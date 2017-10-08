@@ -94,6 +94,7 @@ namespace code {
 			void fnCallRefTfm(Listing *dest, Instr *instr, Nat line);
 
 			// Keep track of the current part.
+			void prologTfm(Listing *dest, Instr *instr, Nat line);
 			void beginBlockTfm(Listing *dest, Instr *instr, Nat line);
 			void endBlockTfm(Listing *dest, Instr *instr, Nat line);
 

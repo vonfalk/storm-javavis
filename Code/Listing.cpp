@@ -545,6 +545,34 @@ namespace code {
 		return Var(id, size);
 	}
 
+	Var Listing::createVar(Part in, TypeDesc *type) {
+		return createVar(in, type, freeDef);
+	}
+
+	Var Listing::createVar(Part in, TypeDesc *type, FreeOpt when) {
+		if (ComplexDesc *c = as<ComplexDesc>(type)) {
+			return createVar(in, type->size(), c->dtor, when | freePtr);
+		} else {
+			return createVar(in, type->size(), Operand(), when);
+		}
+	}
+
+	Var Listing::createParam(TypeDesc *type) {
+		return createParam(type, freeDef);
+	}
+
+	Var Listing::createParam(TypeDesc *type, FreeOpt when) {
+		if (ComplexDesc *c = as<ComplexDesc>(type)) {
+			return createParam(type, c->dtor, when | freePtr);
+		} else {
+			return createParam(type, Operand(), freeDef);
+		}
+	}
+
+	Var Listing::createParam(TypeDesc *type, Operand free) {
+		return createParam(type, free, freeDef);
+	}
+
 	Var Listing::createParam(TypeDesc *type, Operand free, FreeOpt when) {
 		if (checkFree(free, when))
 			needEH = true;

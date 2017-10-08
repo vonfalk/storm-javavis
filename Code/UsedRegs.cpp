@@ -29,11 +29,14 @@ namespace code {
 	static void processInstr(const Arena *arena, Instr *instr, RegSet *all, RegSet *used) {
 		switch (instr->op()) {
 		case op::jmp:
-		case op::beginBlock:
 		case op::endBlock:
 		case op::prolog:
 			// These do not preserve any registers.
 			used->clear();
+			break;
+		case op::beginBlock:
+			// Does not preserve 'rax'.
+			used->remove(ptrA);
 			break;
 		case op::fnCall:
 		case op::fnCallRef:

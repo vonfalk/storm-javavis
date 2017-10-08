@@ -4,6 +4,9 @@
 #include "../Operand.h"
 
 namespace code {
+	class Listing;
+	class TypeDesc;
+
 	namespace x64 {
 		STORM_PKG(core.asm.x64);
 
@@ -95,8 +98,16 @@ namespace code {
 		// Find a unused register given a set of used registers.
 		Reg unusedReg(RegSet *in);
 
+		// As above, but returns 'noReg' instead of throwing if no registers are available.
+		Reg unusedRegUnsafe(RegSet *in);
+
 		// Get the set of registers that can be left dirty through a function call.
 		RegSet *STORM_FN fnDirtyRegs(EnginePtr e);
+
+		// Save/restore the registers (on the stack) required to store 'result' as a return value.
+		// Typically some combination of 'rax', 'rdx', 'xmm0' and 'xmm1' are used.
+		void STORM_FN saveResult(Listing *dest, TypeDesc *result);
+		void STORM_FN restoreResult(Listing *dest, TypeDesc *result);
 
 		// Description of an op-code.
 		struct OpCode {

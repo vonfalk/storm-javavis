@@ -59,8 +59,10 @@ namespace code {
 			Nat spilled = toPreserve->count();
 			if (result->memory)
 				spilled++; // The hidden parameter needs to be spilled!
+			if (usingEH)
+				spilled += 2;
 
-			layout = code::x64::layout(src, params, spilled, usingEH);
+			layout = code::x64::layout(src, params, spilled);
 		}
 
 		void Layout::during(Listing *dest, Listing *src, Nat line) {
@@ -260,10 +262,7 @@ namespace code {
 
 				if (!dtor.empty() && (when & freeOnBlockExit) == freeOnBlockExit) {
 					if (preserveRax && !pushedRax) {
-						// Preserve ptrA and xmm0! (keeps stack 16-byte aligned).
-						*dest << sub(ptrStack, ptrConst(0x10));
-						*dest << mov(ptrRel(ptrStack, Offset::sPtr), ptrA);
-						*dest << mov(longRel(ptrStack, Offset()), xmm0);
+						saveResult(dest, dest->result);
 						pushedRax = true;
 					}
 
@@ -280,9 +279,7 @@ namespace code {
 			}
 
 			if (pushedRax) {
-				*dest << mov(ptrA, ptrRel(ptrStack, Offset::sPtr));
-				*dest << mov(xmm0, longRel(ptrStack, Offset()));
-				*dest << add(ptrStack, ptrConst(0x10));
+				restoreResult(dest, dest->result);
 			}
 
 			part = dest->prev(part);
@@ -439,15 +436,11 @@ namespace code {
 			return used.aligned();
 		}
 
-		Array<Offset> *layout(Listing *src, Params *params, Nat spilled, Bool usingEH) {
+		Array<Offset> *layout(Listing *src, Params *params, Nat spilled) {
 			Array<Offset> *result = code::layout(src);
 
-			// Saved registers:
+			// Saved registers and other things:
 			Offset varOffset = Offset::sPtr * spilled;
-
-			// Exception handling uses an additional 2 pointers on the stack.
-			if (usingEH)
-				varOffset += Offset::sPtr * 2;
 
 			// Figure out which variables we need to spill into memory.
 			varOffset += spillParams(result, src, params, varOffset);

@@ -223,9 +223,12 @@ namespace code {
 		inline Var STORM_FN createVar(Part in, Size size) { return createVar(in, size, Operand(), freeDef); }
 		inline Var STORM_FN createVar(Part in, Size size, Operand free) { return createVar(in, size, free, freeDef); }
 		Var STORM_FN createVar(Part in, Size size, Operand free, FreeOpt when);
+		Var STORM_FN createVar(Part in, TypeDesc *type);
+		Var STORM_FN createVar(Part in, TypeDesc *type, FreeOpt when);
 
-		inline Var STORM_FN createParam(TypeDesc *type) { return createParam(type, Operand(), freeDef); }
-		inline Var STORM_FN createParam(TypeDesc *type, Operand free) { return createParam(type, free, freeDef); }
+		Var STORM_FN createParam(TypeDesc *type);
+		Var STORM_FN createParam(TypeDesc *type, FreeOpt when);
+		Var STORM_FN createParam(TypeDesc *type, Operand free);
 		Var STORM_FN createParam(TypeDesc *type, Operand free, FreeOpt when);
 
 		// TODO: Remove these overloads - they are obsolete.

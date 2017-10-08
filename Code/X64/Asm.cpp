@@ -1,5 +1,9 @@
 #include "stdafx.h"
 #include "Asm.h"
+#include "Params.h"
+#include "../Listing.h"
+#include "../TypeDesc.h"
+#include "../Exception.h"
 
 namespace code {
 	namespace x64 {
@@ -239,6 +243,13 @@ namespace code {
 		}
 
 		Reg unusedReg(RegSet *in) {
+			Reg r = unusedRegUnsafe(in);
+			if (r == noReg)
+				throw InvalidValue(L"We should never run out of registers on X86-64!");
+			return r;
+		}
+
+		Reg unusedRegUnsafe(RegSet *in) {
 			static const Reg candidates[] = {
 				// Scratch registers:
 				ptr11, ptr10, ptr9, ptr8, ptrC, ptrD, ptrSi, ptrDi, ptrA,
@@ -250,7 +261,6 @@ namespace code {
 					return candidates[i];
 			}
 
-			assert(false, L"This should never happen!");
 			return noReg;
 		}
 
@@ -259,9 +269,12 @@ namespace code {
 			r->put(rax);
 			r->put(rdi);
 			r->put(rsi);
+			r->put(rdx);
 			r->put(rcx);
 			r->put(r8);
 			r->put(r9);
+			r->put(r10);
+			r->put(r11);
 			r->put(xmm0);
 			r->put(xmm1);
 			r->put(xmm2);
@@ -271,6 +284,74 @@ namespace code {
 			r->put(xmm6);
 			r->put(xmm7);
 			return r;
+		}
+
+		static void saveResult(Listing *dest, primitive::PrimitiveKind k, nat &i, nat &r, Offset offset) {
+			static const Reg intReg[2] = { ptrA, ptrD };
+			static const Reg realReg[2] = { xmm0, xmm1 };
+
+			switch (k) {
+			case primitive::none:
+				break;
+			case primitive::integer:
+			case primitive::pointer:
+				*dest << mov(ptrRel(ptrStack, offset), intReg[i++]);
+				break;
+			case primitive::real:
+				*dest << mov(longRel(ptrStack, offset), realReg[r++]);
+				break;
+			}
+		}
+
+		void saveResult(Listing *dest, TypeDesc *result) {
+			Result *res = code::x64::result(result);
+			if (res->memory) {
+				// We still need to preserve 'rax'.
+				*dest << push(rax);
+				*dest << push(rax);
+			} else if (res->part1 == primitive::none && res->part2 == primitive::none) {
+				// Nothing to do!
+			} else {
+				nat i = 0;
+				nat r = 0;
+				*dest << sub(ptrStack, ptrConst(16));
+				saveResult(dest, res->part1, i, r, Offset());
+				saveResult(dest, res->part2, i, r, Offset::sPtr);
+			}
+		}
+
+		static void restoreResult(Listing *dest, primitive::PrimitiveKind k, nat &i, nat &r, Offset offset) {
+			static const Reg intReg[2] = { ptrA, ptrD };
+			static const Reg realReg[2] = { xmm0, xmm1 };
+
+			switch (k) {
+			case primitive::none:
+				break;
+			case primitive::integer:
+			case primitive::pointer:
+				*dest << mov(intReg[i++], ptrRel(ptrStack, offset));
+				break;
+			case primitive::real:
+				*dest << mov(realReg[r++], longRel(ptrStack, offset));
+				break;
+			}
+		}
+
+		void restoreResult(Listing *dest, TypeDesc *result) {
+			Result *res = code::x64::result(result);
+			if (res->memory) {
+				// We still need to preserve 'rax'.
+				*dest << push(rax);
+				*dest << push(rax);
+			} else if (res->part1 == primitive::none && res->part2 == primitive::none) {
+				// Nothing to do!
+			} else {
+				nat i = 0;
+				nat r = 0;
+				restoreResult(dest, res->part1, i, r, Offset());
+				restoreResult(dest, res->part2, i, r, Offset::sPtr);
+				*dest << add(ptrStack, ptrConst(16));
+			}
 		}
 
 		void put(Output *to, OpCode op) {

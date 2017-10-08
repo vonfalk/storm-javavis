@@ -7,3 +7,12 @@
 
 * Minor issues [0/1]
   - [ ] Shift operations have no 64-bit transform on X86.
+
+* Improvements [0/1]
+  - [ ] Rework how 'parts' are managed in a listing. We want it to be possible to
+    enable destruction of a variable at a more or less arbitary point in the code. We 
+    do not want to have to wait until the proper block is the topmost active block. Perhaps
+    we could use a 'activate' pseudo-op that enables destruction of an individual variable?
+    This could be implemented by saving a table containing offsets into the code from which 
+    each variable is active. Then we could traverse the table, and destroy all variables that
+    are active quite easily in the exception handler.

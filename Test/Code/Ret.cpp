@@ -142,7 +142,7 @@ BEGIN_TEST_(RetCallComplex, Code) {
 
 	*l << fnCall(toCall, dbgDesc, v);
 
-	// This is abusin the interface a tiny bit...
+	// This is abusing the interface a tiny bit...
 	*l << mov(eax, intRel(v, Offset()));
 
 	*l << fnRet(eax);

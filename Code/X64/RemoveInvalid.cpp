@@ -38,6 +38,7 @@ namespace code {
 			DEST_W_REG(ucast),
 			DEST_RW_REG(mul),
 
+			TRANSFORM(prolog),
 			TRANSFORM(beginBlock),
 			TRANSFORM(endBlock),
 
@@ -200,13 +201,20 @@ namespace code {
 			*dest << mov(instr->dest(), reg);
 		}
 
+		void RemoveInvalid::prologTfm(Listing *dest, Instr *instr, Nat line) {
+			currentPart = dest->root();
+			*dest << instr;
+		}
+
 		void RemoveInvalid::beginBlockTfm(Listing *dest, Instr *instr, Nat line) {
 			currentPart = instr->src().part();
+			*dest << instr;
 		}
 
 		void RemoveInvalid::endBlockTfm(Listing *dest, Instr *instr, Nat line) {
 			Part ended = instr->src().part();
 			currentPart = dest->parent(ended);
+			*dest << instr;
 		}
 
 		void RemoveInvalid::fnParamTfm(Listing *dest, Instr *instr, Nat line) {
@@ -372,7 +380,11 @@ namespace code {
 		}
 
 		static void setRegisterRef(RegEnv &env, Reg target, Param param, const Operand &src) {
-			assert(false, L"Not implemented yet!");
+			assert(src.size() == Size::sPtr);
+			Size s(param.size());
+
+			*env.dest << mov(asSize(target, Size::sPtr), src);
+			*env.dest << mov(asSize(target, s), xRel(s, target, Offset()));
 		}
 
 		static void setRegister(RegEnv &env, Nat i) {
@@ -466,6 +478,64 @@ namespace code {
 			returnSimple(dest, result->part2, i, r, Offset::sPtr, size);
 		}
 
+		// Find registers we need to preserve while calling constructors.
+		static void preserveComplex(Listing *dest, RegSet *used, Block block, Array<ParamInfo> *params) {
+			RegSet *regs = new (used) RegSet(*used);
+
+			Bool firstComplex = true;
+			for (Nat i = 0; i < params->count(); i++) {
+				ParamInfo &param = params->at(i);
+
+				if (as<ComplexDesc>(param.type) != null && firstComplex) {
+					// We do not need to preserve anything required by the first complex
+					// parameter. It will manage anyway!
+					firstComplex = false;
+					continue;
+				}
+
+				if (param.src.type() == opRegister)
+					regs->put(param.src.reg());
+			}
+
+			// Move things around!
+			RegSet *dirty = fnDirtyRegs(dest->engine());
+			used = new (dirty) RegSet(*dirty);
+			used->put(regs);
+
+			firstComplex = true;
+			for (Nat i = 0; i < params->count(); i++) {
+				ParamInfo &param = params->at(i);
+
+				if (as<ComplexDesc>(param.type) != null && firstComplex) {
+					// We do not need to preserve anything required by the first complex
+					// parameter. It will manage anyway!
+					firstComplex = false;
+					continue;
+				}
+
+				if (param.src.type() != opRegister)
+					continue;
+
+				Reg srcReg = param.src.reg();
+				if (!dirty->has(srcReg))
+					// No need to preserve.
+					continue;
+
+				Reg into = unusedRegUnsafe(used);
+				if (into == noReg) {
+					// No more registers. Create a variable!
+					Var v = dest->createVar(block, param.src.size());
+					*dest << mov(v, srcReg);
+					param.src = v;
+				} else {
+					// Put it in 'into' instead!
+					into = asSize(into, param.src.size());
+					*dest << mov(into, srcReg);
+					param.src = into;
+				}
+			}
+		}
+
 		void RemoveInvalid::fnCallTfm(Listing *dest, Instr *instr, Nat line) {
 			if (!as<TypeInstr>(instr)) {
 				TODO(L"Remove me!"); return;
@@ -482,22 +552,43 @@ namespace code {
 			if (complex) {
 				block = dest->createBlock(currentPart);
 				copies = new (this) Array<Var>(params->count(), Var());
-				*dest << begin(block);
+
+				if (used->at(line)->has(ptrA)) {
+					Reg r = unusedReg(used->at(line));
+					*dest << mov(r, ptrA);
+					*dest << begin(block);
+					*dest << mov(ptrA, r);
+				} else {
+					*dest << begin(block);
+				}
+
+				// Find registers we need to preserve while calling constructors.
+				preserveComplex(dest, used->at(line), block, params);
 
 				Part part = block;
 				for (Nat i = 0; i < params->count(); i++) {
-					const ParamInfo &param = params->at(i);
+					ParamInfo &param = params->at(i);
 
 					if (ComplexDesc *c = as<ComplexDesc>(param.type)) {
 						part = dest->createPart(part);
-						Var v = dest->createVar(part, c->size(), c->dtor);
+						Var v = dest->createVar(part, c);
 						copies->at(i) = v;
 
 						// Call the copy constructor.
 						*dest << lea(ptrDi, v);
-						*dest << mov(ptrSi, param.src); // TODO: Load from a safe place.
+						if (param.ref == param.lea) {
+							*dest << lea(ptrSi, param.src);
+						} else if (param.ref) {
+							*dest << mov(ptrSi, param.src); // TODO: Load from a safe place.
+						} else {
+							assert(false, L"Can not use the 'lea'-mode for complex parameters.");
+						}
 						*dest << call(c->ctor, valVoid());
 						*dest << begin(part);
+
+						param.src = v;
+						param.ref = false;
+						param.lea = true;
 					}
 				}
 			}
@@ -532,8 +623,15 @@ namespace code {
 				*dest << add(ptrStack, ptrConst(pushed));
 
 			if (complex) {
-				// TODO: Preserve registers as required!
-				*dest << end(block);
+				const Operand &target = instr->dest();
+				if (target.type() == opRegister) {
+					// 'r10' should be free now. It is not exposed outside of the backend.
+					*dest << mov(asSize(r15, target.size()), target);
+					*dest << end(block);
+					*dest << mov(target, asSize(r15, target.size()));
+				} else {
+					*dest << end(block);
+				}
 			}
 
 			params->clear();

@@ -2,6 +2,7 @@
 #include "Code/Binary.h"
 #include "Code/Listing.h"
 #include "Code/X64/Asm.h"
+#include "Compiler/Debug.h"
 
 using namespace code;
 
@@ -255,6 +256,45 @@ BEGIN_TEST_(CallMixed, Code) {
 	Fn fn = (Fn)bin->address();
 
 	CHECK_EQ((*fn)(), 96.0f);
+} END_TEST
+
+Int CODECALL callComplex(storm::debug::DbgVal dbg, Int v) {
+	return dbg.v + v;
+}
+
+BEGIN_TEST_(CallComplex, Code) {
+	Engine &e = gEngine();
+	Arena *arena = code::arena(e);
+	Type *dbgVal = storm::debug::DbgVal::stormType(e);
+
+	Ref toCall = arena->external(S("callComplex"), address(&callComplex));
+	ComplexDesc *desc = new (e) ComplexDesc(dbgVal->size(), dbgVal->copyCtor()->ref(), dbgVal->destructor()->ref());
+
+	Listing *l = new (e) Listing();
+	l->result = intDesc(e);
+	Var a = l->createVar(l->root(), desc);
+
+	*l << prolog();
+
+	*l << lea(ptrA, a);
+	*l << fnParam(ptrDesc(e), ptrA);
+	*l << fnCall(dbgVal->defaultCtor()->ref());
+
+	*l << mov(ecx, intConst(8));
+
+	*l << fnParam(desc, a);
+	*l << fnParam(intDesc(e), ecx);
+	*l << fnCall(toCall, intDesc(e), eax);
+
+	*l << fnRet(eax);
+
+	Binary *b = new (e) Binary(arena, l);
+	typedef Int (*Fn)();
+	Fn fn = (Fn)b->address();
+
+	storm::debug::DbgVal::clear();
+	CHECK_EQ((*fn)(), 18);
+	CHECK(storm::debug::DbgVal::clear());
 } END_TEST
 
 
