@@ -126,8 +126,8 @@ BEGIN_TEST(CodeTest, CodeBasic) {
 	// Use 'ebx' so that we have to preserve some registers during the function call...
 	*l << mov(ebx, v);
 	*l << mov(eax, ebx);
-	*l << epilog();
-	*l << ret(ValType(Size::sInt, false));
+	l->result = intDesc(e);
+	*l << fnRet(eax);
 
 	Binary *b = new (e) Binary(arena, l);
 
@@ -151,8 +151,8 @@ BEGIN_TEST(SwapTest, CodeBasic) {
 	*l << swap(eax, p);
 	*l << sub(eax, p);
 
-	*l << epilog();
-	*l << ret(ValType(Size::sInt, false));
+	l->result = intDesc(e);
+	*l << fnRet(eax);
 
 	Binary *b = new (e) Binary(arena, l);
 
@@ -184,8 +184,8 @@ BEGIN_TEST(CodeGcTest, CodeBasic) {
 	*l << prolog();
 	*l << call(arena->external(S("triggerCollect"), address(&triggerCollect)), valVoid());
 	*l << mov(eax, intConst(1337));
-	*l << epilog();
-	*l << ret(ValType(Size::sInt, false));
+	l->result = intDesc(e);
+	*l << fnRet(eax);
 
 	Binary *b = new (e) Binary(code::arena(e), l);
 
@@ -203,8 +203,8 @@ BEGIN_TEST(CodeHereTest, CodeBasic) {
 	*l << prolog();
 	*l << push(arena->external(S("triggerCollect"), address(&triggerCollect)));
 	*l << pop(ptrA);
-	*l << epilog();
-	*l << ret(ValType(Size::sInt, false));
+	l->result = intDesc(e);
+	*l << fnRet(eax);
 
 	Binary *b = new (e) Binary(code::arena(e), l);
 

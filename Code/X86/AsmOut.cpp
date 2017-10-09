@@ -475,11 +475,24 @@ namespace code {
 		}
 
 		void fstpOut(Output *to, Instr *instr) {
-			to->putByte(0xD9);
+			if (instr->size() == Size::sDouble)
+				to->putByte(0xDD);
+			else
+				to->putByte(0xD9);
 			modRm(to, 3, instr->dest());
 		}
 
 		void fistpOut(Output *to, Instr *instr) {
+#ifdef X86_REQUIRE_SSE3
+			// Issue FISTTP instead.
+			if (instr->size() == Size::sDouble) {
+				to->putByte(0xDD);
+				modRm(to, 1, instr->dest());
+			} else {
+				to->putByte(0xDB);
+				modRm(to, 1, instr->dest());
+			}
+#else
 			// Use space just above stack for this.
 			Operand modified = intRel(ptrStack, -Offset(4));
 			Operand old = intRel(ptrStack, -Offset(2));
@@ -502,22 +515,36 @@ namespace code {
 			modRm(to, 5, modified);
 
 			// FISTP 'dest'
-			to->putByte(0xDB);
-			modRm(to, 3, instr->dest());
+			if (instr->size() == Size::sDouble) {
+				to->putByte(0xDF);
+				modRm(to, 7, instr->dest());
+			} else {
+				to->putByte(0xDB);
+				modRm(to, 3, instr->dest());
+			}
 
 			// FLDCW [ESP - 2] - restore old mode
 			to->putByte(0xD9);
 			modRm(to, 5, old);
+#endif
 		}
 
 		void fldOut(Output *to, Instr *instr) {
-			to->putByte(0xD9);
+			if (instr->size() == Size::sDouble)
+				to->putByte(0xDD);
+			else
+				to->putByte(0xD9);
 			modRm(to, 0, instr->src());
 		}
 
 		void fildOut(Output *to, Instr *instr) {
-			to->putByte(0xDB);
-			modRm(to, 0, instr->src());
+			if (instr->size() == Size::sDouble) {
+				to->putByte(0xDF);
+				modRm(to, 5, instr->src());
+			} else {
+				to->putByte(0xDB);
+				modRm(to, 0, instr->src());
+			}
 		}
 
 		void faddpOut(Output *to, Instr *instr) {

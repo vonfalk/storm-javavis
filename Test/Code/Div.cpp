@@ -17,8 +17,8 @@ BEGIN_TEST(DivI, Code) {
 	*l << idiv(p1, p2);
 	*l << mov(eax, p1);
 
-	*l << epilog();
-	*l << ret(ValType(Size::sInt, false));
+	l->result = intDesc(e);
+	*l << fnRet(eax);
 
 	Binary *b = new (e) Binary(arena, l);
 	typedef Int (*Fn)(Int, Int);
@@ -45,8 +45,8 @@ BEGIN_TEST(DivI2, Code) {
 	*l << mov(ebx, p2);
 	*l << idiv(eax, ebx);
 
-	*l << epilog();
-	*l << ret(ValType(Size::sInt, false));
+	l->result = intDesc(e);
+	*l << fnRet(eax);
 
 	Binary *b = new (e) Binary(arena, l);
 	typedef Int (*Fn)(Int, Int);
@@ -72,8 +72,8 @@ BEGIN_TEST(DivU, Code) {
 	*l << udiv(p1, p2);
 	*l << mov(eax, p1);
 
-	*l << epilog();
-	*l << ret(ValType(Size::sInt, false));
+	l->result = intDesc(e);
+	*l << fnRet(eax);
 
 	Binary *b = new (e) Binary(arena, l);
 	typedef Nat (*Fn)(Nat, Nat);
@@ -97,8 +97,8 @@ BEGIN_TEST(ModI, Code) {
 	*l << imod(p1, p2);
 	*l << mov(eax, p1);
 
-	*l << epilog();
-	*l << ret(ValType(Size::sInt, false));
+	l->result = intDesc(e);
+	*l << fnRet(eax);
 
 	Binary *b = new (e) Binary(arena, l);
 	typedef Int (*Fn)(Int, Int);
@@ -124,8 +124,8 @@ BEGIN_TEST(ModU, Code) {
 	*l << umod(p1, p2);
 	*l << mov(eax, p1);
 
-	*l << epilog();
-	*l << ret(ValType(Size::sInt, false));
+	l->result = intDesc(e);
+	*l << fnRet(eax);
 
 	Binary *b = new (e) Binary(arena, l);
 	typedef Nat (*Fn)(Nat, Nat);
@@ -148,8 +148,8 @@ BEGIN_TEST(DivIConst, Code) {
 	*l << idiv(p1, intConst(-2));
 	*l << mov(eax, p1);
 
-	*l << epilog();
-	*l << ret(ValType(Size::sInt, false));
+	l->result = intDesc(e);
+	*l << fnRet(eax);
 
 	Binary *b = new (e) Binary(arena, l);
 	typedef Int (*Fn)(Int);
@@ -172,8 +172,8 @@ BEGIN_TEST(ModIConst, Code) {
 	*l << imod(p1, intConst(-10));
 	*l << mov(eax, p1);
 
-	*l << epilog();
-	*l << ret(ValType(Size::sInt, false));
+	l->result = intDesc(e);
+	*l << fnRet(eax);
 
 	Binary *b = new (e) Binary(arena, l);
 	typedef Int (*Fn)(Int);
@@ -198,8 +198,8 @@ BEGIN_TEST(DivByte, Code) {
 	*l << udiv(p1, p2);
 	*l << mov(al, p1);
 
-	*l << epilog();
-	*l << ret(ValType(Size::sByte, false));
+	l->result = byteDesc(e);
+	*l << fnRet(al);
 
 	Binary *b = new (e) Binary(arena, l);
 	typedef Byte (*Fn)(Byte, Byte);
@@ -223,8 +223,8 @@ BEGIN_TEST(ModByte, Code) {
 	*l << umod(p1, p2);
 	*l << mov(al, p1);
 
-	*l << epilog();
-	*l << ret(ValType(Size::sByte, false));
+	l->result = intDesc(e);
+	*l << fnRet(al);
 
 	Binary *b = new (e) Binary(arena, l);
 	typedef Byte (*Fn)(Byte, Byte);

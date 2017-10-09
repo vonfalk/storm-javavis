@@ -16,6 +16,7 @@ namespace storm {
 	typedef os::Long Long; // 64-bit, signed
 	typedef os::Word Word; // 64-bit, unsigned
 	typedef os::Float Float; // 32-bit float
+	typedef os::Double Double; // 64-bit float
 
 	class Engine;
 	class Object;

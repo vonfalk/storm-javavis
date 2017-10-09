@@ -19,8 +19,8 @@ BEGIN_TEST(Add64, Code) {
 	*l << add(v, w);
 	*l << mov(rax, v);
 
-	*l << epilog();
-	*l << ret(ValType(Size::sLong, false));
+	l->result = longDesc(e);
+	*l << fnRet(rax);
 
 	Binary *b = new (e) Binary(arena, l);
 	CHECK_EQ(callFn(b->address(), int64(0)), 0x11111111110);
@@ -41,8 +41,8 @@ BEGIN_TEST(Param64, Code) {
 	*l << add(w, longConst(0x1));
 	*l << mov(rax, w);
 
-	*l << epilog();
-	*l << ret(ValType(Size::sLong, false));
+	l->result = longDesc(e);
+	*l << fnRet(rax);
 
 	Binary *b = new (e) Binary(arena, l);
 	CHECK_EQ(callFn(b->address(), int64(0x123456789A)), 0x123456789B);
@@ -63,10 +63,9 @@ BEGIN_TEST(Call64, Code) {
 	Var v = l->createLongParam();
 
 	*l << prolog();
-	*l << fnParam(v);
-	*l << fnCall(arena->external(S("longFn"), address(&longFn)), valVoid());
-	*l << epilog();
-	*l << ret(valVoid());
+	*l << fnParam(longDesc(e), v);
+	*l << fnCall(arena->external(S("longFn"), address(&longFn)));
+	*l << fnRet();
 
 	Binary *b = new (e) Binary(arena, l);
 	callFn(b->address(), Long(0x123456789A));
@@ -88,8 +87,8 @@ BEGIN_TEST(Sub64, Code) {
 	*l << sub(v, w);
 	*l << mov(rax, v);
 
-	*l << epilog();
-	*l << ret(ValType(Size::sLong, false));
+	l->result = longDesc(e);
+	*l << fnRet(rax);
 
 	Binary *b = new (e) Binary(arena, l);
 	CHECK_EQ(callFn(b->address(), int64(0)), 0x97530ECA87);
@@ -113,8 +112,8 @@ BEGIN_TEST(Mul64, Code) {
 	*l << mul(v, w);
 	*l << add(rax, v);
 
-	*l << epilog();
-	*l << ret(ValType(Size::sLong, false));
+	l->result = longDesc(e);
+	*l << fnRet(rax);
 
 	Binary *b = new (e) Binary(arena, l);
 	CHECK_EQ(callFn(b->address(), int64(0)), 0x2DE2A36D2B77D9DB);
@@ -219,8 +218,8 @@ BEGIN_TEST(Cmp64, Code) {
 	}
 
 	*l << mov(eax, r);
-	*l << epilog();
-	*l << ret(ValType(Size::sInt, false));
+	l->result = intDesc(e);
+	*l << fnRet(eax);
 
 	Binary *b = new (e) Binary(arena, l);
 	const void *p = b->address();

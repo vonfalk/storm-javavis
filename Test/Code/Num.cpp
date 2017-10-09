@@ -16,8 +16,8 @@ BEGIN_TEST(NotTest, Code) {
 	*l << bnot(p);
 	*l << mov(eax, p);
 
-	*l << epilog();
-	*l << ret(valInt());
+	l->result = intDesc(e);
+	*l << fnRet(eax);
 
 	Binary *b = new (e) Binary(arena, l);
 	typedef Int (*Fn)(Int);

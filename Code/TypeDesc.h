@@ -75,6 +75,7 @@ namespace code {
 	inline Primitive STORM_FN ptrPrimitive() { return Primitive(primitive::pointer, Size::sPtr, Offset()); }
 	inline Primitive STORM_FN longPrimitive() { return Primitive(primitive::integer, Size::sLong, Offset()); }
 	inline Primitive STORM_FN floatPrimitive() { return Primitive(primitive::real, Size::sFloat, Offset()); }
+	inline Primitive STORM_FN doublePrimitive() { return Primitive(primitive::real, Size::sDouble, Offset()); }
 
 	/**
 	 * Low-level description of a type. Instances of this class are used to tell the code backend
@@ -159,5 +160,6 @@ namespace code {
 	TypeDesc *STORM_FN ptrDesc(EnginePtr e);
 	TypeDesc *STORM_FN longDesc(EnginePtr e);
 	TypeDesc *STORM_FN floatDesc(EnginePtr e);
+	TypeDesc *STORM_FN doubleDesc(EnginePtr e);
 
 }

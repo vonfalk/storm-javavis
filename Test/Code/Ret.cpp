@@ -5,7 +5,7 @@
 
 using namespace code;
 
-BEGIN_TEST_(RetPrimitive, Code) {
+BEGIN_TEST(RetPrimitive, Code) {
 	Engine &e = gEngine();
 	Arena *arena = code::arena(e);
 
@@ -25,7 +25,7 @@ BEGIN_TEST_(RetPrimitive, Code) {
 	CHECK_EQ((*fn)(), 100);
 } END_TEST
 
-BEGIN_TEST_(RetRefPrimitive, Code) {
+BEGIN_TEST(RetRefPrimitive, Code) {
 	Engine &e = gEngine();
 	Arena *arena = code::arena(e);
 
@@ -47,7 +47,7 @@ BEGIN_TEST_(RetRefPrimitive, Code) {
 	CHECK_EQ((*fn)(), 100);
 } END_TEST
 
-BEGIN_TEST_(RetFloatPrimitive, Code) {
+BEGIN_TEST(RetFloatPrimitive, Code) {
 	Engine &e = gEngine();
 	Arena *arena = code::arena(e);
 
@@ -67,7 +67,7 @@ BEGIN_TEST_(RetFloatPrimitive, Code) {
 	CHECK_EQ((*fn)(), 10.0f);
 } END_TEST
 
-BEGIN_TEST_(RetComplex, Code) {
+BEGIN_TEST(RetComplex, Code) {
 	using storm::debug::DbgVal;
 	Engine &e = gEngine();
 	Arena *arena = code::arena(e);
@@ -94,7 +94,7 @@ BEGIN_TEST_(RetComplex, Code) {
 	CHECK(DbgVal::clear());
 } END_TEST
 
-BEGIN_TEST_(RetRefComplex, Code) {
+BEGIN_TEST(RetRefComplex, Code) {
 	using storm::debug::DbgVal;
 	Engine &e = gEngine();
 	Arena *arena = code::arena(e);
@@ -126,7 +126,7 @@ storm::debug::DbgVal STORM_FN createDbgVal() {
 	return storm::debug::DbgVal(121);
 }
 
-BEGIN_TEST_(RetCallComplex, Code) {
+BEGIN_TEST(RetCallComplex, Code) {
 	using storm::debug::DbgVal;
 	Engine &e = gEngine();
 	Arena *arena = code::arena(e);
@@ -157,7 +157,7 @@ BEGIN_TEST_(RetCallComplex, Code) {
 
 } END_TEST
 
-BEGIN_TEST_(RetCallRefComplex, Code) {
+BEGIN_TEST(RetCallRefComplex, Code) {
 	using storm::debug::DbgVal;
 	Engine &e = gEngine();
 	Arena *arena = code::arena(e);
@@ -214,7 +214,7 @@ SimpleDesc *retDesc(Engine &e) {
 	return desc;
 }
 
-BEGIN_TEST_(RetSimple, Code) {
+BEGIN_TEST(RetSimple, Code) {
 	Engine &e = gEngine();
 	Arena *arena = code::arena(e);
 
@@ -243,7 +243,7 @@ SimpleRet CODECALL createSimple() {
 	return a;
 }
 
-BEGIN_TEST_(RetCallSimple, Code) {
+BEGIN_TEST(RetCallSimple, Code) {
 	Engine &e = gEngine();
 	Arena *arena = code::arena(e);
 	Ref toCall = arena->external(S("create"), address(&createSimple));
@@ -267,7 +267,7 @@ BEGIN_TEST_(RetCallSimple, Code) {
 	CHECK_EQ((*fn)(), 120);
 } END_TEST
 
-BEGIN_TEST_(RetCallRefSimple, Code) {
+BEGIN_TEST(RetCallRefSimple, Code) {
 	Engine &e = gEngine();
 	Arena *arena = code::arena(e);
 	Ref toCall = arena->external(S("create"), address(&createSimple));
@@ -319,7 +319,7 @@ SimpleDesc *retFloatDesc(Engine &e) {
 	return desc;
 }
 
-BEGIN_TEST_(RetSimpleFloat, Code) {
+BEGIN_TEST(RetSimpleFloat, Code) {
 	Engine &e = gEngine();
 	Arena *arena = code::arena(e);
 
@@ -349,7 +349,7 @@ SimpleFloatRet CODECALL createSimpleFloat() {
 	return x;
 }
 
-BEGIN_TEST_(RetCallSimpleFloat, Code) {
+BEGIN_TEST(RetCallSimpleFloat, Code) {
 	Engine &e = gEngine();
 	Arena *arena = code::arena(e);
 	Ref toCall = arena->external(S("create"), address(&createSimpleFloat));
@@ -374,7 +374,7 @@ BEGIN_TEST_(RetCallSimpleFloat, Code) {
 	CHECK_EQ((*fn)(), 30);
 } END_TEST
 
-BEGIN_TEST_(RetCallRefSimpleFloat, Code) {
+BEGIN_TEST(RetCallRefSimpleFloat, Code) {
 	Engine &e = gEngine();
 	Arena *arena = code::arena(e);
 	Ref toCall = arena->external(S("create"), address(&createSimpleFloat));

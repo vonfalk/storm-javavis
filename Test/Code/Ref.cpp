@@ -26,12 +26,12 @@ BEGIN_TEST(RefTest, Code) {
 
 	*l << prolog();
 
-	*l << fnParam(p);
-	*l << fnCall(Ref(fn), valInt());
+	*l << fnParam(intDesc(e), p);
+	*l << fnCall(Ref(fn), intDesc(e), eax);
 	*l << add(eax, intConst(5));
 
-	*l << epilog();
-	*l << ret(valInt());
+	l->result = intDesc(e);
+	*l << fnRet(eax);
 
 	Binary *b = new (e) Binary(arena, l);
 	typedef Int (*Fn)(Int);
@@ -63,9 +63,9 @@ BEGIN_TEST(ReplaceTest, Code) {
 
 	Listing *l = new (e) Listing();
 	*l << prolog();
-	*l << fnCall(tenFun, valInt());
-	*l << epilog();
-	*l << ret(valInt());
+	*l << fnCall(tenFun, intDesc(e), eax);
+	l->result = intDesc(e);
+	*l << fnRet(eax);
 
 	Binary *middleBlob = new (e) Binary(arena, l);
 	RefSource *middle = new (e) RefSource(new (e) Str(S("middle")));
@@ -73,9 +73,9 @@ BEGIN_TEST(ReplaceTest, Code) {
 
 	l = new (e) Listing();
 	*l << prolog();
-	*l << fnCall(Ref(middle), valInt());
-	*l << epilog();
-	*l << ret(valInt());
+	*l << fnCall(Ref(middle), intDesc(e), eax);
+	l->result = intDesc(e);
+	*l << fnRet(eax);
 
 	Binary *b = new (e) Binary(arena, l);
 	typedef Int (*Fn)();
@@ -86,11 +86,11 @@ BEGIN_TEST(ReplaceTest, Code) {
 	// Now, replace 'middle'!
 	l = new (e) Listing();
 	*l << prolog();
-	*l << fnParam(intConst(128));
-	*l << fnParam(intConst(20));
-	*l << fnCall(addFun, valInt());
-	*l << epilog();
-	*l << ret(valInt());
+	*l << fnParam(intDesc(e), intConst(128));
+	*l << fnParam(intDesc(e), intConst(20));
+	*l << fnCall(addFun, intDesc(e), eax);
+	l->result = intDesc(e);
+	*l << fnRet(eax);
 
 	middle->set(new (e) Binary(arena, l));
 

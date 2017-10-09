@@ -45,6 +45,7 @@ namespace code {
 
 		// Float sizes.
 		static Size sFloat;
+		static Size sDouble;
 
 		// Addition (note that we do not have subtraction).
 		Size &STORM_FN operator +=(const Size &o);
@@ -94,6 +95,7 @@ namespace code {
 	inline Size STORM_FN sLong() { return Size::sLong; }
 	inline Size STORM_FN sWord() { return Size::sWord; }
 	inline Size STORM_FN sFloat() { return Size::sFloat; }
+	inline Size STORM_FN sDouble() { return Size::sDouble; }
 
 	/**
 	 * Output.
@@ -138,6 +140,7 @@ namespace code {
 
 		// Float size.
 		static Offset sFloat;
+		static Offset sDouble;
 
 		Offset &STORM_FN operator +=(const Offset &o);
 		Offset &STORM_FN operator -=(const Offset &o);

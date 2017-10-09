@@ -16,8 +16,8 @@ BEGIN_TEST(PreserveTest, Code) {
 	*l << mov(rbx, wordConst(0x01));
 	*l << mov(rcx, wordConst(0x02));
 
-	*l << epilog();
-	*l << ret(ValType(Size::sInt, false));
+	l->result = intDesc(e);
+	*l << fnRet(eax);
 
 	Binary *b = new (e) Binary(arena, l);
 	CHECK_EQ(callFn(b->address(), 0), 0x00);
@@ -38,8 +38,8 @@ BEGIN_TEST(Preserve64, Code) {
 	*l << mov(rax, v);
 	*l << add(v, w);
 
-	*l << epilog();
-	*l << ret(ValType(Size::sLong, false));
+	l->result = intDesc(e);
+	*l << fnRet(eax);
 
 	Binary *b = new (e) Binary(arena, l);
 	CHECK_EQ(callFn(b->address(), int64(0)), 0x123456789A);

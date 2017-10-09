@@ -17,8 +17,8 @@ BEGIN_TEST(Mul, Code) {
 	*l << mul(p1, p2);
 	*l << mov(eax, p1);
 
-	*l << epilog();
-	*l << ret(ValType(Size::sInt, false));
+	l->result = intDesc(e);
+	*l << fnRet(eax);
 
 	Binary *b = new (e) Binary(arena, l);
 	typedef Int (*Fn)(Int, Int);
@@ -45,8 +45,8 @@ BEGIN_TEST(MulReg, Code) {
 	*l << mul(p1, eax);
 	*l << mov(eax, p1);
 
-	*l << epilog();
-	*l << ret(ValType(Size::sInt, false));
+	l->result = intDesc(e);
+	*l << fnRet(eax);
 
 	Binary *b = new (e) Binary(arena, l);
 	typedef Int (*Fn)(Int, Int);
@@ -73,8 +73,8 @@ BEGIN_TEST(MulReg2, Code) {
 	*l << mov(ebx, p1);
 	*l << mul(eax, ebx);
 
-	*l << epilog();
-	*l << ret(ValType(Size::sInt, false));
+	l->result = intDesc(e);
+	*l << fnRet(eax);
 
 	Binary *b = new (e) Binary(arena, l);
 	typedef Int (*Fn)(Int, Int);
@@ -102,8 +102,8 @@ BEGIN_TEST(MulReg3, Code) {
 	*l << mul(ebx, eax);
 	*l << mov(eax, ebx);
 
-	*l << epilog();
-	*l << ret(ValType(Size::sInt, false));
+	l->result = intDesc(e);
+	*l << fnRet(eax);
 
 	Binary *b = new (e) Binary(arena, l);
 	typedef Int (*Fn)(Int, Int);
@@ -128,8 +128,8 @@ BEGIN_TEST(MulConst, Code) {
 	*l << mul(p1, intConst(-2));
 	*l << mov(eax, p1);
 
-	*l << epilog();
-	*l << ret(ValType(Size::sInt, false));
+	l->result = intDesc(e);
+	*l << fnRet(eax);
 
 	Binary *b = new (e) Binary(arena, l);
 	typedef Int (*Fn)(Int);
@@ -153,8 +153,8 @@ BEGIN_TEST(MulByte, Code) {
 	*l << mul(p1, p2);
 	*l << mov(al, p1);
 
-	*l << epilog();
-	*l << ret(ValType(Size::sByte, false));
+	l->result = byteDesc(e);
+	*l << fnRet(al);
 
 	Binary *b = new (e) Binary(arena, l);
 	typedef Byte (*Fn)(Byte, Byte);

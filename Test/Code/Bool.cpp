@@ -21,8 +21,8 @@ BEGIN_TEST(BoolTest, Code) {
 	*l << cmp(eax, eax);
 	*l << setCond(al, ifEqual);
 
-	*l << epilog();
-	*l << ret(ValType(Size::sByte, false));
+	l->result = byteDesc(e);
+	*l << fnRet(al);
 
 	Binary *b = new (e) Binary(arena, l);
 	typedef bool (*Fn)(Int);

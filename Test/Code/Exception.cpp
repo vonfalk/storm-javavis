@@ -50,8 +50,8 @@ BEGIN_TEST(CodeExceptionTest, Code) {
 	*l << fnParam(intConst(3));
 	*l << fnCall(errorFn, valInt());
 
-	*l << epilog();
-	*l << ret(valInt());
+	l->result = intDesc(e);
+	*l << fnRet(eax);
 
 	Binary *b = new (e) Binary(arena, l);
 	typedef Int (*Fn)();
@@ -107,8 +107,8 @@ BEGIN_TEST(CodeCleanupTest, Code) {
 	*l << fnParam(intConst(3));
 	*l << fnCall(errorFn, valInt());
 
-	*l << epilog();
-	*l << ret(valInt());
+	l->result = intDesc(e);
+	*l << fnRet(eax);
 
 	Binary *b = new (e) Binary(arena, l);
 	typedef Int (*Fn)();
@@ -154,8 +154,8 @@ BEGIN_TEST(ExceptionRefTest, Code) {
 	*l << fnParam(intConst(1));
 	*l << fnCall(errorFn, valInt());
 
-	*l << epilog();
-	*l << ret(valInt());
+	l->result = intDesc(e);
+	*l << fnRet(eax);
 
 	Binary *b = new (e) Binary(arena, l);
 	typedef Int (*Fn)();
@@ -196,8 +196,8 @@ BEGIN_TEST(ExceptionSehTest, Code) {
 	*l << fnParam(intConst(1));
 	*l << fnCall(errorFn, valInt());
 
-	*l << epilog();
-	*l << ret(valInt());
+	l->result = intDesc(e);
+	*l << fnRet(eax);
 
 	Binary *b = new (e) Binary(arena, l);
 	typedef Int (*Fn)();
@@ -265,8 +265,8 @@ BEGIN_TEST(ExceptionLargeTest, Code) {
 	*l << fnParam(intConst(1));
 	*l << fnCall(errorFn, valInt());
 
-	*l << epilog();
-	*l << ret(valInt());
+	l->result = intDesc(e);
+	*l << fnRet(eax);
 
 	Binary *b = new (e) Binary(arena, l);
 	typedef Int (*Fn)(Large);

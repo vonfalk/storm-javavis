@@ -116,4 +116,8 @@ namespace code {
 		return new (e.v) PrimitiveDesc(floatPrimitive());
 	}
 
+	TypeDesc *doubleDesc(EnginePtr e) {
+		return new (e.v) PrimitiveDesc(doublePrimitive());
+	}
+
 }

@@ -19,14 +19,13 @@ BEGIN_TEST(VoidTest, Code) {
 
 	*l << prolog();
 
-	*l << fnParam(intConst(3));
-	*l << fnCall(r, valVoid());
+	*l << fnParam(intDesc(e), intConst(3));
+	*l << fnCall(r);
 
-	*l << epilog();
-	*l << ret(valVoid());
+	*l << fnRet();
 
 	Binary *b = new (e) Binary(arena, l);
-	typedef Int (*Fn)();
+	typedef void (*Fn)();
 	Fn fn = (Fn)b->address();
 
 	tmpVar = 0;

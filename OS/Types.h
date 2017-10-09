@@ -24,6 +24,7 @@ namespace os {
 	typedef long long int Long;
 	typedef unsigned long long int Word;
 	typedef float Float;
+	typedef double Double;
 #elif defined(POSIX)
 	typedef char Char;
 	typedef unsigned char Byte;
@@ -32,6 +33,7 @@ namespace os {
 	typedef int64_t Long;
 	typedef uint64_t Word;
 	typedef float Float;
+	typedef double Double;
 #else
 #error "Unsupported system. Please define types for your compiler/system!"
 #endif

@@ -539,6 +539,74 @@ namespace code {
 			}
 		}
 
+		void fstpOut(Output *to, Instr *instr) {
+			if (instr->size() == Size::sDouble) {
+				modRm(to, opCode(0xDD), rmNone, 3, instr->dest());
+			} else {
+				modRm(to, opCode(0xD9), rmNone, 3, instr->dest());
+			}
+		}
+
+		void fistpOut(Output *to, Instr *instr) {
+			// We're actually using the FISTTP instruction, since that fixes proper truncation for us!
+			// It does, however, require SSE3. But that seems fair.
+			if (instr->size() == Size::sDouble) {
+				modRm(to, opCode(0xDD), rmNone, 1, instr->dest());
+			} else {
+				modRm(to, opCode(0xDB), rmNone, 1, instr->dest());
+			}
+		}
+
+		void fldOut(Output *to, Instr *instr) {
+			if (instr->size() == Size::sDouble) {
+				modRm(to, opCode(0xDD), rmNone, 0, instr->src());
+			} else {
+				modRm(to, opCode(0xD9), rmNone, 0, instr->src());
+			}
+		}
+
+		void fildOut(Output *to, Instr *instr) {
+			if (instr->size() == Size::sDouble) {
+				modRm(to, opCode(0xDF), rmNone, 5, instr->src());
+			} else {
+				modRm(to, opCode(0xDB), rmNone, 0, instr->src());
+			}
+		}
+
+		void faddpOut(Output *to, Instr *instr) {
+			to->putByte(0xDE);
+			to->putByte(0xC1);
+		}
+
+		void fsubpOut(Output *to, Instr *instr) {
+			to->putByte(0xDE);
+			to->putByte(0xE9);
+		}
+
+		void fmulpOut(Output *to, Instr *instr) {
+			to->putByte(0xDE);
+			to->putByte(0xC9);
+		}
+
+		void fdivpOut(Output *to, Instr *instr) {
+			to->putByte(0xDE);
+			to->putByte(0xF9);
+		}
+
+		void fcomppOut(Output *to, Instr *instr) {
+			// fcomip ST1 (sets EFLAGS)
+			to->putByte(0xDF);
+			to->putByte(0xF0 + 1);
+
+			// fstp ST0 (effectively only a pop)
+			to->putByte(0xDD);
+			to->putByte(0xD8 + 0);
+		}
+
+		void fwaitOut(Output *to, Instr *instr) {
+			to->putByte(0x9B);
+		}
+
 		void datOut(Output *to, Instr *instr) {
 			Operand src = instr->src();
 			switch (src.type()) {
@@ -593,6 +661,17 @@ namespace code {
 			OUTPUT(setCond),
 			OUTPUT(icast),
 			OUTPUT(ucast),
+
+			OUTPUT(fstp),
+			OUTPUT(fistp),
+			OUTPUT(fld),
+			OUTPUT(fild),
+			OUTPUT(faddp),
+			OUTPUT(fsubp),
+			OUTPUT(fmulp),
+			OUTPUT(fdivp),
+			OUTPUT(fcompp),
+			OUTPUT(fwait),
 
 			OUTPUT(dat),
 		};

@@ -273,6 +273,10 @@ namespace code {
 		return instrSrc(e, op::fnRetRef, src);
 	}
 
+	Instr *fnRet(EnginePtr e) {
+		return instr(e, op::fnRet);
+	}
+
 	Instr *bor(EnginePtr e, Operand dest, Operand src) {
 		return instrDestSrc(e, op::bor, dest, src);
 	}

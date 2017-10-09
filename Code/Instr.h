@@ -139,6 +139,7 @@ namespace code {
 	// return properly according to the current platform. Implies an 'epilog' instruction as well.
 	Instr *STORM_FN fnRet(EnginePtr e, Operand src);
 	Instr *STORM_FN fnRetRef(EnginePtr e, Operand src);
+	Instr *STORM_FN fnRet(EnginePtr e);
 
 	// Old-style function calls. TODO: Remove!
 	Instr *STORM_FN fnParam(EnginePtr e, Operand src);

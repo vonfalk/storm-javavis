@@ -102,6 +102,7 @@ namespace code {
 	PROXY3(fnCallRef, Operand, TypeDesc *, Operand);
 	PROXY1(fnRet, Operand);
 	PROXY1(fnRetRef, Operand);
+	PROXY0(fnRet);
 	PROXY2(bor, Operand, Operand);
 	PROXY2(band, Operand, Operand);
 	PROXY2(bxor, Operand, Operand);

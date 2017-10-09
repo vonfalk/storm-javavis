@@ -30,8 +30,8 @@ BEGIN_TEST(ShiftTest, Code) {
 	*l << shl(eax, byteConst(2));
 	*l << shr(eax, byteConst(2));
 
-	*l << epilog();
-	*l << ret(ValType(Size::sInt, false));
+	l->result = intDesc(e);
+	*l << fnRet(eax);
 
 	Binary *b = new (e) Binary(arena, l);
 	typedef Int (*Fn)(Int, Int);

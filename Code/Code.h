@@ -10,3 +10,11 @@ namespace code {
 	using namespace storm;
 }
 
+/**
+ * Configuration of the code generation:
+ */
+
+// For X86: generate code that requires SSE3 (introduced in the P4 in 2004).
+#define X86_REQUIRE_SSE3
+
+

@@ -51,6 +51,9 @@ namespace code {
 			TRANSFORM(udiv),
 			TRANSFORM(imod),
 			TRANSFORM(umod),
+			TRANSFORM(shr),
+			TRANSFORM(sar),
+			TRANSFORM(shl),
 		};
 
 		RemoveInvalid::RemoveInvalid() {}

@@ -97,6 +97,7 @@ namespace code {
 	Size Size::sWord = Size(8);
 
 	Size Size::sFloat = Size(4);
+	Size Size::sDouble = Size(8);
 
 	nat Size::current() const {
 		switch (sizeof(void *)) {
@@ -214,6 +215,7 @@ namespace code {
 	Offset Offset::sLong = Offset(8);
 	Offset Offset::sWord = Offset(8);
 	Offset Offset::sFloat = Offset(4);
+	Offset Offset::sDouble = Offset(8);
 
 	Int Offset::current() const {
 		switch (sizeof(void *)) {

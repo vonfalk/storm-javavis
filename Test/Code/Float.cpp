@@ -24,12 +24,13 @@ BEGIN_TEST(FloatTest, Code) {
 	*l << fistp(v1);
 	*l << mov(eax, v1);
 
-	*l << epilog();
-	*l << ret(ValType(Size::sInt, false));
+	l->result = intDesc(e);
+	*l << fnRet(eax);
 
 	Binary *b = new (e) Binary(arena, l);
 	typedef Int (*Fn)(Float, Float);
 	Fn fn = (Fn)b->address();
+	// Note: the result is 270.6 truncated to 270.
 	CHECK_EQ((*fn)(12.3f, 2.2f), 270);
 
 } END_TEST
@@ -44,8 +45,8 @@ BEGIN_TEST(FloatConstTest, Code) {
 
 	*l << mov(eax, floatConst(10.2f));
 
-	*l << epilog();
-	*l << ret(ValType(Size::sFloat, true));
+	l->result = floatDesc(e);
+	*l << fnRet(eax);
 
 	Binary *b = new (e) Binary(arena, l);
 	typedef Float (*Fn)();

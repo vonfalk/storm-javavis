@@ -11,7 +11,7 @@ Int CODECALL callIntFn(Int v) {
 	return v + 2;
 }
 
-BEGIN_TEST_(CallPrimitive, Code) {
+BEGIN_TEST(CallPrimitive, Code) {
 	Engine &e = gEngine();
 	Arena *arena = code::arena(e);
 
@@ -33,7 +33,7 @@ BEGIN_TEST_(CallPrimitive, Code) {
 	CHECK_EQ((*fn)(), 102);
 } END_TEST
 
-BEGIN_TEST_(CallPrimitiveRef, Code) {
+BEGIN_TEST(CallPrimitiveRef, Code) {
 	Engine &e = gEngine();
 	Arena *arena = code::arena(e);
 
@@ -62,7 +62,7 @@ Int CODECALL callIntManyFn(Int a, Int b, Int c, Int d, Int e, Int f, Int g, Int 
 	return a*10000000 + b*1000000 + c*100000 + d*10000 + e*1000 + f*100 + g*10 + h;
 }
 
-BEGIN_TEST_(CallPrimitiveMany, Code) {
+BEGIN_TEST(CallPrimitiveMany, Code) {
 	// Attempts to pass enough parameters to put at least one on the stack. Put some parameters in
 	// register so that the backend has to reorder the register assignment to some degree.
 	Engine &e = gEngine();
@@ -98,7 +98,7 @@ BEGIN_TEST_(CallPrimitiveMany, Code) {
 #ifdef X64
 
 // Only usable on X86-64, as we rely on platform specific registers.
-BEGIN_TEST_(CallPrimitiveMany64, Code) {
+BEGIN_TEST(CallPrimitiveMany64, Code) {
 	// Call a function with parameters forming a cycle that the backend needs to break in order to
 	// properly assign the registers.
 	Engine &e = gEngine();
@@ -155,7 +155,7 @@ Int CODECALL callSmallInt(SmallIntParam p) {
 	return Int(p.a + p.b);
 }
 
-BEGIN_TEST_(CallSmallInt, Code) {
+BEGIN_TEST(CallSmallInt, Code) {
 	Engine &e = gEngine();
 	Arena *arena = code::arena(e);
 
@@ -183,7 +183,7 @@ BEGIN_TEST_(CallSmallInt, Code) {
 	CHECK_EQ((*fn)(), 50);
 } END_TEST
 
-BEGIN_TEST_(CallSmallIntRef, Code) {
+BEGIN_TEST(CallSmallIntRef, Code) {
 	Engine &e = gEngine();
 	Arena *arena = code::arena(e);
 
@@ -230,7 +230,7 @@ Int CODECALL callMixedInt(LargeIntParam a, SmallIntParam b) {
 	return Int(a.a + a.b - a.c + b.a - b.b);
 }
 
-BEGIN_TEST_(CallMixedInt, Code) {
+BEGIN_TEST(CallMixedInt, Code) {
 	Engine &e = gEngine();
 	Arena *arena = code::arena(e);
 
@@ -265,7 +265,7 @@ BEGIN_TEST_(CallMixedInt, Code) {
 	CHECK_EQ((*fn)(), 30);
 } END_TEST
 
-BEGIN_TEST_(CallMixedIntRef, Code) {
+BEGIN_TEST(CallMixedIntRef, Code) {
 	Engine &e = gEngine();
 	Arena *arena = code::arena(e);
 
@@ -321,7 +321,7 @@ Float CODECALL callMixed(MixedParam a) {
 	return Float(a.a) - a.b / a.c;
 }
 
-BEGIN_TEST_(CallMixed, Code) {
+BEGIN_TEST(CallMixed, Code) {
 	Engine &e = gEngine();
 	Arena *arena = code::arena(e);
 
@@ -350,7 +350,7 @@ BEGIN_TEST_(CallMixed, Code) {
 	CHECK_EQ((*fn)(), 96.0f);
 } END_TEST
 
-BEGIN_TEST_(CallMixedRef, Code) {
+BEGIN_TEST(CallMixedRef, Code) {
 	Engine &e = gEngine();
 	Arena *arena = code::arena(e);
 
@@ -384,7 +384,7 @@ Int CODECALL callComplex(storm::debug::DbgVal dbg, Int v) {
 	return dbg.v + v;
 }
 
-BEGIN_TEST_(CallComplex, Code) {
+BEGIN_TEST(CallComplex, Code) {
 	Engine &e = gEngine();
 	Arena *arena = code::arena(e);
 	Type *dbgVal = storm::debug::DbgVal::stormType(e);
@@ -420,7 +420,7 @@ BEGIN_TEST_(CallComplex, Code) {
 } END_TEST
 
 
-BEGIN_TEST_(CallRefComplex, Code) {
+BEGIN_TEST(CallRefComplex, Code) {
 	Engine &e = gEngine();
 	Arena *arena = code::arena(e);
 	Type *dbgVal = storm::debug::DbgVal::stormType(e);
