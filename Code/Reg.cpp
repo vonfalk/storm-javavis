@@ -43,7 +43,7 @@ namespace code {
 				return n;
 			if (const wchar *n = x64::nameX64(r))
 				return n;
-			assert(false);
+			assert(false, L"Unknown register: " + ::toS(r));
 			return S("<unknown>");
 		}
 	}

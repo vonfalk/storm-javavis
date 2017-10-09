@@ -192,9 +192,19 @@ namespace code {
 		static void setRegisterRef(RegEnv &env, Reg target, Param param, const Operand &src) {
 			assert(src.size() == Size::sPtr);
 			Size s(param.size());
+			Offset o(param.offset());
 
-			*env.dest << mov(asSize(target, Size::sPtr), src);
-			*env.dest << mov(asSize(target, s), xRel(s, target, Offset()));
+			// If 'target' is a floating-point register, we can't use that as a temporary.
+			if (fpRegister(target)) {
+				// However, since they are always assigned last, we know we can use ptr10, as that
+				// will be clobbered by the function call anyway.
+				*env.dest << mov(ptr10, src);
+				*env.dest << mov(asSize(target, s), xRel(s, ptr10, o));
+			} else {
+				// Use the register we're supposed to fill as a temporary.
+				*env.dest << mov(asSize(target, Size::sPtr), src);
+				*env.dest << mov(asSize(target, s), xRel(s, target, o));
+			}
 		}
 
 		// Try to assign the proper value to a single register (other assignments might be performed

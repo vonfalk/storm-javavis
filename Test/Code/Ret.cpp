@@ -157,6 +157,38 @@ BEGIN_TEST_(RetCallComplex, Code) {
 
 } END_TEST
 
+BEGIN_TEST_(RetCallRefComplex, Code) {
+	using storm::debug::DbgVal;
+	Engine &e = gEngine();
+	Arena *arena = code::arena(e);
+	Type *dbgVal = DbgVal::stormType(e);
+	TypeDesc *dbgDesc = new (e) ComplexDesc(dbgVal->size(), dbgVal->copyCtor()->ref(), dbgVal->destructor()->ref());
+	Ref toCall = arena->external(S("create"), address(&createDbgVal));
+
+	Listing *l = new (e) Listing();
+	l->result = intDesc(e);
+	Var v = l->createVar(l->root(), dbgVal->size(), dbgVal->destructor()->ref(), freeDef | freePtr);
+
+	*l << prolog();
+
+	*l << lea(ptrA, v);
+	*l << fnCallRef(toCall, dbgDesc, ptrA);
+
+	// This is abusing the interface a tiny bit...
+	*l << mov(eax, intRel(v, Offset()));
+
+	*l << fnRet(eax);
+
+	Binary *b = new (e) Binary(arena, l);
+	typedef Int (*Fn)();
+	Fn fn = (Fn)b->address();
+
+	DbgVal::clear();
+	CHECK_EQ((*fn)(), 121);
+	CHECK(DbgVal::clear());
+
+} END_TEST
+
 struct SimpleRet {
 	size_t a;
 	size_t b;
@@ -223,6 +255,31 @@ BEGIN_TEST_(RetCallSimple, Code) {
 	*l << prolog();
 
 	*l << fnCall(toCall, retDesc(e), v);
+	*l << mov(ptrA, ptrRel(v, Offset()));
+	*l << add(ptrA, ptrRel(v, Offset::sPtr));
+
+	*l << fnRet(ptrA);
+
+	Binary *b = new (e) Binary(arena, l);
+	typedef size_t (*Fn)();
+	Fn fn = (Fn)b->address();
+
+	CHECK_EQ((*fn)(), 120);
+} END_TEST
+
+BEGIN_TEST_(RetCallRefSimple, Code) {
+	Engine &e = gEngine();
+	Arena *arena = code::arena(e);
+	Ref toCall = arena->external(S("create"), address(&createSimple));
+
+	Listing *l = new (e) Listing();
+	l->result = ptrDesc(e);
+	Var v = l->createVar(l->root(), Size::sPtr * 2);
+
+	*l << prolog();
+
+	*l << lea(ptrA, v);
+	*l << fnCallRef(toCall, retDesc(e), ptrA);
 	*l << mov(ptrA, ptrRel(v, Offset()));
 	*l << add(ptrA, ptrRel(v, Offset::sPtr));
 
@@ -304,6 +361,32 @@ BEGIN_TEST_(RetCallSimpleFloat, Code) {
 	*l << prolog();
 
 	*l << fnCall(toCall, retFloatDesc(e), v);
+	*l << mov(eax, intRel(v, Offset()));
+	*l << add(eax, intRel(v, Offset::sInt));
+
+	*l << fnRet(eax);
+
+	Binary *b = new (e) Binary(arena, l);
+	typedef Int (*Fn)();
+	Fn fn = (Fn)b->address();
+
+	(*fn)();
+	CHECK_EQ((*fn)(), 30);
+} END_TEST
+
+BEGIN_TEST_(RetCallRefSimpleFloat, Code) {
+	Engine &e = gEngine();
+	Arena *arena = code::arena(e);
+	Ref toCall = arena->external(S("create"), address(&createSimpleFloat));
+
+	Listing *l = new (e) Listing();
+	l->result = intDesc(e);
+	Var v = l->createVar(l->root(), Size::sInt * 3);
+
+	*l << prolog();
+
+	*l << lea(ptrA, v);
+	*l << fnCallRef(toCall, retFloatDesc(e), ptrA);
 	*l << mov(eax, intRel(v, Offset()));
 	*l << add(eax, intRel(v, Offset::sInt));
 

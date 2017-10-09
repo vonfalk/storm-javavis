@@ -63,6 +63,15 @@ namespace code {
 		const Reg xmm6 = Reg(0x82E);
 		const Reg xmm7 = Reg(0x82F);
 
+		static const Reg pmm0 = Reg(0x028);
+		static const Reg pmm1 = Reg(0x029);
+		static const Reg pmm2 = Reg(0x02A);
+		static const Reg pmm3 = Reg(0x02B);
+		static const Reg pmm4 = Reg(0x02C);
+		static const Reg pmm5 = Reg(0x02D);
+		static const Reg pmm6 = Reg(0x02E);
+		static const Reg pmm7 = Reg(0x02F);
+
 
 #define CASE_REG(name) case name: return S(#name)
 
@@ -121,6 +130,16 @@ namespace code {
 				CASE_REG(xmm5);
 				CASE_REG(xmm6);
 				CASE_REG(xmm7);
+
+				// Only for completeness.
+				CASE_REG(pmm0);
+				CASE_REG(pmm1);
+				CASE_REG(pmm2);
+				CASE_REG(pmm3);
+				CASE_REG(pmm4);
+				CASE_REG(pmm5);
+				CASE_REG(pmm6);
+				CASE_REG(pmm7);
 			default:
 				return null;
 			}
@@ -364,6 +383,23 @@ namespace code {
 			to->putByte(op.op3);
 		}
 
+		void put(Output *to, byte rex, OpCode op) {
+			if (op.op1) {
+				// Apparently, 'op1' is considered a prefix, which has to be located *before* the REX prefix....
+				to->putByte(op.op1);
+				to->putByte(rex);
+				to->putByte(op.op2);
+				to->putByte(op.op3);
+			} else if (op.op2) {
+				to->putByte(rex);
+				to->putByte(op.op2);
+				to->putByte(op.op3);
+			} else {
+				to->putByte(rex);
+				to->putByte(op.op3);
+			}
+		}
+
 		// Construct and emit a SIB value. NOTE: 'scale' can not be an extended register since we do
 		// not emit the REX byte ourselves.
 		static void sib(Output *to, byte base, byte scaled = 0xFF, byte scale = 1) {
@@ -394,11 +430,12 @@ namespace code {
 				emitRex |= reg >= 0x4;
 			}
 
-			if (emitRex)
-				to->putByte(rex);
-
-			// Emit the op-code.
-			put(to, op);
+			// Emit the op-code (optionally with a rex prefix where appropriate).
+			if (emitRex) {
+				put(to, rex, op);
+			} else {
+				put(to, op);
+			}
 
 			// Emit the modRm byte.
 			byte modrm = 0;

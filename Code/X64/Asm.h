@@ -138,6 +138,9 @@ namespace code {
 		// Output an opcode.
 		void put(Output *to, OpCode op);
 
+		// Output an opcode with a REX prefix.
+		void put(Output *to, byte rex, OpCode op);
+
 		// Flags to the modRm function, telling it how to behave.
 		enum RmFlags {
 			// No special flags.

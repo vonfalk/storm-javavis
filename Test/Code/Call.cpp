@@ -33,6 +33,31 @@ BEGIN_TEST_(CallPrimitive, Code) {
 	CHECK_EQ((*fn)(), 102);
 } END_TEST
 
+BEGIN_TEST_(CallPrimitiveRef, Code) {
+	Engine &e = gEngine();
+	Arena *arena = code::arena(e);
+
+	Ref intFn = arena->external(S("intFn"), address(&callIntFn));
+
+	Listing *l = new (e) Listing();
+	l->result = intDesc(e);
+	Var v = l->createIntVar(l->root());
+	*l << prolog();
+
+	*l << mov(v, intConst(100));
+	*l << lea(ptrA, v);
+	*l << fnParamRef(intDesc(e), ptrA);
+	*l << fnCall(intFn, intDesc(e), ecx);
+
+	*l << fnRet(ecx);
+
+	Binary *b = new (e) Binary(arena, l);
+	typedef Int (*Fn)();
+	Fn fn = (Fn)b->address();
+
+	CHECK_EQ((*fn)(), 102);
+} END_TEST
+
 Int CODECALL callIntManyFn(Int a, Int b, Int c, Int d, Int e, Int f, Int g, Int h) {
 	return a*10000000 + b*1000000 + c*100000 + d*10000 + e*1000 + f*100 + g*10 + h;
 }
@@ -158,6 +183,35 @@ BEGIN_TEST_(CallSmallInt, Code) {
 	CHECK_EQ((*fn)(), 50);
 } END_TEST
 
+BEGIN_TEST_(CallSmallIntRef, Code) {
+	Engine &e = gEngine();
+	Arena *arena = code::arena(e);
+
+	Ref intFn = arena->external(S("intFn"), address(&callSmallInt));
+	SimpleDesc *desc = smallIntDesc(e);
+
+	Listing *l = new (e) Listing();
+	l->result = intDesc(e);
+	Var v = l->createVar(l->root(), desc->size());
+
+	*l << prolog();
+
+	*l << mov(ptrRel(v, Offset()), ptrConst(10));
+	*l << mov(ptrRel(v, Offset::sPtr), ptrConst(40));
+
+	*l << lea(ptrA, v);
+	*l << fnParamRef(desc, ptrA);
+	*l << fnCall(intFn, intDesc(e), eax);
+
+	*l << fnRet(eax);
+
+	Binary *b = new (e) Binary(arena, l);
+	typedef Int (*Fn)();
+	Fn fn = (Fn)b->address();
+
+	CHECK_EQ((*fn)(), 50);
+} END_TEST
+
 struct LargeIntParam {
 	size_t a;
 	size_t b;
@@ -200,6 +254,44 @@ BEGIN_TEST_(CallMixedInt, Code) {
 
 	*l << fnParam(large, a);
 	*l << fnParam(small, b);
+	*l << fnCall(intFn, intDesc(e), eax);
+
+	*l << fnRet(eax);
+
+	Binary *bin = new (e) Binary(arena, l);
+	typedef Int (*Fn)();
+	Fn fn = (Fn)bin->address();
+
+	CHECK_EQ((*fn)(), 30);
+} END_TEST
+
+BEGIN_TEST_(CallMixedIntRef, Code) {
+	Engine &e = gEngine();
+	Arena *arena = code::arena(e);
+
+	Ref intFn = arena->external(S("intFn"), address(&callMixedInt));
+	SimpleDesc *small = smallIntDesc(e);
+	SimpleDesc *large = largeIntDesc(e);
+
+	Listing *l = new (e) Listing();
+	l->result = intDesc(e);
+	Var a = l->createVar(l->root(), large->size());
+	Var b = l->createVar(l->root(), small->size());
+
+	*l << prolog();
+
+	*l << mov(ptrRel(a, Offset()), ptrConst(1));
+	*l << mov(ptrRel(a, Offset::sPtr), ptrConst(2));
+	*l << mov(ptrRel(a, Offset::sPtr * 2), ptrConst(3));
+
+	*l << mov(ptrRel(b, Offset()), ptrConst(40));
+	*l << mov(ptrRel(b, Offset::sPtr), ptrConst(10));
+
+	*l << lea(ptrA, a);
+	*l << lea(ptrB, b);
+
+	*l << fnParamRef(large, ptrA);
+	*l << fnParamRef(small, ptrB);
 	*l << fnCall(intFn, intDesc(e), eax);
 
 	*l << fnRet(eax);
@@ -258,6 +350,36 @@ BEGIN_TEST_(CallMixed, Code) {
 	CHECK_EQ((*fn)(), 96.0f);
 } END_TEST
 
+BEGIN_TEST_(CallMixedRef, Code) {
+	Engine &e = gEngine();
+	Arena *arena = code::arena(e);
+
+	Ref mixedFn = arena->external(S("mixedFn"), address(&callMixed));
+	SimpleDesc *mixed = mixedDesc(e);
+
+	Listing *l = new (e) Listing();
+	l->result = floatDesc(e);
+	Var a = l->createVar(l->root(), mixed->size());
+
+	*l << prolog();
+
+	*l << mov(ptrRel(a, Offset()), ptrConst(100));
+	*l << mov(floatRel(a, Offset::sPtr), floatConst(40.0f));
+	*l << mov(floatRel(a, Offset::sPtr + Offset::sFloat), floatConst(10.0f));
+
+	*l << lea(ptrA, a);
+	*l << fnParamRef(mixed, ptrA);
+	*l << fnCall(mixedFn, floatDesc(e), eax);
+
+	*l << fnRet(eax);
+
+	Binary *bin = new (e) Binary(arena, l);
+	typedef Float (*Fn)();
+	Fn fn = (Fn)bin->address();
+
+	CHECK_EQ((*fn)(), 96.0f);
+} END_TEST
+
 Int CODECALL callComplex(storm::debug::DbgVal dbg, Int v) {
 	return dbg.v + v;
 }
@@ -298,151 +420,37 @@ BEGIN_TEST_(CallComplex, Code) {
 } END_TEST
 
 
-static Int copied = 0;
-
-void CODECALL callCopyInt(Int *dest, Int *src) {
-	*dest = *src;
-	copied = *src;
-}
-
-BEGIN_TEST(CallCopyTest, Code) {
+BEGIN_TEST_(CallRefComplex, Code) {
 	Engine &e = gEngine();
 	Arena *arena = code::arena(e);
+	Type *dbgVal = storm::debug::DbgVal::stormType(e);
 
-	Ref copy = arena->external(S("copyInt"), address(&callCopyInt));
-	Ref intFn = arena->external(S("intFn"), address(&callIntFn));
+	Ref toCall = arena->external(S("callComplex"), address(&callComplex));
+	ComplexDesc *desc = new (e) ComplexDesc(dbgVal->size(), dbgVal->copyCtor()->ref(), dbgVal->destructor()->ref());
 
 	Listing *l = new (e) Listing();
-	Var v = l->createIntVar(l->root());
+	l->result = intDesc(e);
+	Var a = l->createVar(l->root(), desc);
 
 	*l << prolog();
 
-	*l << mov(v, intConst(20));
-	*l << fnParam(v, copy);
-	*l << fnCall(intFn, valInt());
+	*l << lea(ptrA, a);
+	*l << fnParam(ptrDesc(e), ptrA);
+	*l << fnCall(dbgVal->defaultCtor()->ref());
 
-	*l << epilog();
-	*l << ret(valInt());
+	*l << mov(ecx, intConst(8));
+	*l << lea(ptrA, a);
+	*l << fnParamRef(desc, ptrA);
+	*l << fnParam(intDesc(e), ecx);
+	*l << fnCall(toCall, intDesc(e), eax);
+
+	*l << fnRet(eax);
 
 	Binary *b = new (e) Binary(arena, l);
 	typedef Int (*Fn)();
 	Fn fn = (Fn)b->address();
 
-	CHECK_EQ((*fn)(), 22);
-	CHECK_EQ(copied, 20);
-
-} END_TEST
-
-
-BEGIN_TEST(CallRefTest, Code) {
-	Engine &e = gEngine();
-	Arena *arena = code::arena(e);
-
-	Ref copy = arena->external(S("copyInt"), address(&callCopyInt));
-	Ref intFn = arena->external(S("intFn"), address(&callIntFn));
-
-	Listing *l = new (e) Listing();
-	Var v = l->createIntVar(l->root());
-
-	*l << prolog();
-
-	*l << mov(v, intConst(20));
-	*l << lea(ptrA, v);
-	*l << fnParamRef(ptrA, Size::sInt, copy);
-	*l << fnCall(intFn, valInt());
-
-	*l << epilog();
-	*l << ret(valInt());
-
-	Binary *b = new (e) Binary(arena, l);
-	typedef Int (*Fn)();
-	Fn fn = (Fn)b->address();
-
-	CHECK_EQ((*fn)(), 22);
-	CHECK_EQ(copied, 20);
-
-} END_TEST
-
-BEGIN_TEST(CallRefPlainTest, Code) {
-	Engine &e = gEngine();
-	Arena *arena = code::arena(e);
-
-	Ref intFn = arena->external(S("intFn"), address(&callIntFn));
-
-	Listing *l = new (e) Listing();
-	Var v = l->createIntVar(l->root());
-
-	*l << prolog();
-
-	*l << mov(v, intConst(20));
-	*l << lea(ptrA, v);
-	*l << fnParamRef(ptrA, Size::sInt);
-	*l << fnCall(intFn, valInt());
-
-	*l << epilog();
-	*l << ret(valInt());
-
-	Binary *b = new (e) Binary(arena, l);
-	typedef Int (*Fn)();
-	Fn fn = (Fn)b->address();
-
-	CHECK_EQ((*fn)(), 22);
-	CHECK_EQ(copied, 20);
-
-} END_TEST
-
-struct Large {
-	size_t a, b;
-};
-
-void CODECALL largeCopy(Large *to, Large *src) {
-	*to = *src;
-}
-
-size_t CODECALL largeFn(size_t a, Large b, size_t c) {
-	return a + b.a + b.b + c;
-}
-
-BEGIN_TEST(CallRefMultiple, Code) {
-	Engine &e = gEngine();
-	Arena *arena = code::arena(e);
-
-	Ref largeFn = arena->external(S("largeFn"), address(&::largeFn));
-	Ref largeCopy = arena->external(S("largeCopy"), address(&::largeCopy));
-
-	Listing *l = new (e) Listing();
-
-	Var a = l->createVar(l->root(), Size::sPtr);
-	Var b = l->createVar(l->root(), Size::sPtr*2);
-	Var c = l->createVar(l->root(), Size::sPtr);
-
-	Var pA = l->createVar(l->root(), Size::sPtr);
-	Var pB = l->createVar(l->root(), Size::sPtr);
-	Var pC = l->createVar(l->root(), Size::sPtr);
-
-
-	*l << prolog();
-
-	*l << mov(a, ptrConst(10));
-	*l << mov(ptrRel(b, Offset()), ptrConst(1));
-	*l << mov(ptrRel(b, Offset::sPtr), ptrConst(2));
-	*l << mov(c, ptrConst(20));
-
-	*l << lea(pA, a);
-	*l << lea(pB, b);
-	*l << lea(pC, c);
-
-	*l << fnParamRef(pA, Size::sPtr);
-	*l << fnParamRef(pB, Size::sPtr*2, largeCopy);
-	*l << fnParamRef(pC, Size::sPtr);
-	*l << fnCall(largeFn, valPtr());
-
-	*l << epilog();
-	*l << ret(valPtr());
-
-	Binary *bin = new (e) Binary(arena, l);
-	typedef size_t (*Fn)();
-	Fn fn = (Fn)bin->address();
-
-	CHECK_EQ((*fn)(), 33);
+	storm::debug::DbgVal::clear();
+	CHECK_EQ((*fn)(), 18);
+	CHECK(storm::debug::DbgVal::clear());
 } END_TEST
