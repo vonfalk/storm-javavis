@@ -111,12 +111,15 @@ namespace code {
 
 		// Description of an op-code.
 		struct OpCode {
-			// The actual op-code. Maximum 3 bytes. If only one byte is required, the first bytes are
-			// 0. (the byte 0x00 is the ADD instruction which is 1 byte long. Thus 0x00 0x00 0x00
+			// Any prefix for this op-code? Prefixes are always emitted before any REX
+			// prefix. Prefixes are always non-zero, so 0x00 means no prefix.
+			byte prefix;
+
+			// The actual op-code. Maximum 2 bytes. If only one byte is required, the first bytes
+			// are 0. (the byte 0x00 is the ADD instruction which is 1 byte long. Thus 0x00 0x00
 			// uniquely identifies ADD).
 			byte op1;
 			byte op2;
-			byte op3;
 		};
 
 		// Create OpCode objects.
@@ -130,8 +133,13 @@ namespace code {
 			return r;
 		}
 
-		inline OpCode opCode(byte op1, byte op2, byte op3) {
-			OpCode r = { op1, op2, op3 };
+		inline OpCode prefixOpCode(byte prefix, byte op) {
+			OpCode r = { prefix, 0x00, op };
+			return r;
+		}
+
+		inline OpCode prefixOpCode(byte prefix, byte op1, byte op2) {
+			OpCode r = { prefix, op1, op2 };
 			return r;
 		}
 

@@ -64,9 +64,9 @@ namespace code {
 
 		static OpCode fpOp(const Operand &size, byte op) {
 			if (size.size() == Size::sWord)
-				return opCode(0xF2, 0x0F, op);
+				return prefixOpCode(0xF2, 0x0F, op);
 			else
-				return opCode(0xF3, 0x0F, op);
+				return prefixOpCode(0xF3, 0x0F, op);
 		}
 
 		static bool stackPos(Operand &op) {

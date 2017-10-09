@@ -374,30 +374,20 @@ namespace code {
 		}
 
 		void put(Output *to, OpCode op) {
-			if (op.op1) {
+			if (op.prefix)
+				to->putByte(op.prefix);
+			if (op.op1)
 				to->putByte(op.op1);
-				to->putByte(op.op2);
-			} else if (op.op2) {
-				to->putByte(op.op2);
-			}
-			to->putByte(op.op3);
+			to->putByte(op.op2);
 		}
 
 		void put(Output *to, byte rex, OpCode op) {
-			if (op.op1) {
-				// Apparently, 'op1' is considered a prefix, which has to be located *before* the REX prefix....
+			if (op.prefix)
+				to->putByte(op.prefix);
+			to->putByte(rex);
+			if (op.op1)
 				to->putByte(op.op1);
-				to->putByte(rex);
-				to->putByte(op.op2);
-				to->putByte(op.op3);
-			} else if (op.op2) {
-				to->putByte(rex);
-				to->putByte(op.op2);
-				to->putByte(op.op3);
-			} else {
-				to->putByte(rex);
-				to->putByte(op.op3);
-			}
+			to->putByte(op.op2);
 		}
 
 		// Construct and emit a SIB value. NOTE: 'scale' can not be an extended register since we do
