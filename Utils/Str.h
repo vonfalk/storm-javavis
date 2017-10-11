@@ -116,6 +116,9 @@ String toS(double i);
 String toS(const wchar_t *w);
 const String &toS(const String &s);
 
+// Generic hex-dump.
+String toHex(const void *data, size_t count);
+
 template <class A, class B>
 inline std::wostream &operator <<(std::wostream &to, const std::pair<A, B*> &pair) {
 	return to << pair.first << L" -> " << *pair.second;

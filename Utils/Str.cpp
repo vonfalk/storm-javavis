@@ -254,6 +254,28 @@ String toHex(nat64 x, bool prefix) {
 	return oss.str();
 }
 
+String toHex(const void *data, size_t size) {
+	std::wostringstream to;
+	to << std::setfill(L'0');
+	to << std::hex;
+	const nat width = 16;
+	const byte *d = (const byte *)data;
+	for (size_t i = 0; i <= size; i++) {
+		if (i % width == 0) {
+			if (i > 0)
+				to << L"\n";
+			to << std::setw(4) << i << L" -";
+		}
+
+		to << L" ";
+
+		if (i < size)
+			to << std::setw(2) << int(d[i]);
+	}
+
+	return to.str();
+}
+
 
 template <class T>
 inline String genericToS(T t) {
