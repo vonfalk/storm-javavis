@@ -419,7 +419,6 @@ BEGIN_TEST(CallComplex, Code) {
 	CHECK(storm::debug::DbgVal::clear());
 } END_TEST
 
-
 BEGIN_TEST(CallRefComplex, Code) {
 	Engine &e = gEngine();
 	Arena *arena = code::arena(e);
