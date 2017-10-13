@@ -1,8 +1,10 @@
 #pragma once
+#include "../Reg.h"
 
 #ifdef POSIX
 namespace code {
 	namespace x64 {
+		STORM_PKG(core.asm.x64);
 
 		/**
 		 * Low-level exception handling interface for Linux. Assumes we're using DWARF
@@ -74,8 +76,56 @@ namespace code {
 			// Data section of the FDE.
 			Byte data[FDE_DATA];
 
+			// Access the first few members in the FDE. We always use absolute pointers, so we know their layout!
+
+			// Start address of the code.
+			const void *& codeStart() {
+				return *(const void **)&data[0];
+			}
+			// Total number of bytes of code.
+			size_t &codeSize() {
+				return *(size_t *)&data[8];
+			}
+			// Size of augmenting data.
+			Byte &augSize() {
+				return data[16];
+			}
+
+			// First free offset in 'data'.
+			Nat firstFree() const {
+				return 17;
+			}
+
 			// Set the 'id' field properly.
 			void setCie(CIE *to);
+		};
+
+		class ArrayStream;
+
+		/**
+		 * Generate information about functions, later used by the exception system on some
+		 * platforms.
+		 */
+		class FnInfo {
+			STORM_VALUE;
+		public:
+			FnInfo(Engine &e);
+
+			// Note that the prolog has been executed. The prolog is expected to use ptrFrame as usual.
+			void prolog(Nat pos);
+
+			// Note that a register has been stored to the stack (for preservation).
+			void preserve(Nat pos, Reg reg, Offset offset);
+
+		private:
+			// The data emitted.
+			GcArray<Byte> *data;
+
+			// Last position which we encoded something at.
+			Nat lastPos;
+
+			// Go to 'pos'.
+			void advance(ArrayStream &to, Nat pos);
 		};
 
 		/**
@@ -97,6 +147,18 @@ namespace code {
 
 
 #ifdef GCC
+
+		/**
+		 * GCC specific things:
+		 *
+		 * Idea: Due to the way GCC stores these objects, we should make sure that all Chunks we
+		 * store contain a FDE with an address of zero (or at least close to zero), so that our
+		 * chunks are last in the internal list and therefore searched last. This is vital, since
+		 * our chunks may span a quite large range of addresses that possibly overlap with other
+		 * code in the system. By being last in the list, we do not accidentally override something
+		 * important, and we can keep our 'pc_begin' constant so that we do not break the internal
+		 * representation when we move objects around.
+		 */
 
 		/**
 		 * Struct holding sorted records.
