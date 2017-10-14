@@ -161,14 +161,20 @@ namespace code {
 
 		FDE *DwarfChunk::search(const void *pc) {
 			Entry **iter = std::lower_bound(sorted, sorted + CHUNK_COUNT, pc, Compare());
-			if (iter == sorted + CHUNK_COUNT)
-				return null;
+			// We need to examine both 'iter' and 'iter - 1'.
+			if (iter != sorted + CHUNK_COUNT) {
+				Entry *found = *iter;
+				if (found && found->contains(pc))
+					return &found->data;
+			}
 
-			Entry *found = *iter;
-			if (found->contains(pc))
-				return &found->data;
-			else
-				return null;
+			if (iter != sorted) {
+				Entry *found = *(iter - 1);
+				if (found && found->contains(pc))
+					return &found->data;
+			}
+
+			return null;
 		}
 
 		FDE *DwarfChunk::update(const void *pc) {

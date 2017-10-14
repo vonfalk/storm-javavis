@@ -64,8 +64,25 @@ namespace code {
 		_Unwind_Reason_Code stormPersonality(int version, _Unwind_Action actions, _Unwind_Exception_Class type,
 											struct _Unwind_Exception *data, struct _Unwind_Context *context) {
 
-			PLN(L"In the personality function!");
-			std::terminate();
+			// We assume 'version == 1'.
+			// 'type' is a 8 byte identifier. Equal to 0x47 4e 55 43 43 2b 2b 00 or 'GNUCC++\0' for exceptions from G++.
+			// 'data' is compiler specific information about the exception. See 'unwind.h' for details.
+			// 'context' is the unwinder state.
+
+			if (actions & _UA_SEARCH_PHASE) {
+				// Phase 1: Search for handlers.
+				// TODO: Return _URC_HANDLER_FOUND if we know how to handle it!
+				return _URC_CONTINUE_UNWIND;
+			} else if (actions & _UA_CLEANUP_PHASE) {
+				// Phase 2: Cleanup!
+				// TODO: if (actions & _UA_HANDLER_FRAME), we should return _URC_INSTALL_CONTEXT.
+				// TODO: if we have something to clean up, we should do that now.
+				return _URC_CONTINUE_UNWIND;
+			} else {
+				// Just pretend we did something useful...
+				printf("WARNING: Personality function called with an unknown action!\n");
+				return _URC_CONTINUE_UNWIND;
+			}
 		}
 
 	}
