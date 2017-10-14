@@ -69,6 +69,8 @@ Size Class::size() const {
 		s += t;
 	}
 
+	// We should align the size of the entire type properly, just like C++ does.
+	s += s.align();
 	return s;
 }
 
