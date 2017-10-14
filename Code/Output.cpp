@@ -136,6 +136,12 @@ namespace code {
 		return 0;
 	}
 
+	void Output::markProlog() {}
+
+	void Output::markEpilog() {}
+
+	void Output::markSaved(Reg reg, Offset offset) {}
+
 	/**
 	 * Label output.
 	 */

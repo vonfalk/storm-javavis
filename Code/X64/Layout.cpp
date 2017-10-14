@@ -116,6 +116,9 @@ namespace code {
 			*dest << push(ptrFrame);
 			*dest << mov(ptrFrame, ptrStack);
 
+			// Notify that we've generated the prolog.
+			*dest << prolog();
+
 			// Allocate stack space.
 			if (layout->last() != Offset())
 				*dest << sub(ptrStack, ptrConst(layout->last()));
@@ -138,6 +141,7 @@ namespace code {
 			// Save registers we need to preserve.
 			for (RegSet::Iter i = toPreserve->begin(); i != toPreserve->end(); ++i) {
 				*dest << mov(ptrRel(ptrFrame, offset), asSize(i.v(), Size::sPtr));
+				*dest << preserve(ptrRel(ptrFrame, offset), asSize(i.v(), Size::sPtr));
 				offset -= Offset::sPtr;
 			}
 
@@ -167,6 +171,9 @@ namespace code {
 
 			*dest << mov(ptrStack, ptrFrame);
 			*dest << pop(ptrFrame);
+
+			// Notify that we've generated the epilog.
+			*dest << epilog();
 		}
 
 		void Layout::beginBlockTfm(Listing *dest, Listing *src, Nat line) {

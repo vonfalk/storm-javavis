@@ -6,6 +6,18 @@
 namespace code {
 	namespace x64 {
 
+		void prologOut(Output *to, Instr *instr) {
+			to->markProlog();
+		}
+
+		void epilogOut(Output *to, Instr *instr) {
+			to->markEpilog();
+		}
+
+		void preserveOut(Output *to, Instr *instr) {
+			to->markSaved(instr->src().reg(), instr->dest().offset());
+		}
+
 		void pushOut(Output *to, Instr *instr) {
 			const Operand &src = instr->src();
 			switch (src.type()) {
@@ -662,6 +674,12 @@ namespace code {
 			OUTPUT(icast),
 			OUTPUT(ucast),
 
+			// Debug information.
+			OUTPUT(prolog),
+			OUTPUT(epilog),
+			OUTPUT(preserve),
+
+			// Floating point.
 			OUTPUT(fstp),
 			OUTPUT(fistp),
 			OUTPUT(fld),

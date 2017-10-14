@@ -68,6 +68,9 @@ namespace code {
 			prolog,
 			epilog,
 
+			// Note that a register has been preserved somewhere. Used to generate debugging information.
+			preserve,
+
 			// Blocks.
 			beginBlock,
 			endBlock,

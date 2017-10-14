@@ -6,7 +6,7 @@
 namespace code {
 	namespace x64 {
 
-		CodeOut::CodeOut(Binary *owner, Array<Nat> *lbls, Nat size, Nat numRefs) {
+		CodeOut::CodeOut(Binary *owner, Array<Nat> *lbls, Nat size, Nat numRefs) : fnInfo(owner->engine()) {
 			// Properly align 'size'.
 			this->size = size = roundUp(size, Nat(sizeof(void *)));
 
@@ -138,6 +138,19 @@ namespace code {
 		Nat CodeOut::toRelative(Nat offset) {
 			return offset - (pos + 4); // NOTE: All relative things on the X86-64 are 4 bytes long, not 8!
 		}
+
+		void CodeOut::markProlog() {
+			fnInfo.prolog(pos);
+		}
+
+		void CodeOut::markEpilog() {
+			fnInfo.epilog(pos);
+		}
+
+		void CodeOut::markSaved(Reg reg, Offset offset) {
+			fnInfo.preserve(pos, reg, offset);
+		}
+
 
 	}
 }

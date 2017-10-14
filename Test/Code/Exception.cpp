@@ -23,7 +23,7 @@ static Int throwError(Int point) {
 	return point;
 }
 
-BEGIN_TEST(CodeExceptionTest, Code) {
+BEGIN_TEST_(CodeExceptionTest, Code) {
 	Engine &e = gEngine();
 	Arena *arena = code::arena(e);
 
@@ -38,17 +38,17 @@ BEGIN_TEST(CodeExceptionTest, Code) {
 	*l << prolog();
 
 	*l << mov(v, intConst(10));
-	*l << fnParam(intConst(1));
-	*l << fnCall(errorFn, valInt());
+	*l << fnParam(intDesc(e), intConst(1));
+	*l << fnCall(errorFn);
 
 	*l << begin(block);
 	*l << mov(w, intConst(20));
-	*l << fnParam(intConst(2));
-	*l << fnCall(errorFn, valInt());
+	*l << fnParam(intDesc(e), intConst(2));
+	*l << fnCall(errorFn);
 	*l << end(block);
 
-	*l << fnParam(intConst(3));
-	*l << fnCall(errorFn, valInt());
+	*l << fnParam(intDesc(e), intConst(3));
+	*l << fnCall(errorFn);
 
 	l->result = intDesc(e);
 	*l << fnRet(eax);
@@ -286,7 +286,7 @@ BEGIN_TEST(ExceptionLargeTest, Code) {
 
 } END_TEST
 
-#include "Code/X64/LinuxEh.h"
+#include "Code/X64/DwarfEh.h"
 #include "Core/Io/Buffer.h"
 
 BEGIN_TEST_(DummyTest) { // Note: If 'Dummy' is used as a name, everything crashes...

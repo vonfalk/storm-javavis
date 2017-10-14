@@ -1,20 +1,16 @@
 #pragma once
 #include "../Reg.h"
 
-#ifdef POSIX
 namespace code {
 	namespace x64 {
 		STORM_PKG(core.asm.x64);
 
 		/**
-		 * Low-level exception handling interface for Linux. Assumes we're using DWARF
-		 * information for unwinding on GCC. CLang might be compatible enough so that this code
-		 * works unmodified, but most likely the most GCC specific hooks will need to be rewritten.
-		 *
-		 * The eh_frame section (which is used during stack unwinding) contains a set of
-		 * records. Each record is either a CIE record or a FDE record. CIE records describe general
-		 * parameters that can be used from multiple FDE records. FDE records describe what happens
-		 * in a single function.
+		 * Generation of DWARF unwinding information to properly support exceptions in the generated
+		 * code. Assumes that DWARF(2) unwinding data is used in the compiler. The eh_frame section
+		 * (which is used during stack unwinding) contains a set of records. Each record is either a
+		 * CIE record or a FDE record. CIE records describe general parameters that can be used from
+		 * multiple FDE records. FDE records describe what happens in a single function.
 		 *
 		 * Note that the length is shared between the CIE and FDE records.
 		 *
@@ -114,6 +110,9 @@ namespace code {
 			// Note that the prolog has been executed. The prolog is expected to use ptrFrame as usual.
 			void prolog(Nat pos);
 
+			// Note that the epilog has been executed.
+			void epilog(Nat pos);
+
 			// Note that a register has been stored to the stack (for preservation).
 			void preserve(Nat pos, Reg reg, Offset offset);
 
@@ -146,64 +145,5 @@ namespace code {
 		};
 
 
-#ifdef GCC
-
-		/**
-		 * GCC specific things:
-		 *
-		 * Idea: Due to the way GCC stores these objects, we should make sure that all Chunks we
-		 * store contain a FDE with an address of zero (or at least close to zero), so that our
-		 * chunks are last in the internal list and therefore searched last. This is vital, since
-		 * our chunks may span a quite large range of addresses that possibly overlap with other
-		 * code in the system. By being last in the list, we do not accidentally override something
-		 * important, and we can keep our 'pc_begin' constant so that we do not break the internal
-		 * representation when we move objects around.
-		 */
-
-		/**
-		 * Struct holding sorted records.
-		 */
-		struct SortedRecords {
-			Record *original; // We know this is the case for our usage.
-			size_t count;
-			Record **sorted;
-		};
-
-		/**
-		 * Struct compatible with 'object' from 'libgcc'. We can ignore much of the struct, but
-		 * we need to be able to read and write the unions 'u' and 's'.
-		 */
-		struct GCCObject {
-			void *pc_begin;
-			void *tbase;
-			void *dbase;
-
-			union {
-				Record *single;
-				Record **array;
-				SortedRecords *sorted;
-			} u;
-
-			union {
-				struct {
-					unsigned long sorted : 1;
-					unsigned long from_array : 1;
-					unsigned long mixed_encoding : 1;
-					unsigned long encoding : 8;
-					unsigned long count : 21;
-				} b;
-				size_t all;
-			} s;
-
-			// There are a maximum of two more pointers here, but depending on compilation flags
-			// for 'libgcc' their layout is not known here. Therefore, we can not use them (and
-			// we do not need to either).
-			void *fde_end;
-			void *next;
-		};
-
-#endif
-
 	}
 }
-#endif

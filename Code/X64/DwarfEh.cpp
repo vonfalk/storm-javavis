@@ -1,16 +1,11 @@
 #include "stdafx.h"
-#include "LinuxEh.h"
+#include "DwarfEh.h"
+#include "PosixEh.h"
 #include "Asm.h"
-
-#ifdef POSIX
 
 namespace code {
 	namespace x64 {
 
-		// Personality function for Storm (the signature is not neccessarily correct).
-		void stormPersonality(int version, int actions, size_t exception_class, void *info, void *state) {
-			// TODO!
-		}
 
 		/**
 		 * Definitions of some useful DWARF constants.
@@ -134,11 +129,11 @@ namespace code {
 
 			// Write a pointer.
 			void putPtr(const void *value) {
-				if (pos + 4 <= len) {
+				if (pos + sizeof(value) <= len) {
 					const void **d = (const void **)&to[pos];
 					*d = value;
 				}
-				pos += 4;
+				pos += sizeof(value);
 			}
 
 			// Write an unsigned number (encoded as LEB128).
@@ -281,6 +276,15 @@ namespace code {
 			to.putOp(DW_CFA_def_cfa_register, DW_REG_RBP);
 		}
 
+		void FnInfo::epilog(Nat pos) {
+			assert(pos >= 2);
+
+			ArrayStream to(data);
+			advance(to, pos - 1);
+			// The call frame changed since we popped RBP.
+			to.putOp(DW_CFA_def_cfa, DW_REG_RSP, 8); // def_cfa rsp, 8
+		}
+
 		void FnInfo::preserve(Nat pos, Reg reg, Offset offset) {
 			ArrayStream to(data);
 			advance(to, pos);
@@ -331,4 +335,3 @@ namespace code {
 	}
 }
 
-#endif

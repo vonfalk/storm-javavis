@@ -438,6 +438,10 @@ namespace code {
 		return instr(e, op::epilog);
 	}
 
+	Instr *preserve(EnginePtr e, Operand dest, Reg reg) {
+		return instrDestSrc(e, op::preserve, dest, reg);
+	}
+
 	Instr *begin(EnginePtr e, Part part) {
 		return instrLoose(e, op::beginBlock, Operand(), part);
 	}

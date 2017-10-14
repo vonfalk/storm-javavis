@@ -2,6 +2,7 @@
 #include "Core/TObject.h"
 #include "Core/Array.h"
 #include "Core/GcCode.h"
+#include "Reg.h"
 #include "Size.h"
 #include "Label.h"
 #include "Reference.h"
@@ -63,6 +64,17 @@ namespace code {
 		// Store a (4-byte) reference to a reference or to an object.
 		void STORM_FN putObjRelative(Ref ref);
 		void putObjRelative(RootObject *obj);
+
+		/**
+		 * Call frame information: used during stack unwinding.
+		 */
+
+		// Mark the end of the prolog.
+		virtual void STORM_FN markProlog();
+		// Mark the end of the epilog.
+		virtual void STORM_FN markEpilog();
+		// Mark that a register has been saved at 'offset' relative ptrFrame.
+		virtual void STORM_FN markSaved(Reg reg, Offset offset);
 
 	protected:
 		// Mark a label here.

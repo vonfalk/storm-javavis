@@ -135,6 +135,7 @@ namespace code {
 	PROXY1(dat, Operand);
 	PROXY0(prolog);
 	PROXY0(epilog);
+	PROXY2(preserve, Operand, Reg);
 	PROXY1(begin, Part);
 	PROXY1(end, Part);
 	PROXY0(threadLocal);

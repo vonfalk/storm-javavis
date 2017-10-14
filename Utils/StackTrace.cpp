@@ -237,6 +237,7 @@ StackTrace stackTrace(nat skip) {
 #ifdef POSIX
 
 StackTrace stackTrace(nat skip) {
+	// Note: We can probably get a decent stack trace by using the _Unwind_Backtrace()-function in libgcc.
 	return StackTrace();
 }
 
