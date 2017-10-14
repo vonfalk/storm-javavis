@@ -65,4 +65,12 @@ namespace code {
 		doWritePtr(code, runtime::codeRefs(code), id);
 	}
 
+	bool needFinalization() {
+		return ARCH::needFinalization();
+	}
+
+	void finalize(void *code) {
+		ARCH::finalize(code);
+	}
+
 }

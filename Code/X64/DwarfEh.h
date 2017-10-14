@@ -24,9 +24,9 @@ namespace code {
 		 * CIE_DATA - Maximum number of bytes in the 'data' section of a CIE record.
 		 * FDE_DATA - Maximum number of bytes in the 'data' section of a FDE record.
 		 */
-		static const nat CHUNK_COUNT = 10; // 100;
+		static const nat CHUNK_COUNT = 1000; // TODO: Is this a good size?
 		static const nat CIE_DATA = 24 - 1;
-		static const nat FDE_DATA = 24;
+		static const nat FDE_DATA = 40;
 
 		/**
 		 * A generic DWARF record. The fields in here line up so that they match 'CIE' and 'FDE'.
@@ -72,31 +72,35 @@ namespace code {
 			// Data section of the FDE.
 			Byte data[FDE_DATA];
 
-			// Access the first few members in the FDE. We always use absolute pointers, so we know their layout!
+			// Set the 'id' field properly.
+			void setCie(CIE *to);
+
+			/**
+			 * Access the first few members in the FDE. We always use absolute pointers, so we know
+			 * their layout!
+			 */
 
 			// Start address of the code.
-			const void *& codeStart() {
+			inline const void *&codeStart() {
 				return *(const void **)&data[0];
 			}
 			// Total number of bytes of code.
-			size_t &codeSize() {
+			inline size_t &codeSize() {
 				return *(size_t *)&data[8];
 			}
 			// Size of augmenting data.
-			Byte &augSize() {
+			inline Byte &augSize() {
 				return data[16];
 			}
 
 			// First free offset in 'data'.
-			Nat firstFree() const {
+			inline Nat firstFree() const {
 				return 17;
 			}
 
-			// Set the 'id' field properly.
-			void setCie(CIE *to);
 		};
 
-		class ArrayStream;
+		struct FDEStream;
 
 		/**
 		 * Generate information about functions, later used by the exception system on some
@@ -105,7 +109,8 @@ namespace code {
 		class FnInfo {
 			STORM_VALUE;
 		public:
-			FnInfo(Engine &e);
+			// Set the FDE we shall write to.
+			void set(FDE *fde);
 
 			// Note that the prolog has been executed. The prolog is expected to use ptrFrame as usual.
 			void prolog(Nat pos);
@@ -118,32 +123,17 @@ namespace code {
 
 		private:
 			// The data emitted.
-			GcArray<Byte> *data;
+			FDE *target;
+
+			// Offset inside 'to'.
+			Nat offset;
 
 			// Last position which we encoded something at.
 			Nat lastPos;
 
 			// Go to 'pos'.
-			void advance(ArrayStream &to, Nat pos);
+			void advance(FDEStream &to, Nat pos);
 		};
-
-		/**
-		 * Store exception data for a set number of functions.
-		 */
-		struct Chunk {
-			// CIE forming the 'header' of this chunk.
-			CIE header;
-
-			// The payload of this chunk.
-			FDE functions[CHUNK_COUNT];
-
-			// An empty Record to indicate the end of the FDEs.
-			Record end;
-
-			// Initialize a chunk.
-			void init();
-		};
-
 
 	}
 }

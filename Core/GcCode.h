@@ -44,6 +44,10 @@ namespace storm {
 			// falling back to long jumps where necessary.
 			jump,
 
+			// Update an entry in a separate table containing unwinding information. 'pointer' is a
+			// pointer to the location that shall be updated. Architecture specific.
+			unwindInfo,
+
 			// ...
 		};
 

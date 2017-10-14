@@ -1,6 +1,7 @@
 #include "stdafx.h"
 #include "Refs.h"
 #include "Asm.h"
+#include "DwarfTable.h"
 #include "Core/GcCode.h"
 
 namespace code {
@@ -9,13 +10,7 @@ namespace code {
 		// Will not work properly unless on a 64-bit machine.
 #ifdef X64
 
-		void writePtr(void *code, const GcCode *refs, Nat id) {
-			const GcCodeRef &ref = refs->refs[id];
-			if (ref.kind != GcCodeRef::jump) {
-				dbg_assert(false, L"Only 'jump' is supported by this backend.");
-				return;
-			}
-
+		void writeJump(void *code, const GcCodeRef &ref) {
 			// We're dealing with 6 bytes of data. The pointer, located at 'now->offset' and two
 			// bytes of op-codes located just before the pointer. For simplicity, we will read 2
 			// additional bytes after the pointer so that we can manipulate an entire machine word
@@ -83,5 +78,37 @@ namespace code {
 		}
 
 #endif
+
+		void writePtr(void *code, const GcCode *refs, Nat id) {
+			const GcCodeRef &ref = refs->refs[id];
+
+			switch (ref.kind) {
+#ifdef X64
+			case GcCodeRef::jump:
+				writeJump(code, ref);
+				break;
+#endif
+			case GcCodeRef::unwindInfo:
+				if (ref.pointer)
+					DwarfChunk::updateFn((FDE *)ref.pointer, code);
+				break;
+			default:
+				dbg_assert(false, L"Only 'jump' is supported by this backend.");
+				break;
+			}
+		}
+
+		void finalize(void *code) {
+			GcCode *refs = runtime::codeRefs(code);
+			for (size_t i = 0; i < refs->refCount; i++) {
+				GcCodeRef &ref = refs->refs[i];
+				if (ref.kind == GcCodeRef::unwindInfo && ref.pointer) {
+					FDE *ptr = (FDE *)ref.pointer;
+					// Set it to null so we do not accidentally scan or free it again.
+					ref.pointer = null;
+					dwarfTable.free(ptr);
+				}
+			}
+		}
 	}
 }

@@ -197,18 +197,18 @@ namespace code {
 			}
 		};
 
-		class ArrayStream : public DStream {
+		class FDEStream : public DStream {
 		public:
-			ArrayStream(GcArray<Byte> *data) : DStream(data->v, nat(data->count)), dest(data) {
-				pos = dest->filled;
+			FDEStream(FDE *to, Nat &pos) : DStream(to->data, FDE_DATA), dest(pos) {
+				this->pos = dest;
 			}
 
-			~ArrayStream() {
-				dest->filled = pos;
+			~FDEStream() {
+				dest = pos;
 				assert(!overflow(), L"Increase FDE_DATA!");
 			}
 
-			GcArray<Byte> *dest;
+			Nat &dest;
 		};
 
 
@@ -255,16 +255,16 @@ namespace code {
 		 * Emit function information.
 		 */
 
-		FnInfo::FnInfo(Engine &e) {
-			data = runtime::allocArray<Byte>(e, &byteArrayType, FDE_DATA);
-			data->filled = 0;
+		void FnInfo::set(FDE *fde) {
+			target = fde;
+			offset = fde->firstFree();
 			lastPos = 0;
 		}
 
 		void FnInfo::prolog(Nat pos) {
 			assert(pos >= 4); // We should be called after emitting the 4-byte prolog!
 
-			ArrayStream to(data);
+			FDEStream to(target, offset);
 			advance(to, pos - 3); // after the 'push rbp' instruction
 			// We pushed something, that moves the call frame!
 			to.putOp(DW_CFA_def_cfa_offset, 16); // def_cfa_offset 16
@@ -279,14 +279,14 @@ namespace code {
 		void FnInfo::epilog(Nat pos) {
 			assert(pos >= 2);
 
-			ArrayStream to(data);
+			FDEStream to(target, offset);
 			advance(to, pos - 1);
 			// The call frame changed since we popped RBP.
 			to.putOp(DW_CFA_def_cfa, DW_REG_RSP, 8); // def_cfa rsp, 8
 		}
 
 		void FnInfo::preserve(Nat pos, Reg reg, Offset offset) {
-			ArrayStream to(data);
+			FDEStream to(target, this->offset);
 			advance(to, pos);
 
 			// Note that we stored the variable.
@@ -295,42 +295,14 @@ namespace code {
 			to.putOp(DW_CFA_offset + dwarfRegister(reg), off);
 		}
 
-		void FnInfo::advance(ArrayStream &to, Nat pos) {
+		void FnInfo::advance(FDEStream &to, Nat pos) {
 			assert(pos >= lastPos);
 			if (pos > lastPos) {
-				ArrayStream to(data);
 				to.putAdvance(pos - lastPos);
 				lastPos = pos;
 			}
 		}
 
-
-		/**
-		 * Chunk.
-		 */
-
-		void Chunk::init() {
-			// Clear everything.
-			memset(this, DW_CFA_nop, sizeof(Chunk));
-
-			// Fill in the 'length' fields of all members.
-			header.setLen(&functions[0]);
-			for (Nat i = 0; i < CHUNK_COUNT - 1; i++)
-				functions[i].setLen(&functions[i+1]);
-			functions[CHUNK_COUNT-1].setLen(&end);
-			end.length = 0;
-
-			// Initialize all functions.
-			for (Nat i = 0; i < CHUNK_COUNT; i++) {
-				functions[i].setCie(&header);
-				functions[i].codeStart() = null;
-				functions[i].codeSize() = 0;
-				functions[i].augSize() = 0;
-			}
-
-			// Initialize the CIE.
-			header.init();
-		}
 
 	}
 }

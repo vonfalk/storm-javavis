@@ -1,28 +1,37 @@
 #include "stdafx.h"
 #include "Output.h"
+#include "DwarfTable.h"
 #include "../Binary.h"
 #include "Utils/Bitwise.h"
 
 namespace code {
 	namespace x64 {
 
-		CodeOut::CodeOut(Binary *owner, Array<Nat> *lbls, Nat size, Nat numRefs) : fnInfo(owner->engine()) {
+		CodeOut::CodeOut(Binary *owner, Array<Nat> *lbls, Nat size, Nat numRefs) {
 			// Properly align 'size'.
 			this->size = size = roundUp(size, Nat(sizeof(void *)));
 
 			// Initialize our members.
 			this->owner = owner;
 			codeRefs = new (this) Array<Reference *>();
-			code = (byte *)runtime::allocCode(engine(), size + sizeof(void *), numRefs + 1);
+			code = (byte *)runtime::allocCode(engine(), size + sizeof(void *), numRefs + 2);
 			labels = lbls;
 			pos = 0;
-			ref = 1;
+			ref = 2;
+
+			GcCode *refs = runtime::codeRefs(code);
+
+			// An entry for the DWARF unwinding information.
+			FDE *unwind = dwarfTable.alloc(code);
+			fnInfo.set(unwind);
+			refs->refs[0].offset = 0;
+			refs->refs[0].kind = GcCodeRef::unwindInfo;
+			refs->refs[0].pointer = unwind;
 
 			// Store 'codeRefs' at the end of our allocated space.
-			GcCode *refs = runtime::codeRefs(code);
-			refs->refs[0].offset = size;
-			refs->refs[0].kind = GcCodeRef::rawPtr;
-			refs->refs[0].pointer = codeRefs;
+			refs->refs[1].offset = size;
+			refs->refs[1].kind = GcCodeRef::rawPtr;
+			refs->refs[1].pointer = codeRefs;
 		}
 
 		void CodeOut::putByte(Byte b) {

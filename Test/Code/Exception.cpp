@@ -285,15 +285,3 @@ BEGIN_TEST(ExceptionLargeTest, Code) {
 	CHECK(correct);
 
 } END_TEST
-
-#include "Code/X64/DwarfEh.h"
-#include "Core/Io/Buffer.h"
-
-BEGIN_TEST_(DummyTest) { // Note: If 'Dummy' is used as a name, everything crashes...
-	using namespace code::x64;
-
-	Chunk c;
-	c.init();
-
-	dumpHex(c);
-} END_TEST

@@ -1356,14 +1356,16 @@ namespace storm {
 	void Gc::finalizeObject(void *obj) {
 		const GcType *t = typeOf(obj);
 
-		// Should always hold, but better safe than sorry!
-		if (t->finalizer) {
+		if (t && t->finalizer) {
 			// An object might not yet be initialized...
 			if ((t->kind != GcType::tFixedObj) || (vtable::from((RootObject *)obj) != null)) {
 				typedef void (*Fn)(void *);
 				Fn fn = (Fn)t->finalizer;
 				(*fn)(obj);
 			}
+		} else {
+			// A code allocation. Call the finalizer over in the Code lib.
+			code::finalize(obj);
 		}
 
 		// NOTE: It is not a good idea to replace finalized objects with padding as we might have
@@ -1408,6 +1410,11 @@ namespace storm {
 
 		// Exclude our header, and return the allocated memory.
 		void *result = (byte *)memory + headerSize;
+
+		// Register for finalization if the backend asks us to.
+		if (code::needFinalization())
+			mps_finalize(arena, &result);
+
 		return result;
 	}
 

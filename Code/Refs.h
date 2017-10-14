@@ -11,4 +11,10 @@ namespace code {
 	void writePtr(void *code, Nat id);
 	void writePtr(void *code, Nat id, void *ptr);
 
+	// Do we require finalization of code segments?
+	bool needFinalization();
+
+	// If so, call this function when required.
+	void finalize(void *code);
+
 }
