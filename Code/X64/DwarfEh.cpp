@@ -290,7 +290,7 @@ namespace code {
 			advance(to, pos);
 
 			// Note that we stored the variable. (TODO: Verify if this is correct)
-			assert(offset.v64() < 8);
+			assert(offset.v64() <= -8);
 			Nat off = (-offset.v64() + 16) / 8;
 			to.putOp(DW_CFA_offset + dwarfRegister(reg), off);
 		}

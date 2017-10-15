@@ -43,8 +43,8 @@ namespace code {
 			// function allocated on the GC heap.
 			FDE *alloc(const void *fn);
 
-			// Free a previous allocation for the function at 'fn'.
-			void free(const void *fn);
+			// Free a FDE.
+			void free(FDE *fde);
 
 			// Find the FDE for a specific location (might be inside of a function). Returns 'null'
 			// on failure.

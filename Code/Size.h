@@ -174,8 +174,8 @@ namespace code {
 		Offset STORM_FN alignAs(const Size &s) const;
 
 		// Find out the 32- and 64-bit sizes (for storage).
-		inline nat v32() const { return o32; }
-		inline nat v64() const { return o64; }
+		inline int v32() const { return o32; }
+		inline int v64() const { return o64; }
 
 		// Output.
 		friend wostream &operator <<(wostream &to, const Offset &s);

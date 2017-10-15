@@ -468,7 +468,7 @@ namespace code {
 						} else {
 							mod = 0;
 						}
-					} else if (singleByte(dest.offset().v64())) {
+					} else if (singleByte(nat(dest.offset().v64()))) {
 						mod = 1;
 					}
 

@@ -32,11 +32,10 @@ namespace code {
 			return n->alloc(fn);
 		}
 
-		void DwarfTable::free(const void *fn) {
+		void DwarfTable::free(FDE *fde) {
 			util::Lock::L z(lock);
 
-			FDE *f = find(fn);
-			DwarfChunk::owner(f)->free(f);
+			DwarfChunk::owner(fde)->free(fde);
 		}
 
 		FDE *DwarfTable::find(const void *pc) {
