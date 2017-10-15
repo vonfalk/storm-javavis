@@ -109,6 +109,9 @@ namespace code {
 
 			void *ptr = frame.toPtr(offset);
 
+			if (v.freeOpt & freeIndirection)
+				ptr = *(void **)ptr;
+
 			typedef void (*FPtr)(void *v);
 			typedef void (*FByte)(Byte v);
 			typedef void (*FInt)(Int v);

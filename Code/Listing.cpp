@@ -517,6 +517,13 @@ namespace code {
 		return vars->at(v.id).freeOpt;
 	}
 
+	void Listing::freeOpt(Var v, FreeOpt opt) {
+		if (v.id >= vars->count())
+			return;
+
+		vars->at(v.id).freeOpt = opt;
+	}
+
 	static bool checkFree(const Operand &free, FreeOpt &when) {
 		if (when & freePtr)
 			if (free.size() > Size::sLong)

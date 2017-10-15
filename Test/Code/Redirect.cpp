@@ -25,6 +25,7 @@ static void destroyInt(Int v) {
 
 BEGIN_TEST(RedirectTest, Code) {
 	TODO(L"Enable me!");
+	CHECK(false);
 	break;
 
 	Engine &e = gEngine();

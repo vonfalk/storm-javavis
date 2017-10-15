@@ -145,14 +145,13 @@ BEGIN_TEST(ExceptionRefTest, Code) {
 	Ref errorFn = arena->external(S("errorFn"), address(&::throwError));
 
 	Listing *l = new (e) Listing();
-	// Block block = l->createBlock(l->root());
 	Var v = l->createVar(l->root(), Size::sInt, intCleanup, freeOnBoth | freePtr);
 
 	*l << prolog();
 
 	*l << mov(v, intConst(103));
-	*l << fnParam(intConst(1));
-	*l << fnCall(errorFn, valInt());
+	*l << fnParam(intDesc(e), intConst(1));
+	*l << fnCall(errorFn);
 
 	l->result = intDesc(e);
 	*l << fnRet(eax);
@@ -235,6 +234,7 @@ struct Large {
 	int c;
 
 	Large() : a(0), b(10), c(0) {}
+	~Large();
 };
 
 static bool correct = false;
@@ -245,25 +245,34 @@ static void destroyLarge(Large *large) {
 	correct &= large->c == 0;
 }
 
+Large::~Large() {
+	destroyLarge(this);
+}
+
+static void copyLarge(Large *dest, Large *src) {
+	*dest = *src;
+}
+
 BEGIN_TEST(ExceptionLargeTest, Code) {
 	Engine &e = gEngine();
 	Arena *arena = code::arena(e);
 
-	Ref intCleanup = arena->external(S("largeCleanup"), address(&::destroyLarge));
+	Ref largeCopy = arena->external(S("largeCopy"), address(&::copyLarge));
+	Ref largeCleanup = arena->external(S("largeCleanup"), address(&::destroyLarge));
 	Ref errorFn = arena->external(S("errorFn"), address(&::throwError));
 
 	Listing *l = new (e) Listing();
-	// Block block = l->createBlock(l->root());
-	Var p = l->createParam(ValType(Size::sInt * 3, false), intCleanup, freeOnBoth | freePtr);
-	Var v = l->createVar(l->root(), Size::sInt * 3, intCleanup, freeOnBoth | freePtr);
+	ComplexDesc *desc = new (e) ComplexDesc(Size::sInt * 3, largeCopy, largeCleanup);
+	Var p = l->createParam(desc);
+	Var v = l->createVar(l->root(), Size::sInt * 3, largeCleanup, freeOnBoth | freePtr);
 
 	*l << prolog();
 
 	*l << mov(intRel(v, Offset()), intRel(p, Offset()));
 	*l << mov(intRel(v, Offset::sInt), intRel(p, Offset::sInt));
 	*l << mov(intRel(v, Offset::sInt * 2), intRel(p, Offset::sInt * 2));
-	*l << fnParam(intConst(1));
-	*l << fnCall(errorFn, valInt());
+	*l << fnParam(intDesc(e), intConst(1));
+	*l << fnCall(errorFn);
 
 	l->result = intDesc(e);
 	*l << fnRet(eax);

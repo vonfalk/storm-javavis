@@ -95,6 +95,7 @@ namespace code {
 
 			// Alter a single operand. Replace any local variables with their offset.
 			Operand resolve(Listing *src, const Operand &op);
+			Operand resolve(Listing *src, const Operand &op, const Size &size);
 
 			// Create and destroy parts.
 			void initPart(Listing *dest, Part init);

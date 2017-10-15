@@ -81,6 +81,7 @@ namespace code {
 		}
 
 		void Layout::after(Listing *dest, Listing *src) {
+			*dest << alignAs(Size::sPtr);
 			*dest << dest->meta();
 
 			// Output metadata table.
@@ -112,13 +113,17 @@ namespace code {
 		}
 
 		Operand Layout::resolve(Listing *src, const Operand &op) {
+			return resolve(src, op, op.size());
+		}
+
+		Operand Layout::resolve(Listing *src, const Operand &op, const Size &size) {
 			if (op.type() != opVariable)
 				return op;
 
 			Var v = op.var();
 			if (!src->accessible(v, part))
 				throw VariableUseError(v, part);
-			return xRel(op.size(), ptrFrame, layout->at(v.key()) + op.offset());
+			return xRel(size, ptrFrame, layout->at(v.key()) + op.offset());
 		}
 
 		void Layout::spillParams(Listing *dest) {
@@ -291,14 +296,24 @@ namespace code {
 						pushedRax = true;
 					}
 
-					if (when & freePtr) {
-						*dest << lea(ptrDi, resolve(dest, v));
-						*dest << call(dtor, valVoid());
+					if (when & freeIndirection) {
+						if (when & freePtr) {
+							*dest << mov(ptrDi, resolve(dest, v, Size::sPtr));
+							*dest << call(dtor, valVoid());
+						} else {
+							*dest << mov(ptrDi, resolve(dest, v, Size::sPtr));
+							*dest << mov(asSize(ptrDi, v.size()), xRel(v.size(), ptrDi, Offset()));
+							*dest << call(dtor, valVoid());
+						}
 					} else {
-						*dest << mov(asSize(ptrDi, v.size()), resolve(dest, v));
-						*dest << call(dtor, valVoid());
+						if (when & freePtr) {
+							*dest << lea(ptrDi, resolve(dest, v));
+							*dest << call(dtor, valVoid());
+						} else {
+							*dest << mov(asSize(ptrDi, v.size()), resolve(dest, v));
+							*dest << call(dtor, valVoid());
+						}
 					}
-
 					// TODO: Zero memory to avoid multiple destruction in rare cases?
 				}
 			}
@@ -457,7 +472,10 @@ namespace code {
 				if (to != Offset())
 					continue;
 
-				used += var.size();
+				if (src->freeOpt(var) & freeIndirection)
+					used += Size::sPtr;
+				else
+					used += var.size();
 				to = -(varOffset + used.aligned());
 			}
 
@@ -482,7 +500,10 @@ namespace code {
 				Nat id = var.key();
 
 				if (!src->isParam(var)) {
-					result->at(id) = -(result->at(id) + var.size().aligned() + varOffset);
+					Size s = var.size();
+					if (src->freeOpt(var) & freeIndirection)
+						s = Size::sPtr;
+					result->at(id) = -(result->at(id) + s.aligned() + varOffset);
 				}
 			}
 

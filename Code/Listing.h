@@ -25,6 +25,9 @@ namespace code {
 		// Pass a pointer to the free-function?
 		freePtr = 0x10,
 
+		// Used by the backends: What is stored in the variable is actually a pointer to the value.
+		freeIndirection = 0x20,
+
 		// Default options.
 		freeDef = freeOnBoth,
 	};
@@ -212,6 +215,7 @@ namespace code {
 
 		// Get when to free a variable or a parameter.
 		FreeOpt STORM_FN freeOpt(Var v) const;
+		void STORM_FN freeOpt(Var v, FreeOpt opt);
 
 		// Do this block need an exception handler?
 		inline Bool STORM_FN exceptionHandler() const { return needEH; }

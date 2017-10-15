@@ -109,21 +109,19 @@ namespace code {
 		// Our representation of a stack frame.
 		class StackFrame : public code::StackFrame {
 		public:
-			StackFrame(Nat part, void *cfa) : code::StackFrame(part), cfa((byte *)cfa) {}
+			StackFrame(Nat part, void *rbp) : code::StackFrame(part), rbp((byte *)rbp) {}
 
 			virtual void *toPtr(size_t offset) {
 				ssize_t delta = offset;
-				// The CFA and the addressing in the table differ by onetwo machine words.
-				delta += 16;
-				return cfa + delta;
+				return rbp + delta;
 			}
 
 		private:
-			byte *cfa;
+			byte *rbp;
 		};
 
 		// Perform cleanup using the tables present in the code.
-		static void stormCleanup(size_t fn, size_t pc, size_t cfa) {
+		static void stormCleanup(size_t fn, size_t pc, size_t rbp) {
 			const FnData *data = getData((const void *)fn);
 			const FnPart *parts = getParts(data);
 
@@ -145,7 +143,7 @@ namespace code {
 			}
 
 			// Create a stack frame and pass it on to the Binary object for cleanup.
-			StackFrame frame(found->part, (void *)cfa);
+			StackFrame frame(found->part, (void *)rbp);
 			data->owner->cleanup(frame);
 		}
 
@@ -166,8 +164,8 @@ namespace code {
 				// Phase 2: Cleanup!
 				// if (actions & _UA_HANDLER_FRAME), we should return _URC_INSTALL_CONTEXT.
 
-				// Clean up what we can! (register #6 is RBP)
-				stormCleanup(_Unwind_GetRegionStart(context), _Unwind_GetIP(context), _Unwind_GetCFA(context));
+				// Clean up what we can! (register #6 is RBP) Note: Using the CFA seems to be a bit shaky...
+				stormCleanup(_Unwind_GetRegionStart(context), _Unwind_GetIP(context), _Unwind_GetGR(context, 6));
 				return _URC_CONTINUE_UNWIND;
 			} else {
 				// Just pretend we did something useful...

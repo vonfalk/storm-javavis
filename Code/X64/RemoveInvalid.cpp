@@ -56,6 +56,21 @@ namespace code {
 			TRANSFORM(shl),
 		};
 
+		static bool isComplex(Listing *l, Var v) {
+			TypeDesc *t = l->paramDesc(v);
+			if (!t)
+				return false;
+
+			return as<ComplexDesc>(t) != null;
+		}
+
+		static bool isComplex(Listing *l, Operand op) {
+			if (op.type() != opVariable)
+				return false;
+
+			return isComplex(l, op.var());
+		}
+
 		RemoveInvalid::RemoveInvalid() {}
 
 		void RemoveInvalid::before(Listing *dest, Listing *src) {
@@ -63,6 +78,15 @@ namespace code {
 			large = new (this) Array<Operand>();
 			lblLarge = dest->label();
 			params = new (this) Array<ParamInfo>();
+
+			// Set the 'freeIndirect' flag on all complex parameters.
+			Array<Var> *vars = dest->allParams();
+			for (Nat i = 0; i < vars->count(); i++) {
+				Var v = vars->at(i);
+				if (isComplex(dest, v)) {
+					dest->freeOpt(v, dest->freeOpt(v) | freeIndirection);
+				}
+			}
 		}
 
 		void RemoveInvalid::during(Listing *dest, Listing *src, Nat line) {
@@ -92,9 +116,9 @@ namespace code {
 
 		void RemoveInvalid::after(Listing *dest, Listing *src) {
 			// Output all constants.
-			*dest << lblLarge;
 			if (large->count())
 				*dest << alignAs(Size::sPtr);
+			*dest << lblLarge;
 			for (Nat i = 0; i < large->count(); i++) {
 				*dest << dat(large->at(i));
 			}
@@ -117,34 +141,24 @@ namespace code {
 			return i;
 		}
 
-		static bool isComplex(Listing *l, Operand op) {
-			if (op.type() != opVariable)
-				return false;
-
-			Var v = op.var();
-			TypeDesc *t = l->paramDesc(v);
-			if (!t)
-				return false;
-
-			return as<ComplexDesc>(t) != null;
-		}
-
 		Instr *RemoveInvalid::extractComplex(Listing *to, Instr *i, Nat line) {
 			// Complex parameters are passed as a pointer. Dereference these by inserting a 'mov' instruction.
 			RegSet *regs = used->at(line);
 			if (isComplex(to, i->src())) {
+				const Operand &src = i->src();
 				Reg reg = asSize(unusedReg(regs), Size::sPtr);
 				regs = new (this) RegSet(*regs);
 				regs->put(reg);
 
-				*to << mov(reg, i->src());
-				i = i->alterSrc(ptrRel(reg, Offset()));
+				*to << mov(reg, ptrRel(src.var(), Offset()));
+				i = i->alterSrc(xRel(src.size(), reg, src.offset()));
 			}
 
 			if (isComplex(to, i->dest())) {
+				const Operand &dest = i->dest();
 				Reg reg = asSize(unusedReg(regs), Size::sPtr);
-				*to << mov(reg, i->dest());
-				i = i->alterDest(ptrRel(reg, Offset()));
+				*to << mov(reg, ptrRel(dest.var(), Offset()));
+				i = i->alterDest(xRel(dest.size(), reg, dest.offset()));
 			}
 
 			return i;
