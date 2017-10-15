@@ -60,6 +60,10 @@ namespace code {
 			pos += 8;
 		}
 
+		void CodeOut::align(Nat to) {
+			pos = roundUp(pos, to);
+		}
+
 		void CodeOut::putGc(GcCodeRef::Kind kind, Nat size, Word w) {
 			GcCode *refs = runtime::codeRefs(code);
 			assert(ref < refs->refCount);

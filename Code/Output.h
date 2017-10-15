@@ -17,10 +17,17 @@ namespace code {
 	class Output : public ObjectOn<Compiler> {
 		STORM_CLASS;
 	public:
+		/**
+		 * Low-level output.
+		 */
+
 		virtual void STORM_FN putByte(Byte b);  // 1 byte
 		virtual void STORM_FN putInt(Nat w);    // 4 bytes
 		virtual void STORM_FN putLong(Word w);  // 8 bytes
 		virtual void STORM_FN putPtr(Word w);   // 4 or 8 bytes
+
+		// Align the output pointer for the next 'put' operation.
+		virtual void STORM_FN align(Nat to);
 
 		/**
 		 * Special cases for GC interaction.
@@ -54,6 +61,7 @@ namespace code {
 		void STORM_FN mark(MAYBE(Array<Label> *) lbl);
 		void STORM_FN putRelative(Label lbl); // Writes 4 bytes.
 		void STORM_FN putRelative(Label lbl, Nat offset);
+		void STORM_FN putOffset(Label lbl); // Writes 4 bytes. Offset relative to the start of the blob.
 		void STORM_FN putAddress(Label lbl); // Writes 4 or 8 bytes.
 
 		// References.
@@ -114,6 +122,7 @@ namespace code {
 		virtual void STORM_FN putInt(Nat w);
 		virtual void STORM_FN putLong(Word w);
 		virtual void STORM_FN putPtr(Word w);
+		virtual void STORM_FN align(Nat to);
 		virtual void putGc(GcCodeRef::Kind kind, Nat size, Word w);
 		virtual void STORM_FN putGcPtr(Word w);
 		virtual void STORM_FN putGcRelative(Word w);

@@ -606,6 +606,14 @@ namespace code {
 			}
 		}
 
+		void lblOffsetOut(Output *to, Instr *instr) {
+			to->putOffset(instr->src().label());
+		}
+
+		void alignOut(Output *to, Instr *instr) {
+			to->align(instr->src().constant());
+		}
+
 		const OpEntry<OutputFn> outputMap[] = {
 			OUTPUT(mov),
 			OUTPUT(add),
@@ -648,6 +656,8 @@ namespace code {
 
 			OUTPUT(threadLocal),
 			OUTPUT(dat),
+			OUTPUT(lblOffset),
+			OUTPUT(align),
 		};
 
 		void output(Listing *src, Output *to) {

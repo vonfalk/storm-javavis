@@ -430,6 +430,18 @@ namespace code {
 		return instrSrc(e, op::dat, v);
 	}
 
+	Instr *lblOffset(EnginePtr e, Label l) {
+		return instrSrc(e, op::lblOffset, l);
+	}
+
+	Instr *align(EnginePtr e, Offset o) {
+		return instrSrc(e, op::align, ptrConst(o));
+	}
+
+	Instr *alignAs(EnginePtr e, Size a) {
+		return align(e, Offset(a.align32(), a.align64()));
+	}
+
 	Instr *prolog(EnginePtr e) {
 		return instr(e, op::prolog);
 	}

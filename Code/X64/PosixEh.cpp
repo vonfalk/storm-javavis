@@ -1,6 +1,7 @@
 #include "stdafx.h"
 #include "PosixEh.h"
 #include "DwarfTable.h"
+#include "Binary.h"
 #ifdef POSIX
 
 #ifndef GCC
@@ -60,7 +61,95 @@ namespace code {
 			return found;
 		}
 
+		/**
+		 * Description of the data at the end of each function.
+		 */
+		struct FnData {
+			// Number of entries in the part table.
+			size_t partCount;
 
+			// The binary that contains the rest of the unwinding information for this Binary object.
+			Binary *owner;
+
+			// Pointer to an array of updater objects for this function.
+			Array<Reference *> *refs;
+		};
+
+		/**
+		 * Description of a single entry in the part table.
+		 */
+		struct FnPart {
+			// At which offset do we start?
+			Nat offset;
+
+			// Which part?
+			Nat part;
+		};
+
+		// Get the FnData from a function.
+		static const FnData *getData(const void *fn) {
+			size_t size = runtime::codeSize(fn);
+			const byte *end = (const byte *)fn + size;
+			return (const FnData *)(end - sizeof(FnData));
+		}
+
+		// Get the part data from a function.
+		static const FnPart *getParts(const FnData *data) {
+			const FnPart *end = (const FnPart *)data;
+			return end - data->partCount;
+		}
+
+		// Compare object.
+		struct PartCompare {
+			bool operator()(const FnPart &a, Nat offset) const {
+				return a.offset < offset;
+			}
+		};
+
+		// Our representation of a stack frame.
+		class StackFrame : public code::StackFrame {
+		public:
+			StackFrame(Nat part, void *cfa) : code::StackFrame(part), cfa((byte *)cfa) {}
+
+			virtual void *toPtr(size_t offset) {
+				ssize_t delta = offset;
+				// The CFA and the addressing in the table differ by onetwo machine words.
+				delta += 16;
+				return cfa + delta;
+			}
+
+		private:
+			byte *cfa;
+		};
+
+		// Perform cleanup using the tables present in the code.
+		static void stormCleanup(size_t fn, size_t pc, size_t cfa) {
+			const FnData *data = getData((const void *)fn);
+			const FnPart *parts = getParts(data);
+
+			Nat offset = pc - fn;
+			Nat invalid = Part().key();
+
+			// The entries are sorted by their 'offset' member. We can perform a binary search!
+			// Note: if there is an entry where 'offset == parts[i].offset', we shall not select
+			// that one since 'pc' points to the first instruction that was not executed.
+			const FnPart *found = std::lower_bound(parts, parts + data->partCount, offset, PartCompare());
+			if (found == parts) {
+				// Before any part, nothing to do!
+				return;
+			}
+			found--;
+			if (found->part == invalid) {
+				// A part that specifies outside the prolog and epilog. Nothing to do!
+				return;
+			}
+
+			// Create a stack frame and pass it on to the Binary object for cleanup.
+			StackFrame frame(found->part, (void *)cfa);
+			data->owner->cleanup(frame);
+		}
+
+		// The personality function called by the C++ runtime.
 		_Unwind_Reason_Code stormPersonality(int version, _Unwind_Action actions, _Unwind_Exception_Class type,
 											struct _Unwind_Exception *data, struct _Unwind_Context *context) {
 
@@ -75,8 +164,10 @@ namespace code {
 				return _URC_CONTINUE_UNWIND;
 			} else if (actions & _UA_CLEANUP_PHASE) {
 				// Phase 2: Cleanup!
-				// TODO: if (actions & _UA_HANDLER_FRAME), we should return _URC_INSTALL_CONTEXT.
-				// TODO: if we have something to clean up, we should do that now.
+				// if (actions & _UA_HANDLER_FRAME), we should return _URC_INSTALL_CONTEXT.
+
+				// Clean up what we can! (register #6 is RBP)
+				stormCleanup(_Unwind_GetRegionStart(context), _Unwind_GetIP(context), _Unwind_GetCFA(context));
 				return _URC_CONTINUE_UNWIND;
 			} else {
 				// Just pretend we did something useful...

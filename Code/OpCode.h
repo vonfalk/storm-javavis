@@ -63,6 +63,8 @@ namespace code {
 
 			// Data
 			dat,
+			lblOffset,
+			align,
 
 			// Function prolog/epilog.
 			prolog,

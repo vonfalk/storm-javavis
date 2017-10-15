@@ -3,6 +3,7 @@
 #include "Refs.h"
 #include "Core/Runtime.h"
 #include "Core/GcCode.h"
+#include "Utils/Bitwise.h"
 
 namespace code {
 
@@ -19,6 +20,10 @@ namespace code {
 	}
 
 	void Output::putPtr(Word w) {
+		assert(false);
+	}
+
+	void Output::align(Nat to) {
 		assert(false);
 	}
 
@@ -84,6 +89,10 @@ namespace code {
 
 	void Output::putRelative(Label lbl, Nat offset) {
 		putInt(toRelative(labelOffset(lbl.id) + offset));
+	}
+
+	void Output::putOffset(Label lbl) {
+		putInt(labelOffset(lbl.id));
 	}
 
 	void Output::putAddress(Label lbl) {
@@ -162,6 +171,10 @@ namespace code {
 
 	void LabelOutput::putPtr(Word w) {
 		size += ptrSize;
+	}
+
+	void LabelOutput::align(Nat to) {
+		size = roundUp(size, to);
 	}
 
 	void LabelOutput::putGc(GcCodeRef::Kind kind, Nat size, Word w) {

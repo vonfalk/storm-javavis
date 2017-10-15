@@ -20,6 +20,8 @@ namespace code {
 			TRANSFORM(fnRetRef),
 		};
 
+		Layout::Active::Active(Part part, Label pos) : part(part), pos(pos) {}
+
 		Layout::Layout(Binary *owner) : owner(owner) {}
 
 		void Layout::before(Listing *dest, Listing *src) {
@@ -59,10 +61,11 @@ namespace code {
 			Nat spilled = toPreserve->count();
 			if (result->memory)
 				spilled++; // The hidden parameter needs to be spilled!
-			if (usingEH)
-				spilled += 2;
 
 			layout = code::x64::layout(src, params, spilled);
+
+			// The EH table.
+			activeParts = new (this) Array<Active>();
 		}
 
 		void Layout::during(Listing *dest, Listing *src, Nat line) {
@@ -79,7 +82,33 @@ namespace code {
 
 		void Layout::after(Listing *dest, Listing *src) {
 			*dest << dest->meta();
-			// TODO: Output metadata table.
+
+			// Output metadata table.
+			Array<Var> *vars = src->allVars();
+
+			for (nat i = 0; i < vars->count(); i++) {
+				Var &v = vars->at(i);
+				Operand fn = src->freeFn(v);
+				if (fn.empty())
+					*dest << dat(ptrConst(Offset(0)));
+				else
+					*dest << dat(src->freeFn(v));
+				*dest << dat(ptrConst(layout->at(v.key())));
+			}
+
+			// Output the table containing active parts. Used by the exception handling mechanism.
+			*dest << alignAs(Size::sPtr);
+			// Table contents. Each 'row' is 8 bytes.
+			for (Nat i = 0; i < activeParts->count(); i++) {
+				const Active &a = activeParts->at(i);
+				*dest << lblOffset(a.pos);
+				*dest << dat(natConst(a.part.key()));
+			}
+
+			// Table size.
+			*dest << dat(ptrConst(activeParts->count()));
+			// Owner.
+			*dest << dat(objPtr(owner));
 		}
 
 		Operand Layout::resolve(Listing *src, const Operand &op) {
@@ -126,18 +155,6 @@ namespace code {
 			// Keep track of offsets.
 			Offset offset = -Offset::sPtr;
 
-			// Output the exception handler frame.
-			if (usingEH) {
-				// Current part id.
-				*dest << mov(intRel(ptrFrame, offset), natConst(0));
-				offset -= Offset::sPtr;
-
-				// Owner (needs two instructions, since both will hit memory).
-				*dest << mov(ptrA, objPtr(owner));
-				*dest << mov(ptrRel(ptrFrame, offset), ptrA);
-				offset -= Offset::sPtr;
-			}
-
 			// Save registers we need to preserve.
 			for (RegSet::Iter i = toPreserve->begin(); i != toPreserve->end(); ++i) {
 				*dest << mov(ptrRel(ptrFrame, offset), asSize(i.v(), Size::sPtr));
@@ -153,17 +170,16 @@ namespace code {
 		}
 
 		void Layout::epilogTfm(Listing *dest, Listing *src, Nat line) {
-			// Destroy blocks. Note: we shall not modify 'part' as this may be an early return from the function.
+			// Destroy blocks. Note: we shall not modify 'part' nor alter the exception table as
+			// this may be an early return from the function.
 			Part oldPart = part;
 			for (Part now = part; now != Part(); now = src->prev(now)) {
-				destroyPart(dest, now, true);
+				destroyPart(dest, now, true, false);
 			}
 			part = oldPart;
 
 			// Restore preserved registers.
 			Offset offset = -Offset::sPtr;
-			if (usingEH)
-				offset -= Offset::sPtr*2;
 			for (RegSet::Iter i = toPreserve->begin(); i != toPreserve->end(); ++i) {
 				*dest << mov(asSize(i.v(), Size::sPtr), ptrRel(ptrFrame, offset));
 				offset -= Offset::sPtr;
@@ -188,11 +204,11 @@ namespace code {
 				if (now == Part())
 					throw BlockEndError(L"Block " + ::toS(target) + L" is not a parent of " + ::toS(start));
 
-				destroyPart(dest, now, false);
+				destroyPart(dest, now, false, true);
 			}
 
 			// Destroy the last one as well.
-			destroyPart(dest, target, false);
+			destroyPart(dest, target, false, true);
 		}
 
 		Offset Layout::partId() {
@@ -201,8 +217,6 @@ namespace code {
 
 		Offset Layout::resultParam() {
 			Nat count = 1 + toPreserve->count();
-			if (usingEH)
-				count += 2;
 			return -(Offset::sPtr * count);
 		}
 
@@ -251,11 +265,15 @@ namespace code {
 				}
 			}
 
-			if (usingEH)
-				*dest << mov(intRel(ptrFrame, partId()), natConst(part.key()));
+			if (usingEH) {
+				// Remember where the part started.
+				Label lbl = dest->label();
+				*dest << lbl;
+				activeParts->push(Active(part, lbl));
+			}
 		}
 
-		void Layout::destroyPart(Listing *dest, Part destroy, Bool preserveRax) {
+		void Layout::destroyPart(Listing *dest, Part destroy, Bool preserveRax, Bool table) {
 			if (destroy != part)
 				throw BlockEndError();
 
@@ -290,8 +308,11 @@ namespace code {
 			}
 
 			part = dest->prev(part);
-			if (usingEH)
-				*dest << mov(intRel(ptrFrame, partId()), natConst(part.key()));
+			if (usingEH && table) {
+				Label lbl = dest->label();
+				*dest << lbl;
+				activeParts->push(Active(part, lbl));
+			}
 		}
 
 		static void returnLayout(Listing *dest, primitive::PrimitiveKind k, nat &i, nat &r, Offset offset) {

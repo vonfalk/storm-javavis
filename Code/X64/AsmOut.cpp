@@ -640,6 +640,14 @@ namespace code {
 			}
 		}
 
+		void lblOffsetOut(Output *to, Instr *instr) {
+			to->putOffset(instr->src().label());
+		}
+
+		void alignOut(Output *to, Instr *instr) {
+			to->align(instr->src().constant());
+		}
+
 #define OUTPUT(x) { op::x, &x ## Out }
 
 		typedef void (*OutputFn)(Output *to, Instr *instr);
@@ -692,6 +700,8 @@ namespace code {
 			OUTPUT(fwait),
 
 			OUTPUT(dat),
+			OUTPUT(lblOffset),
+			OUTPUT(align),
 		};
 
 		void output(Listing *src, Output *to) {

@@ -23,7 +23,7 @@ static Int throwError(Int point) {
 	return point;
 }
 
-BEGIN_TEST_(CodeExceptionTest, Code) {
+BEGIN_TEST(CodeExceptionTest, Code) {
 	Engine &e = gEngine();
 	Arena *arena = code::arena(e);
 
@@ -95,17 +95,17 @@ BEGIN_TEST(CodeCleanupTest, Code) {
 	*l << prolog();
 
 	*l << mov(v, intConst(10));
-	*l << fnParam(intConst(1));
-	*l << fnCall(errorFn, valInt());
+	*l << fnParam(intDesc(e), intConst(1));
+	*l << fnCall(errorFn);
 
 	*l << begin(block);
 	*l << mov(w, intConst(20));
-	*l << fnParam(intConst(2));
-	*l << fnCall(errorFn, valInt());
+	*l << fnParam(intDesc(e), intConst(2));
+	*l << fnCall(errorFn);
 	*l << end(block);
 
-	*l << fnParam(intConst(3));
-	*l << fnCall(errorFn, valInt());
+	*l << fnParam(intDesc(e), intConst(3));
+	*l << fnCall(errorFn);
 
 	l->result = intDesc(e);
 	*l << fnRet(eax);

@@ -53,6 +53,21 @@ namespace code {
 			// Currently active part.
 			Part part;
 
+			// Temporary storage of the active part table.
+			class Active {
+				STORM_VALUE;
+			public:
+				Active(Part part, Label pos);
+
+				// Which part?
+				Part part;
+
+				// Where does the part start?
+				Label pos;
+			};
+
+			Array<Active> *activeParts;
+
 			// Using exception handling here?
 			Bool usingEH;
 
@@ -83,7 +98,7 @@ namespace code {
 
 			// Create and destroy parts.
 			void initPart(Listing *dest, Part init);
-			void destroyPart(Listing *dest, Part destroy, Bool preserveRax);
+			void destroyPart(Listing *dest, Part destroy, Bool preserveRax, Bool notifyTable);
 
 			// Spill parameters to the stack.
 			void spillParams(Listing *dest);

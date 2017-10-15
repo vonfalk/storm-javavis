@@ -41,7 +41,7 @@ namespace code {
 		nat size = runtime::codeSize(code);
 		for (nat i = 0; i < size; i++) {
 			if (i % columns == 0) {
-				*to << S("\n") << hex(i) << S(":");
+				*to << S("\n") << hex(i) << S(" -");
 			}
 
 			*to << S(" ") << hex(code[i]);

@@ -133,6 +133,9 @@ namespace code {
 	PROXY0(fcompp);
 	PROXY0(fwait);
 	PROXY1(dat, Operand);
+	PROXY1(lblOffset, Label);
+	PROXY1(align, Offset);
+	PROXY1(alignAs, Size);
 	PROXY0(prolog);
 	PROXY0(epilog);
 	PROXY2(preserve, Operand, Reg);

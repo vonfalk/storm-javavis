@@ -93,6 +93,8 @@ namespace code {
 		void RemoveInvalid::after(Listing *dest, Listing *src) {
 			// Output all constants.
 			*dest << lblLarge;
+			if (large->count())
+				*dest << alignAs(Size::sPtr);
 			for (Nat i = 0; i < large->count(); i++) {
 				*dest << dat(large->at(i));
 			}

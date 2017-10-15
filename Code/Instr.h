@@ -193,6 +193,13 @@ namespace code {
 	// Data.
 	Instr *STORM_FN dat(EnginePtr e, Operand v);
 
+	// Offset of a label.
+	Instr *STORM_FN lblOffset(EnginePtr e, Label l);
+
+	// Align to specific size.
+	Instr *STORM_FN alignAs(EnginePtr e, Size v);
+	Instr *STORM_FN align(EnginePtr e, Offset v);
+
 	// Function prolog/epilog. The prolog will automatically initialize the root block, and the epilog
 	// will automatically destroy all active blocks. The epilog does not count as closing a block, and
 	// may therefore be used inside functions to implement a return statement. For example:

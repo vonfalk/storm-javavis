@@ -66,6 +66,8 @@ namespace code {
 		OP_CODE(fcompp, destNone),
 		OP_CODE(fwait, destNone),
 		OP_CODE(dat, destNone),
+		OP_CODE(lblOffset, destNone),
+		OP_CODE(align, destNone),
 		OP_CODE(prolog, destNone),
 		OP_CODE(epilog, destNone),
 		OP_CODE(preserve, destWrite),
