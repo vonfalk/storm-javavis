@@ -56,7 +56,7 @@ namespace code {
 			TRANSFORM(shl),
 		};
 
-		static bool isComplex(Listing *l, Var v) {
+		static bool isComplexParam(Listing *l, Var v) {
 			TypeDesc *t = l->paramDesc(v);
 			if (!t)
 				return false;
@@ -64,11 +64,11 @@ namespace code {
 			return as<ComplexDesc>(t) != null;
 		}
 
-		static bool isComplex(Listing *l, Operand op) {
+		static bool isComplexParam(Listing *l, Operand op) {
 			if (op.type() != opVariable)
 				return false;
 
-			return isComplex(l, op.var());
+			return isComplexParam(l, op.var());
 		}
 
 		RemoveInvalid::RemoveInvalid() {}
@@ -83,8 +83,13 @@ namespace code {
 			Array<Var> *vars = dest->allParams();
 			for (Nat i = 0; i < vars->count(); i++) {
 				Var v = vars->at(i);
-				if (isComplex(dest, v)) {
-					dest->freeOpt(v, dest->freeOpt(v) | freeIndirection);
+				if (isComplexParam(dest, v)) {
+					FreeOpt flags = dest->freeOpt(v);
+					// Complex parameters are freed by the caller.
+					flags &= ~freeOnException;
+					flags &= ~freeOnBlockExit;
+					flags |= freeIndirection;
+					dest->freeOpt(v, flags);
 				}
 			}
 		}
@@ -144,7 +149,7 @@ namespace code {
 		Instr *RemoveInvalid::extractComplex(Listing *to, Instr *i, Nat line) {
 			// Complex parameters are passed as a pointer. Dereference these by inserting a 'mov' instruction.
 			RegSet *regs = used->at(line);
-			if (isComplex(to, i->src())) {
+			if (isComplexParam(to, i->src())) {
 				const Operand &src = i->src();
 				Reg reg = asSize(unusedReg(regs), Size::sPtr);
 				regs = new (this) RegSet(*regs);
@@ -154,7 +159,7 @@ namespace code {
 				i = i->alterSrc(xRel(src.size(), reg, src.offset()));
 			}
 
-			if (isComplex(to, i->dest())) {
+			if (isComplexParam(to, i->dest())) {
 				const Operand &dest = i->dest();
 				Reg reg = asSize(unusedReg(regs), Size::sPtr);
 				*to << mov(reg, ptrRel(dest.var(), Offset()));

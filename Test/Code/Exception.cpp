@@ -238,11 +238,13 @@ struct Large {
 };
 
 static bool correct = false;
+static int times = 0;
 
 static void destroyLarge(Large *large) {
 	correct &= large->a == 0;
 	correct &= large->b == 10;
 	correct &= large->c == 0;
+	times++;
 }
 
 Large::~Large() {
@@ -285,12 +287,16 @@ BEGIN_TEST(ExceptionLargeTest, Code) {
 
 	throwAt = 1;
 	correct = true;
+	times = 0;
 	CHECK_ERROR((*fn)(large), Error);
 	CHECK(correct);
+	CHECK_EQ(times, 2);
 
 	throwAt = 2;
 	correct = true;
+	times = 0;
 	CHECK_RUNS((*fn)(large));
 	CHECK(correct);
+	CHECK_EQ(times, 2);
 
 } END_TEST
