@@ -79,5 +79,29 @@ namespace code {
 			return l;
 		}
 
+		Listing *Arena::engineRedirect(TypeDesc *result, Array<TypeDesc *> *params, Ref fn, Operand engine) {
+			Listing *l = new (this) Listing(this);
+
+			if (as<PrimitiveDesc>(result)) {
+				// The result is returned in a register. The old pointer and the constant 0 will fit
+				// inside the 'returnData' member of EnginePtr.
+				*l << push(ptrConst(Offset(0)));
+				*l << push(engine);
+			} else {
+				// The result is returned using a hidden parameter. The first parameter is, and has
+				// to be, a pointer to the returned object. Here, the old return pointer and the
+				// return value pointer are stored in the 'returnData' member of EnginePtr.
+				*l << mov(ptrA, ptrRel(ptrStack, Offset::sPtr)); // Read the return value ptr.
+				*l << push(engine);
+				*l << push(ptrA); // Store the return value ptr once more.
+			}
+
+			*l << call(fn, valVoid());
+			*l << add(ptrStack, ptrConst(Size::sPtr * 2));
+			*l << ret(valVoid());
+
+			return l;
+		}
+
 	}
 }

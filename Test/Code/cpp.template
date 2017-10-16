@@ -15,7 +15,8 @@ BEGIN_TEST($file$Test, Code) {
 	$$
 
 	*l << epilog();
-	*l << ret(valInt());
+	l->result = intDesc(e);
+	*l << ret(eax);
 
 	Binary *b = new (e) Binary(arena, l);
 	typedef Int (*Fn)();

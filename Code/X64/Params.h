@@ -177,5 +177,7 @@ namespace code {
 		// Create a 'result' object describing how the return value shall be represented.
 		Result *STORM_FN result(TypeDesc *type);
 
+		// Perform a full layout of parameters.
+		Params *STORM_FN layoutParams(TypeDesc *result, Array<TypeDesc *> *params);
 	}
 }

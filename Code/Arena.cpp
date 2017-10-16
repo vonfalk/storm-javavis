@@ -53,6 +53,11 @@ namespace code {
 		return null;
 	}
 
+	Listing *Arena::engineRedirect(TypeDesc *result, Array<TypeDesc *> *params, Ref fn, Operand engine) {
+		assert(false);
+		return null;
+	}
+
 
 #if defined(X86) && defined(WINDOWS)
 	Arena *arena(EnginePtr e) {

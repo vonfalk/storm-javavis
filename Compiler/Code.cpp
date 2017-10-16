@@ -86,6 +86,10 @@ namespace storm {
 #if defined(X86)
 
 	code::Listing *StaticEngineCode::redirectCode(Value result, code::Ref ref) {
+		// TODO:
+		// Engine &e = engine();
+		// return e.arena()->engineRedirect(result.desc(), params, ref, e.ref(Engine::rEngine));
+
 		using namespace code;
 
 		Listing *l = new (this) Listing();
@@ -111,6 +115,10 @@ namespace storm {
 #elif defined(X64)
 
 	code::Listing *StaticEngineCode::redirectCode(Value result, code::Ref ref) {
+		// TODO:
+		// Engine &e = engine();
+		// return e.arena()->engineRedirect(result.desc(), params, ref, e.ref(Engine::rEngine));
+
 		using namespace code;
 
 		Listing *l = new (this) Listing();

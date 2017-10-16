@@ -5,6 +5,7 @@
 #include "AsmOut.h"
 #include "RemoveInvalid.h"
 #include "Layout.h"
+#include "../Exception.h"
 
 namespace code {
 	namespace x64 {
@@ -43,11 +44,7 @@ namespace code {
 			Listing *l = new (this) Listing(this);
 
 			// Generate a layout of all parameters so we can properly restore them later.
-			Params *layout = new (this) Params();
-			if (code::x64::result(result)->memory)
-				layout->add(Param::returnId, ptrPrimitive());
-			for (Nat i = 0; i < params->count(); i++)
-				layout->add(i, params->at(i));
+			Params *layout = layoutParams(result, params);
 
 			// Note: We want to use the 'prolog' and 'epilog' functionality so that exceptions from
 			// 'fn' are able to propagate through this stub properly.
@@ -78,6 +75,47 @@ namespace code {
 			// Note: The epilog will preserve all registers in this case since there are no destructors to call!
 			*l << epilog();
 			*l << jmp(ptrA);
+
+			return l;
+		}
+
+		Listing *Arena::engineRedirect(TypeDesc *result, Array<TypeDesc *> *params, Ref fn, Operand engine) {
+			Listing *l = new (this) Listing(this);
+
+			// Examine the parameters to see if we have room for an additional parameter without
+			// spilling to the stack. We assume that no stack spilling is required since it vastly
+			// simplifies the implementation of the redirect, and we expect it to be needed very
+			// rarely. The functions that require an EnginePtr are generally small free-standing toS
+			// functions that do not require many parameters. Functions that would require spilling
+			// to the stack should probably be moved into some object anyway.
+			Params *layout = layoutParams(result, params);
+
+			// Shift all registers.
+			Reg last = noReg;
+			for (Nat i = layout->registerCount(); i > 0; i--) {
+				Reg r = layout->registerSrc(i - 1);
+				// Interesting?
+				if (fpRegister(r))
+					continue;
+				// Unused?
+				if (layout->registerAt(i - 1) == Param()) {
+					last = r;
+					continue;
+				}
+				// All integer registers full?
+				if (last == noReg)
+					throw InvalidValue(L"Can not create an engine redirect for this function. "
+									L"It has too many (integer) parameters.");
+
+				// Move the registers one step 'up'.
+				*l << mov(last, r);
+				last = r;
+			}
+
+			// Now, we can simply put the engine ptr inside the first register and jump on to the
+			// function we actually wanted to call.
+			*l << mov(last, engine);
+			*l << jmp(fn);
 
 			return l;
 		}

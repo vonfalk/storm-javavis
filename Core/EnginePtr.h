@@ -13,6 +13,11 @@ namespace storm {
 		// Ctor, so that we can call EnginePtr functions from C++ as well.
 		inline EnginePtr(Engine &e) : v(e) {}
 
+		// Automatic cast to Engine.
+		inline operator Engine &() {
+			return v;
+		}
+
 		// The engine itself.
 		Engine &v;
 

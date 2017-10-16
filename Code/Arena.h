@@ -58,13 +58,20 @@ namespace code {
 		 * Other backend-specific things.
 		 */
 
-		// Create the redirect itself. Calls 'fn' with 'param' (always pointer-sized or empty) to
-		// compute the actual function to call. The actual function (as well as the 'function'
-		// implemented by the redirect) takes params as defined by 'params' and returns 'result'.
+		// Create a function that calls another function (optionally with a pointer sized parameter)
+		// to figure out which function to actually call. Useful when implementing lazy compilation.
+		//
+		// Calls 'fn' with 'param' (always pointer-sized or empty) to compute the
+		// actual function to call. The actual function (as well as the 'function' implemented by
+		// the redirect) takes params as defined by 'params' and returns 'result'.
 		//
 		// These redirect objects are *not* platform independent!
 		virtual Listing *STORM_FN redirect(Bool member, TypeDesc *result, Array<TypeDesc *> *params, Ref fn, Operand param);
 
+		// Create a function that calls another (pre-determined) function and appends an 'EnginePtr'
+		// object as the first parameter to the other function. Calling member functions in this
+		// manner is not supported.
+		virtual Listing *STORM_FN engineRedirect(TypeDesc *result, Array<TypeDesc *> *params, Ref fn, Operand engine);
 	};
 
 	// Create an arena for this platform.

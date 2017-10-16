@@ -311,5 +311,14 @@ namespace code {
 			return new (result) Result(result);
 		}
 
+		Params *layoutParams(TypeDesc *result, Array<TypeDesc *> *params) {
+			Params *layout = new (params) Params();
+			if (code::x64::result(result)->memory)
+				layout->add(Param::returnId, ptrPrimitive());
+			for (Nat i = 0; i < params->count(); i++)
+				layout->add(i, params->at(i));
+			return layout;
+		}
+
 	}
 }
