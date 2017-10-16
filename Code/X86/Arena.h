@@ -36,6 +36,12 @@ namespace code {
 
 			virtual void STORM_FN removeFnRegs(RegSet *from) const;
 
+			/**
+			 * Misc.
+			 */
+
+			virtual Listing *STORM_FN redirect(Bool member, TypeDesc *result, Array<TypeDesc *> *params, Ref fn, Operand param);
+
 		};
 
 

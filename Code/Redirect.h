@@ -21,6 +21,7 @@ namespace code {
 	 * during the call to determine the actual function.
 	 */
 
+	// TODO: Remove this class!
 	class RedirectParam {
 		STORM_VALUE;
 	public:
@@ -39,6 +40,8 @@ namespace code {
 	 *
 	 * Note: if you are trying to return a non-built-in object, a pointer to the destination memory
 	 * location is usually passed as the first parameter. The redirect does not handle this by itself.
+	 *
+	 * TODO: Remove this overload.
 	 */
 	Listing *STORM_FN redirect(Array<RedirectParam> *params, Operand fn, Operand param);
 

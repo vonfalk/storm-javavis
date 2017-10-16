@@ -57,5 +57,27 @@ namespace code {
 			// esi, edi (and actually ebx as well) are preserved.
 		}
 
+		Listing *Arena::redirect(Bool member, TypeDesc *result, Array<TypeDesc *> *params, Ref fn, Operand param) {
+			Listing *l = new (this) Listing(this);
+
+			TODO(L"Handle 'member' properly!");
+
+			// Add parameters. We only want to free them if we get an exception.
+			for (Nat i = 0; i < params->count(); i++)
+				l->createParam(params->at(i), freeOnException | freePtr);
+
+			// Output the function.
+			*l << prolog();
+
+			if (param.empty())
+				*l << fnParam(ptrDesc(engine()), param);
+			*l << fnCall(fn, ptrDesc(engine()), ptrA);
+
+			*l << epilog(); // preserves ptrA
+			*l << jmp(ptrA);
+
+			return l;
+		}
+
 	}
 }

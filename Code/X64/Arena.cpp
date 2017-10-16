@@ -39,5 +39,48 @@ namespace code {
 				from->remove(i.v());
 		}
 
+		Listing *Arena::redirect(Bool member, TypeDesc *result, Array<TypeDesc *> *params, Ref fn, Operand param) {
+			Listing *l = new (this) Listing(this);
+
+			// Generate a layout of all parameters so we can properly restore them later.
+			Params *layout = new (this) Params();
+			if (code::x64::result(result)->memory)
+				layout->add(Param::returnId, ptrPrimitive());
+			for (Nat i = 0; i < params->count(); i++)
+				layout->add(i, params->at(i));
+
+			// Note: We want to use the 'prolog' and 'epilog' functionality so that exceptions from
+			// 'fn' are able to propagate through this stub properly.
+			*l << prolog();
+
+			// Store the registers used for parameters inside variables on the stack.
+			Array<Var> *vars = new (this) Array<Var>(layout->registerCount(), Var());
+			for (Nat i = 0; i < layout->registerCount(); i++) {
+				if (layout->registerAt(i) != Param()) {
+					Var &v = vars->at(i);
+					v = l->createVar(l->root(), Size::sLong);
+					*l << mov(v, asSize(layout->registerSrc(i), Size::sLong));
+				}
+			}
+
+			// Call 'fn' to obtain the actual function to call.
+			if (!param.empty())
+				*l << fnParam(ptrDesc(engine()), param);
+			*l << fnCall(fn, ptrDesc(engine()), ptrA);
+
+			// Restore the registers.
+			for (Nat i = 0; i < layout->registerCount(); i++) {
+				Var v = vars->at(i);
+				if (v != Var())
+					*l << mov(asSize(layout->registerSrc(i), Size::sLong), v);
+			}
+
+			// Note: The epilog will preserve all registers in this case since there are no destructors to call!
+			*l << epilog();
+			*l << jmp(ptrA);
+
+			return l;
+		}
+
 	}
 }

@@ -48,6 +48,12 @@ namespace code {
 		from->remove(ptrC);
 	}
 
+	Listing *Arena::redirect(Bool member, TypeDesc *result, Array<TypeDesc *> *params, Ref fn, Operand param) {
+		assert(false);
+		return null;
+	}
+
+
 #if defined(X86) && defined(WINDOWS)
 	Arena *arena(EnginePtr e) {
 		return new (e.v) x86::Arena();

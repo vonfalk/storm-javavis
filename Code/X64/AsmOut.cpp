@@ -433,7 +433,7 @@ namespace code {
 				break;
 			case opRegister:
 			case opRelative:
-				modRm(to, opCode(0x0F), rmNone, call ? 2 : 4, src);
+				modRm(to, opCode(0xFF), rmNone, call ? 2 : 4, src);
 				break;
 			default:
 				assert(false, L"Unsupported operand used for 'call' or 'jump'.");

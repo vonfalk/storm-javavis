@@ -2,6 +2,7 @@
 #include "Core/TObject.h"
 #include "Core/EnginePtr.h"
 #include "Output.h"
+#include "Operand.h"
 
 namespace code {
 	STORM_PKG(core.asm);
@@ -9,6 +10,7 @@ namespace code {
 	class Listing;
 	class Binary;
 	class RegSet;
+	class TypeDesc;
 
 	/**
 	 * An arena represents a collection of compiled code and external references for some architecture.
@@ -51,6 +53,17 @@ namespace code {
 		// implementation removes ptrA, ptrB and ptrC, but other Arena implementations may want to
 		// remove others as well.
 		virtual void STORM_FN removeFnRegs(RegSet *from) const;
+
+		/**
+		 * Other backend-specific things.
+		 */
+
+		// Create the redirect itself. Calls 'fn' with 'param' (always pointer-sized or empty) to
+		// compute the actual function to call. The actual function (as well as the 'function'
+		// implemented by the redirect) takes params as defined by 'params' and returns 'result'.
+		//
+		// These redirect objects are *not* platform independent!
+		virtual Listing *STORM_FN redirect(Bool member, TypeDesc *result, Array<TypeDesc *> *params, Ref fn, Operand param);
 
 	};
 
