@@ -3,9 +3,11 @@
 #include "DwarfEh.h"
 #ifdef POSIX
 #include <unwind.h>
+#endif
 
 namespace code {
 	namespace x64 {
+#ifdef POSIX
 
 		/**
 		 * Implementation of the runtime required to properly use the exceptions generated in
@@ -73,7 +75,12 @@ namespace code {
 		};
 
 #endif
+#else
+
+		// We need to define a dummy personality function so that other platforms link properly.
+		inline void stormPersonality() {}
+
+#endif
 
 	}
 }
-#endif

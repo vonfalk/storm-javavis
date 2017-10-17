@@ -29,7 +29,7 @@ namespace code {
 		void cleanup(StackFrame &frame);
 
 		// Output to string.
-		virtual void toS(StrBuf *to) const;
+		virtual void STORM_FN toS(StrBuf *to) const;
 
 	private:
 		// Information about a single variable.

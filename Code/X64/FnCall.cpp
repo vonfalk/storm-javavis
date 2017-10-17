@@ -285,7 +285,7 @@ namespace code {
 			static const Reg intReg[2] = { ptrA, ptrD };
 			static const Reg realReg[2] = { xmm0, xmm1 };
 			// Make sure not to overwrite any crucial memory region...
-			Size size(min(totalSize.size64() - offset.v64(), 8));
+			Size size(min(totalSize.size64() - offset.v64(), nat(8)));
 
 			switch (k) {
 			case primitive::none:

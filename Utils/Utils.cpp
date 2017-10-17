@@ -28,6 +28,8 @@ static inline bool alignedNat(volatile void *v) {
 	assert(alignedNat(&v), toHex((void *)&v) + L" is not properly aligned");
 
 #ifdef WINDOWS
+#include <intrin.h>
+#pragma intrinsic(_ReadWriteBarrier)
 #ifdef X64
 #error "Revise the atomics for 64-bit Windows!"
 

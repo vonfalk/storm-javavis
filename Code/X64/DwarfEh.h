@@ -100,7 +100,7 @@ namespace code {
 
 		};
 
-		struct FDEStream;
+		class FDEStream;
 
 		/**
 		 * Generate information about functions, later used by the exception system on some
