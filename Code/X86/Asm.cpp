@@ -416,5 +416,9 @@ namespace code {
 			}
 		}
 
+		bool resultParam(TypeDesc *desc) {
+			return as<PrimitiveDesc>(desc) == null;
+		}
+
 	}
 }

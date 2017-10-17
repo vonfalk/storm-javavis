@@ -39,10 +39,15 @@ namespace code {
 
 			// Registers saved in the prolog.
 			RegSet *preserved;
-			nat preservedCount;
 
 			// Are we using an exception handler?
-			bool usingEH;
+			Bool usingEH;
+
+			// Is there a hidden parameter for the return value?
+			Bool resultParam;
+
+			// Is this a member function?
+			Bool memberFn;
 
 			// Layout of variables.
 			Array<Offset> *layout;
@@ -56,6 +61,9 @@ namespace code {
 			// Label to where the Binary pointer is stored. Only valid if 'usingEH' is true.
 			Label binaryLbl;
 
+			// Create an Operand referring to the return pointer.
+			Operand resultLoc();
+
 			// Signature for transform functions.
 			typedef void (LayoutVars::*TransformFn)(Listing *dest, Listing *src, Nat line);
 
@@ -67,6 +75,8 @@ namespace code {
 			void epilogTfm(Listing *dest, Listing *src, Nat line);
 			void beginBlockTfm(Listing *dest, Listing *src, Nat line);
 			void endBlockTfm(Listing *dest, Listing *src, Nat line);
+			void fnRetTfm(Listing *dest, Listing *src, Nat line);
+			void fnRetRefTfm(Listing *dest, Listing *src, Nat line);
 
 			// Lookup variables to their corresponding offsets.
 			Operand resolve(Listing *src, const Operand &op);
@@ -87,7 +97,7 @@ namespace code {
 		 * 'savedRegs' - # of saved registers in this case.
 		 * 'usingEh' - using exception handler (on Windows)?
 		 */
-		Array<Offset> *STORM_FN layout(Listing *src, Nat savedRegs, Bool usingEh);
+		Array<Offset> *STORM_FN layout(Listing *src, Nat savedRegs, Bool usingEh, Bool resultParam, Bool member);
 
 	}
 }

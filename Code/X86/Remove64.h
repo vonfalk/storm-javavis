@@ -33,6 +33,7 @@ namespace code {
 
 			// Transform functions.
 			void movTfm(Listing *to, Instr *instr, RegSet *used);
+			void swapTfm(Listing *to, Instr *instr, RegSet *used);
 			void addTfm(Listing *to, Instr *instr, RegSet *used);
 			void adcTfm(Listing *to, Instr *instr, RegSet *used);
 			void borTfm(Listing *to, Instr *instr, RegSet *used);

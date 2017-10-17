@@ -25,6 +25,15 @@ namespace code {
 			immRegInstr(to, op8, op, instr->dest(), instr->src());
 		}
 
+		void swapOut(Output *to, Instr *instr) {
+			if (instr->size() == Size::sByte) {
+				to->putByte(0x86);
+			} else {
+				to->putByte(0x87);
+			}
+			modRm(to, registerId(instr->dest().reg()), instr->src());
+		}
+
 		void addOut(Output *to, Instr *instr) {
 			ImmRegInstr8 op8 = {
 				0x82, 0,
@@ -403,7 +412,6 @@ namespace code {
 		}
 
 		void mulOut(Output *to, Instr *instr) {
-			assert(instr->size() != Size::sByte);
 			assert(instr->dest().type() == opRegister);
 			const Operand &src = instr->src();
 			Reg reg = instr->dest().reg();
@@ -611,11 +619,12 @@ namespace code {
 		}
 
 		void alignOut(Output *to, Instr *instr) {
-			to->align(instr->src().constant());
+			to->align(Nat(instr->src().constant()));
 		}
 
 		const OpEntry<OutputFn> outputMap[] = {
 			OUTPUT(mov),
+			OUTPUT(swap),
 			OUTPUT(add),
 			OUTPUT(adc),
 			OUTPUT(bor),

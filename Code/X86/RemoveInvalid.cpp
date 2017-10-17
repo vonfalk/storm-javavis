@@ -135,7 +135,7 @@ namespace code {
 		void RemoveInvalid::mulTfm(Listing *dest, Instr *instr, Nat line) {
 
 			Size size = instr->size();
-			assert(size != Size::sByte && size <= Size::sInt, "Bytes not supported yet!");
+			assert(size <= Size::sInt, "Bytes not supported yet!");
 
 			if (instr->dest().type() == opRegister) {
 				*dest << instr;
@@ -186,8 +186,12 @@ namespace code {
 			if (!isByte && used->has(edx))
 				*to << push(edx);
 
+			// TODO: if 'src' is 'eax', then we're screwed.
+
 			// Move dest into eax first.
-			*to << mov(eax, dest);
+			if (isByte)
+				*to << bxor(eax, eax);
+			*to << mov(asSize(eax, dest.size()), dest);
 
 			if (srcConst) {
 				if (used->has(ebx))
@@ -198,8 +202,8 @@ namespace code {
 
 			// Note: we do not need to clear edx here, AsmOut will do that for us, ie. we treat edx
 			// as an output-only register.
-			*to << instr->alter(eax, newSrc);
-			*to << mov(dest, eax);
+			*to << instr->alter(asSize(eax, dest.size()), newSrc);
+			*to << mov(dest, asSize(eax, dest.size()));
 
 			if (srcConst && used->has(ebx))
 				*to << pop(ebx);
@@ -228,8 +232,12 @@ namespace code {
 			if (!isByte && used->has(edx))
 				*to << push(edx);
 
-			// Move source into eax.
-			*to << mov(eax, dest);
+			// TODO: if 'src' is 'eax', then we're screwed.
+
+			// Move dest into eax first.
+			if (isByte)
+				*to << bxor(eax, eax);
+			*to << mov(asSize(eax, dest.size()), dest);
 
 			if (srcConst) {
 				if (used->has(ebx))
@@ -241,10 +249,17 @@ namespace code {
 			// Note: we do not need to clear edx here, AsmOut will do that for us, ie. we treat edx
 			// as an output-only register.
 			if (instr->op() == op::imod)
-				*to << idiv(eax, newSrc);
+				*to << idiv(asSize(eax, dest.size()), newSrc);
 			else
-				*to << udiv(eax, newSrc);
-			*to << mov(dest, edx);
+				*to << udiv(asSize(eax, dest.size()), newSrc);
+
+			if (isByte) {
+				*to << shr(eax, byteConst(8));
+				*to << mov(dest, asSize(eax, dest.size()));
+			} else {
+				*to << mov(dest, edx);
+			}
+
 
 			if (srcConst && used->has(ebx))
 				*to << pop(ebx);

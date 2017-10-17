@@ -9,6 +9,7 @@ namespace code {
 
 		const OpEntry<Remove64::TransformFn> Remove64::transformMap[] = {
 			TRANSFORM(mov),
+			TRANSFORM(swap),
 			TRANSFORM(add),
 			TRANSFORM(adc),
 			TRANSFORM(bor),
@@ -80,6 +81,11 @@ namespace code {
 		void Remove64::movTfm(Listing *to, Instr *instr, RegSet *used) {
 			*to << mov(low32(instr->dest()), low32(instr->src()));
 			*to << mov(high32(instr->dest()), high32(instr->src()));
+		}
+
+		void Remove64::swapTfm(Listing *to, Instr *instr, RegSet *used) {
+			*to << swap(low32(instr->dest().reg()), low32(instr->src()));
+			*to << swap(high32(instr->dest().reg()), high32(instr->src()));
 		}
 
 		void Remove64::addTfm(Listing *to, Instr *instr, RegSet *used) {

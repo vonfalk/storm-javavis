@@ -353,6 +353,8 @@ namespace code {
 			nat r = 0;
 			returnLayout(dest, result->part1, i, r, Offset());
 			returnLayout(dest, result->part2, i, r, Offset::sPtr);
+
+			TODO(L"Test what happens when the return value is larger than the registers!");
 		}
 
 		static void returnPrimitive(Listing *dest, PrimitiveDesc *p, const Operand &value) {

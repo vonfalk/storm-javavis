@@ -18,12 +18,26 @@ namespace code {
 			TRANSFORM(epilog),
 			TRANSFORM(beginBlock),
 			TRANSFORM(endBlock),
+
+			TRANSFORM(fnRet),
+			TRANSFORM(fnRetRef),
 		};
 
 		LayoutVars::LayoutVars(Binary *owner) : owner(owner) {}
 
+		Operand LayoutVars::resultLoc() {
+			if (memberFn) {
+				return ptrRel(ptrFrame, Offset::sPtr * 3);
+			} else {
+				return ptrRel(ptrFrame, Offset::sPtr * 2);
+			}
+		}
+
 		void LayoutVars::before(Listing *dest, Listing *src) {
 			usingEH = src->exceptionHandler();
+			resultParam = code::x86::resultParam(src->result);
+			memberFn = src->member;
+
 			RegSet *used = allUsedRegs(src);
 			add64(used);
 
@@ -37,7 +51,7 @@ namespace code {
 					preserved->put(i.v());
 			}
 
-			layout = code::x86::layout(src, preserved->count(), usingEH);
+			layout = code::x86::layout(src, preserved->count(), usingEH, resultParam, memberFn);
 
 			if (usingEH)
 				binaryLbl = dest->label();
@@ -137,6 +151,52 @@ namespace code {
 				*dest << mov(intRel(ptrFrame, partId), natConst(part.key()));
 		}
 
+		static void saveResult(Listing *dest) {
+			if (PrimitiveDesc *p = as<PrimitiveDesc>(dest->result)) {
+				Size s = p->v.size();
+				switch (p->v.kind()) {
+				case primitive::none:
+					break;
+				case primitive::integer:
+				case primitive::pointer:
+					if (s == Size::sLong)
+						*dest << push(ptrD);
+					*dest << push(ptrA);
+					break;
+				case primitive::real:
+					*dest << sub(ptrStack, ptrConst(s));
+					*dest << fstp(xRel(s, ptrStack, Offset()));
+					break;
+				}
+			} else {
+				// In both cases we need to the address to the value on the stack.
+				*dest << push(ptrA);
+			}
+		}
+
+		static void restoreResult(Listing *dest) {
+			if (PrimitiveDesc *p = as<PrimitiveDesc>(dest->result)) {
+				Size s = p->v.size();
+				switch (p->v.kind()) {
+				case primitive::none:
+					break;
+				case primitive::integer:
+				case primitive::pointer:
+					*dest << pop(ptrA);
+					if (s == Size::sLong)
+						*dest << pop(ptrD);
+					break;
+				case primitive::real:
+					*dest << fld(xRel(s, ptrStack, Offset()));
+					*dest << add(ptrStack, ptrConst(s));
+					break;
+				}
+			} else {
+				// In both cases we need to the address to the value on the stack.
+				*dest << pop(ptrA);
+			}
+		}
+
 		void LayoutVars::destroyPart(Listing *dest, Part destroy, bool preserveEax) {
 			if (destroy != part)
 				throw BlockEndError();
@@ -152,7 +212,7 @@ namespace code {
 
 				if (!dtor.empty() && (when & freeOnBlockExit) == freeOnBlockExit) {
 					if (preserveEax && !pushedEax) {
-						*dest << push(ptrA);
+						saveResult(dest);
 						pushedEax = true;
 					}
 
@@ -177,7 +237,7 @@ namespace code {
 			}
 
 			if (pushedEax)
-				*dest << pop(ptrA);
+				restoreResult(dest);
 
 			part = dest->prev(part);
 			if (usingEH)
@@ -281,19 +341,110 @@ namespace code {
 			destroyPart(dest, target, false);
 		}
 
-
-		static Offset paramOffset(Listing *src, Var var) {
-			if (var == Var()) {
-				// Old ebp and return pointer.
-				return Offset::sPtr * 2;
+		static void returnPrimitive(Listing *dest, PrimitiveDesc *p, const Operand &value) {
+			switch (p->v.kind()) {
+			case primitive::none:
+				break;
+			case primitive::integer:
+			case primitive::pointer:
+				if (value.type() == opRegister && same(value.reg(), ptrA)) {
+					// Already at the proper place!
+				} else {
+					// A simple 'mov' is enough!
+					*dest << mov(asSize(ptrA, value.size()), value);
+				}
+				break;
+			case primitive::real:
+				// We need to load it on the FP stack.
+				*dest << push(value);
+				*dest << fld(xRel(value.size(), ptrStack, Offset()));
+				*dest << add(ptrStack, ptrConst(value.size()));
+				break;
 			}
-
-			Var prev = src->prev(var);
-			Offset offset = paramOffset(src, prev) + prev.size().aligned();
-			return offset.alignAs(Size::sPtr);
 		}
 
-		Array<Offset> *layout(Listing *src, Nat savedRegs, Bool usingEH) {
+		void LayoutVars::fnRetTfm(Listing *dest, Listing *src, Nat line) {
+			Operand value = resolve(src, src->at(line)->src());
+
+			if (PrimitiveDesc *p = as<PrimitiveDesc>(src->result)) {
+				returnPrimitive(dest, p, value);
+			} else if (ComplexDesc *c = as<ComplexDesc>(src->result)) {
+				// Call the copy-constructor.
+				*dest << lea(ptrA, value);
+				*dest << push(ptrA);
+				*dest << push(resultLoc());
+				*dest << call(c->ctor, valVoid());
+				*dest << add(ptrStack, ptrConst(Size::sPtr * 2));
+				*dest << lea(ptrA, value);
+			} else if (SimpleDesc *s = as<SimpleDesc>(src->result)) {
+			} else {
+				assert(false);
+			}
+
+			epilogTfm(dest, src, line);
+			*dest << ret(valVoid());
+		}
+
+		static void returnPrimitiveRef(Listing *dest, PrimitiveDesc *p, const Operand &value) {
+			Size s(p->v.size());
+			switch (p->v.kind()) {
+			case primitive::none:
+				break;
+			case primitive::integer:
+			case primitive::pointer:
+				// Always two 'mov'.
+				*dest << mov(ptrA, value);
+				*dest << mov(asSize(ptrA, s), xRel(s, ptrA, Offset()));
+				break;
+			case primitive::real:
+				// Load to the FP stack.
+				*dest << fld(xRel(s, ptrStack, Offset()));
+				break;
+			}
+		}
+
+		void LayoutVars::fnRetRefTfm(Listing *dest, Listing *src, Nat line) {
+			Operand value = resolve(src, src->at(line)->src());
+
+			if (PrimitiveDesc *p = as<PrimitiveDesc>(src->result)) {
+				returnPrimitiveRef(dest, p, value);
+			} else if (ComplexDesc *c = as<ComplexDesc>(src->result)) {
+				// Call the copy-constructor.
+				*dest << push(value);
+				*dest << push(resultLoc());
+				*dest << call(c->ctor, valVoid());
+				*dest << add(ptrStack, ptrConst(Size::sPtr));
+				*dest << pop(ptrA);
+			} else if (SimpleDesc *s = as<SimpleDesc>(src->result)) {
+			} else {
+				assert(false);
+			}
+
+			epilogTfm(dest, src, line);
+			*dest << ret(valVoid());
+		}
+
+
+		static void layoutParams(Array<Offset> *result, Listing *src, Bool resultParam, Bool member) {
+			Offset offset = Offset::sPtr * 2; // old ebp and return address
+			Array<Var> *params = src->allParams();
+			for (Nat i = 0; i < params->count(); i++) {
+				if (resultParam) {
+					// Add space for the result parameter
+					if (i == 0 && !member)
+						offset += Size::sPtr;
+					else if (i == 1 && member)
+						offset += Size::sPtr;
+				}
+
+				Var var = params->at(i);
+				Nat id = var.key();
+				result->at(id) = offset;
+				offset = (offset + var.size().aligned()).alignAs(Size::sPtr);
+			}
+		}
+
+		Array<Offset> *layout(Listing *src, Nat savedRegs, Bool usingEH, Bool resultParam, Bool member) {
 			Array<Offset> *result = code::layout(src);
 			Array<Var> *all = src->allVars();
 
@@ -304,16 +455,20 @@ namespace code {
 			// Saved registers.
 			varOffset += Size::sPtr * savedRegs;
 
+			// Update all variables.
 			for (nat i = 0; i < all->count(); i++) {
 				Var var = all->at(i);
 				Nat id = var.key();
 
 				if (src->isParam(var)) {
-					result->at(id) = paramOffset(src, var);
+					// Handled later.
 				} else {
 					result->at(id) = -(result->at(id) + var.size().aligned() + varOffset);
 				}
 			}
+
+			// Update all parameters.
+			layoutParams(result, src, resultParam, member);
 
 			result->last() = result->last() + varOffset;
 			return result;

@@ -2,6 +2,7 @@
 #include "../Reg.h"
 #include "../Output.h"
 #include "../Operand.h"
+#include "../TypeDesc.h"
 #include "Core/EnginePtr.h"
 
 namespace code {
@@ -130,6 +131,11 @@ namespace code {
 			Array<Nat> *srcReg;
 			Array<Nat> *destReg;
 		};
+
+
+		// Shall a result of the type 'r' be returned on the stack? Ie. do we need an additional
+		// parameter for the result?
+		bool resultParam(TypeDesc *desc);
 
 	}
 }
