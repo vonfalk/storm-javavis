@@ -562,7 +562,7 @@ namespace code {
 		void fistpOut(Output *to, Instr *instr) {
 			// We're actually using the FISTTP instruction, since that fixes proper truncation for us!
 			// It does, however, require SSE3. But that seems fair.
-			if (instr->size() == Size::sDouble) {
+			if (instr->size() == Size::sLong) {
 				modRm(to, opCode(0xDD), rmNone, 1, instr->dest());
 			} else {
 				modRm(to, opCode(0xDB), rmNone, 1, instr->dest());
@@ -578,7 +578,7 @@ namespace code {
 		}
 
 		void fildOut(Output *to, Instr *instr) {
-			if (instr->size() == Size::sDouble) {
+			if (instr->size() == Size::sLong) {
 				modRm(to, opCode(0xDF), rmNone, 5, instr->src());
 			} else {
 				modRm(to, opCode(0xDB), rmNone, 0, instr->src());
@@ -645,7 +645,7 @@ namespace code {
 		}
 
 		void alignOut(Output *to, Instr *instr) {
-			to->align(instr->src().constant());
+			to->align(Nat(instr->src().constant()));
 		}
 
 #define OUTPUT(x) { op::x, &x ## Out }

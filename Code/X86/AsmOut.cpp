@@ -493,7 +493,7 @@ namespace code {
 		void fistpOut(Output *to, Instr *instr) {
 #ifdef X86_REQUIRE_SSE3
 			// Issue FISTTP instead.
-			if (instr->size() == Size::sDouble) {
+			if (instr->size() == Size::sLong) {
 				to->putByte(0xDD);
 				modRm(to, 1, instr->dest());
 			} else {
@@ -523,7 +523,7 @@ namespace code {
 			modRm(to, 5, modified);
 
 			// FISTP 'dest'
-			if (instr->size() == Size::sDouble) {
+			if (instr->size() == Size::sLong) {
 				to->putByte(0xDF);
 				modRm(to, 7, instr->dest());
 			} else {
@@ -546,7 +546,7 @@ namespace code {
 		}
 
 		void fildOut(Output *to, Instr *instr) {
-			if (instr->size() == Size::sDouble) {
+			if (instr->size() == Size::sLong) {
 				to->putByte(0xDF);
 				modRm(to, 5, instr->src());
 			} else {

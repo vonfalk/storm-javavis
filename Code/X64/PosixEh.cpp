@@ -2,6 +2,10 @@
 #include "PosixEh.h"
 #include "DwarfTable.h"
 #include "Binary.h"
+
+namespace code {
+	namespace x64 {
+
 #ifdef POSIX
 
 #ifndef GCC
@@ -11,9 +15,6 @@
 #ifdef __USING_SJLJ_EXCEPTIONS__
 #error "Storm does not support SJLJ exceptions. Please use DWARF exceptions instead!"
 #endif
-
-namespace code {
-	namespace x64 {
 
 		// Struct used as a parameter to '_Unwind_Find_FDE'.
 		struct dwarf_eh_bases {
@@ -174,7 +175,11 @@ namespace code {
 			}
 		}
 
+#else
+
+		void stormPersonality() {}
+
+#endif
 	}
 }
 
-#endif

@@ -58,9 +58,7 @@ namespace code {
 		}
 
 		Listing *Arena::redirect(Bool member, TypeDesc *result, Array<TypeDesc *> *params, Ref fn, Operand param) {
-			Listing *l = new (this) Listing(this);
-
-			TODO(L"Handle 'member' properly!");
+			Listing *l = new (this) Listing(this, member, result);
 
 			// Add parameters. We only want to free them if we get an exception.
 			for (Nat i = 0; i < params->count(); i++)
@@ -71,7 +69,8 @@ namespace code {
 
 			if (!param.empty())
 				*l << fnParam(ptrDesc(engine()), param);
-			*l << fnCall(fn, ptrDesc(engine()), ptrA);
+			// It does not matter if the called function is a member in this case.
+			*l << fnCall(fn, false, ptrDesc(engine()), ptrA);
 
 			*l << epilog(); // preserves ptrA
 			*l << jmp(ptrA);

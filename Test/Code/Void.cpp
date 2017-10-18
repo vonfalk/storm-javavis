@@ -20,7 +20,7 @@ BEGIN_TEST(VoidTest, Code) {
 	*l << prolog();
 
 	*l << fnParam(intDesc(e), intConst(3));
-	*l << fnCall(r);
+	*l << fnCall(r, false);
 
 	*l << fnRet();
 

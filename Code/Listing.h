@@ -72,7 +72,9 @@ namespace code {
 		// Create an empty listing. Optionally associating it with an arena. Doing that makes the
 		// listing show backend-specific things in a proper way.
 		STORM_CTOR Listing();
+		STORM_CTOR Listing(Bool member, TypeDesc *result);
 		STORM_CTOR Listing(const Arena *arena);
+		STORM_CTOR Listing(const Arena *arena, Bool member, TypeDesc *result);
 
 		Listing(const Listing &o);
 
@@ -376,6 +378,9 @@ namespace code {
 
 		// Do we need an exception handler.
 		Bool needEH;
+
+		// Initialize everything.
+		void init(Bool member, TypeDesc *result);
 
 		// Find the block id for a part.
 		Nat findBlock(Nat partId) const;

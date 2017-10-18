@@ -75,10 +75,13 @@ namespace code {
 		STORM_CLASS;
 	public:
 		// Create.
-		TypeInstr(op::Code opCode, const Operand &dest, const Operand &src, TypeDesc *type);
+		TypeInstr(op::Code opCode, const Operand &dest, const Operand &src, TypeDesc *type, Bool member);
 
 		// The type of used in this instruction.
 		TypeDesc *type;
+
+		// Is this a call to a member function? Only used for 'fnCall' instructions.
+		Bool member;
 
 		// Alter various parts.
 		virtual Instr *STORM_FN alter(Operand dest, Operand src);
@@ -131,9 +134,9 @@ namespace code {
 	// the target itself.
 	Instr *STORM_FN fnParam(EnginePtr e, TypeDesc *type, Operand src);
 	Instr *STORM_FN fnParamRef(EnginePtr e, TypeDesc *type, Operand src);
-	Instr *STORM_FN fnCall(EnginePtr e, Operand call); // no result
-	Instr *STORM_FN fnCall(EnginePtr e, Operand call, TypeDesc *result, Operand to);
-	Instr *STORM_FN fnCallRef(EnginePtr e, Operand call, TypeDesc *result, Operand to);
+	Instr *STORM_FN fnCall(EnginePtr e, Operand call, Bool member); // no result
+	Instr *STORM_FN fnCall(EnginePtr e, Operand call, Bool member, TypeDesc *result, Operand to);
+	Instr *STORM_FN fnCallRef(EnginePtr e, Operand call, Bool member, TypeDesc *result, Operand to);
 
 	// High-level function return. Examines the return type specified in the listing and handles the
 	// return properly according to the current platform. Implies an 'epilog' instruction as well.

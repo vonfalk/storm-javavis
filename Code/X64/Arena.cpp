@@ -63,7 +63,7 @@ namespace code {
 			// Call 'fn' to obtain the actual function to call.
 			if (!param.empty())
 				*l << fnParam(ptrDesc(engine()), param);
-			*l << fnCall(fn, ptrDesc(engine()), ptrA);
+			*l << fnCall(fn, member, ptrDesc(engine()), ptrA);
 
 			// Restore the registers.
 			for (Nat i = 0; i < layout->registerCount(); i++) {

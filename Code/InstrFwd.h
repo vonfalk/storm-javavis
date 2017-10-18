@@ -71,16 +71,42 @@ namespace code {
 		return l << (*Fn)(l.engine(), p.t, p.u, p.v);
 	}
 
+	template <class T, class U, class V, class W, Instr *(*Fn)(EnginePtr, T, U, V, W)>
+	class InstrProxy4 {
+	public:
+		const T &t;
+		const U &u;
+		const V &v;
+		const W &w;
+		InstrProxy4(const T &t, const U &u, const V &v, const W &w) : t(t), u(u), v(v), w(w) {}
+	};
+
+	template <class T, class U, class V, class W, Instr *(*Fn)(EnginePtr, T, U, V, W)>
+	inline Listing &operator <<(Listing &l, const InstrProxy4<T, U, V, W, Fn> &p) {
+		return l << (*Fn)(l.engine(), p.t, p.u, p.v, p.w);
+	}
+
 
 #define PROXY0(op)												\
-	inline InstrProxy0<&op> op() { return InstrProxy0<&op>(); }
+	inline InstrProxy0<&op> op() {								\
+		return InstrProxy0<&op>();								\
+	}
 #define PROXY1(op, T)													\
-	inline InstrProxy1<T, &op> op(T const &t) { return InstrProxy1<T, &op>(t); }
+	inline InstrProxy1<T, &op> op(T const &t) {							\
+		return InstrProxy1<T, &op>(t);									\
+	}
 #define PROXY2(op, T, U)												\
-	inline InstrProxy2<T, U, &op> op(T const &t, U const &u) { return InstrProxy2<T, U, &op>(t, u); }
+	inline InstrProxy2<T, U, &op> op(T const &t, U const &u) {			\
+		return InstrProxy2<T, U, &op>(t, u);							\
+	}
 #define PROXY3(op, T, U, V)												\
-	inline InstrProxy3<T, U, V, &op> op(T const &t, U const &u, V const &v) { return InstrProxy3<T, U, V, &op>(t, u, v); }
-
+	inline InstrProxy3<T, U, V, &op> op(T const &t, U const &u, V const &v) { \
+		return InstrProxy3<T, U, V, &op>(t, u, v);						\
+	}
+#define PROXY4(op, T, U, V, W)											\
+	inline InstrProxy4<T, U, V, W, &op> op(T const &t, U const &u, V const &v, W const &w) { \
+		return InstrProxy4<T, U, V, W, &op>(t, u, v, w);				\
+	}
 
 	// Repetition of all OP-codes.
 	PROXY2(mov, Operand, Operand);
@@ -97,9 +123,9 @@ namespace code {
 	PROXY2(setCond, Operand, CondFlag);
 	PROXY2(fnParam, TypeDesc *, Operand);
 	PROXY2(fnParamRef, TypeDesc *, Operand);
-	PROXY1(fnCall, Operand);
-	PROXY3(fnCall, Operand, TypeDesc *, Operand);
-	PROXY3(fnCallRef, Operand, TypeDesc *, Operand);
+	PROXY2(fnCall, Operand, Bool);
+	PROXY4(fnCall, Operand, Bool, TypeDesc *, Operand);
+	PROXY4(fnCallRef, Operand, Bool, TypeDesc *, Operand);
 	PROXY1(fnRet, Operand);
 	PROXY1(fnRetRef, Operand);
 	PROXY0(fnRet);

@@ -32,13 +32,13 @@ namespace code {
 			class Param {
 				STORM_VALUE;
 			public:
-				Param(Operand src, Operand copyFn, Bool ref);
+				Param(Operand src, TypeDesc *type, Bool ref);
 
 				// Source operand.
 				Operand src;
 
-				// Function used for copying values (if any).
-				Operand copyFn;
+				// Source type.
+				TypeDesc *type;
 
 				// Reference parameter?
 				Bool ref;
@@ -70,11 +70,14 @@ namespace code {
 			void callFloatTfm(Listing *dest, Instr *instr, Nat line);
 			void retFloatTfm(Listing *dest, Instr *instr, Nat line);
 
+			// Perform a function call.
+			void fnCall(Listing *dest, TypeInstr *instr, Array<Param> *params);
+
 			// Function calls.
 			void fnParamTfm(Listing *dest, Instr *instr, Nat line);
 			void fnParamRefTfm(Listing *dest, Instr *instr, Nat line);
 			void fnCallTfm(Listing *dest, Instr *instr, Nat line);
-			void fnCallFloatTfm(Listing *dest, Instr *instr, Nat line);
+			void fnCallRefTfm(Listing *dest, Instr *instr, Nat line);
 		};
 
 	}

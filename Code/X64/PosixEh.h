@@ -78,7 +78,7 @@ namespace code {
 #else
 
 		// We need to define a dummy personality function so that other platforms link properly.
-		inline void stormPersonality() {}
+		void stormPersonality();
 
 #endif
 

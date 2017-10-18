@@ -27,7 +27,7 @@ BEGIN_TEST(RefTest, Code) {
 	*l << prolog();
 
 	*l << fnParam(intDesc(e), p);
-	*l << fnCall(Ref(fn), intDesc(e), eax);
+	*l << fnCall(Ref(fn), false, intDesc(e), eax);
 	*l << add(eax, intConst(5));
 
 	l->result = intDesc(e);
@@ -63,7 +63,7 @@ BEGIN_TEST(ReplaceTest, Code) {
 
 	Listing *l = new (e) Listing();
 	*l << prolog();
-	*l << fnCall(tenFun, intDesc(e), eax);
+	*l << fnCall(tenFun, false, intDesc(e), eax);
 	l->result = intDesc(e);
 	*l << fnRet(eax);
 
@@ -73,7 +73,7 @@ BEGIN_TEST(ReplaceTest, Code) {
 
 	l = new (e) Listing();
 	*l << prolog();
-	*l << fnCall(Ref(middle), intDesc(e), eax);
+	*l << fnCall(Ref(middle), false, intDesc(e), eax);
 	l->result = intDesc(e);
 	*l << fnRet(eax);
 
@@ -88,7 +88,7 @@ BEGIN_TEST(ReplaceTest, Code) {
 	*l << prolog();
 	*l << fnParam(intDesc(e), intConst(128));
 	*l << fnParam(intDesc(e), intConst(20));
-	*l << fnCall(addFun, intDesc(e), eax);
+	*l << fnCall(addFun, false, intDesc(e), eax);
 	l->result = intDesc(e);
 	*l << fnRet(eax);
 

@@ -22,7 +22,7 @@ BEGIN_TEST(CallPrimitive, Code) {
 	*l << prolog();
 
 	*l << fnParam(intDesc(e), intConst(100));
-	*l << fnCall(intFn, intDesc(e), ecx);
+	*l << fnCall(intFn, false, intDesc(e), ecx);
 
 	*l << fnRet(ecx);
 
@@ -47,7 +47,7 @@ BEGIN_TEST(CallPrimitiveRef, Code) {
 	*l << mov(v, intConst(100));
 	*l << lea(ptrA, v);
 	*l << fnParamRef(intDesc(e), ptrA);
-	*l << fnCall(intFn, intDesc(e), ecx);
+	*l << fnCall(intFn, false, intDesc(e), ecx);
 
 	*l << fnRet(ecx);
 
@@ -84,7 +84,7 @@ BEGIN_TEST(CallPrimitiveMany, Code) {
 	*l << fnParam(intDesc(e), ecx);
 	*l << fnParam(intDesc(e), intConst(8));
 	*l << fnParam(intDesc(e), eax);
-	*l << fnCall(intFn, intDesc(e), ecx);
+	*l << fnCall(intFn, false, intDesc(e), ecx);
 
 	*l << fnRet(ecx);
 
@@ -172,7 +172,7 @@ BEGIN_TEST(CallSmallInt, Code) {
 	*l << mov(ptrRel(v, Offset::sPtr), ptrConst(40));
 
 	*l << fnParam(desc, v);
-	*l << fnCall(intFn, intDesc(e), eax);
+	*l << fnCall(intFn, false, intDesc(e), eax);
 
 	*l << fnRet(eax);
 
@@ -201,7 +201,7 @@ BEGIN_TEST(CallSmallIntRef, Code) {
 
 	*l << lea(ptrA, v);
 	*l << fnParamRef(desc, ptrA);
-	*l << fnCall(intFn, intDesc(e), eax);
+	*l << fnCall(intFn, false, intDesc(e), eax);
 
 	*l << fnRet(eax);
 
@@ -254,7 +254,7 @@ BEGIN_TEST(CallMixedInt, Code) {
 
 	*l << fnParam(large, a);
 	*l << fnParam(small, b);
-	*l << fnCall(intFn, intDesc(e), eax);
+	*l << fnCall(intFn, false, intDesc(e), eax);
 
 	*l << fnRet(eax);
 
@@ -292,7 +292,7 @@ BEGIN_TEST(CallMixedIntRef, Code) {
 
 	*l << fnParamRef(large, ptrA);
 	*l << fnParamRef(small, ptrB);
-	*l << fnCall(intFn, intDesc(e), eax);
+	*l << fnCall(intFn, false, intDesc(e), eax);
 
 	*l << fnRet(eax);
 
@@ -339,7 +339,7 @@ BEGIN_TEST(CallMixed, Code) {
 	*l << mov(floatRel(a, Offset::sPtr + Offset::sFloat), floatConst(10.0f));
 
 	*l << fnParam(mixed, a);
-	*l << fnCall(mixedFn, floatDesc(e), eax);
+	*l << fnCall(mixedFn, false, floatDesc(e), eax);
 
 	*l << fnRet(eax);
 
@@ -369,7 +369,7 @@ BEGIN_TEST(CallMixedRef, Code) {
 
 	*l << lea(ptrA, a);
 	*l << fnParamRef(mixed, ptrA);
-	*l << fnCall(mixedFn, floatDesc(e), eax);
+	*l << fnCall(mixedFn, false, floatDesc(e), eax);
 
 	*l << fnRet(eax);
 
@@ -400,13 +400,13 @@ BEGIN_TEST(CallComplex, Code) {
 
 	*l << lea(ptrA, a);
 	*l << fnParam(ptrDesc(e), ptrA);
-	*l << fnCall(dbgVal->defaultCtor()->ref());
+	*l << fnCall(dbgVal->defaultCtor()->ref(), false);
 
 	*l << mov(ecx, intConst(8));
 
 	*l << fnParam(desc, a);
 	*l << fnParam(intDesc(e), ecx);
-	*l << fnCall(toCall, intDesc(e), eax);
+	*l << fnCall(toCall, false, intDesc(e), eax);
 
 	*l << fnRet(eax);
 
@@ -435,13 +435,13 @@ BEGIN_TEST(CallRefComplex, Code) {
 
 	*l << lea(ptrA, a);
 	*l << fnParam(ptrDesc(e), ptrA);
-	*l << fnCall(dbgVal->defaultCtor()->ref());
+	*l << fnCall(dbgVal->defaultCtor()->ref(), false);
 
 	*l << mov(ecx, intConst(8));
 	*l << lea(ptrA, a);
 	*l << fnParamRef(desc, ptrA);
 	*l << fnParam(intDesc(e), ecx);
-	*l << fnCall(toCall, intDesc(e), eax);
+	*l << fnCall(toCall, false, intDesc(e), eax);
 
 	*l << fnRet(eax);
 

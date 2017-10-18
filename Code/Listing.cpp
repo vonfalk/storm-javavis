@@ -131,40 +131,33 @@ namespace code {
 	 * Listing.
 	 */
 
-	Listing::Listing() :
-		arena(null),
-		code(new (engine()) Array<Entry>()),
-		nextLabels(null),
-		nextLabel(1),
-		params(new (engine()) Array<Nat>()),
-		vars(new (engine()) Array<IVar>()),
-		blocks(new (engine()) Array<IBlock>()),
-		parts(new (engine()) Array<IPart>()),
-		needEH(false) {
-
-		result = new (this) PrimitiveDesc(Primitive());
-		member = false;
-
-		// Create the root block.
-		IBlock root(engine());
-		root.parts->push(0);
-		blocks->push(root);
-		parts->push(IPart(engine(), 0, 0));
+	Listing::Listing() : arena(null) {
+		init(false, new (this) PrimitiveDesc(Primitive()));
 	}
 
-	Listing::Listing(const Arena *arena) :
-		arena(arena),
-		code(new (engine()) Array<Entry>()),
-		nextLabels(null),
-		nextLabel(1),
-		params(new (engine()) Array<Nat>()),
-		vars(new (engine()) Array<IVar>()),
-		blocks(new (engine()) Array<IBlock>()),
-		parts(new (engine()) Array<IPart>()),
-		needEH(false) {
+	Listing::Listing(Bool member, TypeDesc *result) : arena(null) {
+		init(member, result);
+	}
 
-		result = new (this) PrimitiveDesc(Primitive());
-		member = false;
+	Listing::Listing(const Arena *arena) : arena(arena) {
+		init(false, new (this) PrimitiveDesc(Primitive()));
+	}
+
+	Listing::Listing(const Arena *arena, Bool member, TypeDesc *result) : arena(arena) {
+		init(member, result);
+	}
+
+	void Listing::init(Bool member, TypeDesc *result) {
+		this->code = new (this) Array<Entry>();
+		this->nextLabels = null;
+		this->nextLabel = 1;
+		this->params = new (this) Array<Nat>();
+		this->vars = new (this) Array<IVar>();
+		this->blocks = new (this) Array<IBlock>();
+		this->parts = new (this) Array<IPart>();
+		this->needEH = false;
+		this->member = member;
+		this->result = result;
 
 		// Create the root block.
 		IBlock root(engine());

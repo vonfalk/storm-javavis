@@ -1,6 +1,7 @@
 #include "stdafx.h"
 #include "RemoveInvalid.h"
 #include "Listing.h"
+#include "Exception.h"
 #include "Asm.h"
 #include "Utils/Bitwise.h"
 
@@ -37,9 +38,10 @@ namespace code {
 			TRANSFORM(fnParam),
 			TRANSFORM(fnParamRef),
 			TRANSFORM(fnCall),
+			TRANSFORM(fnCallRef),
 		};
 
-		RemoveInvalid::Param::Param(Operand src, Operand copyFn, Bool ref) : src(src), copyFn(copyFn), ref(ref) {}
+		RemoveInvalid::Param::Param(Operand src, TypeDesc *type, Bool ref) : src(src), type(type), ref(ref) {}
 
 		RemoveInvalid::RemoveInvalid() {}
 
@@ -433,11 +435,23 @@ namespace code {
 		}
 
 		void RemoveInvalid::fnParamTfm(Listing *dest, Instr *instr, Nat line) {
-			params->push(Param(instr->src(), instr->dest(), false));
+			TypeInstr *ti = as<TypeInstr>(instr);
+			if (!ti) {
+				TODO(L"REMOVE ME"); return;
+				throw InvalidValue(L"Expected a TypeInstr for 'fnParam'.");
+			}
+
+			params->push(Param(ti->src(), ti->type, false));
 		}
 
 		void RemoveInvalid::fnParamRefTfm(Listing *dest, Instr *instr, Nat line) {
-			params->push(Param(instr->src(), instr->dest(), true));
+			TypeInstr *ti = as<TypeInstr>(instr);
+			if (!ti) {
+				TODO(L"REMOVE ME"); return;
+				throw InvalidValue(L"Expected a TypeInstr for 'fnParamRef'.");
+			}
+
+			params->push(Param(ti->src(), ti->type, true));
 		}
 
 		static Operand offset(const Operand &src, Offset offset) {
@@ -467,10 +481,147 @@ namespace code {
 		static void inlinedMemcpy(Listing *to, const Operand &src, Offset offset) {
 			Nat size = roundUp(src.refSize().size32(), Nat(4));
 			// All registers used here are destroyed during function calls.
-			*to << mov(ptrA, src);
+			if (src.type() != opRegister || !same(src.reg(), ptrA))
+				*to << mov(ptrA, src);
 			for (nat i = 0; i < size; i += 4) {
 				*to << mov(edx, intRel(ptrA, Offset(i)));
 				*to << mov(intRel(ptrStack, Offset(i) + offset), edx);
+			}
+		}
+
+		void RemoveInvalid::fnCall(Listing *dest, TypeInstr *instr, Array<Param> *params) {
+			assert(instr->src().type() != opRegister, L"Not supported.");
+
+			// Returning a reference?
+			Bool retRef = instr->op() == op::fnCallRef;
+
+			// Do we need a parameter for the return value?
+			if (resultParam(instr->type)) {
+				Nat id = instr->member ? 1 : 0;
+				params->insert(id, Param(instr->dest(), null, false));
+			} else if (retRef) {
+				// Perhaps we need to store the result on the stack?
+				if (instr->dest().type() == opRegister)
+					*dest << push(instr->dest());
+			}
+
+			// Push all parameters we can right now. For references and things that need a copy
+			// constructor, store the address on the stack for now and get back to them later.
+			for (Nat i = params->count(); i > 0; i--) {
+				Param &p = params->at(i - 1);
+
+				if (!p.type) {
+					if (retRef) {
+						*dest << push(instr->dest());
+					} else {
+						// We need an additional register for this. Do it later!
+						*dest << push(ptrConst(0));
+					}
+				} else if (as<ComplexDesc>(p.type) == null && !p.ref) {
+					// Push it to the stack now!
+					pushMemcpy(dest, p.src);
+				} else {
+					// Copy the parameter later.
+					Size s = p.type->size();
+					s += Size::sPtr.alignment();
+					*dest << sub(ptrStack, ptrConst(s));
+
+					if (p.src.type() == opRegister) {
+						// Store the source of the reference here for later. We might clobber this
+						// register during the next phase!
+						*dest << mov(ptrRel(ptrStack, Offset()), p.src);
+					}
+				}
+			}
+
+			// Now, we can use any registers we like!
+			// Note: If 'retRef' is false and we require a parameter for the return value, we know
+			// that the return value reside in memory somewhere, otherwise we can not use 'lea' with it!
+
+			// Cumulated offset from esp.
+			Offset paramOffset;
+
+			for (Nat i = 0; i < params->count(); i++) {
+				Param &p = params->at(i);
+
+				Size s = p.type ? p.type->size() : Size::sPtr;
+				s += Size::sPtr.alignment();
+
+				if (!p.type) {
+					if (!retRef) {
+						*dest << lea(ptrA, p.src);
+						*dest << mov(ptrRel(ptrStack, paramOffset), ptrA);
+					}
+				} else if (ComplexDesc *c = as<ComplexDesc>(p.type)) {
+					if (p.ref) {
+						*dest << push(p.src);
+					} else {
+						*dest << lea(ptrA, p.src);
+						*dest << push(ptrA);
+					}
+
+					*dest << lea(ptrA, ptrRel(ptrStack, paramOffset + Offset::sPtr));
+					*dest << push(ptrA);
+					*dest << call(c->ctor, valVoid());
+					*dest << add(ptrStack, ptrConst(Size::sPtr * 2));
+				} else if (p.ref) {
+					// Copy it using an inlined memcpy.
+					if (p.src.type() == opRegister) {
+						*dest << mov(ptrA, ptrRel(ptrStack, paramOffset));
+						inlinedMemcpy(dest, ptrA, paramOffset);
+					} else {
+						inlinedMemcpy(dest, p.src, paramOffset);
+					}
+				}
+
+				paramOffset += s;
+			}
+
+			// Call the function!
+			*dest << call(instr->src(), valVoid());
+
+			// Pop the stack.
+			if (paramOffset != Offset())
+				*dest << add(ptrStack, ptrConst(paramOffset));
+
+			// Handle the return value if needed.
+			if (PrimitiveDesc *p = as<PrimitiveDesc>(instr->type)) {
+				Operand to = instr->dest();
+
+				if (retRef) {
+					if (to.type() == opRegister) {
+						// Previously stored on the stack, restore it!
+						*dest << pop(ptrC);
+					} else {
+						*dest << mov(ptrC, to);
+					}
+					to = xRel(p->size(), ptrC, Offset());
+				}
+
+				switch (p->v.kind()) {
+				case primitive::none:
+					break;
+				case primitive::integer:
+				case primitive::pointer:
+					if (to.type() == opRegister && same(to.reg(), ptrA)) {
+						// Nothing to do!
+					} else if (to.size() == Size::sLong) {
+						*dest << mov(high32(to), edx);
+						*dest << mov(low32(to), eax);
+					} else {
+						*dest << mov(to, asSize(ptrA, to.size()));
+					}
+					break;
+				case primitive::real:
+					if (to.type() == opRegister) {
+						*dest << sub(ptrStack, ptrConst(to.size()));
+						*dest << fstp(xRel(to.size(), ptrStack, Offset()));
+						*dest << add(ptrStack, ptrConst(to.size()));
+					} else {
+						*dest << fstp(to);
+					}
+					break;
+				}
 			}
 		}
 
@@ -479,75 +630,31 @@ namespace code {
 			// array. This could catch stray fnParam op-codes if done right. We could also do it the
 			// other way around, letting fnParam search for a terminating fnCall and be done there.
 
-			// Push all parameters we can right now.
-			for (Nat i = params->count(); i > 0; i--) {
-				Param &p = params->at(i - 1);
-
-				if (p.copyFn.empty() && !p.ref) {
-					// Memcpy using push...
-					pushMemcpy(dest, p.src);
-				} else {
-					// Reserve stack space.
-					Size s = p.ref ? p.src.refSize() : p.src.size();
-					s += Size::sPtr.alignment();
-					*dest << sub(ptrStack, ptrConst(s));
-				}
+			TypeInstr *t = as<TypeInstr>(instr);
+			if (!t) {
+				TODO(L"REMOVE ME"); return;
+				throw InvalidValue(L"Expected a TypeInstr for 'fnCall'.");
 			}
 
-			// Now, we can clobber registers to our hearts content! At least until 'fnParamRef' is
-			// implemented. 'fnParam' with two parameters requires one of them to be a variable,
-			// while 'fnParamRef' is fine with keeping them anywhere.
+			fnCall(dest, t, params);
 
-			// Cumulated offset from esp.
-			Offset paramOffset;
-
-			for (Nat i = 0; i < params->count(); i++) {
-				Param &p = params->at(i);
-
-				Size s = p.ref ? p.src.refSize() : p.src.size();
-				s += Size::sPtr.alignment();
-
-				if (!p.copyFn.empty()) {
-					// Copy it!
-					if (p.ref) {
-						*dest << push(p.src);
-					} else {
-						*dest << lea(ptrA, p.src);
-						*dest << push(ptrA);
-					}
-					*dest << lea(ptrA, ptrRel(ptrStack, paramOffset + Offset::sPtr));
-					*dest << push(ptrA);
-					*dest << call(p.copyFn, valVoid());
-					*dest << add(ptrStack, ptrConst(Size::sPtr * 2));
-				} else if (p.ref) {
-					// Copy it using inlined memcpy.
-					inlinedMemcpy(dest, p.src, paramOffset);
-				}
-
-				paramOffset += s;
-			}
-
-			// Call the real function!
-			Size rSize = instr->dest().size();
-			*dest << call(instr->src(), ValType(rSize, false));
-
-			// If this was a float, do some magic.
-			// if (instr->op() == op::fnCallFloat) {
-			// 	*dest << sub(ptrStack, ptrConst(instr->dest().size()));
-			// 	*dest << fstp(xRel(rSize, ptrStack, Offset()));
-			// 	*dest << pop(instr->dest());
-			// }
-
-			// Pop the stack.
-			if (paramOffset != Offset())
-				*dest << add(ptrStack, ptrConst(paramOffset));
-
-			// Clear parameters for next time.
 			params->clear();
 		}
 
-		void RemoveInvalid::fnCallFloatTfm(Listing *dest, Instr *instr, Nat line) {
-			fnCallTfm(dest, instr, line);
+		void RemoveInvalid::fnCallRefTfm(Listing *dest, Instr *instr, Nat line) {
+			// Idea: Scan backwards to find fnCall op-codes rather than saving them in an
+			// array. This could catch stray fnParam op-codes if done right. We could also do it the
+			// other way around, letting fnParam search for a terminating fnCall and be done there.
+
+			TypeInstr *t = as<TypeInstr>(instr);
+			if (!t) {
+				TODO(L"REMOVE ME"); return;
+				throw InvalidValue(L"Expected a TypeInstr for 'fnCallRef'.");
+			}
+
+			fnCall(dest, t, params);
+
+			params->clear();
 		}
 
 	}

@@ -39,16 +39,16 @@ BEGIN_TEST(CodeExceptionTest, Code) {
 
 	*l << mov(v, intConst(10));
 	*l << fnParam(intDesc(e), intConst(1));
-	*l << fnCall(errorFn);
+	*l << fnCall(errorFn, false);
 
 	*l << begin(block);
 	*l << mov(w, intConst(20));
 	*l << fnParam(intDesc(e), intConst(2));
-	*l << fnCall(errorFn);
+	*l << fnCall(errorFn, false);
 	*l << end(block);
 
 	*l << fnParam(intDesc(e), intConst(3));
-	*l << fnCall(errorFn);
+	*l << fnCall(errorFn, false);
 
 	l->result = intDesc(e);
 	*l << fnRet(eax);
@@ -96,16 +96,16 @@ BEGIN_TEST(CodeCleanupTest, Code) {
 
 	*l << mov(v, intConst(10));
 	*l << fnParam(intDesc(e), intConst(1));
-	*l << fnCall(errorFn);
+	*l << fnCall(errorFn, false);
 
 	*l << begin(block);
 	*l << mov(w, intConst(20));
 	*l << fnParam(intDesc(e), intConst(2));
-	*l << fnCall(errorFn);
+	*l << fnCall(errorFn, false);
 	*l << end(block);
 
 	*l << fnParam(intDesc(e), intConst(3));
-	*l << fnCall(errorFn);
+	*l << fnCall(errorFn, false);
 
 	l->result = intDesc(e);
 	*l << fnRet(eax);
@@ -151,7 +151,7 @@ BEGIN_TEST(ExceptionRefTest, Code) {
 
 	*l << mov(v, intConst(103));
 	*l << fnParam(intDesc(e), intConst(1));
-	*l << fnCall(errorFn);
+	*l << fnCall(errorFn, false);
 
 	l->result = intDesc(e);
 	*l << fnRet(eax);
@@ -192,8 +192,8 @@ BEGIN_TEST(ExceptionSehTest, Code) {
 	*l << prolog();
 
 	*l << mov(v, intConst(103));
-	*l << fnParam(intConst(1));
-	*l << fnCall(errorFn, valInt());
+	*l << fnParam(intDesc(e), intConst(1));
+	*l << fnCall(errorFn, false, intDesc(e), eax);
 
 	l->result = intDesc(e);
 	*l << fnRet(eax);
@@ -274,7 +274,7 @@ BEGIN_TEST(ExceptionLargeTest, Code) {
 	*l << mov(intRel(v, Offset::sInt), intRel(p, Offset::sInt));
 	*l << mov(intRel(v, Offset::sInt * 2), intRel(p, Offset::sInt * 2));
 	*l << fnParam(intDesc(e), intConst(1));
-	*l << fnCall(errorFn);
+	*l << fnCall(errorFn, false);
 
 	l->result = intDesc(e);
 	*l << fnRet(eax);

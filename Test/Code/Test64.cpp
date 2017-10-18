@@ -64,7 +64,7 @@ BEGIN_TEST(Call64, Code) {
 
 	*l << prolog();
 	*l << fnParam(longDesc(e), v);
-	*l << fnCall(arena->external(S("longFn"), address(&longFn)));
+	*l << fnCall(arena->external(S("longFn"), address(&longFn)), false);
 	*l << fnRet();
 
 	Binary *b = new (e) Binary(arena, l);

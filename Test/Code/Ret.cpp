@@ -81,7 +81,7 @@ BEGIN_TEST(RetComplex, Code) {
 
 	*l << lea(ptrA, v);
 	*l << fnParam(ptrDesc(e), ptrA);
-	*l << fnCall(dbgVal->defaultCtor()->ref());
+	*l << fnCall(dbgVal->defaultCtor()->ref(), false);
 
 	*l << fnRet(v);
 
@@ -108,7 +108,7 @@ BEGIN_TEST(RetRefComplex, Code) {
 
 	*l << lea(ptrA, v);
 	*l << fnParam(ptrDesc(e), ptrA);
-	*l << fnCall(dbgVal->defaultCtor()->ref());
+	*l << fnCall(dbgVal->defaultCtor()->ref(), false);
 
 	*l << lea(ptrA, v);
 	*l << fnRetRef(ptrA);
@@ -140,7 +140,7 @@ BEGIN_TEST(RetCallComplex, Code) {
 
 	*l << prolog();
 
-	*l << fnCall(toCall, dbgDesc, v);
+	*l << fnCall(toCall, false, dbgDesc, v);
 
 	// This is abusing the interface a tiny bit...
 	*l << mov(eax, intRel(v, Offset()));
@@ -172,7 +172,7 @@ BEGIN_TEST(RetCallRefComplex, Code) {
 	*l << prolog();
 
 	*l << lea(ptrA, v);
-	*l << fnCallRef(toCall, dbgDesc, ptrA);
+	*l << fnCallRef(toCall, false, dbgDesc, ptrA);
 
 	// This is abusing the interface a tiny bit...
 	*l << mov(eax, intRel(v, Offset()));
@@ -254,7 +254,7 @@ BEGIN_TEST(RetCallSimple, Code) {
 
 	*l << prolog();
 
-	*l << fnCall(toCall, retDesc(e), v);
+	*l << fnCall(toCall, false, retDesc(e), v);
 	*l << mov(ptrA, ptrRel(v, Offset()));
 	*l << add(ptrA, ptrRel(v, Offset::sPtr));
 
@@ -279,7 +279,7 @@ BEGIN_TEST(RetCallRefSimple, Code) {
 	*l << prolog();
 
 	*l << lea(ptrA, v);
-	*l << fnCallRef(toCall, retDesc(e), ptrA);
+	*l << fnCallRef(toCall, false, retDesc(e), ptrA);
 	*l << mov(ptrA, ptrRel(v, Offset()));
 	*l << add(ptrA, ptrRel(v, Offset::sPtr));
 
@@ -360,7 +360,7 @@ BEGIN_TEST(RetCallSimpleFloat, Code) {
 
 	*l << prolog();
 
-	*l << fnCall(toCall, retFloatDesc(e), v);
+	*l << fnCall(toCall, false, retFloatDesc(e), v);
 	*l << mov(eax, intRel(v, Offset()));
 	*l << add(eax, intRel(v, Offset::sInt));
 
@@ -386,7 +386,7 @@ BEGIN_TEST(RetCallRefSimpleFloat, Code) {
 	*l << prolog();
 
 	*l << lea(ptrA, v);
-	*l << fnCallRef(toCall, retFloatDesc(e), ptrA);
+	*l << fnCallRef(toCall, false, retFloatDesc(e), ptrA);
 	*l << mov(eax, intRel(v, Offset()));
 	*l << add(eax, intRel(v, Offset::sInt));
 
