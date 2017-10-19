@@ -126,7 +126,7 @@ BEGIN_TEST(CallPrimitiveMany64, Code) {
 	*l << fnParam(intDesc(e), edi);
 	*l << fnParam(intDesc(e), intConst(0));
 	*l << fnParam(intDesc(e), intConst(0));
-	*l << fnCall(intFn, intDesc(e), ecx);
+	*l << fnCall(intFn, false, intDesc(e), ecx);
 
 	*l << fnRet(ecx);
 

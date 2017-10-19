@@ -347,14 +347,39 @@ namespace code {
 			}
 		}
 
-		// Put the return value into registers. Assumes ptrSi contains a pointer to the struct to be returned.
-		static void returnSimple(Listing *dest, Result *result) {
-			nat i = 0;
-			nat r = 0;
-			returnLayout(dest, result->part1, i, r, Offset());
-			returnLayout(dest, result->part2, i, r, Offset::sPtr);
+		// Memcpy using mov instructions.
+		static void movMemcpy(Listing *to, Reg dest, Reg src, Size size) {
+			Nat total = size.size64();
+			Nat offset = 0;
 
-			TODO(L"Test what happens when the return value is larger than the registers!");
+			for (; offset + 8 <= total; offset += 8) {
+				*to << mov(rdx, longRel(src, Offset(offset)));
+				*to << mov(longRel(dest, Offset(offset)), rdx);
+			}
+
+			for (; offset + 4 <= total; offset += 4) {
+				*to << mov(edx, intRel(src, Offset(offset)));
+				*to << mov(intRel(dest, Offset(offset)), edx);
+			}
+
+			for (; offset + 1 <= total; offset += 1) {
+				*to << mov(dl, byteRel(src, Offset(offset)));
+				*to << mov(byteRel(dest, Offset(offset)), dl);
+			}
+		}
+
+		// Put the return value into registers. Assumes ptrSi contains a pointer to the struct to be returned.
+		static void returnSimple(Listing *dest, Result *result, SimpleDesc *type, Offset resultParam) {
+			if (result->memory) {
+				*dest << mov(ptrA, ptrRel(ptrFrame, resultParam));
+				// Inline a memcpy using mov instructions.
+				movMemcpy(dest, ptrA, ptrSi, type->size());
+			} else {
+				nat i = 0;
+				nat r = 0;
+				returnLayout(dest, result->part1, i, r, Offset());
+				returnLayout(dest, result->part2, i, r, Offset::sPtr);
+			}
 		}
 
 		static void returnPrimitive(Listing *dest, PrimitiveDesc *p, const Operand &value) {
@@ -390,9 +415,9 @@ namespace code {
 				*dest << call(c->ctor, valVoid());
 				// Set 'rax' to the address of the return value.
 				*dest << mov(ptrA, ptrRel(ptrFrame, resultParam()));
-			} else if (as<SimpleDesc>(src->result)) {
+			} else if (SimpleDesc *s = as<SimpleDesc>(src->result)) {
 				*dest << lea(ptrSi, value);
-				returnSimple(dest, result);
+				returnSimple(dest, result, s, resultParam());
 			} else {
 				assert(false);
 			}
@@ -432,9 +457,9 @@ namespace code {
 				*dest << call(c->ctor, valVoid());
 				// Set 'rax' to the address of the return value.
 				*dest << mov(ptrA, ptrRel(ptrFrame, resultParam()));
-			} else if (as<SimpleDesc>(src->result)) {
+			} else if (SimpleDesc *s = as<SimpleDesc>(src->result)) {
 				*dest << mov(ptrSi, value);
-				returnSimple(dest, result);
+				returnSimple(dest, result, s, resultParam());
 			} else {
 				assert(false);
 			}

@@ -370,7 +370,6 @@ BEGIN_TEST(RetCallSimpleFloat, Code) {
 	typedef Int (*Fn)();
 	Fn fn = (Fn)b->address();
 
-	(*fn)();
 	CHECK_EQ((*fn)(), 30);
 } END_TEST
 
@@ -396,6 +395,141 @@ BEGIN_TEST(RetCallRefSimpleFloat, Code) {
 	typedef Int (*Fn)();
 	Fn fn = (Fn)b->address();
 
-	(*fn)();
 	CHECK_EQ((*fn)(), 30);
+} END_TEST
+
+// Struct that is too large to fit in the return registers on X86-64.
+struct LargeSimpleRet {
+	size_t a;
+	size_t b;
+	size_t c;
+};
+
+bool operator ==(const LargeSimpleRet &a, const LargeSimpleRet &b) {
+	return a.a == b.a
+		&& a.b == b.b
+		&& a.c == b.c;
+}
+
+bool operator !=(const LargeSimpleRet &a, const LargeSimpleRet &b) {
+	return !(a == b);
+}
+
+wostream &operator <<(wostream &to, const LargeSimpleRet &a) {
+	return to << L"{ " << a.a << L", " << a.b << L", " << a.c << L"}";
+}
+
+SimpleDesc *retLargeSimpleDesc(Engine &e) {
+	SimpleDesc *desc = new (e) SimpleDesc(Size::sPtr * 3, 3);
+	desc->at(0) = Primitive(primitive::integer, Size::sPtr, Offset());
+	desc->at(1) = Primitive(primitive::integer, Size::sPtr, Offset::sPtr);
+	desc->at(2) = Primitive(primitive::integer, Size::sPtr, Offset::sPtr * 2);
+	return desc;
+}
+
+BEGIN_TEST(RetLargeSimple, Code) {
+	Engine &e = gEngine();
+	Arena *arena = code::arena(e);
+
+	Listing *l = new (e) Listing();
+	l->result = retLargeSimpleDesc(e);
+	Var v = l->createVar(l->root(), Size::sPtr * 3);
+
+	*l << prolog();
+
+	*l << lea(ptrA, v);
+	*l << mov(ptrRel(ptrA, Offset()), ptrConst(10));
+	*l << mov(ptrRel(ptrA, Offset::sPtr), ptrConst(20));
+	*l << mov(ptrRel(ptrA, Offset::sPtr * 2), ptrConst(30));
+
+	*l << fnRet(v);
+
+	Binary *b = new (e) Binary(arena, l);
+	typedef LargeSimpleRet (*Fn)();
+	Fn fn = (Fn)b->address();
+
+	LargeSimpleRet ok = { 10, 20, 30 };
+	CHECK_EQ((*fn)(), ok);
+} END_TEST
+
+BEGIN_TEST(RetRefLargeSimple, Code) {
+	Engine &e = gEngine();
+	Arena *arena = code::arena(e);
+
+	Listing *l = new (e) Listing();
+	l->result = retLargeSimpleDesc(e);
+	Var v = l->createVar(l->root(), Size::sPtr * 3);
+
+	*l << prolog();
+
+	*l << lea(ptrA, v);
+	*l << mov(ptrRel(ptrA, Offset()), ptrConst(10));
+	*l << mov(ptrRel(ptrA, Offset::sPtr), ptrConst(20));
+	*l << mov(ptrRel(ptrA, Offset::sPtr * 2), ptrConst(30));
+
+	*l << lea(ptrA, v);
+	*l << fnRetRef(ptrA);
+
+	Binary *b = new (e) Binary(arena, l);
+	typedef LargeSimpleRet (*Fn)();
+	Fn fn = (Fn)b->address();
+
+	LargeSimpleRet ok = { 10, 20, 30 };
+	CHECK_EQ((*fn)(), ok);
+} END_TEST
+
+static LargeSimpleRet createLargeSimple() {
+	LargeSimpleRet r = { 20, 15, 22 };
+	return r;
+}
+
+BEGIN_TEST(RetCallLargeSimple, Code) {
+	Engine &e = gEngine();
+	Arena *arena = code::arena(e);
+	Ref toCall = arena->external(S("create"), address(&createLargeSimple));
+
+	Listing *l = new (e) Listing();
+	l->result = ptrDesc(e);
+	Var v = l->createVar(l->root(), Size::sPtr * 3);
+
+	*l << prolog();
+
+	*l << fnCall(toCall, false, retLargeSimpleDesc(e), v);
+	*l << mov(ptrA, ptrRel(v, Offset()));
+	*l << sub(ptrA, ptrRel(v, Offset::sPtr));
+	*l << add(ptrA, ptrRel(v, Offset::sPtr * 2));
+
+	*l << fnRet(ptrA);
+
+	Binary *b = new (e) Binary(arena, l);
+	typedef size_t (*Fn)();
+	Fn fn = (Fn)b->address();
+
+	CHECK_EQ((*fn)(), 27);
+} END_TEST
+
+BEGIN_TEST(RetCallRefLargeSimple, Code) {
+	Engine &e = gEngine();
+	Arena *arena = code::arena(e);
+	Ref toCall = arena->external(S("create"), address(&createLargeSimple));
+
+	Listing *l = new (e) Listing();
+	l->result = ptrDesc(e);
+	Var v = l->createVar(l->root(), Size::sPtr * 3);
+
+	*l << prolog();
+
+	*l << lea(ptrA, v);
+	*l << fnCallRef(toCall, false, retLargeSimpleDesc(e), ptrA);
+	*l << mov(ptrA, ptrRel(v, Offset()));
+	*l << sub(ptrA, ptrRel(v, Offset::sPtr));
+	*l << add(ptrA, ptrRel(v, Offset::sPtr * 2));
+
+	*l << fnRet(ptrA);
+
+	Binary *b = new (e) Binary(arena, l);
+	typedef size_t (*Fn)();
+	Fn fn = (Fn)b->address();
+
+	CHECK_EQ((*fn)(), 27);
 } END_TEST
