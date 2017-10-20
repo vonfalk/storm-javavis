@@ -45,6 +45,8 @@ memory management, which requires the source code for all programs using the MPS
 available unless another license is acquired. Furthermore, it is possible to integrate other garbage
 collectors into Storm if the MPS license is an issue.
 
+More information on the language server can be found at [http://urn.kb.se/resolve?urn=urn:nbn:se:liu:diva-138847](http://urn.kb.se/resolve?urn=urn:nbn:se:liu:diva-138847)
+
 Contact
 --------
 
