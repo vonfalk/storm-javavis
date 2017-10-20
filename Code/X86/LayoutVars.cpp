@@ -341,6 +341,22 @@ namespace code {
 			destroyPart(dest, target, false);
 		}
 
+		// Memcpy using mov instructions.
+		static void movMemcpy(Listing *to, Reg dest, Reg src, Size size) {
+			Nat total = size.size32();
+			Nat offset = 0;
+
+			for (; offset + 4 <= total; offset += 4) {
+				*to << mov(edx, intRel(src, Offset(offset)));
+				*to << mov(intRel(dest, Offset(offset)), edx);
+			}
+
+			for (; offset + 1 <= total; offset += 1) {
+				*to << mov(dl, byteRel(src, Offset(offset)));
+				*to << mov(byteRel(dest, Offset(offset)), dl);
+			}
+		}
+
 		static void returnPrimitive(Listing *dest, PrimitiveDesc *p, const Operand &value) {
 			switch (p->v.kind()) {
 			case primitive::none:
@@ -365,6 +381,7 @@ namespace code {
 
 		void LayoutVars::fnRetTfm(Listing *dest, Listing *src, Nat line) {
 			Operand value = resolve(src, src->at(line)->src());
+			assert(value.size() == src->result->size(), L"Wrong size passed to fnRet!");
 
 			if (PrimitiveDesc *p = as<PrimitiveDesc>(src->result)) {
 				returnPrimitive(dest, p, value);
@@ -377,6 +394,9 @@ namespace code {
 				*dest << add(ptrStack, ptrConst(Size::sPtr * 2));
 				*dest << lea(ptrA, value);
 			} else if (SimpleDesc *s = as<SimpleDesc>(src->result)) {
+				// *dest << lea(ptrC, value);
+				// *dest << mov(ptrA, resultLoc());
+				// movMemcpy(dest, ptrA, ptrC, s->size());
 			} else {
 				assert(false);
 			}

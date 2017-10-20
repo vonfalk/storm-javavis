@@ -616,7 +616,7 @@ namespace code {
 					if (to.type() == opRegister) {
 						*dest << sub(ptrStack, ptrConst(to.size()));
 						*dest << fstp(xRel(to.size(), ptrStack, Offset()));
-						*dest << add(ptrStack, ptrConst(to.size()));
+						*dest << pop(to);
 					} else {
 						*dest << fstp(to);
 					}

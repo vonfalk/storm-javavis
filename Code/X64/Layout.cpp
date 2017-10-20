@@ -404,6 +404,7 @@ namespace code {
 
 		void Layout::fnRetTfm(Listing *dest, Listing *src, Nat line) {
 			Operand value = resolve(src, src->at(line)->src());
+			assert(value.size() == src->result->size(), L"Wrong size passed to fnRet!");
 
 			// Handle the return value.
 			if (PrimitiveDesc *p = as<PrimitiveDesc>(src->result)) {

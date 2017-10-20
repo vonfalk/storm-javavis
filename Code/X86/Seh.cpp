@@ -91,8 +91,7 @@ EXCEPTION_DISPOSITION __cdecl x86SEH(_EXCEPTION_RECORD *er, void *frame, _CONTEX
 		SEHFrame *f = SEHFrame::fromSEH(frame);
 		f->cleanup();
 	} else {
-		// Find any exception handlers here!
-		TODO(L"Find handlers.");
+		// TODO: Find any exception handlers here!
 	}
 	return ExceptionContinueSearch;
 }

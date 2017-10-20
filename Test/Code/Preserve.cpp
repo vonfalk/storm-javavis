@@ -38,8 +38,8 @@ BEGIN_TEST(Preserve64, Code) {
 	*l << mov(rax, v);
 	*l << add(v, w);
 
-	l->result = intDesc(e);
-	*l << fnRet(eax);
+	l->result = longDesc(e);
+	*l << fnRet(rax);
 
 	Binary *b = new (e) Binary(arena, l);
 	CHECK_EQ(callFn(b->address(), int64(0)), 0x123456789A);

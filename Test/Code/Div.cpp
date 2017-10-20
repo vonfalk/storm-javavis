@@ -223,7 +223,7 @@ BEGIN_TEST(ModByte, Code) {
 	*l << umod(p1, p2);
 	*l << mov(al, p1);
 
-	l->result = intDesc(e);
+	l->result = byteDesc(e);
 	*l << fnRet(al);
 
 	Binary *b = new (e) Binary(arena, l);
