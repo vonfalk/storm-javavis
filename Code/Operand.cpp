@@ -326,6 +326,11 @@ namespace code {
 		return xConst(Size::sFloat, *q);
 	}
 
+	Operand doubleConst(Double v) {
+		Word *q = reinterpret_cast<Word *>(&v);
+		return xConst(Size::sDouble, *q);
+	}
+
 	Operand ptrConst(Size v) {
 		return Operand(v, Size::sPtr);
 	}
@@ -366,6 +371,10 @@ namespace code {
 		return xRel(Size::sFloat, reg, offset);
 	}
 
+	Operand doubleRel(Reg reg, Offset offset) {
+		return xRel(Size::sDouble, reg, offset);
+	}
+
 	Operand ptrRel(Reg reg, Offset offset) {
 		return xRel(Size::sPtr, reg, offset);
 	}
@@ -390,6 +399,10 @@ namespace code {
 		return xRel(Size::sFloat, v, offset);
 	}
 
+	Operand doubleRel(Var v, Offset offset) {
+		return xRel(Size::sDouble, v, offset);
+	}
+
 	Operand ptrRel(Var v, Offset offset) {
 		return xRel(Size::sPtr, v, offset);
 	}
@@ -412,6 +425,10 @@ namespace code {
 
 	Operand floatRel(Label l, Offset offset) {
 		return xRel(Size::sFloat, l, offset);
+	}
+
+	Operand doubleRel(Label l, Offset offset) {
+		return xRel(Size::sDouble, l, offset);
 	}
 
 	Operand ptrRel(Label l, Offset offset) {

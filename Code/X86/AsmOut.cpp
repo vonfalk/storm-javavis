@@ -169,6 +169,8 @@ namespace code {
 
 		void pushOut(Output *to, Instr *instr) {
 			const Operand &src = instr->src();
+			assert(src.size() != Size::sLong);
+
 			switch (src.type()) {
 			case opConstant:
 				if (singleByte(src.constant())) {
@@ -206,6 +208,8 @@ namespace code {
 
 		void popOut(Output *to, Instr *instr) {
 			const Operand &dest = instr->dest();
+			assert(dest.size() != Size::sLong);
+
 			switch (dest.type()) {
 			case opRegister:
 				to->putByte(0x58 + registerId(dest.reg()));

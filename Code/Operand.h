@@ -208,6 +208,7 @@ namespace code {
 	Operand STORM_FN longConst(Long v);
 	Operand STORM_FN wordConst(Word v);
 	Operand STORM_FN floatConst(Float v);
+	Operand STORM_FN doubleConst(Double v);
 	Operand STORM_FN ptrConst(Size v);
 	Operand STORM_FN ptrConst(Offset v);
 	Operand STORM_FN ptrConst(Nat v);
@@ -222,6 +223,7 @@ namespace code {
 	Operand STORM_FN intRel(Reg reg, Offset offset);
 	Operand STORM_FN longRel(Reg reg, Offset offset);
 	Operand STORM_FN floatRel(Reg reg, Offset offset);
+	Operand STORM_FN doubleRel(Reg reg, Offset offset);
 	Operand STORM_FN ptrRel(Reg reg, Offset offset);
 	Operand STORM_FN xRel(Size size, Reg reg, Offset offset);
 
@@ -230,6 +232,7 @@ namespace code {
 	Operand STORM_FN intRel(Var v, Offset offset);
 	Operand STORM_FN longRel(Var v, Offset offset);
 	Operand STORM_FN floatRel(Var v, Offset offset);
+	Operand STORM_FN doubleRel(Var v, Offset offset);
 	Operand STORM_FN ptrRel(Var v, Offset offset);
 	Operand STORM_FN xRel(Size size, Var v, Offset offset);
 
@@ -238,6 +241,7 @@ namespace code {
 	Operand STORM_FN intRel(Label l, Offset offset);
 	Operand STORM_FN longRel(Label l, Offset offset);
 	Operand STORM_FN floatRel(Label l, Offset offset);
+	Operand STORM_FN doubleRel(Label l, Offset offset);
 	Operand STORM_FN ptrRel(Label l, Offset offset);
 	Operand STORM_FN xRel(Size size, Label l, Offset offset);
 }

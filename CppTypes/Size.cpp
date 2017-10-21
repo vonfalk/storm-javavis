@@ -18,6 +18,7 @@ Size Size::sLong = Size(8);
 Size Size::sWord = Size(8);
 
 Size Size::sFloat = Size(4);
+Size Size::sDouble = Size(8);
 
 nat Size::current() const {
 	switch (sizeof(void *)) {

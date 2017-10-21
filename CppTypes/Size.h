@@ -41,6 +41,7 @@ public:
 
 	// Float sizes.
 	static Size sFloat;
+	static Size sDouble;
 
 	// Addition (note that we do not have subtraction).
 	Size &operator +=(const Size &o);

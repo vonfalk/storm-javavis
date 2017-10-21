@@ -21,6 +21,7 @@ static BuiltIn builtIn[] = {
 	{ L"Long", Size::sLong },
 	{ L"Word", Size::sWord },
 	{ L"Float", Size::sFloat },
+	{ L"Double", Size::sDouble },
 	{ L"size_t", Size::sPtr },
 };
 

@@ -601,3 +601,98 @@ BEGIN_TEST(RetCallLargeSimpleMember, Code) {
 	LargeSimpleRet original(2, 3, 4);
 	CHECK_EQ((*fn)(&original), 10 - 6 + 11);
 } END_TEST
+
+
+/**
+ * Doubles.
+ */
+
+BEGIN_TEST(RetDouble, Code) {
+	Engine &e = gEngine();
+	Arena *arena = code::arena(e);
+
+	Listing *l = new (e) Listing(false, doubleDesc(e));
+	Var v = l->createVar(l->root(), Size::sDouble);
+
+	*l << prolog();
+
+	*l << mov(v, doubleConst(12.1));
+	*l << fnRet(v);
+
+	Binary *b = new (e) Binary(arena, l);
+	typedef double (*Fn)();
+	Fn fn = (Fn)b->address();
+
+	CHECK_EQ((*fn)(), 12.1);
+} END_TEST
+
+BEGIN_TEST(RetDoubleRef, Code) {
+	Engine &e = gEngine();
+	Arena *arena = code::arena(e);
+
+	Listing *l = new (e) Listing(false, doubleDesc(e));
+	Var v = l->createVar(l->root(), Size::sDouble);
+
+	*l << prolog();
+
+	*l << mov(v, doubleConst(12.1));
+	*l << lea(ptrA, v);
+	*l << fnRetRef(ptrA);
+
+	Binary *b = new (e) Binary(arena, l);
+	typedef double (*Fn)();
+	Fn fn = (Fn)b->address();
+
+	CHECK_EQ((*fn)(), 12.1);
+} END_TEST
+
+static double CODECALL createDouble() {
+	return 14.1;
+}
+
+BEGIN_TEST(RetCallDouble, Code) {
+	Engine &e = gEngine();
+	Arena *arena = code::arena(e);
+	Ref toCall = arena->external(S("create"), address(&createDouble));
+
+	Listing *l = new (e) Listing(false, longDesc(e));
+	Var v = l->createVar(l->root(), Size::sDouble);
+
+	*l << prolog();
+
+	*l << fnCall(toCall, false, doubleDesc(e), v);
+	*l << fld(v);
+	*l << fistp(v);
+
+	*l << fnRet(v);
+
+	Binary *b = new (e) Binary(arena, l);
+	typedef Long (*Fn)();
+	Fn fn = (Fn)b->address();
+
+	CHECK_EQ((*fn)(), 14);
+} END_TEST
+
+BEGIN_TEST(RetCallRefDouble, Code) {
+	Engine &e = gEngine();
+	Arena *arena = code::arena(e);
+	Ref toCall = arena->external(S("create"), address(&createDouble));
+
+	Listing *l = new (e) Listing(false, longDesc(e));
+	Var v = l->createVar(l->root(), Size::sDouble);
+
+	*l << prolog();
+
+	*l << lea(ptrA, v);
+	*l << fnCallRef(toCall, false, doubleDesc(e), ptrA);
+	*l << fld(v);
+	*l << fistp(v);
+
+	*l << fnRet(v);
+
+	Binary *b = new (e) Binary(arena, l);
+	typedef Long (*Fn)();
+	Fn fn = (Fn)b->address();
+
+	CHECK_EQ((*fn)(), 14);
+} END_TEST

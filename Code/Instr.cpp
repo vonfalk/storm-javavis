@@ -362,13 +362,13 @@ namespace code {
 	Instr *fstp(EnginePtr e, Operand dest) {
 		if (dest.type() == opRegister)
 			throw InvalidValue(L"Can not store to register.");
-		if (dest.size() != Size::sFloat)
+		if (dest.size() != Size::sFloat && dest.size() != Size::sDouble)
 			throw InvalidValue(L"Invalid size.");
 		return instrDest(e, op::fstp, dest);
 	}
 
 	Instr *fistp(EnginePtr e, Operand dest) {
-		if (dest.size() != Size::sInt)
+		if (dest.size() != Size::sInt && dest.size() != Size::sLong)
 			throw InvalidValue(L"Invalid size.");
 		return instrDest(e, op::fistp, dest);
 	}
@@ -378,7 +378,7 @@ namespace code {
 			throw InvalidValue(L"Can not load from register.");
 		if (src.type() == opConstant)
 			throw InvalidValue(L"Can not load from a constant.");
-		if (src.size() != Size::sFloat)
+		if (src.size() != Size::sFloat && src.size() != Size::sDouble)
 			throw InvalidValue(L"Invalid size.");
 		return instrSrc(e, op::fld, src);
 	}
@@ -388,7 +388,7 @@ namespace code {
 			throw InvalidValue(L"Can not load from register.");
 		if (src.type() == opConstant)
 			throw InvalidValue(L"Can not load from a constant.");
-		if (src.size() != Size::sInt)
+		if (src.size() != Size::sInt && src.size() != Size::sLong)
 			throw InvalidValue(L"Invalid size.");
 		return instrSrc(e, op::fild, src);
 	}

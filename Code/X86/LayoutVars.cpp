@@ -365,6 +365,9 @@ namespace code {
 			case primitive::pointer:
 				if (value.type() == opRegister && same(value.reg(), ptrA)) {
 					// Already at the proper place!
+				} else if (value.size() == Size::sLong) {
+					*dest << mov(high32(rax), high32(value));
+					*dest << mov(low32(rax), low32(value));
 				} else {
 					// A simple 'mov' is enough!
 					*dest << mov(asSize(ptrA, value.size()), value);
@@ -372,7 +375,12 @@ namespace code {
 				break;
 			case primitive::real:
 				// We need to load it on the FP stack.
-				*dest << push(value);
+				if (value.size() == Size::sLong) {
+					*dest << push(high32(value));
+					*dest << push(low32(value));
+				} else {
+					*dest << push(value);
+				}
 				*dest << fld(xRel(value.size(), ptrStack, Offset()));
 				*dest << add(ptrStack, ptrConst(value.size()));
 				break;
