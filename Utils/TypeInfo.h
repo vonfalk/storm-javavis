@@ -13,6 +13,11 @@ namespace std {
 	struct is_trivially_destructible {
 		static const bool value = std::tr1::has_trivial_destructor<T>::value;
 	};
+
+	template <class T>
+	struct is_pod {
+		static const bool value = std::tr1::is_pod<T>::value;
+	};
 }
 
 #endif

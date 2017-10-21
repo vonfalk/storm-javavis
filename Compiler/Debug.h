@@ -34,6 +34,8 @@ namespace storm {
 		class Value {
 			STORM_VALUE;
 		public:
+			Value();
+
 			nat value;
 			Link *list;
 		};

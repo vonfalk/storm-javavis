@@ -54,8 +54,20 @@ namespace storm {
 		gc.detachThread(os::Thread::current());
 	}
 
-	// Starts at -1 so that the first Engine will gain id=0.
+	// Starts at -1 so that the first Engine will get id=0.
 	static Nat engineId = -1;
+
+	template <class T>
+	struct ValFlags {
+		static const nat pod = std::is_pod<T>::value ? typeCppPOD : typeNone;
+		static const nat simple =
+			(std::is_trivially_copy_constructible<T>::value & std::is_trivially_destructible<T>::value)
+			? typeCppSimple : typeNone;
+
+	public:
+		static const TypeFlags v = TypeFlags(typeValue | pod | simple);
+	};
+
 
 	Engine::Engine(const Path &root, ThreadMode mode, void *stackBase) :
 		id(atomicIncrement(engineId)),

@@ -45,6 +45,8 @@ namespace storm {
 		}
 
 
+		Value::Value() : value(0), list(null) {}
+
 		DtorClass::DtorClass(int v) : value(v) {}
 
 		DtorClass::~DtorClass() {

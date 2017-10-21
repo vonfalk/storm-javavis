@@ -74,6 +74,15 @@ namespace storm {
 	}
 
 	Type *CppLoader::createType(Nat id, const CppType &type) {
+		TypeFlags flags = type.flags;
+		// Validate the C++ flags in here.
+		if ((flags & typeCppPOD) && (flags & typeValue)) {
+			throw BuiltInError(L"The class " + ::toS(type.pkg) + L"." + ::toS(type.name) +
+							L" is a POD type, which is not supported by Storm. "
+							L"Add a constructor to the class (it does not have to be exposed to Storm) "
+							L"and compile again.");
+		}
+
 		GcType *gcType = createGcType(id);
 
 		// If this type inherits from 'Type', it needs special care in its Gc-description.

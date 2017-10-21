@@ -179,7 +179,7 @@ static void genTypes(wostream &to, World &w) {
 		if (t.heapAlloc()) {
 			to << L"typeClass, ";
 		} else {
-			to << L"typeValue, ";
+			to << L"ValFlags<" << t.name << L">::v, ";
 		}
 
 		// Destructor (if any).

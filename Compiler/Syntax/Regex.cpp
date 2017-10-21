@@ -200,31 +200,19 @@ namespace storm {
 		 * Set.
 		 */
 
+		Regex::Set::Set(GcArray<wchar> *chars, Int first, Bool inverted)
+			: chars(chars), first(first), inverted(inverted) {}
+
 		Regex::Set Regex::Set::empty() {
-			Set s = {
-				null,
-				0,
-				false,
-			};
-			return s;
+			return Set(null, 0, false);
 		}
 
 		Regex::Set Regex::Set::single(wchar ch) {
-			Set s = {
-				null,
-				ch,
-				false,
-			};
-			return s;
+			return Set(null, ch, false);
 		}
 
 		Regex::Set Regex::Set::all() {
-			Set s = {
-				null,
-				0,
-				true,
-			};
-			return s;
+			return Set(null, 0, true);
 		}
 
 		Regex::Set Regex::Set::parse(Engine &e, const wchar *str, nat &pos) {

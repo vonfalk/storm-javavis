@@ -30,6 +30,12 @@ namespace storm {
 
 		// This is a type that comes from C++.
 		typeCpp = 0x1000,
+
+		// This type comes from C++ and is a POD type.
+		typeCppPOD = 0x2000,
+
+		// This type comes from C++ and is a simple type (ie. trivial copy ctor and dtor).
+		typeCppSimple = 0x4000,
 	};
 
 	BITMASK_OPERATORS(TypeFlags);

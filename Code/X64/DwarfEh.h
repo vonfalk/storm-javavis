@@ -109,6 +109,9 @@ namespace code {
 		class FnInfo {
 			STORM_VALUE;
 		public:
+			// Create.
+			FnInfo();
+
 			// Set the FDE we shall write to.
 			void set(FDE *fde);
 

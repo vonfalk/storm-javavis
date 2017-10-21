@@ -255,6 +255,8 @@ namespace code {
 		 * Emit function information.
 		 */
 
+		FnInfo::FnInfo() : target(null), offset(0), lastPos(0) {}
+
 		void FnInfo::set(FDE *fde) {
 			target = fde;
 			offset = fde->firstFree();

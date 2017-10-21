@@ -1,5 +1,6 @@
 #include "stdafx.h"
 #include "Utils/Memory.h"
+#include "Utils/TypeInfo.h"
 #include "Core/Gen/CppTypes.h"
 #include "Core/Runtime.h"
 
@@ -30,6 +31,34 @@
 
 namespace storm {
 
+	/**
+	 * Add type flags depending on characteristics of T.
+	 */
+	template <class T>
+	struct ValFlags {
+	private:
+		static const nat pod;
+		static const nat simple;
+
+	public:
+		static const TypeFlags v;
+	};
+
+	template <class T>
+	const nat ValFlags<T>::pod = std::is_pod<T>::value ? typeCppPOD : typeNone;
+
+	template <class T>
+	const nat ValFlags<T>::simple =
+		(std::is_trivially_copy_constructible<T>::value & std::is_trivially_destructible<T>::value)
+		? typeCppSimple : typeNone;
+
+	template <class T>
+	const TypeFlags ValFlags<T>::v = TypeFlags(typeValue | pod | simple);
+
+
+	/**
+	 * Struct for all metadata. Declared as a friend to all Storm classes through the STORM_CLASS and STORM_VALUE macro.
+	 */
 	struct CppMeta {
 		static const CppType *cppTypes();
 		static const CppFunction *cppFunctions();

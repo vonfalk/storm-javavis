@@ -66,6 +66,9 @@ namespace storm {
 			class Set {
 				STORM_VALUE;
 			public:
+				// Create.
+				Set(GcArray<wchar> *chars, Int first, Bool inverted);
+
 				// Create an empty set.
 				static Set empty();
 
