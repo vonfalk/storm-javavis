@@ -408,6 +408,11 @@ struct LargeSimpleRet {
 
 	// Make sure it is not a POD.
 	LargeSimpleRet(size_t a, size_t b, size_t c) : a(a), b(b), c(c) {}
+
+	// Used in tests.
+	LargeSimpleRet CODECALL create() {
+		return LargeSimpleRet(a + 8, b + 3, c + 7);
+	}
 };
 
 bool operator ==(const LargeSimpleRet &a, const LargeSimpleRet &b) {
@@ -534,4 +539,65 @@ BEGIN_TEST(RetCallRefLargeSimple, Code) {
 	Fn fn = (Fn)b->address();
 
 	CHECK_EQ((*fn)(), 27);
+} END_TEST
+
+/**
+ * Is interaction with member functions working properly?
+ */
+
+BEGIN_TEST(RetLargeSimpleMember, Code) {
+	Engine &e = gEngine();
+	Arena *arena = code::arena(e);
+
+	Listing *l = new (e) Listing(true, retLargeSimpleDesc(e));
+	Var v = l->createVar(l->root(), Size::sPtr * 3);
+	Var me = l->createParam(ptrDesc(e));
+
+	*l << prolog();
+
+	*l << lea(ptrA, v);
+	*l << mov(ptrC, me);
+	*l << mov(ptrRel(ptrA, Offset()), ptrRel(ptrC, Offset()));
+	*l << mov(ptrRel(ptrA, Offset::sPtr), ptrRel(ptrC, Offset::sPtr));
+	*l << mov(ptrRel(ptrA, Offset::sPtr * 2), ptrRel(ptrC, Offset::sPtr * 2));
+
+	*l << add(ptrRel(ptrA, Offset()), ptrConst(10));
+	*l << add(ptrRel(ptrA, Offset::sPtr), ptrConst(20));
+	*l << add(ptrRel(ptrA, Offset::sPtr * 2), ptrConst(30));
+
+	*l << fnRet(v);
+
+	Binary *b = new (e) Binary(arena, l);
+	typedef LargeSimpleRet (CODECALL LargeSimpleRet::*Fn)();
+	Fn fn = asMemberPtr<Fn>(b->address());
+
+	LargeSimpleRet original(1, 8, 3);
+	CHECK_EQ((original.*fn)(), LargeSimpleRet(11, 28, 33));
+} END_TEST
+
+BEGIN_TEST(RetCallLargeSimpleMember, Code) {
+	Engine &e = gEngine();
+	Arena *arena = code::arena(e);
+	Ref toCall = arena->external(S("create"), address(&LargeSimpleRet::create));
+
+	Listing *l = new (e) Listing(false, ptrDesc(e));
+	Var v = l->createVar(l->root(), Size::sPtr * 3);
+	Var me = l->createParam(ptrDesc(e));
+
+	*l << prolog();
+
+	*l << fnParam(ptrDesc(e), me);
+	*l << fnCall(toCall, true, retLargeSimpleDesc(e), v);
+	*l << mov(ptrA, ptrRel(v, Offset()));
+	*l << sub(ptrA, ptrRel(v, Offset::sPtr));
+	*l << add(ptrA, ptrRel(v, Offset::sPtr * 2));
+
+	*l << fnRet(ptrA);
+
+	Binary *b = new (e) Binary(arena, l);
+	typedef size_t (*Fn)(LargeSimpleRet *);
+	Fn fn = (Fn)b->address();
+
+	LargeSimpleRet original(2, 3, 4);
+	CHECK_EQ((*fn)(&original), 10 - 6 + 11);
 } END_TEST

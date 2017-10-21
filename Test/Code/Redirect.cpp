@@ -93,18 +93,13 @@ BEGIN_TEST(RedirectMemberTest, Code) {
 
 	Binary *b = new (e) Binary(arena, l);
 	typedef BigType (CODECALL BigType::*Fn)();
-	union {
-		Fn fn;
-		const void *raw;
-	} x;
-	memset(&x, 0, sizeof(x));
-	x.raw = b->address();
+	Fn fn = asMemberPtr<Fn>(b->address());
 
 	BigType val(10);
 	throwError = true;
-	CHECK_ERROR((val.*x.fn)(), Error);
+	CHECK_ERROR((val.*fn)(), Error);
 
 	throwError = false;
-	CHECK_EQ((val.*x.fn)().v, 30);
+	CHECK_EQ((val.*fn)().v, 30);
 
 } END_TEST

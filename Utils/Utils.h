@@ -119,7 +119,7 @@ inline float radToDeg(float angle) {
 }
 
 
-// Hack to allow casting member-function-pointers into void *.
+// Hack to allow casting member function pointers into void *.
 template <class T>
 inline const void *address(T fn) {
 #ifdef VISUAL_STUDIO
@@ -127,6 +127,18 @@ inline const void *address(T fn) {
 #else
 	return reinterpret_cast<const void *>(fn);
 #endif
+}
+
+// Hack to allow casting void * into member function pointers.
+template <class Fn>
+inline Fn asMemberPtr(const void *fn) {
+	union {
+		Fn fn;
+		const void *raw;
+	} x;
+	memset(&x, 0, sizeof(x));
+	x.raw = fn;
+	return x.fn;
 }
 
 //Delete an object, and clear the pointer to it.
