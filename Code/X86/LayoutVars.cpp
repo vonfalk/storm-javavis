@@ -394,9 +394,10 @@ namespace code {
 				*dest << add(ptrStack, ptrConst(Size::sPtr * 2));
 				*dest << lea(ptrA, value);
 			} else if (SimpleDesc *s = as<SimpleDesc>(src->result)) {
-				// *dest << lea(ptrC, value);
-				// *dest << mov(ptrA, resultLoc());
-				// movMemcpy(dest, ptrA, ptrC, s->size());
+				// Note: We're assuming that the type is not a POD since they are sometimes returned in registers!
+				*dest << lea(ptrC, value);
+				*dest << mov(ptrA, resultLoc());
+				movMemcpy(dest, ptrA, ptrC, s->size());
 			} else {
 				assert(false);
 			}
@@ -436,6 +437,10 @@ namespace code {
 				*dest << add(ptrStack, ptrConst(Size::sPtr));
 				*dest << pop(ptrA);
 			} else if (SimpleDesc *s = as<SimpleDesc>(src->result)) {
+				// Note: We're assuming that the type is not a POD since they are sometimes returned in registers!
+				*dest << mov(ptrC, value);
+				*dest << mov(ptrA, resultLoc());
+				movMemcpy(dest, ptrA, ptrC, s->size());
 			} else {
 				assert(false);
 			}

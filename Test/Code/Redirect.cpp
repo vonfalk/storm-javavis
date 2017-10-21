@@ -16,7 +16,7 @@ public:
 
 	Int v;
 
-	BigType redirectTo() {
+	BigType CODECALL redirectTo() {
 		return BigType(v + 20);
 	}
 };
@@ -41,7 +41,6 @@ static const void *redirectFn() {
 	return address(&redirectTo);
 }
 
-
 BEGIN_TEST(RedirectTest, Code) {
 	Engine &e = gEngine();
 	Arena *arena = code::arena(e);
@@ -64,7 +63,7 @@ BEGIN_TEST(RedirectTest, Code) {
 	throwError = true;
 	destroyed = 0;
 	CHECK_ERROR((*fn)(BigType(10)), Error);
-	CHECK_EQ(destroyed, 10);
+	CHECK(destroyed >= 10 && destroyed <= 20);
 
 	throwError = false;
 	CHECK_EQ((*fn)(BigType(10)).v, 20);
@@ -88,19 +87,24 @@ BEGIN_TEST(RedirectMemberTest, Code) {
 	TypeDesc *bigDesc = new (e) ComplexDesc(Size::sInt, copyBig, freeBig);
 
 	Array<TypeDesc *> *params = new (e) Array<TypeDesc *>();
-	params->push(bigDesc);
+	params->push(ptrDesc(e));
 
-	Listing *l = arena->redirect(true, ptrDesc(e), params, redirectFn, Operand());
+	Listing *l = arena->redirect(false, bigDesc, params, redirectFn, Operand());
 
 	Binary *b = new (e) Binary(arena, l);
-	typedef BigType (*Fn)(BigType *);
-	Fn fn = (Fn)b->address();
+	typedef BigType (CODECALL BigType::*Fn)();
+	union {
+		Fn fn;
+		const void *raw;
+	} x;
+	memset(&x, 0, sizeof(x));
+	x.raw = b->address();
 
 	BigType val(10);
 	throwError = true;
-	CHECK_ERROR((*fn)(&val), Error);
+	CHECK_ERROR((val.*x.fn)(), Error);
 
 	throwError = false;
-	CHECK_EQ((*fn)(&val).v, 30);
+	CHECK_EQ((val.*x.fn)().v, 30);
 
 } END_TEST

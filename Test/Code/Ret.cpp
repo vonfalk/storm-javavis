@@ -192,6 +192,9 @@ BEGIN_TEST(RetCallRefComplex, Code) {
 struct SimpleRet {
 	size_t a;
 	size_t b;
+
+	// Make sure it is not a POD.
+	SimpleRet(size_t a, size_t b) : a(a), b(b) {}
 };
 
 bool operator ==(const SimpleRet &a, const SimpleRet &b) {
@@ -234,13 +237,11 @@ BEGIN_TEST(RetSimple, Code) {
 	typedef SimpleRet (*Fn)();
 	Fn fn = (Fn)b->address();
 
-	SimpleRet ok = { 10, 20 };
-	CHECK_EQ((*fn)(), ok);
+	CHECK_EQ((*fn)(), SimpleRet(10, 20));
 } END_TEST
 
 SimpleRet CODECALL createSimple() {
-	SimpleRet a = { 100, 20 };
-	return a;
+	return SimpleRet(100, 20);
 }
 
 BEGIN_TEST(RetCallSimple, Code) {
@@ -295,6 +296,9 @@ BEGIN_TEST(RetCallRefSimple, Code) {
 struct SimpleFloatRet {
 	int a, b;
 	float c;
+
+	// Make sure it is not a POD.
+	SimpleFloatRet(int a, int b, float c) : a(a), b(b), c(c) {}
 };
 
 bool operator ==(const SimpleFloatRet &a, const SimpleFloatRet &b) {
@@ -340,13 +344,11 @@ BEGIN_TEST(RetSimpleFloat, Code) {
 	typedef SimpleFloatRet (*Fn)();
 	Fn fn = (Fn)b->address();
 
-	SimpleFloatRet ok = { 10, 20, 20.5f };
-	CHECK_EQ((*fn)(), ok);
+	CHECK_EQ((*fn)(), SimpleFloatRet(10, 20, 20.5f));
 } END_TEST
 
 SimpleFloatRet CODECALL createSimpleFloat() {
-	SimpleFloatRet x = { 10, 20, 3.8f };
-	return x;
+	return SimpleFloatRet(10, 20, 3.8f);
 }
 
 BEGIN_TEST(RetCallSimpleFloat, Code) {
@@ -403,6 +405,9 @@ struct LargeSimpleRet {
 	size_t a;
 	size_t b;
 	size_t c;
+
+	// Make sure it is not a POD.
+	LargeSimpleRet(size_t a, size_t b, size_t c) : a(a), b(b), c(c) {}
 };
 
 bool operator ==(const LargeSimpleRet &a, const LargeSimpleRet &b) {
@@ -448,8 +453,7 @@ BEGIN_TEST(RetLargeSimple, Code) {
 	typedef LargeSimpleRet (*Fn)();
 	Fn fn = (Fn)b->address();
 
-	LargeSimpleRet ok = { 10, 20, 30 };
-	CHECK_EQ((*fn)(), ok);
+	CHECK_EQ((*fn)(), LargeSimpleRet(10, 20, 30));
 } END_TEST
 
 BEGIN_TEST(RetRefLargeSimple, Code) {
@@ -474,13 +478,11 @@ BEGIN_TEST(RetRefLargeSimple, Code) {
 	typedef LargeSimpleRet (*Fn)();
 	Fn fn = (Fn)b->address();
 
-	LargeSimpleRet ok = { 10, 20, 30 };
-	CHECK_EQ((*fn)(), ok);
+	CHECK_EQ((*fn)(), LargeSimpleRet(10, 20, 30));
 } END_TEST
 
 static LargeSimpleRet createLargeSimple() {
-	LargeSimpleRet r = { 20, 15, 22 };
-	return r;
+	return LargeSimpleRet(20, 15, 22);
 }
 
 BEGIN_TEST(RetCallLargeSimple, Code) {

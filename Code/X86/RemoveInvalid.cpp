@@ -478,8 +478,8 @@ namespace code {
 			}
 		}
 
-		static void inlinedMemcpy(Listing *to, const Operand &src, Offset offset) {
-			Nat size = roundUp(src.refSize().size32(), Nat(4));
+		static void inlinedMemcpy(Listing *to, const Operand &src, Offset offset, Size sz) {
+			Nat size = roundUp(sz.size32(), Nat(4));
 			// All registers used here are destroyed during function calls.
 			if (src.type() != opRegister || !same(src.reg(), ptrA))
 				*to << mov(ptrA, src);
@@ -568,9 +568,9 @@ namespace code {
 					// Copy it using an inlined memcpy.
 					if (p.src.type() == opRegister) {
 						*dest << mov(ptrA, ptrRel(ptrStack, paramOffset));
-						inlinedMemcpy(dest, ptrA, paramOffset);
+						inlinedMemcpy(dest, ptrA, paramOffset, p.type->size());
 					} else {
-						inlinedMemcpy(dest, p.src, paramOffset);
+						inlinedMemcpy(dest, p.src, paramOffset, p.type->size());
 					}
 				}
 

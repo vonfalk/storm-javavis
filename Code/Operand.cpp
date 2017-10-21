@@ -244,10 +244,14 @@ namespace code {
 		case opNone:
 			return to << L"<none>";
 		case opConstant:
-			if (o.size() == Size::sPtr)
-				return to << L"0x" << toHex(o.constant());
-			else
+			if (o.size() == Size::sPtr) {
+				if ((o.opType & opMask) == opDualConstant)
+					return to << o.opOffset;
+				else
+					return to << L"0x" << toHex(o.constant());
+			} else {
 				return to << o.constant();
+			}
 		case opRegister:
 			return to << code::name(o.reg());
 		case opRelative:

@@ -142,6 +142,9 @@ BEGIN_TEST(CallPrimitiveMany64, Code) {
 struct SmallIntParam {
 	size_t a;
 	size_t b;
+
+	// Make sure it is not a POD.
+	SmallIntParam(size_t a, size_t b) : a(a), b(b) {}
 };
 
 SimpleDesc *smallIntDesc(Engine &e) {
@@ -216,6 +219,9 @@ struct LargeIntParam {
 	size_t a;
 	size_t b;
 	size_t c;
+
+	// Make sure it is not a POD.
+	LargeIntParam(size_t a, size_t b, size_t c) : a(a), b(b), c(c) {}
 };
 
 SimpleDesc *largeIntDesc(Engine &e) {
@@ -307,6 +313,9 @@ struct MixedParam {
 	size_t a;
 	Float b;
 	Float c;
+
+	// Make sure it is not a POD.
+	MixedParam(size_t a, Float b, Float c) : a(a), b(b), c(c) {}
 };
 
 SimpleDesc *mixedDesc(Engine &e) {
