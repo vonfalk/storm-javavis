@@ -7,8 +7,8 @@
 
 namespace storm {
 
-	CodeGen::CodeGen(RunOn thread) : runOn(thread) {
-		l = new (this) code::Listing();
+	CodeGen::CodeGen(RunOn thread, Bool member, Value result) : runOn(thread), res(result) {
+		l = new (this) code::Listing(member, result.desc(engine()));
 		block = l->root();
 	}
 
@@ -16,8 +16,7 @@ namespace storm {
 
 	CodeGen::CodeGen(RunOn thread, code::Listing *to, code::Block block) : runOn(thread), l(to), block(block) {}
 
-	CodeGen::CodeGen(CodeGen *me, code::Block b) :
-		runOn(me->runOn), l(me->l), block(b), res(me->res), resParam(me->resParam) {}
+	CodeGen::CodeGen(CodeGen *me, code::Block b) : runOn(me->runOn), l(me->l), block(b), res(me->res) {}
 
 	CodeGen *CodeGen::child(code::Block b) {
 		return new (this) CodeGen(this, b);
@@ -33,11 +32,7 @@ namespace storm {
 	}
 
 	code::Var CodeGen::createParam(Value type) {
-		if (type.isValue()) {
-			return l->createParam(type.valTypeParam(), type.destructor(), code::freeOnBoth | code::freePtr);
-		} else {
-			return l->createParam(type.valTypeParam());
-		}
+		return l->createParam(type.desc(engine()));
 	}
 
 	VarInfo CodeGen::createVar(Value type) {
@@ -57,46 +52,13 @@ namespace storm {
 		return VarInfo(l->createVar(in, type.size(), dtor, opt), needsPart);
 	}
 
-	void CodeGen::result(Value type, Bool isMember) {
-		if (res != Value())
-			throw InternalError(L"Trying to re-set the return type of CodeGen.");
-
-		res = type;
-		if (type.isValue()) {
-			// We need a return value parameter as either the first or the second parameter!
-			resParam = l->createParam(code::valPtr());
-			l->moveParam(resParam, isMember ? 1 : 0);
-		}
-	}
-
 	Value CodeGen::result() const {
 		return res;
 	}
 
 	void CodeGen::returnValue(code::Var value) {
 		using namespace code;
-
-		if (res == Value()) {
-			*l << epilog();
-			*l << ret(valVoid());
-		} else if (res.returnInReg()) {
-			*l << mov(asSize(ptrA, res.size()), value);
-			*l << epilog();
-			*l << ret(res.valTypeRet());
-		} else {
-			*l << lea(ptrA, ptrRel(value, Offset()));
-			*l << fnParam(resParam);
-			*l << fnParam(ptrA);
-			*l << fnCall(res.copyCtor(), valPtr());
-
-			// We need to provide the address of the return value as our result. The copy ctor does
-			// not neccessarily return an address to the created value. This is important in some
-			// optimized builds, where the compiler assumes ptrA contains the address of the
-			// returned value. This is usually not the case in unoptimized builds.
-			*l << mov(ptrA, resParam);
-			*l << epilog();
-			*l << ret(valPtr());
-		}
+		*l << fnRet(value);
 	}
 
 	void CodeGen::toS(StrBuf *to) const {
@@ -238,13 +200,13 @@ namespace storm {
 		if (!needsCloneEnv(formal))
 			return actual;
 
+		Engine &e = to->engine();
 		if (formal.isHeapObj()) {
 			VarInfo clone = to->createVar(formal);
 
-			*to->l << fnParam(actual);
-			*to->l << fnParam(env);
-			*to->l << fnCall(cloneFnEnv(formal.type)->ref(), valPtr());
-			*to->l << mov(clone.v, ptrA);
+			*to->l << fnParam(formal.desc(e), actual);
+			*to->l << fnParam(e.ptrDesc(), env);
+			*to->l << fnCall(cloneFnEnv(formal.type)->ref(), false, e.ptrDesc(), clone.v);
 			clone.created(to);
 
 			return clone.v;
@@ -258,15 +220,15 @@ namespace storm {
 
 			*to->l << lea(ptrC, clone.v);
 			*to->l << lea(ptrA, actual);
-			*to->l << fnParam(ptrC);
-			*to->l << fnParam(ptrA);
-			*to->l << fnCall(formal.copyCtor(), valVoid());
+			*to->l << fnParam(e.ptrDesc(), ptrC);
+			*to->l << fnParam(e.ptrDesc(), ptrA);
+			*to->l << fnCall(formal.copyCtor(), true);
 			clone.created(to);
 
 			*to->l << lea(ptrC, clone.v);
-			*to->l << fnParam(ptrC);
-			*to->l << fnParam(env);
-			*to->l << fnCall(toCall->ref(), valVoid());
+			*to->l << fnParam(e.ptrDesc(), ptrC);
+			*to->l << fnParam(e.ptrDesc(), env);
+			*to->l << fnCall(toCall->ref(), true);
 			return clone.v;
 		}
 	}
@@ -307,9 +269,8 @@ namespace storm {
 
 		Engine &e = ctor->engine();
 
-		*s->l << fnParam(type->typeRef());
-		*s->l << fnCall(e.ref(Engine::rAlloc), valPtr());
-		*s->l << mov(to, ptrA);
+		*s->l << fnParam(e.ptrDesc(), type->typeRef());
+		*s->l << fnCall(e.ref(Engine::rAlloc), false, e.ptrDesc(), to);
 
 		CodeResult *r = new (s) CodeResult();
 		params = new (s) Array<code::Operand>(*params);
@@ -354,44 +315,23 @@ namespace storm {
 		using namespace code;
 
 		Offset o = Offset::sPtr * id;
-		if (param.isValue() && !param.isBuiltIn()) {
-			*l << fnParamRef(ptrRel(ptrB, o), param.size(), param.copyCtor());
-		} else {
-			*l << fnParamRef(ptrRel(ptrB, o), param.size());
-		}
-	}
-
-	static void addThunkResult(code::Listing *l, Value result, code::Var res) {
-		using namespace code;
-
-		if (!result.returnInReg())
-			*l << fnParam(res);
-	}
-
-	static void addThunkCall(CodeGen *s, Value result, code::Var res, code::Var fn) {
-		using namespace code;
-
-		*s->l << fnCall(fn, result.valTypeRet());
-		if (result.returnInReg() && result != Value()) {
-			*s->l << mov(ptrB, res);
-			*s->l << mov(xRel(result.size(), ptrB, Offset()), asSize(ptrA, result.size()));
-		}
-
+		*l << fnParamRef(param.desc(l->engine()), ptrRel(ptrB, o));
 	}
 
 	code::Binary *callThunk(Value result, Array<Value> *formals) {
 		using namespace code;
 		Engine &e = formals->engine();
 
-		CodeGen *s = new (e) CodeGen(RunOn());
+		CodeGen *s = new (e) CodeGen(RunOn(), false, Value());
 		Listing *l = s->l;
+		TypeDesc *rDesc = result.desc(e);
 
 		// Parameters:
-		Var fn = l->createParam(valPtr());
-		Var member = l->createParam(ValType(Size::sByte, false));
-		Var params = l->createParam(valPtr());
-		Var first = l->createParam(valPtr());
-		Var output = l->createParam(valPtr());
+		Var fn = l->createParam(e.ptrDesc());
+		Var member = l->createParam(byteDesc(e));
+		Var params = l->createParam(e.ptrDesc());
+		Var first = l->createParam(e.ptrDesc());
+		Var output = l->createParam(e.ptrDesc());
 
 		*l << prolog();
 		*l << mov(ptrB, params);
@@ -414,24 +354,17 @@ namespace storm {
 			*l << jmp(lMember, ifEqual);
 
 			*l << lBoth;
-			*l << fnParam(first);
-			addThunkResult(l, result, output);
+			*l << fnParam(e.ptrDesc(), first);
 			for (Nat i = 0; i < formals->count(); i++)
 				addThunkParam(l, formals->at(i), i);
-			addThunkCall(s, result, output, fn);
-			*l << epilog();
-			*l << ret(valVoid());
+			*l << fnCallRef(fn, true, rDesc, output);
+			*l << fnRet();
 
 			*l << lMember;
-			if (formals->count() > 0)
-				// Not really legal, but anyway...
-				addThunkParam(l, formals->at(0), 0);
-			addThunkResult(l, result, output);
-			for (Nat i = 1; i < formals->count(); i++)
+			for (Nat i = 0; i < formals->count(); i++)
 				addThunkParam(l, formals->at(i), i);
-			addThunkCall(s, result, output, fn);
-			*l << epilog();
-			*l << ret(valVoid());
+			*l << fnCallRef(fn, true, rDesc, output);
+			*l << fnRet();
 		}
 
 		*l << lNoMember;
@@ -439,21 +372,17 @@ namespace storm {
 		*l << jmp(lPlain, ifEqual);
 
 		*l << lFirst;
-		addThunkResult(l, result, output);
-		*l << fnParam(first);
+		*l << fnParam(e.ptrDesc(), first);
 		for (Nat i = 0; i < formals->count(); i++)
 			addThunkParam(l, formals->at(i), i);
-		addThunkCall(s, result, output, fn);
-		*l << epilog();
-		*l << ret(valVoid());
+		*l << fnCallRef(fn, false, rDesc, output);
+		*l << fnRet();
 
 		*l << lPlain;
-		addThunkResult(l, result, output);
 		for (Nat i = 0; i < formals->count(); i++)
 			addThunkParam(l, formals->at(i), i);
-		addThunkCall(s, result, output, fn);
-		*l << epilog();
-		*l << ret(valVoid());
+		*l << fnCallRef(fn, false, rDesc, output);
+		*l << fnRet();
 
 		return new (e) Binary(e.arena(), l);
 	}

@@ -208,15 +208,15 @@ namespace code {
 		return instrLoose(e, op::setCond, to, cond);
 	}
 
-	Instr *call(EnginePtr e, Operand to, ValType ret) {
+	Instr *call(EnginePtr e, Operand to, Size ret) {
 		if (to.size() != Size::sPtr)
 			throw InvalidValue(L"Must call a pointer, tried calling " + ::toS(to));
 
-		return instrLoose(e, op::call, sizedReg(ptrA, ret.size), to);
+		return instrLoose(e, op::call, sizedReg(ptrA, ret), to);
 	}
 
-	Instr *ret(EnginePtr e, ValType ret) {
-		Operand r = sizedReg(ptrA, ret.size);
+	Instr *ret(EnginePtr e, Size ret) {
+		Operand r = sizedReg(ptrA, ret);
 		if (r.type() == opNone)
 			return instr(e, op::ret);
 		else
@@ -464,47 +464,6 @@ namespace code {
 
 	Instr *threadLocal(EnginePtr e) {
 		return instr(e, op::threadLocal);
-	}
-
-
-	/**
-	 * OLD: Remove.
-	 */
-
-	Instr *fnParam(EnginePtr e, Operand src) {
-		return instrSrc(e, op::fnParam, src);
-	}
-
-	Instr *fnParam(EnginePtr e, Var src, Operand copyFn) {
-		if (copyFn.type() != opNone) {
-			if (copyFn.type() == opConstant)
-				throw InvalidValue(L"Should not call constant values, use references instead!");
-			if (copyFn.size() != Size::sPtr)
-				throw InvalidValue(L"Must call a pointer, tried calling " + ::toS(copyFn));
-		}
-		return instrLoose(e, op::fnParam, copyFn, src);
-	}
-
-	Instr *fnParamRef(EnginePtr e, Operand src, Size size) {
-		return instrSrc(e, op::fnParamRef, src.referTo(size));
-	}
-
-	Instr *fnParamRef(EnginePtr e, Operand src, Size size, Operand copyFn) {
-		if (copyFn.type() != opNone) {
-			if (copyFn.type() == opConstant)
-				throw InvalidValue(L"Should not call constant values, use references instead!");
-			if (copyFn.size() != Size::sPtr)
-				throw InvalidValue(L"Must call a pointer, tried calling " + ::toS(copyFn));
-		}
-		return instrLoose(e, op::fnParamRef, copyFn, src.referTo(size));
-	}
-
-	Instr *fnCall(EnginePtr e, Operand src, ValType ret) {
-		if (src.type() == opConstant)
-			throw InvalidValue(L"Should not call constant values, use references instead!");
-		if (src.size() != Size::sPtr)
-			throw InvalidValue(L"Must call a pointer, tried calling " + ::toS(src));
-		return instrLoose(e, op::fnCall, sizedReg(ptrA, ret.size), src);
 	}
 
 }

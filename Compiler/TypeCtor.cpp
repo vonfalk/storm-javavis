@@ -49,10 +49,11 @@ namespace storm {
 	}
 
 	CodeGen *TypeDefaultCtor::generate() {
-		CodeGen *t = new (this) CodeGen(runOn());
+		CodeGen *t = new (this) CodeGen(runOn(), true, thisPtr(owner));
 		Listing *l = t->l;
 
-		Var me = l->createParam(valPtr());
+		TypeDesc *ptr = engine().ptrDesc();
+		Var me = l->createParam(ptr);
 
 		*l << prolog();
 
@@ -71,9 +72,9 @@ namespace storm {
 			if (!ctor)
 				throw InternalError(L"Can not find the default constructor for TObject!");
 
-			*l << fnParam(me);
-			*l << fnParam(thread->ref());
-			*l << fnCall(ctor->directRef(), valPtr());
+			*l << fnParam(ptr, me);
+			*l << fnParam(ptr, thread->ref());
+			*l << fnCall(ctor->directRef(), true);
 		} else if (super) {
 			// Find and run the parent constructor.
 			Function *ctor = super->defaultCtor();
@@ -82,8 +83,8 @@ namespace storm {
 									L"for the parent type is present. See parent class for "
 									+ ::toS(owner->identifier()));
 
-			*l << fnParam(me);
-			*l << fnCall(ctor->directRef(), valPtr());
+			*l << fnParam(ptr, me);
+			*l << fnCall(ctor->directRef(), true);
 		} else {
 			// No parent constructor to run.
 		}
@@ -99,8 +100,8 @@ namespace storm {
 										L"constructor. See " + ::toS(owner->identifier()));
 				*l << mov(ptrA, me);
 				*l << add(ptrA, ptrConst(v->offset()));
-				*l << fnParam(ptrA);
-				*l << fnCall(ctor->ref(), valPtr());
+				*l << fnParam(ptr, ptrA);
+				*l << fnCall(ctor->ref(), true);
 			} else if (v->type.isHeapObj()) {
 				Function *ctor = v->type.type->defaultCtor();
 				if (!ctor)
@@ -120,9 +121,7 @@ namespace storm {
 			owner->vtable->insert(l, me);
 		}
 
-		*l << mov(ptrA, me);
-		*l << epilog();
-		*l << ret(valPtr());
+		*l << fnRet(me);
 
 		return t;
 	}
@@ -164,11 +163,12 @@ namespace storm {
 	}
 
 	CodeGen *TypeCopyCtor::generate() {
-		CodeGen *t = new (this) CodeGen(runOn());
+		CodeGen *t = new (this) CodeGen(runOn(), true, thisPtr(owner));
 		Listing *l = t->l;
 
-		Var me = l->createParam(valPtr());
-		Var src = l->createParam(valPtr());
+		TypeDesc *ptr = engine().ptrDesc();
+		Var me = l->createParam(ptr);
+		Var src = l->createParam(ptr);
 
 		*l << prolog();
 
@@ -178,9 +178,9 @@ namespace storm {
 				throw InternalError(L"No copy constructor for " + ::toS(super->identifier())
 									+ L", required from " + ::toS(owner->identifier()));
 
-			*l << fnParam(me);
-			*l << fnParam(src);
-			*l << fnCall(ctor->ref(), valPtr());
+			*l << fnParam(ptr, me);
+			*l << fnParam(ptr, src);
+			*l << fnCall(ctor->ref(), true);
 		}
 
 		// Copy all variables.
@@ -198,9 +198,9 @@ namespace storm {
 
 				*l << add(ptrA, ptrConst(v->offset()));
 				*l << add(ptrC, ptrConst(v->offset()));
-				*l << fnParam(ptrA);
-				*l << fnParam(ptrC);
-				*l << fnCall(ctor->ref(), valPtr());
+				*l << fnParam(ptr, ptrA);
+				*l << fnParam(ptr, ptrC);
+				*l << fnCall(ctor->ref(), true);
 			} else {
 				// Pointer or built-in.
 				*l << mov(xRel(v->type.size(), ptrA, v->offset()), xRel(v->type.size(), ptrC, v->offset()));
@@ -212,9 +212,7 @@ namespace storm {
 			owner->vtable->insert(l, me);
 		}
 
-		*l << mov(ptrA, me);
-		*l << epilog();
-		*l << ret(valPtr());
+		*l << fnRet(me);
 
 		return t;
 	}
@@ -256,11 +254,12 @@ namespace storm {
 	}
 
 	CodeGen *TypeAssign::generate() {
-		CodeGen *t = new (this) CodeGen(runOn());
+		CodeGen *t = new (this) CodeGen(runOn(), true, thisPtr(owner));
 		Listing *l = t->l;
 
-		Var me = l->createParam(valPtr());
-		Var src = l->createParam(valPtr());
+		TypeDesc *ptr = engine().ptrDesc();
+		Var me = l->createParam(ptr);
+		Var src = l->createParam(ptr);
 
 		*l << prolog();
 
@@ -270,9 +269,9 @@ namespace storm {
 				throw InternalError(L"No assignment operator for " + ::toS(super->identifier())
 									+ L", required from " + ::toS(owner->identifier()));
 
-			*l << fnParam(me);
-			*l << fnParam(src);
-			*l << fnCall(ctor->ref(), valPtr());
+			*l << fnParam(ptr, me);
+			*l << fnParam(ptr, src);
+			*l << fnCall(ctor->ref(), true);
 		}
 
 		// Copy all variables.
@@ -290,18 +289,16 @@ namespace storm {
 
 				*l << add(ptrA, ptrConst(v->offset()));
 				*l << add(ptrC, ptrConst(v->offset()));
-				*l << fnParam(ptrA);
-				*l << fnParam(ptrC);
-				*l << fnCall(ctor->ref(), valPtr());
+				*l << fnParam(ptr, ptrA);
+				*l << fnParam(ptr, ptrC);
+				*l << fnCall(ctor->ref(), true);
 			} else {
 				// Pointer or built-in.
 				*l << mov(xRel(v->type.size(), ptrA, v->offset()), xRel(v->type.size(), ptrC, v->offset()));
 			}
 		}
 
-		*l << mov(ptrA, me);
-		*l << epilog();
-		*l << ret(valPtr());
+		*l << fnRet(me);
 
 		return t;
 	}
@@ -320,20 +317,21 @@ namespace storm {
 	}
 
 	CodeGen *TypeDeepCopy::generate() {
-		CodeGen *t = new (this) CodeGen(runOn());
+		CodeGen *t = new (this) CodeGen(runOn(), true, Value());
 		Listing *l = t->l;
 
-		Var me = l->createParam(valPtr());
-		Var env = l->createParam(valPtr());
+		TypeDesc *ptr = engine().ptrDesc();
+		Var me = l->createParam(ptr);
+		Var env = l->createParam(ptr);
 
 		*l << prolog();
 
 		// Call the super-class (if possible).
 		if (Type *super = owner->super()) {
 			if (Function *before = super->deepCopyFn()) {
-				*l << fnParam(me);
-				*l << fnParam(env);
-				*l << fnCall(before->directRef(), valVoid());
+				*l << fnParam(ptr, me);
+				*l << fnParam(ptr, env);
+				*l << fnCall(before->directRef(), true);
 			}
 		}
 
@@ -355,9 +353,9 @@ namespace storm {
 
 				*l << mov(ptrA, me);
 				*l << add(ptrA, ptrConst(var->offset()));
-				*l << fnParam(ptrA);
-				*l << fnParam(env);
-				*l << fnCall(toCall->ref(), valVoid());
+				*l << fnParam(ptr, ptrA);
+				*l << fnParam(ptr, env);
+				*l << fnCall(toCall->ref(), true);
 			} else if (type.isClass()) {
 				// Call the system-wide copy function for this type.
 				Function *toCall = as<Function>(core->find(S("clone"), paramArray(type.type)));
@@ -365,9 +363,9 @@ namespace storm {
 					throw InternalError(L"Can not find 'core.clone' for " + ::toS(type));
 
 				*l << mov(ptrA, me);
-				*l << fnParam(ptrRel(ptrA, var->offset()));
-				*l << fnParam(env);
-				*l << fnCall(toCall->ref(), valPtr());
+				*l << fnParam(ptr, ptrRel(ptrA, var->offset()));
+				*l << fnParam(ptr, env);
+				*l << fnCall(toCall->ref(), false);
 				*l << mov(ptrC, me);
 				*l << mov(ptrRel(ptrC, var->offset()), ptrA);
 			} else {
@@ -375,8 +373,7 @@ namespace storm {
 			}
 		}
 
-		*l << epilog();
-		*l << ret(valPtr());
+		*l << fnRet();
 
 		return t;
 	}

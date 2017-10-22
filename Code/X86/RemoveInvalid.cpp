@@ -416,24 +416,6 @@ namespace code {
 			icastTfm(dest, instr, line);
 		}
 
-		void RemoveInvalid::callFloatTfm(Listing *dest, Instr *instr, Nat line) {
-			Size s = instr->dest().size();
-
-			*dest << call(instr->src(), ValType(s, false));
-			*dest << sub(ptrStack, ptrConst(s));
-			*dest << fstp(xRel(s, ptrStack, Offset()));
-			*dest << pop(instr->dest());
-		}
-
-		void RemoveInvalid::retFloatTfm(Listing *dest, Instr *instr, Nat line) {
-			Size s = instr->src().size();
-
-			*dest << push(instr->src());
-			*dest << fld(xRel(s, ptrStack, Offset()));
-			*dest << add(ptrStack, ptrConst(s));
-			*dest << ret(ValType(s, false));
-		}
-
 		void RemoveInvalid::fnParamTfm(Listing *dest, Instr *instr, Nat line) {
 			TypeInstr *ti = as<TypeInstr>(instr);
 			if (!ti) {
@@ -562,7 +544,7 @@ namespace code {
 
 					*dest << lea(ptrA, ptrRel(ptrStack, paramOffset + Offset::sPtr));
 					*dest << push(ptrA);
-					*dest << call(c->ctor, valVoid());
+					*dest << call(c->ctor, Size());
 					*dest << add(ptrStack, ptrConst(Size::sPtr * 2));
 				} else if (p.ref) {
 					// Copy it using an inlined memcpy.
@@ -577,8 +559,8 @@ namespace code {
 				paramOffset += s;
 			}
 
-			// Call the function!
-			*dest << call(instr->src(), valVoid());
+			// Call the function! (We do not need to analyze register usage anymore, this is fine).
+			*dest << call(instr->src(), Size());
 
 			// Pop the stack.
 			if (paramOffset != Offset())

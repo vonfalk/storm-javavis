@@ -61,21 +61,22 @@ namespace storm {
 		Value valParam = fn->params->at(1);
 
 		using namespace code;
-		Listing *l = new (fn) Listing();
+		Engine &e = fn->engine();
+		TypeDesc *ptr = e.ptrDesc();
+		Listing *l = new (fn) Listing(false, ptr);
 
-		code::Var valRef = l->createParam(valPtr());
-		code::Var strBuf = l->createParam(valPtr());
+		code::Var valRef = l->createParam(ptr);
+		code::Var strBuf = l->createParam(ptr);
 
 		*l << prolog();
-		*l << fnParam(strBuf);
+		*l << fnParam(ptr, strBuf);
 		if (valParam.ref) {
-			*l << fnParam(valRef);
+			*l << fnParam(valParam.desc(e), valRef);
 		} else {
-			*l << fnParamRef(valRef, valParam.size(), valParam.copyCtor());
+			*l << fnParamRef(valParam.desc(e), valRef);
 		}
-		*l << fnCall(Ref(fn->ref()), valPtr());
-		*l << epilog();
-		*l << ret(valPtr());
+		*l << fnCall(Ref(fn->ref()), true, ptr, ptrA);
+		*l << fnRet(ptrA);
 
 		return new (fn) code::Binary(fn->engine().arena(), l);
 	}

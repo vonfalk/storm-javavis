@@ -182,7 +182,7 @@ BEGIN_TEST(CodeGcTest, CodeBasic) {
 	Listing *l = new (e) Listing();
 
 	*l << prolog();
-	*l << call(arena->external(S("triggerCollect"), address(&triggerCollect)), valVoid());
+	*l << call(arena->external(S("triggerCollect"), address(&triggerCollect)), Size());
 	*l << mov(eax, intConst(1337));
 	l->result = intDesc(e);
 	*l << fnRet(eax);

@@ -143,31 +143,19 @@ namespace storm {
 		using namespace code;
 		Value param = this->param();
 
-		Listing *l = new (this) Listing();
+		Listing *l = new (this) Listing(true, param.desc(engine));
 
-		Var me = l->createParam(valPtr());
+		TypeDesc *ptr = engine.ptrDesc();
+		Var me = l->createParam(ptr);
+		Var data = l->createVar(l->root(), param.size());
 
 		*l << prolog();
 
-		if (param.isBuiltIn()) {
-			// Nothing special to do, return in register.
-			Var result = l->createVar(l->root(), param.size());
-			*l << lea(ptrA, result);
-			*l << fnParam(me);
-			*l << fnParam(ptrA);
-			*l << fnCall(engine.ref(Engine::rFutureResult), valVoid());
-			*l << mov(asSize(ptrA, param.size()), result);
-		} else {
-			// We will be passed an additional pointer, just pass that on and we're good!
-			Var result = l->createParam(valPtr());
-			*l << fnParam(me);
-			*l << fnParam(result);
-			*l << fnCall(engine.ref(Engine::rFutureResult), valVoid());
-			*l << mov(ptrA, result);
-		}
-
-		*l << epilog();
-		*l << ret(param.valTypeRet());
+		*l << lea(ptrA, data);
+		*l << fnParam(ptr, me);
+		*l << fnParam(ptr, ptrA);
+		*l << fnCall(engine.ref(Engine::rFutureResult), false);
+		*l << fnRet(data);
 
 		return l;
 	}

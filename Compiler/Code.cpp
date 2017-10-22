@@ -5,7 +5,6 @@
 #include "Exception.h"
 #include "Engine.h"
 #include "Core/Str.h"
-#include "Code/Redirect.h"
 
 namespace storm {
 
@@ -92,9 +91,9 @@ namespace storm {
 		if (owner) {
 			Array<Value> *params = owner->params;
 			for (Nat i = 0; i < params->count(); i++)
-				p->push(params->at(i).typeDesc(e));
+				p->push(params->at(i).desc(e));
 		}
-		return e.arena()->engineRedirect(result.typeDesc(e), p, ref, e.ref(Engine::rEngine));
+		return e.arena()->engineRedirect(result.desc(e), p, ref, e.ref(Engine::rEngine));
 	}
 
 
@@ -123,11 +122,11 @@ namespace storm {
 
 		Array<TypeDesc *> *params = new (this) Array<TypeDesc *>();
 		for (Nat i = 0; i < owner->params->count(); i++) {
-			params->push(owner->params->at(i).typeDesc(e));
+			params->push(owner->params->at(i).desc(e));
 		}
 
 		Bool member = owner->isMember();
-		TypeDesc *result = owner->result.typeDesc(e);
+		TypeDesc *result = owner->result.desc(e);
 		code::Ref fn = e.ref(Engine::rLazyCodeUpdate);
 		setCode(e.arena()->redirect(member, result, params, fn, code::objPtr(this)));
 	}
@@ -209,7 +208,7 @@ namespace storm {
 	CodeGen *InlineCode::generatePtr() {
 		using namespace code;
 
-		CodeGen *state = new (this) CodeGen(owner->runOn());
+		CodeGen *state = new (this) CodeGen(owner->runOn(), owner->isMember(), owner->result);
 		Listing *l = state->l;
 
 		Array<code::Operand> *params = new (this) Array<code::Operand>();
@@ -217,8 +216,6 @@ namespace storm {
 			Value p = owner->params->at(i);
 			params->push(state->createParam(p));
 		}
-
-		state->result(owner->result, owner->isMember());
 
 		*l << prolog();
 

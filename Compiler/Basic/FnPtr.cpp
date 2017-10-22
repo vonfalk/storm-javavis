@@ -87,17 +87,18 @@ namespace storm {
 				// We need to create a new object each time since the 'dotExpr' might change.
 				RunOn runOn = target->runOn();
 				bool memberFn = target->isMember();
+				code::TypeDesc *ptr = engine().ptrDesc();
 
 				*to->l << lea(ptrA, target->ref());
-				*to->l << fnParam(type.type->typeRef());
-				*to->l << fnParam(ptrA);
+				*to->l << fnParam(ptr, type.type->typeRef());
+				*to->l << fnParam(ptr, ptrA);
 				if (runOn.state == RunOn::named)
-					*to->l << fnParam(runOn.thread->ref());
+					*to->l << fnParam(ptr, runOn.thread->ref());
 				else
-					*to->l << fnParam(ptrConst(Offset()));
-				*to->l << fnParam(thisPtr.v);
-				*to->l << fnParam(byteConst(memberFn ? 1 : 0));
-				*to->l << fnCall(engine().ref(Engine::rFnCreate), valPtr());
+					*to->l << fnParam(ptr, ptrConst(Offset()));
+				*to->l << fnParam(ptr, thisPtr.v);
+				*to->l << fnParam(byteDesc(engine()), byteConst(memberFn ? 1 : 0));
+				*to->l << fnCall(engine().ref(Engine::rFnCreate), false, ptr, ptrA);
 				*to->l << mov(z.v, ptrA);
 			}
 			z.created(to);

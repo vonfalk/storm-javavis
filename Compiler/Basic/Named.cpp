@@ -5,6 +5,7 @@
 #include "Lookup.h"
 #include "Actuals.h"
 #include "Block.h"
+#include "Compiler/Engine.h"
 #include "Compiler/Lib/Future.h"
 
 namespace storm {
@@ -26,6 +27,7 @@ namespace storm {
 						CodeResult *to, bool lookup, bool sameObject) {
 			using namespace code;
 
+			Engine &e = call->engine();
 			if (!to->needed() || to->type().ref == call->result.ref) {
 				callOnThread(call, s, values, to, lookup, sameObject);
 				return;
@@ -45,9 +47,9 @@ namespace storm {
 			} else if (to->type().isValue()) {
 				// Need to copy...
 				*s->l << lea(ptrA, ptrRel(r.v, Offset()));
-				*s->l << fnParam(ptrA);
-				*s->l << fnParam(t->location(s).v);
-				*s->l << fnCall(to->type().copyCtor(), valVoid());
+				*s->l << fnParam(e.ptrDesc(), ptrA);
+				*s->l << fnParam(e.ptrDesc(), t->location(s).v);
+				*s->l << fnCall(to->type().copyCtor(), true);
 			} else {
 				// Regular machine operations suffice!
 				*s->l << mov(ptrA, t->location(s).v);
@@ -242,9 +244,9 @@ namespace storm {
 				if (var->result.isValue()) {
 					*s->l << lea(ptrA, var->var.v);
 					*s->l << lea(ptrC, v.v);
-					*s->l << fnParam(ptrC);
-					*s->l << fnParam(ptrA);
-					*s->l << fnCall(var->result.copyCtor(), valVoid());
+					*s->l << fnParam(engine().ptrDesc(), ptrC);
+					*s->l << fnParam(engine().ptrDesc(), ptrA);
+					*s->l << fnCall(var->result.copyCtor(), true);
 				} else {
 					*s->l << mov(v.v, var->var.v);
 				}
@@ -280,9 +282,9 @@ namespace storm {
 				if (type.isValue()) {
 					*s->l << lea(ptrA, var);
 					*s->l << lea(ptrC, v.v);
-					*s->l << fnParam(ptrC);
-					*s->l << fnParam(ptrA);
-					*s->l << fnCall(type.copyCtor(), valVoid());
+					*s->l << fnParam(engine().ptrDesc(), ptrC);
+					*s->l << fnParam(engine().ptrDesc(), ptrA);
+					*s->l << fnCall(type.copyCtor(), true);
 				} else {
 					*s->l << mov(v.v, var);
 				}
@@ -361,9 +363,9 @@ namespace storm {
 			} else if (var->type.isValue()) {
 				*s->l << add(ptrA, ptrConst(var->offset()));
 				*s->l << lea(ptrC, result.v);
-				*s->l << fnParam(ptrC);
-				*s->l << fnParam(ptrA);
-				*s->l << fnCall(var->type.copyCtor(), valVoid());
+				*s->l << fnParam(engine().ptrDesc(), ptrC);
+				*s->l << fnParam(engine().ptrDesc(), ptrA);
+				*s->l << fnCall(var->type.copyCtor(), true);
 			} else {
 				*s->l << mov(result.v, xRel(result.v.size(), ptrA, var->offset()));
 			}

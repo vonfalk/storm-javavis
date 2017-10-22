@@ -29,7 +29,7 @@ BEGIN_TEST(JmpTest, Code) {
 	*l << end;
 
 	*l << epilog();
-	*l << ret(ValType(Size::sInt, false));
+	*l << ret(Size::sInt);
 
 	Binary *b = new (e) Binary(arena, l);
 	typedef Int (*Fn)(Int);
@@ -60,10 +60,10 @@ BEGIN_TEST(CallTest, Code) {
 	*l << prolog();
 
 	*l << push(p);
-	*l << call(arena->external(S("addFive"), address(&addFive)), ValType(Size::sInt, false));
+	*l << call(arena->external(S("addFive"), address(&addFive)), Size::sInt);
 
 	*l << epilog();
-	*l << ret(ValType(Size::sInt, false));
+	*l << ret(Size::sInt);
 
 	Binary *b = new (e) Binary(arena, l);
 	typedef Int (*Fn)(Int);

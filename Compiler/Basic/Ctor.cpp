@@ -73,14 +73,14 @@ namespace storm {
 			CtorBody *body = parse();
 
 			using namespace code;
-			CodeGen *state = new (this) CodeGen(runOn());
+			CodeGen *state = new (this) CodeGen(runOn(), true, Value());
 			Listing *l = state->l;
 
 			*l << prolog();
 
 			// Parameters (first one is special).
 			{
-				code::Var thisVar = l->createParam(params->at(0).type.valTypeParam());
+				code::Var thisVar = state->createParam(params->at(0).type);
 				SimplePart *hiddenName = new (this) SimplePart(new (this) Str(L" this"));
 				SimplePart *normalName = new (this) SimplePart(new (this) Str(L"this"));
 				LocalVar *hidden = body->variable(hiddenName);
@@ -100,8 +100,7 @@ namespace storm {
 			CodeResult *r = CREATE(CodeResult, this);
 			body->code(state, r);
 
-			*l << epilog();
-			*l << ret(valVoid());
+			*l << fnRet();
 
 			// PLN(identifier() << L": " << l);
 			return state;
@@ -333,10 +332,10 @@ namespace storm {
 			if (t.isValue()) {
 				*s->l << mov(ptrA, dest);
 				*s->l << add(ptrA, ptrConst(v->offset()));
-				*s->l << fnParam(ptrA);
+				*s->l << fnParam(engine().ptrDesc(), ptrA);
 				Function *c = t.type->defaultCtor();
 				assert(c, L"No default constructor!");
-				*s->l << fnCall(c->ref(), valVoid());
+				*s->l << fnCall(c->ref(), false);
 			} else if (t.isBuiltIn()) {
 				// Default value is already there.
 			} else {

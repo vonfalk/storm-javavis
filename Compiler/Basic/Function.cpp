@@ -95,7 +95,7 @@ namespace storm {
 
 			// Generate code!
 			using namespace code;
-			CodeGen *state = new (this) CodeGen(runOn());
+			CodeGen *state = new (this) CodeGen(runOn(), isMember(), result);
 
 			Listing *l = state->l;
 
@@ -108,9 +108,6 @@ namespace storm {
 				assert(var);
 				var->createParam(state);
 			}
-
-			// Return type.
-			state->result(result, isMember());
 
 			if (result == Value()) {
 				CodeResult *r = CREATE(CodeResult, this);

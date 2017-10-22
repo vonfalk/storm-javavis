@@ -65,7 +65,7 @@ namespace code {
 			*to << push(low32(src));
 			*to << push(high32(dest));
 			*to << push(low32(dest));
-			*to << call(xConst(Size::sPtr, (Word)fn), ValType(Size::sLong, false));
+			*to << call(xConst(Size::sPtr, (Word)fn), Size::sLong);
 			*to << add(ptrStack, ptrConst(Size::sLong * 2));
 
 			// Save the result somewhere

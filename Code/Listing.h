@@ -6,7 +6,6 @@
 #include "Label.h"
 #include "Var.h"
 #include "Block.h"
-#include "ValType.h"
 
 namespace code {
 	STORM_PKG(core.asm);
@@ -236,11 +235,6 @@ namespace code {
 		Var STORM_FN createParam(TypeDesc *type, FreeOpt when);
 		Var STORM_FN createParam(TypeDesc *type, Operand free);
 		Var STORM_FN createParam(TypeDesc *type, Operand free, FreeOpt when);
-
-		// TODO: Remove these overloads - they are obsolete.
-		inline Var STORM_FN createParam(ValType type) { return createParam(type, Operand(), freeDef); }
-		inline Var STORM_FN createParam(ValType type, Operand free) { return createParam(type, free, freeDef); }
-		Var STORM_FN createParam(ValType type, Operand free, FreeOpt when);
 
 		/**
 		 * Convenience functions.

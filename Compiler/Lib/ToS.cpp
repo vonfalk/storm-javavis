@@ -66,7 +66,7 @@ namespace storm {
 		using namespace code;
 		Value type = params->at(0);
 
-		CodeGen *to = new (this) CodeGen(runOn());
+		CodeGen *to = new (this) CodeGen(runOn(), isMember(), Value(Str::stormType(engine())));
 		Var param = to->createParam(type);
 
 		*to->l << prolog();

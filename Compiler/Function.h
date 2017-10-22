@@ -129,14 +129,11 @@ namespace storm {
 		// Get the thread thunk, generates it if needed. Returns null if no thunk is needed.
 		code::RefSource *threadThunk();
 
-		// Forward parameter #id for the thread thunk.
-		void threadThunkParam(nat id, code::Listing *to);
-
 		// Generate code for a direct function call.
 		void localCall(CodeGen *to, Array<code::Operand> *params, CodeResult *result, code::Ref ref);
 
 		// Add parameters for the function call.
-		void addParams(CodeGen *to, Array<code::Operand> *params, code::Var resultIn);
+		void addParams(CodeGen *to, Array<code::Operand> *params);
 		void addParam(CodeGen *to, Array<code::Operand> *params, nat id);
 	};
 

@@ -30,8 +30,7 @@ namespace storm {
 
 		void Return::voidCode(CodeGen *state) {
 			using namespace code;
-			*state->l << epilog();
-			*state->l << ret(valVoid());
+			*state->l << fnRet();
 		}
 
 		void Return::valueCode(CodeGen *state) {

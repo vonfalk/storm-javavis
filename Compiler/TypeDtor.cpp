@@ -1,6 +1,7 @@
 #include "stdafx.h"
 #include "TypeDtor.h"
 #include "Type.h"
+#include "Engine.h"
 
 namespace storm {
 
@@ -41,10 +42,10 @@ namespace storm {
 	CodeGen *TypeDefaultDtor::generate() {
 		using namespace code;
 
-		CodeGen *t = new (this) CodeGen(runOn());
+		CodeGen *t = new (this) CodeGen(runOn(), true, Value());
 		Listing *l = t->l;
 
-		Var me = l->createParam(valPtr());
+		Var me = l->createParam(engine().ptrDesc());
 
 		*l << prolog();
 
@@ -61,8 +62,8 @@ namespace storm {
 
 			*l << mov(ptrA, me);
 			*l << add(ptrA, ptrConst(v->offset()));
-			*l << fnParam(ptrA);
-			*l << fnCall(dtor->ref(), valPtr());
+			*l << fnParam(engine().ptrDesc(), ptrA);
+			*l << fnCall(dtor->ref(), true);
 		}
 
 		// Call super class' destructor (if any).
@@ -70,13 +71,12 @@ namespace storm {
 		if (super) {
 			Function *dtor = super->destructor();
 			if (dtor) {
-				*l << fnParam(me);
-				*l << fnCall(dtor->directRef(), valVoid());
+				*l << fnParam(engine().ptrDesc(), me);
+				*l << fnCall(dtor->directRef(), true);
 			}
 		}
 
-		*l << epilog();
-		*l << ret(valVoid());
+		*l << fnRet();
 
 		return t;
 	}

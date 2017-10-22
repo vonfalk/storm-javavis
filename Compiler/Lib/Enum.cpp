@@ -195,20 +195,19 @@ namespace storm {
 		if (!type)
 			return null;
 
-		Listing *l = new (this) Listing();
-		Var out = l->createParam(valPtr());
-		Var in = l->createParam(valInt());
+		TypeDesc *ptr = engine().ptrDesc();
+		Listing *l = new (this) Listing(true, ptr);
+		Var out = l->createParam(ptr);
+		Var in = l->createParam(intDesc(engine()));
 
 		*l << prolog();
 
-		*l << fnParam(type->typeRef());
-		*l << fnParam(out);
-		*l << fnParam(in);
-		*l << fnCall(engine().ref(Engine::rEnumToS), valVoid());
+		*l << fnParam(ptr, type->typeRef());
+		*l << fnParam(ptr, out);
+		*l << fnParam(intDesc(engine()), in);
+		*l << fnCall(engine().ref(Engine::rEnumToS), true);
 
-		*l << mov(ptrA, out);
-		*l << epilog();
-		*l << ret(valPtr());
+		*l << fnRet(out);
 
 		return dynamicFunction(engine(), strBuf, S("<<"), valList(engine(), 2, strBuf, e), l);
 	}

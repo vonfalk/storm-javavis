@@ -90,29 +90,6 @@ namespace storm {
 		}
 	}
 
-	code::ValType Value::valTypeRet() const {
-		TODO(L"Remove me!");
-		if (returnInReg()) {
-			return code::ValType(size(), false); // Note: 'isFloat' is missing, so this is incorrect.
-		} else {
-			// value types are returned as pointers.
-			return code::ValType(Size::sPtr, false);
-		}
-	}
-
-	code::ValType Value::valTypeParam() const {
-		TODO(L"Remove me!");
-		if (isBuiltIn()) {
-			return code::ValType(size(), false); // Note: 'isFloat' is missing, so this is incorrect.
-		} else if (isValue()) {
-			// Values.
-			return code::ValType(size(), false);
-		} else {
-			// Classes and Actors.
-			return code::ValType(Size::sPtr, false);
-		}
-	}
-
 	static TypeKind::T convert(code::primitive::Kind k) {
 		switch (k) {
 		case code::primitive::none:
@@ -154,14 +131,14 @@ namespace storm {
 		return r;
 	}
 
-	code::TypeDesc *Value::typeDesc(Engine &e) const {
+	code::TypeDesc *Value::desc(Engine &e) const {
 		if (!type)
 			return e.voidDesc();
 		return type->typeDesc();
 	}
 
-	code::TypeDesc *typeDesc(EnginePtr e, Value v) {
-		return v.typeDesc(e.v);
+	code::TypeDesc *desc(EnginePtr e, Value v) {
+		return v.desc(e.v);
 	}
 
 	Bool Value::returnInReg() const {

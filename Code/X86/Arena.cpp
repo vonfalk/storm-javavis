@@ -95,9 +95,9 @@ namespace code {
 				*l << push(engine);
 			}
 
-			*l << call(fn, valVoid());
+			*l << call(fn, Size());
 			*l << add(ptrStack, ptrConst(Size::sPtr * 2));
-			*l << ret(valVoid());
+			*l << ret(Size());
 
 			return l;
 		}

@@ -31,18 +31,17 @@ namespace storm {
 			return nativeFunction(e, type, S("clone"), params, address(&runtime::cloneObject));
 
 		// Value or built-in type. We need to generate some code...
-		CodeGen *g = new (e) CodeGen(RunOn());
+		CodeGen *g = new (e) CodeGen(RunOn(), false, type);
 		Var in = g->createParam(type);
-		g->result(type, false);
 
 		*g->l << prolog();
 
 		if (Function *copyFn = type.type->deepCopyFn()) {
 			Var cloneEnv = allocObject(g, cloneEnvT.type);
 			*g->l << lea(ptrA, in);
-			*g->l << fnParam(ptrA);
-			*g->l << fnParam(cloneEnv);
-			*g->l << fnCall(copyFn->ref(), valVoid());
+			*g->l << fnParam(e.ptrDesc(), ptrA);
+			*g->l << fnParam(e.ptrDesc(), cloneEnv);
+			*g->l << fnCall(copyFn->ref(), true);
 		}
 
 		g->returnValue(in);
@@ -62,18 +61,17 @@ namespace storm {
 			return nativeFunction(e, type, S("clone"), params, address(&runtime::cloneObjectEnv));
 
 		// Value or built-in type. We need to generate some code...
-		CodeGen *g = new (e) CodeGen(RunOn());
+		CodeGen *g = new (e) CodeGen(RunOn(), false, type);
 		Var in = g->createParam(type);
 		Var cloneEnv = g->createParam(cloneEnvT);
-		g->result(type, false);
 
 		*g->l << prolog();
 
 		if (Function *copyFn = type.type->deepCopyFn()) {
 			*g->l << lea(ptrA, in);
-			*g->l << fnParam(ptrA);
-			*g->l << fnParam(cloneEnv);
-			*g->l << fnCall(copyFn->ref(), valVoid());
+			*g->l << fnParam(e.ptrDesc(), ptrA);
+			*g->l << fnParam(e.ptrDesc(), cloneEnv);
+			*g->l << fnCall(copyFn->ref(), true);
 		}
 
 		g->returnValue(in);

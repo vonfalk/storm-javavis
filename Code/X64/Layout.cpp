@@ -299,19 +299,19 @@ namespace code {
 					if (when & freeIndirection) {
 						if (when & freePtr) {
 							*dest << mov(ptrDi, resolve(dest, v, Size::sPtr));
-							*dest << call(dtor, valVoid());
+							*dest << call(dtor, Size());
 						} else {
 							*dest << mov(ptrDi, resolve(dest, v, Size::sPtr));
 							*dest << mov(asSize(ptrDi, v.size()), xRel(v.size(), ptrDi, Offset()));
-							*dest << call(dtor, valVoid());
+							*dest << call(dtor, Size());
 						}
 					} else {
 						if (when & freePtr) {
 							*dest << lea(ptrDi, resolve(dest, v));
-							*dest << call(dtor, valVoid());
+							*dest << call(dtor, Size());
 						} else {
 							*dest << mov(asSize(ptrDi, v.size()), resolve(dest, v));
-							*dest << call(dtor, valVoid());
+							*dest << call(dtor, Size());
 						}
 					}
 					// TODO: Zero memory to avoid multiple destruction in rare cases?
@@ -413,7 +413,7 @@ namespace code {
 				// Call the copy-ctor.
 				*dest << lea(ptrSi, value);
 				*dest << mov(ptrDi, ptrRel(ptrFrame, resultParam()));
-				*dest << call(c->ctor, valVoid());
+				*dest << call(c->ctor, Size());
 				// Set 'rax' to the address of the return value.
 				*dest << mov(ptrA, ptrRel(ptrFrame, resultParam()));
 			} else if (SimpleDesc *s = as<SimpleDesc>(src->result)) {
@@ -424,7 +424,7 @@ namespace code {
 			}
 
 			epilogTfm(dest, src, line);
-			*dest << ret(valVoid());
+			*dest << ret(Size()); // We will not analyze registers anymore, Size() is fine.
 		}
 
 		static void returnPrimitiveRef(Listing *dest, PrimitiveDesc *p, const Operand &value) {
@@ -455,7 +455,7 @@ namespace code {
 				// Call the copy-ctor.
 				*dest << mov(ptrSi, value);
 				*dest << mov(ptrDi, ptrRel(ptrFrame, resultParam()));
-				*dest << call(c->ctor, valVoid());
+				*dest << call(c->ctor, Size());
 				// Set 'rax' to the address of the return value.
 				*dest << mov(ptrA, ptrRel(ptrFrame, resultParam()));
 			} else if (SimpleDesc *s = as<SimpleDesc>(src->result)) {
@@ -466,7 +466,7 @@ namespace code {
 			}
 
 			epilogTfm(dest, src, line);
-			*dest << ret(valVoid());
+			*dest << ret(Size()); // We will not analyze registers anymore, Size() is fine.
 		}
 
 

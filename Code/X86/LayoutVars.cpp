@@ -219,16 +219,16 @@ namespace code {
 					if (when & freePtr) {
 						*dest << lea(ptrA, resolve(dest, v));
 						*dest << push(ptrA);
-						*dest << call(dtor, valVoid());
+						*dest << call(dtor, Size());
 						*dest << add(ptrStack, ptrConst(Offset::sPtr));
 					} else if (v.size() <= Size::sInt) {
 						*dest << push(resolve(dest, v));
-						*dest << call(dtor, valVoid());
+						*dest << call(dtor, Size());
 						*dest << add(ptrStack, ptrConst(v.size()));
 					} else {
 						*dest << push(high32(resolve(dest, v)));
 						*dest << push(low32(resolve(dest, v)));
-						*dest << call(dtor, valVoid());
+						*dest << call(dtor, Size());
 						*dest << add(ptrStack, ptrConst(v.size()));
 					}
 
@@ -398,7 +398,7 @@ namespace code {
 				*dest << lea(ptrA, value);
 				*dest << push(ptrA);
 				*dest << push(resultLoc());
-				*dest << call(c->ctor, valVoid());
+				*dest << call(c->ctor, Size());
 				*dest << add(ptrStack, ptrConst(Size::sPtr * 2));
 				*dest << lea(ptrA, value);
 			} else if (SimpleDesc *s = as<SimpleDesc>(src->result)) {
@@ -411,7 +411,7 @@ namespace code {
 			}
 
 			epilogTfm(dest, src, line);
-			*dest << ret(valVoid());
+			*dest << ret(Size()); // We will not analyze registers anymore, Size() is fine.
 		}
 
 		static void returnPrimitiveRef(Listing *dest, PrimitiveDesc *p, const Operand &value) {
@@ -441,7 +441,7 @@ namespace code {
 				// Call the copy-constructor.
 				*dest << push(value);
 				*dest << push(resultLoc());
-				*dest << call(c->ctor, valVoid());
+				*dest << call(c->ctor, Size());
 				*dest << add(ptrStack, ptrConst(Size::sPtr));
 				*dest << pop(ptrA);
 			} else if (SimpleDesc *s = as<SimpleDesc>(src->result)) {
@@ -454,7 +454,7 @@ namespace code {
 			}
 
 			epilogTfm(dest, src, line);
-			*dest << ret(valVoid());
+			*dest << ret(Size()); // We will not analyze registers anymore, Size() is fine.
 		}
 
 

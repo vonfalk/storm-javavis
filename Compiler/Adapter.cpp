@@ -9,13 +9,15 @@ namespace storm {
 	const void *makeRefParams(Function *wrap) {
 		assert(wrap->result.returnInReg(), L"Currently, returning values is not supported.");
 
-		CodeGen *s = new (wrap) CodeGen(wrap->runOn());
+		CodeGen *s = new (wrap) CodeGen(wrap->runOn(), wrap->isMember(), wrap->result);
+		Engine &e = wrap->engine();
 
 		Array<Var> *params = new (wrap) Array<Var>();
 		for (Nat i = 0; i < wrap->params->count(); i++) {
 			params->push(s->createParam(wrap->params->at(i).asRef(true)));
 		}
 
+		Var result = s->createVar(wrap->result).v;
 
 		*s->l << prolog();
 
@@ -23,16 +25,15 @@ namespace storm {
 			Value type = wrap->params->at(i);
 			if (type.ref) {
 				// Nothing special needs to be done...
-				*s->l << fnParam(params->at(i));
+				*s->l << fnParam(type.desc(e), params->at(i));
 			} else {
-				// Use the copy-ctor.
-				*s->l << fnParamRef(params->at(i), type.size(), type.copyCtor());
+				// Copy the reference into the 'real' value.
+				*s->l << fnParamRef(type.desc(e), params->at(i));
 			}
 		}
 
-		*s->l << fnCall(wrap->ref(), wrap->result.valTypeRet());
-		*s->l << epilog();
-		*s->l << ret(wrap->result.valTypeRet());
+		*s->l << fnCall(wrap->ref(), wrap->isMember(), wrap->result.desc(e), result);
+		*s->l << fnRet(result);
 
 		Binary *b = new (wrap) Binary(wrap->engine().arena(), s->l);
 		return b->address();

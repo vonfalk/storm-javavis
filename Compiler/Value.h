@@ -1,6 +1,5 @@
 #pragma once
 #include "Core/EnginePtr.h"
-#include "Code/ValType.h"
 #include "Code/Operand.h"
 #include "Code/TypeDesc.h"
 #include "NamedFlags.h"
@@ -55,12 +54,6 @@ namespace storm {
 		// Return this type in a register?
 		Bool STORM_FN returnInReg() const;
 
-		// Get a ValType representing this type when returning the type.
-		code::ValType STORM_FN valTypeRet() const;
-
-		// Get a ValType representing this type when used as a parameter.
-		code::ValType STORM_FN valTypeParam() const;
-
 		// Is this a value type, a class, an actor or built in? These are mutually exclusive, ie. at most one is true.
 		Bool STORM_FN isValue() const;
 		Bool STORM_FN isClass() const;
@@ -82,7 +75,7 @@ namespace storm {
 		BasicTypeInfo typeInfo() const;
 
 		// Get a type description of this type.
-		code::TypeDesc *typeDesc(Engine &e) const;
+		code::TypeDesc *desc(Engine &e) const;
 
 		/**
 		 * Access to common member functions.
@@ -99,7 +92,7 @@ namespace storm {
 	};
 
 	// Get a description of this type.
-	code::TypeDesc *STORM_FN typeDesc(EnginePtr e, Value v);
+	code::TypeDesc *STORM_FN desc(EnginePtr e, Value v);
 
 
 	/**

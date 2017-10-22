@@ -67,8 +67,6 @@ namespace code {
 			void sarTfm(Listing *dest, Instr *instr, Nat line);
 			void icastTfm(Listing *dest, Instr *instr, Nat line);
 			void ucastTfm(Listing *dest, Instr *instr, Nat line);
-			void callFloatTfm(Listing *dest, Instr *instr, Nat line);
-			void retFloatTfm(Listing *dest, Instr *instr, Nat line);
 
 			// Perform a function call.
 			void fnCall(Listing *dest, TypeInstr *instr, Array<Param> *params);

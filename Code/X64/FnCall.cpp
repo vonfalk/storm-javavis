@@ -404,7 +404,7 @@ namespace code {
 					} else {
 						assert(false, L"Can not use the 'lea'-mode for complex parameters.");
 					}
-					*dest << call(c->ctor, valVoid());
+					*dest << call(c->ctor, Size());
 					*dest << begin(part);
 
 					// Modify the parameter so that we use the newly created parameter.
@@ -485,8 +485,8 @@ namespace code {
 			// Assign parameters to registers.
 			setRegisters(dest, params, layout);
 
-			// Call the function.
-			*dest << call(toCall, valVoid());
+			// Call the function (we do not need accurate knowledge of dirty registers from here).
+			*dest << call(toCall, Size());
 
 			// Handle the return value if required.
 			if (PrimitiveDesc *p = as<PrimitiveDesc>(resultType)) {

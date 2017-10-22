@@ -1,11 +1,11 @@
-* Cleanup work remaining [0/7]
-  - [ ] Remove the old 'fnCall' and 'fnParam' overloads.
-  - [ ] Remove 'retFloat' and 'callFloat'.
-  - [ ] Make 'call' and 'ret' take a plain size instead of a ValType.
+* Cleanup work remaining [6/7]
+  - [X] Remove the old 'fnCall' and 'fnParam' overloads.
+  - [X] Remove 'retFloat' and 'callFloat'.
+  - [X] Make 'call' and 'ret' take a plain size instead of a ValType.
   - [ ] Make a listing require a TypeDesc parameter.
-  - [ ] Remove opRef inside Operand.
-  - [ ] Remove 'ValType'.
-  - [ ] Remove RedirectParam.
+  - [X] Remove opRef inside Operand.
+  - [X] Remove 'ValType'.
+  - [X] Remove RedirectParam.
 
 * Minor issues [0/1]
   - [ ] Shift operations have no 64-bit transform on X86.

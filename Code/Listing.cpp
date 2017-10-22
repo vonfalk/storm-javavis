@@ -584,18 +584,6 @@ namespace code {
 		return Var(id, type->size());
 	}
 
-	Var Listing::createParam(ValType type, Operand free, FreeOpt when) {
-		if (checkFree(free, when))
-			needEH = true;
-
-		TODO(L"Obsolete function. Remove.");
-		Nat id = vars->count();
-		vars->push(IVar(invalid, type.size, new (this) PrimitiveDesc(ptrPrimitive()), free, when));
-
-		params->push(id);
-		return Var(id, type.size);
-	}
-
 	Nat Listing::findBlock(Nat partId) const {
 		if (partId == invalid)
 			return invalid;

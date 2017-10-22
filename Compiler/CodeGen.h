@@ -47,8 +47,9 @@ namespace storm {
 	class CodeGen : public Object {
 		STORM_CLASS;
 	public:
-		// Create. Supply which thread we're supposed to run on.
-		STORM_CTOR CodeGen(RunOn thread);
+		// Create. Supply which thread we're supposed to run on, if we're generating a member
+		// function and the result type.
+		STORM_CTOR CodeGen(RunOn thread, Bool member, Value result);
 
 		// Create a new CodeGen which attaches to an already existing listing.
 		STORM_CTOR CodeGen(RunOn thread, code::Listing *l);
@@ -88,14 +89,10 @@ namespace storm {
 		 * Return values.
 		 */
 
-		// Set the return type. This needs to be done after all parameters have been added.
-		// Returns the parameter used for the return value if applicable.
-		void STORM_FN result(Value type, Bool isMember);
-
 		// Get the return type.
 		Value STORM_FN result() const;
 
-		// Return the value stored in 'value'. Generates an epilog and a ret instruction.
+		// Return the value stored in 'value'. Generates an epilog and a ret instruction (ie. a fnRet instruction).
 		void STORM_FN returnValue(code::Var value);
 
 		/**
@@ -117,9 +114,6 @@ namespace storm {
 	private:
 		// Return type.
 		Value res;
-
-		// Return parameter.
-		code::Var resParam;
 	};
 
 

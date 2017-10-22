@@ -197,49 +197,19 @@ namespace storm {
 	void Function::localCall(CodeGen *to, Array<code::Operand> *params, CodeResult *res, code::Ref ref) {
 		using namespace code;
 
-		if (result == Value()) {
-			addParams(to, params, code::Var());
+		addParams(to, params);
 
-			*to->l << fnCall(ref, valVoid());
+		if (result == Value()) {
+			*to->l << fnCall(ref, isMember());
 		} else {
 			VarInfo rVar = res->safeLocation(to, result);
-			addParams(to, params, rVar.v);
-
-			if (result.returnInReg()) {
-				*to->l << fnCall(ref, result.valTypeRet());
-				*to->l << mov(rVar.v, asSize(ptrA, result.size()));
-			} else {
-				// Ignore return value...
-				*to->l << fnCall(ref, valVoid());
-			}
-
+			*to->l << fnCall(ref, isMember(), result.desc(engine()), rVar.v);
 			rVar.created(to);
 		}
 	}
 
-	void Function::addParams(CodeGen *to, Array<code::Operand> *params, code::Var resultIn) {
-		using namespace code;
-
-		// Do we need a parameter for the result?
-		bool resultParam = resultIn != Var();
-		resultParam &= !result.returnInReg();
-
-		nat start = 0;
-
-		if (resultParam) {
-			if (isMember()) {
-				assert(params->count() >= 1);
-				assert(params->at(0) != Operand(ptrA));
-				addParam(to, params, 0);
-				start = 1;
-			}
-
-			*to->l << lea(ptrA, ptrRel(resultIn, Offset()));
-			*to->l << fnParam(ptrA);
-		}
-
-		for (nat i = start; i < params->count(); i++) {
-			assert(!resultParam || params->at(i) != Operand(ptrA));
+	void Function::addParams(CodeGen *to, Array<code::Operand> *params) {
+		for (nat i = 0; i < params->count(); i++) {
 			addParam(to, params, i);
 		}
 	}
@@ -248,13 +218,13 @@ namespace storm {
 		Value p = this->params->at(id);
 		if (!p.ref && p.isValue()) {
 			if (params->at(id).type() == code::opVariable) {
-				*to->l << fnParam(params->at(id).var(), p.copyCtor());
+				*to->l << fnParam(p.desc(engine()), params->at(id).var());
 			} else {
 				// Has to be a reference to the value...
-				*to->l << fnParamRef(params->at(id), p.type->size(), p.copyCtor());
+				*to->l << fnParamRef(p.desc(engine()), params->at(id));
 			}
 		} else {
-			*to->l << fnParam(params->at(id));
+			*to->l << fnParam(p.desc(engine()), params->at(id));
 		}
 	}
 
@@ -284,15 +254,17 @@ namespace storm {
 
 		Ref thunk = Ref(threadThunk());
 
+		TypeDesc *ptr = e.ptrDesc();
+
 		// Spawn the thread!
 		*to->l << lea(ptrA, par);
-		*to->l << fnParam(ref()); // fn
-		*to->l << fnParam(toOp(isMember())); // member
-		*to->l << fnParam(thunk); // thunk
-		*to->l << fnParam(ptrA); // params
-		*to->l << fnParam(ptrB); // result
-		*to->l << fnParam(thread); // on
-		*to->l << fnCall(e.ref(Engine::rSpawnResult), valVoid());
+		*to->l << fnParam(ptr, ref()); // fn
+		*to->l << fnParam(ptr, toOp(isMember())); // member
+		*to->l << fnParam(ptr, thunk); // thunk
+		*to->l << fnParam(ptr, ptrA); // params
+		*to->l << fnParam(ptr, ptrB); // result
+		*to->l << fnParam(ptr, thread); // on
+		*to->l << fnCall(e.ref(Engine::rSpawnResult), false);
 		resultPos.created(sub);
 
 		*to->l << end(sub->block);
@@ -309,16 +281,15 @@ namespace storm {
 
 				Var env = allocObject(child, CloneEnv::stormType(e));
 				*to->l << lea(ptrA, resultPos.v);
-				*to->l << fnParam(ptrA);
-				*to->l << fnParam(env);
-				*to->l << fnCall(f->ref(), valVoid());
+				*to->l << fnParam(ptr, ptrA);
+				*to->l << fnParam(ptr, env);
+				*to->l << fnCall(f->ref(), true);
 
 				*to->l << end(child->block);
 			}
 		} else if (result.isClass()) {
-			*to->l << fnParam(resultPos.v);
-			*to->l << fnCall(cloneFn(result.type)->ref(), valPtr());
-			*to->l << mov(resultPos.v, ptrA);
+			*to->l << fnParam(ptr, resultPos.v);
+			*to->l << fnCall(cloneFn(result.type)->ref(), false, ptr, resultPos.v);
 		}
 	}
 
@@ -345,15 +316,17 @@ namespace storm {
 		// Get the thunk.
 		Ref thunk = Ref(threadThunk());
 
+		TypeDesc *ptr = e.ptrDesc();
+
 		// Spawn the thread!
 		*to->l << lea(ptrA, par);
-		*to->l << fnParam(ref()); // fn
-		*to->l << fnParam(toOp(isMember())); // member
-		*to->l << fnParam(thunk); // thunk
-		*to->l << fnParam(ptrA); // params
-		*to->l << fnParam(resultPos.v); // result
-		*to->l << fnParam(thread); // on
-		*to->l << fnCall(e.ref(Engine::rSpawnFuture), valVoid());
+		*to->l << fnParam(ptr, ref()); // fn
+		*to->l << fnParam(ptr, toOp(isMember())); // member
+		*to->l << fnParam(ptr, thunk); // thunk
+		*to->l << fnParam(ptr, ptrA); // params
+		*to->l << fnParam(ptr, resultPos.v); // result
+		*to->l << fnParam(ptr, thread); // on
+		*to->l << fnCall(e.ref(Engine::rSpawnFuture), false);
 
 		// Now, we're done!
 		*to->l << end(sub->block);
@@ -361,25 +334,6 @@ namespace storm {
 		// May be delayed...
 		if (result->needed())
 			result->location(to).created(to);
-	}
-
-	void Function::threadThunkParam(nat id, code::Listing *l) {
-		using namespace code;
-
-		Value t = params->at(id);
-		if (id == 0 && wcscmp(name->c_str(), Type::CTOR) == 0) {
-			Var v = l->createParam(valPtr());
-			*l << fnParam(v);
-		} else if (t.isHeapObj()) {
-			Var v = l->createParam(valPtr());
-			*l << fnParam(v);
-		} else if (t.isBuiltIn()) {
-			Var v = l->createParam(t.valTypeParam());
-			*l << fnParam(v);
-		} else {
-			Var v = l->createParam(t.valTypeParam(), t.destructor(), freeOnBoth | freePtr);
-			*l << fnParam(v, t.copyCtor());
-		}
 	}
 
 	code::RefSource *Function::threadThunk() {

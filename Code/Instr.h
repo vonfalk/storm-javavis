@@ -2,7 +2,6 @@
 #include "OpCode.h"
 #include "Operand.h"
 #include "CondFlag.h"
-#include "ValType.h"
 #include "TypeDesc.h"
 #include "Core/Object.h"
 #include "Core/EnginePtr.h"
@@ -116,8 +115,8 @@ namespace code {
 	Instr *STORM_FN popFlags(EnginePtr e);
 	Instr *STORM_FN jmp(EnginePtr e, Operand to);
 	Instr *STORM_FN jmp(EnginePtr e, Label to, CondFlag cond);
-	Instr *STORM_FN call(EnginePtr e, Operand to, ValType ret);
-	Instr *STORM_FN ret(EnginePtr e, ValType ret); // Returns whatever is in eax register. TODO: Replace with a size.
+	Instr *STORM_FN call(EnginePtr e, Operand to, Size resultSize);
+	Instr *STORM_FN ret(EnginePtr e, Size resultSize); // Returns whatever is in eax register.
 
 	// This one has somewhat special semantics, when used with a reference as 'from', it instead
 	// loads the RefSource referred to by the Ref.
@@ -143,14 +142,6 @@ namespace code {
 	Instr *STORM_FN fnRet(EnginePtr e, Operand src);
 	Instr *STORM_FN fnRetRef(EnginePtr e, Operand src);
 	Instr *STORM_FN fnRet(EnginePtr e);
-
-	// Old-style function calls. TODO: Remove!
-	Instr *STORM_FN fnParam(EnginePtr e, Operand src);
-	Instr *STORM_FN fnParam(EnginePtr e, Var src, Operand copyFn);
-	Instr *STORM_FN fnParamRef(EnginePtr e, Operand src, Size size);
-	Instr *STORM_FN fnParamRef(EnginePtr e, Operand src, Size size, Operand copyFn);
-	Instr *STORM_FN fnCall(EnginePtr e, Operand src, ValType ret);
-
 
 	// Integer math (signed/unsigned)
 	Instr *STORM_FN STORM_NAME(bor, or)(EnginePtr e, Operand dest, Operand src);

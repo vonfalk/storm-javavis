@@ -117,8 +117,8 @@ namespace code {
 	PROXY0(popFlags);
 	PROXY1(jmp, Operand);
 	PROXY2(jmp, Label, CondFlag);
-	PROXY2(call, Operand, ValType);
-	PROXY1(ret, ValType);
+	PROXY2(call, Operand, Size);
+	PROXY1(ret, Size);
 	PROXY2(lea, Operand, Operand);
 	PROXY2(setCond, Operand, CondFlag);
 	PROXY2(fnParam, TypeDesc *, Operand);
@@ -168,11 +168,4 @@ namespace code {
 	PROXY1(begin, Part);
 	PROXY1(end, Part);
 	PROXY0(threadLocal);
-
-	// Old things. TODO: Remove!
-	PROXY1(fnParam, Operand);
-	PROXY2(fnParam, Var, Operand);
-	PROXY2(fnParamRef, Operand, Size);
-	PROXY3(fnParamRef, Operand, Size, Operand);
-	PROXY2(fnCall, Operand, ValType);
 }

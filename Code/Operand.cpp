@@ -7,15 +7,6 @@
 
 namespace code {
 
-	// Declared here, as we do not want Storm to know about this trick!
-	BITMASK_OPERATORS(OpType);
-
-	enum OpMasks {
-		opMask = 0x0FFFF,
-
-		opRef = 0x10000,
-	};
-
 	static Word dual(Nat a, Nat b) {
 		return Word(a) << Word(32) | Word(b);
 	}
@@ -62,11 +53,7 @@ namespace code {
 		if (opType != o.opType)
 			return false;
 
-		// This is always safe to do, as 'refSize' returns Size() if no relevant value exists.
-		if (refSize() != o.refSize())
-			return false;
-
-		switch (opType & opMask) {
+		switch (opType) {
 		case opNone:
 			return true;
 		case opConstant:
@@ -103,35 +90,17 @@ namespace code {
 	}
 
 	OpType Operand::type() const {
-		OpType r = opType & OpType(opMask);
-
-		if (r == opDualConstant)
+		if (opType == opDualConstant)
 			return opConstant;
 		else
-			return r;
+			return opType;
 	}
 
 	Size Operand::size() const {
-		if (opType & opRef)
+		if (opType)
 			return Size::sPtr;
 		else
 			return opSize;
-	}
-
-	Operand Operand::referTo(Size size) const {
-		if (this->size() != Size::sPtr)
-			throw InvalidValue(L"Can not refer to something using a non-pointer!");
-		Operand o(*this);
-		o.opType = opType | OpType(opRef);
-		o.opSize = size;
-		return o;
-	}
-
-	Size Operand::refSize() const {
-		if (opType & opRef)
-			return opSize;
-		else
-			return Size();
 	}
 
 	Bool Operand::readable() const {
@@ -169,7 +138,7 @@ namespace code {
 
 	Word Operand::constant() const {
 		assert(type() == opConstant, L"Not a constant!");
-		if ((opType & opMask) == opConstant) {
+		if (opType == opConstant) {
 			return opNum;
 		} else {
 			return opOffset.current();
@@ -245,7 +214,7 @@ namespace code {
 			return to << L"<none>";
 		case opConstant:
 			if (o.size() == Size::sPtr) {
-				if ((o.opType & opMask) == opDualConstant)
+				if (o.opType == opDualConstant)
 					return to << o.opOffset;
 				else
 					return to << L"0x" << toHex(o.constant());

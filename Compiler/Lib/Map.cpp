@@ -83,21 +83,21 @@ namespace storm {
 			return;
 
 		using namespace code;
-		Listing *l = new (this) Listing();
-		Var me = l->createParam(valPtr());
-		Var key = l->createParam(valPtr());
+		TypeDesc *ptr = engine.ptrDesc();
+		Listing *l = new (this) Listing(true, ptr);
+		Var me = l->createParam(ptr);
+		Var key = l->createParam(ptr);
 
 		*l << prolog();
 
-		*l << fnParam(me);
-		*l << fnParam(key);
-		*l << fnParam(ctor->ref());
-		*l << fnCall(engine.ref(Engine::rMapAt), valPtr());
+		*l << fnParam(ptr, me);
+		*l << fnParam(ptr, key);
+		*l << fnParam(ptr, ctor->ref());
+		*l << fnCall(engine.ref(Engine::rMapAt), true, ptr, ptrA);
 
-		*l << epilog();
-		*l << ret(valPtr());
+		*l << fnRet(ptrA);
 
-		add(dynamicFunction(engine, Value(), S("[]"), valList(engine, 2, thisPtr(this), Value(k, true)), l));
+		add(dynamicFunction(engine, Value(v, true), S("[]"), valList(engine, 2, thisPtr(this), Value(k, true)), l));
 	}
 
 

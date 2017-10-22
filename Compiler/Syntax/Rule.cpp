@@ -75,7 +75,7 @@ namespace storm {
 		}
 
 		CodeGen *Rule::createTransform() {
-			CodeGen *code = new (this) CodeGen(runOn());
+			CodeGen *code = new (this) CodeGen(runOn(), true, tfmResult);
 			code::Listing *l = code->l;
 
 			// Add our parameters.
@@ -83,18 +83,15 @@ namespace storm {
 			for (nat i = 0; i < tfmParams->count(); i++)
 				code->createParam(tfmParams->at(i).type);
 
-			// Add return type.
-			code->result(tfmResult, true);
-
 			*l << code::prolog();
 
 			// Call the exception-throwing function.
-			*l << code::fnParam(me);
-			*l << code::fnCall(engine.ref(Engine::rRuleThrow), code::valVoid());
+			*l << code::fnParam(engine.ptrDesc(), me);
+			*l << code::fnCall(engine.ref(Engine::rRuleThrow), true);
 
 			// Not needed, but for good measure.
 			*l << code::epilog();
-			*l << code::ret(tfmResult.valTypeRet());
+			*l << code::ret(Size());
 
 			return code;
 		}

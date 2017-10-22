@@ -49,14 +49,11 @@ namespace storm {
 		using namespace code;
 		Engine &e = engine;
 
-		CodeGen *s = new (e) CodeGen(RunOn());
-		Var me = s->l->createParam(valPtr());
-
-		// Result parameter needed?
 		Value result = params->at(0);
-		Var resultParam;
-		if (!result.returnInReg())
-			resultParam = s->l->createParam(valPtr());
+
+		TypeDesc *ptr = e.ptrDesc();
+		CodeGen *s = new (e) CodeGen(RunOn(), true, result);
+		Var me = s->l->createParam(ptr);
 
 		// Create parameters.
 		Array<Value> *formal = new (e) Array<Value>();
@@ -81,10 +78,9 @@ namespace storm {
 
 		// Do we need to clone the parameters and the result?
 		Var needClone = s->l->createVar(s->l->root(), Size::sByte);
-		*s->l << fnParam(me);
-		*s->l << fnParam(firstTObj);
-		*s->l << fnCall(e.ref(Engine::rFnNeedsCopy), ValType(Size::sByte, false));
-		*s->l << mov(needClone, al);
+		*s->l << fnParam(ptr, me);
+		*s->l << fnParam(ptr, firstTObj);
+		*s->l << fnCall(e.ref(Engine::rFnNeedsCopy), true, byteDesc(e), needClone);
 
 		// Handle parameters.
 		Label doCopy = s->l->label();
@@ -101,23 +97,28 @@ namespace storm {
 
 		// Call the function!
 		if (!result.returnInReg()) {
+			// Create temporary storage for the result.
+			Var resultMem = s->l->createVar(s->l->root(), result.desc(e));
+			*s->l << lea(ptrB, resultMem);
+
 			// Value -> call deepCopy if present.
-			*s->l << fnParam(me); // b
-			*s->l << fnParam(resultParam); // output
-			*s->l << fnParam(Ref(thunk)); // thunk
-			*s->l << fnParam(ptrC); // params
-			*s->l << fnParam(firstTObj); // first
-			*s->l << fnCall(e.ref(Engine::rFnCall), valVoid());
+			*s->l << fnParam(ptr, me); // b
+			*s->l << fnParam(ptr, ptrB); // output
+			*s->l << fnParam(ptr, Ref(thunk)); // thunk
+			*s->l << fnParam(ptr, ptrC); // params
+			*s->l << fnParam(ptr, firstTObj); // first
+			*s->l << fnCall(e.ref(Engine::rFnCall), false);
 
 			// Call 'deepCopy'
 			if (Function *call = result.type->deepCopyFn()) {
 				Var env = allocObject(s, CloneEnv::stormType(e));
-				*s->l << fnParam(resultParam);
-				*s->l << fnParam(env);
-				*s->l << fnCall(call->ref(), valVoid());
+				*s->l << lea(ptrB, resultMem);
+				*s->l << fnParam(ptr, ptrB);
+				*s->l << fnParam(ptr, env);
+				*s->l << fnCall(call->ref(), true);
 			}
 
-			*s->l << mov(ptrA, resultParam);
+			*s->l << fnRet(resultMem);
 		} else if (result.isBuiltIn() || result.isActor()) {
 			// No need to copy!
 			Var r;
@@ -127,35 +128,37 @@ namespace storm {
 			} else {
 				*s->l << mov(ptrA, ptrConst(Offset()));
 			}
-			*s->l << fnParam(me); // b
-			*s->l << fnParam(ptrA); // output
-			*s->l << fnParam(Ref(thunk)); // thunk
-			*s->l << fnParam(ptrC); // params
-			*s->l << fnParam(firstTObj); // first
-			*s->l << fnCall(e.ref(Engine::rFnCall), valVoid());
+			*s->l << fnParam(ptr, me); // b
+			*s->l << fnParam(ptr, ptrA); // output
+			*s->l << fnParam(ptr, Ref(thunk)); // thunk
+			*s->l << fnParam(ptr, ptrC); // params
+			*s->l << fnParam(ptr, firstTObj); // first
+			*s->l << fnCall(e.ref(Engine::rFnCall), false);
+
 			if (result != Value())
-				*s->l << mov(asSize(ptrA, result.size()), r);
+				*s->l << fnRet(r);
+			else
+				*s->l << fnRet();
 		} else {
 			// Class! Call 'core.clone'.
 			Var r = s->l->createVar(s->l->root(), result.size());
 			*s->l << lea(ptrA, r);
-			*s->l << fnParam(me); // b
-			*s->l << fnParam(ptrA); // output
-			*s->l << fnParam(Ref(thunk)); // thunk
-			*s->l << fnParam(ptrC); // params
-			*s->l << fnParam(firstTObj); // first
-			*s->l << fnCall(e.ref(Engine::rFnCall), valVoid());
+			*s->l << fnParam(ptr, me); // b
+			*s->l << fnParam(ptr, ptrA); // output
+			*s->l << fnParam(ptr, Ref(thunk)); // thunk
+			*s->l << fnParam(ptr, ptrC); // params
+			*s->l << fnParam(ptr, firstTObj); // first
+			*s->l << fnCall(e.ref(Engine::rFnCall), false);
 
 			if (Function *call = cloneFn(result.type)) {
-				*s->l << fnParam(r);
-				*s->l << fnCall(call->ref(), valPtr());
+				*s->l << fnParam(ptr, r);
+				*s->l << fnCall(call->ref(), false, ptr, ptrA);
 			} else {
 				*s->l << mov(ptrA, r);
 			}
-		}
 
-		*s->l << epilog();
-		*s->l << ret(result.valTypeRet());
+			*s->l << fnRet(ptrA);
+		}
 
 		return s;
 	}
