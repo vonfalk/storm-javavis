@@ -83,19 +83,19 @@ namespace storm {
 		rv->at(1) = Value(this);
 		Value b(StormInfo<Bool>::type(engine));
 
-		add(inlinedFunction(engine, Value(), Type::CTOR, rr, fnPtr(engine, &numCopyCtor<Int>)));
-		add(inlinedFunction(engine, Value(), S("="), rv, fnPtr(engine, &numAssign<Int>)));
-		add(inlinedFunction(engine, b, S("=="), vv, fnPtr(engine, &numCmp<ifEqual>)));
-		add(inlinedFunction(engine, b, S("!="), vv, fnPtr(engine, &numCmp<ifNotEqual>)));
+		add(inlinedFunction(engine, Value(), Type::CTOR, rr, fnPtr(engine, &numCopyCtor<Int>))->makePure());
+		add(inlinedFunction(engine, Value(), S("="), rv, fnPtr(engine, &numAssign<Int>))->makePure());
+		add(inlinedFunction(engine, b, S("=="), vv, fnPtr(engine, &numCmp<ifEqual>))->makePure());
+		add(inlinedFunction(engine, b, S("!="), vv, fnPtr(engine, &numCmp<ifNotEqual>))->makePure());
 
 		if (bitmask) {
-			add(inlinedFunction(engine, Value(this), S("+"), vv, fnPtr(engine, &enumAdd)));
-			add(inlinedFunction(engine, Value(this), S("-"), vv, fnPtr(engine, &enumSub)));
-			add(inlinedFunction(engine, b, S("&"), vv, fnPtr(engine, &enumOverlaps)));
-			add(inlinedFunction(engine, b, S("has"), vv, fnPtr(engine, &enumOverlaps)));
+			add(inlinedFunction(engine, Value(this), S("+"), vv, fnPtr(engine, &enumAdd))->makePure());
+			add(inlinedFunction(engine, Value(this), S("-"), vv, fnPtr(engine, &enumSub))->makePure());
+			add(inlinedFunction(engine, b, S("&"), vv, fnPtr(engine, &enumOverlaps))->makePure());
+			add(inlinedFunction(engine, b, S("has"), vv, fnPtr(engine, &enumOverlaps))->makePure());
 		}
 
-		add(nativeFunction(engine, Value(this), S("hash"), v, address(&intHash)));
+		add(nativeFunction(engine, Value(this), S("hash"), v, address(&intHash))->makePure());
 
 		return Type::loadAll();
 	}

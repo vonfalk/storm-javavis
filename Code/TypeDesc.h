@@ -55,6 +55,9 @@ namespace code {
 			return Offset(o32, o64);
 		}
 
+		// Move to another offset.
+		Primitive STORM_FN move(Offset to) const;
+
 	private:
 		// We store these fields inside 'dataA' and 'dataB'.
 		// A0, B0: kind (A0 is LSB).
@@ -100,7 +103,7 @@ namespace code {
 	 * type, but we need to know all members of the type. If the simple type contains other simple
 	 * types, these are also disassembled until only primitive types remain.
 	 */
-	class TypeDesc : public storm::Object {
+	class TypeDesc : public ObjectOn<Compiler> {
 		STORM_CLASS;
 	public:
 		// Get the size of this type.
@@ -144,8 +147,11 @@ namespace code {
 				throw storm::ArrayError(L"Out of bounds.");
 			return v->v[id];
 		}
+		Nat STORM_FN count() const {
+			return v->count;
+		}
 
-		virtual void STORM_FN deepCopy(CloneEnv *env);
+		// virtual void STORM_FN deepCopy(CloneEnv *env);
 		virtual Size STORM_FN size() const { return s; }
 		void STORM_FN toS(StrBuf *to) const;
 	};

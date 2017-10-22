@@ -16,6 +16,38 @@ namespace storm {
 		setCode(new (this) LazyCode(fnPtr(engine(), &TypeDefaultCtor::generate, this)));
 	}
 
+	Bool TypeDefaultCtor::pure() const {
+		// Not a value: not pure!
+		if ((owner->typeFlags & typeValue) != typeValue)
+			return false;
+
+		Array<MemberVar *> *v = owner->variables();
+		for (Nat i = 0; i < v->count(); i++) {
+			MemberVar *var = v->at(i);
+			Value t = var->type;
+
+			if (!t.type)
+				continue;
+
+			// Primitives are trivial to copy.
+			if (!t.isBuiltIn())
+				continue;
+
+			// Classes and actors need initialization!
+			if (!t.isValue())
+				return false;
+
+			Function *ctor = t.type->defaultCtor();
+			if (!ctor)
+				continue;
+
+			if (!ctor->pure())
+				return false;
+		}
+
+		return true;
+	}
+
 	CodeGen *TypeDefaultCtor::generate() {
 		CodeGen *t = new (this) CodeGen(runOn());
 		Listing *l = t->l;
@@ -103,6 +135,34 @@ namespace storm {
 		setCode(new (this) LazyCode(fnPtr(engine(), &TypeCopyCtor::generate, this)));
 	}
 
+	Bool TypeCopyCtor::pure() const {
+		// Not a value: not pure!
+		if ((owner->typeFlags & typeValue) != typeValue)
+			return false;
+
+		Array<MemberVar *> *v = owner->variables();
+		for (Nat i = 0; i < v->count(); i++) {
+			MemberVar *var = v->at(i);
+			Value t = var->type;
+
+			if (!t.type)
+				continue;
+
+			// Classes, actors and built-ins are trivial to copy!
+			if (!t.isValue())
+				continue;
+
+			Function *ctor = t.type->copyCtor();
+			if (!ctor)
+				continue;
+
+			if (!ctor->pure())
+				return false;
+		}
+
+		return true;
+	}
+
 	CodeGen *TypeCopyCtor::generate() {
 		CodeGen *t = new (this) CodeGen(runOn());
 		Listing *l = t->l;
@@ -165,6 +225,34 @@ namespace storm {
 		  owner(owner) {
 
 		setCode(new (this) LazyCode(fnPtr(engine(), &TypeAssign::generate, this)));
+	}
+
+	Bool TypeAssign::pure() const {
+		// Not a value: not pure!
+		if ((owner->typeFlags & typeValue) != typeValue)
+			return false;
+
+		Array<MemberVar *> *v = owner->variables();
+		for (Nat i = 0; i < v->count(); i++) {
+			MemberVar *var = v->at(i);
+			Value t = var->type;
+
+			if (!t.type)
+				continue;
+
+			// Classes and actors are trivial to copy.
+			if (!t.isValue())
+				continue;
+
+			Function *assign = t.type->assignFn();
+			if (!assign)
+				continue;
+
+			if (!assign->pure())
+				return false;
+		}
+
+		return true;
 	}
 
 	CodeGen *TypeAssign::generate() {

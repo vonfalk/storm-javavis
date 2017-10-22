@@ -313,6 +313,10 @@ namespace storm {
 		return null;
 	}
 
+	static void fnNull() {
+		// The null function in Storm!
+	}
+
 	code::RefSource *Engine::createRef(RefType ref) {
 #define W(x) S(x)
 #define FNREF(x) arena()->externalSource(S("C++:") W(#x), address(&x))
@@ -350,6 +354,8 @@ namespace storm {
 			return FNREF(fnCallRaw);
 		case rFnCreate:
 			return FNREF(fnCreateRaw);
+		case rFnNull:
+			return FNREF(fnNull);
 		default:
 			assert(false, L"Unknown reference: " + ::toS(ref));
 			return null;
@@ -395,6 +401,18 @@ namespace storm {
 
 	void Engine::stdError(TextOutput *to) {
 		o.stdError = to;
+	}
+
+	code::TypeDesc *Engine::ptrDesc() {
+		if (o.ptrDesc)
+			o.ptrDesc = code::ptrDesc(*this);
+		return o.ptrDesc;
+	}
+
+	code::TypeDesc *Engine::voidDesc() {
+		if (o.voidDesc)
+			o.voidDesc = code::voidDesc(*this);
+		return o.voidDesc;
 	}
 
 	Package *Engine::package() {

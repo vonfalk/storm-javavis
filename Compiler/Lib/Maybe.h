@@ -18,12 +18,10 @@ namespace storm {
 		// Get the parameter.
 		Value STORM_FN param() const;
 
-		// Type.
-		virtual BasicTypeInfo::Kind builtInType() const;
-
 	protected:
 		// Lazy-loading.
 		virtual Bool STORM_FN loadAll();
+		virtual code::TypeDesc *STORM_FN createTypeDesc() { return code::ptrDesc(engine); }
 
 	private:
 		// Contained type.

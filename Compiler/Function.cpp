@@ -15,7 +15,8 @@ namespace storm {
 		result(result),
 		lookupRef(null),
 		codeRef(null),
-		runOnThread(null) {}
+		runOnThread(null),
+		isPure(false) {}
 
 	const void *Function::pointer() {
 		return ref().address();
@@ -54,6 +55,20 @@ namespace storm {
 
 	void Function::runOn(NamedThread *t) {
 		runOnThread = t;
+	}
+
+	Bool Function::pure() const {
+		return isPure;
+	}
+
+	Function *Function::makePure() {
+		isPure = true;
+		return this;
+	}
+
+	Function *Function::makePure(Bool v) {
+		isPure = v;
+		return this;
 	}
 
 	void Function::toS(StrBuf *to) const {

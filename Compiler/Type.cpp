@@ -363,9 +363,135 @@ namespace storm {
 		return code::Ref(selfRef);
 	}
 
-	BasicTypeInfo::Kind Type::builtInType() const {
-		TODO(L"Differentiate between a simple and a complex type!");
-		return TypeKind::userComplex;
+	code::TypeDesc *Type::typeDesc() {
+		if (myTypeDesc) {
+			// Just return the desc we have. It is an actor anyway.
+			return myTypeDesc;
+		}
+
+		// We need to create the description. Switch threads if neccessary.
+		const os::Thread &t = TObject::thread->thread();
+		if (t != os::Thread::current()) {
+			// Switch threads...
+			Type *me = this;
+			os::Future<code::TypeDesc *, Semaphore> f;
+			os::FnCall<code::TypeDesc *, 1> p = os::fnCall().add(me);
+			os::UThread::spawn(address(&Type::typeDesc), true, p, f, &t);
+			return f.result();
+		}
+
+		// Double-check so that the desc is not created.
+		if (!myTypeDesc)
+			myTypeDesc = createTypeDesc();
+		return myTypeDesc;
+	}
+
+	code::TypeDesc *Type::createTypeDesc() {
+		if (!value()) {
+			// If we're not a value, then we're a plain pointer.
+			return engine.ptrDesc();
+		}
+
+		// We need to generate a TypeDesc for this value.
+		// First: See if we're a complex type.
+		Function *ctor = copyCtor();
+		Function *dtor = destructor();
+
+		Bool simple = true;
+		if (ctor && !ctor->pure())
+			simple = false;
+		if (dtor && !dtor->pure())
+			simple = false;
+
+		// Complex types are actually fairly simple to handle.
+		if (!simple) {
+			if (ctor == null)
+				throw TypedefError(L"The type " + ::toS(identifier()) +
+								L" has a nontrivial destructor, but no constructor.");
+
+			code::Ref d = dtor ? dtor->ref() : engine.ref(Engine::rFnNull);
+			return new (this) code::ComplexDesc(size(), ctor->ref(), d);
+		}
+
+		// Generate a proper description of this type!
+		return createSimpleDesc();
+	}
+
+	code::SimpleDesc *Type::createSimpleDesc() {
+		forceLoad();
+		Size mySize = size(); // Performs a layout of all variables if neccessary.
+		Nat elems = populateSimpleDesc(null);
+
+		if (elems == 0 && mySize != Size())
+			throw TypedefError(L"Trying to generate a type description for an empty object with nonzero size. "
+							L"This is most likely not what you want. There are two possible reasons for why "
+							L" this happens: Either, you try to access the type description of " +
+							::toS(identifier()) + L" too early, or you are attempting to construct a non-standard type."
+							L"In the latter case, you should override 'createSimpleDesc' as well.");
+
+		code::SimpleDesc *desc = new (this) code::SimpleDesc(mySize, elems);
+		populateSimpleDesc(desc);
+		return desc;
+	}
+
+	static void merge(Offset offset, Nat &pos, MAYBE(code::SimpleDesc *) into, code::SimpleDesc *from) {
+		if (!into) {
+			pos += from->count();
+			return;
+		}
+
+		for (Nat i = 0; i < from->count(); i++) {
+			code::Primitive src = from->at(i);
+			into->at(pos++) = src.move(src.offset() + offset);
+		}
+	}
+
+	Nat Type::populateSimpleDesc(MAYBE(code::SimpleDesc *) into) {
+		using namespace code;
+
+		Nat pos = 0;
+
+		if (Type *parent = super()) {
+			TypeDesc *desc = parent->typeDesc();
+			if (SimpleDesc *s = as<SimpleDesc>(desc))
+				merge(Offset(), pos, into, s);
+			else
+				throw TypedefError(L"Can not produce a SimpleDesc when the parent type is not a simple type!");
+		}
+
+		Array<MemberVar *> *vars = variables();
+		for (Nat i = 0; i < vars->count(); i++) {
+			MemberVar *v = vars->at(i);
+			Offset offset = v->offset();
+			Value type = v->type;
+
+			if (type.isHeapObj() || type.ref) {
+				// This is a pointer to something.
+				if (into)
+					into->at(pos) = Primitive(primitive::pointer, Size::sPtr, offset);
+				pos++;
+				continue;
+			}
+
+			TypeDesc *original = type.type->typeDesc();
+			if (PrimitiveDesc *p = as<PrimitiveDesc>(original)) {
+				if (into)
+					into->at(pos) = p->v.move(offset);
+				pos++;
+			} else if (SimpleDesc *s = as<SimpleDesc>(original)) {
+				merge(offset, pos, into, s);
+			} else if (ComplexDesc *c = as<ComplexDesc>(original)) {
+				throw TypedefError(L"Can not produce a SimpleDesc from a type containing a complex type!");
+			} else {
+				throw TypedefError(L"Unknown type description: " + ::toS(original));
+			}
+		}
+
+		if (into) {
+			assert(pos == into->count(), L"A too small SimpleDesc provided.");
+		}
+
+		return pos;
 	}
 
 	void Type::doLayout() {
@@ -381,10 +507,17 @@ namespace storm {
 	}
 
 	Array<MemberVar *> *Type::variables() const {
-		if (layout)
+		if (layout) {
 			return layout->variables();
-		else
-			return new (this) Array<MemberVar *>();
+		} else {
+			// Fall back to examining the contents of the NameSet.
+			Array<MemberVar *> *result = new (this) Array<MemberVar *>();
+			for (Iter i = begin(); i != end(); ++i) {
+				if (MemberVar *v = as<MemberVar>(i.v()))
+					result->push(v);
+			}
+			return result;
+		}
 	}
 
 	Size Type::superSize() {
@@ -750,7 +883,7 @@ namespace storm {
 		// Do not add constructor, destructor or deepCopy to the handle if this is a built-in type,
 		// as that allows containers etc to use raw memcpy which is more efficient in many cases.
 		// Also: it prevents infinite loops during startup due to recursive dependencies.
-		bool userType = builtInType() == TypeKind::userComplex;
+		bool userType = as<code::PrimitiveDesc>(typeDesc()) == null;
 		const wchar *name = fn->name->c_str();
 		if (wcscmp(name, CTOR) == 0) {
 			if (refThis && params->count() == 2 && params->at(1) == Value(this, true) && userType)

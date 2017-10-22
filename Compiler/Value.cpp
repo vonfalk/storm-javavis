@@ -1,6 +1,7 @@
 #include "stdafx.h"
 #include "Value.h"
 #include "Type.h"
+#include "Engine.h"
 #include "Core/Str.h"
 #include "Core/StrBuf.h"
 #include "Utils/TypeInfo.h"
@@ -90,8 +91,9 @@ namespace storm {
 	}
 
 	code::ValType Value::valTypeRet() const {
+		TODO(L"Remove me!");
 		if (returnInReg()) {
-			return code::ValType(size(), isFloat());
+			return code::ValType(size(), false); // Note: 'isFloat' is missing, so this is incorrect.
 		} else {
 			// value types are returned as pointers.
 			return code::ValType(Size::sPtr, false);
@@ -99,8 +101,9 @@ namespace storm {
 	}
 
 	code::ValType Value::valTypeParam() const {
+		TODO(L"Remove me!");
 		if (isBuiltIn()) {
-			return code::ValType(size(), isFloat());
+			return code::ValType(size(), false); // Note: 'isFloat' is missing, so this is incorrect.
 		} else if (isValue()) {
 			// Values.
 			return code::ValType(size(), false);
@@ -110,18 +113,38 @@ namespace storm {
 		}
 	}
 
+	static TypeKind::T convert(code::primitive::Kind k) {
+		switch (k) {
+		case code::primitive::none:
+			return TypeKind::nothing;
+		case code::primitive::pointer:
+			return TypeKind::ptr;
+		case code::primitive::integer:
+			return TypeKind::signedNr;
+		case code::primitive::real:
+			return TypeKind::floatNr;
+		}
+		return TypeKind::nothing;
+	}
+
 	BasicTypeInfo Value::typeInfo() const {
 		BasicTypeInfo::Kind kind = TypeKind::nothing;
 
 		if (!type) {
 			kind = TypeKind::nothing;
-		} else if (isBuiltIn()) {
-			kind = type->builtInType();
-		} else if (isValue()) {
-			// In this case, 'type->builtInType()' is either userComplex or userTrivial.
-			kind = type->builtInType();
-		} else {
+		} else if (ref) {
 			kind = TypeKind::ptr;
+		} else {
+			code::TypeDesc *desc = type->typeDesc();
+			if (code::PrimitiveDesc *p = as<code::PrimitiveDesc>(desc)) {
+				kind = convert(p->v.kind());
+			} else if (as<code::SimpleDesc>(desc)) {
+				kind = TypeKind::userTrivial;
+			} else if (as<code::ComplexDesc>(desc)) {
+				kind = TypeKind::userComplex;
+			} else {
+				assert(false);
+			}
 		}
 
 		BasicTypeInfo r = {
@@ -129,6 +152,16 @@ namespace storm {
 			kind,
 		};
 		return r;
+	}
+
+	code::TypeDesc *Value::typeDesc(Engine &e) const {
+		if (!type)
+			return e.voidDesc();
+		return type->typeDesc();
+	}
+
+	code::TypeDesc *typeDesc(EnginePtr e, Value v) {
+		return v.typeDesc(e.v);
 	}
 
 	Bool Value::returnInReg() const {
@@ -143,17 +176,17 @@ namespace storm {
 		if (!type)
 			// Void is considered built-in.
 			return true;
-		TypeKind::T v = type->builtInType();
-		return v != TypeKind::userComplex
-			&& v != TypeKind::userTrivial;
-	}
 
-	Bool Value::isFloat() const {
-		if (!type)
+		// Class types are never built in types, and we can not distinguish them from pointers.
+		if (type->typeFlags & typeClass)
 			return false;
-		if (ref)
+
+		code::TypeDesc *desc = type->typeDesc();
+		if (as<code::PrimitiveDesc>(desc)) {
+			return true;
+		} else {
 			return false;
-		return type->builtInType() == TypeKind::floatNr;
+		}
 	}
 
 	Bool Value::isValue() const {
@@ -167,23 +200,23 @@ namespace storm {
 	Bool Value::isClass() const {
 		if (!type)
 			return false;
-		if (isBuiltIn())
+		if (type->typeFlags & typeClass)
+			return type->isA(Object::stormType(type->engine));
+		else
 			return false;
-		return type->isA(Object::stormType(type->engine));
 	}
 
 	Bool Value::isActor() const {
 		if (!type)
 			return false;
-		if (isBuiltIn())
+		if (type->typeFlags & typeClass)
+			return type->isA(TObject::stormType(type->engine));
+		else
 			return false;
-		return type->isA(TObject::stormType(type->engine));
 	}
 
 	Bool Value::isHeapObj() const {
 		if (!type)
-			return false;
-		if (isBuiltIn())
 			return false;
 		return (type->typeFlags & typeClass) == typeClass;
 	}

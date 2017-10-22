@@ -12,7 +12,8 @@ namespace storm {
 			if (!t.isValue())
 				continue;
 
-			if (t.type->destructor())
+			Function *dtor = t.type->destructor();
+			if (dtor && !dtor->pure())
 				return true;
 		}
 
@@ -24,6 +25,17 @@ namespace storm {
 		  owner(owner) {
 
 		setCode(new (this) LazyCode(fnPtr(engine(), &TypeDefaultDtor::generate, this)));
+	}
+
+	Bool TypeDefaultDtor::pure() const {
+		Type *super = owner->super();
+		if (super) {
+			Function *dtor = super->destructor();
+			if (dtor && !dtor->pure())
+				return false;
+		}
+
+		return !needsDestructor(owner);
 	}
 
 	CodeGen *TypeDefaultDtor::generate() {

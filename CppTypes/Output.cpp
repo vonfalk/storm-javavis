@@ -326,7 +326,7 @@ static void genTemplateArrays(wostream &to, World &w) {
 
 		for (nat j = 0; j < c->variables.size(); j++) {
 			Variable &v = c->variables[j];
-			if (v.access != aPublic)
+			if (!c->valueType && v.access != aPublic)
 				continue;
 
 			TypeRef *r = findType(v.type.borrow());
@@ -492,8 +492,8 @@ static void genVariables(wostream &to, World &w) {
 			Variable &v = c->variables[j];
 			Offset offset = c->varOffset(j, data);
 
-			// Only export public variables...
-			if (v.access != aPublic)
+			// Only export public variables for classes or actors.
+			if (!c->valueType && v.access != aPublic)
 				continue;
 
 			String type = genTypeRef(v.type.borrow(), false);
@@ -502,8 +502,12 @@ static void genVariables(wostream &to, World &w) {
 				continue;
 
 			to << L"{ ";
-			// Name.
-			to << L"S(\"" << v.stormName << L"\"), ";
+			// Name (possibly mangled in Storm). TODO: Export with proper access flags.
+			if (v.access != aPublic) {
+				to << L"S(\" p@" << v.stormName << L"\"), ";
+			} else {
+				to << L"S(\"" << v.stormName << L"\"), ";
+			}
 
 			// Owner id.
 			to << c->id << L" /* " << c->name << L" */, ";

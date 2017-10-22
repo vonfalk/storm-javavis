@@ -33,13 +33,13 @@ namespace storm {
 		// Insert everything into the packages where they belong.
 		void loadPackages();
 
-		// Create all functions in their appropriate places. Assumes types and threads are placed in
-		// their packages.
-		void loadFunctions();
-
 		// Create all exported variables in their appropriate places. Assumes types and threads are
 		// placed in their packages.
 		void loadVariables();
+
+		// Create all functions in their appropriate places. Assumes types and threads are placed in
+		// their packages and that variables are properly created (we might need type layout etc. in this step).
+		void loadFunctions();
 
 		// Create all licenses in their appropriate places.
 		void loadLicenses();

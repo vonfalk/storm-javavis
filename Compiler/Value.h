@@ -2,6 +2,7 @@
 #include "Core/EnginePtr.h"
 #include "Code/ValType.h"
 #include "Code/Operand.h"
+#include "Code/TypeDesc.h"
 #include "NamedFlags.h"
 
 namespace storm {
@@ -60,14 +61,12 @@ namespace storm {
 		// Get a ValType representing this type when used as a parameter.
 		code::ValType STORM_FN valTypeParam() const;
 
-		// Is this type a floating-point type?
-		Bool STORM_FN isFloat() const;
-
 		// Is this a value type, a class, an actor or built in? These are mutually exclusive, ie. at most one is true.
 		Bool STORM_FN isValue() const;
 		Bool STORM_FN isClass() const;
 		Bool STORM_FN isActor() const;
 		// Is this a built-in type? (eg. Int, Float, etc.)
+		// TODO: Rename to 'isPrimitive'.
 		Bool STORM_FN isBuiltIn() const;
 
 		// Combination of 'isClass' and 'isActor'.
@@ -82,6 +81,9 @@ namespace storm {
 		// Get type info for this type.
 		BasicTypeInfo typeInfo() const;
 
+		// Get a type description of this type.
+		code::TypeDesc *typeDesc(Engine &e) const;
+
 		/**
 		 * Access to common member functions.
 		 */
@@ -95,6 +97,10 @@ namespace storm {
 		// destructor is needed.
 		code::Operand STORM_FN destructor() const;
 	};
+
+	// Get a description of this type.
+	code::TypeDesc *STORM_FN typeDesc(EnginePtr e, Value v);
+
 
 	/**
 	 * Compute the common denominator of two values so that

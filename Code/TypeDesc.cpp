@@ -38,6 +38,10 @@ namespace code {
 		dataB |= offset.v64() << 8;
 	}
 
+	Primitive Primitive::move(Offset to) const {
+		return Primitive(kind(), size(), to);
+	}
+
 	wostream &operator <<(wostream &to, const Primitive &p) {
 		return to << primitive::name(p.kind()) << ":" << p.size() << L"@" << p.offset();
 	}
@@ -76,11 +80,11 @@ namespace code {
 		v = runtime::allocArray<Primitive>(engine(), &primitiveArray, entries);
 	}
 
-	void SimpleDesc::deepCopy(CloneEnv *env) {
-		GcArray<Primitive> *c = runtime::allocArray<Primitive>(engine(), &primitiveArray, v->count);
-		memcpy(c->v, v->v, v->count * sizeof(Primitive));
-		v = c;
-	}
+	// void SimpleDesc::deepCopy(CloneEnv *env) {
+	// 	GcArray<Primitive> *c = runtime::allocArray<Primitive>(engine(), &primitiveArray, v->count);
+	// 	memcpy(c->v, v->v, v->count * sizeof(Primitive));
+	// 	v = c;
+	// }
 
 	void SimpleDesc::toS(StrBuf *to) const {
 		*to << S("simple:") << s << S("[");

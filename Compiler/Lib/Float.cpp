@@ -100,27 +100,27 @@ namespace storm {
 		Array<Value> *rv = new (this) Array<Value>(2, Value(this, true));
 		rv->at(1) = Value(this);
 
-		add(inlinedFunction(engine, Value(), Type::CTOR, rr, fnPtr(engine, &floatCopyCtor)));
-		add(inlinedFunction(engine, Value(this, true), S("="), rv, fnPtr(engine, &floatAssign)));
+		add(inlinedFunction(engine, Value(), Type::CTOR, rr, fnPtr(engine, &floatCopyCtor))->makePure());
+		add(inlinedFunction(engine, Value(this, true), S("="), rv, fnPtr(engine, &floatAssign))->makePure());
 
-		add(inlinedFunction(engine, Value(this), S("+"), vv, fnPtr(engine, &floatAdd)));
-		add(inlinedFunction(engine, Value(this), S("-"), vv, fnPtr(engine, &floatSub)));
-		add(inlinedFunction(engine, Value(this), S("*"), vv, fnPtr(engine, &floatMul)));
-		add(inlinedFunction(engine, Value(this), S("/"), vv, fnPtr(engine, &floatDiv)));
+		add(inlinedFunction(engine, Value(this), S("+"), vv, fnPtr(engine, &floatAdd))->makePure());
+		add(inlinedFunction(engine, Value(this), S("-"), vv, fnPtr(engine, &floatSub))->makePure());
+		add(inlinedFunction(engine, Value(this), S("*"), vv, fnPtr(engine, &floatMul))->makePure());
+		add(inlinedFunction(engine, Value(this), S("/"), vv, fnPtr(engine, &floatDiv))->makePure());
 
 		Value vBool = Value(StormInfo<Bool>::type(engine));
-		add(inlinedFunction(engine, vBool, S(">"), vv, fnPtr(engine, &floatCmp<ifFAbove>)));
-		add(inlinedFunction(engine, vBool, S(">="), vv, fnPtr(engine, &floatCmp<ifFAboveEqual>)));
-		add(inlinedFunction(engine, vBool, S("<"), vv, fnPtr(engine, &floatCmp<ifFBelow>)));
-		add(inlinedFunction(engine, vBool, S("<="), vv, fnPtr(engine, &floatCmp<ifFBelowEqual>)));
-		add(inlinedFunction(engine, vBool, S("=="), vv, fnPtr(engine, &floatCmp<ifEqual>)));
-		add(inlinedFunction(engine, vBool, S("!="), vv, fnPtr(engine, &floatCmp<ifNotEqual>)));
+		add(inlinedFunction(engine, vBool, S(">"), vv, fnPtr(engine, &floatCmp<ifFAbove>))->makePure());
+		add(inlinedFunction(engine, vBool, S(">="), vv, fnPtr(engine, &floatCmp<ifFAboveEqual>))->makePure());
+		add(inlinedFunction(engine, vBool, S("<"), vv, fnPtr(engine, &floatCmp<ifFBelow>))->makePure());
+		add(inlinedFunction(engine, vBool, S("<="), vv, fnPtr(engine, &floatCmp<ifFBelowEqual>))->makePure());
+		add(inlinedFunction(engine, vBool, S("=="), vv, fnPtr(engine, &floatCmp<ifEqual>))->makePure());
+		add(inlinedFunction(engine, vBool, S("!="), vv, fnPtr(engine, &floatCmp<ifNotEqual>))->makePure());
 
 		Value vInt = Value(StormInfo<Int>::type(engine));
-		add(inlinedFunction(engine, vInt, S("int"), v, fnPtr(engine, &floatToInt)));
+		add(inlinedFunction(engine, vInt, S("int"), v, fnPtr(engine, &floatToInt))->makePure());
 
-		add(nativeFunction(engine, Value(this), S("min"), vv, address(&floatMin)));
-		add(nativeFunction(engine, Value(this), S("max"), vv, address(&floatMax)));
+		add(nativeFunction(engine, Value(this), S("min"), vv, address(&floatMin))->makePure());
+		add(nativeFunction(engine, Value(this), S("max"), vv, address(&floatMax))->makePure());
 
 		return Type::loadAll();
 	}
@@ -220,29 +220,29 @@ namespace storm {
 		Array<Value> *rv = new (this) Array<Value>(2, Value(this, true));
 		rv->at(1) = Value(this);
 
-		add(inlinedFunction(engine, Value(), Type::CTOR, rr, fnPtr(engine, &doubleCopyCtor)));
-		add(inlinedFunction(engine, Value(this, true), S("="), rv, fnPtr(engine, &doubleAssign)));
+		add(inlinedFunction(engine, Value(), Type::CTOR, rr, fnPtr(engine, &doubleCopyCtor))->makePure());
+		add(inlinedFunction(engine, Value(this, true), S("="), rv, fnPtr(engine, &doubleAssign))->makePure());
 
-		add(inlinedFunction(engine, Value(this), S("+"), vv, fnPtr(engine, &doubleAdd)));
-		add(inlinedFunction(engine, Value(this), S("-"), vv, fnPtr(engine, &doubleSub)));
-		add(inlinedFunction(engine, Value(this), S("*"), vv, fnPtr(engine, &doubleMul)));
-		add(inlinedFunction(engine, Value(this), S("/"), vv, fnPtr(engine, &doubleDiv)));
+		add(inlinedFunction(engine, Value(this), S("+"), vv, fnPtr(engine, &doubleAdd))->makePure());
+		add(inlinedFunction(engine, Value(this), S("-"), vv, fnPtr(engine, &doubleSub))->makePure());
+		add(inlinedFunction(engine, Value(this), S("*"), vv, fnPtr(engine, &doubleMul))->makePure());
+		add(inlinedFunction(engine, Value(this), S("/"), vv, fnPtr(engine, &doubleDiv))->makePure());
 
 		Value vBool = Value(StormInfo<Bool>::type(engine));
-		add(inlinedFunction(engine, vBool, S(">"), vv, fnPtr(engine, &doubleCmp<ifFAbove>)));
-		add(inlinedFunction(engine, vBool, S(">="), vv, fnPtr(engine, &doubleCmp<ifFAboveEqual>)));
-		add(inlinedFunction(engine, vBool, S("<"), vv, fnPtr(engine, &doubleCmp<ifFBelow>)));
-		add(inlinedFunction(engine, vBool, S("<="), vv, fnPtr(engine, &doubleCmp<ifFBelowEqual>)));
-		add(inlinedFunction(engine, vBool, S("=="), vv, fnPtr(engine, &doubleCmp<ifEqual>)));
-		add(inlinedFunction(engine, vBool, S("!="), vv, fnPtr(engine, &doubleCmp<ifNotEqual>)));
+		add(inlinedFunction(engine, vBool, S(">"), vv, fnPtr(engine, &doubleCmp<ifFAbove>))->makePure());
+		add(inlinedFunction(engine, vBool, S(">="), vv, fnPtr(engine, &doubleCmp<ifFAboveEqual>))->makePure());
+		add(inlinedFunction(engine, vBool, S("<"), vv, fnPtr(engine, &doubleCmp<ifFBelow>))->makePure());
+		add(inlinedFunction(engine, vBool, S("<="), vv, fnPtr(engine, &doubleCmp<ifFBelowEqual>))->makePure());
+		add(inlinedFunction(engine, vBool, S("=="), vv, fnPtr(engine, &doubleCmp<ifEqual>))->makePure());
+		add(inlinedFunction(engine, vBool, S("!="), vv, fnPtr(engine, &doubleCmp<ifNotEqual>))->makePure());
 
 		Value vInt = Value(StormInfo<Int>::type(engine));
-		add(inlinedFunction(engine, vInt, S("int"), v, fnPtr(engine, &doubleToInt)));
+		add(inlinedFunction(engine, vInt, S("int"), v, fnPtr(engine, &doubleToInt))->makePure());
 		Value vLong = Value(StormInfo<Long>::type(engine));
-		add(inlinedFunction(engine, vLong, S("long"), v, fnPtr(engine, &doubleToInt))); // We can use the same function here!
+		add(inlinedFunction(engine, vLong, S("long"), v, fnPtr(engine, &doubleToInt))->makePure()); // We can use the same function here!
 
-		add(nativeFunction(engine, Value(this), S("min"), vv, address(&doubleMin)));
-		add(nativeFunction(engine, Value(this), S("max"), vv, address(&doubleMax)));
+		add(nativeFunction(engine, Value(this), S("min"), vv, address(&doubleMin))->makePure());
+		add(nativeFunction(engine, Value(this), S("max"), vv, address(&doubleMax))->makePure());
 
 		return Type::loadAll();
 	}

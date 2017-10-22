@@ -12,10 +12,9 @@ namespace storm {
 	public:
 		FloatType(Str *name, GcType *type);
 
-		virtual BasicTypeInfo::Kind builtInType() const { return TypeKind::floatNr; }
-
 	protected:
 		virtual Bool STORM_FN loadAll();
+		virtual code::TypeDesc *STORM_FN createTypeDesc() { return code::floatDesc(engine); }
 	};
 
 	// Create the float type.
@@ -30,10 +29,9 @@ namespace storm {
 	public:
 		DoubleType(Str *name, GcType *type);
 
-		virtual BasicTypeInfo::Kind builtInType() const { return TypeKind::floatNr; }
-
 	protected:
 		virtual Bool STORM_FN loadAll();
+		virtual code::TypeDesc *STORM_FN createTypeDesc() { return code::doubleDesc(engine); }
 	};
 
 	// Create the float type.

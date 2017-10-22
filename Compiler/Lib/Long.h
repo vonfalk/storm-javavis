@@ -12,10 +12,9 @@ namespace storm {
 	public:
 		LongType(Str *name, GcType *type);
 
-		virtual BasicTypeInfo::Kind builtInType() const { return TypeKind::signedNr; }
-
 	protected:
 		virtual Bool STORM_FN loadAll();
+		virtual code::TypeDesc *STORM_FN createTypeDesc() { return code::longDesc(engine); }
 	};
 
 	// Create the Long type.
@@ -30,10 +29,9 @@ namespace storm {
 	public:
 		WordType(Str *name, GcType *type);
 
-		virtual BasicTypeInfo::Kind builtInType() const { return TypeKind::signedNr; }
-
 	protected:
 		virtual Bool STORM_FN loadAll();
+		virtual code::TypeDesc *STORM_FN createTypeDesc() { return code::longDesc(engine); }
 	};
 
 	// Create the Word type.

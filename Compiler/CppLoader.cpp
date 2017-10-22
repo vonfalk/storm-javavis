@@ -92,7 +92,7 @@ namespace storm {
 			gcType = t;
 		}
 
-		return new (*e) Type(null, type.flags, Size(type.size), gcType, typeVTable(type));
+		return new (*e) Type(null, flags, Size(type.size), gcType, typeVTable(type));
 	}
 
 	Type *CppLoader::findType(const CppType &type) {
@@ -361,8 +361,8 @@ namespace storm {
 		}
 
 		if (ref.ref) {
-			// Only applicable to value types.
-			if (result.isValue())
+			// Not applicable to class types.
+			if (!result.isHeapObj())
 				result = result.asRef(true);
 		}
 
@@ -461,6 +461,14 @@ namespace storm {
 
 		if (fn.threadId < into->namedThreads.count())
 			f->runOn(into->namedThreads[fn.threadId]);
+
+		if (wcscmp(Type::CTOR, fn.name) == 0 || wcscmp(Type::DTOR, fn.name) == 0) {
+			// Check if the type was declared as a simple type.
+			Type *owner = params->at(0).type;
+			if (owner->typeFlags & typeCppSimple)
+				// If so, it has a pure constructor.
+				f->makePure();
+		}
 
 		params->at(0).type->add(f);
 	}

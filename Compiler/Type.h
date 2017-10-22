@@ -132,8 +132,9 @@ namespace storm {
 		// Flags for this type.
 		const TypeFlags typeFlags;
 
-		// What kind of type is this type?
-		virtual BasicTypeInfo::Kind builtInType() const;
+		// Get a compact description of this type, used to know how this type shall be passed to
+		// functions in the system.
+		code::TypeDesc *STORM_FN typeDesc();
 
 		// Names for constructors and destructors.
 		static const wchar *CTOR;
@@ -160,6 +161,10 @@ namespace storm {
 		// Use the 'gcType' of the super class. Use only if no additional fields are introduced into
 		// this class.
 		void useSuperGcType();
+
+		// Create a 'TypeDesc' for this type. Called the first time the 'TypeDesc' is needed, the
+		// result is cached.
+		virtual code::TypeDesc *STORM_FN createTypeDesc();
 
 	private:
 		// Special constructor for creating the first type.
@@ -188,6 +193,15 @@ namespace storm {
 
 		// Thread we should be running on if we indirectly inherit from TObject.
 		NamedThread *useThread;
+
+		// Generated type description. 'null' means that it has not yet been computed.
+		code::TypeDesc *myTypeDesc;
+
+		// Create a SimpleTypeDesc based on this type.
+		code::SimpleDesc *createSimpleDesc();
+
+		// Populate a SimpleTypeDesc based on this type.
+		Nat populateSimpleDesc(MAYBE(code::SimpleDesc *) into);
 
 		// Our size (including base classes). If zero, we need to re-compute it.
 		Size mySize;

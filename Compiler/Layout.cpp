@@ -2,6 +2,7 @@
 #include "Layout.h"
 #include "Core/GcType.h"
 #include "Type.h"
+#include "Exception.h"
 
 namespace storm {
 
@@ -91,11 +92,7 @@ namespace storm {
 	}
 
 	Array<MemberVar *> *Layout::variables() {
-		Array<MemberVar *> *r = new (this) Array<MemberVar *>();
-		for (nat i = 0; i < vars->count(); i++) {
-			r->push(vars->at(i));
-		}
-		return r;
+		return new (this) Array<MemberVar *>(*vars);
 	}
 
 }

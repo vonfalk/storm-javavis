@@ -170,6 +170,8 @@ namespace storm {
 			rFnNeedsCopy,
 			rFnCall,
 			rFnCreate,
+			// A null function (does nothing).
+			rFnNull,
 			// Should be the last one.
 			refCount,
 		};
@@ -189,6 +191,10 @@ namespace storm {
 		void stdIn(TextInput *to);
 		void stdOut(TextOutput *to);
 		void stdError(TextOutput *to);
+
+		// Get 'TypeDesc' objects that are frequently used in the system.
+		code::TypeDesc *ptrDesc();
+		code::TypeDesc *voidDesc();
 
 		// Load a shared library.
 		SharedLib *loadShared(Url *file);
@@ -232,6 +238,10 @@ namespace storm {
 
 			// Void handle.
 			Handle *voidHandle;
+
+			// TypeDesc objects that are used a lot throughout the system.
+			code::TypeDesc *ptrDesc;
+			code::TypeDesc *voidDesc;
 
 			// Handles to readers for stdin, stdout and stderror.
 			TextInput *stdIn;

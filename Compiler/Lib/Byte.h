@@ -12,10 +12,9 @@ namespace storm {
 	public:
 		ByteType(Str *name, GcType *type);
 
-		virtual BasicTypeInfo::Kind builtInType() const { return TypeKind::signedNr; }
-
 	protected:
 		virtual Bool STORM_FN loadAll();
+		virtual code::TypeDesc *STORM_FN createTypeDesc() { return code::byteDesc(engine); }
 	};
 
 	// Create the Byte type.

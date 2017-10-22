@@ -1,5 +1,6 @@
 #pragma once
 #include "Variable.h"
+#include "Code/TypeDesc.h"
 
 namespace storm {
 	STORM_PKG(core.lang);

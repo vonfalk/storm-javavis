@@ -12,10 +12,9 @@ namespace storm {
 	public:
 		IntType(Str *name, GcType *type);
 
-		virtual BasicTypeInfo::Kind builtInType() const { return TypeKind::signedNr; }
-
 	protected:
 		virtual Bool STORM_FN loadAll();
+		virtual code::TypeDesc *STORM_FN createTypeDesc() { return code::intDesc(engine); }
 	};
 
 	// Create the Int type.
@@ -30,10 +29,9 @@ namespace storm {
 	public:
 		NatType(Str *name, GcType *type);
 
-		virtual BasicTypeInfo::Kind builtInType() const { return TypeKind::signedNr; }
-
 	protected:
 		virtual Bool STORM_FN loadAll();
+		virtual code::TypeDesc *STORM_FN createTypeDesc() { return code::intDesc(engine); }
 	};
 
 	// Create the Nat type.

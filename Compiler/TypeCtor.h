@@ -16,6 +16,9 @@ namespace storm {
 		// Create.
 		STORM_CTOR TypeDefaultCtor(Type *owner);
 
+		// Pure?
+		virtual Bool STORM_FN pure() const;
+
 	private:
 		// Owner.
 		Type *owner;
@@ -34,6 +37,9 @@ namespace storm {
 		// Create.
 		STORM_CTOR TypeCopyCtor(Type *owner);
 
+		// Pure?
+		virtual Bool STORM_FN pure() const;
+
 	private:
 		// Owner.
 		Type *owner;
@@ -51,6 +57,9 @@ namespace storm {
 	public:
 		// Create.
 		STORM_CTOR TypeAssign(Type *owner);
+
+		// Pure?
+		virtual Bool STORM_FN pure() const;
 
 	private:
 		// Owner.

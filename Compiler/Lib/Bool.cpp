@@ -80,14 +80,14 @@ namespace storm {
 		Array<Value> *rv = new (this) Array<Value>(2, Value(this, true));
 		rv->at(1) = Value(this);
 
-		add(inlinedFunction(engine, Value(this), S("&"), vv, fnPtr(engine, &boolAnd)));
-		add(inlinedFunction(engine, Value(this), S("|"), vv, fnPtr(engine, &boolOr)));
-		add(inlinedFunction(engine, Value(this), S("=="), vv, fnPtr(engine, &boolEq)));
-		add(inlinedFunction(engine, Value(this), S("!="), vv, fnPtr(engine, &boolNeq)));
-		add(inlinedFunction(engine, Value(this), S("!"), v, fnPtr(engine, &boolNot)));
+		add(inlinedFunction(engine, Value(this), S("&"), vv, fnPtr(engine, &boolAnd))->makePure());
+		add(inlinedFunction(engine, Value(this), S("|"), vv, fnPtr(engine, &boolOr))->makePure());
+		add(inlinedFunction(engine, Value(this), S("=="), vv, fnPtr(engine, &boolEq))->makePure());
+		add(inlinedFunction(engine, Value(this), S("!="), vv, fnPtr(engine, &boolNeq))->makePure());
+		add(inlinedFunction(engine, Value(this), S("!"), v, fnPtr(engine, &boolNot))->makePure());
 
-		add(inlinedFunction(engine, Value(), Type::CTOR, rr, fnPtr(engine, &boolCopyCtor)));
-		add(inlinedFunction(engine, Value(this, true), S("="), rv, fnPtr(engine, &boolAssign)));
+		add(inlinedFunction(engine, Value(), Type::CTOR, rr, fnPtr(engine, &boolCopyCtor))->makePure());
+		add(inlinedFunction(engine, Value(this, true), S("="), rv, fnPtr(engine, &boolAssign))->makePure());
 
 		return Type::loadAll();
 	}

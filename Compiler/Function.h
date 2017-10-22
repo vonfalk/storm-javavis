@@ -42,6 +42,17 @@ namespace storm {
 		// Set where to run.
 		void STORM_FN runOn(NamedThread *thread);
 
+		// Is this function 'pure'? Ie. are we sure that this function does not produce any side effects?
+		// For constructors and destructors, this means that we can ignore calling the function when the
+		// compiler deems it unneccessary. For other functions, it means that the compiler may choose to
+		// perform constant folding or common subexpression elimination through this function safely.
+		virtual Bool STORM_FN pure() const;
+
+		// Make pure.
+		Function *STORM_FN makePure();
+		Function *STORM_FN makePure(Bool v);
+
+
 		// Output.
 		virtual void STORM_FN toS(StrBuf *to) const;
 
@@ -105,6 +116,9 @@ namespace storm {
 
 		// Thread we shall be running on:
 		NamedThread *runOnThread;
+
+		// Is this function pure?
+		Bool isPure;
 
 		// Initialize references.
 		void initRefs();

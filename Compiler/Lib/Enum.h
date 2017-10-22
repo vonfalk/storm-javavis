@@ -26,9 +26,6 @@ namespace storm {
 		// Add new entries.
 		virtual void STORM_FN add(Named *n);
 
-		// Tell them we're an integer!
-		virtual BasicTypeInfo::Kind builtInType() const { return TypeKind::unsignedNr; }
-
 		// Late init.
 		virtual void lateInit();
 
@@ -41,6 +38,9 @@ namespace storm {
 	protected:
 		// Load members.
 		virtual Bool STORM_FN loadAll();
+
+		// We're an integer.
+		virtual code::TypeDesc *STORM_FN createTypeDesc() { return code::intDesc(engine); }
 
 	private:
 		// Shall we support bitmask operators?
