@@ -3,6 +3,7 @@
 #include "Engine.h"
 #include "Function.h"
 #include "Exception.h"
+#include "Engine.h"
 #include "Core/Str.h"
 #include "Code/Redirect.h"
 
@@ -83,52 +84,18 @@ namespace storm {
 		toUpdate->set(code);
 	}
 
-#if defined(X86)
-
 	code::Listing *StaticEngineCode::redirectCode(Value result, code::Ref ref) {
-		// TODO:
-		// Engine &e = engine();
-		// return e.arena()->engineRedirect(result.desc(), params, ref, e.ref(Engine::rEngine));
+		Engine &e = engine();
+		using code::TypeDesc;
 
-		using namespace code;
-
-		Listing *l = new (this) Listing();
-
-		if (result.returnInReg()) {
-			// The old pointer and the 0 constant will nicely fit into the 'returnData' member.
-			*l << push(ptrConst(Offset(0)));
-			*l << push(engine().ref(Engine::rEngine));
-		} else {
-			// The first parameter is, and has to be, a pointer to the returned object.
-			*l << mov(ptrA, ptrRel(ptrStack, Offset::sPtr)); // Read the return value ptr.
-			*l << push(engine().ref(Engine::rEngine));
-			*l << push(ptrA); // Store the return value ptr once more.
+		Array<TypeDesc *> *p = new (this) Array<TypeDesc *>();
+		if (owner) {
+			Array<Value> *params = owner->params;
+			for (Nat i = 0; i < params->count(); i++)
+				p->push(params->at(i).typeDesc(e));
 		}
-
-		*l << call(ref, result.valTypeRet());
-		*l << add(ptrStack, ptrConst(Size::sPtr * 2));
-		*l << ret(result.valTypeRet());
-
-		return l;
+		return e.arena()->engineRedirect(result.typeDesc(e), p, ref, e.ref(Engine::rEngine));
 	}
-
-#elif defined(X64)
-
-	code::Listing *StaticEngineCode::redirectCode(Value result, code::Ref ref) {
-		// TODO:
-		// Engine &e = engine();
-		// return e.arena()->engineRedirect(result.desc(), params, ref, e.ref(Engine::rEngine));
-
-		using namespace code;
-
-		Listing *l = new (this) Listing();
-		TODO(L"Please implement 'StaticEngineCode::redirectCode'!");
-		return l;
-	}
-
-#else
-#error "Please implement 'redirectCode' for your platform!"
-#endif
 
 
 	/**
@@ -151,18 +118,18 @@ namespace storm {
 
 	void LazyCode::createRedirect() {
 		loaded = false;
+		Engine &e = engine();
+		using code::TypeDesc;
 
-		Array<code::RedirectParam> *params = new (this) Array<code::RedirectParam>();
-		for (nat i = 0; i < owner->params->count(); i++) {
-			Value v = owner->params->at(i);
-			if (v.isValue()) {
-				params->push(code::RedirectParam(v.valTypeParam(), v.destructor(), true));
-			} else {
-				params->push(code::RedirectParam(v.valTypeParam()));
-			}
+		Array<TypeDesc *> *params = new (this) Array<TypeDesc *>();
+		for (Nat i = 0; i < owner->params->count(); i++) {
+			params->push(owner->params->at(i).typeDesc(e));
 		}
 
-		setCode(code::redirect(params, engine().ref(Engine::rLazyCodeUpdate), code::objPtr(this)));
+		Bool member = owner->isMember();
+		TypeDesc *result = owner->result.typeDesc(e);
+		code::Ref fn = e.ref(Engine::rLazyCodeUpdate);
+		setCode(e.arena()->redirect(member, result, params, fn, code::objPtr(this)));
 	}
 
 	void LazyCode::setCode(code::Listing *to) {

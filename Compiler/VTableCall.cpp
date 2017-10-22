@@ -13,6 +13,8 @@ namespace storm {
 
 
 	code::RefSource *VTableCalls::get(VTableSlot slot) {
+		TODO(L"Implement VTable calls in an architecture-independent manner.");
+
 		switch (slot.type) {
 		case VTableSlot::tCpp:
 			return getCpp(slot.offset);
