@@ -25,6 +25,8 @@ namespace code {
 		virtual const void *address() const;
 		virtual nat size() const;
 
+		// Get the name of the owning RefSource (if any).
+		MAYBE(Str *) STORM_FN ownerName() const;
 	private:
 		friend class RefSource;
 

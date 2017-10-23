@@ -59,23 +59,19 @@ void StackTrace::output(wostream &to) const {
 	}
 }
 
-String format(const StackTrace &t, const FnLookup &lookup) {
-	std::wostringstream to;
+String format(const StackTrace &t) {
+	// Make sure the CppLookup is registered.
+	static RegisterLookup<CppLookup> z;
 
-	for (nat i = 0; i < t.count(); i++)
-		to << std::setw(3) << i << L": " << lookup.format(t[i]) << endl;
+	std::wostringstream to;
+	FnLookups &l = fnLookups();
+	for (nat i = 0; i < t.count(); i++) {
+		to << std::setw(3) << i << L": ";
+		l.format(to, t[i]);
+		to << endl;
+	}
 
 	return to.str();
-}
-
-String format(const StackTrace &t) {
-	return format(t, CppLookup());
-}
-
-String cppFnName(const void *ptr) {
-	StackFrame f;
-	f.code = ptr;
-	return CppLookup().format(f);
 }
 
 /**

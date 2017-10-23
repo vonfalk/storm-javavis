@@ -25,6 +25,14 @@ namespace code {
 			owner->update();
 	}
 
+	Str *Content::ownerName() const {
+		RefSource *o = (RefSource *)atomicRead((void *&)owner);
+		if (o)
+			return o->title();
+		else
+			return null;
+	}
+
 	StaticContent::StaticContent(const void *addr) {
 		set(addr, 0);
 	}

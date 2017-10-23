@@ -80,15 +80,8 @@ private:
 // Generate a stack trace from the calling point in the code.
 StackTrace stackTrace(nat skip = 0);
 
-// Fromat an entire trace (only looks up C++ functions).
+// Fromat an entire trace.
 String format(const StackTrace &trace);
-
-// Format the entire trace using the supplied FnLookup.
-String format(const StackTrace &trace, const FnLookup &lookup);
 
 // Print the stack here.
 void dumpStack();
-
-// Look up a single function from C++.
-String cppFnName(const void *ptr);
-

@@ -3,6 +3,60 @@
 #include "Path.h"
 #include "DbgHelper.h"
 
+FnLookups &fnLookups() {
+	static FnLookups v;
+	return v;
+}
+
+FnLookups::FnLookups() {}
+
+int FnLookups::attach(const FnLookup &lookup) {
+	util::Lock::L z(lock);
+
+	for (size_t i = 0; i < data.size(); i++) {
+		const FnLookup *l = data[i];
+		if (!l)
+			continue;
+
+		// We assume that if they're of the same type, they're equal.
+		if (typeid(*l) == typeid(lookup))
+			return -1;
+	}
+
+	for (size_t i = 0; i < data.size(); i++) {
+		if (!data[i]) {
+			data[i] = &lookup;
+			return i;
+		}
+	}
+
+	data.push_back(&lookup);
+	return int(data.size() - 1);
+}
+
+void FnLookups::detach(int id) {
+	util::Lock::L z(lock);
+
+	if (id >= 0)
+		data[id] = null;
+}
+
+void FnLookups::format(wostream &to, const StackFrame &frame) {
+	util::Lock::L z(lock);
+
+	for (size_t i = 0; i < data.size(); i++) {
+		const FnLookup *l = data[i];
+		if (!l)
+			continue;
+
+		if (l->format(to, frame))
+			return;
+	}
+
+	// Fallback if all else fails.
+	to << L"Unknown function @" << toHex(frame.code);
+}
+
 #if defined(WINDOWS)
 
 // Easy creation of a SYMBOL_INFO
@@ -226,7 +280,7 @@ static void outputSymbol(wostream &to, SymInfo &symbol) {
 	to << L")";
 }
 
-String CppLookup::format(const StackFrame &frame) const {
+bool CppLookup::format(std::wostream &to, const StackFrame &frame) const {
 	DbgHelp &h = dbgHelp();
 
 	const nat maxNameLen = 512;
@@ -240,23 +294,25 @@ String CppLookup::format(const StackFrame &frame) const {
 	line.SizeOfStruct = sizeof(line);
 	bool hasLine = SymGetLineFromAddr64(h.process, ptr, &lineDisplacement, &line) ? true : false;
 
-	std::wostringstream r;
+	if (!hasSymName && !hasLine)
+		return false;
+
 	if (hasLine) {
 		Path path(line.FileName);
 #ifdef DEBUG
 		path = path.makeRelative(Path::dbgRoot());
 #endif
-		r << path << L"(L" << line.LineNumber << L"): ";
+		to << path << L"(L" << line.LineNumber << L"): ";
 	} else {
-		r << L"<unknown location>: ";
+		to << L"<unknown location>: ";
 	}
 
 	if (hasSymName)
-		outputSymbol(r, symbol);
+		outputSymbol(to, symbol);
 	else
-		r << L"Unknown function @" << toHex(frame.code);
+		to << L"Unknown function @" << toHex(frame.code);
 
-	return r.str();
+	return true;
 }
 
 #elif defined(POSIX)
@@ -281,29 +337,36 @@ public:
 
 };
 
+struct FormatData {
+	std::wostream &to;
+	bool any;
+};
+
 static void formatError(void *data, const char *msg, int errnum) {
-	String *out = (String *)data;
-	*out = L"<unknown function>";
+	FormatData *d = (FormatData *)data;
+	d->any = false;
 }
 
 static void formatOk(void *data, uintptr_t pc, const char *symname, uintptr_t symval, uintptr_t symsize) {
-	String *out = (String *)data;
+	FormatData *d = (FormatData *)data;
+
 	int status = 0;
 	char *demangled = abi::__cxa_demangle(symname, null, null, &status);
 	if (status == 0) {
-		*out = String(demangled);
+		d->to << demangled;
 	} else {
-		*out = String(symname);
+		d->to << symname;
 	}
 	free(demangled);
+	d->any = true;
 }
 
-String CppLookup::format(const StackFrame &frame) const {
+bool CppLookup::format(std::wostream &to, const StackFrame &frame) const {
 	static LookupState state;
 
-	String output;
-	backtrace_syminfo(state.state, (uintptr_t)frame.code, &formatOk, &formatError, &output);
-	return output;
+	FormatData data = { to, false };
+	backtrace_syminfo(state.state, (uintptr_t)frame.code, &formatOk, &formatError, &data);
+	return data.any;
 }
 
 #else

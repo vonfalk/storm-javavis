@@ -1,9 +1,37 @@
 #include "stdafx.h"
 #include "DwarfTable.h"
+#include "Code/Binary.h"
+#include "Core/Str.h"
 #include "Utils/Memory.h"
+#include "Utils/FnLookup.h"
 
 namespace code {
 	namespace x64 {
+
+		/**
+		 * Function lookup using the Dwarf table.
+		 */
+
+		class DwarfLookup : public FnLookup {
+		public:
+			virtual bool format(std::wostream &to, const ::StackFrame &frame) const {
+				FDE *fde = dwarfTable.find(frame.code);
+				if (!fde)
+					return false;
+
+				TODO(L"Test this!");
+				char *start = (char *)fde->codeStart();
+				start += runtime::codeSize(start) - 2*sizeof(void *);;
+				Binary *owner = (Binary *)start;
+				Str *name = owner->ownerName();
+				if (name) {
+					to << name->c_str();
+				} else {
+					to << L"<unnamed Storm function>";
+				}
+				return true;
+			}
+		};
 
 		/**
 		 * The entire table.
@@ -19,6 +47,9 @@ namespace code {
 		}
 
 		FDE *DwarfTable::alloc(const void *fn) {
+			// Register the DwarfLookup for exceptions the first time something is allocated in the table.
+			static RegisterLookup<DwarfLookup> w;
+
 			util::Lock::L z(lock);
 
 			for (size_t i = chunks.size(); i > 0; i--) {
