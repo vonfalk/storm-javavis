@@ -718,12 +718,18 @@ static void genLicenses(wostream &to, World &w) {
 	for (nat i = 0; i < w.licenses.size(); i++) {
 		const License &l = w.licenses[i];
 
+		if (!l.condition.empty())
+			to << L"#if " << l.condition << L"\n";
+
 		to << L"{ S(\"" << l.id << L"\"), ";
 		to << L"S(\"" << l.pkg << L"\"), ";
 		outputStr(to, l.title);
 		to << L",\n";
 		outputStr(to, l.body);
 		to << L" },\n";
+
+		if (!l.condition.empty())
+			to << L"#endif\n";
 	}
 }
 

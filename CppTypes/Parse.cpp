@@ -589,13 +589,21 @@ static void parseFile(nat id, World &world) {
 static void parseLicense(const Path &path, World &world) {
 	TextReader *src = TextReader::create(new FileStream(path, Stream::mRead));
 
-	String pkg = src->getLine();
+	String cond = src->getLine();
+	String pkg;
+	if (cond.empty() || cond[0] != '#') {
+		pkg = cond;
+		cond = L"";
+	} else {
+		cond = cond.substr(1);
+		pkg = src->getLine();
+	}
 	String title = src->getLine();
 	String body = src->getAll();
 
 	delete src;
 
-	world.licenses.push_back(License(path.titleNoExt(), pkg, title, body));
+	world.licenses.push_back(License(path.titleNoExt(), pkg, cond, title, body));
 }
 
 void parseWorld(World &world, const vector<Path> &licenses) {

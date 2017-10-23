@@ -37,7 +37,9 @@ static void generatePart(TextWriter *to, const String &indent, const String &end
 			indented = false;
 		} else {
 			if (!indented) {
-				to->put(indent);
+				// Do not indent preprocessor directives!
+				if (cont[i] != '#')
+					to->put(indent);
 				indented = true;
 			}
 			to->put(cont[i]);

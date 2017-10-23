@@ -1,3 +1,4 @@
+#defined(STORM_GC_MPS)
 core
 Memory Pool System Kit Open Source License
 Copyright © 2001–2013 Ravenbrook Limited. All rights reserved. This is the open
