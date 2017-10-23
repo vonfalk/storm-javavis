@@ -481,6 +481,7 @@ namespace storm {
 			} else if (SimpleDesc *s = as<SimpleDesc>(original)) {
 				merge(offset, pos, into, s);
 			} else if (ComplexDesc *c = as<ComplexDesc>(original)) {
+				UNUSED(c);
 				throw TypedefError(L"Can not produce a SimpleDesc from a type containing a complex type!");
 			} else {
 				throw TypedefError(L"Unknown type description: " + ::toS(original));
