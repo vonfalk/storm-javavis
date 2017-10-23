@@ -260,10 +260,18 @@ String CppLookup::format(const StackFrame &frame) const {
 }
 
 #elif defined(POSIX)
+#include <execinfo.h>
 
 String CppLookup::format(const StackFrame &frame) const {
-	UNUSED(frame);
-	return L"<unknown function>";
+	// Does not work very well...
+	void *const* data = (void *const*)&frame.code;
+	char **sym = backtrace_symbols(data, 1);
+	if (!sym)
+		return L"<unknown function>";
+
+	String result(sym[0]);
+	free(sym);
+	return result;
 }
 
 #else

@@ -235,10 +235,19 @@ StackTrace stackTrace(nat skip) {
 #endif
 
 #ifdef POSIX
+#include <execinfo.h>
 
 StackTrace stackTrace(nat skip) {
-	// Note: We can probably get a decent stack trace by using the _Unwind_Backtrace()-function in libgcc.
-	return StackTrace();
+	// Note: We could call _Unwind_Backtrace directly to avoid any size limitations.
+	const int MAX_DEPTH = 100;
+	void *buffer[MAX_DEPTH];
+	int depth = backtrace(buffer, MAX_DEPTH);
+
+	StackTrace result(depth);
+	for (nat i = 0; i < nat(depth); i++)
+		result[i].code = buffer[i];
+
+	return result;
 }
 
 #endif
