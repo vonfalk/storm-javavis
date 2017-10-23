@@ -260,18 +260,50 @@ String CppLookup::format(const StackFrame &frame) const {
 }
 
 #elif defined(POSIX)
-#include <execinfo.h>
+#include "backtrace.h"
+#include <cxxabi.h>
+
+static void backtraceError(void *data, const char *msg, int errnum) {
+	printf("Error during backtraces (%d): %s\n", errnum, msg);
+}
+
+class LookupState {
+public:
+	char name[PATH_MAX + 1];
+	backtrace_state *state;
+
+	LookupState() {
+		memset(name, 0, PATH_MAX + 1);
+		readlink("/proc/self/exe", name, PATH_MAX);
+
+		state = backtrace_create_state(name, 1, &backtraceError, null);
+	}
+
+};
+
+static void formatError(void *data, const char *msg, int errnum) {
+	String *out = (String *)data;
+	*out = L"<unknown function>";
+}
+
+static void formatOk(void *data, uintptr_t pc, const char *symname, uintptr_t symval, uintptr_t symsize) {
+	String *out = (String *)data;
+	int status = 0;
+	char *demangled = abi::__cxa_demangle(symname, null, null, &status);
+	if (status == 0) {
+		*out = String(demangled);
+	} else {
+		*out = String(symname);
+	}
+	free(demangled);
+}
 
 String CppLookup::format(const StackFrame &frame) const {
-	// Does not work very well...
-	void *const* data = (void *const*)&frame.code;
-	char **sym = backtrace_symbols(data, 1);
-	if (!sym)
-		return L"<unknown function>";
+	static LookupState state;
 
-	String result(sym[0]);
-	free(sym);
-	return result;
+	String output;
+	backtrace_syminfo(state.state, (uintptr_t)frame.code, &formatOk, &formatError, &output);
+	return output;
 }
 
 #else

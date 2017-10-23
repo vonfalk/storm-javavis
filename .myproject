@@ -176,3 +176,10 @@ libPrefix=Debug
 libPrefix=Release
 [sharedlib,storm_slow]
 libPrefix=Slow
+
+#No PCH for c-files.
+[windows]
+compile+=*.c:cl <defines> <file> <includes> <flags> <warnings> /c /Fo<output>
+
+[unix]
+compile+=*.c:gcc -Wno-unknown-pragmas -std=c99 -O3 <defines> <warnings> -Wno-maybe-uninitialized <file> -c <includes> -o <output>

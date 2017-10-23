@@ -13,3 +13,6 @@
 [submodule "root/test/server-tests"]
 	path = root/test/server-tests
 	url = ../storm-server-tests.git
+[submodule "Linux/backtrace"]
+	path = Linux/backtrace
+	url = ../linux/backtrace.git
