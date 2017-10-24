@@ -238,10 +238,17 @@ StackTrace stackTrace(nat skip) {
 	const int MAX_DEPTH = 100;
 	void *buffer[MAX_DEPTH];
 	int depth = backtrace(buffer, MAX_DEPTH);
+	if (depth < 0)
+		return StackTrace();
 
-	StackTrace result(depth);
-	for (nat i = 0; i < nat(depth); i++)
-		result[i].code = buffer[i];
+	nat levels = nat(depth);
+	if (levels <= skip)
+		return StackTrace();
+	levels -= skip;
+
+	StackTrace result(levels);
+	for (nat i = 0; i < levels; i++)
+		result[i].code = buffer[i + skip];
 
 	return result;
 }
