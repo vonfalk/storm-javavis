@@ -47,33 +47,34 @@ namespace storm {
 	// Output an object.
 	wostream &operator <<(wostream &to, const RootObject *o);
 	wostream &operator <<(wostream &to, const RootObject &o);
-}
 
 
-/**
- * Custom casting.
- */
-template <class Src>
-struct RootCast {
-	Src *from;
-	RootCast(Src *from) : from(from) {}
+	/**
+	 * Custom casting.
+	 */
+	template <class Src>
+	struct RootCast {
+		Src *from;
+		RootCast(Src *from) : from(from) {}
 
-	template <class To>
-	To *cast() const {
-		if (from == null)
+		template <class To>
+		To *cast() const {
+			if (from == null)
+				return null;
+			if (from->isA(To::stormType(from->engine())))
+				return static_cast<To *>(from);
 			return null;
-		if (from->isA(To::stormType(from->engine())))
-			return static_cast<To *>(from);
-		return null;
+		}
+	};
+
+	inline RootCast<RootObject> customCast(RootObject *from) {
+		TODO(L"Check so that these are properly used!");
+		return RootCast<RootObject>(from);
 	}
-};
 
-inline RootCast<storm::RootObject> customCast(storm::RootObject *from) {
-	TODO(L"Check so that these are properly used!");
-	return RootCast<storm::RootObject>(from);
-}
+	inline RootCast<const RootObject> customCast(const RootObject *from) {
+		TODO(L"Check so that these are properly used!");
+		return RootCast<const RootObject>(from);
+	}
 
-inline RootCast<const storm::RootObject> customCast(const storm::RootObject *from) {
-	TODO(L"Check so that these are properly used!");
-	return RootCast<const storm::RootObject>(from);
 }
