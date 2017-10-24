@@ -1,5 +1,0 @@
-[]
-
-#This is a template that will be auto-generated!
-ignore+=BuiltIn.cpp
-ignore+=VTables.asm
