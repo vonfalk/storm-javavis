@@ -134,6 +134,8 @@ namespace storm {
 	code::TypeDesc *Value::desc(Engine &e) const {
 		if (!type)
 			return e.voidDesc();
+		if (ref)
+			return e.ptrDesc();
 		return type->typeDesc();
 	}
 

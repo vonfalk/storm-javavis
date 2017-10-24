@@ -97,10 +97,7 @@ namespace code {
 	}
 
 	Size Operand::size() const {
-		if (opType)
-			return Size::sPtr;
-		else
-			return opSize;
+		return opSize;
 	}
 
 	Bool Operand::readable() const {

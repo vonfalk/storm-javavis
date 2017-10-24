@@ -404,13 +404,13 @@ namespace storm {
 	}
 
 	code::TypeDesc *Engine::ptrDesc() {
-		if (o.ptrDesc)
+		if (!o.ptrDesc)
 			o.ptrDesc = code::ptrDesc(*this);
 		return o.ptrDesc;
 	}
 
 	code::TypeDesc *Engine::voidDesc() {
-		if (o.voidDesc)
+		if (!o.voidDesc)
 			o.voidDesc = code::voidDesc(*this);
 		return o.voidDesc;
 	}
