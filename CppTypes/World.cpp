@@ -41,7 +41,7 @@ UnknownPrimitive *World::unknown(const String &name, const SrcPos &pos) {
 		return i->second.borrow();
 
 	// Try to find it inside 'types'.
-	UnknownPrimitive *found;
+	UnknownPrimitive *found = null;
 	for (nat i = 0; i < types.size(); i++) {
 		if (Auto<UnknownPrimitive> u = types[i].as<UnknownPrimitive>()) {
 			String last = u->name.last();

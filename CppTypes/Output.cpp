@@ -488,7 +488,7 @@ static String resolveWrap(TypeRef *type, World &w) {
 	String result;
 	if (UnknownType *u = as<UnknownType>(type)) {
 		result = genTypeRef(u->wrapper(w).borrow(), false);
-	} else if (PtrType *p = as<PtrType>(type)) {
+	} else if (as<PtrType>(type)) {
 		nat id = w.unknown(L"PTR_GC", type->pos)->id;
 		result = L"{ " + ::toS(id) + L", null, false, false }, ";
 	}
