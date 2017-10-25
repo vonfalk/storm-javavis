@@ -46,7 +46,13 @@ public:
 	// Prepare the world for serialization (ie. resolving types, ...).
 	void prepare();
 
+	// Find a wrapper for an unknown type.
+	UnknownPrimitive *unknown(const String &name, const SrcPos &pos);
+
 private:
+	// Fast lookup of UnknownPrimitive objects.
+	map<String, Auto<UnknownPrimitive>> unknownLookup;
+
 	// Sort types so we get a deterministic order.
 	void orderTypes();
 

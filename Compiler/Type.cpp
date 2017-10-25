@@ -423,11 +423,11 @@ namespace storm {
 		Nat elems = populateSimpleDesc(null);
 
 		if (elems == 0 && mySize != Size())
-			throw TypedefError(L"Trying to generate a type description for an empty object with nonzero size. "
-							L"This is most likely not what you want. There are two possible reasons for why "
-							L" this happens: Either, you try to access the type description of " +
-							::toS(identifier()) + L" too early, or you are attempting to construct a non-standard type."
-							L"In the latter case, you should override 'createSimpleDesc' as well.");
+			throw TypedefError(::toS(identifier()) + L": Trying to generate a type description for an empty object "
+							L"with a nonzero size. This is most likely not what you want. There are two possible "
+							L"reasons for why this might happen: Either, you try to access the type description of "
+							L"the type too early, or you are attempting to construct a non-standard type, "
+							L"in which case you should override 'createSimpleDesc' as well.");
 
 		code::SimpleDesc *desc = new (this) code::SimpleDesc(mySize, elems);
 		populateSimpleDesc(desc);

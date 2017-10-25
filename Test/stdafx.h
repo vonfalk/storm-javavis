@@ -40,9 +40,9 @@ SUITE_(CodeBasic, 5);
 // Tests of the code generation backend.
 SUITE_(Code, 6);
 // More tests of the code generation backend. Requires code generation to function.
-SUITE(CoreEx, 7);
-// More involved tests of Storm. Still no compilation from sources.
-SUITE(Storm, 8);
+SUITE_(CoreEx, 7);
+// More involved tests of Storm. Still no compilation from source code.
+SUITE_(Storm, 8);
 // Simple tests of Basic Storm
 SUITE(SimpleBS, 9);
 // More heavy tests of Basic Storm

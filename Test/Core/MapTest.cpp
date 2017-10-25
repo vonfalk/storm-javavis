@@ -55,6 +55,8 @@ BEGIN_TEST(MapTest, Core) {
 		CHECK_ERROR(map->get(new (e) Str(L"A")), MapError);
 	}
 
+	// TODO: More tests here!
+
 } END_TEST
 
 BEGIN_TEST(MapExTest, CoreEx) {
@@ -80,8 +82,6 @@ BEGIN_TEST(MapExTest, CoreEx) {
 		CHECK_EQ(map->get(1, 99), 99);
 		CHECK_ERROR(map->get(1), MapError);
 	}
-
-	// TODO: More tests here!
 
 } END_TEST
 

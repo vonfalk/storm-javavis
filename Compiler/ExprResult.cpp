@@ -8,7 +8,7 @@ namespace storm {
 
 	ExprResult::ExprResult(Value value) : value(value), returns(true) {}
 
-	ExprResult::ExprResult(bool any) : returns(any) {}
+	ExprResult::ExprResult(Bool any) : returns(any) {}
 
 	Value ExprResult::type() const {
 		if (returns)

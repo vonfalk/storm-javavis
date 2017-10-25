@@ -335,6 +335,8 @@ public:
 };
 
 
+class UnknownPrimitive;
+
 /**
  * Unknown type. These are to allow GC:d classes to contain types unknown to the preprocessor
  * without having to allocate them separatly all the time.
@@ -343,7 +345,6 @@ public:
  * PTR_NOGC - pointer to non-gc object.
  * PTR_GC - pointer to gc object.
  * INT - integer sized object.
- * LONG - long-sized object (ie. 64 bits according to Storm terminology).
  *
  * Also: if 'id' is the name of another type, it substitutes that.
  */
@@ -364,10 +365,12 @@ public:
 	// Resolve.
 	virtual Auto<TypeRef> resolve(World &in, const CppName &context) const;
 
+	// Find an 'unknown' type wrapper for this type.
+	Auto<TypeRef> wrapper(World &in) const;
+
 	// Print.
 	virtual void print(wostream &to) const;
 
-private:
 	// Description of an id.
 	struct ID {
 		const wchar_t *name;
@@ -378,6 +381,7 @@ private:
 	// All known ids.
 	static const ID ids[];
 
+private:
 	// Current id.
 	const ID *id;
 

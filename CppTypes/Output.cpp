@@ -124,6 +124,7 @@ static void genTypes(wostream &to, World &w) {
 		Type &t = *w.types[i];
 		Class *c = as<Class>(&t);
 		Primitive *p = as<Primitive>(&t);
+		UnknownPrimitive *up = as<UnknownPrimitive>(&t);
 		to << L"{ ";
 
 		// Name.
@@ -152,6 +153,8 @@ static void genTypes(wostream &to, World &w) {
 					to << L"CppType::superEnum, 0, ";
 			} else if (p) {
 				to << L"CppType::superCustom, size_t(&" << p->generate << L"), ";
+			} else if (up) {
+				to << L"CppType::superCustom, size_t(&" << up->generate << L"), ";
 			} else if (thread) {
 				to << L"CppType::superThread, " << thread->id << L" /* " << thread->name << L" */, ";
 			} else if (parent) {
@@ -178,6 +181,9 @@ static void genTypes(wostream &to, World &w) {
 		// Type flags.
 		if (t.heapAlloc()) {
 			to << L"typeClass, ";
+		} else if (up) {
+			// These are not in the C++ type system, so we can't use 'ValFlags' on them!
+			to << L"typeValue, ";
 		} else {
 			to << L"ValFlags<" << t.name << L">::v, ";
 		}
@@ -478,6 +484,22 @@ static void genFunctions(wostream &to, World &w) {
 	}
 }
 
+static String resolveWrap(TypeRef *type, World &w) {
+	String result;
+	if (UnknownType *u = as<UnknownType>(type)) {
+		result = genTypeRef(u->wrapper(w).borrow(), false);
+	} else if (PtrType *p = as<PtrType>(type)) {
+		nat id = w.unknown(L"PTR_GC", type->pos)->id;
+		result = L"{ " + ::toS(id) + L", null, false, false }, ";
+	}
+
+	if (result.empty()) {
+		throw Error(L"The type of this variable can not be expressed in Storm. "
+					L"Use UNKNOWN(?) to indicate the characteristics of the type.", type->pos);
+	}
+	return result;
+}
+
 static void genVariables(wostream &to, World &w) {
 	for (nat i = 0; i < w.types.size(); i++) {
 		Class *c = as<Class>(w.types[i].borrow());
@@ -497,13 +519,23 @@ static void genVariables(wostream &to, World &w) {
 				continue;
 
 			String type = genTypeRef(v.type.borrow(), false);
-			// ...which the Storm type system can handle. Ignores any external types.
-			if (type.empty())
-				continue;
+			bool unknownVar = false;
+			// ...which the Storm type system can handle.
+			if (type.empty()) {
+				// If this is a value type, we need to tell Storm about it. Otherwise, function calls
+				// will not work properly on all platforms. If it is a class type, we can just ignore it.
+				if (!c->valueType)
+					continue;
+
+				type = resolveWrap(v.type.borrow(), w);
+				unknownVar = true;
+			}
 
 			to << L"{ ";
-			// Name (possibly mangled in Storm). TODO: Export with proper access flags.
-			if (v.access != aPublic) {
+			// Name (possibly mangled in Storm). TODO: Export with proper access flags. 'unknown'
+			// variables shall not be exposed to storm, so we treat them as if they were private
+			// regardless of their actual status.
+			if (v.access != aPublic || unknownVar) {
 				to << L"S(\" p@" << v.stormName << L"\"), ";
 			} else {
 				to << L"S(\"" << v.stormName << L"\"), ";
@@ -642,7 +674,10 @@ static void genRefPtrOffsets(wostream &to, World &w) {
 static void genRefTypes(wostream &to, World &w) {
 	for (nat i = 0; i < w.types.size(); i++) {
 		Type &t = *w.types[i];
-		to << L"{ sizeof(" << t.name << L"), ";
+		if (as<UnknownPrimitive>(&t))
+			to << L"{ 0, ";
+		else
+			to << L"{ sizeof(" << t.name << L"), ";
 		to << toVarName(t.name) << L"_offset }, // #" << i << L"\n";
 	}
 }

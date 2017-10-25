@@ -1,5 +1,6 @@
 #include "stdafx.h"
 #include "Type.h"
+#include "TypeRef.h"
 #include "Utils/Indent.h"
 #include "Exception.h"
 #include "World.h"
@@ -238,7 +239,52 @@ void Primitive::ptrOffsets(vector<Offset> &append) const {
 	// None.
 }
 
-void Primitive::scannedVars(vector<ScannedVar> &append) const {}
+void Primitive::scannedVars(vector<ScannedVar> &append) const {
+	// None.
+}
+
+/**
+ * Unknown primitive.
+ */
+
+UnknownPrimitive::UnknownPrimitive(const CppName &name, const String &pkg, const CppName &generate, const SrcPos &pos) :
+	Type(name, pkg, pos), generate(generate) {}
+
+void UnknownPrimitive::print(wostream &to) const {
+	to << L"unknown primitive " << name;
+}
+
+void UnknownPrimitive::resolveTypes(World &world) {
+	String last = name.last();
+	for (nat i = 0; UnknownType::ids[i].name; i++) {
+		if (last == UnknownType::ids[i].name) {
+			mySize = UnknownType::ids[i].size;
+			gcPtr = UnknownType::ids[i].gc;
+			return;
+		}
+	}
+
+	throw Error(L"Unknown built-in type: " + name, pos);
+}
+
+Size UnknownPrimitive::size() const {
+	return mySize;
+}
+
+bool UnknownPrimitive::heapAlloc() const {
+	return false;
+}
+
+void UnknownPrimitive::ptrOffsets(vector<Offset> &append) const {
+	if (gcPtr) {
+		// This entire thing is a pointer!
+		append.push_back(Offset());
+	}
+}
+
+void UnknownPrimitive::scannedVars(vector<ScannedVar> &append) const {
+	// None.
+}
 
 /**
  * Enum.

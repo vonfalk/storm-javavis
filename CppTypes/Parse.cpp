@@ -547,6 +547,17 @@ static void parseNamespace(Tokenizer &tok, ParseEnv &env, const CppName &name) {
 			env.world.types.insert(p);
 			tok.expect(L")");
 			tok.expect(L";");
+		} else if (t.token == L"STORM_UNKNOWN_PRIMITIVE") {
+			tok.skip();
+			tok.expect(L"(");
+			Token tName = tok.next();
+			tok.expect(L",");
+			CppName gen = parseName(tok);
+			Auto<UnknownPrimitive> p = new UnknownPrimitive(name + tName.token, env.pkg, gen, tName.pos);
+			p->external = !env.exportAll;
+			env.world.types.insert(p);
+			tok.expect(L")");
+			tok.expect(L";");
 		} else if (t.token == L"STORM_THREAD") {
 			tok.skip();
 			tok.expect(L"(");

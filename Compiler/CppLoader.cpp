@@ -262,8 +262,10 @@ namespace storm {
 		} else {
 			const CppRefType &ref = world->refTypes[id];
 
-			assert(t->stride == 0 || t->stride == ref.size, L"Type size mismatch for " + ::toS(type.name) +
-				L". Storm size: " + ::toS(t->stride) + L", C++ size: " + ::toS(ref.size) + L".");
+			// Note: t->stride == 0 means that sizeof(Type) will be 1.
+			// Note: ref.size == 0 means that this type does not exist in C++.
+			assert(t->stride == 0 || ref.size == 0 || t->stride == ref.size, L"Type size mismatch for " +
+				::toS(type.name) + L". Storm size: " + ::toS(t->stride) + L", C++ size: " + ::toS(ref.size) + L".");
 
 			for (nat i = 0; i < entries; i++) {
 				// Uncheckable?

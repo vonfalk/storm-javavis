@@ -133,6 +133,11 @@
 	}
 
 /**
+ * Declare a primitive to be used for an unknown variable (eg. UNKNOWN(PTR_GC))
+ */
+#define STORM_UNKNOWN_PRIMITIVE(name, generator)
+
+/**
  * Create classes in storm. Usage: CREATE(Type, engine, param1, param2, ...)
  */
 #define CREATE(type, engine, ...)				\

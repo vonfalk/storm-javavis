@@ -41,10 +41,10 @@ namespace storm {
 		Value value;
 
 		// Any result?
-		bool returns;
+		Bool returns;
 
 		// Create 'no-return' value.
-		ExprResult(bool any);
+		ExprResult(Bool any);
 
 		// Allow 'noReturn' to create instances.
 		friend ExprResult noReturn();

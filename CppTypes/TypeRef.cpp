@@ -223,10 +223,11 @@ const UnknownType::ID UnknownType::ids[] = {
 	{ L"PTR_NOGC", Size::sPtr, false },
 	{ L"PTR_GC", Size::sPtr, true },
 	{ L"INT", Size::sInt, false },
+	{ null, Size::sInt, false },
 };
 
 UnknownType::UnknownType(const CppName &kind, Auto<TypeRef> of) : TypeRef(of->pos), of(of), id(null) {
-	for (nat i = 0; i < ARRAY_COUNT(ids); i++) {
+	for (nat i = 0; ids[i].name; i++) {
 		if (kind == ids[i].name) {
 			id = &ids[i];
 			break;
@@ -262,6 +263,13 @@ Auto<TypeRef> UnknownType::resolve(World &in, const CppName &ctx) const {
 	} else {
 		throw Error(L"Invalid UNKNOWN() declaration.", of->pos);
 	}
+}
+
+Auto<TypeRef> UnknownType::wrapper(World &in) const {
+	if (!id)
+		return alias;
+	else
+		return new ResolvedType(*this, in.unknown(id->name, pos));
 }
 
 void UnknownType::print(wostream &to) const {

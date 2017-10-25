@@ -35,6 +35,29 @@ void World::add(Auto<Type> type) {
 	types.insert(type);
 }
 
+UnknownPrimitive *World::unknown(const String &name, const SrcPos &pos) {
+	map<String, Auto<UnknownPrimitive>>::const_iterator i = unknownLookup.find(name);
+	if (i != unknownLookup.end())
+		return i->second.borrow();
+
+	// Try to find it inside 'types'.
+	UnknownPrimitive *found;
+	for (nat i = 0; i < types.size(); i++) {
+		if (Auto<UnknownPrimitive> u = types[i].as<UnknownPrimitive>()) {
+			String last = u->name.last();
+			unknownLookup[last] = u;
+
+			if (last == name)
+				found = u.borrow();
+		}
+	}
+
+	if (found)
+		return found;
+
+	throw Error(L"Failed to find the unknown type for " + ::toS(name), pos);
+}
+
 // Sort the types.
 void World::orderTypes() {
 	Type *type = types.findUnsafe(CppName(L"storm::Type"), CppName());

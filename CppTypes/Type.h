@@ -176,6 +176,41 @@ private:
 };
 
 /**
+ * Describe an unknown primitive in Storm.
+ */
+class UnknownPrimitive : public Type {
+public:
+	// Create.
+	UnknownPrimitive(const CppName &name, const String &pkg, const CppName &generate, const SrcPos &pos);
+
+	// Function used to generate this primitive.
+	CppName generate;
+
+	// Print.
+	virtual void print(wostream &to) const;
+
+	// Resolve types in here.
+	virtual void resolveTypes(World &world);
+
+	// Compute the size of this type.
+	virtual Size size() const;
+
+	// Is this type heap-allocated?
+	virtual bool heapAlloc() const;
+
+	// Compute pointer offsets into this type.
+	virtual void ptrOffsets(vector<Offset> &append) const;
+	virtual void scannedVars(vector<ScannedVar> &append) const;
+
+private:
+	// Size of this type.
+	Size mySize;
+
+	// Is it a GC:d pointer?
+	bool gcPtr;
+};
+
+/**
  * Describe an enumeration type from C++.
  */
 class Enum : public Type {
