@@ -1,8 +1,11 @@
 #include "stdafx.h"
 #include "Seh.h"
+#include "SafeSeh.h"
 #include "Binary.h"
 #include "StackFrame.h"
+#include "Core/Str.h"
 #include "Utils/Memory.h"
+#include "Utils/StackInfo.h"
 
 #if defined(WINDOWS) && defined(X86)
 
@@ -75,6 +78,33 @@ namespace code {
 			int o = offset;
 			byte *ebp = (byte *)frame->ebp();
 			return ebp + o;
+		}
+
+
+		class SehInfo : public StackInfo {
+		public:
+			virtual void collect(::StackFrame &to, void *frame) const {
+				// TODO: Detect frames that do not use SEH as well!
+				to.data = null;
+				SEHFrame *f = SEHFrame::fromEbp(frame);
+				if (f->sehHandler == &x86SafeSEH) {
+					// It is ours!
+					to.data = *f->owner;
+				}
+			}
+
+			virtual bool format(std::wostream &to, const ::StackFrame &frame) const {
+				if (frame.data) {
+					Binary *b = (Binary *)frame.data;
+					to << b->ownerName();
+					return true;
+				}
+				return false;
+			}
+		};
+
+		void activateInfo() {
+			static RegisterInfo<SehInfo> info;
 		}
 
 	}

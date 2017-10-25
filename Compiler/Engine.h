@@ -10,6 +10,7 @@
 #include "Code/RefSource.h"
 #include "Code/Reference.h"
 #include "Utils/Lock.h"
+#include "Utils/StackInfo.h"
 
 // TODO: Do not depend on path!
 #include "Utils/Path.h"
@@ -265,6 +266,30 @@ namespace storm {
 
 		// Create references.
 		code::RefSource *createRef(RefType ref);
+
+		// Plug into the stack traces in order to properly scan the stack traces.
+		class StormInfo : public StackInfo {
+		public:
+			StormInfo(Gc &gc);
+			~StormInfo();
+
+			// Clear all allocations from the MPS.
+			void clear();
+
+			virtual void alloc(StackFrame *frames, nat count) const;
+			virtual void free(StackFrame *frames, nat count) const;
+
+		private:
+			Gc &gc;
+
+			// Current allocations.
+			typedef map<size_t, Gc::Root *> RootMap;
+			mutable RootMap roots;
+		};
+
+		// StormInfo instance and ID.
+		StormInfo stackInfo;
+		int stackId;
 
 		// Cleanup code.
 		void destroy();

@@ -175,6 +175,7 @@ namespace storm {
 
 		// Allocate a root that scans an array of pointers.
 		Root *createRoot(void *data, size_t count);
+		Root *createRoot(void *data, size_t count, bool ambiguous);
 
 		// Destroy a root.
 		static void destroyRoot(Root *root);

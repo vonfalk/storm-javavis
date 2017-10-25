@@ -7,6 +7,7 @@
 #include "LayoutVars.h"
 #include "Asm.h"
 #include "AsmOut.h"
+#include "Seh.h"
 
 namespace code {
 	namespace x86 {
@@ -22,6 +23,10 @@ namespace code {
 		Arena::Arena() {}
 
 		Listing *Arena::transform(Listing *l, Binary *owner) const {
+#if defined(WINDOWS) && defined(X86)
+			activateInfo();
+#endif
+
 			if (has64(l)) {
 				// Replace any 64-bit operations with 32-bit corresponding operations.
 				l = code::transform(l, this, new (this) Remove64());

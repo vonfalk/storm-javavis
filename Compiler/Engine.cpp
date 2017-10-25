@@ -75,9 +75,12 @@ namespace storm {
 		threadGroup(util::memberVoidFn(this, &Engine::attachThread), util::memberVoidFn(this, &Engine::detachThread)),
 		world(gc),
 		objRoot(null),
-		ioThread(null) {
+		ioThread(null),
+		stackInfo(gc) {
 
 		bootStatus = bootNone;
+
+		stackId = ::stackInfo().attach(stackInfo);
 
 		// Tell the thread system about the 'stackBase' we received.
 		os::Thread::setStackBase(stackBase);
@@ -135,6 +138,9 @@ namespace storm {
 		Gc::destroyRoot(objRoot);
 		delete ioThread;
 		// volatile Engine *volatile me = this;
+
+		::stackInfo().detach(stackId);
+		stackInfo.clear();
 
 		gc.destroy();
 		libs.unload();
@@ -508,6 +514,36 @@ namespace storm {
 
 	SharedLib *Engine::loadShared(Url *file) {
 		return libs.load(file);
+	}
+
+
+	Engine::StormInfo::StormInfo(Gc &gc) : gc(gc) {}
+
+	Engine::StormInfo::~StormInfo() {
+		clear();
+	}
+
+	void Engine::StormInfo::clear() {
+		if (!roots.empty()) {
+			WARNING(L"The registered roots for stack traces were not empty. Possible leak!");
+		}
+
+		for (RootMap::iterator i = roots.begin(); i != roots.end(); ++i)
+			gc.destroyRoot(i->second);
+		roots.clear();
+	}
+
+	void Engine::StormInfo::alloc(StackFrame *frames, nat count) const {
+		Gc::Root *r = gc.createRoot(frames, count * sizeof(StackFrame), true);
+		roots.insert(std::make_pair(size_t(frames), r));
+	}
+
+	void Engine::StormInfo::free(StackFrame *frames, nat count) const {
+		RootMap::iterator i = roots.find(size_t(frames));
+		if (i != roots.end()) {
+			gc.destroyRoot(i->second);
+			roots.erase(i);
+		}
 	}
 
 

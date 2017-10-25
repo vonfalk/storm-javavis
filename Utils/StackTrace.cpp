@@ -1,6 +1,6 @@
 #include "stdafx.h"
 #include "StackTrace.h"
-#include "FnLookup.h"
+#include "CppInfo.h"
 
 #include <iomanip>
 
@@ -9,14 +9,18 @@
 
 StackTrace::StackTrace() : frames(null), size(0), capacity(0) {}
 
-StackTrace::StackTrace(nat n) : frames(new StackFrame[n]), size(n) {}
+StackTrace::StackTrace(nat n) : frames(new StackFrame[n]), size(n), capacity(n) {
+	stackInfo().alloc(frames, size);
+}
 
 StackTrace::StackTrace(const StackTrace &o) : frames(null) {
 	size = o.size;
+	capacity = o.size;
 	if (o.frames) {
 		frames = new StackFrame[size];
 		for (nat i = 0; i < size; i++)
 			frames[i] = o.frames[i];
+		stackInfo().alloc(frames, size);
 	}
 }
 
@@ -29,6 +33,8 @@ StackTrace &StackTrace::operator =(const StackTrace &o) {
 }
 
 StackTrace::~StackTrace() {
+	if (frames)
+		stackInfo().free(frames, size);
 	delete []frames;
 }
 
@@ -40,12 +46,15 @@ void StackTrace::push(const StackFrame &frame) {
 			capacity *= 2;
 
 		StackFrame *n = new StackFrame[capacity];
+		stackInfo().alloc(n, capacity);
 
 		if (frames)
 			for (nat i = 0; i < size; i++)
 				n[i] = frames[i];
 
 		swap(n, frames);
+		if (n)
+			stackInfo().free(n, size);
 		delete []n;
 	}
 
@@ -61,10 +70,10 @@ void StackTrace::output(wostream &to) const {
 
 String format(const StackTrace &t) {
 	// Make sure the CppLookup is registered.
-	static RegisterLookup<CppLookup> z;
+	static RegisterInfo<CppInfo> z;
 
 	std::wostringstream to;
-	FnLookups &l = fnLookups();
+	StackInfoSet &l = stackInfo();
 	for (nat i = 0; i < t.count(); i++) {
 		to << std::setw(3) << i << L": ";
 		l.format(to, t[i]);
@@ -137,7 +146,7 @@ StackTrace stackTrace(nat skip) {
 	initFrame(context, frame);
 
 	StackTrace r;
-
+	StackInfoSet &s = stackInfo();
 	while (StackWalk64(machineType, process, thread, &frame, &context, NULL, NULL, NULL, NULL)) {
 		if (skip > 0) {
 			skip--;
@@ -147,7 +156,7 @@ StackTrace stackTrace(nat skip) {
 		StackFrame f;
 
 		f.code = (void *)frame.AddrPC.Offset;
-		// parameters...
+		s.collect(f, (void *)frame.AddrFrame.Offset);
 
 		r.push(f);
 	}
@@ -220,8 +229,7 @@ StackTrace stackTrace(nat skip) {
 	for (nat i = 0; i < frames; i++) {
 		StackFrame &f = r[i];
 		f.code = prevIp(now);
-		for (nat j = 0; j < StackFrame::maxParams; j++)
-			f.params[j] = prevParam(now, j);
+		s.collect(f, prevFrame(now));
 		now = prevFrame(now);
 	}
 

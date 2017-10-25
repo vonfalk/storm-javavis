@@ -3,7 +3,7 @@
 #include "Code/Binary.h"
 #include "Core/Str.h"
 #include "Utils/Memory.h"
-#include "Utils/FnLookup.h"
+#include "Utils/StackInfo.h"
 
 namespace code {
 	namespace x64 {
@@ -12,7 +12,7 @@ namespace code {
 		 * Function lookup using the Dwarf table.
 		 */
 
-		class DwarfLookup : public FnLookup {
+		class DwarfInfo : public StackInfo {
 		public:
 			virtual bool format(std::wostream &to, const ::StackFrame &frame) const {
 				FDE *fde = dwarfTable.find(frame.code);
@@ -48,7 +48,7 @@ namespace code {
 
 		FDE *DwarfTable::alloc(const void *fn) {
 			// Register the DwarfLookup for exceptions the first time something is allocated in the table.
-			static RegisterLookup<DwarfLookup> w;
+			static RegisterInfo<DwarfInfo> w;
 
 			util::Lock::L z(lock);
 

@@ -1,4 +1,4 @@
-* Loose ends so far [9/22]
+* Loose ends so far [10/22]
   - [ ] Destructors in maps and arrays are not working properly yet. Idea: add (yet another) member 
         to array headers, and let the user provide a custom destructor in there if neccessary.
   - [ ] Destructors do not need their own slot in the vtables anymore since we have another mechanism for that.
@@ -7,7 +7,6 @@
   - [ ] Improve the preprocessor by automatically adding copy constructors and assignment operators
         where neccessary.
   - [ ] Improve the preprocessor by generating toS() and deepCopy() if not present.
-  - [ ] We need to scan the data inside a StackTrace object using mps_rank_ambig().
   - [ ] Finish the clone() functionality.
   - [ ] Make sure Array<>, Map<> and Set<> clear the memory when an element is removed.
   - [ ] Make a generic toS() for Storm which uses operator << (if present) for values.
@@ -15,6 +14,7 @@
   - [ ] Function pointers should maybe allow casting to less specific types of parameters.
   - [ ] if (x = foo.bar) does not produce an error if 'foo.bar' is not Maybe<T>.
   - [ ] Support marking functions as 'pure' in C++ and Storm.
+  - [X] We need to scan the data inside a StackTrace object using mps_rank_ambig().
   - [X] The grammar rule X : Y ("w", Y)* "w"; does not parse properly. It should either work as expected 
         or report an error!
   - [X] Thread sleep needs to be improved! We should put threads in a sleep queue so that the thread

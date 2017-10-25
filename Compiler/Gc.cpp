@@ -1476,11 +1476,15 @@ namespace storm {
 	};
 
 	Gc::Root *Gc::createRoot(void *data, size_t count) {
+		return createRoot(data, count, false);
+	}
+
+	Gc::Root *Gc::createRoot(void *data, size_t count, bool ambig) {
 		Root *r = new Root;
 		try {
 			check(mps_root_create(&r->root,
 									arena,
-									mps_rank_exact(),
+									ambig ? mps_rank_ambig() : mps_rank_exact(),
 									(mps_rm_t)0,
 									&mpsScanArray,
 									data,

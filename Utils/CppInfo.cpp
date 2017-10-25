@@ -1,61 +1,7 @@
 #include "stdafx.h"
-#include "FnLookup.h"
+#include "CppInfo.h"
 #include "Path.h"
 #include "DbgHelper.h"
-
-FnLookups &fnLookups() {
-	static FnLookups v;
-	return v;
-}
-
-FnLookups::FnLookups() {}
-
-int FnLookups::attach(const FnLookup &lookup) {
-	util::Lock::L z(lock);
-
-	for (size_t i = 0; i < data.size(); i++) {
-		const FnLookup *l = data[i];
-		if (!l)
-			continue;
-
-		// We assume that if they're of the same type, they're equal.
-		if (typeid(*l) == typeid(lookup))
-			return -1;
-	}
-
-	for (size_t i = 0; i < data.size(); i++) {
-		if (!data[i]) {
-			data[i] = &lookup;
-			return i;
-		}
-	}
-
-	data.push_back(&lookup);
-	return int(data.size() - 1);
-}
-
-void FnLookups::detach(int id) {
-	util::Lock::L z(lock);
-
-	if (id >= 0)
-		data[id] = null;
-}
-
-void FnLookups::format(wostream &to, const StackFrame &frame) {
-	util::Lock::L z(lock);
-
-	for (size_t i = 0; i < data.size(); i++) {
-		const FnLookup *l = data[i];
-		if (!l)
-			continue;
-
-		if (l->format(to, frame))
-			return;
-	}
-
-	// Fallback if all else fails.
-	to << L"Unknown function @" << toHex(frame.code);
-}
 
 #if defined(WINDOWS)
 
@@ -280,7 +226,7 @@ static void outputSymbol(wostream &to, SymInfo &symbol) {
 	to << L")";
 }
 
-bool CppLookup::format(std::wostream &to, const StackFrame &frame) const {
+bool CppInfo::format(std::wostream &to, const StackFrame &frame) const {
 	DbgHelp &h = dbgHelp();
 
 	const nat maxNameLen = 512;
@@ -361,7 +307,7 @@ static void formatOk(void *data, uintptr_t pc, const char *symname, uintptr_t sy
 	d->any = true;
 }
 
-bool CppLookup::format(std::wostream &to, const StackFrame &frame) const {
+bool CppInfo::format(std::wostream &to, const StackFrame &frame) const {
 	static LookupState state;
 
 	FormatData data = { to, false };
@@ -370,6 +316,6 @@ bool CppLookup::format(std::wostream &to, const StackFrame &frame) const {
 }
 
 #else
-#error "Please implement CppLookup::format for your OS here."
+#error "Please implement CppInfo::format for your OS here."
 #endif
 

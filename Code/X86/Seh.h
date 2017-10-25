@@ -11,6 +11,10 @@ namespace code {
 		 * Windows-specific exception-handling.
 		 */
 
+
+		// Activate stack traces.
+		void activateInfo();
+
 	}
 }
 

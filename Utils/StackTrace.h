@@ -1,7 +1,5 @@
 #pragma once
 
-class FnLookup;
-
 /**
  * Collection of a stack trace, and tools for showing it to the user using the information
  * available in the Arena for symbolic lookup, alongside any debug information for the C++ code.
@@ -14,16 +12,11 @@ class FnLookup;
  * TODO: Some local variables as well?
  */
 struct StackFrame {
-	// Number of parameters to capture.
-	enum {
-		maxParams = 3,
-	};
-
 	// Return address, points inside some function.
 	const void *code;
 
-	// Some function parameters (fixed number, contains garbage if not all are used).
-	void *params[maxParams];
+	// Additional data if required by some backend.
+	void *data;
 };
 
 
