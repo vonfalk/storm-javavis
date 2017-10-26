@@ -166,6 +166,8 @@ namespace storm {
 		Array<Url *> *result = new (url) Array<Url *>();
 
 		DIR *h = opendir(format(url)->utf8_str());
+		if (!h)
+			return result;
 
 		dirent *d;
 		while ((d = readdir(h)) != null) {
