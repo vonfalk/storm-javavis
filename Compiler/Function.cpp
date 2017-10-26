@@ -259,7 +259,7 @@ namespace storm {
 		// Spawn the thread!
 		*to->l << lea(ptrA, par);
 		*to->l << fnParam(ptr, ref()); // fn
-		*to->l << fnParam(ptr, toOp(isMember())); // member
+		*to->l << fnParam(byteDesc(e), toOp(isMember())); // member
 		*to->l << fnParam(ptr, thunk); // thunk
 		*to->l << fnParam(ptr, ptrA); // params
 		*to->l << fnParam(ptr, ptrB); // result
@@ -321,7 +321,7 @@ namespace storm {
 		// Spawn the thread!
 		*to->l << lea(ptrA, par);
 		*to->l << fnParam(ptr, ref()); // fn
-		*to->l << fnParam(ptr, toOp(isMember())); // member
+		*to->l << fnParam(byteDesc(e), toOp(isMember())); // member
 		*to->l << fnParam(ptr, thunk); // thunk
 		*to->l << fnParam(ptr, ptrA); // params
 		*to->l << fnParam(ptr, resultPos.v); // result

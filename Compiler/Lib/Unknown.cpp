@@ -37,7 +37,6 @@ namespace storm {
 	}
 
 	Type *createUnknownInt(Str *name, Size size, GcType *type) {
-		PVAR(type);
 		return new (name) UnknownType(name, Size::sInt, type);
 	}
 

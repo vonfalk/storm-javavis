@@ -86,6 +86,10 @@ namespace code {
 			virtual void collect(::StackFrame &to, void *frame) const {
 				// TODO: Detect frames that do not use SEH as well!
 				to.data = null;
+
+				if (!frame)
+					return;
+
 				SEHFrame *f = SEHFrame::fromEbp(frame);
 				if (f->sehHandler == &x86SafeSEH) {
 					// It is ours!

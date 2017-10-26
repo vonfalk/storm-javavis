@@ -480,6 +480,9 @@ namespace code {
 			// Do we need a parameter for the return value?
 			if (resultParam(instr->type)) {
 				Nat id = instr->member ? 1 : 0;
+				// In case there are no parameters, the result parameter becomes the only one. This is not
+				// really compliant with the calling convention, but there is nothing else we can do!
+				id = min(id, params->count());
 				params->insert(id, Param(instr->dest(), null, false));
 			} else if (retRef) {
 				// Perhaps we need to store the result on the stack?

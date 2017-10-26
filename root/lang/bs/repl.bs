@@ -172,7 +172,7 @@ class ReplCode on Compiler {
 	}
 
 	CodeGen load() {
-		CodeGen g(RunOn());
+		CodeGen g(RunOn(), true, strType);
 		VarInfo resultVar = g.createVar(strType);
 
 		g.l << prolog();
@@ -192,9 +192,7 @@ class ReplCode on Compiler {
 			createDefaultResult(g, result, resultVar);
 		}
 
-		g.l << mov(Operand(ptrA), Operand(resultVar.v));
-		g.l << epilog();
-		g.l << ret(valPtr);
+		g.l << fnRet(Operand(resultVar.v));
 
 		g;
 	}

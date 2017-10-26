@@ -68,12 +68,10 @@ namespace storm {
 	};
 
 	inline RootCast<RootObject> customCast(RootObject *from) {
-		TODO(L"Check so that these are properly used!");
 		return RootCast<RootObject>(from);
 	}
 
 	inline RootCast<const RootObject> customCast(const RootObject *from) {
-		TODO(L"Check so that these are properly used!");
 		return RootCast<const RootObject>(from);
 	}
 

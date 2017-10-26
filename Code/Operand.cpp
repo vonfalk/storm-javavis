@@ -21,15 +21,23 @@ namespace code {
 
 	Operand::Operand() : opType(opNone), opPtr(null), opNum(0) {}
 
-	Operand::Operand(Reg r) : opType(opRegister), opPtr(null), opNum(r), opSize(code::size(r)) {}
+	Operand::Operand(Reg r) : opType(opRegister), opPtr(null), opNum(r), opSize(code::size(r)) {
+		assert(r != noReg);
+	}
 
 	Operand::Operand(CondFlag c) : opType(opCondFlag), opPtr(null), opNum(c), opSize() {}
 
-	Operand::Operand(Part p) : opType(opPart), opPtr(null), opNum(p.id), opSize() {}
+	Operand::Operand(Part p) : opType(opPart), opPtr(null), opNum(p.id), opSize() {
+		assert(p != Part());
+	}
 
-	Operand::Operand(Var v) : opType(opVariable), opPtr(null), opNum(v.id), opSize(v.size()) {}
+	Operand::Operand(Var v) : opType(opVariable), opPtr(null), opNum(v.id), opSize(v.size()) {
+		assert(v != Var());
+	}
 
-	Operand::Operand(Label l) : opType(opLabel), opPtr(null), opNum(l.id), opSize(Size::sPtr) {}
+	Operand::Operand(Label l) : opType(opLabel), opPtr(null), opNum(l.id), opSize(Size::sPtr) {
+		assert(l != Label());
+	}
 
 	Operand::Operand(Ref ref) : opType(opReference), opPtr(ref.to), opNum(0), opSize(Size::sPtr) {}
 
@@ -43,11 +51,17 @@ namespace code {
 
 	Operand::Operand(RootObject *obj) : opType(opObjReference), opPtr(obj), opOffset(), opSize(Size::sPtr) {}
 
-	Operand::Operand(Reg r, Offset offset, Size size) : opType(opRelative), opPtr(null), opNum(r), opOffset(offset), opSize(size) {}
+	Operand::Operand(Reg r, Offset offset, Size size) : opType(opRelative), opPtr(null), opNum(r), opOffset(offset), opSize(size) {
+		// Note: it is OK if 'r == noReg'. That means absolute addressing.
+	}
 
-	Operand::Operand(Var v, Offset offset, Size size) : opType(opVariable), opPtr(null), opNum(v.id), opOffset(offset), opSize(size) {}
+	Operand::Operand(Var v, Offset offset, Size size) : opType(opVariable), opPtr(null), opNum(v.id), opOffset(offset), opSize(size) {
+		assert(v != Var());
+	}
 
-	Operand::Operand(Label l, Offset offset, Size size) : opType(opRelativeLbl), opPtr(null), opNum(l.id), opOffset(offset), opSize(size) {}
+	Operand::Operand(Label l, Offset offset, Size size) : opType(opRelativeLbl), opPtr(null), opNum(l.id), opOffset(offset), opSize(size) {
+		assert(l != Label());
+	}
 
 	Bool Operand::operator ==(const Operand &o) const {
 		if (opType != o.opType)

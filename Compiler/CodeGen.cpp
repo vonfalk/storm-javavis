@@ -58,7 +58,10 @@ namespace storm {
 
 	void CodeGen::returnValue(code::Var value) {
 		using namespace code;
-		*l << fnRet(value);
+		if (value == Var())
+			*l << fnRet();
+		else
+			*l << fnRet(value);
 	}
 
 	void CodeGen::toS(StrBuf *to) const {

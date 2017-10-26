@@ -82,7 +82,7 @@ class JmpInstr extends AsmAtom {
 	}
 
 	void output(CodeGen g, Labels l) {
-		g.l << jmp(to.v(l), flag);
+		g.l << jmp(to.v(l).label, flag);
 	}
 
 	Str toS() {

@@ -62,9 +62,9 @@ class BfFunction extends Function {
 		BfExpr o = parser.tree.transform();
 		Value strType = named{Str};
 
-		CodeGen r(RunOn());
+		CodeGen r(RunOn(), false, strType);
 		Listing l = r.l;
-	    var input = l.createParam(valPtr());
+	    var input = l.createParam(strType.desc);
 
 		l << prolog();
 
@@ -78,9 +78,7 @@ class BfFunction extends Function {
 		o.code(r, result);
 
 		var resultVar = result.location(r).v;
-		l << mov(Operand(ptrA), Operand(resultVar));
-		l << epilog();
-		l << ret(valPtr());
+		l << fnRet(Operand(resultVar));
 
 		r;
 	}
@@ -304,7 +302,7 @@ class BfLoop extends BfToken {
 
 		to.l << begin;
 		to.l << cmp(byteRel(ptrA, Offset()), byteConst(0.byte));
-		to.l << jmp(Operand(end), CondFlag:ifEqual);
+		to.l << jmp(end, CondFlag:ifEqual);
 
 		// Inner code...
 		for (Nat i = 0; i < tokens.count; i++) {
