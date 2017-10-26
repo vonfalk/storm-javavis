@@ -107,5 +107,19 @@ namespace code {
 			return l;
 		}
 
+		Nat Arena::firstParamId(MAYBE(TypeDesc *) desc) {
+			if (!desc)
+				return 1;
+
+			// No difference with regards to the return value.
+			return 0;
+		}
+
+		Operand Arena::firstParamLoc(Nat id) {
+			if (id != 0)
+				return Operand();
+
+			return ptrRel(ptrStack, Offset::sPtr);
+		}
 	}
 }

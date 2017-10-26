@@ -346,7 +346,7 @@ namespace storm {
 	}
 
 	void VTable::useLookup(Function *fn, VTableSlot slot) {
-		code::RefSource *src = fn->engine().vtableCalls()->get(slot);
+		code::RefSource *src = fn->engine().vtableCalls()->get(slot, fn->result);
 		fn->setLookup(new (fn) DelegatedCode(code::Ref(src)));
 	}
 

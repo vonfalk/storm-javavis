@@ -58,6 +58,19 @@ namespace code {
 		return null;
 	}
 
+	Nat Arena::firstParamId(MAYBE(TypeDesc *) desc) {
+		assert(false);
+		if (desc)
+			return 0;
+		else
+			return 1;
+	}
+
+	Operand Arena::firstParamLoc(Nat id) {
+		assert(false);
+		return Operand();
+	}
+
 
 #if defined(X86) && defined(WINDOWS)
 	Arena *arena(EnginePtr e) {

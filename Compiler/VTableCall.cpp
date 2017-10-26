@@ -9,59 +9,63 @@ namespace storm {
 	VTableCalls::VTableCalls() {
 		cpp = new (this) Array<code::RefSource *>();
 		storm = new (this) Array<code::RefSource *>();
+		variants = engine().arena()->firstParamId(null);
 	}
 
 
-	code::RefSource *VTableCalls::get(VTableSlot slot) {
-		TODO(L"Implement VTable calls in an architecture-independent manner.");
+	code::RefSource *VTableCalls::get(VTableSlot slot, Value result) {
+		Engine &e = engine();
+		Nat id = e.arena()->firstParamId(result.desc(e));
 
 		switch (slot.type) {
 		case VTableSlot::tCpp:
-			return getCpp(slot.offset);
+			return getCpp(slot.offset, id);
 		case VTableSlot::tStorm:
-			return getStorm(slot.offset);
+			return getStorm(slot.offset, id);
 		default:
 			assert(false, L"Unknown slot type.");
 			return null;
 		}
 	}
 
-	code::RefSource *VTableCalls::getCpp(Nat offset) {
-		if (cpp->count() > offset)
-			if (code::RefSource *r = cpp->at(offset))
-				return r;
+	code::RefSource *&VTableCalls::find(Array<code::RefSource *> *in, Nat offset, Nat id) {
+		Nat arrayId = offset*variants + id;
+		while (in->count() <= arrayId)
+			in->push(null);
 
-		while (cpp->count() <= offset)
-			cpp->push(null);
+		return in->at(arrayId);
+	}
+
+
+	code::RefSource *VTableCalls::getCpp(Nat offset, Nat id) {
+		code::RefSource *&entry = find(cpp, offset, id);
+		if (entry)
+			return entry;
 
 		using namespace code;
 
 		Listing *l = new (this) Listing();
-		*l << mov(ptrA, ptrRel(ptrStack, Offset::sPtr));
+		*l << mov(ptrA, engine().arena()->firstParamLoc(id));
 		*l << mov(ptrA, ptrRel(ptrA, Offset()));
 		*l << jmp(ptrRel(ptrA, Offset::sPtr * offset));
 
 		Binary *b = new (this) Binary(engine().arena(), l);
 
 		StrBuf *buf = new (this) StrBuf();
-		*buf << L"vtable cpp:" << offset;
-		RefSource *src = new (this) RefSource(buf->toS(), b);
-		cpp->at(offset) = src;
-		return src;
+		*buf << S("vtable cpp:") << offset << S(", ") << id;
+		entry = new (this) RefSource(buf->toS(), b);
+		return entry;
 	}
 
-	code::RefSource *VTableCalls::getStorm(Nat offset) {
-		if (storm->count() > offset)
-			if (code::RefSource *r = storm->at(offset))
-				return r;
-
-		while (storm->count() <= offset)
-			storm->push(null);
+	code::RefSource *VTableCalls::getStorm(Nat offset, Nat id) {
+		code::RefSource *&entry = find(storm, offset, id);
+		if (entry)
+			return entry;
 
 		using namespace code;
 
 		Listing *l = new (this) Listing();
-		*l << mov(ptrA, ptrRel(ptrStack, Offset::sPtr));
+		*l << mov(ptrA, engine().arena()->firstParamLoc(id));
 		*l << mov(ptrA, ptrRel(ptrA, Offset()));
 		*l << mov(ptrA, ptrRel(ptrA, -Offset::sPtr * vtable::extraOffset));
 		*l << jmp(ptrRel(ptrA, Offset::sPtr * (offset + 2))); // 2 for the 2 size_t members in arrays.
@@ -69,10 +73,9 @@ namespace storm {
 		Binary *b = new (this) Binary(engine().arena(), l);
 
 		StrBuf *buf = new (this) StrBuf();
-		*buf << L"vtable storm:" << offset;
-		RefSource *src = new (this) RefSource(buf->toS(), b);
-		storm->at(offset) = src;
-		return src;
+		*buf << S("vtable storm:") << offset << S(", ") << id;
+		entry = new (this) RefSource(buf->toS(), b);
+		return entry;
 	}
 
 }

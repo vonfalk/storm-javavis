@@ -120,5 +120,26 @@ namespace code {
 			return l;
 		}
 
+		Nat Arena::firstParamId(MAYBE(TypeDesc *) desc) {
+			if (!desc)
+				return 2;
+
+			return result(desc)->memory ? 1 : 0;
+		}
+
+		Operand Arena::firstParamLoc(Nat id) {
+			switch (id) {
+			case 0:
+				// In a register, first parameter.
+				return ptrDi;
+			case 1:
+				// In memory, second parameter.
+				return ptrSi;
+			default:
+				return Operand();
+			}
+		}
+
+
 	}
 }

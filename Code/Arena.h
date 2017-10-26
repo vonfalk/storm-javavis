@@ -72,6 +72,28 @@ namespace code {
 		// object as the first parameter to the other function. Calling member functions in this
 		// manner is not supported.
 		virtual Listing *STORM_FN engineRedirect(TypeDesc *result, Array<TypeDesc *> *params, Ref fn, Operand engine);
+
+
+		/**
+		 * Get the location of the first parameter for a function call. Assumes that a member function is called.
+		 *
+		 * The location is acquired in two steps: first, an implementation asks the ID of the
+		 * parameter location by calling the 'firstParamId(TypeDesc *)' function. This returns one
+		 * out of several possible integers describing the parameter location. The number of
+		 * possible values can be acquired by calling 'firstParamId(null)'.
+		 *
+		 * The ID can then be passed to 'firstParamLoc' to get an Operand describing the location.
+		 *
+		 * This scheme is used so that classes like VTableCalls can detect when two functions with
+		 * different return values have the same vtable stub. This allows it to re-use the stubs.
+		 */
+
+		// Get the ID of the location of the first param.
+		virtual Nat STORM_FN firstParamId(MAYBE(TypeDesc *) desc);
+
+		// Access the location of the first parameter in a function size. The returned Operand is
+		// always pointer-sized.
+		virtual Operand STORM_FN firstParamLoc(Nat id);
 	};
 
 	// Create an arena for this platform.
