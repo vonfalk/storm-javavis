@@ -1,2 +1,6 @@
 []
 #Needed to mark this as a project.
+
+#Ignore includes from 'backtrace.c', they will mess up things. We will not change libbacktrace very often anyway.
+noIncludes+=backtrace.c
+noIncludes+=backtrace.h

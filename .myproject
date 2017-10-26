@@ -112,10 +112,6 @@ flags+=-O2
 buildDir=slow/
 execDir=../slow/
 
-[]
-#Ignore includes from the generated BuiltIn.cpp files.
-noIncludes+=*/BuiltIn.cpp
-
 [windows]
 #Tell the Win32 API we're working with UTF16.
 define+=_UNICODE
