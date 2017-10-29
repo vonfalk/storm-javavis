@@ -299,7 +299,7 @@ class Slide on Render {
 
 	// Add an item with an animation.
 	void addDelayed(SlideItem item) {
-		add(item);
+		items << item;
 		animations << SlideAni(item, true, 0 ms);
 	}
 

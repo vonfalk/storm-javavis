@@ -5,8 +5,17 @@
 namespace code {
 
 	Binary::Binary(Arena *arena, Listing *listing) {
+		compile(arena, listing, false);
+	}
+
+	Binary::Binary(Arena *arena, Listing *listing, Bool debug) {
+		compile(arena, listing, debug);
+	}
+
+	void Binary::compile(Arena *arena, Listing *listing, Bool debug) {
 		Listing *tfm = arena->transform(listing, this);
-		// PVAR(tfm);
+		if (debug)
+			PVAR(tfm);
 
 		fillParts(tfm);
 

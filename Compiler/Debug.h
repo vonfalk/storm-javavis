@@ -112,9 +112,9 @@ namespace storm {
 		// Return a float from C++.
 		Float STORM_FN dbgFloat();
 
-		// Crude printing (not final version).
-		void STORM_FN print(Object *obj);
-		void STORM_FN print(TObject *obj);
+		// Dump object information.
+		void STORM_FN dumpObject(Object *obj);
+		void STORM_FN dumpObject(TObject *obj);
 
 		// Print the stack (machine specific, for debug).
 		void STORM_FN dumpStack();

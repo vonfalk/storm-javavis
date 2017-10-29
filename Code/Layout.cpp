@@ -43,7 +43,9 @@ namespace code {
 
 		for (nat i = 0; i < all->count(); i++) {
 			Offset o = addVar(src, result, populated, all->at(i));
-			o = (o + all->at(i).size()).alignAs(Size::sPtr);
+			o = (o + all->at(i).size());
+			// Align to the most restrictive of pointer alignment and the alignment of the type.
+			o = o.alignAs(Size::sPtr).alignAs(all->at(i).size());
 
 			if (o > worst)
 				worst = o;

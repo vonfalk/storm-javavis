@@ -25,6 +25,9 @@ namespace code {
 		// Translate a listing into machine code.
 		STORM_CTOR Binary(Arena *arena, Listing *src);
 
+		// Output the transformed ASM code for debugging.
+		Binary(Arena *arena, Listing *src, Bool debug);
+
 		// Clean up a stack frame from this function.
 		void cleanup(StackFrame &frame);
 
@@ -56,6 +59,9 @@ namespace code {
 
 		// All parts.
 		GcArray<Part *> *parts;
+
+		// Compile the Listing object.
+		void compile(Arena *arena, Listing *src, Bool debug);
 
 		// Fill in the 'parts' array.
 		void fillParts(Listing *src);

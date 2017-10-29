@@ -85,30 +85,12 @@ namespace storm {
 			return 23.0f;
 		}
 
-		void print(Object *s) {
-			static util::Lock lock;
-			util::Lock::L w(lock);
-
-			if (s == null) {
-				PLN("null");
-				return;
-			}
-
-			PLN(s->toS());
+		void dumpObject(Object *obj) {
+			PLN((void *)obj);
 		}
 
-		void print(TObject *s) {
-			// Make sure to execute on the right thread!
-			const os::Thread &target = s->thread->thread();
-			if (os::Thread::current() != target) {
-				os::Future<void> fut;
-				os::FnCall<void, 1> p = os::fnCall().add(s);
-				typedef void (*PrintFn)(Object *);
-				os::UThread::spawn(address((PrintFn)&print), false, p, fut, &target);
-				fut.result();
-			} else {
-				print((Object *)s);
-			}
+		void dumpObject(TObject *obj) {
+			PLN((void *)obj);
 		}
 
 		void dumpStack() {
