@@ -1,5 +1,6 @@
 #!/bin/bash
 
+LC_NUMERIC="en_US.UTF-8"
 total=0
 
 for i in ./*/.mymake
@@ -27,5 +28,5 @@ do
     fi
 done
 
-printf "Total size %7.1f kB\n" $total
+printf "Total size %7.1f kb\n" $total
 
