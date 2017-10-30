@@ -414,20 +414,16 @@ namespace storm {
 #ifdef SLOW_DEBUG
 						dbg_assert(ref.offset < CODE_SIZE(o), L"Code offset is out of bounds!");
 #endif
-						switch (ref.kind) {
-						case GcCodeRef::rawPtr:
-						case GcCodeRef::relativePtr:
-							// These are the only two kinds that need to be scanned.
+						// Only some kind of references needs to be scanned.
+						if (ref.kind & 0x01) {
 							r = MPS_FIX12(ss, &ref.pointer);
 							if (r != MPS_RES_OK)
 								return r;
-							break;
 						}
 					}
 
 					// Update the pointers in the code blob as well.
 					code::updatePtrs(at, c);
-					// PLN(L"CODE " << mpsSize(o));
 				} else {
 					// Scan regular objects.
 					const MpsHeader *h = o->header;
