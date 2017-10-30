@@ -127,6 +127,8 @@ namespace storm {
 			// 	PLN(identifier() << L": " << l);
 			// 	// This can be used to see the transformed machine code as well:
 			// 	// PLN(engine().arena()->transform(l, null));
+			// 	// See transformed machine code and binary output.
+			// 	// PVAR(new (this) Binary(engine().arena(), l, true));
 			// }
 
 			// PLN(bodyExpr);

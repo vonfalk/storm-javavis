@@ -67,7 +67,7 @@ BEGIN_TEST(ParserTest, Storm) {
 	for (Nat id = 0; id < backendCount(); id++) {
 		{
 			// Plain sentences.
-			Parser *p = Parser::create(pkg, S("Sentence"), createBackend(gEngine(), id));
+			Parser *p = Parser::create(pkg, S("Sentence"), createBackend(e, id));
 			Str *s = new (e) Str(S("the cat runs"));
 			CHECK(p->parse(s, new (e) Url()));
 			CHECK(!p->hasError());
@@ -88,7 +88,7 @@ BEGIN_TEST(ParserTest, Storm) {
 
 		{
 			// Repetitions.
-			Parser *p = Parser::create(pkg, S("Sentences"), createBackend(gEngine(), id));
+			Parser *p = Parser::create(pkg, S("Sentences"), createBackend(e, id));
 			Str *s = new (e) Str(S("the cat runs. the bird sleeps. the dog swims."));
 			CHECK(p->parse(s, new (e) Url()));
 			CHECK(!p->hasError());
@@ -103,7 +103,7 @@ BEGIN_TEST(ParserTest, Storm) {
 
 		{
 			// Captures.
-			Parser *p = Parser::create(pkg, S("WholeSentence"), createBackend(gEngine(), id));
+			Parser *p = Parser::create(pkg, S("WholeSentence"), createBackend(e, id));
 			Str *s = new (e) Str(S("the cat runs."));
 			CHECK(p->parse(s, new (e) Url()));
 			CHECK(!p->hasError());

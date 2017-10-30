@@ -143,7 +143,7 @@ namespace code {
 
 		void addOut(Output *to, Instr *instr) {
 			ImmRegInstr8 op8 = {
-				opCode(0x82), 0,
+				opCode(0x80), 0,
 				opCode(0x00),
 				opCode(0x02),
 			};
@@ -158,7 +158,7 @@ namespace code {
 
 		void adcOut(Output *to, Instr *instr) {
 			ImmRegInstr8 op8 = {
-				opCode(0x82), 2,
+				opCode(0x80), 2,
 				opCode(0x10),
 				opCode(0x12)
 			};
@@ -173,7 +173,7 @@ namespace code {
 
 		void borOut(Output *to, Instr *instr) {
 			ImmRegInstr8 op8 = {
-				opCode(0x82), 1,
+				opCode(0x80), 1,
 				opCode(0x08),
 				opCode(0x0A)
 			};
@@ -188,7 +188,7 @@ namespace code {
 
 		void bandOut(Output *to, Instr *instr) {
 			ImmRegInstr8 op8 = {
-				opCode(0x82), 4,
+				opCode(0x80), 4,
 				opCode(0x20),
 				opCode(0x22)
 			};
@@ -212,7 +212,7 @@ namespace code {
 
 		void subOut(Output *to, Instr *instr) {
 			ImmRegInstr8 op8 = {
-				opCode(0x82), 5,
+				opCode(0x80), 5,
 				opCode(0x28),
 				opCode(0x2A)
 			};
@@ -227,7 +227,7 @@ namespace code {
 
 		void sbbOut(Output *to, Instr *instr) {
 			ImmRegInstr8 op8 = {
-				opCode(0x82), 2,
+				opCode(0x80), 2,
 				opCode(0x18),
 				opCode(0x1A)
 			};
@@ -242,7 +242,7 @@ namespace code {
 
 		void bxorOut(Output *to, Instr *instr) {
 			ImmRegInstr8 op8 = {
-				opCode(0x82), 6,
+				opCode(0x80), 6,
 				opCode(0x30),
 				opCode(0x32)
 			};
@@ -257,7 +257,7 @@ namespace code {
 
 		void cmpOut(Output *to, Instr *instr) {
 			ImmRegInstr8 op8 = {
-				opCode(0x82), 7, // NOTE: it seems like this can also be encoded as 0x80 (preferred by some sources).
+				opCode(0x80), 7,
 				opCode(0x38),
 				opCode(0x3A)
 			};

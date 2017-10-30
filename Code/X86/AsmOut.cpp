@@ -36,7 +36,7 @@ namespace code {
 
 		void addOut(Output *to, Instr *instr) {
 			ImmRegInstr8 op8 = {
-				0x82, 0,
+				0x80, 0,
 				0x00,
 				0x02,
 			};
@@ -51,7 +51,7 @@ namespace code {
 
 		void adcOut(Output *to, Instr *instr) {
 			ImmRegInstr8 op8 = {
-				0x82, 2,
+				0x80, 2,
 				0x10,
 				0x12
 			};
@@ -66,7 +66,7 @@ namespace code {
 
 		void borOut(Output *to, Instr *instr) {
 			ImmRegInstr8 op8 = {
-				0x82, 1,
+				0x80, 1,
 				0x08,
 				0x0A
 			};
@@ -81,7 +81,7 @@ namespace code {
 
 		void bandOut(Output *to, Instr *instr) {
 			ImmRegInstr8 op8 = {
-				0x82, 4,
+				0x80, 4,
 				0x20,
 				0x22
 			};
@@ -109,7 +109,7 @@ namespace code {
 
 		void subOut(Output *to, Instr *instr) {
 			ImmRegInstr8 op8 = {
-				0x82, 5,
+				0x80, 5,
 				0x28,
 				0x2A
 			};
@@ -124,7 +124,7 @@ namespace code {
 
 		void sbbOut(Output *to, Instr *instr) {
 			ImmRegInstr8 op8 = {
-				0x82, 2,
+				0x80, 2,
 				0x18,
 				0x1A
 			};
@@ -139,7 +139,7 @@ namespace code {
 
 		void bxorOut(Output *to, Instr *instr) {
 			ImmRegInstr8 op8 = {
-				0x82, 6,
+				0x80, 6,
 				0x30,
 				0x32
 			};
@@ -154,7 +154,7 @@ namespace code {
 
 		void cmpOut(Output *to, Instr *instr) {
 			ImmRegInstr8 op8 = {
-				0x82, 7, // NOTE: it seems like this can also be encoded as 0x80 (preferred by some sources).
+				0x80, 7,
 				0x38,
 				0x3A
 			};
