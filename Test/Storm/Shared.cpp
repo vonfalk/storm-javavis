@@ -4,6 +4,11 @@
 BEGIN_TEST(Shared, Storm) {
 	Engine &e = gEngine();
 
+#ifdef POSIX
+	CHECK_TITLE(false, L"Shared libraries are not yet implemented!");
+	break;
+#endif
+
 	// Try to load an external library.
 	CHECK_EQ(runFn<Int>(S("ui.test"), 10), 11);
 
