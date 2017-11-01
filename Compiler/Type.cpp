@@ -992,7 +992,7 @@ namespace storm {
 
 	void Type::toS(StrBuf *to) const {
 		if (typeFlags & typeRawPtr) {
-			*to << S("class (raw ptr)");
+			*to << S("class (raw ptr) ");
 		} else if (value()) {
 			*to << S("value ");
 		} else {

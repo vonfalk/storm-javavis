@@ -279,4 +279,15 @@ namespace storm {
 		return Iter();
 	}
 
+	void NameSet::dbg_dump() const {
+		PLN(L"Name set:");
+		for (Overloads::Iter i = overloads->begin(); i != overloads->end(); ++i) {
+			PLN(L" " << i.k() << L":");
+			NameOverloads *o = i.v();
+			for (Nat i = 0; i < o->count(); i++) {
+				PLN(L"  " << o->at(i)->identifier());
+			}
+		}
+	}
+
 }

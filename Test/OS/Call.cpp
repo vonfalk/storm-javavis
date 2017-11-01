@@ -180,6 +180,15 @@ BEGIN_TEST(FnCallTest, OS) {
 		CHECK_RUNS(p.call(address(&Dummy::voidMember), true));
 	}
 
+	{
+		// This should be equivalent to the one above. We're just storing the 'this' pointer separately.
+		void *a = (void *)10;
+		int b = 20;
+		int c = 30;
+		FnCall<void> p = fnCall().add(b).add(c);
+		CHECK_RUNS(p.callRaw(address(&Dummy::voidMember), true, a, null));
+	}
+
 } END_TEST
 
 

@@ -2,6 +2,7 @@
 #include "DwarfEh.h"
 #include "PosixEh.h"
 #include "Asm.h"
+#include "Utils/Bitwise.h"
 
 namespace code {
 	namespace x64 {
@@ -205,7 +206,7 @@ namespace code {
 
 			~FDEStream() {
 				dest = pos;
-				assert(!overflow(), L"Increase FDE_DATA!");
+				assert(!overflow(), L"Increase FDE_DATA to at least " + ::toS(roundUp(pos, nat(sizeof(void *)))) + L"!");
 			}
 
 			Nat &dest;

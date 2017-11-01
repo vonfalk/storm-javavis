@@ -143,6 +143,9 @@ namespace storm {
 		Iter STORM_FN begin() const;
 		Iter STORM_FN end() const;
 
+		// Dump the internal contents of the NameSet for debugging.
+		void dbg_dump() const;
+
 	protected:
 		/**
 		 * Lazy-loading callbacks.

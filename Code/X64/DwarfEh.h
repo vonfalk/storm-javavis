@@ -26,7 +26,7 @@ namespace code {
 		 */
 		static const nat CHUNK_COUNT = 1000; // TODO: Is this a good size?
 		static const nat CIE_DATA = 24 - 1;
-		static const nat FDE_DATA = 40;
+		static const nat FDE_DATA = 48;
 
 		/**
 		 * A generic DWARF record. The fields in here line up so that they match 'CIE' and 'FDE'.

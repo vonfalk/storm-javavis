@@ -50,6 +50,13 @@ namespace os {
 				ParamHelp<Result, typename Par::PrevType, member>
 					::call(fn, params, out, pos, *(typename Par::HereType *)params[pos], args...);
 			}
+
+			template <class ...T>
+			static void callFirst(const void *fn, void **params, void *out, void *first, nat pos, T& ... args) {
+				pos--;
+				ParamHelp<Result, typename Par::PrevType, member>
+					::callFirst(fn, params, out, first, pos, *(typename Par::HereType *)params[pos], args...);
+			}
 		};
 
 
@@ -63,6 +70,11 @@ namespace os {
 				typedef Result CODECALL (*Fn)(T...);
 				Fn p = (Fn)fn;
 				new (storm::Place(out)) Result((*p)(args...));
+			}
+
+			template <class ...T>
+			static void callFirst(const void *fn, void **params, void *out, void *first, nat pos, T& ... args) {
+				call(fn, params, out, pos, first, args...);
 			}
 		};
 
@@ -94,6 +106,11 @@ namespace os {
 				Fn p = (Fn)fn;
 				new (storm::Place(out)) Result((*p)());
 			}
+
+			template <class ...T>
+			static void callFirst(const void *fn, void **params, void *out, void *first, nat pos, T& ... args) {
+				call(fn, params, out, pos, first, args...);
+			}
 		};
 
 
@@ -107,6 +124,12 @@ namespace os {
 				typedef void CODECALL (*Fn)(T...);
 				Fn p = (Fn)fn;
 				(*p)(args...);
+			}
+
+
+			template <class ...T>
+			static void callFirst(const void *fn, void **params, void *out, void *first, nat pos, T& ... args) {
+				call(fn, params, out, pos, first, args...);
 			}
 		};
 
@@ -139,19 +162,24 @@ namespace os {
 				Fn p = (Fn)fn;
 				(*p)();
 			}
+
+			template <class ...T>
+			static void callFirst(const void *fn, void **params, void *out, void *first, nat pos, T& ... args) {
+				call(fn, params, out, pos, first, args...);
+			}
 		};
 
 		template <class Result, class Par>
 		void call(const void *fn, bool member, void **params, void *first, void *result) {
 			if (memberCall(member, fn)) {
 				if (first) {
-					ParamHelp<Result, Par, true>::call(fn, params, result, Par::count, first);
+					ParamHelp<Result, Par, true>::callFirst(fn, params, result, first, Par::count);
 				} else {
 					ParamHelp<Result, Par, true>::call(fn, params, result, Par::count);
 				}
 			} else {
 				if (first) {
-					ParamHelp<Result, Par, false>::call(fn, params, result, Par::count, first);
+					ParamHelp<Result, Par, false>::callFirst(fn, params, result, first, Par::count);
 				} else {
 					ParamHelp<Result, Par, false>::call(fn, params, result, Par::count);
 				}
