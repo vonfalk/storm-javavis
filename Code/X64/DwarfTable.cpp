@@ -19,10 +19,14 @@ namespace code {
 				if (!fde)
 					return false;
 
-				TODO(L"Test this!");
 				char *start = (char *)fde->codeStart();
-				start += runtime::codeSize(start) - 2*sizeof(void *);;
-				Binary *owner = (Binary *)start;
+				if (fde->codeSize() != runtime::codeSize(start)) {
+					// Something is fishy!
+					WARNING(L"This does not seem like code we know...");
+					return false;
+				}
+				start += runtime::codeSize(start) - 2*sizeof(void *);
+				Binary *owner = *(Binary **)start;
 				Str *name = owner->ownerName();
 				if (name) {
 					to << name->c_str();
