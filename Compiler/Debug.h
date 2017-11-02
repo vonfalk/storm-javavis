@@ -119,6 +119,9 @@ namespace storm {
 		// Print the stack (machine specific, for debug).
 		void STORM_FN dumpStack();
 
+		// Print a stack trace.
+		void STORM_FN stackTrace();
+
 		// Throw an exception.
 		void STORM_FN throwError();
 

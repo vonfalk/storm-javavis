@@ -397,7 +397,7 @@ namespace storm {
 
 	Function *nativeEngineFunction(Engine &e, Value result, const wchar *name, Array<Value> *params, const void *fn) {
 		Function *r = new (e) Function(result, new (e) Str(name), params);
-		r->setCode(new (e) StaticEngineCode(result, fn));
+		r->setCode(new (e) StaticEngineCode(fn));
 		return r;
 	}
 

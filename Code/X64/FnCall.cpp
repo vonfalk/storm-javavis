@@ -79,6 +79,9 @@ namespace code {
 			// Save 'ptrA' a bit below the stack (safe as long as 'push + 8 <= 128', which should be OK).
 			*dest << mov(longRel(ptrStack, -Offset(bytesPushed + 8)), rax);
 
+			// Load the old 'ptrA'.
+			*dest << mov(ptrA, p.src);
+
 			// Last part:
 			Nat last = size & 0x07;
 			size -= last; // Now 'size' is a multiple of 8.
@@ -97,6 +100,7 @@ namespace code {
 				*dest << push(longRel(ptrA, Offset(size)));
 			}
 
+			// Restore the old value of 'rax'.
 			*dest << mov(rax, longRel(ptrStack, -Offset(8)));
 			return bytesPushed;
 		}

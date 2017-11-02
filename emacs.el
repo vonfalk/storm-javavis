@@ -1,6 +1,6 @@
 ;; Configuration
 
-(modify-coding-system-alist 'file "\\.bs\\'" 'utf-8-dos)
+(modify-coding-system-alist 'file "\\.bs\\'" 'utf-8)
 (add-to-list 'auto-mode-alist '("\\.h" . c++-mode))
 (add-to-list 'auto-mode-alist '("\\.bs" . java-mode))
 

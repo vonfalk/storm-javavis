@@ -43,8 +43,7 @@ namespace code {
 			return S("ifFAbove");
 		}
 
-		TODO(L"Implement!");
-		assert(false);
+		assert(false, L"Unknown CondFlag: " + ::toS(c));
 		return S("Unknown CondFlag");
 	}
 

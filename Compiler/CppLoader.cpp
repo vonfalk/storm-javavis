@@ -434,7 +434,7 @@ namespace storm {
 		Function *f = new (*e) Function(result, new (*e) Str(fn.name), loadFnParams(fn.params));
 
 		if (fn.kind == CppFunction::fnFreeEngine)
-			f->setCode(new (*e) StaticEngineCode(result, fn.ptr));
+			f->setCode(new (*e) StaticEngineCode(fn.ptr));
 		else
 			f->setCode(new (*e) StaticCode(fn.ptr));
 

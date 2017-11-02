@@ -109,7 +109,7 @@ namespace storm {
 	class StaticEngineCode : public Code {
 		STORM_CLASS;
 	public:
-		StaticEngineCode(Value result, const void *code);
+		StaticEngineCode(const void *code);
 
 	protected:
 		virtual void STORM_FN newRef();
@@ -121,8 +121,8 @@ namespace storm {
 		// Reference to the original code.
 		code::RefSource *original;
 
-		// Generate code which does the redirection.
-		code::Listing *redirectCode(Value result, code::Ref ref);
+		// Generate code which does the redirection. Assumes 'owner' is set.
+		code::Listing *redirectCode(code::Ref ref);
 	};
 
 

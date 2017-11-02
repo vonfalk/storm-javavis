@@ -7,6 +7,10 @@
 #include "Code/Debug.h"
 #include "Utils/Memory.h"
 
+#ifdef POSIX
+#include <signal.h>
+#endif
+
 namespace storm {
 	namespace debug {
 
@@ -77,7 +81,7 @@ namespace storm {
 #ifdef WINDOWS
 			DebugBreak();
 #else
-			abort();
+			kill(getpid(), SIGINT);
 #endif
 		}
 
@@ -95,6 +99,10 @@ namespace storm {
 
 		void dumpStack() {
 			code::dumpStack();
+		}
+
+		void stackTrace() {
+			::dumpStack();
 		}
 
 		void throwError() {
@@ -344,7 +352,7 @@ namespace storm {
 
 			if (live.count(this) == 0) {
 				PLN("Trying to destroy a non-live object at " << this);
-				PLN(format(stackTrace()));
+				PLN(format(::stackTrace()));
 				dbg_dumpNolock();
 				assert(false);
 			}

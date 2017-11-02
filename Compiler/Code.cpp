@@ -71,28 +71,32 @@ namespace storm {
 	 * Static engine code.
 	 */
 
-	StaticEngineCode::StaticEngineCode(Value result, const void *src) {
+	StaticEngineCode::StaticEngineCode(const void *src) {
 		original = new (this) code::RefSource(S("ref-to"));
 		original->setPtr(src);
 
-		code::Listing *l = redirectCode(result, original);
-		code = new (this) code::Binary(engine().arena(), l);
+		code = null;
 	}
 
 	void StaticEngineCode::newRef() {
+		if (!code) {
+			code::Listing *l = redirectCode(original);
+			code = new (this) code::Binary(engine().arena(), l);
+		}
 		toUpdate->set(code);
 	}
 
-	code::Listing *StaticEngineCode::redirectCode(Value result, code::Ref ref) {
+	code::Listing *StaticEngineCode::redirectCode(code::Ref ref) {
 		Engine &e = engine();
+		assert(owner);
 		using code::TypeDesc;
 
 		Array<TypeDesc *> *p = new (this) Array<TypeDesc *>();
-		if (owner) {
-			Array<Value> *params = owner->params;
-			for (Nat i = 0; i < params->count(); i++)
-				p->push(params->at(i).desc(e));
-		}
+		Array<Value> *params = owner->params;
+		for (Nat i = 0; i < params->count(); i++)
+			p->push(params->at(i).desc(e));
+		Value result = owner->result;
+
 		return e.arena()->engineRedirect(result.desc(e), p, ref, e.ref(Engine::rEngine));
 	}
 
