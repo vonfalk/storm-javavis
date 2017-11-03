@@ -84,7 +84,7 @@ namespace storm {
 		Array<Value> *ref = valList(e, 1, r);
 		Array<Value> *refref = valList(e, 2, r, r);
 
-		add(nativeFunction(e, Value(), Type::CTOR, refref, address(&copyIterator)));
+		add(nativeFunction(e, Value(), Type::CTOR, refref, address(&copyIterator))->makePure());
 		add(nativeFunction(e, key, S("next"), ref, address(&WeakSetBase::Iter::nextRaw)));
 
 		return Type::loadAll();

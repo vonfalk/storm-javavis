@@ -97,13 +97,13 @@ namespace storm {
 		Array<Value> *ref = valList(e, 1, r);
 		Array<Value> *refref = valList(e, 2, r, r);
 
-		add(nativeFunction(e, Value(), Type::CTOR, refref, address(&copyIterator)));
-		add(nativeFunction(e, vBool, S("=="), refref, address(&iteratorEq)));
-		add(nativeFunction(e, vBool, S("!="), refref, address(&iteratorNeq)));
+		add(nativeFunction(e, Value(), Type::CTOR, refref, address(&copyIterator))->makePure());
+		add(nativeFunction(e, vBool, S("=="), refref, address(&iteratorEq))->makePure());
+		add(nativeFunction(e, vBool, S("!="), refref, address(&iteratorNeq))->makePure());
 		add(nativeFunction(e, r, S("++*"), ref, address(&SetBase::Iter::preIncRaw)));
 		add(nativeFunction(e, v, S("*++"), ref, address(&SetBase::Iter::postIncRaw)));
-		add(nativeFunction(e, keyRef, S("k"), ref, address(&SetBase::Iter::rawVal)));
-		add(nativeFunction(e, keyRef, S("v"), ref, address(&SetBase::Iter::rawVal)));
+		add(nativeFunction(e, keyRef, S("k"), ref, address(&SetBase::Iter::rawVal))->makePure());
+		add(nativeFunction(e, keyRef, S("v"), ref, address(&SetBase::Iter::rawVal))->makePure());
 
 		return Type::loadAll();
 	}
