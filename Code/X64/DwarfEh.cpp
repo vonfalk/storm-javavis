@@ -286,13 +286,16 @@ namespace code {
 			advance(to, pos - 1);
 			// The call frame changed since we popped RBP.
 			to.putOp(DW_CFA_def_cfa, DW_REG_RSP, 8); // def_cfa rsp, 8
+
+			// NOTE: If this epilog is inside of a function, any code located after this epilog will
+			// have the wrong CFA information, which causes exceptions to fail.
 		}
 
 		void FnInfo::preserve(Nat pos, Reg reg, Offset offset) {
 			FDEStream to(target, this->offset);
 			advance(to, pos);
 
-			// Note that we stored the variable. (TODO: Verify if this is correct)
+			// Note that we stored the variable.
 			assert(offset.v64() <= -8);
 			Nat off = (-offset.v64() + 16) / 8;
 			to.putOp(DW_CFA_offset + dwarfRegister(reg), off);

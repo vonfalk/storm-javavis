@@ -165,7 +165,8 @@ namespace code {
 				// Phase 2: Cleanup!
 				// if (actions & _UA_HANDLER_FRAME), we should return _URC_INSTALL_CONTEXT.
 
-				// Clean up what we can! (register #6 is RBP) Note: Using the CFA seems to be a bit shaky...
+				// Clean up what we can! (register #6 is RBP)
+				// Note: using _Unwind_GetCFA seems to return the CFA of the previous frame.
 				stormCleanup(_Unwind_GetRegionStart(context), _Unwind_GetIP(context), _Unwind_GetGR(context, 6));
 				return _URC_CONTINUE_UNWIND;
 			} else {

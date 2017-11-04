@@ -62,7 +62,7 @@ value ErrorAt {
 
 value ErrorBase {
 	// Some members to initialize and keep track of. Try to initialize e1, v1, e2, but this order
-	// is not neccessarily the initialization order taken.
+	// is not neccessarily the initialization order chosen by Storm.
 	ErrorAt e1;
 	DbgVal v1;
 	ErrorAt e2;

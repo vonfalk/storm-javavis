@@ -103,6 +103,7 @@ namespace storm {
 			*l << fnRet();
 
 			// PLN(identifier() << L": " << l);
+			// PLN(engine().arena()->transform(l, null));
 			return state;
 		}
 

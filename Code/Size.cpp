@@ -182,6 +182,13 @@ namespace code {
 		return Size(size32(), align32(), size64(), align64());
 	}
 
+	Size Size::alignedAs(Size other) const {
+		return Size(roundUp(code::size(s32), other.align32()),
+					other.align32(),
+					roundUp(code::size(s64), other.align64()),
+					other.align64());
+	}
+
 	Nat Size::size32() const {
 		return roundUp(code::size(s32), code::align(s32));
 	}

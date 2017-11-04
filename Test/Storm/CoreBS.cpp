@@ -320,8 +320,8 @@ BEGIN_TEST_FN(checkTimes, const wchar *name, nat times) {
 BEGIN_TEST(BSException, BS) {
 	CALL_TEST_FN(checkTimes, S("test.bs.basicException"), 7);
 	CALL_TEST_FN(checkTimes, S("test.bs.fnException"), 3);
-	CALL_TEST_FN(checkTimes, S("test.bs.threadException"), 4);
 	CALL_TEST_FN(checkTimes, S("test.bs.ctorError"), 8);
+	CALL_TEST_FN(checkTimes, S("test.bs.threadException"), 4);
 } END_TEST
 
 

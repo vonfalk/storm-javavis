@@ -11,7 +11,11 @@ namespace code {
 		}
 
 		void epilogOut(Output *to, Instr *instr) {
-			to->markEpilog();
+			// Marking all epilogs require that we can resize the FDA records on demand, as there
+			// might be an unknown number of return statements in a function.
+			// In general, the epilog CFA information is not strictly neccessary as long as there
+			// are no exceptions thrown during the last two instructions in the epilog.
+			// to->markEpilog();
 		}
 
 		void preserveOut(Output *to, Instr *instr) {

@@ -300,3 +300,35 @@ BEGIN_TEST(ExceptionLargeTest, Code) {
 	CHECK_EQ(times, 2);
 
 } END_TEST
+
+
+BEGIN_TEST(ExceptionLayers, Code) {
+	Engine &e = gEngine();
+	Arena *arena = code::arena(e);
+
+	Ref errorFn = arena->external(S("errorFn"), address(&::throwError));
+
+	Listing *l = new (e) Listing();
+	*l << prolog();
+	*l << mov(ebx, intConst(1));
+	*l << fnParam(intDesc(e), ebx);
+	*l << fnCall(errorFn, false);
+	*l << fnRet();
+
+	Binary *b = new (e) Binary(arena, l);
+	RefSource *next = new (e) RefSource(new (e) Str(S("level2")), b);
+
+	l = new (e) Listing();
+	*l << prolog();
+	*l << mov(ebx, intConst(0));
+	*l << fnCall(Ref(next), false);
+	*l << fnRet();
+
+	b = new (e) Binary(arena, l);
+	typedef void (*Fn)();
+	Fn fn = (Fn)b->address();
+
+	throwAt = 1;
+	CHECK_ERROR((*fn)(), Error);
+
+} END_TEST

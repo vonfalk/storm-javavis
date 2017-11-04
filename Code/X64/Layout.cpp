@@ -500,11 +500,15 @@ namespace code {
 				if (to != Offset())
 					continue;
 
+				// Try to squeeze the preserved registers as tightly as possible while keeping alignment.
+				// This is more concentrated than when pushing registers to the stack. On the stack, all
+				// parameters are aligned to 8 bytes, while we do not need that here. We only need to keep
+				// the natural alignment of the parameters to keep the CPU happy.
 				if (src->freeOpt(var) & freeIndirection)
-					used += Size::sPtr;
+					used = (used + Size::sPtr).alignedAs(Size::sPtr);
 				else
-					used += var.size();
-				to = -(varOffset + used.aligned());
+					used = (used + var.size()).alignedAs(var.size());
+				to = -(varOffset + used);
 			}
 
 			return used.aligned();
