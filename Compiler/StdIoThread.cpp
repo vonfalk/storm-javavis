@@ -206,6 +206,7 @@ namespace storm {
 	void StdIo::startThread() {
 		// TODO? Reduce stack space for this thread?
 		pthread_create(&thread, NULL, &ioMain, this);
+		threadStarted = true;
 	}
 
 	void StdIo::waitThread() {
