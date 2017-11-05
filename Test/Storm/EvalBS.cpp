@@ -74,6 +74,8 @@ BEGIN_TEST(EvalBS, BS) {
 			CHECK_EQ_TITLE(callFn<Word>(fn), (Word)nr, fn->identifier());
 		} else if (fn->result.type == StormInfo<Float>::type(e)) {
 			CHECK_EQ_TITLE(callFn<Float>(fn), (Float)nr, fn->identifier());
+		} else if (fn->result.type == StormInfo<Double>::type(e)) {
+			CHECK_EQ_TITLE(callFn<Double>(fn), (Double)nr, fn->identifier());
 		} else {
 			throw TestError(L"Unknown return type for function " + ::toS(fn->identifier()));
 		}

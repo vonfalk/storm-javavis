@@ -2,3 +2,4 @@
 # add-auto-load-safe-path ~/Projects/storm/.gdbinit
 handle SIGXFSZ nostop noprint
 handle SIGXCPU nostop noprint
+handle SIGSEGV nostop

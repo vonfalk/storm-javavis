@@ -302,13 +302,21 @@ namespace code {
 	}
 
 	Operand floatConst(Float v) {
-		Nat *q = reinterpret_cast<Nat *>(&v);
-		return xConst(Size::sFloat, *q);
+		union {
+			Nat i;
+			Float f;
+		} convert;
+		convert.f = v;
+		return xConst(Size::sFloat, convert.i);
 	}
 
 	Operand doubleConst(Double v) {
-		Word *q = reinterpret_cast<Word *>(&v);
-		return xConst(Size::sDouble, *q);
+		union {
+			Word i;
+			Double f;
+		} convert;
+		convert.f = v;
+		return xConst(Size::sDouble, convert.i);
 	}
 
 	Operand ptrConst(Size v) {

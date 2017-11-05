@@ -78,6 +78,7 @@ namespace storm {
 		Long STORM_FN toLong() const;
 		Word STORM_FN toWord() const;
 		Float STORM_FN toFloat() const;
+		Double STORM_FN toDouble() const;
 
 		// Interpret as hexadecimal numbers.
 		Nat STORM_FN hexToNat() const;

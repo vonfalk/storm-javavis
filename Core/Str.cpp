@@ -55,7 +55,7 @@ namespace storm {
 			data[i] = v[i];
 
 		wchar_t *err = null;
-		long r = ::wcstod(data, &err);
+		double r = ::wcstod(data, &err);
 		if (e)
 			*e = (wchar *)(v + (err - data));
 		return r;
@@ -302,7 +302,15 @@ namespace storm {
 
 	Float Str::toFloat() const {
 		wchar *end;
-		Float r = (float)wcstod(data->v, &end);
+		Float r = (Float)wcstod(data->v, &end);
+		if (end != data->v + data->count - 1)
+			throw StrError(L"Not a floating-point number");
+		return r;
+	}
+
+	Double Str::toDouble() const {
+		wchar *end;
+		Double r = wcstod(data->v, &end);
 		if (end != data->v + data->count - 1)
 			throw StrError(L"Not a floating-point number");
 		return r;
