@@ -1,0 +1,150 @@
+#include "stdafx.h"
+#include "IOCondition.h"
+
+#ifdef POSIX
+// NOTE: This does not exist on all POSIX systems (eg. MacOS)
+#include <sys/eventfd.h>
+#endif
+
+namespace os {
+
+#ifdef WINDOWS
+
+	IOCondition::IOCondition() : signaled(0) {
+		sema = CreateSemaphore(NULL, 0, 1, NULL);
+	}
+
+	IOCondition::~IOCondition() {
+		CloseHandle(sema);
+	}
+
+	void IOCondition::signal() {
+		// If we're the first one to signal, alter the semaphore.
+		if (atomicCAS(signaled, 0, 1) == 0)
+			ReleaseSemaphore(sema, 1, NULL);
+	}
+
+	void IOCondition::wait() {
+		// Wait for someone to signal, and then reset the signaled state for next time.
+		WaitForSingleObject(sema, INFINITE);
+		atomicCAS(signaled, 1, 0);
+	}
+
+	void IOCondition::wait(IOHandle io) {
+		HANDLE ioHandle = io.v();
+		HANDLE handles[2] = { sema, ioHandle };
+		DWORD r = WaitForMultipleObjects(ioHandle ? 2 : 1, handles, FALSE, INFINITE);
+		atomicCAS(signaled, 1, 0);
+	}
+
+	bool IOCondition::wait(nat msTimeout) {
+		DWORD result = WaitForSingleObject(sema, msTimeout);
+		if (result == WAIT_OBJECT_0) {
+			atomicCAS(signaled, 1, 0);
+			return true;
+		} else {
+			return false;
+		}
+	}
+
+	bool IOCondition::wait(IOHandle io, nat msTimeout) {
+		HANDLE ioHandle = io.v();
+		HANDLE handles[2] = { sema, ioHandle };
+		DWORD result = WaitForMultipleObjects(ioHandle ? 2 : 1, handles, FALSE, msTimeout);
+		if (result == WAIT_OBJECT_0 || result == WAIT_OBJECT_0+1) {
+			atomicCAS(signaled, 1, 0);
+			return true;
+		} else {
+			return false;
+		}
+	}
+
+#endif
+
+#ifdef POSIX
+
+	IOCondition::IOCondition() : signaled(0), fd(-1) {
+		fd = eventfd(0, EFD_CLOEXEC | EFD_NONBLOCK);
+	}
+
+	IOCondition::~IOCondition() {
+		close(fd);
+	}
+
+	void IOCondition::signal() {
+		if (atomicCAS(signaled, 0, 1) == 0) {
+			uint64_t val = 1;
+			while (true) {
+				ssize_t r = write(fd, &val, 8);
+				if (r >= 0)
+					break;
+				if (errno == EAGAIN || errno == EINTR)
+					continue;
+				perror("Failed to signal eventfd");
+			}
+		}
+	}
+
+	bool IOCondition::doWait(struct pollfd *fds, nat fdCount, int timeout) {
+		fds[0].fd = fd;
+		fds[0].events = POLLIN;
+		fds[0].revents = 0;
+
+		int result = -1;
+		while (result < 0) {
+			result = poll(fds, fdCount, timeout);
+
+			if (result < 0) {
+				if (errno == EINTR) {
+					// TODO: We could make a better estimation.
+					if (timeout > 0)
+						timeout = 0;
+					continue;
+				}
+				perror("poll");
+				assert(false);
+			}
+		}
+
+		// Notify that we woke up.
+		atomicWrite(signaled, 0);
+
+		if (result == 0) {
+			// Timeout.
+			return false;
+		} else {
+			// Some entry is done. If it is entry #0, we want to read it so that it is not signaled anymore.
+			if (fds[0].revents != 0) {
+				uint64_t v = 0;
+				read(fd, &v, 8);
+			}
+			return true;
+		}
+	}
+
+	void IOCondition::wait() {
+		struct pollfd wait;
+		doWait(&wait, 1, -1);
+	}
+
+	void IOCondition::wait(IOHandle io) {
+		UNUSED(io);
+		TODO(L"Properly handle waiting for IO!");
+		wait();
+	}
+
+	bool IOCondition::wait(nat msTimeout) {
+		msTimeout = min(msTimeout, nat(std::numeric_limits<int>::max()));
+		struct pollfd wait;
+		return doWait(&wait, 1, msTimeout);
+	}
+
+	bool IOCondition::wait(IOHandle io, nat msTimeout) {
+		UNUSED(io);
+		TODO(L"Propery handle waiting for IO!");
+		return wait(msTimeout);
+	}
+
+#endif
+
+}

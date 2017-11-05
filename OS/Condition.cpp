@@ -25,28 +25,9 @@ namespace os {
 		atomicCAS(signaled, 1, 0);
 	}
 
-	void Condition::wait(IOHandle io) {
-		HANDLE ioHandle = io.v();
-		HANDLE handles[2] = { sema, ioHandle };
-		DWORD r = WaitForMultipleObjects(ioHandle ? 2 : 1, handles, FALSE, INFINITE);
-		atomicCAS(signaled, 1, 0);
-	}
-
 	bool Condition::wait(nat msTimeout) {
 		DWORD result = WaitForSingleObject(sema, msTimeout);
 		if (result == WAIT_OBJECT_0) {
-			atomicCAS(signaled, 1, 0);
-			return true;
-		} else {
-			return false;
-		}
-	}
-
-	bool Condition::wait(IOHandle io, nat msTimeout) {
-		HANDLE ioHandle = io.v();
-		HANDLE handles[2] = { sema, ioHandle };
-		DWORD result = WaitForMultipleObjects(ioHandle ? 2 : 1, handles, FALSE, msTimeout);
-		if (result == WAIT_OBJECT_0 || result == WAIT_OBJECT_0+1) {
 			atomicCAS(signaled, 1, 0);
 			return true;
 		} else {
@@ -78,15 +59,6 @@ namespace os {
 	}
 
 	void Condition::wait() {
-		pthread_mutex_lock(&mutex);
-		if (atomicCAS(signaled, 1, 0) == 0)
-			pthread_cond_wait(&cond, &mutex);
-		pthread_mutex_unlock(&mutex);
-	}
-
-	void Condition::wait(IOHandle io) {
-		UNUSED(io);
-		TODO(L"Properly handle waiting for IO!");
 		pthread_mutex_lock(&mutex);
 		if (atomicCAS(signaled, 1, 0) == 0)
 			pthread_cond_wait(&cond, &mutex);
@@ -127,12 +99,6 @@ namespace os {
 			return true;
 		else
 			return errno != ETIMEDOUT;
-	}
-
-	bool Condition::wait(IOHandle io, nat msTimeout) {
-		UNUSED(io);
-		TODO(L"Propery handle waiting for IO!");
-		return wait(msTimeout);
 	}
 
 #endif

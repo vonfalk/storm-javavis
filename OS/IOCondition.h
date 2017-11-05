@@ -1,5 +1,8 @@
 #pragma once
 #include "IOHandle.h"
+#ifdef POSIX
+#include <poll.h>
+#endif
 
 namespace os {
 
@@ -12,12 +15,15 @@ namespace os {
 	 * blocked. What signal means is that one call to 'wait' will be unblocked. More than one 'signal'
 	 * call does not matter. One artifact of this scheme is that 'wait' may return one time too many in
 	 * some cases.
+	 *
+	 * Note: this implementation could cause sporadic wakeups since we allow IO completion routines to
+	 * execute while the semaphore is blocked.
 	 */
-	class Condition {
+	class IOCondition {
 	public:
 		// Ctor.
-		Condition();
-		~Condition();
+		IOCondition();
+		~IOCondition();
 
 		// Signal the condition, wakes up the thread if there is one waiting,
 		// otherwise does nothing.
@@ -25,10 +31,12 @@ namespace os {
 
 		// Wait for someone to signal the condition.
 		void wait();
+		void wait(IOHandle abort);
 
 		// Wait for someone to signal the condition or until the timeout has passed.
 		// true = signaled, false = timeout
 		bool wait(nat msTimeout);
+		bool wait(IOHandle abort, nat msTimeout);
 
 	private:
 #if defined(WINDOWS)
@@ -38,14 +46,16 @@ namespace os {
 		// Waitable semaphore.
 		HANDLE sema;
 #elif defined(POSIX)
-		// Remember if signaled and nobody woke.
+		// Is the semaphore signaled?
 		nat signaled;
 
-		// Condition object.
-		pthread_cond_t cond;
+		// File descriptor we're using.
+		int fd;
 
-		// We need a mutex as well.
-		pthread_mutex_t mutex;
+		// Perform waiting. Assumes the first entry in 'fds' is unused. Returns 'true' if some
+		// entries are ready, false otherwise.
+		bool doWait(struct pollfd *fds, nat fdCount, int timeout);
+
 #else
 #error "Please implement the condition for your platform!"
 #endif

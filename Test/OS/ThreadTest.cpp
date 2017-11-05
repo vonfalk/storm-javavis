@@ -1,6 +1,7 @@
 #include "stdafx.h"
 #include "OS/Thread.h"
 #include "OS/ThreadGroup.h"
+#include "OS/Condition.h"
 #include "Tracker.h"
 
 using namespace os;

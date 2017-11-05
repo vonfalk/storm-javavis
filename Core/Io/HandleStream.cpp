@@ -143,21 +143,41 @@ namespace storm {
 	static Nat read(os::Handle h, os::Thread &attached, void *dest, Nat limit) {
 		TODO(L"Implement proper async file IO");
 
-		ssize_t r = ::read(h.v(), dest, size_t(limit));
-		if (r < 0)
-			return 0;
-		else
-			return Nat(r);
+		while (true) {
+			ssize_t r = ::read(h.v(), dest, size_t(limit));
+			if (r >= 0)
+				return Nat(r);
+
+			// Aborted by a signal. Retry.
+			if (errno == EINTR) {
+				continue;
+			} else if (errno == EAGAIN) {
+				TODO(L"Wait for more data.");
+			} else {
+				// Unknown error.
+				return 0;
+			}
+		}
 	}
 
 	static Nat write(os::Handle h, os::Thread &attached, const void *src, Nat limit) {
-		TODO(L"Implement proper async file IO, handle partial writes?");
+		TODO(L"Implement proper async file IO.");
 
-		ssize_t r = ::write(h.v(), src, size_t(limit));
-		if (r < 0)
-			return 0;
-		else
-			return Nat(r);
+		while (true) {
+			ssize_t r = ::write(h.v(), src, size_t(limit));
+			if (r >= 0)
+				return Nat(r);
+
+			// Aborted by a signal. Retry.
+			if (errno == EINTR) {
+				continue;
+			} else if (errno == EAGAIN) {
+				TODO(L"Wait for more data.");
+			} else {
+				// Unknown error.
+				return 0;
+			}
+		}
 	}
 
 	static void seek(os::Handle h, Word to) {

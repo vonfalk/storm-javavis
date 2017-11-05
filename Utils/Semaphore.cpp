@@ -72,6 +72,7 @@ bool Semaphore::down(nat msTimeout) {
 		switch (errno) {
 		case EINTR:
 			// Just a signal from the MPS. Retry!
+			// TODO: Adjust the time!
 			break;
 		case ETIMEDOUT:
 			// We timed out. That means we're done and should abort!

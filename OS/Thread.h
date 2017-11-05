@@ -1,7 +1,7 @@
 #pragma once
 #include "Utils/Function.h"
 #include "Utils/Semaphore.h"
-#include "Condition.h"
+#include "IOCondition.h"
 #include "IOHandle.h"
 #include "UThread.h"
 
@@ -138,7 +138,7 @@ namespace os {
 
 		// Condition variable for waking up the thread when there is more work to do
 		// or when it is time to exit.
-		Condition wakeCond;
+		IOCondition wakeCond;
 
 		// Current wait behavior.
 		ThreadWait *wait;
