@@ -1,6 +1,14 @@
 #pragma once
 #include "Core/TypeFlags.h"
 
+#if defined(POSIX)
+// We need to compile certain wrappers as if they were member functions on POSIX. Otherwise they
+// might get an odd address, causing vtable-lookup to fail.
+#define ALIGN_MEMBER __attribute__((aligned(2)))
+#else
+#define ALIGN_MEMBER
+#endif
+
 namespace storm {
 
 	/**

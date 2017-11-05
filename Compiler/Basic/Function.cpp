@@ -122,13 +122,14 @@ namespace storm {
 				state->returnValue(rval.v);
 			}
 
-			// if (!identifier()->startsWith(L"lang.bs")) {
+			// if (!identifier()->startsWith(S("lang.bs"))) {
+			// if (identifier()->startsWith(S("test.bs."))) {
 			// 	PLN(bodyExpr);
 			// 	PLN(identifier() << L": " << l);
 			// 	// This can be used to see the transformed machine code as well:
-			// 	// PLN(engine().arena()->transform(l, null));
-			// 	// See transformed machine code and binary output.
-			// 	// PVAR(new (this) Binary(engine().arena(), l, true));
+			// 	PLN(engine().arena()->transform(l, null));
+			// 	// See transformed machine code and binary output (similar to above).
+			// 	PVAR(new (this) Binary(engine().arena(), l, true));
 			// }
 
 			// PLN(bodyExpr);
