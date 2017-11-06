@@ -81,7 +81,7 @@ namespace storm {
 #ifdef WINDOWS
 			DebugBreak();
 #else
-			kill(getpid(), SIGINT);
+			raise(SIGINT);
 #endif
 		}
 
