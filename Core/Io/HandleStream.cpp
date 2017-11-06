@@ -140,9 +140,12 @@ namespace storm {
 		h = os::Handle();
 	}
 
-	static Nat read(os::Handle h, os::Thread &attached, void *dest, Nat limit) {
-		TODO(L"Implement proper async file IO");
+	static void doWait(os::Handle h, os::IORequest::Type type) {
+		os::IORequest request(h, type, os::Thread::current());
+		request.wake.wait();
+	}
 
+	static Nat read(os::Handle h, os::Thread &attached, void *dest, Nat limit) {
 		while (true) {
 			ssize_t r = ::read(h.v(), dest, size_t(limit));
 			if (r >= 0)
@@ -152,7 +155,8 @@ namespace storm {
 			if (errno == EINTR) {
 				continue;
 			} else if (errno == EAGAIN) {
-				TODO(L"Wait for more data.");
+				// Wait for more data.
+				doWait(h, os::IORequest::read);
 			} else {
 				// Unknown error.
 				return 0;
@@ -161,8 +165,6 @@ namespace storm {
 	}
 
 	static Nat write(os::Handle h, os::Thread &attached, const void *src, Nat limit) {
-		TODO(L"Implement proper async file IO.");
-
 		while (true) {
 			ssize_t r = ::write(h.v(), src, size_t(limit));
 			if (r >= 0)
@@ -172,7 +174,8 @@ namespace storm {
 			if (errno == EINTR) {
 				continue;
 			} else if (errno == EAGAIN) {
-				TODO(L"Wait for more data.");
+				// Wait for more data.
+				doWait(h, os::IORequest::write);
 			} else {
 				// Unknown error.
 				return 0;

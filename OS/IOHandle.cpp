@@ -68,23 +68,97 @@ namespace os {
 
 #ifdef POSIX
 
-	IOHandle::IOHandle() {}
+	IOHandle::IOHandle() : wait(null), capacity(0), waitValid(false) {}
 
-	void IOHandle::add(Handle h, const ThreadData *id) {
-		UNUSED(h);
-		UNUSED(id);
+	IOHandle::~IOHandle() {
+		delete []wait;
+	}
+
+	void IOHandle::attach(Handle h, IORequest *wait) {
+		util::Lock::L z(lock);
+		handles[h.v()] = wait;
+		waitValid = false;
+	}
+
+	void IOHandle::detach(Handle h) {
+		util::Lock::L z(lock);
+		HandleMap::iterator i = handles.find(h.v());
+		if (i != handles.end()) {
+			waitValid = false;
+			handles.erase(i);
+		}
 	}
 
 	void IOHandle::notifyAll(const ThreadData *id) const {
 		UNUSED(id);
+		util::Lock::L z(lock);
+
+		for (size_t i = 1; i < capacity && wait[i].fd != 0; i++) {
+			if (wait[i].revents != 0) {
+				// Something happened!
+				HandleMap::const_iterator found = handles.find(wait[i].fd);
+				if (found != handles.end())
+					found->second->wake.set();
+			}
+			wait[i].revents = 0;
+		}
 	}
 
-	void IOHandle::close() {}
+	static short type(IORequest::Type type) {
+		switch (type) {
+		case IORequest::read:
+			return POLLIN;
+		case IORequest::write:
+			return POLLOUT;
+		default:
+			return 0;
+		}
+	}
 
-	void IOHandle::attach() {}
+	IOHandle::Desc IOHandle::desc() {
+		util::Lock::L z(lock);
 
-	void IOHandle::detach() {}
+		if (!waitValid) {
+			resize();
+			size_t pos = 1;
+			for (HandleMap::iterator i = handles.begin(), end = handles.end(); i != end; ++i) {
+				wait[pos].fd = i->first;
+				wait[pos].events = type(i->second->type);
+				wait[pos].revents = 0;
+				pos++;
+			}
+			for (; pos < capacity; pos++)
+				wait[pos].fd = 0;
+			waitValid = false;
+		}
 
+		Desc d = { wait, handles.size() + 1 };
+		return d;
+	}
+
+	void IOHandle::resize() {
+		size_t target = handles.size() + 1;
+		size_t newCap = max(capacity, size_t(8));
+		while (target > newCap)
+			newCap *= 2;
+		if (target < newCap / 4)
+			newCap /= 4;
+		if (newCap == capacity)
+			return;
+
+		// Resize! We do not need to preserve any contents.
+		delete []wait;
+		capacity = newCap;
+		wait = new struct pollfd[capacity];
+	}
+
+	void IOHandle::add(Handle h, const ThreadData *id) {
+		// Nothing to do on POSIX.
+	}
+
+	void IOHandle::close() {
+		// Nothing to do.
+	}
 
 #endif
 

@@ -1,5 +1,6 @@
 #pragma once
 #include "Sync.h"
+#include "Handle.h"
 
 namespace os {
 
@@ -34,15 +35,27 @@ namespace os {
 
 	class IORequest {
 	public:
+		// Read/write?
+		enum Type {
+			read, write
+		};
+
 		// Note the thread that the request is associated with.
-		IORequest(Thread &thread);
+		IORequest(Handle handle, Type type, const Thread &thread);
 		~IORequest();
 
-		// TODO!
+		// Event used for notifying when the file descriptor is readable.
+		Event wake;
+
+		// Request type (read/write).
+		Type type;
 
 	private:
+		// Handle used.
+		Handle handle;
+
 		// Owning thread.
-		Thread &thread;
+		const Thread &thread;
 	};
 
 #else

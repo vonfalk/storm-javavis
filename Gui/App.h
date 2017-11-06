@@ -117,8 +117,8 @@ namespace gui {
 		AppWait(Engine &e);
 
 		virtual void init();
-		virtual bool wait(os::IOHandle io);
-		virtual bool wait(os::IOHandle io, nat msTimeout);
+		virtual bool wait(os::IOHandle &io);
+		virtual bool wait(os::IOHandle &io, nat msTimeout);
 		virtual void signal();
 		virtual void work();
 

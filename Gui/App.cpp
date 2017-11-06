@@ -243,12 +243,12 @@ namespace gui {
 		}
 	}
 
-	bool AppWait::wait(os::IOHandle io) {
+	bool AppWait::wait(os::IOHandle &io) {
 		// Since we know the semantics of wait(IOHandle, nat), we can exploit that...
 		return wait(io, INFINITE);
 	}
 
-	bool AppWait::wait(os::IOHandle io, nat msTimeout) {
+	bool AppWait::wait(os::IOHandle &io, nat msTimeout) {
 		if (done) {
 			// No more need for message processing!
 			return false;

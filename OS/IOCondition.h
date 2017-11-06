@@ -31,12 +31,12 @@ namespace os {
 
 		// Wait for someone to signal the condition.
 		void wait();
-		void wait(IOHandle abort);
+		void wait(IOHandle &abort);
 
 		// Wait for someone to signal the condition or until the timeout has passed.
 		// true = signaled, false = timeout
 		bool wait(nat msTimeout);
-		bool wait(IOHandle abort, nat msTimeout);
+		bool wait(IOHandle &abort, nat msTimeout);
 
 	private:
 #if defined(WINDOWS)
@@ -54,7 +54,7 @@ namespace os {
 
 		// Perform waiting. Assumes the first entry in 'fds' is unused. Returns 'true' if some
 		// entries are ready, false otherwise.
-		bool doWait(struct pollfd *fds, nat fdCount, int timeout);
+		bool doWait(struct pollfd *fds, size_t fdCount, int timeout);
 
 #else
 #error "Please implement the condition for your platform!"

@@ -1,9 +1,15 @@
 #pragma once
 #include "OS/Handle.h"
+#include "Utils/Lock.h"
+
+#if defined(POSIX)
+#include <poll.h>
+#endif
 
 namespace os {
 
 	class ThreadData;
+	class IORequest;
 
 	/**
 	 * IO handle. Encapsulates an OS specific handle to some kind of synchronizing object that the
@@ -44,9 +50,16 @@ namespace os {
 	class IOHandle {
 	public:
 		IOHandle();
+		~IOHandle();
 
-		// Associate a handle to this IO handle.
+		// Associate a handle to this IOHandle.
 		void add(Handle h, const ThreadData *id);
+
+		// Attach to this IO handle.
+		void attach(Handle h, IORequest *request);
+
+		// Detach from this IO handle.
+		void detach(Handle h);
 
 		// Process all messages for this IO handle.
 		void notifyAll(const ThreadData *id) const;
@@ -54,12 +67,32 @@ namespace os {
 		// Close this handle.
 		void close();
 
-		// Attach/detach IO requests.
-		void attach();
-		void detach();
+		// Get an array of pollfd:s describing the threads waiting currently.
+		struct Desc {
+			struct pollfd *fds;
+			size_t count;
+		};
+		Desc desc();
 
 	private:
-		// TODO!
+		// Lock, just in case.
+		mutable util::Lock lock;
+
+		// All handles currently associated with us.
+		typedef map<int, IORequest *> HandleMap;
+		HandleMap handles;
+
+		// Previously allocated array of pollfd structs.
+		struct pollfd *wait;
+
+		// Number of entries in 'wait'. Any unused entries have their 'fd' set to zero.
+		size_t capacity;
+
+		// Is 'wait' properly updated?
+		bool waitValid;
+
+		// Resize 'wait' to an appropriate size.
+		void resize();
 	};
 
 #else

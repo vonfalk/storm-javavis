@@ -170,10 +170,10 @@ namespace os {
 		// The thread is kept alive until 'wait' returns false. At this point, 'wait' will not be
 		// called any more, and the ThreadWait will eventually be destroyed.
 		// The passed handle shall also be examined and the wait shall be aborted if that becomes signaling.
-		virtual bool wait(IOHandle io) = 0;
+		virtual bool wait(IOHandle &io) = 0;
 
 		// Called when wait() should be called, but when a timeout is also present.
-		virtual bool wait(IOHandle io, nat msTimeout) = 0;
+		virtual bool wait(IOHandle &io, nat msTimeout) = 0;
 
 		// Called to indicate that any thread held by 'wait' should be awoken. May be called from
 		// any thread. Calls to 'signal' after the last call to 'wait' may occur.

@@ -92,11 +92,11 @@ namespace sound {
 		events.push_back(CreateEvent(NULL, TRUE, FALSE, NULL));
 	}
 
-	bool AudioWait::wait(os::IOHandle io) {
+	bool AudioWait::wait(os::IOHandle &io) {
 		return wait(io, INFINITE);
 	}
 
-	bool AudioWait::wait(os::IOHandle io, nat ms) {
+	bool AudioWait::wait(os::IOHandle &io, nat ms) {
 		if (exit) {
 			doExit();
 			return false;

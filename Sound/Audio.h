@@ -57,8 +57,8 @@ namespace sound {
 		~AudioWait();
 
 		virtual void init();
-		virtual bool wait(os::IOHandle io);
-		virtual bool wait(os::IOHandle io, nat ms);
+		virtual bool wait(os::IOHandle &io);
+		virtual bool wait(os::IOHandle &io, nat ms);
 		virtual void signal();
 		virtual void work();
 

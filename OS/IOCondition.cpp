@@ -85,7 +85,7 @@ namespace os {
 		}
 	}
 
-	bool IOCondition::doWait(struct pollfd *fds, nat fdCount, int timeout) {
+	bool IOCondition::doWait(struct pollfd *fds, size_t fdCount, int timeout) {
 		fds[0].fd = fd;
 		fds[0].events = POLLIN;
 		fds[0].revents = 0;
@@ -127,10 +127,9 @@ namespace os {
 		doWait(&wait, 1, -1);
 	}
 
-	void IOCondition::wait(IOHandle io) {
-		UNUSED(io);
-		TODO(L"Properly handle waiting for IO!");
-		wait();
+	void IOCondition::wait(IOHandle &io) {
+		IOHandle::Desc desc = io.desc();
+		doWait(desc.fds, desc.count, -1);
 	}
 
 	bool IOCondition::wait(nat msTimeout) {
@@ -139,10 +138,9 @@ namespace os {
 		return doWait(&wait, 1, msTimeout);
 	}
 
-	bool IOCondition::wait(IOHandle io, nat msTimeout) {
-		UNUSED(io);
-		TODO(L"Propery handle waiting for IO!");
-		return wait(msTimeout);
+	bool IOCondition::wait(IOHandle &io, nat msTimeout) {
+		IOHandle::Desc desc = io.desc();
+		return doWait(desc.fds, desc.count, msTimeout);
 	}
 
 #endif

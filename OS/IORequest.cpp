@@ -29,13 +29,12 @@ namespace os {
 
 #ifdef POSIX
 
-	IORequest::IORequest(Thread &thread) : thread(thread) {
-		TODO(L"FIXME");
-		thread.threadData()->ioComplete.attach();
+	IORequest::IORequest(Handle handle, Type type, const Thread &thread) : type(type), handle(handle), thread(thread) {
+		thread.threadData()->ioComplete.attach(handle, this);
 	}
 
 	IORequest::~IORequest() {
-		thread.threadData()->ioComplete.detach();
+		thread.threadData()->ioComplete.detach(handle);
 	}
 
 #endif
