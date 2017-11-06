@@ -39,7 +39,7 @@ namespace storm {
 #elif defined(POSIX)
 
 	static os::Handle openFile(Str *name, bool input) {
-		int flags = O_CLOEXEC;
+		int flags = O_CLOEXEC | O_NONBLOCK;
 		if (input)
 			flags |= O_RDONLY;
 		else

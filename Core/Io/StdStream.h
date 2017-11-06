@@ -78,7 +78,6 @@ namespace storm {
 
 		/**
 		 * Get standard file handles.
-		 * (implemented in HandleStream.cpp)
 		 */
 		IStream *STORM_FN in(EnginePtr e);
 		OStream *STORM_FN out(EnginePtr e);
