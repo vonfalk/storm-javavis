@@ -820,14 +820,16 @@ namespace os {
 		pushContext(fn, null);
 	}
 
-	static void errorFn() {
-		PLN(L"UThread boot function returned. This is an implementation bug!");
-		std::terminate();
-	}
+	// static void errorFn() {
+	// 	PLN(L"UThread boot function returned. This is an implementation bug!");
+	// 	std::terminate();
+	// }
 
 	void UThreadData::pushContext(const void *fn, void *param) {
-		// Previous function's return to. Needed to align the stack properly.
-		push((void *)errorFn);
+		// Previous function's return to. Needed to align the stack properly.  Note: we can not push
+		// an address to the start of a function here since that would break stack traces when using
+		// DWARF. It is possible we could get away by using a function with no DWARF data.
+		push((void *)0);
 
 		push((void *)fn); // return to
 		push((void *)0); // rbp
