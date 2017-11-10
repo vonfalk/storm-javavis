@@ -39,7 +39,7 @@ Gc &gc() {
 int _tmain(int argc, const wchar_t *argv[]) {
 	initDebug();
 
-	stackBase = &argc;
+	stackBase = &argv;
 	// Allows using threads without an Engine.
 	os::Thread::setStackBase(stackBase);
 

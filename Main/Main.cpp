@@ -179,7 +179,7 @@ int stormMain(int argc, const wchar_t *argv[]) {
 			root = Path::cwd() + root;
 	}
 
-	Engine e(root, Engine::reuseMain, &argc);
+	Engine e(root, Engine::reuseMain, &argv);
 	Moment end;
 
 	importPkgs(e, p);
