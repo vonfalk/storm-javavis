@@ -30,7 +30,7 @@ namespace os {
 		atomicCAS(signaled, 1, 0);
 	}
 
-	void IOCondition::wait(IOHandle io) {
+	void IOCondition::wait(IOHandle &io) {
 		HANDLE ioHandle = io.v();
 		HANDLE handles[2] = { sema, ioHandle };
 		DWORD r = WaitForMultipleObjects(ioHandle ? 2 : 1, handles, FALSE, INFINITE);
@@ -47,7 +47,7 @@ namespace os {
 		}
 	}
 
-	bool IOCondition::wait(IOHandle io, nat msTimeout) {
+	bool IOCondition::wait(IOHandle &io, nat msTimeout) {
 		HANDLE ioHandle = io.v();
 		HANDLE handles[2] = { sema, ioHandle };
 		DWORD result = WaitForMultipleObjects(ioHandle ? 2 : 1, handles, FALSE, msTimeout);

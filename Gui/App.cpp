@@ -256,9 +256,9 @@ namespace gui {
 
 		if (msgDisabled) {
 			if (msTimeout != INFINITE)
-				fallback.wait(msTimeout);
+				fallback.wait(io, msTimeout);
 			else
-				fallback.wait();
+				fallback.wait(io);
 		} else {
 			HANDLE h = io.v();
 			Nat count = h != NULL ? 1 : 0;

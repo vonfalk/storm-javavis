@@ -151,7 +151,7 @@ namespace gui {
 		nat msgDisabled;
 
 		// Condition for use when messages are disabled.
-		os::Condition fallback;
+		os::IOCondition fallback;
 
 		// Engine, used to retrieve the App object.
 		Engine &e;
