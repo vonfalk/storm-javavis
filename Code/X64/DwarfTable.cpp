@@ -113,6 +113,9 @@ namespace code {
 			Entry *use = firstFree;
 			firstFree = use->ptr.nextFree;
 
+			// Clear any remains from a previous user.
+			memset(&use->data, 0, sizeof(FDE));
+
 			// Initialize the newly found data.
 			use->ptr.owner = this;
 			use->data.codeStart() = fn;

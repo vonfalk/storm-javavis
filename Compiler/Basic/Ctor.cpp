@@ -126,7 +126,7 @@ namespace storm {
 			threadParam = ctor->addParams(this);
 		}
 
-		void CtorBody::add(Array<Expr *>*exprs) {
+		void CtorBody::add(Array<Expr *> *exprs) {
 			for (nat i = 0; i < exprs->count(); i++) {
 				add(exprs->at(i));
 			}

@@ -65,7 +65,7 @@ namespace storm {
 			STORM_CTOR CtorBody(BSCtor *owner);
 
 			using ExprBlock::add;
-			void STORM_FN add(Array<Expr *>*exprs);
+			void STORM_FN add(Array<Expr *> *exprs);
 
 			// Temporary storage of the actual LocalVar that stores the parameter we need to capture.
 			LocalVar *threadParam;
