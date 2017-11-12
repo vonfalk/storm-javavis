@@ -53,6 +53,12 @@ Gui+=sharedlib
 Graphics+=sharedlib
 Sound+=sharedlib
 
+#Libraries that require position independent code on some platforms. If you intend to put the compiler itself
+#inside a shared library, add 'Compiler+=pic' here.
+Core+=pic
+OS+=pic
+Shared+=pic
+Utils+=pic
 
 [deps]
 TestLib+=CppTypes
@@ -112,6 +118,11 @@ link=lib /LTCG <files> /nologo /OUT:<output>
 flags=-std=c++11
 flags+=-O2
 
+[pic,unix]
+#All libraries need to be compiled with the -fPIC flag. At least on X86-64.
+flags+=-fPIC
+cflags+=-fPIC
+
 
 [storm_slow]
 buildDir=slow/
@@ -169,8 +180,15 @@ preBuildCreates+=Gen/CppVTables.s
 
 [sharedlib]
 packagePath=../root/<package>/
+
+[sharedlib,!unix]
 postBuild+=if not exist "<path|packagePath>" mkdir <path|packagePath>
 postBuild+=copy <output> <path|packagePath><libPrefix><title|output>
+
+[sharedlib,unix]
+flags+=-fPIC
+postBuild+=mkdir -p <path|packagePath>
+postBuild+=cp <output> <path|packagePath><libPrefix><title|output>
 
 [sharedlib,storm_debug]
 libPrefix=Debug
@@ -184,4 +202,4 @@ libPrefix=Slow
 compile+=*.c:cl <defines> <file> <includes> <flags> <warnings> /c /Fo<output>
 
 [unix]
-compile+=*.c:gcc -Wno-unknown-pragmas -std=c99 -O3 <defines> <warnings> -Wno-maybe-uninitialized <file> -c <includes> -o <output>
+compile+=*.c:gcc -Wno-unknown-pragmas -std=c99 -O3 <cflags> <defines> <warnings> -Wno-maybe-uninitialized <file> -c <includes> -o <output>

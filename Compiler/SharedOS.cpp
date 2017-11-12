@@ -2,24 +2,13 @@
 #include "SharedOS.h"
 #include "Core/Str.h"
 #include "Core/Io/Stream.h"
+#include "Core/PODArray.h"
+
+#if defined(POSIX)
+#include <elf.h>
+#endif
 
 namespace storm {
-
-#if defined(WINDOWS)
-
-	LoadedLib invalidLib = NULL;
-
-	LoadedLib loadLibrary(Url *path) {
-		return LoadLibrary(path->format()->c_str());
-	}
-
-	void unloadLibrary(LoadedLib lib) {
-		FreeLibrary(lib);
-	}
-
-	const void *findLibraryFn(LoadedLib lib, const char *name) {
-		return GetProcAddress(lib, name);
-	}
 
 	// Fill a structure with data from a stream.
 	template <class T>
@@ -40,6 +29,22 @@ namespace storm {
 		if (r.filled() != size)
 			return null;
 		return (T *)r.dataPtr();
+	}
+
+#if defined(WINDOWS)
+
+	LoadedLib invalidLib = NULL;
+
+	LoadedLib loadLibrary(Url *path) {
+		return LoadLibrary(path->format()->c_str());
+	}
+
+	void unloadLibrary(LoadedLib lib) {
+		FreeLibrary(lib);
+	}
+
+	const void *findLibraryFn(LoadedLib lib, const char *name) {
+		return GetProcAddress(lib, name);
 	}
 
 	// Find the file offset of a specific section.
@@ -128,6 +133,26 @@ namespace storm {
 
 #elif defined(POSIX)
 
+#if defined(X86)
+#define EM_CURRENT EM_386
+#define EI_CLASS_CURRENT ELFCLASS32
+#define EI_DATA_CURRENT ELFDATA2LSB
+#define EI_OSABI_CURRENT ELFOSABI_SYSV
+#define Elf_Ehdr Elf32_Ehdr
+#define Elf_Shdr Elf32_Shdr
+#define Elf_Sym Elf32_Sym
+#elif defined(X64)
+#define EM_CURRENT EM_X86_64
+#define EI_CLASS_CURRENT ELFCLASS64
+#define EI_DATA_CURRENT ELFDATA2LSB
+#define EI_OSABI_CURRENT ELFOSABI_SYSV
+#define Elf_Ehdr Elf64_Ehdr
+#define Elf_Shdr Elf64_Shdr
+#define Elf_Sym Elf64_Sym
+#else
+#error "I do not know your current machine type."
+#endif
+
 	LoadedLib invalidLib = null;
 
 	LoadedLib loadLibrary(Url *path) {
@@ -139,13 +164,142 @@ namespace storm {
 	}
 
 	const void *findLibraryFn(LoadedLib lib, const char *name) {
+		PVAR(dlsym(lib, ".text"));
 		return dlsym(lib, name);
 	}
 
-	bool hasExport(Url *file, const char *name) {
-		TODO(L"Implement me!");
-		// Disallow all dynamic libraries for now:
+	static bool findSections(RIStream *file, Elf_Ehdr &header, Elf_Shdr &dynsym, Elf_Shdr &strtab) {
+		bool hasDynsym = false;
+		bool hasStrtab = false;
+
+		for (nat i = 0; i < header.e_shnum; i++) {
+			Elf_Shdr current;
+			file->seek(header.e_shoff + i*header.e_shentsize);
+			if (!fill(file, current))
+				return false;
+
+			if (current.sh_type == SHT_DYNSYM && !hasDynsym) {
+				dynsym = current;
+				hasDynsym = true;
+			}
+
+			if (current.sh_type == SHT_STRTAB && !hasStrtab) {
+				strtab = current;
+				hasStrtab = true;
+			}
+
+			if (hasDynsym && hasStrtab)
+				return true;
+		}
 		return false;
+	}
+
+	static Nat strlen(const Buffer &buf, Nat start) {
+		for (Nat i = start; i < buf.count(); i++)
+			if (buf[i] == 0)
+				return i - start;
+		return buf.count() - start;
+	}
+
+	// Look for the string table offsets of a specified name.
+	static void findNames(RIStream *file, Elf_Shdr &strtab, const char *name, PODArray<Word, 10> &result) {
+		Nat nameLen = ::strlen(name);
+
+		// We're assuming that 'name', as well as any entries in the ELF file are way less than 1024 bytes long.
+		const Nat chunkSize = 1024;
+		Buffer buf = buffer(file->engine(), chunkSize * 2);
+
+		// Fill up the buffer.
+		file->seek(strtab.sh_offset);
+		file->read(buf);
+
+		// Start looking for strings!
+		Word pos = 0;
+		Nat bufpos = 0;
+		while (pos < strtab.sh_size) {
+			Nat len = strlen(buf, bufpos);
+
+			if (nameLen == len) {
+				// Could be the one!
+				if (strcmp(name, (const char *)buf.dataPtr() + bufpos) == 0)
+					result.push(pos);
+			}
+
+			pos += len + 1;
+			bufpos += len + 1;
+
+			if (bufpos >= chunkSize) {
+				// Move data.
+				for (Nat i = 0; i < chunkSize; i++)
+					buf[i] = buf[i + chunkSize];
+				bufpos -= chunkSize;
+				// Read another chunk from disk.
+				buf.filled(chunkSize);
+				file->read(buf);
+			}
+		}
+	}
+
+	struct Verify {
+		nat key, value;
+	};
+
+	static bool hasExport(RIStream *file, const char *name) {
+		// NOTE: We're assuming 64-bit ELF files.
+		Elf_Ehdr header;
+		if (!fill(file, header))
+			return false;
+
+		Verify verify[] = {
+			{ EI_MAG0, ELFMAG0 },
+			{ EI_MAG1, ELFMAG1 },
+			{ EI_MAG2, ELFMAG2 },
+			{ EI_MAG3, ELFMAG3 },
+			{ EI_CLASS, EI_CLASS_CURRENT },
+			{ EI_DATA, EI_DATA_CURRENT },
+			{ EI_OSABI, EI_OSABI_CURRENT }
+		};
+
+		for (size_t i = 0; i < ARRAY_COUNT(verify); i++) {
+			if (header.e_ident[verify[i].key] != verify[i].value)
+				return false;
+		}
+
+		if (header.e_type != ET_DYN)
+			return false;
+		if (header.e_machine != EM_CURRENT)
+			return false;
+
+		Elf_Shdr dynsym = {}, strtab = {};
+		if (!findSections(file, header, dynsym, strtab))
+			return false;
+
+		// Look for strings in the string table...
+		PODArray<Word, 10> offsets(file->engine());
+		findNames(file, strtab, name, offsets);
+		if (offsets.count() == 0)
+			return false;
+
+		// See if any symbols here refer to any of the offsets we found.
+		file->seek(dynsym.sh_offset);
+		for (size_t i = 0; i*sizeof(Elf_Sym) < dynsym.sh_size; i++) {
+			Elf_Sym sym;
+			if (!fill(file, sym))
+				return false;
+
+			for (Nat i = 0; i < offsets.count(); i++)
+				if (offsets[i] == sym.st_name)
+					return true;
+		}
+
+		return false;
+	}
+
+	bool hasExport(Url *file, const char *name) {
+		RIStream *src = file->read()->randomAccess();
+		bool r = hasExport(src, name);
+		src->close();
+		return r;
 	}
 
 #else

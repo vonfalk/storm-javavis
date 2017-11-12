@@ -4,12 +4,7 @@
 
 namespace storm {
 	namespace shared {
-		// TODO: Place in another package for linux/unix. Alternatively, use a separate file extension
-		// for both systems.
-		STORM_PKG(lang.dll);
-
-		// Entry point!
-		PkgReader *STORM_FN reader(Array<Url *> *files, Package *pkg);
+		STORM_PKG(core.lang);
 
 		/**
 		 * Reader for shared libraries.
@@ -38,5 +33,19 @@ namespace storm {
 			void load();
 		};
 
+
+		namespace win {
+			STORM_PKG(lang.dll);
+
+			// Entry point for Windows.
+			PkgReader *STORM_FN reader(Array<Url *> *files, Package *pkg);
+		}
+
+		namespace posix {
+			STORM_PKG(lang.so);
+
+			// Entry point for POSIX.
+			PkgReader *STORM_FN reader(Array<Url *> *files, Package *pkg);
+		}
 	}
 }

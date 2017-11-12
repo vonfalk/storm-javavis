@@ -4,9 +4,16 @@
 
 namespace storm {
 	namespace shared {
+		namespace win {
+			PkgReader *reader(Array<Url *> *files, Package *pkg) {
+				return new (files) SharedReader(files, pkg);
+			}
+		}
 
-		PkgReader *reader(Array<Url *> *files, Package *pkg) {
-			return new (files) SharedReader(files, pkg);
+		namespace posix {
+			PkgReader *reader(Array<Url *> *files, Package *pkg) {
+				return new (files) SharedReader(files, pkg);
+			}
 		}
 
 		SharedReader::SharedReader(Array<Url *> *files, Package *pkg) : PkgReader(files, pkg) {

@@ -56,6 +56,11 @@ _ZN2os8doSwitchEPPNS_12UThreadStack4DescES3_:
 	pop %rbp
 	retq
 
+	.align 8
+doEndDetour2Ptr:
+	# Store a pointer to the 'doEndDetour2' function so we can call it using RIP relative addressing.
+	.quad doEndDetour2
+
 	# doEndDetour()
 	.globl doEndDetour
 	.type doEndDetour, @function
@@ -97,7 +102,7 @@ doEndDetour:
 
 	# Now, we have saved everything. Call the 'doEndDetour2' function in C to perform thread switches properly.
 	movq %rax, %rdi
-	call doEndDetour2
+	call *doEndDetour2Ptr(%rip)
 
 	# Restore the state we saved on the stack!
 	movaps (%rsp), %xmm7
@@ -169,7 +174,7 @@ doEndDetourMember:
 
 	# Now, we have saved everything. Call the 'doEndDetour2' function in C to perform thread switches properly.
 	movq %rax, %rdi
-	call doEndDetour2
+	call *doEndDetour2Ptr(%rip)
 
 	# Restore the state we saved on the stack!
 	movaps (%rsp), %xmm7
