@@ -3,7 +3,9 @@
 #include "Core/Str.h"
 #include "Core/Thread.h"
 
-namespace gui {
+namespace testlib {
+
+	STORM_DEFINE_THREAD(LibThread);
 
 	Int test(Int v) {
 		return v + 1;
@@ -31,7 +33,7 @@ namespace gui {
 		case 0:
 			return Compiler::thread(e.v);
 		default:
-			return Ui::thread(e.v);
+			return LibThread::thread(e.v);
 		}
 	}
 }

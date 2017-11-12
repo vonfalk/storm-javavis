@@ -2,7 +2,9 @@
 #include "Core/Array.h"
 #include "Core/EnginePtr.h"
 
-namespace gui {
+namespace testlib {
+
+	STORM_THREAD(LibThread);
 
 	Int STORM_FN test(Int v);
 	Int STORM_FN test(Str *v);

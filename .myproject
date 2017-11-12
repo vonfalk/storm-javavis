@@ -42,21 +42,26 @@ SoundLib+=extern_lib
 
 #Libraries that need the storm preprocessor to be run.
 Compiler+=stormpp
+TestLib+=stormpp
 Gui+=stormpp
 Graphics+=stormpp
 Sound+=stormpp
 
 #Libraries linked into shared libraries loaded by Storm at runtime.
+TestLib+=sharedlib
 Gui+=sharedlib
 Graphics+=sharedlib
 Sound+=sharedlib
 
 
 [deps]
+TestLib+=CppTypes
 Gui+=CppTypes
 Compiler+=CppTypes
 Sound+=CppTypes
 Graphics+=CppTypes
+
+Compiler+=TestLib
 
 [deps,windows]
 #To make sure everything is built.
