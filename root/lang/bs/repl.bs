@@ -138,6 +138,15 @@ class ReplSandbox on Compiler {
 		}
 	}
 
+	// Show version information.
+	void version() {
+		print("Versions for modules currently in use by the system:");
+		print("");
+		for (v in core:info:versions) {
+			print(v.toS);
+		}
+	}
+
 	// This is the exit command.
 	void exit() {
 		owner.done = true;

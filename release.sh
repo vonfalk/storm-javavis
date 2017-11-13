@@ -1,10 +1,57 @@
 #!/bin/bash
 
+function find_version {
+    tag=`git describe --abbrev=0 master`
+    desc=`git describe master`
+
+    if [[ $tag != $desc ]]
+    then
+	# Format the extra information.
+	tag=`echo $desc | sed -E 's/-([0-9]+)-([a-zA-Z0-9]+)$/+git.\1.\2/'`
+    fi
+
+    echo $tag | sed 's/^v//'
+}
+
+function create_version {
+    tag=`git describe --abbrev=0 master`
+    git describe master > release_message.txt
+    echo "" >> release_message.txt
+    echo "# Commits since previous release:" >> release_message.txt
+    git log ${tag}..master | sed -e 's/^/# /' >> release_message.txt
+    $EDITOR release_message.txt
+
+    version=`head -n 1 release_message.txt`
+    tail -n +2 release_message.txt | grep -v "# " | git tag -a -F - v${version}
+    rm release_message.txt
+}
+
+branch=`git rev-parse --abbrev-ref HEAD`
+if [[ $branch != "master" ]]
+then
+    echo "Error: You need to checkout the branch 'master' to perform a release."
+    exit 1
+fi
+
+version=`find_version`
+read -p "Current version is $version. Change it? [Y/n] " -n 1 -r
+echo
+if [[ $REPLY =~ ^[Yy]$ ]] || [[ -z $REPLY ]]
+then
+    create_version
+    version=`find_version`
+fi
+
+echo "Current version: $version"
+
+echo "core.info" > Compiler/COMPILER.version
+echo "$version" >> Compiler/COMPILER.version
+
 echo "Building release..."
 mm release -ne || { echo "Compilation failed!"; exit 1; }
 
 echo "Done! Running the test suite..."
-release/Test.exe --all || { echo "Tests failed!"; exit 1; }
+release/Test --all || { echo "Tests failed!"; exit 1; }
 
 echo "Seems good"
 
