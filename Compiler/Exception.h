@@ -10,7 +10,7 @@ namespace storm {
 	 * Runtime errors.
 	 */
 
-	class RuntimeError : public Exception {
+	class EXCEPTION_EXPORT RuntimeError : public Exception {
 	public:
 		inline RuntimeError(const String &w) : w(w) {}
 		inline virtual String what() const { return w; }
@@ -23,7 +23,7 @@ namespace storm {
 	 * Defines exceptions used in the compiler.
 	 */
 
-	class CodeError : public Exception {
+	class EXCEPTION_EXPORT CodeError : public Exception {
 	public:
 		inline CodeError(const SrcPos &where) : where(where) {}
 
@@ -39,7 +39,7 @@ namespace storm {
 	/**
 	 * Internal error.
 	 */
-	class InternalError : public Exception {
+	class EXCEPTION_EXPORT InternalError : public Exception {
 	public:
 		inline InternalError(const String &w) : w(w) {}
 		inline virtual String what() const { return w; }
@@ -50,7 +50,7 @@ namespace storm {
 	/**
 	 * Language definition error.
 	 */
-	class LangDefError : public Exception {
+	class EXCEPTION_EXPORT LangDefError : public Exception {
 	public:
 		inline LangDefError(const String &w) : w(w) {}
 		inline virtual String what() const { return w; }
@@ -61,7 +61,7 @@ namespace storm {
 	/**
 	 * Specific subclass when calling core:debug:throwError.
 	 */
-	class DebugError : public Exception {
+	class EXCEPTION_EXPORT DebugError : public Exception {
 		inline virtual String what() const { return L"Debug error"; }
 	};
 
@@ -69,7 +69,7 @@ namespace storm {
 	/**
 	 * Internal type error (something in C++ went wrong).
 	 */
-	class InternalTypeError : public InternalError {
+	class EXCEPTION_EXPORT InternalTypeError : public InternalError {
 	public:
 		InternalTypeError(const String &context, const Type *expected, const Type *got);
 	};
@@ -78,7 +78,7 @@ namespace storm {
 	/**
 	 * Some syntax error.
 	 */
-	class SyntaxError : public CodeError {
+	class EXCEPTION_EXPORT SyntaxError : public CodeError {
 	public:
 		inline SyntaxError(const SrcPos &where, const String &msg) : CodeError(where), msg(msg) {}
 
@@ -94,7 +94,7 @@ namespace storm {
 	/**
 	 * Type checking error.
 	 */
-	class TypeError : public CodeError {
+	class EXCEPTION_EXPORT TypeError : public CodeError {
 	public:
 		inline TypeError(const SrcPos &where, const String &msg) : CodeError(where), msg(msg) {}
 		inline TypeError(const SrcPos &where, const Value &expected, const ExprResult &got)
@@ -114,7 +114,7 @@ namespace storm {
 	 * Error in type definitions.
 	 * TODO: Require a SrcPos!
 	 */
-	class TypedefError : public CodeError {
+	class EXCEPTION_EXPORT TypedefError : public CodeError {
 	public:
 		inline TypedefError(const String &msg) : CodeError(SrcPos()), msg(msg) { TODO("Require a SrcPos!"); }
 		inline virtual String what() const {
@@ -128,7 +128,7 @@ namespace storm {
 	/**
 	 * Error while handling built-in functions.
 	 */
-	class BuiltInError : public Exception {
+	class EXCEPTION_EXPORT BuiltInError : public Exception {
 	public:
 		BuiltInError(const String &msg) : msg(msg) {}
 		virtual String what() const { return L"Error while loading built in functions: " + msg; }

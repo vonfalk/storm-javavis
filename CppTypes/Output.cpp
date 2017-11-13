@@ -876,6 +876,7 @@ static void genGccX64(wostream &to, World &w) {
 		String sName = stormVTableName(t.name);
 		to << L"\t.globl " << sName << L"\n";
 		to << L"\t.type " << sName << L", @function\n";
+		to << L"\t.hidden " << sName << L"\n";
 		to << sName << L":\n";
 		// There are two words of additional information in GCC.
 		to << L"\tmovabsq $" << gccVTableName(t.name) << L"+16, %rax\n";

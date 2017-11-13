@@ -148,6 +148,10 @@ flags+=-Wno-pmf-conversions
 flags+=-Wno-switch
 flags+=-Wno-parentheses
 flags+=-Wno-unused-function
+#Do not export all symbols from .so-files. Storm assumes that functions and variables in different
+#modules are different variables and may thus contain different values. This is not the default on UNIX
+#systems, at least not when using GCC.
+flags+=-fvisibility=hidden
 
 library+=pthread
 library+=dl

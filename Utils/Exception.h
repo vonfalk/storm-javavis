@@ -1,8 +1,9 @@
 #pragma once
 
 #include "StackTrace.h"
+#include "Platform.h"
 
-class Exception : public Printable {
+class EXCEPTION_EXPORT Exception : public Printable {
 public:
 	Exception();
 	virtual ~Exception();
@@ -17,7 +18,7 @@ protected:
 };
 
 // Generic error supposed to be reported to the user, not falling under any other cathegory.
-class UserError : public Exception {
+class EXCEPTION_EXPORT UserError : public Exception {
 public:
 	UserError(const String &msg) : msg(msg) {}
 
@@ -26,7 +27,7 @@ private:
 	String msg;
 };
 
-class NoSuchFile : public Exception {
+class EXCEPTION_EXPORT NoSuchFile : public Exception {
 public:
 	NoSuchFile(const String &file) : file(file) {};
 	NoSuchFile(const NoSuchFile &other) : file(other.file) {};
@@ -37,7 +38,7 @@ protected:
 	String file;
 };
 
-class CannotOpen : public Exception {
+class EXCEPTION_EXPORT CannotOpen : public Exception {
 public:
 	CannotOpen(const String &path) : path(path) {};
 	CannotOpen(const CannotOpen &other) : path(other.path) {};
@@ -48,7 +49,7 @@ private:
 	String path;
 };
 
-class LoadError : public Exception {
+class EXCEPTION_EXPORT LoadError : public Exception {
 public:
 	LoadError(const String &error) : error(error) {};
 	LoadError(const LoadError &other) : error(other.error) {};
@@ -59,7 +60,7 @@ private:
 	String error;
 };
 
-class SaveError : public Exception {
+class EXCEPTION_EXPORT SaveError : public Exception {
 public:
 	SaveError(const String &error) : error(error) {};
 	SaveError(const SaveError &other) : error(other.error) {};

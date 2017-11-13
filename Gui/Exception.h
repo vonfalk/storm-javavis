@@ -3,7 +3,7 @@
 
 namespace gui {
 
-	class GuiError : public Exception {
+	class EXCEPTION_EXPORT GuiError : public Exception {
 	public:
 		GuiError(const String &what) : data(what) {}
 

@@ -3,14 +3,14 @@
 namespace code {
 
 	// Thrown when an instruction contains invalid data for some reason.
-	class InvalidValue : public Exception {
+	class EXCEPTION_EXPORT InvalidValue : public Exception {
 		String error;
 	public:
 		InvalidValue(const String &what) : error(what) {}
 		virtual String what() const { return error; }
 	};
 
-	class BlockBeginError : public Exception {
+	class EXCEPTION_EXPORT BlockBeginError : public Exception {
 	public:
 		BlockBeginError() : msg(L"The parent scope must be entered before a child scope.") {}
 		BlockBeginError(const String &msg) : msg(msg) {}
@@ -19,7 +19,7 @@ namespace code {
 		String msg;
 	};
 
-	class BlockEndError : public Exception {
+	class EXCEPTION_EXPORT BlockEndError : public Exception {
 	public:
 		BlockEndError() : msg(L"The scope is not the topmost active scope.") {}
 		BlockEndError(const String &msg) : msg(msg) {}
@@ -28,12 +28,12 @@ namespace code {
 		String msg;
 	};
 
-	class FrameError : public Exception {
+	class EXCEPTION_EXPORT FrameError : public Exception {
 	public:
 		String what() const { return L"Trying to use an invalid frame, part or variable."; }
 	};
 
-	class DuplicateLabelError : public Exception {
+	class EXCEPTION_EXPORT DuplicateLabelError : public Exception {
 	public:
 		DuplicateLabelError(nat id) : id(id) {}
 
@@ -42,7 +42,7 @@ namespace code {
 		String what() const { return String(L"Duplicate usage of label ") + toS(id) + L"."; }
 	};
 
-	class UnusedLabelError : public Exception {
+	class EXCEPTION_EXPORT UnusedLabelError : public Exception {
 	public:
 		UnusedLabelError(nat id) : id(id) {}
 
@@ -51,7 +51,7 @@ namespace code {
 		String what() const { return String(L"Use of undefined label ") + toS(id) + L"."; }
 	};
 
-	class VariableUseError : public Exception {
+	class EXCEPTION_EXPORT VariableUseError : public Exception {
 	public:
 		VariableUseError(Var v, Part p) : var(v), part(p) {}
 

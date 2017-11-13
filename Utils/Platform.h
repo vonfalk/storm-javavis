@@ -51,6 +51,19 @@
  * mymake think that Code is dependent on almost all projects, since they only need the CODECALL macro.
  */
 
+/**
+ * SHARED_EXPORT:
+ * Used to mark functions that shall be exported from a shared library.
+ */
+
+/**
+ * EXCEPTION_EXPORT:
+ * Used to mark all exceptions in the system, as some systems require special knowledge of all
+ * classes that are used as exceptions.
+ * See https://gcc.gnu.org/wiki/Visibility for details.
+ */
+
+
 
 // Detect the current architecture and platform.
 #if defined(_WIN64)
@@ -100,6 +113,7 @@
 #define THREAD __declspec(thread)
 #define NAKED __declspec(naked)
 #define SHARED_EXPORT __declspec(dllexport)
+#define EXCEPTION_EXPORT
 
 #if VISUAL_STUDIO >= 2010
 #define USE_MOVE // Not sure about this one...
@@ -109,8 +123,9 @@
 
 #ifdef GCC
 #define THREAD __thread
-#define NAKED error // not supported?
-#define SHARED_EXPORT // TODO!
+#define NAKED error // not supported.
+#define SHARED_EXPORT __attribute__((visibility ("default")))
+#define EXCEPTION_EXPORT __attribute__((visibility ("default")))
 
 // We require support for these features.
 #define USE_MOVE

@@ -362,6 +362,9 @@ static Auto<Class> parseParent(Tokenizer &tok, const CppName &fullName, const St
 
 // Parse a type.
 static void parseType(Tokenizer &tok, ParseEnv &env, const CppName &inside) {
+	// Exported exception?
+	tok.skipIf(L"EXCEPTION_EXPORT");
+
 	Token name = tok.next();
 
 	// Forward-declaration?

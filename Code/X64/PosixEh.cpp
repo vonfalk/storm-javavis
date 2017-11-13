@@ -43,7 +43,7 @@ namespace code {
 
 		// Hook into the exception resolution system so that we can provide our generated DWARF
 		// frames when required.
-		extern "C" FDE *_Unwind_Find_FDE(void *pc, struct dwarf_eh_bases *bases) {
+		extern "C" SHARED_EXPORT FDE *_Unwind_Find_FDE(void *pc, struct dwarf_eh_bases *bases) {
 			// Try asking the standard library first.
 			FDE *found = (*prevFDE.ptr)(pc, bases);
 			if (found)
