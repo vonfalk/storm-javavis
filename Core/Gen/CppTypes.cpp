@@ -67,6 +67,7 @@ namespace storm {
 		static const CppTemplate *cppTemplates();
 		static const CppThread *cppThreads();
 		static const CppLicense *cppLicenses();
+		static const CppVersion *cppVersions();
 		static const CppRefType *cppRefTypes();
 
 		/**
@@ -196,6 +197,14 @@ namespace storm {
 		return licenses;
 	}
 
+	const CppVersion *CppMeta::cppVersions() {
+		static const CppVersion versions[] = {
+			// VERSIONS
+			{ null, null, null },
+		};
+		return versions;
+	}
+
 	const CppRefType *CppMeta::cppRefTypes() {
 #ifdef DEBUG
 		// REF_PTR_OFFSETS
@@ -219,6 +228,7 @@ namespace storm {
 			CppMeta::cppTemplates(),
 			CppMeta::cppThreads(),
 			CppMeta::cppLicenses(),
+			CppMeta::cppVersions(),
 			CppMeta::cppRefTypes(),
 		};
 		return &w;

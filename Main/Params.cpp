@@ -78,6 +78,9 @@ static StatePtr start(const wchar_t *arg, Params &result) {
 		return &import;
 	} else if (wcscmp(arg, L"-r") == 0) {
 		return &root;
+	} else if (wcscmp(arg, L"--version") == 0) {
+		result.mode = Params::modeVersion;
+		return StatePtr();
 	} else if (wcscmp(arg, L"--server") == 0) {
 		result.mode = Params::modeServer;
 		return StatePtr();
@@ -112,4 +115,16 @@ Params::Params(int argc, const wchar_t *argv[])
 
 	if (state && mode != Params::modeError)
 		state(null, *this);
+}
+
+void help(const wchar_t *cmd) {
+	wcout << L"Usage: " << endl;
+	wcout << cmd << L"                  - launch the default REPL." << endl;
+	wcout << cmd << L" <language>       - launch the REPL for <language>." << endl;
+	wcout << cmd << L" -f <function>    - run <function> then exit." << endl;
+	wcout << cmd << L" -i <name> <path> - import package at <path> as <name>." << endl;
+	wcout << cmd << L" -c <expr>        - evaluate <expr> in the default REPL." << endl;
+	wcout << cmd << L" -r <path>        - use <path> as the root path." << endl;
+	wcout << cmd << L" --version        - print the current version and exit." << endl;
+	wcout << cmd << L" --server         - start the language server." << endl;
 }

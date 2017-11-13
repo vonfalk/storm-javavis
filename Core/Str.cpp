@@ -262,6 +262,16 @@ namespace storm {
 	}
 
 	Bool Str::isInt() const {
+		Nat start = 0;
+		if (data->v[0] == '-')
+			start++;
+		for (Nat i = start; i < data->count - 1; i++)
+			if (data->v[i] < '0' || data->v[i] > '9')
+				return false;
+		return true;
+	}
+
+	Bool Str::isNat() const {
 		for (nat i = 0; i < data->count - 1; i++)
 			if (data->v[i] < '0' || data->v[i] > '9')
 				return false;

@@ -768,6 +768,17 @@ static void genLicenses(wostream &to, World &w) {
 	}
 }
 
+static void genVersions(wostream &to, World &w) {
+	for (nat i = 0; i < w.versions.size(); i++) {
+		const Version &v = w.versions[i];
+
+		to << L"{ S(\"" << v.id << L"\"), ";
+		to << L"S(\"" << v.pkg << L"\"), ";
+		// Version strings should be simple enough so that this works properly:
+		to << L"S(\"" << v.version << L"\") },\n";
+	}
+}
+
 GenerateMap genMap() {
 	struct E {
 		const wchar_t *tag;
@@ -793,6 +804,7 @@ GenerateMap genMap() {
 		{ L"REF_PTR_OFFSETS", &genRefPtrOffsets },
 		{ L"REF_TYPES", &genRefTypes },
 		{ L"LICENSES", &genLicenses },
+		{ L"VERSIONS", &genVersions },
 	};
 
 	GenerateMap g;

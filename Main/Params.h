@@ -24,6 +24,7 @@ public:
 		modeRepl,
 		modeFunction,
 		modeServer,
+		modeVersion,
 		modeError,
 	};
 
@@ -42,3 +43,5 @@ public:
 	// Import additional packages.
 	vector<Import> import;
 };
+
+void help(const wchar_t *cmd);

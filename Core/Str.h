@@ -71,6 +71,7 @@ namespace storm {
 
 		// Is this an integer?
 		Bool STORM_FN isInt() const;
+		Bool STORM_FN isNat() const;
 
 		// Interpret as numbers.
 		Int STORM_FN toInt() const;

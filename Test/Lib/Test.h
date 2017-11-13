@@ -160,7 +160,7 @@ template <class T, class U>
 void verifyLt(TestResult &r, const T &lhs, const U &rhs, const String &expr) {
 	if (!(lhs < rhs)) {
 		r.failed++;
-		std::wcout << L"Failed: " << expr << L" == " << lhs << L" < " << rhs << std::endl;
+		std::wcout << L"Failed: " << expr << L" == " << lhs << L" !< " << rhs << std::endl;
 	}
 }
 
@@ -168,7 +168,7 @@ template <class T, class U>
 void verifyLte(TestResult &r, const T &lhs, const U &rhs, const String &expr) {
 	if (!(lhs <= rhs)) {
 		r.failed++;
-		std::wcout << L"Failed: " << expr << L" == " << lhs << L" <= " << rhs << std::endl;
+		std::wcout << L"Failed: " << expr << L" == " << lhs << L" !<= " << rhs << std::endl;
 	}
 }
 
@@ -176,7 +176,7 @@ template <class T, class U>
 void verifyGt(TestResult &r, const T &lhs, const U &rhs, const String &expr) {
 	if (!(lhs > rhs)) {
 		r.failed++;
-		std::wcout << L"Failed: " << expr << L" == " << lhs << L" > " << rhs << std::endl;
+		std::wcout << L"Failed: " << expr << L" == " << lhs << L" !> " << rhs << std::endl;
 	}
 }
 
@@ -184,7 +184,7 @@ template <class T, class U>
 void verifyGte(TestResult &r, const T &lhs, const U &rhs, const String &expr) {
 	if (!(lhs >= rhs)) {
 		r.failed++;
-		std::wcout << L"Failed: " << expr << L" == " << lhs << L" >= " << rhs << std::endl;
+		std::wcout << L"Failed: " << expr << L" == " << lhs << L" !>= " << rhs << std::endl;
 	}
 }
 

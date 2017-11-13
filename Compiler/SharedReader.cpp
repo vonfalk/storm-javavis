@@ -42,7 +42,7 @@ namespace storm {
 			load();
 			for (Nat i = 0; i < toLoad->count(); i++) {
 				toLoad->at(i).loadFunctions();
-				toLoad->at(i).loadLicenses();
+				toLoad->at(i).loadMeta();
 			}
 		}
 

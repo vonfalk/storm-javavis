@@ -3,6 +3,7 @@
 #include "Type.h"
 #include "Thread.h"
 #include "License.h"
+#include "Version.h"
 #include "Auto.h"
 #include "NameMap.h"
 
@@ -37,6 +38,9 @@ public:
 
 	// Licenses.
 	vector<License> licenses;
+
+	// Versions.
+	vector<Version> versions;
 
 	// ...
 

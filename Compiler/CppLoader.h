@@ -41,8 +41,8 @@ namespace storm {
 		// their packages and that variables are properly created (we might need type layout etc. in this step).
 		void loadFunctions();
 
-		// Create all licenses in their appropriate places.
-		void loadLicenses();
+		// Create other metadata provided by this package (such as license and version information).
+		void loadMeta();
 
 	private:
 		// Engine to load into.
@@ -78,6 +78,15 @@ namespace storm {
 
 		// Get the number of licenses.
 		nat licenseCount() const;
+
+		// Get the number of versions.
+		nat versionCount() const;
+
+		// Create all licenses in their appropriate places.
+		void loadLicenses();
+
+		// Create all versions in their appropriate places.
+		void loadVersions();
 
 		// Find a NameSet corresponding to a given name.
 		NameSet *findPkg(const wchar *name);

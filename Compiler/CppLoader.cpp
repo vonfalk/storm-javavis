@@ -5,6 +5,7 @@
 #include "Package.h"
 #include "Function.h"
 #include "License.h"
+#include "Version.h"
 #include "Code.h"
 #include "VTableCpp.h"
 #include "Exception.h"
@@ -62,6 +63,13 @@ namespace storm {
 	nat CppLoader::licenseCount() const {
 		nat n = 0;
 		while (world->licenses[n].name)
+			n++;
+		return n;
+	}
+
+	nat CppLoader::versionCount() const {
+		nat n = 0;
+		while (world->versions[n].name)
 			n++;
 		return n;
 	}
@@ -535,12 +543,30 @@ namespace storm {
 		memberOf->add(new (*e) EnumValue(memberOf, new (*e) Str(val.name), val.value));
 	}
 
+	void CppLoader::loadMeta() {
+		loadLicenses();
+		loadVersions();
+	}
+
 	void CppLoader::loadLicenses() {
 		nat count = licenseCount();
 		for (nat i = 0; i < count; i++) {
 			const CppLicense &l = world->licenses[i];
 			NameSet *into = findPkg(l.pkg);
 			into->add(new (*e) License(new (*e) Str(l.name), new (*e) Str(l.title), new (*e) Str(l.body)));
+		}
+	}
+
+	void CppLoader::loadVersions() {
+		nat count = versionCount();
+		for (nat i = 0; i < count; i++) {
+			const CppVersion &v = world->versions[i];
+			Version *ver = parseVersion(new (*e) Str(v.version));
+			if (!ver)
+				throw InternalError(L"Failed to parse the version string " + ::toS(v.version));
+
+			NameSet *into = findPkg(v.pkg);
+			into->add(new (*e) VersionTag(new (*e) Str(v.name), ver));
 		}
 	}
 

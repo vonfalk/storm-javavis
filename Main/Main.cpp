@@ -5,6 +5,7 @@
 #include "Compiler/Engine.h"
 #include "Compiler/Package.h"
 #include "Compiler/Repl.h"
+#include "Compiler/Version.h"
 #include "Core/Timing.h"
 #include "Core/Io/StdStream.h"
 #include "Core/Io/Text.h"
@@ -124,16 +125,6 @@ int runFunction(Engine &e, const wchar_t *function) {
 	return 0;
 }
 
-void help(const wchar_t *cmd) {
-	wcout << L"Usage: " << endl;
-	wcout << cmd << L"                  - launch the default REPL." << endl;
-	wcout << cmd << L" <language>       - launch the REPL for <language>." << endl;
-	wcout << cmd << L" -f <function>    - run <function> then exit." << endl;
-	wcout << cmd << L" -i <name> <path> - import package at <path> as <name>." << endl;
-	wcout << cmd << L" -c <expr>        - evaluate <expr> in the default REPL." << endl;
-	wcout << cmd << L" -r <path>        - use <path> as the root path." << endl;
-}
-
 void importPkgs(Engine &into, const Params &p) {
 	for (Nat i = 0; i < p.import.size(); i++) {
 		const Import &import = p.import[i];
@@ -148,6 +139,22 @@ void importPkgs(Engine &into, const Params &p) {
 		Package *pkg = new (into) Package(n->last()->name, path);
 		ns->add(pkg);
 	}
+}
+
+void showVersion(Engine &e) {
+	Array<VersionTag *> *tags = storm::versions(e.package(S("core")));
+	if (tags->empty()) {
+		wcout << L"Error: No version information found. Make sure this release was compiled correctly." << std::endl;
+		return;
+	}
+
+	VersionTag *best = tags->at(0);
+	for (Nat i = 1; i < tags->count(); i++) {
+		if (best->path()->count() > tags->at(i)->path()->count())
+			best = tags->at(i);
+	}
+
+	wcout << best->version << std::endl;
 }
 
 int stormMain(int argc, const wchar_t *argv[]) {
@@ -198,6 +205,10 @@ int stormMain(int argc, const wchar_t *argv[]) {
 			break;
 		case Params::modeFunction:
 			result = runFunction(e, p.modeParam);
+			break;
+		case Params::modeVersion:
+			showVersion(e);
+			result = 0;
 			break;
 		case Params::modeServer:
 			server::run(e, proc::in(e), proc::out(e));

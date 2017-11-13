@@ -44,6 +44,25 @@ vector<Path> findLicenses(const vector<Path> &in) {
 	return result;
 }
 
+void findVersions(const Path &in, vector<Path> &out) {
+	vector<Path> c = in.children();
+	for (nat i = 0; i < c.size(); i++) {
+		if (c[i].isDir()) {
+			findVersions(c[i], out);
+		} else if (c[i].hasExt(L"version")) {
+			out.push_back(c[i]);
+		}
+	}
+}
+
+// Find version files.
+vector<Path> findVersions(const vector<Path> &in) {
+	vector<Path> result;
+	for (nat i = 0; i < in.size(); i++)
+		findVersions(in[i], result);
+	return result;
+}
+
 // Find the latest last-modified time for any files.
 Timestamp lastModified(const vector<Path> &files) {
 	Timestamp last = files[0].mTime();
@@ -97,12 +116,15 @@ int _tmain(int argc, const wchar_t *argv[]) {
 		return 1;
 	}
 
-	// Find all license files.
+	// Find all license and version files.
 	vector<Path> licenses = findLicenses(config.dirs);
+	vector<Path> versions = findVersions(config.dirs);
 
 	Timestamp modified = lastModified(SrcPos::files);
 	if (!licenses.empty())
 		modified = max(modified, lastModified(licenses));
+	if (!versions.empty())
+		modified = max(modified, lastModified(versions));
 	modified = max(modified, config.cppSrc);
 	if (config.genAsm)
 		modified = max(modified, config.asmSrc);
@@ -121,7 +143,7 @@ int _tmain(int argc, const wchar_t *argv[]) {
 	if (update) {
 		try {
 			World world;
-			parseWorld(world, licenses);
+			parseWorld(world, licenses, versions);
 
 			// TODO: More!
 			world.usingDecl.push_back(CppName(L"storm"));

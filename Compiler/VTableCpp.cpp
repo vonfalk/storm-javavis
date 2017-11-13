@@ -9,7 +9,6 @@
 
 #ifdef POSIX
 #include <link.h>
-#include <fstream>
 #endif
 
 namespace storm {
@@ -320,6 +319,7 @@ namespace storm {
 				// memFlags(table[size]);
 
 				// TODO: Check if the address is aligned?
+				// TODO: Make heurustic more similar to what is used on Linux if possible.
 
 				if (!readable(table[size]))
 					return size;

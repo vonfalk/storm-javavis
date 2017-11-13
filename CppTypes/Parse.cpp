@@ -620,11 +620,26 @@ static void parseLicense(const Path &path, World &world) {
 	world.licenses.push_back(License(path.titleNoExt(), pkg, cond, title, body));
 }
 
-void parseWorld(World &world, const vector<Path> &licenses) {
+// Parse a version file.
+static void parseVersion(const Path &path, World &world) {
+	TextReader *src = TextReader::create(new FileStream(path, Stream::mRead));
+
+	String pkg = src->getLine();
+	String ver = src->getLine();
+
+	delete src;
+
+	world.versions.push_back(Version(path.titleNoExt(), pkg, ver));
+}
+
+void parseWorld(World &world, const vector<Path> &licenses, const vector<Path> &versions) {
 	for (nat i = 0; i < SrcPos::files.size(); i++) {
 		parseFile(i, world);
 	}
 	for (nat i = 0; i < licenses.size(); i++) {
 		parseLicense(licenses[i], world);
+	}
+	for (nat i = 0; i < versions.size(); i++) {
+		parseVersion(versions[i], world);
 	}
 }

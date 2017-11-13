@@ -1,7 +1,4 @@
-* Loose ends so far [10/23]
-  - [ ] Check all synchronization primitives used on Linux. It seems that the BSThread test crashes
-        sometimes when the GC decides it needs to perform garbage collection around the time when threads
-        are spawned and/or when futures are used.
+* Loose ends so far [11/23]
   - [ ] Destructors in maps and arrays are not working properly yet. Idea: add (yet another) member 
         to array headers, and let the user provide a custom destructor in there if neccessary.
   - [ ] Destructors do not need their own slot in the vtables anymore since we have another mechanism for that.
@@ -17,6 +14,9 @@
   - [ ] Function pointers should maybe allow casting to less specific types of parameters.
   - [ ] if (x = foo.bar) does not produce an error if 'foo.bar' is not Maybe<T>.
   - [ ] Support marking functions as 'pure' in C++ and Storm.
+  - [X] Check all synchronization primitives used on Linux. It seems that the BSThread test crashes
+        sometimes when the GC decides it needs to perform garbage collection around the time when threads
+        are spawned and/or when futures are used.
   - [X] We need to scan the data inside a StackTrace object using mps_rank_ambig().
   - [X] The grammar rule X : Y ("w", Y)* "w"; does not parse properly. It should either work as expected 
         or report an error!
