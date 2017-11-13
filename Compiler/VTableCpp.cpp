@@ -7,6 +7,11 @@
 #include "Function.h"
 #include "Engine.h"
 
+#ifdef POSIX
+#include <link.h>
+#include <fstream>
+#endif
+
 namespace storm {
 
 	VTableCpp *VTableCpp::wrap(Engine &e, const void *vtable) {
@@ -344,25 +349,88 @@ namespace storm {
 		extern "C" const char __etext;
 		extern "C" const char _edata;
 
-		// Is the address in the text section of the executable?
-		static inline bool inText(const void *addr) {
+		enum AddrInfo {
+			addrUnknown,
+			addrText,
+			addrData,
+		};
+
+		// Is the address in the text section of the current executable?
+		static inline bool inMyText(const void *addr) {
 			const char *a = (const char *)addr;
 			return &__executable_start <= a
 				&& a < &__etext;
 		}
 
-		// Is the address in the data section of the executable?
-		static inline bool inData(const void *addr) {
+		// Is the address in the data section of any loaded library?
+		static inline bool inMyData(const void *addr) {
 			const char *a = (const char *)addr;
 			return &__etext <= a
 				&& a <= &_edata;
+		}
+
+		struct CheckData {
+			const void *addr;
+			AddrInfo result;
+		};
+
+		// Callback from 'dl_iterate_phdr'.
+		static int checkLibrary(struct dl_phdr_info *info, size_t size, void *voidData) {
+			CheckData *data = (CheckData *)voidData;
+			size_t addr = (size_t)data->addr;
+
+			// Early out?
+			if (addr < info->dlpi_addr)
+				return 0;
+
+			const ElfW(Phdr) *found = null;
+			for (size_t i = 0; i < info->dlpi_phnum; i++) {
+				const ElfW(Phdr) *header = &info->dlpi_phdr[i];
+				size_t start = info->dlpi_addr + header->p_vaddr;
+				size_t end = start + header->p_memsz;
+
+				if (addr >= start && addr < end) {
+					found = header;
+					break;
+				}
+			}
+
+			if (!found)
+				return 0;
+
+			if (found->p_type == PT_LOAD) {
+				if (found->p_flags & PF_X)
+					data->result = addrText;
+				else
+					data->result = addrData;
+			}
+
+			return 0;
+		}
+
+		// Get information on the address provided.
+		// TODO: We might want to provide some kind of cache of the data we get when calling 'dl_iterate_phdr',
+		// since that call is potentially expensive.
+		static AddrInfo addrInfo(const void *addr) {
+			if (inMyText(addr))
+				return addrText;
+			if (inMyData(addr))
+				return addrData;
+
+			// See if it is inside a dynamic library.
+			CheckData result = {
+				addr,
+				addrUnknown
+			};
+			dl_iterate_phdr(&checkLibrary, &result);
+			return result.result;
 		}
 
 
 		nat fnSlot(const void *fn) {
 			// See if the pointer is odd. Then it contains the offset into the vtable + 1.
 			size_t ptr = (size_t)fn;
-			if ((ptr & 0x1) != 0 && !inText(fn)) {
+			if ((ptr & 0x1) != 0 && addrInfo(fn) != addrText) {
 				return nat((ptr - 1) / sizeof(void *));
 			} else {
 				return invalid;
@@ -371,21 +439,19 @@ namespace storm {
 
 		nat count(const void *vtable) {
 			const void *const* table = (const void *const*)vtable;
-			assert(inData(table));
+			assert(addrInfo(table) == addrData);
 
 			// This is a table of pointers, so we can find the size by scanning until we find
 			// something which does not look like a pointer. We also know that all member functions
 			// are aligned at even addresses at the very least. Since vtables generally start with
 			// null or something that is not code, we can use that to find the end of the VTable.
 			nat size = 1;
-			while (inData(table + size)) {
+			while (addrInfo(table + size) == addrData) {
 				const void *entry = table[size];
 
 				if (size_t(entry) & 0x1)
 					return size;
-				if (!inText(entry))
-					return size;
-				if (inData(entry))
+				if (addrInfo(entry) != addrText)
 					return size;
 
 				size++;

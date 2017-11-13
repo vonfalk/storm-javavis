@@ -164,7 +164,6 @@ namespace storm {
 	}
 
 	const void *findLibraryFn(LoadedLib lib, const char *name) {
-		PVAR(dlsym(lib, ".text"));
 		return dlsym(lib, name);
 	}
 
