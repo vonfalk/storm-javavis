@@ -1,5 +1,7 @@
 #!/bin/bash
 
+notes_from=""
+
 if [[ $1 == "zip" ]]
 then
     OUT=$STORM_ROOT/release/storm.zip
@@ -11,6 +13,7 @@ else
     add="tar --append $OUT"
     exe=""
     lib=".so"
+    notes_from=$1
 fi
 
 function add_rename {
@@ -33,7 +36,13 @@ add_rename release/Storm$exe Storm$exe
 find doc/ -type f | xargs --delimiter='\n' $add > /dev/null
 
 # Release notes.
-release-notes > doc/release_notes.md
+if [[ -f $notes_from ]]
+then
+    unzip -p $notes_from doc/release_notes.md
+else
+    release-notes > doc/release_notes.md
+fi
+
 $add doc/release_notes.md
 rm doc/release_notes.md
 

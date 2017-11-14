@@ -1,6 +1,11 @@
 #!/bin/bash
 
-version=$(find_version)
+if [[ $# -ge 1 ]]
+then
+    version=$1
+else
+    version=$(find_version)
+fi
 echo "Compiling $version..."
 
 echo "core.info" > ${STORM_ROOT}/Compiler/COMPILER.version
