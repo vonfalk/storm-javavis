@@ -9,14 +9,14 @@ the examples included in the download.
 Downloading and Installing Storm
 ----------------------------------
 
-First, download Storm from [here](storm.zip) and unpack the archive somewhere convenient. The
+First, download Storm from [here](md://Introduction/Downloads) and unpack the archive somewhere convenient. The
 archive contains two folders and one executable file:
 
 * `doc` contains the source files for this documentation in markdown format.
 * `root` is the directory that Storm uses as the root package when started. The contents of this
   directory is described in greater detail below.
-* `Storm.exe` is the main executable for Storm. Start it normally to open an interactive command
-  prompt where Storm code can be executed. You can also pass command line parameters to Storm to
+* `Storm` or `Storm.exe` is the main executable for Storm. Start it normally to open an interactive
+  command prompt where Storm code can be executed. You can also pass command line parameters to Storm to
   make it do other things than running the interactive command prompt. Use `Storm --help` or
   `Storm -?` to see a list of supported options.
 

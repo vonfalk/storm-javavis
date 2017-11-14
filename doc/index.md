@@ -1,7 +1,7 @@
 Storm
 ========
 
-?File(Download Storm)storm.zip?
+?Button(md://Introduction/Downloads)Download Storm?
 
 Storm is a work in progress language that focuses on extensibility on many levels. Read more about
 it [here](md://Storm/).
@@ -9,21 +9,14 @@ it [here](md://Storm/).
 Downloads
 ----------
 
-Storm is currently a work in progress, and it is not ready for any official releases yet. Therefore,
-there is no version numbering for binaries and documentation at the moment. This will be introduced
-when the language is closer to completion.
+Go to the download page by clicking the button to the right. Precompiled binaries for Windows
+(32-bit) and Linux (64-bit, X86-64) are provided.
 
-Currently, Storm only works on Windows, 32-bit. It will be ported to other platforms in the future,
-but nothing is planned yet, as the main focus is to complete the language first. The download
-contains an executable along with code required for Basic Storm to work properly. Furthermore
-libraries for sound playback, image loading and basic GUI creation is included. The source code for
-the project is available upon request to [info@storm-lang.org](mailto:info@storm-lang.org).
+To run the compiler, simply unpack the archive file and run `Storm` (`Storm.exe` on Windows), and
+the top loop for Basic Storm should start. The compiler does not need any external libraries aside
+from the C and C++ standard libraries. The Windows version uses `dbghelp.dll`, which is included
+with Windows, to pretty-print stack traces.
 
-To run the compiler, simply unpack the zip-file and run `StormMain.exe`, and the top loop for Basic
-Storm should start. The compiler does not need any external libraries. It is statically linked to
-the C runtime, and only depends on the Windows API and `dbghelp.dll`. `dbghelp.dll` is included with
-Windows, at least from Windows XP, so that should not be any problem. It even runs on Wine (tested
-with Wine version 1.7.40 on Arch Linux).
 
 Documentation
 --------------
