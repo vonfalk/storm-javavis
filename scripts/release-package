@@ -10,7 +10,7 @@ then
     lib=".dll"
 else
     OUT=$STORM_ROOT/release/storm.tar
-    add="tar --append $OUT"
+    add="tar -rf $OUT"
     exe=""
     lib=".so"
     notes_from=$1
@@ -38,12 +38,12 @@ find doc/ -type f | xargs --delimiter='\n' $add > /dev/null
 # Release notes.
 if [[ -f $notes_from ]]
 then
-    unzip -p $notes_from doc/release_notes.md
+    unzip -p $notes_from doc/release_notes.md > doc/release_notes.md
 else
     release-notes > doc/release_notes.md
 fi
 
-$add doc/release_notes.md
+$add doc/release_notes.md > /dev/null
 rm doc/release_notes.md
 
 # Source code.
@@ -62,5 +62,9 @@ add_rename Plugin/emacs.el storm-mode.el
 
 if [[ $1 != "zip" ]]
 then
+    if [[ -e $OUT.gz ]]
+    then
+	rm $OUT.gz
+    fi
     gzip $OUT
 fi
