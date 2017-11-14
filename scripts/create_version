@@ -1,0 +1,12 @@
+#!/bin/bash
+
+tag=`git describe --abbrev=0 master`
+git describe master | sed 's!^release/!!' > release_message.txt
+echo "" >> release_message.txt
+echo "# Commits since previous release:" >> release_message.txt
+git log ${tag}..master | sed -e 's/^/# /' >> release_message.txt
+$EDITOR release_message.txt
+
+version=`head -n 1 release_message.txt`
+tail -n +2 release_message.txt | grep -v "# " | git tag -a -F - release/${version}
+rm release_message.txt

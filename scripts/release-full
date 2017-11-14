@@ -1,0 +1,23 @@
+#!/bin/bash
+
+branch=`git rev-parse --abbrev-ref HEAD`
+if [[ $branch != "master" ]]
+then
+    echo "Error: You need to checkout the branch 'master' to perform a release."
+    exit 1
+fi
+
+version=`find_version`
+read -p "Current version is $version. Change it? [Y/n] " -n 1 -r
+echo
+if [[ $REPLY =~ ^[Yy]$ ]] || [[ -z $REPLY ]]
+then
+    create_version
+    version=`find_version`
+fi
+
+release-compile || exit 1
+release-package zip || exit 1
+release-test zip || exit 1
+echo "All seems well, uploading the file..."
+cat $STORM_ROOT/release/storm.zip | ssh filip-www@fprg.se /home/filip-www/upload-storm.sh

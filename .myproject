@@ -116,7 +116,9 @@ link=lib /LTCG <files> /nologo /OUT:<output>
 [storm_release,unix]
 #We do not need O3
 flags=-std=c++11
-flags+=-O2
+#Note: We seem to make the optimizer unhappy at O2...
+#flags+=-O2
+flags+=-O1
 
 [pic,unix]
 #All libraries need to be compiled with the -fPIC flag. At least on X86-64.

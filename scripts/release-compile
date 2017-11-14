@@ -1,0 +1,14 @@
+#!/bin/bash
+
+version=$(find_version)
+echo "Compiling $version..."
+
+echo "core.info" > ${STORM_ROOT}/Compiler/COMPILER.version
+echo "$version" >> ${STORM_ROOT}/Compiler/COMPILER.version
+
+cd $STORM_ROOT
+mm release -ne || { echo "Compilation failed!"; exit 1; }
+
+echo "Done! Running test suite..."
+release/Test --all || { echo "Tests failed!"; exit 1; }
+

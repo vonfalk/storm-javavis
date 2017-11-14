@@ -1,0 +1,57 @@
+#!/bin/bash
+
+if [[ $1 == "zip" ]]
+then
+    OUT=$STORM_ROOT/release/storm.zip
+    add="7z a $OUT"
+    exe=".exe"
+    lib=".dll"
+else
+    OUT=$STORM_ROOT/release/storm.tar
+    add="tar --append $OUT"
+    exe=""
+    lib=".so"
+fi
+
+function add_rename {
+    cp $1 $2
+    eval $add $2 > /dev/null
+    rm $2
+}
+
+if [[ -e $OUT ]]
+then
+    rm $OUT
+fi
+
+cd $STORM_ROOT
+
+# Main executable.
+add_rename release/Storm$exe Storm$exe
+
+# Documentation.
+find doc/ -type f | xargs --delimiter='\n' $add > /dev/null
+
+# Release notes.
+release-notes > doc/release_notes.md
+$add doc/release_notes.md
+rm doc/release_notes.md
+
+# Source code.
+find root/ -type f -not -name "*$lib" | grep -v "server-tests/" | xargs --delimiter='\n' $add > /dev/null
+
+# Rename and add dynamic libraries
+IFS=$'\n'
+for j in $(find root/ -name "Release*$lib")
+do
+    name=$(echo $j | sed 's/Release//')
+    add_rename $j $name
+done
+
+# Add the Emacs plugin.
+add_rename Plugin/emacs.el storm-mode.el
+
+if [[ $1 != "zip" ]]
+then
+    gzip $OUT
+fi

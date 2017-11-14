@@ -119,7 +119,7 @@ namespace os {
 			if (alloc < 0) {
 				params(new void *[count], true);
 			} else {
-				assert(alloc >= count, L"Not enough memory allocated to FnCall.");
+				assert(nat(alloc) >= count, L"Not enough memory allocated to FnCall.");
 				params(memory, false);
 			}
 			src.extract(params());

@@ -1,0 +1,40 @@
+#!/bin/bash
+
+if [[ $1 == "zip" ]]
+then
+    IN=$STORM_ROOT/release/storm.zip
+    extract="7z x $IN"
+else
+    IN=$STORM_ROOT/release/storm.tar.gz
+    extract="tar xzf $IN"
+fi
+
+
+echo "Making sure the release works..."
+mkdir -p $STORM_ROOT/release/storm
+cd $STORM_ROOT/release/storm
+
+$extract > /dev/null
+echo "exit" | ./Storm > /dev/null
+if [[ $? -ne 0 ]]
+then
+    echo "Failed to launch the repl. Something is bad! Test in release/storm"
+    exit 1
+fi
+
+./Storm -c 'test:bf:inlineBf' > output.txt
+if [[ $? -ne 0 ]]
+then
+    echo "Failed to execute BS code. Test in release/storm"
+    exit 1
+fi
+
+grep "1, 1, 2, 3, 5, 8, 13, 21, 34, 55, 89" output.txt > /dev/null
+if [[ $? -ne 0 ]]
+then
+    echo "Failed to execute BS code. Test in release/storm"
+    exit 1
+fi
+
+cd $STORM_ROOT
+rm -r $STORM_ROOT/release/storm

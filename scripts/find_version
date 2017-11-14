@@ -1,0 +1,12 @@
+#!/bin/bash
+
+tag=`git describe --abbrev=0 master`
+desc=`git describe master`
+
+if [[ $tag != $desc ]]
+then
+    # Format the extra information.
+    tag=`echo $desc | sed -E 's/-([0-9]+)-([a-zA-Z0-9]+)$/+git.\1.\2/'`
+fi
+
+echo $tag | sed 's!^release/!!'

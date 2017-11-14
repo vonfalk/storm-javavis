@@ -25,6 +25,7 @@
 #define ARRAY_COUNT(x) (sizeof(x) / sizeof(*(x)))
 
 #include <stdio.h>
+#include <stddef.h>
 #include <string.h>
 
 #ifdef WINDOWS

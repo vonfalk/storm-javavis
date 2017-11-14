@@ -6,6 +6,14 @@
 #include "Core/Str.h"
 #include "Core/Hash.h"
 
+#ifdef major
+#undef major
+#endif
+
+#ifdef minor
+#undef minor
+#endif
+
 namespace storm {
 
 	Version::Version(Nat major, Nat minor, Nat patch)
