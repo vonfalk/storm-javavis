@@ -19,7 +19,13 @@ static int CODECALL replaced(VTableTest *me) {
 	return me->z + 10;
 }
 
-static int check(const VTableTest &v) {
+#if defined(GCC)
+#define NO_OPTIMIZE __attribute__((optimize("O0")))
+#else
+#define NO_OPTIMIZE
+#endif
+
+static int NO_OPTIMIZE check(const VTableTest &v) {
 	// NOTE: We may eventually have to disable optimizations for this function for tests to work. If
 	// the compiler inlines this function, it will see that it knows the type of 'v', and that it
 	// does not have to use the vtable at all.

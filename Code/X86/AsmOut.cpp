@@ -450,6 +450,7 @@ namespace code {
 			assert(instr->dest().type() == opRegister);
 			assert(same(ptrA, instr->dest().reg()));
 			if (instr->size() == Size::sByte) {
+				to->putByte(0x98); // CBW
 				to->putByte(0xF6); // DIV
 			} else {
 				to->putByte(0x99); // CDQ
@@ -462,6 +463,7 @@ namespace code {
 			assert(instr->dest().type() == opRegister);
 			assert(same(ptrA, instr->dest().reg()));
 			if (instr->size() == Size::sByte) {
+				to->putByte(0x30); to->putByte(0xE4); // XOR AH, AH
 				to->putByte(0xF6); // DIV
 			} else {
 				to->putByte(0x31); to->putByte(0xD2); // XOR EDX, EDX
