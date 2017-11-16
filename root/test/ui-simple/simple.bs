@@ -1,0 +1,6 @@
+use ui;
+
+void simple() {
+	print("Creating application object.");
+	app();
+}

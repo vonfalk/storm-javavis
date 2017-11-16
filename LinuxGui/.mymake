@@ -1,0 +1,9 @@
+[]
+package=ui
+input=*
+stormUsingNamespace=storm
+stormUsingNamespace+=storm::geometry
+
+[unix]
+flags+=`pkg-config --cflags gtk+-3.0`
+linkFlags+=`pkg-config --libs gtk+-3.0`

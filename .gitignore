@@ -61,3 +61,7 @@ ReadMe.txt
 # External code in other git repos. #
 #####################################
 External/
+
+*/Gen/*
+!*/Gen/.gitignore
+!Core/Gen/*
