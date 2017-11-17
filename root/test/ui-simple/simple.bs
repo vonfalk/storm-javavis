@@ -1,6 +1,8 @@
 use ui;
 
 void simple() {
-	print("Creating application object.");
-	app();
+	Frame f("Test");
+	f.create();
+	sleep(2 s);
+	print("Bye!");
 }

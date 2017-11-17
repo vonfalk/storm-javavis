@@ -156,7 +156,11 @@ namespace storm {
 	LoadedLib invalidLib = null;
 
 	LoadedLib loadLibrary(Url *path) {
-		return dlopen(path->format()->utf8_str(), RTLD_NOW | RTLD_LOCAL);
+		LoadedLib r = dlopen(path->format()->utf8_str(), RTLD_NOW | RTLD_LOCAL);
+		if (!r) {
+			WARNING(L"Failed to load " << path << L": " << String(dlerror()));
+		}
+		return r;
 	}
 
 	void unloadLibrary(LoadedLib lib) {
