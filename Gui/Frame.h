@@ -14,6 +14,7 @@ namespace gui {
 	public:
 		// Note: does not create an actual frame. Use 'create' below to do that.
 		STORM_CTOR Frame(Str *title);
+		STORM_CTOR Frame(Str *title, Size size);
 
 		// Create the frame and show it.
 		void STORM_FN create();
@@ -27,6 +28,12 @@ namespace gui {
 #ifdef GUI_WIN32
 		// Message!
 		virtual MsgResult onMessage(const Message &msg);
+#endif
+
+#ifdef GUI_GTK
+		// Window text.
+		using Window::text;
+		virtual void STORM_SETTER text(Str *str);
 #endif
 
 		// Set size.

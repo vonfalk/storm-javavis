@@ -49,6 +49,10 @@ namespace gui {
 		liveWindows->remove(w);
 	}
 
+	Window *App::findWindow(Handle h) {
+		return windows->get(h, null);
+	}
+
 	bool App::resumeEvent(Window *window, Event *event) {
 		return liveWindows->has(window) == false
 			|| event->isSet();

@@ -1,8 +1,18 @@
 use ui;
+use core:geometry;
+
+class SimpleWin extends Frame {
+	init() {
+		init("Window", Size(300, 300));
+
+		create();
+	}
+}
 
 void simple() {
-	Frame f("Test");
-	f.create();
+	SimpleWin win;
+	// win.waitForClose();
 	sleep(2 s);
+	win.close();
 	print("Bye!");
 }

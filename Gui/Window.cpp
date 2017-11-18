@@ -375,11 +375,11 @@ namespace gui {
 		return true;
 	}
 
-	void Window::destroyWindow(Handle handle) {}
+	void Window::destroyWindow(Handle handle) {
+		gtk_widget_destroy(handle.widget());
+	}
 
 	const Str *Window::text() {
-		if (created()) {
-		}
 		return myText;
 	}
 
@@ -399,7 +399,12 @@ namespace gui {
 		}
 	}
 
-	void Window::visible(Bool v) {}
+	void Window::visible(Bool v) {
+		if (v)
+			gtk_widget_show(handle().widget());
+		else
+			gtk_widget_hide(handle().widget());
+	}
 
 	void Window::focus() {}
 

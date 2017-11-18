@@ -1,6 +1,7 @@
 #include "stdafx.h"
 #include "Frame.h"
 #include "App.h"
+#include "GtkSignal.h"
 
 namespace gui {
 
@@ -13,6 +14,13 @@ namespace gui {
 		attachParent(this);
 		text(title);
 		pos(Rect(-10000, -10000, -10002, -10002));
+	}
+
+	Frame::Frame(Str *title, Size size) : full(false), showCursor(true) {
+		onClose = new (this) Event();
+		attachParent(this);
+		text(title);
+		pos(Rect(Point(-10000, -10000), size));
 	}
 
 	void Frame::create() {
@@ -170,7 +178,38 @@ namespace gui {
 	}
 
 	bool Frame::createWindow(bool sizeable) {
+		GtkWidget *frame = gtk_window_new(GTK_WINDOW_TOPLEVEL);
+		gtk_window_set_title((GtkWindow *)frame, text()->utf8_str());
+		gtk_window_set_resizable((GtkWindow *)frame, sizeable);
+
+		Signal<void, Frame>::Connect<&Frame::close>::to(frame, "destroy", engine());
+
+		Size sz = pos().size();
+		if (sz.w > 0 && sz.h > 0)
+			gtk_window_set_default_size((GtkWindow *)frame, sz.w, sz.h);
+
+		handle(frame);
+
+		// Create child windows (if any).
+		parentCreated(0);
+
+		// Set visibility and full screen attributes.
+		if (visible()) {
+			gtk_widget_show(frame);
+		}
+
+		if (full) {
+			goFull(handle(), windowedStyle, windowedRect);
+		}
+
 		return true;
+	}
+
+	void Frame::text(Str *str) {
+		if (created()) {
+			gtk_window_set_title((GtkWindow *)handle().widget(), str->utf8_str());
+		}
+		Window::text(str);
 	}
 
 #endif

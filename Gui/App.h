@@ -45,6 +45,8 @@ namespace gui {
 		// when 'window' is no longer alive.
 		void waitForEvent(Window *owner, Event *event);
 
+		// Find a registered window.
+		MAYBE(Window *) findWindow(Handle h);
 
 		/**
 		 * Win32 specifics.
