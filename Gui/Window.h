@@ -47,13 +47,13 @@ namespace gui {
 		virtual ~Window();
 
 		// Invalid window handle.
-		static const HWND invalid;
+		static const Handle invalid;
 
 		// Get our handle. May be 'invalid'.
-		HWND handle() const;
+		Handle handle() const;
 
 		// Set our handle, our parent is inferred from the handle itself.
-		void handle(HWND handle);
+		void handle(Handle handle);
 
 		// Are we created?
 		bool created() const { return handle() != invalid; }
@@ -78,6 +78,7 @@ namespace gui {
 		// Note: 'parent' need to be set before calling this function. This initializes the creation of our window.
 		virtual void parentCreated(nat id);
 
+#ifdef GUI_WIN32
 		// Called when a regular message has been received. If no result is returned, calls the
 		// default window proc, or any message procedure declared by the window we're handling. Only
 		// works for windows with the default window class provided by App. Otherwise, use 'preTranslateMessage'.
@@ -90,6 +91,7 @@ namespace gui {
 		// Called when a WM_COMMAND has been sent to (by) us. Return 'true' if it is handled. Type
 		// is the notification code specified by the message (eg BN_CLICK).
 		virtual bool onCommand(nat type);
+#endif
 
 		// Visibility.
 		Bool STORM_FN visible();
@@ -139,8 +141,9 @@ namespace gui {
 		// Override this to do any special window creation. The default implementation creates a
 		// plain child window with no window class. Called as soon as we know our parent (not on
 		// Frames). Returns 'false' on failure.
-		virtual bool create(HWND parent, nat id);
+		virtual bool create(Handle parent, nat id);
 
+#ifdef GUI_WIN32
 		// Create a window, and handle it. Makes sure that all messages are handled correctly.
 		// Equivalent to handle(CreateWindowEx(...)), but ensures that any messages sent before
 		// CreateWindowEx returns are sent to this class as well.
@@ -148,7 +151,7 @@ namespace gui {
 		bool createEx(LPCTSTR className, DWORD style, DWORD exStyle, HWND parent, nat id, CreateFlags flags);
 		bool createEx(LPCTSTR className, DWORD style, DWORD exStyle, HWND parent, nat id);
 		bool createEx(LPCTSTR className, DWORD style, DWORD exStyle, HWND parent);
-
+#endif
 	private:
 		Handle myHandle;
 
@@ -183,8 +186,13 @@ namespace gui {
 		// Tell our painter we've been resized.
 		void notifyPainter(Size s);
 
+		// Destroy a handle.
+		void destroyWindow(Handle handle);
+
+#ifdef GUI_WIN32
 		// Handle on paint events.
 		MsgResult onPaint();
+#endif
 	};
 
 }

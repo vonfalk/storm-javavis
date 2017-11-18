@@ -27,9 +27,9 @@ namespace gui {
 		As *get(Painter *owner) {
 			this->owner = owner;
 			if (!resource) {
-				create(owner, &resource);
+				// create(owner, &resource);
 				if (resource) {
-					owner->addResource(this);
+					// owner->addResource(this);
 				}
 			}
 			return static_cast<As*>(resource);
@@ -41,11 +41,12 @@ namespace gui {
 		}
 
 		// Create the resource.
-		virtual void create(Painter *owner, ID2D1Resource **out);
+		// virtual void create(Painter *owner, ID2D1Resource **out);
 
 	private:
 		// The resource itself.
-		ID2D1Resource *resource;
+		// ID2D1Resource *resource;
+		void *resource;
 
 		// Our owner (if any).
 		Painter *owner;

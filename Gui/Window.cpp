@@ -8,7 +8,7 @@
 namespace gui {
 
 	// Null is a failure code from eg. GetParent function, should be OK to use as invalid.
-	const HWND Window::invalid = (HWND)NULL;
+	const Handle Window::invalid;
 
 	Window::Window() : myHandle(invalid), myParent(null), myRoot(null), myVisible(true), myPos(0, 0, 10, 10) {
 		myText = new (this) Str(L"");
@@ -30,8 +30,8 @@ namespace gui {
 		return myRoot;
 	}
 
-	HWND Window::handle() const {
-		return myHandle.hwnd();
+	Handle Window::handle() const {
+		return myHandle;
 	}
 
 	void Window::attachParent(Container *parent) {
@@ -59,18 +59,18 @@ namespace gui {
 				WARNING(L"Failed to create a window...");
 	}
 
-	void Window::handle(HWND handle) {
+	void Window::handle(Handle handle) {
 		App *a = app(engine());
 		if (myHandle != invalid) {
 
 			if (myParent == null) {
 				// We're a frame (or orphaned).
-				DestroyWindow(myHandle.hwnd());
+				destroyWindow(myHandle);
 			} else if (!myParent->created()) {
 				// Parent has already been destroyed. This means we're destroyed,
 				// by our parent, even though we have a handle.
 			} else {
-				DestroyWindow(myHandle.hwnd());
+				destroyWindow(myHandle);
 			}
 
 			// Notify we've been destroyed.
@@ -88,6 +88,71 @@ namespace gui {
 		} else {
 			detachPainter();
 		}
+	}
+
+	Bool Window::onKey(Bool down, Nat id) {
+		return false;
+	}
+
+	Bool Window::onChar(Nat id) {
+		return false;
+	}
+
+	Bool Window::visible() {
+		return myVisible;
+	}
+
+	Font *Window::font() {
+		return new (this) Font(*myFont);
+	}
+
+	void Window::resized(Size size) {
+		// Nothing here, override when needed.
+	}
+
+	void Window::painter(Painter *p) {
+		detachPainter();
+
+		myPainter = p;
+
+		if (created())
+			attachPainter();
+	}
+
+	void Window::attachPainter() {
+		if (myPainter) {
+			Engine &e = engine();
+			os::Future<void> result;
+			Window *me = this;
+			os::FnCall<void, 2> params = os::fnCall().add(myPainter).add(me);
+			os::UThread::spawn(address(&Painter::attach), true, params, result, &Render::thread(e)->thread());
+			result.result();
+		}
+	}
+
+	void Window::detachPainter() {
+		if (myPainter) {
+			Engine &e = engine();
+			os::Future<void> result;
+			os::FnCall<void, 2> params = os::fnCall().add(myPainter);
+			os::UThread::spawn(address(&Painter::detach), true, params, result, &Render::thread(e)->thread());
+			result.result();
+		}
+	}
+
+	void Window::notifyPainter(Size s) {
+		if (myPainter) {
+			Engine &e = engine();
+			os::FnCall<void, 2> params = os::fnCall().add(myPainter).add(s);
+			os::UThread::spawn(address(&Painter::resize), true, params, &Render::thread(e)->thread());
+		}
+	}
+
+	void Window::onTimer() {}
+
+#ifdef GUI_WIN32
+	void Window::destroyWindow(Handle handle) {
+		DestroyWindow(handle.hwnd());
 	}
 
 	MsgResult Window::onMessage(const Message &msg) {
@@ -126,22 +191,6 @@ namespace gui {
 			break;
 		}
 		return noResult();
-	}
-
-	Bool Window::onKey(Bool down, Nat id) {
-		return false;
-	}
-
-	Bool Window::onChar(Nat id) {
-		return false;
-	}
-
-	bool Window::onCommand(nat id) {
-		return false;
-	}
-
-	Bool Window::visible() {
-		return myVisible;
 	}
 
 	void Window::visible(Bool show) {
@@ -197,10 +246,6 @@ namespace gui {
 			SetFocus(handle());
 	}
 
-	Font *Window::font() {
-		return new (this) Font(*myFont);
-	}
-
 	void Window::font(Font *font) {
 		myFont = new (this) Font(*font);
 		if (created())
@@ -217,8 +262,8 @@ namespace gui {
 			InvalidateRect(handle(), NULL, FALSE);
 	}
 
-	void Window::resized(Size size) {
-		// Nothing here, override when needed.
+	bool Window::onCommand(nat id) {
+		return false;
 	}
 
 	bool Window::create(HWND parent, nat id) {
@@ -257,7 +302,7 @@ namespace gui {
 		}
 
 		if (flags & cAutoPos) {
-			// Outside the screen?
+			// Outside the screen? TODO: Check for something other than 0, screen coords may be negative!
 			if (myPos.p1.x < 0 && myPos.p1.y < 0) {
 				p.x = CW_USEDEFAULT;
 				p.y = 0;
@@ -295,45 +340,6 @@ namespace gui {
 		}
 	}
 
-	void Window::painter(Painter *p) {
-		Engine &e = engine();
-		detachPainter();
-
-		myPainter = p;
-
-		if (created())
-			attachPainter();
-	}
-
-	void Window::attachPainter() {
-		if (myPainter) {
-			Engine &e = engine();
-			os::Future<void> result;
-			Window *me = this;
-			os::FnCall<void, 2> params = os::fnCall().add(myPainter).add(me);
-			os::UThread::spawn(address(&Painter::attach), true, params, result, &Render::thread(e)->thread());
-			result.result();
-		}
-	}
-
-	void Window::detachPainter() {
-		if (myPainter) {
-			Engine &e = engine();
-			os::Future<void> result;
-			os::FnCall<void, 2> params = os::fnCall().add(myPainter);
-			os::UThread::spawn(address(&Painter::detach), true, params, result, &Render::thread(e)->thread());
-			result.result();
-		}
-	}
-
-	void Window::notifyPainter(Size s) {
-		if (myPainter) {
-			Engine &e = engine();
-			os::FnCall<void, 2> params = os::fnCall().add(myPainter).add(s);
-			os::UThread::spawn(address(&Painter::resize), true, params, &Render::thread(e)->thread());
-		}
-	}
-
 	MsgResult Window::onPaint() {
 		if (myPainter) {
 			Engine &e = engine();
@@ -350,8 +356,6 @@ namespace gui {
 		}
 	}
 
-	void Window::onTimer() {}
-
 	void Window::setTimer(Duration interval) {
 		timerInterval = interval;
 		if (created()) {
@@ -362,5 +366,58 @@ namespace gui {
 	void Window::clearTimer() {
 		KillTimer(handle(), 1);
 	}
+
+#endif
+
+#ifdef GUI_GTK
+
+	bool Window::create(Handle parent, nat id) {
+		return true;
+	}
+
+	void Window::destroyWindow(Handle handle) {}
+
+	const Str *Window::text() {
+		if (created()) {
+		}
+		return myText;
+	}
+
+	void Window::text(Str *str) {
+		myText = str;
+	}
+
+	Rect Window::pos() {
+		if (created()) {
+		}
+		return myPos;
+	}
+
+	void Window::pos(Rect r) {
+		myPos = r;
+		if (created()) {
+		}
+	}
+
+	void Window::visible(Bool v) {}
+
+	void Window::focus() {}
+
+	void Window::font(Font *font) {
+		myFont = new (this) Font(*font);
+	}
+
+	void Window::update() {}
+
+	void Window::repaint() {}
+
+	void Window::setTimer(Duration interval) {
+		timerInterval = interval;
+	}
+
+	void Window::clearTimer() {
+	}
+
+#endif
 
 }

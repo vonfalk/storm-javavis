@@ -18,31 +18,33 @@ namespace gui {
 	}
 
 	void Text::init(Str *text, Font *font, Size size) {
-		RenderMgr *mgr = renderMgr(engine());
-		HRESULT r = mgr->dWrite()->CreateTextLayout(text->c_str(),
-													text->peekLength(),
-													font->textFormat(),
-													size.w,
-													size.h,
-													&l);
-		if (FAILED(r)) {
-			WARNING("Failed to create layout: " << ::toS(r));
-		}
+		// RenderMgr *mgr = renderMgr(engine());
+		// HRESULT r = mgr->dWrite()->CreateTextLayout(text->c_str(),
+		// 											text->peekLength(),
+		// 											font->textFormat(),
+		// 											size.w,
+		// 											size.h,
+		// 											&l);
+		// if (FAILED(r)) {
+		// 	WARNING("Failed to create layout: " << ::toS(r));
+		// }
 	}
 
 	Size Text::size() {
-		DWRITE_TEXT_METRICS metrics;
-		l->GetMetrics(&metrics);
-		return Size(metrics.width, metrics.height);
+		// DWRITE_TEXT_METRICS metrics;
+		// l->GetMetrics(&metrics);
+		// return Size(metrics.width, metrics.height);
+		return Size();
 	}
 
 	Size Text::layoutBorder() {
-		return Size(l->GetMaxWidth() - borderExtra, l->GetMaxHeight() - borderExtra);
+		// return Size(l->GetMaxWidth() - borderExtra, l->GetMaxHeight() - borderExtra);
+		return Size();
 	}
 
 	void Text::layoutBorder(Size s) {
-		l->SetMaxWidth(s.w + borderExtra);
-		l->SetMaxHeight(s.h + borderExtra);
+		// l->SetMaxWidth(s.w + borderExtra);
+		// l->SetMaxHeight(s.h + borderExtra);
 	}
 
 }

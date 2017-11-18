@@ -5,6 +5,7 @@
 #include "Core/EnginePtr.h"
 #include "Core/Event.h"
 #include "Core/Sema.h"
+#include "Handle.h"
 
 namespace gui {
 	class Painter;
@@ -21,8 +22,10 @@ namespace gui {
 			STORM_VALUE;
 		public:
 
-			ID2D1RenderTarget *target;
-			IDXGISwapChain *swapChain;
+			void *target;
+			void *swapChain;
+			// ID2D1RenderTarget *target;
+			// IDXGISwapChain *swapChain;
 
 			// Create
 			inline RenderInfo() {
@@ -32,8 +35,8 @@ namespace gui {
 
 			// Release all members.
 			inline void release() {
-				::release(target);
-				::release(swapChain);
+				// ::release(target);
+				// ::release(swapChain);
 			}
 		};
 
@@ -44,7 +47,7 @@ namespace gui {
 		void attach(Resource *resource);
 
 		// Attach a Painter.
-		RenderInfo attach(Painter *painter, HWND window);
+		RenderInfo attach(Painter *painter, Handle window);
 
 		// Detach a Painter.
 		void detach(Painter *painter);
@@ -59,10 +62,10 @@ namespace gui {
 		void newContinuous();
 
 		// Get the DWrite factory object.
-		inline IDWriteFactory *dWrite() { return writeFactory; }
+		// inline IDWriteFactory *dWrite() { return writeFactory; }
 
 		// Get the D2D factory object.
-		inline ID2D1Factory *d2d() { return factory; }
+		// inline ID2D1Factory *d2d() { return factory; }
 
 	private:
 		friend RenderMgr *renderMgr(EnginePtr e);
@@ -71,13 +74,13 @@ namespace gui {
 		RenderMgr();
 
 		// The D2D-factory.
-		ID2D1Factory *factory;
-		IDXGIFactory *giFactory;
-		IDWriteFactory *writeFactory;
+		// ID2D1Factory *factory;
+		// IDXGIFactory *giFactory;
+		// IDWriteFactory *writeFactory;
 
 		// D3D device and dxgi device.
-		ID3D10Device1 *device;
-		IDXGIDevice *giDevice;
+		// ID3D10Device1 *device;
+		// IDXGIDevice *giDevice;
 
 		// Live painters. TODO? Weak set?
 		Set<Painter *> *painters;
@@ -86,7 +89,7 @@ namespace gui {
 		WeakSet<Resource> *resources;
 
 		// Create a render target.
-		ID2D1RenderTarget *createTarget(IDXGISwapChain *swapChain);
+		// ID2D1RenderTarget *createTarget(IDXGISwapChain *swapChain);
 
 		// Event to wait for either: new continuous windows, or: termination.
 		Event *waitEvent;

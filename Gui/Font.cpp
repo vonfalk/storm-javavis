@@ -2,6 +2,25 @@
 #include "Font.h"
 #include "RenderMgr.h"
 
+#ifndef FW_NORMAL
+// Same as in the Win32 API.
+#define FW_DONTCARE		0
+#define FW_THIN			100
+#define FW_EXTRALIGHT	200
+#define FW_ULTRALIGHT 	200
+#define FW_LIGHT 	    300
+#define FW_NORMAL 		400
+#define FW_REGULAR 		400
+#define FW_MEDIUM 		500
+#define FW_SEMIBOLD 	600
+#define FW_DEMIBOLD 	600
+#define FW_BOLD 		700
+#define FW_EXTRABOLD 	800
+#define FW_ULTRABOLD 	800
+#define FW_BLACK 		900
+#define FW_HEAVY 		900
+#endif
+
 namespace gui {
 
 	/**
@@ -13,8 +32,8 @@ namespace gui {
 	struct FontData {
 		// Create.
 		FontData() : refs(1) {
-			hFont = (HFONT)INVALID_HANDLE_VALUE;
-			textFmt = null;
+			// hFont = (HFONT)INVALID_HANDLE_VALUE;
+			// textFmt = null;
 		}
 
 		// Destroy.
@@ -50,17 +69,17 @@ namespace gui {
 
 		// Clear data. _not_ thread safe, only to be used inside 'invalidate'.
 		void clear() {
-			if (hFont != INVALID_HANDLE_VALUE)
-				DeleteObject(hFont);
-			hFont = (HFONT)INVALID_HANDLE_VALUE;
-			::release(textFmt);
+			// if (hFont != INVALID_HANDLE_VALUE)
+			// 	DeleteObject(hFont);
+			// hFont = (HFONT)INVALID_HANDLE_VALUE;
+			// ::release(textFmt);
 		}
 
 		// WIN32 font.
-		HFONT hFont;
+		// HFONT hFont;
 
 		// TextFormat.
-		IDWriteTextFormat *textFmt;
+		// IDWriteTextFormat *textFmt;
 
 		// Lock for modifying any members.
 		os::Lock lock;
@@ -87,6 +106,7 @@ namespace gui {
 		shared->addRef();
 	}
 
+#ifdef GUI_WIN32
 	Font::Font(LOGFONT &f) {
 		fName = new (this) Str(f.lfFaceName);
 		fHeight = (float)abs(f.lfHeight);
@@ -96,6 +116,7 @@ namespace gui {
 		fStrikeOut = f.lfStrikeOut == TRUE;
 		shared = new FontData();
 	}
+#endif
 
 	Font::~Font() {
 		shared->release();
@@ -147,6 +168,7 @@ namespace gui {
 			*to << L", strike out";
 	}
 
+#ifdef GUI_WIN32
 	HFONT Font::handle() {
 		os::Lock::L z(shared->lock);
 		if (shared->hFont == INVALID_HANDLE_VALUE) {
@@ -196,7 +218,17 @@ namespace gui {
 		NONCLIENTMETRICS ncm;
 		ncm.cbSize = sizeof(ncm) - sizeof(ncm.iPaddedBorderWidth);
 		SystemParametersInfo(SPI_GETNONCLIENTMETRICS, ncm.cbSize, &ncm, 0);
-		return CREATE(Font, e.v, ncm.lfMessageFont);
+		return new (e.v) Font(ncm.lfMessageFont);
 	}
+
+#endif
+
+#ifdef GUI_GTK
+
+	Font *defaultFont(EnginePtr e) {
+		return new (e.v) Font(new (e.v) Str(L"FIXME"), 12.0);
+	}
+
+#endif
 
 }

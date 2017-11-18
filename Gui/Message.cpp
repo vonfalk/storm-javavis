@@ -2,6 +2,8 @@
 #include "Message.h"
 #include "MsgName.h"
 
+#ifdef GUI_WIN32
+
 namespace gui {
 
 	Message::Message(const MSG &src) : msg(src.message), wParam(src.wParam), lParam(src.lParam) {}
@@ -24,3 +26,5 @@ namespace gui {
 	}
 
 }
+
+#endif

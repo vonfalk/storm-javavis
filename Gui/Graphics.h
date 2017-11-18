@@ -18,7 +18,7 @@ namespace gui {
 		STORM_CLASS;
 	public:
 		// Create. Done from within the Painter class. Will not free 'target'.
-		Graphics(ID2D1RenderTarget *target, Painter *owner);
+		// Graphics(ID2D1RenderTarget *target, Painter *owner);
 
 		// Destroy.
 		~Graphics();
@@ -30,7 +30,7 @@ namespace gui {
 		void destroyed();
 
 		// Update the target.
-		void updateTarget(ID2D1RenderTarget *target);
+		// void updateTarget(ID2D1RenderTarget *target);
 
 		// Prepare the rendering.
 		void beforeRender();
@@ -115,7 +115,8 @@ namespace gui {
 
 	private:
 		// Render target.
-		ID2D1RenderTarget *target;
+		// ID2D1RenderTarget *target;
+		void *target;
 
 		// Owner.
 		Painter *owner;
@@ -128,11 +129,12 @@ namespace gui {
 				v = null;
 			}
 
-			Layer(ID2D1Layer *layer) {
-				v = layer;
-			}
+			// Layer(ID2D1Layer *layer) {
+			// 	v = layer;
+			// }
 
-			UNKNOWN(PTR_NOGC) ID2D1Layer *v;
+			// UNKNOWN(PTR_NOGC) ID2D1Layer *v;
+			UNKNOWN(PTR_NOGC) void *v;
 		};
 
 		// State. The values here are always absolute, ie they do not depend on
@@ -142,11 +144,11 @@ namespace gui {
 		public:
 			State() {}
 
-			State(const D2D1_MATRIX_3X2_F &tfm, Float lineWidth) {
-				*transform() = tfm;
-				this->lineWidth = lineWidth;
-				layer = null;
-			}
+			// State(const D2D1_MATRIX_3X2_F &tfm, Float lineWidth) {
+			// 	*transform() = tfm;
+			// 	this->lineWidth = lineWidth;
+			// 	layer = null;
+			// }
 
 			// Transform storage. Do not touch!
 			Float tfm0;
@@ -157,9 +159,9 @@ namespace gui {
 			Float tfm5;
 
 			// Get the real type.
-			inline D2D1_MATRIX_3X2_F *transform() {
-				return (D2D1_MATRIX_3X2_F *)&tfm0;
-			}
+			// inline D2D1_MATRIX_3X2_F *transform() {
+			// 	return (D2D1_MATRIX_3X2_F *)&tfm0;
+			// }
 
 			// Line size.
 			Float lineWidth;
@@ -193,7 +195,7 @@ namespace gui {
 		Array<Layer> *layers;
 
 		// Get a layer.
-		ID2D1Layer *layer();
+		// ID2D1Layer *layer();
 	};
 
 }

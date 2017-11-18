@@ -40,7 +40,7 @@ namespace gui {
 		void STORM_FN repaint();
 
 		// Get our render target.
-		inline ID2D1RenderTarget *renderTarget() { return target.target; }
+		// inline ID2D1RenderTarget *renderTarget() { return target.target; }
 
 		// Add a resource. Resources are invalidated whenever we have to re-create the render target.
 		void addResource(RenderResource *resource);

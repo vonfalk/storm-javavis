@@ -5,8 +5,12 @@
 
 namespace gui {
 
+#ifdef GUI_WIN32
 	// Reserved ids.
-	static const nat reservedTo = IDCANCEL;
+	static const Nat reservedTo = IDCANCEL;
+#else
+	static const Nat reservedTo = 0;
+#endif
 
 	Container::Container() {
 		ids = new (this) IdMap();
@@ -35,7 +39,7 @@ namespace gui {
 		windows->remove(child);
 	}
 
-	void Container::parentCreated(nat id) {
+	void Container::parentCreated(Nat id) {
 		Window::parentCreated(id);
 
 		// Late creation, create any remaining children!
@@ -74,7 +78,7 @@ namespace gui {
 		return firstFree;
 	}
 
-	void Container::allocate(Window *window, nat id) {
+	void Container::allocate(Window *window, Nat id) {
 		if (id == 0)
 			return;
 
@@ -84,6 +88,8 @@ namespace gui {
 		ids->put(id, window);
 		windows->put(window, id);
 	}
+
+#ifdef GUI_WIN32
 
 	MsgResult Container::onMessage(const Message &msg) {
 		switch (msg.msg) {
@@ -111,4 +117,5 @@ namespace gui {
 		return i.v()->onCommand(type);
 	}
 
+#endif
 }

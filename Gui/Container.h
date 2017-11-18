@@ -28,9 +28,13 @@ namespace gui {
 		// Called when we've been destroyed.
 		virtual void windowDestroyed();
 
+#ifdef GUI_WIN32
 		// Handle messages.
 		virtual MsgResult onMessage(const Message &msg);
 
+		// Forward WM_COMMAND messages to the right window.
+		bool onCommand(const Message &msg);
+#endif
 	private:
 		// Currently used ids.
 		typedef Map<Nat, Window *> IdMap;
@@ -48,10 +52,7 @@ namespace gui {
 
 		// Allocate a window with a suggested id. Fails if that id is already in use.
 		// An id of 0 is special. That means you do not want any callbacks from that control.
-		void allocate(Window *window, nat id);
-
-		// Forward WM_COMMAND messages to the right window.
-		bool onCommand(const Message &msg);
+		void allocate(Window *window, Nat id);
 	};
 
 }

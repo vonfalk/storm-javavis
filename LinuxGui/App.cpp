@@ -44,40 +44,6 @@ namespace gui {
 		g_source_attach(fdSource, context);
 	}
 
-	static short from_g(GIOCondition src) {
-		short r = 0;
-		if (src & G_IO_IN)
-			r |= POLLIN;
-		if (src & G_IO_OUT)
-			r |= POLLOUT;
-		if (src & G_IO_PRI)
-			r |= POLLPRI;
-		if (src & G_IO_ERR)
-			r |= POLLERR;
-		if (src & G_IO_HUP)
-			r |= POLLHUP;
-		if (src & G_IO_NVAL)
-			r |= POLLNVAL;
-		return r;
-	}
-
-	static GIOCondition to_g(short src) {
-		GIOCondition r = GIOCondition(0);
-		if (src & POLLIN)
-			r = GIOCondition(r | G_IO_IN);
-		if (src & POLLOUT)
-			r = GIOCondition(r | G_IO_OUT);
-		if (src & POLLPRI)
-			r = GIOCondition(r | G_IO_PRI);
-		if (src & POLLERR)
-			r = GIOCondition(r | G_IO_ERR);
-		if (src & POLLHUP)
-			r = GIOCondition(r | G_IO_HUP);
-		if (src & POLLNVAL)
-			r = GIOCondition(r | G_IO_NVAL);
-		return r;
-	}
-
 	GSourceFuncs AppWait::fdFuncs = {
 		null, // prepare
 		&AppWait::fdCheck, // check

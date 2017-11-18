@@ -12,6 +12,7 @@ namespace gui {
 	class Window;
 	class Frame;
 	class Font;
+	class AppWait;
 
 	/**
 	 * Application object. One instance of this object is created to manage all live windows for one
@@ -20,6 +21,9 @@ namespace gui {
 	class App : public ObjectOn<Ui> {
 		STORM_CLASS;
 	public:
+		// Default font.
+		Font *defaultFont;
+
 		// Indicate that 'w' is about to create a window and attach it. This makes us forward any
 		// messages addressed to an unknown window to 'w'. This is only done until 'addWindow(w)' is
 		// called.
@@ -41,14 +45,18 @@ namespace gui {
 		// when 'window' is no longer alive.
 		void waitForEvent(Window *owner, Event *event);
 
-		// Default font.
-		Font *defaultFont;
 
+		/**
+		 * Win32 specifics.
+		 */
+
+#ifdef GUI_WIN32
 		// Get the window class for frame windows.
 		ATOM windowClass();
 
 		// Get our instance.
 		HINSTANCE instance();
+#endif
 
 	private:
 		friend class AppWait;
@@ -59,15 +67,6 @@ namespace gui {
 
 		// # of messages to process before doing a thread switch.
 		static const Nat maxProcessMessages = 10;
-
-		// Process any messages for this thread. Returns 'false' if we should quit the message loop for any reason.
-		bool processMessages();
-
-		// Process a single message. It is assumed to not be WM_QUIT.
-		void processMessage(MSG &msg);
-
-		// Check if either the event is set or the window is removed.
-		bool resumeEvent(Window *w, Event *e);
 
 		// Keep track of all windows.
 		typedef Map<Handle, Window *> WindowMap;
@@ -80,6 +79,33 @@ namespace gui {
 		// The window class that is currently trying to create a window (if any).
 		Window *creating;
 
+		// Our window class (an ATOM).
+		Handle hWindowClass;
+
+		// Our instance (an HINSTANCE).
+		Handle hInstance;
+
+		// The AppWait object that is in charge of our thread.
+		UNKNOWN(PTR_NOGC) AppWait *appWait;
+
+		// Platform-specific initialization.
+		void init();
+
+		// Check if either the event is set or the window is removed.
+		bool resumeEvent(Window *w, Event *e);
+
+		/**
+		 * Win32 specific functionality.
+		 * Note: No variables may be placed inside #ifdefs, since that confuses the Storm preprocessor.
+		 */
+#ifdef GUI_WIN32
+
+		// Process any messages for this thread. Returns 'false' if we should quit the message loop for any reason.
+		bool processMessages();
+
+		// Process a single message. It is assumed to not be WM_QUIT.
+		void processMessage(MSG &msg);
+
 		// Find the root frame for a window.
 		Frame *findRoot(HWND wnd);
 
@@ -89,19 +115,10 @@ namespace gui {
 		// Set up other needed things.
 		void initCommonControls();
 
-		// Our window class (an ATOM).
-
-		Handle hWindowClass;
-
-		// Our instance (an HINSTANCE).
-		Handle hInstance;
-
-		// The AppWait object that is in charge of our thread.
-		UNKNOWN(PTR_NOGC) AppWait *appWait;
-
 		// Window proc.
 		static LRESULT WINAPI windowProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam);
 		static MsgResult handleMessage(HWND hwnd, const Message &msg);
+#endif
 	};
 
 	// Get the App object.
@@ -115,6 +132,7 @@ namespace gui {
 	class AppWait : public os::ThreadWait {
 	public:
 		AppWait(Engine &e);
+		~AppWait();
 
 		virtual void init();
 		virtual bool wait(os::IOHandle &io);
@@ -141,9 +159,6 @@ namespace gui {
 		os::UThread uThread;
 
 	private:
-		// Our thread id (win32 thread id).
-		DWORD threadId;
-
 		// # of WM_THREAD_SIGNAL messages sent. Not actually increased above 1
 		nat signalSent;
 
@@ -161,6 +176,48 @@ namespace gui {
 
 		// Notify this semaphore on exit.
 		os::Sema *notifyExit;
+
+		// Destroy.
+		void destroy();
+
+#ifdef GUI_WIN32
+		// Our thread id (win32 thread id).
+		DWORD threadId;
+#endif
+
+#ifdef GUI_GTK
+		// The global main context.
+		GMainContext *context;
+
+		// The source we use to attach file descriptors to.
+		GSource *fdSource;
+
+		// Data for our fdSource.
+		struct FdData {
+			GSource super;
+			GMainContext *context;
+			os::IOHandle::Desc *fds;
+			gpointer *tags;
+			nat *notify;
+		};
+
+		// Function table for our GSource.
+		static GSourceFuncs fdFuncs;
+
+		// Callback from fdFuncs.
+		static gboolean fdCheck(GSource *source);
+
+		// Callback from GLib.
+		static gboolean onTimeout(gpointer appWait);
+
+		// Used in 'fdCheck'.
+		vector<gpointer> tags;
+
+		// Wait for a callback of some sort.
+		void doWait(os::IOHandle &io);
+
+#endif
+
 	};
 
 	os::Thread spawnUiThread(Engine &e);

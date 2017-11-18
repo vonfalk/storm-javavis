@@ -16,11 +16,15 @@ namespace gui {
 		// Click callback.
 		MAYBE(Fn<void, Button *> *) onClick;
 
+#ifdef GUI_WIN32
 		// Notifications.
 		virtual bool onCommand(nat id);
+#endif
 
 	protected:
+#ifdef GUI_WIN32
 		virtual bool create(HWND parent, nat id);
+#endif
 	};
 
 }

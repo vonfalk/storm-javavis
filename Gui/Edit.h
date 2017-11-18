@@ -29,11 +29,13 @@ namespace gui {
 		STORM_CTOR Edit();
 		STORM_CTOR Edit(Str *cue);
 
+#ifdef GUI_WIN32
 		// Key handling for implementing Ctrl+Backspace.
 		virtual Bool STORM_FN onChar(Nat code);
 
 		// Implement the 'return' as a confirmation.
 		virtual Bool STORM_FN onKey(Bool pressed, Nat code);
+#endif
 
 		// Manipulate the selection.
 		Selection STORM_FN selected();
@@ -51,8 +53,9 @@ namespace gui {
 		Bool STORM_FN multiline();
 
 	protected:
+#ifdef GUI_WIN32
 		virtual bool create(HWND parent, nat id);
-
+#endif
 	private:
 		// Our selection.
 		Selection sel;

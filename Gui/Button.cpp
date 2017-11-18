@@ -13,6 +13,7 @@ namespace gui {
 		onClick = click;
 	}
 
+#ifdef GUI_WIN32
 	bool Button::create(HWND parent, nat id) {
 		return Window::createEx(WC_BUTTON, buttonFlags, 0, parent, id);
 	}
@@ -26,5 +27,6 @@ namespace gui {
 
 		return false;
 	}
+#endif
 
 }

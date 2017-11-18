@@ -7,17 +7,17 @@ namespace gui {
 	RenderResource::RenderResource() : resource(null), owner(null) {}
 
 	RenderResource::~RenderResource() {
-		::release(resource);
+		// ::release(resource);
 	}
 
 	void RenderResource::destroy() {
-		::release(resource);
+		// ::release(resource);
 	}
 
 	void RenderResource::forgetOwner() {
 		owner = null;
 	}
 
-	void RenderResource::create(Painter *from, ID2D1Resource **out) {}
+	// void RenderResource::create(Painter *from, ID2D1Resource **out) {}
 
 }

@@ -47,7 +47,7 @@ namespace gui {
 		inline Rect STORM_FN bound() { return b; }
 
 		// Get the geometry object.
-		ID2D1PathGeometry *geometry();
+		// ID2D1PathGeometry *geometry();
 
 	private:
 		// Element type.
@@ -117,7 +117,8 @@ namespace gui {
 		Rect b;
 
 		// The underlying DX object.
-		ID2D1PathGeometry *g;
+		// ID2D1PathGeometry *g;
+		void *g;
 
 		// Invalidate this path.
 		void invalidate();

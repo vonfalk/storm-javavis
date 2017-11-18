@@ -8,6 +8,8 @@
 
 namespace gui {
 
+#ifdef GUI_WIN32
+
 #ifdef DEBUG
 	static D2D1_FACTORY_OPTIONS options = { D2D1_DEBUG_LEVEL_INFORMATION };
 #else
@@ -53,86 +55,89 @@ namespace gui {
 		return r;
 	}
 
+#endif
+
 	RenderMgr::RenderMgr() : exiting(false) {
 		painters = new (this) Set<Painter *>();
 		resources = new (this) WeakSet<Resource>();
 		waitEvent = new (this) Event();
 		exitSema = new (this) Sema(0);
-		factory = null;
-		device = null;
-		giDevice = null;
-		giFactory = null;
-		writeFactory = null;
+		// factory = null;
+		// device = null;
+		// giDevice = null;
+		// giFactory = null;
+		// writeFactory = null;
 
-		HRESULT h;
+		// HRESULT h;
 
-		h = D2D1CreateFactory(D2D1_FACTORY_TYPE_SINGLE_THREADED, __uuidof(ID2D1Factory), &options, (void **)&factory);
-		if (FAILED(h))
-			throwError(L"Failed to create a D2D factory: ", h);
+		// h = D2D1CreateFactory(D2D1_FACTORY_TYPE_SINGLE_THREADED, __uuidof(ID2D1Factory), &options, (void **)&factory);
+		// if (FAILED(h))
+		// 	throwError(L"Failed to create a D2D factory: ", h);
 
-		if (FAILED(h = createDevice(&device)))
-			throwError(L"Failed to create a D3D device: ", h);
-		if (FAILED(h = device->QueryInterface(__uuidof(IDXGIDevice), (void **)&giDevice)))
-			throwError(L"Failed to get the DXGI device: ", h);
-		IDXGIAdapter *adapter = null;
-		if (FAILED(h = giDevice->GetParent(__uuidof(IDXGIAdapter), (void **)&adapter)))
-			throwError(L"Failed to get the DXGIAdapter: ", h);
-		if (FAILED(h = adapter->GetParent(__uuidof(IDXGIFactory), (void **)&giFactory)))
-			throwError(L"Failed to get the GI factory: ", h);
-		::release(adapter);
+		// if (FAILED(h = createDevice(&device)))
+		// 	throwError(L"Failed to create a D3D device: ", h);
+		// if (FAILED(h = device->QueryInterface(__uuidof(IDXGIDevice), (void **)&giDevice)))
+		// 	throwError(L"Failed to get the DXGI device: ", h);
+		// IDXGIAdapter *adapter = null;
+		// if (FAILED(h = giDevice->GetParent(__uuidof(IDXGIAdapter), (void **)&adapter)))
+		// 	throwError(L"Failed to get the DXGIAdapter: ", h);
+		// if (FAILED(h = adapter->GetParent(__uuidof(IDXGIFactory), (void **)&giFactory)))
+		// 	throwError(L"Failed to get the GI factory: ", h);
+		// ::release(adapter);
 
-		DWRITE_FACTORY_TYPE type = DWRITE_FACTORY_TYPE_SHARED;
-		if (FAILED(h = DWriteCreateFactory(type, __uuidof(IDWriteFactory), (IUnknown **)&writeFactory)))
-			throwError(L"Failed to initialize Direct Write: ", h);
+		// DWRITE_FACTORY_TYPE type = DWRITE_FACTORY_TYPE_SHARED;
+		// if (FAILED(h = DWriteCreateFactory(type, __uuidof(IDWriteFactory), (IUnknown **)&writeFactory)))
+		// 	throwError(L"Failed to initialize Direct Write: ", h);
 	}
 
-	static void create(DXGI_SWAP_CHAIN_DESC &desc, HWND window) {
-		RECT c;
-		GetClientRect(window, &c);
+	// static void create(DXGI_SWAP_CHAIN_DESC &desc, HWND window) {
+	// 	RECT c;
+	// 	GetClientRect(window, &c);
 
-		zeroMem(desc);
-		desc.BufferCount = 1;
-		desc.BufferDesc.Width = c.right - c.left;
-		desc.BufferDesc.Height = c.bottom - c.top;
-		desc.BufferDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
-		desc.BufferDesc.RefreshRate.Numerator = 60; // TODO: Needed?
-		desc.BufferDesc.RefreshRate.Denominator = 1;
-		desc.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;
-		desc.OutputWindow = window;
-		desc.SampleDesc.Count = 1;
-		desc.SampleDesc.Quality = 0;
-		desc.Windowed = TRUE;
-	}
+	// 	zeroMem(desc);
+	// 	desc.BufferCount = 1;
+	// 	desc.BufferDesc.Width = c.right - c.left;
+	// 	desc.BufferDesc.Height = c.bottom - c.top;
+	// 	desc.BufferDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
+	// 	desc.BufferDesc.RefreshRate.Numerator = 60; // TODO: Needed?
+	// 	desc.BufferDesc.RefreshRate.Denominator = 1;
+	// 	desc.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;
+	// 	desc.OutputWindow = window;
+	// 	desc.SampleDesc.Count = 1;
+	// 	desc.SampleDesc.Quality = 0;
+	// 	desc.Windowed = TRUE;
+	// }
 
 	void RenderMgr::attach(Resource *resource) {
 		resources->put(resource);
 	}
 
-	RenderMgr::RenderInfo RenderMgr::attach(Painter *painter, HWND window) {
-		RECT c;
-		GetClientRect(window, &c);
+	RenderMgr::RenderInfo RenderMgr::attach(Painter *painter, Handle window) {
+		// RECT c;
+		// GetClientRect(window, &c);
 
-		DXGI_SWAP_CHAIN_DESC desc;
-		create(desc, window);
+		// DXGI_SWAP_CHAIN_DESC desc;
+		// create(desc, window);
 
-		RenderInfo r;
-		HRESULT h;
+		// RenderInfo r;
+		// HRESULT h;
 
-		// TODO: Use CreateSwapChainForHwnd.
-		if (FAILED(h = giFactory->CreateSwapChain(device, &desc, &r.swapChain))) {
-			r.release();
-			throwError(L"Failed to create a swap chain: ", h);
-		}
+		// // TODO: Use CreateSwapChainForHwnd.
+		// if (FAILED(h = giFactory->CreateSwapChain(device, &desc, &r.swapChain))) {
+		// 	r.release();
+		// 	throwError(L"Failed to create a swap chain: ", h);
+		// }
 
-		try {
-			r.target = createTarget(r.swapChain);
-		} catch (...) {
-			r.release();
-			throw;
-		}
+		// try {
+		// 	r.target = createTarget(r.swapChain);
+		// } catch (...) {
+		// 	r.release();
+		// 	throw;
+		// }
 
-		painters->put(painter);
-		return r;
+		// painters->put(painter);
+		// return r;
+		return RenderInfo();
 	}
 
 	void RenderMgr::detach(Painter *painter) {
@@ -140,38 +145,38 @@ namespace gui {
 	}
 
 	void RenderMgr::resize(RenderInfo &info, Size sz) {
-		::release(info.target);
+		// ::release(info.target);
 
-		HRESULT r;
-		if (FAILED(r = info.swapChain->ResizeBuffers(1, (UINT)sz.w, (UINT)sz.h, DXGI_FORMAT_UNKNOWN, 0))) {
-			throwError(L"Failed to resize buffers: " , r);
-		}
+		// HRESULT r;
+		// if (FAILED(r = info.swapChain->ResizeBuffers(1, (UINT)sz.w, (UINT)sz.h, DXGI_FORMAT_UNKNOWN, 0))) {
+		// 	throwError(L"Failed to resize buffers: " , r);
+		// }
 
-		info.target = createTarget(info.swapChain);
+		// info.target = createTarget(info.swapChain);
 	}
 
-	ID2D1RenderTarget *RenderMgr::createTarget(IDXGISwapChain *swapChain) {
-		HRESULT h;
-		ID2D1RenderTarget *target;
-		ComPtr<IDXGISurface> surface;
+	// ID2D1RenderTarget *RenderMgr::createTarget(IDXGISwapChain *swapChain) {
+	// 	HRESULT h;
+	// 	ID2D1RenderTarget *target;
+	// 	ComPtr<IDXGISurface> surface;
 
-		if (FAILED(h = swapChain->GetBuffer(0, __uuidof(IDXGISurface), (void **)&surface))) {
-			throwError(L"Failed to get the surface: ", h);
-		}
+	// 	if (FAILED(h = swapChain->GetBuffer(0, __uuidof(IDXGISurface), (void **)&surface))) {
+	// 		throwError(L"Failed to get the surface: ", h);
+	// 	}
 
-		D2D1_RENDER_TARGET_PROPERTIES props = {
-			D2D1_RENDER_TARGET_TYPE_DEFAULT,
-			{ DXGI_FORMAT_UNKNOWN, D2D1_ALPHA_MODE_PREMULTIPLIED },
-			0, 0, // Dpi
-			D2D1_RENDER_TARGET_USAGE_NONE,
-			D2D1_FEATURE_LEVEL_10, // Use _DEFAULT?
-		};
-		if (FAILED(h = factory->CreateDxgiSurfaceRenderTarget(surface.v, &props, &target))) {
-			throwError(L"Failed to create a render target: ", h);
-		}
+	// 	D2D1_RENDER_TARGET_PROPERTIES props = {
+	// 		D2D1_RENDER_TARGET_TYPE_DEFAULT,
+	// 		{ DXGI_FORMAT_UNKNOWN, D2D1_ALPHA_MODE_PREMULTIPLIED },
+	// 		0, 0, // Dpi
+	// 		D2D1_RENDER_TARGET_USAGE_NONE,
+	// 		D2D1_FEATURE_LEVEL_10, // Use _DEFAULT?
+	// 	};
+	// 	if (FAILED(h = factory->CreateDxgiSurfaceRenderTarget(surface.v, &props, &target))) {
+	// 		throwError(L"Failed to create a render target: ", h);
+	// 	}
 
-		return target;
-	}
+	// 	return target;
+	// }
 
 	void RenderMgr::terminate() {
 		exiting = true;
@@ -188,11 +193,11 @@ namespace gui {
 		while (Resource *n = r.next())
 			n->destroy();
 
-		::release(giDevice);
-		::release(device);
-		::release(factory);
-		::release(giFactory);
-		::release(writeFactory);
+		// ::release(giDevice);
+		// ::release(device);
+		// ::release(factory);
+		// ::release(giFactory);
+		// ::release(writeFactory);
 	}
 
 	void RenderMgr::main() {

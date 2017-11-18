@@ -1,5 +1,7 @@
 #pragma once
 
+#ifdef GUI_WIN32
+
 namespace gui {
 
 	/**
@@ -8,3 +10,5 @@ namespace gui {
 	const wchar *msgName(UINT msg);
 
 }
+
+#endif

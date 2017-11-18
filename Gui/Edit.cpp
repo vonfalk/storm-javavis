@@ -22,6 +22,35 @@ namespace gui {
 		myCue = new (this) Str(L"");
 	}
 
+	void Edit::multiline(Bool v) {
+		myMultiline = v;
+		if (created())
+			WARNING(L"Setting multiline after creation is not yet implemented.");
+	}
+
+	Bool Edit::multiline() {
+		return myMultiline;
+	}
+
+	void Edit::removeLastWord() {
+		Selection s = selected();
+		if (s.end == 0)
+			return;
+
+		const Str *t = text();
+		s.end = min(s.end, t->peekLength());
+		nat removeStart = s.end - 1;
+		while (removeStart > 0) {
+			if (t->c_str()[removeStart] == ' ')
+				break;
+			removeStart--;
+		}
+
+		text(*t->substr(t->begin(), t->posIter(removeStart)) + t->substr(t->posIter(s.end), t->end()));
+		selected(Selection(removeStart));
+	}
+
+#ifdef GUI_WIN32
 	bool Edit::create(HWND parent, nat id) {
 		DWORD flags = editFlags;
 		if (myMultiline)
@@ -85,32 +114,25 @@ namespace gui {
 			SendMessage(handle(), EM_SETCUEBANNER, 0, (LPARAM)myCue->c_str());
 	}
 
-	void Edit::multiline(Bool v) {
-		myMultiline = v;
-		if (created())
-			WARNING(L"Setting multiline after creation is not yet implemented.");
+#endif
+
+#ifdef GUI_GTK
+	Selection Edit::selected() {
+		return sel;
 	}
 
-	Bool Edit::multiline() {
-		return myMultiline;
+	void Edit::selected(Selection sel) {
+		this->sel = sel;
 	}
 
-	void Edit::removeLastWord() {
-		Selection s = selected();
-		if (s.end == 0)
-			return;
-
-		const Str *t = text();
-		s.end = min(s.end, t->peekLength());
-		nat removeStart = s.end - 1;
-		while (removeStart > 0) {
-			if (t->c_str()[removeStart] == ' ')
-				break;
-			removeStart--;
-		}
-
-		text(*t->substr(t->begin(), t->posIter(removeStart)) + t->substr(t->posIter(s.end), t->end()));
-		selected(Selection(removeStart));
+	Str *Edit::cue() {
+		return myCue;
 	}
+
+	void Edit::cue(Str *s) {
+		myCue = s;
+	}
+
+#endif
 
 }

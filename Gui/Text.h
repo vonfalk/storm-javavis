@@ -27,11 +27,12 @@ namespace gui {
 		// to apply a font to a specific part of the string.
 
 		// Get the layout.
-		inline IDWriteTextLayout *layout() const { return l; }
+		// inline IDWriteTextLayout *layout() const { return l; }
 
 	private:
 		// The layout itself.
-		IDWriteTextLayout *l;
+		// IDWriteTextLayout *l;
+		void *l;
 
 		// Create layout.
 		void init(Str *text, Font *font, Size size);

@@ -24,8 +24,10 @@ namespace gui {
 		// Wait until this frame is closed.
 		void STORM_FN waitForClose();
 
+#ifdef GUI_WIN32
 		// Message!
 		virtual MsgResult onMessage(const Message &msg);
+#endif
 
 		// Set size.
 		virtual void STORM_FN size(Size s);

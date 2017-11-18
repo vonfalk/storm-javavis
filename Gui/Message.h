@@ -1,5 +1,7 @@
 #pragma once
 
+#ifdef GUI_WIN32
+
 namespace gui {
 
 	/**
@@ -33,3 +35,5 @@ namespace gui {
 	MsgResult msgResult(LRESULT result);
 
 }
+
+#endif

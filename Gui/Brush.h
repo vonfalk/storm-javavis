@@ -14,15 +14,15 @@ namespace gui {
 		Brush();
 
 		// Get a brush.
-		inline ID2D1Brush *brush(Painter *owner, const Rect &rect) {
-			ID2D1Brush *b = get<ID2D1Brush>(owner);
-			prepare(rect, b);
-			b->SetOpacity(opacity);
-			return b;
-		}
+		// inline ID2D1Brush *brush(Painter *owner, const Rect &rect) {
+		// 	ID2D1Brush *b = get<ID2D1Brush>(owner);
+		// 	prepare(rect, b);
+		// 	b->SetOpacity(opacity);
+		// 	return b;
+		// }
 
 		// Prepare for drawing a bounding box of 'bound'.
-		virtual void prepare(const Rect &bound, ID2D1Brush *b);
+		// virtual void prepare(const Rect &bound, ID2D1Brush *b);
 
 		// Opacity.
 		Float opacity;
@@ -36,7 +36,7 @@ namespace gui {
 	public:
 		STORM_CTOR SolidBrush(Color color);
 
-		virtual void create(Painter *owner, ID2D1Resource **out);
+		// virtual void create(Painter *owner, ID2D1Resource **out);
 
 	private:
 		Color color;
@@ -50,9 +50,9 @@ namespace gui {
 	public:
 		STORM_CTOR BitmapBrush(Bitmap *bitmap);
 
-		virtual void create(Painter *owner, ID2D1Resource **out);
+		// virtual void create(Painter *owner, ID2D1Resource **out);
 
-		virtual void prepare(const Rect &bound, ID2D1Brush *b);
+		// virtual void prepare(const Rect &bound, ID2D1Brush *b);
 	private:
 		Bitmap *bitmap;
 	};
@@ -90,10 +90,11 @@ namespace gui {
 
 	protected:
 		// Get the stops object.
-		ID2D1GradientStopCollection *dxStops(Painter *owner);
+		// ID2D1GradientStopCollection *dxStops(Painter *owner);
 
 	private:
-		ID2D1GradientStopCollection *dxObject;
+		// ID2D1GradientStopCollection *dxObject;
+		void *dxObject;
 		Array<GradientStop> *myStops;
 	};
 
@@ -110,13 +111,13 @@ namespace gui {
 		STORM_CTOR LinearGradient(Color c1, Color c2, Angle angle);
 
 		// Get the brush.
-		inline ID2D1LinearGradientBrush *brush(Painter *owner) { return get<ID2D1LinearGradientBrush>(owner); }
+		// inline ID2D1LinearGradientBrush *brush(Painter *owner) { return get<ID2D1LinearGradientBrush>(owner); }
 
 		// Create.
-		virtual void create(Painter *owner, ID2D1Resource **out);
+		// virtual void create(Painter *owner, ID2D1Resource **out);
 
 		// Prepare.
-		virtual void prepare(const Rect &s, ID2D1Brush *b);
+		// virtual void prepare(const Rect &s, ID2D1Brush *b);
 
 		// The angle.
 		Angle angle;

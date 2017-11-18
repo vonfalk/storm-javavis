@@ -18,8 +18,10 @@ namespace gui {
 		// Copy.
 		Font(const Font &o);
 
+#ifdef GUI_WIN32
 		// Create font with more options.
 		Font(LOGFONT &lf);
+#endif
 
 		// Destroy.
 		~Font();
@@ -55,13 +57,16 @@ namespace gui {
 		inline Bool STORM_FN strikeOut() { return fStrikeOut; }
 		void STORM_SETTER strikeOut(Bool u);
 
+		// To string.
+		virtual void STORM_FN toS(StrBuf *to) const;
+
+#ifdef GUI_WIN32
 		// Get a Win32 handle. Will be alive at least as long as this object.
 		HFONT handle();
 
 		// Get TextFormat for D2D. This class retains ownership over the returned object.
 		IDWriteTextFormat *textFormat();
-
-		virtual void STORM_FN toS(StrBuf *to) const;
+#endif
 
 	private:
 		// Shared data. Be careful with this!

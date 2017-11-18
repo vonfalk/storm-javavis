@@ -1,6 +1,8 @@
 #include "stdafx.h"
 #include "MsgName.h"
 
+#ifdef GUI_WIN32
+
 namespace gui {
 
 #define ENTRY(name) case name: return WIDEN(#name);
@@ -300,3 +302,5 @@ namespace gui {
 		return L"<unknown>";
 	}
 }
+
+#endif

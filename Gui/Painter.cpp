@@ -6,7 +6,7 @@ namespace gui {
 
 	Painter::Painter() : continuous(false), repaintCounter(0) {
 		attachedTo = Window::invalid;
-		bgColor = color(GetSysColor(COLOR_3DFACE));
+		// bgColor = color(GetSysColor(COLOR_3DFACE));
 		resources = new (this) WeakSet<RenderResource>();
 	}
 
@@ -23,8 +23,8 @@ namespace gui {
 	}
 
 	void Painter::attach(Window *to) {
-		HWND handle = to->handle();
-		if (handle != attachedTo.hwnd()) {
+		Handle handle = to->handle();
+		if (handle != attachedTo) {
 			detach();
 			attachedTo = handle;
 			create();
@@ -46,15 +46,15 @@ namespace gui {
 			// destroyResources();
 			RenderMgr *mgr = renderMgr(engine());
 			mgr->resize(target, sz);
-			if (graphics)
-				graphics->updateTarget(target.target);
+			// if (graphics)
+			// 	graphics->updateTarget(target.target);
 		}
 	}
 
 	void Painter::create() {
 		RenderMgr *mgr = renderMgr(engine());
-		target = mgr->attach(this, attachedTo.hwnd());
-		graphics = new (this) Graphics(target.target, this);
+		target = mgr->attach(this, attachedTo);
+		// graphics = new (this) Graphics(target.target, this);
 	}
 
 	void Painter::destroy() {
@@ -97,50 +97,50 @@ namespace gui {
 		if (!target.swapChain)
 			return;
 
-		target.target->BeginDraw();
-		target.target->SetTransform(D2D1::Matrix3x2F::Identity());
-		target.target->Clear(dx(bgColor));
+		// target.target->BeginDraw();
+		// target.target->SetTransform(D2D1::Matrix3x2F::Identity());
+		// target.target->Clear(dx(bgColor));
 
-		bool more = false;
+		// bool more = false;
 
-		try {
-			graphics->beforeRender();
-			more = render(graphics->size(), graphics);
-			graphics->afterRender();
-		} catch (...) {
-			graphics->afterRender();
-			target.target->EndDraw();
-			repaintCounter++;
-			throw;
-		}
+		// try {
+		// 	graphics->beforeRender();
+		// 	more = render(graphics->size(), graphics);
+		// 	graphics->afterRender();
+		// } catch (...) {
+		// 	graphics->afterRender();
+		// 	// target.target->EndDraw();
+		// 	repaintCounter++;
+		// 	throw;
+		// }
 
-		HRESULT r = target.target->EndDraw();
+		// HRESULT r = target.target->EndDraw();
 
-		if (SUCCEEDED(r)) {
-			if (waitForVSync) {
-				r = target.swapChain->Present(1, 0);
-			} else {
-				r = target.swapChain->Present(0, 0);
-			}
-		}
+		// if (SUCCEEDED(r)) {
+		// 	if (waitForVSync) {
+		// 		r = target.swapChain->Present(1, 0);
+		// 	} else {
+		// 		r = target.swapChain->Present(0, 0);
+		// 	}
+		// }
 
-		if (r == D2DERR_RECREATE_TARGET || r == DXGI_ERROR_DEVICE_RESET) {
-			// Re-create our render target.
-			destroy();
-			create();
-			// TODO: We probably want to re-draw ourselves here...
-		}
+		// if (r == D2DERR_RECREATE_TARGET || r == DXGI_ERROR_DEVICE_RESET) {
+		// 	// Re-create our render target.
+		// 	destroy();
+		// 	create();
+		// 	// TODO: We probably want to re-draw ourselves here...
+		// }
 
-		repaintCounter++;
+		// repaintCounter++;
 
-		if (more != continuous) {
-			continuous = more;
-			if (more) {
-				// Register!
-				RenderMgr *mgr = renderMgr(engine());
-				mgr->newContinuous();
-			}
-		}
+		// if (more != continuous) {
+		// 	continuous = more;
+		// 	if (more) {
+		// 		// Register!
+		// 		RenderMgr *mgr = renderMgr(engine());
+		// 		mgr->newContinuous();
+		// 	}
+		// }
 	}
 
 }
