@@ -34,6 +34,9 @@ namespace gui {
 		// Window text.
 		using Window::text;
 		virtual void STORM_SETTER text(Str *str);
+
+		// Container.
+		virtual GtkFixed *container();
 #endif
 
 		// Set size.

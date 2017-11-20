@@ -35,6 +35,15 @@ namespace gui {
 		// Forward WM_COMMAND messages to the right window.
 		bool onCommand(const Message &msg);
 #endif
+#ifdef GUI_GTK
+		// Get the container to use for this window. Might be different from what is returned by
+		// 'handle()'.
+		virtual GtkFixed *container();
+#endif
+	protected:
+		// Create.
+		virtual bool create(Container *parent, nat id);
+
 	private:
 		// Currently used ids.
 		typedef Map<Nat, Window *> IdMap;

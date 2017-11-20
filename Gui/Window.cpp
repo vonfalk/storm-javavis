@@ -55,7 +55,7 @@ namespace gui {
 		myRoot = myParent->myRoot;
 
 		if (!created())
-			if (!create(myParent->handle(), id))
+			if (!create(myParent, id))
 				WARNING(L"Failed to create a window...");
 	}
 
@@ -266,8 +266,8 @@ namespace gui {
 		return false;
 	}
 
-	bool Window::create(HWND parent, nat id) {
-		return createEx(NULL, childFlags, 0, parent, id);
+	bool Window::create(Window *container, nat id) {
+		return createEx(NULL, childFlags, 0, parent->handle().hwnd(), id);
 	}
 
 	bool Window::createEx(LPCTSTR className, DWORD style, DWORD exStyle, HWND parent) {
@@ -371,8 +371,23 @@ namespace gui {
 
 #ifdef GUI_GTK
 
-	bool Window::create(Handle parent, nat id) {
+	bool Window::create(Container *parent, nat id) {
+		initWidget(parent, gtk_drawing_area_new());
 		return true;
+	}
+
+	void Window::initWidget(Container *parent, GtkWidget *widget) {
+		handle(widget);
+
+		Size s = myPos.size();
+		gtk_widget_set_size_request(widget, s.w, s.h);
+		gtk_fixed_put(parent->container(), widget, myPos.p0.x, myPos.p0.y);
+
+
+		if (myVisible)
+			gtk_widget_show(widget);
+		else
+			gtk_widget_hide(widget);
 	}
 
 	void Window::destroyWindow(Handle handle) {

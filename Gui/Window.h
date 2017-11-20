@@ -141,7 +141,7 @@ namespace gui {
 		// Override this to do any special window creation. The default implementation creates a
 		// plain child window with no window class. Called as soon as we know our parent (not on
 		// Frames). Returns 'false' on failure.
-		virtual bool create(Handle parent, nat id);
+		virtual bool create(Container *parent, nat id);
 
 #ifdef GUI_WIN32
 		// Create a window, and handle it. Makes sure that all messages are handled correctly.
@@ -151,6 +151,11 @@ namespace gui {
 		bool createEx(LPCTSTR className, DWORD style, DWORD exStyle, HWND parent, nat id, CreateFlags flags);
 		bool createEx(LPCTSTR className, DWORD style, DWORD exStyle, HWND parent, nat id);
 		bool createEx(LPCTSTR className, DWORD style, DWORD exStyle, HWND parent);
+#endif
+#ifdef GUI_GTK
+		// Called to perform initialization of the recently created widget. Performs things such as
+		// setting visibility, text and position. Also calls 'handle()' on the widget.
+		void initWidget(Container *parent, GtkWidget *widget);
 #endif
 	private:
 		Handle myHandle;

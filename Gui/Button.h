@@ -20,11 +20,17 @@ namespace gui {
 		// Notifications.
 		virtual bool onCommand(nat id);
 #endif
+#ifdef GUI_GTK
+		using Window::text;
+		void text(Str *text);
+#endif
 
 	protected:
-#ifdef GUI_WIN32
-		virtual bool create(HWND parent, nat id);
-#endif
+		virtual bool create(Container *parent, nat id);
+
+	private:
+		// Click notification.
+		void clicked();
 	};
 
 }

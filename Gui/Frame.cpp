@@ -182,6 +182,12 @@ namespace gui {
 		gtk_window_set_title((GtkWindow *)frame, text()->utf8_str());
 		gtk_window_set_resizable((GtkWindow *)frame, sizeable);
 
+		PVAR(basic_new());
+
+		GtkWidget *container = gtk_fixed_new();
+		gtk_container_add(GTK_CONTAINER(frame), container);
+		gtk_widget_show(container);
+
 		Signal<void, Frame>::Connect<&Frame::close>::to(frame, "destroy", engine());
 
 		Size sz = pos().size();
@@ -210,6 +216,11 @@ namespace gui {
 			gtk_window_set_title((GtkWindow *)handle().widget(), str->utf8_str());
 		}
 		Window::text(str);
+	}
+
+	GtkFixed *Frame::container() {
+		// There is a GTK_FIXED inside the frame.
+		return GTK_FIXED(gtk_bin_get_child(GTK_BIN(handle().widget())));
 	}
 
 #endif

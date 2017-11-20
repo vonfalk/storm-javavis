@@ -91,6 +91,10 @@ namespace gui {
 
 #ifdef GUI_WIN32
 
+	bool Container::create(Container *parent, nat id) {
+		return Window::create(parent, id);
+	}
+
 	MsgResult Container::onMessage(const Message &msg) {
 		switch (msg.msg) {
 		case WM_COMMAND:
@@ -118,4 +122,17 @@ namespace gui {
 	}
 
 #endif
+#ifdef GUI_GTK
+
+	bool Container::create(Container *parent, nat id) {
+		initWidget(parent, gtk_fixed_new());
+		return true;
+	}
+
+	GtkFixed *Container::container() {
+		return GTK_FIXED(handle().container());
+	}
+
+#endif
+
 }

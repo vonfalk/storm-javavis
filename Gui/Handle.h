@@ -26,6 +26,7 @@ namespace gui {
 		Handle(GtkWidget *wnd) { value = (size_t)wnd; }
 
 		inline GtkWidget *widget() const { return (GtkWidget *)value; }
+		inline GtkContainer *container() const { return GTK_CONTAINER(widget()); }
 #endif
 
 		inline Bool STORM_FN operator ==(Handle o) const {

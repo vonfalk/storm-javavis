@@ -2,17 +2,30 @@ use ui;
 use core:geometry;
 
 class SimpleWin extends Frame {
+	Button button;
+	Int times;
+
 	init() {
-		init("Window", Size(300, 300));
+		init("Window", Size(300, 300)) {
+			button("OK");
+			times = 0;
+		}
+
+		button.onClick = &this.onOk(Button);
+		add(button);
 
 		create();
+	}
+
+	void onOk(Button b) {
+		button.text("Clicked" + toS(times++));
 	}
 }
 
 void simple() {
 	SimpleWin win;
-	// win.waitForClose();
-	sleep(2 s);
-	win.close();
+	win.waitForClose();
+	// sleep(2 s);
+	// win.close();
 	print("Bye!");
 }
