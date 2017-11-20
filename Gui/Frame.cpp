@@ -182,9 +182,7 @@ namespace gui {
 		gtk_window_set_title((GtkWindow *)frame, text()->utf8_str());
 		gtk_window_set_resizable((GtkWindow *)frame, sizeable);
 
-		PVAR(basic_new());
-
-		GtkWidget *container = gtk_fixed_new();
+		GtkWidget *container = basic_new();
 		gtk_container_add(GTK_CONTAINER(frame), container);
 		gtk_widget_show(container);
 
@@ -218,9 +216,9 @@ namespace gui {
 		Window::text(str);
 	}
 
-	GtkFixed *Frame::container() {
-		// There is a GTK_FIXED inside the frame.
-		return GTK_FIXED(gtk_bin_get_child(GTK_BIN(handle().widget())));
+	Basic *Frame::container() {
+		// There is a BASIC layout inside the frame.
+		return BASIC(gtk_bin_get_child(GTK_BIN(handle().widget())));
 	}
 
 #endif

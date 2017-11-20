@@ -380,9 +380,7 @@ namespace gui {
 		handle(widget);
 
 		Size s = myPos.size();
-		gtk_widget_set_size_request(widget, s.w, s.h);
-		gtk_fixed_put(parent->container(), widget, myPos.p0.x, myPos.p0.y);
-
+		basic_put(parent->container(), widget, myPos.p0.x, myPos.p0.y, s.w, s.h);
 
 		if (myVisible)
 			gtk_widget_show(widget);
@@ -404,14 +402,14 @@ namespace gui {
 
 	Rect Window::pos() {
 		if (created()) {
+			Size s = myPos.size();
+			basic_move(parent()->container(), handle().widget(), myPos.p0.x, myPos.p0.y, s.w, s.h);
 		}
 		return myPos;
 	}
 
 	void Window::pos(Rect r) {
 		myPos = r;
-		if (created()) {
-		}
 	}
 
 	void Window::visible(Bool v) {

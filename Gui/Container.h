@@ -38,7 +38,7 @@ namespace gui {
 #ifdef GUI_GTK
 		// Get the container to use for this window. Might be different from what is returned by
 		// 'handle()'.
-		virtual GtkFixed *container();
+		virtual Basic *container();
 #endif
 	protected:
 		// Create.

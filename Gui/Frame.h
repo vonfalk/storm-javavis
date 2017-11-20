@@ -36,7 +36,7 @@ namespace gui {
 		virtual void STORM_SETTER text(Str *str);
 
 		// Container.
-		virtual GtkFixed *container();
+		virtual Basic *container();
 #endif
 
 		// Set size.

@@ -6,10 +6,12 @@ class SimpleWin extends Frame {
 	Int times;
 
 	init() {
-		init("Window", Size(300, 300)) {
+		init("Window", Size(200, 200)) {
 			button("OK");
 			times = 0;
 		}
+
+		button.pos(Rect(10, 100, 190, 190));
 
 		button.onClick = &this.onOk(Button);
 		add(button);

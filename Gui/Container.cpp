@@ -129,8 +129,8 @@ namespace gui {
 		return true;
 	}
 
-	GtkFixed *Container::container() {
-		return GTK_FIXED(handle().container());
+	Basic *Container::container() {
+		return BASIC(handle().container());
 	}
 
 #endif
