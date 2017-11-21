@@ -49,7 +49,7 @@ static void move(Basic *me, BasicChild *child, gint x, gint y, gint w, gint h) {
 }
 
 void basic_put(Basic *layout, GtkWidget *widget, gint x, gint y, gint w, gint h) {
-	BasicChild *child = (BasicChild *)g_new(BasicChild, 1);
+	BasicChild *child = g_new(BasicChild, 1);
 	child->widget = widget;
 	child->x = x;
 	child->y = y;
@@ -148,13 +148,21 @@ static void basic_preferred_height(GtkWidget *widget, int *minimum, int *natural
 		gint child_min, child_nat;
 		gtk_widget_get_preferred_height(child->widget, &child_min, &child_nat);
 
-		*minimum = max(*minimum, child->x + child_min);
-		*natural = max(*natural, child->x + child_nat);
+		*minimum = max(*minimum, child->y + child_min);
+		*natural = max(*natural, child->y + child_nat);
 	}
 }
 
 static void basic_size_allocate(GtkWidget *widget, GtkAllocation *allocation) {
 	Basic *me = BASIC(widget);
+
+	gtk_widget_set_allocation(widget, allocation);
+	if (gtk_widget_get_has_window(widget) && gtk_widget_get_realized(widget)) {
+		// Seems to never be called, but good to have just in case...
+		gdk_window_move_resize(gtk_widget_get_window(widget),
+							allocation->x, allocation->y,
+							allocation->width, allocation->height);
+	}
 
 	for (GList *children = me->children; children; children = children->next) {
 		BasicChild *child = (BasicChild *)children->data;
@@ -167,6 +175,12 @@ static void basic_size_allocate(GtkWidget *widget, GtkAllocation *allocation) {
 		alloc.y = child->y;
 		alloc.width = child->w;
 		alloc.height = child->h;
+
+		if (!gtk_widget_get_has_window(widget)) {
+			alloc.x += allocation->x;
+			alloc.y += allocation->y;
+		}
+
 		gtk_widget_size_allocate(child->widget, &alloc);
 	}
 }
@@ -223,31 +237,32 @@ static void basic_class_init(BasicClass *klass) {
 	container_class->child_type = &basic_child_type;
 	container_class->set_child_property = &basic_set_property;
 	container_class->get_child_property = &basic_get_property;
+	gtk_container_class_handle_border_width(container_class);
 
 	gtk_container_class_install_child_property(container_class,
 											CHILD_PROP_X,
 											g_param_spec_int("x",
 															"X position",
 															"X position of child widget",
-															G_MININT, G_MAXINT, 0, G_PARAM_READWRITE));
+															G_MININT, G_MAXINT, 0, (GParamFlags)G_PARAM_READWRITE));
 	gtk_container_class_install_child_property(container_class,
 											CHILD_PROP_Y,
 											g_param_spec_int("y",
 															"Y position",
 															"Y position of child widget",
-															G_MININT, G_MAXINT, 0, G_PARAM_READWRITE));
+															G_MININT, G_MAXINT, 0, (GParamFlags)G_PARAM_READWRITE));
 	gtk_container_class_install_child_property(container_class,
 											CHILD_PROP_W,
 											g_param_spec_int("w",
 															"Width",
 															"Width of child widget",
-															0, G_MAXINT, 0, G_PARAM_READWRITE));
+															0, G_MAXINT, 0, (GParamFlags)G_PARAM_READWRITE));
 	gtk_container_class_install_child_property(container_class,
 											CHILD_PROP_H,
 											g_param_spec_int("h",
 															"Height",
 															"Height of child widget",
-															0, G_MAXINT, 0, G_PARAM_READWRITE));
+															0, G_MAXINT, 0, (GParamFlags)G_PARAM_READWRITE));
 }
 
 static void basic_init(Basic *instance) {
