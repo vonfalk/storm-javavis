@@ -1,5 +1,6 @@
 #include "stdafx.h"
 #include "Edit.h"
+#include "Core/Convert.h"
 
 namespace gui {
 
@@ -19,13 +20,14 @@ namespace gui {
 	Edit::Edit(Str *cue) {
 		myMultiline = false;
 		myCue = cue;
-		myCue = new (this) Str(L"");
 	}
 
 	void Edit::multiline(Bool v) {
+		if (created()) {
+			WARNING(L"Can not set multiline after creation!");
+			return;
+		}
 		myMultiline = v;
-		if (created())
-			WARNING(L"Setting multiline after creation is not yet implemented.");
 	}
 
 	Bool Edit::multiline() {
@@ -51,12 +53,12 @@ namespace gui {
 	}
 
 #ifdef GUI_WIN32
-	bool Edit::create(HWND parent, nat id) {
+	bool Edit::create(Container *parent, nat id) {
 		DWORD flags = editFlags;
 		if (myMultiline)
 			flags |= ES_MULTILINE | WS_VSCROLL | ES_WANTRETURN;
 
-		if (!Window::createEx(WC_EDIT, flags, WS_EX_CLIENTEDGE, parent, id))
+		if (!Window::createEx(WC_EDIT, flags, WS_EX_CLIENTEDGE, parent->handle().hwnd(), id))
 			return false;
 
 		// Update selection.
@@ -117,6 +119,29 @@ namespace gui {
 #endif
 
 #ifdef GUI_GTK
+	bool Edit::create(Container *parent, nat id) {
+		TODO(L"Implement support for multiline!");
+		GtkWidget *edit = gtk_entry_new();
+		gtk_entry_set_placeholder_text(GTK_ENTRY(edit), myCue->utf8_str());
+		initWidget(parent, edit);
+		return true;
+	}
+
+	const Str *Edit::text() {
+		if (created()) {
+			const gchar *buf = gtk_entry_get_text(GTK_ENTRY(handle().widget()));
+			Window::text(new (this) Str(toWChar(engine(), buf)));
+		}
+		return Window::text();
+	}
+
+	void Edit::text(Str *str) {
+		if (created()) {
+			gtk_entry_set_text(GTK_ENTRY(handle().widget()), str->utf8_str());
+		}
+		Window::text(str);
+	}
+
 	Selection Edit::selected() {
 		return sel;
 	}
@@ -130,6 +155,9 @@ namespace gui {
 	}
 
 	void Edit::cue(Str *s) {
+		if (created()) {
+			gtk_entry_set_placeholder_text(GTK_ENTRY(handle().widget()), s->utf8_str());
+		}
 		myCue = s;
 	}
 

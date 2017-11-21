@@ -11,10 +11,13 @@ namespace gui {
 	public:
 		STORM_CTOR Label(Str *text);
 
-	protected:
-#ifdef GUI_WIN32
-		virtual bool create(HWND parent, nat id);
+#ifdef GUI_GTK
+		using Window::text;
+		virtual void STORM_FN text(Str *text);
 #endif
+
+	protected:
+		virtual bool create(Container *parent, nat id);
 	};
 
 }

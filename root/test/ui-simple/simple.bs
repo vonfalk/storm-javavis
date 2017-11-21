@@ -2,24 +2,33 @@ use ui;
 use core:geometry;
 
 class SimpleWin extends Frame {
+	Label lbl;
 	Button button;
+	Edit edit;
 	Int times;
 
 	init() {
 		init("Window", Size(200, 200)) {
+			lbl("Input text:");
+			edit("text");
 			button("OK");
 			times = 0;
 		}
 
+		lbl.pos(Rect(10, 10, 190, 30));
+		edit.pos(Rect(10, 30, 190, 60));
 		button.pos(Rect(10, 100, 190, 190));
 
 		button.onClick = &this.onOk(Button);
+		add(lbl);
+		add(edit);
 		add(button);
-
 		create();
 	}
 
 	void onOk(Button b) {
+		lbl.text("You entered: " + edit.text);
+		edit.text("");
 		button.text("Clicked" + toS(times++));
 	}
 }

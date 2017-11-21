@@ -36,6 +36,11 @@ namespace gui {
 		// Implement the 'return' as a confirmation.
 		virtual Bool STORM_FN onKey(Bool pressed, Nat code);
 #endif
+#ifdef GUI_GTK
+		// Get/set text.
+		virtual const Str *STORM_FN text();
+		virtual void STORM_FN text(Str *text);
+#endif
 
 		// Manipulate the selection.
 		Selection STORM_FN selected();
@@ -53,9 +58,9 @@ namespace gui {
 		Bool STORM_FN multiline();
 
 	protected:
-#ifdef GUI_WIN32
-		virtual bool create(HWND parent, nat id);
-#endif
+		// Create.
+		virtual bool create(Container *parent, nat id);
+
 	private:
 		// Our selection.
 		Selection sel;
