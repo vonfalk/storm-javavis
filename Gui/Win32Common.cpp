@@ -41,10 +41,6 @@ namespace gui {
 		return Point(Float(a.x), Float(a.y));
 	}
 
-	bool pressed(nat keycode) {
-		return (GetKeyState(keycode) & 0x8000) != 0;
-	}
-
 	static nat toByte(float f) {
 		return byte(f * 255.0f);
 	}

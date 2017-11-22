@@ -10,6 +10,11 @@ namespace gui {
 
 	Selection::Selection(Nat s, Nat e) : start(s), end(e) {}
 
+	Str *toS(EnginePtr e, Selection s) {
+		StrBuf *out = new (e.v) StrBuf();
+		*out << S("{") << s.start << S(", ") << s.end << S("}");
+		return out->toS();
+	}
 
 	Edit::Edit() {
 		myMultiline = false;
@@ -52,6 +57,18 @@ namespace gui {
 		selected(Selection(removeStart));
 	}
 
+	Bool Edit::onKey(Bool down, Nat code, Modifiers mod) {
+		if (down && code == VK_RETURN) {
+			if (!myMultiline || (mod & mod::ctrl)) {
+				if (onReturn) {
+					onReturn->call(this);
+					return true;
+				}
+			}
+		}
+		return false;
+	}
+
 #ifdef GUI_WIN32
 	bool Edit::create(Container *parent, nat id) {
 		DWORD flags = editFlags;
@@ -74,18 +91,6 @@ namespace gui {
 		if (code == 127 && pressed(VK_CONTROL)) {
 			removeLastWord();
 			return true;
-		}
-		return false;
-	}
-
-	Bool Edit::onKey(Bool down, Nat code) {
-		if (down && code == VK_RETURN) {
-			if (!myMultiline || pressed(VK_CONTROL)) {
-				if (onReturn) {
-					onReturn->call(this);
-					return true;
-				}
-			}
 		}
 		return false;
 	}
@@ -120,9 +125,11 @@ namespace gui {
 
 #ifdef GUI_GTK
 	bool Edit::create(Container *parent, nat id) {
-		TODO(L"Implement support for multiline!");
+		if (myMultiline)
+			TODO(L"Implement multiline edit control.");
 		GtkWidget *edit = gtk_entry_new();
 		gtk_entry_set_placeholder_text(GTK_ENTRY(edit), myCue->utf8_str());
+		gtk_editable_select_region(GTK_EDITABLE(edit), sel.start, sel.end);
 		initWidget(parent, edit);
 		return true;
 	}
@@ -143,10 +150,18 @@ namespace gui {
 	}
 
 	Selection Edit::selected() {
+		if (created()) {
+			gint start, end;
+			gtk_editable_get_selection_bounds(GTK_EDITABLE(handle().widget()), &start, &end);
+			sel = Selection(Nat(start), Nat(end));
+		}
 		return sel;
 	}
 
 	void Edit::selected(Selection sel) {
+		if (created()) {
+			gtk_editable_select_region(GTK_EDITABLE(handle().widget()), sel.start, sel.end);
+		}
 		this->sel = sel;
 	}
 

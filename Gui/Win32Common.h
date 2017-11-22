@@ -48,9 +48,6 @@ namespace gui {
 
 	wostream &operator <<(wostream &to, const D2D1_MATRIX_3X2_F &m);
 
-	// Key state (as of the last processed message, only valid in the msg thread).
-	bool pressed(nat keycode);
-
 }
 
 // Custom messages.

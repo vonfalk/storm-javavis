@@ -4,6 +4,10 @@
 #include "Frame.h"
 #include "App.h"
 #include "Painter.h"
+#include "GtkSignal.h"
+
+// We're using gtk_widget_override_font, as there is no better way of setting custom fonts on widgets...
+#pragma GCC diagnostic ignored "-Wdeprecated-declarations"
 
 namespace gui {
 
@@ -90,7 +94,7 @@ namespace gui {
 		}
 	}
 
-	Bool Window::onKey(Bool down, Nat id) {
+	Bool Window::onKey(Bool down, Nat id, Modifiers modifiers) {
 		return false;
 	}
 
@@ -178,11 +182,11 @@ namespace gui {
 	MsgResult Window::beforeMessage(const Message &msg) {
 		switch (msg.msg) {
 		case WM_KEYUP:
-			if (onKey(false, msg.wParam))
+			if (onKey(false, msg.wParam, modifiers()))
 				return msgResult(0);
 			break;
 		case WM_KEYDOWN:
-			if (onKey(true, msg.wParam))
+			if (onKey(true, msg.wParam, modifiers()))
 				return msgResult(0);
 			break;
 		case WM_CHAR:
@@ -371,6 +375,20 @@ namespace gui {
 
 #ifdef GUI_GTK
 
+	gboolean Window::onKeyUp(GdkEvent *event) {
+		GdkEventKey &k = event->key;
+		return onKey(false, k.keyval, modifiers(k.state)) == TRUE;
+	}
+
+	gboolean Window::onKeyDown(GdkEvent *event) {
+		GdkEventKey &k = event->key;
+		return onKey(false, k.keyval, modifiers(k.state)) == TRUE;
+	}
+
+	void Window::onSize(GdkRectangle *alloc) {
+		resized(Size(alloc->width, alloc->height));
+	}
+
 	bool Window::create(Container *parent, nat id) {
 		initWidget(parent, gtk_drawing_area_new());
 		return true;
@@ -386,6 +404,17 @@ namespace gui {
 			gtk_widget_show(widget);
 		else
 			gtk_widget_hide(widget);
+
+		if (myFont != app(engine())->defaultFont)
+			gtk_widget_override_font(fontWidget(), myFont->desc());
+
+		initSignals(widget);
+	}
+
+	void Window::initSignals(GtkWidget *widget) {
+		Signal<gboolean, Window, GdkEvent *>::Connect<&Window::onKeyDown>::to(widget, "key-press-event", engine());
+		Signal<gboolean, Window, GdkEvent *>::Connect<&Window::onKeyUp>::to(widget, "key-release-event", engine());
+		Signal<void, Window, GdkRectangle *>::Connect<&Window::onSize>::to(widget, "size-allocate", engine());
 	}
 
 	void Window::destroyWindow(Handle handle) {
@@ -419,15 +448,37 @@ namespace gui {
 			gtk_widget_hide(handle().widget());
 	}
 
-	void Window::focus() {}
+	void Window::focus() {
+		gtk_widget_grab_focus(handle().widget());
+	}
 
 	void Window::font(Font *font) {
 		myFont = new (this) Font(*font);
+		if (created())
+			gtk_widget_override_font(fontWidget(), myFont->desc());
 	}
 
-	void Window::update() {}
+	GtkWidget *Window::fontWidget() {
+		return handle().widget();
+	}
 
-	void Window::repaint() {}
+	void Window::update() {
+		if (created()) {
+			GdkWindow *window = gtk_widget_get_window(handle().widget());
+			if (window) {
+				gdk_window_invalidate_rect(window, NULL, true);
+				gdk_window_process_updates(window, true);
+			}
+		}
+	}
+
+	void Window::repaint() {
+		if (created()) {
+			GdkWindow *window = gtk_widget_get_window(handle().widget());
+			if (window)
+				gdk_window_invalidate_rect(window, NULL, true);
+		}
+	}
 
 	void Window::setTimer(Duration interval) {
 		timerInterval = interval;

@@ -2,6 +2,7 @@
 #include "Message.h"
 #include "Handle.h"
 #include "Font.h"
+#include "Key.h"
 #include "Core/Timing.h"
 #include "Core/TObject.h"
 #include "Utils/Bitmask.h"
@@ -112,7 +113,7 @@ namespace gui {
 		// Set focus.
 		virtual void STORM_FN focus();
 
-		// Update the window (ie repaint it).
+		// Update the window (ie repaint it) right now.
 		virtual void STORM_FN update();
 
 		// Repaint the window when we have time.
@@ -122,7 +123,7 @@ namespace gui {
 		virtual void STORM_FN resized(Size size);
 
 		// Key events. Return 'true' if the message was handled and should not propagate further.
-		virtual Bool STORM_FN onKey(Bool pressed, Nat keycode);
+		virtual Bool STORM_FN onKey(Bool pressed, Nat keycode, mod::Modifiers modifiers);
 		virtual Bool STORM_FN onChar(Nat charCode);
 
 		// Set window contents (custom drawing).
@@ -156,6 +157,12 @@ namespace gui {
 		// Called to perform initialization of the recently created widget. Performs things such as
 		// setting visibility, text and position. Also calls 'handle()' on the widget.
 		void initWidget(Container *parent, GtkWidget *widget);
+
+		// Initialize any signals required by the Window class.
+		void initSignals(GtkWidget *widget);
+
+		// Get the widget we shall set the font on.
+		virtual GtkWidget *fontWidget();
 #endif
 	private:
 		Handle myHandle;
@@ -197,6 +204,12 @@ namespace gui {
 #ifdef GUI_WIN32
 		// Handle on paint events.
 		MsgResult onPaint();
+#endif
+#ifdef GUI_GTK
+		// Signal landing pads.
+		gboolean onKeyUp(GdkEvent *event);
+		gboolean onKeyDown(GdkEvent *event);
+		void onSize(GdkRectangle *alloc);
 #endif
 	};
 

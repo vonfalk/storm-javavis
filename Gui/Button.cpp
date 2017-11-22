@@ -20,6 +20,7 @@ namespace gui {
 	}
 
 #ifdef GUI_WIN32
+
 	bool Button::create(Container *parent, nat id) {
 		return Window::createEx(WC_BUTTON, buttonFlags, 0, parent->handle().hwnd(), id);
 	}
@@ -32,6 +33,7 @@ namespace gui {
 
 		return false;
 	}
+
 #endif
 
 #ifdef GUI_GTK
@@ -49,6 +51,10 @@ namespace gui {
 			gtk_label_set_text(GTK_LABEL(widget), text->utf8_str());
 		}
 		Window::text(text);
+	}
+
+	GtkWidget *Button::fontWidget() {
+		return gtk_bin_get_child(GTK_BIN(handle().widget()));
 	}
 
 #endif

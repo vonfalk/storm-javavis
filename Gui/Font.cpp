@@ -1,6 +1,7 @@
 #include "stdafx.h"
 #include "Font.h"
 #include "RenderMgr.h"
+#include "Core/Convert.h"
 
 #ifndef FW_NORMAL
 // Same as in the Win32 API.
@@ -32,8 +33,7 @@ namespace gui {
 	struct FontData {
 		// Create.
 		FontData() : refs(1) {
-			// hFont = (HFONT)INVALID_HANDLE_VALUE;
-			// textFmt = null;
+			init();
 		}
 
 		// Destroy.
@@ -63,23 +63,45 @@ namespace gui {
 				addRef();
 				return this;
 			} else {
+				// Not alone. We need to preserve ourselves for the other owner...
 				return new FontData();
 			}
 		}
 
-		// Clear data. _not_ thread safe, only to be used inside 'invalidate'.
-		void clear() {
-			// if (hFont != INVALID_HANDLE_VALUE)
-			// 	DeleteObject(hFont);
-			// hFont = (HFONT)INVALID_HANDLE_VALUE;
-			// ::release(textFmt);
-		}
-
+#ifdef GUI_WIN32
 		// WIN32 font.
-		// HFONT hFont;
+		HFONT hFont;
 
 		// TextFormat.
-		// IDWriteTextFormat *textFmt;
+		IDWriteTextFormat *textFmt;
+
+		void init() {
+			hFont = (HFONT)INVALID_HANDLE_VALUE;
+			textFmt = null;
+		}
+
+		// Clear data. _not_ thread safe, only to be used inside 'invalidate'.
+		void clear() {
+			if (hFont != INVALID_HANDLE_VALUE)
+				DeleteObject(hFont);
+			hFont = (HFONT)INVALID_HANDLE_VALUE;
+			::release(textFmt);
+		}
+#endif
+#ifdef GUI_GTK
+		// What do we need?
+		PangoFontDescription *desc;
+
+		void init() {
+			desc = null;
+		}
+
+		void clear() {
+			if (desc)
+				pango_font_description_free(desc);
+			desc = null;
+		}
+#endif
 
 		// Lock for modifying any members.
 		os::Lock lock;
@@ -105,18 +127,6 @@ namespace gui {
 		shared = f.shared;
 		shared->addRef();
 	}
-
-#ifdef GUI_WIN32
-	Font::Font(LOGFONT &f) {
-		fName = new (this) Str(f.lfFaceName);
-		fHeight = (float)abs(f.lfHeight);
-		fWeight = (int)f.lfWeight;
-		fItalic = f.lfItalic == TRUE;
-		fUnderline = f.lfUnderline == TRUE;
-		fStrikeOut = f.lfStrikeOut == TRUE;
-		shared = new FontData();
-	}
-#endif
 
 	Font::~Font() {
 		shared->release();
@@ -169,6 +179,17 @@ namespace gui {
 	}
 
 #ifdef GUI_WIN32
+
+	Font::Font(LOGFONT &f) {
+		fName = new (this) Str(f.lfFaceName);
+		fHeight = (float)abs(f.lfHeight);
+		fWeight = (int)f.lfWeight;
+		fItalic = f.lfItalic == TRUE;
+		fUnderline = f.lfUnderline == TRUE;
+		fStrikeOut = f.lfStrikeOut == TRUE;
+		shared = new FontData();
+	}
+
 	HFONT Font::handle() {
 		os::Lock::L z(shared->lock);
 		if (shared->hFont == INVALID_HANDLE_VALUE) {
@@ -214,7 +235,7 @@ namespace gui {
 		return shared->textFmt;
 	}
 
-	Font *defaultFont(EnginePtr e) {
+	Font *sysDefaultFont(EnginePtr e) {
 		NONCLIENTMETRICS ncm;
 		ncm.cbSize = sizeof(ncm) - sizeof(ncm.iPaddedBorderWidth);
 		SystemParametersInfo(SPI_GETNONCLIENTMETRICS, ncm.cbSize, &ncm, 0);
@@ -225,8 +246,37 @@ namespace gui {
 
 #ifdef GUI_GTK
 
-	Font *defaultFont(EnginePtr e) {
-		return new (e.v) Font(new (e.v) Str(L"FIXME"), 12.0);
+	Font::Font(const PangoFontDescription &desc) {
+		fName = new (this) Str(toWChar(engine(), pango_font_description_get_family(&desc)));
+		fHeight = float(pango_font_description_get_size(&desc)) / float(PANGO_SCALE);
+		fWeight = pango_font_description_get_weight(&desc);
+		fItalic = pango_font_description_get_style(&desc) == PANGO_STYLE_ITALIC;
+		// TODO: How do I get/set these?
+		fUnderline = false;
+		fStrikeOut = false;
+		shared = new FontData();
+		shared->desc = pango_font_description_copy(&desc);
+	}
+
+	PangoFontDescription *Font::desc() {
+		os::Lock::L z(shared->lock);
+		if (!shared->desc) {
+			shared->desc = pango_font_description_new();
+			pango_font_description_set_family(shared->desc, fName->utf8_str());
+			pango_font_description_set_size(shared->desc, gint(fHeight * PANGO_SCALE));
+			pango_font_description_set_style(shared->desc, fItalic ? PANGO_STYLE_ITALIC : PANGO_STYLE_NORMAL);
+			// TODO: Set underline and strikethrough as well.
+		}
+		return shared->desc;
+	}
+
+	Font *sysDefaultFont(EnginePtr e) {
+		GtkStyleContext *style = gtk_style_context_new();
+		const PangoFontDescription *desc = null;
+		gtk_style_context_get(style, GTK_STATE_FLAG_NORMAL, "font", &desc, NULL);
+		Font *r = new (e.v) Font(*desc);
+		g_object_unref(style);
+		return r;
 	}
 
 #endif

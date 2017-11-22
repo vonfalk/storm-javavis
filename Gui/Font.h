@@ -22,6 +22,10 @@ namespace gui {
 		// Create font with more options.
 		Font(LOGFONT &lf);
 #endif
+#ifdef GUI_GTK
+		// Create font with more options.
+		Font(const PangoFontDescription &desc);
+#endif
 
 		// Destroy.
 		~Font();
@@ -67,6 +71,10 @@ namespace gui {
 		// Get TextFormat for D2D. This class retains ownership over the returned object.
 		IDWriteTextFormat *textFormat();
 #endif
+#ifdef GUI_GTK
+		// Get a Pango font description.
+		PangoFontDescription *desc();
+#endif
 
 	private:
 		// Shared data. Be careful with this!
@@ -95,6 +103,6 @@ namespace gui {
 	};
 
 	// Create the system default font for UI.
-	Font *STORM_FN defaultFont(EnginePtr e);
+	Font *sysDefaultFont(EnginePtr e);
 
 }

@@ -14,6 +14,9 @@ namespace gui {
 	class Font;
 	class AppWait;
 
+	// Get the default font.
+	Font *STORM_FN defaultFont(EnginePtr e);
+
 	/**
 	 * Application object. One instance of this object is created to manage all live windows for one
 	 * Engine. This class is therefore a singleton, get the one and only instance using 'app' below.
@@ -137,6 +140,7 @@ namespace gui {
 		~AppWait();
 
 		virtual void init();
+		virtual void setup();
 		virtual bool wait(os::IOHandle &io);
 		virtual bool wait(os::IOHandle &io, nat msTimeout);
 		virtual void signal();
@@ -179,8 +183,9 @@ namespace gui {
 		// Notify this semaphore on exit.
 		os::Sema *notifyExit;
 
-		// Destroy.
-		void destroy();
+		// Platform specific init and destroy.
+		void platformInit();
+		void platformDestroy();
 
 #ifdef GUI_WIN32
 		// Our thread id (win32 thread id).

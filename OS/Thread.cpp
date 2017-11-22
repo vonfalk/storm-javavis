@@ -187,6 +187,11 @@ namespace os {
 		start.sema.up();
 		// From here on, do not touch 'start'.
 
+		// Any other initialization required before we start executing code?
+		if (wait)
+			wait->setup();
+
+		// Run the function we were told to execute.
 		fn();
 
 		// Specific wait behavior?
@@ -332,6 +337,8 @@ namespace os {
 	ThreadWait::~ThreadWait() {}
 
 	void ThreadWait::init() {}
+
+	void ThreadWait::setup() {}
 
 	void ThreadWait::work() {}
 

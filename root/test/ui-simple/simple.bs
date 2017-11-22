@@ -28,7 +28,6 @@ class SimpleWin extends Frame {
 
 	void onOk(Button b) {
 		lbl.text("You entered: " + edit.text);
-		edit.text("");
 		button.text("Clicked" + toS(times++));
 	}
 }

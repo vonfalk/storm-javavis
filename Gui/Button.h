@@ -23,6 +23,8 @@ namespace gui {
 #ifdef GUI_GTK
 		using Window::text;
 		void text(Str *text);
+
+		virtual GtkWidget *fontWidget();
 #endif
 
 	protected:

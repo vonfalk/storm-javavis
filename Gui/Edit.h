@@ -20,6 +20,8 @@ namespace gui {
 		Nat end;
 	};
 
+	Str *STORM_FN toS(EnginePtr e, Selection s);
+
 	/**
 	 * Text input field.
 	 */
@@ -32,10 +34,11 @@ namespace gui {
 #ifdef GUI_WIN32
 		// Key handling for implementing Ctrl+Backspace.
 		virtual Bool STORM_FN onChar(Nat code);
+#endif
 
 		// Implement the 'return' as a confirmation.
-		virtual Bool STORM_FN onKey(Bool pressed, Nat code);
-#endif
+		virtual Bool STORM_FN onKey(Bool pressed, Nat code, mod::Modifiers mod);
+
 #ifdef GUI_GTK
 		// Get/set text.
 		virtual const Str *STORM_FN text();

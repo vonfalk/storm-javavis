@@ -6,10 +6,14 @@
 
 namespace gui {
 
+	Font *defaultFont(EnginePtr e) {
+		return app(e)->defaultFont;
+	}
+
 	App::App() : appWait(null), creating(null) {
 		windows = new (this) Map<Handle, Window *>();
 		liveWindows = new (this) Set<Window *>();
-		defaultFont = gui::defaultFont(engine());
+		defaultFont = gui::sysDefaultFont(engine());
 
 		init();
 	}
@@ -100,13 +104,20 @@ namespace gui {
 	 */
 
 	AppWait::AppWait(Engine &e) : uThread(os::UThread::invalid), msgDisabled(0), e(e), notifyExit(null) {
-		App *app = gui::app(e);
-		app->appWait = this;
 		done = false;
 	}
 
+	void AppWait::init() {
+		platformInit();
+	}
+
+	void AppWait::setup() {
+		App *app = gui::app(e);
+		app->appWait = this;
+	}
+
 	AppWait::~AppWait() {
-		destroy();
+		platformDestroy();
 	}
 
 	void AppWait::disableMsg() {
@@ -263,7 +274,7 @@ namespace gui {
 	}
 
 
-	void AppWait::init() {
+	void AppWait::platformInit() {
 		threadId = GetCurrentThreadId();
 		uThread = os::UThread::current();
 		signalSent = 0;
@@ -275,7 +286,7 @@ namespace gui {
 		}
 	}
 
-	void AppWait::destroy() {}
+	void AppWait::platformDestroy() {}
 
 	bool AppWait::wait(os::IOHandle &io) {
 		// Since we know the semantics of wait(IOHandle, nat), we can exploit that...
@@ -331,6 +342,8 @@ namespace gui {
 			}
 		} catch (const Exception &e) {
 			PLN(L"Unhandled exception in window thread:\n" << e);
+		} catch (...) {
+			PLN(L"Unhandled exception in window thread: <unknown>");
 		}
 	}
 
@@ -351,7 +364,7 @@ namespace gui {
 		// Nothing so far...
 	}
 
-	void AppWait::init() {
+	void AppWait::platformInit() {
 		done = false;
 		// TODO? Pass 'standard' parameters from the command line somehow...
 		gtk_init(NULL, NULL);
@@ -364,7 +377,7 @@ namespace gui {
 		g_source_attach(fdSource, context);
 	}
 
-	void AppWait::destroy() {
+	void AppWait::platformDestroy() {
 		g_source_destroy(fdSource);
 		g_source_unref(fdSource);
 	}

@@ -163,7 +163,15 @@ namespace os {
 
 		// Called before any work is done, on the thread that will call wait later on. Note that the
 		// constructor will probably _not_ run on the same thread as 'init' will be run on.
+		// This function is called to perform enough initialization so that 'signal' will work properly.
+		// Therefore, 'init' is called while the creating thread is blocked. Because of this, do not call
+		// any functions in Storm here, as they may cause a deadlock. Defer such work to 'setup' instead.
 		virtual void init();
+
+		// Called before the first thread switch on the newly created thread, but after the spawning
+		// thread has been released. Therefore, it is safe to call any function inside Storm from
+		// here, but keep in mind that 'signal' might be called during the call to 'signal'.
+		virtual void setup();
 
 		// Called when the thread should wait for an event of some kind. This functions should
 		// return either when 'signal' has been called, but may return in other cases as well.

@@ -31,7 +31,15 @@ namespace gui {
 					return Result();
 				}
 
-				return (c->*fn)(args...);
+				// Note: We need to catch exceptions since we can not throw them through Gtk+ code.
+				try {
+					return (c->*fn)(args...);
+				} catch (const Exception &e) {
+					PLN(L"Unhandled exception in window thread:\n" << e);
+				} catch (...) {
+					PLN(L"Unhandled exception in window thread: <unknown>");
+				}
+				return Result();
 			}
 		};
 	};

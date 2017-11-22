@@ -1,0 +1,4 @@
+* General [0/2]
+  - [ ] Make the text view and the multiline text view separate, as we want
+        to handle text separatly in the two cases.
+  - [ ] Figure out a way to unify the onKey and onChar messages. They are different on Win32 and the same on GTK.
