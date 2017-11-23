@@ -389,6 +389,22 @@ namespace gui {
 		resized(Size(alloc->width, alloc->height));
 	}
 
+	gboolean Window::onDraw(cairo_t *ctx) {
+		return FALSE;
+		// TODO: We need to draw any child windows as well when returning 'true'.
+		// int w = gtk_widget_get_allocated_width(handle().widget());
+		// int h = gtk_widget_get_allocated_height(handle().widget());
+		// PVAR(w);
+		// PVAR(h);
+
+		// cairo_set_source_rgb(ctx, 100, 0, 0);
+		// cairo_set_line_width(ctx, 10);
+		// cairo_rectangle(ctx, 0, 0, 100, 100);
+		// cairo_fill(ctx);
+
+		// return TRUE;
+	}
+
 	bool Window::create(Container *parent, nat id) {
 		initWidget(parent, gtk_drawing_area_new());
 		return true;
@@ -415,6 +431,7 @@ namespace gui {
 		Signal<gboolean, Window, GdkEvent *>::Connect<&Window::onKeyDown>::to(widget, "key-press-event", engine());
 		Signal<gboolean, Window, GdkEvent *>::Connect<&Window::onKeyUp>::to(widget, "key-release-event", engine());
 		Signal<void, Window, GdkRectangle *>::Connect<&Window::onSize>::to(widget, "size-allocate", engine());
+		Signal<gboolean, Window, cairo_t *>::Connect<&Window::onDraw>::to(widget, "draw", engine());
 	}
 
 	void Window::destroyWindow(Handle handle) {

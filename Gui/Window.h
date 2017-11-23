@@ -210,6 +210,7 @@ namespace gui {
 		gboolean onKeyUp(GdkEvent *event);
 		gboolean onKeyDown(GdkEvent *event);
 		void onSize(GdkRectangle *alloc);
+		gboolean onDraw(cairo_t *ctx);
 #endif
 	};
 
