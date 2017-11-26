@@ -386,19 +386,20 @@ namespace gui {
 	}
 
 	void Window::onSize(GdkRectangle *alloc) {
-		resized(Size(alloc->width, alloc->height));
+		Size s(alloc->width, alloc->height);
+		notifyPainter(s);
+		resized(s);
 	}
 
 	gboolean Window::onDraw(cairo_t *ctx) {
-		int w = gtk_widget_get_allocated_width(handle().widget());
-		int h = gtk_widget_get_allocated_height(handle().widget());
-		PVAR(w);
-		PVAR(h);
+		if (myPainter) {
+			Engine &e = engine();
+			os::Future<void> result;
+			os::FnCall<void, 1> params = os::fnCall().add(myPainter);
+			os::UThread::spawn(address(&Painter::repaint), true, params, result, &Render::thread(e)->thread());
 
-		cairo_set_source_rgb(ctx, 100, 0, 0);
-		cairo_set_line_width(ctx, 10);
-		cairo_rectangle(ctx, 0, 0, 100, 100);
-		cairo_fill(ctx);
+			result.result();
+		}
 
 		return FALSE;
 	}

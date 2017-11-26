@@ -63,4 +63,22 @@ void release(T *&v) {
 
 #include "ComPtr.h"
 
+#else
+
+/**
+ * Define some types that are actually from the Win32 api so that we can use those types on other
+ * platforms as well.
+ */
+class DXObject {};
+
+typedef DXObject ID2D1RenderTarget;
+typedef DXObject ID2D1Factory;
+typedef DXObject ID3D10Device1;
+typedef DXObject IDXGISwapChain;
+typedef DXObject IDXGIFactory;
+typedef DXObject IDXGIDevice;
+typedef DXObject IDWriteFactory;
+
+inline void release(DXObject *o) {}
+
 #endif

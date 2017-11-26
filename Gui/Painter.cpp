@@ -6,6 +6,7 @@ namespace gui {
 
 	Painter::Painter() : continuous(false), repaintCounter(0) {
 		attachedTo = Window::invalid;
+		TODO(L"Find default BG color!");
 		// bgColor = color(GetSysColor(COLOR_3DFACE));
 		resources = new (this) WeakSet<RenderResource>();
 	}
@@ -39,22 +40,22 @@ namespace gui {
 	}
 
 	void Painter::resize(Size sz) {
-		if (target.swapChain) {
+		if (target.any()) {
 			// This seems to not be neccessary. Probably because the resources are actually
 			// associated to the underlying D3D device, and not the RenderTarget.
 			// If the resize call fails for some reason, this is probably the cause.
 			// destroyResources();
 			RenderMgr *mgr = renderMgr(engine());
 			mgr->resize(target, sz);
-			// if (graphics)
-			// 	graphics->updateTarget(target.target);
+			if (graphics)
+				graphics->updateTarget(target);
 		}
 	}
 
 	void Painter::create() {
 		RenderMgr *mgr = renderMgr(engine());
 		target = mgr->attach(this, attachedTo);
-		// graphics = new (this) Graphics(target.target, this);
+		graphics = new (this) Graphics(target, this);
 	}
 
 	void Painter::destroy() {
@@ -89,58 +90,95 @@ namespace gui {
 		} else {
 			doRepaint(false);
 		}
+
+		// TODO: On Gtk+, we need to copy our buffer to the window here.
 	}
 
 	void Painter::doRepaint(bool waitForVSync) {
-		if (!target.target)
-			return;
-		if (!target.swapChain)
+		if (!target.any())
 			return;
 
-		// target.target->BeginDraw();
-		// target.target->SetTransform(D2D1::Matrix3x2F::Identity());
-		// target.target->Clear(dx(bgColor));
+		bool more = false;
+		try {
+			more = doRepaintI(waitForVSync);
+		} catch (...) {
+			repaintCounter++;
+			throw;
+		}
 
-		// bool more = false;
-
-		// try {
-		// 	graphics->beforeRender();
-		// 	more = render(graphics->size(), graphics);
-		// 	graphics->afterRender();
-		// } catch (...) {
-		// 	graphics->afterRender();
-		// 	// target.target->EndDraw();
-		// 	repaintCounter++;
-		// 	throw;
-		// }
-
-		// HRESULT r = target.target->EndDraw();
-
-		// if (SUCCEEDED(r)) {
-		// 	if (waitForVSync) {
-		// 		r = target.swapChain->Present(1, 0);
-		// 	} else {
-		// 		r = target.swapChain->Present(0, 0);
-		// 	}
-		// }
-
-		// if (r == D2DERR_RECREATE_TARGET || r == DXGI_ERROR_DEVICE_RESET) {
-		// 	// Re-create our render target.
-		// 	destroy();
-		// 	create();
-		// 	// TODO: We probably want to re-draw ourselves here...
-		// }
-
-		// repaintCounter++;
-
-		// if (more != continuous) {
-		// 	continuous = more;
-		// 	if (more) {
-		// 		// Register!
-		// 		RenderMgr *mgr = renderMgr(engine());
-		// 		mgr->newContinuous();
-		// 	}
-		// }
+		repaintCounter++;
+		if (more != continuous) {
+			continuous = more;
+			if (more) {
+				// Register!
+				RenderMgr *mgr = renderMgr(engine());
+				mgr->newContinuous();
+			}
+		}
 	}
 
+#ifdef GUI_WIN32
+
+	void Painter::doRepaint(bool waitForVSync) {
+		if (!target.target())
+			return false;
+		if (!target.swapChain())
+			return false;
+
+		target.target()->BeginDraw();
+		target.target()->SetTransform(D2D1::Matrix3x2F::Identity());
+		target.target()->Clear(dx(bgColor));
+
+		bool more = false;
+
+		try {
+			graphics->beforeRender();
+			more = render(graphics->size(), graphics);
+			graphics->afterRender();
+		} catch (...) {
+			graphics->afterRender();
+			// target.target()->EndDraw();
+			throw;
+		}
+
+		HRESULT r = target.target()->EndDraw();
+
+		if (SUCCEEDED(r)) {
+			if (waitForVSync) {
+				r = target.swapChain()->Present(1, 0);
+			} else {
+				r = target.swapChain()->Present(0, 0);
+			}
+		}
+
+		if (r == D2DERR_RECREATE_TARGET || r == DXGI_ERROR_DEVICE_RESET) {
+			// Re-create our render target.
+			destroy();
+			create();
+			// TODO: We probably want to re-draw ourselves here...
+		}
+
+		return more;
+	}
+
+#endif
+#ifdef GUI_GTK
+
+	bool Painter::doRepaintI(bool waitForVSync) {
+		if (!target.any())
+			return false;
+
+		try {
+			graphics->beforeRender();
+			render(graphics->size(), graphics);
+			graphics->afterRender();
+		} catch (...) {
+			graphics->afterRender();
+			throw;
+		}
+
+		return false;
+	}
+
+#endif
 }

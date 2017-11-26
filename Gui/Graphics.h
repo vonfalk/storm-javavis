@@ -1,6 +1,7 @@
 #pragma once
 #include "Core/TObject.h"
 #include "Core/Array.h"
+#include "RenderInfo.h"
 #include "Font.h"
 
 namespace gui {
@@ -18,7 +19,10 @@ namespace gui {
 		STORM_CLASS;
 	public:
 		// Create. Done from within the Painter class. Will not free 'target'.
-		// Graphics(ID2D1RenderTarget *target, Painter *owner);
+		Graphics(RenderInfo info, Painter *owner);
+
+		// Update the target.
+		void updateTarget(RenderInfo info);
 
 		// Destroy.
 		~Graphics();
@@ -28,9 +32,6 @@ namespace gui {
 
 		// Called when the target is destroyed.
 		void destroyed();
-
-		// Update the target.
-		// void updateTarget(ID2D1RenderTarget *target);
 
 		// Prepare the rendering.
 		void beforeRender();
@@ -115,8 +116,7 @@ namespace gui {
 
 	private:
 		// Render target.
-		// ID2D1RenderTarget *target;
-		void *target;
+		RenderInfo info;
 
 		// Owner.
 		Painter *owner;
@@ -135,6 +135,9 @@ namespace gui {
 
 			// UNKNOWN(PTR_NOGC) ID2D1Layer *v;
 			UNKNOWN(PTR_NOGC) void *v;
+
+			// Release.
+			void release();
 		};
 
 		// State. The values here are always absolute, ie they do not depend on

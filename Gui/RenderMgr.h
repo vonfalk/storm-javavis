@@ -6,6 +6,7 @@
 #include "Core/Event.h"
 #include "Core/Sema.h"
 #include "Handle.h"
+#include "RenderInfo.h"
 
 namespace gui {
 	class Painter;
@@ -17,29 +18,6 @@ namespace gui {
 	class RenderMgr : public ObjectOn<Render> {
 		STORM_CLASS;
 	public:
-		// Values returned from 'attach'
-		class RenderInfo {
-			STORM_VALUE;
-		public:
-
-			void *target;
-			void *swapChain;
-			// ID2D1RenderTarget *target;
-			// IDXGISwapChain *swapChain;
-
-			// Create
-			inline RenderInfo() {
-				target = null;
-				swapChain = null;
-			}
-
-			// Release all members.
-			inline void release() {
-				// ::release(target);
-				// ::release(swapChain);
-			}
-		};
-
 		// Shutdown the rendering thread.
 		void terminate();
 
@@ -61,12 +39,13 @@ namespace gui {
 		// Notify that a new window wants continuous repaints.
 		void newContinuous();
 
+#ifdef GUI_WIN32
 		// Get the DWrite factory object.
-		// inline IDWriteFactory *dWrite() { return writeFactory; }
+		inline IDWriteFactory *dWrite() { return writeFactory; }
 
 		// Get the D2D factory object.
-		// inline ID2D1Factory *d2d() { return factory; }
-
+		inline ID2D1Factory *d2d() { return factory; }
+#endif
 	private:
 		friend RenderMgr *renderMgr(EnginePtr e);
 
@@ -74,22 +53,24 @@ namespace gui {
 		RenderMgr();
 
 		// The D2D-factory.
-		// ID2D1Factory *factory;
-		// IDXGIFactory *giFactory;
-		// IDWriteFactory *writeFactory;
+		ID2D1Factory *factory;
+		IDXGIFactory *giFactory;
+		IDWriteFactory *writeFactory;
 
 		// D3D device and dxgi device.
-		// ID3D10Device1 *device;
-		// IDXGIDevice *giDevice;
+		ID3D10Device1 *device;
+		IDXGIDevice *giDevice;
+
+		// For OpenGL: The global context and the global display.
+		UNKNOWN(PTR_NOGC) EGLDisplay glDisplay;
+		UNKNOWN(PTR_NOGC) EGLContext glContext;
+		UNKNOWN(PTR_NOGC) cairo_device_t *glDevice;
 
 		// Live painters. TODO? Weak set?
 		Set<Painter *> *painters;
 
 		// Live resources that needs cleaning before termination.
 		WeakSet<Resource> *resources;
-
-		// Create a render target.
-		// ID2D1RenderTarget *createTarget(IDXGISwapChain *swapChain);
 
 		// Event to wait for either: new continuous windows, or: termination.
 		Event *waitEvent;
@@ -99,6 +80,21 @@ namespace gui {
 
 		// Exiting?
 		Bool exiting;
+
+		// Platform specific initialization.
+		void init();
+
+		// Platform specific destruction.
+		void destroy();
+
+#ifdef GUI_WIN32
+		// Create a render target.
+		ID2D1RenderTarget *createTarget(IDXGISwapChain *swapChain);
+#endif
+#ifdef GUI_GTK
+		// Create the global context if neccessary.
+		cairo_device_t *createDevice(GtkWidget *widget);
+#endif
 	};
 
 	// Create/get the singleton render manager.

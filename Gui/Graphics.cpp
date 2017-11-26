@@ -9,39 +9,34 @@
 
 namespace gui {
 
-	// Graphics::Graphics(ID2D1RenderTarget *target, Painter *p) : target(target), owner(p) {
-	// 	oldStates = new (this) Array<State>();
-	// 	layers = new (this) Array<Layer>();
+	Graphics::Graphics(RenderInfo info, Painter *p) : info(info), owner(p) {
+		oldStates = new (this) Array<State>();
+		layers = new (this) Array<Layer>();
 
-	// 	state = defaultState();
-	// 	oldStates->push(state);
-	// 	layerHistory = runtime::allocArray<Nat>(engine(), &natArrayType, layerHistoryCount);
+		state = defaultState();
+		oldStates->push(state);
+		layerHistory = runtime::allocArray<Nat>(engine(), &natArrayType, layerHistoryCount);
 
-	// 	for (nat i = 0; i < layerHistory->count; i++)
-	// 		layerHistory->v[i] = 0;
-	// }
+		for (nat i = 0; i < layerHistory->count; i++)
+			layerHistory->v[i] = 0;
+	}
 
 	Graphics::~Graphics() {
-		// for (nat i = 0; i < layers->count(); i++)
-		// 	layers->at(i).v->Release();
+		for (nat i = 0; i < layers->count(); i++)
+			layers->at(i).release();
 	}
 
-	Size Graphics::size() {
-		// return convert(target->GetSize());
-		return Size();
+	void Graphics::updateTarget(RenderInfo info) {
+		this->info = info;
+
+		// Remove any layers.
+		for (nat i = 0; i < layers->count(); i++)
+			layers->at(i).release();
+		layers->clear();
 	}
-
-	// void Graphics::updateTarget(ID2D1RenderTarget *target) {
-	// 	this->target = target;
-
-	// 	// Remove any layers.
-	// 	for (nat i = 0; i < layers.size(); i++)
-	// 		layers->at(i)->Release();
-	// 	layers.clear();
-	// }
 
 	void Graphics::destroyed() {
-		target = null;
+		info = RenderInfo();
 		owner = null;
 	}
 
@@ -85,7 +80,7 @@ namespace gui {
 		// while (oldStates->count() > 1) {
 		// 	if (state.layer.v) {
 		// 		layers->push(state.layer.v);
-		// 		target->PopLayer();
+		// 		info.target()->PopLayer();
 		// 	}
 		// 	state = oldStates->last();
 		// 	oldStates->pop();
@@ -97,11 +92,11 @@ namespace gui {
 	Bool Graphics::pop() {
 		// if (state.layer.v) {
 		// 	layers->push(state.layer);
-		// 	target->PopLayer();
+		// 	info.target()->PopLayer();
 		// }
 
 		// state = oldStates->last();
-		// target->SetTransform(*state.transform());
+		// info.target()->SetTransform(*state.transform());
 		// if (oldStates->count() > 1) {
 		// 	oldStates->pop();
 		// 	return true;
@@ -130,7 +125,7 @@ namespace gui {
 	// 		r = layers->last().v;
 	// 		layers->pop();
 	// 	} else {
-	// 		target->CreateLayer(NULL, &r);
+	// 		info.target()->CreateLayer(NULL, &r);
 	// 	}
 
 	// 	minFreeLayers = min(minFreeLayers, layers->count());
@@ -148,7 +143,7 @@ namespace gui {
 
 		// D2D1_LAYER_PARAMETERS p = defaultParameters();
 		// p.opacity = opacity;
-		// target->PushLayer(&p, state.layer.v);
+		// info.target()->PushLayer(&p, state.layer.v);
 	}
 
 	void Graphics::push(Rect clip) {
@@ -157,7 +152,7 @@ namespace gui {
 
 		// D2D1_LAYER_PARAMETERS p = defaultParameters();
 		// p.contentBounds = dx(clip);
-		// target->PushLayer(&p, state.layer.v);
+		// info.target()->PushLayer(&p, state.layer.v);
 	}
 
 	void Graphics::push(Rect clip, Float opacity) {
@@ -167,12 +162,12 @@ namespace gui {
 		// D2D1_LAYER_PARAMETERS p = defaultParameters();
 		// p.contentBounds = dx(clip);
 		// p.opacity = opacity;
-		// target->PushLayer(&p, state.layer.v);
+		// info.target()->PushLayer(&p, state.layer.v);
 	}
 
 	void Graphics::transform(Transform *tfm) {
 		// *state.transform() = dxMultiply(dx(tfm), *oldStates->last().transform());
-		// target->SetTransform(*state.transform());
+		// info.target()->SetTransform(*state.transform());
 	}
 
 	void Graphics::lineWidth(Float w) {
@@ -184,52 +179,52 @@ namespace gui {
 	 */
 
 	void Graphics::line(Point from, Point to, Brush *style) {
-		// target->DrawLine(dx(from), dx(to), style->brush(owner, Rect(from, to).normalized()), state.lineWidth);
+		// info.target()->DrawLine(dx(from), dx(to), style->brush(owner, Rect(from, to).normalized()), state.lineWidth);
 	}
 
 	void Graphics::draw(Rect rect, Brush *style) {
-		// target->DrawRectangle(dx(rect), style->brush(owner, rect), state.lineWidth);
+		// info.target()->DrawRectangle(dx(rect), style->brush(owner, rect), state.lineWidth);
 	}
 
 	void Graphics::draw(Rect rect, Size edges, Brush *style) {
 		// D2D1_ROUNDED_RECT r = { dx(rect), edges.w, edges.h };
-		// target->DrawRoundedRectangle(r, style->brush(owner, rect), state.lineWidth);
+		// info.target()->DrawRoundedRectangle(r, style->brush(owner, rect), state.lineWidth);
 	}
 
 	void Graphics::oval(Rect rect, Brush *style) {
 		// Size s = rect.size() / 2;
 		// D2D1_ELLIPSE e = { dx(rect.center()), s.w, s.h };
-		// target->DrawEllipse(e, style->brush(owner, rect), state.lineWidth);
+		// info.target()->DrawEllipse(e, style->brush(owner, rect), state.lineWidth);
 	}
 
 	void Graphics::draw(Path *path, Brush *brush) {
-		// target->DrawGeometry(path->geometry(), brush->brush(owner, path->bound()), state.lineWidth);
+		// info.target()->DrawGeometry(path->geometry(), brush->brush(owner, path->bound()), state.lineWidth);
 	}
 
 	void Graphics::fill(Rect rect, Brush *style) {
-		// target->FillRectangle(dx(rect), style->brush(owner, rect));
+		// info.target()->FillRectangle(dx(rect), style->brush(owner, rect));
 	}
 
 	void Graphics::fill(Rect rect, Size edges, Brush *style) {
 		// D2D1_ROUNDED_RECT r = { dx(rect), edges.w, edges.h };
-		// target->FillRoundedRectangle(r, style->brush(owner, rect));
+		// info.target()->FillRoundedRectangle(r, style->brush(owner, rect));
 	}
 
 	void Graphics::fill(Brush *brush) {
 		// Rect s = Rect(Point(), size());
-		// target->SetTransform(D2D1::Matrix3x2F::Identity());
-		// target->FillRectangle(dx(s), brush->brush(owner, s));
-		// target->SetTransform(*state.transform());
+		// info.target()->SetTransform(D2D1::Matrix3x2F::Identity());
+		// info.target()->FillRectangle(dx(s), brush->brush(owner, s));
+		// info.target()->SetTransform(*state.transform());
 	}
 
 	void Graphics::fillOval(Rect rect, Brush *style) {
 		// Size s = rect.size() / 2;
 		// D2D1_ELLIPSE e = { dx(rect.center()), s.w, s.h };
-		// target->FillEllipse(e, style->brush(owner, rect));
+		// info.target()->FillEllipse(e, style->brush(owner, rect));
 	}
 
 	void Graphics::fill(Path *path, Brush *brush) {
-		// target->FillGeometry(path->geometry(), brush->brush(owner, path->bound()));
+		// info.target()->FillGeometry(path->geometry(), brush->brush(owner, path->bound()));
 	}
 
 	void Graphics::draw(Bitmap *bitmap) {
@@ -249,16 +244,43 @@ namespace gui {
 	}
 
 	void Graphics::draw(Bitmap *bitmap, Rect rect, Float opacity) {
-		// target->DrawBitmap(bitmap->bitmap(owner), &dx(rect), opacity, D2D1_BITMAP_INTERPOLATION_MODE_LINEAR, NULL);
+		// info.target()->DrawBitmap(bitmap->bitmap(owner), &dx(rect), opacity, D2D1_BITMAP_INTERPOLATION_MODE_LINEAR, NULL);
 	}
 
 	void Graphics::text(Str *text, Font *font, Brush *brush, Rect rect) {
 		// ID2D1Brush *b = brush->brush(owner, rect);
-		// target->DrawText(text->c_str(), text->peekLength(), font->textFormat(), dx(rect), b);
+		// info.target()->DrawText(text->c_str(), text->peekLength(), font->textFormat(), dx(rect), b);
 	}
 
 	void Graphics::draw(Text *text, Brush *brush, Point origin) {
-		// target->DrawTextLayout(dx(origin), text->layout(), brush->brush(owner, Rect(origin, text->size())));
+		// info.target()->DrawTextLayout(dx(origin), text->layout(), brush->brush(owner, Rect(origin, text->size())));
 	}
+
+#ifdef GUI_WIN32
+
+	Size Graphics::size() {
+		return convert(info.target()->GetSize());
+	}
+
+	void Graphics::Layer::release() {
+		v->Release();
+		v = null;
+	}
+
+#endif
+#ifdef GUI_GTK
+
+	Size Graphics::size() {
+		// NOTE: Does not seem to work...
+		return Size(cairo_gl_surface_get_width(info.surface()),
+					cairo_gl_surface_get_height(info.surface()));
+	}
+
+	void Graphics::Layer::release() {
+		// TODO:
+		v = null;
+	}
+
+#endif
 
 }
