@@ -20,11 +20,16 @@ namespace gui {
 			static Result callback(GtkWidget *src, Params... args, gpointer engine) {
 				Engine *e = (Engine *)engine;
 				App *app = gui::app(*e);
-				Window *win = app->findWindow(Handle(src));
-				if (!win) {
-					WARNING(L"Unknown window!");
-					return Result();
+
+				Window *win = null;
+				while ((win = app->findWindow(Handle(src))) == null) {
+					src = gtk_widget_get_parent(src);
+					if (!src) {
+						WARNING(L"Unknown window!");
+						return Result();
+					}
 				}
+
 				Class *c = as<Class>(win);
 				if (!c) {
 					WARNING(L"Invalid subclass. Got " << win);

@@ -222,6 +222,10 @@ namespace gui {
 		return BASIC(gtk_bin_get_child(GTK_BIN(handle().widget())));
 	}
 
+	GtkWidget *Frame::drawWidget() {
+		return gtk_bin_get_child(GTK_BIN(handle().widget()));
+	}
+
 #endif
 
 }

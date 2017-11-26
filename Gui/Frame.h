@@ -37,6 +37,9 @@ namespace gui {
 
 		// Container.
 		virtual Basic *container();
+
+		// Get the container widget inside here.
+		virtual GtkWidget *drawWidget();
 #endif
 
 		// Set size.

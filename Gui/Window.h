@@ -163,8 +163,12 @@ namespace gui {
 
 		// Get the widget we shall set the font on.
 		virtual GtkWidget *fontWidget();
+
+		// Get the widget we shall draw on.
+		virtual GtkWidget *drawWidget();
 #endif
 	private:
+		// Handle.
 		Handle myHandle;
 
 		// Parent.
