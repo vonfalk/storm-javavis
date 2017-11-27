@@ -8,6 +8,8 @@ namespace gui {
 	class RenderInfo {
 		STORM_VALUE;
 	public:
+		// Size of the surface we're rendering to.
+		Size size;
 
 #ifdef GUI_WIN32
 		inline ID2D1RenderTarget *target() const {
@@ -47,10 +49,12 @@ namespace gui {
 			second = to;
 		}
 		inline void release() {
-			if (second)
+			if (device())
 				cairo_destroy(device());
-			if (first)
+			device(null);
+			if (surface())
 				cairo_surface_destroy(surface());
+			surface(null);
 		}
 		inline bool any() const {
 			return device() != null;

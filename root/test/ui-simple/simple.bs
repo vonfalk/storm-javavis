@@ -42,8 +42,12 @@ class DrawWin extends Frame {
 }
 
 class SimpleDraw extends Painter {
+	init() {
+		init();
+		bgColor = red;
+	}
+
 	Bool render(Size size, Graphics to) {
-		print("Drawing: " + size.toS);
 		SolidBrush solid(green);
 		to.line(Point(0, 0), Point(100, 100), solid);
 

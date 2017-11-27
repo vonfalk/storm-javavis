@@ -8,6 +8,20 @@
 namespace gui {
 	class RenderResource;
 
+	/**
+	 * Paramters to 'redraw' calls. Not exposed to Storm.
+	 */
+	struct RepaintParams {
+#ifdef GUI_GTK
+		cairo_t *target;
+		GtkWidget *widget;
+#endif
+	};
+
+	/**
+	 * Object responsible for painting window contents. Create a subclass and override
+	 * 'render'. Then attach it to a Window.
+	 */
 	class Painter : public ObjectOn<Render> {
 		STORM_CLASS;
 	public:
@@ -36,8 +50,9 @@ namespace gui {
 		// Called when the attached window has been resized.
 		void CODECALL resize(Size to);
 
-		// Called when the attached window wants to be repainted.
-		void STORM_FN repaint();
+		// Called when the attached window wants to be repainted. The parameter passed is
+		// OS-specific data.
+		void CODECALL repaint(RepaintParams *params);
 
 		// Add a resource. Resources are invalidated whenever we have to re-create the render target.
 		void addResource(RenderResource *resource);
@@ -78,11 +93,18 @@ namespace gui {
 		// Repaint number (to keep track of when 'redraw' should return and avoid flicker).
 		volatile Nat repaintCounter;
 
+		// Called before and after the actual work inside 'repaint' is done. Used for platform specific calls.
+		void beforeRepaint(RepaintParams *handle);
+		void afterRepaint(RepaintParams *handle);
+
 		// Do repaints (always).
 		void doRepaint(bool waitForVSync);
 
 		// Do the platform specific of the repaint cycle.
 		bool doRepaintI(bool waitForVSync);
+
+		// Get the background color.
+		Color getBgColor();
 	};
 
 }

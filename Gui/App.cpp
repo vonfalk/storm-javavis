@@ -366,6 +366,10 @@ namespace gui {
 
 	void AppWait::platformInit() {
 		done = false;
+
+		// We'll be using threads with X from time to time. Mainly while painting in the background through Cairo.
+		XInitThreads();
+
 		// TODO? Pass 'standard' parameters from the command line somehow...
 		gtk_init(NULL, NULL);
 

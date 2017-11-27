@@ -347,8 +347,9 @@ namespace gui {
 	MsgResult Window::onPaint() {
 		if (myPainter) {
 			Engine &e = engine();
+			RepaintParams *param = null;
 			os::Future<void> result;
-			os::FnCall<void, 1> params = os::fnCall().add(myPainter);
+			os::FnCall<void, 2> params = os::fnCall().add(myPainter).add(param);
 			os::UThread::spawn(address(&Painter::repaint), true, params, result, &Render::thread(e)->thread());
 
 			result.result();
@@ -394,8 +395,10 @@ namespace gui {
 	gboolean Window::onDraw(cairo_t *ctx) {
 		if (myPainter) {
 			Engine &e = engine();
+			RepaintParams param = { ctx, handle().widget() };
+			RepaintParams *pParam = &param;
 			os::Future<void> result;
-			os::FnCall<void, 1> params = os::fnCall().add(myPainter);
+			os::FnCall<void, 2> params = os::fnCall().add(myPainter).add(pParam);
 			os::UThread::spawn(address(&Painter::repaint), true, params, result, &Render::thread(e)->thread());
 
 			result.result();

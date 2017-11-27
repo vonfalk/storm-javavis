@@ -239,6 +239,8 @@ namespace gui {
 			throw;
 		}
 
+		r.size = Size(desc.BufferDesc.Width, desc.BufferDesc.Height);
+
 		painters->put(painter);
 		return r;
 	}
@@ -251,6 +253,7 @@ namespace gui {
 			throwError(L"Failed to resize buffers: " , r);
 		}
 
+		info.size = sz;
 		info.target = createTarget(info.swapChain);
 	}
 
@@ -280,74 +283,30 @@ namespace gui {
 #endif
 #ifdef GUI_GTK
 
-	void RenderMgr::init() {
-		glContext = null;
-		glDisplay = null;
-		glDevice = null;
-	}
+	void RenderMgr::init() {}
 
-	void RenderMgr::destroy() {
-		if (glDevice) {
-			cairo_device_destroy(glDevice);
-			glDevice = null;
-			eglDestroyContext(glDisplay, glContext);
-			glContext = null;
-			eglTerminate(glDisplay);
-			glDisplay = null;
-		}
-	}
-
-	cairo_device_t *RenderMgr::createDevice(GtkWidget *widget) {
-		if (glDevice)
-			return glDevice;
-
-		GdkDisplay *gdkDisplay = gtk_widget_get_display(widget);
-
-#if defined(GDK_WINDOWING_X11)
-		glDisplay = eglGetDisplay((EGLNativeDisplayType)gdk_x11_display_get_xdisplay(gdkDisplay));
-#elif defined(GDK_WINDOWING_WAYLAND)
-#error "TODO: Implement support for Wayland as well!"
-#else
-#error "Please implement rendering for this windowing system!"
-#endif
-
-		eglInitialize(glDisplay, NULL, NULL);
-
-		// TODO: Check wich attributes we want.
-		EGLint attributes[] = { EGL_RENDERABLE_TYPE, EGL_OPENGL_BIT, EGL_NONE };
-		EGLConfig eglConfig;
-		EGLint num;
-		eglChooseConfig(glDisplay, attributes, &eglConfig, 1, &num);
-		// TODO: Share context with other EGL contexts?
-		glContext = eglCreateContext(glDisplay, eglConfig, EGL_NO_CONTEXT, NULL);
-
-		glDevice = cairo_egl_device_create(glDisplay, glContext);
-
-		return glDevice;
-	}
+	void RenderMgr::destroy() {}
 
 	RenderInfo RenderMgr::attach(Painter *painter, Handle window) {
 		RenderInfo r;
 
-		int w = gtk_widget_get_allocated_width(window.widget());
-		int h = gtk_widget_get_allocated_height(window.widget());
+		r.size = Size(gtk_widget_get_allocated_width(window.widget()),
+					gtk_widget_get_allocated_height(window.widget()));
 
-		cairo_device_t *device = createDevice(window.widget());
-		r.surface(cairo_gl_surface_create(device, CAIRO_CONTENT_COLOR_ALPHA, w, h));
-
-		PLN(cairo_surface_status(r.surface()));
-		PVAR(CAIRO_STATUS_DEVICE_ERROR);
-
-		r.device(cairo_create(r.surface()));
+		// We will create the surface later.
 
 		painters->put(painter);
 		return r;
 	}
 
 	void RenderMgr::resize(RenderInfo &info, Size size) {
-		cairo_destroy(info.device());
-		cairo_gl_surface_set_size(info.surface(), size.w, size.h);
-		info.device(cairo_create(info.surface()));
+		if (size == info.size)
+			return;
+
+		// Just clear out the surface, we will create it again on the next repaint.
+		// TODO: How to do if we're in continuous mode?
+		info.size = size;
+		info.release();
 	}
 
 #endif

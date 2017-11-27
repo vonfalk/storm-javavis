@@ -6,8 +6,7 @@ namespace gui {
 
 	Painter::Painter() : continuous(false), repaintCounter(0) {
 		attachedTo = Window::invalid;
-		TODO(L"Find default BG color!");
-		// bgColor = color(GetSysColor(COLOR_3DFACE));
+		bgColor = getBgColor();
 		resources = new (this) WeakSet<RenderResource>();
 	}
 
@@ -82,7 +81,9 @@ namespace gui {
 		resources->remove(r);
 	}
 
-	void Painter::repaint() {
+	void Painter::repaint(RepaintParams *params) {
+		beforeRepaint(params);
+
 		if (continuous) {
 			nat old = repaintCounter;
 			while (old == repaintCounter)
@@ -91,7 +92,7 @@ namespace gui {
 			doRepaint(false);
 		}
 
-		// TODO: On Gtk+, we need to copy our buffer to the window here.
+		afterRepaint(params);
 	}
 
 	void Painter::doRepaint(bool waitForVSync) {
@@ -161,6 +162,14 @@ namespace gui {
 		return more;
 	}
 
+	void Painter::beforeRepaint(RepaintParams *handle) {}
+
+	void Painter::afterRepaint(RepaintParams *handle) {}
+
+	Color Painter::getBgColor() {
+		return color(GetSysColor(COLOR_3DFACE));
+	}
+
 #endif
 #ifdef GUI_GTK
 
@@ -168,16 +177,63 @@ namespace gui {
 		if (!target.any())
 			return false;
 
+		bool more = false;
+
+		// Clear the surface with the desired color. TODO: Set the clip properly?
+		cairo_set_source_rgba(target.device(), bgColor.r, bgColor.g, bgColor.b, bgColor.a);
+		cairo_set_operator(target.device(), CAIRO_OPERATOR_SOURCE);
+		cairo_paint(target.device());
+
+		// Restore the default operator.
+		cairo_set_operator(target.device(), CAIRO_OPERATOR_OVER);
+
 		try {
 			graphics->beforeRender();
-			render(graphics->size(), graphics);
+			more = render(graphics->size(), graphics);
 			graphics->afterRender();
 		} catch (...) {
 			graphics->afterRender();
 			throw;
 		}
 
-		return false;
+		// Flush any pending operations.
+		cairo_surface_flush(target.surface());
+
+		// TODO: If 'waitForVSync' is true: we shall call 'repaint' (or 'invalidate') on the window
+		// and wait until we get a callback from that window. Otherwise, animations won't work.
+
+		return more;
+	}
+
+	void Painter::beforeRepaint(RepaintParams *p) {
+		if (!target.any()) {
+			// Update the size, since it might have changed since we last observed it.
+			Size sz = Size(gtk_widget_get_allocated_width(p->widget),
+						gtk_widget_get_allocated_height(p->widget));
+			target.size = sz;
+
+			// We should create the target!
+			cairo_surface_t *realTarget = cairo_get_target(p->target);
+			target.surface(cairo_surface_create_similar(realTarget, CAIRO_CONTENT_COLOR_ALPHA, sz.w, sz.h));
+			target.device(cairo_create(target.surface()));
+
+			if (graphics)
+				graphics->updateTarget(target);
+		}
+	}
+
+	void Painter::afterRepaint(RepaintParams *p) {
+		if (!target.any())
+			return;
+
+		cairo_t *to = p->target;
+		cairo_set_source_surface(to, target.surface(), 0, 0);
+		cairo_paint(to);
+	}
+
+	Color Painter::getBgColor() {
+		// Transparent.
+		return Color(0.0f, 0.0f, 0.0f, 0.0f);
 	}
 
 #endif

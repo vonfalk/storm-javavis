@@ -35,6 +35,10 @@ namespace gui {
 		layers->clear();
 	}
 
+	Size Graphics::size() {
+		return info.size;
+	}
+
 	void Graphics::destroyed() {
 		info = RenderInfo();
 		owner = null;
@@ -174,57 +178,59 @@ namespace gui {
 		// state.lineWidth = oldStates->last().lineWidth * w;
 	}
 
+#ifdef GUI_WIN32
+
 	/**
 	 * Draw stuff.
 	 */
 
 	void Graphics::line(Point from, Point to, Brush *style) {
-		// info.target()->DrawLine(dx(from), dx(to), style->brush(owner, Rect(from, to).normalized()), state.lineWidth);
+		info.target()->DrawLine(dx(from), dx(to), style->brush(owner, Rect(from, to).normalized()), state.lineWidth);
 	}
 
 	void Graphics::draw(Rect rect, Brush *style) {
-		// info.target()->DrawRectangle(dx(rect), style->brush(owner, rect), state.lineWidth);
+		info.target()->DrawRectangle(dx(rect), style->brush(owner, rect), state.lineWidth);
 	}
 
 	void Graphics::draw(Rect rect, Size edges, Brush *style) {
-		// D2D1_ROUNDED_RECT r = { dx(rect), edges.w, edges.h };
-		// info.target()->DrawRoundedRectangle(r, style->brush(owner, rect), state.lineWidth);
+		D2D1_ROUNDED_RECT r = { dx(rect), edges.w, edges.h };
+		info.target()->DrawRoundedRectangle(r, style->brush(owner, rect), state.lineWidth);
 	}
 
 	void Graphics::oval(Rect rect, Brush *style) {
-		// Size s = rect.size() / 2;
-		// D2D1_ELLIPSE e = { dx(rect.center()), s.w, s.h };
-		// info.target()->DrawEllipse(e, style->brush(owner, rect), state.lineWidth);
+		Size s = rect.size() / 2;
+		D2D1_ELLIPSE e = { dx(rect.center()), s.w, s.h };
+		info.target()->DrawEllipse(e, style->brush(owner, rect), state.lineWidth);
 	}
 
 	void Graphics::draw(Path *path, Brush *brush) {
-		// info.target()->DrawGeometry(path->geometry(), brush->brush(owner, path->bound()), state.lineWidth);
+		info.target()->DrawGeometry(path->geometry(), brush->brush(owner, path->bound()), state.lineWidth);
 	}
 
 	void Graphics::fill(Rect rect, Brush *style) {
-		// info.target()->FillRectangle(dx(rect), style->brush(owner, rect));
+		info.target()->FillRectangle(dx(rect), style->brush(owner, rect));
 	}
 
 	void Graphics::fill(Rect rect, Size edges, Brush *style) {
-		// D2D1_ROUNDED_RECT r = { dx(rect), edges.w, edges.h };
-		// info.target()->FillRoundedRectangle(r, style->brush(owner, rect));
+		D2D1_ROUNDED_RECT r = { dx(rect), edges.w, edges.h };
+		info.target()->FillRoundedRectangle(r, style->brush(owner, rect));
 	}
 
 	void Graphics::fill(Brush *brush) {
-		// Rect s = Rect(Point(), size());
-		// info.target()->SetTransform(D2D1::Matrix3x2F::Identity());
-		// info.target()->FillRectangle(dx(s), brush->brush(owner, s));
-		// info.target()->SetTransform(*state.transform());
+		Rect s = Rect(Point(), size());
+		info.target()->SetTransform(D2D1::Matrix3x2F::Identity());
+		info.target()->FillRectangle(dx(s), brush->brush(owner, s));
+		info.target()->SetTransform(*state.transform());
 	}
 
 	void Graphics::fillOval(Rect rect, Brush *style) {
-		// Size s = rect.size() / 2;
-		// D2D1_ELLIPSE e = { dx(rect.center()), s.w, s.h };
-		// info.target()->FillEllipse(e, style->brush(owner, rect));
+		Size s = rect.size() / 2;
+		D2D1_ELLIPSE e = { dx(rect.center()), s.w, s.h };
+		info.target()->FillEllipse(e, style->brush(owner, rect));
 	}
 
 	void Graphics::fill(Path *path, Brush *brush) {
-		// info.target()->FillGeometry(path->geometry(), brush->brush(owner, path->bound()));
+		info.target()->FillGeometry(path->geometry(), brush->brush(owner, path->bound()));
 	}
 
 	void Graphics::draw(Bitmap *bitmap) {
@@ -244,22 +250,16 @@ namespace gui {
 	}
 
 	void Graphics::draw(Bitmap *bitmap, Rect rect, Float opacity) {
-		// info.target()->DrawBitmap(bitmap->bitmap(owner), &dx(rect), opacity, D2D1_BITMAP_INTERPOLATION_MODE_LINEAR, NULL);
+		info.target()->DrawBitmap(bitmap->bitmap(owner), &dx(rect), opacity, D2D1_BITMAP_INTERPOLATION_MODE_LINEAR, NULL);
 	}
 
 	void Graphics::text(Str *text, Font *font, Brush *brush, Rect rect) {
-		// ID2D1Brush *b = brush->brush(owner, rect);
-		// info.target()->DrawText(text->c_str(), text->peekLength(), font->textFormat(), dx(rect), b);
+		ID2D1Brush *b = brush->brush(owner, rect);
+		info.target()->DrawText(text->c_str(), text->peekLength(), font->textFormat(), dx(rect), b);
 	}
 
 	void Graphics::draw(Text *text, Brush *brush, Point origin) {
-		// info.target()->DrawTextLayout(dx(origin), text->layout(), brush->brush(owner, Rect(origin, text->size())));
-	}
-
-#ifdef GUI_WIN32
-
-	Size Graphics::size() {
-		return convert(info.target()->GetSize());
+		info.target()->DrawTextLayout(dx(origin), text->layout(), brush->brush(owner, Rect(origin, text->size())));
 	}
 
 	void Graphics::Layer::release() {
@@ -270,11 +270,51 @@ namespace gui {
 #endif
 #ifdef GUI_GTK
 
-	Size Graphics::size() {
-		// NOTE: Does not seem to work...
-		return Size(cairo_gl_surface_get_width(info.surface()),
-					cairo_gl_surface_get_height(info.surface()));
+	/**
+	 * Draw stuff.
+	 */
+
+	void Graphics::line(Point from, Point to, Brush *style) {
+		cairo_new_path(info.device());
+		cairo_move_to(info.device(), from.x, from.y);
+		cairo_line_to(info.device(), to.x, to.y);
+
+		// TODO: Respect the brush!
+		cairo_set_source_rgb(info.device(), 0, 0, 0);
+		cairo_stroke(info.device());
 	}
+
+	void Graphics::draw(Rect rect, Brush *style) {}
+
+	void Graphics::draw(Rect rect, Size edges, Brush *style) {}
+
+	void Graphics::oval(Rect rect, Brush *style) {}
+
+	void Graphics::draw(Path *path, Brush *brush) {}
+
+	void Graphics::fill(Rect rect, Brush *style) {}
+
+	void Graphics::fill(Rect rect, Size edges, Brush *style) {}
+
+	void Graphics::fill(Brush *brush) {}
+
+	void Graphics::fillOval(Rect rect, Brush *style) {}
+
+	void Graphics::fill(Path *path, Brush *brush) {}
+
+	void Graphics::draw(Bitmap *bitmap) {}
+
+	void Graphics::draw(Bitmap *bitmap, Point topLeft) {}
+
+	void Graphics::draw(Bitmap *bitmap, Point topLeft, Float opacity) {}
+
+	void Graphics::draw(Bitmap *bitmap, Rect rect) {}
+
+	void Graphics::draw(Bitmap *bitmap, Rect rect, Float opacity) {}
+
+	void Graphics::text(Str *text, Font *font, Brush *brush, Rect rect) {}
+
+	void Graphics::draw(Text *text, Brush *brush, Point origin) {}
 
 	void Graphics::Layer::release() {
 		// TODO:

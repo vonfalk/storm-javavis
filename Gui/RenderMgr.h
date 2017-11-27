@@ -61,11 +61,6 @@ namespace gui {
 		ID3D10Device1 *device;
 		IDXGIDevice *giDevice;
 
-		// For OpenGL: The global context and the global display.
-		UNKNOWN(PTR_NOGC) EGLDisplay glDisplay;
-		UNKNOWN(PTR_NOGC) EGLContext glContext;
-		UNKNOWN(PTR_NOGC) cairo_device_t *glDevice;
-
 		// Live painters. TODO? Weak set?
 		Set<Painter *> *painters;
 
