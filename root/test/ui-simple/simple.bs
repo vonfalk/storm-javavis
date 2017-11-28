@@ -50,6 +50,9 @@ class SimpleDraw extends Painter {
 	Bool render(Size size, Graphics to) {
 		SolidBrush solid(green);
 		to.line(Point(0, 0), Point(100, 100), solid);
+		to.draw(Rect(10, 10, 190, 190), solid);
+		to.draw(Rect(20, 20, 180, 180), Size(50), solid);
+		to.oval(Rect(40, 40, 100, 80), solid);
 
 		false;
 	}

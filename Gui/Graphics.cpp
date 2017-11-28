@@ -279,26 +279,88 @@ namespace gui {
 		cairo_move_to(info.device(), from.x, from.y);
 		cairo_line_to(info.device(), to.x, to.y);
 
-		// TODO: Respect the brush!
-		cairo_set_source_rgb(info.device(), 0, 0, 0);
+		style->setSource(info.device(), Rect(from, to).normalized());
+
 		cairo_stroke(info.device());
 	}
 
-	void Graphics::draw(Rect rect, Brush *style) {}
+	void Graphics::draw(Rect rect, Brush *style) {
+		Size sz = rect.size();
+		cairo_rectangle(info.device(), rect.p0.x, rect.p0.y, sz.w, sz.h);
+		style->setSource(info.device(), rect);
+		cairo_stroke(info.device());
+	}
 
-	void Graphics::draw(Rect rect, Size edges, Brush *style) {}
+	static void rounded_corner(const RenderInfo &info, Point center, Size scale, double from, double to) {
+		cairo_save(info.device());
+		cairo_translate(info.device(), center.x, center.y);
+		cairo_scale(info.device(), scale.w, scale.h);
+		cairo_arc(info.device(), 0, 0, 1, from, to);
+		cairo_restore(info.device());
+	}
 
-	void Graphics::oval(Rect rect, Brush *style) {}
+	static void rounded_rect(const RenderInfo &to, Rect rect, Size edges) {
+		const double quarter = M_PI / 2;
+
+		cairo_new_path(to.device());
+		rounded_corner(to, Point(rect.p1.x - edges.w, rect.p0.y + edges.h), edges, -quarter, 0);
+		rounded_corner(to, Point(rect.p1.x - edges.w, rect.p1.y - edges.h), edges, 0, quarter);
+		rounded_corner(to, Point(rect.p0.x + edges.w, rect.p1.y - edges.h), edges, quarter, 2*quarter);
+		rounded_corner(to, Point(rect.p0.x + edges.w, rect.p0.y + edges.h), edges, 2*quarter, 3*quarter);
+		cairo_close_path(to.device());
+	}
+
+	void Graphics::draw(Rect rect, Size edges, Brush *style) {
+		rounded_rect(info, rect, edges);
+
+		style->setSource(info.device(), rect);
+		cairo_stroke(info.device());
+	}
+
+	static void cairo_oval(const RenderInfo &to, Rect rect) {
+		cairo_save(to.device());
+
+		Point center = rect.center();
+		cairo_translate(to.device(), center.x, center.y);
+		Size size = rect.size();
+		cairo_scale(to.device(), size.w / 2, size.h / 2);
+
+		cairo_arc(to.device(), 0, 0, 1, 0, 2*M_PI);
+
+		cairo_restore(to.device());
+	}
+
+	void Graphics::oval(Rect rect, Brush *style) {
+		cairo_oval(info, rect);
+
+		style->setSource(info.device(), rect);
+		cairo_stroke(info.device());
+	}
 
 	void Graphics::draw(Path *path, Brush *brush) {}
 
-	void Graphics::fill(Rect rect, Brush *style) {}
+	void Graphics::fill(Rect rect, Brush *style) {
+		Size sz = rect.size();
+		cairo_rectangle(info.device(), rect.p0.x, rect.p0.y, sz.w, sz.h);
+		style->setSource(info.device(), rect);
+		cairo_fill(info.device());
+	}
 
-	void Graphics::fill(Rect rect, Size edges, Brush *style) {}
+	void Graphics::fill(Rect rect, Size edges, Brush *style) {
+		rounded_rect(info, rect, edges);
+
+		style->setSource(info.device(), rect);
+		cairo_fill(info.device());
+	}
 
 	void Graphics::fill(Brush *brush) {}
 
-	void Graphics::fillOval(Rect rect, Brush *style) {}
+	void Graphics::fillOval(Rect rect, Brush *style) {
+		cairo_oval(info, rect);
+
+		style->setSource(info.device(), rect);
+		cairo_fill(info.device());
+	}
 
 	void Graphics::fill(Path *path, Brush *brush) {}
 

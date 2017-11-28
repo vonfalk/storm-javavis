@@ -78,6 +78,7 @@ typedef DXObject IDXGISwapChain;
 typedef DXObject IDXGIFactory;
 typedef DXObject IDXGIDevice;
 typedef DXObject IDWriteFactory;
+typedef DXObject ID2D1Resource;
 
 inline void release(DXObject *o) {}
 

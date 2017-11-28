@@ -13,16 +13,22 @@ namespace gui {
 	public:
 		Brush();
 
+#ifdef GUI_WIN32
 		// Get a brush.
-		// inline ID2D1Brush *brush(Painter *owner, const Rect &rect) {
-		// 	ID2D1Brush *b = get<ID2D1Brush>(owner);
-		// 	prepare(rect, b);
-		// 	b->SetOpacity(opacity);
-		// 	return b;
-		// }
+		inline ID2D1Brush *brush(Painter *owner, const Rect &rect) {
+			ID2D1Brush *b = get<ID2D1Brush>(owner);
+			prepare(rect, b);
+			b->SetOpacity(opacity);
+			return b;
+		}
 
 		// Prepare for drawing a bounding box of 'bound'.
-		// virtual void prepare(const Rect &bound, ID2D1Brush *b);
+		virtual void prepare(const Rect &bound, ID2D1Brush *b);
+#endif
+#ifdef GUI_GTK
+		// Set the source of the cairo_t to this brush.
+		virtual void setSource(cairo_t *c, const Rect &bound);
+#endif
 
 		// Opacity.
 		Float opacity;
@@ -36,7 +42,12 @@ namespace gui {
 	public:
 		STORM_CTOR SolidBrush(Color color);
 
-		// virtual void create(Painter *owner, ID2D1Resource **out);
+#ifdef GUI_WIN32
+		virtual void create(Painter *owner, ID2D1Resource **out);
+#endif
+#ifdef GUI_GTK
+		virtual void setSource(cairo_t *c, const Rect &bound);
+#endif
 
 	private:
 		Color color;

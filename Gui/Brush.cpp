@@ -7,13 +7,33 @@ namespace gui {
 
 	Brush::Brush() : opacity(1.0f) {}
 
-	// void Brush::prepare(const Rect &r, ID2D1Brush *b) {}
+#ifdef GUI_WIN32
+
+	void Brush::prepare(const Rect &r, ID2D1Brush *b) {}
+
+#endif
+#ifdef GUI_GTK
+
+	void Brush::setSource(cairo_t *c, const Rect &r) {}
+
+#endif
 
 	SolidBrush::SolidBrush(Color c) : color(c) {}
 
-	// void SolidBrush::create(Painter *owner, ID2D1Resource **out) {
-	// 	owner->renderTarget()->CreateSolidColorBrush(dx(color), (ID2D1SolidColorBrush **)out);
-	// }
+#ifdef GUI_WIN32
+
+	void SolidBrush::create(Painter *owner, ID2D1Resource **out) {
+		owner->renderTarget()->CreateSolidColorBrush(dx(color), (ID2D1SolidColorBrush **)out);
+	}
+
+#endif
+#ifdef GUI_GTK
+
+	void SolidBrush::setSource(cairo_t *c, const Rect &r) {
+		cairo_set_source_rgba(c, color.r, color.g, color.b, color.a*opacity);
+	}
+
+#endif
 
 	BitmapBrush::BitmapBrush(Bitmap *bitmap) : bitmap(bitmap) {}
 
