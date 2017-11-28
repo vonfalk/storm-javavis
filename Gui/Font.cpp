@@ -271,11 +271,12 @@ namespace gui {
 	}
 
 	Font *sysDefaultFont(EnginePtr e) {
-		GtkStyleContext *style = gtk_style_context_new();
+		GtkWidget *dummy = gtk_label_new("dummy");
+		GtkStyleContext *style = gtk_widget_get_style_context(dummy);
 		const PangoFontDescription *desc = null;
 		gtk_style_context_get(style, GTK_STATE_FLAG_NORMAL, "font", &desc, NULL);
 		Font *r = new (e.v) Font(*desc);
-		g_object_unref(style);
+		gtk_widget_destroy(dummy);
 		return r;
 	}
 
