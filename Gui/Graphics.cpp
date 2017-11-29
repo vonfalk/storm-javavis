@@ -203,8 +203,8 @@ namespace gui {
 		info.target()->DrawEllipse(e, style->brush(owner, rect), state.lineWidth);
 	}
 
-	void Graphics::draw(Path *path, Brush *brush) {
-		info.target()->DrawGeometry(path->geometry(), brush->brush(owner, path->bound()), state.lineWidth);
+	void Graphics::draw(Path *path, Brush *style) {
+		info.target()->DrawGeometry(path->geometry(), style->brush(owner, path->bound()), state.lineWidth);
 	}
 
 	void Graphics::fill(Rect rect, Brush *style) {
@@ -216,10 +216,10 @@ namespace gui {
 		info.target()->FillRoundedRectangle(r, style->brush(owner, rect));
 	}
 
-	void Graphics::fill(Brush *brush) {
+	void Graphics::fill(Brush *style) {
 		Rect s = Rect(Point(), size());
 		info.target()->SetTransform(D2D1::Matrix3x2F::Identity());
-		info.target()->FillRectangle(dx(s), brush->brush(owner, s));
+		info.target()->FillRectangle(dx(s), style->brush(owner, s));
 		info.target()->SetTransform(*state.transform());
 	}
 
@@ -229,8 +229,8 @@ namespace gui {
 		info.target()->FillEllipse(e, style->brush(owner, rect));
 	}
 
-	void Graphics::fill(Path *path, Brush *brush) {
-		info.target()->FillGeometry(path->geometry(), brush->brush(owner, path->bound()));
+	void Graphics::fill(Path *path, Brush *style) {
+		info.target()->FillGeometry(path->geometry(), style->brush(owner, path->bound()));
 	}
 
 	void Graphics::draw(Bitmap *bitmap) {
@@ -337,7 +337,11 @@ namespace gui {
 		cairo_stroke(info.device());
 	}
 
-	void Graphics::draw(Path *path, Brush *brush) {}
+	void Graphics::draw(Path *path, Brush *style) {
+		path->draw(info.device());
+		style->setSource(info.device(), path->bound());
+		cairo_stroke(info.device());
+	}
 
 	void Graphics::fill(Rect rect, Brush *style) {
 		Size sz = rect.size();
@@ -353,7 +357,10 @@ namespace gui {
 		cairo_fill(info.device());
 	}
 
-	void Graphics::fill(Brush *brush) {}
+	void Graphics::fill(Brush *style) {
+		style->setSource(info.device(), Rect(Point(0, 0), size()));
+		cairo_paint(info.device());
+	}
 
 	void Graphics::fillOval(Rect rect, Brush *style) {
 		cairo_oval(info, rect);
@@ -362,7 +369,11 @@ namespace gui {
 		cairo_fill(info.device());
 	}
 
-	void Graphics::fill(Path *path, Brush *brush) {}
+	void Graphics::fill(Path *path, Brush *style) {
+		path->draw(info.device());
+		style->setSource(info.device(), path->bound());
+		cairo_stroke(info.device());
+	}
 
 	void Graphics::draw(Bitmap *bitmap) {}
 

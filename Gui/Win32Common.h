@@ -68,6 +68,8 @@ void release(T *&v) {
 /**
  * Define some types that are actually from the Win32 api so that we can use those types on other
  * platforms as well.
+ *
+ * TODO: Maybe we shall prefer generic name for these types?
  */
 class DXObject {};
 
@@ -79,6 +81,8 @@ typedef DXObject IDXGIFactory;
 typedef DXObject IDXGIDevice;
 typedef DXObject IDWriteFactory;
 typedef DXObject ID2D1Resource;
+typedef DXObject ID2D1PathGeometry;
+typedef DXObject ID2D1Layer;
 
 inline void release(DXObject *o) {}
 

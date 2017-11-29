@@ -38,24 +38,56 @@ class DrawWin extends Frame {
 		init("Window", Size(200, 200));
 		painter(SimpleDraw());
 		create();
+
+		// TODO: Without this line, everything crashes when pressing a key...
+		onKey(false, 10, Modifiers:none);
+	}
+
+	Bool onKey(Bool down, Nat keycode, Modifiers mod) {
+		print("Keycode: " # down # ", " # keycode # ", " # mod);
+		if (keycode != 10)
+			close();
+		false;
 	}
 }
 
 class SimpleDraw extends Painter {
+	Path star;
+	SolidBrush starColor;
+	SolidBrush solid;
+
 	init() {
-		init();
+		init() {
+			starColor = yellow;
+			solid = green;
+		}
 		bgColor = red;
+
+		Int edges = 5;
+		Int stops = edges * 2;
+		for (Int i = 0; i < stops; i++) {
+			Angle a = 360 deg / stops.float;
+			a *= i.float;
+
+			Point p = angle(a) * 20.0;
+			if (i % 2 == 0)
+				p *= 2.0;
+			star.point(p);
+		}
+		star.close();
 	}
 
 	Bool render(Size size, Graphics to) {
-		SolidBrush solid(green);
 		to.line(Point(0, 0), Point(100, 100), solid);
 		to.draw(Rect(10, 10, 190, 190), solid);
 		to.draw(Rect(20, 20, 180, 180), Size(50), solid);
 		to.oval(Rect(40, 40, 100, 80), solid);
 
+		to.draw(star, starColor);
+
 		false;
 	}
+
 }
 
 void simple() {

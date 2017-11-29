@@ -46,9 +46,14 @@ namespace gui {
 		// Get the bounding box of this path.
 		inline Rect STORM_FN bound() { return b; }
 
+#ifdef GUI_WIN32
 		// Get the geometry object.
-		// ID2D1PathGeometry *geometry();
-
+		ID2D1PathGeometry *geometry();
+#endif
+#ifdef GUI_GTK
+		// Set the path on the supplied cairo_t.
+		void draw(cairo_t *c);
+#endif
 	private:
 		// Element type.
 		enum Type {
@@ -117,8 +122,7 @@ namespace gui {
 		Rect b;
 
 		// The underlying DX object.
-		// ID2D1PathGeometry *g;
-		void *g;
+		ID2D1PathGeometry *g;
 
 		// Invalidate this path.
 		void invalidate();

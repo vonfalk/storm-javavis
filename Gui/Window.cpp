@@ -378,12 +378,12 @@ namespace gui {
 
 	gboolean Window::onKeyUp(GdkEvent *event) {
 		GdkEventKey &k = event->key;
-		return onKey(false, k.keyval, modifiers(k.state)) == TRUE;
+		return onKey(false, k.keyval, modifiers(k.state)) ? TRUE : FALSE;
 	}
 
 	gboolean Window::onKeyDown(GdkEvent *event) {
 		GdkEventKey &k = event->key;
-		return onKey(false, k.keyval, modifiers(k.state)) == TRUE;
+		return onKey(true, k.keyval, modifiers(k.state)) ? TRUE : FALSE;
 	}
 
 	void Window::onSize(GdkRectangle *alloc) {

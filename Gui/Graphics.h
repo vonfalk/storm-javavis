@@ -129,12 +129,11 @@ namespace gui {
 				v = null;
 			}
 
-			// Layer(ID2D1Layer *layer) {
-			// 	v = layer;
-			// }
+			Layer(ID2D1Layer *layer) {
+				v = layer;
+			}
 
-			// UNKNOWN(PTR_NOGC) ID2D1Layer *v;
-			UNKNOWN(PTR_NOGC) void *v;
+			UNKNOWN(PTR_NOGC) ID2D1Layer *v;
 
 			// Release.
 			void release();
