@@ -122,12 +122,14 @@ namespace storm {
 	void Enum::toString(StrBuf *to, Nat v) {
 		// Note: this needs to be thread safe...
 		bool first = true;
+		Nat original = v;
 
 		for (Nat i = 0; i < values->count(); i++) {
 			EnumValue *val = values->at(i);
 
 			if (bitmask) {
-				if (val->value & v) {
+				// Note: special case for 'empty' if present.
+				if ((val->value & v) || (val->value == original && original == 0)) {
 					put(to, val->name, first);
 					v = v & ~val->value;
 				}
@@ -142,6 +144,8 @@ namespace storm {
 		// Any remaining garbage?
 		if (v != 0)
 			put(to, S("<unknown>"), first);
+		else if (bitmask && first)
+			put(to, S("<none>"), first);
 	}
 
 	void Enum::toS(StrBuf *to) const {
