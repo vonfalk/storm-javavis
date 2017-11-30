@@ -214,6 +214,10 @@ namespace os {
 		void *stackBase;
 		nat stackSize;
 
+		// Detour data and originating UThread, so that we can resume the desired thread afterwards.
+		UThreadData *detourOrigin;
+		void *detourResult;
+
 		// Move this UThread to another Thread.
 		void move(UThreadState *from, UThreadState *to);
 
@@ -297,11 +301,16 @@ namespace os {
 		 * Take a detour to another thread for a while, with the intention to return directly to the
 		 * currently running thread later. Used while spawning threads.
 		 *
-		 * Only a single detour can be active at any point.
+		 * When starting a detour, the current thread is essentially replaced by the other thread
+		 * until 'endDetour' is called. During this period the calling thread will be in a sleeping
+		 * state, unable to be woken from conditions and the like. The new thread will function like
+		 * a regular thread, and is therefore scheduled normally with respect to semaphores and
+		 * other synchronization primitives.
 		 *
 		 * Do not take a detour to a thread that is already on the ready queue. It is fine if the
 		 * thread being detoured to is associated with another Thread than the one represented by
-		 * the current UThreadState.
+		 * the current UThreadState. However, the thread will appear as if it belongs to the
+		 * associated threads when iterating through all stacks (eg. done by the GC).
 		 */
 
 		// Take a detour to another UThread. Returns whatever was passed as 'result' to 'endDetour'.
@@ -350,12 +359,6 @@ namespace os {
 		// Number of threads alive. Always updated using atomics, no locks. Threads
 		// that are waiting and not stored in the 'ready' queue are also counted.
 		nat aliveCount;
-
-		// Thread to return to after the current detour. 'null' if no current detour.
-		UThreadData *detourOrigin;
-
-		// Result from the detour.
-		void *detourResult;
 
 		// Elliminate any exited threads.
 		void reap();

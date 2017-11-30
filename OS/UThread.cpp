@@ -251,7 +251,9 @@ namespace os {
 	UThreadStack::UThreadStack() : desc(null), stackLimit(null) {}
 
 	UThreadData::UThreadData(UThreadState *state) :
-		references(0), next(null), owner(null), stackBase(null), stackSize(0) {
+		references(0), next(null), owner(null),
+		stackBase(null), stackSize(0),
+		detourOrigin(null), detourResult(null) {
 
 		// Notify the GC that we exist and may contain interesting data.
 		state->newStack(this);
@@ -298,7 +300,6 @@ namespace os {
 		running->addRef();
 
 		aliveCount = 1;
-		detourOrigin = null;
 	}
 
 	UThreadState::~UThreadState() {
@@ -309,7 +310,6 @@ namespace os {
 			atomicDecrement(aliveCount);
 		}
 
-		assert(detourOrigin == null, L"A detour was not properly terminated before terminating the thread.");
 		assert(aliveCount == 0, L"An OS thread tried to terminate before all its UThreads terminated.");
 		assert(stacks.empty(), L"Consistency issue. aliveCount says zero, but we still have stacks we can scan!");
 	}
@@ -447,7 +447,8 @@ namespace os {
 			}
 
 			if (next == prev) {
-				// May happen if we are the only UThread running.
+				// May happen if we are the only UThread running and someone managed to wake the
+				// thread before we had time to sleep.
 				break;
 			} else if (next) {
 				running = next;
@@ -477,23 +478,34 @@ namespace os {
 
 	void *UThreadState::startDetour(UThreadData *to) {
 		assert(to->owner == null, L"The UThread is already associated with a thread, can not use it for detour.");
-		assert(detourOrigin == null, L"Can not start multiple detours!");
-		to->owner = this;
 
-		detourOrigin = running;
+		UThreadData *prev = running;
+
+		// Remember the currently running UThread so that we can go back to it.
+		to->owner = this;
+		to->detourOrigin = prev;
+
+		// Switch threads.
 		running = to;
-		detourOrigin->switchTo(running);
-		return detourResult;
+		prev->switchTo(running);
+
+		// Since we returned here from 'switchTo', we know that 'endDetour' has set the result for us!
+		return to->detourResult;
 	}
 
 	void UThreadState::endDetour(void *result) {
-		assert(detourOrigin, L"No active detour.");
-		detourResult = result;
-		running->owner = null;
+		assert(running->detourOrigin, L"No active detour.");
 
+		// Find the thread to run instead.
 		UThreadData *prev = running;
-		running = detourOrigin;
-		detourOrigin = null;
+		running = prev->detourOrigin;
+
+		// Release the currently running UThread from our grip.
+		prev->detourOrigin = null;
+		prev->detourResult = result;
+		prev->owner = null;
+
+		// Switch threads.
 		prev->switchTo(running);
 	}
 

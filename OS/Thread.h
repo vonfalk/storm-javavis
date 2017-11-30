@@ -170,6 +170,12 @@ namespace os {
 		// The thread is kept alive until 'wait' returns false. At this point, 'wait' will not be
 		// called any more, and the ThreadWait will eventually be destroyed.
 		// The passed handle shall also be examined and the wait shall be aborted if that becomes signaling.
+		// NOTE: It is vital that the 'wait' operation does not call any code that uses
+		// synchronization primitives in Sync.h or similar, such as dispatching events from an UI
+		// thread or similar. Doing this violates the core assumption that a sleeping thread will
+		// not try to wait for other things in the system. To the threading system, this appears
+		// that a sleeping thread is running, which causes havoc. Primitives dealing with the entire
+		// OS thread (as opposed to a single UThread) are, fine (and necessary) to use though.
 		virtual bool wait(IOHandle &io) = 0;
 
 		// Called when wait() should be called, but when a timeout is also present.
