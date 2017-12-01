@@ -1147,11 +1147,17 @@ namespace storm {
 			}
 
 			Nat Parser::stateCount() const {
-				return store->count();
+				if (store)
+					return store->count();
+				else
+					return 0;
 			}
 
 			Nat Parser::byteCount() const {
-				return store->byteCount();
+				if (store)
+					return store->byteCount();
+				else
+					return 0;
 			}
 
 			void Parser::clearSyntax() {

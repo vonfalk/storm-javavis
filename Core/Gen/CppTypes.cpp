@@ -72,55 +72,51 @@ namespace storm {
 
 		/**
 		 * Constructor for built-in classes.
-		 *
-		 * These are used as if they were members in some classes, and therefore need the
-		 * ALIGN_MEMBER macro to ensure the pointer is not accidentally treated as a vtable lookup
-		 * offset.
 		 */
 		template <class T>
-		static void ALIGN_MEMBER create1(void *mem) {
+		static void CODECALL create1(void *mem) {
 			new (Place(mem))T();
 		}
 
 		template <class T, class P>
-		static void ALIGN_MEMBER create2(void *mem, P p) {
+		static void CODECALL create2(void *mem, P p) {
 			new (Place(mem))T(p);
 		}
 
 		template <class T, class P, class Q>
-		static void ALIGN_MEMBER create3(void *mem, P p, Q q) {
+		static void CODECALL create3(void *mem, P p, Q q) {
 			new (Place(mem))T(p, q);
 		}
 
 		template <class T, class P, class Q, class R>
-		static void ALIGN_MEMBER create4(void *mem, P p, Q q, R r) {
+		static void CODECALL create4(void *mem, P p, Q q, R r) {
 			new (Place(mem))T(p, q, r);
 		}
 
 		template <class T, class P, class Q, class R, class S>
-		static void ALIGN_MEMBER create5(void *mem, P p, Q q, R r, S s) {
+		static void CODECALL create5(void *mem, P p, Q q, R r, S s) {
 			new (Place(mem))T(p, q, r, s);
 		}
 
 		template <class T, class P, class Q, class R, class S, class U>
-		static void ALIGN_MEMBER create6(void *mem, P p, Q q, R r, S s, U u) {
+		static void CODECALL create6(void *mem, P p, Q q, R r, S s, U u) {
 			new (Place(mem))T(p, q, r, s, u);
 		}
 
 		template <class T, class P, class Q, class R, class S, class U, class V>
-		static void ALIGN_MEMBER create7(void *mem, P p, Q q, R r, S s, U u, V v) {
+		static void CODECALL create7(void *mem, P p, Q q, R r, S s, U u, V v) {
 			new (Place(mem))T(p, q, r, s, u, v);
 		}
 
 		// Wrap an assignment operator call.
 		template <class T>
-		static T ALIGN_MEMBER &assign(T &to, const T &from) {
+		static T &CODECALL assign(T &to, const T &from) {
 			return to = from;
 		}
 
 		// Wrap a destructor call.
 		template <class T>
-		static void ALIGN_MEMBER destroy(T *obj) {
+		static void CODECALL destroy(T *obj) {
 			obj->~T();
 		}
 
