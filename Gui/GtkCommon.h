@@ -2,6 +2,7 @@
 
 #ifdef GUI_GTK
 
+#include <poll.h>
 #include <X11/Xlib.h>
 #include <gtk/gtk.h>
 #include "GtkLayout.h"

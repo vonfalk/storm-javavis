@@ -375,15 +375,13 @@ namespace gui {
 
 		// Find the context for the main loop.
 		context = g_main_context_default();
-
-		// Create the source for file descriptors.
-		fdSource = g_source_new(&fdFuncs, sizeof(FdData));
-		g_source_attach(fdSource, context);
+		// Become the owner of the main context.
+		g_main_context_acquire(context);
 	}
 
 	void AppWait::platformDestroy() {
-		g_source_destroy(fdSource);
-		g_source_unref(fdSource);
+		// Release ownership of the main context.
+		g_main_context_release(context);
 	}
 
 	static short from_g(GIOCondition src) {
@@ -400,6 +398,15 @@ namespace gui {
 			r |= POLLHUP;
 		if (src & G_IO_NVAL)
 			r |= POLLNVAL;
+		return r;
+	}
+
+	static struct pollfd from_g(GPollFD fd) {
+		struct pollfd r = {
+			fd.fd,
+			from_g(GIOCondition(fd.events)),
+			from_g(GIOCondition(fd.revents))
+		};
 		return r;
 	}
 
@@ -420,61 +427,72 @@ namespace gui {
 		return r;
 	}
 
-	GSourceFuncs AppWait::fdFuncs = {
-		null, // prepare
-		&AppWait::fdCheck, // check
-		null, // dispatch
-		null, // finalize
-	};
-
-	gboolean AppWait::fdCheck(GSource *source) {
-		FdData *me = (FdData *)source;
-		if (!me->fds)
-			return FALSE;
-
-		os::IOHandle::Desc &desc = *me->fds;
-		bool any = false;
-
-		for (size_t i = 1; i < desc.count; i++) {
-			short result = from_g(g_source_query_unix_fd(source, me->tags[i]));
-			desc.fds[i].revents = result;
-			any |= result != 0;
-		}
-
-		if (any) {
-			atomicWrite(*me->notify, 1);
-			g_main_context_wakeup(me->context);
-		}
-
-		return FALSE;
+	static GPollFD to_g(struct pollfd fd) {
+		GPollFD r = {
+			fd.fd,
+			to_g(fd.events),
+			to_g(fd.revents)
+		};
+		return r;
 	}
 
-	void AppWait::doWait(os::IOHandle &io) {
-		// Prepare waiting for the fds.
-		FdData *fdData = (FdData *)fdSource;
-		os::IOHandle::Desc desc = io.desc();
-		tags.resize(desc.count); // Grow to fit.
-		for (size_t i = 1; i < desc.count; i++)
-			tags[i] = g_source_add_unix_fd(fdSource, desc.fds[i].fd, to_g(desc.fds[i].events));
-		fdData->context = context;
-		fdData->fds = &desc;
-		fdData->tags = tags.data();
-		fdData->notify = &signalSent;
+	bool AppWait::doWait(os::IOHandle &io, int stormTimeout) {
+		// NOTE: We could check the return value of '_prepare' to possibly avoid polling, but the
+		// return value is ignored in the Gtk+ implementation as well, so we can probably get away
+		// with ignoring it as well.
+		gint maxPriority = 0;
+		g_main_context_prepare(context, &maxPriority);
 
-		// Wait until we get an event. Perform more than one iteration if we have time.
-		while (atomicRead(signalSent) == 0)
-			g_main_context_iteration(context, TRUE);
+		// Get poll fd:s from Gtk+:
+		gint timeout = 0;
+		gint fdCount = 0;
+		gint oldSize = 0;
+		do {
+			oldSize = gPollFd.size();
+			fdCount = g_main_context_query(context, maxPriority, &timeout, gPollFd.data(), oldSize);
+			gPollFd.resize(fdCount);
+		} while (fdCount > oldSize);
 
-		// Reset the 'events' variable here. If we reset it just before we enter the wile loop, we
-		// might miss events from 'signal' if we are unlucky.
+		// Put them into an array of system specific poll fd:s.
+		os::IOHandle::Desc ioDesc = io.desc();
+		pollFd.resize(ioDesc.count - 1 + gPollFd.size());
+		for (size_t i = 0; i < ioDesc.count - 1; i++)
+			pollFd[i] = ioDesc.fds[i + 1];
+		for (size_t i = 0; i < gPollFd.size(); i++)
+			pollFd[i + ioDesc.count - 1] = from_g(gPollFd[i]);
+
+		// Adjust timeout.
+		if (timeout < 0)
+			timeout = stormTimeout;
+		else if (stormTimeout >= 0)
+			timeout = min(timeout, stormTimeout);
+
+		// Now, we can call 'poll'!
+		int result = -1;
+		while (result < 0) {
+			result = poll(pollFd.data(), pollFd.size(), timeout);
+
+			if (result < 0) {
+				if (errno != EINTR) {
+					perror("poll");
+					assert(false);
+				}
+				if (timeout > 0)
+					timeout = 0;
+			}
+		}
+
+		// Copy the poll descriptors back to their original location...
+		for (size_t i = 0; i < ioDesc.count - 1; i++)
+			ioDesc.fds[i + 1] = pollFd[i];
+		for (size_t i = 0; i < gPollFd.size(); i++)
+			gPollFd[i] = to_g(pollFd[i + ioDesc.count - 1]);
+
+		// Reset the 'signal sent' flag.
 		atomicWrite(signalSent, 0);
 
-		// Remove the file descriptors again.
-		for (size_t i = 1; i < tags.size(); i++)
-			g_source_remove_unix_fd(fdSource, tags[i]);
-		fdData->fds = null;
-		fdData->tags = null;
-		fdData->notify = null;
+		// Let Gtk+ investigate the result of the polling.
+		return g_main_context_check(context, maxPriority, gPollFd.data(), gint(gPollFd.size())) == TRUE;
 	}
 
 	bool AppWait::wait(os::IOHandle &io) {
@@ -484,37 +502,23 @@ namespace gui {
 		if (msgDisabled) {
 			fallback.wait(io);
 		} else {
-			doWait(io);
+			doWait(io, -1);
 		}
 
 		return !done;
-	}
-
-	gboolean AppWait::onTimeout(gpointer appWait) {
-		AppWait *me = (AppWait *)appWait;
-		atomicWrite(me->signalSent, 1);
-		g_main_context_wakeup(me->context);
-		return TRUE;
 	}
 
 	bool AppWait::wait(os::IOHandle &io, nat msTimeout) {
 		if (done)
 			return false;
 
+		msTimeout = min(msTimeout, nat(std::numeric_limits<int>::max()));
+
 		if (msgDisabled) {
 			fallback.wait(io, msTimeout);
 		} else {
-			// Create a timeout.
-			GSource *timeout = g_timeout_source_new(msTimeout);
-			g_source_set_callback(timeout, &onTimeout, this, NULL);
-			g_source_attach(timeout, context);
-
 			// Wait for things to happen.
-			doWait(io);
-
-			// Destroy the timeout.
-			g_source_destroy(timeout);
-			g_source_unref(timeout);
+			doWait(io, int(msTimeout));
 		}
 
 		return !done;
@@ -535,8 +539,11 @@ namespace gui {
 		if (msgDisabled)
 			return;
 
-		// Try to dispatch a maximum of 100 events. Return as no event is dispatched so that we wait
-		// properly instead of just burning CPU cycles for no good.
+		// Try to dispatch any pending events first.
+		g_main_context_dispatch(context);
+
+		// Try to dispatch a maximum of 'App::maxProcessMessages' events. Return as soon as no event
+		// is dispatched so that we wait properly instead of just burning CPU cycles for no good.
 		bool dispatched = true;
 		for (nat i = 0; i < App::maxProcessMessages && dispatched; i++) {
 			dispatched &= g_main_context_iteration(context, FALSE) == TRUE;

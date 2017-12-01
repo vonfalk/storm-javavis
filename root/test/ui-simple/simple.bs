@@ -38,15 +38,11 @@ class DrawWin extends Frame {
 		init("Window", Size(200, 200));
 		painter(SimpleDraw());
 		create();
-
-		// TODO: Without this line, everything crashes when pressing a key...
-		onKey(false, 10, Modifiers:none);
 	}
 
 	Bool onKey(Bool down, Nat keycode, Modifiers mod) {
 		print("Keycode: " # down # ", " # keycode # ", " # mod);
-		if (keycode != 10)
-			close();
+		close();
 		false;
 	}
 }

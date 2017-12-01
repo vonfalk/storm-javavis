@@ -196,32 +196,14 @@ namespace gui {
 		// The global main context.
 		GMainContext *context;
 
-		// The source we use to attach file descriptors to.
-		GSource *fdSource;
+		// Poll descriptors passed to Gtk+.
+		vector<GPollFD> gPollFd;
 
-		// Data for our fdSource.
-		struct FdData {
-			GSource super;
-			GMainContext *context;
-			os::IOHandle::Desc *fds;
-			gpointer *tags;
-			nat *notify;
-		};
+		// Poll descriptors used by the system calls.
+		vector<struct pollfd> pollFd;
 
-		// Function table for our GSource.
-		static GSourceFuncs fdFuncs;
-
-		// Callback from fdFuncs.
-		static gboolean fdCheck(GSource *source);
-
-		// Callback from GLib.
-		static gboolean onTimeout(gpointer appWait);
-
-		// Used in 'fdCheck'.
-		vector<gpointer> tags;
-
-		// Wait for a callback of some sort.
-		void doWait(os::IOHandle &io);
+		// Wait for a callback of some sort. Returns 'true' if some sources from Gtk+ are ready for dispatch.
+		bool doWait(os::IOHandle &io, int timeout);
 
 #endif
 
