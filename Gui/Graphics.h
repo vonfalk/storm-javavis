@@ -146,11 +146,18 @@ namespace gui {
 		public:
 			State() {}
 
-			// State(const D2D1_MATRIX_3X2_F &tfm, Float lineWidth) {
-			// 	*transform() = tfm;
-			// 	this->lineWidth = lineWidth;
-			// 	layer = null;
-			// }
+#ifdef GUI_WIN32
+			State(const D2D1_MATRIX_3X2_F &tfm, Float lineWidth) {
+				*transform() = tfm;
+				this->lineWidth = lineWidth;
+				layer = null;
+			}
+
+			// Get the real type of the transformation matrix.
+			inline D2D1_MATRIX_3X2_F *transform() {
+				return (D2D1_MATRIX_3X2_F *)&tfm0;
+			}
+#endif
 
 			// Transform storage. Do not touch!
 			Float tfm0;
@@ -159,11 +166,6 @@ namespace gui {
 			Float tfm3;
 			Float tfm4;
 			Float tfm5;
-
-			// Get the real type.
-			// inline D2D1_MATRIX_3X2_F *transform() {
-			// 	return (D2D1_MATRIX_3X2_F *)&tfm0;
-			// }
 
 			// Line size.
 			Float lineWidth;
@@ -198,6 +200,9 @@ namespace gui {
 
 		// Get a layer.
 		// ID2D1Layer *layer();
+
+		// Prepare rendering (platform specific).
+		void prepare();
 	};
 
 }

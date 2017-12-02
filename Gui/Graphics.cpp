@@ -55,6 +55,7 @@ namespace gui {
 
 	void Graphics::beforeRender() {
 		minFreeLayers = layers->count();
+		prepare();
 	}
 
 	void Graphics::afterRender() {
@@ -142,6 +143,8 @@ namespace gui {
 	}
 
 	void Graphics::push(Float opacity) {
+		// Note: We can use a 'group' to implement this in cairo.
+
 		// oldStates->push(state);
 		// state.layer = layer();
 
@@ -261,6 +264,8 @@ namespace gui {
 	void Graphics::draw(Text *text, Brush *brush, Point origin) {
 		info.target()->DrawTextLayout(dx(origin), text->layout(), brush->brush(owner, Rect(origin, text->size())));
 	}
+
+	void Graphics::prepare() {}
 
 	void Graphics::Layer::release() {
 		v->Release();
@@ -388,6 +393,10 @@ namespace gui {
 	void Graphics::text(Str *text, Font *font, Brush *brush, Rect rect) {}
 
 	void Graphics::draw(Text *text, Brush *brush, Point origin) {}
+
+	void Graphics::prepare() {
+		cairo_set_line_width(info.device(), 1.0);
+	}
 
 	void Graphics::Layer::release() {
 		// TODO:

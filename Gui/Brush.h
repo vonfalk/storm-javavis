@@ -27,7 +27,17 @@ namespace gui {
 #endif
 #ifdef GUI_GTK
 		// Set the source of the cairo_t to this brush.
-		virtual void setSource(cairo_t *c, const Rect &bound);
+		inline void setSource(cairo_t *c, const Rect &bound) {
+			cairo_pattern_t *b = get();
+			if (b) {
+				prepare(bound, b);
+				// TODO: Handle opacity!
+				cairo_set_source(c, b);
+			}
+		}
+
+		// Prepare for drawing a bounding box of 'bound'.
+		virtual void prepare(const Rect &bound, cairo_pattern_t *brush);
 #endif
 
 		// Opacity.
@@ -46,7 +56,7 @@ namespace gui {
 		virtual void create(Painter *owner, ID2D1Resource **out);
 #endif
 #ifdef GUI_GTK
-		virtual void setSource(cairo_t *c, const Rect &bound);
+		virtual cairo_pattern_t *create();
 #endif
 
 	private:
@@ -55,18 +65,20 @@ namespace gui {
 
 	/**
 	 * Bitmap brush.
+	 *
+	 * TODO: Implement properly on both platforms.
 	 */
-	class BitmapBrush : public Brush {
-		STORM_CLASS;
-	public:
-		STORM_CTOR BitmapBrush(Bitmap *bitmap);
+	// class BitmapBrush : public Brush {
+	// 	STORM_CLASS;
+	// public:
+	// 	STORM_CTOR BitmapBrush(Bitmap *bitmap);
 
-		// virtual void create(Painter *owner, ID2D1Resource **out);
+	// 	virtual void create(Painter *owner, ID2D1Resource **out);
 
-		// virtual void prepare(const Rect &bound, ID2D1Brush *b);
-	private:
-		Bitmap *bitmap;
-	};
+	// 	virtual void prepare(const Rect &bound, ID2D1Brush *b);
+	// private:
+	// 	Bitmap *bitmap;
+	// };
 
 	/**
 	 * A single gradient stop.
@@ -100,12 +112,16 @@ namespace gui {
 		virtual void destroy();
 
 	protected:
+#ifdef GUI_WIN32
 		// Get the stops object.
-		// ID2D1GradientStopCollection *dxStops(Painter *owner);
-
+		ID2D1GradientStopCollection *dxStops(Painter *owner);
+#endif
+#ifdef GUI_GTK
+		// Apply stops to a pattern.
+		void applyStops(cairo_pattern_t *to);
+#endif
 	private:
-		// ID2D1GradientStopCollection *dxObject;
-		void *dxObject;
+		ID2D1GradientStopCollection *dxObject;
 		Array<GradientStop> *myStops;
 	};
 
@@ -121,14 +137,23 @@ namespace gui {
 		// Create two stops at 0 and 1.
 		STORM_CTOR LinearGradient(Color c1, Color c2, Angle angle);
 
+#ifdef GUI_WIN32
 		// Get the brush.
-		// inline ID2D1LinearGradientBrush *brush(Painter *owner) { return get<ID2D1LinearGradientBrush>(owner); }
+		inline ID2D1LinearGradientBrush *brush(Painter *owner) { return get<ID2D1LinearGradientBrush>(owner); }
 
 		// Create.
-		// virtual void create(Painter *owner, ID2D1Resource **out);
+		virtual void create(Painter *owner, ID2D1Resource **out);
 
 		// Prepare.
-		// virtual void prepare(const Rect &s, ID2D1Brush *b);
+		virtual void prepare(const Rect &s, ID2D1Brush *b);
+#endif
+#ifdef GUI_GTK
+		// Create.
+		virtual cairo_pattern_t *create();
+
+		// Prepare.
+		virtual void prepare(const Rect &s, cairo_pattern_t *b);
+#endif
 
 		// The angle.
 		Angle angle;
@@ -137,5 +162,7 @@ namespace gui {
 		// Compute points.
 		void compute(const Rect &sz, Point &start, Point &end);
 	};
+
+	// TODO: Implement a radial gradient as well!
 
 }

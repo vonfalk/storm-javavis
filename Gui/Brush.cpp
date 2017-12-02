@@ -14,7 +14,7 @@ namespace gui {
 #endif
 #ifdef GUI_GTK
 
-	void Brush::setSource(cairo_t *c, const Rect &r) {}
+	void Brush::prepare(const Rect &r, cairo_pattern_t *b) {}
 
 #endif
 
@@ -29,13 +29,13 @@ namespace gui {
 #endif
 #ifdef GUI_GTK
 
-	void SolidBrush::setSource(cairo_t *c, const Rect &r) {
-		cairo_set_source_rgba(c, color.r, color.g, color.b, color.a*opacity);
+	cairo_pattern_t *SolidBrush::create() {
+		return cairo_pattern_create_rgba(color.r, color.g, color.b, color.a);
 	}
 
 #endif
 
-	BitmapBrush::BitmapBrush(Bitmap *bitmap) : bitmap(bitmap) {}
+	// BitmapBrush::BitmapBrush(Bitmap *bitmap) : bitmap(bitmap) {}
 
 	// void BitmapBrush::create(Painter *owner, ID2D1Resource **out) {
 	// 	D2D1_BITMAP_BRUSH_PROPERTIES props = {
@@ -66,31 +66,45 @@ namespace gui {
 	Gradient::Gradient(Array<GradientStop> *stops) : dxObject(null), myStops(stops) {}
 
 	Gradient::~Gradient() {
-		// ::release(dxObject);
+		destroy();
 	}
 
 	void Gradient::destroy() {
 		Brush::destroy();
-		// ::release(dxObject);
+		::release(dxObject);
 	}
-
-	// ID2D1GradientStopCollection *Gradient::dxStops(Painter *owner) {
-	// 	if (!dxObject) {
-	// 		D2D1_GRADIENT_STOP *tmp = (D2D1_GRADIENT_STOP *)alloca(sizeof(D2D1_GRADIENT_STOP) * myStops->count());
-	// 		for (nat i = 0; i < myStops->count(); i++) {
-	// 			tmp[i].position = myStops->at(i).pos;
-	// 			tmp[i].color = dx(myStops->at(i).color);
-	// 		}
-
-	// 		owner->renderTarget()->CreateGradientStopCollection(tmp, myStops->count(), &dxObject);
-	// 	}
-	// 	return dxObject;
-	// }
 
 	void Gradient::stops(Array<GradientStop> *stops) {
 		myStops = new (this) Array<GradientStop>(*stops);
 		destroy();
 	}
+
+#ifdef GUI_WIN32
+
+	ID2D1GradientStopCollection *Gradient::dxStops(Painter *owner) {
+		if (!dxObject) {
+			D2D1_GRADIENT_STOP *tmp = (D2D1_GRADIENT_STOP *)alloca(sizeof(D2D1_GRADIENT_STOP) * myStops->count());
+			for (Nat i = 0; i < myStops->count(); i++) {
+				tmp[i].position = myStops->at(i).pos;
+				tmp[i].color = dx(myStops->at(i).color);
+			}
+
+			owner->renderTarget()->CreateGradientStopCollection(tmp, myStops->count(), &dxObject);
+		}
+		return dxObject;
+	}
+
+#endif
+#ifdef GUI_GTK
+
+	void Gradient::applyStops(cairo_pattern_t *to) {
+		for (Nat i = 0; i < myStops->count(); i++) {
+			GradientStop &at = myStops->at(i);
+			cairo_pattern_add_color_stop_rgba(to, at.pos, at.color.r, at.color.g, at.color.b, at.color.a);
+		}
+	}
+
+#endif
 
 	LinearGradient::LinearGradient(Array<GradientStop> *stops, Angle angle) : Gradient(stops), angle(angle) {}
 
@@ -101,20 +115,50 @@ namespace gui {
 		stops(s);
 	}
 
-	// void LinearGradient::create(Painter *owner, ID2D1Resource **out) {
-	// 	Point start(0, 0), end(1, 1);
-	// 	D2D1_LINEAR_GRADIENT_BRUSH_PROPERTIES p = { dx(start), dx(end) };
-	// 	owner->renderTarget()->CreateLinearGradientBrush(p, dxStops(owner), (ID2D1LinearGradientBrush**)out);
-	// }
+#ifdef GUI_WIN32
 
-	// void LinearGradient::prepare(const Rect &rect, ID2D1Brush *r) {
-	// 	Point start, end;
-	// 	compute(rect, start, end);
+	void LinearGradient::create(Painter *owner, ID2D1Resource **out) {
+		Point start(0, 0), end(1, 1);
+		D2D1_LINEAR_GRADIENT_BRUSH_PROPERTIES p = { dx(start), dx(end) };
+		owner->renderTarget()->CreateLinearGradientBrush(p, dxStops(owner), (ID2D1LinearGradientBrush**)out);
+	}
 
-	// 	ID2D1LinearGradientBrush *o = (ID2D1LinearGradientBrush *)r;
-	// 	o->SetStartPoint(dx(start));
-	// 	o->SetEndPoint(dx(end));
-	// }
+	void LinearGradient::prepare(const Rect &rect, ID2D1Brush *r) {
+		Point start, end;
+		compute(rect, start, end);
+
+		ID2D1LinearGradientBrush *o = (ID2D1LinearGradientBrush *)r;
+		o->SetStartPoint(dx(start));
+		o->SetEndPoint(dx(end));
+	}
+
+#endif
+#ifdef GUI_GTK
+
+	cairo_pattern_t *LinearGradient::create() {
+		// Using the points (0, 1) - (0, -1) (= 0 deg) for simplicity. We'll transform it later.
+		cairo_pattern_t *r = cairo_pattern_create_linear(0, 1, 0, -1);
+		applyStops(r);
+		return r;
+	}
+
+	void LinearGradient::prepare(const Rect &bound, cairo_pattern_t *r) {
+		Size size = bound.size();
+		Point center = bound.center();
+
+		float w = max(size.w, size.h);
+		float scale = 1.0f / w;
+
+		// Compute a matrix so that 'start' and 'end' map to the points (0, 0) and (1, 0).
+		cairo_matrix_t tfm;
+		// Note: transformations are applied in reverse.
+		cairo_matrix_init_rotate(&tfm, -angle.rad());
+		cairo_matrix_scale(&tfm, scale, scale);
+		cairo_matrix_translate(&tfm, -center.x, -center.y);
+		cairo_pattern_set_matrix(r, &tfm);
+	}
+
+#endif
 
 	void LinearGradient::compute(const Rect &bound, Point &start, Point &end) {
 		Size size = bound.size();

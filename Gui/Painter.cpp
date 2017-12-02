@@ -180,6 +180,7 @@ namespace gui {
 		bool more = false;
 
 		// Clear the surface with the desired color. TODO: Set the clip properly?
+		// TODO: We probably want to save the background color in a cairo_pattern_t and use that.
 		cairo_set_source_rgba(target.device(), bgColor.r, bgColor.g, bgColor.b, bgColor.a);
 		cairo_set_operator(target.device(), CAIRO_OPERATOR_SOURCE);
 		cairo_paint(target.device());

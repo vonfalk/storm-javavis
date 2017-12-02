@@ -46,10 +46,23 @@ namespace gui {
 		virtual void create(Painter *owner, ID2D1Resource **out);
 
 #endif
+#ifdef GUI_GTK
+
+		// Get the resource, lazily creates it if needed.
+		cairo_pattern_t *get() {
+			if (!resource)
+				resource = create();
+			return resource;
+		}
+
+		// Create the resource.
+		virtual cairo_pattern_t *create();
+
+#endif
 
 	private:
 		// The resource itself.
-		ID2D1Resource *resource;
+		OsResource *resource;
 
 		// Our owner (if any).
 		Painter *owner;

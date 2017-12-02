@@ -48,6 +48,11 @@ namespace gui {
 
 	wostream &operator <<(wostream &to, const D2D1_MATRIX_3X2_F &m);
 
+	/**
+	 * Define generic types to be used in Storm class declarations.
+	 */
+	typedef ID2D1Resource OsResource;
+
 }
 
 // Custom messages.
@@ -62,6 +67,7 @@ void release(T *&v) {
 }
 
 #include "ComPtr.h"
+
 
 #else
 
@@ -80,9 +86,9 @@ typedef DXObject IDXGISwapChain;
 typedef DXObject IDXGIFactory;
 typedef DXObject IDXGIDevice;
 typedef DXObject IDWriteFactory;
-typedef DXObject ID2D1Resource;
 typedef DXObject ID2D1PathGeometry;
 typedef DXObject ID2D1Layer;
+typedef DXObject ID2D1GradientStopCollection;
 
 inline void release(DXObject *o) {}
 

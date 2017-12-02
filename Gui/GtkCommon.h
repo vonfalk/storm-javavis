@@ -12,7 +12,10 @@
 
 namespace gui {
 
-	// Nothing here yet...
+	/**
+	 * Define generic types to be used in Storm class declarations.
+	 */
+	typedef cairo_pattern_t OsResource;
 
 }
 
