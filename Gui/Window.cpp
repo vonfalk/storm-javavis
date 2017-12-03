@@ -373,7 +373,6 @@ namespace gui {
 	}
 
 #endif
-
 #ifdef GUI_GTK
 
 	gboolean Window::onKeyUp(GdkEvent *event) {

@@ -4,6 +4,11 @@
 #include "Window.h"
 #include "Frame.h"
 
+#ifdef POSIX
+// NOTE: This does not exist on all POSIX systems (eg. MacOS)
+#include <sys/eventfd.h>
+#endif
+
 namespace gui {
 
 	Font *defaultFont(EnginePtr e) {
@@ -364,8 +369,28 @@ namespace gui {
 		// Nothing so far...
 	}
 
+	void App::repaint(Handle window) {
+		appWait->repaint(window);
+	}
+
+	AppWait::RepaintRequest::RepaintRequest(Handle handle) :
+		handle(handle), wait(0), next(null) {}
+
+	void AppWait::repaint(Handle window) {
+		RepaintRequest r(window);
+		{
+			util::Lock::L z(repaintLock);
+			r.next = repaintList;
+			repaintList = &r;
+		}
+
+		signal();
+		r.wait.down();
+	}
+
 	void AppWait::platformInit() {
 		done = false;
+		repaintList = null;
 
 		// We'll be using threads with X from time to time. Mainly while painting in the background through Cairo.
 		XInitThreads();
@@ -377,11 +402,26 @@ namespace gui {
 		context = g_main_context_default();
 		// Become the owner of the main context.
 		g_main_context_acquire(context);
+
+		// We need an eventfd for our condition semantics.
+		eventFd = eventfd(0, EFD_CLOEXEC | EFD_NONBLOCK);
 	}
 
 	void AppWait::platformDestroy() {
+		// Dismiss any repaint requests.
+		{
+			util::Lock::L z(repaintLock);
+			while (repaintList) {
+				repaintList->wait.up();
+				repaintList = repaintList->next;
+			}
+		}
+
 		// Release ownership of the main context.
 		g_main_context_release(context);
+
+		// Close the eventfd.
+		close(eventFd);
 	}
 
 	static short from_g(GIOCondition src) {
@@ -436,7 +476,25 @@ namespace gui {
 		return r;
 	}
 
-	bool AppWait::doWait(os::IOHandle &io, int stormTimeout) {
+	void AppWait::plainWait(struct pollfd *fds, size_t count, int timeout) {
+		int result = -1;
+		while (result < 0) {
+			result = poll(fds, count, timeout);
+
+			if (result < 0) {
+				if (errno != EINTR) {
+					perror("poll");
+					assert(false);
+				}
+
+				// TODO: Better approximation of the remaining time.
+				if (timeout > 0)
+					timeout = 0;
+			}
+		}
+	}
+
+	void AppWait::gtkWait(os::IOHandle::Desc &io, int stormTimeout) {
 		// NOTE: We could check the return value of '_prepare' to possibly avoid polling, but the
 		// return value is ignored in the Gtk+ implementation as well, so we can probably get away
 		// with ignoring it as well.
@@ -454,12 +512,11 @@ namespace gui {
 		} while (fdCount > oldSize);
 
 		// Put them into an array of system specific poll fd:s.
-		os::IOHandle::Desc ioDesc = io.desc();
-		pollFd.resize(ioDesc.count - 1 + gPollFd.size());
-		for (size_t i = 0; i < ioDesc.count - 1; i++)
-			pollFd[i] = ioDesc.fds[i + 1];
+		pollFd.resize(io.count + gPollFd.size());
+		for (size_t i = 0; i < io.count; i++)
+			pollFd[i] = io.fds[i];
 		for (size_t i = 0; i < gPollFd.size(); i++)
-			pollFd[i + ioDesc.count - 1] = from_g(gPollFd[i]);
+			pollFd[i + io.count] = from_g(gPollFd[i]);
 
 		// Adjust timeout.
 		if (timeout < 0)
@@ -468,42 +525,60 @@ namespace gui {
 			timeout = min(timeout, stormTimeout);
 
 		// Now, we can call 'poll'!
-		int result = -1;
-		while (result < 0) {
-			result = poll(pollFd.data(), pollFd.size(), timeout);
-
-			if (result < 0) {
-				if (errno != EINTR) {
-					perror("poll");
-					assert(false);
-				}
-				if (timeout > 0)
-					timeout = 0;
-			}
-		}
+		plainWait(pollFd.data(), pollFd.size(), timeout);
 
 		// Copy the poll descriptors back to their original location...
-		for (size_t i = 0; i < ioDesc.count - 1; i++)
-			ioDesc.fds[i + 1] = pollFd[i];
+		for (size_t i = 0; i < io.count; i++)
+			io.fds[i] = pollFd[i];
 		for (size_t i = 0; i < gPollFd.size(); i++)
-			gPollFd[i] = to_g(pollFd[i + ioDesc.count - 1]);
-
-		// Reset the 'signal sent' flag.
-		atomicWrite(signalSent, 0);
+			gPollFd[i] = to_g(pollFd[i + io.count]);
 
 		// Let Gtk+ investigate the result of the polling.
-		return g_main_context_check(context, maxPriority, gPollFd.data(), gint(gPollFd.size())) == TRUE;
+		g_main_context_check(context, maxPriority, gPollFd.data(), gint(gPollFd.size()));
+	}
+
+	void AppWait::doWait(os::IOHandle &io, int timeout) {
+		os::IOHandle::Desc desc = io.desc();
+		desc.fds[0].fd = eventFd;
+		desc.fds[0].events = POLLIN;
+		desc.fds[0].revents = 0;
+
+		if (msgDisabled) {
+			plainWait(desc.fds, desc.count, timeout);
+		} else {
+			gtkWait(desc, timeout);
+		}
+
+		// If entry #0 is done, we want to read it so that it is not signaled anymore.
+		if (desc.fds[0].revents != 0) {
+			uint64_t v = 0;
+			ssize_t r = read(eventFd, &v, 8);
+			if (r <= 0)
+				perror("Failed to read from eventfd");
+		}
+
+		// Notify that we woke up. This needs to be done after reading from the eventfd, otherwise
+		// the 'signalSent' might be set again before we manage to clear the eventfd.
+		atomicWrite(signalSent, 0);
+
+		// Handle any repaint requests.
+		{
+			util::Lock::L z(repaintLock);
+			while (repaintList) {
+				GdkWindow *window = gtk_widget_get_window(repaintList->handle.widget());
+				if (window)
+					gdk_window_invalidate_rect(window, NULL, true);
+				repaintList->wait.up();
+				repaintList = repaintList->next;
+			}
+		}
 	}
 
 	bool AppWait::wait(os::IOHandle &io) {
 		if (done)
 			return false;
 
-		if (msgDisabled) {
-			fallback.wait(io);
-		} else {
-			doWait(io, -1);
-		}
+		doWait(io, -1);
 
 		return !done;
 	}
@@ -513,25 +588,23 @@ namespace gui {
 			return false;
 
 		msTimeout = min(msTimeout, nat(std::numeric_limits<int>::max()));
-
-		if (msgDisabled) {
-			fallback.wait(io, msTimeout);
-		} else {
-			// Wait for things to happen.
-			doWait(io, int(msTimeout));
-		}
+		doWait(io, msTimeout);
 
 		return !done;
 	}
 
 	void AppWait::signal() {
-		// Note: causes the next invocation of 'g_main_context_iteration' to return without blocking
-		// if no thread is currently blocking inside 'g_main_context_iteration'. This makes it
-		// behave like a Condition, which is what we want.
-		if (atomicCAS(signalSent, 0, 1) == 0)
-			g_main_context_wakeup(context);
-
-		fallback.signal();
+		if (atomicCAS(signalSent, 0, 1) == 0) {
+			uint64_t val = 1;
+			while (true) {
+				ssize_t r = write(eventFd, &val, 8);
+				if (r >= 0)
+					break;
+				if (errno == EAGAIN || errno == EINTR)
+					continue;
+				perror("Failed to signal eventfd");
+			}
+		}
 	}
 
 	void AppWait::work() {

@@ -1,10 +1,11 @@
 #include "stdafx.h"
 #include "Painter.h"
 #include "RenderResource.h"
+#include "App.h"
 
 namespace gui {
 
-	Painter::Painter() : continuous(false), repaintCounter(0) {
+	Painter::Painter() : continuous(false), rendering(false), repaintCounter(0), currentRepaint(0) {
 		attachedTo = Window::invalid;
 		bgColor = getBgColor();
 		resources = new (this) WeakSet<RenderResource>();
@@ -85,13 +86,12 @@ namespace gui {
 		beforeRepaint(params);
 
 		if (continuous) {
-			nat old = repaintCounter;
-			while (old == repaintCounter)
-				os::UThread::leave();
+			waitForFrame();
 		} else {
 			doRepaint(false);
 		}
 
+		currentRepaint = repaintCounter;
 		afterRepaint(params);
 	}
 
@@ -101,9 +101,12 @@ namespace gui {
 
 		bool more = false;
 		try {
+			rendering = true;
 			more = doRepaintI(waitForVSync);
+			rendering = false;
 		} catch (...) {
 			repaintCounter++;
+			rendering = false;
 			throw;
 		}
 
@@ -120,7 +123,20 @@ namespace gui {
 
 #ifdef GUI_WIN32
 
-	void Painter::doRepaint(bool waitForVSync) {
+	bool Painter::ready() {
+		// Always ready to render!
+		return true;
+	}
+
+	void Painter::waitForFrame() {
+		// Wait until we have rendered a frame, so that Windows think we did it to satisfy the paint
+		// request.
+		nat old = repaintCounter;
+		while (old == repaintCounter)
+			os::UThread::leave();
+	}
+
+	void Painter::doRepaintI(bool waitForVSync) {
 		if (!target.target())
 			return false;
 		if (!target.swapChain())
@@ -173,6 +189,21 @@ namespace gui {
 #endif
 #ifdef GUI_GTK
 
+	bool Painter::ready() {
+		// Do not try to repaint a new frame until the previous one has been displayed.
+		return repaintCounter == currentRepaint;
+	}
+
+	void Painter::waitForFrame() {
+		// It is fine to copy the contents of our buffer as long as we're not currently rendering to it.
+		while (rendering)
+			os::UThread::leave();
+
+		// Now we're ready for another frame. Let the RenderMgr know that 'ready' has changed.
+		RenderMgr *mgr = renderMgr(engine());
+		mgr->newContinuous();
+	}
+
 	bool Painter::doRepaintI(bool waitForVSync) {
 		if (!target.any())
 			return false;
@@ -200,8 +231,13 @@ namespace gui {
 		// Flush any pending operations.
 		cairo_surface_flush(target.surface());
 
-		// TODO: If 'waitForVSync' is true: we shall call 'repaint' (or 'invalidate') on the window
-		// and wait until we get a callback from that window. Otherwise, animations won't work.
+		// Notify Gtk+ that we have new content!
+		if (waitForVSync) {
+			// Note: It is safe to call 'app' from the Render thread here since we know that App has
+			// been created previously (otherwise, we would not have been attached anywhere).
+			App *a = app(engine());
+			a->repaint(attachedTo);
+		}
 
 		return more;
 	}

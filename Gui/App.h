@@ -51,16 +51,20 @@ namespace gui {
 		// Find a registered window.
 		MAYBE(Window *) findWindow(Handle h);
 
+#ifdef GUI_WIN32
 		/**
 		 * Win32 specifics.
 		 */
 
-#ifdef GUI_WIN32
 		// Get the window class for frame windows.
 		ATOM windowClass();
 
 		// Get our instance.
 		HINSTANCE instance();
+#endif
+#ifdef GUI_GTK
+		// Post a repaint request from any thread.
+		void repaint(Handle window);
 #endif
 
 	private:
@@ -164,15 +168,17 @@ namespace gui {
 		// The UThread that runs the message pump.
 		os::UThread uThread;
 
+#ifdef GUI_GTK
+		// Post a repaint request to the Gtk+ window. Safe to call from any thread.
+		void repaint(Handle handle);
+#endif
+
 	private:
 		// # of WM_THREAD_SIGNAL messages sent. Not actually increased above 1
 		nat signalSent;
 
 		// Message checking disabled?
 		nat msgDisabled;
-
-		// Condition for use when messages are disabled.
-		os::IOCondition fallback;
 
 		// Engine, used to retrieve the App object.
 		Engine &e;
@@ -188,13 +194,35 @@ namespace gui {
 		void platformDestroy();
 
 #ifdef GUI_WIN32
+		// Condition for use when messages are disabled.
+		os::IOCondition fallback;
+
 		// Our thread id (win32 thread id).
 		DWORD threadId;
 #endif
 
 #ifdef GUI_GTK
+		// Repaint requests that can be posted to the Ui thread cheaply.
+		class RepaintRequest {
+		public:
+			RepaintRequest(Handle handle);
+
+			Handle handle;
+			os::Sema wait;
+			RepaintRequest *next;
+		};
+
+		// First repaint request.
+		RepaintRequest *repaintList;
+
+		// Lock for the repaint requests.
+		util::Lock repaintLock;
+
 		// The global main context.
 		GMainContext *context;
+
+		// File descriptor for the eventfd we use as a condition.
+		int eventFd;
 
 		// Poll descriptors passed to Gtk+.
 		vector<GPollFD> gPollFd;
@@ -202,8 +230,13 @@ namespace gui {
 		// Poll descriptors used by the system calls.
 		vector<struct pollfd> pollFd;
 
-		// Wait for a callback of some sort. Returns 'true' if some sources from Gtk+ are ready for dispatch.
-		bool doWait(os::IOHandle &io, int timeout);
+		// Wait for a callback of some sort.
+		void doWait(os::IOHandle &io, int timeout);
+
+		// Low-level waiting primitives.
+		void gtkWait(os::IOHandle::Desc &io, int timeout);
+		void plainWait(struct pollfd *fds, size_t count, int timeout);
+
 
 #endif
 

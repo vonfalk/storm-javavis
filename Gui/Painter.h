@@ -58,6 +58,9 @@ namespace gui {
 		void addResource(RenderResource *resource);
 		void removeResource(RenderResource *resource);
 
+		// Ready to render another frame in continuous mode?
+		bool ready();
+
 #ifdef GUI_WIN32
 		// Get our render target.
 		inline ID2D1RenderTarget *renderTarget() { return target.target(); }
@@ -81,6 +84,9 @@ namespace gui {
 		// not do anything, instead we rely on RenderMgr to repaint us every frame.
 		Bool continuous;
 
+		// Are we currently rendering?
+		Bool rendering;
+
 		// Create any resources connected to the current device.
 		void create();
 
@@ -93,9 +99,15 @@ namespace gui {
 		// Repaint number (to keep track of when 'redraw' should return and avoid flicker).
 		volatile Nat repaintCounter;
 
+		// Last repaint shown on the screen. Used to determine if we are ready to draw the next frame.
+		volatile Nat currentRepaint;
+
 		// Called before and after the actual work inside 'repaint' is done. Used for platform specific calls.
 		void beforeRepaint(RepaintParams *handle);
 		void afterRepaint(RepaintParams *handle);
+
+		// Wait for a new frame to be rendered (used during continuous updates).
+		void waitForFrame();
 
 		// Do repaints (always).
 		void doRepaint(bool waitForVSync);

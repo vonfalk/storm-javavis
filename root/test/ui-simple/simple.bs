@@ -52,6 +52,7 @@ class SimpleDraw extends Painter {
 	LinearGradient bgBrush;
 	SolidBrush starColor;
 	SolidBrush solid;
+	Moment started;
 
 	init() {
 		init() {
@@ -75,6 +76,9 @@ class SimpleDraw extends Painter {
 	}
 
 	Bool render(Size size, Graphics to) {
+		Moment now;
+		Float time = (now - started) / 30 ms;
+
 		to.fill(bgBrush);
 		to.transform(rotate(20 deg, Point(100, 100)));
 
@@ -83,18 +87,18 @@ class SimpleDraw extends Painter {
 		to.draw(Rect(20, 20, 180, 180), Size(50), solid);
 		to.oval(Rect(40, 40, 100, 80), solid);
 
-		to.push(Rect(0, 0, 120, 120), 0.8);
+		to.push(Rect(0, 0, 120, 120), 0.5);
 		to.transform(translate(Point(100, 100)));
 		to.fill(star, starColor);
 
 		to.push();
-		to.transform(rotate(20 deg));
+		to.transform(rotate(1 deg * time));
 		to.fill(star, starColor);
 
 		to.pop();
 		to.pop();
 
-		false;
+		true;
 	}
 
 }
