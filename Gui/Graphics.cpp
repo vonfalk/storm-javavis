@@ -13,7 +13,7 @@ namespace gui {
 		oldStates = new (this) Array<State>();
 		layers = new (this) Array<Layer>();
 
-		state = defaultState();
+		state = State();
 		oldStates->push(state);
 		layerHistory = runtime::allocArray<Nat>(engine(), &natArrayType, layerHistoryCount);
 
@@ -48,11 +48,6 @@ namespace gui {
 	 * State management.
 	 */
 
-	Graphics::State Graphics::defaultState() {
-		// return State(dxUnit(), 1.0f);
-		return State();
-	}
-
 	void Graphics::beforeRender() {
 		minFreeLayers = layers->count();
 		prepare();
@@ -74,68 +69,69 @@ namespace gui {
 		}
 
 		// Remove any layers that seems to not be needed in the near future.
-		// while (layers->count() > maxLayers) {
-		// 	layers->last().v->Release();
-		// 	layers->pop();
-		// }
+		while (layers->count() > maxLayers) {
+			layers->last().release();
+			layers->pop();
+		}
 	}
+
+#ifdef GUI_WIN32
 
 	void Graphics::reset() {
 		// Do any PopLayer calls required.
-		// while (oldStates->count() > 1) {
-		// 	if (state.layer.v) {
-		// 		layers->push(state.layer.v);
-		// 		info.target()->PopLayer();
-		// 	}
-		// 	state = oldStates->last();
-		// 	oldStates->pop();
-		// }
+		while (oldStates->count() > 1) {
+			if (state.layer.v) {
+				layers->push(state.layer.v);
+				info.target()->PopLayer();
+			}
+			state = oldStates->last();
+			oldStates->pop();
+		}
 
-		// state = oldStates->at(0);
+		state = oldStates->at(0);
 	}
 
 	Bool Graphics::pop() {
-		// if (state.layer.v) {
-		// 	layers->push(state.layer);
-		// 	info.target()->PopLayer();
-		// }
+		if (state.layer.v) {
+			layers->push(state.layer);
+			info.target()->PopLayer();
+		}
 
-		// state = oldStates->last();
-		// info.target()->SetTransform(*state.transform());
-		// if (oldStates->count() > 1) {
-		// 	oldStates->pop();
-		// 	return true;
-		// } else {
-		// 	return false;
-		// }
-		return false;
+		state = oldStates->last();
+		info.target()->SetTransform(*state.transform());
+		if (oldStates->count() > 1) {
+			oldStates->pop();
+			return true;
+		} else {
+			return false;
+		}
 	}
 
-	// static D2D1_LAYER_PARAMETERS defaultParameters() {
-	// 	D2D1_LAYER_PARAMETERS p = {
-	// 		D2D1::InfiniteRect(),
-	// 		NULL,
-	// 		D2D1_ANTIALIAS_MODE_PER_PRIMITIVE,
-	// 		D2D1::IdentityMatrix(),
-	// 		1.0,
-	// 		NULL,
-	// 		D2D1_LAYER_OPTIONS_INITIALIZE_FOR_CLEARTYPE,
-	// 	};
-	// 	return p;
-	// }
+	static D2D1_LAYER_PARAMETERS defaultParameters() {
+		D2D1_LAYER_PARAMETERS p = {
+			D2D1::InfiniteRect(),
+			NULL,
+			D2D1_ANTIALIAS_MODE_PER_PRIMITIVE,
+			D2D1::IdentityMatrix(),
+			1.0,
+			NULL,
+			D2D1_LAYER_OPTIONS_INITIALIZE_FOR_CLEARTYPE,
+		};
+		return p;
+	}
 
-	// ID2D1Layer *Graphics::layer() {
-	// 	ID2D1Layer *r = null;
-	// 	if (layers->count() > 0) {
-	// 		r = layers->last().v;
-	// 		layers->pop();
-	// 	} else {
-	// 		info.target()->CreateLayer(NULL, &r);
-	// 	}
+	ID2D1Layer *Graphics::layer() {
+		ID2D1Layer *r = null;
+		if (layers->count() > 0) {
+			r = layers->last().v;
+			layers->pop();
+		} else {
+			info.target()->CreateLayer(NULL, &r);
+		}
 
-	// 	minFreeLayers = min(minFreeLayers, layers->count());
-	// 	return r;
-	// }
+		minFreeLayers = min(minFreeLayers, layers->count());
+		return r;
+	}
 
 	void Graphics::push() {
 		oldStates->push(state);
@@ -143,45 +139,42 @@ namespace gui {
 	}
 
 	void Graphics::push(Float opacity) {
-		// Note: We can use a 'group' to implement this in cairo.
+		oldStates->push(state);
+		state.layer = layer();
 
-		// oldStates->push(state);
-		// state.layer = layer();
-
-		// D2D1_LAYER_PARAMETERS p = defaultParameters();
-		// p.opacity = opacity;
-		// info.target()->PushLayer(&p, state.layer.v);
+		D2D1_LAYER_PARAMETERS p = defaultParameters();
+		p.opacity = opacity;
+		info.target()->PushLayer(&p, state.layer.v);
 	}
 
 	void Graphics::push(Rect clip) {
-		// oldStates->push(state);
-		// state.layer = layer();
+		oldStates->push(state);
+		state.layer = layer();
 
-		// D2D1_LAYER_PARAMETERS p = defaultParameters();
-		// p.contentBounds = dx(clip);
-		// info.target()->PushLayer(&p, state.layer.v);
+		D2D1_LAYER_PARAMETERS p = defaultParameters();
+		p.contentBounds = dx(clip);
+		info.target()->PushLayer(&p, state.layer.v);
 	}
 
 	void Graphics::push(Rect clip, Float opacity) {
-		// oldStates->push(state);
-		// state.layer = layer();
+		oldStates->push(state);
+		state.layer = layer();
 
-		// D2D1_LAYER_PARAMETERS p = defaultParameters();
-		// p.contentBounds = dx(clip);
-		// p.opacity = opacity;
-		// info.target()->PushLayer(&p, state.layer.v);
+		D2D1_LAYER_PARAMETERS p = defaultParameters();
+		p.contentBounds = dx(clip);
+		p.opacity = opacity;
+		info.target()->PushLayer(&p, state.layer.v);
 	}
 
 	void Graphics::transform(Transform *tfm) {
-		// *state.transform() = dxMultiply(dx(tfm), *oldStates->last().transform());
-		// info.target()->SetTransform(*state.transform());
+		*state.transform() = dxMultiply(dx(tfm), *oldStates->last().transform());
+		info.target()->SetTransform(*state.transform());
 	}
 
 	void Graphics::lineWidth(Float w) {
-		// state.lineWidth = oldStates->last().lineWidth * w;
+		// Note: How is the line size affected by scaling etc?
+		state.lineWidth = oldStates->last().lineWidth * w;
 	}
-
-#ifdef GUI_WIN32
 
 	/**
 	 * Draw stuff.
@@ -276,6 +269,95 @@ namespace gui {
 #ifdef GUI_GTK
 
 	/**
+	 * State management.
+	 */
+
+	void Graphics::reset() {
+		// Clear any remaining states from the stack.
+		while (pop())
+			;
+	}
+
+	void Graphics::push() {
+		oldStates->push(state);
+		state.layer = Layer::none;
+	}
+
+	void Graphics::push(Float opacity) {
+		oldStates->push(state);
+		state.layer = Layer::group;
+		state.opacity = opacity;
+		cairo_push_group(info.device());
+	}
+
+	void Graphics::push(Rect clip) {
+		oldStates->push(state);
+		state.layer = Layer::save;
+		cairo_save(info.device());
+
+		Size sz = clip.size();
+		cairo_rectangle(info.device(), clip.p0.x, clip.p0.y, sz.w, sz.h);
+		cairo_clip(info.device());
+	}
+
+	void Graphics::push(Rect clip, Float opacity) {
+		oldStates->push(state);
+		state.layer = Layer::group;
+		state.opacity = opacity;
+		cairo_push_group(info.device());
+
+		Size sz = clip.size();
+		cairo_rectangle(info.device(), clip.p0.x, clip.p0.y, sz.w, sz.h);
+		cairo_clip(info.device());
+	}
+
+	Bool Graphics::pop() {
+		switch (state.layer.kind()) {
+		case Layer::none:
+			break;
+		case Layer::group:
+			cairo_pop_group_to_source(info.device());
+			cairo_paint_with_alpha(info.device(), state.opacity);
+			break;
+		case Layer::save:
+			cairo_restore(info.device());
+			break;
+		}
+
+		state = oldStates->last();
+		prepare();
+
+		if (oldStates->count() > 1) {
+			oldStates->pop();
+			return true;
+		} else {
+			return false;
+		}
+	}
+
+	void Graphics::transform(Transform *tfm) {
+		cairo_matrix_t m = cairoMultiply(cairo(tfm), oldStates->last().transform());
+		state.transform(m);
+		cairo_set_matrix(info.device(), &m);
+	}
+
+	void Graphics::lineWidth(Float w) {
+		// Note: Line size is affected by transforms at the time of stroking. Is this what we desire?
+		state.lineWidth = oldStates->last().lineWidth * w;
+		cairo_set_line_width(info.device(), state.lineWidth);
+	}
+
+	void Graphics::prepare() {
+		cairo_matrix_t tfm = state.transform();
+		cairo_set_matrix(info.device(), &tfm);
+		cairo_set_line_width(info.device(), state.lineWidth);
+	}
+
+	void Graphics::Layer::release() {
+		v = null;
+	}
+
+	/**
 	 * Draw stuff.
 	 */
 
@@ -363,8 +445,15 @@ namespace gui {
 	}
 
 	void Graphics::fill(Brush *style) {
+		cairo_matrix_t tfm;
+		cairo_matrix_init_identity(&tfm);
+		cairo_set_matrix(info.device(), &tfm);
+
 		style->setSource(info.device(), Rect(Point(0, 0), size()));
 		cairo_paint(info.device());
+
+		tfm = state.transform();
+		cairo_set_matrix(info.device(), &tfm);
 	}
 
 	void Graphics::fillOval(Rect rect, Brush *style) {
@@ -377,7 +466,7 @@ namespace gui {
 	void Graphics::fill(Path *path, Brush *style) {
 		path->draw(info.device());
 		style->setSource(info.device(), path->bound());
-		cairo_stroke(info.device());
+		cairo_fill(info.device());
 	}
 
 	void Graphics::draw(Bitmap *bitmap) {}
@@ -393,15 +482,6 @@ namespace gui {
 	void Graphics::text(Str *text, Font *font, Brush *brush, Rect rect) {}
 
 	void Graphics::draw(Text *text, Brush *brush, Point origin) {}
-
-	void Graphics::prepare() {
-		cairo_set_line_width(info.device(), 1.0);
-	}
-
-	void Graphics::Layer::release() {
-		// TODO:
-		v = null;
-	}
 
 #endif
 

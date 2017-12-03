@@ -17,6 +17,11 @@ namespace gui {
 	 */
 	typedef cairo_pattern_t OsResource;
 
+
+	// More convenient matrix operations.
+	cairo_matrix_t cairoMultiply(const cairo_matrix_t &a, const cairo_matrix_t &b);
+	cairo_matrix_t cairo(Transform *tfm);
+
 }
 
 #endif

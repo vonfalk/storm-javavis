@@ -133,6 +133,26 @@ namespace gui {
 				v = layer;
 			}
 
+			inline operator bool() {
+				return v != null;
+			}
+
+#ifdef GUI_GTK
+			enum Kind {
+				none,
+				group,
+				save,
+			};
+
+			Layer(Kind k) {
+				v = (ID2D1Layer *)k;
+			}
+
+			inline Kind kind() const {
+				return (Kind)(size_t)v;
+			}
+#endif
+
 			UNKNOWN(PTR_NOGC) ID2D1Layer *v;
 
 			// Release.
@@ -144,9 +164,12 @@ namespace gui {
 		class State {
 			STORM_VALUE;
 		public:
-			State() {}
-
 #ifdef GUI_WIN32
+			State() {
+				lineWidth = 1.0f;
+				*transform() = dxUnit();
+			}
+
 			State(const D2D1_MATRIX_3X2_F &tfm, Float lineWidth) {
 				*transform() = tfm;
 				this->lineWidth = lineWidth;
@@ -156,6 +179,37 @@ namespace gui {
 			// Get the real type of the transformation matrix.
 			inline D2D1_MATRIX_3X2_F *transform() {
 				return (D2D1_MATRIX_3X2_F *)&tfm0;
+			}
+#endif
+#ifdef GUI_GTK
+			State() {
+				lineWidth = 1.0f;
+				tfm0 = 1; tfm1 = 0;
+				tfm2 = 0; tfm3 = 1;
+				tfm4 = 0; tfm5 = 0;
+				layer = Layer::none;
+			}
+
+			State(const cairo_matrix_t &tfm, Float lineWidth) {
+				this->lineWidth = 0;
+				transform(tfm);
+			}
+
+			// Set the transform.
+			void transform(const cairo_matrix_t &src) {
+				tfm0 = float(src.xx); tfm1 = float(src.yx);
+				tfm2 = float(src.xy); tfm3 = float(src.yy);
+				tfm4 = float(src.x0); tfm5 = float(src.y0);
+			}
+
+			// Get the transform.
+			cairo_matrix_t transform() const {
+				cairo_matrix_t r = {
+					tfm0, tfm1,
+					tfm2, tfm3,
+					tfm4, tfm5
+				};
+				return r;
 			}
 #endif
 
@@ -170,12 +224,12 @@ namespace gui {
 			// Line size.
 			Float lineWidth;
 
+			// Opacity (if needed by the backend).
+			Float opacity;
+
 			// Layer pushed with this state. May be null.
 			Layer layer;
 		};
-
-		// Default state.
-		State defaultState();
 
 		// State stack. Always contains at least one element (the default state).
 		Array<State> *oldStates;
@@ -198,10 +252,12 @@ namespace gui {
 		// Keep track of layers used.
 		Array<Layer> *layers;
 
+#ifdef GUI_WIN32
 		// Get a layer.
-		// ID2D1Layer *layer();
+		ID2D1Layer *layer();
+#endif
 
-		// Prepare rendering (platform specific).
+		// Prepare rendering a new frame (backend specific).
 		void prepare();
 	};
 

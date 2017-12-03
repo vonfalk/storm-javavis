@@ -76,12 +76,23 @@ class SimpleDraw extends Painter {
 
 	Bool render(Size size, Graphics to) {
 		to.fill(bgBrush);
+		to.transform(rotate(20 deg, Point(100, 100)));
+
 		to.line(Point(0, 0), Point(100, 100), solid);
 		to.draw(Rect(10, 10, 190, 190), solid);
 		to.draw(Rect(20, 20, 180, 180), Size(50), solid);
 		to.oval(Rect(40, 40, 100, 80), solid);
 
-		to.draw(star, starColor);
+		to.push(Rect(0, 0, 120, 120), 0.8);
+		to.transform(translate(Point(100, 100)));
+		to.fill(star, starColor);
+
+		to.push();
+		to.transform(rotate(20 deg));
+		to.fill(star, starColor);
+
+		to.pop();
+		to.pop();
 
 		false;
 	}
