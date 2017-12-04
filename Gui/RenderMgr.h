@@ -36,8 +36,8 @@ namespace gui {
 		// Main thread entry point.
 		void main();
 
-		// Notify that a new window wants continuous repaints.
-		void newContinuous();
+		// Notify that a new painter is ready to repaint.
+		void painterReady();
 
 #ifdef GUI_WIN32
 		// Get the DWrite factory object.

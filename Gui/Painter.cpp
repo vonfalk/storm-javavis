@@ -5,7 +5,7 @@
 
 namespace gui {
 
-	Painter::Painter() : continuous(false), rendering(false), repaintCounter(0), currentRepaint(0) {
+	Painter::Painter() : continuous(false), rendering(false), resized(false), repaintCounter(0), currentRepaint(0) {
 		attachedTo = Window::invalid;
 		bgColor = getBgColor();
 		resources = new (this) WeakSet<RenderResource>();
@@ -104,9 +104,11 @@ namespace gui {
 			rendering = true;
 			more = doRepaintI(waitForVSync);
 			rendering = false;
+			resized = false;
 		} catch (...) {
 			repaintCounter++;
 			rendering = false;
+			resized = false;
 			throw;
 		}
 
@@ -116,7 +118,7 @@ namespace gui {
 			if (more) {
 				// Register!
 				RenderMgr *mgr = renderMgr(engine());
-				mgr->newContinuous();
+				mgr->painterReady();
 			}
 		}
 	}
@@ -190,23 +192,23 @@ namespace gui {
 #ifdef GUI_GTK
 
 	bool Painter::ready() {
-		// Do not try to repaint a new frame until the previous one has been displayed.
-		return repaintCounter == currentRepaint;
+		// Do not try to repaint a new frame until the previous one has been displayed, or if we need a repaint.
+		return repaintCounter == currentRepaint || resized;
 	}
 
 	void Painter::waitForFrame() {
 		// It is fine to copy the contents of our buffer as long as we're not currently rendering to it.
-		while (rendering)
+		while (rendering || resized)
 			os::UThread::leave();
 
 		// Now we're ready for another frame. Let the RenderMgr know that 'ready' has changed.
 		RenderMgr *mgr = renderMgr(engine());
-		mgr->newContinuous();
+		mgr->painterReady();
 	}
 
 	bool Painter::doRepaintI(bool waitForVSync) {
 		if (!target.any())
-			return false;
+			return continuous;
 
 		bool more = false;
 
@@ -256,6 +258,12 @@ namespace gui {
 
 			if (graphics)
 				graphics->updateTarget(target);
+
+			resized = true;
+
+			// Notify the RenderMgr, so that it knows we want to repaint now, in case we were done just before.
+			RenderMgr *mgr = renderMgr(engine());
+			mgr->painterReady();
 		}
 	}
 

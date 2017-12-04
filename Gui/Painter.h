@@ -87,6 +87,9 @@ namespace gui {
 		// Are we currently rendering?
 		Bool rendering;
 
+		// Resized since the last rendered frame?
+		Bool resized;
+
 		// Create any resources connected to the current device.
 		void create();
 

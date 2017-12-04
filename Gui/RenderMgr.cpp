@@ -96,7 +96,7 @@ namespace gui {
 		exitSema->up();
 	}
 
-	void RenderMgr::newContinuous() {
+	void RenderMgr::painterReady() {
 		waitEvent->set();
 	}
 
