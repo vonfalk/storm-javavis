@@ -72,7 +72,6 @@ namespace os {
 		UThread result(data);
 
 		on->uState.insert(data);
-		on->reportWake();
 
 		return result;
 	}
@@ -440,9 +439,14 @@ namespace os {
 		assert(stacks.contains(&data->stack), L"WRONG THREAD");
 		atomicIncrement(aliveCount);
 
-		util::Lock::L z(lock);
-		ready.push(data);
-		data->addRef();
+		{
+			util::Lock::L z(lock);
+			ready.push(data);
+			data->addRef();
+		}
+
+		// Notify that we need to wake up now!
+		owner->reportWake();
 	}
 
 	void UThreadState::wait() {
@@ -473,8 +477,13 @@ namespace os {
 	}
 
 	void UThreadState::wake(UThreadData *data) {
-		util::Lock::L z(lock);
-		ready.push(data);
+		{
+			util::Lock::L z(lock);
+			ready.push(data);
+		}
+
+		// Make sure we're not waiting for something that has already happened.
+		owner->reportWake();
 	}
 
 	void UThreadState::reap() {

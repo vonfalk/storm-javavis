@@ -41,6 +41,10 @@ namespace gui {
 
 	void Painter::resize(Size sz) {
 		if (target.any()) {
+			// Do not attempt to resize the drawing surface if we're currently drawing to it.
+			while (rendering)
+				os::UThread::leave();
+
 			// This seems to not be neccessary. Probably because the resources are actually
 			// associated to the underlying D3D device, and not the RenderTarget.
 			// If the resize call fails for some reason, this is probably the cause.
@@ -49,6 +53,10 @@ namespace gui {
 			mgr->resize(target, sz);
 			if (graphics)
 				graphics->updateTarget(target);
+
+			// Note that we need to redraw before we have any valid contents.
+			resized = true;
+			mgr->painterReady();
 		}
 	}
 
@@ -198,8 +206,9 @@ namespace gui {
 
 	void Painter::waitForFrame() {
 		// It is fine to copy the contents of our buffer as long as we're not currently rendering to it.
-		while (rendering || resized)
+		while (rendering || resized) {
 			os::UThread::leave();
+		}
 
 		// Now we're ready for another frame. Let the RenderMgr know that 'ready' has changed.
 		RenderMgr *mgr = renderMgr(engine());

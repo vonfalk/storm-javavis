@@ -612,6 +612,8 @@ namespace gui {
 		if (msgDisabled)
 			return;
 
+		msgDisabled = true;
+
 		// Try to dispatch any pending events first.
 		g_main_context_dispatch(context);
 
@@ -621,6 +623,8 @@ namespace gui {
 		for (nat i = 0; i < App::maxProcessMessages && dispatched; i++) {
 			dispatched &= g_main_context_iteration(context, FALSE) == TRUE;
 		}
+
+		msgDisabled = false;
 	}
 
 	void AppWait::terminate(os::Sema &notify) {

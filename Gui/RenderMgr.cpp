@@ -305,10 +305,19 @@ namespace gui {
 		if (size == info.size)
 			return;
 
-		// Just clear out the surface, we will create it again on the next repaint.
-		// TODO: How to do if we're in continuous mode?
 		info.size = size;
+
+		// If there is no previous surface, don't worry. We'll create it later.
+		if (!info.surface())
+			return;
+
+		// If we have a surface somewhere, re-create it from the template of the previous surface.
+		cairo_surface_t *s = cairo_surface_create_similar(info.surface(), CAIRO_CONTENT_COLOR_ALPHA, size.w, size.h);
+		cairo_t *c = cairo_create(s);
+
 		info.release();
+		info.surface(s);
+		info.device(c);
 	}
 
 #endif
