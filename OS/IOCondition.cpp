@@ -106,20 +106,22 @@ namespace os {
 			}
 		}
 
-		// Notify that we woke up.
-		atomicWrite(signaled, 0);
-
-		if (result == 0) {
-			// Timeout.
-			return false;
-		} else {
+		if (result) {
 			// Some entry is done. If it is entry #0, we want to read it so that it is not signaled anymore.
 			if (fds[0].revents != 0) {
 				uint64_t v = 0;
-				read(fd, &v, 8);
+				ssize_t r = read(fd, &v, 8);
+				if (r <= 0)
+					perror("Failed to read from eventfd");
 			}
-			return true;
 		}
+
+		// Now that we're done messing with the eventfd, we need to tell the world that they need to
+		// signal the eventfd if they try to wake us again.
+		atomicWrite(signaled, 0);
+
+		// 'result == 0' => timeout, otherwise something interesting happened.
+		return result != 0;
 	}
 
 	void IOCondition::wait() {

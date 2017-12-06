@@ -61,3 +61,34 @@ BEGIN_TEST(WaitTest, OS) {
 
 	os::UThread::sleep(100);
 } END_TEST
+
+class OtherCond {
+public:
+	os::IOCondition cond;
+	nat running;
+
+	OtherCond() : running(1) {}
+
+	void run() {
+		for (nat i = 0; i < 10000; i++) {
+			cond.wait();
+		}
+
+		running = 0;
+	}
+};
+
+/**
+ * Make sure the IOCondition does not hang under heavy load.
+ */
+BEGIN_TEST(IOConditionTest, OS) {
+	os::ThreadGroup group;
+	OtherCond data;
+	os::Thread::spawn(util::memberVoidFn(&data, &OtherCond::run), group);
+
+	while (atomicRead(data.running)) {
+		data.cond.signal();
+	}
+
+	group.join();
+} END_TEST
