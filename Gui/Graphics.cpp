@@ -378,6 +378,11 @@ namespace gui {
 		cairo_stroke(info.device());
 	}
 
+	static void rectangle(const RenderInfo &info, const Rect &rect) {
+		Size sz = rect.size();
+		cairo_rectangle(info.device(), rect.p0.x, rect.p0.y, sz.w, sz.h);
+	}
+
 	static void rounded_corner(const RenderInfo &info, Point center, Size scale, double from, double to) {
 		cairo_save(info.device());
 		cairo_translate(info.device(), center.x, center.y);
@@ -431,8 +436,7 @@ namespace gui {
 	}
 
 	void Graphics::fill(Rect rect, Brush *style) {
-		Size sz = rect.size();
-		cairo_rectangle(info.device(), rect.p0.x, rect.p0.y, sz.w, sz.h);
+		rectangle(info, rect);
 		style->setSource(info.device(), rect);
 		cairo_fill(info.device());
 	}
@@ -479,7 +483,23 @@ namespace gui {
 
 	void Graphics::draw(Bitmap *bitmap, Rect rect, Float opacity) {}
 
-	void Graphics::text(Str *text, Font *font, Brush *brush, Rect rect) {}
+	void Graphics::text(Str *text, Font *font, Brush *style, Rect rect) {
+		// Note: It would be good to not have to create the layout all the time.
+		PangoLayout *layout = pango_cairo_create_layout(info.device());
+
+		pango_layout_set_wrap(layout, PANGO_WRAP_WORD_CHAR);
+		pango_layout_set_font_description(layout, font->desc());
+		pango_layout_set_width(layout, toPango(rect.size().w));
+		pango_layout_set_height(layout, toPango(rect.size().h));
+		pango_layout_set_text(layout, text->utf8_str(), -1);
+
+		style->setSource(info.device(), rect);
+
+		cairo_move_to(info.device(), rect.p0.x, rect.p0.y);
+		pango_cairo_show_layout(info.device(), layout);
+
+		g_object_unref(layout);
+	}
 
 	void Graphics::draw(Text *text, Brush *brush, Point origin) {}
 

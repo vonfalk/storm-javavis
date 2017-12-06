@@ -53,12 +53,14 @@ class SimpleDraw extends Painter {
 	SolidBrush starColor;
 	SolidBrush solid;
 	Moment started;
+	Font font;
 
 	init() {
 		init() {
 			bgBrush(red, green, 45 deg);
 			starColor = yellow;
 			solid = green;
+			font = defaultFont;
 		}
 
 		Int edges = 5;
@@ -80,6 +82,8 @@ class SimpleDraw extends Painter {
 		Float time = (now - started) / 30 ms;
 
 		to.fill(bgBrush);
+		to.text("Hello World", font, starColor, Rect(100, 0, 130, 60));
+
 		to.transform(rotate(20 deg, Point(100, 100)));
 
 		to.line(Point(0, 0), Point(100, 100), solid);

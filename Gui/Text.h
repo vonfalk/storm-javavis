@@ -16,6 +16,9 @@ namespace gui {
 		// Create text that fits inside a square 'size' units big.
 		STORM_CTOR Text(Str *text, Font *font, Size size);
 
+		// Destroy.
+		virtual ~Text();
+
 		// Size of the text inside the layout.
 		Size STORM_FN size();
 
@@ -23,19 +26,28 @@ namespace gui {
 		Size STORM_FN layoutBorder();
 		void STORM_SETTER layoutBorder(Size size);
 
-		// We can add formatting options for parts of the string here. For example, it is possible
-		// to apply a font to a specific part of the string.
+		// TODO: We can add formatting options for parts of the string here. For example, it is
+		// possible to apply a font to a specific part of the string.
 
+
+#ifdef GUI_WIN32
 		// Get the layout.
-		// inline IDWriteTextLayout *layout() const { return l; }
+		inline IDWriteTextLayout *layout() const { return l; }
+#endif
+#ifdef GUI_GTK
+		// Get the layout.
+		inline PangoLayout *layout() const { return l; }
+#endif
 
 	private:
 		// The layout itself.
-		// IDWriteTextLayout *l;
-		void *l;
+		OsTextLayout *l;
 
 		// Create layout.
 		void init(Str *text, Font *font, Size size);
+
+		// Destroy the layout.
+		void destroy();
 	};
 
 }

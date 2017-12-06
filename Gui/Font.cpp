@@ -248,7 +248,7 @@ namespace gui {
 
 	Font::Font(const PangoFontDescription &desc) {
 		fName = new (this) Str(toWChar(engine(), pango_font_description_get_family(&desc)));
-		fHeight = float(pango_font_description_get_size(&desc)) / float(PANGO_SCALE);
+		fHeight = fromPango(pango_font_description_get_size(&desc));
 		fWeight = pango_font_description_get_weight(&desc);
 		fItalic = pango_font_description_get_style(&desc) == PANGO_STYLE_ITALIC;
 		// TODO: How do I get/set these?
@@ -263,7 +263,7 @@ namespace gui {
 		if (!shared->desc) {
 			shared->desc = pango_font_description_new();
 			pango_font_description_set_family(shared->desc, fName->utf8_str());
-			pango_font_description_set_size(shared->desc, gint(fHeight * PANGO_SCALE));
+			pango_font_description_set_size(shared->desc, toPango(fHeight));
 			pango_font_description_set_style(shared->desc, fItalic ? PANGO_STYLE_ITALIC : PANGO_STYLE_NORMAL);
 			// TODO: Set underline and strikethrough as well.
 		}

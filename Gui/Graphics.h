@@ -108,7 +108,10 @@ namespace gui {
 		void STORM_FN draw(Bitmap *bitmap, Rect rect);
 		void STORM_FN draw(Bitmap *bitmap, Rect rect, Float opacity);
 
-		// Draw text.
+		// Draw text the easy way. Prefer using a Text object if possible, since they give more
+		// control over the text and yeild better performance. Attempts to fit the given text inside
+		// 'rect'. No attempt is made at clipping anything not fitting inside 'rect', so any text
+		// not fitting inside 'rect' will be drawn outside the rectangle.
 		void STORM_FN text(Str *text, Font *font, Brush *brush, Rect rect);
 
 		// Draw pre-formatted text.
