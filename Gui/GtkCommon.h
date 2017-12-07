@@ -27,4 +27,11 @@ namespace gui {
 	inline float fromPango(int val) { return float(val) / float(PANGO_SCALE); }
 }
 
+#else
+
+// Allow using some types in class declarations even if we're not using Gtk+.
+struct cairo_t;
+struct cairo_surface_t;
+struct PangoContext;
+
 #endif

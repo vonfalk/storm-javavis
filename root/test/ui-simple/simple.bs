@@ -52,16 +52,24 @@ class SimpleDraw extends Painter {
 	LinearGradient bgBrush;
 	SolidBrush starColor;
 	SolidBrush solid;
+	SolidBrush textColor;
 	Moment started;
-	Font font;
+	Text text;
+	Size textSize;
 
 	init() {
 		init() {
 			bgBrush(red, green, 45 deg);
 			starColor = yellow;
 			solid = green;
-			font = defaultFont;
+			textColor = blue;
+			text = Text("Hello!", defaultFont);
 		}
+
+		textSize = text.size();
+		print(text.size().toS());
+		print(text.layoutBorder().toS());
+		text.layoutBorder(textSize);
 
 		Int edges = 5;
 		Int stops = edges * 2;
@@ -82,8 +90,6 @@ class SimpleDraw extends Painter {
 		Float time = (now - started) / 30 ms;
 
 		to.fill(bgBrush);
-		to.text("Hello World", font, starColor, Rect(100, 0, 130, 60));
-
 		to.transform(rotate(20 deg, Point(100, 100)));
 
 		to.line(Point(0, 0), Point(100, 100), solid);
@@ -98,6 +104,7 @@ class SimpleDraw extends Painter {
 		to.push();
 		to.transform(rotate(1 deg * time));
 		to.fill(star, starColor);
+		to.draw(text, textColor, Point() - (textSize / 2));
 
 		to.pop();
 		to.pop();

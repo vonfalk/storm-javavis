@@ -249,13 +249,13 @@ namespace gui {
 		info.target()->DrawBitmap(bitmap->bitmap(owner), &dx(rect), opacity, D2D1_BITMAP_INTERPOLATION_MODE_LINEAR, NULL);
 	}
 
-	void Graphics::text(Str *text, Font *font, Brush *brush, Rect rect) {
-		ID2D1Brush *b = brush->brush(owner, rect);
+	void Graphics::text(Str *text, Font *font, Brush *style, Rect rect) {
+		ID2D1Brush *b = style->brush(owner, rect);
 		info.target()->DrawText(text->c_str(), text->peekLength(), font->textFormat(), dx(rect), b);
 	}
 
-	void Graphics::draw(Text *text, Brush *brush, Point origin) {
-		info.target()->DrawTextLayout(dx(origin), text->layout(), brush->brush(owner, Rect(origin, text->size())));
+	void Graphics::draw(Text *text, Brush *style, Point origin) {
+		info.target()->DrawTextLayout(dx(origin), text->layout(), style->brush(owner, Rect(origin, text->size())));
 	}
 
 	void Graphics::prepare() {}
@@ -501,7 +501,13 @@ namespace gui {
 		g_object_unref(layout);
 	}
 
-	void Graphics::draw(Text *text, Brush *brush, Point origin) {}
+	void Graphics::draw(Text *text, Brush *style, Point origin) {
+		Size sz = text->size();
+		style->setSource(info.device(), Rect(origin, sz));
+
+		cairo_move_to(info.device(), origin.x, origin.y);
+		pango_cairo_show_layout(info.device(), text->layout());
+	}
 
 #endif
 

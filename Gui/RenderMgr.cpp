@@ -285,9 +285,19 @@ namespace gui {
 #endif
 #ifdef GUI_GTK
 
-	void RenderMgr::init() {}
+	void RenderMgr::init() {
+		// Create the dummy cairo surface.
+		// TODO: If possible, we would probably want to use create_similar_surface on a surface from Gtk+.
+		cSurface = cairo_image_surface_create(CAIRO_FORMAT_ARGB32, 1, 1);
+		cDevice = cairo_create(cSurface);
+		cContext = pango_cairo_create_context(cDevice);
+	}
 
-	void RenderMgr::destroy() {}
+	void RenderMgr::destroy() {
+		g_object_unref(cContext);
+		cairo_destroy(cDevice);
+		cairo_surface_destroy(cSurface);
+	}
 
 	RenderInfo RenderMgr::attach(Painter *painter, Handle window) {
 		RenderInfo r;

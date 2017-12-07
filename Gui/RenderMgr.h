@@ -46,6 +46,10 @@ namespace gui {
 		// Get the D2D factory object.
 		inline ID2D1Factory *d2d() { return factory; }
 #endif
+#ifdef GUI_GTK
+		// Get a PangoContext we can use to create text.
+		PangoContext *dummyContext() { return cContext; }
+#endif
 	private:
 		friend RenderMgr *renderMgr(EnginePtr e);
 
@@ -60,6 +64,13 @@ namespace gui {
 		// D3D device and dxgi device.
 		ID3D10Device1 *device;
 		IDXGIDevice *giDevice;
+
+		// Dummy Cairo surface and corresponding device.
+		cairo_surface_t *cSurface;
+		cairo_t *cDevice;
+
+		// Pango context for the dummy device.
+		PangoContext *cContext;
 
 		// Live painters. TODO? Weak set?
 		Set<Painter *> *painters;

@@ -22,7 +22,8 @@ namespace gui {
 		// Size of the text inside the layout.
 		Size STORM_FN size();
 
-		// Layout border size.
+		// Layout border size. If no layout border is set from the constructor, it will return the
+		// largest possible float value.
 		Size STORM_FN layoutBorder();
 		void STORM_SETTER layoutBorder(Size size);
 
