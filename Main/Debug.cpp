@@ -15,14 +15,16 @@
 template <class R, class ... T>
 class SyscallCheck {
 public:
-	SyscallCheck(const char *name) : name(name) {
+	SyscallCheck(const char *name) : name(name), called(0) {
 		prev = (Prev)dlsym(RTLD_NEXT, name);
 		assert(prev);
 	}
 
-	R operator ()(T ... args) const {
+	R operator ()(T ... args) {
+		atomicIncrement(called);
 		R result = (*prev)(args...);
 		if (result < 0 && errno == EINTR) {
+			PLN(L"EINTR caught after calling " << name << " for " << called << L" times.");
 			perror(name);
 			errno = EINTR;
 		}
@@ -32,6 +34,8 @@ public:
 private:
 	typedef R (*Prev)(T...);
 	Prev prev;
+
+	size_t called;
 
 	const char *name;
 };
