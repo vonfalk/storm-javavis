@@ -1,5 +1,6 @@
 #include "stdafx.h"
 #include "Params.h"
+#include "Debug.h"
 #include "Compiler/Server/Main.h"
 #include "Compiler/Exception.h"
 #include "Compiler/Engine.h"
