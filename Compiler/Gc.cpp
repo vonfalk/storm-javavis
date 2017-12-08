@@ -628,7 +628,6 @@ namespace storm {
 
 			// Remember we did not find a running stack.
 			to = null;
-			const os::UThreadStack *prevMain = null;
 
 			// Scan all UThreads.
 			MPS_SCAN_BEGIN(ss) {
@@ -656,7 +655,6 @@ namespace storm {
 
 							// This is the main stack! Scan that later.
 							to = (void **)stack->stackLimit;
-							prevMain = stack;
 							continue;
 						}
 
