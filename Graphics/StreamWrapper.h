@@ -1,6 +1,8 @@
 #pragma once
 #include "Core/Io/Stream.h"
 
+#ifdef WINDOWS
+
 // Note: this is a bit too general... We only need IStream.
 #include <wincodec.h>
 
@@ -123,3 +125,5 @@ namespace graphics {
 	};
 
 }
+
+#endif

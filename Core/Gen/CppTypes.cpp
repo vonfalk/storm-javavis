@@ -28,6 +28,7 @@
 
 // Turn of some warnings from GCC in this file...
 #pragma GCC diagnostic ignored "-Wnarrowing"
+#pragma GCC diagnostic ignored "-Wunused-variable"
 
 namespace storm {
 

@@ -1,4 +1,6 @@
-#pragma once
+// #pragma once // GCC issues a warning when using 'pragma once' with precompiled headers...
+#ifndef GRAPHICS_H
+#define GRAPHICS_H
 
 #include "Utils/Utils.h"
 #include "Shared/Storm.h"
@@ -15,3 +17,5 @@ void release(T *&v) {
 		v->Release();
 	v = null;
 }
+
+#endif

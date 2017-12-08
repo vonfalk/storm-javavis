@@ -28,7 +28,7 @@ namespace storm {
 		inline Nat STORM_FN height() { return h; }
 		geometry::Size STORM_FN size();
 
-		// TODO: Replace at leas one of these with foo[pt] = color;
+		// TODO: Replace at least one of these with foo[pt] = color;
 		// Get pixel at point.
 		Color STORM_FN get(Nat x, Nat y);
 		Color STORM_FN get(geometry::Point at);
@@ -40,14 +40,14 @@ namespace storm {
 		// Raw buffer information:
 
 		// Stride, difference between each row (in bytes).
-		nat stride() const;
+		Nat stride() const;
 
 		// Size of buffer.
-		nat bufferSize() const;
+		Nat bufferSize() const;
 
 		// Raw buffer access.
 		byte *buffer();
-		byte *buffer(nat x, nat y);
+		byte *buffer(Nat x, Nat y);
 
 	private:
 		// Data.
@@ -58,7 +58,7 @@ namespace storm {
 		Nat h;
 
 		// Compute offset of pixel.
-		nat offset(nat x, nat y);
+		Nat offset(Nat x, Nat y);
 	};
 
 }

@@ -22,20 +22,20 @@ namespace storm {
 	Image::Image() : data(null), w(0), h(0) {}
 
 	Image::Image(Image *o) : data(null), w(o->w), h(o->h) {
-		nat s = w * h * 4;
+		Nat s = w * h * 4;
 		// Note: Maybe we should use 'allocBuffer' here instead, as image data is sometimes passed
 		// to external libraries...
 		data = runtime::allocArray<Byte>(engine(), &byteArrayType, s);
 		memcpy(data->v, o->data->v, s);
 	}
 
-	Image::Image(Size size) : data(null), w(nat(size.w)), h(nat(size.h)) {
-		nat s = w * h * 4;
+	Image::Image(Size size) : data(null), w(Nat(size.w)), h(Nat(size.h)) {
+		Nat s = w * h * 4;
 		data = runtime::allocArray<Byte>(engine(), &byteArrayType, s);
 	}
 
 	Image::Image(Nat w, Nat h) : data(null), w(w), h(h) {
-		nat s = w * h * 4;
+		Nat s = w * h * 4;
 		data = runtime::allocArray<Byte>(engine(), &byteArrayType, s);
 	}
 
@@ -43,7 +43,7 @@ namespace storm {
 		return geometry::Size(Float(w), Float(h));
 	}
 
-	nat Image::offset(nat x, nat y) {
+	Nat Image::offset(Nat x, Nat y) {
 		return (y * w + x) * 4;
 	}
 
@@ -55,7 +55,7 @@ namespace storm {
 
 	Color Image::get(Point p) {
 		// TODO? Interpolate colors?
-		return get(nat(p.x), nat(p.y));
+		return get(Nat(p.x), Nat(p.y));
 	}
 
 	void Image::set(Nat x, Nat y, Color c) {
@@ -65,14 +65,14 @@ namespace storm {
 	}
 
 	void Image::set(Point p, Color c) {
-		set(nat(p.x), nat(p.y), c);
+		set(Nat(p.x), Nat(p.y), c);
 	}
 
-	nat Image::stride() const {
+	Nat Image::stride() const {
 		return w * 4;
 	}
 
-	nat Image::bufferSize() const {
+	Nat Image::bufferSize() const {
 		return w * h * 4;
 	}
 
@@ -80,7 +80,7 @@ namespace storm {
 		return data->v;
 	}
 
-	byte *Image::buffer(nat x, nat y) {
+	byte *Image::buffer(Nat x, Nat y) {
 		return data->v + offset(x, y);
 	}
 

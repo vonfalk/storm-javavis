@@ -12,6 +12,24 @@ namespace storm {
 		{ 0 },
 	};
 
+	const GcType sizeArrayType = {
+		GcType::tArray,
+		null,
+		null,
+		sizeof(const void *),
+		0,
+		{},
+	};
+
+	const GcType wordArrayType = {
+		GcType::tArray,
+		null,
+		null,
+		sizeof(Word),
+		0,
+		{},
+	};
+
 	const GcType natArrayType = {
 		GcType::tArray,
 		null,

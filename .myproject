@@ -70,10 +70,10 @@ Graphics+=CppTypes
 #To make sure everything is built.
 Compiler+=TestLib
 Compiler+=Gui
+Compiler+=Graphics
 
 [deps,windows]
 #To make sure everything is built.
-Compiler+=Graphics
 Compiler+=Sound
 
 [!extern_lib]
