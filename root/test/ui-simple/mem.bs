@@ -1,0 +1,22 @@
+thread A;
+
+void useA() on A {
+	useMem();
+}
+
+void useMem() {
+	for (Int times = 0; times < 10000; times++) {
+		Str x = "hej";
+		for (Int y = 0; y < 10000; y++) {
+			x = x + "a";
+		}
+		sleep(1 ms);
+	}
+	print("Done!");
+}
+
+void simpleMem() {
+	spawn useA;
+	spawn useMem;
+	simple();
+}

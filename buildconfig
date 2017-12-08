@@ -1,7 +1,7 @@
 #Test
 #CppTypes -a ../Compiler/ --template ../Compiler/Gen/CppTypes.template.cpp --out ../Compiler/Gen/CppTypes.cpp --asm ../Compiler/Gen/CppTypes.asm
 
-Main -a -r ../root/ -f test.ui-simple.simple
+Main -a -r ../root/ -f test.ui-simple.simpleMem
 
 #Basic UI test.
 #Main -a -r ../root/ -f test.ui.simple
