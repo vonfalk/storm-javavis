@@ -608,35 +608,68 @@ namespace storm {
 			// Decrease the scanned size to zero. We update it again later.
 			mps_decrease_scanned(ss, (char *)limit - (char *)base);
 
-			// We scan all UThreads on this os thread, and watch out if 'to' is equal to a UThread
-			// we scanned. If that is the case, we're in the middle of a thread switch. That means
-			// that whatever is in 'from' and 'to' are not consistent, so we shall ignore
-			// them. However, that means that all UThreads have proper states saved to them, which
-			// we can scan anyway.
+			// Remember the total number of bytes scanned.
 			size_t bytesScanned = 0;
+
+			// We scan all UThreads on this thread, if one of them is the currently running thread
+			// their 'desc' is null. In that case we delay scanning that thread until after the
+			// other threads. If we do not find an 'active' thread, we're in the middle of a thread
+			// switch, which means that we can scan all threads as if they were sleeping.
+
+			// Aside from that, we need to be aware that UThreads may be executed by another thread
+			// during detours. The UThreads will always be located inside the stacks set on the
+			// thread where they are intended to run. They can not be moved around while they
+			// contain anything useful since it is not possible to move the UThreads between sets
+			// atomically. Instead, the UThreadStack objects participating in a thread switch are
+			// marked with a 'detourActive' != 0. Any such UThread shall be ignored during stack
+			// scanning since they are considered to belong to another thread. The UThread is
+			// instead associated with the proper thread by following the pointer inside the
+			// 'detourTo' member.
 
 			// Remember we did not find a running stack.
 			to = null;
+			const os::UThreadStack *prevMain = null;
 
 			// Scan all UThreads.
 			MPS_SCAN_BEGIN(ss) {
+				// Examine all UThreads running on this thread.
 				os::InlineSet<os::UThreadStack>::iterator i = thread->stacks->begin();
 				for (nat id = 0; i != thread->stacks->end(); ++i, id++) {
-					const os::UThreadStack *stack = *i;
-					if (!stack->desc) {
-						// This is the main stack! Scan that later.
-						to = (void **)stack->stackLimit;
+					// If this thread is used as a detour thread, do not scan it at all.
+					const os::UThreadStack *first = *i;
+					if (first->detourActive)
 						continue;
-					}
 
-					void **low = (void **)stack->desc->low;
-					void **high = (void **)stack->stackLimit;
+					// Examine the main stack and all detours for this thread.
+					for (const os::UThreadStack *stack = first; stack; stack = stack->detourTo) {
+						// Is this thread being initialized? During initialization, a stack does not
+						// contain sensible data. For example, 'desc' is probably null even if this
+						// stack is not the currently running stack. If 'stackLimit' is also null we
+						// will not only be confused, but we will also crash.
+						if (stack->initializing)
+							continue;
 
-					bytesScanned += (char *)high - (char *)low;
-					for (void **at = low; at < high; at++) {
-						mps_res_t r = MPS_FIX12(ss, at);
-						if (r != MPS_RES_OK)
-							return r;
+						// Is this the main stack of this thread?
+						if (!stack->desc) {
+							// We should not find two of these for any given thread.
+							dbg_assert(to == null, L"We found two potential main stacks.");
+
+							// This is the main stack! Scan that later.
+							to = (void **)stack->stackLimit;
+							prevMain = stack;
+							continue;
+						}
+
+						// All is well, scan it!
+						void **low = (void **)stack->desc->low;
+						void **high = (void **)stack->stackLimit;
+
+						bytesScanned += (char *)high - (char *)low;
+						for (void **at = low; at < high; at++) {
+							mps_res_t r = MPS_FIX12(ss, at);
+							if (r != MPS_RES_OK)
+								return r;
+						}
 					}
 				}
 

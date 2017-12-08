@@ -165,9 +165,23 @@ namespace os {
 		// current CPU state describes the stack of that thread.
 		Desc *desc;
 
-		// Stack bottom for the current thread. Only used if 'low' or 'high' is missing (depends on
-		// the current architecture).
+		// Stack bottom for the current thread.
 		void *stackLimit;
+
+		// Is this thread being initialized? Updated atomically.
+		nat initializing;
+
+		// Is this thread participating in a detour? Updated atomically.
+
+		// If set, this stack is not considered to belong to the thread for which the thread's set
+		// contain this stack. Instead, it it considered to be a member of the thread which has a
+		// stack that points to this stack from its 'detourTo' member (either directly or
+		// indirectly). This is done to allow atomic migrations from one thread to another. However,
+		// it can cause a stack to be scanned twice if stack scanning happens at an unfortunate time.
+		nat detourActive;
+
+		// Which thread is currently running instead of this thread?
+		UThreadStack *detourTo;
 	};
 
 

@@ -248,7 +248,10 @@ namespace os {
 	 * UThread data and UThreadStack.
 	 */
 
-	UThreadStack::UThreadStack() : desc(null), stackLimit(null) {}
+	UThreadStack::UThreadStack() :
+		desc(null), stackLimit(null),
+		initializing(1),
+		detourActive(0), detourTo(null) {}
 
 	UThreadData::UThreadData(UThreadState *state) :
 		references(0), next(null), owner(null),
@@ -263,6 +266,8 @@ namespace os {
 		// For the thread where the stack was allocated by the OS, we do not need to care.
 		UThreadData *t = new UThreadData(thread);
 		t->stack.stackLimit = base;
+		// Note that we're done with our initialization.
+		atomicWrite(t->stack.initializing, 0);
 		return t;
 	}
 
@@ -275,6 +280,9 @@ namespace os {
 		t->stackBase = stack;
 		t->stack.desc = initialDesc(t->stackBase, t->stackSize);
 		t->stack.stackLimit = t->stack.desc->high;
+
+		// Note that we're done with our initialization.
+		atomicWrite(t->stack.initializing, 0);
 		return t;
 	}
 
@@ -429,6 +437,7 @@ namespace os {
 
 	void UThreadState::insert(UThreadData *data) {
 		data->owner = this;
+		assert(stacks.contains(&data->stack), L"WRONG THREAD");
 		atomicIncrement(aliveCount);
 
 		util::Lock::L z(lock);
@@ -485,9 +494,24 @@ namespace os {
 		to->owner = this;
 		to->detourOrigin = prev;
 
+		// Adopt the new UThread, so that it is scanned as if it belonged to our thread.
+		// Note: it is important to do this in the proper order, otherwise there will be a
+		// small window where the UThread is not scanned at all.
+		atomicWrite(prev->stack.detourTo, &to->stack);
+		atomicWrite(to->stack.detourActive, 1);
+
 		// Switch threads.
 		running = to;
 		prev->switchTo(running);
+
+		// Since we returned here from 'switchTo', we know that 'endDetour' was called. Thus, we have
+		// a result inside 'to', and we shall release our temporary adoption of the UThread now.
+		// Note: We can not do that inside 'endDetour' since the other thread is currently
+		// running. If we would alter 'detourTo' or 'detourActive' on a running thread, it is
+		// possible that the stack scanning will think the thread is active for the wrong OS thread,
+		// which would cause everything to crash due to the mismatch of stack pointers.
+		atomicWrite(to->stack.detourActive, 0);
+		atomicWrite(prev->stack.detourTo, (UThreadStack *)null);
 
 		// Since we returned here from 'switchTo', we know that 'endDetour' has set the result for us!
 		return to->detourResult;
