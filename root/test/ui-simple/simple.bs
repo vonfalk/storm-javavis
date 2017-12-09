@@ -67,8 +67,6 @@ class SimpleDraw extends Painter {
 		}
 
 		textSize = text.size();
-		print(text.size().toS());
-		print(text.layoutBorder().toS());
 		text.layoutBorder(textSize);
 
 		Int edges = 5;

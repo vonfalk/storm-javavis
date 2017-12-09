@@ -5,6 +5,9 @@
 #include <poll.h>
 #include <X11/Xlib.h>
 #include <gtk/gtk.h>
+#include <gtk/gtkx.h>
+#include <GL/gl.h>
+#include <GL/glx.h>
 #include "GtkLayout.h"
 
 // Some headers define 'Bool' for us. That is not good...
@@ -33,5 +36,6 @@ namespace gui {
 struct cairo_t;
 struct cairo_surface_t;
 struct PangoContext;
+struct GdkWindow;
 
 #endif

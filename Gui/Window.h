@@ -192,12 +192,19 @@ namespace gui {
 		// Painter.
 		Painter *myPainter;
 
+		// On Gtk+: the window we're rendering to.
+		GdkWindow *renderWindow;
+
 		// Timer timeout (nonzero = set).
 		Duration timerInterval;
 
-		// Notify our painter of our new HWND.
+		// Prepare for a painter/prepare for no painter. Not called when we swap painter.
 		void attachPainter();
 		void detachPainter();
+
+		// Notify our painter of our new HWND.
+		void notifyAttachPainter();
+		void notifyDetachPainter();
 
 		// Tell our painter we've been resized.
 		void notifyPainter(Size s);
@@ -215,6 +222,9 @@ namespace gui {
 		gboolean onKeyDown(GdkEvent *event);
 		void onSize(GdkRectangle *alloc);
 		gboolean onDraw(cairo_t *ctx);
+
+		void onRealize();
+		void onUnrealize();
 #endif
 	};
 
