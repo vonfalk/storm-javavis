@@ -8,6 +8,7 @@
 #include <gtk/gtkx.h>
 #include <GL/gl.h>
 #include <GL/glx.h>
+#include <EGL/egl.h>
 #include "GtkLayout.h"
 
 // Some headers define 'Bool' for us. That is not good...

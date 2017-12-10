@@ -500,9 +500,13 @@ namespace gui {
 		// TODO: Move to RenderMgr.
 		::Window window = GDK_WINDOW_XID(renderWindow);
 		Display *xDisplay = GDK_DISPLAY_XDISPLAY(gdk_window_get_display(renderWindow));
+
 		int major, minor;
 		glXQueryVersion(xDisplay, &major, &minor);
 		PVAR(major); PVAR(minor);
+
+		GlContext::create(renderWindow);
+		return;
 
 		// Note: Minor should be larger than 2 for FBConfig to work...
 		int visualAttrs[] = {

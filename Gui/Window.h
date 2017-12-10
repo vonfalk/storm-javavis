@@ -3,6 +3,7 @@
 #include "Handle.h"
 #include "Font.h"
 #include "Key.h"
+#include "GlContext.h"
 #include "Core/Timing.h"
 #include "Core/TObject.h"
 #include "Utils/Bitmask.h"
