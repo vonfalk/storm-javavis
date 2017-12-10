@@ -494,22 +494,51 @@ namespace gui {
 		}
 	}
 
+	class NoSignals {
+	public:
+		NoSignals() {
+			sigset_t block;
+			sigemptyset(&old);
+			sigfillset(&block);
+			sigdelset(&block, SIGSEGV);
+			pthread_sigmask(SIG_BLOCK, &block, &old);
+		}
+
+		~NoSignals() {
+			pthread_sigmask(SIG_SETMASK, &old, NULL);
+		}
+
+	private:
+		sigset_t old;
+	};
+
 	void AppWait::gtkWait(os::IOHandle::Desc &io, int stormTimeout) {
 		// NOTE: We could check the return value of '_prepare' to possibly avoid polling, but the
 		// return value is ignored in the Gtk+ implementation as well, so we can probably get away
 		// with ignoring it as well.
 		gint maxPriority = 0;
-		g_main_context_prepare(context, &maxPriority);
-
-		// Get poll fd:s from Gtk+:
 		gint timeout = 0;
 		gint fdCount = 0;
 		gint oldSize = 0;
-		do {
-			oldSize = gPollFd.size();
-			fdCount = g_main_context_query(context, maxPriority, &timeout, gPollFd.data(), oldSize);
-			gPollFd.resize(fdCount);
-		} while (fdCount > oldSize);
+		{
+			// Block signals from the GC while calling g_main_context_prepare and
+			// g_main_context_query. If signals arrive while Gtk+ is communicating with Xlib (mostly
+			// during startup), it sometimes bails out when it sees the EINTR result from a system
+			// call. It seems looks like the error is inside libxcb, which is used by libX11, but I am
+			// not sure.
+			// Note: it could be a very bad idea to block GC signals in this way since libxcb (or
+			// libX11 for that matter) could try taking a lock that a sleeping thread is hogging at
+			// the moment, which would cause a deadlock.
+			NoSignals z;
+			g_main_context_prepare(context, &maxPriority);
+
+			// Get poll fd:s from Gtk+:
+			do {
+				oldSize = gPollFd.size();
+				fdCount = g_main_context_query(context, maxPriority, &timeout, gPollFd.data(), oldSize);
+				gPollFd.resize(fdCount);
+			} while (fdCount > oldSize);
+		}
 
 		// Put them into an array of system specific poll fd:s.
 		pollFd.resize(io.count + gPollFd.size());
@@ -533,8 +562,11 @@ namespace gui {
 		for (size_t i = 0; i < gPollFd.size(); i++)
 			gPollFd[i] = to_g(pollFd[i + io.count]);
 
-		// Let Gtk+ investigate the result of the polling.
-		g_main_context_check(context, maxPriority, gPollFd.data(), gint(gPollFd.size()));
+		{
+			NoSignals z;
+			// Let Gtk+ investigate the result of the polling.
+			g_main_context_check(context, maxPriority, gPollFd.data(), gint(gPollFd.size()));
+		}
 	}
 
 	void AppWait::doWait(os::IOHandle &io, int timeout) {
@@ -614,15 +646,8 @@ namespace gui {
 
 		msgDisabled = true;
 
-		// Try to dispatch any pending events first.
+		// Dispatch any pending events.
 		g_main_context_dispatch(context);
-
-		// Try to dispatch a maximum of 'App::maxProcessMessages' events. Return as soon as no event
-		// is dispatched so that we wait properly instead of just burning CPU cycles for no good.
-		bool dispatched = true;
-		for (nat i = 0; i < App::maxProcessMessages && dispatched; i++) {
-			dispatched &= g_main_context_iteration(context, FALSE) == TRUE;
-		}
 
 		msgDisabled = false;
 	}
