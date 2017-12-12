@@ -22,6 +22,9 @@ namespace gui {
 		// Activate this context.
 		void activate();
 
+		// Swap buffers of the context.
+		virtual void swapBuffers() = 0;
+
 		// Create a GlContext for the given window.
 		static GlContext *create(GdkWindow *window);
 
@@ -41,6 +44,9 @@ namespace gui {
 	class EglContext : public GlContext {
 	public:
 		virtual ~EglContext();
+
+		// Swap buffers.
+		virtual void swapBuffers();
 
 		// Create an EGL context. Returns null on failure.
 		static EglContext *create(GdkWindow *window);
@@ -104,6 +110,9 @@ namespace gui {
 	class GlxContext : public GlContext {
 	public:
 		virtual ~GlxContext();
+
+		// Swap buffers.
+		virtual void swapBuffers();
 
 		// Create a GLX context. Returns null on failure.
 		static GlxContext *create(GdkWindow *window);

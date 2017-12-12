@@ -449,6 +449,20 @@ namespace gui {
 
 	gboolean Window::onDraw(cairo_t *ctx) {
 		if (myPainter) {
+			if (renderWindow) {
+				// Testing the rendering:
+				static GlContext *c = null;
+				if (!c)
+					c = GlContext::create(renderWindow);
+
+				c->activate();
+				glClearColor(0, 1, 0, 0.5);
+				glClear(GL_COLOR_BUFFER_BIT);
+				c->swapBuffers();
+			}
+			return TRUE;
+
+
 			Engine &e = engine();
 			RepaintParams param = { ctx, handle().widget() };
 			RepaintParams *pParam = &param;
@@ -496,6 +510,7 @@ namespace gui {
 		// gtk_widget_set_has_window(drawTo, true);
 		gtk_widget_set_window(drawTo, renderWindow);
 		gtk_widget_set_double_buffered(drawTo, false);
+		return;
 
 		// TODO: Move to RenderMgr.
 		::Window window = GDK_WINDOW_XID(renderWindow);

@@ -125,6 +125,10 @@ namespace gui {
 		eglMakeCurrent(display->display, surface, surface, display->context);
 	}
 
+	void EglContext::swapBuffers() {
+		eglSwapBuffers(display->display, surface);
+	}
+
 
 	/**
 	 * GLX
@@ -240,6 +244,10 @@ namespace gui {
 
 	void GlxContext::setActive() {
 		glXMakeCurrent(display->display, window, display->context);
+	}
+
+	void GlxContext::swapBuffers() {
+		glXSwapBuffers(display->display, window);
 	}
 
 }
