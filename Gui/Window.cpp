@@ -506,6 +506,7 @@ namespace gui {
 		renderWindow = gdk_window_new(parent, &attrs, GDK_WA_X | GDK_WA_Y);
 		gdk_window_ensure_native(renderWindow);
 		gdk_window_show_unraised(renderWindow);
+		gdk_window_set_user_data(renderWindow, drawTo);
 
 		// gtk_widget_set_has_window(drawTo, true);
 		gtk_widget_set_window(drawTo, renderWindow);
