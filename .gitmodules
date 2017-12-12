@@ -16,3 +16,6 @@
 [submodule "Linux/backtrace"]
 	path = Linux/backtrace
 	url = ../linux/backtrace.git
+[submodule "Linux/nanovg"]
+	path = Linux/nanovg
+	url = ../linux/nanovg.git

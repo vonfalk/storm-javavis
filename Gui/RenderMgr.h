@@ -66,6 +66,7 @@ namespace gui {
 		IDXGIDevice *giDevice;
 
 		// Dummy Cairo surface and corresponding device.
+		// TODO: Remove!
 		cairo_surface_t *cSurface;
 		cairo_t *cDevice;
 

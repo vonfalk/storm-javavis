@@ -2,15 +2,6 @@
 #ifndef GUI_H
 #define GUI_H
 
-#include "Shared/Storm.h"
-#include "Core/Graphics/Color.h"
-#include "Core/Geometry/Angle.h"
-#include "Core/Geometry/Point.h"
-#include "Core/Geometry/Rect.h"
-#include "Core/Geometry/Size.h"
-#include "Core/Geometry/Transform.h"
-#include "Core/Geometry/Vector.h"
-
 /**
  * Determine which Gui toolkit to use based on the platform.
  *
@@ -25,6 +16,17 @@
 #define GUI_GTK
 #endif
 
+// Allow inclusion from C as well.
+#ifdef __cplusplus
+
+#include "Shared/Storm.h"
+#include "Core/Graphics/Color.h"
+#include "Core/Geometry/Angle.h"
+#include "Core/Geometry/Point.h"
+#include "Core/Geometry/Rect.h"
+#include "Core/Geometry/Size.h"
+#include "Core/Geometry/Transform.h"
+#include "Core/Geometry/Vector.h"
 
 /**
  * Common declarations.
@@ -45,4 +47,5 @@ namespace gui {
 #include "Win32Common.h"
 #include "GtkCommon.h"
 
+#endif
 #endif

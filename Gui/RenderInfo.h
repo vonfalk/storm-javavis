@@ -1,4 +1,5 @@
 #pragma once
+#include "GlContext.h"
 
 namespace gui {
 
@@ -36,28 +37,18 @@ namespace gui {
 		}
 #endif
 #ifdef GUI_GTK
-		inline cairo_surface_t *surface() const {
-			return (cairo_surface_t *)first;
+		inline GlContext *context() const {
+			return (GlContext *)first;
 		}
-		inline void surface(cairo_surface_t *to) {
-			first = to;
-		}
-		inline cairo_t *device() const {
-			return (cairo_t *)second;
-		}
-		inline void device(cairo_t *to) {
-			second = to;
+		inline void context(GlContext *context) {
+			first = context;
 		}
 		inline void release() {
-			if (device())
-				cairo_destroy(device());
-			device(null);
-			if (surface())
-				cairo_surface_destroy(surface());
-			surface(null);
+			delete context();
+			context(null);
 		}
 		inline bool any() const {
-			return device() != null;
+			return context() != null;
 		}
 #endif
 

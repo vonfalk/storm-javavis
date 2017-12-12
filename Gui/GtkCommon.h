@@ -4,6 +4,7 @@
 
 #include <poll.h>
 #include <X11/Xlib.h>
+#define GL_GLEXT_PROTOTYPES
 #include <gtk/gtk.h>
 #include <gtk/gtkx.h>
 #include <GL/gl.h>
@@ -34,8 +35,6 @@ namespace gui {
 #else
 
 // Allow using some types in class declarations even if we're not using Gtk+.
-struct cairo_t;
-struct cairo_surface_t;
 struct PangoContext;
 struct GdkWindow;
 

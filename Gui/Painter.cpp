@@ -5,7 +5,7 @@
 
 namespace gui {
 
-	Painter::Painter() : continuous(false), rendering(false), resized(false), repaintCounter(0), currentRepaint(0) {
+	Painter::Painter() : continuous(false), rendering(false), repaintCounter(0), currentRepaint(0) {
 		attachedTo = Window::invalid;
 		bgColor = getBgColor();
 		resources = new (this) WeakSet<RenderResource>();
@@ -53,10 +53,6 @@ namespace gui {
 			mgr->resize(target, sz);
 			if (graphics)
 				graphics->updateTarget(target);
-
-			// Note that we need to redraw before we have any valid contents.
-			resized = true;
-			mgr->painterReady();
 		}
 	}
 
@@ -112,11 +108,9 @@ namespace gui {
 			rendering = true;
 			more = doRepaintI(waitForVSync);
 			rendering = false;
-			resized = false;
 		} catch (...) {
 			repaintCounter++;
 			rendering = false;
-			resized = false;
 			throw;
 		}
 
@@ -131,20 +125,15 @@ namespace gui {
 		}
 	}
 
-#ifdef GUI_WIN32
-
-	bool Painter::ready() {
-		// Always ready to render!
-		return true;
-	}
-
 	void Painter::waitForFrame() {
 		// Wait until we have rendered a frame, so that Windows think we did it to satisfy the paint
 		// request.
-		nat old = repaintCounter;
+		Nat old = repaintCounter;
 		while (old == repaintCounter)
 			os::UThread::leave();
 	}
+
+#ifdef GUI_WIN32
 
 	void Painter::doRepaintI(bool waitForVSync) {
 		if (!target.target())
@@ -199,36 +188,30 @@ namespace gui {
 #endif
 #ifdef GUI_GTK
 
-	bool Painter::ready() {
-		// Do not try to repaint a new frame until the previous one has been displayed, or if we need a repaint.
-		return repaintCounter == currentRepaint || resized;
-	}
-
-	void Painter::waitForFrame() {
-		// It is fine to copy the contents of our buffer as long as we're not currently rendering to it.
-		while (rendering || resized) {
-			os::UThread::leave();
-		}
-
-		// Now we're ready for another frame. Let the RenderMgr know that 'ready' has changed.
-		RenderMgr *mgr = renderMgr(engine());
-		mgr->painterReady();
-	}
-
 	bool Painter::doRepaintI(bool waitForVSync) {
 		if (!target.any())
 			return continuous;
 
 		bool more = false;
 
-		// Clear the surface with the desired color. TODO: Set the clip properly?
-		// TODO: We probably want to save the background color in a cairo_pattern_t and use that.
-		cairo_set_source_rgba(target.device(), bgColor.r, bgColor.g, bgColor.b, bgColor.a);
-		cairo_set_operator(target.device(), CAIRO_OPERATOR_SOURCE);
-		cairo_paint(target.device());
+		// Clear the surface with the desired color.
+		GlContext *ctx = target.context();
+		ctx->activate();
+		glClearColor(bgColor.r, bgColor.g, bgColor.b, bgColor.a);
+		glClear(GL_COLOR_BUFFER_BIT);
 
-		// Restore the default operator.
-		cairo_set_operator(target.device(), CAIRO_OPERATOR_OVER);
+		// Start a frame and set default parameters in case someone failed to clean up.
+		nvgBeginFrame(ctx->nvg, target.size.w, target.size.h, 1.0f);
+		nvgGlobalCompositeOperation(ctx->nvg, NVG_SOURCE_OVER);
+		nvgLineCap(ctx->nvg, NVG_ROUND);
+		// Note: we could set some more...
+
+		nvgStrokeColor(ctx->nvg, nvgRGBf(1.0f, 0.0f, 0.0f));
+		nvgStrokeWidth(ctx->nvg, 2);
+		nvgBeginPath(ctx->nvg);
+		nvgMoveTo(ctx->nvg, 10, 10);
+		nvgLineTo(ctx->nvg, 190, 170);
+		nvgStroke(ctx->nvg);
 
 		try {
 			graphics->beforeRender();
@@ -236,19 +219,14 @@ namespace gui {
 			graphics->afterRender();
 		} catch (...) {
 			graphics->afterRender();
+			nvgCancelFrame(ctx->nvg);
 			throw;
 		}
 
-		// Flush any pending operations.
-		cairo_surface_flush(target.surface());
+		nvgEndFrame(ctx->nvg);
 
-		// Notify Gtk+ that we have new content!
-		if (waitForVSync) {
-			// Note: It is safe to call 'app' from the Render thread here since we know that App has
-			// been created previously (otherwise, we would not have been attached anywhere).
-			App *a = app(engine());
-			a->repaint(attachedTo);
-		}
+		// TODO: handle VSync somehow?
+		target.context()->swapBuffers();
 
 		return more;
 	}
@@ -260,32 +238,21 @@ namespace gui {
 						gtk_widget_get_allocated_height(p->widget));
 			target.size = sz;
 
-			// We should create the target!
-			cairo_surface_t *realTarget = cairo_get_target(p->target);
-			target.surface(cairo_surface_create_similar(realTarget, CAIRO_CONTENT_COLOR_ALPHA, sz.w, sz.h));
-			target.device(cairo_create(target.surface()));
-
+			// Create the target.
+			target.context(GlContext::create(p->target));
 			if (graphics)
 				graphics->updateTarget(target);
-
-			resized = true;
-
-			// Notify the RenderMgr, so that it knows we want to repaint now, in case we were done just before.
-			RenderMgr *mgr = renderMgr(engine());
-			mgr->painterReady();
 		}
 	}
 
 	void Painter::afterRepaint(RepaintParams *p) {
-		if (!target.any())
-			return;
-
-		cairo_t *to = p->target;
-		cairo_set_source_surface(to, target.surface(), 0, 0);
-		cairo_paint(to);
+		// Nothing special needs to be done.
 	}
 
 	Color Painter::getBgColor() {
+		// Temporary: Green
+		return Color(0.0f, 1.0f, 0.0f, 1.0f);
+
 		// Transparent.
 		return Color(0.0f, 0.0f, 0.0f, 0.0f);
 	}

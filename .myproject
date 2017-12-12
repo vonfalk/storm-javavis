@@ -194,6 +194,7 @@ postBuild+=copy <output> <path|packagePath><libPrefix><title|output>
 
 [sharedlib,unix]
 flags+=-fPIC
+cflags+=-fPIC
 linkFlags+=-Wl,-z,defs
 postBuild+=mkdir -p <path|packagePath>
 postBuild+=cp <output> <path|packagePath><libPrefix><title|output>

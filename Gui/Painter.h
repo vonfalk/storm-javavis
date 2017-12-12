@@ -13,7 +13,7 @@ namespace gui {
 	 */
 	struct RepaintParams {
 #ifdef GUI_GTK
-		cairo_t *target;
+		GdkWindow *target;
 		GtkWidget *widget;
 #endif
 	};
@@ -58,9 +58,6 @@ namespace gui {
 		void addResource(RenderResource *resource);
 		void removeResource(RenderResource *resource);
 
-		// Ready to render another frame in continuous mode?
-		bool ready();
-
 #ifdef GUI_WIN32
 		// Get our render target.
 		inline ID2D1RenderTarget *renderTarget() { return target.target(); }
@@ -86,9 +83,6 @@ namespace gui {
 
 		// Are we currently rendering?
 		Bool rendering;
-
-		// Resized since the last rendered frame?
-		Bool resized;
 
 		// Create any resources connected to the current device.
 		void create();

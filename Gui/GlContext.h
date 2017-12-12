@@ -1,4 +1,5 @@
 #pragma once
+#include "nanovg.h"
 
 #ifdef GUI_GTK
 
@@ -19,16 +20,23 @@ namespace gui {
 	public:
 		virtual ~GlContext();
 
+		// The nanovg context.
+		NVGcontext *nvg;
+
 		// Activate this context.
 		void activate();
 
 		// Swap buffers of the context.
 		virtual void swapBuffers() = 0;
 
-		// Create a GlContext for the given window.
+		// Create a GlContext for the given window. Note: the newly created context will be
+		// activated during creation.
 		static GlContext *create(GdkWindow *window);
 
 	protected:
+		// Create.
+		GlContext();
+
 		// Set this context as the active one.
 		virtual void setActive() = 0;
 
@@ -94,6 +102,9 @@ namespace gui {
 
 		// The data for our display.
 		DisplayData *display;
+
+		// Window we're drawing to.
+		EGLNativeWindowType window;
 
 		// Surface we're drawing to.
 		EGLSurface surface;

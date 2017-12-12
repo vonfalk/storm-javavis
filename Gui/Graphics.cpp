@@ -279,78 +279,79 @@ namespace gui {
 	}
 
 	void Graphics::push() {
-		oldStates->push(state);
-		state.layer = Layer::none;
+		// oldStates->push(state);
+		// state.layer = Layer::none;
 	}
 
 	void Graphics::push(Float opacity) {
-		oldStates->push(state);
-		state.layer = Layer::group;
-		state.opacity = opacity;
-		cairo_push_group(info.device());
+		// oldStates->push(state);
+		// state.layer = Layer::group;
+		// state.opacity = opacity;
+		// cairo_push_group(info.device());
 	}
 
 	void Graphics::push(Rect clip) {
-		oldStates->push(state);
-		state.layer = Layer::save;
-		cairo_save(info.device());
+		// oldStates->push(state);
+		// state.layer = Layer::save;
+		// cairo_save(info.device());
 
-		Size sz = clip.size();
-		cairo_rectangle(info.device(), clip.p0.x, clip.p0.y, sz.w, sz.h);
-		cairo_clip(info.device());
+		// Size sz = clip.size();
+		// cairo_rectangle(info.device(), clip.p0.x, clip.p0.y, sz.w, sz.h);
+		// cairo_clip(info.device());
 	}
 
 	void Graphics::push(Rect clip, Float opacity) {
-		oldStates->push(state);
-		state.layer = Layer::group;
-		state.opacity = opacity;
-		cairo_push_group(info.device());
+		// oldStates->push(state);
+		// state.layer = Layer::group;
+		// state.opacity = opacity;
+		// cairo_push_group(info.device());
 
-		Size sz = clip.size();
-		cairo_rectangle(info.device(), clip.p0.x, clip.p0.y, sz.w, sz.h);
-		cairo_clip(info.device());
+		// Size sz = clip.size();
+		// cairo_rectangle(info.device(), clip.p0.x, clip.p0.y, sz.w, sz.h);
+		// cairo_clip(info.device());
 	}
 
 	Bool Graphics::pop() {
-		switch (state.layer.kind()) {
-		case Layer::none:
-			break;
-		case Layer::group:
-			cairo_pop_group_to_source(info.device());
-			cairo_paint_with_alpha(info.device(), state.opacity);
-			break;
-		case Layer::save:
-			cairo_restore(info.device());
-			break;
-		}
+		// switch (state.layer.kind()) {
+		// case Layer::none:
+		// 	break;
+		// case Layer::group:
+		// 	cairo_pop_group_to_source(info.device());
+		// 	cairo_paint_with_alpha(info.device(), state.opacity);
+		// 	break;
+		// case Layer::save:
+		// 	cairo_restore(info.device());
+		// 	break;
+		// }
 
-		state = oldStates->last();
-		prepare();
+		// state = oldStates->last();
+		// prepare();
 
-		if (oldStates->count() > 1) {
-			oldStates->pop();
-			return true;
-		} else {
-			return false;
-		}
+		// if (oldStates->count() > 1) {
+		// 	oldStates->pop();
+		// 	return true;
+		// } else {
+		// 	return false;
+		// }
+		return false;
 	}
 
 	void Graphics::transform(Transform *tfm) {
-		cairo_matrix_t m = cairoMultiply(cairo(tfm), oldStates->last().transform());
-		state.transform(m);
-		cairo_set_matrix(info.device(), &m);
+		// cairo_matrix_t m = cairoMultiply(cairo(tfm), oldStates->last().transform());
+		// state.transform(m);
+		// cairo_set_matrix(info.device(), &m);
 	}
 
 	void Graphics::lineWidth(Float w) {
-		// Note: Line size is affected by transforms at the time of stroking. Is this what we desire?
-		state.lineWidth = oldStates->last().lineWidth * w;
-		cairo_set_line_width(info.device(), state.lineWidth);
+		// // Note: Line size is affected by transforms at the time of stroking. Is this what we desire?
+		// state.lineWidth = oldStates->last().lineWidth * w;
+		// cairo_set_line_width(info.device(), state.lineWidth);
 	}
 
 	void Graphics::prepare() {
-		cairo_matrix_t tfm = state.transform();
-		cairo_set_matrix(info.device(), &tfm);
-		cairo_set_line_width(info.device(), state.lineWidth);
+		// cairo_matrix_t tfm = state.transform();
+		// cairo_set_matrix(info.device(), &tfm);
+		// cairo_set_line_width(info.device(), state.lineWidth);
 	}
 
 	void Graphics::Layer::release() {
@@ -362,115 +363,115 @@ namespace gui {
 	 */
 
 	void Graphics::line(Point from, Point to, Brush *style) {
-		cairo_new_path(info.device());
-		cairo_move_to(info.device(), from.x, from.y);
-		cairo_line_to(info.device(), to.x, to.y);
+		// cairo_new_path(info.device());
+		// cairo_move_to(info.device(), from.x, from.y);
+		// cairo_line_to(info.device(), to.x, to.y);
 
-		style->setSource(info.device(), Rect(from, to).normalized());
+		// style->setSource(info.device(), Rect(from, to).normalized());
 
-		cairo_stroke(info.device());
+		// cairo_stroke(info.device());
 	}
 
 	void Graphics::draw(Rect rect, Brush *style) {
-		Size sz = rect.size();
-		cairo_rectangle(info.device(), rect.p0.x, rect.p0.y, sz.w, sz.h);
-		style->setSource(info.device(), rect);
-		cairo_stroke(info.device());
+		// Size sz = rect.size();
+		// cairo_rectangle(info.device(), rect.p0.x, rect.p0.y, sz.w, sz.h);
+		// style->setSource(info.device(), rect);
+		// cairo_stroke(info.device());
 	}
 
 	static void rectangle(const RenderInfo &info, const Rect &rect) {
-		Size sz = rect.size();
-		cairo_rectangle(info.device(), rect.p0.x, rect.p0.y, sz.w, sz.h);
+		// Size sz = rect.size();
+		// cairo_rectangle(info.device(), rect.p0.x, rect.p0.y, sz.w, sz.h);
 	}
 
 	static void rounded_corner(const RenderInfo &info, Point center, Size scale, double from, double to) {
-		cairo_save(info.device());
-		cairo_translate(info.device(), center.x, center.y);
-		cairo_scale(info.device(), scale.w, scale.h);
-		cairo_arc(info.device(), 0, 0, 1, from, to);
-		cairo_restore(info.device());
+		// cairo_save(info.device());
+		// cairo_translate(info.device(), center.x, center.y);
+		// cairo_scale(info.device(), scale.w, scale.h);
+		// cairo_arc(info.device(), 0, 0, 1, from, to);
+		// cairo_restore(info.device());
 	}
 
 	static void rounded_rect(const RenderInfo &to, Rect rect, Size edges) {
-		const double quarter = M_PI / 2;
+		// const double quarter = M_PI / 2;
 
-		cairo_new_path(to.device());
-		rounded_corner(to, Point(rect.p1.x - edges.w, rect.p0.y + edges.h), edges, -quarter, 0);
-		rounded_corner(to, Point(rect.p1.x - edges.w, rect.p1.y - edges.h), edges, 0, quarter);
-		rounded_corner(to, Point(rect.p0.x + edges.w, rect.p1.y - edges.h), edges, quarter, 2*quarter);
-		rounded_corner(to, Point(rect.p0.x + edges.w, rect.p0.y + edges.h), edges, 2*quarter, 3*quarter);
-		cairo_close_path(to.device());
+		// cairo_new_path(to.device());
+		// rounded_corner(to, Point(rect.p1.x - edges.w, rect.p0.y + edges.h), edges, -quarter, 0);
+		// rounded_corner(to, Point(rect.p1.x - edges.w, rect.p1.y - edges.h), edges, 0, quarter);
+		// rounded_corner(to, Point(rect.p0.x + edges.w, rect.p1.y - edges.h), edges, quarter, 2*quarter);
+		// rounded_corner(to, Point(rect.p0.x + edges.w, rect.p0.y + edges.h), edges, 2*quarter, 3*quarter);
+		// cairo_close_path(to.device());
 	}
 
 	void Graphics::draw(Rect rect, Size edges, Brush *style) {
-		rounded_rect(info, rect, edges);
+		// rounded_rect(info, rect, edges);
 
-		style->setSource(info.device(), rect);
-		cairo_stroke(info.device());
+		// style->setSource(info.device(), rect);
+		// cairo_stroke(info.device());
 	}
 
 	static void cairo_oval(const RenderInfo &to, Rect rect) {
-		cairo_save(to.device());
+		// cairo_save(to.device());
 
-		Point center = rect.center();
-		cairo_translate(to.device(), center.x, center.y);
-		Size size = rect.size();
-		cairo_scale(to.device(), size.w / 2, size.h / 2);
+		// Point center = rect.center();
+		// cairo_translate(to.device(), center.x, center.y);
+		// Size size = rect.size();
+		// cairo_scale(to.device(), size.w / 2, size.h / 2);
 
-		cairo_arc(to.device(), 0, 0, 1, 0, 2*M_PI);
+		// cairo_arc(to.device(), 0, 0, 1, 0, 2*M_PI);
 
-		cairo_restore(to.device());
+		// cairo_restore(to.device());
 	}
 
 	void Graphics::oval(Rect rect, Brush *style) {
-		cairo_oval(info, rect);
+		// cairo_oval(info, rect);
 
-		style->setSource(info.device(), rect);
-		cairo_stroke(info.device());
+		// style->setSource(info.device(), rect);
+		// cairo_stroke(info.device());
 	}
 
 	void Graphics::draw(Path *path, Brush *style) {
-		path->draw(info.device());
-		style->setSource(info.device(), path->bound());
-		cairo_stroke(info.device());
+		// path->draw(info.device());
+		// style->setSource(info.device(), path->bound());
+		// cairo_stroke(info.device());
 	}
 
 	void Graphics::fill(Rect rect, Brush *style) {
-		rectangle(info, rect);
-		style->setSource(info.device(), rect);
-		cairo_fill(info.device());
+		// rectangle(info, rect);
+		// style->setSource(info.device(), rect);
+		// cairo_fill(info.device());
 	}
 
 	void Graphics::fill(Rect rect, Size edges, Brush *style) {
-		rounded_rect(info, rect, edges);
+		// rounded_rect(info, rect, edges);
 
-		style->setSource(info.device(), rect);
-		cairo_fill(info.device());
+		// style->setSource(info.device(), rect);
+		// cairo_fill(info.device());
 	}
 
 	void Graphics::fill(Brush *style) {
-		cairo_matrix_t tfm;
-		cairo_matrix_init_identity(&tfm);
-		cairo_set_matrix(info.device(), &tfm);
+		// cairo_matrix_t tfm;
+		// cairo_matrix_init_identity(&tfm);
+		// cairo_set_matrix(info.device(), &tfm);
 
-		style->setSource(info.device(), Rect(Point(0, 0), size()));
-		cairo_paint(info.device());
+		// style->setSource(info.device(), Rect(Point(0, 0), size()));
+		// cairo_paint(info.device());
 
-		tfm = state.transform();
-		cairo_set_matrix(info.device(), &tfm);
+		// tfm = state.transform();
+		// cairo_set_matrix(info.device(), &tfm);
 	}
 
 	void Graphics::fillOval(Rect rect, Brush *style) {
-		cairo_oval(info, rect);
+		// cairo_oval(info, rect);
 
-		style->setSource(info.device(), rect);
-		cairo_fill(info.device());
+		// style->setSource(info.device(), rect);
+		// cairo_fill(info.device());
 	}
 
 	void Graphics::fill(Path *path, Brush *style) {
-		path->draw(info.device());
-		style->setSource(info.device(), path->bound());
-		cairo_fill(info.device());
+		// path->draw(info.device());
+		// style->setSource(info.device(), path->bound());
+		// cairo_fill(info.device());
 	}
 
 	void Graphics::draw(Bitmap *bitmap) {}
@@ -484,29 +485,29 @@ namespace gui {
 	void Graphics::draw(Bitmap *bitmap, Rect rect, Float opacity) {}
 
 	void Graphics::text(Str *text, Font *font, Brush *style, Rect rect) {
-		// Note: It would be good to not have to create the layout all the time.
-		PangoLayout *layout = pango_cairo_create_layout(info.device());
+		// // Note: It would be good to not have to create the layout all the time.
+		// PangoLayout *layout = pango_cairo_create_layout(info.device());
 
-		pango_layout_set_wrap(layout, PANGO_WRAP_WORD_CHAR);
-		pango_layout_set_font_description(layout, font->desc());
-		pango_layout_set_width(layout, toPango(rect.size().w));
-		pango_layout_set_height(layout, toPango(rect.size().h));
-		pango_layout_set_text(layout, text->utf8_str(), -1);
+		// pango_layout_set_wrap(layout, PANGO_WRAP_WORD_CHAR);
+		// pango_layout_set_font_description(layout, font->desc());
+		// pango_layout_set_width(layout, toPango(rect.size().w));
+		// pango_layout_set_height(layout, toPango(rect.size().h));
+		// pango_layout_set_text(layout, text->utf8_str(), -1);
 
-		style->setSource(info.device(), rect);
+		// style->setSource(info.device(), rect);
 
-		cairo_move_to(info.device(), rect.p0.x, rect.p0.y);
-		pango_cairo_show_layout(info.device(), layout);
+		// cairo_move_to(info.device(), rect.p0.x, rect.p0.y);
+		// pango_cairo_show_layout(info.device(), layout);
 
-		g_object_unref(layout);
+		// g_object_unref(layout);
 	}
 
 	void Graphics::draw(Text *text, Brush *style, Point origin) {
-		Size sz = text->size();
-		style->setSource(info.device(), Rect(origin, sz));
+		// Size sz = text->size();
+		// style->setSource(info.device(), Rect(origin, sz));
 
-		cairo_move_to(info.device(), origin.x, origin.y);
-		pango_cairo_show_layout(info.device(), text->layout());
+		// cairo_move_to(info.device(), origin.x, origin.y);
+		// pango_cairo_show_layout(info.device(), text->layout());
 	}
 
 #endif

@@ -61,7 +61,7 @@ namespace gui {
 			Nat pos = 0;
 			for (Set<Painter *>::Iter i = painters->begin(), e = painters->end(); i != e; ++i) {
 				Painter *p = i.v();
-				if (p->continuous && p->ready()) {
+				if (p->continuous) {
 					if (pos >= toRedraw->count())
 						toRedraw->push(p);
 					else
@@ -288,6 +288,7 @@ namespace gui {
 	void RenderMgr::init() {
 		// Create the dummy cairo surface.
 		// TODO: If possible, we would probably want to use create_similar_surface on a surface from Gtk+.
+		// TODO: Remove these!
 		cSurface = cairo_image_surface_create(CAIRO_FORMAT_ARGB32, 1, 1);
 		cDevice = cairo_create(cSurface);
 		cContext = pango_cairo_create_context(cDevice);
@@ -317,17 +318,10 @@ namespace gui {
 
 		info.size = size;
 
-		// If there is no previous surface, don't worry. We'll create it later.
-		if (!info.surface())
-			return;
-
-		// If we have a surface somewhere, re-create it from the template of the previous surface.
-		cairo_surface_t *s = cairo_surface_create_similar(info.surface(), CAIRO_CONTENT_COLOR_ALPHA, size.w, size.h);
-		cairo_t *c = cairo_create(s);
-
-		info.release();
-		info.surface(s);
-		info.device(c);
+		if (info.any()) {
+			info.context()->activate();
+			glViewport(0, 0, size.w, size.h);
+		}
 	}
 
 #endif

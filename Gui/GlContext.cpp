@@ -12,10 +12,19 @@ namespace gui {
 			result = GlxContext::create(window);
 		if (!result)
 			throw GuiError(L"Failed to initialize OpenGL.");
+
+		result->activate();
+		result->nvg = nvgCreateGL2(NVG_ANTIALIAS | NVG_STENCIL_STROKES);
+
 		return result;
 	}
 
+	GlContext::GlContext() : nvg(null) {}
+
 	GlContext::~GlContext() {
+		if (nvg)
+			nvgDeleteGL2(nvg);
+
 		if (active == this)
 			active = null;
 	}
@@ -35,7 +44,7 @@ namespace gui {
 
 	EglContext *EglContext::create(GdkWindow *window) {
 		// TODO: Detect Wayland as well.
-		NativeWindowType eWindow = GDK_WINDOW_XID(window);
+		EGLNativeWindowType eWindow = GDK_WINDOW_XID(window);
 		Display *xDisplay = GDK_DISPLAY_XDISPLAY(gdk_window_get_display(window));
 		EGLDisplay eDisplay = eglGetDisplay(xDisplay);
 
@@ -51,6 +60,7 @@ namespace gui {
 			ok = result->display->initialize();
 
 		if (ok) {
+			result->window = eWindow;
 			result->surface = eglCreateWindowSurface(eDisplay, result->display->config, eWindow, NULL);
 			if (!result->surface)
 				ok = false;

@@ -438,7 +438,6 @@ namespace gui {
 	void Window::onSize(GdkRectangle *alloc) {
 		// If we have our own window, resize that as well.
 		if (renderWindow) {
-			PVAR(alloc->x); PVAR(alloc->y); PVAR(alloc->width); PVAR(alloc->height);
 			gdk_window_move_resize(renderWindow, alloc->x, alloc->y, alloc->width, alloc->height);
 		}
 
@@ -448,29 +447,17 @@ namespace gui {
 	}
 
 	gboolean Window::onDraw(cairo_t *ctx) {
-		if (myPainter) {
-			if (renderWindow) {
-				// Testing the rendering:
-				static GlContext *c = null;
-				if (!c)
-					c = GlContext::create(renderWindow);
-
-				c->activate();
-				glClearColor(0, 1, 0, 0.5);
-				glClear(GL_COLOR_BUFFER_BIT);
-				c->swapBuffers();
-			}
-			return TRUE;
-
-
+		if (myPainter && renderWindow) {
 			Engine &e = engine();
-			RepaintParams param = { ctx, handle().widget() };
+			RepaintParams param = { renderWindow, handle().widget() };
 			RepaintParams *pParam = &param;
 			os::Future<void> result;
 			os::FnCall<void, 2> params = os::fnCall().add(myPainter).add(pParam);
 			os::UThread::spawn(address(&Painter::repaint), true, params, result, &Render::thread(e)->thread());
 
 			result.result();
+
+			return TRUE;
 		}
 
 		return FALSE;
@@ -511,76 +498,9 @@ namespace gui {
 		// gtk_widget_set_has_window(drawTo, true);
 		gtk_widget_set_window(drawTo, renderWindow);
 		gtk_widget_set_double_buffered(drawTo, false);
-		return;
 
-		// TODO: Move to RenderMgr.
-		::Window window = GDK_WINDOW_XID(renderWindow);
-		Display *xDisplay = GDK_DISPLAY_XDISPLAY(gdk_window_get_display(renderWindow));
-
-		int major, minor;
-		glXQueryVersion(xDisplay, &major, &minor);
-		PVAR(major); PVAR(minor);
-
-		GlContext::create(renderWindow);
-		return;
-
-		// Note: Minor should be larger than 2 for FBConfig to work...
-		int visualAttrs[] = {
-			GLX_X_RENDERABLE    , True,
-			GLX_DRAWABLE_TYPE   , GLX_WINDOW_BIT,
-			GLX_RENDER_TYPE     , GLX_RGBA_BIT,
-			GLX_X_VISUAL_TYPE   , GLX_TRUE_COLOR,
-			GLX_RED_SIZE        , 8,
-			GLX_GREEN_SIZE      , 8,
-			GLX_BLUE_SIZE       , 8,
-			//GLX_ALPHA_SIZE      , 8,
-			GLX_DEPTH_SIZE      , 24,
-			GLX_STENCIL_SIZE    , 8,
-			GLX_DOUBLEBUFFER    , True,
-			//GLX_SAMPLE_BUFFERS  , 1,
-			//GLX_SAMPLES         , 4,
-			None
-		};
-
-		int fbcount = 0;
-		GLXFBConfig *fbc = glXChooseFBConfig(xDisplay, DefaultScreen(xDisplay), visualAttrs, &fbcount);
-		assert(fbcount > 0, L"No available formats for the frame buffer.");
-
-		// Pick best type:
-		int bestId = 0;
-		int bestSamples = 0;
-		for (int i = 0; i < fbcount; i++) {
-			int buffers = 0, samples = 0;
-			glXGetFBConfigAttrib(xDisplay, fbc[i], GLX_SAMPLE_BUFFERS, &buffers);
-			glXGetFBConfigAttrib(xDisplay, fbc[i], GLX_SAMPLES, &samples);
-
-			if (buffers >= 0 && samples > bestSamples) {
-				bestId = i;
-				bestSamples = 0;
-			}
-		}
-
-		XVisualInfo *vi = glXGetVisualFromFBConfig(xDisplay, fbc[bestId]);
-		PLN(L"Best format:");
-		PVAR(vi->visualid);
-		PVAR(vi->depth);
-		PVAR(vi->colormap_size);
-		PVAR(vi->bits_per_rgb);
-		XFree(vi);
-
-		// TODO: Set error handler here...
-		GLXContext ctx = glXCreateNewContext(xDisplay, fbc[bestId], GLX_RGBA_TYPE, 0, True);
-		XFree(fbc);
-
-		PVAR(window);
-		PVAR(ctx);
-		PVAR(glXIsDirect(xDisplay, ctx));
-
-		PVAR(glXMakeCurrent(xDisplay, window, ctx));
-		glClearColor(0, 0.5, 1, 1);
-		glClear(GL_COLOR_BUFFER_BIT);
-		// NOTE: Does not block until VBlank; the next gl command does, however.
-		glXSwapBuffers(xDisplay, window);
+		// TODO: We need to handle any child widgets here. We probably want to make them into their
+		// own sub-windows and paint them on top of the Gl window somehow.
 	}
 
 	void Window::onUnrealize() {
