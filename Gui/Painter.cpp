@@ -7,7 +7,7 @@ namespace gui {
 
 	Painter::Painter() : continuous(false), rendering(false), repaintCounter(0), currentRepaint(0) {
 		attachedTo = Window::invalid;
-		bgColor = getBgColor();
+		bgColor = app(engine())->defaultBgColor;
 		resources = new (this) WeakSet<RenderResource>();
 	}
 
@@ -181,10 +181,6 @@ namespace gui {
 
 	void Painter::afterRepaint(RepaintParams *handle) {}
 
-	Color Painter::getBgColor() {
-		return color(GetSysColor(COLOR_3DFACE));
-	}
-
 #endif
 #ifdef GUI_GTK
 
@@ -247,14 +243,6 @@ namespace gui {
 
 	void Painter::afterRepaint(RepaintParams *p) {
 		// Nothing special needs to be done.
-	}
-
-	Color Painter::getBgColor() {
-		// Temporary: Green
-		return Color(0.0f, 1.0f, 0.0f, 1.0f);
-
-		// Transparent.
-		return Color(0.0f, 0.0f, 0.0f, 0.0f);
 	}
 
 #endif

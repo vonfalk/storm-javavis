@@ -111,9 +111,6 @@ namespace gui {
 
 		// Do the platform specific of the repaint cycle.
 		bool doRepaintI(bool waitForVSync);
-
-		// Get the background color.
-		Color getBgColor();
 	};
 
 }

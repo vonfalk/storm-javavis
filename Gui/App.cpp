@@ -3,6 +3,7 @@
 #include "LibData.h"
 #include "Window.h"
 #include "Frame.h"
+#include "Defaults.h"
 
 #ifdef POSIX
 // NOTE: This does not exist on all POSIX systems (eg. MacOS)
@@ -15,10 +16,17 @@ namespace gui {
 		return app(e)->defaultFont;
 	}
 
+	Color defaultBgColor(EnginePtr e) {
+		return app(e)->defaultBgColor;
+	}
+
 	App::App() : appWait(null), creating(null) {
 		windows = new (this) Map<Handle, Window *>();
 		liveWindows = new (this) Set<Window *>();
-		defaultFont = gui::sysDefaultFont(engine());
+
+		Defaults def = sysDefaults(engine());
+		defaultFont = def.font;
+		defaultBgColor = def.bgColor;
 
 		init();
 	}
@@ -98,8 +106,13 @@ namespace gui {
 
 	App *app(EnginePtr e) {
 		App *&v = appData(e.v);
-		if (!v)
-			v = new (e.v) App();
+		if (!v) {
+			// Try to be threadsafe.
+			static util::Lock l;
+			util::Lock::L z(l);
+			if (!v)
+				v = new (e.v) App();
+		}
 		return v;
 	}
 

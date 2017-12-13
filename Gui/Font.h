@@ -102,7 +102,4 @@ namespace gui {
 		void changed();
 	};
 
-	// Create the system default font for UI.
-	Font *sysDefaultFont(EnginePtr e);
-
 }

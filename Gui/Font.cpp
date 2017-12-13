@@ -235,13 +235,6 @@ namespace gui {
 		return shared->textFmt;
 	}
 
-	Font *sysDefaultFont(EnginePtr e) {
-		NONCLIENTMETRICS ncm;
-		ncm.cbSize = sizeof(ncm) - sizeof(ncm.iPaddedBorderWidth);
-		SystemParametersInfo(SPI_GETNONCLIENTMETRICS, ncm.cbSize, &ncm, 0);
-		return new (e.v) Font(ncm.lfMessageFont);
-	}
-
 #endif
 
 #ifdef GUI_GTK
@@ -268,16 +261,6 @@ namespace gui {
 			// TODO: Set underline and strikethrough as well.
 		}
 		return shared->desc;
-	}
-
-	Font *sysDefaultFont(EnginePtr e) {
-		GtkWidget *dummy = gtk_label_new("dummy");
-		GtkStyleContext *style = gtk_widget_get_style_context(dummy);
-		const PangoFontDescription *desc = null;
-		gtk_style_context_get(style, GTK_STATE_FLAG_NORMAL, "font", &desc, NULL);
-		Font *r = new (e.v) Font(*desc);
-		gtk_widget_destroy(dummy);
-		return r;
 	}
 
 #endif

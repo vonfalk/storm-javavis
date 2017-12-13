@@ -15,7 +15,10 @@ namespace gui {
 	class AppWait;
 
 	// Get the default font.
-	Font *STORM_FN defaultFont(EnginePtr e);
+	Font *STORM_FN defaultFont(EnginePtr e) ON(Ui);
+
+	// Get the default background color.
+	Color STORM_FN defaultBgColor(EnginePtr e) ON(Ui);
 
 	/**
 	 * Application object. One instance of this object is created to manage all live windows for one
@@ -26,6 +29,9 @@ namespace gui {
 	public:
 		// Default font.
 		Font *defaultFont;
+
+		// Default background color.
+		Color defaultBgColor;
 
 		// Indicate that 'w' is about to create a window and attach it. This makes us forward any
 		// messages addressed to an unknown window to 'w'. This is only done until 'addWindow(w)' is
