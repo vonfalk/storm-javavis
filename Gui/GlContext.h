@@ -37,6 +37,10 @@ namespace gui {
 		// Create.
 		GlContext();
 
+		// Call before the GL context is destroyed so that the nanovg context can be destroyed
+		// properly.
+		void destroy();
+
 		// Set this context as the active one.
 		virtual void setActive() = 0;
 

@@ -22,11 +22,18 @@ namespace gui {
 	GlContext::GlContext() : nvg(null) {}
 
 	GlContext::~GlContext() {
-		if (nvg)
-			nvgDeleteGL2(nvg);
+		if (nvg) {
+			WARNING(L"'destroy' was not called on a GlContext!");
+		}
 
 		if (active == this)
 			active = null;
+	}
+
+	void GlContext::destroy() {
+		if (nvg)
+			nvgDeleteGL2(nvg);
+		nvg = null;
 	}
 
 	GlContext *GlContext::active = null;
@@ -124,6 +131,8 @@ namespace gui {
 	}
 
 	EglContext::~EglContext() {
+		destroy();
+
 		if (surface)
 			eglDestroySurface(display->context, surface);
 
@@ -248,6 +257,8 @@ namespace gui {
 	}
 
 	GlxContext::~GlxContext() {
+		destroy();
+
 		if (display)
 			display->release();
 	}
