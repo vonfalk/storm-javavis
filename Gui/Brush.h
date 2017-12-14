@@ -26,18 +26,13 @@ namespace gui {
 		virtual void prepare(const Rect &bound, ID2D1Brush *b);
 #endif
 #ifdef GUI_GTK
-		// Set the source of the cairo_t to this brush.
-		inline void setSource(cairo_t *c, const Rect &bound) {
-			cairo_pattern_t *b = get();
-			if (b) {
-				prepare(bound, b);
-				// TODO: Handle opacity!
-				cairo_set_source(c, b);
-			}
-		}
+		// Set the stroke of the NVGcontext.
+		virtual void setStroke(NVGcontext *c, const Rect &bound);
 
-		// Prepare for drawing a bounding box of 'bound'.
-		virtual void prepare(const Rect &bound, cairo_pattern_t *brush);
+		// Set the fill of the NVGcontext.
+		virtual void setFill(NVGcontext *c, const Rect &bound);
+
+		// TODO: Care about 'opacity'!
 #endif
 
 		// Opacity.
@@ -56,7 +51,8 @@ namespace gui {
 		virtual void create(Painter *owner, ID2D1Resource **out);
 #endif
 #ifdef GUI_GTK
-		virtual cairo_pattern_t *create();
+		virtual void setStroke(NVGcontext *c, const Rect &bound);
+		virtual void setFill(NVGcontext *c, const Rect &bound);
 #endif
 
 	private:

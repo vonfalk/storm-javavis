@@ -47,17 +47,7 @@ namespace gui {
 
 #endif
 #ifdef GUI_GTK
-
-		// Get the resource, lazily creates it if needed.
-		cairo_pattern_t *get() {
-			if (!resource)
-				resource = create();
-			return resource;
-		}
-
-		// Create the resource.
-		virtual cairo_pattern_t *create();
-
+		// Nothing here yet.
 #endif
 
 	private:

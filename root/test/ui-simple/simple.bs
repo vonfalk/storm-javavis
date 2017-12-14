@@ -65,6 +65,7 @@ class SimpleDraw extends Painter {
 			textColor = blue;
 			text = Text("Hello!", defaultFont);
 		}
+		bgColor = red;
 
 		textSize = text.size();
 		text.layoutBorder(textSize);

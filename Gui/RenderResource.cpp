@@ -26,13 +26,7 @@ namespace gui {
 #ifdef GUI_GTK
 
 	void RenderResource::destroy() {
-		if (resource)
-			cairo_pattern_destroy(resource);
 		resource = null;
-	}
-
-	cairo_pattern_t *RenderResource::create() {
-		return null;
 	}
 
 #endif

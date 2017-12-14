@@ -14,7 +14,9 @@ namespace gui {
 #endif
 #ifdef GUI_GTK
 
-	void Brush::prepare(const Rect &r, cairo_pattern_t *b) {}
+	void Brush::setStroke(NVGcontext *c, const Rect &bound) {}
+
+	void Brush::setFill(NVGcontext *c, const Rect &bound) {}
 
 #endif
 
@@ -29,8 +31,12 @@ namespace gui {
 #endif
 #ifdef GUI_GTK
 
-	cairo_pattern_t *SolidBrush::create() {
-		return cairo_pattern_create_rgba(color.r, color.g, color.b, color.a);
+	void SolidBrush::setStroke(NVGcontext *c, const Rect &bound) {
+		nvgStrokeColor(c, nvg(color));
+	}
+
+	void SolidBrush::setFill(NVGcontext *c, const Rect &bound) {
+		nvgFillColor(c, nvg(color));
 	}
 
 #endif

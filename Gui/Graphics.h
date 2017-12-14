@@ -187,32 +187,21 @@ namespace gui {
 #ifdef GUI_GTK
 			State() {
 				lineWidth = 1.0f;
+				// Note: unless we add 0.5 here, all whole numbers will be between pixels.
 				tfm0 = 1; tfm1 = 0;
 				tfm2 = 0; tfm3 = 1;
-				tfm4 = 0; tfm5 = 0;
+				tfm4 = 0.5f; tfm5 = 0.5f;
 				layer = Layer::none;
 			}
 
-			State(const cairo_matrix_t &tfm, Float lineWidth) {
-				this->lineWidth = 0;
-				transform(tfm);
+			State(const float *tfm, Float lineWidth) {
+				this->lineWidth = lineWidth;
+				memcpy(&tfm0, tfm, sizeof(float)*6);
 			}
 
-			// Set the transform.
-			void transform(const cairo_matrix_t &src) {
-				tfm0 = float(src.xx); tfm1 = float(src.yx);
-				tfm2 = float(src.xy); tfm3 = float(src.yy);
-				tfm4 = float(src.x0); tfm5 = float(src.y0);
-			}
-
-			// Get the transform.
-			cairo_matrix_t transform() const {
-				cairo_matrix_t r = {
-					tfm0, tfm1,
-					tfm2, tfm3,
-					tfm4, tfm5
-				};
-				return r;
+			// Get the transform (array of 6 floats).
+			float *transform() {
+				return &tfm0;
 			}
 #endif
 
@@ -258,6 +247,10 @@ namespace gui {
 #ifdef GUI_WIN32
 		// Get a layer.
 		ID2D1Layer *layer();
+#endif
+#ifdef GUI_GTK
+		// Get the NVGcontext used here. Makes sure that the proper context is active.
+		NVGcontext *context();
 #endif
 
 		// Prepare rendering a new frame (backend specific).

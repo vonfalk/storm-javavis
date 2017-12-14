@@ -63,6 +63,11 @@ namespace gui {
 	}
 
 	void Painter::destroy() {
+		// Wait until we're not rendering anymore.
+		while (rendering)
+			os::UThread::leave();
+
+		// Go ahead and destroy all resources associated with this painter.
 		destroyResources();
 
 		graphics = null;
@@ -201,13 +206,6 @@ namespace gui {
 		nvgGlobalCompositeOperation(ctx->nvg, NVG_SOURCE_OVER);
 		nvgLineCap(ctx->nvg, NVG_ROUND);
 		// Note: we could set some more...
-
-		nvgStrokeColor(ctx->nvg, nvgRGBf(1.0f, 0.0f, 0.0f));
-		nvgStrokeWidth(ctx->nvg, 2);
-		nvgBeginPath(ctx->nvg);
-		nvgMoveTo(ctx->nvg, 10, 10);
-		nvgLineTo(ctx->nvg, 190, 170);
-		nvgStroke(ctx->nvg);
 
 		try {
 			graphics->beforeRender();

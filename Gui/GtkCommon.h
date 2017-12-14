@@ -20,12 +20,8 @@ namespace gui {
 	/**
 	 * Define generic types to be used in Storm class declarations.
 	 */
-	typedef cairo_pattern_t OsResource;
+	typedef void *OsResource;
 	typedef PangoLayout OsTextLayout;
-
-	// More convenient matrix operations.
-	cairo_matrix_t cairoMultiply(const cairo_matrix_t &a, const cairo_matrix_t &b);
-	cairo_matrix_t cairo(Transform *tfm);
 
 	// Convert to/from Pango units.
 	inline int toPango(float val) { return int(val * PANGO_SCALE); }
