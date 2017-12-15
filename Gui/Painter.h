@@ -62,6 +62,10 @@ namespace gui {
 		// Get our render target.
 		inline ID2D1RenderTarget *renderTarget() { return target.target(); }
 #endif
+#ifdef GUI_GTK
+		// Get the NVG context.
+		inline NVGcontext *nvgContext() { return target.context()->nvg; }
+#endif
 	private:
 		friend class RenderMgr;
 

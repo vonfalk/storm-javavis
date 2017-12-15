@@ -170,6 +170,7 @@ namespace gui {
 #ifdef GUI_WIN32
 			State() {
 				lineWidth = 1.0f;
+				opacity = 1.0f;
 				*transform() = dxUnit();
 			}
 
@@ -187,6 +188,7 @@ namespace gui {
 #ifdef GUI_GTK
 			State() {
 				lineWidth = 1.0f;
+				opacity = 1.0f;
 				// Note: unless we add 0.5 here, all whole numbers will be between pixels.
 				tfm0 = 1; tfm1 = 0;
 				tfm2 = 0; tfm3 = 1;

@@ -47,12 +47,20 @@ namespace gui {
 
 #endif
 #ifdef GUI_GTK
-		// Nothing here yet.
+
+		// We're storing an integer texture id inside the render resource. Returns -1 if empty.
+		int texture() const {
+			return ((int)(size_t)resource) - 1;
+		}
+		void texture(int texture) {
+			resource = (OsResource *)(size_t)(texture + 1);
+		}
+
 #endif
 
 	private:
 		// The resource itself.
-		OsResource *resource;
+		UNKNOWN(PTR_NOGC) OsResource *resource;
 
 		// Our owner (if any).
 		Painter *owner;

@@ -14,6 +14,18 @@ namespace gui {
 #endif
 #ifdef GUI_GTK
 
+	void Brush::stroke(NVGcontext *c, const Rect &bound, Float opactiy) {
+		nvgGlobalAlpha(c, opacity * this->opacity);
+		setStroke(c, bound);
+		nvgStroke(c);
+	}
+
+	void Brush::fill(NVGcontext *c, const Rect &bound, Float opacity) {
+		nvgGlobalAlpha(c, opacity * this->opacity);
+		setFill(c, bound);
+		nvgFill(c);
+	}
+
 	void Brush::setStroke(NVGcontext *c, const Rect &bound) {}
 
 	void Brush::setFill(NVGcontext *c, const Rect &bound) {}
@@ -103,11 +115,28 @@ namespace gui {
 #endif
 #ifdef GUI_GTK
 
-	void Gradient::applyStops(cairo_pattern_t *to) {
-		for (Nat i = 0; i < myStops->count(); i++) {
-			GradientStop &at = myStops->at(i);
-			cairo_pattern_add_color_stop_rgba(to, at.pos, at.color.r, at.color.g, at.color.b, at.color.a);
-		}
+	void Gradient::setStroke(NVGcontext *c, const Rect &bound) {
+		if (myStops->count() >= 2)
+			nvgStrokePaint(c, createPaint(c, bound));
+		else if (myStops->count() >= 1)
+			nvgStrokeColor(c, nvg(myStops->at(0).color));
+		else
+			nvgStrokeColor(c, nvgRGBAf(0, 0, 0, 0));
+	}
+
+	void Gradient::setFill(NVGcontext *c, const Rect &bound) {
+		if (myStops->count() >= 2)
+			nvgFillPaint(c, createPaint(c, bound));
+		else if (myStops->count() >= 1)
+			nvgFillColor(c, nvg(myStops->at(0).color));
+		else
+			nvgFillColor(c, nvgRGBAf(0, 0, 0, 0));
+	}
+
+	NVGpaint Gradient::createPaint(NVGcontext *c, const Rect &bound) {
+		assert(false);
+		NVGpaint p = {};
+		return p;
 	}
 
 #endif
@@ -141,42 +170,115 @@ namespace gui {
 #endif
 #ifdef GUI_GTK
 
-	cairo_pattern_t *LinearGradient::create() {
-		// Using the points (0, 1) - (0, -1) (= 0 deg) for simplicity. We'll transform it later.
-		cairo_pattern_t *r = cairo_pattern_create_linear(0, 1, 0, -1);
-		applyStops(r);
-		return r;
+	namespace texture {
+		// A resolution of 128 should be enough since we'll be using linear interpolation on the texture.
+		static const Nat width = 128;
+
+		static Color lerp(Float x, const Color &a, const Color &b) {
+			Float y = 1.0f - x;
+			return Color(a.r*y + b.r*x, a.g*y + b.g*x, a.b*y + b.b*x, a.a*y + b.a*x);
+		}
+
+		static void write(byte *to, const Color &c) {
+			to[0] = byte(c.r * 255.0f);
+			to[1] = byte(c.g * 255.0f);
+			to[2] = byte(c.b * 255.0f);
+			to[3] = byte(c.a * 255.0f);
+		}
+
+		static void fill(byte *data, Float start, Float end, const Color &from, const Color &to) {
+			if (start >= end)
+				return;
+
+			int startI = int(start * width);
+			int endI = int(end * width);
+			int delta = endI - startI;
+			for (int i = 0; i < delta; i++) {
+				Color c = lerp(Float(i) / delta, from, to);
+				write(data + (startI + i)*4, c);
+			}
+		}
+
+		static int create(NVGcontext *c, Array<GradientStop> *stops) {
+			byte data[width*4];
+
+			// Fill from zero until the first stop.
+			{
+				const GradientStop &first = stops->first();
+				fill(data, 0.0f, first.pos, first.color, first.color);
+			}
+
+			// Fill the space between each step.
+			for (Nat i = 0; i < stops->count() - 1; i++) {
+				const GradientStop &from = stops->at(i);
+				const GradientStop &to = stops->at(i + 1);
+				fill(data, from.pos, to.pos, from.color, to.color);
+			}
+
+			// Fill from the last stop until the end.
+			{
+				const GradientStop &last = stops->last();
+				fill(data, last.pos, 1.0f, last.color, last.color);
+			}
+
+			// Create the texture.
+			return nvgCreateImageRGBA(c, 1, width, 0, data);
+		}
 	}
 
-	void LinearGradient::prepare(const Rect &bound, cairo_pattern_t *r) {
-		Size size = bound.size();
-		Point center = bound.center();
+	NVGpaint LinearGradient::createPaint(NVGcontext *c, const Rect &bound) {
+		Point start, end;
+		Float distance;
+		compute(bound, start, end, distance);
 
-		float w = max(size.w, size.h);
-		float scale = 1.0f / w;
+		if (myStops->count() == 2) {
+			// Use the simple approach.
+			GradientStop from = myStops->at(0);
+			GradientStop to = myStops->at(1);
 
-		// Compute a matrix so that 'start' and 'end' map to the points (0, 0) and (1, 0).
-		cairo_matrix_t tfm;
-		// Note: transformations are applied in reverse.
-		cairo_matrix_init_rotate(&tfm, -angle.rad());
-		cairo_matrix_scale(&tfm, scale, scale);
-		cairo_matrix_translate(&tfm, -center.x, -center.y);
-		cairo_pattern_set_matrix(r, &tfm);
+			// Adjust the points to the position of the gradient stops.
+			Point dir = end - start;
+			end = start + dir*to.pos;
+			start = start + dir*from.pos;
+
+			return nvgLinearGradient(c, start.x, start.y, end.x, end.y, nvg(from.color), nvg(to.color));
+		}
+
+		// We need to create a texture, and use that...
+		if (texture() < 0) {
+			texture(gui::texture::create(c, myStops));
+		}
+
+		// Figure out where we want to draw the texture.
+		Point perp = storm::geometry::angle(angle - deg(90));
+		Point origin = start + perp * distance/2;
+
+		return nvgImagePattern(c, origin.x, origin.y, distance, distance, (angle + deg(180)).rad(), texture(), 1.0f);
+	}
+
+	void LinearGradient::destroy() {
+		Gradient::destroy();
 	}
 
 #endif
 
 	void LinearGradient::compute(const Rect &bound, Point &start, Point &end) {
+		Float d;
+		compute(bound, start, end, d);
+	}
+
+	void LinearGradient::compute(const Rect &bound, Point &start, Point &end, Float &w) {
 		Size size = bound.size();
 		Point dir = storm::geometry::angle(angle);
 		Point c = center(size);
 
-		float w = max(size.w, size.h);
+		w = max(size.w, size.h);
 		start = c + dir * -w;
 		end = c + dir * w;
 
 		start += bound.p0;
 		end += bound.p0;
+		w *= 2;
 	}
 
 }

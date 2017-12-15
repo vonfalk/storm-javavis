@@ -32,7 +32,6 @@ namespace storm {
 		Color STORM_FN operator +(const Color &b) const;
 		Color STORM_FN operator -(const Color &b) const;
 
-		// Expose these once we have Floats!
 		// These do not alter the alpha channel.
 		Color STORM_FN operator *(Float factor) const;
 		Color STORM_FN operator /(Float factor) const;

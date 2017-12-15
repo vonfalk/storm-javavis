@@ -376,20 +376,18 @@ namespace gui {
 
 	void Graphics::line(Point from, Point to, Brush *style) {
 		NVGcontext *c = context();
-		style->setStroke(c, Rect(from, to).normalized());
 		nvgBeginPath(c);
 		nvgMoveTo(c, from.x, from.y);
 		nvgLineTo(c, to.x, to.y);
-		nvgStroke(c);
+		style->stroke(c, Rect(from, to).normalized(), state.opacity);
 	}
 
 	void Graphics::draw(Rect rect, Brush *style) {
 		NVGcontext *c = context();
-		style->setStroke(c, rect);
 		nvgBeginPath(c);
 		Size sz = rect.size();
 		nvgRect(c, rect.p0.x, rect.p0.y, sz.w, sz.h);
-		nvgStroke(c);
+		style->stroke(c, rect, state.opacity);
 	}
 
 	static void roundedRect(NVGcontext *c, Rect rect, Size edges) {
@@ -421,10 +419,9 @@ namespace gui {
 
 	void Graphics::draw(Rect rect, Size edges, Brush *style) {
 		NVGcontext *c = context();
-		style->setStroke(c, rect);
 		nvgBeginPath(c);
 		roundedRect(c, rect, edges);
-		nvgStroke(c);
+		style->stroke(c, rect, state.opacity);
 	}
 
 	static void drawOval(NVGcontext *c, Rect rect) {
@@ -435,52 +432,54 @@ namespace gui {
 
 	void Graphics::oval(Rect rect, Brush *style) {
 		NVGcontext *c = context();
-		style->setStroke(c, rect);
 		nvgBeginPath(c);
 		drawOval(c, rect);
-		nvgStroke(c);
+		style->stroke(c, rect, state.opacity);
 	}
 
 	void Graphics::draw(Path *path, Brush *style) {
 		NVGcontext *c = context();
 		path->draw(c);
-		style->setStroke(c, path->bound());
-		nvgStroke(c);
+		style->stroke(c, path->bound(), state.opacity);
 	}
 
 	void Graphics::fill(Rect rect, Brush *style) {
 		NVGcontext *c = context();
-		style->setFill(c, rect);
 		nvgBeginPath(c);
 		Size sz = rect.size();
 		nvgRect(c, rect.p0.x, rect.p0.y, sz.w, sz.h);
-		nvgFill(c);
+		style->fill(c, rect, state.opacity);
 	}
 
 	void Graphics::fill(Rect rect, Size edges, Brush *style) {
 		NVGcontext *c = context();
-		style->setFill(c, rect);
 		nvgBeginPath(c);
 		roundedRect(c, rect, edges);
-		nvgFill(c);
+		style->fill(c, rect, state.opacity);
 	}
 
 	void Graphics::fill(Brush *style) {
-		// TODO!
+		NVGcontext *c = context();
+		nvgResetTransform(c);
+		Size sz = size();
+		nvgBeginPath(c);
+		nvgRect(c, 0, 0, sz.w + 1.0f, sz.h + 1.0f);
+		style->fill(c, Rect(Point(), sz), state.opacity);
+		// Go back to the previous transform.
+		nvgSetTransform(c, state.transform());
 	}
 
 	void Graphics::fillOval(Rect rect, Brush *style) {
-		// cairo_oval(info, rect);
-
-		// style->setSource(info.device(), rect);
-		// cairo_fill(info.device());
+		NVGcontext *c = context();
+		nvgBeginPath(c);
+		drawOval(c, rect);
+		style->fill(c, rect, state.opacity);
 	}
 
 	void Graphics::fill(Path *path, Brush *style) {
 		NVGcontext *c = context();
 		path->draw(c);
-		style->setFill(c, path->bound());
-		nvgFill(c);
+		style->fill(c, path->bound(), state.opacity);
 	}
 
 	void Graphics::draw(Bitmap *bitmap) {}

@@ -26,7 +26,14 @@ namespace gui {
 #ifdef GUI_GTK
 
 	void RenderResource::destroy() {
-		resource = null;
+		if (texture() >= 0) {
+			if (owner) {
+				nvgDeleteImage(owner->nvgContext(), texture());
+			}
+			// NOTE: Destroying the nvgContext destroys the textures created there as well, so we
+			// don't need to worry in case we do not have an owner.
+		}
+		texture(-1);
 	}
 
 #endif

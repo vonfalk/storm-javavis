@@ -26,13 +26,17 @@ namespace gui {
 		virtual void prepare(const Rect &bound, ID2D1Brush *b);
 #endif
 #ifdef GUI_GTK
+		// Stroke the current path.
+		void stroke(NVGcontext *c, const Rect &bound, Float opacity);
+
+		// Fill the current path.
+		void fill(NVGcontext *c, const Rect &bound, Float opacity);
+
 		// Set the stroke of the NVGcontext.
 		virtual void setStroke(NVGcontext *c, const Rect &bound);
 
 		// Set the fill of the NVGcontext.
 		virtual void setFill(NVGcontext *c, const Rect &bound);
-
-		// TODO: Care about 'opacity'!
 #endif
 
 		// Opacity.
@@ -107,18 +111,24 @@ namespace gui {
 		// Destroy the stops.
 		virtual void destroy();
 
+#ifdef GUI_GTK
+		virtual void setStroke(NVGcontext *c, const Rect &bound);
+		virtual void setFill(NVGcontext *c, const Rect &bound);
+
+		// Called to create the paint for this gradient.
+		virtual NVGpaint createPaint(NVGcontext *c, const Rect &bound);
+#endif
 	protected:
 #ifdef GUI_WIN32
 		// Get the stops object.
 		ID2D1GradientStopCollection *dxStops(Painter *owner);
 #endif
-#ifdef GUI_GTK
-		// Apply stops to a pattern.
-		void applyStops(cairo_pattern_t *to);
-#endif
-	private:
-		ID2D1GradientStopCollection *dxObject;
+		// Current stops.
 		Array<GradientStop> *myStops;
+
+	private:
+		// DX object containing the gradient stops.
+		ID2D1GradientStopCollection *dxObject;
 	};
 
 
@@ -144,11 +154,11 @@ namespace gui {
 		virtual void prepare(const Rect &s, ID2D1Brush *b);
 #endif
 #ifdef GUI_GTK
-		// Create.
-		virtual cairo_pattern_t *create();
+		// Create the NVGpaint to use for this gradient.
+		virtual NVGpaint createPaint(NVGcontext *c, const Rect &bound);
 
-		// Prepare.
-		virtual void prepare(const Rect &s, cairo_pattern_t *b);
+		// Destroy any resources here.
+		virtual void destroy();
 #endif
 
 		// The angle.
@@ -157,6 +167,7 @@ namespace gui {
 	private:
 		// Compute points.
 		void compute(const Rect &sz, Point &start, Point &end);
+		void compute(const Rect &sz, Point &start, Point &end, Float &distance);
 	};
 
 	// TODO: Implement a radial gradient as well!
