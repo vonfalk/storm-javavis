@@ -130,6 +130,8 @@ namespace gui {
 		}
 	}
 
+#ifdef GUI_WIN32
+
 	void Painter::waitForFrame() {
 		// Wait until we have rendered a frame, so that Windows think we did it to satisfy the paint
 		// request.
@@ -137,8 +139,6 @@ namespace gui {
 		while (old == repaintCounter)
 			os::UThread::leave();
 	}
-
-#ifdef GUI_WIN32
 
 	void Painter::doRepaintI(bool waitForVSync) {
 		if (!target.target())
@@ -188,6 +188,12 @@ namespace gui {
 
 #endif
 #ifdef GUI_GTK
+
+	void Painter::waitForFrame() {
+		// Just wait until we're not drawing at the moment.
+		while (rendering)
+			os::UThread::leave();
+	}
 
 	bool Painter::doRepaintI(bool waitForVSync) {
 		if (!target.any())
