@@ -14,14 +14,14 @@ namespace gui {
 #endif
 #ifdef GUI_GTK
 
-	void Brush::stroke(NVGcontext *c, const Rect &bound, Float opactiy) {
-		nvgGlobalAlpha(c, opacity * this->opacity);
+	void Brush::stroke(NVGcontext *c, const Rect &bound) {
+		nvgGlobalAlpha(c, opacity);
 		setStroke(c, bound);
 		nvgStroke(c);
 	}
 
-	void Brush::fill(NVGcontext *c, const Rect &bound, Float opacity) {
-		nvgGlobalAlpha(c, opacity * this->opacity);
+	void Brush::fill(NVGcontext *c, const Rect &bound) {
+		nvgGlobalAlpha(c, opacity);
 		setFill(c, bound);
 		nvgFill(c);
 	}

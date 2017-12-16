@@ -27,10 +27,10 @@ namespace gui {
 #endif
 #ifdef GUI_GTK
 		// Stroke the current path.
-		void stroke(NVGcontext *c, const Rect &bound, Float opacity);
+		void stroke(NVGcontext *c, const Rect &bound);
 
 		// Fill the current path.
-		void fill(NVGcontext *c, const Rect &bound, Float opacity);
+		void fill(NVGcontext *c, const Rect &bound);
 
 		// Set the stroke of the NVGcontext.
 		virtual void setStroke(NVGcontext *c, const Rect &bound);

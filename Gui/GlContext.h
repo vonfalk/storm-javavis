@@ -181,6 +181,53 @@ namespace gui {
 		static DisplayMap displays;
 	};
 
+	/**
+	 * Render to a texture.
+	 */
+	class TextureContext : public GlContext {
+	public:
+		// Create inside another context.
+		TextureContext(GlContext *inside, Size size);
+
+		// Destroy.
+		virtual ~TextureContext();
+
+		// Swap buffers. Does nothing.
+		virtual void swapBuffers();
+
+		// Resize.
+		void resize(Size size);
+
+		// Get a NVG image id for the texture.
+		int nvgImage();
+
+	protected:
+		// Set as active.
+		virtual void setActive();
+
+	private:
+		// Owning context.
+		GlContext *owner;
+
+		// The of this texture.
+		Size mySize;
+
+		// Frame buffer object.
+		GLuint framebuffer;
+
+		// Texture we're rendering to.
+		GLuint texture;
+
+		// Depth- and stencil buffer.
+		GLuint depth;
+
+		// NVG image id. -1 if not yet created.
+		int nvgId;
+
+		// Create/resize the buffers.
+		void createBuffers(Size size);
+	};
+
 }
 
 #else

@@ -19,7 +19,10 @@ namespace gui {
 		return result;
 	}
 
-	GlContext::GlContext() : nvg(null) {}
+	GlContext::GlContext() : nvg(null) {
+		// The constructor generally activates the new context, but we can not be sure.
+		active = null;
+	}
 
 	GlContext::~GlContext() {
 		if (nvg) {
@@ -42,6 +45,7 @@ namespace gui {
 		if (active == this)
 			return;
 		setActive();
+		active = this;
 	}
 
 
@@ -142,6 +146,7 @@ namespace gui {
 
 	void EglContext::setActive() {
 		eglMakeCurrent(display->display, surface, surface, display->context);
+		glBindFramebuffer(GL_FRAMEBUFFER, 0);
 	}
 
 	void EglContext::swapBuffers() {
@@ -265,10 +270,94 @@ namespace gui {
 
 	void GlxContext::setActive() {
 		glXMakeCurrent(display->display, window, display->context);
+		glBindFramebuffer(GL_FRAMEBUFFER, 0);
 	}
 
 	void GlxContext::swapBuffers() {
 		glXSwapBuffers(display->display, window);
+	}
+
+	/**
+	 * Texture.
+	 *
+	 * Inspired by http://www.opengl-tutorial.org/intermediate-tutorials/tutorial-14-render-to-texture/
+	 */
+
+	TextureContext::TextureContext(GlContext *owner, Size size) :
+		owner(owner), mySize(size), framebuffer(0), texture(0), depth(0), nvgId(-1) {
+
+		nvg = owner->nvg;
+		owner->activate();
+
+		// Create a framebuffer.
+		glGenFramebuffers(1, &framebuffer);
+		glBindFramebuffer(GL_FRAMEBUFFER, framebuffer);
+
+		// Create the texture and depth/stencil buffer.
+		glGenTextures(1, &texture);
+		glGenRenderbuffers(1, &depth);
+
+		// Create the buffers.
+		createBuffers(size);
+
+		// Bind them.
+		glFramebufferTexture(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, texture, 0);
+		glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, depth);
+
+		// Set output.
+		GLenum draw = GL_COLOR_ATTACHMENT0;
+		glDrawBuffers(1, &draw);
+		glViewport(0, 0, size.w, size.h);
+	}
+
+	TextureContext::~TextureContext() {
+		glDeleteFramebuffers(1, &framebuffer);
+		glDeleteRenderbuffers(1, &depth);
+		glDeleteTextures(1, &texture);
+
+		nvg = null;
+	}
+
+	void TextureContext::createBuffers(Size size) {
+		// Create the texture containing the color information we need.
+		glBindTexture(GL_TEXTURE_2D, texture);
+		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, int(size.w), int(size.h), 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+
+		// Create a depth/stencil buffer.
+		glBindRenderbuffer(GL_RENDERBUFFER, depth);
+		glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, int(size.w), int(size.h));
+	}
+
+	void TextureContext::resize(Size size) {
+		if (size == mySize)
+			return;
+
+		activate();
+		createBuffers(size);
+		mySize = size;
+		if (nvgId >= 0) {
+			nvgResizeImage(nvg, nvgId, int(mySize.w), int(mySize.h));
+		}
+	}
+
+	void TextureContext::swapBuffers() {}
+
+	void TextureContext::setActive() {
+		owner->activate();
+		glBindFramebuffer(GL_FRAMEBUFFER, framebuffer);
+		GLenum draw = GL_COLOR_ATTACHMENT0;
+		glDrawBuffers(1, &draw);
+	}
+
+	int TextureContext::nvgImage() {
+		if (nvgId < 0) {
+			nvgId = nvglCreateImageFromHandleGL2(nvg, texture,
+												int(mySize.w), int(mySize.h),
+												NVG_IMAGE_NEAREST | NVG_IMAGE_NODELETE);
+		}
+		return nvgId;
 	}
 
 }

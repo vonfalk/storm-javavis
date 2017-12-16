@@ -379,7 +379,7 @@ namespace gui {
 		nvgBeginPath(c);
 		nvgMoveTo(c, from.x, from.y);
 		nvgLineTo(c, to.x, to.y);
-		style->stroke(c, Rect(from, to).normalized(), state.opacity);
+		style->stroke(c, Rect(from, to).normalized());
 	}
 
 	void Graphics::draw(Rect rect, Brush *style) {
@@ -387,7 +387,7 @@ namespace gui {
 		nvgBeginPath(c);
 		Size sz = rect.size();
 		nvgRect(c, rect.p0.x, rect.p0.y, sz.w, sz.h);
-		style->stroke(c, rect, state.opacity);
+		style->stroke(c, rect);
 	}
 
 	static void roundedRect(NVGcontext *c, Rect rect, Size edges) {
@@ -421,7 +421,7 @@ namespace gui {
 		NVGcontext *c = context();
 		nvgBeginPath(c);
 		roundedRect(c, rect, edges);
-		style->stroke(c, rect, state.opacity);
+		style->stroke(c, rect);
 	}
 
 	static void drawOval(NVGcontext *c, Rect rect) {
@@ -434,13 +434,13 @@ namespace gui {
 		NVGcontext *c = context();
 		nvgBeginPath(c);
 		drawOval(c, rect);
-		style->stroke(c, rect, state.opacity);
+		style->stroke(c, rect);
 	}
 
 	void Graphics::draw(Path *path, Brush *style) {
 		NVGcontext *c = context();
 		path->draw(c);
-		style->stroke(c, path->bound(), state.opacity);
+		style->stroke(c, path->bound());
 	}
 
 	void Graphics::fill(Rect rect, Brush *style) {
@@ -448,14 +448,14 @@ namespace gui {
 		nvgBeginPath(c);
 		Size sz = rect.size();
 		nvgRect(c, rect.p0.x, rect.p0.y, sz.w, sz.h);
-		style->fill(c, rect, state.opacity);
+		style->fill(c, rect);
 	}
 
 	void Graphics::fill(Rect rect, Size edges, Brush *style) {
 		NVGcontext *c = context();
 		nvgBeginPath(c);
 		roundedRect(c, rect, edges);
-		style->fill(c, rect, state.opacity);
+		style->fill(c, rect);
 	}
 
 	void Graphics::fill(Brush *style) {
@@ -464,7 +464,7 @@ namespace gui {
 		Size sz = size();
 		nvgBeginPath(c);
 		nvgRect(c, 0, 0, sz.w + 1.0f, sz.h + 1.0f);
-		style->fill(c, Rect(Point(), sz), state.opacity);
+		style->fill(c, Rect(Point(), sz));
 		// Go back to the previous transform.
 		nvgSetTransform(c, state.transform());
 	}
@@ -473,13 +473,13 @@ namespace gui {
 		NVGcontext *c = context();
 		nvgBeginPath(c);
 		drawOval(c, rect);
-		style->fill(c, rect, state.opacity);
+		style->fill(c, rect);
 	}
 
 	void Graphics::fill(Path *path, Brush *style) {
 		NVGcontext *c = context();
 		path->draw(c);
-		style->fill(c, path->bound(), state.opacity);
+		style->fill(c, path->bound());
 	}
 
 	void Graphics::draw(Bitmap *bitmap) {}
