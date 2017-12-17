@@ -30,6 +30,9 @@ extern "C" {
 	// Set the size of an image.
 	void nvgResizeImage(NVGcontext *ctx, int id, int w, int h);
 
+	// Create image patterns using a transformation matrix instead of the parameters in nvgImagePattern.
+	NVGpaint nvgImagePatternRaw(NVGcontext *ctx, float *tfm, float w, float h, int image, float alpha);
+
 }
 
 namespace gui {

@@ -124,7 +124,7 @@ namespace gui {
 		// Owner.
 		Painter *owner;
 
-		// A layer in D2D.
+		// A layer in D2D/OpenGL.
 		class Layer {
 			STORM_VALUE;
 		public:
@@ -132,7 +132,7 @@ namespace gui {
 				v = null;
 			}
 
-			Layer(ID2D1Layer *layer) {
+			Layer(OsLayer *layer) {
 				v = layer;
 			}
 
@@ -140,23 +140,15 @@ namespace gui {
 				return v != null;
 			}
 
-#ifdef GUI_GTK
-			enum Kind {
-				none,
-				group,
-				save,
-			};
-
-			Layer(Kind k) {
-				v = (ID2D1Layer *)k;
+			inline bool operator ==(const Layer &o) const {
+				return v == o.v;
 			}
 
-			inline Kind kind() const {
-				return (Kind)(size_t)v;
+			inline bool operator !=(const Layer &o) const {
+				return v != o.v;
 			}
-#endif
 
-			UNKNOWN(PTR_NOGC) ID2D1Layer *v;
+			UNKNOWN(PTR_NOGC) OsLayer *v;
 
 			// Release.
 			void release();
@@ -193,7 +185,6 @@ namespace gui {
 				tfm0 = 1; tfm1 = 0;
 				tfm2 = 0; tfm3 = 1;
 				tfm4 = 0.5f; tfm5 = 0.5f;
-				layer = Layer::none;
 			}
 
 			State(const float *tfm, Float lineWidth) {
@@ -214,6 +205,9 @@ namespace gui {
 			Float tfm3;
 			Float tfm4;
 			Float tfm5;
+
+			// Clip region. Coordinates are in the space of the previous state's transform.
+			Rect clip;
 
 			// Line size.
 			Float lineWidth;
@@ -253,6 +247,9 @@ namespace gui {
 #ifdef GUI_GTK
 		// Get the NVGcontext used here. Makes sure that the proper context is active.
 		NVGcontext *context();
+
+		// Get a layer.
+		TextureContext *layer();
 #endif
 
 		// Prepare rendering a new frame (backend specific).

@@ -70,6 +70,8 @@ namespace gui {
 		// Go ahead and destroy all resources associated with this painter.
 		destroyResources();
 
+		if (graphics)
+			graphics->destroyed();
 		graphics = null;
 		target.release();
 

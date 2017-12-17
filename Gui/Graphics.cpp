@@ -17,12 +17,12 @@ namespace gui {
 		oldStates->push(state);
 		layerHistory = runtime::allocArray<Nat>(engine(), &natArrayType, layerHistoryCount);
 
-		for (nat i = 0; i < layerHistory->count; i++)
+		for (Nat i = 0; i < layerHistory->count; i++)
 			layerHistory->v[i] = 0;
 	}
 
 	Graphics::~Graphics() {
-		for (nat i = 0; i < layers->count(); i++)
+		for (Nat i = 0; i < layers->count(); i++)
 			layers->at(i).release();
 	}
 
@@ -30,7 +30,7 @@ namespace gui {
 		this->info = info;
 
 		// Remove any layers.
-		for (nat i = 0; i < layers->count(); i++)
+		for (Nat i = 0; i < layers->count(); i++)
 			layers->at(i).release();
 		layers->clear();
 	}
@@ -42,6 +42,11 @@ namespace gui {
 	void Graphics::destroyed() {
 		info = RenderInfo();
 		owner = null;
+
+		// Remove any layers.
+		for (Nat i = 0; i < layers->count(); i++)
+			layers->at(i).release();
+		layers->clear();
 	}
 
 	/**
@@ -49,7 +54,14 @@ namespace gui {
 	 */
 
 	void Graphics::beforeRender() {
+		// Keep track of free layers so we can remove them if we have too many.
 		minFreeLayers = layers->count();
+
+		// Update the clip region of the root state.
+		state.clip = Rect(Point(), info.size);
+		oldStates->last().clip = state.clip;
+
+		// Set up the backend.
 		prepare();
 	}
 
@@ -81,7 +93,7 @@ namespace gui {
 		// Do any PopLayer calls required.
 		while (oldStates->count() > 1) {
 			if (state.layer.v) {
-				layers->push(state.layer.v);
+				layers->push(state.layer);
 				info.target()->PopLayer();
 			}
 			state = oldStates->last();
@@ -280,54 +292,105 @@ namespace gui {
 			;
 	}
 
+	TextureContext *Graphics::layer() {
+		TextureContext *r = null;
+		if (layers->count() > 0) {
+			r = layers->last().v;
+			layers->pop();
+			// Resize to fit the screen if necessary.
+			r->resize(info.size);
+		} else {
+			r = new TextureContext(info.context(), info.size);
+		}
+
+		// Clear the layer.
+		r->activate();
+		glClearColor(0, 0, 0, 0);
+		glClear(GL_COLOR_BUFFER_BIT);
+
+		minFreeLayers = min(minFreeLayers, layers->count());
+		return r;
+	}
+
 	void Graphics::push() {
 		oldStates->push(state);
-		// state.layer = Layer::none;
 	}
 
 	void Graphics::push(Float opacity) {
 		oldStates->push(state);
-		// state.layer = Layer::group;
-		// state.opacity = opacity;
-		// cairo_push_group(info.device());
+
+		nvgFlush(info.context()->nvg);
+		state.layer = layer();
+		state.opacity = opacity;
 	}
 
 	void Graphics::push(Rect clip) {
 		oldStates->push(state);
-		// state.layer = Layer::save;
-		// cairo_save(info.device());
 
-		// Size sz = clip.size();
-		// cairo_rectangle(info.device(), clip.p0.x, clip.p0.y, sz.w, sz.h);
-		// cairo_clip(info.device());
+		nvgFlush(info.context()->nvg);
+		state.layer = layer();
+		state.opacity = 1.0f;
+		state.clip = clip;
 	}
 
 	void Graphics::push(Rect clip, Float opacity) {
 		oldStates->push(state);
-		// state.layer = Layer::group;
-		// state.opacity = opacity;
-		// cairo_push_group(info.device());
 
-		// Size sz = clip.size();
-		// cairo_rectangle(info.device(), clip.p0.x, clip.p0.y, sz.w, sz.h);
-		// cairo_clip(info.device());
+		nvgFlush(info.context()->nvg);
+		state.layer = layer();
+		state.opacity = opacity;
+		state.clip = clip;
 	}
 
 	Bool Graphics::pop() {
-		// switch (state.layer.kind()) {
-		// case Layer::none:
-		// 	break;
-		// case Layer::group:
-		// 	cairo_pop_group_to_source(info.device());
-		// 	cairo_paint_with_alpha(info.device(), state.opacity);
-		// 	break;
-		// case Layer::save:
-		// 	cairo_restore(info.device());
-		// 	break;
-		// }
-
+		State prev = state;
 		state = oldStates->last();
 		prepare();
+
+		// See if we need to apply and dispose a layer.
+		if (prev.layer && prev.layer != state.layer) {
+			TextureContext *gl = prev.layer.v;
+			nvgFlush(gl->nvg);
+
+			// Draw the previous layer onto the now current layer, using the opacity present here.
+			// The texture inside layers are always the same size and position as the main rendering
+			// target. Therefore, we want to draw it in (0, 0) - (w, h). However, we probably want
+			// to do that having the proper transformation applied so that we can clip properly if
+			// we need to.
+			NVGcontext *c = context();
+
+			// Set the clip region.
+			Size clipSize = prev.clip.size();
+			nvgScissor(c, prev.clip.p0.x, prev.clip.p0.y, clipSize.w, clipSize.h);
+
+			// Draw a rectangle at (0, 0) - (w, h) in real coordinates. Thus, we need to negate the
+			// current transform.
+			float tfm[6];
+			nvgCurrentTransform(c, tfm);
+			float invTfm[6];
+			nvgTransformInverse(invTfm, tfm);
+			float x, y;
+			nvgBeginPath(c);
+			nvgTransformPoint(&x, &y, invTfm, 0, 0);
+			nvgMoveTo(c, x, y);
+			nvgTransformPoint(&x, &y, invTfm, info.size.w, 0);
+			nvgLineTo(c, x, y);
+			nvgTransformPoint(&x, &y, invTfm, info.size.w, info.size.h);
+			nvgLineTo(c, x, y);
+			nvgTransformPoint(&x, &y, invTfm, 0, info.size.h);
+			nvgLineTo(c, x, y);
+			nvgClosePath(c);
+
+			// Draw the image.
+			nvgFillPaint(c, nvgImagePatternRaw(c, invTfm, info.size.w, info.size.h, gl->nvgImage(), prev.opacity));
+			nvgFill(c);
+
+			// Reset clip region.
+			nvgResetScissor(c);
+
+			// Push it to the layer stack for later reuse.
+			layers->push(prev.layer);
+		}
 
 		if (oldStates->count() > 1) {
 			oldStates->pop();
@@ -345,9 +408,9 @@ namespace gui {
 	}
 
 	void Graphics::lineWidth(Float w) {
-		// // Note: Line size is affected by transforms at the time of stroking. Is this what we desire?
-		// state.lineWidth = oldStates->last().lineWidth * w;
-		// cairo_set_line_width(info.device(), state.lineWidth);
+		// TODO: How is the width of lines affected by scaling etc.?
+		state.lineWidth = oldStates->last().lineWidth * w;
+		nvgStrokeWidth(info.context()->nvg, state.lineWidth);
 	}
 
 	void Graphics::prepare() {
@@ -357,16 +420,22 @@ namespace gui {
 	}
 
 	void Graphics::Layer::release() {
+		delete v;
 		v = null;
 	}
 
 	NVGcontext *Graphics::context() {
-		GlContext *c = info.context();
-		assert(c);
+		// Find the context to activate and make sure it is active. There might have been a thread
+		// switch somewhere since last time.
 
-		// Activate the context in case there was a thread switch somewhere since the last paint
-		// operation.
+		GlContext *c = info.context();
+		// If the current state contains a TextureContext, use that.
+		if (state.layer)
+			c = state.layer.v;
+
+		assert(c);
 		c->activate();
+
 		return c->nvg;
 	}
 

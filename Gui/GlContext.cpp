@@ -301,16 +301,18 @@ namespace gui {
 		createBuffers(size);
 
 		// Bind them.
-		glFramebufferTexture(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, texture, 0);
+		glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, texture, 0);
 		glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, depth);
 
-		// Set output.
-		GLenum draw = GL_COLOR_ATTACHMENT0;
-		glDrawBuffers(1, &draw);
-		glViewport(0, 0, size.w, size.h);
+		if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE) {
+			WARNING(L"Failed to configure the framebuffer.");
+		}
 	}
 
 	TextureContext::~TextureContext() {
+		if (nvgId >= 0)
+			nvgDeleteImage(nvg, nvgId);
+
 		glDeleteFramebuffers(1, &framebuffer);
 		glDeleteRenderbuffers(1, &depth);
 		glDeleteTextures(1, &texture);
@@ -321,9 +323,9 @@ namespace gui {
 	void TextureContext::createBuffers(Size size) {
 		// Create the texture containing the color information we need.
 		glBindTexture(GL_TEXTURE_2D, texture);
-		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, int(size.w), int(size.h), 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, int(size.w), int(size.h), 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
 
 		// Create a depth/stencil buffer.
 		glBindRenderbuffer(GL_RENDERBUFFER, depth);
@@ -347,12 +349,12 @@ namespace gui {
 	void TextureContext::setActive() {
 		owner->activate();
 		glBindFramebuffer(GL_FRAMEBUFFER, framebuffer);
-		GLenum draw = GL_COLOR_ATTACHMENT0;
-		glDrawBuffers(1, &draw);
 	}
 
 	int TextureContext::nvgImage() {
 		if (nvgId < 0) {
+			// TODO: Is this framebuffer using premultiplied alpha or not? I do not think so, but it
+			// is worth checking out!
 			nvgId = nvglCreateImageFromHandleGL2(nvg, texture,
 												int(mySize.w), int(mySize.h),
 												NVG_IMAGE_NEAREST | NVG_IMAGE_NODELETE);

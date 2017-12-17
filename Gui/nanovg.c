@@ -34,4 +34,17 @@ void nvgResizeImage(NVGcontext *ctx, int id, int w, int h) {
 	}
 }
 
+NVGpaint nvgImagePatternRaw(NVGcontext *ctx, float *tfm, float w, float h, int image, float alpha) {
+	NVGpaint p;
+	NVG_NOTUSED(ctx);
+	memset(&p, 0, sizeof(p));
+	memcpy(p.xform, tfm, sizeof(float)*6);
+	p.extent[0] = w;
+	p.extent[1] = h;
+	p.image = image;
+	p.innerColor = p.outerColor = nvgRGBAf(1, 1, 1, alpha);
+	return p;
+}
+
+
 #endif

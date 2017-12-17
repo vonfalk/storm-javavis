@@ -52,6 +52,7 @@ namespace gui {
 	 * Define generic types to be used in Storm class declarations.
 	 */
 	typedef ID2D1Resource OsResource;
+	typedef ID2D1Layer OsLayer;
 	typedef IDWriteTextLayout OsTextLayout;
 
 }
@@ -88,7 +89,6 @@ typedef DXObject IDXGIFactory;
 typedef DXObject IDXGIDevice;
 typedef DXObject IDWriteFactory;
 typedef DXObject ID2D1PathGeometry;
-typedef DXObject ID2D1Layer;
 typedef DXObject ID2D1GradientStopCollection;
 
 inline void release(DXObject *o) {}

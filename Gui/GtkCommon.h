@@ -17,10 +17,13 @@
 
 namespace gui {
 
+	class TextureContext;
+
 	/**
 	 * Define generic types to be used in Storm class declarations.
 	 */
 	typedef void *OsResource;
+	typedef TextureContext OsLayer;
 	typedef PangoLayout OsTextLayout;
 
 	// Convert to/from Pango units.
