@@ -25,6 +25,17 @@ namespace gui {
 #endif
 #ifdef GUI_GTK
 
+	int RenderResource::texture(Painter *owner) {
+		this->owner = owner;
+		if (texture() < 0) {
+			int id = create(owner);
+			texture(id);
+			if (id >= 0)
+				owner->addResource(this);
+		}
+		return texture();
+	}
+
 	void RenderResource::destroy() {
 		if (texture() >= 0) {
 			if (owner) {
@@ -34,6 +45,10 @@ namespace gui {
 			// don't need to worry in case we do not have an owner.
 		}
 		texture(-1);
+	}
+
+	int RenderResource::create(Painter *owner) {
+		return -1;
 	}
 
 #endif

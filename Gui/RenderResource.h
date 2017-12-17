@@ -48,6 +48,13 @@ namespace gui {
 #endif
 #ifdef GUI_GTK
 
+		// Get the texture.
+		int texture(Painter *owner);
+
+		// Create the texture. Return -1 on failure.
+		virtual int create(Painter *owner);
+
+	private:
 		// We're storing an integer texture id inside the render resource. Returns -1 if empty.
 		int texture() const {
 			return ((int)(size_t)resource) - 1;

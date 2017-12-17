@@ -87,6 +87,26 @@ namespace gui {
 		}
 	}
 
+	/**
+	 * Drawing shared between backends.
+	 */
+
+	void Graphics::draw(Bitmap *bitmap) {
+		draw(bitmap, Point());
+	}
+
+	void Graphics::draw(Bitmap *bitmap, Point topLeft) {
+		draw(bitmap, Rect(topLeft, topLeft + bitmap->size()));
+	}
+
+	void Graphics::draw(Bitmap *bitmap, Point topLeft, Float opacity) {
+		draw(bitmap, Rect(topLeft, topLeft + bitmap->size()), opacity);
+	}
+
+	void Graphics::draw(Bitmap *bitmap, Rect rect) {
+		draw(bitmap, rect, 1);
+	}
+
 #ifdef GUI_WIN32
 
 	void Graphics::reset() {
@@ -243,22 +263,6 @@ namespace gui {
 
 	void Graphics::fill(Path *path, Brush *style) {
 		info.target()->FillGeometry(path->geometry(), style->brush(owner, path->bound()));
-	}
-
-	void Graphics::draw(Bitmap *bitmap) {
-		draw(bitmap, Point());
-	}
-
-	void Graphics::draw(Bitmap *bitmap, Point topLeft) {
-		draw(bitmap, Rect(topLeft, topLeft + bitmap->size()));
-	}
-
-	void Graphics::draw(Bitmap *bitmap, Point topLeft, Float opacity) {
-		draw(bitmap, Rect(topLeft, topLeft + bitmap->size()), opacity);
-	}
-
-	void Graphics::draw(Bitmap *bitmap, Rect rect) {
-		draw(bitmap, rect, 1);
 	}
 
 	void Graphics::draw(Bitmap *bitmap, Rect rect, Float opacity) {
@@ -448,7 +452,7 @@ namespace gui {
 		nvgBeginPath(c);
 		nvgMoveTo(c, from.x, from.y);
 		nvgLineTo(c, to.x, to.y);
-		style->stroke(c, Rect(from, to).normalized());
+		style->stroke(owner, c, Rect(from, to).normalized());
 	}
 
 	void Graphics::draw(Rect rect, Brush *style) {
@@ -456,7 +460,7 @@ namespace gui {
 		nvgBeginPath(c);
 		Size sz = rect.size();
 		nvgRect(c, rect.p0.x, rect.p0.y, sz.w, sz.h);
-		style->stroke(c, rect);
+		style->stroke(owner, c, rect);
 	}
 
 	static void roundedRect(NVGcontext *c, Rect rect, Size edges) {
@@ -490,7 +494,7 @@ namespace gui {
 		NVGcontext *c = context();
 		nvgBeginPath(c);
 		roundedRect(c, rect, edges);
-		style->stroke(c, rect);
+		style->stroke(owner, c, rect);
 	}
 
 	static void drawOval(NVGcontext *c, Rect rect) {
@@ -503,13 +507,13 @@ namespace gui {
 		NVGcontext *c = context();
 		nvgBeginPath(c);
 		drawOval(c, rect);
-		style->stroke(c, rect);
+		style->stroke(owner, c, rect);
 	}
 
 	void Graphics::draw(Path *path, Brush *style) {
 		NVGcontext *c = context();
 		path->draw(c);
-		style->stroke(c, path->bound());
+		style->stroke(owner, c, path->bound());
 	}
 
 	void Graphics::fill(Rect rect, Brush *style) {
@@ -517,14 +521,14 @@ namespace gui {
 		nvgBeginPath(c);
 		Size sz = rect.size();
 		nvgRect(c, rect.p0.x, rect.p0.y, sz.w, sz.h);
-		style->fill(c, rect);
+		style->fill(owner, c, rect);
 	}
 
 	void Graphics::fill(Rect rect, Size edges, Brush *style) {
 		NVGcontext *c = context();
 		nvgBeginPath(c);
 		roundedRect(c, rect, edges);
-		style->fill(c, rect);
+		style->fill(owner, c, rect);
 	}
 
 	void Graphics::fill(Brush *style) {
@@ -533,7 +537,7 @@ namespace gui {
 		Size sz = size();
 		nvgBeginPath(c);
 		nvgRect(c, 0, 0, sz.w + 1.0f, sz.h + 1.0f);
-		style->fill(c, Rect(Point(), sz));
+		style->fill(owner, c, Rect(Point(), sz));
 		// Go back to the previous transform.
 		nvgSetTransform(c, state.transform());
 	}
@@ -542,24 +546,23 @@ namespace gui {
 		NVGcontext *c = context();
 		nvgBeginPath(c);
 		drawOval(c, rect);
-		style->fill(c, rect);
+		style->fill(owner, c, rect);
 	}
 
 	void Graphics::fill(Path *path, Brush *style) {
 		NVGcontext *c = context();
 		path->draw(c);
-		style->fill(c, path->bound());
+		style->fill(owner, c, path->bound());
 	}
 
-	void Graphics::draw(Bitmap *bitmap) {}
-
-	void Graphics::draw(Bitmap *bitmap, Point topLeft) {}
-
-	void Graphics::draw(Bitmap *bitmap, Point topLeft, Float opacity) {}
-
-	void Graphics::draw(Bitmap *bitmap, Rect rect) {}
-
-	void Graphics::draw(Bitmap *bitmap, Rect rect, Float opacity) {}
+	void Graphics::draw(Bitmap *bitmap, Rect rect, Float opacity) {
+		NVGcontext *c = context();
+		Size sz = rect.size();
+		nvgBeginPath(c);
+		nvgRect(c, rect.p0.x, rect.p0.y, sz.w, sz.h);
+		nvgFillPaint(c, nvgImagePattern(c, rect.p0.x, rect.p0.y, sz.w, sz.h, 0, bitmap->texture(owner), opacity));
+		nvgFill(c);
+	}
 
 	void Graphics::text(Str *text, Font *font, Brush *style, Rect rect) {}
 

@@ -27,16 +27,16 @@ namespace gui {
 #endif
 #ifdef GUI_GTK
 		// Stroke the current path.
-		void stroke(NVGcontext *c, const Rect &bound);
+		void stroke(Painter *p, NVGcontext *c, const Rect &bound);
 
 		// Fill the current path.
-		void fill(NVGcontext *c, const Rect &bound);
+		void fill(Painter *p, NVGcontext *c, const Rect &bound);
 
 		// Set the stroke of the NVGcontext.
-		virtual void setStroke(NVGcontext *c, const Rect &bound);
+		virtual void setStroke(Painter *p, NVGcontext *c, const Rect &bound);
 
 		// Set the fill of the NVGcontext.
-		virtual void setFill(NVGcontext *c, const Rect &bound);
+		virtual void setFill(Painter *p, NVGcontext *c, const Rect &bound);
 #endif
 
 		// Opacity.
@@ -55,8 +55,8 @@ namespace gui {
 		virtual void create(Painter *owner, ID2D1Resource **out);
 #endif
 #ifdef GUI_GTK
-		virtual void setStroke(NVGcontext *c, const Rect &bound);
-		virtual void setFill(NVGcontext *c, const Rect &bound);
+		virtual void setStroke(Painter *p, NVGcontext *c, const Rect &bound);
+		virtual void setFill(Painter *p, NVGcontext *c, const Rect &bound);
 #endif
 
 	private:
@@ -112,11 +112,11 @@ namespace gui {
 		virtual void destroy();
 
 #ifdef GUI_GTK
-		virtual void setStroke(NVGcontext *c, const Rect &bound);
-		virtual void setFill(NVGcontext *c, const Rect &bound);
+		virtual void setStroke(Painter *p, NVGcontext *c, const Rect &bound);
+		virtual void setFill(Painter *p, NVGcontext *c, const Rect &bound);
 
 		// Called to create the paint for this gradient.
-		virtual NVGpaint createPaint(NVGcontext *c, const Rect &bound);
+		virtual NVGpaint createPaint(Painter *p, NVGcontext *c, const Rect &bound);
 #endif
 	protected:
 #ifdef GUI_WIN32
@@ -155,10 +155,10 @@ namespace gui {
 #endif
 #ifdef GUI_GTK
 		// Create the NVGpaint to use for this gradient.
-		virtual NVGpaint createPaint(NVGcontext *c, const Rect &bound);
+		virtual NVGpaint createPaint(Painter *p, NVGcontext *c, const Rect &bound);
 
 		// Destroy any resources here.
-		virtual void destroy();
+		virtual int create(Painter *owner);
 #endif
 
 		// The angle.

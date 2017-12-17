@@ -14,21 +14,21 @@ namespace gui {
 #endif
 #ifdef GUI_GTK
 
-	void Brush::stroke(NVGcontext *c, const Rect &bound) {
+	void Brush::stroke(Painter *p, NVGcontext *c, const Rect &bound) {
 		nvgGlobalAlpha(c, opacity);
-		setStroke(c, bound);
+		setStroke(p, c, bound);
 		nvgStroke(c);
 	}
 
-	void Brush::fill(NVGcontext *c, const Rect &bound) {
+	void Brush::fill(Painter *p, NVGcontext *c, const Rect &bound) {
 		nvgGlobalAlpha(c, opacity);
-		setFill(c, bound);
+		setFill(p, c, bound);
 		nvgFill(c);
 	}
 
-	void Brush::setStroke(NVGcontext *c, const Rect &bound) {}
+	void Brush::setStroke(Painter *p, NVGcontext *c, const Rect &bound) {}
 
-	void Brush::setFill(NVGcontext *c, const Rect &bound) {}
+	void Brush::setFill(Painter *p, NVGcontext *c, const Rect &bound) {}
 
 #endif
 
@@ -43,11 +43,11 @@ namespace gui {
 #endif
 #ifdef GUI_GTK
 
-	void SolidBrush::setStroke(NVGcontext *c, const Rect &bound) {
+	void SolidBrush::setStroke(Painter *p, NVGcontext *c, const Rect &bound) {
 		nvgStrokeColor(c, nvg(color));
 	}
 
-	void SolidBrush::setFill(NVGcontext *c, const Rect &bound) {
+	void SolidBrush::setFill(Painter *p, NVGcontext *c, const Rect &bound) {
 		nvgFillColor(c, nvg(color));
 	}
 
@@ -115,28 +115,28 @@ namespace gui {
 #endif
 #ifdef GUI_GTK
 
-	void Gradient::setStroke(NVGcontext *c, const Rect &bound) {
+	void Gradient::setStroke(Painter *p, NVGcontext *c, const Rect &bound) {
 		if (myStops->count() >= 2)
-			nvgStrokePaint(c, createPaint(c, bound));
+			nvgStrokePaint(c, createPaint(p, c, bound));
 		else if (myStops->count() >= 1)
 			nvgStrokeColor(c, nvg(myStops->at(0).color));
 		else
 			nvgStrokeColor(c, nvgRGBAf(0, 0, 0, 0));
 	}
 
-	void Gradient::setFill(NVGcontext *c, const Rect &bound) {
+	void Gradient::setFill(Painter *p, NVGcontext *c, const Rect &bound) {
 		if (myStops->count() >= 2)
-			nvgFillPaint(c, createPaint(c, bound));
+			nvgFillPaint(c, createPaint(p, c, bound));
 		else if (myStops->count() >= 1)
 			nvgFillColor(c, nvg(myStops->at(0).color));
 		else
 			nvgFillColor(c, nvgRGBAf(0, 0, 0, 0));
 	}
 
-	NVGpaint Gradient::createPaint(NVGcontext *c, const Rect &bound) {
+	NVGpaint Gradient::createPaint(Painter *p, NVGcontext *c, const Rect &bound) {
 		assert(false);
-		NVGpaint p = {};
-		return p;
+		NVGpaint paint = {};
+		return paint;
 	}
 
 #endif
@@ -226,7 +226,7 @@ namespace gui {
 		}
 	}
 
-	NVGpaint LinearGradient::createPaint(NVGcontext *c, const Rect &bound) {
+	NVGpaint LinearGradient::createPaint(Painter *p, NVGcontext *c, const Rect &bound) {
 		Point start, end;
 		Float distance;
 		compute(bound, start, end, distance);
@@ -244,20 +244,18 @@ namespace gui {
 			return nvgLinearGradient(c, start.x, start.y, end.x, end.y, nvg(from.color), nvg(to.color));
 		}
 
-		// We need to create a texture, and use that...
-		if (texture() < 0) {
-			texture(gui::texture::create(c, myStops));
-		}
+		// We need to create a texture, and use that.
+		int texId = texture(p);
 
 		// Figure out where we want to draw the texture.
 		Point perp = storm::geometry::angle(angle - deg(90));
 		Point origin = start + perp * distance/2;
 
-		return nvgImagePattern(c, origin.x, origin.y, distance, distance, (angle + deg(180)).rad(), texture(), 1.0f);
+		return nvgImagePattern(c, origin.x, origin.y, distance, distance, (angle + deg(180)).rad(), texId, 1.0f);
 	}
 
-	void LinearGradient::destroy() {
-		Gradient::destroy();
+	int LinearGradient::create(Painter *owner) {
+		return gui::texture::create(owner->nvgContext(), myStops);
 	}
 
 #endif

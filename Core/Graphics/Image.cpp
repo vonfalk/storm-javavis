@@ -23,20 +23,18 @@ namespace storm {
 
 	Image::Image(Image *o) : data(null), w(o->w), h(o->h) {
 		Nat s = w * h * 4;
-		// Note: Maybe we should use 'allocBuffer' here instead, as image data is sometimes passed
-		// to external libraries...
-		data = runtime::allocArray<Byte>(engine(), &byteArrayType, s);
+		data = runtime::allocBuffer(engine(), s);
 		memcpy(data->v, o->data->v, s);
 	}
 
 	Image::Image(Size size) : data(null), w(Nat(size.w)), h(Nat(size.h)) {
 		Nat s = w * h * 4;
-		data = runtime::allocArray<Byte>(engine(), &byteArrayType, s);
+		data = runtime::allocBuffer(engine(), s);
 	}
 
 	Image::Image(Nat w, Nat h) : data(null), w(w), h(h) {
 		Nat s = w * h * 4;
-		data = runtime::allocArray<Byte>(engine(), &byteArrayType, s);
+		data = runtime::allocBuffer(engine(), s);
 	}
 
 	geometry::Size Image::size() {
