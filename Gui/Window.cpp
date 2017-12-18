@@ -69,6 +69,7 @@ namespace gui {
 	void Window::handle(Handle handle) {
 		App *a = app(engine());
 		if (myHandle != invalid) {
+			notifyDetachPainter();
 			if (myParent == null) {
 				// We're a frame (or orphaned).
 				destroyWindow(myHandle);
@@ -91,8 +92,6 @@ namespace gui {
 		if (myHandle != invalid) {
 			a->addWindow(this);
 			notifyAttachPainter();
-		} else {
-			notifyDetachPainter();
 		}
 	}
 
@@ -504,6 +503,7 @@ namespace gui {
 	}
 
 	void Window::onUnrealize() {
+		notifyDetachPainter();
 		renderWindow = null;
 	}
 

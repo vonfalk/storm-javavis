@@ -357,7 +357,7 @@ namespace gui {
 			// is worth checking out!
 			nvgId = nvglCreateImageFromHandleGL2(nvg, texture,
 												int(mySize.w), int(mySize.h),
-												NVG_IMAGE_NEAREST | NVG_IMAGE_NODELETE);
+												NVG_IMAGE_FLIPY | NVG_IMAGE_NEAREST | NVG_IMAGE_NODELETE);
 		}
 		return nvgId;
 	}
