@@ -445,13 +445,16 @@ namespace gui {
 
 	/**
 	 * Draw stuff.
+	 *
+	 * Note: We offset all lines 0.5 px since they would otherwise be located 'between' pixels
+	 * rather than in the center of pixels.
 	 */
 
 	void Graphics::line(Point from, Point to, Brush *style) {
 		NVGcontext *c = context();
 		nvgBeginPath(c);
-		nvgMoveTo(c, from.x, from.y);
-		nvgLineTo(c, to.x, to.y);
+		nvgMoveTo(c, from.x + 0.5f, from.y + 0.5f);
+		nvgLineTo(c, to.x + 0.5f, to.y + 0.5f);
 		style->stroke(owner, c, Rect(from, to).normalized());
 	}
 
@@ -459,13 +462,15 @@ namespace gui {
 		NVGcontext *c = context();
 		nvgBeginPath(c);
 		Size sz = rect.size();
-		nvgRect(c, rect.p0.x, rect.p0.y, sz.w, sz.h);
+		nvgRect(c, rect.p0.x + 0.5f, rect.p0.y + 0.5f, sz.w, sz.h);
 		style->stroke(owner, c, rect);
 	}
 
 	static void roundedRect(NVGcontext *c, Rect rect, Size edges) {
 		const float kappa90 = 0.5522847493f;
 		const float invKappa90 = 1.0f - kappa90;
+
+		rect = rect + Point(0.5f, 0.5f);
 
 		nvgMoveTo(c, rect.p1.x - edges.w, rect.p0.y);
 		nvgBezierTo(c,
@@ -500,7 +505,7 @@ namespace gui {
 	static void drawOval(NVGcontext *c, Rect rect) {
 		Size size = rect.size() / 2;
 		Point center = rect.center();
-		nvgEllipse(c, center.x, center.y, size.w, size.h);
+		nvgEllipse(c, center.x + 0.5f, center.y + 0.5f, size.w, size.h);
 	}
 
 	void Graphics::oval(Rect rect, Brush *style) {

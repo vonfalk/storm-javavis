@@ -181,10 +181,9 @@ namespace gui {
 			State() {
 				lineWidth = 1.0f;
 				opacity = 1.0f;
-				// Note: unless we add 0.5 here, all whole numbers will be between pixels.
 				tfm0 = 1; tfm1 = 0;
 				tfm2 = 0; tfm3 = 1;
-				tfm4 = 0.5f; tfm5 = 0.5f;
+				tfm4 = 0; tfm5 = 0;
 			}
 
 			State(const float *tfm, Float lineWidth) {

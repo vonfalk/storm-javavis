@@ -166,7 +166,7 @@ namespace gui {
 			switch (e.t) {
 			case tStart:
 				current = e.start()->pt;
-				nvgMoveTo(c, current.x, current.y);
+				nvgMoveTo(c, current.x + 0.5f, current.y + 0.5f);
 				started = true;
 				break;
 			case tClose:
@@ -176,21 +176,24 @@ namespace gui {
 			case tLine:
 				if (started) {
 					current = e.line()->to;
-					nvgLineTo(c, current.x, current.y);
+					nvgLineTo(c, current.x + 0.5f, current.y + 0.5f);
 				}
 				break;
 			case tBezier2:
 				if (started) {
 					Bezier2 *b = e.bezier2();
 					current = b->to;
-					nvgQuadTo(c, b->c1.x, b->c1.y, current.x, current.y);
+					nvgQuadTo(c, b->c1.x + 0.5f, b->c1.y + 0.5f,
+							current.x + 0.5f, current.y + 0.5f);
 				}
 				break;
 			case tBezier3:
 				if (started) {
 					Bezier3 *b = e.bezier3();
 					current = b->to;
-					nvgBezierTo(c, b->c1.x, b->c1.y, b->c2.x, b->c2.y, current.x, current.y);
+					nvgBezierTo(c, b->c1.x + 0.5f, b->c1.y + 0.5f,
+								b->c2.x + 0.5f, b->c2.y + 0.5f,
+								current.x + 0.5f, current.y + 0.5f);
 				}
 				break;
 			}
