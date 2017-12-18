@@ -3,11 +3,9 @@
 
 #ifndef WINDOWS
 
-// TODO: We should probably add a license for libpng, even though we tecnically do not distribute it.
+// TODO: We should probably add a license for libpng and libjpeg, even though we tecnically do not distribute it.
 #include <png.h>
-
-// #include <jpeglib.h>
-
+#include <jpeglib.h>
 
 namespace graphics {
 
@@ -102,9 +100,109 @@ namespace graphics {
 		return output;
 	}
 
+	void onJpegError(j_common_ptr info) {
+		struct jpeg_error_mgr *me = (struct jpeg_error_mgr *)info;
+
+		char buffer[JMSG_LENGTH_MAX];
+		(*me->format_message)(info, buffer);
+
+		throw ImageLoadError(String(buffer));
+	}
+
+	class JpegInput : public jpeg_source_mgr {
+	public:
+		JpegInput(IStream *src) : src(src) {
+			next_input_byte = NULL;
+			bytes_in_buffer = 0;
+			init_source = &JpegInput::sInit;
+			fill_input_buffer = &JpegInput::sFill;
+			skip_input_data = &JpegInput::sSkip;
+			resync_to_restart = &jpeg_resync_to_restart;
+			term_source = &JpegInput::sClose;
+		}
+
+		void init() {
+			// Read in 8k chunks.
+			current = buffer(src->engine(), 1024*8);
+		}
+
+		bool fill() {
+			current.filled(0);
+			current = src->read(current);
+
+			bytes_in_buffer = current.filled();
+			next_input_byte = current.dataPtr();
+
+			return !current.empty();
+		}
+
+		void skip(long count) {
+			while (size_t(count) > bytes_in_buffer) {
+				count -= bytes_in_buffer;
+				fill();
+			}
+
+			next_input_byte += count;
+			bytes_in_buffer -= count;
+		}
+
+	private:
+		// Source.
+		IStream *src;
+
+		// Current buffer.
+		Buffer current;
+
+		// Wrapper functions.
+		static void sInit(j_decompress_ptr info) {
+			((JpegInput *)info->src)->init();
+		}
+		static boolean sFill(j_decompress_ptr info) {
+			return ((JpegInput *)info->src)->fill() ? TRUE : FALSE;
+		}
+		static void sSkip(j_decompress_ptr info, long count) {
+			PLN(L"SKIP");
+			((JpegInput *)info->src)->skip(count);
+		}
+		static void sClose(j_decompress_ptr info) {
+			// Usually nothing is required here. Called when reading an image is finished.
+		}
+	};
+
 	Image *loadJpeg(IStream *from, const wchar *&error) {
-		error = S("JPEG files are not supported yet.");
-		return null;
+		struct jpeg_decompress_struct decode;
+		struct jpeg_error_mgr errorMgr;
+		decode.err = jpeg_std_error(&errorMgr);
+		decode.err->error_exit = &onJpegError;
+
+		try {
+			jpeg_create_decompress(&decode);
+			JpegInput input(from);
+			decode.src = &input;
+
+			if (jpeg_read_header(&decode, TRUE) != JPEG_HEADER_OK)
+				throw ImageLoadError(L"No JPEG header was found.");
+
+			// Set up output format and start decompression.
+			decode.out_color_space = JCS_EXT_RGBA;
+			jpeg_start_decompress(&decode);
+
+			// Create and fill target bitmap.
+			Image *out = new (from) Image(decode.output_width, decode.output_height);
+			while (decode.output_scanline < decode.output_height) {
+				byte *buf = out->buffer() + out->stride()*decode.output_scanline;
+				jpeg_read_scanlines(&decode, &buf, 1);
+			}
+
+			// Clean up.
+			jpeg_finish_decompress(&decode);
+			jpeg_destroy_decompress(&decode);
+			return out;
+		} catch (...) {
+			// Clean up!
+			jpeg_destroy_decompress(&decode);
+			throw;
+		}
 	}
 
 	Image *loadBmp(IStream *from, const wchar *&error) {

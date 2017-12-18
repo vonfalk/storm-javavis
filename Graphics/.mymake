@@ -4,5 +4,5 @@ input=*
 stormUsingNamespace=storm
 
 [unix]
-flags+=`pkg-config --cflags libpng`
-linkFlags+=`pkg-config --libs libpng`
+flags+=`pkg-config --cflags libpng libjpeg`
+linkFlags+=`pkg-config --libs libpng libjpeg`
