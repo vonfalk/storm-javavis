@@ -40,8 +40,8 @@ class DrawWin extends Frame {
 		create();
 	}
 
-	Bool onKey(Bool down, Nat keycode, Modifiers mod) {
-		print("Keycode: " # down # ", " # keycode # ", " # mod);
+	Bool onKey(Bool down, Key key, Modifiers mod) {
+		print("Keycode: " # down # ", " # key # ", " # mod);
 		close();
 		false;
 	}

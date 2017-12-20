@@ -142,10 +142,14 @@ namespace storm {
 		}
 
 		// Any remaining garbage?
-		if (v != 0)
-			put(to, S("<unknown>"), first);
-		else if (bitmask && first)
+		if (v != 0) {
+			if (!first)
+				*to << S(" + ");
+			first = false;
+			*to << S("<unknown: ") << v << S(">");
+		} else if (bitmask && first) {
 			put(to, S("<none>"), first);
+		}
 	}
 
 	void Enum::toS(StrBuf *to) const {

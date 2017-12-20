@@ -37,7 +37,7 @@ namespace gui {
 #endif
 
 		// Implement the 'return' as a confirmation.
-		virtual Bool STORM_FN onKey(Bool pressed, Nat code, mod::Modifiers mod);
+		virtual Bool STORM_FN onKey(Bool pressed, key::Key code, mod::Modifiers mod);
 
 #ifdef GUI_GTK
 		// Get/set text.

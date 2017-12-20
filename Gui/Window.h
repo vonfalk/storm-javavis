@@ -124,7 +124,7 @@ namespace gui {
 		virtual void STORM_FN resized(Size size);
 
 		// Key events. Return 'true' if the message was handled and should not propagate further.
-		virtual Bool STORM_FN onKey(Bool pressed, Nat keycode, mod::Modifiers modifiers);
+		virtual Bool STORM_FN onKey(Bool pressed, key::Key keycode, mod::Modifiers modifiers);
 		virtual Bool STORM_FN onChar(Nat charCode);
 
 		// Set window contents (custom drawing).

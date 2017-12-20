@@ -95,7 +95,7 @@ namespace gui {
 		}
 	}
 
-	Bool Window::onKey(Bool down, Nat id, Modifiers modifiers) {
+	Bool Window::onKey(Bool down, key::Key id, Modifiers modifiers) {
 		return false;
 	}
 
@@ -192,11 +192,11 @@ namespace gui {
 	MsgResult Window::beforeMessage(const Message &msg) {
 		switch (msg.msg) {
 		case WM_KEYUP:
-			if (onKey(false, msg.wParam, modifiers()))
+			if (onKey(false, keycode(msg.wParam), modifiers()))
 				return msgResult(0);
 			break;
 		case WM_KEYDOWN:
-			if (onKey(true, msg.wParam, modifiers()))
+			if (onKey(true, keycode(msg.wParam), modifiers()))
 				return msgResult(0);
 			break;
 		case WM_CHAR:
@@ -426,12 +426,15 @@ namespace gui {
 
 	gboolean Window::onKeyUp(GdkEvent *event) {
 		GdkEventKey &k = event->key;
-		return onKey(false, k.keyval, modifiers(k.state)) ? TRUE : FALSE;
+		return onKey(false, keycode(k), modifiers(k)) ? TRUE : FALSE;
 	}
 
 	gboolean Window::onKeyDown(GdkEvent *event) {
 		GdkEventKey &k = event->key;
-		return onKey(true, k.keyval, modifiers(k.state)) ? TRUE : FALSE;
+		bool ok = onKey(true, keycode(k), modifiers(k));
+		if (ok)
+			ok = onChar(k.keyval);
+		return ok ? TRUE : FALSE;
 	}
 
 	void Window::onSize(GdkRectangle *alloc) {

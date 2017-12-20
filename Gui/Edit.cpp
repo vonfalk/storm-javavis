@@ -57,8 +57,8 @@ namespace gui {
 		selected(Selection(removeStart));
 	}
 
-	Bool Edit::onKey(Bool down, Nat code, Modifiers mod) {
-		if (down && code == VK_RETURN) {
+	Bool Edit::onKey(Bool down, key::Key code, Modifiers mod) {
+		if (down && code == key::ret) {
 			if (!myMultiline || (mod & mod::ctrl)) {
 				if (onReturn) {
 					onReturn->call(this);
