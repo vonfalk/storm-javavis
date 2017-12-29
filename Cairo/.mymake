@@ -1,0 +1,42 @@
+[]
+include+=./
+include+=../
+
+[unix]
+input=*
+define+=_XOPEN_SOURCE=700
+define+=HAVE_CONFIG_H=1
+
+# Note: We're making all of Cairo's symbols public so that our version replaces the version already in the system.
+cflags=`pkg-config --cflags pixman-1 freetype2`
+cflags+=-fPIC
+
+ignore+=*.cpp
+ignore+=*/skia/*
+ignore+=*/win32/*
+ignore+=*/drm/*
+ignore+=*-xcb-*
+ignore+=*-svg-*
+ignore+=*-script-*
+ignore+=*-xlib-*
+ignore+=*-quartz-*
+ignore+=*-cogl-*
+ignore+=*-wgl-*
+ignore+=*-pdf-*
+ignore+=*-ps-*
+ignore+=*-tee-*
+ignore+=*-vg-*
+ignore+=*-xml-*
+ignore+=*-os2-*
+ignore+=*-directfb-*
+ignore+=*-legacy.c
+ignore+=*-png.c
+ignore+=*/cairo-image-mask-compositor.c
+ignore+=*/check-*
+ignore+=*/test-*
+
+warnings=-Wno-attributes
+
+[!unix]
+#Do not compile on Windows, we do not need it there.
+input=cairo.c

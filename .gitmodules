@@ -16,3 +16,6 @@
 [submodule "Linux/backtrace"]
 	path = Linux/backtrace
 	url = ../linux/backtrace.git
+[submodule "Linux/cairo"]
+	path = Linux/cairo
+	url = ../linux/cairo.git
