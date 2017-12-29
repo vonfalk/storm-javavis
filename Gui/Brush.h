@@ -27,8 +27,8 @@ namespace gui {
 #endif
 #ifdef GUI_GTK
 		// Set the source of the cairo_t to this brush.
-		inline void setSource(cairo_t *c, const Rect &bound) {
-			cairo_pattern_t *b = get();
+		inline void setSource(Painter *owner, cairo_t *c, const Rect &bound) {
+			cairo_pattern_t *b = get<cairo_pattern_t>(owner);
 			if (b) {
 				prepare(bound, b);
 				// TODO: Handle opacity!
@@ -56,7 +56,7 @@ namespace gui {
 		virtual void create(Painter *owner, ID2D1Resource **out);
 #endif
 #ifdef GUI_GTK
-		virtual cairo_pattern_t *create();
+		virtual OsResource *create(Painter *owner);
 #endif
 
 	private:
@@ -149,7 +149,7 @@ namespace gui {
 #endif
 #ifdef GUI_GTK
 		// Create.
-		virtual cairo_pattern_t *create();
+		virtual OsResource *create(Painter *owner);
 
 		// Prepare.
 		virtual void prepare(const Rect &s, cairo_pattern_t *b);

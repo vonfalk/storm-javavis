@@ -29,7 +29,7 @@ namespace gui {
 #endif
 #ifdef GUI_GTK
 
-	cairo_pattern_t *SolidBrush::create() {
+	OsResource *SolidBrush::create(Painter *owner) {
 		return cairo_pattern_create_rgba(color.r, color.g, color.b, color.a);
 	}
 
@@ -135,7 +135,7 @@ namespace gui {
 #endif
 #ifdef GUI_GTK
 
-	cairo_pattern_t *LinearGradient::create() {
+	OsResource *LinearGradient::create(Painter *owner) {
 		// Using the points (0, 1) - (0, -1) (= 0 deg) for simplicity. We'll transform it later.
 		cairo_pattern_t *r = cairo_pattern_create_linear(0, 1, 0, -1);
 		applyStops(r);

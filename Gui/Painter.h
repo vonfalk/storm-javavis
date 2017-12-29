@@ -62,6 +62,9 @@ namespace gui {
 		// Get our render target.
 		inline ID2D1RenderTarget *renderTarget() { return target.target(); }
 #endif
+#ifdef GUI_GTK
+		inline GlSurface *surface() { return target.surface(); }
+#endif
 	private:
 		friend class RenderMgr;
 

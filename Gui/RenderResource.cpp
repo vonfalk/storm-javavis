@@ -4,7 +4,7 @@
 
 namespace gui {
 
-	RenderResource::RenderResource() : resource(null), owner(null) {}
+	RenderResource::RenderResource() : resource(null), destroyFn(null), owner(null) {}
 
 	RenderResource::~RenderResource() {
 		destroy();
@@ -12,6 +12,10 @@ namespace gui {
 
 	void RenderResource::forgetOwner() {
 		owner = null;
+	}
+
+	void RenderResource::attachTo(Painter *to) {
+		to->addResource(this);
 	}
 
 #ifdef GUI_WIN32
@@ -26,12 +30,12 @@ namespace gui {
 #ifdef GUI_GTK
 
 	void RenderResource::destroy() {
-		if (resource)
-			cairo_pattern_destroy(resource);
+		if (resource && destroyFn)
+			(*destroyFn)(resource);
 		resource = null;
 	}
 
-	cairo_pattern_t *RenderResource::create() {
+	OsResource *RenderResource::create(Painter *owner) {
 		return null;
 	}
 

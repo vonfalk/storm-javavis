@@ -23,7 +23,7 @@ namespace gui {
 	/**
 	 * Define generic types to be used in Storm class declarations.
 	 */
-	typedef cairo_pattern_t OsResource;
+	typedef void OsResource;
 	typedef size_t OsLayer;
 	typedef PangoLayout OsTextLayout;
 
@@ -34,6 +34,26 @@ namespace gui {
 		none,
 		group,
 		save
+	};
+
+	/**
+	 * How do we destroy various objects inside Cairo?
+	 */
+	template <class T>
+	struct Destroy;
+
+	template <>
+	struct Destroy<cairo_pattern_t> {
+		static void destroy(OsResource *p) {
+			cairo_pattern_destroy((cairo_pattern_t *)p);
+		}
+	};
+
+	template <>
+	struct Destroy<cairo_surface_t> {
+		static void destroy(OsResource *i) {
+			cairo_surface_destroy((cairo_surface_t *)i);
+		}
 	};
 
 	// More convenient matrix operations.

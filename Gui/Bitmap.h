@@ -18,7 +18,7 @@ namespace gui {
 #endif
 #ifdef GUI_GTK
 		// Create the bitmap.
-		virtual int create(Painter *owner);
+		virtual OsResource *create(Painter *owner);
 #endif
 
 		// Size.

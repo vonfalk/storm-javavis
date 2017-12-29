@@ -108,6 +108,14 @@ namespace gui {
 		void STORM_FN draw(Bitmap *bitmap, Rect rect);
 		void STORM_FN draw(Bitmap *bitmap, Rect rect, Float opacity);
 
+		// Draw a part of a bitmap.
+		void STORM_FN draw(Bitmap *bitmap, Rect src, Point topLeft);
+		void STORM_FN draw(Bitmap *bitmap, Rect src, Point topLeft, Float opacity);
+		void STORM_FN draw(Bitmap *bitmap, Rect src, Rect dest);
+		void STORM_FN draw(Bitmap *bitmap, Rect src, Rect dest, Float opacity);
+
+		// TODO: Add support for drawing a part of a bitmap in a convenient way. Eg. tile or similarly.
+
 		// Draw text the easy way. Prefer using a Text object if possible, since they give more
 		// control over the text and yeild better performance. Attempts to fit the given text inside
 		// 'rect'. No attempt is made at clipping anything not fitting inside 'rect', so any text

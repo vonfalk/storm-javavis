@@ -30,9 +30,8 @@ namespace gui {
 			this->owner = owner;
 			if (!resource) {
 				create(owner, &resource);
-				if (resource) {
-					owner->addResource(this);
-				}
+				if (resource)
+					attachTo(owner);
 			}
 			return static_cast<As*>(resource);
 		}
@@ -49,14 +48,20 @@ namespace gui {
 #ifdef GUI_GTK
 
 		// Get the resource, lazily creates it if needed.
-		cairo_pattern_t *get() {
-			if (!resource)
-				resource = create();
-			return resource;
+		template <class As>
+		As *get(Painter *owner) {
+			this->owner = owner;
+			if (!resource) {
+				resource = create(owner);
+				destroyFn = &Destroy<As>::destroy;
+				if (resource)
+					attachTo(owner);
+			}
+			return (As *)resource;
 		}
 
 		// Create the resource.
-		virtual cairo_pattern_t *create();
+		virtual OsResource *create(Painter *owner);
 
 #endif
 
@@ -64,8 +69,15 @@ namespace gui {
 		// The resource itself.
 		OsResource *resource;
 
-		// Our owner (if any).
+		// Function used to destroy 'resource'. Ignored on Windows.
+		typedef void (*DestroyFn)(OsResource *res);
+		UNKNOWN(PTR_NOGC) DestroyFn destroyFn;
+
+		// Our owner (if any). TODO: Possible to remove?
 		Painter *owner;
+
+		// Attach ourselves to our owner.
+		void attachTo(Painter *to);
 	};
 
 }

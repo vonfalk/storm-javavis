@@ -103,8 +103,20 @@ namespace gui {
 		draw(bitmap, Rect(topLeft, topLeft + bitmap->size()), opacity);
 	}
 
+	void Graphics::draw(Bitmap *bitmap, Rect src, Point topLeft) {
+		draw(bitmap, src, Rect(topLeft, topLeft + src.size()));
+	}
+
+	void Graphics::draw(Bitmap *bitmap, Rect src, Point topLeft, Float opacity) {
+		draw(bitmap, src, Rect(topLeft, topLeft + src.size()), opacity);
+	}
+
 	void Graphics::draw(Bitmap *bitmap, Rect rect) {
 		draw(bitmap, rect, 1);
+	}
+
+	void Graphics::draw(Bitmap *bitmap, Rect src, Rect dest) {
+		draw(bitmap, src, dest, 1);
 	}
 
 #ifdef GUI_WIN32
@@ -269,6 +281,10 @@ namespace gui {
 		info.target()->DrawBitmap(bitmap->bitmap(owner), &dx(rect), opacity, D2D1_BITMAP_INTERPOLATION_MODE_LINEAR, NULL);
 	}
 
+	void Graphics::draw(Bitmap *bitmap, Rect src, Rect dest, Float opacity) {
+		info.target()->DrawBitmap(bitmap->bitmap(owner), &dx(dest), opacity, D2D1_BITMAP_INTERPOLATION_MODE_LINEAR, &dx(src));
+	}
+
 	void Graphics::text(Str *text, Font *font, Brush *style, Rect rect) {
 		ID2D1Brush *b = style->brush(owner, rect);
 		info.target()->DrawText(text->c_str(), text->peekLength(), font->textFormat(), dx(rect), b);
@@ -404,7 +420,7 @@ namespace gui {
 		cairo_move_to(info.target(), from.x, from.y);
 		cairo_line_to(info.target(), to.x, to.y);
 
-		style->setSource(info.target(), Rect(from, to).normalized());
+		style->setSource(owner, info.target(), Rect(from, to).normalized());
 
 		cairo_stroke(info.target());
 	}
@@ -412,7 +428,7 @@ namespace gui {
 	void Graphics::draw(Rect rect, Brush *style) {
 		Size sz = rect.size();
 		cairo_rectangle(info.target(), rect.p0.x, rect.p0.y, sz.w, sz.h);
-		style->setSource(info.target(), rect);
+		style->setSource(owner, info.target(), rect);
 		cairo_stroke(info.target());
 	}
 
@@ -443,7 +459,7 @@ namespace gui {
 	void Graphics::draw(Rect rect, Size edges, Brush *style) {
 		rounded_rect(info, rect, edges);
 
-		style->setSource(info.target(), rect);
+		style->setSource(owner, info.target(), rect);
 		cairo_stroke(info.target());
 	}
 
@@ -463,26 +479,26 @@ namespace gui {
 	void Graphics::oval(Rect rect, Brush *style) {
 		cairo_oval(info, rect);
 
-		style->setSource(info.target(), rect);
+		style->setSource(owner, info.target(), rect);
 		cairo_stroke(info.target());
 	}
 
 	void Graphics::draw(Path *path, Brush *style) {
 		path->draw(info.target());
-		style->setSource(info.target(), path->bound());
+		style->setSource(owner, info.target(), path->bound());
 		cairo_stroke(info.target());
 	}
 
 	void Graphics::fill(Rect rect, Brush *style) {
 		rectangle(info, rect);
-		style->setSource(info.target(), rect);
+		style->setSource(owner, info.target(), rect);
 		cairo_fill(info.target());
 	}
 
 	void Graphics::fill(Rect rect, Size edges, Brush *style) {
 		rounded_rect(info, rect, edges);
 
-		style->setSource(info.target(), rect);
+		style->setSource(owner, info.target(), rect);
 		cairo_fill(info.target());
 	}
 
@@ -491,7 +507,7 @@ namespace gui {
 		cairo_matrix_init_identity(&tfm);
 		cairo_set_matrix(info.target(), &tfm);
 
-		style->setSource(info.target(), Rect(Point(0, 0), size()));
+		style->setSource(owner, info.target(), Rect(Point(0, 0), size()));
 		cairo_paint(info.target());
 
 		tfm = state.transform();
@@ -501,17 +517,44 @@ namespace gui {
 	void Graphics::fillOval(Rect rect, Brush *style) {
 		cairo_oval(info, rect);
 
-		style->setSource(info.target(), rect);
+		style->setSource(owner, info.target(), rect);
 		cairo_fill(info.target());
 	}
 
 	void Graphics::fill(Path *path, Brush *style) {
 		path->draw(info.target());
-		style->setSource(info.target(), path->bound());
+		style->setSource(owner, info.target(), path->bound());
 		cairo_fill(info.target());
 	}
 
-	void Graphics::draw(Bitmap *bitmap, Rect rect, Float opacity) {}
+	void Graphics::draw(Bitmap *bitmap, Rect rect, Float opacity) {
+		rectangle(info, rect);
+		cairo_pattern_t *pattern = cairo_pattern_create_for_surface(bitmap->get<cairo_surface_t>(owner));
+		cairo_matrix_t tfm;
+		Size original = bitmap->size();
+		Size target = rect.size();
+		cairo_matrix_init_scale(&tfm, original.w / target.w, original.h / target.h);
+		cairo_matrix_translate(&tfm, -rect.p0.x, -rect.p0.y);
+		cairo_pattern_set_matrix(pattern, &tfm);
+		cairo_set_source(info.target(), pattern);
+		cairo_fill(info.target());
+		cairo_pattern_destroy(pattern);
+	}
+
+	void Graphics::draw(Bitmap *bitmap, Rect src, Rect dest, Float opacity) {
+		rectangle(info, dest);
+		cairo_pattern_t *pattern = cairo_pattern_create_for_surface(bitmap->get<cairo_surface_t>(owner));
+		cairo_matrix_t tfm;
+		Size original = src.size();
+		Size target = dest.size();
+		cairo_matrix_init_translate(&tfm, src.p0.x, src.p0.y);
+		cairo_matrix_scale(&tfm, original.w / target.w, original.h / target.h);
+		cairo_matrix_translate(&tfm, -dest.p0.x, -dest.p0.y);
+		cairo_pattern_set_matrix(pattern, &tfm);
+		cairo_set_source(info.target(), pattern);
+		cairo_fill(info.target());
+		cairo_pattern_destroy(pattern);
+	}
 
 	void Graphics::text(Str *text, Font *font, Brush *style, Rect rect) {
 		// Note: It would be good to not have to create the layout all the time.
@@ -523,7 +566,7 @@ namespace gui {
 		pango_layout_set_height(layout, toPango(rect.size().h));
 		pango_layout_set_text(layout, text->utf8_str(), -1);
 
-		style->setSource(info.target(), rect);
+		style->setSource(owner, info.target(), rect);
 
 		cairo_move_to(info.target(), rect.p0.x, rect.p0.y);
 		pango_cairo_show_layout(info.target(), layout);
@@ -533,7 +576,7 @@ namespace gui {
 
 	void Graphics::draw(Text *text, Brush *style, Point origin) {
 		Size sz = text->size();
-		style->setSource(info.target(), Rect(origin, sz));
+		style->setSource(owner, info.target(), Rect(origin, sz));
 
 		cairo_move_to(info.target(), origin.x, origin.y);
 		pango_cairo_show_layout(info.target(), text->layout());
