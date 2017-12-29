@@ -129,15 +129,15 @@ namespace gui {
 			STORM_VALUE;
 		public:
 			Layer() {
-				v = null;
+				v = 0;
 			}
 
-			Layer(OsLayer *layer) {
+			Layer(OsLayer layer) {
 				v = layer;
 			}
 
 			inline operator bool() {
-				return v != null;
+				return v != OsLayer(0);
 			}
 
 			inline bool operator ==(const Layer &o) const {
@@ -148,7 +148,7 @@ namespace gui {
 				return v != o.v;
 			}
 
-			UNKNOWN(PTR_NOGC) OsLayer *v;
+			UNKNOWN(PTR_NOGC) OsLayer v;
 
 			// Release.
 			void release();
@@ -184,17 +184,31 @@ namespace gui {
 				tfm0 = 1; tfm1 = 0;
 				tfm2 = 0; tfm3 = 1;
 				tfm4 = 0; tfm5 = 0;
+				layer = LayerKind::none;
 			}
 
-			State(const float *tfm, Float lineWidth) {
+			State(const cairo_matrix_t &tfm, Float lineWidth) {
 				this->lineWidth = lineWidth;
-				memcpy(&tfm0, tfm, sizeof(float)*6);
+				transform(tfm);
 			}
 
-			// Get the transform (array of 6 floats).
-			float *transform() {
-				return &tfm0;
+			// Set the transform.
+			void transform(const cairo_matrix_t &src) {
+				tfm0 = float(src.xx); tfm1 = float(src.yx);
+				tfm2 = float(src.xy); tfm3 = float(src.yy);
+				tfm4 = float(src.x0); tfm5 = float(src.y0);
 			}
+
+			// Get the transform.
+			cairo_matrix_t transform() const {
+				cairo_matrix_t r = {
+					tfm0, tfm1,
+					tfm2, tfm3,
+					tfm4, tfm5
+				};
+				return r;
+			}
+
 #endif
 
 			// Transform storage. Do not touch!
@@ -242,13 +256,6 @@ namespace gui {
 #ifdef GUI_WIN32
 		// Get a layer.
 		ID2D1Layer *layer();
-#endif
-#ifdef GUI_GTK
-		// Get the NVGcontext used here. Makes sure that the proper context is active.
-		NVGcontext *context();
-
-		// Get a layer.
-		TextureContext *layer();
 #endif
 
 		// Prepare rendering a new frame (backend specific).

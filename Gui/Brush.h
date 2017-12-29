@@ -26,17 +26,18 @@ namespace gui {
 		virtual void prepare(const Rect &bound, ID2D1Brush *b);
 #endif
 #ifdef GUI_GTK
-		// Stroke the current path.
-		void stroke(Painter *p, NVGcontext *c, const Rect &bound);
+		// Set the source of the cairo_t to this brush.
+		inline void setSource(cairo_t *c, const Rect &bound) {
+			cairo_pattern_t *b = get();
+			if (b) {
+				prepare(bound, b);
+				// TODO: Handle opacity!
+				cairo_set_source(c, b);
+			}
+		}
 
-		// Fill the current path.
-		void fill(Painter *p, NVGcontext *c, const Rect &bound);
-
-		// Set the stroke of the NVGcontext.
-		virtual void setStroke(Painter *p, NVGcontext *c, const Rect &bound);
-
-		// Set the fill of the NVGcontext.
-		virtual void setFill(Painter *p, NVGcontext *c, const Rect &bound);
+		// Prepare for drawing a bounding box of 'bound'.
+		virtual void prepare(const Rect &bound, cairo_pattern_t *brush);
 #endif
 
 		// Opacity.
@@ -55,8 +56,7 @@ namespace gui {
 		virtual void create(Painter *owner, ID2D1Resource **out);
 #endif
 #ifdef GUI_GTK
-		virtual void setStroke(Painter *p, NVGcontext *c, const Rect &bound);
-		virtual void setFill(Painter *p, NVGcontext *c, const Rect &bound);
+		virtual cairo_pattern_t *create();
 #endif
 
 	private:
@@ -111,24 +111,18 @@ namespace gui {
 		// Destroy the stops.
 		virtual void destroy();
 
-#ifdef GUI_GTK
-		virtual void setStroke(Painter *p, NVGcontext *c, const Rect &bound);
-		virtual void setFill(Painter *p, NVGcontext *c, const Rect &bound);
-
-		// Called to create the paint for this gradient.
-		virtual NVGpaint createPaint(Painter *p, NVGcontext *c, const Rect &bound);
-#endif
 	protected:
 #ifdef GUI_WIN32
 		// Get the stops object.
 		ID2D1GradientStopCollection *dxStops(Painter *owner);
 #endif
-		// Current stops.
-		Array<GradientStop> *myStops;
-
+#ifdef GUI_GTK
+		// Apply stops to a pattern.
+		void applyStops(cairo_pattern_t *to);
+#endif
 	private:
-		// DX object containing the gradient stops.
 		ID2D1GradientStopCollection *dxObject;
+		Array<GradientStop> *myStops;
 	};
 
 
@@ -154,11 +148,11 @@ namespace gui {
 		virtual void prepare(const Rect &s, ID2D1Brush *b);
 #endif
 #ifdef GUI_GTK
-		// Create the NVGpaint to use for this gradient.
-		virtual NVGpaint createPaint(Painter *p, NVGcontext *c, const Rect &bound);
+		// Create.
+		virtual cairo_pattern_t *create();
 
-		// Destroy any resources here.
-		virtual int create(Painter *owner);
+		// Prepare.
+		virtual void prepare(const Rect &s, cairo_pattern_t *b);
 #endif
 
 		// The angle.
@@ -167,7 +161,6 @@ namespace gui {
 	private:
 		// Compute points.
 		void compute(const Rect &sz, Point &start, Point &end);
-		void compute(const Rect &sz, Point &start, Point &end, Float &distance);
 	};
 
 	// TODO: Implement a radial gradient as well!

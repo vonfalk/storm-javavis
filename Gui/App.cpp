@@ -379,7 +379,8 @@ namespace gui {
 #ifdef GUI_GTK
 
 	void App::init() {
-		// Nothing so far...
+		// Note: App::init is called after AppWait::platformInit
+		display = gdk_display_get_default();
 	}
 
 	void App::repaint(Handle window) {

@@ -48,26 +48,21 @@ namespace gui {
 #endif
 #ifdef GUI_GTK
 
-		// Get the texture.
-		int texture(Painter *owner);
-
-		// Create the texture. Return -1 on failure.
-		virtual int create(Painter *owner);
-
-	private:
-		// We're storing an integer texture id inside the render resource. Returns -1 if empty.
-		int texture() const {
-			return ((int)(size_t)resource) - 1;
+		// Get the resource, lazily creates it if needed.
+		cairo_pattern_t *get() {
+			if (!resource)
+				resource = create();
+			return resource;
 		}
-		void texture(int texture) {
-			resource = (OsResource *)(size_t)(texture + 1);
-		}
+
+		// Create the resource.
+		virtual cairo_pattern_t *create();
 
 #endif
 
 	private:
 		// The resource itself.
-		UNKNOWN(PTR_NOGC) OsResource *resource;
+		OsResource *resource;
 
 		// Our owner (if any).
 		Painter *owner;

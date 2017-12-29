@@ -25,30 +25,14 @@ namespace gui {
 #endif
 #ifdef GUI_GTK
 
-	int RenderResource::texture(Painter *owner) {
-		this->owner = owner;
-		if (texture() < 0) {
-			int id = create(owner);
-			texture(id);
-			if (id >= 0)
-				owner->addResource(this);
-		}
-		return texture();
-	}
-
 	void RenderResource::destroy() {
-		if (texture() >= 0) {
-			if (owner) {
-				nvgDeleteImage(owner->nvgContext(), texture());
-			}
-			// NOTE: Destroying the nvgContext destroys the textures created there as well, so we
-			// don't need to worry in case we do not have an owner.
-		}
-		texture(-1);
+		if (resource)
+			cairo_pattern_destroy(resource);
+		resource = null;
 	}
 
-	int RenderResource::create(Painter *owner) {
-		return -1;
+	cairo_pattern_t *RenderResource::create() {
+		return null;
 	}
 
 #endif

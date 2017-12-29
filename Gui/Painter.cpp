@@ -203,17 +203,13 @@ namespace gui {
 
 		bool more = false;
 
-		// Clear the surface with the desired color.
-		GlContext *ctx = target.context();
-		ctx->activate();
-		glClearColor(bgColor.r, bgColor.g, bgColor.b, bgColor.a);
-		glClear(GL_COLOR_BUFFER_BIT);
+		// Clear the surface with the background color.
+		cairo_set_source_rgba(target.target(), bgColor.r, bgColor.g, bgColor.b, bgColor.a);
+		cairo_set_operator(target.target(), CAIRO_OPERATOR_SOURCE);
+		cairo_paint(target.target());
 
-		// Start a frame and set default parameters in case someone failed to clean up.
-		nvgBeginFrame(ctx->nvg, target.size.w, target.size.h, 1.0f);
-		nvgGlobalCompositeOperation(ctx->nvg, NVG_SOURCE_OVER);
-		nvgLineCap(ctx->nvg, NVG_ROUND);
-		// Note: we could set some more...
+		// Set the default operator again.
+		cairo_set_operator(target.target(), CAIRO_OPERATOR_OVER);
 
 		try {
 			graphics->beforeRender();
@@ -221,27 +217,22 @@ namespace gui {
 			graphics->afterRender();
 		} catch (...) {
 			graphics->afterRender();
-			nvgCancelFrame(ctx->nvg);
 			throw;
 		}
 
-		nvgEndFrame(ctx->nvg);
-
+		// Show the result.
 		// TODO: handle VSync somehow?
-		target.context()->swapBuffers();
+		target.surface()->swapBuffers();
 
 		return more;
 	}
 
 	void Painter::beforeRepaint(RepaintParams *p) {
 		if (!target.any()) {
-			// Update the size, since it might have changed since we last observed it.
-			Size sz = Size(gtk_widget_get_allocated_width(p->widget),
-						gtk_widget_get_allocated_height(p->widget));
-			target.size = sz;
+			// We can create the actual context now that we know we have a window to draw to.
+			RenderMgr *mgr = renderMgr(engine());
+			target = mgr->create(p->widget, p->target);
 
-			// Create the target.
-			target.context(GlContext::create(p->target));
 			if (graphics)
 				graphics->updateTarget(target);
 		}

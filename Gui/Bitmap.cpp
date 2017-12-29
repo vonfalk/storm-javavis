@@ -46,10 +46,11 @@ namespace gui {
 #ifdef GUI_GTK
 
 	int Bitmap::create(Painter *owner) {
-		Nat w = src->width();
-		Nat h = src->height();
-		assert(src->stride() == w * 4, L"We need a stride of exactly width*4 for OpenGL.");
-		return nvgCreateImageRGBA(owner->nvgContext(), w, h, 0, src->buffer());
+		// Nat w = src->width();
+		// Nat h = src->height();
+		// assert(src->stride() == w * 4, L"We need a stride of exactly width*4 for OpenGL.");
+		// return nvgCreateImageRGBA(owner->nvgContext(), w, h, 0, src->buffer());
+		return 0;
 	}
 
 #endif

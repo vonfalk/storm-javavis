@@ -1,7 +1,10 @@
 #pragma once
-#include "GlContext.h"
 
 namespace gui {
+
+#ifdef GUI_GTK
+	class GlSurface;
+#endif
 
 	/**
 	 * Plaform specific information required to render to the screen.
@@ -10,6 +13,7 @@ namespace gui {
 		STORM_VALUE;
 	public:
 		// Size of the surface we're rendering to.
+		// TODO: Remove?
 		Size size;
 
 #ifdef GUI_WIN32
@@ -26,30 +30,33 @@ namespace gui {
 		inline void swapChain(IDGXISwapChain *to) {
 			second = to;
 		}
-
-		// Release all members.
-		inline void release() {
-			::release(target());
-			::release(swapChain());
-		}
 		inline bool any() const {
 			return swapChain() != null;
 		}
+
+		// Release all members.
+		void release()
 #endif
 #ifdef GUI_GTK
-		inline GlContext *context() const {
-			return (GlContext *)first;
+		inline cairo_t *target() const {
+			return (cairo_t *)first;
 		}
-		inline void context(GlContext *context) {
-			first = context;
+		inline void target(cairo_t *cairo) {
+			first = cairo;
 		}
-		inline void release() {
-			delete context();
-			context(null);
+
+		inline GlSurface *surface() const {
+			return (GlSurface *)second;
 		}
-		inline bool any() const {
-			return context() != null;
+		inline void surface(GlSurface *s) {
+			second = s;
 		}
+		inline bool any() {
+			return target() != null;
+		}
+
+		void release();
+
 #endif
 
 		// Create

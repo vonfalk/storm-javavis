@@ -155,6 +155,7 @@ flags+=-falign-functions=2
 #modules are different variables and may thus contain different values. This is not the default on UNIX
 #systems, at least not when using GCC.
 flags+=-fvisibility=hidden
+cflags+=-fvisibility=hidden
 
 library+=pthread
 library+=dl

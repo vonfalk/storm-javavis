@@ -71,6 +71,9 @@ namespace gui {
 #ifdef GUI_GTK
 		// Post a repaint request from any thread.
 		void repaint(Handle window);
+
+		// Get the default display.
+		inline GdkDisplay *defaultDisplay() const { return display; }
 #endif
 
 	private:
@@ -99,6 +102,9 @@ namespace gui {
 
 		// Our instance (an HINSTANCE).
 		Handle hInstance;
+
+		// The default display when using Gtk+.
+		GdkDisplay *display;
 
 		// The AppWait object that is in charge of our thread.
 		UNKNOWN(PTR_NOGC) AppWait *appWait;

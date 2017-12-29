@@ -1,7 +1,6 @@
 #pragma once
 #include "Core/Array.h"
 #include "Resource.h"
-#include "nanovg.h"
 
 namespace gui {
 
@@ -52,8 +51,8 @@ namespace gui {
 		ID2D1PathGeometry *geometry();
 #endif
 #ifdef GUI_GTK
-		// Set the path on the supplied context.
-		void draw(NVGcontext *to);
+		// Set the path on the supplied cairo_t.
+		void draw(cairo_t *c);
 #endif
 	private:
 		// Element type.

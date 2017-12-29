@@ -52,7 +52,7 @@ namespace gui {
 	 * Define generic types to be used in Storm class declarations.
 	 */
 	typedef ID2D1Resource OsResource;
-	typedef ID2D1Layer OsLayer;
+	typedef ID2D1Layer *OsLayer;
 	typedef IDWriteTextLayout OsTextLayout;
 
 }

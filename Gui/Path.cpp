@@ -156,8 +156,8 @@ namespace gui {
 #endif
 #ifdef GUI_GTK
 
-	void Path::draw(NVGcontext *c) {
-		nvgBeginPath(c);
+	void Path::draw(cairo_t *c) {
+		cairo_new_path(c);
 
 		bool started = false;
 		Point current;
@@ -166,34 +166,33 @@ namespace gui {
 			switch (e.t) {
 			case tStart:
 				current = e.start()->pt;
-				nvgMoveTo(c, current.x + 0.5f, current.y + 0.5f);
+				cairo_move_to(c, current.x, current.y);
 				started = true;
 				break;
 			case tClose:
-				nvgClosePath(c);
+				cairo_close_path(c);
 				started = false;
 				break;
 			case tLine:
 				if (started) {
 					current = e.line()->to;
-					nvgLineTo(c, current.x + 0.5f, current.y + 0.5f);
+					cairo_line_to(c, current.x, current.y);
 				}
 				break;
 			case tBezier2:
 				if (started) {
 					Bezier2 *b = e.bezier2();
+					Point c1 = current + (2.0f/3.0f)*(b->c1 - current);
+					Point c2 = b->to + (2.0f/3.0f)*(b->c1 - b->to);
 					current = b->to;
-					nvgQuadTo(c, b->c1.x + 0.5f, b->c1.y + 0.5f,
-							current.x + 0.5f, current.y + 0.5f);
+					cairo_curve_to(c, c1.x, c1.y, c2.x, c2.y, current.x, current.y);
 				}
 				break;
 			case tBezier3:
 				if (started) {
 					Bezier3 *b = e.bezier3();
 					current = b->to;
-					nvgBezierTo(c, b->c1.x + 0.5f, b->c1.y + 0.5f,
-								b->c2.x + 0.5f, b->c2.y + 0.5f,
-								current.x + 0.5f, current.y + 0.5f);
+					cairo_curve_to(c, b->c1.x, b->c1.y, b->c2.x, b->c2.y, current.x, current.y);
 				}
 				break;
 			}

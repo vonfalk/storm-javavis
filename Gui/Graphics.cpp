@@ -208,7 +208,7 @@ namespace gui {
 	}
 
 	void Graphics::lineWidth(Float w) {
-		// Note: How is the line size affected by scaling etc?
+		// TODO: How is the width of lines affected by scaling etc.? How do we want it to behave?
 		state.lineWidth = oldStates->last().lineWidth * w;
 	}
 
@@ -296,105 +296,74 @@ namespace gui {
 			;
 	}
 
-	TextureContext *Graphics::layer() {
-		TextureContext *r = null;
-		if (layers->count() > 0) {
-			r = layers->last().v;
-			layers->pop();
-			// Resize to fit the screen if necessary.
-			r->resize(info.size);
-		} else {
-			r = new TextureContext(info.context(), info.size);
-		}
+	// TextureContext *Graphics::layer() {
+	// 	TextureContext *r = null;
+	// 	if (layers->count() > 0) {
+	// 		r = layers->last().v;
+	// 		layers->pop();
+	// 		// Resize to fit the screen if necessary.
+	// 		r->resize(info.size);
+	// 	} else {
+	// 		r = new TextureContext(info.context(), info.size);
+	// 	}
 
-		// Clear the layer.
-		r->activate();
-		glClearColor(0, 0, 0, 0);
-		glClear(GL_COLOR_BUFFER_BIT);
+	// 	// Clear the layer.
+	// 	r->activate();
+	// 	glClearColor(0, 0, 0, 0);
+	// 	glClear(GL_COLOR_BUFFER_BIT);
 
-		minFreeLayers = min(minFreeLayers, layers->count());
-		return r;
-	}
+	// 	minFreeLayers = min(minFreeLayers, layers->count());
+	// 	return r;
+	// }
 
 	void Graphics::push() {
 		oldStates->push(state);
+		state.layer = LayerKind::none;
 	}
 
 	void Graphics::push(Float opacity) {
 		oldStates->push(state);
-
-		nvgFlush(info.context()->nvg);
-		state.layer = layer();
+		state.layer = LayerKind::group;
 		state.opacity = opacity;
+		cairo_push_group(info.target());
 	}
 
 	void Graphics::push(Rect clip) {
 		oldStates->push(state);
+		state.layer = LayerKind::save;
+		cairo_save(info.target());
 
-		nvgFlush(info.context()->nvg);
-		state.layer = layer();
-		state.opacity = 1.0f;
-		state.clip = clip;
+		Size sz = clip.size();
+		cairo_rectangle(info.target(), clip.p0.x, clip.p0.y, sz.w, sz.h);
+		cairo_clip(info.target());
 	}
 
 	void Graphics::push(Rect clip, Float opacity) {
 		oldStates->push(state);
-
-		nvgFlush(info.context()->nvg);
-		state.layer = layer();
+		state.layer = LayerKind::group;
 		state.opacity = opacity;
-		state.clip = clip;
+		cairo_push_group(info.target());
+
+		Size sz = clip.size();
+		cairo_rectangle(info.target(), clip.p0.x, clip.p0.y, sz.w, sz.h);
+		cairo_clip(info.target());
 	}
 
 	Bool Graphics::pop() {
-		State prev = state;
+		switch (state.layer.v) {
+		case LayerKind::none:
+			break;
+		case LayerKind::group:
+			cairo_pop_group_to_source(info.target());
+			cairo_paint_with_alpha(info.target(), state.opacity);
+			break;
+		case LayerKind::save:
+			cairo_restore(info.target());
+			break;
+		}
+
 		state = oldStates->last();
 		prepare();
-
-		// See if we need to apply and dispose a layer.
-		if (prev.layer && prev.layer != state.layer) {
-			TextureContext *gl = prev.layer.v;
-			nvgFlush(gl->nvg);
-
-			// Draw the previous layer onto the now current layer, using the opacity present here.
-			// The texture inside layers are always the same size and position as the main rendering
-			// target. Therefore, we want to draw it in (0, 0) - (w, h). However, we probably want
-			// to do that having the proper transformation applied so that we can clip properly if
-			// we need to.
-			NVGcontext *c = context();
-
-			// Set the clip region.
-			Size clipSize = prev.clip.size();
-			nvgScissor(c, prev.clip.p0.x, prev.clip.p0.y, clipSize.w, clipSize.h);
-
-			// Draw a rectangle at (0, 0) - (w, h) in real coordinates. Thus, we need to negate the
-			// current transform.
-			float tfm[6];
-			nvgCurrentTransform(c, tfm);
-			float invTfm[6];
-			nvgTransformInverse(invTfm, tfm);
-			float x, y;
-			nvgBeginPath(c);
-			nvgTransformPoint(&x, &y, invTfm, 0, 0);
-			nvgMoveTo(c, x, y);
-			nvgTransformPoint(&x, &y, invTfm, info.size.w, 0);
-			nvgLineTo(c, x, y);
-			nvgTransformPoint(&x, &y, invTfm, info.size.w, info.size.h);
-			nvgLineTo(c, x, y);
-			nvgTransformPoint(&x, &y, invTfm, 0, info.size.h);
-			nvgLineTo(c, x, y);
-			nvgClosePath(c);
-
-			// Draw the image.
-			nvgFillPaint(c, nvgImagePatternRaw(c, invTfm, info.size.w, info.size.h, gl->nvgImage(), prev.opacity));
-			nvgFill(c);
-
-			// Reset clip region.
-			nvgResetScissor(c);
-
-			// Push it to the layer stack for later reuse.
-			layers->push(prev.layer);
-		}
 
 		if (oldStates->count() > 1) {
 			oldStates->pop();
@@ -405,173 +374,170 @@ namespace gui {
 	}
 
 	void Graphics::transform(Transform *tfm) {
-		NVGcontext *c = info.context()->nvg;
-		nvgSetTransform(c, oldStates->last().transform());
-		nvgTransform(c, tfm);
-		nvgCurrentTransform(c, state.transform());
+		cairo_matrix_t m = cairoMultiply(cairo(tfm), oldStates->last().transform());
+		state.transform(m);
+		cairo_set_matrix(info.target(), &m);
 	}
 
 	void Graphics::lineWidth(Float w) {
-		// TODO: How is the width of lines affected by scaling etc.?
-		state.lineWidth = oldStates->last().lineWidth * w;
-		nvgStrokeWidth(info.context()->nvg, state.lineWidth);
+		// TODO: How is the width of lines affected by scaling etc.? How do we want it to behave?
+		state.lineWidth = oldStates->last().lineWidth *w;
+		cairo_set_line_width(info.target(), state.lineWidth);
 	}
 
 	void Graphics::prepare() {
-		NVGcontext *c = info.context()->nvg;
-		nvgSetTransform(c, state.transform());
-		nvgStrokeWidth(c, state.lineWidth);
+		cairo_matrix_t tfm = state.transform();
+		cairo_set_matrix(info.target(), &tfm);
+		cairo_set_line_width(info.target(), state.lineWidth);
 	}
 
 	void Graphics::Layer::release() {
-		delete v;
-		v = null;
-	}
-
-	NVGcontext *Graphics::context() {
-		// Find the context to activate and make sure it is active. There might have been a thread
-		// switch somewhere since last time.
-
-		GlContext *c = info.context();
-		// If the current state contains a TextureContext, use that.
-		if (state.layer)
-			c = state.layer.v;
-
-		assert(c);
-		c->activate();
-
-		return c->nvg;
+		v = LayerKind::none;
 	}
 
 	/**
 	 * Draw stuff.
-	 *
-	 * Note: We offset all lines 0.5 px since they would otherwise be located 'between' pixels
-	 * rather than in the center of pixels.
 	 */
 
 	void Graphics::line(Point from, Point to, Brush *style) {
-		NVGcontext *c = context();
-		nvgBeginPath(c);
-		nvgMoveTo(c, from.x + 0.5f, from.y + 0.5f);
-		nvgLineTo(c, to.x + 0.5f, to.y + 0.5f);
-		style->stroke(owner, c, Rect(from, to).normalized());
+		cairo_new_path(info.target());
+		cairo_move_to(info.target(), from.x, from.y);
+		cairo_line_to(info.target(), to.x, to.y);
+
+		style->setSource(info.target(), Rect(from, to).normalized());
+
+		cairo_stroke(info.target());
 	}
 
 	void Graphics::draw(Rect rect, Brush *style) {
-		NVGcontext *c = context();
-		nvgBeginPath(c);
 		Size sz = rect.size();
-		nvgRect(c, rect.p0.x + 0.5f, rect.p0.y + 0.5f, sz.w, sz.h);
-		style->stroke(owner, c, rect);
+		cairo_rectangle(info.target(), rect.p0.x, rect.p0.y, sz.w, sz.h);
+		style->setSource(info.target(), rect);
+		cairo_stroke(info.target());
 	}
 
-	static void roundedRect(NVGcontext *c, Rect rect, Size edges) {
-		const float kappa90 = 0.5522847493f;
-		const float invKappa90 = 1.0f - kappa90;
+	static void rectangle(const RenderInfo &info, const Rect &rect) {
+		Size sz = rect.size();
+		cairo_rectangle(info.target(), rect.p0.x, rect.p0.y, sz.w, sz.h);
+	}
 
-		rect = rect + Point(0.5f, 0.5f);
+	static void rounded_corner(const RenderInfo &info, Point center, Size scale, double from, double to) {
+		cairo_save(info.target());
+		cairo_translate(info.target(), center.x, center.y);
+		cairo_scale(info.target(), scale.w, scale.h);
+		cairo_arc(info.target(), 0, 0, 1, from, to);
+		cairo_restore(info.target());
+	}
 
-		nvgMoveTo(c, rect.p1.x - edges.w, rect.p0.y);
-		nvgBezierTo(c,
-					rect.p1.x - edges.w*invKappa90, rect.p0.y,
-					rect.p1.x, rect.p0.y + edges.h*invKappa90,
-					rect.p1.x, rect.p0.y + edges.h);
-		nvgLineTo(c, rect.p1.x, rect.p1.y - edges.h);
-		nvgBezierTo(c,
-					rect.p1.x, rect.p1.y - edges.h*invKappa90,
-					rect.p1.x - edges.w*invKappa90, rect.p1.y,
-					rect.p1.x - edges.w, rect.p1.y);
-		nvgLineTo(c, rect.p0.x + edges.w, rect.p1.y);
-		nvgBezierTo(c,
-					rect.p0.x + edges.w*invKappa90, rect.p1.y,
-					rect.p0.x, rect.p1.y - edges.h*invKappa90,
-					rect.p0.x, rect.p1.y - edges.h);
-		nvgLineTo(c, rect.p0.x, rect.p0.y + edges.h);
-		nvgBezierTo(c,
-					rect.p0.x, rect.p0.y + edges.h*invKappa90,
-					rect.p0.x + edges.w*invKappa90, rect.p0.y,
-					rect.p0.x + edges.w, rect.p0.y);
-		nvgClosePath(c);
+	static void rounded_rect(const RenderInfo &to, Rect rect, Size edges) {
+		const double quarter = M_PI / 2;
+
+		cairo_new_path(to.target());
+		rounded_corner(to, Point(rect.p1.x - edges.w, rect.p0.y + edges.h), edges, -quarter, 0);
+		rounded_corner(to, Point(rect.p1.x - edges.w, rect.p1.y - edges.h), edges, 0, quarter);
+		rounded_corner(to, Point(rect.p0.x + edges.w, rect.p1.y - edges.h), edges, quarter, 2*quarter);
+		rounded_corner(to, Point(rect.p0.x + edges.w, rect.p0.y + edges.h), edges, 2*quarter, 3*quarter);
+		cairo_close_path(to.target());
 	}
 
 	void Graphics::draw(Rect rect, Size edges, Brush *style) {
-		NVGcontext *c = context();
-		nvgBeginPath(c);
-		roundedRect(c, rect, edges);
-		style->stroke(owner, c, rect);
+		rounded_rect(info, rect, edges);
+
+		style->setSource(info.target(), rect);
+		cairo_stroke(info.target());
 	}
 
-	static void drawOval(NVGcontext *c, Rect rect) {
-		Size size = rect.size() / 2;
+	static void cairo_oval(const RenderInfo &to, Rect rect) {
+		cairo_save(to.target());
+
 		Point center = rect.center();
-		nvgEllipse(c, center.x + 0.5f, center.y + 0.5f, size.w, size.h);
+		cairo_translate(to.target(), center.x, center.y);
+		Size size = rect.size();
+		cairo_scale(to.target(), size.w / 2, size.h / 2);
+
+		cairo_arc(to.target(), 0, 0, 1, 0, 2*M_PI);
+
+		cairo_restore(to.target());
 	}
 
 	void Graphics::oval(Rect rect, Brush *style) {
-		NVGcontext *c = context();
-		nvgBeginPath(c);
-		drawOval(c, rect);
-		style->stroke(owner, c, rect);
+		cairo_oval(info, rect);
+
+		style->setSource(info.target(), rect);
+		cairo_stroke(info.target());
 	}
 
 	void Graphics::draw(Path *path, Brush *style) {
-		NVGcontext *c = context();
-		path->draw(c);
-		style->stroke(owner, c, path->bound());
+		path->draw(info.target());
+		style->setSource(info.target(), path->bound());
+		cairo_stroke(info.target());
 	}
 
 	void Graphics::fill(Rect rect, Brush *style) {
-		NVGcontext *c = context();
-		nvgBeginPath(c);
-		Size sz = rect.size();
-		nvgRect(c, rect.p0.x, rect.p0.y, sz.w, sz.h);
-		style->fill(owner, c, rect);
+		rectangle(info, rect);
+		style->setSource(info.target(), rect);
+		cairo_fill(info.target());
 	}
 
 	void Graphics::fill(Rect rect, Size edges, Brush *style) {
-		NVGcontext *c = context();
-		nvgBeginPath(c);
-		roundedRect(c, rect, edges);
-		style->fill(owner, c, rect);
+		rounded_rect(info, rect, edges);
+
+		style->setSource(info.target(), rect);
+		cairo_fill(info.target());
 	}
 
 	void Graphics::fill(Brush *style) {
-		NVGcontext *c = context();
-		nvgResetTransform(c);
-		Size sz = size();
-		nvgBeginPath(c);
-		nvgRect(c, 0, 0, sz.w + 1.0f, sz.h + 1.0f);
-		style->fill(owner, c, Rect(Point(), sz));
-		// Go back to the previous transform.
-		nvgSetTransform(c, state.transform());
+		cairo_matrix_t tfm;
+		cairo_matrix_init_identity(&tfm);
+		cairo_set_matrix(info.target(), &tfm);
+
+		style->setSource(info.target(), Rect(Point(0, 0), size()));
+		cairo_paint(info.target());
+
+		tfm = state.transform();
+		cairo_set_matrix(info.target(), &tfm);
 	}
 
 	void Graphics::fillOval(Rect rect, Brush *style) {
-		NVGcontext *c = context();
-		nvgBeginPath(c);
-		drawOval(c, rect);
-		style->fill(owner, c, rect);
+		cairo_oval(info, rect);
+
+		style->setSource(info.target(), rect);
+		cairo_fill(info.target());
 	}
 
 	void Graphics::fill(Path *path, Brush *style) {
-		NVGcontext *c = context();
-		path->draw(c);
-		style->fill(owner, c, path->bound());
+		path->draw(info.target());
+		style->setSource(info.target(), path->bound());
+		cairo_fill(info.target());
 	}
 
-	void Graphics::draw(Bitmap *bitmap, Rect rect, Float opacity) {
-		NVGcontext *c = context();
-		Size sz = rect.size();
-		nvgBeginPath(c);
-		nvgRect(c, rect.p0.x, rect.p0.y, sz.w, sz.h);
-		nvgFillPaint(c, nvgImagePattern(c, rect.p0.x, rect.p0.y, sz.w, sz.h, 0, bitmap->texture(owner), opacity));
-		nvgFill(c);
+	void Graphics::draw(Bitmap *bitmap, Rect rect, Float opacity) {}
+
+	void Graphics::text(Str *text, Font *font, Brush *style, Rect rect) {
+		// Note: It would be good to not have to create the layout all the time.
+		PangoLayout *layout = pango_cairo_create_layout(info.target());
+
+		pango_layout_set_wrap(layout, PANGO_WRAP_WORD_CHAR);
+		pango_layout_set_font_description(layout, font->desc());
+		pango_layout_set_width(layout, toPango(rect.size().w));
+		pango_layout_set_height(layout, toPango(rect.size().h));
+		pango_layout_set_text(layout, text->utf8_str(), -1);
+
+		style->setSource(info.target(), rect);
+
+		cairo_move_to(info.target(), rect.p0.x, rect.p0.y);
+		pango_cairo_show_layout(info.target(), layout);
+
+		g_object_unref(layout);
 	}
 
-	void Graphics::text(Str *text, Font *font, Brush *style, Rect rect) {}
+	void Graphics::draw(Text *text, Brush *style, Point origin) {
+		Size sz = text->size();
+		style->setSource(info.target(), Rect(origin, sz));
 
-	void Graphics::draw(Text *text, Brush *style, Point origin) {}
+		cairo_move_to(info.target(), origin.x, origin.y);
+		pango_cairo_show_layout(info.target(), text->layout());
+	}
 
 #endif
 

@@ -7,6 +7,8 @@
 #include "Core/Sema.h"
 #include "Handle.h"
 #include "RenderInfo.h"
+#include "DxDevice.h"
+#include "GlDevice.h"
 
 namespace gui {
 	class Painter;
@@ -41,14 +43,17 @@ namespace gui {
 
 #ifdef GUI_WIN32
 		// Get the DWrite factory object.
-		inline IDWriteFactory *dWrite() { return writeFactory; }
+		inline IDWriteFactory *dWrite() { return device->dWrite(); }
 
 		// Get the D2D factory object.
-		inline ID2D1Factory *d2d() { return factory; }
+		inline ID2D1Factory *d2d() { return device->d2d(); }
 #endif
 #ifdef GUI_GTK
 		// Get a PangoContext we can use to create text.
 		PangoContext *dummyContext() { return cContext; }
+
+		// Create a context to draw to.
+		RenderInfo create(GtkWidget *widget, GdkWindow *target);
 #endif
 	private:
 		friend RenderMgr *renderMgr(EnginePtr e);
@@ -56,22 +61,16 @@ namespace gui {
 		// Create.
 		RenderMgr();
 
-		// The D2D-factory.
-		ID2D1Factory *factory;
-		IDXGIFactory *giFactory;
-		IDWriteFactory *writeFactory;
-
-		// D3D device and dxgi device.
-		ID3D10Device1 *device;
-		IDXGIDevice *giDevice;
+		// The underlying device.
+		Device *device;
 
 		// Dummy Cairo surface and corresponding device.
 		// TODO: Remove!
 		cairo_surface_t *cSurface;
 		cairo_t *cDevice;
-
-		// Pango context for the dummy device.
 		PangoContext *cContext;
+		void init();
+		void destroy();
 
 		// Live painters. TODO? Weak set?
 		Set<Painter *> *painters;
@@ -88,16 +87,6 @@ namespace gui {
 		// Exiting?
 		Bool exiting;
 
-		// Platform specific initialization.
-		void init();
-
-		// Platform specific destruction.
-		void destroy();
-
-#ifdef GUI_WIN32
-		// Create a render target.
-		ID2D1RenderTarget *createTarget(IDXGISwapChain *swapChain);
-#endif
 #ifdef GUI_GTK
 		// Create the global context if neccessary.
 		cairo_device_t *createDevice(GtkWidget *widget);
