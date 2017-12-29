@@ -27,9 +27,17 @@ namespace gui {
 		// Create the context for a window (stage 2 of creation).
 		RenderInfo create(GtkWidget *widget, GdkWindow *window);
 
+		// Get a pango context for text rendering.
+		inline PangoContext *pango() const { return pangoContext; }
+
 	private:
 		// Current context.
 		GlContext *context;
+
+		// Dummy context for text rendering.
+		cairo_surface_t *pangoSurface;
+		cairo_t *pangoTarget;
+		PangoContext *pangoContext;
 	};
 
 

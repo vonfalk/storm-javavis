@@ -49,8 +49,8 @@ namespace gui {
 		inline ID2D1Factory *d2d() { return device->d2d(); }
 #endif
 #ifdef GUI_GTK
-		// Get a PangoContext we can use to create text.
-		PangoContext *dummyContext() { return cContext; }
+		// Get a pango context.
+		inline PangoContext *pango() { return device->pango(); }
 
 		// Create a context to draw to.
 		RenderInfo create(GtkWidget *widget, GdkWindow *target);
@@ -63,14 +63,6 @@ namespace gui {
 
 		// The underlying device.
 		Device *device;
-
-		// Dummy Cairo surface and corresponding device.
-		// TODO: Remove!
-		cairo_surface_t *cSurface;
-		cairo_t *cDevice;
-		PangoContext *cContext;
-		void init();
-		void destroy();
 
 		// Live painters. TODO? Weak set?
 		Set<Painter *> *painters;

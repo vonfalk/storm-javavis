@@ -20,7 +20,6 @@ namespace gui {
 			PLN("Error while initializing rendering: " << e);
 			throw;
 		}
-		init(); // <-- remove this
 	}
 
 	void RenderMgr::attach(Resource *resource) {
@@ -57,7 +56,6 @@ namespace gui {
 		while (Resource *n = r.next())
 			n->destroy();
 
-		destroy(); // <-- remove this
 		delete device;
 		device = null;
 	}
@@ -137,21 +135,6 @@ namespace gui {
 	}
 
 #ifdef GUI_GTK
-
-	void RenderMgr::init() {
-		// Create the dummy cairo surface.
-		// TODO: If possible, we would probably want to use create_similar_surface on a surface from Gtk+.
-		// TODO: Remove these!
-		cSurface = cairo_image_surface_create(CAIRO_FORMAT_ARGB32, 1, 1);
-		cDevice = cairo_create(cSurface);
-		cContext = pango_cairo_create_context(cDevice);
-	}
-
-	void RenderMgr::destroy() {
-		g_object_unref(cContext);
-		cairo_destroy(cDevice);
-		cairo_surface_destroy(cSurface);
-	}
 
 	RenderInfo RenderMgr::create(GtkWidget *widget, GdkWindow *window) {
 		return device->create(widget, window);

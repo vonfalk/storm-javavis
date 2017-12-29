@@ -60,7 +60,7 @@ namespace gui {
 
 	void Text::init(Str *text, Font *font, Size size) {
 		RenderMgr *mgr = renderMgr(engine());
-		l = pango_layout_new(mgr->dummyContext());
+		l = pango_layout_new(mgr->pango());
 
 		pango_layout_set_wrap(l, PANGO_WRAP_WORD_CHAR);
 		pango_layout_set_font_description(l, font->desc());

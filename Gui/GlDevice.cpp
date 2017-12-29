@@ -8,9 +8,17 @@ namespace gui {
 
 	Device::Device(Engine &e) {
 		context = GlContext::create(e);
+
+		pangoSurface = cairo_gl_surface_create(context->device, CAIRO_CONTENT_COLOR_ALPHA, 1, 1);
+		pangoTarget = cairo_create(pangoSurface);
+		pangoContext = pango_cairo_create_context(pangoTarget);
 	}
 
 	Device::~Device() {
+		g_object_unref(pangoContext);
+		cairo_destroy(pangoTarget);
+		cairo_surface_destroy(pangoSurface);
+
 		delete context;
 	}
 
