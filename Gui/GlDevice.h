@@ -5,8 +5,7 @@
 #ifdef GUI_GTK
 namespace gui {
 
-	// TODO: Remove 'GlContext.h' and rename these to GlContext.
-	class GlDevice;
+	class GlContext;
 
 	/**
 	 * Implements the logic of creating and accessing a device in OpenGL on Linux.
@@ -30,7 +29,7 @@ namespace gui {
 
 	private:
 		// Current context.
-		GlDevice *context;
+		GlContext *context;
 	};
 
 
@@ -59,13 +58,13 @@ namespace gui {
 	/**
 	 * Encapsulation of either an EGL context or a GLX context.
 	 */
-	class GlDevice : NoCopy {
+	class GlContext : NoCopy {
 	public:
 		// Destroy.
-		virtual ~GlDevice();
+		virtual ~GlContext();
 
 		// Create a device for the current display.
-		static GlDevice *create(Engine &e);
+		static GlContext *create(Engine &e);
 
 		// Cairo device for the current context.
 		cairo_device_t *device;
@@ -75,7 +74,7 @@ namespace gui {
 
 	protected:
 		// Create.
-		GlDevice();
+		GlContext();
 
 		// Create a cairo device for this context.
 		virtual cairo_device_t *createDevice() = 0;
@@ -84,13 +83,13 @@ namespace gui {
 	/**
 	 * EGL context.
 	 */
-	class EglDevice : public GlDevice {
+	class EglContext : public GlContext {
 	public:
 		// Destroy.
-		~EglDevice();
+		~EglContext();
 
 		// Create an EGL device, returns null on failure.
-		static EglDevice *create(Display *display);
+		static EglContext *create(Display *display);
 
 		// Create a surface.
 		virtual GlSurface *createSurface(GdkWindow *window, Size size);
@@ -101,7 +100,7 @@ namespace gui {
 
 	private:
 		// Create.
-		EglDevice(EGLDisplay display);
+		EglContext(EGLDisplay display);
 
 		// Initialize.
 		bool initialize();
@@ -131,13 +130,13 @@ namespace gui {
 	/**
 	 * GLX context.
 	 */
-	class GlxDevice : public GlDevice {
+	class GlxContext : public GlContext {
 	public:
 		// Destroy.
-		~GlxDevice();
+		~GlxContext();
 
 		// Create a GLX device, returns null on failure.
-		static GlxDevice *create(Display *display);
+		static GlxContext *create(Display *display);
 
 		// Create a surface.
 		virtual GlSurface *createSurface(GdkWindow *window, Size size);
@@ -148,7 +147,7 @@ namespace gui {
 
 	private:
 		// Create.
-		GlxDevice(Display *display);
+		GlxContext(Display *display);
 
 		// Initialize.
 		bool initialize();

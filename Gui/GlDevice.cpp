@@ -7,7 +7,7 @@
 namespace gui {
 
 	Device::Device(Engine &e) {
-		context = GlDevice::create(e);
+		context = GlContext::create(e);
 	}
 
 	Device::~Device() {
@@ -69,22 +69,22 @@ namespace gui {
 	 * GL backends.
 	 */
 
-	GlDevice::GlDevice() : device(null) {}
+	GlContext::GlContext() : device(null) {}
 
-	GlDevice::~GlDevice() {
+	GlContext::~GlContext() {
 		if (device)
 			cairo_device_destroy(device);
 	}
 
-	GlDevice *GlDevice::create(Engine &e) {
+	GlContext *GlContext::create(Engine &e) {
 		// Should be safe to call 'app' here since it is created by now.
 		App *app = gui::app(e);
 		// Note: We should support Wayland as well.
 		Display *display = GDK_DISPLAY_XDISPLAY(app->defaultDisplay());
 
-		GlDevice *result = EglDevice::create(display);
+		GlContext *result = EglContext::create(display);
 		if (!result)
-			result = GlxDevice::create(display);
+			result = GlxContext::create(display);
 		if (!result)
 			throw GuiError(L"Failed to initialize OpenGL");
 
@@ -99,12 +99,12 @@ namespace gui {
 	 * EGL
 	 */
 
-	EglDevice *EglDevice::create(Display *xDisplay) {
+	EglContext *EglContext::create(Display *xDisplay) {
 		EGLDisplay display = eglGetDisplay(xDisplay);
 		if (!eglInitialize(display, NULL, NULL))
 			return null;
 
-		EglDevice *me = new EglDevice(display);
+		EglContext *me = new EglContext(display);
 		if (!me->initialize()) {
 			delete me;
 			return null;
@@ -113,9 +113,9 @@ namespace gui {
 		}
 	}
 
-	EglDevice::EglDevice(EGLDisplay display) : display(display), context(null), config(null) {}
+	EglContext::EglContext(EGLDisplay display) : display(display), context(null), config(null) {}
 
-	EglDevice::~EglDevice() {
+	EglContext::~EglContext() {
 		if (context)
 			eglDestroyContext(display, context);
 
@@ -123,7 +123,7 @@ namespace gui {
 			eglTerminate(display);
 	}
 
-	bool EglDevice::initialize() {
+	bool EglContext::initialize() {
 		EGLint attributes[] = {
 			EGL_RED_SIZE, 8,
 			EGL_GREEN_SIZE, 8,
@@ -154,11 +154,11 @@ namespace gui {
 		return true;
 	}
 
-	cairo_device_t *EglDevice::createDevice() {
+	cairo_device_t *EglContext::createDevice() {
 		return cairo_egl_device_create(display, context);
 	}
 
-	GlSurface *EglDevice::createSurface(GdkWindow *gWindow, Size size) {
+	GlSurface *EglContext::createSurface(GdkWindow *gWindow, Size size) {
 		EGLNativeWindowType window = GDK_WINDOW_XID(gWindow);
 
 		EGLint attrs[] = {
@@ -176,15 +176,15 @@ namespace gui {
 		return new Surface(cairo, surface);
 	}
 
-	EglDevice::Surface::Surface(cairo_surface_t *cairo, EGLSurface surface) :
+	EglContext::Surface::Surface(cairo_surface_t *cairo, EGLSurface surface) :
 		GlSurface(cairo), surface(surface) {}
 
-	EglDevice::Surface::~Surface() {
+	EglContext::Surface::~Surface() {
 		EGLDisplay display = cairo_egl_device_get_display(cairo_surface_get_device(cairo));
 		eglDestroySurface(display, surface);
 	}
 
-	void EglDevice::Surface::resize(Size s) {
+	void EglContext::Surface::resize(Size s) {
 		cairo_device_t *device = cairo_surface_get_device(cairo);
 		cairo_surface_destroy(cairo);
 		cairo = cairo_gl_surface_create_for_egl(device, surface, s.w, s.h);
@@ -195,8 +195,8 @@ namespace gui {
 	 * GLX
 	 */
 
-	GlxDevice *GlxDevice::create(Display *display) {
-		GlxDevice *result = new GlxDevice(display);
+	GlxContext *GlxContext::create(Display *display) {
+		GlxContext *result = new GlxContext(display);
 		if (!result->initialize()) {
 			delete result;
 			return null;
@@ -205,9 +205,9 @@ namespace gui {
 		}
 	}
 
-	GlxDevice::GlxDevice(Display *display) : display(display), context(null) {}
+	GlxContext::GlxContext(Display *display) : display(display), context(null) {}
 
-	GlxDevice::~GlxDevice() {
+	GlxContext::~GlxContext() {
 		if (context)
 			glXDestroyContext(display, context);
 	}
@@ -232,7 +232,7 @@ namespace gui {
 		return result;
 	}
 
-	bool GlxDevice::initialize() {
+	bool GlxContext::initialize() {
 		int attrs[] = {
 			GLX_X_RENDERABLE, True,
 			GLX_DRAWABLE_TYPE, GLX_WINDOW_BIT,
@@ -274,11 +274,11 @@ namespace gui {
 		return false;
 	}
 
-	cairo_device_t *GlxDevice::createDevice() {
+	cairo_device_t *GlxContext::createDevice() {
 		return cairo_glx_device_create(display, context);
 	}
 
-	GlSurface *GlxDevice::createSurface(GdkWindow *gWindow, Size size) {
+	GlSurface *GlxContext::createSurface(GdkWindow *gWindow, Size size) {
 		::Window window = GDK_WINDOW_XID(gWindow);
 		cairo_surface_t *cairo = cairo_gl_surface_create_for_window(device, window, size.w, size.h);
 		if (cairo_surface_status(cairo) != CAIRO_STATUS_SUCCESS)
@@ -287,10 +287,10 @@ namespace gui {
 		return new Surface(cairo, window);
 	}
 
-	GlxDevice::Surface::Surface(cairo_surface_t *cairo, ::Window window) :
+	GlxContext::Surface::Surface(cairo_surface_t *cairo, ::Window window) :
 		GlSurface(cairo), window(window) {}
 
-	void GlxDevice::Surface::resize(Size s) {
+	void GlxContext::Surface::resize(Size s) {
 		cairo_device_t *device = cairo_surface_get_device(cairo);
 		cairo_surface_destroy(cairo);
 		cairo = cairo_gl_surface_create_for_window(device, window, s.w, s.h);
