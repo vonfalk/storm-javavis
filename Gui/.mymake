@@ -21,7 +21,7 @@ preBuild+=./build_cairo.sh <path|packagePath><cairoName>
 linkFlags+=-Wl,-rpath,'$ORIGIN'
 
 # Make sure to link our version of Cairo first, since that contains all symbols needed.
-linkFlags+=-L<path|packagePath><cairoName>
+linkFlags+=<path|packagePath><cairoName>
 
 flags+=`pkg-config --cflags gtk+-3.0 x11`
 linkFlags+=`pkg-config --libs gtk+-3.0 x11` -lGL -lEGL
