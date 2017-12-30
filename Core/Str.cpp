@@ -620,6 +620,34 @@ namespace storm {
 		return new (this) Str(this, pos, s);
 	}
 
+	Str::Iter Str::find(Char ch) const {
+		return find(ch, begin());
+	}
+
+	Str::Iter Str::find(Char ch, Iter start) const {
+		Iter pos = start, last = end();
+		for (; pos != last; ++pos)
+			if (pos.v() == ch)
+				return pos;
+		return pos;
+	}
+
+	Str::Iter Str::findLast(Char ch) const {
+		return findLast(ch, end());
+	}
+
+	Str::Iter Str::findLast(Char ch, Iter last) const {
+		// TODO: We should search backwards...
+		Iter pos = begin();
+		Iter result = end();
+		for (; pos != last; ++pos) {
+			if (pos.v() == ch)
+				result = pos;
+		}
+
+		return result;
+	}
+
 	const wchar *Str::toPtr(const Iter &i) const {
 		if (i.atEnd())
 			return data->v + data->count - 1;
@@ -652,6 +680,13 @@ namespace storm {
 		Iter t = *this;
 		++*this;
 		return t;
+	}
+
+	Str::Iter Str::Iter::operator +(Nat steps) const {
+		Iter tmp = *this;
+		for (Nat i = 0; i < steps; i++)
+			++tmp;
+		return tmp;
 	}
 
 	Bool Str::Iter::operator ==(const Iter &o) const {

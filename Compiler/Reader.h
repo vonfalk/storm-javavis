@@ -25,6 +25,11 @@ namespace storm {
 		Array<Url *> *files;
 	};
 
+	// Get the file extension that determines which package to use when parsing/compiling a
+	// file. Usually, the last file extension is returned, but if a file is named like foo.so.2,
+	// 'so' is used instead, since the last part is a number and there is a previous file extension.
+	Str *STORM_FN codeFileType(Url *file);
+
 	// Get the package containing syntax when parsing 'file'. This is the default package, and
 	// languages may choose to ignore this.
 	SimpleName *STORM_FN syntaxPkgName(Url *file);

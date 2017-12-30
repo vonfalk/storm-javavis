@@ -76,7 +76,7 @@ class SimpleDraw extends Painter {
 			solid = green;
 			textColor = blue;
 			text = Text("Hello!", defaultFont);
-			image = graphics:loadImage(resUrl / "sample.jpg");
+			image = graphics:loadImage(resUrl / "ui_alpha.png");
 		}
 		bgColor = red;
 

@@ -1,7 +1,0 @@
-#define CAIRO_HAS_DLSYM 1
-#define CAIRO_HAS_PTHREAD 1
-#define CAIRO_HAS_REAL_PTHREAD 1
-#define HAVE_STDINT_H 1
-#define HAVE_STDLIB_H 1
-#define HAVE_STRING_H 1
-#define HAVE_UINT64_T 1

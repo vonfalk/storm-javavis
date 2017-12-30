@@ -6,10 +6,22 @@ stormUsingNamespace+=storm::geometry
 
 #flags+=/d1reportSingleClassLayoutGradientStop
 
-noIncludes+=*Cairo/cairo.h
-
 [unix]
+# Note: We provide our own version of Cairo, since many systems do not provide a cairo
+# that has GL support. Our version of cairo is placed next to the Gui library, and the
+# rpath is set to $ORIGIN to give our version of Cairo priority over the system's version.
+
+# Name of the cairo shared library file.
+cairoName=libcairo.so.2
+
+# Compile cairo if neccessary. We're using build system provided by Cairo.
+preBuild+=./build_cairo.sh <path|packagePath><cairoName>
+
+# Set rpath.
+linkFlags+=-Wl,-rpath,'$ORIGIN'
+
+# Make sure to link our version of Cairo first, since that contains all symbols needed.
+linkFlags+=-L<path|packagePath><cairoName>
+
 flags+=`pkg-config --cflags gtk+-3.0 x11`
 linkFlags+=`pkg-config --libs gtk+-3.0 x11` -lGL -lEGL
-
-

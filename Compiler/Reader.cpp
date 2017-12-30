@@ -16,16 +16,34 @@ namespace storm {
 		cloned(files, e);
 	}
 
+	Str *codeFileType(Url *file) {
+		// Note: If a file has no dots at all, we return "". This is intended.
+		Str *best = null;
+		Str *name = file->name();
+		do {
+			Str::Iter dot = name->findLast(Char('.'));
+			if (dot == name->end())
+				break;
+
+			best = name->substr(dot + 1);
+			name = name->substr(name->begin(), dot);
+		} while (best->isNat());
+
+		if (!best)
+			best = new (file) Str(S(""));
+
+		return best;
+	}
 
 	SimpleName *syntaxPkgName(Url *file) {
 		SimpleName *r = new (file) SimpleName();
 		r->add(new (file) Str(L"lang"));
-		r->add(file->ext());
+		r->add(codeFileType(file));
 		return r;
 	}
 
 	SimpleName *readerName(Url *file) {
-		return readerName(file->ext());
+		return readerName(codeFileType(file));
 	}
 
 	SimpleName *readerName(Str *ext) {

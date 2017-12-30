@@ -5,12 +5,10 @@
 #include <poll.h>
 #include <X11/Xlib.h>
 #define GL_GLEXT_PROTOTYPES
-#include "Cairo/cairo.h"
+#include <cairo/cairo.h>
+#include "CairoGL.h"
 #include <gtk/gtk.h>
 #include <gtk/gtkx.h>
-#include <GL/gl.h>
-#include <GL/glx.h>
-#include <EGL/egl.h>
 #include "GtkLayout.h"
 
 // Some headers define 'Bool' for us. That is not good...

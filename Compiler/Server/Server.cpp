@@ -118,6 +118,7 @@ namespace storm {
 		void Server::onSupported(SExpr *expr) {
 			String *ext = next(expr)->asStr();
 
+			// TODO: This is not always how Storm works anymore. See 'codeFileType' in 'Reader.h' for details.
 			SimpleName *n = readerName(ext->v);
 			bool ok = engine().scope().find(n) != null;
 

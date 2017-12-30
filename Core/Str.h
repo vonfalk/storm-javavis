@@ -136,6 +136,7 @@ namespace storm {
 			// Advance.
 			Iter &STORM_FN operator ++();
 			Iter STORM_FN operator ++(int dummy);
+			Iter STORM_FN operator +(Nat steps) const;
 
 			// Compare.
 			Bool STORM_FN operator ==(const Iter &o) const;
@@ -169,7 +170,7 @@ namespace storm {
 		// Get an iterator to a specific position.
 		Iter posIter(Nat pos) const;
 
-		// Substring.
+		// Substring. TODO: Rename?
 		Str *STORM_FN substr(Iter from) const;
 		Str *STORM_FN substr(Iter from, Iter to) const;
 
@@ -178,6 +179,14 @@ namespace storm {
 
 		// Insert an entire string at a given position.
 		Str *STORM_FN insert(Iter pos, Str *str) const;
+
+		// Find a character in the string. Returns the first appearance of the character.
+		Iter STORM_FN find(Char ch) const;
+		Iter STORM_FN find(Char ch, Iter start) const;
+
+		// Find the last occurrence of 'ch' in the string. Note that 'last' is *not* examined.
+		Iter STORM_FN findLast(Char ch) const;
+		Iter STORM_FN findLast(Char ch, Iter last) const;
 
 	private:
 		friend class Iter;

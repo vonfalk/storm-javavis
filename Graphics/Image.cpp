@@ -31,6 +31,8 @@ namespace graphics {
 	}
 
 	Image *loadImage(Url *file) {
+		if (!file->exists())
+			throw ImageLoadError(L"The file " + ::toS(file) + L" does not exist.");
 		return loadImage(file->read());
 	}
 
