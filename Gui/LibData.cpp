@@ -30,11 +30,15 @@ void destroyLibData(void *data) {
 	using namespace gui;
 
 	GcArray<void *> *d = (GcArray<void *> *)data;
+
+	// The RenderMgr assumes that the windowing system handled by App is still initialized during termination.
+	RenderMgr *render = (RenderMgr *)d->v[1];
+	if (render)
+		render->terminate();
+
+	// Now, we can safely destroy the App object.
 	App *app = (App *)d->v[0];
 	if (app)
 		app->terminate();
 
-	RenderMgr *render = (RenderMgr *)d->v[1];
-	if (render)
-		render->terminate();
 }

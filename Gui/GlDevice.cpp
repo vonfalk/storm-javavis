@@ -85,8 +85,7 @@ namespace gui {
 	GlContext::GlContext() : device(null) {}
 
 	GlContext::~GlContext() {
-		if (device)
-			cairo_device_destroy(device);
+		destroyDevice();
 	}
 
 	GlContext *GlContext::create(Engine &e) {
@@ -107,6 +106,13 @@ namespace gui {
 
 		return result;
 	}
+
+	void GlContext::destroyDevice() {
+		if (device)
+			cairo_device_destroy(device);
+		device = null;
+	}
+
 
 	/**
 	 * EGL
@@ -129,6 +135,8 @@ namespace gui {
 	EglContext::EglContext(EGLDisplay display) : display(display), context(null), config(null) {}
 
 	EglContext::~EglContext() {
+		destroyDevice();
+
 		if (context)
 			eglDestroyContext(display, context);
 
@@ -215,6 +223,8 @@ namespace gui {
 	GlxContext::GlxContext(Display *display) : display(display), context(null) {}
 
 	GlxContext::~GlxContext() {
+		destroyDevice();
+
 		if (context)
 			glXDestroyContext(display, context);
 	}

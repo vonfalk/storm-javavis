@@ -86,6 +86,10 @@ namespace gui {
 
 		// Create a cairo device for this context.
 		virtual cairo_device_t *createDevice() = 0;
+
+		// Destroy the current device. Called by subclasses to destroy the cairo_device before any
+		// GL context is destroyed.
+		void destroyDevice();
 	};
 
 	/**
