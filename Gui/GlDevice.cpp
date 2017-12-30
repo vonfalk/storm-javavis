@@ -36,12 +36,14 @@ namespace gui {
 
 	void Device::resize(RenderInfo &info, Size size) {
 		info.size = size;
-		if (info.target())
-			cairo_destroy(info.target());
+
+		// Note: We do not need to destroy and re-create the cairo context. It works anyway!
+		// if (info.target())
+		// 	cairo_destroy(info.target());
 
 		info.surface()->resize(size);
 
-		info.target(cairo_create(info.surface()->cairo));
+		// info.target(cairo_create(info.surface()->cairo));
 	}
 
 	RenderInfo Device::create(GtkWidget *widget, GdkWindow *window) {
@@ -72,6 +74,9 @@ namespace gui {
 		cairo_gl_surface_swapbuffers(cairo);
 	}
 
+	void GlSurface::resize(Size s) {
+		cairo_gl_surface_set_size(cairo, s.w, s.h);
+	}
 
 	/**
 	 * GL backends.
@@ -192,12 +197,6 @@ namespace gui {
 		eglDestroySurface(display, surface);
 	}
 
-	void EglContext::Surface::resize(Size s) {
-		cairo_device_t *device = cairo_surface_get_device(cairo);
-		cairo_surface_destroy(cairo);
-		cairo = cairo_gl_surface_create_for_egl(device, surface, s.w, s.h);
-	}
-
 
 	/**
 	 * GLX
@@ -297,12 +296,6 @@ namespace gui {
 
 	GlxContext::Surface::Surface(cairo_surface_t *cairo, ::Window window) :
 		GlSurface(cairo), window(window) {}
-
-	void GlxContext::Surface::resize(Size s) {
-		cairo_device_t *device = cairo_surface_get_device(cairo);
-		cairo_surface_destroy(cairo);
-		cairo = cairo_gl_surface_create_for_window(device, window, s.w, s.h);
-	}
 
 }
 #endif

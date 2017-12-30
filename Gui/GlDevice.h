@@ -58,8 +58,8 @@ namespace gui {
 		// Swap buffers.
 		void swapBuffers();
 
-		// Resize the surface. Alters 'cairo'.
-		virtual void resize(Size s) = 0;
+		// Resize the surface.
+		void resize(Size s);
 	};
 
 
@@ -128,8 +128,6 @@ namespace gui {
 			Surface(cairo_surface_t *cairo, EGLSurface surface);
 			~Surface();
 
-			virtual void resize(Size s);
-
 		private:
 			EGLSurface surface;
 		};
@@ -170,8 +168,6 @@ namespace gui {
 		class Surface : public GlSurface {
 		public:
 			Surface(cairo_surface_t *surface, ::Window window);
-
-			virtual void resize(Size s);
 
 		private:
 			::Window window;
