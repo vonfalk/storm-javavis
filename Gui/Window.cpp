@@ -448,6 +448,27 @@ namespace gui {
 		resized(s);
 	}
 
+gboolean gtk_container_should_propagate_draw (GtkContainer   *container, GtkWidget      *child, cairo_t        *cr)
+{
+  GdkWindow *child_in_window;
+
+  if (!gtk_widget_is_drawable (child))
+    return FALSE;
+
+  /* Never propagate to a child window when exposing a window
+   * that is not the one the child widget is in.
+   */
+  if (gtk_widget_get_has_window (child))
+    child_in_window = gdk_window_get_parent (gtk_widget_get_window (child));
+  else
+    child_in_window = gtk_widget_get_window (child);
+  if (!gtk_cairo_should_draw_window (cr, child_in_window))
+    return FALSE;
+
+  return TRUE;
+}
+
+
 	gboolean Window::onDraw(cairo_t *ctx) {
 		// Do we have a painter?
 		if (myPainter && gdkWindow) {
@@ -464,27 +485,49 @@ namespace gui {
 		}
 
 		// Do we have a window and need to paint the background?
-		if (gdkWindow) {
+		if (gdkWindow && gtk_cairo_should_draw_window(ctx, gdkWindow)) {
+			GtkWidget *me = drawWidget();
+
 			// Fill with the background color we figured out earlier.
 			App *app = gui::app(engine());
 			Color bg = app->defaultBgColor;
 			cairo_set_source_rgba(ctx, bg.r, bg.g, bg.b, bg.a);
+			cairo_set_source_rgba(ctx, 0, 1, 0, bg.a);
 			cairo_paint(ctx);
 
-			GtkWidget *me = handle().widget();
-			GtkStyleContext *style = gtk_widget_get_style_context(me);
-			gtk_render_background(style, ctx, 0, 0,
-								gtk_widget_get_allocated_width(me),
-								gtk_widget_get_allocated_height(me));
-			gtk_render_frame(style, ctx, 0, 0,
-							gtk_widget_get_allocated_width(me),
-							gtk_widget_get_allocated_height(me));
+			// GtkStyleContext *style = gtk_widget_get_style_context(me);
+			// gtk_render_background(style, ctx, 0, 0,
+			// 					gtk_widget_get_allocated_width(me),
+			// 					gtk_widget_get_allocated_height(me));
+			// gtk_render_frame(style, ctx, 0, 0,
+			// 				gtk_widget_get_allocated_width(me),
+			// 				gtk_widget_get_allocated_height(me));
 
 			typedef gboolean (*DrawFn)(GtkWidget *, cairo_t *);
 			DrawFn original = GTK_WIDGET_GET_CLASS(me)->draw;
 			if (original) {
 				PLN(L"Drawing");
 				(*original)(me, ctx);
+			}
+
+			// PVAR(gtk_widget_is_drawable(me));
+
+			GList *l = gtk_container_get_children((GtkContainer *)me);
+			for (GList *p = l; p; p = p->next) {
+				PVAR(gtk_container_should_propagate_draw((GtkContainer *)me, (GtkWidget *)p->data, ctx));
+
+				// GtkWidget *c = (GtkWidget *)p->data;
+				// PVAR(gtk_widget_is_drawable(c));
+				// PVAR(gtk_widget_get_has_window(c));
+				// PVAR(gtk_widget_get_window(c));
+				// PVAR(gdk_window_get_parent(gtk_widget_get_window(c)));
+				// PVAR(gdkWindow);
+				// PVAR(gtk_cairo_should_draw_window(ctx, gdkWindow));
+
+				// gtk_widget_draw((GtkWidget *)p->data, ctx);
+
+				// PLN(L"Hej");
+				gtk_container_propagate_draw((GtkContainer *)me, (GtkWidget *)p->data, ctx);
 			}
 		}
 
@@ -539,7 +582,6 @@ namespace gui {
 		gtk_widget_set_window(drawTo, gdkWindow);
 		if (myPainter)
 			gtk_widget_set_double_buffered(drawTo, false);
-		gtk_widget_set_child_visible(drawTo, true);
 	}
 
 	void Window::onUnrealize() {
