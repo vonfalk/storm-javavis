@@ -192,8 +192,10 @@ namespace gui {
 		// Painter.
 		Painter *myPainter;
 
-		// On Gtk+: the window we're rendering to.
-		GdkWindow *renderWindow;
+		// In Gtk+, widgets are usually not rendered in separate windows. When we're using OpenGL
+		// rendering, we need separate windows for the widget being drawn to, and any child
+		// widgets. This variable represents the created window.
+		GdkWindow *gdkWindow;
 
 		// Timer timeout (nonzero = set).
 		Duration timerInterval;

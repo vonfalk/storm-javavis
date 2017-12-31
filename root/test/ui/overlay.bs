@@ -1,0 +1,96 @@
+use ui;
+use graphics;
+use core:io;
+use core:geometry;
+
+class OverlayWin extends Frame {
+	Button toggle;
+
+	init() {
+		init("Graphics overlay", Size(200, 200)) {
+			toggle("Toggle");
+		}
+
+		painter(OverlayDraw());
+
+		toggle.pos(Rect(120, 120, 190, 190));
+		toggle.onClick = &this.doToggle(Button);
+		add(toggle);
+		create();
+	}
+
+	void doToggle(Button b) {
+		// TODO: Set/clear painter here!
+		print("Clicked!");
+	}
+}
+
+class OverlayDraw extends Painter {
+	Path star;
+	LinearGradient bgBrush;
+	SolidBrush starColor;
+	SolidBrush solid;
+	SolidBrush textColor;
+	Moment started;
+	Text text;
+	Size textSize;
+
+	init() {
+		init() {
+			bgBrush(red, green, 45 deg);
+			starColor = yellow;
+			solid = green;
+			textColor = blue;
+			text = Text("Hello!", defaultFont);
+		}
+		bgColor = red;
+
+		textSize = text.size();
+		text.layoutBorder(textSize);
+
+		Int edges = 5;
+		Int stops = edges * 2;
+		for (Int i = 0; i < stops; i++) {
+			Angle a = 360 deg / stops.float;
+			a *= i.float;
+
+			Point p = angle(a) * 20.0;
+			if (i % 2 == 0)
+				p *= 2.0;
+			star.point(p);
+		}
+		star.close();
+	}
+
+	Bool render(Size size, Graphics to) {
+		Moment now;
+		Float time = (now - started) / 30 ms;
+
+		to.fill(bgBrush);
+		// to.transform(rotate(20 deg, Point(100, 100)));
+
+		to.line(Point(0, 0), Point(100, 100), solid);
+		to.draw(Rect(10, 10, 190, 190), solid);
+		to.draw(Rect(20, 20, 180, 180), Size(50), solid);
+		to.oval(Rect(40, 40, 100, 80), solid);
+
+		to.push(Rect(0, 0, 120, 120), 0.5);
+		to.transform(translate(Point(100, 100)));
+		to.fill(star, starColor);
+
+		to.push();
+		to.transform(rotate(1 deg * time));
+		to.fill(star, starColor);
+		to.draw(text, textColor, Point() - (textSize / 2));
+
+		to.pop();
+		to.pop();
+
+		true;
+	}
+}
+
+void overlay() {
+	OverlayWin win;
+	win.waitForClose;
+}

@@ -5,7 +5,8 @@
 #Main -a -r ../root/ -f test.ui.simple
 #Main -a -r ../root/ -f test.ui.main
 #Main -a -r ../root/ -f test.ui.multiline
-Main -a -r ../root/ -f test.ui-simple.simple
+Main -a -r ../root/ -f test.ui.overlay
+#Main -a -r ../root/ -f test.ui-simple.simple
 
 #Memory intensive UI test.
 #Main -a -r ../root/ -f test.ui-simple.simpleMem

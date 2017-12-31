@@ -16,7 +16,7 @@ namespace gui {
 
 	Window::Window() :
 		myHandle(invalid), myParent(null), myRoot(null),
-		myVisible(true), renderWindow(null), myPos(0, 0, 10, 10) {
+		myVisible(true), gdkWindow(null), myPos(0, 0, 10, 10) {
 
 		myText = new (this) Str(L"");
 		myFont = app(engine())->defaultFont;
@@ -439,8 +439,8 @@ namespace gui {
 
 	void Window::onSize(GdkRectangle *alloc) {
 		// If we have our own window, resize that as well.
-		if (renderWindow) {
-			gdk_window_move_resize(renderWindow, alloc->x, alloc->y, alloc->width, alloc->height);
+		if (gdkWindow) {
+			gdk_window_move_resize(gdkWindow, alloc->x, alloc->y, alloc->width, alloc->height);
 		}
 
 		Size s(alloc->width, alloc->height);
@@ -449,9 +449,10 @@ namespace gui {
 	}
 
 	gboolean Window::onDraw(cairo_t *ctx) {
-		if (myPainter && renderWindow) {
+		// Do we have a painter?
+		if (myPainter && gdkWindow) {
 			Engine &e = engine();
-			RepaintParams param = { renderWindow, handle().widget() };
+			RepaintParams param = { gdkWindow, handle().widget() };
 			RepaintParams *pParam = &param;
 			os::Future<void> result;
 			os::FnCall<void, 2> params = os::fnCall().add(myPainter).add(pParam);
@@ -462,16 +463,53 @@ namespace gui {
 			return TRUE;
 		}
 
+		// Do we have a window and need to paint the background?
+		if (gdkWindow) {
+			// Fill with the background color we figured out earlier.
+			App *app = gui::app(engine());
+			Color bg = app->defaultBgColor;
+			cairo_set_source_rgba(ctx, bg.r, bg.g, bg.b, bg.a);
+			cairo_paint(ctx);
+
+			GtkWidget *me = handle().widget();
+			GtkStyleContext *style = gtk_widget_get_style_context(me);
+			gtk_render_background(style, ctx, 0, 0,
+								gtk_widget_get_allocated_width(me),
+								gtk_widget_get_allocated_height(me));
+			gtk_render_frame(style, ctx, 0, 0,
+							gtk_widget_get_allocated_width(me),
+							gtk_widget_get_allocated_height(me));
+
+			typedef gboolean (*DrawFn)(GtkWidget *, cairo_t *);
+			DrawFn original = GTK_WIDGET_GET_CLASS(me)->draw;
+			if (original) {
+				PLN(L"Drawing");
+				(*original)(me, ctx);
+			}
+		}
+
 		return FALSE;
 	}
 
 	void Window::onRealize() {
-		if (!myPainter)
+		if (gdkWindow)
 			return;
 
-		if (renderWindow)
+		// Check if we need to create a separate window for this widget. There are two cases in
+		// which we need that:
+		// 1: we have a painter attached to us
+		// 2: our parent has a painter attached
+
+		bool create = false;
+		// if (myPainter)
+		// 	create = true;
+		if (myParent && myParent != this && myParent->myPainter)
+			create = true;
+
+		if (!create)
 			return;
 
+		// Create the window.
 		GdkWindowAttr attrs;
 		memset(&attrs, 0, sizeof(attrs));
 
@@ -492,29 +530,28 @@ namespace gui {
 		// Probably good. We could use *_get_system_visual() instead.
 		attrs.visual = gdk_screen_get_rgba_visual(gdk_window_get_screen(parent));
 
-		renderWindow = gdk_window_new(parent, &attrs, GDK_WA_X | GDK_WA_Y);
-		gdk_window_ensure_native(renderWindow);
-		gdk_window_show_unraised(renderWindow);
-		gdk_window_set_user_data(renderWindow, drawTo);
+		gdkWindow = gdk_window_new(parent, &attrs, GDK_WA_X | GDK_WA_Y);
+		gdk_window_ensure_native(gdkWindow);
+		gdk_window_show_unraised(gdkWindow);
+		gdk_window_set_user_data(gdkWindow, drawTo);
 
-		// gtk_widget_set_has_window(drawTo, true);
-		gtk_widget_set_window(drawTo, renderWindow);
-		gtk_widget_set_double_buffered(drawTo, false);
-
-		// TODO: We need to handle any child widgets here. We probably want to make them into their
-		// own sub-windows and paint them on top of the Gl window somehow.
+		gtk_widget_set_has_window(drawTo, true);
+		gtk_widget_set_window(drawTo, gdkWindow);
+		if (myPainter)
+			gtk_widget_set_double_buffered(drawTo, false);
+		gtk_widget_set_child_visible(drawTo, true);
 	}
 
 	void Window::onUnrealize() {
 		notifyDetachPainter();
-		renderWindow = null;
+		gdkWindow = null;
 	}
 
 	void Window::attachPainter() {
 		if (!created())
 			return;
 
-		if (renderWindow)
+		if (gdkWindow)
 			return;
 
 		// TODO: This does not work.
@@ -527,7 +564,7 @@ namespace gui {
 		if (!created())
 			return;
 
-		if (!renderWindow)
+		if (!gdkWindow)
 			return;
 
 		// TODO: This does not work, but can not happen currently.
