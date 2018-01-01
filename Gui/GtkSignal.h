@@ -17,6 +17,10 @@ namespace gui {
 				g_signal_connect(to, name, (GCallback)&callback, &e);
 			}
 
+			static void last(GtkWidget *to, const gchar *name, Engine &e) {
+				g_signal_connect_after(to, name, (GCallback)&callback, &e);
+			}
+
 			static Result callback(GtkWidget *src, Params... args, gpointer engine) {
 				Engine *e = (Engine *)engine;
 				App *app = gui::app(*e);

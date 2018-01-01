@@ -415,8 +415,8 @@ namespace gui {
 		Signal<gboolean, Window, GdkEvent *>::Connect<&Window::onKeyDown>::to(widget, "key-press-event", engine());
 		Signal<gboolean, Window, GdkEvent *>::Connect<&Window::onKeyUp>::to(widget, "key-release-event", engine());
 		Signal<void, Window, GdkRectangle *>::Connect<&Window::onSize>::to(widget, "size-allocate", engine());
-		Signal<void, Window>::Connect<&Window::onRealize>::to(widget, "realize", engine());
-		Signal<void, Window>::Connect<&Window::onUnrealize>::to(widget, "unrealize", engine());
+		Signal<void, Window>::Connect<&Window::onRealize>::to(drawWidget(), "realize", engine());
+		Signal<void, Window>::Connect<&Window::onUnrealize>::to(drawWidget(), "unrealize", engine());
 		Signal<gboolean, Window, cairo_t *>::Connect<&Window::onDraw>::to(drawWidget(), "draw", engine());
 	}
 
@@ -448,32 +448,11 @@ namespace gui {
 		resized(s);
 	}
 
-gboolean gtk_container_should_propagate_draw (GtkContainer   *container, GtkWidget      *child, cairo_t        *cr)
-{
-  GdkWindow *child_in_window;
-
-  if (!gtk_widget_is_drawable (child))
-    return FALSE;
-
-  /* Never propagate to a child window when exposing a window
-   * that is not the one the child widget is in.
-   */
-  if (gtk_widget_get_has_window (child))
-    child_in_window = gdk_window_get_parent (gtk_widget_get_window (child));
-  else
-    child_in_window = gtk_widget_get_window (child);
-  if (!gtk_cairo_should_draw_window (cr, child_in_window))
-    return FALSE;
-
-  return TRUE;
-}
-
-
 	gboolean Window::onDraw(cairo_t *ctx) {
 		// Do we have a painter?
 		if (myPainter && gdkWindow) {
 			Engine &e = engine();
-			RepaintParams param = { gdkWindow, handle().widget() };
+			RepaintParams param = { gdkWindow, drawWidget() };
 			RepaintParams *pParam = &param;
 			os::Future<void> result;
 			os::FnCall<void, 2> params = os::fnCall().add(myPainter).add(pParam);
@@ -492,43 +471,26 @@ gboolean gtk_container_should_propagate_draw (GtkContainer   *container, GtkWidg
 			App *app = gui::app(engine());
 			Color bg = app->defaultBgColor;
 			cairo_set_source_rgba(ctx, bg.r, bg.g, bg.b, bg.a);
-			cairo_set_source_rgba(ctx, 0, 1, 0, bg.a);
 			cairo_paint(ctx);
 
-			// GtkStyleContext *style = gtk_widget_get_style_context(me);
-			// gtk_render_background(style, ctx, 0, 0,
-			// 					gtk_widget_get_allocated_width(me),
-			// 					gtk_widget_get_allocated_height(me));
-			// gtk_render_frame(style, ctx, 0, 0,
-			// 				gtk_widget_get_allocated_width(me),
-			// 				gtk_widget_get_allocated_height(me));
+			// It seems Gtk+ does not understand what we're doing and therefore miscalculates the x-
+			// and y- positions of the layout during drawing. We correct this by using the offset in
+			// the cairo_t.
+			GtkAllocation position;
+			gtk_widget_get_allocation(me, &position);
 
+			cairo_save(ctx);
+			cairo_translate(ctx, -position.x, -position.y);
+
+			// Call the original draw function here, with our translated context.
 			typedef gboolean (*DrawFn)(GtkWidget *, cairo_t *);
 			DrawFn original = GTK_WIDGET_GET_CLASS(me)->draw;
-			if (original) {
-				PLN(L"Drawing");
+			if (original)
 				(*original)(me, ctx);
-			}
 
-			// PVAR(gtk_widget_is_drawable(me));
+			cairo_restore(ctx);
 
-			GList *l = gtk_container_get_children((GtkContainer *)me);
-			for (GList *p = l; p; p = p->next) {
-				PVAR(gtk_container_should_propagate_draw((GtkContainer *)me, (GtkWidget *)p->data, ctx));
-
-				// GtkWidget *c = (GtkWidget *)p->data;
-				// PVAR(gtk_widget_is_drawable(c));
-				// PVAR(gtk_widget_get_has_window(c));
-				// PVAR(gtk_widget_get_window(c));
-				// PVAR(gdk_window_get_parent(gtk_widget_get_window(c)));
-				// PVAR(gdkWindow);
-				// PVAR(gtk_cairo_should_draw_window(ctx, gdkWindow));
-
-				// gtk_widget_draw((GtkWidget *)p->data, ctx);
-
-				// PLN(L"Hej");
-				gtk_container_propagate_draw((GtkContainer *)me, (GtkWidget *)p->data, ctx);
-			}
+			return TRUE;
 		}
 
 		return FALSE;
@@ -544,8 +506,8 @@ gboolean gtk_container_should_propagate_draw (GtkContainer   *container, GtkWidg
 		// 2: our parent has a painter attached
 
 		bool create = false;
-		// if (myPainter)
-		// 	create = true;
+		if (myPainter)
+			create = true;
 		if (myParent && myParent != this && myParent->myPainter)
 			create = true;
 
@@ -576,15 +538,18 @@ gboolean gtk_container_should_propagate_draw (GtkContainer   *container, GtkWidg
 		gdkWindow = gdk_window_new(parent, &attrs, GDK_WA_X | GDK_WA_Y);
 		gdk_window_ensure_native(gdkWindow);
 		gdk_window_show_unraised(gdkWindow);
-		gdk_window_set_user_data(gdkWindow, drawTo);
 
 		gtk_widget_set_has_window(drawTo, true);
 		gtk_widget_set_window(drawTo, gdkWindow);
+		gdk_window_set_user_data(gdkWindow, drawTo);
 		if (myPainter)
 			gtk_widget_set_double_buffered(drawTo, false);
 	}
 
 	void Window::onUnrealize() {
+		if (!gdkWindow)
+			return;
+
 		notifyDetachPainter();
 		gdkWindow = null;
 	}
