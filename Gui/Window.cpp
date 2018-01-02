@@ -16,7 +16,7 @@ namespace gui {
 
 	Window::Window() :
 		myHandle(invalid), myParent(null), myRoot(null),
-		myVisible(true), gdkWindow(null), myPos(0, 0, 10, 10) {
+		myVisible(true), drawing(false), gdkWindow(null), myPos(0, 0, 10, 10) {
 
 		myText = new (this) Str(L"");
 		myFont = app(engine())->defaultFont;
@@ -464,8 +464,18 @@ namespace gui {
 		}
 
 		// Do we have a window and need to paint the background?
-		if (gdkWindow && gtk_cairo_should_draw_window(ctx, gdkWindow)) {
+		if (!drawing && gdkWindow && gtk_cairo_should_draw_window(ctx, gdkWindow)) {
 			GtkWidget *me = drawWidget();
+			GtkWidget *parentWidget = gtk_widget_get_parent(me);
+			if (!parentWidget || !GTK_IS_CONTAINER(parentWidget)) {
+				// If no parent exists, or the parent is not a container, we simply delegate to the
+				// default behaviour. This should not happen in practice, but it is good to have a
+				// decent fallback. Since the parent is not a container, the default implementation
+				// will probably work anyway.
+				return FALSE;
+			}
+			GtkContainer *parent = GTK_CONTAINER(gtk_widget_get_parent(me));
+
 
 			// Fill with the background color we figured out earlier.
 			App *app = gui::app(engine());
@@ -479,16 +489,27 @@ namespace gui {
 			GtkAllocation position;
 			gtk_widget_get_allocation(me, &position);
 
-			cairo_save(ctx);
-			cairo_translate(ctx, -position.x, -position.y);
+			// Since we have to pretend that the current child does not have a window when calling
+			// 'gtk_container_propagate_draw' below, the current widget's offset will be applied twice.
+			cairo_translate(ctx, -position.x*2, -position.y*2);
 
 			// Call the original draw function here, with our translated context.
-			typedef gboolean (*DrawFn)(GtkWidget *, cairo_t *);
-			DrawFn original = GTK_WIDGET_GET_CLASS(me)->draw;
-			if (original)
-				(*original)(me, ctx);
+			// typedef gboolean (*DrawFn)(GtkWidget *, cairo_t *);
+			// DrawFn original = GTK_WIDGET_GET_CLASS(me)->draw;
+			// if (original)
+			// 	(*original)(me, ctx);
 
-			cairo_restore(ctx);
+			// Call 'gtk_container_propagate_draw' to draw ourselves again. Remember that we are
+			// currently drawing so that we do not get into an infinite recursion when we are called
+			// again. We could call 'GTK_WIDGET_GET_CLASS(me)->draw' instead, but that function
+			// assumes that the cairo_t is properly transformed so that (0, 0) is at the top left of
+			// the widget. That is not the case now, due to the possible bug inside
+			// 'gtk_container_propagate_draw'.
+			gtk_widget_set_has_window(me, FALSE);
+			drawing = true;
+			gtk_container_propagate_draw(parent, me, ctx);
+			drawing = false;
+			gtk_widget_set_has_window(me, TRUE);
 
 			return TRUE;
 		}

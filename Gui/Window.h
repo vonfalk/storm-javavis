@@ -180,6 +180,9 @@ namespace gui {
 		// Visible?
 		Bool myVisible;
 
+		// Currently drawing anything to this window?
+		Bool drawing;
+
 		// Text.
 		const Str *myText;
 
