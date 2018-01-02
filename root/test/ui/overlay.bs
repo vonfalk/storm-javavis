@@ -11,7 +11,7 @@ class OverlayWin extends Frame {
 			toggle("Toggle");
 		}
 
-		painter(OverlayDraw());
+		// painter(OverlayDraw());
 
 		toggle.pos(Rect(120, 120, 190, 190));
 		toggle.onClick = &this.doToggle(Button);
@@ -20,8 +20,12 @@ class OverlayWin extends Frame {
 	}
 
 	void doToggle(Button b) {
-		// TODO: Set/clear painter here!
-		print("Clicked!");
+		// Set/clear the painter.
+		if (p = painter) {
+			painter(null);
+		} else {
+			painter(OverlayDraw());
+		}
 	}
 }
 

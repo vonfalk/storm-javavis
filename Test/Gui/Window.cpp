@@ -17,4 +17,7 @@ BEGIN_TEST(Window, Gui) {
 	PLN(L"Trying layers!");
 	runFn<void>(S("test.ui.layer"));
 
+	PLN(L"Trying overlays with other windows inside the frame. Try clicking 'Toggle' a few times.");
+	runFn<void>(S("test.ui.overlay"));
+
 } END_TEST

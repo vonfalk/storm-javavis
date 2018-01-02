@@ -39,6 +39,15 @@ namespace gui {
 		windows->remove(child);
 	}
 
+	Array<Window *> *Container::children() const {
+		Array<Window *> *result = new (this) Array<Window *>();
+		result->reserve(ids->count());
+		for (IdMap::Iter i = ids->begin(), end = ids->end(); i != end; ++i) {
+			result->push(i.v());
+		}
+		return result;
+	}
+
 	void Container::parentCreated(Nat id) {
 		Window::parentCreated(id);
 

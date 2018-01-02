@@ -127,7 +127,10 @@ namespace gui {
 		virtual Bool STORM_FN onChar(Nat charCode);
 
 		// Set window contents (custom drawing).
-		void STORM_SETTER painter(Painter *to);
+		void STORM_SETTER painter(MAYBE(Painter *) to);
+
+		// Get the current painter.
+		MAYBE(Painter *) STORM_FN painter();
 
 		// Window timer.
 		virtual void STORM_FN onTimer();
@@ -227,9 +230,11 @@ namespace gui {
 		gboolean onKeyDown(GdkEvent *event);
 		void onSize(GdkRectangle *alloc);
 		gboolean onDraw(cairo_t *ctx);
-
 		void onRealize();
 		void onUnrealize();
+
+		// Do we need to be a separate native window?
+		bool useNativeWindow() const;
 #endif
 	};
 

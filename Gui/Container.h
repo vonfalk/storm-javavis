@@ -1,6 +1,7 @@
 #pragma once
 #include "Window.h"
 #include "Core/Map.h"
+#include "Core/Array.h"
 
 namespace gui {
 
@@ -22,11 +23,15 @@ namespace gui {
 		// Remove a child window. Silently fails if the child does not already exist.
 		void STORM_FN remove(Window *child);
 
+		// Get all children.
+		Array<Window *> *STORM_FN children() const;
+
 		// Called when our parent is created.
 		virtual void parentCreated(nat id);
 
 		// Called when we've been destroyed.
 		virtual void windowDestroyed();
+
 
 #ifdef GUI_WIN32
 		// Handle messages.
