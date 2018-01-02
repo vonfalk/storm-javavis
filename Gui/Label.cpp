@@ -14,6 +14,7 @@ namespace gui {
 #endif
 #ifdef GUI_GTK
 	bool Label::create(Container *parent, nat id) {
+		TODO(L"The default should be top-left aligned. Not vertically centered.");
 		GtkWidget *label = gtk_label_new(text()->utf8_str());
 		gtk_widget_set_halign(label, (GtkAlign)GTK_ALIGN_START);
 		initWidget(parent, label);

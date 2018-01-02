@@ -3,9 +3,15 @@ use core:geometry;
 use core:io;
 
 class Dialog extends Frame {
+	Label msg;
+
 	init() {
-		init("Dialog");
+		init("Dialog") {
+			msg("Nothing here!");
+		}
 		size(Size(200, 100));
+		msg.pos(Rect(10, 10, 190, 90));
+		add(msg);
 		create();
 	}
 }

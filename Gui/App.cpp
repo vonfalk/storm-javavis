@@ -126,6 +126,7 @@ namespace gui {
 	}
 
 	void AppWait::init() {
+		uThread = os::UThread::current();
 		platformInit();
 	}
 
@@ -294,7 +295,6 @@ namespace gui {
 
 	void AppWait::platformInit() {
 		threadId = GetCurrentThreadId();
-		uThread = os::UThread::current();
 		signalSent = 0;
 		currentEngine = &e;
 
@@ -404,6 +404,7 @@ namespace gui {
 
 	void AppWait::platformInit() {
 		done = false;
+		dispatchReady = false;
 		repaintList = null;
 
 		// We'll be using threads with X from time to time. Mainly while painting in the background through Cairo.
@@ -581,6 +582,8 @@ namespace gui {
 			// Let Gtk+ investigate the result of the polling.
 			g_main_context_check(context, maxPriority, gPollFd.data(), gint(gPollFd.size()));
 		}
+
+		dispatchReady = true;
 	}
 
 	void AppWait::doWait(os::IOHandle &io, int timeout) {
@@ -654,11 +657,16 @@ namespace gui {
 	}
 
 	void AppWait::work() {
+		// Don't try to dispatch anything unless we called wait earlier.
+		if (!dispatchReady)
+			return;
+
 		// If we're already doing message processing, do not confuse Gtk by recursive calls to g_main_context_iteration.
 		if (msgDisabled)
 			return;
 
 		msgDisabled = true;
+		dispatchReady = false;
 
 		// Dispatch any pending events.
 		g_main_context_dispatch(context);
@@ -667,6 +675,8 @@ namespace gui {
 	}
 
 	void AppWait::terminate(os::Sema &notify) {
+		uThread = os::UThread::invalid;
+
 		// We do not need to wait for the termination of the main loop. Just setting 'done' and
 		// calling signal() is enough.
 		notify.up();

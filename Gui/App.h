@@ -236,6 +236,9 @@ namespace gui {
 		// File descriptor for the eventfd we use as a condition.
 		int eventFd;
 
+		// Did we call 'wait' since the last call to 'dispatch'?
+		bool dispatchReady;
+
 		// Poll descriptors passed to Gtk+.
 		vector<GPollFD> gPollFd;
 

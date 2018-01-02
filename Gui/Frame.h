@@ -25,6 +25,8 @@ namespace gui {
 		// Wait until this frame is closed.
 		void STORM_FN waitForClose();
 
+		// TODO: Add a function that implements modal dialogs.
+
 #ifdef GUI_WIN32
 		// Message!
 		virtual MsgResult onMessage(const Message &msg);
