@@ -571,41 +571,31 @@ namespace gui {
 		if (gtk_widget_get_window(drawTo))
 			g_object_unref(gtk_widget_get_window(drawTo));
 
-		gtk_widget_set_has_window(drawTo, true);
+		gtk_widget_set_has_window(drawTo, TRUE);
 		gtk_widget_set_window(drawTo, gdkWindow);
 		gdk_window_set_user_data(gdkWindow, drawTo);
 		if (myPainter)
-			gtk_widget_set_double_buffered(drawTo, false);
+			gtk_widget_set_double_buffered(drawTo, FALSE);
 	}
 
 	void Window::onUnrealize() {
 		if (!gdkWindow)
 			return;
 
+		GtkWidget *drawTo = drawWidget();
+		// gtk_widget_set_window(drawTo, NULL);
+		gtk_widget_set_has_window(drawTo, FALSE);
+
 		notifyDetachPainter();
 		gdkWindow = null;
 	}
 
-	static void update_gtk_window(GtkWidget *widget) {
-		// If this widget is not yet realized, do not touch it!
-		if (!gtk_widget_get_realized(widget))
-			return;
+	static void recreate_widget(GtkWidget *widget) {
+		gtk_widget_unmap(widget);
+		gtk_widget_unrealize(widget);
 
-		// Update the window unless this widget has declared that it has its own window.
-		if (!gtk_widget_get_has_window(widget)) {
-			GdkWindow *oldWin = gtk_widget_get_window(widget);
-			GdkWindow *newWin = gtk_widget_get_parent_window(widget);
-			gtk_widget_set_window(widget, newWin);
-
-			if (oldWin != newWin) {
-				g_object_ref(newWin);
-				g_object_unref(oldWin);
-			}
-		}
-
-		// Recurse.
-		if (GTK_IS_CONTAINER(widget))
-			gtk_container_forall(GTK_CONTAINER(widget), (GtkCallback)&update_gtk_window, null);
+		gtk_widget_realize(widget);
+		gtk_widget_map(widget);
 	}
 
 	void Window::attachPainter() {
@@ -615,17 +605,7 @@ namespace gui {
 		if (gdkWindow)
 			return;
 
-		onRealize();
-		update_gtk_window(handle().widget());
-
-		// We need to propagate to our children if we're a container. We actually do not need more
-		// than one layer, but the if statements above will fix that.
-		if (Container *c = as<Container>(this)) {
-			Array<Window *> *children = c->children();
-			for (Nat i = 0; i < children->count(); i++) {
-				children->at(i)->attachPainter();
-			}
-		}
+		recreate_widget(drawWidget());
 	}
 
 	void Window::detachPainter() {
@@ -635,28 +615,7 @@ namespace gui {
 		if (!gdkWindow)
 			return;
 
-		// Do we still need our window?
-		if (useNativeWindow())
-			return;
-
-		// We need to propagate to our children if we're a container. We actually do not need more
-		// than one layer, but the if statements above will fix that.
-		if (Container *c = as<Container>(this)) {
-			Array<Window *> *children = c->children();
-			for (Nat i = 0; i < children->count(); i++) {
-				children->at(i)->detachPainter();
-			}
-		}
-
-		// Destroy our window.
-		GtkWidget *drawTo = drawWidget();
-		gtk_widget_set_has_window(drawTo, FALSE);
-		GdkWindow *parent = gtk_widget_get_parent_window(drawTo);
-		g_object_ref(parent);
-		gtk_widget_set_window(drawTo, gtk_widget_get_parent_window(drawTo));
-		gdk_window_destroy(gdkWindow);
-		gdkWindow = null;
-		update_gtk_window(handle().widget());
+		recreate_widget(drawWidget());
 	}
 
 	const Str *Window::text() {
