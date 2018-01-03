@@ -19,8 +19,8 @@ namespace storm {
 		STORM_CTOR Color(Byte r, Byte g, Byte b, Byte alpha);
 
 		// Create from Floats.
-		Color(Float r, Float g, Float b);
-		Color(Float r, Float g, Float b, Float a);
+		STORM_CTOR Color(Float r, Float g, Float b);
+		STORM_CTOR Color(Float r, Float g, Float b, Float a);
 
 		// Actual values, in the range [0-1]
 		Float r;

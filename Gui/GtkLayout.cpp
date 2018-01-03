@@ -178,6 +178,8 @@ static void basic_size_allocate(GtkWidget *widget, GtkAllocation *allocation) {
 		alloc.height = child->h;
 
 		if (!gtk_widget_get_has_window(widget)) {
+			// Really? It seems these coordinates are supposed to be relative to the parent...
+			// TODO: Investigate!
 			alloc.x += allocation->x;
 			alloc.y += allocation->y;
 		}
@@ -187,7 +189,7 @@ static void basic_size_allocate(GtkWidget *widget, GtkAllocation *allocation) {
 }
 
 static void basic_add(GtkContainer *container, GtkWidget *widget) {
-	basic_put(BASIC(container), widget, 0, 0, 10, 10);
+	basic_put(BASIC(container), widget, 0, 0, 100, 100);
 }
 
 static void basic_remove(GtkContainer *container, GtkWidget *widget) {

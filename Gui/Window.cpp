@@ -16,7 +16,8 @@ namespace gui {
 
 	Window::Window() :
 		myHandle(invalid), myParent(null), myRoot(null),
-		myVisible(true), drawing(false), gdkWindow(null), myPos(0, 0, 10, 10) {
+		myVisible(true), drawing(false), gdkWindow(null),
+		myPos(0, 0, 40, 40) /* large enought to not generate warnings in Gtk+ */ {
 
 		myText = new (this) Str(L"");
 		myFont = app(engine())->defaultFont;
@@ -547,9 +548,16 @@ namespace gui {
 		memset(&attrs, 0, sizeof(attrs));
 
 		GtkWidget *drawTo = drawWidget();
-		GdkWindow *parent = gtk_widget_get_window(drawTo);
-		if (!parent)
-			parent = gtk_widget_get_parent_window(drawTo);
+
+		GdkWindow *oldWindow = gtk_widget_get_window(drawTo);
+		GdkWindow *parentWindow = gtk_widget_get_parent_window(drawTo);
+		if (oldWindow && parentWindow != oldWindow) {
+			// This widget already has its own window. Use that.
+			gdkWindow = oldWindow;
+			return;
+		}
+		if (!oldWindow)
+			oldWindow = parentWindow;
 
 		GtkAllocation alloc;
 		gtk_widget_get_allocation(drawTo, &alloc);
@@ -561,15 +569,15 @@ namespace gui {
 		attrs.window_type = GDK_WINDOW_CHILD; // GDK_WINDOW_SUBSURFACE is nice on Wayland.
 		attrs.wclass = GDK_INPUT_OUTPUT;
 		// Probably good. We could use *_get_system_visual() instead.
-		attrs.visual = gdk_screen_get_rgba_visual(gdk_window_get_screen(parent));
+		attrs.visual = gdk_screen_get_rgba_visual(gdk_window_get_screen(oldWindow));
 
-		gdkWindow = gdk_window_new(parent, &attrs, GDK_WA_X | GDK_WA_Y);
+		gdkWindow = gdk_window_new(oldWindow, &attrs, GDK_WA_X | GDK_WA_Y);
 		gdk_window_ensure_native(gdkWindow);
 		gdk_window_show_unraised(gdkWindow);
 
 		// Unref the old window.
-		if (gtk_widget_get_window(drawTo))
-			g_object_unref(gtk_widget_get_window(drawTo));
+		if (oldWindow)
+			g_object_unref(oldWindow);
 
 		gtk_widget_set_has_window(drawTo, TRUE);
 		gtk_widget_set_window(drawTo, gdkWindow);
@@ -627,15 +635,15 @@ namespace gui {
 	}
 
 	Rect Window::pos() {
-		if (created()) {
-			Size s = myPos.size();
-			basic_move(parent()->container(), handle().widget(), myPos.p0.x, myPos.p0.y, s.w, s.h);
-		}
 		return myPos;
 	}
 
 	void Window::pos(Rect r) {
 		myPos = r;
+		if (created()) {
+			Size s = myPos.size();
+			basic_move(parent()->container(), handle().widget(), myPos.p0.x, myPos.p0.y, s.w, s.h);
+		}
 	}
 
 	void Window::visible(Bool v) {

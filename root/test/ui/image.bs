@@ -1,0 +1,81 @@
+use ui;
+use graphics;
+use core:geometry;
+use core:io;
+
+class ImageViewer extends Frame {
+	Window image;
+	Button[] select;
+	ImagePainter paint;
+
+	init() {
+		Str[] names = [ "ui_alpha.png", "ui_pattern.png", "tree.jpg", "tree-hq.bmp", "tree-lq.bmp" ];
+		Float buttonHeight = 50;
+
+		init("Image viewer", Size(400, 300.float + names.count.int.float*buttonHeight)) {}
+
+		image.painter(paint);
+		add(image);
+
+		for (id, f in names) {
+			Button b(f);
+			b.onClick = &this.chooseImage(Button);
+			select.push(b);
+			add(b);
+		}
+
+		create();
+	}
+
+	void resized(Size size) {
+		Float buttonHeight = 50;
+		Float buttonsH = select.count.int.float*buttonHeight;
+		Float buttonsStart = size.h - buttonsH;
+
+		image.pos(Rect(10, 10, size.w - 10, buttonsStart - 10));
+
+		for (id, b in select) {
+			Float y = id.int.float*buttonHeight + buttonsStart;
+			b.pos(Rect(10, y, size.w - 10, y + buttonHeight - 10));
+		}
+	}
+
+	void chooseImage(Button x) {
+		Url url = resUrl / x.text;
+		print("Loading " + url.toS);
+		paint.show(url.loadImage);
+		image.repaint();
+	}
+}
+
+class ImagePainter extends Painter {
+	Bitmap? picture;
+
+	init() {
+		init();
+		bgColor = Color(0.5, 0.5, 0.5);
+	}
+
+	Bool render(Size me, Graphics g) {
+		if (picture) {
+			Size p = picture.size;
+			if (p.w > me.w) {
+				p = p * (me.w / p.w);
+			}
+
+			Rect pos(me.center - p/2, p);
+			g.draw(picture, pos);
+		}
+
+		false;
+	}
+
+	void show(Image p) {
+		picture = Bitmap(p);
+	}
+}
+
+void images() {
+	ImageViewer w;
+	w.waitForClose;
+}

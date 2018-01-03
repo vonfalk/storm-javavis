@@ -161,7 +161,6 @@ namespace graphics {
 			return ((JpegInput *)info->src)->fill() ? TRUE : FALSE;
 		}
 		static void sSkip(j_decompress_ptr info, long count) {
-			PLN(L"SKIP");
 			((JpegInput *)info->src)->skip(count);
 		}
 		static void sClose(j_decompress_ptr info) {
