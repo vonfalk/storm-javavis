@@ -554,6 +554,8 @@ namespace gui {
 		if (oldWindow && parentWindow != oldWindow) {
 			// This widget already has its own window. Use that.
 			gdkWindow = oldWindow;
+			if (myPainter)
+				gtk_widget_set_double_buffered(drawTo, FALSE);
 			return;
 		}
 		if (!oldWindow)

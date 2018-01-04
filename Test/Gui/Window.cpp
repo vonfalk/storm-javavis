@@ -20,4 +20,7 @@ BEGIN_TEST(Window, Gui) {
 	PLN(L"Trying overlays with other windows inside the frame. Try clicking 'Toggle' a few times.");
 	runFn<void>(S("test.ui.overlay"));
 
+	PLN(L"Trying out loading various image formats.");
+	runFn<void>(S("test.ui.images"));
+
 } END_TEST

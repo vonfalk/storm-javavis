@@ -59,8 +59,9 @@ class ImagePainter extends Painter {
 	Bool render(Size me, Graphics g) {
 		if (picture) {
 			Size p = picture.size;
-			if (p.w > me.w) {
-				p = p * (me.w / p.w);
+			Float scale = min(me.w / p.w, me.h / p.h);
+			if (scale < 1) {
+				p = p * scale;
 			}
 
 			Rect pos(me.center - p/2, p);
