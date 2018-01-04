@@ -9,10 +9,14 @@ class ImageViewer extends Frame {
 	ImagePainter paint;
 
 	init() {
-		Str[] names = [ "ui_alpha.png", "ui_pattern.png", "tree.jpg", "tree-hq.bmp", "tree-lq.bmp" ];
+		Str[] names = [
+			"ui_alpha.png", "ui_alpha.bmp", "ui_alpha-16.bmp", "ui_pattern.png",
+			"tree.jpg",
+			"tree-24.bmp", "tree-32.bmp", "tree-16-565.bmp", "tree-16-555.bmp", "tree-8.bmp", "tree-4.bmp", "tree-1.bmp"
+		];
 		Float buttonHeight = 50;
 
-		init("Image viewer", Size(400, 300.float + names.count.int.float*buttonHeight)) {}
+		init("Image viewer", Size(400, 300.float + ((names.count + 2) / 3).int.float*buttonHeight)) {}
 
 		image.painter(paint);
 		add(image);
@@ -29,14 +33,16 @@ class ImageViewer extends Frame {
 
 	void resized(Size size) {
 		Float buttonHeight = 50;
-		Float buttonsH = select.count.int.float*buttonHeight;
+		Float buttonWidth = (size.w - 10) / 3;
+		Float buttonsH = ((select.count + 2) / 3).int.float*buttonHeight;
 		Float buttonsStart = size.h - buttonsH;
 
 		image.pos(Rect(10, 10, size.w - 10, buttonsStart - 10));
 
 		for (id, b in select) {
-			Float y = id.int.float*buttonHeight + buttonsStart;
-			b.pos(Rect(10, y, size.w - 10, y + buttonHeight - 10));
+			Float x = (id % 3).int.float*buttonWidth + 10;
+			Float y = (id / 3).int.float*buttonHeight + buttonsStart;
+			b.pos(Rect(x, y, x + buttonWidth - 10, y + buttonHeight - 10));
 		}
 	}
 
@@ -77,6 +83,7 @@ class ImagePainter extends Painter {
 }
 
 void images() {
+	(resUrl / "ui_alpha.bmp").loadImage;
 	ImageViewer w;
 	w.waitForClose;
 }

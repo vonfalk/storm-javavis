@@ -1,13 +1,9 @@
 #include "stdafx.h"
 #include "Image.h"
 #include "ImageLoad.h"
+#include "BmpLoad.h"
 
 namespace graphics {
-
-	namespace wic {
-		Image *loadImage(storm::IStream *from, const wchar *&error);
-	}
-
 
 	// check the header in the stream
 	// zeroTerm - Zero-terminated string in the file?

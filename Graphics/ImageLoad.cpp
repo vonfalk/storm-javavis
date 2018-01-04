@@ -204,11 +204,6 @@ namespace graphics {
 		}
 	}
 
-	Image *loadBmp(IStream *from, const wchar *&error) {
-		error = S("BMP files are not supported yet.");
-		return null;
-	}
-
 }
 
 #endif

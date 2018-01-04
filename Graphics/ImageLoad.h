@@ -9,6 +9,5 @@ namespace graphics {
 	 */
 	Image *loadPng(IStream *from, const wchar *&error);
 	Image *loadJpeg(IStream *from, const wchar *&error);
-	Image *loadBmp(IStream *from, const wchar *&error);
 
 }

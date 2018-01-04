@@ -132,6 +132,10 @@ static void basic_preferred_width(GtkWidget *widget, int *minimum, int *natural)
 		*minimum = max(*minimum, child->x + child_min);
 		*natural = max(*natural, child->x + child_nat);
 	}
+
+	// We report a minimum size of zero to allow the window to resize to any size. Any constraints
+	// are handled in Storm.
+	*minimum = 0;
 }
 
 static void basic_preferred_height(GtkWidget *widget, int *minimum, int *natural) {
@@ -152,6 +156,10 @@ static void basic_preferred_height(GtkWidget *widget, int *minimum, int *natural
 		*minimum = max(*minimum, child->y + child_min);
 		*natural = max(*natural, child->y + child_nat);
 	}
+
+	// We report a minimum size of zero to allow the window to resize to any size. Any constraints
+	// are handled in Storm.
+	*minimum = 0;
 }
 
 static void basic_size_allocate(GtkWidget *widget, GtkAllocation *allocation) {

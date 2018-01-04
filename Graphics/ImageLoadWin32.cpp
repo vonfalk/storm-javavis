@@ -126,9 +126,10 @@ namespace graphics {
 		return wic::loadImage(from);
 	}
 
-	Image *loadBmp(IStream *from) {
-		return wic::loadImage(from);
-	}
+	// Implemented in BmpLoad.cpp
+	// Image *loadBmp(IStream *from) {
+	// 	return wic::loadImage(from);
+	// }
 
 }
 
