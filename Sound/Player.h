@@ -1,6 +1,7 @@
 #pragma once
 #include "Sound.h"
 #include "Handle.h"
+#include "Types.h"
 #include "Core/Timing.h"
 #include "Core/Event.h"
 
@@ -8,6 +9,9 @@ namespace sound {
 
 	/**
 	 * Sound playback.
+	 *
+	 * TODO: Make 'wait' signaling when the buffer is not playing. Esp. if playback was not started
+	 * for some reason.
 	 */
 	class Player : public ObjectOn<Audio> {
 		STORM_CLASS;
@@ -61,6 +65,9 @@ namespace sound {
 		// Number of parts.
 		static const Nat bufferParts;
 
+		// Size of a single sample for 1 channel in bytes.
+		static const Nat sampleDepth;
+
 		// Source.
 		Sound *src;
 
@@ -68,7 +75,7 @@ namespace sound {
 		Float fVolume;
 
 		// Sound buffer.
-		IDirectSoundBuffer8 *buffer;
+		SoundBuffer buffer;
 
 		// Size of the buffer (bytes).
 		Nat bufferSize;
@@ -95,6 +102,9 @@ namespace sound {
 			// Starting sample # for this part.
 			Word sample;
 
+			// OpenAL buffer name. Unused on DirectSound.
+			Word alBuffer;
+
 			// Is this part's index after the end of the stream?
 			Bool afterEnd;
 		};
@@ -103,6 +113,9 @@ namespace sound {
 
 		// Starting sample # for each part.
 		GcArray<PartInfo> *partInfo;
+
+		// Temporary buffer usable by the backends.
+		void *tmpBuffer;
 
 		// Waiting event.
 		Handle event;
@@ -124,6 +137,26 @@ namespace sound {
 
 		// Get the next part.
 		static Nat next(Nat part);
+
+
+		/**
+		 * Backend specific buffer management:
+		 */
+
+		// Initialize the sound buffer.
+		void initBuffer();
+
+		// Destroy the sound buffer.
+		void destroyBuffer();
+
+		// Set playback volume.
+		void bufferVolume(float volume);
+
+		// Start playing buffer.
+		void bufferPlay();
+
+		// Stop playing buffer.
+		void bufferStop();
 	};
 
 }

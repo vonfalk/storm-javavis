@@ -9,7 +9,7 @@ namespace storm {
 	 * Buffer for use with streams. Designed to make it possible to allocate on the stack to avoid
 	 * heap allocations (at least from C++).
 	 *
-	 * If multiple copies of a buffer is created, they all refer to the same backing storage,
+	 * If multiple copies of a buffer are created, they all refer to the same backing storage,
 	 * slightly breaking the memory model of Storm.
 	 *
 	 * When using the MPS: buffers are allocated in a pool that neither moves nor protects its

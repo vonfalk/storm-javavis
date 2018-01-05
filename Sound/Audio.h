@@ -3,6 +3,7 @@
 #include "Core/WeakSet.h"
 #include "Handle.h"
 #include "Player.h"
+#include "Types.h"
 
 namespace sound {
 	class AudioWait;
@@ -19,12 +20,12 @@ namespace sound {
 		// Terminate and clean up the audio thread.
 		void terminate();
 
-		// Get the direct sound interface.
-		inline IDirectSound8 *ds() { return dsound; }
-
 		// Add/remove a player to be notified about its events.
 		void addPlayer(Player *player);
 		void removePlayer(Player *player);
+
+		// Get the sound device.
+		inline SoundDevice device() { return soundDevice; }
 
 	private:
 		friend class AudioWait;
@@ -32,8 +33,9 @@ namespace sound {
 		// AudioWait class.
 		AudioWait *wait;
 
-		// DirectSound device.
-		IDirectSound8 *dsound;
+		// Sound device and context.
+		SoundDevice soundDevice;
+		SoundContext soundContext;
 
 		// All players associated with the audio manager.
 		WeakSet<Player> *players;
@@ -41,8 +43,24 @@ namespace sound {
 		// Notify events for all players here.
 		void notifyEvents();
 
+		// Initialize the device.
+		void init();
+
+		// Destroy the device.
+		void destroy();
+
+#ifdef SOUND_DX
+
 		// Get a list of all events that provide us with wake notifications.
 		void allEvents(vector<HANDLE> &events);
+
+#endif
+#ifdef SOUND_AL
+
+		// See if any playback is performed at the moment.
+		bool anyPlayback();
+
+#endif
 	};
 
 	// Get the global AudioMgr instance.
@@ -68,12 +86,22 @@ namespace sound {
 	private:
 		Engine &e;
 
+#ifdef SOUND_DX
+
 		// All event variables to be waited for. Index 0 is always present and used for the IO
 		// handle in the wait functions. Index 1 is also always present and represents the event
 		// that is signaled by 'signal' above. The others originate from events signaled by
 		// DirectSound to indicate the need for refilling audio buffers.
 		// All events here have a manual reset.
 		vector<HANDLE> events;
+
+#endif
+#ifdef SOUND_AL
+
+		// IO wait object.
+		os::IOCondition ioWait;
+
+#endif
 
 		// Shall we exit?
 		bool exit;
@@ -86,6 +114,9 @@ namespace sound {
 
 		// Notify exit if feasible.
 		void doExit();
+
+		// Destroy any backend specific resources.
+		void destroy();
 	};
 
 }

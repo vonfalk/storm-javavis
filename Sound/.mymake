@@ -8,3 +8,9 @@ include+=../SoundLib/vorbis/include/
 include+=../SoundLib/flac/include/
 
 #flags+=/d1reportSingleClassLayoutGradientStop
+
+[unix]
+library+=openal
+
+# Otherwise, GCC reports OV_CALLBACKS_STREAMONLY etc. inside vorbisfile.h as not used.
+flags+=-Wno-unused-variable

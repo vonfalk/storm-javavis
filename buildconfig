@@ -7,7 +7,7 @@
 #Main -a -r ../root/ -f test.ui.multiline
 #Main -a -r ../root/ -f test.ui.dialog
 #Main -a -r ../root/ -f test.ui.overlay
-Main -a -r ../root/ -f test.ui.images
+#Main -a -r ../root/ -f test.ui.images
 #Main -a -r ../root/ -f test.ui-simple.simple
 
 #Memory intensive UI test.
@@ -15,7 +15,7 @@ Main -a -r ../root/ -f test.ui.images
 
 #Main -a -r ../root/ -f test.d.testFactorial
 #Main -a -r ../root/ -f test.asm.testInlineLabel
-#Main -a -r ../root/ -f test.sound.play
+Main -a -r ../root/ -f test.sound.play
 #Main -a -r ../root/ -f sound.testMe
 
 

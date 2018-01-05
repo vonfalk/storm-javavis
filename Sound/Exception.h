@@ -13,4 +13,13 @@ namespace sound {
 		String msg;
 	};
 
+	/**
+	 * Error.
+	 */
+	class EXCEPTION_EXPORT SoundInitError : public Exception {
+	public:
+		SoundInitError() {}
+		virtual String what() const { return L"Failed to initialize sound output."; }
+	};
+
 }

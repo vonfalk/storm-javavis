@@ -44,5 +44,14 @@ define+=HAVE_LROUND
 define+=__STDC_WANT_LIB_EXT2__=1
 define+=_LARGEFILE_SOURCE
 
+# Disable some more warnings...
+cflags+=-Wno-implicit-function-declaration
+cflags+=-Wno-int-conversion
+
+# We need to include 'alloca.h' with GCC...
+cflags+=-include alloca.h
+
 #Windows-specific stuff...
 ignore+=*/windows_*
+
+cflags+=-fPIC

@@ -9,7 +9,7 @@ namespace sound {
 	const GcType FlacSound::dataType = {
 		GcType::tFixed,
 		null,
-		&FlacSound::destroyData,
+		address(&FlacSound::destroyData),
 		sizeof(Data),
 		1,
 		{ OFFSET_OF(Data, owner) }
@@ -232,7 +232,7 @@ namespace sound {
 	void FlacSound::error(const FLAC__StreamDecoder *decoder,
 						FLAC__StreamDecoderErrorStatus status,
 						void *data) {
-		FlacSound *me = ((FlacSound::Data *)data)->owner;
+		// FlacSound *me = ((FlacSound::Data *)data)->owner;
 		// Possibilities:
 		switch (status) {
 		case FLAC__STREAM_DECODER_ERROR_STATUS_LOST_SYNC:

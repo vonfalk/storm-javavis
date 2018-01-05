@@ -73,9 +73,6 @@ Graphics+=CppTypes
 Compiler+=TestLib
 Compiler+=Gui
 Compiler+=Graphics
-
-[deps,windows]
-#To make sure everything is built.
 Compiler+=Sound
 
 [!extern_lib]

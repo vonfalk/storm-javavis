@@ -8,7 +8,7 @@ namespace sound {
 	 * Buffer for use with sound streams. Designed to make it possible to allocate on the stack to
 	 * avoid heap allocations (at least from C++).
 	 *
-	 * If multiple copies of a buffer is created, they all refer to the same backing storage,
+	 * If multiple copies of a buffer are created, they all refer to the same backing storage,
 	 * slightly breaking the memory model of Storm.
 	 *
 	 * TODO: Make proper element access operators from Storm.

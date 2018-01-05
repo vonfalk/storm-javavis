@@ -2,19 +2,13 @@
 #include "Audio.h"
 #include "Player.h"
 #include "LibData.h"
+#include "Exception.h"
 
 namespace sound {
 
-	AudioMgr::AudioMgr() : wait(null), dsound(null) {
+	AudioMgr::AudioMgr() : wait(null), soundDevice() {
 		players = new (this) WeakSet<Player>();
-
-		if (FAILED(DirectSoundCreate8(NULL, &dsound, NULL))) {
-			WARNING(L"Failed to initialize DirectSound.");
-		} else {
-			// This is fine since we do not do anything that depends on focus:
-			// https://groups.google.com/forum/#!msg/microsoft.public.win32.programmer.directx.audio/a7QhlgNFBpg/w8lTd8_NRSEJ
-			dsound->SetCooperativeLevel(GetDesktopWindow(), DSSCL_PRIORITY);
-		}
+		init();
 	}
 
 	void AudioMgr::terminate() {
@@ -28,7 +22,7 @@ namespace sound {
 			p->close();
 		}
 
-		::release(dsound);
+		destroy();
 	}
 
 	void AudioMgr::addPlayer(Player *player) {
@@ -37,6 +31,67 @@ namespace sound {
 
 	void AudioMgr::removePlayer(Player *player) {
 		players->remove(player);
+	}
+
+	AudioMgr *audioMgr(EnginePtr e) {
+		AudioMgr *&d = audioMgrData(e.v);
+		if (!d)
+			d = new (e.v) AudioMgr();
+		return d;
+	}
+
+	/**
+	 * Waiting logic.
+	 */
+
+	AudioWait::AudioWait(Engine &e) : e(e), exit(false), working(false), notifyExit(null) {
+		AudioMgr *m = audioMgr(e);
+		m->wait = this;
+	}
+
+	AudioWait::~AudioWait() {
+		destroy();
+	}
+
+	void AudioWait::doExit() {
+		if (exit && !working && notifyExit) {
+			notifyExit->up();
+			notifyExit = null;
+		}
+	}
+
+	void AudioWait::terminate() {
+		os::Sema sync(0);
+		notifyExit = &sync;
+
+		exit = true;
+
+		// Allow the thread to exit properly...
+		signal();
+		sync.down();
+	}
+
+	os::Thread spawnAudioThread(Engine &e) {
+		return os::Thread::spawn(new AudioWait(e), runtime::threadGroup(e));
+	}
+
+	/**
+	 * Backend specific code.
+	 */
+#ifdef SOUND_DX
+
+	void AudioMgr::init() {
+		if (FAILED(DirectSoundCreate8(NULL, &dsound, NULL))) {
+			throw SoundInitError();
+		} else {
+			// This is fine since we do not do anything that depends on focus:
+			// https://groups.google.com/forum/#!msg/microsoft.public.win32.programmer.directx.audio/a7QhlgNFBpg/w8lTd8_NRSEJ
+			dsound->SetCooperativeLevel(GetDesktopWindow(), DSSCL_PRIORITY);
+		}
+	}
+
+	void AudioMgr::destroy() {
+		::release(dsound);
 	}
 
 	static bool signaled(HANDLE event) {
@@ -67,29 +122,13 @@ namespace sound {
 		}
 	}
 
-	AudioMgr *audioMgr(EnginePtr e) {
-		AudioMgr *&d = audioMgrData(e.v);
-		if (!d)
-			d = new (e.v) AudioMgr();
-		return d;
-	}
-
-	/**
-	 * Waiting logic.
-	 */
-
-	AudioWait::AudioWait(Engine &e) : e(e), exit(false), working(false), notifyExit(null) {
-		AudioMgr *m = audioMgr(e);
-		m->wait = this;
-	}
-
-	AudioWait::~AudioWait() {
-		CloseHandle(events[1]);
-	}
-
 	void AudioWait::init() {
 		events.push_back(NULL);
 		events.push_back(CreateEvent(NULL, TRUE, FALSE, NULL));
+	}
+
+	void AudioWait::destroy() {
+		CloseHandle(events[1]);
 	}
 
 	bool AudioWait::wait(os::IOHandle &io) {
@@ -114,9 +153,8 @@ namespace sound {
 		DWORD z = WaitForMultipleObjectsEx(count - first, &events[first], FALSE, ms, FALSE);
 		ResetEvent(events[1]);
 
-		if (exit) {
+		if (exit)
 			doExit();
-		}
 		return !exit;
 	}
 
@@ -132,26 +170,107 @@ namespace sound {
 		doExit();
 	}
 
-	void AudioWait::doExit() {
-		if (exit && !working && notifyExit) {
-			notifyExit->up();
-			notifyExit = null;
+#endif
+#ifdef SOUND_AL
+
+	/**
+	 * Note: There does not seem to be any sophisticated mechanism to get notified when sound
+	 * buffers in OpenAL are finished playing. So we simply make sure that we do not sleep longer
+	 * than a couple of hundred ms each time, so that we can poll OpenAL often enough.
+	 */
+	static const nat MAX_WAIT_MS = 100;
+
+	void AudioMgr::init() {
+		soundDevice = alcOpenDevice(NULL);
+		if (!soundDevice)
+			throw SoundInitError();
+
+		soundContext = alcCreateContext(soundDevice, NULL);
+		if (!soundContext)
+			throw SoundInitError();
+
+		alcMakeContextCurrent(soundContext);
+
+		// Set up the listener.
+		alListener3f(AL_POSITION, 0, 0, 1);
+		alListener3f(AL_VELOCITY, 0, 0, 0);
+		ALfloat orientation[] = { 0, 0, 1, 0, 1, 0 };
+		alListenerfv(AL_ORIENTATION, orientation);
+	}
+
+	void AudioMgr::destroy() {
+		alcDestroyContext(soundContext);
+		alcCloseDevice(soundDevice);
+	}
+
+	void AudioMgr::notifyEvents() {
+		WeakSet<Player>::Iter i = players->iter();
+		while (Player *p = i.next()) {
+			if (p->playing())
+				p->onNotify();
 		}
 	}
 
-	void AudioWait::terminate() {
-		os::Sema sync(0);
-		notifyExit = &sync;
+	bool AudioMgr::anyPlayback() {
+		WeakSet<Player>::Iter i = players->iter();
+		while (Player *p = i.next()) {
+			if (p->playing())
+				return true;
+		}
 
-		exit = true;
-
-		// Allow the thread to exit properly...
-		signal();
-		sync.down();
+		return false;
 	}
 
-	os::Thread spawnAudioThread(Engine &e) {
-		return os::Thread::spawn(new AudioWait(e), runtime::threadGroup(e));
+	void AudioWait::init() {}
+
+	void AudioWait::destroy() {}
+
+	bool AudioWait::wait(os::IOHandle &io) {
+		if (exit) {
+			doExit();
+			return false;
+		}
+
+		if (!working && audioMgr(e)->anyPlayback()) {
+			ioWait.wait(io, MAX_WAIT_MS);
+		} else {
+			ioWait.wait(io);
+		}
+
+		if (exit)
+			doExit();
+		return !exit;
 	}
+
+	bool AudioWait::wait(os::IOHandle &io, nat ms) {
+		if (exit) {
+			doExit();
+			return false;
+		}
+
+		if (!working && audioMgr(e)->anyPlayback()) {
+			ioWait.wait(io, min(MAX_WAIT_MS, ms));
+		} else {
+			ioWait.wait(io, ms);
+		}
+
+		if (exit)
+			doExit();
+		return !exit;
+	}
+
+	void AudioWait::signal() {
+		ioWait.signal();
+	}
+
+	void AudioWait::work() {
+		AudioMgr *m = audioMgr(e);
+		working = true;
+		audioMgr(e)->notifyEvents();
+		working = false;
+		doExit();
+	}
+
+#endif
 
 }
