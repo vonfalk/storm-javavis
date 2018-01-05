@@ -5,6 +5,8 @@ namespace gui {
 
 	/**
 	 * Label for displaying text.
+	 *
+	 * TODO: Allow setting text alignment.
 	 */
 	class Label : public Window {
 		STORM_CLASS;
