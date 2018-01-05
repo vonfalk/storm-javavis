@@ -252,6 +252,8 @@ namespace gui {
 		void gtkWait(os::IOHandle::Desc &io, int timeout);
 		void plainWait(struct pollfd *fds, size_t count, int timeout);
 
+		// Hook for Gtk+ events.
+		static void gtkEventHook(GdkEvent *event, gpointer data);
 
 #endif
 

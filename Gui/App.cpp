@@ -413,6 +413,10 @@ namespace gui {
 		// TODO? Pass 'standard' parameters from the command line somehow...
 		gtk_init(NULL, NULL);
 
+		// Install our own event handler before the one Gtk+ installed. We need to intercept events
+		// to windows where we are rendering using OpenGL.
+		gdk_event_handler_set(&gtkEventHook, this, NULL);
+
 		// Find the context for the main loop.
 		context = g_main_context_default();
 		// Become the owner of the main context.
@@ -437,6 +441,25 @@ namespace gui {
 
 		// Close the eventfd.
 		close(eventFd);
+	}
+
+	void AppWait::gtkEventHook(GdkEvent *event, gpointer data) {
+		if (event->type == GDK_EXPOSE) {
+			AppWait *me = (AppWait *)data;
+			App *app = gui::app(me->e);
+
+			// Find the Window associated with this event and pass a paint event directly to that
+			// window before we let Gtk+ handle it and interfere with our OpenGL rendering.
+			GtkWidget *widget = gtk_get_event_widget(event);
+			Window *window = app->findWindow(widget);
+
+			// Do not pass to Gtk+ if the window tells us not to.
+			if (window && window->preExpose())
+				return;
+		}
+
+		// Pass it on to Gtk+.
+		gtk_main_do_event(event);
 	}
 
 	static short from_g(GIOCondition src) {

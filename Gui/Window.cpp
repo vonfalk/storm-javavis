@@ -5,6 +5,7 @@
 #include "App.h"
 #include "Painter.h"
 #include "GtkSignal.h"
+#include "GtkEmpty.h"
 
 // We're using gtk_widget_override_font, as there is no better way of setting custom fonts on widgets...
 #pragma GCC diagnostic ignored "-Wdeprecated-declarations"
@@ -396,7 +397,7 @@ namespace gui {
 #ifdef GUI_GTK
 
 	bool Window::create(Container *parent, nat id) {
-		initWidget(parent, gtk_drawing_area_new());
+		initWidget(parent, empty_new());
 		return true;
 	}
 
@@ -454,7 +455,7 @@ namespace gui {
 		resized(s);
 	}
 
-	gboolean Window::onDraw(cairo_t *ctx) {
+	bool Window::preExpose() {
 		// Do we have a painter?
 		if (myPainter && gdkWindow) {
 			Engine &e = engine();
@@ -465,6 +466,25 @@ namespace gui {
 			os::UThread::spawn(address(&Painter::repaint), true, params, result, &Render::thread(e)->thread());
 
 			result.result();
+
+			return true;
+		}
+
+		// Process normally.
+		return false;
+	}
+
+	gboolean Window::onDraw(cairo_t *ctx) {
+		// Do we have a painter?
+		if (myPainter && gdkWindow) {
+			// Engine &e = engine();
+			// RepaintParams param = { gdkWindow, drawWidget() };
+			// RepaintParams *pParam = &param;
+			// os::Future<void> result;
+			// os::FnCall<void, 2> params = os::fnCall().add(myPainter).add(pParam);
+			// os::UThread::spawn(address(&Painter::repaint), true, params, result, &Render::thread(e)->thread());
+
+			// result.result();
 
 			return TRUE;
 		}
@@ -552,6 +572,7 @@ namespace gui {
 		GdkWindow *oldWindow = gtk_widget_get_window(drawTo);
 		GdkWindow *parentWindow = gtk_widget_get_parent_window(drawTo);
 		if (oldWindow && parentWindow != oldWindow) {
+			WARNING(L"Using previously created windows could be bad.");
 			// This widget already has its own window. Use that.
 			gdkWindow = oldWindow;
 			if (myPainter)

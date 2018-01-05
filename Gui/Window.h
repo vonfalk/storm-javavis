@@ -93,6 +93,12 @@ namespace gui {
 		// is the notification code specified by the message (eg BN_CLICK).
 		virtual bool onCommand(nat type);
 #endif
+#ifdef GUI_GTK
+		// Called when we received an EXPOSE event, but before Gtk+ is informed about the
+		// event. Return 'true' to inhibit the Gtk+ behaviour completely.
+		bool preExpose();
+
+#endif
 
 		// Visibility.
 		Bool STORM_FN visible();
