@@ -35,9 +35,6 @@ namespace sound {
 		// finishEvent.set();
 		freq = src->sampleFreq();
 		channels = src->channels();
-		sampleSize = sampleDepth * channels;
-		partSize = sampleSize * bufferPartTime * freq;
-		bufferSize = partSize * bufferParts;
 
 		if (channels > 2)
 			WARNING(L"More than two channels may not produce expected results.");
@@ -59,6 +56,7 @@ namespace sound {
 			AudioMgr *mgr = audioMgr(engine());
 			mgr->removePlayer(this);
 			destroyBuffer();
+			buffer = SoundBuffer();
 		}
 
 		if (src) {
@@ -190,7 +188,7 @@ namespace sound {
 			// Set up notifications. One in the beginning of each section of the buffer.
 			DSBPOSITIONNOTIFY n[bufferParts];
 			for (nat i = 0; i < bufferParts; i++) {
-				n[i].dwOffset = i * partSize;
+				n[i].dwOffset = i * partSize();
 				n[i].hEventNotify = event.v();
 			}
 
@@ -229,10 +227,10 @@ namespace sound {
 		DWORD pos = 0;
 		buffer->GetCurrentPosition(&pos, NULL);
 
-		nat part = pos / partSize;
+		nat part = pos / partSize();
 		nat64 sample = partInfo->v[part].sample;
 		if (!partInfo->v[part].afterEnd)
-			sample += (pos % partSize) / sampleSize;
+			sample += (pos % partSize()) / sampleSize();
 
 		sample *= 1000000;
 		sample /= freq;
@@ -243,7 +241,7 @@ namespace sound {
 	void Player::onNotify() {
 		DWORD play;
 		buffer->GetCurrentPosition(&play, NULL);
-		nat playPart = play / partSize;
+		nat playPart = play / partSize();
 
 		if (partInfo->v[playPart].afterEnd) {
 			stop();
@@ -259,7 +257,7 @@ namespace sound {
 
 		void *buf1 = null, *buf2 = null;
 		DWORD size1 = 0, size2 = 0;
-		buffer->Lock(partSize * part, partSize, &buf1, &size1, &buf2, &size2, 0);
+		buffer->Lock(partSize() * part, partSize(), &buf1, &size1, &buf2, &size2, 0);
 
 		partInfo->v[part].afterEnd |= fill(buf1, size1);
 		partInfo->v[part].afterEnd |= fill(buf2, size2);
@@ -327,11 +325,13 @@ namespace sound {
 			partInfo->v[i].alBuffer = buf;
 		}
 
-		tmpBuffer = malloc(partSize);
+		if (!tmpBuffer)
+			tmpBuffer = malloc(partSize());
 	}
 
 	void Player::destroyBuffer() {
 		free(tmpBuffer);
+		tmpBuffer = null;
 
 		ALuint source = buffer;
 		alDeleteSources(1, &source);
@@ -417,10 +417,10 @@ namespace sound {
 
 	void Player::fill(nat part) {
 		partInfo->v[part].sample = src->tell();
-		partInfo->v[part].afterEnd = fill(tmpBuffer, partSize);
+		partInfo->v[part].afterEnd = fill(tmpBuffer, partSize());
 
 		ALuint partBuffer = partInfo->v[part].alBuffer;
-		alBufferData(partBuffer, AL_FORMAT_STEREO16, tmpBuffer, partSize, freq);
+		alBufferData(partBuffer, AL_FORMAT_STEREO16, tmpBuffer, partSize(), freq);
 		alSourceQueueBuffers(buffer, 1, &partBuffer);
 
 		lastFilled = part;
@@ -428,6 +428,10 @@ namespace sound {
 
 	inline float clamp(float v, float max, float min) {
 		return std::max(std::min(v, max), min);
+	}
+
+	inline short convert(float src) {
+		return short(clamp(src * 32767, 32767, -32768));
 	}
 
 	bool Player::fill(void *buf, nat size) {
@@ -441,7 +445,7 @@ namespace sound {
 			if (src->more()) {
 				sound::Buffer r = src->read(size - at);
 				for (Nat i = 0; i < r.filled(); i++)
-					to[at++] = short(clamp(r[i] * 32767, 32767, -32768));
+					to[at++] = convert(r[i]);
 			} else {
 				afterEnd = true;
 				for (; at < size; at++)

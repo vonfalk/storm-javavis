@@ -77,14 +77,20 @@ namespace sound {
 		// Sound buffer.
 		SoundBuffer buffer;
 
+		// Size of the buffer (samples).
+		inline Nat bufferSamples() const { return partSamples() * bufferParts; }
+
+		// Size of one part of the buffer (samples).
+		inline Nat partSamples() const { return bufferPartTime * freq; }
+
 		// Size of the buffer (bytes).
-		Nat bufferSize;
+		inline Nat bufferSize() const { return sampleSize() * bufferSamples(); }
 
-		// Part size of the buffer.
-		Nat partSize;
+		// Size of one part of the buffer (bytes).
+		inline Nat partSize() const { return sampleSize() * partSamples(); }
 
-		// Size of a single sample (all channels).
-		Nat sampleSize;
+		// Size of a single sample (bytes, all channels).
+		inline Nat sampleSize() const { return channels * sampleDepth; }
 
 		// Channels.
 		Nat channels;

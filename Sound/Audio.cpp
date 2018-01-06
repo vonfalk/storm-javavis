@@ -17,6 +17,10 @@ namespace sound {
 			wait = null;
 		}
 
+		// We're likely running in a different thread that the thread that set up OpenAL. We need to
+		// activate the OpenAL context once more to make 'close' work as expected.
+		activate();
+
 		WeakSet<Player>::Iter i = players->iter();
 		while (Player *p = i.next()) {
 			p->close();
@@ -93,6 +97,8 @@ namespace sound {
 	void AudioMgr::destroy() {
 		::release(dsound);
 	}
+
+	void AudioMgr::activate() {}
 
 	static bool signaled(HANDLE event) {
 		return WaitForSingleObjectEx(event, 0, FALSE) != WAIT_TIMEOUT;
@@ -201,6 +207,11 @@ namespace sound {
 	void AudioMgr::destroy() {
 		alcDestroyContext(soundContext);
 		alcCloseDevice(soundDevice);
+	}
+
+	void AudioMgr::activate() {
+		if (soundContext)
+			alcMakeContextCurrent(soundContext);
 	}
 
 	void AudioMgr::notifyEvents() {

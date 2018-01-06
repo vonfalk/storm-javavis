@@ -49,6 +49,9 @@ namespace sound {
 		// Destroy the device.
 		void destroy();
 
+		// Activate the AL context in this thread. (No-op on DirectSound).
+		void activate();
+
 #ifdef SOUND_DX
 
 		// Get a list of all events that provide us with wake notifications.
