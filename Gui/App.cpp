@@ -24,11 +24,11 @@ namespace gui {
 		windows = new (this) Map<Handle, Window *>();
 		liveWindows = new (this) Set<Window *>();
 
+		init();
+
 		Defaults def = sysDefaults(engine());
 		defaultFont = def.font;
 		defaultBgColor = def.bgColor;
-
-		init();
 	}
 
 	void App::terminate() {
@@ -110,8 +110,12 @@ namespace gui {
 			// Try to be threadsafe.
 			static util::Lock l;
 			util::Lock::L z(l);
-			if (!v)
+			if (!v) {
+				// Poke the thread as well since we might be running on another OS thread.
+				Ui::thread(e.v)->thread();
+
 				v = new (e.v) App();
+			}
 		}
 		return v;
 	}

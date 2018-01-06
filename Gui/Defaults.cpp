@@ -50,10 +50,6 @@ namespace gui {
 		return Color(byte(r), byte(g), byte(b));
 	}
 
-	static void printElem(void *e, void *data) {
-		PLN(String((const char *)e));
-	}
-
 	Defaults sysDefaults(EnginePtr e) {
 		GtkWidget *dummyLabel = gtk_label_new("dummy");
 		GtkWidget *dummyWindow = gtk_window_new(GTK_WINDOW_TOPLEVEL);

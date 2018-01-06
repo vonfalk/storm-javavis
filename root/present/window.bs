@@ -45,36 +45,36 @@ class PresentWindow extends Frame {
 	}
 
 	// Key handling.
-	Bool onKey(Bool down, Nat id) {
+	Bool onKey(Bool down, Key id, Modifiers mod) {
 		if (down) {
-			if (id == 13) {
+			if (id == Key:return) {
 				if (typedNumber != 0) {
 					paint.jumpTo(typedNumber - 1);
 					typedNumber = 0;
 				} else {
 					paint.next;
 				}
-			} else if (id == 39) {
+			} else if (id == Key:right) {
 				paint.next;
-			} else if (id == 37) {
+			} else if (id == Key:left) {
 				paint.prev;
-			} else if (id == 27) {
+			} else if (id == Key:esc) {
 				close;
-			} else if (id == 82) { // r
+			} else if (id == Key:r) {
 				paint.resetTimer;
 				repaint;
-			} else if (id == 83) { // s
+			} else if (id == Key:s) {
 				paint.surpriseKey;
-			} else if (id == 70) { // f
+			} else if (id == Key:f) {
 				if (fullscreen) {
 					fullscreen(false);
 				} else {
 					fullscreen(true);
 				}
-			} else if (id >= 48 & id <= 57) {
+			} else if (keycode(id) >= 48 & keycode(id) <= 57) {
 				typedNumber *= 10;
-				typedNumber += id - 48;
-			} else if (id == 116) { // F5 - reload. Remove when the emacs integration can support this!
+				typedNumber += keycode(id) - 48;
+			} else if (id == Key:F5) { // F5 - reload. Remove when the emacs integration can support this!
 				print("Reloading " # toReload.path);
 				reloadPkg(toReload);
 				print("Compiling...");
@@ -85,7 +85,7 @@ class PresentWindow extends Frame {
 				print("Key: " # id);
 			}
 		}
-		super:onKey(down, id);
+		super:onKey(down, id, mod);
 	}
 
 	// Repaint, the timer on screen needs to be redrawn.

@@ -34,6 +34,9 @@ namespace gui {
 		// Return 'true' if you want to be redrawn the next frame as well!
 		virtual Bool STORM_FN render(Size size, Graphics *graphics);
 
+		// Called from Storm to repaint the window.
+		void STORM_FN repaint();
+
 		// Background color. Updated on next redraw.
 		Color bgColor;
 
@@ -52,7 +55,7 @@ namespace gui {
 
 		// Called when the attached window wants to be repainted. The parameter passed is
 		// OS-specific data.
-		void CODECALL repaint(RepaintParams *params);
+		void CODECALL repaintUi(RepaintParams *params);
 
 		// Add a resource. Resources are invalidated whenever we have to re-create the render target.
 		void addResource(RenderResource *resource);

@@ -463,7 +463,7 @@ namespace gui {
 			RepaintParams *pParam = &param;
 			os::Future<void> result;
 			os::FnCall<void, 2> params = os::fnCall().add(myPainter).add(pParam);
-			os::UThread::spawn(address(&Painter::repaint), true, params, result, &Render::thread(e)->thread());
+			os::UThread::spawn(address(&Painter::repaintUi), true, params, result, &Render::thread(e)->thread());
 
 			result.result();
 

@@ -93,8 +93,9 @@ namespace gui {
 		resources->remove(r);
 	}
 
-	void Painter::repaint(RepaintParams *params) {
-		beforeRepaint(params);
+	void Painter::repaint() {
+		if (!target.any())
+			return;
 
 		if (continuous) {
 			waitForFrame();
@@ -103,6 +104,11 @@ namespace gui {
 		}
 
 		currentRepaint = repaintCounter;
+	}
+
+	void Painter::repaintUi(RepaintParams *params) {
+		beforeRepaint(params);
+		repaint();
 		afterRepaint(params);
 	}
 

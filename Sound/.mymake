@@ -13,5 +13,8 @@ include+=../SoundLib/
 [unix]
 library+=openal
 
+flags+=-I../SoundLib/mpg123/src/libmpg123/
+
+
 # Otherwise, GCC reports OV_CALLBACKS_STREAMONLY etc. inside vorbisfile.h as not used.
 flags+=-Wno-unused-variable

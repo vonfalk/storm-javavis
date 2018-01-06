@@ -5,7 +5,7 @@ namespace gui {
 
 	Nat STORM_FN keycode(Key key) {
 		// Control keys do not have any characters assigned to them, except for return and tab.
-		if (key < key::lastControl) {
+		if (key >= key::firstControl && key < key::lastControl) {
 			switch (key) {
 			case key::ret:
 				return '\n';
@@ -55,6 +55,7 @@ namespace gui {
 		KEYMAP(tab, VK_TAB, GDK_KEY_Tab),
 		KEYMAP(ret, VK_RETURN, GDK_KEY_Return),
 		KEYMAP(left, VK_LEFT, GDK_KEY_Left),
+		KEYMAP(right, VK_RIGHT, GDK_KEY_Right),
 		KEYMAP(up, VK_UP, GDK_KEY_Up),
 		KEYMAP(down, VK_DOWN, GDK_KEY_Down),
 		KEYMAP(pageUp, VK_PRIOR, GDK_KEY_Page_Up),
