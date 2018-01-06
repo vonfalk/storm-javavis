@@ -6,6 +6,7 @@ stormUsingNamespace=storm
 include+=../SoundLib/ogg/include/
 include+=../SoundLib/vorbis/include/
 include+=../SoundLib/flac/include/
+include+=../SoundLib/
 
 #flags+=/d1reportSingleClassLayoutGradientStop
 

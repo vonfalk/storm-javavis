@@ -3,12 +3,16 @@
 #include "Player.h"
 #include "LibData.h"
 #include "Exception.h"
+#include "mpg123.h"
 
 namespace sound {
 
 	AudioMgr::AudioMgr() : wait(null), soundDevice() {
 		players = new (this) WeakSet<Player>();
 		init();
+
+		// We need to initialize the MP3 backend.
+		mpg123_init();
 	}
 
 	void AudioMgr::terminate() {

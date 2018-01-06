@@ -273,6 +273,7 @@ namespace sound {
 		nat at = 0;
 		size /= sizeof(float);
 
+		// TODO: We do not need to allocate a buffer at each iteration in the loop.
 		while (at < size) {
 			if (src->more()) {
 				sound::Buffer r = src->read(size - at);
@@ -420,7 +421,8 @@ namespace sound {
 		partInfo->v[part].afterEnd = fill(tmpBuffer, partSize());
 
 		ALuint partBuffer = partInfo->v[part].alBuffer;
-		alBufferData(partBuffer, AL_FORMAT_STEREO16, tmpBuffer, partSize(), freq);
+		ALenum format = channels == 2 ? AL_FORMAT_STEREO16 : AL_FORMAT_MONO16;
+		alBufferData(partBuffer, format, tmpBuffer, partSize(), freq);
 		alSourceQueueBuffers(buffer, 1, &partBuffer);
 
 		lastFilled = part;

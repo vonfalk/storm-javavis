@@ -10,6 +10,9 @@
 [submodule "SoundLib/flac"]
 	path = SoundLib/flac
 	url = ../sound/flac.git
+[submodule "SoundLib/mpg123"]
+	path = SoundLib/mpg123
+	url = ../sound/mpg123.git
 [submodule "root/test/server-tests"]
 	path = root/test/server-tests
 	url = ../storm-server-tests.git

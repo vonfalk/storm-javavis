@@ -22,6 +22,43 @@ ignore+=*/tone.c
 ignore+=*/psytune.c
 ignore+=*/barkmel.c
 
+ignore+=*.S
+ignore+=mpg123/ports/*
+ignore+=mpg123/src/libmpg123/synth_*
+ignore+=mpg123/src/libmpg123/dct64_*
+ignore+=mpg123/src/libmpg123/*_arm.c
+ignore+=mpg123/src/libmpg123/*_altivec.c
+ignore+=mpg123/src/libout123/*
+ignore+=mpg123/src/libmpg123/system.c
+ignore+=mpg123/src/libmpg123/legacy_*.c
+#Might need these...
+ignore+=mpg123/src/libmpg123/lfs_wrap.c
+ignore+=mpg123/src/libmpg123/lfs_alias.c
+
+#Ignore the main mpg123 application. We only want libmpg123.
+ignore+=mpg123/src/audio.c
+ignore+=mpg123/src/common.c
+ignore+=mpg123/src/control_generic.c
+ignore+=mpg123/src/equalizer.c
+ignore+=mpg123/src/genre.c
+ignore+=mpg123/src/getlopt.c
+ignore+=mpg123/src/httpget.c
+ignore+=mpg123/src/local.c
+ignore+=mpg123/src/metaprint.c
+ignore+=mpg123/src/mpg123.c
+ignore+=mpg123/src/mpg123-id3dump.c
+ignore+=mpg123/src/mpg123-strip.c
+ignore+=mpg123/src/out123.c
+ignore+=mpg123/src/playlist.c
+ignore+=mpg123/src/resolver.c
+ignore+=mpg123/src/streamdump.c
+ignore+=mpg123/src/sysutil.c
+ignore+=mpg123/src/term.c
+ignore+=mpg123/src/waves.c
+ignore+=mpg123/src/win32_net.c
+ignore+=mpg123/src/win32_support.c
+ignore+=mpg123/src/wrapper_test.c
+
 noIncludes+=*/modes/*.h
 
 include+=ogg/include/
@@ -29,11 +66,26 @@ include+=vorbis/include/
 include+=vorbis/lib/
 include+=flac/include/
 include+=flac/src/libFLAC/include/
+include+=mpg123/src/
+include+=mpg123/src/compat/
+include+=mpg123/src/libmpg123/
 
 #FLAC requires exporting no_export to be defined...
 define+=FLAC__NO_DLL
 define+=PACKAGE_VERSION=\"\"
 define+=FLAC__HAS_OGG
+
+#MPG123 requires the following
+define+=HAVE_STDLIB_H
+define+=HAVE_STRERROR
+define+=HAVE_STRING_H
+define+=GAPLESS
+# Default decoder (C-code)
+define+=OPT_MULTI
+define+=OPT_GENERIC
+define+=OPT_GENERIC_DITHER
+define+=NO_8BIT
+define+=REAL_IS_FLOAT
 
 #No warnings, libogg is a mess in that regard...
 warnings=
@@ -43,6 +95,10 @@ define+=HAVE_STDINT_H
 define+=HAVE_LROUND
 define+=__STDC_WANT_LIB_EXT2__=1
 define+=_LARGEFILE_SOURCE
+define+=ASMALIGN_BALIGN
+define+=HAVE_SYS_STAT_H
+define+=HAVE_DIRENT_H
+define+=HAVE_SYS_TYPES_H
 
 # Disable some more warnings...
 cflags+=-Wno-implicit-function-declaration
@@ -55,3 +111,6 @@ cflags+=-include alloca.h
 ignore+=*/windows_*
 
 cflags+=-fPIC
+
+[unix,storm_debug]
+cflags+=-g

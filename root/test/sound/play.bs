@@ -31,5 +31,5 @@ void play() {
 	play(fileUrl / "News Theme.ogg");
 	play(fileUrl / "News Theme.flac");
 	play(fileUrl / "News Theme.wav");
-	// play(fileUrl / "News Theme.mp3");
+	play(fileUrl / "News Theme.mp3");
 }

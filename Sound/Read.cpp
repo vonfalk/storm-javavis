@@ -3,6 +3,7 @@
 #include "OggSound.h"
 #include "FlacSound.h"
 #include "WavSound.h"
+#include "Mp3Sound.h"
 #include "Exception.h"
 
 namespace sound {
@@ -38,6 +39,10 @@ namespace sound {
 			result = openFlac(src->randomAccess());
 		} else if (checkHeader(src, "RIFF", false)) {
 			result = openWav(src->randomAccess());
+		} else if (checkHeader(src, "ID3", false)) {
+			result = openMp3(src->randomAccess());
+		} else if (checkHeader(src, "\xFF\xFB", false)) {
+			result = openMp3(src->randomAccess());
 		} else {
 			throw SoundOpenError(L"Unknown file format.");
 		}
@@ -51,12 +56,21 @@ namespace sound {
 	Sound *soundStream(IStream *src) {
 		Sound *result = null;
 
+		const char *foo = "\xFF\xFB";
+		PVAR(strlen("\xFF\xFB"));
+		PVAR(int(foo[0]));
+		PVAR(int(foo[1]));
+
 		if (checkHeader(src, "OggS", false)) {
 			result = openOggStream(src);
 		} else if (checkHeader(src, "fLaC", false)) {
 			result = openFlac(src->randomAccess());
 		} else if (checkHeader(src, "RIFF", false)) {
 			result = openWavStream(src);
+		} else if (checkHeader(src, "ID3", false)) {
+			result = openMp3Stream(src);
+		} else if (checkHeader(src, "\xFF\xFB", false)) {
+			result = openMp3Stream(src);
 		} else {
 			throw SoundOpenError(L"Unknown file format.");
 		}
