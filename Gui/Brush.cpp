@@ -5,7 +5,7 @@
 
 namespace gui {
 
-	Brush::Brush() : opacity(1.0f) {}
+	Brush::Brush() {}
 
 #ifdef GUI_WIN32
 
@@ -15,10 +15,11 @@ namespace gui {
 #ifdef GUI_GTK
 
 	void Brush::prepare(const Rect &r, cairo_pattern_t *b) {}
+	void Brush::prepare(const Rect &r, cairo_t *b) {}
 
 #endif
 
-	SolidBrush::SolidBrush(Color c) : color(c) {}
+	SolidBrush::SolidBrush(Color c) : opacity(1.0f), color(c) {}
 
 #ifdef GUI_WIN32
 
@@ -26,29 +27,54 @@ namespace gui {
 		owner->renderTarget()->CreateSolidColorBrush(dx(color), (ID2D1SolidColorBrush **)out);
 	}
 
+	void SolidBrush::prepare(ID2D1Brush *b) {
+		b->SetOpacity(opacity);
+	}
+
 #endif
 #ifdef GUI_GTK
 
 	OsResource *SolidBrush::create(Painter *owner) {
-		return cairo_pattern_create_rgba(color.r, color.g, color.b, color.a);
+		// return cairo_pattern_create_rgba(color.r, color.g, color.b, color.a);
+		return 0;
+	}
+
+	void SolidBrush::prepare(const Rect &bound, cairo_t *cairo) {
+		cairo_set_source_rgba(cairo, color.r, color.g, color.b, color.a * opacity);
 	}
 
 #endif
 
-	// BitmapBrush::BitmapBrush(Bitmap *bitmap) : bitmap(bitmap) {}
+	BitmapBrush::BitmapBrush(Bitmap *bitmap) : bitmap(bitmap) {}
 
-	// void BitmapBrush::create(Painter *owner, ID2D1Resource **out) {
-	// 	D2D1_BITMAP_BRUSH_PROPERTIES props = {
-	// 		D2D1_EXTEND_MODE_WRAP,
-	// 		D2D1_EXTEND_MODE_WRAP,
-	// 		D2D1_BITMAP_INTERPOLATION_MODE_LINEAR,
-	// 	};
-	// 	owner->renderTarget()->CreateBitmapBrush(bitmap->bitmap(owner), props, (ID2D1BitmapBrush **)out);
-	// }
+#ifdef GUI_WIN32
 
-	// void BitmapBrush::prepare(const Rect &bound, ID2D1Brush *r) {
-	// 	r->SetTransform(D2D1::Matrix3x2F::Translation(D2D1::SizeF(bound.p0.x, bound.p0.y)));
-	// }
+	void BitmapBrush::create(Painter *owner, ID2D1Resource **out) {
+		D2D1_BITMAP_BRUSH_PROPERTIES props = {
+			D2D1_EXTEND_MODE_WRAP,
+			D2D1_EXTEND_MODE_WRAP,
+			D2D1_BITMAP_INTERPOLATION_MODE_LINEAR,
+		};
+		owner->renderTarget()->CreateBitmapBrush(bitmap->bitmap(owner), props, (ID2D1BitmapBrush **)out);
+	}
+
+	void BitmapBrush::prepare(const Rect &bound, ID2D1Brush *r) {
+		r->SetTransform(D2D1::Matrix3x2F::Translation(D2D1::SizeF(bound.p0.x, bound.p0.y)));
+	}
+#endif
+#ifdef GUI_GTK
+
+	OsResource *BitmapBrush::create(Painter *owner) {
+		return cairo_pattern_create_for_surface(bitmap->get<cairo_surface_t>(owner));
+	}
+
+	void BitmapBrush::prepare(const Rect &bound, cairo_pattern_t *brush) {
+		cairo_matrix_t tfm;
+		cairo_matrix_init_translate(&tfm, -bound.p0.x, -bound.p0.y);
+		cairo_pattern_set_matrix(brush, &tfm);
+	}
+
+#endif
 
 	GradientStop::GradientStop(Float position, Color color) : pos(position), color(color) {}
 

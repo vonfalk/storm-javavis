@@ -18,7 +18,6 @@ namespace gui {
 		inline ID2D1Brush *brush(Painter *owner, const Rect &rect) {
 			ID2D1Brush *b = get<ID2D1Brush>(owner);
 			prepare(rect, b);
-			b->SetOpacity(opacity);
 			return b;
 		}
 
@@ -29,19 +28,19 @@ namespace gui {
 		// Set the source of the cairo_t to this brush.
 		inline void setSource(Painter *owner, cairo_t *c, const Rect &bound) {
 			cairo_pattern_t *b = get<cairo_pattern_t>(owner);
+
 			if (b) {
 				prepare(bound, b);
-				// TODO: Handle opacity!
 				cairo_set_source(c, b);
+			} else {
+				prepare(bound, c);
 			}
 		}
 
 		// Prepare for drawing a bounding box of 'bound'.
 		virtual void prepare(const Rect &bound, cairo_pattern_t *brush);
+		virtual void prepare(const Rect &bound, cairo_t *cairo);
 #endif
-
-		// Opacity.
-		Float opacity;
 	};
 
 	/**
@@ -54,10 +53,17 @@ namespace gui {
 
 #ifdef GUI_WIN32
 		virtual void create(Painter *owner, ID2D1Resource **out);
+
+		virtual void prepare(const Rect &bound, ID2D1Brush *b);
 #endif
 #ifdef GUI_GTK
 		virtual OsResource *create(Painter *owner);
+
+		virtual void prepare(const Rect &bound, cairo_t *cairo);
 #endif
+
+		// Opacity.
+		Float opacity;
 
 	private:
 		Color color;
@@ -65,20 +71,25 @@ namespace gui {
 
 	/**
 	 * Bitmap brush.
-	 *
-	 * TODO: Implement properly on both platforms.
 	 */
-	// class BitmapBrush : public Brush {
-	// 	STORM_CLASS;
-	// public:
-	// 	STORM_CTOR BitmapBrush(Bitmap *bitmap);
+	class BitmapBrush : public Brush {
+		STORM_CLASS;
+	public:
+		STORM_CTOR BitmapBrush(Bitmap *bitmap);
 
-	// 	virtual void create(Painter *owner, ID2D1Resource **out);
+#ifdef GUI_WIN32
+		virtual void create(Painter *owner, ID2D1Resource **out);
 
-	// 	virtual void prepare(const Rect &bound, ID2D1Brush *b);
-	// private:
-	// 	Bitmap *bitmap;
-	// };
+		virtual void prepare(const Rect &bound, ID2D1Brush *b);
+#endif
+#ifdef GUI_GTK
+		virtual OsResource *create(Painter *owner);
+
+		virtual void prepare(const Rect &bound, cairo_pattern_t *brush);
+#endif
+	private:
+		Bitmap *bitmap;
+	};
 
 	/**
 	 * A single gradient stop.
