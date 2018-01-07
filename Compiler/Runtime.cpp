@@ -116,6 +116,10 @@ namespace storm {
 			return e.threadGroup;
 		}
 
+		os::Lock &threadLock(Engine &e) {
+			return e.threadLock;
+		}
+
 		void attachThread(Engine &e) {
 			e.gc.attachThread();
 		}

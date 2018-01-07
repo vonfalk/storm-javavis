@@ -19,14 +19,17 @@ namespace storm {
 	}
 
 	const os::Thread &Thread::thread() {
-		// TODO: Make thread-safe!
-
+		// Do not acquire the lock first, as creation will only happen once.
 		if (osThread == os::Thread::invalid) {
-			if (create) {
-				// TODO? make sure the newly created thread has been properly registered with the gc!
-				osThread = (*create)(engine());
-			} else {
-				osThread = os::Thread::spawn(util::Fn<void>(), runtime::threadGroup(engine()));
+			// Acquire lock and check again.
+			os::Lock::L z(runtime::threadLock(engine()));
+			if (osThread == os::Thread::invalid) {
+				if (create) {
+					// TODO: make sure the newly created thread has been properly registered with the gc?
+					osThread = (*create)(engine());
+				} else {
+					osThread = os::Thread::spawn(util::Fn<void>(), runtime::threadGroup(engine()));
+				}
 			}
 		}
 		return osThread;

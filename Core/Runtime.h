@@ -107,6 +107,9 @@ namespace storm {
 		// Get the thread group to use for all threads.
 		os::ThreadGroup &threadGroup(Engine &e);
 
+		// Get the lock used to synchronize thread startup in the Thread class.
+		os::Lock &threadLock(Engine &e);
+
 		// Create a GcWatch object.
 		GcWatch *createWatch(Engine &e);
 

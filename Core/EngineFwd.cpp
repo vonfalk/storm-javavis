@@ -26,6 +26,7 @@ namespace storm {
 			&runtime::codeUpdatePtrs,
 			&runtime::setVTable,
 			&runtime::threadGroup,
+			&runtime::threadLock,
 			&runtime::createWatch,
 			&runtime::postStdRequest,
 			&runtime::cloneObject,

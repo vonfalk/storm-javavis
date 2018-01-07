@@ -39,6 +39,7 @@ namespace storm {
 		void (*codeUpdatePtrs)(void *code);
 		void (*setVTable)(RootObject *object);
 		os::ThreadGroup &(*threadGroup)(Engine &e);
+		os::Lock &(*threadLock)(Engine &e);
 		GcWatch *(*createWatch)(Engine &e);
 		void (*postStdRequest)(Engine &e, StdRequest *request);
 		RootObject *(*cloneObject)(RootObject *obj);

@@ -161,6 +161,10 @@ namespace storm {
 			return (*fwd.threadGroup)(e);
 		}
 
+		os::Lock &threadLock(Engine &e) {
+			return (*fwd.threadLock)(e);
+		}
+
 		GcWatch *createWatch(Engine &e) {
 			return (*fwd.createWatch)(e);
 		}

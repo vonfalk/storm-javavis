@@ -96,6 +96,9 @@ namespace storm {
 		// The threadgroup which all threads spawned from here shall belong to.
 		os::ThreadGroup threadGroup;
 
+		// The lock that is used to synchronize thread creation in storm::Thread::thread().
+		os::Lock threadLock;
+
 		/**
 		 * Packages.
 		 */
