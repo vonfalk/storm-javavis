@@ -158,7 +158,8 @@ namespace code {
 			//   - if the word contains only floating point numbers, pass them into a real register.
 			//   - otherwise, pass the word in an integer register (eg. int + float).
 
-			if (type->size().size64() > 2*8) {
+			Nat size = type->size().size64();
+			if (size > 2*8) {
 				// Too large: pass on the stack!
 				stack->push(id);
 				return;
@@ -167,11 +168,14 @@ namespace code {
 			primitive::Kind first = paramKind(type->v, 0, 8);
 			primitive::Kind second = paramKind(type->v, 8, 16);
 
+			Nat firstSize = min(size, Nat(8));
+			Nat secondSize = (size > 8) ? (size - 8) : 0;
+
 			size_t iCount = integer->filled;
 			size_t rCount = real->filled;
 
-			if (tryAdd(first, Param(id, 8, 0)) &&
-				tryAdd(second, Param(id, 8, 8))) {
+			if (tryAdd(first, Param(id, firstSize, 0)) &&
+				tryAdd(second, Param(id, secondSize, 8))) {
 				// It worked!
 			} else {
 				// Not enough room. Roll back and pass on the stack instead.
