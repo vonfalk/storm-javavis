@@ -65,7 +65,9 @@ namespace gui {
 #ifdef GUI_GTK
 
 	OsResource *BitmapBrush::create(Painter *owner) {
-		return cairo_pattern_create_for_surface(bitmap->get<cairo_surface_t>(owner));
+		cairo_pattern_t *p = cairo_pattern_create_for_surface(bitmap->get<cairo_surface_t>(owner));
+		cairo_pattern_set_extend(p, CAIRO_EXTEND_REPEAT);
+		return p;
 	}
 
 	void BitmapBrush::prepare(const Rect &bound, cairo_pattern_t *brush) {

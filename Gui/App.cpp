@@ -449,17 +449,23 @@ namespace gui {
 
 	void AppWait::gtkEventHook(GdkEvent *event, gpointer data) {
 		if (event->type == GDK_EXPOSE) {
-			AppWait *me = (AppWait *)data;
-			App *app = gui::app(me->e);
+			try {
+				AppWait *me = (AppWait *)data;
+				App *app = gui::app(me->e);
 
-			// Find the Window associated with this event and pass a paint event directly to that
-			// window before we let Gtk+ handle it and interfere with our OpenGL rendering.
-			GtkWidget *widget = gtk_get_event_widget(event);
-			Window *window = app->findWindow(widget);
+				// Find the Window associated with this event and pass a paint event directly to that
+				// window before we let Gtk+ handle it and interfere with our OpenGL rendering.
+				GtkWidget *widget = gtk_get_event_widget(event);
+				Window *window = app->findWindow(widget);
 
-			// Do not pass to Gtk+ if the window tells us not to.
-			if (window && window->preExpose())
-				return;
+				// Do not pass to Gtk+ if the window tells us not to.
+				if (window && window->preExpose())
+					return;
+			} catch (const Exception &e) {
+				PLN(L"Unhandled exception in window thread:\n" << e);
+			} catch (...) {
+				PLN(L"Unhandled exception in window thread: <unknown>");
+			}
 		}
 
 		// Pass it on to Gtk+.

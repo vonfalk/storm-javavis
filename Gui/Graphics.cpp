@@ -528,7 +528,6 @@ namespace gui {
 	}
 
 	void Graphics::draw(Bitmap *bitmap, Rect rect, Float opacity) {
-		rectangle(info, rect);
 		cairo_pattern_t *pattern = cairo_pattern_create_for_surface(bitmap->get<cairo_surface_t>(owner));
 		cairo_matrix_t tfm;
 		Size original = bitmap->size();
@@ -537,12 +536,19 @@ namespace gui {
 		cairo_matrix_translate(&tfm, -rect.p0.x, -rect.p0.y);
 		cairo_pattern_set_matrix(pattern, &tfm);
 		cairo_set_source(info.target(), pattern);
-		cairo_fill(info.target());
+		if (opacity < 1.0f)
+			cairo_paint_with_alpha(info.target(), opacity);
+		else
+			cairo_paint(info.target());
 		cairo_pattern_destroy(pattern);
 	}
 
 	void Graphics::draw(Bitmap *bitmap, Rect src, Rect dest, Float opacity) {
+		cairo_save(info.target());
+
 		rectangle(info, dest);
+		cairo_clip(info.target());
+
 		cairo_pattern_t *pattern = cairo_pattern_create_for_surface(bitmap->get<cairo_surface_t>(owner));
 		cairo_matrix_t tfm;
 		Size original = src.size();
@@ -552,8 +558,13 @@ namespace gui {
 		cairo_matrix_translate(&tfm, -dest.p0.x, -dest.p0.y);
 		cairo_pattern_set_matrix(pattern, &tfm);
 		cairo_set_source(info.target(), pattern);
-		cairo_fill(info.target());
+		if (opacity < 1.0f)
+			cairo_paint_with_alpha(info.target(), opacity);
+		else
+			cairo_paint(info.target());
 		cairo_pattern_destroy(pattern);
+
+		cairo_restore(info.target());
 	}
 
 	void Graphics::text(Str *text, Font *font, Brush *style, Rect rect) {
