@@ -105,6 +105,7 @@ cflags+=-Wno-implicit-function-declaration
 cflags+=-Wno-int-conversion
 cflags+=-Impg123/src/libmpg123/
 cflags+=-Iogg/include/
+cflags+=-Iinclude/
 
 # We need to include 'alloca.h' with GCC...
 cflags+=-include alloca.h
