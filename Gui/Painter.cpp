@@ -7,7 +7,8 @@ namespace gui {
 
 	Painter::Painter() : continuous(false), rendering(false), repaintCounter(0), currentRepaint(0) {
 		attachedTo = Window::invalid;
-		bgColor = app(engine())->defaultBgColor;
+		app = gui::app(engine());
+		bgColor = app->defaultBgColor;
 		resources = new (this) WeakSet<RenderResource>();
 	}
 
@@ -100,7 +101,7 @@ namespace gui {
 		if (continuous) {
 			waitForFrame();
 		} else {
-			doRepaint(false);
+			doRepaint(false, false);
 		}
 
 		currentRepaint = repaintCounter;
@@ -108,18 +109,27 @@ namespace gui {
 
 	void Painter::repaintUi(RepaintParams *params) {
 		beforeRepaint(params);
-		repaint();
+
+		if (!ready()) {
+			// There is a frame ready right now! No need to wait even if we're not in continuous mode!
+		} else if (continuous) {
+			waitForFrame();
+		} else {
+			doRepaint(false, true);
+		}
+
+		currentRepaint = repaintCounter;
 		afterRepaint(params);
 	}
 
-	void Painter::doRepaint(bool waitForVSync) {
+	void Painter::doRepaint(bool waitForVSync, bool fromWindow) {
 		if (!target.any())
 			return;
 
 		bool more = false;
 		try {
 			rendering = true;
-			more = doRepaintI(waitForVSync);
+			more = doRepaintI(waitForVSync, fromWindow);
 			rendering = false;
 		} catch (...) {
 			repaintCounter++;
@@ -140,6 +150,11 @@ namespace gui {
 
 #ifdef GUI_WIN32
 
+	bool Painter::ready() {
+		// Always ready to draw!
+		return true;
+	}
+
 	void Painter::waitForFrame() {
 		// Wait until we have rendered a frame, so that Windows think we did it to satisfy the paint
 		// request.
@@ -148,7 +163,7 @@ namespace gui {
 			os::UThread::leave();
 	}
 
-	void Painter::doRepaintI(bool waitForVSync) {
+	void Painter::doRepaintI(bool waitForVSync, bool fromWindow) {
 		if (!target.target())
 			return false;
 		if (!target.swapChain())
@@ -203,7 +218,12 @@ namespace gui {
 			os::UThread::leave();
 	}
 
-	bool Painter::doRepaintI(bool waitForVSync) {
+	bool Painter::ready() {
+		// Wait until the previous frame is actually shown.
+		return currentRepaint == repaintCounter;
+	}
+
+	bool Painter::doRepaintI(bool waitForVSync, bool fromWindow) {
 		if (!target.any())
 			return continuous;
 
@@ -226,9 +246,12 @@ namespace gui {
 			throw;
 		}
 
-		// Show the result.
-		// TODO: handle VSync somehow?
-		target.surface()->swapBuffers();
+		cairo_surface_flush(target.surface()->cairo);
+
+		// TODO: Handle VSync?
+		// Show the result if we're in continuous mode.
+		if (fromWindow)
+			app->repaint(attachedTo);
 
 		return more;
 	}
@@ -245,7 +268,15 @@ namespace gui {
 	}
 
 	void Painter::afterRepaint(RepaintParams *p) {
-		// Nothing special needs to be done.
+		// Show the frame. We need to do this in sync with the Gtk+ thread, otherwise we will cause havoc!
+		if (GlSurface *surface = target.surface()) {
+			surface->swapBuffers();
+
+			if (continuous) {
+				RenderMgr *mgr = renderMgr(engine());
+				mgr->painterReady();
+			}
+		}
 	}
 
 #endif

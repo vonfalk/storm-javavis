@@ -475,14 +475,22 @@ namespace gui {
 	}
 
 	gboolean Window::onDraw(cairo_t *ctx) {
+		// Anything we should do at all?
+		if (!gdkWindow)
+			return FALSE;
+
+		// Is this draw event for us?
+		if (!gtk_cairo_should_draw_window(ctx, gdkWindow))
+			return FALSE;
+
 		// Do we have a painter?
-		if (myPainter && gdkWindow) {
+		if (myPainter) {
 			// Engine &e = engine();
 			// RepaintParams param = { gdkWindow, drawWidget() };
 			// RepaintParams *pParam = &param;
 			// os::Future<void> result;
 			// os::FnCall<void, 2> params = os::fnCall().add(myPainter).add(pParam);
-			// os::UThread::spawn(address(&Painter::repaint), true, params, result, &Render::thread(e)->thread());
+			// os::UThread::spawn(address(&Painter::repaintUi), true, params, result, &Render::thread(e)->thread());
 
 			// result.result();
 
@@ -490,7 +498,7 @@ namespace gui {
 		}
 
 		// Do we have a window and need to paint the background?
-		if (!drawing && gdkWindow && gtk_cairo_should_draw_window(ctx, gdkWindow)) {
+		if (!drawing) {
 			GtkWidget *me = drawWidget();
 			GtkWidget *parentWidget = gtk_widget_get_parent(me);
 			if (!parentWidget || !GTK_IS_CONTAINER(parentWidget)) {

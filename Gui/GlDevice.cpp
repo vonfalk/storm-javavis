@@ -9,6 +9,8 @@ namespace gui {
 	Device::Device(Engine &e) {
 		context = GlContext::create(e);
 
+		cairo_gl_device_set_thread_aware(context->device, TRUE);
+
 		pangoSurface = cairo_gl_surface_create(context->device, CAIRO_CONTENT_COLOR_ALPHA, 1, 1);
 		pangoTarget = cairo_create(pangoSurface);
 		pangoContext = pango_cairo_create_context(pangoTarget);
@@ -70,7 +72,6 @@ namespace gui {
 	}
 
 	void GlSurface::swapBuffers() {
-		cairo_surface_flush(cairo);
 		cairo_gl_surface_swapbuffers(cairo);
 	}
 

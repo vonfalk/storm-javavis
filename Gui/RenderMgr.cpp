@@ -73,7 +73,7 @@ namespace gui {
 			Nat pos = 0;
 			for (Set<Painter *>::Iter i = painters->begin(), e = painters->end(); i != e; ++i) {
 				Painter *p = i.v();
-				if (p->continuous) {
+				if (p->continuous && p->ready()) {
 					if (pos >= toRedraw->count())
 						toRedraw->push(p);
 					else
@@ -91,7 +91,7 @@ namespace gui {
 				// Note: It seems from the documentation for 'IDXGISwapChain::Present' that it schedules a buffer
 				// swap but does not block until the next call to 'Present'. If so, we do not have to worry.
 				try {
-					toRedraw->at(i)->doRepaint(true);
+					toRedraw->at(i)->doRepaint(true, false);
 				} catch (const Exception &e) {
 					PLN(L"Error while rendering:\n" << e);
 				} catch (...) {

@@ -6,6 +6,7 @@
 #include "Core/WeakSet.h"
 
 namespace gui {
+	class App;
 	class RenderResource;
 
 	/**
@@ -61,6 +62,9 @@ namespace gui {
 		void addResource(RenderResource *resource);
 		void removeResource(RenderResource *resource);
 
+		// Ready to render?
+		bool ready();
+
 #ifdef GUI_WIN32
 		// Get our render target.
 		inline ID2D1RenderTarget *renderTarget() { return target.target(); }
@@ -79,6 +83,9 @@ namespace gui {
 
 		// Graphics object.
 		Graphics *graphics;
+
+		// App object.
+		App *app;
 
 		// Resources.
 		WeakSet<RenderResource> *resources;
@@ -113,10 +120,10 @@ namespace gui {
 		void waitForFrame();
 
 		// Do repaints (always).
-		void doRepaint(bool waitForVSync);
+		void doRepaint(bool waitForVSync, bool fromWindow);
 
 		// Do the platform specific of the repaint cycle.
-		bool doRepaintI(bool waitForVSync);
+		bool doRepaintI(bool waitForVSync, bool fromWindow);
 	};
 
 }
