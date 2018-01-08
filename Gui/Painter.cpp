@@ -229,6 +229,9 @@ namespace gui {
 
 		bool more = false;
 
+		GlSurface *surface = target.surface();
+		os::Lock::L z(surface->lock);
+
 		// Clear the surface with the background color.
 		cairo_set_source_rgba(target.target(), bgColor.r, bgColor.g, bgColor.b, bgColor.a);
 		cairo_set_operator(target.target(), CAIRO_OPERATOR_SOURCE);
@@ -246,11 +249,11 @@ namespace gui {
 			throw;
 		}
 
-		cairo_surface_flush(target.surface()->cairo);
+		cairo_surface_flush(surface->cairo);
 
 		// TODO: Handle VSync?
 		// Show the result if we're in continuous mode.
-		if (fromWindow)
+		if (!fromWindow)
 			app->repaint(attachedTo);
 
 		return more;
@@ -270,12 +273,20 @@ namespace gui {
 	void Painter::afterRepaint(RepaintParams *p) {
 		// Show the frame. We need to do this in sync with the Gtk+ thread, otherwise we will cause havoc!
 		if (GlSurface *surface = target.surface()) {
-			surface->swapBuffers();
+			// os::Lock::L z(surface->lock);
+			// surface->swapBuffers();
 
 			if (continuous) {
 				RenderMgr *mgr = renderMgr(engine());
 				mgr->painterReady();
 			}
+		}
+	}
+
+	void Painter::afterRepaintUi() {
+		if (GlSurface *surface = target.surface()) {
+			os::Lock::L z(surface->lock);
+			surface->swapBuffers();
 		}
 	}
 

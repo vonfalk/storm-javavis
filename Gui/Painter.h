@@ -58,6 +58,9 @@ namespace gui {
 		// OS-specific data.
 		void CODECALL repaintUi(RepaintParams *params);
 
+		// Called on the Ui thread after repaintUi completed.
+		void afterRepaintUi();
+
 		// Add a resource. Resources are invalidated whenever we have to re-create the render target.
 		void addResource(RenderResource *resource);
 		void removeResource(RenderResource *resource);

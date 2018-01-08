@@ -9,8 +9,6 @@ namespace gui {
 	Device::Device(Engine &e) {
 		context = GlContext::create(e);
 
-		cairo_gl_device_set_thread_aware(context->device, TRUE);
-
 		pangoSurface = cairo_gl_surface_create(context->device, CAIRO_CONTENT_COLOR_ALPHA, 1, 1);
 		pangoTarget = cairo_create(pangoSurface);
 		pangoContext = pango_cairo_create_context(pangoTarget);
@@ -64,19 +62,40 @@ namespace gui {
 	 * GL surface.
 	 */
 
-	GlSurface::GlSurface(cairo_surface_t *cairo) : cairo(cairo) {}
+	GlSurface::GlSurface(cairo_surface_t *onscreen) : onscreen(onscreen) {
+		// cairo = cairo_surface_create_similar(onscreen,
+		// 									CAIRO_CONTENT_COLOR, // Maybe alpha also...
+		// 									cairo_gl_surface_get_width(onscreen),
+		// 									cairo_gl_surface_get_height(onscreen));
+
+		// onscreenDraw = cairo_create(onscreen);
+		cairo = onscreen;
+	}
 
 	GlSurface::~GlSurface() {
 		if (cairo)
 			cairo_surface_destroy(cairo);
+
+		// if (onscreenDraw)
+		// 	cairo_destroy(onscreenDraw);
+
+		// if (onscreen)
+		// 	cairo_surface_destroy(onscreen);
 	}
 
 	void GlSurface::swapBuffers() {
+		// cairo_set_source_surface(onscreenDraw, cairo, 0, 0);
+		// cairo_paint(onscreenDraw);
+
+		// cairo_gl_surface_swapbuffers(onscreen);
 		cairo_gl_surface_swapbuffers(cairo);
 	}
 
 	void GlSurface::resize(Size s) {
+		os::Lock::L z(lock);
+
 		cairo_gl_surface_set_size(cairo, s.w, s.h);
+		// cairo_gl_surface_set_size(onscreen, s.w, s.h);
 	}
 
 	/**
@@ -95,15 +114,20 @@ namespace gui {
 		// Note: We should support Wayland as well.
 		Display *display = GDK_DISPLAY_XDISPLAY(app->defaultDisplay());
 
-		GlContext *result = EglContext::create(display);
+		// It seems GLX is faster in practice. It is also more stable using X11 forwarding. Might be
+		// required for Wayland support, though. EGL works fine when running locally, so it is a
+		// good fallback.
+		GlContext *result = GlxContext::create(display);
 		if (!result)
-			result = GlxContext::create(display);
+			result = EglContext::create(display);
 		if (!result)
 			throw GuiError(L"Failed to initialize OpenGL");
 
 		result->device = result->createDevice();
 		if (cairo_device_status(result->device) != CAIRO_STATUS_SUCCESS)
 			throw GuiError(L"Failed to initialize Cario. Cairo requires at least OpenGL 2.0 or OpenGL ES 2.0.");
+
+		cairo_gl_device_set_thread_aware(result->device, TRUE);
 
 		return result;
 	}

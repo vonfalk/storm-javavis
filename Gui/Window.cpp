@@ -458,16 +458,16 @@ namespace gui {
 	bool Window::preExpose() {
 		// Do we have a painter?
 		if (myPainter && gdkWindow) {
-			Engine &e = engine();
-			RepaintParams param = { gdkWindow, drawWidget() };
-			RepaintParams *pParam = &param;
-			os::Future<void> result;
-			os::FnCall<void, 2> params = os::fnCall().add(myPainter).add(pParam);
-			os::UThread::spawn(address(&Painter::repaintUi), true, params, result, &Render::thread(e)->thread());
+			// Engine &e = engine();
+			// RepaintParams param = { gdkWindow, drawWidget() };
+			// RepaintParams *pParam = &param;
+			// os::Future<void> result;
+			// os::FnCall<void, 2> params = os::fnCall().add(myPainter).add(pParam);
+			// os::UThread::spawn(address(&Painter::repaintUi), true, params, result, &Render::thread(e)->thread());
 
-			result.result();
+			// result.result();
 
-			return true;
+			// return true;
 		}
 
 		// Process normally.
@@ -485,14 +485,16 @@ namespace gui {
 
 		// Do we have a painter?
 		if (myPainter) {
-			// Engine &e = engine();
-			// RepaintParams param = { gdkWindow, drawWidget() };
-			// RepaintParams *pParam = &param;
-			// os::Future<void> result;
-			// os::FnCall<void, 2> params = os::fnCall().add(myPainter).add(pParam);
-			// os::UThread::spawn(address(&Painter::repaintUi), true, params, result, &Render::thread(e)->thread());
+			Engine &e = engine();
+			RepaintParams param = { gdkWindow, drawWidget() };
+			RepaintParams *pParam = &param;
+			os::Future<void> result;
+			os::FnCall<void, 2> params = os::fnCall().add(myPainter).add(pParam);
+			os::UThread::spawn(address(&Painter::repaintUi), true, params, result, &Render::thread(e)->thread());
 
-			// result.result();
+			result.result();
+			// myPainter->repaintUi(&param);
+			myPainter->afterRepaintUi();
 
 			return TRUE;
 		}

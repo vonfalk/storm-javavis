@@ -52,14 +52,24 @@ namespace gui {
 		// Destroy.
 		virtual ~GlSurface();
 
-		// Current cairo surface.
+		// Current cairo surface (offscreen).
 		cairo_surface_t *cairo;
+
+		// Lock for thread synchronization.
+		os::Lock lock;
 
 		// Swap buffers.
 		void swapBuffers();
 
 		// Resize the surface.
 		void resize(Size s);
+
+	private:
+		// Current on-screen surface. Updated using 'swapBuffers'.
+		cairo_surface_t *onscreen;
+
+		// Cairo context for 'onscreen'.
+		cairo_t *onscreenDraw;
 	};
 
 
