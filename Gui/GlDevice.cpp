@@ -38,12 +38,7 @@ namespace gui {
 		info.size = size;
 
 		// Note: We do not need to destroy and re-create the cairo context. It works anyway!
-		// if (info.target())
-		// 	cairo_destroy(info.target());
-
 		info.surface()->resize(size);
-
-		// info.target(cairo_create(info.surface()->cairo));
 	}
 
 	RenderInfo Device::create(GtkWidget *widget, GdkWindow *window) {
@@ -62,40 +57,19 @@ namespace gui {
 	 * GL surface.
 	 */
 
-	GlSurface::GlSurface(cairo_surface_t *onscreen) : onscreen(onscreen) {
-		// cairo = cairo_surface_create_similar(onscreen,
-		// 									CAIRO_CONTENT_COLOR, // Maybe alpha also...
-		// 									cairo_gl_surface_get_width(onscreen),
-		// 									cairo_gl_surface_get_height(onscreen));
-
-		// onscreenDraw = cairo_create(onscreen);
-		cairo = onscreen;
-	}
+	GlSurface::GlSurface(cairo_surface_t *cairo) : cairo(cairo) {}
 
 	GlSurface::~GlSurface() {
 		if (cairo)
 			cairo_surface_destroy(cairo);
-
-		// if (onscreenDraw)
-		// 	cairo_destroy(onscreenDraw);
-
-		// if (onscreen)
-		// 	cairo_surface_destroy(onscreen);
 	}
 
 	void GlSurface::swapBuffers() {
-		// cairo_set_source_surface(onscreenDraw, cairo, 0, 0);
-		// cairo_paint(onscreenDraw);
-
-		// cairo_gl_surface_swapbuffers(onscreen);
 		cairo_gl_surface_swapbuffers(cairo);
 	}
 
 	void GlSurface::resize(Size s) {
-		os::Lock::L z(lock);
-
 		cairo_gl_surface_set_size(cairo, s.w, s.h);
-		// cairo_gl_surface_set_size(onscreen, s.w, s.h);
 	}
 
 	/**

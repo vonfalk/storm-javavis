@@ -459,7 +459,7 @@ namespace gui {
 				Window *window = app->findWindow(widget);
 
 				// Do not pass to Gtk+ if the window tells us not to.
-				if (window && window->preExpose())
+				if (window && window->preExpose(widget))
 					return;
 			} catch (const Exception &e) {
 				PLN(L"Unhandled exception in window thread:\n" << e);

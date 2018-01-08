@@ -9,7 +9,9 @@ namespace gui {
 		attachedTo = Window::invalid;
 		app = gui::app(engine());
 		bgColor = app->defaultBgColor;
+		mgr = gui::renderMgr(engine());
 		resources = new (this) WeakSet<RenderResource>();
+		lock = new (this) Lock();
 	}
 
 	Painter::~Painter() {
@@ -49,8 +51,10 @@ namespace gui {
 			// This seems to not be neccessary. Probably because the resources are actually
 			// associated to the underlying D3D device, and not the RenderTarget.
 			// If the resize call fails for some reason, this is probably the cause.
+
 			// destroyResources();
-			RenderMgr *mgr = renderMgr(engine());
+
+			Lock::L z(lock);
 			mgr->resize(target, sz);
 			if (graphics)
 				graphics->updateTarget(target);
@@ -58,7 +62,6 @@ namespace gui {
 	}
 
 	void Painter::create() {
-		RenderMgr *mgr = renderMgr(engine());
 		target = mgr->attach(this, attachedTo);
 		graphics = new (this) Graphics(target, this);
 	}
@@ -76,7 +79,6 @@ namespace gui {
 		graphics = null;
 		target.release();
 
-		RenderMgr *mgr = renderMgr(engine());
 		mgr->detach(this);
 	}
 
@@ -104,10 +106,10 @@ namespace gui {
 			doRepaint(false, false);
 		}
 
-		currentRepaint = repaintCounter;
+		afterRepaint();
 	}
 
-	void Painter::repaintUi(RepaintParams *params) {
+	void Painter::repaintI(RepaintParams *params) {
 		beforeRepaint(params);
 
 		if (!ready()) {
@@ -118,8 +120,7 @@ namespace gui {
 			doRepaint(false, true);
 		}
 
-		currentRepaint = repaintCounter;
-		afterRepaint(params);
+		afterRepaint();
 	}
 
 	void Painter::doRepaint(bool waitForVSync, bool fromWindow) {
@@ -142,10 +143,43 @@ namespace gui {
 			continuous = more;
 			if (more) {
 				// Register!
-				RenderMgr *mgr = renderMgr(engine());
 				mgr->painterReady();
 			}
 		}
+	}
+
+	void Painter::uiAttach(Window *to) {
+		os::Future<void> result;
+		Painter *me = this;
+		os::FnCall<void, 2> params = os::fnCall().add(me).add(to);
+		os::UThread::spawn(address(&Painter::attach), true, params, result, &thread->thread());
+		result.result();
+	}
+
+	void Painter::uiDetach() {
+		os::Future<void> result;
+		Painter *me = this;
+		os::FnCall<void, 2> params = os::fnCall().add(me);
+		os::UThread::spawn(address(&Painter::detach), true, params, result, &thread->thread());
+		result.result();
+	}
+
+	void Painter::uiResize(Size size) {
+		os::Future<void> result;
+		Painter *me = this;
+		os::FnCall<void, 2> params = os::fnCall().add(me).add(size);
+		os::UThread::spawn(address(&Painter::resize), true, params, result, &thread->thread());
+		result.result();
+	}
+
+	void Painter::uiRepaint(RepaintParams *par) {
+		os::Future<void> result;
+		Painter *me = this;
+		os::FnCall<void, 2> params = os::fnCall().add(me).add(par);
+		os::UThread::spawn(address(&Painter::repaintI), true, params, result, &thread->thread());
+		result.result();
+
+		uiAfterRepaint();
 	}
 
 #ifdef GUI_WIN32
@@ -207,20 +241,25 @@ namespace gui {
 
 	void Painter::beforeRepaint(RepaintParams *handle) {}
 
-	void Painter::afterRepaint(RepaintParams *handle) {}
+	void Painter::afterRepaint() {
+		currentRepaint = repaintCounter;
+	}
+
+	void Painter::uiAfterRepaint() {}
 
 #endif
 #ifdef GUI_GTK
 
 	void Painter::waitForFrame() {
-		// Just wait until we're not drawing at the moment.
+		// Just wait until we're not drawing at the moment. Note: We could just fall through since
+		// we have a lock protecting the rendering.
 		while (rendering)
 			os::UThread::leave();
 	}
 
 	bool Painter::ready() {
 		// Wait until the previous frame is actually shown.
-		return currentRepaint == repaintCounter;
+		return atomicRead(currentRepaint) == atomicRead(repaintCounter);
 	}
 
 	bool Painter::doRepaintI(bool waitForVSync, bool fromWindow) {
@@ -229,8 +268,9 @@ namespace gui {
 
 		bool more = false;
 
+		// Prevent the UI thread from calling 'swapBuffers' while we're rendering!
+		Lock::L z(lock);
 		GlSurface *surface = target.surface();
-		os::Lock::L z(surface->lock);
 
 		// Clear the surface with the background color.
 		cairo_set_source_rgba(target.target(), bgColor.r, bgColor.g, bgColor.b, bgColor.a);
@@ -253,7 +293,7 @@ namespace gui {
 
 		// TODO: Handle VSync?
 		// Show the result if we're in continuous mode.
-		if (!fromWindow)
+		if (!fromWindow && attachedTo != Window::invalid)
 			app->repaint(attachedTo);
 
 		return more;
@@ -262,7 +302,6 @@ namespace gui {
 	void Painter::beforeRepaint(RepaintParams *p) {
 		if (!target.any()) {
 			// We can create the actual context now that we know we have a window to draw to.
-			RenderMgr *mgr = renderMgr(engine());
 			target = mgr->create(p->widget, p->target);
 
 			if (graphics)
@@ -270,23 +309,19 @@ namespace gui {
 		}
 	}
 
-	void Painter::afterRepaint(RepaintParams *p) {
-		// Show the frame. We need to do this in sync with the Gtk+ thread, otherwise we will cause havoc!
-		if (GlSurface *surface = target.surface()) {
-			// os::Lock::L z(surface->lock);
-			// surface->swapBuffers();
+	void Painter::afterRepaint() {}
 
-			if (continuous) {
-				RenderMgr *mgr = renderMgr(engine());
-				mgr->painterReady();
-			}
-		}
-	}
+	void Painter::uiAfterRepaint() {
+		Lock::L z(lock);
 
-	void Painter::afterRepaintUi() {
+		currentRepaint = repaintCounter;
+
 		if (GlSurface *surface = target.surface()) {
-			os::Lock::L z(surface->lock);
 			surface->swapBuffers();
+
+			// We're ready for the next frame now!
+			if (continuous)
+				mgr->painterReady();
 		}
 	}
 

@@ -96,7 +96,7 @@ namespace gui {
 #ifdef GUI_GTK
 		// Called when we received an EXPOSE event, but before Gtk+ is informed about the
 		// event. Return 'true' to inhibit the Gtk+ behaviour completely.
-		bool preExpose();
+		bool preExpose(GtkWidget *widget);
 
 #endif
 
@@ -215,13 +215,6 @@ namespace gui {
 		// Prepare for a painter/prepare for no painter. Not called when we swap painter.
 		void attachPainter();
 		void detachPainter();
-
-		// Notify our painter of our new HWND.
-		void notifyAttachPainter();
-		void notifyDetachPainter();
-
-		// Tell our painter we've been resized.
-		void notifyPainter(Size s);
 
 		// Destroy a handle.
 		void destroyWindow(Handle handle);

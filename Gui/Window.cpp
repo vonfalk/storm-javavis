@@ -71,7 +71,9 @@ namespace gui {
 	void Window::handle(Handle handle) {
 		App *a = app(engine());
 		if (myHandle != invalid) {
-			notifyDetachPainter();
+			if (myPainter)
+				myPainter->uiDetach();
+
 			if (myParent == null) {
 				// We're a frame (or orphaned).
 				destroyWindow(myHandle);
@@ -93,7 +95,8 @@ namespace gui {
 		myHandle = handle;
 		if (myHandle != invalid) {
 			a->addWindow(this);
-			notifyAttachPainter();
+			if (myPainter)
+				myPainter->uiAttach(this);
 		}
 	}
 
@@ -117,8 +120,9 @@ namespace gui {
 		// Nothing here, override when needed.
 	}
 
-	void Window::painter(Painter *p) {
-		notifyDetachPainter();
+	void Window::painter(MAYBE(Painter *) p) {
+		if (myPainter)
+			myPainter->uiDetach();
 
 		Painter *old = myPainter;
 		myPainter = p;
@@ -131,41 +135,12 @@ namespace gui {
 				attachPainter();
 		}
 
-		if (created())
-			notifyAttachPainter();
+		if (created() && myPainter)
+			myPainter->uiAttach(this);
 	}
 
 	MAYBE(Painter *) Window::painter() {
 		return myPainter;
-	}
-
-	void Window::notifyAttachPainter() {
-		if (myPainter) {
-			Engine &e = engine();
-			os::Future<void> result;
-			Window *me = this;
-			os::FnCall<void, 2> params = os::fnCall().add(myPainter).add(me);
-			os::UThread::spawn(address(&Painter::attach), true, params, result, &Render::thread(e)->thread());
-			result.result();
-		}
-	}
-
-	void Window::notifyDetachPainter() {
-		if (myPainter) {
-			Engine &e = engine();
-			os::Future<void> result;
-			os::FnCall<void, 2> params = os::fnCall().add(myPainter);
-			os::UThread::spawn(address(&Painter::detach), true, params, result, &Render::thread(e)->thread());
-			result.result();
-		}
-	}
-
-	void Window::notifyPainter(Size s) {
-		if (myPainter) {
-			Engine &e = engine();
-			os::FnCall<void, 2> params = os::fnCall().add(myPainter).add(s);
-			os::UThread::spawn(address(&Painter::resize), true, params, &Render::thread(e)->thread());
-		}
 	}
 
 	void Window::onTimer() {}
@@ -180,7 +155,8 @@ namespace gui {
 		switch (msg.msg) {
 		case WM_SIZE: {
 			Size s = pos().size();
-			notifyPainter(s);
+			if (myPainter)
+				myPainter->uiResize(s);
 			resized(s);
 			return msgResult(0);
 		}
@@ -367,13 +343,7 @@ namespace gui {
 
 	MsgResult Window::onPaint() {
 		if (myPainter) {
-			Engine &e = engine();
-			RepaintParams *param = null;
-			os::Future<void> result;
-			os::FnCall<void, 2> params = os::fnCall().add(myPainter).add(param);
-			os::UThread::spawn(address(&Painter::repaint), true, params, result, &Render::thread(e)->thread());
-
-			result.result();
+			myPainter->uiRepaint();
 			ValidateRect(handle(), NULL);
 
 			return msgResult(0);
@@ -451,22 +421,19 @@ namespace gui {
 		}
 
 		Size s(alloc->width, alloc->height);
-		notifyPainter(s);
+		if (myPainter)
+			myPainter->uiResize(s);
 		resized(s);
 	}
 
-	bool Window::preExpose() {
+	bool Window::preExpose(GtkWidget *widget) {
 		// Do we have a painter?
-		if (myPainter && gdkWindow) {
-			// Engine &e = engine();
-			// RepaintParams param = { gdkWindow, drawWidget() };
-			// RepaintParams *pParam = &param;
-			// os::Future<void> result;
-			// os::FnCall<void, 2> params = os::fnCall().add(myPainter).add(pParam);
-			// os::UThread::spawn(address(&Painter::repaintUi), true, params, result, &Render::thread(e)->thread());
+		if (myPainter && gdkWindow && widget == drawWidget()) {
+			// Does not seem to be needed right now, but this is where one can hook into paint
+			// events before Gtk+ gets hold of them!
 
-			// result.result();
-
+			// RepaintParams params = { gdkWindow, drawWidget() };
+			// myPainter->uiRepaint(&params);
 			// return true;
 		}
 
@@ -485,16 +452,8 @@ namespace gui {
 
 		// Do we have a painter?
 		if (myPainter) {
-			Engine &e = engine();
-			RepaintParams param = { gdkWindow, drawWidget() };
-			RepaintParams *pParam = &param;
-			os::Future<void> result;
-			os::FnCall<void, 2> params = os::fnCall().add(myPainter).add(pParam);
-			os::UThread::spawn(address(&Painter::repaintUi), true, params, result, &Render::thread(e)->thread());
-
-			result.result();
-			// myPainter->repaintUi(&param);
-			myPainter->afterRepaintUi();
+			RepaintParams params = { gdkWindow, drawWidget() };
+			myPainter->uiRepaint(&params);
 
 			return TRUE;
 		}
@@ -615,8 +574,13 @@ namespace gui {
 		gtk_widget_set_has_window(drawTo, TRUE);
 		gtk_widget_set_window(drawTo, gdkWindow);
 		gdk_window_set_user_data(gdkWindow, drawTo);
-		if (myPainter)
+		if (myPainter) {
 			gtk_widget_set_double_buffered(drawTo, FALSE);
+
+			// Draw initial contents.
+			RepaintParams params = { gdkWindow, drawTo };
+			myPainter->uiRepaint(&params);
+		}
 	}
 
 	void Window::onUnrealize() {
@@ -627,7 +591,8 @@ namespace gui {
 		// gtk_widget_set_window(drawTo, NULL);
 		gtk_widget_set_has_window(drawTo, FALSE);
 
-		notifyDetachPainter();
+		if (myPainter)
+			myPainter->uiDetach();
 		gdkWindow = null;
 	}
 

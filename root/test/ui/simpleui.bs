@@ -1,0 +1,39 @@
+use ui;
+use core:geometry;
+use core:io;
+
+class SimpleUi extends Frame {
+	Label lbl;
+	Edit edit;
+	Button bn;
+
+	init() {
+		init("Simple Window") {
+			lbl("Input text:");
+			edit("text");
+			bn("OK");
+		}
+
+		size(Size(200, 200));
+		lbl.pos(Rect(10, 10, 190, 30));
+		edit.pos(Rect(10, 30, 190, 50));
+		bn.pos(Rect(10, 100, 190, 190));
+
+		bn.onClick = &this.onOk(Button);
+		add(lbl);
+		add(edit);
+		add(bn);
+		create();
+	}
+
+	void onOk(Button b) {
+		print("You entered: " # edit.text);
+		edit.text("");
+	}
+}
+
+
+void simpleUi() {
+	SimpleUi win;
+	win.waitForClose;
+}

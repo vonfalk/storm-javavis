@@ -4,6 +4,7 @@
 #include "Graphics.h"
 #include "RenderMgr.h"
 #include "Core/WeakSet.h"
+#include "Core/Lock.h"
 
 namespace gui {
 	class App;
@@ -41,32 +42,9 @@ namespace gui {
 		// Background color. Updated on next redraw.
 		Color bgColor;
 
-		/**
-		 * The following API is intended to be private to the C++ code.
-		 */
-
-		// Attach to a specific window.
-		void CODECALL attach(Window *to);
-
-		// Detach from the previous window.
-		void CODECALL detach();
-
-		// Called when the attached window has been resized.
-		void CODECALL resize(Size to);
-
-		// Called when the attached window wants to be repainted. The parameter passed is
-		// OS-specific data.
-		void CODECALL repaintUi(RepaintParams *params);
-
-		// Called on the Ui thread after repaintUi completed.
-		void afterRepaintUi();
-
 		// Add a resource. Resources are invalidated whenever we have to re-create the render target.
 		void addResource(RenderResource *resource);
 		void removeResource(RenderResource *resource);
-
-		// Ready to render?
-		bool ready();
 
 #ifdef GUI_WIN32
 		// Get our render target.
@@ -75,6 +53,27 @@ namespace gui {
 #ifdef GUI_GTK
 		inline GlSurface *surface() { return target.surface(); }
 #endif
+
+		/**
+		 * The following functions (the ones starting with 'uiXxx') are intended to be called
+		 * directly from Window on the Ui thread (not the Render thread). This is for two
+		 * reasons. Firstly, convenience inside the Window class. But more importantly, it is since
+		 * some backends require to do some work on the Ui thread to synchronize drawing.
+		 */
+
+		// Attach to a window.
+		void uiAttach(Window *to);
+
+		// Detach from the currently attached window.
+		void uiDetach();
+
+		// Called when the attached window has been resized.
+		void uiResize(Size size);
+
+		// Called when the attached window wants to be repainted. The parameter passed contains
+		// OS-specific data.
+		void uiRepaint(RepaintParams *params);
+
 	private:
 		friend class RenderMgr;
 
@@ -90,8 +89,14 @@ namespace gui {
 		// App object.
 		App *app;
 
+		// Render manager.
+		RenderMgr *mgr;
+
 		// Resources.
 		WeakSet<RenderResource> *resources;
+
+		// Lock used to synchronize buffer swaps on Gtk+.
+		Lock *lock;
 
 		// Registered for continuous repaints in RenderMgr?  If true, then calls to 'repaint' will
 		// not do anything, instead we rely on RenderMgr to repaint us every frame.
@@ -99,6 +104,12 @@ namespace gui {
 
 		// Are we currently rendering?
 		Bool rendering;
+
+		// Ready to render? Called by the render manager to determine if the painter is ready to
+		// render when it is in continuous mode. Some implementations may need to wait for some
+		// event even when they are in continuous mode. If a painter ever returns false from
+		// ready(), it needs to call 'RenderMgr::painterReady' when it becomes ready again.
+		bool ready();
 
 		// Create any resources connected to the current device.
 		void create();
@@ -115,9 +126,25 @@ namespace gui {
 		// Last repaint shown on the screen. Used to determine if we are ready to draw the next frame.
 		volatile Nat currentRepaint;
 
+		// Attach to a specific window.
+		void attach(Window *to);
+
+		// Detach from the previous window.
+		void detach();
+
+		// Called when the attached window has been resized.
+		void resize(Size to);
+
+		// Called when the attached window wants to be repainted. The parameter passed is
+		// OS-specific data.
+		void repaintI(RepaintParams *params);
+
 		// Called before and after the actual work inside 'repaint' is done. Used for platform specific calls.
 		void beforeRepaint(RepaintParams *handle);
-		void afterRepaint(RepaintParams *handle);
+		void afterRepaint();
+
+		// Called from the UI thread.
+		void uiAfterRepaint();
 
 		// Wait for a new frame to be rendered (used during continuous updates).
 		void waitForFrame();

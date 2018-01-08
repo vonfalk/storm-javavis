@@ -4,18 +4,21 @@
 #Basic UI test.
 #Main -a -r ../root/ -f test.ui.simple
 #Main -a -r ../root/ -f test.ui.main
+#Main -a -r ../root/ -f test.ui.simpleUi
 #Main -a -r ../root/ -f test.ui.multiline
 #Main -a -r ../root/ -f test.ui.dialog
 #Main -a -r ../root/ -f test.ui.overlay
-#Main -a -r ../root/ -f test.ui.images
-#Main -a -r ../root/ -f test.ui-simple.simple
+Main -a -r ../root/ -f test.ui.images
+
+#UI while running intensive memory allocations in the background.
+#Main -a -r ../root/ -f test.ui.mem
 
 #Memory intensive UI test.
 #Main -a -r ../root/ -f test.ui-simple.simpleMem
 
 #Main -a -r ../root/ -f test.d.testFactorial
 #Main -a -r ../root/ -f test.asm.testInlineLabel
-Main -a -r ../root/ -f test.sound.play
+#Main -a -r ../root/ -f test.sound.play
 #Main -a -r ../root/ -f sound.testMe
 
 
