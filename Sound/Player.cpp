@@ -39,10 +39,16 @@ namespace sound {
 		if (channels > 2)
 			WARNING(L"More than two channels may not produce expected results.");
 
-		initBuffer();
+		AudioMgr *mgr = audioMgr(engine());
+		// Do not try to start playback if audio initialization failed.
+		if (mgr->device()) {
+			initBuffer();
 
-		audioMgr(engine())->addPlayer(this);
-		fill();
+			audioMgr(engine())->addPlayer(this);
+			fill();
+		} else {
+			TODO(L"Implement a reasonable fallback for timings.");
+		}
 	}
 
 	Player::~Player() {

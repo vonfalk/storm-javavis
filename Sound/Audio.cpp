@@ -9,7 +9,13 @@ namespace sound {
 
 	AudioMgr::AudioMgr() : wait(null), soundDevice() {
 		players = new (this) WeakSet<Player>();
-		init();
+
+		try {
+			init();
+		} catch (const Exception &e) {
+			std::wcout << e.what() << endl;
+			soundDevice = SoundDevice();
+		}
 
 		// We need to initialize the MP3 backend.
 		mpg123_init();
