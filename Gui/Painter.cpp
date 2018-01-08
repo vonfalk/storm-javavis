@@ -279,6 +279,7 @@ namespace gui {
 
 		// Set the default operator again.
 		cairo_set_operator(target.target(), CAIRO_OPERATOR_OVER);
+		cairo_set_fill_rule(target.target(), CAIRO_FILL_RULE_EVEN_ODD);
 
 		try {
 			graphics->beforeRender();
