@@ -16,6 +16,28 @@
 #define GUI_GTK
 #endif
 
+/**
+ * For Gtk+, there are a few possible implementations of the rendering. They differ both in how
+ * OpenGL interacts with the drawing in Gtk+.
+ *
+ * GTK_RENDER_SINGLE_GL - use one thread for OpenGL and Ui. Use OpenGL for updates, bypassing Gtk+.
+ * GTK_RENDER_SINGLE_GL_COPY - use one thread for OpenGL and Ui. Copy the GL contents to cairo.
+ *
+ * TODO: Add multithreaded rendering somehow...
+ */
+#ifdef GUI_GTK
+
+// #define GTK_RENDER_SINGLE_GL // Has issues with black backgrounds.
+#define GTK_RENDER_SINGLE_GL_COPY
+
+#if defined(GTK_RENDER_SINGLE_GL) || defined(GTK_RENDER_SINGLE_GL_COPY)
+// Defined if both the Ui and Render thread are the same thread.
+#define SINGLE_THREADED_UI
+#endif
+
+#endif
+
+
 // Allow inclusion from C as well.
 #ifdef __cplusplus
 

@@ -432,7 +432,7 @@ namespace gui {
 			// Does not seem to be needed right now, but this is where one can hook into paint
 			// events before Gtk+ gets hold of them!
 
-			// RepaintParams params = { gdkWindow, drawWidget() };
+			// RepaintParams params = { gdkWindow, drawWidget(), NULL };
 			// myPainter->uiRepaint(&params);
 			// return true;
 		}
@@ -452,7 +452,7 @@ namespace gui {
 
 		// Do we have a painter?
 		if (myPainter) {
-			RepaintParams params = { gdkWindow, drawWidget() };
+			RepaintParams params = { gdkWindow, drawWidget(), ctx };
 			myPainter->uiRepaint(&params);
 
 			return TRUE;
@@ -576,10 +576,6 @@ namespace gui {
 		gdk_window_set_user_data(gdkWindow, drawTo);
 		if (myPainter) {
 			gtk_widget_set_double_buffered(drawTo, FALSE);
-
-			// Draw initial contents.
-			RepaintParams params = { gdkWindow, drawTo };
-			myPainter->uiRepaint(&params);
 		}
 	}
 

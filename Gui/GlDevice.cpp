@@ -9,15 +9,15 @@ namespace gui {
 	Device::Device(Engine &e) {
 		context = GlContext::create(e);
 
-		pangoSurface = cairo_gl_surface_create(context->device, CAIRO_CONTENT_COLOR_ALPHA, 1, 1);
-		pangoTarget = cairo_create(pangoSurface);
+		pangoSurface = context->createSurface(Size(1, 1));
+		pangoTarget = cairo_create(pangoSurface->cairo);
 		pangoContext = pango_cairo_create_context(pangoTarget);
 	}
 
 	Device::~Device() {
 		g_object_unref(pangoContext);
 		cairo_destroy(pangoTarget);
-		cairo_surface_destroy(pangoSurface);
+		delete pangoSurface;
 
 		delete context;
 	}
@@ -46,7 +46,11 @@ namespace gui {
 
 		info.size = Size(gtk_widget_get_allocated_width(widget),
 						gtk_widget_get_allocated_height(widget));
+#ifdef GTK_RENDER_SINGLE_GL_COPY
+		info.surface(context->createSurface(info.size));
+#else
 		info.surface(context->createSurface(window, info.size));
+#endif
 		info.target(cairo_create(info.surface()->cairo));
 
 		return info;
@@ -178,6 +182,10 @@ namespace gui {
 		return cairo_egl_device_create(display, context);
 	}
 
+	GlSurface *EglContext::createSurface(Size size) {
+		return new GlSurface(cairo_gl_surface_create(device, CAIRO_CONTENT_COLOR, size.w, size.h));
+	}
+
 	GlSurface *EglContext::createSurface(GdkWindow *gWindow, Size size) {
 		EGLNativeWindowType window = GDK_WINDOW_XID(gWindow);
 
@@ -292,6 +300,10 @@ namespace gui {
 
 	cairo_device_t *GlxContext::createDevice() {
 		return cairo_glx_device_create(display, context);
+	}
+
+	GlSurface *GlxContext::createSurface(Size size) {
+		return new GlSurface(cairo_gl_surface_create(device, CAIRO_CONTENT_COLOR, size.w, size.h));
 	}
 
 	GlSurface *GlxContext::createSurface(GdkWindow *gWindow, Size size) {

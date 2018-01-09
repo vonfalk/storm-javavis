@@ -11,7 +11,6 @@ namespace gui {
 		bgColor = app->defaultBgColor;
 		mgr = gui::renderMgr(engine());
 		resources = new (this) WeakSet<RenderResource>();
-		lock = new (this) Lock();
 	}
 
 	Painter::~Painter() {
@@ -54,7 +53,6 @@ namespace gui {
 
 			// destroyResources();
 
-			Lock::L z(lock);
 			mgr->resize(target, sz);
 			if (graphics)
 				graphics->updateTarget(target);
@@ -97,40 +95,27 @@ namespace gui {
 	}
 
 	void Painter::repaint() {
+		// TODO: FIXME! Does not currently work for single-threaded usage.
 		if (!target.any())
 			return;
 
 		if (continuous) {
 			waitForFrame();
 		} else {
-			doRepaint(false, false);
+			doRepaint(false);
 		}
 
 		afterRepaint();
 	}
 
-	void Painter::repaintI(RepaintParams *params) {
-		beforeRepaint(params);
-
-		if (!ready()) {
-			// There is a frame ready right now! No need to wait even if we're not in continuous mode!
-		} else if (continuous) {
-			waitForFrame();
-		} else {
-			doRepaint(false, true);
-		}
-
-		afterRepaint();
-	}
-
-	void Painter::doRepaint(bool waitForVSync, bool fromWindow) {
+	void Painter::doRepaint(bool waitForVSync) {
 		if (!target.any())
 			return;
 
 		bool more = false;
 		try {
 			rendering = true;
-			more = doRepaintI(waitForVSync, fromWindow);
+			more = doRepaintI(waitForVSync);
 			rendering = false;
 		} catch (...) {
 			repaintCounter++;
@@ -146,6 +131,50 @@ namespace gui {
 				mgr->painterReady();
 			}
 		}
+	}
+
+#ifdef SINGLE_THREADED_UI
+
+	void Painter::repaintI(RepaintParams *params) {
+		beforeRepaint(params);
+
+		// Nothing is done in parallell: just draw the frame right now!
+		doRepaint(false);
+
+		afterRepaint();
+	}
+
+	void Painter::uiAttach(Window *to) {
+		attach(to);
+	}
+
+	void Painter::uiDetach() {
+		detach();
+	}
+
+	void Painter::uiResize(Size size) {
+		resize(size);
+	}
+
+	void Painter::uiRepaint(RepaintParams *par) {
+		repaintI(par);
+		uiAfterRepaint(par);
+	}
+
+#else
+
+	void Painter::repaintI(RepaintParams *params) {
+		beforeRepaint(params);
+
+		if (!ready()) {
+			// There is a frame ready right now! No need to wait even if we're not in continuous mode!
+		} else if (continuous) {
+			waitForFrame();
+		} else {
+			doRepaint(false, true);
+		}
+
+		afterRepaint();
 	}
 
 	void Painter::uiAttach(Window *to) {
@@ -182,7 +211,12 @@ namespace gui {
 		uiAfterRepaint();
 	}
 
+#endif
 #ifdef GUI_WIN32
+
+#ifdef SINGLE_THREADED_UI
+#error "Single threaded UI is not supported on Win32! Please disable SINGLE_THREADED_UI in stdafx.h."
+#endif
 
 	bool Painter::ready() {
 		// Always ready to draw!
@@ -197,7 +231,7 @@ namespace gui {
 			os::UThread::leave();
 	}
 
-	void Painter::doRepaintI(bool waitForVSync, bool fromWindow) {
+	void Painter::doRepaintI(bool waitForVSync) {
 		if (!target.target())
 			return false;
 		if (!target.swapChain())
@@ -250,9 +284,12 @@ namespace gui {
 #endif
 #ifdef GUI_GTK
 
+#ifndef SINGLE_THREADED_UI
+#error "Multithreading with Gtk+ is not yet supported."
+#endif
+
 	void Painter::waitForFrame() {
-		// Just wait until we're not drawing at the moment. Note: We could just fall through since
-		// we have a lock protecting the rendering.
+		// Just wait until we're not drawing at the moment.
 		while (rendering)
 			os::UThread::leave();
 	}
@@ -262,22 +299,21 @@ namespace gui {
 		return atomicRead(currentRepaint) == atomicRead(repaintCounter);
 	}
 
-	bool Painter::doRepaintI(bool waitForVSync, bool fromWindow) {
+	bool Painter::doRepaintI(bool waitForVSync) {
 		if (!target.any())
 			return continuous;
 
 		bool more = false;
 
-		// Prevent the UI thread from calling 'swapBuffers' while we're rendering!
-		Lock::L z(lock);
 		GlSurface *surface = target.surface();
+		cairo_surface_mark_dirty(surface->cairo);
 
 		// Clear the surface with the background color.
 		cairo_set_source_rgba(target.target(), bgColor.r, bgColor.g, bgColor.b, bgColor.a);
 		cairo_set_operator(target.target(), CAIRO_OPERATOR_SOURCE);
 		cairo_paint(target.target());
 
-		// Set the default operator again.
+		// Set the the defaults once again, just in case.
 		cairo_set_operator(target.target(), CAIRO_OPERATOR_OVER);
 		cairo_set_fill_rule(target.target(), CAIRO_FILL_RULE_EVEN_ODD);
 
@@ -293,10 +329,6 @@ namespace gui {
 		cairo_surface_flush(surface->cairo);
 
 		// TODO: Handle VSync?
-		// Show the result if we're in continuous mode.
-		if (!fromWindow && attachedTo != Window::invalid)
-			app->repaint(attachedTo);
-
 		return more;
 	}
 
@@ -312,17 +344,23 @@ namespace gui {
 
 	void Painter::afterRepaint() {}
 
-	void Painter::uiAfterRepaint() {
-		Lock::L z(lock);
-
+	void Painter::uiAfterRepaint(RepaintParams *params) {
 		currentRepaint = repaintCounter;
 
 		if (GlSurface *surface = target.surface()) {
+#ifdef GTK_RENDER_SINGLE_GL_COPY
+			cairo_set_source_surface(params->ctx, surface->cairo, 0, 0);
+			cairo_paint(params->ctx);
+#else
 			surface->swapBuffers();
+#endif
 
 			// We're ready for the next frame now!
-			if (continuous)
+			if (continuous) {
 				mgr->painterReady();
+				if (GdkWindow *window = gtk_widget_get_window(attachedTo.widget()))
+					gdk_window_invalidate_rect(window, NULL, true);
+			}
 		}
 	}
 

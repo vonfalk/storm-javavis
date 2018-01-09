@@ -4,7 +4,6 @@
 #include "Graphics.h"
 #include "RenderMgr.h"
 #include "Core/WeakSet.h"
-#include "Core/Lock.h"
 
 namespace gui {
 	class App;
@@ -17,6 +16,7 @@ namespace gui {
 #ifdef GUI_GTK
 		GdkWindow *target;
 		GtkWidget *widget;
+		cairo_t *ctx;
 #endif
 	};
 
@@ -95,9 +95,6 @@ namespace gui {
 		// Resources.
 		WeakSet<RenderResource> *resources;
 
-		// Lock used to synchronize buffer swaps on Gtk+.
-		Lock *lock;
-
 		// Registered for continuous repaints in RenderMgr?  If true, then calls to 'repaint' will
 		// not do anything, instead we rely on RenderMgr to repaint us every frame.
 		Bool continuous;
@@ -144,16 +141,16 @@ namespace gui {
 		void afterRepaint();
 
 		// Called from the UI thread.
-		void uiAfterRepaint();
+		void uiAfterRepaint(RepaintParams *handle);
 
 		// Wait for a new frame to be rendered (used during continuous updates).
 		void waitForFrame();
 
 		// Do repaints (always).
-		void doRepaint(bool waitForVSync, bool fromWindow);
+		void doRepaint(bool waitForVSync);
 
 		// Do the platform specific of the repaint cycle.
-		bool doRepaintI(bool waitForVSync, bool fromWindow);
+		bool doRepaintI(bool waitForVSync);
 	};
 
 }

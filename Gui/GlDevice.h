@@ -35,7 +35,7 @@ namespace gui {
 		GlContext *context;
 
 		// Dummy context for text rendering.
-		cairo_surface_t *pangoSurface;
+		GlSurface *pangoSurface;
 		cairo_t *pangoTarget;
 		PangoContext *pangoContext;
 	};
@@ -52,7 +52,7 @@ namespace gui {
 		// Destroy.
 		virtual ~GlSurface();
 
-		// Current cairo surface (offscreen).
+		// Current cairo surface.
 		cairo_surface_t *cairo;
 
 		// Swap buffers.
@@ -76,6 +76,9 @@ namespace gui {
 
 		// Cairo device for the current context.
 		cairo_device_t *device;
+
+		// Create an off-screen surface.
+		virtual GlSurface *createSurface(Size size) = 0;
 
 		// Create a surface for a window using this context.
 		virtual GlSurface *createSurface(GdkWindow *window, Size size) = 0;
@@ -102,6 +105,9 @@ namespace gui {
 
 		// Create an EGL device, returns null on failure.
 		static EglContext *create(Display *display);
+
+		// Create an offscreen surface.
+		virtual GlSurface *createSurface(Size size);
 
 		// Create a surface.
 		virtual GlSurface *createSurface(GdkWindow *window, Size size);
@@ -147,6 +153,9 @@ namespace gui {
 
 		// Create a GLX device, returns null on failure.
 		static GlxContext *create(Display *display);
+
+		// Create an offscreen surface.
+		virtual GlSurface *createSurface(Size size);
 
 		// Create a surface.
 		virtual GlSurface *createSurface(GdkWindow *window, Size size);

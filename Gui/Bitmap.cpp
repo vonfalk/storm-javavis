@@ -51,8 +51,7 @@ namespace gui {
 		Nat h = src->height();
 
 		GlSurface *surface = owner->surface();
-		cairo_surface_t *texture = cairo_gl_surface_create(cairo_surface_get_device(surface->cairo),
-														CAIRO_CONTENT_COLOR_ALPHA, w, h);
+		cairo_surface_t *texture = cairo_surface_create_similar(surface->cairo, CAIRO_CONTENT_COLOR_ALPHA, w, h);
 		cairo_surface_t *image = cairo_surface_map_to_image(texture, NULL);
 
 		byte *src = this->src->buffer();
