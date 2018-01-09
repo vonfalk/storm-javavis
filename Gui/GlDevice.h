@@ -46,7 +46,7 @@ namespace gui {
 	 */
 	class GlSurface : NoCopy {
 	public:
-		// Create.
+		// Create. If 'offscreen' is true, we can not use cairo_gl_surface_set_size.
 		GlSurface(cairo_surface_t *surface);
 
 		// Destroy.
@@ -56,10 +56,30 @@ namespace gui {
 		cairo_surface_t *cairo;
 
 		// Swap buffers.
-		void swapBuffers();
+		virtual void swapBuffers();
 
-		// Resize the surface.
-		void resize(Size s);
+		// Resize the surface. Might alter 'cairo'.
+		virtual void resize(Size s);
+	};
+
+
+	/**
+	 * Represents an offscreen surface.
+	 */
+	class GlOffscreenSurface : public GlSurface {
+	public:
+		// Create.
+		GlOffscreenSurface(GlContext *owner, Size size);
+
+		// Swap buffers (no-op here).
+		virtual void swapBuffers();
+
+		// Resize.
+		virtual void resize(Size s);
+
+	private:
+		// Owner.
+		GlContext *owner;
 	};
 
 
@@ -78,7 +98,7 @@ namespace gui {
 		cairo_device_t *device;
 
 		// Create an off-screen surface.
-		virtual GlSurface *createSurface(Size size) = 0;
+		virtual GlSurface *createSurface(Size size);
 
 		// Create a surface for a window using this context.
 		virtual GlSurface *createSurface(GdkWindow *window, Size size) = 0;
@@ -105,9 +125,6 @@ namespace gui {
 
 		// Create an EGL device, returns null on failure.
 		static EglContext *create(Display *display);
-
-		// Create an offscreen surface.
-		virtual GlSurface *createSurface(Size size);
 
 		// Create a surface.
 		virtual GlSurface *createSurface(GdkWindow *window, Size size);
@@ -153,9 +170,6 @@ namespace gui {
 
 		// Create a GLX device, returns null on failure.
 		static GlxContext *create(Display *display);
-
-		// Create an offscreen surface.
-		virtual GlSurface *createSurface(Size size);
 
 		// Create a surface.
 		virtual GlSurface *createSurface(GdkWindow *window, Size size);

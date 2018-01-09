@@ -37,8 +37,15 @@ namespace gui {
 	void Device::resize(RenderInfo &info, Size size) {
 		info.size = size;
 
-		// Note: We do not need to destroy and re-create the cairo context. It works anyway!
+		cairo_t *oldTarget = info.target();
+		cairo_surface_t *oldSurface = info.surface()->cairo;
+
 		info.surface()->resize(size);
+
+		if (oldSurface != info.surface()->cairo) {
+			cairo_destroy(oldTarget);
+			info.target(cairo_create(info.surface()->cairo));
+		}
 	}
 
 	RenderInfo Device::create(GtkWidget *widget, GdkWindow *window) {
@@ -74,6 +81,17 @@ namespace gui {
 
 	void GlSurface::resize(Size s) {
 		cairo_gl_surface_set_size(cairo, s.w, s.h);
+	}
+
+	GlOffscreenSurface::GlOffscreenSurface(GlContext *owner, Size s) :
+		GlSurface(cairo_gl_surface_create(owner->device, CAIRO_CONTENT_COLOR, s.w, s.h)),
+		owner(owner) {}
+
+	void GlOffscreenSurface::swapBuffers() {}
+
+	void GlOffscreenSurface::resize(Size s) {
+		cairo_surface_destroy(cairo);
+		cairo = cairo_gl_surface_create(owner->device, CAIRO_CONTENT_COLOR, s.w, s.h);
 	}
 
 	/**
@@ -114,6 +132,10 @@ namespace gui {
 		if (device)
 			cairo_device_destroy(device);
 		device = null;
+	}
+
+	GlSurface *GlContext::createSurface(Size size) {
+		return new GlOffscreenSurface(this, size);
 	}
 
 
@@ -180,10 +202,6 @@ namespace gui {
 
 	cairo_device_t *EglContext::createDevice() {
 		return cairo_egl_device_create(display, context);
-	}
-
-	GlSurface *EglContext::createSurface(Size size) {
-		return new GlSurface(cairo_gl_surface_create(device, CAIRO_CONTENT_COLOR, size.w, size.h));
 	}
 
 	GlSurface *EglContext::createSurface(GdkWindow *gWindow, Size size) {
@@ -300,10 +318,6 @@ namespace gui {
 
 	cairo_device_t *GlxContext::createDevice() {
 		return cairo_glx_device_create(display, context);
-	}
-
-	GlSurface *GlxContext::createSurface(Size size) {
-		return new GlSurface(cairo_gl_surface_create(device, CAIRO_CONTENT_COLOR, size.w, size.h));
 	}
 
 	GlSurface *GlxContext::createSurface(GdkWindow *gWindow, Size size) {
