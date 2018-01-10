@@ -118,8 +118,8 @@ The following messages can be sent from the text editor to the language server:
 
 The following messages can be sent from the language server to the text editor:
 
-* `(supported type result)`: Sent as a reply to `(supported type)`. Indicates wither the previously
-  queried file extension *type* is supported. *result* is either `t` or `nil`, indicating
+* `(supported type result)`: Sent as a reply to `(supported type)`. Indicates whether the previously
+  queried file extension *type* is supported or not. *result* is either `t` or `nil`, indicating
   *supported* and *not supported* respectively.
 * `(color id edit start colors...)`: Color a part of the file with identifier *id* as denoted by
   colors. The character indexes in this message refers the text as it was after edit number *edit*.
