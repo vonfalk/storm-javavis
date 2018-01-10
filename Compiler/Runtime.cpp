@@ -116,7 +116,7 @@ namespace storm {
 			return e.threadGroup;
 		}
 
-		os::Lock &threadLock(Engine &e) {
+		util::Lock &threadLock(Engine &e) {
 			return e.threadLock;
 		}
 

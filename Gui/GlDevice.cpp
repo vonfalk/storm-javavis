@@ -28,8 +28,13 @@ namespace gui {
 		info.size = Size(gtk_widget_get_allocated_width(window.widget()),
 						gtk_widget_get_allocated_height(window.widget()));
 
-		// We can not create an actual surface yet, since the widget in 'window' is not necessarily
-		// realized yet.
+#if GTK_RENDER_IS_CAIRO(GTK_MODE)
+		info.surface(context->createSurface(info.size));
+#else
+		info.surface(context->createDoubleSurface(info.size));
+#endif
+
+		info.target(cairo_create(info.surface()->cairo));
 
 		return info;
 	}
@@ -48,20 +53,14 @@ namespace gui {
 		}
 	}
 
-	RenderInfo Device::create(GtkWidget *widget, GdkWindow *window) {
-		RenderInfo info;
-
-		info.size = Size(gtk_widget_get_allocated_width(widget),
-						gtk_widget_get_allocated_height(widget));
-#ifdef GTK_RENDER_SINGLE_GL_COPY
-		info.surface(context->createSurface(info.size));
-#else
-		info.surface(context->createSurface(window, info.size));
-#endif
-		info.target(cairo_create(info.surface()->cairo));
-
-		return info;
-	}
+	// Create a surface that renders to an actual window.
+	// RenderInfo Device::create(GtkWidget *widget, GdkWindow *window) {
+	// 	RenderInfo info;
+	// 	info.size = Size(gtk_widget_get_allocated_width(widget),
+	// 					gtk_widget_get_allocated_height(widget));
+	// 	info.surface(context->createSurface(window, info.size));
+	// 	return info;
+	// }
 
 
 	/**
@@ -75,6 +74,8 @@ namespace gui {
 			cairo_surface_destroy(cairo);
 	}
 
+	void GlSurface::attach(GdkWindow *to) {}
+
 	void GlSurface::swapBuffers() {
 		cairo_gl_surface_swapbuffers(cairo);
 	}
@@ -82,6 +83,11 @@ namespace gui {
 	void GlSurface::resize(Size s) {
 		cairo_gl_surface_set_size(cairo, s.w, s.h);
 	}
+
+
+	/**
+	 * Offscreen surface.
+	 */
 
 	GlOffscreenSurface::GlOffscreenSurface(GlContext *owner, Size s) :
 		GlSurface(cairo_gl_surface_create(owner->device, CAIRO_CONTENT_COLOR, s.w, s.h)),
@@ -92,6 +98,45 @@ namespace gui {
 	void GlOffscreenSurface::resize(Size s) {
 		cairo_surface_destroy(cairo);
 		cairo = cairo_gl_surface_create(owner->device, CAIRO_CONTENT_COLOR, s.w, s.h);
+	}
+
+
+	/**
+	 * Double surface.
+	 */
+
+	GlDoubleSurface::GlDoubleSurface(GlContext *owner, Size s) :
+		GlOffscreenSurface(owner, s),
+		screenSurface(null),
+		screen(null) {}
+
+	GlDoubleSurface::~GlDoubleSurface() {
+		if (screen)
+			cairo_destroy(screen);
+		delete screenSurface;
+	}
+
+	void GlDoubleSurface::attach(GdkWindow *to) {
+		if (screen)
+			return;
+
+		Size size(gdk_window_get_width(to), gdk_window_get_height(to));
+		screenSurface = owner->createSurface(to, size);
+		screen = cairo_create(screenSurface->cairo);
+	}
+
+	void GlDoubleSurface::swapBuffers() {
+		cairo_surface_flush(cairo);
+
+		cairo_set_source_surface(screen, cairo, 0, 0);
+		cairo_paint(screen);
+		screenSurface->swapBuffers();
+	}
+
+	void GlDoubleSurface::resize(Size s) {
+		GlOffscreenSurface::resize(s);
+		if (screenSurface)
+			screenSurface->resize(s);
 	}
 
 	/**
@@ -110,6 +155,10 @@ namespace gui {
 		// Note: We should support Wayland as well.
 		Display *display = GDK_DISPLAY_XDISPLAY(app->defaultDisplay());
 
+#if GTK_RENDER_IS_SW(GTK_MODE)
+		return new GlSoftwareContext();
+#endif
+
 		// It seems GLX is faster in practice. It is also more stable using X11 forwarding. Might be
 		// required for Wayland support, though. EGL works fine when running locally, so it is a
 		// good fallback.
@@ -120,10 +169,12 @@ namespace gui {
 			throw GuiError(L"Failed to initialize OpenGL");
 
 		result->device = result->createDevice();
-		if (cairo_device_status(result->device) != CAIRO_STATUS_SUCCESS)
-			throw GuiError(L"Failed to initialize Cario. Cairo requires at least OpenGL 2.0 or OpenGL ES 2.0.");
+		if (result->device) {
+			if (cairo_device_status(result->device) != CAIRO_STATUS_SUCCESS)
+				throw GuiError(L"Failed to initialize Cario. Cairo requires at least OpenGL 2.0 or OpenGL ES 2.0.");
 
-		cairo_gl_device_set_thread_aware(result->device, TRUE);
+			cairo_gl_device_set_thread_aware(result->device, TRUE);
+		}
 
 		return result;
 	}
@@ -136,6 +187,45 @@ namespace gui {
 
 	GlSurface *GlContext::createSurface(Size size) {
 		return new GlOffscreenSurface(this, size);
+	}
+
+	GlSurface *GlContext::createDoubleSurface(Size size) {
+		return new GlDoubleSurface(this, size);
+	}
+
+
+	/**
+	 * Software.
+	 */
+
+	GlSoftwareContext::GlSoftwareContext() {}
+
+	GlSurface *GlSoftwareContext::createSurface(Size size) {
+		return new SwSurface(size);
+	}
+
+	GlSurface *GlSoftwareContext::createDoubleSurface(Size size) {
+		assert(false, L"Not supported!");
+		return null;
+	}
+
+	GlSurface *GlSoftwareContext::createSurface(GdkWindow *window, Size size) {
+		assert(false, L"Not supported!");
+		return null;
+	}
+
+	cairo_device_t *GlSoftwareContext::createDevice() {
+		return null;
+	}
+
+	GlSoftwareContext::SwSurface::SwSurface(Size size) :
+		GlSurface(cairo_image_surface_create(CAIRO_FORMAT_ARGB32, size.w, size.h)) {}
+
+	void GlSoftwareContext::SwSurface::swapBuffers() {}
+
+	void GlSoftwareContext::SwSurface::resize(Size s) {
+		cairo_surface_destroy(cairo);
+		cairo = cairo_image_surface_create(CAIRO_FORMAT_ARGB32, s.w, s.h);
 	}
 
 

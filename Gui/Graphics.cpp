@@ -471,6 +471,7 @@ namespace gui {
 		Size size = rect.size();
 		cairo_scale(to.target(), size.w / 2, size.h / 2);
 
+		cairo_new_path(to.target());
 		cairo_arc(to.target(), 0, 0, 1, 0, 2*M_PI);
 
 		cairo_restore(to.target());

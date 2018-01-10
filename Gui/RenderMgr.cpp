@@ -44,7 +44,7 @@ namespace gui {
 	void RenderMgr::terminate() {
 		exiting = true;
 
-#ifndef SINGLE_THREADED_UI
+#ifdef UI_MULTITHREAD
 		waitEvent->set();
 		exitSema->down();
 #endif
@@ -95,7 +95,7 @@ namespace gui {
 				// Note: It seems from the documentation for 'IDXGISwapChain::Present' that it schedules a buffer
 				// swap but does not block until the next call to 'Present'. If so, we do not have to worry.
 				try {
-					toRedraw->at(i)->doRepaint(true);
+					toRedraw->at(i)->doRepaint(true, false);
 				} catch (const Exception &e) {
 					PLN(L"Error while rendering:\n" << e);
 				} catch (...) {
@@ -124,14 +124,15 @@ namespace gui {
 	}
 
 
-#ifdef SINGLE_THREADED_UI
+#ifdef UI_SINGLETHREAD
 
 	os::Thread spawnRenderThread(Engine &e) {
 		// We use the Ui thread here, since we do not want true multithreaded rendering for some reason.
 		return Ui::thread(e)->thread();
 	}
 
-#else
+#endif
+#ifdef UI_MULTITHREAD
 
 	os::Thread spawnRenderThread(Engine &e) {
 		// Ugly hack...
@@ -145,14 +146,6 @@ namespace gui {
 
 		util::Fn<void, void> fn((Wrap *)&e, &Wrap::attach);
 		return os::Thread::spawn(fn, runtime::threadGroup(e));
-	}
-
-#endif
-
-#ifdef GUI_GTK
-
-	RenderInfo RenderMgr::create(GtkWidget *widget, GdkWindow *window) {
-		return device->create(widget, window);
 	}
 
 #endif

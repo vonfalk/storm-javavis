@@ -24,9 +24,6 @@ namespace gui {
 		// Resize the target of a painter.
 		void resize(RenderInfo &info, Size size);
 
-		// Create the context for a window (stage 2 of creation).
-		RenderInfo create(GtkWidget *widget, GdkWindow *window);
-
 		// Get a pango context for text rendering.
 		inline PangoContext *pango() const { return pangoContext; }
 
@@ -55,6 +52,9 @@ namespace gui {
 		// Current cairo surface.
 		cairo_surface_t *cairo;
 
+		// Attach to a specific window (if required).
+		virtual void attach(GdkWindow *to);
+
 		// Swap buffers.
 		virtual void swapBuffers();
 
@@ -77,9 +77,38 @@ namespace gui {
 		// Resize.
 		virtual void resize(Size s);
 
-	private:
+	protected:
 		// Owner.
 		GlContext *owner;
+	};
+
+
+	/**
+	 * Represents an offscreen surface where 'swapBuffers' copies the contents to the screen.
+	 */
+	class GlDoubleSurface : public GlOffscreenSurface {
+	public:
+		// Create.
+		GlDoubleSurface(GlContext *owner, Size size);
+
+		// Destroy.
+		~GlDoubleSurface();
+
+		// Attach to a window.
+		virtual void attach(GdkWindow *to);
+
+		// Swap buffers.
+		virtual void swapBuffers();
+
+		// Resize.
+		virtual void resize(Size s);
+
+	private:
+		// Surface for the onscreen buffer.
+		GlSurface *screenSurface;
+
+		// Cairo surface for the onscreen buffer.
+		cairo_t *screen;
 	};
 
 
@@ -100,6 +129,9 @@ namespace gui {
 		// Create an off-screen surface.
 		virtual GlSurface *createSurface(Size size);
 
+		// Create an off-screen double surface.
+		virtual GlSurface *createDoubleSurface(Size size);
+
 		// Create a surface for a window using this context.
 		virtual GlSurface *createSurface(GdkWindow *window, Size size) = 0;
 
@@ -113,6 +145,41 @@ namespace gui {
 		// Destroy the current device. Called by subclasses to destroy the cairo_device before any
 		// GL context is destroyed.
 		void destroyDevice();
+	};
+
+	/**
+	 * Surface for software rendering. Not really a GlContext...
+	 */
+	class GlSoftwareContext : public GlContext {
+	public:
+		// Create.
+		GlSoftwareContext();
+
+		// Create an off-screen surface.
+		virtual GlSurface *createSurface(Size size);
+
+		// Create an off-screen double surface.
+		virtual GlSurface *createDoubleSurface(Size size);
+
+		// Create a surface for a window.
+		virtual GlSurface *createSurface(GdkWindow *window, Size size);
+
+	protected:
+		// Create device.
+		virtual cairo_device_t *createDevice();
+
+	private:
+		class SwSurface : public GlSurface {
+		public:
+			// Create.
+			SwSurface(Size size);
+
+			// Swap buffers (no-op here).
+			virtual void swapBuffers();
+
+			// Resize.
+			virtual void resize(Size s);
+		};
 	};
 
 	/**

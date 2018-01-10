@@ -51,9 +51,6 @@ namespace gui {
 #ifdef GUI_GTK
 		// Get a pango context.
 		inline PangoContext *pango() { return device->pango(); }
-
-		// Create a context to draw to.
-		RenderInfo create(GtkWidget *widget, GdkWindow *target);
 #endif
 	private:
 		friend RenderMgr *renderMgr(EnginePtr e);

@@ -161,7 +161,7 @@ namespace storm {
 			return (*fwd.threadGroup)(e);
 		}
 
-		os::Lock &threadLock(Engine &e) {
+		util::Lock &threadLock(Engine &e) {
 			return (*fwd.threadLock)(e);
 		}
 

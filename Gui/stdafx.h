@@ -8,35 +8,58 @@
  * Supported:
  * GUI_WIN32 - Win32 (native)
  * GUI_GTK   - Gtk+3.0
+ *
+ * Depending on the platform, one of the following flags will also be set:
+ * UI_MULTITHREAD
+ * UI_SINGLETHREAD
  */
 
 #ifdef WINDOWS
 #define GUI_WIN32
+#define UI_MULTITHREAD
 #else
 #define GUI_GTK
 #endif
+
+#ifdef GUI_GTK
+#include "GtkMode.h"
 
 /**
  * For Gtk+, there are a few possible implementations of the rendering. They differ both in how
  * OpenGL interacts with the drawing in Gtk+.
  *
- * GTK_RENDER_SINGLE_GL - use one thread for OpenGL and Ui. Use OpenGL for updates, bypassing Gtk+.
- * GTK_RENDER_SINGLE_GL_COPY - use one thread for OpenGL and Ui. Copy the GL contents to cairo.
+ * GTK_ST_HW - single-threaded, hardware acceleration
+ * GTK_ST_HW_CAIRO - single-threaded, hardware acceleration, copy to Cairo
+ * GTK_MT_HW - multi-threaded, hardware acceleration
+ * GTK_MT_HW_CAIRO - multi-threaded, hardware acceleration, copy to Cairo
+ * GTK_ST_SW - single-threaded, software rendering
+ * GTK_MT_SW - multi-threaded, software rendering
  *
- * TODO: Add multithreaded rendering somehow...
+ * Note: Client applications will notice when we are not multi threading rendering.
  */
-#ifdef GUI_GTK
+#define GTK_ST_HW (0)
+#define GTK_ST_HW_CAIRO (GTK_RENDER_CAIRO)
+#define GTK_MT_HW (GTK_RENDER_MT)
+#define GTK_MT_HW_CAIRO (GTK_RENDER_MT | GTK_RENDER_CAIRO)
+#define GTK_ST_SW (GTK_RENDER_SW | GTK_RENDER_CAIRO)
+#define GTK_MT_SW (GTK_RENDER_SW | GTK_RENDER_CAIRO | GTK_RENDER_MT)
 
-// #define GTK_RENDER_SINGLE_GL // Has issues with black backgrounds.
-#define GTK_RENDER_SINGLE_GL_COPY
+// The selected mode. Pick one of the above.
+#define GTK_MODE GTK_ST_SW
 
-#if defined(GTK_RENDER_SINGLE_GL) || defined(GTK_RENDER_SINGLE_GL_COPY)
-// Defined if both the Ui and Render thread are the same thread.
-#define SINGLE_THREADED_UI
+
+#if GTK_RENDER_IS_MT(GTK_MODE)
+#define UI_MULTITHREAD
+#else
+#define UI_SINGLETHREAD
 #endif
 
 #endif
 
+
+#if defined(UI_MULTITHREAD) == defined(UI_SINGLETHREAD)
+#error "Pick either single- or multithreaded Ui!"
+#endif
 
 // Allow inclusion from C as well.
 #ifdef __cplusplus

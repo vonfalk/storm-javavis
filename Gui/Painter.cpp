@@ -5,12 +5,13 @@
 
 namespace gui {
 
-	Painter::Painter() : continuous(false), rendering(false), repaintCounter(0), currentRepaint(0) {
+	Painter::Painter() : continuous(false), repaintCounter(0), currentRepaint(0) {
 		attachedTo = Window::invalid;
 		app = gui::app(engine());
 		bgColor = app->defaultBgColor;
 		mgr = gui::renderMgr(engine());
 		resources = new (this) WeakSet<RenderResource>();
+		lock = new (this) Lock();
 	}
 
 	Painter::~Painter() {
@@ -44,8 +45,7 @@ namespace gui {
 	void Painter::resize(Size sz) {
 		if (target.any()) {
 			// Do not attempt to resize the drawing surface if we're currently drawing to it.
-			while (rendering)
-				os::UThread::leave();
+			Lock::L z(lock);
 
 			// This seems to not be neccessary. Probably because the resources are actually
 			// associated to the underlying D3D device, and not the RenderTarget.
@@ -66,8 +66,7 @@ namespace gui {
 
 	void Painter::destroy() {
 		// Wait until we're not rendering anymore.
-		while (rendering)
-			os::UThread::leave();
+		Lock::L z(lock);
 
 		// Go ahead and destroy all resources associated with this painter.
 		destroyResources();
@@ -95,31 +94,28 @@ namespace gui {
 	}
 
 	void Painter::repaint() {
-		// TODO: FIXME! Does not currently work for single-threaded usage.
 		if (!target.any())
 			return;
 
 		if (continuous) {
 			waitForFrame();
 		} else {
-			doRepaint(false);
+			doRepaint(false, false);
 		}
 
 		afterRepaint();
 	}
 
-	void Painter::doRepaint(bool waitForVSync) {
+	void Painter::doRepaint(bool waitForVSync, bool fromDraw) {
 		if (!target.any())
 			return;
 
 		bool more = false;
 		try {
-			rendering = true;
-			more = doRepaintI(waitForVSync);
-			rendering = false;
+			Lock::L z(lock);
+			more = doRepaintI(waitForVSync, fromDraw);
 		} catch (...) {
 			repaintCounter++;
-			rendering = false;
 			throw;
 		}
 
@@ -133,13 +129,13 @@ namespace gui {
 		}
 	}
 
-#ifdef SINGLE_THREADED_UI
+#ifdef UI_SINGLETHREAD
 
 	void Painter::repaintI(RepaintParams *params) {
 		beforeRepaint(params);
 
 		// Nothing is done in parallell: just draw the frame right now!
-		doRepaint(false);
+		doRepaint(false, false);
 
 		afterRepaint();
 	}
@@ -161,7 +157,8 @@ namespace gui {
 		uiAfterRepaint(par);
 	}
 
-#else
+#endif
+#ifdef UI_MULTITHREAD
 
 	void Painter::repaintI(RepaintParams *params) {
 		beforeRepaint(params);
@@ -208,7 +205,7 @@ namespace gui {
 		os::UThread::spawn(address(&Painter::repaintI), true, params, result, &thread->thread());
 		result.result();
 
-		uiAfterRepaint();
+		uiAfterRepaint(par);
 	}
 
 #endif
@@ -231,7 +228,7 @@ namespace gui {
 			os::UThread::leave();
 	}
 
-	void Painter::doRepaintI(bool waitForVSync) {
+	void Painter::doRepaintI(bool waitForVSync, bool fromDraw) {
 		if (!target.target())
 			return false;
 		if (!target.swapChain())
@@ -284,14 +281,9 @@ namespace gui {
 #endif
 #ifdef GUI_GTK
 
-#ifndef SINGLE_THREADED_UI
-#error "Multithreading with Gtk+ is not yet supported."
-#endif
-
 	void Painter::waitForFrame() {
 		// Just wait until we're not drawing at the moment.
-		while (rendering)
-			os::UThread::leave();
+		Lock::L z(lock);
 	}
 
 	bool Painter::ready() {
@@ -299,11 +291,12 @@ namespace gui {
 		return atomicRead(currentRepaint) == atomicRead(repaintCounter);
 	}
 
-	bool Painter::doRepaintI(bool waitForVSync) {
+	bool Painter::doRepaintI(bool waitForVSync, bool fromDraw) {
 		if (!target.any())
 			return continuous;
 
 		bool more = false;
+		Lock::L z(lock);
 
 		GlSurface *surface = target.surface();
 		cairo_surface_mark_dirty(surface->cairo);
@@ -328,29 +321,37 @@ namespace gui {
 
 		cairo_surface_flush(surface->cairo);
 
+		// Tell Gtk+ we're ready to draw, unless a call to 'draw' is already queued.
+		if (!fromDraw) {
+#ifdef UI_MULTITHREAD
+			app->repaint(attachedTo.widget());
+#else
+			if (GdkWindow *window = gtk_widget_get_window(attachedTo.widget()))
+				gdk_window_invalidate_rect(window, NULL, true);
+#endif
+		}
+
 		// TODO: Handle VSync?
 		return more;
 	}
 
-	void Painter::beforeRepaint(RepaintParams *p) {
-		if (!target.any()) {
-			// We can create the actual context now that we know we have a window to draw to.
-			target = mgr->create(p->widget, p->target);
-
-			if (graphics)
-				graphics->updateTarget(target);
-		}
-	}
+	void Painter::beforeRepaint(RepaintParams *p) {}
 
 	void Painter::afterRepaint() {}
 
 	void Painter::uiAfterRepaint(RepaintParams *params) {
+		Lock::L z(lock);
 		currentRepaint = repaintCounter;
 
 		if (GlSurface *surface = target.surface()) {
-#ifdef GTK_RENDER_SINGLE_GL_COPY
+			surface->attach(params->target);
+
+#if GTK_RENDER_IS_CAIRO(GTK_MODE)
 			cairo_set_source_surface(params->ctx, surface->cairo, 0, 0);
 			cairo_paint(params->ctx);
+
+			// Make sure Cairo does not use our surface outside the lock!
+			cairo_surface_flush(cairo_get_group_target(params->ctx));
 #else
 			surface->swapBuffers();
 #endif
@@ -358,8 +359,10 @@ namespace gui {
 			// We're ready for the next frame now!
 			if (continuous) {
 				mgr->painterReady();
+#ifdef UI_SINGLETHREAD
 				if (GdkWindow *window = gtk_widget_get_window(attachedTo.widget()))
 					gdk_window_invalidate_rect(window, NULL, true);
+#endif
 			}
 		}
 	}

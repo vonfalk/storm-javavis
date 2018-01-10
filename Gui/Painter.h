@@ -4,6 +4,7 @@
 #include "Graphics.h"
 #include "RenderMgr.h"
 #include "Core/WeakSet.h"
+#include "Core/Lock.h"
 
 namespace gui {
 	class App;
@@ -92,15 +93,15 @@ namespace gui {
 		// Render manager.
 		RenderMgr *mgr;
 
+		// Lock for the target surface.
+		Lock *lock;
+
 		// Resources.
 		WeakSet<RenderResource> *resources;
 
 		// Registered for continuous repaints in RenderMgr?  If true, then calls to 'repaint' will
 		// not do anything, instead we rely on RenderMgr to repaint us every frame.
 		Bool continuous;
-
-		// Are we currently rendering?
-		Bool rendering;
 
 		// Ready to render? Called by the render manager to determine if the painter is ready to
 		// render when it is in continuous mode. Some implementations may need to wait for some
@@ -147,10 +148,10 @@ namespace gui {
 		void waitForFrame();
 
 		// Do repaints (always).
-		void doRepaint(bool waitForVSync);
+		void doRepaint(bool waitForVSync, bool fromDraw);
 
 		// Do the platform specific of the repaint cycle.
-		bool doRepaintI(bool waitForVSync);
+		bool doRepaintI(bool waitForVSync, bool fromDraw);
 	};
 
 }

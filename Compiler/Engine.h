@@ -97,7 +97,8 @@ namespace storm {
 		os::ThreadGroup threadGroup;
 
 		// The lock that is used to synchronize thread creation in storm::Thread::thread().
-		os::Lock threadLock;
+		// A regular util::Lock is used since it needs to be recursive when threads are reused.
+		util::Lock threadLock;
 
 		/**
 		 * Packages.
