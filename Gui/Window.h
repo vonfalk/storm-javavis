@@ -11,6 +11,7 @@ namespace gui {
 	class Container;
 	class Frame;
 	class Painter;
+	class Timer;
 
 	// Modifiers for the create function.
 	enum CreateFlags {
@@ -207,10 +208,13 @@ namespace gui {
 		// In Gtk+, widgets are usually not rendered in separate windows. When we're using OpenGL
 		// rendering, we need separate windows for the widget being drawn to, and any child
 		// widgets. This variable represents the created window.
-		GdkWindow *gdkWindow;
+		UNKNOWN(PTR_NOGC) GdkWindow *gdkWindow;
 
 		// Timer timeout (nonzero = set).
 		Duration timerInterval;
+
+		// In Gtk+, we need to allocate a timer object separatly.
+		UNKNOWN(PTR_NOGC) Timer *gTimer;
 
 		// Prepare for a painter/prepare for no painter. Not called when we swap painter.
 		void attachPainter();

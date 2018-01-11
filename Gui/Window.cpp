@@ -17,7 +17,8 @@ namespace gui {
 
 	Window::Window() :
 		myHandle(invalid), myParent(null), myRoot(null),
-		myVisible(true), drawing(false), gdkWindow(null),
+		myVisible(true), drawing(false),
+		gdkWindow(null), gTimer(null),
 		myPos(0, 0, 40, 40) /* large enought to not generate warnings in Gtk+ */ {
 
 		myText = new (this) Str(L"");
@@ -333,7 +334,7 @@ namespace gui {
 			return false;
 		} else {
 			handle(z);
-			if (timerInterval.inMs() != 0) {
+			if (timerInterval != Duration()) {
 				setTimer(timerInterval);
 			}
 			SendMessage(handle(), WM_SETFONT, (WPARAM)myFont->handle(), TRUE);
@@ -366,6 +367,43 @@ namespace gui {
 #endif
 #ifdef GUI_GTK
 
+	class Timer {
+	public:
+		Timer(Duration interval, GtkWidget *widget, Engine &engine);
+		~Timer();
+
+	private:
+		GtkWidget *widget;
+		Engine *engine;
+		guint id;
+
+		static gboolean callback(gpointer user_data);
+	};
+
+	Timer::Timer(Duration interval, GtkWidget *widget, Engine &engine) :
+		widget(widget), engine(&engine),
+		id(g_timeout_add(interval.inMs(), &callback, this)) {}
+
+	Timer::~Timer() {
+		if (id) {
+			GSource *s = g_main_context_find_source_by_id(NULL, id);
+			g_source_destroy(s);
+
+			id = 0;
+		}
+	}
+
+	gboolean Timer::callback(gpointer user_data) {
+		Timer *me = (Timer *)user_data;
+		App *app = gui::app(*me->engine);
+
+		Window *win = app->findWindow(Handle(me->widget));
+		win->onTimer();
+
+		return G_SOURCE_CONTINUE;
+	}
+
+
 	bool Window::create(Container *parent, nat id) {
 		initWidget(parent, empty_new());
 		return true;
@@ -395,10 +433,15 @@ namespace gui {
 		Signal<void, Window>::Connect<&Window::onRealize>::to(drawWidget(), "realize", engine());
 		Signal<void, Window>::Connect<&Window::onUnrealize>::to(drawWidget(), "unrealize", engine());
 		Signal<gboolean, Window, cairo_t *>::Connect<&Window::onDraw>::to(drawWidget(), "draw", engine());
+
+		if (timerInterval != Duration())
+			setTimer(timerInterval);
 	}
 
 	void Window::destroyWindow(Handle handle) {
 		gtk_widget_destroy(handle.widget());
+		if (gTimer)
+			delete gTimer;
 	}
 
 	gboolean Window::onKeyUp(GdkEvent *event) {
@@ -685,11 +728,21 @@ namespace gui {
 
 	void Window::setTimer(Duration interval) {
 		timerInterval = interval;
-		TODO(L"Implement timers!");
+		if (created()) {
+			delete gTimer;
+			gTimer = null;
+
+			if (interval == Duration())
+				return;
+
+			gTimer = new Timer(interval, handle().widget(), engine());
+		}
 	}
 
 	void Window::clearTimer() {
-		TODO(L"Implement timers!");
+		if (gTimer)
+			delete gTimer;
+		gTimer = null;
 	}
 
 #endif
