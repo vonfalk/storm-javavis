@@ -746,7 +746,8 @@ namespace storm {
 		assert(headerSize == OFFSET_OF(MpsObj, count), L"Invalid header size.");
 		assert(vtableOffset >= sizeof(void *), L"Invalid vtable offset (initialization failed?)");
 
-		mps_lib_assert_fail_install(&mps_assert_fail);
+		// Note: This is defined in Gc/mps.c, and only aids in debugging.
+		mps_init();
 
 		MPS_ARGS_BEGIN(args) {
 			MPS_ARGS_ADD(args, MPS_KEY_ARENA_SIZE, arenaSize);

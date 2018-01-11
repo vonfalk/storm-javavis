@@ -37,6 +37,10 @@ extern "C" {
 	// Custom assertion failure handler. Calls 'DebugBreak' to aid when debugging.
 	void mps_assert_fail(const char *file, unsigned line, const char *condition);
 
+	// Setup some global state for the MPS. This is not strictly required, but it makes debugging a
+	// lot easier.
+	void mps_init();
+
 }
 #endif
 

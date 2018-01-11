@@ -1,4 +1,6 @@
 #include "stdafx.h"
+#include "Utils/Mode.h"
+#include "Utils/Platform.h"
 #include "mps.h"
 
 #ifdef STORM_GC_MPS
@@ -34,10 +36,43 @@ void mps_assert_fail(const char *file, unsigned line, const char *condition) {
 			file, line, condition);
 	fflush(stderr);
 	mps_telemetry_flush();
-#if defined(DEBUG) && defined(WINDOWS)
+#ifdef DEBUG
+#ifdef WINDOWS
 	DebugBreak();
+#else
+	raise(SIGINT);
+#endif
 #endif
 	abort();
+}
+
+#ifdef POSIX
+void mps_on_sigsegv(int signal) {
+	(void)signal;
+	// Raise SIGINT instead. See the comment below for details.
+	raise(SIGINT);
+}
+#endif
+
+void mps_init() {
+	// Custom assertions.
+	mps_lib_assert_fail_install(&mps_assert_fail);
+
+#ifdef DEBUG
+
+#ifdef POSIX
+	// Set up a handler for SIGSEGV that raises a SIGINT instead. This makes debugging in GDB a lot
+	// easier, since it is not possible to distinguish between a genuine SIGSEGV and a SIGSEGV that
+	// MPS handles otherwise.
+	struct sigaction sa;
+	sa.sa_handler = &mps_on_sigsegv;
+	sigemptyset(&sa.sa_mask);
+	sa.sa_flags = SA_RESTART;
+
+	sigaction(SIGSEGV, &sa, NULL);
+#endif
+
+#endif
 }
 
 #endif
