@@ -134,8 +134,9 @@ namespace gui {
 	void Painter::repaintI(RepaintParams *params) {
 		beforeRepaint(params);
 
-		// Nothing is done in parallell: just draw the frame right now!
-		doRepaint(false, false);
+		// Do we need to render the frame now, or did we already render something before?
+		if (ready())
+			doRepaint(false, true);
 
 		afterRepaint();
 	}
