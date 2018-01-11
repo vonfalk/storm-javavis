@@ -57,6 +57,10 @@ namespace gui {
 		}
 	}
 
+	Bool Frame::cursorVisible() {
+		return showCursor;
+	}
+
 	void Frame::fullscreen(Bool v) {
 		if (created() && full != v) {
 			if (v) {
@@ -73,16 +77,7 @@ namespace gui {
 		return full;
 	}
 
-	void Frame::cursorVisible(Bool v) {
-		// Will be altered soon anyway, we do not need to do anything here.
-		showCursor = v;
-	}
-
-	Bool Frame::cursorVisible() {
-		return showCursor;
-	}
-
-	#ifdef GUI_WIN32
+#ifdef GUI_WIN32
 
 	// Convert a client size to the actual window size.
 	static Size clientToWindow(Size s, DWORD windowStyles, DWORD windowExStyles) {
@@ -166,15 +161,23 @@ namespace gui {
 		return Container::onMessage(msg);
 	}
 
-#endif
-
-#ifdef GUI_GTK
-	static void goFull(Handle wnd, Long &oldStyle, Rect &oldPos) {
-		TODO(L"Fixme!");
+	void Frame::cursorVisible(Bool v) {
+		// Will be altered soon anyway, we do not need to do anything here.
+		showCursor = v;
 	}
 
-	static void goBack(Handle wnd, Long &oldStyle, Rect &oldPos) {
-		TODO(L"Fixme!");
+#endif
+#ifdef GUI_GTK
+
+	static void goFull(Handle wnd, Long &, Rect &) {
+		GdkWindow *window = gtk_widget_get_window(wnd.widget());
+		gdk_window_set_fullscreen_mode(window, GDK_FULLSCREEN_ON_CURRENT_MONITOR);
+		gdk_window_fullscreen(window);
+	}
+
+	static void goBack(Handle wnd, Long &, Rect &) {
+		GdkWindow *window = gtk_widget_get_window(wnd.widget());
+		gdk_window_unfullscreen(window);
 	}
 
 	bool Frame::createWindow(bool sizeable) {
@@ -203,6 +206,10 @@ namespace gui {
 			gtk_widget_show(frame);
 		}
 
+		// Update cursor visibility.
+		// cursorVisible(showCursor);
+		cursorVisible(false);
+
 		if (full) {
 			goFull(handle(), windowedStyle, windowedRect);
 		}
@@ -224,6 +231,23 @@ namespace gui {
 
 	GtkWidget *Frame::drawWidget() {
 		return gtk_bin_get_child(GTK_BIN(handle().widget()));
+	}
+
+	void Frame::cursorVisible(Bool v) {
+		showCursor = v;
+		if (created()) {
+			GtkWidget *widget = handle().widget();
+			GdkCursor *cursor = null;
+			if (showCursor)
+				cursor = gdk_cursor_new_from_name(gtk_widget_get_display(widget), "default");
+			else
+				cursor = gdk_cursor_new_for_display(gtk_widget_get_display(widget), GDK_BLANK_CURSOR);
+
+			GdkWindow *window = gtk_widget_get_window(widget);
+
+			gdk_window_set_cursor(window, cursor);
+			g_object_unref((GObject *)cursor);
+		}
 	}
 
 #endif
