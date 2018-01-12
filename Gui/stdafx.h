@@ -45,7 +45,7 @@
 #define GTK_MT_SW (GTK_RENDER_SW | GTK_RENDER_CAIRO | GTK_RENDER_MT)
 
 // The selected mode. Pick one of the above.
-#define GTK_MODE GTK_ST_SW
+#define GTK_MODE GTK_MT_SW
 
 
 #if GTK_RENDER_IS_MT(GTK_MODE)

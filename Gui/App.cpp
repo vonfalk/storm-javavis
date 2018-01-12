@@ -391,21 +391,6 @@ namespace gui {
 		appWait->repaint(window);
 	}
 
-	AppWait::RepaintRequest::RepaintRequest(Handle handle) :
-		handle(handle), wait(0), next(null) {}
-
-	void AppWait::repaint(Handle window) {
-		RepaintRequest r(window);
-		{
-			util::Lock::L z(repaintLock);
-			r.next = repaintList;
-			repaintList = &r;
-		}
-
-		signal();
-		r.wait.down();
-	}
-
 	void AppWait::platformInit() {
 		done = false;
 		dispatchReady = false;
@@ -644,16 +629,7 @@ namespace gui {
 		atomicWrite(signalSent, 0);
 
 		// Handle any repaint requests.
-		{
-			util::Lock::L z(repaintLock);
-			while (repaintList) {
-				GdkWindow *window = gtk_widget_get_window(repaintList->handle.widget());
-				if (window)
-					gdk_window_invalidate_rect(window, NULL, true);
-				repaintList->wait.up();
-				repaintList = repaintList->next;
-			}
-		}
+		handleRepaints();
 	}
 
 	bool AppWait::wait(os::IOHandle &io) {
@@ -690,6 +666,8 @@ namespace gui {
 	}
 
 	void AppWait::work() {
+		handleRepaints();
+
 		// Don't try to dispatch anything unless we called wait earlier.
 		if (!dispatchReady)
 			return;
@@ -716,6 +694,36 @@ namespace gui {
 		done = true;
 		signal();
 	}
+
+	AppWait::RepaintRequest::RepaintRequest(Handle handle) :
+		handle(handle), wait(0), next(null) {}
+
+	void AppWait::repaint(Handle window) {
+		RepaintRequest r(window);
+		{
+			util::Lock::L z(repaintLock);
+			r.next = repaintList;
+			repaintList = &r;
+		}
+
+		signal();
+		r.wait.down();
+	}
+
+	void AppWait::handleRepaints() {
+		util::Lock::L z(repaintLock);
+		while (repaintList) {
+			RepaintRequest *now = repaintList;
+			repaintList = repaintList->next;
+
+			GdkWindow *window = gtk_widget_get_window(now->handle.widget());
+			if (window)
+				gdk_window_invalidate_rect(window, NULL, true);
+			now->wait.up();
+		}
+	}
+
+
 
 #endif
 

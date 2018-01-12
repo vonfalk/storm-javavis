@@ -245,6 +245,9 @@ namespace gui {
 		// Poll descriptors used by the system calls.
 		vector<struct pollfd> pollFd;
 
+		// Handle all repaint requests.
+		void handleRepaints();
+
 		// Wait for a callback of some sort.
 		void doWait(os::IOHandle &io, int timeout);
 
