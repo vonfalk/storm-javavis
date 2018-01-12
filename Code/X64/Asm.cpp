@@ -256,7 +256,7 @@ namespace code {
 		}
 
 		bool singleInt(Word value) {
-			const Long limit = Long(1) << Long(32);
+			const Long limit = Long(1) << Long(31);
 			Long v(value);
 			return v >= -limit && v < limit;
 		}

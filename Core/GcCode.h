@@ -33,10 +33,10 @@ namespace storm {
 
 			// A relative non-gc pointer to somewhere. This is updated as the object moves, but is
 			// never scanned.
-			relative = 0x31,
+			relative = 0x30,
 
 			// An absolute pointer to somewhere within this code section. This is updated whenever
-			// the object moves, but is never scanned as it does not point to the start.
+			// the object moves, but is never scanned as it does not point to the start of an object.
 			inside = 0x40,
 
 			// A relative (4-byte) pointer to one of the 'pointer' variables in the GcCodeRef
