@@ -387,7 +387,8 @@ namespace gui {
 	Timer::~Timer() {
 		if (id) {
 			GSource *s = g_main_context_find_source_by_id(NULL, id);
-			g_source_destroy(s);
+			if (s)
+				g_source_destroy(s);
 
 			id = 0;
 		}
@@ -440,8 +441,10 @@ namespace gui {
 
 	void Window::destroyWindow(Handle handle) {
 		gtk_widget_destroy(handle.widget());
-		if (gTimer)
+		if (gTimer) {
 			delete gTimer;
+			gTimer = null;
+		}
 	}
 
 	gboolean Window::onKeyUp(GdkEvent *event) {
