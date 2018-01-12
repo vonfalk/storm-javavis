@@ -2,6 +2,7 @@
 #include "Image.h"
 #include "ImageLoad.h"
 #include "BmpLoad.h"
+#include "PPMLoad.h"
 
 namespace graphics {
 
@@ -51,6 +52,9 @@ namespace graphics {
 		} else if (checkHeader(from, "BM", false)) {
 			// BMP file
 			loaded = loadBmp(from, error);
+		} else if (isPPM(from)) {
+			// PPM file.
+			loaded = loadPPM(from, error);
 		}
 
 		if (!loaded)

@@ -12,7 +12,8 @@ class ImageViewer extends Frame {
 		Str[] names = [
 			"ui_alpha.png", "ui_alpha.bmp", "ui_alpha-16.bmp", "ui_pattern.png",
 			"tree.jpg",
-			"tree-24.bmp", "tree-32.bmp", "tree-16-565.bmp", "tree-16-555.bmp", "tree-8.bmp", "tree-4.bmp", "tree-1.bmp"
+			"tree-24.bmp", "tree-32.bmp", "tree-16-565.bmp", "tree-16-555.bmp", "tree-8.bmp", "tree-4.bmp", "tree-1.bmp",
+			"flower-ascii.ppm", "flower-raw.ppm", "tree-1.pbm"
 		];
 		Float buttonHeight = 50;
 
@@ -83,7 +84,6 @@ class ImagePainter extends Painter {
 }
 
 void images() {
-	(resUrl / "ui_alpha.bmp").loadImage;
 	ImageViewer w;
 	w.waitForClose;
 }
