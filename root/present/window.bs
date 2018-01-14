@@ -55,9 +55,9 @@ class PresentWindow extends Frame {
 					paint.next;
 				}
 			} else if (id == Key:right) {
-				paint.next;
+				spawn paint.next;
 			} else if (id == Key:left) {
-				paint.prev;
+				spawn paint.prev;
 			} else if (id == Key:esc) {
 				close;
 			} else if (id == Key:r) {
