@@ -11,16 +11,11 @@
 Main -a -r ../root/ -f test.ui.images
 
 #UI while running intensive memory allocations in the background.
-#Main -a -r ../root/ -f test.ui.mem
+#Main -a -r ../root/ -f test.ui.simpleMem
 
-#Memory intensive UI test.
-#Main -a -r ../root/ -f test.ui-simple.simpleMem
-
-#Main -a -r ../root/ -f test.d.testFactorial
+#Other tests.
 #Main -a -r ../root/ -f test.asm.testInlineLabel
 #Main -a -r ../root/ -f test.sound.play
-#Main -a -r ../root/ -f sound.testMe
-
 
 #Presentation
 #Main -a -r ../root/ -i final ../External/final -f final.configura
