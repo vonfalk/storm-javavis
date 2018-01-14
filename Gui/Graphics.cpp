@@ -312,26 +312,6 @@ namespace gui {
 			;
 	}
 
-	// TextureContext *Graphics::layer() {
-	// 	TextureContext *r = null;
-	// 	if (layers->count() > 0) {
-	// 		r = layers->last().v;
-	// 		layers->pop();
-	// 		// Resize to fit the screen if necessary.
-	// 		r->resize(info.size);
-	// 	} else {
-	// 		r = new TextureContext(info.context(), info.size);
-	// 	}
-
-	// 	// Clear the layer.
-	// 	r->activate();
-	// 	glClearColor(0, 0, 0, 0);
-	// 	glClear(GL_COLOR_BUFFER_BIT);
-
-	// 	minFreeLayers = min(minFreeLayers, layers->count());
-	// 	return r;
-	// }
-
 	void Graphics::push() {
 		oldStates->push(state);
 		state.layer = LayerKind::none;

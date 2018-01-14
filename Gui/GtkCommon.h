@@ -59,7 +59,7 @@ namespace gui {
 	cairo_matrix_t cairo(Transform *tfm);
 
 	// Convert to/from Pango units.
-	inline int toPango(float val) { return int(val * PANGO_SCALE); }
+	inline int toPango(float val) { return int(ceilf(val * PANGO_SCALE)); }
 	inline float fromPango(int val) { return float(val) / float(PANGO_SCALE); }
 }
 
