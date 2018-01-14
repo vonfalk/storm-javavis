@@ -123,6 +123,13 @@ namespace gui {
 		return r;
 	}
 
+#ifdef GUI_GTK
+
+	RenderInfo RenderMgr::create(RepaintParams *p) {
+		return device->create(p);
+	}
+
+#endif
 
 #ifdef UI_SINGLETHREAD
 

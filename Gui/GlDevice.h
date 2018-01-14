@@ -6,6 +6,7 @@
 namespace gui {
 
 	class GlContext;
+	class RepaintParams;
 
 	/**
 	 * Implements the logic of creating and accessing a device in OpenGL on Linux.
@@ -18,11 +19,14 @@ namespace gui {
 		// Destroy.
 		~Device();
 
-		// Attach a painter.
+		// Attach a painter. If it returns a RenderInfo where 'any()' returns false, call 'create' later.
 		RenderInfo attach(Handle window);
 
 		// Resize the target of a painter.
 		void resize(RenderInfo &info, Size size);
+
+		// Create a painter the first time it is drawn.
+		RenderInfo create(RepaintParams *params);
 
 		// Get a pango context for text rendering.
 		inline PangoContext *pango() const { return pangoContext; }

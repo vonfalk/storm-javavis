@@ -51,6 +51,9 @@ namespace gui {
 #ifdef GUI_GTK
 		// Get a pango context.
 		inline PangoContext *pango() { return device->pango(); }
+
+		// Create the context the first time it is rendered, if needed.
+		RenderInfo create(RepaintParams *params);
 #endif
 	private:
 		friend RenderMgr *renderMgr(EnginePtr e);

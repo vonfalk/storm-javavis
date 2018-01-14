@@ -2,6 +2,7 @@
 #include "GlDevice.h"
 #include "Exception.h"
 #include "App.h"
+#include "Painter.h"
 
 #ifdef GUI_GTK
 namespace gui {
@@ -30,11 +31,14 @@ namespace gui {
 
 #if GTK_RENDER_IS_CAIRO(GTK_MODE)
 		info.surface(context->createSurface(info.size));
-#else
+#elif GTK_RENDER_IS_COPY(GTK_MODE)
 		info.surface(context->createDoubleSurface(info.size));
+#else
+		// In case of GTK_RENDER_SYNC or GTK_RENDER_SWAP, create the surface later.
 #endif
 
-		info.target(cairo_create(info.surface()->cairo));
+		if (info.surface())
+			info.target(cairo_create(info.surface()->cairo));
 
 		return info;
 	}
@@ -54,13 +58,14 @@ namespace gui {
 	}
 
 	// Create a surface that renders to an actual window.
-	// RenderInfo Device::create(GtkWidget *widget, GdkWindow *window) {
-	// 	RenderInfo info;
-	// 	info.size = Size(gtk_widget_get_allocated_width(widget),
-	// 					gtk_widget_get_allocated_height(widget));
-	// 	info.surface(context->createSurface(window, info.size));
-	// 	return info;
-	// }
+	RenderInfo Device::create(RepaintParams *params) {
+		RenderInfo info;
+		info.size = Size(gtk_widget_get_allocated_width(params->widget),
+						gtk_widget_get_allocated_height(params->widget));
+		info.surface(context->createSurface(params->target, info.size));
+		info.target(cairo_create(info.surface()->cairo));
+		return info;
+	}
 
 
 	/**

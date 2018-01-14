@@ -322,6 +322,10 @@ namespace gui {
 
 		cairo_surface_flush(surface->cairo);
 
+#if GTK_RENDER_IS_SWAP(GTK_MODE)
+		// No synchronization, just swap buffers when we're ready!
+		surface->swapBuffers();
+#else
 		// Tell Gtk+ we're ready to draw, unless a call to 'draw' is already queued.
 		if (!fromDraw) {
 #ifdef UI_MULTITHREAD
@@ -331,16 +335,31 @@ namespace gui {
 				gdk_window_invalidate_rect(window, NULL, true);
 #endif
 		}
+#endif
 
 		// TODO: Handle VSync?
 		return more;
 	}
 
-	void Painter::beforeRepaint(RepaintParams *p) {}
+	void Painter::beforeRepaint(RepaintParams *p) {
+		// Required when we're rendering directly to a window surface.
+		if (!target.any()) {
+			target = mgr->create(p);
+			if (graphics)
+				graphics->updateTarget(target);
+		}
+	}
 
-	void Painter::afterRepaint() {}
+	void Painter::afterRepaint() {
+#if GTK_RENDER_IS_SWAP(GTK_MODE)
+		currentRepaint = repaintCounter;
+#endif
+	}
 
 	void Painter::uiAfterRepaint(RepaintParams *params) {
+		// Nothing needs to be done in case we're running with GTK_RENDER_SWAP.
+#if !GTK_RENDER_IS_SWAP(GTK_MODE)
+
 		Lock::L z(lock);
 		currentRepaint = repaintCounter;
 
@@ -366,6 +385,8 @@ namespace gui {
 #endif
 			}
 		}
+
+#endif
 	}
 
 #endif
