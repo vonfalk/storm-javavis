@@ -125,17 +125,17 @@ namespace gui {
 		volatile Nat currentRepaint;
 
 		// Attach to a specific window.
-		void attach(Window *to);
+		void CODECALL attach(Window *to);
 
 		// Detach from the previous window.
-		void detach();
+		void CODECALL detach();
 
 		// Called when the attached window has been resized.
-		void resize(Size to);
+		void CODECALL resize(Size to);
 
 		// Called when the attached window wants to be repainted. The parameter passed is
 		// OS-specific data.
-		void repaintI(RepaintParams *params);
+		void CODECALL repaintI(RepaintParams *params);
 
 		// Called before and after the actual work inside 'repaint' is done. Used for platform specific calls.
 		void beforeRepaint(RepaintParams *handle);

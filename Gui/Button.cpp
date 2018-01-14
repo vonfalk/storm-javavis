@@ -1,5 +1,6 @@
 #include "stdafx.h"
 #include "Button.h"
+#include "Container.h"
 #include "GtkSignal.h"
 
 namespace gui {
@@ -35,7 +36,6 @@ namespace gui {
 	}
 
 #endif
-
 #ifdef GUI_GTK
 
 	bool Button::create(Container *parent, nat id) {

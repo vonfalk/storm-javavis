@@ -2,6 +2,8 @@
 #ifndef GUI_H
 #define GUI_H
 
+#include "Utils/Platform.h"
+
 /**
  * Determine which Gui toolkit to use based on the platform.
  *

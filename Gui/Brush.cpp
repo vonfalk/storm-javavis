@@ -27,7 +27,7 @@ namespace gui {
 		owner->renderTarget()->CreateSolidColorBrush(dx(color), (ID2D1SolidColorBrush **)out);
 	}
 
-	void SolidBrush::prepare(ID2D1Brush *b) {
+	void SolidBrush::prepare(const Rect &bound, ID2D1Brush *b) {
 		b->SetOpacity(opacity);
 	}
 

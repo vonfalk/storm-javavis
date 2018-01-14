@@ -167,7 +167,7 @@ namespace graphics {
 			Float maxval;
 			Bool multibyte;
 
-			Multi(Nat maxval) : maxval(maxval), multibyte(maxval > 255) {}
+			Multi(Nat maxval) : maxval(Float(maxval)), multibyte(maxval > 255) {}
 
 			Float next(State &src) const {
 				Nat result = src.next();
@@ -192,7 +192,7 @@ namespace graphics {
 				}
 
 				fill--;
-				return ~(data >> fill) & 0x1;
+				return Float(~(data >> fill) & 0x1);
 			}
 
 			void flush() {
@@ -205,7 +205,7 @@ namespace graphics {
 		struct Multi {
 			Float maxval;
 
-			Multi(Nat maxval) : maxval(maxval) {}
+			Multi(Nat maxval) : maxval(Float(maxval)) {}
 
 			Float next(State &src) const {
 				return Float(src.nextNum()) / maxval;
@@ -216,7 +216,7 @@ namespace graphics {
 
 		struct Mono {
 			Float next(State &src) const {
-				return src.nextNum();
+				return Float(src.nextNum());
 			}
 
 			void flush() const {}

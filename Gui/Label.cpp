@@ -1,5 +1,6 @@
 #include "stdafx.h"
 #include "Label.h"
+#include "Container.h"
 
 namespace gui {
 

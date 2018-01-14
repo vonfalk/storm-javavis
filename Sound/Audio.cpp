@@ -95,17 +95,19 @@ namespace sound {
 #ifdef SOUND_DX
 
 	void AudioMgr::init() {
+		IDirectSound8 *dsound = null;
 		if (FAILED(DirectSoundCreate8(NULL, &dsound, NULL))) {
 			throw SoundInitError();
 		} else {
 			// This is fine since we do not do anything that depends on focus:
 			// https://groups.google.com/forum/#!msg/microsoft.public.win32.programmer.directx.audio/a7QhlgNFBpg/w8lTd8_NRSEJ
 			dsound->SetCooperativeLevel(GetDesktopWindow(), DSSCL_PRIORITY);
+			soundDevice = dsound;
 		}
 	}
 
 	void AudioMgr::destroy() {
-		::release(dsound);
+		soundDevice.release();
 	}
 
 	void AudioMgr::activate() {}

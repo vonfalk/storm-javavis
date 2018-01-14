@@ -27,7 +27,7 @@ namespace gui {
 		inline IDXGISwapChain *swapChain() const {
 			return (IDXGISwapChain *)second;
 		}
-		inline void swapChain(IDGXISwapChain *to) {
+		inline void swapChain(IDXGISwapChain *to) {
 			second = to;
 		}
 		inline bool any() const {
@@ -35,7 +35,7 @@ namespace gui {
 		}
 
 		// Release all members.
-		void release()
+		void release();
 #endif
 #ifdef GUI_GTK
 		inline cairo_t *target() const {

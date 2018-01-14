@@ -193,14 +193,14 @@ namespace gui {
 
 	void Window::visible(Bool show) {
 		if (created())
-			ShowWindow(handle(), show ? TRUE : FALSE);
+			ShowWindow(handle().hwnd(), show ? TRUE : FALSE);
 	}
 
 	const Str *Window::text() {
 		if (created()) {
-			Nat len = GetWindowTextLength(handle());
+			Nat len = GetWindowTextLength(handle().hwnd());
 			GcArray<wchar> *src = runtime::allocArray<wchar>(engine(), &wcharArrayType, len + 1);
-			GetWindowText(handle(), src->v, len + 1);
+			GetWindowText(handle().hwnd(), src->v, len + 1);
 			myText = (new (this) Str(src))->fromCrLf();
 		}
 		return myText;
@@ -209,13 +209,13 @@ namespace gui {
 	void Window::text(Str *s) {
 		myText = s;
 		if (created())
-			SetWindowText(handle(), s->toCrLf()->c_str());
+			SetWindowText(handle().hwnd(), s->toCrLf()->c_str());
 	}
 
 	Rect Window::pos() {
 		if (created()) {
 			RECT r;
-			HWND h = handle();
+			HWND h = handle().hwnd();
 			GetClientRect(h, &r);
 			POINT a = { r.left, r.top };
 			ClientToScreen(h, &a);
@@ -230,34 +230,34 @@ namespace gui {
 		myPos = r;
 		if (created()) {
 			RECT z = convert(r);
-			HWND h = handle();
+			HWND h = handle().hwnd();
 			DWORD style = GetWindowLong(h, GWL_STYLE);
 			DWORD exStyle = GetWindowLong(h, GWL_EXSTYLE);
 			AdjustWindowRectEx(&z, style, FALSE, exStyle);
 			// Todo: keep track if we need to repaint.
-			MoveWindow(handle(), z.left, z.top, z.right - z.left, z.bottom - z.top, TRUE);
+			MoveWindow(h, z.left, z.top, z.right - z.left, z.bottom - z.top, TRUE);
 		}
 	}
 
 	void Window::focus() {
 		if (created())
-			SetFocus(handle());
+			SetFocus(handle().hwnd());
 	}
 
 	void Window::font(Font *font) {
 		myFont = new (this) Font(*font);
 		if (created())
-			SendMessage(handle(), WM_SETFONT, (WPARAM)font->handle(), TRUE);
+			SendMessage(handle().hwnd(), WM_SETFONT, (WPARAM)font->handle(), TRUE);
 	}
 
 	void Window::update() {
 		if (created())
-			UpdateWindow(handle());
+			UpdateWindow(handle().hwnd());
 	}
 
 	void Window::repaint() {
 		if (created())
-			InvalidateRect(handle(), NULL, FALSE);
+			InvalidateRect(handle().hwnd(), NULL, FALSE);
 	}
 
 	void Window::attachPainter() {}
@@ -268,7 +268,7 @@ namespace gui {
 		return false;
 	}
 
-	bool Window::create(Window *container, nat id) {
+	bool Window::create(Container *parent, nat id) {
 		return createEx(NULL, childFlags, 0, parent->handle().hwnd(), id);
 	}
 
@@ -337,15 +337,16 @@ namespace gui {
 			if (timerInterval != Duration()) {
 				setTimer(timerInterval);
 			}
-			SendMessage(handle(), WM_SETFONT, (WPARAM)myFont->handle(), TRUE);
+			SendMessage(handle().hwnd(), WM_SETFONT, (WPARAM)myFont->handle(), TRUE);
 			return true;
 		}
 	}
 
 	MsgResult Window::onPaint() {
 		if (myPainter) {
-			myPainter->uiRepaint();
-			ValidateRect(handle(), NULL);
+			RepaintParams p;
+			myPainter->uiRepaint(&p);
+			ValidateRect(handle().hwnd(), NULL);
 
 			return msgResult(0);
 		} else {
@@ -356,12 +357,12 @@ namespace gui {
 	void Window::setTimer(Duration interval) {
 		timerInterval = interval;
 		if (created()) {
-			SetTimer(handle(), 1, (UINT)interval.inMs(), NULL);
+			SetTimer(handle().hwnd(), 1, (UINT)interval.inMs(), NULL);
 		}
 	}
 
 	void Window::clearTimer() {
-		KillTimer(handle(), 1);
+		KillTimer(handle().hwnd(), 1);
 	}
 
 #endif

@@ -88,22 +88,22 @@ namespace gui {
 
 	// Make 'wnd' go fullscreen.
 	static void goFull(Handle wnd, Long &oldStyle, Rect &oldPos) {
-		oldStyle = GetWindowLong(wnd, GWL_STYLE);
+		oldStyle = GetWindowLong(wnd.hwnd(), GWL_STYLE);
 		RECT oldRect;
-		GetWindowRect(wnd, &oldRect);
+		GetWindowRect(wnd.hwnd(), &oldRect);
 		oldPos = convert(oldRect);
 
-		HMONITOR m = MonitorFromWindow(wnd, MONITOR_DEFAULTTONEAREST);
+		HMONITOR m = MonitorFromWindow(wnd.hwnd(), MONITOR_DEFAULTTONEAREST);
 		MONITORINFO mi = { sizeof(mi) };
 		GetMonitorInfo(m, &mi);
 
-		SetWindowLong(wnd, GWL_STYLE, oldStyle & ~(WS_CAPTION | WS_THICKFRAME));
+		SetWindowLong(wnd.hwnd(), GWL_STYLE, oldStyle & ~(WS_CAPTION | WS_THICKFRAME));
 
 		LONG l = mi.rcMonitor.left;
 		LONG r = mi.rcMonitor.right;
 		LONG t = mi.rcMonitor.top;
 		LONG b = mi.rcMonitor.bottom;
-		SetWindowPos(wnd, NULL, l, t, r - l, b - t, SWP_NOZORDER | SWP_NOACTIVATE | SWP_FRAMECHANGED);
+		SetWindowPos(wnd.hwnd(), NULL, l, t, r - l, b - t, SWP_NOZORDER | SWP_NOACTIVATE | SWP_FRAMECHANGED);
 	}
 
 	static void goBack(Handle wnd, Long &style, Rect &rect) {
@@ -112,8 +112,8 @@ namespace gui {
 		LONG t = LONG(rect.p0.y);
 		LONG b = LONG(rect.p1.y);
 
-		SetWindowLong(wnd, GWL_STYLE, LONG(style));
-		SetWindowPos(wnd, NULL, l, t, r - l, b - t, SWP_NOZORDER | SWP_NOACTIVATE | SWP_FRAMECHANGED);
+		SetWindowLong(wnd.hwnd(), GWL_STYLE, LONG(style));
+		SetWindowPos(wnd.hwnd(), NULL, l, t, r - l, b - t, SWP_NOZORDER | SWP_NOACTIVATE | SWP_FRAMECHANGED);
 	}
 
 	// Helper to create the actual handle.
@@ -134,7 +134,7 @@ namespace gui {
 		parentCreated(0);
 
 		if (visible()) {
-			ShowWindow(handle(), TRUE);
+			ShowWindow(handle().hwnd(), TRUE);
 			update();
 		}
 

@@ -79,7 +79,8 @@ define+=FLAC__HAS_OGG
 define+=HAVE_STDLIB_H
 define+=HAVE_STRERROR
 define+=HAVE_STRING_H
-define+=GAPLESS
+define+=HAVE_SYS_STAT_H
+define+=GAPLESS=1
 # Default decoder (C-code)
 define+=OPT_MULTI
 define+=OPT_GENERIC
@@ -90,13 +91,17 @@ define+=REAL_IS_FLOAT
 #No warnings, libogg is a mess in that regard...
 warnings=
 
+[windows]
+#MPG123
+define+=HAVE_WINDOWS_H
+define+=WANT_WIN32_UNICODE
+
 [unix]
 define+=HAVE_STDINT_H
 define+=HAVE_LROUND
 define+=__STDC_WANT_LIB_EXT2__=1
 define+=_LARGEFILE_SOURCE
 define+=ASMALIGN_BALIGN
-define+=HAVE_SYS_STAT_H
 define+=HAVE_DIRENT_H
 define+=HAVE_SYS_TYPES_H
 

@@ -68,6 +68,9 @@ namespace gui {
 	// Convert from virtual keycodes into our representation.
 	Key keycode(WPARAM vk);
 
+	// Was 'keycode' pressed when the last window message was sent?
+	bool pressed(nat keycode);
+
 #endif
 #ifdef GUI_GTK
 	// Extract modifiers and keycode from a GdkEventKey.

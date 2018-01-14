@@ -229,7 +229,7 @@ namespace gui {
 			os::UThread::leave();
 	}
 
-	void Painter::doRepaintI(bool waitForVSync, bool fromDraw) {
+	bool Painter::doRepaintI(bool waitForVSync, bool fromDraw) {
 		if (!target.target())
 			return false;
 		if (!target.swapChain())
@@ -277,7 +277,7 @@ namespace gui {
 		currentRepaint = repaintCounter;
 	}
 
-	void Painter::uiAfterRepaint() {}
+	void Painter::uiAfterRepaint(RepaintParams *handle) {}
 
 #endif
 #ifdef GUI_GTK

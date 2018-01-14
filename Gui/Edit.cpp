@@ -1,5 +1,6 @@
 #include "stdafx.h"
 #include "Edit.h"
+#include "Container.h"
 #include "Core/Convert.h"
 
 namespace gui {
@@ -82,7 +83,7 @@ namespace gui {
 		selected(sel);
 
 		// Cue banner.
-		SendMessage(handle(), EM_SETCUEBANNER, 0, (LPARAM)myCue->c_str());
+		SendMessage(handle().hwnd(), EM_SETCUEBANNER, 0, (LPARAM)myCue->c_str());
 
 		return true;
 	}
@@ -98,7 +99,7 @@ namespace gui {
 	Selection Edit::selected() {
 		if (created()) {
 			DWORD start, end;
-			SendMessage(handle(), EM_GETSEL, (WPARAM)&start, (LPARAM)&end);
+			SendMessage(handle().hwnd(), EM_GETSEL, (WPARAM)&start, (LPARAM)&end);
 			sel.start = start;
 			sel.end = end;
 		}
@@ -108,7 +109,7 @@ namespace gui {
 	void Edit::selected(Selection sel) {
 		this->sel = sel;
 		if (created())
-			SendMessage(handle(), EM_SETSEL, (WPARAM)sel.start, (LPARAM)sel.end);
+			SendMessage(handle().hwnd(), EM_SETSEL, (WPARAM)sel.start, (LPARAM)sel.end);
 	}
 
 	Str *Edit::cue() {
@@ -118,7 +119,7 @@ namespace gui {
 	void Edit::cue(Str *s) {
 		myCue = s;
 		if (created())
-			SendMessage(handle(), EM_SETCUEBANNER, 0, (LPARAM)myCue->c_str());
+			SendMessage(handle().hwnd(), EM_SETCUEBANNER, 0, (LPARAM)myCue->c_str());
 	}
 
 #endif

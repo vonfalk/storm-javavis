@@ -118,18 +118,13 @@ namespace graphics {
 	}
 
 
-	Image *loadPng(IStream *from) {
-		return wic::loadImage(from);
+	Image *loadPng(storm::IStream *from, const wchar *&error) {
+		return wic::loadImage(from, error);
 	}
 
-	Image *loadJpeg(IStream *from) {
-		return wic::loadImage(from);
+	Image *loadJpeg(storm::IStream *from, const wchar *&error) {
+		return wic::loadImage(from, error);
 	}
-
-	// Implemented in BmpLoad.cpp
-	// Image *loadBmp(IStream *from) {
-	// 	return wic::loadImage(from);
-	// }
 
 }
 

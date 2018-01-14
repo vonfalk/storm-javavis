@@ -167,7 +167,7 @@ namespace sound {
 		DSBUFFERDESC desc = {
 			sizeof(desc),
 			DSBCAPS_CTRLVOLUME | DSBCAPS_CTRLPOSITIONNOTIFY | DSBCAPS_GLOBALFOCUS,
-			bufferSize,
+			bufferSize(),
 			0,
 			&fmt,
 			DS3DALG_DEFAULT,
@@ -209,7 +209,7 @@ namespace sound {
 	}
 
 	void Player::destroyBuffer() {
-		::release(buffer);
+		buffer.release();
 		CloseHandle(event.v());
 		event = Handle();
 	}

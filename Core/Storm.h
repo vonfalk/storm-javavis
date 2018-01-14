@@ -18,6 +18,8 @@
 /**
  * Declare a super-class as hidden to Storm. This means that Storm will not know that the current
  * class inherits from any parent-class, even if it does from C++'s point of view.
+ *
+ * Can also be used to make enums not being exported to Storm.
  */
 #define STORM_HIDDEN(parent) parent
 

@@ -42,7 +42,7 @@ namespace sound {
 		stream->src = src;
 		stream->seekable = seekable;
 
-		mpg123_replace_reader_handle(h, &read, &seek, &cleanup);
+		mpg123_replace_reader_handle(h, &Mp3Sound::read, &Mp3Sound::seek, &Mp3Sound::cleanup);
 		int ok = mpg123_open_handle(h, stream);
 
 		long rate = 0;
@@ -195,7 +195,7 @@ namespace sound {
 			return -1;
 		}
 
-		return src->tell();
+		return off_t(src->tell());
 	}
 
 	void Mp3Sound::cleanup(void *handle) {

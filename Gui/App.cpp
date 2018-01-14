@@ -210,7 +210,7 @@ namespace gui {
 
 			// Dialog message?
 			Frame *root = w->rootFrame();
-			if (root && IsDialogMessage(root->handle(), &msg))
+			if (root && IsDialogMessage(root->handle().hwnd(), &msg))
 				return;
 		}
 

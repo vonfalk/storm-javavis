@@ -19,6 +19,13 @@ namespace sound {
 		inline IDirectSoundBuffer8 *operator ->() const {
 			return (IDirectSoundBuffer8 *)data;
 		}
+
+		inline void release() {
+			if (data) {
+				(*this)->Release();
+				data = 0;
+			}
+		}
 #endif
 #ifdef SOUND_AL
 		SoundBuffer(ALuint buffer) { data = (size_t)buffer; }
@@ -50,6 +57,13 @@ namespace sound {
 
 		inline IDirectSound8 *operator ->() const {
 			return (IDirectSound8 *)data;
+		}
+
+		inline void release() {
+			if (data) {
+				(*this)->Release();
+				data = 0;
+			}
 		}
 #endif
 #ifdef SOUND_AL

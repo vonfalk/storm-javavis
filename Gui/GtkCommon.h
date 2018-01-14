@@ -28,7 +28,7 @@ namespace gui {
 	/**
 	 * Layer types in Cairo.
 	 */
-	enum LayerKind {
+	enum STORM_HIDDEN(LayerKind) {
 		none,
 		group,
 		save

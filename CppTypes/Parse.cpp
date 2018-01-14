@@ -282,6 +282,12 @@ static void parseMember(Tokenizer &tok, ParseEnv &env, Namespace &addTo, Access 
 // Parse an enum declaration.
 static void parseEnum(Tokenizer &tok, ParseEnv &env, const CppName &inside) {
 	Token name = tok.next();
+	if (name.token == L"STORM_HIDDEN" && tok.skipIf(L"(")) {
+		// This enum is supposed to be hidden from Storm.
+		tok.skip();
+		tok.expect(L")");
+		name.token = L"";
+	}
 
 	// Forward-declaration?
 	if (tok.skipIf(L";"))

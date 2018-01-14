@@ -107,7 +107,7 @@ namespace gui {
 
 #ifdef GUI_WIN32
 
-	static bool pressed(nat keycode) {
+	bool pressed(nat keycode) {
 		return (GetKeyState(keycode) & 0x8000) != 0;
 	}
 
@@ -115,7 +115,7 @@ namespace gui {
 		Modifiers r = mod::none;
 		if (pressed(VK_CONTROL))
 			r |= mod::ctrl;
-		if (pressed(VK_ALT))
+		if (pressed(VK_MENU))
 			r |= mod::alt;
 		if (pressed(VK_SHIFT))
 			r |= mod::shift;
@@ -123,15 +123,15 @@ namespace gui {
 		return r;
 	}
 
-	Key keycode(LPARAM vk) {
+	Key keycode(WPARAM vk) {
 		Key result = lookup(vk);
 		if (result == key::unknown) {
 			UINT c = MapVirtualKey(vk, MAPVK_VK_TO_CHAR);
 			c &= 0x7FFFFFFF; // The highest bit is used to indicate dead keys. We do not care at this point.
 
 			// Windows gives uppercase for A-Z, but lowercase to any other characters that have uppercase forms...
-			if (keyval >= 'A' && keyval <= 'Z')
-				keyval += 'a' - 'A';
+			if (c >= 'A' && c <= 'Z')
+				c += 'a' - 'A';
 
 			result = Key(c);
 		}

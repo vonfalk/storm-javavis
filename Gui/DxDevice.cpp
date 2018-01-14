@@ -75,6 +75,7 @@ namespace gui {
 		writeFactory = null;
 
 		// Setup DirectX, Direct2D and DirectWrite.
+		HRESULT h;
 		h = D2D1CreateFactory(D2D1_FACTORY_TYPE_SINGLE_THREADED, __uuidof(ID2D1Factory), &options, (void **)&factory);
 		if (FAILED(h))
 			throwError(L"Failed to create a D2D factory: ", h);
@@ -105,41 +106,46 @@ namespace gui {
 
 	RenderInfo Device::attach(Handle window) {
 		RECT c;
-		GetClientRect(window, &c);
+		GetClientRect(window.hwnd(), &c);
 
 		DXGI_SWAP_CHAIN_DESC desc;
-		create(desc, window);
+		create(desc, window.hwnd());
 
 		RenderInfo r;
 		HRESULT h;
 
 		// TODO: Use CreateSwapChainForHwnd.
-		if (FAILED(h = giFactory->CreateSwapChain(device, &desc, &r.swapChain))) {
+		IDXGISwapChain *swapChain = null;
+		if (FAILED(h = giFactory->CreateSwapChain(device, &desc, &swapChain))) {
 			r.release();
 			throwError(L"Failed to create a swap chain: ", h);
 		}
 
+		r.swapChain(swapChain);
+
 		try {
-			r.target = createTarget(r.swapChain);
+			r.target(createTarget(swapChain));
 		} catch (...) {
 			r.release();
 			throw;
 		}
 
-		r.size = Size(desc.BufferDesc.Width, desc.BufferDesc.Height);
+		r.size = Size(Float(desc.BufferDesc.Width), Float(desc.BufferDesc.Height));
 		return r;
 	}
 
 	void Device::resize(RenderInfo &info, Size sz) {
-		::release(info.target);
+		if (info.target())
+			info.target()->Release();
+		info.target(null);
 
 		HRESULT r;
-		if (FAILED(r = info.swapChain->ResizeBuffers(1, (UINT)sz.w, (UINT)sz.h, DXGI_FORMAT_UNKNOWN, 0))) {
+		if (FAILED(r = info.swapChain()->ResizeBuffers(1, (UINT)sz.w, (UINT)sz.h, DXGI_FORMAT_UNKNOWN, 0))) {
 			throwError(L"Failed to resize buffers: " , r);
 		}
 
 		info.size = sz;
-		info.target = createTarget(info.swapChain);
+		info.target(createTarget(info.swapChain()));
 	}
 
 	ID2D1RenderTarget *Device::createTarget(IDXGISwapChain *swapChain) {
