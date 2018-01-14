@@ -25,11 +25,12 @@ namespace sound {
 	};
 
 	Player::Player(Sound *src) :
-		src(src), buffer(), //event(null),
+		src(src), buffer(),
 		lastFilled(0), bufferPlaying(false),
 		fVolume(1.0f), tmpBuffer(null) {
 
 		partInfo = runtime::allocArray<PartInfo>(engine(), &partInfoType, bufferParts);
+		lock = new (this) Lock();
 		finishEvent = new (this) Event();
 
 		// finishEvent.set();
@@ -54,10 +55,18 @@ namespace sound {
 	Player::~Player() {
 		// Do not close 'src' as it might have already been destroyed.
 		src = null;
-		close();
+		lock = null;
+
+		// Bare minimum cleanup. Most other objects might be destroyed.
+		if (buffer) {
+			destroyBuffer();
+			buffer = SoundBuffer();
+		}
 	}
 
 	void Player::close() {
+		Lock::L z(lock);
+
 		if (buffer) {
 			AudioMgr *mgr = audioMgr(engine());
 			mgr->removePlayer(this);
@@ -104,7 +113,10 @@ namespace sound {
 			bufferStop();
 			finishEvent->set();
 
-			// Reset position if possible.
+			// Reset position if possible. TODO: Should we do this now? It is probably better to
+			// wait until somebody calls 'play' again, or even do the fill in the background. This
+			// implementation makes 'stop' unexpectedly expensive.
+			Lock::L z(lock);
 			if (src->seek(0))
 				fill();
 		}
@@ -144,6 +156,8 @@ namespace sound {
 	}
 
 	void Player::fill() {
+		Lock::L z(lock);
+
 		for (nat i = 0; i < bufferParts; i++)
 			fill(i);
 	}
@@ -252,6 +266,7 @@ namespace sound {
 		if (partInfo->v[playPart].afterEnd) {
 			stop();
 		} else {
+			Lock::L z(lock);
 			for (nat at = next(lastFilled); at != playPart; at = next(at))
 				fill(at);
 		}
@@ -398,6 +413,8 @@ namespace sound {
 		// Anything to do?
 		if (processed <= 0)
 			return;
+
+		Lock::L z(lock);
 
 		// Fill any processed parts.
 		for (ALint i = 0; i < processed; i++) {

@@ -4,6 +4,7 @@
 #include "Types.h"
 #include "Core/Timing.h"
 #include "Core/Event.h"
+#include "Core/Lock.h"
 
 namespace sound {
 
@@ -67,6 +68,9 @@ namespace sound {
 
 		// Size of a single sample for 1 channel in bytes.
 		static const Nat sampleDepth;
+
+		// Lock for keeping calls into the source stream in sync.
+		Lock *lock;
 
 		// Source.
 		Sound *src;
