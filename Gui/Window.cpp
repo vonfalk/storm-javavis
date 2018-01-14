@@ -260,9 +260,20 @@ namespace gui {
 			InvalidateRect(handle().hwnd(), NULL, FALSE);
 	}
 
-	void Window::attachPainter() {}
+	void Window::attachPainter() {
+		if (!created())
+			return;
 
-	void Window::detachPainter() {}
+		repaint();
+	}
+
+	void Window::detachPainter() {
+		if (!created())
+			return;
+
+		// We must ask really hard to make Windows repaint the window properly.
+		RedrawWindow(handle().hwnd(), NULL, NULL, RDW_ERASE | RDW_INVALIDATE);
+	}
 
 	bool Window::onCommand(nat id) {
 		return false;

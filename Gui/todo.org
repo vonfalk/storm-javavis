@@ -1,5 +1,6 @@
-* General [0/3]
+* General [2/4]
+  - [ ] Add a way to create proper modal dialogs with return codes.
   - [ ] Make the text view and the multiline text view separate, as we want
         to handle text separatly in the two cases.
-  - [ ] Investigate why OpenGL rendering fails when maximizing a window containing GL rendering over X forwarding to Windows.
-  - [ ] Figure out a way to unify the onKey and onChar messages. They are different on Win32 and the same on GTK.
+  - [X] Investigate why OpenGL rendering fails when maximizing a window containing GL rendering over X forwarding to Windows.
+  - [X] Figure out a way to unify the onKey and onChar messages. They are different on Win32 and the same on GTK.
