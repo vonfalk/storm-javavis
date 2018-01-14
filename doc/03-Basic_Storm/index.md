@@ -13,7 +13,7 @@ The philosophy of Basic Storm is, just like LISP, that everything is an expressi
 it is safe to ignore this fact, but it opens up a lot of flexibility, especially when generating
 code. One of the more outstanding differences is that blocks and if-statements are expressions, not
 statements. A block returns the last expression written in it, which allows the programmer to
-introduce temporary variables in the middle of an expressions among other things.
+introduce temporary variables in the middle of an expression among other things.
 
 Most of Basic Storm is implemented in C++, alongside the compiler. However, some parts are
 implemented in Basic Storm itself. Examples of this are the array syntax (`T[]`), array

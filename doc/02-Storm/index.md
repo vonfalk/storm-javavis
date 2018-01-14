@@ -33,9 +33,9 @@ treat syntax as regular members of a package, so you can mix and match as you se
 problem at hand. Using the syntax language, it is easy to extend an already existing syntax rule of
 your favorite language so that it better matches the problem you try to solve.
 
+
 Threading
 ----------
-
 
 The threading model in Storm is based around the idea that you declare which thread to use for
 different functions and objects, and let the compiler do the rest. This has at least two benefits:

@@ -3,44 +3,88 @@ Storm
 
 ?Button(md://Introduction/Downloads)Download Storm?
 
-Storm is a work in progress language that focuses on extensibility on many levels. Read more about
-it [here](md://Storm/).
+Storm is a programming language platform with a strong focus on extensibility. Storm itself is
+mostly a framework for creating languages rather than a complete compiler. The framework is designed
+to make easy to implement languages that can be extended with new syntax and semantics. Of course,
+Storm comes bundled with a few languages (mainly [Basic Storm](md://Basic_Storm)), but these are
+separate from the core and could be implemented as libraries in the future. Since these languages
+are implemented in Storm, they allow users to create their own syntax extensions as separate
+libraries. Furthermore, Storm allows languages to interact with each other freely and mostly
+seamlessly.
 
-Downloads
-----------
+Aside from extensibility, Storm is implemented as an interactive compiler. This means that Storm is
+designed to be executed in the background while programs are being developed. As the compiler is
+running in the background, it is able to provide information about the program being developed to
+help the developer, much like an IDE. Currently, it is possible to run Storm as a
+[language server](md://Storm/Language_server) that provides syntax highlighting for all supported
+languages and language extensions to an editor. In the future, the language server should be able
+to provide more semantic information as well.
 
-Go to the download page by clicking the button to the right. Precompiled binaries for Windows
-(32-bit) and Linux (64-bit, X86-64) are provided.
-
-To run the compiler, simply unpack the archive file and run `Storm` (`Storm.exe` on Windows), and
-the top loop for Basic Storm should start. The compiler does not need any external libraries aside
-from the C and C++ standard libraries. The Windows version uses `dbghelp.dll`, which is included
-with Windows, to pretty-print stack traces.
+More information on the language server can be found at
+[http://urn.kb.se/resolve?urn=urn:nbn:se:liu:diva-138847](http://urn.kb.se/resolve?urn=urn:nbn:se:liu:diva-138847)
 
 
-Documentation
---------------
+The following example illustrates some of the possibilities of Storm:
 
-Start by going to [Introduction](md://Introduction/) for information on how to download and install
-Storm, and for some concrete examples of what Storm is capable of.
+```
+use present;
 
-The documentation provided here aims to provide an understanding of the language itself. It will not
-generally discuss specific APIs or the standard library in depth. For documentation on specific
-functions, objects or packages, please refer to the built-in documentation in Storm.
-When using Basic Storm, import the package `lang.bs.macro` and use the `explore{name}` syntax to
-output information about packages, types, functions or most other named things in the system. Sadly,
-the built-in documentation is not finished yet.
+void main() {
+	// Generate a random title for the presentation.
+	Str title = "Presentation number " + rand(1, 10).toS;
 
-For information on licenses used in the system, type `licenses` in the Basic Storm top loop, or call
-`core.info.licenses` from your code. Note that while Storm is licensed under the LGPL version 2.1,
-Storm uses the [Memory Pool System](http://www.ravenbrook.com/project/mps/) from Ravenbrook Ltd. for
-memory management, which requires the source code for all programs using the MPS being freely
-available unless another license is acquired. Furthermore, it is possible to integrate other garbage
-collectors into Storm if the MPS license is an issue.
+	// Create the presentation. Uses an extension implemented in the package 'present'.
+	var p = presentation "My presentation" {
+		Title title;
+		Content "Hello!" {
+			List [ "Welcome to " + title, "In Storm!" ];
+		};
+	}
 
-More information on the language server can be found at [http://urn.kb.se/resolve?urn=urn:nbn:se:liu:diva-138847](http://urn.kb.se/resolve?urn=urn:nbn:se:liu:diva-138847)
+
+	// Show the presentation in a window on the screen.
+	PresentWindow window(p);
+	win.waitForClose();
+}
+```
+
+In this example, we use a language extension that allows creating presentation slides in a
+declarative manner. This extension is not a part of Basic Storm, it is implemented as a language
+extension that is included with the `use present;` statement on the first line. The language
+extension adds a `presentation`-block that evaluates to a value of the type `Presentation`, which is
+later passed to a `PresentationWindow` that shows the actual presentation. The example also shows
+that the language extension is able to use variables declared outside of the language extension with
+the variable `title`.
+
+
+Getting started
+----------------
+
+If you are interested in Storm and want to learn more, check out some of these sections:
+
+* [Introduction](md://Introduction/) contains instructions describing how to download and install
+  Storm, and a couple of examples to show what Storm can do.
+
+* [Storm](md://Storm/) contains documentation on Storm itself. This information is not tied to any
+  particular language, but applies to all languages in Storm.
+
+* [Basic Storm](md://Basic_Storm/) contains information about the language Basic Storm that is
+  bundled with Storm by default. Refer to this part of the documentation for concrete information
+  about syntax and functionality you will see while using Storm.
+
+* [BNF Syntax](md://BNF_Syntax/) contains information on the language used to define syntax in
+  Storm. Refer to this part of the documentation if you are interested in creating new languages or
+  syntax extensions to other languages.
+
+Note that the main goal of the documentation provided here is to get you started in using the
+language and to give an understanding of the language. It will not discuss specific APIs or the
+standard library in depth. For that kind of documentation, please refer to the built-in
+documentation in Storm (not finished yet). When using the Basic Storm REPL, the command
+`explore{<package>}` can be used to list members in packages.
+
 
 Contact
 --------
 
-If you have any questions or requests regarding Storm, please contact me at [info@storm-lang.org](info@storm-lang.org).
+If you have any questions or requests regarding Storm, please contact me at
+[info@storm-lang.org](mailto:info@storm-lang.org).

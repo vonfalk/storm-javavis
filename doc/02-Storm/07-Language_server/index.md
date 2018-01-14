@@ -17,6 +17,9 @@ trouble.
 The goal is to extend the protocol to allow sending commands to the top-loop, compiling parts of the
 system etc. through the language server. We're not there yet, but we're getting there!
 
+For a more detailed description of the language server, look at the master thesis that is formed the
+foundation of the language server:
+[http://urn.kb.se/resolve?urn=urn:nbn:se:liu:diva-138847](http://urn.kb.se/resolve?urn=urn:nbn:se:liu:diva-138847)
 
 The Emacs plugin
 -------------------
