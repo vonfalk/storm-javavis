@@ -207,8 +207,7 @@ namespace gui {
 		}
 
 		// Update cursor visibility.
-		// cursorVisible(showCursor);
-		cursorVisible(false);
+		cursorVisible(showCursor);
 
 		if (full) {
 			goFull(handle(), windowedStyle, windowedRect);
@@ -246,7 +245,6 @@ namespace gui {
 			GdkWindow *window = gtk_widget_get_window(widget);
 
 			gdk_window_set_cursor(window, cursor);
-			g_object_unref((GObject *)cursor);
 		}
 	}
 
