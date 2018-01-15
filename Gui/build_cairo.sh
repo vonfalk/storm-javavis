@@ -8,6 +8,13 @@ then
     exit 1
 fi
 
+if [[ $# -lt 2 ]]
+then
+    threads=""
+else
+    threads="-j $2"
+fi
+
 output=$(pwd)/$1
 if [[ -f $output ]]
 then
@@ -24,9 +31,10 @@ echo "Configuring Cairo..."
 
 # Make
 echo "Compiling Cairo..."
-make -j 2>/dev/null || { echo "Make failed."; exit 1; }
+make $threads 2>/dev/null || { echo "Make failed."; exit 1; }
 echo "Done!"
 
 # Copy the output.
+mkdir -p $(dirname $output)
 cp src/.libs/libcairo.so $output || { echo "Copy failed."; exit 1; }
 

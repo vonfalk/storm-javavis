@@ -15,7 +15,7 @@ stormUsingNamespace+=storm::geometry
 cairoName=libcairo.so.2
 
 # Compile cairo if neccessary. We're using build system provided by Cairo.
-preBuild+=./build_cairo.sh <path|packagePath><cairoName>
+preBuild+=./build_cairo.sh <path|packagePath><cairoName> <maxThreads>
 
 # Set rpath.
 linkFlags+=-Wl,-rpath,'$ORIGIN'

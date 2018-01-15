@@ -16,9 +16,9 @@ Binary releases
 - [Linux (Debian, GCC 6.2.0 or later)](storm.tar.gz)
 
 To run the compiler, simply unpack the archive file and run `Storm` (`Storm.exe` on Windows), and
-the top loop for Basic Storm should start. The compiler does not need any external libraries aside
-from the C and C++ standard libraries. The Windows version uses `dbghelp.dll`, which is included
-with Windows, to pretty-print stack traces.
+the top loop for Basic Storm should start. On Windows, no external libraries are required except for
+`dgbhelp.dll`, which is included with Windows. On Linux, Gtk+ 3.10 or later is required for the Ui
+library.
 
 For more detaled instructions, see [Introduction](md://Introduction/).
 
