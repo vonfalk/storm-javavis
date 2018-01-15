@@ -1,5 +1,6 @@
 * Loose ends so far [12/27]
-  - [ ] Stack traces for Windows (32-bit) do not contain names of Storm functions.
+  - [ ] Stack traces for Windows (32-bit) do not always contain names of Storm functions. Only functions
+        that require exception handling are currently shown.
   - [ ] In Basic Storm, expressions like '2 - 1.0' fail to compile since Float is not searched for
         candidates. This could be solved by moving the operators out of the number classes or improve
         overload resolution in this case.
