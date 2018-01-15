@@ -109,14 +109,19 @@ namespace code {
 
 	Instr *STORM_FN mov(EnginePtr e, Operand to, Operand from);
 	Instr *STORM_FN swap(EnginePtr e, Reg a, Operand b);
-	Instr *STORM_FN push(EnginePtr e, Operand v);
-	Instr *STORM_FN pop(EnginePtr e, Operand to);
-	Instr *STORM_FN pushFlags(EnginePtr e);
-	Instr *STORM_FN popFlags(EnginePtr e);
 	Instr *STORM_FN jmp(EnginePtr e, Operand to);
 	Instr *STORM_FN jmp(EnginePtr e, Label to, CondFlag cond);
 	Instr *STORM_FN call(EnginePtr e, Operand to, Size resultSize);
 	Instr *STORM_FN ret(EnginePtr e, Size resultSize); // Returns whatever is in eax register.
+
+	// Note: Be very careful when using push and pop in code that performs function calls! Certain
+	// architectures require the stack to be properly aligned when calling a function. The different
+	// backends takes care of this for you, but they will not keep track of push and pop
+	// instructions so that they can compensate for any additional instructions used.
+	Instr *STORM_FN push(EnginePtr e, Operand v);
+	Instr *STORM_FN pop(EnginePtr e, Operand to);
+	Instr *STORM_FN pushFlags(EnginePtr e);
+	Instr *STORM_FN popFlags(EnginePtr e);
 
 	// This one has somewhat special semantics, when used with a reference as 'from', it instead
 	// loads the RefSource referred to by the Ref.

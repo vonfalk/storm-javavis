@@ -316,11 +316,11 @@ namespace storm {
 	}
 
 	StrBuf *StrBuf::add(Float f) {
+		// TODO: Improve!
 #ifdef WINDOWS
 		const nat size = 50;
 		wchar buf[size];
 		_snwprintf_s(buf, size, size, L"%f", f);
-		// TODO: Improve!
 		return add(buf);
 #else
 		const nat size = 50;

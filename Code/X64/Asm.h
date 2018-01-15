@@ -29,6 +29,14 @@ namespace code {
 		extern const Reg dl;
 		extern const Reg sil;
 		extern const Reg dil;
+		extern const Reg r8l;
+		extern const Reg r9l;
+		extern const Reg r10l;
+		extern const Reg r11l;
+		extern const Reg r12l;
+		extern const Reg r13l;
+		extern const Reg r14l;
+		extern const Reg r15l;
 		extern const Reg edx;
 		extern const Reg esi;
 		extern const Reg edi;

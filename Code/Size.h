@@ -91,6 +91,7 @@ namespace code {
 	};
 
 	// Get sizes from Storm.
+	inline Size STORM_FN sPtr() { return Size::sPtr; }
 	inline Size STORM_FN sChar() { return Size::sChar; }
 	inline Size STORM_FN sByte() { return Size::sByte; }
 	inline Size STORM_FN sInt() { return Size::sInt; }

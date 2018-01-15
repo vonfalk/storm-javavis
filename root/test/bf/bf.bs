@@ -9,6 +9,8 @@ void separateBf() {
 	print(fibonacci(""));
 	print("Echo:");
 	print(echo("<echo>"));
+	print("Mandelbrot:");
+	print(mandelbrot(""));
 }
 
 void inlineBf() {

@@ -33,7 +33,7 @@ namespace code {
 
 		// Transform the code in preparation for this backend's code generation. This is
 		// backend-specific. 'owner' is the binary object that will be called to handle exceptions.
-		virtual Listing *STORM_FN transform(Listing *src, Binary *owner) const;
+		virtual Listing *STORM_FN transform(Listing *src, MAYBE(Binary *) owner) const;
 
 		// Translate a previously transformed listing into machine code for this arena.
 		virtual void STORM_FN output(Listing *src, Output *to) const;

@@ -78,7 +78,7 @@ class BfFunction extends Function {
 		o.code(r, result);
 
 		var resultVar = result.location(r).v;
-		l << fnRet(Operand(resultVar));
+		l << fnRet(resultVar);
 
 		r;
 	}
@@ -156,6 +156,9 @@ class BfState on Compiler {
 	// Temporary variable (int sized).
 	core:asm:Var tmpData;
 
+	// Temporary storage of the data pointer while performing IO.
+	core:asm:Var tmpPtr;
+
 	// Data area. A large variable.
 	core:asm:Var data;
 
@@ -184,6 +187,7 @@ class BfState on Compiler {
 		output = g.createVar(strBuf).v;
 		input = g.createVar(textInput).v;
 		tmpData = g.l.createVar(g.block, sInt());
+		tmpPtr = g.l.createVar(g.block, sPtr());
 		data = g.l.createVar(g.block, Size(size));
 	}
 
@@ -197,7 +201,7 @@ class BfState on Compiler {
 		create.code(g, CodeResult(textInput, VarInfo(input)));
 
 		// Initialize our pointer as well.
-		g.l << lea(Operand(ptrA), ptrRel(data, Offset()));
+		g.l << lea(ptrA, ptrRel(data, Offset()));
 	}
 
 	// Create the result.
@@ -222,7 +226,7 @@ class BfToken on Compiler {
 class BfBack extends BfToken {
 	init(SrcPos pos) { init(pos); }
 	void code(BfState state, CodeGen to) {
-		to.l << sub(Operand(ptrA), ptrConst(Offset(1)));
+		to.l << sub(ptrA, ptrConst(Offset(1)));
 	}
 	Str toS() { "<"; }
 }
@@ -230,7 +234,7 @@ class BfBack extends BfToken {
 class BfFwd extends BfToken {
 	init(SrcPos pos) { init(pos); }
 	void code(BfState state, CodeGen to) {
-		to.l << add(Operand(ptrA), ptrConst(Offset(1)));
+		to.l << add(ptrA, ptrConst(Offset(1)));
 	}
 	Str toS() { ">"; }
 }
@@ -238,15 +242,15 @@ class BfFwd extends BfToken {
 class BfInput extends BfToken {
 	init(SrcPos pos) { init(pos); }
 	void code(BfState state, CodeGen to) {
-		to.l << push(Operand(ptrA));
+		to.l << mov(state.tmpPtr, ptrA);
 
 		Block block(pos, Scope(named{core:io:TextInput}));
 		BareVarAccess inAccess(pos, state.textInput, state.input);
 		Expr e = namedExpr(block, SStr("read", pos), inAccess, Actuals());
 		e.code(to, CodeResult(state.natType, VarInfo(state.tmpData)));
 
-		to.l << lea(Operand(ptrC), Operand(state.tmpData));
-		to.l << pop(Operand(ptrA));
+		to.l << lea(ptrC, state.tmpData);
+		to.l << mov(ptrA, state.tmpPtr);
 		to.l << mov(byteRel(ptrA, Offset()), byteRel(ptrC, Offset()));
 	}
 	Str toS() { ","; }
@@ -255,8 +259,8 @@ class BfInput extends BfToken {
 class BfOutput extends BfToken {
 	init(SrcPos pos) { init(pos); }
 	void code(BfState state, CodeGen to) {
-		to.l << push(Operand(ptrA));
-		to.l << lea(Operand(ptrC), Operand(state.tmpData));
+		to.l << mov(state.tmpPtr, ptrA);
+		to.l << lea(ptrC, state.tmpData);
 		to.l << mov(byteRel(ptrC, Offset()), byteRel(ptrA, Offset()));
 
 		Block block(pos, Scope(named{StrBuf}));
@@ -266,7 +270,7 @@ class BfOutput extends BfToken {
 		Expr e = namedExpr(block, SStr("add", pos), outAccess, Actuals(ch));
 		e.code(to, CodeResult());
 
-		to.l << pop(Operand(ptrA));
+		to.l << mov(ptrA, state.tmpPtr);
 	}
 	Str toS() { "."; }
 }
@@ -309,7 +313,7 @@ class BfLoop extends BfToken {
 			tokens[i].code(state, to);
 		}
 
-		to.l << jmp(Operand(begin));
+		to.l << jmp(begin);
 		to.l << end;
 	}
 

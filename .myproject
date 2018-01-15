@@ -99,6 +99,7 @@ flags=-std=c++11
 flags+=-O1
 #Generate debug information.
 flags+=-g
+cflags+=-g
 
 [storm_release]
 buildDir=release/
