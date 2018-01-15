@@ -554,8 +554,9 @@ namespace gui {
 
 		pango_layout_set_wrap(layout, PANGO_WRAP_WORD_CHAR);
 		pango_layout_set_font_description(layout, font->desc());
-		pango_layout_set_width(layout, toPango(rect.size().w));
-		pango_layout_set_height(layout, toPango(rect.size().h));
+		// Account for rounding errors...
+		pango_layout_set_width(layout, toPango(rect.size().w + 0.3f));
+		pango_layout_set_height(layout, toPango(rect.size().h + 0.3f));
 		pango_layout_set_text(layout, text->utf8_str(), -1);
 
 		style->setSource(owner, info.target(), rect);
