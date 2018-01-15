@@ -6,12 +6,10 @@ stormUsingNamespace=storm
 include+=../SoundLib/ogg/include/
 include+=../SoundLib/vorbis/include/
 include+=../SoundLib/flac/include/
+include+=../SoundLib/mpg123/src/libmpg123/
 include+=../SoundLib/
 
 #flags+=/d1reportSingleClassLayoutGradientStop
-
-[windows]
-include+=../SoundLib/mpg123/src/libmpg123/
 
 [unix]
 library+=openal
