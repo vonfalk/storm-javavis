@@ -6,3 +6,10 @@ stormUsingNamespace=storm
 [unix]
 library+=png
 library+=jpeg
+
+[unix,release]
+# Set rpath, so we can supply the proper versions of libpng and libjpeg.
+linkFlags+=-Wl,-rpath,'$ORIGIN'
+
+# Copy the appropriate libraries to the target directory.
+postBuild+=../scripts/copy_libs.sh <output> <path|packagePath> png jpeg

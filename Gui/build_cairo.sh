@@ -4,7 +4,7 @@
 
 if [[ $# -lt 1 ]]
 then
-    echo "Missing parameter: The name of the output file shall be provided."
+    echo "Missing parameter: The name of the output file must be provided."
     exit 1
 fi
 
@@ -27,6 +27,7 @@ cd ../Linux/cairo
 
 # Configure TODO: It would be nice to not build the test suite...
 echo "Configuring Cairo..."
+export LDFLAGS="-Wl,-rpath,'\$\$ORIGIN'"
 ./autogen.sh --enable-gl --enable-dynamic --disable-static 2>/dev/null || { echo "Configure failed."; exit 1; }
 
 # Make
@@ -35,6 +36,11 @@ make $threads 2>/dev/null || { echo "Make failed."; exit 1; }
 echo "Done!"
 
 # Copy the output.
-mkdir -p $(dirname $output)
-cp src/.libs/libcairo.so $output || { echo "Copy failed."; exit 1; }
+outdir=$(dirname $output)
+mkdir -p $outdir
 
+# Copy libpng as well.
+../../scripts/copy_libs.sh src/.libs/libcairo.so $outdir png
+
+# Then the output
+cp src/.libs/libcairo.so $output || { echo "Copy failed."; exit 1; }
