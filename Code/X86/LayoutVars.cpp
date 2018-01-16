@@ -11,6 +11,9 @@
 namespace code {
 	namespace x86 {
 
+		// Number of words used for an EH frame.
+		static const Nat EH_WORDS = 4;
+
 #define TRANSFORM(x) { op::x, &LayoutVars::x ## Tfm }
 
 		const OpEntry<LayoutVars::TransformFn> LayoutVars::transformMap[] = {
@@ -304,7 +307,7 @@ namespace code {
 			{
 				Offset offset = -Offset::sPtr;
 				if (usingEH)
-					offset -= Offset::sPtr * 4;
+					offset -= Offset::sPtr * EH_WORDS;
 				for (RegSet::Iter i = preserved->begin(); i != preserved->end(); ++i) {
 					*dest << mov(asSize(*i, Size::sPtr), ptrRel(ptrFrame, offset));
 					offset -= Offset::sPtr;
@@ -314,7 +317,7 @@ namespace code {
 			if (usingEH) {
 				// Remove the SEH. Note: ptrC is not preserved across function calls, so it is OK to use it here!
 				// We can not use ptrA nor ptrD as rax == eax:edx
-				*dest << mov(ptrC, ptrRel(ptrFrame, -Offset::sPtr * 4));
+				*dest << mov(ptrC, ptrRel(ptrFrame, -Offset::sPtr * EH_WORDS));
 				*dest << threadLocal() << mov(ptrRel(noReg, Offset()), ptrC);
 			}
 
@@ -484,7 +487,7 @@ namespace code {
 			Offset varOffset;
 			// Exception handler frame.
 			if (usingEH)
-				varOffset += Size::sPtr * 4;
+				varOffset += Size::sPtr * EH_WORDS;
 			// Saved registers.
 			varOffset += Size::sPtr * savedRegs;
 
