@@ -24,6 +24,8 @@ namespace storm {
 			&runtime::codeSize,
 			&runtime::codeRefs,
 			&runtime::codeUpdatePtrs,
+			&runtime::trackCode,
+			&runtime::findCode,
 			&runtime::setVTable,
 			&runtime::threadGroup,
 			&runtime::threadLock,

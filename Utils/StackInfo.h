@@ -77,6 +77,10 @@ public:
 		stackInfo().detach(id);
 	}
 
+	T *operator ->() {
+		return &lookup;
+	}
+
 private:
 	T lookup;
 	int id;

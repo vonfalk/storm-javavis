@@ -6,7 +6,7 @@ namespace storm {
 	 * Location dependency declarations for objects in the GC.
 	 *
 	 * This object encapsulates an interface which enables users to query if an object has been
-	 * moved by the GC since the last time it was accessed. This is usefull when implementing hash
+	 * moved by the GC since the last time it was accessed. This is useful when implementing hash
 	 * maps for which the object's location is its key into the table. Moving the object alters this
 	 * identity, and therefore destroys the hash map. Using a GcWatch to keep track of changes
 	 * allows the map to detect these conditions and act accordingly.
@@ -23,6 +23,9 @@ namespace storm {
 
 		// Clear all watched addresses.
 		virtual void clear() = 0;
+
+		// See if any object has moved. May return false positives.
+		virtual bool moved() = 0;
 
 		// See if the object has moved. May return false positives.
 		virtual bool moved(const void *addr) = 0;

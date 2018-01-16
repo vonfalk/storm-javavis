@@ -13,16 +13,23 @@ namespace code {
 			// Initialize our members.
 			this->owner = owner;
 			codeRefs = new (this) Array<Reference *>();
-			code = (byte *)runtime::allocCode(engine(), size + sizeof(void *), numRefs + 1);
+			code = (byte *)runtime::allocCode(engine(), size + 2*sizeof(void *), numRefs + 2);
 			labels = lbls;
 			pos = 0;
-			ref = 1;
+			ref = 2;
 
-			// Store 'codeRefs' at the end of our allocated space.
+			// Store 'codeRefs' and 'owner' at the end of our allocated space.
 			GcCode *refs = runtime::codeRefs(code);
 			refs->refs[0].offset = size;
 			refs->refs[0].kind = GcCodeRef::rawPtr;
 			refs->refs[0].pointer = codeRefs;
+
+			refs->refs[1].offset = size + sizeof(void *);
+			refs->refs[1].kind = GcCodeRef::rawPtr;
+			refs->refs[1].pointer = owner;
+
+			// Remember where we stored 'code' so that we can find it later on.
+			runtime::trackCode(engine(), code);
 		}
 
 		void CodeOut::putByte(Byte b) {

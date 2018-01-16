@@ -24,7 +24,7 @@ namespace code {
 
 		Listing *Arena::transform(Listing *l, Binary *owner) const {
 #if defined(WINDOWS) && defined(X86)
-			activateInfo();
+			activateInfo(engine());
 #endif
 
 			if (has64(l)) {

@@ -108,6 +108,14 @@ namespace storm {
 			code::updatePtrs(code, Gc::codeRefs(code));
 		}
 
+		void trackCode(Engine &e, void *code) {
+			e.codeTable.add(code);
+		}
+
+		void *findCode(Engine &e, void *code) {
+			return e.codeTable.find(code);
+		}
+
 		void setVTable(RootObject *object) {
 			typeOf(object)->vtable->insert(object);
 		}

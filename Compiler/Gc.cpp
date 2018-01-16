@@ -1498,6 +1498,13 @@ namespace storm {
 		mps_arena_release(arena);
 	}
 
+	bool Gc::isCodeAlloc(void *ptr) {
+		mps_pool_t pool = null;
+		if (!mps_addr_pool(&pool, arena, ptr))
+			return false;
+
+		return pool == codePool;
+	}
 
 	struct Gc::Root {
 		mps_root_t root;
@@ -1749,6 +1756,10 @@ namespace storm {
 			mps_ld_reset(&ld, gc.arena);
 		}
 
+		virtual bool moved() {
+			return mps_ld_isstale_any(&ld, gc.arena) ? true : false;
+		}
+
 		virtual bool moved(const void *addr) {
 			return mps_ld_isstale(&ld, gc.arena, (mps_addr_t)addr) ? true : false;
 		}
@@ -1931,6 +1942,11 @@ namespace storm {
 		// Nothing to do...
 	}
 
+	bool Gc::isCodeAlloc(void *ptr) {
+		// Maybe... We do not know.
+		return true;
+	}
+
 	Gc::Root *Gc::createRoot(void *data, size_t count) {
 		// No roots here!
 		return null;
@@ -1943,6 +1959,7 @@ namespace storm {
 		virtual void add(const void *addr) {}
 		virtual void remove(const void *addr) {}
 		virtual void clear() {}
+		virtual bool moved() { return false; }
 		virtual bool moved(const void *addr) { return false; }
 		virtual GcWatch *clone() const {
 			return new MallocWatch();

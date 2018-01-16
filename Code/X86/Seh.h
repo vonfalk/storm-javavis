@@ -13,7 +13,7 @@ namespace code {
 
 
 		// Activate stack traces.
-		void activateInfo();
+		void activateInfo(Engine &e);
 
 	}
 }

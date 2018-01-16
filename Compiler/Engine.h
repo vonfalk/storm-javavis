@@ -4,6 +4,7 @@
 #include "BootStatus.h"
 #include "World.h"
 #include "Scope.h"
+#include "CodeTable.h"
 #include "VTableCall.h"
 #include "SharedLibs.h"
 #include "Code/Arena.h"
@@ -24,6 +25,7 @@ namespace storm {
 	class StdIo;
 	class TextInput;
 	class TextOutput;
+	class CodeTable;
 
 	/**
 	 * Defines the root object of the compiler. This object contains everything needed by the
@@ -141,6 +143,9 @@ namespace storm {
 
 		// The arena used for code generation for this platform.
 		code::Arena *arena();
+
+		// Code table for this engine. Used to implement 'runtime::trackCode' and 'runtime::findCode'.
+		CodeTable codeTable;
 
 		// VTable call stubs.
 		VTableCalls *vtableCalls();

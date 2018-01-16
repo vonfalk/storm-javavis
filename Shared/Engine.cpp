@@ -153,6 +153,14 @@ namespace storm {
 			(*fwd.codeUpdatePtrs)(code);
 		}
 
+		void trackCode(Engine &e, void *code) {
+			(*fwd.trackCode)(e, code);
+		}
+
+		void *findCode(Engine &e, void *ptr) {
+			return (*fwd.findCode)(e, ptr);
+		}
+
 		void setVTable(RootObject *object) {
 			(*fwd.setVTable)(object);
 		}

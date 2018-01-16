@@ -14,6 +14,16 @@ namespace code {
 
 		struct SEHFrame;
 
+		// Find the Binary for a code segment we generated earlier.
+		static Binary *codeBinary(const void *code) {
+			size_t s = runtime::codeSize(code);
+			if (s <= sizeof(void *))
+				return null;
+
+			const void *pos = (const char *)code + s - sizeof(void *);
+			return *(Binary **)pos;
+		}
+
 		// Stack frame we're implementing.
 		class Frame : public StackFrame {
 		public:
@@ -87,13 +97,12 @@ namespace code {
 				// TODO: Detect frames that do not use SEH as well!
 				to.data = null;
 
-				if (!frame)
-					return;
-
-				SEHFrame *f = SEHFrame::fromEbp(frame);
-				if (f->sehHandler == &x86SafeSEH) {
-					// It is ours!
-					to.data = *f->owner;
+				util::Lock::L z(lock);
+				for (std::set<Engine *>::const_iterator i = check.begin(), end = check.end(); i != end; ++i) {
+					Engine *e = *i;
+					void *code = runtime::findCode(*e, (void *)to.code);
+					if (code)
+						to.data = codeBinary(code);
 				}
 			}
 
@@ -105,10 +114,25 @@ namespace code {
 				}
 				return false;
 			}
+
+			void add(Engine &e) {
+				util::Lock::L z(lock);
+
+				// TODO: We should de-register Engine objects somehow...
+				check.insert(&e);
+			}
+
+		private:
+			// All Engine objects to check.
+			std::set<Engine *> check;
+
+			// Lock for updating the 'check' variable.
+			mutable util::Lock lock;
 		};
 
-		void activateInfo() {
+		void activateInfo(Engine &e) {
 			static RegisterInfo<SehInfo> info;
+			info->add(e);
 		}
 
 	}

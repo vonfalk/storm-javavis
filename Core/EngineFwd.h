@@ -37,6 +37,8 @@ namespace storm {
 		size_t (*codeSize)(const void *code);
 		GcCode *(*codeRefs)(void *code);
 		void (*codeUpdatePtrs)(void *code);
+		void (*trackCode)(Engine &e, void *code);
+		void *(*findCode)(Engine &e, void *ptr);
 		void (*setVTable)(RootObject *object);
 		os::ThreadGroup &(*threadGroup)(Engine &e);
 		util::Lock &(*threadLock)(Engine &e);

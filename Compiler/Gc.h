@@ -152,6 +152,9 @@ namespace storm {
 		// Access the metadata of a code allocation. Note: all references must be scannable at *any* time.
 		static GcCode *codeRefs(void *alloc);
 
+		// Is this pointer allocated by the GC? May return false positives.
+		bool isCodeAlloc(void *ptr);
+
 		/**
 		 * Iterate through all objects on the heap.
 		 *

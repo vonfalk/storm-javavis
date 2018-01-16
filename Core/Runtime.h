@@ -101,6 +101,14 @@ namespace storm {
 		// 'codeRef' section into the data section.
 		void codeUpdatePtrs(void *code);
 
+		// Track a code allocation so that it can be looked up later on.
+		void trackCode(Engine &e, void *code);
+
+		// Look up a pointer from within the set of allocations previously tracked by
+		// 'trackCode'. Allocations that are not alive are not returned. 'ptr' may be anywhere
+		// inside the code part of a previous allocation.
+		void *findCode(Engine &e, void *ptr);
+
 		// Re-set the vtable of an object to what it should be.
 		void setVTable(RootObject *object);
 
