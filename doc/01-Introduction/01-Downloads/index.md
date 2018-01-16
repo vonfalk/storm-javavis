@@ -18,7 +18,7 @@ Binary releases
 To run the compiler, simply unpack the archive file and run `Storm` (`Storm.exe` on Windows), and
 the top loop for Basic Storm should start. On Windows, no external libraries are required except for
 `dgbhelp.dll`, which is included with Windows. On Linux, Gtk+ 3.10 or later is required for the Ui
-library.
+library, `libpng` 16 and `libjpeg` 62 are required for proper image decoding.
 
 For more detaled instructions, see [Introduction](md://Introduction/).
 
