@@ -420,5 +420,10 @@ namespace code {
 			return as<PrimitiveDesc>(desc) == null;
 		}
 
+		CodeTable &codeTable() {
+			static CodeTable t;
+			return t;
+		}
+
 	}
 }

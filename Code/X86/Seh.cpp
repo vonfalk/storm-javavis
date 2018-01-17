@@ -3,6 +3,7 @@
 #include "SafeSeh.h"
 #include "Binary.h"
 #include "StackFrame.h"
+#include "Asm.h"
 #include "Core/Str.h"
 #include "Utils/Memory.h"
 #include "Utils/StackInfo.h"
@@ -97,13 +98,10 @@ namespace code {
 				// TODO: Detect frames that do not use SEH as well!
 				to.data = null;
 
-				util::Lock::L z(lock);
-				for (std::set<Engine *>::const_iterator i = check.begin(), end = check.end(); i != end; ++i) {
-					Engine *e = *i;
-					void *code = runtime::findCode(*e, (void *)to.code);
-					if (code)
-						to.data = codeBinary(code);
-				}
+				CodeTable &table = codeTable();
+				void *code = table.find(to.code);
+				if (code)
+					to.data = codeBinary(code);
 			}
 
 			virtual bool format(std::wostream &to, const ::StackFrame &frame) const {
@@ -114,25 +112,10 @@ namespace code {
 				}
 				return false;
 			}
-
-			void add(Engine &e) {
-				util::Lock::L z(lock);
-
-				// TODO: We should de-register Engine objects somehow...
-				check.insert(&e);
-			}
-
-		private:
-			// All Engine objects to check.
-			std::set<Engine *> check;
-
-			// Lock for updating the 'check' variable.
-			mutable util::Lock lock;
 		};
 
-		void activateInfo(Engine &e) {
+		void activateInfo() {
 			static RegisterInfo<SehInfo> info;
-			info->add(e);
 		}
 
 	}

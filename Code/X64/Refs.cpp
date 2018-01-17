@@ -105,7 +105,7 @@ namespace code {
 				if (ref.kind == GcCodeRef::unwindInfo && ref.pointer) {
 					FDE *ptr = (FDE *)ref.pointer;
 					// Set it to null so we do not accidentally scan or free it again.
-					ref.pointer = null;
+					atomicWrite(ref.pointer, null);
 					dwarfTable.free(ptr);
 				}
 			}

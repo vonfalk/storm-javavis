@@ -3,6 +3,7 @@
 #include "../Output.h"
 #include "../Operand.h"
 #include "../TypeDesc.h"
+#include "../CodeTable.h"
 #include "Core/EnginePtr.h"
 
 namespace code {
@@ -136,6 +137,9 @@ namespace code {
 		// Shall a result of the type 'r' be returned on the stack? Ie. do we need an additional
 		// parameter for the result?
 		bool resultParam(TypeDesc *desc);
+
+		// Get the code table used for all code.
+		CodeTable &codeTable();
 
 	}
 }

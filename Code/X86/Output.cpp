@@ -1,6 +1,7 @@
 #include "stdafx.h"
 #include "Output.h"
 #include "Binary.h"
+#include "Asm.h"
 #include "Utils/Bitwise.h"
 
 namespace code {
@@ -13,10 +14,10 @@ namespace code {
 			// Initialize our members.
 			this->owner = owner;
 			codeRefs = new (this) Array<Reference *>();
-			code = (byte *)runtime::allocCode(engine(), size + 2*sizeof(void *), numRefs + 2);
+			code = (byte *)runtime::allocCode(engine(), size + 2*sizeof(void *), numRefs + 3);
 			labels = lbls;
 			pos = 0;
-			ref = 2;
+			ref = 3;
 
 			// Store 'codeRefs' and 'owner' at the end of our allocated space.
 			GcCode *refs = runtime::codeRefs(code);
@@ -28,8 +29,10 @@ namespace code {
 			refs->refs[1].kind = GcCodeRef::rawPtr;
 			refs->refs[1].pointer = owner;
 
-			// Remember where we stored 'code' so that we can find it later on.
-			runtime::trackCode(engine(), code);
+			CodeTable::Handle unwind = codeTable().add(code);
+			refs->refs[2].offset = 0;
+			refs->refs[2].kind = GcCodeRef::unwindInfo;
+			refs->refs[2].pointer = unwind;
 		}
 
 		void CodeOut::putByte(Byte b) {

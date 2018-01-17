@@ -73,7 +73,6 @@ namespace storm {
 		id(atomicIncrement(engineId)),
 		gc(defaultArena, defaultFinalizer),
 		threadGroup(util::memberVoidFn(this, &Engine::attachThread), util::memberVoidFn(this, &Engine::detachThread)),
-		codeTable(*this),
 		world(gc),
 		objRoot(null),
 		ioThread(null),
@@ -135,7 +134,6 @@ namespace storm {
 
 		// We need to remove the root this array implies before the Gc is destroyed.
 		world.clear();
-		codeTable.clear();
 
 		Gc::destroyRoot(objRoot);
 		delete ioThread;

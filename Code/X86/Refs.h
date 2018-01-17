@@ -7,8 +7,8 @@ namespace code {
 		void writePtr(void *code, const GcCode *refs, Nat id);
 
 		// No finalization for X86.
-		inline bool needFinalization() { return false; }
-		inline void finalize(void *code) {}
+		inline bool needFinalization() { return true; }
+		void finalize(void *code);
 
 	}
 }

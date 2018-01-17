@@ -238,8 +238,9 @@ namespace code {
 			// will count as if they were done after the sorting. Otherwise, things may break.
 			atomicWrite(updated, 1);
 
-			// Sort!
-			std::sort(sorted, sorted + used, Compare());
+			// Sort! Heap sort will not lose any data or behave wierdly even if things change under our feet.
+			std::make_heap(sorted, sorted + used, Compare());
+			std::sort_heap(sorted, sorted + used, Compare());
 
 			// Done! Hopefully the array is not altered until next time some information is needed!
 			return result;
