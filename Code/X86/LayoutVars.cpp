@@ -56,8 +56,8 @@ namespace code {
 
 			layout = code::x86::layout(src, preserved->count(), usingEH, resultParam, memberFn);
 
-			if (usingEH)
-				binaryLbl = dest->label();
+			selfLbl = dest->label();
+			*dest << selfLbl;
 		}
 
 		void LayoutVars::during(Listing *dest, Listing *src, Nat line) {
@@ -73,14 +73,7 @@ namespace code {
 		}
 
 		void LayoutVars::after(Listing *dest, Listing *src) {
-			// NOTE: This table may not be aligned properly. On X86, this is not a problem, but it
-			// might be on other platforms!
-
-			if (usingEH) {
-				*dest << binaryLbl;
-				*dest << dat(objPtr(owner));
-			}
-
+			*dest << alignAs(Size::sPtr);
 			*dest << dest->meta();
 
 			Array<Var> *vars = src->allVars();
@@ -265,8 +258,8 @@ namespace code {
 				partId = offset;
 				offset -= Offset::sInt;
 
-				// Owner.
-				*dest << mov(ptrRel(ptrFrame, offset), binaryLbl);
+				// Self pointer.
+				*dest << mov(ptrRel(ptrFrame, offset), selfLbl);
 				offset -= Offset::sPtr;
 
 				// Standard SEH frame.

@@ -58,8 +58,8 @@ namespace code {
 			// Offset at which the part id is stored if we're using exceptions.
 			Offset partId;
 
-			// Label to where the Binary pointer is stored. Only valid if 'usingEH' is true.
-			Label binaryLbl;
+			// Label to the beginning of the code, so that we can store a pointer to ourselves in the EH frame.
+			Label selfLbl;
 
 			// Create an Operand referring to the return pointer.
 			Operand resultLoc();

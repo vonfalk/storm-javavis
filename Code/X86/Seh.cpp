@@ -42,10 +42,9 @@ namespace code {
 			SEHFrame *prev;
 			const void *sehHandler;
 
-			// The Binary object that owns this code.
-			// This is a Binary ** to allow the Gc to move the Binary object even while
-			// the function has a frame on the stack.
-			Binary **owner;
+			// Pointer to the running code. This is so that we are able to extract the location of
+			// the Binary object during unwinding.
+			void *self;
 
 			// The topmost active part.
 			size_t activePart;
@@ -72,9 +71,10 @@ namespace code {
 
 			// Cleanup this frame.
 			void cleanup() {
-				if (owner && *owner) {
+				Binary *owner = codeBinary(self);
+				if (owner) {
 					Frame f(this);
-					(*owner)->cleanup(f);
+					owner->cleanup(f);
 				} else {
 					WARNING(L"Using SEH, but no link to the metadata provided!");
 				}
