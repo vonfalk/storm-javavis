@@ -212,7 +212,10 @@ namespace storm {
 			const void *addr = fn->originalPtr();
 			nat r = cpp->findSlot(addr);
 			if (r != vtable::invalid) {
-				return cppSlot(r);
+				VTableSlot slot = cppSlot(r);
+				if (setLookup)
+					updateSuper(slot);
+				return slot;
 			}
 		}
 
@@ -248,6 +251,20 @@ namespace storm {
 			return s->vtable->findSuperSlot(fn, setLookup);
 		} else {
 			return VTableSlot();
+		}
+	}
+
+	void VTable::updateSuper(VTableSlot slot) {
+		Type *s = owner->super();
+		if (!s)
+			return;
+
+		VTable *super = s->vtable;
+		if (Function *fn = get(slot)) {
+			useLookup(fn, slot);
+		} else {
+			// Keep on looking!
+			super->updateSuper(slot);
 		}
 	}
 

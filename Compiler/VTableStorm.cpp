@@ -107,8 +107,10 @@ namespace storm {
 	}
 
 	Function *VTableStorm::get(Nat slot) const {
-		assert(slot < count());
-		return refs->v[slot];
+		if (slot < count())
+			return refs->v[slot];
+
+		return null;
 	}
 
 	void VTableStorm::clear(Nat slot) {

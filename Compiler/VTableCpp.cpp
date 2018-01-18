@@ -149,7 +149,6 @@ namespace storm {
 			if (id < count())
 				return refs->v[id];
 
-		// Note: we're currently a bit robust here, pretending to allow out-of bounds reads...
 		return null;
 	}
 

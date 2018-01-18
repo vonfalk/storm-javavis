@@ -114,6 +114,9 @@ namespace storm {
 		// 'setLookup' is true, then use vtable lookup for the most specific match found.
 		VTableSlot findSuperSlot(OverridePart *fn, Bool setLookup);
 
+		// Enable lookup for 'slot' in any parent classes.
+		void updateSuper(VTableSlot slot);
+
 		// Find (and update) any children overriding 'fn'. Returns true if any child is found.
 		Bool updateChildren(Function *fn, VTableSlot slot);
 
@@ -131,7 +134,7 @@ namespace storm {
 		void set(VTableSlot slot, Function *fn);
 		void set(VTableSlot slot, const void *fn);
 
-		// Get the function associated with 'slot'.
+		// Get the function associated with 'slot'. We allow reading out of bounds.
 		MAYBE(Function *) get(VTableSlot slot);
 
 		// Clear 'slot'.

@@ -939,8 +939,8 @@ namespace storm {
 
 		Function *found = as<Function>(s->findHere(fn));
 		if (found) {
-			// Found it, no need to search further as all possible parent functions are already in
-			// the vtable already.
+			// Found it, no need to search further as all possible parent functions are in the
+			// vtable already.
 			s->vtable->insert(found);
 			return true;
 		} else {

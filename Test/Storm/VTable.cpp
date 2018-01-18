@@ -3,6 +3,7 @@
 #include "Compiler/Debug.h"
 #include "Compiler/Package.h"
 #include "Compiler/TypeCtor.h"
+#include "Code/X86/Arena.h"
 
 class VTableTest : public RootObject {
 public:
@@ -322,3 +323,29 @@ BEGIN_TEST(VTableSplit, Storm) {
 
 	TODO(L"Make sure to update the vtable slots of classes which do not contain the function in question as well!");
 } END_TEST
+
+// Make sure that classes implemented only in C++ behave correctly as well.
+// Earlier, this could be observed with the code::Arena class.
+BEGIN_TEST(VTableCppOnly, Storm) {
+	Engine &e = gEngine();
+
+	// Create an arena (always the X86 arena for simplicity).
+	code::Arena *arena = new (e) code::x86::Arena();
+
+	// Find the type of the base class.
+	Type *base = StormInfo<code::Arena>::type(e);
+	PVAR(base->identifier());
+
+	// Try to call the 'firstParamLoc' function, and see which function is actually called.
+	Array<Value> *params = new (e) Array<Value>(2, Value());
+	params->at(0) = Value(base);
+	params->at(1) = Value(StormInfo<Nat>::type(e));
+	Function *call = as<Function>(base->find(L"firstParamLoc", params));
+
+	Nat param = 0;
+	os::FnCall<code::Operand, 2> fnParams = os::fnCall().add(arena).add(param);
+
+	// The base-class implementation asserts, so it is easy to see which version was actually called.
+	CHECK_RUNS(fnParams.call(call->pointer(), true));
+
+} END_TEST;

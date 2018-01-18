@@ -105,6 +105,10 @@ namespace storm {
 		}
 	}
 
+	Code *Function::getLookup() const {
+		return lookup;
+	}
+
 	void Function::compile() {
 		if (code)
 			code->compile();

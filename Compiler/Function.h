@@ -69,6 +69,9 @@ namespace storm {
 		// Set lookup code. A default one is provided, use null to restore it.
 		void STORM_FN setLookup(MAYBE(Code *) lookup);
 
+		// Get the lookup currently in use.
+		MAYBE(Code *) STORM_FN getLookup() const;
+
 		// Forcefully compile this function.
 		void STORM_FN compile();
 
