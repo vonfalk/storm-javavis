@@ -334,13 +334,12 @@ BEGIN_TEST(VTableCppOnly, Storm) {
 
 	// Find the type of the base class.
 	Type *base = StormInfo<code::Arena>::type(e);
-	PVAR(base->identifier());
 
 	// Try to call the 'firstParamLoc' function, and see which function is actually called.
 	Array<Value> *params = new (e) Array<Value>(2, Value());
 	params->at(0) = Value(base);
 	params->at(1) = Value(StormInfo<Nat>::type(e));
-	Function *call = as<Function>(base->find(L"firstParamLoc", params));
+	Function *call = as<Function>(base->find(S("firstParamLoc"), params));
 
 	Nat param = 0;
 	os::FnCall<code::Operand, 2> fnParams = os::fnCall().add(arena).add(param);
