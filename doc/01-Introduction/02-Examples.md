@@ -12,6 +12,10 @@ The files `eval.bs` and `eval.bnf` illustrates the tight interaction between dif
 implementing a simple calculator that can evaluate simple expressions. Call `demo:eval("1 + 3")` to
 evaluate expressions, or `demo:tree("1 + 3")` to see the syntax tree for expressions.
 
+```
+?Include:root/demo/eval.bnf?
+```
+
 The file `eval.bnf` contains the grammar describing the expressions supported by the
 calculator. `Expr` is the rule that describes entire expressions, and it is therefore the start
 rule. Aside from the language, the `bnf`-file also describes how to transform the syntax tree from a
@@ -19,6 +23,10 @@ successful parse into a representation that is more convenient for the user of t
 particular case, we are only interested in evaluating the parsed expression, and as such we use the
 transformations to evaluate the expression rather than constructing another representation. See
 [BNF Syntax](md://BNF_Syntax) for details on the syntax and semantics of the grammar language in Storm.
+
+```
+?Include:root/demo/eval.bs?
+```
 
 The functions `eval` and `tree` are implemented in Basic Storm in the file `eval.bs`. The `tree`
 function creates `Parser` instance which parses strings starting with the supplied `Expr` rule,
@@ -51,15 +59,28 @@ included, the syntax highlighting will be wrong. Now, uncomment the `use present
 of the file and see that the syntax highlighting is now correct since the proper grammar is now
 included.
 
+The grammar for the presentation language is available in the file `root/present/syntax.bnf`, which
+is shown below:
+
+```
+?Include:root/present/syntax.bnf?
+```
+
 Reload
 -------
 
 This file shows that it is possible to reload code in an already running program in Storm (to
-certain degrees, at least). From the REPL, call `demo:reloadMain`, and you shall see that you are
-returned to the prompt, but the numbers 1 to 10 are displayed in sequence in the background. While
-this is happening, change the `myPrint` function by commenting the first `print` statement and
-replace it with the second one and type `reload{demo}` into the REPL. Now, you shall see stars being
-displayed instead of numbers, even when you reload the code in the middle of the running code!
+certain degrees, at least).
+
+```
+?Include:root/demo/reload.bs?
+```
+
+From the REPL, call `demo:reloadMain`, and you shall see that you are returned to the prompt, but
+the numbers 1 to 10 are displayed in sequence in the background. While this is happening, change the
+`myPrint` function by commenting the first `print` statement and replace it with the second one and
+type `reload{demo}` into the REPL. Now, you shall see stars being displayed instead of numbers, even
+when you reload the code in the middle of the running code!
 
 Note that any changes made to the `slowFn` function while it is being executed will not be
 visible. This is because code reloads replace entire functions, and since the call stack will still
@@ -69,11 +90,16 @@ complete.
 Thread
 -------
 
-The file `thread.bs` illustrates how the threading system in Storm works. The `seq` function calls
-the function `threadDemo` twice. Since `threadDemo` is declared to be executed on the `Demo` thread,
-this causes Storm to post a message to the `Demo` thread, asking for the function to be executed
-there. This all happens behind the scenes, and the function call behaves (almost) as if it was being
-a regular function.
+The file `thread.bs` illustrates how the threading system in Storm works.
+
+```
+?Include:root/demo/thread.bs?
+```
+
+The `seq` function calls the function `threadDemo` twice. Since `threadDemo` is declared to be
+executed on the `Demo` thread, this causes Storm to post a message to the `Demo` thread, asking for
+the function to be executed there. This all happens behind the scenes, and the function call behaves
+(almost) as if it was being a regular function.
 
 The function `spawn`, on the other hand calls `threadDemo` using the `spawn` keyword. This causes
 execution in `Spawn` to progress until `a.result + b.result` is being evaluated (`a` and `b` are
@@ -92,7 +118,13 @@ Actor
 ------
 
 The file `actor.bs` is another version of the example in `thread.bs`, using actors instead of plain
-functions. The `actorSeq` function creates two actors on different OS threads and calls `run` on
+functions.
+
+```
+?Include:root/demo/actor.bs?
+```
+
+The `actorSeq` function creates two actors on different OS threads and calls `run` on
 both of them. As in the previous example, Storm posts a message to the proper thread behind the
 scenes, so calling the `run` function appears as a regular function call. As such, the output is
 deterministic and should match the output of `seq` in the previous example.

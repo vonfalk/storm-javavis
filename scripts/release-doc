@@ -10,6 +10,10 @@ release-notes > doc/release_notes.md
 7z a release/storm.zip doc/ > /dev/null
 rm doc/release_notes.md
 
+# Add some code examples as well!
+7z a release/storm.zip root/demo/ > /dev/null
+7z a release/storm.zip root/present/ > /dev/null
+
 echo "Uploading documentation to fprg.se..."
 cat release/storm.zip | ssh filip-www@fprg.se /home/filip-www/upload-doc.sh
 

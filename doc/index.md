@@ -3,26 +3,23 @@ Storm
 
 ?Button(md://Introduction/Downloads)Download Storm?
 
-Storm is a programming language platform with a strong focus on extensibility. Storm itself is
+Storm is a **programming language platform** with a strong focus on **extensibility**. Storm itself is
 mostly a framework for creating languages rather than a complete compiler. The framework is designed
 to make easy to implement languages that can be extended with new syntax and semantics. Of course,
 Storm comes bundled with a few languages (mainly [Basic Storm](md://Basic_Storm)), but these are
 separate from the core and could be implemented as libraries in the future. Since these languages
-are implemented in Storm, they allow users to create their own syntax extensions as separate
-libraries. Furthermore, Storm allows languages to interact with each other freely and mostly
+are implemented in Storm, they allow users to create their own **syntax extensions** as separate
+libraries. Furthermore, Storm allows languages to **interact** with each other freely and mostly
 seamlessly.
 
-Aside from extensibility, Storm is implemented as an interactive compiler. This means that Storm is
+Aside from extensibility, Storm is implemented as an **interactive compiler**. This means that Storm is
 designed to be executed in the background while programs are being developed. As the compiler is
 running in the background, it is able to provide information about the program being developed to
 help the developer, much like an IDE. Currently, it is possible to run Storm as a
 [language server](md://Storm/Language_server) that provides syntax highlighting for all supported
 languages and language extensions to an editor. In the future, the language server should be able
-to provide more semantic information as well.
-
-More information on the language server can be found at
-[http://urn.kb.se/resolve?urn=urn:nbn:se:liu:diva-138847](http://urn.kb.se/resolve?urn=urn:nbn:se:liu:diva-138847)
-
+to provide more semantic information as well. More information on the language server can be found
+[here](http://urn.kb.se/resolve?urn=urn:nbn:se:liu:diva-138847).
 
 The following example illustrates some of the possibilities of Storm:
 
@@ -55,6 +52,9 @@ extension adds a `presentation`-block that evaluates to a value of the type `Pre
 later passed to a `PresentationWindow` that shows the actual presentation. The example also shows
 that the language extension is able to use variables declared outside of the language extension with
 the variable `title`.
+
+The syntax used to define the syntax language, together with other examples illustrating the
+capabilities of Storm can be found on the [Examples](md://Introduction/Examples) page.
 
 
 Getting started
