@@ -12,15 +12,20 @@ annotated release tags in the Git repository.
 Binary releases
 -----------------
 
-- [Windows (32-bit)](storm.zip)
-- [Linux (Debian, GCC 6.2.0 or later)](storm.tar.gz)
-
 To run the compiler, simply unpack the archive file and run `Storm` (`Storm.exe` on Windows), and
-the top loop for Basic Storm should start. On Windows, no external libraries are required except for
-`dgbhelp.dll`, which is included with Windows. On Linux, Gtk+ 3.10 or later is required for the Ui
-library, `libpng` 16 and `libjpeg` 62 are required for proper image decoding.
+the top loop for Basic Storm should start. For more detaled instructions, see
+[Introduction](md://Introduction/).
 
-For more detaled instructions, see [Introduction](md://Introduction/).
+- [Windows (32-bit)](storm.zip)
+
+  No external libraries are required, except for `dbghelp.dll`, which is included with Windows. The
+  Ui library requires Windows 7 or later.
+
+- [Linux (X86-64)](storm.tar.gz)
+
+  The C standard library for GCC 6.2.0 or later is required. For the Ui library, Gtk+ 3.10 or later
+  is required. `libpng` and `libjpeg` are also required for proper image decoding, but they are
+  included in the download since there are many incompatible versions of these libraries.
 
 
 Source releases
