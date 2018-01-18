@@ -3,7 +3,6 @@
 
 #ifndef WINDOWS
 
-// TODO: We should probably add a license for libpng and libjpeg, even though we tecnically do not distribute it.
 #include <png.h>
 #include <jpeglib.h>
 
