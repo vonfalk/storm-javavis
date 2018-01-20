@@ -28,12 +28,6 @@ namespace storm {
 
 		// This named is final.
 		namedFinal = 0x10,
-
-		/**
-		 * Access.
-		 * TODO: Implement private, package, protected and public in some way.
-		 */
-
 	};
 
 	BITMASK_OPERATORS(NamedFlags);
