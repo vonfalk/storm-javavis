@@ -24,6 +24,7 @@ namespace storm {
 	class StdIo;
 	class TextInput;
 	class TextOutput;
+	class Visibility;
 
 	/**
 	 * Defines the root object of the compiler. This object contains everything needed by the
@@ -184,6 +185,20 @@ namespace storm {
 		// Get a reference to a function in the runtime.
 		code::Ref ref(RefType ref);
 
+		// Default visibility objects.
+		enum VisType {
+			vPublic,
+			vTypePrivate,
+			vTypeProtected,
+			vPackagePrivate,
+
+			// Should be last.
+			visCount,
+		};
+
+		// Get a visibility object.
+		Visibility *visibility(VisType type);
+
 		// Get the StdIo object.
 		StdIo *stdIo();
 
@@ -248,6 +263,9 @@ namespace storm {
 			code::TypeDesc *ptrDesc;
 			code::TypeDesc *voidDesc;
 
+			// Default visibility objects.
+			Visibility *visibility[visCount];
+
 			// Handles to readers for stdin, stdout and stderror.
 			TextInput *stdIn;
 			TextOutput *stdOut;
@@ -270,6 +288,9 @@ namespace storm {
 
 		// Create references.
 		code::RefSource *createRef(RefType ref);
+
+		// Create visibility objects.
+		Visibility *createVisibility(VisType t);
 
 		// Plug into the stack traces in order to properly scan the stack traces.
 		class StormInfo : public StackInfo {

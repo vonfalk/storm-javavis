@@ -1,5 +1,6 @@
 #pragma once
 #include "Core/TObject.h"
+#include "Core/EnginePtr.h"
 
 namespace storm {
 	STORM_PKG(core.lang);
@@ -39,6 +40,10 @@ namespace storm {
 
 		// Check.
 		virtual Bool STORM_FN visible(Named *check, NameLookup *source);
+
+	protected:
+		// To string.
+		virtual void STORM_FN toS(StrBuf *to) const;
 	};
 
 
@@ -53,6 +58,10 @@ namespace storm {
 
 		// Check.
 		virtual Bool STORM_FN visible(Named *check, NameLookup *source);
+
+	protected:
+		// To string.
+		virtual void STORM_FN toS(StrBuf *to) const;
 	};
 
 
@@ -67,6 +76,10 @@ namespace storm {
 
 		// Check.
 		virtual Bool STORM_FN visible(Named *check, NameLookup *source);
+
+	protected:
+		// To string.
+		virtual void STORM_FN toS(StrBuf *to) const;
 	};
 
 
@@ -81,6 +94,20 @@ namespace storm {
 
 		// Check.
 		virtual Bool STORM_FN visible(Named *check, NameLookup *source);
+
+	protected:
+		// To string.
+		virtual void STORM_FN toS(StrBuf *to) const;
 	};
+
+
+	/**
+	 * Access the shared instances of the above objects.
+	 */
+
+	Visibility *STORM_FN STORM_NAME(allPublic, public)(EnginePtr e) ON(Compiler);
+	Visibility *STORM_FN typePrivate(EnginePtr e) ON(Compiler);
+	Visibility *STORM_FN typeProtected(EnginePtr e) ON(Compiler);
+	Visibility *STORM_FN packagePrivate(EnginePtr e) ON(Compiler);
 
 }

@@ -7,6 +7,10 @@
 
 namespace storm {
 
+	/**
+	 * NameLookup.
+	 */
+
 	NameLookup::NameLookup() : parentLookup(null) {}
 
 	NameLookup *NameLookup::parent() const {
@@ -43,9 +47,15 @@ namespace storm {
 		return find(new (this) Str(name));
 	}
 
+
+	/**
+	 * Named.
+	 */
+
 	Named::Named(Str *name) : name(name), flags(namedDefault) {
 		if (engine().has(bootTemplates)) {
 			params = new (this) Array<Value>();
+			visibility = allPublic(engine());
 		}
 	}
 
@@ -54,6 +64,8 @@ namespace storm {
 	void Named::lateInit() {
 		if (!params)
 			params = new (this) Array<Value>();
+		if (!visibility)
+			visibility = allPublic(engine());
 	}
 
 	NameLookup *Named::parent() const {

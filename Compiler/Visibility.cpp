@@ -3,6 +3,7 @@
 #include "Named.h"
 #include "Type.h"
 #include "Package.h"
+#include "Engine.h"
 
 namespace storm {
 
@@ -52,6 +53,10 @@ namespace storm {
 		return true;
 	}
 
+	void Public::toS(StrBuf *to) const {
+		*to << S("public");
+	}
+
 
 	/**
 	 * Private within types.
@@ -62,6 +67,10 @@ namespace storm {
 	Bool TypePrivate::visible(Named *check, NameLookup *source) {
 		Type *type = firstParent<Type>(check);
 		return hasParent(source, type);
+	}
+
+	void TypePrivate::toS(StrBuf *to) const {
+		*to << S("private");
 	}
 
 
@@ -81,6 +90,10 @@ namespace storm {
 		return src->isA(type);
 	}
 
+	void TypeProtected::toS(StrBuf *to) const {
+		*to << S("protected");
+	}
+
 
 	/**
 	 * Private within a package.
@@ -91,6 +104,31 @@ namespace storm {
 	Bool PackagePrivate::visible(Named *check, NameLookup *source) {
 		Package *package = firstParent<Package>(check);
 		return hasParent(source, package);
+	}
+
+	void PackagePrivate::toS(StrBuf *to) const {
+		*to << S("package private");
+	}
+
+
+	/**
+	 * Object access.
+	 */
+
+	Visibility *STORM_NAME(allPublic, public)(EnginePtr e) {
+		return e.v.visibility(Engine::vPublic);
+	}
+
+	Visibility *typePrivate(EnginePtr e) {
+		return e.v.visibility(Engine::vTypePrivate);
+	}
+
+	Visibility *typeProtected(EnginePtr e) {
+		return e.v.visibility(Engine::vTypeProtected);
+	}
+
+	Visibility *packagePrivate(EnginePtr e) {
+		return e.v.visibility(Engine::vPackagePrivate);
 	}
 
 }

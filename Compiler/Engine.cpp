@@ -18,6 +18,7 @@
 #include "Syntax/Node.h"
 #include "Utils/Memory.h"
 #include "StdIoThread.h"
+#include "Visibility.h"
 
 // Only included from here:
 #include "OS/SharedMaster.h"
@@ -364,6 +365,29 @@ namespace storm {
 			return FNREF(fnNull);
 		default:
 			assert(false, L"Unknown reference: " + ::toS(ref));
+			return null;
+		}
+	}
+
+	Visibility *Engine::visibility(VisType t) {
+		Visibility *&r = o.visibility[t];
+		if (!r)
+			r = createVisibility(t);
+		return r;
+	}
+
+	Visibility *Engine::createVisibility(VisType t) {
+		switch (t) {
+		case vPublic:
+			return new (*this) Public();
+		case vTypePrivate:
+			return new (*this) TypePrivate();
+		case vTypeProtected:
+			return new (*this) TypeProtected();
+		case vPackagePrivate:
+			return new (*this) PackagePrivate();
+		default:
+			assert(false, L"Unknown visibility: " + ::toS(t));
 			return null;
 		}
 	}

@@ -3,6 +3,7 @@
 #include "Thread.h"
 #include "NamedFlags.h"
 #include "Value.h"
+#include "Visibility.h"
 
 namespace storm {
 	STORM_PKG(core.lang);
@@ -51,11 +52,14 @@ namespace storm {
 		// Create with parameters.
 		STORM_CTOR Named(Str *name, Array<Value> *params);
 
-		// Our name. Note: this can be null for a while when starting up the compiler.
+		// Our name. Note: may be null for a while during compiler startup.
 		Str *name;
 
-		// Our parameters. Note: this can be null for a while when starting up the compiler.
+		// Our parameters. Note: may be null for a while during compiler startup.
 		Array<Value> *params;
+
+		// Visibility. Initialized to 'public'. Note: may be null for a while during compiler startup.
+		Visibility *visibility;
 
 		// Flags for this named object.
 		NamedFlags flags;
