@@ -110,7 +110,7 @@ namespace storm {
 			Block *block;
 
 			// Find a variable here.
-			virtual MAYBE(Named *) STORM_FN find(SimplePart *part);
+			virtual MAYBE(Named *) STORM_FN find(SimplePart *part, MAYBE(NameLookup *) source);
 		};
 
 	}

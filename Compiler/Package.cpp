@@ -78,7 +78,7 @@ namespace storm {
 			Url *now = children->at(i);
 			if (now->dir()) {
 				Str *name = now->name();
-				if (!tryFind(new (this) SimplePart(name)))
+				if (!tryFind(new (this) SimplePart(name), null))
 					add(loadPackage(name));
 			} else {
 				files->push(now);

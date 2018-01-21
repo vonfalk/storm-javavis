@@ -21,8 +21,13 @@ namespace storm {
 	public:
 		STORM_CTOR NameLookup();
 
-		// Find the specified NamePart in here. Returns null if not found.
-		virtual MAYBE(Named *) STORM_FN find(SimplePart *part);
+		// Find the specified NamePart in here. Returns null if not found. 'source' indicates who is
+		// looking for something, and is used to perform visibility checks. If set to 'null', no
+		// visibility checks are performed.
+		virtual MAYBE(Named *) STORM_FN find(SimplePart *part, MAYBE(NameLookup *) source);
+
+		// Convenience overloads for 'find'. TODO: All of these should require a 'source'.
+		MAYBE(Named *) STORM_FN find(SimplePart *part);
 		MAYBE(Named *) STORM_FN find(Str *name, Array<Value> *params);
 		MAYBE(Named *) STORM_FN find(Str *name, Value param);
 		MAYBE(Named *) STORM_FN find(Str *name);
@@ -58,8 +63,11 @@ namespace storm {
 		// Our parameters. Note: may be null for a while during compiler startup.
 		Array<Value> *params;
 
-		// Visibility. Initialized to 'public'. Note: may be null for a while during compiler startup.
-		Visibility *visibility;
+		// Visibility. 'null' means 'visible from everywhere'.
+		MAYBE(Visibility *) visibility;
+
+		// Check if this named entity is visible from 'source'.
+		Bool STORM_FN visibleFrom(MAYBE(NameLookup *) source);
 
 		// Flags for this named object.
 		NamedFlags flags;
@@ -84,6 +92,9 @@ namespace storm {
 
 		// String representation.
 		virtual void STORM_FN toS(StrBuf *buf) const;
+
+		// Output the visibility to a string buffer.
+		void STORM_FN putVisibility(StrBuf *to) const;
 
 	private:
 		// Find closest named parent.

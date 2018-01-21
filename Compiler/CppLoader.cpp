@@ -154,7 +154,7 @@ namespace storm {
 			}
 		}
 
-		// Now we can fill in the names and superclasses properly!
+		// Now we can fill in the names and visibility properly!
 		for (nat i = 0; i < c; i++) {
 			const CppType &type = world->types[i];
 
@@ -166,7 +166,11 @@ namespace storm {
 			if (!into->types[i])
 				continue;
 
+			// Name.
 			into->types[i]->name = new (*e) Str(type.name);
+
+			// Visibility. All types from C++ are public. There is no mechanism to make them anything else.
+			into->types[i]->visibility = e->visibility(Engine::vPublic);
 		}
 	}
 
@@ -193,6 +197,7 @@ namespace storm {
 				}
 
 				into->namedThreads[i] = new (*e) NamedThread(new (*e) Str(thread.name), into->threads[i]);
+				into->namedThreads[i]->visibility = e->visibility(Engine::vPublic);
 			}
 		}
 	}
@@ -449,6 +454,8 @@ namespace storm {
 		if (fn.threadId < this->into->namedThreads.count())
 			f->runOn(this->into->namedThreads[fn.threadId]);
 
+		f->visibility = visibility(fn.access);
+
 		into->add(f);
 	}
 
@@ -479,6 +486,8 @@ namespace storm {
 				// If so, it has a pure constructor.
 				f->makePure();
 		}
+
+		f->visibility = visibility(fn.access);
 
 		params->at(0).type->add(f);
 	}
@@ -533,6 +542,7 @@ namespace storm {
 
 		MemberVar *v = new (*e) MemberVar(new (*e) Str(var.name), type, memberOf);
 		v->setOffset(Offset(var.offset));
+		v->visibility = visibility(var.access);
 		memberOf->add(v);
 	}
 
@@ -567,6 +577,20 @@ namespace storm {
 
 			NameSet *into = findPkg(v.pkg);
 			into->add(new (*e) VersionTag(new (*e) Str(v.name), ver));
+		}
+	}
+
+	Visibility *CppLoader::visibility(CppAccess a) {
+		switch (a) {
+		case cppPublic:
+			return e->visibility(Engine::vPublic);
+		case cppProtected:
+			return e->visibility(Engine::vTypeProtected);
+		case cppPrivate:
+			return e->visibility(Engine::vTypePrivate);
+		default:
+			assert(false, L"Unknown access in C++ code: " + ::toS(a));
+			return null;
 		}
 	}
 

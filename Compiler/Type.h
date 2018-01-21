@@ -68,7 +68,7 @@ namespace storm {
 		virtual void STORM_FN add(Named *item);
 
 		// Modify the 'find' behaviour slightly so it also considers superclasses.
-		virtual MAYBE(Named *) STORM_FN find(SimplePart *part);
+		virtual MAYBE(Named *) STORM_FN find(SimplePart *part, MAYBE(NameLookup *) source);
 		using NameSet::find;
 
 		// Receive notification of new additions.
@@ -120,7 +120,7 @@ namespace storm {
 		void vtableInit(const void *vtable);
 
 		// Find only in this class.
-		MAYBE(Named *) STORM_FN findHere(SimplePart *part);
+		MAYBE(Named *) STORM_FN findHere(SimplePart *part, MAYBE(NameLookup *) source);
 
 		// Helpers for the chain.
 		inline Bool STORM_FN isA(const Type *o) const { return chain->isA(o); }

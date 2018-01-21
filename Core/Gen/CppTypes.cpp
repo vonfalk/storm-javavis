@@ -146,7 +146,7 @@ namespace storm {
 
 		static const CppFunction functions[] = {
 			// CPP_FUNCTIONS
-			{ null, null, CppFunction::fnFree, 0, null, null, { CppTypeRef::tVoid, null, false, false } },
+			{ null, null, CppFunction::fnFree, cppPublic, 0, null, null, { CppTypeRef::tVoid, null, false, false } },
 		};
 
 		return functions;
@@ -155,7 +155,7 @@ namespace storm {
 	const CppVariable *CppMeta::cppVariables() {
 		static const CppVariable variables[] = {
 			// CPP_VARIABLES
-			{ null, 0, { CppTypeRef::invalid }, CppOffset::invalid },
+			{ null, 0, cppPublic, { CppTypeRef::invalid }, CppOffset::invalid },
 		};
 
 		return variables;

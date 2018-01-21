@@ -153,7 +153,9 @@ namespace storm {
 	}
 
 	void Enum::toS(StrBuf *to) const {
-		*to << S("enum ") << identifier() << S(" {\n");
+		*to << S("enum ") << identifier() << S(" [");
+		putVisibility(to);
+		*to << S("] {\n");
 		{
 			Indent z(to);
 			for (Nat i = 0; i < values->count(); i++) {

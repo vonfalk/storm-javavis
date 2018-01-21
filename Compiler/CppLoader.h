@@ -133,6 +133,9 @@ namespace storm {
 		// Load a template.
 		TemplateList *loadTemplate(const CppTemplate &t);
 
+		// Get a visibility object from the C++ access.
+		Visibility *visibility(CppAccess a);
+
 		// See if various types are external.
 		inline bool external(const CppType &t) const { return t.kind == CppType::superExternal; }
 		inline bool external(const CppTemplate &t) const { return t.generate == null; }

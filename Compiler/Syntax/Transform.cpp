@@ -114,8 +114,8 @@ namespace storm {
 
 		Expr *TransformFn::createMe(ExprBlock *in) {
 			// See if there is a parameter named 'me'. If so: use that!
-			for (Nat i = 0; i < params->count(); i++) {
-				if (wcscmp(params->at(i).name->c_str(), S("me")) == 0) {
+			for (Nat i = 0; i < valParams->count(); i++) {
+				if (wcscmp(valParams->at(i).name->c_str(), S("me")) == 0) {
 					if (result)
 						throw SyntaxError(pos, L"Can not use 'me' as a parameter name and specify a result.");
 					LocalVar *r = in->variable(new (this) SimplePart(S("me")));

@@ -12,6 +12,15 @@ namespace storm {
 	class Type;
 
 	/**
+	 * Access mode from C++.
+	 */
+	enum STORM_HIDDEN(CppAccess) {
+		cppPublic,
+		cppProtected,
+		cppPrivate,
+	};
+
+	/**
 	 * A size. Describes both x86 and x64 sizes.
 	 */
 	struct CppSize {
@@ -174,6 +183,9 @@ namespace storm {
 		// Kind.
 		FnKind kind;
 
+		// Access modifier.
+		CppAccess access;
+
 		// Thread to run this function on.
 		size_t threadId;
 
@@ -196,6 +208,9 @@ namespace storm {
 
 		// Type this variable is a member of.
 		nat memberOf;
+
+		// Access mode.
+		CppAccess access;
 
 		// Type of this variable.
 		CppTypeRef type;

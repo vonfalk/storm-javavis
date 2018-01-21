@@ -158,7 +158,7 @@ namespace storm {
 			parentLookup = prev;
 		}
 
-		Named *BlockLookup::find(SimplePart *part) {
+		Named *BlockLookup::find(SimplePart *part, MAYBE(NameLookup *) source) {
 			if (part->params->empty())
 				return block->variable(part);
 

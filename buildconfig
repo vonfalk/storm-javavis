@@ -1,4 +1,4 @@
-#Test
+Test
 #CppTypes -a ../Compiler/ --template ../Compiler/Gen/CppTypes.template.cpp --out ../Compiler/Gen/CppTypes.cpp --asm ../Compiler/Gen/CppTypes.asm
 
 #Basic UI test.
@@ -8,7 +8,7 @@
 #Main -a -r ../root/ -f test.ui.multiline
 #Main -a -r ../root/ -f test.ui.dialog
 #Main -a -r ../root/ -f test.ui.overlay
-Main -a -r ../root/ -f test.ui.images
+#Main -a -r ../root/ -f test.ui.images
 
 #UI while running intensive memory allocations in the background.
 #Main -a -r ../root/ -f test.ui.simpleMem

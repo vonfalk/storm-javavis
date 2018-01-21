@@ -76,8 +76,8 @@ namespace storm {
 			void STORM_FN addParams(Block *block);
 
 		protected:
-			// Parameter names.
-			Array<ValParam> *params;
+			// Parameter names and values.
+			Array<ValParam> *valParams;
 
 		private:
 			// Generate code.

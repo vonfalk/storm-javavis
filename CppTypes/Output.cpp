@@ -332,9 +332,6 @@ static void genTemplateArrays(wostream &to, World &w) {
 
 		for (nat j = 0; j < c->variables.size(); j++) {
 			Variable &v = c->variables[j];
-			if (!c->valueType && v.access != aPublic)
-				continue;
-
 			TypeRef *r = findType(v.type.borrow());
 			templateParams(as<ResolvedTemplateType>(r), to, created);
 		}
@@ -425,6 +422,20 @@ static void genPtr(wostream &to, Function &fn) {
 	}
 }
 
+static const wchar *accessName(Access access) {
+	switch (access) {
+	case aPublic:
+		return L"cppPublic";
+	case aProtected:
+		return L"cppProtected";
+	case aPrivate:
+		return L"cppPrivate";
+	default:
+		assert(false, L"Unknown access modifier: " + ::toS(access));
+		return L"<unknown>";
+	}
+}
+
 static void genFunctions(wostream &to, World &w) {
 	for (nat i = 0; i < w.functions.size(); i++) {
 		Function &f = w.functions[i];
@@ -456,6 +467,9 @@ static void genFunctions(wostream &to, World &w) {
 			to << L"CppFunction::fnFreeEngine, ";
 		else
 			to << L"CppFunction::fnFree, ";
+
+		// Access.
+		to << accessName(f.access) << L", ";
 
 		// Thread id.
 		if (f.isMember)
@@ -514,12 +528,7 @@ static void genVariables(wostream &to, World &w) {
 			Variable &v = c->variables[j];
 			Offset offset = c->varOffset(j, data);
 
-			// Only export public variables for classes or actors.
-			if (!c->valueType && v.access != aPublic)
-				continue;
-
 			String type = genTypeRef(v.type.borrow(), false);
-			bool unknownVar = false;
 			// ...which the Storm type system can handle.
 			if (type.empty()) {
 				// If this is a value type, we need to tell Storm about it. Otherwise, function calls
@@ -528,21 +537,19 @@ static void genVariables(wostream &to, World &w) {
 					continue;
 
 				type = resolveWrap(v.type.borrow(), w);
-				unknownVar = true;
 			}
 
 			to << L"{ ";
 			// Name (possibly mangled in Storm). TODO: Export with proper access flags. 'unknown'
 			// variables shall not be exposed to storm, so we treat them as if they were private
 			// regardless of their actual status.
-			if (v.access != aPublic || unknownVar) {
-				to << L"S(\" p@" << v.stormName << L"\"), ";
-			} else {
-				to << L"S(\"" << v.stormName << L"\"), ";
-			}
+			to << L"S(\"" << v.stormName << L"\"), ";
 
 			// Owner id.
 			to << c->id << L" /* " << c->name << L" */, ";
+
+			// Access.
+			to << accessName(v.access) << L", ";
 
 			// Type.
 			to << type;

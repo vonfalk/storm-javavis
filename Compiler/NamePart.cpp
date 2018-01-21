@@ -53,12 +53,16 @@ namespace storm {
 		return this;
 	}
 
-	Named *SimplePart::choose(NameOverloads *from) const {
+	Named *SimplePart::choose(NameOverloads *from, MAYBE(NameLookup *) source) const {
 		Array<Named *> *candidates = new (this) Array<Named *>();
 		int best = std::numeric_limits<int>::max();
 
 		for (nat i = 0; i < from->count(); i++) {
 			Named *candidate = from->at(i);
+			// Do not consider 'candidate' if we're not allowed to access it! Note: no 'visibility' means 'public'.
+			if (!candidate->visibleFrom(source))
+				continue;
+
 			int badness = matches(candidate);
 			if (badness >= 0 && badness <= best) {
 				if (badness != best)

@@ -14,7 +14,8 @@ namespace storm {
 
 
 	void Variable::toS(StrBuf *to) const {
-		*to << type << L" " << identifier();
+		*to << type << L" ";
+		Named::toS(to);
 	}
 
 

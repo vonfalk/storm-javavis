@@ -67,7 +67,7 @@ namespace storm {
 
 
 		BSRawFn::BSRawFn(Value result, SStr *name, Array<ValParam> *params, MAYBE(NamedThread *) thread)
-			: Function(result, name->v, values(params)), pos(name->pos), params(params) {
+			: Function(result, name->v, values(params)), pos(name->pos), valParams(params) {
 
 			init(thread);
 		}
@@ -102,8 +102,8 @@ namespace storm {
 			*l << prolog();
 
 			// Parameters
-			for (nat i = 0; i < params->count(); i++) {
-				SimplePart *name = new (this) SimplePart(params->at(i).name);
+			for (nat i = 0; i < valParams->count(); i++) {
+				SimplePart *name = new (this) SimplePart(valParams->at(i).name);
 				LocalVar *var = body->variable(name);
 				assert(var);
 				var->createParam(state);
@@ -143,8 +143,8 @@ namespace storm {
 		}
 
 		void BSRawFn::addParams(Block *to) {
-			for (nat i = 0; i < params->count(); i++) {
-				LocalVar *v = new (this) LocalVar(params->at(i).name, params->at(i).type, pos, true);
+			for (nat i = 0; i < valParams->count(); i++) {
+				LocalVar *v = new (this) LocalVar(valParams->at(i).name, valParams->at(i).type, pos, true);
 
 				if (parentLookup) {
 					if (i == 0 && isMember())
@@ -165,13 +165,13 @@ namespace storm {
 		}
 
 		Bool BSFunction::update(Array<ValParam> *params, syntax::Node *node, SrcPos pos) {
-			if (this->params->count() != params->count())
+			if (valParams->count() != params->count())
 				return false;
 			for (Nat i = 0; i < params->count(); i++)
-				if (this->params->at(i).type != params->at(i).type)
+				if (valParams->at(i).type != params->at(i).type)
 					return false;
 
-			this->params = params;
+			valParams = params;
 			this->body = node;
 			this->pos = pos;
 			reset();
@@ -183,10 +183,10 @@ namespace storm {
 		}
 
 		Bool BSFunction::update(Array<Str *> *params, syntax::Node *body) {
-			if (this->params->count() != params->count())
+			if (valParams->count() != params->count())
 				return false;
 			for (Nat i = 0; i < params->count(); i++)
-				this->params->at(i).name = params->at(i);
+				valParams->at(i).name = params->at(i);
 
 			this->body = body;
 			reset();
@@ -194,7 +194,7 @@ namespace storm {
 		}
 
 		Bool BSFunction::update(BSFunction *from) {
-			return update(from->params, from->body);
+			return update(from->valParams, from->body);
 		}
 
 		BSTreeFn::BSTreeFn(Value result, SStr *name, Array<ValParam> *params, MAYBE(NamedThread *) thread)

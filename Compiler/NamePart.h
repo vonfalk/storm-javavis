@@ -11,6 +11,7 @@ namespace storm {
 	class Name;
 	class Named;
 	class NameOverloads;
+	class NameLookup;
 
 	/**
 	 * Represents one part of a name. Each part is a string and zero or more parameters (think
@@ -63,8 +64,10 @@ namespace storm {
 		// Resolve names.
 		virtual MAYBE(SimplePart *) find(const Scope &scope);
 
-		// Choose an overload.
-		virtual MAYBE(Named *) STORM_FN choose(NameOverloads *from) const;
+		// Choose an overload, assuming 'source' is trying to access it. 'source' is used to perform
+		// a visibility check on the potential candidates. If 'source' is null, all objects are
+		// considered.
+		virtual MAYBE(Named *) STORM_FN choose(NameOverloads *from, MAYBE(NameLookup *) source) const;
 
 		// Compute the badness of a candidate. Returns -1 on no match.
 		virtual Int STORM_FN matches(Named *candidate) const;

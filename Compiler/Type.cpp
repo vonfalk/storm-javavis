@@ -322,8 +322,8 @@ namespace storm {
 		}
 	}
 
-	Named *Type::find(SimplePart *part) {
-		if (Named *n = NameSet::find(part))
+	Named *Type::find(SimplePart *part, MAYBE(NameLookup *) source) {
+		if (Named *n = NameSet::find(part, source))
 			return n;
 
 		// Constructors are not inherited.
@@ -331,7 +331,7 @@ namespace storm {
 			return null;
 
 		if (Type *s = super())
-			return s->find(part);
+			return s->find(part, source);
 		else
 			return null;
 	}
@@ -904,8 +904,8 @@ namespace storm {
 		}
 	}
 
-	Named *Type::findHere(SimplePart *part) {
-		return NameSet::find(part);
+	Named *Type::findHere(SimplePart *part, MAYBE(NameLookup *) source) {
+		return NameSet::find(part, source);
 	}
 
 	/**
@@ -937,7 +937,7 @@ namespace storm {
 		if (!s)
 			return false;
 
-		Function *found = as<Function>(s->findHere(fn));
+		Function *found = as<Function>(s->findHere(fn, null));
 		if (found) {
 			// Found it, no need to search further as all possible parent functions are in the
 			// vtable already.
@@ -953,7 +953,7 @@ namespace storm {
 
 		TypeChain::Iter i = chain->children();
 		while (Type *child = i.next()) {
-			Function *found = as<Function>(child->findHere(fn));
+			Function *found = as<Function>(child->findHere(fn, null));
 			if (found) {
 				// Found something. Insert it in the vtable. We do not need to go further down this
 				// particular path as any overriding functions there are already found by now.
@@ -1016,6 +1016,10 @@ namespace storm {
 		if (useThread) {
 			*to << S(" on ") << useThread->identifier();
 		}
+
+		*to << S(" [");
+		putVisibility(to);
+		*to << S("]");
 	}
 
 	Function *Type::defaultCtor() {

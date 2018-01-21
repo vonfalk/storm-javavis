@@ -73,9 +73,9 @@ namespace storm {
 			name->insert(thisPtr(t));
 			Function *ctor = as<Function>(t->find(name));
 			if (!ctor)
-				throw SyntaxError(variable->pos, L"No constructor " + ::toS(variable->result)
-								+ L"(" + ::toS(name) + L") found. Can not initialize "
-								+ ::toS(variable->name) + L".");
+				throw SyntaxError(variable->pos, L"No constructor for " + ::toS(variable->result)
+								+ L" found. Can not initialize " + ::toS(variable->name) +
+								L". Expected signature: " + ::toS(name));
 
 			initCtor = new (this) CtorCall(pos, ctor, actuals);
 		}

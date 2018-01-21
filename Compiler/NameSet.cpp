@@ -178,8 +178,8 @@ namespace storm {
 		loading = false;
 	}
 
-	Named *NameSet::find(SimplePart *part) {
-		if (Named *found = tryFind(part))
+	Named *NameSet::find(SimplePart *part, MAYBE(NameLookup *) source) {
+		if (Named *found = tryFind(part, source))
 			return found;
 
 		if (loaded)
@@ -188,10 +188,10 @@ namespace storm {
 		if (!loadName(part))
 			forceLoad();
 
-		return tryFind(part);
+		return tryFind(part, source);
 	}
 
-	Named *NameSet::tryFind(SimplePart *part) {
+	Named *NameSet::tryFind(SimplePart *part, MAYBE(NameLookup *) source) {
 		if (!overloads)
 			return null;
 
@@ -199,11 +199,16 @@ namespace storm {
 			return null;
 
 		NameOverloads *found = overloads->get(part->name);
-		Named *result = part->choose(found);
+		Named *result = part->choose(found, source);
 		if (result)
 			return result;
 
-		return found->createTemplate(this, part);
+		Named *t = found->createTemplate(this, part);
+		// Are we allowed to access the newly created template?
+		if (!t || !t->visibleFrom(source))
+			return null;
+
+		return t;
 	}
 
 	Bool NameSet::loadName(SimplePart *part) {

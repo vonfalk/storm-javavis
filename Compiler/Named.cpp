@@ -18,8 +18,13 @@ namespace storm {
 		return parentLookup;
 	}
 
-	Named *NameLookup::find(SimplePart *part) {
+	Named *NameLookup::find(SimplePart *part, MAYBE(NameLookup *) source) {
 		return null;
+	}
+
+	Named *NameLookup::find(SimplePart *part) {
+		TODO(L"Remove me!");
+		return find(part, null);
 	}
 
 	Named *NameLookup::find(Str *name, Array<Value> *params) {
@@ -52,20 +57,17 @@ namespace storm {
 	 * Named.
 	 */
 
-	Named::Named(Str *name) : name(name), flags(namedDefault) {
+	Named::Named(Str *name) : name(name), flags(namedDefault), visibility(null) {
 		if (engine().has(bootTemplates)) {
 			params = new (this) Array<Value>();
-			visibility = allPublic(engine());
 		}
 	}
 
-	Named::Named(Str *name, Array<Value> *params) : name(name), params(params), flags(namedDefault) {}
+	Named::Named(Str *name, Array<Value> *params) : name(name), params(params), flags(namedDefault), visibility(null) {}
 
 	void Named::lateInit() {
 		if (!params)
 			params = new (this) Array<Value>();
-		if (!visibility)
-			visibility = allPublic(engine());
 	}
 
 	NameLookup *Named::parent() const {
@@ -112,7 +114,24 @@ namespace storm {
 	void Named::compile() {}
 
 	void Named::toS(StrBuf *buf) const {
-		*buf << identifier();
+		*buf << identifier() << S(" [");
+		putVisibility(buf);
+		*buf << S("]");
+	}
+
+	void Named::putVisibility(StrBuf *to) const {
+		if (visibility)
+			*to << visibility;
+		else
+			*to << S("public (unset)");
+	}
+
+	Bool Named::visibleFrom(MAYBE(NameLookup *) source) {
+		if (visibility && source)
+			return visibility->visible(this, source);
+
+		// If either 'visibility' or 'source' is null, we default to 'public'.
+		return true;
 	}
 
 }

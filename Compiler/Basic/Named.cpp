@@ -482,9 +482,8 @@ namespace storm {
 			part->insert(thisPtr(t));
 
 			Function *ctor = as<Function>(t->find(part));
-			if (!ctor) {
+			if (!ctor)
 				throw SyntaxError(pos, L"No constructor " + ::toS(t->identifier()) + L"." + ::toS(part) + L")");
-			}
 
 			return new (t) CtorCall(pos, ctor, actual);
 		}
