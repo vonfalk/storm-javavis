@@ -2,6 +2,8 @@
 #include "Node.h"
 #include "Exception.h"
 #include "Type.h"
+#include "Engine.h"
+#include "Package.h"
 #include "Core/Str.h"
 
 namespace storm {
@@ -45,12 +47,13 @@ namespace storm {
 
 
 		const void *transformFunction(Type *type, const Value &result, const Value &param) {
+			Scope root = type->engine.scope();
 			Array<Value> *par = new (type) Array<Value>();
 			par->push(thisPtr(type));
 			if (param != Value())
 				par->push(param);
 			SimplePart *part = new (type) SimplePart(new (type) Str(L"transform"), par);
-			if (Function *fn = as<Function>(type->find(part))) {
+			if (Function *fn = as<Function>(type->find(part, root))) {
 				if (!result.canStore(fn->result)) {
 					throw InternalError(L"The function " + ::toS(fn->identifier()) + L" returns " +
 										::toS(fn->result) + L", which is incompatible with " +

@@ -178,7 +178,7 @@ namespace storm {
 		loading = false;
 	}
 
-	Named *NameSet::find(SimplePart *part, MAYBE(NameLookup *) source) {
+	Named *NameSet::find(SimplePart *part, Scope source) {
 		if (Named *found = tryFind(part, source))
 			return found;
 
@@ -191,7 +191,7 @@ namespace storm {
 		return tryFind(part, source);
 	}
 
-	Named *NameSet::tryFind(SimplePart *part, MAYBE(NameLookup *) source) {
+	Named *NameSet::tryFind(SimplePart *part, Scope source) {
 		if (!overloads)
 			return null;
 

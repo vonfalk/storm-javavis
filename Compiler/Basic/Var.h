@@ -91,6 +91,9 @@ namespace storm {
 			// will create the value in-place instead of copying the value to its location.
 			// When dealing with reference types, it does not matter.
 			Expr *initCtor;
+
+			// Scope.
+			Scope scope;
 		};
 
 	}

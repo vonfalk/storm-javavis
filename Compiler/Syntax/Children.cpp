@@ -4,6 +4,7 @@
 #include "Node.h"
 #include "Rule.h"
 #include "Production.h"
+#include "BSUtils.h"
 
 #include "Compiler/Basic/Named.h"
 #include "Compiler/Basic/WeakCast.h"
@@ -16,46 +17,6 @@
 namespace storm {
 	namespace syntax {
 		using namespace bs;
-
-		// Call a specific member in Basic Storm.
-		static Expr *callMember(Str *name, Expr *me, Expr *param = null) {
-			Value type = me->result().type();
-			if (type == Value())
-				throw InternalError(L"Can not call members of 'void'.");
-
-			Actuals *actual = new (me) Actuals();
-			Array<Value> *params = new (me) Array<Value>();
-			params->push(thisPtr(type.type));
-			actual->add(me);
-			if (param) {
-				params->push(param->result().type());
-				actual->add(param);
-			}
-
-			SimplePart *part = new (me) SimplePart(name, params);
-			Named *found = type.type->find(part);
-			Function *toCall = as<Function>(found);
-			if (!toCall)
-				throw InternalError(::toS(part) + L" was not found!");
-
-			return new (me) FnCall(me->pos, toCall, actual);
-		}
-
-		static Expr *callMember(const SrcPos &pos, Str *name, Expr *me, Expr *param = null) {
-			try {
-				return callMember(name, me, param);
-			} catch (const InternalError &e) {
-				throw SyntaxError(pos, e.what());
-			}
-		}
-
-		static Expr *callMember(const wchar *name, Expr *me, Expr *param = null) {
-			return callMember(new (me) Str(name), me, param);
-		}
-
-		static Expr *callMember(const SrcPos &pos, const wchar *name, Expr *me, Expr *param = null) {
-			return callMember(pos, new (me) Str(name), me, param);
-		}
 
 		static bool interesting(Token *t) {
 			if (!t->target)
@@ -98,7 +59,7 @@ namespace storm {
 			LocalVarAccess *result = null;
 			{
 				Function *f = Array<Node *>::stormType(engine())->defaultCtor();
-				Expr *r = new (this) CtorCall(pos, f, new (this) Actuals());
+				Expr *r = new (this) CtorCall(pos, scope, f, new (this) Actuals());
 				Var *v = new (this) Var(root, new (this) syntax::SStr(S("result")), r);
 				root->add(v);
 				result = new (this) LocalVarAccess(pos, v->var());
@@ -182,10 +143,10 @@ namespace storm {
 					continue;
 
 				Expr *src = new (this) MemberVarAccess(pos, thisExpr(block), t->target);
-				Expr *read = callMember(S("count"), src);
+				Expr *read = callMember(scope, S("count"), src);
 
 				if (minExpr)
-					minExpr = callMember(S("min"), minExpr, read);
+					minExpr = callMember(scope, S("min"), minExpr, read);
 				else
 					minExpr = read;
 			}
@@ -211,8 +172,8 @@ namespace storm {
 			forBlock->add(i);
 
 			For *loop = new (this) For(pos, forBlock);
-			loop->test(callMember(S("<"), readI, readEnd));
-			loop->update(callMember(S("++*"), readI));
+			loop->test(callMember(scope, S("<"), readI, readEnd));
+			loop->update(callMember(scope, S("++*"), readI));
 
 			ExprBlock *inLoop = new (this) ExprBlock(pos, loop);
 			for (Nat i = from; i < to; i++) {
@@ -221,7 +182,7 @@ namespace storm {
 					continue;
 
 				Expr *src = new (this) MemberVarAccess(pos, thisExpr(block), t->target);
-				Expr *read = callMember(S("[]"), src, readI);
+				Expr *read = callMember(scope, S("[]"), src, readI);
 				inLoop->add(push(inLoop, result, read));
 			}
 
@@ -231,7 +192,7 @@ namespace storm {
 		}
 
 		Expr *ChildrenFn::push(Block *block, Expr *result, Expr *tokenSrc) {
-			return callMember(pos, S("push"), result, tokenSrc);
+			return callMember(pos, scope, S("push"), result, tokenSrc);
 		}
 
 		bs::Expr *ChildrenFn::thisExpr(bs::ExprBlock *block) {

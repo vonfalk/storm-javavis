@@ -63,15 +63,15 @@ namespace storm {
 		 * Function call.
 		 */
 
-		FnCall::FnCall(SrcPos pos, Function *toExecute, Actuals *params, Bool lookup, Bool sameObject)
-			: Expr(pos), toExecute(toExecute), params(params), lookup(lookup), sameObject(sameObject), async(false) {
+		FnCall::FnCall(SrcPos pos, Scope scope, Function *toExecute, Actuals *params, Bool lookup, Bool sameObject)
+			: Expr(pos), toExecute(toExecute), params(params), scope(scope), lookup(lookup), sameObject(sameObject), async(false) {
 
 			if (params->expressions->count() != toExecute->params->count())
 				throw SyntaxError(pos, L"The parameter count does not match!");
 		}
 
-		FnCall::FnCall(SrcPos pos, Function *toExecute, Actuals *params)
-			: Expr(pos), toExecute(toExecute), params(params), lookup(true), sameObject(false), async(false) {
+		FnCall::FnCall(SrcPos pos, Scope scope, Function *toExecute, Actuals *params)
+			: Expr(pos), toExecute(toExecute), params(params), scope(scope), lookup(true), sameObject(false), async(false) {
 
 			if (params->expressions->count() != toExecute->params->count())
 				throw SyntaxError(pos, L"The parameter count does not match!");
@@ -100,7 +100,7 @@ namespace storm {
 
 			// Load parameters.
 			for (nat i = 0; i < values->count(); i++)
-				vars->at(i) = params->code(i, s, values->at(i));
+				vars->at(i) = params->code(i, s, values->at(i), scope);
 
 			// Call!
 			if (async) {
@@ -130,8 +130,8 @@ namespace storm {
 		 * Execute constructor.
 		 */
 
-		CtorCall::CtorCall(SrcPos pos, Function *ctor, Actuals *params)
-			: Expr(pos), ctor(ctor), params(params) {
+		CtorCall::CtorCall(SrcPos pos, Scope scope, Function *ctor, Actuals *params)
+			: Expr(pos), ctor(ctor), params(params), scope(scope) {
 
 			assert(params->expressions->count() == ctor->params->count() - 1, L"Invalid number of parameters to constructor!");
 			toCreate = ctor->params->at(0).asRef(false);
@@ -162,7 +162,7 @@ namespace storm {
 
 			// Load parameters.
 			for (nat i = 1; i < values->count(); i++)
-				vars->at(i) = params->code(i - 1, s, values->at(i));
+				vars->at(i) = params->code(i - 1, s, values->at(i), scope);
 
 			// This needs to be last, otherwise other generated code may overwrite it!
 			VarInfo thisVar;
@@ -189,30 +189,30 @@ namespace storm {
 			Array<code::Operand> *vars = new (e) Array<code::Operand>(values->count() - 1);
 
 			for (nat i = 0; i < values->count() - 1; i++)
-				vars->at(i) = params->code(i, s, values->at(i + 1));
+				vars->at(i) = params->code(i, s, values->at(i + 1), scope);
 
 			VarInfo created = to->safeLocation(s, toCreate);
 			allocObject(s, ctor, vars, created.v);
 			created.created(s);
 		}
 
-		CtorCall *defaultCtor(const SrcPos &pos, Type *t) {
+		CtorCall *defaultCtor(const SrcPos &pos, Scope scope, Type *t) {
 			Function *f = t->defaultCtor();
 			if (!f)
 				throw SyntaxError(pos, L"No default constructor for " + ::toS(t->identifier()));
 
 			Actuals *actual = new (t) Actuals();
-			return new (t) CtorCall(pos, f, actual);
+			return new (t) CtorCall(pos, scope, f, actual);
 		}
 
-		CtorCall *copyCtor(const SrcPos &pos, Type *t, Expr *src) {
+		CtorCall *copyCtor(const SrcPos &pos, Scope scope, Type *t, Expr *src) {
 			Function *f = t->copyCtor();
 			if (!f)
 				throw SyntaxError(pos, L"No copy-constructor for " + ::toS(t->identifier()));
 
 			Actuals *actual = new (t) Actuals();
 			actual->add(src);
-			return new (t) CtorCall(pos, f, actual);
+			return new (t) CtorCall(pos, scope, f, actual);
 		}
 
 
@@ -405,7 +405,7 @@ namespace storm {
 		 * Assignment.
 		 */
 
-		ClassAssign::ClassAssign(Expr *to, Expr *value) : Expr(to->pos), to(to) {
+		ClassAssign::ClassAssign(Expr *to, Expr *value, Scope scope) : Expr(to->pos), to(to) {
 			Value r = to->result().type();
 			if ((r.type->typeFlags & typeClass) != typeClass)
 				throw TypeError(to->pos, L"The default assignment can not be used with other types than classes"
@@ -413,7 +413,7 @@ namespace storm {
 			if (!r.ref)
 				throw TypeError(to->pos, L"Can not assign to a non-reference.");
 
-			this->value = castTo(value, r.asRef(false));
+			this->value = castTo(value, r.asRef(false), scope);
 			if (!this->value)
 				throw TypeError(to->pos, L"Can not store a " + ::toS(value->result()) + L" in " + ::toS(r));
 		}
@@ -467,8 +467,8 @@ namespace storm {
 		/**
 		 * Look up a proper action from a name and a set of parameters.
 		 */
-		static Expr *findCtor(Type *t, Actuals *actual, const SrcPos &pos);
-		static Expr *findTarget(Named *n, LocalVar *first, Actuals *actual, const SrcPos &pos, bool useLookup);
+		static Expr *findCtor(Scope scope, Type *t, Actuals *actual, const SrcPos &pos);
+		static Expr *findTarget(Scope scope, Named *n, LocalVar *first, Actuals *actual, const SrcPos &pos, bool useLookup);
 		static Expr *findTargetThis(Block *block, SimpleName *name,
 									Actuals *params, const SrcPos &pos,
 									Named *&candidate);
@@ -477,21 +477,21 @@ namespace storm {
 								bool useThis);
 
 		// Find a constructor.
-		static Expr *findCtor(Type *t, Actuals *actual, const SrcPos &pos) {
+		static Expr *findCtor(Scope scope, Type *t, Actuals *actual, const SrcPos &pos) {
 			BSNamePart *part = new (t) BSNamePart(Type::CTOR, pos, actual);
 			part->insert(thisPtr(t));
 
-			Function *ctor = as<Function>(t->find(part));
+			Function *ctor = as<Function>(t->find(part, scope));
 			if (!ctor)
 				throw SyntaxError(pos, L"No constructor " + ::toS(t->identifier()) + L"." + ::toS(part) + L")");
 
-			return new (t) CtorCall(pos, ctor, actual);
+			return new (t) CtorCall(pos, scope, ctor, actual);
 		}
 
 
 		// Helper to create the actual type, given something found. If '!useLookup', then we will not use the lookup
 		// of the function or variable (ie use vtables).
-		static Expr *findTarget(Named *n, LocalVar *first, Actuals *actual, const SrcPos &pos, bool useLookup) {
+		static Expr *findTarget(Scope scope, Named *n, LocalVar *first, Actuals *actual, const SrcPos &pos, bool useLookup) {
 			if (!n)
 				return null;
 
@@ -503,7 +503,7 @@ namespace storm {
 			if (Function *f = as<Function>(n)) {
 				if (first)
 					actual->addFirst(new (first) LocalVarAccess(pos, first));
-				return new (n) FnCall(pos, f, actual, useLookup, first ? true : false);
+				return new (n) FnCall(pos, scope, f, actual, useLookup, first ? true : false);
 			}
 
 			if (LocalVar *v = as<LocalVar>(n)) {
@@ -559,7 +559,7 @@ namespace storm {
 					throw SyntaxError(pos, L"No super type for " + ::toS(thisVar->result) + L", can not use 'super' here.");
 
 				part->last() = lastPart;
-				candidate = storm::find(super, part);
+				candidate = storm::find(block->scope, super, part);
 				useLookup = false;
 			} else {
 				// May be anything.
@@ -568,7 +568,7 @@ namespace storm {
 				useLookup = true;
 			}
 
-			Expr *e = findTarget(candidate, thisVar, params, pos, useLookup);
+			Expr *e = findTarget(block->scope, candidate, thisVar, params, pos, useLookup);
 			if (e)
 				return e;
 
@@ -586,9 +586,9 @@ namespace storm {
 			{
 				Named *n = scope.find(name);
 				if (Type *t = as<Type>(n))
-					return findCtor(t, params, pos);
+					return findCtor(block->scope, t, params, pos);
 				else if (as<LocalVar>(n) != null && params->empty())
-					return findTarget(n, null, params, pos, false);
+					return findTarget(block->scope, n, null, params, pos, false);
 			}
 
 			// If we have a this-pointer, try to use it!
@@ -602,7 +602,7 @@ namespace storm {
 			name->last() = last;
 			Named *n = scope.find(name);
 
-			if (Expr *e = findTarget(n, null, params, pos, true))
+			if (Expr *e = findTarget(block->scope, n, null, params, pos, true))
 				return e;
 
 			if (!n && !candidate)

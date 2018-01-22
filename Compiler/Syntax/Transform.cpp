@@ -4,6 +4,7 @@
 #include "Type.h"
 #include "Rule.h"
 #include "Production.h"
+#include "BSUtils.h"
 
 #include "Compiler/Basic/Named.h"
 #include "Compiler/Basic/WeakCast.h"
@@ -17,46 +18,6 @@
 namespace storm {
 	namespace syntax {
 		using namespace bs;
-
-		// Call a specific member in Basic Storm.
-		static Expr *callMember(Str *name, Expr *me, Expr *param = null) {
-			Value type = me->result().type();
-			if (type == Value())
-				throw InternalError(L"Can not call members of 'void'.");
-
-			Actuals *actual = new (me) Actuals();
-			Array<Value> *params = new (me) Array<Value>();
-			params->push(thisPtr(type.type));
-			actual->add(me);
-			if (param) {
-				params->push(param->result().type());
-				actual->add(param);
-			}
-
-			SimplePart *part = new (me) SimplePart(name, params);
-			Named *found = type.type->find(part);
-			Function *toCall = as<Function>(found);
-			if (!toCall)
-				throw InternalError(::toS(part) + L" was not found!");
-
-			return new (me) FnCall(me->pos, toCall, actual);
-		}
-
-		static Expr *callMember(const SrcPos &pos, Str *name, Expr *me, Expr *param = null) {
-			try {
-				return callMember(name, me, param);
-			} catch (const InternalError &e) {
-				throw SyntaxError(pos, e.what());
-			}
-		}
-
-		static Expr *callMember(const wchar *name, Expr *me, Expr *param = null) {
-			return callMember(new (me) Str(name), me, param);
-		}
-
-		static Expr *callMember(const SrcPos &pos, const wchar *name, Expr *me, Expr *param = null) {
-			return callMember(pos, new (me) Str(name), me, param);
-		}
 
 		static syntax::SStr *tfmName(ProductionDecl *decl) {
 			return new (decl) syntax::SStr(S("transform"), decl->pos);
@@ -262,7 +223,7 @@ namespace storm {
 				// Assign something to the variable!
 				IfTrue *branch = new (this) IfTrue(this->pos, check);
 				actuals->addFirst(access);
-				Expr *tfmCall = new (this) FnCall(this->pos, tfmFn, actuals);
+				Expr *tfmCall = new (this) FnCall(this->pos, scope, tfmFn, actuals);
 				OpInfo *assignOp = assignOperator(new (e) syntax::SStr(S("=")), 1);
 				branch->set(new (this) Operator(branch, readV, assignOp, tfmCall));
 				check->trueExpr(branch);
@@ -275,7 +236,7 @@ namespace storm {
 
 				// Extra block to avoid name collisions.
 				ExprBlock *forBlock = new (this) ExprBlock(this->pos, in);
-				Expr *arrayCount = callMember(S("count"), srcAccess);
+				Expr *arrayCount = callMember(this->pos, scope, S("count"), srcAccess);
 				Var *end = new (this) Var(forBlock,
 										Value(StormInfo<Nat>::type(e)),
 										new (e) syntax::SStr(S("_end")),
@@ -291,12 +252,12 @@ namespace storm {
 				forBlock->add(i);
 
 				For *loop = new (this) For(this->pos, forBlock);
-				loop->test(callMember(S("<"), readI, readEnd));
-				loop->update(callMember(S("++*"), readI));
+				loop->test(callMember(this->pos, scope, S("<"), readI, readEnd));
+				loop->update(callMember(this->pos, scope, S("++*"), readI));
 
-				actuals->addFirst(callMember(S("[]"), srcAccess, readI));
-				Expr *tfmCall = new (this) FnCall(this->pos, tfmFn, actuals);
-				loop->body(callMember(S("push"), readV, tfmCall));
+				actuals->addFirst(callMember(this->pos, scope, S("[]"), srcAccess, readI));
+				Expr *tfmCall = new (this) FnCall(this->pos, scope, tfmFn, actuals);
+				loop->body(callMember(this->pos, scope, S("push"), readV, tfmCall));
 
 				forBlock->add(loop);
 				in->add(forBlock);
@@ -306,7 +267,7 @@ namespace storm {
 				actuals->addFirst(srcAccess);
 
 				// Call function and create variable!
-				FnCall *tfmCall = new (this) FnCall(this->pos, tfmFn, actuals);
+				FnCall *tfmCall = new (this) FnCall(this->pos, scope, tfmFn, actuals);
 				v = new (this) Var(in, varName, tfmCall);
 				in->add(v);
 			}
@@ -400,14 +361,14 @@ namespace storm {
 
 				actuals->addFirst(src);
 
-				toStore = new (this) FnCall(this->pos, tfmFn, actuals);
+				toStore = new (this) FnCall(this->pos, scope, tfmFn, actuals);
 			}
 
 			if (token->invoke) {
 				// Call the member function indicated in 'invoke'.
 				if (!me)
 					throw SyntaxError(this->pos, L"Can not invoke functions on 'me' when 'me' is undefined.");
-				return callMember(this->pos, token->invoke, me, toStore);
+				return callMember(this->pos, scope, token->invoke, me, toStore);
 			} else {
 				// We just called 'transform' for the side effects.
 				return toStore;
@@ -443,10 +404,10 @@ namespace storm {
 					continue;
 
 				MemberVarAccess *srcAccess = new (this) MemberVarAccess(this->pos, thisVar(in), t->target);
-				Expr *read = callMember(S("count"), srcAccess);
+				Expr *read = callMember(pos, scope, S("count"), srcAccess);
 
 				if (minExpr)
-					minExpr = callMember(S("min"), minExpr, read);
+					minExpr = callMember(pos, scope, S("min"), minExpr, read);
 				else
 					minExpr = read;
 			}
@@ -473,8 +434,8 @@ namespace storm {
 			forBlock->add(i);
 
 			For *loop = new (this) For(this->pos, forBlock);
-			loop->test(callMember(S("<"), readI, readEnd));
-			loop->update(callMember(S("++*"), readI));
+			loop->test(callMember(pos, scope, S("<"), readI, readEnd));
+			loop->update(callMember(pos, scope, S("++*"), readI));
 
 			ExprBlock *inLoop = new (this) ExprBlock(this->pos, loop);
 
@@ -484,7 +445,7 @@ namespace storm {
 					continue;
 
 				MemberVarAccess *srcAccess = new (this) MemberVarAccess(this->pos, thisVar(in), t->target);
-				Expr *element = callMember(S("[]"), srcAccess, readI);
+				Expr *element = callMember(pos, scope, S("[]"), srcAccess, readI);
 				inLoop->add(executeToken(inLoop, me, element, t, i));
 			}
 
@@ -525,7 +486,7 @@ namespace storm {
 			Rule *rule = source->rule();
 
 			SimplePart *part = new (this) SimplePart(new (this) Str(S("pos")), thisPtr(rule));
-			Named *found = rule->find(part);
+			Named *found = rule->find(part, scope);
 
 			MemberVar *posVar = as<MemberVar>(found);
 			assert(posVar, L"'pos' not found in syntax node types!");
@@ -599,7 +560,7 @@ namespace storm {
 			types->insert(0, thisPtr(type));
 
 			SimplePart *tfmName = new (this) SimplePart(new (this) Str(S("transform")), types);
-			Named *foundTfm = type->find(tfmName);
+			Named *foundTfm = type->find(tfmName, scope);
 			Function *tfmFn = as<Function>(foundTfm);
 			if (!tfmFn) {
 				StrBuf *to = new (this) StrBuf();

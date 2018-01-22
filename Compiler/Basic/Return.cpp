@@ -14,7 +14,7 @@ namespace storm {
 		}
 
 		Return::Return(SrcPos pos, Block *block, Expr *expr) : Expr(pos), returnType(findParentType(pos, block)) {
-			this->expr = expectCastTo(expr, returnType);
+			this->expr = expectCastTo(expr, returnType, block->scope);
 		}
 
 		ExprResult Return::result() {

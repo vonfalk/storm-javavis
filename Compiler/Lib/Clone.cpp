@@ -105,8 +105,9 @@ namespace storm {
 	}
 
 	Function *cloneFn(Type *t) {
-		Package *p = t->engine.package(S("core"));
-		Function *r = as<Function>(p->find(S("clone"), Value(t)));
+		Engine &e = t->engine;
+		Package *p = e.package(S("core"));
+		Function *r = as<Function>(p->find(S("clone"), Value(t), e.scope()));
 		if (!r)
 			throw InternalError(L"Can not finde core.clone for " + ::toS(t->identifier()));
 		return r;
@@ -118,7 +119,7 @@ namespace storm {
 		Array<Value> *params = new (e) Array<Value>(2, Value(t));
 		params->at(1) = Value(CloneEnv::stormType(e));
 
-		Function *r = as<Function>(p->find(S("clone"), params));
+		Function *r = as<Function>(p->find(S("clone"), params, e.scope()));
 		if (!r)
 			throw InternalError(L"Can not finde core.clone for " + ::toS(t->identifier()));
 		return r;

@@ -25,6 +25,7 @@ namespace storm {
 			return null;
 
 		// Find the relevant output operator.
+		Scope root = engine().scope();
 		Function *found = null;
 		SimplePart *output = new (this) SimplePart(new (this) Str(L"<<"));
 		output->params->push(thisPtr(StrBuf::stormType(engine())));
@@ -32,17 +33,17 @@ namespace storm {
 
 		// Look in the parent package.
 		if (Package *pkg = ScopeLookup::firstPkg(type.type)) {
-			found = as<Function>(pkg->find(output));
+			found = as<Function>(pkg->find(output, root));
 		}
 
 		// If not found there, look directly inside StrBuf.
 		if (!found) {
-			found = as<Function>(StrBuf::stormType(engine())->find(output));
+			found = as<Function>(StrBuf::stormType(engine())->find(output, root));
 		}
 
 		// For enums, it might also be located in 'core'.
 		if (!found) {
-			found = as<Function>(engine().package(S("core"))->find(output));
+			found = as<Function>(engine().package(S("core"))->find(output, root));
 		}
 
 		// If not found anywhere, do not create a toS!
@@ -81,7 +82,7 @@ namespace storm {
 		use->localCall(to, p, new (this) CodeResult(), false);
 
 		// Call 'toS' on the StrBuf to get the string.
-		Function *toS = as<Function>(strBufT->find(S("toS"), thisPtr(strBufT)));
+		Function *toS = as<Function>(strBufT->find(S("toS"), thisPtr(strBufT), engine().scope()));
 		if (!toS)
 			throw InternalError(L"Can not find 'toS' for the StrBuf type!");
 

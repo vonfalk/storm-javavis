@@ -19,8 +19,8 @@ namespace storm {
 			// if '!lookup', then the lookup functionality (such as vtables) will not be used.
 			// if 'sameObject', then we will not spawn other threads for this function call, as it
 			// is assumed that we are always calling the same object.
-			STORM_CTOR FnCall(SrcPos pos, Function *toExecute, Actuals *params);
-			STORM_CTOR FnCall(SrcPos pos, Function *toExecute, Actuals *params, Bool lookup, Bool sameObject);
+			STORM_CTOR FnCall(SrcPos pos, Scope scope, Function *toExecute, Actuals *params);
+			STORM_CTOR FnCall(SrcPos pos, Scope scope, Function *toExecute, Actuals *params, Bool lookup, Bool sameObject);
 
 			// Tell us to return a future instead.
 			void makeAsync();
@@ -41,6 +41,9 @@ namespace storm {
 			// Parameters.
 			Actuals *params;
 
+			// Scope this function is called within.
+			Scope scope;
+
 			// Use lookup?
 			bool lookup;
 
@@ -59,7 +62,7 @@ namespace storm {
 			STORM_CLASS;
 		public:
 			// Call a constructor.
-			STORM_CTOR CtorCall(SrcPos pos, Function *ctor, Actuals *params);
+			STORM_CTOR CtorCall(SrcPos pos, Scope scope, Function *ctor, Actuals *params);
 
 			// Result type.
 			virtual ExprResult STORM_FN result();
@@ -80,6 +83,9 @@ namespace storm {
 			// Parameters.
 			Actuals *params;
 
+			// Scope we're being executed in.
+			Scope scope;
+
 			// Create a value.
 			void createValue(CodeGen *s, CodeResult *to);
 
@@ -88,10 +94,10 @@ namespace storm {
 		};
 
 		// Call the default constructor for T.
-		CtorCall *STORM_FN defaultCtor(const SrcPos &pos, Type *t);
+		CtorCall *STORM_FN defaultCtor(const SrcPos &pos, Scope scope, Type *t);
 
 		// Call the copy-constructor for T.
-		CtorCall *STORM_FN copyCtor(const SrcPos &pos, Type *t, Expr *src);
+		CtorCall *STORM_FN copyCtor(const SrcPos &pos, Scope scope, Type *t, Expr *src);
 
 		/**
 		 * Get a local variable.
@@ -201,7 +207,7 @@ namespace storm {
 		class ClassAssign : public Expr {
 			STORM_CLASS;
 		public:
-			STORM_CTOR ClassAssign(Expr *to, Expr *value);
+			STORM_CTOR ClassAssign(Expr *to, Expr *value, Scope scope);
 
 			// Result type.
 			virtual ExprResult STORM_FN result();

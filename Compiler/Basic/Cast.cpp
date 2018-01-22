@@ -32,13 +32,13 @@ namespace storm {
 		}
 
 		// Find a cast ctor.
-		Function *castCtor(Value from, Value to) {
+		static Function *castCtor(Value from, Value to, Scope scope) {
 			if (!to.type)
 				return null;
 
 			Array<Value> *params = new (to.type) Array<Value>(2, from);
 			params->at(0) = thisPtr(to.type);
-			Named *n = to.type->find(Type::CTOR, params);
+			Named *n = to.type->find(Type::CTOR, params, scope);
 			if (Function *ctor = as<Function>(n))
 				if (ctor->flags & namedAutoCast)
 					return ctor;
@@ -46,24 +46,24 @@ namespace storm {
 			return null;
 		}
 
-		Bool castable(Expr *from, Value to) {
-			return castable(from, to, namedDefault);
-		}
-
-		void expectCastable(Expr *from, Value to) {
-			if (!castable(from, to))
+		void expectCastable(Expr *from, Value to, Scope scope) {
+			if (!castable(from, to, scope))
 				throw TypeError(from->pos, to, from->result());
 		}
 
-		Bool castable(Expr *from, Value to, NamedFlags mode) {
-			return castPenalty(from, to, mode) >= 0;
+		Bool castable(Expr *from, Value to, Scope scope) {
+			return castable(from, to, namedDefault, scope);
 		}
 
-		Int castPenalty(Expr *from, Value to) {
-			return castPenalty(from, to, namedDefault);
+		Bool castable(Expr *from, Value to, NamedFlags mode, Scope scope) {
+			return castPenalty(from, to, mode, scope) >= 0;
 		}
 
-		Int castPenalty(Expr *from, Value to, NamedFlags mode) {
+		Int castPenalty(Expr *from, Value to, Scope scope) {
+			return castPenalty(from, to, namedDefault, scope);
+		}
+
+		Int castPenalty(Expr *from, Value to, NamedFlags mode, Scope scope) {
 			ExprResult r = from->result();
 			if (!r.any())
 				return 0;
@@ -93,19 +93,19 @@ namespace storm {
 			}
 
 			// Find a cast ctor!
-			if (castCtor(f, to))
+			if (castCtor(f, to, scope))
 				return 1000; // Larger than casting literals.
 
 			return -1;
 		}
 
-		Expr *castTo(Expr *from, Value to) {
-			return castTo(from, to, namedDefault);
+		Expr *castTo(Expr *from, Value to, Scope scope) {
+			return castTo(from, to, namedDefault, scope);
 		}
 
-		Expr *castTo(Expr *from, Value to, NamedFlags mode) {
+		Expr *castTo(Expr *from, Value to, NamedFlags mode, Scope scope) {
 			// Safeguard.
-			if (!castable(from, to, mode))
+			if (!castable(from, to, mode, scope))
 				return null;
 
 			ExprResult r = from->result();
@@ -126,21 +126,21 @@ namespace storm {
 					return from;
 
 			// Cast ctor?
-			if (Function *ctor = castCtor(f, to)) {
+			if (Function *ctor = castCtor(f, to, scope)) {
 				Actuals *params = new (from) Actuals(from);
-				return new (from) CtorCall(from->pos, ctor, params);
+				return new (from) CtorCall(from->pos, scope, ctor, params);
 			}
 
 			return null;
 		}
 
-		Expr *expectCastTo(Expr *from, Value to) {
-			if (Expr *r = castTo(from, to))
+		Expr *expectCastTo(Expr *from, Value to, Scope scope) {
+			if (Expr *r = castTo(from, to, scope))
 				return r;
 			throw TypeError(from->pos, to, from->result());
 		}
 
-		ExprResult common(Expr *a, Expr *b) {
+		ExprResult common(Expr *a, Expr *b, Scope scope) {
 			ExprResult ar = a->result();
 			ExprResult br = b->result();
 
@@ -161,9 +161,9 @@ namespace storm {
 			Value bv = br.type();
 
 			// Simple casting?
-			if (castable(a, bv))
+			if (castable(a, bv, scope))
 				return bv;
-			if (castable(b, av))
+			if (castable(b, av, scope))
 				return av;
 
 			// Nothing possible... Return void.

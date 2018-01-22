@@ -26,7 +26,7 @@ Expr asMaybe(Block block, Expr expr) on Compiler {
 		Name ctor("__ctor", Value:[ Value(t), eType ]);
 		Named? c = Scope(t).find(ctor);
 		if (c as Function) {
-			result = CtorCall(expr.pos, c, Actuals(expr));
+			result = CtorCall(expr.pos, block.scope, c, Actuals(expr));
 		}
 	}
 

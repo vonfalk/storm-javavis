@@ -27,7 +27,7 @@ namespace storm {
 
 		ExprResult If::result() {
 			if (falseCode && trueCode) {
-				return common(trueCode, falseCode);
+				return common(trueCode, falseCode, scope);
 			} else {
 				return ExprResult();
 			}
@@ -49,14 +49,14 @@ namespace storm {
 
 
 			Value rType = result().type();
-			Expr *t = expectCastTo(trueCode, rType);
+			Expr *t = expectCastTo(trueCode, rType, scope);
 			t->code(state, r);
 
 			if (falseCode) {
 				*state->l << jmp(lblDone);
 				*state->l << lblElse;
 
-				Expr *f = expectCastTo(falseCode, rType);
+				Expr *f = expectCastTo(falseCode, rType, scope);
 				f->code(state, r);
 
 				*state->l << lblDone;
@@ -86,7 +86,7 @@ namespace storm {
 
 		ExprResult IfWeak::result() {
 			if (falseCode && trueCode) {
-				return common(trueCode, falseCode);
+				return common(trueCode, falseCode, scope);
 			} else {
 				return ExprResult();
 			}
@@ -136,7 +136,7 @@ namespace storm {
 			*state->l << jmp(elseLbl, ifEqual);
 
 			Value rType = result().type();
-			Expr *t = expectCastTo(trueCode, rType);
+			Expr *t = expectCastTo(trueCode, rType, scope);
 			t->code(state, r);
 
 			if (falseCode) {
@@ -146,7 +146,7 @@ namespace storm {
 			*state->l << elseLbl;
 
 			if (falseCode) {
-				Expr *t = expectCastTo(falseCode, rType);
+				Expr *t = expectCastTo(falseCode, rType, scope);
 				t->code(state, r);
 			}
 

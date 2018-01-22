@@ -9,12 +9,12 @@ namespace storm {
 			includes = new (this) Array<Package *>();
 		}
 
-		Named *BSLookup::findHelper(Scope s, SimpleName *name) {
-			if (Named *found = ScopeLookup::find(s, name))
+		Named *BSLookup::findHelper(Scope scope, SimpleName *name) {
+			if (Named *found = ScopeLookup::find(scope, name))
 				return found;
 
 			for (nat i = 0; i < includes->count(); i++) {
-				if (Named *found = storm::find(includes->at(i), name))
+				if (Named *found = storm::find(scope, includes->at(i), name))
 					return found;
 			}
 
@@ -28,10 +28,11 @@ namespace storm {
 				SimplePart *last = name->last();
 				if (last->params->any() && last->params->at(0) != Value()) {
 					Type *firstParam = last->params->at(0).type;
-					if (Named *r = firstParam->find(last))
+					if (Named *r = firstParam->find(last, s))
 						return r;
 
-					// TODO: Also look in the parent scope of the last type?
+					// TODO: Also look in the parent scope of the last type? This will fix issues
+					// with 2 / 0.2 etc.
 				}
 			}
 

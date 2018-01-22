@@ -11,13 +11,13 @@
 
 namespace storm {
 
-	Named *find(NameLookup *root, SimpleName *name) {
+	Named *find(Scope scope, NameLookup *root, SimpleName *name) {
 		if (name->empty())
 			return as<Named>(root);
 
-		Named *at = root->find(name->at(0));
+		Named *at = root->find(name->at(0), scope);
 		for (nat i = 1; at != null && i < name->count(); i++) {
-			at = at->find(name->at(i));
+			at = at->find(name->at(i), scope);
 		}
 
 		return at;
@@ -42,12 +42,14 @@ namespace storm {
 	}
 
 	Package *ScopeLookup::rootPkg(Package *p) {
-		NameLookup *at = p;
-		while (at->parent())
-			at = at->parent();
+		return p->engine().package();
 
-		assert(as<Package>(at), L"Detached NameLookup found!");
-		return as<Package>(at);
+		// NameLookup *at = p;
+		// while (at->parent())
+		// 	at = at->parent();
+
+		// assert(as<Package>(at), L"Detached NameLookup found!");
+		// return as<Package>(at);
 	}
 
 	Package *ScopeLookup::corePkg(NameLookup *l) {
@@ -55,7 +57,7 @@ namespace storm {
 		Package *top = firstPkg(l);
 		Package *root = rootPkg(top);
 		SimplePart *core = new (l) SimplePart(new (l) Str(L"core"));
-		return as<Package>(root->find(core));
+		return as<Package>(root->find(core, Scope(root)));
 	}
 
 	NameLookup *ScopeLookup::nextCandidate(NameLookup *prev) {
@@ -75,13 +77,13 @@ namespace storm {
 	Named *ScopeLookup::find(Scope in, SimpleName *name) {
 		// Regular path.
 		for (NameLookup *at = in.top; at; at = nextCandidate(at)) {
-			if (Named *found = storm::find(at, name))
+			if (Named *found = storm::find(in, at, name))
 				return found;
 		}
 
 		// Core.
 		if (Package *core = corePkg(in.top))
-			if (Named *found = storm::find(core, name))
+			if (Named *found = storm::find(in, core, name))
 				return found;
 
 		// We failed!
@@ -208,7 +210,7 @@ namespace storm {
 			return found;
 
 		for (nat i = 0; i < extra->count(); i++) {
-			if (Named *found = storm::find(extra->at(i), name))
+			if (Named *found = storm::find(in, extra->at(i), name))
 				return found;
 		}
 

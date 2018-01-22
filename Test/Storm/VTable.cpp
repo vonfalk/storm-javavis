@@ -117,7 +117,7 @@ BEGIN_TEST(VTableCppTest2, Storm) {
 
 	Type *extend = debug::Extend::stormType(e);
 	Package *pkg = as<Package>(extend->parent());
-	Function *value = as<Function>(extend->find(S("value"), Value(extend)));
+	Function *value = as<Function>(extend->find(S("value"), Value(extend), Scope()));
 	VERIFY(value);
 	VERIFY(pkg);
 
@@ -127,7 +127,7 @@ BEGIN_TEST(VTableCppTest2, Storm) {
 
 	// Add our own instantiation...
 	Type *sub1 = addSubclass(pkg, extend, S("value"), address(&extendReplace));
-	Function *value1 = as<Function>(sub1->find(S("value"), Value(sub1)));
+	Function *value1 = as<Function>(sub1->find(S("value"), Value(sub1), Scope()));
 
 	// Now, we should use vtable calls on the base class!
 	CHECK(usesVTable(value));
@@ -136,7 +136,7 @@ BEGIN_TEST(VTableCppTest2, Storm) {
 
 	// Add another subclass, subling to sub1.
 	Type *sub2 = addSubclass(pkg, extend, S("value"), address(&extendReplace2));
-	Function *value2 = as<Function>(sub2->find(S("value"), Value(sub2)));
+	Function *value2 = as<Function>(sub2->find(S("value"), Value(sub2), Scope()));
 
 	// VTable call on base class and first level derived.
 	CHECK(usesVTable(value));
@@ -145,7 +145,7 @@ BEGIN_TEST(VTableCppTest2, Storm) {
 
 	// Add another subclass from sub1.
 	Type *sub3 = addSubclass(pkg, sub1, S("value"), address(&extendReplace2));
-	Function *value3 = as<Function>(sub3->find(S("value"), Value(sub3)));
+	Function *value3 = as<Function>(sub3->find(S("value"), Value(sub3), Scope()));
 
 	// VTable call on base class and first level derived.
 	CHECK(usesVTable(value));
@@ -256,12 +256,12 @@ BEGIN_TEST(VTableStormTest, Storm) {
 
 	// Note: *not* overriding 'value' in debug::Extend.
 	Type *sub1 = addSubclass(pkg, base, S("val"), address(&extendReplace));
-	Function *val1 = as<Function>(sub1->find(S("val"), Value(sub1)));
+	Function *val1 = as<Function>(sub1->find(S("val"), Value(sub1), Scope()));
 
 	CHECK(!usesVTable(val1));
 
 	Type *sub2 = addSubclass(pkg, sub1, S("val"), address(&extendReplace2));
-	Function *val2 = as<Function>(sub2->find(S("val"), Value(sub2)));
+	Function *val2 = as<Function>(sub2->find(S("val"), Value(sub2), Scope()));
 
 	CHECK(!usesVTable(val2));
 	CHECK(usesVTable(val1));
@@ -277,7 +277,7 @@ BEGIN_TEST(VTableSplit, Storm) {
 
 	Type *base = debug::Extend::stormType(e);
 	Package *pkg = as<Package>(base->parent());
-	Function *value = as<Function>(base->find(S("value"), Value(base)));
+	Function *value = as<Function>(base->find(S("value"), Value(base), Scope()));
 	VERIFY(pkg);
 	VERIFY(value);
 
@@ -339,7 +339,7 @@ BEGIN_TEST(VTableCppOnly, Storm) {
 	Array<Value> *params = new (e) Array<Value>(2, Value());
 	params->at(0) = Value(base);
 	params->at(1) = Value(StormInfo<Nat>::type(e));
-	Function *call = as<Function>(base->find(S("firstParamLoc"), params));
+	Function *call = as<Function>(base->find(S("firstParamLoc"), params, Scope()));
 
 	Nat param = 0;
 	os::FnCall<code::Operand, 2> fnParams = os::fnCall().add(arena).add(param);

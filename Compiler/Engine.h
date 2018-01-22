@@ -103,6 +103,9 @@ namespace storm {
 
 		/**
 		 * Packages.
+		 *
+		 * All package lookup performed from here will completely disregard visibility; they are
+		 * indended for 'supervisor' usage.
 		 */
 
 		// Get the root package.
@@ -283,8 +286,8 @@ namespace storm {
 		// Standard IO thread.
 		StdIo *ioThread;
 
-		// Lock for initializing the io thread.
-		util::Lock ioLock;
+		// Lock used for syncronizing object creation.
+		util::Lock createLock;
 
 		// Create references.
 		code::RefSource *createRef(RefType ref);

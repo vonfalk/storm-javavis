@@ -235,7 +235,7 @@ namespace storm {
 	}
 
 	VTableSlot VTable::findSuperSlot(OverridePart *fn, bool setLookup) {
-		Function *found = as<Function>(owner->findHere(fn, null));
+		Function *found = as<Function>(owner->findHere(fn, Scope()));
 		if (found) {
 			// If it is not known to us yet, we can not do much about it.
 			if (updaters->has(found)) {
@@ -285,7 +285,7 @@ namespace storm {
 	Bool VTable::updateChildren(OverridePart *fn, VTableSlot slot) {
 		bool found = false;
 
-		if (Function *f = as<Function>(owner->findHere(fn, null))) {
+		if (Function *f = as<Function>(owner->findHere(fn, Scope()))) {
 			// If it is not known to us, we can not do anything useful with it.
 			if (VTableUpdater *u = updaters->get(f, null)) {
 				VTableSlot from = u->slot();

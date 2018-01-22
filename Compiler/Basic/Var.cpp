@@ -40,11 +40,12 @@ namespace storm {
 
 		void Var::init(Block *block, const Value &type, syntax::SStr *name) {
 			variable = new (this) LocalVar(name->v, type, name->pos, false);
+			scope = block->scope;
 			block->add(variable);
 		}
 
 		void Var::initTo(Expr *e) {
-			if (Expr *z = castTo(e, variable->result))
+			if (Expr *z = castTo(e, variable->result, scope))
 				initExpr = z;
 			else
 				// Use a ctor...
@@ -71,13 +72,13 @@ namespace storm {
 			Type *t = variable->result.type;
 			BSNamePart *name = new (this) BSNamePart(Type::CTOR, pos, actuals);
 			name->insert(thisPtr(t));
-			Function *ctor = as<Function>(t->find(name));
+			Function *ctor = as<Function>(t->find(name, scope));
 			if (!ctor)
 				throw SyntaxError(variable->pos, L"No constructor for " + ::toS(variable->result)
 								+ L" found. Can not initialize " + ::toS(variable->name) +
 								L". Expected signature: " + ::toS(name));
 
-			initCtor = new (this) CtorCall(pos, ctor, actuals);
+			initCtor = new (this) CtorCall(pos, scope, ctor, actuals);
 		}
 
 		ExprResult Var::result() {
@@ -95,9 +96,9 @@ namespace storm {
 				if (initCtor)
 					ctor = initCtor;
 				else if (initExpr)
-					ctor = copyCtor(pos, t.type, initExpr);
+					ctor = copyCtor(pos, scope, t.type, initExpr);
 				else
-					ctor = defaultCtor(pos, t.type);
+					ctor = defaultCtor(pos, scope, t.type);
 
 				if (ctor) {
 					CodeResult *gr = new (this) CodeResult(variable->result, variable->var);

@@ -36,13 +36,13 @@ namespace storm {
 		 * Helper to compute an actual parameter. Takes care of ref/non-ref conversions.
 		 * Returns the value into which the resulting parameter were placed.
 		 */
-		code::Operand Actuals::code(nat id, CodeGen *s, Value param) {
+		code::Operand Actuals::code(nat id, CodeGen *s, Value param, Scope scope) {
 			using namespace code;
 
-			Expr *expr = castTo(expressions->at(id), param);
+			Expr *expr = castTo(expressions->at(id), param, scope);
 			if (param.ref) {
 				// If we failed, try to cast to a non-reference type and deal with that later.
-				expr = castTo(expressions->at(id), param.asRef(false));
+				expr = castTo(expressions->at(id), param.asRef(false), scope);
 			}
 			assert(expr,
 				L"Can not use " + ::toS(expressions->at(id)->result()) + L" as an actual value for parameter " + ::toS(param));
@@ -74,8 +74,8 @@ namespace storm {
 		}
 
 
-		BSNamePart::BSNamePart(syntax::SStr *name, Actuals *params)
-			: SimplePart(name->v, params->values()), pos(name->pos) {
+		BSNamePart::BSNamePart(syntax::SStr *name, Actuals *params) :
+			SimplePart(name->v, params->values()), pos(name->pos) {
 
 			exprs = new (this) Array<Expr *>(*params->expressions);
 		}
@@ -108,7 +108,9 @@ namespace storm {
 		}
 
 		// TODO: Consider using 'max' for match weights instead?
-		Int BSNamePart::matches(Named *candidate) const {
+		// TODO: Consider storing a context inside the context, so that names are resolved in the context
+		// they were created rather than in the context they are evaluated. Not sure if this is a good idea though.
+		Int BSNamePart::matches(Named *candidate, Scope context) const {
 			Array<Value> *c = candidate->params;
 			if (c->count() != params->count())
 				return -1;
@@ -121,7 +123,7 @@ namespace storm {
 				Value formal = c->at(i).asRef(false);
 				Expr *actual = exprs->at(i);
 
-				int penalty = castPenalty(actual, formal, candidate->flags);
+				int penalty = castPenalty(actual, formal, candidate->flags, context);
 				if (penalty >= 0)
 					distance += penalty;
 				else

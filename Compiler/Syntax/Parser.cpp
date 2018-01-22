@@ -1,6 +1,7 @@
 #include "stdafx.h"
 #include "Parser.h"
 #include "Package.h"
+#include "Engine.h"
 #include "Core/StrBuf.h"
 #include "Earley/Parser.h"
 #include "GLR/Parser.h"
@@ -157,7 +158,8 @@ namespace storm {
 		}
 
 		InfoParser *InfoParser::create(Package *pkg, const wchar *name, ParserBackend *backend) {
-			if (Rule *r = as<Rule>(pkg->find(name))) {
+			Scope root = pkg->engine().scope();
+			if (Rule *r = as<Rule>(pkg->find(name, root))) {
 				return new (pkg) InfoParser(r, backend);
 			} else {
 				throw InternalError(L"Can not find the rule " + ::toS(name) + L" in " + ::toS(pkg->identifier()));
@@ -241,7 +243,8 @@ namespace storm {
 		}
 
 		Parser *Parser::create(Package *pkg, const wchar *name, ParserBackend *backend) {
-			if (Rule *r = as<Rule>(pkg->find(name))) {
+			Scope root = pkg->engine().scope();
+			if (Rule *r = as<Rule>(pkg->find(name, root))) {
 				return create(r, backend);
 			} else {
 				throw InternalError(L"Can not find the rule " + ::toS(name) + L" in " + ::toS(pkg->identifier()));

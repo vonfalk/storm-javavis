@@ -266,7 +266,7 @@ class BfOutput extends BfToken {
 		Block block(pos, Scope(named{StrBuf}));
 		BareVarAccess outAccess(pos, state.strBuf, state.output);
 		BareVarAccess tmpData(pos, state.natType, state.tmpData);
-		Expr ch = CtorCall(SrcPos(), named{Char:__init<Char, Nat>}, Actuals(tmpData));
+		Expr ch = CtorCall(SrcPos(), rootScope, named{Char:__init<Char, Nat>}, Actuals(tmpData));
 		Expr e = namedExpr(block, SStr("add", pos), outAccess, Actuals(ch));
 		e.code(to, CodeResult());
 

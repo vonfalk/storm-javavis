@@ -91,7 +91,7 @@ namespace storm {
 		void STORM_FN forceLoad();
 
 		// Find something in here.
-		virtual MAYBE(Named *) STORM_FN find(SimplePart *part, MAYBE(NameLookup *) source);
+		virtual MAYBE(Named *) STORM_FN find(SimplePart *part, Scope source);
 		using Named::find;
 
 		// Watch this NameSet for new additions.
@@ -163,7 +163,7 @@ namespace storm {
 		virtual Bool STORM_FN loadAll();
 
 		// Find a named here without bothering with lazy-loading.
-		Named *STORM_FN tryFind(SimplePart *part, MAYBE(NameLookup *) source);
+		Named *STORM_FN tryFind(SimplePart *part, Scope source);
 
 	private:
 		// Overloads.

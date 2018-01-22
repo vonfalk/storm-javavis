@@ -67,10 +67,10 @@ namespace storm {
 		// Choose an overload, assuming 'source' is trying to access it. 'source' is used to perform
 		// a visibility check on the potential candidates. If 'source' is null, all objects are
 		// considered.
-		virtual MAYBE(Named *) STORM_FN choose(NameOverloads *from, MAYBE(NameLookup *) source) const;
+		virtual MAYBE(Named *) STORM_FN choose(NameOverloads *from, Scope source) const;
 
 		// Compute the badness of a candidate. Returns -1 on no match.
-		virtual Int STORM_FN matches(Named *candidate) const;
+		virtual Int STORM_FN matches(Named *candidate, Scope source) const;
 
 		// To string.
 		virtual void STORM_FN toS(StrBuf *to) const;

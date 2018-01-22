@@ -2,6 +2,7 @@
 #include "Compiler/NamedThread.h"
 #include "Compiler/Syntax/SStr.h"
 #include "Compiler/Name.h"
+#include "Compiler/Scope.h"
 #include "Expr.h"
 
 namespace storm {
@@ -25,7 +26,7 @@ namespace storm {
 
 			// Generate the code to get one parameter. Returns where it is stored.
 			// 'type' may differ slightly from 'expressions->at(id)->result()'.
-			code::Operand code(nat id, CodeGen *s, Value type);
+			code::Operand code(nat id, CodeGen *s, Value type, Scope scope);
 
 			// Empty?
 			inline Bool STORM_FN empty() { return expressions->empty(); }
@@ -62,7 +63,7 @@ namespace storm {
 			void STORM_FN alter(Nat id, Value to);
 
 			// Matches?
-			virtual Int STORM_FN matches(Named *candidate) const;
+			virtual Int STORM_FN matches(Named *candidate, Scope source) const;
 
 		private:
 			// Original expressions. (may contain null).

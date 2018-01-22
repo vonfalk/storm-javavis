@@ -90,7 +90,7 @@ namespace storm {
 			FnBody *body = createBody();
 
 			// Expression possibly wrapped around the body (casting the value if needed).
-			Expr *bodyExpr = expectCastTo(body, result);
+			Expr *bodyExpr = expectCastTo(body, result, Scope(this));
 			// PLN(bodyExpr);
 
 			// Generate code!

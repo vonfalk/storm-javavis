@@ -322,7 +322,7 @@ namespace storm {
 		}
 	}
 
-	Named *Type::find(SimplePart *part, MAYBE(NameLookup *) source) {
+	Named *Type::find(SimplePart *part, Scope source) {
 		if (Named *n = NameSet::find(part, source))
 			return n;
 
@@ -765,12 +765,14 @@ namespace storm {
 			Array<Value> *rr = new (engine) Array<Value>(2, Value(this, true));
 			Array<Value> *vv = new (engine) Array<Value>(2, Value(this));
 
+			Scope scope = engine.scope();
+
 			// Find constructor.
-			if (Function *f = as<Function>(find(CTOR, rr)))
+			if (Function *f = as<Function>(find(CTOR, rr, scope)))
 				updateHandle(f);
 
 			// Find destructor.
-			if (Function *f = as<Function>(find(DTOR, r)))
+			if (Function *f = as<Function>(find(DTOR, r, scope)))
 				updateHandle(f);
 
 			// Find deepCopy.
@@ -780,11 +782,11 @@ namespace storm {
 			updateHandleToS(true, null);
 
 			// Find hash function.
-			if (Function *f = as<Function>(find(S("hash"), r)))
+			if (Function *f = as<Function>(find(S("hash"), r, scope)))
 				updateHandle(f);
 
 			// Find equal function.
-			if (Function *f = as<Function>(find(S("=="), vv)))
+			if (Function *f = as<Function>(find(S("=="), vv, scope)))
 				updateHandle(f);
 
 		} else if (runOn().state != RunOn::any) {
@@ -848,7 +850,7 @@ namespace storm {
 				Type *strBufT = StrBuf::stormType(engine);
 				bv->at(0) = thisPtr(strBufT);
 
-				if (Function *f = as<Function>(strBufT->find(S("<<"), bv))) {
+				if (Function *f = as<Function>(strBufT->find(S("<<"), bv, engine.scope()))) {
 					h->setToS(f);
 					handleToS = toSFound;
 				} else {
@@ -904,7 +906,7 @@ namespace storm {
 		}
 	}
 
-	Named *Type::findHere(SimplePart *part, MAYBE(NameLookup *) source) {
+	Named *Type::findHere(SimplePart *part, Scope source) {
 		return NameSet::find(part, source);
 	}
 
@@ -937,7 +939,7 @@ namespace storm {
 		if (!s)
 			return false;
 
-		Function *found = as<Function>(s->findHere(fn, null));
+		Function *found = as<Function>(s->findHere(fn, Scope()));
 		if (found) {
 			// Found it, no need to search further as all possible parent functions are in the
 			// vtable already.
@@ -953,7 +955,7 @@ namespace storm {
 
 		TypeChain::Iter i = chain->children();
 		while (Type *child = i.next()) {
-			Function *found = as<Function>(child->findHere(fn, null));
+			Function *found = as<Function>(child->findHere(fn, Scope()));
 			if (found) {
 				// Found something. Insert it in the vtable. We do not need to go further down this
 				// particular path as any overriding functions there are already found by now.
@@ -1023,24 +1025,24 @@ namespace storm {
 	}
 
 	Function *Type::defaultCtor() {
-		return as<Function>(find(CTOR, new (this) Array<Value>(1, thisPtr(this))));
+		return as<Function>(find(CTOR, new (this) Array<Value>(1, thisPtr(this)), engine.scope()));
 	}
 
 	Function *Type::copyCtor() {
-		return as<Function>(find(CTOR, new (this) Array<Value>(2, thisPtr(this))));
+		return as<Function>(find(CTOR, new (this) Array<Value>(2, thisPtr(this)), engine.scope()));
 	}
 
 	Function *Type::assignFn() {
-		return as<Function>(find(S("="), new (this) Array<Value>(2, thisPtr(this))));
+		return as<Function>(find(S("="), new (this) Array<Value>(2, thisPtr(this)), engine.scope()));
 	}
 
 	Function *Type::deepCopyFn() {
 		Array<Value> *params = valList(engine, 2, thisPtr(this), Value(CloneEnv::stormType(engine)));
-		return as<Function>(find(S("deepCopy"), params));
+		return as<Function>(find(S("deepCopy"), params, engine.scope()));
 	}
 
 	Function *Type::destructor() {
-		return as<Function>(find(DTOR, new (this) Array<Value>(1, thisPtr(this))));
+		return as<Function>(find(DTOR, new (this) Array<Value>(1, thisPtr(this)), engine.scope()));
 	}
 
 	void *Type::operator new(size_t size, Engine &e, GcType *type) {

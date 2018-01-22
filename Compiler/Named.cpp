@@ -18,38 +18,34 @@ namespace storm {
 		return parentLookup;
 	}
 
-	Named *NameLookup::find(SimplePart *part, MAYBE(NameLookup *) source) {
+	Named *NameLookup::find(SimplePart *part, Scope source) {
 		return null;
 	}
 
-	Named *NameLookup::find(SimplePart *part) {
-		TODO(L"Remove me!");
-		return find(part, null);
+
+	Named *NameLookup::find(Str *name, Array<Value> *params, Scope source) {
+		return find(new (this) SimplePart(name, params), source);
 	}
 
-	Named *NameLookup::find(Str *name, Array<Value> *params) {
-		return find(new (this) SimplePart(name, params));
+	Named *NameLookup::find(Str *name, Value param, Scope source) {
+		return find(new (this) SimplePart(name, param), source);
 	}
 
-	Named *NameLookup::find(Str *name, Value param) {
-		return find(new (this) SimplePart(name, param));
-	}
-
-	Named *NameLookup::find(Str *name) {
-		return find(new (this) SimplePart(name));
+	Named *NameLookup::find(Str *name, Scope source) {
+		return find(new (this) SimplePart(name), source);
 	}
 
 
-	Named *NameLookup::find(const wchar *name, Array<Value> *params) {
-		return find(new (this) Str(name), params);
+	Named *NameLookup::find(const wchar *name, Array<Value> *params, Scope source) {
+		return find(new (this) Str(name), params, source);
 	}
 
-	Named *NameLookup::find(const wchar *name, Value param) {
-		return find(new (this) Str(name), param);
+	Named *NameLookup::find(const wchar *name, Value param, Scope source) {
+		return find(new (this) Str(name), param, source);
 	}
 
-	Named *NameLookup::find(const wchar *name) {
-		return find(new (this) Str(name));
+	Named *NameLookup::find(const wchar *name, Scope source) {
+		return find(new (this) Str(name), source);
 	}
 
 
@@ -126,9 +122,10 @@ namespace storm {
 			*to << S("public (unset)");
 	}
 
-	Bool Named::visibleFrom(MAYBE(NameLookup *) source) {
-		if (visibility && source)
-			return visibility->visible(this, source);
+	Bool Named::visibleFrom(Scope source) {
+		// Note: We could pass the entire 'source' along.
+		if (visibility && source.top)
+			return visibility->visible(this, source.top);
 
 		// If either 'visibility' or 'source' is null, we default to 'public'.
 		return true;

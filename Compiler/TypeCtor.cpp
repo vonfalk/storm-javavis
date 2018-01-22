@@ -68,7 +68,7 @@ namespace storm {
 			Array<Value> *params = new (this) Array<Value>();
 			params->push(thisPtr(super));
 			params->push(thisPtr(Thread::stormType(engine())));
-			Function *ctor = as<Function>(super->find(Type::CTOR, params));
+			Function *ctor = as<Function>(super->find(Type::CTOR, params, Scope()));
 			if (!ctor)
 				throw InternalError(L"Can not find the default constructor for TObject!");
 
@@ -358,7 +358,7 @@ namespace storm {
 				*l << fnCall(toCall->ref(), true);
 			} else if (type.isClass()) {
 				// Call the system-wide copy function for this type.
-				Function *toCall = as<Function>(core->find(S("clone"), paramArray(type.type)));
+				Function *toCall = as<Function>(core->find(S("clone"), paramArray(type.type), Scope()));
 				if (!toCall)
 					throw InternalError(L"Can not find 'core.clone' for " + ::toS(type));
 

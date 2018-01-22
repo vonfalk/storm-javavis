@@ -154,7 +154,7 @@ namespace storm {
 		if (addedTo && e.has(bootTemplates)) {
 			// Was the type already added from somewhere else?
 			SimplePart *p = new (e) SimplePart(templ->name, types->toArray());
-			if (Type *t = as<Type>(addedTo->find(p)))
+			if (Type *t = as<Type>(addedTo->find(p, Scope())))
 				return t;
 		}
 

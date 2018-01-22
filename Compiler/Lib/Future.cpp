@@ -37,7 +37,7 @@ namespace storm {
 		TemplateList *l = e.v.cppTemplate(FutureId);
 		NameSet *to = l->addTo();
 		assert(to, L"Too early to use 'wrapFuture'.");
-		Type *found = as<Type>(to->find(new (e.v) SimplePart(new (e.v) Str(L"Future"), v)));
+		Type *found = as<Type>(to->find(S("Future"), v, Scope()));
 		if (!found)
 			throw InternalError(L"Can not find the future type!");
 		return Value(found);

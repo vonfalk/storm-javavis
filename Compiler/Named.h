@@ -4,6 +4,7 @@
 #include "NamedFlags.h"
 #include "Value.h"
 #include "Visibility.h"
+#include "Scope.h"
 
 namespace storm {
 	STORM_PKG(core.lang);
@@ -23,17 +24,16 @@ namespace storm {
 
 		// Find the specified NamePart in here. Returns null if not found. 'source' indicates who is
 		// looking for something, and is used to perform visibility checks. If set to 'null', no
-		// visibility checks are performed.
-		virtual MAYBE(Named *) STORM_FN find(SimplePart *part, MAYBE(NameLookup *) source);
+		// visibility checks are performed. TODO: Maybe use 'Scope' instead of a plain NameLookup?
+		virtual MAYBE(Named *) STORM_FN find(SimplePart *part, Scope source);
 
-		// Convenience overloads for 'find'. TODO: All of these should require a 'source'.
-		MAYBE(Named *) STORM_FN find(SimplePart *part);
-		MAYBE(Named *) STORM_FN find(Str *name, Array<Value> *params);
-		MAYBE(Named *) STORM_FN find(Str *name, Value param);
-		MAYBE(Named *) STORM_FN find(Str *name);
-		MAYBE(Named *) find(const wchar *name, Array<Value> *params);
-		MAYBE(Named *) find(const wchar *name, Value param);
-		MAYBE(Named *) find(const wchar *name);
+		// Convenience overloads for 'find'.
+		MAYBE(Named *) STORM_FN find(Str *name, Array<Value> *params, Scope source);
+		MAYBE(Named *) STORM_FN find(Str *name, Value param, Scope source);
+		MAYBE(Named *) STORM_FN find(Str *name, Scope source);
+		MAYBE(Named *) find(const wchar *name, Array<Value> *params, Scope source);
+		MAYBE(Named *) find(const wchar *name, Value param, Scope source);
+		MAYBE(Named *) find(const wchar *name, Scope source);
 
 		// Get the parent object to this lookup, or null if none.
 		virtual NameLookup *STORM_FN parent() const;
@@ -67,7 +67,7 @@ namespace storm {
 		MAYBE(Visibility *) visibility;
 
 		// Check if this named entity is visible from 'source'.
-		Bool STORM_FN visibleFrom(MAYBE(NameLookup *) source);
+		Bool STORM_FN visibleFrom(Scope source);
 
 		// Flags for this named object.
 		NamedFlags flags;

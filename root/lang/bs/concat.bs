@@ -106,7 +106,7 @@ class ConcatExpr extends Expr {
 			Actuals params;
 			params.add(LocalVarAccess(pos, strBufVar.var));
 			params.add(e);
-			inner.add(FnCall(pos, member, params));
+			inner.add(FnCall(pos, scope, member, params));
 			true;
 		} else {
 			false;
@@ -121,7 +121,7 @@ class ConcatExpr extends Expr {
 			var part = SimplePart("toS", Value:[r]);
 			Named? member = findIn.find(Name(part));
 			if (member as Function) {
-				FnCall call(pos, member, Actuals(e));
+				FnCall call(pos, outer.scope, member, Actuals(e));
 				appendStrBuf(call);
 			} else {
 				false;

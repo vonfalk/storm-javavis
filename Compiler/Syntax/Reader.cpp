@@ -63,7 +63,7 @@ namespace storm {
 		}
 
 		syntax::InfoParser *FileReader::createParser() {
-			syntax::Rule *r = as<syntax::Rule>(syntaxPkg(this)->find(S("SRoot")));
+			syntax::Rule *r = as<syntax::Rule>(syntaxPkg(this)->find(S("SRoot"), Scope() /* god mode! */));
 			if (!r)
 				throw LangDefError(L"Can not find the 'SRoot' rule.");
 			return new (this) syntax::InfoParser(r);
@@ -110,7 +110,7 @@ namespace storm {
 					return SStr::stormType(engine());
 
 				if (last->params->any() && last->params->at(0) != Value()) {
-					if (Named *r = last->params->at(0).type->find(last))
+					if (Named *r = last->params->at(0).type->find(last, in))
 						return r;
 				}
 			}

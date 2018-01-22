@@ -193,7 +193,7 @@ class ReplCode on Compiler {
 		Named? toSFn = root.scope.find(name);
 		if (toSFn as Function) {
 			// It exists, use the result.
-			FnCall toSCall(SrcPos(), toSFn, Actuals(expr));
+			FnCall toSCall(SrcPos(), root.scope, toSFn, Actuals(expr));
 			toSCall.code(g, CodeResult(strType, resultVar));
 		} else {
 			// Just evaluate and print a dummy output.

@@ -1,5 +1,6 @@
 #pragma once
 #include "Expr.h"
+#include "Compiler/Scope.h"
 
 namespace storm {
 	namespace bs {
@@ -12,26 +13,26 @@ namespace storm {
 		 */
 
 		// Is the value 'from' castable to 'to'?
-		Bool castable(Expr *from, Value to, NamedFlags mode);
-		Bool STORM_FN castable(Expr *from, Value to);
+		Bool castable(Expr *from, Value to, NamedFlags mode, Scope scope);
+		Bool STORM_FN castable(Expr *from, Value to, Scope scope);
 
 		// Same as 'castable', but throws an exception on failure.
-		void STORM_FN expectCastable(Expr *from, Value to);
+		void STORM_FN expectCastable(Expr *from, Value to, Scope scope);
 
 		// What is the penalty of casting 'from' to 'to'? Returns -1 if not possible.
-		Int castPenalty(Expr *from, Value to, NamedFlags mode);
-		Int STORM_FN castPenalty(Expr *from, Value to);
+		Int castPenalty(Expr *from, Value to, NamedFlags mode, Scope scope);
+		Int STORM_FN castPenalty(Expr *from, Value to, Scope scope);
 
 		// Return an expression that returns the type 'to'. If nothing special needs to be done,
 		// simply returns 'from'. Note that the returned expr may differ in the 'ref' member!
-		Expr *castTo(Expr *from, Value to, NamedFlags mode);
-		MAYBE(Expr *) STORM_FN castTo(Expr *from, Value to);
+		Expr *castTo(Expr *from, Value to, NamedFlags mode, Scope scope);
+		MAYBE(Expr *) STORM_FN castTo(Expr *from, Value to, Scope scope);
 
 		// Same as 'castTo', but will throw a type error if it is not possible to do the cast.
-		Expr *STORM_FN expectCastTo(Expr *from, Value to);
+		Expr *STORM_FN expectCastTo(Expr *from, Value to, Scope scope);
 
 		// Get the lowest common type that can store both expressions.
-		ExprResult STORM_FN common(Expr *a, Expr *b);
+		ExprResult STORM_FN common(Expr *a, Expr *b, Scope scope);
 
 	}
 }

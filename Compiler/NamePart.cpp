@@ -53,7 +53,7 @@ namespace storm {
 		return this;
 	}
 
-	Named *SimplePart::choose(NameOverloads *from, MAYBE(NameLookup *) source) const {
+	Named *SimplePart::choose(NameOverloads *from, Scope source) const {
 		Array<Named *> *candidates = new (this) Array<Named *>();
 		int best = std::numeric_limits<int>::max();
 
@@ -63,7 +63,7 @@ namespace storm {
 			if (!candidate->visibleFrom(source))
 				continue;
 
-			int badness = matches(candidate);
+			int badness = matches(candidate, source);
 			if (badness >= 0 && badness <= best) {
 				if (badness != best)
 					candidates->clear();
@@ -85,7 +85,7 @@ namespace storm {
 		}
 	}
 
-	Int SimplePart::matches(Named *candidate) const {
+	Int SimplePart::matches(Named *candidate, Scope source) const {
 		Array<Value> *c = candidate->params;
 		if (c->count() != params->count())
 			return -1;

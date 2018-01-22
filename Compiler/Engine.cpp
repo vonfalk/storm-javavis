@@ -243,8 +243,11 @@ namespace storm {
 	}
 
 	ScopeLookup *Engine::scopeLookup() {
-		if (!o.rootLookup)
-			o.rootLookup = new (*this) ScopeLookup();
+		if (!o.rootLookup) {
+			util::Lock::L z(createLock);
+			if (!o.rootLookup)
+				o.rootLookup = new (*this) ScopeLookup();
+		}
 
 		return o.rootLookup;
 	}
@@ -394,7 +397,7 @@ namespace storm {
 
 	StdIo *Engine::stdIo() {
 		if (!ioThread) {
-			util::Lock::L z(ioLock);
+			util::Lock::L z(createLock);
 			if (!ioThread) {
 				ioThread = new StdIo();
 			}
@@ -463,7 +466,7 @@ namespace storm {
 			if (p->params->any())
 				return null;
 
-			Named *next = now->find(p);
+			Named *next = now->find(p, Scope());
 			if (!next) {
 				Package *pkg = new (*this) Package(p->name);
 				now->add(pkg);
@@ -495,7 +498,7 @@ namespace storm {
 			if (p->params->any())
 				return null;
 
-			Named *next = now->find(p);
+			Named *next = now->find(p, Scope());
 			if (!next && create) {
 				Package *pkg = new (*this) Package(p->name);
 				now->add(pkg);
@@ -513,7 +516,7 @@ namespace storm {
 	static Package *findChild(Package *p, Url *path, Nat start) {
 		for (Nat i = start; p && i < path->count(); i++) {
 			// TODO: Make sure we handle case sensitivity correctly!
-			p = as<Package>(p->find(path->at(i)));
+			p = as<Package>(p->find(path->at(i), Scope()));
 		}
 		return p;
 	}

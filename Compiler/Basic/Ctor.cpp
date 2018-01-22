@@ -183,7 +183,7 @@ namespace storm {
 
 		void SuperCall::init(Initializer *init) {
 			Str *name = init->name->v;
-			MemberVar *v = as<MemberVar>(thisPtr.type->find(name, new (this) Array<Value>(1, thisPtr)));
+			MemberVar *v = as<MemberVar>(thisPtr.type->find(name, new (this) Array<Value>(1, thisPtr), scope));
 			if (v == null || v->params->at(0).type != thisPtr.type)
 				throw SyntaxError(init->name->pos, L"The member variable " + ::toS(name) + L" was not found in "
 								+ ::toS(thisPtr));
@@ -213,7 +213,7 @@ namespace storm {
 			if (hiddenThread)
 				values->insert(storm::thisPtr(Thread::stormType(engine())), 1);
 
-			Function *ctor = as<Function>(parent->find(values));
+			Function *ctor = as<Function>(parent->find(values, scope));
 			if (!ctor)
 				throw SyntaxError(pos, L"No constructor (" + ::toS(values) + L") found in " + ::toS(parent->identifier()));
 
@@ -221,13 +221,13 @@ namespace storm {
 			actuals->reserve(values->params->count());
 
 			if (hiddenThread) {
-				actuals->push(params->code(0, s, ctor->params->at(0)));
+				actuals->push(params->code(0, s, ctor->params->at(0), scope));
 				actuals->push(rootBlock->threadParam->var.v);
 				for (nat i = 2; i < values->params->count(); i++)
-					actuals->push(params->code(i - 1, s, ctor->params->at(i)));
+					actuals->push(params->code(i - 1, s, ctor->params->at(i), scope));
 			} else {
 				for (nat i = 0; i < values->params->count(); i++)
-					actuals->push(params->code(i, s, ctor->params->at(i)));
+					actuals->push(params->code(i, s, ctor->params->at(i), scope));
 			}
 
 			CodeResult *t = CREATE(CodeResult, this);
@@ -242,13 +242,13 @@ namespace storm {
 			Type *parent = TObject::stormType(engine());
 			Array<Value> *values = new (this) Array<Value>(2, Value(parent));
 			values->at(1) = Value(Thread::stormType(engine()));
-			Function *ctor = as<Function>(parent->find(Type::CTOR, values));
+			Function *ctor = as<Function>(parent->find(Type::CTOR, values, scope));
 			if (!ctor)
 				throw InternalError(L"The constructor of TObject: __ctor(TObject, Thread) was not found!");
 
 			// Call the constructor.
 			Array<code::Operand> *actuals = new (this) Array<code::Operand>();
-			actuals->push(params->code(0, s, ctor->params->at(0)));
+			actuals->push(params->code(0, s, ctor->params->at(0), scope));
 			actuals->push(t->ref());
 
 			CodeResult *res = new (this) CodeResult();
@@ -345,7 +345,7 @@ namespace storm {
 					throw SyntaxError(pos, L"Can not initialize " + ::toS(v->name) + L" by default-constructing it. In "
 									+ ::toS(thisPtr) + L", please initialize this member explicitly.");
 				Actuals *params = new (this) Actuals();
-				CtorCall *ctorCall = new (this) CtorCall(pos, ctor, params);
+				CtorCall *ctorCall = new (this) CtorCall(pos, scope, ctor, params);
 				CodeResult *created = new (this) CodeResult(t, s->block);
 				ctorCall->code(s, created);
 
@@ -366,7 +366,7 @@ namespace storm {
 			assert(to->expr || to->params);
 
 			if (to->expr) {
-				Expr *init = castTo(to->expr, t);
+				Expr *init = castTo(to->expr, t, scope);
 				if (t.isHeapObj() && init) {
 					initVarAssign(s, v, init);
 				} else {
@@ -390,13 +390,13 @@ namespace storm {
 			BSNamePart *values = new (this) BSNamePart(Type::CTOR, pos, to);
 			values->insert(storm::thisPtr(toCreate));
 
-			Function *ctor = as<Function>(toCreate->find(values));
+			Function *ctor = as<Function>(toCreate->find(values, scope));
 			if (!ctor)
 				throw SyntaxError(pos, L"No constructor for " + ::toS(t) + L"(" + ::toS(values) + L").");
 
 			if (t.isHeapObj()) {
 				// Easy way, call the constructor as normal.
-				CtorCall *call = new (this) CtorCall(pos, ctor, to);
+				CtorCall *call = new (this) CtorCall(pos, scope, ctor, to);
 				CodeResult *created = new (this) CodeResult(t, s->block);
 				call->code(s, created);
 				VarInfo loc = created->location(s);
@@ -411,7 +411,7 @@ namespace storm {
 				// We will prepare 'ptrA' later.
 				actuals->push(ptrA);
 				for (nat i = 1; i < values->params->count(); i++)
-					actuals->push(to->code(i - 1, s, ctor->params->at(i)));
+					actuals->push(to->code(i - 1, s, ctor->params->at(i), scope));
 
 				*s->l << mov(ptrA, dest);
 				*s->l << add(ptrA, ptrConst(v->offset()));

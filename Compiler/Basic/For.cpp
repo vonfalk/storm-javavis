@@ -8,7 +8,7 @@ namespace storm {
 		For::For(SrcPos pos, Block *parent) : Block(pos, parent) {}
 
 		void For::test(Expr *e) {
-			testExpr = expectCastTo(e, Value(StormInfo<Bool>::type(engine())));
+			testExpr = expectCastTo(e, Value(StormInfo<Bool>::type(engine())), scope);
 		}
 
 		void For::update(Expr *e) {

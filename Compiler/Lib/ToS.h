@@ -17,6 +17,7 @@ namespace storm {
 		virtual MAYBE(Named *) STORM_FN generate(SimplePart *part);
 	};
 
+
 	/**
 	 * Function generated.
 	 */

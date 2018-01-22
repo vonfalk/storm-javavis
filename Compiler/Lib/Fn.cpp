@@ -18,7 +18,7 @@ namespace storm {
 		TemplateList *l = e.cppTemplate(ArrayId);
 		NameSet *to = l->addTo();
 		assert(to, L"Too early to use 'fnType'.");
-		Type *found = as<Type>(to->find(S("Fn"), params));
+		Type *found = as<Type>(to->find(S("Fn"), params, Scope()));
 		if (!found)
 			throw InternalError(L"Can not find the function type!");
 		return found;

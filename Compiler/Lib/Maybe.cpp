@@ -45,7 +45,7 @@ namespace storm {
 		TemplateList *l = e.cppTemplate(MaybeId);
 		NameSet *to = l->addTo();
 		assert(to, L"Too early to use 'wrapMaybe'.");
-		Type *found = as<Type>(to->find(new (e) SimplePart(new (e) Str(L"Maybe"), v)));
+		Type *found = as<Type>(to->find(S("Maybe"), v, Scope()));
 		if (!found)
 			throw InternalError(L"Can not find the maybe type!");
 		return Value(found);

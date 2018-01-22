@@ -32,7 +32,7 @@ namespace storm {
 		TemplateList *l = e.cppTemplate(syntax::ParserId);
 		NameSet *to = l->addTo();
 		assert(to, L"Too early to use 'parserType'");
-		ParserType *found = as<ParserType>(to->find(new (e) SimplePart(new (e) Str(L"Parser"), Value(rule))));
+		ParserType *found = as<ParserType>(to->find(S("Parser"), Value(rule), Scope()));
 		if (!found)
 			throw InternalError(L"Can not find the parser type!");
 		return found;

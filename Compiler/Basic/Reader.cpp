@@ -33,7 +33,7 @@ namespace storm {
 		UseReader::UseReader(FileInfo *info) : FileReader(info) {}
 
 		syntax::InfoParser *UseReader::createParser() {
-			syntax::Rule *r = as<syntax::Rule>(syntaxPkg(this)->find(S("SIncludes")));
+			syntax::Rule *r = as<syntax::Rule>(syntaxPkg(this)->find(S("SIncludes"), Scope()));
 			if (!r)
 				throw LangDefError(L"Can not find the 'SIncludes' rule.");
 			return new (this) syntax::InfoParser(r);
@@ -73,7 +73,7 @@ namespace storm {
 		}
 
 		syntax::InfoParser *CodeReader::createParser() {
-			syntax::Rule *r = as<syntax::Rule>(syntaxPkg(this)->find(S("SFile")));
+			syntax::Rule *r = as<syntax::Rule>(syntaxPkg(this)->find(S("SFile"), Scope()));
 			if (!r)
 				throw LangDefError(L"Can not find the 'SFile' rule.");
 			syntax::InfoParser *p = new (this) syntax::InfoParser(r);

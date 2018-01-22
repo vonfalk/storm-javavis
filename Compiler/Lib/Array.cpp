@@ -38,7 +38,7 @@ namespace storm {
 		TemplateList *l = e.cppTemplate(ArrayId);
 		NameSet *to = l->addTo();
 		assert(to, L"Too early to use 'wrapArray'.");
-		Type *found = as<Type>(to->find(new (e) SimplePart(new (e) Str(L"Array"), v)));
+		Type *found = as<Type>(to->find(S("Array"), v, Scope()));
 		if (!found)
 			throw InternalError(L"Can not find the array type!");
 		return Value(found);

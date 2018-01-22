@@ -80,7 +80,7 @@ class ArrayInit extends Expr {
 	Bool acceptable(Value t) {
 		Bool ok = true;
 		for (Nat i = 0; i < values.count; i++) {
-			ok = ok & lang:bs:castable(values[i], t);
+			ok = ok & lang:bs:castable(values[i], t, block.scope);
 		}
 
 		ok;

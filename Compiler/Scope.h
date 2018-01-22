@@ -61,8 +61,8 @@ namespace storm {
 		Str *voidName;
 	};
 
-	// Find a Named from a SimpleName.
-	MAYBE(Named *) STORM_FN find(NameLookup *root, SimpleName *name) ON(Compiler);
+	// Find a Named from a SimpleName. 'scope' is used in visibility checks.
+	MAYBE(Named *) STORM_FN find(Scope scope, NameLookup *root, SimpleName *name) ON(Compiler);
 
 	/**
 	 * Denotes a scope to use when looking up names. The scope itself is not much more than a policy
