@@ -51,7 +51,9 @@ namespace storm {
 			// if (wcscmp(name->v->c_str(), L"asyncPostObject") == 0)
 			// 	PVAR(body);
 
-			return new (this) BSFunction(result, name, resolve(params, scope), scope, thread, body);
+			BSFunction *f = new (this) BSFunction(result, name, resolve(params, scope), scope, thread, body);
+			f->visibility = visibility;
+			return f;
 		}
 
 		void bs::FunctionDecl::update(BSFunction *fn) {

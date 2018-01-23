@@ -42,6 +42,7 @@ namespace storm {
 			Array<NameParam> *params;
 			MAYBE(SrcName *) thread;
 			syntax::Node *body;
+			MAYBE(Visibility *) visibility;
 
 			// Create the corresponding function.
 			Function *STORM_FN createFn();

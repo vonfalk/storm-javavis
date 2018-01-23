@@ -3,6 +3,7 @@
 #include "Compiler/Exception.h"
 #include "Compiler/TypeCtor.h"
 #include "Compiler/TypeDtor.h"
+#include "Compiler/Engine.h"
 #include "Function.h"
 #include "Ctor.h"
 
@@ -137,9 +138,14 @@ namespace storm {
 		ClassBody::ClassBody() {
 			items = new (this) Array<Named *>();
 			templates = new (this) Array<Template *>();
+
+			// TODO: Default to 'private' instead?
+			defaultVisibility = engine().visibility(Engine::vPublic);
 		}
 
 		void ClassBody::add(Named *i) {
+			if (!i->visibility)
+				i->visibility = defaultVisibility;
 			items->push(i);
 		}
 
@@ -147,14 +153,19 @@ namespace storm {
 			templates->push(t);
 		}
 
+		void ClassBody::add(Visibility *v) {
+			defaultVisibility = v;
+		}
+
 		void ClassBody::add(TObject *o) {
-			if (Named *n = as<Named>(o)) {
+			if (Named *n = as<Named>(o))
 				add(n);
-			} else if (Template *t = as<Template>(o)) {
+			else if (Template *t = as<Template>(o))
 				add(t);
-			} else {
+			else if (Visibility *v = as<Visibility>(o))
+				add(v);
+			else
 				throw InternalError(L"Not a suitable type to ClassBody.add(): " + ::toS(runtime::typeOf(o)->identifier()));
-			}
 		}
 
 		/**

@@ -5,6 +5,7 @@
 #include "Compiler/Syntax/SStr.h"
 #include "Compiler/Syntax/Node.h"
 #include "Compiler/Scope.h"
+#include "Compiler/Visibility.h"
 #include "Param.h"
 
 namespace storm {
@@ -64,7 +65,7 @@ namespace storm {
 		/**
 		 * Class body.
 		 */
-		class ClassBody : public Object {
+		class ClassBody : public ObjectOn<Compiler> {
 			STORM_CLASS;
 		public:
 			STORM_CTOR ClassBody();
@@ -75,6 +76,9 @@ namespace storm {
 			// Add template.
 			void STORM_FN add(Template *t);
 
+			// Add default access modifier.
+			void STORM_FN add(Visibility *v);
+
 			// Add any of the above things.
 			void STORM_FN add(TObject *t);
 
@@ -83,6 +87,9 @@ namespace storm {
 
 			// Template contents.
 			Array<Template *> *templates;
+
+			// Currently default access modifier.
+			Visibility *defaultVisibility;
 		};
 
 

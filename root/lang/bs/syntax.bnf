@@ -105,9 +105,14 @@ SNamedThread => NamedThread(name) : "thread" #keyword, SName name, ";";
 
 // Possible root blocks in a file.
 TObject SFileItem(Scope env);
-SFileItem => f : SFunction(env) f;
-SFileItem => c : SClass(env) c;
-SFileItem => t : SNamedThread t;
+SFileItem => item : SPlainFileItem(env) item;
+SFileItem => apply(pos, item, access) : SFreeAccess access - " ", SPlainFileItem(env) item;
+SFileItem => access : [SFreeAccess access - ":"]-;
+
+TObject SPlainFileItem(Scope env);
+SPlainFileItem => f : SFunction(env) f;
+SPlainFileItem => c : SClass(env) c;
+SPlainFileItem => t : SNamedThread t;
 
 // Root rule. Used to parse an entire file, except the use-statements).
 Content SFile(Scope env);
@@ -342,6 +347,24 @@ SStmt[20] => e : SUnless(block) e;
 
 
 ////////////////////////////////////////////////////////////////////
+// Access modifiers.
+////////////////////////////////////////////////////////////////////
+
+// Access modifiers for things inside types. They have a slightly different meaning compared
+// to free functions and variables.
+Visibility STypeAccess() #keyword;
+STypeAccess => typePublic() : "public";
+STypeAccess => typeProtected() : "protected";
+STypeAccess => typePackage() : "package";
+STypeAccess => typePrivate() : "private";
+
+// Access modifiers for things outside of types.
+Visibility SFreeAccess() #keyword;
+SFreeAccess => freePublic() : "public";
+SFreeAccess => freePackage() : "package";
+SFreeAccess => freePrivate() : "private";
+
+////////////////////////////////////////////////////////////////////
 // Function and class bodies!
 ////////////////////////////////////////////////////////////////////
 
@@ -376,14 +399,22 @@ SFirstFormal => nameless(type) : SType type;
 
 // Possible contents of a class.
 TObject SClassItem(Class owner);
-SClassItem => ClassVar(owner, t, n) :
+SClassItem => item : SPlainClassItem(owner) item;
+SClassItem => item : [STypeAccess item - ":"]-;
+SClassItem => apply(pos, item, access) : STypeAccess access - " ", SPlainClassItem(owner) item;
+
+
+// Class items possible to put access modifiers (and other decorators) in front of.
+Named SPlainClassItem(Class owner);
+SPlainClassItem => ClassVar(owner, t, n) :
     SType t, SName n #varName, ";";
-SClassItem => classFn(owner, pos, name, result, params, body) :
+SPlainClassItem => classFn(owner, pos, name, result, params, body) :
     SType result, SName name #fnName, "(", SFormals params, ")", "{"[, SFunctionBody@ body,]+ "}";
-SClassItem => classCtor(owner, pos, params, body) :
+SPlainClassItem => classCtor(owner, pos, params, body) :
     "init" #keyword, "(", SCtorParams params, ")", "{"[, SCtorBody@ body,]+ "}";
-SClassItem => classCastCtor(owner, pos, params, body) :
-    "cast" #keyword, "(", SCtorParams params, ")", "{"[, SCtorBody@ body,]+ "}";
+SPlainClassItem => classCastCtor(owner, pos, params, body) :
+	"cast" #keyword, "(", SCtorParams params, ")", "{"[, SCtorBody@ body,]+ "}";
+
 
 // Root rule for parsing classes and values.
 ClassBody SClassBody(Class owner);

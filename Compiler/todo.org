@@ -1,6 +1,6 @@
-* Loose ends so far [12/27]
-  - [ ] Stack traces for Windows (32-bit) do not always contain names of Storm functions. Only functions
-        that require exception handling are currently shown.
+* Loose ends so far [13/29]
+  - [ ] Change the default visibility of class members in Basic Storm to private.
+  - [ ] Implement 'private' for non-members in Basic Storm.
   - [ ] In Basic Storm, expressions like '2 - 1.0' fail to compile since Float is not searched for
         candidates. This could be solved by moving the operators out of the number classes or improve
         overload resolution in this case.
@@ -21,6 +21,8 @@
   - [ ] Function pointers should maybe allow casting to less specific types of parameters.
   - [ ] if (x = foo.bar) does not produce an error if 'foo.bar' is not Maybe<T>.
   - [ ] Support marking functions as 'pure' in C++ and Storm.
+  - [X] Stack traces for Windows (32-bit) do not always contain names of Storm functions. Only functions
+        that require exception handling are currently shown.
   - [X] Examine if the special case in the stack scanning actually works. The one time I've seen
         it, everything crashed shortly afterwards, but that could have been something else.
         Note: The crash was due to newly created UThreads being visible to the GC before they

@@ -1,0 +1,10 @@
+* Things to fix here [0/2]
+  - [ ] When editing large-ish syntax files, adding a new rule or production is broken.
+        It seems this is due to the file being in the sweet spot where the heuristic is
+        happy enough to accept the solution where the new thing is parsed as whitespace,
+        but not eager enough to parse the entire file again. This is fixed after a fairly
+        large amount of edits (~3 productions) and a few seconds, so it could mean
+        that the timeouts should be more aggressive.
+  - [ ] The language server loses some characters when editing neare a Part boundary,
+        such as after use statements in Basic Storm. This is especially visible when
+        the boundaries are changed.
