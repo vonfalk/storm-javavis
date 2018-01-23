@@ -820,6 +820,8 @@ namespace storm {
 			h->setToS(newFn);
 			handleToS = toSFound;
 
+			// TODO: Remove the notification now?
+
 			return;
 		}
 

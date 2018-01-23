@@ -23,7 +23,7 @@ namespace storm {
 		STORM_CTOR OverridePart(Type *parent, Function *match);
 
 		// Custom badness measure.
-		virtual Int STORM_FN matches(Named *candidate) const;
+		virtual Int STORM_FN matches(Named *candidate, Scope scope) const;
 
 	private:
 		// Remember the result as well.

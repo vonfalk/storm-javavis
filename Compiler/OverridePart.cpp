@@ -15,7 +15,7 @@ namespace storm {
 		params->at(0) = thisPtr(parent);
 	}
 
-	Int OverridePart::matches(Named *candidate) const {
+	Int OverridePart::matches(Named *candidate, Scope scope) const {
 		Function *fn = as<Function>(candidate);
 		if (!fn)
 			return -1;
