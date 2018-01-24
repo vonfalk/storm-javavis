@@ -14,9 +14,25 @@ namespace storm {
 		 * outside of types. The access modifiers within types have slightly different meanings in
 		 * some cases. Most notably 'private', which means 'private within this file' for free
 		 * functions and 'private within this type' for types.
-		 *
-		 * TODO: Implement support for 'freePrivate'.
 		 */
+
+
+		/**
+		 * Private access for free functions etc.
+		 */
+		class FilePrivate : public Visibility {
+			STORM_CLASS;
+		public:
+			// Create.
+			FilePrivate();
+
+			// Check.
+			virtual Bool STORM_FN visible(Named *check, NameLookup *source);
+
+		protected:
+			// To string.
+			virtual void STORM_FN toS(StrBuf *to) const;
+		};
 
 
 

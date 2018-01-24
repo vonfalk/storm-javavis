@@ -1,11 +1,8 @@
-* Loose ends so far [13/29]
+* Loose ends so far [15/30]
   - [ ] Change the default visibility of class members in Basic Storm to private.
-  - [ ] Implement 'private' for non-members in Basic Storm.
   - [ ] In Basic Storm, expressions like '2 - 1.0' fail to compile since Float is not searched for
         candidates. This could be solved by moving the operators out of the number classes or improve
         overload resolution in this case.
-  - [ ] When creating an Arena using code:arena(), the vtable dispatch for 'transform' is not correct. The
-        base class is called directly (no lookup) even though there are implementations in the derived classes.
   - [ ] Destructors in maps and arrays are not working properly yet. Idea: add (yet another) member 
         to array headers, and let the user provide a custom destructor in there if neccessary.
   - [ ] Destructors do not need their own slot in the vtables anymore since we have another mechanism for that.
@@ -16,11 +13,15 @@
   - [ ] Improve the preprocessor by generating toS() and deepCopy() if not present.
   - [ ] Finish the clone() functionality.
   - [ ] Make sure Array<>, Map<> and Set<> clear the memory when an element is removed.
-  - [ ] Make a generic toS() for Storm which uses operator << (if present) for values.
   - [ ] Verify so that integers can not be casted to integers.
   - [ ] Function pointers should maybe allow casting to less specific types of parameters.
+  - [ ] Add a 'pos' member to Named. Then we can implement a generic 'file private' and use that in Basic Storm.
   - [ ] if (x = foo.bar) does not produce an error if 'foo.bar' is not Maybe<T>.
   - [ ] Support marking functions as 'pure' in C++ and Storm.
+  - [ ] Make a generic toS() for Storm which uses operator << (if present) for values.
+  - [X] Implement 'private' for non-members in Basic Storm.
+  - [X] When creating an Arena using code:arena(), the vtable dispatch for 'transform' is not correct. The
+        base class is called directly (no lookup) even though there are implementations in the derived classes.
   - [X] Stack traces for Windows (32-bit) do not always contain names of Storm functions. Only functions
         that require exception handling are currently shown.
   - [X] Examine if the special case in the stack scanning actually works. The one time I've seen

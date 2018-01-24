@@ -2,9 +2,46 @@
 #include "Access.h"
 #include "Engine.h"
 #include "Exception.h"
+#include "Class.h"
+#include "Function.h"
 
 namespace storm {
 	namespace bs {
+
+		static SrcPos findPos(NameLookup *src) {
+			if (BSRawFn *fn = as<BSRawFn>(src))
+				return fn->pos;
+			else if (Class *c = as<Class>(src))
+				return c->declared;
+
+			// TODO: Implement more types here. It would be nice if all Named had a 'pos' member,
+			// since that is usable for all named entities.
+			return SrcPos();
+		}
+
+		FilePrivate::FilePrivate() {}
+
+		Bool FilePrivate::visible(Named *check, NameLookup *source) {
+			SrcPos c = findPos(check);
+			SrcPos s = findPos(source);
+
+			// If both come from unknown files, they are probably not from the same file.
+			if (!c.file || !s.file)
+				return false;
+
+			if (c.file == s.file)
+				return true;
+			return c.file->equals(s.file);
+		}
+
+		void FilePrivate::toS(StrBuf *to) const {
+			*to << S("private");
+		}
+
+
+		/**
+		 * Convenience functions.
+		 */
 
 		Visibility *typePublic(EnginePtr e) {
 			return e.v.visibility(Engine::vPublic);
@@ -31,8 +68,7 @@ namespace storm {
 		}
 
 		Visibility *freePrivate(EnginePtr e) {
-			throw RuntimeError(L"The keyword 'private' for non-members is not implemented yet.");
-			return e.v.visibility(Engine::vPublic);
+			return new (e.v) FilePrivate();
 		}
 
 
