@@ -53,6 +53,17 @@ BEGIN_TEST(InheritanceTest, BS) {
 	CHECK_EQ(runFn<Int>(S("test.bs.testAsExpr"), 1), 12);
 	CHECK_EQ(runFn<Int>(S("test.bs.testAsExpr2"), 0), 30);
 	CHECK_EQ(runFn<Int>(S("test.bs.testAsExpr2"), 1), 12);
+
+	// Inheritance together with visibility. Private members should not interact with other classes.
+	CHECK_EQ(runFn<Int>(S("test.bs.testAccess"), 0, 0), 10); // Base, private
+	CHECK_EQ(runFn<Int>(S("test.bs.testAccess"), 1, 0), 10); // Derived, private
+	CHECK_EQ(runFn<Int>(S("test.bs.testAccess"), 0, 1), 10); // Base, protected
+	CHECK_EQ(runFn<Int>(S("test.bs.testAccess"), 1, 1), 20); // Derived, protected
+
+	// These should fail for various reasons.
+	CHECK_ERROR(runFn<Int>(S("test.bs.testCallProt")), SyntaxError);
+	CHECK_ERROR(runFn<Int>(S("test.bs.testCallPriv")), SyntaxError);
+	CHECK_ERROR(runFn<Int>(S("test.bs.testPrivSuper")), SyntaxError);
 } END_TEST
 
 /**

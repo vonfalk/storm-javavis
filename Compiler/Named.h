@@ -68,6 +68,7 @@ namespace storm {
 
 		// Check if this named entity is visible from 'source'.
 		Bool STORM_FN visibleFrom(Scope source);
+		Bool STORM_FN visibleFrom(MAYBE(NameLookup *) source);
 
 		// Flags for this named object.
 		NamedFlags flags;

@@ -272,12 +272,12 @@ namespace storm {
 
 		// Search towards the super class for a function overridden by 'fn'. Returns 'true' if an
 		// overridden function was found.
-		Bool vtableInsertSuper(OverridePart *added);
+		Bool vtableInsertSuper(OverridePart *added, Named *original);
 
 		// Search towards the subclasses for an overriding function and make sure to insert it into
 		// the vtable in 'slot'. Assuming 'parentFn' is the corresponding function in the closest
 		// parent. Returns true if any function was inserted.
-		Bool vtableInsertSubclasses(OverridePart *added);
+		Bool vtableInsertSubclasses(OverridePart *added, Named *original);
 
 		// Called when we have been attached to a new parent.
 		void vtableNewSuper();

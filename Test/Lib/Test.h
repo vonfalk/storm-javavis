@@ -12,6 +12,7 @@
 // CHECK_NEQ(expr, val)
 // CHECK_EQ_TITLE(expr, val, title)
 // CHECK_NEQ_TITLE(expr, val, title)
+// CHECK_ERROR(expr, exception)
 // BEGIN_TEST(name)
 // END_TEST
 // And the types:

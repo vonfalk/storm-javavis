@@ -18,6 +18,7 @@
   - [ ] Add a 'pos' member to Named. Then we can implement a generic 'file private' and use that in Basic Storm.
   - [ ] if (x = foo.bar) does not produce an error if 'foo.bar' is not Maybe<T>.
   - [ ] Support marking functions as 'pure' in C++ and Storm.
+  - [ ] Automatically mark non-virtual functions in C++ as 'final' in storm, since VTables will not work anyway.
   - [ ] Make a generic toS() for Storm which uses operator << (if present) for values.
   - [X] Implement 'private' for non-members in Basic Storm.
   - [X] When creating an Arena using code:arena(), the vtable dispatch for 'transform' is not correct. The

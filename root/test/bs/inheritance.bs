@@ -11,6 +11,26 @@ class Base {
 	Int sum() {
 		a;
 	}
+
+	protected Int prot() {
+		10;
+	}
+
+	Int useProt() {
+		prot();
+	}
+
+	private Int priv() {
+		10;
+	}
+
+	Int usePriv() {
+		priv();
+	}
+
+	private Int secret() {
+		22;
+	}
 }
 
 class Derived extends Base {
@@ -22,6 +42,23 @@ class Derived extends Base {
 
 	Int sum() {
 		super:sum + b;
+	}
+
+	protected Int prot() {
+		20;
+	}
+
+	private Int priv() {
+		20;
+	}
+
+	Int callSecret() {
+		secret();
+	}
+
+	private Int secret() {
+		// Should not compile.
+		super:secret();
 	}
 }
 
@@ -93,6 +130,32 @@ Int testAsExpr2(Int v) {
 	}
 }
 
+Int testAccess(Int type, Int fn) {
+	Base c = if (type == 0) { Base(); } else { Derived(); };
+
+	if (fn == 0) {
+		c.usePriv();
+	} else {
+		c.useProt();
+	}
+}
+
+Int testCallProt() {
+	Base b;
+	// Should not compile.
+	b.prot();
+}
+
+Int testCallPriv() {
+	Base b;
+	// Should not compile.
+	b.priv();
+}
+
+Int testPrivSuper() {
+	Derived d;
+	d.callSecret();
+}
 
 class DerivedDbg extends Dbg {
 	Int b;

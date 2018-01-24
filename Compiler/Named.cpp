@@ -123,9 +123,12 @@ namespace storm {
 	}
 
 	Bool Named::visibleFrom(Scope source) {
-		// Note: We could pass the entire 'source' along.
-		if (visibility && source.top)
-			return visibility->visible(this, source.top);
+		return visibleFrom(source.top);
+	}
+
+	Bool Named::visibleFrom(MAYBE(NameLookup *) source) {
+		if (visibility && source)
+			return visibility->visible(this, source);
 
 		// If either 'visibility' or 'source' is null, we default to 'public'.
 		return true;
