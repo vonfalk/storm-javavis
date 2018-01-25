@@ -10,13 +10,13 @@ use graphics;
  */
 class PresentWindow extends Frame {
 	// Painter.
-	PresentPainter paint;
+	private PresentPainter paint;
 
 	// Package to reload.
-	Package toReload;
+	private Package toReload;
 
 	// Number typed currently.
-	Nat typedNumber;
+	private Nat typedNumber;
 
 	init(Presentation show) {
 		init(show.title) {
@@ -36,12 +36,6 @@ class PresentWindow extends Frame {
 		}
 
 		create();
-	}
-
-	// Closed.
-	void close() {
-		paint.cleanup();
-		super:close();
 	}
 
 	// Key handling.
@@ -101,28 +95,28 @@ class PresentWindow extends Frame {
  */
 class PresentPainter extends Painter {
 	// The presentation.
-	Presentation p;
+	private Presentation p;
 
 	// Current slide #.
-	Nat slideNr;
+	private Nat slideNr;
 
 	// Current slide.
-	Slide? slide;
+	private Slide? slide;
 
 	// Previous slide (for animations).
-	Slide? lastSlide;
+	private Slide? lastSlide;
 
 	// Current intro.
-	SlideIntro? intro;
+	private SlideIntro? intro;
 
 	// End of presentation brush.
-	SolidBrush endColor;
+	private SolidBrush endColor;
 
 	// Style.
-	SlideStyle style;
+	private SlideStyle style;
 
 	// Brush used outside the slide's limit.
-	SolidBrush outsideColor;
+	private SolidBrush outsideColor;
 
 	init(Presentation p) {
 		init() {
@@ -180,7 +174,7 @@ class PresentPainter extends Painter {
 	}
 
 	// Advance the current slide.
-	Bool advance() {
+	private Bool advance() {
 		if (slide) {
 			slide.doAnimation(true);
 		} else {
@@ -189,14 +183,12 @@ class PresentPainter extends Painter {
 	}
 
 	// Show a slide.
-	void show(Slide? s) {
-		cleanup;
+	private void show(Slide? s) {
 		lastSlide = slide;
 		slide = s;
 		if (slide) {
 			intro = slide.intro;
-			slide.repaintFn = &this.repaint;
-			slide.advanceFn = &this.next;
+			slide.owner = this;
 
 			// Start the intro first, otherwise we may repaint the intro before it has been properly
 			// started due to animations in 'show'.
@@ -241,13 +233,6 @@ class PresentPainter extends Painter {
 		}
 
 		animate;
-	}
-
-	void cleanup() {
-		if (slide) {
-			slide.repaintFn = null;
-			slide.advanceFn = null;
-		}
 	}
 
 }

@@ -134,8 +134,8 @@ class SlideIntro on Render {
  * Fade transition.
  */
 class FadeIntro extends SlideIntro {
-	Duration duration;
-	Moment started;
+	private Duration duration;
+	private Moment started;
 
 	init(Duration d) {
 		init() {
@@ -170,9 +170,9 @@ class FadeIntro extends SlideIntro {
  * Zoom intro.
  */
 class ZoomIntro extends SlideIntro {
-	Moment started;
-	Duration time;
-	Point center;
+	private Moment started;
+	private Duration time;
+	private Point center;
 
 	init(Duration time) {
 		init() {
@@ -245,31 +245,28 @@ class Slide on Render {
 	Fn<Bool, Duration>? animateFn;
 
 	// Animation started.
-	Moment aniStarted;
+	private Moment aniStarted;
 
 	// Objects in this slide.
 	SlideItem[] items;
 
-	// Pending animations in this slide.
-	SlideAni[] animations;
-
 	// Intro transition.
 	SlideIntro? intro;
 
+	// Pending animations in this slide.
+	private SlideAni[] animations;
+
 	// Current animation position.
-	Nat animationPos;
+	private Nat animationPos;
 
-	// Repaint function.
-	Fn<void>? repaintFn;
-
-	// Advance to the next slide.
-	Fn<void>? advanceFn;
+	// Owning render object so that we can ask to be repainted, and so that the slideshow can be advanced.
+	package PresentPainter? owner;
 
 	// Slide number text.
-	Text? numberText;
+	private Text? numberText;
 
 	// Slide number (set by Presentation when we're added to it).
-	Nat number;
+	package Nat number;
 
 	// Surprise key pressed.
 	void onSurprise() {}
@@ -281,14 +278,14 @@ class Slide on Render {
 
 	// Repaint this slide.
 	void repaint() {
-		if (repaintFn)
-			repaintFn.call;
+		if (owner)
+			owner.repaint;
 	}
 
 	// Advance to the next slide.
 	void advance() {
-		if (advanceFn)
-			advanceFn.call;
+		if (owner)
+			owner.next();
 	}
 
 	// Add an item.
@@ -341,7 +338,7 @@ class Slide on Render {
 	}
 
 	// Create text for the current slide number if needed.
-	Text slideNumberText(SlideStyle style) {
+	private Text slideNumberText(SlideStyle style) {
 		if (numberText)
 			return numberText;
 
@@ -413,7 +410,7 @@ class Slide on Render {
  * Title slide.
  */
 class TitleSlide extends Slide {
-	Text title;
+	private Text title;
 
 	init(Str title) {
 		init() {
@@ -455,7 +452,7 @@ class TitleSlide extends Slide {
  * Content slide.
  */
 class ContentSlide extends Slide {
-	Text title;
+	private Text title;
 
 	init(Str title) {
 		init() {
@@ -498,9 +495,9 @@ class ContentSlide extends Slide {
  * Vertical content slide.
  */
 class VContentSlide extends Slide {
-	Text title;
-	Float space;
-	Bool center;
+	private Text title;
+	private Float space;
+	private Bool center;
 
 	init(Str title) {
 		init() {
@@ -576,11 +573,11 @@ class VContentSlide extends Slide {
  * Terminal-style slide.
  */
 class TerminalSlide extends Slide {
-	Font font;
-	Size chSize;
-	SolidBrush bg;
-	SolidBrush fg;
-	Str[] lines;
+	private Font font;
+	private Size chSize;
+	private SolidBrush bg;
+	private SolidBrush fg;
+	private Str[] lines;
 	Nat width;
 	Nat height;
 
@@ -705,8 +702,8 @@ class SlideItem on Render {
 
 
 class TextItem extends SlideItem {
-	Text t;
-	Brush? color;
+	private Text t;
+	private Brush? color;
 
 	init(Str text) {
 		init() {
@@ -751,10 +748,10 @@ class TextItem extends SlideItem {
 }
 
 class ListItem extends SlideItem {
-	Text[] texts;
-	Brush? color;
-	Float ballSize;
-	Float ballInner;
+	private Text[] texts;
+	private Brush? color;
+	private Float ballSize;
+	private Float ballInner;
 
 	init(Str[] text) {
 		init() {}
@@ -777,7 +774,7 @@ class ListItem extends SlideItem {
 	}
 
 	// Create our text!
-	void initText(Str[] text, Font font) {
+	private void initText(Str[] text, Font font) {
 		for (Nat i = 0; i < text.count; i++)
 			texts << Text(text[i], font);
 		ballSize = font.pxHeight;
@@ -819,8 +816,8 @@ class ListItem extends SlideItem {
 }
 
 class ImageItem extends SlideItem {
-	Bitmap image;
-	Float scale;
+	private Bitmap image;
+	private Float scale;
 
 	init(Url image) {
 		init() {
