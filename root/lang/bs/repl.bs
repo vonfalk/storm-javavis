@@ -12,10 +12,10 @@ BsRepl repl() {
 class BsRepl extends Repl {
 
 	// Shall we terminate?
-	Bool done;
+	package Bool done;
 
 	// Scope.
-	Scope scope;
+	private Scope scope;
 
 	// Pre-processing.
 	init() {
@@ -67,6 +67,7 @@ class BsRepl extends Repl {
 		done;
 	}
 
+private:
 	void addUse(SrcName name) {
 		Named? pkg = rootScope.find(name);
 		if (pkg as Package) {
@@ -98,7 +99,7 @@ class BsRepl extends Repl {
 
 }
 
-void outputLicense(core:info:License l, Bool full) on Compiler {
+private void outputLicense(core:info:License l, Bool full) on Compiler {
 	print(l.identifier # ": " # l.title);
 	if (full) {
 		Str line = "-" * 80;
@@ -111,7 +112,7 @@ void outputLicense(core:info:License l, Bool full) on Compiler {
 
 // Sandbox class for the Repl to execute in.
 class ReplSandbox on Compiler {
-	BsRepl owner;
+	private BsRepl owner;
 
 	init(BsRepl owner) {
 		init() {
@@ -153,7 +154,7 @@ class ReplSandbox on Compiler {
 	}
 
 	// This function will be replaced runtime, beware >)
-	// TODO: Replace with some kind of anonymous function.
+	// TODO: Replace with some kind of anonymous function. Everything crashes if it is called recursively.
 	Str evalFn() {
 		"";
 	}
@@ -166,10 +167,10 @@ class ReplBlock extends Block {
 }
 
 class ReplCode on Compiler {
-	ReplBlock root;
-	LocalVar thisPtr;
-	Expr expr;
-	Value strType;
+	private ReplBlock root;
+	private LocalVar thisPtr;
+	private Expr expr;
+	private Value strType;
 
 	init(ReplBlock root, LocalVar thisPtr, Expr expr) {
 		init() {
@@ -206,6 +207,7 @@ class ReplCode on Compiler {
 		g;
 	}
 
+private:
 	// Create an empty string for output.
 	void createDefaultResult(CodeGen g, Value resultType, VarInfo result) {
 		StrBuf s;

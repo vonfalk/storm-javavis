@@ -41,6 +41,11 @@ class TemplateExpr extends ExprBlock {
 		add(exprs);
 	}
 
+	void code(CodeGen state, CodeResult r) {
+		super:code(state, r);
+	}
+
+private:
 	Array<SPatternExpr> findArrays(SExpr create) {
 		SPatternExpr[] result;
 		for (x in create.allChildren(named{PatternActual})) {
@@ -74,10 +79,6 @@ class TemplateExpr extends ExprBlock {
 	void addExpr(Str member, LocalVarAccess exprs, Expr insert) {
 		add(namedExpr(this, SStr(member), exprs, Actuals(insert)));
 	}
-
-	void code(CodeGen state, CodeResult r) {
-		super:code(state, r);
-	}
 }
 
 
@@ -88,22 +89,22 @@ class TemplateExpr extends ExprBlock {
  */
 class PatternBlock extends Block {
 	// Expressions to be inserted later.
-	Array<Expr> exprs;
+	private Array<Expr> exprs;
 
 	// Next expression to be extracted.
-	Nat exprPos;
+	private Nat exprPos;
 
 	// Actuals to be inserted later.
-	Array<Array<Expr>> actuals;
+	private Array<Array<Expr>> actuals;
 
 	// Next actuals to be extracted.
-	Nat actualsPos;
+	private Nat actualsPos;
 
 	// Parent block.
-	Block parent;
+	private Block parent;
 
 	// Contained expr.
-	Expr data;
+	private Expr data;
 
 	init(Block parent, Nat atomCount, Nat actualsCount) {
 		init(parent.pos, parent) {
@@ -230,7 +231,7 @@ Maybe<PatternBlock> findPattern(Block src) on Compiler {
  */
 class ReferSExpr extends Expr {
 	// The expression referred to.
-	SExpr expr;
+	private SExpr expr;
 
 	init(SExpr expr) {
 		init(expr.pos) { expr = expr; }

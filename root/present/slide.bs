@@ -702,7 +702,7 @@ class SlideItem on Render {
 
 
 class TextItem extends SlideItem {
-	private Text t;
+	Text t;
 	private Brush? color;
 
 	init(Str text) {

@@ -9,10 +9,14 @@ namespace storm {
 	namespace bs {
 
 		static SrcPos findPos(NameLookup *src) {
-			if (BSRawFn *fn = as<BSRawFn>(src))
-				return fn->pos;
-			else if (Class *c = as<Class>(src))
-				return c->declared;
+			while (src) {
+				if (BSRawFn *fn = as<BSRawFn>(src))
+					return fn->pos;
+				else if (Class *c = as<Class>(src))
+					return c->declared;
+
+				src = src->parent();
+			}
 
 			// TODO: Implement more types here. It would be nice if all Named had a 'pos' member,
 			// since that is usable for all named entities.

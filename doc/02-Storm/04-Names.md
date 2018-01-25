@@ -1,7 +1,7 @@
 Names
 ======
 
-Most things in the compiler has got a name. Therefore, it is good to know how name resolution works
+Most things in the compiler has a name. Therefore, it is good to know how name resolution works
 in the compiler. Storm provides ways to alter the way name lookups are performed on a case-by-case
 basis. Therefore, this section mostly describes the framework as well as the expected way to look up
 names.
@@ -45,3 +45,22 @@ requested for a name with parameters it does not find a match for, it asks a `Te
 same name (if it is present) to generate the match.
 
 Member functions and variables always have an explicit this pointer as their first parameter.
+
+
+Visibility
+-----------
+
+Each `Named` object is optionally associated with a *visibility*. The visibility determines which
+parts of the system is allowed to access a particular `Named`. This mechanism is used to implement
+access controls, such as `public` and `private`, in Storm, but allows more flexibility if desired.
+
+The visibility of a `Named` object is represented by instances of subclasses to the `Visibility`
+class. This class is not much more than a predicate function, `visible(Named check, NameLookup source)`
+that is called by `Named.visibleFrom` whenever Storm needs to determine if the object `check` is visible
+from `source`. There are a couple of default implementations for common keywords provided by default, for
+example `Public`, `TypePrivate`, `TypeProtected`, `PackagePrivate`, etc.
+
+The visibility is assessed during type lookup. Thus, it is necessary to provide a `Scope` that
+describes the caller's scope when calling `NameLookup.find()`. It is also possible to override the
+visibility system by providing an empty scope (ie. `Scope()`) to the `find` function. If a `Named`
+object is not associated with a `Visibility` object, Storm considers it to be visible from everywhere.
