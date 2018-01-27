@@ -422,7 +422,7 @@ static void genPtr(wostream &to, Function &fn) {
 	}
 }
 
-static const wchar *accessName(Access access) {
+static const wchar_t *accessName(Access access) {
 	switch (access) {
 	case aPublic:
 		return L"cppPublic";
