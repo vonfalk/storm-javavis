@@ -34,7 +34,7 @@ void reloadPkg(Package pkg) on Compiler {
 
 void reloadUrl(Package pkg, Url url) on Compiler {
 	if (url.dir) {
-	} else if (url.ext.equals("bs")) {
+	} else if (url.ext == "bs") {
 		reloadBsUrl(pkg, url);
 	} else {
 		print("Ignoring non BS-file: " # url);

@@ -66,14 +66,14 @@ class RangeFor extends ExprBlock {
 
 	// Hide the fact that we're actually two nested blocks!
 	LocalVar? variable(SimplePart part) {
-		if (part.name.equals(valName)) {
+		if (part.name == valName) {
 			if (loopBlock) {
 				return loopBlock.variable(part);
 			}
 		}
 
 		if (keyName) {
-			if (part.name.equals(keyName)) {
+			if (part.name == keyName) {
 				if (loopBlock) {
 					return loopBlock.variable(part);
 				}

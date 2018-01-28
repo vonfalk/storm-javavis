@@ -3,17 +3,17 @@ use core:asm;
 use core:lang;
 
 AsmOperand number(Str size, Str value) {
-	if (size.equals("b")) {
+	if (size == "b") {
 		byteConst(value.toInt.byte);
-	} else if (size.equals("i")) {
+	} else if (size == "i") {
 		intConst(value.toInt);
-	} else if (size.equals("n")) {
+	} else if (size == "n") {
 		natConst(value.toNat);
-	} else if (size.equals("l")) {
+	} else if (size == "l") {
 		longConst(value.toLong);
-	} else if (size.equals("w")) {
+	} else if (size == "w") {
 		wordConst(value.toWord);
-	} else if (size.equals("p")) {
+	} else if (size == "p") {
 		ptrConst(Offset(value.toInt));
 	} else {
 		// Fallback.

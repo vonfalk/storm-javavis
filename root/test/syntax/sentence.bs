@@ -37,7 +37,7 @@ Bool testSentence() on Compiler {
 		parser.throwError;
 
 	var tfm = parser.tree.transform();
-	"Statement: bird, fly".equals(tfm.toS);
+	"Statement: bird, fly" == tfm.toS;
 }
 
 Bool testMaybe() on Compiler {
@@ -49,7 +49,7 @@ Bool testMaybe() on Compiler {
 	Statement? tfm = tree.transform;
 
 	if (tfm) {
-		"Statement: bird, fly".equals(tfm.toS);
+		"Statement: bird, fly" == tfm.toS;
 	} else {
 		false;
 	}
@@ -61,7 +61,7 @@ Bool testArray() on Compiler {
 	Parser<Paragraph> parser;
 	parser.parse(s, Url());
 	Statement[] tfm = parser.tree.transform;
-	"[Statement: bird, fly, Statement: cat, sleep]".equals(tfm.toS);
+	"[Statement: bird, fly, Statement: cat, sleep]" == tfm.toS;
 }
 
 Bool testCall() on Compiler {
@@ -70,7 +70,7 @@ Bool testCall() on Compiler {
 	Parser<ParCall> parser;
 	parser.parse(s, Url());
 	Statement[] tfm = parser.tree.transform;
-	"[Statement: bird, fly, Statement: cat, sleep]".equals(tfm.toS);
+	"[Statement: bird, fly, Statement: cat, sleep]" == tfm.toS;
 }
 
 Bool testCallMaybe() on Compiler {
@@ -79,7 +79,7 @@ Bool testCallMaybe() on Compiler {
 	Parser<MaybeCall> parser;
 	parser.parse(s, Url());
 	Statement[] tfm = parser.tree.transform;
-	"[Statement: bird, fly, Statement: cat, sleep]".equals(tfm.toS);
+	"[Statement: bird, fly, Statement: cat, sleep]" == tfm.toS;
 }
 
 Nat testRaw() on Compiler {
@@ -106,7 +106,7 @@ Bool testCapture() on Compiler {
 	Parser<Capture> parser;
 	parser.parse(s, Url());
 	Str tfm = parser.tree.transform;
-	"fly bird".equals(tfm);
+	"fly bird" == tfm;
 }
 
 Bool testRawCapture() on Compiler {
@@ -115,7 +115,7 @@ Bool testRawCapture() on Compiler {
 	Parser<RawCapture> parser;
 	parser.parse(s, Url());
 	SStr tfm = parser.tree.transform;
-	"fly bird".equals(tfm.v);
+	"fly bird" == tfm.v;
 }
 
 void testParams() on Compiler {
@@ -124,5 +124,5 @@ void testParams() on Compiler {
 	Parser<PrefixWords> parser;
 	parser.parse(s, Url());
 	StrBuf[] tfm = parser.tree.transform;
-	"[a fly, a bird]".equals(tfm.toS());
+	"[a fly, a bird]" == tfm.toS();
 }
