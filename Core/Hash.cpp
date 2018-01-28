@@ -49,7 +49,7 @@ namespace storm {
 	}
 
 	void checkHashHandle(const Handle &h) {
-		assert(h.hashFn && h.equalFn, L"Incomplete handle for use in a hash container.");
+		assert(h.hashFn && h.hasEqual(), L"Incomplete handle for use in a hash container.");
 	}
 
 }

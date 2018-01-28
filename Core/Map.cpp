@@ -200,7 +200,7 @@ namespace storm {
 
 		nat prev = Info::free;
 		do {
-			if (info->v[slot].hash == hash && (*keyT.equalFn)(key, keyPtr(slot))) {
+			if (info->v[slot].hash == hash && keyT.equal(key, keyPtr(slot))) {
 				// Is the node we're about to delete inside a chain?
 				if (prev != Info::free) {
 					// Unlink us from the chain.
@@ -380,7 +380,7 @@ namespace storm {
 				nat into = insert(k, valPtr(oldVal, i), hash, found);
 
 				// Is this the key we're looking for?
-				if ((*keyT.equalFn)(k, find))
+				if (keyT.equal(k, find))
 					found = into;
 			}
 
@@ -424,7 +424,7 @@ namespace storm {
 				const void *k = keyPtr(oldKey, i);
 
 				// Is this the key we're looking for?
-				if ((*keyT.equalFn)(k, remove)) {
+				if (keyT.equal(k, remove)) {
 					found = true;
 					continue;
 				}
@@ -525,7 +525,7 @@ namespace storm {
 			return Info::free;
 
 		do {
-			if (info->v[slot].hash == hash && (*keyT.equalFn)(key, keyPtr(slot)))
+			if (info->v[slot].hash == hash && keyT.equal(key, keyPtr(slot)))
 				return slot;
 
 			slot = info->v[slot].status;

@@ -2,6 +2,7 @@
 #include "Operator.h"
 #include "Named.h"
 #include "Cast.h"
+#include "Compiler/Type.h"
 #include "Compiler/Exception.h"
 
 namespace storm {
@@ -34,27 +35,38 @@ namespace storm {
 		}
 
 		Expr *OpInfo::meaning(Block *block, Expr *lhs, Expr *rhs) {
-			Actuals *actual = new (block) Actuals();
-			actual->add(lhs);
-			actual->add(rhs);
-			syntax::SStr *n = CREATE(syntax::SStr, block, name, pos);
-			return namedExpr(block, n, actual);
+			Expr *fn = find(block, name, lhs, rhs);
+			if (!fn)
+				throw SyntaxError(pos, L"Can not find an implementation of the operator " +
+								::toS(name) + L" for " + ::toS(lhs->result().type()) + L", " +
+								::toS(rhs->result().type()) + L".");
+
+			return fn;
 		}
 
-		AssignOpInfo::AssignOpInfo(syntax::SStr *op, Int prio, Bool leftAssoc) : OpInfo(op, prio, leftAssoc) {}
+		Expr *OpInfo::find(Block *block, Str *name, Expr *lhs, Expr *rhs) {
+			Actuals *actuals = new (this) Actuals();
+			actuals->add(lhs);
+			actuals->add(rhs);
 
-		Expr *AssignOpInfo::meaning(Block *block, Expr *lhs, Expr *rhs) {
-			Value l = lhs->result().type();
-			Value r = rhs->result().type();
-			UNUSED(r);
+			BSNamePart *part = new (this) BSNamePart(name, pos, actuals);
+			SimpleName *sName = new (this) SimpleName(part);
 
-			if (l.isHeapObj() && l.ref && castable(rhs, l.asRef(false), block->scope)) {
-				return new (block) ClassAssign(lhs, rhs, block->scope);
-			} else {
-				return OpInfo::meaning(block, lhs, rhs);
+			Named *found = block->scope.find(sName);
+			if (!found) {
+				ExprResult r = rhs->result();
+				if (r.any()) {
+					// Try to find the function inside 'rhs' as well. Auto-casting might make that work.
+					found = r.type().type->find(part, block->scope);
+				}
 			}
-		}
 
+			Function *fn = as<Function>(found);
+			if (!fn)
+				return null;
+
+			return new (this) FnCall(pos, block->scope, fn, actuals);
+		}
 
 		OpInfo *lOperator(syntax::SStr *op, Int p) {
 			return new (op) OpInfo(op, p, true);
@@ -64,39 +76,6 @@ namespace storm {
 			return new (op) OpInfo(op, p, false);
 		}
 
-		OpInfo *assignOperator(syntax::SStr *op, Int p) {
-			return new (op) AssignOpInfo(op, p, false);
-		}
-
-		static Str *combinedName(Str *name) {
-			return *name + new (name) Str(L"=");
-		}
-
-		CombinedOperator::CombinedOperator(OpInfo *info, Int prio) :
-			OpInfo(new (engine()) syntax::SStr(combinedName(info->name)), prio, true), op(info) {}
-
-		Expr *CombinedOperator::meaning(Block *block, Expr *lhs, Expr *rhs) {
-			try {
-				// Is this operator overloaded?
-				return OpInfo::meaning(block, lhs, rhs);
-			} catch (const TypeError &) {
-				// It's ok. We have a backup plan!
-			} catch (const SyntaxError &) {
-				// It's ok. We have a backup plan!
-			}
-
-			try {
-				// Create: 'lhs = lhs <op> rhs'
-				syntax::SStr *eqOp = new (this) syntax::SStr(S("="), pos);
-				OpInfo *assign = new (this) AssignOpInfo(eqOp, 100, true);
-
-				Expr *middle = op->meaning(block, lhs, rhs);
-				return assign->meaning(block, lhs, middle);
-			} catch (...) {
-				TODO(L"Better error message when using combined operators.");
-				throw;
-			}
-		}
 
 		Operator::Operator(Block *block, Expr *lhs, OpInfo *op, Expr *rhs)
 			: Expr(op->pos), block(block), lhs(lhs), op(op), rhs(rhs), fnCall(null) {}

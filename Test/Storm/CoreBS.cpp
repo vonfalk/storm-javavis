@@ -7,6 +7,7 @@
 
 using storm::debug::DbgVal;
 using storm::debug::Dbg;
+using storm::debug::DbgActor;
 
 BEGIN_TEST(Priority, BS) {
 	CHECK_EQ(runFn<Int>(S("test.bs.prio1")), 203);
@@ -134,7 +135,44 @@ BEGIN_TEST(AutocastTest, BS) {
 	CHECK_EQ(runFn<Float>(S("test.bs.promoteCtor")), 2);
 	CHECK_EQ(runFn<Float>(S("test.bs.promoteInit")), 8);
 	CHECK_EQ(runFn<Nat>(S("test.bs.initNat")), 20);
+	CHECK_EQ(runFn<Float>(S("test.bs.opFloat")), 5.0f);
 } END_TEST
+
+
+/**
+ * Automatic generation of operators.
+ */
+
+BEGIN_TEST(OperatorTest, BS) {
+	CHECK_EQ(runFn<Bool>(S("test.bs.opLT"), 10, 20), true);
+	CHECK_EQ(runFn<Bool>(S("test.bs.opLT"), 20, 10), false);
+	CHECK_EQ(runFn<Bool>(S("test.bs.opLT"), 10, 10), false);
+	CHECK_EQ(runFn<Bool>(S("test.bs.opGT"), 10, 20), false);
+	CHECK_EQ(runFn<Bool>(S("test.bs.opGT"), 20, 10), true);
+	CHECK_EQ(runFn<Bool>(S("test.bs.opGT"), 10, 10), false);
+	CHECK_EQ(runFn<Bool>(S("test.bs.opLTE"), 10, 20), true);
+	CHECK_EQ(runFn<Bool>(S("test.bs.opLTE"), 20, 10), false);
+	CHECK_EQ(runFn<Bool>(S("test.bs.opLTE"), 20, 20), true);
+	CHECK_EQ(runFn<Bool>(S("test.bs.opGTE"), 10, 20), false);
+	CHECK_EQ(runFn<Bool>(S("test.bs.opGTE"), 20, 10), true);
+	CHECK_EQ(runFn<Bool>(S("test.bs.opGTE"), 10, 10), true);
+	CHECK_EQ(runFn<Bool>(S("test.bs.opEQ"), 10, 20), false);
+	CHECK_EQ(runFn<Bool>(S("test.bs.opEQ"), 20, 10), false);
+	CHECK_EQ(runFn<Bool>(S("test.bs.opEQ"), 10, 10), true);
+	CHECK_EQ(runFn<Bool>(S("test.bs.opNEQ"), 10, 20), true);
+	CHECK_EQ(runFn<Bool>(S("test.bs.opNEQ"), 20, 10), true);
+	CHECK_EQ(runFn<Bool>(S("test.bs.opNEQ"), 10, 10), false);
+
+	// Check the == operator for actors.
+	DbgActor *a = new (gEngine()) DbgActor(1);
+	DbgActor *b = new (gEngine()) DbgActor(2);
+
+	CHECK_EQ(runFn<Bool>(S("test.bs.opActorEQ"), a, b), false);
+	CHECK_EQ(runFn<Bool>(S("test.bs.opActorEQ"), a, a), true);
+	CHECK_EQ(runFn<Bool>(S("test.bs.opActorNEQ"), a, b), true);
+	CHECK_EQ(runFn<Bool>(S("test.bs.opActorNEQ"), a, a), false);
+} END_TEST
+
 
 /**
  * Type system.
@@ -299,9 +337,11 @@ BEGIN_TEST(GenerateTest, BS) {
 	CHECK_EQ(runFn<Int>(S("test.bs.testGenClass"), 10), 12);
 } END_TEST
 
+
 /**
  * Patterns.
  */
+
 BEGIN_TEST(PatternTest, BS) {
 	CHECK_EQ(runFn<Int>(S("test.bs.testPattern")), 170);
 	CHECK_EQ(runFn<Int>(S("test.bs.testPatternNames")), 2010);
@@ -309,6 +349,7 @@ BEGIN_TEST(PatternTest, BS) {
 	CHECK_EQ(runFn<Int>(S("test.bs.testPatternSplice1")), 23);
 	CHECK_EQ(runFn<Int>(S("test.bs.testPatternSplice2")), 6);
 } END_TEST
+
 
 /**
  * Exception safety.

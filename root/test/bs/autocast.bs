@@ -99,3 +99,10 @@ Nat initNat() {
 	ACCast v;
 	v.v;
 }
+
+Float opFloat() {
+	// Make sure we can find Float./(10, 2.0) even though
+	// the normal name resolution would only consider
+	// Int./(10, 2.0), which does not exist.
+	10 / 2.0;
+}

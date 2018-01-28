@@ -11,6 +11,7 @@
 #include "Compiler/Basic/If.h"
 #include "Compiler/Basic/For.h"
 #include "Compiler/Basic/Operator.h"
+#include "Compiler/Basic/Operators.h"
 
 #include "Compiler/Lib/Array.h"
 #include "Compiler/Lib/Maybe.h"

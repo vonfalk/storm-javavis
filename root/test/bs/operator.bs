@@ -1,0 +1,50 @@
+use core:debug;
+// Make sure operators are properly defined.
+
+/**
+ * A value that only defines 'less than'. All operators should be present as well.
+ */
+value LessOp {
+	init(Int v) {
+		init() { v = v; }
+	}
+
+	Bool <(LessOp o) {
+		return v < o.v;
+	}
+
+	private Int v;
+}
+
+
+Bool opLT(Int a, Int b) {
+	LessOp(a) < LessOp(b);
+}
+
+Bool opGT(Int a, Int b) {
+	LessOp(a) > LessOp(b);
+}
+
+Bool opLTE(Int a, Int b) {
+	LessOp(a) <= LessOp(b);
+}
+
+Bool opGTE(Int a, Int b) {
+	LessOp(a) >= LessOp(b);
+}
+
+Bool opEQ(Int a, Int b) {
+	LessOp(a) == LessOp(b);
+}
+
+Bool opNEQ(Int a, Int b) {
+	LessOp(a) != LessOp(b);
+}
+
+Bool opActorEQ(DbgActor a, DbgActor b) {
+	a is b;
+}
+
+Bool opActorNEQ(DbgActor a, DbgActor b) {
+	a !is b;
+}

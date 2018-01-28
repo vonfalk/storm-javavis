@@ -465,6 +465,60 @@ namespace storm {
 
 
 		/**
+		 * Comparison.
+		 */
+
+		ClassCompare::ClassCompare(SrcPos pos, Expr *lhs, Expr *rhs, Bool negate) :
+			Expr(pos), lhs(lhs), rhs(rhs), negate(negate) {
+
+			Value r = lhs->result().type();
+			if ((r.type->typeFlags & typeClass) != typeClass)
+				throw TypeError(lhs->pos, L"The default comparison operator can not be used with other types than classes.");
+
+			r = rhs->result().type();
+			if ((r.type->typeFlags & typeClass) != typeClass)
+				throw TypeError(rhs->pos, L"The default comparison operator can not be used with other types than classes.");
+		}
+
+		ExprResult ClassCompare::result() {
+			return ExprResult(Value(StormInfo<Bool>::type(engine())));
+		}
+
+		void ClassCompare::code(CodeGen *s, CodeResult *to) {
+			using namespace code;
+
+			Bool needed = to->needed();
+
+			CodeResult *l = needed
+				? new (this) CodeResult(lhs->result().type().asRef(false), s->block)
+				: new (this) CodeResult();
+			lhs->code(s, l);
+
+			CodeResult *r = needed
+				? new (this) CodeResult(rhs->result().type().asRef(false), s->block)
+				: new (this) CodeResult();
+			rhs->code(s, r);
+
+			// Is our result needed?
+			if (!to->needed())
+				return;
+
+			VarInfo lVar = l->location(s);
+			VarInfo rVar = r->location(s);
+			VarInfo res = to->location(s);
+
+			*s->l << cmp(lVar.v, rVar.v);
+			*s->l << setCond(res.v, negate ? ifNotEqual : ifEqual);
+			res.created(s);
+		}
+
+		void ClassCompare::toS(StrBuf *to) const {
+			*to << lhs << S(" is ") << rhs;
+		}
+
+
+
+		/**
 		 * Look up a proper action from a name and a set of parameters.
 		 */
 		static Expr *findCtor(Scope scope, Type *t, Actuals *actual, const SrcPos &pos);

@@ -85,9 +85,17 @@ SFormal => NameParam(type, name) : SType type, SName name #varName;
 // Function.
 FunctionDecl SFunction(Scope env);
 SFunction => FunctionDecl(env, result, name, params, body) :
-    SType result, SName name #fnName, "(", SFormals params, ")", "{" [, SFunctionBody@ body, ]+ "}";
+    SType result, SFnDeclName name #fnName, "(", SFormals params, ")", "{" [, SFunctionBody@ body, ]+ "}";
 SFunction => FunctionDecl(env, result, name, params, thread, body) :
-    SType result, SName name #fnName, "(", SFormals params, ")", "on" #keyword, SType thread, "{" [, SFunctionBody@ body, ]+ "}";
+    SType result, SFnDeclName name #fnName, "(", SFormals params, ")", "on" #keyword, SType thread, "{" [, SFunctionBody@ body, ]+ "}";
+
+
+// Function names. Slightly wider than a regular Name, since we allow operators here as well.
+SStr SFnDeclName();
+SFnDeclName => name : SName name;
+SFnDeclName => name : (SOperator)@ name;
+SFnDeclName => name : (SPrePost - "\*")@ name;
+SFnDeclName => name : ("\*" - SPrePost)@ name;
 
 
 // Class/value.
@@ -294,30 +302,32 @@ SPrePost => v : "--"@ v;
 
 // Operators.
 OpInfo SOperator();
-SOperator => lOperator(op, 900) : "\*"@ op;
-SOperator => lOperator(op, 900) : "/"@ op;
-SOperator => lOperator(op, 900) : "%"@ op;
-SOperator => lOperator(op, 800) : "\+"@ op;
-SOperator => lOperator(op, 800) : "\-"@ op;
-SOperator => lOperator(op, 700) : "<<"@ op;
-SOperator => lOperator(op, 700) : ">>"@ op;
-SOperator => lOperator(op, 600) : ">"@ op;
-SOperator => lOperator(op, 600) : "<"@ op;
-SOperator => lOperator(op, 600) : ">="@ op;
-SOperator => lOperator(op, 600) : "<="@ op;
-SOperator => lOperator(op, 500) : "=="@ op;
-SOperator => lOperator(op, 500) : "!="@ op;
-SOperator => lOperator(op, 490) : "&"@ op;
-SOperator => lOperator(op, 480) : "^"@ op;
-SOperator => lOperator(op, 470) : "|"@ op;
+SOperator => compareLt(op, 600) : "<"@ op;
+SOperator => compareGt(op, 600) : ">"@ op;
+SOperator => compareLte(op, 600) : "<="@ op;
+SOperator => compareGte(op, 600) : ">="@ op;
+SOperator => compareEq(op, 500) : "=="@ op;
+SOperator => compareNeq(op, 500) : "!="@ op;
+SOperator => IsOperator(op, 500, false) : "is"@ op;
+SOperator => IsOperator(op, 500, true) : "!is"@ op;
 SOperator => assignOperator(op, 100) : "="@ op;
 SOperator => ConcatOperator(op, 300) : "#"@ op;
+SOperator => op : SAssignableOp op;
+SOperator => CombinedOperator(op, 100) : SAssignableOp op - "=";
 
 // Operator combined with assignment. Eg. +=.
-// This one has higher priority so that we treat '==' as its own operator, and not a strange variant of the assignment.
-OpInfo SCombOp();
-SCombOp[100] => v : SOperator v;
-SCombOp[0] => CombinedOperator(op, 100) : SOperator op, "=";
+OpInfo SAssignableOp();
+SAssignableOp => lOperator(op, 900) : "\*"@ op;
+SAssignableOp => lOperator(op, 900) : "/"@ op;
+SAssignableOp => lOperator(op, 900) : "%"@ op;
+SAssignableOp => lOperator(op, 800) : "\+"@ op;
+SAssignableOp => lOperator(op, 800) : "\-"@ op;
+SAssignableOp => lOperator(op, 700) : "<<"@ op;
+SAssignableOp => lOperator(op, 700) : ">>"@ op;
+SAssignableOp => lOperator(op, 490) : "&"@ op;
+SAssignableOp => lOperator(op, 480) : "^"@ op;
+SAssignableOp => lOperator(op, 470) : "|"@ op;
+
 
 ////////////////////////////////////////////////////////////////////
 // Expressions!
@@ -328,7 +338,7 @@ SExpr[20] => e : SAtom(block) e;
 SExpr => prePostOperator(block, o, e) : "!"@ o, SAtom(block) e;
 SExpr => prefixOperator(block, o, e) : SPrePost o, SAtom(block) e;
 SExpr => postfixOperator(block, o, e) : SAtom(block) e, SPrePost o;
-SExpr => mkOperator(block, lhs, op, rhs) : SAtom(block) lhs, SCombOp op, SExpr(block) rhs;
+SExpr => mkOperator(block, lhs, op, rhs) : SAtom(block) lhs, SOperator op, SExpr(block) rhs;
 // This must be larger than operators, as templates may be seen as the < operator otherwise.
 SExpr[10] => Var(block, t, name, actual) : SType t, SName name #varName, SFnActuals(block) actual;
 SExpr[10] => Var(block, t, name, init) : SType t, SName name #varName, "=", SExpr(block) init;
@@ -409,11 +419,11 @@ Named SPlainClassItem(Class owner);
 SPlainClassItem => ClassVar(owner, t, n) :
     SType t, SName n #varName, ";";
 SPlainClassItem => classFn(owner, pos, name, result, params, body) :
-    SType result, SName name #fnName, "(", SFormals params, ")", "{"[, SFunctionBody@ body,]+ "}";
+    SType result, SFnDeclName name #fnName, "(", SFormals params, ")", "{"[, SFunctionBody@ body,]+ "}";
 SPlainClassItem => classCtor(owner, pos, params, body) :
     "init" #keyword, "(", SCtorParams params, ")", "{"[, SCtorBody@ body,]+ "}";
 SPlainClassItem => classCastCtor(owner, pos, params, body) :
-	"cast" #keyword, "(", SCtorParams params, ")", "{"[, SCtorBody@ body,]+ "}";
+    "cast" #keyword, "(", SCtorParams params, ")", "{"[, SCtorBody@ body,]+ "}";
 
 
 // Root rule for parsing classes and values.

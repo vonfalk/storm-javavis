@@ -45,47 +45,18 @@ namespace storm {
 			virtual Expr *STORM_FN meaning(Block *block, Expr *lhs, Expr *rhs);
 
 		protected:
+			// To string.
 			virtual void STORM_FN toS(StrBuf *to) const;
+
+			// Resolve the operator 'name' according to the normal rules. Returns 'null' if nothing usable is found.
+			MAYBE(Expr *) STORM_FN find(Block *block, Str *name, Expr *lhs, Expr *rhs);
 		};
 
-		/**
-		 * Info for the assignment operator.
-		 */
-		class AssignOpInfo : public OpInfo {
-			STORM_CLASS;
-		public:
-			// Ctor.
-			STORM_CTOR AssignOpInfo(syntax::SStr *op, Int prio, Bool leftAssoc);
-
-			// Custom meaning.
-			virtual Expr *STORM_FN meaning(Block *block, Expr *lhs, Expr *rhs);
-		};
 
 		// Create OpInfo.
 		OpInfo *STORM_FN lOperator(syntax::SStr *op, Int priority);
 		OpInfo *STORM_FN rOperator(syntax::SStr *op, Int priority);
 
-		// Assignment operator. (right associative).
-		OpInfo *STORM_FN assignOperator(syntax::SStr *op, Int priority);
-
-		/**
-		 * Combined operator, ie an operator that combines assignment with another operator.  First
-		 * looks for a specific overload of the operator, if it is not found, turns the expression
-		 * into 'lhs = lhs + rhs'.
-		 */
-		class CombinedOperator : public OpInfo {
-			STORM_CLASS;
-		public:
-			// Ctor.
-			STORM_CTOR CombinedOperator(OpInfo *op, Int prio);
-
-			// Meaning.
-			virtual Expr *STORM_FN meaning(Block *block, Expr *lhs, Expr *rhs);
-
-		private:
-			// Wrapped operator.
-			OpInfo *op;
-		};
 
 		/**
 		 * Represents a binary operator. We need a special representation for it

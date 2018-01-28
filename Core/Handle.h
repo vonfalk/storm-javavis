@@ -71,6 +71,20 @@ namespace storm {
 		// Less-than function.
 		typedef Bool (*LessFn)(const void *a, const void *b);
 		UNKNOWN(PTR_GC) LessFn lessFn;
+
+		// Helper for equality comparison. Works if one of 'equalFn' and 'lessFn' is implemented.
+		inline Bool hasEqual() const {
+			return equalFn || lessFn;
+		}
+		inline Bool equal(const void *a, const void *b) const {
+			if (equalFn) {
+				// Use '==' if possible.
+				return (*equalFn)(a, b);
+			} else {
+				// Otherwise, we can use '!(a < b) && !(b < a)' instead.
+				return !(*lessFn)(a, b) && !(*lessFn)(a, b);
+			}
+		}
 	};
 
 	/**

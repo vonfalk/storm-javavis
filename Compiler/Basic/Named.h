@@ -224,6 +224,31 @@ namespace storm {
 		};
 
 
+		/**
+		 * Default compare for classes.
+		 */
+		class ClassCompare : public Expr {
+			STORM_CLASS;
+		public:
+			// Create. Optionally negate the result (for !=).
+			STORM_CTOR ClassCompare(SrcPos pos, Expr *lhs, Expr *rhs, Bool negate);
+
+			// Result type.
+			virtual ExprResult STORM_FN result();
+
+			// Generate code.
+			virtual void STORM_FN code(CodeGen *s, CodeResult *to);
+
+			// Output.
+			virtual void STORM_FN toS(StrBuf *to) const;
+
+		private:
+			Expr *lhs;
+			Expr *rhs;
+			Bool negate;
+		};
+
+
 		// Find out what the named expression means, and create proper object.
 		Expr *STORM_FN namedExpr(Block *block, syntax::SStr *name, Actuals *params);
 		Expr *STORM_FN namedExpr(Block *block, SrcName *name, Actuals *params);

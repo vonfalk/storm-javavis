@@ -239,6 +239,9 @@ namespace storm {
 			// Handle for TObject.
 			Handle *tObjHandle;
 
+			// Void handle.
+			Handle *voidHandle;
+
 			// Root package.
 			Package *root;
 
@@ -256,9 +259,6 @@ namespace storm {
 
 			// References.
 			code::RefSource *refs[refCount];
-
-			// Void handle.
-			Handle *voidHandle;
 
 			// TypeDesc objects that are used a lot throughout the system.
 			code::TypeDesc *ptrDesc;
