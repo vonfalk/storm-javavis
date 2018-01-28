@@ -20,15 +20,17 @@ namespace storm {
 			Cons *cell = msg->asCons();
 			Symbol *kind = cell->first->asSym();
 
-			if (start->equals(kind)) {
+			if (!kind) {
+				return null;
+			} else if (*start == *kind) {
 				clear();
-			} else if (stop->equals(kind)) {
+			} else if (*stop == *kind) {
 				return onStop(cell->rest);
-			} else if (sum->equals(kind)) {
+			} else if (*sum == *kind) {
 				return onSum(cell->rest);
-			} else if (send->equals(kind)) {
+			} else if (*send == *kind) {
 				return onSend(cell->rest);
-			} else if (echo->equals(kind)) {
+			} else if (*echo == *kind) {
 				return onEcho(cell->rest);
 			}
 

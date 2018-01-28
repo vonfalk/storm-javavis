@@ -744,29 +744,72 @@ namespace storm {
 		} else if (useThread) {
 			return engine.tObjHandle().gcArrayType;
 		} else {
-			return engine.objHandle().gcArrayType;
+			return &pointerArrayType;
 		}
 	}
 
-	void Type::buildHandle() {
-		if (value() || rawPtr()) {
-			if (!handleContent)
-				handleContent = new (engine) code::Content();
+	static void objDeepCopy(void *obj, CloneEnv *env) {
+		Object *&o = *(Object **)obj;
+		cloned(o, env);
+	}
 
-			RefHandle *h = new (engine) RefHandle(handleContent);
+	static void objToS(const void *obj, StrBuf *to) {
+		const Object *o = *(const Object **)obj;
+		*to << o;
+	}
+
+	void Type::buildHandle() {
+		bool val = value() || rawPtr();
+
+		if (!val) {
+			// The above check is not strictly necessary for correctness. However, we crash during
+			// boot if we try to access 'chain' too early.
+			if (isA(TObject::stormType(engine))) {
+				// TObject.
+				tHandle = &engine.tObjHandle();
+				return;
+			}
+		}
+
+		if (!handleContent)
+			handleContent = new (engine) code::Content();
+
+		RefHandle *h = new (engine) RefHandle(handleContent);
+		tHandle = h;
+
+		// We need to fill in enough members in 'h' to be able to create the arrays below. Note: We
+		// know that 'Value' is simple enough to be copied with memcpy, so it is fine to have a
+		// partly initialized handle for 'Value' for a small while.
+		if (val) {
 			const GcType *g = gcType();
 			h->size = g->stride;
+			h->locationHash = false;
 			h->gcArrayType = g;
 			h->toSFn = &defToS;
 			handleToS = toSMissing;
-			tHandle = h;
+		} else {
+			// Plain class.
+			h->size = sizeof(void *);
+			h->locationHash = false;
+			h->gcArrayType = &pointerArrayType;
+			h->copyFn = null; // Memcpy is OK.
+			h->deepCopyFn = &objDeepCopy;
+			h->toSFn = &objToS;
+		}
 
-			Array<Value> *r = new (engine) Array<Value>(1, Value(this, true));
-			Array<Value> *rr = new (engine) Array<Value>(2, Value(this, true));
-			Array<Value> *vv = new (engine) Array<Value>(2, Value(this));
+		// Populate the handle for some types manually. Otherwise, we will not be able to boot
+		// properly.
+		populateHandle(this, h);
 
-			Scope scope = engine.scope();
 
+		Scope scope = engine.scope();
+
+		Array<Value> *r = new (engine) Array<Value>(1, thisPtr(this));
+		Array<Value> *rr = new (engine) Array<Value>(2, thisPtr(this));
+		Array<Value> *vv = new (engine) Array<Value>(2, Value(this));
+
+		// Fill in the rest of the members.
+		if (val) {
 			// Find constructor.
 			if (Function *f = as<Function>(find(CTOR, rr, scope)))
 				updateHandle(f);
@@ -780,22 +823,19 @@ namespace storm {
 				updateHandle(f);
 
 			updateHandleToS(true, null);
-
-			// Find hash function.
-			if (Function *f = as<Function>(find(S("hash"), r, scope)))
-				updateHandle(f);
-
-			// Find equal function.
-			if (Function *f = as<Function>(find(S("=="), vv, scope)))
-				updateHandle(f);
-
-		} else if (runOn().state != RunOn::any) {
-			// Standard tObject handle.
-			tHandle = &engine.tObjHandle();
-		} else {
-			// Standard pointer handle.
-			tHandle = &engine.objHandle();
 		}
+
+		// Find hash function.
+		if (Function *f = as<Function>(find(S("hash"), r, scope)))
+			updateHandle(f);
+
+		// Find equal function.
+		if (Function *f = as<Function>(find(S("=="), vv, scope)))
+			updateHandle(f);
+
+		// Find less-than function.
+		if (Function *f = as<Function>(find(S("<"), vv, scope)))
+			updateHandle(f);
 	}
 
 	void Type::updateHandleToS(bool first, Function *newFn) {
@@ -877,7 +917,7 @@ namespace storm {
 	}
 
 	void Type::updateHandle(Function *fn) {
-		assert(value());
+		bool val = value();
 		RefHandle *h = (RefHandle *)tHandle;
 		Array<Value> *params = fn->params;
 
@@ -890,21 +930,36 @@ namespace storm {
 		// Also: it prevents infinite loops during startup due to recursive dependencies.
 		bool userType = as<code::PrimitiveDesc>(typeDesc()) == null;
 		const wchar *name = fn->name->c_str();
-		if (wcscmp(name, CTOR) == 0) {
+		if (val && wcscmp(name, CTOR) == 0) {
 			if (refThis && params->count() == 2 && params->at(1) == Value(this, true) && userType)
 				h->setCopyCtor(fn->ref());
-		} else if (wcscmp(name, DTOR) == 0) {
+		} else if (val && wcscmp(name, DTOR) == 0) {
 			if (refThis && params->count() == 1 && userType)
 				h->setDestroy(fn->ref());
-		} else if (wcscmp(name, S("deepCopy")) == 0 && userType) {
+		} else if (val && wcscmp(name, S("deepCopy")) == 0 && userType) {
 			if (refThis && params->count() == 2 && params->at(1) == Value(CloneEnv::stormType(engine)))
 				h->setDeepCopy(fn->ref());
 		} else if (wcscmp(name, S("hash")) == 0) {
-			if (params->count() == 1)
-				h->hashFn = (Handle::HashFn)makeRefParams(fn);
+			if (params->count() == 1) {
+				if (allRefParams(fn))
+					h->setHash(fn->ref());
+				else
+					h->hashFn = (Handle::HashFn)makeRefParams(fn);
+			}
 		} else if (wcscmp(name, S("==")) == 0) {
-			if (params->count() == 2)
-				h->equalFn = (Handle::EqualFn)makeRefParams(fn);
+			if (params->count() == 2) {
+				if (allRefParams(fn))
+					h->setEqual(fn->ref());
+				else
+					h->equalFn = (Handle::EqualFn)makeRefParams(fn);
+			}
+		} else if (wcscmp(name, S("<")) == 0) {
+			if (params->count() == 2) {
+				if (allRefParams(fn))
+					h->setLess(fn->ref());
+				else
+					h->lessFn = (Handle::LessFn)makeRefParams(fn);
+			}
 		}
 	}
 

@@ -1,4 +1,4 @@
-* Loose ends so far [15/30]
+* Loose ends so far [15/32]
   - [ ] Change the default visibility of class members in Basic Storm to private.
   - [ ] In Basic Storm, expressions like '2 - 1.0' fail to compile since Float is not searched for
         candidates. This could be solved by moving the operators out of the number classes or improve
@@ -19,6 +19,8 @@
   - [ ] if (x = foo.bar) does not produce an error if 'foo.bar' is not Maybe<T>.
   - [ ] Support marking functions as 'pure' in C++ and Storm.
   - [ ] Automatically mark non-virtual functions in C++ as 'final' in storm, since VTables will not work anyway.
+  - [ ] If a type has a '==' or '<' outside the type itself, the corresponding operator will not be present in
+        a Handle, like '<<' at the moment.
   - [ ] Make a generic toS() for Storm which uses operator << (if present) for values.
   - [X] Implement 'private' for non-members in Basic Storm.
   - [X] When creating an Arena using code:arena(), the vtable dispatch for 'transform' is not correct. The

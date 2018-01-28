@@ -7,18 +7,6 @@ namespace storm {
 
 	void Object::deepCopy(CloneEnv *env) {}
 
-	Bool Object::equals(Object *o) const {
-		if (o)
-			return type() == o->type();
-		else
-			return false;
-	}
-
-	Nat Object::hash() const {
-		TODO(L"Implement me!");
-		return 0;
-	}
-
 	Str *Object::toS() const {
 		return RootObject::toS();
 	}

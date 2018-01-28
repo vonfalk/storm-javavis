@@ -170,42 +170,6 @@ namespace storm {
 	 * Helpers for the pointer handle.
 	 */
 
-	static void objDeepCopy(void *obj, CloneEnv *env) {
-		Object *&o = *(Object **)obj;
-		cloned(o, env);
-	}
-
-	static void objToS(const void *obj, StrBuf *to) {
-		const Object *o = *(const Object **)obj;
-		*to << o;
-	}
-
-	static Nat objHash(const void *obj) {
-		const Object *o = *(const Object **)obj;
-		return o->hash();
-	}
-
-	static Bool objEqual(const void *a, const void *b) {
-		Object *ao = *(Object **)a;
-		Object *bo = *(Object **)b;
-		return ao->equals(bo);
-	}
-
-	const Handle &Engine::objHandle() {
-		if (!o.objHandle) {
-			o.objHandle = new (*this) Handle();
-			o.objHandle->size = sizeof(void *);
-			o.objHandle->locationHash = false;
-			o.objHandle->gcArrayType = &pointerArrayType;
-			o.objHandle->copyFn = null; // No special function, use memcpy.
-			o.objHandle->deepCopyFn = &objDeepCopy;
-			o.objHandle->toSFn = &objToS;
-			o.objHandle->hashFn = &objHash;
-			o.objHandle->equalFn = &objEqual;
-		}
-		return *o.objHandle;
-	}
-
 	static void tObjToS(const void *obj, StrBuf *to) {
 		const TObject *o = *(const TObject **)obj;
 		*to << o;

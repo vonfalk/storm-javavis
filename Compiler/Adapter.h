@@ -10,4 +10,7 @@ namespace storm {
 	 */
 	const void *makeRefParams(Function *wrap);
 
+	// See if 'makeRefParams' is unnecessary.
+	bool allRefParams(Function *fn);
+
 }

@@ -156,18 +156,16 @@ namespace storm {
 		}
 	}
 
-	Bool SimpleName::equals(Object *other) const {
-		if (type() != other->type())
+	Bool SimpleName::operator ==(const SimpleName &o) const {
+		if (!sameType(this, &o))
 			return false;
 
-		SimpleName *o = (SimpleName *)other;
-		if (count() != o->count())
+		if (count() != o.count())
 			return false;
 
-		for (nat i = 0; i < count(); i++) {
-			if (!at(i)->equals(o->at(i)))
+		for (Nat i = 0; i < count(); i++)
+			if (*at(i) != *o.at(i))
 				return false;
-		}
 
 		return true;
 	}

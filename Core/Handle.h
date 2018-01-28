@@ -64,9 +64,13 @@ namespace storm {
 		typedef Nat (*HashFn)(const void *obj);
 		UNKNOWN(PTR_GC) HashFn hashFn;
 
-		// Equals function.
+		// Equality function.
 		typedef Bool (*EqualFn)(const void *a, const void *b);
 		UNKNOWN(PTR_GC) EqualFn equalFn;
+
+		// Less-than function.
+		typedef Bool (*LessFn)(const void *a, const void *b);
+		UNKNOWN(PTR_GC) LessFn lessFn;
 	};
 
 	/**

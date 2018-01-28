@@ -75,4 +75,12 @@ namespace storm {
 		return RootCast<const RootObject>(from);
 	}
 
+
+	/**
+	 * Check if two objects have the same type. Useful in operator ==.
+	 */
+	inline Bool sameType(const RootObject *a, const RootObject *b) {
+		return runtime::typeOf(a) == runtime::typeOf(b);
+	}
+
 }

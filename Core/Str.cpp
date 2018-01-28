@@ -243,12 +243,18 @@ namespace storm {
 		}
 	}
 
-	Bool Str::equals(Object *o) const {
-		if (!Object::equals(o))
+	Bool Str::operator ==(const Str &o) const {
+		if (!sameType(this, &o))
 			return false;
 
-		Str *other = (Str *)o;
-		return wcscmp(c_str(), other->c_str()) == 0;
+		return wcscmp(c_str(), o.c_str()) == 0;
+	}
+
+	Bool Str::operator <(const Str &o) const {
+		if (!sameType(this, &o))
+			return false;
+
+		return wcscmp(c_str(), o.c_str()) < 0;
 	}
 
 	Nat Str::hash() const {

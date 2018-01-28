@@ -306,6 +306,7 @@ struct as {
 		return v;
 	}
 
+private:
 	T *v;
 };
 

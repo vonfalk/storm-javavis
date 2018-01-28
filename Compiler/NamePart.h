@@ -76,7 +76,7 @@ namespace storm {
 		virtual void STORM_FN toS(StrBuf *to) const;
 
 		// Equals.
-		virtual Bool STORM_FN equals(Object *o) const;
+		virtual Bool STORM_FN operator ==(const SimplePart &o) const;
 
 		// Hash.
 		virtual Nat STORM_FN hash() const;

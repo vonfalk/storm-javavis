@@ -74,38 +74,40 @@ namespace storm {
 			Cons *cell = msg->asCons();
 			Symbol *kind = cell->first->asSym();
 
-			if (quit->equals(kind)) {
+			if (!kind) {
+				return true;
+			} else if (*quit == *kind) {
 				return false;
-			} else if (supported->equals(kind)) {
+			} else if (*supported == *kind) {
 				work->poke();
 				onSupported(cell->rest);
-			} else if (open->equals(kind)) {
+			} else if (*open == *kind) {
 				work->poke();
 				onOpen(cell->rest);
-			} else if (edit->equals(kind)) {
+			} else if (*edit == *kind) {
 				work->poke();
 				onEdit(cell->rest);
-			} else if (point->equals(kind)) {
+			} else if (*point == *kind) {
 				onPoint(cell->rest);
-			} else if (close->equals(kind)) {
+			} else if (*close == *kind) {
 				work->poke();
 				onClose(cell->rest);
-			} else if (error->equals(kind)) {
+			} else if (*error == *kind) {
 				work->poke();
 				onError(cell->rest);
-			} else if (indent->equals(kind)) {
+			} else if (*indent == *kind) {
 				work->poke();
 				onIndent(cell->rest);
-			} else if (chunkSz->equals(kind)) {
+			} else if (*chunkSz == *kind) {
 				work->poke();
 				onChunkSz(cell->rest);
-			} else if (test->equals(kind)) {
+			} else if (*test == *kind) {
 				work->poke();
 				onTest(cell->rest);
-			} else if (debug->equals(kind)) {
+			} else if (*debug == *kind) {
 				work->poke();
 				onDebug(cell->rest);
-			} else if (color->equals(kind)) {
+			} else if (*color == *kind) {
 				work->poke();
 				onColor(cell->rest);
 			} else {

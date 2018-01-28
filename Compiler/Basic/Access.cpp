@@ -35,7 +35,7 @@ namespace storm {
 
 			if (c.file == s.file)
 				return true;
-			return c.file->equals(s.file);
+			return *c.file == *s.file;
 		}
 
 		void FilePrivate::toS(StrBuf *to) const {

@@ -25,8 +25,6 @@ namespace storm {
 
 		/**
 		 * Members common to all objects.
-		 *
-		 * TODO: Re-think the equals-api.
 		 */
 
 		// Deep copy of all objects in here.
@@ -35,13 +33,11 @@ namespace storm {
 		// Convert to string. TODO? Move toS(StrBuf *) to protected. CppTypes can be a friend to all types.
 		virtual Str *STORM_FN toS() const;
 		virtual void STORM_FN toS(StrBuf *to) const;
-
-		// Equality check.
-		virtual Bool STORM_FN equals(Object *o) const;
-
-		// Hash function.
-		virtual Nat STORM_FN hash() const;
 	};
 
+	// Are the two objects the same type?
+	inline Bool STORM_FN sameType(const Object *a, const Object *b) {
+		return runtime::typeOf(a) == runtime::typeOf(b);
+	}
 }
 

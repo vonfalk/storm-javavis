@@ -89,25 +89,30 @@ namespace storm {
 		cloned(parts, e);
 	}
 
-	Bool Url::equals(Object *o) const {
-		if (!Object::equals(o))
+	Bool Url::operator ==(const Url &o) const {
+		if (!sameType(this, &o))
 			return false;
 
-		Url *u = (Url *)o;
-		if (protocol) {
-			if (!protocol->equals(u->protocol))
+		if (protocol && o.protocol) {
+			if (*protocol != *o.protocol)
 				return false;
+		} else if (!protocol && !o.protocol) {
+			// OK.
 		} else {
-			if (u->protocol)
-				return false;
+			return false;
 		}
 
-		if (parts->count() != u->parts->count())
+		if (parts->count() != o.parts->count())
 			return false;
 
-		for (nat i = 0; i < parts->count(); i++) {
-			if (!parts->at(i)->equals(u->parts->at(i)))
-				return false;
+		for (Nat i = 0; i < parts->count(); i++) {
+			if (protocol) {
+				if (!protocol->partEq(parts->at(i), o.parts->at(i)))
+					return false;
+			} else {
+				if (*parts->at(i) != *o.parts->at(i))
+					return false;
+			}
 		}
 
 		return true;
@@ -241,7 +246,7 @@ namespace storm {
 			throw InvalidName(L"Both paths to 'relative' must be absolute.");
 
 		// Different protocols, not possible...
-		if (!protocol->equals(to->protocol))
+		if (*protocol != *to->protocol)
 			return this;
 
 		Array<Str *> *rel = new (this) Array<Str *>();

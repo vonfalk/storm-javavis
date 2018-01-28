@@ -49,7 +49,7 @@ namespace storm {
 
 		// Equals. Note that this is always a bitwise equality, multiple paths may name
 		// the same file!
-		virtual Bool STORM_FN equals(Object *o) const;
+		virtual Bool STORM_FN operator ==(const Url &o) const;
 
 		// Hash of this url.
 		virtual Nat STORM_FN hash() const;

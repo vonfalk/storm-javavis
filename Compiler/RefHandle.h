@@ -39,6 +39,9 @@ namespace storm {
 		// Set equality function.
 		void STORM_FN setEqual(code::Ref ref);
 
+		// Set less-than function.
+		void STORM_FN setLess(code::Ref ref);
+
 	private:
 		// Content to use when creating references.
 		code::Content *content;
@@ -60,11 +63,19 @@ namespace storm {
 
 		// Ref to equality fn.
 		code::MemberRef *equalRef;
+
+		// Ref to less-than fn.
+		code::MemberRef *lessRef;
 	};
 
 
 	// Generate machine code to adapt a operator << function to be callable from a toS function
 	// pointer inside a handle.
 	code::Binary *STORM_FN toSThunk(Function *fn);
+
+
+	// Manual population of functions for some of the handles in the system. Will only fill in
+	// function pointers, so fill in the proper references later on.
+	void populateHandle(Type *type, Handle *h);
 
 }

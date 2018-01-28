@@ -246,6 +246,7 @@
 #include "Utils/Platform.h"
 #include "Types.h"
 #include "Runtime.h"
+#include "Compare.h"
 
 /**
  * Declare a string literal in Storm. Expands to L"" or u"" depending on what is appropriate for the

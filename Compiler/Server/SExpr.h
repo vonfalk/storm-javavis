@@ -124,7 +124,7 @@ namespace storm {
 		public:
 			virtual void STORM_FN deepCopy(CloneEnv *env);
 			virtual void STORM_FN toS(StrBuf *to) const;
-			virtual Bool STORM_FN equals(Object *o) const;
+			virtual Bool STORM_FN operator ==(const Symbol &o) const;
 			virtual Nat STORM_FN hash() const;
 
 		protected:

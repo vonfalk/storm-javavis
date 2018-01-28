@@ -15,7 +15,7 @@ namespace storm {
 	Protocol::Protocol() {}
 
 	Bool Protocol::partEq(Str *a, Str *b) {
-		return a->equals(b);
+		return *a == *b;
 	}
 
 	Nat Protocol::partHash(Str *part) {
@@ -44,6 +44,10 @@ namespace storm {
 
 	void Protocol::toS(StrBuf *to) const {
 		*to << L"<unknown protocol>";
+	}
+
+	Bool Protocol::operator ==(const Protocol &o) const {
+		return runtime::typeOf(this) == runtime::typeOf(&o);
 	}
 
 

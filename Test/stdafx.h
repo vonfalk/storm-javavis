@@ -63,7 +63,7 @@ SUITED(Stress, 100);
 
 template <class T, class U>
 void verifyObjEq(TestResult &r, T *lhs, U *rhs, const String &expr) {
-	if (!(lhs->equals(rhs))) {
+	if (!(*lhs == *rhs)) {
 		r.failed++;
 		std::wcout << L"Failed: " << expr << L" == " << lhs << L" != " << rhs << std::endl;
 	}

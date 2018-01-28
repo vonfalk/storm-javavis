@@ -64,6 +64,9 @@ namespace storm {
 
 		// Output.
 		virtual void STORM_FN toS(StrBuf *to) const;
+
+		// The same protocol as some other?
+		virtual Bool STORM_FN operator ==(const Protocol &o) const;
 	};
 
 

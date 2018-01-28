@@ -55,6 +55,12 @@ namespace storm {
 		equalRef = new (this) code::MemberRef(this, OFFSET_OF(RefHandle, equalFn), ref, content);
 	}
 
+	void RefHandle::setLess(code::Ref ref) {
+		if (lessRef)
+			lessRef->disable();
+		lessRef = new (this) code::MemberRef(this, OFFSET_OF(RefHandle, lessFn), ref, content);
+	}
+
 
 	code::Binary *toSThunk(Function *fn) {
 		assert(fn->params->count() == 2);
@@ -79,5 +85,38 @@ namespace storm {
 		*l << fnRet(ptrA);
 
 		return new (fn) code::Binary(fn->engine().arena(), l);
+	}
+
+	template <class T>
+	static Nat wrapHash(const void *obj) {
+		const T *&o = *(const T **)obj;
+		return o->hash();
+	}
+
+	template <class T>
+	static Bool wrapEquals(const void *a, const void *b) {
+		const T *&oa = *(const T **)a;
+		const T *&ob = *(const T **)b;
+		return *oa == *ob;
+	}
+
+	template <class T>
+	static Bool wrapLess(const void *a, const void *b) {
+		const T *&oa = *(const T **)a;
+		const T *&ob = *(const T **)b;
+		return *oa < *ob;
+	}
+
+
+	static void populateStr(Handle *h) {
+		h->hashFn = &wrapHash<Str>;
+		h->equalFn = &wrapEquals<Str>;
+		h->lessFn = &wrapLess<Str>;
+	}
+
+	void populateHandle(Type *type, Handle *h) {
+		Engine &e = type->engine;
+		if (type == Str::stormType(e))
+			populateStr(h);
 	}
 }

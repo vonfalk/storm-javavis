@@ -229,10 +229,11 @@ namespace storm {
 			*to << v->escape(' ');
 		}
 
-		Bool Symbol::equals(Object *o) const {
-			if (Object::equals(o))
-				return id == ((Symbol *)o)->id;
-			return false;
+		Bool Symbol::operator ==(const Symbol &o) const {
+			if (!sameType(this, &o))
+				return false;
+
+			return id == o.id;
 		}
 
 		Nat Symbol::hash() const {

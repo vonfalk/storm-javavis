@@ -23,7 +23,7 @@ namespace storm {
 	 * unicode codepoints, but hides the underlying representation by disallowing low-level access
 	 * to the string from Storm.
 	 *
-	 * Note: we may want to enforce proper normalization of strings to avoid weird results.
+	 * Note: We may want to enforce proper normalization of strings to avoid weird results.
 	 */
 	class Str : public Object {
 		STORM_CLASS;
@@ -63,8 +63,9 @@ namespace storm {
 		// Multiplication.
 		Str *STORM_FN operator *(Nat times) const;
 
-		// Equals (TODO: new interface).
-		virtual Bool STORM_FN equals(Object *o) const;
+		// Compare.
+		virtual Bool STORM_FN operator ==(const Str &o) const;
+		virtual Bool STORM_FN operator <(const Str &o) const;
 
 		// Hash.
 		virtual Nat STORM_FN hash() const;

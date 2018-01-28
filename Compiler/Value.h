@@ -9,6 +9,8 @@ namespace storm {
 
 	/**
 	 * Describes a value inside Storm.
+	 *
+	 * TODO: Think about thread safety here.
 	 */
 	class Value {
 		STORM_VALUE;
@@ -101,10 +103,10 @@ namespace storm {
 	 * type. In case 'a' and 'b' are unrelated, Value() - void
 	 * is returned.
 	 */
-	Value STORM_FN common(Value a, Value b);
+	Value STORM_FN common(Value a, Value b) ON(Compiler);
 
 	// Create a this pointer for a type.
-	Value STORM_FN thisPtr(Type *t);
+	Value STORM_FN thisPtr(Type *t) ON(Compiler);
 
 	// Output.
 	wostream &operator <<(wostream &to, const Value &v);

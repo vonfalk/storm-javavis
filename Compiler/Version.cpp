@@ -112,7 +112,7 @@ namespace storm {
 			return false;
 
 		for (Nat i = 0; i < pre->count(); i++)
-			if (!pre->at(i)->equals(o.pre->at(i)))
+			if (*pre->at(i) != *o.pre->at(i))
 				return false;
 
 		return true;

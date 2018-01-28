@@ -71,11 +71,11 @@ namespace storm {
 				return used;
 			}
 
-			Bool StackItem::equals(Object *o) const {
-				if (runtime::typeOf(this) != runtime::typeOf(o))
+			Bool StackItem::operator ==(const StackItem &o) const {
+				if (!sameType(this, &o))
 					return false;
 
-				return state == ((StackItem *)o)->state;
+				return state == o.state;
 			}
 
 			Nat StackItem::hash() const {

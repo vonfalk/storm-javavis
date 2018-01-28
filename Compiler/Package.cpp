@@ -165,7 +165,7 @@ namespace storm {
 			SimpleName *name = i.k();
 
 			// Load ourselves last.
-			if (name->parent()->equals(me)) {
+			if (*name->parent() == *me) {
 				delayName = name;
 				delayFiles = i.v();
 				continue;

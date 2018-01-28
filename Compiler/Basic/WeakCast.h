@@ -62,6 +62,7 @@ namespace storm {
 			Value to;
 		};
 
+
 		/**
 		 * Weak cast from Maybe<T> to T.
 		 */

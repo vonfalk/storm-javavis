@@ -117,17 +117,17 @@ namespace storm {
 		}
 	}
 
-	Bool SimplePart::equals(Object *other) const {
-		if (type() != other->type())
-			return false;
-		SimplePart *o = (SimplePart *)other;
-		if (!name->equals(o->name))
-			return false;
-		if (params->count() != o->params->count())
+	Bool SimplePart::operator ==(const SimplePart &o) const {
+		if (!sameType(this, &o))
 			return false;
 
-		for (nat i = 0; i < params->count(); i++)
-			if (params->at(i) != o->params->at(i))
+		if (*name != *o.name)
+			return false;
+		if (params->count() != o.params->count())
+			return false;
+
+		for (Nat i = 0; i < params->count(); i++)
+			if (params->at(i) != o.params->at(i))
 				return false;
 
 		return true;

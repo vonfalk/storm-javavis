@@ -94,7 +94,7 @@ namespace storm {
 		// TODO: We may want to consider type aliases in the future, and implement 'void' that way.
 		if (voidName != null && name->count() == 1) {
 			SimplePart *last = name->last();
-			if (last->name->equals(voidName) && last->params->empty())
+			if (*last->name == *voidName && last->params->empty())
 				return Value();
 		}
 

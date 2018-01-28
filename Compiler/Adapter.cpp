@@ -39,4 +39,12 @@ namespace storm {
 		return b->address();
 	}
 
+	Bool allRefParams(Function *fn) {
+		for (Nat i = 0; i < fn->params->count(); i++)
+			if (!fn->params->at(i).ref)
+				return false;
+
+		return true;
+	}
+
 }

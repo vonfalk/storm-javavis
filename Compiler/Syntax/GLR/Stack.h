@@ -51,7 +51,7 @@ namespace storm {
 				Bool insert(TreeStore *store, StackItem *item, Bool &usedTree);
 
 				// Equality check and hashing.
-				virtual Bool STORM_FN equals(Object *o) const;
+				virtual Bool STORM_FN operator ==(const StackItem &o) const;
 				virtual Nat STORM_FN hash() const;
 
 				// Output.
