@@ -3,6 +3,7 @@
 #include "StrBuf.h"
 #include "GcType.h"
 #include "Random.h"
+#include "HandleWrap.h"
 
 namespace storm {
 
@@ -174,6 +175,18 @@ namespace storm {
 
 		Nat id = rand(Nat(0), count());
 		return getRaw(id);
+	}
+
+	void ArrayBase::sortRaw() {
+		assert(handle.lessFn, L"The operator < is required when sorting an array.");
+
+		if (empty())
+			return;
+
+		HandleIter begin(handle, data, 0);
+		HandleIter end(handle, data, count());
+
+		std::sort(begin, end);
 	}
 
 	void ArrayBase::toS(StrBuf *to) const {

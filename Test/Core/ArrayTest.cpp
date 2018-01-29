@@ -32,3 +32,14 @@ BEGIN_TEST(ArrayExTest, CoreEx) {
 	CHECK_EQ(toS(v), L"[core.Str]");
 
 } END_TEST
+
+
+BEGIN_TEST(ArraySortTest, CoreEx) {
+	Engine &e = gEngine();
+
+	Array<Int> *v = new (e) Array<Int>();
+	*v << 3 << 2 << 1 << 0;
+	v->sort();
+
+	CHECK_EQ(toS(v), L"[0, 1, 2, 3]");
+} END_TEST

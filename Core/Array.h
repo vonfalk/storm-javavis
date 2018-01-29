@@ -71,6 +71,11 @@ namespace storm {
 		// Get a random element. Throws if array is empty.
 		void *CODECALL randomRaw() const;
 
+		// Sort the array. Assumes the handle contains a '<' function.
+		void CODECALL sortRaw();
+
+		// TODO: Allow sorting with a predicate.
+
 		// To string.
 		virtual void STORM_FN toS(StrBuf *to) const;
 
@@ -245,6 +250,12 @@ namespace storm {
 			return *(const T *)randomRaw();
 		}
 
+		// Sort. Assumes we have a '<' comparison in the handle.
+		void sort() {
+			sortRaw();
+		}
+
+		// Append elements.
 		Array<T> &operator <<(const T &item) {
 			push(item);
 			return *this;
