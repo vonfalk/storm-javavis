@@ -142,7 +142,7 @@ namespace storm {
 #elif defined(POSIX)
 
 	Bool FileProtocol::partEq(Str *a, Str *b) {
-		return a->equals(b);
+		return *a == *b;
 	}
 
 	Nat FileProtocol::partHash(Str *a) {
