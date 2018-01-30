@@ -3,7 +3,7 @@
 #include "StrBuf.h"
 #include "GcType.h"
 #include "Random.h"
-#include "HandleWrap.h"
+#include "Sort.h"
 
 namespace storm {
 
@@ -180,13 +180,20 @@ namespace storm {
 	void ArrayBase::sortRaw() {
 		assert(handle.lessFn, L"The operator < is required when sorting an array.");
 
+		sortRaw(handle.lessFn);
+	}
+
+	void ArrayBase::sortRaw(Handle::LessFn compare) {
+		assert(handle.lessFn, L"The operator < is required when sorting an array.");
+
 		if (empty())
 			return;
 
-		HandleIter begin(handle, data, 0);
-		HandleIter end(handle, data, count());
+		// We need one temporary element.
+		ensure(count() + 1);
 
-		std::sort(begin, end);
+		SortData d(data, handle, compare);
+		sort(d);
 	}
 
 	void ArrayBase::toS(StrBuf *to) const {

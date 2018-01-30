@@ -38,8 +38,9 @@ BEGIN_TEST(ArraySortTest, CoreEx) {
 	Engine &e = gEngine();
 
 	Array<Int> *v = new (e) Array<Int>();
-	*v << 3 << 2 << 1 << 0;
-	v->sort();
+	for (Int i = 0; i < 10; i++)
+		*v << (10 - i);
 
-	CHECK_EQ(toS(v), L"[0, 1, 2, 3]");
+	v->sort();
+	CHECK_EQ(toS(v), L"[1, 2, 3, 4, 5, 6, 7, 8, 9, 10]");
 } END_TEST

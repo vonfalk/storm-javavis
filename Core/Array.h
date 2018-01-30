@@ -74,7 +74,8 @@ namespace storm {
 		// Sort the array. Assumes the handle contains a '<' function.
 		void CODECALL sortRaw();
 
-		// TODO: Allow sorting with a predicate.
+		// Sort using a predicate.
+		void CODECALL sortRaw(Handle::LessFn compare);
 
 		// To string.
 		virtual void STORM_FN toS(StrBuf *to) const;
