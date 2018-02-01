@@ -36,6 +36,11 @@ BEGIN_TEST(ArrayExTest, CoreEx) {
 
 } END_TEST
 
+static bool CODECALL predicate(Int a, Int b) {
+	a = (a + 5) % 10;
+	b = (b + 5) % 10;
+	return a < b;
+}
 
 BEGIN_TEST(ArraySortTest, CoreEx) {
 	Engine &e = gEngine();
@@ -46,6 +51,14 @@ BEGIN_TEST(ArraySortTest, CoreEx) {
 
 	v->sort();
 	CHECK_EQ(toS(v), L"[1, 2, 3, 4, 5, 6, 7, 8, 9, 10]");
+
+	// Try with a predicate!
+	v->sort(fnPtr(e, &predicate));
+	CHECK_EQ(toS(v), L"[5, 6, 7, 8, 9, 10, 1, 2, 3, 4]");
+
+	// See if 'sorted' works as expected.
+	CHECK_EQ(toS(v->sorted()), L"[1, 2, 3, 4, 5, 6, 7, 8, 9, 10]");
+	CHECK_EQ(toS(v), L"[5, 6, 7, 8, 9, 10, 1, 2, 3, 4]");
 } END_TEST
 
 

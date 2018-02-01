@@ -1,5 +1,6 @@
 #pragma once
 #include "Handle.h"
+#include "Fn.h"
 
 namespace storm {
 
@@ -16,11 +17,11 @@ namespace storm {
 	public:
 		// Use the entire available range in 'data'.
 		SortData(GcArray<byte> *data, const Handle &type);
-		SortData(GcArray<byte> *data, const Handle &type, Handle::LessFn compare);
+		SortData(GcArray<byte> *data, const Handle &type, FnBase *compare);
 
 		// Use only a part of 'data'.
 		SortData(GcArray<byte> *data, const Handle &type, size_t begin, size_t end);
-		SortData(GcArray<byte> *data, const Handle &type, Handle::LessFn compare, size_t begin, size_t end);
+		SortData(GcArray<byte> *data, const Handle &type, FnBase *compare, size_t begin, size_t end);
 
 		// Narrow the described region.
 		SortData(const SortData &src, size_t begin, size_t end);
@@ -31,8 +32,9 @@ namespace storm {
 		// Type of data to use.
 		const Handle &type;
 
-		// Comparison function.
-		Handle::LessFn compare;
+		// Comparison function (if null, 'type->lessFn' is used)
+		FnBase *compare;
+		RawFn compareFn;
 
 		// Range to be affected by the current operation.
 		size_t begin;

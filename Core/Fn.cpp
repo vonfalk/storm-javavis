@@ -5,6 +5,14 @@
 
 namespace storm {
 
+	RawFn::RawFn() : fn(null) {}
+
+	void RawFn::call(FnBase *ptr, void *out, const void *params) const {
+		typedef void (*Fn)(FnBase *ptr, void *out, const void *params);
+		Fn fn = (Fn)this->fn;
+		(*fn)(ptr, out, params);
+	}
+
 	/**
 	 * Targets.
 	 */
@@ -78,7 +86,7 @@ namespace storm {
 			return thread;
 	}
 
-	void FnBase::callRaw(void *out, const os::FnCallRaw &params, const TObject *first, CloneEnv *env) const {
+	void FnBase::callRawI(void *out, const os::FnCallRaw &params, const TObject *first, CloneEnv *env) const {
 		const void *toCall = target()->ptr();
 
 		Thread *thread = runOn(first);
@@ -107,6 +115,11 @@ namespace storm {
 
 	void FnBase::toS(StrBuf *to) const {
 		target()->toS(to);
+	}
+
+	RawFn FnBase::rawCall() {
+		assert(false, L"Override 'rawCall'!");
+		return RawFn();
 	}
 
 

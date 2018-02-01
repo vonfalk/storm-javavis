@@ -42,6 +42,9 @@ namespace storm {
 		fnCall->at(0) = t;
 		add(lazyFunction(e, params->at(0), S("call"), fnCall, fnPtr(e, &FnType::callCode, this)));
 
+		Value rawFn(RawFn::stormType(e));
+		add(lazyFunction(e, rawFn, S("rawCall"), valList(e, 1, t), fnPtr(e, &FnType::rawCallCode, this)));
+
 		return Type::loadAll();
 	}
 
@@ -163,10 +166,74 @@ namespace storm {
 		return s;
 	}
 
+	CodeGen *FnType::rawCallCode() {
+		using namespace code;
+		Engine &e = engine;
+
+		if (!rawCall)
+			rawCall = createRawCall();
+
+		Value result(RawFn::stormType(e));
+
+		TypeDesc *ptr = e.ptrDesc();
+		CodeGen *s = new (e) CodeGen(RunOn(), true, result);
+		s->l->createParam(ptr);
+
+		Var v = s->l->createVar(s->l->root(), Size::sPtr);
+
+		*s->l << prolog();
+		*s->l << mov(v, Ref(rawCall));
+		*s->l << fnRet(v);
+
+		return s;
+	}
+
+	code::RefSource *FnType::createRawCall() {
+		using namespace code;
+		Engine &e = engine;
+
+		CodeGen *s = new (e) CodeGen(RunOn(), false, Value());
+		Listing *l = s->l;
+
+		// Parameters:
+		Var fnBase = l->createParam(e.ptrDesc());
+		Var out = l->createParam(e.ptrDesc());
+		Var paramArray = l->createParam(e.ptrDesc());
+
+		*l << prolog();
+
+		Array<Value> *callParams = clone(params);
+		callParams->at(0) = thisPtr(this);
+		Function *callFn = as<Function>(find(S("call"), callParams, Scope()));
+		assert(callFn, L"Could not find 'call' inside a Fn object.");
+
+		// Add parameters one by one. We need variables to not confuse the fnParam call (should be fixed in the future).
+		*l << mov(ptrA, paramArray);
+		Array<Var> *paramVars = new (e) Array<Var>();
+		for (Nat i = 1; i < params->count(); i++) {
+			Var v = l->createVar(l->root(), Size::sPtr);
+			*l << mov(v, ptrRel(ptrA, Offset::sPtr * (i - 1)));
+			*paramVars << v;
+		}
+
+		// Do the function call.
+		*l << fnParam(callParams->at(0).desc(e), fnBase);
+		for (Nat i = 0; i < paramVars->count(); i++)
+			*l << fnParamRef(params->at(i+1).desc(e), paramVars->at(i));
+
+		*l << fnCallRef(callFn->ref(), true, params->at(0).desc(e), out);
+
+		*l << fnRet();
+
+		RefSource *result = new (e) RefSource(*identifier() + new (this) Str(L"<rawCall>"));
+		result->set(new (e) Binary(e.arena(), l));
+		return result;
+	}
+
 	void CODECALL fnCallRaw(FnBase *b, void *output, os::CallThunk thunk, void **params, TObject *first) {
 		// TODO: We can provide a single CloneEnv so that all parameters are cloned uniformly.
 		os::FnCallRaw call(params, thunk);
-		b->callRaw(output, call, first, null);
+		b->callRawI(output, call, first, null);
 	}
 
 	class RefFnTarget : public FnTarget {

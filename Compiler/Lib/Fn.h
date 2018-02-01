@@ -25,8 +25,17 @@ namespace storm {
 		// Generate the code for calling the function.
 		CodeGen *CODECALL callCode();
 
+		// Generate code returned by 'rawCall'.
+		CodeGen *CODECALL rawCallCode();
+
+		// Create the contents of 'rawCall'.
+		code::RefSource *createRawCall();
+
 		// Thunk used for function calls.
 		code::RefSource *thunk;
+
+		// Code used by 'rawCall'.
+		code::RefSource *rawCall;
 	};
 
 	// Find the function type.

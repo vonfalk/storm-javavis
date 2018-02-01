@@ -7,24 +7,27 @@ namespace storm {
 	 * SortData.
 	 */
 
-	static void check(const SortData &d) {
+	static void init(SortData &d) {
+		if (d.compare)
+			d.compareFn = d.compare->rawCall();
+
 		assert(d.data->filled < d.data->count, L"Sorting requires at least one free element.");
 	}
 
 	SortData::SortData(GcArray<byte> *data, const Handle &type) :
-		data(data), type(type), compare(type.lessFn), begin(0), end(data->filled) { check(*this); }
+		data(data), type(type), compare(null), begin(0), end(data->filled) { init(*this); }
 
-	SortData::SortData(GcArray<byte> *data, const Handle &type, Handle::LessFn compare) :
-		data(data), type(type), compare(compare), begin(0), end(data->filled) { check(*this); }
+	SortData::SortData(GcArray<byte> *data, const Handle &type, FnBase *compare) :
+		data(data), type(type), compare(compare), begin(0), end(data->filled) { init(*this); }
 
 	SortData::SortData(GcArray<byte> *data, const Handle &type, size_t begin, size_t end) :
-		data(data), type(type), compare(type.lessFn), begin(begin), end(end) { check(*this); }
+		data(data), type(type), compare(null), begin(begin), end(end) { init(*this); }
 
-	SortData::SortData(GcArray<byte> *data, const Handle &type, Handle::LessFn compare, size_t begin, size_t end) :
-		data(data), type(type), compare(compare), begin(begin), end(end) { check(*this); }
+	SortData::SortData(GcArray<byte> *data, const Handle &type, FnBase *compare, size_t begin, size_t end) :
+		data(data), type(type), compare(compare), begin(begin), end(end) { init(*this); }
 
 	SortData::SortData(const SortData &src, size_t begin, size_t end) :
-		data(src.data), type(src.type), compare(src.compare), begin(begin), end(end) {}
+		data(src.data), type(src.type), compare(src.compare), compareFn(src.compareFn), begin(begin), end(end) {}
 
 	/**
 	 * Convenience operations.
@@ -33,7 +36,19 @@ namespace storm {
 	// Compare two elements.
 	static inline bool compare(const SortData &d, size_t a, size_t b) {
 		size_t size = d.type.size;
-		return (*d.compare)(d.data->v + a*size, d.data->v + b*size);
+
+		byte *params[2] = {
+			d.data->v + a*size,
+			d.data->v + b*size,
+		};
+
+		if (d.compare) {
+			bool r = false;
+			d.compareFn.call(d.compare, &r, params);
+			return r;
+		} else {
+			return (*d.type.lessFn)(params[0], params[1]);
+		}
 	}
 
 	// Move 'from' to 'to'. Assuming 'to' is not initialized.

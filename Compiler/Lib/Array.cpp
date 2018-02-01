@@ -2,6 +2,7 @@
 #include "Array.h"
 #include "Engine.h"
 #include "Exception.h"
+#include "Fn.h"
 #include "Core/Str.h"
 
 namespace storm {
@@ -69,6 +70,22 @@ namespace storm {
 		return to;
 	}
 
+	static ArrayBase *CODECALL sortedRaw(ArrayBase *src) {
+		Type *t = runtime::typeOf(src);
+		ArrayBase *copy = (ArrayBase *)runtime::allocObject(sizeof(ArrayBase), t);
+		copyArray(copy, src);
+		copy->sortRaw();
+		return copy;
+	}
+
+	static ArrayBase *CODECALL sortedRawPred(ArrayBase *src, FnBase *compare) {
+		Type *t = runtime::typeOf(src);
+		ArrayBase *copy = (ArrayBase *)runtime::allocObject(sizeof(ArrayBase), t);
+		copyArray(copy, src);
+		copy->sortRawPred(compare);
+		return copy;
+	}
+
 	ArrayType::ArrayType(Str *name, Type *contents) : Type(name, typeClass), contents(contents) {
 		if (engine.has(bootTemplates))
 			lateInit();
@@ -114,6 +131,22 @@ namespace storm {
 		add(nativeFunction(e, ref, S("random"), valList(e, 1, t), address(&ArrayBase::randomRaw)));
 		add(nativeFunction(e, Value(iter), S("begin"), valList(e, 1, t), address(&ArrayBase::beginRaw))->makePure());
 		add(nativeFunction(e, Value(iter), S("end"), valList(e, 1, t), address(&ArrayBase::endRaw))->makePure());
+
+		// Sort using <. TODO: This crashes during compiler boot for some reason. Investigate.
+		// if (param().type->handle().lessFn) {
+		// 	add(nativeFunction(e, Value(), S("sort"), valList(e, 1, t), address(&ArrayBase::sortRaw)));
+		// 	add(nativeFunction(e, t, S("sorted"), valList(e, 1, t), address(&sortedRaw))->makePure());
+		// }
+
+		// Sort with provided predicate function.
+		{
+			Array<Value> *pParams = new (e) Array<Value>();
+			*pParams << Value(StormInfo<Bool>::type(e));
+			*pParams << param() << param();
+			Value predicate = thisPtr(fnType(pParams));
+			add(nativeFunction(e, Value(), S("sort"), valList(e, 2, t, predicate), address(&ArrayBase::sortRawPred)));
+			add(nativeFunction(e, t, S("sorted"), valList(e, 2, t, predicate), address(&sortedRawPred))->makePure());
+		}
 
 		return Type::loadAll();
 	}

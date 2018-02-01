@@ -3,6 +3,7 @@
 #include "Handle.h"
 #include "GcArray.h"
 #include "StrBuf.h"
+#include "Fn.h"
 #include "Utils/Exception.h"
 
 namespace storm {
@@ -75,7 +76,7 @@ namespace storm {
 		void CODECALL sortRaw();
 
 		// Sort using a predicate.
-		void CODECALL sortRaw(Handle::LessFn compare);
+		void CODECALL sortRawPred(FnBase *compare);
 
 		// To string.
 		virtual void STORM_FN toS(StrBuf *to) const;
@@ -254,6 +255,23 @@ namespace storm {
 		// Sort. Assumes we have a '<' comparison in the handle.
 		void sort() {
 			sortRaw();
+		}
+
+		Array<T> *sorted() const {
+			Array<T> *copy = new (this) Array<T>(*this);
+			copy->sortRaw();
+			return copy;
+		}
+
+		// Sort with custom predicate.
+		void sort(Fn<Bool, T, T> *compare) {
+			sortRawPred(compare);
+		}
+
+		void sorted(Fn<Bool, T, T> *compare) {
+			Array<T> *copy = new (this) Array<T>(*this);
+			copy->sortRawPred(compare);
+			return copy;
 		}
 
 		// Append elements.

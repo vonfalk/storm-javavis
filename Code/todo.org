@@ -7,7 +7,9 @@
   - [X] Remove 'ValType'.
   - [X] Remove RedirectParam.
 
-* Minor issues [0/1]
+* Minor issues [0/2]
+  - [ ] A sequence of 'fnParamRef(ptrRel(ptrA, Offset::sPtr))'... will not work properly. We're only
+        checking if sources are registers, and we do not care if they are relative a register.
   - [ ] Shift operations have no 64-bit transform on X86.
 
 * Improvements [0/1]

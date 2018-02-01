@@ -180,12 +180,17 @@ namespace storm {
 	void ArrayBase::sortRaw() {
 		assert(handle.lessFn, L"The operator < is required when sorting an array.");
 
-		sortRaw(handle.lessFn);
+		if (empty())
+			return;
+
+		// We need one temporary element.
+		ensure(count() + 1);
+
+		SortData d(data, handle);
+		sort(d);
 	}
 
-	void ArrayBase::sortRaw(Handle::LessFn compare) {
-		assert(handle.lessFn, L"The operator < is required when sorting an array.");
-
+	void ArrayBase::sortRawPred(FnBase *compare) {
 		if (empty())
 			return;
 
