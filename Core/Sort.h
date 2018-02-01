@@ -51,6 +51,9 @@ namespace storm {
 	// Heap sort using the max-heap.
 	void heapSort(const SortData &data);
 
+	// Insertion sort for small data.
+	void insertionSort(const SortData &data);
+
 	// Sort. Using quicksort but falls back to heapsort if necessary.
 	void sort(const SortData &data);
 

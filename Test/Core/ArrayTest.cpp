@@ -2,6 +2,9 @@
 #include "Core/Array.h"
 #include "Core/Str.h"
 
+#include "Core/Random.h"
+#include "Core/Timing.h"
+
 BEGIN_TEST(ArrayTest, Core) {
 	Engine &e = gEngine();
 
@@ -43,4 +46,28 @@ BEGIN_TEST(ArraySortTest, CoreEx) {
 
 	v->sort();
 	CHECK_EQ(toS(v), L"[1, 2, 3, 4, 5, 6, 7, 8, 9, 10]");
+} END_TEST
+
+
+// Performance of sort()
+BEGIN_TESTX(ArraySortPerf, CoreEx) {
+	Engine &e = gEngine();
+
+	Array<Int> *v = new (e) Array<Int>();
+	vector<Int> s;
+	for (Int i = 0; i < 100000; i++) {
+		Int val = rand(0, 1000000);
+		*v << val;
+		s.push_back(val);
+	}
+
+	Moment start;
+	v->sort();
+	Moment half;
+	std::sort(s.begin(), s.end());
+	Moment end;
+
+	PLN(L"Sorted " << v->count() << L" integers:");
+	PLN(L"  " << (half - start) << L" using storm::sort");
+	PLN(L"  " << (end - half)   << L" using std::sort");
 } END_TEST

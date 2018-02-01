@@ -7,6 +7,7 @@ namespace storm {
 	 * Random number generation.
 	 * TODO: Better random source, these should probably use the <random> header in the future.
 	 * TODO: When we have ranges, update to support ranges.
+	 * TODO: Rename to 'random'?
 	 */
 
 	// Random integer in range (including min, excluding max).

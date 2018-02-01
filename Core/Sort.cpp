@@ -139,6 +139,29 @@ namespace storm {
 		}
 	}
 
+	void insertionSort(const SortData &sort) {
+		size_t scratch = sort.data->filled;
+
+		for (size_t target = sort.begin + 1; target < sort.end; target++) {
+			// Do we need to do anything at all with this element?
+			if (!compare(sort, target, target - 1))
+				continue;
+
+			// Move it to our scratch space, move the element we already compared and keep comparing
+			// until we find a suitable spot.
+			move(sort, scratch, target);
+
+			size_t to = target;
+			do {
+				move(sort, to, to - 1);
+				to--;
+			} while (to > sort.begin && compare(sort, scratch, to - 1));
+
+			// Put the element we moved back where it belongs!
+			move(sort, to, scratch);
+		}
+	}
+
 
 	/**
 	 * Quicksort.
@@ -210,6 +233,9 @@ namespace storm {
 		size_t end[STACK_SIZE];
 		size_t top = 0;
 
+		// Minimum number of elements actually handled by quicksort.
+		const size_t INSERTION_LIMIT = 8;
+
 		while (true) {
 			if (now.begin + 1 >= now.end) {
 				// Try to pop some work from the stack!
@@ -223,37 +249,39 @@ namespace storm {
 				}
 			}
 
-			// TODO: Pick better pivot!
+			// Small enough to fall back to insertion sort?
+			if (now.end - now.begin <= INSERTION_LIMIT) {
+				insertionSort(now);
+				now.begin = now.end;
+				continue;
+			}
+
+			// Out of stack space? Fall back to heap sort.
+			if (top >= STACK_SIZE) {
+				heapSort(now);
+				now.begin = now.end;
+				continue;
+			}
+
+			// Pick a pivot and use that.
 			size_t pivot = pickPivot(now);
 			pivot = partition(now, pivot);
 
 			// Put the smaller part on hold for later. Take the larger one now.
-			size_t qBegin = now.begin;
-			size_t qEnd   = now.end;
+			begin[top] = now.begin;
+			end[top] = now.end;
+
 			if (pivot - now.begin < now.end - pivot) {
-				qEnd = pivot;
+				end[top] = pivot;
 				now.begin = pivot + 1;
 			} else {
-				qBegin = pivot + 1;
+				begin[top] = pivot + 1;
 				now.end = pivot;
 			}
 
-			// Put it on the stack if there is room. Otherwise, fall back to heapsort.
-			if (qBegin + 1 < qEnd) {
-				if (top < STACK_SIZE) {
-					begin[top] = qBegin;
-					end[top] = qEnd;
-					top++;
-				} else {
-					std::swap(qBegin, now.begin);
-					std::swap(qEnd, now.end);
-
-					heapSort(now);
-
-					std::swap(qBegin, now.begin);
-					std::swap(qEnd, now.end);
-				}
-			}
+			// Only 'commit' the transaction if it was a nonzero number of elements.
+			if (begin[top] + 1 < end[top])
+				top++;
 		}
 	}
 
