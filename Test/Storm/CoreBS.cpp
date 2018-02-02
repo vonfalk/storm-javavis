@@ -302,6 +302,12 @@ BEGIN_TEST(BSArrayTest, BS) {
 	for (nat i = 0; i < 20; i++) {
 		CHECK_EQ(r->at(i), i);
 	}
+
+	// Sorting.
+	CHECK_EQ(toS(runFn<Str *>(S("test.bs.sortArray"))), L"[1, 2, 3, 4, 5]");
+	CHECK_EQ(toS(runFn<Str *>(S("test.bs.sortedArray"))), L"[1, 2, 3, 4, 5][5, 4, 3, 2, 1]");
+	CHECK_EQ(toS(runFn<Str *>(S("test.bs.sortArrayP"))), L"[3, 4, 5, 1, 2]");
+	CHECK_EQ(toS(runFn<Str *>(S("test.bs.sortedArrayP"))), L"[3, 4, 5, 1, 2][5, 4, 3, 2, 1]");
 } END_TEST
 
 

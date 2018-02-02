@@ -25,7 +25,10 @@ namespace storm {
 		virtual void lateInit();
 
 		// Parameter.
-		Value param() const;
+		Value STORM_FN param() const;
+
+		// Notifications.
+		virtual void STORM_FN notifyAdded(NameSet *to, Named *added);
 
 	protected:
 		// Lazy loading.
@@ -38,6 +41,9 @@ namespace storm {
 		// Helpers.
 		void loadClassFns();
 		void loadValueFns();
+
+		// Add 'sort' without parameters.
+		void addSort();
 	};
 
 	/**

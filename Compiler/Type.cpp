@@ -310,7 +310,7 @@ namespace storm {
 			if (*f->name == DTOR)
 				updateDtor(f);
 
-			if ((value() || rawPtr()) && tHandle)
+			if (tHandle)
 				updateHandle(f);
 		}
 

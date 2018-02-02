@@ -97,6 +97,9 @@ namespace storm {
 		// Watch this NameSet for new additions.
 		virtual void STORM_FN watchAdd(Named *notifyTo);
 
+		// Remove a previously added watch.
+		virtual void STORM_FN watchRemove(Named *notifyTo);
+
 		// Output.
 		virtual void STORM_FN toS(StrBuf *to) const;
 

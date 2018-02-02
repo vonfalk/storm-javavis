@@ -115,6 +115,12 @@ namespace storm {
 		notify->put(notifyTo);
 	}
 
+	void NameSet::watchRemove(Named *notifyTo) {
+		if (!notify)
+			return;
+		notify->remove(notifyTo);
+	}
+
 	void NameSet::notifyAdd(Named *what) {
 		if (!notify)
 			return;

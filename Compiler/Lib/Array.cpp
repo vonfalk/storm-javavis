@@ -132,11 +132,13 @@ namespace storm {
 		add(nativeFunction(e, Value(iter), S("begin"), valList(e, 1, t), address(&ArrayBase::beginRaw))->makePure());
 		add(nativeFunction(e, Value(iter), S("end"), valList(e, 1, t), address(&ArrayBase::endRaw))->makePure());
 
-		// Sort using <. TODO: This crashes during compiler boot for some reason. Investigate.
-		// if (param().type->handle().lessFn) {
-		// 	add(nativeFunction(e, Value(), S("sort"), valList(e, 1, t), address(&ArrayBase::sortRaw)));
-		// 	add(nativeFunction(e, t, S("sorted"), valList(e, 1, t), address(&sortedRaw))->makePure());
-		// }
+		// Sort with operator <.
+		if (param().type->handle().lessFn) {
+			addSort();
+		} else {
+			param().type->watchAdd(this);
+		}
+
 
 		// Sort with provided predicate function.
 		{
@@ -172,6 +174,28 @@ namespace storm {
 		add(nativeFunction(e, t, S("<<"), valList(e, 2, t, ref), address(&pushValue)));
 		add(nativeFunction(e, t, S("push"), valList(e, 2, t, ref), address(&pushValue)));
 		add(nativeFunction(e, Value(), S("insert"), valList(e, 3, t, natType, ref), address(&ArrayBase::insertRaw)));
+	}
+
+	void ArrayType::notifyAdded(NameSet *to, Named *added) {
+		if (added == param().type) {
+			if (*added->name == S("<") &&
+				added->params->count() == 2 &&
+				added->params->at(0).type == to &&
+				added->params->at(1).type == to) {
+
+				addSort();
+				to->watchRemove(this);
+			}
+		}
+	}
+
+	void ArrayType::addSort() {
+		Engine &e = engine;
+		Array<Value> *params = valList(e, 1, thisPtr(this));
+
+		// Sort using <.
+		add(nativeFunction(e, Value(), S("sort"), params, address(&ArrayBase::sortRaw)));
+		add(nativeFunction(e, Value(this), S("sorted"), params, address(&sortedRaw))->makePure());
 	}
 
 	/**

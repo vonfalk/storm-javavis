@@ -109,3 +109,38 @@ Int testIteratorIndex() {
 
 	sum;
 }
+
+Array<Int> smallIntArray() {
+	Array<Int> r;
+	for (Int i = 0; i < 5; i++)
+		r << (5 - i);
+	r;
+}
+
+Str sortArray() {
+	Array<Int> arr = smallIntArray();
+	arr.sort();
+	arr.toS;
+}
+
+Str sortedArray() {
+	Array<Int> arr = smallIntArray();
+	arr.sorted.toS + arr.toS;
+}
+
+Bool sortPred(Int a, Int b) {
+	a = (a + 2) % 5;
+	b = (b + 2) % 5;
+	a < b;
+}
+
+Str sortArrayP() {
+	Array<Int> arr = smallIntArray();
+	arr.sort(&sortPred(Int, Int));
+	arr.toS;
+}
+
+Str sortedArrayP() {
+	Array<Int> arr = smallIntArray();
+	arr.sorted(&sortPred(Int, Int)).toS + arr.toS;
+}
