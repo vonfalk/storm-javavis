@@ -90,11 +90,11 @@ namespace storm {
 
 			for (nat i = 0; i < body->items->count(); i++) {
 				Named *&z = body->items->at(i);
-				if (wcscmp(z->name->c_str(), Type::CTOR) == 0) {
+				if (*z->name == Type::CTOR) {
 					if (z->params->count() == 2 && z->params->at(0) == z->params->at(1))
 						hasCopyCtor = true;
 					hasCtor = true;
-				} else if (wcscmp(z->name->c_str(), S("deepCopy")) == 0) {
+				} else if (*z->name == S("deepCopy")) {
 					if (z->params->count() == 2 && z->params->at(1).type == CloneEnv::stormType(this))
 						hasDeepCopy = true;
 				}

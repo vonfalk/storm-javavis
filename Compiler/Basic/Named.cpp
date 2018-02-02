@@ -549,9 +549,9 @@ namespace storm {
 			if (!n)
 				return null;
 
-			if (wcscmp(n->name->c_str(), Type::CTOR) == 0)
+			if (*n->name == Type::CTOR)
 				throw SyntaxError(pos, L"Can not call a constructor by using __ctor. Use Type() instead.");
-			if (wcscmp(n->name->c_str(), Type::DTOR) == 0)
+			if (*n->name == Type::DTOR)
 				throw SyntaxError(pos, L"Manual invocations of destructors are forbidden.");
 
 			if (Function *f = as<Function>(n)) {
@@ -585,7 +585,7 @@ namespace storm {
 				return false;
 
 			SimplePart *p = name->at(0);
-			if (wcscmp(p->name->c_str(), S("super")) != 0)
+			if (*p->name != S("super"))
 				return false;
 			return p->params->empty();
 		}

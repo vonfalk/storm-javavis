@@ -106,7 +106,7 @@ namespace storm {
 		Named *SyntaxLookup::find(Scope in, SimpleName *name) {
 			if (name->count() == 1) {
 				SimplePart *last = name->last();
-				if (wcscmp(last->name->c_str(), S("SStr")) == 0 && last->params->empty())
+				if (*last->name == S("SStr") && last->params->empty())
 					return SStr::stormType(engine());
 
 				if (last->params->any() && last->params->at(0) != Value()) {

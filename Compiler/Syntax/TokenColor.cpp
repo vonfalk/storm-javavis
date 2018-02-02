@@ -33,7 +33,7 @@ namespace storm {
 
 		TokenColor STORM_FN tokenColor(Str *name) {
 			for (nat i = 0; i < ARRAY_COUNT(tcTable); i++)
-				if (wcscmp(tcTable[i].name, name->c_str()) == 0)
+				if (*name == tcTable[i].name)
 					return tcTable[i].color;
 
 			return tNone;

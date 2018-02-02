@@ -302,12 +302,12 @@ namespace storm {
 		NameSet::add(item);
 
 		if (Function *f = as<Function>(item)) {
-			if (wcscmp(f->name->c_str(), CTOR) == 0)
+			if (*f->name == CTOR)
 				updateCtor(f);
-			else if (wcscmp(f->name->c_str(), DTOR) != 0)
+			else if (*f->name != DTOR)
 				vtableFnAdded(f);
 
-			if (wcscmp(f->name->c_str(), DTOR) == 0)
+			if (*f->name == DTOR)
 				updateDtor(f);
 
 			if ((value() || rawPtr()) && tHandle)
@@ -327,7 +327,7 @@ namespace storm {
 			return n;
 
 		// Constructors are not inherited.
-		if (wcscmp(part->name->c_str(), CTOR) == 0)
+		if (*part->name == CTOR)
 			return null;
 
 		if (Type *s = super())
@@ -843,7 +843,7 @@ namespace storm {
 			return;
 
 		if (newFn) {
-			if (wcscmp(newFn->name->c_str(), S("<<")) != 0)
+			if (*newFn->name != S("<<"))
 				return;
 
 			if (newFn->params->count() != 2)
@@ -929,31 +929,31 @@ namespace storm {
 		// as that allows containers etc to use raw memcpy which is more efficient in many cases.
 		// Also: it prevents infinite loops during startup due to recursive dependencies.
 		bool userType = as<code::PrimitiveDesc>(typeDesc()) == null;
-		const wchar *name = fn->name->c_str();
-		if (val && wcscmp(name, CTOR) == 0) {
+		Str *name = fn->name;
+		if (val && *name == CTOR) {
 			if (refThis && params->count() == 2 && params->at(1) == Value(this, true) && userType)
 				h->setCopyCtor(fn->ref());
-		} else if (val && wcscmp(name, DTOR) == 0) {
+		} else if (val && *name == DTOR) {
 			if (refThis && params->count() == 1 && userType)
 				h->setDestroy(fn->ref());
-		} else if (val && wcscmp(name, S("deepCopy")) == 0 && userType) {
+		} else if (val && *name == S("deepCopy") && userType) {
 			if (refThis && params->count() == 2 && params->at(1) == Value(CloneEnv::stormType(engine)))
 				h->setDeepCopy(fn->ref());
-		} else if (wcscmp(name, S("hash")) == 0) {
+		} else if (*name == S("hash")) {
 			if (params->count() == 1) {
 				if (allRefParams(fn))
 					h->setHash(fn->ref());
 				else
 					h->hashFn = (Handle::HashFn)makeRefParams(fn);
 			}
-		} else if (wcscmp(name, S("==")) == 0) {
+		} else if (*name == S("==")) {
 			if (params->count() == 2) {
 				if (allRefParams(fn))
 					h->setEqual(fn->ref());
 				else
 					h->equalFn = (Handle::EqualFn)makeRefParams(fn);
 			}
-		} else if (wcscmp(name, S("<")) == 0) {
+		} else if (*name == S("<")) {
 			if (params->count() == 2) {
 				if (allRefParams(fn))
 					h->setLess(fn->ref());
@@ -1104,7 +1104,7 @@ namespace storm {
 			Function *f = as<Function>(i.v());
 			if (!f)
 				continue;
-			if (wcscmp(CTOR, f->name->c_str()) == 0)
+			if (*f->name == CTOR)
 				continue;
 
 			vtableFnAdded(f);
