@@ -12,7 +12,7 @@ namespace storm {
 	/**
 	 * Custom error type.
 	 */
-	class ArrayError : public Exception {
+	class EXCEPTION_EXPORT ArrayError : public Exception {
 	public:
 		ArrayError(const String &msg) : msg(msg) {}
 		virtual String what() const { return L"Array error: " + msg; }

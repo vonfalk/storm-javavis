@@ -44,8 +44,8 @@ namespace storm {
 	// Make a max-heap out of the elements in 'data'. Runs in O(n) time.
 	void makeHeap(const SortData &data);
 
-	// Insert an element into a max-heap.
-	void heapInsert(void *elem, const SortData &data);
+	// Insert an element into a heap. Expands the heap to occupy 'data.end' as well.
+	void heapInsert(const void *elem, const SortData &data);
 
 	// Remove an element from a max-heap. The removed element is moved to the last position of the heap.
 	void heapRemove(const SortData &data);

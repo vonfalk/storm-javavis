@@ -4,6 +4,14 @@
 namespace storm {
 
 	/**
+	 * Note: We do not need to deal with calling 'create' and 'destroy' as we're simply moving
+	 * things around in memory. Moving things is fine, since the GC does that all the time anyway.
+	 *
+	 * We could use 'arraySwap' in Array.cpp for this.
+	 */
+
+
+	/**
 	 * SortData.
 	 */
 
@@ -76,24 +84,24 @@ namespace storm {
 	 * Heap operations.
 	 */
 
-	static inline size_t left(size_t item) {
-		return item*2 + 1;
+	static inline size_t left(const SortData &sort, size_t item) {
+		return (item - sort.begin)*2 + 1 + sort.begin;
 	}
 
-	static inline size_t right(size_t item) {
-		return item*2 + 2;
+	static inline size_t right(const SortData &sort, size_t item) {
+		return (item - sort.begin)*2 + 2 + sort.begin;
 	}
 
-	static inline size_t parent(size_t item) {
-		return (item - 1) / 2;
+	static inline size_t parent(const SortData &sort, size_t item) {
+		return (item - sort.begin - 1) / 2 + sort.begin;
 	}
 
-	// 'elem' is the location of the element that should be at location 'top'
+	// 'elem' is the location of the element that should be at location 'top'.
 	static inline void siftDown(const SortData &sort, size_t top, size_t elem) {
 		size_t at = top;
 		while (at < sort.end) {
-			size_t l = left(at);
-			size_t r = right(at);
+			size_t l = left(sort, at);
+			size_t r = right(sort, at);
 
 			// Done?
 			if ((l >= sort.end || !compare(sort, elem, l))
@@ -115,8 +123,8 @@ namespace storm {
 	}
 
 	void makeHeap(const SortData &sort) {
-		size_t top = parent(sort.end) + 1;
-		while (top > 0) {
+		size_t top = parent(sort, sort.end) + 1;
+		while (top > sort.begin) {
 			top--;
 
 			// See if this element needs to move down the heap.
@@ -124,8 +132,23 @@ namespace storm {
 		}
 	}
 
-	void heapInsert(void *elem, const SortData &sort) {
-		assert(false, L"Not implemented yet!");
+	void heapInsert(const void *elem, const SortData &sort) {
+		// Sift up until we're done.
+		size_t at = sort.end;
+		while (at != sort.begin) {
+			size_t p = parent(sort, at);
+
+			// Done?
+			if (!compare(sort, p, at))
+				break;
+
+			// Move the parent one step down in the tree.
+			move(sort, at, p);
+			at = p;
+		}
+
+		// Insert the new element in the heap.
+		sort.type.safeCopy(sort.data->v + at*sort.type.size, elem);
 	}
 
 	void heapRemove(const SortData &sort) {
@@ -133,10 +156,10 @@ namespace storm {
 			return;
 
 		// Move the top element out of the way.
-		move(sort, sort.data->filled, 0);
+		move(sort, sort.data->filled, sort.begin);
 
 		// Update the heap.
-		siftDown(sort, 0, sort.end - 1);
+		siftDown(sort, sort.begin, sort.end - 1);
 
 		// Move the extracted element to its proper location.
 		move(sort, sort.end - 1, sort.data->filled);

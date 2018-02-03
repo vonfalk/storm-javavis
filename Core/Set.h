@@ -26,7 +26,7 @@ namespace storm {
 	/**
 	 * Exception thrown from the set.
 	 */
-	class SetError : public Exception {
+	class EXCEPTION_EXPORT SetError : public Exception {
 	public:
 		SetError(const String &msg) : msg(msg) {}
 		virtual String what() const { return L"Set error: " + msg; }

@@ -26,7 +26,7 @@ namespace storm {
 	/**
 	 * Exception thrown from the map.
 	 */
-	class MapError : public Exception {
+	class EXCEPTION_EXPORT MapError : public Exception {
 	public:
 		MapError(const String &msg) : msg(msg) {}
 		virtual String what() const { return L"Map error: " + msg; }
