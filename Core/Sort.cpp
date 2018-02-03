@@ -4,14 +4,6 @@
 namespace storm {
 
 	/**
-	 * Note: We do not need to deal with calling 'create' and 'destroy' as we're simply moving
-	 * things around in memory. Moving things is fine, since the GC does that all the time anyway.
-	 *
-	 * We could use 'arraySwap' in Array.cpp for this.
-	 */
-
-
-	/**
 	 * SortData.
 	 */
 
@@ -42,14 +34,7 @@ namespace storm {
 	 */
 
 	// Compare two elements.
-	static inline bool compare(const SortData &d, size_t a, size_t b) {
-		size_t size = d.type.size;
-
-		byte *params[2] = {
-			d.data->v + a*size,
-			d.data->v + b*size,
-		};
-
+	static inline bool compare(const SortData &d, const void *params[2]) {
 		if (d.compare) {
 			bool r = false;
 			d.compareFn.call(d.compare, &r, params);
@@ -59,14 +44,36 @@ namespace storm {
 		}
 	}
 
+	static inline bool compare(const SortData &d, size_t a, size_t b) {
+		size_t size = d.type.size;
+
+		const void *params[2] = {
+			d.data->v + a*size,
+			d.data->v + b*size,
+		};
+
+		return compare(d, params);
+	}
+
+	static inline bool compare(const SortData &d, size_t a, const void *b) {
+		size_t size = d.type.size;
+
+		const void *params[2] = {
+			d.data->v + a*size,
+			b,
+		};
+
+		return compare(d, params);
+	}
+
 	// Move 'from' to 'to'. Assuming 'to' is not initialized.
 	static inline void move(const SortData &d, size_t to, size_t from) {
 		if (to == from)
 			return;
 
+		// Note: Just using memcpy is safe. The GC moves memory around all the time.
 		size_t size = d.type.size;
-		d.type.safeCopy(d.data->v + to*size, d.data->v + from*size);
-		d.type.safeDestroy(d.data->v + from*size);
+		memcpy(d.data->v + to*size, d.data->v + from*size, size);
 	}
 
 	// Move 'from' to 'to' while keeping 'preserve' intact. Assumes 'from' is not to be preserved.
@@ -139,7 +146,7 @@ namespace storm {
 			size_t p = parent(sort, at);
 
 			// Done?
-			if (!compare(sort, p, at))
+			if (!compare(sort, p, elem))
 				break;
 
 			// Move the parent one step down in the tree.
@@ -272,7 +279,7 @@ namespace storm {
 		size_t top = 0;
 
 		// Minimum number of elements actually handled by quicksort.
-		const size_t INSERTION_LIMIT = 8;
+		const size_t INSERTION_LIMIT = 16;
 
 		while (true) {
 			if (now.begin + 1 >= now.end) {

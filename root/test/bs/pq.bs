@@ -1,0 +1,34 @@
+
+Int pqSecond() {
+	PQueue<Int> pq;
+	pq << 8 << 10 << 4 << 5;
+	pq.pop();
+	pq.top();
+}
+
+Int pqInit() {
+	PQueue<Int> pq([2, 6, 3, 8]);
+	pq.top();
+}
+
+Bool pqCompareFn(Int a, Int b) {
+	a > b;
+}
+
+Int pqCompare() {
+	PQueue<Int> pq(&pqCompareFn(Int, Int));
+	pq << 8 << 10 << 4 << 5;
+	pq.pop();
+	pq.top();
+}
+
+Int pqCompareInit() {
+	PQueue<Int> pq([2, 8, 5, 10], &pqCompareFn(Int, Int));
+	pq.top();
+}
+
+
+Str pqStr() {
+	PQueue<Str> pq(["Hello", "World", "Basic", "Storm"]);
+	pq.top();
+}

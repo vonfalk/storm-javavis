@@ -310,6 +310,14 @@ BEGIN_TEST(BSArrayTest, BS) {
 	CHECK_EQ(toS(runFn<Str *>(S("test.bs.sortedArrayP"))), L"[3, 4, 5, 1, 2][5, 4, 3, 2, 1]");
 } END_TEST
 
+BEGIN_TEST(BSPQTest, BS) {
+	CHECK_EQ(runFn<Int>(S("test.bs.pqSecond")), 8);
+	CHECK_EQ(runFn<Int>(S("test.bs.pqInit")), 8);
+	CHECK_EQ(runFn<Int>(S("test.bs.pqCompare")), 5);
+	CHECK_EQ(runFn<Int>(S("test.bs.pqCompareInit")), 2);
+	CHECK_EQ(toS(runFn<Str *>(S("test.bs.pqStr"))), L"World");
+} END_TEST
+
 
 /**
  * Enums.

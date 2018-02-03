@@ -145,7 +145,7 @@ namespace storm {
 			Array<Value> *pParams = new (e) Array<Value>();
 			*pParams << Value(StormInfo<Bool>::type(e));
 			*pParams << param() << param();
-			Value predicate = thisPtr(fnType(pParams));
+			Value predicate = Value(fnType(pParams));
 			add(nativeFunction(e, Value(), S("sort"), valList(e, 2, t, predicate), address(&ArrayBase::sortRawPred)));
 			add(nativeFunction(e, t, S("sorted"), valList(e, 2, t, predicate), address(&sortedRawPred))->makePure());
 		}
