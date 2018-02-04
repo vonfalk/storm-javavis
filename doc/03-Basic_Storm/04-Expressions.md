@@ -70,12 +70,21 @@ means.
 By default, an operator is equivalent with calling the member function with the same name as the
 operator on the left hand side object. This means that `1 + 2` is equivalent to `1.+(2)`. Note that
 it is not possible to write function calls like this at the moment because of restrictions in the
-syntax. At the moment, it is also not possible to declare operator functions, since a name is
-required to contain letters. These two shortcomings will be addressed in the future.
+syntax. However, it is possible to declare functions named after an operator. Operators with a pre-
+and post variant uses a star to differentiate the semantics. The pre increment operator is named
+`++*` while the post increment operator is named `*++`.
 
 New operators can be implemented by adding a new option to the `Operator` rule, either using the
 default `lOperator` or `rOperator` to follow the same semantics as most of the built-in operators,
 or create a custom object overriding `OpInfo` and implements a custom meaning for the operator.
+
+The comparison operators `==`, `!=`, `<`, `>`, `<=` and `>=` have slightly special semantics so that
+it is not necessary to define all operators for all types. If one of these operators are not present
+for the types used, Basic Storm tries to fall back on simpler operators. For example, the expression
+`a > b` falls back to `a < b` if the first is not present, and `a >= b` falls back to `!(a < b)`.
+This means that it is sufficient to implement `<` for a class to be able to do all comparisons. However,
+it is usually desirable to also implement `==`, since that can usually be made more efficient than calling
+`<` twice.
 
 Currently, two operators have a special meaning: assignment and string concatenation. The assignment
 operator will simply call `a.=(b)` if `a` and `b` are values, but it provides a default
