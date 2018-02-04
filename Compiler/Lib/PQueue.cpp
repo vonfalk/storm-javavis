@@ -113,10 +113,13 @@ namespace storm {
 
 	void PQueueType::notifyAdded(NameSet *to, Named *added) {
 		if (added == param().type) {
-			if (*added->name == S("<") &&
-				added->params->count() == 2 &&
-				added->params->at(0).type == to &&
-				added->params->at(1).type == to) {
+			Function *fn = as<Function>(added);
+			if (fn &&
+				*fn->name == S("<") &&
+				fn->result == Value(StormInfo<Bool>::type(engine)) &&
+				fn->params->count() == 2 &&
+				fn->params->at(0).type == to &&
+				fn->params->at(1).type == to) {
 
 				addLess();
 				to->watchRemove(this);
