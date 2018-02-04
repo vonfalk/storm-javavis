@@ -377,7 +377,7 @@ namespace code {
 					to->putByte(op.opDestReg);
 					modRm(to, registerId(dest.reg()), src);
 				} else {
-					assert(false); // This mode is _not_ supported.
+					assert(false, L"ModRM mode not supported.");
 				}
 				break;
 			}

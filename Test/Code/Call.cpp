@@ -6,6 +6,8 @@
 
 using namespace code;
 
+using storm::debug::DbgVal;
+
 // If this is static, it seems the compiler optimizes it away, which breaks stuff.
 Int CODECALL callIntFn(Int v) {
 	return v + 2;
@@ -389,14 +391,14 @@ BEGIN_TEST(CallMixedRef, Code) {
 	CHECK_EQ((*fn)(), 96.0f);
 } END_TEST
 
-Int CODECALL callComplex(storm::debug::DbgVal dbg, Int v) {
+Int CODECALL callComplex(DbgVal dbg, Int v) {
 	return dbg.v + v;
 }
 
 BEGIN_TEST(CallComplex, Code) {
 	Engine &e = gEngine();
 	Arena *arena = code::arena(e);
-	Type *dbgVal = storm::debug::DbgVal::stormType(e);
+	Type *dbgVal = DbgVal::stormType(e);
 
 	Ref toCall = arena->external(S("callComplex"), address(&callComplex));
 	ComplexDesc *desc = new (e) ComplexDesc(dbgVal->size(), dbgVal->copyCtor()->ref(), dbgVal->destructor()->ref());
@@ -423,15 +425,15 @@ BEGIN_TEST(CallComplex, Code) {
 	typedef Int (*Fn)();
 	Fn fn = (Fn)b->address();
 
-	storm::debug::DbgVal::clear();
+	DbgVal::clear();
 	CHECK_EQ((*fn)(), 18);
-	CHECK(storm::debug::DbgVal::clear());
+	CHECK(DbgVal::clear());
 } END_TEST
 
 BEGIN_TEST(CallRefComplex, Code) {
 	Engine &e = gEngine();
 	Arena *arena = code::arena(e);
-	Type *dbgVal = storm::debug::DbgVal::stormType(e);
+	Type *dbgVal = DbgVal::stormType(e);
 
 	Ref toCall = arena->external(S("callComplex"), address(&callComplex));
 	ComplexDesc *desc = new (e) ComplexDesc(dbgVal->size(), dbgVal->copyCtor()->ref(), dbgVal->destructor()->ref());
@@ -458,7 +460,84 @@ BEGIN_TEST(CallRefComplex, Code) {
 	typedef Int (*Fn)();
 	Fn fn = (Fn)b->address();
 
-	storm::debug::DbgVal::clear();
+	DbgVal::clear();
 	CHECK_EQ((*fn)(), 18);
-	CHECK(storm::debug::DbgVal::clear());
+	CHECK(DbgVal::clear());
+} END_TEST
+
+
+static Int CODECALL intFn(Int a, Int b, Int c) {
+	return 100*a + 10*b + c;
+}
+
+// Try loading values for the call from an array, to make sure that registers are preserved properly.
+BEGIN_TEST(CallFromArray, Code) {
+	Engine &e = gEngine();
+	Arena *arena = code::arena(e);
+	TypeDesc *valDesc = intDesc(e);
+
+	Ref toCall = arena->external(S("intFn"), address(&intFn));
+
+	Listing *l = new (e) Listing(false, valDesc);
+	Var params = l->createParam(ptrDesc(e));
+
+	*l << prolog();
+
+	*l << mov(ptrA, params);
+	*l << fnParamRef(valDesc, ptrRel(ptrA, Offset()));
+	*l << fnParamRef(valDesc, ptrRel(ptrA, Offset::sPtr));
+	*l << fnParamRef(valDesc, ptrRel(ptrA, Offset::sPtr*2));
+
+	*l << fnCall(toCall, false, valDesc, eax);
+
+	*l << fnRet(eax);
+
+	Binary *b = new (e) Binary(arena, l);
+	typedef Int (*Fn)(const Int **);
+	Fn fn = (Fn)b->address();
+
+	const Int va = 5, vb = 7, vc = 2;
+	const Int *actuals[] = { &va, &vb, &vc };
+	CHECK_EQ((*fn)(actuals), 572);
+
+} END_TEST
+
+static Int CODECALL complexIntFn(DbgVal a, DbgVal b, DbgVal c) {
+	return 100*a.v + 10*b.v + c.v;
+}
+
+BEGIN_TEST(CallComplexFromArray, Code) {
+	Engine &e = gEngine();
+	Arena *arena = code::arena(e);
+	Type *dbgVal = DbgVal::stormType(e);
+	ComplexDesc *valDesc = new (e) ComplexDesc(dbgVal->size(), dbgVal->copyCtor()->ref(), dbgVal->destructor()->ref());
+
+	Ref toCall = arena->external(S("intFn"), address(&complexIntFn));
+
+	Listing *l = new (e) Listing(false, intDesc(e));
+	Var params = l->createParam(ptrDesc(e));
+
+	*l << prolog();
+
+	*l << mov(ptrA, params);
+	*l << fnParamRef(valDesc, ptrRel(ptrA, Offset()));
+	*l << fnParamRef(valDesc, ptrRel(ptrA, Offset::sPtr));
+	*l << fnParamRef(valDesc, ptrRel(ptrA, Offset::sPtr*2));
+
+	*l << fnCall(toCall, false, intDesc(e), eax);
+
+	*l << fnRet(eax);
+
+	Binary *b = new (e) Binary(arena, l);
+	typedef Int (*Fn)(const DbgVal **);
+	Fn fn = (Fn)b->address();
+
+	DbgVal::clear();
+	{
+		const DbgVal va(5), vb(7), vc(2);
+		const DbgVal *actuals[] = { &va, &vb, &vc };
+		CHECK_EQ((*fn)(actuals), 572);
+	}
+	CHECK(DbgVal::clear());
+
 } END_TEST

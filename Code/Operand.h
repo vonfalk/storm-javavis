@@ -121,6 +121,11 @@ namespace code {
 		void STORM_FN ensureReadable(op::Code op) const;
 		void STORM_FN ensureWritable(op::Code op) const;
 
+		// Does this operand use a register (Note: local variables that will use ptrBase later are
+		// not considered to be using a register). This currently includes raw registers and memory
+		// accesses relative to registers.
+		Bool STORM_FN hasRegister() const;
+
 		/**
 		 * Get values. Asserts if you try to get a value we're not representing.
 		 */

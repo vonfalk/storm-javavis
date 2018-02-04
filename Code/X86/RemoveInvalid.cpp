@@ -471,6 +471,14 @@ namespace code {
 			}
 		}
 
+		// Subtract 'offset' from ptrStack if required. Resets it to 0 afterwards. Used to implement
+		// 'lazy' subtraction of ptrStack in 'fnCall' below.
+		static void subStack(Listing *dest, Offset &offset) {
+			if (offset != Offset())
+				*dest << sub(ptrStack, ptrConst(offset));
+			offset = Offset();
+		}
+
 		void RemoveInvalid::fnCall(Listing *dest, TypeInstr *instr, Array<Param> *params) {
 			assert(instr->src().type() != opRegister, L"Not supported.");
 
@@ -492,10 +500,14 @@ namespace code {
 
 			// Push all parameters we can right now. For references and things that need a copy
 			// constructor, store the address on the stack for now and get back to them later.
+			Offset delayedSub;
 			for (Nat i = params->count(); i > 0; i--) {
 				Param &p = params->at(i - 1);
+				bool first = i == 1;
 
 				if (!p.type) {
+					subStack(dest, delayedSub);
+
 					if (retRef) {
 						*dest << push(instr->dest());
 					} else {
@@ -503,21 +515,39 @@ namespace code {
 						*dest << push(ptrConst(0));
 					}
 				} else if (as<ComplexDesc>(p.type) == null && !p.ref) {
+					subStack(dest, delayedSub);
+
 					// Push it to the stack now!
 					pushMemcpy(dest, p.src);
 				} else {
 					// Copy the parameter later.
 					Size s = p.type->size();
 					s += Size::sPtr.alignment();
-					*dest << sub(ptrStack, ptrConst(s));
 
-					if (p.src.type() == opRegister) {
+					// Note: Not needed for the first parameter. We do not have time to clobber
+					// registers until we apply the first parameter, so we might as well just push
+					// it straight away.
+					if (!first && p.ref && p.src.hasRegister()) {
+						// Include everything but the last 4 bytes in the 'sub' operation. We use a
+						// 'push' for those since 'push src' is able to handle more addressing modes
+						// compared to 'mov [ptrBase + 0x??], src'
+						delayedSub += s;
+						delayedSub -= Offset::sPtr;
+						subStack(dest, delayedSub);
+
 						// Store the source of the reference here for later. We might clobber this
 						// register during the next phase!
-						*dest << mov(ptrRel(ptrStack, Offset()), p.src);
+						*dest << push(p.src);
+					} else {
+						// Remember that we shall adjust esp, so that multiple parameters can be
+						// condensed into a single sub instruction.
+						delayedSub += s;
+						// *dest << sub(ptrStack, ptrConst(s));
 					}
 				}
 			}
+
+			subStack(dest, delayedSub);
 
 			// Now, we can use any registers we like!
 			// Note: If 'retRef' is false and we require a parameter for the return value, we know
@@ -528,6 +558,7 @@ namespace code {
 
 			for (Nat i = 0; i < params->count(); i++) {
 				Param &p = params->at(i);
+				bool first = i == 0;
 
 				Size s = p.type ? p.type->size() : Size::sPtr;
 				s += Size::sPtr.alignment();
@@ -538,7 +569,10 @@ namespace code {
 						*dest << mov(ptrRel(ptrStack, paramOffset), ptrA);
 					}
 				} else if (ComplexDesc *c = as<ComplexDesc>(p.type)) {
-					if (p.ref) {
+					if (!first && p.ref && p.src.hasRegister()) {
+						// If the pointer was pushed on the stack, use that as we might have clobbered a used register.
+						*dest << push(ptrRel(ptrStack, paramOffset));
+					} else if (p.ref) {
 						*dest << push(p.src);
 					} else {
 						*dest << lea(ptrA, p.src);
@@ -551,7 +585,7 @@ namespace code {
 					*dest << add(ptrStack, ptrConst(Size::sPtr * 2));
 				} else if (p.ref) {
 					// Copy it using an inlined memcpy.
-					if (p.src.type() == opRegister) {
+					if (!first && p.src.hasRegister()) {
 						*dest << mov(ptrA, ptrRel(ptrStack, paramOffset));
 						inlinedMemcpy(dest, ptrA, paramOffset, p.type->size());
 					} else {

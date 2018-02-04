@@ -147,6 +147,16 @@ namespace code {
 			throw InvalidValue(L"For instruction " + String(name(op)) + L": " + ::toS(*this) + L" is not writable.");
 	}
 
+	Bool Operand::hasRegister() const {
+		switch (opType) {
+		case opRegister:
+		case opRelative:
+			return true;
+		default:
+			return false;
+		}
+	}
+
 	Word Operand::constant() const {
 		assert(type() == opConstant, L"Not a constant!");
 		if (opType == opConstant) {

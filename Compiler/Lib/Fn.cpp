@@ -207,19 +207,12 @@ namespace storm {
 		Function *callFn = as<Function>(find(S("call"), callParams, Scope()));
 		assert(callFn, L"Could not find 'call' inside a Fn object.");
 
-		// Add parameters one by one. We need variables to not confuse the fnParam call (should be fixed in the future).
 		*l << mov(ptrA, paramArray);
-		Array<Var> *paramVars = new (e) Array<Var>();
-		for (Nat i = 1; i < params->count(); i++) {
-			Var v = l->createVar(l->root(), Size::sPtr);
-			*l << mov(v, ptrRel(ptrA, Offset::sPtr * (i - 1)));
-			*paramVars << v;
-		}
 
-		// Do the function call.
+		// Add parameters one by one.
 		*l << fnParam(callParams->at(0).desc(e), fnBase);
-		for (Nat i = 0; i < paramVars->count(); i++)
-			*l << fnParamRef(params->at(i+1).desc(e), paramVars->at(i));
+		for (Nat i = 1; i < params->count(); i++)
+			*l << fnParamRef(params->at(i).desc(e), ptrRel(ptrA, Offset::sPtr * (i - 1)));
 
 		*l << fnCallRef(callFn->ref(), true, params->at(0).desc(e), out);
 
