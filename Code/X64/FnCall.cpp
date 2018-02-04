@@ -160,7 +160,7 @@ namespace code {
 					continue;
 
 				const Operand &src = env.src->at(p.id()).src;
-				if (src.type() == opRegister && same(src.reg(), reg)) {
+				if (src.hasRegister() && same(src.reg(), reg)) {
 					// We need to set this register now, otherwise it will be destroyed!
 					if (env.active->at(i)) {
 						// Cycle detected. Push the register we should vacate onto the stack and
@@ -177,7 +177,10 @@ namespace code {
 		// Set a register to what it is supposed to be, assuming 'src' is the actual value.
 		static void setRegisterVal(RegEnv &env, Reg target, Param param, const Operand &src) {
 			if (param.offset() == 0 && src.size().size64() <= 8) {
-				*env.dest << mov(asSize(target, src.size()), src);
+				if (src.type() == opRegister && src.reg() == target)
+					; // Already done!
+				else
+					*env.dest << mov(asSize(target, src.size()), src);
 			} else if (src.type() == opVariable) {
 				Size s(param.size());
 				*env.dest << mov(asSize(target, s), xRel(s, src.var(), Offset(param.offset())));
@@ -206,7 +209,10 @@ namespace code {
 				*env.dest << mov(asSize(target, s), xRel(s, ptr10, o));
 			} else {
 				// Use the register we're supposed to fill as a temporary.
-				*env.dest << mov(asSize(target, Size::sPtr), src);
+				if (src.type() == opRegister && src.reg() == target)
+					; // Already done!
+				else
+					*env.dest << mov(asSize(target, Size::sPtr), src);
 				*env.dest << mov(asSize(target, s), xRel(s, target, o));
 			}
 		}
@@ -351,7 +357,7 @@ namespace code {
 					continue;
 				}
 
-				if (param.src.type() != opRegister)
+				if (!param.src.hasRegister())
 					continue;
 
 				Reg srcReg = param.src.reg();
@@ -363,13 +369,14 @@ namespace code {
 				if (into == noReg) {
 					// No more registers. Create a variable!
 					Var v = dest->createVar(block, param.src.size());
-					*dest << mov(v, srcReg);
+					*dest << mov(v, param.src);
 					param.src = v;
 				} else {
 					// Put it in 'into' instead!
 					into = asSize(into, param.src.size());
-					*dest << mov(into, srcReg);
+					*dest << mov(into, param.src);
 					param.src = into;
+					used->put(into);
 				}
 			}
 		}
@@ -452,6 +459,9 @@ namespace code {
 			Block block;
 			Result *resultLayout = code::x64::result(resultType);
 			bool complex = hasComplex(params);
+
+			// Copy 'used' so we do not alter our callers version.
+			used = new (used) RegSet(*used);
 
 			// Is the result parameter in a register that needs to be preserved?
 			if (resultRef && resultPos.type() == opRegister) {

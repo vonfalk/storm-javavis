@@ -167,7 +167,7 @@ namespace code {
 	}
 
 	Reg Operand::reg() const {
-		assert(type() == opRegister || type() == opRelative, L"Not a register!");
+		assert(hasRegister(), L"Not a register!");
 		return Reg(opNum);
 	}
 

@@ -1,6 +1,7 @@
 #include "stdafx.h"
 #include "Code/Binary.h"
 #include "Code/Listing.h"
+#include "Code/X64/Arena.h"
 #include "Code/X64/Asm.h"
 #include "Compiler/Debug.h"
 
@@ -483,10 +484,15 @@ BEGIN_TEST(CallFromArray, Code) {
 
 	*l << prolog();
 
-	*l << mov(ptrA, params);
-	*l << fnParamRef(valDesc, ptrRel(ptrA, Offset()));
-	*l << fnParamRef(valDesc, ptrRel(ptrA, Offset::sPtr));
-	*l << fnParamRef(valDesc, ptrRel(ptrA, Offset::sPtr*2));
+	// Use a 'bad' register for the current backend.
+	Reg reg = ptrA;
+	if (as<code::x64::Arena>(arena))
+		reg = code::x64::ptrDi;
+
+	*l << mov(reg, params);
+	*l << fnParamRef(valDesc, ptrRel(reg, Offset()));
+	*l << fnParamRef(valDesc, ptrRel(reg, Offset::sPtr));
+	*l << fnParamRef(valDesc, ptrRel(reg, Offset::sPtr*2));
 
 	*l << fnCall(toCall, false, valDesc, eax);
 
