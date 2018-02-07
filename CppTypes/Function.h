@@ -10,7 +10,8 @@
  */
 class Function {
 public:
-	Function(const CppName &name, const String &pkg, Access access, const SrcPos &pos, Auto<TypeRef> result);
+	Function(const CppName &name, const String &pkg, Access access,
+			const SrcPos &pos, const String &doc, Auto<TypeRef> result);
 
 	// String constants for constructor and destructor names.
 	static const String ctor, dtor;
@@ -26,6 +27,9 @@ public:
 
 	// Declared at?
 	SrcPos pos;
+
+	// Documentation.
+	String doc;
 
 	// Access.
 	Access access;

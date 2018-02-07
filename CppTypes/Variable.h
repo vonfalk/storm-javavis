@@ -8,10 +8,7 @@ class World;
 
 class Variable {
 public:
-	Variable(const CppName &name, Auto<TypeRef> type, Access access, const SrcPos &pos);
-
-	// Position.
-	SrcPos pos;
+	Variable(const CppName &name, Auto<TypeRef> type, Access access, const SrcPos &pos, const String &doc);
 
 	// Name.
 	CppName name;
@@ -21,6 +18,12 @@ public:
 
 	// Type.
 	Auto<TypeRef> type;
+
+	// Position.
+	SrcPos pos;
+
+	// Documentation.
+	String doc;
 
 	// Access.
 	Access access;

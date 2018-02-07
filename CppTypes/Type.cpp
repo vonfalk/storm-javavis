@@ -5,8 +5,8 @@
 #include "Exception.h"
 #include "World.h"
 
-Type::Type(const CppName &name, const String &pkg, const SrcPos &pos)
-	: id(0), name(name), pkg(pkg), pos(pos), external(false) {}
+Type::Type(const CppName &name, const String &pkg, const SrcPos &pos, const String &doc) :
+	id(0), name(name), pkg(pkg), pos(pos), external(false) {}
 
 vector<Offset> Type::ptrOffsets() const {
 	vector<Offset> r;
@@ -29,8 +29,8 @@ wostream &operator <<(wostream &to, const Type &type) {
  * Class.
  */
 
-Class::Class(const CppName &name, const String &pkg, const SrcPos &pos) :
-	Type(name, pkg, pos), valueType(false), parent(L""), hiddenParent(false),
+Class::Class(const CppName &name, const String &pkg, const SrcPos &pos, const String &doc) :
+	Type(name, pkg, pos, doc), valueType(false), parent(L""), hiddenParent(false),
 	dtorFound(false), parentType(null), threadType(null) {}
 
 void Class::resolveTypes(World &in) {
@@ -212,8 +212,8 @@ void ClassNamespace::add(const Function &f) {
  * Primitive.
  */
 
-Primitive::Primitive(const CppName &name, const String &pkg, const CppName &generate, const SrcPos &pos) :
-	Type(name, pkg, pos), generate(generate) {}
+Primitive::Primitive(const CppName &name, const String &pkg, const CppName &generate, const SrcPos &pos, const String &doc) :
+	Type(name, pkg, pos, doc), generate(generate) {}
 
 void Primitive::print(wostream &to) const {
 	to << L"primitive " << name;
@@ -248,7 +248,7 @@ void Primitive::scannedVars(vector<ScannedVar> &append) const {
  */
 
 UnknownPrimitive::UnknownPrimitive(const CppName &name, const String &pkg, const CppName &generate, const SrcPos &pos) :
-	Type(name, pkg, pos), generate(generate) {}
+	Type(name, pkg, pos, L""), generate(generate) {}
 
 void UnknownPrimitive::print(wostream &to) const {
 	to << L"unknown primitive " << name;
@@ -290,7 +290,8 @@ void UnknownPrimitive::scannedVars(vector<ScannedVar> &append) const {
  * Enum.
  */
 
-Enum::Enum(const CppName &name, const String &pkg, const SrcPos &pos) : Type(name, pkg, pos), bitmask(false) {}
+Enum::Enum(const CppName &name, const String &pkg, const SrcPos &pos, const String &doc) :
+	Type(name, pkg, pos, doc), bitmask(false) {}
 
 void Enum::resolveTypes(World &world) {}
 

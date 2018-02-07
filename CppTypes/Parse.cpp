@@ -40,7 +40,21 @@ struct ParseEnv {
 
 	// The world in which we want to store everything.
 	World &world;
+
+	// Last documentation comment seen here.
+	Comment doc;
 };
+
+// Get the current documentation.
+static Comment getDoc(Tokenizer &tok, ParseEnv &env) {
+	Comment r = tok.comment();
+	tok.clearComment();
+	if (r.empty())
+		return env.doc;
+
+	env.doc = r;
+	return r;
+}
 
 // Read a name.
 static CppName parseName(Tokenizer &tok) {
@@ -126,6 +140,7 @@ static Auto<TypeRef> parseTypeRef(Tokenizer &tok) {
 // Parse an unknown block.
 static void parseBlock(Tokenizer &tok) {
 	while (tok.more()) {
+		tok.clearComment();
 		Token t = tok.next();
 		if (t.token == L"{")
 			parseBlock(tok);
@@ -153,6 +168,8 @@ static void parseMember(Tokenizer &tok, ParseEnv &env, Namespace &addTo, Access 
 
 	bool isVirtual = tok.skipIf(L"virtual");
 	tok.skipIf(L"inline"); // The combination 'virtual inline' is insane, but we'll roll with it...
+
+	Comment doc = getDoc(tok, env);
 
 	// First, we should have a type.
 	Auto<TypeRef> type;
@@ -218,7 +235,7 @@ static void parseMember(Tokenizer &tok, ParseEnv &env, Namespace &addTo, Access 
 
 	if (tok.skipIf(L"(")) {
 		// Function.
-		Function f(CppName(name.token), env.pkg, access, name.pos, type);
+		Function f(CppName(name.token), env.pkg, access, name.pos, L"", type);
 		if (!stormName.empty())
 			f.stormName = stormName;
 		f.isVirtual = isVirtual;
@@ -254,8 +271,10 @@ static void parseMember(Tokenizer &tok, ParseEnv &env, Namespace &addTo, Access 
 
 		// Save if 'exportFn' is there.
 		if (exportFn || f.name == Function::dtor) {
-			if (env.exportAll)
+			if (env.exportAll) {
+				f.doc = doc.str();
 				addTo.add(f);
+			}
 		}
 	} else if (tok.skipIf(L"[")) {
 		throw Error(L"C-style arrays not supported in classes exposed to Storm.", name.pos);
@@ -264,13 +283,13 @@ static void parseMember(Tokenizer &tok, ParseEnv &env, Namespace &addTo, Access 
 		while (!tok.skipIf(L";"))
 			tok.skip();
 
-		Variable v(CppName(name.token), type, access, name.pos);
+		Variable v(CppName(name.token), type, access, name.pos, doc.str());
 		if (!stormName.empty())
 			v.stormName = stormName;
 		addTo.add(v);
 	} else if (tok.skipIf(L";")) {
 		// Variable.
-		Variable v(CppName(name.token), type, access, name.pos);
+		Variable v(CppName(name.token), type, access, name.pos, doc.str());
 		if (!stormName.empty())
 			v.stormName = stormName;
 		addTo.add(v);
@@ -293,6 +312,8 @@ static void parseEnum(Tokenizer &tok, ParseEnv &env, const CppName &inside) {
 	if (tok.skipIf(L";"))
 		return;
 
+	Comment doc = getDoc(tok, env);
+
 	if (name.token == L"{") {
 		name.token = L"";
 	} else {
@@ -301,7 +322,7 @@ static void parseEnum(Tokenizer &tok, ParseEnv &env, const CppName &inside) {
 
 	// Add the type.
 	CppName fullName = inside + name.token;
-	Auto<Enum> type = new Enum(fullName, env.pkg, name.pos);
+	Auto<Enum> type = new Enum(fullName, env.pkg, name.pos, doc.str());
 
 	do {
 		Token member = tok.next();
@@ -327,6 +348,7 @@ static void parseEnum(Tokenizer &tok, ParseEnv &env, const CppName &inside) {
 		}
 
 	} while (tok.skipIf(L","));
+	tok.clearComment();
 	tok.skipIf(L"}");
 	tok.expect(L";");
 
@@ -336,8 +358,9 @@ static void parseEnum(Tokenizer &tok, ParseEnv &env, const CppName &inside) {
 }
 
 // Parse the parent class of a type.
-static Auto<Class> parseParent(Tokenizer &tok, const CppName &fullName, const String &pkg, const SrcPos &pos) {
-	Auto<Class> result = new Class(fullName, pkg, pos);
+static Auto<Class> parseParent(Tokenizer &tok, ParseEnv &env, const CppName &fullName, const String &pkg, const SrcPos &pos) {
+	Comment doc = getDoc(tok, env);
+	Auto<Class> result = new Class(fullName, pkg, pos, doc.str());
 	if (!tok.skipIf(L":"))
 		return result;
 
@@ -378,7 +401,7 @@ static void parseType(Tokenizer &tok, ParseEnv &env, const CppName &inside) {
 		return;
 
 	CppName fullName = inside + name.token;
-	Auto<Class> type = parseParent(tok, fullName, env.pkg, name.pos);
+	Auto<Class> type = parseParent(tok, env, fullName, env.pkg, name.pos);
 
 	tok.expect(L"{");
 
@@ -464,6 +487,7 @@ static void parseType(Tokenizer &tok, ParseEnv &env, const CppName &inside) {
 	type->external = !env.exportAll;
 	env.world.add(type);
 
+	tok.clearComment();
 	tok.expect(L";");
 }
 
@@ -550,8 +574,9 @@ static void parseNamespace(Tokenizer &tok, ParseEnv &env, const CppName &name) {
 			tok.expect(L"(");
 			Token tName = tok.next();
 			tok.expect(L",");
+			Comment doc = getDoc(tok, env);
 			CppName gen = parseName(tok);
-			Auto<Primitive> p = new Primitive(name + tName.token, env.pkg, gen, tName.pos);
+			Auto<Primitive> p = new Primitive(name + tName.token, env.pkg, gen, tName.pos, doc.str());
 			p->external = !env.exportAll;
 			env.world.types.insert(p);
 			tok.expect(L")");
@@ -585,6 +610,7 @@ static void parseNamespace(Tokenizer &tok, ParseEnv &env, const CppName &name) {
 			tok.skip();
 			parseBlock(tok);
 		} else if (t.token == L"}") {
+			tok.clearComment();
 			tok.skip();
 			break;
 		} else if (t.token == L";") {

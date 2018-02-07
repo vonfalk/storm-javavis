@@ -146,7 +146,7 @@ void World::resolveTypes() {
 			// Add the default copy-constructor to the type unless it is an actor.
 			if (!c->isActor() && !c->external) {
 				Auto<TypeRef> r = new NamedType(c->pos, L"void");
-				Function f(c->name + Function::ctor, c->pkg, aPublic, c->pos, r);
+				Function f(c->name + Function::ctor, c->pkg, aPublic, c->pos, L"Copy constructor.", r);
 				f.isMember = true;
 				f.params.push_back(new RefType(new ResolvedType(t)));
 				f.params.push_back(new RefType(makeConst(new ResolvedType(t))));
@@ -156,7 +156,7 @@ void World::resolveTypes() {
 			// Add the default assignment operator to the type if it is a value.
 			if (c->valueType && !c->external) {
 				Auto<TypeRef> r = new RefType(new ResolvedType(t));
-				Function f(c->name + String(L"operator ="), c->pkg, aPublic, c->pos, r);
+				Function f(c->name + String(L"operator ="), c->pkg, aPublic, c->pos, L"Assignment operator.", r);
 				f.isMember = true;
 				f.isConst = true;
 				f.wrapAssign = true;
