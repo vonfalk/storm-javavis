@@ -3,15 +3,6 @@
 #include "Bitmask.h"
 
 // A basic stream class.
-// Any object that can follows the following interface can be loaded/saved using this class.
-// class Foo {
-// public:
-//     static Foo load(Stream &from);
-//     void save(Stream &to) const;
-// }
-// Note that even though the type of the parameter to "write" can be deduced, it is the standard
-// to write it out, so that innocent changes to datatypes does not break the file structure without
-// warnings.
 class Stream : NoCopy {
 public:
 	enum Mode { mNone = 0x0, mRead = 0x1, mWrite = 0x2, mRandom = 0x3 };
@@ -48,7 +39,7 @@ protected:
 
 private:
 	// Chunk size when copying streams.
-	static const nat copySize = 10 * 1024;
+	enum { copySize = 1 * 1024 };
 };
 
 BITMASK_OPERATORS(Stream::Mode);

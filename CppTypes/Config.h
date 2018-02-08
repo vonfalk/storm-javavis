@@ -17,7 +17,7 @@ struct Config {
 	Path cppSrc, asmSrc;
 
 	// Output to.
-	Path cppOut, asmOut;
+	Path cppOut, asmOut, docOut;
 
 	// Do we have asm source?
 	bool genAsm;

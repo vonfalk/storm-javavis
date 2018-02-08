@@ -31,3 +31,13 @@ bool Stream::error() const {
 void Stream::clearError() {
 	hasError = false;
 }
+
+void Stream::write(Stream *src) {
+	src->seek(0);
+
+	byte buffer[copySize];
+	while (src->more()) {
+		nat bytes = src->read(copySize, buffer);
+		write(bytes, buffer);
+	}
+}

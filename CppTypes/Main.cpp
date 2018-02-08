@@ -136,9 +136,10 @@ int _tmain(int argc, const wchar_t *argv[]) {
 	}
 
 	bool update = oldFile(modified, config.cppOut);
-	if (config.genAsm) {
+	if (config.genAsm)
 		update |= oldFile(modified, config.asmOut);
-	}
+	if (!config.docOut.isEmpty())
+		update |= oldFile(modified, config.docOut);
 
 	if (update) {
 		try {
@@ -155,6 +156,8 @@ int _tmain(int argc, const wchar_t *argv[]) {
 
 			if (config.genAsm)
 				generateFile(config.asmSrc, config.asmOut, asmMap(), world);
+			if (!config.docOut.isEmpty())
+				generateDoc(config.docOut, world);
 		} catch (const Exception &e) {
 			PLN(e);
 			// PLN(e.what());

@@ -6,7 +6,7 @@
 #include "World.h"
 
 Type::Type(const CppName &name, const String &pkg, const SrcPos &pos, const String &doc) :
-	id(0), name(name), pkg(pkg), pos(pos), external(false) {}
+	id(0), name(name), pkg(pkg), pos(pos), doc(doc), external(false) {}
 
 vector<Offset> Type::ptrOffsets() const {
 	vector<Offset> r;
@@ -323,5 +323,5 @@ void Enum::print(wostream &to) const {
  * Template.
  */
 
-Template::Template(const CppName &name, const String &pkg, const CppName &generator, const SrcPos &pos) :
-	name(name), pkg(pkg), generator(generator), pos(pos) {}
+Template::Template(const CppName &name, const String &pkg, const CppName &generator, const SrcPos &pos, const String &doc) :
+	name(name), pkg(pkg), generator(generator), pos(pos), doc(doc) {}

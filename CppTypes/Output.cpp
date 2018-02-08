@@ -921,4 +921,3 @@ GenerateMap asmMap() {
 
 	return g;
 }
-

@@ -11,20 +11,22 @@ public:
 	virtual void put(wchar_t ch) = 0;
 	virtual void put(const String &str);
 
-	static TextWriter *create(Stream *stream, textfile::Format fmt);
+	static TextWriter *create(Stream *stream, bool owner, textfile::Format fmt);
 protected:
-	TextWriter(Stream *stream);
+	TextWriter(Stream *stream, bool owner);
 
 	Stream *stream;
+	bool owner;
 };
 
 namespace textfile {
 	class Utf8Writer : public TextWriter {
 	public:
-		Utf8Writer(Stream *to, bool bom);
+		Utf8Writer(Stream *to, bool owner, bool bom);
 
 		virtual textfile::Format format() { return bom ? textfile::utf8 : textfile::utf8noBom; };
 		virtual void put(wchar_t ch);
+		using TextWriter::put;
 	private:
 		bool bom;
 		wchar_t largeCp;
@@ -36,11 +38,12 @@ namespace textfile {
 
 	class Utf16Writer : public TextWriter {
 	public:
-		Utf16Writer(Stream *to, bool reverseEndian = false);
+		Utf16Writer(Stream *to, bool owner, bool reverseEndian = false);
 
 		virtual textfile::Format format() { return (reverseEndian ? textfile::utf16rev : textfile::utf16); };
 
 		virtual void put(wchar_t ch);
+		using TextWriter::put;
 	private:
 		bool reverseEndian;
 

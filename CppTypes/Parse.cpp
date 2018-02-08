@@ -565,7 +565,8 @@ static void parseNamespace(Tokenizer &tok, ParseEnv &env, const CppName &name) {
 			Token tName = tok.next();
 			tok.expect(L",");
 			CppName gen = parseName(tok);
-			Auto<Template> t = new Template(name + tName.token, env.pkg, gen, tName.pos);
+			Comment doc = getDoc(tok, env);
+			Auto<Template> t = new Template(name + tName.token, env.pkg, gen, tName.pos, doc.str());
 			env.world.templates.insert(t);
 			tok.expect(L")");
 			tok.expect(L";");
@@ -596,7 +597,8 @@ static void parseNamespace(Tokenizer &tok, ParseEnv &env, const CppName &name) {
 			tok.skip();
 			tok.expect(L"(");
 			Token tName = tok.next();
-			Auto<Thread> t = new Thread(name + tName.token, env.pkg, tName.pos, !env.exportAll);
+			Comment doc = getDoc(tok, env);
+			Auto<Thread> t = new Thread(name + tName.token, env.pkg, tName.pos, doc.str(), !env.exportAll);
 			env.world.threads.insert(t);
 			tok.expect(L")");
 			tok.expect(L";");

@@ -11,3 +11,6 @@ typedef map<String, GenerateFn> GenerateMap;
 
 // Generate a file from a template.
 void generateFile(const Path &src, const Path &dest, const GenerateMap &actions, World &world);
+
+// Generate the documentation file.
+void generateDoc(const Path &out, World &world);

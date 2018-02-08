@@ -6,10 +6,11 @@
 // TextWriter
 //////////////////////////////////////////////////////////////////////////
 
-TextWriter::TextWriter(Stream *stream) : stream(stream) {}
+TextWriter::TextWriter(Stream *stream, bool owner) : stream(stream), owner(owner) {}
 
 TextWriter::~TextWriter() {
-	if (stream) delete stream;
+	if (stream && owner)
+		delete stream;
 }
 
 void TextWriter::put(const String &str) {
@@ -18,16 +19,16 @@ void TextWriter::put(const String &str) {
 	}
 }
 
-TextWriter *TextWriter::create(Stream *stream, textfile::Format fmt) {
+TextWriter *TextWriter::create(Stream *stream, bool owner, textfile::Format fmt) {
 	switch (fmt) {
 	case textfile::utf8:
-		return new textfile::Utf8Writer(stream, true);
+		return new textfile::Utf8Writer(stream, owner, true);
 	case textfile::utf8noBom:
-		return new textfile::Utf8Writer(stream, false);
+		return new textfile::Utf8Writer(stream, owner, false);
 	case textfile::utf16:
-		return new textfile::Utf16Writer(stream, false);
+		return new textfile::Utf16Writer(stream, owner, false);
 	case textfile::utf16rev:
-		return new textfile::Utf16Writer(stream, true);
+		return new textfile::Utf16Writer(stream, owner, true);
 	default:
 		assert(false);
 		return null;
@@ -39,7 +40,7 @@ namespace textfile {
 	// Utf8Writer
 	//////////////////////////////////////////////////////////////////////////
 
-	Utf8Writer::Utf8Writer(Stream *to, bool bom) : TextWriter(to), largeCp(0), bom(bom) {
+	Utf8Writer::Utf8Writer(Stream *to, bool owner, bool bom) : TextWriter(to, owner), largeCp(0), bom(bom) {
 		if (bom)
 			put(0xFEFF);
 	}
@@ -112,7 +113,9 @@ namespace textfile {
 	// Utf16Writer
 	//////////////////////////////////////////////////////////////////////////
 
-	Utf16Writer::Utf16Writer(Stream *to, bool reverseEndian) : TextWriter(to), reverseEndian(reverseEndian) {
+	Utf16Writer::Utf16Writer(Stream *to, bool owner, bool reverseEndian) :
+		TextWriter(to, owner), reverseEndian(reverseEndian) {
+
 		put(0xFEFF);
 	}
 

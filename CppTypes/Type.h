@@ -253,7 +253,7 @@ public:
 class Template : public Refcount {
 public:
 	// Create.
-	Template(const CppName &name, const String &pkg, const CppName &generator, const SrcPos &pos);
+	Template(const CppName &name, const String &pkg, const CppName &generator, const SrcPos &pos, const String &doc);
 
 	// Our id. Set when added to the world.
 	nat id;
@@ -269,4 +269,7 @@ public:
 
 	// Position.
 	SrcPos pos;
+
+	// Documentation.
+	String doc;
 };
