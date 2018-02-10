@@ -7,6 +7,15 @@
 // From Storm headers. Assumed to be 64-bits.
 typedef long long int Long;
 
+// Get the documentation id from something. Returns 0 if it does not exist.
+template <class T>
+static nat docId(const T &v) {
+	if (v.doc)
+		return v.doc->id();
+	else
+		return 0;
+}
+
 // Convert from a fully-qualified (type) name to a suitable variable name.
 static String toVarName(const CppName &c) {
 	String s = c;
@@ -167,6 +176,9 @@ static void genTypes(wostream &to, World &w) {
 				to << L"CppType::superNone, 0, ";
 			}
 		}
+
+		// Documentation.
+		to << docId(t) << L", ";
 
 		// Size.
 		Size s = t.size();
@@ -339,7 +351,6 @@ static void genTemplateArrays(wostream &to, World &w) {
 }
 
 static void genFnParams(wostream &to, World &w) {
-	// TODO: if this is slow, we can probably gain a lot of entries by reusing equal parameter lists.
 	for (nat i = 0; i < w.functions.size(); i++) {
 		Function &f = w.functions[i];
 
@@ -357,8 +368,9 @@ static void genFnParams(wostream &to, World &w) {
 			// Ignore the dummy int-parameter if it is present.
 			params = 1;
 
-		to << L"static const CppTypeRef params_" << i << L"[] = { ";
+		to << L"static const CppParam params_" << i << L"[] = { ";
 
+		assert(f.paramNames.size() >= params, L"Missing parameter names for " + toS(f.name));
 		for (nat p = 0; p < params; p++) {
 			TypeRef *r = f.params[p].borrow();
 
@@ -366,14 +378,16 @@ static void genFnParams(wostream &to, World &w) {
 			if (p == 0 && as<EnginePtrType>(r))
 				continue;
 
+			to << L"{ S(\"" << f.paramNames[p] << L"\"), ";
 			genTypeRef(to, r);
+			to << L"}, ";
 		}
 
-		to << L"{ -1, null, false } };\n";
+		to << L"{ null, { -1, null, false } } };\n";
 	}
 
 	// We only generate one for the empty parameter list.
-	to << L"static const CppTypeRef params_empty[] = { { -1, null } };";
+	to << L"static const CppParam params_empty[] = { { null, { -1, null } } };";
 }
 
 static void stormName(wostream &to, Function &f) {
@@ -479,6 +493,9 @@ static void genFunctions(wostream &to, World &w) {
 		else
 			to << L"-1, ";
 
+		// Documentation.
+		to << docId(f) << L", ";
+
 		// Pointer to the function.
 		genPtr(to, f);
 		to << L", ";
@@ -548,6 +565,9 @@ static void genVariables(wostream &to, World &w) {
 			// Owner id.
 			to << c->id << L" /* " << c->name << L" */, ";
 
+			// Documentation.
+			to << docId(v) << L", ";
+
 			// Access.
 			to << accessName(v.access) << L", ";
 
@@ -583,7 +603,13 @@ static void genEnumValues(wostream &to, World &w) {
 			to << e->id << L" /* " << e->name << L" */, ";
 
 			// Value.
-			to << e->name.parent() << L"::" << cppMember;
+			to << e->name.parent() << L"::" << cppMember << L", ";
+
+			// Documentation.
+			if (e->memberDoc[j])
+				to << e->memberDoc[j]->id();
+			else
+				to << "0";
 
 			to << L" },\n";
 		}
@@ -614,9 +640,12 @@ static void genTemplates(wostream &to, World &w) {
 
 		// Generator function.
 		if (config.compiler)
-			to << L"&" << t.generator;
+			to << L"&" << t.generator << L", ";
 		else
-			to << L"null";
+			to << L"null, ";
+
+		// Documentation.
+		to << docId(t);
 
 		to << L" },\n";
 	}
@@ -645,6 +674,9 @@ static void genThreads(wostream &to, World &w) {
 
 		// Declaration.
 		to << L"&" << t.name << L"::decl, ";
+
+		// Documentation.
+		to << docId(t) << L", ";
 
 		// External?
 		to << (t.external ? L"true" : L"false");

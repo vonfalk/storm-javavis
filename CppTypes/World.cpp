@@ -138,6 +138,9 @@ void World::orderLicenses() {
 }
 
 void World::resolveTypes() {
+	Auto<Doc> copy = new Doc(L"Copy constructor.");
+	Auto<Doc> assign = new Doc(L"Assignment operator.");
+
 	for (nat i = 0; i < types.size(); i++) {
 		Type *t = types[i].borrow();
 		t->resolveTypes(*this);
@@ -146,22 +149,26 @@ void World::resolveTypes() {
 			// Add the default copy-constructor to the type unless it is an actor.
 			if (!c->isActor() && !c->external) {
 				Auto<TypeRef> r = new NamedType(c->pos, L"void");
-				Function f(c->name + Function::ctor, c->pkg, aPublic, c->pos, L"Copy constructor.", r);
+				Function f(c->name + Function::ctor, c->pkg, aPublic, c->pos, copy, r);
 				f.isMember = true;
 				f.params.push_back(new RefType(new ResolvedType(t)));
+				f.paramNames.push_back(L"this");
 				f.params.push_back(new RefType(makeConst(new ResolvedType(t))));
+				f.paramNames.push_back(L"other");
 				functions.push_back(f);
 			}
 
 			// Add the default assignment operator to the type if it is a value.
 			if (c->valueType && !c->external) {
 				Auto<TypeRef> r = new RefType(new ResolvedType(t));
-				Function f(c->name + String(L"operator ="), c->pkg, aPublic, c->pos, L"Assignment operator.", r);
+				Function f(c->name + String(L"operator ="), c->pkg, aPublic, c->pos, assign, r);
 				f.isMember = true;
 				f.isConst = true;
 				f.wrapAssign = true;
 				f.params.push_back(r);
+				f.paramNames.push_back(L"this");
 				f.params.push_back(new RefType(makeConst(new ResolvedType(t))));
+				f.paramNames.push_back(L"other");
 				functions.push_back(f);
 			}
 		}

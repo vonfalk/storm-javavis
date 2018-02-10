@@ -5,7 +5,7 @@
 #include "Exception.h"
 #include "World.h"
 
-Type::Type(const CppName &name, const String &pkg, const SrcPos &pos, const String &doc) :
+Type::Type(const CppName &name, const String &pkg, const SrcPos &pos, const Auto<Doc> &doc) :
 	id(0), name(name), pkg(pkg), pos(pos), doc(doc), external(false) {}
 
 vector<Offset> Type::ptrOffsets() const {
@@ -29,7 +29,7 @@ wostream &operator <<(wostream &to, const Type &type) {
  * Class.
  */
 
-Class::Class(const CppName &name, const String &pkg, const SrcPos &pos, const String &doc) :
+Class::Class(const CppName &name, const String &pkg, const SrcPos &pos, const Auto<Doc> &doc) :
 	Type(name, pkg, pos, doc), valueType(false), parent(L""), hiddenParent(false),
 	dtorFound(false), parentType(null), threadType(null) {}
 
@@ -205,6 +205,7 @@ void ClassNamespace::add(const Function &f) {
 	g.isMember = true;
 	// Add our this-pointer.
 	g.params.insert(g.params.begin(), new RefType(new ResolvedType(&owner)));
+	g.paramNames.insert(g.paramNames.begin(), L"this");
 	world.functions.push_back(g);
 }
 
@@ -212,7 +213,7 @@ void ClassNamespace::add(const Function &f) {
  * Primitive.
  */
 
-Primitive::Primitive(const CppName &name, const String &pkg, const CppName &generate, const SrcPos &pos, const String &doc) :
+Primitive::Primitive(const CppName &name, const String &pkg, const CppName &generate, const SrcPos &pos, const Auto<Doc> &doc) :
 	Type(name, pkg, pos, doc), generate(generate) {}
 
 void Primitive::print(wostream &to) const {
@@ -248,7 +249,7 @@ void Primitive::scannedVars(vector<ScannedVar> &append) const {
  */
 
 UnknownPrimitive::UnknownPrimitive(const CppName &name, const String &pkg, const CppName &generate, const SrcPos &pos) :
-	Type(name, pkg, pos, L""), generate(generate) {}
+	Type(name, pkg, pos, null), generate(generate) {}
 
 void UnknownPrimitive::print(wostream &to) const {
 	to << L"unknown primitive " << name;
@@ -290,7 +291,7 @@ void UnknownPrimitive::scannedVars(vector<ScannedVar> &append) const {
  * Enum.
  */
 
-Enum::Enum(const CppName &name, const String &pkg, const SrcPos &pos, const String &doc) :
+Enum::Enum(const CppName &name, const String &pkg, const SrcPos &pos, const Auto<Doc> &doc) :
 	Type(name, pkg, pos, doc), bitmask(false) {}
 
 void Enum::resolveTypes(World &world) {}
@@ -323,5 +324,5 @@ void Enum::print(wostream &to) const {
  * Template.
  */
 
-Template::Template(const CppName &name, const String &pkg, const CppName &generator, const SrcPos &pos, const String &doc) :
+Template::Template(const CppName &name, const String &pkg, const CppName &generator, const SrcPos &pos, const Auto<Doc> &doc) :
 	name(name), pkg(pkg), generator(generator), pos(pos), doc(doc) {}

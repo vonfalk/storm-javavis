@@ -4,6 +4,7 @@
 #include "CppName.h"
 #include "Thread.h"
 #include "Access.h"
+#include "Doc.h"
 
 /**
  * A function declared in C++.
@@ -11,7 +12,7 @@
 class Function {
 public:
 	Function(const CppName &name, const String &pkg, Access access,
-			const SrcPos &pos, const String &doc, Auto<TypeRef> result);
+			const SrcPos &pos, const Auto<Doc> &doc, Auto<TypeRef> result);
 
 	// String constants for constructor and destructor names.
 	static const String ctor, dtor;
@@ -29,13 +30,16 @@ public:
 	SrcPos pos;
 
 	// Documentation.
-	String doc;
+	Auto<Doc> doc;
 
 	// Access.
 	Access access;
 
 	// Parameters (any implicit this-pointer is not present here).
 	vector<Auto<TypeRef>> params;
+
+	// Parameter names.
+	vector<String> paramNames;
 
 	// Return type.
 	Auto<TypeRef> result;

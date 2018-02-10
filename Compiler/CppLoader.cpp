@@ -465,11 +465,11 @@ namespace storm {
 		assert(params->count() > 0, L"Missing this pointer for " + ::toS(fn.name) + L"!");
 
 		// Find the vtable...
-		const CppTypeRef &firstParam = fn.params[0];
-		assert(firstParam.params == null, L"Members for template types are not supported!");
+		const CppParam &firstParam = fn.params[0];
+		assert(firstParam.type.params == null, L"Members for template types are not supported!");
 		// CppType::VTableFn vFn = world->types[firstParam.id].vtable;
 
-		const void *ptr = deVirtualize(fn.params[0], fn.ptr);
+		const void *ptr = deVirtualize(firstParam.type, fn.ptr);
 		Function *f = new (*e) CppMemberFunction(result, new (*e) Str(fn.name), params, fn.ptr);
 		f->setCode(new (*e) StaticCode(ptr));
 
@@ -492,10 +492,10 @@ namespace storm {
 		params->at(0).type->add(f);
 	}
 
-	Array<Value> *CppLoader::loadFnParams(const CppTypeRef *params) {
+	Array<Value> *CppLoader::loadFnParams(const CppParam *params) {
 		Array<Value> *r = new (*e) Array<Value>();
 
-		for (Value v = findValue(*params); v != Value(); v = findValue(*++params)) {
+		for (Value v = findValue(params->type); v != Value(); v = findValue((++params)->type)) {
 			r->push(v);
 		}
 

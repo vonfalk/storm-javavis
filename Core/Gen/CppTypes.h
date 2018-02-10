@@ -112,7 +112,10 @@ namespace storm {
 #endif
 
 		// Super class' type id, see 'kind' for the exact meaning.
-		size_t super;
+		nat super;
+
+		// Documentation id.
+		nat doc;
 
 		// Total size of the type.
 		CppSize size;
@@ -156,6 +159,17 @@ namespace storm {
 	};
 
 	/**
+	 * Parameter to a function in C++.
+	 */
+	struct CppParam {
+		// The parameter name (null if last parameter).
+		const wchar *name;
+
+		// The type of the parameter.
+		CppTypeRef type;
+	};
+
+	/**
 	 * List of C++ functions.
 	 */
 	struct CppFunction {
@@ -187,13 +201,16 @@ namespace storm {
 		CppAccess access;
 
 		// Thread to run this function on.
-		size_t threadId;
+		nat threadId;
+
+		// Documentation id.
+		nat doc;
 
 		// Pointer to the function.
 		const void *ptr;
 
 		// Parameters.
-		const CppTypeRef *params;
+		const CppParam *params;
 
 		// Result.
 		CppTypeRef result;
@@ -208,6 +225,9 @@ namespace storm {
 
 		// Type this variable is a member of.
 		nat memberOf;
+
+		// Documentation.
+		nat doc;
 
 		// Access mode.
 		CppAccess access;
@@ -231,6 +251,9 @@ namespace storm {
 
 		// Value.
 		nat value;
+
+		// Documentation.
+		nat doc;
 	};
 
 	/**
@@ -246,6 +269,9 @@ namespace storm {
 		// Generate templates using this function. If null, this template is located externally.
 		typedef Type *(*GenerateFn)(Str *name, ValueArray *);
 		GenerateFn generate;
+
+		// Documentation id.
+		nat doc;
 	};
 
 	/**
@@ -260,6 +286,9 @@ namespace storm {
 
 		// Thread declaration.
 		DeclThread *decl;
+
+		// Documentation id.
+		nat doc;
 
 		// Located externally?
 		bool external;

@@ -3,12 +3,13 @@
 #include "TypeRef.h"
 #include "SrcPos.h"
 #include "Access.h"
+#include "Doc.h"
 
 class World;
 
 class Variable {
 public:
-	Variable(const CppName &name, Auto<TypeRef> type, Access access, const SrcPos &pos, const String &doc);
+	Variable(const CppName &name, Auto<TypeRef> type, Access access, const SrcPos &pos, const Auto<Doc> &doc);
 
 	// Name.
 	CppName name;
@@ -23,7 +24,7 @@ public:
 	SrcPos pos;
 
 	// Documentation.
-	String doc;
+	Auto<Doc> doc;
 
 	// Access.
 	Access access;

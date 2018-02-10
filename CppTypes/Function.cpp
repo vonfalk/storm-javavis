@@ -6,7 +6,7 @@ const String Function::ctor = L"__init";
 const String Function::dtor = L"__destroy";
 
 Function::Function(const CppName &name, const String &pkg, Access access, const SrcPos &pos,
-				const String &doc, Auto<TypeRef> result) :
+				const Auto<Doc> &doc, Auto<TypeRef> result) :
 	name(name), pkg(pkg), stormName(name.last()), access(access), pos(pos), doc(doc), result(result),
 	isMember(false), isVirtual(false), isConst(false), wrapAssign(false), castMember(false), threadType(null) {}
 

@@ -6,6 +6,7 @@
 #include "Function.h"
 #include "Namespace.h"
 #include "Thread.h"
+#include "Doc.h"
 
 class World;
 
@@ -20,7 +21,7 @@ struct ScannedVar {
 class Type : public Refcount {
 public:
 	// Create a type with name X, where X is the fully qualified name of the type (eg. std::string, Foo:Bar::Baz).
-	Type(const CppName &name, const String &pkg, const SrcPos &pos, const String &doc);
+	Type(const CppName &name, const String &pkg, const SrcPos &pos, const Auto<Doc> &doc);
 
 	// The ID of this type. Set during world.prepare().
 	nat id;
@@ -35,7 +36,7 @@ public:
 	SrcPos pos;
 
 	// Documentation for this type.
-	String doc;
+	Auto<Doc> doc;
 
 	// Is this type external to this unit?
 	bool external;
@@ -69,7 +70,7 @@ wostream &operator <<(wostream &to, const Type &type);
 class Class : public Type {
 public:
 	// Create a type with name X, where X is the fully qualified name of the type (eg. Foo::Bar::Baz).
-	Class(const CppName &name, const String &pkg, const SrcPos &pos, const String &doc);
+	Class(const CppName &name, const String &pkg, const SrcPos &pos, const Auto<Doc> &doc);
 
 	// Is this a value-type?
 	bool valueType;
@@ -152,7 +153,7 @@ private:
 class Primitive : public Type {
 public:
 	// Create.
-	Primitive(const CppName &name, const String &pkg, const CppName &generate, const SrcPos &pos, const String &doc);
+	Primitive(const CppName &name, const String &pkg, const CppName &generate, const SrcPos &pos, const Auto<Doc> &doc);
 
 	// Function used to generate this primitive.
 	CppName generate;
@@ -219,13 +220,16 @@ private:
 class Enum : public Type {
 public:
 	// Create.
-	Enum(const CppName &name, const String &pkg, const SrcPos &pos, const String &doc);
+	Enum(const CppName &name, const String &pkg, const SrcPos &pos, const Auto<Doc> &doc);
 
 	// Members in the enum (not their values, we can easily generate code that fetches those for us).
 	vector<String> members;
 
 	// Names of the enum members in Storm.
 	vector<String> stormMembers;
+
+	// Documentation for all members.
+	vector<Auto<Doc>> memberDoc;
 
 	// Is this enum used as a bitmask?
 	bool bitmask;
@@ -253,7 +257,7 @@ public:
 class Template : public Refcount {
 public:
 	// Create.
-	Template(const CppName &name, const String &pkg, const CppName &generator, const SrcPos &pos, const String &doc);
+	Template(const CppName &name, const String &pkg, const CppName &generator, const SrcPos &pos, const Auto<Doc> &doc);
 
 	// Our id. Set when added to the world.
 	nat id;
@@ -271,5 +275,5 @@ public:
 	SrcPos pos;
 
 	// Documentation.
-	String doc;
+	Auto<Doc> doc;
 };

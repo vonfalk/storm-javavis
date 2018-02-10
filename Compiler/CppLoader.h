@@ -122,7 +122,7 @@ namespace storm {
 		void loadMemberFunction(const CppFunction &fn, bool cast);
 
 		// Load parameters for a function.
-		Array<Value> *loadFnParams(const CppTypeRef *params);
+		Array<Value> *loadFnParams(const CppParam *params);
 
 		// Load a variable.
 		void loadVariable(const CppVariable &var);

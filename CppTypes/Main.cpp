@@ -152,12 +152,14 @@ int _tmain(int argc, const wchar_t *argv[]) {
 				world.usingDecl.push_back(CppName(config.usingDecl[i]));
 
 			world.prepare();
+
+			if (!config.docOut.isEmpty())
+				generateDoc(config.docOut, world);
+
 			generateFile(config.cppSrc, config.cppOut, genMap(), world);
 
 			if (config.genAsm)
 				generateFile(config.asmSrc, config.asmOut, asmMap(), world);
-			if (!config.docOut.isEmpty())
-				generateDoc(config.docOut, world);
 		} catch (const Exception &e) {
 			PLN(e);
 			// PLN(e.what());

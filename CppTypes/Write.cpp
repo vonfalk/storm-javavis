@@ -110,29 +110,51 @@ void generateFile(const Path &src, const Path &dest, const GenerateMap &actions,
 }
 
 template <class T>
-const String &get(const NameMap<T> &src, nat id) {
-	return src[id]->doc;
+const T &get(const NameMap<T> &src, nat id) {
+	return *src[id];
 }
 
 template <class T>
-const String &get(const vector<T> &src, nat id) {
-	return src[id].doc;
+const T &get(const vector<T> &src, nat id) {
+	return src[id];
 }
 
 template <class T>
-vector<nat> writeObjects(Stream &to, const T &src) {
-	vector<nat> result;
+const Auto<Doc> &getDoc(const T &v) {
+	return v.doc;
+}
+
+const Auto<Doc> &getDoc(const Auto<Doc> &src) {
+	return src;
+}
+
+template <class T>
+void writeDoc(vector<nat> &index, Stream &to, const T &src);
+
+template <class T>
+void recurse(vector<nat> &index, Stream &to, const T &src) {}
+
+void recurse(vector<nat> &index, Stream &to, const Type &src) {
+	if (const Class *c = as<const Class>(&src))
+		writeDoc(index, to, c->variables);
+	else if (const Enum *e = as<const Enum>(&src))
+		writeDoc(index, to, e->memberDoc);
+}
+
+template <class T>
+void writeDoc(vector<nat> &index, Stream &to, const T &src) {
 	textfile::Utf8Writer w(&to, false, false);
 
 	for (nat i = 0; i < src.size(); i++) {
-		result.push_back(nat(to.pos()));
-		w.put(get(src, i));
+		Doc *d = getDoc(get(src, i)).borrow();
+		if (d && d->fileId == 0) {
+			w.put(d->v);
+			index.push_back(nat(to.pos()));
+			d->fileId = index.size(); // Indices are 1-based.
+		}
+
+		recurse(index, to, get(src, i));
 	}
-
-	// Extra entry so that we know where the last string ends.
-	result.push_back(nat(to.pos()));
-
-	return result;
 }
 
 void generateDoc(const Path &out, World &world) {
@@ -142,36 +164,25 @@ void generateDoc(const Path &out, World &world) {
 			folder.createDir();
 	}
 
+
+	// Index part of the file. Contains character offsets for all entries. For entry 'n', the index
+	// 'n - 1' and 'n' tells the beginning and end of the actual data.
+	vector<nat> index;
+	index.push_back(0);
+
+	// Write all data to memory first.
 	MemoryStream data;
-	vector<vector<nat>> index;
+	writeDoc(index, data, world.types);
+	writeDoc(index, data, world.functions);
+	writeDoc(index, data, world.templates);
+	writeDoc(index, data, world.threads);
 
-	index.push_back(writeObjects(data, world.types));
-	index.push_back(writeObjects(data, world.functions));
-	index.push_back(writeObjects(data, world.templates));
-	index.push_back(writeObjects(data, world.threads));
+	// Offset the indexes to make room for the table itself.
+	for (nat i = 0; i < index.size(); i++)
+		index[i] += sizeof(nat)*index.size();
 
+	// Write everything to file.
 	FileStream file(out, Stream::mWrite);
-	if (!file.valid())
-		throw Error(L"Could not write to: " + toS(out), SrcPos());
-
-	// Write a table containing the offsets to the sub-tables.
-	nat indexCount = 0;
-	for (nat i = 0; i < index.size(); i++) {
-		file.write(sizeof(nat), &indexCount);
-
-		indexCount += index[i].size();
-	}
-	// Total number of entries ends the initial table.
-	file.write(sizeof(nat), &indexCount);
-
-	// Offset all tables to accommodate for the sub-tables and write out all tables.
-	indexCount += index.size()+1;
-	for (nat i = 0; i < index.size(); i++) {
-		for (nat j = 0; j < index[i].size(); j++)
-			index[i][j] += indexCount*sizeof(nat);
-
-		file.write(sizeof(nat) * index[i].size(), &index[i][0]);
-	}
-
+	file.write(sizeof(nat)*index.size(), &index[0]);
 	file.write(&data);
 }

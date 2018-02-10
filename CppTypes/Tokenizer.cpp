@@ -94,6 +94,10 @@ String Comment::str() const {
 }
 
 const wchar_t *Comment::parse(std::wostringstream &r, State &state, Params &par, wchar_t ch) {
+	// Just ignore any CR. We only want LF in the final output.
+	if (ch == '\r')
+		return null;
+
 	switch (state) {
 	case start:
 		// Always a '/' that should be ignored.

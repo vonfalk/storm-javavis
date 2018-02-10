@@ -134,7 +134,7 @@ namespace storm {
 
 		static const CppType types[] = {
 			// CPP_TYPES
-			{ null, null, CppType::superNone, 0, CppSize::invalid, null, typeNone, null },
+			{ null, null, CppType::superNone, 0, 0, CppSize::invalid, null, typeNone, null },
 		};
 		return types;
 	}
@@ -146,7 +146,7 @@ namespace storm {
 
 		static const CppFunction functions[] = {
 			// CPP_FUNCTIONS
-			{ null, null, CppFunction::fnFree, cppPublic, 0, null, null, { CppTypeRef::tVoid, null, false, false } },
+			{ null, null, CppFunction::fnFree, cppPublic, 0, 0, null, null, { CppTypeRef::tVoid, null, false, false } },
 		};
 
 		return functions;
@@ -155,7 +155,7 @@ namespace storm {
 	const CppVariable *CppMeta::cppVariables() {
 		static const CppVariable variables[] = {
 			// CPP_VARIABLES
-			{ null, 0, cppPublic, { CppTypeRef::invalid }, CppOffset::invalid },
+			{ null, 0, 0, cppPublic, { CppTypeRef::invalid }, CppOffset::invalid },
 		};
 
 		return variables;
@@ -164,7 +164,7 @@ namespace storm {
 	const CppEnumValue *CppMeta::cppEnumValues() {
 		static const CppEnumValue values[] = {
 			// CPP_ENUM_VALUES
-			{ null, 0, 0 },
+			{ null, 0, 0, 0 },
 		};
 
 		return values;
@@ -173,7 +173,7 @@ namespace storm {
 	const CppTemplate *CppMeta::cppTemplates() {
 		static const CppTemplate templates[] = {
 			// CPP_TEMPLATES
-			{ null, null, null },
+			{ null, null, null, 0 },
 		};
 		return templates;
 	}
@@ -181,7 +181,7 @@ namespace storm {
 	const CppThread *CppMeta::cppThreads() {
 		static const CppThread threads[] = {
 			// CPP_THREADS
-			{ null, null, null, false },
+			{ null, null, null, 0, false },
 		};
 		return threads;
 	}
