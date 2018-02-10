@@ -173,7 +173,8 @@ stormppUses=--use
 stormProvides=./
 stormUses=../Core/
 stormppUsing=--using 
-preBuild+=<execpath|stormpp> <stormProvides> <stormppUses*stormUses> --template ../Core/Gen/CppTypes.cpp --out Gen/CppTypes.cpp --asm <stormppAsmTemplate> <stormppAsmOut> <stormppUsing*stormUsingNamespace> <stormppFlags>
+packagePath=../root/
+preBuild+=<execpath|stormpp> <stormProvides> <stormppUses*stormUses> --template ../Core/Gen/CppTypes.cpp --out Gen/CppTypes.cpp --asm <stormppAsmTemplate> <stormppAsmOut> --doc <packagePath>/doc <stormppUsing*stormUsingNamespace> <stormppFlags>
 preBuildCreates+=Gen/CppTypes.cpp
 
 [stormpp,windows]

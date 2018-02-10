@@ -6,6 +6,7 @@
 #include "Version.h"
 #include "Auto.h"
 #include "NameMap.h"
+#include "Doc.h"
 
 /**
  * Describes all types and functions known.
@@ -41,6 +42,9 @@ public:
 
 	// Versions.
 	vector<Version> versions;
+
+	// Documentation in use. Built up during the output phase.
+	vector<Auto<Doc>> documentation;
 
 	// ...
 

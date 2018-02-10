@@ -276,4 +276,7 @@ public:
 
 	// Documentation.
 	Auto<Doc> doc;
+
+	// External symbol?
+	bool external;
 };

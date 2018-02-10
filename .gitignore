@@ -63,6 +63,12 @@ ReadMe.txt
 #####################################
 External/
 
+# Generated code.
 */Gen/*
 !*/Gen/.gitignore
 !Core/Gen/*
+
+# Documentation pack files for Storm.
+doc
+!doc/
+

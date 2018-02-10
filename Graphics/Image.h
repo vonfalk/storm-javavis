@@ -12,6 +12,7 @@ namespace graphics {
 	 * - PNG
 	 * - JPG
 	 * - BMP
+	 * - PPM
 	 */
 	Image *STORM_FN loadImage(Url *file);
 	Image *STORM_FN loadImage(IStream *from);

@@ -151,11 +151,17 @@ namespace storm {
 	Url *STORM_FN cwdUrl(EnginePtr e);
 
 	// Some exceptions.
-	class InvalidName : public Exception {
+	class EXCEPTION_EXPORT InvalidName : public Exception {
 	public:
+		InvalidName() {}
 		InvalidName(const String &name) : name(name) {}
 		String name;
-		String what() const { return L"The url part " + name + L" is not acceptable."; }
+		String what() const {
+			if (name.empty())
+				return L"Empty name segments are not allowed.";
+			else
+				return L"The url part " + name + L" is not acceptable.";
+		}
 	};
 
 }

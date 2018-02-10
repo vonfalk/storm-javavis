@@ -27,16 +27,17 @@ namespace storm {
 
 	// Get the file extension that determines which package to use when parsing/compiling a
 	// file. Usually, the last file extension is returned, but if a file is named like foo.so.2,
-	// 'so' is used instead, since the last part is a number and there is a previous file extension.
-	Str *STORM_FN codeFileType(Url *file);
+	// 'so' is used instead, since the last part is a number and there is a previous file
+	// extension. If no dots are found at all, 'null' is returned.
+	MAYBE(Str *) STORM_FN codeFileType(Url *file);
 
 	// Get the package containing syntax when parsing 'file'. This is the default package, and
 	// languages may choose to ignore this.
-	SimpleName *STORM_FN syntaxPkgName(Url *file);
+	MAYBE(SimpleName *) STORM_FN syntaxPkgName(Url *file);
 
-	// Get the name of the 'reader' function for use when reading 'file'.
-	SimpleName *STORM_FN readerName(Url *file);
-	SimpleName *STORM_FN readerName(Str *ext);
+	// Get the name of the 'reader' function for use when reading 'file'. Returns 'null' for files without an extension.
+	MAYBE(SimpleName *) STORM_FN readerName(Url *file);
+	MAYBE(SimpleName *) STORM_FN readerName(Str *ext);
 
 	// Group files together by which reader they should use. Storm will have a custom implementation
 	// of this which does not use a 'PkgFiles' object.

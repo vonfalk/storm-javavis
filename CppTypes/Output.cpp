@@ -9,9 +9,9 @@ typedef long long int Long;
 
 // Get the documentation id from something. Returns 0 if it does not exist.
 template <class T>
-static nat docId(const T &v) {
+static nat docId(World &world, const T &v) {
 	if (v.doc)
-		return v.doc->id();
+		return v.doc->id(world);
 	else
 		return 0;
 }
@@ -177,8 +177,11 @@ static void genTypes(wostream &to, World &w) {
 			}
 		}
 
-		// Documentation.
-		to << docId(t) << L", ";
+		// Documentation. Only output if we provide the type.
+		if (t.external)
+			to << 0 << L", ";
+		else
+			to << docId(w, t) << L", ";
 
 		// Size.
 		Size s = t.size();
@@ -494,7 +497,7 @@ static void genFunctions(wostream &to, World &w) {
 			to << L"-1, ";
 
 		// Documentation.
-		to << docId(f) << L", ";
+		to << docId(w, f) << L", ";
 
 		// Pointer to the function.
 		genPtr(to, f);
@@ -566,7 +569,7 @@ static void genVariables(wostream &to, World &w) {
 			to << c->id << L" /* " << c->name << L" */, ";
 
 			// Documentation.
-			to << docId(v) << L", ";
+			to << docId(w, v) << L", ";
 
 			// Access.
 			to << accessName(v.access) << L", ";
@@ -607,7 +610,7 @@ static void genEnumValues(wostream &to, World &w) {
 
 			// Documentation.
 			if (e->memberDoc[j])
-				to << e->memberDoc[j]->id();
+				to << e->memberDoc[j]->id(w);
 			else
 				to << "0";
 
@@ -645,7 +648,10 @@ static void genTemplates(wostream &to, World &w) {
 			to << L"null, ";
 
 		// Documentation.
-		to << docId(t);
+		if (t.external)
+			to << 0;
+		else
+			to << docId(w, t);
 
 		to << L" },\n";
 	}
@@ -676,7 +682,7 @@ static void genThreads(wostream &to, World &w) {
 		to << L"&" << t.name << L"::decl, ";
 
 		// Documentation.
-		to << docId(t) << L", ";
+		to << docId(w, t) << L", ";
 
 		// External?
 		to << (t.external ? L"true" : L"false");

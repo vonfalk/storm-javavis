@@ -16,8 +16,8 @@ namespace storm {
 		cloned(files, e);
 	}
 
-	Str *codeFileType(Url *file) {
-		// Note: If a file has no dots at all, we return "". This is intended.
+	MAYBE(Str *) codeFileType(Url *file) {
+		// Note: If a file has no dots at all, we return 'null'. This is intended.
 		Str *best = null;
 		Str *name = file->name();
 		do {
@@ -29,24 +29,31 @@ namespace storm {
 			name = name->substr(name->begin(), dot);
 		} while (best->isNat());
 
-		if (!best)
-			best = new (file) Str(S(""));
-
 		return best;
 	}
 
-	SimpleName *syntaxPkgName(Url *file) {
+	MAYBE(SimpleName *) syntaxPkgName(Url *file) {
+		Str *type = codeFileType(file);
+		if (!type)
+			return null;
+
 		SimpleName *r = new (file) SimpleName();
 		r->add(new (file) Str(L"lang"));
-		r->add(codeFileType(file));
+		r->add(type);
 		return r;
 	}
 
-	SimpleName *readerName(Url *file) {
-		return readerName(codeFileType(file));
+	MAYBE(SimpleName *) readerName(Url *file) {
+		if (Str *type = codeFileType(file))
+			return readerName(type);
+
+		return null;
 	}
 
-	SimpleName *readerName(Str *ext) {
+	MAYBE(SimpleName *) readerName(Str *ext) {
+		if (ext->empty())
+			return null;
+
 		Engine &e = ext->engine();
 		SimpleName *r = new (e) SimpleName();
 		r->add(new (e) Str(L"lang"));
@@ -62,8 +69,8 @@ namespace storm {
 		Map<SimpleName *, PkgFiles *> *r = new (files) Map<SimpleName *, PkgFiles *>();
 		for (nat i = 0; i < files->count(); i++) {
 			Url *f = files->at(i);
-			SimpleName *reader = readerName(f);
-			r->at(reader)->files->push(f);
+			if (SimpleName *reader = readerName(f))
+				r->at(reader)->files->push(f);
 		}
 		return r;
 	}

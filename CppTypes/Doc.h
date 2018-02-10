@@ -2,6 +2,8 @@
 #include "Auto.h"
 #include "Tokenizer.h"
 
+class World;
+
 /**
  * Contains documentation for types, functions and variables in the C++ code.
  *
@@ -18,11 +20,12 @@ public:
 	// Contents of the comment.
 	String v;
 
-	// Where is the documentation stored in the documentation file? Zero is reserved as 'not present'.
-	nat fileId;
+	// Get our ID. Creates identifiers on demand.
+	nat id(World &world);
 
-	// Get the id, but check so that it is valid.
-	nat id() const;
+private:
+	// Our ID. 0 means 'not yet assigned', and is thereby not a valid ID.
+	nat fileId;
 };
 
 wostream &operator <<(wostream &to, const Doc &doc);

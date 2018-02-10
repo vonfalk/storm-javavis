@@ -114,6 +114,10 @@ namespace storm {
 		if (!pkgPath)
 			return null;
 
+		// Name parts that are empty do not play well with the Url.
+		if (name->empty())
+			return null;
+
 		// TODO: Make sure this is case sensitive!
 		Url *sub = pkgPath->push(name);
 		if (!sub->exists())
@@ -123,10 +127,10 @@ namespace storm {
 	}
 
 	void Package::loadFiles(Array<Url *> *files) {
-		// Remember previous contents if things go wrong...
-		Array<Named *> *prev = new (this) Array<Named *>();
-		for (Iter i = begin(), to = end(); i != to; ++i)
-			prev->push(i.v());
+		// TODO: Remember previous contents if things go wrong...
+		// Array<Named *> *prev = new (this) Array<Named *>();
+		// for (Iter i = begin(), to = end(); i != to; ++i)
+		// 	prev->push(i.v());
 
 		try {
 			Map<SimpleName *, PkgFiles *> *readers = readerName(files);

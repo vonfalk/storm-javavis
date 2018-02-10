@@ -20,13 +20,21 @@ namespace storm {
 		return (c == '/') || (c == '\\');
 	}
 
-	// Make sure 'str' do not contain any forbidden characters.
+	// Make sure 'str' do not contain any forbidden characters, and is not empty.
 	static void validate(Str *str) {
+		if (str->empty())
+			throw InvalidName();
+
 		for (const wchar *s = str->c_str(); *s; s++) {
 			// Now, we only disallow separators in parts.
 			if (separator(*s))
 				throw InvalidName(str->c_str());
 		}
+	}
+
+	static void validate(Array<Str *> *data) {
+		for (Nat i = 0; i < data->count(); i++)
+			validate(data->at(i));
 	}
 
 	static Array<Str *> *simplify(Array<Str *> *parts) {
@@ -62,10 +70,12 @@ namespace storm {
 	}
 
 	Url::Url(Protocol *p, Array<Str *> *parts) : protocol(p), parts(parts), flags(nothing) {
+		validate(this->parts);
 		simplifyInplace(this->parts);
 	}
 
 	Url::Url(Protocol *p, Array<Str *> *parts, UrlFlags flags) : protocol(p), parts(parts), flags(flags) {
+		validate(this->parts);
 		simplifyInplace(this->parts);
 	}
 

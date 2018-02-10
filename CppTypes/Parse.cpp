@@ -568,6 +568,7 @@ static void parseNamespace(Tokenizer &tok, ParseEnv &env, const CppName &name) {
 			CppName gen = parseName(tok);
 			Auto<Doc> doc = getDoc(tok, env);
 			Auto<Template> t = new Template(name + tName.token, env.pkg, gen, tName.pos, doc);
+			t->external = !env.exportAll;
 			env.world.templates.insert(t);
 			tok.expect(L")");
 			tok.expect(L";");

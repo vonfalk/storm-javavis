@@ -325,4 +325,4 @@ void Enum::print(wostream &to) const {
  */
 
 Template::Template(const CppName &name, const String &pkg, const CppName &generator, const SrcPos &pos, const Auto<Doc> &doc) :
-	name(name), pkg(pkg), generator(generator), pos(pos), doc(doc) {}
+	name(name), pkg(pkg), generator(generator), pos(pos), doc(doc), external(false) {}

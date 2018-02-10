@@ -109,54 +109,6 @@ void generateFile(const Path &src, const Path &dest, const GenerateMap &actions,
 	}
 }
 
-template <class T>
-const T &get(const NameMap<T> &src, nat id) {
-	return *src[id];
-}
-
-template <class T>
-const T &get(const vector<T> &src, nat id) {
-	return src[id];
-}
-
-template <class T>
-const Auto<Doc> &getDoc(const T &v) {
-	return v.doc;
-}
-
-const Auto<Doc> &getDoc(const Auto<Doc> &src) {
-	return src;
-}
-
-template <class T>
-void writeDoc(vector<nat> &index, Stream &to, const T &src);
-
-template <class T>
-void recurse(vector<nat> &index, Stream &to, const T &src) {}
-
-void recurse(vector<nat> &index, Stream &to, const Type &src) {
-	if (const Class *c = as<const Class>(&src))
-		writeDoc(index, to, c->variables);
-	else if (const Enum *e = as<const Enum>(&src))
-		writeDoc(index, to, e->memberDoc);
-}
-
-template <class T>
-void writeDoc(vector<nat> &index, Stream &to, const T &src) {
-	textfile::Utf8Writer w(&to, false, false);
-
-	for (nat i = 0; i < src.size(); i++) {
-		Doc *d = getDoc(get(src, i)).borrow();
-		if (d && d->fileId == 0) {
-			w.put(d->v);
-			index.push_back(nat(to.pos()));
-			d->fileId = index.size(); // Indices are 1-based.
-		}
-
-		recurse(index, to, get(src, i));
-	}
-}
-
 void generateDoc(const Path &out, World &world) {
 	{
 		Path folder = out.parent();
@@ -167,15 +119,18 @@ void generateDoc(const Path &out, World &world) {
 
 	// Index part of the file. Contains character offsets for all entries. For entry 'n', the index
 	// 'n - 1' and 'n' tells the beginning and end of the actual data.
-	vector<nat> index;
-	index.push_back(0);
+	const vector<Auto<Doc>> src = world.documentation;
+	vector<nat> index(src.size() + 1, 0);
 
 	// Write all data to memory first.
 	MemoryStream data;
-	writeDoc(index, data, world.types);
-	writeDoc(index, data, world.functions);
-	writeDoc(index, data, world.templates);
-	writeDoc(index, data, world.threads);
+	{
+		textfile::Utf8Writer w(&data, false, false);
+		for (nat i = 0; i < src.size(); i++) {
+			w.put(src[i]->v);
+			index[i + 1] = nat(data.pos());
+		}
+	}
 
 	// Offset the indexes to make room for the table itself.
 	for (nat i = 0; i < index.size(); i++)
