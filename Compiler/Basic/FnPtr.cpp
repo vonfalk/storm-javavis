@@ -3,6 +3,7 @@
 #include "Compiler/Engine.h"
 #include "Compiler/Exception.h"
 #include "Compiler/Lib/Fn.h"
+#include "Core/Join.h"
 
 namespace storm {
 	namespace bs {
@@ -108,9 +109,7 @@ namespace storm {
 			*to << S("&");
 			if (dotExpr) {
 				*to << dotExpr << S(".");
-				*to << target->name << S("(");
-				join(to, target->params, S(", "));
-				*to << S(")");
+				*to << target->name << S("(") << join(target->params, S(", ")) << S(")");
 			} else {
 				*to << target;
 			}

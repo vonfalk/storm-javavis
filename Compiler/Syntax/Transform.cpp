@@ -5,6 +5,7 @@
 #include "Rule.h"
 #include "Production.h"
 #include "BSUtils.h"
+#include "Core/Join.h"
 
 #include "Compiler/Basic/Named.h"
 #include "Compiler/Basic/WeakCast.h"
@@ -565,9 +566,8 @@ namespace storm {
 			Function *tfmFn = as<Function>(foundTfm);
 			if (!tfmFn) {
 				StrBuf *to = new (this) StrBuf();
-				*to << S("Can not transform a ") << type->identifier() << S(" with parameters: (");
-				join(to, actuals->values(), S(", "));
-				*to << S(").");
+				*to << S("Can not transform a ") << type->identifier()
+					<< S(" with parameters: (") << join(actuals->values(), S(", ")) << S(").");
 				throw SyntaxError(pos, to->toS()->c_str());
 			}
 			return tfmFn;

@@ -2,6 +2,7 @@
 #include "Actuals.h"
 #include "Cast.h"
 #include "Compiler/CodeGen.h"
+#include "Core/Join.h"
 
 namespace storm {
 	namespace bs {
@@ -68,9 +69,7 @@ namespace storm {
 		}
 
 		void Actuals::toS(StrBuf *to) const {
-			*to << S("(");
-			join(to, expressions, S(", "));
-			*to << S(")");
+			*to << S("(") << join(expressions, S(", ")) << S(")");
 		}
 
 

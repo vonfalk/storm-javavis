@@ -5,6 +5,7 @@
 #include "Engine.h"
 #include "Core/Str.h"
 #include "Core/Hash.h"
+#include "Core/Join.h"
 
 #ifdef major
 #undef major
@@ -36,14 +37,11 @@ namespace storm {
 
 	void Version::toS(StrBuf *to) const {
 		*to << major << S(".") << minor << S(".") << patch;
-		if (pre->any()) {
-			*to << S("-");
-			join(to, pre, S("."));
-		}
-		if (build->any()) {
-			*to << S("+");
-			join(to, build, S("."));
-		}
+		if (pre->any())
+			*to << S("-") << join(pre, S("."));
+
+		if (build->any())
+			*to << S("+") << join(build, S("."));
 	}
 
 	static int compare(Str *a, Str *b) {

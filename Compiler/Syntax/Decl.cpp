@@ -1,6 +1,7 @@
 #include "stdafx.h"
 #include "Decl.h"
 #include "Core/Str.h"
+#include "Core/Join.h"
 #include "Core/CloneEnv.h"
 #include "Exception.h"
 
@@ -34,9 +35,7 @@ namespace storm {
 		}
 
 		void RuleDecl::toS(StrBuf *to) const {
-			*to << result << S(" ") << name << S("(");
-			join(to, params, S(", "));
-			*to << S(")");
+			*to << result << S(" ") << name << S("(") << join(params, S(", ")) << S(")");
 
 			if (color != tNone)
 				*to << S(" #") << storm::syntax::name(engine(), color);
