@@ -824,6 +824,15 @@ static void genVersions(wostream &to, World &w) {
 	}
 }
 
+static void genDocName(wostream &to, World &w) {
+	to << L"S(\"";
+
+	if (!config.docOut.isEmpty())
+		to << config.docOut.title();
+
+	to << L"\")\n";
+}
+
 GenerateMap genMap() {
 	struct E {
 		const wchar_t *tag;
@@ -850,6 +859,7 @@ GenerateMap genMap() {
 		{ L"REF_TYPES", &genRefTypes },
 		{ L"LICENSES", &genLicenses },
 		{ L"VERSIONS", &genVersions },
+		{ L"DOC_NAME", &genDocName },
 	};
 
 	GenerateMap g;

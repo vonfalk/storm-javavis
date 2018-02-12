@@ -41,8 +41,14 @@ namespace storm {
 		// Create from fundamentals.
 		STORM_CTOR Url(Protocol* p, Array<Str *> *parts, UrlFlags flags);
 
+		// Relative path creation.
+		STORM_CTOR Url(Array<Str *> *parts, UrlFlags flags);
+
 		// Ctor for STORM.
 		STORM_CTOR Url(Protocol *p, Array<Str *> *parts);
+
+		// Relative path.
+		STORM_CTOR Url(Array<Str *> *parts);
 
 		// Deep copy.
 		virtual void STORM_FN deepCopy(CloneEnv *o);

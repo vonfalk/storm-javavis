@@ -27,6 +27,9 @@ namespace storm {
 		// Name.
 		Str *name;
 
+		// Documentation (if present).
+		MAYBE(NamedDoc *) documentation;
+
 		// Called when something with our name is not found. Returns null if nothing is found.
 		virtual MAYBE(Named *) STORM_FN generate(SimplePart *part);
 	};

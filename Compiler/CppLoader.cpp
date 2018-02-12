@@ -15,8 +15,12 @@
 
 namespace storm {
 
-	CppLoader::CppLoader(Engine &e, const CppWorld *world, World &into, Package *root) :
-		e(&e), world(world), into(&into), rootPackage(root) {}
+	CppLoader::CppLoader(Engine &e, const CppWorld *world, World &into, Package *root, Url *docPath) :
+		e(&e), world(world), into(&into), rootPackage(root), docUrl(null) {
+
+		if (docPath)
+			docUrl = docPath->push(new (e) Str(world->docFile));
+	}
 
 	nat CppLoader::typeCount() const {
 		nat n = 0;
@@ -171,6 +175,9 @@ namespace storm {
 
 			// Visibility. All types from C++ are public. There is no mechanism to make them anything else.
 			into->types[i]->visibility = e->visibility(Engine::vPublic);
+
+			// Documentation.
+			into->types[i]->documentation = createDoc(type.doc, null);
 		}
 	}
 
@@ -198,6 +205,7 @@ namespace storm {
 
 				into->namedThreads[i] = new (*e) NamedThread(new (*e) Str(thread.name), into->threads[i]);
 				into->namedThreads[i]->visibility = e->visibility(Engine::vPublic);
+				into->namedThreads[i]->documentation = createDoc(thread.doc, null);
 			}
 		}
 	}
@@ -305,6 +313,7 @@ namespace storm {
 
 			if (!into->templates[i]) {
 				into->templates[i] = loadTemplate(t);
+				// TODO: Documentation for templates!
 			}
 		}
 	}
@@ -323,8 +332,13 @@ namespace storm {
 
 		TemplateList *result = new (*e) TemplateList(into, templ);
 
-		if (!t.generate) {
+		if (external(t)) {
 			// Attach the template to the correct package right now, otherwise it can not be used.
+
+			// TODO: Do we really need to add a new TemplateCppFn here? We're polluting the global
+			// namespace with dummy templates. It would be better to just handle having a
+			// TemplateList with just a Str instead of a TemplateCppFn, or simply instruct it to not
+			// add the template.
 			NameSet *pkg = findAbsPkg(t.pkg);
 			if (!pkg)
 				throw InternalError(L"Could not find the package " + ::toS(t.pkg) + L"!");
@@ -455,6 +469,7 @@ namespace storm {
 			f->runOn(this->into->namedThreads[fn.threadId]);
 
 		f->visibility = visibility(fn.access);
+		f->documentation = createDoc(fn.doc, fn.params);
 
 		into->add(f);
 	}
@@ -488,6 +503,7 @@ namespace storm {
 		}
 
 		f->visibility = visibility(fn.access);
+		f->documentation = createDoc(fn.doc, fn.params);
 
 		params->at(0).type->add(f);
 	}
@@ -543,6 +559,7 @@ namespace storm {
 		MemberVar *v = new (*e) MemberVar(new (*e) Str(var.name), type, memberOf);
 		v->setOffset(Offset(var.offset));
 		v->visibility = visibility(var.access);
+		v->documentation = createDoc(var.doc, null);
 		memberOf->add(v);
 	}
 
@@ -550,6 +567,7 @@ namespace storm {
 		Enum *memberOf = as<Enum>(into->types[val.memberOf]);
 		assert(memberOf, L"Type not properly loaded or not an enum!");
 
+		memberOf->documentation = createDoc(val.doc, null);
 		memberOf->add(new (*e) EnumValue(memberOf, new (*e) Str(val.name), val.value));
 	}
 
@@ -592,6 +610,16 @@ namespace storm {
 			assert(false, L"Unknown access in C++ code: " + ::toS(a));
 			return null;
 		}
+	}
+
+	CppDoc *CppLoader::createDoc(nat id, const CppParam *params) {
+		if (id <= 0)
+			return null;
+
+		if (docUrl)
+			return new (*e) CppDoc(docUrl, id, params);
+		else
+			return new (*e) CppDoc(world->docFile, id, params);
 	}
 
 }

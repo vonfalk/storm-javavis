@@ -42,11 +42,17 @@ namespace storm {
 		// The OS handle to the library.
 		LoadedLib lib;
 
-		// Information about the library.
-		SharedLibInfo info;
+		// All data in a GC root.
+		struct Root {
+			SharedLibInfo info;
+			Url *srcDir;
+		};
 
-		// Root for the 'libData' pointer in info.
-		Gc::Root *infoRoot;
+		// Data managed by the GC.
+		Root root;
+
+		// GC root.
+		Gc::Root *gcRoot;
 
 		// The world loaded by this shared library.
 		World world;

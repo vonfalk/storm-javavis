@@ -1,5 +1,7 @@
 #pragma once
 #include "Core/Gen/CppTypes.h"
+#include "Core/Io/Url.h"
+#include "CppDoc.h"
 #include "RootArray.h"
 #include "NamedThread.h"
 #include "World.h"
@@ -16,7 +18,7 @@ namespace storm {
 		STORM_VALUE;
 	public:
 		// Create, note which set of functions to be loaded.
-		CppLoader(Engine &e, const CppWorld *world, World &into, Package *root);
+		CppLoader(Engine &e, const CppWorld *world, World &into, MAYBE(Package *) root, MAYBE(Url *) docPath);
 
 		// Load all types into a RootArray. This makes it possible to create instances of these types from C++.
 		void loadTypes();
@@ -56,7 +58,10 @@ namespace storm {
 
 		// Assume all non-external package paths are relative to this package. Null means the system
 		// root should be used.
-		Package *rootPackage;
+		MAYBE(Package *) rootPackage;
+
+		// Documentation file.
+		MAYBE(Url *) docUrl;
 
 		// Get the number of types.
 		nat typeCount() const;
@@ -135,6 +140,9 @@ namespace storm {
 
 		// Get a visibility object from the C++ access.
 		Visibility *visibility(CppAccess a);
+
+		// Create documentation. Returns null if not present for the current function.
+		CppDoc *createDoc(nat id, MAYBE(const CppParam *) params);
 
 		// See if various types are external.
 		inline bool external(const CppType &t) const { return t.kind == CppType::superExternal; }

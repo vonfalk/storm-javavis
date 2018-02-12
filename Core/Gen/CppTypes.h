@@ -371,6 +371,9 @@ namespace storm {
 		// List of versions.
 		const CppVersion *versions;
 
+		// Name of the file containing documentation for this world.
+		const wchar *docFile;
+
 		// List of the actual offsets for all pointers inside all types. Useful to diagnose
 		// GC-related issues. This is empty in release builds.
 		const CppRefType *refTypes;

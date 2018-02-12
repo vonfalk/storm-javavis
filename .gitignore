@@ -69,6 +69,6 @@ External/
 !Core/Gen/*
 
 # Documentation pack files for Storm.
-doc
-!doc/
+root/doc
+*_doc
 

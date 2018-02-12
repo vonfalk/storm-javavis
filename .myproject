@@ -174,7 +174,8 @@ stormProvides=./
 stormUses=../Core/
 stormppUsing=--using 
 packagePath=../root/
-preBuild+=<execpath|stormpp> <stormProvides> <stormppUses*stormUses> --template ../Core/Gen/CppTypes.cpp --out Gen/CppTypes.cpp --asm <stormppAsmTemplate> <stormppAsmOut> --doc <packagePath>/doc <stormppUsing*stormUsingNamespace> <stormppFlags>
+docName=doc
+preBuild+=<execpath|stormpp> <stormProvides> <stormppUses*stormUses> --template ../Core/Gen/CppTypes.cpp --out Gen/CppTypes.cpp --asm <stormppAsmTemplate> <stormppAsmOut> --doc <path|packagePath><docName> <stormppUsing*stormUsingNamespace> <stormppFlags>
 preBuildCreates+=Gen/CppTypes.cpp
 
 [stormpp,windows]
@@ -189,6 +190,7 @@ preBuildCreates+=Gen/CppVTables.s
 
 [sharedlib]
 packagePath=../root/<package>/
+docName=<titleNoExt|output>_doc
 
 [sharedlib,!unix]
 postBuild+=if not exist "<path|packagePath>" mkdir <path|packagePath>

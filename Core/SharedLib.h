@@ -30,8 +30,8 @@ namespace storm {
 	};
 
 	/**
-	 * Information returned about a shared lib. This is always stack allocated as it may contain
-	 * GC:d pointers.
+	 * Information returned about a shared lib. May only contain pointers, as it is sometimes
+	 * allocated in a GC root.
 	 */
 	struct SharedLibInfo {
 		// All types in the library.

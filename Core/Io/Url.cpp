@@ -74,7 +74,17 @@ namespace storm {
 		simplifyInplace(this->parts);
 	}
 
+	Url::Url(Array<Str *> *parts) : protocol(null), parts(parts), flags(nothing) {
+		validate(this->parts);
+		simplifyInplace(this->parts);
+	}
+
 	Url::Url(Protocol *p, Array<Str *> *parts, UrlFlags flags) : protocol(p), parts(parts), flags(flags) {
+		validate(this->parts);
+		simplifyInplace(this->parts);
+	}
+
+	Url::Url(Array<Str *> *parts, UrlFlags flags) : protocol(null), parts(parts), flags(flags) {
 		validate(this->parts);
 		simplifyInplace(this->parts);
 	}

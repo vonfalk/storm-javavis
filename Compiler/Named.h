@@ -5,6 +5,7 @@
 #include "Value.h"
 #include "Visibility.h"
 #include "Scope.h"
+#include "Doc.h"
 
 namespace storm {
 	STORM_PKG(core.lang);
@@ -65,6 +66,9 @@ namespace storm {
 
 		// Visibility. 'null' means 'visible from everywhere'.
 		MAYBE(Visibility *) visibility;
+
+		// Documentation (if present).
+		MAYBE(NamedDoc *) documentation;
 
 		// Check if this named entity is visible from 'source'.
 		Bool STORM_FN visibleFrom(Scope source);

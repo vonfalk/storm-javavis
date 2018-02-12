@@ -25,35 +25,36 @@ namespace storm {
 			unique,
 		};
 
-		zeroMem(info);
-		infoRoot = file->engine().gc.createRoot(&info.libData, 1);
-		ok = (*entry)(&start, &info);
+		zeroMem(root);
+		gcRoot = file->engine().gc.createRoot(&root, sizeof(root) / sizeof(void *));
+		root.srcDir = file->parent();
+		ok = (*entry)(&start, &root.info);
 	}
 
 	SharedLib::~SharedLib() {
 		if (lib != invalidLib)
 			unloadLibrary(lib);
 
-		Gc::destroyRoot(infoRoot);
-		infoRoot = null;
+		Gc::destroyRoot(gcRoot);
+		gcRoot = null;
 	}
 
 	void SharedLib::shutdown() {
-		if (info.shutdownFn)
-			(*info.shutdownFn)(&info);
+		if (root.info.shutdownFn)
+			(*root.info.shutdownFn)(&root.info);
 
-		Gc::destroyRoot(infoRoot);
-		infoRoot = null;
+		Gc::destroyRoot(gcRoot);
+		gcRoot = null;
 
 		world.clear();
 	}
 
 	SharedLib *SharedLib::prevInstance() {
-		return (SharedLib *)info.previousIdentifier;
+		return (SharedLib *)root.info.previousIdentifier;
 	}
 
 	CppLoader SharedLib::createLoader(Engine &e, Package *into) {
-		return CppLoader(e, info.world, world, into);
+		return CppLoader(e, root.info.world, world, into, root.srcDir);
 	}
 
 	SharedLib *SharedLib::load(Url *file) {
@@ -112,7 +113,7 @@ namespace storm {
 
 	void *SharedLib::getData(Engine &e, void *lib) {
 		SharedLib *me = (SharedLib *)lib;
-		return me->info.libData;
+		return me->root.info.libData;
 	}
 
 }
