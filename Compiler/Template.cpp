@@ -11,6 +11,10 @@ namespace storm {
 		return null;
 	}
 
+	Bool Template::placeholder() {
+		return false;
+	}
+
 
 	TemplateCppFn::TemplateCppFn(Str *name, GenerateFn fn) : Template(name), fn(fn) {}
 
@@ -25,6 +29,24 @@ namespace storm {
 
 	Type *TemplateCppFn::generate(ValueArray *part) {
 		return (*fn)(name, part);
+	}
+
+	static Type *nullTemplate(Str *name, ValueArray *params) {
+		return null;
+	}
+
+	TemplatePlaceholder::TemplatePlaceholder(Str *name) : TemplateCppFn(name, &nullTemplate) {}
+
+	Bool TemplatePlaceholder::placeholder() {
+		return true;
+	}
+
+	Named *TemplatePlaceholder::generate(SimplePart *part) {
+		return null;
+	}
+
+	Type *TemplatePlaceholder::generate(ValueArray *part) {
+		return null;
 	}
 
 

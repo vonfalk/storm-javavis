@@ -28,7 +28,8 @@ namespace storm {
 	void TemplateList::addTo(NameSet *to) {
 		if (!addedTo) {
 			addedTo = to;
-			to->add(templ);
+			if (!templ->placeholder())
+				to->add(templ);
 			addTo(root, to);
 		}
 	}

@@ -318,27 +318,18 @@ namespace storm {
 		}
 	}
 
-	static Type *nullTemplate(Str *name, ValueArray *params) {
-		return null;
-	}
-
 	TemplateList *CppLoader::loadTemplate(const CppTemplate &t) {
 		Str *n = new (*e) Str(t.name);
 		TemplateCppFn *templ = null;
-		if (t.generate)
-			templ = new (*e) TemplateCppFn(n, t.generate);
+		if (external(t))
+			templ = new (*e) TemplatePlaceholder(n);
 		else
-			templ = new (*e) TemplateCppFn(n, &nullTemplate);
+			templ = new (*e) TemplateCppFn(n, t.generate);
 
 		TemplateList *result = new (*e) TemplateList(into, templ);
 
 		if (external(t)) {
 			// Attach the template to the correct package right now, otherwise it can not be used.
-
-			// TODO: Do we really need to add a new TemplateCppFn here? We're polluting the global
-			// namespace with dummy templates. It would be better to just handle having a
-			// TemplateList with just a Str instead of a TemplateCppFn, or simply instruct it to not
-			// add the template.
 			NameSet *pkg = findAbsPkg(t.pkg);
 			if (!pkg)
 				throw InternalError(L"Could not find the package " + ::toS(t.pkg) + L"!");

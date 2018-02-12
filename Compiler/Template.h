@@ -27,11 +27,11 @@ namespace storm {
 		// Name.
 		Str *name;
 
-		// Documentation (if present).
-		MAYBE(NamedDoc *) documentation;
-
 		// Called when something with our name is not found. Returns null if nothing is found.
 		virtual MAYBE(Named *) STORM_FN generate(SimplePart *part);
+
+		// Is this a placeholder template object? These will not be inserted in packages by 'TemplateList'.
+		virtual Bool STORM_FN placeholder();
 	};
 
 	/**
@@ -48,7 +48,24 @@ namespace storm {
 		// Generate function.
 		UNKNOWN(PTR_GC) GenerateFn fn;
 
-		// Generate stuff.
+		// Generate things.
+		virtual MAYBE(Named *) STORM_FN generate(SimplePart *part);
+		virtual MAYBE(Type *) STORM_FN generate(ValueArray *part);
+	};
+
+	/**
+	 * Placeholder template for foreign template definitions from C++.
+	 */
+	class TemplatePlaceholder : public TemplateCppFn {
+		STORM_CLASS;
+	public:
+		// Create.
+		STORM_CTOR TemplatePlaceholder(Str *name);
+
+		// This is a placeholder!
+		virtual Bool STORM_FN placeholder();
+
+		// Generate things.
 		virtual MAYBE(Named *) STORM_FN generate(SimplePart *part);
 		virtual MAYBE(Type *) STORM_FN generate(ValueArray *part);
 	};
