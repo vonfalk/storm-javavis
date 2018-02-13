@@ -22,57 +22,57 @@ namespace storm {
 			docUrl = docPath->push(new (e) Str(world->docFile));
 	}
 
-	nat CppLoader::typeCount() const {
-		nat n = 0;
+	Nat CppLoader::typeCount() const {
+		Nat n = 0;
 		while (world->types[n].name)
 			n++;
 		return n;
 	}
 
-	nat CppLoader::templateCount() const {
-		nat n = 0;
+	Nat CppLoader::templateCount() const {
+		Nat n = 0;
 		while (world->templates[n].name)
 			n++;
 		return n;
 	}
 
-	nat CppLoader::threadCount() const {
-		nat n = 0;
+	Nat CppLoader::threadCount() const {
+		Nat n = 0;
 		while (world->threads[n].name)
 			n++;
 		return n;
 	}
 
-	nat CppLoader::functionCount() const {
-		nat n = 0;
+	Nat CppLoader::functionCount() const {
+		Nat n = 0;
 		while (world->functions[n].name)
 			n++;
 		return n;
 	}
 
-	nat CppLoader::variableCount() const {
-		nat n = 0;
+	Nat CppLoader::variableCount() const {
+		Nat n = 0;
 		while (world->variables[n].name)
 			n++;
 		return n;
 	}
 
-	nat CppLoader::enumValueCount() const {
-		nat n = 0;
+	Nat CppLoader::enumValueCount() const {
+		Nat n = 0;
 		while (world->enumValues[n].name)
 			n++;
 		return n;
 	}
 
-	nat CppLoader::licenseCount() const {
-		nat n = 0;
+	Nat CppLoader::licenseCount() const {
+		Nat n = 0;
 		while (world->licenses[n].name)
 			n++;
 		return n;
 	}
 
-	nat CppLoader::versionCount() const {
-		nat n = 0;
+	Nat CppLoader::versionCount() const {
+		Nat n = 0;
 		while (world->versions[n].name)
 			n++;
 		return n;
@@ -117,12 +117,12 @@ namespace storm {
 	}
 
 	void CppLoader::loadTypes() {
-		nat c = typeCount();
+		Nat c = typeCount();
 		into->types.resize(c);
 
 		// Note: we do not set any names yet, as the Str type is not neccessarily available until
 		// after we've created the types here.
-		for (nat i = 0; i < c; i++) {
+		for (Nat i = 0; i < c; i++) {
 			const CppType &type = world->types[i];
 
 			// The array could be partially filled.
@@ -135,7 +135,7 @@ namespace storm {
 		}
 
 		// Create all types with custom types.
-		for (nat i = 0; i < c; i++) {
+		for (Nat i = 0; i < c; i++) {
 			const CppType &type = world->types[i];
 
 			if (!delayed(type))
@@ -153,13 +153,13 @@ namespace storm {
 
 		// If we're in early boot, we need to manually create vtables for all types.
 		if (!e->has(bootTypes)) {
-			for (nat i = 0; i < c; i++) {
+			for (Nat i = 0; i < c; i++) {
 				into->types[i]->vtableInit(typeVTable(world->types[i]));
 			}
 		}
 
 		// Now we can fill in the names and visibility properly!
-		for (nat i = 0; i < c; i++) {
+		for (Nat i = 0; i < c; i++) {
 			const CppType &type = world->types[i];
 
 			// Don't mess with external types.
@@ -177,16 +177,16 @@ namespace storm {
 			into->types[i]->visibility = e->visibility(Engine::vPublic);
 
 			// Documentation.
-			into->types[i]->documentation = createDoc(type.doc, null);
+			setDoc(into->types[i], type.doc, null);
 		}
 	}
 
 	void CppLoader::loadThreads() {
-		nat c = threadCount();
+		Nat c = threadCount();
 		into->threads.resize(c);
 		into->namedThreads.resize(c);
 
-		for (nat i = 0; i < c; i++) {
+		for (Nat i = 0; i < c; i++) {
 			const CppThread &thread = world->threads[i];
 
 			if (external(thread)) {
@@ -205,13 +205,13 @@ namespace storm {
 
 				into->namedThreads[i] = new (*e) NamedThread(new (*e) Str(thread.name), into->threads[i]);
 				into->namedThreads[i]->visibility = e->visibility(Engine::vPublic);
-				into->namedThreads[i]->documentation = createDoc(thread.doc, null);
+				setDoc(into->namedThreads[i], thread.doc, null);
 			}
 		}
 	}
 
 	void CppLoader::loadSuper() {
-		nat c = typeCount();
+		Nat c = typeCount();
 
 		// Remember which ones we've already set.
 		vector<bool> updated(c, false);
@@ -220,7 +220,7 @@ namespace storm {
 			// Try to add super classes to all classes until we're done. We're only adding classes
 			// as a super class when they have their super classes added, to avoid re-computation of
 			// lookup tables and similar.
-			for (nat i = 0; i < c; i++) {
+			for (Nat i = 0; i < c; i++) {
 				const CppType &type = world->types[i];
 				if (updated[i])
 					continue;
@@ -264,13 +264,13 @@ namespace storm {
 	GcType *CppLoader::createGcType(Nat id) {
 		const CppType &type = world->types[id];
 
-		nat entries;
+		Nat entries;
 		for (entries = 0; type.ptrOffsets[entries] != CppOffset::invalid; entries++)
 			;
 
 		GcType *t = e->gc.allocType(GcType::tFixedObj, null, Size(type.size).current(), entries);
 
-		for (nat i = 0; i < entries; i++) {
+		for (Nat i = 0; i < entries; i++) {
 			t->offset[i] = Offset(type.ptrOffsets[i]).current();
 		}
 
@@ -288,7 +288,7 @@ namespace storm {
 			assert(t->stride == 0 || ref.size == 0 || t->stride == ref.size, L"Type size mismatch for " +
 				::toS(type.name) + L". Storm size: " + ::toS(t->stride) + L", C++ size: " + ::toS(ref.size) + L".");
 
-			for (nat i = 0; i < entries; i++) {
+			for (Nat i = 0; i < entries; i++) {
 				// Uncheckable?
 				if (ref.offsets[i] == size_t(-1))
 					continue;
@@ -305,10 +305,10 @@ namespace storm {
 	}
 
 	void CppLoader::loadTemplates() {
-		nat c = templateCount();
+		Nat c = templateCount();
 		into->templates.resize(c);
 
-		for (nat i = 0; i < c; i++) {
+		for (Nat i = 0; i < c; i++) {
 			const CppTemplate &t = world->templates[i];
 
 			if (!into->templates[i]) {
@@ -394,15 +394,15 @@ namespace storm {
 	}
 
 	void CppLoader::loadPackages() {
-		nat c = typeCount();
-		for (nat i = 0; i < c; i++) {
+		Nat c = typeCount();
+		for (Nat i = 0; i < c; i++) {
 			const CppType &t = world->types[i];
 			if (!external(t))
 				findPkg(t.pkg)->add(into->types[i]);
 		}
 
 		c = templateCount();
-		for (nat i = 0; i < c; i++) {
+		for (Nat i = 0; i < c; i++) {
 			const CppTemplate &t = world->templates[i];
 			if (!external(t)) {
 				NameSet *to = findPkg(t.pkg);
@@ -411,7 +411,7 @@ namespace storm {
 		}
 
 		c = threadCount();
-		for (nat i = 0; i < c; i++) {
+		for (Nat i = 0; i < c; i++) {
 			const CppThread &t = world->threads[i];
 			if (!external(t))
 				findPkg(t.pkg)->add(into->namedThreads[i]);
@@ -420,8 +420,8 @@ namespace storm {
 
 
 	void CppLoader::loadFunctions() {
-		nat c = functionCount();
-		for (nat i = 0; i < c; i++) {
+		Nat c = functionCount();
+		for (Nat i = 0; i < c; i++) {
 			loadFunction(world->functions[i]);
 		}
 	}
@@ -460,7 +460,7 @@ namespace storm {
 			f->runOn(this->into->namedThreads[fn.threadId]);
 
 		f->visibility = visibility(fn.access);
-		f->documentation = createDoc(fn.doc, fn.params);
+		setDoc(f, fn.doc, fn.params);
 
 		into->add(f);
 	}
@@ -494,7 +494,7 @@ namespace storm {
 		}
 
 		f->visibility = visibility(fn.access);
-		f->documentation = createDoc(fn.doc, fn.params);
+		setDoc(f, fn.doc, fn.params);
 
 		params->at(0).type->add(f);
 	}
@@ -529,13 +529,13 @@ namespace storm {
 	}
 
 	void CppLoader::loadVariables() {
-		nat c = variableCount();
-		for (nat i = 0; i < c; i++) {
+		Nat c = variableCount();
+		for (Nat i = 0; i < c; i++) {
 			loadVariable(world->variables[i]);
 		}
 
 		c = enumValueCount();
-		for (nat i = 0; i < c; i++) {
+		for (Nat i = 0; i < c; i++) {
 			loadEnumValue(world->enumValues[i]);
 		}
 	}
@@ -550,7 +550,7 @@ namespace storm {
 		MemberVar *v = new (*e) MemberVar(new (*e) Str(var.name), type, memberOf);
 		v->setOffset(Offset(var.offset));
 		v->visibility = visibility(var.access);
-		v->documentation = createDoc(var.doc, null);
+		setDoc(v, var.doc, null);
 		memberOf->add(v);
 	}
 
@@ -558,8 +558,9 @@ namespace storm {
 		Enum *memberOf = as<Enum>(into->types[val.memberOf]);
 		assert(memberOf, L"Type not properly loaded or not an enum!");
 
-		memberOf->documentation = createDoc(val.doc, null);
-		memberOf->add(new (*e) EnumValue(memberOf, new (*e) Str(val.name), val.value));
+		EnumValue *value = new (*e) EnumValue(memberOf, new (*e) Str(val.name), val.value);
+		setDoc(value, val.doc, null);
+		memberOf->add(value);
 	}
 
 	void CppLoader::loadMeta() {
@@ -568,8 +569,8 @@ namespace storm {
 	}
 
 	void CppLoader::loadLicenses() {
-		nat count = licenseCount();
-		for (nat i = 0; i < count; i++) {
+		Nat count = licenseCount();
+		for (Nat i = 0; i < count; i++) {
 			const CppLicense &l = world->licenses[i];
 			NameSet *into = findPkg(l.pkg);
 			into->add(new (*e) License(new (*e) Str(l.name), new (*e) Str(l.title), new (*e) Str(l.body)));
@@ -577,8 +578,8 @@ namespace storm {
 	}
 
 	void CppLoader::loadVersions() {
-		nat count = versionCount();
-		for (nat i = 0; i < count; i++) {
+		Nat count = versionCount();
+		for (Nat i = 0; i < count; i++) {
 			const CppVersion &v = world->versions[i];
 			Version *ver = parseVersion(new (*e) Str(v.version));
 			if (!ver)
@@ -603,14 +604,18 @@ namespace storm {
 		}
 	}
 
-	CppDoc *CppLoader::createDoc(nat id, const CppParam *params) {
+	CppDoc *CppLoader::createDoc(Named *entity, Nat id, const CppParam *params) {
 		if (id <= 0)
 			return null;
 
 		if (docUrl)
-			return new (*e) CppDoc(docUrl, id, params);
+			return new (*e) CppDoc(entity, docUrl, id, params);
 		else
-			return new (*e) CppDoc(world->docFile, id, params);
+			return new (*e) CppDoc(entity, world->docFile, id, params);
+	}
+
+	void CppLoader::setDoc(Named *entity, Nat id, const CppParam *params) {
+		entity->documentation = createDoc(entity, id, params);
 	}
 
 }

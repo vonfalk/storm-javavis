@@ -264,5 +264,9 @@ namespace storm {
 		};
 
 		BITMASK_OPERATORS(DbgBit);
+
+		// Check documentation
+		void STORM_FN docFunction(Int param);
+
 	}
 }

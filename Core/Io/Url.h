@@ -106,7 +106,7 @@ namespace storm {
 
 		// Get a specific part.
 		inline Str *at(Nat i) const { return parts->at(i); }
-		inline Str *STORM_FN operator[](Nat i) { return parts->at(i); }
+		inline Str *STORM_FN operator[](Nat i) const { return parts->at(i); }
 
 		/**
 		 * Find out things about this URL. All operations are not always supported

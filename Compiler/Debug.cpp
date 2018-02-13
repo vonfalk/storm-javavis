@@ -420,6 +420,8 @@ namespace storm {
 
 		DbgNoToS::DbgNoToS() : dummy(0) {}
 
+		void docFunction(Int param) {}
+
 	}
 }
 

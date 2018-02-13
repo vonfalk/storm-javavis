@@ -17,7 +17,7 @@ namespace storm {
 	}
 
 	wostream &operator <<(wostream &to, DocParam p) {
-		return to << p.name << L" " << p.type;
+		return to << p.type << L" " << p.name;
 	}
 
 

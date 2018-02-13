@@ -64,28 +64,28 @@ namespace storm {
 		MAYBE(Url *) docUrl;
 
 		// Get the number of types.
-		nat typeCount() const;
+		Nat typeCount() const;
 
 		// Get the number of templates.
-		nat templateCount() const;
+		Nat templateCount() const;
 
 		// Get the number of named threads.
-		nat threadCount() const;
+		Nat threadCount() const;
 
 		// Get the number of functions.
-		nat functionCount() const;
+		Nat functionCount() const;
 
 		// Get the number of variables.
-		nat variableCount() const;
+		Nat variableCount() const;
 
 		// Get the number of enum values.
-		nat enumValueCount() const;
+		Nat enumValueCount() const;
 
 		// Get the number of licenses.
-		nat licenseCount() const;
+		Nat licenseCount() const;
 
 		// Get the number of versions.
-		nat versionCount() const;
+		Nat versionCount() const;
 
 		// Create all licenses in their appropriate places.
 		void loadLicenses();
@@ -142,7 +142,8 @@ namespace storm {
 		Visibility *visibility(CppAccess a);
 
 		// Create documentation. Returns null if not present for the current function.
-		CppDoc *createDoc(nat id, MAYBE(const CppParam *) params);
+		CppDoc *createDoc(Named *entity, Nat id, MAYBE(const CppParam *) params);
+		void setDoc(Named *entity, Nat id, MAYBE(const CppParam *) params);
 
 		// See if various types are external.
 		inline bool external(const CppType &t) const { return t.kind == CppType::superExternal; }

@@ -13,15 +13,18 @@ namespace storm {
 		STORM_CLASS;
 	public:
 		// Create.
-		CppDoc(Url *file, Nat entry, MAYBE(const CppParam *) params);
+		CppDoc(Named *entity, Url *file, Nat entry, MAYBE(const CppParam *) params);
 
 		// Create with a simple name instead of an Url. The name is assumed to be relative the root package's Url.
-		CppDoc(const wchar *file, Nat entry, MAYBE(const CppParam *) params);
+		CppDoc(Named *entity, const wchar *file, Nat entry, MAYBE(const CppParam *) params);
 
 		// Get documentation.
 		virtual Doc *STORM_FN get();
 
 	private:
+		// Original entity.
+		Named *entity;
+
 		// Url of the file containing documentation or a simple c-string containing the file name.
 		UNKNOWN(PTR_GC) const void *data;
 
@@ -32,7 +35,7 @@ namespace storm {
 		Nat entryInfo;
 
 		// Get an URL to the file.
-		const Url *file();
+		Url *file();
 
 		// Get the entry.
 		Nat entry();

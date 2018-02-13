@@ -1,6 +1,7 @@
 #pragma once
 #include "Value.h"
 #include "Core/Str.h"
+#include "Utils/Exception.h"
 
 namespace storm {
 	STORM_PKG(core.lang);
@@ -75,5 +76,18 @@ namespace storm {
 		// Get documentation for this named entity.
 		virtual Doc *STORM_FN get();
 	};
+
+
+	/**
+	 * Exception for documentation errors.
+	 */
+	class EXCEPTION_EXPORT DocError : public Exception {
+	public:
+		inline DocError(const String &w) : w(w) {}
+		inline virtual String what() const { return w; }
+	private:
+		String w;
+	};
+
 
 }
