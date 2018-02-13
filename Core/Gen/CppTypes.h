@@ -112,7 +112,7 @@ namespace storm {
 #endif
 
 		// Super class' type id, see 'kind' for the exact meaning.
-		nat super;
+		size_t super;
 
 		// Documentation id.
 		nat doc;

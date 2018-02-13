@@ -9,8 +9,8 @@ namespace storm {
 
 	template <class T>
 	void join(StrBuf *to, T *src, const wchar *space) {
-		T::Iter begin = src->begin();
-		T::Iter end = src->end();
+		typename T::Iter begin = src->begin();
+		typename T::Iter end = src->end();
 
 		if (begin == end)
 			return;
