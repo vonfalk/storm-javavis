@@ -52,7 +52,7 @@ namespace storm {
 
 	Name *Name::parent() const {
 		Name *n = new (this) Name();
-		for (nat i = 1; i < parts->count(); i++)
+		for (Nat i = 0; i + 1 < parts->count(); i++)
 			n->add(parts->at(i));
 		return n;
 	}

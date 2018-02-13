@@ -19,9 +19,10 @@ namespace storm {
 
 
 	/**
-	 * The string type used in Storm, strings are immutable. Treats a string as a sequence of
-	 * unicode codepoints, but hides the underlying representation by disallowing low-level access
-	 * to the string from Storm.
+	 * The string type used in Storm.
+	 *
+	 * Strings are immutable sequences of unicode codepoints. The implementation stores string in
+	 * UTF-16, but hides this fact by disallowing low-level access to the underlying representation.
 	 *
 	 * Note: We may want to enforce proper normalization of strings to avoid weird results.
 	 */

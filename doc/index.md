@@ -79,8 +79,9 @@ If you are interested in Storm and want to learn more, check out some of these s
 Note that the main goal of the documentation provided here is to get you started in using the
 language and to give an understanding of the language. It will not discuss specific APIs or the
 standard library in depth. For that kind of documentation, please refer to the built-in
-documentation in Storm (not finished yet). When using the Basic Storm REPL, the command
-`explore{<package>}` can be used to list members in packages.
+documentation in Storm. In the Basic Storm REPL, type `help <name>` to access documentation for
+entities in the system. For example: `help core:Str` will tell you about the string type and its
+members. `help core:Str:find` will tell you that there are two overloads of `find`.
 
 
 Contact

@@ -90,19 +90,22 @@ namespace storm {
 	}
 
 	Str *Named::identifier() const {
-		if (parentLookup == null) {
-			StrBuf *out = new (this) StrBuf();
-			*out << name;
-			if (params != null && params->count() > 0) {
-				*out << L"(" << params->at(0);
-				for (nat i = 1; i < params->count(); i++)
-					*out << L", " << params->at(i);
-				*out << L")";
-			}
-			return out->toS();
-		}
+		if (parentLookup == null)
+			return shortIdentifier();
 
 		return path()->toS();
+	}
+
+	Str *Named::shortIdentifier() const {
+		StrBuf *out = new (this) StrBuf();
+		*out << name;
+		if (params != null && params->count() > 0) {
+			*out << L"(" << params->at(0);
+			for (nat i = 1; i < params->count(); i++)
+				*out << L", " << params->at(i);
+			*out << L")";
+		}
+		return out->toS();
 	}
 
 	void Named::notifyAdded(NameSet *to, Named *added) {}

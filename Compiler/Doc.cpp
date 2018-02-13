@@ -13,11 +13,17 @@ namespace storm {
 	DocParam::DocParam(Str *name, Value type) : name(name), type(type) {}
 
 	StrBuf &operator <<(StrBuf &to, DocParam p) {
-		return to << p.name << S(" ") << p.type;
+		if (p.name->any())
+			return to << p.type << S(" ") << p.name;
+		else
+			return to << p.type;
 	}
 
 	wostream &operator <<(wostream &to, DocParam p) {
-		return to << p.type << L" " << p.name;
+		if (p.name->any())
+			return to << p.type << L" " << p.name;
+		else
+			return to << p.type;
 	}
 
 

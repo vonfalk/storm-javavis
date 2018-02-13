@@ -290,6 +290,18 @@ namespace storm {
 		return Iter();
 	}
 
+	Array<Named *> *NameSet::findName(Str *name) const {
+		Array<Named *> *result = new (this) Array<Named *>();
+
+		if (NameOverloads *f = overloads->get(name, null)) {
+			result->reserve(f->count());
+			for (Nat i = 0; i < f->count(); i++)
+				result->push(f->at(i));
+		}
+
+		return result;
+	}
+
 	void NameSet::dbg_dump() const {
 		PLN(L"Name set:");
 		for (Overloads::Iter i = overloads->begin(); i != overloads->end(); ++i) {

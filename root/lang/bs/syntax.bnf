@@ -140,6 +140,9 @@ SReplExpr => p : SExpr(block) p;
 SReplExpr => p : SStmt(block) p;
 SReplExpr => Expr(pos) : "";
 
+// Help.
+SReplExpr[10] => helpStmt(block, name) : "help " #keyword, SFnName name;
+
 
 ////////////////////////////////////////////////////////////////////
 // Code!

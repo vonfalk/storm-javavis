@@ -143,8 +143,12 @@ namespace storm {
 			void advance();
 		};
 
+		// Get iterators to the begin and end of the contents.
 		Iter STORM_FN begin() const;
 		Iter STORM_FN end() const;
+
+		// Get all overloads for a specific name.
+		Array<Named *> *STORM_FN findName(Str *name) const;
 
 		// Dump the internal contents of the NameSet for debugging.
 		void dbg_dump() const;

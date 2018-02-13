@@ -52,7 +52,9 @@
   - [X] Implement shrink() for Map<> as well.
   - [X] Handles and templates does not work with built-in types (like Int).
 
-* Improvements [4/17]
+* Improvements [4/19]
+  - [ ] Indicate function return types and types of variables in Doc objects.
+  - [ ] Why is the expression '"foo" + foo()' allowed if 'foo()' returns null?
   - [ ] Allow comment that 'groups' functions together. This will form a two-level tree that could improve
         readability of the documentation.
   - [ ] Switch the order of 'src' and 'dest' in 'jmp'. They are currently reversed when compared to 'call'.

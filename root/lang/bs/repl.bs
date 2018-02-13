@@ -217,3 +217,87 @@ private:
 	}
 
 }
+
+// Implementation of the 'help' statement in the Repl.
+Expr helpStmt(Block block, SrcName name) on Compiler {
+    Expr type = macro:createType(name.pos, block, name);
+	SrcName fnName(name.pos);
+	fnName.add("lang");
+	fnName.add("bs");
+	fnName.add("replHelp");
+	namedExpr(block, fnName, Actuals(type));
+}
+
+// Execute the help statement in the repl.
+void replHelp(SrcName name) on Compiler {
+	Scope root = rootScope;
+
+	if (entity = root.find(name)) {
+		printHelp(entity);
+	} else if (entity = root.find(name.parent) as NameSet) {
+		printHelp(entity, name.last.name);
+	} else {
+		print("I do not know anything called " + name.toS);
+	}
+}
+
+
+void printHelp(Named entity) on Compiler {
+	if (doc = entity.documentation) {
+		print(doc.get().toS);
+	} else {
+		print(entity.identifier() + ":");
+		print("No further help available.");
+	}
+
+	if (entity as NameSet) {
+		print("\nMembers:");
+
+		Array<Named> members;
+		for (i in entity)
+			members << i;
+
+		members.sort(&compareMembers(Named, Named));
+		for (m in members)
+			print(" " + formatMember(m));
+	}
+}
+
+void printHelp(NameSet in, Str last) on Compiler {
+	Array<Named> found = in.findName(last);
+
+	if (found.empty) {
+		print("No members named '" # last # "' in " # in);
+		return;
+	}
+
+	print("Found " # found.count # " overloads for " # last # ":");
+
+	found.sort(&compareMembers(Named, Named));
+	for (i in found) {
+		print("");
+		printHelp(i);
+	}
+}
+
+Bool compareMembers(Named a, Named b) on Compiler {
+	if (a.name == b.name)
+		return a.params.count < b.params.count;
+
+	return a.name < b.name;
+}
+
+Str formatMember(Named entity) on Compiler {
+	StrBuf result;
+	result << entity.shortIdentifier();
+
+	if (entity as Function) {
+		result << "->" << entity.result;
+	}
+
+	if (a = entity.visibility) {
+		result << " (" << a.toS << ")";
+	}
+
+	result.toS;
+}
