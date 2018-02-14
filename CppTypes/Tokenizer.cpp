@@ -161,7 +161,7 @@ const wchar_t *Comment::parse(std::wostringstream &r, State &state, Params &par,
 		return null;
 
 	case singleBefore:
-		// Right after an asterisk. Count number of spaces and emit any text we find.
+		// Right after the second /. Count number of spaces and emit any text we find.
 		if (ch == ' ') {
 			par.curr++;
 		} else if (ch == '\n') {
@@ -410,8 +410,8 @@ void Tokenizer::processChar(nat &start, State &state, bool &firstComment) {
 		start = ++pos;
 		if (ch == '\n')
 			state = sStart;
-		else
-			commentEnd = start - 1;
+		else if (ch != '\r')
+			commentEnd = start;
 		break;
 	case sMlComment:
 		start = ++pos;
