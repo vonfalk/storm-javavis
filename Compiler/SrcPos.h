@@ -30,6 +30,10 @@ namespace storm {
 
 		// Deep copy.
 		void STORM_FN deepCopy(CloneEnv *env);
+
+		// Compare.
+		Bool STORM_FN operator ==(SrcPos o) const;
+		Bool STORM_FN operator !=(SrcPos o) const;
 	};
 
 	// Output.

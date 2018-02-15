@@ -3,6 +3,7 @@
 #include "Compiler/Function.h"
 #include "Compiler/Syntax/SStr.h"
 #include "Compiler/Syntax/Node.h"
+#include "Compiler/Doc.h"
 #include "Param.h"
 #include "Block.h"
 
@@ -44,6 +45,9 @@ namespace storm {
 			syntax::Node *body;
 			MAYBE(Visibility *) visibility;
 
+			// Position of the documentation. May be unset.
+			SrcPos docPos;
+
 			// Create the corresponding function.
 			Function *STORM_FN createFn();
 
@@ -75,6 +79,9 @@ namespace storm {
 
 			// Add function parameters to a block. Mainly for internal use.
 			void STORM_FN addParams(Block *block);
+
+			// Get parameters as required by documentation.
+			Array<DocParam> *STORM_FN docParams();
 
 		protected:
 			// Parameter names and values.

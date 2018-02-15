@@ -42,7 +42,10 @@ namespace storm {
 	}
 
 	void Doc::toS(StrBuf *to) const {
-		*to << name << S("(") << join(params, S(", ")) << S("):\n");
+		*to << name;
+		if (params->any())
+			*to << S("(") << join(params, S(", ")) << S(")");
+		*to << S(":\n\n");
 		*to << body;
 	}
 

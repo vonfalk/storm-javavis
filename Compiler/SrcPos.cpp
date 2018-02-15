@@ -21,6 +21,19 @@ namespace storm {
 		cloned(file, env);
 	}
 
+	Bool SrcPos::operator ==(SrcPos o) const {
+		if (!file && !o.file)
+			return true;
+		if (!file || !o.file)
+			return false;
+		return *file == *o.file
+			&& pos == o.pos;
+	}
+
+	Bool SrcPos::operator !=(SrcPos o) const {
+		return !(*this == o);
+	}
+
 	wostream &operator <<(wostream &to, const SrcPos &p) {
 		if (p.unknown())
 			return to << L"<unknown location>";

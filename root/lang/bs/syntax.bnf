@@ -21,6 +21,18 @@ SInComment : "[^\*/]*" - SInComment; // Everything except * and / are fine.
 SInComment : "\*+[^\*/]" - SInComment;
 SInComment : "/+" - SInComment;
 
+
+// Comments for documentation. Either a block of single line comments not separated by more than a
+// single blank line or a single multi-line comment. Returns the start position of the comment
+// so that it is possible to find it again later.
+SrcPos SDocComment() #comment;
+SDocComment => pos : ("//[^\n\r]*\r?\n[ \t]*")+;
+SDocComment => pos : "/" - "\*" - [SInComment]@ - "[ \t]*\n[ \t]*";
+
+SrcPos SFindDoc();
+SFindDoc[5] => p : "[ \t\n\r]*" - SDocComment p;
+SFindDoc[0] => p : SFindDoc - "[ \t\n\r]*" - SDocComment p;
+
 // A name in Storm. This should probably be extended to handle more of unicode.
 SStr SName();
 SName => s : "[A-Za-z_][A-Za-z0-9_]*"@ s;
@@ -100,12 +112,12 @@ SFnDeclName => name : ("\*" - SPrePost)@ name;
 
 // Class/value.
 Class SClass(Scope env);
-SClass => createClass(pos, env, name, body) : "class" #keyword, SName name #typeName, "{" [, SClassBody@ body, ]+ "}";
-SClass => createValue(pos, env, name, body) : "value" #keyword, SName name #typeName, "{" [, SClassBody@ body, ]+ "}";
-SClass => extendClass(pos, env, name, base, body) : "class" #keyword , SName name #typeName, "extends" #keyword, SType base, "{" [, SClassBody@ body, ]+ "}";
-SClass => extendValue(pos, env, name, base, body) : "value" #keyword, SName name #typeName, "extends" #keyword, SType base, "{" [, SClassBody@ body, ]+ "}";
-SClass => threadClass(pos, env, name, thread, body) : "class" #keyword, SName name #typeName, "on" #keyword, SType thread, "{" [, SClassBody@ body, ]+ "}";
-SClass => threadClass(pos, env, name, body) : "class" #keyword, SName name #typeName, "on" #keyword, "\?", "{" [, SClassBody@ body, ]+ "}";
+SClass => createClass(pos, env, name, body) : "class" #keyword, SName name #typeName, "{" - [SClassBody@ body, ]+ "}";
+SClass => createValue(pos, env, name, body) : "value" #keyword, SName name #typeName, "{" - [SClassBody@ body, ]+ "}";
+SClass => extendClass(pos, env, name, base, body) : "class" #keyword , SName name #typeName, "extends" #keyword, SType base, "{" - [SClassBody@ body, ]+ "}";
+SClass => extendValue(pos, env, name, base, body) : "value" #keyword, SName name #typeName, "extends" #keyword, SType base, "{" - [SClassBody@ body, ]+ "}";
+SClass => threadClass(pos, env, name, thread, body) : "class" #keyword, SName name #typeName, "on" #keyword, SType thread, "{" - [SClassBody@ body, ]+ "}";
+SClass => threadClass(pos, env, name, body) : "class" #keyword, SName name #typeName, "on" #keyword, "\?", "{" - [SClassBody@ body, ]+ "}";
 
 // Named thread declaration.
 NamedThread SNamedThread();
@@ -115,16 +127,20 @@ SNamedThread => NamedThread(name) : "thread" #keyword, SName name, ";";
 TObject SFileItem(Scope env);
 SFileItem => item : SPlainFileItem(env) item;
 SFileItem => apply(pos, item, access) : SFreeAccess access - " ", SPlainFileItem(env) item;
-SFileItem => access : [SFreeAccess access - ":"]-;
+SFileItem => access : SDelimiter - [SFreeAccess access - ":"]-;
 
 TObject SPlainFileItem(Scope env);
 SPlainFileItem => f : SFunction(env) f;
 SPlainFileItem => c : SClass(env) c;
 SPlainFileItem => t : SNamedThread t;
 
+TObject SDocFileItem(Scope env);
+SDocFileItem[0] => item : SDelimiter - SFileItem(env) item;
+SDocFileItem[5] => applyDoc(c, item) : SFindDoc c - SFileItem(env) item;
+
 // Root rule. Used to parse an entire file, except the use-statements).
 Content SFile(Scope env);
-SFile => Content() : SDelimiter - (SFileItem(env) -> add, )*;
+SFile => Content() : (SDocFileItem(env) -> add)* - SDelimiter;
 
 // Root rule for parsing includes.
 Array<SrcName> SIncludes();
@@ -428,7 +444,10 @@ SPlainClassItem => classCtor(owner, pos, params, body) :
 SPlainClassItem => classCastCtor(owner, pos, params, body) :
     "cast" #keyword, "(", SCtorParams params, ")", "{"[, SCtorBody@ body,]+ "}";
 
+TObject SDocClassItem(Class owner);
+SDocClassItem[0] => item : SDelimiter - SClassItem(owner) item;
+SDocClassItem[5] => applyDoc(c, item) : SFindDoc c - SClassItem(owner) item;
 
 // Root rule for parsing classes and values.
 ClassBody SClassBody(Class owner);
-SClassBody => ClassBody() : (SClassItem(owner) -> add, )*;
+SClassBody => ClassBody() : (SDocClassItem(owner) -> add)* - SDelimiter;

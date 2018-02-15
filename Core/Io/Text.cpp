@@ -30,6 +30,14 @@ namespace storm {
 	}
 
 	Char TextInput::read() {
+		Char r = readRaw();
+		if (r == Char('\r'))
+			if (peek() == Char('\n'))
+				r = readRaw();
+		return r;
+	}
+
+	Char TextInput::readRaw() {
 		if (hasNext) {
 			hasNext = false;
 			return next;
@@ -56,14 +64,14 @@ namespace storm {
 		StrBuf *to = new (this) StrBuf();
 
 		while (true) {
-			Char c = read();
+			Char c = readRaw();
 			if (c == Char(nat(0))) {
 				break;
 			}
 			if (c == Char('\r')) {
 				c = peek();
 				if (c == Char('\n'))
-					read();
+					readRaw();
 				break;
 			}
 			if (c == Char('\n')) {
@@ -79,7 +87,7 @@ namespace storm {
 		StrBuf *to = new (this) StrBuf();
 
 		while (true) {
-			Char c = read();
+			Char c = readRaw();
 			if (c == Char(Nat(0)))
 				break;
 			if (c == Char('\r')) {
@@ -98,7 +106,7 @@ namespace storm {
 		StrBuf *to = new (this) StrBuf();
 
 		while (more()) {
-			Char c = read();
+			Char c = readRaw();
 			if (c == Char(Nat(0)))
 				break;
 			*to << c;

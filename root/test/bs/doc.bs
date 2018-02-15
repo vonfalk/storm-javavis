@@ -1,0 +1,8 @@
+// Check documentation
+void doc1Fn(Int a) {}
+
+/**
+ * Check documentation
+ */
+void doc2Fn(Int b) {}
+

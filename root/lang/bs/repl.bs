@@ -110,7 +110,9 @@ private void outputLicense(core:info:License l, Bool full) on Compiler {
 	}
 }
 
-// Sandbox class for the Repl to execute in.
+/**
+ * Sandbox class for the Repl to execute in.
+ */
 class ReplSandbox on Compiler {
 	private BsRepl owner;
 

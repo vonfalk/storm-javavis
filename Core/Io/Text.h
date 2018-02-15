@@ -42,7 +42,9 @@ namespace storm {
 
 	/**
 	 * Base interface for reading text. Caches one character. When implementing your own version,
-	 * override 'readChar' to read a code point in UTF32.
+	 * override 'readChar' to read a code point in UTF32. Manages line endings so that the 'read'
+	 * functions will always only see '\n' as line endings. 'readRaw' and 'peek' may observe a '\r'
+	 * sometimes.
 	 */
 	class TextInput : public Object {
 		STORM_CLASS;
@@ -52,6 +54,9 @@ namespace storm {
 
 		// Read a single character from the stream. Returns 0 on failure.
 		Char STORM_FN read();
+
+		// Read a single character from the stream without line-ending conversion. Returns 0 on failure.
+		Char STORM_FN readRaw();
 
 		// Peek a single character. Returns 0 on failure.
 		Char STORM_FN peek();

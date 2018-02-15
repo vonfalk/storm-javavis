@@ -1,6 +1,7 @@
 #include "stdafx.h"
 #include "Function.h"
 #include "Cast.h"
+#include "Doc.h"
 #include "Core/Fn.h"
 #include "Compiler/Code.h"
 #include "Compiler/Exception.h"
@@ -53,6 +54,10 @@ namespace storm {
 
 			BSFunction *f = new (this) BSFunction(result, name, resolve(params, scope), scope, thread, body);
 			f->visibility = visibility;
+
+			if (docPos != SrcPos())
+				applyDoc(docPos, f);
+
 			return f;
 		}
 
@@ -145,7 +150,7 @@ namespace storm {
 		}
 
 		void BSRawFn::addParams(Block *to) {
-			for (nat i = 0; i < valParams->count(); i++) {
+			for (Nat i = 0; i < valParams->count(); i++) {
 				LocalVar *v = new (this) LocalVar(valParams->at(i).name, valParams->at(i).type, pos, true);
 
 				if (parentLookup) {
@@ -155,6 +160,16 @@ namespace storm {
 
 				to->add(v);
 			}
+		}
+
+		Array<DocParam> *BSRawFn::docParams() {
+			Array<DocParam> *r = new (this) Array<DocParam>();
+			r->reserve(valParams->count());
+
+			for (Nat i = 0; i < valParams->count(); i++)
+				r->push(DocParam(valParams->at(i).name, valParams->at(i).type));
+
+			return r;
 		}
 
 
