@@ -180,6 +180,7 @@ BEGIN_TEST(OperatorTest, BS) {
 
 BEGIN_TEST(TypesTest, BS) {
 	CHECK_ERROR(runFn<void>(S("test.bs.invalidDecl")), SyntaxError);
+	CHECK_ERROR(runFn<void>(S("test.bs.voidExpr")), SyntaxError);
 } END_TEST
 
 

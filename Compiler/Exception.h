@@ -20,9 +20,8 @@ namespace storm {
 
 
 	/**
-	 * Defines exceptions used in the compiler.
+	 * Defines exceptions used by the compiler.
 	 */
-
 	class EXCEPTION_EXPORT CodeError : public Exception {
 	public:
 		inline CodeError(const SrcPos &where) : where(where) {}

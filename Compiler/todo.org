@@ -52,9 +52,8 @@
   - [X] Implement shrink() for Map<> as well.
   - [X] Handles and templates does not work with built-in types (like Int).
 
-* Improvements [4/19]
+* Improvements [5/19]
   - [ ] Indicate function return types and types of variables in Doc objects.
-  - [ ] Why is the expression '"foo" + foo()' allowed if 'foo()' returns null?
   - [ ] Allow comment that 'groups' functions together. This will form a two-level tree that could improve
         readability of the documentation.
   - [ ] Switch the order of 'src' and 'dest' in 'jmp'. They are currently reversed when compared to 'call'.
@@ -71,6 +70,7 @@
   - [ ] We can remove a lot of copy-constructors in Code/, and use memcpy + default generated ones!
   - [ ] Remove mov eax, eax (or similar) They are occasionally generated if we're unlucky.
   - [ ] Idea: disallow cloning of values without deepCopy() so that we can safely make iterators for actors.
+  - [X] Why is the expression '"foo" + foo()' allowed if 'foo()' returns null?
   - [X] The syntax SExpr (, SExpr)? is treated as a parameter list. Switch to {} for capture so that
         this does not happen. (requiring SExpr - (,SExpr) instead), stricter parsing.
   - [X] Implement attaching and detaching threads using ThreadGroups for os::Thread.

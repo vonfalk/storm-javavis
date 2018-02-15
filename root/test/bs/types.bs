@@ -4,3 +4,8 @@ void invalidDecl() {
 	// Shall not compile...
 	Float x = Size(1, 2);
 }
+
+void voidExpr() {
+	// Shall not compile, but not crash either (invalidDecl returns void).
+	"foo" + invalidDecl();
+}

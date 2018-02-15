@@ -89,7 +89,7 @@ namespace storm {
 
 		void ExprBlock::add(Expr *expr) {
 			if (firstNoReturn == invalid)
-				if (expr->result().empty())
+				if (expr->result().nothing())
 					firstNoReturn = exprs->count();
 
 			exprs->push(expr);

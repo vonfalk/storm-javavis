@@ -9,6 +9,10 @@ namespace storm {
 	 * value indicating that the expression will never return for some reason. For example, if a
 	 * return statement has been found in a block (on all paths), that block will return this 'no
 	 * return' value. The same holds true for paths always throwing an exception.
+	 *
+	 * Note the difference between 'never returns' and 'returns void'. Because it is easy to confuse
+	 * these concepts, this class does not provide the usual 'any' and 'empty' members. Instead,
+	 * 'nothing', 'empty' and 'value' are provided.
 	 */
 	class ExprResult {
 		STORM_VALUE;
@@ -17,14 +21,19 @@ namespace storm {
 		STORM_CTOR ExprResult();
 
 		// Return a value.
-		STORM_CAST_CTOR ExprResult(Value value);
+		STORM_CAST_CTOR ExprResult(Value result);
 
 		// Result type. If equal to 'noReturn', we never return.
 		Value STORM_FN type() const;
 
-		// Any result?
-		Bool STORM_FN any() const;
+		// Does the expression return a value (ie. not void)?
+		Bool STORM_FN value() const;
+
+		// Does the expression return void?
 		Bool STORM_FN empty() const;
+
+		// Does the expression not return at all.
+		Bool STORM_FN nothing() const;
 
 		// Same type?
 		Bool STORM_FN operator ==(const ExprResult &o) const;
@@ -38,7 +47,7 @@ namespace storm {
 
 	private:
 		// Return type.
-		Value value;
+		Value result;
 
 		// Any result?
 		Bool returns;

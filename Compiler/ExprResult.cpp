@@ -6,27 +6,31 @@ namespace storm {
 
 	ExprResult::ExprResult() : returns(true) {}
 
-	ExprResult::ExprResult(Value value) : value(value), returns(true) {}
+	ExprResult::ExprResult(Value result) : result(result), returns(true) {}
 
 	ExprResult::ExprResult(Bool any) : returns(any) {}
 
 	Value ExprResult::type() const {
 		if (returns)
-			return value;
+			return result;
 		else
 			return Value();
 	}
 
-	Bool ExprResult::any() const {
-		return returns;
+	Bool ExprResult::value() const {
+		return returns && result != Value();
 	}
 
 	Bool ExprResult::empty() const {
+		return returns && result == Value();
+	}
+
+	Bool ExprResult::nothing() const {
 		return !returns;
 	}
 
 	Bool ExprResult::operator ==(const ExprResult &o) const {
-		return returns == o.returns && value == o.value;
+		return returns == o.returns && result == o.result;
 	}
 
 	Bool ExprResult::operator !=(const ExprResult &o) const {
@@ -34,31 +38,31 @@ namespace storm {
 	}
 
 	ExprResult ExprResult::asRef(Bool r) const {
-		if (!any())
+		if (nothing())
 			return *this;
-		return ExprResult(value.asRef(r));
+		return ExprResult(result.asRef(r));
 	}
 
 	wostream &operator <<(wostream &to, const ExprResult &r) {
-		if (r.any()) {
-			to << r.type();
+		if (r.nothing()) {
+			to << L"<nothing>";
 		} else {
-			to << "<nothing>";
+			to << r.type();
 		}
 		return to;
 	}
 
 	StrBuf &operator <<(StrBuf &to, ExprResult r) {
-		if (r.any()) {
-			to << r.type();
+		if (r.nothing()) {
+			to << S("nothing");
 		} else {
-			to << "<nothing>";
+			to << r.type();
 		}
 		return to;
 	}
 
 	void ExprResult::deepCopy(CloneEnv *env) {
-		value.deepCopy(env);
+		result.deepCopy(env);
 	}
 
 	ExprResult noReturn() {
@@ -66,9 +70,9 @@ namespace storm {
 	}
 
 	ExprResult common(ExprResult a, ExprResult b) {
-		if (!a.any())
+		if (a.nothing())
 			return b;
-		if (!b.any())
+		if (b.nothing())
 			return a;
 
 		return common(a.type(), b.type());

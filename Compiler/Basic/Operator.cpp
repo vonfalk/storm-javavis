@@ -55,7 +55,7 @@ namespace storm {
 			Named *found = block->scope.find(sName);
 			if (!found) {
 				ExprResult r = rhs->result();
-				if (r.any()) {
+				if (r.value()) {
 					// Try to find the function inside 'rhs' as well. Auto-casting might make that work.
 					found = r.type().type->find(part, block->scope);
 				}

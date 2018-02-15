@@ -19,7 +19,9 @@ namespace storm {
 		// Same as 'castable', but throws an exception on failure.
 		void STORM_FN expectCastable(Expr *from, Value to, Scope scope);
 
-		// What is the penalty of casting 'from' to 'to'? Returns -1 if not possible.
+		// What is the penalty of casting 'from' to 'to'? Returns -1 if not possible. Note: We will
+		// always allow casting '<nothing>' into anything. This is convenient when implementing
+		// if-statements for example.
 		Int castPenalty(Expr *from, Value to, NamedFlags mode, Scope scope);
 		Int STORM_FN castPenalty(Expr *from, Value to, Scope scope);
 
