@@ -11,7 +11,7 @@ Int pqInit() {
 	pq.top();
 }
 
-Bool pqCompareFn(Int a, Int b) {
+private Bool pqCompareFn(Int a, Int b) {
 	a > b;
 }
 

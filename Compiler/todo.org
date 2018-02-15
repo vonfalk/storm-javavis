@@ -1,4 +1,4 @@
-* Loose ends so far [17/34]
+* Loose ends so far [18/34]
   - [ ] Support documentation of templates from C++.
   - [ ] Change the default visibility of class members in Basic Storm to private.
   - [ ] Destructors in maps and arrays are not working properly yet. Idea: add (yet another) member 
@@ -19,7 +19,7 @@
   - [ ] Automatically mark non-virtual functions in C++ as 'final' in storm, since VTables will not work anyway.
   - [ ] If a type has a '==' or '<' outside the type itself, the corresponding operator will not be present in
         a Handle, like '<<' at the moment.
-  - [ ] In Basic Storm, taking a function pointer of a private function does not work.
+  - [X] In Basic Storm, taking a function pointer of a private function does not work.
   - [X] Make a generic toS() for Storm which uses operator << (if present) for values.
   - [X] In Basic Storm, expressions like '2 - 1.0' fail to compile since Float is not searched for
         candidates. This could be solved by moving the operators out of the number classes or improve

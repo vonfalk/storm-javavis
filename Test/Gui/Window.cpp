@@ -3,8 +3,7 @@
 
 BEGIN_TEST(Window, Gui) {
 
-	PLN(L"Showing a simple window. Click the button and it should output things\n"
-		L"to the screen. Close it to proceed to more tests.");
+	PLN(L"Showing a simple window with graphics. Close it to proceed.");
 	runFn<void>(S("test.ui.simple"));
 
 	PLN(L"Trying showing a dialog from a window. This makes sure that 'waitForClose'\n"

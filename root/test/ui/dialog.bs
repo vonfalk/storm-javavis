@@ -17,7 +17,7 @@ class Dialog extends Frame {
 }
 
 class DlgMainWin extends Frame {
-	Button button;
+	private Button button;
 
 	init() {
 		init("Main window") {
@@ -31,7 +31,7 @@ class DlgMainWin extends Frame {
 		create();
 	}
 
-	void showDialog(Button b) {
+	private void showDialog(Button b) {
 		button.text("Showing dialog...");
 		Dialog d;
 		d.waitForClose;

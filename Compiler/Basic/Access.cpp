@@ -14,6 +14,8 @@ namespace storm {
 					return fn->pos;
 				else if (Class *c = as<Class>(src))
 					return c->declared;
+				else if (BlockLookup *b = as<BlockLookup>(src))
+					return b->block->pos;
 
 				src = src->parent();
 			}

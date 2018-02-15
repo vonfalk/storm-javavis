@@ -128,7 +128,7 @@ Str sortedArray() {
 	arr.sorted.toS + arr.toS;
 }
 
-Bool sortPred(Int a, Int b) {
+private Bool sortPred(Int a, Int b) {
 	a = (a + 2) % 5;
 	b = (b + 2) % 5;
 	a < b;
