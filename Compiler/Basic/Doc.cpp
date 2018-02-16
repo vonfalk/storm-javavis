@@ -117,7 +117,7 @@ namespace storm {
 					}
 
 					if (s.curr < s.space)
-						return L"Not enough indentation after //";
+						return S("Not enough indentation after //");
 					for (Nat i = s.space; i < s.curr; i++)
 						*out << Char(' ');
 					s.curr = 0;
@@ -169,7 +169,7 @@ namespace storm {
 					}
 
 					if (s.curr < s.space)
-						return L"Not enough indentation after the first *";
+						return S("Not enough indentation after the first *");
 					for (Nat i = s.space; i < s.curr; i++)
 						*out << Char(' ');
 					s.curr = 0;
