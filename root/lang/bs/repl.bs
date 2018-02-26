@@ -245,12 +245,7 @@ void replHelp(SrcName name) on Compiler {
 
 
 void printHelp(Named entity) on Compiler {
-	if (doc = entity.documentation) {
-		print(doc.get().toS);
-	} else {
-		print(entity.identifier() + ":");
-		print("No further help available.");
-	}
+	print(entity.findDoc.toS);
 
 	if (entity as NameSet) {
 		print("\nMembers:");
@@ -295,6 +290,9 @@ Str formatMember(Named entity) on Compiler {
 
 	if (entity as Function) {
 		result << "->" << entity.result;
+	}
+	if (entity as Variable) {
+		result << ": " << entity.type;
 	}
 
 	if (a = entity.visibility) {

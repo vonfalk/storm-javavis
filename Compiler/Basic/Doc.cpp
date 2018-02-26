@@ -211,7 +211,7 @@ namespace storm {
 			Str *body = readBody();
 			Array<DocParam> *params = createParams();
 
-			return new (this) Doc(entity->name, params, body);
+			return doc(entity, params, body);
 		}
 
 		Str *BSDoc::readBody() {

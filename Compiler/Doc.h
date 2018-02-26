@@ -28,6 +28,33 @@ namespace storm {
 	StrBuf &STORM_FN operator <<(StrBuf &to, DocParam p);
 	wostream &operator <<(wostream &to, DocParam p);
 
+
+	/**
+	 * Documentation note. Contains a type and a string that is to displayed alongside the name of
+	 * the object. Used for things like return types and inheritance.
+	 */
+	class DocNote {
+		STORM_VALUE;
+	public:
+		// Create.
+		STORM_CTOR DocNote(Str *note, Value type);
+		STORM_CTOR DocNote(Str *note, Named *named);
+
+		// Note.
+		Str *note;
+
+		// Named object.
+		MAYBE(Named *) named;
+
+		// Reference?
+		Bool ref;
+	};
+
+	// To string.
+	StrBuf &STORM_FN operator <<(StrBuf &to, DocNote n);
+	wostream &operator <<(wostream &to, DocNote n);
+
+
 	/**
 	 * Documentation for a single named entity.
 	 *
@@ -45,12 +72,17 @@ namespace storm {
 	public:
 		// Create.
 		STORM_CTOR Doc(Str *name, Array<DocParam> *params, Str *body);
+		STORM_CTOR Doc(Str *name, Array<DocParam> *params, DocNote note, Str *body);
+		STORM_CTOR Doc(Str *name, Array<DocParam> *params, Array<DocNote> *notes, Str *body);
 
 		// Name of this entity.
 		Str *name;
 
 		// Parameters.
 		Array<DocParam> *params;
+
+		// Notes.
+		Array<DocNote> *notes;
 
 		// Documentation body. Formatted using a format similar to Markdown.
 		Str *body;
@@ -62,6 +94,12 @@ namespace storm {
 		// To string.
 		virtual void STORM_FN toS(StrBuf *to) const;
 	};
+
+	// Create documentation, infer 'name' and 'notes' from an entity.
+	Doc *STORM_FN doc(Named *entity, Array<DocParam> *params, Str *body) ON(Compiler);
+
+	// Create a dummy documentation block for 'entity'. Used when no NamedDoc is provided.
+	Doc *STORM_FN doc(Named *entity) ON(Compiler);
 
 
 	/**

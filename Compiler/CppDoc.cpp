@@ -114,7 +114,7 @@ namespace storm {
 		Str *body = readBody(file(), entry());
 		Array<DocParam> *params = createParams(entity, this->params);
 
-		return new (this) Doc(entity->name, params, body);
+		return doc(entity, params, body);
 	}
 
 }

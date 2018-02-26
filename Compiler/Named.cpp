@@ -137,4 +137,11 @@ namespace storm {
 		return true;
 	}
 
+	Doc *Named::findDoc() {
+		if (documentation)
+			return documentation->get();
+		else
+			return doc(this);
+	}
+
 }

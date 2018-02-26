@@ -70,6 +70,11 @@ namespace storm {
 		// Documentation (if present).
 		MAYBE(NamedDoc *) documentation;
 
+		// Get a 'Doc' object for this entity. Uses 'documentation' if available, otherwise
+		// generates a dummy object. This could be a fairly expensive operation, since all
+		// documentation is generally *not* held in main memory.
+		Doc *STORM_FN findDoc();
+
 		// Check if this named entity is visible from 'source'.
 		Bool STORM_FN visibleFrom(Scope source);
 		Bool STORM_FN visibleFrom(MAYBE(NameLookup *) source);
