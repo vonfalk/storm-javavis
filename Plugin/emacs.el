@@ -571,6 +571,7 @@
   (unless (equal "/" dir)
     (file-name-directory (directory-file-name dir))))
 
+
 (defvar storm-running-compile nil "The buffer currently used for compiling Storm.")
 
 (require 'compile)
@@ -764,6 +765,7 @@
       (storm-output-string "\n\nStorm process terminated.\n" 'storm-server-killed)
       (storm-terminated))))
 
+
 ;; Decoding messages in a raw string.
 
 (defmacro storm-state (src)
@@ -973,3 +975,82 @@
 ;; (with-current-buffer "eval.bs"
 ;;   (let ((str (log-time "Extracted text" (buffer-string))))
 ;;     (log-time "Send message " (storm-send (list 'dummy str)))))
+
+
+(defvar storm-name-history nil "History for entered names.")
+(defvar storm-complete-cache '(nil nil) "Last queried completions.")
+
+(defun storm-complete-try (string predicate)
+  "Try to complete 'string'. Returns either 't if it is a unique match, 'nil if no match and a string if multiple entries match."
+  (try-completion string (storm-complete-all string predicate) predicate))
+
+
+(defun storm-complete-all (string predicate)
+  "Get all completions for 'string'."
+  (unless (string= (car storm-complete-cache) string)
+    ;; Update the cache.
+    (let ((result '("aaa" "aab" "aac" "get" "from" "storm")))
+      (setcar storm-complete-cache string)
+      (setcdr storm-complete-cache result)))
+
+  ;; TODO: respect predicate?
+  (cdr storm-complete-cache))
+
+(defun storm-complete-test (string predicate)
+  "Is 'string' an exact match?"
+  (test-completion string (storm-complete-all string predicate) predicate))
+
+(defun storm-sort-names (names)
+  "Sort function for names during autocompletion."
+  (sort names #'string<))
+
+(defun storm-complete-meta (string predicate)
+  "Return metadata."
+  '(metadata
+    (category . storm-name)
+    (display-sort-function . storm-sort-names)
+    (cycle-sort-function . storm-sort-names)))
+
+(defun storm-find-dot (string dir)
+  "Find the last dot (.), looking either from the beginning or from the end."
+  "Parens are respected, and dots inside them are ignored."
+  (let ((parens 0)
+	(pos 0)
+	(result 0)
+	(len (length string)))
+    (when (< dir 0)
+      (setq pos (1- len))
+      (setq result len))
+
+    (while (and (< pos len) (>= pos 0))
+      (let ((ch (string-to-char (substring string pos (1+ pos)))))
+	(cond ((and (= parens 0) (= ch ?.)) (setq result (1+ pos)))
+	      ((= ch ?\() (setq parens (1+ parens)))
+	      ((= ch ?\)) (setq parens (1- parens))))
+	)
+      (setq pos (+ pos dir))
+      )
+    result
+    )
+  )
+
+(defun storm-complete-boundaries (string predicate suffix)
+  (cons
+   'boundaries
+   (cons
+    (storm-find-dot string 1)
+    (storm-find-dot suffix -1))))
+
+(defun storm-complete (string predicate mode)
+  (cond ((eq mode 'nil)      (storm-complete-try  string predicate))
+	((eq mode 't)        (storm-complete-all  string predicate))
+	((eq mode 'lambda)   (storm-complete-test string predicate))
+	((eq mode 'metadata) (storm-complete-meta string predicate))
+	((and (consp mode) (eq (car mode) 'boundaries))
+	 (storm-complete-boundaries string predicate (cdr mode)))
+	(t 'nil)))
+
+(defun storm-read-name (prompt)
+  "Read a name of an entity in Storm, giving the ability for auto-completion if available."
+  (completing-read prompt 'storm-complete nil 'confirm nil 'storm-name-history))
+
