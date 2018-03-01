@@ -53,6 +53,8 @@ namespace storm {
 			Symbol *level;
 			Symbol *as;
 			Symbol *t;
+			Symbol *completeName;
+			Symbol *documentation;
 
 			// Any test state required now?
 			Test *testState;
@@ -86,6 +88,8 @@ namespace storm {
 			void onTest(SExpr *msg);
 			void onDebug(SExpr *msg);
 			void onColor(SExpr *msg);
+			void onComplete(SExpr *msg);
+			void onDocumentation(SExpr *msg);
 
 			// Send updates for 'range' in 'file'.
 			void update(File *file, Range range);

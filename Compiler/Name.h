@@ -146,4 +146,8 @@ namespace storm {
 	SimpleName *STORM_FN parseSimpleName(Str *str);
 	SimpleName *parseSimpleName(Engine &e, const wchar *str);
 
+	// Parse a string containing a complex name (that may contain parameters). Returns 'null' on
+	// failure (ie. non-matching parentheses).
+	MAYBE(Name *) STORM_FN parseComplexName(Str *str);
+
 }

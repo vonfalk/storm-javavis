@@ -207,4 +207,89 @@ namespace storm {
 		return r;
 	}
 
+	static Str *trimStr(Engine &e, const wchar *start, const wchar *end) {
+		while (start < end && *start == ' ')
+			start++;
+
+		while (start < end && end[-1] == ' ')
+			end--;
+
+		return new (e) Str(start, end);
+	}
+
+	static bool atEnd(wchar ch) {
+		switch (ch) {
+		case '\0':
+		case ')':
+		case ',':
+			return true;
+		default:
+			return false;
+		}
+	}
+
+	static MAYBE(Name *) parseComplexName(Engine &e, const wchar *&at) {
+		Name *r = new (e) Name();
+
+		const wchar *first = at;
+		while (!atEnd(*at)) {
+			if (*at == '.') {
+				if (first < at)
+					r->add(trimStr(e, first, at));
+				at++;
+				first = at;
+			} else if (*at == '(') {
+				RecPart *part = new (e) RecPart(trimStr(e, first, at));
+
+				while (*at != ')') {
+					if (*at == '\0')
+						return null;
+					at++;
+					if (*at == ' ')
+						continue;
+
+					Name *p = parseComplexName(e, at);
+					if (!p)
+						return null;
+
+					part->params->push(p);
+				}
+				r->add(part);
+
+				// Find . or end of string.
+				at++;
+				while (!atEnd(*at)) {
+					if (*at == '.') {
+						at++;
+						break;
+					}
+					if (*at != ' ')
+						return false;
+					at++;
+				}
+
+				first = at;
+			} else {
+				at++;
+			}
+		}
+
+		if (first < at) {
+			r->add(trimStr(e, first, at));
+		} else if (first == at && at[-1] == '.') {
+			r->add(new (e) Str(S("")));
+		}
+
+		return r;
+	}
+
+	MAYBE(Name *) parseComplexName(Str *str) {
+		const wchar *at = str->c_str();
+		Name *result = parseComplexName(str->engine(), at);
+
+		if (*at != '\0')
+			return null;
+		return result;
+	}
+
 }

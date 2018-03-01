@@ -115,6 +115,11 @@ The following messages can be sent from the text editor to the language server:
 * `(indent id pos)`: Request indentation information for character *pos* (a number) in the file with
   identifier *id* (a number). The language server replies to this message with an `(indent file value)` message.
 * `(color id)`: Send all coloring information for file *id* once more.
+* `(complete-name string context)`: Reply with a list of names matching *string*. *string* is parsed using the
+  default syntax for names in Storm. Names are resolved using a scope that looks for names inside `core`
+  and optionally in the package corresponding *context*, if provided.
+* `(documentation name context)`: Reply with the documentation for *name*. *name* is parsed just like
+  in the `complete-name` message.
 
 The following messages can be sent from the language server to the text editor:
 
@@ -137,6 +142,15 @@ The following messages can be sent from the language server to the text editor:
   meaning of the number *value*. If *type* is `level`, the line shall be indented *value* levels (a
   level is defined by the client). If *type* is `as`, the line shall be indented as the line
   containing the character at offset *value* (zero based index).
+* `(complete-name name...)`: Sent as a reply to `(complete-name string context)` to provide a list
+  of possible matches. The matches provided are generally only one level deep, meaning that
+  the language server will not traverse the entire name tree to provide all possible completions since
+  that would be very expensive and most likely not what is actually desired.
+* `(documentation name data)`: Sent as a reply to `(documentation name context)`. If *name* did not exist,
+  then *data* is `nil`. Otherwise, *data* has the form: `(name params notes body)`, where *name* is the name
+  of the entity, *params* is a list containing entries like `(param-name param-type param-ref)`, *notes* is a
+  list containing entries like `(note note-type note-ref)` and *body* is the body of the documentation.
+  See the class `core.lang.Doc` for details.
 
 The following colors are available to the language server:
 

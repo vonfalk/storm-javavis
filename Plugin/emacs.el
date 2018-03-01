@@ -989,7 +989,7 @@
   "Get all completions for 'string'."
   (unless (string= (car storm-complete-cache) string)
     ;; Update the cache.
-    (let ((result '("aaa" "aab" "aac" "get" "from" "storm")))
+    (let ((result (storm-query (list 'complete-name string))))
       (setcar storm-complete-cache string)
       (setcdr storm-complete-cache result)))
 
@@ -1038,8 +1038,9 @@
   (cons
    'boundaries
    (cons
-    (storm-find-dot string 1)
-    (storm-find-dot suffix -1))))
+    ;; (storm-find-dot string 1)
+    ;; (storm-find-dot suffix -1))))
+    0 (length suffix))))
 
 (defun storm-complete (string predicate mode)
   (cond ((eq mode 'nil)      (storm-complete-try  string predicate))
@@ -1054,3 +1055,7 @@
   "Read a name of an entity in Storm, giving the ability for auto-completion if available."
   (completing-read prompt 'storm-complete nil 'confirm nil 'storm-name-history))
 
+
+(defun storm-doc (name)
+  (interactive (list (storm-read-name "Show documentation for: ")))
+  (message "TODO: Show documentation for %s" name))

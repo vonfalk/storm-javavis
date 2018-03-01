@@ -25,6 +25,8 @@ namespace storm {
 			level = c->symbol(S("level"));
 			as = c->symbol(S("as"));
 			t = c->symbol(S("t"));
+			completeName = c->symbol(S("complete-name"));
+			documentation = c->symbol(S("documentation"));
 			work = new (this) WorkQueue(this);
 			chunkChars = defaultChunkChars;
 		}
@@ -110,12 +112,21 @@ namespace storm {
 			} else if (*color == *kind) {
 				work->poke();
 				onColor(cell->rest);
+			} else if (*completeName == *kind) {
+				onComplete(cell->rest);
+			} else if (*documentation == *kind) {
+				onDocumentation(cell->rest);
 			} else {
 				print(TO_S(this, S("Unknown message: ") << msg));
 			}
 
 			return true;
 		}
+
+
+		/**
+		 * Handle messages.
+		 */
 
 		void Server::onSupported(SExpr *expr) {
 			String *ext = next(expr)->asStr();
@@ -276,6 +287,66 @@ namespace storm {
 				updateLater(f, f->full());
 			}
 		}
+
+		static Name *parseName(Str *str) {
+			Name *result = parseComplexName(str);
+			while (!result) {
+				// Try to remove '(' and see if we can parse!
+				Str::Iter last = str->findLast(Char('('));
+				if (last == str->end())
+					break;
+
+				str = str->substr(str->begin(), last);
+				result = parseComplexName(str);
+			}
+
+			return result;
+		}
+
+		static void findOptions(Scope scope, Name *candidate, Array<Str *> *out) {
+			NamePart *last = candidate->last();
+			NameSet *found = as<NameSet>(scope.find(candidate->parent()));
+			if (!found)
+				return;
+
+			// Make sure everything is properly loaded.
+			found->forceLoad();
+			for (NameSet::Iter i = found->begin(), e = found->end(); i != e; ++i) {
+				Named *f = i.v();
+				if (f->name->startsWith(last->name))
+					out->push(f->identifier());
+			}
+		}
+
+		void Server::onComplete(SExpr *expr) {
+			Str *str = next(expr)->asStr()->v;
+			Str *ctx = null;
+			if (expr)
+				ctx = next(expr)->asStr()->v;
+
+			// TODO: Handle the context!
+			Scope scope = engine().scope();
+
+			Array<Str *> *results = new (this) Array<Str *>();
+			Name *name = parseName(str);
+			if (name) {
+				PVAR(name);
+				findOptions(scope, name, results);
+			}
+
+			SExpr *reply = null;
+			for (Nat i = results->count(); i > 0; i--)
+				reply = cons(engine(), new (this) String(results->at(i - 1)), reply);
+			conn->send(cons(engine(), completeName, reply));
+		}
+
+		void Server::onDocumentation(SExpr *expr) {
+			print(TO_S(this, S("TODO: Send documentation")));
+		}
+
+		/**
+		 * Update logic.
+		 */
 
 		static Str *colorName(EnginePtr e, syntax::TokenColor c) {
 			using namespace storm::syntax;
