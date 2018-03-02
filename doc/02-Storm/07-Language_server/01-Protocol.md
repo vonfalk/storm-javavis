@@ -147,10 +147,10 @@ The following messages can be sent from the language server to the text editor:
   the language server will not traverse the entire name tree to provide all possible completions since
   that would be very expensive and most likely not what is actually desired.
 * `(documentation name data)`: Sent as a reply to `(documentation name context)`. If *name* did not exist,
-  then *data* is `nil`. Otherwise, *data* has the form: `(name params notes body)`, where *name* is the name
-  of the entity, *params* is a list containing entries like `(param-name param-type param-ref)`, *notes* is a
-  list containing entries like `(note note-type note-ref)` and *body* is the body of the documentation.
-  See the class `core.lang.Doc` for details.
+  then *data* is `nil`. Otherwise, *data* is a list with elements of the form: `(name params notes body)`,
+  where *name* is the name of the entity, *params* is a list containing entries like
+  `(param-name param-type param-ref)`, *notes* is a list containing entries like `(note note-type note-ref)`
+  and *body* is the body of the documentation. See the class `core.lang.Doc` for details.
 
 The following colors are available to the language server:
 

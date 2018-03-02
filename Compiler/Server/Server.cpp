@@ -303,9 +303,17 @@ namespace storm {
 			return result;
 		}
 
-		static void findOptions(Scope scope, Name *candidate, Array<Str *> *out) {
-			NamePart *last = candidate->last();
-			NameSet *found = as<NameSet>(scope.find(candidate->parent()));
+		static Str *format(Named *f, Name *candidate) {
+			Nat len = max(Nat(1), candidate->count());
+			SimpleName *path = f->path();
+			if (path->count() > len) {
+				path = path->from(path->count() - len);
+			}
+			return path->toS();
+		}
+
+		static void findOptions(NameLookup *in, Name *candidate, Array<Str *> *out) {
+			NameSet *found = as<NameSet>(in);
 			if (!found)
 				return;
 
@@ -313,24 +321,49 @@ namespace storm {
 			found->forceLoad();
 			for (NameSet::Iter i = found->begin(), e = found->end(); i != e; ++i) {
 				Named *f = i.v();
-				if (f->name->startsWith(last->name))
-					out->push(f->identifier());
+				if (candidate->empty())
+					out->push(format(f, candidate));
+				else if (f->name->startsWith(candidate->last()->name))
+					out->push(format(f, candidate));
 			}
+		}
+
+		static void findOptions(Engine &e, Scope scope, Name *candidate, Array<Str *> *out) {
+			Name *parent = candidate->parent();
+
+			if (parent->empty()) {
+				// Look inside 'core', 'root' and 'top'.
+				findOptions(scope.top, candidate, out);
+				Package *core = e.package(S("core"));
+				if (scope.top != core)
+					findOptions(core, candidate, out);
+				if (scope.top != e.package())
+					findOptions(e.package(), candidate, out);
+			} else {
+				findOptions(scope.find(parent), candidate, out);
+			}
+		}
+
+		static Scope createScope(Engine &e, SExpr *&ctx) {
+			Scope scope = e.scope();
+
+			if (ctx) {
+				Url *path = parsePath(next(ctx)->asStr()->v);
+				if (Package *pkg = e.package(path))
+					scope = Scope(scope, pkg);
+			}
+
+			return scope;
 		}
 
 		void Server::onComplete(SExpr *expr) {
 			Str *str = next(expr)->asStr()->v;
-			Str *ctx = null;
-			if (expr)
-				ctx = next(expr)->asStr()->v;
-
-			// TODO: Handle the context!
-			Scope scope = engine().scope();
+			Scope scope = createScope(engine(), expr);
 
 			Array<Str *> *results = new (this) Array<Str *>();
 			Name *name = parseName(str);
 			if (name) {
-				findOptions(scope, name, results);
+				findOptions(engine(), scope, name, results);
 			}
 
 			SExpr *reply = null;

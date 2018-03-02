@@ -134,7 +134,7 @@ namespace storm {
 
 	SimpleName *SimpleName::parent() const {
 		SimpleName *n = new (this) SimpleName();
-		for (nat i = 1; i < parts->count(); i++)
+		for (nat i = 0; i + 1 < parts->count(); i++)
 			n->add(parts->at(i));
 		return n;
 	}

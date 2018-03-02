@@ -82,6 +82,7 @@ namespace storm {
 		}
 
 		// Core.
+		// TODO: We might not want to lookup inside 'core' always?
 		if (Package *core = corePkg(in.top))
 			if (Named *found = storm::find(in, core, name))
 				return found;
