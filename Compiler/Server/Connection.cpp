@@ -202,6 +202,7 @@ namespace storm {
 			Buffer r = input->read(chunk);
 			if (r.empty()) {
 				// EOF reached...
+				// Note: Ctrl+D on UNIX will also end up here.
 				return false;
 			}
 

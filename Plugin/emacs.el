@@ -611,15 +611,16 @@
 
 (defun storm-start-compiler ()
   "Start the Storm compiler."
-  (setq storm-process
-	(apply #'start-process
-	       "*storm-interactive*"
-	       nil
-	       (append
-		(list storm-mode-compiler
-		      "-r" (expand-file-name storm-mode-root))
-		(storm-include-params)
-		(list "--server"))))
+  (let ((process-connection-type nil)) ;; Don't use a PTY. Otherwise  breaks everything.
+    (setq storm-process
+	  (apply #'start-process
+		 "*storm-interactive*"
+		 nil
+		 (append
+		  (list storm-mode-compiler
+			"-r" (expand-file-name storm-mode-root))
+		  (storm-include-params)
+		  (list "--server")))))
   (set-process-coding-system storm-process 'binary 'binary)
   (set-process-filter storm-process 'storm-on-message)
   (set-process-sentinel storm-process 'storm-on-status)
@@ -989,7 +990,7 @@
   "Get all completions for 'string'."
   (unless (string= (car storm-complete-cache) string)
     ;; Update the cache.
-    (let ((result (storm-query (list 'complete-name string))))
+    (let ((result (storm-query (list 'complete-name string default-directory))))
       (setcar storm-complete-cache string)
       (setcdr storm-complete-cache result)))
 

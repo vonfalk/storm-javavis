@@ -330,7 +330,6 @@ namespace storm {
 			Array<Str *> *results = new (this) Array<Str *>();
 			Name *name = parseName(str);
 			if (name) {
-				PVAR(name);
 				findOptions(scope, name, results);
 			}
 
