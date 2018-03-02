@@ -264,7 +264,7 @@ namespace storm {
 						break;
 					}
 					if (*at != ' ')
-						return false;
+						return null;
 					at++;
 				}
 
