@@ -1,5 +1,6 @@
 #pragma once
 #include "Value.h"
+#include "Visibility.h"
 #include "Core/Str.h"
 #include "Utils/Exception.h"
 
@@ -71,9 +72,9 @@ namespace storm {
 		STORM_CLASS;
 	public:
 		// Create.
-		STORM_CTOR Doc(Str *name, Array<DocParam> *params, Str *body);
-		STORM_CTOR Doc(Str *name, Array<DocParam> *params, DocNote note, Str *body);
-		STORM_CTOR Doc(Str *name, Array<DocParam> *params, Array<DocNote> *notes, Str *body);
+		STORM_CTOR Doc(Str *name, Array<DocParam> *params, MAYBE(Visibility *) v, Str *body);
+		STORM_CTOR Doc(Str *name, Array<DocParam> *params, DocNote note, MAYBE(Visibility *) v, Str *body);
+		STORM_CTOR Doc(Str *name, Array<DocParam> *params, Array<DocNote> *notes, MAYBE(Visibility *) v, Str *body);
 
 		// Name of this entity.
 		Str *name;
@@ -84,11 +85,17 @@ namespace storm {
 		// Notes.
 		Array<DocNote> *notes;
 
+		// Visibility of this entity.
+		MAYBE(Visibility *) visibility;
+
 		// Documentation body. Formatted using a format similar to Markdown.
 		Str *body;
 
 		// Deep copy.
 		virtual void STORM_FN deepCopy(CloneEnv *env);
+
+		// Generate a one-line summary of the documentation.
+		Str *STORM_FN summary() const;
 
 	protected:
 		// To string.

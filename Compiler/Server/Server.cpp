@@ -372,8 +372,118 @@ namespace storm {
 			conn->send(cons(engine(), completeName, reply));
 		}
 
+		SExpr *Server::formatValue(Str *name, Named *type, Bool ref) {
+			SExpr *result = null;
+			result = cons(engine(), ref ? t : null, result);
+			if (type)
+				result = cons(engine(), new (this) String(type->identifier()), result);
+			else
+				result = cons(engine(), null, result);
+			result = cons(engine(), new (this) String(name), result);
+			return result;
+		}
+
+		SExpr *Server::formatValue(Str *name, Value v) {
+			return formatValue(name, v.type, v.ref);
+		}
+
+		static Bool compareNamed(Named *a, Named *b) {
+			if (*a->name == *b->name)
+				return a->params->count() < b->params->count();
+			return *a->name < *b->name;
+		}
+
+		SExpr *Server::formatDoc(Named *entity) {
+			Engine &e = engine();
+			SExpr *data = null;
+
+			Doc *d = entity->findDoc();
+
+			// Members.
+			{
+				SExpr *members = null;
+				if (NameSet *s = ::as<NameSet>(entity)) {
+					s->forceLoad();
+
+					Array<Named *> *found = new (e) Array<Named *>();
+					for (NameSet::Iter i = s->begin(), end = s->end(); i != end; ++i)
+						found->push(i.v());
+					found->sort(fnPtr(e, &compareNamed));
+
+					for (Nat i = found->count(); i > 0; i--) {
+						Named *src = found->at(i - 1);
+						// TODO: We might actually want to *load* documentation to provide parameter names here.
+						SExpr *m = cons(e, new (e) String(src->identifier()),
+										new (e) String(doc(src)->summary()));
+						members = cons(e, m, members);
+					}
+				}
+				data = cons(e, members, data);
+			}
+
+			// Body. TODO: Maybe a richer representation that includes references etc.?
+			data = cons(e, new (e) String(d->body), data);
+
+			// Visibility.
+			if (d->visibility)
+				data = cons(e, new (e) String(d->visibility->toS()), data);
+			else
+				data = cons(e, null, data);
+
+			// Notes.
+			{
+				SExpr *notes = null;
+				for (Nat i = d->notes->count(); i > 0; i--) {
+					DocNote n = d->notes->at(i - 1);
+					notes = cons(e, formatValue(n.note, n.named, n.ref), notes);
+				}
+				data = cons(e, notes, data);
+			}
+
+			// Parameters.
+			{
+				SExpr *params = null;
+				for (Nat i = d->params->count(); i > 0; i--) {
+					DocParam p = d->params->at(i - 1);
+					params = cons(e, formatValue(p.name, p.type), params);
+				}
+				data = cons(e, params, data);
+			}
+
+			// Name.
+			data = cons(e, new (e) String(d->name), data);
+
+			return data;
+		}
+
+		void Server::findDoc(Name *name, Scope scope, Array<SExpr *> *to) {
+			if (!name)
+				return;
+
+			if (Named *entity = scope.find(name)) {
+				// We found something! Output whatever we know about this entity.
+				to->push(formatDoc(entity));
+				return;
+			}
+
+			if (NameSet *parent = ::as<NameSet>(scope.find(name->parent()))) {
+				Array<Named *> *found = parent->findName(name->last()->name);
+				found->sort(fnPtr(found->engine(), &compareNamed));
+
+				for (Nat i = 0; i < found->count(); i++) {
+					to->push(formatDoc(found->at(i)));
+				}
+			}
+		}
+
 		void Server::onDocumentation(SExpr *expr) {
-			print(TO_S(this, S("TODO: Send documentation")));
+			Name *name = parseComplexName(next(expr)->asStr()->v);
+			Scope scope = createScope(engine(), expr);
+
+			Array<SExpr *> *result = new (this) Array<SExpr *>();
+			findDoc(name, scope, result);
+
+			conn->send(list(engine(), 2, documentation, list(result)));
 		}
 
 		/**

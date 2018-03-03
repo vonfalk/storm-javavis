@@ -106,6 +106,12 @@ namespace storm {
 			void print(Str *s);
 			void print(const wchar *s);
 			void print(const CString &s);
+
+			// Helpers for providing documentation.
+			void findDoc(Name *name, Scope scope, Array<SExpr *> *out);
+			SExpr *formatDoc(Named *entity);
+			SExpr *formatValue(Str *name, Named *entity, Bool ref);
+			SExpr *formatValue(Str *name, Value v);
 		};
 
 

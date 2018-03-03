@@ -123,16 +123,31 @@ namespace storm {
 		}
 	};
 
+	// Specializations for built-in types. Generates StormInfo for them too, see Storm.h.
 	STORM_PKG(core);
 
-	// Specializations for built-in types. Generates StormInfo for them too, see Storm.h.
+	// Primitive type for boolean values.
 	STORM_PRIMITIVE(Bool, createBool);
+
+	// Unsigned 8-bit number.
 	STORM_PRIMITIVE(Byte, createByte);
+
+	// Signed 32-bit number (two's complement).
 	STORM_PRIMITIVE(Int, createInt);
+
+	// Unsigned 32-bit number.
 	STORM_PRIMITIVE(Nat, createNat);
+
+	// Signed 64-bit number (two's complement).
 	STORM_PRIMITIVE(Long, createLong);
+
+	// Unsigned 64-bit number.
 	STORM_PRIMITIVE(Word, createWord);
+
+	// 32-bit floating point number.
 	STORM_PRIMITIVE(Float, createFloat);
+
+	// 64-bit floating point number.
 	STORM_PRIMITIVE(Double, createDouble);
 
 	/**

@@ -306,6 +306,7 @@
   (set-face-attribute 'default nil :height 200)
   (global-storm-mode t))
 
+(global-set-key (kbd "C-c h") 'storm-doc)
 
 ;;; For debugging ;;;
 

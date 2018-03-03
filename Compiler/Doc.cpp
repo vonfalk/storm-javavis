@@ -73,14 +73,14 @@ namespace storm {
 	 * Doc.
 	 */
 
-	Doc::Doc(Str *name, Array<DocParam> *params, Str *body) :
-		name(name), params(params), notes(new (engine()) Array<DocNote>()), body(body) {}
+	Doc::Doc(Str *name, Array<DocParam> *params, MAYBE(Visibility *) v, Str *body) :
+		name(name), params(params), notes(new (engine()) Array<DocNote>()), visibility(v), body(body) {}
 
-	Doc::Doc(Str *name, Array<DocParam> *params, DocNote note, Str *body) :
-		name(name), params(params), notes(new (engine()) Array<DocNote>(1, note)), body(body) {}
+	Doc::Doc(Str *name, Array<DocParam> *params, DocNote note, MAYBE(Visibility *) v, Str *body) :
+		name(name), params(params), notes(new (engine()) Array<DocNote>(1, note)), visibility(v), body(body) {}
 
-	Doc::Doc(Str *name, Array<DocParam> *params, Array<DocNote> *notes, Str *body) :
-		name(name), params(params), notes(notes), body(body) {}
+	Doc::Doc(Str *name, Array<DocParam> *params, Array<DocNote> *notes, MAYBE(Visibility *) v, Str *body) :
+		name(name), params(params), notes(notes), visibility(v), body(body) {}
 
 	void Doc::deepCopy(CloneEnv *env) {
 		cloned(name, env);
@@ -89,12 +89,26 @@ namespace storm {
 		cloned(body, env);
 	}
 
+	static void putSummary(StrBuf *to, const Doc *doc) {
+		*to << doc->name;
+		if (doc->params->any())
+			*to << S("(") << join(doc->params, S(", ")) << S(")");
+		if (doc->notes->any())
+			*to << S(" ") << join(doc->notes, S(", "));
+	}
+
+	Str *Doc::summary() const {
+		StrBuf *to = new (this) StrBuf();
+		putSummary(to, this);
+		if (visibility)
+			*to << S(" [") << visibility << S("]");
+		return to->toS();
+	}
+
 	void Doc::toS(StrBuf *to) const {
-		*to << name;
-		if (params->any())
-			*to << S("(") << join(params, S(", ")) << S(")");
-		if (notes->any())
-			*to << S(" ") << join(notes, S(", "));
+		if (visibility)
+			*to << visibility << S(" ");
+		putSummary(to, this);
 		*to << S(":\n\n");
 		*to << body;
 	}
@@ -118,19 +132,21 @@ namespace storm {
 				notes->push(note(e, S("on"), on.thread));
 		}
 
+		// TODO? Visibility.
+
 		return notes;
 	}
 
 	Doc *doc(Named *entity, Array<DocParam> *params, Str *body) {
-		return new (entity) Doc(entity->name, params, createNotes(entity), body);
+		return new (entity) Doc(entity->name, params, createNotes(entity), entity->visibility, body);
 	}
 
 	Doc *doc(Named *entity) {
 		Array<DocParam> *params = new (entity) Array<DocParam>();
 		for (Nat i = 0; i < entity->params->count(); i++)
-			params->push(DocParam(new (entity) Str(S("?")), entity->params->at(i)));
+			params->push(DocParam(new (entity) Str(S("")), entity->params->at(i)));
 
-		return new (entity) Doc(entity->name, params, createNotes(entity), new (entity) Str(S("")));
+		return new (entity) Doc(entity->name, params, createNotes(entity), entity->visibility, new (entity) Str(S("")));
 	}
 
 

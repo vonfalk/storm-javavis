@@ -256,7 +256,7 @@ void printHelp(Named entity) on Compiler {
 
 		members.sort(&compareMembers(Named, Named));
 		for (m in members)
-			print(" " + formatMember(m));
+			print(" " + doc(m).summary());
 	}
 }
 
@@ -282,22 +282,4 @@ Bool compareMembers(Named a, Named b) on Compiler {
 		return a.params.count < b.params.count;
 
 	return a.name < b.name;
-}
-
-Str formatMember(Named entity) on Compiler {
-	StrBuf result;
-	result << entity.shortIdentifier();
-
-	if (entity as Function) {
-		result << "->" << entity.result;
-	}
-	if (entity as Variable) {
-		result << ": " << entity.type;
-	}
-
-	if (a = entity.visibility) {
-		result << " (" << a.toS << ")";
-	}
-
-	result.toS;
 }

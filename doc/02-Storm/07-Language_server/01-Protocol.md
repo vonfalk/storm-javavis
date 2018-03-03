@@ -147,10 +147,7 @@ The following messages can be sent from the language server to the text editor:
   the language server will not traverse the entire name tree to provide all possible completions since
   that would be very expensive and most likely not what is actually desired.
 * `(documentation name data)`: Sent as a reply to `(documentation name context)`. If *name* did not exist,
-  then *data* is `nil`. Otherwise, *data* is a list with elements of the form: `(name params notes body)`,
-  where *name* is the name of the entity, *params* is a list containing entries like
-  `(param-name param-type param-ref)`, *notes* is a list containing entries like `(note note-type note-ref)`
-  and *body* is the body of the documentation. See the class `core.lang.Doc` for details.
+  then *data* is `nil`. Otherwise, *data* is a list with elements of the form described below.
 
 The following colors are available to the language server:
 
@@ -162,3 +159,18 @@ The following colors are available to the language server:
 * `fn-name`: Used for names of functions in a language. Emacs uses `font-lock-function-face`.
 * `var-name`: Used for names of variables in a language. Emacs uses `font-lock-variable-face`.
 * `type-name`: Used for names of types in a language. Emacs uses `font-lock-type-face`.
+
+The data inside the `documentation` is a list containing the following data:
+
+* `name`: A string containing the name of the entity.
+* `params`: A list of parameters to this entity. Each of the parameters are a list, `(name type ref)`,
+  where *name* is the name of the parameter and *type* is a string containing the fully-qualified name of
+  the type of the parameter, or `nil` if the parameter refers to `void`. *ref* is `t` if the parameter is
+  a reference, otherwise `nil`.
+* `notes`: A list of notes for this entity. Takes the same form as `params` above, except that *type* does
+  not necessarily refer to a type. Any entity is valid as a note.
+* `visibility`: Visibility of this entity as a string, or `nil` if none was provided.
+* `body`: The body text of the documentation as a string.
+* `members`: A list of members of this entity, if any. Each element has the form `(name . title)` where *name*
+  is the full name of the member and *title* is a short summary that is suitable to show the user.
+

@@ -198,6 +198,7 @@
     (define-key map "\C-cx" 'storm-debug-un-color)
     (define-key map "\C-ce" 'storm-debug-find-error)
     (define-key map "}"     'storm-insert-indent)
+    (define-key map "\C-ch" 'storm-doc)
     map)
   "Keymap for storm-mode")
 
@@ -611,7 +612,8 @@
 
 (defun storm-start-compiler ()
   "Start the Storm compiler."
-  (let ((process-connection-type nil)) ;; Don't use a PTY. Otherwise  breaks everything.
+  ;; Don't use a PTY. Otherwise (=4) breaks everything.
+  (let ((process-connection-type nil))
     (setq storm-process
 	  (apply #'start-process
 		 "*storm-interactive*"
@@ -1054,9 +1056,73 @@
 
 (defun storm-read-name (prompt)
   "Read a name of an entity in Storm, giving the ability for auto-completion if available."
+  (storm-start)
   (completing-read prompt 'storm-complete nil 'confirm nil 'storm-name-history))
 
 
 (defun storm-doc (name)
   (interactive (list (storm-read-name "Show documentation for: ")))
-  (message "TODO: Show documentation for %s" name))
+
+  (let ((doc (storm-query (list 'documentation name default-directory))))
+    (if (or (null doc) (null (first doc)))
+	(message "\"%s\" does not exist." name)
+      (storm-show-doc (first doc)))))
+
+
+(defun storm-show-doc (doc)
+  (with-current-buffer-window "*storm-documentation*"
+			      nil
+			      nil
+			      (mapc #'storm-insert-doc doc)))
+
+(defun storm-insert-doc (doc)
+  (if (< (length doc) 6)
+      (insert "Invalid documentation format returned from Storm.\n")
+    (let ((name    (nth 0 doc))
+	  (params  (nth 1 doc))
+	  (notes   (nth 2 doc))
+	  (vis     (nth 3 doc))
+	  (body    (nth 4 doc))
+	  (members (nth 5 doc)))
+      (when vis
+	(insert vis " "))
+      (insert name)
+      (unless (endp params)
+	(insert "(")
+	(storm-insert-param (first params))
+	(mapc (lambda (x) (insert ", ") (storm-insert-param x)) (rest params))
+	(insert ")"))
+      (unless (endp notes)
+	(insert " ")
+	(storm-insert-note (first notes))
+	(mapc (lambda (x) (insert ", ") (storm-insert-note x)) (rest notes)))
+      (insert ":\n\n")
+      (insert body "\n")
+      (unless (endp members)
+	(insert "\nMembers:\n")
+	(mapc (lambda (x) (insert " " (cdr x) "\n")) members))))
+  (insert "\n\n"))
+
+(defun storm-insert-param (param)
+  (let ((name (nth 0 param))
+	(type (nth 1 param))
+	(ref  (nth 2 param)))
+    (if (null type)
+	(insert "void")
+      (insert type))
+    (when ref
+      (insert "&"))
+    (when (and (not (null name)) (< 0 (length name)))
+      (insert " " name))))
+
+(defun storm-insert-note (param)
+  (let ((note (nth 0 param))
+	(type (nth 1 param))
+	(ref  (nth 2 param)))
+    (when (and (not (null note)) (< 0 (length note)))
+      (insert note " "))
+    (if (null type)
+	(insert "void")
+      (insert type))
+    (when ref
+      (insert "&"))))
