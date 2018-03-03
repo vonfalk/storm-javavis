@@ -83,6 +83,11 @@ documentation in Storm. In the Basic Storm REPL, type `help <name>` to access do
 entities in the system. For example: `help core:Str` will tell you about the string type and its
 members. `help core:Str:find` will tell you that there are two overloads of `find`.
 
+You can also access the documentation in Storm using the Emacs plugin. Run the command `M-x storm-doc`
+and enter the name of the thing you want to see documentation for. The Emacs plugin allows interactive
+browsing of the documentation and provides auto completion for the name entry which makes it easy
+to explore the contents of packages.
+
 
 Contact
 --------

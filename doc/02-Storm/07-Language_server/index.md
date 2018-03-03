@@ -63,3 +63,17 @@ While using `storm-mode`, you can use the following keyboard shortcuts to intera
   with the buffer. Usually this rarely happens.
 
 Indentation in Storm-mode respects `tab-width` for indentation levels.
+
+The plugin also allows browsing the built-in documentation from Emacs. Run the command `M-x storm-doc`
+(bound to `C-c h` in buffers using `storm-mode`) and enter the name of the type or function you wish
+to see documentation for. You can use `<tab>` as usual while entering names to auto-complete the name
+and to see all available completions. Currently, it is not possible to view documentation for
+non-instantiated templates (eg. `core.Array`). Instead, you need to provide parameters for the
+instantiation you are interested in (eg. `core.Array(core.Int)`). The instantiations that are used
+elsewhere in the system will show up in auto-completion just like other types.
+
+In the buffer that shows the documentation, it is possible to navigate to other parts of the documentation
+by clicking the highlighted words or the list of members at the end (even though they are not highlighted).
+It is also possible to move the cursor to them and press `RET` there to visit them. Use `[back]` and
+`[forward]` or `C-c C-f` and `C-c C-b` to go back and forward between previously visited parts of the
+documentation.

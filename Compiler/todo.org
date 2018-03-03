@@ -52,8 +52,9 @@
   - [X] Implement shrink() for Map<> as well.
   - [X] Handles and templates does not work with built-in types (like Int).
 
-* Improvements [5/19]
-  - [ ] Indicate function return types and types of variables in Doc objects.
+* Improvements [6/20]
+  - [ ] Automatically re-flow the raw text in comments, just like Markdown would. This is good
+        when the width of the users terminal or buffer is smaller than the width of the comments.
   - [ ] Allow comment that 'groups' functions together. This will form a two-level tree that could improve
         readability of the documentation.
   - [ ] Switch the order of 'src' and 'dest' in 'jmp'. They are currently reversed when compared to 'call'.
@@ -70,6 +71,7 @@
   - [ ] We can remove a lot of copy-constructors in Code/, and use memcpy + default generated ones!
   - [ ] Remove mov eax, eax (or similar) They are occasionally generated if we're unlucky.
   - [ ] Idea: disallow cloning of values without deepCopy() so that we can safely make iterators for actors.
+  - [X] Indicate function return types and types of variables in Doc objects.
   - [X] Why is the expression '"foo" + foo()' allowed if 'foo()' returns null?
   - [X] The syntax SExpr (, SExpr)? is treated as a parameter list. Switch to {} for capture so that
         this does not happen. (requiring SExpr - (,SExpr) instead), stricter parsing.
