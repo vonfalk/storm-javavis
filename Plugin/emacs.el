@@ -1060,20 +1060,40 @@
   (completing-read prompt 'storm-complete nil 'confirm nil 'storm-name-history))
 
 
-(defun storm-doc (name)
+(defun storm-doc (name &optional no-history)
   (interactive (list (storm-read-name "Show documentation for: ")))
 
-  (let ((doc (storm-query (list 'documentation name default-directory))))
+  (let* ((msg (if (stringp name)
+		  (list 'documentation name default-directory)
+		name))
+	 (doc (storm-query msg)))
     (if (or (null doc) (null (first doc)))
 	(message "\"%s\" does not exist." name)
-      (storm-show-doc (first doc)))))
+      (storm-show-doc msg (first doc) no-history))))
 
 
-(defun storm-show-doc (doc)
-  (with-current-buffer-window "*storm-documentation*"
-			      nil
-			      nil
-			      (mapc #'storm-insert-doc doc)))
+(defun storm-show-doc (msg doc no-history)
+  (with-current-buffer-window
+   "*storm-documentation*" nil nil
+
+   (unless no-history
+     ;; Add to history.
+     (setq storm-doc-next nil)
+     (setq storm-doc-prev (cons msg (limit storm-doc-prev storm-doc-history))))
+
+   (mapc #'storm-insert-doc doc)
+   (storm-doc-mode)
+
+   ))
+
+(defun limit (seq max)
+  "Limit the length of 'seq' to 'max' elements."
+  (if (<= max 0)
+      nil
+    (if (endp seq)
+	nil
+      (cons (car seq)
+	    (limit (cdr seq) (1- max))))))
 
 (defun storm-insert-doc (doc)
   (if (< (length doc) 6)
@@ -1086,7 +1106,7 @@
 	  (members (nth 5 doc)))
       (when vis
 	(insert vis " "))
-      (insert name)
+      (storm-insert-face name 'bold)
       (unless (endp params)
 	(insert "(")
 	(storm-insert-param (first params))
@@ -1099,9 +1119,48 @@
       (insert ":\n\n")
       (insert body "\n")
       (unless (endp members)
-	(insert "\nMembers:\n")
-	(mapc (lambda (x) (insert " " (cdr x) "\n")) members))))
+	(storm-insert-face "\nMembers (mouse-1 or RET to visit):\n" 'bold)
+	(mapc (lambda (x)
+		(storm-insert-link (cdr x) (car x) nil)
+		(insert "\n"))
+	      members))))
   (insert "\n\n"))
+
+(defun storm-insert-face (text face)
+  (let* ((from (point))
+	 (to   (progn (insert text) (point))))
+    (add-text-properties from to (list 'face face))))
+
+(defun storm-insert-link (text target mark)
+  (let* ((from (point))
+	 (to   (progn (insert text) (point))))
+    (make-button from to
+		 'target target
+		 'follow-link t
+		 'face (if mark 'button nil)
+		 'help-echo (format "Visit the documentation for '%s'." target)
+		 'action #'storm-link-pressed)))
+
+(defun storm-link-pressed (button)
+  (let ((target (button-get button 'target)))
+    (cond ((eq target 'forward) (storm-doc-fwd))
+	  ((eq target 'back) (storm-doc-back))
+	  (t (storm-doc target)))))
+
+(defun storm-doc-fwd ()
+  (interactive)
+  (when storm-doc-next
+    (setq storm-doc-prev (cons (first storm-doc-next) (limit storm-doc-prev storm-doc-history)))
+    (setq storm-doc-next (rest storm-doc-next))
+    (storm-doc (first storm-doc-prev) t)))
+
+(defun storm-doc-back ()
+  (interactive)
+  (when (and storm-doc-prev (> (length storm-doc-prev) 1))
+    (setq storm-doc-next (cons (first storm-doc-prev) (limit storm-doc-next storm-doc-history)))
+    (setq storm-doc-prev (rest storm-doc-prev))
+    (storm-doc (first storm-doc-prev) t)))
+
 
 (defun storm-insert-param (param)
   (let ((name (nth 0 param))
@@ -1109,7 +1168,7 @@
 	(ref  (nth 2 param)))
     (if (null type)
 	(insert "void")
-      (insert type))
+      (storm-insert-link type type t))
     (when ref
       (insert "&"))
     (when (and (not (null name)) (< 0 (length name)))
@@ -1123,6 +1182,29 @@
       (insert note " "))
     (if (null type)
 	(insert "void")
-      (insert type))
+      (storm-insert-link type type t))
     (when ref
       (insert "&"))))
+
+(defvar storm-doc-history 20 "Number of history entries for documentation in Storm.")
+(defvar storm-doc-prev nil "History for the documentation from Storm.")
+(defvar storm-doc-next nil "History for the documentation from Storm.")
+
+(defun storm-doc-mode ()
+  "Activate documentation mode in the current buffer."
+  (setq major-mode 'storm-doc-mode)
+  (setq mode-name "Storm documentation")
+
+  ;; Add buttons indicating 'forward' and 'back' at the end.
+  (save-excursion
+    (goto-char (point-max))
+    (when (and storm-doc-prev (> (length storm-doc-prev) 1))
+      (storm-insert-link "[back]" 'back t)
+      (insert "  "))
+    (when storm-doc-next
+      (storm-insert-link "[forward]" 'forward t)))
+
+  ;; Keybindings.
+  (local-set-key (kbd "C-c C-b") #'storm-doc-back)
+  (local-set-key (kbd "C-c C-f") #'storm-doc-fwd)
+  )

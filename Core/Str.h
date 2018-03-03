@@ -124,7 +124,7 @@ namespace storm {
 		Nat peekLength() const;
 
 		/**
-		 * Iterator (not implemented yet.)
+		 * Iterator.
 		 */
 		class Iter {
 			STORM_VALUE;
