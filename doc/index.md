@@ -17,8 +17,9 @@ designed to be executed in the background while programs are being developed. As
 running in the background, it is able to provide information about the program being developed to
 help the developer, much like an IDE. Currently, it is possible to run Storm as a
 [language server](md://Storm/Language_server) that provides syntax highlighting for all supported
-languages and language extensions to an editor. In the future, the language server should be able
-to provide more semantic information as well. More information on the language server can be found
+languages and language extensions to an editor, such as [Emacs](md://Storm/Language_server/Emacs_plugin).
+In the future, the language server should be able to provide more semantic information as well.
+More information on the language server can be found
 [here](http://urn.kb.se/resolve?urn=urn:nbn:se:liu:diva-138847).
 
 The following example illustrates some of the possibilities of Storm:
@@ -83,7 +84,8 @@ documentation in Storm. In the Basic Storm REPL, type `help <name>` to access do
 entities in the system. For example: `help core:Str` will tell you about the string type and its
 members. `help core:Str:find` will tell you that there are two overloads of `find`.
 
-You can also access the documentation in Storm using the Emacs plugin. Run the command `M-x storm-doc`
+You can also access the documentation in Storm using the
+[Emacs plugin](md://Storm/Language_server/Emacs_plugin). Run the command `M-x storm-doc`
 and enter the name of the thing you want to see documentation for. The Emacs plugin allows interactive
 browsing of the documentation and provides auto completion for the name entry which makes it easy
 to explore the contents of packages.
