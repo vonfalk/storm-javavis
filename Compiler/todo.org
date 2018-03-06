@@ -1,6 +1,7 @@
-* Loose ends so far [18/39]
+* Loose ends so far [18/40]
   - [ ] Support documentation of templates from C++.
   - [ ] Add documentation for the built-in types (such as core.Int).
+  - [ ] It is not possible to chain 'assignment' functions using the = operator.
   - [ ] Accessing member variables do not respect the thread associated with the type like functions do.
         Therefore, it is possible to break the threading model by using raw variable accesses!
   - [ ] Allow nesting class declarations in Basic Storm.

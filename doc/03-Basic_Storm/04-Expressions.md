@@ -115,6 +115,45 @@ Storm, but you can still provide more efficient implementations if you want. In 
 to implement these operators, even though the meaning is seldom ambiguous.
 
 
+Assignment
+-----------
+
+It is possible to create accessor functions (sometimes referred to as *getters* and *setters*) for
+data members in classes that act just like if they were plain member variables. The get part is
+easily implemented using regular functions, since Basic Storm does not differentiate between `foo.a`
+and `foo.a()`. Updating such a field, however, requires a function declared to be usable as a target
+for assignment. In Basic Storm, this is done by replacing the return type of the function (which
+should be `void` anyway) with the keyword `assign` like so:
+
+```
+class Foo {
+    init() {
+        init() { data = 2; }
+    }
+
+    Int v() {
+        data;
+    }
+
+    assign v(Int x) {
+        data = x;
+    }
+
+    private Int data;
+}
+```
+
+This declaration makes it possible to access the value inside `data` through the name `v` as if it
+was a plain variable. This functionality allows a smooth transition from using a plain variable into
+using functions that verify constraints and/or update other state simultaneously.
+
+```
+Foo x;
+x.v = 20;
+print(x.v.toS);
+```
+
+
 Variables
 ----------
 

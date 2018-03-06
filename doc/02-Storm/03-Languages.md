@@ -18,12 +18,13 @@ Loading
 
 Code is loaded in the following steps:
 
-1. load syntax
-2. load types
-3. finalize types
-4. load functions
+1. load syntax rules
+2. load syntax options
+3. load types
+4. finalize types
+5. load functions
 
-Step 3 is used to set up inheritance for types and other tasks that requires information about other
+Step 4 is used to set up inheritance for types and other tasks that requires information about other
 types present in the same package.
 
 Each `Reader` is handed a set of all files of the same type that are found, since some files may
