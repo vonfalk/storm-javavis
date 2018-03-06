@@ -179,7 +179,7 @@ namespace storm {
 		// Package. This is 'null' if this is a member function.
 		const wchar *pkg;
 
-		// Kind of function.
+		// Kind of function and misc. flags.
 		enum FnKind {
 			// Free function. Nothing strange.
 			fnFree,
@@ -192,6 +192,14 @@ namespace storm {
 
 			// Constructor usable for casting.
 			fnCastMember,
+
+			/**
+			 * Flags part of the enum. Use 'fnMask' to mask out the regular members below.
+			 */
+			fnMask = 0xFF,
+
+			// This function is usable as an assignment function.
+			fnAssign = 0x100,
 		};
 
 		// Kind.
@@ -215,6 +223,22 @@ namespace storm {
 		// Result.
 		CppTypeRef result;
 	};
+
+	// Extract the regular part of the 'kind' enum.
+	inline CppFunction::FnKind fnKind(const CppFunction &f) {
+		return CppFunction::FnKind(nat(f.kind) & nat(CppFunction::fnMask));
+	}
+
+	// See if a function has one or more specific flags.
+	inline bool fnHasFlag(const CppFunction &f, CppFunction::FnKind flag) {
+		return (nat(f.kind) & nat(flag)) == nat(flag);
+	}
+
+	// Combine flags properly. Required by the generated code.
+	inline CppFunction::FnKind operator |(CppFunction::FnKind a, CppFunction::FnKind b) {
+		return CppFunction::FnKind(nat(a) | nat(b));
+	}
+
 
 	/**
 	 * List of C++ member variables.

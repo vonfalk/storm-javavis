@@ -19,18 +19,21 @@ namespace storm {
 		 * on. Also acts as an intermediate store for types until we have found all types in the
 		 * current package. Otherwise, we would behave like C, that the type declarations have to be
 		 * before anything that uses them.
+		 *
+		 * If 'result' is null, then we assume that this function declares a setter function, since
+		 * the return type is always 'null' for them.
 		 */
 		class FunctionDecl : public ObjectOn<Compiler> {
 			STORM_CLASS;
 		public:
 			STORM_CTOR FunctionDecl(Scope scope,
-									SrcName *result,
+									MAYBE(SrcName *) result,
 									syntax::SStr *name,
 									Array<NameParam> *params,
 									syntax::Node *body);
 
 			STORM_CTOR FunctionDecl(Scope scope,
-									SrcName *result,
+									MAYBE(SrcName *) result,
 									syntax::SStr *name,
 									Array<NameParam> *params,
 									SrcName *thread,
@@ -39,7 +42,7 @@ namespace storm {
 			// Values.
 			Scope scope;
 			syntax::SStr *name;
-			SrcName *result;
+			MAYBE(SrcName *) result;
 			Array<NameParam> *params;
 			MAYBE(SrcName *) thread;
 			syntax::Node *body;
@@ -57,6 +60,18 @@ namespace storm {
 			// Get our name as a NamePart.
 			NamePart *STORM_FN namePart() const;
 		};
+
+		// Declare setter functions.
+		FunctionDecl *STORM_FN assignDecl(Scope scope,
+										syntax::SStr *name,
+										Array<NameParam> *params,
+										syntax::Node *body);
+
+		FunctionDecl *STORM_FN assignDecl(Scope scope,
+										syntax::SStr *name,
+										Array<NameParam> *params,
+										SrcName *thread,
+										syntax::Node *body);
 
 
 		/**

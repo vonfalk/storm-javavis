@@ -27,7 +27,7 @@ namespace sound {
 		void STORM_FN close();
 
 		// Sound volume (0-1).
-		void STORM_SETTER volume(Float level);
+		void STORM_ASSIGN volume(Float level);
 		Float STORM_FN volume();
 
 		// Play.

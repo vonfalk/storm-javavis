@@ -5,21 +5,64 @@
 #include "Compiler/Exception.h"
 #include "Utils/Bitmask.h"
 
+#include "Type.h"
+
 namespace storm {
 	namespace bs {
 
 		AssignOpInfo::AssignOpInfo(syntax::SStr *op, Int prio, Bool leftAssoc) : OpInfo(op, prio, leftAssoc) {}
 
 		Expr *AssignOpInfo::meaning(Block *block, Expr *lhs, Expr *rhs) {
+			// We need to do this first. Otherwise the UnresolvedName will barf when we ask it for its return type.
+			if (UnresolvedName *n = as<UnresolvedName>(lhs)) {
+				// Try to find a setter function!
+				if (Expr *setter = findSetter(block, lhs, rhs))
+					return setter;
+			}
+
 			Value l = lhs->result().type();
-			Value r = rhs->result().type();
-			UNUSED(r);
+			// Note: We will check compatibility between types at a later stage.
+
+			if (!l.ref) {
+				// Try to use a setter function if we can find one.
+				if (Expr *setter = findSetter(block, lhs, rhs))
+					return setter;
+
+				throw SyntaxError(pos, L"Unable to assign to the value " + ::toS(l) + L". "
+								L"It is only possible to assign to references (such as variables), "
+								L"and if an assignment function is available.");
+			}
 
 			if (l.isHeapObj() && l.ref && castable(rhs, l.asRef(false), block->scope)) {
 				return new (block) ClassAssign(lhs, rhs, block->scope);
 			} else {
 				return OpInfo::meaning(block, lhs, rhs);
 			}
+		}
+
+		Expr *AssignOpInfo::findSetter(Block *block, Expr *lhs, Expr *rhs) {
+			UnresolvedName *name = as<UnresolvedName>(lhs);
+			if (!name)
+				if (FnCall *call = as<FnCall>(lhs))
+					name = call->name();
+
+			// Not something we can use to find a setter.
+			if (!name)
+				return null;
+
+			Actuals *params = new (this) Actuals(*name->params);
+			params->add(rhs);
+
+			// Try again!
+			FnCall *call = as<FnCall>(name->retry(params));
+			if (!call)
+				return null;
+
+			// Only accept functions explicitly marked as 'assign'.
+			if (call->function()->fnFlags() & fnAssign)
+				return call;
+
+			return null;
 		}
 
 		OpInfo *assignOperator(syntax::SStr *op, Int p) {

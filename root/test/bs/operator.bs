@@ -1,4 +1,5 @@
 use core:debug;
+use core:geometry;
 // Make sure operators are properly defined.
 
 /**
@@ -47,4 +48,63 @@ Bool opActorEQ(DbgActor a, DbgActor b) {
 
 Bool opActorNEQ(DbgActor a, DbgActor b) {
 	a !is b;
+}
+
+
+/**
+ * Class that provides a value 'val' that is accessed through getters and setters (called properties
+ * in some languages).
+ */
+class Property {
+	init() {
+		init() { v = 10; }
+	}
+
+	Int plain() {
+		v;
+	}
+
+	void plain(Int to) {
+		v = to;
+	}
+
+	Int val() {
+		v;
+	}
+
+	assign val(Int to) {
+		v = to;
+	}
+
+	assign set(Int to) {
+		v = to;
+	}
+
+	private Int v;
+}
+
+Int testSetter() {
+	Property p;
+	p.set = 20;
+	p.val;
+}
+
+Int testSetterPair() {
+	Property p;
+	p.val = 20;
+	p.val;
+}
+
+Int testNoSetter() {
+	Property p;
+	// Should *not* work.
+	p.plain = 20;
+	p.plain;
+}
+
+Float testSetterCpp() {
+	// Setters declared inside C++.
+	Rect x(0, 0, 100, 100);
+	x.size = Size(50, 50);
+	x.p1.x;
 }

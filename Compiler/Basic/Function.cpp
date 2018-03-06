@@ -12,8 +12,27 @@ namespace storm {
 	namespace bs {
 		using syntax::SStr;
 
+		FunctionDecl *assignDecl(Scope scope,
+								syntax::SStr *name,
+								Array<NameParam> *params,
+								syntax::Node *body) {
+
+			return new (name) FunctionDecl(scope, null, name, params, body);
+		}
+
+		FunctionDecl *assignDecl(Scope scope,
+								syntax::SStr *name,
+								Array<NameParam> *params,
+								SrcName *thread,
+								syntax::Node *body) {
+
+			return new (name) FunctionDecl(scope, null, name, params, thread, body);
+		}
+
+
+
 		FunctionDecl::FunctionDecl(Scope scope,
-								SrcName *result,
+								MAYBE(SrcName *) result,
 								syntax::SStr *name,
 								Array<NameParam> *params,
 								syntax::Node *body)
@@ -25,7 +44,7 @@ namespace storm {
 			  body(body) {}
 
 		FunctionDecl::FunctionDecl(Scope scope,
-								SrcName *result,
+								MAYBE(SrcName *) result,
 								syntax::SStr *name,
 								Array<NameParam> *params,
 								SrcName *thread,
@@ -38,7 +57,9 @@ namespace storm {
 			  body(body) {}
 
 		Function *FunctionDecl::createFn() {
-			Value result = scope.value(this->result);
+			Value result;
+			if (this->result)
+				result = scope.value(this->result);
 			NamedThread *thread = null;
 
 			if (this->thread) {
@@ -55,6 +76,9 @@ namespace storm {
 			BSFunction *f = new (this) BSFunction(result, name, resolve(params, scope), scope, thread, body);
 			f->visibility = visibility;
 
+			if (!this->result)
+				f->make(fnAssign);
+
 			if (docPos != SrcPos())
 				applyDoc(docPos, f);
 
@@ -62,7 +86,9 @@ namespace storm {
 		}
 
 		void bs::FunctionDecl::update(BSFunction *fn) {
-			Value result = scope.value(this->result);
+			Value result;
+			if (this->result)
+				result = scope.value(this->result);
 
 			assert(fn->result == result);
 			fn->update(resolve(params, scope), body, name->pos);

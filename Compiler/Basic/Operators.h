@@ -20,6 +20,10 @@ namespace storm {
 
 			// Custom meaning.
 			virtual Expr *STORM_FN meaning(Block *block, Expr *lhs, Expr *rhs);
+
+		private:
+			// Try to find an applicable setter function.
+			Expr *findSetter(Block *block, Expr *lhs, Expr *rhs);
 		};
 
 		// Assignment operator. (right associative).

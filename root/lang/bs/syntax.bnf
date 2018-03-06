@@ -96,11 +96,14 @@ SFormal => NameParam(type, name) : SType type, SName name #varName;
 
 // Function.
 FunctionDecl SFunction(Scope env);
-SFunction => FunctionDecl(env, result, name, params, body) :
+SFunction[0] => FunctionDecl(env, result, name, params, body) :
     SType result, SFnDeclName name #fnName, "(", SFormals params, ")", "{" [, SFunctionBody@ body, ]+ "}";
-SFunction => FunctionDecl(env, result, name, params, thread, body) :
+SFunction[5] => assignDecl(env, name, params, body) :
+    "assign" #keyword, SFnDeclName name #fnName, "(", SFormals params, ")", "{" [, SFunctionBody@ body, ]+ "}";
+SFunction[0] => FunctionDecl(env, result, name, params, thread, body) :
     SType result, SFnDeclName name #fnName, "(", SFormals params, ")", "on" #keyword, SType thread, "{" [, SFunctionBody@ body, ]+ "}";
-
+SFunction[5] => assignDecl(env, name, params, thread, body) :
+    "assign" #keyword, SFnDeclName name #fnName, "(", SFormals params, ")", "on" #keyword, SType thread, "{" [, SFunctionBody@ body, ]+ "}";
 
 // Function names. Slightly wider than a regular Name, since we allow operators here as well.
 SStr SFnDeclName();
@@ -435,13 +438,15 @@ SClassItem => apply(pos, item, access) : STypeAccess access - " ", SPlainClassIt
 
 // Class items possible to put access modifiers (and other decorators) in front of.
 Named SPlainClassItem(Class owner);
-SPlainClassItem => ClassVar(owner, t, n) :
+SPlainClassItem[0] => ClassVar(owner, t, n) :
     SType t, SName n #varName, ";";
-SPlainClassItem => classFn(owner, pos, name, result, params, body) :
+SPlainClassItem[0] => classFn(owner, pos, name, result, params, body) :
     SType result, SFnDeclName name #fnName, "(", SFormals params, ")", "{"[, SFunctionBody@ body,]+ "}";
-SPlainClassItem => classCtor(owner, pos, params, body) :
+SPlainClassItem[5] => classAssign(owner, pos, name, params, body) :
+    "assign" #keyword, SFnDeclName name #fnName, "(", SFormals params, ")", "{"[, SFunctionBody@ body,]+ "}";
+SPlainClassItem[5] => classCtor(owner, pos, params, body) :
     "init" #keyword, "(", SCtorParams params, ")", "{"[, SCtorBody@ body,]+ "}";
-SPlainClassItem => classCastCtor(owner, pos, params, body) :
+SPlainClassItem[5] => classCastCtor(owner, pos, params, body) :
     "cast" #keyword, "(", SCtorParams params, ")", "{"[, SCtorBody@ body,]+ "}";
 
 TObject SDocClassItem(Class owner);

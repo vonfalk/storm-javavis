@@ -11,6 +11,8 @@
 namespace storm {
 	namespace bs {
 
+		static Expr *findTarget(Block *block, SimpleName *name, const SrcPos &pos, Actuals *params, bool useThis);
+
 		static void callOnThread(Function *fn, CodeGen *s, Array<code::Operand> *actuals,
 								CodeResult *to, bool lookup, bool sameObject) {
 
@@ -75,6 +77,17 @@ namespace storm {
 
 			if (params->expressions->count() != toExecute->params->count())
 				throw SyntaxError(pos, L"The parameter count does not match!");
+		}
+
+		UnresolvedName *FnCall::name() {
+			// This is approximate, and assumes that if we have a getter, the setter must be located
+			// at the same place (which is actually fairly reasonable in many cases). This is,
+			// however, not always true.
+
+			BlockLookup *lookup = as<BlockLookup>(scope.top);
+			if (!lookup)
+				throw InternalError(L"Can not use FnCall::name() without having a scope referring to a block.");
+			return new (this) UnresolvedName(lookup->block, toExecute->path(), pos, params, false);
 		}
 
 		void FnCall::makeAsync() {
@@ -402,6 +415,35 @@ namespace storm {
 
 
 		/**
+		 * Unresolved name.
+		 */
+
+		UnresolvedName::UnresolvedName(Block *block, SimpleName *name, SrcPos pos, Actuals *params, Bool useThis) :
+			Expr(pos), block(block), name(name), params(params), useThis(useThis) {}
+
+		Expr *UnresolvedName::retry(Actuals *params) const {
+			return findTarget(block, name, pos, params, useThis);
+		}
+
+		ExprResult UnresolvedName::result() {
+			error();
+			return ExprResult();
+		}
+
+		void UnresolvedName::code(CodeGen *s, CodeResult *r) {
+			error();
+		}
+
+		void UnresolvedName::toS(StrBuf *to) const {
+			*to << name << S("[invalid]");
+		}
+
+		void UnresolvedName::error() const {
+			throw SyntaxError(pos, L"Can not find " + ::toS(name) + L".");
+		}
+
+
+		/**
 		 * Assignment.
 		 */
 
@@ -631,9 +673,7 @@ namespace storm {
 
 		// Find whatever is meant by the 'name' in this context. Return suitable expression. If
 		// 'useThis' is true, a 'this' pointer may be inserted as the first parameter.
-		static Expr *findTarget(Block *block, SimpleName *name,
-										const SrcPos &pos, Actuals *params,
-										bool useThis) {
+		static Expr *findTarget(Block *block, SimpleName *name, const SrcPos &pos, Actuals *params, bool useThis) {
 			const Scope &scope = block->scope;
 
 			// Type ctors and local variables have priority.
@@ -651,7 +691,7 @@ namespace storm {
 				if (Expr *e = findTargetThis(block, name, params, pos, candidate))
 					return e;
 
-			// Try without the this pointer first.
+			// Try without the this pointer.
 			BSNamePart *last = new (name) BSNamePart(name->last()->name, pos, params);
 			name->last() = last;
 			Named *n = scope.find(name);
@@ -660,7 +700,8 @@ namespace storm {
 				return e;
 
 			if (!n && !candidate)
-				throw SyntaxError(pos, L"Can not find " + ::toS(name) + L".");
+				// Delay throwing the error until later.
+				return new (name) UnresolvedName(block, name, pos, params, useThis);
 
 			if (!n)
 				n = candidate;
@@ -700,6 +741,11 @@ namespace storm {
 		}
 
 		Expr *STORM_FN spawnExpr(Expr *expr) {
+			// If it is an unresolved name: poke it so that it throws the more appropriate error
+			// rather than us delivering a less informative error.
+			if (as<UnresolvedName>(expr))
+				expr->result();
+
 			FnCall *fnCall = as<FnCall>(expr);
 			if (!fnCall)
 				throw SyntaxError(expr->pos, L"The spawn-syntax is not applicable to anything but functions"

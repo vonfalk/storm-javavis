@@ -25,7 +25,7 @@ namespace gui {
 		// Layout border size. If no layout border is set from the constructor, it will return the
 		// largest possible float value.
 		Size STORM_FN layoutBorder();
-		void STORM_SETTER layoutBorder(Size size);
+		void STORM_ASSIGN layoutBorder(Size size);
 
 		// TODO: We can add formatting options for parts of the string here. For example, it is
 		// possible to apply a font to a specific part of the string.

@@ -113,6 +113,15 @@ namespace storm {
 									syntax::Node *content);
 
 		/**
+		 * Class function declared as 'assign function'.
+		 */
+		BSFunction *STORM_FN classAssign(Class *owner,
+										SrcPos pos,
+										syntax::SStr *name,
+										Array<NameParam> *params,
+										syntax::Node *content);
+
+		/**
 		 * Class constructor.
 		 */
 		BSCtor *STORM_FN classCtor(Class *owner,

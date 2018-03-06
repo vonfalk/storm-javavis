@@ -47,17 +47,17 @@ namespace gui {
 
 		// Manipulate the selection.
 		Selection STORM_FN selected();
-		void STORM_SETTER selected(Selection sel);
+		void STORM_ASSIGN selected(Selection sel);
 
 		// Called when return is pressed.
 		MAYBE(Fn<void, Edit *> *) onReturn;
 
 		// Cue banner.
-		void STORM_SETTER cue(Str *t);
+		void STORM_ASSIGN cue(Str *t);
 		Str *STORM_FN cue();
 
 		// Multiline. You can currently only set multiline before the control is created.
-		void STORM_SETTER multiline(Bool v);
+		void STORM_ASSIGN multiline(Bool v);
 		Bool STORM_FN multiline();
 
 	protected:

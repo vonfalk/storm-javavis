@@ -62,10 +62,10 @@ namespace gui {
 		Bool STORM_FN pop();
 
 		// Set the transform (in relation to the previous state).
-		void STORM_SETTER transform(Transform *tfm);
+		void STORM_ASSIGN transform(Transform *tfm);
 
 		// Set the line width (in relation to the previous state).
-		void STORM_SETTER lineWidth(Float w);
+		void STORM_ASSIGN lineWidth(Float w);
 
 		/**
 		 * Draw stuff.

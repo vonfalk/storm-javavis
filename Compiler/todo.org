@@ -1,9 +1,10 @@
-* Loose ends so far [18/38]
+* Loose ends so far [18/39]
   - [ ] Support documentation of templates from C++.
   - [ ] Add documentation for the built-in types (such as core.Int).
   - [ ] Accessing member variables do not respect the thread associated with the type like functions do.
         Therefore, it is possible to break the threading model by using raw variable accesses!
   - [ ] Allow nesting class declarations in Basic Storm.
+  - [ ] Allow declaring member functions (at least in values) as a different thread than the owner.
   - [ ] Unary negation is not implemented in Basic Storm (and possibly not in the built-in types).
   - [ ] Change the default visibility of class members in Basic Storm to private.
   - [ ] Destructors in maps and arrays are not working properly yet. Idea: add (yet another) member 

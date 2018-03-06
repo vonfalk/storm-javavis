@@ -427,7 +427,7 @@ namespace storm {
 	}
 
 	void CppLoader::loadFunction(const CppFunction &fn) {
-		switch (fn.kind) {
+		switch (fnKind(fn)) {
 		case CppFunction::fnFree:
 		case CppFunction::fnFreeEngine:
 			loadFreeFunction(fn);
@@ -451,13 +451,16 @@ namespace storm {
 
 		Function *f = new (*e) Function(result, new (*e) Str(fn.name), loadFnParams(fn.params));
 
-		if (fn.kind == CppFunction::fnFreeEngine)
+		if (fnKind(fn) == CppFunction::fnFreeEngine)
 			f->setCode(new (*e) StaticEngineCode(fn.ptr));
 		else
 			f->setCode(new (*e) StaticCode(fn.ptr));
 
 		if (fn.threadId < this->into->namedThreads.count())
 			f->runOn(this->into->namedThreads[fn.threadId]);
+
+		if (fnHasFlag(fn, CppFunction::fnAssign))
+			f->make(fnAssign);
 
 		f->visibility = visibility(fn.access);
 		setDoc(f, fn.doc, fn.params);
@@ -492,6 +495,9 @@ namespace storm {
 				// If so, it has a pure constructor.
 				f->makePure();
 		}
+
+		if (fnHasFlag(fn, CppFunction::fnAssign))
+			f->make(fnAssign);
 
 		f->visibility = visibility(fn.access);
 		setDoc(f, fn.doc, fn.params);

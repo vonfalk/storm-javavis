@@ -35,7 +35,7 @@ namespace gui {
 #ifdef GUI_GTK
 		// Window text.
 		using Window::text;
-		virtual void STORM_SETTER text(Str *str);
+		virtual void STORM_ASSIGN text(Str *str);
 
 		// Container.
 		virtual Basic *container();
@@ -48,15 +48,15 @@ namespace gui {
 		virtual void STORM_FN size(Size s);
 
 		// Set position.
-		virtual void STORM_SETTER pos(Rect r);
+		virtual void STORM_ASSIGN pos(Rect r);
 		using Window::pos;
 
 		// Set fullscreen mode.
-		void STORM_SETTER fullscreen(Bool f);
+		void STORM_ASSIGN fullscreen(Bool f);
 		Bool STORM_FN fullscreen();
 
 		// Hide cursor on this window.
-		void STORM_SETTER cursorVisible(Bool v);
+		void STORM_ASSIGN cursorVisible(Bool v);
 		Bool STORM_FN cursorVisible();
 
 	private:

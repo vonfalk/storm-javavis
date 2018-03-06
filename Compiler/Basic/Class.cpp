@@ -191,6 +191,22 @@ namespace storm {
 										body);
 		}
 
+		BSFunction *STORM_FN classAssign(Class *owner,
+										SrcPos pos,
+										syntax::SStr *name,
+										Array<NameParam> *params,
+										syntax::Node *body) {
+
+			BSFunction *f = new (owner) BSFunction(Value(),
+												name,
+												resolve(params, owner, owner->scope),
+												owner->scope,
+												null, // thread
+												body);
+			f->make(fnAssign);
+			return f;
+		}
+
 		BSCtor *STORM_FN classCtor(Class *owner,
 										SrcPos pos,
 										Array<NameParam> *params,

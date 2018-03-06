@@ -8,7 +8,8 @@ const String Function::dtor = L"__destroy";
 Function::Function(const CppName &name, const String &pkg, Access access, const SrcPos &pos,
 				const Auto<Doc> &doc, Auto<TypeRef> result) :
 	name(name), pkg(pkg), stormName(name.last()), access(access), pos(pos), doc(doc), result(result),
-	isMember(false), isVirtual(false), isConst(false), wrapAssign(false), castMember(false), threadType(null) {}
+	isMember(false), isVirtual(false), isConst(false), isAssign(false),
+	wrapAssign(false), castMember(false), threadType(null) {}
 
 void Function::resolveTypes(World &w, const CppName &ctx) {
 	result = result->resolve(w, ctx);

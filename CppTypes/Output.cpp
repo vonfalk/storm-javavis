@@ -477,13 +477,18 @@ static void genFunctions(wostream &to, World &w) {
 
 		// Kind.
 		if (f.isMember && f.castMember)
-			to << L"CppFunction::fnCastMember, ";
+			to << L"CppFunction::fnCastMember";
 		else if (f.isMember)
-			to << L"CppFunction::fnMember, ";
+			to << L"CppFunction::fnMember";
 		else if (engineFn)
-			to << L"CppFunction::fnFreeEngine, ";
+			to << L"CppFunction::fnFreeEngine";
 		else
-			to << L"CppFunction::fnFree, ";
+			to << L"CppFunction::fnFree";
+
+		if (f.isAssign)
+			to << L" | CppFunction::fnAssign, ";
+		else
+			to << L", ";
 
 		// Access.
 		to << accessName(f.access) << L", ";

@@ -36,7 +36,7 @@ namespace storm {
 
 			// Size.
 			inline Size STORM_FN size() const { return p1 - p0; }
-			inline void STORM_SETTER size(Size to) { p1 = p0 + to; }
+			inline void STORM_ASSIGN size(Size to) { p1 = p0 + to; }
 			inline Rect STORM_FN sized(Size to) { Rect r = *this; r.size(to); return r; }
 
 			// Center.

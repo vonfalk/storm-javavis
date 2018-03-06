@@ -117,7 +117,7 @@ namespace gui {
 		~Gradient();
 
 		// Set the stops.
-		void STORM_SETTER stops(Array<GradientStop> *stops);
+		void STORM_ASSIGN stops(Array<GradientStop> *stops);
 
 		// Destroy the stops.
 		virtual void destroy();

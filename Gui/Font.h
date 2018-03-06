@@ -36,30 +36,30 @@ namespace gui {
 
 		// Font name.
 		inline Str *STORM_FN name() { return fName; }
-		void STORM_SETTER name(Str *name);
+		void STORM_ASSIGN name(Str *name);
 
 		// Font height (pt).
 		inline Float STORM_FN height() { return fHeight; }
-		void STORM_SETTER height(Float h);
+		void STORM_ASSIGN height(Float h);
 
 		// Font height (dip).
 		inline Float STORM_FN pxHeight() { return fHeight * 92.0f / 72.0f; }
 
 		// Font weight. TODO: Make constants for weight.
 		inline Int STORM_FN weight() { return fWeight; }
-		void STORM_SETTER weight(Int w);
+		void STORM_ASSIGN weight(Int w);
 
 		// Italic.
 		inline Bool STORM_FN italic() { return fItalic; }
-		void STORM_SETTER italic(Bool u);
+		void STORM_ASSIGN italic(Bool u);
 
 		// Underline.
 		inline Bool STORM_FN underline() { return fUnderline; }
-		void STORM_SETTER underline(Bool u);
+		void STORM_ASSIGN underline(Bool u);
 
 		// Strike thru.
 		inline Bool STORM_FN strikeOut() { return fStrikeOut; }
-		void STORM_SETTER strikeOut(Bool u);
+		void STORM_ASSIGN strikeOut(Bool u);
 
 		// To string.
 		virtual void STORM_FN toS(StrBuf *to) const;

@@ -173,6 +173,16 @@ BEGIN_TEST(OperatorTest, BS) {
 	CHECK_EQ(runFn<Bool>(S("test.bs.opActorNEQ"), a, a), false);
 } END_TEST
 
+BEGIN_TEST(SetterTest, BS) {
+	// The hard part with this test is not getting the correct result, it is getting it to compile!
+	CHECK_EQ(runFn<Int>(S("test.bs.testSetter")), 20);
+	CHECK_EQ(runFn<Int>(S("test.bs.testSetterPair")), 20);
+	CHECK_EQ(runFn<Float>(S("test.bs.testSetterCpp")), 50.0f);
+
+	// When trying to use anything else as a setter, a syntax error should be thrown!
+	CHECK_ERROR(runFn<Int>(S("test.bs.testNoSetter")), SyntaxError);
+} END_TEST
+
 
 /**
  * Type system.

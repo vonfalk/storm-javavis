@@ -16,6 +16,10 @@ namespace storm {
 			add(expr);
 		}
 
+		Actuals::Actuals(const Actuals &o) {
+			expressions = new (this) Array<Expr *>(*o.expressions);
+		}
+
 		Array<Value> *Actuals::values() {
 			Array<Value> *v = new (this) Array<Value>();
 			v->reserve(expressions->count());

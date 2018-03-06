@@ -16,7 +16,7 @@ namespace storm {
 		lookupRef(null),
 		codeRef(null),
 		runOnThread(null),
-		isPure(false) {}
+		myFlags(fnNone) {}
 
 	const void *Function::pointer() {
 		return ref().address();
@@ -58,17 +58,16 @@ namespace storm {
 	}
 
 	Bool Function::pure() const {
-		return isPure;
+		return (myFlags & fnPure) != 0;
 	}
 
-	Function *Function::makePure() {
-		isPure = true;
+	Function *Function::make(FnFlags flag) {
+		myFlags |= flag;
 		return this;
 	}
 
-	Function *Function::makePure(Bool v) {
-		isPure = v;
-		return this;
+	FnFlags Function::fnFlags() const {
+		return myFlags;
 	}
 
 	void Function::toS(StrBuf *to) const {

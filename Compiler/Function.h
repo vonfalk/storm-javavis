@@ -10,6 +10,25 @@ namespace storm {
 	STORM_PKG(core.lang);
 
 	/**
+	 * Flags applicable to functions.
+	 */
+	enum FnFlags {
+		// Nothing special about this function.
+		fnNone = 0x00,
+
+		// This function is pure, meaning that it has no side effects and accesses no global
+		// data. This means that two calls with the same parameters will always yield the same
+		// results, which in turn means that the result can be cached or computed compile-time.
+		fnPure = 0x01,
+
+		// This is a setter function, and as such we want to be able to use the function as the
+		// target of an assignment.
+		fnAssign = 0x2,
+	};
+
+	BITMASK_OPERATORS(FnFlags);
+
+	/**
 	 * Describes a function in the compiler, either a member function or a free function. In the
 	 * case of a member function, the 'this' pointer is explicitly stated as the first parameter.
 	 */
@@ -48,10 +67,14 @@ namespace storm {
 		// perform constant folding or common subexpression elimination through this function safely.
 		virtual Bool STORM_FN pure() const;
 
-		// Make pure.
-		Function *STORM_FN makePure();
-		Function *STORM_FN makePure(Bool v);
+		// Add a flag to the set of flags.
+		Function *STORM_FN make(FnFlags flag);
 
+		// Helper for C++.
+		inline Function *makePure() { return make(fnPure); }
+
+		// Get function flags.
+		FnFlags STORM_FN fnFlags() const;
 
 		// Output.
 		virtual void STORM_FN toS(StrBuf *to) const;
@@ -120,8 +143,8 @@ namespace storm {
 		// Thread we shall be running on:
 		NamedThread *runOnThread;
 
-		// Is this function pure?
-		Bool isPure;
+		// Flags for this function.
+		FnFlags myFlags;
 
 		// Initialize references.
 		void initRefs();

@@ -10,6 +10,8 @@ namespace storm {
 	namespace bs {
 		STORM_PKG(lang.bs);
 
+		class UnresolvedName;
+
 		/**
 		 * Execute a function.
 		 */
@@ -22,8 +24,14 @@ namespace storm {
 			STORM_CTOR FnCall(SrcPos pos, Scope scope, Function *toExecute, Actuals *params);
 			STORM_CTOR FnCall(SrcPos pos, Scope scope, Function *toExecute, Actuals *params, Bool lookup, Bool sameObject);
 
+			// Create a UnresolvedName object describing how to find this function.
+			UnresolvedName *STORM_FN name();
+
+			// Get the function we are going to call.
+			inline Function *STORM_FN function() const { return toExecute; }
+
 			// Tell us to return a future instead.
-			void makeAsync();
+			void STORM_FN makeAsync();
 
 			// Result type.
 			virtual ExprResult STORM_FN result();
@@ -31,6 +39,7 @@ namespace storm {
 			// Generate code.
 			virtual void STORM_FN code(CodeGen *s, CodeResult *to);
 
+		protected:
 			// To string.
 			virtual void STORM_FN toS(StrBuf *to) const;
 
@@ -70,6 +79,7 @@ namespace storm {
 			// Generate code.
 			virtual void STORM_FN code(CodeGen *s, CodeResult *to);
 
+		protected:
 			// To string.
 			virtual void STORM_FN toS(StrBuf *to) const;
 
@@ -116,6 +126,7 @@ namespace storm {
 			// Variable to access.
 			LocalVar *var;
 
+		protected:
 			// To string.
 			virtual void STORM_FN toS(StrBuf *to) const;
 		};
@@ -138,6 +149,7 @@ namespace storm {
 			Value type;
 			code::Var var;
 
+		protected:
 			// To string.
 			virtual void STORM_FN toS(StrBuf *to) const;
 		};
@@ -160,6 +172,7 @@ namespace storm {
 			// Variable to access.
 			MemberVar *var;
 
+		protected:
 			// Output.
 			virtual void STORM_FN toS(StrBuf *to) const;
 
@@ -192,12 +205,60 @@ namespace storm {
 			// Generate code.
 			virtual void STORM_FN code(CodeGen *s, CodeResult *to);
 
+		protected:
 			// Output.
 			virtual void STORM_FN toS(StrBuf *to) const;
 
 		private:
 			// Which thread?
 			NamedThread *thread;
+		};
+
+
+		/**
+		 * Unresolved named expression returned from 'namedExpr' in case a name is not found. This
+		 * is useful since parts of the system (such as the assignment operator when using setters)
+		 * need to inspect and modify a possibly incorrect name.
+		 *
+		 * Accessing any of the member functions that would require a valid name will throw an
+		 * appropriate exception. This basically means that the error 'namedExpr' would throw is
+		 * delayed until another class tries to access the result rather than being thrown immediately.
+		 */
+		class UnresolvedName : public Expr {
+			STORM_CLASS;
+		public:
+			// Create. Takes the same parameters as the internal 'findTarget' function so that the
+			// same query can be repeated later on.
+			UnresolvedName(Block *block, SimpleName *name, SrcPos pos, Actuals *params, Bool useThis);
+
+			// Block.
+			Block *block;
+
+			// Name.
+			SimpleName *name;
+
+			// Actual parameters.
+			Actuals *params;
+
+			// Use the 'this' parameter?
+			Bool useThis;
+
+			// Retry with different parameters.
+			Expr *retry(Actuals *params) const;
+
+			// Result type.
+			virtual ExprResult STORM_FN result();
+
+			// Generate code.
+			virtual void STORM_FN code(CodeGen *s, CodeResult *to);
+
+		protected:
+			// Output.
+			virtual void STORM_FN toS(StrBuf *to) const;
+
+		private:
+			// Throw the error.
+			void error() const;
 		};
 
 
@@ -215,6 +276,7 @@ namespace storm {
 			// Generate code.
 			virtual void STORM_FN code(CodeGen *s, CodeResult *to);
 
+		protected:
 			// Output.
 			virtual void STORM_FN toS(StrBuf *to) const;
 
@@ -239,6 +301,7 @@ namespace storm {
 			// Generate code.
 			virtual void STORM_FN code(CodeGen *s, CodeResult *to);
 
+		protected:
 			// Output.
 			virtual void STORM_FN toS(StrBuf *to) const;
 

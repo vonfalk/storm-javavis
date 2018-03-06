@@ -167,7 +167,7 @@
 /**
  * Mark a function as a setter function. These functions will be callable as 'foo = x' => 'foo(x)'.
  */
-#define STORM_SETTER STORM_FN
+#define STORM_ASSIGN STORM_FN
 
 /**
  * Mark a constructor exported to Storm.

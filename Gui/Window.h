@@ -103,19 +103,19 @@ namespace gui {
 
 		// Visibility.
 		Bool STORM_FN visible();
-		void STORM_SETTER visible(Bool show);
+		void STORM_ASSIGN visible(Bool show);
 
 		// Window text.
 		virtual const Str *STORM_FN text();
-		virtual void STORM_SETTER text(Str *str);
+		virtual void STORM_ASSIGN text(Str *str);
 
 		// Window position. Always relative to the client area (even in Frames).
 		Rect STORM_FN pos();
-		virtual void STORM_SETTER pos(Rect r);
+		virtual void STORM_ASSIGN pos(Rect r);
 
 		// Font.
 		Font *STORM_FN font();
-		void STORM_SETTER font(Font *font);
+		void STORM_ASSIGN font(Font *font);
 
 		// Set focus.
 		virtual void STORM_FN focus();
@@ -134,7 +134,7 @@ namespace gui {
 		virtual Bool STORM_FN onChar(Nat charCode);
 
 		// Set window contents (custom drawing).
-		void STORM_SETTER painter(MAYBE(Painter *) to);
+		void STORM_ASSIGN painter(MAYBE(Painter *) to);
 
 		// Get the current painter.
 		MAYBE(Painter *) STORM_FN painter();

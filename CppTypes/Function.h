@@ -53,6 +53,9 @@ public:
 	// Leading 'virtual' modifier?
 	bool isVirtual;
 
+	// Assignment function (marked STORM_ASSIGN).
+	bool isAssign;
+
 	// This is an assignment function that should be wrapped.
 	bool wrapAssign;
 

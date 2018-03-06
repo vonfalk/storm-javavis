@@ -17,6 +17,7 @@ namespace storm {
 		public:
 			STORM_CTOR Actuals();
 			STORM_CTOR Actuals(Expr *expr);
+			Actuals(const Actuals &o);
 
 			// Parameters.
 			Array<Expr *> *expressions;
