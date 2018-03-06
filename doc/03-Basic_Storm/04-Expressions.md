@@ -13,12 +13,13 @@ Basic Storm supports the following literals:
 * __Strings:__ enclosed in double quotes (`"abc"`). A string evaluates to a `core:Str` 
   object. Since `Str` objects are immutable, it is undefined whether each evaluation will return
   the same or a different `Str` object. (at the moment, they differ).
-* __Integers:__ a simple number. Negative numbers are not supported (the unary `-` operator is 
-  not implemented yet). Use `0 - 1` instead. Integer literals evaluate to a `core:Int` by default, 
+* __Integers:__ a simple number. Integer literals evaluate to a `core:Int` by default,
   but the compiler will cast the literal to `core:Nat` or `core:Byte` automatically if the context 
   requires it, and the literal fits inside the target type without truncation. In some cases, it 
   is necessary to manually help the compiler by doing the casts manually. This is done by calling
   the `nat` or `byte` method on the `Int` object, like this: `1.nat`, or `nat(1)`.
+* __Reals:__ real numbers. Evaluate to the type `core:Float`. Integer numbers are automatically
+  casted to `core:Float` if possible without a loss of precision.
 * __Booleans:__ the reserved words `true` or `false`. Evaluates to `core:Bool`.
 * __Arrays:__ enclosed in square brackets (`[]`), separated with comma (`,`). The literal may start with
   the desired type of the array followed by a colon (`:`). When the type is not entered, Basic Storm tries
@@ -73,6 +74,10 @@ it is not possible to write function calls like this at the moment because of re
 syntax. However, it is possible to declare functions named after an operator. Operators with a pre-
 and post variant uses a star to differentiate the semantics. The pre increment operator is named
 `++*` while the post increment operator is named `*++`.
+
+The `is` operator is an exception to this rule as it can not be overloaded. The `is` operator checks
+whether two references refer to the same object. This is equivalent to the behaviour of `==` for
+actor types, but the `is` operator works for class types as well, where `==` can be overloaded.
 
 New operators can be implemented by adding a new option to the `Operator` rule, either using the
 default `lOperator` or `rOperator` to follow the same semantics as most of the built-in operators,

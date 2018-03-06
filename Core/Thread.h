@@ -11,7 +11,7 @@ namespace storm {
 	 * object, as they are not reported to the GC during startup.
 	 *
 	 * NOTE: These may be copied, so never assume that if a != b, then they represent different
-	 * threads.
+	 * threads. However, the reverse holds. Ie. if a == b then they represent the same thread.
 	 */
 	class Thread : public Object {
 		STORM_CLASS;
@@ -59,7 +59,15 @@ namespace storm {
 
 
 	/**
-	 * Declare the compiler thread, where the compiler itself is to run.
+	 * The main thread of the compiler.
+	 *
+	 * In order to avoid many potential threading issues in the compiler, the compiler itself is
+	 * single threaded and executed by this thread. This is important to consider when writing
+	 * languages and other code that deal with compilation. Even though the languages in Storm will
+	 * ensure that your progam is properly synchronized with regards to data races, it is beneficial
+	 * to place logic that relies a lot on functionality provided by the compiler itself (such as
+	 * the name tree) on the Compiler thread as well in order to avoid an excessive amount of
+	 * expensive thread switches.
 	 */
 	STORM_THREAD(Compiler);
 

@@ -1,16 +1,21 @@
-* Loose ends so far [18/34]
+* Loose ends so far [18/38]
   - [ ] Support documentation of templates from C++.
+  - [ ] Add documentation for the built-in types (such as core.Int).
+  - [ ] Accessing member variables do not respect the thread associated with the type like functions do.
+        Therefore, it is possible to break the threading model by using raw variable accesses!
+  - [ ] Allow nesting class declarations in Basic Storm.
+  - [ ] Unary negation is not implemented in Basic Storm (and possibly not in the built-in types).
   - [ ] Change the default visibility of class members in Basic Storm to private.
   - [ ] Destructors in maps and arrays are not working properly yet. Idea: add (yet another) member 
         to array headers, and let the user provide a custom destructor in there if neccessary.
-  - [ ] Destructors do not need their own slot in the vtables anymore since we have another mechanism for that.
+  - [ ] Destructors do not need their own slot in the Storm vtables anymore since we have another mechanism for that.
   - [ ] Check so that destructors are required if a value-type object within a class or actor
         contains a destructor.
   - [ ] Improve the preprocessor by automatically adding copy constructors and assignment operators
         where neccessary.
   - [ ] Improve the preprocessor by generating toS() and deepCopy() if not present.
   - [ ] Finish the clone() functionality.
-  - [ ] Make sure Array<>, Map<> and Set<> clear the memory when an element is removed.
+  - [ ] Make sure Array<>, Map<> and Set<> clear the memory when an element is removed (and call destructors).
   - [ ] Verify so that integers can not be casted to integers.
   - [ ] Function pointers should maybe allow casting to less specific types of parameters.
   - [ ] Add a 'pos' member to Named. Then we can implement a generic 'file private' and use that in Basic Storm.
