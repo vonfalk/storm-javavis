@@ -34,29 +34,39 @@ namespace storm {
 	 * DocNote.
 	 */
 
-	DocNote::DocNote(Str *note, Value type) : note(note), named(type.type), ref(type.ref) {}
+	DocNote::DocNote(Str *note, Value type) : note(note), named(type.type), ref(type.ref), showType(true) {}
 
-	DocNote::DocNote(Str *note, Named *named) : note(note), named(named), ref(false) {}
+	DocNote::DocNote(Str *note, Named *named) : note(note), named(named), ref(false), showType(true) {}
+
+	DocNote::DocNote(Str *note) : note(note), named(null), ref(false), showType(false) {}
 
 	StrBuf &operator <<(StrBuf &to, DocNote n) {
-		to << n.note << S(" ");
-		if (n.named)
-			to << n.named->identifier();
-		else
-			to << S("void");
-		if (n.ref)
-			to << S("&");
+		to << n.note;
+		if (n.showType) {
+			to << S(" ");
+			if (n.named) {
+				to << n.named->identifier();
+				if (n.ref)
+					to << S("&");
+			} else {
+				to << S("void");
+			}
+		}
 		return to;
 	}
 
 	wostream &operator <<(wostream &to, DocNote n) {
-		to << n.note << L" ";
-		if (n.named)
-			to << n.named->identifier();
-		else
-			to << L"void";
-		if (n.ref)
-			to << L"&";
+		to << n.note;
+		if (n.showType) {
+			to << L" ";
+			if (n.named) {
+				to << n.named->identifier();
+				if (n.ref)
+					to << L"&";
+			} else {
+				to << L"void";
+			}
+		}
 		return to;
 	}
 
@@ -66,6 +76,10 @@ namespace storm {
 
 	static DocNote note(Engine &e, const wchar *note, Named *named) {
 		return DocNote(new (e) Str(note), named);
+	}
+
+	static DocNote note(Engine &e, const wchar *note) {
+		return DocNote(new (e) Str(note));
 	}
 
 
@@ -122,6 +136,8 @@ namespace storm {
 			RunOn on = fn->runOn();
 			if (on.state != RunOn::any)
 				notes->push(note(e, S("on"), on.thread));
+			if (fn->fnFlags() & fnAssign)
+				notes->push(note(e, S("assign")));
 		} else if (Variable *var = as<Variable>(entity)) {
 			notes->push(note(e, S("->"), var->type));
 		} else if (Type *type = as<Type>(entity)) {
@@ -131,8 +147,6 @@ namespace storm {
 			if (on.state != RunOn::any)
 				notes->push(note(e, S("on"), on.thread));
 		}
-
-		// TODO? Visibility.
 
 		return notes;
 	}

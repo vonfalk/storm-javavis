@@ -387,6 +387,15 @@ namespace storm {
 			return formatValue(name, v.type, v.ref);
 		}
 
+		SExpr *Server::formatNote(const DocNote &note) {
+			if (note.showType) {
+				return formatValue(note.note, note.named, note.ref);
+			} else {
+				SExpr *title = new (this) String(note.note);
+				return cons(engine(), title, null);
+			}
+		}
+
 		static Bool compareNamed(Named *a, Named *b) {
 			if (*a->name == *b->name)
 				return a->params->count() < b->params->count();
@@ -425,17 +434,21 @@ namespace storm {
 			data = cons(e, new (e) String(d->body), data);
 
 			// Visibility.
-			if (d->visibility)
-				data = cons(e, new (e) String(d->visibility->toS()), data);
-			else
+			if (d->visibility) {
+				Str *type = runtime::typeOf(d->visibility)->path()->toS();
+				SExpr *cell = cons(e, new (e) String(type), new (e) String(d->visibility->toS()));
+
+				data = cons(e, cell, data);
+			} else {
 				data = cons(e, null, data);
+			}
 
 			// Notes.
 			{
 				SExpr *notes = null;
 				for (Nat i = d->notes->count(); i > 0; i--) {
 					DocNote n = d->notes->at(i - 1);
-					notes = cons(e, formatValue(n.note, n.named, n.ref), notes);
+					notes = cons(e, formatNote(n), notes);
 				}
 				data = cons(e, notes, data);
 			}

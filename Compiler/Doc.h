@@ -33,6 +33,9 @@ namespace storm {
 	/**
 	 * Documentation note. Contains a type and a string that is to displayed alongside the name of
 	 * the object. Used for things like return types and inheritance.
+	 *
+	 * A type of 'void' is ignored, which means that this class can be used to represent other kinds
+	 * of information as well.
 	 */
 	class DocNote {
 		STORM_VALUE;
@@ -40,6 +43,7 @@ namespace storm {
 		// Create.
 		STORM_CTOR DocNote(Str *note, Value type);
 		STORM_CTOR DocNote(Str *note, Named *named);
+		STORM_CTOR DocNote(Str *note);
 
 		// Note.
 		Str *note;
@@ -49,6 +53,9 @@ namespace storm {
 
 		// Reference?
 		Bool ref;
+
+		// Show the type at all?
+		Bool showType;
 	};
 
 	// To string.

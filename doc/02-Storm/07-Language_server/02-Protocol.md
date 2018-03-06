@@ -168,8 +168,10 @@ The data inside the `documentation` is a list containing the following data:
   the type of the parameter, or `nil` if the parameter refers to `void`. *ref* is `t` if the parameter is
   a reference, otherwise `nil`.
 * `notes`: A list of notes for this entity. Takes the same form as `params` above, except that *type* does
-  not necessarily refer to a type. Any entity is valid as a note.
-* `visibility`: Visibility of this entity as a string, or `nil` if none was provided.
+  not necessarily refer to a type. Any entity is valid as a note. The `type` and `ref` may be left out for
+  notes, which means that no type shall be shown for this note at all.
+* `visibility`: Visibility of this entity as a cons cell `(type . title)`, or `nil` if none was provided.
+  *title* is a string suitable to show the user and *type* is the type implementing this visibility.
 * `body`: The body text of the documentation as a string.
 * `members`: A list of members of this entity, if any. Each element has the form `(name . title)` where *name*
   is the full name of the member and *title* is a short summary that is suitable to show the user.

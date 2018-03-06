@@ -112,6 +112,7 @@ namespace storm {
 			SExpr *formatDoc(Named *entity);
 			SExpr *formatValue(Str *name, Named *entity, Bool ref);
 			SExpr *formatValue(Str *name, Value v);
+			SExpr *formatNote(const DocNote &note);
 		};
 
 

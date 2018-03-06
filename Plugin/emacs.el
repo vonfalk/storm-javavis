@@ -1105,7 +1105,8 @@
 	  (body    (nth 4 doc))
 	  (members (nth 5 doc)))
       (when vis
-	(insert vis " "))
+	(storm-insert-link (cdr vis) (car vis) nil)
+	(insert " "))
       (storm-insert-face name 'bold)
       (unless (endp params)
 	(insert "(")
@@ -1175,16 +1176,19 @@
       (insert " " name))))
 
 (defun storm-insert-note (param)
-  (let ((note (nth 0 param))
-	(type (nth 1 param))
-	(ref  (nth 2 param)))
-    (when (and (not (null note)) (< 0 (length note)))
-      (insert note " "))
-    (if (null type)
-	(insert "void")
-      (storm-insert-link type type t))
-    (when ref
-      (insert "&"))))
+  ;; Note: Either 1 or 3 elements.
+  (if (> (length param) 2)
+      (let ((note (nth 0 param))
+	    (type (nth 1 param))
+	    (ref  (nth 2 param)))
+	(when (and (not (null note)) (< 0 (length note)))
+	  (insert note " "))
+	(if (null type)
+	    (insert "void")
+	  (storm-insert-link type type t))
+	(when ref
+	  (insert "&")))
+    (insert (first param))))
 
 (defvar storm-doc-history 20 "Number of history entries for documentation in Storm.")
 (defvar storm-doc-prev nil "History for the documentation from Storm.")
@@ -1200,9 +1204,11 @@
     (goto-char (point-max))
     (when (and storm-doc-prev (> (length storm-doc-prev) 1))
       (storm-insert-link "[back]" 'back t)
-      (insert "  "))
+      (when storm-doc-next
+	(insert "  ")))
     (when storm-doc-next
-      (storm-insert-link "[forward]" 'forward t)))
+      (storm-insert-link "[forward]" 'forward t))
+    (insert "\n"))
 
   ;; Keybindings.
   (local-set-key (kbd "C-c C-b") #'storm-doc-back)
