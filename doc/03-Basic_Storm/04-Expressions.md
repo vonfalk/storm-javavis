@@ -93,13 +93,15 @@ it is usually desirable to also implement `==`, since that can usually be made m
 
 Currently, two operators have a special meaning: assignment and string concatenation. The assignment
 operator will simply call `a.=(b)` if `a` and `b` are values, but it provides a default
-implementation of the assignment operator for class and actor types. The string concatenation
-operator, `#`, is implemented in Basic Storm in `lang:bs:concat.bs` and uses a `core:StrBuf` class
-to build a string from all elements involved. The same string buffer is used for all elements, even
-if there are more than two present. Elements are appended to the `StrBuf` object using the `add`
-member of `StrBuf`. `StrBuf` contains overloads for strings, integers and booleans. If an `add`
-overload is not found, the value is converted to a string using the `toS` function for the object
-(either member or non-member, just like function calls).
+implementation of the assignment operator for class and actor types. As described below, it is also
+possible to create member functions that can be assigned to just as if they were a member
+variable. This is considered by the default implementation of the assignment operator. The string
+concatenation operator, `#`, is implemented in Basic Storm in `lang:bs:concat.bs` and uses a
+`core:StrBuf` class to build a string from all elements involved. The same string buffer is used for
+all elements, even if there are more than two present. Elements are appended to the `StrBuf` object
+using the `add` member of `StrBuf`. `StrBuf` contains overloads for strings, integers and
+booleans. If an `add` overload is not found, the value is converted to a string using the `toS`
+function for the object (either member or non-member, just like function calls).
 
 To implement operators like `+=`, Basic Storm takes a slightly different approach compared to
 C++. This kind of operators (hereby called _combined operators_), are implemented by a syntax rule
@@ -118,12 +120,18 @@ to implement these operators, even though the meaning is seldom ambiguous.
 Assignment
 -----------
 
-It is possible to create accessor functions (sometimes referred to as *getters* and *setters*) for
-data members in classes that act just like if they were plain member variables. The get part is
-easily implemented using regular functions, since Basic Storm does not differentiate between `foo.a`
-and `foo.a()`. Updating such a field, however, requires a function declared to be usable as a target
-for assignment. In Basic Storm, this is done by replacing the return type of the function (which
-should be `void` anyway) with the keyword `assign` like so:
+Basic Storm allows creating member functions that simulate a member variable. This is useful in
+cases where get- and set functions are required but it is desirable to treat the concept as if it
+was a regular member variable. This mechanism also helps a smooth transition from an implementation
+using a member variable to an implementation that uses get- and set functions (eg. to invalidate
+caches or to notify other systems about a change to the variable).
+
+Since Basic Storm does not differentiate between an empty list of actual parameters (ie. `foo()`)
+and no parameter list (ie. `foo`), implementing the get function is trivial. Simply provide a member
+function without any parameters, and the function can be used to read the value as if it was a
+regular variable. The set functionality, however, requires an additional mechanism, called
+*assignment functions* in Basic Storm. Assignment functions are regular function that are marked
+using `assign` instead of a return type as follows:
 
 ```
 class Foo {
@@ -143,14 +151,18 @@ class Foo {
 }
 ```
 
-This declaration makes it possible to access the value inside `data` through the name `v` as if it
-was a plain variable. This functionality allows a smooth transition from using a plain variable into
-using functions that verify constraints and/or update other state simultaneously.
+Declaring a function as `assign` makes the assignment operator consider using that function to
+implement assignment to a particular member. In this case, the assignment operator in the expression
+`foo.v = 3` will realize that it is not possible to assign to the value `foo.v` and look for an
+assignment function `foo.v(3)` to implement the assignment. Note that this transformation is only
+performed if the function called by `foo.v(3)` is marked as an assignment function, it is not done
+in general.
+
 
 ```
-Foo x;
-x.v = 20;
-print(x.v.toS);
+Foo foo;
+foo.v = 20; // equivalent to foo.v(20)
+print(foo.v.toS);
 ```
 
 
