@@ -14,7 +14,7 @@ namespace storm {
 
 		Expr *AssignOpInfo::meaning(Block *block, Expr *lhs, Expr *rhs) {
 			// We need to do this first. Otherwise the UnresolvedName will barf when we ask it for its return type.
-			if (UnresolvedName *n = as<UnresolvedName>(lhs)) {
+			if (as<UnresolvedName>(lhs)) {
 				// Try to find a setter function!
 				if (Expr *setter = findSetter(block, lhs, rhs))
 					return setter;

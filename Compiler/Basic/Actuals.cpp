@@ -16,7 +16,7 @@ namespace storm {
 			add(expr);
 		}
 
-		Actuals::Actuals(const Actuals &o) {
+		Actuals::Actuals(const Actuals &o) : ObjectOn<Compiler>(o) {
 			expressions = new (this) Array<Expr *>(*o.expressions);
 		}
 
