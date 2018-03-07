@@ -82,11 +82,13 @@ namespace code {
 
 			// Start address of the code.
 			inline const void *&codeStart() {
-				return *(const void **)&data[0];
+				void *x = &data[0];
+				return *(const void **)x;
 			}
 			// Total number of bytes of code.
 			inline size_t &codeSize() {
-				return *(size_t *)&data[8];
+				void *x = &data[8];
+				return *(size_t *)x;
 			}
 			// Size of augmenting data.
 			inline Byte &augSize() {
