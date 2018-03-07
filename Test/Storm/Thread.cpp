@@ -2,7 +2,7 @@
 #include "Fn.h"
 #include "Compiler/Debug.h"
 
-BEGIN_TEST(BSThread, BS) {
+BEGIN_TEST_(BSThread, BS) {
 	using namespace storm::debug;
 
 	Engine &e = gEngine();
@@ -39,4 +39,7 @@ BEGIN_TEST(BSThread, BS) {
 	CHECK_EQ(runFn<Int>(S("test.bs.asyncPostObject2")), 13);
 	CHECK_EQ(runFn<Int>(S("test.bs.asyncPostVal")), 33);
 	CHECK_RUNS(runFn<void>(S("test.bs.spawnVoid")));
+
+	// Check variable accesses in other threads.
+	CHECK_EQ(runFn<Int>(S("test.bs.threadVarAccess")), 5);
 } END_TEST

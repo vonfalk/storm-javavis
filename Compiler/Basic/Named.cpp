@@ -382,6 +382,11 @@ namespace storm {
 			} else {
 				*s->l << mov(result.v, xRel(result.v.size(), ptrA, var->offset()));
 			}
+			// TODO: Consider the case where we want to do extraction on another thread! We need to
+			// support returning references from such an operation since other parts of the system
+			// will request references from us even though no assignments are being made. This has
+			// the unfortunate side-effect that we are unable to detect assignments that will be
+			// silently ignored (we don't know the proper thread until it is too late).
 			result.created(s);
 		}
 

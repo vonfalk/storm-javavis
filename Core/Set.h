@@ -262,8 +262,6 @@ namespace storm {
 
 	/**
 	 * C++ interface.
-	 *
-	 * TODO: Set vtables for class in constructors.
 	 */
 	template <class K>
 	class Set : public SetBase {

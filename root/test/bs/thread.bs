@@ -266,3 +266,19 @@ void spawnVoid() {
 	var fut = spawn voidThreadFn();
 	fut.result;
 }
+
+
+class ActorVar on Other {
+	// Public value that we will try to get from another thread.
+	CloneDerived value;
+
+	init() {
+		init();
+	}
+}
+
+Int threadVarAccess() {
+	// Try to access a variable inside an object on another thread. We should receive a clone!
+	ActorVar o;
+	o.value.c;
+}
