@@ -218,6 +218,10 @@ namespace storm {
 		code::TypeDesc *ptrDesc();
 		code::TypeDesc *voidDesc();
 
+		// Get a single shared instance of a function that reads objects from references.
+		Function *readObjFn();
+		Function *readTObjFn();
+
 		// Load a shared library.
 		SharedLib *loadShared(Url *file);
 
@@ -263,6 +267,10 @@ namespace storm {
 			// TypeDesc objects that are used a lot throughout the system.
 			code::TypeDesc *ptrDesc;
 			code::TypeDesc *voidDesc;
+
+			// Read Objects or TObjects from references.
+			Function *readObj;
+			Function *readTObj;
 
 			// Default visibility objects.
 			Visibility *visibility[visCount];

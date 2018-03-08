@@ -242,8 +242,9 @@ namespace storm {
 
 		// Examine if we need to create a CloneEnv.
 		bool needEnv = false;
-		for (Nat i = 0; i < formals->count(); i++)
-			needEnv |= needsCloneEnv(formals->at(i));
+		if (copy)
+			for (Nat i = 0; i < formals->count(); i++)
+				needEnv |= needsCloneEnv(formals->at(i));
 
 		// Create it if required.
 		Var env;

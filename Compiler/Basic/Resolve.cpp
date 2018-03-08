@@ -57,9 +57,9 @@ namespace storm {
 
 			if (MemberVar *v = as<MemberVar>(n)) {
 				if (first)
-					return new (n) MemberVarAccess(pos, new (first) LocalVarAccess(pos, first), v);
+					return new (n) MemberVarAccess(pos, new (first) LocalVarAccess(pos, first), v, true);
 				else
-					return new (n) MemberVarAccess(pos, actual->expressions->at(0), v);
+					return new (n) MemberVarAccess(pos, actual->expressions->at(0), v, false);
 			}
 
 			if (NamedThread *v = as<NamedThread>(n)) {

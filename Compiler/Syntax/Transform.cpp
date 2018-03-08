@@ -189,7 +189,7 @@ namespace storm {
 
 		LocalVar *TransformFn::createPlainVar(ExprBlock *in, Str *name, Token *token) {
 			MemberVar *src = token->target;
-			Expr *srcAccess = new (this) MemberVarAccess(pos, thisVar(in), src);
+			Expr *srcAccess = new (this) MemberVarAccess(pos, thisVar(in), src, true);
 
 			syntax::SStr *sName = CREATE(syntax::SStr, this, name);
 			Var *v = new (this) Var(in, sName, srcAccess);
@@ -204,7 +204,7 @@ namespace storm {
 
 			Type *srcType = tokenType(token);
 			MemberVar *src = token->target;
-			MemberVarAccess *srcAccess = new (this) MemberVarAccess(this->pos, thisVar(in), src);
+			MemberVarAccess *srcAccess = new (this) MemberVarAccess(this->pos, thisVar(in), src, true);
 
 			// Prepare parameters.
 			Actuals *actuals = createActuals(in, pos);
@@ -349,7 +349,7 @@ namespace storm {
 			if (!shallExecute(in, token, pos))
 				return;
 
-			Expr *srcAccess = new (this) MemberVarAccess(this->pos, thisVar(in), token->target);
+			Expr *srcAccess = new (this) MemberVarAccess(this->pos, thisVar(in), token->target, true);
 			in->add(executeToken(in, me, srcAccess, token, pos));
 		}
 
@@ -382,7 +382,7 @@ namespace storm {
 			if (!shallExecute(in, token, pos))
 				return;
 
-			Expr *srcAccess = new (this) MemberVarAccess(this->pos, thisVar(in), token->target);
+			Expr *srcAccess = new (this) MemberVarAccess(this->pos, thisVar(in), token->target, true);
 			WeakCast *cast = new (this) WeakMaybeCast(srcAccess);
 			IfWeak *check = new (this) IfWeak(in, cast);
 			IfTrue *trueBlock = new (this) IfTrue(this->pos, check);
@@ -406,7 +406,7 @@ namespace storm {
 					// Not interesting...
 					continue;
 
-				MemberVarAccess *srcAccess = new (this) MemberVarAccess(this->pos, thisVar(in), t->target);
+				MemberVarAccess *srcAccess = new (this) MemberVarAccess(this->pos, thisVar(in), t->target, true);
 				Expr *read = callMember(pos, scope, S("count"), srcAccess);
 
 				if (minExpr)
@@ -447,7 +447,7 @@ namespace storm {
 				if (!shallExecute(in, t, i))
 					continue;
 
-				MemberVarAccess *srcAccess = new (this) MemberVarAccess(this->pos, thisVar(in), t->target);
+				MemberVarAccess *srcAccess = new (this) MemberVarAccess(this->pos, thisVar(in), t->target, true);
 				Expr *element = callMember(pos, scope, S("[]"), srcAccess, readI);
 				inLoop->add(executeToken(inLoop, me, element, t, i));
 			}
@@ -494,7 +494,7 @@ namespace storm {
 			MemberVar *posVar = as<MemberVar>(found);
 			assert(posVar, L"'pos' not found in syntax node types!");
 
-			return new (this) MemberVarAccess(pos, thisVar(in), posVar);
+			return new (this) MemberVarAccess(pos, thisVar(in), posVar, true);
 		}
 
 		Nat TransformFn::findToken(Str *name) {

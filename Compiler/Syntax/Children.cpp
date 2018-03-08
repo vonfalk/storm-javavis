@@ -111,7 +111,7 @@ namespace storm {
 			if (!interesting(token))
 				return;
 
-			Expr *src = new (this) MemberVarAccess(pos, thisExpr(block), token->target);
+			Expr *src = new (this) MemberVarAccess(pos, thisExpr(block), token->target, true);
 			block->add(push(block, result, src));
 		}
 
@@ -119,7 +119,7 @@ namespace storm {
 			if (!interesting(token))
 				return;
 
-			Expr *src = new (this) MemberVarAccess(pos, thisExpr(block), token->target);
+			Expr *src = new (this) MemberVarAccess(pos, thisExpr(block), token->target, true);
 			WeakCast *cast = new (this) WeakMaybeCast(src);
 			IfWeak *check = new (this) IfWeak(block, cast);
 			IfTrue *trueBlock = new (this) IfTrue(pos, check);
@@ -142,7 +142,7 @@ namespace storm {
 					// Not interesting...
 					continue;
 
-				Expr *src = new (this) MemberVarAccess(pos, thisExpr(block), t->target);
+				Expr *src = new (this) MemberVarAccess(pos, thisExpr(block), t->target, true);
 				Expr *read = callMember(scope, S("count"), src);
 
 				if (minExpr)
@@ -181,7 +181,7 @@ namespace storm {
 				if (!interesting(t))
 					continue;
 
-				Expr *src = new (this) MemberVarAccess(pos, thisExpr(block), t->target);
+				Expr *src = new (this) MemberVarAccess(pos, thisExpr(block), t->target, true);
 				Expr *read = callMember(scope, S("[]"), src, readI);
 				inLoop->add(push(inLoop, result, read));
 			}

@@ -5,6 +5,7 @@
 #include "Function.h"
 #include "Adapter.h"
 #include "Exception.h"
+#include "Package.h"
 #include "Core/Str.h"
 #include "Core/Handle.h"
 #include "Core/Gen/CppTypes.h"
@@ -1018,6 +1019,32 @@ namespace storm {
 
 	Function *Type::destructor() {
 		return as<Function>(find(DTOR, new (this) Array<Value>(1, thisPtr(this)), engine.scope()));
+	}
+
+	Function *Type::readRefFn() {
+		if (readRef)
+			return readRef;
+
+		if (!value()) {
+			// We can just use the default implementation shared between all objects.
+			if (isA(TObject::stormType(engine)))
+				return engine.readTObjFn();
+			else
+				return engine.readObjFn();
+		}
+
+		// Otherwise, we need to create our own function. Note: We're not actually adding the
+		// function to the name tree. We want it to be invisible!
+		Value r(this);
+		code::Listing *src = new (engine) code::Listing(false, typeDesc());
+		code::Var param = src->createParam(engine.ptrDesc());
+
+		*src << code::prolog();
+		*src << code::fnRetRef(param);
+
+		readRef = dynamicFunction(engine, r, S("_read_"), valList(engine, 1, r.asRef()), src);
+		readRef->parentLookup = engine.package();
+		return readRef;
 	}
 
 	void *Type::operator new(size_t size, Engine &e, GcType *type) {

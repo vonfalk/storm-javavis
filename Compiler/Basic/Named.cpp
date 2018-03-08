@@ -311,11 +311,15 @@ namespace storm {
 		/**
 		 * Member variable.
 		 */
-		MemberVarAccess::MemberVarAccess(SrcPos pos, Expr *member, MemberVar *var)
-			: Expr(pos), member(member), var(var) {}
+		MemberVarAccess::MemberVarAccess(SrcPos pos, Expr *member, MemberVar *var, Bool sameObject)
+			: Expr(pos), member(member), var(var), assignTo(false), sameObject(sameObject) {}
 
 		ExprResult MemberVarAccess::result() {
 			return var->type.asRef();
+		}
+
+		void MemberVarAccess::assignResult() {
+			assignTo = true;
 		}
 
 		void MemberVarAccess::code(CodeGen *s, CodeResult *to) {
@@ -347,12 +351,11 @@ namespace storm {
 
 			// If it was a reference, we can use it right away!
 			if (mType.ref) {
-				*s->l << mov(ptrA, memberPtr);
+				extractCode(s, to, memberPtr);
 			} else {
 				*s->l << lea(ptrA, memberPtr);
+				extractCode(s, to, code::Var());
 			}
-
-			extractCode(s, to);
 		}
 
 		void MemberVarAccess::classCode(CodeGen *s, CodeResult *to) {
@@ -360,13 +363,32 @@ namespace storm {
 
 			CodeResult *mResult = new (this) CodeResult(member->result().type().asRef(false), s->block);
 			member->code(s, mResult);
-			*s->l << mov(ptrA, mResult->location(s).v);
-
-			extractCode(s, to);
+			extractCode(s, to, mResult->location(s).v);
 		}
 
-		void MemberVarAccess::extractCode(CodeGen *s, CodeResult *to) {
+		void MemberVarAccess::extractCode(CodeGen *s, CodeResult *to, code::Var obj) {
+			RunOn target = var->owner()->runOn();
+			if (sameObject || s->runOn.canRun(target)) {
+				extractPlainCode(s, to, obj);
+				return;
+			}
+
+			// We need to copy. See if we shall warn the user...
+			if (assignTo)
+				throw SyntaxError(pos, L"Unable to assign to member variables in objects running "
+								L"on a different thread than the caller. Use assignment functions "
+								L"for this task instead.");
+
+			assert(obj != code::Var(), L"We should always get a reasonable 'obj' when dealing with threaded objects.");
+
+			extractCopyCode(s, to, obj);
+		}
+
+		void MemberVarAccess::extractPlainCode(CodeGen *s, CodeResult *to, code::Var obj) {
 			using namespace code;
+
+			if (obj != code::Var())
+				*s->l << mov(ptrA, obj);
 
 			VarInfo result = to->location(s);
 			if (to->type().ref) {
@@ -381,12 +403,48 @@ namespace storm {
 			} else {
 				*s->l << mov(result.v, xRel(result.v.size(), ptrA, var->offset()));
 			}
-			// TODO: Consider the case where we want to do extraction on another thread! We need to
-			// support returning references from such an operation since other parts of the system
-			// will request references from us even though no assignments are being made. This has
-			// the unfortunate side-effect that we are unable to detect assignments that will be
-			// silently ignored (we don't know the proper thread until it is too late).
+
 			result.created(s);
+		}
+
+		void MemberVarAccess::extractCopyCode(CodeGen *s, CodeResult *to, code::Var obj) {
+			using namespace code;
+
+			Value type = to->type();
+			VarInfo result = to->location(s);
+			VarInfo local = result;
+			if (type.ref) {
+				// We need to create a value here that we can use later.
+				local = s->createVar(type.asRef(false));
+			}
+
+			Function *fn = type.type->readRefFn();
+			code::Var thread = s->l->createVar(s->block, Size::sPtr);
+			RunOn runOn = var->owner()->runOn();
+			switch (runOn.state) {
+			case RunOn::runtime:
+				*s->l << mov(ptrA, obj);
+				*s->l << add(ptrA, engine().ref(Engine::rTObjectOffset));
+				*s->l << mov(thread, ptrRel(ptrA, Offset()));
+				break;
+			case RunOn::named:
+				*s->l << mov(thread, runOn.thread->ref());
+				break;
+			default:
+				throw InternalError(L"Can not issue a threaded read on a non-threaded object.");
+			}
+
+			// Offset the pointer and continue. Note: We do not want to modify 'obj' since that
+			// could be used as eg. a local variable.
+			code::Var offset = s->l->createVar(s->block, Size::sPtr);
+			*s->l << mov(offset, obj);
+			*s->l << add(offset, ptrConst(var->offset()));
+			Array<Operand> *params = new (this) Array<Operand>(1, Operand(offset));
+			fn->threadCall(s, params, new (this) CodeResult(type.asRef(false), local), thread);
+
+			if (type.ref) {
+				*s->l << lea(result.v, local.v);
+			}
 		}
 
 		void MemberVarAccess::toS(StrBuf *to) const {

@@ -412,6 +412,28 @@ namespace storm {
 		return o.voidDesc;
 	}
 
+	static RootObject *CODECALL readObject(RootObject **src) {
+		return *src;
+	}
+
+	Function *Engine::readObjFn() {
+		if (!o.readObj) {
+			Value t(Object::stormType(*this));
+			o.readObj = nativeFunction(*this, t, S("_read_"), valList(*this, 1, t.asRef()), address(&readObject));
+			o.readObj->parentLookup = o.root;
+		}
+		return o.readObj;
+	}
+
+	Function *Engine::readTObjFn() {
+		if (!o.readTObj) {
+			Value t(TObject::stormType(*this));
+			o.readTObj = nativeFunction(*this, t, S("_readT_"), valList(*this, 1, t.asRef()), address(&readObject));
+			o.readTObj->parentLookup = o.root;
+		}
+		return o.readTObj;
+	}
+
 	Package *Engine::package() {
 		if (!o.root) {
 			assert(has(bootTypes), L"Can not create packages yet.");

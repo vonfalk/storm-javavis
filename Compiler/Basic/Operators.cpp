@@ -19,6 +19,11 @@ namespace storm {
 					return setter;
 			}
 
+			// Notify LHS that we are going to assign to it, so that it can tell the user if that is a bad idea.
+			if (MemberVarAccess *access = as<MemberVarAccess>(lhs)) {
+				access->assignResult();
+			}
+
 			Value l = lhs->result().type();
 			// Note: We will check compatibility between types at a later stage.
 

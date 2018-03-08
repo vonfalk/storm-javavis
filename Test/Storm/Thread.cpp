@@ -1,8 +1,9 @@
 #include "stdafx.h"
 #include "Fn.h"
 #include "Compiler/Debug.h"
+#include "Compiler/Exception.h"
 
-BEGIN_TEST_(BSThread, BS) {
+BEGIN_TEST(BSThread, BS) {
 	using namespace storm::debug;
 
 	Engine &e = gEngine();
@@ -41,5 +42,6 @@ BEGIN_TEST_(BSThread, BS) {
 	CHECK_RUNS(runFn<void>(S("test.bs.spawnVoid")));
 
 	// Check variable accesses in other threads.
-	CHECK_EQ(runFn<Int>(S("test.bs.threadVarAccess")), 5);
+	CHECK_EQ(runFn<Int>(S("test.bs.threadVarAccess")), 6); // 1 copy, 1 deep copy. Starts at 4.
+	CHECK_ERROR(runFn<void>(S("test.bs.threadVarAssign")), SyntaxError);
 } END_TEST

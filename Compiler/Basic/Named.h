@@ -54,13 +54,13 @@ namespace storm {
 			Scope scope;
 
 			// Use lookup?
-			bool lookup;
+			Bool lookup;
 
 			// Same object?
-			bool sameObject;
+			Bool sameObject;
 
 			// Async function call?
-			bool async;
+			Bool async;
 		};
 
 
@@ -161,13 +161,18 @@ namespace storm {
 		class MemberVarAccess : public Expr {
 			STORM_CLASS;
 		public:
-			STORM_CTOR MemberVarAccess(SrcPos pos, Expr *member, MemberVar *var);
+			STORM_CTOR MemberVarAccess(SrcPos pos, Expr *member, MemberVar *var, Bool sameObject);
 
 			// Result type.
 			virtual ExprResult STORM_FN result();
 
 			// Generate code.
 			virtual void STORM_FN code(CodeGen *s, CodeResult *to);
+
+			// Notify that we will try to assign to this variable. This will not affect the
+			// correctness of this note, but failing to call 'assignTarget' when other code will
+			// attempt to modify the returned reference will result in no error message to the user.
+			void STORM_FN assignResult();
 
 			// Variable to access.
 			MemberVar *var;
@@ -180,14 +185,27 @@ namespace storm {
 			// Member in which the variable is.
 			Expr *member;
 
+			// Will we be part of an assignment? This is only used to generate better error
+			// messages. Nothing else.
+			Bool assignTo;
+
+			// Do we know the target object is running on the same thread as the caller?
+			Bool sameObject;
+
 			// Generate code for a value access.
 			void valueCode(CodeGen *s, CodeResult *to);
 
 			// Generate code for a class access.
 			void classCode(CodeGen *s, CodeResult *to);
 
-			// Extract the value itself from ptrA
-			void extractCode(CodeGen *s, CodeResult *to);
+			// Extract the value itself from 'obj' or 'ptrA' if 'obj == code::Var()'.
+			void extractCode(CodeGen *s, CodeResult *to, code::Var obj);
+
+			// Extract the value, assuming we don't need a deep copy.
+			void extractPlainCode(CodeGen *s, CodeResult *to, code::Var obj);
+
+			// Extract the value, assuming we need a deep copy.
+			void extractCopyCode(CodeGen *s, CodeResult *to, code::Var obj);
 		};
 
 		/**

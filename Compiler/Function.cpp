@@ -146,7 +146,7 @@ namespace storm {
 		using namespace code;
 
 		RunOn on = runOn();
-		assert(on.state != RunOn::any, L"Only use 'findThread' on functions which 'runOn()' something other than any.");
+		assert(on.state != RunOn::any, L"Only use 'findThread' on functions which 'runOn()' return something other than any.");
 
 		Var r = s->l->createVar(s->block, Size::sPtr);
 

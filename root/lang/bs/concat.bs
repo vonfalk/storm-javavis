@@ -25,7 +25,7 @@ class ConcatOperator extends OpInfo {
 }
 
 // Helper to append parameters.
-void appendTo(ConcatExpr expr, Expr e) {
+void appendTo(ConcatExpr expr, Expr e) on Compiler {
 	if (e as Operator) {
 		OpInfo info = e.op;
 		if (info as ConcatOperator) {

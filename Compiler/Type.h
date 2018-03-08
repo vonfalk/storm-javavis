@@ -147,6 +147,11 @@ namespace storm {
 		MAYBE(Function *) STORM_FN deepCopyFn();
 		MAYBE(Function *) STORM_FN destructor();
 
+		// Get a function that reads an instance of this type from a reference and returns a
+		// value. This functionality is used to make sure accesses to variables in other threads are
+		// safe. This function is created on demand.
+		Function *STORM_FN readRefFn();
+
 		// Get the raw destructor to be used for this type. Mainly used by the GC for finalization.
 		typedef void (*DtorFn)(void *);
 		inline DtorFn rawDestructor() { return rawDtor; }
@@ -258,6 +263,9 @@ namespace storm {
 
 		// Reference to us.
 		code::RefSource *selfRef;
+
+		// Function used to read instances of this type. Created on demand.
+		Function *readRef;
 
 		/**
 		 * Helpers for deciding which functions shall be virtual.
