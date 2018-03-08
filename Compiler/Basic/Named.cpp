@@ -351,11 +351,12 @@ namespace storm {
 
 			// If it was a reference, we can use it right away!
 			if (mType.ref) {
-				extractCode(s, to, memberPtr);
+				*s->l << mov(ptrA, memberPtr);
 			} else {
 				*s->l << lea(ptrA, memberPtr);
-				extractCode(s, to, code::Var());
 			}
+
+			extractCode(s, to);
 		}
 
 		void MemberVarAccess::classCode(CodeGen *s, CodeResult *to) {
@@ -363,13 +364,15 @@ namespace storm {
 
 			CodeResult *mResult = new (this) CodeResult(member->result().type().asRef(false), s->block);
 			member->code(s, mResult);
-			extractCode(s, to, mResult->location(s).v);
+			*s->l << mov(ptrA, mResult->location(s).v);
+
+			extractCode(s, to);
 		}
 
-		void MemberVarAccess::extractCode(CodeGen *s, CodeResult *to, code::Var obj) {
+		void MemberVarAccess::extractCode(CodeGen *s, CodeResult *to) {
 			RunOn target = var->owner()->runOn();
 			if (sameObject || s->runOn.canRun(target)) {
-				extractPlainCode(s, to, obj);
+				extractPlainCode(s, to);
 				return;
 			}
 
@@ -379,16 +382,11 @@ namespace storm {
 								L"on a different thread than the caller. Use assignment functions "
 								L"for this task instead.");
 
-			assert(obj != code::Var(), L"We should always get a reasonable 'obj' when dealing with threaded objects.");
-
-			extractCopyCode(s, to, obj);
+			extractCopyCode(s, to);
 		}
 
-		void MemberVarAccess::extractPlainCode(CodeGen *s, CodeResult *to, code::Var obj) {
+		void MemberVarAccess::extractPlainCode(CodeGen *s, CodeResult *to) {
 			using namespace code;
-
-			if (obj != code::Var())
-				*s->l << mov(ptrA, obj);
 
 			VarInfo result = to->location(s);
 			if (to->type().ref) {
@@ -407,7 +405,7 @@ namespace storm {
 			result.created(s);
 		}
 
-		void MemberVarAccess::extractCopyCode(CodeGen *s, CodeResult *to, code::Var obj) {
+		void MemberVarAccess::extractCopyCode(CodeGen *s, CodeResult *to) {
 			using namespace code;
 
 			Value type = to->type();
@@ -419,13 +417,16 @@ namespace storm {
 			}
 
 			Function *fn = type.type->readRefFn();
+
+			// Figure out which thread is the proper one. We can not use Function::findThread since
+			// that would find the thread for the *function* rather than the object we're reading from.
 			code::Var thread = s->l->createVar(s->block, Size::sPtr);
 			RunOn runOn = var->owner()->runOn();
 			switch (runOn.state) {
 			case RunOn::runtime:
-				*s->l << mov(ptrA, obj);
-				*s->l << add(ptrA, engine().ref(Engine::rTObjectOffset));
-				*s->l << mov(thread, ptrRel(ptrA, Offset()));
+				*s->l << mov(ptrC, ptrA);
+				*s->l << add(ptrC, engine().ref(Engine::rTObjectOffset));
+				*s->l << mov(thread, ptrRel(ptrC, Offset()));
 				break;
 			case RunOn::named:
 				*s->l << mov(thread, runOn.thread->ref());
@@ -436,10 +437,12 @@ namespace storm {
 
 			// Offset the pointer and continue. Note: We do not want to modify 'obj' since that
 			// could be used as eg. a local variable.
-			code::Var offset = s->l->createVar(s->block, Size::sPtr);
-			*s->l << mov(offset, obj);
-			*s->l << add(offset, ptrConst(var->offset()));
-			Array<Operand> *params = new (this) Array<Operand>(1, Operand(offset));
+			code::Var data = s->l->createVar(s->block, Size::sPtr);
+			*s->l << add(ptrA, ptrConst(var->offset()));
+			*s->l << mov(data, ptrA);
+
+			// Call the function on the proper thread.
+			Array<Operand> *params = new (this) Array<Operand>(1, Operand(data));
 			fn->threadCall(s, params, new (this) CodeResult(type.asRef(false), local), thread);
 
 			if (type.ref) {

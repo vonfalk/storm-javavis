@@ -198,14 +198,14 @@ namespace storm {
 			// Generate code for a class access.
 			void classCode(CodeGen *s, CodeResult *to);
 
-			// Extract the value itself from 'obj' or 'ptrA' if 'obj == code::Var()'.
-			void extractCode(CodeGen *s, CodeResult *to, code::Var obj);
+			// Extract the value itself from 'ptrA'
+			void extractCode(CodeGen *s, CodeResult *to);
 
 			// Extract the value, assuming we don't need a deep copy.
-			void extractPlainCode(CodeGen *s, CodeResult *to, code::Var obj);
+			void extractPlainCode(CodeGen *s, CodeResult *to);
 
 			// Extract the value, assuming we need a deep copy.
-			void extractCopyCode(CodeGen *s, CodeResult *to, code::Var obj);
+			void extractCopyCode(CodeGen *s, CodeResult *to);
 		};
 
 		/**
