@@ -202,11 +202,10 @@ namespace storm {
 			Thread *thread = obj->thread;
 			if (thread && thread->thread() != os::Thread::current()) {
 				os::Thread t = thread->thread();
-				os::Future<void> f;
-				StrBuf *me = this;
-				os::FnCall<void, 2> p = os::fnCall().add(obj).add(me);
-				os::UThread::spawn(address<void (CODECALL TObject::*)(StrBuf *) const>(&TObject::toS), true, p, f, &t);
-				f.result();
+				os::Future<Str *> f;
+				os::FnCall<Str *, 1> p = os::fnCall().add(obj);
+				os::UThread::spawn(address<Str * (CODECALL TObject::*)() const>(&TObject::toS), true, p, f, &t);
+				add(f.result());
 			} else {
 				add(obj->toS());
 			}

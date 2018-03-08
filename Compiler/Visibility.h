@@ -20,9 +20,9 @@ namespace storm {
 	 * Note: Virtual dispatch is resolved by examining if the overridden function is visible from
 	 * the overriding function, not by examining all possible implementations from the *call
 	 * site*. Furthermore, the system assumes that visibility for functions inside types are
-	 * transitive wrt inheritance. Ie. if A <- B <- C, then if A.foo is visible from C.foo, then
-	 * A.foo must also be visible from B.foo, and B.foo must be visible from C.foo. If this
-	 * constraint is not fullfilled, then the use of virtual dispatch will be unpredictable.
+	 * transitive with respect to inheritance. Ie. if A <- B <- C, then if A.foo is visible from
+	 * C.foo, then A.foo must also be visible from B.foo, and B.foo must be visible from C.foo. If
+	 * this constraint is not fullfilled, then the use of virtual dispatch will be unpredictable.
 	 */
 	class Visibility : public ObjectOn<Compiler> {
 		STORM_CLASS;
