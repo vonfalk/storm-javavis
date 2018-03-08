@@ -4,6 +4,7 @@
 #include "Variable.h"
 #include "Type.h"
 #include "Core/Str.h"
+#include "Core/Set.h"
 #include "Code/Debug.h"
 #include "Utils/Memory.h"
 
@@ -109,11 +110,50 @@ namespace storm {
 			throw DebugError();
 		}
 
+		/**
+		 * Basically an alias for Set<Object>, but uses object hashes for all operations.
+		 */
+		class ObjSet : public SetBase {
+		public:
+			static Type *stormType(Engine &e) {
+				return SetBase::stormType(e);
+			}
+
+			ObjSet() : SetBase(StormInfo<TObject *>::handle(engine())) {}
+
+			void put(RootObject *r) {
+				putRaw(&r);
+			}
+
+			Bool has(RootObject *r) {
+				return hasRaw(&r);
+			}
+
+			class Iter : public SetBase::Iter {
+			public:
+				Iter() : SetBase::Iter() {}
+				Iter(ObjSet *owner) : SetBase::Iter(owner) {}
+
+				ObjSet *v() const {
+					return *(ObjSet **)rawVal();
+				}
+			};
+
+			Iter begin() {
+				return Iter(this);
+			}
+
+			Iter end() {
+				return Iter();
+			}
+
+		};
+
 		// Generic object traversal function.
 		typedef void (*FoundFn)(void *, MemberVar *, nat, void *);
 
 		// Call 'foundFn' for all objects reachable from 'base'.
-		static void traverse(void *base, Type *type, set<Object *> &visited, nat depth, FoundFn fn, void *data) {
+		static void traverse(void *base, Type *type, ObjSet *visited, nat depth, FoundFn fn, void *data) {
 			// Examine super class' members.
 			if (Type *super = type->super())
 				traverse(base, super, visited, depth, fn, data);
@@ -128,9 +168,9 @@ namespace storm {
 					WARNING(L"References are not yet supported and therefore ignored!");
 				} else if (t.isClass()) {
 					// Class.
-					Object *o = OFFSET_IN(base, offset.current(), Object *);
-					if (o != null && visited.count(o) == 0) {
-						visited.insert(o);
+					RootObject *o = OFFSET_IN(base, offset.current(), Object *);
+					if (o != null && !visited->has(o)) {
+						visited->put(o);
 						if (fn)
 							(*fn)(o, v, depth, data);
 						traverse(o, runtime::typeOf(o), visited, depth + 1, fn, data);
@@ -151,25 +191,24 @@ namespace storm {
 		}
 
 		// Entry point.
-		static set<Object *> traverse(Object *o, FoundFn fn, void *data) {
-			TODO(L"Use a Storm set here instead!");
-			set<Object *> visited;
-			visited.insert(o);
+		static ObjSet *traverse(Object *o, FoundFn fn, void *data) {
+			ObjSet *visited = new (o) ObjSet();
+			visited->put(o);
 			traverse(o, runtime::typeOf(o), visited, 0, fn, data);
 			return visited;
 		}
 
 
 		static void printLayout(void *object, MemberVar *var, nat depth, void *data) {
-			const set<Object *> &o = *(const set<Object *>*)data;
+			ObjSet *o = (ObjSet *)data;
 
 			bool hilight = false;
 			String value = L"?";
 			const storm::Value &v = var->type;
 			if (v.isClass()) {
-				Object *obj = (Object *)object;
+				RootObject *obj = (RootObject *)object;
 				value = ::toS(obj) + L" @" + toHex(obj);
-				if (o.count(obj) != 0)
+				if (o->has(obj))
 					hilight = true;
 			} else if (v.isBuiltIn()) {
 				// Built in type.
@@ -195,25 +234,25 @@ namespace storm {
 		}
 
 		// Layout with highlights.
-		static void layout(Object *root, const set<Object *> &hilight) {
+		static void layout(Object *root, ObjSet *hilight) {
 			PLN(runtime::typeOf(root)->identifier() << " " << root);
-			traverse(root, &printLayout, (void *)&hilight);
+			traverse(root, &printLayout, hilight);
 		}
 
 		void layout(Object *obj) {
-			layout(obj, set<Object *>());
+			layout(obj, new (obj) ObjSet());
 		}
 
 		Bool disjoint(Object *a, Object *b) {
-			set<Object *> aObjs = traverse(a, null, null);
-			set<Object *> bObjs = traverse(b, null, null);
-			set<Object *> same;
-			for (set<Object *>::iterator i = aObjs.begin(), end = aObjs.end(); i != end; ++i) {
-				if (bObjs.count(*i))
-					same.insert(*i);
+			ObjSet *aObjs = traverse(a, null, null);
+			ObjSet *bObjs = traverse(b, null, null);
+			ObjSet *same = new (a) ObjSet();
+			for (ObjSet::Iter i = aObjs->begin(), end = aObjs->end(); i != end; ++i) {
+				if (bObjs->has(i.v()))
+					same->put(i.v());
 			}
 
-			if (!same.empty()) {
+			if (same->any()) {
 				PLN("The objects " << a << " and " << b << " are not disjoint!");
 				PLN("Reachable from a: " << ::toS(aObjs));
 				PLN("Reachable from b: " << ::toS(bObjs));
