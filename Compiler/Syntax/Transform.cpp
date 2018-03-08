@@ -8,6 +8,7 @@
 #include "Core/Join.h"
 
 #include "Compiler/Basic/Named.h"
+#include "Compiler/Basic/Resolve.h"
 #include "Compiler/Basic/WeakCast.h"
 #include "Compiler/Basic/If.h"
 #include "Compiler/Basic/For.h"

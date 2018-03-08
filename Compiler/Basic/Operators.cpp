@@ -2,10 +2,9 @@
 #include "Operators.h"
 #include "Named.h"
 #include "Cast.h"
+#include "Resolve.h"
 #include "Compiler/Exception.h"
 #include "Utils/Bitmask.h"
-
-#include "Type.h"
 
 namespace storm {
 	namespace bs {

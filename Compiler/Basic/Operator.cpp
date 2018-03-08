@@ -2,6 +2,7 @@
 #include "Operator.h"
 #include "Named.h"
 #include "Cast.h"
+#include "Resolve.h"
 #include "Compiler/Type.h"
 #include "Compiler/Exception.h"
 

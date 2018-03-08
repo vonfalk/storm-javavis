@@ -32,5 +32,6 @@ namespace storm {
 		// Add syntax to a parser.
 		void STORM_FN addSyntax(Scope from, syntax::ParserBase *to);
 
+
 	}
 }
