@@ -71,3 +71,31 @@ as their first parameter (you do not have to give it a name), and the first para
 automatically passed to the parent constructor. This is needed to make it possible for Storm to
 ensure that even the constructor of the actor is running on the given thread to the not-yet created
 actor.
+
+
+Actors
+--------
+
+As mentioned in [the Storm documentation](md://Storm/Type_system), actors behave slightly
+differently compared to classes. Each actor is associated with a thread, either statically or
+dynamically upon creation. Storm will then make sure that all code in the actor is executed by the
+appropriate thread. Furthermore, Storm ensures that no data is shared between different threads.
+
+In order to ensure these properties hold, Storm will examine each function call and perform a
+*thread switch* if necessary. A thread switch involves sending a message to another thread (using
+`core:Future<T>` to wait for the result) and making deep copies of all parameters and return values
+to avoid shared data. This means that one needs to be a bit careful when working with actors, since
+a class that is passed through a function declared to be executed on another thread will be copied
+along the way, thereby breaking the by-reference semantics that one might expect. This is the main
+reason why the `==` operator for classes compares values rather than references.
+
+This mechanism also introduces difficulties when dealing with member variables inside actors. In
+order to avoid data races and shared data, accesses to these kind of variables need to be
+synchronized, and data needs to be copied just like function calls. Basic Storm implements this
+using *thread switches*, just like for function calls. A small `read` function is used to perform
+the variable read on the appropriate thread with copying as appropriate. However, this solution
+means that accessing variables on other threads will not behave as regular accesses. In particular,
+due to the copying it is not possible to modify the variable in this manner. Basic Storm will detect
+this kind of situation if the variable is immediately assigned to (eg. `foo.x = 8`), but will not
+detect in more complex cases such as `foo.x++` or `foo.x.z = 10` (where `foo.x` is the access that
+requires a thread switch).
