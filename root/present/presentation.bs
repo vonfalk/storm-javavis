@@ -7,6 +7,7 @@ use lang:bs:macro;
  * Presentation.
  */
 class Presentation on Render {
+package:
 	// Title.
 	Str title;
 
@@ -31,6 +32,7 @@ class Presentation on Render {
 	// Show page number?
 	Bool showPage;
 
+public:
 	// Create.
 	init(Str title) {
 		init() {
@@ -47,10 +49,44 @@ class Presentation on Render {
 		slide.number = slides.count;
 	}
 
-	// Temporary solution to safely set the background image from other threads.
-	void setBg(Image image) {
+	// Get the background image.
+	Image? background() {
+		bgImage;
+	}
+
+	// Set the background image.
+	assign background(Image image) {
 		bgImage = image;
 	}
 
+	// Set the background color.
+	assign background(Color color) {
+		bg = color;
+	}
+
+	// Get text color.
+	Color textColor() {
+		text;
+	}
+
+	// Set the text color.
+	assign textColor(Color color) {
+		text = color;
+	}
+
+	// Package to reload when pressing F5.
+	assign package(Package pkg) {
+		reload = pkg;
+	}
+
+	// Show timer?
+	assign timer(Bool v) {
+		showTimer = v;
+	}
+
+	// Show page numbers?
+	assign pageNumbers(Bool v) {
+		showPage = v;
+	}
 }
 
