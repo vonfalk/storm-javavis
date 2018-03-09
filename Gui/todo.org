@@ -1,6 +1,8 @@
-* General [2/4]
+* General [2/5]
   - [ ] Add a way to create proper modal dialogs with return codes.
   - [ ] Make the text view and the multiline text view separate, as we want
         to handle text separatly in the two cases.
+  - [ ] Investigate why GTK_MT_HW_COPY experiences fairly large (around 500 ms) stutters from time to time.
+        This could be due to our handling of double buffers, but also due to Gtk+ not liking that we're bypassing it.
   - [X] Investigate why OpenGL rendering fails when maximizing a window containing GL rendering over X forwarding to Windows.
   - [X] Figure out a way to unify the onKey and onChar messages. They are different on Win32 and the same on GTK.

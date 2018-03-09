@@ -62,7 +62,11 @@
 #define GTK_MT_SW (GTK_RENDER_SW | GTK_RENDER_CAIRO | GTK_RENDER_MT)
 
 // The selected mode. Pick one of the above.
-#define GTK_MODE GTK_MT_HW_COPY
+// Note: GTK_MT_HW_COPY have stuttering issues on some systems. Repaints seems to be done
+// properly, but the image on the screen is not always updated. I think this is due to us
+// fighting with Gtk+, as everything seems to work better with the GTK_MT_HW_CAIRO (even
+// though there are more VSync artifacts in that case).
+#define GTK_MODE GTK_MT_HW_CAIRO
 
 
 #if GTK_RENDER_IS_MT(GTK_MODE)
