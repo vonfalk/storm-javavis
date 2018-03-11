@@ -1,0 +1,28 @@
+use core:geometry;
+
+/**
+ * Describes a component in the layout hierarchy.
+ *
+ * A component is a rectangle that will be laid out according to the rules of the active Layout. The
+ * Component class also stores information about the underlying component, such as minimum size and
+ * other component-specific information.
+ *
+ * Provide a function called 'component' to wrap custom types inside the 'Component' class. The
+ * system will try to call that function automatically when possible.
+ *
+ * Generally, all information inside a particular component is assumed to be read-only.
+ */
+class Component {
+	// Get the position of this component.
+	Rect pos() {
+		Rect();
+	}
+
+	// Set the position of this component.
+	assign pos(Rect p) {}
+
+	// Get the minimum size of this component.
+	Size minSize() {
+		Size(0, 0);
+	}
+}

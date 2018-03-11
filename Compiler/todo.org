@@ -1,5 +1,7 @@
-* Loose ends so far [20/40]
+* Loose ends so far [20/41]
   - [ ] Support documentation of templates from C++.
+  - [ ] We probably want to allow creating documentation for an entire package. Possibly by creating
+        a file called 'doc.txt' or similar inside the appropriate folder.
   - [ ] Add documentation for the built-in types (such as core.Int).
   - [ ] It is not possible to chain 'assignment' functions using the = operator.
   - [ ] Allow declaring member functions (at least in values) as a different thread than the owner.

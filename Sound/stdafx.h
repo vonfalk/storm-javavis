@@ -9,6 +9,9 @@ namespace sound {
 	using namespace storm;
 	using storm::IStream;
 
+	/**
+	 * Thread used for audio processing. All classes that provides sound are invoked from this thread.
+	 */
 	STORM_THREAD(Audio);
 }
 

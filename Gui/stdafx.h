@@ -101,7 +101,17 @@ namespace gui {
 	using namespace storm;
 	using namespace storm::geometry;
 
+	/**
+	 * Thread used for interaction with the Ui library. All events regarding windows are handled by
+	 * this thread.
+	 */
 	STORM_THREAD(Ui);
+
+	/**
+	 * Thread used for rendering. This thread is dedicated to drawing custom contents inside the
+	 * windows so that events from the operating system can be handled within reasonable time even
+	 * when heavy rendering work is being done.
+	 */
 	STORM_THREAD(Render);
 
 }
