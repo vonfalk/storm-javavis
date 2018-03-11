@@ -728,14 +728,25 @@ namespace storm {
 			throw GcError(msg);
 	}
 
+	// Macros usable to increase readability inside 'generationParams'. Note: we measure in KB, not bytes!
+#define KB
+#define MB *1024
+
 	/**
-	 * Parameters about the generations to create.
+	 * Parameters about the generations to create. Note: the mortality rate is only an initial
+	 * guess, the MPS computes the actual mortality during run-time.
+     *
 	 * TODO: Tweak these!
 	 */
 	static mps_gen_param_s generationParams[] = {
-		{ 2*1024*1024, 0.85 }, // Nursery generation, 2MB
-		{ 4*1024*1024, 0.45 }, // Intermediate generation, 4MB
-		{ 8*1024*1024, 0.10 }, // Long-lived generation (for types, code and other things), 8MB
+		// Nursery generation. Should be fairly small.
+		{ 2 MB, 0.9 },
+
+		// Intermediate generation.
+		{ 8 MB, 0.5 },
+
+		// Long-lived generation (for types, code and other things).
+		{ 16 MB, 0.1 },
 	};
 
 	Gc::Gc(size_t arenaSize, nat finalizationInterval) : finalizationInterval(finalizationInterval) {
