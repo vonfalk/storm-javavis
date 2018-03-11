@@ -59,7 +59,8 @@ namespace storm {
 		info = null;
 		key = null;
 		val = null;
-		watch = null;
+		if (watch)
+			watch->clear();
 	}
 
 	void MapBase::shrink() {

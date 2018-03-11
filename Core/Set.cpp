@@ -49,7 +49,8 @@ namespace storm {
 		lastFree = 0;
 		info = null;
 		key = null;
-		watch = null;
+		if (watch)
+			watch->clear();
 	}
 
 	void SetBase::shrink() {
