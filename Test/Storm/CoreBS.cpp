@@ -65,6 +65,9 @@ BEGIN_TEST(InheritanceTest, BS) {
 	CHECK_ERROR(runFn<Int>(S("test.bs.testCallProt")), SyntaxError);
 	CHECK_ERROR(runFn<Int>(S("test.bs.testCallPriv")), SyntaxError);
 	CHECK_ERROR(runFn<Int>(S("test.bs.testPrivSuper")), SyntaxError);
+
+	// Inner classes should be able to access private things.
+	CHECK_EQ(runFn<Int>(S("test.bs.testInner")), 25);
 } END_TEST
 
 /**

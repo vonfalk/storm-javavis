@@ -38,6 +38,10 @@ moment.
 Note that it is not possible to inherit from a class _and_ declare the class as an actor. If the
 super class was an actor the new class will be an actor as well, otherwise it will not.
 
+Storm allows nested type definitions. These work like in C++, which means that a type declared
+inside another type will be able to access all private parts of the outer type. Aside from that,
+Storm does not consider them to have any special relation to each other.
+
 Constructors
 --------------
 

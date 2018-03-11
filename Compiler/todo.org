@@ -1,8 +1,7 @@
-* Loose ends so far [19/40]
+* Loose ends so far [20/40]
   - [ ] Support documentation of templates from C++.
   - [ ] Add documentation for the built-in types (such as core.Int).
   - [ ] It is not possible to chain 'assignment' functions using the = operator.
-  - [ ] Allow nesting class declarations in Basic Storm.
   - [ ] Allow declaring member functions (at least in values) as a different thread than the owner.
   - [ ] Unary negation is not implemented in Basic Storm (and possibly not in the built-in types).
   - [ ] Change the default visibility of class members in Basic Storm to private.
@@ -24,6 +23,7 @@
   - [ ] Automatically mark non-virtual functions in C++ as 'final' in storm, since VTables will not work anyway.
   - [ ] If a type has a '==' or '<' outside the type itself, the corresponding operator will not be present in
         a Handle, like '<<' at the moment.
+  - [X] Allow nesting class declarations in Basic Storm.
   - [X] Accessing member variables do not respect the thread associated with the type like functions do.
         Therefore, it is possible to break the threading model by using raw variable accesses!
   - [X] In Basic Storm, taking a function pointer of a private function does not work.

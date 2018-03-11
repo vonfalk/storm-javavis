@@ -31,6 +31,14 @@ class Base {
 	private Int secret() {
 		22;
 	}
+
+	class Inner {
+		public Int z;
+
+		Int value(Base other) {
+			z + other.secret + other.a;
+		}
+	}
 }
 
 class Derived extends Base {
@@ -155,6 +163,16 @@ Int testCallPriv() {
 Int testPrivSuper() {
 	Derived d;
 	d.callSecret();
+}
+
+Int testInner() {
+	Base b;
+	b.a = 1;
+
+	Base:Inner i;
+	i.z = 2;
+
+	i.value(b);
 }
 
 class DerivedDbg extends Dbg {
