@@ -63,6 +63,8 @@ namespace storm {
 		// into the beginning of 'params' and used. This method inhibits automatic insertion of 'this'.
 		Expr *STORM_FN namedExpr(Block *block, syntax::SStr *name, Expr *first, Actuals *params);
 		Expr *STORM_FN namedExpr(Block *block, syntax::SStr *name, Expr *first);
+		Expr *STORM_FN namedExpr(Block *block, SrcPos pos, Str *name, Expr *first, Actuals *params);
+		Expr *STORM_FN namedExpr(Block *block, SrcPos pos, Str *name, Expr *first);
 
 	}
 }

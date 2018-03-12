@@ -122,50 +122,75 @@ namespace storm {
 
 		}
 
+		static Str *firstName(Str *in) {
+			Str::Iter dot = in->find(Char('.'));
+			if (dot == in->end())
+				return in;
+
+			return in->substr(in->begin(), dot);
+		}
+
+		static MAYBE(Str *) restName(Str *in) {
+			Str::Iter dot = in->find(Char('.'));
+			if (dot == in->end())
+				return null;
+
+			dot++;
+			return in->substr(dot);
+		}
+
+		Expr *TransformFn::recurse(Block *block, Str *name, Expr *root) {
+			while (name = restName(name)) {
+				Str *here = firstName(name);
+				root = namedExpr(block, pos, name, root);
+			}
+
+			return root;
+		}
+
 		Expr *TransformFn::readVar(Block *in, Str *name) {
-			SimplePart *part = new (this) SimplePart(name);
-			if (LocalVar *r = in->variable(part))
-				return new (this) LocalVarAccess(pos, r);
+			Str *first = firstName(name);
+			if (LocalVar *r = in->variable(new (this) SimplePart(first)))
+				return recurse(in, name, new (this) LocalVarAccess(pos, r));
 
 			if (*name == S("me"))
 				throw SyntaxError(pos, L"Can not use 'me' this early!");
 			if (*name == S("pos"))
 				return posVar(in);
+			if (Expr *e = createLiteral(name))
+				return e;
 
-			throw InternalError(L"The variable " + ::toS(name) + L" was not created before being read.");
+			throw InternalError(L"The variable " + ::toS(first) + L" was not created before being read.");
 		}
 
 		Expr *TransformFn::findVar(ExprBlock *in, Str *name) {
-			if (LocalVar *r = in->variable(new (this) SimplePart(name)))
-				return new (this) LocalVarAccess(pos, r);
+			Str *first = firstName(name);
+			if (LocalVar *r = in->variable(new (this) SimplePart(first)))
+				return recurse(in, name, new (this) LocalVarAccess(pos, r));
 
 			if (*name == S("me"))
 				throw SyntaxError(pos, L"Can not use 'me' this early!");
 			if (*name == S("pos"))
 				return posVar(in);
-			if (name->isInt())
-				return new (this) Constant(pos, name->toInt());
-			if (*name == S("true"))
-				return new (this) Constant(pos, true);
-			if (*name == S("false"))
-				return new (this) Constant(pos, false);
+			if (Expr *e = createLiteral(name))
+				return e;
 
 			// We need to create it...
-			if (lookingFor->has(name))
-				throw SyntaxError(pos, L"The variable " + ::toS(name) + L" depends on itself.");
-			lookingFor->put(name);
+			if (lookingFor->has(first))
+				throw SyntaxError(pos, L"The variable " + ::toS(first) + L" depends on itself.");
+			lookingFor->put(first);
 
 			try {
-				Nat pos = findToken(name);
+				Nat pos = findToken(first);
 				if (pos >= tokenCount())
-					throw SyntaxError(this->pos, L"The variable " + ::toS(name) + L" is not declared!");
+					throw SyntaxError(this->pos, L"The variable " + ::toS(first) + L" is not declared!");
 
-				LocalVar *var = createVar(in, name, pos);
-				lookingFor->remove(name);
+				LocalVar *var = createVar(in, first, pos);
+				lookingFor->remove(first);
 
-				return new (this) LocalVarAccess(this->pos, var);
+				return recurse(in, name, new (this) LocalVarAccess(this->pos, var));
 			} catch (...) {
-				lookingFor->remove(name);
+				lookingFor->remove(first);
 				throw;
 			}
 
@@ -173,6 +198,17 @@ namespace storm {
 
 		Bool TransformFn::hasVar(ExprBlock *in, Str *name) {
 			return in->variable(new (this) SimplePart(name)) != null;
+		}
+
+		Expr *TransformFn::createLiteral(Str *name) {
+			if (name->isInt())
+				return new (this) Constant(pos, name->toInt());
+			if (*name == S("true"))
+				return new (this) Constant(pos, true);
+			if (*name == S("false"))
+				return new (this) Constant(pos, false);
+
+			return null;
 		}
 
 		LocalVar *TransformFn::createVar(ExprBlock *in, Str *name, Nat pos) {

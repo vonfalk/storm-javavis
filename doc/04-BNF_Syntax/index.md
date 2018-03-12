@@ -42,10 +42,11 @@ Function calls
 The syntax language is very limited in terms of combining functions. Each syntax option has a
 function call that generates the syntax tree for that option. This function call may also be a
 variable in the option. Function calls take the form `<identifier>(<parameters>)`, where
-`<parameters>` is a list of parameters separated by comma. Each parameter is either a variable, or a
-literal. Function calls are not allowed as parameters. The only type of literals currently
-implemented are numeric literals and booleans, which are expanded to `core.Int` and `core.Bool`
-respectively.
+`<parameters>` is a list of parameters separated by comma. Each parameter is either a variable, a
+traversal or a literal. Function calls taking parameters are not allowed as parameters. Traversals
+have the form 'x.y.z' and allow accessing members (such as member variables and member functions) in
+addition to plain variables. The only type of literals currently implemented are numeric literals
+and booleans, which are expanded to `core.Int` and `core.Bool` respectively.
 
 Comments
 ---------

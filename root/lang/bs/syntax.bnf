@@ -448,11 +448,8 @@ SPlainClassItem[5] => classCtor(owner, pos, params, body) :
     "init" #keyword, "(", SCtorParams params, ")", "{"[, SCtorBody@ body,]+ "}";
 SPlainClassItem[5] => classCastCtor(owner, pos, params, body) :
     "cast" #keyword, "(", SCtorParams params, ")", "{"[, SCtorBody@ body,]+ "}";
-SPlainClassItem[0] => c : SClass(scope) c - SClassScope(owner) scope;
+SPlainClassItem[0] => c : SClass(owner.scope) c;
 
-// Helper for creating classes, since we are not (yet?) able to use 'owner.scope' in parameter lists.
-Scope SClassScope(Class owner);
-SClassScope => scope(owner) : "";
 
 TObject SDocClassItem(Class owner);
 SDocClassItem[0] => item : SDelimiter - SClassItem(owner) item;

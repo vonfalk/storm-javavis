@@ -333,5 +333,15 @@ namespace storm {
 			for (nat i = 0; i < productions->count(); i++)
 				*to << S("\n") << productions->at(i);
 		}
+
+		Str *joinName(Str *first, Array<Str *> *rest) {
+			StrBuf *to = new (first) StrBuf();
+			*to << first;
+
+			for (Nat i = 0; i < rest->count(); i++)
+				*to << S(".") << rest->at(i);
+
+			return to->toS();
+		}
 	}
 }

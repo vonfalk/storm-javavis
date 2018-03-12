@@ -104,6 +104,7 @@ namespace storm {
 		// Unescape string literals.
 		Str *STORM_FN unescapeStr(Str *s);
 
+
 		/**
 		 * Regex token declaration.
 		 */
@@ -325,6 +326,9 @@ namespace storm {
 			// Output.
 			virtual void STORM_FN toS(StrBuf *to) const;
 		};
+
+		// Join a set of strings into a dot-separated name. Used in the grammar.
+		Str *STORM_FN joinName(Str *first, Array<Str *> *rest);
 
 	}
 }

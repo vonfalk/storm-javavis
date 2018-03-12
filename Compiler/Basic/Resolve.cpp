@@ -176,16 +176,24 @@ namespace storm {
 		}
 
 		Expr *namedExpr(Block *block, syntax::SStr *name, Expr *first, Actuals *params) {
-			params->addFirst(first);
-			SimpleName *n = new (name) SimpleName(name->v);
-			return findTarget(block, n, name->pos, params, false);
+			return namedExpr(block, name->pos, name->v, first, params);
 		}
 
 		Expr *namedExpr(Block *block, syntax::SStr *name, Expr *first) {
+			return namedExpr(block, name->pos, name->v, first);
+		}
+
+		Expr *namedExpr(Block *block, SrcPos pos, Str *name, Expr *first, Actuals *params) {
+			params->addFirst(first);
+			SimpleName *n = new (name) SimpleName(name);
+			return findTarget(block, n, pos, params, false);
+		}
+
+		Expr *namedExpr(Block *block, SrcPos pos, Str *name, Expr *first) {
 			Actuals *params = new (block) Actuals();
 			params->add(first);
-			SimpleName *n = new (name) SimpleName(name->v);
-			return findTarget(block, n, name->pos, params, false);
+			SimpleName *n = new (name) SimpleName(name);
+			return findTarget(block, n, pos, params, false);
 		}
 
 

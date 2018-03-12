@@ -1,5 +1,9 @@
 use core.lang;
 
+// Note: This file is parsed by the built-in parser during startup. Therefore, small differences in the
+// accepted languages may occur. For example, the built-in parser will does not accept actual parameters
+// of the form 'a.b.c', while the grammar specified here will not.
+
 delimiter = SDelim;
 
 void SDelim();
@@ -126,8 +130,14 @@ SString => unescapeStr(s) : "\"" #string - (SStrContent #string) s - "\"" #strin
 
 Array<Str> SActuals();
 SActuals => Array<Str>() : "(", ")";
-SActuals => Array<Str>() : "(", SAtom -> push, (",", SAtom -> push,)* ")";
+SActuals => Array<Str>() : "(", SActualExpr -> push, (",", SActualExpr -> push,)* ")";
 
+// Expressions usable inside actual parameter lists.
+Str SActualExpr();
+SActualExpr => s : SAtom s;
+SActualExpr => joinName(first, rest) : SIdent first #varName (, "\.", SIdent rest #varName)*;
+
+// Atoms in the expressions.
 Str SAtom();
 SAtom[-1] => s : SIdent s #varName;
 SAtom => s : "[+\-]?[0-9]+" s #constant;

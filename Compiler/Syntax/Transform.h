@@ -79,6 +79,9 @@ namespace storm {
 			// See if a variable has been created.
 			Bool hasVar(bs::ExprBlock *in, Str *name);
 
+			// Create a literal if applicable.
+			MAYBE(bs::Expr *) createLiteral(Str *name);
+
 			// Create a variable.
 			bs::LocalVar *createVar(bs::ExprBlock *in, Str *name, Nat pos);
 
@@ -143,6 +146,11 @@ namespace storm {
 
 			// Shall this token be executed?
 			Bool shallExecute(bs::ExprBlock *in, Token *token, Nat pos);
+
+			// Recurse through a name separated by dots (eg. a.b.c) and produce an expression that
+			// accesses that particular member. The first part of 'name' is what 'expr' is supposed
+			// to refer to.
+			bs::Expr *recurse(bs::Block *in, Str *name, bs::Expr *expr);
 		};
 
 		// Create a function that transforms an option.
