@@ -369,7 +369,11 @@ void Tokenizer::processChar(nat &start, State &state, bool &firstComment) {
 	switch (state) {
 	case sStart:
 		pos++;
-		if (isWhitespace(ch)) {
+		if (ch == '\n') {
+			// Do not count single-line comments that have a blank line inside them as a whole comment block.
+			start = pos;
+			firstComment = true;
+		} else if (isWhitespace(ch)) {
 			start = pos;
 		} else if (isSpecial(ch)) {
 			state = sDone;
