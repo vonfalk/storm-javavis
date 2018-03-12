@@ -182,6 +182,7 @@ namespace code {
 	Instr *STORM_FN fistp(EnginePtr e, Operand dest); // Truncates results.
 	Instr *STORM_FN fld(EnginePtr e, Operand src);
 	Instr *STORM_FN fild(EnginePtr e, Operand src);
+	Instr *STORM_FN fldz(EnginePtr e);
 	Instr *STORM_FN faddp(EnginePtr e);
 	Instr *STORM_FN fsubp(EnginePtr e);
 	Instr *STORM_FN fmulp(EnginePtr e);

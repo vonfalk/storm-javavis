@@ -393,6 +393,10 @@ namespace code {
 		return instrSrc(e, op::fild, src);
 	}
 
+	Instr *fldz(EnginePtr e) {
+		return instr(e, op::fldz);
+	}
+
 	Instr *faddp(EnginePtr e) {
 		return instr(e, op::faddp);
 	}

@@ -36,6 +36,16 @@ namespace storm {
 		}
 	}
 
+	static void floatNeg(InlineParams p) {
+		if (p.result->needed()) {
+			*p.state->l << fldz();
+			*p.state->l << fld(p.params->at(0));
+			*p.state->l << fsubp();
+			*p.state->l << fstp(p.result->location(p.state).v);
+			*p.state->l << fwait();
+		}
+	}
+
 	static void floatMul(InlineParams p) {
 		if (p.result->needed()) {
 			*p.state->l << fld(p.params->at(0));
@@ -107,6 +117,7 @@ namespace storm {
 		add(inlinedFunction(engine, Value(this), S("-"), vv, fnPtr(engine, &floatSub))->makePure());
 		add(inlinedFunction(engine, Value(this), S("*"), vv, fnPtr(engine, &floatMul))->makePure());
 		add(inlinedFunction(engine, Value(this), S("/"), vv, fnPtr(engine, &floatDiv))->makePure());
+		add(inlinedFunction(engine, Value(this), S("-"), v, fnPtr(engine, &floatNeg))->makePure());
 
 		Value vBool = Value(StormInfo<Bool>::type(engine));
 		add(inlinedFunction(engine, vBool, S(">"), vv, fnPtr(engine, &floatCmp<ifFAbove>))->makePure());
@@ -150,6 +161,16 @@ namespace storm {
 		if (p.result->needed()) {
 			*p.state->l << fld(p.params->at(0));
 			*p.state->l << fld(p.params->at(1));
+			*p.state->l << fsubp();
+			*p.state->l << fstp(p.result->location(p.state).v);
+			*p.state->l << fwait();
+		}
+	}
+
+	static void doubleNeg(InlineParams p) {
+		if (p.result->needed()) {
+			*p.state->l << fldz();
+			*p.state->l << fld(p.params->at(0));
 			*p.state->l << fsubp();
 			*p.state->l << fstp(p.result->location(p.state).v);
 			*p.state->l << fwait();
@@ -227,6 +248,7 @@ namespace storm {
 		add(inlinedFunction(engine, Value(this), S("-"), vv, fnPtr(engine, &doubleSub))->makePure());
 		add(inlinedFunction(engine, Value(this), S("*"), vv, fnPtr(engine, &doubleMul))->makePure());
 		add(inlinedFunction(engine, Value(this), S("/"), vv, fnPtr(engine, &doubleDiv))->makePure());
+		add(inlinedFunction(engine, Value(this), S("-"), v, fnPtr(engine, &doubleNeg))->makePure());
 
 		Value vBool = Value(StormInfo<Bool>::type(engine));
 		add(inlinedFunction(engine, vBool, S(">"), vv, fnPtr(engine, &doubleCmp<ifFAbove>))->makePure());

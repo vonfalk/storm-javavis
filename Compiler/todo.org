@@ -1,11 +1,13 @@
-* Loose ends so far [20/42]
+* Loose ends so far [21/43]
   - [ ] Support documentation of templates from C++.
   - [ ] We probably want to allow creating documentation for an entire package. Possibly by creating
         a file called 'doc.txt' or similar inside the appropriate folder.
+  - [ ] Finish integrating the Double class in the system. Basic Storm should be able to instantiate them from
+        literals. Str and StrBuf should be able to parse and stringify them, and conversions between built-in
+        types should be implemented. Finally, the implementation needs to be tested.
   - [ ] Add documentation for the built-in types (such as core.Int).
   - [ ] It is not possible to chain 'assignment' functions using the = operator.
   - [ ] Allow declaring member functions (at least in values) as a different thread than the owner.
-  - [ ] Unary negation is not implemented in Basic Storm (and possibly not in the built-in types).
   - [ ] Change the default visibility of class members in Basic Storm to private.
   - [ ] Destructors in maps and arrays are not working properly yet. Idea: add (yet another) member 
         to array headers, and let the user provide a custom destructor in there if neccessary.
@@ -26,6 +28,7 @@
   - [ ] If a type has a '==' or '<' outside the type itself, the corresponding operator will not be present in
         a Handle, like '<<' at the moment.
   - [ ] Show 'known subclasses' inside the documentation in Emacs?
+  - [X] Unary negation is not implemented in Basic Storm (and possibly not in the built-in types).
   - [X] Allow nesting class declarations in Basic Storm.
   - [X] Accessing member variables do not respect the thread associated with the type like functions do.
         Therefore, it is possible to break the threading model by using raw variable accesses!

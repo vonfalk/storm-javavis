@@ -72,4 +72,13 @@ namespace storm {
 		}
 	}
 
+	void numINeg(InlineParams p) {
+		if (p.result->needed()) {
+			Operand result = p.result->location(p.state).v;
+			// Note: it would be nice to use the 'neg' instruction for this.
+			*p.state->l << mov(result, xConst(result.size(), 0));
+			*p.state->l << sub(result, p.params->at(0));
+		}
+	}
+
 }

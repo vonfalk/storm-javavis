@@ -109,8 +109,9 @@ SFunction[5] => assignDecl(env, name, params, thread, body) :
 SStr SFnDeclName();
 SFnDeclName => name : SName name;
 SFnDeclName => name : (SOperator)@ name;
-SFnDeclName => name : (SPrePost - "\*")@ name;
-SFnDeclName => name : ("\*" - SPrePost)@ name;
+SFnDeclName => name : (SPreOp)@ name;
+SFnDeclName => name : (SPrePostOp - "\*")@ name;
+SFnDeclName => name : ("\*" - SPrePostOp)@ name;
 
 
 // Class/value.
@@ -317,10 +318,16 @@ SUnit => degUnit(u) : "rad"@ u;
 // Operators!
 ////////////////////////////////////////////////////////////////////
 
-// Pre-and postfix operators.
-SStr SPrePost();
-SPrePost => v : "\+\+"@ v;
-SPrePost => v : "--"@ v;
+// Pre- and postfix operators. These come in two variants: one prefix and one postfix version, which
+// are differentiated using an asterisk in the function name. Eg. ++* and *++.
+SStr SPrePostOp();
+SPrePostOp => v : "\+\+"@ v;
+SPrePostOp => v : "--"@ v;
+
+// Prefix operators. These have no corresponding postfix variant.
+SStr SPreOp();
+SPreOp => v : "!"@ v;
+SPreOp => v : "-"@ v;
 
 // Operators.
 OpInfo SOperator();
@@ -357,9 +364,9 @@ SAssignableOp => lOperator(op, 470) : "|"@ op;
 
 Expr SExpr(Block block);
 SExpr[20] => e : SAtom(block) e;
-SExpr => prePostOperator(block, o, e) : "!"@ o, SAtom(block) e;
-SExpr => prefixOperator(block, o, e) : SPrePost o, SAtom(block) e;
-SExpr => postfixOperator(block, o, e) : SAtom(block) e, SPrePost o;
+SExpr => prePostOperator(block, o, e) : SPreOp o, SAtom(block) e;
+SExpr => prefixOperator(block, o, e) : SPrePostOp o, SAtom(block) e;
+SExpr => postfixOperator(block, o, e) : SAtom(block) e, SPrePostOp o;
 SExpr => mkOperator(block, lhs, op, rhs) : SAtom(block) lhs, SOperator op, SExpr(block) rhs;
 // This must be larger than operators, as templates may be seen as the < operator otherwise.
 SExpr[10] => Var(block, t, name, actual) : SType t, SName name #varName, SFnActuals(block) actual;

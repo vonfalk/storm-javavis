@@ -32,12 +32,12 @@ Int prio7() {
 }
 
 Int prio8() {
-	5 #- 4 #- 1;
+	5 #-# 4 #-# 1;
 }
 
 // Left-associative operators is slightly stronger.
 Int prio9() {
-	5 #- 4 - 1;
+	5 #-# 4 - 1;
 }
 
 

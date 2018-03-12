@@ -59,6 +59,7 @@ namespace code {
 		OP_CODE(fistp, destWrite),
 		OP_CODE(fld, destNone),
 		OP_CODE(fild, destNone),
+		OP_CODE(fldz, destNone),
 		OP_CODE(faddp, destNone),
 		OP_CODE(fsubp, destNone),
 		OP_CODE(fmulp, destNone),

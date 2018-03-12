@@ -152,6 +152,7 @@ namespace code {
 	PROXY1(fistp, Operand);
 	PROXY1(fld, Operand);
 	PROXY1(fild, Operand);
+	PROXY0(fldz);
 	PROXY0(faddp);
 	PROXY0(fsubp);
 	PROXY0(fmulp);

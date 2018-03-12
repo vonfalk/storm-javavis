@@ -16,4 +16,4 @@ Prod => v : Atom v;
 Int Atom();
 Atom => toInt(v) : "[0-9]+" v;
 Atom => v : "(", Expr v, ")";
-Atom => -(0, v) : "\-", Atom v;
+Atom => -(v) : "\-", Atom v;

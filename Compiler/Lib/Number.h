@@ -22,6 +22,7 @@ namespace storm {
 	void numUDiv(InlineParams p);
 	void numIMod(InlineParams p);
 	void numUMod(InlineParams p);
+	void numINeg(InlineParams p);
 
 	// Compare.
 	template <code::CondFlag f>

@@ -54,6 +54,7 @@ namespace code {
 			fistp,
 			fld,
 			fild,
+			fldz,
 			faddp,
 			fsubp,
 			fmulp,

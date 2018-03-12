@@ -561,6 +561,11 @@ namespace code {
 			}
 		}
 
+		void fldzOut(Output *to, Instr *instr) {
+			to->putByte(0xD9);
+			to->putByte(0xEE);
+		}
+
 		void faddpOut(Output *to, Instr *instr) {
 			to->putByte(0xDE);
 			to->putByte(0xC1);
@@ -662,6 +667,7 @@ namespace code {
 			OUTPUT(fistp),
 			OUTPUT(fld),
 			OUTPUT(fild),
+			OUTPUT(fldz),
 			OUTPUT(faddp),
 			OUTPUT(fsubp),
 			OUTPUT(fmulp),
