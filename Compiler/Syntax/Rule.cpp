@@ -7,6 +7,7 @@
 #include "Compiler/CodeGen.h"
 #include "Compiler/Function.h"
 #include "Compiler/TypeCtor.h"
+#include "Compiler/Basic/Doc.h"
 
 namespace storm {
 	namespace syntax {
@@ -20,6 +21,9 @@ namespace storm {
 			  color(decl->color) {
 
 			setSuper(Node::stormType(engine));
+
+			if (decl->docPos.any())
+				documentation = new (this) bs::BSDoc(decl->docPos, this);
 		}
 
 		Bool Rule::loadAll() {

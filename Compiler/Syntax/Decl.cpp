@@ -12,7 +12,23 @@ namespace storm {
 
 		UseDecl::UseDecl(SrcName *pkg) : pkg(pkg) {}
 
+		void UseDecl::deepCopy(CloneEnv *env) {
+			cloned(pkg, env);
+		}
+
+		void UseDecl::toS(StrBuf *to) const {
+			*to << S("use ") << pkg << S(";");
+		}
+
 		DelimDecl::DelimDecl(SrcName *token) : token(token) {}
+
+		void DelimDecl::deepCopy(CloneEnv *env) {
+			cloned(token, env);
+		}
+
+		void DelimDecl::toS(StrBuf *to) const {
+			*to << S("delimiter = ") << token << S(";");
+		}
 
 		ParamDecl::ParamDecl(Name *type, Str *name) : type(type), name(name) {}
 
@@ -343,5 +359,25 @@ namespace storm {
 
 			return to->toS();
 		}
+
+		RuleDecl *applyDoc(SrcPos doc, RuleDecl *decl) {
+			decl->docPos = doc;
+			return decl;
+		}
+
+		ProductionDecl *applyDoc(SrcPos doc, ProductionDecl *decl) {
+			decl->docPos = doc;
+			return decl;
+		}
+
+		FileItem *applyDoc(SrcPos doc, FileItem *decl) {
+			if (RuleDecl *rule = as<RuleDecl>(decl))
+				applyDoc(doc, rule);
+			else if (ProductionDecl *prod = as<ProductionDecl>(decl))
+				applyDoc(doc, prod);
+
+			return decl;
+		}
+
 	}
 }

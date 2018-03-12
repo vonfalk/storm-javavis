@@ -287,17 +287,21 @@ namespace storm {
 					SrcName *name = parseName(e, tok);
 					Token sep = tok.peek();
 
+					// Comment containind documentation. May be empty, but that's fine.
+					SrcPos comment = tok.comment();
+
 					if (sep == S(":")) {
-						r->productions->push(parseProduction(e, tok, name));
+						r->productions->push(applyDoc(comment, parseProduction(e, tok, name)));
 					} else if (sep == S("=>")) {
-						r->productions->push(parseProductionResult(e, tok, name));
+						r->productions->push(applyDoc(comment, parseProductionResult(e, tok, name)));
 					} else if (sep == S("[")) {
-						r->productions->push(parseProductionPriority(e, tok, name));
+						r->productions->push(applyDoc(comment, parseProductionPriority(e, tok, name)));
 					} else {
-						r->rules->push(parseRule(e, tok, name));
+						r->rules->push(applyDoc(comment, parseRule(e, tok, name)));
 					}
 				}
 
+				tok.clearComment();
 				tok.expect(S(";"));
 			}
 

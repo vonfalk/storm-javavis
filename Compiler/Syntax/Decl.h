@@ -33,6 +33,12 @@ namespace storm {
 
 			// Package to use.
 			SrcName *pkg;
+
+			// Deep copy.
+			virtual void STORM_FN deepCopy(CloneEnv *env);
+
+			// Output.
+			virtual void STORM_FN toS(StrBuf *to) const;
 		};
 
 		/**
@@ -46,6 +52,12 @@ namespace storm {
 
 			// Delimiter to use.
 			SrcName *token;
+
+			// Deep copy.
+			virtual void STORM_FN deepCopy(CloneEnv *env);
+
+			// Output.
+			virtual void STORM_FN toS(StrBuf *to) const;
 		};
 
 		/**
@@ -191,6 +203,9 @@ namespace storm {
 			// Where was this production declared?
 			SrcPos pos;
 
+			// Location of the documentation (if any).
+			SrcPos docPos;
+
 			// Which rule are we a member of?
 			Name *rule;
 
@@ -271,6 +286,9 @@ namespace storm {
 			// Declared at?
 			SrcPos pos;
 
+			// Documentation location, if any?
+			SrcPos docPos;
+
 			// Name.
 			Str *name;
 
@@ -295,6 +313,7 @@ namespace storm {
 			// Output.
 			virtual void STORM_FN toS(StrBuf *to) const;
 		};
+
 
 		/**
 		 * Contents of an entire file.
@@ -329,6 +348,11 @@ namespace storm {
 
 		// Join a set of strings into a dot-separated name. Used in the grammar.
 		Str *STORM_FN joinName(Str *first, Array<Str *> *rest);
+
+		// Attach documentation to a rule or a production.
+		RuleDecl *STORM_FN applyDoc(SrcPos doc, RuleDecl *decl);
+		ProductionDecl *STORM_FN applyDoc(SrcPos doc, ProductionDecl *decl);
+		FileItem *STORM_FN applyDoc(SrcPos doc, FileItem *decl);
 
 	}
 }

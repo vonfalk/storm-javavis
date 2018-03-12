@@ -25,6 +25,9 @@ namespace storm {
 		// Unknown position?
 		Bool STORM_FN unknown() const;
 
+		// Any data?
+		Bool STORM_FN any() const;
+
 		// Increase the position.
 		SrcPos STORM_FN operator +(Nat v) const;
 

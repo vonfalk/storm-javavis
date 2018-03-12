@@ -85,6 +85,7 @@ namespace storm {
 			: src(src),
 			  file(path),
 			  pos(start),
+			  commentStart(invalid),
 			  lookahead(src, 0, SrcPos(path, 0)) {
 
 			lookahead = findNext();
@@ -136,17 +137,31 @@ namespace storm {
 			return lookahead.pos;
 		}
 
+		Nat Tokenizer::invalid = Nat(-1);
+
+		SrcPos Tokenizer::comment() const {
+			if (commentStart == invalid)
+				return SrcPos();
+			else
+				return SrcPos(file, commentStart);
+		}
+
+		void Tokenizer::clearComment() {
+			commentStart = invalid;
+		}
+
 		Token Tokenizer::findNext() {
 			State state = sStart;
 			nat start = pos;
+			bool firstComment = true;
 
 			while (state != sDone)
-				processChar(start, state);
+				processChar(start, state, firstComment);
 
 			return Token(src, pos - start, SrcPos(file, start));
 		}
 
-		void Tokenizer::processChar(Nat &start, State &state) {
+		void Tokenizer::processChar(Nat &start, State &state, bool &firstComment) {
 			const wchar *str = src->c_str();
 			wchar ch = str[pos];
 			if (ch == 0) {
@@ -158,6 +173,10 @@ namespace storm {
 				switch (state) {
 				case sStart:
 					state = sComment;
+					if (firstComment) {
+						commentStart = pos;
+						firstComment = false;
+					}
 					break;
 				case sString:
 				case sComment:
@@ -173,6 +192,10 @@ namespace storm {
 				pos++;
 				if (isWhitespace(ch)) {
 					start = pos;
+					// If there is a space inside the block, they are considered two blocks and we
+					// are only interested in the last one.
+					if (ch == '\n')
+						firstComment = true;
 				} else if (isSpecial(ch)) {
 					state = sDone;
 				} else if (isOperator(ch)) {

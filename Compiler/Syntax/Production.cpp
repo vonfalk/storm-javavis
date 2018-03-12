@@ -3,6 +3,7 @@
 #include "Compiler/Lib/Array.h"
 #include "Compiler/Lib/Maybe.h"
 #include "Compiler/TypeCtor.h"
+#include "Compiler/Basic/Doc.h"
 #include "Utils/Memory.h"
 #include "Exception.h"
 #include "Node.h"
@@ -339,6 +340,9 @@ namespace storm {
 
 			// Can not be created in the initializer list as it accesses us in 'add'.
 			production = new (this) Production(this, decl, delim, scope);
+
+			if (decl->docPos.any())
+				documentation = new (this) bs::BSDoc(decl->docPos, this);
 		}
 
 		void ProductionType::add(Named *m) {

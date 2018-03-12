@@ -79,6 +79,12 @@ namespace storm {
 			// Current position.
 			SrcPos position() const;
 
+			// Position of the last comment block. Returns SrcPos() if none.
+			SrcPos comment() const;
+
+			// Clear the current comment.
+			void clearComment();
+
 		private:
 			// Source string.
 			Str *src;
@@ -88,6 +94,12 @@ namespace storm {
 
 			// Current position.
 			Nat pos;
+
+			// Start of the last comment block. Set to Nat(-1) if none.
+			Nat commentStart;
+
+			// No comment.
+			static Nat invalid;
 
 			// Different states of the tokenizer.
 			enum State {
@@ -106,7 +118,7 @@ namespace storm {
 			Token findNext();
 
 			// Do one step in the state machine.
-			void processChar(Nat &start, State &state);
+			void processChar(Nat &start, State &state, bool &firstComment);
 		};
 
 	}

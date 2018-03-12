@@ -13,6 +13,10 @@ namespace storm {
 		return file == null;
 	}
 
+	Bool SrcPos::any() const {
+		return file != null;
+	}
+
 	SrcPos SrcPos::operator +(Nat v) const {
 		return SrcPos(file, pos + v);
 	}
