@@ -173,6 +173,8 @@ The data inside the `documentation` is a list containing the following data:
 * `visibility`: Visibility of this entity as a cons cell `(type . title)`, or `nil` if none was provided.
   *title* is a string suitable to show the user and *type* is the type implementing this visibility.
 * `body`: The body text of the documentation as a string.
-* `members`: A list of members of this entity, if any. Each element has the form `(name . title)` where *name*
-  is the full name of the member and *title* is a short summary that is suitable to show the user.
+* `refs`: A list of references to other things in the system. Each element has the form `(name . contents)`,
+  where *name* is the name of this category and *contents* is a list with the actual contents. Each element
+  there has the form `(name . title)` where *name* is the full name of the member and *title* is a short
+  summary that is suitable to show the user.
 

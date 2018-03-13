@@ -17,13 +17,14 @@ namespace storm {
 			// Get documentation.
 			virtual Doc *STORM_FN get();
 
-		private:
+		protected:
 			// Where is the documentation located?
 			SrcPos docPos;
 
 			// Which object?
 			Named *entity;
 
+		private:
 			// Read the body of the documentation.
 			Str *readBody();
 

@@ -79,8 +79,9 @@ namespace storm {
 			if (!this->result)
 				f->make(fnAssign);
 
-			if (docPos != SrcPos())
-				applyDoc(docPos, f);
+			// Always apply documentation. Otherwise we will not show parameter names if no
+			// documentation comment is present.
+			applyDoc(docPos, f);
 
 			return f;
 		}

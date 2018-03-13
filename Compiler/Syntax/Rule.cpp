@@ -1,13 +1,13 @@
 #include "stdafx.h"
 #include "Rule.h"
 #include "Node.h"
+#include "Doc.h"
 #include "Exception.h"
 #include "Engine.h"
 #include "Core/Str.h"
 #include "Compiler/CodeGen.h"
 #include "Compiler/Function.h"
 #include "Compiler/TypeCtor.h"
-#include "Compiler/Basic/Doc.h"
 
 namespace storm {
 	namespace syntax {
@@ -23,7 +23,7 @@ namespace storm {
 			setSuper(Node::stormType(engine));
 
 			if (decl->docPos.any())
-				documentation = new (this) bs::BSDoc(decl->docPos, this);
+				documentation = new (this) SyntaxDoc(decl->docPos, this);
 		}
 
 		Bool Rule::loadAll() {

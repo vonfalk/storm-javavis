@@ -402,32 +402,62 @@ namespace storm {
 			return *a->name < *b->name;
 		}
 
+		static SExpr *formatNameList(Array<Named *> *items) {
+			Engine &e = items->engine();
+			SExpr *result = null;
+			items->sort(fnPtr(e, &compareNamed));
+
+			for (Nat i = items->count(); i > 0; i--) {
+				Named *src = items->at(i - 1);
+				// TODO: We might actually want to *load* documentation to provide parameter names here.
+				SExpr *m = cons(e, new (e) String(src->identifier()),
+								new (e) String(doc(src)->summary()));
+				result = cons(e, m, result);
+			}
+
+			return result;
+		}
+
+		static SExpr *formatRefs(Named *entity) {
+			Engine &e = entity->engine();
+			SExpr *result = null;
+
+			if (NameSet *s = as<NameSet>(entity)) {
+				s->forceLoad();
+
+				Array<Named *> *found = new (e) Array<Named *>();
+				for (NameSet::Iter i = s->begin(), end = s->end(); i != end; ++i)
+					found->push(i.v());
+
+				SExpr *node = cons(e, new (e) String(S("Members")), formatNameList(found));
+				result = cons(e, node, result);
+			}
+
+			if (Type *t = as<Type>(entity)) {
+				Array<Named *> *found = new (e) Array<Named *>();
+				TypeChain::Iter i = t->chain->children();
+				while (Type *t = i.next())
+					found->push(t);
+
+				if (found->any()) {
+					SExpr *node = cons(e, new (e) String(S("Known subclasses")), formatNameList(found));
+					result = cons(e, node, result);
+				}
+			}
+
+			return result;
+		}
+
 		SExpr *Server::formatDoc(Named *entity) {
 			Engine &e = engine();
 			SExpr *data = null;
 
 			Doc *d = entity->findDoc();
 
-			// Members.
+			// References.
 			{
-				SExpr *members = null;
-				if (NameSet *s = ::as<NameSet>(entity)) {
-					s->forceLoad();
-
-					Array<Named *> *found = new (e) Array<Named *>();
-					for (NameSet::Iter i = s->begin(), end = s->end(); i != end; ++i)
-						found->push(i.v());
-					found->sort(fnPtr(e, &compareNamed));
-
-					for (Nat i = found->count(); i > 0; i--) {
-						Named *src = found->at(i - 1);
-						// TODO: We might actually want to *load* documentation to provide parameter names here.
-						SExpr *m = cons(e, new (e) String(src->identifier()),
-										new (e) String(doc(src)->summary()));
-						members = cons(e, m, members);
-					}
-				}
-				data = cons(e, members, data);
+				SExpr *refs = formatRefs(entity);
+				data = cons(e, refs, data);
 			}
 
 			// Body. TODO: Maybe a richer representation that includes references etc.?

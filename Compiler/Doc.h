@@ -118,6 +118,10 @@ namespace storm {
 
 	/**
 	 * Documentation provider for named entities.
+	 *
+	 * TODO: It would be interesting to be able to query for a 'minimal' documentation object that
+	 * only contains enough information to make the 'summary' interesting. This would mean only
+	 * loading the parameter names and any notes essentially.
 	 */
 	class NamedDoc : public ObjectOn<Compiler> {
 		STORM_CLASS;

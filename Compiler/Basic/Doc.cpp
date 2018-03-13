@@ -216,7 +216,7 @@ namespace storm {
 
 		Str *BSDoc::readBody() {
 			if (!docPos.file)
-				throw InternalError(L"Documentation in Basic Storm should always have a file!");
+				return new (this) Str(S(""));
 
 			IStream *s = docPos.file->read();
 			TextInput *src = readText(s);
