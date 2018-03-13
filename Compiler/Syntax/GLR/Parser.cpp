@@ -910,7 +910,7 @@ namespace storm {
 				// when it is populated.
 				void *mem = runtime::allocObject(type->size().current(), type);
 				Node *r = new (Place(mem)) Node(SrcPos(sourceUrl, pos));
-				type->vtable->insert(r);
+				type->vtable()->insert(r);
 
 				// Create any arrays needed.
 				for (nat i = 0; i < type->arrayMembers->count(); i++) {

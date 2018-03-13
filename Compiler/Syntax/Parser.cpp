@@ -234,7 +234,7 @@ namespace storm {
 			Type *t = parserType(root);
 			void *mem = runtime::allocObject(sizeof(Parser), t);
 			Parser *r = new (Place(mem)) Parser(backend);
-			t->vtable->insert(r);
+			t->vtable()->insert(r);
 			return r;
 		}
 

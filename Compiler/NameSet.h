@@ -169,8 +169,11 @@ namespace storm {
 		// a later time.
 		virtual Bool STORM_FN loadAll();
 
+		// See if this NameSet is loaded fully.
+		inline Bool STORM_FN allLoaded() const { return loaded; }
+
 		// Find a named here without bothering with lazy-loading.
-		Named *STORM_FN tryFind(SimplePart *part, Scope source);
+		MAYBE(Named *) STORM_FN tryFind(SimplePart *part, Scope source);
 
 	private:
 		// Overloads.
@@ -178,10 +181,10 @@ namespace storm {
 		Map<Str *, NameOverloads *> *overloads;
 
 		// Lazy-loading done?
-		bool loaded;
+		Bool loaded;
 
 		// Lazy-loading in progress?
-		bool loading;
+		Bool loading;
 
 		// Identifier for the next anonymous thing.
 		Nat nextAnon;

@@ -18,13 +18,40 @@ namespace storm {
 	class Function;
 
 	/**
-	 * Description of a type.
+	 * Description of a Type inside Storm.
+	 *
+	 * A type is either a *value*, a *class* or an *actor* (TObject). These have slightly different
+	 * semantics. Most notably, values are always stored on the stack while the other two are
+	 * heap-allocated. Furthermore, actors are associated with a specific thread, meaning that the
+	 * system ensures that they are only accessed from that particular thread (it is, of course,
+	 * possible to handle references to an actor from anywhere). It is convenient to wrap the type
+	 * in a Value object to more easily query characteristics of a particular type. This also makes
+	 * sure that references are handled properly.
+	 *
+	 * Furthermore, the class handles inheritance and the creation of various data structures
+	 * required in the compiler, such as VTables (for virtual dispatch), type handles (for the
+	 * templating mechanism used in Storm) and various wrapper functions.
+	 *
+	 * There are some peculiarities that needs to be considered, mainly with regards to lazy loading:
+	 *
+	 * - During early compiler boot, all pointer members may be null even if not indicated
+     *   otherwise. This includes name and parameters of the object, but also things like VTable and
+     *   TypeChain. Code in C++ needs to be careful with regards to this.
+	 *
+	 * - VTables are only created when an object or any of its child objects are first instantiated.
+	 *   Since the creation of VTables require loading all classes in an object hierarchy, eager
+	 *   creation of VTables causes strange dependencies that causes seeminly unused types to be
+	 *   loaded without reason just because some other type was added to the hierarchy in another
+	 *   part of the system. Note that no VTables are created for value types.
 	 */
 	class Type : public NameSet {
 		STORM_CLASS;
 
 		// Let allocation access gcType.
 		friend void *runtime::allocObject(size_t s, Type *t);
+
+		// Let VTable access the raw version of our VTable.
+		friend MAYBE(VTable *) rawVTable(Type *t);
 
 	public:
 		// Create a type declared in Storm.
@@ -95,6 +122,9 @@ namespace storm {
 		// Get this class's size. (NOTE: This function is safe to call from any thread).
 		Size STORM_FN size();
 
+		// Get the VTable for this type.
+		MAYBE(VTable *) STORM_FN vtable();
+
 		/**
 		 * The threadsafe part ends here.
 		 */
@@ -111,16 +141,17 @@ namespace storm {
 		// Inheritance chain and membership lookup. TODO: Make private?
 		TypeChain *chain;
 
-		// The VTable for this class. Value types do not have a vtable, so 'vtable' is null for a
-		// value type. TODO: Make private?
-		MAYBE(VTable *) vtable;
-
 		// If the type was initialized during early boot, we need to initialize vtables through here
 		// at a suitable time, before any Storm-defined types are created.
 		void vtableInit(const void *vtable);
 
-		// Find only in this class.
+		// Find only in this type.
 		MAYBE(Named *) STORM_FN findHere(SimplePart *part, Scope source);
+
+		// Find only in this type, not trying to lazily load any missing content. Useful when one
+		// wants to see what has happened so far without triggering excessive compilation too early
+		// in the compilation process.
+		MAYBE(Named *) STORM_FN tryFindHere(SimplePart *part, Scope source);
 
 		// Helpers for the chain.
 		inline Bool STORM_FN isA(const Type *o) const { return chain->isA(o); }
@@ -274,6 +305,10 @@ namespace storm {
 		 * decide which functions shall use lookup.
 		 */
 
+		// The VTable for this class. Value types do not have a vtable, so 'vtable' is null for a
+		// value type.
+		MAYBE(VTable *) myVTable;
+
 		// Called when a function has been added here. Decides if 'f' should be virtual or not and
 		// acts accordingly.
 		void vtableFnAdded(Function *added);
@@ -297,4 +332,8 @@ namespace storm {
 
 	// Allocate an instance of 'type' (slow).
 	RootObject *alloc(Type *type);
+
+	// Get the raw VTable (should only be used inside VTable).
+	inline MAYBE(VTable *) rawVTable(Type *t) { return t->myVTable; }
+
 }

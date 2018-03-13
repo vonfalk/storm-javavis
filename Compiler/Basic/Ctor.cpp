@@ -301,7 +301,7 @@ namespace storm {
 
 			// Set our VTable.
 			if (type->typeFlags & typeClass) {
-				type->vtable->insert(s->l, dest);
+				type->vtable()->insert(s->l, dest);
 			}
 
 			// From here on, we need to make sure that we're freeing our 'this' pointer properly.

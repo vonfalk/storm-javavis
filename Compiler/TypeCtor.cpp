@@ -118,7 +118,7 @@ namespace storm {
 
 		if (owner->typeFlags & typeClass) {
 			// Set the VTable.
-			owner->vtable->insert(l, me);
+			owner->vtable()->insert(l, me);
 		}
 
 		*l << fnRet(me);
@@ -209,7 +209,7 @@ namespace storm {
 
 		if (owner->typeFlags & typeClass) {
 			// Set the VTable.
-			owner->vtable->insert(l, me);
+			owner->vtable()->insert(l, me);
 		}
 
 		*l << fnRet(me);

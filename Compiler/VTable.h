@@ -37,6 +37,11 @@ namespace storm {
 	 * date if vtable slots are moved. We assume we will be notified when a child has been removed,
 	 * and that we will be re-created whenever we gain a new parent.
 	 *
+	 * Note: As mentioned in the documentation for 'core.lang.Type', we assume that we do not need
+	 * to eagerly load functions in child classes since they are not needed until that class is
+	 * instantiated, in which case we will be notified. If we would eagerly load subclasses in this
+	 * manner, we would create dependencies that are hard to realize.
+	 *
 	 * TODO: It might be possible to only store a bitmask in VTableCpp and VTableStorm which
 	 * indicates if we have a new function set at this level or not.
 	 */

@@ -154,13 +154,13 @@ namespace storm {
 
 		// Ask our parent to do the same.
 		if (Type *s = owner->super())
-			s->vtable->disableLookup(cppFound, stormFound);
+			rawVTable(s)->disableLookup(cppFound, stormFound);
 	}
 
 	Bool VTable::hasOverride(VTableSlot slot) {
 		TypeChain::Iter i = owner->chain->children();
 		while (Type *c = i.next()) {
-			VTable *child = c->vtable;
+			VTable *child = rawVTable(c);
 
 			if (child->get(slot) != null)
 				return true;
@@ -181,7 +181,7 @@ namespace storm {
 
 		TypeChain::Iter i = owner->chain->children();
 		while (Type *c = i.next()) {
-			if (VTable *t = c->vtable)
+			if (VTable *t = rawVTable(c))
 				t->parentSlotMoved(slot, addr);
 		}
 	}
@@ -198,7 +198,7 @@ namespace storm {
 
 		TypeChain::Iter i = owner->chain->children();
 		while (Type *c = i.next()) {
-			if (VTable *t = c->vtable)
+			if (VTable *t = rawVTable(c))
 				t->parentSlotMoved(slot, addr);
 		}
 	}
@@ -228,7 +228,7 @@ namespace storm {
 
 		// See if our parent has a match!
 		if (Type *s = owner->super()) {
-			return s->vtable->findSuperSlot(new (this) OverridePart(fn), setLookup);
+			return rawVTable(s)->findSuperSlot(new (this) OverridePart(fn), setLookup);
 		} else {
 			return VTableSlot();
 		}
@@ -248,7 +248,7 @@ namespace storm {
 
 		// Try to find it in superclasses.
 		if (Type *s = owner->super()) {
-			return s->vtable->findSuperSlot(fn, setLookup);
+			return rawVTable(s)->findSuperSlot(fn, setLookup);
 		} else {
 			return VTableSlot();
 		}
@@ -259,7 +259,7 @@ namespace storm {
 		if (!s)
 			return;
 
-		VTable *super = s->vtable;
+		VTable *super = rawVTable(s);
 		if (Function *fn = get(slot)) {
 			useLookup(fn, slot);
 		} else {
@@ -277,7 +277,7 @@ namespace storm {
 		bool found = false;
 		TypeChain::Iter i = owner->chain->children();
 		while (Type *c = i.next())
-			found |= c->vtable->updateChildren(p, slot);
+			found |= rawVTable(c)->updateChildren(p, slot);
 
 		return found;
 	}
@@ -285,7 +285,9 @@ namespace storm {
 	Bool VTable::updateChildren(OverridePart *fn, VTableSlot slot) {
 		bool found = false;
 
-		if (Function *f = as<Function>(owner->findHere(fn, Scope()))) {
+		// Note: Do not attempt to eagerly load functions in the child class. Functions there will
+		// be loaded when the class is created, and we will be notified when that happens.
+		if (Function *f = as<Function>(owner->tryFindHere(fn, Scope()))) {
 			// If it is not known to us, we can not do anything useful with it.
 			if (VTableUpdater *u = updaters->get(f, null)) {
 				VTableSlot from = u->slot();
@@ -306,7 +308,7 @@ namespace storm {
 		// Go on recursing!
 		TypeChain::Iter i = owner->chain->children();
 		while (Type *c = i.next())
-			found |= c->vtable->updateChildren(fn, slot);
+			found |= rawVTable(c)->updateChildren(fn, slot);
 		return found;
 	}
 
@@ -327,7 +329,7 @@ namespace storm {
 			// Grow all child vtables as well.
 			TypeChain::Iter i = owner->chain->children();
 			while (Type *c = i.next())
-				c->vtable->parentGrown(oldCount, stormGrow);
+				rawVTable(c)->parentGrown(oldCount, stormGrow);
 		}
 
 		return stormSlot(slot);
@@ -341,7 +343,7 @@ namespace storm {
 
 		TypeChain::Iter i = owner->chain->children();
 		while (Type *c = i.next())
-			c->vtable->parentGrown(pos, count);
+			rawVTable(c)->parentGrown(pos, count);
 
 		for (UpdateMap::Iter i = updaters->begin(), e = updaters->end(); i != e; ++i) {
 			Function *f = i.k();

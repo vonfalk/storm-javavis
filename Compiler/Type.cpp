@@ -124,13 +124,13 @@ namespace storm {
 		if (value() || rawPtr())
 			return;
 
-		vtable = new (engine) VTable(this);
+		myVTable = new (engine) VTable(this);
 		if (typeFlags & typeCpp) {
-			vtable->createCpp(vtab);
+			myVTable->createCpp(vtab);
 		} else if (Type *t = super()) {
-			vtable->createStorm(t->vtable);
+			myVTable->createStorm(t->myVTable);
 		} else {
-			vtable->createStorm(Object::stormType(engine)->vtable);
+			myVTable->createStorm(Object::stormType(engine)->myVTable);
 		}
 	}
 
@@ -146,8 +146,8 @@ namespace storm {
 
 		chain->lateInit();
 
-		if (vtable)
-			vtable->lateInit();
+		if (myVTable)
+			myVTable->lateInit();
 	}
 
 	// Our finalizer.
@@ -264,7 +264,7 @@ namespace storm {
 
 		if ((typeFlags & typeCpp) != typeCpp && !value() && !rawPtr()) {
 			// Re-initialize the vtable.
-			vtable->createStorm(to->vtable);
+			myVTable->createStorm(to->myVTable);
 		}
 
 		// Register all functions here and in our children as vtable calls.
@@ -556,6 +556,36 @@ namespace storm {
 			mySize = layout->doLayout(mySize);
 		}
 		return mySize;
+	}
+
+	VTable *Type::vtable() {
+		// Don't bother if we're a value or we don't have a vtable yet.
+		if (!myVTable || value())
+			return null;
+
+		// If we're loaded, then we're good to go!
+		if (allLoaded())
+			return myVTable;
+
+		// We need to load ourself. Make sure we're running on the proper thread.
+		const os::Thread &t = TObject::thread->thread();
+		if (t != os::Thread::current()) {
+			// Switch threads...
+			Type *me = this;
+			os::Future<VTable *, Semaphore> f;
+			os::FnCall<VTable *, 1> p = os::fnCall().add(me);
+			os::UThread::spawn(address(&Type::vtable), true, p, f, &t);
+			return f.result();
+		}
+
+		// In the proper thread. The only thing we need to do is to make sure that the VTable is
+		// populated, which is simply done by issuing a 'forceLoad'. Us intercepting the 'add'
+		// function will do all of the dirty work.
+		// If we force loading too early, we will not be able to boot... All types used during
+		// boot should be properly loaded during boot anyway, so that is fine.
+		if (engine.has(bootDone))
+			forceLoad();
+		return myVTable;
 	}
 
 	static void defToS(const void *obj, StrBuf *to) {
@@ -968,6 +998,10 @@ namespace storm {
 		return NameSet::find(part, source);
 	}
 
+	Named *Type::tryFindHere(SimplePart *part, Scope source) {
+		return NameSet::tryFind(part, source);
+	}
+
 	void Type::toS(StrBuf *to) const {
 		if (typeFlags & typeRawPtr) {
 			*to << S("class (raw ptr) ");
@@ -1084,9 +1118,9 @@ namespace storm {
 		// direction, as they already are in the vtable in that case.
 		OverridePart *part = new (engine) OverridePart(fn);
 		if (vtableInsertSuper(part, fn))
-			vtable->insert(fn);
+			myVTable->insert(fn);
 		else if (vtableInsertSubclasses(part, fn))
-			vtable->insert(fn);
+			myVTable->insert(fn);
 	}
 
 	Bool Type::vtableInsertSuper(OverridePart *fn, Named *original) {
@@ -1099,7 +1133,7 @@ namespace storm {
 		if (found && found->visibleFrom(original)) {
 			// Found it, no need to search further as all possible parent functions are in the
 			// vtable already.
-			s->vtable->insert(found);
+			s->myVTable->insert(found);
 			return true;
 		} else {
 			return s->vtableInsertSuper(fn, original);
@@ -1111,11 +1145,13 @@ namespace storm {
 
 		TypeChain::Iter i = chain->children();
 		while (Type *child = i.next()) {
-			Function *found = as<Function>(child->findHere(fn, Scope()));
+			// Note: We do not want to eagerly load the child class now. The VTable for the child is
+			// not needed until it is instantiated anyway, and we will get notified when that happens.
+			Function *found = as<Function>(child->tryFindHere(fn, Scope()));
 			if (found && original->visibleFrom(found)) {
 				// Found something. Insert it in the vtable. We do not need to go further down this
 				// particular path as any overriding functions there are already found by now.
-				child->vtable->insert(found);
+				child->myVTable->insert(found);
 				inserted = true;
 			} else {
 				inserted |= child->vtableInsertSubclasses(fn, original);
@@ -1145,7 +1181,7 @@ namespace storm {
 		if (!engine.has(bootTemplates))
 			return;
 
-		old->vtable->removeChild(this);
+		old->myVTable->removeChild(this);
 	}
 
 }

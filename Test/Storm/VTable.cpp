@@ -157,11 +157,11 @@ BEGIN_TEST(VTableCppTest2, Storm) {
 	debug::Extend *o = new (e) debug::Extend(1);
 	CHECK_EQ(o->value(), 1);
 	CHECK_EQ(callFn(o, value), 1);
-	sub1->vtable->insert(o);
+	sub1->vtable()->insert(o);
 	CHECK_EQ(o->value(), 20);
 	CHECK_EQ(callFn(o, value), 20);
 	CHECK_EQ(callFn(o, value1), 20);
-	sub2->vtable->insert(o);
+	sub2->vtable()->insert(o);
 	CHECK_EQ(o->value(), 40);
 	CHECK_EQ(callFn(o, value), 40);
 	CHECK_EQ(callFn(o, value1), 40);
@@ -203,12 +203,12 @@ BEGIN_TEST(VTableCppTest3, Storm) {
 
 	// Instantiate a class and make sure everything works as intended!
 	debug::Extend *o = new (e) debug::Extend(1);
-	sub1->vtable->insert(o);
+	sub1->vtable()->insert(o);
 	CHECK_EQ(callFn(o, f1), 20);
-	sub2->vtable->insert(o);
+	sub2->vtable()->insert(o);
 	CHECK_EQ(callFn(o, f1), 40);
 	CHECK_EQ(callFn(o, f2), 40);
-	sub3->vtable->insert(o);
+	sub3->vtable()->insert(o);
 	CHECK_EQ(callFn(o, f1), 60);
 	CHECK_EQ(callFn(o, f2), 60);
 	CHECK_EQ(callFn(o, f3), 60);
@@ -235,12 +235,12 @@ BEGIN_TEST(VTableCppTest4, Storm) {
 
 	// Instantiate a class and make sure everything works as intended!
 	debug::Extend *o = new (e) debug::Extend(1);
-	sub1->vtable->insert(o);
+	sub1->vtable()->insert(o);
 	CHECK_EQ(callFn(o, f1), 20);
-	sub2->vtable->insert(o);
+	sub2->vtable()->insert(o);
 	CHECK_EQ(callFn(o, f1), 40);
 	CHECK_EQ(callFn(o, f2), 40);
-	sub3->vtable->insert(o);
+	sub3->vtable()->insert(o);
 	CHECK_EQ(callFn(o, f1), 60);
 	CHECK_EQ(callFn(o, f2), 60);
 	CHECK_EQ(callFn(o, f3), 60);

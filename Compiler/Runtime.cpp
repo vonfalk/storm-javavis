@@ -109,7 +109,7 @@ namespace storm {
 		}
 
 		void setVTable(RootObject *object) {
-			typeOf(object)->vtable->insert(object);
+			typeOf(object)->vtable()->insert(object);
 		}
 
 		os::ThreadGroup &threadGroup(Engine &e) {
