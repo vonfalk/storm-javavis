@@ -142,7 +142,7 @@ namespace storm {
 		Expr *TransformFn::recurse(Block *block, Str *name, Expr *root) {
 			while (name = restName(name)) {
 				Str *here = firstName(name);
-				root = namedExpr(block, pos, name, root);
+				root = namedExpr(block, pos, here, root);
 			}
 
 			return root;
