@@ -66,10 +66,10 @@ namespace storm {
 		}
 
 		void If::toS(StrBuf *to) const {
-			*to << L"if (" << condition << L") ";
+			*to << S("if (") << condition << S(") ");
 			*to << trueCode;
 			if (falseCode) {
-				*to << L" else ";
+				*to << S(" else ");
 				*to << falseCode;
 			}
 		}
@@ -93,10 +93,10 @@ namespace storm {
 		}
 
 		void IfWeak::toS(StrBuf *to) const {
-			*to << L"if (" << weakCast << L") ";
+			*to << S("if (") << weakCast << S(") ");
 			*to << trueCode;
 			if (falseCode) {
-				*to << L" else ";
+				*to << S(" else ");
 				*to << falseCode;
 			}
 		}

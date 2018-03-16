@@ -32,7 +32,7 @@ namespace storm {
 		}
 
 		void OpInfo::toS(StrBuf *to) const {
-			*to << L"{name=" << name << L", left=" << (leftAssoc ? L"true" : L"false") << L"}";
+			*to << S("{name=") << name << S(", left=") << (leftAssoc ? S("true") : S("false")) << S("}");
 		}
 
 		Expr *OpInfo::meaning(Block *block, Expr *lhs, Expr *rhs) {

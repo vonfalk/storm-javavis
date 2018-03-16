@@ -242,9 +242,9 @@ SLoop => RangeFor(pos, block, k, v, in) : "for" #keyword, "(", SName k #varName,
 // Unless block.
 Unless SUnless(Block block);
 SUnless[0] => Unless(block, cast) :
-    "unless" #keyword, "(", SAllWeakCast(block) cast, ")" [, SStmt(me) -> fail ]? (, SStmt(me) -> success)*;
+    "unless" #keyword, "(", SAllWeakCast(block) cast, ")" [, SStmt(me) -> fail ]? (, SStmt(me.successBlock) -> success)*;
 SUnless[5] => Unless(block, cast, name) :
-    "unless" #keyword, "(", SName name, "=", SAllWeakCast(block) cast, ")" [, SStmt(me) -> fail ]? (, SStmt(me) -> success)*;
+    "unless" #keyword, "(", SName name, "=", SAllWeakCast(block) cast, ")" [, SStmt(me) -> fail ]? (, SStmt(me.successBlock) -> success)*;
 
 // Initializer list for arrays.
 Array<Expr> SArrayInitList(Block block);

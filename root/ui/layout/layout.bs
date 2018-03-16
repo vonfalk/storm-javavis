@@ -29,5 +29,47 @@ class Layout extends Component {
 
 	// Re-compute the layout here.
 	void layout() {}
+
+	// Add a child to this layout.
+	void add(Component child) {}
 }
 
+// Default border/space in the Ui.
+Size defaultBorder() {
+	Size(8, 8);
+}
+
+
+/**
+ * A simple layout that adds a border around the single component within.
+ */
+class Border extends Component {
+	// The one and only component inside here.
+	private Component? child;
+
+	// Size of the border.
+	Size border;
+
+	// Initialize.
+	init() {
+		init() { border = defaultBorder; }
+	}
+
+	// Add/set the child.
+	void add(Component c) {
+		child = c;
+	}
+
+	// Re-compute the layout.
+	void layout() {
+		unless (c = child)
+			return;
+
+		Rect p = pos;
+
+		p.p0 += border;
+		p.p1 -= border;
+
+		c.pos = p;
+	}
+}

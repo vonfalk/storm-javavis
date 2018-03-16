@@ -138,16 +138,16 @@ namespace storm {
 		}
 
 		void ExprBlock::toS(StrBuf *to) const {
-			*to << L"{\n";
+			*to << S("{\n");
 			{
 				Indent i(to);
 				for (nat i = 0; i < exprs->count(); i++) {
-					*to << exprs->at(i) << L";\n";
+					*to << exprs->at(i) << S(";\n");
 					if (i == firstNoReturn && i != exprs->count() - 1)
-						*to << L"// unreachable code:\n";
+						*to << S("// unreachable code:\n");
 				}
 			}
-			*to << L"}";
+			*to << S("}");
 		}
 
 		/**

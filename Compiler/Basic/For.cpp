@@ -62,7 +62,7 @@ namespace storm {
 		}
 
 		void For::toS(StrBuf *to) const {
-			*to << L"for (" << testExpr << L"; " << updateExpr << L") " << bodyExpr;
+			*to << S("for (") << testExpr << S("; ") << updateExpr << S(") ") << bodyExpr;
 		}
 
 	}

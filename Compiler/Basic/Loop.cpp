@@ -72,11 +72,11 @@ namespace storm {
 
 		void Loop::toS(StrBuf *to) const {
 			if (doExpr) {
-				*to << L"do " << doExpr;
+				*to << S("do ") << doExpr;
 			}
 
 			if (condExpr) {
-				*to << L"while (" << condExpr << L") ";
+				*to << S("while (") << condExpr << S(") ");
 			}
 
 			if (whileExpr) {

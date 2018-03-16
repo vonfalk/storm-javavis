@@ -97,7 +97,7 @@ namespace storm {
 		}
 
 		void WeakDowncast::toS(StrBuf *to) const {
-			*to << expr << " as " << this->to;
+			*to << expr << S(" as ") << this->to;
 		}
 
 		/**

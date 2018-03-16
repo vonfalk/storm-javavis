@@ -33,19 +33,19 @@ namespace storm {
 		void Constant::toS(StrBuf *to) const {
 			switch (cType) {
 			case tInt:
-				*to << intValue << L"i";
+				*to << intValue << S("i");
 				break;
 			case tFloat:
-				*to << floatValue << L"f";
+				*to << floatValue << S("f");
 				break;
 			case tStr:
-				*to << L"\"" << strValue->escape() << L"\"";
+				*to << S("\"") << strValue->escape() << S("\"");
 				break;
 			case tBool:
-				*to << (boolValue ? L"true" : L"false");
+				*to << (boolValue ? S("true") : S("false"));
 				break;
 			default:
-				*to << L"UNKNOWN";
+				*to << S("UNKNOWN");
 				break;
 			}
 		}

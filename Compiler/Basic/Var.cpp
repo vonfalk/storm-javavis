@@ -130,12 +130,12 @@ namespace storm {
 
 		void Var::toS(StrBuf *to) const {
 			if (variable->constant)
-				*to << L"const ";
-			*to << variable->result << L" " << variable->name;
+				*to << S("const ");
+			*to << variable->result << S(" ") << variable->name;
 			if (initExpr)
-				*to << L" = " << initExpr;
+				*to << S(" = ") << initExpr;
 			else if (initCtor)
-				*to << L"(" << initCtor << L")";
+				*to << S("(") << initCtor << S(")");
 		}
 
 

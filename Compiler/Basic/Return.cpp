@@ -59,9 +59,9 @@ namespace storm {
 		}
 
 		void Return::toS(StrBuf *to) const {
-			*to << L"return";
+			*to << S("return");
 			if (expr)
-				*to << L" " << expr;
+				*to << S(" ") << expr;
 		}
 
 	}

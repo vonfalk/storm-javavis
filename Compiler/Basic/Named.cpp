@@ -135,7 +135,7 @@ namespace storm {
 			p->last() = new (p) SimplePart(p->last()->name);
 			*to << p << params;
 			if (async)
-				*to << L"&";
+				*to << S("&");
 		}
 
 		/**
@@ -305,7 +305,7 @@ namespace storm {
 		}
 
 		void BareVarAccess::toS(StrBuf *to) const {
-			*to << type << L"<bare>" << code::Operand(var);
+			*to << type << S("<bare>") << code::Operand(var);
 		}
 
 		/**
@@ -451,7 +451,7 @@ namespace storm {
 		}
 
 		void MemberVarAccess::toS(StrBuf *to) const {
-			*to << member << L"." << var->name;
+			*to << member << S(".") << var->name;
 		}
 
 
@@ -538,7 +538,7 @@ namespace storm {
 		}
 
 		void ClassAssign::toS(StrBuf *to) const {
-			*to << to << L" = " << value;
+			*to << to << S(" = ") << value;
 		}
 
 

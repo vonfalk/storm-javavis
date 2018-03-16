@@ -1,0 +1,29 @@
+use ui;
+use ui:layout;
+use core:geometry;
+
+class MyWin extends Frame {
+	private UiRoot layout;
+	private Button bn;
+
+	init() {
+		init("My window", Size(400, 400)) {
+			bn("Hej svejs");
+		}
+
+		add(bn);
+		layout.add(component(bn));
+
+		create();
+	}
+
+	void resized(Size s) {
+		layout.resize(s);
+	}
+}
+
+
+void main() {
+	MyWin w;
+	w.waitForClose;
+}

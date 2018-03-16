@@ -70,6 +70,9 @@ Int testMaybeInv(Int v) {
 	unless (r)
 		return 10;
 
+	// Create a value to see if it works.
+	DbgVal s(10);
+
 	r.get;
 }
 

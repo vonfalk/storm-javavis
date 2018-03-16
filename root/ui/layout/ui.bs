@@ -1,0 +1,60 @@
+use ui;
+use core:geometry;
+
+/**
+ * Wrappers for using the layout library together with the Ui library.
+ */
+
+
+/**
+ * Wrapper around windows in the UI class.
+ */
+class UiComponent extends Component {
+	// The window we're wrapping.
+	private Window window;
+
+	// Create.
+	init(Window window) {
+		init() { window = window; }
+	}
+
+	// Get position.
+	Rect pos() {
+		window.pos;
+	}
+
+	// Set position.
+	assign pos(Rect p) {
+		window.pos = p;
+	}
+
+	// Minimum size.
+	Size minSize() {
+		// TODO!
+		Size(0, 0);
+	}
+}
+
+// Create components.
+Component component(Window window) {
+	UiComponent(window);
+}
+
+/**
+ * Wrap the root layout.
+ */
+class UiRoot extends Border {
+	// Current size, as reported by the owner.
+	private Rect current;
+
+	// Set the size.
+	void resize(Size s) {
+		current = Rect(s);
+		layout();
+	}
+
+	// Get the size.
+	Rect pos() {
+		current;
+	}
+}

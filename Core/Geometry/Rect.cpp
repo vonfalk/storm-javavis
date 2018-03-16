@@ -8,6 +8,8 @@ namespace storm {
 
 		Rect::Rect() : p0(), p1() {}
 
+		Rect::Rect(Size s) : p0(), p1(s) {}
+
 		Rect::Rect(Point p, Size s) : p0(p), p1(p + s) {}
 
 		Rect::Rect(Point topLeft, Point bottomRight) : p0(topLeft), p1(bottomRight) {}

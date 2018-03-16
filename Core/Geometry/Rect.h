@@ -15,6 +15,9 @@ namespace storm {
 			// Empty rectangle.
 			STORM_CTOR Rect();
 
+			// Initialize to (0, 0)-(size)
+			STORM_CTOR Rect(Size s);
+
 			// Initialize to point and size.
 			STORM_CTOR Rect(Point p, Size s);
 

@@ -64,7 +64,7 @@ namespace storm {
 		}
 
 		void Unless::toS(StrBuf *to) const {
-			*to << "unless (" << cast << ") " << failStmt << ";\n" << successBlock;
+			*to << S("unless (") << cast << S(") ") << failStmt << S(";\n") << successBlock;
 		}
 
 
