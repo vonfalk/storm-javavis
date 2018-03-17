@@ -43,7 +43,7 @@ Size defaultBorder() {
 /**
  * A simple layout that adds a border around the single component within.
  */
-class Border extends Component {
+class Border extends Layout {
 	// The one and only component inside here.
 	private Component? child;
 
@@ -60,6 +60,14 @@ class Border extends Component {
 		child = c;
 	}
 
+	// Compute the minimum size.
+	Size minSize() {
+		Size s;
+		if (c = child)
+			s = child.minSize;
+		s + border*2;
+	}
+
 	// Re-compute the layout.
 	void layout() {
 		unless (c = child)
@@ -72,4 +80,5 @@ class Border extends Component {
 
 		c.pos = p;
 	}
+
 }

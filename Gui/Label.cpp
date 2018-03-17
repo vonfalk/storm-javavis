@@ -9,11 +9,19 @@ namespace gui {
 	}
 
 #ifdef GUI_WIN32
+
 	bool Label::create(Container *parent, nat id) {
 		return createEx(WC_STATIC, childFlags, 0, parent->handle().hwnd(), id);
 	}
+
+	Size Label::minSize() const {
+		TODO(L"Implement me!");
+		Size();
+	}
+
 #endif
 #ifdef GUI_GTK
+
 	bool Label::create(Container *parent, nat id) {
 		GtkWidget *label = gtk_label_new(text()->utf8_str());
 		gtk_widget_set_halign(label, (GtkAlign)GTK_ALIGN_START);
@@ -35,5 +43,15 @@ namespace gui {
 		}
 		Window::text(text);
 	}
+
+	Size Label::minSize() const {
+		gint w, h;
+
+		gtk_widget_get_preferred_width(handle().widget(), &w, NULL);
+		gtk_widget_get_preferred_height(handle().widget(), &h, NULL);
+
+		return Size(Float(w), Float(h));
+	}
+
 #endif
 }

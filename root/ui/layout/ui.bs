@@ -13,6 +13,8 @@ class UiComponent extends Component {
 	// The window we're wrapping.
 	private Window window;
 
+	// TODO: We probably want to allow modifying the 'minSize' returned from the actual window.
+
 	// Create.
 	init(Window window) {
 		init() { window = window; }
@@ -30,8 +32,7 @@ class UiComponent extends Component {
 
 	// Minimum size.
 	Size minSize() {
-		// TODO!
-		Size(0, 0);
+		window.minSize();
 	}
 }
 

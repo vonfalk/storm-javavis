@@ -4,15 +4,23 @@ use core:geometry;
 
 class MyWin extends Frame {
 	private UiRoot layout;
-	private Button bn;
+	private Button[] buttons;
 
 	init() {
-		init("My window", Size(400, 400)) {
-			bn("Hej svejs");
+		init("My window", Size(400, 400));
+
+		Grid grid;
+		grid.wrapCols(2);
+		grid.expandRow(0, 1);
+		grid.expandRow(1, 2);
+
+		for (x in ["A", "B", "C", "D"]) {
+			Button b(x);
+			add(b);
+			grid.add(component(b));
 		}
 
-		add(bn);
-		layout.add(component(bn));
+		layout.add(grid);
 
 		create();
 	}

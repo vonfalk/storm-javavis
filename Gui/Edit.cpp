@@ -122,6 +122,11 @@ namespace gui {
 			SendMessage(handle().hwnd(), EM_SETCUEBANNER, 0, (LPARAM)myCue->c_str());
 	}
 
+	Size Edit::minSize() const {
+		TODO(L"Implement me!");
+		return Size();
+	}
+
 #endif
 
 #ifdef GUI_GTK
@@ -175,6 +180,15 @@ namespace gui {
 			gtk_entry_set_placeholder_text(GTK_ENTRY(handle().widget()), s->utf8_str());
 		}
 		myCue = s;
+	}
+
+	Size Edit::minSize() const {
+		gint w, h;
+
+		gtk_widget_get_preferred_width(handle().widget(), &w, NULL);
+		gtk_widget_get_preferred_height(handle().widget(), &h, NULL);
+
+		return Size(Float(w), Float(h));
 	}
 
 #endif

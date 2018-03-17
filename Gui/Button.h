@@ -27,6 +27,9 @@ namespace gui {
 		virtual GtkWidget *fontWidget();
 #endif
 
+		// Get minimum size.
+		virtual Size STORM_FN minSize() const;
+
 	protected:
 		virtual bool create(Container *parent, nat id);
 

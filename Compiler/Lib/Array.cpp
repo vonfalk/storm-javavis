@@ -56,6 +56,18 @@ namespace storm {
 		runtime::setVTable(o);
 	}
 
+	static void CODECALL createArrayClassCount(void *mem, Nat count, const RootObject *data) {
+		ArrayType *t = (ArrayType *)runtime::typeOf((RootObject *)mem);
+		ArrayBase *o = new (Place(mem)) ArrayBase(t->param().type->handle(), count, &data);
+		runtime::setVTable(o);
+	}
+
+	static void CODECALL createArrayValCount(void *mem, Nat count, const void *data) {
+		ArrayType *t = (ArrayType *)runtime::typeOf((RootObject *)mem);
+		ArrayBase *o = new (Place(mem)) ArrayBase(t->param().type->handle(), count, data);
+		runtime::setVTable(o);
+	}
+
 	static ArrayBase *CODECALL pushClass(ArrayBase *to, const void *src) {
 		to->pushRaw(&src);
 		return to;
@@ -159,6 +171,7 @@ namespace storm {
 		Value natType = Value(StormInfo<Nat>::type(e));
 
 		add(nativeFunction(e, Value(), Type::CTOR, valList(e, 1, t), address(&createArrayRaw))->makePure());
+		add(nativeFunction(e, Value(), Type::CTOR, valList(e, 3, t, natType, param()), address(&createArrayClassCount))->makePure());
 		add(nativeFunction(e, t, S("<<"), valList(e, 2, t, param()), address(&pushClass)));
 		add(nativeFunction(e, t, S("push"), valList(e, 2, t, param()), address(&pushClass)));
 		add(nativeFunction(e, Value(), S("insert"), valList(e, 3, t, natType, param()), address(&insertClass)));
@@ -171,6 +184,7 @@ namespace storm {
 		Value natType = Value(StormInfo<Nat>::type(e));
 
 		add(nativeFunction(e, Value(), Type::CTOR, valList(e, 1, t), address(&createArrayRaw))->makePure());
+		add(nativeFunction(e, Value(), Type::CTOR, valList(e, 3, t, natType, ref), address(&createArrayValCount))->makePure());
 		add(nativeFunction(e, t, S("<<"), valList(e, 2, t, ref), address(&pushValue)));
 		add(nativeFunction(e, t, S("push"), valList(e, 2, t, ref), address(&pushValue)));
 		add(nativeFunction(e, Value(), S("insert"), valList(e, 3, t, natType, ref), address(&ArrayBase::insertRaw)));

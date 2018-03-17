@@ -1,0 +1,219 @@
+use core:geometry;
+
+/**
+ * Information for types in grids.
+ */
+class GridInfo {
+	// Location in the grid.
+	Nat row;
+	Nat col;
+}
+
+
+/**
+ * Children in the grid.
+ */
+private value GridChild {
+	GridInfo info;
+	Component component;
+	Size minSize;
+
+	init(GridInfo info, Component c) {
+		init() {
+			info = info;
+			component = c;
+		}
+	}
+}
+
+
+/**
+ * Layout for putting components in a grid-like pattern.
+ */
+class Grid extends Layout {
+	// Space between elements.
+	Size border;
+
+	// Initialize.
+	init() {
+		init() {
+			border = defaultBorder;
+		}
+	}
+
+	// Set number of columns used for automatic wrapping.
+	void wrapCols(Nat count) {
+		wrapAt = count;
+	}
+
+	// Add a new child.
+	GridInfo add(Component c) {
+		GridInfo info;
+		children << GridChild(info, c);
+
+		if ((wrapAt != 0) & (wrapAt == insertRow))
+			nextLine();
+
+		info.row = insertRow++;
+		info.col = insertCol;
+
+		info;
+	}
+
+	// Go to the next line of the grid.
+	void nextLine() {
+		insertRow = 0;
+		insertCol++;
+	}
+
+	// Set the weight for an individual column.
+	void expandCol(Nat col, Nat weight) {
+		while (colWeights.count <= col)
+			colWeights << 0;
+		colWeights[col] = weight;
+	}
+
+	// Set the weight for an individual row.
+	void expandRow(Nat row, Nat weight) {
+		while (rowWeights.count <= row)
+			rowWeights << 0;
+		rowWeights[row] = weight;
+	}
+
+	// Compute the minimum size.
+	Size minSize() {
+		update();
+
+		var row = rowMin();
+		var col = colMin();
+
+		Size r;
+		for (x in row)
+			r.w += x;
+		for (x in col)
+			r.h += x;
+
+		r.w += border.w*(col.count.int.float - 1);
+		r.h += border.h*(row.count.int.float - 1);
+		r;
+	}
+
+	// Perform the layout.
+	void layout() {
+		update();
+
+		Size me = pos.size;
+
+		var row = toOffsets(adjust(rowMin(), border.w, me.w, rowWeights), border.w);
+		var col = toOffsets(adjust(colMin(), border.h, me.h, colWeights), border.h);
+
+		for (c in children) {
+			layout(c, row, col);
+		}
+	}
+
+
+private:
+	// Data about the children.
+	GridChild[] children;
+
+	// Current row and column for next insertion.
+	Nat insertRow;
+	Nat insertCol;
+
+	// Wrap automatically at.
+	Nat wrapAt;
+
+	// Weights for expanding rows/cols.
+	Nat[] rowWeights;
+	Nat[] colWeights;
+
+	/**
+	 * Volatile state that can be computed by the data in 'children'. Updated by calling 'refresh'.
+	 */
+
+	// Number of rows/cols.
+	Nat rows;
+	Nat cols;
+
+	// Update our internal state from the data available to us.
+	void update() {
+		rows = 0;
+		cols = 0;
+
+		for (i, c in children) {
+			rows = max(rows, c.info.row + 1);
+			cols = max(cols, c.info.col + 1);
+
+			children[i].minSize = c.component.minSize();
+		}
+
+		while (rowWeights.count < rows)
+			rowWeights << 0;
+		while (colWeights.count < cols)
+			colWeights << 0;
+	}
+
+	// Get minimum row heights
+	Float[] rowMin() {
+		Float[] result(rows, 0.0);
+		for (c in children)
+			result[c.info.row] = max(result[c.info.row], c.minSize.w);
+		result;
+	}
+
+	// Get minimum column widths.
+	Float[] colMin() {
+		Float[] result(cols, 0);
+		for (c in children)
+			result[c.info.col] = max(result[c.info.col], c.minSize.h);
+		result;
+	}
+
+	// Adjust rows/colums to fit the specified width/height.
+	Float[] adjust(Float[] elems, Float border, Float total, Nat[] weights) {
+		Float min;
+		for (x in elems)
+			min += x;
+		min += border*(elems.count.int.float - 1);
+
+		Nat totalWeight;
+		for (Nat i = 0; i < elems.count; i++)
+			totalWeight += weights[i];
+
+		Float remaining = total - min;
+		Float adjust = 0;
+		if (totalWeight > 0)
+			adjust = remaining / (totalWeight.int.float);
+
+		Float[] result;
+		result.reserve(elems.count);
+
+		for (i, x in elems) {
+			result << (x + adjust*weights[i].int.float);
+		}
+
+		result;
+	}
+
+	// Convert to offsets.
+	Float[] toOffsets(Float[] elems, Float border) {
+		Float[] result;
+		result.reserve(elems.count + 1);
+		Float sum = border;
+		for (x in elems) {
+			result << sum;
+			sum += x + border;
+		}
+		result << sum;
+	}
+
+	// Position a single child given the sizes of rows and columns.
+	void layout(GridChild child, Float[] row, Float[] col) {
+		Point p0(row[child.info.row], col[child.info.col]);
+		Point p1(row[child.info.row + 1], col[child.info.col + 1]);
+		p1 -= border;
+
+		child.component.pos = Rect(p0, p1);
+	}
+}

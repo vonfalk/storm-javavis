@@ -60,6 +60,9 @@ namespace gui {
 		void STORM_ASSIGN multiline(Bool v);
 		Bool STORM_FN multiline();
 
+		// Minimum size.
+		virtual Size STORM_FN minSize() const;
+
 	protected:
 		// Create.
 		virtual bool create(Container *parent, nat id);

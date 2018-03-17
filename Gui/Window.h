@@ -113,6 +113,11 @@ namespace gui {
 		Rect STORM_FN pos();
 		virtual void STORM_ASSIGN pos(Rect r);
 
+		// Get the minimum size for this window. Note: This does not consider the size and position
+		// of any child windows in case this is a container. This function is mostly useful for
+		// determining the preferred size for various widgets.
+		virtual Size STORM_FN minSize() const;
+
 		// Font.
 		Font *STORM_FN font();
 		void STORM_ASSIGN font(Font *font);

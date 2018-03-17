@@ -44,6 +44,10 @@ namespace gui {
 		return myHandle;
 	}
 
+	Size Window::minSize() const {
+		return Size();
+	}
+
 	void Window::attachParent(Container *parent) {
 		myParent = parent;
 		if (parent == this)
