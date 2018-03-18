@@ -153,7 +153,7 @@ namespace storm {
 				return lookup->value(*this, simple, pos);
 		}
 
-		throw SyntaxError(pos, ::toS(name) + L" can not be resolved to a type!");
+		throw SyntaxError(pos, ::toS(name) + L" can not be resolved to a type.");
 	}
 
 	Value Scope::value(SrcName *name) const {

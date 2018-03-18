@@ -8,6 +8,8 @@ namespace storm {
 	namespace bs {
 		STORM_PKG(lang.bs);
 
+		class MemberWrap;
+
 		/**
 		 * Access modifiers in Basic Storm. We divide them into two categories: type access and free
 		 * access. The type access are used within types, while the free access modifiers are used
@@ -53,8 +55,9 @@ namespace storm {
 		// Apply modifiers to named objects.
 		Named *STORM_FN apply(SrcPos pos, Named *to, Visibility *v);
 		FunctionDecl *STORM_FN apply(SrcPos pos, FunctionDecl *to, Visibility *v);
+		MemberWrap *STORM_FN apply(SrcPos pos, MemberWrap *wrap, Visibility *v);
 
-		// Apply to unknown objects. Currently, Named objects and FunctionDecl are supported.
+		// Apply to unknown objects. Currently, Named objects, FunctionDecl and MemberWrap are supported.
 		TObject *STORM_FN apply(SrcPos pos, TObject *to, Visibility *v);
 
 	}

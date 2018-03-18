@@ -5,7 +5,7 @@ use core:geometry;
  *
  * Layouts can be nested inside each other to describe more complex interactions. If a layout
  * requires to maintain additional information about each component, it should contain a class named
- * 'Info' for that purpose.
+ * 'Info' for that purpose, and 'add' should return an instance associated with the newly added component.
  */
 class Layout extends Component {
 	// Our allotted space.

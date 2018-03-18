@@ -11,9 +11,9 @@ namespace storm {
 	 * Utilities.
 	 */
 
-	// Find the first parent of the given type.
+	// Find the first parent of 'at' that is of type T. This includes 'at' itself.
 	template <class T>
-	static T *firstParent(NameLookup *at) {
+	static MAYBE(T *) firstOf(NameLookup *at) {
 		T *result = as<T>(at);
 		while (at && !result) {
 			at = at->parent();
@@ -22,8 +22,17 @@ namespace storm {
 		return result;
 	}
 
-	// See if 'check' is a child of 'parent'.
-	static Bool hasParent(NameLookup *check, NameLookup *parent) {
+	// Fidn the first parent of 'at' that is of type T, excluding 'at'.
+	template <class T>
+	static MAYBE(T *) firstParent(NameLookup *at) {
+		if (at)
+			return firstOf<T>(at->parent());
+		else
+			return null;
+	}
+
+	// See if 'check' is a child of 'parent'. Always returns 'null' if 'parent' is 'null'.
+	static Bool hasParent(NameLookup *check, MAYBE(NameLookup *) parent) {
 		for (NameLookup *at = check; at; at = at->parent())
 			if (at == parent)
 				return true;
@@ -82,7 +91,7 @@ namespace storm {
 
 	Bool TypeProtected::visible(Named *check, NameLookup *source) {
 		Type *type = firstParent<Type>(check);
-		Type *src = firstParent<Type>(source);
+		Type *src = firstOf<Type>(source);
 
 		if (!type || !src)
 			return false;

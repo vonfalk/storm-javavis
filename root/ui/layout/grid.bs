@@ -1,36 +1,18 @@
 use core:geometry;
 
 /**
- * Information for types in grids.
- */
-class GridInfo {
-	// Location in the grid.
-	Nat row;
-	Nat col;
-}
-
-
-/**
- * Children in the grid.
- */
-private value GridChild {
-	GridInfo info;
-	Component component;
-	Size minSize;
-
-	init(GridInfo info, Component c) {
-		init() {
-			info = info;
-			component = c;
-		}
-	}
-}
-
-
-/**
  * Layout for putting components in a grid-like pattern.
  */
 class Grid extends Layout {
+	/**
+	 * Information for components in grids.
+	 */
+	class Info {
+		// Location in the grid.
+		Nat row;
+		Nat col;
+	}
+
 	// Space between elements.
 	Size border;
 
@@ -47,9 +29,9 @@ class Grid extends Layout {
 	}
 
 	// Add a new child.
-	GridInfo add(Component c) {
-		GridInfo info;
-		children << GridChild(info, c);
+	Info add(Component c) {
+		Info info;
+		children << Child(info, c);
 
 		if ((wrapAt != 0) & (wrapAt == insertRow))
 			nextLine();
@@ -114,8 +96,24 @@ class Grid extends Layout {
 
 
 private:
+	/**
+	 * Children in the grid.
+	 */
+	value Child {
+		Info info;
+		Component component;
+		Size minSize;
+
+		init(Info info, Component c) {
+			init() {
+				info = info;
+				component = c;
+			}
+		}
+	}
+
 	// Data about the children.
-	GridChild[] children;
+	Child[] children;
 
 	// Current row and column for next insertion.
 	Nat insertRow;
@@ -209,7 +207,7 @@ private:
 	}
 
 	// Position a single child given the sizes of rows and columns.
-	void layout(GridChild child, Float[] row, Float[] col) {
+	void layout(Child child, Float[] row, Float[] col) {
 		Point p0(row[child.info.row], col[child.info.col]);
 		Point p1(row[child.info.row + 1], col[child.info.col + 1]);
 		p1 -= border;

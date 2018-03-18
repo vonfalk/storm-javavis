@@ -98,11 +98,21 @@ namespace storm {
 			return to;
 		}
 
+		MemberWrap *apply(SrcPos pos, MemberWrap *to, Visibility *v) {
+			if (to->visibility)
+				throw SyntaxError(pos, L"This member already has a visibility specified. Can not ad another.");
+
+			to->visibility = v;
+			return to;
+		}
+
 		TObject *apply(SrcPos pos, TObject *to, Visibility *v) {
 			if (Named *n = as<Named>(to))
 				return apply(pos, n, v);
 			else if (FunctionDecl *d = as<FunctionDecl>(to))
 				return apply(pos, d, v);
+			else if (MemberWrap *wrap = as<MemberWrap>(to))
+				return apply(pos, wrap, v);
 			else
 				throw InternalError(L"I can not apply visibility to " + ::toS(to));
 		}

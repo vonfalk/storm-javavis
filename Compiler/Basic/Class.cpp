@@ -6,6 +6,8 @@
 #include "Compiler/Engine.h"
 #include "Function.h"
 #include "Ctor.h"
+#include "Access.h"
+#include "Doc.h"
 
 namespace storm {
 	namespace bs {
@@ -77,48 +79,50 @@ namespace storm {
 			allowLazyLoad = true;
 		}
 
+		Class::AddState::AddState() : ctor(false), copyCtor(false), deepCopy(false), assign(false) {}
+
 		bool Class::loadAll() {
 			if (!allowLazyLoad)
 				return false;
 
 			ClassBody *body = syntax::transformNode<ClassBody, Class *>(this->body, this);
 
-			// Found a CTOR?
-			bool hasCtor = false;
-			bool hasCopyCtor = false;
-			bool hasDeepCopy = false;
+			AddState added;
 
-			for (nat i = 0; i < body->items->count(); i++) {
-				Named *&z = body->items->at(i);
-				if (*z->name == Type::CTOR) {
-					if (z->params->count() == 2 && z->params->at(0) == z->params->at(1))
-						hasCopyCtor = true;
-					hasCtor = true;
-				} else if (*z->name == S("deepCopy")) {
-					if (z->params->count() == 2 && z->params->at(1).type == CloneEnv::stormType(this))
-						hasDeepCopy = true;
-				}
-				add(z);
+			// Add the named objects first.
+			for (Nat i = 0; i < body->items->count(); i++) {
+				addMember(body->items->at(i), added);
 			}
 
+			// Poke the classes to tell them they can load their super types now.
+			for (Nat i = 0; i < body->items->count(); i++) {
+				if (Class *c = as<Class>(body->items->at(i)))
+					c->lookupTypes();
+			}
+
+			// Add the wrapped items.
+			for (Nat i = 0; i < body->wraps->count(); i++) {
+				addMember(body->wraps->at(i)->transform(this), added);
+			}
+
+
+			// Add default members as required.
 			if (needsDestructor(this))
 				add(new (engine) TypeDefaultDtor(this));
 
-			if (!hasCtor)
+			if (!added.ctor)
 				add(classDefaultCtor(this));
 
-			if (!hasCopyCtor && runOn().state == RunOn::any)
+			if (!added.copyCtor && runOn().state == RunOn::any)
 				add(new (engine) TypeCopyCtor(this));
 
-			if (!hasDeepCopy && runOn().state == RunOn::any)
+			if (!added.deepCopy && runOn().state == RunOn::any)
 				add(new (engine) TypeDeepCopy(this));
 
-			// TODO: Add a default toS for values somehow.
-
-			// Temporary solution.
-			if (typeFlags & typeValue) {
+			if ((typeFlags & typeValue) && !added.assign)
 				add(new (engine) TypeAssign(this));
-			}
+
+			// TODO: Add a default toS for values somehow.
 
 			for (Nat i = 0; i < body->templates->count(); i++) {
 				add(body->templates->at(i));
@@ -131,12 +135,46 @@ namespace storm {
 			return Type::loadAll();
 		}
 
+		void Class::addMember(Named *item, AddState &state) {
+			if (*item->name == Type::CTOR) {
+				if (item->params->count() == 2 && item->params->at(0) == item->params->at(1))
+					state.copyCtor = true;
+				state.ctor = true;
+			} else if (*item->name == S("deepCopy")) {
+				if (item->params->count() == 2 && item->params->at(1).type == CloneEnv::stormType(this))
+					state.deepCopy = true;
+			} else if (*item->name == S("=")) {
+				if (item->params->count() == 2 && item->params->at(1).type == this)
+					state.assign = true;
+			}
+
+			add(item);
+		}
+
+
 		/**
-		 * Body
+		 * Wrap.
+		 */
+
+		MemberWrap::MemberWrap(syntax::Node *node) : node(node), visibility(null) {}
+
+		Named *MemberWrap::transform(Class *owner) {
+			Named *n = syntax::transformNode<Named, Class *>(node, owner);
+			if (visibility)
+				apply(node->pos, n, visibility);
+			if (docPos.any())
+				applyDoc(docPos, n);
+			return n;
+		}
+
+
+		/**
+		 * Body.
 		 */
 
 		ClassBody::ClassBody() {
 			items = new (this) Array<Named *>();
+			wraps = new (this) Array<MemberWrap *>();
 			templates = new (this) Array<Template *>();
 
 			// TODO: Default to 'private' instead?
@@ -147,6 +185,12 @@ namespace storm {
 			if (!i->visibility)
 				i->visibility = defaultVisibility;
 			items->push(i);
+		}
+
+		void ClassBody::add(MemberWrap *w) {
+			if (!w->visibility)
+				w->visibility = defaultVisibility;
+			wraps->push(w);
 		}
 
 		void ClassBody::add(Template *t) {
@@ -160,6 +204,8 @@ namespace storm {
 		void ClassBody::add(TObject *o) {
 			if (Named *n = as<Named>(o))
 				add(n);
+			else if (MemberWrap *w = as<MemberWrap>(o))
+				add(w);
 			else if (Template *t = as<Template>(o))
 				add(t);
 			else if (Visibility *v = as<Visibility>(o))
@@ -169,11 +215,12 @@ namespace storm {
 		}
 
 		/**
-		 * Member
+		 * Members.
 		 */
 
-		ClassVar::ClassVar(Class *owner, SrcName *type, syntax::SStr *name)
-			: MemberVar(name->v, owner->scope.value(type), owner) {}
+		MemberVar *classVar(Class *owner, SrcName *type, syntax::SStr *name) {
+			return new (owner) MemberVar(name->v, owner->scope.value(type), owner);
+		}
 
 
 		BSFunction *STORM_FN classFn(Class *owner,

@@ -441,31 +441,35 @@ SCtorParams => Array<NameParam>() : SFirstFormal -> push - (, ",", SFormal -> pu
 NameParam SFirstFormal();
 SFirstFormal => nameless(type) : SType type;
 
-// Possible contents of a class.
+// Possible contents of a class. Note that all except types are captured and loaded later
+// to make sure nested types work as expected.
 TObject SClassItem(Class owner);
-SClassItem => item : SPlainClassItem(owner) item;
-SClassItem => item : [STypeAccess item - ":"]-;
-SClassItem => apply(pos, item, access) : STypeAccess access - " ", SPlainClassItem(owner) item;
-
+SClassItem => c : SClass(owner.scope) c;
+SClassItem => MemberWrap(item) : SClassWrapItem@ item;
 
 // Class items possible to put access modifiers (and other decorators) in front of.
-Named SPlainClassItem(Class owner);
-SPlainClassItem[0] => ClassVar(owner, t, n) :
+Named SClassWrapItem(Class owner);
+SClassWrapItem[0] => classVar(owner, t, n) :
     SType t, SName n #varName, ";";
-SPlainClassItem[0] => classFn(owner, pos, name, result, params, body) :
+SClassWrapItem[0] => classFn(owner, pos, name, result, params, body) :
     SType result, SFnDeclName name #fnName, "(", SFormals params, ")", "{"[, SFunctionBody@ body,]+ "}";
-SPlainClassItem[5] => classAssign(owner, pos, name, params, body) :
+SClassWrapItem[5] => classAssign(owner, pos, name, params, body) :
     "assign" #keyword, SFnDeclName name #fnName, "(", SFormals params, ")", "{"[, SFunctionBody@ body,]+ "}";
-SPlainClassItem[5] => classCtor(owner, pos, params, body) :
+SClassWrapItem[5] => classCtor(owner, pos, params, body) :
     "init" #keyword, "(", SCtorParams params, ")", "{"[, SCtorBody@ body,]+ "}";
-SPlainClassItem[5] => classCastCtor(owner, pos, params, body) :
+SClassWrapItem[5] => classCastCtor(owner, pos, params, body) :
     "cast" #keyword, "(", SCtorParams params, ")", "{"[, SCtorBody@ body,]+ "}";
-SPlainClassItem[0] => c : SClass(owner.scope) c;
 
+
+// Contents of a class, including access modifiers.
+TObject SClassAccessItem(Class owner);
+SClassAccessItem => item : SClassItem(owner) item;
+SClassAccessItem => item : [STypeAccess item - ":"]-;
+SClassAccessItem => apply(pos, item, access) : STypeAccess access - " ", SClassItem(owner) item;
 
 TObject SDocClassItem(Class owner);
-SDocClassItem[0] => item : SDelimiter - SClassItem(owner) item;
-SDocClassItem[5] => applyDoc(c, item) : SFindDoc c - SClassItem(owner) item;
+SDocClassItem[0] => item : SDelimiter - SClassAccessItem(owner) item;
+SDocClassItem[5] => applyDoc(c, item) : SFindDoc c - SClassAccessItem(owner) item;
 
 // Root rule for parsing classes and values.
 ClassBody SClassBody(Class owner);

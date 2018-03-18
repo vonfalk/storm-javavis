@@ -10,8 +10,6 @@ namespace storm {
 		 * Base class for all syntax nodes. This class will be overridden by 'Rule' to add the
 		 * 'transform' function and then by 'Option' to implement the 'transform' function for that
 		 * specific option.
-		 *
-		 * TODO: Always run on compiler thread?
 		 */
 		class Node : public ObjectOn<Compiler> {
 			STORM_CLASS;

@@ -46,6 +46,19 @@ namespace storm {
 
 			// Allowing lazy loads?
 			bool allowLazyLoad;
+
+			// State used to keep track of what is added.
+			struct AddState {
+				AddState();
+
+				bool ctor;
+				bool copyCtor;
+				bool deepCopy;
+				bool assign;
+			};
+
+			// Add a member to the class, keeping track of what already exists.
+			void addMember(Named *member, AddState &s);
 		};
 
 
@@ -63,6 +76,29 @@ namespace storm {
 
 
 		/**
+		 * Wrapper around syntax nodes for class members so that we can attach a visibilty to them.
+		 */
+		class MemberWrap : public ObjectOn<Compiler> {
+			STORM_CLASS;
+		public:
+			// Create.
+			STORM_CTOR MemberWrap(syntax::Node *node);
+
+			// Node we're wrapping.
+			syntax::Node *node;
+
+			// Visibility of this node (if attached).
+			MAYBE(Visibility *) visibility;
+
+			// If set: location of the documentation for this member.
+			SrcPos docPos;
+
+			// Transform this node.
+			Named *STORM_FN transform(Class *owner);
+		};
+
+
+		/**
 		 * Class body.
 		 */
 		class ClassBody : public ObjectOn<Compiler> {
@@ -72,6 +108,9 @@ namespace storm {
 
 			// Add content.
 			void STORM_FN add(Named *item);
+
+			// Add a wrapped syntax node.
+			void STORM_FN add(MemberWrap *wrap);
 
 			// Add template.
 			void STORM_FN add(Template *t);
@@ -85,6 +124,9 @@ namespace storm {
 			// Contents.
 			Array<Named *> *items;
 
+			// Wrapped members for later evaluation.
+			Array<MemberWrap *> *wraps;
+
 			// Template contents.
 			Array<Template *> *templates;
 
@@ -96,11 +138,7 @@ namespace storm {
 		/**
 		 * Class variable.
 		 */
-		class ClassVar : public MemberVar {
-			STORM_CLASS;
-		public:
-			STORM_CTOR ClassVar(Class *owner, SrcName *type, syntax::SStr *name);
-		};
+		MemberVar *STORM_FN classVar(Class *owner, SrcName *type, syntax::SStr *name) ON(Compiler);
 
 		/**
 		 * Class function.
@@ -110,7 +148,7 @@ namespace storm {
 									syntax::SStr *name,
 									Name *result,
 									Array<NameParam> *params,
-									syntax::Node *content);
+									syntax::Node *content) ON(Compiler);
 
 		/**
 		 * Class function declared as 'assign function'.
@@ -119,7 +157,7 @@ namespace storm {
 										SrcPos pos,
 										syntax::SStr *name,
 										Array<NameParam> *params,
-										syntax::Node *content);
+										syntax::Node *content) ON(Compiler);
 
 		/**
 		 * Class constructor.
@@ -127,14 +165,14 @@ namespace storm {
 		BSCtor *STORM_FN classCtor(Class *owner,
 								SrcPos pos,
 								Array<NameParam> *params,
-								syntax::Node *content);
+								syntax::Node *content) ON(Compiler);
 
 		BSCtor *STORM_FN classCastCtor(Class *owner,
 									SrcPos pos,
 									Array<NameParam> *params,
-									syntax::Node *content);
+									syntax::Node *content) ON(Compiler);
 
-		BSCtor *STORM_FN classDefaultCtor(Class *owner);
+		BSCtor *STORM_FN classDefaultCtor(Class *owner) ON(Compiler);
 
 	}
 }

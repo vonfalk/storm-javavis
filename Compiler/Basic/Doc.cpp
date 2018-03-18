@@ -2,6 +2,7 @@
 #include "Doc.h"
 #include "Function.h"
 #include "Type.h"
+#include "Class.h"
 #include "Compiler/Exception.h"
 #include "Core/Io/Text.h"
 #include "Core/Io/Stream.h"
@@ -266,6 +267,10 @@ namespace storm {
 				// Tell the declaration where the documentation is. It will call us again later so
 				// that we can set the documentation properly.
 				fn->docPos = pos;
+			} else if (MemberWrap *wrap = as<MemberWrap>(to)) {
+				// Remember where the documentation is. It will call us again later so that we can
+				// set the documentation properly.
+				wrap->docPos = pos;
 			} else {
 				// TODO: Handle documentation for generators as well!
 				// PVAR(runtime::typeOf(to)->identifier());

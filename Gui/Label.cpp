@@ -16,7 +16,7 @@ namespace gui {
 
 	Size Label::minSize() const {
 		TODO(L"Implement me!");
-		Size();
+		return Size();
 	}
 
 #endif
