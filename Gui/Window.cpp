@@ -44,7 +44,7 @@ namespace gui {
 		return myHandle;
 	}
 
-	Size Window::minSize() const {
+	Size Window::minSize() {
 		return Size();
 	}
 

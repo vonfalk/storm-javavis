@@ -18,7 +18,7 @@ namespace gui {
 		virtual void STORM_FN text(Str *text);
 #endif
 
-		virtual Size STORM_FN minSize() const;
+		virtual Size STORM_FN minSize();
 
 	protected:
 		virtual bool create(Container *parent, nat id);

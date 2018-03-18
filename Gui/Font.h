@@ -70,6 +70,9 @@ namespace gui {
 
 		// Get TextFormat for D2D. This class retains ownership over the returned object.
 		IDWriteTextFormat *textFormat();
+
+		// Get the size of a string in a given font as reported by GDI.
+		Size stringSize(const Str *str);
 #endif
 #ifdef GUI_GTK
 		// Get a Pango font description.
@@ -101,5 +104,4 @@ namespace gui {
 		// Invalidate any created resources.
 		void changed();
 	};
-
 }

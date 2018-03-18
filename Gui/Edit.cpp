@@ -122,9 +122,15 @@ namespace gui {
 			SendMessage(handle().hwnd(), EM_SETCUEBANNER, 0, (LPARAM)myCue->c_str());
 	}
 
-	Size Edit::minSize() const {
-		TODO(L"Implement me!");
-		return Size();
+	Size Edit::minSize() {
+		Size sz;
+		if (myCue->any())
+			sz = font()->stringSize(myCue);
+		else
+			sz = font()->stringSize(new (this) Str(S("AAAA")));
+		sz.w += sz.h;
+		sz.h *= 1.6f;
+		return sz;
 	}
 
 #endif
@@ -182,7 +188,7 @@ namespace gui {
 		myCue = s;
 	}
 
-	Size Edit::minSize() const {
+	Size Edit::minSize() {
 		gint w, h;
 
 		gtk_widget_get_preferred_width(handle().widget(), &w, NULL);

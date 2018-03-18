@@ -14,9 +14,8 @@ namespace gui {
 		return createEx(WC_STATIC, childFlags, 0, parent->handle().hwnd(), id);
 	}
 
-	Size Label::minSize() const {
-		TODO(L"Implement me!");
-		return Size();
+	Size Label::minSize() {
+		return font()->stringSize(text());
 	}
 
 #endif
@@ -44,7 +43,7 @@ namespace gui {
 		Window::text(text);
 	}
 
-	Size Label::minSize() const {
+	Size Label::minSize() {
 		gint w, h;
 
 		gtk_widget_get_preferred_width(handle().widget(), &w, NULL);

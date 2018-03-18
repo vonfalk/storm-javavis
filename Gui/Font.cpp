@@ -235,6 +235,21 @@ namespace gui {
 		return shared->textFmt;
 	}
 
+	Size Font::stringSize(const Str *str) {
+		HFONT font = handle();
+
+		HDC dc = GetDC(NULL);
+		HGDIOBJ oldFont = SelectObject(dc, font);
+
+		SIZE size = {0, 0};
+		GetTextExtentPoint32(dc, str->c_str(), str->peekLength(), &size);
+
+		SelectObject(dc, oldFont);
+		ReleaseDC(NULL, dc);
+
+		return Size(Float(size.cx), Float(size.cy));
+	}
+
 #endif
 
 #ifdef GUI_GTK

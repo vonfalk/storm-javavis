@@ -61,7 +61,7 @@ namespace gui {
 		Bool STORM_FN multiline();
 
 		// Minimum size.
-		virtual Size STORM_FN minSize() const;
+		virtual Size STORM_FN minSize();
 
 	protected:
 		// Create.

@@ -33,19 +33,24 @@ class Grid extends Layout {
 		Info info;
 		children << Child(info, c);
 
-		if ((wrapAt != 0) & (wrapAt == insertRow))
+		if ((wrapAt != 0) & (wrapAt == insertCol))
 			nextLine();
 
-		info.row = insertRow++;
-		info.col = insertCol;
+		info.row = insertRow;
+		info.col = insertCol++;
 
 		info;
 	}
 
 	// Go to the next line of the grid.
 	void nextLine() {
-		insertRow = 0;
-		insertCol++;
+		insertRow++;
+		insertCol = 0;
+	}
+
+	// Set the weight for an individual column to 1.
+	void expandCol(Nat col) {
+		expandCol(col, 1);
 	}
 
 	// Set the weight for an individual column.
@@ -53,6 +58,11 @@ class Grid extends Layout {
 		while (colWeights.count <= col)
 			colWeights << 0;
 		colWeights[col] = weight;
+	}
+
+	// Set the weight for an individual row to 1.
+	void expandRow(Nat row) {
+		expandRow(row, 1);
 	}
 
 	// Set the weight for an individual row.
@@ -86,8 +96,8 @@ class Grid extends Layout {
 
 		Size me = pos.size;
 
-		var row = toOffsets(adjust(rowMin(), border.w, me.w, rowWeights), border.w);
-		var col = toOffsets(adjust(colMin(), border.h, me.h, colWeights), border.h);
+		var row = toOffsets(adjust(rowMin(), border.h, me.h, rowWeights), border.h);
+		var col = toOffsets(adjust(colMin(), border.w, me.w, colWeights), border.w);
 
 		for (c in children) {
 			layout(c, row, col);
@@ -156,7 +166,7 @@ private:
 	Float[] rowMin() {
 		Float[] result(rows, 0.0);
 		for (c in children)
-			result[c.info.row] = max(result[c.info.row], c.minSize.w);
+			result[c.info.row] = max(result[c.info.row], c.minSize.h);
 		result;
 	}
 
@@ -164,7 +174,7 @@ private:
 	Float[] colMin() {
 		Float[] result(cols, 0);
 		for (c in children)
-			result[c.info.col] = max(result[c.info.col], c.minSize.h);
+			result[c.info.col] = max(result[c.info.col], c.minSize.w);
 		result;
 	}
 
@@ -208,8 +218,8 @@ private:
 
 	// Position a single child given the sizes of rows and columns.
 	void layout(Child child, Float[] row, Float[] col) {
-		Point p0(row[child.info.row], col[child.info.col]);
-		Point p1(row[child.info.row + 1], col[child.info.col + 1]);
+		Point p0(col[child.info.col], row[child.info.row]);
+		Point p1(col[child.info.col + 1], row[child.info.row + 1]);
 		p1 -= border;
 
 		child.component.pos = Rect(p0, p1);

@@ -9,12 +9,38 @@ class MyWin extends Frame {
 	init() {
 		init("My window", Size(400, 400));
 
+		// Button a("A");
+		// Button b("B");
+		// Button c("C");
+		// Button d("D");
+		// Button e("E");
+		// Button f("F");
+		// buttons = [a, b, c, d, e, f];
+
+		// Idea for the layout DSL:
+		// layout {
+		// 	Grid {
+		// 	wrapCols: 2;
+		// 	expandRow: 0;
+		// 		a;
+		// 		b;
+		// 		c;
+		// 	nextLine:
+		// 		d;
+		// 		e;
+		// 		f {
+		// 		row: 3;
+		// 		col: 3;
+		// 		}
+		// 	}
+		// }
+
 		Grid grid;
 		grid.wrapCols(2);
-		grid.expandRow(0, 1);
-		grid.expandRow(1, 2);
+		grid.expandCol(0, 1);
+		// grid.expandCol(1, 2);
 
-		for (x in ["A", "B", "C", "D"]) {
+		for (x in ["A", "B", "C", "D", "E", "F"]) {
 			Button b(x);
 			add(b);
 			grid.add(component(b));

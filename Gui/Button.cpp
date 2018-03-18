@@ -35,11 +35,11 @@ namespace gui {
 		return false;
 	}
 
-	Size Button::minSize() const {
-		SIZE sz;
-		Button_GetIdealSize(handle().hwnd(), &sz);
-
-		return Size(Float(sz.cx), Float(sz.cy));
+	Size Button::minSize() {
+		Size sz = font()->stringSize(text());
+		sz.w += sz.h;
+		sz.h *= 1.6f;
+		return sz;
 	}
 
 #endif
@@ -64,7 +64,7 @@ namespace gui {
 		return gtk_bin_get_child(GTK_BIN(handle().widget()));
 	}
 
-	Size Button::minSize() const {
+	Size Button::minSize() {
 		gint w, h;
 
 		gtk_widget_get_preferred_width(handle().widget(), &w, NULL);

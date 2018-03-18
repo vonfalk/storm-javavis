@@ -28,7 +28,7 @@ namespace gui {
 #endif
 
 		// Get minimum size.
-		virtual Size STORM_FN minSize() const;
+		virtual Size STORM_FN minSize();
 
 	protected:
 		virtual bool create(Container *parent, nat id);
