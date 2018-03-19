@@ -1,0 +1,34 @@
+use core.lang;
+use lang.bs;
+
+// Borrow the low-level syntax from Basic Storm.
+delimiter = SDelimiter;
+
+// Backend-agnostic version of the syntax. There might be more specialized variants for use
+// with specific backends for additional convenience.
+lang.bs.SAtom => block(l) : "layout" #keyword, SLayoutRoot(block) l;
+
+LayoutRoot SLayoutRoot(Block block);
+SLayoutRoot => createRoot(block) : SLayout(me) -> add;
+
+// Define an instance of a Layout object with associated properties.
+LayoutBlock SLayout(LayoutRoot block);
+SLayout => LayoutBlock(block, name, params) : lang.bs.SType name, ("(", SParamList(block) params, ")",)? "{" [, SLayoutContent(me),]+ "}";
+
+// Contents of a Layout object.
+void SLayoutContent(LayoutBlock block);
+SLayoutContent : (SLayoutItem(block),)*;
+
+// One property or a nested layout object.
+void SLayoutItem(LayoutBlock block);
+
+// A property, either in this layout or its parent.
+SLayoutItem => add(block, name, params) : SName name #varName - (, ":", SParamList(block) params)?, ";";
+
+// A nested layout item.
+SLayoutItem => add(block, l) : SLayout(block) l;
+
+// Parameter list.
+Actuals SParamList(LayoutRoot root);
+SParamList => Actuals() : ;
+SParamList => Actuals() : lang.bs.SExpr(root.block) -> add - (, ",", lang.bs.SExpr(root.block) -> add)*;

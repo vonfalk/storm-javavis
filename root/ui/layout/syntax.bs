@@ -1,0 +1,102 @@
+use core:lang;
+use lang:bs;
+use lang:bs:macro;
+
+/**
+ * A block corresponding to one layout entry.
+ */
+class LayoutRoot on Compiler {
+	// Root block.
+	protected ExprBlock root;
+
+	// Create.
+	init(ExprBlock root) {
+		init() {
+			root = root;
+		}
+	}
+
+	// Get the block.
+	ExprBlock block() {
+		root;
+	}
+
+	// Add a block.
+	void add(LayoutRoot sub) {
+		root.add(sub.root);
+	}
+
+	// To string.
+	void toS(StrBuf to) {
+		root.toS(to);
+	}
+}
+
+// Create a new root block.
+LayoutRoot createRoot(Block parent) {
+	LayoutRoot(ExprBlock(SrcPos(), parent));
+}
+
+// Sane default for maybe actuals.
+// Idea: provide syntax: "foo or Actuals()" equivalent to this?
+private Actuals sane(Actuals? params) {
+	if (params)
+		params;
+	else
+		Actuals();
+}
+
+/**
+ * A block that is an inner node in the layout tree.
+ */
+class LayoutBlock extends LayoutRoot {
+	// Block used to put data from child items in so that we are still able to get something
+	// positioned 'last' in the parent block.
+	private ExprBlock sub;
+
+	// Variable storing the resulting transform.
+	private LocalVarAccess result;
+
+	// Create.
+	init(LayoutRoot parent, SrcName name, Actuals? params) {
+		ExprBlock block(name.pos, parent.root);
+		ExprBlock sub(name.pos, block);
+
+		Expr src = namedExpr(block, name, sane(params));
+		print(src.result.toS);
+		if (!Value(named{Layout}).canStore(src.result.type))
+			src = namedExpr(block, name.pos, "component", src);
+		print(src.result.toS);
+		Var result(block, SStr("@ result"), src);
+
+
+		block.add(result);
+		block.add(sub);
+		LocalVarAccess resultAcc(name.pos, result.var);
+		block.add(resultAcc);
+
+		init(block) {
+			sub = sub;
+			result = resultAcc;
+		}
+	}
+
+	// Add a property.
+	void add(SStr name, Actuals? params) {
+	}
+
+	// Add a child block.
+	void add(LayoutBlock e) {
+		sub.add(namedExpr(sub, sub.pos, "add", result, Actuals(e.root)));
+	}
+
+	// Use the sub block if required anywhere.
+	ExprBlock block() {
+		sub;
+	}
+
+	// Output a string representation.
+	void toS(StrBuf to) {
+		root.toS(to);
+	}
+}
