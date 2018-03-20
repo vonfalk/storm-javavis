@@ -5,6 +5,9 @@
   - [ ] Finish integrating the Double class in the system. Basic Storm should be able to instantiate them from
         literals. Str and StrBuf should be able to parse and stringify them, and conversions between built-in
         types should be implemented. Finally, the implementation needs to be tested.
+  - [ ] Support two-stage initialization. First a call to 'super' or similarly, after which 'this' is accessible
+        as the parent class, then a call to 'init {}' which initializes the rest of the object. Slightly tricky
+        to implement wrt the 'as' operator.
   - [ ] Add documentation for the built-in types (such as core.Int).
   - [ ] It is not possible to chain 'assignment' functions using the = operator.
   - [ ] Allow declaring member functions (at least in values) as a different thread than the owner.

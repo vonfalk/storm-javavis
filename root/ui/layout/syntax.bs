@@ -46,6 +46,28 @@ private Actuals sane(Actuals? params) {
 		Actuals();
 }
 
+// Apply a property to the object denoted in Expr. Attempts to call a function first, and then
+// attempts an assignment if possible.
+private Expr? applyProperty(Block block, Expr expr, SStr name, Actuals params) {
+	Expr e = namedExpr(block, name, expr, params);
+	// Did we find it already?
+	unless (e as UnresolvedName) {
+		return e;
+	}
+
+	// If only one parameter, attempt assignment.
+	if (params.expressions.count != 1)
+		return null;
+
+	Expr l = namedExpr(block, name, expr, Actuals());
+	if (l as UnresolvedName) {
+		return null;
+	}
+
+	AssignOpInfo assign(SStr("="), 10, true);
+	return assign.meaning(block, l, params.expressions[0]);
+}
+
 /**
  * A block that is an inner node in the layout tree.
  */
@@ -57,16 +79,27 @@ class LayoutBlock extends LayoutRoot {
 	// Variable storing the resulting transform.
 	private LocalVarAccess result;
 
+	// Properties that should be applied in the parent later on.
+	private value ParentExpr {
+		SStr name;
+		Actuals params;
+
+		init(SStr name, Actuals params) {
+			init() { name = name; params = params; }
+		}
+	}
+
+	// Properties to be applied in the parent.
+	private ParentExpr[] parent;
+
 	// Create.
 	init(LayoutRoot parent, SrcName name, Actuals? params) {
 		ExprBlock block(name.pos, parent.root);
 		ExprBlock sub(name.pos, block);
 
 		Expr src = namedExpr(block, name, sane(params));
-		print(src.result.toS);
 		if (!Value(named{Layout}).canStore(src.result.type))
 			src = namedExpr(block, name.pos, "component", src);
-		print(src.result.toS);
 		Var result(block, SStr("@ result"), src);
 
 
@@ -83,11 +116,39 @@ class LayoutBlock extends LayoutRoot {
 
 	// Add a property.
 	void add(SStr name, Actuals? params) {
+		// Look in this class.
+		Expr? e = applyProperty(sub, result, name, sane(params));
+		if (e) {
+			sub.add(e);
+		} else {
+			// Failed... try inside the info struct of the parent if available.
+			parent << ParentExpr(name, sane(params));
+		}
 	}
 
 	// Add a child block.
 	void add(LayoutBlock e) {
-		sub.add(namedExpr(sub, sub.pos, "add", result, Actuals(e.root)));
+		Expr add = namedExpr(sub, sub.pos, "add", result, Actuals(e.root));
+		if (e.parent.empty) {
+			sub.add(add);
+			return;
+		}
+
+		// Add properties from the child.
+		ExprBlock child(sub.pos, sub);
+		sub.add(child);
+
+		Var info(child, SStr("@ info"), add);
+		child.add(info);
+		LocalVarAccess access(sub.pos, info.var);
+
+		for (x in e.parent) {
+			if (expr = applyProperty(child, access, x.name, x.params)) {
+				child.add(expr);
+			} else {
+				throwSyntaxError(x.name.pos, "Unable to find a suitable property " # x.name.v);
+			}
+		}
 	}
 
 	// Use the sub block if required anywhere.

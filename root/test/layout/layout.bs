@@ -24,46 +24,21 @@ class MyWin extends Frame {
 		add(e);
 		add(f);
 
-		dump{
-			var grid = layout Grid {
-				wrapCols: 2;
-				expandRow: 0, 1;
-				a {}
-				b {}
-				c {}
-				nextLine;
-				d {}
-				e {}
-				f {
-					row: 3;
-					col: 3;
-				}
+		var grid = layout Grid {
+			wrapCols: 2;
+			expandCol: 0, 1;
+			a {}
+			b {}
+			c {}
+			nextLine;
+			d {}
+			e {}
+			f {
+				row: 3;
+				col: 3;
 			}
 		};
 
-		// var grid = {
-		// 	Grid x;
-		// 	x.wrapCols(2);
-		// 	x.expandRow(0, 1);
-		// 	{
-		// 		var z = x.add(component(a));
-		// 	}
-		// 	{
-		// 		var z = x.add(component(b));
-		// 	}
-		// 	x;
-		// };
-
-		// Grid grid;
-		// grid.wrapCols(2);
-		// grid.expandCol(0, 1);
-		// // grid.expandCol(1, 2);
-
-		// for (x in ["A", "B", "C", "D", "E", "F"]) {
-		// 	Button b(x);
-		// 	add(b);
-		// 	grid.add(component(b));
-		// }
 
 		layout.add(grid);
 

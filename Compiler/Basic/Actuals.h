@@ -38,6 +38,9 @@ namespace storm {
 			// Add a parameter to the beginning.
 			void STORM_FN addFirst(Expr *expr);
 
+			// Add a first parameter to a copy of this object.
+			Actuals *STORM_FN withFirst(Expr *expr) const;
+
 		protected:
 			virtual void STORM_FN toS(StrBuf *to) const;
 		};

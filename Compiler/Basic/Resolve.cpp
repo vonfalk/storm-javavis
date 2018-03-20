@@ -46,7 +46,7 @@ namespace storm {
 
 			if (Function *f = as<Function>(n)) {
 				if (first)
-					actual->addFirst(new (first) LocalVarAccess(pos, first));
+					actual = actual->withFirst(new (first) LocalVarAccess(pos, first));
 				return new (n) FnCall(pos, scope, f, actual, useLookup, first ? true : false);
 			}
 
@@ -184,7 +184,7 @@ namespace storm {
 		}
 
 		Expr *namedExpr(Block *block, SrcPos pos, Str *name, Expr *first, Actuals *params) {
-			params->addFirst(first);
+			params = params->withFirst(first);
 			SimpleName *n = new (name) SimpleName(name);
 			return findTarget(block, n, pos, params, false);
 		}

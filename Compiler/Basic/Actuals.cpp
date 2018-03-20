@@ -37,6 +37,12 @@ namespace storm {
 			expressions->insert(0, e);
 		}
 
+		Actuals *Actuals::withFirst(Expr *e) const {
+			Actuals *copy = new (this) Actuals(*this);
+			copy->addFirst(e);
+			return copy;
+		}
+
 		/**
 		 * Helper to compute an actual parameter. Takes care of ref/non-ref conversions.
 		 * Returns the value into which the resulting parameter were placed.
