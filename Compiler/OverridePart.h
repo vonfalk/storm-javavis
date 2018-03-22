@@ -25,6 +25,9 @@ namespace storm {
 		// Custom badness measure.
 		virtual Int STORM_FN matches(Named *candidate, Scope scope) const;
 
+		// Custom to string.
+		virtual void STORM_FN toS(StrBuf *to) const;
+
 	private:
 		// Remember the result as well.
 		Value result;

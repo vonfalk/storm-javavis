@@ -107,19 +107,23 @@ namespace storm {
 			STORM_CTOR ClassBody();
 
 			// Add content.
-			void STORM_FN add(Named *item);
+			virtual void STORM_FN add(Named *item);
 
 			// Add a wrapped syntax node.
-			void STORM_FN add(MemberWrap *wrap);
+			virtual void STORM_FN add(MemberWrap *wrap);
 
 			// Add template.
-			void STORM_FN add(Template *t);
+			virtual void STORM_FN add(Template *t);
 
 			// Add default access modifier.
-			void STORM_FN add(Visibility *v);
+			virtual void STORM_FN add(Visibility *v);
 
 			// Add any of the above things.
-			void STORM_FN add(TObject *t);
+			virtual void STORM_FN add(TObject *t);
+
+			// Called before the class attempts to extract data from the class. Allows extensions to
+			// get a last chance at altering the data before we process it.
+			virtual void STORM_FN prepare();
 
 			// Contents.
 			Array<Named *> *items;

@@ -48,6 +48,23 @@ by-value semantics (any changes from the other thread are not visible) while act
 by-reference semantics. This is also the reason why classes in Storm behave more like values than in
 Java.
 
+Function overloading
+---------------------
+
+Storm supports function overloading in classes and actors. Overloading functions causes vtable-based
+dispatch to be used, but unlike eg. C++, Storm will keep track of where the vtable is required and
+only use it if it is really necessary. Thus, you will not pay the cost of overloading functions
+unless you use it.
+
+A function in a derived class does not have to match a function in the parent class exactly. It is
+possible to accept wider types (ie. less specific) in the derived class. However, this means a
+function could overload two functions in a parent class, which is not allowed. This happens if, for
+example, the parent class contains the functions `add(Str)` and `add(Url)`, and the derived class
+contains the function `add(Object)`. However, if the parent class would also contain an exact match,
+(`add(Object)` in this case) as well, the exact match is preferred over inexact matches. This
+restrictive behaviour is to reduce the unintentional surprises in the overloading behaviour.
+
+
 Cloning
 ---------
 

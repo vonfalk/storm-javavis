@@ -86,6 +86,7 @@ namespace storm {
 				return false;
 
 			ClassBody *body = syntax::transformNode<ClassBody, Class *>(this->body, this);
+			body->prepare();
 
 			AddState added;
 
@@ -213,6 +214,8 @@ namespace storm {
 			else
 				throw InternalError(L"Not a suitable type to ClassBody.add(): " + ::toS(runtime::typeOf(o)->identifier()));
 		}
+
+		void ClassBody::prepare() {}
 
 		/**
 		 * Members.
