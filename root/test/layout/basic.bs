@@ -1,10 +1,10 @@
 use ui;
-use ui:layout;
+use layout;
 use core:geometry;
 
 use lang:bs:macro;
 
-class MyWin extends Frame {
+class BasicWin extends Frame {
 	private UiRoot layout;
 	private Button[] buttons;
 
@@ -51,7 +51,7 @@ class MyWin extends Frame {
 }
 
 
-void main() {
-	MyWin w;
+void basicMain() {
+	BasicWin w;
 	w.waitForClose;
 }

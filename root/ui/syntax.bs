@@ -1,0 +1,36 @@
+use layout;
+use core:lang;
+use lang:bs;
+use lang:bs:macro;
+
+// Create "classes" for the keyword "window".
+Class createWindow(SrcPos pos, Scope env, SStr name, SWindowBody body) {
+	extendClass(pos, env, name, name{ui:Frame}, body);
+}
+
+
+/**
+ * Custom contents for a window 'class'.
+ */
+class WindowBody extends ClassBody {
+	private SLayoutRoot? layout;
+
+	// Handle our special types.
+	void add(TObject obj) {
+		if (obj as SLayoutRoot) {
+			if (layout) {
+				throwSyntaxError(obj.pos, "Multiple layout definitions are not allowed.");
+			}
+
+			layout = obj;
+			return;
+		}
+
+		super:add(obj);
+	}
+
+	// Make final preparations.
+	void prepare() {
+		print("Prepare!");
+	}
+}

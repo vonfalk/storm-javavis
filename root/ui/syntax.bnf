@@ -1,0 +1,34 @@
+use layout;
+// TODO: Export 'layout'.
+
+use core.lang;
+use lang.bs;
+
+delimiter = SDelimiter;
+
+
+// Provide a new type definition keyword: 'window'.
+SClass => createWindow(pos, env, name, body) : "window" #keyword, SName name #typeName, "{" - [SWindowBody@ body, ]+ "}";
+
+
+// Custom class body definition to include some more things!
+ClassBody SWindowBody(Class owner);
+SWindowBody => WindowBody() : (SDocWindowItem(owner) -> add)* - SDelimiter;
+
+TObject SDocWindowItem(Class owner);
+SDocWindowItem[0] => item : SDelimiter - SWindowAccessItem(owner) item;
+SDocWindowItem[5] => applyDoc(c, item) : SFindDoc c - SWindowAccessItem(owner) item;
+
+TObject SWindowAccessItem(Class owner);
+SWindowAccessItem => item : SWindowItem(owner) item;
+SWindowAccessItem => item : [STypeAccess item - ":"]-;
+SWindowAccessItem => apply(pos, item, access) : STypeAccess access - " ", SWindowItem(owner) item;
+
+TObject SWindowItem(Class owner);
+SWindowItem => c : SClass(owner.scope) c;
+SWindowItem => layout : "layout[ \t]" #keyword, SLayoutRoot@ layout;
+SWindowItem => MemberWrap(item) : SClassWrapItem@ item;
+
+
+// Allow type declarations in the layout.
+SLayoutItem : SType type, SName name #varName, ("(", SParamList(block) params, ")",)? "{" [, SLayoutContent(me),]+ "}";

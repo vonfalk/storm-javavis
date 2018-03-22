@@ -6,14 +6,14 @@ delimiter = SDelimiter;
 
 // Backend-agnostic version of the syntax. There might be more specialized variants for use
 // with specific backends for additional convenience.
-lang.bs.SAtom => block(l) : "layout" #keyword, SLayoutRoot(block) l;
+lang.bs.SAtom => block(l) : "layout[ \t]" #keyword, SLayoutRoot(block) l;
 
 LayoutRoot SLayoutRoot(Block block);
 SLayoutRoot => createRoot(block) : SLayout(me) -> add;
 
 // Define an instance of a Layout object with associated properties.
 LayoutBlock SLayout(LayoutRoot block);
-SLayout => LayoutBlock(block, name, params) : lang.bs.SType name, ("(", SParamList(block) params, ")",)? "{" [, SLayoutContent(me),]+ "}";
+SLayout => LayoutBlock(block, name, params) : SType name, ("(", SParamList(block) params, ")",)? "{" [, SLayoutContent(me),]+ "}";
 
 // Contents of a Layout object.
 void SLayoutContent(LayoutBlock block);
