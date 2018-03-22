@@ -248,6 +248,7 @@ void printHelp(Named entity) on Compiler {
 	print(entity.findDoc.toS);
 
 	if (entity as NameSet) {
+		entity.forceLoad();
 		print("\nMembers:");
 
 		Array<Named> members;

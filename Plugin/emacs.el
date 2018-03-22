@@ -527,16 +527,18 @@
 	    (cons message storm-process-message-queue))
       (storm-start))))
 
-(defun storm-query (message)
+(defun storm-query (message &optional timeout)
   "Send a message to the Storm process and await a result for a maximum of 1 second. The 
    response is expected to start with the same symbol as the sent message."
 
   (setq storm-process-query (first message))
   (storm-send message)
 
+  (unless timeout
+    (setq timeout 1))
+
   ;; Wait until we receive some data.
-  (let ((timeout 1)
-	(start-time (current-time)))
+  (let ((start-time (current-time)))
     (while (and (not (listp storm-process-query))
 		(< (float-time (time-since start-time)) timeout))
       (accept-process-output storm-process timeout)))
@@ -992,7 +994,7 @@
   "Get all completions for 'string'."
   (unless (string= (car storm-complete-cache) string)
     ;; Update the cache.
-    (let ((result (storm-query (list 'complete-name string default-directory))))
+    (let ((result (storm-query (list 'complete-name string default-directory) 2))) ;; Allow more timeout if compilation is needed.
       (setcar storm-complete-cache string)
       (setcdr storm-complete-cache result)))
 
@@ -1066,7 +1068,7 @@
   (let* ((msg (if (stringp name)
 		  (list 'documentation name default-directory)
 		name))
-	 (doc (storm-query msg)))
+	 (doc (storm-query msg 3))) ;; Allow 3 s timeout for compilation.
     (if (or (null doc) (null (first doc)))
 	(message "\"%s\" does not exist." name)
       (storm-show-doc msg (first doc) no-history))))
