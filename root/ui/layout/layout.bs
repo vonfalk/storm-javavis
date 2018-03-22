@@ -64,7 +64,7 @@ class Border extends Layout {
 	Size minSize() {
 		Size s;
 		if (c = child)
-			s = child.minSize;
+			s = c.minSize;
 		s + border*2;
 	}
 
