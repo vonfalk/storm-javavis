@@ -94,7 +94,7 @@ namespace storm {
 			SrcPos docPos;
 
 			// Transform this node.
-			Named *STORM_FN transform(Class *owner);
+			virtual Named *STORM_FN transform(Class *owner);
 		};
 
 
@@ -104,7 +104,7 @@ namespace storm {
 		class ClassBody : public ObjectOn<Compiler> {
 			STORM_CLASS;
 		public:
-			STORM_CTOR ClassBody();
+			STORM_CTOR ClassBody(Class *owner);
 
 			// Add content.
 			virtual void STORM_FN add(Named *item);
@@ -123,7 +123,13 @@ namespace storm {
 
 			// Called before the class attempts to extract data from the class. Allows extensions to
 			// get a last chance at altering the data before we process it.
-			virtual void STORM_FN prepare();
+			virtual void STORM_FN prepareItems();
+
+			// Called after 'item' is loaded but before 'wraps' are loaded.
+			virtual void STORM_FN prepareWraps();
+
+			// Owning class.
+			Class *owner;
 
 			// Contents.
 			Array<Named *> *items;

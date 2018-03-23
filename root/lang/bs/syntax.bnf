@@ -473,4 +473,4 @@ SDocClassItem[5] => applyDoc(c, item) : SFindDoc c - SClassAccessItem(owner) ite
 
 // Root rule for parsing classes and values.
 ClassBody SClassBody(Class owner);
-SClassBody => ClassBody() : (SDocClassItem(owner) -> add)* - SDelimiter;
+SClassBody => ClassBody(owner) : (SDocClassItem(owner) -> add)* - SDelimiter;

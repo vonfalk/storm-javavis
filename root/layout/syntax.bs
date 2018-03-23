@@ -77,7 +77,7 @@ class LayoutBlock extends LayoutRoot {
 	private ExprBlock sub;
 
 	// Variable storing the resulting transform.
-	private LocalVarAccess result;
+	private Expr result;
 
 	// Properties that should be applied in the parent later on.
 	private value ParentExpr {
@@ -113,6 +113,15 @@ class LayoutBlock extends LayoutRoot {
 			result = resultAcc;
 		}
 	}
+
+	// More basic creation for subclasses.
+	protected init(ExprBlock root, ExprBlock sub, Expr result) {
+		init(block) {
+			sub = sub;
+			result = result;
+		}
+	}
+
 
 	// Add a property.
 	void add(SStr name, Actuals? params) {

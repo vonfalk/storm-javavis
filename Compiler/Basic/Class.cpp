@@ -86,7 +86,7 @@ namespace storm {
 				return false;
 
 			ClassBody *body = syntax::transformNode<ClassBody, Class *>(this->body, this);
-			body->prepare();
+			body->prepareItems();
 
 			AddState added;
 
@@ -100,6 +100,8 @@ namespace storm {
 				if (Class *c = as<Class>(body->items->at(i)))
 					c->lookupTypes();
 			}
+
+			body->prepareWraps();
 
 			// Add the wrapped items.
 			for (Nat i = 0; i < body->wraps->count(); i++) {
@@ -173,7 +175,7 @@ namespace storm {
 		 * Body.
 		 */
 
-		ClassBody::ClassBody() {
+		ClassBody::ClassBody(Class *owner) : owner(owner) {
 			items = new (this) Array<Named *>();
 			wraps = new (this) Array<MemberWrap *>();
 			templates = new (this) Array<Template *>();
@@ -215,7 +217,9 @@ namespace storm {
 				throw InternalError(L"Not a suitable type to ClassBody.add(): " + ::toS(runtime::typeOf(o)->identifier()));
 		}
 
-		void ClassBody::prepare() {}
+		void ClassBody::prepareItems() {}
+
+		void ClassBody::prepareWraps() {}
 
 		/**
 		 * Members.

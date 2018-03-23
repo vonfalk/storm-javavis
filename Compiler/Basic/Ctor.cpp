@@ -145,6 +145,15 @@ namespace storm {
 
 		Initializer::Initializer(syntax::SStr *name, Actuals *params) : name(name), params(params) {}
 
+		void Initializer::toS(StrBuf *to) const {
+			*to << name->v;
+			if (params) {
+				*to << params;
+			} else if (expr) {
+				*to << S(" = ") << expr;
+			}
+		}
+
 		SuperCall::SuperCall(SrcPos pos, CtorBody *block, Actuals *params, Array<Initializer *> *init)
 			: Expr(pos) {
 
@@ -192,6 +201,18 @@ namespace storm {
 				throw SyntaxError(init->name->pos, L"The member " + ::toS(name) + L" has already been initialized.");
 
 			initMap->put(name, init);
+		}
+
+		void SuperCall::toS(StrBuf *to) const {
+			*to << S("init") << params << S(" {\n");
+			to->indent();
+
+			for (InitMap::Iter i = initMap->begin(); i != initMap->end(); ++i) {
+				*to << i.v() << S(";\n");
+			}
+
+			to->dedent();
+			*to << S("}");
 		}
 
 		void SuperCall::callParent(CodeGen *s) {
@@ -342,8 +363,8 @@ namespace storm {
 			} else {
 				Function *ctor = t.type->defaultCtor();
 				if (!ctor)
-					throw SyntaxError(pos, L"Can not initialize " + ::toS(v->name) + L" by default-constructing it. In "
-									+ ::toS(thisPtr) + L", please initialize this member explicitly.");
+					throw SyntaxError(pos, L"Can not initialize " + ::toS(v->name) + L" by default-constructing it. "
+									L"Please initialize this member explicitly in " + ::toS(thisPtr) + L".");
 				Actuals *params = new (this) Actuals();
 				CtorCall *ctorCall = new (this) CtorCall(pos, scope, ctor, params);
 				CodeResult *created = new (this) CodeResult(t, s->block);

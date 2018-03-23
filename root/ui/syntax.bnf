@@ -13,7 +13,7 @@ SClass => createWindow(pos, env, name, body) : "window" #keyword, SName name #ty
 
 // Custom class body definition to include some more things!
 ClassBody SWindowBody(Class owner);
-SWindowBody => WindowBody() : (SDocWindowItem(owner) -> add)* - SDelimiter;
+SWindowBody => WindowBody(owner) : (SDocWindowItem(owner) -> add)* - SDelimiter;
 
 TObject SDocWindowItem(Class owner);
 SDocWindowItem[0] => item : SDelimiter - SWindowAccessItem(owner) item;
@@ -31,4 +31,4 @@ SWindowItem => MemberWrap(item) : SClassWrapItem@ item;
 
 
 // Allow type declarations in the layout.
-SLayoutItem : SType type, SName name #varName, ("(", SParamList(block) params, ")",)? "{" [, SLayoutContent(me),]+ "}";
+SLayout => LayoutDeclBlock(block, name) : SType type, SName name #varName, ("(", SParamList(block) params, ")",)? "{" [, SLayoutContent(me),]+ "}" = SLayoutMemberDecl;

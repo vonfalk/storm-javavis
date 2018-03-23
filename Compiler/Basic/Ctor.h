@@ -30,6 +30,9 @@ namespace storm {
 			// Position.
 			SrcPos pos;
 
+			// Body.
+			syntax::Node *body;
+
 			// We may need to run on a specific thread based on the current actual parameters.
 			virtual code::Var STORM_FN findThread(CodeGen *s, Array<code::Operand> *params);
 
@@ -39,9 +42,6 @@ namespace storm {
 		private:
 			// Parameter names.
 			Array<ValParam> *params;
-
-			// Body
-			syntax::Node *body;
 
 			// Generate code.
 			CodeGen *CODECALL generateCode();
@@ -96,10 +96,13 @@ namespace storm {
 			syntax::SStr *name;
 
 			// Initialize by assignment (may be null).
-			Expr *expr;
+			MAYBE(Expr *) expr;
 
 			// Initialize to (may be null).
-			Actuals *params;
+			MAYBE(Actuals *) params;
+
+			// Output.
+			virtual void STORM_FN toS(StrBuf *to) const;
 		};
 
 		/**
@@ -110,13 +113,19 @@ namespace storm {
 		public:
 			// Create.
 			STORM_CTOR SuperCall(SrcPos pos, CtorBody *block, Actuals *params);
-			STORM_CTOR SuperCall(SrcPos pos, CtorBody *block, Actuals *params, Array<Initializer *>*init);
+			STORM_CTOR SuperCall(SrcPos pos, CtorBody *block, Actuals *params, Array<Initializer *> *init);
+
+			// Add a new initializer.
+			void STORM_FN init(Initializer *init);
 
 			// Result.
 			virtual ExprResult STORM_FN result();
 
 			// Code.
 			virtual void STORM_FN code(CodeGen *s, CodeResult *r);
+
+			// To string.
+			virtual void STORM_FN toS(StrBuf *to) const;
 
 		private:
 			// Member of.
@@ -155,9 +164,6 @@ namespace storm {
 
 			// Initialize a variable with its default constructor.
 			void initVarDefault(CodeGen *s, MemberVar *var);
-
-			// Add an initializer.
-			void init(Initializer *init);
 		};
 
 	}

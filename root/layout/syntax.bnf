@@ -13,7 +13,7 @@ SLayoutRoot => createRoot(block) : SLayout(me) -> add;
 
 // Define an instance of a Layout object with associated properties.
 LayoutBlock SLayout(LayoutRoot block);
-SLayout => LayoutBlock(block, name, params) : SType name, ("(", SParamList(block) params, ")",)? "{" [, SLayoutContent(me),]+ "}";
+SLayout => LayoutBlock(block, name, params) : SType name, ("(", SParamList(block.block) params, ")",)? "{" [, SLayoutContent(me),]+ "}";
 
 // Contents of a Layout object.
 void SLayoutContent(LayoutBlock block);
@@ -23,12 +23,12 @@ SLayoutContent : (SLayoutItem(block),)*;
 void SLayoutItem(LayoutBlock block);
 
 // A property, either in this layout or its parent.
-SLayoutItem => add(block, name, params) : SName name #varName - (, ":", SParamList(block) params)?, ";";
+SLayoutItem => add(block, name, params) : SName name #varName - (, ":", SParamList(block.block) params)?, ";";
 
 // A nested layout item.
 SLayoutItem => add(block, l) : SLayout(block) l;
 
 // Parameter list.
-Actuals SParamList(LayoutRoot root);
+Actuals SParamList(Block root);
 SParamList => Actuals() : ;
-SParamList => Actuals() : lang.bs.SExpr(root.block) -> add - (, ",", lang.bs.SExpr(root.block) -> add)*;
+SParamList => Actuals() : lang.bs.SExpr(root) -> add - (, ",", lang.bs.SExpr(root) -> add)*;

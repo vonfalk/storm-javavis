@@ -85,6 +85,12 @@ namespace storm {
 			// To string.
 			virtual void STORM_FN toS(StrBuf *to) const;
 
+			// Get expression at location i.
+			Expr *STORM_FN operator [](Nat i) const;
+
+			// Get number of expressions.
+			Nat STORM_FN count() const;
+
 		private:
 			// Expressions here.
 			Array<Expr *>*exprs;

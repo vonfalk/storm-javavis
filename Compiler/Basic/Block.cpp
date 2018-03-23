@@ -150,6 +150,14 @@ namespace storm {
 			*to << S("}");
 		}
 
+		Expr *ExprBlock::operator [](Nat at) const {
+			return exprs->at(at);
+		}
+
+		Nat ExprBlock::count() const {
+			return exprs->count();
+		}
+
 		/**
 		 * Block lookup
 		 */

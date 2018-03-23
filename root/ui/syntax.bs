@@ -3,17 +3,31 @@ use core:lang;
 use lang:bs;
 use lang:bs:macro;
 
-// Create "classes" for the keyword "window".
+// Create "classes" for the keyword "window". TODO: Allow custom subclasses.
 Class createWindow(SrcPos pos, Scope env, SStr name, SWindowBody body) {
 	extendClass(pos, env, name, name{ui:Frame}, body);
 }
 
+// Get all SLayoutMemberDecls inside a syntax node.
+private SLayoutMemberDecl[] allDecls(SLayoutRoot root) {
+	SLayoutMemberDecl[] result;
+	for (child in root.allChildren(named{SLayoutMemberDecl})) {
+		if (child as SLayoutMemberDecl) {
+			result << child;
+		}
+	}
+	result;
+}
 
 /**
  * Custom contents for a window 'class'.
  */
 class WindowBody extends ClassBody {
 	private SLayoutRoot? layout;
+
+	init(Class owner) {
+		init(owner);
+	}
 
 	// Handle our special types.
 	void add(TObject obj) {
@@ -29,8 +43,123 @@ class WindowBody extends ClassBody {
 		super:add(obj);
 	}
 
-	// Make final preparations.
-	void prepare() {
-		print("Prepare!");
+	// Inject 'layout' now, so that we can account for any newly declared classes.
+	void prepareWraps() {
+		if (layout) {
+			addLayoutVars(layout);
+			modifyCtors(layout);
+		}
+	}
+
+	private void addLayoutVars(SLayoutRoot layout) {
+		for (child in layout.allDecls()) {
+			// Add member variables.
+			owner.add(classVar(owner, child.type.transform, child.name.transform));
+		}
+	}
+
+	// Modify all constructors so that we can inject some code into them!
+	private void modifyCtors(SLayoutRoot layout) {
+		MemberWrap[] newWraps;
+		for (item in wraps) {
+			newWraps << CtorWrap(item.node, layout);
+		}
+		wraps = newWraps;
+	}
+}
+
+/**
+ * Custom wrap that alters constructors.
+ */
+class CtorWrap extends MemberWrap {
+	private SLayoutRoot layout;
+
+	// Create.
+	init(lang:bnf:Node node, SLayoutRoot layout) {
+		init(node) {
+			layout = layout;
+		}
+	}
+
+	// Transform the node.
+	Named transform(Class owner) {
+		Named r = super:transform(owner);
+		if (r as BSCtor) {
+			modifyCtor(r);
+		}
+
+		r;
+	}
+
+	// Modify a constructor to include additional initializers, and the setup of the actual layout.
+	void modifyCtor(BSCtor ctor) {
+		if (body = ctor.body as SCtorBody) {
+			ctor.body = CtorBodyWrap(body, layout);
+		} else {
+			print("WARNING: Unable to wrap constructor body.");
+		}
+	}
+}
+
+
+/**
+ * Wrap the constructor body.
+ */
+class CtorBodyWrap extends SCtorBody {
+	private SCtorBody real;
+	private SLayoutRoot layout;
+
+	// Initialize.
+	init(SCtorBody real, SLayoutRoot layout) {
+		init() {
+			real = real;
+			layout = layout;
+		}
+	}
+
+	// Wrap the transform function.
+	CtorBody transform(BSCtor ctor) {
+		CtorBody result = real.transform(ctor);
+
+		for (Nat i = 0; i < result.count; i++) {
+			Expr e = result[i];
+
+			if (e as SuperCall) {
+				fixSuper(result, e);
+			}
+		}
+
+		print(result.toS);
+
+		result;
+	}
+
+	// Add things to the super call.
+	void fixSuper(Block block, SuperCall s) {
+		for (member in layout.allDecls()) {
+			Actuals params = if (x = member.params) { x.transform(block); } else { Actuals(); };
+
+			s.init(Initializer(member.name.transform, params));
+		}
+	}
+}
+
+
+/**
+ * Custom layout block for variable declarations.
+ */
+class LayoutDeclBlock extends LayoutBlock {
+	// Create.
+	init(LayoutRoot parent, SStr member) {
+		ExprBlock block(name.pos, parent.root);
+		ExprBlock sub(name.pos, block);
+
+		// TODO: We should create an accessor to the proper member variable here!
+		Expr result(name.pos);
+
+		block.add(sub);
+		block.add(result);
+
+		init(block, sub, result);
 	}
 }
