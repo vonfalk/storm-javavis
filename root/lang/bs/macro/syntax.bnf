@@ -30,7 +30,7 @@ SFileItem => Generate(env, name, param, body) :
 SClassItem => Generate(owner, name, param, body) :
     SName name #fnName, ":", "generate" #keyword, "(", SName param #varName, ")", "{", SFunctionBody@ body, "}";
 
-// Pattern-based block- and expr generation.
+// Pattern-based block- and expr generation. TODO: It would be nice to have whole function generation as well!
 SExpr => TemplateExpr(block, env, expr) : SPattern(block) env, SExpr @expr;
 
 Expr SPattern(Block block);

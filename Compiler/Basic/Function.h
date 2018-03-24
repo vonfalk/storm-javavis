@@ -149,14 +149,14 @@ namespace storm {
 			STORM_CTOR BSTreeFn(Value result, syntax::SStr *name, Array<ValParam> *params, MAYBE(NamedThread *) thread);
 
 			// Set the root of the syntax tree. Resetting the body also makes the function re-compile.
-			void STORM_FN body(FnBody *body);
+			void STORM_ASSIGN body(FnBody *body);
 
 			// Override to use the body.
 			virtual FnBody *STORM_FN createBody();
 
 		private:
 			// Body.
-			FnBody *root;
+			MAYBE(FnBody *) root;
 		};
 
 

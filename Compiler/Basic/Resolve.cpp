@@ -159,8 +159,12 @@ namespace storm {
 		}
 
 		Expr *namedExpr(Block *block, syntax::SStr *name, Actuals *params) {
-			SimpleName *n = new (name) SimpleName(name->v);
-			return findTarget(block, n, name->pos, params, true);
+			return namedExpr(block, name->pos, name->v, params);
+		}
+
+		Expr *namedExpr(Block *block, SrcPos pos, Str *name, Actuals *params) {
+			SimpleName *n = new (name) SimpleName(name);
+			return findTarget(block, n, pos, params, true);
 		}
 
 		Expr *namedExpr(Block *block, SrcName *name, Actuals *params) {

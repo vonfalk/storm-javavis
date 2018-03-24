@@ -56,6 +56,7 @@ namespace storm {
 
 		// Find out what the named expression means, and create proper object.
 		Expr *STORM_FN namedExpr(Block *block, syntax::SStr *name, Actuals *params);
+		Expr *STORM_FN namedExpr(Block *block, SrcPos pos, Str *name, Actuals *params);
 		Expr *STORM_FN namedExpr(Block *block, SrcName *name, Actuals *params);
 		Expr *STORM_FN namedExpr(Block *block, SrcPos pos, Name *name, Actuals *params);
 

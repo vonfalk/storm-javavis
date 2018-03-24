@@ -48,6 +48,8 @@ class WindowBody extends ClassBody {
 		if (layout) {
 			addLayoutVars(layout);
 			modifyCtors(layout);
+			addResized(layout.pos);
+			addMinSize(layout.pos);
 		}
 	}
 
@@ -56,6 +58,9 @@ class WindowBody extends ClassBody {
 			// Add member variables.
 			owner.add(classVar(owner, child.type.transform, child.name.transform));
 		}
+
+		// Add a member for the layout itself.
+		owner.add(MemberVar("layout", Value(named{UiRoot}), owner));
 	}
 
 	// Modify all constructors so that we can inject some code into them!
@@ -65,6 +70,35 @@ class WindowBody extends ClassBody {
 			newWraps << CtorWrap(item.node, layout);
 		}
 		wraps = newWraps;
+	}
+
+	// Add the 'resized' overload.
+	private void addResized(SrcPos pos) {
+		Value me(owner);
+		Value sizeType(named{core:geometry:Size});
+		BSTreeFn resized(Value(), SStr("resized", pos), [ValParam(me, "this"), ValParam(sizeType, "s")], null);
+
+		FnBody resizeBody(resized, owner.scope);
+		var layout = namedExpr(resizeBody, pos, "layout", Actuals());
+		var size = namedExpr(resizeBody, pos, "s", Actuals());
+		resizeBody.add(namedExpr(resizeBody, pos, "resize", layout, Actuals(size)));
+		resized.body = resizeBody;
+
+		owner.add(resized);
+	}
+
+	// Add the 'minSize' overload.
+	private void addMinSize(SrcPos pos) {
+		Value me(owner);
+		Value size(named{core:geometry:Size});
+		BSTreeFn minSize(size, SStr("minSize", pos), [ValParam(me, "this")], null);
+
+		FnBody minSizeBody(minSize, owner.scope);
+		var layout = namedExpr(minSizeBody, pos, "layout", Actuals());
+		minSizeBody.add(namedExpr(minSizeBody, pos, "minSize", layout));
+		minSize.body = minSizeBody;
+
+		owner.add(minSize);
 	}
 }
 
@@ -125,22 +159,45 @@ class CtorBodyWrap extends SCtorBody {
 			Expr e = result[i];
 
 			if (e as SuperCall) {
-				fixSuper(result, e);
+				i += fixSuper(result, i, e);
 			}
 		}
-
-		print(result.toS);
 
 		result;
 	}
 
-	// Add things to the super call.
-	void fixSuper(Block block, SuperCall s) {
-		for (member in layout.allDecls()) {
-			Actuals params = if (x = member.params) { x.transform(block); } else { Actuals(); };
+	// Add things to the super call. Returns number of statements inserted.
+	private Nat fixSuper(ExprBlock block, Nat pos, SuperCall s) {
+		var decls = layout.allDecls();
+		Expr[] vars;
 
-			s.init(Initializer(member.name.transform, params));
+		for (member in decls) {
+			Actuals params = if (x = member.params) { x.transform(block); } else { Actuals(); };
+			SStr name = member.name.transform;
+			SStr varName("layout:" + name.v, name.pos);
+
+			// Create a local variable so that we can initialize the layout!
+			Var v(block, member.type.transform, varName, params);
+			block.insert(pos++, v);
+			LocalVarAccess var(member.pos, v.var);
+			vars << var;
+
+			// Initialize the variable as well.
+			s.init(Initializer(member.name.transform, var));
 		}
+
+		// Initialize the layout itself as well.
+		s.init(Initializer(SStr("layout", layout.pos), layout.transform(block).block));
+
+
+		// Call 'add' for each of the components after the constructor call itself.
+		pos++;
+		for (var in vars) {
+			block.insert(pos++, namedExpr(block, SStr("add", var.pos), Actuals(var)));
+		}
+
+		//  We add two statements for each declaration found.
+		decls.count*2;
 	}
 }
 
@@ -151,15 +208,19 @@ class CtorBodyWrap extends SCtorBody {
 class LayoutDeclBlock extends LayoutBlock {
 	// Create.
 	init(LayoutRoot parent, SStr member) {
-		ExprBlock block(name.pos, parent.root);
-		ExprBlock sub(name.pos, block);
+		ExprBlock block(member.pos, parent.root);
+		ExprBlock sub(member.pos, block);
 
-		// TODO: We should create an accessor to the proper member variable here!
-		Expr result(name.pos);
+		Expr src = namedExpr(block, SStr("layout:" + member.v, member.pos), Actuals());
+		if (!Value(named{layout:Layout}).canStore(src.result.type))
+			src = namedExpr(block, member.pos, "component", src);
+		Var result(block, SStr("@ result"), src);
 
-		block.add(sub);
 		block.add(result);
+		block.add(sub);
+		LocalVarAccess resultAcc(member.pos, result.var);
+		block.add(resultAcc);
 
-		init(block, sub, result);
+		init(block, sub, resultAcc);
 	}
 }

@@ -49,6 +49,17 @@ class UiRoot extends Border {
 	// Current size, as reported by the owner.
 	private Rect current;
 
+	// Create, optionally adding a component at the same time.
+	init() {
+		init();
+	}
+
+	// Create, optionally adding a component at the same time.
+	init(Component c) {
+		init();
+		add(c);
+	}
+
 	// Set the size.
 	void resize(Size s) {
 		current = Rect(s);

@@ -48,8 +48,11 @@ namespace storm {
 		}
 
 		void Block::add(LocalVar *var) {
-			if (variables->has(var->name))
-				throw TypeError(variables->get(var->name)->pos, L"The variable " + ::toS(var->name) + L" is already defined.");
+			if (variables->has(var->name)) {
+				// Old position: variables->get(var->name)->pos
+				throw TypeError(var->pos, L"The variable " + ::toS(var->name) + L" is already defined in this block:\n@" +
+								::toS(variables->get(var->name)->pos) + L": Syntax error: Previously defined here.");
+			}
 			variables->put(var->name, var);
 		}
 
@@ -93,6 +96,19 @@ namespace storm {
 					firstNoReturn = exprs->count();
 
 			exprs->push(expr);
+		}
+
+		void ExprBlock::insert(Nat pos, Expr *expr) {
+			if (firstNoReturn != invalid) {
+				if (firstNoReturn >= pos)
+					firstNoReturn++;
+			}
+
+			if (firstNoReturn == invalid || firstNoReturn >= pos)
+				if (expr->result().nothing())
+					firstNoReturn = pos;
+
+			exprs->insert(pos, expr);
 		}
 
 		ExprResult ExprBlock::result() {

@@ -67,8 +67,11 @@ namespace storm {
 			STORM_CTOR ExprBlock(SrcPos pos, Block *parent);
 
 			// Add an expression.
-			using Block::add;
 			void STORM_FN add(Expr *s);
+			using Block::add;
+
+			// Add an expression to a specific location.
+			void STORM_FN insert(Nat pos, Expr *s);
 
 			// Result.
 			virtual ExprResult STORM_FN result();

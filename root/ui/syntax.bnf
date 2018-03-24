@@ -31,4 +31,4 @@ SWindowItem => MemberWrap(item) : SClassWrapItem@ item;
 
 
 // Allow type declarations in the layout.
-SLayout => LayoutDeclBlock(block, name) : SType type, SName name #varName, ("(", SParamList(block) params, ")",)? "{" [, SLayoutContent(me),]+ "}" = SLayoutMemberDecl;
+SLayout => LayoutDeclBlock(block, name) : SType type, SName name #varName, ("(", SParamList(block.block) params, ")",)? "{" [, SLayoutContent(me),]+ "}" = SLayoutMemberDecl;
