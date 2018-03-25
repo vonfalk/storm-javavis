@@ -4,11 +4,11 @@ use lang.bs;
 delimiter = SDelimiter;
 
 // Use type{a:b:c} to build a type name quickly and easily.
-SExpr => createType(pos, block, type) : "name" #keyword, "{", SType type, "}";
+SAtom => createType(pos, block, type) : "name" #keyword, "{", SType type, "}";
 
 // Use named{a:b:c} to refer to objects. Evaluates compile-time to the type of the actual object
 // in the compiler.
-SExpr => referNamed(pos, block, name) : "named" #keyword, "{", SType name, "}";
+SAtom => referNamed(pos, block, name) : "named" #keyword, "{", SType name, "}";
 
 // Output a type.
 SExpr => exploreType(pos, block, type) : "explore" #keyword, "{", SType type, "}";

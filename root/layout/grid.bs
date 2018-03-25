@@ -19,7 +19,7 @@ class Grid extends Layout {
 	/**
 	 * Information for components in grids.
 	 */
-	class Info {
+	class Info extends Layout:Info {
 		// Location in the grid.
 		Nat row;
 

@@ -13,3 +13,41 @@ Repaints are handled by a different thread, named `Render`. This thread is in ch
 all windows when they need to. Repaints are done either when the operating system requests a
 repaint, when you call `Window.repaint()`, or if you want your window to be redrawn at each frame
 rendered to the display.
+
+Layout
+-------
+
+The GUI library is integrated with the [layout library](md://Libraries/Layout). The library provides
+a convenient way of declaring windows with layout in Basic Storm as follows:
+
+```
+window MyWin {
+    layout Grid {
+        wrapCols: 2;
+        expandCol: 0;
+        Button a("A") {}
+        Button b("B") { rowspan: 2; }
+        Button c("C") {}
+        nextLine;
+        Button d("D") {}
+        Button e("E") {}
+        Button f("F") { row: 3; col: 2; }
+        Button g("G") { row: 4; col: 1; colspan: 2; }
+    }
+
+    init() {
+        init("My window", Size(200, 200));
+        create();
+    }
+}
+```
+
+When using the `window` keyword instead of `class`, it is possible to specify a `layout` block
+inside the class. By default these classes inherit from `ui.Frame`, but this can be overridden using
+the keyword `extends` as usual.
+
+The layout language is also extended by the ui library to allow declaring variables inside the
+layout. These variables will become member variables inside the class itself, and the initialization
+will be performed inside the constructor. Since the initialization will be performed inside the
+constructors of the class, it is possible to use any local variables declared before the `init`
+block in the constructor inside the initialization, even though this easily gets confusing.
