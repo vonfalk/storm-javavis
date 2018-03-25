@@ -177,6 +177,7 @@ class CtorBodyWrap extends SCtorBody {
 	// Add things to the super call. Returns number of statements inserted.
 	private Nat fixSuper(ExprBlock block, Nat pos, SuperCall s) {
 		var decls = layout.allDecls();
+		Nat added = 0;
 		Expr[] vars;
 
 		for (member in decls) {
@@ -189,6 +190,7 @@ class CtorBodyWrap extends SCtorBody {
 			block.insert(pos++, v);
 			LocalVarAccess var(member.pos, v.var);
 			vars << var;
+			added++;
 
 			// Initialize the variable as well.
 			s.init(Initializer(member.name.transform, var));
@@ -201,11 +203,15 @@ class CtorBodyWrap extends SCtorBody {
 		// Call 'add' for each of the components after the constructor call itself.
 		pos++;
 		for (var in vars) {
-			block.insert(pos++, namedExpr(block, SStr("add", var.pos), Actuals(var)));
+			// Add it to the window if possible.
+			if (Value(named{ui:Window}).canStore(var.result.type)) {
+				block.insert(pos++, namedExpr(block, SStr("add", var.pos), Actuals(var)));
+				added++;
+			}
 		}
 
 		//  We add two statements for each declaration found.
-		decls.count*2;
+		added;
 	}
 }
 
