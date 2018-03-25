@@ -8,6 +8,12 @@ Class createWindow(SrcPos pos, Scope env, SStr name, SWindowBody body) {
 	extendClass(pos, env, name, name{ui:Frame}, body);
 }
 
+Class createWindow(SrcPos pos, Scope env, SStr name, Name parent, SWindowBody body) {
+	// TODO: Check so that we inherit from a window. We can not necessarily do that right now, since
+	// that particular class might not be loaded yet.
+	extendClass(pos, env, name, parent, body);
+}
+
 // Get all SLayoutMemberDecls inside a syntax node.
 private SLayoutMemberDecl[] allDecls(SLayoutRoot root) {
 	SLayoutMemberDecl[] result;
@@ -18,6 +24,7 @@ private SLayoutMemberDecl[] allDecls(SLayoutRoot root) {
 	}
 	result;
 }
+
 
 /**
  * Custom contents for a window 'class'.
@@ -101,6 +108,7 @@ class WindowBody extends ClassBody {
 		owner.add(minSize);
 	}
 }
+
 
 /**
  * Custom wrap that alters constructors.

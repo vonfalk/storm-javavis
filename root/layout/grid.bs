@@ -2,6 +2,18 @@ use core:geometry;
 
 /**
  * Layout for putting components in a grid-like pattern.
+ *
+ * The grid is automatically sized to fit the constraints dictated by the contained components. Each
+ * row and column will have their own size. To fill all available space, specify which rows and
+ * columns are allowed to grow using 'expandRow' or 'expandCol'. A weight may additionally be
+ * specified to allow different rows/columns to grow at different ratios with respect to each other.
+ *
+ * Elements may also be positioned at absolute grid coordinates by specifying 'row' and 'col',
+ * starting at index 0. Additional rows and columns are then created to accomodate all
+ * components. Elements may span multiple rows and column, as dictated by 'rowspan' and 'colspan'.
+ *
+ * Elements are added row by row, wrapping if a maximum number of columns have been specified using
+ * 'wrapCols', or if 'nextLine' is called.
  */
 class Grid extends Layout {
 	/**
@@ -10,7 +22,25 @@ class Grid extends Layout {
 	class Info {
 		// Location in the grid.
 		Nat row;
+
+		// Location in the grid.
 		Nat col;
+
+		// Span number of rows from 'row'.
+		Nat rowspan;
+
+		// Span number of columns from 'col'.
+		Nat colspan;
+
+		// Initialize values.
+		init(Nat row, Nat col) {
+			init() {
+				row = row;
+				col = col;
+				rowspan = 1;
+				colspan = 1;
+			}
+		}
 	}
 
 	// Space between elements.
@@ -30,14 +60,11 @@ class Grid extends Layout {
 
 	// Add a new child.
 	Info add(Component c) {
-		Info info;
-		children << Child(info, c);
-
 		if ((wrapAt != 0) & (wrapAt == insertCol))
 			nextLine();
 
-		info.row = insertRow;
-		info.col = insertCol++;
+		Info info(insertRow, insertCol++);
+		children << Child(info, c);
 
 		info;
 	}
@@ -120,6 +147,21 @@ private:
 				component = c;
 			}
 		}
+
+		// Get position and information from 'info' based from 'rows'(0) or 'cols'(1).
+		Nat pos(Nat dim) {
+			if (dim == 0)
+				info.row;
+			else
+				info.col;
+		}
+
+		Nat span(Nat dim) {
+			if (dim == 0)
+				info.rowspan;
+			else
+				info.colspan;
+		}
 	}
 
 	// Data about the children.
@@ -150,8 +192,9 @@ private:
 		cols = 0;
 
 		for (i, c in children) {
-			rows = max(rows, c.info.row + 1);
-			cols = max(cols, c.info.col + 1);
+			var info = c.info;
+			rows = max(rows, info.row + info.rowspan);
+			cols = max(cols, info.col + info.colspan);
 
 			children[i].minSize = c.component.minSize();
 		}
@@ -165,17 +208,63 @@ private:
 	// Get minimum row heights
 	Float[] rowMin() {
 		Float[] result(rows, 0.0);
-		for (c in children)
-			result[c.info.row] = max(result[c.info.row], c.minSize.h);
+		Nat width = 1;
+		while (width > 0) {
+			width = minStep(width, 0, result);
+		}
 		result;
 	}
 
 	// Get minimum column widths.
 	Float[] colMin() {
 		Float[] result(cols, 0);
-		for (c in children)
-			result[c.info.col] = max(result[c.info.col], c.minSize.w);
+		Nat width = 1;
+		while (width > 0) {
+			width = minStep(width, 1, result);
+		}
 		result;
+	}
+
+	// Pick the proper dimension out of 's'.
+	Float pick(Nat dim, Size s) {
+		if (dim == 0)
+			s.h;
+		else
+			s.w;
+	}
+
+	// Compute one step of the min-width process, or 0 if none. Returns the next larger size to examine.
+	Nat minStep(Nat current, Nat dim, Float[] result) {
+		Nat next = 0;
+		for (c in children) {
+			Float space = pick(dim, border);
+			Float size = pick(dim, c.minSize);
+			Nat pos = c.pos(dim);
+			Nat span = c.span(dim);
+
+			if (span > current) {
+				// Figure out the next step.
+				if (next == 0) {
+					next = span;
+				} else {
+					next = min(next, span);
+				}
+			} else if (span == current) {
+				// See the current width of the desired columns.
+				Float sum = 0;
+				for (Nat x = 0; x < span; x++)
+					sum += result[x + pos];
+				sum += (span - 1).int.float * space;
+
+				// ... and grow them if necessary.
+				if (sum < size) {
+					Float grow = (size - sum) / span.int.float;
+					for (Nat x = 0; x < span; x++)
+						result[x + pos] += grow;
+				}
+			}
+		}
+		next;
 	}
 
 	// Adjust rows/colums to fit the specified width/height.
@@ -218,8 +307,9 @@ private:
 
 	// Position a single child given the sizes of rows and columns.
 	void layout(Child child, Float[] row, Float[] col) {
-		Point p0(col[child.info.col], row[child.info.row]);
-		Point p1(col[child.info.col + 1], row[child.info.row + 1]);
+		var info = child.info;
+		Point p0(col[info.col], row[info.row]);
+		Point p1(col[info.col + info.colspan], row[info.row + info.rowspan]);
 		p1 -= border;
 
 		child.component.pos = Rect(p0, p1);

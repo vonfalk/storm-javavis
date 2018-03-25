@@ -11,12 +11,13 @@ window MyWin {
 		wrapCols: 2;
 		expandCol: 0;
 		Button a("A") {}
-		Button b("B") {}
+		Button b("B") { rowspan: 2; }
 		Button c("C") {}
 		nextLine;
 		Button d("D") {}
 		Button e("E") {}
-		Button f("F") { row: 3; col: 3; }
+		Button f("F") { row: 3; col: 2; }
+		Button g("G") { row: 4; col: 1; colspan: 2; }
 	}
 
 	init() {
