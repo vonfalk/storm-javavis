@@ -125,6 +125,10 @@ namespace gui {
 		// Nothing here, override when needed.
 	}
 
+	void Window::onResize(Size size) {
+		resized(size);
+	}
+
 	void Window::painter(MAYBE(Painter *) p) {
 		if (myPainter)
 			myPainter->uiDetach();
@@ -162,7 +166,7 @@ namespace gui {
 			Size s = pos().size();
 			if (myPainter)
 				myPainter->uiResize(s);
-			resized(s);
+			onResize(s);
 			return msgResult(0);
 		}
 		case WM_PAINT:
@@ -334,7 +338,7 @@ namespace gui {
 
 		// Position controls before creation.
 		if (myPos.size().valid())
-			resized(myPos.size());
+			onResize(myPos.size());
 
 		HINSTANCE instance = app->instance();
 		LPCTSTR windowName = myText->toCrLf()->c_str();
@@ -485,7 +489,7 @@ namespace gui {
 		Size s(alloc->width, alloc->height);
 		if (myPainter)
 			myPainter->uiResize(s);
-		resized(s);
+		onResize(s);
 	}
 
 	bool Window::preExpose(GtkWidget *widget) {

@@ -77,6 +77,11 @@ namespace gui {
 		return full;
 	}
 
+	void Frame::onResize(Size size) {
+		updateMinSize();
+		Window::onResize(size);
+	}
+
 #ifdef GUI_WIN32
 
 	// Convert a client size to the actual window size.
@@ -133,6 +138,8 @@ namespace gui {
 		// Create child windows (little of a hack, sorry!)
 		parentCreated(0);
 
+		updateMinSize();
+
 		if (visible()) {
 			ShowWindow(handle().hwnd(), TRUE);
 			update();
@@ -143,6 +150,16 @@ namespace gui {
 		}
 
 		return true;
+	}
+
+	static void fill(MINMAXINFO *info, HWND hWnd, Size size) {
+		// Need to adjust 'size' since it is measured in client size, while Win32 expects actual window sizes.
+		LONG styles = GetWindowLong(hWnd, GWL_STYLE);
+		LONG exStyles = GetWindowLong(hWnd, GWL_EXSTYLE);
+		size = clientToWindow(size, styles, exStyles);
+
+		info->ptMinTrackSize.x = (LONG)size.w;
+		info->ptMinTrackSize.y = (LONG)size.h;
 	}
 
 	MsgResult Frame::onMessage(const Message &msg) {
@@ -156,6 +173,9 @@ namespace gui {
 				return msgResult(TRUE);
 			}
 			break;
+		case WM_GETMINMAXINFO:
+			fill((MINMAXINFO *)msg.lParam, handle().hwnd(), lastMinSize);
+			return msgResult(0);
 		}
 
 		return Container::onMessage(msg);
@@ -164,6 +184,10 @@ namespace gui {
 	void Frame::cursorVisible(Bool v) {
 		// Will be altered soon anyway, we do not need to do anything here.
 		showCursor = v;
+	}
+
+	void Frame::updateMinSize() {
+		lastMinSize = minSize();
 	}
 
 #endif
@@ -200,6 +224,8 @@ namespace gui {
 
 		// Create child windows (if any).
 		parentCreated(0);
+
+		updateMinSize();
 
 		// Set visibility and full screen attributes.
 		if (visible()) {
@@ -246,6 +272,14 @@ namespace gui {
 
 			gdk_window_set_cursor(window, cursor);
 		}
+	}
+
+	void Frame::updateMinSize() {
+		lastMinSize = minSize();
+
+		GtkWidget *widget = handle().widget();
+		if (widget)
+			gtk_widget_set_size_request(widget, (gint)lastMinSize.w, (gint)lastMinSize.h);
 	}
 
 #endif

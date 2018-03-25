@@ -159,6 +159,9 @@ namespace gui {
 		// Frames). Returns 'false' on failure.
 		virtual bool create(Container *parent, nat id);
 
+		// Internal 'resized' notification.
+		virtual void onResize(Size size);
+
 #ifdef GUI_WIN32
 		// Create a window, and handle it. Makes sure that all messages are handled correctly.
 		// Equivalent to handle(CreateWindowEx(...)), but ensures that any messages sent before

@@ -59,12 +59,22 @@ namespace gui {
 		void STORM_ASSIGN cursorVisible(Bool v);
 		Bool STORM_FN cursorVisible();
 
+	protected:
+		// Notification on window resizes.
+		virtual void onResize(Size size);
+
 	private:
 		// Helper to create the window.
 		bool createWindow(bool sizeable);
 
+		// Update the minimum size.
+		void updateMinSize();
+
 		// Event that fires when we're closed.
 		Event *onClose;
+
+		// Cached minimum size. Updated whenever the window is resized.
+		Size lastMinSize;
 
 		// Info. Not valid if we're not in fullscreen mode.
 		Long windowedStyle;

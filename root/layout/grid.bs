@@ -108,9 +108,9 @@ class Grid extends Layout {
 
 		Size r;
 		for (x in row)
-			r.w += x;
-		for (x in col)
 			r.h += x;
+		for (x in col)
+			r.w += x;
 
 		r.w += border.w*(col.count.int.float - 1);
 		r.h += border.h*(row.count.int.float - 1);
