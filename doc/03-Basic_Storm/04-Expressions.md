@@ -13,6 +13,9 @@ Basic Storm supports the following literals:
 * __Strings:__ enclosed in double quotes (`"abc"`). A string evaluates to a `core:Str` 
   object. Since `Str` objects are immutable, it is undefined whether each evaluation will return
   the same or a different `Str` object. (at the moment, they differ).
+* __Interpolated strings:__ much like strings, except that they use `#"..."`. Inside interpolated
+  strings, it is possible to insert arbitrary expressions enclosed in `#{...}`. To specify a width,
+  use `#{10:...}`.
 * __Integers:__ a simple number. Integer literals evaluate to a `core:Int` by default,
   but the compiler will cast the literal to `core:Nat` or `core:Byte` automatically if the context 
   requires it, and the literal fits inside the target type without truncation. In some cases, it 

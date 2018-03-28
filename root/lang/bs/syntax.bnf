@@ -304,6 +304,27 @@ SAtom => unit(block, value, unit) : SConst value, SUnit unit #typeName;
 // Temporary, to turn a value of type T into Maybe<T>, this should be done automatically in the future.
 SAtom => asMaybe(block, expr) : "\?", SAtom(block) expr;
 
+////////////////////////////////////////////////////////////////////
+// Interpolated strings.
+////////////////////////////////////////////////////////////////////
+
+// Support for string interpolation using #"..."
+SAtom => e : "#\"" #string - SInterpolatedStr(block) e - "\"" #string;
+
+Expr SInterpolatedStr(Block block);
+SInterpolatedStr => strConstant(pos, str) : SInterpolatedContent str;
+SInterpolatedStr => interpolateStr(block, first, e, second)
+   : SInterpolatedStr(block) first - "#{" #string, SInterpolatedFmt(block) e, "}" #string - SInterpolatedContent second;
+
+Array<Expr> SInterpolatedFmt(Block block);
+SInterpolatedFmt => Array<Expr>(1, e) : SExpr(block) e;
+SInterpolatedFmt => interpolateFill(block, nr, e) : "[0-9]+"@ nr #constant, ":", SExpr(block) e;
+
+
+Str SInterpolatedContent() #string;
+SInterpolatedContent => v : "[^\"\\\n#]*" v;
+SInterpolatedContent => v : (SInterpolatedContent - "\\." - SInterpolatedContent) v;
+
 
 ////////////////////////////////////////////////////////////////////
 // Units!

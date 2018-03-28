@@ -77,7 +77,7 @@ class ConcatExpr extends Expr {
 	}
 
 	// Append a node, trying to use a << operator directly.
-	Bool appendStrBuf(Expr e) {
+	private Bool appendStrBuf(Expr e) {
 		// Try to find an << operator in our current scope.
 		Scope s = outer.scope;
 		if (appendStrBuf(e, s))
@@ -99,7 +99,7 @@ class ConcatExpr extends Expr {
 	}
 
 	// Append a node, trying to call add on the StrBuf using a << operator found using 'scope'.
-	Bool appendStrBuf(Expr e, Scope scope) {
+	private Bool appendStrBuf(Expr e, Scope scope) {
 		Value v = rootScope.value(strBufType);
 		var part = SimplePart("<<", Value:[v, e.result.type]);
 		if (member = scope.find(Name(part)) as Function) {
@@ -114,7 +114,7 @@ class ConcatExpr extends Expr {
 	}
 
 	// Append a node, trying to call toS on the object first.
-	Bool appendToS(Expr e) {
+	private Bool appendToS(Expr e) {
 		Value r = e.result.type;
 		if (t = r.type) {
 			Scope findIn = outer.scope.child(t);
@@ -151,4 +151,37 @@ class ConcatExpr extends Expr {
 // Fixup the strings from multiline str{} literals.
 Expr rawMultilineStrConstant(SrcPos pos, Str str) {
 	rawStrConstant(pos, str.removeIndentation.trimBlankLines);
+}
+
+
+// Helper for string interpolations.
+Expr interpolateStr(Block parent, Expr first, Array<Expr> middle, Str second) {
+	var r = if (first as ConcatExpr) {
+		first;
+	} else {
+		ConcatExpr r(first.pos, parent);
+		r.append(first);
+		r;
+	};
+
+	for (x in middle)
+		r.append(x);
+	r.append(strConstant(first.pos, second));
+	r;
+}
+
+// Create formats conveniently.
+Array<Expr> interpolateFmt(Block parent, Str name, Expr param, Expr expr) {
+	Array<Expr> r(2, expr);
+
+	SrcName n;
+	n.add("core");
+	n.add(name);
+	r[0] = namedExpr(parent, n, Actuals(param));
+
+	r;
+}
+
+Array<Expr> interpolateFill(Block parent, SStr nr, Expr expr) {
+	interpolateFmt(parent, "width", intConstant(nr.pos, nr.v), expr);
 }
