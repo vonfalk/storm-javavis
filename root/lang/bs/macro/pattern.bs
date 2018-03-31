@@ -171,7 +171,7 @@ Expr insertExpr(SrcPos pos, Block block) {
 	if (r = findPattern(block)) {
 		r.nextExpr();
 	} else {
-		throwSyntaxError(pos, "Can not use ${} syntax outside of pattern blocks.");
+		throwSyntaxError(pos, "Can not use \${} syntax outside of pattern blocks.");
 		// When we have exceptions, we can ignore this.
 		Expr(pos);
 	}

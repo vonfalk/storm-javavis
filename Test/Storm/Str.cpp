@@ -6,7 +6,7 @@ BEGIN_TEST(StrConcatTest, BS) {
 	CHECK_EQ(::toS(runFn<Str *>(S("test.bs.strConcatTest"))), L"ab1cvoid");
 	CHECK_ERROR(runFn<Str *>(S("test.bs.strConcatError")), SyntaxError);
 
-	CHECK_EQ(::toS(runFn<Str *>(S("test.bs.strInterpolate"))), L"|30|   20|");
+	CHECK_EQ(::toS(runFn<Str *>(S("test.bs.strInterpolate"))), L"|30|   20|20   |   20|+++30|00000028|");
 } END_TEST
 
 

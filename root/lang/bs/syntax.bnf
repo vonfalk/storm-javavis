@@ -84,6 +84,8 @@ SFnTypes => t : "(", STypes t, ")";
 
 
 // Strings and their content:
+// Note: Storm uses interpolated strings now, so this is not actually used by Storm. It is, however, provided
+// here for other languages that wish to accept 'plain' strings.
 void SStrContent();
 SStrContent : "[^\"\\\n]*"; // All except end of string and backslash.
 SStrContent : SStrContent - "\\." - SStrContent; // Gobble escape sequences (we could translate them here...)
@@ -256,14 +258,42 @@ void SArrayInitItem(Array<Expr> to, Block block);
 SArrayInitItem => to : SExpr(block) -> push;
 
 // Constants that can be used with units.
-Expr SConst();
+Expr SConst(Block block);
 SConst => intConstant(pos, nr) : "-?[0-9]+" nr #constant;
 SConst => floatConstant(pos, nr) : "-?[0-9]+\.[0-9]+" nr #constant;
-SConst => strConstant(pos, str) : SString str #string;
 SConst[20] => trueConstant(pos) : "true" #constant;
 SConst[20] => falseConstant(pos) : "false" #constant;
 
-// Multiline string constants.
+////////////////////////////////////////////////////////////////////
+// Interpolated strings.
+////////////////////////////////////////////////////////////////////
+
+SConst => r : "\"" #string - SIntString(block) r #string - "\"" #string;
+
+Expr SIntString(Block block);
+SIntString => strConstant(pos, str) : (SPlainString) str;
+SIntString => interpolateStr(block, l, fmt, r) : SIntString(block) l - "${", SIntElem(block) fmt, "}" - (SPlainString) r;
+
+void SPlainString() #string;
+SPlainString : ;
+SPlainString : "[^\"\\$\n]*" - SPlainString;
+SPlainString : "\\." - SPlainString;
+
+InterpolatedItem SIntElem(Block block);
+SIntElem => InterpolatedItem(block, expr) : SExpr(block) expr;
+SIntElem => InterpolatedItem(block, expr) : SExpr(block) expr, "," - (, SIntFmt(me))+;
+
+void SIntFmt(InterpolatedItem item);
+SIntFmt => setWidth(pos, item, nr) : "[0-9]+" nr;
+SIntFmt => setRight(pos, item) : "r" #keyword;
+SIntFmt => setLeft(pos, item) : "l" #keyword;
+SIntFmt => setFill(pos, item, ch) : "f" #keyword - "." ch; // Note: does not support surrogate pairs...
+SIntFmt => setHex(pos, item) : "x" #keyword;
+
+////////////////////////////////////////////////////////////////////
+// Multiline string literals.
+////////////////////////////////////////////////////////////////////
+
 SConst[10] => rawMultilineStrConstant(pos, str) : "str" #keyword, "{[ \t]*[\n\r]+" - [SSkipBlock str]+ - "}";
 
 // Skip a block, assuming matching {} and well-behaved strings.
@@ -285,7 +315,7 @@ SSkipContent : "'" - SStrContent - "'";
 
 // Atoms, for example constants and variables/function calls.
 Expr SAtom(Block block);
-SAtom => v : SConst v;
+SAtom => v : SConst(block) v;
 SAtom => namedExpr(block, name, params) : SType name #varName, SFnActuals(block) params;
 SAtom[10] => namedExpr(block, name, dotExpr, params) : SAtom(block) dotExpr, "\.", SName name #varName, SFnActuals(block) params;
 SAtom[20] => spawnExpr(expr) : "spawn" #keyword, SExpr(block) expr;
@@ -299,32 +329,10 @@ SAtom => arrayInit(block, t, list) : SType t, ":", "\[" [, SArrayInitList(block)
 SAtom => ArrayInit(pos, block, list) : "\[" [, SArrayInitList(block) list, ]$ "\]";
 SAtom[20] => FnPtr(block, name, params) : "&", SFnName name, SFnTypes params;
 SAtom[20] => FnPtr(block, dotExpr, name, params) : "&", SAtom(block) dotExpr, "\.", SName name #varName, SFnTypes params;
-SAtom => unit(block, value, unit) : SConst value, SUnit unit #typeName;
+SAtom => unit(block, value, unit) : SConst(block) value, SUnit unit #typeName;
 
 // Temporary, to turn a value of type T into Maybe<T>, this should be done automatically in the future.
 SAtom => asMaybe(block, expr) : "\?", SAtom(block) expr;
-
-////////////////////////////////////////////////////////////////////
-// Interpolated strings.
-////////////////////////////////////////////////////////////////////
-
-// Support for string interpolation using #"..."
-SAtom => e : "#\"" #string - SInterpolatedStr(block) e - "\"" #string;
-
-Expr SInterpolatedStr(Block block);
-SInterpolatedStr => strConstant(pos, str) : SInterpolatedContent str;
-SInterpolatedStr => interpolateStr(block, first, e, second)
-   : SInterpolatedStr(block) first - "#{" #string, SInterpolatedFmt(block) e, "}" #string - SInterpolatedContent second;
-
-Array<Expr> SInterpolatedFmt(Block block);
-SInterpolatedFmt => Array<Expr>(1, e) : SExpr(block) e;
-SInterpolatedFmt => interpolateFill(block, nr, e) : "[0-9]+"@ nr #constant, ":", SExpr(block) e;
-
-
-Str SInterpolatedContent() #string;
-SInterpolatedContent => v : "[^\"\\\n#]*" v;
-SInterpolatedContent => v : (SInterpolatedContent - "\\." - SInterpolatedContent) v;
-
 
 ////////////////////////////////////////////////////////////////////
 // Units!

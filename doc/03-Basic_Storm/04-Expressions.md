@@ -11,11 +11,9 @@ Literals
 
 Basic Storm supports the following literals:
 * __Strings:__ enclosed in double quotes (`"abc"`). A string evaluates to a `core:Str` 
-  object. Since `Str` objects are immutable, it is undefined whether each evaluation will return
-  the same or a different `Str` object. (at the moment, they differ).
-* __Interpolated strings:__ much like strings, except that they use `#"..."`. Inside interpolated
-  strings, it is possible to insert arbitrary expressions enclosed in `#{...}`. To specify a width,
-  use `#{10:...}`.
+  object. The `Str` objects corresponding to the string literals are generally stored
+  alongside the code, so that no new objects are created when using a string literal.
+  However, this is not the case when using interpolated strings (see below).
 * __Integers:__ a simple number. Integer literals evaluate to a `core:Int` by default,
   but the compiler will cast the literal to `core:Nat` or `core:Byte` automatically if the context 
   requires it, and the literal fits inside the target type without truncation. In some cases, it 
@@ -29,6 +27,46 @@ Basic Storm supports the following literals:
   to infer the type according to the types in the array, and according to context. Arrays evaluate to an
   instance of the type `core:Array<T>`. Example: `Int:[1, 2, 3]` or `[1, 2, 3]`. Array literals are 
   implemented completely in Basic Storm, have a look at `lang:bs:array.bs`.
+
+Interpolated strings
+---------------------
+
+Storm supports *interpolated strings* inside string literals. This means that it is possible to
+conveniently concatenate strings like this: `"Hello ${name}"`, where `name` is an expression that
+evaluates to a string. Because of this, it is necessary to escape the `$` character in addition
+to `"`, and `\`. Using this syntax is equivalent to using the string concatenation operator
+(ie. `#`, see below), which is in turn equivalent to creating a `StrBuf` to do the concatenation
+(use the `dump{}` statement in `lang:bs:macro` to inspect the behaviour if you are interested). This
+means that even though it may not look like it, Basic Storm will type-check the interpolations for
+you, and will inform you if you are doing something ill-formed. Since a `StrBuf` is used for
+concatenation, this syntax does not have any additional overhead compared to using a `StrBuf`
+directly. However, this means that string literals using interpolation has to be re-created each
+time they are evaluated, in contrast to plain string literals. This can be observed using the `is`
+operator.
+
+This syntax also supports formatting of strings. To specify formatting, add a comma followed by
+formatting options. The following formatting options are supported:
+
+* *a number*: Indicates the minimum width, equivalent to `out << width(<number>)`.
+* __l__: Left-align this item. Equivalent to `out << left`.
+* __r__: Right-align this item (the default). Equivalent to `out << right`.
+* __f<char>__: Set the fill character. Equivalent to `out << fill(<char>)`.
+* __x__: Output as hexadecimal. Note that this only works for unsigned numbers. Equivalent to
+  `out << hex(<expression>)`.
+
+The formatting is evaluated left to right, so in case any formatting overrides some other
+formatting, only the last one will be visible.
+
+For example, one can format strings into a nice table like this:
+
+```
+Str[] names;
+for (k, v in names)
+   print("${k,4}: ${v,10}");
+```
+
+Note that any Basic Storm expression is usable inside string interpolation. It is possible to do
+things like this, even though it is not recommended: `"8 + 20 = ${8 + 20}"` or `"${a.toS + "b",20}".
 
 Function calls
 ---------------

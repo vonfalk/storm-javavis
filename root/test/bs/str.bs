@@ -12,7 +12,8 @@ Str strConcatError() {
 Str strInterpolate() {
 	Int a = 20;
 	Int b = 30;
-	#"|#{b}|#{5:a}|";
+	Nat c = 40;
+	"|${b}|${a,5}|${a,5l}|${a,5r}|${b,5f+}|${c,x}|";
 }
 
 value NoToS {

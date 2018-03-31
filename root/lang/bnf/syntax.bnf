@@ -16,7 +16,7 @@ SFindDoc[5] => p : "[ \t\n\r]*" - SDocComment p;
 SFindDoc[0] => p : SFindDoc - "[ \t\n\r]*" - SDocComment p;
 
 // Match a block of single-line comments that could be documentation.
-SrcPos SDocComment();
+SrcPos SDocComment() #comment;
 SDocComment => pos : ("//[^\n\r]*\r?\n[ \t]*")+;
 
 // Identifier.

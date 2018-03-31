@@ -153,9 +153,49 @@ Expr rawMultilineStrConstant(SrcPos pos, Str str) {
 	rawStrConstant(pos, str.removeIndentation.trimBlankLines);
 }
 
+/**
+ * Interpolated strings. Uses the # syntax.
+ */
 
-// Helper for string interpolations.
-Expr interpolateStr(Block parent, Expr first, Array<Expr> middle, Str second) {
+/**
+ * An interpolated string element.
+ */
+class InterpolatedItem on Compiler {
+	// Modifiers to append before 'insert'.
+	Expr[] modifiers;
+
+	// Expression to insert.
+	Expr insert;
+
+	// Context.
+	Block context;
+
+	// Create.
+	init(Block ctx, Expr e) {
+		init() { insert = e; context = ctx; }
+	}
+
+	// Add a modifier.
+	void modify(SrcPos pos, Str name, Actuals params) {
+		SrcName n(pos);
+		n.add("core");
+		n.add(name);
+
+		modifiers << namedExpr(context, n, params);
+	}
+
+	// Wrap 'expr'.
+	void wrap(SrcPos pos, Str name) {
+		SrcName n(pos);
+		n.add("core");
+		n.add(name);
+
+		insert = namedExpr(context, n, Actuals(insert));
+	}
+}
+
+// Create string interpolation expressions.
+Expr interpolateStr(Block parent, Expr first, InterpolatedItem item, Str second) {
 	var r = if (first as ConcatExpr) {
 		first;
 	} else {
@@ -164,24 +204,41 @@ Expr interpolateStr(Block parent, Expr first, Array<Expr> middle, Str second) {
 		r;
 	};
 
-	for (x in middle)
-		r.append(x);
+	// Append 'item' with any modifiers.
+	for (m in item.modifiers)
+		r.append(m);
+	r.append(item.insert);
+
 	r.append(strConstant(first.pos, second));
 	r;
 }
 
-// Create formats conveniently.
-Array<Expr> interpolateFmt(Block parent, Str name, Expr param, Expr expr) {
-	Array<Expr> r(2, expr);
-
-	SrcName n;
-	n.add("core");
-	n.add(name);
-	r[0] = namedExpr(parent, n, Actuals(param));
-
-	r;
+// Set width of the output.
+void setWidth(SrcPos pos, InterpolatedItem item, Str nr) {
+	item.modify(pos, "width", Actuals(intConstant(pos, nr)));
 }
 
-Array<Expr> interpolateFill(Block parent, SStr nr, Expr expr) {
-	interpolateFmt(parent, "width", intConstant(nr.pos, nr.v), expr);
+// Set to left align.
+void setLeft(SrcPos pos, InterpolatedItem item) {
+	item.modify(pos, "left", Actuals());
+}
+
+// Set to right align.
+void setRight(SrcPos pos, InterpolatedItem item) {
+	item.modify(pos, "right", Actuals());
+}
+
+// Set fill character.
+void setFill(SrcPos pos, InterpolatedItem item, Str fill) {
+	var cp = Constant(pos, fill.begin.v.codepoint.long);
+	SrcName charName(pos);
+	charName.add("core");
+	charName.add("Char");
+	var ch = namedExpr(item.context, charName, Actuals(cp));
+	item.modify(pos, "fill", Actuals(ch));
+}
+
+// Set to hex.
+void setHex(SrcPos pos, InterpolatedItem item) {
+	item.wrap(pos, "hex");
 }
