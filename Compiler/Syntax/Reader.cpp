@@ -10,8 +10,16 @@
 namespace storm {
 	namespace syntax {
 
+		// Find the syntax package for BNF given a type in 'lang.bnf'.
+		static Package *syntaxPkg(RootObject *o) {
+			Type *t = runtime::typeOf(o);
+			Package *p = as<Package>(t->parent());
+			assert(p);
+			return p;
+		}
+
 		static storm::FileReader *CODECALL createFile(FileInfo *info) {
-			return new (info) FileReader(info);
+			return new (info) UseReader(info);
 		}
 
 		PkgReader *reader(Array<Url *> *files, Package *pkg) {
@@ -20,9 +28,47 @@ namespace storm {
 		}
 
 
-		FileReader::FileReader(FileInfo *info) : storm::FileReader(info), c(null) {}
+		/**
+		 * UseReader.
+		 */
 
-		void FileReader::readSyntaxRules() {
+		UseReader::UseReader(FileInfo *info) : FileReader(info) {}
+
+		syntax::InfoParser *UseReader::createParser() {
+			syntax::Rule *r = as<syntax::Rule>(syntaxPkg(this)->find(S("SUse"), Scope()));
+			if (!r)
+				throw LangDefError(L"Can not find the 'SUse' rule.");
+			return new (this) syntax::InfoParser(r);
+		}
+
+		FileReader *UseReader::createNext(ReaderQuery q) {
+			Package *grammar = syntaxPkg(this);
+
+			// If we're trying to parse our grammar, use the simple C parser. If the language
+			// server wants information, use the full-blown solution instead!
+			if (grammar == info->pkg && !(q & qParser)) {
+				return new (this) DeclReader(info->next(info->contents->begin()));
+			}
+
+			syntax::Parser *p = syntax::Parser::create(grammar, S("SUse"));
+
+			if (!p->parse(info->contents, info->url, info->start))
+				p->throwError();
+
+			Array<SrcName *> *included = p->transform<Array<SrcName *>>();
+			return new (this) DeclReader(info->next(p->matchEnd()), included);
+		}
+
+
+		/**
+		 * DeclReader.
+		 */
+
+		DeclReader::DeclReader(FileInfo *info, Array<SrcName *> *use) : FileReader(info), c(null), syntax(use) {}
+
+		DeclReader::DeclReader(FileInfo *info) : FileReader(info), c(null), syntax(new (engine()) Array<SrcName *>()) {}
+
+		void DeclReader::readSyntaxRules() {
 			ensureLoaded();
 			Package *pkg = info->pkg;
 
@@ -32,7 +78,7 @@ namespace storm {
 			}
 		}
 
-		void FileReader::readSyntaxProductions() {
+		void DeclReader::readSyntaxProductions() {
 			ensureLoaded();
 			Package *pkg = info->pkg;
 
@@ -54,22 +100,24 @@ namespace storm {
 			}
 		}
 
-		// Find the syntax package for BNF given a type in 'lang.bnf'.
-		static Package *syntaxPkg(RootObject *o) {
-			Type *t = runtime::typeOf(o);
-			Package *p = as<Package>(t->parent());
-			assert(p);
-			return p;
+		static void addSyntax(syntax::ParserBase *to, SyntaxLookup *lookup) {
+			for (Nat i = 0; i < lookup->extra->count(); i++)
+				if (Package *p = as<Package>(lookup->extra->at(i)))
+					to->addSyntax(p);
 		}
 
-		syntax::InfoParser *FileReader::createParser() {
+		syntax::InfoParser *DeclReader::createParser() {
 			syntax::Rule *r = as<syntax::Rule>(syntaxPkg(this)->find(S("SRoot"), Scope() /* god mode! */));
 			if (!r)
 				throw LangDefError(L"Can not find the 'SRoot' rule.");
-			return new (this) syntax::InfoParser(r);
+
+			// Add additional syntax!
+			syntax::InfoParser *p = new (this) syntax::InfoParser(r);
+			add(p, syntax);
+			return p;
 		}
 
-		void FileReader::ensureLoaded() {
+		void DeclReader::ensureLoaded() {
 			if (c)
 				return;
 
@@ -80,23 +128,45 @@ namespace storm {
 			} else {
 				// Use the 'real' parser!
 				Parser *p = Parser::create(grammar, S("SRoot"));
+
+				// Add syntax from the previous step.
+				add(p, syntax);
+
+				// Parse!
 				p->parse(info->contents, info->url, info->start);
 				if (p->hasError())
 					p->throwError();
 				c = p->transform<FileContents>();
 			}
 
-			Scope root = engine().scope();
+			// Add any newly found use statements. Should only be the case if we used the C parser.
 			SyntaxLookup *lookup = new (this) SyntaxLookup();
-			for (nat i = 0; i < c->use->count(); i++) {
-				SrcName *name = c->use->at(i);
+			add(lookup, c->use);
+
+			scope = Scope(info->pkg, lookup);
+		}
+
+		void DeclReader::add(SyntaxLookup *to, Array<SrcName *> *use) {
+			Scope root = engine().scope();
+			for (Nat i = 0; i < use->count(); i++) {
+				SrcName *name = use->at(i);
 				Named *found = root.find(name);
 				if (!found)
 					throw SyntaxError(name->pos, L"The package " + ::toS(name) + L" does not exist!");
-				lookup->extra->push(found);
+				to->extra->push(found);
 			}
+		}
 
-			scope = Scope(info->pkg, lookup);
+		void DeclReader::add(syntax::ParserBase *to, Array<SrcName *> *use) {
+			Scope root = engine().scope();
+			for (Nat i = 0; i < use->count(); i++) {
+				SrcName *name = use->at(i);
+				Package *found = as<Package>(root.find(name));
+				if (!found)
+					throw SyntaxError(name->pos, L"The package " + ::toS(name) + L" does not exist!");
+
+				to->addSyntax(found);
+			}
 		}
 
 

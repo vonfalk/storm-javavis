@@ -1,7 +1,10 @@
+extend test.bnf;
+
 // Syntax for debugging...
 use lang.bs;
 
-delimiter = SDelimiter;
+// Custom syntax inside 'test.bnf', equivalent to 'delimiter = SDelimiter;', just to show that it's possible!
+delim: SDelimiter;
 
 SStmt => dumpExpr(e, str) : "dump:", ( SExpr(block) e ) str, ";";
 

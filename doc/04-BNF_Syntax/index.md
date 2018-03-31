@@ -36,6 +36,21 @@ Also note that, compared to Basic Storm, it is not possible to omit the parenthe
 call in the syntax language. That makes the syntax language think you are referring to a variable
 instead.
 
+Extensibility
+--------------
+
+The syntax language may also be extended similarly to Basic Storm with some minor differences. In
+the syntax language, it is more important to carefully consider which syntax is required in order to
+be able to parse something else. Therefore, it is recommended to always create separate packages for
+extensions to the syntax language in order to avoid any cycles that could cause strange behaviour.
+
+For this reason, the syntax language uses a separate `use` statement for extending the syntax. `use`
+only extends the namespace with more packages while the keyword `extend` only extends the set of
+productions visible while parsing the syntax in the file. Just like in Basic Storm, `extend`
+statements must be the first statements in the file. `use` statements can be located anywhere, even
+if it is good practice to put them right after any `extend` statements.
+
+
 Function calls
 ---------------
 
@@ -58,7 +73,8 @@ Visibility
 -----------
 
 All options that can be resolved from the `use`d packages (in Basic Storm, any use statements in the
-`.bs`-file are included) are visible and considered during the parsing process.
+`.bs`-file are included) are visible and considered during the parsing process. Currently everything
+declared in the syntax language is considered `public`.
 
 Rules
 ------

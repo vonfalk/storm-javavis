@@ -16,21 +16,46 @@ namespace storm {
 		PkgReader *STORM_FN reader(Array<Url *> *files, Package *pkg) ON(Compiler);
 
 		/**
-		 * Reader for files.
+		 * First stage reader for the syntax language. Here, we only read use statements to figure
+		 * out the syntax used in the rest of the file.
+		 *
+		 * During bootstrapping, this step is skipped entirely.
 		 */
-		class FileReader : public storm::FileReader {
+		class UseReader : public FileReader {
 			STORM_CLASS;
 		public:
 			// Create.
-			STORM_CTOR FileReader(FileInfo *info);
+			STORM_CTOR UseReader(FileInfo *info);
+
+			// Create parser.
+			virtual syntax::InfoParser *STORM_FN createParser();
+
+		protected:
+			// Create the next part.
+			virtual MAYBE(FileReader *) STORM_FN createNext(ReaderQuery q);
+		};
+
+		class SyntaxLookup;
+
+		/**
+		 * Second stage reader for the syntax language. This is where the bulk of the work is done.
+		 */
+		class DeclReader : public FileReader {
+			STORM_CLASS;
+		public:
+			// Create, assuming we have read some imports previously.
+			STORM_CTOR DeclReader(FileInfo *info, Array<SrcName *> *imports);
+
+			// Create, assuming we want to use the C parser.
+			STORM_CTOR DeclReader(FileInfo *info);
 
 			// Get the syntax rules.
 			virtual void STORM_FN readSyntaxRules();
 
-			// Get the syntax productions.
+			// Get the productions.
 			virtual void STORM_FN readSyntaxProductions();
 
-			// Syntax highligting.
+			// Create parser.
 			virtual syntax::InfoParser *STORM_FN createParser();
 
 		private:
@@ -40,9 +65,19 @@ namespace storm {
 			// Scope. Created by 'ensureLoaded'.
 			Scope scope;
 
-			// Ensure the contents is loaded.
+			// Packages used for extensions.
+			Array<SrcName *> *syntax;
+
+			// Ensure contents is loaded.
 			void ensureLoaded();
+
+			// Add packages to a ScopeLookup.
+			void add(SyntaxLookup *to, Array<SrcName *> *used);
+
+			// Add packages to a parser.
+			void add(syntax::ParserBase *to, Array<SrcName *> *used);
 		};
+
 
 
 		/**

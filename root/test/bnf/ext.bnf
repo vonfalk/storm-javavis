@@ -1,0 +1,8 @@
+// Small extension to the syntax language itself, just to show that it is possible.
+// This extension is therefore mostly useless, but shows what's possible.
+use lang.bnf;
+
+delimiter = SDelim;
+
+// Allow using the keyword 'delim:' for setting the delimiter.
+SFileItem => DelimDecl(pkg) : "delim:" #keyword, SName pkg #typeName;

@@ -2,7 +2,8 @@ use core.lang;
 
 // Note: This file is parsed by the built-in parser during startup. Therefore, small differences in the
 // accepted languages may occur. For example, the built-in parser will does not accept actual parameters
-// of the form 'a.b.c', while the grammar specified here will not.
+// of the form 'a.b.c', while the grammar specified here does. Furthermore, it is not possible to extend
+// the grammar in this file with 'use' statements, which is otherwise possible.
 
 delimiter = SDelim;
 
@@ -31,6 +32,9 @@ SNamePart => RecPart(name) : SIdent name, "<", SName -> add, (",", SName -> add,
 
 SrcName SName();
 SName => SrcName(pos) : SNamePart -> add #typeName - (, "\.", SNamePart -> add #typeName)*;
+
+Array<SrcName> SUse();
+SUse => Array<SrcName>() : (, "extend" #keyword, SName -> push #typeName, ";")*;
 
 FileContents SRoot();
 SRoot => FileContents() : (SDocFileItem -> push, ";")* - SDelim;

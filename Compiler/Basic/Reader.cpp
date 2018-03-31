@@ -46,7 +46,7 @@ namespace storm {
 
 			syntax::Parser *p = syntax::Parser::create(syntaxPkg(this), S("SIncludes"));
 
-			if (!p->parse(info->contents, info->url))
+			if (!p->parse(info->contents, info->url, info->start))
 				p->throwError();
 
 			Array<SrcName *> *includes = p->transform<Array<SrcName *>>();

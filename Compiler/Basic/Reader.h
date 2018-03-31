@@ -31,6 +31,7 @@ namespace storm {
 			virtual MAYBE(FileReader *) STORM_FN createNext(ReaderQuery q);
 		};
 
+
 		/**
 		 * Second stage reader for Basic Storm. Here, we receive all includes from the previous
 		 * state and read the rest of the file.
