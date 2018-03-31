@@ -8,28 +8,59 @@
 
 namespace storm {
 
-	StrFmt::StrFmt() : width(0), fill(Char(' ')) {}
+	StrFmt::StrFmt() : width(0), align(alignNone), fill(Char(' ')) {}
 
-	StrFmt::StrFmt(Nat width, Char fill) : width(width), fill(fill) {}
+	StrFmt::StrFmt(Nat width, Char fill) : width(width), align(alignNone), fill(fill) {}
+
+	StrFmt::StrFmt(Nat width, Byte align, Char fill) : width(width), align(align), fill(fill) {}
 
 	void StrFmt::reset() {
 		width = 0;
+		align = alignRight;
 	}
 
 	void StrFmt::clear() {
 		width = 0;
+		align = alignNone;
 		fill = Char(' ');
 	}
 
 	void StrFmt::merge(const StrFmt &o) {
 		if (o.width)
 			width = o.width;
+		if (o.align != alignNone)
+			align = o.align;
 		if (o.fill != Char('\0'))
 			fill = o.fill;
 	}
 
+	static Bool isLeft(const StrFmt &f) {
+		return f.align == StrFmt::alignLeft;
+	}
+
+	static Bool isRight(const StrFmt &f) {
+		// Default is 'right'.
+		return f.align != StrFmt::alignLeft;
+	}
+
 	StrFmt width(Nat w) {
 		return StrFmt(w, Char('\0'));
+	}
+
+	StrFmt left() {
+		return StrFmt(0, StrFmt::alignLeft, Char('\0'));
+	}
+
+	StrFmt left(Nat w) {
+		return StrFmt(w, StrFmt::alignLeft, Char('\0'));
+	}
+
+	StrFmt right() {
+		return StrFmt(0, StrFmt::alignRight, Char('\0'));
+	}
+
+	StrFmt right(Nat w) {
+		return StrFmt(w, StrFmt::alignRight, Char('\0'));
 	}
 
 	StrFmt fill(Char c) {
@@ -78,7 +109,7 @@ namespace storm {
 		// We can not copy any extra data, so we can not use copyBuf()
 
 		GcArray<wchar> *to = runtime::allocArray<wchar>(engine(), &wcharArrayType, pos + 1);
-		for (nat i = 0; i < pos; i++)
+		for (Nat i = 0; i < pos; i++)
 			to->v[i] = buf->v[i];
 
 		return new (this) Str(to);
@@ -102,21 +133,20 @@ namespace storm {
 		if (!lastNewline())
 			return;
 
-		nat iLen = indentStr->charCount();
-		nat iTot = iLen * indentation;
+		Nat iLen = indentStr->charCount();
+		Nat iTot = iLen * indentation;
 		ensure(pos + iTot);
 
-		for (nat i = 0; i < indentation; i++) {
-			for (nat j = 0; j < iLen; j++) {
+		for (Nat i = 0; i < indentation; i++) {
+			for (Nat j = 0; j < iLen; j++) {
 				buf->v[pos++] = indentStr->data->v[j];
 			}
 		}
 	}
 
-	void StrBuf::fill(nat toOutput) {
-		nat w = fmt.width;
+	void StrBuf::fill(Nat toOutput) {
+		Nat w = fmt.width;
 		Char fill = fmt.fill;
-		fmt.reset();
 
 		// Nothing to do?
 		if (toOutput >= w)
@@ -124,30 +154,53 @@ namespace storm {
 
 		wchar first = fill.leading();
 		wchar last = fill.trailing();
-		nat toFill = w - toOutput;
+		Nat toFill = w - toOutput;
 		if (first)
 			ensure(pos + toFill*2);
 		else
 			ensure(pos + toFill);
 
-		for (nat i = 0; i < toFill; i++) {
+		for (Nat i = 0; i < toFill; i++) {
 			if (first)
 				buf->v[pos++] = first;
 			buf->v[pos++] = last;
 		}
 	}
 
+	void StrBuf::fillReverse(Nat toOutput) {
+		Nat w = fmt.width;
+		Char fill = fmt.fill;
+
+		// Nothing to do?
+		if (toOutput >= w)
+			return;
+
+		wchar first = fill.leading();
+		wchar last = fill.trailing();
+		Nat toFill = w - toOutput;
+		if (first)
+			ensure(pos + toFill*2);
+		else
+			ensure(pos + toFill);
+
+		for (Nat i = 0; i < toFill; i++) {
+			buf->v[pos++] = last;
+			if (first)
+				buf->v[pos++] = first;
+		}
+	}
+
 	StrBuf *StrBuf::add(const wchar *data) {
-		nat len = 0;
-		nat points = 0;
-		nat iLen = indentStr->charCount();
-		nat iTot = iLen * indentation;
+		Nat len = 0;
+		Nat points = 0;
+		Nat iLen = indentStr->charCount();
+		Nat iTot = iLen * indentation;
 
 		// Compute the length.
 		if (lastNewline())
 			len += iTot;
 
-		for (nat at = 0; data[at]; at++) {
+		for (Nat at = 0; data[at]; at++) {
 			if (data[at] == '\n' && data[at + 1] != '\0')
 				len += iTot;
 			len++;
@@ -157,16 +210,21 @@ namespace storm {
 
 		// Add fill.
 		insertIndent();
-		fill(points);
+		if (isRight(fmt))
+			fill(points);
 
 		// Reserve space (sometimes a bit too much, but that is fine).
 		ensure(pos + len);
 
 		// Copy.
-		for (nat at = 0; data[at]; at++) {
+		for (Nat at = 0; data[at]; at++) {
 			insertIndent();
 			buf->v[pos++] = data[at];
 		}
+
+		if (isLeft(fmt))
+			fill(points);
+		fmt.reset();
 
 		return this;
 	}
@@ -232,7 +290,7 @@ namespace storm {
 	}
 
 	// 64-bit numbers never need more than 21 digits, including a - sign.
-	static const nat maxDigits = 21;
+	static const Nat maxDigits = 21;
 
 	static void reverse(wchar *begin, wchar *end) {
 		while ((begin != end) && (begin != --end)) {
@@ -243,73 +301,64 @@ namespace storm {
 	StrBuf *StrBuf::add(Long i) {
 		insertIndent();
 
-		nat worst = max(maxDigits, fmt.width * fmt.fill.size());
+		Nat worst = max(maxDigits, fmt.width * fmt.fill.size());
 
 		ensure(pos + worst);
 
 		bool negative = i < 0;
 
-		nat p = 0;
-		while (p < worst) {
+		Nat start = pos;
+		while (pos < start + worst) {
 			Long last = i % 10;
+			i /= 10;
+
 			if (last > 0 && negative)
 				last -= 10;
-			buf->v[pos + p++] = wchar(abs(last) + '0');
-			i /= 10;
+			buf->v[pos++] = wchar(abs(last) + '0');
 			if (i == 0)
 				break;
 		}
 
 		if (negative)
-			buf->v[pos + p++] = '-';
+			buf->v[pos++] = '-';
 
 		// Fill if needed.
-		if (p < fmt.width) {
-			wchar lead = fmt.fill.leading();
-			wchar trail = fmt.fill.trailing();
-			for (nat i = p; i < fmt.width; i++) {
-				buf->v[pos + p++] = trail;
-				if (lead)
-					buf->v[pos + p++] = lead;
-			}
-			fmt.reset();
+		if (isRight(fmt)) {
+			fillReverse(pos - start);
+			reverse(buf->v + start, buf->v + pos);
+		} else if (isLeft(fmt)) {
+			reverse(buf->v + start, buf->v + pos);
+			fill(pos - start);
 		}
+		fmt.reset();
 
-		reverse(buf->v + pos, buf->v + pos + p);
-
-		pos += p;
 		return this;
 	}
 
 	StrBuf *StrBuf::add(Word i) {
 		insertIndent();
 
-		nat worst = max(maxDigits, fmt.width * fmt.fill.size());
+		Nat worst = max(maxDigits, fmt.width * fmt.fill.size());
 
 		ensure(pos + worst);
 
-		nat p = 0;
-		while (p < worst) {
-			buf->v[pos + p++] = wchar((i % 10) + '0');
+		Nat start = pos;
+		while (pos < start + worst) {
+			buf->v[pos++] = wchar((i % 10) + '0');
 			i /= 10;
 			if (i == 0)
 				break;
 		}
 
 		// Fill if needed.
-		if (p < fmt.width) {
-			wchar lead = fmt.fill.leading();
-			wchar trail = fmt.fill.trailing();
-			for (nat i = p; i < fmt.width; i++) {
-				buf->v[pos + p++] = trail;
-				if (lead)
-					buf->v[pos + p++] = lead;
-			}
-			fmt.reset();
+		if (isRight(fmt)) {
+			fillReverse(pos - start);
+			reverse(buf->v + start, buf->v + pos);
+		} else if (isLeft(fmt)) {
+			reverse(buf->v + start, buf->v + pos);
+			fill(pos - start);
 		}
-
-		reverse(buf->v + pos, buf->v + pos + p);
-		pos += p;
+		fmt.reset();
 
 		return this;
 	}
@@ -317,16 +366,16 @@ namespace storm {
 	StrBuf *StrBuf::add(Float f) {
 		// TODO: Improve!
 #ifdef WINDOWS
-		const nat size = 50;
+		const Nat size = 50;
 		wchar buf[size];
 		_snwprintf_s(buf, size, size, L"%f", f);
 		return add(buf);
 #else
-		const nat size = 50;
+		const Nat size = 50;
 		char buf[size];
 		snprintf(buf, size, "%f", f);
 		wchar wbuf[size] = {0};
-		for (nat i = 0; buf[i]; i++)
+		for (Nat i = 0; buf[i]; i++)
 			wbuf[i] = buf[i];
 		return add(wbuf);
 #endif
@@ -347,15 +396,15 @@ namespace storm {
 
 	StrBuf *StrBuf::add(HexFmt f) {
 		// Enough for a 128 bit integer.
-		const nat bufSize = 32;
+		const Nat bufSize = 32;
 		wchar buf[bufSize + 1];
 
 		const char digits[] = "0123456789ABCDEF";
 
 		wchar *to = buf + bufSize;
 		*to = 0;
-		for (nat i = 0; i < min(bufSize, f.digits); i++) {
-			nat part = f.value & 0x0F;
+		for (Nat i = 0; i < min(bufSize, f.digits); i++) {
+			Nat part = f.value & 0x0F;
 			f.value = f.value >> 4;
 			*--to = digits[part];
 		}
@@ -368,7 +417,9 @@ namespace storm {
 		pos = 0;
 		indentStr = new (this) Str(L"    ");
 		indentation = 0;
+		// Note: clear and reset have slightly different semantics.
 		fmt.clear();
+		fmt.reset();
 	}
 
 	void StrBuf::indent() {
@@ -390,14 +441,14 @@ namespace storm {
 
 	StrBuf &StrBuf::operator <<(const void *ptr) {
 		size_t v = (size_t)ptr;
-		const nat digits = sizeof(size_t) * 2;
+		const Nat digits = sizeof(size_t) * 2;
 		wchar buf[digits + 3];
 		buf[0] = '0';
 		buf[1] = 'x';
 		buf[digits + 2] = 0;
 
-		for (nat i = 0; i < digits; i++) {
-			nat digit = (v >> ((digits - i - 1) * 4)) & 0xF;
+		for (Nat i = 0; i < digits; i++) {
+			Nat digit = (v >> ((digits - i - 1) * 4)) & 0xF;
 			if (digit < 0xA)
 				buf[i + 2] = '0' + digit;
 			else
@@ -415,8 +466,8 @@ namespace storm {
 		return !empty();
 	}
 
-	void StrBuf::ensure(nat capacity) {
-		nat curr = 0;
+	void StrBuf::ensure(Nat capacity) {
+		Nat curr = 0;
 		if (buf)
 			curr = buf->count - 1;
 
@@ -424,11 +475,11 @@ namespace storm {
 			return;
 
 		// Grow!
-		nat newCap = max(capacity, curr * 2);
-		newCap = max(newCap, nat(16));
+		Nat newCap = max(capacity, curr * 2);
+		newCap = max(newCap, Nat(16));
 
 		GcArray<wchar> *to = runtime::allocArray<wchar>(engine(), &wcharArrayType, newCap + 1);
-		for (nat i = 0; i < pos; i++)
+		for (Nat i = 0; i < pos; i++)
 			to->v[i] = buf->v[i];
 
 		buf = to;
@@ -436,7 +487,7 @@ namespace storm {
 
 	GcArray<wchar> *StrBuf::copyBuf(GcArray<wchar> *buf) const {
 		GcArray<wchar> *to = runtime::allocArray<wchar>(engine(), &wcharArrayType, buf->count);
-		for (nat i = 0; i < buf->count; i++)
+		for (Nat i = 0; i < buf->count; i++)
 			to->v[i] = buf->v[i];
 		return to;
 	}

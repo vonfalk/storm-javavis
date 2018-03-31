@@ -22,25 +22,40 @@ namespace storm {
 	public:
 		StrFmt();
 		StrFmt(Nat width, Char fill);
+		StrFmt(Nat width, Byte align, Char fill);
 
 		// Min width of the next output.
 		Nat width;
 
+		// Text alignment (0 = not set, 1 = left, 2 = right).
+		Byte align;
+
 		// Fill character.
 		Char fill;
 
-		// Reset after outputting something.
+		// Reset after outputting something. May contain values that affects the formatting.
 		void reset();
 
-		// Clear. Restores all properties.
+		// Clear. Restores all properties to values that do not affect another StrFmt.
 		void clear();
 
 		// Merge with another StrFmt.
 		void merge(const StrFmt &o);
+
+		// Constants for text alignment.
+		enum {
+			alignNone = 0,
+			alignLeft = 1,
+			alignRight = 2,
+		};
 	};
 
 	// Create formats.
 	StrFmt STORM_FN width(Nat w);
+	StrFmt STORM_FN left();
+	StrFmt STORM_FN left(Nat width);
+	StrFmt STORM_FN right();
+	StrFmt STORM_FN right(Nat width);
 	StrFmt STORM_FN fill(Char fill);
 
 	/**
@@ -166,7 +181,10 @@ namespace storm {
 		void insertIndent();
 
 		// Insert fill character if needed.
-		void fill(nat toOutput);
+		void fill(Nat toOutput);
+
+		// Insert fill character if needed, assuming we will reverse the string afterwards.
+		void fillReverse(Nat toOutput);
 
 		// Copy a buffer.
 		GcArray<wchar> *copyBuf(GcArray<wchar> *buf) const;

@@ -64,6 +64,10 @@ BEGIN_TEST(StrBufTest, Core) {
 	*buf << hex(Byte(10)) << S(" ") << hex(Nat(10)) << S(" ") << hex(Word(0x12345));
 	CHECK_EQ(toS(buf), L"0A 0000000A 0000000000012345");
 
+	buf->clear();
+	*buf << left(3) << -3 << 3 << left(3) << S("a") << S("a") << left(3) << Word(3);
+	CHECK_EQ(toS(buf), L"-3 3a  a3  ");
+
 } END_TEST
 
 
