@@ -33,12 +33,12 @@ namespace storm {
 	 * Clone an object.
 	 */
 	template <class T>
-	T *clone(T *obj) {
+	T *clone(const T *obj) {
 		return (T *)runtime::cloneObject((RootObject *)obj);
 	}
 
 	template <class T>
-	T *clone(T *obj, CloneEnv *env) {
+	T *clone(const T *obj, CloneEnv *env) {
 		return (T *)runtime::cloneObjectEnv((RootObject *)obj, env);
 	}
 

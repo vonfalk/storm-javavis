@@ -110,6 +110,11 @@ namespace storm {
 			new (Place(mem))T(p, q, r, s, u, v);
 		}
 
+		template <class T, class P, class Q, class R, class S, class U, class V, class W>
+		static void CODECALL create8(void *mem, P p, Q q, R r, S s, U u, V v, W w) {
+			new (Place(mem))T(p, q, r, s, u, v, w);
+		}
+
 		// Wrap an assignment operator call.
 		template <class T>
 		static T &CODECALL assign(T &to, const T &from) {

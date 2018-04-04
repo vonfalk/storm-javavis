@@ -325,3 +325,4 @@ void dumpHex(const T &v) {
 // Some other libraries we need on Windows.
 #pragma comment(lib, "user32.lib")
 #pragma comment(lib, "ole32.lib")
+#pragma comment(lib, "ws2_32.lib")
