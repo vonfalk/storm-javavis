@@ -5,7 +5,7 @@
 #include "Net.h"
 
 namespace storm {
-	STORM_PKG(core.io.net);
+	STORM_PKG(core.net);
 
 	/**
 	 * Abstract representation of an internet address (eg. IPv4 or IPv6). Roughly corresponds to a

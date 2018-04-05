@@ -1,5 +1,5 @@
 #include "stdafx.h"
-#include "Core/Io/Net/Address.h"
+#include "Core/Net/Address.h"
 
 BEGIN_TEST_(NetTest) {
 	Engine &e = gEngine();

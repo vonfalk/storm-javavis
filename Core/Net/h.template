@@ -1,7 +1,7 @@
 #pragma once
 
 namespace storm {
-	STORM_PKG(core.io.net);
+	STORM_PKG(core.net);
 
 	$$
 
