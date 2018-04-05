@@ -49,6 +49,9 @@ namespace storm {
 	// Convert a sockaddr to a proper Storm class.
 	Address *toStorm(Engine &e, sockaddr *src);
 
+	// Parse a string containing an address into an appropriate representation. Does *not* resolve names.
+	Address *STORM_FN toAddress(Str *addr);
+
 
 	/**
 	 * An IPv4 address.
@@ -105,10 +108,10 @@ namespace storm {
 		STORM_CTOR Inet6Address(Nat port, Nat addr0, Nat addr1, Nat addr2, Nat addr3, Nat flow, Nat scope);
 
 		// Access individual parts by index.
-		Byte STORM_FN operator [](Nat id) const;
+		Nat STORM_FN operator [](Nat id) const;
 
 		// Number of bytes.
-		Nat STORM_FN count() const { return 16; }
+		Nat STORM_FN count() const { return 8; }
 
 		// Get flow info.
 		Nat STORM_FN flowInfo() const { return myFlow; }

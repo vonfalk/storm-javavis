@@ -43,12 +43,187 @@ namespace storm {
 		}
 	}
 
+	static void error(Str *src) {
+		throw NetError(L"Invalid address: " + ::toS(src));
+	}
+
+	static Address *to4Address(Str *str) {
+		const wchar *src = str->c_str();
+
+		Nat number = 0;
+		Nat digits = 0;
+		Nat addr = 0;
+		Nat parts = 0;
+
+		Bool hasPort = false;
+		Nat port = 0;
+
+		for (const wchar *at = src; *at; at++) {
+			if (*at >= '0' && *at <= '9') {
+				number = number * 10 + (*at - '0');
+				digits++;
+			} else if (*at == '.') {
+				if (digits == 0 || number > 0xFF || parts > 3 || hasPort)
+					error(str);
+
+				parts++;
+				addr = (addr << 8) | number;
+				digits = 0;
+				number = 0;
+			} else if (*at == ':') {
+				if (digits == 0 || number > 0xFF || parts > 3 || hasPort)
+					error(str);
+
+				hasPort = true;
+				addr = (addr << 8) | number;
+				digits = 0;
+				number = 0;
+			} else {
+				error(str);
+			}
+		}
+
+		if (digits == 0)
+			error(str);
+
+		if (hasPort) {
+			port = number;
+		} else if (number > 0xFF || parts > 3) {
+			error(str);
+		} else {
+			addr = (addr << 8) | number;
+		}
+
+		return new (str) Inet4Address(port, addr);
+	}
+
+	static Bool isHex(wchar c) {
+		return (c >= '0' && c <= '9')
+			|| (c >= 'A' && c <= 'F')
+			|| (c >= 'a' && c <= 'f');
+	}
+
+	static Nat fromHex(wchar c) {
+		if (c >= '0' && c <= '9')
+			return c - '0';
+		if (c >= 'A' && c <= 'F')
+			return c - 'A' + 10;
+		if (c >= 'a' && c <= 'f')
+			return c - 'a' + 10;
+		return 0;
+	}
+
+	static Address *to6Address(Str *str) {
+		const wchar *src = str->c_str();
+
+		Nat parts[8] = { 0 };
+		Nat part = 0;
+		Nat digits = 0;
+		Nat expand = 8; // no expansion
+
+		Nat port = 0;
+		Bool hasPort = false;
+		Bool inPort = false;
+
+		for (const wchar *at = src; *at; at++) {
+			if (!inPort && isHex(*at)) {
+				if (part > 8)
+					error(str);
+
+				parts[part] = parts[part] * 0x10 + fromHex(*at);
+				digits++;
+			} else if (inPort && *at > '0' && *at < '9') {
+				if (hasPort)
+					// no ':' yet
+					error(str);
+
+				port = port * 10 + (*at - '0');
+				digits++;
+			} else if (*at == ':') {
+				if (inPort) {
+					// Indicate that we're all done!
+					hasPort = false;
+				} else if (digits == 0) {
+					if (at != src) {
+						// Double!
+						if (expand < 8)
+							error(str);
+						expand = part;
+					}
+				} else {
+					part++;
+				}
+				digits = 0;
+			} else if (*at == '[') {
+				if (at != src)
+					error(str);
+				hasPort = true;
+			} else if (*at == ']') {
+				if (digits == 0) {
+					if (expand >= 8)
+						error(str);
+				} else {
+					part++;
+				}
+
+				if (!hasPort)
+					error(str);
+				inPort = true;
+			} else {
+				error(str);
+			}
+		}
+
+		if (digits == 0) {
+			if (expand >= 8 || inPort)
+				error(str);
+		} else if (!inPort) {
+			part++;
+		}
+
+		if (part != 8 && expand >= 8)
+			error(str);
+
+		if (expand < 8) {
+			// 'i' is index from the end.
+			for (Nat i = 0; i < 8 - expand; i++) {
+				Nat to = 8 - i - 1;
+				if (i < part - expand)
+					parts[to] = parts[part - i - 1];
+				else
+					parts[to] = 0;
+			}
+		}
+
+		return new (str) Inet6Address(port,
+									(parts[0] << 16) | parts[1],
+									(parts[2] << 16) | parts[3],
+									(parts[4] << 16) | parts[5],
+									(parts[6] << 16) | parts[7]);
+	}
+
+
+	Address *toAddress(Str *str) {
+		const wchar *src = str->c_str();
+
+		bool dot = false;
+		for (const wchar *i = src; *i; i++)
+			if (*i == '.')
+				dot = true;
+
+		if (dot)
+			return to4Address(str);
+		else
+			return to6Address(str);
+	}
+
 	/**
 	 * IPv4.
 	 */
 
 	Inet4Address::Inet4Address(sockaddr_in *addr) : Address(ntohs(addr->sin_port)) {
 		memcpy(&myAddr, &addr->sin_addr, sizeof(myAddr));
+		myAddr = ntohl(myAddr);
 	}
 
 	Inet4Address::Inet4Address(Nat port, Nat addr) : Address(port), myAddr(addr) {}
@@ -65,7 +240,8 @@ namespace storm {
 		i->sin_family = AF_INET;
 		i->sin_port = htons((short)port());
 
-		memcpy(&i->sin_addr, &myAddr, sizeof(myAddr));
+		Nat tmp = htonl(myAddr);
+		memcpy(&i->sin_addr, &tmp, sizeof(myAddr));
 	}
 
 	void Inet4Address::toS(StrBuf *to) const {
@@ -93,7 +269,13 @@ namespace storm {
 	Inet6Address::Inet6Address(sockaddr_in6 *addr) : Address(addr->sin6_port) {
 		myFlow = ntohl(addr->sin6_flowinfo);
 		myScope = ntohl(addr->sin6_scope_id);
-		memcpy(&myAddr0, &addr->sin6_addr, 4*sizeof(myAddr0));
+
+		Nat data[4];
+		memcpy(data, &addr->sin6_addr, 4*sizeof(myAddr0));
+		myAddr0 = ntohl(data[0]);
+		myAddr1 = ntohl(data[1]);
+		myAddr2 = ntohl(data[2]);
+		myAddr3 = ntohl(data[3]);
 	}
 
 	Inet6Address::Inet6Address(Nat port, Nat addr0, Nat addr1, Nat addr2, Nat addr3)
@@ -102,13 +284,13 @@ namespace storm {
 	Inet6Address::Inet6Address(Nat port, Nat addr0, Nat addr1, Nat addr2, Nat addr3, Nat flow, Nat scope)
 		: Address(port), myAddr0(addr0), myAddr1(addr1), myAddr2(addr2), myAddr3(addr3), myFlow(flow), myScope(scope) {}
 
-	Byte Inet6Address::operator [](Nat id) const {
+	Nat Inet6Address::operator [](Nat id) const {
 		if (id >= 16)
 			return 0;
 
 		const Nat *src[] = { &myAddr0, &myAddr1, &myAddr2, &myAddr3 };
-		const Nat part = *src[id / 4];
-		return Byte((part >> (24 - (id%4)*8)) & 0xFF);
+		const Nat part = *src[id / 2];
+		return (part >> (16 - (id % 2)*16)) & 0xFFFF;
 	}
 
 	void Inet6Address::fill(sockaddr *fill) const {
@@ -118,7 +300,28 @@ namespace storm {
 		i->sin6_flowinfo = htonl(myFlow);
 		i->sin6_scope_id = htonl(myScope);
 
-		memcpy(&i->sin6_addr, &myAddr0, 4*sizeof(myAddr0));
+		Nat data[4] = { htonl(myAddr0), htonl(myAddr1), htonl(myAddr2), htonl(myAddr3) };
+		memcpy(&i->sin6_addr, data, 4*sizeof(myAddr0));
+	}
+
+	static void putHex(StrBuf *to, Nat part) {
+		const wchar digits[] = S("0123456789abcdef");
+		wchar out[5];
+		Nat at = 5;
+		out[--at] = 0;
+
+		while (part) {
+			out[--at] = digits[part & 0x0F];
+			part >>= 4;
+		}
+
+		while (out[at] == '0')
+			at++;
+
+		if (at == 4)
+			at = 3;
+
+		*to << &out[at];
 	}
 
 	void Inet6Address::toS(StrBuf *to) const {
@@ -156,8 +359,7 @@ namespace storm {
 
 			if (i > 0)
 				*to << S(":");
-			Byte d = (*this)[i];
-			*to << hex(d);
+			putHex(to, (*this)[i]);
 		}
 
 		if (largestEnd == count())
