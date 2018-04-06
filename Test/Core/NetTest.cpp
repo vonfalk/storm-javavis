@@ -1,7 +1,8 @@
 #include "stdafx.h"
 #include "Core/Net/Address.h"
+#include "Core/Net/Socket.h"
 
-BEGIN_TEST_(NetTest) {
+BEGIN_TEST(NetAddrTest, Core) {
 	Engine &e = gEngine();
 
 	Address *addr = new (e) Inet4Address(0, 0xC0A80101);
@@ -47,5 +48,13 @@ BEGIN_TEST_(NetTest) {
 	CHECK_EQ(toS(toAddress(new (e) Str(S("1::fed:1")))), L"1::fed:1");
 
 	CHECK_EQ(toS(toAddress(new (e) Str(S("[1::fed:1]:31337")))), L"[1::fed:1]:31337");
+
+} END_TEST
+
+BEGIN_TEST_(NetConnectTest, Core) {
+	Engine &e = gEngine();
+
+	Socket *s = connect(toAddress(new (e) Str(S("51.15.180.4:80"))));
+	PVAR(s);
 
 } END_TEST

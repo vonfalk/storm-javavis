@@ -14,7 +14,7 @@ namespace os {
 	class IORequest : public OVERLAPPED {
 	public:
 		// Note the thread that the request is associated with.
-		IORequest(Thread &thread);
+		IORequest(const Thread &thread);
 		~IORequest();
 
 		// Sema used for notifying when the request is complete.
@@ -23,12 +23,18 @@ namespace os {
 		// Number of bytes read.
 		nat bytes;
 
+		// Error code (if any).
+		int error;
+
 		// Called on completion.
 		void complete(nat bytes);
 
+		// Called on failure.
+		void failed(nat bytes, int error);
+
 	private:
 		// Owning thread.
-		Thread &thread;
+		const Thread &thread;
 	};
 
 #elif defined(POSIX)

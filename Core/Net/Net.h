@@ -1,5 +1,6 @@
 #pragma once
 #include "Utils/Exception.h"
+#include "OS/Handle.h"
 
 /**
  * Common includes for the network subsystem.
@@ -9,7 +10,9 @@
 
 #if defined(WINDOWS)
 
+#include <winsock2.h>
 #include <ws2tcpip.h>
+#include <mswsock.h>
 
 #elif defined(POSIX)
 
@@ -36,5 +39,24 @@ namespace storm {
 	private:
 		String msg;
 	};
+
+	// Initialize sockets (if needed).
+	void initSockets();
+
+	/**
+	 * Helpers for socket manipulation.
+	 */
+
+	class Address;
+
+	// Create a socket.
+	os::Handle createTcpSocket(int family);
+	os::Handle createUdpSocket(int family);
+
+	// Connect.
+	bool connectSocket(os::Handle socket, const os::Thread &attached, sockaddr *addr);
+
+	// Close a socket.
+	void closeSocket(os::Handle socket);
 
 }

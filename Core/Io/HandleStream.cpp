@@ -220,6 +220,10 @@ namespace storm {
 		: handle(h),
 		  attachedTo(os::Thread::invalid) {}
 
+	HandleIStream::HandleIStream(os::Handle h, os::Thread t)
+		: handle(h),
+		  attachedTo(t) {}
+
 	HandleIStream::HandleIStream(const HandleIStream &o)
 		: PeekIStream(o),
 		  handle(dupHandle(o.handle)),
@@ -258,6 +262,10 @@ namespace storm {
 	HandleRIStream::HandleRIStream(os::Handle h)
 		: handle(h),
 		  attachedTo(os::Thread::invalid) {}
+
+	HandleRIStream::HandleRIStream(os::Handle h, os::Thread t)
+		: handle(h),
+		  attachedTo(t) {}
 
 	HandleRIStream::HandleRIStream(const HandleRIStream &o)
 		: handle(dupHandle(o.handle)),
@@ -335,6 +343,10 @@ namespace storm {
 	HandleOStream::HandleOStream(os::Handle h)
 		: handle(h),
 		  attachedTo(os::Thread::invalid) {}
+
+	HandleOStream::HandleOStream(os::Handle h, os::Thread t)
+		: handle(h),
+		  attachedTo(t) {}
 
 	HandleOStream::HandleOStream(const HandleOStream &o)
 		: handle(dupHandle(o.handle)),

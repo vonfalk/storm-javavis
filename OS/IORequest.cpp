@@ -6,7 +6,7 @@ namespace os {
 
 #ifdef WINDOWS
 
-	IORequest::IORequest(Thread &thread) : wake(0), bytes(0), thread(thread) {
+	IORequest::IORequest(const Thread &thread) : wake(0), bytes(0), error(0), thread(thread) {
 		Internal = 0;
 		InternalHigh = 0;
 		Offset = 0;
@@ -22,6 +22,13 @@ namespace os {
 
 	void IORequest::complete(nat bytes) {
 		this->bytes = bytes;
+		this->error = 0;
+		wake.up();
+	}
+
+	void IORequest::failed(nat bytes, int error) {
+		this->bytes = bytes;
+		this->error = error;
 		wake.up();
 	}
 

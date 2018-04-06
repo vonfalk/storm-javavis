@@ -21,6 +21,7 @@ namespace storm {
 	public:
 		// Create.
 		HandleIStream(os::Handle handle);
+		HandleIStream(os::Handle handle, os::Thread attachedTo);
 
 		// Copy.
 		HandleIStream(const HandleIStream &o);
@@ -53,6 +54,7 @@ namespace storm {
 	public:
 		// Create.
 		HandleRIStream(os::Handle handle);
+		HandleRIStream(os::Handle handle, os::Thread attachedTo);
 
 		// Copy.
 		HandleRIStream(const HandleRIStream &o);
@@ -105,12 +107,13 @@ namespace storm {
 	public:
 		// Create.
 		HandleOStream(os::Handle h);
+		HandleOStream(os::Handle h, os::Thread attachedTo);
 
 		// Copy.
 		HandleOStream(const HandleOStream &o);
 
 		// Destroy.
-		~HandleOStream();
+		virtual ~HandleOStream();
 
 		// Write data.
 		using OStream::write;

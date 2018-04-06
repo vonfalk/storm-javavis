@@ -44,6 +44,10 @@ namespace storm {
 	private:
 		// Port.
 		Nat myPort;
+
+		// Explicit padding required since the ABI used by GCC differs from MSVC.
+		// TODO: Remove the need for this member!
+		Nat pad;
 	};
 
 	// Convert a sockaddr to a proper Storm class.
