@@ -91,6 +91,10 @@ namespace storm {
 	// Create a socket that is connected to a specific address.
 	MAYBE(Socket *) STORM_FN connect(Address *to);
 
+	// Create a socket that is connected to a specific address, resolving the name first. If 'host'
+	// specifies a port, it overrides the port in 'port'.
+	MAYBE(Socket *) STORM_FN connect(Str *host, Nat port);
+
 
 	/**
 	 * Input stream for the socket.

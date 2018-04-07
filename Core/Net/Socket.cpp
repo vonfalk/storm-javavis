@@ -121,6 +121,21 @@ namespace storm {
 		}
 	}
 
+	MAYBE(Socket *) connect(Str *host, Nat port) {
+		Array<Address *> *found = lookupAddress(host);
+
+		for (Nat i = 0; i < found->count(); i++) {
+			Address *addr = found->at(i);
+			if (!addr->port())
+				addr = addr->withPort(port);
+
+			if (Socket *s = connect(addr))
+				return s;
+		}
+
+		return null;
+	}
+
 
 	/**
 	 * IStream.

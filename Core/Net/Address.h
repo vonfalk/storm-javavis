@@ -1,6 +1,7 @@
 #pragma once
 #include "Core/Str.h"
 #include "Core/StrBuf.h"
+#include "Core/Array.h"
 #include "Core/EnginePtr.h"
 #include "Net.h"
 
@@ -53,8 +54,16 @@ namespace storm {
 	// Convert a sockaddr to a proper Storm class.
 	Address *toStorm(Engine &e, sockaddr *src);
 
+	// Unsafe version that requires explicit checking.
+	MAYBE(Address *) toStormUnsafe(Engine &e, sockaddr *src);
+
 	// Parse a string containing an address into an appropriate representation. Does *not* resolve names.
 	Address *STORM_FN toAddress(Str *addr);
+
+	// Lookup a name on the network.
+	// Note: this function currently blocks *everything* running on the current thread while waiting
+	// for the network. It could therefore be useful to dispatch it to another thread.
+	Array<Address *> *STORM_FN lookupAddress(Str *addr);
 
 
 	/**

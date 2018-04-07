@@ -33,13 +33,20 @@ namespace storm {
 	}
 
 	Address *toStorm(Engine &e, sockaddr *addr) {
+		if (Address *r = toStormUnsafe(e, addr))
+			return r;
+
+		throw NetError(L"Unsupported address family!");
+	}
+
+	Address *toStormUnsafe(Engine &e, sockaddr *addr) {
 		switch (addr->sa_family) {
 		case AF_INET:
 			return new (e) Inet4Address((sockaddr_in *)addr);
 		case AF_INET6:
 			return new (e) Inet6Address((sockaddr_in6 *)addr);
 		default:
-			throw NetError(L"Unsupported address family!");
+			return null;
 		}
 	}
 
@@ -215,6 +222,70 @@ namespace storm {
 			return to4Address(str);
 		else
 			return to6Address(str);
+	}
+
+#if defined(WINDOWS)
+
+	static bool doLookup(Str *str, Array<Address *> *to) {
+		initSockets();
+
+		ADDRINFOW *results = NULL;
+		if (GetAddrInfoW(str->c_str(), NULL, NULL, &results) != 0)
+			return false;
+
+		for (ADDRINFOW *at = results; at; at = at->ai_next) {
+			if (at->ai_addr)
+				if (Address *addr = toStormUnsafe(str->engine(), at->ai_addr))
+					to->push(addr);
+		}
+
+		FreeAddrInfoW(results);
+		return true;
+	}
+
+#elif defined(POSIX)
+
+	static bool doLookup(Str *str, Array<Address *> *to) {
+		addrinfo *results = NULL;
+		if (getaddrinfo(str->utf8_str(), NULL, NULL, &results) != 0)
+			return false;
+
+		for (addrinfo *at = results; at; at = at->ai_next) {
+			if (at->ai_addr)
+				if (Address *addr = toStormUnsafe(str->engine(), at->ai_addr))
+					to->push(addr);
+		}
+
+		freeaddrinfo(results);
+		return true;
+	}
+
+#endif
+
+	Array<Address *> *lookupAddress(Str *str) {
+		Nat port = 0;
+
+		Str::Iter colon = str->findLast(Char(':'));
+		if (colon != str->end()) {
+			Str::Iter portStart = colon;
+			Str *portStr = str->substr(++portStart);
+			if (portStr->isNat()) {
+				port = portStr->toNat();
+				str = str->substr(str->begin(), colon);
+			}
+		}
+
+		Array<Address *> *result = new (str) Array<Address *>();
+		if (!doLookup(str, result))
+			return result;
+
+		if (port) {
+			for (Nat i = 0; i < result->count(); i++) {
+				result->at(i) = result->at(i)->withPort(port);
+			}
+		}
+
+		return result;
 	}
 
 	/**

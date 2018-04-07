@@ -52,12 +52,15 @@ BEGIN_TEST(NetAddrTest, Core) {
 
 	CHECK_EQ(toS(toAddress(new (e) Str(S("[1::fed:1]:31337")))), L"[1::fed:1]:31337");
 
+	// Name resolution.
+	CHECK_GTE(lookupAddress(new (e) Str(S("storm-lang.org")))->count(), Nat(1));
+
 } END_TEST
 
 BEGIN_TEST_(NetConnectTest, Core) {
 	Engine &e = gEngine();
 
-	Socket *s = connect(toAddress(new (e) Str(S("51.15.180.4:80"))));
+	Socket *s = connect(new (e) Str(S("storm-lang.org")), 80);
 	PVAR(s);
 
 	OStream *out = s->output();
