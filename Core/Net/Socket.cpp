@@ -5,7 +5,7 @@
 namespace storm {
 
 
-	Socket::Socket(os::Handle handle, os::Thread attachTo) : handle(handle), closed(0) {
+	Socket::Socket(os::Handle handle, os::Thread attachTo, Address *peer) : handle(handle), closed(0), peer(peer) {
 		i = new (this) SocketIStream(this, attachTo);
 		o = new (this) SocketOStream(this, attachTo);
 	}
@@ -40,13 +40,58 @@ namespace storm {
 		}
 	}
 
-	IStream *Socket::input() const {
+	SocketIStream *Socket::input() const {
 		return i;
 	}
 
-	OStream *Socket::output() const {
+	SocketOStream *Socket::output() const {
 		return o;
 	}
+
+	Duration Socket::inputTimeout() const {
+		return getSocketTime(handle, SOL_SOCKET, SO_RCVTIMEO);
+	}
+
+	void Socket::inputTimeout(Duration v) {
+		setSocketTime(handle, SOL_SOCKET, SO_RCVTIMEO, v);
+	}
+
+	Duration Socket::outputTimeout() const {
+		return getSocketTime(handle, SOL_SOCKET, SO_SNDTIMEO);
+	}
+
+	void Socket::outputTimeout(Duration v) {
+		setSocketTime(handle, SOL_SOCKET, SO_SNDTIMEO, v);
+	}
+
+	Bool Socket::nodelay() const {
+		int v = 0;
+		getSocketOpt(handle, IPPROTO_TCP, TCP_NODELAY, &v, sizeof(v));
+		return v != 0;
+	}
+
+	void Socket::nodelay(Bool v) {
+		int val = v ? 1 : 0;
+		setSocketOpt(handle, IPPROTO_TCP, TCP_NODELAY, &val, sizeof(val));
+	}
+
+	void Socket::toS(StrBuf *to) const {
+		*to << S("Socket: ");
+		if (handle) {
+			sockaddr_storage data;
+			if (getSocketName(handle, (sockaddr *)&data, sizeof(data))) {
+				*to << toStorm(engine(), (sockaddr *)&data);
+			} else {
+				*to << S("<unknown>");
+			}
+
+			if (peer)
+				*to << S(" <-> ") << peer;
+		} else {
+			*to << S("<closed>");
+		}
+	}
+
 
 	/**
 	 * Connect.
@@ -69,7 +114,7 @@ namespace storm {
 			if (!ok)
 				return false;
 
-			return new (to) Socket(h, current);
+			return new (to) Socket(h, current, to);
 		} catch (...) {
 			closeSocket(h);
 			throw;

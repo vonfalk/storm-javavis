@@ -36,14 +36,18 @@ namespace storm {
 			request.OffsetHigh = pos.HighPart;
 		} else {
 			// If we can not seek, it means that the offset should be zero.
-			pos.QuadPart = 0;
+			request.Offset = 0;
+			request.OffsetHigh = 0;
 		}
 
-		DWORD read;
-		if (ReadFile(h.v(), dest, DWORD(limit), &read, &request)) {
-			// Completed synchronusly.
-			request.bytes = read;
-		} else if (GetLastError() == ERROR_IO_PENDING) {
+		int error = 0;
+		// Note: When using ReadFile with sockets, it will sometimes indicate synchronous
+		// completion *and* notify the IO completion port. Therefore, we will not trust the return
+		// value, and assume asynchronous completion anyway.
+		if (!ReadFile(h.v(), dest, DWORD(limit), NULL, &request))
+			error = GetLastError();
+
+		if (error == ERROR_IO_PENDING || error == 0) {
 			// Completing async...
 			request.wake.down();
 
@@ -74,14 +78,18 @@ namespace storm {
 			request.OffsetHigh = pos.HighPart;
 		} else {
 			// If we can not seek, it means that the offset should be zero.
-			pos.QuadPart = 0;
+			request.Offset = 0;
+			request.OffsetHigh = 0;
 		}
 
-		DWORD written;
-		if (WriteFile(h.v(), src, DWORD(limit), &written, &request)) {
-			// Completed synchronously.
-			request.bytes = written;
-		} else if (GetLastError() == ERROR_IO_PENDING) {
+		int error = 0;
+		// Note: When using WriteFile with sockets, it will sometimes indicate synchronous
+		// completion *and* notify the IO completion port. Therefore, we will not trust the return
+		// value, and assume asynchronous completion anyway.
+		if (!WriteFile(h.v(), src, DWORD(limit), NULL, &request))
+			error = GetLastError();
+
+		if (error == ERROR_IO_PENDING || error == 0) {
 			// Completing async...
 			request.wake.down();
 

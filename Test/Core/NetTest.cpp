@@ -1,6 +1,9 @@
 #include "stdafx.h"
 #include "Core/Net/Address.h"
 #include "Core/Net/Socket.h"
+#include "Core/Io/Text.h"
+#include "Core/Io/FileStream.h"
+#include "Core/Timing.h"
 
 BEGIN_TEST(NetAddrTest, Core) {
 	Engine &e = gEngine();
@@ -56,5 +59,11 @@ BEGIN_TEST_(NetConnectTest, Core) {
 
 	Socket *s = connect(toAddress(new (e) Str(S("51.15.180.4:80"))));
 	PVAR(s);
+
+	OStream *out = s->output();
+	const char *msg = "GET / HTTP/1.1\r\nHost: fprg.se\r\n\r\n";
+	out->write(buffer(e, (const Byte *)msg, strlen(msg)));
+
+	PVAR(readText(s->input())->readAll());
 
 } END_TEST

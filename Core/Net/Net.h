@@ -1,6 +1,7 @@
 #pragma once
 #include "Utils/Exception.h"
 #include "OS/Handle.h"
+#include "Core/Timing.h"
 
 /**
  * Common includes for the network subsystem.
@@ -48,6 +49,7 @@ namespace storm {
 	 */
 
 	class Address;
+	class Duration;
 
 	// Create a socket.
 	os::Handle createTcpSocket(int family);
@@ -58,5 +60,15 @@ namespace storm {
 
 	// Close a socket.
 	void closeSocket(os::Handle socket);
+
+	// Get the name of the socket (ie. local address bound to the socket).
+	bool getSocketName(os::Handle socket, sockaddr *out, int size);
+
+	// Get/setsockopt.
+	bool getSocketOpt(os::Handle socket, int level, int name, void *value, socklen_t size);
+	bool setSocketOpt(os::Handle socket, int level, int name, void *value, socklen_t size);
+
+	Duration getSocketTime(os::Handle socket, int level, int name);
+	bool setSocketTime(os::Handle socket, int level, int name, const Duration &d);
 
 }

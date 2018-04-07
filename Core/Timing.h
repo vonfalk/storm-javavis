@@ -41,9 +41,11 @@ namespace storm {
 		Long v;
 
 		// Get the value in various units.
-		inline Long STORM_FN inUs() { return Long(v); }
-		inline Long STORM_FN inMs() { return Long(v / 1000); }
-		inline Long STORM_FN inS() { return Long(v / 1000000); }
+		inline Long STORM_FN inUs() const { return Long(v); }
+		inline Long STORM_FN inMs() const { return Long(v / 1000); }
+		inline Long STORM_FN inS() const { return Long(v / 1000000); }
+		inline Long STORM_FN inMin() const { return inS() / 60; }
+		inline Long STORM_FN inH() const { return inMin() / 60; }
 	};
 
 	namespace time {

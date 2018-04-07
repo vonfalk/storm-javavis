@@ -11,8 +11,8 @@ namespace os {
 	public:
 		inline Handle() : z(INVALID_HANDLE_VALUE) {}
 		inline Handle(HANDLE v) : z(v) {}
-		inline HANDLE v() { return z; }
-		inline operator bool () { return z != INVALID_HANDLE_VALUE; }
+		inline HANDLE v() const { return z; }
+		inline operator bool () const { return z != INVALID_HANDLE_VALUE; }
 	private:
 		HANDLE z;
 	};
@@ -21,8 +21,8 @@ namespace os {
 	public:
 		inline Handle() : z(-1) {}
 		inline Handle(int v) : z(v) {}
-		inline int v() { return (int)this->z; }
-		inline operator bool () { return v() >= 0; }
+		inline int v() const { return (int)this->z; }
+		inline operator bool () const { return v() >= 0; }
 	private:
 		ptrdiff_t z;
 	};

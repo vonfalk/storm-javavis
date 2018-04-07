@@ -42,17 +42,18 @@ namespace os {
 			ULONG_PTR key = 0;
 			OVERLAPPED *request = NULL;
 			BOOL ok = GetQueuedCompletionStatus(handle, &bytes, &key, &request, 0);
+			int error = GetLastError();
 
 			if (request) {
+				// PLN(L"Got status: " << bytes << L", " << key << L", " << request << L", " << ok);
 				if ((ULONG_PTR)id == key) {
 					IORequest *r = (IORequest *)request;
 
 					if (ok)
 						r->complete(nat(bytes));
 					else
-						r->failed(nat(bytes), GetLastError());
+						r->failed(nat(bytes), error);
 				}
-				// PLN(L"Got status: " << bytes << L", " << key);
 			} else {
 				// Nothing was dequeued, abort.
 				break;

@@ -1,6 +1,7 @@
 #pragma once
 #include "Net.h"
 #include "Address.h"
+#include "Core/Timing.h"
 #include "Core/Io/HandleStream.h"
 #include "OS/Handle.h"
 
@@ -23,7 +24,7 @@ namespace storm {
 		STORM_CLASS;
 	public:
 		// Create. Assumes the socket in 'handle' is set up for asynchronious operation.
-		Socket(os::Handle handle, os::Thread attachTo);
+		Socket(os::Handle handle, os::Thread attachTo, MAYBE(Address *) peer);
 
 		// Destroy.
 		virtual ~Socket();
@@ -35,10 +36,31 @@ namespace storm {
 		virtual void STORM_FN deepCopy(CloneEnv *env);
 
 		// Get the input stream.
-		IStream *STORM_FN input() const;
+		SocketIStream *STORM_FN input() const;
 
 		// Get the output stream.
-		OStream *STORM_FN output() const;
+		SocketOStream *STORM_FN output() const;
+
+		// To string.
+		void STORM_FN toS(StrBuf *to) const;
+
+		// Get input timeout.
+		Duration STORM_FN inputTimeout() const;
+
+		// Set input timeout.
+		void STORM_ASSIGN inputTimeout(Duration v);
+
+		// Get output timeout.
+		Duration STORM_FN outputTimeout() const;
+
+		// Set output timeout.
+		void STORM_ASSIGN outputTimeout(Duration v);
+
+		// Get the value of the 'nodelay' socket option.
+		Bool STORM_FN nodelay() const;
+
+		// Set the 'nodelay' socket option.
+		void STORM_ASSIGN nodelay(Bool v);
 
 	private:
 		friend class SocketIStream;
@@ -61,6 +83,9 @@ namespace storm {
 		// Input and output streams.
 		SocketIStream *i;
 		SocketOStream *o;
+
+		// Connected peer (if any).
+		MAYBE(Address *) peer;
 	};
 
 	// Create a socket that is connected to a specific address.
@@ -71,6 +96,7 @@ namespace storm {
 	 * Input stream for the socket.
 	 */
 	class SocketIStream : public HandleIStream {
+		STORM_CLASS;
 	public:
 		// Not exposed to Storm. Created by the Socket.
 		SocketIStream(Socket *owner, os::Thread attachedTo);
