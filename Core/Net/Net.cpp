@@ -42,9 +42,85 @@ namespace storm {
 		return os::Handle((HANDLE)s);
 	}
 
+	bool bindSocket(os::Handle socket, const sockaddr *name, int nameSize) {
+		return bind((SOCKET)socket.v(), name, nameSize) == 0;
+	}
+
+	bool listenSocket(os::Handle socket, int backlog) {
+		return listen((SOCKET)socket.v(), backlog) == 0;
+	}
+
+	static BOOL AcceptEx(os::Handle listen, os::Handle accept,
+						void *output, DWORD receiveLen,
+						DWORD localLen, DWORD remoteLen,
+						DWORD *received, OVERLAPPED *overlapped) {
+
+		SOCKET s = (SOCKET)listen.v();
+		LPFN_ACCEPTEX ptr = null;
+		GUID guid = WSAID_ACCEPTEX;
+		DWORD bytes = 0;
+		int ok = WSAIoctl(s, SIO_GET_EXTENSION_FUNCTION_POINTER, &guid, sizeof(guid), &ptr, sizeof(ptr), &bytes, NULL, NULL);
+
+		if (ok)
+			throw NetError(L"Unable to acquire AcceptEx.");
+
+		return (*ptr)(s, (SOCKET)accept.v(), output, receiveLen, localLen, remoteLen, received, overlapped);
+	}
+
+	static void GetAcceptExSockaddrs(os::Handle socket, void *buffer, DWORD receiveLen,
+									DWORD localLen, DWORD remoteLen,
+									LPSOCKADDR *localAddr, int *localSize,
+									LPSOCKADDR *remoteAddr, int *remoteSize) {
+
+		SOCKET s = (SOCKET)socket.v();
+		LPFN_GETACCEPTEXSOCKADDRS ptr = null;
+		GUID guid = WSAID_GETACCEPTEXSOCKADDRS;
+		DWORD bytes = 0;
+		int ok = WSAIoctl(s, SIO_GET_EXTENSION_FUNCTION_POINTER, &guid, sizeof(guid), &ptr, sizeof(ptr), &bytes, NULL, NULL);
+
+		if (ok)
+			throw NetError(L"Unable to acquire GetAcceptExSockaddrs");
+
+		return (*ptr)(buffer, receiveLen, localLen, remoteLen, localAddr, localSize, remoteAddr, remoteSize);
+	}
+
+	os::Handle acceptSocket(os::Handle socket, const os::Thread &thread, sockaddr *addr, int addrSize) {
+		os::Handle out = createSocket(AF_INET6, SOCK_STREAM, IPPROTO_TCP);
+
+		// Output buffer with some extra data as specified in the documentation.
+		sockaddr_storage buffer[3];
+		os::IORequest request(thread);
+		DWORD bytes = 0;
+
+		int error = 0;
+		if (!AcceptEx(socket, out, &buffer, 0, sizeof(sockaddr_storage), sizeof(sockaddr_storage), &bytes, &request))
+			error = WSAGetLastError();
+
+		if (error == ERROR_IO_PENDING || error == 0) {
+			// Wait for the result.
+			request.wake.down();
+
+			if (request.error == 0) {
+				sockaddr *local, *remote;
+				int localSize, remoteSize;
+
+				GetAcceptExSockaddrs(socket, buffer, 0, sizeof(sockaddr_storage), sizeof(sockaddr_storage),
+									&local, &localSize, &remote, &remoteSize);
+
+				memcpy(addr, remote, min(addrSize, remoteSize));
+
+				return out;
+			}
+		}
+
+		// Some other error.
+		closeSocket(out);
+		return os::Handle();
+	}
+
 	static BOOL ConnectEx(os::Handle socket, const sockaddr *name, int namelen, OVERLAPPED *overlapped) {
 		SOCKET s = (SOCKET)socket.v();
-		LPFN_CONNECTEX ptr = 0;
+		LPFN_CONNECTEX ptr = null;
 		GUID guid = WSAID_CONNECTEX;
 		DWORD bytes = 0;
 		int ok = WSAIoctl(s, SIO_GET_EXTENSION_FUNCTION_POINTER, &guid, sizeof(guid), &ptr, sizeof(ptr), &bytes, NULL, NULL);
@@ -64,16 +140,14 @@ namespace storm {
 			return false;
 		}
 
-		// TODO: Not always current!
 		os::IORequest request(attached);
 
-		if (ConnectEx(socket, addr, sizeof(sockaddr_storage), &request)) {
-			// Already complete.
-			return true;
-		}
+		int error = 0;
+		if (!ConnectEx(socket, addr, sizeof(sockaddr_storage), &request))
+			error = WSAGetLastError();
 
-		int code = WSAGetLastError();
-		if (code == ERROR_IO_PENDING) {
+
+		if (error == ERROR_IO_PENDING || error == 0) {
 			// Wait for the result.
 			request.wake.down();
 

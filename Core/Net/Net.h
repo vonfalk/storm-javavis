@@ -55,6 +55,15 @@ namespace storm {
 	os::Handle createTcpSocket(int family);
 	os::Handle createUdpSocket(int family);
 
+	// Bind the socket.
+	bool bindSocket(os::Handle socket, const sockaddr *addr, int addrSize);
+
+	// Start listening from a socket.
+	bool listenSocket(os::Handle socket, int backlog);
+
+	// Accept a connection from a socket.
+	os::Handle acceptSocket(os::Handle socket, const os::Thread &attached, sockaddr *addr, int addrSize);
+
 	// Connect.
 	bool connectSocket(os::Handle socket, const os::Thread &attached, sockaddr *addr);
 

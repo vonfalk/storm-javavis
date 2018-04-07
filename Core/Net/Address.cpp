@@ -337,7 +337,7 @@ namespace storm {
 	 * IPv6
 	 */
 
-	Inet6Address::Inet6Address(sockaddr_in6 *addr) : Address(addr->sin6_port) {
+	Inet6Address::Inet6Address(sockaddr_in6 *addr) : Address(ntohs(addr->sin6_port)) {
 		myFlow = ntohl(addr->sin6_flowinfo);
 		myScope = ntohl(addr->sin6_scope_id);
 

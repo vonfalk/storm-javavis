@@ -1,6 +1,8 @@
 #include "stdafx.h"
 #include "Core/Net/Address.h"
 #include "Core/Net/Socket.h"
+#include "Core/Net/NetStream.h"
+#include "Core/Net/Listener.h"
 #include "Core/Io/Text.h"
 #include "Core/Io/FileStream.h"
 #include "Core/Timing.h"
@@ -60,13 +62,28 @@ BEGIN_TEST(NetAddrTest, Core) {
 BEGIN_TEST_(NetConnectTest, Core) {
 	Engine &e = gEngine();
 
-	Socket *s = connect(new (e) Str(S("storm-lang.org")), 80);
-	PVAR(s);
+	Listener *l = listen(e, 31337);
+	PVAR(l);
 
-	OStream *out = s->output();
-	const char *msg = "GET / HTTP/1.1\r\nHost: fprg.se\r\n\r\n";
-	out->write(buffer(e, (const Byte *)msg, strlen(msg)));
+	// TODO: Is 'accept' aborted when 'l' is closed?
+	NetStream *client = l->accept();
+	PVAR(client);
 
-	PVAR(readText(s->input())->readAll());
+	Str *line = readText(client->input())->readLine();
+	PVAR(line);
+	client->output()->write(buffer(e, (const Byte *)line->utf8_str(), strlen(line->utf8_str())));
+
+	Sleep(5000);
+
+	client->close();
+
+	// NetStream *s = connect(new (e) Str(S("storm-lang.org")), 80);
+	// PVAR(s);
+
+	// OStream *out = s->output();
+	// const char *msg = "GET / HTTP/1.1\r\nHost: fprg.se\r\n\r\n";
+	// out->write(buffer(e, (const Byte *)msg, strlen(msg)));
+
+	// PVAR(readText(s->input())->readAll());
 
 } END_TEST
