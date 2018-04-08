@@ -61,6 +61,9 @@ namespace gui {
 		// Last used control id.
 		Nat lastId;
 
+		// Padding due to 8-byte alignment from Window.
+		Nat pad;
+
 		// Allocate a new id for the window.
 		Nat allocate(Window *window);
 

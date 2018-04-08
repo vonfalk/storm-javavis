@@ -20,6 +20,13 @@ vector<ScannedVar> Type::scannedVars() const {
 	return r;
 }
 
+Size Type::size() const {
+	// Align properly as Visual Studio does.
+	Size s = rawSize();
+	s += s.align();
+	return s;
+}
+
 wostream &operator <<(wostream &to, const Type &type) {
 	type.print(to);
 	return to;
@@ -54,12 +61,49 @@ bool Class::isActor() const {
 	return false;
 }
 
-Size Class::size() const {
+Size Class::rawSize() const {
 	Size s;
 
 	if (parentType) {
-		s = parentType->size();
-		s += s.align(); // align to its natural alignment.
+		// This part is interesting. Visual Studio acts as if the parent type is a data member of a
+		// derived class, while GCC acts as if the data members of the parent were embedded directly
+		// inside the derived class. This means that a derived class in GCC could be the same size
+		// as the parent class even though it contains additional data members. (eg Parent: void *,
+		// int. Derived: int). In Visual Studio, the derived class is always larger unless it is
+		// empty. We need to detect this, as we assume the (visible) binary layout of objects are
+		// the same on different platforms. For now, we only instruct the user to insert more
+		// padding, as we have no better way of dealing with the situation at the moment.
+
+		// We will examine the first variable (if present) to see if the alignment differs between
+		// the two cases. If it is the same, we're fine anyway so we don't have to issue an
+		// error. This means that we can be somewhat more accepting since this is not an issue in
+		// most cases (many classes start with a pointer anyway), and solving the issue would waste
+		// quite a bit of memory on 32-bit systems.
+
+
+		Size raw = parentType->rawSize(); // Align as GCC would do.
+		s = raw + raw.align(); // Align as Visual Studio would do.
+
+		if (variables.size() >= 1) {
+			Size t = variables[0].type->size();
+			raw += t.align();
+			s += t.align();
+
+			if (raw.size32() != s.size32() || raw.size64() != s.size64()) {
+				PVAR(*parentType);
+				std::wostringstream msg;
+				msg << L"The type " << name << L" will be inconsistently aligned on different systems. "
+					<< L"On Windows, it will start at " << s << L" and on UNIX it will start at " << raw
+					<< L". This is because the parent class, " << parentType->name << L" is aligned at "
+					<< parentType->rawSize() << L". You can fix this by placing a pointer as the first "
+					<< L"member of " << name << L", or by rearranging/padding " << parentType->name
+					<< L" so that its size matches its natural alignment.";
+				throw Error(msg.str(), pos);
+			}
+		} else {
+			// Pass the raw size on so that we can detect any problems there!
+			s = raw;
+		}
 	} else if (!valueType) {
 		s = Size::sPtr; // VTable.
 	}
@@ -70,8 +114,6 @@ Size Class::size() const {
 		s += t;
 	}
 
-	// We should align the size of the entire type properly, just like C++ does.
-	s += s.align();
 	return s;
 }
 
@@ -228,7 +270,7 @@ void Primitive::resolveTypes(World &world) {
 	mySize = i->second;
 }
 
-Size Primitive::size() const {
+Size Primitive::rawSize() const {
 	return mySize;
 }
 
@@ -268,7 +310,7 @@ void UnknownPrimitive::resolveTypes(World &world) {
 	throw Error(L"Unknown built-in type: " + name, pos);
 }
 
-Size UnknownPrimitive::size() const {
+Size UnknownPrimitive::rawSize() const {
 	return mySize;
 }
 
@@ -296,7 +338,7 @@ Enum::Enum(const CppName &name, const String &pkg, const SrcPos &pos, const Auto
 
 void Enum::resolveTypes(World &world) {}
 
-Size Enum::size() const {
+Size Enum::rawSize() const {
 	enum Test { foo = 0x10 };
 	assert(Size::sInt.current() == sizeof(Test), L"Check the enum size on this machine!");
 	// We might want to use sPtr or similar. I don't know the enum size on x86-64.

@@ -218,11 +218,11 @@ namespace gui {
 		// widgets. This variable represents the created window.
 		UNKNOWN(PTR_NOGC) GdkWindow *gdkWindow;
 
-		// Timer timeout (nonzero = set).
-		Duration timerInterval;
-
 		// In Gtk+, we need to allocate a timer object separatly.
 		UNKNOWN(PTR_NOGC) Timer *gTimer;
+
+		// Timer timeout (nonzero = set).
+		Duration timerInterval;
 
 		// Prepare for a painter/prepare for no painter. Not called when we swap painter.
 		void attachPainter();

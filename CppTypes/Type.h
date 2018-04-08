@@ -47,8 +47,11 @@ public:
 	// Resolve types in here.
 	virtual void resolveTypes(World &world) = 0;
 
+	// Compute the unaligned size of this type.
+	virtual Size rawSize() const = 0;
+
 	// Compute the size of this type.
-	virtual Size size() const = 0;
+	Size size() const;
 
 	// Is this type heap-allocated? (value types return false, class types return true).
 	virtual bool heapAlloc() const = 0;
@@ -112,7 +115,7 @@ public:
 	virtual void resolveTypes(World &world);
 
 	// Compute our size.
-	virtual Size size() const;
+	virtual Size rawSize() const;
 
 	// Compute our pointer offsets.
 	virtual void ptrOffsets(vector<Offset> &append) const;
@@ -165,7 +168,7 @@ public:
 	virtual void resolveTypes(World &world);
 
 	// Compute the size of this type.
-	virtual Size size() const;
+	virtual Size rawSize() const;
 
 	// Is this type heap-allocated?
 	virtual bool heapAlloc() const;
@@ -197,7 +200,7 @@ public:
 	virtual void resolveTypes(World &world);
 
 	// Compute the size of this type.
-	virtual Size size() const;
+	virtual Size rawSize() const;
 
 	// Is this type heap-allocated?
 	virtual bool heapAlloc() const;
@@ -238,7 +241,7 @@ public:
 	virtual void resolveTypes(World &world);
 
 	// Compute size.
-	virtual Size size() const;
+	virtual Size rawSize() const;
 
 	// Generate pointer offsets.
 	virtual void ptrOffsets(vector<Offset> &append) const;
