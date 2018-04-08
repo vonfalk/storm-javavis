@@ -6,6 +6,9 @@ namespace storm {
 	Listener::Listener(os::Handle socket, os::Thread attached) : Socket(socket), attachedTo(attached) {}
 
 	NetStream *Listener::accept() {
+		if (handle == os::Handle())
+			return null;
+
 		sockaddr_storage addr;
 		os::Handle accepted = acceptSocket(handle, attachedTo, (sockaddr *)&addr, sizeof(addr));
 

@@ -59,31 +59,63 @@ BEGIN_TEST(NetAddrTest, Core) {
 
 } END_TEST
 
+struct NetServer {
+	Listener *l;
+	bool done;
+
+	NetServer() : l(null), done(false) {}
+
+	void server() {
+		Engine &e = gEngine();
+
+		l = listen(e, 31337);
+
+		while (NetStream *s = l->accept()) {
+			PVAR(s);
+
+			Buffer r = s->input()->read(50);
+			s->output()->write(r);
+
+			s->close();
+		}
+
+		l->close();
+		done = true;
+	}
+};
+
 BEGIN_TEST_(NetConnectTest, Core) {
 	Engine &e = gEngine();
+	NetServer server;
 
-	Listener *l = listen(e, 31337);
-	PVAR(l);
+	os::UThread::spawn(util::memberVoidFn(&server, &NetServer::server));
 
-	// TODO: Is 'accept' aborted when 'l' is closed?
-	NetStream *client = l->accept();
-	PVAR(client);
+	os::UThread::leave();
 
-	Str *line = readText(client->input())->readLine();
-	PVAR(line);
-	client->output()->write(buffer(e, (const Byte *)line->utf8_str(), strlen(line->utf8_str())));
+	VERIFY(server.l);
 
-	Sleep(5000);
+	NetStream *sock = connect(new (e) Str(S("localhost")), 31337);
+	VERIFY(sock);
 
-	client->close();
+	const char *data = "Hello!";
+	sock->output()->write(buffer(e, (const Byte *)data, strlen(data)));
 
-	// NetStream *s = connect(new (e) Str(S("storm-lang.org")), 80);
-	// PVAR(s);
+	// We should get the same data back!
+	Buffer r = sock->input()->read(50);
+	CHECK_EQ(String((const char *)r.dataPtr()), L"Hello!");
 
-	// OStream *out = s->output();
-	// const char *msg = "GET / HTTP/1.1\r\nHost: fprg.se\r\n\r\n";
-	// out->write(buffer(e, (const Byte *)msg, strlen(msg)));
+	sock->close();
 
-	// PVAR(readText(s->input())->readAll());
+	// Make sure it starts calling 'accept' again, so that we see if it is aborted properly!
+	os::UThread::leave();
+
+	// Exit the server by calling 'close'.
+	server.l->close();
+
+	// Wait for the server to terminate.
+	while (!server.done)
+		os::UThread::leave();
+
+	// TODO: Make sure we can read and write to a single socket simultaneously!
 
 } END_TEST
