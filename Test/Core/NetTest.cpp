@@ -84,7 +84,7 @@ struct NetServer {
 	}
 };
 
-BEGIN_TEST_(NetConnectTest, Core) {
+BEGIN_TEST(NetConnectTest, Core) {
 	Engine &e = gEngine();
 	NetServer server;
 
@@ -117,5 +117,73 @@ BEGIN_TEST_(NetConnectTest, Core) {
 		os::UThread::leave();
 
 	// TODO: Make sure we can read and write to a single socket simultaneously!
+
+} END_TEST
+
+struct NetDuplex {
+	NetStream *client;
+	Nat id;
+	Nat errorAt;
+
+	NetDuplex() : client(null), id(0), errorAt(0) {}
+
+	void start() {
+		Engine &e = gEngine();
+		Listener *l = listen(e, 31338);
+
+		client = l->accept();
+		check(1);
+		os::UThread::spawn(util::memberVoidFn(this, &NetDuplex::send));
+
+
+		check(2);
+		Buffer b = client->input()->read(50);
+		check(5);
+
+		if (b.filled() != 6)
+			errorAt = 10;
+
+		client->close();
+		l->close();
+
+		// Signal we're done!
+		id = 0;
+	}
+
+	void send() {
+		Engine &e = gEngine();
+
+		check(3);
+		const char *data = "World!";
+		client->output()->write(buffer(e, (const Byte *)data, strlen(data)));
+		check(4);
+	}
+
+	void check(Nat expected) {
+		if (++id != expected)
+			if (errorAt == 0)
+				errorAt = id;
+	}
+
+};
+
+BEGIN_TEST_(NetDuplexTest, Core) {
+	Engine &e = gEngine();
+	NetDuplex ctx;
+
+	os::UThread::spawn(util::memberVoidFn(&ctx, &NetDuplex::start));
+
+	NetStream *s = connect(new (e) Str(S("localhost")), 31338);
+	VERIFY(s);
+
+	Buffer msg = s->input()->read(50);
+	s->output()->write(msg);
+
+	s->close();
+
+	while (ctx.id != 0)
+		os::UThread::leave();
+
+	CHECK_EQ(ctx.errorAt, 0);
 
 } END_TEST
