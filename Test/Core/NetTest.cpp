@@ -71,8 +71,6 @@ struct NetServer {
 		l = listen(e, 31337);
 
 		while (NetStream *s = l->accept()) {
-			PVAR(s);
-
 			Buffer r = s->input()->read(50);
 			s->output()->write(r);
 
@@ -167,7 +165,7 @@ struct NetDuplex {
 
 };
 
-BEGIN_TEST_(NetDuplexTest, Core) {
+BEGIN_TEST(NetDuplexTest, Core) {
 	Engine &e = gEngine();
 	NetDuplex ctx;
 

@@ -43,7 +43,6 @@ namespace storm {
 			if (getSocketName(handle, (sockaddr *)&data, sizeof(data))) {
 				*to << toStorm(engine(), (sockaddr *)&data);
 			} else {
-				PVAR(WSAGetLastError());
 				*to << S("<unknown>");
 			}
 		} else {

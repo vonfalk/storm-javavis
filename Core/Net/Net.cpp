@@ -84,16 +84,22 @@ namespace storm {
 		return (*ptr)(buffer, receiveLen, localLen, remoteLen, localAddr, localSize, remoteAddr, remoteSize);
 	}
 
+	// Additional 16 bytes as required by AcceptEx (see the documentation for details).
+	struct sockaddr_large {
+		sockaddr_storage addr;
+		byte extra[16];
+	};
+
 	os::Handle acceptSocket(os::Handle socket, const os::Thread &thread, sockaddr *addr, int addrSize) {
 		os::Handle out = createSocket(AF_INET6, SOCK_STREAM, IPPROTO_TCP);
 
 		// Output buffer with some extra data as specified in the documentation.
-		sockaddr_storage buffer[3];
+		sockaddr_large buffer[2];
 		os::IORequest request(thread);
 		DWORD bytes = 0;
 
 		int error = 0;
-		if (!AcceptEx(socket, out, &buffer, 0, sizeof(sockaddr_storage), sizeof(sockaddr_storage), &bytes, &request))
+		if (!AcceptEx(socket, out, &buffer, 0, sizeof(sockaddr_large), sizeof(sockaddr_large), &bytes, &request))
 			error = WSAGetLastError();
 
 		if (error == ERROR_IO_PENDING || error == 0) {
@@ -104,7 +110,7 @@ namespace storm {
 				sockaddr *local, *remote;
 				int localSize, remoteSize;
 
-				GetAcceptExSockaddrs(socket, buffer, 0, sizeof(sockaddr_storage), sizeof(sockaddr_storage),
+				GetAcceptExSockaddrs(socket, buffer, 0, sizeof(sockaddr_large), sizeof(sockaddr_large),
 									&local, &localSize, &remote, &remoteSize);
 
 				memcpy(addr, remote, min(addrSize, remoteSize));
