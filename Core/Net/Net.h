@@ -17,9 +17,12 @@
 
 #elif defined(POSIX)
 
+#include <sys/types.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
+#include <netinet/tcp.h>
 #include <arpa/inet.h>
+#include <netdb.h>
 
 #else
 
@@ -56,22 +59,22 @@ namespace storm {
 	os::Handle createUdpSocket(int family);
 
 	// Bind the socket.
-	bool bindSocket(os::Handle socket, const sockaddr *addr, int addrSize);
+	bool bindSocket(os::Handle socket, const sockaddr *addr, socklen_t addrSize);
 
 	// Start listening from a socket.
 	bool listenSocket(os::Handle socket, int backlog);
 
 	// Accept a connection from a socket.
-	os::Handle acceptSocket(os::Handle socket, const os::Thread &attached, sockaddr *addr, int addrSize);
+	os::Handle acceptSocket(os::Handle socket, const os::Thread &attached, sockaddr *addr, socklen_t addrSize);
 
 	// Connect.
-	bool connectSocket(os::Handle socket, const os::Thread &attached, sockaddr *addr);
+	bool connectSocket(os::Handle socket, const os::Thread &attached, sockaddr *addr, socklen_t addrSize);
 
 	// Close a socket.
 	void closeSocket(os::Handle socket);
 
 	// Get the name of the socket (ie. local address bound to the socket).
-	bool getSocketName(os::Handle socket, sockaddr *out, int size);
+	bool getSocketName(os::Handle socket, sockaddr *out, socklen_t size);
 
 	// Get/setsockopt.
 	bool getSocketOpt(os::Handle socket, int level, int name, void *value, socklen_t size);

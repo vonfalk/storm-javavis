@@ -82,7 +82,7 @@ struct NetServer {
 	}
 };
 
-BEGIN_TEST(NetConnectTest, Core) {
+BEGIN_TEST_(NetConnectTest, Core) {
 	Engine &e = gEngine();
 	NetServer server;
 

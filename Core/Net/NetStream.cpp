@@ -68,9 +68,9 @@ namespace storm {
 
 		try {
 			// Connect!
-			bool ok = connectSocket(h, current, sa);
+			bool ok = connectSocket(h, current, sa, sizeof(data));
 			if (!ok)
-				return false;
+				return null;
 
 			return new (to) NetStream(h, current, to);
 		} catch (...) {

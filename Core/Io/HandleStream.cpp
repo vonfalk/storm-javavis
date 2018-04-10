@@ -159,8 +159,8 @@ namespace storm {
 			if (r >= 0)
 				return Nat(r);
 
-			// Aborted by a signal. Retry.
 			if (errno == EINTR) {
+				// Aborted by a signal. Retry.
 				continue;
 			} else if (errno == EAGAIN) {
 				// Wait for more data.
@@ -178,8 +178,8 @@ namespace storm {
 			if (r >= 0)
 				return Nat(r);
 
-			// Aborted by a signal. Retry.
 			if (errno == EINTR) {
+				// Aborted by a signal. Retry.
 				continue;
 			} else if (errno == EAGAIN) {
 				// Wait for more data.
