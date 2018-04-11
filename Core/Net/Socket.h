@@ -22,6 +22,9 @@ namespace storm {
 		// Create. Assumes the socket in 'handle' is set up for asynchronious operation.
 		Socket(os::Handle handle);
 
+		// Copy ctor.
+		Socket(const Socket &o);
+
 		// Destroy.
 		virtual ~Socket();
 

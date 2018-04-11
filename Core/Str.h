@@ -9,7 +9,7 @@ namespace storm {
 	/**
 	 * Custom exception.
 	 */
-	class StrError : public Exception {
+	class EXCEPTION_EXPORT StrError : public Exception {
 	public:
 		StrError(const String &msg) : msg(L"String error: " + msg) {}
 		virtual String what() const { return msg; }

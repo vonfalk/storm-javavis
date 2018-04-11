@@ -1,5 +1,6 @@
 #include "stdafx.h"
 #include "HandleStream.h"
+#include "Core/Exception.h"
 #include "OS/IORequest.h"
 
 namespace storm {
@@ -232,10 +233,14 @@ namespace storm {
 		: handle(h),
 		  attachedTo(t) {}
 
-	HandleIStream::HandleIStream(const HandleIStream &o)
-		: PeekIStream(o),
-		  handle(dupHandle(o.handle)),
-		  attachedTo(os::Thread::invalid) {}
+	// HandleIStream::HandleIStream(const HandleIStream &o)
+	// 	: PeekIStream(o),
+	// 	  handle(dupHandle(o.handle)),
+	// 	  attachedTo(os::Thread::invalid) {}
+
+	HandleIStream::HandleIStream(const HandleIStream &o) : PeekIStream(o), attachedTo(os::Thread::invalid) {
+		throw NotSupported(L"Copying HandleIStream");
+	}
 
 	HandleIStream::~HandleIStream() {
 		if (handle)
@@ -275,9 +280,13 @@ namespace storm {
 		: handle(h),
 		  attachedTo(t) {}
 
-	HandleRIStream::HandleRIStream(const HandleRIStream &o)
-		: handle(dupHandle(o.handle)),
-		  attachedTo(os::Thread::invalid) {}
+	// HandleRIStream::HandleRIStream(const HandleRIStream &o)
+	// 	: handle(dupHandle(o.handle)),
+	// 	  attachedTo(os::Thread::invalid) {}
+
+	HandleRIStream::HandleRIStream(const HandleRIStream &o) : attachedTo(os::Thread::invalid) {
+		throw NotSupported(L"Copying HandleIStream");
+	}
 
 	HandleRIStream::~HandleRIStream() {
 		if (handle)
@@ -356,9 +365,13 @@ namespace storm {
 		: handle(h),
 		  attachedTo(t) {}
 
-	HandleOStream::HandleOStream(const HandleOStream &o)
-		: handle(dupHandle(o.handle)),
-		  attachedTo(os::Thread::invalid) {}
+	// HandleOStream::HandleOStream(const HandleOStream &o)
+	// 	: handle(dupHandle(o.handle)),
+	// 	  attachedTo(os::Thread::invalid) {}
+
+	HandleOStream::HandleOStream(const HandleOStream &o) : attachedTo(os::Thread::invalid) {
+		throw NotSupported(L"Copying HandleIStream");
+	}
 
 	HandleOStream::~HandleOStream() {
 		if (handle)

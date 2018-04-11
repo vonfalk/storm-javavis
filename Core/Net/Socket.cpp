@@ -1,11 +1,15 @@
 #include "stdafx.h"
 #include "Socket.h"
-#include "Core/CloneEnv.h"
+#include "Core/Exception.h"
 
 namespace storm {
 
 
 	Socket::Socket(os::Handle handle) : handle(handle) {}
+
+	Socket::Socket(const Socket &o) : Object(o) {
+		throw NotSupported(L"Copying a socket");
+	}
 
 	Socket::~Socket() {
 		if (handle)
