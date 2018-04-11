@@ -11,8 +11,9 @@ namespace storm {
 
 #if defined(WINDOWS)
 
-	static inline void close(os::Handle &h) {
+	static inline void close(os::Handle &h, os::Thread &attached) {
 		CloseHandle(h.v());
+		attached = os::Thread::invalid;
 		h = os::Handle();
 	}
 
@@ -144,13 +145,22 @@ namespace storm {
 
 #elif defined(POSIX)
 
-	static inline void close(os::Handle &h) {
+	static inline void close(os::Handle &h, os::Thread &attached) {
+		if (attached != os::Thread::invalid)
+			attached.detach(h);
+
 		::close(h.v());
+		attached = os::Thread::invalid;
 		h = os::Handle();
 	}
 
-	static void doWait(os::Handle h, os::IORequest::Type type) {
-		os::IORequest request(h, type, os::Thread::current());
+	static void doWait(os::Handle h, os::Thread &attached, os::IORequest::Type type) {
+		if (attached == os::Thread::invalid) {
+			attached = os::Thread::current();
+			attached.attach(h);
+		}
+
+		os::IORequest request(h, type, attached);
 		request.wake.wait();
 	}
 
@@ -165,7 +175,7 @@ namespace storm {
 				continue;
 			} else if (errno == EAGAIN) {
 				// Wait for more data.
-				doWait(h, os::IORequest::read);
+				doWait(h, attached, os::IORequest::read);
 			} else {
 				// Unknown error.
 				return 0;
@@ -184,7 +194,7 @@ namespace storm {
 				continue;
 			} else if (errno == EAGAIN) {
 				// Wait for more data.
-				doWait(h, os::IORequest::write);
+				doWait(h, attached, os::IORequest::write);
 			} else {
 				// Unknown error.
 				return 0;
@@ -244,7 +254,7 @@ namespace storm {
 
 	HandleIStream::~HandleIStream() {
 		if (handle)
-			storm::close(handle);
+			storm::close(handle, attachedTo);
 	}
 
 	Bool HandleIStream::more() {
@@ -256,7 +266,7 @@ namespace storm {
 
 	void HandleIStream::close() {
 		if (handle)
-			storm::close(handle);
+			storm::close(handle, attachedTo);
 
 		PeekIStream::close();
 	}
@@ -290,7 +300,7 @@ namespace storm {
 
 	HandleRIStream::~HandleRIStream() {
 		if (handle)
-			storm::close(handle);
+			storm::close(handle, attachedTo);
 	}
 
 	void HandleRIStream::deepCopy(CloneEnv *e) {
@@ -328,7 +338,7 @@ namespace storm {
 
 	void HandleRIStream::close() {
 		if (handle)
-			storm::close(handle);
+			storm::close(handle, attachedTo);
 	}
 
 	RIStream *HandleRIStream::randomAccess() {
@@ -375,7 +385,7 @@ namespace storm {
 
 	HandleOStream::~HandleOStream() {
 		if (handle)
-			storm::close(handle);
+			storm::close(handle, attachedTo);
 	}
 
 	void HandleOStream::write(Buffer to, Nat start) {
@@ -392,7 +402,7 @@ namespace storm {
 
 	void HandleOStream::close() {
 		if (handle)
-			storm::close(handle);
+			storm::close(handle, attachedTo);
 	}
 
 }

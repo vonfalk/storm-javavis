@@ -5,20 +5,20 @@
 namespace storm {
 
 
-	Socket::Socket(os::Handle handle) : handle(handle) {}
+	Socket::Socket(os::Handle handle, os::Thread attachedTo) : handle(handle), attachedTo(attachedTo) {}
 
-	Socket::Socket(const Socket &o) : Object(o) {
+	Socket::Socket(const Socket &o) : Object(o), attachedTo(os::Thread::invalid) {
 		throw NotSupported(L"Copying a socket");
 	}
 
 	Socket::~Socket() {
 		if (handle)
-			closeSocket(handle);
+			closeSocket(handle, attachedTo);
 	}
 
 	void Socket::close() {
 		if (handle) {
-			closeSocket(handle);
+			closeSocket(handle, attachedTo);
 			handle = os::Handle();
 		}
 	}

@@ -166,7 +166,7 @@ namespace storm {
 		return false;
 	}
 
-	void closeSocket(os::Handle handle) {
+	void closeSocket(os::Handle handle, const os::Thread &attached) {
 		closesocket((SOCKET)handle.v());
 	}
 
@@ -209,8 +209,8 @@ namespace storm {
 		return listen(socket.v(), backlog) == 0;
 	}
 
-	static void doWait(os::Handle h, os::IORequest::Type type) {
-		os::IORequest request(h, type, os::Thread::current());
+	static void doWait(os::Handle h, const os::Thread &attached, os::IORequest::Type type) {
+		os::IORequest request(h, type, attached);
 		request.wake.wait();
 	}
 
@@ -246,7 +246,7 @@ namespace storm {
 			} else if (errno == EAGAIN) {
 				// Wait for more data.
 				PLN(L"Waiting for " << socket.v());
-				doWait(socket, os::IORequest::read);
+				doWait(socket, attached, os::IORequest::read);
 				PLN(L"Done waiting for " << socket.v());
 			} else {
 				// Unknown error.
@@ -276,7 +276,7 @@ namespace storm {
 
 		// If 'ok' indicates an error, we should wait.
 		if (ok != 0) {
-			doWait(socket, os::IORequest::write);
+			doWait(socket, attached, os::IORequest::write);
 
 			// Acquire the result of the connect operation.
 			int error = 0;
@@ -296,10 +296,9 @@ namespace storm {
 		return true;
 	}
 
-	void closeSocket(os::Handle handle) {
+	void closeSocket(os::Handle handle, const os::Thread &attached) {
+		attached.detach(handle);
 		close(handle.v());
-		// PLN(L"Shutdown: " << handle.v());
-		// shutdown(handle.v(), SHUT_RDWR);
 	}
 
 	bool getSocketName(os::Handle socket, sockaddr *out, socklen_t size) {

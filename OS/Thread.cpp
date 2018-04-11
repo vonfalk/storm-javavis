@@ -100,6 +100,10 @@ namespace os {
 		data->attach(h);
 	}
 
+	void Thread::detach(Handle h) const {
+		data->detach(h);
+	}
+
 	static void *mainStackBase = null;
 
 	Thread Thread::current() {

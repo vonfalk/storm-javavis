@@ -3,7 +3,9 @@
 
 namespace storm {
 
-	NetStream::NetStream(os::Handle handle, os::Thread attachTo, Address *peer) : Socket(handle), closed(0), peer(peer) {
+	NetStream::NetStream(os::Handle handle, os::Thread attachTo, Address *peer)
+		: Socket(handle, attachedTo), closed(0), peer(peer) {
+
 		i = new (this) NetIStream(this, attachTo);
 		o = new (this) NetOStream(this, attachTo);
 	}
@@ -40,7 +42,7 @@ namespace storm {
 		} while (atomicCAS(closed, old, w) != old);
 
 		if (w == (closeRead | closeWrite) && handle) {
-			closeSocket(handle);
+			closeSocket(handle, attachedTo);
 			handle = os::Handle();
 		}
 	}
@@ -74,7 +76,7 @@ namespace storm {
 
 			return new (to) NetStream(h, current, to);
 		} catch (...) {
-			closeSocket(h);
+			closeSocket(h, current);
 			throw;
 		}
 	}

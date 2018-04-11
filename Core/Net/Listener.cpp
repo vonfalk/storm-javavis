@@ -3,7 +3,7 @@
 
 namespace storm {
 
-	Listener::Listener(os::Handle socket, os::Thread attached) : Socket(socket), attachedTo(attached) {}
+	Listener::Listener(os::Handle socket, os::Thread attached) : Socket(socket, attached) {}
 
 	NetStream *Listener::accept() {
 		if (handle == os::Handle())
@@ -17,7 +17,7 @@ namespace storm {
 				attachedTo.attach(accepted);
 				return new (this) NetStream(accepted, attachedTo, stormAddr);
 			}
-			closeSocket(accepted);
+			closeSocket(accepted, os::Thread::invalid);
 		}
 
 		return null;
@@ -57,7 +57,7 @@ namespace storm {
 		}
 
 	error:
-		closeSocket(socket);
+		closeSocket(socket, os::Thread::invalid);
 		return null;
 	}
 

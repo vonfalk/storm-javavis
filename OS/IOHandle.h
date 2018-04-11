@@ -14,6 +14,8 @@ namespace os {
 	/**
 	 * IO handle. Encapsulates an OS specific handle to some kind of synchronizing object that the
 	 * OS will notify when IO requests have been completed.
+	 *
+	 * TODO: We could use epoll on Linux for better performance when using many file descriptors.
 	 */
 #if defined(WINDOWS)
 
@@ -27,6 +29,9 @@ namespace os {
 
 		// Associate a handle to this IO handle.
 		void add(Handle h, const ThreadData *id);
+
+		// Remove association with this IO handle.
+		void remove(Handle h, const ThreadData *id);
 
 		// Process all messages for this IO handle.
 		void notifyAll(const ThreadData *id) const;
@@ -54,6 +59,9 @@ namespace os {
 
 		// Associate a handle to this IOHandle.
 		void add(Handle h, const ThreadData *id);
+
+		// Remove association of a handle.
+		void remove(Handle h, const ThreadData *id);
 
 		// Attach to this IO handle.
 		void attach(Handle h, IORequest *request);

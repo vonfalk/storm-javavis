@@ -33,6 +33,10 @@ namespace os {
 		}
 	}
 
+	void IOHandle::remove(Handle h, const ThreadData *id) {
+		// Not needed.
+	}
+
 	void IOHandle::notifyAll(const ThreadData *id) const {
 		if (!handle)
 			return;
@@ -166,6 +170,10 @@ namespace os {
 
 	void IOHandle::add(Handle h, const ThreadData *id) {
 		// Nothing to do on POSIX.
+	}
+
+	void IOHandle::remove(Handle h, const ThreadData *id) {
+		// TODO: Mark any pending operations for this handle as 'complete'.
 	}
 
 	void IOHandle::close() {

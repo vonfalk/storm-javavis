@@ -27,10 +27,6 @@ namespace storm {
 
 		// To string.
 		virtual void STORM_FN toS(StrBuf *to) const;
-
-	private:
-		// Thread the handle is attached to.
-		UNKNOWN(PTR_NOGC) os::Thread attachedTo;
 	};
 
 	// Listen on all interfaces on 'port'. If 'port' is zero, pick an unused port.

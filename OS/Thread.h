@@ -54,6 +54,10 @@ namespace os {
 		// Attach a os handle to this thread.
 		void attach(Handle h) const;
 
+		// Detach an os handle from this thread. This should be done before the handle is closed.
+		// Note: Currently only applicable on POSIX systems.
+		void detach(Handle h) const;
+
 		// Get a list of UThreads running on this thread. Note that access to this list is not thread safe.
 		const InlineSet<UThreadStack> &stacks() const;
 
@@ -128,6 +132,9 @@ namespace os {
 
 		// Attach a handle.
 		inline void attach(Handle h) { ioComplete.add(h, this); }
+
+		// Detach a handle.
+		inline void detach(Handle h) { ioComplete.remove(h, this); }
 
 		// Thread main function.
 		static void threadMain(ThreadStart &start, void *stackBottom);

@@ -71,7 +71,7 @@ namespace storm {
 	bool connectSocket(os::Handle socket, const os::Thread &attached, sockaddr *addr, socklen_t addrSize);
 
 	// Close a socket.
-	void closeSocket(os::Handle socket);
+	void closeSocket(os::Handle socket, const os::Thread &attached);
 
 	// Get the name of the socket (ie. local address bound to the socket).
 	bool getSocketName(os::Handle socket, sockaddr *out, socklen_t size);

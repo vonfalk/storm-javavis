@@ -20,7 +20,7 @@ namespace storm {
 		STORM_CLASS;
 	public:
 		// Create. Assumes the socket in 'handle' is set up for asynchronious operation.
-		Socket(os::Handle handle);
+		Socket(os::Handle handle, os::Thread attachedTo);
 
 		// Copy ctor.
 		Socket(const Socket &o);
@@ -49,6 +49,9 @@ namespace storm {
 	protected:
 		// The handle for this socket.
 		UNKNOWN(PTR_NOGC) os::Handle handle;
+
+		// The thread the socket is associated with.
+		UNKNOWN(PTR_NOGC) os::Thread attachedTo;
 	};
 
 }
