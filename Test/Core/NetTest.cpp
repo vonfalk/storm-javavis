@@ -133,7 +133,6 @@ struct NetDuplex {
 		check(1);
 		os::UThread::spawn(util::memberVoidFn(this, &NetDuplex::send));
 
-
 		check(2);
 		Buffer b = client->input()->read(50);
 		check(5);
@@ -158,7 +157,6 @@ struct NetDuplex {
 	}
 
 	void check(Nat expected) {
-		PVAR(expected);
 		if (++id != expected)
 			if (errorAt == 0)
 				errorAt = id;
@@ -166,7 +164,7 @@ struct NetDuplex {
 
 };
 
-BEGIN_TEST_(NetDuplexTest, Core) {
+BEGIN_TEST(NetDuplexTest, Core) {
 	Engine &e = gEngine();
 	NetDuplex ctx;
 

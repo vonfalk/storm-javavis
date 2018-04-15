@@ -84,44 +84,9 @@ namespace os {
 
 #ifdef POSIX
 
-	IOHandle::IOHandle() : wait(null), capacity(0), waitValid(false) {}
+	IOHandle::IOHandle() {}
 
-	IOHandle::~IOHandle() {
-		delete []wait;
-	}
-
-	void IOHandle::attach(Handle h, IORequest *wait) {
-		util::Lock::L z(lock);
-		handles.insert(make_pair(h.v(), wait));
-		waitValid = false;
-	}
-
-	void IOHandle::detach(Handle h, IORequest *wait) {
-		util::Lock::L z(lock);
-		HandleRange range = handles.equal_range(h.v());
-		for (HandleMap::iterator i = range.first; i != range.second; ++i) {
-			if (i->second == wait) {
-				handles.erase(i);
-				waitValid = false;
-				break;
-			}
-		}
-	}
-
-	void IOHandle::notifyAll(const ThreadData *id) const {
-		UNUSED(id);
-		util::Lock::L z(lock);
-
-		for (size_t i = 1; i < capacity && wait[i].fd != 0; i++) {
-			if (wait[i].revents != 0) {
-				// Something happened!
-				HandleMap::const_iterator found = handles.find(wait[i].fd);
-				if (found != handles.end())
-					found->second->wake.set();
-			}
-			wait[i].revents = 0;
-		}
-	}
+	IOHandle::~IOHandle() {}
 
 	static short type(IORequest::Type type) {
 		switch (type) {
@@ -134,41 +99,56 @@ namespace os {
 		}
 	}
 
-	IOHandle::Desc IOHandle::desc() {
+	void IOHandle::attach(Handle h, IORequest *wait) {
 		util::Lock::L z(lock);
-
-		if (!waitValid) {
-			resize();
-			size_t pos = 1;
-			for (HandleMap::iterator i = handles.begin(), end = handles.end(); i != end; ++i) {
-				wait[pos].fd = i->first;
-				wait[pos].events = type(i->second->type);
-				wait[pos].revents = 0;
-				pos++;
-			}
-			for (; pos < capacity; pos++)
-				wait[pos].fd = 0;
-			waitValid = false;
-		}
-
-		Desc d = { wait, handles.size() + 1 };
-		return d;
+		handles.put(h.v(), type(wait->type), wait);
 	}
 
-	void IOHandle::resize() {
-		size_t target = handles.size() + 1;
-		size_t newCap = max(capacity, size_t(8));
-		while (target > newCap)
-			newCap *= 2;
-		if (target < newCap / 4)
-			newCap /= 4;
-		if (newCap == capacity)
-			return;
+	void IOHandle::detach(Handle h, IORequest *wait) {
+		util::Lock::L z(lock);
+		for (nat pos = handles.find(h.v()); pos < handles.capacity(); pos = handles.next(pos)) {
+			if (handles.valueAt(pos) == wait) {
+				handles.remove(pos);
+				break;
+			}
+		}
+	}
 
-		// Resize! We do not need to preserve any contents.
-		delete []wait;
-		capacity = newCap;
-		wait = new struct pollfd[capacity];
+	void IOHandle::notifyAll(const ThreadData *id) const {
+		UNUSED(id);
+		util::Lock::L z(lock);
+
+		struct pollfd *wait = handles.data();
+
+		// See if we need to ask the OS for new events...
+		bool any = false;
+		for (size_t i = 0; i < handles.capacity(); i++)
+			if (wait[i + 1].fd >= 0 && wait[i + 1].revents)
+				any = true;
+
+		if (!any) {
+			// Find new events.
+			int r = poll(wait + 1, handles.capacity(), 0);
+
+			// Any use checking for events?
+			if (r <= 0)
+				return;
+		}
+
+		for (size_t i = 0; i < handles.capacity(); i++) {
+			if (wait[i + 1].revents) {
+				// Something happened!
+				if (IORequest *r = handles.valueAt(i))
+					r->wake.set();
+			}
+			wait[i + 1].revents = 0;
+		}
+	}
+
+	IOHandle::Desc IOHandle::desc() {
+		util::Lock::L z(lock);
+		Desc d = { handles.data(), handles.capacity() + 1 };
+		return d;
 	}
 
 	void IOHandle::add(Handle h, const ThreadData *id) {
@@ -178,17 +158,15 @@ namespace os {
 	void IOHandle::remove(Handle h, const ThreadData *id) {
 		util::Lock::L z(lock);
 
-		// Mark all pending things as 'complete'.
-		HandleRange range = handles.equal_range(h.v());
-		for (HandleMap::iterator i = range.first; i != range.second; ++i) {
-			IORequest *r = i->second;
+		// Mark all pending things as 'complete' and remove them.
+		for (nat pos = handles.find(h.v()); pos < handles.capacity(); pos = handles.find(h.v())) {
+			IORequest *r = handles.valueAt(pos);
 			r->closed = true;
 			r->wake.set();
-		}
 
-		// Remove all entries.
-		handles.erase(h.v());
-		waitValid = true;
+			// Remove!
+			handles.remove(pos);
+		}
 	}
 
 	void IOHandle::close() {

@@ -167,7 +167,6 @@ namespace storm {
 	}
 
 	void closeSocket(os::Handle handle, const os::Thread &attached) {
-		assert(attached != os::Thread::invalid, L"We need a thread!");
 		closesocket((SOCKET)handle.v());
 	}
 
@@ -302,8 +301,8 @@ namespace storm {
 	}
 
 	void closeSocket(os::Handle handle, const os::Thread &attached) {
-		assert(attached != os::Thread::invalid, L"We need a thread!");
-		attached.detach(handle);
+		if (attached != os::Thread::invalid)
+			attached.detach(handle);
 		close(handle.v());
 	}
 

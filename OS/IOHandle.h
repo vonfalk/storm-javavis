@@ -1,8 +1,7 @@
 #pragma once
 #include "OS/Handle.h"
-// #include "OS/FdMap.h"
+#include "OS/FdMap.h"
 #include "Utils/Lock.h"
-#include "Utils/HashMap.h"
 
 #if defined(POSIX)
 #include <poll.h>
@@ -89,22 +88,8 @@ namespace os {
 		mutable util::Lock lock;
 
 		// All handles currently associated with us.
-		// typedef FdMap<IORequest, 1> HandleMap;
-		typedef std::unordered_multimap<int, IORequest *> HandleMap;
-		typedef std::pair<HandleMap::iterator, HandleMap::iterator> HandleRange;
+		typedef FdMap<IORequest, 1> HandleMap;
 		HandleMap handles;
-
-		// Previously allocated array of pollfd structs.
-		struct pollfd *wait;
-
-		// Number of entries in 'wait'. Any unused entries have their 'fd' set to zero.
-		size_t capacity;
-
-		// Is 'wait' properly updated?
-		bool waitValid;
-
-		// Resize 'wait' to an appropriate size.
-		void resize();
 	};
 
 #else
