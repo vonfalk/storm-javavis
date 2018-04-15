@@ -3,11 +3,11 @@
 
 namespace storm {
 
-	NetStream::NetStream(os::Handle handle, os::Thread attachTo, Address *peer)
+	NetStream::NetStream(os::Handle handle, os::Thread attachedTo, Address *peer)
 		: Socket(handle, attachedTo), closed(0), peer(peer) {
 
-		i = new (this) NetIStream(this, attachTo);
-		o = new (this) NetOStream(this, attachTo);
+		i = new (this) NetIStream(this, attachedTo);
+		o = new (this) NetOStream(this, attachedTo);
 	}
 
 	void NetStream::deepCopy(CloneEnv *env) {

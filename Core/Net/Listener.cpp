@@ -17,7 +17,7 @@ namespace storm {
 				attachedTo.attach(accepted);
 				return new (this) NetStream(accepted, attachedTo, stormAddr);
 			}
-			closeSocket(accepted, os::Thread::invalid);
+			closeSocket(accepted, attachedTo);
 		}
 
 		return null;

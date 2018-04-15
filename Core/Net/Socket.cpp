@@ -5,7 +5,9 @@
 namespace storm {
 
 
-	Socket::Socket(os::Handle handle, os::Thread attachedTo) : handle(handle), attachedTo(attachedTo) {}
+	Socket::Socket(os::Handle handle, os::Thread attachedTo) : handle(handle), attachedTo(attachedTo) {
+		assert(attachedTo != os::Thread::invalid, L"We need a thread!");
+	}
 
 	Socket::Socket(const Socket &o) : Object(o), attachedTo(os::Thread::invalid) {
 		throw NotSupported(L"Copying a socket");

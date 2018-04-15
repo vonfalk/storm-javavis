@@ -92,16 +92,19 @@ namespace os {
 
 	void IOHandle::attach(Handle h, IORequest *wait) {
 		util::Lock::L z(lock);
-		handles[h.v()] = wait;
+		handles.insert(make_pair(h.v(), wait));
 		waitValid = false;
 	}
 
-	void IOHandle::detach(Handle h) {
+	void IOHandle::detach(Handle h, IORequest *wait) {
 		util::Lock::L z(lock);
-		HandleMap::iterator i = handles.find(h.v());
-		if (i != handles.end()) {
-			waitValid = false;
-			handles.erase(i);
+		HandleRange range = handles.equal_range(h.v());
+		for (HandleMap::iterator i = range.first; i != range.second; ++i) {
+			if (i->second == wait) {
+				handles.erase(i);
+				waitValid = false;
+				break;
+			}
 		}
 	}
 
@@ -173,7 +176,19 @@ namespace os {
 	}
 
 	void IOHandle::remove(Handle h, const ThreadData *id) {
-		// TODO: Mark any pending operations for this handle as 'complete'.
+		util::Lock::L z(lock);
+
+		// Mark all pending things as 'complete'.
+		HandleRange range = handles.equal_range(h.v());
+		for (HandleMap::iterator i = range.first; i != range.second; ++i) {
+			IORequest *r = i->second;
+			r->closed = true;
+			r->wake.set();
+		}
+
+		// Remove all entries.
+		handles.erase(h.v());
+		waitValid = true;
 	}
 
 	void IOHandle::close() {

@@ -154,7 +154,8 @@ namespace storm {
 		h = os::Handle();
 	}
 
-	static void doWait(os::Handle h, os::Thread &attached, os::IORequest::Type type) {
+	// Returns 'false' if the handle was closed (by us) during the operation.
+	static bool doWait(os::Handle h, os::Thread &attached, os::IORequest::Type type) {
 		if (attached == os::Thread::invalid) {
 			attached = os::Thread::current();
 			attached.attach(h);
@@ -162,6 +163,7 @@ namespace storm {
 
 		os::IORequest request(h, type, attached);
 		request.wake.wait();
+		return !request.closed;
 	}
 
 	static Nat read(os::Handle h, os::Thread &attached, void *dest, Nat limit) {
@@ -175,12 +177,15 @@ namespace storm {
 				continue;
 			} else if (errno == EAGAIN) {
 				// Wait for more data.
-				doWait(h, attached, os::IORequest::read);
+				if (!doWait(h, attached, os::IORequest::read))
+					break;
 			} else {
 				// Unknown error.
-				return 0;
+				break;
 			}
 		}
+
+		return 0;
 	}
 
 	static Nat write(os::Handle h, os::Thread &attached, const void *src, Nat limit) {
@@ -194,12 +199,15 @@ namespace storm {
 				continue;
 			} else if (errno == EAGAIN) {
 				// Wait for more data.
-				doWait(h, attached, os::IORequest::write);
+				if (!doWait(h, attached, os::IORequest::write))
+					break;
 			} else {
 				// Unknown error.
-				return 0;
+				break;
 			}
 		}
+
+		return 0;
 	}
 
 	static void seek(os::Handle h, Word to) {

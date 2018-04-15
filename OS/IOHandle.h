@@ -1,6 +1,8 @@
 #pragma once
 #include "OS/Handle.h"
+// #include "OS/FdMap.h"
 #include "Utils/Lock.h"
+#include "Utils/HashMap.h"
 
 #if defined(POSIX)
 #include <poll.h>
@@ -67,7 +69,7 @@ namespace os {
 		void attach(Handle h, IORequest *request);
 
 		// Detach from this IO handle.
-		void detach(Handle h);
+		void detach(Handle h, IORequest *request);
 
 		// Process all messages for this IO handle.
 		void notifyAll(const ThreadData *id) const;
@@ -87,7 +89,9 @@ namespace os {
 		mutable util::Lock lock;
 
 		// All handles currently associated with us.
-		typedef map<int, IORequest *> HandleMap;
+		// typedef FdMap<IORequest, 1> HandleMap;
+		typedef std::unordered_multimap<int, IORequest *> HandleMap;
+		typedef std::pair<HandleMap::iterator, HandleMap::iterator> HandleRange;
 		HandleMap handles;
 
 		// Previously allocated array of pollfd structs.

@@ -120,7 +120,7 @@ namespace storm {
 		}
 
 		// Some other error.
-		closeSocket(out);
+		closeSocket(out, thread);
 		return os::Handle();
 	}
 
@@ -167,6 +167,7 @@ namespace storm {
 	}
 
 	void closeSocket(os::Handle handle, const os::Thread &attached) {
+		assert(attached != os::Thread::invalid, L"We need a thread!");
 		closesocket((SOCKET)handle.v());
 	}
 
@@ -209,9 +210,11 @@ namespace storm {
 		return listen(socket.v(), backlog) == 0;
 	}
 
-	static void doWait(os::Handle h, const os::Thread &attached, os::IORequest::Type type) {
+	// Returns 'false' if the file descriptor was closed.
+	static bool doWait(os::Handle h, const os::Thread &attached, os::IORequest::Type type) {
 		os::IORequest request(h, type, attached);
 		request.wake.wait();
+		return !request.closed;
 	}
 
 	static bool setNonblocking(int fd) {
@@ -245,9 +248,8 @@ namespace storm {
 				continue;
 			} else if (errno == EAGAIN) {
 				// Wait for more data.
-				PLN(L"Waiting for " << socket.v());
-				doWait(socket, attached, os::IORequest::read);
-				PLN(L"Done waiting for " << socket.v());
+				if (!doWait(socket, attached, os::IORequest::read))
+					break;
 			} else {
 				// Unknown error.
 				break;
@@ -276,7 +278,10 @@ namespace storm {
 
 		// If 'ok' indicates an error, we should wait.
 		if (ok != 0) {
-			doWait(socket, attached, os::IORequest::write);
+			if (!doWait(socket, attached, os::IORequest::write)) {
+				// Closed by us before completion (should not happen).
+				return false;
+			}
 
 			// Acquire the result of the connect operation.
 			int error = 0;
@@ -287,7 +292,7 @@ namespace storm {
 			}
 
 			if (error != 0) {
-				PVAR(error);
+				// PVAR(error);
 				return false;
 			}
 		}
@@ -297,6 +302,7 @@ namespace storm {
 	}
 
 	void closeSocket(os::Handle handle, const os::Thread &attached) {
+		assert(attached != os::Thread::invalid, L"We need a thread!");
 		attached.detach(handle);
 		close(handle.v());
 	}

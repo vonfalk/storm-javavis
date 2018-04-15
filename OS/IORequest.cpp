@@ -36,12 +36,14 @@ namespace os {
 
 #ifdef POSIX
 
-	IORequest::IORequest(Handle handle, Type type, const Thread &thread) : type(type), handle(handle), thread(thread) {
+	IORequest::IORequest(Handle handle, Type type, const Thread &thread)
+		: type(type), closed(false), handle(handle), thread(thread) {
+
 		thread.threadData()->ioComplete.attach(handle, this);
 	}
 
 	IORequest::~IORequest() {
-		thread.threadData()->ioComplete.detach(handle);
+		thread.threadData()->ioComplete.detach(handle, this);
 	}
 
 #endif

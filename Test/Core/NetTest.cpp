@@ -82,7 +82,7 @@ struct NetServer {
 	}
 };
 
-BEGIN_TEST_(NetConnectTest, Core) {
+BEGIN_TEST(NetConnectTest, Core) {
 	Engine &e = gEngine();
 	NetServer server;
 
@@ -158,6 +158,7 @@ struct NetDuplex {
 	}
 
 	void check(Nat expected) {
+		PVAR(expected);
 		if (++id != expected)
 			if (errorAt == 0)
 				errorAt = id;
@@ -165,7 +166,7 @@ struct NetDuplex {
 
 };
 
-BEGIN_TEST(NetDuplexTest, Core) {
+BEGIN_TEST_(NetDuplexTest, Core) {
 	Engine &e = gEngine();
 	NetDuplex ctx;
 

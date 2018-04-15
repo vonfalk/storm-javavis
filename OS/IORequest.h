@@ -50,11 +50,15 @@ namespace os {
 		IORequest(Handle handle, Type type, const Thread &thread);
 		~IORequest();
 
-		// Event used for notifying when the file descriptor is readable.
+		// Event used for notifying when the file descriptor is ready for the desired operation, or
+		// when it is closed.
 		Event wake;
 
 		// Request type (read/write).
 		Type type;
+
+		// Closed?
+		bool closed;
 
 	private:
 		// Handle used.
