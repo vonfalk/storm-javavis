@@ -46,6 +46,18 @@ namespace storm {
 		// Set output timeout.
 		void STORM_ASSIGN outputTimeout(Duration v);
 
+		// Get input buffer size in bytes.
+		Nat STORM_FN inputBufferSize() const;
+
+		// Set the input buffer size in bytes. The operating system may alter this value (eg. Linux doubles it).
+		void STORM_ASSIGN inputBufferSize(Nat size);
+
+		// Get the output buffer size in bytes.
+		Nat STORM_FN outputBufferSize() const;
+
+		// Set the output buffer size in bytes. The operating system may alter this value (eg. Linux doubles it).
+		void STORM_ASSIGN outputBufferSize(Nat size);
+
 	protected:
 		// The handle for this socket.
 		UNKNOWN(PTR_NOGC) os::Handle handle;

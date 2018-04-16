@@ -114,28 +114,36 @@ BEGIN_TEST(NetConnectTest, Core) {
 	while (!server.done)
 		os::UThread::leave();
 
-	// TODO: Make sure we can read and write to a single socket simultaneously!
-
 } END_TEST
 
 struct NetDuplex {
 	NetStream *client;
 	Nat id;
 	Nat errorAt;
+	Bool choked;
 
-	NetDuplex() : client(null), id(0), errorAt(0) {}
+	NetDuplex() : client(null), id(0), errorAt(0), choked(false) {}
 
 	void start() {
 		Engine &e = gEngine();
 		Listener *l = listen(e, 31338);
 
 		client = l->accept();
+
+		// Make it easier to choke the connection.
+		client->outputBufferSize(32);
+
 		check(1);
 		os::UThread::spawn(util::memberVoidFn(this, &NetDuplex::send));
+		os::UThread::spawn(util::memberVoidFn(this, &NetDuplex::checkFull));
 
 		check(2);
 		Buffer b = client->input()->read(50);
-		check(5);
+
+		// Let the other one finish first.
+		os::UThread::leave();
+
+		check(6);
 
 		if (b.filled() != 6)
 			errorAt = 10;
@@ -151,9 +159,22 @@ struct NetDuplex {
 		Engine &e = gEngine();
 
 		check(3);
+
+		// On Linux, writing to a socket with a non-full output buffer will not block, we need to
+		// fill the buffer to verify the behaviour of the queuing system!
 		const char *data = "World!";
-		client->output()->write(buffer(e, (const Byte *)data, strlen(data)));
+		Buffer b = buffer(e, (const Byte *)data, strlen(data));
+
+		while (!choked)
+			client->output()->write(b);
+
+		check(5);
+	}
+
+	void checkFull() {
+		// Executed whenever 'send' starts blocking.
 		check(4);
+		choked = true;
 	}
 
 	void check(Nat expected) {
@@ -173,7 +194,14 @@ BEGIN_TEST(NetDuplexTest, Core) {
 	NetStream *s = connect(new (e) Str(S("localhost")), 31338);
 	VERIFY(s);
 
-	Buffer msg = s->input()->read(50);
+	// Make it easier to choke the connection.
+	s->inputBufferSize(32);
+
+	// Wait until it filled the output buffer.
+	while (!ctx.choked)
+		os::UThread::leave();
+
+	Buffer msg = s->input()->read(6);
 	s->output()->write(msg);
 
 	s->close();

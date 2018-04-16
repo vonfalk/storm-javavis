@@ -41,6 +41,26 @@ namespace storm {
 		setSocketTime(handle, SOL_SOCKET, SO_SNDTIMEO, v);
 	}
 
+	Nat Socket::inputBufferSize() const {
+		Nat out = 0;
+		getSocketOpt(handle, SOL_SOCKET, SO_RCVBUF, &out, sizeof(out));
+		return out;
+	}
+
+	void Socket::inputBufferSize(Nat size) {
+		setSocketOpt(handle, SOL_SOCKET, SO_RCVBUF, &size, sizeof(size));
+	}
+
+	Nat Socket::outputBufferSize() const {
+		Nat out = 0;
+		getSocketOpt(handle, SOL_SOCKET, SO_SNDBUF, &out, sizeof(out));
+		return out;
+	}
+
+	void Socket::outputBufferSize(Nat size) {
+		setSocketOpt(handle, SOL_SOCKET, SO_SNDBUF, &size, sizeof(size));
+	}
+
 	void Socket::toS(StrBuf *to) const {
 		*to << S("Socket: ");
 		if (handle) {

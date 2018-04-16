@@ -68,7 +68,8 @@
   - [X] Implement shrink() for Map<> as well.
   - [X] Handles and templates does not work with built-in types (like Int).
 
-* Improvements [6/21]
+* Improvements [6/22]
+  - [ ] Add a type that represents byte sizes. Use that in eg. Socket::readBuffer.
   - [ ] The call to 'getaddrinfo' in the networking subsystem blocks an entire OS thread waiting for
         the network. This is not very good, as we might have other things to do in the meantime.
   - [ ] Automatically re-flow the raw text in comments, just like Markdown would. This is good
