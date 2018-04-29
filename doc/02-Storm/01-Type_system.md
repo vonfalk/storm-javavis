@@ -48,21 +48,29 @@ by-value semantics (any changes from the other thread are not visible) while act
 by-reference semantics. This is also the reason why classes in Storm behave more like values than in
 Java.
 
-Function overloading
+Function overriding
 ---------------------
 
-Storm supports function overloading in classes and actors. Overloading functions causes vtable-based
+Storm supports function overriding in classes and actors. Overriding functions causes vtable-based
 dispatch to be used, but unlike eg. C++, Storm will keep track of where the vtable is required and
-only use it if it is really necessary. Thus, you will not pay the cost of overloading functions
+only use it if it is really necessary. Thus, you will not pay the cost of overriding functions
 unless you use it.
 
 A function in a derived class does not have to match a function in the parent class exactly. It is
 possible to accept wider types (ie. less specific) in the derived class. However, this means a
-function could overload two functions in a parent class, which is not allowed. This happens if, for
+function could override two functions in a parent class, which is not allowed. This happens if, for
 example, the parent class contains the functions `add(Str)` and `add(Url)`, and the derived class
 contains the function `add(Object)`. However, if the parent class would also contain an exact match,
 (`add(Object)` in this case) as well, the exact match is preferred over inexact matches. This
-restrictive behaviour is to reduce the unintentional surprises in the overloading behaviour.
+restrictive behaviour is to reduce the unintentional surprises in the overriding behaviour.
+
+Intentions regarding function overriding can be asserted by Storm, much like in other
+languages. This is done by setting flags on the relevant functions (using
+`Function.make(FnFlags)`). The following flags are available in this regard:
+
+* `fnFinal` asserts that this function should not be overridden in derived classes.
+* `fnAbstract` asserts that this function is abstract and has to be overridden in a derived class.
+* `fnOverride` asserts that this function is supposed to override a function in a parent class.
 
 
 Cloning

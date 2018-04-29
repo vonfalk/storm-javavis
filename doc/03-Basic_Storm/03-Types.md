@@ -103,3 +103,39 @@ due to the copying it is not possible to modify the variable in this manner. Bas
 this kind of situation if the variable is immediately assigned to (eg. `foo.x = 8`), but will not
 detect in more complex cases such as `foo.x++` or `foo.x.z = 10` (where `foo.x` is the access that
 requires a thread switch).
+
+
+Function declarations in types
+-------------------------------
+
+Declaring functions inside types in Basic Storm is mostly the same to declaring functions at the
+top-level. However, functions declared inside a type will become member functions, which means that
+they receive a hidden first parameter describing the instance being operated on. In Basic Storm,
+this is mostly equivalent to a global function with the first parameter named `this`. The name
+`this` is special in Basic Storm, since the variable named `this` will automatically be inserted as
+an implicit first parameter to functions of the form `foo(bar, baz)` (as opposed to `bar.foo(baz)`),
+just as one would expect for member functions.
+
+Aside from that, member functions can be declared as assignment functions by replacing the return
+type with the keyword `assign`.
+
+Aside from assignment functions, Basic Storm provides the keywords `final`, `abstract` and
+`override` that tell Storm your intentions with regards to inheritance. These keywords are specified
+after the parameter list of the function but before the function body like this:
+
+```
+class Foo {
+    Int foo() : final { 10; }
+}
+```
+
+These keywords correspond to the function flags `fnFinal`, `fnAbstract` and `fnOverride`
+respectively, which are documented [here](md://Storm/Type_system). If a function is marked
+`abstract`, it is possible to omit the function body entirely. If the function is ever called (for
+example by `super.foo`), it will throw an appropriate exception. For example:
+
+```
+class Foo {
+    Int bar() : abstract;
+}
+```
