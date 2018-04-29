@@ -1,0 +1,32 @@
+class FinalBase {
+	Int a() : final { 10; }
+	Int b() { 20; }
+}
+
+Int createFinalBase() {
+	FinalBase().a();
+}
+
+class FinalA extends FinalBase {
+	Int a() { 20; }
+}
+
+Int createFinalA() {
+	FinalA().a();
+}
+
+class FinalB extends FinalBase {
+	Int b() : override { 30; }
+}
+
+Int createFinalB() {
+	FinalB().b();
+}
+
+class FinalC extends FinalBase {
+	Int c() : override { 30; }
+}
+
+Int createFinalC() {
+	FinalC().b();
+}

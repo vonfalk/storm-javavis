@@ -1160,22 +1160,32 @@ namespace storm {
 		if (abstractFn)
 			invalidateAbstract();
 
+		OverridePart *part = new (engine) OverridePart(fn);
+		bool insert = false;
+
 		// Try to find a function which overrides this function, or a function which we override. If
 		// we found the function in either direction, we do not need to search in the other
 		// direction, as they already are in the vtable in that case.
-		//
+		if (vtableInsertSuper(part, fn)) {
+			insert = true;
+		} else if (fn->fnFlags() & fnOverride) {
+			throw TypedefError(L"The function " + ::toS(fn->identifier()) + L" is marked 'override' but does not override.");
+		}
+
+		// Always check subclasses in the case of a function marked 'final'.
+		if (!insert || (fn->fnFlags() & fnFinal)) {
+			insert |= vtableInsertSubclasses(part, fn);
+		}
+
 		// Furthermore, if 'fn' is abstract, we insert it anyway since we're certain it will be used
 		// eventually. Furthermore, it greatly simplifies (and speeds up) the implementation of 'abstract()'.
-		OverridePart *part = new (engine) OverridePart(fn);
-		if (vtableInsertSuper(part, fn) ||
-			vtableInsertSubclasses(part, fn) ||
-			abstractFn) {
+		insert |= abstractFn;
 
+		if (insert)
 			myVTable->insert(fn);
-		}
 	}
 
-	Bool Type::vtableInsertSuper(OverridePart *fn, Named *original) {
+	Bool Type::vtableInsertSuper(OverridePart *fn, Function *original) {
 		// See if our parent contains an appropriate function.
 		Type *s = super();
 		if (!s)
@@ -1183,6 +1193,13 @@ namespace storm {
 
 		Function *found = as<Function>(s->findHere(fn, Scope()));
 		if (found && found->visibleFrom(original)) {
+
+			// See if 'found' was marked 'final'.
+			if (found->fnFlags() & fnFinal) {
+				throw TypedefError(L"The function " + ::toS(original->identifier()) + L" attempts to "
+								L"override the final function " + ::toS(found->identifier()));
+			}
+
 			// Found it, no need to search further as all possible parent functions are in the
 			// vtable already.
 			s->myVTable->insert(found);
@@ -1192,7 +1209,7 @@ namespace storm {
 		}
 	}
 
-	Bool Type::vtableInsertSubclasses(OverridePart *fn, Named *original) {
+	Bool Type::vtableInsertSubclasses(OverridePart *fn, Function *original) {
 		bool inserted = false;
 
 		TypeChain::Iter i = chain->children();
@@ -1201,8 +1218,14 @@ namespace storm {
 			// not needed until it is instantiated anyway, and we will get notified when that happens.
 			Function *found = as<Function>(child->tryFindHere(fn, Scope()));
 			if (found && original->visibleFrom(found)) {
-				// Found something. Insert it in the vtable. We do not need to go further down this
-				// particular path as any overriding functions there are already found by now.
+				// Found something.
+				if (original->fnFlags() & fnFinal) {
+					throw TypedefError(L"The function " + ::toS(found->identifier()) + L" attempts to "
+									L"override the final function " + ::toS(original->identifier()));
+				}
+
+				// Insert it in the vtable. We do not need to go further down this particular path
+				// as any overriding functions there are already found by now.
 				child->myVTable->insert(found);
 				inserted = true;
 			} else {

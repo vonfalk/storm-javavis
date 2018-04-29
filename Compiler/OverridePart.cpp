@@ -6,7 +6,7 @@
 namespace storm {
 
 	// NOTE: Slightly dangerous to re-use the parameters from the function...
-	OverridePart::OverridePart(Function *src) :	SimplePart(src->name, src->params), result(src->result) {}
+	OverridePart::OverridePart(Function *src) : SimplePart(src->name, src->params), result(src->result) {}
 
 	OverridePart::OverridePart(Type *parent, Function *src) :
 		SimplePart(src->name, new (src) Array<Value>(*src->params)),

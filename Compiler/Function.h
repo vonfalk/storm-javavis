@@ -85,6 +85,7 @@ namespace storm {
 		// Helpers for the grammar.
 		inline Function *STORM_FN makeAbstract() { return make(fnAbstract); }
 		inline Function *STORM_FN makeFinal() { return make(fnFinal); }
+		inline Function *STORM_FN makeOverride() { return make(fnOverride); }
 
 		// Get function flags.
 		FnFlags STORM_FN fnFlags() const;

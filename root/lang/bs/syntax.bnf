@@ -474,7 +474,7 @@ SFirstFormal => nameless(type) : SType type;
 void SClassOption(Class owner, Function item) #keyword;
 SClassOption => makeAbstract(item) : "abstract";
 SClassOption => makeFinal(item) : "final";
-// SClassOption : "override";
+SClassOption => makeOverride(item) : "override";
 // etc. (we might want to handle 'override' differently)
 
 void SClassOptions(Class owner, Function item);

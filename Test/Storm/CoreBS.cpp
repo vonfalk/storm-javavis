@@ -75,6 +75,16 @@ BEGIN_TEST(AbstractTest, BS) {
 	CHECK_ERROR(runFn<Int>(S("test.bs.createAbstract")), InstantiationError);
 } END_TEST
 
+BEGIN_TEST(FinalTest, BS) {
+	CHECK_EQ(runFn<Int>(S("test.bs.createFinalBase")), 10);
+	// Overriding a final function.
+	CHECK_ERROR(runFn<Int>(S("test.bs.createFinalA")), TypedefError);
+	// Using 'override' properly.
+	CHECK_EQ(runFn<Int>(S("test.bs.createFinalB")), 30);
+	// Not overriding, even though 'override' is specified.
+	CHECK_ERROR(runFn<Int>(S("test.bs.createFinalC")), TypedefError);
+} END_TEST
+
 /**
  * Values.
  */
