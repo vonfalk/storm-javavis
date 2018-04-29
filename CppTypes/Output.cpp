@@ -486,9 +486,12 @@ static void genFunctions(wostream &to, World &w) {
 			to << L"CppFunction::fnFree";
 
 		if (f.isAssign)
-			to << L" | CppFunction::fnAssign, ";
-		else
-			to << L", ";
+			to << L" | CppFunction::fnAssign";
+
+		if (!f.isVirtual && f.isMember)
+			to << L" | CppFunction::fnFinal";
+
+		to << L", ";
 
 		// Access.
 		to << accessName(f.access) << L", ";

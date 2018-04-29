@@ -37,6 +37,12 @@ Note that no functions or variables are exposed unless marked. In many aspects, 
 handles objects and values like C++, so they can interact quite well as long as all types involved
 are properly exposed to the compiler's type system.
 
+There is also an additional marker, `STORM_ASSIGN`, that marks a function as an assignment function
+in Storm. For details on the available markers, see the file `Core/Storm.h`.
+
+Note: If a function is not explicitly declared `virtual`, Storm assumes it is `final` even if the
+function overrides a virtual function in a parent class.
+
 
 Garbage Collection
 -------------------

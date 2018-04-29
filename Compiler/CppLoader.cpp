@@ -462,6 +462,8 @@ namespace storm {
 		if (fnHasFlag(fn, CppFunction::fnAssign))
 			f->make(fnAssign);
 
+		// Note: CppFunction::fnFinal has no meaning for free functions, so we can ignore it here.
+
 		f->visibility = visibility(fn.access);
 		setDoc(f, fn.doc, fn.params);
 
@@ -498,6 +500,9 @@ namespace storm {
 
 		if (fnHasFlag(fn, CppFunction::fnAssign))
 			f->make(fnAssign);
+
+		if (fnHasFlag(fn, CppFunction::fnFinal))
+			f->make(fnFinal);
 
 		f->visibility = visibility(fn.access);
 		setDoc(f, fn.doc, fn.params);

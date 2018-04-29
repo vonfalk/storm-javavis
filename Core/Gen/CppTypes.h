@@ -200,6 +200,9 @@ namespace storm {
 
 			// This function is usable as an assignment function.
 			fnAssign = 0x100,
+
+			// This function is final (ie. non-virtual in C++).
+			fnFinal = 0x200,
 		};
 
 		// Kind.

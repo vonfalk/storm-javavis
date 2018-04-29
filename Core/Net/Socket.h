@@ -32,7 +32,7 @@ namespace storm {
 		virtual void STORM_FN close();
 
 		// To string.
-		void STORM_FN toS(StrBuf *to) const;
+		virtual void STORM_FN toS(StrBuf *to) const;
 
 		// Get input timeout.
 		Duration STORM_FN inputTimeout() const;
