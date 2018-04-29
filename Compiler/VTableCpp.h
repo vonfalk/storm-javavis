@@ -30,7 +30,7 @@ namespace storm {
 		static VTableCpp *copy(Engine &e, const void *vtable, nat count);
 		static VTableCpp *copy(Engine &e, const VTableCpp *src);
 
-		// Get our size.
+		// Get number of elements. Note: 'size' returns number of bytes.
 		nat count() const;
 
 		// Set this VTable for a class.

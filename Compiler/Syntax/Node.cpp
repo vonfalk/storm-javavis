@@ -46,12 +46,14 @@ namespace storm {
 		}
 
 
-		const void *transformFunction(Type *type, const Value &result, const Value &param) {
+		const void *transformFunction(Type *type, const Value &result, const Value &param1, const Value &param2) {
 			Scope root = type->engine.scope();
 			Array<Value> *par = new (type) Array<Value>();
 			par->push(thisPtr(type));
-			if (param != Value())
-				par->push(param);
+			if (param1 != Value())
+				par->push(param1);
+			if (param2 != Value())
+				par->push(param2);
 			SimplePart *part = new (type) SimplePart(new (type) Str(L"transform"), par);
 			if (Function *fn = as<Function>(type->find(part, root))) {
 				if (!result.canStore(fn->result)) {

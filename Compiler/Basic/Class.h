@@ -161,6 +161,16 @@ namespace storm {
 									syntax::Node *content) ON(Compiler);
 
 		/**
+		 * Abstract function in a class.
+		 */
+		Function *STORM_FN classAbstractFn(Class *owner,
+										SrcPos pos,
+										syntax::SStr *name,
+										Name *result,
+										Array<NameParam> *params,
+										syntax::Node *options) ON(Compiler);
+
+		/**
 		 * Class function declared as 'assign function'.
 		 */
 		BSFunction *STORM_FN classAssign(Class *owner,
@@ -183,6 +193,14 @@ namespace storm {
 									syntax::Node *content) ON(Compiler);
 
 		BSCtor *STORM_FN classDefaultCtor(Class *owner) ON(Compiler);
+
+
+		/**
+		 * Options invoked from the grammar.
+		 */
+
+		void STORM_FN makeAbstract(Named *item);
+		void STORM_FN makeFinal(Named *item);
 
 	}
 }

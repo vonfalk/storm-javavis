@@ -90,6 +90,15 @@ namespace storm {
 		// Get where we want to run.
 		RunOn STORM_FN runOn();
 
+		// Is this type abstract? Ie. should we disallow instantiating the object? By default, a
+		// type is abstract if it contains any abstract members, but languages may alter this
+		// definition to better suit their needs.
+		virtual Bool STORM_FN abstract();
+
+		// Check if this type should be possible to instantiate (ie. it is not abstract) and throw
+		// an error otherwise.
+		void STORM_FN ensureNonAbstract(SrcPos pos);
+
 		// Keep track of what is added.
 		using NameSet::add;
 		virtual void STORM_FN add(Named *item);
@@ -227,6 +236,15 @@ namespace storm {
 		// How is the update of the toS function going?
 		Nat handleToS;
 
+		enum {
+			abstractUnknown = 0,
+			abstractNo = 1,
+			abstractYes = 2,
+		};
+
+		// Cache for the 'abstract' function.
+		Nat isAbstract;
+
 		// Thread we should be running on if we indirectly inherit from TObject.
 		NamedThread *useThread;
 
@@ -327,6 +345,9 @@ namespace storm {
 
 		// Called when we lost our previous parent.
 		void vtableDetachedSuper(Type *oldSuper);
+
+		// Invalidate 'isAbstract' for all child classes.
+		void invalidateAbstract();
 
 	};
 

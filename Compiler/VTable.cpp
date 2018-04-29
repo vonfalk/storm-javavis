@@ -66,6 +66,45 @@ namespace storm {
 		cpp->insert(to, obj, code::Ref(source));
 	}
 
+	Array<Function *> *VTable::allSlots() {
+		Array<Function *> *cppFns = new (this) Array<Function *>(cpp->count(), null);
+		Array<Function *> *stormFns = null;
+		if (storm)
+			stormFns = new (this) Array<Function *>(storm->count(), null);
+
+		allSlots(cppFns, stormFns);
+
+		Array<Function *> *result = new (this) Array<Function *>();
+		result->reserve(cppFns->count() + (stormFns ? stormFns->count() : 0));
+		for (Nat i = 0; i < cppFns->count(); i++)
+			if (Function *f = cppFns->at(i))
+				result->push(f);
+
+		if (storm)
+			for (Nat i = 0; i < stormFns->count(); i++)
+				if (Function *f = stormFns->at(i))
+					result->push(f);
+
+		return result;
+	}
+
+	void VTable::allSlots(Array<Function *> *cppFns, Array<Function *> *stormFns) {
+		for (Nat i = 0; i < min(cppFns->count(), cpp->count()); i++) {
+			if (!cppFns->at(i))
+				cppFns->at(i) = cpp->get(i);
+		}
+
+		if (storm) {
+			for (Nat i = 0; i < min(stormFns->count(), storm->count()); i++) {
+				if (!stormFns->at(i))
+					stormFns->at(i) = storm->get(i);
+			}
+		}
+
+		if (Type *s = owner->super())
+			rawVTable(s)->allSlots(cppFns, stormFns);
+	}
+
 	void VTable::dbg_dump() const {
 		PLN(L"vtable @" << cpp->address() << L":");
 

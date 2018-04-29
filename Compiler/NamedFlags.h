@@ -22,12 +22,17 @@ namespace storm {
 		namedAutoCast = 0x02,
 
 		/**
-		 * Overloading.
-		 * TODO: Add member meaning: expected to overload something.
+		 * Overloading, mainly for functions.
 		 */
 
 		// This named is final.
 		namedFinal = 0x10,
+
+		// This named is abstract (ie. has to be overridden).
+		namedAbstract = 0x20,
+
+		// This named is expected to override something.
+		namedOverride = 0x40,
 	};
 
 	BITMASK_OPERATORS(NamedFlags);

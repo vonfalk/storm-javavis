@@ -1,0 +1,20 @@
+
+class Abstract {
+	Int fun() : abstract;
+}
+
+class NoAbstract extends Abstract {
+	Int fun() {
+		10;
+	}
+}
+
+Int createAbstract() {
+	Abstract x;
+	x.fun();
+}
+
+Int createNoAbstract() {
+	NoAbstract x;
+	x.fun();
+}

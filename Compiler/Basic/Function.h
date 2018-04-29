@@ -161,6 +161,19 @@ namespace storm {
 
 
 		/**
+		 * Abstract function that throws an exception when invoked.
+		 */
+		class BSAbstractFn : public BSRawFn {
+			STORM_CLASS;
+		public:
+			STORM_CTOR BSAbstractFn(Value result, syntax::SStr *name, Array<ValParam> *params);
+
+			// Override to use the body.
+			virtual FnBody *STORM_FN createBody();
+		};
+
+
+		/**
 		 * Body of a function.
 		 * TODO: FIX INHERITANCE
 		 */

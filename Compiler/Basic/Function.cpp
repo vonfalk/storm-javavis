@@ -100,6 +100,10 @@ namespace storm {
 		}
 
 
+		/**
+		 * Raw function.
+		 */
+
 		BSRawFn::BSRawFn(Value result, SStr *name, Array<ValParam> *params, MAYBE(NamedThread *) thread)
 			: Function(result, name->v, values(params)), pos(name->pos), valParams(params) {
 
@@ -200,6 +204,10 @@ namespace storm {
 		}
 
 
+		/**
+		 * Function.
+		 */
+
 		BSFunction::BSFunction(Value result, SStr *name, Array<ValParam> *params, Scope scope,
 								MAYBE(NamedThread *) thread, syntax::Node *body) :
 			BSRawFn(result, name, params, thread), scope(scope), body(body) {}
@@ -241,6 +249,11 @@ namespace storm {
 			return update(from->valParams, from->body);
 		}
 
+
+		/**
+		 * Tree function.
+		 */
+
 		BSTreeFn::BSTreeFn(Value result, SStr *name, Array<ValParam> *params, MAYBE(NamedThread *) thread)
 			: BSRawFn(result, name, params, thread) {}
 
@@ -259,6 +272,23 @@ namespace storm {
 		}
 
 
+		/**
+		 * Abstract function.
+		 */
+
+		BSAbstractFn::BSAbstractFn(Value result, SStr *name, Array<ValParam> *params)
+			: BSRawFn(result, name, params, null) {}
+
+		FnBody *BSAbstractFn::createBody() {
+			// We don't have anything to return, and we don't really care if this is a bit slower if
+			// we were to actually generate machine code for throwing the exception:
+			throw AbstractFnCalled(::toS(identifier()));
+		}
+
+
+		/**
+		 * Function body.
+		 */
 
 		bs::FnBody::FnBody(BSRawFn *owner, Scope scope)
 			: ExprBlock(owner->pos, scope), type(owner->result) {

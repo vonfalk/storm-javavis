@@ -147,6 +147,9 @@ namespace storm {
 
 			assert(params->expressions->count() == ctor->params->count() - 1, L"Invalid number of parameters to constructor!");
 			toCreate = ctor->params->at(0).asRef(false);
+
+			// Throws an error if we should not instantiate the type.
+			toCreate.type->ensureNonAbstract(pos);
 		}
 
 		ExprResult CtorCall::result() {

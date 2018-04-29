@@ -12,8 +12,8 @@ namespace storm {
 
 	class EXCEPTION_EXPORT RuntimeError : public Exception {
 	public:
-		inline RuntimeError(const String &w) : w(w) {}
-		inline virtual String what() const { return w; }
+		RuntimeError(const String &w) : w(w) {}
+		virtual String what() const { return w; }
 	private:
 		String w;
 	};
@@ -24,7 +24,7 @@ namespace storm {
 	 */
 	class EXCEPTION_EXPORT CodeError : public Exception {
 	public:
-		inline CodeError(const SrcPos &where) : where(where) {}
+		CodeError(const SrcPos &where) : where(where) {}
 
 		// Where is the error located?
 		SrcPos where;
@@ -40,8 +40,8 @@ namespace storm {
 	 */
 	class EXCEPTION_EXPORT InternalError : public Exception {
 	public:
-		inline InternalError(const String &w) : w(w) {}
-		inline virtual String what() const { return w; }
+		InternalError(const String &w) : w(w) {}
+		virtual String what() const { return w; }
 	private:
 		String w;
 	};
@@ -51,8 +51,8 @@ namespace storm {
 	 */
 	class EXCEPTION_EXPORT LangDefError : public Exception {
 	public:
-		inline LangDefError(const String &w) : w(w) {}
-		inline virtual String what() const { return w; }
+		LangDefError(const String &w) : w(w) {}
+		virtual String what() const { return w; }
 	private:
 		String w;
 	};
@@ -61,7 +61,7 @@ namespace storm {
 	 * Specific subclass when calling core:debug:throwError.
 	 */
 	class EXCEPTION_EXPORT DebugError : public Exception {
-		inline virtual String what() const { return L"Debug error"; }
+		virtual String what() const { return L"Debug error"; }
 	};
 
 
@@ -79,9 +79,9 @@ namespace storm {
 	 */
 	class EXCEPTION_EXPORT SyntaxError : public CodeError {
 	public:
-		inline SyntaxError(const SrcPos &where, const String &msg) : CodeError(where), msg(msg) {}
+		SyntaxError(const SrcPos &where, const String &msg) : CodeError(where), msg(msg) {}
 
-		inline virtual String what() const {
+		virtual String what() const {
 			return L"@" + ::toS(where) + L": Syntax error: " + msg;
 		}
 
@@ -95,13 +95,13 @@ namespace storm {
 	 */
 	class EXCEPTION_EXPORT TypeError : public CodeError {
 	public:
-		inline TypeError(const SrcPos &where, const String &msg) : CodeError(where), msg(msg) {}
-		inline TypeError(const SrcPos &where, const Value &expected, const ExprResult &got)
+		TypeError(const SrcPos &where, const String &msg) : CodeError(where), msg(msg) {}
+		TypeError(const SrcPos &where, const Value &expected, const ExprResult &got)
 			: CodeError(where), msg(L"Expected " + ::toS(expected) + L" but got " + ::toS(got)) {}
-		inline TypeError(const SrcPos &where, const Value &expected, const Value &got)
+		TypeError(const SrcPos &where, const Value &expected, const Value &got)
 			: CodeError(where), msg(L"Expected " + ::toS(expected) + L" but got " + ::toS(got)) {}
 
-		inline virtual String what() const {
+		virtual String what() const {
 			return L"@" + ::toS(where) + L": Type error: " + msg;
 		}
 
@@ -115,8 +115,8 @@ namespace storm {
 	 */
 	class EXCEPTION_EXPORT TypedefError : public CodeError {
 	public:
-		inline TypedefError(const String &msg) : CodeError(SrcPos()), msg(msg) { TODO("Require a SrcPos!"); }
-		inline virtual String what() const {
+		TypedefError(const String &msg) : CodeError(SrcPos()), msg(msg) { TODO("Require a SrcPos!"); }
+		virtual String what() const {
 			return L"@" + ::toS(where) + L": Type definition error: " + msg;
 		}
 	private:
@@ -131,6 +131,29 @@ namespace storm {
 	public:
 		BuiltInError(const String &msg) : msg(msg) {}
 		virtual String what() const { return L"Error while loading built in functions: " + msg; }
+	private:
+		String msg;
+	};
+
+
+	/**
+	 * Calling an abstract function.
+	 */
+	class EXCEPTION_EXPORT AbstractFnCalled : public RuntimeError {
+	public:
+		AbstractFnCalled(const String &name) : RuntimeError(L"Called an abstract function: " + name) {}
+	};
+
+
+	/**
+	 * Trying to instantiate an abstract class.
+	 */
+	class EXCEPTION_EXPORT InstantiationError : public CodeError {
+	public:
+		InstantiationError(const SrcPos &pos, const String &msg) : CodeError(pos), msg(msg) {}
+		virtual String what() const {
+			return L"@" + ::toS(where) + L": Instantiation error: " + msg;
+		}
 	private:
 		String msg;
 	};

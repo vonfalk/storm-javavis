@@ -48,12 +48,12 @@ namespace storm {
 
 		// Find the appropriate 'transform' function in a specific type. If 'param' is void, no
 		// params are assumed except the this pointer.
-		const void *transformFunction(Type *type, const Value &result, const Value &param);
+		const void *transformFunction(Type *type, const Value &result, const Value &param1, const Value &param2);
 
 		template <class R>
 		R *transformNode(Node *node) {
 			Engine &e = node->engine();
-			const void *fn = transformFunction(runtime::typeOf(node), Value(StormInfo<R>::type(e)), Value());
+			const void *fn = transformFunction(runtime::typeOf(node), Value(StormInfo<R>::type(e)), Value(), Value());
 
 			os::FnCall<R *> p = os::fnCall().add(node);
 			return p.call(fn, true);
@@ -65,9 +65,22 @@ namespace storm {
 			Engine &e = node->engine();
 			const void *fn = transformFunction(runtime::typeOf(node),
 											Value(StormInfo<R>::type(e)),
-											Value(StormInfo<P>::type(e)));
+											Value(StormInfo<P>::type(e)),
+											Value());
 
 			os::FnCall<R *> p = os::fnCall().add(node).add(par);
+			return p.call(fn, true);
+		}
+
+		template <class R, class P, class Q>
+		R *transformNode(Node *node, P par1, Q par2) {
+			Engine &e = node->engine();
+			const void *fn = transformFunction(runtime::typeOf(node),
+											Value(StormInfo<R>::type(e)),
+											Value(StormInfo<P>::type(e)),
+											Value(StormInfo<Q>::type(e)));
+
+			os::FnCall<R *> p = os::fnCall().add(node).add(par1).add(par2);
 			return p.call(fn, true);
 		}
 

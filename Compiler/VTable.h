@@ -42,7 +42,7 @@ namespace storm {
 	 * instantiated, in which case we will be notified. If we would eagerly load subclasses in this
 	 * manner, we would create dependencies that are hard to realize.
 	 *
-	 * TODO: It might be possible to only store a bitmask in VTableCpp and VTableStorm which
+	 * TODO: It might be possible to only store a bitmask in VTableCpp and VTableStorm that
 	 * indicates if we have a new function set at this level or not.
 	 */
 	class VTable : public ObjectOn<Compiler> {
@@ -78,6 +78,10 @@ namespace storm {
 
 		// Generate code for setting the vtable.
 		void insert(code::Listing *to, code::Var obj);
+
+		// Get the "topmost" functions for each entry in the vtable. Unused slots are left out
+		// (since they would be null).
+		Array<Function *> *allSlots();
 
 		// Dump the vtable contents to stdout.
 		void dbg_dump() const;
@@ -147,6 +151,9 @@ namespace storm {
 
 		// Create a slot for a Storm function. Returns the created index.
 		VTableSlot allocSlot();
+
+		// Fill in functions for slots into the two arrays.
+		void allSlots(Array<Function *> *cppFns, Array<Function *> *stormFns);
 
 		// Use lookup for 'fn'.
 		static void useLookup(Function *fn, VTableSlot slot);

@@ -245,6 +245,25 @@ namespace storm {
 										body);
 		}
 
+		Function *STORM_FN classAbstractFn(Class *owner,
+											SrcPos pos,
+											syntax::SStr *name,
+											Name *result,
+											Array<NameParam> *params,
+											syntax::Node *options) {
+
+			Function *f = new (owner) BSAbstractFn(owner->scope.value(result, pos),
+												name,
+												resolve(params, owner, owner->scope));
+
+			syntax::transformNode<void, Class *, Named *>(options, owner, f);
+
+			if (f->flags & namedAbstract)
+				return f;
+
+			throw SyntaxError(pos, L"A function without implementation must be marked using ': abstract'.");
+		}
+
 		BSFunction *STORM_FN classAssign(Class *owner,
 										SrcPos pos,
 										syntax::SStr *name,
@@ -286,6 +305,14 @@ namespace storm {
 			Array<NameParam> *params = CREATE(Array<NameParam>, owner);
 
 			return classCtor(owner, owner->declared, params, null);
+		}
+
+		void makeAbstract(Named *item) {
+			item->flags |= namedAbstract;
+		}
+
+		void STORM_FN makeFinal(Named *item) {
+			item->flags |= namedFinal;
 		}
 
 	}

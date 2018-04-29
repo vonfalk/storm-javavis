@@ -299,6 +299,49 @@ namespace storm {
 		}
 	}
 
+	Bool Type::abstract() {
+		// Note: We always insert abstract functions in a vtable, even if it is not necessary at the
+		// moment. This means that we can simply examine all slots in a vtable to determine if we're
+		// abstract or not.
+		VTable *vt = vtable();
+
+		// If we don't have a VTable, then the concept of 'abstract' is not meaningful.
+		if (!vt)
+			return false;
+
+		if (isAbstract != abstractUnknown)
+			return isAbstract == abstractYes;
+
+		// If any of the topmost functions are abstract, the entire class is abstract.
+		Array<Function *> *fns = vt->allSlots();
+		isAbstract = abstractYes;
+		for (Nat i = 0; i < fns->count(); i++)
+			if (fns->at(i)->flags & namedAbstract)
+				return true;
+
+		isAbstract = abstractNo;
+		return false;
+	}
+
+	void Type::ensureNonAbstract(SrcPos pos) {
+		if (!abstract())
+			return;
+
+		// Generate a nice error message...
+		std::wostringstream msg;
+		msg << L"The class " << identifier() << L" is abstract due to the following members:\n";
+
+		VTable *vt = vtable();
+		if (vt) {
+			Array<Function *> *fns = vt->allSlots();
+			for (Nat i = 0; i < fns->count(); i++)
+				if (fns->at(i)->flags & namedAbstract)
+					msg << L" " << fns->at(i)->shortIdentifier() << L"\n";
+		}
+
+		throw InstantiationError(pos, msg.str());
+	}
+
 	void Type::add(Named *item) {
 		NameSet::add(item);
 
@@ -1103,7 +1146,7 @@ namespace storm {
 	/**
 	 * VTable logic.
 	 *
-	 * Note: there is a small optimization we can do here. If we know we are the leaf class for a
+	 * Note: there is a small optimization we do here. If we know we are the leaf class for a
 	 * specific function, that function only needs to be registered in the vtable but does not need
 	 * to use vtable dispatch!
 	 */
@@ -1113,14 +1156,23 @@ namespace storm {
 		if (value() || rawPtr())
 			return;
 
+		bool abstractFn = (fn->flags & namedAbstract) == namedAbstract;
+		if (abstractFn)
+			invalidateAbstract();
+
 		// Try to find a function which overrides this function, or a function which we override. If
 		// we found the function in either direction, we do not need to search in the other
 		// direction, as they already are in the vtable in that case.
+		//
+		// Furthermore, if 'fn' is abstract, we insert it anyway since we're certain it will be used
+		// eventually. Furthermore, it greatly simplifies (and speeds up) the implementation of 'abstract()'.
 		OverridePart *part = new (engine) OverridePart(fn);
-		if (vtableInsertSuper(part, fn))
+		if (vtableInsertSuper(part, fn) ||
+			vtableInsertSubclasses(part, fn) ||
+			abstractFn) {
+
 			myVTable->insert(fn);
-		else if (vtableInsertSubclasses(part, fn))
-			myVTable->insert(fn);
+		}
 	}
 
 	Bool Type::vtableInsertSuper(OverridePart *fn, Named *original) {
@@ -1172,6 +1224,8 @@ namespace storm {
 
 			vtableFnAdded(f);
 		}
+
+		isAbstract = abstractUnknown;
 	}
 
 	void Type::vtableDetachedSuper(Type *old) {
@@ -1182,6 +1236,15 @@ namespace storm {
 			return;
 
 		old->myVTable->removeChild(this);
+		isAbstract = abstractUnknown;
+	}
+
+	void Type::invalidateAbstract() {
+		isAbstract = abstractUnknown;
+
+		TypeChain::Iter i = chain->children();
+		while (Type *child = i.next())
+			child->invalidateAbstract();
 	}
 
 }

@@ -470,6 +470,17 @@ SCtorParams => Array<NameParam>() : SFirstFormal -> push - (, ",", SFormal -> pu
 NameParam SFirstFormal();
 SFirstFormal => nameless(type) : SType type;
 
+// Decorators we can apply to a named element in a class.
+void SClassOption(Class owner, Named item) #keyword;
+SClassOption => makeAbstract(item) : "abstract";
+SClassOption => makeFinal(item) : "final";
+// SClassOption : "override";
+// etc. (we might want to handle 'override' differently)
+
+void SClassOptions(Class owner, Named item);
+SClassOptions : ;
+SClassOptions : ":", SClassOption(owner, item) - (, ",", SClassOption(owner, item))*;
+
 // Possible contents of a class. Note that all except types are captured and loaded later
 // to make sure nested types work as expected.
 TObject SClassItem(Class owner);
@@ -481,7 +492,9 @@ Named SClassWrapItem(Class owner);
 SClassWrapItem[0] => classVar(owner, t, n) :
     SType t, SName n #varName, ";";
 SClassWrapItem[0] => classFn(owner, pos, name, result, params, body) :
-    SType result, SFnDeclName name #fnName, "(", SFormals params, ")", "{"[, SFunctionBody@ body,]+ "}";
+    SType result, SFnDeclName name #fnName, "(", SFormals params, ")", SClassOptions(owner, me), "{"[, SFunctionBody@ body,]+ "}";
+SClassWrapItem[0] => classAbstractFn(owner, pos, name, result, params, options) :
+    SType result, SFnDeclName name #fnName, "(", SFormals params, ")", SClassOptions@ options, ";";
 SClassWrapItem[5] => classAssign(owner, pos, name, params, body) :
     "assign" #keyword, SFnDeclName name #fnName, "(", SFormals params, ")", "{"[, SFunctionBody@ body,]+ "}";
 SClassWrapItem[5] => classCtor(owner, pos, params, body) :
