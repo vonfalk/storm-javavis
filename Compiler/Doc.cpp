@@ -127,6 +127,17 @@ namespace storm {
 		*to << body;
 	}
 
+	static void addFlags(FnFlags fn, Array<DocNote> *notes) {
+		Engine &e = notes->engine();
+		FnFlags flags[] = { fnPure, fnFinal, fnAbstract, fnOverride };
+		const wchar *names[] = { S("pure"), S("final"), S("abstract"), S("override") };
+
+		for (Nat i = 0; i < ARRAY_COUNT(flags); i++) {
+			if ((fn & flags[i]) == flags[i])
+				notes->push(note(e, names[i]));
+		}
+	}
+
 	static Array<DocNote> *createNotes(Named *entity) {
 		Engine &e = entity->engine();
 		Array<DocNote> *notes = new (e) Array<DocNote>();
@@ -138,6 +149,8 @@ namespace storm {
 				notes->push(note(e, S("on"), on.thread));
 			if (fn->fnFlags() & fnAssign)
 				notes->push(note(e, S("assign")));
+
+			addFlags(fn->fnFlags(), notes);
 		} else if (Variable *var = as<Variable>(entity)) {
 			notes->push(note(e, S("->"), var->type));
 		} else if (Type *type = as<Type>(entity)) {
