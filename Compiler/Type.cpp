@@ -316,7 +316,7 @@ namespace storm {
 		Array<Function *> *fns = vt->allSlots();
 		isAbstract = abstractYes;
 		for (Nat i = 0; i < fns->count(); i++)
-			if (fns->at(i)->flags & namedAbstract)
+			if (fns->at(i)->fnFlags() & fnAbstract)
 				return true;
 
 		isAbstract = abstractNo;
@@ -335,7 +335,7 @@ namespace storm {
 		if (vt) {
 			Array<Function *> *fns = vt->allSlots();
 			for (Nat i = 0; i < fns->count(); i++)
-				if (fns->at(i)->flags & namedAbstract)
+				if (fns->at(i)->fnFlags() & fnAbstract)
 					msg << L" " << fns->at(i)->shortIdentifier() << L"\n";
 		}
 
@@ -1156,7 +1156,7 @@ namespace storm {
 		if (value() || rawPtr())
 			return;
 
-		bool abstractFn = (fn->flags & namedAbstract) == namedAbstract;
+		bool abstractFn = (fn->fnFlags() & fnAbstract) == fnAbstract;
 		if (abstractFn)
 			invalidateAbstract();
 

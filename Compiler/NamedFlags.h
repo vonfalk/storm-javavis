@@ -21,18 +21,6 @@ namespace storm {
 		// This function is suitable for automatic casts (only constructors).
 		namedAutoCast = 0x02,
 
-		/**
-		 * Overloading, mainly for functions.
-		 */
-
-		// This named is final.
-		namedFinal = 0x10,
-
-		// This named is abstract (ie. has to be overridden).
-		namedAbstract = 0x20,
-
-		// This named is expected to override something.
-		namedOverride = 0x40,
 	};
 
 	BITMASK_OPERATORS(NamedFlags);

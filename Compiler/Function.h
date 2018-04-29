@@ -23,7 +23,16 @@ namespace storm {
 
 		// This is a setter function, and as such we want to be able to use the function as the
 		// target of an assignment.
-		fnAssign = 0x2,
+		fnAssign = 0x02,
+
+		// This named is final.
+		fnFinal = 0x04,
+
+		// This named is abstract (ie. has to be overridden).
+		fnAbstract = 0x08,
+
+		// This named is expected to override something.
+		fnOverride = 0x10,
 	};
 
 	BITMASK_OPERATORS(FnFlags);
@@ -72,6 +81,10 @@ namespace storm {
 
 		// Helper for C++.
 		inline Function *makePure() { return make(fnPure); }
+
+		// Helpers for the grammar.
+		inline Function *STORM_FN makeAbstract() { return make(fnAbstract); }
+		inline Function *STORM_FN makeFinal() { return make(fnFinal); }
 
 		// Get function flags.
 		FnFlags STORM_FN fnFlags() const;

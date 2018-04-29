@@ -471,13 +471,13 @@ NameParam SFirstFormal();
 SFirstFormal => nameless(type) : SType type;
 
 // Decorators we can apply to a named element in a class.
-void SClassOption(Class owner, Named item) #keyword;
+void SClassOption(Class owner, Function item) #keyword;
 SClassOption => makeAbstract(item) : "abstract";
 SClassOption => makeFinal(item) : "final";
 // SClassOption : "override";
 // etc. (we might want to handle 'override' differently)
 
-void SClassOptions(Class owner, Named item);
+void SClassOptions(Class owner, Function item);
 SClassOptions : ;
 SClassOptions : ":", SClassOption(owner, item) - (, ",", SClassOption(owner, item))*;
 

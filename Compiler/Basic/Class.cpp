@@ -256,9 +256,9 @@ namespace storm {
 												name,
 												resolve(params, owner, owner->scope));
 
-			syntax::transformNode<void, Class *, Named *>(options, owner, f);
+			syntax::transformNode<void, Class *, Function *>(options, owner, f);
 
-			if (f->flags & namedAbstract)
+			if (f->fnFlags() & fnAbstract)
 				return f;
 
 			throw SyntaxError(pos, L"A function without implementation must be marked using ': abstract'.");
@@ -305,14 +305,6 @@ namespace storm {
 			Array<NameParam> *params = CREATE(Array<NameParam>, owner);
 
 			return classCtor(owner, owner->declared, params, null);
-		}
-
-		void makeAbstract(Named *item) {
-			item->flags |= namedAbstract;
-		}
-
-		void STORM_FN makeFinal(Named *item) {
-			item->flags |= namedFinal;
 		}
 
 	}

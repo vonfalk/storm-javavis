@@ -194,13 +194,5 @@ namespace storm {
 
 		BSCtor *STORM_FN classDefaultCtor(Class *owner) ON(Compiler);
 
-
-		/**
-		 * Options invoked from the grammar.
-		 */
-
-		void STORM_FN makeAbstract(Named *item);
-		void STORM_FN makeFinal(Named *item);
-
 	}
 }
