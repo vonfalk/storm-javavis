@@ -5,7 +5,7 @@ echo "===="
 echo ""
 
 # Generate release notes from the Git repository.
-for c in $(git for-each-ref "refs/tags/release/" --sort=-committerdate --format="%(objectname)")
+for c in $(git for-each-ref "refs/tags/release/" --sort='-*committerdate' --format="%(objectname)")
 do
     if [[ $(git cat-file -t $c) == "tag" ]]
     then
