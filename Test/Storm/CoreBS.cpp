@@ -216,7 +216,7 @@ BEGIN_TEST(TypesTest, BS) {
  * Maybe.
  */
 
-BEGIN_TEST(MaybeTest, BS) {
+BEGIN_TEST_(MaybeTest, BS) {
 	CHECK_EQ(runFn<Int>(S("test.bs.testMaybe"), 0), 0);
 	CHECK_EQ(runFn<Int>(S("test.bs.testMaybe"), 1), 2);
 	CHECK_EQ(runFn<Int>(S("test.bs.testMaybe"), 2), 6);
@@ -233,6 +233,13 @@ BEGIN_TEST(MaybeTest, BS) {
 
 	CHECK_EQ(runFn<Int>(S("test.bs.testMaybeInv2"), 0), 10);
 	CHECK_EQ(runFn<Int>(S("test.bs.testMaybeInv2"), 1), 1);
+
+	// Values!
+	CHECK_EQ(runFn<Int>(S("test.bs.testMaybeValue"), 0), 8);
+	CHECK_EQ(runFn<Int>(S("test.bs.testMaybeValue"), 1), 1);
+
+	CHECK_EQ(::toS(runFn<Str *>(S("test.bs.testMaybeValueToS"), 0)), L"null");
+	CHECK_EQ(::toS(runFn<Str *>(S("test.bs.testMaybeValueToS"), 5)), L"5");
 } END_TEST
 
 

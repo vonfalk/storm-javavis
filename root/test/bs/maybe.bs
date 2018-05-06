@@ -84,3 +84,26 @@ Int testMaybeInv2(Int v) {
 
 	w.get;
 }
+
+Int testMaybeValue(Int v) {
+	Int? result;
+
+	if (v > 0)
+		result = v;
+
+	// if (result) {
+	// 	result;
+	// } else {
+	// 	8;
+	// }
+	3;
+}
+
+Str testMaybeValueToS(Int v) {
+	Int? result;
+
+	if (v > 0)
+		result = v;
+
+	result.toS();
+}

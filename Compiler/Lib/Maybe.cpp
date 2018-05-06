@@ -9,19 +9,28 @@
 
 namespace storm {
 
+	static Bool isValue(Value v) {
+		return v.isValue() || v.isBuiltIn();
+	}
+
+	static Bool isValue(Type *t) {
+		return isValue(Value(t));
+	}
+
 	Type *createMaybe(Str *name, ValueArray *val) {
 		if (val->count() != 1)
 			return null;
 
 		Value p = val->at(0);
-		if (!p.isClass() && !p.isActor())
-			return null;
 		if (p.ref)
 			return null;
 		if (isMaybe(p))
 			return null;
 
-		return new (name) MaybeType(name, p.type);
+		if (isValue(p))
+			return new (name) MaybeValueType(name, p.type);
+		else
+			return new (name) MaybeClassType(name, p.type);
 	}
 
 
@@ -57,26 +66,32 @@ namespace storm {
 		return t;
 	}
 
-	MaybeType::MaybeType(Str *name, Type *param)
-		: Type(name,
-			new (name) Array<Value>(1, Value(param)),
-			typeClass | typeRawPtr | typeFinal,
-			Size::sPtr,
-			allocType(name->engine()),
-			null),
-		  contained(param) {}
+	/**
+	 * Common base class.
+	 */
+
+	MaybeType::MaybeType(Str *name, Type *param, TypeFlags flags, Size size, GcType *gcType)
+		: Type(name, new (name) Array<Value>(1, Value(param)), flags, size, gcType, null), contained(param) {}
+
 
 	Value MaybeType::param() const {
 		return Value(contained);
 	}
 
-	static void initMaybe(InlineParams p) {
+	/**
+	 * For classes or actors.
+	 */
+
+	MaybeClassType::MaybeClassType(Str *name, Type *param)
+		: MaybeType(name, param, typeClass | typeRawPtr | typeFinal, Size::sPtr, allocType(name->engine())) {}
+
+	static void initMaybeClass(InlineParams p) {
 		using namespace code;
 		*p.state->l << mov(ptrA, p.params->at(0));
 		*p.state->l << mov(ptrRel(ptrA, Offset()), ptrConst(Offset()));
 	}
 
-	static void copyMaybe(InlineParams p) {
+	static void copyMaybeClass(InlineParams p) {
 		using namespace code;
 		*p.state->l << mov(ptrA, p.params->at(0));
 		*p.state->l << mov(ptrRel(ptrA, Offset()), p.params->at(1));
@@ -89,7 +104,7 @@ namespace storm {
 		}
 	}
 
-	static void emptyMaybe(InlineParams p) {
+	static void emptyMaybeClass(InlineParams p) {
 		using namespace code;
 		if (!p.result->needed())
 			return;
@@ -98,7 +113,7 @@ namespace storm {
 		*p.state->l << setCond(p.result->location(p.state).v, ifEqual);
 	}
 
-	static void anyMaybe(InlineParams p) {
+	static void anyMaybeClass(InlineParams p) {
 		using namespace code;
 		if (!p.result->needed())
 			return;
@@ -107,26 +122,30 @@ namespace storm {
 		*p.state->l << setCond(p.result->location(p.state).v, ifNotEqual);
 	}
 
-	static Str *maybeToS(EnginePtr e, RootObject *o) {
+	static Str *maybeToSClass(EnginePtr e, RootObject *o) {
 		if (!o)
 			return new (e.v) Str(L"null");
 		else
 			return o->toS();
 	}
 
-	static void maybeToSBuf(RootObject *o, StrBuf *buf) {
+	static void maybeToSBufClass(RootObject *o, StrBuf *buf) {
 		if (o)
 			o->toS(buf);
 		else
 			*buf << L"null";
 	}
 
-	static void maybeClone(Object *o, CloneEnv *env) {
+	static void maybeCloneClass(Object *o, CloneEnv *env) {
 		if (o)
 			o->deepCopy(env);
 	}
 
-	Bool MaybeType::loadAll() {
+	code::TypeDesc *MaybeClassType::createTypeDesc() {
+		return engine.ptrDesc();
+	}
+
+	Bool MaybeClassType::loadAll() {
 		Engine &e = engine;
 		Value t = thisPtr(this);
 		Value b = Value(StormInfo<Bool>::type(e));
@@ -135,35 +154,42 @@ namespace storm {
 		Array<Value> *r = new (e) Array<Value>(1, t.asRef(true));
 		Array<Value> *rv = new (e) Array<Value>(2, t);
 		rv->at(0) = t.asRef(true);
+		Array<Value> *rp = new (e) Array<Value>(2, t.asRef(true));
+		rp->at(1) = param();
 
-		add(inlinedFunction(e, Value(), CTOR, r, fnPtr(e, &initMaybe)));
-		add(inlinedFunction(e, Value(), CTOR, rv, fnPtr(e, &copyMaybe)));
-		add(inlinedFunction(e, t.asRef(true), S("="), rv, fnPtr(e, &copyMaybe)));
-		add(inlinedFunction(e, b, S("empty"), v, fnPtr(e, &emptyMaybe)));
-		add(inlinedFunction(e, b, S("any"), v, fnPtr(e, &anyMaybe)));
+		add(inlinedFunction(e, Value(), CTOR, r, fnPtr(e, &initMaybeClass)));
+		add(inlinedFunction(e, Value(), CTOR, rv, fnPtr(e, &copyMaybeClass)));
+		add(inlinedFunction(e, t.asRef(true), S("="), rv, fnPtr(e, &copyMaybeClass)));
+		add(inlinedFunction(e, b, S("empty"), v, fnPtr(e, &emptyMaybeClass)));
+		add(inlinedFunction(e, b, S("any"), v, fnPtr(e, &anyMaybeClass)));
 
-		add(nativeEngineFunction(e, Value(Str::stormType(e)), S("toS"), v, address(&maybeToS)));
+		// Cast constructor.
+		Function *cast = inlinedFunction(e, Value(), CTOR, rp, fnPtr(e, &copyMaybeClass));
+		cast->flags |= namedAutoCast;
+		add(cast);
+
+		add(nativeEngineFunction(e, Value(Str::stormType(e)), S("toS"), v, address(&maybeToSClass)));
 
 		Array<Value> *strBuf = new (e) Array<Value>(2, t);
 		strBuf->at(1) = Value(StrBuf::stormType(e));
-		add(nativeFunction(e, Value(), S("toS"), strBuf, address(&maybeToSBuf)));
+		add(nativeFunction(e, Value(), S("toS"), strBuf, address(&maybeToSBufClass)));
 
 		if (!contained->isA(TObject::stormType(e))) {
 			Array<Value> *clone = new (e) Array<Value>(2, t);
 			clone->at(1) = Value(CloneEnv::stormType(e));
-			add(nativeFunction(e, Value(), S("deepCopy"), clone, address(&maybeClone)));
+			add(nativeFunction(e, Value(), S("deepCopy"), clone, address(&maybeCloneClass)));
 		}
 
 		// Create copy ctors for derived versions of Maybe<T> and T.
-		add(new (e) TemplateFn(new (e) Str(CTOR), fnPtr(e, &MaybeType::createCopy, this)));
+		add(new (e) TemplateFn(new (e) Str(CTOR), fnPtr(e, &MaybeClassType::createCopy, this)));
 
 		// Create assignment functions for derived versions of Maybe.
-		add(new (e) TemplateFn(new (e) Str(S("=")), fnPtr(e, &MaybeType::createAssign, this)));
+		add(new (e) TemplateFn(new (e) Str(S("=")), fnPtr(e, &MaybeClassType::createAssign, this)));
 
-		return Type::loadAll();
+		return MaybeType::loadAll();
 	}
 
-	Named *MaybeType::createAssign(Str *name, SimplePart *part) {
+	Named *MaybeClassType::createAssign(Str *name, SimplePart *part) {
 		if (part->params->count() != 2)
 			return null;
 
@@ -175,31 +201,152 @@ namespace storm {
 		if (!param().canStore(other))
 			return null;
 
-
 		Array<Value> *rv = new (this) Array<Value>(2, o);
 		rv->at(0) = Value(this).asRef(true);
-		return inlinedFunction(engine, Value(), S("="), rv, fnPtr(engine, &copyMaybe));
+		return inlinedFunction(engine, Value(), S("="), rv, fnPtr(engine, &copyMaybeClass));
 	}
 
-	Named *MaybeType::createCopy(Str *name, SimplePart *part) {
+	Named *MaybeClassType::createCopy(Str *name, SimplePart *part) {
 		if (part->params->count() != 2)
 			return null;
 
 		Value o = part->params->at(1);
+		if (!isMaybe(o))
+			return null;
 
-		Value other = o;
-		if (isMaybe(o))
-			other = unwrapMaybe(o);
+		Value other = unwrapMaybe(o);
 
 		if (!param().canStore(other))
 			return null;
 
-
 		Array<Value> *rv = new (this) Array<Value>(2, o.asRef(false));
 		rv->at(0) = Value(this).asRef(true);
-		Function *f = inlinedFunction(engine, Value(), CTOR, rv, fnPtr(engine, &copyMaybe));
+
+		Function *f = inlinedFunction(engine, Value(), CTOR, rv, fnPtr(engine, &copyMaybeClass));
 		f->flags |= namedAutoCast;
 		return f;
+	}
+
+	/**
+	 * For values.
+	 */
+
+	static Size maybeValSize(Type *type) {
+		return (type->size() + Size::sByte).aligned();
+	}
+
+	static GcType *allocTypeValue(Type *type) {
+		Size size = maybeValSize(type);
+
+		GcType *t = type->engine.gc.allocType(type->gcType());
+		t->stride = size.current();
+		return t;
+	}
+
+	MaybeValueType::MaybeValueType(Str *name, Type *param)
+		: MaybeType(name, param, typeValue, maybeValSize(param), allocTypeValue(param)) {}
+
+	code::TypeDesc *MaybeValueType::createTypeDesc() {
+		using namespace code;
+		TypeDesc *original = contained->typeDesc();
+
+		if (PrimitiveDesc *p = as<PrimitiveDesc>(original)) {
+			// Very simple. Struct with a primitive and a boolean.
+			SimpleDesc *result = new (this) SimpleDesc(size(), 2);
+			result->at(0) = p->v;
+			result->at(1) = Primitive(primitive::integer, Size::sByte, Offset(original->size()));
+			return result;
+		} else if (SimpleDesc *s = as<SimpleDesc>(original)) {
+			// Just add another primitive. We don't need a copy-ctor if the underlying type doesn't!
+			SimpleDesc *result = new (this) SimpleDesc(size(), s->count() + 1);
+			for (Nat i = 0; i < s->count(); i++)
+				result->at(i) = s->at(i);
+
+			result->at(s->count()) = Primitive(primitive::integer, Size::sByte, Offset(original->size()));
+			return result;
+		} else if (ComplexDesc *c = as<ComplexDesc>(original)) {
+			// Complex description is the easiest actually... We just sort everything out in our copy-ctor.
+			Ref ctor = engine.ref(Engine::rFnNull), dtor = engine.ref(Engine::rFnNull);
+			if (Function *f = copyCtor())
+				ctor = f->ref();
+			if (Function *f = destructor())
+				dtor = f->ref();
+
+			return new (this) ComplexDesc(size(), ctor, dtor);
+		} else {
+			throw InternalError(L"Unknown type description found for " + ::toS(contained->identifier()));
+		}
+	}
+
+	Bool MaybeValueType::loadAll() {
+		Engine &e = engine;
+		Value t = thisPtr(this);
+		Value b = Value(StormInfo<Bool>::type(e));
+
+		Array<Value> *r = new (e) Array<Value>(1, t.asRef(true));
+		Array<Value> *rv = new (e) Array<Value>(2, t);
+		rv->at(0) = t.asRef(true);
+		Array<Value> *rp = new (e) Array<Value>(2, t.asRef(true));
+		rp->at(1) = param();
+
+		add(inlinedFunction(e, Value(), CTOR, r, fnPtr(e, &MaybeValueType::initMaybe, this)));
+		add(inlinedFunction(e, Value(), CTOR, rv, fnPtr(e, &MaybeValueType::copyMaybe, this)));
+		// add(inlinedFunction(e, t.asRef(true), S("="), rv, fnPtr(e, &copyMaybeClass)));
+		add(inlinedFunction(e, b, S("empty"), r, fnPtr(e, &MaybeValueType::emptyMaybe, this)));
+		add(inlinedFunction(e, b, S("any"), r, fnPtr(e, &MaybeValueType::anyMaybe, this)));
+
+		// TODO:
+		// // Cast constructor.
+		// Function *cast = inlinedFunction(e, Value(), CTOR, rp, fnPtr(e, &copyMaybeClass));
+		// cast->flags |= namedAutoCast;
+		// add(cast);
+
+		// add(nativeEngineFunction(e, Value(Str::stormType(e)), S("toS"), v, address(&maybeToSClass)));
+
+		// Array<Value> *strBuf = new (e) Array<Value>(2, t);
+		// strBuf->at(1) = Value(StrBuf::stormType(e));
+		// add(nativeFunction(e, Value(), S("toS"), strBuf, address(&maybeToSBufClass)));
+
+		// if (!contained->isA(TObject::stormType(e))) {
+		// 	Array<Value> *clone = new (e) Array<Value>(2, t);
+		// 	clone->at(1) = Value(CloneEnv::stormType(e));
+		// 	add(nativeFunction(e, Value(), S("deepCopy"), clone, address(&maybeCloneClass)));
+		// }
+
+		// // Create copy ctors for derived versions of Maybe<T> and T.
+		// add(new (e) TemplateFn(new (e) Str(CTOR), fnPtr(e, &MaybeClassType::createCopy, this)));
+
+		// // Create assignment functions for derived versions of Maybe.
+		// add(new (e) TemplateFn(new (e) Str(S("=")), fnPtr(e, &MaybeClassType::createAssign, this)));
+
+		return MaybeType::loadAll();
+	}
+
+	void MaybeValueType::initMaybe(InlineParams p) {
+		using namespace code;
+		*p.state->l << mov(ptrA, p.params->at(0));
+		*p.state->l << mov(byteRel(ptrA, boolOffset()), byteConst(0));
+	}
+
+	void MaybeValueType::copyMaybe(InlineParams p) {
+		assert(false, L"TODO!");
+	}
+
+	void MaybeValueType::emptyMaybe(InlineParams p) {
+		using namespace code;
+		if (!p.result->needed())
+			return;
+
+		*p.state->l << mov(ptrA, p.params->at(0));
+		*p.state->l << cmp(byteRel(ptrA, boolOffset()), byteConst(0));
+		*p.state->l << setCond(p.result->location(p.state).v, ifEqual);
+	}
+
+	void MaybeValueType::anyMaybe(InlineParams p) {
+		using namespace code;
+
+		*p.state->l << mov(ptrA, p.params->at(0));
+		*p.state->l << mov(p.result->location(p.state).v, byteRel(ptrA, boolOffset()));
 	}
 
 }

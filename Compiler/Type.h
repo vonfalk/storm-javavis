@@ -110,7 +110,7 @@ namespace storm {
 		// Receive notification of new additions.
 		virtual void STORM_FN notifyAdded(NameSet *to, Named *what);
 
-		// Reference to the type information.
+		// Reference to this object (ie. the type information).
 		virtual code::Ref STORM_FN typeRef();
 
 		/**

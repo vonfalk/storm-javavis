@@ -158,6 +158,8 @@ namespace storm {
 			rRuleThrow,
 			// Allocate an object of the type given.
 			rAlloc,
+			// Allocate an array of the given type.
+			rAllocArray,
 			// Execute as<T>.
 			rAs,
 			// # of bytes inside a vtable the object's vtable ptr is pointing.

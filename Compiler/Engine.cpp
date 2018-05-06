@@ -279,6 +279,10 @@ namespace storm {
 		return runtime::allocObject(0, t);
 	}
 
+	static void *allocArray(Type *t, size_t count) {
+		return runtime::allocArray(t->engine, t->gcArrayType(), count);
+	}
+
 	static RootObject *stormAs(RootObject *in, Type *type) {
 		if (!in)
 			return null;
@@ -304,6 +308,8 @@ namespace storm {
 			return FNREF(syntax::Node::throwError);
 		case rAlloc:
 			return FNREF(allocType);
+		case rAllocArray:
+			return FNREF(allocArray);
 		case rAs:
 			return FNREF(stormAs);
 		case rVTableAllocOffset:
