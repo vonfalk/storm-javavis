@@ -59,26 +59,39 @@ namespace storm {
 	public:
 		STORM_CTOR MaybeValueType(Str *name, Type *param);
 
+		// Called by the generated code.
+		static void *toSHelper(MaybeValueType *me, void *value, StrBuf *out);
+
+		// Offset of the boolean flag. Corresponds to 'any', ie. 1 if value present, otherwise 0.
+		Offset boolOffset() const { return Offset(contained->size()); }
+
 	protected:
 		// Lazy-loading.
 		virtual Bool STORM_FN loadAll();
 		virtual code::TypeDesc *STORM_FN createTypeDesc();
 
 	private:
+		// Handle to the type stored in here, so that we can use toS properly.
+		const Handle *handle;
+
+		// Offset of the boolean at the end of the type.
+		Nat offset;
+
 		// Create copy ctors.
 		Named *CODECALL createCopy(Str *name, SimplePart *part);
 
 		// Create assignment operators.
 		Named *CODECALL createAssign(Str *name, SimplePart *part);
 
-		// Offset of the boolean flag. Corresponds to 'any', ie. 1 if value present, otherwise 0.
-		Offset boolOffset() const { return Offset(contained->size()); }
-
 		// Other misc. code generation helpers.
 		void CODECALL initMaybe(InlineParams p);
 		void CODECALL copyMaybe(InlineParams p);
+		void CODECALL castMaybe(InlineParams p); // Cast from plain to Maybe<T>
 		void CODECALL emptyMaybe(InlineParams p);
 		void CODECALL anyMaybe(InlineParams p);
+		void CODECALL toSMaybe(InlineParams p);
+		void CODECALL toSMaybeBuf(InlineParams p);
+		void CODECALL cloneMaybe(InlineParams p);
 	};
 
 

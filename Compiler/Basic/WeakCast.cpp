@@ -117,15 +117,58 @@ namespace storm {
 		void WeakMaybeCast::code(CodeGen *state, CodeResult *boolResult, MAYBE(LocalVar *) var) {
 			using namespace code;
 
-			// Note: we're assuming we're working with Maybe<T> where T is a class.
+			Value srcType = expr->result().type();
+			if (MaybeClassType *c = as<MaybeClassType>(srcType.type)) {
+				classCode(c, state, boolResult, var);
+			} else if (MaybeValueType *v = as<MaybeValueType>(srcType.type)) {
+				valueCode(v, state, boolResult, var);
+			}
+		}
 
-			// Get the variable and store it in our variable.
-			CodeResult *from = new (this) CodeResult(expr->result().type().asRef(false), var->var);
+		void WeakMaybeCast::classCode(MaybeClassType *c, CodeGen *state, CodeResult *boolResult, MAYBE(LocalVar *) var) {
+			using namespace code;
+
+			CodeResult *from;
+			if (var)
+				from = new (this) CodeResult(Value(c), var->var);
+			else
+				from = new (this) CodeResult(Value(c), state->block);
 			expr->code(state, from);
 
 			// Check if it is null.
-			*state->l << cmp(var->var.v, ptrConst(Offset()));
+			*state->l << cmp(from->location(state).v, ptrConst(Offset()));
 			*state->l << setCond(boolResult->location(state).v, ifNotEqual);
+		}
+
+		void WeakMaybeCast::valueCode(MaybeValueType *c, CodeGen *state, CodeResult *boolResult, MAYBE(LocalVar *) var) {
+			using namespace code;
+
+			CodeResult *from = new (this) CodeResult(Value(c), state->block);
+			expr->code(state, from);
+			from->location(state).created(state);
+
+			Label end = state->l->label();
+
+			// Check if it is null.
+			*state->l << lea(ptrC, from->location(state).v);
+			*state->l << cmp(byteRel(ptrC, c->boolOffset()), byteConst(0));
+			*state->l << setCond(boolResult->location(state).v, ifNotEqual);
+			*state->l << jmp(end, ifEqual);
+
+			// Copy it if we want a result, and if we weren't null.
+			if (var) {
+				*state->l << lea(ptrA, var->var.v);
+				if (c->param().isBuiltIn()) {
+					Size sz = c->param().size();
+					*state->l << mov(xRel(sz, ptrA, Offset()), xRel(sz, ptrC, Offset()));
+				} else {
+					*state->l << fnParam(engine().ptrDesc(), ptrA);
+					*state->l << fnParam(engine().ptrDesc(), ptrC);
+					*state->l << fnCall(c->param().copyCtor(), true);
+				}
+			}
+
+			*state->l << end;
 		}
 
 		void WeakMaybeCast::toS(StrBuf *to) const {

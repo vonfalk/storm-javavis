@@ -1,5 +1,6 @@
 #pragma once
 #include "Block.h"
+#include "Compiler/Lib/Maybe.h"
 
 namespace storm {
 	namespace bs {
@@ -87,6 +88,12 @@ namespace storm {
 		private:
 			// Expression to cast.
 			Expr *expr;
+
+			// Generate code for class types.
+			void classCode(MaybeClassType *c, CodeGen *state, CodeResult *boolResult, MAYBE(LocalVar *) var);
+
+			// Genereate code for value types.
+			void valueCode(MaybeValueType *c, CodeGen *state, CodeResult *boolResult, MAYBE(LocalVar *) var);
 		};
 
 		// Figure out what kind of weak cast to create based on the type of the lhs of expressions like <lhs> as <type>.

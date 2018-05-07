@@ -15,6 +15,7 @@
 #include "Core/Convert.h"
 #include "Lib/Enum.h"
 #include "Lib/Fn.h"
+#include "Lib/Maybe.h"
 #include "Syntax/Node.h"
 #include "Utils/Memory.h"
 #include "StdIoThread.h"
@@ -336,6 +337,8 @@ namespace storm {
 			return FNREF(fnCreateRaw);
 		case rFnNull:
 			return FNREF(fnNull);
+		case rMaybeToS:
+			return FNREF(MaybeValueType::toSHelper);
 		default:
 			assert(false, L"Unknown reference: " + ::toS(ref));
 			return null;

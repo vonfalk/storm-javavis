@@ -85,25 +85,43 @@ Int testMaybeInv2(Int v) {
 	w.get;
 }
 
-Int testMaybeValue(Int v) {
+// See if we can return Maybe<T> properly.
+Int? createMaybe(Int v) {
 	Int? result;
+	if (v > 0)
+		result = v;
+	result;
+}
+
+Int testMaybeValue(Int v) {
+	Int? result = createMaybe(v);
+
+	if (result) {
+		result;
+	} else {
+		8;
+	}
+}
+
+Int testMaybeValueAny(Int v) {
+	Int? result = createMaybe(v);
 
 	if (v > 0)
 		result = v;
 
-	// if (result) {
-	// 	result;
-	// } else {
-	// 	8;
-	// }
-	3;
+	if (result.any) {
+		1;
+	} else {
+		0;
+	}
+}
+
+// See if we can use Maybe<T> as a parameter.
+Str maybeToS(Int? val) {
+	val.toS();
 }
 
 Str testMaybeValueToS(Int v) {
-	Int? result;
-
-	if (v > 0)
-		result = v;
-
-	result.toS();
+	Int? result = createMaybe(v);
+	maybeToS(result);
 }

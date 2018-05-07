@@ -264,7 +264,7 @@ namespace storm {
 
 			result->at(s->count()) = Primitive(primitive::integer, Size::sByte, Offset(original->size()));
 			return result;
-		} else if (ComplexDesc *c = as<ComplexDesc>(original)) {
+		} else if (as<ComplexDesc>(original)) {
 			// Complex description is the easiest actually... We just sort everything out in our copy-ctor.
 			Ref ctor = engine.ref(Engine::rFnNull), dtor = engine.ref(Engine::rFnNull);
 			if (Function *f = copyCtor())
@@ -284,40 +284,43 @@ namespace storm {
 		Value b = Value(StormInfo<Bool>::type(e));
 
 		Array<Value> *r = new (e) Array<Value>(1, t.asRef(true));
-		Array<Value> *rv = new (e) Array<Value>(2, t);
-		rv->at(0) = t.asRef(true);
+		Array<Value> *rr = new (e) Array<Value>(2, t.asRef(true));
 		Array<Value> *rp = new (e) Array<Value>(2, t.asRef(true));
-		rp->at(1) = param();
+		rp->at(1) = param().asRef(true);
+
+		handle = &contained->handle();
+		offset = boolOffset().current();
 
 		add(inlinedFunction(e, Value(), CTOR, r, fnPtr(e, &MaybeValueType::initMaybe, this)));
-		add(inlinedFunction(e, Value(), CTOR, rv, fnPtr(e, &MaybeValueType::copyMaybe, this)));
-		// add(inlinedFunction(e, t.asRef(true), S("="), rv, fnPtr(e, &copyMaybeClass)));
+		add(inlinedFunction(e, Value(), CTOR, rr, fnPtr(e, &MaybeValueType::copyMaybe, this)));
+		add(inlinedFunction(e, t.asRef(true), S("="), rr, fnPtr(e, &MaybeValueType::copyMaybe, this)));
 		add(inlinedFunction(e, b, S("empty"), r, fnPtr(e, &MaybeValueType::emptyMaybe, this)));
 		add(inlinedFunction(e, b, S("any"), r, fnPtr(e, &MaybeValueType::anyMaybe, this)));
 
-		// TODO:
-		// // Cast constructor.
-		// Function *cast = inlinedFunction(e, Value(), CTOR, rp, fnPtr(e, &copyMaybeClass));
-		// cast->flags |= namedAutoCast;
-		// add(cast);
+		// Cast constructor.
+		Function *cast = inlinedFunction(e, Value(), CTOR, rp, fnPtr(e, &MaybeValueType::castMaybe, this));
+		cast->flags |= namedAutoCast;
+		add(cast);
 
-		// add(nativeEngineFunction(e, Value(Str::stormType(e)), S("toS"), v, address(&maybeToSClass)));
+		if (handle->toSFn) {
+			add(inlinedFunction(e, Value(Str::stormType(e)), S("toS"), r, fnPtr(e, &MaybeValueType::toSMaybe, this)));
 
-		// Array<Value> *strBuf = new (e) Array<Value>(2, t);
-		// strBuf->at(1) = Value(StrBuf::stormType(e));
-		// add(nativeFunction(e, Value(), S("toS"), strBuf, address(&maybeToSBufClass)));
+			Array<Value> *strBuf = new (e) Array<Value>(2, t);
+			strBuf->at(1) = Value(StrBuf::stormType(e));
+			add(inlinedFunction(e, Value(), S("toS"), strBuf, fnPtr(e, &MaybeValueType::toSMaybe, this)));
+		}
 
-		// if (!contained->isA(TObject::stormType(e))) {
-		// 	Array<Value> *clone = new (e) Array<Value>(2, t);
-		// 	clone->at(1) = Value(CloneEnv::stormType(e));
-		// 	add(nativeFunction(e, Value(), S("deepCopy"), clone, address(&maybeCloneClass)));
-		// }
+		if (contained->deepCopyFn()) {
+			Array<Value> *clone = new (e) Array<Value>(2, t);
+			clone->at(1) = Value(CloneEnv::stormType(e));
+			add(nativeFunction(e, Value(), S("deepCopy"), clone, fnPtr(e, &MaybeValueType::cloneMaybe, this)));
+		}
 
-		// // Create copy ctors for derived versions of Maybe<T> and T.
-		// add(new (e) TemplateFn(new (e) Str(CTOR), fnPtr(e, &MaybeClassType::createCopy, this)));
+		// Create copy ctors for derived versions of Maybe<T> and T.
+		add(new (e) TemplateFn(new (e) Str(CTOR), fnPtr(e, &MaybeValueType::createCopy, this)));
 
-		// // Create assignment functions for derived versions of Maybe.
-		// add(new (e) TemplateFn(new (e) Str(S("=")), fnPtr(e, &MaybeClassType::createAssign, this)));
+		// Create assignment functions for derived versions of Maybe.
+		add(new (e) TemplateFn(new (e) Str(S("=")), fnPtr(e, &MaybeValueType::createAssign, this)));
 
 		return MaybeType::loadAll();
 	}
@@ -329,7 +332,71 @@ namespace storm {
 	}
 
 	void MaybeValueType::copyMaybe(InlineParams p) {
-		assert(false, L"TODO!");
+		using namespace code;
+		*p.state->l << mov(ptrA, p.params->at(0));
+		*p.state->l << mov(ptrC, p.params->at(1));
+
+		// Store the result before we trash it.
+		if (p.result->needed()) {
+			*p.state->l << mov(p.result->location(p.state).v, ptrA);
+		}
+
+		Label empty = p.state->l->label();
+
+		*p.state->l << mov(bl, byteRel(ptrC, boolOffset()));
+		*p.state->l << mov(byteRel(ptrA, boolOffset()), bl);
+		*p.state->l << cmp(bl, byteConst(0));
+		*p.state->l << jmp(empty, ifEqual);
+
+		// Copy.
+		if (Value(contained).isBuiltIn()) {
+			// Just move the value.
+			Size sz = contained->size();
+			*p.state->l << mov(xRel(sz, ptrA, Offset()), xRel(sz, ptrC, Offset()));
+		} else {
+			Function *copyCtor = contained->copyCtor();
+			if (!copyCtor)
+				throw TypedefError(L"The type " + ::toS(contained->identifier()) + L" does not provide a copy constructor!");
+
+			// Call the regular constructor! (TODO? Inline it?)
+			*p.state->l << fnParam(engine.ptrDesc(), ptrA);
+			*p.state->l << fnParam(engine.ptrDesc(), ptrC);
+			*p.state->l << fnCall(copyCtor->ref(), false);
+		}
+
+		*p.state->l << empty;
+	}
+
+	void MaybeValueType::castMaybe(InlineParams p) {
+		using namespace code;
+		*p.state->l << mov(ptrA, p.params->at(0));
+		*p.state->l << mov(ptrC, p.params->at(1));
+
+		// Store the result before we trash it.
+		if (p.result->needed()) {
+			*p.state->l << mov(p.result->location(p.state).v, ptrA);
+		}
+
+		*p.state->l << mov(byteRel(ptrA, boolOffset()), byteConst(1));
+
+		// Copy.
+		if (Value(contained).isBuiltIn()) {
+			// Just move the value.
+			Size sz = contained->size();
+			*p.state->l << mov(xRel(sz, ptrA, Offset()), xRel(sz, ptrC, Offset()));
+		} else {
+			Function *copyCtor = contained->copyCtor();
+			if (!copyCtor) {
+				// TODO: We could fall back to a memcpy implementation... We can't inline it,
+				// however, as we don't know the exact size of the type (could be either 32- or 64-bit).
+				throw TypedefError(L"The type " + ::toS(contained->identifier()) + L" does not provide a copy constructor!");
+			}
+
+			// Call the regular constructor! (TODO? Inline it?)
+			*p.state->l << fnParam(engine.ptrDesc(), ptrA);
+			*p.state->l << fnParam(engine.ptrDesc(), ptrC);
+			*p.state->l << fnCall(copyCtor->ref(), false);
+		}
 	}
 
 	void MaybeValueType::emptyMaybe(InlineParams p) {
@@ -347,6 +414,105 @@ namespace storm {
 
 		*p.state->l << mov(ptrA, p.params->at(0));
 		*p.state->l << mov(p.result->location(p.state).v, byteRel(ptrA, boolOffset()));
+	}
+
+	void MaybeValueType::toSMaybe(InlineParams p) {
+		using namespace code;
+		if (!p.result->needed())
+			return;
+
+		*p.state->l << fnParam(engine.ptrDesc(), typeRef());
+		*p.state->l << fnParam(engine.ptrDesc(), p.params->at(0));
+		*p.state->l << fnParam(engine.ptrDesc(), ptrConst(0));
+		*p.state->l << fnCall(engine.ref(Engine::rMaybeToS), false, engine.ptrDesc(), p.result->location(p.state).v);
+	}
+
+	void MaybeValueType::toSMaybeBuf(InlineParams p) {
+		using namespace code;
+		if (!p.result->needed())
+			return;
+
+		*p.state->l << fnParam(engine.ptrDesc(), typeRef());
+		*p.state->l << fnParam(engine.ptrDesc(), p.params->at(0));
+		*p.state->l << fnParam(engine.ptrDesc(), p.params->at(1));
+		*p.state->l << fnCall(engine.ref(Engine::rMaybeToS), false);
+	}
+
+	void *MaybeValueType::toSHelper(MaybeValueType *me, void *value, StrBuf *out) {
+		StrBuf *to = out;
+		if (!to)
+			to = new (me) StrBuf();
+
+		// Does this object represent 'null'?
+		byte *data = (byte *)value;
+		if (data[me->offset]) {
+			(*me->handle->toSFn)(value, to);
+		} else {
+			*to << S("null");
+		}
+
+		// Were we called as 'toS()' or 'toS(StrBuf)'?
+		if (out)
+			return null;
+		else
+			return to->toS();
+	}
+
+	void MaybeValueType::cloneMaybe(InlineParams p) {
+		using namespace code;
+
+		Function *call = contained->deepCopyFn();
+		if (!call)
+			throw InternalError(L"The deep copy function was removed from " + ::toS(contained->identifier()));
+
+		Label end = p.state->l->label();
+
+		*p.state->l << mov(ptrA, p.params->at(0));
+		*p.state->l << cmp(byteRel(ptrA, boolOffset()), byteConst(0));
+		*p.state->l << jmp(end, ifEqual);
+
+		*p.state->l << fnParam(engine.ptrDesc(), ptrA);
+		*p.state->l << fnParam(engine.ptrDesc(), p.params->at(1));
+		*p.state->l << fnCall(contained->deepCopyFn()->ref(), true);
+
+		*p.state->l << end;
+	}
+
+	Named *MaybeValueType::createAssign(Str *name, SimplePart *part) {
+		if (part->params->count() != 2)
+			return null;
+
+		Value o = part->params->at(1);
+		if (!isMaybe(o))
+			return null;
+
+		Value other = unwrapMaybe(o);
+		if (!param().canStore(other))
+			return null;
+
+		Array<Value> *rr = new (this) Array<Value>(2, o.asRef(true));
+		rr->at(0) = Value(this).asRef(true);
+		return inlinedFunction(engine, Value(), S("="), rr, fnPtr(engine, &MaybeValueType::copyMaybe, this));
+	}
+
+	Named *MaybeValueType::createCopy(Str *name, SimplePart *part) {
+		if (part->params->count() != 2)
+			return null;
+
+		Value o = part->params->at(1);
+		if (!isMaybe(o))
+			return null;
+
+		Value other = unwrapMaybe(o);
+
+		if (!param().canStore(other))
+			return null;
+
+		Array<Value> *rr = new (this) Array<Value>(2, o.asRef(true));
+		rr->at(0) = Value(this).asRef(true);
+		Function *f = inlinedFunction(engine, Value(), S("="), rr, fnPtr(engine, &MaybeValueType::copyMaybe, this));
+		f->flags |= namedAutoCast;
+		return f;
 	}
 
 }

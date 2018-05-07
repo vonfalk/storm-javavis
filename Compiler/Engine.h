@@ -182,6 +182,8 @@ namespace storm {
 			rFnCreate,
 			// A null function (does nothing).
 			rFnNull,
+			// ToS helper for Maybe<T>.
+			rMaybeToS,
 			// Should be the last one.
 			refCount,
 		};

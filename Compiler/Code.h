@@ -171,6 +171,9 @@ namespace storm {
 
 	/**
 	 * Parameters passed to functions generating inline code.
+	 *
+	 * Note: The params may be registers!
+	 * Currently, only the first will ever be a register. We should verify that!
 	 */
 	class InlineParams {
 		STORM_VALUE;

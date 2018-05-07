@@ -133,7 +133,7 @@ namespace storm {
 		void STORM_FN autoCall(CodeGen *to, Array<code::Operand> *params, CodeResult *result);
 
 		// Generate code for this function call, assuming we are performing the call the same thread as the
-		// currently running thread. if 'useLookup' is false, we will not use the lookup function (ie VTables).
+		// currently running thread. If 'useLookup' is false, we will not use the lookup function (ie VTables).
 		void STORM_FN localCall(CodeGen *to, Array<code::Operand> *params, CodeResult *result, Bool useLookup);
 
 		// Generate code for this function call, assuming we want to run on a different thread.
