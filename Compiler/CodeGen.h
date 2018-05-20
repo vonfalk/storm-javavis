@@ -186,4 +186,9 @@ namespace storm {
 	// Create a thunk for a function usable with function pointers. This thunk is compatible with 'os::CallThunk'
 	code::Binary *STORM_FN callThunk(Value result, Array<Value> *params);
 
+	// Make sure all parameters in a parameter list reside in memory, moving any values stored in
+	// registers into memory as necessary. Returns either the original parameter list or a modified
+	// version if at least one parameter was flushed to memory.
+	Array<code::Operand> *STORM_FN spillRegisters(CodeGen *s, Array<code::Operand> *params);
+
 }

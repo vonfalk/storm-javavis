@@ -391,4 +391,30 @@ namespace storm {
 		return new (e) Binary(e.arena(), l);
 	}
 
+
+	Array<code::Operand> *STORM_FN spillRegisters(CodeGen *s, Array<code::Operand> *params) {
+		Bool hasReg = false;
+		for (Nat i = 0; i < params->count(); i++) {
+			hasReg |= params->at(i).hasRegister();
+		}
+
+		if (!hasReg)
+			return params;
+
+		Array<code::Operand> *result = new (params) Array<code::Operand>(*params);
+
+		for (Nat i = 0; i < result->count(); i++) {
+			code::Operand &op = result->at(i);
+			if (!op.hasRegister())
+				continue;
+
+			// Create a variable for this type.
+			code::Var v = s->l->createVar(s->block, op.size());
+			*s->l << mov(v, op);
+			op = code::Operand(v);
+		}
+
+		return result;
+	}
+
 }

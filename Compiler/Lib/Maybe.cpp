@@ -87,19 +87,21 @@ namespace storm {
 
 	static void initMaybeClass(InlineParams p) {
 		using namespace code;
-		*p.state->l << mov(ptrA, p.params->at(0));
-		*p.state->l << mov(ptrRel(ptrA, Offset()), ptrConst(Offset()));
+		p.allocRegs(0);
+		*p.state->l << mov(ptrRel(p.regParam(0), Offset()), ptrConst(Offset()));
 	}
 
 	static void copyMaybeClass(InlineParams p) {
 		using namespace code;
-		*p.state->l << mov(ptrA, p.params->at(0));
-		*p.state->l << mov(ptrRel(ptrA, Offset()), p.params->at(1));
+		p.allocRegs(0);
+		Reg dest = p.regParam(0);
 
-		// See if we should return something (neccessary since we can be used as a constructor).
+		*p.state->l << mov(ptrRel(dest, Offset()), p.param(1));
+
+		// See if we should return something (necessary since we can be used as an assignment).
 		if (p.result->needed()) {
-			if (!p.result->suggest(p.state, p.params->at(0))) {
-				*p.state->l << mov(p.result->location(p.state).v, p.params->at(0));
+			if (!p.result->suggest(p.state, p.originalParam(0))) {
+				*p.state->l << mov(p.result->location(p.state).v, dest);
 			}
 		}
 	}
@@ -109,7 +111,7 @@ namespace storm {
 		if (!p.result->needed())
 			return;
 
-		*p.state->l << cmp(p.params->at(0), ptrConst(Offset()));
+		*p.state->l << cmp(p.param(0), ptrConst(Offset()));
 		*p.state->l << setCond(p.result->location(p.state).v, ifEqual);
 	}
 
@@ -118,7 +120,7 @@ namespace storm {
 		if (!p.result->needed())
 			return;
 
-		*p.state->l << cmp(p.params->at(0), ptrConst(Offset()));
+		*p.state->l << cmp(p.param(0), ptrConst(Offset()));
 		*p.state->l << setCond(p.result->location(p.state).v, ifNotEqual);
 	}
 
@@ -327,40 +329,45 @@ namespace storm {
 
 	void MaybeValueType::initMaybe(InlineParams p) {
 		using namespace code;
-		*p.state->l << mov(ptrA, p.params->at(0));
-		*p.state->l << mov(byteRel(ptrA, boolOffset()), byteConst(0));
+		p.allocRegs(0);
+		*p.state->l << mov(byteRel(p.regParam(0), boolOffset()), byteConst(0));
 	}
 
 	void MaybeValueType::copyMaybe(InlineParams p) {
 		using namespace code;
-		*p.state->l << mov(ptrA, p.params->at(0));
-		*p.state->l << mov(ptrC, p.params->at(1));
+		p.allocRegs(0, 1);
+
+		Reg dest = p.regParam(0);
+		Reg src = p.regParam(1);
+
+		Reg tmp = asSize(freeReg(dest, src), Size::sByte);
+
 
 		// Store the result before we trash it.
 		if (p.result->needed()) {
-			*p.state->l << mov(p.result->location(p.state).v, ptrA);
+			*p.state->l << mov(p.result->location(p.state).v, dest);
 		}
 
 		Label empty = p.state->l->label();
 
-		*p.state->l << mov(bl, byteRel(ptrC, boolOffset()));
-		*p.state->l << mov(byteRel(ptrA, boolOffset()), bl);
-		*p.state->l << cmp(bl, byteConst(0));
+		*p.state->l << mov(tmp, byteRel(src, boolOffset()));
+		*p.state->l << mov(byteRel(dest, boolOffset()), tmp);
+		*p.state->l << cmp(tmp, byteConst(0));
 		*p.state->l << jmp(empty, ifEqual);
 
 		// Copy.
 		if (Value(contained).isBuiltIn()) {
 			// Just move the value.
 			Size sz = contained->size();
-			*p.state->l << mov(xRel(sz, ptrA, Offset()), xRel(sz, ptrC, Offset()));
+			*p.state->l << mov(xRel(sz, dest, Offset()), xRel(sz, src, Offset()));
 		} else {
 			Function *copyCtor = contained->copyCtor();
 			if (!copyCtor)
 				throw TypedefError(L"The type " + ::toS(contained->identifier()) + L" does not provide a copy constructor!");
 
 			// Call the regular constructor! (TODO? Inline it?)
-			*p.state->l << fnParam(engine.ptrDesc(), ptrA);
-			*p.state->l << fnParam(engine.ptrDesc(), ptrC);
+			*p.state->l << fnParam(engine.ptrDesc(), dest);
+			*p.state->l << fnParam(engine.ptrDesc(), src);
 			*p.state->l << fnCall(copyCtor->ref(), false);
 		}
 
@@ -369,21 +376,23 @@ namespace storm {
 
 	void MaybeValueType::castMaybe(InlineParams p) {
 		using namespace code;
-		*p.state->l << mov(ptrA, p.params->at(0));
-		*p.state->l << mov(ptrC, p.params->at(1));
+		p.allocRegs(0, 1);
+
+		Reg dest = p.regParam(0);
+		Reg src = p.regParam(1);
 
 		// Store the result before we trash it.
 		if (p.result->needed()) {
-			*p.state->l << mov(p.result->location(p.state).v, ptrA);
+			*p.state->l << mov(p.result->location(p.state).v, dest);
 		}
 
-		*p.state->l << mov(byteRel(ptrA, boolOffset()), byteConst(1));
+		*p.state->l << mov(byteRel(dest, boolOffset()), byteConst(1));
 
 		// Copy.
 		if (Value(contained).isBuiltIn()) {
 			// Just move the value.
 			Size sz = contained->size();
-			*p.state->l << mov(xRel(sz, ptrA, Offset()), xRel(sz, ptrC, Offset()));
+			*p.state->l << mov(xRel(sz, dest, Offset()), xRel(sz, src, Offset()));
 		} else {
 			Function *copyCtor = contained->copyCtor();
 			if (!copyCtor) {
@@ -393,8 +402,8 @@ namespace storm {
 			}
 
 			// Call the regular constructor! (TODO? Inline it?)
-			*p.state->l << fnParam(engine.ptrDesc(), ptrA);
-			*p.state->l << fnParam(engine.ptrDesc(), ptrC);
+			*p.state->l << fnParam(engine.ptrDesc(), dest);
+			*p.state->l << fnParam(engine.ptrDesc(), src);
 			*p.state->l << fnCall(copyCtor->ref(), false);
 		}
 	}
@@ -404,16 +413,18 @@ namespace storm {
 		if (!p.result->needed())
 			return;
 
-		*p.state->l << mov(ptrA, p.params->at(0));
-		*p.state->l << cmp(byteRel(ptrA, boolOffset()), byteConst(0));
+		p.allocRegs(0);
+		*p.state->l << cmp(byteRel(p.regParam(0), boolOffset()), byteConst(0));
 		*p.state->l << setCond(p.result->location(p.state).v, ifEqual);
 	}
 
 	void MaybeValueType::anyMaybe(InlineParams p) {
 		using namespace code;
+		if (!p.result->needed())
+			return;
 
-		*p.state->l << mov(ptrA, p.params->at(0));
-		*p.state->l << mov(p.result->location(p.state).v, byteRel(ptrA, boolOffset()));
+		p.allocRegs(0);
+		*p.state->l << mov(p.result->location(p.state).v, byteRel(p.regParam(0), boolOffset()));
 	}
 
 	void MaybeValueType::toSMaybe(InlineParams p) {
@@ -422,7 +433,7 @@ namespace storm {
 			return;
 
 		*p.state->l << fnParam(engine.ptrDesc(), typeRef());
-		*p.state->l << fnParam(engine.ptrDesc(), p.params->at(0));
+		*p.state->l << fnParam(engine.ptrDesc(), p.param(0));
 		*p.state->l << fnParam(engine.ptrDesc(), ptrConst(0));
 		*p.state->l << fnCall(engine.ref(Engine::rMaybeToS), false, engine.ptrDesc(), p.result->location(p.state).v);
 	}
@@ -433,8 +444,8 @@ namespace storm {
 			return;
 
 		*p.state->l << fnParam(engine.ptrDesc(), typeRef());
-		*p.state->l << fnParam(engine.ptrDesc(), p.params->at(0));
-		*p.state->l << fnParam(engine.ptrDesc(), p.params->at(1));
+		*p.state->l << fnParam(engine.ptrDesc(), p.param(0));
+		*p.state->l << fnParam(engine.ptrDesc(), p.param(1));
 		*p.state->l << fnCall(engine.ref(Engine::rMaybeToS), false);
 	}
 
@@ -467,12 +478,14 @@ namespace storm {
 
 		Label end = p.state->l->label();
 
-		*p.state->l << mov(ptrA, p.params->at(0));
-		*p.state->l << cmp(byteRel(ptrA, boolOffset()), byteConst(0));
+		p.allocRegs(0);
+		Reg dest = p.regParam(0);
+
+		*p.state->l << cmp(byteRel(dest, boolOffset()), byteConst(0));
 		*p.state->l << jmp(end, ifEqual);
 
-		*p.state->l << fnParam(engine.ptrDesc(), ptrA);
-		*p.state->l << fnParam(engine.ptrDesc(), p.params->at(1));
+		*p.state->l << fnParam(engine.ptrDesc(), dest);
+		*p.state->l << fnParam(engine.ptrDesc(), p.param(1));
 		*p.state->l << fnCall(contained->deepCopyFn()->ref(), true);
 
 		*p.state->l << end;

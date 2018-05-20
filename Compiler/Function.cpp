@@ -191,10 +191,12 @@ namespace storm {
 		if (useLookup && as<DelegatedCode>(lookup) == null)
 			inlined = null;
 
-		if (inlined)
+		if (inlined) {
+			// TODO: We might want to create a new block here.
 			inlined->code(to, params, result);
-		else
+		} else {
 			localCall(to, params, result, useLookup ? this->ref() : directRef());
+		}
 	}
 
 	void Function::localCall(CodeGen *to, Array<code::Operand> *params, CodeResult *res, code::Ref ref) {
@@ -241,6 +243,9 @@ namespace storm {
 		Engine &e = engine();
 		CodeGen *sub = to->child();
 		*to->l << begin(sub->block);
+
+		// Spill any registers to memory if necessary...
+		params = spillRegisters(sub, params);
 
 		// Create the parameters.
 		Var par = createFnCall(sub, this->params, params, true);
@@ -306,6 +311,9 @@ namespace storm {
 		Engine &e = engine();
 		CodeGen *sub = to->child();
 		*to->l << begin(sub->block);
+
+		// Spill any registers to memory if necessary...
+		params = spillRegisters(sub, params);
 
 		// Create the parameters.
 		Var par = createFnCall(sub, this->params, params, true);

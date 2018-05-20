@@ -7,68 +7,68 @@ namespace storm {
 	void ucast(InlineParams p) {
 		if (!p.result->needed())
 			return;
-		*p.state->l << ucast(p.result->location(p.state).v, p.params->at(0));
+		*p.state->l << ucast(p.result->location(p.state).v, p.param(0));
 	}
 
 	void icast(InlineParams p) {
 		if (!p.result->needed())
 			return;
-		*p.state->l << icast(p.result->location(p.state).v, p.params->at(0));
+		*p.state->l << icast(p.result->location(p.state).v, p.param(0));
 	}
 
 	void numAdd(InlineParams p) {
 		if (p.result->needed()) {
 			Operand result = p.result->location(p.state).v;
-			*p.state->l << mov(result, p.params->at(0));
-			*p.state->l << add(result, p.params->at(1));
+			*p.state->l << mov(result, p.param(0));
+			*p.state->l << add(result, p.param(1));
 		}
 	}
 
 	void numSub(InlineParams p) {
 		if (p.result->needed()) {
 			Operand result = p.result->location(p.state).v;
-			*p.state->l << mov(result, p.params->at(0));
-			*p.state->l << sub(result, p.params->at(1));
+			*p.state->l << mov(result, p.param(0));
+			*p.state->l << sub(result, p.param(1));
 		}
 	}
 
 	void numMul(InlineParams p) {
 		if (p.result->needed()) {
 			Operand result = p.result->location(p.state).v;
-			*p.state->l << mov(result, p.params->at(0));
-			*p.state->l << mul(result, p.params->at(1));
+			*p.state->l << mov(result, p.param(0));
+			*p.state->l << mul(result, p.param(1));
 		}
 	}
 
 	void numIDiv(InlineParams p) {
 		if (p.result->needed()) {
 			Operand result = p.result->location(p.state).v;
-			*p.state->l << mov(result, p.params->at(0));
-			*p.state->l << idiv(result, p.params->at(1));
+			*p.state->l << mov(result, p.param(0));
+			*p.state->l << idiv(result, p.param(1));
 		}
 	}
 
 	void numUDiv(InlineParams p) {
 		if (p.result->needed()) {
 			Operand result = p.result->location(p.state).v;
-			*p.state->l << mov(result, p.params->at(0));
-			*p.state->l << udiv(result, p.params->at(1));
+			*p.state->l << mov(result, p.param(0));
+			*p.state->l << udiv(result, p.param(1));
 		}
 	}
 
 	void numIMod(InlineParams p) {
 		if (p.result->needed()) {
 			Operand result = p.result->location(p.state).v;
-			*p.state->l << mov(result, p.params->at(0));
-			*p.state->l << imod(result, p.params->at(1));
+			*p.state->l << mov(result, p.param(0));
+			*p.state->l << imod(result, p.param(1));
 		}
 	}
 
 	void numUMod(InlineParams p) {
 		if (p.result->needed()) {
 			Operand result = p.result->location(p.state).v;
-			*p.state->l << mov(result, p.params->at(0));
-			*p.state->l << umod(result, p.params->at(1));
+			*p.state->l << mov(result, p.param(0));
+			*p.state->l << umod(result, p.param(1));
 		}
 	}
 
@@ -77,7 +77,7 @@ namespace storm {
 			Operand result = p.result->location(p.state).v;
 			// Note: it would be nice to use the 'neg' instruction for this.
 			*p.state->l << mov(result, xConst(result.size(), 0));
-			*p.state->l << sub(result, p.params->at(0));
+			*p.state->l << sub(result, p.param(0));
 		}
 	}
 

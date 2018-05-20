@@ -191,16 +191,6 @@ namespace storm {
 	 * Inline code.
 	 */
 
-	InlineParams::InlineParams(CodeGen *state, Array<code::Operand> *params, CodeResult *result) :
-		state(state), params(params), result(result) {}
-
-	void InlineParams::deepCopy(CloneEnv *env) {
-		clone(state, env);
-		clone(params, env);
-		clone(result, env);
-	}
-
-
 	InlineCode::InlineCode(Fn<void, InlineParams> *create) :
 		LazyCode(fnPtr(TObject::engine(), &InlineCode::generatePtr, this)), create(create) {}
 

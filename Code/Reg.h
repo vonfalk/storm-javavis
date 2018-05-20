@@ -73,6 +73,11 @@ namespace code {
 	// Are the two registers the same, disregarding size?
 	Bool STORM_FN same(Reg a, Reg b);
 
+	// Find a free register out of the three registers that are usable by default. Always returns a
+	// pointer-sized register.
+	Reg STORM_FN freeReg(Reg a);
+	Reg STORM_FN freeReg(Reg a, Reg b);
+
 	/**
 	 * Set of registers. Considers registers of different sizes to be the same, but keeps track of
 	 * the largest integer sized register used. Byte-sizes are promoted to 32-bit sizes.
@@ -230,4 +235,5 @@ namespace code {
 		static Nat registerSize(Reg r);
 
 	};
+
 }

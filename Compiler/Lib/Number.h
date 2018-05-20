@@ -29,7 +29,7 @@ namespace storm {
 	void numCmp(InlineParams p) {
 		if (p.result->needed()) {
 			code::Operand result = p.result->location(p.state).v;
-			*p.state->l << code::cmp(p.params->at(0), p.params->at(1));
+			*p.state->l << code::cmp(p.param(0), p.param(1));
 			*p.state->l << code::setCond(result, f);
 		}
 	}
@@ -59,120 +59,145 @@ namespace storm {
 	// Increase/decrease
 	template <class T>
 	void numInc(InlineParams p) {
-		*p.state->l << mov(code::ptrA, p.params->at(0));
-		*p.state->l << add(tRel(T(), code::ptrA), p.params->at(1));
+		p.allocRegs(0);
+		code::Reg dest = p.regParam(0);
+
+		*p.state->l << add(tRel(T(), dest), p.param(1));
 		if (p.result->needed())
-			*p.state->l << mov(p.result->location(p.state).v, tRel(T(), code::ptrA));
+			*p.state->l << mov(p.result->location(p.state).v, tRel(T(), dest));
 	}
 
 	template <class T>
 	void numDec(InlineParams p) {
-		*p.state->l << mov(code::ptrA, p.params->at(0));
-		*p.state->l << sub(tRel(T(), code::ptrA), p.params->at(1));
+		p.allocRegs(0);
+		code::Reg dest = p.regParam(0);
+
+		*p.state->l << sub(tRel(T(), dest), p.param(1));
 		if (p.result->needed())
-			*p.state->l << mov(p.result->location(p.state).v, tRel(T(), code::ptrA));
+			*p.state->l << mov(p.result->location(p.state).v, tRel(T(), dest));
 	}
 
 	template <class T>
 	void numScale(InlineParams p) {
-		*p.state->l << mov(code::ptrA, p.params->at(0));
-		*p.state->l << mul(tRel(T(), code::ptrA), p.params->at(1));
+		p.allocRegs(0);
+		code::Reg dest = p.regParam(0);
+
+		*p.state->l << mul(tRel(T(), dest), p.param(1));
 		if (p.result->needed())
-			*p.state->l << mov(p.result->location(p.state).v, tRel(T(), code::ptrA));
+			*p.state->l << mov(p.result->location(p.state).v, tRel(T(), dest));
 	}
 
 	template <class T>
 	void numIDivScale(InlineParams p) {
-		*p.state->l << mov(code::ptrA, p.params->at(0));
-		*p.state->l << idiv(tRel(T(), code::ptrA), p.params->at(1));
+		p.allocRegs(0);
+		code::Reg dest = p.regParam(0);
+
+		*p.state->l << idiv(tRel(T(), dest), p.param(1));
 		if (p.result->needed())
-			*p.state->l << mov(p.result->location(p.state).v, tRel(T(), code::ptrA));
+			*p.state->l << mov(p.result->location(p.state).v, tRel(T(), dest));
 	}
 
 	template <class T>
 	void numUDivScale(InlineParams p) {
-		*p.state->l << mov(code::ptrA, p.params->at(0));
-		*p.state->l << udiv(tRel(T(), code::ptrA), p.params->at(1));
+		p.allocRegs(0);
+		code::Reg dest = p.regParam(0);
+
+		*p.state->l << udiv(tRel(T(), dest), p.param(1));
 		if (p.result->needed())
-			*p.state->l << mov(p.result->location(p.state).v, tRel(T(), code::ptrA));
+			*p.state->l << mov(p.result->location(p.state).v, tRel(T(), dest));
 	}
 
 	template <class T>
 	void numIModEq(InlineParams p) {
-		*p.state->l << mov(code::ptrA, p.params->at(0));
-		*p.state->l << imod(tRel(T(), code::ptrA), p.params->at(1));
+		p.allocRegs(0);
+		code::Reg dest = p.regParam(0);
+
+		*p.state->l << imod(tRel(T(), dest), p.param(1));
 		if (p.result->needed())
-			*p.state->l << mov(p.result->location(p.state).v, tRel(T(), code::ptrA));
+			*p.state->l << mov(p.result->location(p.state).v, tRel(T(), dest));
 	}
 
 	template <class T>
 	void numUModEq(InlineParams p) {
-		*p.state->l << mov(code::ptrA, p.params->at(0));
-		*p.state->l << umod(tRel(T(), code::ptrA), p.params->at(1));
+		p.allocRegs(0);
+		code::Reg dest = p.regParam(0);
+
+		*p.state->l << umod(tRel(T(), dest), p.param(1));
 		if (p.result->needed())
-			*p.state->l << mov(p.result->location(p.state).v, tRel(T(), code::ptrA));
+			*p.state->l << mov(p.result->location(p.state).v, tRel(T(), dest));
 	}
 
 	template <class T>
 	void numPrefixInc(InlineParams p) {
-		*p.state->l << mov(code::ptrA, p.params->at(0));
-		*p.state->l << add(tRel(T(), code::ptrA), tConst(T(1)));
+		p.allocRegs(0);
+		code::Reg dest = p.regParam(0);
+
+		*p.state->l << add(tRel(T(), dest), tConst(T(1)));
 		if (p.result->needed())
-			*p.state->l << mov(p.result->location(p.state).v, tRel(T(), code::ptrA));
+			*p.state->l << mov(p.result->location(p.state).v, tRel(T(), dest));
 	}
 
 	template <class T>
 	void numPostfixInc(InlineParams p) {
-		*p.state->l << mov(code::ptrA, p.params->at(0));
+		p.allocRegs(0);
+		code::Reg dest = p.regParam(0);
+
 		if (p.result->needed())
-			*p.state->l << mov(p.result->location(p.state).v, tRel(T(), code::ptrA));
-		*p.state->l << add(tRel(T(), code::ptrA), tConst(T(1)));
+			*p.state->l << mov(p.result->location(p.state).v, tRel(T(), dest));
+		*p.state->l << add(tRel(T(), dest), tConst(T(1)));
 	}
 
 	template <class T>
 	void numPrefixDec(InlineParams p) {
-		*p.state->l << mov(code::ptrA, p.params->at(0));
-		*p.state->l << sub(tRel(T(), code::ptrA), tConst(T(1)));
+		p.allocRegs(0);
+		code::Reg dest = p.regParam(0);
+
+		*p.state->l << sub(tRel(T(), dest), tConst(T(1)));
 		if (p.result->needed())
-			*p.state->l << mov(p.result->location(p.state).v, tRel(T(), code::ptrA));
+			*p.state->l << mov(p.result->location(p.state).v, tRel(T(), dest));
 	}
 
 	template <class T>
 	void numPostfixDec(InlineParams p) {
-		*p.state->l << mov(code::ptrA, p.params->at(0));
+		p.allocRegs(0);
+		code::Reg dest = p.regParam(0);
+
 		if (p.result->needed())
-			*p.state->l << mov(p.result->location(p.state).v, tRel(T(), code::ptrA));
-		*p.state->l << sub(tRel(T(), code::ptrA), tConst(T(1)));
+			*p.state->l << mov(p.result->location(p.state).v, tRel(T(), dest));
+		*p.state->l << sub(tRel(T(), dest), tConst(T(1)));
 	}
 
 	template <class T>
 	void numAssign(InlineParams p) {
-		*p.state->l << mov(code::ptrA, p.params->at(0));
-		*p.state->l << mov(tRel(T(), code::ptrA), p.params->at(1));
+		p.allocRegs(0);
+		code::Reg dest = p.regParam(0);
+
+		*p.state->l << mov(tRel(T(), dest), p.param(1));
 		if (p.result->needed()) {
 			if (p.result->type().ref) {
 				// Try to suggest params[0], since we already have a ref to the value there.
-				if (!p.result->suggest(p.state, p.params->at(0)))
-					*p.state->l << mov(p.result->location(p.state).v, code::ptrA);
+				if (!p.result->suggest(p.state, p.originalParam(0)))
+					*p.state->l << mov(p.result->location(p.state).v, dest);
 			} else {
 				// Try to suggest params[1], since we already have the value there.
-				if (!p.result->suggest(p.state, p.params->at(1)))
-					*p.state->l << mov(p.result->location(p.state).v, code::ptrA);
+				if (!p.result->suggest(p.state, p.param(1)))
+					*p.state->l << mov(p.result->location(p.state).v, dest);
 			}
 		}
 	}
 
 	template <class T>
 	void numCopyCtor(InlineParams p) {
-		*p.state->l << mov(code::ptrC, p.params->at(1));
-		*p.state->l << mov(code::ptrA, p.params->at(0));
-		*p.state->l << mov(tRel(T(), code::ptrA), tRel(T(), code::ptrC));
+		p.allocRegs(0, 1);
+		*p.state->l << mov(tRel(T(), p.regParam(0)), tRel(T(), p.regParam(1)));
 	}
 
 	template <class T>
 	void numInit(InlineParams p) {
-		*p.state->l << mov(code::ptrA, p.params->at(0));
-		*p.state->l << mov(tRel(T(), code::ptrA), tConst(T(0)));
+		p.allocRegs(0);
+		code::Reg dest = p.regParam(0);
+
+		*p.state->l << mov(tRel(T(), dest), tConst(T(0)));
 	}
 
 	template <class T>
@@ -184,11 +209,11 @@ namespace storm {
 
 		Label lbl = p.state->l->label();
 		Label end = p.state->l->label();
-		Operand tmp1 = asSize(ptrA, p.params->at(0).size());
-		Operand tmp2 = asSize(ptrC, p.params->at(1).size());
+		p.allocRegs(0, 1);
+		Reg tmp1 = p.regParam(0);
+		Reg tmp2 = p.regParam(1);
+
 		Operand result = p.result->location(p.state).v;
-		*p.state->l << mov(tmp1, p.params->at(0));
-		*p.state->l << mov(tmp2, p.params->at(1));
 		*p.state->l << cmp(tmp1, tmp2);
 		*p.state->l << jmp(lbl, tLess(T()));
 		*p.state->l << mov(result, tmp2);
@@ -207,11 +232,11 @@ namespace storm {
 
 		Label lbl = p.state->l->label();
 		Label end = p.state->l->label();
-		Operand tmp1 = asSize(ptrA, p.params->at(0).size());
-		Operand tmp2 = asSize(ptrC, p.params->at(1).size());
+		p.allocRegs(0, 1);
+		Reg tmp1 = p.regParam(0);
+		Reg tmp2 = p.regParam(1);
+
 		Operand result = p.result->location(p.state).v;
-		*p.state->l << mov(tmp1, p.params->at(0));
-		*p.state->l << mov(tmp2, p.params->at(1));
 		*p.state->l << cmp(tmp1, tmp2);
 		*p.state->l << jmp(lbl, tLess(T()));
 		*p.state->l << mov(result, tmp1);
@@ -230,11 +255,11 @@ namespace storm {
 
 		Label lbl = p.state->l->label();
 		Label end = p.state->l->label();
-		Operand tmp1 = asSize(ptrA, p.params->at(0).size());
-		Operand tmp2 = asSize(ptrC, p.params->at(1).size());
+		p.allocRegs(0, 1);
+		Reg tmp1 = p.regParam(0);
+		Reg tmp2 = p.regParam(1);
+
 		Operand result = p.result->location(p.state).v;
-		*p.state->l << mov(tmp1, p.params->at(0));
-		*p.state->l << mov(tmp2, p.params->at(1));
 		*p.state->l << cmp(tmp1, tmp2);
 		*p.state->l << jmp(lbl, tLess(T()));
 		*p.state->l << sub(tmp1, tmp2);

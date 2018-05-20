@@ -11,15 +11,14 @@ namespace storm {
 	}
 
 	static void floatCopyCtor(InlineParams p) {
-		*p.state->l << mov(ptrC, p.params->at(1));
-		*p.state->l << mov(ptrA, p.params->at(0));
-		*p.state->l << mov(floatRel(ptrA, Offset()), floatRel(ptrC, Offset()));
+		p.allocRegs(0, 1);
+		*p.state->l << mov(floatRel(p.regParam(0), Offset()), floatRel(p.regParam(1), Offset()));
 	}
 
 	static void floatAdd(InlineParams p) {
 		if (p.result->needed()) {
-			*p.state->l << fld(p.params->at(0));
-			*p.state->l << fld(p.params->at(1));
+			*p.state->l << fld(p.param(0));
+			*p.state->l << fld(p.param(1));
 			*p.state->l << faddp();
 			*p.state->l << fstp(p.result->location(p.state).v);
 			*p.state->l << fwait();
@@ -28,8 +27,8 @@ namespace storm {
 
 	static void floatSub(InlineParams p) {
 		if (p.result->needed()) {
-			*p.state->l << fld(p.params->at(0));
-			*p.state->l << fld(p.params->at(1));
+			*p.state->l << fld(p.param(0));
+			*p.state->l << fld(p.param(1));
 			*p.state->l << fsubp();
 			*p.state->l << fstp(p.result->location(p.state).v);
 			*p.state->l << fwait();
@@ -39,7 +38,7 @@ namespace storm {
 	static void floatNeg(InlineParams p) {
 		if (p.result->needed()) {
 			*p.state->l << fldz();
-			*p.state->l << fld(p.params->at(0));
+			*p.state->l << fld(p.param(0));
 			*p.state->l << fsubp();
 			*p.state->l << fstp(p.result->location(p.state).v);
 			*p.state->l << fwait();
@@ -48,8 +47,8 @@ namespace storm {
 
 	static void floatMul(InlineParams p) {
 		if (p.result->needed()) {
-			*p.state->l << fld(p.params->at(0));
-			*p.state->l << fld(p.params->at(1));
+			*p.state->l << fld(p.param(0));
+			*p.state->l << fld(p.param(1));
 			*p.state->l << fmulp();
 			*p.state->l << fstp(p.result->location(p.state).v);
 			*p.state->l << fwait();
@@ -58,8 +57,8 @@ namespace storm {
 
 	static void floatDiv(InlineParams p) {
 		if (p.result->needed()) {
-			*p.state->l << fld(p.params->at(0));
-			*p.state->l << fld(p.params->at(1));
+			*p.state->l << fld(p.param(0));
+			*p.state->l << fld(p.param(1));
 			*p.state->l << fdivp();
 			*p.state->l << fstp(p.result->location(p.state).v);
 			*p.state->l << fwait();
@@ -67,17 +66,19 @@ namespace storm {
 	}
 
 	static void floatAssign(InlineParams p) {
-		*p.state->l << mov(ptrA, p.params->at(0));
-		*p.state->l << mov(floatRel(ptrA, Offset()), p.params->at(1));
+		p.allocRegs(0);
+		Reg dest = p.regParam(0);
+
+		*p.state->l << mov(floatRel(dest, Offset()), p.param(1));
 		if (p.result->needed())
-			if (!p.result->suggest(p.state, p.params->at(0)))
-				*p.state->l << mov(p.result->location(p.state).v, floatRel(ptrA, Offset()));
+			if (!p.result->suggest(p.state, p.originalParam(0)))
+				*p.state->l << mov(p.result->location(p.state).v, dest);
 	}
 
 	static void floatToInt(InlineParams p) {
 		if (!p.result->needed())
 			return;
-		*p.state->l << fld(p.params->at(0));
+		*p.state->l << fld(p.param(0));
 		*p.state->l << fistp(p.result->location(p.state).v);
 	}
 
@@ -85,8 +86,8 @@ namespace storm {
 	static void floatCmp(InlineParams p) {
 		if (p.result->needed()) {
 			Operand result = p.result->location(p.state).v;
-			*p.state->l << fld(p.params->at(1));
-			*p.state->l << fld(p.params->at(0));
+			*p.state->l << fld(p.param(1));
+			*p.state->l << fld(p.param(0));
 			*p.state->l << fcompp();
 			*p.state->l << setCond(result, f);
 		}
@@ -142,15 +143,14 @@ namespace storm {
 	}
 
 	static void doubleCopyCtor(InlineParams p) {
-		*p.state->l << mov(ptrC, p.params->at(1));
-		*p.state->l << mov(ptrA, p.params->at(0));
-		*p.state->l << mov(doubleRel(ptrA, Offset()), doubleRel(ptrC, Offset()));
+		p.allocRegs(0, 1);
+		*p.state->l << mov(doubleRel(p.regParam(0), Offset()), doubleRel(p.regParam(1), Offset()));
 	}
 
 	static void doubleAdd(InlineParams p) {
 		if (p.result->needed()) {
-			*p.state->l << fld(p.params->at(0));
-			*p.state->l << fld(p.params->at(1));
+			*p.state->l << fld(p.param(0));
+			*p.state->l << fld(p.param(1));
 			*p.state->l << faddp();
 			*p.state->l << fstp(p.result->location(p.state).v);
 			*p.state->l << fwait();
@@ -159,8 +159,8 @@ namespace storm {
 
 	static void doubleSub(InlineParams p) {
 		if (p.result->needed()) {
-			*p.state->l << fld(p.params->at(0));
-			*p.state->l << fld(p.params->at(1));
+			*p.state->l << fld(p.param(0));
+			*p.state->l << fld(p.param(1));
 			*p.state->l << fsubp();
 			*p.state->l << fstp(p.result->location(p.state).v);
 			*p.state->l << fwait();
@@ -170,7 +170,7 @@ namespace storm {
 	static void doubleNeg(InlineParams p) {
 		if (p.result->needed()) {
 			*p.state->l << fldz();
-			*p.state->l << fld(p.params->at(0));
+			*p.state->l << fld(p.param(0));
 			*p.state->l << fsubp();
 			*p.state->l << fstp(p.result->location(p.state).v);
 			*p.state->l << fwait();
@@ -179,8 +179,8 @@ namespace storm {
 
 	static void doubleMul(InlineParams p) {
 		if (p.result->needed()) {
-			*p.state->l << fld(p.params->at(0));
-			*p.state->l << fld(p.params->at(1));
+			*p.state->l << fld(p.param(0));
+			*p.state->l << fld(p.param(1));
 			*p.state->l << fmulp();
 			*p.state->l << fstp(p.result->location(p.state).v);
 			*p.state->l << fwait();
@@ -189,8 +189,8 @@ namespace storm {
 
 	static void doubleDiv(InlineParams p) {
 		if (p.result->needed()) {
-			*p.state->l << fld(p.params->at(0));
-			*p.state->l << fld(p.params->at(1));
+			*p.state->l << fld(p.param(0));
+			*p.state->l << fld(p.param(1));
 			*p.state->l << fdivp();
 			*p.state->l << fstp(p.result->location(p.state).v);
 			*p.state->l << fwait();
@@ -198,17 +198,20 @@ namespace storm {
 	}
 
 	static void doubleAssign(InlineParams p) {
-		*p.state->l << mov(ptrA, p.params->at(0));
-		*p.state->l << mov(doubleRel(ptrA, Offset()), p.params->at(1));
+		p.allocRegs(0);
+		Reg dest = p.regParam(0);
+
+		*p.state->l << mov(doubleRel(dest, Offset()), p.param(1));
 		if (p.result->needed())
-			if (!p.result->suggest(p.state, p.params->at(0)))
-				*p.state->l << mov(p.result->location(p.state).v, doubleRel(ptrA, Offset()));
+			if (!p.result->suggest(p.state, p.originalParam(0))) {
+				*p.state->l << mov(p.result->location(p.state).v, dest);
+			}
 	}
 
 	static void doubleToInt(InlineParams p) {
 		if (!p.result->needed())
 			return;
-		*p.state->l << fld(p.params->at(0));
+		*p.state->l << fld(p.param(0));
 		*p.state->l << fistp(p.result->location(p.state).v);
 	}
 
@@ -216,8 +219,8 @@ namespace storm {
 	static void doubleCmp(InlineParams p) {
 		if (p.result->needed()) {
 			Operand result = p.result->location(p.state).v;
-			*p.state->l << fld(p.params->at(1));
-			*p.state->l << fld(p.params->at(0));
+			*p.state->l << fld(p.param(1));
+			*p.state->l << fld(p.param(0));
 			*p.state->l << fcompp();
 			*p.state->l << setCond(result, f);
 		}

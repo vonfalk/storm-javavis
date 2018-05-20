@@ -92,6 +92,22 @@ namespace code {
 		return (aa & 0xFF) == (bb & 0xFF);
 	}
 
+	static const Reg gpRegs[] = { ptrA, ptrB, ptrC };
+
+	Reg freeReg(Reg a) {
+		for (nat i = 0; i < ARRAY_COUNT(gpRegs); i++)
+			if (!same(a, gpRegs[i]))
+				return gpRegs[i];
+		return noReg;
+	}
+
+	Reg freeReg(Reg a, Reg b) {
+		for (nat i = 0; i < ARRAY_COUNT(gpRegs); i++)
+			if (!same(a, gpRegs[i]) && !same(b, gpRegs[i]))
+				return gpRegs[i];
+		return noReg;
+	}
+
 
 	RegSet::RegSet() {}
 

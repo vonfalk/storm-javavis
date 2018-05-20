@@ -24,27 +24,27 @@ namespace storm {
 	static void enumAdd(InlineParams p) {
 		if (p.result->needed()) {
 			Operand result = p.result->location(p.state).v;
-			*p.state->l << mov(result, p.params->at(0));
-			*p.state->l << bor(result, p.params->at(1));
+			*p.state->l << mov(result, p.param(0));
+			*p.state->l << bor(result, p.param(1));
 		}
 	}
 
 	static void enumSub(InlineParams p) {
 		if (p.result->needed()) {
 			Operand result = p.result->location(p.state).v;
-			*p.state->l << mov(result, p.params->at(1));
+			*p.state->l << mov(result, p.param(1));
 			*p.state->l << bnot(result);
-			*p.state->l << band(result, p.params->at(0));
+			*p.state->l << band(result, p.param(0));
 		}
 	}
 
 	static void enumOverlaps(InlineParams p) {
 		if (p.result->needed()) {
 			Operand result = p.result->location(p.state).v;
-			// TODO: Use 'test' op-code if it is implemented.
+			// TODO: Use 'test' op-code when it is implemented.
 			Var t = p.state->l->createVar(p.state->block, Size::sInt);
-			*p.state->l << mov(t, p.params->at(0));
-			*p.state->l << band(t, p.params->at(1));
+			*p.state->l << mov(t, p.param(0));
+			*p.state->l << band(t, p.param(1));
 			*p.state->l << setCond(result, ifNotEqual);
 		}
 	}

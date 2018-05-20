@@ -17,13 +17,13 @@ namespace storm {
 		if (!p.result->needed())
 			return;
 
-		*p.state->l << fild(p.params->at(0));
+		*p.state->l << fild(p.param(0));
 		*p.state->l << fstp(p.result->location(p.state).v);
 	}
 
 	static void castLong(InlineParams p) {
-		*p.state->l << mov(ptrA, p.params->at(0));
-		*p.state->l << icast(longRel(ptrA, Offset()), p.params->at(1));
+		p.allocRegs(0);
+		*p.state->l << icast(longRel(p.regParam(0), Offset()), p.param(1));
 	}
 
 	LongType::LongType(Str *name, GcType *type) : Type(name, typeValue | typeFinal, Size::sLong, type, null) {}
@@ -90,8 +90,8 @@ namespace storm {
 	}
 
 	static void castWord(InlineParams p) {
-		*p.state->l << mov(ptrA, p.params->at(0));
-		*p.state->l << ucast(longRel(ptrA, Offset()), p.params->at(1));
+		p.allocRegs(0);
+		*p.state->l << ucast(longRel(p.regParam(0), Offset()), p.param(1));
 	}
 
 	WordType::WordType(Str *name, GcType *type) : Type(name, typeValue | typeFinal, Size::sWord, type, null) {}

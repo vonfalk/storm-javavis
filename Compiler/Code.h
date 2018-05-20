@@ -7,6 +7,7 @@
 #include "Code/Binary.h"
 #include "Value.h"
 #include "CodeGen.h"
+#include "InlineParams.h"
 
 namespace storm {
 	STORM_PKG(core.lang);
@@ -166,25 +167,6 @@ namespace storm {
 
 		// Set the code in here.
 		void setCode(code::Listing *src);
-	};
-
-
-	/**
-	 * Parameters passed to functions generating inline code.
-	 *
-	 * Note: The params may be registers!
-	 * Currently, only the first will ever be a register. We should verify that!
-	 */
-	class InlineParams {
-		STORM_VALUE;
-	public:
-		STORM_CTOR InlineParams(CodeGen *state, Array<code::Operand> *params, CodeResult *result);
-
-		CodeGen *state;
-		Array<code::Operand> *params;
-		CodeResult *result;
-
-		void STORM_FN deepCopy(CloneEnv *env);
 	};
 
 

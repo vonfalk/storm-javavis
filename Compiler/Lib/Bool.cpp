@@ -12,23 +12,23 @@ namespace storm {
 	static void boolAnd(InlineParams p) {
 		if (p.result->needed()) {
 			Operand result = p.result->location(p.state).v;
-			*p.state->l << mov(result, p.params->at(0));
-			*p.state->l << band(result, p.params->at(1));
+			*p.state->l << mov(result, p.param(0));
+			*p.state->l << band(result, p.param(1));
 		}
 	}
 
 	static void boolOr(InlineParams p) {
 		if (p.result->needed()) {
 			Operand result = p.result->location(p.state).v;
-			*p.state->l << mov(result, p.params->at(0));
-			*p.state->l << bor(result, p.params->at(1));
+			*p.state->l << mov(result, p.param(0));
+			*p.state->l << bor(result, p.param(1));
 		}
 	}
 
 	static void boolEq(InlineParams p) {
 		if (p.result->needed()) {
 			Operand result = p.result->location(p.state).v;
-			*p.state->l << cmp(p.params->at(0), p.params->at(1));
+			*p.state->l << cmp(p.param(0), p.param(1));
 			*p.state->l << setCond(result, ifEqual);
 		}
 	}
@@ -36,7 +36,7 @@ namespace storm {
 	static void boolNeq(InlineParams p) {
 		if (p.result->needed()) {
 			Operand result = p.result->location(p.state).v;
-			*p.state->l << cmp(p.params->at(0), p.params->at(1));
+			*p.state->l << cmp(p.param(0), p.param(1));
 			*p.state->l << setCond(result, ifNotEqual);
 		}
 	}
@@ -44,29 +44,30 @@ namespace storm {
 	static void boolNot(InlineParams p) {
 		if (p.result->needed()) {
 			Operand result = p.result->location(p.state).v;
-			*p.state->l << cmp(p.params->at(0), byteConst(0));
+			*p.state->l << cmp(p.param(0), byteConst(0));
 			*p.state->l << setCond(result, ifEqual);
 		}
 	}
 
 	static void boolAssign(InlineParams p) {
-		*p.state->l << mov(ptrA, p.params->at(0));
-		*p.state->l << mov(byteRel(ptrA, Offset()), p.params->at(1));
+		p.allocRegs(0);
+		Reg dest = p.regParam(0);
+
+		*p.state->l << mov(byteRel(dest, Offset()), p.param(1));
 		if (p.result->needed()) {
 			if (p.result->type().ref) {
-				if (!p.result->suggest(p.state, p.params->at(0)))
-					*p.state->l << mov(p.result->location(p.state).v, ptrA);
+				if (!p.result->suggest(p.state, p.originalParam(0)))
+					*p.state->l << mov(p.result->location(p.state).v, dest);
 			} else {
-				if (!p.result->suggest(p.state, p.params->at(1)))
-					*p.state->l << mov(p.result->location(p.state).v, p.params->at(1));
+				if (!p.result->suggest(p.state, p.param(1)))
+					*p.state->l << mov(p.result->location(p.state).v, p.param(1));
 			}
 		}
 	}
 
 	static void boolCopyCtor(InlineParams p) {
-		*p.state->l << mov(ptrC, p.params->at(1));
-		*p.state->l << mov(ptrA, p.params->at(0));
-		*p.state->l << mov(byteRel(ptrA, Offset()), byteRel(ptrC, Offset()));
+		p.allocRegs(0, 1);
+		*p.state->l << mov(byteRel(p.regParam(0), Offset()), byteRel(p.regParam(1), Offset()));
 	}
 
 
