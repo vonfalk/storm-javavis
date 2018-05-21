@@ -1,0 +1,5 @@
+
+Int testLambda() {
+	var fn = (Int x) => x + 3;
+	fn.call(10);
+}

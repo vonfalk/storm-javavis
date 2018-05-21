@@ -95,7 +95,7 @@ SString => s : "\"" #string - (SStrContent #string) s - "\"" #string;
 
 // Parameter list (possibly empty).
 Array<NameParam> SFormals();
-SFormals => Array<NameParam>() : "";
+SFormals => Array<NameParam>() : ;
 SFormals => Array<NameParam>() : SFormal -> push - (, ",", SFormal -> push)*;
 
 NameParam SFormal();
@@ -417,6 +417,18 @@ SStmt[10] => e : SIf(block) e;
 SStmt[10] => e : SLoop(block) e;
 SStmt[10] => e : SReturn(block) e, ";";
 SStmt[20] => e : SUnless(block) e;
+
+
+////////////////////////////////////////////////////////////////////
+// Lambda functions!
+////////////////////////////////////////////////////////////////////
+
+SExpr[50] => LambdaExpr(pos, block, params, content) : "(", SFormals params, ")", "=>", SExpr@ content;
+// SExpr[50] => LambdaExpr(pos, block, params, content) : "(", SLambdaFormals params, ")", "=>", SExpr @content;
+
+Array<Str> SLambdaFormals();
+SLambdaFormals => Array<Str>() : ;
+SLambdaFormals => Array<Str>() : SName -> push - (, ",", SName -> push)*;
 
 
 ////////////////////////////////////////////////////////////////////

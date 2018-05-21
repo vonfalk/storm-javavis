@@ -1,0 +1,39 @@
+use core:lang;
+
+/**
+ * Lambda expressions. There are two types of them: one requires specifying types in the parameter
+ * list, but can be used anywhere. The other does not require types in the parameter list, but needs
+ * to be used in a context where the types of the parameters can be inferred (not implemented yet).
+ *
+ * We should also support captures in some manner.
+ */
+class LambdaExpr extends Expr {
+	private Array<ValParam> params;
+	private SExpr body;
+	private Block parent;
+
+	init(SrcPos pos, Block parent, Array<NameParam> params, SExpr body) {
+		var p = params.resolve(parent.scope);
+
+		// SimpleName name;
+		// name.add("core");
+		// name.add("Fn", p.values());
+
+		init(pos) {
+			params = params.resolve(parent.scope);
+			// type = rootScope.value(name, pos);
+			body = body;
+			parent = parent;
+		}
+	}
+
+	ExprResult result() {
+		ExprResult();
+	}
+
+	void code(CodeGen gen, CodeResult r) {}
+
+	protected void toS(StrBuf to) {
+		to << "lambda";
+	}
+}

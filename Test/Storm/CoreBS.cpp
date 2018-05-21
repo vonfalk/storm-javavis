@@ -403,6 +403,14 @@ BEGIN_TEST(PatternTest, BS) {
 	CHECK_EQ(runFn<Int>(S("test.bs.testPatternSplice2")), 6);
 } END_TEST
 
+/**
+ * Lambda functions.
+ */
+
+BEGIN_TEST_(LambdaTest, BS) {
+	CHECK_RUNS(runFn<Int>(S("test.bs.testLambda")));
+} END_TEST
+
 
 /**
  * Exception safety.
