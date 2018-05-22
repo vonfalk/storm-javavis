@@ -42,7 +42,7 @@ namespace storm {
 		// Parent name lookup. This should be set by the parent. If it is null, the default 'parent'
 		// implementation asserts. Therefore, root objects need to override 'parent' in order to
 		// return null.
-		NameLookup *parentLookup;
+		MAYBE(NameLookup *) parentLookup;
 	};
 
 

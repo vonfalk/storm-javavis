@@ -62,4 +62,7 @@ namespace storm {
 	// Find a package from a path.
 	MAYBE(Package *) STORM_FN package(Url *path);
 
+	// Get the root package.
+	Package *STORM_FN rootPkg(EnginePtr e);
+
 }

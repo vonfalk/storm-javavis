@@ -74,7 +74,7 @@ namespace storm {
 			name->insert(thisPtr(t));
 			Function *ctor = as<Function>(t->find(name, scope));
 			if (!ctor)
-				throw SyntaxError(variable->pos, L"No constructor for " + ::toS(variable->result)
+				throw SyntaxError(variable->pos, L"No appropriate constructor for " + ::toS(variable->result)
 								+ L" found. Can not initialize " + ::toS(variable->name) +
 								L". Expected signature: " + ::toS(name));
 

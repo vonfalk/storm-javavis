@@ -1,4 +1,5 @@
 use core:lang;
+use core:asm;
 
 /**
  * Lambda expressions. There are two types of them: one requires specifying types in the parameter
@@ -8,32 +9,105 @@ use core:lang;
  * We should also support captures in some manner.
  */
 class LambdaExpr extends Expr {
-	private Array<ValParam> params;
+	private Array<ValParam> fnParams;
+	private Value fnResult;
+	private Value type;
 	private SExpr body;
 	private Block parent;
 
 	init(SrcPos pos, Block parent, Array<NameParam> params, SExpr body) {
 		var p = params.resolve(parent.scope);
+		Scope scope = lambdaScope(parent);
+		ExprBlock expr = wrapLambda(scope, p, body);
+		Value result = expr.result.type;
 
-		// SimpleName name;
-		// name.add("core");
-		// name.add("Fn", p.values());
+		SimpleName name;
+		name.add("core");
+		name.add("Fn", { var z = p.values(); z.insert(0, result); z; });
 
 		init(pos) {
-			params = params.resolve(parent.scope);
-			// type = rootScope.value(name, pos);
+			fnParams = params.resolve(parent.scope);
+			fnResult = result;
+			type = rootScope.value(name, pos);
 			body = body;
 			parent = parent;
 		}
 	}
 
 	ExprResult result() {
-		ExprResult();
+		ExprResult(type);
 	}
 
-	void code(CodeGen gen, CodeResult r) {}
+	void code(CodeGen to, CodeResult r) {
+		if (!r.needed())
+			return;
+
+		BSTreeFn fn(fnResult, SStr("<lambda>", pos), fnParams, to.runOn.thread);
+		fn.parentLookup = lambdaParent(parent);
+		fn.body = {
+			FnBody b(fn, lambdaScope(parent));
+			b.add(body.transform(b));
+			b;
+		};
+
+		VarInfo v = r.location(to);
+		to.l << mov(v.v, objPtr(pointer(fn)));
+		v.created(to);
+	}
 
 	protected void toS(StrBuf to) {
 		to << "lambda";
 	}
+}
+
+/**
+ * Wrap a lambda function body in a block that contains the parameters as variables, much like how a
+ * BSRawFn would do.
+ */
+ExprBlock wrapLambda(Scope scope, Array<ValParam> params, SExpr body) on Compiler {
+	SrcPos pos = body.pos;
+	ExprBlock r(pos, scope);
+
+	for (p in params) {
+		r.add(LocalVar(p.name, p.type, pos, true));
+	}
+
+	r.add(body.transform(r));
+
+	r;
+}
+
+/**
+ * Find the proper scope for a lambda function.
+ */
+Scope lambdaScope(Block block) on Compiler {
+	NameLookup at = block.lookup;
+	while (true) {
+		if (at as NameSet) {
+			Scope s = block.scope;
+			s.top = at;
+			return s;
+		}
+
+		at = at.parent;
+	}
+
+	// Crude fallback. Should not happen.
+	return rootScope();
+}
+
+/**
+ * Find the proper parent to a lambda function.
+ */
+NameLookup lambdaParent(Block block) on Compiler {
+	NameLookup at = block.lookup;
+	while (true) {
+		if (at as Package) {
+			return at;
+		} else {
+			at = at.parent;
+		}
+	}
+
+	return rootPkg;
 }

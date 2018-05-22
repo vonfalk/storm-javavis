@@ -193,4 +193,8 @@ namespace storm {
 		return path->engine().package(path);
 	}
 
+	Package *rootPkg(EnginePtr e) {
+		return e.v.package();
+	}
+
 }

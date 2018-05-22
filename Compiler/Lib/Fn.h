@@ -43,7 +43,7 @@ namespace storm {
 
 	// Create a function pointer pointing to a function in Storm. The second version binds a 'this'
 	// pointer to the first parameter of 'target'. That overload is not exposed to Storm, as it
-	// breaks type safety.
+	// breaks type safety (and is not possible to represent in Storm's type system at the moment).
 	FnBase *STORM_FN pointer(Function *target);
 	FnBase *pointer(Function *target, RootObject *thisPtr);
 

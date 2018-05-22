@@ -277,7 +277,11 @@ namespace storm {
 		 */
 
 		BSAbstractFn::BSAbstractFn(Value result, SStr *name, Array<ValParam> *params)
-			: BSRawFn(result, name, params, null) {}
+			: BSRawFn(result, name, params, null) {
+
+			// Just to make sure...
+			makeAbstract();
+		}
 
 		FnBody *BSAbstractFn::createBody() {
 			// We don't have anything to return, and we don't really care if this is a bit slower if
