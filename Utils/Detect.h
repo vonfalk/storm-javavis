@@ -3,7 +3,12 @@
 /**
  * Detect members in a class. From: http://en.wikibooks.org/wiki/More_C%2B%2B_Idioms/Member_Detector
  *
- * Usage: CREATE_DETECTOR(attribute)
+ * Usage:
+ * CREATE_DETECTOR(attribute)
+ * or
+ * CREATE_DETECTOR_MEMBER(suffix, member)
+ * where 'suffix' is used in the name of the detect-class, and "memeber" is checked for.
+ *
  * detect_<attribute><T>::value -> true or false.
  */
 #define CREATE_DETECTOR_MEMBER(suffix, member)							\

@@ -272,42 +272,45 @@ inline bool all(const vector<bool> &v) {
 	return true;
 }
 
-template <class From>
-struct default_cast {
-	From *x;
-	default_cast(From *x) : x(x) {}
 
-	template <class To>
-	To *cast() const {
-		return dynamic_cast<To *>(x);
+namespace cast_impl {
+	// Use the DynamicCast member if it exists, otherwise fall back to dynamic_cast.
+
+	template <class To, class From>
+	To *cast(From *from, typename From::DynamicCast *) {
+		// TODO: It would be neat to enforce that either both 'From' and 'To' are const, or none of them.
+		return From::DynamicCast::template cast<To>(from);
 	}
-};
 
-template <class From>
-default_cast<From> customCast(From *v) {
-	return default_cast<From>(v);
+	template <class To, class From>
+	To *cast(From *from, ...) {
+		return dynamic_cast<To *>(from);
+	}
 }
 
 
-#include "Detect.h"
+/**
+ * Custom typecasting using as<T>(foo) instead of dynamic_cast<T *>(foo).
+ *
+ * Uses custom casting for the source type if it contains a type 'DynamicCast'. This type should
+ * contain a function 'cast<T>()' that performs the typecasting.
+ */
+template <class To>
+class as {
+public:
+	template <class From>
+	as(From *v) : v(cast_impl::cast<To, From>(v, 0)) {}
 
-template <class T>
-struct as {
-	template <class U>
-	as(U *v) {
-		this->v = customCast(v).template cast<T>();
-	}
-
-	operator T*() const {
+	operator To*() const {
 		return v;
 	}
 
-	T *operator ->() const {
+	To *operator ->() const {
 		return v;
 	}
 
 private:
-	T *v;
+	To *v;
 };
 
 #include "Object.h"

@@ -7,6 +7,7 @@ namespace storm {
 	class Engine;
 	class Str;
 	class StrBuf;
+	struct RootCast;
 
 	/**
 	 * The shared parts between Object and TObject. Not exposed to Storm.
@@ -41,6 +42,9 @@ namespace storm {
 		// To string.
 		virtual Str *STORM_FN toS() const;
 		virtual void STORM_FN toS(StrBuf *to) const;
+
+		// Custom casting using as<>.
+		typedef RootCast DynamicCast;
 	};
 
 
@@ -52,13 +56,18 @@ namespace storm {
 	/**
 	 * Custom casting.
 	 */
-	template <class Src>
 	struct RootCast {
-		Src *from;
-		RootCast(Src *from) : from(from) {}
+		template <class To>
+		static To *cast(RootObject *from) {
+			if (from == null)
+				return null;
+			if (from->isA(To::stormType(from->engine())))
+				return static_cast<To *>(from);
+			return null;
+		}
 
 		template <class To>
-		To *cast() const {
+		static To *cast(const RootObject *from) {
 			if (from == null)
 				return null;
 			if (from->isA(To::stormType(from->engine())))
@@ -66,14 +75,6 @@ namespace storm {
 			return null;
 		}
 	};
-
-	inline RootCast<RootObject> customCast(RootObject *from) {
-		return RootCast<RootObject>(from);
-	}
-
-	inline RootCast<const RootObject> customCast(const RootObject *from) {
-		return RootCast<const RootObject>(from);
-	}
 
 
 	/**
