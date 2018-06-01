@@ -7,6 +7,7 @@
 
 #pragma warning(disable: 4068) // Do not warn about unknown pragmas.
 #pragma GCC diagnostic ignored "-Wimplicit-fallthrough"
+#pragma GCC diagnostic ignored "-Wcast-function-type"
 
 /**
  * Note: Defining CONFIG_VAR_COOL or CONFIG_VAR_RASH from mymake will compile the 'cool' or the

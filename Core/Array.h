@@ -268,7 +268,7 @@ namespace storm {
 			sortRawPred(compare);
 		}
 
-		void sorted(Fn<Bool, T, T> *compare) {
+		Array<T> *sorted(Fn<Bool, T, T> *compare) {
 			Array<T> *copy = new (this) Array<T>(*this);
 			copy->sortRawPred(compare);
 			return copy;

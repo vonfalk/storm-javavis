@@ -7,6 +7,8 @@
 #include "Utils/Memory.h"
 #include "Utils/Bitwise.h"
 
+#pragma GCC diagnostic ignored "-Wclass-memaccess"
+
 #if defined(STORM_GC_MPS)
 
 /**
@@ -1846,7 +1848,7 @@ namespace storm {
 	}
 
 	GcArray<Byte> *Gc::allocBuffer(size_t count) {
-		return allocArray(&byteArrayType, count);
+		return (GcArray<Byte> *)allocArray(&byteArrayType, count);
 	}
 
 	void *Gc::allocArray(const GcType *type, size_t count) {
@@ -1904,14 +1906,12 @@ namespace storm {
 	const GcType *Gc::typeOf(const void *mem) {
 		const GcType **data = (const GcType **)mem;
 
-		for (nat i = 0; i < (headerSizeWords-1)*sizeof(size_t); i++) {
-			byte *addr = (byte *)data - i - 1;
-			if (*addr != 0xFF) {
-				PLN(L"Wrote before the object: " << mem << L" offset: -" << (i+1));
-				DebugBreak();
-			}
-		}
-
+		// for (nat i = 0; i < (headerSizeWords-1)*sizeof(size_t); i++) {
+		// 	byte *addr = (byte *)data - i - 1;
+		// 	if (*addr != 0xFF) {
+		// 		PLN(L"Wrote before the object: " << mem << L" offset: -" << (i+1));
+		// 	}
+		// }
 
 		return *(data - headerSizeWords);
 	}
@@ -1922,11 +1922,12 @@ namespace storm {
 	}
 
 	void *Gc::allocCode(size_t code, size_t refs) {
-		static memory::Manager mgr;
+		// static memory::Manager mgr;
 
 		code = align(code);
 		size_t size = code + sizeof(GcCode) + refs*sizeof(GcCodeRef) - sizeof(GcCodeRef) + headerSizeWords*sizeof(size_t);
-		void *mem = mgr.allocate(size);
+		void *mem = malloc(size);
+		// void *mem = mgr.allocate(size);
 		memset(mem, 0, size);
 		memset((size_t *)mem + 1, 0xFF, (headerSizeWords - 1)*sizeof(size_t));
 
@@ -1963,6 +1964,11 @@ namespace storm {
 		return null;
 	}
 
+	Gc::Root *Gc::createRoot(void *data, size_t count, bool ambiguous) {
+		// No roots here!
+		return null;
+	}
+
 	void Gc::destroyRoot(Root *root) {}
 
 	class MallocWatch : public GcWatch {
@@ -1994,7 +2000,6 @@ namespace storm {
 			byte *addr = (byte *)data - i - 1;
 			if (*addr != 0xFF) {
 				PLN(L"Wrote before the object: " << object << L" offset: -" << (i+1));
-				DebugBreak();
 			}
 		}
 	}

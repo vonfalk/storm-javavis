@@ -21,7 +21,7 @@
 
 // Use MPS.
 #define STORM_GC_MPS
-// Use Boehm GC.
+// Use Boehm GC (not implemented yet).
 // #define STORM_GC_BOEHM
 // Use malloc for acquiring memory (never frees it, only for debugging).
 // #define STORM_GC_MALLOC

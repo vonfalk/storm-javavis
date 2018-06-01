@@ -59,7 +59,7 @@ namespace storm {
 		}
 
 		Engine &allocEngine(const RootObject *o) {
-			return typeOf(o)->engine;
+			return Gc::typeOf(o)->type->engine;
 		}
 
 		void *allocRaw(Engine &e, const GcType *type) {
