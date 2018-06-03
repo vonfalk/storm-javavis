@@ -1,53 +1,18 @@
 #include "stdafx.h"
 #include "RefSource.h"
 #include "Reference.h"
+#include "Exception.h"
 #include "Core/Array.h"
 #include "Core/StrBuf.h"
 #include "Core/Str.h"
 
 namespace code {
 
-	Content::Content() {}
-
-	const void *Content::address() const {
-		return lastAddress;
-	}
-
-	nat Content::size() const {
-		return lastSize;
-	}
-
-	void Content::set(const void *addr, nat size) {
-		lastAddress = addr;
-		lastSize = size;
-
-		if (owner)
-			owner->update();
-	}
-
-	Str *Content::ownerName() const {
-		RefSource *o = (RefSource *)atomicRead((void *&)owner);
-		if (o)
-			return o->title();
-		else
-			return null;
-	}
-
-	StaticContent::StaticContent(const void *addr) {
-		set(addr, 0);
-	}
-
-
-	RefSource::RefSource(const wchar *title) : cont(null) {
-		name = new (this) Str(title);
+	RefSource::RefSource() : cont(null) {
 		refs = new (this) WeakSet<Reference>();
 	}
 
-	RefSource::RefSource(Str *title) : name(title), cont(null) {
-		refs = new (this) WeakSet<Reference>();
-	}
-
-	RefSource::RefSource(Str *title, Content *content) : name(title), cont(content) {
+	RefSource::RefSource(Content *content) : cont(content) {
 		refs = new (this) WeakSet<Reference>();
 	}
 
@@ -76,8 +41,30 @@ namespace code {
 		set(new (this) StaticContent(to));
 	}
 
-	void RefSource::toS(StrBuf *to) const {
-		*to << name;
+	Str *RefSource::title() const {
+		throw InvalidValue(L"A RefSource does not override 'title'.");
 	}
+
+	void RefSource::toS(StrBuf *to) const {
+		*to << title();
+	}
+
+
+	/**
+	 * NameRefSource.
+	 */
+
+	StrRefSource::StrRefSource(const wchar *title) : RefSource() {
+		name = new (this) Str(title);
+	}
+
+	StrRefSource::StrRefSource(Str *title) : RefSource(), name(title) {}
+
+	StrRefSource::StrRefSource(Str *title, Content *content) : RefSource(content), name(title) {}
+
+	Str *StrRefSource::title() const {
+		return name;
+	}
+
 
 }

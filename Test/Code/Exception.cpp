@@ -316,7 +316,7 @@ BEGIN_TEST(ExceptionLayers, Code) {
 	*l << fnRet();
 
 	Binary *b = new (e) Binary(arena, l);
-	RefSource *next = new (e) RefSource(new (e) Str(S("level2")), b);
+	RefSource *next = new (e) StrRefSource(new (e) Str(S("level2")), b);
 
 	l = new (e) Listing();
 	*l << prolog();

@@ -72,7 +72,8 @@ namespace storm {
 	 */
 
 	StaticEngineCode::StaticEngineCode(const void *src) {
-		original = new (this) code::RefSource(S("ref-to"));
+		// TODO: Better reference somehow?
+		original = new (this) code::StrRefSource(S("ref-to"));
 		original->setPtr(src);
 
 		code = null;

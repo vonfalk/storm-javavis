@@ -2,6 +2,7 @@
 #include "Named.h"
 #include "RunOn.h"
 #include "Code.h"
+#include "NamedSource.h"
 #include "Code/Reference.h"
 #include "Core/Future.h"
 #include "OS/Future.h"

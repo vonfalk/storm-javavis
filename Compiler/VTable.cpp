@@ -53,7 +53,7 @@ namespace storm {
 			updaters = new (this) UpdateMap();
 
 		if (!source) {
-			source = new (this) code::RefSource(S("vtable"));
+			source = new (this) NamedSource(owner, Char('v'));
 			source->set(cpp);
 		}
 	}

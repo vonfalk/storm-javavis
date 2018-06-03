@@ -68,7 +68,7 @@ namespace storm {
 
 		// Create the thunk if not done already.
 		if (!thunk) {
-			thunk = new (this) code::RefSource(*identifier() + new (this) Str(L"<thunk>"));
+			thunk = new (this) NamedSource(this, Char('t'));
 			thunk->set(callThunk(result, formal));
 		}
 
@@ -218,7 +218,7 @@ namespace storm {
 
 		*l << fnRet();
 
-		RefSource *result = new (e) RefSource(*identifier() + new (this) Str(L"<rawCall>"));
+		RefSource *result = new (e) NamedSource(this, Char('r'));
 		result->set(new (e) Binary(e.arena(), l));
 		return result;
 	}

@@ -38,4 +38,20 @@ namespace storm {
 		code::RefSource *&find(Array<code::RefSource *> *in, Nat offset, Nat id);
 	};
 
+
+	/**
+	 * Custom reference sources for the vtable thunks.
+	 */
+	class VTableSource : public code::RefSource {
+		STORM_CLASS;
+	public:
+		STORM_CTOR VTableSource(VTableSlot slot, Nat id, code::Content *c);
+
+		virtual Str *STORM_FN title() const;
+
+	private:
+		VTableSlot slot;
+		Nat id;
+	};
+
 }

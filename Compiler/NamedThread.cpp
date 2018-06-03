@@ -1,5 +1,6 @@
 #include "stdafx.h"
 #include "NamedThread.h"
+#include "NamedSource.h"
 #include "Core/Thread.h"
 #include "Core/StrBuf.h"
 
@@ -17,7 +18,7 @@ namespace storm {
 
 	code::Ref NamedThread::ref() {
 		if (!reference) {
-			reference = new (this) code::RefSource(identifier());
+			reference = new (this) NamedSource(this);
 			reference->setPtr(myThread);
 		}
 		return code::Ref(reference);

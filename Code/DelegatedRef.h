@@ -31,19 +31,6 @@ namespace code {
 	};
 
 	/**
-	 * A RefSource using a DelegatedContent internally.
-	 */
-	class DelegatedSrc : public RefSource {
-		STORM_CLASS;
-	public:
-		// Create the delegated reference.
-		STORM_CTOR DelegatedSrc(Ref referTo, Str *name);
-
-		// Set our content to a new reference.
-		void STORM_FN set(Ref referTo);
-	};
-
-	/**
 	 * The reference used by DelegatedContent and DelegatedSrc.
 	 */
 	class DelegatedRef : public Reference {

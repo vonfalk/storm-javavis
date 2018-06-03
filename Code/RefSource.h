@@ -1,68 +1,36 @@
 #pragma once
 #include "Core/TObject.h"
 #include "Core/WeakSet.h"
+#include "Content.h"
 
 namespace code {
 	STORM_PKG(core.asm);
 
-	class RefSource;
 	class Reference;
 
 	/**
-	 * Content. Provides a pointer and a size which can be referred to by RefSources, and by
-	 * extension, References. Only one RefSource can refer to a Content object.
-	 */
-	class Content : public ObjectOn<Compiler> {
-		STORM_CLASS;
-	public:
-		STORM_CTOR Content();
-
-		// Set the address of this content. Don't do this after the content has been added to a
-		// RefSource.
-		void set(const void *address, nat size);
-
-		// Get last address and size.
-		virtual const void *address() const;
-		virtual nat size() const;
-
-		// Get the name of the owning RefSource (if any).
-		MAYBE(Str *) STORM_FN ownerName() const;
-	private:
-		friend class RefSource;
-
-		// Last address and size.
-		UNKNOWN(PTR_GC) const void *lastAddress;
-		nat lastSize;
-
-		// Owning RefSource.
-		RefSource *owner;
-	};
-
-	/**
-	 * Static content.
-	 */
-	class StaticContent : public Content {
-		STORM_CLASS;
-	public:
-		StaticContent(const void *ptr);
-	};
-
-	/**
-	 * Something that references can refer to. A RefSource has some kind of unique identifier that
-	 * can be stored whenever listings are serialized, so that we can properly link the program from
-	 * a previously serialized representation. Currently, this is a String, but we want to replace
-	 * this with a more generic object later on.
+	 * A RefSource is a static name that references can refer to. The RefSource also has some
+	 * contents that provides the actual pointer that references refer to. While a RefSource is
+	 * static in nature, the content can be altered freely. Doing so causes all references referring
+	 * to the RefSource to be updated.
 	 *
-	 * A RefSource is something very static, but its contents can be replaced. When that happens,
-	 * all references will be updated.
+	 * The RefSource has a unique identifier of some sort. This is used in two situations:
+	 * 1: It is presented to the user whenever a Listing is printed.
+	 * 2: It is used as a unique identifier when parts of a program is saved on disk to be able
+	 *    to link the program properly at a later time.
+	 *
+	 * The identifier is not provided by the RefSource class itself. Instead, implementations should
+	 * create a subclass that implements 'title' for the identifier presented to the user and 'name'
+	 * for the identifier used during serialization (not implemented yet).
+	 *
+	 * TODO: Make the class abstract!
 	 */
 	class RefSource : public ObjectOn<Compiler> {
 		STORM_CLASS;
 		friend class Reference;
 	public:
-		RefSource(const wchar *title);
-		STORM_CTOR RefSource(Str *title);
-		STORM_CTOR RefSource(Str *title, Content *content);
+		STORM_CTOR RefSource();
+		STORM_CTOR RefSource(Content *content);
 
 		// Set the content of this source. This updates all references referring to this source.
 		void STORM_FN set(Content *to);
@@ -79,7 +47,7 @@ namespace code {
 		inline Content *STORM_FN content() const { return cont; }
 
 		// Get our title.
-		inline Str *STORM_FN title() const { return name; }
+		virtual Str *STORM_FN title() const;
 
 		// Output.
 		virtual void STORM_FN toS(StrBuf *to) const;
@@ -88,14 +56,30 @@ namespace code {
 		void update();
 
 	private:
-		// Name.
-		Str *name;
-
 		// Content.
 		Content *cont;
 
 		// All non Ref-references referring to this source.
 		WeakSet<Reference> *refs;
+	};
+
+
+	/**
+	 * RefSource labeled by a string.
+	 */
+	class StrRefSource : public RefSource {
+		STORM_CLASS;
+	public:
+		StrRefSource(const wchar *name);
+		STORM_CTOR StrRefSource(Str *name);
+		STORM_CTOR StrRefSource(Str *name, Content *content);
+
+		// Title.
+		virtual Str *STORM_FN title() const;
+
+	private:
+		// Name.
+		Str *name;
 	};
 
 }

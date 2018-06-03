@@ -1,4 +1,6 @@
 #pragma once
+#include "Var.h"
+#include "Block.h"
 
 namespace code {
 

@@ -14,7 +14,7 @@ namespace code {
 	}
 
 	RefSource *Arena::externalSource(const wchar *name, const void *ptr) const {
-		RefSource *src = new (this) RefSource(name);
+		RefSource *src = new (this) StrRefSource(name);
 		src->setPtr(ptr);
 		return src;
 	}

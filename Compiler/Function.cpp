@@ -121,15 +121,13 @@ namespace storm {
 
 	void Function::initRefs() {
 		if (!codeRef) {
-			assert(parent(), L"Too early!");
-			codeRef = new (this) code::RefSource(*identifier() + L"<c>");
+			codeRef = new (this) NamedSource(this, Char('d'));
 			if (code)
 				code->update(codeRef);
 		}
 
 		if (!lookupRef) {
-			assert(parent(), L"Too early!");
-			lookupRef = new (this) code::RefSource(*identifier() + L"<l>");
+			lookupRef = new (this) NamedSource(this);
 			if (!lookup) {
 				lookup = new (this) DelegatedCode(code::Ref(codeRef));
 				lookup->attach(this);
@@ -354,7 +352,7 @@ namespace storm {
 			return threadThunkRef;
 
 		Binary *threadThunkCode = callThunk(result, params);
-		threadThunkRef = new (this) RefSource(*identifier() + new (this) Str(L"<thunk>"));
+		threadThunkRef = new (this) NamedSource(this, Char('t'));
 		threadThunkRef->set(threadThunkCode);
 		return threadThunkRef;
 	}

@@ -399,9 +399,7 @@ namespace storm {
 
 	code::Ref Type::typeRef() {
 		if (!selfRef) {
-			StrBuf *name = new (this) StrBuf();
-			*name << identifier() << S("<type>");
-			selfRef = new (engine) code::RefSource(name->toS());
+			selfRef = new (engine) NamedSource(this);
 			selfRef->setPtr(this);
 		}
 		return code::Ref(selfRef);
@@ -1191,9 +1189,8 @@ namespace storm {
 		if (!s)
 			return false;
 
-		Function *found = as<Function>(s->findHere(fn, Scope()));
+		Function *found = as<Function>(s->tryFindHere(fn, Scope()));
 		if (found && found->visibleFrom(original)) {
-
 			// See if 'found' was marked 'final'.
 			if (found->fnFlags() & fnFinal) {
 				throw TypedefError(L"The function " + ::toS(original->identifier()) + L" attempts to "

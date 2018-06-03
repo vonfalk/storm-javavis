@@ -50,11 +50,7 @@ namespace storm {
 		*l << jmp(ptrRel(ptrA, Offset::sPtr * offset));
 
 		Binary *b = new (this) Binary(engine().arena(), l);
-
-		StrBuf *buf = new (this) StrBuf();
-		*buf << S("vtable cpp:") << offset << S(", ") << id;
-		entry = new (this) RefSource(buf->toS(), b);
-		return entry;
+		return new (this) VTableSource(cppSlot(offset), id, b);
 	}
 
 	code::RefSource *VTableCalls::getStorm(Nat offset, Nat id) {
@@ -71,11 +67,15 @@ namespace storm {
 		*l << jmp(ptrRel(ptrA, Offset::sPtr * (offset + 2))); // 2 for the 2 size_t members in arrays.
 
 		Binary *b = new (this) Binary(engine().arena(), l);
+		return new (this) VTableSource(stormSlot(offset), id, b);
+	}
 
-		StrBuf *buf = new (this) StrBuf();
-		*buf << S("vtable storm:") << offset << S(", ") << id;
-		entry = new (this) RefSource(buf->toS(), b);
-		return entry;
+	VTableSource::VTableSource(VTableSlot slot, Nat id, code::Content *c) : RefSource(c), slot(slot), id(id) {}
+
+	Str *VTableSource::title() const {
+		StrBuf *out = new (this) StrBuf();
+		*out << S("vtable ") << slot << S(",") << id;
+		return out->toS();
 	}
 
 }

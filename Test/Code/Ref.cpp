@@ -18,7 +18,7 @@ BEGIN_TEST(RefTest, Code) {
 	Engine &e = gEngine();
 	Arena *arena = code::arena(e);
 
-	RefSource *fn = new (e) RefSource(new (e) Str(L"fnA/B"));
+	RefSource *fn = new (e) StrRefSource(L"fnA/B");
 	fn->setPtr(address(&fnA));
 
 	Listing *l = new (e) Listing();
@@ -68,7 +68,7 @@ BEGIN_TEST(ReplaceTest, Code) {
 	*l << fnRet(eax);
 
 	Binary *middleBlob = new (e) Binary(arena, l);
-	RefSource *middle = new (e) RefSource(new (e) Str(S("middle")));
+	RefSource *middle = new (e) StrRefSource(S("middle"));
 	middle->set(middleBlob);
 
 	l = new (e) Listing();

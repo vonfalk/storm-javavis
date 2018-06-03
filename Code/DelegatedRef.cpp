@@ -13,15 +13,6 @@ namespace code {
 	}
 
 
-	DelegatedSrc::DelegatedSrc(Ref referTo, Str *name) : RefSource(name) {
-		set(referTo);
-	}
-
-	void DelegatedSrc::set(Ref referTo) {
-		RefSource::set(new (this) DelegatedContent(referTo));
-	}
-
-
 	DelegatedRef::DelegatedRef(DelegatedContent *owner, Ref to) :
 		Reference(to, owner), owner(owner) {}
 
