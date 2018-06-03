@@ -29,9 +29,9 @@ namespace storm {
 	}
 
 	TypeChain *TypeChain::superChain() const {
-		if (chain->count == 1)
+		if (chainCount() == 1)
 			return null;
-		return chain->v[chain->count - 2];
+		return chainAt(chainCount() - 2);
 	}
 
 	Type *TypeChain::super() const {
@@ -66,8 +66,13 @@ namespace storm {
 	}
 
 	Bool TypeChain::isA(const TypeChain *o) const {
-		return chain->count >= o->chain->count
-			&& chain->v[o->chain->count - 1] == o;
+		if (chain) {
+			Nat c = o->chainCount();
+			return chain->count >= c
+				&& chain->v[c - 1] == o;
+		} else {
+			return o == this;
+		}
 	}
 
 	Bool TypeChain::isA(const Type *o) const {
@@ -77,7 +82,7 @@ namespace storm {
 	Int TypeChain::distance(const TypeChain *o) const {
 		if (!isA(o))
 			return -1;
-		return Int(chain->count - o->chain->count);
+		return Int(chainCount() - o->chainCount());
 	}
 
 	Int TypeChain::distance(const Type *o) const {
@@ -85,18 +90,20 @@ namespace storm {
 	}
 
 	void TypeChain::updateSuper(const TypeChain *o) {
-		nat count = o->chain->count;
+		nat count = o->chainCount();
 		chain = runtime::allocArray<TypeChain *>(engine(), &pointerArrayType, count + 1);
 		for (nat i = 0; i < count; i++)
-			chain->v[i] = o->chain->v[i];
+			chain->v[i] = o->chainAt(i);
 		chain->v[count] = this;
 
 		notify();
 	}
 
 	void TypeChain::clearSuper() {
-		chain = runtime::allocArray<TypeChain *>(engine(), &pointerArrayType, 1);
-		chain->v[0] = this;
+		chain = null;
+
+		// chain = runtime::allocArray<TypeChain *>(engine(), &pointerArrayType, 1);
+		// chain->v[0] = this;
 
 		notify();
 	}

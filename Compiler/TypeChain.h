@@ -12,8 +12,6 @@ namespace storm {
 	 * class is a subclass of another. Using Cohen's algorithm.
 	 *
 	 * TODO: Realize when a type died and remove it from any other TypeChain:s then!
-	 *
-	 * TODO: Make a custom iterator which can replace the array in 'children'.
 	 */
 	class TypeChain : public ObjectOn<Compiler> {
 		STORM_CLASS;
@@ -70,6 +68,7 @@ namespace storm {
 		Type *owner;
 
 		// Chain of super types (eg. our supertype, that supertype, and so on).
+		// If we have no parents, 'chain' is set to null.
 		GcArray<TypeChain *> *chain;
 
 		// Children.
@@ -86,6 +85,12 @@ namespace storm {
 
 		// Get the super TypeChain object.
 		TypeChain *superChain() const;
+
+		// Size of the chain.
+		inline Nat chainCount() const { return chain ? chain->count : 1; }
+
+		// Element 'n' in the chain.
+		inline TypeChain *chainAt(Nat n) const { return chain ? chain->v[n] : const_cast<TypeChain *>(this); }
 	};
 
 }
