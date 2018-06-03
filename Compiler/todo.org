@@ -1,3 +1,13 @@
+* Performance improvements [1/3]
+  - [X] The main culprit of the startup time is loading all functions in the system (about 50%). Investigate why.
+        It seems much of the time can be traced to filling in the VTables, out of which the main culprit is
+        'fn->directRef()', which initializes references.
+  - [ ] Each function needs to create strings to initialize the references. This is not optimized for speed
+        and takes about 10 ms during startup. Should be fixed by allowing RefSource to take arbitrary objects
+        as their "names" instead of strings.
+  - [ ] TypeChain is currently always allocating an array of size 1 before it is properly initialized. This is very
+        wasteful, as it is almost always overwritten with a new array an instant later.
+
 * Loose ends so far [21/43]
   - [ ] Support documentation of templates from C++.
   - [ ] We probably want to allow creating documentation for an entire package. Possibly by creating

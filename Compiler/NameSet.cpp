@@ -201,10 +201,11 @@ namespace storm {
 		if (!overloads)
 			return null;
 
-		if (!overloads->has(part->name))
+		Overloads::Iter i = overloads->find(part->name);
+		if (i == overloads->end())
 			return null;
 
-		NameOverloads *found = overloads->get(part->name);
+		NameOverloads *found = i.v();
 		Named *result = part->choose(found, source);
 		if (result)
 			return result;
