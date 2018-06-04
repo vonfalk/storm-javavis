@@ -158,9 +158,17 @@
 #define CODECALL __attribute__((cdecl))
 #endif
 
-#if defined(X64)
+#if defined(VISUAL_STUDIO) && defined(X64)
 // X86-64 does not need to specify a calling convention. There is a single standard convention!
 #define CODECALL
+#endif
+
+#if defined(GCC) && defined(X64)
+// X86-64 does not need to specify a calling convention. There is a single standard convention!
+
+// We're using -falign-functions=2, but that seems to be ignored for static template functions on
+// GCC 8.1.0, so we specify it here as well to be safe.
+#define CODECALL  __attribute__((aligned(2)))
 #endif
 
 // Make sure it is defined.
