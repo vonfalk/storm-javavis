@@ -18,7 +18,7 @@ BEGIN_TEST(RefTest, Code) {
 	Engine &e = gEngine();
 	Arena *arena = code::arena(e);
 
-	RefSource *fn = new (e) StrRefSource(L"fnA/B");
+	RefSource *fn = new (e) StrRefSource(S("fnA/B"));
 	fn->setPtr(address(&fnA));
 
 	Listing *l = new (e) Listing();

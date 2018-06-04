@@ -1920,7 +1920,7 @@ namespace storm {
 
 	GcType *Gc::allocType(GcType::Kind kind, Type *type, size_t stride, size_t entries) {
 		size_t s = typeSize(entries);
-		GcType *t = (GcType *)poolAlloc(s);
+		GcType *t = (GcType *)malloc(s);
 		memset(t, 0, s);
 		t->kind = kind;
 		t->type = type;
@@ -1931,7 +1931,7 @@ namespace storm {
 
 	GcType *Gc::allocType(const GcType *src) {
 		size_t s = typeSize(src->count);
-		GcType *t = (GcType *)poolAlloc(s);
+		GcType *t = (GcType *)malloc(s);
 		memcpy(t, src, s);
 		return t;
 	}
