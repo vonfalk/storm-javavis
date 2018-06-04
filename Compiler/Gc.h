@@ -107,6 +107,23 @@ namespace storm {
 		void *allocWeakArray(size_t count);
 
 		/**
+		 * Notify the GC that we're trying to allocate a fairly large data structure from this
+		 * thread in the near future, most of which will be dead right after the work is
+		 * complete. This hint could be ignored by the underlying implementation.
+		 */
+		class RampAlloc {
+		public:
+			RampAlloc(Gc &owner);
+			~RampAlloc();
+
+		private:
+			RampAlloc(const RampAlloc &);
+			RampAlloc &operator =(const RampAlloc &);
+
+			Gc &owner;
+		};
+
+		/**
 		 * Management of Gc types.
 		 *
 		 * These objects are semi-managed by the GC. They are not collected automatically, but they

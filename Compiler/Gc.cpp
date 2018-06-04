@@ -1251,6 +1251,14 @@ namespace storm {
 		return (byte *)memory + headerSize;
 	}
 
+	Gc::RampAlloc::RampAlloc(Gc &owner) : owner(owner) {
+		check(mps_ap_alloc_pattern_begin(owner.currentAllocPoint(), mps_alloc_pattern_ramp()), L"RAMP");
+	}
+
+	Gc::RampAlloc::~RampAlloc() {
+		check(mps_ap_alloc_pattern_end(owner.currentAllocPoint(), mps_alloc_pattern_ramp()), L"RAMP");
+	}
+
 	size_t Gc::typeSize(size_t entries) {
 		return sizeof(MpsType) + entries*sizeof(size_t) - sizeof(size_t);
 	}
@@ -1913,6 +1921,10 @@ namespace storm {
 		*(size_t *)start = (count << 1) | 1;
 		return start;
 	}
+
+	Gc::RampAlloc::RampAlloc(Gc &owner) : owner(owner) {}
+
+	Gc::RampAlloc::~RampAlloc() {}
 
 	static size_t typeSize(size_t entries) {
 		return sizeof(GcType) + entries*sizeof(size_t) - sizeof(size_t);

@@ -50,7 +50,8 @@ namespace storm {
 		*l << jmp(ptrRel(ptrA, Offset::sPtr * offset));
 
 		Binary *b = new (this) Binary(engine().arena(), l);
-		return new (this) VTableSource(cppSlot(offset), id, b);
+		entry = new (this) VTableSource(cppSlot(offset), id, b);
+		return entry;
 	}
 
 	code::RefSource *VTableCalls::getStorm(Nat offset, Nat id) {
@@ -67,7 +68,8 @@ namespace storm {
 		*l << jmp(ptrRel(ptrA, Offset::sPtr * (offset + 2))); // 2 for the 2 size_t members in arrays.
 
 		Binary *b = new (this) Binary(engine().arena(), l);
-		return new (this) VTableSource(stormSlot(offset), id, b);
+		entry = new (this) VTableSource(stormSlot(offset), id, b);
+		return entry;
 	}
 
 	VTableSource::VTableSource(VTableSlot slot, Nat id, code::Content *c) : RefSource(c), slot(slot), id(id) {}

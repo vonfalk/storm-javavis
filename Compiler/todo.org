@@ -1,35 +1,39 @@
 * Performance improvements [3/4]
   - [X] The main culprit of the startup time is loading all functions in the system (about 50%). Investigate why.
-        It seems much of the time can be traced to filling in the VTables, out of which the main culprit is
-        'fn->directRef()', which initializes references.
+    It seems much of the time can be traced to filling in the VTables, out of which the main culprit is
+    'fn->directRef()', which initializes references.
+    Finished: reduced startup with approx. 10-20 ms on Windows.
   - [X] Each function needs to create strings to initialize the references. This is not optimized for speed
-        and takes about 10 ms during startup. Should be fixed by allowing RefSource to take arbitrary objects
-        as their "names" instead of strings.
+    and takes about 10 ms during startup. Should be fixed by allowing RefSource to take arbitrary objects
+    as their "names" instead of strings.
   - [X] TypeChain is currently always allocating an array of size 1 before it is properly initialized. This is very
-        wasteful, as it is almost always overwritten with a new array an instant later.
-  - [ ] All the above was completed without much gain...
+    wasteful, as it is almost always overwritten with a new array an instant later.
+  - [ ] In Basic Storm: It is likely that "result" is called multiple times from some nodes, which causes an
+    exponential growth in calls towards the leaves of the AST. Caching in Expr could solve the issue,
+    but the scale of the issue should be assessed first.
 
-* Loose ends so far [21/43]
+* Loose ends so far [21/45]
+  - [ ] Storm crashes when running the test suite when compiling with newer GCC (8.0 or 8.1 and newer).
   - [ ] Support documentation of templates from C++.
   - [ ] We probably want to allow creating documentation for an entire package. Possibly by creating
-        a file called 'doc.txt' or similar inside the appropriate folder.
+    a file called 'doc.txt' or similar inside the appropriate folder.
   - [ ] Finish integrating the Double class in the system. Basic Storm should be able to instantiate them from
-        literals. Str and StrBuf should be able to parse and stringify them, and conversions between built-in
-        types should be implemented. Finally, the implementation needs to be tested.
+    literals. Str and StrBuf should be able to parse and stringify them, and conversions between built-in
+    types should be implemented. Finally, the implementation needs to be tested.
   - [ ] Support two-stage initialization. First a call to 'super' or similarly, after which 'this' is accessible
-        as the parent class, then a call to 'init {}' which initializes the rest of the object. Slightly tricky
-        to implement wrt the 'as' operator.
+    as the parent class, then a call to 'init {}' which initializes the rest of the object. Slightly tricky
+    to implement wrt the 'as' operator.
   - [ ] Add documentation for the built-in types (such as core.Int).
   - [ ] It is not possible to chain 'assignment' functions using the = operator.
   - [ ] Allow declaring member functions (at least in values) as a different thread than the owner.
   - [ ] Change the default visibility of class members in Basic Storm to private.
   - [ ] Destructors in maps and arrays are not working properly yet. Idea: add (yet another) member 
-        to array headers, and let the user provide a custom destructor in there if neccessary.
+    to array headers, and let the user provide a custom destructor in there if neccessary.
   - [ ] Destructors do not need their own slot in the Storm vtables anymore since we have another mechanism for that.
   - [ ] Check so that destructors are required if a value-type object within a class or actor
-        contains a destructor.
+    contains a destructor.
   - [ ] Improve the preprocessor by automatically adding copy constructors and assignment operators
-        where neccessary.
+    where neccessary.
   - [ ] Improve the preprocessor by generating toS() and deepCopy() if not present.
   - [ ] Finish the clone() functionality.
   - [ ] Make sure Array<>, Map<> and Set<> clear the memory when an element is removed (and call destructors).
@@ -40,38 +44,38 @@
   - [ ] Support marking functions as 'pure' in C++ and Storm.
   - [ ] Automatically mark non-virtual functions in C++ as 'final' in storm, since VTables will not work anyway.
   - [ ] If a type has a '==' or '<' outside the type itself, the corresponding operator will not be present in
-        a Handle, like '<<' at the moment.
+    a Handle, like '<<' at the moment.
   - [ ] Show 'known subclasses' inside the documentation in Emacs?
   - [X] Unary negation is not implemented in Basic Storm (and possibly not in the built-in types).
   - [X] Allow nesting class declarations in Basic Storm.
   - [X] Accessing member variables do not respect the thread associated with the type like functions do.
-        Therefore, it is possible to break the threading model by using raw variable accesses!
+    Therefore, it is possible to break the threading model by using raw variable accesses!
   - [X] In Basic Storm, taking a function pointer of a private function does not work.
   - [X] Make a generic toS() for Storm which uses operator << (if present) for values.
   - [X] In Basic Storm, expressions like '2 - 1.0' fail to compile since Float is not searched for
-        candidates. This could be solved by moving the operators out of the number classes or improve
-        overload resolution in this case.
+    candidates. This could be solved by moving the operators out of the number classes or improve
+    overload resolution in this case.
   - [X] Implement 'private' for non-members in Basic Storm.
   - [X] When creating an Arena using code:arena(), the vtable dispatch for 'transform' is not correct. The
-        base class is called directly (no lookup) even though there are implementations in the derived classes.
+    base class is called directly (no lookup) even though there are implementations in the derived classes.
   - [X] Stack traces for Windows (32-bit) do not always contain names of Storm functions. Only functions
-        that require exception handling are currently shown.
+    that require exception handling are currently shown.
   - [X] Examine if the special case in the stack scanning actually works. The one time I've seen
-        it, everything crashed shortly afterwards, but that could have been something else.
-        Note: The crash was due to newly created UThreads being visible to the GC before they
-        were completely initialized, resulting in the GC trying to scan the address 0 or being
-        very confused with multiple main stacks.
+    it, everything crashed shortly afterwards, but that could have been something else.
+    Note: The crash was due to newly created UThreads being visible to the GC before they
+    were completely initialized, resulting in the GC trying to scan the address 0 or being
+    very confused with multiple main stacks.
   - [X] Check all synchronization primitives used on Linux. It seems that the BSThread test crashes
-        sometimes when the GC decides it needs to perform garbage collection around the time when threads
-        are spawned and/or when futures are used.
+    sometimes when the GC decides it needs to perform garbage collection around the time when threads
+    are spawned and/or when futures are used.
   - [X] We need to scan the data inside a StackTrace object using mps_rank_ambig().
   - [X] The grammar rule X : Y ("w", Y)* "w"; does not parse properly. It should either work as expected 
-        or report an error!
+    or report an error!
   - [X] Thread sleep needs to be improved! We should put threads in a sleep queue so that the thread
-        can be properly put to sleep even if there is another uthread active on the current thread.
+    can be properly put to sleep even if there is another uthread active on the current thread.
   - [X] Review the semantics of Buffer::filled() wrt IStream::read. Buffer::filled could be used instead
-        of the explicit 'start' parameter. This allows a Buffer to be passed to 'read' multiple times
-        to fill the buffer until completion.
+    of the explicit 'start' parameter. This allows a Buffer to be passed to 'read' multiple times
+    to fill the buffer until completion.
   - [X] Handles for values do not get a proper == operator.
   - [X] Enums should be treated like raw integers (currently they are Values).
   - [X] Destructors should be auto-generated in Basic Storm if they are needed.
@@ -82,17 +86,17 @@
 * Improvements [6/22]
   - [ ] Add a type that represents byte sizes. Use that in eg. Socket::readBuffer.
   - [ ] The call to 'getaddrinfo' in the networking subsystem blocks an entire OS thread waiting for
-        the network. This is not very good, as we might have other things to do in the meantime.
+    the network. This is not very good, as we might have other things to do in the meantime.
   - [ ] Automatically re-flow the raw text in comments, just like Markdown would. This is good
-        when the width of the users terminal or buffer is smaller than the width of the comments.
+    when the width of the users terminal or buffer is smaller than the width of the comments.
   - [ ] Allow comment that 'groups' functions together. This will form a two-level tree that could improve
-        readability of the documentation.
+    readability of the documentation.
   - [ ] Switch the order of 'src' and 'dest' in 'jmp'. They are currently reversed when compared to 'call'.
   - [ ] Use the LO pool for object formats, this should make it possible to have them garbage collected
-        and readable during scanning.
+    and readable during scanning.
   - [ ] Cache and re-use the function thunks generated by CodeGen/callThunk().
   - [ ] Decouple a variable's storage location from when it needs destruction. This could be used to make
-        variables immediatly eligible for destruction even if they are moved to an outer scope.
+    variables immediatly eligible for destruction even if they are moved to an outer scope.
   - [ ] Properly handle failure conditions when creating Threads and UThreads (eg. out of memory).
   - [ ] Rename 'TObject' to 'Actor' to make it easier to understand.
   - [ ] Fix destructors in Storm...
@@ -104,9 +108,9 @@
   - [X] Indicate function return types and types of variables in Doc objects.
   - [X] Why is the expression '"foo" + foo()' allowed if 'foo()' returns null?
   - [X] The syntax SExpr (, SExpr)? is treated as a parameter list. Switch to {} for capture so that
-        this does not happen. (requiring SExpr - (,SExpr) instead), stricter parsing.
+    this does not happen. (requiring SExpr - (,SExpr) instead), stricter parsing.
   - [X] Implement attaching and detaching threads using ThreadGroups for os::Thread.
   - [X] Make it possible to mark entire rules with syntax colors. That would be equivalent to marking
-        all usages of that token with the corresponding color.
+    all usages of that token with the corresponding color.
   - [X] In Array.get(), do not create the exception in getRaw() since it takes up a lot of valuable space in
-        the i-cache. Instead, call a separate function or reverse the logic.
+    the i-cache. Instead, call a separate function or reverse the logic.

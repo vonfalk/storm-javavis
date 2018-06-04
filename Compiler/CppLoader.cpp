@@ -420,6 +420,10 @@ namespace storm {
 
 
 	void CppLoader::loadFunctions() {
+		// This is fairly expensive and generates a bit of garbage. Help the GC by informing it of
+		// the mess we're going to create.
+		Gc::RampAlloc z(e->gc);
+
 		Nat c = functionCount();
 		for (Nat i = 0; i < c; i++) {
 			loadFunction(world->functions[i]);
