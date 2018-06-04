@@ -149,6 +149,7 @@ flags+=-Wno-pmf-conversions
 flags+=-Wno-switch
 flags+=-Wno-parentheses
 flags+=-Wno-unused-function
+flags+=-Wno-pragmas
 #We need to align functions to even addresses, otherwise they will be seen as vtable offsets.
 flags+=-falign-functions=2
 #Do not export all symbols from .so-files. Storm assumes that functions and variables in different

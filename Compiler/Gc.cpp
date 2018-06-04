@@ -7,6 +7,10 @@
 #include "Utils/Memory.h"
 #include "Utils/Bitwise.h"
 
+#ifdef POSIX
+#include <sys/mman.h>
+#endif
+
 #pragma GCC diagnostic ignored "-Wclass-memaccess"
 
 #if defined(STORM_GC_MPS)
@@ -1813,6 +1817,39 @@ namespace storm {
 
 	static const size_t headerSizeWords = 4;
 
+	// Very primitive pool allocator without support for freeing memory.
+	static byte *allocStart = null;
+	static byte *allocEnd = null;
+	static const size_t allocChunk = 1024*1024; // 1MB at a time.
+	static util::Lock allocLock;
+
+#if defined(WINDOWS)
+
+	static void newPool() {
+		allocStart = (byte *)VirtualAlloc(null, allocChunk, MEM_COMMIT | MEM_RESERVE, PAGE_EXECUTE_READWRITE);
+		allocEnd = allocStart + allocChunk;
+	}
+
+#elif defined(POSIX)
+
+	static void newPool() {
+		allocStart = (byte *)mmap(null, allocChunk, PROT_READ | PROT_WRITE | PROT_EXEC, MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
+		allocEnd = allocStart + allocChunk;
+	}
+
+#endif
+
+	static void *poolAlloc(size_t bytes) {
+		util::Lock::L z(allocLock);
+
+		if (size_t(allocEnd - allocStart) < bytes)
+			newPool();
+
+		void *result = allocStart;
+		allocStart += bytes;
+		return result;
+	}
+
 	Gc::Gc(size_t initial, nat finalizationInterval) : finalizationInterval(finalizationInterval) {}
 
 	Gc::~Gc() {}
@@ -1833,7 +1870,7 @@ namespace storm {
 
 	void *Gc::alloc(const GcType *type) {
 		size_t size = align(type->stride) + headerSizeWords*sizeof(size_t);
-		void *mem = malloc(size);
+		void *mem = poolAlloc(size);
 		memset(mem, 0, size);
 		memset(mem, 0xFF, headerSizeWords*sizeof(size_t));
 
@@ -1853,7 +1890,7 @@ namespace storm {
 
 	void *Gc::allocArray(const GcType *type, size_t count) {
 		size_t size = align(type->stride)*count + 2*sizeof(size_t) + headerSizeWords*sizeof(size_t);
-		void *mem = malloc(size);
+		void *mem = poolAlloc(size);
 		memset(mem, 0, size);
 		memset(mem, 0xFF, headerSizeWords*sizeof(size_t));
 
@@ -1866,7 +1903,7 @@ namespace storm {
 
 	void *Gc::allocWeakArray(size_t count) {
 		size_t size = sizeof(void*)*count + 2*sizeof(size_t) + headerSizeWords*sizeof(size_t);
-		void *mem = malloc(size);
+		void *mem = poolAlloc(size);
 		memset(mem, 0, size);
 		memset(mem, 0xFF, headerSizeWords*sizeof(size_t));
 
@@ -1883,7 +1920,7 @@ namespace storm {
 
 	GcType *Gc::allocType(GcType::Kind kind, Type *type, size_t stride, size_t entries) {
 		size_t s = typeSize(entries);
-		GcType *t = (GcType *)malloc(s);
+		GcType *t = (GcType *)poolAlloc(s);
 		memset(t, 0, s);
 		t->kind = kind;
 		t->type = type;
@@ -1894,7 +1931,7 @@ namespace storm {
 
 	GcType *Gc::allocType(const GcType *src) {
 		size_t s = typeSize(src->count);
-		GcType *t = (GcType *)malloc(s);
+		GcType *t = (GcType *)poolAlloc(s);
 		memcpy(t, src, s);
 		return t;
 	}
@@ -1926,7 +1963,7 @@ namespace storm {
 
 		code = align(code);
 		size_t size = code + sizeof(GcCode) + refs*sizeof(GcCodeRef) - sizeof(GcCodeRef) + headerSizeWords*sizeof(size_t);
-		void *mem = malloc(size);
+		void *mem = poolAlloc(size);
 		// void *mem = mgr.allocate(size);
 		memset(mem, 0, size);
 		memset((size_t *)mem + 1, 0xFF, (headerSizeWords - 1)*sizeof(size_t));
