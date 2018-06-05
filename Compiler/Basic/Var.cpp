@@ -31,7 +31,8 @@ namespace storm {
 
 		Var::Var(Block *block, syntax::SStr *name, Expr *init) : Expr(name->pos) {
 			this->init(block, init->result().type().asRef(false), name);
-			initTo(init);
+			// We don't need to call 'initTo' since we know that 'init' will work properly anyway!.
+			initExpr = init;
 		}
 
 		LocalVar *Var::var() {

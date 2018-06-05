@@ -63,8 +63,8 @@ namespace storm {
 			return castPenalty(from, to, namedDefault, scope);
 		}
 
-		Int castPenalty(Expr *from, Value to, NamedFlags mode, Scope scope) {
-			ExprResult r = from->result();
+		Int castPenalty(Expr *from, ExprResult fromResult, Value to, NamedFlags mode, Scope scope) {
+			ExprResult r = fromResult;
 			// We want to allow 'casting' <nothing> into anything. This is good, since we want to be
 			// able to place non-returning functions basically anywhere (especially in if-statements).
 			if (r.nothing())
@@ -101,18 +101,23 @@ namespace storm {
 			return -1;
 		}
 
+		Int castPenalty(Expr *from, Value to, NamedFlags mode, Scope scope) {
+			return castPenalty(from, from->result(), to, mode, scope);
+		}
+
 		Expr *castTo(Expr *from, Value to, Scope scope) {
 			return castTo(from, to, namedDefault, scope);
 		}
 
 		Expr *castTo(Expr *from, Value to, NamedFlags mode, Scope scope) {
-			// Safeguard.
-			if (!castable(from, to, mode, scope))
-				return null;
-
 			ExprResult r = from->result();
 			if (r.nothing())
 				return from;
+
+			// Safeguard.
+			if (castPenalty(from, r, to, mode, scope) < 0)
+				return null;
+
 			Value f = r.type();
 
 			// No work?
