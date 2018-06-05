@@ -216,4 +216,4 @@ libPrefix=Slow
 compile+=*.c:cl <defines> <file> <includes> <flags> <warnings> /c /Fo<output>
 
 [unix]
-compile+=*.c:gcc -Wno-unknown-pragmas -std=c99 -O3 <cflags> <defines> <warnings> -Wno-maybe-uninitialized <file> -c <includes> -o <output>
+compile+=*.c:gcc -Wno-unknown-pragmas -Wno-pragmas -std=c99 -O3 <cflags> <defines> <warnings> -Wno-maybe-uninitialized <file> -c <includes> -o <output>
