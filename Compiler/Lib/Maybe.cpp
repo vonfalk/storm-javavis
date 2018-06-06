@@ -195,6 +195,9 @@ namespace storm {
 		if (part->params->count() != 2)
 			return null;
 
+		if (part->params->at(0).type != this)
+			return null;
+
 		Value o = part->params->at(1);
 		if (!isMaybe(o))
 			return null;
@@ -210,6 +213,9 @@ namespace storm {
 
 	Named *MaybeClassType::createCopy(Str *name, SimplePart *part) {
 		if (part->params->count() != 2)
+			return null;
+
+		if (part->params->at(0).type != this)
 			return null;
 
 		Value o = part->params->at(1);
@@ -495,6 +501,9 @@ namespace storm {
 		if (part->params->count() != 2)
 			return null;
 
+		if (part->params->at(0).type != this)
+			return null;
+
 		Value o = part->params->at(1);
 		if (!isMaybe(o))
 			return null;
@@ -510,6 +519,9 @@ namespace storm {
 
 	Named *MaybeValueType::createCopy(Str *name, SimplePart *part) {
 		if (part->params->count() != 2)
+			return null;
+
+		if (part->params->at(0).type != this)
 			return null;
 
 		Value o = part->params->at(1);

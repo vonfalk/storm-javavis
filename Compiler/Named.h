@@ -37,7 +37,7 @@ namespace storm {
 		MAYBE(Named *) find(const wchar *name, Scope source);
 
 		// Get the parent object to this lookup, or null if none.
-		virtual NameLookup *STORM_FN parent() const;
+		virtual MAYBE(NameLookup *) STORM_FN parent() const;
 
 		// Parent name lookup. This should be set by the parent. If it is null, the default 'parent'
 		// implementation asserts. Therefore, root objects need to override 'parent' in order to

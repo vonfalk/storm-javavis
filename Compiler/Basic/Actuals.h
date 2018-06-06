@@ -66,6 +66,10 @@ namespace storm {
 			// Alter an expression.
 			void STORM_FN alter(Nat id, Value to);
 
+			// Match the first parameter strictly, ie. do not allow automatic type casts of the
+			// first parameter.
+			void STORM_FN strictFirst();
+
 			// Matches?
 			virtual Int STORM_FN matches(Named *candidate, Scope source) const;
 
@@ -75,6 +79,9 @@ namespace storm {
 
 			// Position of this part.
 			SrcPos pos;
+
+			// Strict matching of the 'this' parameter.
+			Bool strictThis;
 		};
 
 		// Helper to create a Name with one BSNamePart inside of it.

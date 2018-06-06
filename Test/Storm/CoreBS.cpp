@@ -222,6 +222,7 @@ BEGIN_TEST(MaybeTest, BS) {
 	CHECK_EQ(runFn<Int>(S("test.bs.testMaybe"), 2), 6);
 
 	CHECK_EQ(runFn<Int>(S("test.bs.assignMaybe")), 1);
+	CHECK_ERROR(runFn<void>(S("test.bs.assignError")), SyntaxError);
 
 	CHECK_EQ(::toS(runFn<Str *>(S("test.bs.maybeToS"), 0)), L"null");
 	CHECK_EQ(::toS(runFn<Str *>(S("test.bs.maybeToS"), 1)), L"ok");

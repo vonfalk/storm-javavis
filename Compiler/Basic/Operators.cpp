@@ -40,7 +40,14 @@ namespace storm {
 			if (l.isHeapObj() && l.ref && castable(rhs, l.asRef(false), block->scope)) {
 				return new (block) ClassAssign(lhs, rhs, block->scope);
 			} else {
-				return OpInfo::meaning(block, lhs, rhs);
+				// Make sure we do not allow automatic conversion of the 'this' parameter during
+				// assignment. That would produce weird results.
+				Expr *fn = find(block, name, lhs, rhs, true);
+				if (!fn)
+					throw SyntaxError(pos, L"Can not find an implementation of the operator " +
+									::toS(name) + L" for " + ::toS(lhs->result().type()) + L", " +
+									::toS(rhs->result().type()) + L".");
+				return fn;
 			}
 		}
 

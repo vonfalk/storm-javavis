@@ -25,6 +25,9 @@ namespace storm {
 		Int castPenalty(Expr *from, Value to, NamedFlags mode, Scope scope);
 		Int STORM_FN castPenalty(Expr *from, Value to, Scope scope);
 
+		// What is the penalty of casting 'from' to 'to', disregarding any automatic type conversions.
+		Int plainCastPenalty(ExprResult from, Value to, NamedFlags mode);
+
 		// Return an expression that returns the type 'to'. If nothing special needs to be done,
 		// simply returns 'from'. Note that the returned expr may differ in the 'ref' member!
 		Expr *castTo(Expr *from, Value to, NamedFlags mode, Scope scope);

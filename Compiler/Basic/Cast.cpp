@@ -64,26 +64,12 @@ namespace storm {
 		}
 
 		Int castPenalty(Expr *from, ExprResult fromResult, Value to, NamedFlags mode, Scope scope) {
-			ExprResult r = fromResult;
-			// We want to allow 'casting' <nothing> into anything. This is good, since we want to be
-			// able to place non-returning functions basically anywhere (especially in if-statements).
-			if (r.nothing())
-				return 0;
-			Value f = r.type();
-
-			if (mode & namedMatchNoInheritance)
-				return (canStore(f, to) && f.type == to.type) ? 0 : -1;
-
-			// No work needed?
-			if (canStore(f, to)) {
-				if (f.type != null && to.type != null)
-					return f.type->distanceFrom(to.type);
-				else
-					return 0;
-			}
+			Int penalty = plainCastPenalty(fromResult, to, mode);
+			if (penalty >= 0)
+				return penalty;
 
 			// Special cast supported directly by the Expr?
-			Int penalty = from->castPenalty(to);
+			penalty = from->castPenalty(to);
 			if (penalty >= 0)
 				return 100 * penalty; // Quite large penalty, so that we prefer functions without casting.
 
@@ -95,7 +81,7 @@ namespace storm {
 			}
 
 			// Find a cast ctor!
-			if (castCtor(f, to, scope))
+			if (castCtor(fromResult.type(), to, scope))
 				return 1000; // Larger than casting literals.
 
 			return -1;
@@ -108,6 +94,28 @@ namespace storm {
 		Expr *castTo(Expr *from, Value to, Scope scope) {
 			return castTo(from, to, namedDefault, scope);
 		}
+
+		Int plainCastPenalty(ExprResult from, Value to, NamedFlags mode) {
+			// We want to allow 'casting' <nothing> into anything. This is good, since we want to be
+			// able to place non-returning functions basically anywhere (especially in if-statements).
+			if (from.nothing())
+				return 0;
+			Value f = from.type();
+
+			if (mode & namedMatchNoInheritance)
+				return (canStore(f, to) && f.type == to.type) ? 0 : -1;
+
+			// No work needed?
+			if (canStore(f, to)) {
+				if (f.type != null && to.type != null)
+					return f.type->distanceFrom(to.type);
+				else
+					return 0;
+			}
+
+			return -1;
+		}
+
 
 		Expr *castTo(Expr *from, Value to, NamedFlags mode, Scope scope) {
 			ExprResult r = from->result();

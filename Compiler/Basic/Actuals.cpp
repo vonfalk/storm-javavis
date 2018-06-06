@@ -116,6 +116,10 @@ namespace storm {
 			exprs->at(at) = new (this) DummyExpr(pos, to);
 		}
 
+		void BSNamePart::strictFirst() {
+			strictThis = true;
+		}
+
 		// TODO: Consider using 'max' for match weights instead?
 		// TODO: Consider storing a context inside the context, so that names are resolved in the context
 		// they were created rather than in the context they are evaluated. Not sure if this is a good idea though.
@@ -128,11 +132,20 @@ namespace storm {
 
 			for (nat i = 0; i < c->count(); i++) {
 				// We can convert everything to references, so treat everything as if it was a plain
-				// value.
-				Value formal = c->at(i).asRef(false);
+				// value. However, we don't want to use automatic type casts when the formal
+				// parameter is a reference, since that eliminates any side effects (most notably
+				// for the 'this' parameter).
+
+				Value formal = c->at(i);
 				Expr *actual = exprs->at(i);
 
-				int penalty = castPenalty(actual, formal, candidate->flags, context);
+				int penalty = -1;
+				if (formal.ref && i == 0 && strictThis) {
+					penalty = plainCastPenalty(actual->result(), formal.asRef(false), candidate->flags);
+				} else {
+					penalty = castPenalty(actual, formal.asRef(false), candidate->flags, context);
+				}
+
 				if (penalty >= 0)
 					distance += penalty;
 				else

@@ -46,11 +46,17 @@ namespace storm {
 		}
 
 		Expr *OpInfo::find(Block *block, Str *name, Expr *lhs, Expr *rhs) {
+			return find(block, name, lhs, rhs, false);
+		}
+
+		Expr *OpInfo::find(Block *block, Str *name, Expr *lhs, Expr *rhs, Bool strict) {
 			Actuals *actuals = new (this) Actuals();
 			actuals->add(lhs);
 			actuals->add(rhs);
 
 			BSNamePart *part = new (this) BSNamePart(name, pos, actuals);
+			if (strict)
+				part->strictFirst();
 			SimpleName *sName = new (this) SimpleName(part);
 
 			Named *found = block->scope.find(sName);

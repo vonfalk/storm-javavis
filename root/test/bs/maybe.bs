@@ -42,6 +42,14 @@ Int assignMaybe() {
 		0;
 }
 
+void assignError() {
+	Dbg v(20);
+	Dbg? r;
+
+	// Should not work.
+	v = r;
+}
+
 Str maybeToS(Int p) {
 	Str? r;
 

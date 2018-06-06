@@ -1,4 +1,4 @@
-* Performance improvements [3/4]
+* Performance improvements [3/5]
   - [X] The main culprit of the startup time is loading all functions in the system (about 50%). Investigate why.
     It seems much of the time can be traced to filling in the VTables, out of which the main culprit is
     'fn->directRef()', which initializes references.
@@ -11,6 +11,7 @@
   - [ ] In Basic Storm: It is likely that "result" is called multiple times from some nodes, which causes an
     exponential growth in calls towards the leaves of the AST. Caching in Expr could solve the issue,
     but the scale of the issue should be assessed first.
+  - [ ] Parsing core.lang.syntax.bnf takes about 80 ms, which is a bit on the high end when compiling code...
 
 * Loose ends so far [23/45]
   - [ ] Support documentation of templates from C++.

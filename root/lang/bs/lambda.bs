@@ -87,9 +87,11 @@ Scope lambdaScope(Block block) on Compiler {
 			Scope s = block.scope;
 			s.top = at;
 			return s;
+		} else if (parent = at.parent) {
+			at = parent;
+		} else {
+			return rootScope;
 		}
-
-		at = at.parent;
 	}
 
 	// Crude fallback. Should not happen.
@@ -102,10 +104,13 @@ Scope lambdaScope(Block block) on Compiler {
 NameLookup lambdaParent(Block block) on Compiler {
 	NameLookup at = block.lookup;
 	while (true) {
+		// print(at.toS);
 		if (at as Package) {
 			return at;
+		} else if (parent = at.parent) {
+			at = parent;
 		} else {
-			at = at.parent;
+			return rootPkg;
 		}
 	}
 

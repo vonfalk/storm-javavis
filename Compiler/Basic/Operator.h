@@ -50,6 +50,7 @@ namespace storm {
 
 			// Resolve the operator 'name' according to the normal rules. Returns 'null' if nothing usable is found.
 			MAYBE(Expr *) STORM_FN find(Block *block, Str *name, Expr *lhs, Expr *rhs);
+			MAYBE(Expr *) STORM_FN find(Block *block, Str *name, Expr *lhs, Expr *rhs, Bool strict);
 		};
 
 
