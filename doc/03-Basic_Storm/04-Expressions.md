@@ -587,18 +587,6 @@ Note that this has no meaning:
 var v = null;
 ```
 
-Automatic type conversions
----------------------------
-
-Automatic type conversions are done only for a few built-in types at the moment. Integer literals
-are automatically converted from the standard `Int` type to either `Nat` or `Byte` as
-suitable. Apart from this, `T` can be automatically casted to `T?` if needed. Currently, there are
-no way of implementing custom conversions. This will probably be included later!
-
-If two or more functions are callable after type conversions, the one which requires the least
-amount of conversions is called. Casts from `T` to `T?`, as well as integer literal casts costs more
-than the regular calls. In the case of equal distance calls, an error will be shown.
-
 Syntax
 -------
 
