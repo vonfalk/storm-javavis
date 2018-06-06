@@ -488,6 +488,36 @@ fn->
 This syntax is implemented in `lang:bs:fnPtr.bs`.
 
 
+Lambda functions
+-----------------
+
+Lambda functions are anonymous functions that are easily created inline with other code in Basic
+Storm. A lambda expression in Basic Storm evaluates to a function pointer pointing to the anonymous
+function. A lambda function is created as follows:
+
+```
+var x = (Int a, Int b) => a + b + 3;
+```
+
+This creates a function and binds it to `x`, which will be of the type `fn(Int, Int)->Int`, or
+`Fn<Int, Int, Int>`. In some cases, Basic Storm can infer the types of the parameters from
+context. In such cases, they may be left out. This can be done when the lambda function is passed
+directly as a parameter to a function, or if it is being assigned to a variable. For example:
+
+```
+Array<Int> x; // initialize with som data.
+x.sort((a, b) => a > b);
+```
+
+In this case, Basic Storm is able to see that `sort` requires a function taking two `Int`s, and is
+therefore able to infer that the types of `a` and `b` need to be `Int`.
+
+Currently, lambda functions are unable to capture variables from the surrounding scope. That
+capability will be added in the future.
+
+This syntax is implemented in `lang:bs:lambda.bs`.
+
+
 Null and maybe
 ---------------
 

@@ -9,12 +9,20 @@ use core:asm;
  * We should also support captures in some manner.
  */
 class LambdaExpr extends Expr {
+	// Parameters to the function. Parameters where the type is 'void' were not specified at the
+	// declaration site and need to be inferred.
 	private Array<ValParam> fnParams;
-	private Value fnResult;
+
+	// The type returned by this expression. Set to 'void' if we don't know due to unspecified parameters.
 	private Value type;
+
+	// Body of the lambda function.
 	private SExpr body;
+
+	// Parent block.
 	private Block parent;
 
+	// Create a lambda expression where the types of all parameters are known.
 	init(SrcPos pos, Block parent, Array<NameParam> params, SExpr body) {
 		var p = params.resolve(parent.scope);
 		Scope scope = lambdaScope(parent);
@@ -27,8 +35,21 @@ class LambdaExpr extends Expr {
 
 		init(pos) {
 			fnParams = params.resolve(parent.scope);
-			fnResult = result;
 			type = rootScope.value(name, pos);
+			body = body;
+			parent = parent;
+		}
+	}
+
+	// Create a lambda expression where the type of the parameters are unknown and have to be deduced.
+	init(SrcPos pos, Block parent, Array<SStr> paramNames, SExpr body) {
+		ValParam[] params;
+		for (i in paramNames)
+			params << ValParam(Value(), i);
+
+		init(pos) {
+			fnParams = params;
+			type = Value();
 			body = body;
 			parent = parent;
 		}
@@ -38,11 +59,34 @@ class LambdaExpr extends Expr {
 		ExprResult(type);
 	}
 
+	// Attempt automatic type deduction if we need to.
+	Int castPenalty(Value to) {
+		if (to == type) {
+			0;
+		} else if (acceptable(to)) {
+			10;
+		} else {
+			-1;
+		}
+	}
+
 	void code(CodeGen to, CodeResult r) {
+		unless (fnType = r.type.type) {
+			throwSyntaxError(pos, "Unable to deduce parameter types for the lambda function.");
+			return;
+		}
+
+		if (!acceptable(r.type))
+			throwSyntaxError(pos, "Unable to deduce parameter types for the lambda function.");
+
 		if (!r.needed())
 			return;
 
-		BSTreeFn fn(fnResult, SStr("<lambda>", pos), fnParams, to.runOn.thread);
+		ValParam[] params;
+		for (i, p in fnParams)
+			params << ValParam(fnType.params[i + 1], p.name);
+
+		BSTreeFn fn(fnType.params[0], SStr("<lambda>", pos), params, to.runOn.thread);
 		fn.parentLookup = lambdaParent(parent);
 		fn.body = {
 			FnBody b(fn, lambdaScope(parent));
@@ -56,9 +100,44 @@ class LambdaExpr extends Expr {
 	}
 
 	protected void toS(StrBuf to) {
-		to << "lambda";
+		to << "(";
+		for (i, p in fnParams) {
+			if (i > 0)
+				to << ", ";
+			if (p.type != Value())
+				to << p.type << " ";
+			to << p.name;
+		}
+		to << ") => <lambda body>";
+		// TODO: It would be nice to output a nice formatted body here, but at the moment that is
+		// not easily done since we need to transform the body in a suitable context for that to
+		// work. As it is now, we don't necessarily know that context here.
+	}
+
+	// Is 'type' an acceptable return type given what we currently know?
+	private Bool acceptable(Value type) {
+		unless (fn = type.type as FnType)
+			return false;
+
+		// Proper number of parameters?
+		if (fn.params.count != fnParams.count + 1)
+			return false;
+
+		// Make sure that all parameter types that are specified are properly set.
+		for (i, p in fnParams) {
+			if (p.type == Value()) {
+				// Not specified. Anything goes!
+			} else if (p.type != fn.params[i + 1]) {
+				// Non-compatible type. Not possible!
+				return false;
+			}
+		}
+
+		// All is well!
+		true;
 	}
 }
+
 
 /**
  * Wrap a lambda function body in a block that contains the parameters as variables, much like how a

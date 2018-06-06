@@ -408,8 +408,10 @@ BEGIN_TEST(PatternTest, BS) {
  * Lambda functions.
  */
 
-BEGIN_TEST_(LambdaTest, BS) {
-	CHECK_RUNS(runFn<Int>(S("test.bs.testLambda")));
+BEGIN_TEST(LambdaTest, BS) {
+	CHECK_EQ(runFn<Int>(S("test.bs.testLambda")), 13);
+	CHECK_EQ(runFn<Int>(S("test.bs.testLambdaParam")), 15);
+	CHECK_EQ(runFn<Int>(S("test.bs.testLambdaVar")), 32);
 } END_TEST
 
 

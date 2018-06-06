@@ -3,3 +3,16 @@ Int testLambda() {
 	var fn = (Int x) => x + 3;
 	fn.call(10);
 }
+
+Int callLambda(fn(Int)->Int x) {
+	x.call(10);
+}
+
+Int testLambdaParam() {
+	callLambda((a) => a + 5);
+}
+
+Int testLambdaVar() {
+	fn (Int) -> Int x = (a) => a + 20;
+	x.call(12);
+}

@@ -424,11 +424,11 @@ SStmt[20] => e : SUnless(block) e;
 ////////////////////////////////////////////////////////////////////
 
 SExpr[50] => LambdaExpr(pos, block, params, content) : "(", SFormals params, ")", "=>", SExpr@ content;
-// SExpr[50] => LambdaExpr(pos, block, params, content) : "(", SLambdaFormals params, ")", "=>", SExpr @content;
+SExpr[50] => LambdaExpr(pos, block, params, content) : "(", SLambdaFormals params, ")", "=>", SExpr @content;
 
-// Array<Str> SLambdaFormals();
-// SLambdaFormals => Array<Str>() : ;
-// SLambdaFormals => Array<Str>() : SName -> push - (, ",", SName -> push)*;
+Array<SStr> SLambdaFormals();
+SLambdaFormals => Array<SStr>() : ;
+SLambdaFormals => Array<SStr>() : SName -> push - (, ",", SName -> push)*;
 
 
 ////////////////////////////////////////////////////////////////////
