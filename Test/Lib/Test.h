@@ -21,11 +21,12 @@
 
 class TestResult {
 public:
-	TestResult() : total(0), failed(0), crashed(0) {}
+	TestResult() : total(0), failed(0), crashed(0), aborted(false) {}
 
 	nat total;
 	nat failed;
 	nat crashed;
+	bool aborted;
 
 	inline nat passed() const {
 		return total - failed - crashed;
@@ -35,11 +36,12 @@ public:
 		total += other.total;
 		failed += other.failed;
 		crashed += other.crashed;
+		aborted |= other.aborted;
 		return *this;
 	}
 
 	inline bool ok() const {
-		return failed == 0 && crashed == 0;
+		return failed == 0 && crashed == 0 && !aborted;
 	}
 
 	friend std::wostream &operator <<(std::wostream &to, const TestResult &r);
@@ -56,6 +58,8 @@ inline std::wostream &operator <<(std::wostream &to, const TestResult &r) {
 		to << L"\nFailed " << r.failed << L" tests!";
 	if (r.crashed > 0)
 		to << L"\nCrashed " << r.crashed << L" tests!";
+	if (r.aborted)
+		to << L"\nABORTED";
 	return to;
 }
 

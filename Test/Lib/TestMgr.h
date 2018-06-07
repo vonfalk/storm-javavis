@@ -36,6 +36,7 @@ void Tests::runSuite(Suite *s, TestResult &r, bool runAll) {
 				r += i->second->run();
 			} catch (const AbortError &) {
 				std::wcout << L"Aborted..." << std::endl;
+				r.aborted = true;
 			}
 		}
 	}
@@ -98,9 +99,11 @@ TestResult Tests::run(int argc, const wchar_t *const *argv) {
 		// asserts print their stack trace immediatly since things may crash badly when throwing exceptions.
 		PLN(L"Assert while testing.");
 		PLN(L"ABORTED");
+		r.aborted = true;
 	} catch (const Exception &e) {
 		PLN(L"Error while testing:\n" << e);
 		PLN(L"ABORTED");
+		r.aborted = true;
 	}
 
 	return r;
