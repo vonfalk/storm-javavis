@@ -16,28 +16,28 @@ namespace storm {
 		class Class;
 
 		/**
-		 * A constructor. Enforces that the parent constructor is called.
+		 * Raw constructor call, much like BSRawFn.
 		 */
-		class BSCtor : public Function {
+		class BSRawCtor : public Function {
 			STORM_CLASS;
 		public:
-			// Create. If body is null, we will generate the default ctor.
-			BSCtor(Array<ValParam> *params, Scope scope, syntax::Node *body, SrcPos pos);
-
-			// Scope.
-			Scope scope;
+			// Create.
+			STORM_CTOR BSRawCtor(Array<ValParam> *params, SrcPos pos);
 
 			// Position.
 			SrcPos pos;
-
-			// Body.
-			syntax::Node *body;
 
 			// We may need to run on a specific thread based on the current actual parameters.
 			virtual code::Var STORM_FN findThread(CodeGen *s, Array<code::Operand> *params);
 
 			// Add parameters. Returns the local variable that represents the 'threadParam' above if needed.
 			LocalVar *addParams(Block *to);
+
+			// Re-compile at next execution.
+			void STORM_FN reset();
+
+			// Create the body.
+			virtual CtorBody *STORM_FN createBody();
 
 		private:
 			// Parameter names.
@@ -46,15 +46,55 @@ namespace storm {
 			// Generate code.
 			CodeGen *CODECALL generateCode();
 
-			// Parse.
-			CtorBody *parse();
-
-			// Default ctor body.
-			CtorBody *defaultParse();
-
 			// Do we need a 'hidden' thread parameter?
 			bool needsThread;
 		};
+
+
+		/**
+		 * A constructor. Enforces that the parent constructor is called.
+		 */
+		class BSCtor : public BSRawCtor {
+			STORM_CLASS;
+		public:
+			// Create. If body is null, we will generate the default ctor.
+			BSCtor(Array<ValParam> *params, Scope scope, syntax::Node *body, SrcPos pos);
+
+			// Scope.
+			Scope scope;
+
+			// Body.
+			syntax::Node *body;
+
+			// Create the body.
+			virtual CtorBody *STORM_FN createBody();
+
+		private:
+			// Default ctor body.
+			CtorBody *defaultParse();
+		};
+
+
+		/**
+		 * A constructor using a pre-created syntax tree.
+		 */
+		class BSTreeCtor : public BSRawCtor {
+			STORM_CLASS;
+		public:
+			// Create.
+			STORM_CTOR BSTreeCtor(Array<ValParam> *params, SrcPos pos);
+
+			// Set the root of the syntax tree. Resetting the body also makes the function re-compile.
+			void STORM_ASSIGN body(CtorBody *body);
+
+			// Create the body.
+			virtual CtorBody *STORM_FN createBody();
+
+		private:
+			// Body.
+			MAYBE(CtorBody *) root;
+		};
+
 
 		/**
 		 * Body of the constructor.
@@ -63,6 +103,7 @@ namespace storm {
 			STORM_CLASS;
 		public:
 			STORM_CTOR CtorBody(BSCtor *owner);
+			STORM_CTOR CtorBody(BSRawCtor *owner, Scope scope);
 
 			using ExprBlock::add;
 			void STORM_FN add(Array<Expr *> *exprs);

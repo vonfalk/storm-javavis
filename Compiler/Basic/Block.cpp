@@ -71,6 +71,10 @@ namespace storm {
 		}
 
 		LocalVar *Block::variable(SimplePart *part) {
+			// Don't try to search for parameterized variables, that makes no sense at the moment!
+			if (part->params->any())
+				return null;
+
 			Str *name = part->name;
 			VarMap::Iter i = variables->find(name);
 			if (i != variables->end())

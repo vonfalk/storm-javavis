@@ -10,10 +10,8 @@
 namespace storm {
 	namespace bs {
 
-		BSCtor::BSCtor(Array<ValParam> *params, Scope scope, syntax::Node *body, SrcPos pos)
+		BSRawCtor::BSRawCtor(Array<ValParam> *params, SrcPos pos)
 			: Function(Value(), new (params) Str(Type::CTOR), values(params)),
-			  scope(scope),
-			  body(body),
 			  params(params),
 			  pos(pos) {
 
@@ -35,12 +33,15 @@ namespace storm {
 
 			// Rename until it is initialized!
 			params->at(0).name = new (this) Str(L" this");
-
-			Fn<CodeGen *> *ptr = fnPtr(engine(), &BSCtor::generateCode, this);
-			setCode(new (this) LazyCode(ptr));
+			reset();
 		}
 
-		code::Var BSCtor::findThread(CodeGen *s, Array<code::Operand> *params) {
+		void BSRawCtor::reset() {
+			// Could be done better...
+			setCode(new (this) LazyCode(fnPtr(engine(), &BSRawCtor::generateCode, this)));
+		}
+
+		code::Var BSRawCtor::findThread(CodeGen *s, Array<code::Operand> *params) {
 			using namespace code;
 
 			RunOn on = runOn();
@@ -53,24 +54,8 @@ namespace storm {
 			return r;
 		}
 
-		CtorBody *BSCtor::parse() {
-			if (!body)
-				return defaultParse();
-
-			return syntax::transformNode<CtorBody, BSCtor *>(body, this);
-		}
-
-		CtorBody *BSCtor::defaultParse() {
-			CtorBody *r = new (this) CtorBody(this);
-			Actuals *actual = new (this) Actuals();
-			SuperCall *super = new (this) SuperCall(pos, r, actual);
-			super->pos = pos;
-			r->add(super);
-			return r;
-		}
-
-		CodeGen *BSCtor::generateCode() {
-			CtorBody *body = parse();
+		CodeGen *BSRawCtor::generateCode() {
+			CtorBody *body = createBody();
 
 			using namespace code;
 			CodeGen *state = new (this) CodeGen(runOn(), true, Value());
@@ -107,7 +92,7 @@ namespace storm {
 			return state;
 		}
 
-		LocalVar *BSCtor::addParams(Block *to) {
+		LocalVar *BSRawCtor::addParams(Block *to) {
 			LocalVar *thread = 0;
 
 			for (nat i = 0; i < params->count(); i++) {
@@ -122,7 +107,66 @@ namespace storm {
 			return thread;
 		}
 
+		CtorBody *BSRawCtor::createBody() {
+			throw InternalError(L"A BSRawCtor can not be used without overriding 'createBody'!");
+		}
+
+
+		/**
+		 * Regular ctor.
+		 */
+
+		BSCtor::BSCtor(Array<ValParam> *params, Scope scope, syntax::Node *body, SrcPos pos)
+			: BSRawCtor(params, pos), scope(scope), body(body) {}
+
+		CtorBody *BSCtor::createBody() {
+			if (!body)
+				return defaultParse();
+
+			return syntax::transformNode<CtorBody, BSCtor *>(body, this);
+		}
+
+		CtorBody *BSCtor::defaultParse() {
+			CtorBody *r = new (this) CtorBody(this, scope);
+			Actuals *actual = new (this) Actuals();
+			SuperCall *super = new (this) SuperCall(pos, r, actual);
+			super->pos = pos;
+			r->add(super);
+			return r;
+		}
+
+
+		/**
+		 * Tree ctor.
+		 */
+
+		BSTreeCtor::BSTreeCtor(Array<ValParam> *params, SrcPos pos)
+			: BSRawCtor(params, pos) {}
+
+		void BSTreeCtor::body(CtorBody *body) {
+			if (root)
+				reset();
+
+			root = body;
+		}
+
+		CtorBody *BSTreeCtor::createBody() {
+			if (!root)
+				throw RuntimeError(L"The body of " + ::toS(identifier()) + L"was not set before trying to use it.");
+
+			return root;
+		}
+
+
+		/**
+		 * Constructor body.
+		 */
+
 		CtorBody::CtorBody(BSCtor *ctor) : ExprBlock(ctor->pos, ctor->scope) {
+			threadParam = ctor->addParams(this);
+		}
+
+		CtorBody::CtorBody(BSRawCtor *ctor, Scope scope) : ExprBlock(ctor->pos, scope) {
 			threadParam = ctor->addParams(this);
 		}
 

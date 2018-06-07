@@ -25,7 +25,7 @@ namespace storm {
 
 		// Find the specified NamePart in here. Returns null if not found. 'source' indicates who is
 		// looking for something, and is used to perform visibility checks. If set to 'null', no
-		// visibility checks are performed. TODO: Maybe use 'Scope' instead of a plain NameLookup?
+		// visibility checks are performed.
 		virtual MAYBE(Named *) STORM_FN find(SimplePart *part, Scope source);
 
 		// Convenience overloads for 'find'.
