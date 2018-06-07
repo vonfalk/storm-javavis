@@ -1189,7 +1189,7 @@ namespace storm {
 		if (!s)
 			return false;
 
-		Function *found = as<Function>(s->tryFindHere(fn, Scope()));
+		Function *found = as<Function>(s->tryFind(fn, Scope()));
 		if (found && found->visibleFrom(original)) {
 			// See if 'found' was marked 'final'.
 			if (found->fnFlags() & fnFinal) {
