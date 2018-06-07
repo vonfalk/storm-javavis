@@ -16,6 +16,9 @@ class LambdaExpr extends Expr {
 	// The type returned by this expression. Set to 'void' if we don't know due to unspecified parameters.
 	private Value type;
 
+	// Set of captured parameters if known beforehand.
+	private Maybe<Set<Str>> captured;
+
 	// Body of the lambda function.
 	private SExpr body;
 
@@ -26,8 +29,8 @@ class LambdaExpr extends Expr {
 	init(SrcPos pos, Block parent, Array<NameParam> params, SExpr body) {
 		var p = params.resolve(parent.scope);
 		Scope scope = lambdaScope(parent);
-		ExprBlock expr = wrapLambda(scope, p, body);
-		Value result = expr.result.type;
+		var info = lambdaInfo(scope, p, body, parent);
+		Value result = info.result.type;
 
 		SimpleName name;
 		name.add("core");
@@ -86,7 +89,15 @@ class LambdaExpr extends Expr {
 		for (i, p in fnParams)
 			params << ValParam(fnType.params[i + 1], p.name);
 
-		BSTreeFn fn(fnType.params[0], SStr("<lambda>", pos), params, to.runOn.thread);
+		Str[] capture = capturedVars(params);
+		if (capture.any)
+			captureCode(to, r, capture, fnType.params[0], params);
+		else
+			plainCode(to, r, fnType.params[0], params);
+	}
+
+	private void plainCode(CodeGen to, CodeResult r, Value result, ValParam[] params) {
+		BSTreeFn fn(result, SStr("<lambda>", pos), params, to.runOn.thread);
 		fn.parentLookup = lambdaParent(parent);
 		fn.body = {
 			FnBody b(fn, lambdaScope(parent));
@@ -97,6 +108,68 @@ class LambdaExpr extends Expr {
 		VarInfo v = r.location(to);
 		to.l << mov(v.v, objPtr(pointer(fn)));
 		v.created(to);
+	}
+
+	private void captureCode(CodeGen to, CodeResult r, Str[] capture, Value result, ValParam[] params) {
+		Type type("<lambda>", TypeFlags:typeClass);
+		type.parentLookup = lambdaParent(parent);
+		// TODO: Maybe we want to support 'known, but not statically' as well. I don't think it will
+		// make much of a difference in this case though.
+		if (t = to.runOn.thread)
+			type.setThread(t);
+
+		var create = setupType(type, capture);
+
+		params.insert(0, ValParam(Value(type), "this"));
+		BSTreeFn fn(result, SStr("<run>", pos), params, null);
+		type.add(fn);
+		fn.body = {
+			FnBody b(fn, parent.scope.child(type));
+			b.add(body.transform(b));
+			b;
+		};
+
+		FnPtr p(create, fn, pos);
+		p.code(to, r);
+	}
+
+	// Set up the type 'type' for use as a container for the local variables 'capture'. Returns an
+	// Expr that creates an instance of 'type' properly initialized.
+	private Expr setupType(Type type, Str[] capture) {
+		MemberVar[] vars;
+		ValParam[] formals;
+		formals << ValParam(Value(type), "this");
+
+		Actuals actuals;
+		for (c in capture) {
+			if (v = parent.variable(SimplePart(c))) {
+				MemberVar m(c, v.result, type);
+				type.add(m);
+				vars << m;
+
+				formals << ValParam(v.result, c);
+
+				actuals.add(LocalVarAccess(pos, v));
+			}
+		}
+
+		// Create a constructor.
+		BSTreeCtor ctor(formals, pos);
+		ctor.body = {
+			CtorBody b(ctor, rootScope); // We don't need a proper scope.
+			Initializer[] init;
+			for (v in vars) {
+				if (formal = b.variable(SimplePart(v.name))) {
+					init << Initializer(SStr(v.name), LocalVarAccess(pos, formal));
+				}
+			}
+			SuperCall s(pos, b, Actuals(), init);
+			b.add(s);
+			b;
+		};
+		type.add(ctor);
+
+		CtorCall(pos, rootScope, ctor, actuals);
 	}
 
 	protected void toS(StrBuf to) {
@@ -136,6 +209,20 @@ class LambdaExpr extends Expr {
 		// All is well!
 		true;
 	}
+
+	// Get the captured parameters as an array.
+	private Str[] capturedVars(ValParam[] params) {
+		Set<Str> r = if (captured) {
+			captured;
+		} else {
+			lambdaInfo(lambdaScope(parent), params, body, parent).capture;
+		};
+
+		Str[] result;
+		for (i in r)
+			result << i;
+		result;
+	}
 }
 
 
@@ -143,7 +230,7 @@ class LambdaExpr extends Expr {
  * Wrap a lambda function body in a block that contains the parameters as variables, much like how a
  * BSRawFn would do.
  */
-ExprBlock wrapLambda(Scope scope, Array<ValParam> params, SExpr body) on Compiler {
+private ExprBlock wrapLambda(Scope scope, Array<ValParam> params, SExpr body) on Compiler {
 	SrcPos pos = body.pos;
 	ExprBlock r(pos, scope);
 
@@ -157,15 +244,50 @@ ExprBlock wrapLambda(Scope scope, Array<ValParam> params, SExpr body) on Compile
 }
 
 /**
+ * Information about a lambda function.
+ */
+class LambdaInfo extends NameLookup {
+	private Block block;
+	public Set<Str> capture;
+	public ExprResult result;
+
+	init(NameLookup? parent, Block block) {
+		init() {
+			block = block;
+		}
+		parentLookup = parent;
+	}
+
+	Named? find(SimplePart part, Scope source) {
+		if (var = block.variable(part)) {
+			capture.put(part.name);
+			return var;
+		} else {
+			return null;
+		}
+	}
+}
+
+/**
+ * Figure out the return type and any captured parameters of a lambda function.
+ */
+private LambdaInfo lambdaInfo(Scope scope, Array<ValParam> params, SExpr body, Block parent) on Compiler {
+	LambdaInfo l(scope.top, parent);
+	scope.top = l;
+
+	l.result = wrapLambda(scope, params, body).result;
+
+	l;
+}
+
+/**
  * Find the proper scope for a lambda function.
  */
-Scope lambdaScope(Block block) on Compiler {
+private Scope lambdaScope(Block block) on Compiler {
 	NameLookup at = block.lookup;
 	while (true) {
 		if (at as NameSet) {
-			Scope s = block.scope;
-			s.top = at;
-			return s;
+			return block.scope.child(at);
 		} else if (parent = at.parent) {
 			at = parent;
 		} else {
@@ -180,7 +302,7 @@ Scope lambdaScope(Block block) on Compiler {
 /**
  * Find the proper parent to a lambda function.
  */
-NameLookup lambdaParent(Block block) on Compiler {
+private NameLookup lambdaParent(Block block) on Compiler {
 	NameLookup at = block.lookup;
 	while (true) {
 		// print(at.toS);

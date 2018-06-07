@@ -412,6 +412,9 @@ BEGIN_TEST(LambdaTest, BS) {
 	CHECK_EQ(runFn<Int>(S("test.bs.testLambda")), 13);
 	CHECK_EQ(runFn<Int>(S("test.bs.testLambdaParam")), 15);
 	CHECK_EQ(runFn<Int>(S("test.bs.testLambdaVar")), 32);
+	CHECK_EQ(runFn<Int>(S("test.bs.testLambdaCapture")), 30);
+	CHECK_EQ(runFn<Int>(S("test.bs.testLambdaCapture2")), 53);
+	CHECK_EQ(toS(runFn<Str *>(S("test.bs.testLambdaMemory"))), L"[0, 1, 2, 0, 1, 3]");
 } END_TEST
 
 

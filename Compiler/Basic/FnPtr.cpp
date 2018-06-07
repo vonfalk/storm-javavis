@@ -50,6 +50,16 @@ namespace storm {
 			target = findTarget(block->scope, tn, formal, dot);
 		}
 
+		FnPtr::FnPtr(Function *target, SrcPos pos) : Expr(pos), target(target) {}
+
+		FnPtr::FnPtr(Expr *dot, Function *target, SrcPos pos) : Expr(pos), dotExpr(dot), target(target) {
+			if (dotExpr->result().type().isValue())
+				throw SyntaxError(dotExpr->pos, L"Only classes and actors can be bound to a function pointer. Not values.");
+
+			if (target->params->empty() || !target->params->at(0).canStore(dot->result().type()))
+				throw SyntaxError(dotExpr->pos, L"The first parameter of the specified function does not match the type of the provided expression.");
+		}
+
 		ExprResult FnPtr::result() {
 			// TODO: Parameters should be taken from 'formal'. Consider when a pointer wants to restrict
 			// a parameter to a derived class.

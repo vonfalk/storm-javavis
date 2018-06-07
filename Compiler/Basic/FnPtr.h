@@ -17,6 +17,10 @@ namespace storm {
 			STORM_CTOR FnPtr(Block *block, SrcName *name, Array<SrcName *> *formal);
 			STORM_CTOR FnPtr(Block *block, Expr *dot, syntax::SStr *name, Array<SrcName *> *formal);
 
+			// Create, assuming we already know the exact function we want to get a pointer for.
+			STORM_CTOR FnPtr(Function *target, SrcPos pos);
+			STORM_CTOR FnPtr(Expr *dot, Function *target, SrcPos pos);
+
 			// Result.
 			virtual ExprResult STORM_FN result();
 

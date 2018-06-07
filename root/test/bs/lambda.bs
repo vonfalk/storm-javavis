@@ -13,6 +13,38 @@ Int testLambdaParam() {
 }
 
 Int testLambdaVar() {
-	fn (Int) -> Int x = (a) => a + 20;
+	fn(Int)->Int x = (a) => a + 20;
 	x.call(12);
+}
+
+Int testLambdaCapture() {
+	Int outside = 20;
+	callLambda((x) => x + outside);
+}
+
+Int testLambdaCapture2() {
+	Int outside = 20;
+	var foo = (Int x) => x + outside;
+	foo.call(33);
+}
+
+
+fn->Int createCounter() {
+	Int now = 0;
+	() => now++;
+}
+
+Str testLambdaMemory() {
+	var a = createCounter();
+	var b = createCounter();
+
+	Int[] result;
+	result << a.call();
+	result << a.call();
+	result << a.call();
+	result << b.call();
+	result << b.call();
+	result << a.call();
+
+	result.toS();
 }

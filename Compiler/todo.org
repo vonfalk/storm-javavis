@@ -13,8 +13,10 @@
     but the scale of the issue should be assessed first.
   - [ ] Parsing core.lang.syntax.bnf takes about 80 ms, which is a bit on the high end when compiling code...
 
-* Loose ends so far [23/45]
+* Loose ends so far [23/47]
   - [ ] Support documentation of templates from C++.
+  - [ ] BSFunction and BSCtor should release their syntax tree after they are compiled.
+  - [ ] The scope of parameters in Basic Storm is wrong (with respect to visibility).
   - [ ] We probably want to allow creating documentation for an entire package. Possibly by creating
     a file called 'doc.txt' or similar inside the appropriate folder.
   - [ ] Finish integrating the Double class in the system. Basic Storm should be able to instantiate them from

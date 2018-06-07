@@ -512,8 +512,36 @@ x.sort((a, b) => a > b);
 In this case, Basic Storm is able to see that `sort` requires a function taking two `Int`s, and is
 therefore able to infer that the types of `a` and `b` need to be `Int`.
 
-Currently, lambda functions are unable to capture variables from the surrounding scope. That
-capability will be added in the future.
+Lambda functions automatically capture any variables from the surrounding scope that are used within
+the lambda expression. Captured variables are copied into the lambda function (in fact, they become
+member variables inside a anonymous object), which means that they behave as if they were passed to
+a function (eg. values are copies, classes and actors are references). This is illustrated in the
+example below, where the lambda function will remember the value of the variable `outside` even when
+it goes out of scope:
+
+```
+Int outside = 20;
+var add = (Int x) => x + outside;
+```
+
+Since captured variables are copied to the lambda functions, values can be modified without
+affecting the surrounding scope. This can be used to create a counting function:
+
+```
+fn->Int counter() {
+    Int now = 0;
+    return () => now++;
+}
+
+void foo() {
+    var a = counter();
+    var b = counter();
+
+    a.call(); // => 0
+    a.call(); // => 1
+    b.call(); // => 0
+}
+```
 
 This syntax is implemented in `lang:bs:lambda.bs`.
 
