@@ -213,7 +213,13 @@ namespace storm {
 			BSRawFn(result, name, params, thread), scope(scope), body(body) {}
 
 		bs::FnBody *BSFunction::createBody() {
-			return syntax::transformNode<FnBody, BSFunction *>(body, this);
+			if (!body)
+				throw InternalError(L"Multiple compilation of a function!");
+
+			FnBody *result = syntax::transformNode<FnBody, BSFunction *>(body, this);
+			// We don't need to keep it around anymore.
+			body = null;
+			return result;
 		}
 
 		Bool BSFunction::update(Array<ValParam> *params, syntax::Node *node, SrcPos pos) {
@@ -258,17 +264,17 @@ namespace storm {
 			: BSRawFn(result, name, params, thread) {}
 
 		void BSTreeFn::body(FnBody *body) {
-			if (root)
-				reset();
-
 			root = body;
+			reset();
 		}
 
 		bs::FnBody *BSTreeFn::createBody() {
 			if (!root)
 				throw RuntimeError(L"The body of " + ::toS(identifier()) + L"was not set before trying to use it.");
 
-			return root;
+			FnBody *result = root;
+			root = null;
+			return result;
 		}
 
 

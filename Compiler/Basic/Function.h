@@ -89,9 +89,6 @@ namespace storm {
 			// Override this to create the syntax tree to compile.
 			virtual FnBody *STORM_FN createBody();
 
-			// Re-compile at next execution.
-			void STORM_FN reset();
-
 			// Add function parameters to a block. Mainly for internal use.
 			void STORM_FN addParams(Block *block);
 
@@ -101,6 +98,9 @@ namespace storm {
 		protected:
 			// Parameter names and values.
 			Array<ValParam> *valParams;
+
+			// Re-compile at next execution.
+			void STORM_FN reset();
 
 		private:
 			// Generate code.
@@ -135,7 +135,7 @@ namespace storm {
 
 		private:
 			// Code.
-			syntax::Node *body;
+			MAYBE(syntax::Node *) body;
 		};
 
 

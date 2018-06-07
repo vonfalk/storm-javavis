@@ -123,7 +123,9 @@ namespace storm {
 			if (!body)
 				return defaultParse();
 
-			return syntax::transformNode<CtorBody, BSCtor *>(body, this);
+			CtorBody *result = syntax::transformNode<CtorBody, BSCtor *>(body, this);
+			body = null;
+			return result;
 		}
 
 		CtorBody *BSCtor::defaultParse() {
@@ -144,17 +146,17 @@ namespace storm {
 			: BSRawCtor(params, pos) {}
 
 		void BSTreeCtor::body(CtorBody *body) {
-			if (root)
-				reset();
-
 			root = body;
+			reset();
 		}
 
 		CtorBody *BSTreeCtor::createBody() {
 			if (!root)
 				throw RuntimeError(L"The body of " + ::toS(identifier()) + L"was not set before trying to use it.");
 
-			return root;
+			CtorBody *result = root;
+			root = null;
+			return result;
 		}
 
 

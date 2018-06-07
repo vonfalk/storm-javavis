@@ -33,11 +33,12 @@ namespace storm {
 			// Add parameters. Returns the local variable that represents the 'threadParam' above if needed.
 			LocalVar *addParams(Block *to);
 
-			// Re-compile at next execution.
-			void STORM_FN reset();
-
 			// Create the body.
 			virtual CtorBody *STORM_FN createBody();
+
+		protected:
+			// Re-compile at next execution.
+			void STORM_FN reset();
 
 		private:
 			// Parameter names.
@@ -63,13 +64,13 @@ namespace storm {
 			// Scope.
 			Scope scope;
 
-			// Body.
-			syntax::Node *body;
-
 			// Create the body.
 			virtual CtorBody *STORM_FN createBody();
 
 		private:
+			// Body.
+			MAYBE(syntax::Node *) body;
+
 			// Default ctor body.
 			CtorBody *defaultParse();
 		};
