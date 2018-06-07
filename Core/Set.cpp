@@ -529,8 +529,6 @@ namespace storm {
 
 	SetBase::Iter::Iter() : info(null), key(null), pos(0) {}
 
-	SetBase::Iter::Iter(const Iter &o) : info(o.info), key(o.key), pos(o.pos) {}
-
 	SetBase::Iter::Iter(SetBase *owner) : info(owner->info), key(owner->key), pos(0) {
 		// Find the first occupied position. This may place us at the end.
 		while (!atEnd() && info->v[pos].status == Info::free)

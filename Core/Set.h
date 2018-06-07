@@ -213,9 +213,6 @@ namespace storm {
 			// Pointing to the end.
 			Iter();
 
-			// Copy.
-			Iter(const Iter &o);
-
 			// Pointing to the first element.
 			Iter(SetBase *owner);
 

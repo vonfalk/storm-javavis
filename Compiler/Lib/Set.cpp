@@ -53,8 +53,8 @@ namespace storm {
 		add(nativeFunction(e, keyRef, S("get"), thisKey, address(&SetBase::getRaw)));
 		add(nativeFunction(e, keyRef, S("[]"), thisKey, address(&SetBase::atRaw)));
 		add(nativeFunction(e, boolT, S("remove"), thisKey, address(&SetBase::removeRaw)));
-		add(nativeFunction(e, Value(), S("begin"), valList(e, 1, t), address(&SetBase::beginRaw)));
-		add(nativeFunction(e, Value(), S("end"), valList(e, 1, t), address(&SetBase::endRaw)));
+		add(nativeFunction(e, iter, S("begin"), valList(e, 1, t), address(&SetBase::beginRaw)));
+		add(nativeFunction(e, iter, S("end"), valList(e, 1, t), address(&SetBase::endRaw)));
 
 		return Type::loadAll();
 	}
@@ -63,16 +63,20 @@ namespace storm {
 	 * Iterator.
 	 */
 
-	static void copyIterator(void *to, const SetBase::Iter *from) {
+	static void CODECALL copyIterator(void *to, const SetBase::Iter *from) {
 		new (Place(to)) SetBase::Iter(*from);
 	}
 
-	static bool iteratorEq(SetBase::Iter &a, SetBase::Iter &b) {
+	static bool CODECALL iteratorEq(SetBase::Iter &a, SetBase::Iter &b) {
 		return a == b;
 	}
 
-	static bool iteratorNeq(SetBase::Iter &a, SetBase::Iter &b) {
+	static bool CODECALL iteratorNeq(SetBase::Iter &a, SetBase::Iter &b) {
 		return a != b;
+	}
+
+	static void *CODECALL iteratorGet(const SetBase::Iter &v) {
+		return v.rawVal();
 	}
 
 	SetIterType::SetIterType(Type *k)
@@ -102,8 +106,8 @@ namespace storm {
 		add(nativeFunction(e, vBool, S("!="), refref, address(&iteratorNeq))->makePure());
 		add(nativeFunction(e, r, S("++*"), ref, address(&SetBase::Iter::preIncRaw)));
 		add(nativeFunction(e, v, S("*++"), ref, address(&SetBase::Iter::postIncRaw)));
-		add(nativeFunction(e, keyRef, S("k"), ref, address(&SetBase::Iter::rawVal))->makePure());
-		add(nativeFunction(e, keyRef, S("v"), ref, address(&SetBase::Iter::rawVal))->makePure());
+		add(nativeFunction(e, keyRef, S("k"), ref, address(&iteratorGet))->makePure());
+		add(nativeFunction(e, keyRef, S("v"), ref, address(&iteratorGet))->makePure());
 
 		return Type::loadAll();
 	}

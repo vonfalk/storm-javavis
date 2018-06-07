@@ -219,23 +219,23 @@ namespace storm {
 	 * Iterator.
 	 */
 
-	static void copyIterator(void *to, const ArrayBase::Iter *from) {
+	static void CODECALL copyIterator(void *to, const ArrayBase::Iter *from) {
 		new (Place(to)) ArrayBase::Iter(*from);
 	}
 
-	static bool iteratorEq(ArrayBase::Iter &a, ArrayBase::Iter &b) {
+	static bool CODECALL iteratorEq(ArrayBase::Iter &a, ArrayBase::Iter &b) {
 		return a == b;
 	}
 
-	static bool iteratorNeq(ArrayBase::Iter &a, ArrayBase::Iter &b) {
+	static bool CODECALL iteratorNeq(ArrayBase::Iter &a, ArrayBase::Iter &b) {
 		return a != b;
 	}
 
-	static void *iteratorGet(const ArrayBase::Iter &v) {
+	static void *CODECALL iteratorGet(const ArrayBase::Iter &v) {
 		return v.getRaw();
 	}
 
-	static Nat iteratorGetKey(const ArrayBase::Iter &v) {
+	static Nat CODECALL iteratorGetKey(const ArrayBase::Iter &v) {
 		return v.getIndex();
 	}
 
