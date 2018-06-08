@@ -106,6 +106,15 @@ namespace storm {
 		}
 	}
 
+	bool MapBase::changedHash(const void *key) {
+		if (watch) {
+			const void *kPtr = *(const void **)key;
+			return watch->moved(kPtr);
+		} else {
+			return false;
+		}
+	}
+
 	void MapBase::putRaw(const void *key, const void *value) {
 		nat hash = (*keyT.hashFn)(key);
 		nat old = findSlot(key, hash);
@@ -184,7 +193,7 @@ namespace storm {
 
 		if (remove(key)) {
 			return true;
-		} else if (watch != null && watch->moved(key)) {
+		} else if (changedHash(key)) {
 			return rehashRemove(capacity(), key);
 		} else {
 			return false;
@@ -276,13 +285,14 @@ namespace storm {
 
 			if (info->v[i].status != Info::free) {
 				std::wcout << "  \t";
-				StrBuf *b = new (this) StrBuf();
-				(*keyT.toSFn)(keyPtr(i), b);
-				if (valT.toSFn) {
-					*b << L"\t";
-					(*valT.toSFn)(valPtr(i), b);
-				}
-				std::wcout << b;
+				std::wcout << *(void **)keyPtr(i);
+				// StrBuf *b = new (this) StrBuf();
+				// (*keyT.toSFn)(keyPtr(i), b);
+				// if (valT.toSFn) {
+				// 	*b << L"\t";
+				// 	(*valT.toSFn)(valPtr(i), b);
+				// }
+				// std::wcout << b;
 			}
 			std::wcout << endl;
 		}
@@ -299,8 +309,6 @@ namespace storm {
 		info = runtime::allocArray<Info>(engine(), &infoType, cap);
 		key = runtime::allocArray<byte>(engine(), keyT.gcArrayType, cap);
 		val = runtime::allocArray<byte>(engine(), valT.gcArrayType, cap);
-		if (watch)
-			watch->clear();
 
 		for (nat i = 0; i < cap; i++)
 			info->v[i].status = Info::free;
@@ -510,10 +518,9 @@ namespace storm {
 			return Info::free;
 
 		nat r = findSlotI(key, hash);
-		if (r == Info::free && watch != null) {
-			if (watch->moved(key))
-				// The object has moved. We need to rebuild the hash map.
-				r = rehashFind(capacity(), key);
+		if (r == Info::free && changedHash(key)) {
+			// The object has moved. We need to rebuild the hash map.
+			r = rehashFind(capacity(), key);
 		}
 
 		return r;

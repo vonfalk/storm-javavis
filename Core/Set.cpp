@@ -93,6 +93,15 @@ namespace storm {
 		}
 	}
 
+	bool SetBase::changedHash(const void *key) {
+		if (watch) {
+			const void *kPtr = *(const void **)key;
+			return watch->moved(kPtr);
+		} else {
+			return false;
+		}
+	}
+
 	void SetBase::putRaw(const void *key) {
 		nat hash = (*keyT.hashFn)(key);
 		nat old = findSlot(key, hash);
@@ -157,7 +166,7 @@ namespace storm {
 
 		if (remove(key)) {
 			return true;
-		} else if (watch != null && watch->moved(key)) {
+		} else if (changedHash(key)) {
 			return rehashRemove(capacity(), key);
 		} else {
 			return false;
@@ -263,8 +272,6 @@ namespace storm {
 		lastFree = 0;
 		info = runtime::allocArray<Info>(engine(), &infoType, cap);
 		key = runtime::allocArray<byte>(engine(), keyT.gcArrayType, cap);
-		if (watch)
-			watch->clear();
 
 		for (nat i = 0; i < cap; i++)
 			info->v[i].status = Info::free;
@@ -461,10 +468,9 @@ namespace storm {
 			return Info::free;
 
 		nat r = findSlotI(key, hash);
-		if (r == Info::free && watch != null) {
-			if (watch->moved(key))
-				// The object has moved. We need to rebuild the hash map.
-				r = rehashFind(capacity(), key);
+		if (r == Info::free && changedHash(key)) {
+			// The object has moved. We need to rebuild the hash map.
+			r = rehashFind(capacity(), key);
 		}
 
 		return r;

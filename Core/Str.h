@@ -33,11 +33,11 @@ namespace storm {
 		STORM_CTOR Str();
 
 		// Create from a string literal.
-		Str(const wchar *s);
+		explicit Str(const wchar *s);
 
 #ifdef POSIX
 		// If wchar_t is a different size, allow creation from literals with wchar_t as well.
-		Str(const wchar_t *s);
+		explicit Str(const wchar_t *s);
 #endif
 
 		// Create from a substring of a c-string.

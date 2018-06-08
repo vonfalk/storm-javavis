@@ -177,6 +177,10 @@ namespace storm {
 		// object is moved.
 		nat newHash(const void *key);
 
+		// Check if the hash of an object has changed due to the GC moving the object. Only returns
+		// 'true' if we're using location dependent hashes with the 'watch' object.
+		bool changedHash(const void *key);
+
 		// Insert a node, given its hash is known (eg. when re-hashing). Assumes no other node with
 		// the same key exists, and will therefore always insert the element. Returns the slot
 		// inserted into. 'watch' is a slot number that shall be updated if the contents of that
