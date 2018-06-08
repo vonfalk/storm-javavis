@@ -755,6 +755,21 @@ namespace storm {
 		{ 16 MB, 0.1 },
 	};
 
+	// Remember if we have set up MPS, and synchronize initialization.
+	static bool mpsInitDone = false;
+
+	// Set up MPS the first time we try to use it. We only want to call it once, otherwise it will
+	// overwrite handlers that the MPS installs for us.
+	static void mpsInit() {
+		static util::Lock mpsInitLock;
+		util::Lock::L z(mpsInitLock);
+
+		if (!mpsInitDone) {
+			mpsInitDone = true;
+			mps_init();
+		}
+	}
+
 	Gc::Gc(size_t arenaSize, nat finalizationInterval) : finalizationInterval(finalizationInterval) {
 		// We work under these assumptions.
 		assert(wordSize == sizeof(size_t), L"Invalid word-size");
@@ -764,7 +779,7 @@ namespace storm {
 		assert(vtableOffset >= sizeof(void *), L"Invalid vtable offset (initialization failed?)");
 
 		// Note: This is defined in Gc/mps.c, and only aids in debugging.
-		mps_init();
+		mpsInit();
 
 		MPS_ARGS_BEGIN(args) {
 			MPS_ARGS_ADD(args, MPS_KEY_ARENA_SIZE, arenaSize);
