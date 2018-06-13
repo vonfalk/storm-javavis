@@ -64,13 +64,13 @@ namespace storm {
 			// Scope.
 			Scope scope;
 
+			// Body.
+			MAYBE(syntax::Node *) body;
+
 			// Create the body.
 			virtual CtorBody *STORM_FN createBody();
 
 		private:
-			// Body.
-			MAYBE(syntax::Node *) body;
-
 			// Default ctor body.
 			CtorBody *defaultParse();
 		};

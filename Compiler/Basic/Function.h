@@ -124,6 +124,9 @@ namespace storm {
 			// Scope.
 			Scope scope;
 
+			// Code.
+			MAYBE(syntax::Node *) body;
+
 			// Create the body from our string.
 			virtual FnBody *STORM_FN createBody();
 
@@ -132,10 +135,6 @@ namespace storm {
 			Bool STORM_FN update(Array<ValParam> *params, syntax::Node *body);
 			Bool STORM_FN update(Array<Str *> *params, syntax::Node *body);
 			Bool STORM_FN update(BSFunction *from);
-
-		private:
-			// Code.
-			MAYBE(syntax::Node *) body;
 		};
 
 
