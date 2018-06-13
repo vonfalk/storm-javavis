@@ -408,3 +408,17 @@ inline Auto<TypeRef> makeConst(Auto<TypeRef> v) {
 	v->constType = true;
 	return v;
 }
+
+inline ResolvedType *findResolved(TypeRef *t) {
+	if (PtrType *p = as<PtrType>(t)) {
+		return findResolved(p->of.borrow());
+	} else if (RefType *r = as<RefType>(t)) {
+		return findResolved(r->of.borrow());
+	} else if (MaybeType *m = as<MaybeType>(t)) {
+		return findResolved(m->of.borrow());
+	} else if (ResolvedType *z = as<ResolvedType>(t)) {
+		return z;
+	} else {
+		return null;
+	}
+}

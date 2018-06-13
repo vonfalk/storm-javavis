@@ -38,7 +38,7 @@ wostream &operator <<(wostream &to, const Type &type) {
 
 Class::Class(const CppName &name, const String &pkg, const SrcPos &pos, const Auto<Doc> &doc) :
 	Type(name, pkg, pos, doc), valueType(false), parent(L""), hiddenParent(false),
-	dtorFound(false), parentType(null), threadType(null) {}
+	dtorFound(false), parentType(null), threadType(null), parentDepth(0) {}
 
 void Class::resolveTypes(World &in) {
 	CppName ctx = name;
@@ -223,6 +223,17 @@ void Class::print(wostream &to) const {
 	to << L"}";
 }
 
+nat Class::inheritanceDepth() const {
+	if (parentDepth == 0) {
+		if (parentType)
+			parentDepth = parentType->inheritanceDepth() + 1;
+		else
+			parentDepth = 0;
+	}
+
+	return parentDepth;
+}
+
 /**
  * Class namespace.
  */
@@ -286,6 +297,10 @@ void Primitive::scannedVars(vector<ScannedVar> &append) const {
 	// None.
 }
 
+nat Primitive::inheritanceDepth() const {
+	return 0;
+}
+
 /**
  * Unknown primitive.
  */
@@ -329,6 +344,10 @@ void UnknownPrimitive::scannedVars(vector<ScannedVar> &append) const {
 	// None.
 }
 
+nat UnknownPrimitive::inheritanceDepth() const {
+	return 0;
+}
+
 /**
  * Enum.
  */
@@ -360,6 +379,10 @@ void Enum::print(wostream &to) const {
 			to << members[i] << L",\n";
 	}
 	to << L"}";
+}
+
+nat Enum::inheritanceDepth() const {
+	return 0;
 }
 
 /**

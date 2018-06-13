@@ -53,6 +53,9 @@ public:
 	// Compute the size of this type.
 	Size size() const;
 
+	// Find the inheritance depth of this type.
+	virtual nat inheritanceDepth() const = 0;
+
 	// Is this type heap-allocated? (value types return false, class types return true).
 	virtual bool heapAlloc() const = 0;
 
@@ -133,6 +136,12 @@ public:
 	// Is this type heap-allocated?
 	virtual bool heapAlloc() const { return !valueType; }
 
+	// Find the inheritance depth of this type.
+	virtual nat inheritanceDepth() const;
+
+private:
+	// Cached inheritance depth.
+	mutable nat parentDepth;
 };
 
 /**
@@ -177,6 +186,9 @@ public:
 	virtual void ptrOffsets(vector<Offset> &append) const;
 	virtual void scannedVars(vector<ScannedVar> &append) const;
 
+	// Find the inheritance depth of this type.
+	virtual nat inheritanceDepth() const;
+
 private:
 	// Size of this type.
 	Size mySize;
@@ -208,6 +220,9 @@ public:
 	// Compute pointer offsets into this type.
 	virtual void ptrOffsets(vector<Offset> &append) const;
 	virtual void scannedVars(vector<ScannedVar> &append) const;
+
+	// Find the inheritance depth of this type.
+	virtual nat inheritanceDepth() const;
 
 private:
 	// Size of this type.
@@ -252,6 +267,9 @@ public:
 
 	// Never allocated on heap.
 	virtual bool heapAlloc() const { return false; }
+
+	// Find the inheritance depth of this type.
+	virtual nat inheritanceDepth() const;
 };
 
 /**

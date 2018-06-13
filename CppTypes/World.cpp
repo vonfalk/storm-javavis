@@ -84,6 +84,14 @@ void World::orderTypes() {
 			if (l->pkg != r->pkg)
 				return l->pkg < r->pkg;
 
+			// Order by 'inheritanceDepth' to make the least specific types come first. This
+			// improves the load performance inside CppLoader due to VTable creation taking less
+			// time in this case.
+			nat lDepth = l->inheritanceDepth();
+			nat rDepth = r->inheritanceDepth();
+			if (lDepth != rDepth)
+				return lDepth < rDepth;
+
 			// Then order by name.
 			return l->name < r->name;
 		}
@@ -95,6 +103,23 @@ void World::orderTypes() {
 void World::orderFunctions() {
 	struct pred {
 		bool operator ()(const Function &l, const Function &r) const {
+			// If the first parameter is named 'this', then sort on the inheritance depth of that parameter.
+			bool lThis = !l.paramNames.empty() && l.paramNames[0] == L"this";
+			bool rThis = !r.paramNames.empty() && r.paramNames[0] == L"this";
+			if (lThis && rThis) {
+				ResolvedType *lRes = findResolved(l.params[0].borrow());
+				ResolvedType *rRes = findResolved(r.params[0].borrow());
+
+				if (lRes && rRes) {
+					// if (lRes->type->inheritanceDepth() != rRes->type->inheritanceDepth())
+					// 	return lRes->type->inheritanceDepth() < rRes->type->inheritanceDepth();
+				}
+			} else if (lThis) {
+				return false;
+			} else if (rThis) {
+				return true;
+			}
+
 			if (l.name != r.name)
 				return l.name < r.name;
 			// Not entirely deterministic, but good enough for us.
@@ -181,12 +206,12 @@ void World::resolveTypes() {
 }
 
 void World::prepare() {
+	resolveTypes();
+
 	orderTypes();
 	orderTemplates();
 	orderThreads();
 	orderLicenses();
-
-	resolveTypes();
 	orderFunctions();
 }
 
