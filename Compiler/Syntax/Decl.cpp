@@ -8,7 +8,16 @@
 namespace storm {
 	namespace syntax {
 
+		/**
+		 * FileItem.
+		 */
+
 		FileItem::FileItem() {}
+
+
+		/**
+		 * Use declarations.
+		 */
 
 		UseDecl::UseDecl(SrcName *pkg) : pkg(pkg) {}
 
@@ -20,6 +29,11 @@ namespace storm {
 			*to << S("use ") << pkg << S(";");
 		}
 
+
+		/**
+		 * Delimiters.
+		 */
+
 		DelimDecl::DelimDecl(SrcName *token) : token(token) {}
 
 		void DelimDecl::deepCopy(CloneEnv *env) {
@@ -30,6 +44,11 @@ namespace storm {
 			*to << S("delimiter = ") << token << S(";");
 		}
 
+
+		/**
+		 * Parameters.
+		 */
+
 		ParamDecl::ParamDecl(Name *type, Str *name) : type(type), name(name) {}
 
 		StrBuf &operator <<(StrBuf &to, ParamDecl decl) {
@@ -37,6 +56,9 @@ namespace storm {
 		}
 
 
+		/**
+		 * Rules.
+		 */
 
 		RuleDecl::RuleDecl(SrcPos pos, Str *name, Name *result)
 			: pos(pos), name(name), result(result), color(tNone) {
@@ -69,6 +91,10 @@ namespace storm {
 			this->color = c;
 		}
 
+
+		/**
+		 * Tokens.
+		 */
 
 		TokenDecl::TokenDecl() : color(tNone) {}
 
@@ -111,6 +137,11 @@ namespace storm {
 			return s->unescape(Char('"'));
 		}
 
+
+		/**
+		 * Regex tokens.
+		 */
+
 		RegexTokenDecl::RegexTokenDecl(Str *regex) : regex(regex) {}
 
 		void RegexTokenDecl::deepCopy(CloneEnv *env) {
@@ -123,6 +154,10 @@ namespace storm {
 			TokenDecl::toS(to);
 		}
 
+
+		/**
+		 * Rule tokens.
+		 */
 
 		RuleTokenDecl::RuleTokenDecl(SrcPos pos, Name *rule) : pos(pos), rule(rule) {}
 
@@ -147,6 +182,10 @@ namespace storm {
 		}
 
 
+		/**
+		 * Delimiter tokens.
+		 */
+
 		DelimTokenDecl::DelimTokenDecl() {}
 
 		void DelimTokenDecl::toS(StrBuf *to) const {
@@ -159,6 +198,10 @@ namespace storm {
 			*to << S(" - ");
 		}
 
+
+		/**
+		 * Productions.
+		 */
 
 		ProductionDecl::ProductionDecl(SrcPos pos, Name *memberOf) : pos(pos), rule(memberOf) {
 			tokens = new (this) Array<TokenDecl *>();
@@ -306,6 +349,19 @@ namespace storm {
 		}
 
 
+		/**
+		 * Custom declaration.
+		 */
+
+		CustomDecl::CustomDecl() {}
+
+		void CustomDecl::expand(FileContents *to) {}
+
+
+		/**
+		 * File contents.
+		 */
+
 		FileContents::FileContents() {
 			use = new (this) Array<SrcName *>();
 			rules = new (this) Array<RuleDecl *>();
@@ -321,6 +377,8 @@ namespace storm {
 				use->push(u->pkg);
 			else if (DelimDecl *d = as<DelimDecl>(item))
 				delimiter = d->token;
+			else if (CustomDecl *c = as<CustomDecl>(item))
+				c->expand(this);
 			else
 				WARNING(L"Unknown FileItem!");
 		}

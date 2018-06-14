@@ -9,8 +9,11 @@ namespace storm {
 	namespace syntax {
 		STORM_PKG(lang.bnf);
 
+		class FileContents;
+
 		/**
-		 * Logic for parsing syntax files.
+		 * Logic for storing a parsed version of a syntax file before it is transformed into the
+		 * real representation (which requires type resolution).
 		 */
 
 		/**
@@ -21,6 +24,7 @@ namespace storm {
 		public:
 			STORM_CTOR FileItem();
 		};
+
 
 		/**
 		 * Use declaration.
@@ -41,6 +45,7 @@ namespace storm {
 			virtual void STORM_FN toS(StrBuf *to) const;
 		};
 
+
 		/**
 		 * Delimiter declaration.
 		 */
@@ -60,6 +65,7 @@ namespace storm {
 			virtual void STORM_FN toS(StrBuf *to) const;
 		};
 
+
 		/**
 		 * Parameter declaration.
 		 */
@@ -73,6 +79,7 @@ namespace storm {
 		};
 
 		StrBuf &STORM_FN operator <<(StrBuf &to, ParamDecl decl);
+
 
 		/**
 		 * Token in a production declaration.
@@ -312,6 +319,21 @@ namespace storm {
 
 			// Output.
 			virtual void STORM_FN toS(StrBuf *to) const;
+		};
+
+
+		/**
+		 * Custom declaration. Expected to expand into multiple other declarations when added to a
+		 * 'FileContents' object.
+		 */
+		class CustomDecl : public FileItem {
+			STORM_CLASS;
+		public:
+			// Create.
+			STORM_CTOR CustomDecl();
+
+			// Expand into other declarations. Add to 'to'.
+			virtual void STORM_FN expand(FileContents *to);
 		};
 
 

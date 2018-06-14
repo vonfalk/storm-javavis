@@ -1,0 +1,13 @@
+// A decent addition to the syntax language, allowing the construct 'list(<repeat> : <delimiter>)' to be used.
+use lang.bnf;
+
+delimiter = SDelim;
+
+// Entry point. Generate a file item for productions containing the keyword 'list'.
+SFileItem => ListProdDecl(pos, member, prio) : SName member, SPriority prio [, ("=>", SExpr(me.lhs),)? ":", SListTokens(me)]+;
+
+void SListTokens(ListProdDecl me);
+SListTokens : STokens(me.lhs), SList(me), STokens(me.rhs);
+
+void SList(ListProdDecl me);
+SList : "list" #keyword, "(", STokens(me.repeat), ":", STokens(me.delimiter), ")";

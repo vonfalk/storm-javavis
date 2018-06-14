@@ -1,0 +1,70 @@
+use core:lang;
+use lang:bnf;
+
+class ListProdDecl extends CustomDecl {
+	private SrcPos pos;
+	private Name memberOf;
+
+	// Tokens to the left of the 'list' construct. Also includes the result and priority.
+	ProductionDecl lhs;
+
+	// Tokens to the right of the 'list' construct.
+	ProductionDecl rhs;
+
+	// Tokens to be repeated inside the 'list' construct.
+	ProductionDecl repeat;
+
+	// Tokens used as a delimiter.
+	ProductionDecl delimiter;
+
+	init(SrcPos pos, Name memberOf, Int prio) {
+		init() {
+			pos = pos;
+			memberOf = memberOf;
+
+			lhs(pos, memberOf);
+			rhs(pos, memberOf);
+			repeat(pos, memberOf);
+			delimiter(pos, memberOf);
+		}
+
+		lhs.pushPrio(prio);
+	}
+
+	void expand(FileContents to) {
+		validate();
+
+		var plain = lhs.clone();
+		plain.append(rhs);
+		to.push(plain);
+
+		var rep = lhs.clone();
+		rep.append(repeat);
+		rep.pushRepStart("");
+		rep.append(delimiter);
+		rep.append(repeat);
+		rep.pushRepEnd(RepType:repZeroPlus);
+		rep.append(rhs);
+		to.push(rep);
+	}
+
+	private void validate() {
+		for (token in repeat.tokens) {
+			if (token.store)
+				throwSyntaxError(pos, "Binding tokens inside a list construct to variables is not supported.");
+		}
+
+		for (token in delimiter.tokens) {
+			if (token.store)
+				throwSyntaxError(pos, "Can not interact with tokens inside the delimiter part of list constructs.");
+			if (token.invoke)
+				throwSyntaxError(pos, "Can not interact with tokens inside the delimiter part of list constructs.");
+		}
+	}
+}
+
+private void append(ProductionDecl to, ProductionDecl from) {
+	for (token in from.tokens) {
+		to.push(token);
+	}
+}

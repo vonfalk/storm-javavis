@@ -1,0 +1,25 @@
+use ui; use layout; use core:geometry;
+
+window MyWindow {
+	layout Grid {
+	wrapCols: 2;
+	expandCol: 0;
+	expandRow: 0;
+		Button a("A") {}
+		Button b("B") {}
+		Button c("C") {}
+		Button d("D") {}
+	}
+
+	init() {
+		init("My window", Size(100, 100));
+		a.onClick = (Button b) => print("Clicked!");
+		create();
+	}
+}
+
+void gridTest() {
+	MyWindow w;
+	w.waitForClose;
+}
+

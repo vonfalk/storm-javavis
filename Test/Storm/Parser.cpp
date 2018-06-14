@@ -127,6 +127,33 @@ BEGIN_TEST(ParserTest, Storm) {
 
 } END_TEST
 
+BEGIN_TEST(ParserExt, BS) {
+	// Extensible syntax in the parser.
+	Engine &e = gEngine();
+
+	Package *pkg = as<Package>(e.scope().find(parseSimpleName(e, S("test.syntax"))));
+	VERIFY(pkg);
+
+	Parser *p = Parser::create(pkg, S("SCommaList"));
+	Str *s = new (e) Str(S("(a, b)"));
+	CHECK(p->parse(s, new (e) Url()));
+	CHECK(!p->hasError());
+	CHECK(p->hasTree());
+
+	syntax::Node *tree = p->tree();
+	Array<Str *> *r = syntax::transformNode<Array<Str *>>(tree);
+	CHECK_EQ(::toS(r), L"[a, b]");
+
+	s = new (e) Str(S("()"));
+	CHECK(p->parse(s, new (e) Url()));
+	CHECK(!p->hasError());
+	CHECK(p->hasTree());
+
+	tree = p->tree();
+	r = syntax::transformNode<Array<Str *>>(tree);
+	CHECK_EQ(::toS(r), L"[]");
+} END_TEST
+
 BEGIN_TEST(ParseTricky, BS) {
 	// Tricky cases.
 	for (Nat id = 0; id < backendCount(); id++) {

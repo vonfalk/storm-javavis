@@ -13,7 +13,11 @@
     but the scale of the issue should be assessed first.
   - [ ] Parsing core.lang.syntax.bnf takes about 80 ms, which is a bit on the high end when compiling code...
 
-* Loose ends so far [24/48]
+* Loose ends so far [24/49]
+  - [ ] When a .bnf-file includes another package, productions from there are not automatically visible,
+    which seems unintuitive. Even though a package (perhaps containing syntax helpers) is included, its
+    productions are not visible. This could probably be solved nicely with 'package exports' or a similar 
+    mechanism.
   - [ ] Support documentation of templates from C++.
   - [ ] The scope of the type lookup for parameters in Basic Storm is wrong (with respect to visibility).
   - [ ] Lambda functions can not infer their proper type when being assigned to Maybe<T>.

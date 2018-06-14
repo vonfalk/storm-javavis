@@ -1,0 +1,12 @@
+extend test.bnf;
+
+delimiter = SDelimiter;
+
+void SDelimiter();
+SDelimiter : "[ \n\t]*";
+
+Array<Str> SCommaList();
+SCommaList => Array<Str>() : "(", list(SElem -> push, : ",",), ")";
+
+Str SElem();
+SElem => v : "[A-Za-z0-9]+" v;
