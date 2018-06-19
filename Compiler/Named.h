@@ -22,6 +22,7 @@ namespace storm {
 		STORM_CLASS;
 	public:
 		STORM_CTOR NameLookup();
+		STORM_CTOR NameLookup(NameLookup *parent);
 
 		// Find the specified NamePart in here. Returns null if not found. 'source' indicates who is
 		// looking for something, and is used to perform visibility checks. If set to 'null', no

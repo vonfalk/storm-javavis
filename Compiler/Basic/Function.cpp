@@ -2,6 +2,7 @@
 #include "Function.h"
 #include "Cast.h"
 #include "Doc.h"
+#include "Scope.h"
 #include "Core/Fn.h"
 #include "Compiler/Code.h"
 #include "Compiler/Exception.h"
@@ -57,13 +58,15 @@ namespace storm {
 			  body(body) {}
 
 		Function *FunctionDecl::createFn() {
+			Scope fScope = fileScope(scope, name->pos);
+
 			Value result;
 			if (this->result)
-				result = scope.value(this->result);
+				result = fScope.value(this->result);
 			NamedThread *thread = null;
 
 			if (this->thread) {
-				if (NamedThread *t = as<NamedThread>(scope.find(this->thread))) {
+				if (NamedThread *t = as<NamedThread>(fScope.find(this->thread))) {
 					thread = t;
 				} else {
 					throw SyntaxError(this->thread->pos, ::toS(this->thread) + L" is not a thread.");
@@ -73,7 +76,8 @@ namespace storm {
 			// if (*name->v == S("asyncPostObject"))
 			// 	PVAR(body);
 
-			BSFunction *f = new (this) BSFunction(result, name, resolve(params, scope), scope, thread, body);
+			Array<ValParam> *par = resolve(params, fScope);
+			BSFunction *f = new (this) BSFunction(result, name, par, scope, thread, body);
 			f->visibility = visibility;
 
 			if (!this->result)

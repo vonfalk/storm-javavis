@@ -246,7 +246,7 @@ private ExprBlock wrapLambda(Scope scope, Array<ValParam> params, SExpr body) on
 /**
  * Information about a lambda function.
  */
-class LambdaInfo extends NameLookup {
+private class LambdaInfo extends NameLookup {
 	private Block block;
 	public Set<Str> capture;
 	public ExprResult result;

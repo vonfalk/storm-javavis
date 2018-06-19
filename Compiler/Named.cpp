@@ -13,6 +13,8 @@ namespace storm {
 
 	NameLookup::NameLookup() : parentLookup(null) {}
 
+	NameLookup::NameLookup(NameLookup *parent) : parentLookup(parent) {}
+
 	NameLookup *NameLookup::parent() const {
 		assert(parentLookup, L"No parent yet!");
 		return parentLookup;

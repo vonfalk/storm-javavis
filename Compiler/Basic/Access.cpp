@@ -4,6 +4,7 @@
 #include "Exception.h"
 #include "Class.h"
 #include "Function.h"
+#include "Scope.h"
 
 namespace storm {
 	namespace bs {
@@ -16,6 +17,8 @@ namespace storm {
 					return c->declared;
 				else if (BlockLookup *b = as<BlockLookup>(src))
 					return b->block->pos;
+				else if (FileScope *f = as<FileScope>(src))
+					return f->pos;
 
 				src = src->parent();
 			}

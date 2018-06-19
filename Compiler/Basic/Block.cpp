@@ -182,9 +182,7 @@ namespace storm {
 		 * Block lookup
 		 */
 
-		BlockLookup::BlockLookup(Block *o, NameLookup *prev) : block(o) {
-			parentLookup = prev;
-		}
+		BlockLookup::BlockLookup(Block *o, NameLookup *prev) : NameLookup(prev), block(o) {}
 
 		Named *BlockLookup::find(SimplePart *part, Scope source) {
 			if (part->params->empty())
