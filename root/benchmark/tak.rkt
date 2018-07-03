@@ -14,9 +14,10 @@
 (define (runTakInt at)
   (if (< at 13)
       (begin
-       (display (string-append "Tac " (number->string at) "\n"))
+       (display (string-append "Tak " (number->string at) "\n"))
        (display (string-append "=> " (number->string (tak (* 2 at) at 0)) "\n"))
        (runTakInt (+ 1 at)))
       0))
 
 (runTak)
+(time (runTak))

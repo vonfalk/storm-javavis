@@ -25,3 +25,5 @@
 
 ;; takes 2.5s
 (consume (repeat 100))
+(time (consume (repeat 100)))
+

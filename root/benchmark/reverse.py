@@ -31,9 +31,15 @@ def output(a):
 import sys
 sys.setrecursionlimit(1050)
 
+import time
+
+start = time.time()
+
 # print(output(create(10)))
 # print(output(reverse(create(10))))
 # takes about 39s
 
 for i in range(100):
     reverse(create(1000))
+
+print("Total time: {}".format(time.time() - start))

@@ -14,8 +14,12 @@ Int tak(Int x, Int y, Int z) {
 
 // takes 1m28s
 void testTak() {
+	Moment start;
+
 	for (Int i = 0; i < 13; i++) {
 		print("Tak " # i);
 		print("=> " # tak(2*i, i, 0));
 	}
+
+	print("Total time: " # (Moment() - start));
 }

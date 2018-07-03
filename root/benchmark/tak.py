@@ -10,4 +10,7 @@ def testTak():
         print("Tak ", i)
         print("=> ", tak(i, 0, -i))
 
+import time
+start = time.time()
 testTak()
+print("Total time: {}".format(time.time() - start))
