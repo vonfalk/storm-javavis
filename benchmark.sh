@@ -32,8 +32,29 @@ function process_tail {
     input=$1
     multiplier=$2
 
+    read -d '' minmaxavg << 'EOF'
+BEGIN {
+    sum=0;
+    count=0;
+    min=9999999;
+    max=0;
+}
+{
+    count += 1;
+    sum += $1;
+    if ($1 > max) max = $1;
+    if ($1 < min) min = $1;
+}
+END{
+    print "Avg: ", sum/count;
+    print "Min: ", min;
+    print "Max: ", max;
+}
+EOF
+
     tail -n +11 | awk -v multiplier=$multiplier '{ print $1 * multiplier; }' > $input.out
-    awk 'BEGIN { sum=0; count=0; } { count+=1; sum+=$1; } END { print sum/count; }' $input.out > $input.avg
+    awk "$minmaxavg" $input.out > $input.avg
+    #awk 'BEGIN { sum=0; count=0; } { count+=1; sum+=$1; } END { print sum/count; }' $input.out > $input.avg
     cat $input.avg
 }
 
@@ -48,17 +69,17 @@ function process_rkt {
 }
 
 function do_process {
-    echo "Tak:"
-    echo -n "Nim: "; process_file benchmark/tak_nim 1000
-    echo -n "Python: "; process_file benchmark/tak_py 1000
-    echo -n "Storm: "; process_file benchmark/tak_storm 1
-    echo -n "Racket: "; process_rkt benchmark/tak_rkt
+    echo "== Tak =="
+    echo "Nim: "; process_file benchmark/tak_nim 1000
+    echo "Python: "; process_file benchmark/tak_py 1000
+    echo "Storm: "; process_file benchmark/tak_storm 1
+    echo "Racket: "; process_rkt benchmark/tak_rkt
 
-    echo "Reverse:"
-    echo -n "Nim: "; process_file benchmark/reverse_nim 1000
-    echo -n "Python: "; process_file benchmark/reverse_py 1000
-    echo -n "Storm: "; process_file benchmark/reverse_storm 1
-    echo -n "Racket: "; process_rkt benchmark/reverse_rkt
+    echo "== Reverse =="
+    echo "Nim: "; process_file benchmark/reverse_nim 1000
+    echo "Python: "; process_file benchmark/reverse_py 1000
+    echo "Storm: "; process_file benchmark/reverse_storm 1
+    echo "Racket: "; process_rkt benchmark/reverse_rkt
 }
 
 case $1 in
