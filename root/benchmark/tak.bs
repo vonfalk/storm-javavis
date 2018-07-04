@@ -16,10 +16,15 @@ Int tak(Int x, Int y, Int z) {
 void testTak() {
 	Moment start;
 
-	for (Int i = 0; i < 13; i++) {
+	for (Int i = 0; i < 12; i++) {
 		print("Tak " # i);
 		print("=> " # tak(2*i, i, 0));
 	}
 
-	print("Total time: " # (Moment() - start));
+	print("Total time: " # (Moment() - start).inMs);
+}
+
+void fullTak() {
+	for (Int i = 0; i < 100; i++)
+		testTak();
 }

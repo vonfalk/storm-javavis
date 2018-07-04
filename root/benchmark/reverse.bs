@@ -49,12 +49,15 @@ Cons? reverse(Cons? a) {
 	r;
 }
 
-// takes 14s
 void testReverse() {
 	Moment start;
 
-	for (Int i = 0; i < 100; i++)
-		reverse(create(1000));
+	reverse(create(3000));
 
-	print("Total time: " # (Moment() - start));
+	print("Total time: " # (Moment() - start).inMs);
+}
+
+void fullReverse() {
+	for (Int i = 0; i < 100; i++)
+		testReverse();
 }

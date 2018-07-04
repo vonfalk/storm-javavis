@@ -12,12 +12,13 @@
   (runTakInt 0))
 
 (define (runTakInt at)
-  (if (< at 13)
+  (if (< at 12)
       (begin
        (display (string-append "Tak " (number->string at) "\n"))
        (display (string-append "=> " (number->string (tak (* 2 at) at 0)) "\n"))
        (runTakInt (+ 1 at)))
       0))
 
-(runTak)
-(time (runTak))
+(for ((i (in-range 100)))
+     (time (runTak)))
+

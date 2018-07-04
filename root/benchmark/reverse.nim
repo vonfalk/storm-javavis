@@ -28,10 +28,13 @@ proc reverse(a: Cons): Cons =
     else:
         result = append(reverse(a.next), cons(a.value, nil))
 
-let time = cpuTime()
+proc test() =
+    let time = cpuTime()
 
-#takes 1.4s in release
+    var v = reverse(create(3000))
+
+    echo "Total time: ", cpuTime() - time
+
+
 for i in 1..100:
-    var v = reverse(create(1000))
-
-echo "Total time: ", cpuTime() - time
+    test()

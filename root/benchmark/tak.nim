@@ -6,12 +6,14 @@ proc tak(x, y, z :int): int =
      else:
        result = z
 
-let time = cpuTime()
+proc test() =
+    let time = cpuTime()
 
-for i in 0..12:
-    echo("Tak ", i)
-    echo("=> ", tak(2*i, i, 0))
+    for i in 0..11:
+        echo("Tak ", i)
+        echo("=> ", tak(2*i, i, 0))
 
-echo "Total time: ", cpuTime() - time
+    echo "Total time: ", cpuTime() - time
 
-# Built with -d:release, takes 9s + 2s compile
+for i in 1..100:
+    test()

@@ -14,16 +14,6 @@
       null
       (my-append (my-reverse (rest a)) (cons (first a) null))))
 
-(define (consume x)
-  null)
-
-(define (repeat x)
-  (when (> x 0)
-    (begin
-     (my-reverse (create 1000))
-     (repeat (- x 1)))))
-
-;; takes 2.5s
-(consume (repeat 100))
-(time (consume (repeat 100)))
+(for ((i (in-range 100)))
+     (time (my-reverse (create 3000))))
 

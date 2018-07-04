@@ -82,19 +82,25 @@ namespace storm {
 		return createReader(readerName(f), files, pkg);
 	}
 
+	static Str *noReaderWarning(SimpleName *name, Array<Url *> *files) {
+		StrBuf *msg = new (name) StrBuf();
+		*msg << L"No reader for [";
+		Url *rootUrl = name->engine().package()->url();
+		for (nat i = 0; i < files->count(); i++) {
+			if (i > 0)
+				*msg << L", ";
+			*msg << files->at(i)->relative(rootUrl);
+		}
+		*msg << L"] (should be " << name << L")";
+
+		return msg->toS();
+	}
+
 	MAYBE(PkgReader *) createReader(SimpleName *name, Array<Url *> *files, Package *pkg) {
 		Function *createFn = as<Function>(pkg->engine().scope().find(name));
 		if (!createFn) {
-			StrBuf *msg = new (name) StrBuf();
-			*msg << L"No reader for [";
-			Url *rootUrl = pkg->engine().package()->url();
-			for (nat i = 0; i < files->count(); i++) {
-				if (i > 0)
-					*msg << L", ";
-				*msg << files->at(i)->relative(rootUrl);
-			}
-			*msg << L"] (should be " << name << L")";
-			WARNING(msg->toS()->c_str());
+			// TODO: Always output this warning?
+			WARNING(noReaderWarning(name, files)->c_str());
 			return null;
 		}
 

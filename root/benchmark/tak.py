@@ -4,13 +4,17 @@ def tak(x, y, z):
     else:
         return z
 
+import time
+
 # takes 24m30s (in Linux VM)
 def testTak():
-    for i in range(13):
-        print("Tak ", i)
-        print("=> ", tak(i, 0, -i))
+    start = time.time()
 
-import time
-start = time.time()
-testTak()
-print("Total time: {}".format(time.time() - start))
+    for i in range(12):
+        print("Tak ", i)
+        print("=> ", tak(2*i, i, 0))
+
+    print("Total time: {}".format(time.time() - start))
+
+for i in range(30):
+    testTak()
