@@ -32,7 +32,7 @@ function process_tail {
     input=$1
     multiplier=$2
 
-    tail -n +2 | awk -v multiplier=$multiplier '{ print $1 * multiplier; }' > $input.out
+    tail -n +11 | awk -v multiplier=$multiplier '{ print $1 * multiplier; }' > $input.out
     awk 'BEGIN { sum=0; count=0; } { count+=1; sum+=$1; } END { print sum/count; }' $input.out > $input.avg
     cat $input.avg
 }

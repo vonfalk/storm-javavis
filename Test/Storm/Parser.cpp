@@ -193,8 +193,13 @@ BEGIN_TEST(ParseOrderTest, BS) {
  */
 
 BEGIN_TEST(SyntaxTest, BS) {
+	Engine &e = gEngine();
+
 	CHECK_RUNS(runFn<void>(S("test.syntax.testSimple")));
 	CHECK(runFn<Bool>(S("test.syntax.testSentence")));
+	CHECK_EQ(toS(runFn<Str *>(S("test.syntax.testManualTfm"), new (e) Str(S("dogs sleep")))), L"Plural dog");
+	CHECK_EQ(toS(runFn<Str *>(S("test.syntax.testManualTfm"), new (e) Str(S("the dog sleeps")))), L"Singular dog");
+	CHECK_EQ(toS(runFn<Str *>(S("test.syntax.testManualTfm"), new (e) Str(S("do dogs sleep?")))), L"Question dog");
 	CHECK(runFn<Bool>(S("test.syntax.testMaybe")));
 	CHECK(runFn<Bool>(S("test.syntax.testArray")));
 	CHECK(runFn<Bool>(S("test.syntax.testCall")));

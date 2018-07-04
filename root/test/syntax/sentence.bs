@@ -40,6 +40,24 @@ Bool testSentence() on Compiler {
 	"Statement: bird, fly" == tfm.toS;
 }
 
+Str testManualTfm(Str s) on Compiler {
+	Parser<Sentence> parser;
+	parser.parse(s, Url());
+	if (parser.hasError)
+		parser.throwError;
+
+	Sentence tree = parser.tree();
+	if (tree as PluralAssert) {
+		return "Plural " + tree.noun.transform();
+	} else if (tree as SingularAssert) {
+		return "Singular " + tree.noun.transform();
+	} else if (tree as Question) {
+		return "Question " + tree.noun.transform();
+	} else {
+		return "Unknown";
+	}
+}
+
 Bool testMaybe() on Compiler {
 	Str s = "do birds fly?";
 
