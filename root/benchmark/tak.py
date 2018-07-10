@@ -6,7 +6,6 @@ def tak(x, y, z):
 
 import time
 
-# takes 24m30s (in Linux VM)
 def testTak():
     start = time.time()
 
@@ -16,5 +15,5 @@ def testTak():
 
     print("Total time: {}".format(time.time() - start))
 
-for i in range(30):
+for i in range(100):
     testTak()
