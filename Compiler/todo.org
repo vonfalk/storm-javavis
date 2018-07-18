@@ -13,11 +13,12 @@
     but the scale of the issue should be assessed first.
   - [ ] Parsing core.lang.syntax.bnf takes about 80 ms, which is a bit on the high end when compiling code...
 
-* Loose ends so far [26/49]
+* Loose ends so far [26/50]
   - [ ] When a .bnf-file includes another package, productions from there are not automatically visible,
     which seems unintuitive. Even though a package (perhaps containing syntax helpers) is included, its
     productions are not visible. This could probably be solved nicely with 'package exports' or a similar 
     mechanism.
+  - [ ] Allow initializers for global variables.
   - [ ] Support documentation of templates from C++.
   - [ ] Lambda functions can not infer their proper type when being assigned to Maybe<T>.
   - [ ] We probably want to allow creating documentation for an entire package. Possibly by creating
@@ -93,7 +94,10 @@
   - [X] Implement shrink() for Map<> as well.
   - [X] Handles and templates does not work with built-in types (like Int).
 
-* Improvements [6/22]
+* Improvements [6/23]
+  - [ ] Consider utilizing the transformations better in Basic Storm. We could, for example, skip the
+    XxxDecl classes, and just have lists of AST nodes that are transformed as appropriate later in the
+    compilation instead.
   - [ ] Add a type that represents byte sizes. Use that in eg. Socket::readBuffer.
   - [ ] The call to 'getaddrinfo' in the networking subsystem blocks an entire OS thread waiting for
     the network. This is not very good, as we might have other things to do in the meantime.

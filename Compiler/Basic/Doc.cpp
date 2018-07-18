@@ -263,10 +263,10 @@ namespace storm {
 		TObject *applyDoc(SrcPos pos, TObject *to) {
 			if (Named *named = as<Named>(to)) {
 				named->documentation = new (named) BSDoc(pos, named);
-			} else if (FunctionDecl *fn = as<FunctionDecl>(to)) {
+			} else if (NamedDecl *decl = as<NamedDecl>(to)) {
 				// Tell the declaration where the documentation is. It will call us again later so
 				// that we can set the documentation properly.
-				fn->docPos = pos;
+				decl->docPos = pos;
 			} else if (MemberWrap *wrap = as<MemberWrap>(to)) {
 				// Remember where the documentation is. It will call us again later so that we can
 				// set the documentation properly.

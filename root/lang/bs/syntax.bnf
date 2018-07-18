@@ -134,6 +134,10 @@ SClass => threadClass(pos, env, name, body) : "class" #keyword, SName name #type
 NamedThread SNamedThread();
 SNamedThread => NamedThread(name) : "thread" #keyword, SName name, ";";
 
+// Global variable declaration.
+GlobalVarDecl SGlobalVar(Scope env);
+SGlobalVar => GlobalVarDecl(env, type, name, thread) : SType type, SName name #varName, "on" #keyword, SType thread, ";";
+
 // Possible root blocks in a file.
 TObject SFileItem(Scope env);
 SFileItem => item : SPlainFileItem(env) item;
@@ -144,6 +148,7 @@ TObject SPlainFileItem(Scope env);
 SPlainFileItem => f : SFunction(env) f;
 SPlainFileItem => c : SClass(env) c;
 SPlainFileItem => t : SNamedThread t;
+SPlainFileItem => v : SGlobalVar(env) v;
 
 TObject SDocFileItem(Scope env);
 SDocFileItem[0] => item : SDelimiter - SFileItem(env) item;

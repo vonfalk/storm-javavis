@@ -1,0 +1,18 @@
+Int globalInt on Compiler;
+
+Str globalStr on Compiler;
+
+Int testGlobal(Int v) {
+	Int old = globalInt;
+	globalInt = v;
+	old;
+}
+
+Str testGlobal(Str v) {
+	Str old = globalStr;
+	globalStr = v;
+	old;
+}
+
+// Global variable with an initializer.
+// Str globalInited on Compiler = "Hello";

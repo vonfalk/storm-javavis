@@ -85,11 +85,11 @@ namespace storm {
 			readContent();
 			Package *pkg = info->pkg;
 
-			for (nat i = 0; i < content->types->count(); i++) {
+			for (Nat i = 0; i < content->types->count(); i++) {
 				pkg->add(content->types->at(i));
 			}
 
-			for (nat i = 0; i < content->threads->count(); i++) {
+			for (Nat i = 0; i < content->threads->count(); i++) {
 				pkg->add(content->threads->at(i));
 			}
 		}
@@ -97,7 +97,7 @@ namespace storm {
 		void CodeReader::resolveTypes() {
 			readContent();
 
-			for (nat i = 0; i < content->types->count(); i++) {
+			for (Nat i = 0; i < content->types->count(); i++) {
 				if (Class *c = as<Class>(content->types->at(i))) {
 					c->lookupTypes();
 				}
@@ -108,11 +108,11 @@ namespace storm {
 			readContent();
 			Package *pkg = info->pkg;
 
-			for (nat i = 0; i < content->functions->count(); i++) {
-				pkg->add(content->functions->at(i)->createFn());
+			for (Nat i = 0; i < content->decls->count(); i++) {
+				pkg->add(content->decls->at(i)->create());
 			}
 
-			for (nat i = 0; i < content->templates->count(); i++) {
+			for (Nat i = 0; i < content->templates->count(); i++) {
 				pkg->add(content->templates->at(i));
 			}
 		}

@@ -19,6 +19,10 @@ namespace storm {
 	}
 
 
+	/**
+	 * Member variable.
+	 */
+
 	MemberVar::MemberVar(Str *name, Value type, Type *member) : Variable(name, type, member) {
 		hasLayout = false;
 	}
@@ -39,5 +43,12 @@ namespace storm {
 		assert(!params->empty());
 		return params->at(0).type;
 	}
+
+
+	/**
+	 * Global variable.
+	 */
+
+	GlobalVar::GlobalVar(Str *name, Value type, NamedThread *thread) : Variable(name, type), owner(thread) {}
 
 }

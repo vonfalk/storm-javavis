@@ -4,6 +4,7 @@
 #include "Compiler/Syntax/SStr.h"
 #include "Compiler/Syntax/Node.h"
 #include "Compiler/Doc.h"
+#include "Decl.h"
 #include "Param.h"
 #include "Block.h"
 
@@ -23,7 +24,7 @@ namespace storm {
 		 * If 'result' is null, then we assume that this function declares a setter function, since
 		 * the return type is always 'null' for them.
 		 */
-		class FunctionDecl : public ObjectOn<Compiler> {
+		class FunctionDecl : public NamedDecl {
 			STORM_CLASS;
 		public:
 			STORM_CTOR FunctionDecl(Scope scope,
@@ -46,19 +47,19 @@ namespace storm {
 			Array<NameParam> *params;
 			MAYBE(SrcName *) thread;
 			syntax::Node *body;
-			MAYBE(Visibility *) visibility;
-
-			// Position of the documentation. May be unset.
-			SrcPos docPos;
-
-			// Create the corresponding function.
-			Function *STORM_FN createFn();
 
 			// Temporary solution for updating a function.
 			void STORM_FN update(BSFunction *fn);
 
 			// Get our name as a NamePart.
 			NamePart *STORM_FN namePart() const;
+
+			// To string.
+			virtual void STORM_FN toS(StrBuf *to) const;
+
+		private:
+			// Create the actual function.
+			virtual Named *STORM_FN doCreate();
 		};
 
 		// Declare setter functions.

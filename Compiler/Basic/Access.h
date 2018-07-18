@@ -2,7 +2,7 @@
 #include "Core/EnginePtr.h"
 #include "Compiler/Visibility.h"
 #include "Compiler/SrcPos.h"
-#include "Function.h"
+#include "Decl.h"
 
 namespace storm {
 	namespace bs {
@@ -54,7 +54,7 @@ namespace storm {
 
 		// Apply modifiers to named objects.
 		Named *STORM_FN apply(SrcPos pos, Named *to, Visibility *v);
-		FunctionDecl *STORM_FN apply(SrcPos pos, FunctionDecl *to, Visibility *v);
+		NamedDecl *STORM_FN apply(SrcPos pos, NamedDecl *to, Visibility *v);
 		MemberWrap *STORM_FN apply(SrcPos pos, MemberWrap *wrap, Visibility *v);
 
 		// Apply to unknown objects. Currently, Named objects, FunctionDecl and MemberWrap are supported.

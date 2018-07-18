@@ -443,6 +443,22 @@ BEGIN_TEST(BSException, BS) {
 	CALL_TEST_FN(checkTimes, S("test.bs.threadException"), 4);
 } END_TEST
 
+// Global variables.
+BEGIN_TEST_(Globals, BS) {
+	Engine &e = gEngine();
+
+	runFn<Int>(S("test.bs.testGlobal"), 10);
+	CHECK_EQ(runFn<Int>(S("test.bs.testGlobal"), 5), 10);
+	CHECK_EQ(runFn<Int>(S("test.bs.testGlobal"), 7), 5);
+
+	Str *strA = new (e) Str(S("A"));
+	Str *strB = new (e) Str(S("B"));
+	runFn<Str *>(S("test.bs.testGlobal"), strA);
+	CHECK_EQ(runFn<Str *>(S("test.bs.testGlobal"), strB), strA);
+	CHECK_EQ(runFn<Str *>(S("test.bs.testGlobal"), strA), strB);
+
+	TODO(L"Allow initializers as well!");
+} END_TEST
 
 /**
  * Heavy tests.

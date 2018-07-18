@@ -91,9 +91,9 @@ namespace storm {
 			return to;
 		}
 
-		FunctionDecl *apply(SrcPos pos, FunctionDecl *to, Visibility *v) {
+		NamedDecl *apply(SrcPos pos, NamedDecl *to, Visibility *v) {
 			if (to->visibility)
-				throw SyntaxError(pos, L"The function " + ::toS(to->name) +
+				throw SyntaxError(pos, L"The declaration " + ::toS(to) +
 								L" already has a visibility specified. Can not add " +
 								::toS(v) + L" as well.");
 
@@ -112,7 +112,7 @@ namespace storm {
 		TObject *apply(SrcPos pos, TObject *to, Visibility *v) {
 			if (Named *n = as<Named>(to))
 				return apply(pos, n, v);
-			else if (FunctionDecl *d = as<FunctionDecl>(to))
+			else if (NamedDecl *d = as<NamedDecl>(to))
 				return apply(pos, d, v);
 			else if (MemberWrap *wrap = as<MemberWrap>(to))
 				return apply(pos, wrap, v);

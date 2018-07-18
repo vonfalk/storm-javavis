@@ -2,7 +2,7 @@
 #include "Compiler/NamedThread.h"
 #include "Compiler/Template.h"
 #include "Compiler/Visibility.h"
-#include "Function.h"
+#include "Decl.h"
 
 namespace storm {
 	namespace bs {
@@ -19,8 +19,8 @@ namespace storm {
 			// Add a type.
 			void STORM_FN add(Type *type);
 
-			// Add a function.
-			void STORM_FN add(FunctionDecl *fn);
+			// Add a declaration of a named entity.
+			void STORM_FN add(NamedDecl *fn);
 
 			// Add a named thread.
 			void STORM_FN add(NamedThread *thread);
@@ -37,8 +37,8 @@ namespace storm {
 			// All types.
 			Array<Type *> *types;
 
-			// All function definitions.
-			Array<FunctionDecl *> *functions;
+			// All declarations of named objects.
+			Array<NamedDecl *> *decls;
 
 			// All named threads.
 			Array<NamedThread *> *threads;
@@ -52,7 +52,7 @@ namespace storm {
 		private:
 			// Apply visibility to named objects.
 			void update(Named *named);
-			void update(FunctionDecl *fn);
+			void update(NamedDecl *fn);
 		};
 
 	}

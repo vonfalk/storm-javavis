@@ -10,7 +10,7 @@ namespace storm {
 
 		Content::Content() {
 			types = new (this) Array<Type *>();
-			functions = new (this) Array<FunctionDecl *>();
+			decls = new (this) Array<NamedDecl *>();
 			threads = new (this) Array<NamedThread *>();
 			templates = new (this) Array<Template *>();
 			defaultVisibility = engine().visibility(Engine::vPublic);
@@ -21,9 +21,9 @@ namespace storm {
 			types->push(t);
 		}
 
-		void Content::add(FunctionDecl *t) {
+		void Content::add(NamedDecl *t) {
 			update(t);
-			functions->push(t);
+			decls->push(t);
 		}
 
 		void Content::add(NamedThread *t) {
@@ -42,7 +42,7 @@ namespace storm {
 		void Content::add(TObject *o) {
 			if (Type *t = as<Type>(o))
 				add(t);
-			else if (FunctionDecl *fn = as<FunctionDecl>(o))
+			else if (NamedDecl *fn = as<NamedDecl>(o))
 				add(fn);
 			else if (NamedThread *nt = as<NamedThread>(o))
 				add(nt);
@@ -59,7 +59,7 @@ namespace storm {
 				n->visibility = defaultVisibility;
 		}
 
-		void Content::update(FunctionDecl *fn) {
+		void Content::update(NamedDecl *fn) {
 			if (!fn->visibility)
 				fn->visibility = defaultVisibility;
 		}

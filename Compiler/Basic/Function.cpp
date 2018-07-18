@@ -57,7 +57,7 @@ namespace storm {
 			  thread(thread),
 			  body(body) {}
 
-		Function *FunctionDecl::createFn() {
+		Named *FunctionDecl::doCreate() {
 			Scope fScope = fileScope(scope, name->pos);
 
 			Value result;
@@ -78,14 +78,9 @@ namespace storm {
 
 			Array<ValParam> *par = resolve(params, fScope);
 			BSFunction *f = new (this) BSFunction(result, name, par, scope, thread, body);
-			f->visibility = visibility;
 
 			if (!this->result)
 				f->make(fnAssign);
-
-			// Always apply documentation. Otherwise we will not show parameter names if no
-			// documentation comment is present.
-			applyDoc(docPos, f);
 
 			return f;
 		}
@@ -101,6 +96,10 @@ namespace storm {
 
 		NamePart *bs::FunctionDecl::namePart() const {
 			return new (this) SimplePart(name->v, values(resolve(params, scope)));
+		}
+
+		void bs::FunctionDecl::toS(StrBuf *to) const {
+			*to << namePart();
 		}
 
 

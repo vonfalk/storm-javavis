@@ -1,5 +1,6 @@
 #pragma once
 #include "Named.h"
+#include "NamedThread.h"
 
 namespace storm {
 	STORM_PKG(core.lang);
@@ -50,6 +51,25 @@ namespace storm {
 
 		// Has the layout been produced?
 		Bool hasLayout;
+	};
+
+
+	/**
+	 * A global variable stored in the name tree. Global variables are only supposed to be
+	 * accessible from their associated thread, so that proper synchronization is enforced by the
+	 * compiler. Consider two global variables that form a single state together. Disallowing access
+	 * from other threads than the "owning" thread forces the programmer to write accessor functions
+	 * on the proper thread, which ensures that any updates to the state happen as intended. Having
+	 * multiple threads accessing the global variables could cause unintended race conditions.
+	 */
+	class GlobalVar : public Variable {
+		STORM_CLASS;
+	public:
+		// Create.
+		STORM_CTOR GlobalVar(Str *name, Value type, NamedThread *thread);
+
+		// Owning thread.
+		NamedThread *owner;
 	};
 
 }
