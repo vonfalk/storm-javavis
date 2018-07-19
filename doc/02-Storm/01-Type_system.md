@@ -137,6 +137,17 @@ The following members are recommended for all types:
   default implementation for objects and actors. Values works without `toS`.
 
 
+Global variables
+----------------
+
+Global variables are supported by the system. Global variables are always associated with a named
+thread, which means that only the specified thread may access the variable. This is so that programs
+using multiple global variables to represent a single global state will be less likely to be subject
+to data races due to multiple threads accessing the variables. Disallowing access from all threads
+but one makes sure programs provide accessors that enforce proper synchronization (due to them being
+threaded).
+
+
 Packages
 ---------
 

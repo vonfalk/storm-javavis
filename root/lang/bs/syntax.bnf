@@ -136,7 +136,7 @@ SNamedThread => NamedThread(name) : "thread" #keyword, SName name, ";";
 
 // Global variable declaration.
 GlobalVarDecl SGlobalVar(Scope env);
-SGlobalVar => GlobalVarDecl(env, type, name, thread) : SType type, SName name #varName, "on" #keyword, SType thread, ";";
+SGlobalVar => GlobalVarDecl(env, type, name, thread) : SType type, SName name #varName, "on" #keyword, SType thread, ("=", SExpr@ -> init)? ";";
 
 // Possible root blocks in a file.
 TObject SFileItem(Scope env);

@@ -1,6 +1,8 @@
 #pragma once
 #include "Named.h"
 #include "NamedThread.h"
+#include "RunOn.h"
+#include "Core/Fn.h"
 
 namespace storm {
 	STORM_PKG(core.lang);
@@ -61,15 +63,37 @@ namespace storm {
 	 * from other threads than the "owning" thread forces the programmer to write accessor functions
 	 * on the proper thread, which ensures that any updates to the state happen as intended. Having
 	 * multiple threads accessing the global variables could cause unintended race conditions.
+	 *
+	 * TODO: Expose 'dataPtr' to Storm in a good way. Perhaps by exposing Engine::ref so that ASM
+	 * can access it at least.
 	 */
 	class GlobalVar : public Variable {
 		STORM_CLASS;
 	public:
-		// Create.
-		STORM_CTOR GlobalVar(Str *name, Value type, NamedThread *thread);
+		// Create. Initialize the variable to whatever is returned by 'initializer'. 'initializer'
+		// is evaluated on the thread specified by 'thread'.
+		STORM_CTOR GlobalVar(Str *name, Value type, NamedThread *thread, FnBase *initializer);
 
 		// Owning thread.
 		NamedThread *owner;
+
+		// Assuming we're running on 'thread', may we access this variable?
+		Bool STORM_FN accessibleFrom(RunOn thread);
+
+		// Get the pointer to the data. Safe to call from any thread.
+		void *CODECALL dataPtr();
+
+		// Output.
+		virtual void STORM_FN toS(StrBuf *to) const;
+
+	private:
+		// The data stored in the variable. If the variable is an Object or a TObject, this is just
+		// a pointer to the object itself. If it is a value type, this is a pointer to an array of
+		// size 1 which contains the object.
+		UNKNOWN(PTR_GC) void *data;
+
+		// Do we have an array for this type?
+		Bool hasArray;
 	};
 
 }

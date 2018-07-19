@@ -339,6 +339,8 @@ namespace storm {
 			return FNREF(fnNull);
 		case rMaybeToS:
 			return FNREF(MaybeValueType::toSHelper);
+		case rGlobalAddr:
+			return FNREF(GlobalVar::dataPtr);
 		default:
 			assert(false, L"Unknown reference: " + ::toS(ref));
 			return null;

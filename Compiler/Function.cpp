@@ -351,10 +351,15 @@ namespace storm {
 		if (threadThunkRef)
 			return threadThunkRef;
 
-		Binary *threadThunkCode = callThunk(result, params);
+		Binary *threadThunkCode = storm::callThunk(result, params);
 		threadThunkRef = new (this) NamedSource(this, Char('t'));
 		threadThunkRef->set(threadThunkCode);
 		return threadThunkRef;
+	}
+
+	code::Ref Function::thunkRef() {
+		// This is the same thing as the thread thunk nowadays.
+		return code::Ref(threadThunk());
 	}
 
 

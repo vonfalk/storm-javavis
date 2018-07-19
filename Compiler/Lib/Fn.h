@@ -17,6 +17,12 @@ namespace storm {
 		// Create.
 		STORM_CTOR FnType(Str *name, ValueArray *params);
 
+		// Get the result type of this function. Convenience for examining the first parameter manually.
+		Value STORM_FN result();
+
+		// Get the parameters of this function. Convenience for examining the parameters manually.
+		Array<Value> *STORM_FN parameters();
+
 	protected:
 		// Load.
 		virtual Bool STORM_FN loadAll();

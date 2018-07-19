@@ -444,20 +444,29 @@ BEGIN_TEST(BSException, BS) {
 } END_TEST
 
 // Global variables.
-BEGIN_TEST_(Globals, BS) {
+BEGIN_TEST(Globals, BS) {
 	Engine &e = gEngine();
 
-	runFn<Int>(S("test.bs.testGlobal"), 10);
+	CHECK_EQ(runFn<Int>(S("test.bs.testGlobal"), 10), 0);
 	CHECK_EQ(runFn<Int>(S("test.bs.testGlobal"), 5), 10);
 	CHECK_EQ(runFn<Int>(S("test.bs.testGlobal"), 7), 5);
 
 	Str *strA = new (e) Str(S("A"));
 	Str *strB = new (e) Str(S("B"));
-	runFn<Str *>(S("test.bs.testGlobal"), strA);
+	CHECK_EQ(toS(runFn<Str *>(S("test.bs.testGlobal"), strA)), L"Hello");
 	CHECK_EQ(runFn<Str *>(S("test.bs.testGlobal"), strB), strA);
 	CHECK_EQ(runFn<Str *>(S("test.bs.testGlobal"), strA), strB);
 
-	TODO(L"Allow initializers as well!");
+	debug::DbgNoToS val;
+	val.dummy = 1;
+	CHECK_EQ(runFn<debug::DbgNoToS>(S("test.bs.testGlobal"), val).dummy, 0);
+	CHECK_EQ(runFn<debug::DbgNoToS>(S("test.bs.testGlobal"), val).dummy, 1);
+
+	// From other threads (would be good to check initialization is properly done as well).
+	CHECK_EQ(toS(runFn<Str *>(S("test.bs.threadGlobal"))), L"Other");
+
+	CHECK_ERROR(runFn<Str *>(S("test.bs.failThreadGlobal")), SyntaxError);
+
 } END_TEST
 
 /**

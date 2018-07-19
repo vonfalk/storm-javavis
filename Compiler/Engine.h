@@ -184,6 +184,8 @@ namespace storm {
 			rFnNull,
 			// ToS helper for Maybe<T>.
 			rMaybeToS,
+			// Get the address of a global variable.
+			rGlobalAddr,
 			// Should be the last one.
 			refCount,
 		};

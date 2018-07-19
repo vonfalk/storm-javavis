@@ -120,6 +120,8 @@ namespace code {
 	void TypeInstr::toS(StrBuf *to) const {
 		Instr::toS(to);
 		*to << S(" - ") << type;
+		if (member)
+			*to << S("[member]");
 	}
 
 	Instr *TypeInstr::alter(Operand dest, Operand src) {

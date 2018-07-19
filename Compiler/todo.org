@@ -13,16 +13,23 @@
     but the scale of the issue should be assessed first.
   - [ ] Parsing core.lang.syntax.bnf takes about 80 ms, which is a bit on the high end when compiling code...
 
-* Loose ends so far [26/50]
+* Loose ends so far [27/54]
   - [ ] When a .bnf-file includes another package, productions from there are not automatically visible,
     which seems unintuitive. Even though a package (perhaps containing syntax helpers) is included, its
-    productions are not visible. This could probably be solved nicely with 'package exports' or a similar 
+    productions are not visible. This could probably be solved nicely with 'package exports' or a similar
     mechanism.
-  - [ ] Allow initializers for global variables.
+  - [ ] Allow creating variables from the REPL. We could use global variables inside the ReplSandbox object for this.
   - [ ] Support documentation of templates from C++.
   - [ ] Lambda functions can not infer their proper type when being assigned to Maybe<T>.
   - [ ] We probably want to allow creating documentation for an entire package. Possibly by creating
     a file called 'doc.txt' or similar inside the appropriate folder.
+  - [ ] Expose all function pointers the Engine knows about to Storm using a similar API to what is used now.
+    This allows other languages to use "internal" features, for example, to access global variables properly.
+  - [ ] Global variables should perhaps be initialized lazily. Otherwise, initialization expressions may fail
+    to compile properly if they refer to functions in the same compilation unit.
+  - [ ] Generalize the "weak cast" functionality so that new types may "overload" them. This can for example
+    be done by providing an entity type WeakCast that one can include (named "as" for example) that provides
+    the desired functionality. It can then be injected using generators.
   - [ ] Finish integrating the Double class in the system. Basic Storm should be able to instantiate them from
     literals. Str and StrBuf should be able to parse and stringify them, and conversions between built-in
     types should be implemented. Finally, the implementation needs to be tested.
@@ -33,7 +40,7 @@
   - [ ] It is not possible to chain 'assignment' functions using the = operator.
   - [ ] Allow declaring member functions (at least in values) as a different thread than the owner.
   - [ ] Change the default visibility of class members in Basic Storm to private.
-  - [ ] Destructors in maps and arrays are not working properly yet. Idea: add (yet another) member 
+  - [ ] Destructors in maps and arrays are not working properly yet. Idea: add (yet another) member
     to array headers, and let the user provide a custom destructor in there if neccessary.
   - [ ] Destructors do not need their own slot in the Storm vtables anymore since we have another mechanism for that.
   - [ ] Check so that destructors are required if a value-type object within a class or actor
@@ -52,6 +59,7 @@
   - [ ] Support marking functions as 'pure' in C++ and Storm.
   - [ ] If a type has a '==' or '<' outside the type itself, the corresponding operator will not be present in
     a Handle, like '<<' at the moment.
+  - [X] Allow initializers for global variables.
   - [X] Automatically mark non-virtual functions in C++ as 'final' in storm, since VTables will not work anyway.
   - [X] The scope of the type lookup for parameters in Basic Storm is wrong (with respect to visibility).
   - [X] BSFunction and BSCtor should release their syntax tree after they are compiled.
@@ -80,7 +88,7 @@
     sometimes when the GC decides it needs to perform garbage collection around the time when threads
     are spawned and/or when futures are used.
   - [X] We need to scan the data inside a StackTrace object using mps_rank_ambig().
-  - [X] The grammar rule X : Y ("w", Y)* "w"; does not parse properly. It should either work as expected 
+  - [X] The grammar rule X : Y ("w", Y)* "w"; does not parse properly. It should either work as expected
     or report an error!
   - [X] Thread sleep needs to be improved! We should put threads in a sleep queue so that the thread
     can be properly put to sleep even if there is another uthread active on the current thread.

@@ -109,6 +109,7 @@ namespace storm {
 		// Call the copy-constructor for T.
 		CtorCall *STORM_FN copyCtor(const SrcPos &pos, Scope scope, Type *t, Expr *src);
 
+
 		/**
 		 * Get a local variable.
 		 */
@@ -131,8 +132,9 @@ namespace storm {
 			virtual void STORM_FN toS(StrBuf *to) const;
 		};
 
+
 		/**
-		 * Get a local variable (bare-bone wrapper for interfacing with other languages).
+		 * Get a local variable (bare-bones wrapper for interfacing with other languages).
 		 */
 		class BareVarAccess : public Expr {
 			STORM_CLASS;
@@ -207,6 +209,29 @@ namespace storm {
 			// Extract the value, assuming we need a deep copy.
 			void extractCopyCode(CodeGen *s, CodeResult *to);
 		};
+
+
+		/**
+		 * Read a global variable.
+		 */
+		class GlobalVarAccess : public Expr {
+			STORM_CLASS;
+		public:
+			STORM_CTOR GlobalVarAccess(SrcPos pos, GlobalVar *var);
+
+			// Member to access.
+			GlobalVar *var;
+
+			// Result type.
+			virtual ExprResult STORM_FN result();
+
+			// Generate code.
+			virtual void STORM_FN code(CodeGen *s, CodeResult *to);
+
+			// To string.
+			virtual void STORM_FN toS(StrBuf *to) const;
+		};
+
 
 		/**
 		 * Read a named thread variable.

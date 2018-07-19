@@ -153,6 +153,8 @@ namespace storm {
 			addFlags(fn->fnFlags(), notes);
 		} else if (Variable *var = as<Variable>(entity)) {
 			notes->push(note(e, S("->"), var->type));
+			if (GlobalVar *global = as<GlobalVar>(var))
+				notes->push(note(e, S("on"), global->owner));
 		} else if (Type *type = as<Type>(entity)) {
 			if (Type *super = type->super())
 				notes->push(note(e, S("extends"), Value(super)));

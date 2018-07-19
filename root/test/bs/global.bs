@@ -1,18 +1,42 @@
+// Global integer.
 Int globalInt on Compiler;
 
-Str globalStr on Compiler;
+// Global string, initialized to "hello"
+Str globalStr on Compiler = "Hello";
 
-Int testGlobal(Int v) {
+// Make sure we can handle value types properly.
+core:debug:DbgNoToS globalValue on Compiler;
+
+Int testGlobal(Int v) on Compiler {
 	Int old = globalInt;
 	globalInt = v;
 	old;
 }
 
-Str testGlobal(Str v) {
+Str testGlobal(Str v) on Compiler {
 	Str old = globalStr;
 	globalStr = v;
 	old;
 }
 
-// Global variable with an initializer.
-// Str globalInited on Compiler = "Hello";
+core:debug:DbgNoToS testGlobal(core:debug:DbgNoToS v) on Compiler {
+	var old = globalValue;
+	globalValue = v;
+	old;
+}
+
+// Global on another thread.
+Str threadStr on Other = "Other";
+
+Str getOther() on Other {
+	threadStr;
+}
+
+Str threadGlobal() {
+	getOther();
+}
+
+Str failThreadGlobal() {
+	// Should not work.
+	threadStr;
+}

@@ -67,6 +67,11 @@ namespace storm {
 				return new (n) NamedThreadAccess(pos, v);
 			}
 
+			if (GlobalVar *v = as<GlobalVar>(n)) {
+				assert(!first);
+				return new (n) GlobalVarAccess(pos, v);
+			}
+
 			return null;
 		}
 

@@ -311,9 +311,11 @@ namespace storm {
 			*to << type << S("<bare>") << code::Operand(var);
 		}
 
+
 		/**
 		 * Member variable.
 		 */
+
 		MemberVarAccess::MemberVarAccess(SrcPos pos, Expr *member, MemberVar *var, Bool sameObject)
 			: Expr(pos), member(member), var(var), assignTo(false), sameObject(sameObject) {}
 
@@ -459,11 +461,56 @@ namespace storm {
 
 
 		/**
+		 * Global variable.
+		 */
+
+		GlobalVarAccess::GlobalVarAccess(SrcPos pos, GlobalVar *var) : Expr(pos), var(var) {}
+
+		ExprResult GlobalVarAccess::result() {
+			return var->type.asRef();
+		}
+
+		void GlobalVarAccess::code(CodeGen *s, CodeResult *to) {
+			using namespace code;
+
+			// Check so that we're using the proper thread!
+			if (!var->accessibleFrom(s->runOn))
+				throw SyntaxError(pos, L"Can not access the global variable " + ::toS(var) +
+								L" from a thread other than " + ::toS(var->owner));
+
+			if (!to->needed())
+				return;
+
+
+			*s->l << fnParam(engine().ptrDesc(), objPtr(var));
+			*s->l << fnCall(engine().ref(Engine::rGlobalAddr), true, engine().ptrDesc(), ptrA);
+
+			if (to->type().ref) {
+				*s->l << mov(to->location(s).v, ptrA);
+			} else {
+				// We need to make a copy...
+				VarInfo d = to->location(s);
+				if (var->type.isValue()) {
+					*s->l << lea(ptrC, d.v);
+					*s->l << fnParam(engine().ptrDesc(), ptrC);
+					*s->l << fnParam(engine().ptrDesc(), ptrA);
+					*s->l << fnCall(var->type.copyCtor(), true);
+				} else {
+					*s->l << mov(d.v, xRel(d.v.size(), ptrA, Offset()));
+				}
+			}
+		}
+
+		void GlobalVarAccess::toS(StrBuf *to) const {
+			*to << var->identifier();
+		}
+
+
+		/**
 		 * Named thread.
 		 */
 
-		NamedThreadAccess::NamedThreadAccess(SrcPos pos, NamedThread *thread)
-			: Expr(pos), thread(thread) {}
+		NamedThreadAccess::NamedThreadAccess(SrcPos pos, NamedThread *thread) : Expr(pos), thread(thread) {}
 
 		ExprResult NamedThreadAccess::result() {
 			return Value(Thread::stormType(engine()));

@@ -117,6 +117,14 @@ namespace storm {
 		// 'directRef->address()'. Intended to be used to find vtable slots for this function.
 		virtual const void *originalPtr();
 
+		// Get a reference to the call thunk for this function. This allows calling the function
+		// through a FnCall object without actually knowing the type of all parameters and/or the
+		// return value.
+		code::Ref STORM_FN thunkRef();
+
+		// Get a properly casted call thunk.
+		inline os::CallThunk callThunk() { return (os::CallThunk)thunkRef().address(); }
+
 		/**
 		 * Generate calls to this function.
 		 */
@@ -167,8 +175,10 @@ namespace storm {
 		// Helper for calling this function from another thread.
 		code::RefSource *threadThunkRef;
 
-		// Get the thread thunk, generates it if needed. Returns null if no thunk is needed.
-		code::RefSource *threadThunk();
+		// Get the thread thunk, generates it if needed. Returns null if no thunk is needed. This
+		// may be used to call the function through a generic FnParams object without knowing the
+		// types of all parameters and/or the return value.
+		code::RefSource *STORM_FN threadThunk();
 
 		// Generate code for a direct function call.
 		void localCall(CodeGen *to, Array<code::Operand> *params, CodeResult *result, code::Ref ref);

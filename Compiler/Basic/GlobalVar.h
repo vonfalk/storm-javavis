@@ -3,6 +3,8 @@
 #include "Compiler/Scope.h"
 #include "Compiler/Name.h"
 #include "Compiler/Visibility.h"
+#include "Compiler/Function.h"
+#include "Compiler/Syntax/Node.h"
 
 namespace storm {
 	namespace bs {
@@ -29,12 +31,22 @@ namespace storm {
 			// Thread associated with the global variable.
 			SrcName *thread;
 
+			// Initialize to.
+			MAYBE(syntax::Node *) initExpr;
+
+			// Initialize to an expression.
+			void STORM_FN init(syntax::Node *initExpr);
+
 			// To string.
 			virtual void STORM_FN toS(StrBuf *to) const;
 
 		protected:
 			// Create actual entities.
 			virtual Named *STORM_FN doCreate();
+
+		private:
+			// Create an initializer for the variable.
+			Function *createInitializer(Value type, Scope scope);
 		};
 
 	}

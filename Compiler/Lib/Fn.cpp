@@ -32,6 +32,18 @@ namespace storm {
 		setSuper(FnBase::stormType(engine));
 	}
 
+	Value FnType::result() {
+		return params->at(0);
+	}
+
+	Array<Value> *FnType::parameters() {
+		Array<Value> *c = new (this) Array<Value>();
+		c->reserve(params->count() - 1);
+		for (Nat i = 1; i < params->count(); i++)
+			c->push(params->at(i));
+		return c;
+	}
+
 	Bool FnType::loadAll() {
 		Engine &e = engine;
 		Value t = thisPtr(this);
