@@ -83,6 +83,9 @@ namespace storm {
 		// Get the pointer to the data. Safe to call from any thread.
 		void *CODECALL dataPtr();
 
+		// Get a string representation of the value. Returns null if no string representation is available.
+		Str *STORM_FN strValue() const;
+
 		// Output.
 		virtual void STORM_FN toS(StrBuf *to) const;
 

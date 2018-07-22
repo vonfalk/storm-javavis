@@ -18,7 +18,10 @@ namespace storm {
 		// Create.
 		STORM_CTOR NameOverloads();
 
-		// Get the number of items in here.
+		// Is this instance empty? (ie. not even any template?)
+		Bool STORM_FN empty() const;
+
+		// Get the number of items in here. Note: May return 0 even if 'empty' returns false.
 		Nat STORM_FN count() const;
 
 		// Get item #n in here.
@@ -30,6 +33,12 @@ namespace storm {
 
 		// Add a template.
 		void STORM_FN add(Template *item);
+
+		// Remove an element. Returns true on success.
+		Bool STORM_FN remove(Named *item);
+
+		// Remove a template. Returns true on success.
+		Bool STORM_FN remove(Template *item);
 
 		// Generate from a template and adds it to this overloads object.
 		// TODO: More care should be taking when dealing with templates and overload resolution!
@@ -80,6 +89,12 @@ namespace storm {
 
 		// Add a template.
 		virtual void STORM_FN add(Template *item);
+
+		// Remove a named object from here.
+		virtual void STORM_FN remove(Named *item);
+
+		// Remove a template from here.
+		virtual void STORM_FN remove(Template *item);
 
 		// Get an anonymous name for this NameSet.
 		virtual Str *STORM_FN anonName();
@@ -197,6 +212,9 @@ namespace storm {
 
 		// Notify something has been added.
 		void notifyAdd(Named *what);
+
+		// Notify something has been removed.
+		void notifyRemove(Named *what);
 	};
 
 }

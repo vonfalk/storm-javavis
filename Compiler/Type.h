@@ -32,7 +32,7 @@ namespace storm {
 	 * required in the compiler, such as VTables (for virtual dispatch), type handles (for the
 	 * templating mechanism used in Storm) and various wrapper functions.
 	 *
-	 * There are some peculiarities that needs to be considered, mainly with regards to lazy loading:
+	 * There are some peculiarities that need to be considered, mainly with regards to lazy loading:
 	 *
 	 * - During early compiler boot, all pointer members may be null even if not indicated
      *   otherwise. This includes name and parameters of the object, but also things like VTable and

@@ -101,6 +101,9 @@ namespace storm {
 		// Receive notifications from NameSet objects. (TODO: Move into separate class?)
 		virtual void STORM_FN notifyAdded(NameSet *to, Named *added);
 
+		// Receive notifications from NameSet objects. (TODO: Move into semarate class?)
+		virtual void STORM_FN notifyRemoved(NameSet *to, Named *removed);
+
 		// Force compilation of this named (and any sub-objects contained in here).
 		virtual void STORM_FN compile();
 

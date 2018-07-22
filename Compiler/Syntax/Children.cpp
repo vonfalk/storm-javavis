@@ -62,7 +62,7 @@ namespace storm {
 				Expr *r = new (this) CtorCall(pos, scope, f, new (this) Actuals());
 				Var *v = new (this) Var(root, new (this) syntax::SStr(S("result")), r);
 				root->add(v);
-				result = new (this) LocalVarAccess(pos, v->var());
+				result = new (this) LocalVarAccess(pos, v->var);
 			}
 
 			// Go through the rule and generate code!
@@ -161,14 +161,14 @@ namespace storm {
 									new (e) syntax::SStr(S("_end")),
 									minExpr);
 			forBlock->add(end);
-			Expr *readEnd = new (this) LocalVarAccess(pos, end->var());
+			Expr *readEnd = new (this) LocalVarAccess(pos, end->var);
 
 			// Iterate...
 			Var *i = new (this) Var(forBlock,
 									Value(StormInfo<Nat>::type(e)),
 									new (e) syntax::SStr(S("_i")),
 									new (this) Constant(pos, 0));
-			Expr *readI = new (this) LocalVarAccess(pos, i->var());
+			Expr *readI = new (this) LocalVarAccess(pos, i->var);
 			forBlock->add(i);
 
 			For *loop = new (this) For(pos, forBlock);

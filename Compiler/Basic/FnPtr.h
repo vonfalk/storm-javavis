@@ -34,6 +34,9 @@ namespace storm {
 			// Anything before the dot?
 			Expr *dotExpr;
 
+			// Formal function parameters.
+			Array<Value> *formals;
+
 			// Found function.
 			Function *target;
 		};

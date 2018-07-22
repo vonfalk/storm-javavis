@@ -19,11 +19,9 @@ class BsRepl extends Repl {
 
 	// Pre-processing.
 	init() {
-		Type repl = named{BsRepl};
-
 		init() {
 			done = false;
-			scope(repl, BSLookup());
+			scope(named{ReplSandbox}, BSLookup());
 		}
 
 		scope.addInclude(named{core});
@@ -82,21 +80,40 @@ private:
 	}
 
 	void evalExpr(SReplExpr tree) {
+		Type sandboxType = named{lang:bs:ReplSandbox};
 		ReplBlock block(scope);
-		LocalVar thisPtr("this", thisPtr(named{lang:bs:ReplSandbox}), SrcPos(), true);
+		LocalVar thisPtr("this", thisPtr(sandboxType), SrcPos(), true);
 		block.add(thisPtr);
 
 		Expr expr = tree.transform(block);
+		block.add(expr);
 
-		Function replaceFn = named{ReplSandbox:evalFn<ReplSandbox>};
-		ReplCode code(block, thisPtr, expr);
-		replaceFn.setCode(LazyCode(&code.load()));
+		if (expr as Var) {
+			// We are declaring a variable.
+			Str name = expr.var.name;
+			Value result = block.result.type.asRef(false);
 
-		// Now, run the replaced function!
-		ReplSandbox sandbox(this);
-		print("=> " # sandbox.evalFn());
+			ReplCode code(block, thisPtr, name);
+			Function fn(result, "init", [thisPtr.result]);
+			fn.parentLookup = sandboxType;
+			fn.setCode(LazyCode(&code.loadGenerator));
+
+			ReplSandbox sandbox(this);
+			GlobalVar var(name, result, named{Compiler}, fn.pointer(sandbox));
+			if (old = sandboxType.find(name, scope) as GlobalVar)
+				sandboxType.remove(old);
+			if (into = thisPtr.result.type)
+				into.add(var);
+		} else {
+			Function replaceFn = named{ReplSandbox:evalFn<ReplSandbox>};
+			ReplCode code(block, thisPtr);
+			replaceFn.setCode(LazyCode(&code.load()));
+
+			// Now, run the replaced function!
+			ReplSandbox sandbox(this);
+			print("=> " # sandbox.evalFn());
+		}
 	}
-
 }
 
 private void outputLicense(core:info:License l, Bool full) on Compiler {
@@ -120,6 +137,19 @@ class ReplSandbox on Compiler {
 		init() {
 			owner = owner;
 		}
+	}
+
+	// Show about the repl.
+	void help() {
+		print("Special commands in the REPL:");
+		print("licenses       Print license information");
+		print("version        Print version information");
+		print("variables      Print all variables in this top loop");
+		print("exit           Terminate this Storm instance");
+		print("<var> = <expr> Create a variable in the top loop");
+		print("               Regular variable definitions are also accepted");
+		print("del <var>      Delete variable <var> from the top loop");
+		print("help <name>    Print documentation about <name>");
 	}
 
 	// Show all licenses in the system.
@@ -150,6 +180,29 @@ class ReplSandbox on Compiler {
 		}
 	}
 
+	// Show all variables.
+	void variables() {
+		Type here = named{lang:bs:ReplSandbox};
+		Array<GlobalVar> all;
+		for (v in here)
+			if (v as GlobalVar)
+				all << v;
+
+		if (all.empty) {
+			print("No variables declared.");
+		} else {
+			all.sort(&compareMembers(GlobalVar, GlobalVar));
+
+			print("Name       Value");
+			print("-------------------");
+			for (v in all) {
+				StrBuf b;
+				b << left << width(10) << v.name << " " << v.strValue;
+				print(b.toS);
+			}
+		}
+	}
+
 	// This is the exit command.
 	void exit() {
 		owner.done = true;
@@ -162,7 +215,7 @@ class ReplSandbox on Compiler {
 	}
 }
 
-class ReplBlock extends Block {
+class ReplBlock extends ExprBlock {
 	init(Scope scope) {
 		init(SrcPos(), scope) {}
 	}
@@ -171,45 +224,89 @@ class ReplBlock extends Block {
 class ReplCode on Compiler {
 	private ReplBlock root;
 	private LocalVar thisPtr;
-	private Expr expr;
 	private Value strType;
+	private Str varName;
 
-	init(ReplBlock root, LocalVar thisPtr, Expr expr) {
+	init(ReplBlock root, LocalVar thisPtr) {
 		init() {
 			root = root;
 			thisPtr = thisPtr;
-			expr = expr;
 			strType = named{Str};
 		}
 	}
 
+	init(ReplBlock root, LocalVar thisPtr, Str varName) {
+		init() {
+			root = root;
+			thisPtr = thisPtr;
+			strType = named{Str};
+			varName = varName;
+		}
+	}
+
 	CodeGen load() {
-		CodeGen g(RunOn(), true, strType);
+		CodeGen g(RunOn(named{Compiler}), true, strType);
 		VarInfo resultVar = g.createVar(strType);
 
 		g.l << prolog();
 
 		thisPtr.createParam(g);
 
-		Value result = expr.result.type;
-		Name name("toS", [result]);
+		Value result = root.result.type;
+		createStr(g, result, root, resultVar);
+
+		g.l << fnRet(resultVar.v);
+
+		g;
+	}
+
+	// Generate code that makes sure to return the value created by 'root' after printing it.
+	CodeGen loadGenerator() {
+		Value result = root.result.type.asRef(false);
+
+		CodeGen g(RunOn(named{Compiler}), true, result);
+		VarInfo resultVar = g.createVar(result);
+		VarInfo resultStr = g.createVar(strType);
+
+		g.l << prolog();
+
+		thisPtr.createParam(g);
+
+		// Compute the result.
+		root.code(g, CodeResult(result, resultVar));
+
+		// Generate a string representation.
+		createStr(g, result, BareVarAccess(SrcPos(), result, resultVar.v), resultStr);
+
+		// Print the result.
+		ConcatExpr concat(SrcPos(), root);
+		concat.append(strConstant(SrcPos(), varName + " = "));
+		concat.append(BareVarAccess(SrcPos(), strType, resultStr.v));
+
+		var print = namedExpr(root, SrcPos(), "print", concat);
+		print.code(g, CodeResult());
+
+		g.l << fnRet(resultVar.v);
+
+		g;
+	}
+
+private:
+	// Compute a string representation of an object.
+	void createStr(CodeGen g, Value resultType, Expr expr, VarInfo resultVar) {
+		Name name("toS", [resultType]);
 		Named? toSFn = root.scope.find(name);
 		if (toSFn as Function) {
 			// It exists, use the result.
 			FnCall toSCall(SrcPos(), root.scope, toSFn, Actuals(expr));
 			toSCall.code(g, CodeResult(strType, resultVar));
 		} else {
-			// Just evaluate and print a dummy output.
+			// Just evaluate and return a dummy output.
 			expr.code(g, CodeResult());
-			createDefaultResult(g, result, resultVar);
+			createDefaultResult(g, resultType, resultVar);
 		}
-
-		g.l << fnRet(Operand(resultVar.v));
-
-		g;
 	}
 
-private:
 	// Create an empty string for output.
 	void createDefaultResult(CodeGen g, Value resultType, VarInfo result) {
 		StrBuf s;
@@ -218,6 +315,27 @@ private:
 		constant.code(g, CodeResult(strType, result));
 	}
 
+}
+
+// Implementation of the 'del' statement in the Repl.
+Expr delStmt(Block block, SStr name) on Compiler {
+	SrcName fnName(name.pos);
+	fnName.add("lang");
+	fnName.add("bs");
+	fnName.add("replDel");
+	namedExpr(block, fnName, Actuals(strConstant(name)));
+}
+
+// Remove variables from the repl class.
+void replDel(Str name) on Compiler {
+	Type inside = named{lang:bs:ReplSandbox};
+	if (var = inside.find(name, rootScope) as GlobalVar) {
+		inside.remove(var);
+
+		print("Deleted " + name + " (was " + var.strValue + ")");
+	} else {
+		print("No variable " + name + ".");
+	}
 }
 
 // Implementation of the 'help' statement in the Repl.

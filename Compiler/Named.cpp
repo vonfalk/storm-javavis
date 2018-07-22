@@ -112,6 +112,8 @@ namespace storm {
 
 	void Named::notifyAdded(NameSet *to, Named *added) {}
 
+	void Named::notifyRemoved(NameSet *to, Named *added) {}
+
 	void Named::compile() {}
 
 	void Named::toS(StrBuf *buf) const {

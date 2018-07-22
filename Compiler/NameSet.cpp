@@ -11,6 +11,11 @@ namespace storm {
 		items(new (this) Array<Named *>()),
 		templates(new (this) Array<Template *>()) {}
 
+	Bool NameOverloads::empty() const {
+		return items->empty()
+			&& templates->empty();
+	}
+
 	Nat NameOverloads::count() const {
 		return items->count();
 	}
@@ -27,7 +32,7 @@ namespace storm {
 		if (a->count() != b->count())
 			return false;
 
-		for (nat i = 0; i < a->count(); i++)
+		for (Nat i = 0; i < a->count(); i++)
 			if (a->at(i) != b->at(i))
 				return false;
 
@@ -35,7 +40,7 @@ namespace storm {
 	}
 
 	void NameOverloads::add(Named *item) {
-		for (nat i = 0; i < items->count(); i++)
+		for (Nat i = 0; i < items->count(); i++)
 			if (storm::equals(item->params, items->at(i)->params)) {
 				throw TypedefError(::toS(item) + L" is already defined as " + ::toS(items->at(i)->identifier()));
 			}
@@ -48,9 +53,31 @@ namespace storm {
 		templates->push(item);
 	}
 
+	Bool NameOverloads::remove(Named *item) {
+		for (Nat i = 0; i < items->count(); i++) {
+			if (items->at(i) == item) {
+				items->remove(i);
+				return true;
+			}
+		}
+
+		return false;
+	}
+
+	Bool NameOverloads::remove(Template *item) {
+		for (Nat i = 0; i < templates->count(); i++) {
+			if (templates->at(i) == item) {
+				templates->remove(i);
+				return true;
+			}
+		}
+
+		return false;
+	}
+
 	Named *NameOverloads::createTemplate(NameSet *owner, SimplePart *part) {
 		Named *found = null;
-		for (nat i = 0; i < templates->count(); i++) {
+		for (Nat i = 0; i < templates->count(); i++) {
 			Named *n = templates->at(i)->generate(part);
 			if (found != null && n != null) {
 				throw TypedefError(L"Multiple template matches for: " + ::toS(part));
@@ -68,7 +95,7 @@ namespace storm {
 	}
 
 	void NameOverloads::toS(StrBuf *to) const {
-		for (nat i = 0; i < items->count(); i++)
+		for (Nat i = 0; i < items->count(); i++)
 			*to << items->at(i) << L"\n";
 		if (templates->any())
 			*to << L"<" << templates->count() << L" templates>\n";
@@ -131,6 +158,16 @@ namespace storm {
 		}
 	}
 
+	void NameSet::notifyRemove(Named *what) {
+		if (!notify)
+			return;
+
+		WeakSet<Named>::Iter i = notify->iter();
+		while (Named *n = i.next()) {
+			n->notifyRemoved(this, what);
+		}
+	}
+
 	void NameSet::add(Named *item) {
 		if (!overloads)
 			overloads = new (this) Map<Str *, NameOverloads *>();
@@ -147,6 +184,27 @@ namespace storm {
 		overloads->at(item->name)->add(item);
 	}
 
+	void NameSet::remove(Named *item) {
+		if (!overloads)
+			return;
+
+		NameOverloads *o = overloads->at(item->name);
+		if (o->remove(item))
+			notifyRemove(item);
+		if (o->empty())
+			overloads->remove(item->name);
+	}
+
+	void NameSet::remove(Template *item) {
+		if (!overloads)
+			return;
+
+		NameOverloads *o = overloads->at(item->name);
+		o->remove(item);
+		if (o->empty())
+			overloads->remove(item->name);
+	}
+
 	Str *NameSet::anonName() {
 		StrBuf *buf = new (this) StrBuf();
 		*buf << L"@ " << (nextAnon++);
@@ -157,7 +215,7 @@ namespace storm {
 		Array<Named *> *r = new (this) Array<Named *>();
 		for (Overloads::Iter at = overloads->begin(); at != overloads->end(); ++at) {
 			NameOverloads &o = *at.v();
-			for (nat i = 0; i < o.count(); i++)
+			for (Nat i = 0; i < o.count(); i++)
 				r->push(o[i]);
 		}
 		return r;

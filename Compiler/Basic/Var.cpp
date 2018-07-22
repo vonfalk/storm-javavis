@@ -35,18 +35,14 @@ namespace storm {
 			initExpr = init;
 		}
 
-		LocalVar *Var::var() {
-			return variable;
-		}
-
 		void Var::init(Block *block, const Value &type, syntax::SStr *name) {
-			variable = new (this) LocalVar(name->v, type, name->pos, false);
+			var = new (this) LocalVar(name->v, type, name->pos, false);
 			scope = block->scope;
-			block->add(variable);
+			block->add(var);
 		}
 
 		void Var::initTo(Expr *e) {
-			if (Expr *z = castTo(e, variable->result, scope))
+			if (Expr *z = castTo(e, var->result, scope))
 				initExpr = z;
 			else
 				// Use a ctor...
@@ -54,13 +50,13 @@ namespace storm {
 		}
 
 		void Var::initTo(Actuals *actuals) {
-			if (variable->result.isBuiltIn()) {
+			if (var->result.isBuiltIn()) {
 				// Assignment is the same as initialization here...
 				nat size = actuals->expressions->count();
 				if (size == 1) {
 					Expr *e = actuals->expressions->at(0);
 					// Check types!
-					if (e->result() == variable->result) {
+					if (e->result() == var->result) {
 						initExpr = e;
 						return;
 					}
@@ -70,26 +66,26 @@ namespace storm {
 				}
 			}
 
-			Type *t = variable->result.type;
+			Type *t = var->result.type;
 			BSNamePart *name = new (this) BSNamePart(Type::CTOR, pos, actuals);
 			name->insert(thisPtr(t));
 			Function *ctor = as<Function>(t->find(name, scope));
 			if (!ctor)
-				throw SyntaxError(variable->pos, L"No appropriate constructor for " + ::toS(variable->result)
-								+ L" found. Can not initialize " + ::toS(variable->name) +
+				throw SyntaxError(var->pos, L"No appropriate constructor for " + ::toS(var->result)
+								+ L" found. Can not initialize " + ::toS(var->name) +
 								L". Expected signature: " + ::toS(name));
 
 			initCtor = new (this) CtorCall(pos, scope, ctor, actuals);
 		}
 
 		ExprResult Var::result() {
-			return variable->result.asRef();
+			return var->result.asRef();
 		}
 
 		void Var::code(CodeGen *s, CodeResult *to) {
 			using namespace code;
 
-			const Value &t = variable->result;
+			const Value &t = var->result;
 
 			if (t.isValue()) {
 				Expr *ctor = null;
@@ -102,37 +98,37 @@ namespace storm {
 					ctor = defaultCtor(pos, scope, t.type);
 
 				if (ctor) {
-					CodeResult *gr = new (this) CodeResult(variable->result, variable->var);
+					CodeResult *gr = new (this) CodeResult(var->result, var->var);
 					ctor->code(s, gr);
 				}
 			} else if (initExpr) {
-				CodeResult *gr = new (this) CodeResult(variable->result, variable->var);
+				CodeResult *gr = new (this) CodeResult(var->result, var->var);
 				initExpr->code(s, gr);
 			} else if (initCtor) {
-				CodeResult *gr = new (this) CodeResult(variable->result, variable->var);
+				CodeResult *gr = new (this) CodeResult(var->result, var->var);
 				initCtor->code(s, gr);
 			}
 
-			variable->var.created(s);
+			var->var.created(s);
 
 			if (to->needed()) {
 				// Part of another expression.
 				if (to->type().ref) {
 					VarInfo v = to->location(s);
-					*s->l << lea(v.v, variable->var.v);
+					*s->l << lea(v.v, var->var.v);
 					v.created(s);
-				} else if (!to->suggest(s, variable->var.v)) {
+				} else if (!to->suggest(s, var->var.v)) {
 					VarInfo v = to->location(s);
-					*s->l << mov(v.v, variable->var.v);
+					*s->l << mov(v.v, var->var.v);
 					v.created(s);
 				}
 			}
 		}
 
 		void Var::toS(StrBuf *to) const {
-			if (variable->constant)
+			if (var->constant)
 				*to << S("const ");
-			*to << variable->result << S(" ") << variable->name;
+			*to << var->result << S(" ") << var->name;
 			if (initExpr)
 				*to << S(" = ") << initExpr;
 			else if (initCtor)

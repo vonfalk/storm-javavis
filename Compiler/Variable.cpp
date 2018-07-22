@@ -99,6 +99,18 @@ namespace storm {
 		}
 	}
 
+	Str *GlobalVar::strValue() const {
+		const Handle &h = type.type->handle();
+		if (h.toSFn) {
+			StrBuf *out = new (this) StrBuf();
+			void *ptr = const_cast<GlobalVar *>(this)->dataPtr();
+			(*h.toSFn)(ptr, out);
+			return out->toS();
+		} else {
+			return new (this) Str(S("<no string representation>"));
+		}
+	}
+
 	void GlobalVar::toS(StrBuf *to) const {
 		Variable::toS(to);
 		*to << S(" on ") << owner->identifier();

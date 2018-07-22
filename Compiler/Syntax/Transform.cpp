@@ -118,7 +118,7 @@ namespace storm {
 			Var *var = new (this) Var(in, name, init);
 			in->add(var);
 
-			return new (this) LocalVarAccess(pos, var->var());
+			return new (this) LocalVarAccess(pos, var->var);
 
 		}
 
@@ -232,7 +232,7 @@ namespace storm {
 
 			in->add(v);
 
-			return v->var();
+			return v->var;
 		}
 
 		LocalVar *TransformFn::createTfmVar(ExprBlock *in, Str *name, Token *token, Nat pos) {
@@ -252,7 +252,7 @@ namespace storm {
 			if (isMaybe(src->type)) {
 				v = new (this) Var(in, wrapMaybe(tfmFn->result), varName, new (this) Actuals());
 				in->add(v);
-				Expr *readV = new (this) LocalVarAccess(this->pos, v->var());
+				Expr *readV = new (this) LocalVarAccess(this->pos, v->var);
 
 				WeakCast *cast = new (this) WeakMaybeCast(srcAccess);
 				IfWeak *check = new (this) IfWeak(in, cast);
@@ -271,7 +271,7 @@ namespace storm {
 			} else if (isArray(src->type)) {
 				v = new (this) Var(in, wrapArray(tfmFn->result), varName, new (this) Actuals());
 				in->add(v);
-				Expr *readV = new (this) LocalVarAccess(this->pos, v->var());
+				Expr *readV = new (this) LocalVarAccess(this->pos, v->var);
 
 				// Extra block to avoid name collisions.
 				ExprBlock *forBlock = new (this) ExprBlock(this->pos, in);
@@ -280,14 +280,14 @@ namespace storm {
 										Value(StormInfo<Nat>::type(e)),
 										new (e) syntax::SStr(S("_end")),
 										arrayCount);
-				Expr *readEnd = new (this) LocalVarAccess(this->pos, end->var());
+				Expr *readEnd = new (this) LocalVarAccess(this->pos, end->var);
 				forBlock->add(end);
 
 				Var *i = new (this) Var(forBlock,
 										Value(StormInfo<Nat>::type(e)),
 										new (e) syntax::SStr(S("_i")),
 										new (this) Constant(this->pos, 0));
-				Expr *readI = new (this) LocalVarAccess(this->pos, i->var());
+				Expr *readI = new (this) LocalVarAccess(this->pos, i->var);
 				forBlock->add(i);
 
 				For *loop = new (this) For(this->pos, forBlock);
@@ -311,7 +311,7 @@ namespace storm {
 				in->add(v);
 			}
 
-			return v->var();
+			return v->var;
 		}
 
 
@@ -462,14 +462,14 @@ namespace storm {
 									new (e) syntax::SStr(S("_end")),
 									minExpr);
 			forBlock->add(end);
-			Expr *readEnd = new (this) LocalVarAccess(this->pos, end->var());
+			Expr *readEnd = new (this) LocalVarAccess(this->pos, end->var);
 
 			// Iterate...
 			Var *i = new (this) Var(forBlock,
 									Value(StormInfo<Nat>::type(e)),
 									new (e) syntax::SStr(S("_i")),
 									new (this) Constant(this->pos, 0));
-			Expr *readI = new (this) LocalVarAccess(this->pos, i->var());
+			Expr *readI = new (this) LocalVarAccess(this->pos, i->var);
 			forBlock->add(i);
 
 			For *loop = new (this) For(this->pos, forBlock);

@@ -48,10 +48,10 @@ namespace storm {
 	Type *fnType(Array<Value> *params);
 
 	// Create a function pointer pointing to a function in Storm. The second version binds a 'this'
-	// pointer to the first parameter of 'target'. That overload is not exposed to Storm, as it
-	// breaks type safety (and is not possible to represent in Storm's type system at the moment).
+	// pointer to the first parameter of 'target'.
 	FnBase *STORM_FN pointer(Function *target);
-	FnBase *pointer(Function *target, RootObject *thisPtr);
+	FnBase *STORM_FN pointer(Function *target, Object *thisPtr);
+	FnBase *STORM_FN pointer(Function *target, TObject *thisPtr);
 
 	// Low-level functionality required by generated machine code.
 	void CODECALL fnCallRaw(FnBase *b, void *output, os::CallThunk thunk, void **params, TObject *first);

@@ -266,13 +266,19 @@ namespace storm {
 		}
 	};
 
-	FnBase *pointer(Function *target) {
-		return pointer(target, null);
-	}
-
-	FnBase *pointer(Function *target, RootObject *thisPtr) {
+	static FnBase *pointerI(Function *target, RootObject *thisPtr) {
 		Array<Value> *p = clone(target->params);
-		p->insert(0, target->result);
+		if (!thisPtr) {
+			p->insert(0, target->result);
+		} else if (p->count() > 0 && p->at(0).canStore(Value(runtime::typeOf(thisPtr)))) {
+			p->at(0) = target->result;
+		} else {
+			if (p->count() == 0)
+				throw RuntimeError(L"Attempted to bind a non-existend first parameter of a function pointer when calling 'pointer'.");
+			else
+				throw RuntimeError(L"Type mismatch for object passed to 'pointer'. Expected "
+								+ ::toS(p->at(0)) + L", but got " + ::toS(Value(runtime::typeOf(thisPtr))));
+		}
 		Type *t = fnType(p);
 
 		Thread *thread = null;
@@ -287,6 +293,18 @@ namespace storm {
 											thread);
 		runtime::setVTable(c);
 		return c;
+	}
+
+	FnBase *pointer(Function *target) {
+		return pointerI(target, null);
+	}
+
+	FnBase *pointer(Function *target, Object *thisPtr) {
+		return pointerI(target, thisPtr);
+	}
+
+	FnBase *pointer(Function *target, TObject *thisPtr) {
+		return pointerI(target, thisPtr);
 	}
 
 	FnBase *fnCreateRaw(Type *type, code::RefSource *to, Thread *thread, RootObject *thisPtr, Bool memberFn) {

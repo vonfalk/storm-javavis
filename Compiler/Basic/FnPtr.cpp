@@ -9,7 +9,8 @@ namespace storm {
 	namespace bs {
 
 		// Note: We do not (yet?) support implicit this pointer.
-		static Function *findTarget(const Scope &scope, SrcName *name, Array<SrcName *> *formal, Expr *dot) {
+		static Function *findTarget(const Scope &scope, SrcName *name, Array<SrcName *> *formal,
+									Array<Value> *formalsOut, Expr *dot) {
 			SimpleName *resolved = name->simplify(scope);
 			if (!resolved)
 				throw SyntaxError(name->pos, L"The parameters of the name " + ::toS(name) +
@@ -18,8 +19,11 @@ namespace storm {
 			Array<Value> *params = new (name) Array<Value>();
 			if (dot)
 				params->push(dot->result().type());
-			for (nat i = 0; i < formal->count(); i++)
-				params->push(scope.value(formal->at(i)));
+			for (nat i = 0; i < formal->count(); i++) {
+				Value v = scope.value(formal->at(i));
+				params->push(v);
+				formalsOut->push(v);
+			}
 
 			SimplePart *last = new (resolved) SimplePart(resolved->last()->name, params);
 			resolved->last() = last;
@@ -36,7 +40,8 @@ namespace storm {
 
 
 		FnPtr::FnPtr(Block *block, SrcName *name, Array<SrcName *>*formal) : Expr(name->pos) {
-			target = findTarget(block->scope, name, formal, null);
+			formals = new (this) Array<Value>();
+			target = findTarget(block->scope, name, formal, formals, null);
 		}
 
 		FnPtr::FnPtr(Block *block, Expr *dot, syntax::SStr *name, Array<SrcName *>*formal)
@@ -47,10 +52,14 @@ namespace storm {
 
 			SrcName *tn = CREATE(SrcName, this);
 			tn->add(new (this) SimplePart(name->v));
-			target = findTarget(block->scope, tn, formal, dot);
+			formals = new (this) Array<Value>();
+			target = findTarget(block->scope, tn, formal, formals, dot);
 		}
 
-		FnPtr::FnPtr(Function *target, SrcPos pos) : Expr(pos), target(target) {}
+		FnPtr::FnPtr(Function *target, SrcPos pos) : Expr(pos), target(target) {
+			formals = clone(target->params);
+
+		}
 
 		FnPtr::FnPtr(Expr *dot, Function *target, SrcPos pos) : Expr(pos), dotExpr(dot), target(target) {
 			if (dotExpr->result().type().isValue())
@@ -58,17 +67,14 @@ namespace storm {
 
 			if (target->params->empty() || !target->params->at(0).canStore(dot->result().type()))
 				throw SyntaxError(dotExpr->pos, L"The first parameter of the specified function does not match the type of the provided expression.");
+
+			formals = clone(target->params);
+			formals->remove(0);
 		}
 
 		ExprResult FnPtr::result() {
-			// TODO: Parameters should be taken from 'formal'. Consider when a pointer wants to restrict
-			// a parameter to a derived class.
-			Array<Value> *params = clone(target->params);
-			if (dotExpr) {
-				params->at(0) = target->result;
-			} else {
-				params->insert(0, target->result);
-			}
+			Array<Value> *params = clone(formals);
+			params->insert(0, target->result);
 			return thisPtr(fnType(params));
 		}
 
