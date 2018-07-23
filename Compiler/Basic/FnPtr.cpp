@@ -8,6 +8,12 @@
 namespace storm {
 	namespace bs {
 
+		static void checkDot(Expr *dotExpr) {
+			Value dotResult = dotExpr->result().type();
+			if (dotResult.isValue() || dotResult.isBuiltIn())
+				throw SyntaxError(dotExpr->pos, L"Only classes and actors can be bound to a function pointer. Not values.");
+		}
+
 		FnPtr::FnPtr(Block *block, SrcName *name, Array<SrcName *> *formal) : Expr(name->pos) {
 			findTarget(block->scope, name, formal, null);
 		}
@@ -15,13 +21,26 @@ namespace storm {
 		FnPtr::FnPtr(Block *block, Expr *dot, syntax::SStr *name, Array<SrcName *>*formal)
 			: Expr(name->pos), dotExpr(dot) {
 
-			Value dotResult = dotExpr->result().type();
-			if (dotResult.isValue() || dotResult.isBuiltIn())
-				throw SyntaxError(dotExpr->pos, L"Only classes and actors can be bound to a function pointer. Not values.");
+			checkDot(dotExpr);
 
-			SrcName *tn = CREATE(SrcName, this);
+			SrcName *tn = new (this) SrcName(name->pos);
 			tn->add(new (this) SimplePart(name->v));
 			findTarget(block->scope, tn, formal, dot);
+		}
+
+		FnPtr::FnPtr(Block *block, SrcName *name) : Expr(name->pos), parent(block), name(name->simplify(block->scope)) {
+			if (!this->name)
+				throw SyntaxError(name->pos, L"The parameters of the name " + ::toS(name) +
+								L" can not be resolved to proper types.");
+		}
+
+		FnPtr::FnPtr(Block *block, Expr *dot, syntax::SStr *name) : Expr(name->pos), dotExpr(dot), parent(block) {
+
+			checkDot(dotExpr);
+
+			SimpleName *tn = new (this) SimpleName();
+			tn->add(new (this) SimplePart(name->v));
+			this->name = tn;
 		}
 
 		FnPtr::FnPtr(Function *target, SrcPos pos) : Expr(pos), target(target) {
@@ -31,8 +50,7 @@ namespace storm {
 		}
 
 		FnPtr::FnPtr(Expr *dot, Function *target, SrcPos pos) : Expr(pos), dotExpr(dot), target(target) {
-			if (dotExpr->result().type().isValue())
-				throw SyntaxError(dotExpr->pos, L"Only classes and actors can be bound to a function pointer. Not values.");
+			checkDot(dotExpr);
 
 			if (target->params->empty() || !target->params->at(0).canStore(dot->result().type()))
 				throw SyntaxError(dotExpr->pos, L"The first parameter of the specified function does not match the type of the provided expression.");
@@ -59,7 +77,7 @@ namespace storm {
 				formals->push(v);
 			}
 
-			SimplePart *last = new (resolved) SimplePart(resolved->last()->name, params);
+			SimplePart *last = new (this) SimplePart(resolved->last()->name, params);
 			resolved->last() = last;
 
 			Named *found = scope.find(resolved);
@@ -74,14 +92,72 @@ namespace storm {
 			ptrType = thisPtr(fnType(formals));
 		}
 
+		Function *FnPtr::acceptableFn(Value t) {
+			FnType *ptrType = as<FnType>(t.type);
+			if (!ptrType)
+				return null;
+			if (ptrType->params->empty())
+				return null;
+
+			Array<Value> *params = clone(ptrType->params);
+			Value result = params->at(0);
+			if (dotExpr)
+				params->at(0) = dotExpr->result().type();
+			else
+				params->remove(0);
+
+			SimplePart *last = new (this) SimplePart(this->name->last()->name, params);
+			SimpleName *name = clone(this->name);
+			name->last() = last;
+
+			Function *found = as<Function>(parent->scope.find(name));
+			if (!found)
+				return null;
+			if (!result.canStore(found->result))
+				return null;
+
+			return found;
+		}
+
 		ExprResult FnPtr::result() {
 			return ptrType;
 		}
 
-		void FnPtr::code(CodeGen *to, CodeResult *r) {
-			using namespace code;
+		Int FnPtr::castPenalty(Value to) {
+			if (ptrType != Value()) {
+				// If types were specified, no automatic cast.
+				return to.asRef(false) == ptrType ? 0 : -1;
+			} else if (acceptableFn(to)) {
+				return 10;
+			} else {
+				return -1;
+			}
+		}
 
+		void FnPtr::code(CodeGen *to, CodeResult *r) {
 			Value type = result().type();
+
+			if (!type.type) {
+				// Types were deduced automatically, we need to check some more...
+				type = r->type();
+				if (!type.type)
+					throw SyntaxError(pos, L"Unable to deduce parameter types for a function pointer in this context. "
+						L"Please specify parameter types explicitly.");
+
+				Function *target = acceptableFn(type);
+				if (!target)
+					throw SyntaxError(pos, L"Failed to find a suitable function for the function pointer type " +
+									::toS(type) + L". Please specify explicit parameters.");
+
+				code(to, r, type, target);
+			} else {
+				assert(target);
+				code(to, r, type, target);
+			}
+		}
+
+		void FnPtr::code(CodeGen *to, CodeResult *r, Value type, Function *target) {
+			using namespace code;
 
 			// Note: initialized to zero if not needed.
 			VarInfo thisPtr = to->createVar(type);
@@ -123,14 +199,29 @@ namespace storm {
 
 		void FnPtr::toS(StrBuf *to) const {
 			*to << S("&");
-			if (dotExpr) {
-				*to << dotExpr << S(".");
-				*to << target->name << S("(") << join(target->params, S(", ")) << S(")");
+
+			if (target && ptrType.type) {
+				if (dotExpr) {
+					*to << dotExpr << S(".") << target->name;
+				} else {
+					SimpleName *p = target->path();
+					p->last()->params->clear();
+					*to << p;
+				}
+
+				*to << S("(");
+				for (Nat i = 1; ptrType.type->params->count(); i++) {
+					if (i != 1)
+						*to << S(", ");
+					*to << ptrType.type->params->at(i);
+				}
+				*to << S(")");
+			} else if (name) {
+				*to << name;
 			} else {
-				*to << target;
+				*to << S("<invalid>");
 			}
 		}
-
 
 	}
 }

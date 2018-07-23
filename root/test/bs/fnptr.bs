@@ -184,7 +184,7 @@ class InActor on ? {
 }
 
 fn->Dbg dbgFnPtr() {
-	&returnDbg;
+	&returnDbg();
 }
 
 Dbg returnDbg() on Other {
@@ -205,9 +205,9 @@ Bool returnBool2() {
 
 fn->Bool createBoolFn(Bool v) {
 	if (v) {
-		&returnBool1;
+		&returnBool1();
 	} else {
-		&returnBool2;
+		&returnBool2();
 	}
 }
 
@@ -219,4 +219,27 @@ Int runBoolFn(fn->Bool fn) {
 	} else {
 		0;
 	}
+}
+
+Int autoFn() {
+	runFnPtr(&addTen);
+}
+
+class PtrTest {
+	Int z;
+
+	init(Int v) {
+		init() {
+			z = v;
+		}
+	}
+
+	Int doIt(Int v) {
+		v + z;
+	}
+}
+
+Int autoMemberFn() {
+	PtrTest x(5);
+	runFnPtr(&x.doIt);
 }

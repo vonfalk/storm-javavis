@@ -428,22 +428,11 @@ done like this:
 Fn<Int, Int> ptr = &myObject.myFunction(Int);
 ```
 
-or
-
-```
-Fn<Int, Int> ptr = &myObject->myFunction(Int);
-```
-
-The difference between the two syntaxes is that the first one (using `.`) creates a function pointer
-with a strong reference to `myObject` while the second one (using `->`) creates a weak reference. As
-Storm does not yet fully support weak references, it is your job to keep the object alive if you use
-a weak reference, otherwise the program crashes whenever the function pointer is used. This will be
-improved as soon as Storm has proper weak references.
-
 As you can see, the type of a function pointer bound with an associated object is identical to that
 of a function pointer without an associated object. This means that you can easily create pointers
-to functions associated with some kind of state and treat them just like regular functions. Function
-pointers are also as flexible as the regular function calls. This means that if both:
+to functions associated with some kind of state and treat them just like regular functions.
+
+Function pointers are also as flexible as the regular function calls. This means that if both:
 
 ```
 &object.function(A);
@@ -455,9 +444,27 @@ and
 &function(Object, A);
 ```
 
-Works. In the first case, the function pointer will only take one parameter, while it will take two
+works. In the first case, the function pointer will only take one parameter, while it will take two
 in the second case. Bu utilizing this, it is possible to choose if the first parameter of a function
 should be bound or not.
+
+In cases where Basic Storm can easily infer the desired type of a function pointer (such as when
+initializing a variable or when passing it as a parameter to a function), the parameter types may be
+left out entirely:
+
+```
+Bool compare(Int a, Int b) {
+    a > b;
+}
+
+void mySort(Int[] x) {
+    x.sort(&compare);
+}
+```
+
+Note the difference between omitting the parentheses entirely and supplying an empty parameter
+list. The former means to automatically infer the function to be called, while the second means to
+find a function taking zero parameters.
 
 To call the function from the function pointer, use the `call` member of the `Fn` object.
 

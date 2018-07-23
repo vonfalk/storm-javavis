@@ -82,7 +82,6 @@ Array<SrcName> SFnTypes();
 SFnTypes => Array<SrcName>() : "";
 SFnTypes => t : "(", STypes t, ")";
 
-
 // Strings and their content:
 // Note: Storm uses interpolated strings now, so this is not actually used by Storm. It is, however, provided
 // here for other languages that wish to accept 'plain' strings.
@@ -338,9 +337,15 @@ SAtom => e : SLoop(block) e;
 SAtom => accessExpr(block, lhs, par) : SAtom(block) lhs, "\[", SExpr(block) par, "\]";
 SAtom => arrayInit(block, t, list) : SType t, ":", "\[" [, SArrayInitList(block) list, ]$ "\]";
 SAtom => ArrayInit(pos, block, list) : "\[" [, SArrayInitList(block) list, ]$ "\]";
-SAtom[20] => FnPtr(block, name, params) : "&", SFnName name, SFnTypes params;
-SAtom[20] => FnPtr(block, dotExpr, name, params) : "&", SAtom(block) dotExpr, "\.", SName name #varName, SFnTypes params;
 SAtom => unit(block, value, unit) : SConst(block) value, SUnit unit #typeName;
+
+// Function pointers with explicit parameters.
+SAtom[20] => FnPtr(block, name, params) : "&", SFnName name, "(", STypes params, ")";
+SAtom[20] => FnPtr(block, dotExpr, name, params) : "&", SAtom(block) dotExpr, "\.", SName name #varName, "(", STypes params, ")";
+
+// Function pointers with parameter deduction from context.
+SAtom[20] => FnPtr(block, name) : "&", SFnName name;
+SAtom[20] => FnPtr(block, dotExpr, name) : "&", SAtom(block) dotExpr, "\.", SName name #varName;
 
 // Temporary, to turn a value of type T into Maybe<T>, this should be done automatically in the future.
 SAtom => asMaybe(block, expr) : "\?", SAtom(block) expr;

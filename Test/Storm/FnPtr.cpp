@@ -205,4 +205,10 @@ BEGIN_TEST(FnPtrThreadTest, BS) {
 		CHECK_EQ(storm, 10101);
 	}
 
+	// Automatic parameter type deduction.
+	{
+		CHECK_EQ(runFn<Int>(S("test.bs.autoFn")), 20);
+		CHECK_EQ(runFn<Int>(S("test.bs.autoMemberFn")), 15);
+	}
+
 } END_TEST

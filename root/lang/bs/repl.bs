@@ -191,7 +191,7 @@ class ReplSandbox on Compiler {
 		if (all.empty) {
 			print("No variables declared.");
 		} else {
-			all.sort(&compareMembers(GlobalVar, GlobalVar));
+			all.sort(&compareMembers);
 
 			print("Name       Value");
 			print("-------------------");
@@ -373,7 +373,7 @@ void printHelp(Named entity) on Compiler {
 		for (i in entity)
 			members << i;
 
-		members.sort(&compareMembers(Named, Named));
+		members.sort(&compareMembers);
 		for (m in members)
 			print(" " + doc(m).summary());
 	}
@@ -389,7 +389,7 @@ void printHelp(NameSet in, Str last) on Compiler {
 
 	print("Found " # found.count # " overloads for " # last # ":");
 
-	found.sort(&compareMembers(Named, Named));
+	found.sort(&compareMembers);
 	for (i in found) {
 		print("");
 		printHelp(i);
