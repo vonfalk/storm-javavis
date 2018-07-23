@@ -34,11 +34,14 @@ namespace storm {
 			// Anything before the dot?
 			Expr *dotExpr;
 
-			// Formal function parameters.
-			Array<Value> *formals;
+			// Type of function pointer to return.
+			Value ptrType;
 
 			// Found function.
 			Function *target;
+
+			// Initialize 'target' and 'type'.
+			void findTarget(const Scope &scope, SrcName *name, Array<SrcName *> *formal, MAYBE(Expr *) dot);
 		};
 
 	}

@@ -8,57 +8,26 @@
 namespace storm {
 	namespace bs {
 
-		// Note: We do not (yet?) support implicit this pointer.
-		static Function *findTarget(const Scope &scope, SrcName *name, Array<SrcName *> *formal,
-									Array<Value> *formalsOut, Expr *dot) {
-			SimpleName *resolved = name->simplify(scope);
-			if (!resolved)
-				throw SyntaxError(name->pos, L"The parameters of the name " + ::toS(name) +
-								L" can not be resolved to proper types.");
-
-			Array<Value> *params = new (name) Array<Value>();
-			if (dot)
-				params->push(dot->result().type());
-			for (nat i = 0; i < formal->count(); i++) {
-				Value v = scope.value(formal->at(i));
-				params->push(v);
-				formalsOut->push(v);
-			}
-
-			SimplePart *last = new (resolved) SimplePart(resolved->last()->name, params);
-			resolved->last() = last;
-
-			Named *found = scope.find(resolved);
-			if (!found)
-				throw SyntaxError(name->pos, L"Could not find " + ::toS(resolved));
-			Function *fn = as<Function>(found);
-			if (!fn)
-				throw SyntaxError(name->pos, L"Can not take the pointer of anything else than a function, this is "
-								+ ::toS(*found) + L"!");
-			return fn;
-		}
-
-
-		FnPtr::FnPtr(Block *block, SrcName *name, Array<SrcName *>*formal) : Expr(name->pos) {
-			formals = new (this) Array<Value>();
-			target = findTarget(block->scope, name, formal, formals, null);
+		FnPtr::FnPtr(Block *block, SrcName *name, Array<SrcName *> *formal) : Expr(name->pos) {
+			findTarget(block->scope, name, formal, null);
 		}
 
 		FnPtr::FnPtr(Block *block, Expr *dot, syntax::SStr *name, Array<SrcName *>*formal)
 			: Expr(name->pos), dotExpr(dot) {
 
-			if (dotExpr->result().type().isValue())
+			Value dotResult = dotExpr->result().type();
+			if (dotResult.isValue() || dotResult.isBuiltIn())
 				throw SyntaxError(dotExpr->pos, L"Only classes and actors can be bound to a function pointer. Not values.");
 
 			SrcName *tn = CREATE(SrcName, this);
 			tn->add(new (this) SimplePart(name->v));
-			formals = new (this) Array<Value>();
-			target = findTarget(block->scope, tn, formal, formals, dot);
+			findTarget(block->scope, tn, formal, dot);
 		}
 
 		FnPtr::FnPtr(Function *target, SrcPos pos) : Expr(pos), target(target) {
-			formals = clone(target->params);
-
+			Array<Value> *formals = clone(target->params);
+			formals->insert(0, target->result);
+			ptrType = thisPtr(fnType(formals));
 		}
 
 		FnPtr::FnPtr(Expr *dot, Function *target, SrcPos pos) : Expr(pos), dotExpr(dot), target(target) {
@@ -68,14 +37,45 @@ namespace storm {
 			if (target->params->empty() || !target->params->at(0).canStore(dot->result().type()))
 				throw SyntaxError(dotExpr->pos, L"The first parameter of the specified function does not match the type of the provided expression.");
 
-			formals = clone(target->params);
-			formals->remove(0);
+			Array<Value> *formals = clone(target->params);
+			formals->at(0) = target->result;
+			ptrType = thisPtr(fnType(formals));
+		}
+
+		// Note: We don't support implicit this pointer.
+		void FnPtr::findTarget(const Scope &scope, SrcName *name, Array<SrcName *> *formal, MAYBE(Expr *) dot) {
+			SimpleName *resolved = name->simplify(scope);
+			if (!resolved)
+				throw SyntaxError(name->pos, L"The parameters of the name " + ::toS(name) +
+								L" can not be resolved to proper types.");
+
+			Array<Value> *params = new (this) Array<Value>();
+			Array<Value> *formals = new (this) Array<Value>();
+			if (dot)
+				params->push(dot->result().type());
+			for (Nat i = 0; i < formal->count(); i++) {
+				Value v = scope.value(formal->at(i));
+				params->push(v);
+				formals->push(v);
+			}
+
+			SimplePart *last = new (resolved) SimplePart(resolved->last()->name, params);
+			resolved->last() = last;
+
+			Named *found = scope.find(resolved);
+			if (!found)
+				throw SyntaxError(name->pos, L"Could not find " + ::toS(resolved));
+			target = as<Function>(found);
+			if (!target)
+				throw SyntaxError(name->pos, L"Can not take the pointer of anything other than a function. This is a " +
+								::toS(*found) + L"!");
+
+			formals->insert(0, target->result);
+			ptrType = thisPtr(fnType(formals));
 		}
 
 		ExprResult FnPtr::result() {
-			Array<Value> *params = clone(formals);
-			params->insert(0, target->result);
-			return thisPtr(fnType(params));
+			return ptrType;
 		}
 
 		void FnPtr::code(CodeGen *to, CodeResult *r) {
