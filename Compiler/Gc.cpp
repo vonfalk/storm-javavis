@@ -1274,13 +1274,13 @@ namespace storm {
 		check(mps_ap_alloc_pattern_end(owner.currentAllocPoint(), mps_alloc_pattern_ramp()), L"RAMP");
 	}
 
-	size_t Gc::typeSize(size_t entries) {
-		return sizeof(MpsType) + entries*sizeof(size_t) - sizeof(size_t);
+	size_t Gc::mpsTypeSize(size_t entries) {
+		return gcTypeSize(entries) + sizeof(MpsType) - sizeof(GcType);
 	}
 
 	GcType *Gc::allocType(GcType::Kind kind, Type *type, size_t stride, size_t entries) {
-		size_t s = typeSize(entries);
-		MpsType *t;// = (GcType *)malloc(s);
+		size_t s = mpsTypeSize(entries);
+		MpsType *t; // = (MpsType *)malloc(s);
 		check(mps_alloc((mps_addr_t *)&t, gcTypePool, s), L"Failed to allocate type info.");
 		memset(t, 0, s);
 		new (t) MpsType();
@@ -1292,12 +1292,12 @@ namespace storm {
 	}
 
 	GcType *Gc::allocType(const GcType *src) {
-		size_t s = typeSize(src->count);
-		MpsType *t;
+		size_t s = mpsTypeSize(src->count);
+		MpsType *t; // = (MpsType *)malloc(s);
 		check(mps_alloc((mps_addr_t *)&t, gcTypePool, s), L"Failed to allocate type info.");
 		new (t) MpsType();
 
-		memcpy(&t->type, src, s);
+		memcpy(&t->type, src, gcTypeSize(src->count));
 		return &t->type;
 	}
 
@@ -1367,7 +1367,9 @@ namespace storm {
 					MpsType *e = *i;
 					freeTypes.erase(e);
 
-					size_t s = typeSize(e->type.count);
+					size_t s = mpsTypeSize(e->type.count);
+					// I don't think we really need to call the destructor here, but let's play nice.
+					e->~MpsType();
 					mps_free(gcTypePool, e, s);
 					removed++;
 				}
@@ -1941,12 +1943,8 @@ namespace storm {
 
 	Gc::RampAlloc::~RampAlloc() {}
 
-	static size_t typeSize(size_t entries) {
-		return sizeof(GcType) + entries*sizeof(size_t) - sizeof(size_t);
-	}
-
 	GcType *Gc::allocType(GcType::Kind kind, Type *type, size_t stride, size_t entries) {
-		size_t s = typeSize(entries);
+		size_t s = gcTypeSize(entries);
 		GcType *t = (GcType *)malloc(s);
 		memset(t, 0, s);
 		t->kind = kind;
@@ -1957,7 +1955,7 @@ namespace storm {
 	}
 
 	GcType *Gc::allocType(const GcType *src) {
-		size_t s = typeSize(src->count);
+		size_t s = gcTypeSize(src->count);
 		GcType *t = (GcType *)malloc(s);
 		memcpy(t, src, s);
 		return t;

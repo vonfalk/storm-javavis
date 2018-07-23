@@ -72,4 +72,8 @@ namespace storm {
 		size_t offset[1];
 	};
 
+	// Size of a GcType object.
+	inline size_t gcTypeSize(size_t entries) {
+		return sizeof(GcType) + entries*sizeof(size_t) - sizeof(size_t);
+	}
 }

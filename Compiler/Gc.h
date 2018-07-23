@@ -314,8 +314,8 @@ namespace storm {
 		// During destruction - ignore any freeType() calls?
 		bool ignoreFreeType;
 
-		// Size of an MPS-type.
-		static size_t typeSize(size_t offsets);
+		// Size of an MpsType.
+		static size_t mpsTypeSize(size_t offsets);
 
 		// Worker function for 'scanning' the MpsType objects.
 		static void markType(mps_addr_t addr, mps_fmt_t fmt, mps_pool_t pool, void *p, size_t);
