@@ -13,12 +13,11 @@
     but the scale of the issue should be assessed first.
   - [ ] Parsing core.lang.syntax.bnf takes about 80 ms, which is a bit on the high end when compiling code...
 
-* Loose ends so far [28/55]
+* Loose ends so far [29/55]
   - [ ] When a .bnf-file includes another package, productions from there are not automatically visible,
     which seems unintuitive. Even though a package (perhaps containing syntax helpers) is included, its
     productions are not visible. This could probably be solved nicely with 'package exports' or a similar
     mechanism.
-  - [ ] Allow creating variables from the REPL. We could use global variables inside the ReplSandbox object for this.
   - [ ] Support documentation of templates from C++.
   - [ ] Lambda functions can not infer their proper type when being assigned to Maybe<T>.
   - [ ] We probably want to allow creating documentation for an entire package. Possibly by creating
@@ -59,6 +58,7 @@
   - [ ] Support marking functions as 'pure' in C++ and Storm.
   - [ ] If a type has a '==' or '<' outside the type itself, the corresponding operator will not be present in
     a Handle, like '<<' at the moment.
+  - [X] Allow creating variables from the REPL. We could use global variables inside the ReplSandbox object for this.
   - [X] Function pointers should perhaps be able to infer the parameter types from context if possible, just like lambdas.
   - [X] Allow initializers for global variables.
   - [X] Automatically mark non-virtual functions in C++ as 'final' in storm, since VTables will not work anyway.
