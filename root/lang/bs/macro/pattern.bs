@@ -21,9 +21,10 @@ class TemplateExpr extends ExprBlock {
 		add(exprVars);
 		LocalVarAccess exprs(pos, exprVars.var);
 
-		for (node in atoms) {
+		for (id, node in atoms) {
 			if (node as PatternAtom) {
 				addExpr(block, exprs, node.pattern, "push");
+				node.pattern = PatternExprSrc(id);
 			} else {
 				throwSyntaxError(pos, "Internal error!");
 			}
@@ -51,16 +52,19 @@ private:
 		for (x in create.allChildren(named{PatternActual})) {
 			if (x as PatternActual) {
 				result << x.pattern;
+				x.pattern = PatternExprSrc(result.count - 1);
 			}
 		}
 		for (x in create.allChildren(named{PatternArray})) {
 			if (x as PatternArray) {
 				result << x.pattern;
+				x.pattern = PatternExprSrc(result.count - 1);
 			}
 		}
 		for (x in create.allChildren(named{PatternBlockItem})) {
 			if (x as PatternBlockItem) {
 				result << x.pattern;
+				x.pattern = PatternExprSrc(result.count - 1);
 			}
 		}
 		result;
@@ -89,16 +93,10 @@ private:
  */
 class PatternBlock extends Block {
 	// Expressions to be inserted later.
-	private Array<Expr> exprs;
-
-	// Next expression to be extracted.
-	private Nat exprPos;
+	Array<Expr> exprs;
 
 	// Actuals to be inserted later.
-	private Array<Array<Expr>> actuals;
-
-	// Next actuals to be extracted.
-	private Nat actualsPos;
+	Array<Array<Expr>> actuals;
 
 	// Parent block.
 	private Block parent;
@@ -122,25 +120,13 @@ class PatternBlock extends Block {
 		exprs.push(expr);
 	}
 
-	// Get the next expression (during transformation).
-	Expr nextExpr() {
-		exprs[exprPos++];
-	}
-
 	// Add a set of actual parameters.
 	void pushArray(Array<Expr> expr) {
 		actuals.push(expr);
 	}
 
-	// Get the next set of actuals (during transformation).
-	Array<Expr> nextActuals() {
-		actuals[actualsPos++];
-	}
-
 	// Transform an SExpr and contain the new value.
 	void transform(SExpr src) {
-		exprPos = 0;
-		actualsPos = 0;
 		data = src.transform(this);
 	}
 
@@ -166,10 +152,75 @@ class PatternBlock extends Block {
 }
 
 
+/**
+ * Subclass to the SPatternExpr used to tell the transformation where to fetch the proper
+ * expressions from.
+ */
+class PatternExprSrc extends SPatternExpr {
+	// The index we're concerned of.
+	private Nat id;
+
+	// Create.
+	init(Nat id) {
+		init() {
+			id = id;
+		}
+	}
+
+	// Get an expression.
+	Expr expr(Block block) {
+		if (r = findPattern(block)) {
+			r.exprs[id];
+		} else {
+			throwSyntaxError(block.pos, "Can not use \${} syntax outside of pattern blocks.");
+
+			// Can be removed when we have exceptions.
+			Expr(block.pos);
+		}
+	}
+
+	// Get an array.
+	Array<Expr> array(Block block) {
+		if (r = findPattern(block)) {
+			r.actuals[id];
+		} else {
+			throwSyntaxError(block.pos, "Can not use @{} syntax outside of pattern blocks.");
+
+			// Can be removed when we have exceptions.
+			Array<Expr>();
+		}
+	}
+
+	// Dummy transformation function.
+	void transform() {}
+
+	// To string.
+	void toS(StrBuf to) {
+		to << "Captured expression " << id;
+	}
+
+	private Maybe<PatternBlock> findPattern(Block src) {
+		Block now = src;
+		while (true) {
+			if (now as PatternBlock)
+				return now;
+
+			if (l = now.lookup.parent as BlockLookup) {
+				now = l.block;
+			} else {
+				return null;
+			}
+		}
+
+		null;
+	}
+}
+
+
 // Insert a previously generated Expr here.
-Expr insertExpr(SrcPos pos, Block block) {
-	if (r = findPattern(block)) {
-		r.nextExpr();
+Expr insertExpr(SrcPos pos, Block block, SPatternExpr pattern) {
+	if (pattern as PatternExprSrc) {
+		pattern.expr(block);
 	} else {
 		throwSyntaxError(pos, "Can not use \${} syntax outside of pattern blocks.");
 		// When we have exceptions, we can ignore this.
@@ -178,9 +229,9 @@ Expr insertExpr(SrcPos pos, Block block) {
 }
 
 // Insert a previously generated Array<Expr> here.
-void insertActuals(SrcPos pos, Actuals actuals, Block block) {
-	if (r = findPattern(block)) {
-		for (x in r.nextActuals()) {
+void insertActuals(SrcPos pos, Actuals actuals, Block block, SPatternExpr pattern) {
+	if (pattern as PatternExprSrc) {
+		for (x in pattern.array(block)) {
 			actuals.add(x);
 		}
 	} else {
@@ -189,9 +240,9 @@ void insertActuals(SrcPos pos, Actuals actuals, Block block) {
 }
 
 // Insert a previously generated Array<Expr> here.
-void insertExprs(SrcPos pos, Array<Expr> into, Block block) {
-	if (r = findPattern(block)) {
-		for (x in r.nextActuals()) {
+void insertExprs(SrcPos pos, Array<Expr> into, Block block, SPatternExpr pattern) {
+	if (pattern as PatternExprSrc) {
+		for (x in pattern.array(block)) {
 			into.push(x);
 		}
 	} else {
@@ -199,9 +250,9 @@ void insertExprs(SrcPos pos, Array<Expr> into, Block block) {
 	}
 }
 
-void insertExprs(SrcPos pos, ExprBlock block) {
-	if (r = findPattern(block)) {
-		for (x in r.nextActuals()) {
+void insertExprs(SrcPos pos, ExprBlock block, SPatternExpr pattern) {
+	if (pattern as PatternExprSrc) {
+		for (x in pattern.array(block)) {
 			block.add(x);
 		}
 	} else {
@@ -209,22 +260,6 @@ void insertExprs(SrcPos pos, ExprBlock block) {
 	}
 }
 
-// Find a parent 'PatternBlock'.
-Maybe<PatternBlock> findPattern(Block src) on Compiler {
-	Block now = src;
-	while (true) {
-		if (now as PatternBlock)
-			return now;
-
-		if (l = now.lookup.parent as BlockLookup) {
-			now = l.block;
-		} else {
-			return null;
-		}
-	}
-
-	null;
-}
 
 /**
  * Refer to a SExpr object.

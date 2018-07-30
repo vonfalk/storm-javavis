@@ -37,14 +37,14 @@ Expr SPattern(Block block);
 SPattern => env : "pattern" #keyword, "(", SExpr(block) env, ")";
 
 // Inserting expressions into templates.
-SAtom => insertExpr(pos, block) : "$" #keyword - SPatternExpr @pattern = PatternAtom;
+SAtom => insertExpr(pos, block, pattern) : "$" #keyword - SPatternExpr @pattern = PatternAtom;
 
 // Insert zero or more expressions into a parameter list...
-SActual => insertActuals(pos, to, block) : "@" #keyword - SPatternExpr @pattern = PatternActual;
+SActual => insertActuals(pos, to, block, pattern) : "@" #keyword - SPatternExpr @pattern = PatternActual;
 // .. or inside array initializations...
-SArrayInitItem => insertExprs(pos, to, block) : "@" #keyword - SPatternExpr @pattern = PatternArray;
+SArrayInitItem => insertExprs(pos, to, block, pattern) : "@" #keyword - SPatternExpr @pattern = PatternArray;
 // .. or inside a regular block.
-SBlockItem => insertExprs(pos, parent) : "@" #keyword - SPatternExpr @pattern = PatternBlockItem;
+SBlockItem => insertExprs(pos, parent, pattern) : "@" #keyword - SPatternExpr @pattern = PatternBlockItem;
 
 void SPatternExpr();
 SPatternExpr : SName name #keyword = PatternVar;
