@@ -130,6 +130,8 @@ namespace storm {
 
 	void PkgReader::readFunctions() {}
 
+	void PkgReader::resolveFunctions() {}
+
 	FileReader *PkgReader::readFile(Url *url, Str *src) {
 		return null;
 	}
@@ -188,6 +190,12 @@ namespace storm {
 		loadReaders();
 		for (nat i = 0; i < readers->count(); i++)
 			traverse(readers->at(i), &FileReader::readFunctions, qFunctions);
+	}
+
+	void FilePkgReader::resolveFunctions() {
+		loadReaders();
+		for (nat i = 0; i < readers->count(); i++)
+			traverse(readers->at(i), &FileReader::resolveFunctions, qFunctions);
 	}
 
 	FileReader *FilePkgReader::readFile(Url *file, Str *src) {

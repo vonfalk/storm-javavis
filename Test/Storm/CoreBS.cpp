@@ -467,6 +467,9 @@ BEGIN_TEST(Globals, BS) {
 
 	CHECK_ERROR(runFn<Str *>(S("test.bs.failThreadGlobal")), SyntaxError);
 
+	// Make sure we have the proper initialization order.
+	CHECK_EQ(toS(runFn<Str *>(S("test.bs.getInitGlobal"))), L"Global: A");
+
 } END_TEST
 
 /**

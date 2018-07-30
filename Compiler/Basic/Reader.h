@@ -54,6 +54,9 @@ namespace storm {
 			// Get functions.
 			void STORM_FN readFunctions();
 
+			// Resolve functions.
+			void STORM_FN resolveFunctions();
+
 			// Current scope.
 			Scope scope;
 

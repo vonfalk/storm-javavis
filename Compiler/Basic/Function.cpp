@@ -76,7 +76,7 @@ namespace storm {
 			// if (*name->v == S("asyncPostObject"))
 			// 	PVAR(body);
 
-			Array<ValParam> *par = resolve(params, fScope);
+			Array<ValParam> *par = bs::resolve(params, fScope);
 			BSFunction *f = new (this) BSFunction(result, name, par, scope, thread, body);
 
 			if (!this->result)
@@ -91,11 +91,11 @@ namespace storm {
 				result = scope.value(this->result);
 
 			assert(fn->result == result);
-			fn->update(resolve(params, scope), body, name->pos);
+			fn->update(bs::resolve(params, scope), body, name->pos);
 		}
 
 		NamePart *bs::FunctionDecl::namePart() const {
-			return new (this) SimplePart(name->v, values(resolve(params, scope)));
+			return new (this) SimplePart(name->v, values(bs::resolve(params, scope)));
 		}
 
 		void bs::FunctionDecl::toS(StrBuf *to) const {

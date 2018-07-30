@@ -10,20 +10,27 @@ namespace storm {
 		NamedDecl::NamedDecl() : visibility(null) {}
 
 		Named *NamedDecl::create() {
-			Named *r = doCreate();
-			r->visibility = visibility;
+			created = doCreate();
+			created->visibility = visibility;
 
 			// Apply documentation to functions, even if no comment is given. If not, functions
 			// without parameters will not show parameter names in the documentation.
-			if (docPos.any() || as<Function>(r))
-				applyDoc(docPos, r);
+			if (docPos.any() || as<Function>(created))
+				applyDoc(docPos, created);
 
-			return r;
+			return created;
+		}
+
+		void NamedDecl::resolve() {
+			if (created)
+				doResolve(created);
 		}
 
 		Named *NamedDecl::doCreate() {
 			throw InternalError(L"Please override 'doCreate'!");
 		}
+
+		void NamedDecl::doResolve(Named *entity) {}
 
 	}
 }

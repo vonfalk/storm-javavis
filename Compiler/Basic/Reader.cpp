@@ -117,6 +117,14 @@ namespace storm {
 			}
 		}
 
+		void CodeReader::resolveFunctions() {
+			readContent();
+
+			for (Nat i = 0; i < content->decls->count(); i++) {
+				content->decls->at(i)->resolve();
+			}
+		}
+
 		void CodeReader::readContent() {
 			if (content)
 				return;

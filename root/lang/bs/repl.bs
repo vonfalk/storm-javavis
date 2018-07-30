@@ -104,6 +104,7 @@ private:
 				sandboxType.remove(old);
 			if (into = thisPtr.result.type)
 				into.add(var);
+			var.create();
 		} else {
 			Function replaceFn = named{ReplSandbox:evalFn<ReplSandbox>};
 			ReplCode code(block, thisPtr);

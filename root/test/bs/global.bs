@@ -4,6 +4,9 @@ Int globalInt on Compiler;
 // Global string, initialized to "hello"
 Str globalStr on Compiler = "Hello";
 
+// Make sure we can initialize variables with functions declared later in the same file.
+Str globalInit on Compiler = initGlobal("A");
+
 // Make sure we can handle value types properly.
 core:debug:DbgNoToS globalValue on Compiler;
 
@@ -40,3 +43,12 @@ Str failThreadGlobal() {
 	// Should not work.
 	threadStr;
 }
+
+Str initGlobal(Str v) {
+	"Global: " + v;
+}
+
+Str getInitGlobal() on Compiler {
+	globalInit;
+}
+

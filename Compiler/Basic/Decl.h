@@ -27,9 +27,19 @@ namespace storm {
 			// Create the actual named entity.
 			Named *STORM_FN create();
 
+			// Initialize the declaration previously created (if any).
+			void STORM_FN resolve();
+
 		protected:
 			// Do the actual creation.
 			virtual Named *STORM_FN doCreate();
+
+			// Resolve things inside 'named'.
+			virtual void STORM_FN doResolve(Named *entity);
+
+		private:
+			// Previously created entity.
+			MAYBE(Named *) created;
 		};
 
 	}

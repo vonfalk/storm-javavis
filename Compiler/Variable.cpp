@@ -53,13 +53,27 @@ namespace storm {
 	 */
 
 	GlobalVar::GlobalVar(Str *name, Value type, NamedThread *thread, FnBase *initializer) :
-		Variable(name, type), owner(thread) {
+		Variable(name, type), owner(thread), initializer(initializer), hasArray(false) {
 
 		FnType *fnType = as<FnType>(runtime::typeOf(initializer));
 		if (!fnType)
 			throw RuntimeError(L"Invalid type of the initializer passed to GlobalVar. Must be a function pointer.");
 		if (fnType->params->count() != 1)
 			throw RuntimeError(L"An initializer provided to GlobalVar may not take parameters.");
+
+		hasArray = type.isValue() || type.isBuiltIn();
+	}
+
+	Bool GlobalVar::accessibleFrom(RunOn thread) {
+		return thread.canRun(RunOn(owner));
+	}
+
+	void GlobalVar::create() {
+		// Already created?
+		if (!initializer)
+			return;
+
+		FnType *fnType = as<FnType>(runtime::typeOf(initializer));
 
 		// Find the 'call' function so that we may call that.
 		Function *callFn = as<Function>(fnType->find(S("call"), thisPtr(fnType), engine().scope()));
@@ -72,9 +86,7 @@ namespace storm {
 							L" can not store the type returned from the initializer. Expected " +
 							::toS(type) + L", got " + ::toS(callFn->result) + L".");
 
-
 		void *outPtr = &data;
-		hasArray = type.isValue() || type.isBuiltIn();
 		if (hasArray) {
 			// Create the storage for the data.
 			GcArray<byte> *d = (GcArray<byte> *)runtime::allocArray(engine(), type.type->gcArrayType(), 1);
@@ -87,7 +99,7 @@ namespace storm {
 		os::FnCallRaw call(params, callFn->callThunk());
 
 		// Call on the specified thread.
-		os::Thread initOn = thread->thread()->thread();
+		os::Thread initOn = owner->thread()->thread();
 		if (initOn == os::Thread::current()) {
 			// No thread call needed.
 			call.callRaw(callFn->ref().address(), true, null, outPtr);
@@ -96,6 +108,39 @@ namespace storm {
 			os::FutureSema<os::Sema> future;
 			os::UThread::spawnRaw(callFn->ref().address(), true, null, call, future, outPtr, &initOn);
 			future.result();
+		}
+
+		// Mark ourselves as initialized.
+		initializer = null;
+	}
+
+	void GlobalVar::compile() {
+		create();
+	}
+
+	void *GlobalVar::dataPtr() {
+		if (atomicRead(initializer) != null) {
+			// We might need to initialize! Call 'create' on the proper thread to do that. Note:
+			// 'create' will not initialize us again if initialization was done already, so we will
+			// be safe even if two threads happen to call 'dataPtr' for the first time more or less
+			// simultaneously.
+			const os::Thread &t = TObject::thread->thread();
+			if (t != os::Thread::current()) {
+				GlobalVar *me = this;
+				os::Future<void, Semaphore> f;
+				os::FnCall<void, 1> p = os::fnCall().add(me);
+				os::UThread::spawn(address(&GlobalVar::create), true, p, f, &t);
+				f.result();
+			} else {
+				create();
+			}
+		}
+
+		if (hasArray) {
+			GcArray<byte> *a = (GcArray<byte> *)data;
+			return a->v;
+		} else {
+			return &data;
 		}
 	}
 
@@ -121,19 +166,6 @@ namespace storm {
 			void *ptr = const_cast<GlobalVar *>(this)->dataPtr();
 			(*h.toSFn)(ptr, to);
 		}
-	}
-
-	void *GlobalVar::dataPtr() {
-		if (hasArray) {
-			GcArray<byte> *a = (GcArray<byte> *)data;
-			return a->v;
-		} else {
-			return &data;
-		}
-	}
-
-	Bool GlobalVar::accessibleFrom(RunOn thread) {
-		return thread.canRun(RunOn(owner));
 	}
 
 }

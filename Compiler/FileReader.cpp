@@ -27,6 +27,8 @@ namespace storm {
 
 	void FileReader::readFunctions() {}
 
+	void FileReader::resolveFunctions() {}
+
 	syntax::Rule *FileReader::rootRule() {
 		throw LangDefError(L"This language does not support syntax highlighting.");
 	}

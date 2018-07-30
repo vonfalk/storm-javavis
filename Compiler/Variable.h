@@ -64,6 +64,8 @@ namespace storm {
 	 * on the proper thread, which ensures that any updates to the state happen as intended. Having
 	 * multiple threads accessing the global variables could cause unintended race conditions.
 	 *
+	 * The variable is initialized the first time it is accessed, or the first time 'create' is called.
+	 *
 	 * TODO: Expose 'dataPtr' to Storm in a good way. Perhaps by exposing Engine::ref so that ASM
 	 * can access it at least.
 	 */
@@ -80,6 +82,12 @@ namespace storm {
 		// Assuming we're running on 'thread', may we access this variable?
 		Bool STORM_FN accessibleFrom(RunOn thread);
 
+		// Make sure the variable is created.
+		void STORM_FN create();
+
+		// Compile this entity. Synonymous with 'create'.
+		virtual void STORM_FN compile();
+
 		// Get the pointer to the data. Safe to call from any thread.
 		void *CODECALL dataPtr();
 
@@ -90,6 +98,10 @@ namespace storm {
 		virtual void STORM_FN toS(StrBuf *to) const;
 
 	private:
+		// Initializer for the variable. If 'null', that means we have already initialized the
+		// variable.
+		FnBase *initializer;
+
 		// The data stored in the variable. If the variable is an Object or a TObject, this is just
 		// a pointer to the object itself. If it is a value type, this is a pointer to an array of
 		// size 1 which contains the object.
@@ -97,6 +109,9 @@ namespace storm {
 
 		// Do we have an array for this type?
 		Bool hasArray;
+
+		// Created?
+		inline Bool created() { return initializer == null; }
 	};
 
 }

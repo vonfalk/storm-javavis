@@ -36,25 +36,38 @@ namespace storm {
 			return new (this) GlobalVar(name->v, type, thread, pointer(init));
 		}
 
-		Function *GlobalVarDecl::createInitializer(Value type, Scope scope) {
-			BSTreeFn *fn = new (this) BSTreeFn(type, new (this) syntax::SStr(S("init")),
-											new (this) Array<ValParam>(), null);
-			FnBody *body = new (this) FnBody(fn, scope);
-			fn->body(body);
-
-			if (initExpr) {
-				// Use the initialization if we have one.
-				body->add(syntax::transformNode<Expr, Block *>(initExpr, body));
-			} else {
-				// Create an instance using the default constructor.
-				body->add(defaultCtor(this->type->pos, scope, type.type));
+		void GlobalVarDecl::doResolve(Named *entity) {
+			if (GlobalVar *v = as<GlobalVar>(entity)) {
+				v->create();
 			}
+		}
 
+		Function *GlobalVarDecl::createInitializer(Value type, Scope scope) {
+			GlobalInitializer *r = new (this) GlobalInitializer(this->type->pos, type, scope, initExpr);
 			// Trick the function into believing that it has a proper name (just like
 			// lambdas). Necessary in order to be able to call 'runOn', which is done when we create
 			// function pointers to the function.
-			fn->parentLookup = scope.top;
-			return fn;
+			r->parentLookup = scope.top;
+			return r;
+		}
+
+
+		GlobalInitializer::GlobalInitializer(SrcPos pos, Value type, Scope scope, MAYBE(syntax::Node *) initExpr) :
+			BSRawFn(type, new (engine()) syntax::SStr(S("init")), new (engine()) Array<ValParam>(), null),
+			pos(pos), scope(scope), initExpr(initExpr) {}
+
+		FnBody *GlobalInitializer::createBody() {
+			FnBody *body = new (this) FnBody(this, scope);
+
+			if (initExpr) {
+				// Use the expression.
+				body->add(syntax::transformNode<Expr, Block *>(initExpr, body));
+			} else {
+				// Create an instance using the default constructor.
+				body->add(defaultCtor(pos, scope, result.type));
+			}
+
+			return body;
 		}
 
 	}

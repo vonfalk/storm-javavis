@@ -29,6 +29,7 @@ class FooFile extends FileReader {
 	void readTypes() {}
 	void resolveTypes() {}
 	void readFunctions() {}
+	void resolveFunctions() {}
 
 	// Either override this function...
 	Rule rootRule() {

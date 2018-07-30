@@ -90,6 +90,9 @@ namespace storm {
 		// Get all functions.
 		virtual void STORM_FN readFunctions();
 
+		// Resolve functions.
+		virtual void STORM_FN resolveFunctions();
+
 		/**
 		 * For language server integration. Overload either 'rootRule' or 'createParser'.
 		 */

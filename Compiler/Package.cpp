@@ -74,7 +74,7 @@ namespace storm {
 		Array<Url *> *files = new (this) Array<Url *>();
 
 		// Load any remaining packages:
-		for (nat i = 0; i < children->count(); i++) {
+		for (Nat i = 0; i < children->count(); i++) {
 			Url *now = children->at(i);
 			if (now->dir()) {
 				Str *name = now->name();
@@ -136,20 +136,23 @@ namespace storm {
 			Map<SimpleName *, PkgFiles *> *readers = readerName(files);
 			Array<PkgReader *> *load = createReaders(readers);
 
-			for (nat i = 0; i < load->count(); i++)
+			for (Nat i = 0; i < load->count(); i++)
 				load->at(i)->readSyntaxRules();
 
-			for (nat i = 0; i < load->count(); i++)
+			for (Nat i = 0; i < load->count(); i++)
 				load->at(i)->readSyntaxProductions();
 
-			for (nat i = 0; i < load->count(); i++)
+			for (Nat i = 0; i < load->count(); i++)
 				load->at(i)->readTypes();
 
-			for (nat i = 0; i < load->count(); i++)
+			for (Nat i = 0; i < load->count(); i++)
 				load->at(i)->resolveTypes();
 
-			for (nat i = 0; i < load->count(); i++)
+			for (Nat i = 0; i < load->count(); i++)
 				load->at(i)->readFunctions();
+
+			for (Nat i = 0; i < load->count(); i++)
+				load->at(i)->resolveFunctions();
 
 		} catch (...) {
 			TODO(L"Try to restore!");

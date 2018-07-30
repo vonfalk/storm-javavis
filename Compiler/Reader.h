@@ -58,6 +58,7 @@ namespace storm {
 	 * 3: get types (just information, should be lazily-loaded!)
 	 * 4: resolve types (ie. set up inheritance, figure out how structs look...)
 	 * 5: get functions
+	 * 6: resolve functions (any other work needed to finalize functions etc.)
 	 *
 	 * This is to ensure that inter-dependencies are resolved correctly. Within each language, these
 	 * rules may be implemented differently.
@@ -88,6 +89,9 @@ namespace storm {
 
 		// Get all functions.
 		virtual void STORM_FN readFunctions();
+
+		// Resolve functions.
+		virtual void STORM_FN resolveFunctions();
 
 		/**
 		 * For language server integration.
@@ -125,6 +129,9 @@ namespace storm {
 
 		// Get all functions.
 		virtual void STORM_FN readFunctions();
+
+		// Resolve functions.
+		virtual void STORM_FN resolveFunctions();
 
 		// Get a file reader for the given Url.
 		virtual MAYBE(FileReader *) STORM_FN readFile(Url *url, Str *src);
