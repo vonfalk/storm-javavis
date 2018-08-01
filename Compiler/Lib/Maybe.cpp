@@ -166,9 +166,7 @@ namespace storm {
 		add(inlinedFunction(e, b, S("any"), v, fnPtr(e, &anyMaybeClass)));
 
 		// Cast constructor.
-		Function *cast = inlinedFunction(e, Value(), CTOR, rp, fnPtr(e, &copyMaybeClass));
-		cast->flags |= namedAutoCast;
-		add(cast);
+		add(inlinedFunction(e, Value(), CTOR, rp, fnPtr(e, &copyMaybeClass))->makeAutoCast());
 
 		add(nativeEngineFunction(e, Value(Str::stormType(e)), S("toS"), v, address(&maybeToSClass)));
 
@@ -230,9 +228,7 @@ namespace storm {
 		Array<Value> *rv = new (this) Array<Value>(2, o.asRef(false));
 		rv->at(0) = Value(this).asRef(true);
 
-		Function *f = inlinedFunction(engine, Value(), CTOR, rv, fnPtr(engine, &copyMaybeClass));
-		f->flags |= namedAutoCast;
-		return f;
+		return inlinedFunction(engine, Value(), CTOR, rv, fnPtr(engine, &copyMaybeClass))->makeAutoCast();
 	}
 
 	/**
@@ -306,9 +302,7 @@ namespace storm {
 		add(inlinedFunction(e, b, S("any"), r, fnPtr(e, &MaybeValueType::anyMaybe, this)));
 
 		// Cast constructor.
-		Function *cast = inlinedFunction(e, Value(), CTOR, rp, fnPtr(e, &MaybeValueType::castMaybe, this));
-		cast->flags |= namedAutoCast;
-		add(cast);
+		add(inlinedFunction(e, Value(), CTOR, rp, fnPtr(e, &MaybeValueType::castMaybe, this))->makeAutoCast());
 
 		if (handle->toSFn) {
 			add(inlinedFunction(e, Value(Str::stormType(e)), S("toS"), r, fnPtr(e, &MaybeValueType::toSMaybe, this)));
@@ -535,9 +529,7 @@ namespace storm {
 
 		Array<Value> *rr = new (this) Array<Value>(2, o.asRef(true));
 		rr->at(0) = Value(this).asRef(true);
-		Function *f = inlinedFunction(engine, Value(), S("="), rr, fnPtr(engine, &MaybeValueType::copyMaybe, this));
-		f->flags |= namedAutoCast;
-		return f;
+		return inlinedFunction(engine, Value(), S("="), rr, fnPtr(engine, &MaybeValueType::copyMaybe, this))->makeAutoCast();
 	}
 
 }

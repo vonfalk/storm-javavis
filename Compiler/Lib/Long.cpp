@@ -67,7 +67,7 @@ namespace storm {
 		add(inlinedFunction(engine, Value(), Type::CTOR, r, fnPtr(engine, &numInit<Long>))->makePure());
 
 		Array<Value> *ri = valList(engine, 2, Value(this, true), Value(StormInfo<Int>::type(engine)));
-		add(cast(inlinedFunction(engine, Value(), Type::CTOR, ri, fnPtr(engine, &castLong)))->makePure());
+		add(inlinedFunction(engine, Value(), Type::CTOR, ri, fnPtr(engine, &castLong))->makeAutoCast()->makePure());
 
 		add(inlinedFunction(engine, Value(StormInfo<Int>::type(engine)), S("int"), v, fnPtr(engine, &icast))->makePure());
 		add(inlinedFunction(engine, Value(StormInfo<Nat>::type(engine)), S("nat"), v, fnPtr(engine, &icast))->makePure());
@@ -134,9 +134,9 @@ namespace storm {
 		add(inlinedFunction(engine, Value(), Type::CTOR, r, fnPtr(engine, &numInit<Word>))->makePure());
 
 		Array<Value> *rb = valList(engine, 2, Value(this, true), Value(StormInfo<Byte>::type(engine)));
-		add(cast(inlinedFunction(engine, Value(), Type::CTOR, rb, fnPtr(engine, &castWord)))->makePure());
+		add(inlinedFunction(engine, Value(), Type::CTOR, rb, fnPtr(engine, &castWord))->makeAutoCast()->makePure());
 		Array<Value> *ri = valList(engine, 2, Value(this, true), Value(StormInfo<Nat>::type(engine)));
-		add(cast(inlinedFunction(engine, Value(), Type::CTOR, ri, fnPtr(engine, &castWord)))->makePure());
+		add(inlinedFunction(engine, Value(), Type::CTOR, ri, fnPtr(engine, &castWord))->makeAutoCast()->makePure());
 
 		add(inlinedFunction(engine, Value(StormInfo<Int>::type(engine)), S("int"), v, fnPtr(engine, &ucast))->makePure());
 		add(inlinedFunction(engine, Value(StormInfo<Nat>::type(engine)), S("nat"), v, fnPtr(engine, &ucast))->makePure());

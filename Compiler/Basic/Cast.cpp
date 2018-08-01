@@ -40,7 +40,7 @@ namespace storm {
 			params->at(0) = thisPtr(to.type);
 			Named *n = to.type->find(Type::CTOR, params, scope);
 			if (Function *ctor = as<Function>(n))
-				if (ctor->flags & namedAutoCast)
+				if (ctor->fnFlags() & fnAutoCast)
 					return ctor;
 
 			return null;

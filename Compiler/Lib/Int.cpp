@@ -126,7 +126,7 @@ namespace storm {
 		add(inlinedFunction(engine, Value(), Type::CTOR, r, fnPtr(engine, &numInit<Nat>))->makePure());
 
 		Array<Value> *rb = valList(engine, 2, Value(this, true), Value(StormInfo<Byte>::type(engine)));
-		add(cast(inlinedFunction(engine, Value(), Type::CTOR, rb, fnPtr(engine, &castNat)))->makePure());
+		add(inlinedFunction(engine, Value(), Type::CTOR, rb, fnPtr(engine, &castNat))->makeAutoCast()->makePure());
 
 		add(inlinedFunction(engine, Value(StormInfo<Int>::type(engine)), S("int"), v, fnPtr(engine, &ucast))->makePure());
 		add(inlinedFunction(engine, Value(StormInfo<Byte>::type(engine)), S("byte"), v, fnPtr(engine, &ucast))->makePure());

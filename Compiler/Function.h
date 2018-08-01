@@ -22,18 +22,21 @@ namespace storm {
 		// results, which in turn means that the result can be cached or computed compile-time.
 		fnPure = 0x01,
 
+		// This function is a constructor suitable for automatic type casts. Only relevant for constructors.
+		fnAutoCast = 0x02,
+
 		// This is a setter function, and as such we want to be able to use the function as the
 		// target of an assignment.
-		fnAssign = 0x02,
+		fnAssign = 0x04,
 
 		// This named is final.
-		fnFinal = 0x04,
+		fnFinal = 0x08,
 
 		// This named is abstract (ie. has to be overridden).
-		fnAbstract = 0x08,
+		fnAbstract = 0x10,
 
 		// This named is expected to override something.
-		fnOverride = 0x10,
+		fnOverride = 0x20,
 	};
 
 	BITMASK_OPERATORS(FnFlags);
@@ -81,7 +84,8 @@ namespace storm {
 		Function *STORM_FN make(FnFlags flag);
 
 		// Helper for C++.
-		inline Function *makePure() { return make(fnPure); }
+		inline Function *STORM_FN makePure() { return make(fnPure); }
+		inline Function *STORM_FN makeAutoCast() { return make(fnAutoCast); }
 
 		// Helpers for the grammar.
 		inline Function *STORM_FN makeAbstract() { return make(fnAbstract); }

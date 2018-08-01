@@ -489,7 +489,7 @@ namespace storm {
 		f->setCode(new (*e) StaticCode(ptr));
 
 		if (cast)
-			f->flags |= namedAutoCast;
+			f->makeAutoCast();
 
 		if (fn.threadId < into->namedThreads.count())
 			f->runOn(into->namedThreads[fn.threadId]);

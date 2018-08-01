@@ -18,9 +18,6 @@ namespace storm {
 		// Ignore inheritance when matching types for this Named.
 		namedMatchNoInheritance = 0x01,
 
-		// This function is suitable for automatic casts (only constructors).
-		namedAutoCast = 0x02,
-
 	};
 
 	BITMASK_OPERATORS(NamedFlags);

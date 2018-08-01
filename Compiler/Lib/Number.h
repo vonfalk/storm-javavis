@@ -271,10 +271,4 @@ namespace storm {
 		*p.state->l << end;
 	}
 
-	// Mark 'f' as an auto-cast function.
-	inline Function *cast(Function *f) {
-		f->flags |= namedAutoCast;
-		return f;
-	}
-
 }

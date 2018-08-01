@@ -296,7 +296,7 @@ namespace storm {
 											Array<NameParam> *params,
 											syntax::Node *body) {
 			BSCtor *r = classCtor(owner, pos, params, body);
-			r->flags |= namedAutoCast;
+			r->makeAutoCast();
 			return r;
 		}
 
