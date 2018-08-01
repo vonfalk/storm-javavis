@@ -126,29 +126,70 @@ namespace storm {
 	// Specializations for built-in types. Generates StormInfo for them too, see Storm.h.
 	STORM_PKG(core);
 
-	// Primitive type for boolean values.
+	/**
+	 * Boolean value. Contains either 'true' or 'false'.
+	 */
 	STORM_PRIMITIVE(Bool, createBool);
 
-	// Unsigned 8-bit number.
+	/**
+	 * Unsigned 8-bit number.
+	 *
+	 * Can store values from 0 to 255. Operations yielding values that are out of range are
+	 * truncated, effectively performing computations modulo 256.
+	 */
 	STORM_PRIMITIVE(Byte, createByte);
 
-	// Signed 32-bit number (two's complement).
+	/**
+	 * Signed 32-bit number (using two's complement).
+	 *
+	 * Can store values from -2 147 843 648 to 2 147 843 647. Languages may assume that overflow
+	 * does not occur (as C++ does). Currently, no language in Storm does this.
+	 */
 	STORM_PRIMITIVE(Int, createInt);
 
-	// Unsigned 32-bit number.
+	/**
+	 * Unsigned 32-bit number.
+	 *
+	 * Can store values from 0 to 4 294 967 295. Used as the standard type to describe quantities
+	 * that are known to be positive, such as sizes of arrays etc. It is safe to assume that
+	 * operations on this type are performed modulo 2^32.
+	 */
 	STORM_PRIMITIVE(Nat, createNat);
 
-	// Signed 64-bit number (two's complement).
+	/**
+	 * Signed 64-bit number (using two's complement).
+	 *
+	 * Can store values from ‭-9 223 372 036 854 775 808 to ‭9 223 372 036 854 775 807. Languages may
+	 * assume that overflow does not occur (as C++ does). Currently, no language in Storm does this.
+	 *
+	 * Prefer to use Int over Long if possible, as the former is more efficient on most systems (32
+	 * bit platforms requires additional instructions to manipulate 64 bit numbers, and 32-bit
+	 * instructions are shorter on x86-64).
+	 */
 	STORM_PRIMITIVE(Long, createLong);
 
-	// Unsigned 64-bit number.
+	/**
+	 * Unsigned 64-bit number.
+	 *
+	 * Can store values from 0 to 18 446 744 073 709 551 615. It is safe to assume that operations
+	 * on this type are performed modulo 2^64.
+	 *
+	 * Prefer to use Nat over Word if possible, as the former is more efficient on most systems (32
+	 * bit platforms requires additional instructions to manipulate 64 bit numbers, and 32-bit
+	 * instructions are shorter on x86-64).
+	 */
 	STORM_PRIMITIVE(Word, createWord);
 
-	// 32-bit floating point number.
+	/**
+	 * 32-bit floating point number.
+	 */
 	STORM_PRIMITIVE(Float, createFloat);
 
-	// 64-bit floating point number.
+	/**
+	 * 64-bit floating point number.
+	 */
 	STORM_PRIMITIVE(Double, createDouble);
+
 
 	/**
 	 * Helper for figuring out how to create objects.
