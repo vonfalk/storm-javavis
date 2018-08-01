@@ -10,7 +10,7 @@ namespace storm {
 	 *
 	 * Since parameters may reside in registers, any code that uses registers needs to be careful
 	 * when using registers so that no parameters are accidentally overwritten. For this reason,
-	 * functions that are using registers internally should call either 'allocRegisters' or
+	 * functions that are using registers internally should call either 'allocRegs' or
 	 * 'spillParameters' before any parameters are accessed.
 	 *
 	 * Parameters are then accessed by calling the 'parameter' function, or if the parameter is

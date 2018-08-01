@@ -364,6 +364,10 @@ namespace storm {
 	}
 
 	StrBuf *StrBuf::add(Float f) {
+		return add(Double(f));
+	}
+
+	StrBuf *StrBuf::add(Double f) {
 		// TODO: Improve!
 #ifdef WINDOWS
 		const Nat size = 50;

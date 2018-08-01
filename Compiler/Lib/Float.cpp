@@ -234,6 +234,12 @@ namespace storm {
 		return max(a, b);
 	}
 
+	static void castDouble(InlineParams p) {
+		p.allocRegs(0);
+		*p.state->l << fld(p.param(1));
+		*p.state->l << fstp(doubleRel(p.regParam(0), Offset()));
+	}
+
 	DoubleType::DoubleType(Str *name, GcType *type) : Type(name, typeValue | typeFinal, Size::sDouble, type, null) {}
 
 	Bool DoubleType::loadAll() {
@@ -260,6 +266,9 @@ namespace storm {
 		add(inlinedFunction(engine, vBool, S("<="), vv, fnPtr(engine, &doubleCmp<ifFBelowEqual>))->makePure());
 		add(inlinedFunction(engine, vBool, S("=="), vv, fnPtr(engine, &doubleCmp<ifEqual>))->makePure());
 		add(inlinedFunction(engine, vBool, S("!="), vv, fnPtr(engine, &doubleCmp<ifNotEqual>))->makePure());
+
+		Array<Value> *rf = valList(engine, 2, Value(this, true), Value(StormInfo<Float>::type(engine)));
+		add(inlinedFunction(engine, Value(), Type::CTOR, rf, fnPtr(engine, &castDouble))->makeAutoCast()->makePure());
 
 		Value vInt = Value(StormInfo<Int>::type(engine));
 		add(inlinedFunction(engine, vInt, S("int"), v, fnPtr(engine, &doubleToInt))->makePure());

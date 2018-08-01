@@ -13,6 +13,7 @@ namespace storm {
 		return new (name) IntType(name, type);
 	}
 
+	// Note: Works for both float and double.
 	static void intToFloat(InlineParams p) {
 		if (!p.result->needed())
 			return;
@@ -66,6 +67,7 @@ namespace storm {
 		add(inlinedFunction(engine, Value(StormInfo<Long>::type(engine)), S("long"), v, fnPtr(engine, &icast))->makePure());
 		add(inlinedFunction(engine, Value(StormInfo<Word>::type(engine)), S("word"), v, fnPtr(engine, &icast))->makePure());
 		add(inlinedFunction(engine, Value(StormInfo<Float>::type(engine)), S("float"), v, fnPtr(engine, &intToFloat))->makePure());
+		add(inlinedFunction(engine, Value(StormInfo<Double>::type(engine)), S("double"), v, fnPtr(engine, &intToFloat))->makePure());
 
 		Value n(StormInfo<Nat>::type(engine));
 		add(nativeFunction(engine, n, S("hash"), v, address(&intHash))->makePure());

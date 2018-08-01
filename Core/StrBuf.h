@@ -114,6 +114,7 @@ namespace storm {
 		StrBuf *STORM_FN add(Long i);
 		StrBuf *STORM_FN add(Word i);
 		StrBuf *STORM_FN add(Float f);
+		StrBuf *STORM_FN add(Double d);
 		StrBuf *STORM_FN add(Char c);
 		StrBuf *STORM_FN add(HexFmt h);
 
@@ -130,6 +131,7 @@ namespace storm {
 		StrBuf &STORM_FN operator <<(Long i) { return *add(i); }
 		StrBuf &STORM_FN operator <<(Word i) { return *add(i); }
 		StrBuf &STORM_FN operator <<(Float f) { return *add(f); }
+		StrBuf &STORM_FN operator <<(Double d) { return *add(d); }
 		StrBuf &STORM_FN operator <<(Char c) { return *add(c); }
 		StrBuf &STORM_FN operator <<(HexFmt f) { return *add(f); }
 

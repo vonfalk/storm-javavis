@@ -13,6 +13,7 @@ namespace storm {
 		return new (name) LongType(name, type);
 	}
 
+	// Note: Works for both float and double.
 	static void longToFloat(InlineParams p) {
 		if (!p.result->needed())
 			return;
@@ -74,6 +75,7 @@ namespace storm {
 		add(inlinedFunction(engine, Value(StormInfo<Byte>::type(engine)), S("byte"), v, fnPtr(engine, &icast))->makePure());
 		add(inlinedFunction(engine, Value(StormInfo<Word>::type(engine)), S("word"), v, fnPtr(engine, &icast))->makePure());
 		add(inlinedFunction(engine, Value(StormInfo<Float>::type(engine)), S("float"), v, fnPtr(engine, &longToFloat))->makePure());
+		add(inlinedFunction(engine, Value(StormInfo<Double>::type(engine)), S("double"), v, fnPtr(engine, &longToFloat))->makePure());
 
 		Value n(StormInfo<Nat>::type(engine));
 		add(nativeFunction(engine, n, S("hash"), v, address(&longHash))->makePure());
