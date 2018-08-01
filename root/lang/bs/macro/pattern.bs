@@ -14,8 +14,8 @@ class TemplateExpr extends ExprBlock {
 		// PatternBlock exprs(<env>, atoms.count, actuals.count);
 		Actuals params;
 		params.add(env);
-		params.add(Constant(pos, atoms.count.long));
-		params.add(Constant(pos, arrays.count.long));
+		params.add(NumLiteral(pos, atoms.count.long));
+		params.add(NumLiteral(pos, arrays.count.long));
 
 		Var exprVars(this, Value(named{PatternBlock}), SStr("block"), params);
 		add(exprVars);

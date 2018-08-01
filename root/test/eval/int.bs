@@ -3,53 +3,55 @@
 
 // Int
 Int iConst20() { 20; }
-Int iAdd12() { 10 + 2; }
-Int iSub5() { 10 - 5; }
-Int iSubN5() { 5 - 10; }
-Int iMul8() { 2 * 4; }
-Int iMulN8() { (0-2) * 4; }
-Int iDiv8() { 16 / 2; }
-Int iMod8() { 18 % 10; }
-Int iInc10() { Int i = 5; i += 5; i; }
-Int iDec10() { Int i = 15; i -= 5; i; }
+Int iConst21() { 21i; }
+Int iAdd12() { 10i + 2i; }
+Int iSub5() { 10i - 5i; }
+Int iSubN5() { 5i - 10i; }
+Int iMul8() { 2i * 4i; }
+Int iMulN8() { (0i-2i) * 4i; }
+Int iDiv8() { 16i / 2i; }
+Int iMod8() { 18i % 10i; }
+Int iInc10() { Int i = 5; i += 5i; i; }
+Int iDec10() { Int i = 15; i -= 5i; i; }
 Int iInc12() { Int i = 10; i++; ++i; }
 Int iInc11() { Int i = 10; ++i; i++; }
 Int iDec8() { Int i = 10; i--; --i; }
 Int iDec9() { Int i = 10; --i; i--; }
 Int iAssign10() { Int i = 10; Int j = 5; j = i; j; }
-Bool iLessF() { 20 < 10; }
-Bool iLessT() { 20 < 21; }
-Bool iLessEqF() { 20 <= 19; }
-Bool iLessEqT() { 20 <= 20; }
-Bool iGreaterF() { 20 > 30; }
-Bool iGreaterT() { 20 > 10; }
-Bool iGreaterEqF() { 20 >= 21; }
-Bool iGreaterEqT() { 20 >= 20; }
-Bool iEqF() { 20 == 22; }
-Bool iEqT() { 20 == 20; }
-Bool iNeqF() { 20 != 20; }
-Bool iNeqT() { 20 != 22; }
-Int iDelta10() { 20.delta(30); }
-Int iDelta11() { 20.delta(9); }
-Int iDelta50() { 20.delta(-30); }
-Int iDelta29() { (-20).delta(9); }
-Int iMin10() { 10.min(20); }
-Int iMin11() { 21.min(11); }
-Int iMinN10() { (-10).min(20); }
-Int iMinN9() { 10.min(-9); }
-Int iMax20() { 10.max(20); }
-Int iMax11() { 11.max(9); }
-Int iMax23() { 23.max(-20); }
-Int iMax22() { (-10).max(22); }
-Int iNegN2() { -(2); }
+Bool iLessF() { 20i < 10i; }
+Bool iLessT() { 20i < 21i; }
+Bool iLessEqF() { 20i <= 19i; }
+Bool iLessEqT() { 20i <= 20i; }
+Bool iGreaterF() { 20i > 30i; }
+Bool iGreaterT() { 20i > 10i; }
+Bool iGreaterEqF() { 20i >= 21i; }
+Bool iGreaterEqT() { 20i >= 20i; }
+Bool iEqF() { 20i == 22i; }
+Bool iEqT() { 20i == 20i; }
+Bool iNeqF() { 20i != 20i; }
+Bool iNeqT() { 20i != 22i; }
+Int iDelta10() { 20i.delta(30i); }
+Int iDelta11() { 20i.delta(9i); }
+Int iDelta50() { 20i.delta(-30i); }
+Int iDelta29() { (-20i).delta(9i); }
+Int iMin10() { 10i.min(20i); }
+Int iMin11() { 21i.min(11i); }
+Int iMinN10() { (-10i).min(20i); }
+Int iMinN9() { 10i.min(-9i); }
+Int iMax20() { 10i.max(20i); }
+Int iMax11() { 11i.max(9i); }
+Int iMax23() { 23i.max(-20i); }
+Int iMax22() { (-10i).max(22i); }
+Int iNegN2() { -(2i); }
 
 // Nat
 Nat nConst21() { 21; }
-Nat nAdd22() { 20.nat + 2.nat; }
-Nat nSub10() { 15.nat - 5.nat; }
-Nat nMul10() { 2.nat * 5.nat; }
-Nat nDiv6() { 12.nat / 2.nat; }
-Nat nMod2() { 12.nat % 10.nat; }
+Nat nConst22() { 22n; }
+Nat nAdd22() { 20n + 2n; }
+Nat nSub10() { 15n - 5n; }
+Nat nMul10() { 2n * 5n; }
+Nat nDiv6() { 12n / 2n; }
+Nat nMod2() { 12n % 10n; }
 Nat nInc1() { Nat i = 0; i += 1; i; }
 Nat nDec1() { Nat i = 6; i -= 5; i; }
 Nat nInc8() { Nat i = 6; i++; ++i; }
@@ -57,32 +59,33 @@ Nat nInc7() { Nat i = 6; ++i; i++; }
 Nat nDec4() { Nat i = 6; i--; --i; }
 Nat nDec5() { Nat i = 6; --i; i--; }
 Nat nAssign12() { Nat i = 12; Nat j = 5; j = i; j; }
-Bool nLessF() { 20.nat < 10.nat; }
-Bool nLessT() { 20.nat < 21.nat; }
-Bool nLessEqF() { 20.nat <= 19.nat; }
-Bool nLessEqT() { 20.nat <= 20.nat; }
-Bool nGreaterF() { 20.nat > 30.nat; }
-Bool nGreaterT() { 20.nat > 10.nat; }
-Bool nGreaterEqF() { 20.nat >= 21.nat; }
-Bool nGreaterEqT() { 20.nat >= 20.nat; }
-Bool nEqF() { 20.nat == 22.nat; }
-Bool nEqT() { 20.nat == 20.nat; }
-Bool nNeqF() { 20.nat != 20.nat; }
-Bool nNeqT() { 20.nat != 22.nat; }
-Nat nDelta10() { 20.nat.delta(30.nat); }
-Nat nDelta11() { 20.nat.delta(9.nat); }
-Nat nMin10() { 10.nat.min(20.nat); }
-Nat nMin11() { 21.nat.min(11.nat); }
-Nat nMax20() { 10.nat.max(20.nat); }
-Nat nMax11() { 11.nat.max(9.nat); }
+Bool nLessF() { 20n < 10n; }
+Bool nLessT() { 20n < 21n; }
+Bool nLessEqF() { 20n <= 19n; }
+Bool nLessEqT() { 20n <= 20n; }
+Bool nGreaterF() { 20n > 30n; }
+Bool nGreaterT() { 20n > 10n; }
+Bool nGreaterEqF() { 20n >= 21n; }
+Bool nGreaterEqT() { 20n >= 20n; }
+Bool nEqF() { 20n == 22n; }
+Bool nEqT() { 20n == 20n; }
+Bool nNeqF() { 20n != 20n; }
+Bool nNeqT() { 20n != 22n; }
+Nat nDelta10() { 20n.delta(30n); }
+Nat nDelta11() { 20n.delta(9n); }
+Nat nMin10() { 10n.min(20n); }
+Nat nMin11() { 21n.min(11n); }
+Nat nMax20() { 10n.max(20n); }
+Nat nMax11() { 11n.max(9n); }
 
 // Byte
 Byte bConst22() { 22; }
-Byte bAdd23() { 21.byte + 2.byte; }
-Byte bSub11() { 15.byte - 4.byte; }
-Byte bMul10() { 2.byte * 5.byte; }
-Byte bDiv7() { 15.byte / 2.byte; }
-Byte bMod5() { 15.byte % 10.byte; }
+Byte bConst23() { 23b; }
+Byte bAdd23() { 21b + 2b; }
+Byte bSub11() { 15b - 4b; }
+Byte bMul10() { 2b * 5b; }
+Byte bDiv7() { 15b / 2b; }
+Byte bMod5() { 15b % 10b; }
 Byte bInc2() { Byte i = 0; i += 2; i; }
 Byte bDec2() { Byte i = 6; i -= 4; i; }
 Byte bInc18() { Byte i = 16; i++; ++i; }
@@ -90,32 +93,33 @@ Byte bInc17() { Byte i = 16; ++i; i++; }
 Byte bDec14() { Byte i = 16; i--; --i; }
 Byte bDec15() { Byte i = 16; --i; i--; }
 Byte bAssign13() { Byte i = 13; Byte j = 5; j = i; j; }
-Bool bLessF() { 20.byte < 10.byte; }
-Bool bLessT() { 20.byte < 21.byte; }
-Bool bLessEqF() { 20.byte <= 19.byte; }
-Bool bLessEqT() { 20.byte <= 20.byte; }
-Bool bGreaterF() { 20.byte > 30.byte; }
-Bool bGreaterT() { 20.byte > 10.byte; }
-Bool bGreaterEqF() { 20.byte >= 21.byte; }
-Bool bGreaterEqT() { 20.byte >= 20.byte; }
-Bool bEqF() { 20.byte == 22.byte; }
-Bool bEqT() { 20.byte == 20.byte; }
-Bool bNeqF() { 20.byte != 20.byte; }
-Bool bNeqT() { 20.byte != 22.byte; }
-Byte bDelta10() { 20.byte.delta(30.byte); }
-Byte bDelta11() { 20.byte.delta(9.byte); }
-Byte bMin10() { 10.byte.min(20.byte); }
-Byte bMin11() { 21.byte.min(11.byte); }
-Byte bMax20() { 10.byte.max(20.byte); }
-Byte bMax11() { 11.byte.max(9.byte); }
+Bool bLessF() { 20b < 10b; }
+Bool bLessT() { 20b < 21b; }
+Bool bLessEqF() { 20b <= 19b; }
+Bool bLessEqT() { 20b <= 20b; }
+Bool bGreaterF() { 20b > 30b; }
+Bool bGreaterT() { 20b > 10b; }
+Bool bGreaterEqF() { 20b >= 21b; }
+Bool bGreaterEqT() { 20b >= 20b; }
+Bool bEqF() { 20b == 22b; }
+Bool bEqT() { 20b == 20b; }
+Bool bNeqF() { 20b != 20b; }
+Bool bNeqT() { 20b != 22b; }
+Byte bDelta10() { 20b.delta(30b); }
+Byte bDelta11() { 20b.delta(9b); }
+Byte bMin10() { 10b.min(20b); }
+Byte bMin11() { 21b.min(11b); }
+Byte bMax20() { 10b.max(20b); }
+Byte bMax11() { 11b.max(9b); }
 
 // Long
 Long lConst31() { 31; }
-Long lAdd32() { 30.long + 2.long; }
-Long lSub20() { 25.long - 5.long; }
-Long lMul20() { 4.long * 5.long; }
-Long lDiv60() { 120.long / 2.long; }
-Long lMod20() { 120.long % 100.long; }
+Long lConst32() { 32l; }
+Long lAdd32() { 30l + 2l; }
+Long lSub20() { 25l - 5l; }
+Long lMul20() { 4l * 5l; }
+Long lDiv60() { 120l / 2l; }
+Long lMod20() { 120l % 100l; }
 Long lInc14() { Long i = 10; i += 4; i; }
 Long lDec16() { Long i = 18; i -= 2; i; }
 Long lInc28() { Long i = 26; i++; ++i; }
@@ -123,39 +127,40 @@ Long lInc27() { Long i = 26; ++i; i++; }
 Long lDec24() { Long i = 26; i--; --i; }
 Long lDec25() { Long i = 26; --i; i--; }
 Long lAssign22() { Long i = 22; Long j = 5; j = i; j; }
-Bool lLessF() { 20.long < 10.long; }
-Bool lLessT() { 20.long < 21.long; }
-Bool lLessEqF() { 20.long <= 19.long; }
-Bool lLessEqT() { 20.long <= 20.long; }
-Bool lGreaterF() { 20.long > 30.long; }
-Bool lGreaterT() { 20.long > 10.long; }
-Bool lGreaterEqF() { 20.long >= 21.long; }
-Bool lGreaterEqT() { 20.long >= 20.long; }
-Bool lEqF() { 20.long == 22.long; }
-Bool lEqT() { 20.long == 20.long; }
-Bool lNeqF() { 20.long != 20.long; }
-Bool lNeqT() { 20.long != 22.long; }
-Long lDelta10() { 20.long.delta(30.long); }
-Long lDelta11() { 20.long.delta(9.long); }
-Long lDelta50() { 20.long.delta(-30.long); }
-Long lDelta29() { (-20).long.delta(9.long); }
-Long lMin10() { 10.long.min(20.long); }
-Long lMin11() { 21.long.min(11.long); }
-Long lMinN10() { (-10).long.min(20.long); }
-Long lMinN9() { 10.long.min(-9.long); }
-Long lMax20() { 10.long.max(20.long); }
-Long lMax11() { 11.long.max(9.long); }
-Long lMax23() { 23.long.max(-20.long); }
-Long lMax22() { (-10).long.max(22.long); }
-Long lNegN2() { -(2); }
+Bool lLessF() { 20l < 10l; }
+Bool lLessT() { 20l < 21l; }
+Bool lLessEqF() { 20l <= 19l; }
+Bool lLessEqT() { 20l <= 20l; }
+Bool lGreaterF() { 20l > 30l; }
+Bool lGreaterT() { 20l > 10l; }
+Bool lGreaterEqF() { 20l >= 21l; }
+Bool lGreaterEqT() { 20l >= 20l; }
+Bool lEqF() { 20l == 22l; }
+Bool lEqT() { 20l == 20l; }
+Bool lNeqF() { 20l != 20l; }
+Bool lNeqT() { 20l != 22l; }
+Long lDelta10() { 20l.delta(30l); }
+Long lDelta11() { 20l.delta(9l); }
+Long lDelta50() { 20l.delta(-30l); }
+Long lDelta29() { (-20l).delta(9l); }
+Long lMin10() { 10l.min(20l); }
+Long lMin11() { 21l.min(11l); }
+Long lMinN10() { (-10l).min(20l); }
+Long lMinN9() { 10l.min(-9l); }
+Long lMax20() { 10l.max(20l); }
+Long lMax11() { 11l.max(9l); }
+Long lMax23() { 23l.max(-20l); }
+Long lMax22() { (-10l).max(22l); }
+Long lNegN2() { -(2l); }
 
 // Word
 Word wConst131() { 131; }
-Word wAdd132() { 130.word + 2.word; }
-Word wSub120() { 125.word - 5.word; }
-Word wMul120() { 24.word * 5.word; }
-Word wDiv160() { 320.word / 2.word; }
-Word wMod120() { 1120.word % 1000.word; }
+Word wConst123() { 123w; }
+Word wAdd132() { 130w + 2w; }
+Word wSub120() { 125w - 5w; }
+Word wMul120() { 24w * 5w; }
+Word wDiv160() { 320w / 2w; }
+Word wMod120() { 1120w % 1000w; }
 Word wInc114() { Word i = 110; i += 4; i; }
 Word wDec116() { Word i = 118; i -= 2; i; }
 Word wInc128() { Word i = 126; i++; ++i; }
@@ -163,83 +168,124 @@ Word wInc127() { Word i = 126; ++i; i++; }
 Word wDec124() { Word i = 126; i--; --i; }
 Word wDec125() { Word i = 126; --i; i--; }
 Word wAssign122() { Word i = 122; Word j = 5; j = i; j; }
-Bool wLessF() { 20.word < 10.word; }
-Bool wLessT() { 20.word < 21.word; }
-Bool wLessEqF() { 20.word <= 19.word; }
-Bool wLessEqT() { 20.word <= 20.word; }
-Bool wGreaterF() { 20.word > 30.word; }
-Bool wGreaterT() { 20.word > 10.word; }
-Bool wGreaterEqF() { 20.word >= 21.word; }
-Bool wGreaterEqT() { 20.word >= 20.word; }
-Bool wEqF() { 20.word == 22.word; }
-Bool wEqT() { 20.word == 20.word; }
-Bool wNeqF() { 20.word != 20.word; }
-Bool wNeqT() { 20.word != 22.word; }
-Word wDelta10() { 20.word.delta(30.word); }
-Word wDelta11() { 20.word.delta(9.word); }
-Word wMin10() { 10.word.min(20.word); }
-Word wMin11() { 21.word.min(11.word); }
-Word wMax20() { 10.word.max(20.word); }
-Word wMax11() { 11.word.max(9.word); }
+Bool wLessF() { 20w < 10w; }
+Bool wLessT() { 20w < 21w; }
+Bool wLessEqF() { 20w <= 19w; }
+Bool wLessEqT() { 20w <= 20w; }
+Bool wGreaterF() { 20w > 30w; }
+Bool wGreaterT() { 20w > 10w; }
+Bool wGreaterEqF() { 20w >= 21w; }
+Bool wGreaterEqT() { 20w >= 20w; }
+Bool wEqF() { 20w == 22w; }
+Bool wEqT() { 20w == 20w; }
+Bool wNeqF() { 20w != 20w; }
+Bool wNeqT() { 20w != 22w; }
+Word wDelta10() { 20w.delta(30w); }
+Word wDelta11() { 20w.delta(9w); }
+Word wMin10() { 10w.min(20w); }
+Word wMin11() { 21w.min(11w); }
+Word wMax20() { 10w.max(20w); }
+Word wMax11() { 11w.max(9w); }
 
 // Float
 Float fConst120() { 120; }
 Float fConst121() { 121.0; }
-Float fAdd124() { 123.5 + 0.5; }
-Float fSub100() { 120.5 - 20.5; }
-Float fMul20() { 8.0 * 2.5; }
-Float fDiv8() { 20.0 / 2.5; }
+Float fConst122() { 122f; }
+Float fConst123() { 123.0f; }
+Float fAdd124() { 123.5f + 0.5f; }
+Float fSub100() { 120.5f - 20.5f; }
+Float fMul20() { 8.0f * 2.5f; }
+Float fDiv8() { 20.0f / 2.5f; }
 Float fAssign20() { Float f = 20.0; Float g = 2.0; g = f; g; }
-Float fCall124() { fConst120() + 4.0; }
-Float fNegN81() { -(81.0); }
-Bool fLessF() { 20.0 < 10.0; }
-Bool fLessT() { 20.0 < 20.1; }
-Bool fLessEqF() { 20.0 <= 19.0; }
-Bool fLessEqT() { 20.0 <= 20.0; }
-Bool fGreaterF() { 20.0 > 30.0; }
-Bool fGreaterT() { 20.0 > 10.0; }
-Bool fGreaterEqF() { 20.0 >= 21.0; }
-Bool fGreaterEqT() { 20.0 >= 20.0; }
-Bool fEqF() { 20.0 == 20.1; }
-Bool fEqT() { 20.0 == 20.0; }
-Bool fNeqF() { 20.0 != 20.0; }
-Bool fNeqT() { 20.0 != 20.1; }
+Float fCall124() { fConst120() + 4.0f; }
+Float fNegN81() { -(81.0f); }
+Bool fLessF() { 20.0f < 10.0f; }
+Bool fLessT() { 20.0f < 20.1f; }
+Bool fLessEqF() { 20.0f <= 19.0f; }
+Bool fLessEqT() { 20.0f <= 20.0f; }
+Bool fGreaterF() { 20.0f > 30.0f; }
+Bool fGreaterT() { 20.0f > 10.0f; }
+Bool fGreaterEqF() { 20.0f >= 21.0f; }
+Bool fGreaterEqT() { 20.0f >= 20.0f; }
+Bool fEqF() { 20.0f == 20.1f; }
+Bool fEqT() { 20.0f == 20.0f; }
+Bool fNeqF() { 20.0f != 20.0f; }
+Bool fNeqT() { 20.0f != 20.1f; }
+
+// Double
+Double dConst120() { 120; }
+Double dConst121() { 121.0; }
+Double dConst122() { 122d; }
+Double dConst123() { 123.0d; }
+Double dAdd124() { 123.5d + 0.5d; }
+Double dSub100() { 120.5d - 20.5d; }
+Double dMul20() { 8.0d * 2.5d; }
+Double dDiv8() { 20.0d / 2.5d; }
+Double dAssign20() { Double f = 20.0; Double g = 2.0; g = f; g; }
+Double dCall124() { dConst120() + 4.0; }
+Double dNegN81() { -(81.0d); }
+Bool dLessF() { 20.0d < 10.0d; }
+Bool dLessT() { 20.0d < 20.1d; }
+Bool dLessEqF() { 20.0d <= 19.0d; }
+Bool dLessEqT() { 20.0d <= 20.0d; }
+Bool dGreaterF() { 20.0d > 30.0d; }
+Bool dGreaterT() { 20.0d > 10.0d; }
+Bool dGreaterEqF() { 20.0d >= 21.0d; }
+Bool dGreaterEqT() { 20.0d >= 20.0d; }
+Bool dEqF() { 20.0d == 20.1d; }
+Bool dEqT() { 20.0d == 20.0d; }
+Bool dNeqF() { 20.0d != 20.0d; }
+Bool dNeqT() { 20.0d != 20.1d; }
 
 // Conversion tests.
 // Int ->
-Byte intByte20() { 20.byte; }
-Nat intNat20() { 20.nat; }
-Long intLong20() { 20.long; }
-Word intWord20() { 20.word; }
+Byte intByte20() { 20i.byte; }
+Nat intNat20() { 20i.nat; }
+Long intLong20() { 20i.long; }
+Word intWord20() { 20i.word; }
+Float intFloat20() { 20i.float; }
+Double intDouble20() { 20i.double; }
 Byte autoIntByte20() { 20; }
 Nat autoIntNat20() { 20; }
 Long autoIntLong20() { 20; }
 Word autoIntWord20() { 20; }
-Long autoIntLong12() { 12.nat.int; }
+Long autoIntLong12() { 12n.int; }
+Float autoIntFloat20() { 20; }
+Double autoIntDouble20() { 20; }
 
 // Nat ->
-Byte natByte20() { 20.nat.byte; }
-Int natInt20() { 20.nat.int; }
-Long natLong20() { 20.nat.long; }
-Word natWord20() { 20.nat.word; }
-Word autoNatWord12() { 12.nat; }
+Byte natByte20() { 20n.byte; }
+Int natInt20() { 20n.int; }
+Long natLong20() { 20n.long; }
+Word natWord20() { 20n.word; }
+Word autoNatWord12() { 12n; }
 
 // Byte ->
-Int byteInt20() { 20.byte.int; }
-Nat byteNat20() { 20.byte.nat; }
-Long byteLong20() { 20.byte.long; }
-Word byteWord20() { 20.byte.word; }
-Nat autoByteNat20() { 20.byte; }
-Word autoByteWord20() { 20.byte; }
+Int byteInt20() { 20b.int; }
+Nat byteNat20() { 20b.nat; }
+Long byteLong20() { 20b.long; }
+Word byteWord20() { 20b.word; }
+Nat autoByteNat20() { 20b; }
+Word autoByteWord20() { 20b; }
 
 // Long ->
-Byte longByte20() { 20.long.byte; }
-Int longInt20() { 20.long.int; }
-Nat longNat20() { 20.long.nat; }
-Word longWord20() { 20.long.word; }
+Byte longByte20() { 20l.byte; }
+Int longInt20() { 20l.int; }
+Nat longNat20() { 20l.nat; }
+Word longWord20() { 20l.word; }
+Float longFloat20() { 20l.float; }
+Double longDouble20() { 20l.double; }
 
 // Word ->
-Byte wordByte20() { 20.word.byte; }
-Int wordInt20() { 20.word.int; }
-Nat wordNat20() { 20.word.nat; }
-Long wordLong20() { 20.word.long; }
+Byte wordByte20() { 20w.byte; }
+Int wordInt20() { 20w.int; }
+Nat wordNat20() { 20w.nat; }
+Long wordLong20() { 20w.long; }
+
+// Float ->
+Int floatInt23() { 23.0f.int; }
+Long floatLong32() { 32.0f.long; }
+
+// Double ->
+Int doubleInt23() { 23.0d.int; }
+Long doubleLong32() { 32.0d.long; }

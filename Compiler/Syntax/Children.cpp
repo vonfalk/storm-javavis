@@ -167,7 +167,7 @@ namespace storm {
 			Var *i = new (this) Var(forBlock,
 									Value(StormInfo<Nat>::type(e)),
 									new (e) syntax::SStr(S("_i")),
-									new (this) Constant(pos, 0));
+									new (this) NumLiteral(pos, 0));
 			Expr *readI = new (this) LocalVarAccess(pos, i->var);
 			forBlock->add(i);
 

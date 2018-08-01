@@ -13,12 +13,13 @@
     but the scale of the issue should be assessed first.
   - [ ] Parsing core.lang.syntax.bnf takes about 80 ms, which is a bit on the high end when compiling code...
 
-* Loose ends so far [32/55]
+* Loose ends so far [32/56]
   - [ ] When a .bnf-file includes another package, productions from there are not automatically visible,
     which seems unintuitive. Even though a package (perhaps containing syntax helpers) is included, its
     productions are not visible. This could probably be solved nicely with 'package exports' or a similar
     mechanism.
   - [ ] Support documentation of templates from C++.
+  - [ ] In Basic Storm, writing 1.2 currently produces a float by default. Is this desirable?
   - [ ] Lambda functions can not infer their proper type when being assigned to Maybe<T>.
   - [ ] We probably want to allow creating documentation for an entire package. Possibly by creating
     a file called 'doc.txt' or similar inside the appropriate folder.

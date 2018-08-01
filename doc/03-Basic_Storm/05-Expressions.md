@@ -19,14 +19,30 @@ Basic Storm supports the following literals:
   requires it, and the literal fits inside the target type without truncation. In some cases, it 
   is necessary to manually help the compiler by doing the casts manually. This is done by calling
   the `nat` or `byte` method on the `Int` object, like this: `1.nat`, or `nat(1)`.
-* __Reals:__ real numbers. Evaluate to the type `core:Float`. Integer numbers are automatically
-  casted to `core:Float` if possible without a loss of precision.
+* __Reals:__ real numbers. Evaluate to the type `core:Float` or `core:Double`. Integer numbers are
+  automatically casted to `core:Float` or `core:Double` if possible without a loss of precision.
 * __Booleans:__ the reserved words `true` or `false`. Evaluates to `core:Bool`.
 * __Arrays:__ enclosed in square brackets (`[]`), separated with comma (`,`). The literal may start with
   the desired type of the array followed by a colon (`:`). When the type is not entered, Basic Storm tries
   to infer the type according to the types in the array, and according to context. Arrays evaluate to an
   instance of the type `core:Array<T>`. Example: `Int:[1, 2, 3]` or `[1, 2, 3]`. Array literals are 
   implemented completely in Basic Storm, have a look at `lang:bs:array.bs`.
+
+Numeric literals may be suffixed with a lowercase letter to indicate the desired type of the
+literal. If a type is indicated in this manner, the literal will not perform automatic type casting
+(however, the numeric types allow automatic casting to a type with higher precision using auto-cast
+constructors, this is not disabled). The letter used is the first letter of the corresponding built
+in type:
+
+```
+Byte   b = 10b;
+Int    i = 10i;
+Nat    n = 10n;
+Long   l = 10l;
+Word   w = 10w;
+Float  f = 10f;
+Double d = 10d;
+```
 
 Interpolated strings
 ---------------------

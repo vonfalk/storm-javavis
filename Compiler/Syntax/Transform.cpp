@@ -202,11 +202,11 @@ namespace storm {
 
 		Expr *TransformFn::createLiteral(Str *name) {
 			if (name->isInt())
-				return new (this) Constant(pos, name->toInt());
+				return new (this) NumLiteral(pos, name->toLong());
 			if (*name == S("true"))
-				return new (this) Constant(pos, true);
+				return new (this) BoolLiteral(pos, true);
 			if (*name == S("false"))
-				return new (this) Constant(pos, false);
+				return new (this) BoolLiteral(pos, false);
 
 			return null;
 		}
@@ -286,7 +286,7 @@ namespace storm {
 				Var *i = new (this) Var(forBlock,
 										Value(StormInfo<Nat>::type(e)),
 										new (e) syntax::SStr(S("_i")),
-										new (this) Constant(this->pos, 0));
+										new (this) NumLiteral(this->pos, 0));
 				Expr *readI = new (this) LocalVarAccess(this->pos, i->var);
 				forBlock->add(i);
 
@@ -468,7 +468,7 @@ namespace storm {
 			Var *i = new (this) Var(forBlock,
 									Value(StormInfo<Nat>::type(e)),
 									new (e) syntax::SStr(S("_i")),
-									new (this) Constant(this->pos, 0));
+									new (this) NumLiteral(this->pos, 0));
 			Expr *readI = new (this) LocalVarAccess(this->pos, i->var);
 			forBlock->add(i);
 

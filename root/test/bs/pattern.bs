@@ -9,7 +9,7 @@ Expr patternExpr(Block block, Expr param) {
 		if (10 > 20) {
 			z;
 		} else {
-			10 + $param * ${Constant(SrcPos(), 20)};
+			10 + $param * ${NumLiteral(SrcPos(), 20)};
 		}
 	};
 

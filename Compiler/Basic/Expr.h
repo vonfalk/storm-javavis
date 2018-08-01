@@ -33,39 +33,18 @@ namespace storm {
 
 
 		/**
-		 * Constant (eg, number, string...).
+		 * Numeric literal.
 		 */
-		class Constant : public Expr {
+		class NumLiteral : public Expr {
 			STORM_CLASS;
 		public:
-			STORM_CTOR Constant(SrcPos pos, Int i);
-			STORM_CTOR Constant(SrcPos pos, Long i);
-			STORM_CTOR Constant(SrcPos pos, Float f);
-			STORM_CTOR Constant(SrcPos pos, Str *str);
-			STORM_CTOR Constant(SrcPos pos, Bool b);
+			STORM_CTOR NumLiteral(SrcPos pos, Int i);
+			STORM_CTOR NumLiteral(SrcPos pos, Long i);
+			STORM_CTOR NumLiteral(SrcPos pos, Double f);
 
-			// Types
-			enum CType {
-				tInt,
-				tFloat,
-				tStr,
-				tBool,
-			};
-
-			// Actual type.
-			CType cType;
-
-			// Value (if integer).
-			Long intValue;
-
-			// Value (if float).
-			Float floatValue;
-
-			// Value (if string).
-			Str *strValue;
-
-			// Value (if bool).
-			Bool boolValue;
+			// Specify type using a suffix. 'suffix' is one of the characters 'binlwfd', which each
+			// corresponds to the first letter in one of the primitive types.
+			void STORM_FN setType(Str *suffix);
 
 			// Return value.
 			virtual ExprResult STORM_FN result();
@@ -79,27 +58,79 @@ namespace storm {
 			// To string.
 			virtual void STORM_FN toS(StrBuf *to) const;
 
-		protected:
-			// Code for a string label.
-			void strCode(CodeGen *state, CodeResult *r);
+		private:
+			// Value (if integer).
+			Long intValue;
+
+			// Value (if float).
+			Double floatValue;
+
+			// Integer value?
+			Bool isInt;
+
+			// Specified type (if any).
+			MAYBE(Type *) type;
 
 			// Code for an int label.
 			void intCode(CodeGen *state, CodeResult *r);
 
 			// Code for a float label.
 			void floatCode(CodeGen *state, CodeResult *r);
-
-			// Code for a bool label.
-			void boolCode(CodeGen *state, CodeResult *r);
 		};
 
-		Constant *STORM_FN intConstant(SrcPos pos, Str *str);
-		Constant *STORM_FN strConstant(syntax::SStr *str);
-		Constant *STORM_FN strConstant(SrcPos pos, Str *str);
-		Constant *STORM_FN rawStrConstant(SrcPos pos, Str *str);
-		Constant *STORM_FN floatConstant(SrcPos pos, Str *str);
-		Constant *STORM_FN trueConstant(EnginePtr e, SrcPos pos);
-		Constant *STORM_FN falseConstant(EnginePtr e, SrcPos pos);
+		NumLiteral *STORM_FN intConstant(SrcPos pos, Str *str);
+		NumLiteral *STORM_FN floatConstant(SrcPos pos, Str *str);
+
+		/**
+		 * String literal.
+		 */
+		class StrLiteral : public Expr {
+			STORM_CLASS;
+		public:
+			// Create.
+			STORM_CTOR StrLiteral(SrcPos pos, Str *str);
+
+			// Return value.
+			virtual ExprResult STORM_FN result();
+
+			// Generate code.
+			virtual void STORM_FN code(CodeGen *state, CodeResult *r);
+
+			// To string.
+			virtual void STORM_FN toS(StrBuf *to) const;
+
+		private:
+			// Value.
+			Str *value;
+		};
+
+		StrLiteral *STORM_FN strConstant(syntax::SStr *str);
+		StrLiteral *STORM_FN strConstant(SrcPos pos, Str *str);
+		StrLiteral *STORM_FN rawStrConstant(SrcPos pos, Str *str);
+
+		/**
+		 * Boolean literal.
+		 */
+		class BoolLiteral : public Expr {
+			STORM_CLASS;
+		public:
+			// Create.
+			STORM_CTOR BoolLiteral(SrcPos pos, Bool value);
+
+			// Return value.
+			virtual ExprResult STORM_FN result();
+
+			// Generate code.
+			virtual void STORM_FN code(CodeGen *state, CodeResult *r);
+
+			// To string.
+			virtual void STORM_FN toS(StrBuf *to) const;
+
+		private:
+			// Value.
+			Bool value;
+		};
+
 
 		/**
 		 * Dummy expression, tells that we're returning a value of a specific type, but will not

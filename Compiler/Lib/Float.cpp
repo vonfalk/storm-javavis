@@ -75,11 +75,20 @@ namespace storm {
 				*p.state->l << mov(p.result->location(p.state).v, dest);
 	}
 
+	// Note: Can be used for 'double' or 'float' -> 'int' or 'long'.
 	static void floatToInt(InlineParams p) {
 		if (!p.result->needed())
 			return;
 		*p.state->l << fld(p.param(0));
 		*p.state->l << fistp(p.result->location(p.state).v);
+	}
+
+	// Note: Can be used for both 'double' and 'float'.
+	static void floatToFloat(InlineParams p) {
+		if (!p.result->needed())
+			return;
+		*p.state->l << fld(p.param(0));
+		*p.state->l << fstp(p.result->location(p.state).v);
 	}
 
 	template <CondFlag f>
@@ -130,6 +139,10 @@ namespace storm {
 
 		Value vInt = Value(StormInfo<Int>::type(engine));
 		add(inlinedFunction(engine, vInt, S("int"), v, fnPtr(engine, &floatToInt))->makePure());
+		Value vLong = Value(StormInfo<Long>::type(engine));
+		add(inlinedFunction(engine, vLong, S("long"), v, fnPtr(engine, &floatToInt))->makePure());
+		Value vDouble = Value(StormInfo<Double>::type(engine));
+		add(inlinedFunction(engine, vDouble, S("double"), v, fnPtr(engine, &floatToFloat))->makePure());
 
 		add(nativeFunction(engine, Value(this), S("min"), vv, address(&floatMin))->makePure());
 		add(nativeFunction(engine, Value(this), S("max"), vv, address(&floatMax))->makePure());
@@ -208,13 +221,6 @@ namespace storm {
 			}
 	}
 
-	static void doubleToInt(InlineParams p) {
-		if (!p.result->needed())
-			return;
-		*p.state->l << fld(p.param(0));
-		*p.state->l << fistp(p.result->location(p.state).v);
-	}
-
 	template <CondFlag f>
 	static void doubleCmp(InlineParams p) {
 		if (p.result->needed()) {
@@ -271,9 +277,11 @@ namespace storm {
 		add(inlinedFunction(engine, Value(), Type::CTOR, rf, fnPtr(engine, &castDouble))->makeAutoCast()->makePure());
 
 		Value vInt = Value(StormInfo<Int>::type(engine));
-		add(inlinedFunction(engine, vInt, S("int"), v, fnPtr(engine, &doubleToInt))->makePure());
+		add(inlinedFunction(engine, vInt, S("int"), v, fnPtr(engine, &floatToInt))->makePure());
 		Value vLong = Value(StormInfo<Long>::type(engine));
-		add(inlinedFunction(engine, vLong, S("long"), v, fnPtr(engine, &doubleToInt))->makePure()); // We can use the same function here!
+		add(inlinedFunction(engine, vLong, S("long"), v, fnPtr(engine, &floatToInt))->makePure()); // We can use the same function here!
+		Value vFloat = Value(StormInfo<Float>::type(engine));
+		add(inlinedFunction(engine, vFloat, S("float"), v, fnPtr(engine, &floatToFloat))->makePure());
 
 		add(nativeFunction(engine, Value(this), S("min"), vv, address(&doubleMin))->makePure());
 		add(nativeFunction(engine, Value(this), S("max"), vv, address(&doubleMax))->makePure());

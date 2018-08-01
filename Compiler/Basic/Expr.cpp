@@ -1,7 +1,8 @@
 #include "stdafx.h"
 #include "Expr.h"
 #include "Core/Str.h"
-#include "Exception.h"
+#include "Compiler/Exception.h"
+#include "Compiler/Type.h"
 
 namespace storm {
 	namespace bs {
@@ -20,112 +21,134 @@ namespace storm {
 			return -1;
 		}
 
-		Constant::Constant(SrcPos pos, Int v) : Expr(pos), cType(tInt), intValue(v) {}
+		/**
+		 * Numeric literals.
+		 */
 
-		Constant::Constant(SrcPos pos, Long v) : Expr(pos), cType(tInt), intValue(v) {}
+		NumLiteral::NumLiteral(SrcPos pos, Int v) : Expr(pos), intValue(v), isInt(true) {}
 
-		Constant::Constant(SrcPos pos, Float v) : Expr(pos), cType(tFloat), floatValue(v) {}
+		NumLiteral::NumLiteral(SrcPos pos, Long v) : Expr(pos), intValue(v), isInt(true) {}
 
-		Constant::Constant(SrcPos pos, Str *v) : Expr(pos), cType(tStr), strValue(v) {}
+		NumLiteral::NumLiteral(SrcPos pos, Double v) : Expr(pos), floatValue(v), isInt(false) {}
 
-		Constant::Constant(SrcPos pos, Bool v) : Expr(pos), cType(tBool), boolValue(v) {}
+		void NumLiteral::setType(Str *suffix) {
+			Str::Iter b = suffix->begin();
+			if (b == suffix->end())
+				throw InternalError(L"Suffixes passed to NumLiteral may not be empty.");
+			Char ch = *b;
+			if (++b != suffix->end())
+				throw InternalError(L"Suffixes passed to NumLiteral must be exactly one character long!");
 
-		void Constant::toS(StrBuf *to) const {
-			switch (cType) {
-			case tInt:
-				*to << intValue << S("i");
-				break;
-			case tFloat:
-				*to << floatValue << S("f");
-				break;
-			case tStr:
-				*to << S("\"") << strValue->escape() << S("\"");
-				break;
-			case tBool:
-				*to << (boolValue ? S("true") : S("false"));
-				break;
-			default:
-				*to << S("UNKNOWN");
-				break;
+			if (isInt) {
+				switch (ch.codepoint()) {
+				case 'b':
+					type = StormInfo<Byte>::type(engine());
+					break;
+				case 'i':
+					type = StormInfo<Int>::type(engine());
+					break;
+				case 'n':
+					type = StormInfo<Nat>::type(engine());
+					break;
+				case 'l':
+					type = StormInfo<Long>::type(engine());
+					break;
+				case 'w':
+					type = StormInfo<Word>::type(engine());
+					break;
+				case 'f':
+					type = StormInfo<Float>::type(engine());
+					break;
+				case 'd':
+					type = StormInfo<Double>::type(engine());
+					break;
+				default:
+					throw SyntaxError(pos, L"Invalid suffix: " + ::toS(suffix));
+				}
+			} else {
+				switch (ch.codepoint()) {
+				case 'f':
+					type = StormInfo<Float>::type(engine());
+					break;
+				case 'd':
+					type = StormInfo<Double>::type(engine());
+					break;
+				default:
+					throw SyntaxError(pos, L"Invalid suffix: " + ::toS(suffix));
+				}
 			}
 		}
 
-		ExprResult Constant::result() {
-			switch (cType) {
-			case tInt:
+		void NumLiteral::toS(StrBuf *to) const {
+			if (isInt) {
+				*to << intValue;
+			} else {
+				*to << floatValue;
+			}
+
+			if (type)
+				*to << S(" (") << type->name << S(")");
+		}
+
+		ExprResult NumLiteral::result() {
+			if (type)
+				return Value(type);
+
+			if (isInt)
 				return Value(StormInfo<Int>::type(engine()));
-			case tFloat:
+			else
 				return Value(StormInfo<Float>::type(engine()));
-			case tStr:
-				return Value(StormInfo<Str>::type(engine()));
-			case tBool:
-				return Value(StormInfo<Bool>::type(engine()));
-			default:
-				TODO("Implement missing type");
-				return Value();
-			}
 		}
 
-		Int Constant::castPenalty(Value to) {
-			if (cType != tInt)
+		Int NumLiteral::castPenalty(Value to) {
+			if (type)
 				return -1;
 
 			if (to.ref)
 				return -1;
 
-			// Prefer bigger types if multiple are possible.
 			Engine &e = engine();
-			if (to.type == StormInfo<Long>::type(e))
-				return 1;
-			if (to.type == StormInfo<Word>::type(e))
-				return 1;
-			if (to.type == StormInfo<Int>::type(e) && (abs(intValue) & 0x7FFFFFFF) == abs(intValue))
-				return 2;
-			if (to.type == StormInfo<Nat>::type(e) && (intValue & 0xFFFFFFFF) == intValue)
-				return 2;
-			if (to.type == StormInfo<Byte>::type(e) && (intValue & 0xFF) == intValue)
-				return 3;
-			if (to.type == StormInfo<Float>::type(e) && (abs(intValue) & 0xFFFF) == abs(intValue))
-				// We allow up to 16 bits to automatically cast.
-				return 3;
+
+			if (isInt) {
+				// Prefer bigger types if multiple are possible.
+				if (to.type == StormInfo<Long>::type(e))
+					return 1;
+				if (to.type == StormInfo<Word>::type(e))
+					return 1;
+				if (to.type == StormInfo<Int>::type(e) && (abs(intValue) & 0x7FFFFFFF) == abs(intValue))
+					return 2;
+				if (to.type == StormInfo<Nat>::type(e) && (intValue & 0xFFFFFFFF) == intValue)
+					return 2;
+				if (to.type == StormInfo<Byte>::type(e) && (intValue & 0xFF) == intValue)
+					return 3;
+				if (to.type == StormInfo<Double>::type(e) && (abs(intValue) & 0x3FFFFFFFFFFFF) == abs(intValue))
+					// We allow up to 52 bits to automatically cast.
+					return 3;
+				if (to.type == StormInfo<Float>::type(e) && (abs(intValue) & 0xFFFF) == abs(intValue))
+					// We allow up to 16 bits to automatically cast.
+					return 4;
+			} else {
+				// We're fine with using doubles as well.
+				if (to.type == StormInfo<Double>::type(e))
+					return 1;
+			}
 
 			return -1;
 		}
 
-		void Constant::code(CodeGen *s, CodeResult *r) {
+		void NumLiteral::code(CodeGen *s, CodeResult *r) {
 			using namespace code;
 
 			if (!r->needed())
 				return;
 
-			switch (cType) {
-			case tInt:
+			if (isInt)
 				intCode(s, r);
-				break;
-			case tFloat:
+			else
 				floatCode(s, r);
-				break;
-			case tStr:
-				strCode(s, r);
-				break;
-			case tBool:
-				boolCode(s, r);
-				break;
-			default:
-				TODO("Implement missing type");
-				break;
-			}
 		}
 
-		void Constant::strCode(CodeGen *s, CodeResult *r) {
-			using namespace code;
-
-			// We can store the string as an object inside the code.
-			VarInfo to = r->location(s);
-			*s->l << mov(to.v, objPtr(strValue));
-		}
-
-		void Constant::intCode(CodeGen *s, CodeResult *r) {
+		void NumLiteral::intCode(CodeGen *s, CodeResult *r) {
 			using namespace code;
 
 			VarInfo to = r->location(s);
@@ -140,6 +163,8 @@ namespace storm {
 				*s->l << mov(to.v, byteConst(byte(intValue)));
 			else if (t == StormInfo<Float>::type(e))
 				*s->l << mov(to.v, floatConst(float(intValue)));
+			else if (t == StormInfo<Double>::type(e))
+				*s->l << mov(to.v, doubleConst(double(intValue)));
 			else if (t == StormInfo<Long>::type(e))
 				*s->l << mov(to.v, longConst(Long(intValue)));
 			else if (t == StormInfo<Word>::type(e))
@@ -150,54 +175,92 @@ namespace storm {
 			to.created(s);
 		}
 
-		void Constant::floatCode(CodeGen *s, CodeResult *r) {
+		void NumLiteral::floatCode(CodeGen *s, CodeResult *r) {
 			using namespace code;
 
 			VarInfo to = r->location(s);
 			Type *t = r->type().type;
 			Engine &e = engine();
-			assert(t == StormInfo<Float>::type(e), L"Unknown type for a float constant.");
-
-			*s->l << mov(to.v, floatConst(float(floatValue)));
+			if (t == StormInfo<Float>::type(e))
+				*s->l << mov(to.v, floatConst(float(floatValue)));
+			else if (t == StormInfo<Double>::type(e))
+				*s->l << mov(to.v, doubleConst(floatValue));
+			else
+				assert(false, L"Unknown type for a float constant.");
 
 			to.created(s);
 		}
 
-		void Constant::boolCode(CodeGen *s, CodeResult *r) {
-			using namespace code;
 
+		NumLiteral *intConstant(SrcPos pos, Str *v) {
+			return new (v) NumLiteral(pos, v->toLong());
+		}
+
+		NumLiteral *floatConstant(SrcPos pos, Str *v) {
+			return new (v) NumLiteral(pos, v->toDouble());
+		}
+
+		/**
+		 * String literals.
+		 */
+
+		StrLiteral::StrLiteral(SrcPos pos, Str *value) : Expr(pos), value(value) {}
+
+		ExprResult StrLiteral::result() {
+			return Value(StormInfo<Str>::type(engine()));
+		}
+
+		void StrLiteral::code(CodeGen *s, CodeResult *r) {
+			if (!r->needed())
+				return;
+
+			// We can store the string as an object inside the code.
 			VarInfo to = r->location(s);
-			*s->l << mov(to.v, byteConst(boolValue ? 1 : 0));
+			*s->l << code::mov(to.v, code::objPtr(value));
 			to.created(s);
 		}
 
-		Constant *intConstant(SrcPos pos, Str *v) {
-			return CREATE(Constant, v->engine(), pos, v->toLong());
+		void StrLiteral::toS(StrBuf *to) const {
+			*to << S("\"") << value->escape() << S("\"");
 		}
 
-		Constant *floatConstant(SrcPos pos, Str *v) {
-			return CREATE(Constant, v->engine(), pos, v->toFloat());
-		}
 
-		Constant *strConstant(syntax::SStr *v) {
+		StrLiteral *strConstant(syntax::SStr *v) {
 			return strConstant(v->pos, v->v);
 		}
 
-		Constant *strConstant(SrcPos pos, Str *v) {
-			return CREATE(Constant, v->engine(), pos, v->unescape());
+		StrLiteral *strConstant(SrcPos pos, Str *v) {
+			return new (v) StrLiteral(pos, v->unescape());
 		}
 
-		Constant *rawStrConstant(SrcPos pos, Str *v) {
-			return CREATE(Constant, v->engine(), pos, v);
+		StrLiteral *rawStrConstant(SrcPos pos, Str *v) {
+			return new (v) StrLiteral(pos, v);
 		}
 
-		Constant *trueConstant(EnginePtr e, SrcPos pos) {
-			return CREATE(Constant, e.v, pos, true);
+
+		/**
+		 * Boolean literals.
+		 */
+
+		BoolLiteral::BoolLiteral(SrcPos pos, Bool value) : Expr(pos), value(value) {}
+
+		ExprResult BoolLiteral::result() {
+			return Value(StormInfo<Bool>::type(engine()));
 		}
 
-		Constant *falseConstant(EnginePtr e, SrcPos pos) {
-			return CREATE(Constant, e.v, pos, false);
+		void BoolLiteral::code(CodeGen *s, CodeResult *r) {
+			if (!r->needed())
+				return;
+
+			VarInfo to = r->location(s);
+			*s->l << code::mov(to.v, code::byteConst(value ? 1 : 0));
+			to.created(s);
 		}
+
+		void BoolLiteral::toS(StrBuf *to) const {
+			*to << (value ? S("true") : S("false"));
+		}
+
 
 		/**
 		 * Dummy expression.

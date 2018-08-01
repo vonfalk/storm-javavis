@@ -230,7 +230,7 @@ void setRight(SrcPos pos, InterpolatedItem item) {
 
 // Set fill character.
 void setFill(SrcPos pos, InterpolatedItem item, Str fill) {
-	var cp = Constant(pos, fill.begin.v.codepoint.long);
+	var cp = NumLiteral(pos, fill.begin.v.codepoint.long);
 	SrcName charName(pos);
 	charName.add("core");
 	charName.add("Char");
