@@ -82,7 +82,7 @@ for (k, v in names)
 ```
 
 Note that any Basic Storm expression is usable inside string interpolation. It is possible to do
-things like this, even though it is not recommended: `"8 + 20 = ${8 + 20}"` or `"${a.toS + "b",20}".
+things like this, even though it is not recommended: `"8 + 20 = ${8 + 20}"` or `"${a.toS + "b",20}"`.
 
 Function calls
 ---------------
