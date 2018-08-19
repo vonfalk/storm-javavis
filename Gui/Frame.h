@@ -45,7 +45,7 @@ namespace gui {
 #endif
 
 		// Set size.
-		virtual void STORM_FN size(Size s);
+		virtual void STORM_ASSIGN size(Size s);
 
 		// Set position.
 		virtual void STORM_ASSIGN pos(Rect r);
