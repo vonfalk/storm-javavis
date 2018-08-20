@@ -39,8 +39,9 @@ namespace storm {
 		class CodeReader : public FileReader {
 			STORM_CLASS;
 		public:
-			// Create.
-			STORM_CTOR CodeReader(FileInfo *info, Array<SrcName *> *includes);
+			// Create. If the flag 'qParser' is set in 'query', then we will not complain about
+			// non-existing packages in order to provide a better interactive experience.
+			STORM_CTOR CodeReader(FileInfo *info, Array<SrcName *> *includes, ReaderQuery query);
 
 			// Create parser.
 			virtual syntax::InfoParser *STORM_FN createParser();

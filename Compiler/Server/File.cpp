@@ -303,7 +303,7 @@ namespace storm {
 			return parse(node, root, null);
 		}
 
-		InfoNode *Part::parse(InfoNode *node, Rule *root, InfoErrors *out) {
+		InfoNode *Part::parse(InfoNode *node, Rule *root, MAYBE(InfoErrors *) out) {
 			parser->root(root);
 			Str *src = node->toS();
 			InfoErrors e = parser->parseApprox(src, path);
@@ -615,7 +615,9 @@ namespace storm {
 				Bool here = false;
 				here |= range.intersects(full);
 				// Note: 'range' can be empty, which causes problems when it lies right between two parts.
+				// If 'range' is empty and lies between two parts, pick the earliest possible part.
 				here |= range.empty() && range.from == full.from;
+				// here |= range.empty() && range.from == full.to;
 
 				if (here) {
 					// Make sure to 'clip' the range so that it fits inside 'full'.
@@ -797,7 +799,10 @@ namespace storm {
 				if (part == parts->at(i)) {
 					switch (border) {
 					case prevBorder:
-						if (i > 0)
+						// Invalidate from the previous part, if there is one.
+						if (i == 0)
+							work->post(new (this) InvalidatePart(this, 0, force));
+						else
 							work->post(new (this) InvalidatePart(this, i - 1, force));
 						break;
 					case nextBorder:

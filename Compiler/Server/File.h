@@ -113,7 +113,7 @@ namespace storm {
 
 			// Re-parse a node in the syntax tree. Returns 'null' on complete failure.
 			syntax::InfoNode *parse(syntax::InfoNode *node, syntax::Rule *root);
-			syntax::InfoNode *parse(syntax::InfoNode *node, syntax::Rule *root, syntax::InfoErrors *result);
+			syntax::InfoNode *parse(syntax::InfoNode *node, syntax::Rule *root, MAYBE(syntax::InfoErrors *) result);
 
 			// Re-parse a range in the syntax tree. Returns the range that was re-parsed and needs
 			// to be transmitted to the client again.
@@ -121,7 +121,7 @@ namespace storm {
 
 			// Traverse the parse tree and find a path to the leafmost node we might want to
 			// re-parse. Returns an empty range on complete failure for some reason.
-			Array<Node> *findParsePath(const Range &update, Nat offset, syntax::InfoNode *node);
+			MAYBE(Array<Node> *) findParsePath(const Range &update, Nat offset, syntax::InfoNode *node);
 
 			// Traverse the path and re-parse a node that looks promising. Returns the invalidated range.
 			Range parsePath(Array<Node> *path, Range changed);

@@ -50,7 +50,7 @@ namespace storm {
 				p->throwError();
 
 			Array<SrcName *> *includes = p->transform<Array<SrcName *>>();
-			return new (this) CodeReader(info->next(p->matchEnd()), includes);
+			return new (this) CodeReader(info->next(p->matchEnd()), includes, q);
 		}
 
 
@@ -58,17 +58,18 @@ namespace storm {
 		 * CodeReader.
 		 */
 
-		CodeReader::CodeReader(FileInfo *info, Array<SrcName *> *includes) : FileReader(info) {
+		CodeReader::CodeReader(FileInfo *info, Array<SrcName *> *includes, ReaderQuery query) : FileReader(info) {
 			BSLookup *lookup = new (this) BSLookup();
 			scope = Scope(info->pkg, lookup);
 
 			for (Nat i = 0; i < includes->count(); i++) {
 				SrcName *v = includes->at(i);
 				Package *p = as<Package>(engine().scope().find(v));
-				if (!p)
+				if (p)
+					addInclude(scope, p);
+				else if ((query & qParser) == 0)
+					// Only complain if we're not parsing interactively.
 					throw SyntaxError(v->pos, L"Unknown package " + ::toS(v));
-
-				addInclude(scope, p);
 			}
 		}
 
