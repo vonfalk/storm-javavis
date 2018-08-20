@@ -1,0 +1,14 @@
+use lang:bs;
+
+/**
+ * Serializable class.
+ */
+class Data : persist {
+	Int a;
+	Int b;
+}
+
+// Persist decorator
+void persist(Class c) {
+	print("Decorator: " # c);
+}
