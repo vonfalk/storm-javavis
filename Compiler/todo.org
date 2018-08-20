@@ -17,7 +17,7 @@
     but the scale of the issue should be assessed first.
   - [ ] Parsing core.lang.syntax.bnf takes about 80 ms, which is a bit on the high end when compiling code...
 
-* Loose ends so far [43/70]
+* Loose ends so far [43/71]
   - [ ] When using "unless (foo)", "foo" uses a local variable in the block as well as outside of the block,
     which makes assignments to that variable to not write to the original variable even if one would expect so.
     We should at least warn about this.
@@ -25,7 +25,7 @@
     It is not easy to keep track of the current package oneself when navigating through the hyperlinks.
   - [ ] When editing a file that uses parent requirements in the language server, and there are multiple
     valid parses for some token when context is disregarding, introducing an error regarding requirements
-    could make other valid places pick the wrong parse with regards to context. See the file 
+    could make other valid places pick the wrong parse with regards to context. See the file
     test/server/context.bs for an example of this happening.
   - [ ] When a .bnf-file includes another package, productions from there are not automatically visible,
     which seems unintuitive. Even though a package (perhaps containing syntax helpers) is included, its
@@ -34,6 +34,8 @@
   - [ ] Support documentation of templates from C++.
   - [ ] It seems like the sound library crashes during shutdown from time to time, at least on Windows.
   - [ ] In Basic Storm, writing 1.2 currently produces a float by default. Is this desirable?
+  - [ ] Allow easy creation of subtypes similar to Ada, where one can something like: type Foo is (0 .. 99).
+    Implement this as a library, eg. lang:bs:subtype
   - [ ] Lambda functions can not infer their proper type when being assigned to Maybe<T>.
   - [ ] Expose all function pointers the Engine knows about to Storm using a similar API to what is used now.
     This allows other languages to use "internal" features, for example, to access global variables properly.

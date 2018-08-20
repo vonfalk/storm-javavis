@@ -129,14 +129,20 @@ SFnDeclName => name : (SPrePostOp - "\*")@ name;
 SFnDeclName => name : ("\*" - SPrePostOp)@ name;
 
 
+// List of decorators. Specifies behaviours of components in the system (eg. classes).
+// Currently, only classes are supported. Functions and member variables will likely be supported in the future.
+void SDecorators(Class me);
+SDecorators : ;
+SDecorators : ":", SType -> decorate #keyword - (, ",", SType -> decorate #keyword)*;
+
 // Class/value.
 Class SClass(Scope env);
-SClass => createClass(pos, env, name, body) : "class" #keyword, SName name #typeName, "{" - [SClassBody@ body, ]+ "}";
-SClass => createValue(pos, env, name, body) : "value" #keyword, SName name #typeName, "{" - [SClassBody@ body, ]+ "}";
-SClass => extendClass(pos, env, name, base, body) : "class" #keyword , SName name #typeName, "extends" #keyword, SType base, "{" - [SClassBody@ body, ]+ "}";
-SClass => extendValue(pos, env, name, base, body) : "value" #keyword, SName name #typeName, "extends" #keyword, SType base, "{" - [SClassBody@ body, ]+ "}";
-SClass => threadClass(pos, env, name, thread, body) : "class" #keyword, SName name #typeName, "on" #keyword, SType thread, "{" - [SClassBody@ body, ]+ "}";
-SClass => threadClass(pos, env, name, body) : "class" #keyword, SName name #typeName, "on" #keyword, "\?", "{" - [SClassBody@ body, ]+ "}";
+SClass => createClass(pos, env, name, body) : "class" #keyword, SName name #typeName, SDecorators(me), "{" - [SClassBody@ body, ]+ "}";
+SClass => createValue(pos, env, name, body) : "value" #keyword, SName name #typeName, SDecorators(me), "{" - [SClassBody@ body, ]+ "}";
+SClass => extendClass(pos, env, name, base, body) : "class" #keyword , SName name #typeName, "extends" #keyword, SType base, SDecorators(me), "{" - [SClassBody@ body, ]+ "}";
+SClass => extendValue(pos, env, name, base, body) : "value" #keyword, SName name #typeName, "extends" #keyword, SType base, SDecorators(me), "{" - [SClassBody@ body, ]+ "}";
+SClass => threadClass(pos, env, name, thread, body) : "class" #keyword, SName name #typeName, "on" #keyword, SType thread, SDecorators(me), "{" - [SClassBody@ body, ]+ "}";
+SClass => threadClass(pos, env, name, body) : "class" #keyword, SName name #typeName, "on" #keyword, "\?", SDecorators(me), "{" - [SClassBody@ body, ]+ "}";
 
 // Named thread declaration.
 NamedThread SNamedThread();

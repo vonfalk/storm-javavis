@@ -79,6 +79,13 @@ namespace storm {
 			allowLazyLoad = true;
 		}
 
+		void Class::decorate(SrcName *decorator) {
+			if (!decorators)
+				decorators = new (this) Array<SrcName *>();
+
+			decorators->push(decorator);
+		}
+
 		Class::AddState::AddState() : ctor(false), copyCtor(false), deepCopy(false), assign(false) {}
 
 		bool Class::loadAll() {
@@ -133,6 +140,27 @@ namespace storm {
 
 			// We do not need the syntax tree anymore!
 			this->body = null;
+
+			// Call any decorators.
+			if (decorators) {
+				for (Nat i = 0; i < decorators->count(); i++) {
+					SrcName *name = decorators->at(i);
+					Name *params = name->parent();
+					params->add(new (this) SimplePart(name->last()->name, Value(Class::stormType(engine))));
+
+					Function *found = as<Function>(scope.find(params));
+					if (!found)
+						throw SyntaxError(name->pos, L"Could not find a decorator named " + ::toS(name) + L" in the current scope.");
+
+					if (found->result != Value())
+						throw SyntaxError(name->pos, L"Decorators may not return a value.");
+
+					// Call the function...
+					typedef void (*Fn)(Class *);
+					Fn fn = (Fn)found->pointer();
+					(*fn)(this);
+				}
+			}
 
 			// Super needs to be called!
 			return Type::loadAll();

@@ -37,13 +37,19 @@ namespace storm {
 			// Associated thread (if any).
 			Name *thread;
 
+			// Add a decorator.
+			void STORM_FN decorate(SrcName *decorator);
+
 		protected:
 			// Load the body lazily.
 			virtual Bool STORM_FN loadAll();
 
 		private:
 			// Body of the class.
-			syntax::Node *body;
+			MAYBE(syntax::Node *) body;
+
+			// Decorators used.
+			MAYBE(Array<SrcName *> *) decorators;
 
 			// Allowing lazy loads?
 			bool allowLazyLoad;
@@ -126,7 +132,7 @@ namespace storm {
 			// get a last chance at altering the data before we process it.
 			virtual void STORM_FN prepareItems();
 
-			// Called after 'item' is loaded but before 'wraps' are loaded.
+			// Called after 'items' are loaded but before 'wraps' are loaded.
 			virtual void STORM_FN prepareWraps();
 
 			// Owning class.
