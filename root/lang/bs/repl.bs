@@ -150,6 +150,7 @@ class ReplSandbox on Compiler {
 		print("<var> = <expr> Create a variable in the top loop");
 		print("               Regular variable definitions are also accepted");
 		print("del <var>      Delete variable <var> from the top loop");
+		print("use <package>  Import <package> into the current namespace");
 		print("help <name>    Print documentation about <name>");
 	}
 
