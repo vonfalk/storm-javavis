@@ -37,16 +37,14 @@ namespace storm {
 		IStream *from;
 
 		// Read various primitive types from the stream. Throws an exception on error.
-		Byte STORM_FN readByte();
-		Int STORM_FN readInt();
-		Nat STORM_FN readNat();
-		Long STORM_FN readLong();
-		Word STORM_FN readWord();
-		Float STORM_FN readFloat();
-		Double STORM_FN readDouble();
-
-		// TODO: Move to Str when we have support for static members.
-		Str *STORM_FN readStr();
+		// Call Int:read() etc. from Storm to access these members!
+		Byte readByte();
+		Int readInt();
+		Nat readNat();
+		Long readLong();
+		Word readWord();
+		Float readFloat();
+		Double readDouble();
 	};
 
 
@@ -74,13 +72,14 @@ namespace storm {
 		OStream *to;
 
 		// Write various primitive types to the stream. Used to implement custom serialization.
-		void STORM_FN writeByte(Byte v);
-		void STORM_FN writeInt(Int v);
-		void STORM_FN writeNat(Nat v);
-		void STORM_FN writeLong(Long v);
-		void STORM_FN writeWord(Word v);
-		void STORM_FN writeFloat(Float v);
-		void STORM_FN writeDouble(Double v);
+		// Call Int:write etc. from storm to access these members!
+		void writeByte(Byte v);
+		void writeInt(Int v);
+		void writeNat(Nat v);
+		void writeLong(Long v);
+		void writeWord(Word v);
+		void writeFloat(Float v);
+		void writeDouble(Double v);
 
 		// Indicate the start of serialization of the given object. Value types just pass the type
 		// of the object. If the function returns 'false', the object was previously serialized and
@@ -137,14 +136,15 @@ namespace storm {
 		endId = 0x00,
 
 		// Built in types.
-		byteId = 0x01,
-		intId = 0x02,
-		natId = 0x03,
-		longId = 0x04,
-		wordId = 0x05,
-		floatId = 0x06,
-		doubleId = 0x07,
-		strId = 0x08,
+		boolId = 0x01,
+		byteId = 0x02,
+		intId = 0x03,
+		natId = 0x04,
+		longId = 0x05,
+		wordId = 0x06,
+		floatId = 0x07,
+		doubleId = 0x08,
+		strId = 0x09,
 
 		// Containers.
 		arrayId = 0x10,

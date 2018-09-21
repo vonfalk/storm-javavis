@@ -3,6 +3,7 @@
 #include "Core/Array.h"
 #include "Core/Hash.h"
 #include "Core/Str.h"
+#include "Core/Io/Serialization.h"
 #include "Function.h"
 #include "Number.h"
 
@@ -20,6 +21,14 @@ namespace storm {
 
 		*p.state->l << fild(p.param(0));
 		*p.state->l << fstp(p.result->location(p.state).v);
+	}
+
+	static Int intRead(ObjIStream *from) {
+		return from->readInt();
+	}
+
+	static void intWrite(Int v, ObjOStream *to) {
+		return to->writeInt(v);
 	}
 
 	IntType::IntType(Str *name, GcType *type) : Type(name, typeValue | typeFinal, Size::sInt, type, null) {}
@@ -75,6 +84,13 @@ namespace storm {
 		add(inlinedFunction(engine, Value(this), S("max"), vv, fnPtr(engine, &numMax<Int>))->makePure());
 		add(inlinedFunction(engine, Value(this), S("delta"), vv, fnPtr(engine, &numDelta<Int>))->makePure());
 
+		Array<Value> *is = new (this) Array<Value>(1, Value(StormInfo<ObjIStream>::type(engine)));
+		add(nativeFunction(engine, Value(this), S("read"), is, address(&intRead)));
+
+		Array<Value> *os = new (this) Array<Value>(2, Value(this, false));
+		os->at(1) = Value(StormInfo<ObjOStream>::type(engine));
+		add(nativeFunction(engine, Value(), S("write"), os, address(&intWrite)));
+
 		return Type::loadAll();
 	}
 
@@ -86,6 +102,14 @@ namespace storm {
 	static void castNat(InlineParams p) {
 		p.allocRegs(0);
 		*p.state->l << ucast(intRel(p.regParam(0), Offset()), p.param(1));
+	}
+
+	static Nat natRead(ObjIStream *from) {
+		return from->readNat();
+	}
+
+	static void natWrite(Nat v, ObjOStream *to) {
+		return to->writeNat(v);
 	}
 
 	NatType::NatType(Str *name, GcType *type) : Type(name, typeValue | typeFinal, Size::sNat, type, null) {}
@@ -150,6 +174,13 @@ namespace storm {
 		add(inlinedFunction(engine, Value(this), S("min"), vv, fnPtr(engine, &numMin<Nat>))->makePure());
 		add(inlinedFunction(engine, Value(this), S("max"), vv, fnPtr(engine, &numMax<Nat>))->makePure());
 		add(inlinedFunction(engine, Value(this), S("delta"), vv, fnPtr(engine, &numDelta<Nat>))->makePure());
+
+		Array<Value> *is = new (this) Array<Value>(1, Value(StormInfo<ObjIStream>::type(engine)));
+		add(nativeFunction(engine, Value(this), S("read"), is, address(&natRead)));
+
+		Array<Value> *os = new (this) Array<Value>(2, Value(this, false));
+		os->at(1) = Value(StormInfo<ObjOStream>::type(engine));
+		add(nativeFunction(engine, Value(), S("write"), os, address(&natWrite)));
 
 		return Type::loadAll();
 	}

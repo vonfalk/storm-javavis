@@ -2,6 +2,7 @@
 #include "Float.h"
 #include "Function.h"
 #include "Number.h"
+#include "Core/Io/Serialization.h"
 
 namespace storm {
 	using namespace code;
@@ -110,6 +111,14 @@ namespace storm {
 		return max(a, b);
 	}
 
+	static Float floatRead(ObjIStream *from) {
+		return from->readFloat();
+	}
+
+	static void floatWrite(Float v, ObjOStream *to) {
+		to->writeFloat(v);
+	}
+
 	FloatType::FloatType(Str *name, GcType *type) : Type(name, typeValue | typeFinal, Size::sFloat, type, null) {}
 
 	Bool FloatType::loadAll() {
@@ -146,6 +155,13 @@ namespace storm {
 
 		add(nativeFunction(engine, Value(this), S("min"), vv, address(&floatMin))->makePure());
 		add(nativeFunction(engine, Value(this), S("max"), vv, address(&floatMax))->makePure());
+
+		Array<Value> *is = new (this) Array<Value>(1, Value(StormInfo<ObjIStream>::type(engine)));
+		add(nativeFunction(engine, Value(this), S("read"), is, address(&floatRead)));
+
+		Array<Value> *os = new (this) Array<Value>(2, Value(this, false));
+		os->at(1) = Value(StormInfo<ObjOStream>::type(engine));
+		add(nativeFunction(engine, Value(), S("write"), os, address(&floatWrite)));
 
 		return Type::loadAll();
 	}
@@ -246,6 +262,14 @@ namespace storm {
 		*p.state->l << fstp(doubleRel(p.regParam(0), Offset()));
 	}
 
+	static Double doubleRead(ObjIStream *from) {
+		return from->readDouble();
+	}
+
+	static void doubleWrite(Double v, ObjOStream *to) {
+		to->writeDouble(v);
+	}
+
 	DoubleType::DoubleType(Str *name, GcType *type) : Type(name, typeValue | typeFinal, Size::sDouble, type, null) {}
 
 	Bool DoubleType::loadAll() {
@@ -285,6 +309,13 @@ namespace storm {
 
 		add(nativeFunction(engine, Value(this), S("min"), vv, address(&doubleMin))->makePure());
 		add(nativeFunction(engine, Value(this), S("max"), vv, address(&doubleMax))->makePure());
+
+		Array<Value> *is = new (this) Array<Value>(1, Value(StormInfo<ObjIStream>::type(engine)));
+		add(nativeFunction(engine, Value(this), S("read"), is, address(&doubleRead)));
+
+		Array<Value> *os = new (this) Array<Value>(2, Value(this, false));
+		os->at(1) = Value(StormInfo<ObjOStream>::type(engine));
+		add(nativeFunction(engine, Value(), S("write"), os, address(&doubleWrite)));
 
 		return Type::loadAll();
 	}

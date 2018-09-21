@@ -92,18 +92,6 @@ namespace storm {
 		return r;
 	}
 
-	Str *ObjIStream::readStr() {
-		Nat len = readNat();
-		Buffer b = from->read(buffer(engine(), len));
-		checkBuffer(b);
-
-		GcArray<char> *dst = runtime::allocArray<char>(engine(), &byteArrayType, len + 1);
-		memcpy(&dst->v, b.dataPtr(), len);
-		dst->v[len] = 0;
-
-		return new (this) Str(toWChar(engine(), dst->v));
-	}
-
 
 	/**
 	 * ObjOStream
@@ -120,6 +108,7 @@ namespace storm {
 
 		// Insert the standard types inside 'ids', so we don't have to bother with them later.
 		Engine &e = engine();
+		typeIds->put((TObject *)StormInfo<Bool>::type(e), boolId);
 		typeIds->put((TObject *)StormInfo<Byte>::type(e), byteId);
 		typeIds->put((TObject *)StormInfo<Int>::type(e), intId);
 		typeIds->put((TObject *)StormInfo<Nat>::type(e), natId);

@@ -1,6 +1,7 @@
 #include "stdafx.h"
 #include "Bool.h"
 #include "Function.h"
+#include "Core/Io/Serialization.h"
 
 namespace storm {
 	using namespace code;
@@ -70,6 +71,14 @@ namespace storm {
 		*p.state->l << mov(byteRel(p.regParam(0), Offset()), byteRel(p.regParam(1), Offset()));
 	}
 
+	static Bool boolRead(ObjIStream *from) {
+		return from->readByte() != 0;
+	}
+
+	static void boolWrite(Bool v, ObjOStream *to) {
+		to->writeByte(v ? 1 : 0);
+	}
+
 
 	BoolType::BoolType(Str *name, GcType *type) : Type(name, typeValue | typeFinal, Size::sByte, type, null) {}
 
@@ -89,6 +98,13 @@ namespace storm {
 
 		add(inlinedFunction(engine, Value(), Type::CTOR, rr, fnPtr(engine, &boolCopyCtor))->makePure());
 		add(inlinedFunction(engine, Value(this, true), S("="), rv, fnPtr(engine, &boolAssign))->makePure());
+
+		Array<Value> *is = new (this) Array<Value>(1, Value(StormInfo<ObjIStream>::type(engine)));
+		add(nativeFunction(engine, Value(this), S("read"), is, address(&boolRead)));
+
+		Array<Value> *os = new (this) Array<Value>(2, Value(this, false));
+		os->at(1) = Value(StormInfo<ObjOStream>::type(engine));
+		add(nativeFunction(engine, Value(), S("write"), os, address(&boolWrite)));
 
 		return Type::loadAll();
 	}
