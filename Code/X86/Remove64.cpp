@@ -110,7 +110,7 @@ namespace code {
 
 		void Remove64::bnotTfm(Listing *to, Instr *instr, RegSet *used) {
 			*to << bnot(low32(instr->dest()));
-			*to << bnot(high32(instr->src()));
+			*to << bnot(high32(instr->dest()));
 		}
 
 		void Remove64::subTfm(Listing *to, Instr *instr, RegSet *used) {

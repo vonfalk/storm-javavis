@@ -77,6 +77,14 @@ Nat nMin10() { 10n.min(20n); }
 Nat nMin11() { 21n.min(11n); }
 Nat nMax20() { 10n.max(20n); }
 Nat nMax11() { 11n.max(9n); }
+Nat nAnd12() { 13n & 0xFE_n; }
+Nat nOr10() { 8n | 2n; }
+Nat nXor9() { 10n ^ 3n; }
+Nat nNeg65535() { ~0xFFFF0000_n; }
+Nat nAndEq12() { Nat v = 13; v &= 0xFE_n; v; }
+Nat nOrEq10() { Nat v = 2; v |= 10n; v; }
+Nat nXorEq9() { Nat v = 10; v ^= 3n; v; }
+
 
 // Byte
 Byte bConst22() { 22; }
@@ -186,6 +194,14 @@ Word wMin10() { 10w.min(20w); }
 Word wMin11() { 21w.min(11w); }
 Word wMax20() { 10w.max(20w); }
 Word wMax11() { 11w.max(9w); }
+Word wAnd12() { 13w & 0xFE_w; }
+Word wOr10() { 8w | 2w; }
+Word wXor9() { 10w ^ 3w; }
+Word wNeg65535() { ~0xFFFFFFFFFFFF0000_w; }
+Word wAndEq12() { Word v = 13; v &= 0xFE_w; v; }
+Word wOrEq10() { Word v = 2; v |= 8w; v; }
+Word wXorEq9() { Word v = 10; v ^= 3w; v; }
+
 
 // Float
 Float fConst120() { 120; }

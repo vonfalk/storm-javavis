@@ -81,4 +81,36 @@ namespace storm {
 		}
 	}
 
+	void numAnd(InlineParams p) {
+		if (p.result->needed()) {
+			Operand result = p.result->location(p.state).v;
+			*p.state->l << mov(result, p.param(0));
+			*p.state->l << band(result, p.param(1));
+		}
+	}
+
+	void numOr(InlineParams p) {
+		if (p.result->needed()) {
+			Operand result = p.result->location(p.state).v;
+			*p.state->l << mov(result, p.param(0));
+			*p.state->l << bor(result, p.param(1));
+		}
+	}
+
+	void numXor(InlineParams p) {
+		if (p.result->needed()) {
+			Operand result = p.result->location(p.state).v;
+			*p.state->l << mov(result, p.param(0));
+			*p.state->l << bxor(result, p.param(1));
+		}
+	}
+
+	void numNot(InlineParams p) {
+		if (p.result->needed()) {
+			Operand result = p.result->location(p.state).v;
+			*p.state->l << mov(result, p.param(0));
+			*p.state->l << bnot(result);
+		}
+	}
+
 }

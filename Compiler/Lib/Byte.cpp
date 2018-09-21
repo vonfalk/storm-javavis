@@ -53,6 +53,17 @@ namespace storm {
 		add(inlinedFunction(engine, Value(this), S("/="), rv, fnPtr(engine, &numIDivScale<Byte>))->makePure());
 		add(inlinedFunction(engine, Value(this), S("%="), rv, fnPtr(engine, &numIModEq<Byte>))->makePure());
 
+		// Bitwise operators.
+		add(inlinedFunction(engine, Value(this), S("&"), vv, fnPtr(engine, &numAnd))->makePure());
+		add(inlinedFunction(engine, Value(this), S("|"), vv, fnPtr(engine, &numOr))->makePure());
+		add(inlinedFunction(engine, Value(this), S("^"), vv, fnPtr(engine, &numXor))->makePure());
+		add(inlinedFunction(engine, Value(this), S("~"), v, fnPtr(engine, &numNot))->makePure());
+
+		add(inlinedFunction(engine, Value(this), S("&="), rv, fnPtr(engine, &numAndEq<Byte>))->makePure());
+		add(inlinedFunction(engine, Value(this), S("|="), rv, fnPtr(engine, &numOrEq<Byte>))->makePure());
+		add(inlinedFunction(engine, Value(this), S("^="), rv, fnPtr(engine, &numXorEq<Byte>))->makePure());
+
+
 		add(inlinedFunction(engine, Value(), Type::CTOR, rr, fnPtr(engine, &numCopyCtor<Byte>))->makePure());
 		add(inlinedFunction(engine, Value(), Type::CTOR, r, fnPtr(engine, &numInit<Byte>))->makePure());
 

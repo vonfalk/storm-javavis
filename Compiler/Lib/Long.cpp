@@ -132,6 +132,16 @@ namespace storm {
 		add(inlinedFunction(engine, Value(this), S("/="), rv, fnPtr(engine, &numUDivScale<Word>))->makePure());
 		add(inlinedFunction(engine, Value(this), S("%="), rv, fnPtr(engine, &numUModEq<Word>))->makePure());
 
+		// Bitwise operators.
+		add(inlinedFunction(engine, Value(this), S("&"), vv, fnPtr(engine, &numAnd))->makePure());
+		add(inlinedFunction(engine, Value(this), S("|"), vv, fnPtr(engine, &numOr))->makePure());
+		add(inlinedFunction(engine, Value(this), S("^"), vv, fnPtr(engine, &numXor))->makePure());
+		add(inlinedFunction(engine, Value(this), S("~"), v, fnPtr(engine, &numNot))->makePure());
+
+		add(inlinedFunction(engine, Value(this), S("&="), rv, fnPtr(engine, &numAndEq<Word>))->makePure());
+		add(inlinedFunction(engine, Value(this), S("|="), rv, fnPtr(engine, &numOrEq<Word>))->makePure());
+		add(inlinedFunction(engine, Value(this), S("^="), rv, fnPtr(engine, &numXorEq<Word>))->makePure());
+
 		add(inlinedFunction(engine, Value(), Type::CTOR, rr, fnPtr(engine, &numCopyCtor<Word>))->makePure());
 		add(inlinedFunction(engine, Value(), Type::CTOR, r, fnPtr(engine, &numInit<Word>))->makePure());
 

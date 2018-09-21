@@ -379,6 +379,7 @@ SPrePostOp => v : "--"@ v;
 SStr SPreOp();
 SPreOp => v : "!"@ v;
 SPreOp => v : "-"@ v;
+SPreOp => v : "~"@ v;
 
 // Operators.
 OpInfo SOperator();

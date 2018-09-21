@@ -24,6 +24,12 @@ namespace storm {
 	void numUMod(InlineParams p);
 	void numINeg(InlineParams p);
 
+	// Bitwise operations.
+	void numAnd(InlineParams p);
+	void numOr(InlineParams p);
+	void numXor(InlineParams p);
+	void numNot(InlineParams p);
+
 	// Compare.
 	template <code::CondFlag f>
 	void numCmp(InlineParams p) {
@@ -184,6 +190,36 @@ namespace storm {
 					*p.state->l << mov(p.result->location(p.state).v, dest);
 			}
 		}
+	}
+
+	template <class T>
+	void numAndEq(InlineParams p) {
+		p.allocRegs(0);
+		code::Reg dest = p.regParam(0);
+
+		*p.state->l << band(tRel(T(), dest), p.param(1));
+		if (p.result->needed())
+			*p.state->l << mov(p.result->location(p.state).v, tRel(T(), dest));
+	}
+
+	template <class T>
+	void numOrEq(InlineParams p) {
+		p.allocRegs(0);
+		code::Reg dest = p.regParam(0);
+
+		*p.state->l << bor(tRel(T(), dest), p.param(1));
+		if (p.result->needed())
+			*p.state->l << mov(p.result->location(p.state).v, tRel(T(), dest));
+	}
+
+	template <class T>
+	void numXorEq(InlineParams p) {
+		p.allocRegs(0);
+		code::Reg dest = p.regParam(0);
+
+		*p.state->l << bxor(tRel(T(), dest), p.param(1));
+		if (p.result->needed())
+			*p.state->l << mov(p.result->location(p.state).v, tRel(T(), dest));
 	}
 
 	template <class T>
