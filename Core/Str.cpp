@@ -689,6 +689,18 @@ namespace storm {
 		to->to->write(b);
 	}
 
+	Str *Str::read(ObjIStream *from) {
+		Nat count = from->readNat();
+		Buffer b = from->from->read(count);
+		if (!b.full())
+			throw SerializationError(L"Not enough data.");
+
+		size_t sz = convert((char *)b.dataPtr(), count, NULL, 0);
+		GcArray<wchar> *result = runtime::allocArray<wchar>(from->engine(), &wcharArrayType, sz);
+		convert((char *)b.dataPtr(), count, result->v, sz);
+		return new (from) Str(result);
+	}
+
 	const wchar *Str::toPtr(const Iter &i) const {
 		if (i.atEnd())
 			return data->v + data->count - 1;

@@ -3,6 +3,7 @@
 #include "Core/Array.h"
 #include "Core/Hash.h"
 #include "Core/Str.h"
+#include "Core/Io/Serialization.h"
 #include "Function.h"
 #include "Number.h"
 
@@ -16,6 +17,15 @@ namespace storm {
 	Type *createByte(Str *name, Size size, GcType *type) {
 		return new (name) ByteType(name, type);
 	}
+
+	Byte byteRead(ObjIStream *from) {
+		return from->readByte();
+	}
+
+	void byteWrite(Byte b, ObjOStream *to) {
+		to->writeByte(b);
+	}
+
 
 	ByteType::ByteType(Str *name, GcType *type) : Type(name, typeValue | typeFinal, Size::sByte, type, null) {}
 
@@ -78,6 +88,13 @@ namespace storm {
 		add(inlinedFunction(engine, Value(this), S("min"), vv, fnPtr(engine, &numMin<Byte>))->makePure());
 		add(inlinedFunction(engine, Value(this), S("max"), vv, fnPtr(engine, &numMax<Byte>))->makePure());
 		add(inlinedFunction(engine, Value(this), S("delta"), vv, fnPtr(engine, &numDelta<Byte>))->makePure());
+
+		Array<Value> *is = new (this) Array<Value>(1, Value(StormInfo<ObjIStream>::type(engine)));
+		add(nativeFunction(engine, Value(this), S("read"), is, address(&byteRead)));
+
+		Array<Value> *os = new (this) Array<Value>(2, Value(this, false));
+		os->at(1) = Value(StormInfo<ObjOStream>::type(engine));
+		add(nativeFunction(engine, Value(), S("write"), os, address(&byteWrite)));
 
 		return Type::loadAll();
 	}

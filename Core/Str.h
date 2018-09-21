@@ -194,6 +194,7 @@ namespace storm {
 
 		// Serialization.
 		void STORM_FN write(ObjOStream *to) const;
+		static Str *STORM_FN read(ObjIStream *from);
 
 	private:
 		friend class Iter;

@@ -8,7 +8,7 @@ use core:io;
 class Data : persist {
 	Int a;
 	Int b;
-	InnerData data;
+	Employee data;
 
 	init() {
 		init() { a = 5; b = 8; }
@@ -19,11 +19,13 @@ class Data : persist {
 		if (to.startObject(this)) {
 			to.member("a", named{core:Int});
 			to.member("b", named{core:Int});
-			to.member("data", named{InnerData});
+			to.member("c", named{core:Bool});
+			to.member("data", named{Employee});
 			to.endMembers();
 
-			to.writeInt(a);
-			to.writeInt(b);
+			a.write(to);
+			b.write(to);
+			true.write(to);
 			data.write(to);
 
 			to.end();
@@ -34,7 +36,7 @@ class Data : persist {
 /**
  * Another serializable class.
  */
-class InnerData : persist {
+class Employee : persist {
 	Str name;
 	Int coolness;
 
@@ -44,12 +46,12 @@ class InnerData : persist {
 
 	void write(ObjOStream to) {
 		if (to.startObject(this)) {
-			to.member("a", named{core:Str});
-			to.member("b", named{core:Int});
+			to.member("name", named{core:Str});
+			to.member("coolness", named{core:Int});
 			to.endMembers();
 
 			name.write(to);
-			to.writeInt(coolness);
+			coolness.write(to);
 
 			to.end();
 		}

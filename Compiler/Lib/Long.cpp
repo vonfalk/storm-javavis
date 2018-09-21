@@ -3,6 +3,7 @@
 #include "Core/Array.h"
 #include "Core/Hash.h"
 #include "Core/Str.h"
+#include "Core/Io/Serialization.h"
 #include "Function.h"
 #include "Number.h"
 
@@ -25,6 +26,14 @@ namespace storm {
 	static void castLong(InlineParams p) {
 		p.allocRegs(0);
 		*p.state->l << icast(longRel(p.regParam(0), Offset()), p.param(1));
+	}
+
+	static Long longRead(ObjIStream *from) {
+		return from->readLong();
+	}
+
+	static void longWrite(Long v, ObjOStream *to) {
+		to->writeLong(v);
 	}
 
 	LongType::LongType(Str *name, GcType *type) : Type(name, typeValue | typeFinal, Size::sLong, type, null) {}
@@ -83,6 +92,13 @@ namespace storm {
 		add(inlinedFunction(engine, Value(this), S("max"), vv, fnPtr(engine, &numMax<Long>))->makePure());
 		add(inlinedFunction(engine, Value(this), S("delta"), vv, fnPtr(engine, &numDelta<Long>))->makePure());
 
+		Array<Value> *is = new (this) Array<Value>(1, Value(StormInfo<ObjIStream>::type(engine)));
+		add(nativeFunction(engine, Value(this), S("read"), is, address(&longRead)));
+
+		Array<Value> *os = new (this) Array<Value>(2, Value(this, false));
+		os->at(1) = Value(StormInfo<ObjOStream>::type(engine));
+		add(nativeFunction(engine, Value(), S("write"), os, address(&longWrite)));
+
 		return Type::loadAll();
 	}
 
@@ -94,6 +110,14 @@ namespace storm {
 	static void castWord(InlineParams p) {
 		p.allocRegs(0);
 		*p.state->l << ucast(longRel(p.regParam(0), Offset()), p.param(1));
+	}
+
+	static Word wordRead(ObjIStream *from) {
+		return from->readWord();
+	}
+
+	static void wordWrite(Word v, ObjOStream *to) {
+		to->writeWord(v);
 	}
 
 	WordType::WordType(Str *name, GcType *type) : Type(name, typeValue | typeFinal, Size::sWord, type, null) {}
@@ -160,6 +184,13 @@ namespace storm {
 		add(inlinedFunction(engine, Value(this), S("min"), vv, fnPtr(engine, &numMin<Word>))->makePure());
 		add(inlinedFunction(engine, Value(this), S("max"), vv, fnPtr(engine, &numMax<Word>))->makePure());
 		add(inlinedFunction(engine, Value(this), S("delta"), vv, fnPtr(engine, &numDelta<Word>))->makePure());
+
+		Array<Value> *is = new (this) Array<Value>(1, Value(StormInfo<ObjIStream>::type(engine)));
+		add(nativeFunction(engine, Value(this), S("read"), is, address(&wordRead)));
+
+		Array<Value> *os = new (this) Array<Value>(2, Value(this, false));
+		os->at(1) = Value(StormInfo<ObjOStream>::type(engine));
+		add(nativeFunction(engine, Value(), S("write"), os, address(&wordWrite)));
 
 		return Type::loadAll();
 	}

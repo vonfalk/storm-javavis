@@ -12,7 +12,7 @@ class TextObjStream {
 
 	// Read an object to a StrBuf.
 	void read(StrBuf to) {
-		Nat type = src.readNat();
+		Nat type = Nat:read(src);
 		read(to, type);
 	}
 
@@ -79,13 +79,13 @@ private:
 
 		if (!value) {
 			// Previous object?
-			objId = src.readNat();
+			objId = Nat:read(src);
 			if (objects.has(objId)) {
 				to << "<previous object, id " << objId << ">";
 				return;
 			}
 			objects.put(objId);
-			type = src.readNat();
+			type = Nat:read(src);
 		}
 
 		Type t = findType(type);
@@ -109,13 +109,13 @@ private:
 		if (types.has(type))
 			return types.get(type);
 
-		Str name = src.readStr();
+		Str name = Str:read(src);
 		Type t(name);
 
 		do {
-			Nat type = src.readNat();
+			Nat type = Nat:read(src);
 		} while (type > 0) {
-			Str name = src.readStr();
+			Str name = Str:read(src);
 			t.members << Member(type, name);
 		}
 
@@ -124,22 +124,24 @@ private:
 
 	// Read a primitive type.
 	Bool readPrimitive(StrBuf to, Nat type) {
-		if (type == StoredId:byteId.v) {
-			to << src.readByte();
+		if (type == StoredId:boolId.v) {
+			to << Bool:read(src);
+		} else if (type == StoredId:byteId.v) {
+			to << Byte:read(src);
 		} else if (type == StoredId:intId.v) {
-			to << src.readInt();
+			to << Int:read(src);
 		} else if (type == StoredId:natId.v) {
-			to << src.readNat();
+			to << Nat:read(src);
 		} else if (type == StoredId:longId.v) {
-			to << src.readLong();
+			to << Long:read(src);
 		} else if (type == StoredId:wordId.v) {
-			to << src.readWord();
+			to << Word:read(src);
 		} else if (type == StoredId:floatId.v) {
-			to << src.readFloat();
+			to << Float:read(src);
 		} else if (type == StoredId:doubleId.v) {
-			to << src.readDouble();
+			to << Double:read(src);
 		} else if (type == StoredId:strId.v) {
-			to << src.readStr();
+			to << Str:read(src);
 		} else {
 			return false;
 		}

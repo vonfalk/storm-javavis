@@ -56,19 +56,17 @@ namespace storm {
 		return out;
 	}
 
-	size_t convert(const char *begin, const char *end, wchar *to, size_t maxCount) {
+	size_t convert(const char *from, size_t fromCount, wchar *to, size_t maxCount) {
 		size_t out = 0;
 
-		const char *at = begin;
-		while (at < end) {
+		size_t at = 0;
+		while (at < fromCount) {
 			nat left;
-			nat cp = utf8::firstData(*at, left);
-			at++;
+			nat cp = utf8::firstData(from[at++], left);
 
 			for (nat i = 0; i < left; i++) {
-				if (at < end && utf8::isCont(*at)) {
-					cp = utf8::addCont(cp, *at);
-					at++;
+				if (at < fromCount && utf8::isCont(from[at])) {
+					cp = utf8::addCont(cp, from[at++]);
 				} else {
 					cp = replacementChar;
 					break;
@@ -118,13 +116,6 @@ namespace storm {
 
 	WRAP_CONVERT(toWChar, char, wchar, wcharArrayType);
 	WRAP_CONVERT(toChar, wchar, char, byteArrayType);
-
-	GcArray<wchar> *toWChar(Engine &e, const char *from, const char *to) {
-		size_t space = convert(from, to, (wchar *)NULL, 0);
-		GcArray<wchar> *r = runtime::allocArray<wchar>(e, &wcharArrayType, space);
-		convert(from, to, r->v, space);
-		return r;
-	}
 
 #ifdef POSIX
 
