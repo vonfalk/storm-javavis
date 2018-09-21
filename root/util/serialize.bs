@@ -65,18 +65,15 @@ private:
 
 	// Read an object of a known type.
 	void read(StrBuf to, Nat type) {
-		Nat mask = 2147483648; // 0x80000000;
-		Bool value = false;
-		Nat objId;
-		if (type > mask) {
-			value = true;
-			type -= mask;
-		}
+		Nat mask = 0x80000000;
+		Bool value = (mask & type) != 0;
+		type &= ~mask;
 
 		// Check for primitive types!
 		if (readPrimitive(to, type))
 			return;
 
+		Nat objId;
 		if (!value) {
 			// Previous object?
 			objId = Nat:read(src);
