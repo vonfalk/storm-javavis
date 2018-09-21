@@ -44,6 +44,17 @@ Float  f = 10f;
 Double d = 10d;
 ```
 
+Hexadecimal numbers are always treated as unsigned numbers (but they may be explicitly casted to
+signed numbers at will). Hexadecimal numbers may also be suffixed as regular numbers. However, the
+literals and the number must be separated by an underscore, like so (note that only unsigned types
+are usable):
+
+```
+Byte   b = 0xFE_b;
+Nat    n = 0xFEFF_n;
+Word   w = 0xFEFF_w;
+```
+
 Interpolated strings
 ---------------------
 

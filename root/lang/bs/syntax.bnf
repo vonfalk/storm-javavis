@@ -269,6 +269,7 @@ SArrayInitItem => to : SExpr(block) -> push;
 
 // Constants that can be used with units.
 Expr SConst(Block block);
+SConst => hexConstant(pos, nr) : "0x" #constant - "[A-Fa-f0-9]+" nr #constant - ("_" #constant - "[bnw]" -> setType #constant)?;
 SConst => intConstant(pos, nr) : "-?[0-9]+" nr #constant - ("[binlwfd]" -> setType #constant)?;
 SConst => floatConstant(pos, nr) : "-?[0-9]+\.[0-9]+" nr #constant - ("[fd]" -> setType #constant)?;
 SConst[20] => BoolLiteral(pos, true) : "true" #constant;

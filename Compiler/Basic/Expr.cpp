@@ -25,11 +25,13 @@ namespace storm {
 		 * Numeric literals.
 		 */
 
-		NumLiteral::NumLiteral(SrcPos pos, Int v) : Expr(pos), intValue(v), isInt(true) {}
+		NumLiteral::NumLiteral(SrcPos pos, Int v) : Expr(pos), intValue(v), isInt(true), isSigned(true) {}
 
-		NumLiteral::NumLiteral(SrcPos pos, Long v) : Expr(pos), intValue(v), isInt(true) {}
+		NumLiteral::NumLiteral(SrcPos pos, Long v) : Expr(pos), intValue(v), isInt(true), isSigned(true) {}
 
-		NumLiteral::NumLiteral(SrcPos pos, Double v) : Expr(pos), floatValue(v), isInt(false) {}
+		NumLiteral::NumLiteral(SrcPos pos, Word v) : Expr(pos), intValue(v), isInt(true), isSigned(false) {}
+
+		NumLiteral::NumLiteral(SrcPos pos, Double v) : Expr(pos), floatValue(v), isInt(false), isSigned(true) {}
 
 		void NumLiteral::setType(Str *suffix) {
 			Str::Iter b = suffix->begin();
@@ -43,45 +45,59 @@ namespace storm {
 				switch (ch.codepoint()) {
 				case 'b':
 					type = StormInfo<Byte>::type(engine());
-					break;
+					return;
 				case 'i':
-					type = StormInfo<Int>::type(engine());
+					if (isSigned) {
+						type = StormInfo<Int>::type(engine());
+						return;
+					}
 					break;
 				case 'n':
 					type = StormInfo<Nat>::type(engine());
-					break;
+					return;
 				case 'l':
-					type = StormInfo<Long>::type(engine());
+					if (isSigned) {
+						type = StormInfo<Long>::type(engine());
+						return;
+					}
 					break;
 				case 'w':
 					type = StormInfo<Word>::type(engine());
-					break;
+					return;
 				case 'f':
-					type = StormInfo<Float>::type(engine());
+					if (isSigned) {
+						type = StormInfo<Float>::type(engine());
+						return;
+					}
 					break;
 				case 'd':
-					type = StormInfo<Double>::type(engine());
+					if (isSigned) {
+						type = StormInfo<Double>::type(engine());
+						return;
+					}
 					break;
-				default:
-					throw SyntaxError(pos, L"Invalid suffix: " + ::toS(suffix));
 				}
 			} else {
 				switch (ch.codepoint()) {
 				case 'f':
 					type = StormInfo<Float>::type(engine());
-					break;
+					return;
 				case 'd':
 					type = StormInfo<Double>::type(engine());
-					break;
-				default:
-					throw SyntaxError(pos, L"Invalid suffix: " + ::toS(suffix));
+					return;
 				}
 			}
+
+			throw SyntaxError(pos, L"Invalid suffix: " + ::toS(suffix));
 		}
 
 		void NumLiteral::toS(StrBuf *to) const {
 			if (isInt) {
-				*to << intValue;
+				if (isSigned) {
+					*to << intValue;
+				} else {
+					*to << hex((Word)intValue);
+				}
 			} else {
 				*to << floatValue;
 			}
@@ -95,7 +111,10 @@ namespace storm {
 				return Value(type);
 
 			if (isInt)
-				return Value(StormInfo<Int>::type(engine()));
+				if (isSigned)
+					return Value(StormInfo<Int>::type(engine()));
+				else
+					return Value(StormInfo<Nat>::type(engine()));
 			else
 				return Value(StormInfo<Float>::type(engine()));
 		}
@@ -111,20 +130,20 @@ namespace storm {
 
 			if (isInt) {
 				// Prefer bigger types if multiple are possible.
-				if (to.type == StormInfo<Long>::type(e))
+				if (to.type == StormInfo<Long>::type(e) && isSigned)
 					return 1;
 				if (to.type == StormInfo<Word>::type(e))
 					return 1;
-				if (to.type == StormInfo<Int>::type(e) && (abs(intValue) & 0x7FFFFFFF) == abs(intValue))
+				if (to.type == StormInfo<Int>::type(e) && (abs(intValue) & 0x7FFFFFFF) == abs(intValue) && isSigned)
 					return 2;
 				if (to.type == StormInfo<Nat>::type(e) && (intValue & 0xFFFFFFFF) == intValue)
 					return 2;
 				if (to.type == StormInfo<Byte>::type(e) && (intValue & 0xFF) == intValue)
 					return 3;
-				if (to.type == StormInfo<Double>::type(e) && (abs(intValue) & 0x3FFFFFFFFFFFF) == abs(intValue))
+				if (to.type == StormInfo<Double>::type(e) && (abs(intValue) & 0x3FFFFFFFFFFFF) == abs(intValue) && isSigned)
 					// We allow up to 52 bits to automatically cast.
 					return 3;
-				if (to.type == StormInfo<Float>::type(e) && (abs(intValue) & 0xFFFF) == abs(intValue))
+				if (to.type == StormInfo<Float>::type(e) && (abs(intValue) & 0xFFFF) == abs(intValue) && isSigned)
 					// We allow up to 16 bits to automatically cast.
 					return 4;
 			} else {
@@ -198,6 +217,10 @@ namespace storm {
 
 		NumLiteral *floatConstant(SrcPos pos, Str *v) {
 			return new (v) NumLiteral(pos, v->toDouble());
+		}
+
+		NumLiteral *hexConstant(SrcPos pos, Str *v) {
+			return new (v) NumLiteral(pos, v->hexToWord());
 		}
 
 		/**

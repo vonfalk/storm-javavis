@@ -38,8 +38,14 @@ namespace storm {
 		class NumLiteral : public Expr {
 			STORM_CLASS;
 		public:
+			// Create, describes an integer.
 			STORM_CTOR NumLiteral(SrcPos pos, Int i);
 			STORM_CTOR NumLiteral(SrcPos pos, Long i);
+
+			// Create, describes an unsigned number (will not allow signed output).
+			STORM_CTOR NumLiteral(SrcPos pos, Word i);
+
+			// Create, describes a floating-point number.
 			STORM_CTOR NumLiteral(SrcPos pos, Double f);
 
 			// Specify type using a suffix. 'suffix' is one of the characters 'binlwfd', which each
@@ -68,6 +74,9 @@ namespace storm {
 			// Integer value?
 			Bool isInt;
 
+			// Unsigned number?
+			Bool isSigned;
+
 			// Specified type (if any).
 			MAYBE(Type *) type;
 
@@ -80,6 +89,7 @@ namespace storm {
 
 		NumLiteral *STORM_FN intConstant(SrcPos pos, Str *str);
 		NumLiteral *STORM_FN floatConstant(SrcPos pos, Str *str);
+		NumLiteral *STORM_FN hexConstant(SrcPos pos, Str *str);
 
 		/**
 		 * String literal.
