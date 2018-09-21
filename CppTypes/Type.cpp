@@ -244,10 +244,16 @@ void ClassNamespace::add(const Function &f) {
 
 	Function g = f;
 	g.name = owner.name + f.name;
-	g.isMember = true;
-	// Add our this-pointer.
-	g.params.insert(g.params.begin(), new RefType(new ResolvedType(&owner)));
-	g.paramNames.insert(g.paramNames.begin(), L"this");
+	if (g.isStatic) {
+		// Static functions are not treated as member functions. They just happen to be located
+		// inside a class.
+		g.pkg += L"." + owner.name.last();
+	} else {
+		g.isMember = true;
+		// Add our this-pointer.
+		g.params.insert(g.params.begin(), new RefType(new ResolvedType(&owner)));
+		g.paramNames.insert(g.paramNames.begin(), L"this");
+	}
 	world.functions.push_back(g);
 }
 

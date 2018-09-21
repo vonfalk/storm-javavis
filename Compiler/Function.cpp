@@ -33,7 +33,11 @@ namespace storm {
 	}
 
 	Bool Function::isMember() {
-		return as<Type>(parent()) != null;
+		if (params->empty())
+			return false;
+
+		Type *first = params->at(0).type;
+		return first == parent();
 	}
 
 	RunOn Function::runOn() const {

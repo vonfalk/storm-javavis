@@ -47,6 +47,9 @@ public:
 	// Is this a member function?
 	bool isMember;
 
+	// Is this a static function?
+	bool isStatic;
+
 	// Trailing const modifier?
 	bool isConst;
 

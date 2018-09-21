@@ -149,8 +149,18 @@ static void parseBlock(Tokenizer &tok) {
 	}
 }
 
+// Skip an empty array modifier (eg. int foo[]) if applicable.
+static void skipArray(Tokenizer &tok, bool skippable) {
+	if (tok.skipIf(L"[")) {
+		if (skippable)
+			tok.expect(L"]");
+		else
+			throw Error(L"Can not use the array syntax on parameters here. Use regular pointers instead.", tok.peek().pos);
+	}
+}
+
 // Parse a variable or function.
-static void parseMember(Tokenizer &tok, ParseEnv &env, Namespace &addTo, Access access) {
+static void parseMember(Tokenizer &tok, ParseEnv &env, Namespace &addTo, Access access, bool isStatic) {
 	if (!tok.more() || tok.skipIf(L";"))
 		return;
 
@@ -246,6 +256,7 @@ static void parseMember(Tokenizer &tok, ParseEnv &env, Namespace &addTo, Access 
 		if (!tok.skipIf(L")")) {
 			f.params.push_back(parseTypeRef(tok));
 			f.paramNames.push_back(tok.next().token);
+			skipArray(tok, !exportFn);
 
 			while (tok.more() && tok.skipIf(L",")) {
 				if (tok.skipIf(L"...")) {
@@ -257,6 +268,7 @@ static void parseMember(Tokenizer &tok, ParseEnv &env, Namespace &addTo, Access 
 				}
 				f.params.push_back(parseTypeRef(tok));
 				f.paramNames.push_back(tok.next().token);
+				skipArray(tok, !exportFn);
 			}
 
 			tok.expect(L")");
@@ -271,28 +283,38 @@ static void parseMember(Tokenizer &tok, ParseEnv &env, Namespace &addTo, Access 
 			tok.expect(L")");
 		}
 
+		f.isStatic = isStatic;
+
 		// Save if 'exportFn' is there.
 		if (exportFn || f.name == Function::dtor)
 			if (env.exportAll)
 				addTo.add(f);
 
 	} else if (tok.skipIf(L"[")) {
-		throw Error(L"C-style arrays not supported in classes exposed to Storm.", name.pos);
+		// We're only interested when we're not dealing with a non-static array.
+		if (!isStatic)
+			throw Error(L"C-style arrays not supported in classes exposed to Storm.", name.pos);
 	} else if (tok.skipIf(L"=")) {
 		// Initialized variable. Skip the initialization part.
 		while (!tok.skipIf(L";"))
 			tok.skip();
 
-		Variable v(CppName(name.token), type, access, name.pos, doc);
-		if (!stormName.empty())
-			v.stormName = stormName;
-		addTo.add(v);
+		// We don't do static variables.
+		if (!isStatic) {
+			Variable v(CppName(name.token), type, access, name.pos, doc);
+			if (!stormName.empty())
+				v.stormName = stormName;
+			addTo.add(v);
+		}
 	} else if (tok.skipIf(L";")) {
-		// Variable.
-		Variable v(CppName(name.token), type, access, name.pos, doc);
-		if (!stormName.empty())
-			v.stormName = stormName;
-		addTo.add(v);
+		// We don't do static variables.
+		if (!isStatic) {
+			// Variable.
+			Variable v(CppName(name.token), type, access, name.pos, doc);
+			if (!stormName.empty())
+				v.stormName = stormName;
+			addTo.add(v);
+		}
 	} else {
 		// Unknown construct; ignore it.
 	}
@@ -422,8 +444,11 @@ static void parseType(Tokenizer &tok, ParseEnv &env, const CppName &inside) {
 	tok.expect(L";");
 
 	Access access = aPrivate;
+	bool isStatic = false;
 	while (tok.more()) {
 		Token t = tok.peek();
+		bool wasStatic = isStatic;
+		isStatic = false;
 
 		if (t.token == L"{") {
 			tok.skip();
@@ -462,17 +487,8 @@ static void parseType(Tokenizer &tok, ParseEnv &env, const CppName &inside) {
 			tok.expect(L":");
 			access = aProtected;
 		} else if (t.token == L"static") {
-			// Ignore static members. Maybe we should warn about this...
-			TODO(L"Warn about static members?");
-			while (true) {
-				if (tok.skipIf(L";"))
-					break;
-				if (tok.skipIf(L"{")) {
-					parseBlock(tok);
-					break;
-				}
-				tok.skip();
-			}
+			tok.skip();
+			isStatic = true;
 		} else if (t.token == L"friend") {
 			while (!tok.skipIf(L";"))
 				tok.skip();
@@ -483,7 +499,7 @@ static void parseType(Tokenizer &tok, ParseEnv &env, const CppName &inside) {
 			tok.skip();
 		} else {
 			ClassNamespace ns(env.world, *type);
-			parseMember(tok, env, ns, access);
+			parseMember(tok, env, ns, access, wasStatic);
 		}
 	}
 
@@ -623,9 +639,9 @@ static void parseNamespace(Tokenizer &tok, ParseEnv &env, const CppName &name) {
 			// Stray semicolon, skip it.
 			tok.skip();
 		} else {
-			// Everything is considered 'public' outside of a class.
+			// Everything is considered 'public' and non-static outside of a class.
 			WorldNamespace tmp(env.world, name);
-			parseMember(tok, env, tmp, aPublic);
+			parseMember(tok, env, tmp, aPublic, false);
 		}
 	}
 }

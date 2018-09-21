@@ -44,6 +44,9 @@ namespace storm {
 	/**
 	 * Describes a function in the compiler, either a member function or a free function. In the
 	 * case of a member function, the 'this' pointer is explicitly stated as the first parameter.
+	 *
+	 * See 'isMember' for details on which functions are considered member functions and nonmember
+	 * functions.
 	 */
 	class Function : public Named {
 		STORM_CLASS;
@@ -66,6 +69,8 @@ namespace storm {
 		code::Ref STORM_FN directRef();
 
 		// Is this a member function?
+		// A function is considered a member function if it is located inside a function *and* the
+		// first parameter of the function matches that type.
 		Bool STORM_FN isMember();
 
 		// Which thread shall we run on?
