@@ -30,7 +30,7 @@ private:
 	// Create a proper text stream.
 	TextOutput textOutput(OStream to) {
 		TextInfo info;
-		info.useCrLf = true; // Seems the pdf reader assumes CR-LF in calculating offsets.
+		info.useCrLf = false;
 		info.useBom = false;
 		return Utf8Output(to, info);
 	}
