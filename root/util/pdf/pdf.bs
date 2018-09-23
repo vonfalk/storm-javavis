@@ -1,0 +1,86 @@
+use core:io;
+
+/**
+ * Describes a PDF file.
+ *
+ * A PDF file contains a number of objects, each described by an instance of PdfObject. These
+ * objects may contain things like postscript code, images etc.
+ */
+class PdfFile {
+	init() {
+		init() {}
+	}
+
+	void write(OStream to) {
+		Nat[] offsets;
+		offsets << 0; // First one is at offset 0.
+
+		// Header.
+		writeObject(offsets, to, &this.writeHeader(OStream));
+
+		// Footer.
+		writeFooter(offsets, to);
+	}
+
+private:
+	// All objects in this file.
+	PdfObject[] objects;
+
+
+	// Create a proper text stream.
+	TextOutput textOutput(OStream to) {
+		TextInfo info;
+		info.useCrLf = true; // Seems the pdf reader assumes CR-LF in calculating offsets.
+		info.useBom = false;
+		return Utf8Output(to, info);
+	}
+
+	// Write the PDF header, consideded object #0.
+	void writeHeader(OStream to) {
+		var out = textOutput(to);
+		out.write("%PDF-1.6\n%✓\n"); // Check mark to use some high-order bits.
+		out.flush();
+	}
+
+	// Write an object to the PDF.
+	void writeObject(Nat[] offsets, OStream to, fn(OStream) -> void fn) {
+		MemOStream stream;
+		fn.call(stream);
+		offsets << (offsets.last + stream.buffer.filled);
+		to.write(stream.buffer);
+	}
+
+	// Write the footer.
+	void writeFooter(Nat[] offsets, OStream to) {
+		var xrefPos = offsets.last; offsets.pop;
+		var out = textOutput(to);
+		out.write("xref\n");
+		out.write("0 ${offsets.count}\n");
+		for (i, o in offsets) {
+			if (i == 0)
+				out.write("0000000000 65535 f\n");
+			else
+				out.write("${o, 10} ${0, 5} n\n");
+		}
+		// TODO: Configurable root?
+		out.write("trailer <</Size ${offsets.count} /Root 1 0 R>>\n");
+		out.write("startxref\n${xrefPos}\n%%EOF");
+		out.flush();
+	}
+}
+
+class PdfObject {
+	package Nat id;
+
+	init() {
+		init() {}
+	}
+}
+
+void test() {
+	PdfFile pdf;
+	Url url = cwdUrl / ".." / "test.pdf";
+	print("Writing to ${url}...");
+	pdf.write(url.write);
+	print("Done!");
+}
