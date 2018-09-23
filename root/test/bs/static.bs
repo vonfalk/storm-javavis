@@ -1,0 +1,22 @@
+
+class StaticTest {
+	Int x;
+
+	init(Int x) {
+		init() { x = x; }
+	}
+
+	StaticTest create() : static, pure {
+		StaticTest(52);
+	}
+}
+
+// Check decorators for free functions as well.
+Int unity(Int v) : pure {
+	v;
+}
+
+Int testStatic() {
+	StaticTest v = StaticTest:create();
+	unity(v.x);
+}

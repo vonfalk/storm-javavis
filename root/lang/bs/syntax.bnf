@@ -100,14 +100,23 @@ SFormals => Array<NameParam>() : SFormal -> push - (, ",", SFormal -> push)*;
 NameParam SFormal();
 SFormal => NameParam(type, name) : SType type, SName name #varName;
 
+// Decorators applicable to free functions.
+void SFreeOption(BSRawFn item) #keyword;
+SFreeOption => makePure(item) : "pure";
+
+void SFreeOptions(BSRawFn item);
+SFreeOptions : ;
+SFreeOptions : ":", SFreeOption(item) - (, ",", SFreeOption(item))*;
+
+
 // Function.
 FunctionDecl SFunction(Scope env);
 SFunction[0] => FunctionDecl(env, result, name, params, body) :
-    SType result, SFnDeclName name #fnName, "(", SFormals params, ")", "{" [, SFunctionBody@ body, ]+ "}";
+    SType result, SFnDeclName name #fnName, "(", SFormals params, ")", SFreeOptions@ -> options, "{" [, SFunctionBody@ body, ]+ "}";
 SFunction[5] => assignDecl(env, name, params, body) :
     "assign" #keyword, SFnDeclName name #fnName, "(", SFormals params, ")", "{" [, SFunctionBody@ body, ]+ "}";
 SFunction[0] => FunctionDecl(env, result, name, params, thread, body) :
-    SType result, SFnDeclName name #fnName, "(", SFormals params, ")", "on" #keyword, SType thread, "{" [, SFunctionBody@ body, ]+ "}";
+    SType result, SFnDeclName name #fnName, "(", SFormals params, ")", "on" #keyword, SType thread, SFreeOptions@ -> options, "{" [, SFunctionBody@ body, ]+ "}";
 SFunction[5] => assignDecl(env, name, params, thread, body) :
     "assign" #keyword, SFnDeclName name #fnName, "(", SFormals params, ")", "on" #keyword, SType thread, "{" [, SFunctionBody@ body, ]+ "}";
 
@@ -501,13 +510,15 @@ NameParam SFirstFormal();
 SFirstFormal => nameless(type) : SType type;
 
 // Decorators we can apply to a named element in a class.
-void SClassOption(Class owner, Function item) #keyword;
+void SClassOption(Class owner, BSRawFn item) #keyword;
+SClassOption : SFreeOption(item);
 SClassOption => makeAbstract(item) : "abstract";
 SClassOption => makeFinal(item) : "final";
 SClassOption => makeOverride(item) : "override";
+SClassOption => makeStatic(owner, item) : "static";
 // etc. (we might want to handle 'override' differently)
 
-void SClassOptions(Class owner, Function item);
+void SClassOptions(Class owner, BSRawFn item);
 SClassOptions : ;
 SClassOptions : ":", SClassOption(owner, item) - (, ",", SClassOption(owner, item))*;
 

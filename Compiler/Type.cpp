@@ -1154,6 +1154,10 @@ namespace storm {
 		if (value() || rawPtr())
 			return;
 
+		// If the function is a static function, don't use it in vtables.
+		if (fn->params->empty() || fn->params->at(0).type != this)
+			return;
+
 		bool abstractFn = (fn->fnFlags() & fnAbstract) == fnAbstract;
 		if (abstractFn)
 			invalidateAbstract();

@@ -57,6 +57,10 @@ namespace storm {
 			  thread(thread),
 			  body(body) {}
 
+		void FunctionDecl::options(syntax::Node *node) {
+			optionNode = node;
+		}
+
 		Named *FunctionDecl::doCreate() {
 			Scope fScope = fileScope(scope, name->pos);
 
@@ -81,6 +85,9 @@ namespace storm {
 
 			if (!this->result)
 				f->make(fnAssign);
+
+			if (optionNode)
+				syntax::transformNode<void, BSRawFn *>(optionNode, f);
 
 			return f;
 		}
@@ -125,6 +132,19 @@ namespace storm {
 
 		FnBody *BSRawFn::createBody() {
 			throw InternalError(L"A BSRawFn can not be used without overriding 'createBody'!");
+		}
+
+		void BSRawFn::removeThis() {
+			if (parentLookup)
+				throw InternalError(L"Don't call 'removeThis' after adding the function to the name tree.");
+
+			if (valParams->empty())
+				return;
+			if (*valParams->at(0).name != S("this"))
+				return;
+
+			valParams->remove(0);
+			params->remove(0);
 		}
 
 		CodeGen *BSRawFn::generateCode() {

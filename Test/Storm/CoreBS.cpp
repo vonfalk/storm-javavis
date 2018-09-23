@@ -85,6 +85,10 @@ BEGIN_TEST(FinalTest, BS) {
 	CHECK_ERROR(runFn<Int>(S("test.bs.createFinalC")), TypedefError);
 } END_TEST
 
+BEGIN_TEST(StaticTest, BS) {
+	CHECK_EQ(runFn<Int>(S("test.bs.testStatic")), 52);
+} END_TEST
+
 /**
  * Values.
  */

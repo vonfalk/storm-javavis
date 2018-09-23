@@ -12,6 +12,7 @@ namespace storm {
 	namespace bs {
 		STORM_PKG(lang.bs);
 
+		class BSRawFn;
 		class BSFunction;
 		class BSCtor;
 
@@ -193,6 +194,10 @@ namespace storm {
 									syntax::Node *content) ON(Compiler);
 
 		BSCtor *STORM_FN classDefaultCtor(Class *owner) ON(Compiler);
+
+
+		// Make a function static if it was previously a member function.
+		void STORM_FN makeStatic(Class *owner, BSRawFn *fn);
 
 	}
 }

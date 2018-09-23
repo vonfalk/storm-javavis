@@ -40,12 +40,16 @@ namespace storm {
 									SrcName *thread,
 									syntax::Node *body);
 
+			// Optionally set options (type: SFreeOptions).
+			void STORM_FN options(syntax::Node *options);
+
 			// Values.
 			Scope scope;
 			syntax::SStr *name;
 			MAYBE(SrcName *) result;
 			Array<NameParam> *params;
 			MAYBE(SrcName *) thread;
+			MAYBE(syntax::Node *) optionNode;
 			syntax::Node *body;
 
 			// Temporary solution for updating a function.
@@ -89,6 +93,9 @@ namespace storm {
 
 			// Override this to create the syntax tree to compile.
 			virtual FnBody *STORM_FN createBody();
+
+			// Remove the 'this' parameter. Only do this before the function is added to the name tree!
+			void STORM_FN removeThis();
 
 			// Add function parameters to a block. Mainly for internal use.
 			void STORM_FN addParams(Block *block);

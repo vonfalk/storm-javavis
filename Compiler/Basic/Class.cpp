@@ -230,12 +230,12 @@ namespace storm {
 		}
 
 
-		BSFunction *STORM_FN classFn(Class *owner,
-											SrcPos pos,
-											syntax::SStr *name,
-											Name *result,
-											Array<NameParam> *params,
-											syntax::Node *body) {
+		BSFunction *classFn(Class *owner,
+							SrcPos pos,
+							syntax::SStr *name,
+							Name *result,
+							Array<NameParam> *params,
+							syntax::Node *body) {
 
 			return new (owner) BSFunction(owner->scope.value(result, pos),
 										name,
@@ -245,18 +245,18 @@ namespace storm {
 										body);
 		}
 
-		Function *STORM_FN classAbstractFn(Class *owner,
-											SrcPos pos,
-											syntax::SStr *name,
-											Name *result,
-											Array<NameParam> *params,
-											syntax::Node *options) {
+		Function *classAbstractFn(Class *owner,
+								SrcPos pos,
+								syntax::SStr *name,
+								Name *result,
+								Array<NameParam> *params,
+								syntax::Node *options) {
 
-			Function *f = new (owner) BSAbstractFn(owner->scope.value(result, pos),
+			BSRawFn *f = new (owner) BSAbstractFn(owner->scope.value(result, pos),
 												name,
 												resolve(params, owner, owner->scope));
 
-			syntax::transformNode<void, Class *, Function *>(options, owner, f);
+			syntax::transformNode<void, Class *, BSRawFn *>(options, owner, f);
 
 			if (f->fnFlags() & fnAbstract)
 				return f;
@@ -264,11 +264,11 @@ namespace storm {
 			throw SyntaxError(pos, L"A function without implementation must be marked using ': abstract'.");
 		}
 
-		BSFunction *STORM_FN classAssign(Class *owner,
-										SrcPos pos,
-										syntax::SStr *name,
-										Array<NameParam> *params,
-										syntax::Node *body) {
+		BSFunction *classAssign(Class *owner,
+								SrcPos pos,
+								syntax::SStr *name,
+								Array<NameParam> *params,
+								syntax::Node *body) {
 
 			BSFunction *f = new (owner) BSFunction(Value(),
 												name,
@@ -280,10 +280,10 @@ namespace storm {
 			return f;
 		}
 
-		BSCtor *STORM_FN classCtor(Class *owner,
-										SrcPos pos,
-										Array<NameParam> *params,
-										syntax::Node *body) {
+		BSCtor *classCtor(Class *owner,
+						SrcPos pos,
+						Array<NameParam> *params,
+						syntax::Node *body) {
 
 			return new (owner) BSCtor(resolve(params, owner, owner->scope),
 									owner->scope,
@@ -291,20 +291,32 @@ namespace storm {
 									pos);
 		}
 
-		BSCtor *STORM_FN classCastCtor(Class *owner,
-											SrcPos pos,
-											Array<NameParam> *params,
-											syntax::Node *body) {
+		BSCtor *classCastCtor(Class *owner,
+							SrcPos pos,
+							Array<NameParam> *params,
+							syntax::Node *body) {
+
 			BSCtor *r = classCtor(owner, pos, params, body);
 			r->makeAutoCast();
 			return r;
 		}
 
 
-		BSCtor *STORM_FN classDefaultCtor(Class *owner) {
+		BSCtor *classDefaultCtor(Class *owner) {
 			Array<NameParam> *params = CREATE(Array<NameParam>, owner);
 
 			return classCtor(owner, owner->declared, params, null);
+		}
+
+		void makeStatic(Class *owner, BSRawFn *fn) {
+			if (fn->params->empty() || fn->params->at(0).type != owner)
+				throw SyntaxError(fn->pos, L"Unable to make non-member functions static!");
+
+			FnFlags outlawed = fnAbstract | fnFinal | fnOverride;
+			if (fn->fnFlags() & outlawed)
+				throw SyntaxError(fn->pos, L"Can not make functions that are marked abstract, final or override into static functions.");
+
+			fn->removeThis();
 		}
 
 	}
