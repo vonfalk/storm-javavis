@@ -14,23 +14,42 @@ class Data : persist {
 		init() { a = 5; b = 8; }
 	}
 
-	// Output. Should be automatically generated...
+	// Write. Should be automatically generated...
 	void write(ObjOStream to) {
-		if (to.startObject(this)) {
+		var mode = to.startObject(this);
+		if (mode & Serialize:members) {
 			to.member("a", named{core:Int});
 			to.member("b", named{core:Int});
 			to.member("c", named{core:Bool});
 			to.member("data", named{Employee});
 			to.endMembers();
-
+		}
+		if (mode & Serialize:body) {
 			a.write(to);
 			b.write(to);
 			true.write(to);
 			data.write(to);
-
-			to.end();
+			to.endBody();
 		}
 	}
+
+	// Read. Should be automatically generated...
+	// static Data read(ObjIStream from) {
+	// 	// TODO: How do we handle inheritance?
+	// 	var mode = from.startObject();
+	// 	if (mode & Serialize:members) {
+	// 		from.member("a", named{core:Int});
+	// 		from.member("b", named{core:Int});
+	// 		from.member("c", named{core:Bool});
+	// 		from.member("data", named{Employee});
+	// 		from.endMembers();
+	// 	}
+	// 	if (mode & Serialize:body) {
+	// 		// Create an instance of the object and load data from it.
+	// 	} else {
+	// 		// Retrieve a previously stored object.
+	// 	}
+	// }
 }
 
 /**
@@ -45,15 +64,16 @@ class Employee : persist {
 	}
 
 	void write(ObjOStream to) {
-		if (to.startObject(this)) {
+		var mode = to.startObject(this);
+		if (mode & Serialize:members) {
 			to.member("name", named{core:Str});
 			to.member("coolness", named{core:Int});
 			to.endMembers();
-
+		}
+		if (mode & Serialize:body) {
 			name.write(to);
 			coolness.write(to);
-
-			to.end();
+			to.endBody();
 		}
 	}
 }

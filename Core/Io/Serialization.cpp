@@ -104,7 +104,6 @@ namespace storm {
 
 		typeIds = new (this) Map<TObject *, Nat>();
 		nextId = firstCustomId;
-		memberOutput = false;
 
 		// Insert the standard types inside 'ids', so we don't have to bother with them later.
 		Engine &e = engine();
@@ -136,12 +135,12 @@ namespace storm {
 		return id;
 	}
 
-	void ObjOStream::startValue(Type *t) {
+	serialize::Serialize ObjOStream::startValue(Type *t) {
 		putHeader(t, true);
-		putTypeDesc(t);
+		return putTypeDesc(t) | serialize::body;
 	}
 
-	Bool ObjOStream::startObject(Object *v) {
+	serialize::Serialize ObjOStream::startObject(Object *v) {
 		Type *t = runtime::typeOf(v);
 		putHeader(t, false);
 
@@ -150,7 +149,7 @@ namespace storm {
 		if (id != count) {
 			// We have written this one before!
 			writeNat(id);
-			return false;
+			return serialize::none;
 		}
 
 		// Remember for the future.
@@ -159,8 +158,7 @@ namespace storm {
 
 		// Output the actual type, it might differ from the formal type of the variable.
 		writeNat(typeId(t) & ~typeMask);
-		putTypeDesc(t);
-		return true;
+		return putTypeDesc(t) | serialize::body;
 	}
 
 	void ObjOStream::putHeader(Type *t, Bool value) {
@@ -174,25 +172,22 @@ namespace storm {
 		}
 	}
 
-	void ObjOStream::putTypeDesc(Type *t) {
+	serialize::Serialize ObjOStream::putTypeDesc(Type *t) {
 		Nat id = typeId(t);
 		if (id & typeMask) {
-			memberOutput = true;
-
 			// We need to output the type info for this type.
 			id &= ~typeMask;
 			typeIds->put((TObject *)t, id);
 			// Type name, used for pretty-printing.
 			runtime::typeName(t)->write(this);
+
+			return serialize::members;
 		} else {
-			memberOutput = false;
+			return serialize::none;
 		}
 	}
 
 	void ObjOStream::member(Str *name, Type *t) {
-		if (!memberOutput)
-			return;
-
 		Nat id = typeId(t) & ~typeMask;
 		if (runtime::isValue(t))
 			id |= typeMask;
@@ -201,12 +196,11 @@ namespace storm {
 	}
 
 	void ObjOStream::endMembers() {
-		if (memberOutput)
-			writeNat(0);
-		memberOutput = false;
+		// End of the members list.
+		writeNat(0);
 	}
 
-	void ObjOStream::end() {
+	void ObjOStream::endBody() {
 		if (depth == 0)
 			throw InternalError(L"Calls to 'end' does not match calls to 'start' during serialization.");
 		if (--depth == 0) {
