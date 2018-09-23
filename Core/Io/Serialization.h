@@ -1,5 +1,6 @@
 #pragma once
 #include "Utils/Exception.h"
+#include "Utils/Bitmask.h"
 #include "Core/Array.h"
 #include "Core/Map.h"
 #include "Core/CloneEnv.h"
@@ -18,6 +19,25 @@ namespace storm {
 	private:
 		String w;
 	};
+
+
+	namespace serialize {
+		/**
+		 * Request for different parts of the serialization interfaces.
+		 */
+		enum Serialize {
+			// Nothing.
+			none = 0x00,
+
+			// Need to serialize the members.
+			members = 0x01,
+
+			// Need to serialize the body of the object.
+			body = 0x02,
+		};
+
+		BITMASK_OPERATORS(Serialize);
+	}
 
 
 	/**
@@ -82,10 +102,10 @@ namespace storm {
 		void writeDouble(Double v);
 
 		// Indicate the start of serialization of the given object. Value types just pass the type
-		// of the object. If the function returns 'false', the object was previously serialized and
-		// the serialization routine shall terminate.
-		void STORM_FN startValue(Type *t);
-		Bool STORM_FN startObject(Object *v);
+		// of the object. The functions return a combination of the values 'header' and 'body',
+		// indicating which parts of the object that should be serialized at this time.
+		serialize::Serialize STORM_FN startValue(Type *t);
+		serialize::Serialize STORM_FN startObject(Object *v);
 
 		// Indicate a new member being serialized.
 		void STORM_FN member(Str *name, Type *t);
@@ -93,8 +113,8 @@ namespace storm {
 		// Indicate the end of serializing members.
 		void STORM_FN endMembers();
 
-		// Indicate the end of serialization started with a call to 'startXxx'.
-		void STORM_FN end();
+		// Indicate the end of serialization of the body.
+		void STORM_FN endBody();
 
 	private:
 		// Directory of previously serialized objects. Note: hashes object identity rather than
@@ -111,9 +131,6 @@ namespace storm {
 		// Depth of the output.
 		Nat depth;
 
-		// Currently outputting member information for a type?
-		Bool memberOutput;
-
 		// Find the type id for 't'. Generate a new one if none exists.
 		Nat typeId(Type *t);
 
@@ -124,7 +141,7 @@ namespace storm {
 		void putHeader(Type *t, Bool value);
 
 		// Output a type description if necessary.
-		void putTypeDesc(Type *t);
+		serialize::Serialize putTypeDesc(Type *t);
 	};
 
 
