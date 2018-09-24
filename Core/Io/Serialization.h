@@ -107,6 +107,11 @@ namespace storm {
 		serialize::Serialize STORM_FN startValue(Type *t);
 		serialize::Serialize STORM_FN startObject(Object *v);
 
+		// Specify the parent class of the current class. Directly following this call, the current
+		// class is expected to call 'write' for the parent class in order to possibly specify the
+		// layout for that class.
+		void STORM_FN parent(Type *t);
+
 		// Indicate a new member being serialized.
 		void STORM_FN member(Str *name, Type *t);
 

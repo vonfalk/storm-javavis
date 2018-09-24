@@ -8,27 +8,35 @@ use core:io;
 class Data : persist {
 	Int a;
 	Int b;
-	Employee data;
+	Employee data1;
+	Employee data2;
 
 	init() {
-		init() { a = 5; b = 8; }
+		init() {
+			a = 5;
+			b = 8;
+			data1 = Employee();
+			data2 = Manager();
+		}
 	}
 
 	// Write. Should be automatically generated...
 	void write(ObjOStream to) {
 		var mode = to.startObject(this);
 		if (mode & Serialize:members) {
+			// TODO: Parent class.
 			to.member("a", named{core:Int});
 			to.member("b", named{core:Int});
-			to.member("c", named{core:Bool});
-			to.member("data", named{Employee});
+			to.member("data1", named{Employee});
+			to.member("data2", named{Employee});
 			to.endMembers();
 		}
 		if (mode & Serialize:body) {
+			// TODO: Parent class.
 			a.write(to);
 			b.write(to);
-			true.write(to);
-			data.write(to);
+			data1.write(to);
+			data2.write(to);
 			to.endBody();
 		}
 	}
@@ -55,7 +63,7 @@ class Data : persist {
 /**
  * Another serializable class.
  */
-class Employee : persist {
+class Employee {
 	Str name;
 	Int coolness;
 
@@ -73,6 +81,33 @@ class Employee : persist {
 		if (mode & Serialize:body) {
 			name.write(to);
 			coolness.write(to);
+			to.endBody();
+		}
+	}
+}
+
+/**
+ * A sub-class to Employee.
+ */
+class Manager extends Employee {
+	Str title;
+
+	init() {
+		init() { title = "Manager"; }
+		coolness *= 10;
+	}
+
+	void write(ObjOStream to) {
+		var mode = to.startObject(this);
+		if (mode & Serialize:members) {
+			to.parent(named{Employee});
+			super:write(to);
+			to.member("title", named{core:Str});
+			to.endMembers();
+		}
+		if (mode & Serialize:body) {
+			super:write(to);
+			title.write(to);
 			to.endBody();
 		}
 	}
