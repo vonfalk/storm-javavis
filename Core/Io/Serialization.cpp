@@ -187,6 +187,8 @@ namespace storm {
 		}
 	}
 
+	void ObjOStream::parent(Type *t) {}
+
 	void ObjOStream::member(Str *name, Type *t) {
 		Nat id = typeId(t) & ~typeMask;
 		if (runtime::isValue(t))
