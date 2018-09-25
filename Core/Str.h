@@ -192,6 +192,9 @@ namespace storm {
 		Iter STORM_FN findLast(Char ch) const;
 		Iter STORM_FN findLast(Char ch, Iter last) const;
 
+		// Serialization.
+		void STORM_FN write(ObjOStream *to) const;
+
 	private:
 		friend class Iter;
 		friend class StrBuf;

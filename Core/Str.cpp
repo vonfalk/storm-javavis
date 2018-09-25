@@ -5,6 +5,7 @@
 #include "Utf.h"
 #include "Convert.h"
 #include "NumConvert.h"
+#include "Io/Serialization.h"
 
 namespace storm {
 
@@ -677,6 +678,15 @@ namespace storm {
 		}
 
 		return result;
+	}
+
+	void Str::write(ObjOStream *to) const {
+		GcArray<char> *buf = toChar(engine(), data->v);
+		Buffer b = fullBuffer((GcArray<Byte> *)buf);
+		b.filled(b.count() - 1);
+
+		to->writeNat(b.filled());
+		to->to->write(b);
 	}
 
 	const wchar *Str::toPtr(const Iter &i) const {
