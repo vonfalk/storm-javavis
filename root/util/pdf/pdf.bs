@@ -1,5 +1,6 @@
 use core:io;
 
+
 /**
  * Describes a PDF file.
  *
@@ -12,14 +13,20 @@ class PdfFile {
 	}
 
 	void write(OStream to) {
+		Nat pos = writeHeader(to);
 		Nat[] offsets;
-		offsets << 0; // First one is at offset 0.
 
-		// Header.
-		writeObject(offsets, to, &this.writeHeader(OStream));
+		for (o in objects) {
+			offsets << pos;
+			pos += writeObject(o, to);
+		}
 
-		// Footer.
-		writeFooter(offsets, to);
+		writeFooter(pos, offsets, to);
+	}
+
+	void add(PdfObject o) {
+		objects << o;
+		o.id = objects.count;
 	}
 
 private:
@@ -27,45 +34,49 @@ private:
 	PdfObject[] objects;
 
 
-	// Create a proper text stream.
-	TextOutput textOutput(OStream to) {
-		TextInfo info;
-		info.useCrLf = false;
-		info.useBom = false;
-		return Utf8Output(to, info);
+	// Write the PDF header. Returns number of bytes written.
+	Nat writeHeader(OStream to) {
+		MemOStream memStream;
+		var output = textOutput(memStream);
+		output.write("%PDF-1.6\n%✓\n"); // Check mark to use some high-order bits.
+		output.flush();
+
+		Nat count = memStream.buffer.filled;
+		to.write(memStream.buffer);
+		count;
 	}
 
-	// Write the PDF header, consideded object #0.
-	void writeHeader(OStream to) {
-		var out = textOutput(to);
-		out.write("%PDF-1.6\n%✓\n"); // Check mark to use some high-order bits.
-		out.flush();
-	}
+	// Write an object. Return size in bytes.
+	Nat writeObject(PdfObject o, OStream to) {
+		MemOStream memStream;
+		o.write(memStream);
 
-	// Write an object to the PDF.
-	void writeObject(Nat[] offsets, OStream to, fn(OStream) -> void fn) {
-		MemOStream stream;
-		fn.call(stream);
-		offsets << (offsets.last + stream.buffer.filled);
-		to.write(stream.buffer);
+		Nat count = memStream.buffer.filled;
+		to.write(memStream.buffer);
+		count;
 	}
 
 	// Write the footer.
-	void writeFooter(Nat[] offsets, OStream to) {
-		var xrefPos = offsets.last; offsets.pop;
-		var out = textOutput(to);
-		out.write("xref\n");
-		out.write("0 ${offsets.count}\n");
-		for (i, o in offsets) {
-			if (i == 0)
-				out.write("0000000000 65535 f\n");
-			else
-				out.write("${o, 10} ${0, 5} n\n");
+	void writeFooter(Nat pos, Nat[] offsets, OStream to) {
+		StrBuf out;
+		out << fill(Char(48)); // 0
+		out << "xref\n";
+		out << "0 " << offsets.count << "\n";
+
+		// First offset is special.
+		out << "0000000000 65535 f\n";
+		for (o in offsets) {
+			out << width(10) << o << " 00000 n\n";
 		}
-		// TODO: Configurable root?
-		out.write("trailer <</Size ${offsets.count} /Root 1 0 R>>\n");
-		out.write("startxref\n${xrefPos}\n%%EOF");
-		out.flush();
+
+		// Trailer to locate the xref table.
+		// TODO: Allow specifying an arbitrary root object?
+		out << "trailer <</Size " << (offsets.count + 1) << " /Root 1 0 R>>\n";
+		out << "startxref\n" << pos << "\n%%EOF";
+
+		var conv = textOutput(to);
+		conv.write(out.toS);
+		conv.flush();
 	}
 }
 
@@ -75,10 +86,56 @@ class PdfObject {
 	init() {
 		init() {}
 	}
+
+	void write(OStream to) {
+		var text = textOutput(to);
+		text.write("${id} 0 obj ");
+		text.flush();
+
+		output(to, text);
+
+		text.write("\nendobj\n");
+		text.flush();
+	}
+
+	void output(OStream to, TextOutput text) : abstract;
 }
+
+class PdfStrObject extends PdfObject {
+	// TODO: Don't need this, this should be abstract as well!
+	private Str cont;
+
+	init(Str contents) {
+		init() { cont = contents; }
+	}
+
+	void output(OStream to, TextOutput text) {
+		StrBuf out;
+		output(out);
+		text.write(out.toS);
+	}
+
+	// TODO: Should be abstract in the future.
+	void output(StrBuf to) {
+		to << cont;
+	}
+}
+
+// Create a proper text stream.
+private TextOutput textOutput(OStream to) {
+	TextInfo info;
+	info.useCrLf = false;
+	info.useBom = false;
+	return Utf8Output(to, info);
+}
+
 
 void test() {
 	PdfFile pdf;
+	pdf.add(PdfStrObject("<</Type /Catalog /Pages 2 0 R >>"));
+	pdf.add(PdfStrObject("<</Type /Pages /Kids [3 0 R] /Count 1 >>"));
+	pdf.add(PdfStrObject("<</Type /Page /MediaBox [0 0 500 800] >>"));
+
 	Url url = cwdUrl / ".." / "test.pdf";
 	print("Writing to ${url}...");
 	pdf.write(url.write);
