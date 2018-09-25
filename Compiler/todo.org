@@ -1,4 +1,4 @@
-* Performance improvements [3/5]
+* Performance improvements [3/7]
   - [X] The main culprit of the startup time is loading all functions in the system (about 50%). Investigate why.
     It seems much of the time can be traced to filling in the VTables, out of which the main culprit is
     'fn->directRef()', which initializes references.
@@ -8,6 +8,10 @@
     as their "names" instead of strings.
   - [X] TypeChain is currently always allocating an array of size 1 before it is properly initialized. This is very
     wasteful, as it is almost always overwritten with a new array an instant later.
+  - [ ] Take a look at improving the performance of Map<>. On Linux, it actually performs worse than std::map
+    during insertions at least.
+  - [ ] If a copy constructor for a type is marked as 'pure', keep the 'copy' entry in the handle 'null' so that
+    containers may use memcpy instead of calling the copy ctor for trivial types all the time.
   - [ ] In Basic Storm: It is likely that "result" is called multiple times from some nodes, which causes an
     exponential growth in calls towards the leaves of the AST. Caching in Expr could solve the issue,
     but the scale of the issue should be assessed first.

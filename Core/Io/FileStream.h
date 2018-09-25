@@ -8,14 +8,14 @@ namespace storm {
 	 * File IO.
 	 */
 
-	class IFileStream : public HandleRIStream {
+	class FileIStream : public HandleRIStream {
 		STORM_CLASS;
 	public:
 		// Create from a path.
-		IFileStream(Str *name);
+		FileIStream(Str *name);
 
 		// Copy.
-		IFileStream(const IFileStream &o);
+		FileIStream(const FileIStream &o);
 
 		// To string.
 		virtual void STORM_FN toS(StrBuf *to) const;
@@ -26,14 +26,14 @@ namespace storm {
 	};
 
 
-	class OFileStream : public HandleOStream {
+	class FileOStream : public HandleOStream {
 		STORM_CLASS;
 	public:
 		// Create from a path.
-		OFileStream(Str *name);
+		FileOStream(Str *name);
 
 		// Copy.
-		OFileStream(const OFileStream &o);
+		FileOStream(const FileOStream &o);
 
 		// To string.
 		virtual void STORM_FN toS(StrBuf *to) const;

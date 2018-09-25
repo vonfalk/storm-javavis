@@ -62,9 +62,7 @@ namespace storm {
 	// Create a buffer.
 	Buffer STORM_FN buffer(EnginePtr e, Nat count);
 
-	// Create a buffer using a (potentially stack-allocated) GcArray for backing data. This function
-	// assumes that the backing array contains data, so it sets 'filled' to the size of the
-	// data. Use the constructor if this is not desired.
+	// Create a buffer using a (potentially stack-allocated) GcArray for backing data.
 	Buffer emptyBuffer(GcArray<Byte> *data);
 	Buffer fullBuffer(GcArray<Byte> *data);
 

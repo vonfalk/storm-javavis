@@ -39,7 +39,7 @@ static const wchar strData2[] = S("a\u00D6\u0D36\u3042\u79C1\U0001F639e");
 
 TextInput *read(const void *src, nat count) {
 	Buffer b = buffer(gEngine(), (const byte *)src, count);
-	IMemStream *s = new (gEngine()) IMemStream(b);
+	MemIStream *s = new (gEngine()) MemIStream(b);
 	return readText(s);
 }
 

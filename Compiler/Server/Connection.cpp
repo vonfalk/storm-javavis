@@ -54,7 +54,7 @@ namespace storm {
 		}
 
 		void Connection::send(SExpr *expr) {
-			OMemStream *out = new (this) OMemStream();
+			MemOStream *out = new (this) MemOStream();
 
 			// Leading zero byte.
 			GcPreArray<byte, 5> d;
@@ -274,7 +274,7 @@ namespace storm {
 				return null;
 			}
 
-			IMemStream *src = new (this) IMemStream(str);
+			MemIStream *src = new (this) MemIStream(str);
 			TextInput *text = new (this) Utf8Input(src);
 			Str *data = text->readAllRaw();
 
@@ -293,7 +293,7 @@ namespace storm {
 				return null;
 			}
 
-			IMemStream *src = new (this) IMemStream(str);
+			MemIStream *src = new (this) MemIStream(str);
 			TextInput *text = new (this) Utf8Input(src);
 			Str *name = text->readAllRaw();
 

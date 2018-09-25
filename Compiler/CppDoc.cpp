@@ -45,7 +45,7 @@ namespace storm {
 
 		src->seek(from);
 
-		return readText(new (src) IMemStream(src->readAll(to - from)))->readAll();
+		return readText(new (src) MemIStream(src->readAll(to - from)))->readAll();
 	}
 
 	static Str *readBody(Url *src, Nat entry) {

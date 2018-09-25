@@ -5,30 +5,30 @@
 
 namespace storm {
 
-	IMemStream::IMemStream(Buffer b) : data(buffer(engine(), b.filled())), pos(0) {
+	MemIStream::MemIStream(Buffer b) : data(buffer(engine(), b.filled())), pos(0) {
 		// Copy the filled data.
 		memcpy(data.dataPtr(), b.dataPtr(), b.filled());
 		data.filled(b.filled());
 	}
 
-	IMemStream::IMemStream(const IMemStream &o) : data(o.data) {}
+	MemIStream::MemIStream(const MemIStream &o) : data(o.data) {}
 
-	void IMemStream::deepCopy(CloneEnv *env) {
+	void MemIStream::deepCopy(CloneEnv *env) {
 		// We never change 'data', so we do not need to clone it here.
 	}
 
-	Bool IMemStream::more() {
+	Bool MemIStream::more() {
 		return pos < data.count();
 	}
 
-	Buffer IMemStream::read(Buffer to) {
+	Buffer MemIStream::read(Buffer to) {
 		Nat start = to.filled();
 		to = peek(to);
 		pos += to.filled() - start;
 		return to;
 	}
 
-	Buffer IMemStream::peek(Buffer to) {
+	Buffer MemIStream::peek(Buffer to) {
 		Nat start = to.filled();
 		Nat copy = min(to.count() - start, data.count() - pos);
 		memcpy(to.dataPtr() + start, data.dataPtr() + pos, copy);
@@ -36,40 +36,40 @@ namespace storm {
 		return to;
 	}
 
-	void IMemStream::seek(Word to) {
+	void MemIStream::seek(Word to) {
 		pos = min(nat(to), data.count());
 	}
 
-	Word IMemStream::tell() {
+	Word MemIStream::tell() {
 		return pos;
 	}
 
-	Word IMemStream::length() {
+	Word MemIStream::length() {
 		return data.count();
 	}
 
-	RIStream *IMemStream::randomAccess() {
+	RIStream *MemIStream::randomAccess() {
 		return this;
 	}
 
-	void IMemStream::toS(StrBuf *to) const {
+	void MemIStream::toS(StrBuf *to) const {
 		outputMark(*to, data, pos);
 	}
 
 
-	OMemStream::OMemStream() {}
+	MemOStream::MemOStream() {}
 
-	OMemStream::OMemStream(Buffer appendTo) : data(appendTo) {}
+	MemOStream::MemOStream(Buffer appendTo) : data(appendTo) {}
 
-	OMemStream::OMemStream(const OMemStream &o) : data(o.data) {
+	MemOStream::MemOStream(const MemOStream &o) : data(o.data) {
 		data.deepCopy(null);
 	}
 
-	void OMemStream::deepCopy(CloneEnv *env) {
+	void MemOStream::deepCopy(CloneEnv *env) {
 		// Nothing to do...
 	}
 
-	void OMemStream::write(Buffer src, Nat start) {
+	void MemOStream::write(Buffer src, Nat start) {
 		start = min(start, src.filled());
 		Nat copy = src.filled() - start;
 		Nat filled = data.filled();
@@ -84,11 +84,11 @@ namespace storm {
 		data.filled(filled + copy);
 	}
 
-	Buffer OMemStream::buffer() {
+	Buffer MemOStream::buffer() {
 		return data;
 	}
 
-	void OMemStream::toS(StrBuf *to) const {
+	void MemOStream::toS(StrBuf *to) const {
 		*to << data;
 	}
 

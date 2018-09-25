@@ -49,6 +49,13 @@ namespace storm {
 		}
 	}
 
+	static void enumGet(InlineParams p) {
+		if (p.result->needed()) {
+			if (!p.result->suggest(p.state, p.param(0)))
+				*p.state->l << mov(p.result->location(p.state).v, p.param(0));
+		}
+	}
+
 	Enum::Enum(Str *name, Bool bitmask)
 		: Type(name, typeValue, Size::sInt, createGcType(name->engine()), null),
 		  bitmask(bitmask) {
@@ -95,7 +102,9 @@ namespace storm {
 			add(inlinedFunction(engine, b, S("has"), vv, fnPtr(engine, &enumOverlaps))->makePure());
 		}
 
-		add(nativeFunction(engine, Value(this), S("hash"), v, address(&intHash))->makePure());
+		Value nat(StormInfo<Nat>::type(engine));
+		add(inlinedFunction(engine, nat, S("v"), v, fnPtr(engine, &enumGet))->makePure());
+		add(nativeFunction(engine, nat, S("hash"), v, address(&intHash))->makePure());
 
 		return Type::loadAll();
 	}

@@ -208,7 +208,7 @@ namespace storm {
 		}
 
 		void String::write(OStream *to, Connection *c) {
-			OMemStream *mem = new (this) OMemStream();
+			MemOStream *mem = new (this) MemOStream();
 			TextOutput *text = new (this) Utf8Output(mem);
 			text->write(v);
 			text->flush();
@@ -245,7 +245,7 @@ namespace storm {
 				// Fist time, send the entire symbol!
 				writeInt(to, newSymbol, id);
 
-				OMemStream *mem = new (this) OMemStream();
+				MemOStream *mem = new (this) MemOStream();
 				TextOutput *text = new (this) Utf8Output(mem);
 				text->write(v);
 				text->flush();

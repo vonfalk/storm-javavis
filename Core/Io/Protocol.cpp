@@ -128,11 +128,11 @@ namespace storm {
 	}
 
 	IStream *FileProtocol::read(Url *url) {
-		return new (url) IFileStream(format(url));
+		return new (url) FileIStream(format(url));
 	}
 
 	OStream *FileProtocol::write(Url *url) {
-		return new (url) OFileStream(format(url));
+		return new (url) FileOStream(format(url));
 	}
 
 	Bool FileProtocol::exists(Url *url) {
@@ -193,11 +193,11 @@ namespace storm {
 	}
 
 	IStream *FileProtocol::read(Url *url) {
-		return new (url) IFileStream(format(url));
+		return new (url) FileIStream(format(url));
 	}
 
 	OStream *FileProtocol::write(Url *url) {
-		return new (url) OFileStream(format(url));
+		return new (url) FileOStream(format(url));
 	}
 
 	Bool FileProtocol::exists(Url *url) {

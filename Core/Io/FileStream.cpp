@@ -58,20 +58,20 @@ namespace storm {
 #error "Please implement file IO for your platform!"
 #endif
 
-	IFileStream::IFileStream(Str *name) : HandleRIStream(openFile(name, true)), name(name) {}
+	FileIStream::FileIStream(Str *name) : HandleRIStream(openFile(name, true)), name(name) {}
 
-	IFileStream::IFileStream(const IFileStream &o) : HandleRIStream(copyFile(o.handle, o.name, true)), name(o.name) {}
+	FileIStream::FileIStream(const FileIStream &o) : HandleRIStream(copyFile(o.handle, o.name, true)), name(o.name) {}
 
-	void IFileStream::toS(StrBuf *to) const {
+	void FileIStream::toS(StrBuf *to) const {
 		*to << L"File input from " << name;
 	}
 
 
-	OFileStream::OFileStream(Str *name) : HandleOStream(openFile(name, false)), name(name) {}
+	FileOStream::FileOStream(Str *name) : HandleOStream(openFile(name, false)), name(name) {}
 
-	OFileStream::OFileStream(const OFileStream &o) : HandleOStream(copyFile(o.handle, o.name, false)), name(o.name) {}
+	FileOStream::FileOStream(const FileOStream &o) : HandleOStream(copyFile(o.handle, o.name, false)), name(o.name) {}
 
-	void OFileStream::toS(StrBuf *to) const {
+	void FileOStream::toS(StrBuf *to) const {
 		*to << L"File output to " << name;
 	}
 

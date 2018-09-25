@@ -8,14 +8,14 @@ namespace storm {
 	/**
 	 * Simple memory stream.
 	 */
-	class IMemStream : public RIStream {
+	class MemIStream : public RIStream {
 		STORM_CLASS;
 	public:
 		// Create from a buffer.
-		STORM_CTOR IMemStream(Buffer b);
+		STORM_CTOR MemIStream(Buffer b);
 
 		// Copy.
-		IMemStream(const IMemStream &o);
+		MemIStream(const MemIStream &o);
 
 		// Deep copy.
 		virtual void STORM_FN deepCopy(CloneEnv *env);
@@ -57,17 +57,17 @@ namespace storm {
 	/**
 	 * Output stream.
 	 */
-	class OMemStream : public OStream {
+	class MemOStream : public OStream {
 		STORM_CLASS;
 	public:
 		// Create.
-		STORM_CTOR OMemStream();
+		STORM_CTOR MemOStream();
 
 		// Create. Append to a buffer.
-		STORM_CTOR OMemStream(Buffer appendTo);
+		STORM_CTOR MemOStream(Buffer appendTo);
 
 		// Copy.
-		OMemStream(const OMemStream &o);
+		MemOStream(const MemOStream &o);
 
 		// Deep copy.
 		void STORM_FN deepCopy(CloneEnv *env);

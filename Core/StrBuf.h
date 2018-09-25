@@ -202,7 +202,7 @@ namespace storm {
 	class Indent {
 		STORM_VALUE;
 	public:
-		Indent(StrBuf *buf);
+		STORM_CTOR Indent(StrBuf *buf);
 		~Indent();
 
 	private:
