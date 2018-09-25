@@ -1,4 +1,5 @@
 #pragma once
+#include "Utils/Exception.h"
 #include "Core/Array.h"
 #include "Core/Map.h"
 #include "Core/CloneEnv.h"
@@ -7,66 +8,15 @@
 namespace storm {
 	STORM_PKG(core.io);
 
-	class StoredType;
-
 	/**
-	 * Description of a stored field in a serialized type.
+	 * Error during serialization.
 	 */
-	class StoredField {
-		STORM_VALUE;
+	class EXCEPTION_EXPORT SerializationError : public Exception {
 	public:
-		// Create.
-		STORM_CTOR StoredField(Str *name, Type *type, Nat offset);
-
-		// Name of the field.
-		Str *name;
-
-		// Type of the field.
-		Type *type;
-
-		// Offset of the field inside the type.
-		Nat offset;
-
-		// Deep copy.
-		void STORM_FN deepCopy(CloneEnv *env);
-	};
-
-
-	/**
-	 * Description of a serialized type.
-	 *
-	 * This description is similar to core.lang.Type, but is different since it focuses on the
-	 * serialized data. Instances of this type are associated to a core.lang.Type, but do not have
-	 * to correspond exactly to the contents of the type. This is to support cases when the
-	 * underlying type has been modified since it was serialized.
-	 */
-	class StoredType : public Object {
-		STORM_CLASS;
-	public:
-		// Create and associate with a type.
-		STORM_CTOR StoredType(Type *t);
-
-		// Copy.
-		StoredType(const StoredType &o);
-
-		// Deep copy.
-		void STORM_FN deepCopy(CloneEnv *env);
-
-		// Associated type.
-		Type *type;
-
-		// Number of fields.
-		Nat STORM_FN count() const { return fields->count(); }
-
-		// Get a field.
-		StoredField STORM_FN at(Nat i) const { return fields->at(i); }
-
-		// Add a field.
-		void STORM_FN push(StoredField f) { fields->push(f); }
-
+		SerializationError(const String &w) : w(w) {}
+		virtual String what() const { return w; }
 	private:
-		// Type information.
-		Array<StoredField> *fields;
+		String w;
 	};
 
 
@@ -83,14 +33,36 @@ namespace storm {
 		// Create.
 		STORM_CTOR ObjIStream(IStream *src);
 
-	private:
 		// Source stream.
-		IStream *src;
+		IStream *from;
+
+		// Read various primitive types from the stream. Throws an exception on error.
+		Byte STORM_FN readByte();
+		Int STORM_FN readInt();
+		Nat STORM_FN readNat();
+		Long STORM_FN readLong();
+		Word STORM_FN readWord();
+		Float STORM_FN readFloat();
+		Double STORM_FN readDouble();
+
+		// TODO: Move to Str when we have support for static members.
+		Str *STORM_FN readStr();
 	};
 
 
 	/**
 	 * Output stream for objects.
+	 *
+	 * Generic serialization is implemented as follows:
+	 * 1: call 'startValue', 'startObject' depending on what is appropriate.
+	 * 2: if the function returns false, abort serialization of the current instance; it has already
+	 *    been serialized before.
+	 * 3: call 'member' once for each member that is going to be serialized.
+	 * 4: call 'endMembers'.
+	 * 5: serialize the members by calling their serialization function.
+	 * 6: call 'end'
+	 *
+	 * Note: Serialization of threaded objects is not yet supported.
 	 */
 	class ObjOStream : public Object {
 		STORM_CLASS;
@@ -101,11 +73,7 @@ namespace storm {
 		// Destination stream. Used to implement custom serialization.
 		OStream *to;
 
-		// Write an object to the stream. 'value' is a pointer to an instance of the type described
-		// by 'type', similar to how types are handled with the Handle type.
-		void CODECALL write(StoredType *type, const void *value);
-
-		// Write various primitive types to the stream (using 'write' above).
+		// Write various primitive types to the stream. Used to implement custom serialization.
 		void STORM_FN writeByte(Byte v);
 		void STORM_FN writeInt(Int v);
 		void STORM_FN writeNat(Nat v);
@@ -114,26 +82,50 @@ namespace storm {
 		void STORM_FN writeFloat(Float v);
 		void STORM_FN writeDouble(Double v);
 
+		// Indicate the start of serialization of the given object. Value types just pass the type
+		// of the object. If the function returns 'false', the object was previously serialized and
+		// the serialization routine shall terminate.
+		void STORM_FN startValue(Type *t);
+		Bool STORM_FN startObject(Object *v);
+
+		// Indicate a new member being serialized.
+		void STORM_FN member(Str *name, Type *t);
+
+		// Indicate the end of serializing members.
+		void STORM_FN endMembers();
+
+		// Indicate the end of serialization started with a call to 'startXxx'.
+		void STORM_FN end();
+
 	private:
+		// Directory of previously serialized objects. Note: hashes object identity rather than
+		// regular equality.
+		Map<Object *, Nat> *objIds;
 
-		// Directory of all types that have been stored so far. Note: We're using TObject, since
-		// Type is not accessable outside the compiler.
-		Map<TObject *, StoredType *> *stored;
-
-		// Directory of allocated type id:s.
-		Map<TObject *, Nat> *ids;
+		// Directory of allocated type id:s (actually Map<Type *, Nat>). Types that have been
+		// assigned an identifier but not yet been written to the stream have their highest bit set.
+		Map<TObject *, Nat> *typeIds;
 
 		// Next available type id.
 		Nat nextId;
 
-		// Serialize a type description. Makes sure that all subtypes referred to inside 'type' are assigned id:s.
-		void writeTypeDesc(StoredType *type);
+		// Depth of the output.
+		Nat depth;
 
-		// Serialize a field.
-		void writeField(StoredField field);
+		// Currently outputting member information for a type?
+		Bool memberOutput;
 
 		// Find the type id for 't'. Generate a new one if none exists.
-		Nat findId(Type *t);
+		Nat typeId(Type *t);
+
+		// Clear 'objIds'.
+		void clearObjects();
+
+		// Output any header before the current object.
+		void putHeader(Type *t, Bool value);
+
+		// Output a type description if necessary.
+		void putTypeDesc(Type *t);
 	};
 
 
@@ -141,6 +133,9 @@ namespace storm {
 	 * Reserved type id:s. These denote the primitive types known natively by the serialization system.
 	 */
 	enum StoredId {
+		// Indicates the end of the members table.
+		endId = 0x00,
+
 		// Built in types.
 		byteId = 0x01,
 		intId = 0x02,

@@ -47,7 +47,11 @@ namespace storm {
 		}
 
 		Str *typeName(Type *t) {
-			return t->name;
+			return t->shortIdentifier();
+		}
+
+		bool isValue(Type *t) {
+			return (t->typeFlags & typeValue) == typeValue;
 		}
 
 		const GcType *gcTypeOf(const void *alloc) {

@@ -13,4 +13,17 @@ namespace storm {
 		String msg;
 	};
 
+
+	/**
+	 * Internal error.
+	 */
+	class EXCEPTION_EXPORT InternalError : public Exception {
+	public:
+		InternalError(const String &w) : w(w) {}
+		virtual String what() const { return w; }
+	private:
+		String w;
+	};
+
+
 }
