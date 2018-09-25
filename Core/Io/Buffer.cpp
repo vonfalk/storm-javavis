@@ -73,7 +73,7 @@ namespace storm {
 	}
 
 	StrBuf &operator <<(StrBuf &to, Buffer b) {
-		outputMark(to, b, b.count());
+		outputMark(to, b, b.count() + 1);
 		return to;
 	}
 

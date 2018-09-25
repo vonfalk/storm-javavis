@@ -101,6 +101,10 @@ namespace storm {
 			return (*fwd.typeName)(t);
 		}
 
+		bool isValue(Type *t) {
+			return (*fwd.isValue)(t);
+		}
+
 		const GcType *gcTypeOf(const void *alloc) {
 			return (*fwd.gcTypeOf)(alloc);
 		}

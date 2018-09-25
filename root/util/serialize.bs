@@ -1,0 +1,150 @@
+use core:io;
+
+/**
+ * Read serialized objects and output a human-readable string representation. This does not require
+ * that we have access to all objects stored in the serialized stream.
+ */
+class TextObjStream {
+	// Create.
+	init(IStream src) {
+		init() { src = ObjIStream(src); }
+	}
+
+	// Read an object to a StrBuf.
+	void read(StrBuf to) {
+		Nat type = src.readNat();
+		read(to, type);
+	}
+
+	// Read to a string.
+	Str read() {
+		StrBuf to;
+		read(to);
+		to.toS();
+	}
+
+private:
+
+	/**
+	 * Type description.
+	 */
+	class Type {
+		Str name;
+		Member[] members;
+
+		init(Str name) {
+			init() {
+				name = name;
+			}
+		}
+	}
+
+	/**
+	 * Member description.
+	 */
+	value Member {
+		Nat type;
+		Str name;
+
+		init(Nat type, Str name) {
+			init() {
+				type = type;
+				name = name;
+			}
+		}
+	}
+
+	// Source stream.
+	ObjIStream src;
+
+	// Remember all types.
+	Nat->Type types;
+
+	// Remember previously stored objects.
+	Set<Nat> objects;
+
+	// Read an object of a known type.
+	void read(StrBuf to, Nat type) {
+		Nat mask = 2147483648; // 0x80000000;
+		Bool value = false;
+		Nat objId;
+		if (type > mask) {
+			value = true;
+			type -= mask;
+		}
+
+		// Check for primitive types!
+		if (readPrimitive(to, type))
+			return;
+
+		if (!value) {
+			// Previous object?
+			objId = src.readNat();
+			if (objects.has(objId)) {
+				to << "<previous object, id " << objId << ">";
+				return;
+			}
+			objects.put(objId);
+			type = src.readNat();
+		}
+
+		Type t = findType(type);
+		to << t.name;
+		if (!value)
+			to << " (" << objId << ")";
+		to << " {\n";
+		{
+			Indent z(to);
+			for (m in t.members) {
+				to << m.name << ": ";
+				read(to, m.type);
+				to << "\n";
+			}
+		}
+		to << "}";
+	}
+
+	// Find the type 'type'. Read it if necessary.
+	Type findType(Nat type) {
+		if (types.has(type))
+			return types.get(type);
+
+		Str name = src.readStr();
+		Type t(name);
+
+		do {
+			Nat type = src.readNat();
+		} while (type > 0) {
+			Str name = src.readStr();
+			t.members << Member(type, name);
+		}
+
+		t;
+	}
+
+	// Read a primitive type.
+	Bool readPrimitive(StrBuf to, Nat type) {
+		if (type == StoredId:byteId.v) {
+			to << src.readByte();
+		} else if (type == StoredId:intId.v) {
+			to << src.readInt();
+		} else if (type == StoredId:natId.v) {
+			to << src.readNat();
+		} else if (type == StoredId:longId.v) {
+			to << src.readLong();
+		} else if (type == StoredId:wordId.v) {
+			to << src.readWord();
+		} else if (type == StoredId:floatId.v) {
+			to << src.readFloat();
+		} else if (type == StoredId:doubleId.v) {
+			to << src.readDouble();
+		} else if (type == StoredId:strId.v) {
+			to << src.readStr();
+		} else {
+			return false;
+		}
+
+		true;
+	}
+
+}

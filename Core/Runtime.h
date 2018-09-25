@@ -49,8 +49,11 @@ namespace storm {
 		// Get the GcType for an allocation.
 		const GcType *gcTypeOf(const void *alloc);
 
-		// Get the name of a type.
+		// Get the name of a type (expected to be used for pretty-printing).
 		Str *typeName(Type *t);
+
+		// Is 't' a value type?
+		bool isValue(Type *t);
 
 		// Is type A an instance of type B?
 		bool isA(const RootObject *a, const Type *b);

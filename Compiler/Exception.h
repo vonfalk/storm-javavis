@@ -1,5 +1,6 @@
 #pragma once
 #include "Utils/Exception.h"
+#include "Core/Exception.h"
 #include "SrcPos.h"
 #include "Value.h"
 #include "ExprResult.h"
@@ -34,17 +35,6 @@ namespace storm {
 		virtual void output(wostream &to) const;
 	};
 
-
-	/**
-	 * Internal error.
-	 */
-	class EXCEPTION_EXPORT InternalError : public Exception {
-	public:
-		InternalError(const String &w) : w(w) {}
-		virtual String what() const { return w; }
-	private:
-		String w;
-	};
 
 	/**
 	 * Language definition error.

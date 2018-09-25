@@ -1,4 +1,6 @@
 use lang:bs;
+use lang:bs:macro;
+use core:io;
 
 /**
  * Serializable class.
@@ -6,9 +8,69 @@ use lang:bs;
 class Data : persist {
 	Int a;
 	Int b;
+	InnerData data;
+
+	init() {
+		init() { a = 5; b = 8; }
+	}
+
+	// Output. Should be automatically generated...
+	void write(ObjOStream to) {
+		if (to.startObject(this)) {
+			to.member("a", named{core:Int});
+			to.member("b", named{core:Int});
+			to.member("data", named{InnerData});
+			to.endMembers();
+
+			to.writeInt(a);
+			to.writeInt(b);
+			data.write(to);
+
+			to.end();
+		}
+	}
 }
+
+/**
+ * Another serializable class.
+ */
+class InnerData : persist {
+	Str name;
+	Int coolness;
+
+	init() {
+		init() { name = "John Smith"; coolness = 500; }
+	}
+
+	void write(ObjOStream to) {
+		if (to.startObject(this)) {
+			to.member("a", named{core:Str});
+			to.member("b", named{core:Int});
+			to.endMembers();
+
+			name.write(to);
+			to.writeInt(coolness);
+
+			to.end();
+		}
+	}
+}
+
 
 // Persist decorator
 void persist(Class c) {
 	print("Decorator: " # c);
+}
+
+// Test serialization.
+void testSerialize() {
+	Data x;
+	MemOStream out;
+	ObjOStream obj(out);
+
+	x.write(obj);
+
+	MemIStream in(out.buffer);
+	util:TextObjStream read(in);
+	print("Result: " # read.read());
 }

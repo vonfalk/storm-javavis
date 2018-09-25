@@ -1,116 +1,231 @@
 #include "stdafx.h"
 #include "Serialization.h"
 #include "Str.h"
+#include "Exception.h"
+
+// TODO: Remove later!
+#include "Core/Convert.h"
 
 namespace storm {
-
-	/**
-	 * StoredField
-	 */
-
-	StoredField::StoredField(Str *name, Type *type, Nat offset)
-		: name(name), type(type), offset(offset) {}
-
-	void StoredField::deepCopy(CloneEnv *env) {
-		cloned(name, env);
-		cloned(type, env);
-	}
-
-
-	/**
-	 * StoredType
-	 */
-
-	StoredType::StoredType(Type *t) : type(t) {
-		fields = new (engine()) Array<StoredField>();
-	}
-
-	StoredType::StoredType(const StoredType &o) : type(o.type) {
-		fields = new (this) Array<StoredField>(*o.fields);
-	}
-
-	void StoredType::deepCopy(CloneEnv *env) {
-		for (Nat i = 0; i < fields->count(); i++) {
-			fields->at(i).deepCopy(env);
-		}
-	}
-
 
 	/**
 	 * ObjIStream
 	 */
 
-	ObjIStream::ObjIStream(IStream *src) : src(src) {}
+	ObjIStream::ObjIStream(IStream *src) : from(src) {}
+
+	static void checkBuffer(const Buffer &b) {
+		if (!b.full())
+			throw SerializationError(L"Not enough data.");
+	}
+
+	Byte ObjIStream::readByte() {
+		GcPreArray<Byte, 1> d;
+		Buffer b = from->read(emptyBuffer(d));
+		checkBuffer(b);
+		return d.v[0];
+	}
+
+	Int ObjIStream::readInt() {
+		GcPreArray<Byte, 4> d;
+		Buffer b = from->read(emptyBuffer(d));
+		checkBuffer(b);
+		Int r = Int(b[0]) << 24;
+		r |= Int(b[1]) << 16;
+		r |= Int(b[2]) << 8;
+		r |= Int(b[3]) << 0;
+		return r;
+	}
+
+	Nat ObjIStream::readNat() {
+		GcPreArray<Byte, 4> d;
+		Buffer b = from->read(emptyBuffer(d));
+		checkBuffer(b);
+		Nat r = Nat(b[0]) << 24;
+		r |= Nat(b[1]) << 16;
+		r |= Nat(b[2]) << 8;
+		r |= Nat(b[3]) << 0;
+		return r;
+	}
+
+	Long ObjIStream::readLong() {
+		GcPreArray<Byte, 8> d;
+		Buffer b = from->read(emptyBuffer(d));
+		checkBuffer(b);
+		Long r = Long(b[0]) << 56;
+		r |= Long(b[1]) << 48;
+		r |= Long(b[2]) << 40;
+		r |= Long(b[3]) << 32;
+		r |= Long(b[4]) << 24;
+		r |= Long(b[5]) << 16;
+		r |= Long(b[6]) << 8;
+		r |= Long(b[7]) << 0;
+		return r;
+	}
+
+	Word ObjIStream::readWord() {
+		GcPreArray<Byte, 8> d;
+		Buffer b = from->read(emptyBuffer(d));
+		checkBuffer(b);
+		Long r = Long(b[0]) << 56;
+		r |= Long(b[1]) << 48;
+		r |= Long(b[2]) << 40;
+		r |= Long(b[3]) << 32;
+		r |= Long(b[4]) << 24;
+		r |= Long(b[5]) << 16;
+		r |= Long(b[6]) << 8;
+		r |= Long(b[7]) << 0;
+		return r;
+	}
+
+	Float ObjIStream::readFloat() {
+		Nat repr = readNat();
+		Float r;
+		memcpy(&r, &repr, sizeof(repr));
+		return r;
+	}
+
+	Double ObjIStream::readDouble() {
+		Word repr = readWord();
+		Double r;
+		memcpy(&r, &repr, sizeof(repr));
+		return r;
+	}
+
+	Str *ObjIStream::readStr() {
+		Nat len = readNat();
+		Buffer b = from->read(buffer(engine(), len));
+		checkBuffer(b);
+
+		GcArray<char> *dst = runtime::allocArray<char>(engine(), &byteArrayType, len + 1);
+		memcpy(&dst->v, b.dataPtr(), len);
+		dst->v[len] = 0;
+
+		return new (this) Str(toWChar(engine(), dst->v));
+	}
 
 
 	/**
 	 * ObjOStream
 	 */
 
+	static const Nat typeMask = 0x80000000;
+
 	ObjOStream::ObjOStream(OStream *to) : to(to) {
-		stored = new (this) Map<TObject *, StoredType *>();
-		ids = new (this) Map<TObject *, Nat>();
+		clearObjects();
+
+		typeIds = new (this) Map<TObject *, Nat>();
 		nextId = firstCustomId;
+		memberOutput = false;
 
 		// Insert the standard types inside 'ids', so we don't have to bother with them later.
 		Engine &e = engine();
-		ids->put((TObject *)StormInfo<Byte>::type(e), byteId);
-		ids->put((TObject *)StormInfo<Int>::type(e), intId);
-		ids->put((TObject *)StormInfo<Nat>::type(e), natId);
-		ids->put((TObject *)StormInfo<Long>::type(e), longId);
-		ids->put((TObject *)StormInfo<Word>::type(e), wordId);
-		ids->put((TObject *)StormInfo<Float>::type(e), floatId);
-		ids->put((TObject *)StormInfo<Double>::type(e), doubleId);
-		ids->put((TObject *)StormInfo<Str>::type(e), strId);
+		typeIds->put((TObject *)StormInfo<Byte>::type(e), byteId);
+		typeIds->put((TObject *)StormInfo<Int>::type(e), intId);
+		typeIds->put((TObject *)StormInfo<Nat>::type(e), natId);
+		typeIds->put((TObject *)StormInfo<Long>::type(e), longId);
+		typeIds->put((TObject *)StormInfo<Word>::type(e), wordId);
+		typeIds->put((TObject *)StormInfo<Float>::type(e), floatId);
+		typeIds->put((TObject *)StormInfo<Double>::type(e), doubleId);
+		typeIds->put((TObject *)StormInfo<Str>::type(e), strId);
 	}
 
-	Nat ObjOStream::findId(Type *type) {
+	void ObjOStream::clearObjects() {
+		MapBase *t = new (this) MapBase(StormInfo<TObject>::handle(engine()), StormInfo<Nat>::handle(engine()));
+		objIds = (Map<Object *, Nat> *)t;
+	}
+
+	Nat ObjOStream::typeId(Type *type) {
 		// TODO: We need to deal with containers somehow.
 		TObject *t = (TObject *)type;
-		Nat id = ids->get(t, nextId);
+		Nat id = typeIds->get(t, nextId);
 		if (id == nextId) {
 			nextId++;
-			ids->put(t, id);
+			id |= typeMask;
+			typeIds->put(t, id);
 		}
 		return id;
 	}
 
-	void ObjOStream::write(StoredType *type, const void *value) {
-		TObject *t = (TObject *)type->type;
-		if (!stored->has(t)) {
-			stored->put(t, type);
+	void ObjOStream::startValue(Type *t) {
+		putHeader(t, true);
+		putTypeDesc(t);
+	}
 
-			// Serialize the type description. As a side-effect, this will assign ID:s to all
-			// subtypes.
-			writeTypeDesc(type);
+	Bool ObjOStream::startObject(Object *v) {
+		Type *t = runtime::typeOf(v);
+		putHeader(t, false);
+
+		Nat count = objIds->count();
+		Nat id = objIds->get(v, count);
+		if (id != count) {
+			// We have written this one before!
+			writeNat(id);
+			return false;
 		}
 
-		// If this is an object, we need to remember if we've stored it previously.
+		// Remember for the future.
+		objIds->put(v, id);
+		writeNat(id);
 
-		for (Nat i = 0; i < type->count(); i++) {
-			// Serialize each field according to the information in its type.
+		// Output the actual type, it might differ from the formal type of the variable.
+		writeNat(typeId(t) & ~typeMask);
+		putTypeDesc(t);
+		return true;
+	}
+
+	void ObjOStream::putHeader(Type *t, Bool value) {
+		if (depth++ == 0) {
+			// This is the first object. Output its type!
+			// Values have the highest bit set.
+			Nat id = typeId(t) & ~typeMask;
+			if (value)
+				id |= typeMask;
+			writeNat(id);
 		}
 	}
 
-	void ObjOStream::writeTypeDesc(StoredType *type) {
-		// TODO: I don't think we need the actual type here, we will receive it during
-		// deserialization. However, it would be nice to write the name of the type here so that it
-		// can be shown in diagnostic messages and during pretty printing of serialized output.
+	void ObjOStream::putTypeDesc(Type *t) {
+		Nat id = typeId(t);
+		if (id & typeMask) {
+			memberOutput = true;
 
-		// Number of types in here.
-		writeNat(type->count());
-		for (Nat i = 0; i < type->count(); i++) {
-			writeField(type->at(i));
+			// We need to output the type info for this type.
+			id &= ~typeMask;
+			typeIds->put((TObject *)t, id);
+			// Type name, used for pretty-printing.
+			runtime::typeName(t)->write(this);
+		} else {
+			memberOutput = false;
 		}
 	}
 
-	void ObjOStream::writeField(StoredField f) {
-		Nat typeId = findId(f.type);
+	void ObjOStream::member(Str *name, Type *t) {
+		if (!memberOutput)
+			return;
 
-		f.name->write(this);
-		writeNat(typeId);
-		writeNat(f.offset);
+		Nat id = typeId(t) & ~typeMask;
+		if (runtime::isValue(t))
+			id |= typeMask;
+		writeNat(id);
+		name->write(this);
 	}
+
+	void ObjOStream::endMembers() {
+		if (memberOutput)
+			writeNat(0);
+		memberOutput = false;
+	}
+
+	void ObjOStream::end() {
+		if (depth == 0)
+			throw InternalError(L"Calls to 'end' does not match calls to 'start' during serialization.");
+		if (--depth == 0) {
+			// All done!
+			clearObjects();
+		}
+	}
+
 
 	void ObjOStream::writeByte(Byte v) {
 		GcPreArray<Byte, 1> d;
