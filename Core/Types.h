@@ -26,6 +26,7 @@ namespace storm {
 	class StrBuf;
 	class Thread;
 	class Handle;
+	class ObjOStream;
 
 	/**
 	 * Struct used to wrap a pointer used in placement-new situations. We do not want to overload

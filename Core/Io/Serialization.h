@@ -16,14 +16,13 @@ namespace storm {
 		STORM_VALUE;
 	public:
 		// Create.
-		STORM_CTOR StoredField(Str *name, StoredType *type, Nat offset);
+		STORM_CTOR StoredField(Str *name, Type *type, Nat offset);
 
 		// Name of the field.
 		Str *name;
 
-		// Type of the field. TODO: Replace with a function that generates a 'StoredType' object?
-		// Otherwise, it will be tricky to generate instances of 'StoredType' using initializers only.
-		StoredType *type;
+		// Type of the field.
+		Type *type;
 
 		// Offset of the field inside the type.
 		Nat offset;
@@ -78,11 +77,11 @@ namespace storm {
 	 * once in the stream, which means that objects written using a single instance of an OObjStream
 	 * has to be read using a single instance of an IObjStream.
 	 */
-	class IObjStream : public Object {
+	class ObjIStream : public Object {
 		STORM_CLASS;
 	public:
 		// Create.
-		STORM_CTOR IObjStream(IStream *src);
+		STORM_CTOR ObjIStream(IStream *src);
 
 	private:
 		// Source stream.
@@ -93,28 +92,48 @@ namespace storm {
 	/**
 	 * Output stream for objects.
 	 */
-	class OObjStream : public Object {
+	class ObjOStream : public Object {
 		STORM_CLASS;
 	public:
 		// Create.
-		STORM_CTOR OObjStream(OStream *dst);
+		STORM_CTOR ObjOStream(OStream *to);
+
+		// Destination stream. Used to implement custom serialization.
+		OStream *to;
 
 		// Write an object to the stream. 'value' is a pointer to an instance of the type described
 		// by 'type', similar to how types are handled with the Handle type.
 		void CODECALL write(StoredType *type, const void *value);
 
-	private:
-		// Destination stream.
-		OStream *dst;
+		// Write various primitive types to the stream (using 'write' above).
+		void STORM_FN writeByte(Byte v);
+		void STORM_FN writeInt(Int v);
+		void STORM_FN writeNat(Nat v);
+		void STORM_FN writeLong(Long v);
+		void STORM_FN writeWord(Word v);
+		void STORM_FN writeFloat(Float v);
+		void STORM_FN writeDouble(Double v);
 
-		// Directory of all types that have been stored so far.
-		Map<Type *, StoredType *> *stored;
+	private:
+
+		// Directory of all types that have been stored so far. Note: We're using TObject, since
+		// Type is not accessable outside the compiler.
+		Map<TObject *, StoredType *> *stored;
 
 		// Directory of allocated type id:s.
-		Map<Type *, Nat> *ids;
+		Map<TObject *, Nat> *ids;
 
 		// Next available type id.
 		Nat nextId;
+
+		// Serialize a type description. Makes sure that all subtypes referred to inside 'type' are assigned id:s.
+		void writeTypeDesc(StoredType *type);
+
+		// Serialize a field.
+		void writeField(StoredField field);
+
+		// Find the type id for 't'. Generate a new one if none exists.
+		Nat findId(Type *t);
 	};
 
 
@@ -122,14 +141,21 @@ namespace storm {
 	 * Reserved type id:s. These denote the primitive types known natively by the serialization system.
 	 */
 	enum StoredId {
-		byteId = 1,
-		intId = 2,
-		natId = 3,
-		longId = 4,
-		wordId = 5,
-		floatId = 6,
-		doubleId = 7,
-		stringId = 8,
+		// Built in types.
+		byteId = 0x01,
+		intId = 0x02,
+		natId = 0x03,
+		longId = 0x04,
+		wordId = 0x05,
+		floatId = 0x06,
+		doubleId = 0x07,
+		strId = 0x08,
+
+		// Containers.
+		arrayId = 0x10,
+		mapId = 0x11,
+		setId = 0x12,
+		pqId = 0x13,
 
 		// First ID usable by custom types.
 		firstCustomId = 0x20
