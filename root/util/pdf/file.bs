@@ -1,17 +1,23 @@
 use core:io;
 
-
 /**
  * Describes a PDF file.
  *
  * A PDF file contains a number of objects, each described by an instance of PdfObject. These
  * objects may contain things like postscript code, images etc.
  */
-class PdfFile {
+class File {
+	// The root object of this file. Add pages to the file through this object.
+	Catalog root;
+
+	// Initialize. Creates a Catalog object as the root object.
 	init() {
 		init() {}
+
+		add(root);
 	}
 
+	// Write the pdf structure to file.
 	void write(OStream to) {
 		Nat pos = writeHeader(to);
 		Nat[] offsets;
@@ -24,6 +30,7 @@ class PdfFile {
 		writeFooter(pos, offsets, to);
 	}
 
+	// Add an object to this file.
 	void add(PdfObject o) {
 		objects << o;
 		o.id = objects.count;
@@ -80,64 +87,10 @@ private:
 	}
 }
 
-class PdfObject {
-	package Nat id;
-
-	init() {
-		init() {}
-	}
-
-	void write(OStream to) {
-		var text = textOutput(to);
-		text.write("${id} 0 obj ");
-		text.flush();
-
-		output(to, text);
-
-		text.write("\nendobj\n");
-		text.flush();
-	}
-
-	void output(OStream to, TextOutput text) : abstract;
-}
-
-class PdfStrObject extends PdfObject {
-	// TODO: Don't need this, this should be abstract as well!
-	private Str cont;
-
-	init(Str contents) {
-		init() { cont = contents; }
-	}
-
-	void output(OStream to, TextOutput text) {
-		StrBuf out;
-		output(out);
-		text.write(out.toS);
-	}
-
-	// TODO: Should be abstract in the future.
-	void output(StrBuf to) {
-		to << cont;
-	}
-}
-
 // Create a proper text stream.
-private TextOutput textOutput(OStream to) {
+package TextOutput textOutput(OStream to) {
 	TextInfo info;
 	info.useCrLf = false;
 	info.useBom = false;
 	return Utf8Output(to, info);
-}
-
-
-void test() {
-	PdfFile pdf;
-	pdf.add(PdfStrObject("<</Type /Catalog /Pages 2 0 R >>"));
-	pdf.add(PdfStrObject("<</Type /Pages /Kids [3 0 R] /Count 1 >>"));
-	pdf.add(PdfStrObject("<</Type /Page /MediaBox [0 0 500 800] >>"));
-
-	Url url = cwdUrl / ".." / "test.pdf";
-	print("Writing to ${url}...");
-	pdf.write(url.write);
-	print("Done!");
 }

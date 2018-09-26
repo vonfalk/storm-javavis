@@ -1,0 +1,20 @@
+use core:io;
+use core:geometry;
+
+/**
+ * Utility functions for testing the implementation. Should be removed in the future.
+ */
+void test() {
+	File pdf;
+
+	Page p(pdf, Rect(0, 0, 500, 800));
+	pdf.root.pages << p;
+
+	Contents c(p);
+	c.data << "175 720 m 175 500 l 300 800 400 600 v 100 650 50 75 re h S";
+
+	Url url = cwdUrl / ".." / "test.pdf";
+	print("Writing to ${url}...");
+	pdf.write(url.write);
+	print("Done!");
+}

@@ -1,0 +1,90 @@
+use core:io;
+
+/**
+ * An object in a PDF file.
+ *
+ * A PDF file consists of multiple objects, each describing a part of the document. These are then
+ * linked to each other through their unique identifier.
+ */
+class PdfObject {
+	// The ID of this object. Set when we're added to a File instance.
+	package Nat id;
+
+	// Output ourself to a stream. Adds the mandatory 'obj' and 'endobj' text around the object.
+	// Override 'output' to provide custom output.
+	void write(OStream to) : final {
+		var text = textOutput(to);
+		text.write("${id} 0 obj ");
+		text.flush();
+
+		output(to, text);
+
+		text.write("\nendobj\n");
+		text.flush();
+	}
+
+	// Output the contents of this object. Use either 'text' or 'to' depending on what is appropriate.
+	void output(OStream to, TextOutput text) : abstract;
+}
+
+
+/**
+ * An object that is expressed as a string (like most objects in a PDF).
+ *
+ * Makes the string output a bit more convenient by providing a string buffer that can be used to
+ * emit the data.
+ */
+class StrObject extends PdfObject {
+	// Simplify the output of text. Calls 'output(StrBuf)' to acquire the text to be outputted.
+	void output(OStream to, TextOutput text) : final {
+		StrBuf out;
+		output(out);
+		text.write(out.toS);
+	}
+
+	// Called to get the text to output.
+	void output(StrBuf to) : abstract;
+}
+
+
+/**
+ * An object that is stored as a stream.
+ *
+ * Keeps track of the length of the stream and writes it properly to the file.
+ */
+class StreamObject extends PdfObject {
+	// Calls 'output(OStream)' to acquire the data.
+	void output(OStream to, TextOutput text) : final {
+		MemOStream out;
+		output(out);
+
+		text.write("<</Length ${out.buffer.filled}>>\nstream\n");
+		text.flush();
+		to.write(out.buffer);
+		text.write("\nendstream");
+	}
+
+	// Create the output.
+	void output(OStream to) : abstract;
+}
+
+
+/**
+ * An object represented as a string.
+ *
+ * Useful for testing, will most likely be removed in the future.
+ * TODO: Remove!
+ */
+class PdfStrObject extends StrObject {
+	private Str cont;
+
+	init(Str contents) {
+		init() { cont = contents; }
+	}
+
+	void output(StrBuf to) {
+		to << cont;
+	}
+}
+
+

@@ -1,0 +1,82 @@
+use core:io;
+use core:geometry;
+
+/**
+ * This is the root object that describes general properties of the file itself.
+ *
+ * In this implementation, we merge the 'catalog' and the 'pages' objects of the PDF file.
+ */
+class Catalog extends StrObject {
+	// All pages in the document.
+	Page[] pages;
+
+	// Output.
+	void output(StrBuf to) {
+		to << "<</Type /Catalog /Pages <</Type /Pages /Kids [";
+		for (p in pages)
+			to << p.id << " 0 R ";
+		to << "] /Count " << pages.count << " >> >>";
+	}
+}
+
+
+/**
+ * Describes a single page of a PDF document.
+ */
+class Page extends StrObject {
+	// Remember the owning file.
+	File file;
+
+	// Bounding box of this document. Measured in points.
+	Rect mediaBox;
+
+	// TODO: We want to define logical units as well and automatically insert an appropriate
+	// transform in the generated code later on.
+
+	// Contents of this page.
+	Contents? contents;
+
+	// Create a page.
+	init(File f, Rect box) {
+		init() {
+			file = f;
+			mediaBox = box;
+		}
+
+		f.add(this);
+	}
+
+	// Output.
+	void output(StrBuf to) {
+		to << "<</Type /Page /MediaBox [";
+		to << mediaBox.p0.x << " " << mediaBox.p0.y << " " << mediaBox.p1.x << " " << mediaBox.p1.y;
+		to << "] ";
+		if (contents)
+			to << "/Contents " << contents.id << " 0 R ";
+		to << ">>";
+	}
+}
+
+
+/**
+ * Describes the contents of a page.
+ */
+class Contents extends StreamObject {
+	// Commands to execute.
+	StrBuf data;
+
+	// Create.
+	init(Page to) {
+		init() {}
+
+		to.file.add(this);
+		to.contents = this;
+	}
+
+	// Output.
+	void output(OStream to) {
+		var t = textOutput(to);
+		t.write(data.toS);
+		t.flush();
+	}
+}
