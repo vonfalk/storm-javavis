@@ -8,11 +8,18 @@ CppTyes	      Preprocessor for C++ code. Extracts the neccessary type informatio
 doc	      Documentation.
 Experiments   C++ sources which are compiled into asm to examine C++ behaviour.
 External      External Storm code, not to be committed in the main repository.
+Graphics      The graphics library, for loading image files in various formats.
+Gui           The Gui library.
+Linux         Contains various projects required by Storm on Linux (as submodules).
 Main	      Entry-point for the standalone compiler. Produces Storm.exe.
 mps	      The MPS garbage collector. This is a Git submodule.
-Old	      Old sources. See below.
-Plugin	      Plugins for various editors (currently only Emacs).
 OS	      OS-specific interface, provides threading, generic function calls and more.
+Plugin	      Plugins for various editors (currently only Emacs).
+root	      Root for Storm code.
+scripts	      Various useful scripts. Mostly for automatic releases.
+Shared	      Basic shared library, mainly for testing purposes.
+Sound	      Sound library, for sound playback.
+SoundLib      Libraries used for sound decoding (mp3, ogg and flac are supported at the moment).
 Test	      Test cases for all parts of Storm. Alter its behaviour in 'stdafx.h'
 Test/Code     Tests for code generation.
 Test/Core     Tests for the core Storm classes required for proper operation of the compiler.
@@ -20,25 +27,6 @@ Test/Gc	      Tests for the Gc-integration.
 Test/Lib      Test library.
 Test/OS	      Tests of the OS library.
 Test/Storm    Tests for the compiler itself.
+TestLib	      The test library used for writing tests.
 TestData      Data required for some tests.
-Utils	      Generic C++ utilities. Majority of things here should be moved elsewhere.
-root	      Root for Storm code.
-
-The folder Old contains sources for an older version of the compiler where refcouting
-was used to keep track of memory. These sources are only kept around for easy reference
-when debugging at the moment and will be removed eventually. The tag 'old-refcount' points
-to the last commit before the rewrite started. Old contains this structure:
-
-Code	      Code generation.
-CodeTest      Tests for code generation.
-Graphics      Graphics library (eg. loading images)
-LibOgg	      Sources for libogg
-Shared	      Shared code.
-Sound	      Sound playback.
-Storm	      Old core. Being migrated into Compiler
-StormBuiltin  Preprocessor for the C++ code.
-StormGui      UI library.
-StormMain     Entry-point for the standalone compiler. Rename into Storm later?
-StormTest     Tests for the Storm compiler.
-migrate.el    Script that uses regexes for migrating code from Old/ to the current release.
-
+Utils	      Generic C++ utilities. A majority of the things here should be moved elsewhere.
