@@ -94,8 +94,9 @@ namespace storm {
 			// Override this to create the syntax tree to compile.
 			virtual FnBody *STORM_FN createBody();
 
-			// Remove the 'this' parameter. Only do this before the function is added to the name tree!
-			void STORM_FN removeThis();
+			// Make this function static by removing the 'this' parameter. Only do this before the
+			// function is added to the name tree!
+			void STORM_FN makeStatic();
 
 			// Add function parameters to a block. Mainly for internal use.
 			void STORM_FN addParams(Block *block);

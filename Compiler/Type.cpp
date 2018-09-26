@@ -1155,7 +1155,7 @@ namespace storm {
 			return;
 
 		// If the function is a static function, don't use it in vtables.
-		if (fn->params->empty() || fn->params->at(0).type != this)
+		if (!fn->isMember())
 			return;
 
 		bool abstractFn = (fn->fnFlags() & fnAbstract) == fnAbstract;

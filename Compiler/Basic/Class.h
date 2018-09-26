@@ -196,8 +196,5 @@ namespace storm {
 		BSCtor *STORM_FN classDefaultCtor(Class *owner) ON(Compiler);
 
 
-		// Make a function static if it was previously a member function.
-		void STORM_FN makeStatic(Class *owner, BSRawFn *fn);
-
 	}
 }

@@ -33,6 +33,9 @@ namespace storm {
 	}
 
 	Bool Function::isMember() {
+		if (fnFlags() & fnStatic)
+			return false;
+
 		if (params->empty())
 			return false;
 

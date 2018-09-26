@@ -515,7 +515,7 @@ SClassOption : SFreeOption(item);
 SClassOption => makeAbstract(item) : "abstract";
 SClassOption => makeFinal(item) : "final";
 SClassOption => makeOverride(item) : "override";
-SClassOption => makeStatic(owner, item) : "static";
+SClassOption => makeStatic(item) : "static";
 // etc. (we might want to handle 'override' differently)
 
 void SClassOptions(Class owner, BSRawFn item);

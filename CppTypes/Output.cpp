@@ -476,7 +476,9 @@ static void genFunctions(wostream &to, World &w) {
 		}
 
 		// Kind.
-		if (f.isMember && f.castMember)
+		if (f.isStatic)
+			to << L"CppFunction::fnStatic";
+		else if (f.isMember && f.castMember)
 			to << L"CppFunction::fnCastMember";
 		else if (f.isMember)
 			to << L"CppFunction::fnMember";

@@ -134,15 +134,25 @@ namespace storm {
 			throw InternalError(L"A BSRawFn can not be used without overriding 'createBody'!");
 		}
 
-		void BSRawFn::removeThis() {
+		void BSRawFn::makeStatic() {
 			if (parentLookup)
 				throw InternalError(L"Don't call 'removeThis' after adding the function to the name tree.");
+
+			// Already static?
+			if (fnFlags() & fnStatic)
+				return;
+
+			FnFlags outlawed = fnAbstract | fnFinal | fnOverride;
+			if (fnFlags() & outlawed)
+				throw SyntaxError(pos, L"Can not make functions marked abstract, final or override into static functions.");
 
 			if (valParams->empty())
 				return;
 			if (*valParams->at(0).name != S("this"))
 				return;
 
+			// All seems well, proceed.
+			make(fnStatic);
 			valParams->remove(0);
 			params->remove(0);
 		}

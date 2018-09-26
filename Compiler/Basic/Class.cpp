@@ -308,16 +308,5 @@ namespace storm {
 			return classCtor(owner, owner->declared, params, null);
 		}
 
-		void makeStatic(Class *owner, BSRawFn *fn) {
-			if (fn->params->empty() || fn->params->at(0).type != owner)
-				throw SyntaxError(fn->pos, L"Unable to make non-member functions static!");
-
-			FnFlags outlawed = fnAbstract | fnFinal | fnOverride;
-			if (fn->fnFlags() & outlawed)
-				throw SyntaxError(fn->pos, L"Can not make functions that are marked abstract, final or override into static functions.");
-
-			fn->removeThis();
-		}
-
 	}
 }

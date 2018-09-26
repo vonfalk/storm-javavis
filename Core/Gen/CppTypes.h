@@ -193,6 +193,9 @@ namespace storm {
 			// Constructor usable for casting.
 			fnCastMember,
 
+			// This is a static member, it is stored as a free function.
+			fnStatic,
+
 			/**
 			 * Flags part of the enum. Use 'fnMask' to mask out the regular members below.
 			 */

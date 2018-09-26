@@ -87,6 +87,8 @@ BEGIN_TEST(FinalTest, BS) {
 
 BEGIN_TEST(StaticTest, BS) {
 	CHECK_EQ(runFn<Int>(S("test.bs.testStatic")), 52);
+	CHECK_EQ(runFn<Int>(S("test.bs.testStaticInheritance"), 0), 10);
+	CHECK_EQ(runFn<Int>(S("test.bs.testStaticInheritance"), 1), 10);
 } END_TEST
 
 /**

@@ -129,8 +129,8 @@ namespace storm {
 
 	static void addFlags(FnFlags fn, Array<DocNote> *notes) {
 		Engine &e = notes->engine();
-		FnFlags flags[] = { fnPure, fnFinal, fnAbstract, fnOverride };
-		const wchar *names[] = { S("pure"), S("final"), S("abstract"), S("override") };
+		FnFlags flags[] = { fnPure, fnFinal, fnAbstract, fnOverride, fnStatic };
+		const wchar *names[] = { S("pure"), S("final"), S("abstract"), S("override"), S("static") };
 
 		for (Nat i = 0; i < ARRAY_COUNT(flags); i++) {
 			if ((fn & flags[i]) == flags[i])

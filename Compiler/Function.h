@@ -29,14 +29,17 @@ namespace storm {
 		// target of an assignment.
 		fnAssign = 0x04,
 
-		// This named is final.
+		// This function is final.
 		fnFinal = 0x08,
 
-		// This named is abstract (ie. has to be overridden).
+		// This function is abstract (ie. has to be overridden).
 		fnAbstract = 0x10,
 
-		// This named is expected to override something.
+		// This function is expected to override something.
 		fnOverride = 0x20,
+
+		// This function is static (ie. 'isMember' never returns true).
+		fnStatic = 0x40,
 	};
 
 	BITMASK_OPERATORS(FnFlags);

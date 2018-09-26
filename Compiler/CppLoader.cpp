@@ -434,6 +434,7 @@ namespace storm {
 		switch (fnKind(fn)) {
 		case CppFunction::fnFree:
 		case CppFunction::fnFreeEngine:
+		case CppFunction::fnStatic:
 			loadFreeFunction(fn);
 			break;
 		case CppFunction::fnMember:
@@ -466,22 +467,15 @@ namespace storm {
 		if (fnHasFlag(fn, CppFunction::fnAssign))
 			f->make(fnAssign);
 
+		if (fnKind(fn) == CppFunction::fnStatic)
+			f->make(fnStatic);
+
 		// Note: CppFunction::fnFinal has no meaning for free functions, so we can ignore it here.
 
 		f->visibility = visibility(fn.access);
 		setDoc(f, fn.doc, fn.params);
 
 		into->add(f);
-
-		// Sanity check: Since we don't treat static member functions specially, a static member
-		// with a first parameter that could be a this pointer will be treated as a member
-		// function. This is all good and well, except the calling convention differs (usually only
-		// when returning a complex type though), which will make us crash. Therefore, we just check
-		// if the newly added function consider itself to be a member function and assert if so.
-		if (f->isMember())
-			throw BuiltInError(L"The function " + ::toS(f) + L" was declared static in C++, but is considered "
-							L"to be a member function by Storm. Please make it a member function in C++ as well, "
-							L"or change the parameter list.");
 	}
 
 	void CppLoader::loadMemberFunction(const CppFunction &fn, bool cast) {

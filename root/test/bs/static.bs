@@ -9,6 +9,20 @@ class StaticTest {
 	StaticTest create() : static, pure {
 		StaticTest(52);
 	}
+
+	Int fn(StaticTest z) : static {
+		z.x;
+	}
+}
+
+class StaticDerived extends StaticTest {
+	init(Int x) {
+		init(x) {}
+	}
+
+	Int fn(StaticDerived z) : static {
+		z.x + 5;
+	}
 }
 
 // Check decorators for free functions as well.
@@ -19,4 +33,10 @@ Int unity(Int v) : pure {
 Int testStatic() {
 	StaticTest v = StaticTest:create();
 	unity(v.x);
+}
+
+Int testStaticInheritance(Int x) {
+	StaticTest s = if (x == 0) { StaticTest(10); } else { StaticDerived(10); };
+
+	s.fn();
 }
