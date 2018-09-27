@@ -10,6 +10,9 @@ class PdfObject {
 	// The ID of this object. Set when we're added to a File instance.
 	package Nat id;
 
+	// Called just after this object has been attached to a File instance.
+	void addedTo(File f) {}
+
 	// Output ourself to a stream. Adds the mandatory 'obj' and 'endobj' text around the object.
 	// Override 'output' to provide custom output.
 	void write(OStream to) : final {

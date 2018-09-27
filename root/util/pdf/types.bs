@@ -10,12 +10,40 @@ class Catalog extends StrObject {
 	// All pages in the document.
 	Page[] pages;
 
+	// Create.
+	init() {
+		Pages p;
+		init() {
+			pages = p.pages;
+			pagesData = p;
+		}
+	}
+
+	// Called when added to somewhere.
+	void addedTo(File f) {
+		f.add(pagesData);
+	}
+
 	// Output.
 	void output(StrBuf to) {
-		to << "<</Type /Catalog /Pages <</Type /Pages /Kids [";
-		for (p in pages)
-			to << p.id << " 0 R ";
-		to << "] /Count " << pages.count << " >> >>";
+		to << "<</Type /Catalog /Pages " << pagesData.id << " 0 R >>";
+	}
+
+	// Reference to the 'pages' object.
+	private Pages pagesData;
+
+	// We need to split this object into two parts, and this object represents the 'Pages' part.
+	private class Pages extends StrObject {
+		// All pages. Shared with the parent Catalog object.
+		Page[] pages;
+
+		// Output.
+		void output(StrBuf to) {
+			to << "<</Type /Pages /Kids [";
+			for (p in pages)
+				to << p.id << " 0 R ";
+			to << "] /Count " << pages.count << " >>";
+		}
 	}
 }
 

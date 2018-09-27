@@ -34,6 +34,7 @@ class File {
 	void add(PdfObject o) {
 		objects << o;
 		o.id = objects.count;
+		o.addedTo(this);
 	}
 
 private:
