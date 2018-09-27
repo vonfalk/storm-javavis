@@ -547,3 +547,54 @@ BEGIN_TEST(CallComplexFromArray, Code) {
 	CHECK(DbgVal::clear());
 
 } END_TEST
+
+struct ByteStruct {
+	Byte a;
+	Byte b;
+
+	ByteStruct(Byte a, Byte b) : a(a), b(b) {}
+};
+
+SimpleDesc *bytesDesc(Engine &e) {
+	SimpleDesc *desc = new (e) SimpleDesc(Size::sByte * 2, 2);
+	desc->at(0) = Primitive(primitive::integer, Size::sByte, Offset());
+	desc->at(1) = Primitive(primitive::integer, Size::sByte, Offset::sByte);
+	return desc;
+}
+
+ByteStruct CODECALL callBytes(ByteStruct p) {
+	return ByteStruct(p.a + 10, p.b - 5);
+}
+
+BEGIN_TEST(CallBytes, Code) {
+	Engine &e = gEngine();
+	Arena *arena = code::arena(e);
+
+	Ref byteFn = arena->external(S("byteFn"), address(&callBytes));
+	SimpleDesc *bytes = bytesDesc(e);
+
+	Listing *l = new (e) Listing(false, bytes);
+	Var p = l->createParam(bytes);
+	Var a = l->createVar(l->root(), bytes->size());
+	Var b = l->createVar(l->root(), bytes->size());
+
+	*l << prolog();
+	*l << mov(byteRel(a, Offset()), byteRel(p, Offset()));
+	*l << mov(byteRel(a, Offset::sByte), byteRel(p, Offset::sByte));
+
+	*l << add(byteRel(a, Offset()), byteConst(21));
+	*l << add(byteRel(a, Offset::sByte), byteConst(18));
+
+	*l << fnParam(bytes, a);
+	*l << fnCall(byteFn, false, bytes, b);
+
+	*l << fnRet(b);
+
+	Binary *bin = new (e) Binary(arena, l);
+	typedef ByteStruct (*Fn)(ByteStruct);
+	Fn fn = (Fn)bin->address();
+
+	ByteStruct r = (*fn)(ByteStruct(2, 3));
+	CHECK_EQ(r.a, 33);
+	CHECK_EQ(r.b, 16);
+} END_TEST

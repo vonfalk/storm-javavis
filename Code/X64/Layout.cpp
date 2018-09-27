@@ -142,7 +142,13 @@ namespace code {
 				to += Offset(info.offset());
 
 				Size size(info.size());
-				*dest << mov(xRel(size, ptrFrame, to), asSize(params->registerSrc(i), size));
+				Reg r = asSize(params->registerSrc(i), size);
+				if (r == noReg) {
+					// Size not natively supported. Round up!
+					size += Size::sInt.alignment();
+					r = asSize(params->registerSrc(i), size);
+				}
+				*dest << mov(xRel(size, ptrFrame, to), r);
 			}
 		}
 
@@ -504,10 +510,16 @@ namespace code {
 				// This is more concentrated than when pushing registers to the stack. On the stack, all
 				// parameters are aligned to 8 bytes, while we do not need that here. We only need to keep
 				// the natural alignment of the parameters to keep the CPU happy.
+				Size sz = var.size();
 				if (src->freeOpt(var) & freeIndirection)
-					used = (used + Size::sPtr).alignedAs(Size::sPtr);
-				else
-					used = (used + var.size()).alignedAs(var.size());
+					sz = Size::sPtr;
+
+				// However, since we don't want to use multiple instructions to spill a single
+				// parameter, we increase the size of some parameters a bit.
+				if (asSize(ptrA, sz) == noReg)
+					sz = sz + Size::sInt.alignment();
+
+				used = (used + sz).alignedAs(sz);
 				to = -(varOffset + used);
 			}
 

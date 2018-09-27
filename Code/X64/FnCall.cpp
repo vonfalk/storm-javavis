@@ -177,10 +177,19 @@ namespace code {
 		// Set a register to what it is supposed to be, assuming 'src' is the actual value.
 		static void setRegisterVal(RegEnv &env, Reg target, Param param, const Operand &src) {
 			if (param.offset() == 0 && src.size().size64() <= 8) {
-				if (src.type() == opRegister && src.reg() == target)
-					; // Already done!
-				else
-					*env.dest << mov(asSize(target, src.size()), src);
+				if (src.type() == opRegister && src.reg() == target) {
+					// Already done!
+				} else {
+					Reg to = asSize(target, src.size());
+					if (to == noReg) {
+						// Unsupported size, 'src' must be a variable, so we'll simply copy slightly
+						// more data than what we actually need.
+						Size s = src.size() + Size::sInt.alignment();
+						*env.dest << mov(asSize(target, s), xRel(s, src.var(), Offset()));
+					} else {
+						*env.dest << mov(to, src);
+					}
+				}
 			} else if (src.type() == opVariable) {
 				Size s(param.size());
 				*env.dest << mov(asSize(target, s), xRel(s, src.var(), Offset(param.offset())));
@@ -213,7 +222,13 @@ namespace code {
 					; // Already done!
 				else
 					*env.dest << mov(asSize(target, Size::sPtr), src);
-				*env.dest << mov(asSize(target, s), xRel(s, target, o));
+				Reg to = asSize(target, s);
+				if (to == noReg) {
+					// Unsupported size, upgrade to the next larger supported one.
+					s += Size::sInt.alignment();
+					to = asSize(target, s);
+				}
+				*env.dest << mov(to, xRel(s, target, o));
 			}
 		}
 
@@ -290,6 +305,35 @@ namespace code {
 			}
 		}
 
+		// Safe copy of a register to the location pointed to by ptrSi.
+		static void safeCopy(Listing *dest, Size size, Offset offset, Reg to) {
+			Reg t = asSize(to, size);
+			if (t != noReg) {
+				// Supported. No worries!
+				*dest << mov(xRel(size, ptrSi, offset), t);
+				return;
+			}
+
+			// Not supported. Try to copy an entire 'int' first if we are able to...
+			Nat toCopy = size.size64();
+			if (toCopy >= 4) {
+				*dest << mov(xRel(Size::sInt, ptrSi, offset), asSize(to, Size::sInt));
+				*dest << shr(asSize(to, Size::sLong), byteConst(32));
+				toCopy -= 4;
+				offset += Size::sInt;
+			}
+
+			// Then copy single bytes for as long as we need to.
+			while (toCopy > 0) {
+				*dest << mov(xRel(Size::sByte, ptrSi, offset), asSize(to, Size::sByte));
+				toCopy--;
+				offset += Size::sByte;
+
+				if (toCopy > 0)
+					*dest << shr(asSize(to, Size::sInt), byteConst(8));
+			}
+		}
+
 		// Handle returning a part of a simple value.
 		static void returnSimple(Listing *dest, primitive::PrimitiveKind k, nat &i, nat &r, Offset offset, Size totalSize) {
 			static const Reg intReg[2] = { ptrA, ptrD };
@@ -302,7 +346,7 @@ namespace code {
 				break;
 			case primitive::integer:
 			case primitive::pointer:
-				*dest << mov(xRel(size, ptrSi, offset), asSize(intReg[i++], size));
+				safeCopy(dest, size, offset, intReg[i++]);
 				break;
 			case primitive::real:
 				*dest << mov(xRel(size, ptrSi, offset), asSize(realReg[r++], size));

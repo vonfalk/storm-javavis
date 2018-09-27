@@ -22,10 +22,21 @@ SmallType retSmall(int x, int y) {
 	return SmallType(10 + x + y);
 }
 
+struct TinyType {
+	char a, b;
+};
+
+TinyType doTiny(TinyType a) {
+	TinyType z{a.a + a.b, 20};
+	return z;
+}
+
 int main() {
 	Foo z;
 
 	foo(z);
+
+	TinyType r = doTiny(TinyType{});
 }
 
 int fMain() {
