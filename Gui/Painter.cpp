@@ -61,7 +61,7 @@ namespace gui {
 
 	void Painter::create() {
 		target = mgr->attach(this, attachedTo);
-		graphics = new (this) Graphics(target, this);
+		graphics = new (this) WindowGraphics(target, this);
 	}
 
 	void Painter::destroy() {

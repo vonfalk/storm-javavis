@@ -1,7 +1,7 @@
 #pragma once
 #include "Handle.h"
 #include "Window.h"
-#include "Graphics.h"
+#include "WindowGraphics.h"
 #include "RenderMgr.h"
 #include "Core/WeakSet.h"
 #include "Core/Lock.h"
@@ -85,7 +85,7 @@ namespace gui {
 		RenderInfo target;
 
 		// Graphics object.
-		Graphics *graphics;
+		WindowGraphics *graphics;
 
 		// App object.
 		App *app;
