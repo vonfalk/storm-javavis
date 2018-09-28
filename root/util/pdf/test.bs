@@ -1,22 +1,50 @@
 use core:io;
 use core:geometry;
+use graphics;
+use ui;
 
 /**
  * Utility functions for testing the implementation. Should be removed in the future.
  */
-void test() {
+void basicTest() {
 	File pdf;
 
 	Page p(pdf, Rect(0, 0, 500, 800));
 	pdf.root.pages << p;
 
-	Contents c(p);
-	c.data << "175 720 m 175 500 l 300 800 400 600 v 100 650 50 75 re h S";
+	p.content.data << "175 720 m 175 500 l 300 800 400 600 v 100 650 50 75 re h S";
 
 	Url url = cwdUrl / ".." / "test.pdf";
 	print("Writing to ${url}...");
 	OStream s = url.write;
 	pdf.write(s);
 	s.close();
+	print("Done!");
+}
+
+
+void test() {
+	PdfGraphics g(a4, a4);
+
+	Path path;
+	path.start(Point(100, 100));
+	path.bezier(Point(100, 50), Point(50, 100), Point(50, 50));
+	path.close();
+
+	path.start(Point(50, 100));
+	path.bezier(Point(100, 100), Point(100, 150));
+
+	g.draw(path, SolidBrush(black));
+
+	g.line(Point(10, 10), Point(40, 40), SolidBrush(black));
+	g.draw(Rect(Point(10, 10), a4 - Size(20)), SolidBrush(black));
+
+	g.nextPage();
+
+	g.line(Point(0, 0), Point(a4), SolidBrush(black));
+
+	Url url = cwdUrl / ".." / "test.pdf";
+	print("Writing to ${url}...");
+	g.save(url);
 	print("Done!");
 }

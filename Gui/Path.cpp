@@ -7,7 +7,7 @@
 namespace gui {
 
 	Path::Path() : g(null), started(false) {
-		elements = new (this) Array<Element>();
+		elements = new (this) Array<PathPoint>();
 	}
 
 	Path::~Path() {
@@ -26,7 +26,7 @@ namespace gui {
 	}
 
 	void Path::start(Point pt) {
-		Element e(tStart);
+		PathPoint e(tStart);
 		e.start()->pt = pt;
 		elements->push(e);
 		if (elements->count() == 1)
@@ -39,14 +39,14 @@ namespace gui {
 	}
 
 	void Path::close() {
-		Element e(tClose);
+		PathPoint e(tClose);
 		elements->push(e);
 		started = false;
 		invalidate();
 	}
 
 	void Path::line(Point to) {
-		Element e(tLine);
+		PathPoint e(tLine);
 		e.line()->to = to;
 		elements->push(e);
 		b = b.include(to);
@@ -61,7 +61,7 @@ namespace gui {
 	}
 
 	void Path::bezier(Point c1, Point to) {
-		Element e(tBezier2);
+		PathPoint e(tBezier2);
 		e.bezier2()->c1 = c1;
 		e.bezier2()->to = to;
 		elements->push(e);
@@ -70,7 +70,7 @@ namespace gui {
 	}
 
 	void Path::bezier(Point c1, Point c2, Point to) {
-		Element e(tBezier3);
+		PathPoint e(tBezier3);
 		e.bezier3()->c1 = c1;
 		e.bezier3()->c2 = c2;
 		e.bezier3()->to = to;
@@ -81,6 +81,10 @@ namespace gui {
 
 	void Path::invalidate() {
 		::release(g);
+	}
+
+	Array<PathPoint> *Path::data() {
+		return new (this) Array<PathPoint>(*elements);
 	}
 
 #ifdef GUI_WIN32
@@ -109,7 +113,7 @@ namespace gui {
 			bool started = false;
 
 			for (Nat i = 0; i < elements->count(); i++) {
-				Element &e = elements->at(i);
+				PathPoint &e = elements->at(i);
 				switch (e.t) {
 				case tStart:
 					if (started)
@@ -162,7 +166,7 @@ namespace gui {
 		bool started = false;
 		Point current;
 		for (Nat i = 0; i < elements->count(); i++) {
-			Element &e = elements->at(i);
+			PathPoint &e = elements->at(i);
 			switch (e.t) {
 			case tStart:
 				current = e.start()->pt;

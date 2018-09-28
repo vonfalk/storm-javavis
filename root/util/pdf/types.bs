@@ -47,7 +47,6 @@ class Catalog extends StrObject {
 	}
 }
 
-
 /**
  * Describes a single page of a PDF document.
  */
@@ -55,14 +54,11 @@ class Page extends StrObject {
 	// Remember the owning file.
 	File file;
 
-	// Bounding box of this document. Measured in points.
+	// Physical size of this page (in mm).
 	Rect mediaBox;
 
-	// TODO: We want to define logical units as well and automatically insert an appropriate
-	// transform in the generated code later on.
-
-	// Contents of this page.
-	Contents? contents;
+	// Content of this page.
+	Content content;
 
 	// Create a page.
 	init(File f, Rect box) {
@@ -72,34 +68,29 @@ class Page extends StrObject {
 		}
 
 		f.add(this);
+		f.add(content);
 	}
+
 
 	// Output.
 	void output(StrBuf to) {
-		to << "<</Type /Page /MediaBox [";
+		// Note: sets units to mm rather than points.
+		to << "<</Type /Page /UserUnit 2.83464567 /MediaBox [";
 		to << mediaBox.p0.x << " " << mediaBox.p0.y << " " << mediaBox.p1.x << " " << mediaBox.p1.y;
-		to << "] ";
-		if (contents)
-			to << "/Contents " << contents.id << " 0 R ";
-		to << ">>";
+		to << "] /Contents " << content.id << " 0 R >>";
 	}
 }
 
 
 /**
- * Describes the contents of a page.
+ * Describes the content of a page.
  */
-class Contents extends StreamObject {
+class Content extends StreamObject {
+	// Physical coordinate system (in mm).
+	Size physical;
+
 	// Commands to execute.
 	StrBuf data;
-
-	// Create.
-	init(Page to) {
-		init() {}
-
-		to.file.add(this);
-		to.contents = this;
-	}
 
 	// Output.
 	void output(OStream to) {

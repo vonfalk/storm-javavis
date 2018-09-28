@@ -4,6 +4,65 @@
 
 namespace gui {
 
+	// Element type.
+	enum PathPointType {
+		tClose,
+		tStart,
+		tLine,
+		tBezier2,
+		tBezier3,
+	};
+
+	// Different element types.
+	struct Start {
+		Point pt;
+	};
+
+	struct Line {
+		Point to;
+	};
+
+	struct Bezier2 {
+		Point c1;
+		Point to;
+	};
+
+	struct Bezier3 {
+		Point c1;
+		Point c2;
+		Point to;
+	};
+
+	// Element. One of five different types.
+	class PathPoint {
+		STORM_VALUE;
+	public:
+		STORM_CTOR PathPoint(PathPointType type) {
+			t = type;
+		}
+
+		PathPointType t;
+		Point p0;
+		Point p1;
+		Point p2;
+
+		// Convert to other types for convenient access.
+		inline Start *start() {
+			return (Start *)&p0;
+		}
+		inline Line *line() {
+			return (Line *)&p0;
+		}
+		inline Bezier2 *bezier2() {
+			return (Bezier2 *)&p0;
+		}
+		inline Bezier3 *bezier3() {
+			return (Bezier3 *)&p0;
+		}
+	};
+
+
+
 	/**
 	 * A point-by-point path to draw.
 	 *
@@ -54,66 +113,13 @@ namespace gui {
 		// Set the path on the supplied cairo_t.
 		void draw(cairo_t *c);
 #endif
+
+		// Get the actual path.
+		Array<PathPoint> *STORM_FN data();
+
 	private:
-		// Element type.
-		enum Type {
-			tClose,
-			tStart,
-			tLine,
-			tBezier2,
-			tBezier3,
-		};
-
-		// Different element types.
-		struct Start {
-			Point pt;
-		};
-
-		struct Line {
-			Point to;
-		};
-
-		struct Bezier2 {
-			Point c1;
-			Point to;
-		};
-
-		struct Bezier3 {
-			Point c1;
-			Point c2;
-			Point to;
-		};
-
-		// Element. One of five different types.
-		class Element {
-			STORM_VALUE;
-		public:
-			Element(Type type) {
-				t = type;
-			}
-
-			Type t;
-			Point p0;
-			Point p1;
-			Point p2;
-
-			// Convert to other types for convenient access.
-			inline Start *start() {
-				return (Start *)&p0;
-			}
-			inline Line *line() {
-				return (Line *)&p0;
-			}
-			inline Bezier2 *bezier2() {
-				return (Bezier2 *)&p0;
-			}
-			inline Bezier3 *bezier3() {
-				return (Bezier3 *)&p0;
-			}
-		};
-
 		// All elements.
-		Array<Element> *elements;
+		Array<PathPoint> *elements;
 
 		// Any path started?
 		Bool started;

@@ -1,0 +1,136 @@
+use ui;
+use core:io;
+use core:geometry;
+
+/**
+ * Graphics object that outputs to a PDF file.
+ *
+ * Call 'nextPage' to start drawing on a new page.
+ */
+class PdfGraphics extends Graphics {
+	// Create, specifying dimensions. 'physical' is the page's physical dimension in millimeters,
+	// and 'virtual' is the virtual dimensions in what corresponds to pixels on other output
+	// devices.
+	init(Size physical, Size virtual) {
+		File pdf;
+		Page p(pdf, Rect(Point(), physical));
+
+		init() {
+			pdf = pdf;
+			current = p;
+			output = p.content.data;
+			physical = physical;
+			virtual = virtual;
+		}
+
+		preparePage();
+	}
+
+	// Save the finished file to a stream.
+	void save(OStream to) {
+		pdf.write(to);
+	}
+
+	// Save the finished file to a file.
+	void save(Url to) {
+		var s = to.write();
+		save(s);
+		s.close();
+	}
+
+	// Start drawing to a new page.
+	void nextPage() {
+		current = Page(pdf, Rect(Point(), physical));
+		preparePage();
+	}
+
+	// Draw a line.
+	void line(Point a, Point b, Brush brush) {
+		put(a, "m ");
+		put(b, "l S\n");
+	}
+
+	// Draw a rectangle.
+	void draw(Rect r, Brush brush) {
+		put(r.p0, "");
+		put(r.size, "re S\n");
+	}
+
+	// Draw a path.
+	void draw(Path p, Brush brush) {
+		put(p, "S\n");
+	}
+
+private:
+	// Output to.
+	File pdf;
+
+	// Current page.
+	Page current;
+
+	// Current stream (for convenience).
+	StrBuf output;
+
+	// Dimensions, physical and virtual.
+	Size physical;
+	Size virtual;
+
+	// Prepare a new page.
+	void preparePage() {
+		output = current.content.data;
+		pdf.root.pages << current;
+
+		// reset()
+
+		// Line join style, line end style and line width.
+		output << "1 j 1 J 1 w\n";
+
+		// Invert the x axis, and scale to fit the new coordinate system.
+		output << (physical.w / virtual.w) << " 0 0 " << ((-physical.h) / virtual.h) << " 0 " << physical.h << " cm\n";
+	}
+
+	// Output a point to the current page.
+	void put(Point pt, Str after) {
+		output << pt.x << " " << pt.y << " " << after;
+	}
+
+	// Output a size to the current page.
+	void put(Size sz, Str after) {
+		output << sz.w << " " << sz.h << " " << after;
+	}
+
+	// Output a path.
+	void put(Path p, Str after) {
+		Point last;
+		for (e in p.data) {
+			if (e.t == PathPointType:tClose) {
+				output << "h ";
+			} else if (e.t == PathPointType:tStart) {
+				put(e.p0, "m ");
+				last = e.p0;
+			} else if (e.t == PathPointType:tLine) {
+				put(e.p0, "l ");
+				last = e.p0;
+			} else if (e.t == PathPointType:tBezier2) {
+				put(last + (2.0/3.0)*(e.p0 - last), "");
+				put(e.p1 + (2.0/3.0)*(e.p0 - e.p1), "");
+				put(e.p1, "c ");
+				last = e.p1;
+			} else if (e.t == PathPointType:tBezier3) {
+				put(e.p0, "");
+				put(e.p1, "");
+				put(e.p2, "c ");
+				last = e.p2;
+			}
+		}
+		output << after;
+	}
+}
+
+
+// Some common paper sizes.
+Size a0() { Size(841, 1189); }
+Size a1() { Size(594, 841); }
+Size a2() { Size(420, 594); }
+Size a3() { Size(297, 420); }
+Size a4() { Size(210, 297); }
