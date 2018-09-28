@@ -19,15 +19,16 @@ class File {
 
 	// Write the pdf structure to file.
 	void write(OStream to) {
-		Nat pos = writeHeader(to);
-		Nat[] offsets;
+		MeterOStream meter(to);
+		Word[] offsets;
 
+		writeHeader(meter);
 		for (o in objects) {
-			offsets << pos;
-			pos += writeObject(o, to);
+			offsets << meter.tell();
+			o.write(meter);
 		}
 
-		writeFooter(pos, offsets, to);
+		writeFooter(meter.tell, offsets, meter);
 	}
 
 	// Add an object to this file.
@@ -42,30 +43,15 @@ private:
 	PdfObject[] objects;
 
 
-	// Write the PDF header. Returns number of bytes written.
-	Nat writeHeader(OStream to) {
-		MemOStream memStream;
-		var output = textOutput(memStream);
+	// Write the PDF header.
+	void writeHeader(OStream to) {
+		var output = textOutput(to);
 		output.write("%PDF-1.6\n%✓\n"); // Check mark to use some high-order bits.
 		output.flush();
-
-		Nat count = memStream.buffer.filled;
-		to.write(memStream.buffer);
-		count;
-	}
-
-	// Write an object. Return size in bytes.
-	Nat writeObject(PdfObject o, OStream to) {
-		MemOStream memStream;
-		o.write(memStream);
-
-		Nat count = memStream.buffer.filled;
-		to.write(memStream.buffer);
-		count;
 	}
 
 	// Write the footer.
-	void writeFooter(Nat pos, Nat[] offsets, OStream to) {
+	void writeFooter(Word pos, Word[] offsets, OStream to) {
 		StrBuf out;
 		out << fill(Char(48)); // 0
 		out << "xref\n";
