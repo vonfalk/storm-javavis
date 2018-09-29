@@ -54,7 +54,7 @@ class Page extends StrObject {
 	// Remember the owning file.
 	File file;
 
-	// Physical size of this page (in mm).
+	// Physical size of this page (in points, 1/74 inces).
 	Rect mediaBox;
 
 	// Content of this page.
@@ -75,7 +75,8 @@ class Page extends StrObject {
 	// Output.
 	void output(StrBuf to) {
 		// Note: sets units to mm rather than points.
-		to << "<</Type /Page /UserUnit 2.83464567 /MediaBox [";
+		// to << "<</Type /Page /UserUnit 2.83464567 /MediaBox [";
+		to << "<</Type /Page /UserUnit 8 /MediaBox [";
 		to << mediaBox.p0.x << " " << mediaBox.p0.y << " " << mediaBox.p1.x << " " << mediaBox.p1.y;
 		to << "] /Contents " << content.id << " 0 R >>";
 	}

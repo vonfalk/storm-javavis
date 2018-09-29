@@ -38,25 +38,31 @@ void draw(Graphics g, Size size) on Render {
 }
 
 class Preview extends Frame {
-	init(Size sz) {
-		init("Preview", sz*2);
+	init(Size sz, Float scale) {
+		init("Preview", sz*scale);
 
-		painter = PreviewPainter();
+		painter = PreviewPainter(scale);
 
 		create();
 	}
 }
 
 class PreviewPainter extends Painter {
+	Float scale;
+
+	init(Float scale) {
+		init() { scale = scale; }
+	}
+
 	void render(Size sz, Graphics g) {
-		g.transform(scale(2));
+		g.transform(scale(scale));
 		draw(g, sz);
 	}
 }
 
 void test() {
 	save();
-	Preview p(a4);
+	Preview p(a4, 3);
 	p.waitForClose;
 }
 

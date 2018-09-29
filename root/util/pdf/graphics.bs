@@ -13,7 +13,7 @@ class PdfGraphics extends Graphics {
 	// devices.
 	init(Size physical, Size virtual) {
 		File pdf;
-		Page p(pdf, Rect(Point(), physical));
+		Page p(pdf, Rect(Point(), toPt(physical)));
 
 		init() {
 			pdf = pdf;
@@ -40,7 +40,7 @@ class PdfGraphics extends Graphics {
 
 	// Start drawing to a new page.
 	void nextPage() {
-		current = Page(pdf, Rect(Point(), physical));
+		current = Page(pdf, Rect(Point(), toPt(physical)));
 		preparePage();
 	}
 
@@ -85,6 +85,9 @@ private:
 		// Line join style, line end style and line width.
 		output << "1 j 1 J 1 w\n";
 
+		// Scale the default coordinate system to millimeters.
+		output << "2.83464567 0 0 2.83464567 0 0 cm\n";
+
 		// Invert the x axis, and scale to fit the new coordinate system.
 		output << (physical.w / virtual.w) << " 0 0 " << ((-physical.h) / virtual.h) << " 0 " << physical.h << " cm\n";
 	}
@@ -127,6 +130,14 @@ private:
 	}
 }
 
+// Convert millimeters to points.
+package Float toPt(Float x) {
+	x * 2.83464567;
+}
+
+package Size toPt(Size x) {
+	x * 2.83464567;
+}
 
 // Some common paper sizes.
 Size a0() { Size(841, 1189); }
