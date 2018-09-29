@@ -22,10 +22,7 @@ void basicTest() {
 	print("Done!");
 }
 
-
-void test() {
-	PdfGraphics g(a4, a4);
-
+void draw(Graphics g, Size size) on Render {
 	Path path;
 	path.start(Point(100, 100));
 	path.bezier(Point(100, 50), Point(50, 100), Point(50, 50));
@@ -38,9 +35,37 @@ void test() {
 
 	g.line(Point(10, 10), Point(40, 40), SolidBrush(black));
 	g.draw(Rect(Point(10, 10), a4 - Size(20)), SolidBrush(black));
+}
+
+class Preview extends Frame {
+	init(Size sz) {
+		init("Preview", sz*2);
+
+		painter = PreviewPainter();
+
+		create();
+	}
+}
+
+class PreviewPainter extends Painter {
+	void render(Size sz, Graphics g) {
+		g.transform(scale(2));
+		draw(g, sz);
+	}
+}
+
+void test() {
+	save();
+	Preview p(a4);
+	p.waitForClose;
+}
+
+void save() on Render {
+	PdfGraphics g(a4, a4);
+
+	draw(g, a4);
 
 	g.nextPage();
-
 	g.line(Point(0, 0), Point(a4), SolidBrush(black));
 
 	Url url = cwdUrl / ".." / "test.pdf";
