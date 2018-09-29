@@ -35,6 +35,14 @@ void draw(Graphics g, Size size) on Render {
 
 	g.line(Point(10, 10), Point(40, 40), SolidBrush(black));
 	g.draw(Rect(Point(10, 10), a4 - Size(20)), SolidBrush(black));
+
+
+	g.fill(Rect(Point(130, 30), Point(150, 40)), SolidBrush(black));
+	Path p2;
+	p2.start(Point(50, 200));
+	p2.bezier(Point(70, 200), Point(70, 260), Point(50, 260));
+	g.fill(p2, SolidBrush(black));
+
 }
 
 class Preview extends Frame {

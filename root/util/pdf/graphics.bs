@@ -61,6 +61,17 @@ class PdfGraphics extends Graphics {
 		put(p, "S\n");
 	}
 
+	// Fill a rectangle.
+	void fill(Rect r, Brush brush) {
+		put(r.p0, "");
+		put(r.size, "re f\n");
+	}
+
+	// Draw a path.
+	void fill(Path p, Brush brush) {
+		put(p, "f\n");
+	}
+
 private:
 	// Output to.
 	File pdf;
