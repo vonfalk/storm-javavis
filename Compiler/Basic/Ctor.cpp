@@ -352,7 +352,7 @@ namespace storm {
 				initVar(child, var);
 
 				Value type = var->type;
-				if (type.isValue()) {
+				if (type.isValue() && type.destructor() != code::Operand()) {
 					// If we get an exception, this variable should be cleared from here on.
 					Part part = s->l->createPart(varBlock);
 					*s->l << begin(part);

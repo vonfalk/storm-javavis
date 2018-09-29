@@ -519,7 +519,7 @@ namespace code {
 
 	static bool checkFree(const Operand &free, FreeOpt &when) {
 		if (when & freePtr)
-			if (free.size() > Size::sLong)
+			if (max(free.size(), Size::sLong) != Size::sLong)
 				throw InvalidValue(L"Can not destroy values larger than 8 bytes by value.");
 
 		if (!free.empty())

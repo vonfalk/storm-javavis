@@ -217,7 +217,7 @@ namespace code {
 						*dest << push(ptrA);
 						*dest << call(dtor, Size());
 						*dest << add(ptrStack, ptrConst(Offset::sPtr));
-					} else if (v.size() <= Size::sInt) {
+					} else if (v.size().size32() <= Size::sInt.size32()) {
 						*dest << push(resolve(dest, v));
 						*dest << call(dtor, Size());
 						*dest << add(ptrStack, ptrConst(v.size()));

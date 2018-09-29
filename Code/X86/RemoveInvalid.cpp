@@ -97,7 +97,7 @@ namespace code {
 			}
 
 			Size size = instr->src().size();
-			assert(size <= Size::sInt, "The 64-bit transform should have fixed this!");
+			assert(size.size32() <= Size::sInt.size32(), "The 64-bit transform should have fixed this!");
 
 			Reg reg = unusedReg(line);
 			if (reg == noReg) {
@@ -137,7 +137,7 @@ namespace code {
 		void RemoveInvalid::mulTfm(Listing *dest, Instr *instr, Nat line) {
 
 			Size size = instr->size();
-			assert(size <= Size::sInt, "Bytes not supported yet!");
+			assert(size.size32() <= Size::sInt.size32(), "Bytes not supported yet!");
 
 			if (instr->dest().type() == opRegister) {
 				*dest << instr;
@@ -449,7 +449,7 @@ namespace code {
 		}
 
 		static void pushMemcpy(Listing *dest, const Operand &src) {
-			if (src.size() <= Size::sInt) {
+			if (src.size().size32() <= Size::sInt.size32()) {
 				*dest << push(src);
 				return;
 			}

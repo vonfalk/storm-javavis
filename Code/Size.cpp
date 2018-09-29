@@ -162,22 +162,6 @@ namespace code {
 		return to << ::toS(s).c_str();
 	}
 
-	bool Size::operator <(const Size &o) const {
-		return code::size(s32) < code::size(o.s32);
-	}
-
-	bool Size::operator >(const Size &o) const {
-		return code::size(s32) > code::size(o.s32);
-	}
-
-	bool Size::operator >=(const Size &o) const {
-		return code::size(s32) >= code::size(o.s32);
-	}
-
-	bool Size::operator <=(const Size &o) const {
-		return code::size(s32) <= code::size(o.s32);
-	}
-
 	Size Size::aligned() const {
 		return Size(size32(), align32(), size64(), align64());
 	}
@@ -324,22 +308,6 @@ namespace code {
 		return to << ::toS(s).c_str();
 	}
 
-	bool Offset::operator <(const Offset &o) const {
-		return o32 < o.o32;
-	}
-
-	bool Offset::operator >(const Offset &o) const {
-		return o32 > o.o32;
-	}
-
-	bool Offset::operator >=(const Offset &o) const {
-		return o32 >= o.o32;
-	}
-
-	bool Offset::operator <=(const Offset &o) const {
-		return o32 <= o.o32;
-	}
-
 	Offset Offset::alignAs(const Size &s) const {
 		bool neg = o32 < 0;
 		Int n32 = roundUp(std::abs(o32), int(s.align32()));
@@ -350,6 +318,28 @@ namespace code {
 
 	Offset Offset::abs() const {
 		return Offset(::abs(o32), ::abs(o64));
+	}
+
+	Size min(Size a, Size b) {
+		return Size(min(a.size32(), b.size32()),
+					min(a.align32(), b.align32()),
+					min(a.size64(), b.size64()),
+					min(a.align64(), b.align64()));
+	}
+
+	Size max(Size a, Size b) {
+		return Size(max(a.size32(), b.size32()),
+					max(a.align32(), b.align32()),
+					max(a.size64(), b.size64()),
+					max(a.align64(), b.align64()));
+	}
+
+	Offset min(Offset a, Offset b) {
+		return Offset(min(a.v32(), b.v32()), min(a.v64(), b.v64()));
+	}
+
+	Offset max(Offset a, Offset b) {
+		return Offset(max(a.v32(), b.v32()), max(a.v64(), b.v64()));
 	}
 
 }

@@ -47,8 +47,7 @@ namespace code {
 			// Align to the most restrictive of pointer alignment and the alignment of the type.
 			o = o.alignAs(Size::sPtr).alignAs(all->at(i).size());
 
-			if (o > worst)
-				worst = o;
+			worst = max(worst, o);
 		}
 
 		result->last() = worst;

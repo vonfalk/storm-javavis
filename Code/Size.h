@@ -24,7 +24,7 @@ namespace code {
 		STORM_CTOR Size(Nat s);
 
 		// Initialize to previously obtained values.
-		Size(nat size32, nat align32, nat size64, nat align64);
+		Size(Nat size32, Nat align32, Nat size64, Nat align64);
 
 		// Get the size for the current platform, the size being properly aligned.
 		Nat STORM_FN current() const;
@@ -58,12 +58,6 @@ namespace code {
 		// Equality check.
 		Bool STORM_FN operator ==(const Size &o) const;
 		Bool STORM_FN operator !=(const Size &o) const;
-
-		// Greater/lesser?
-		Bool STORM_FN operator <(const Size &o) const;
-		Bool STORM_FN operator >(const Size &o) const;
-		Bool STORM_FN operator >=(const Size &o) const;
-		Bool STORM_FN operator <=(const Size &o) const;
 
 		// Align the size (as seen by offsets) to the current alignment in here.
 		Size STORM_FN aligned() const;
@@ -168,12 +162,6 @@ namespace code {
 		Bool STORM_FN operator ==(const Offset &o) const;
 		Bool STORM_FN operator !=(const Offset &o) const;
 
-		// Greater/lesser?
-		Bool STORM_FN operator <(const Offset &o) const;
-		Bool STORM_FN operator >(const Offset &o) const;
-		Bool STORM_FN operator >=(const Offset &o) const;
-		Bool STORM_FN operator <=(const Offset &o) const;
-
 		// Align this offset to the align presen in 'size'.
 		Offset STORM_FN alignAs(const Size &s) const;
 
@@ -184,7 +172,9 @@ namespace code {
 		// Output.
 		friend wostream &operator <<(wostream &to, const Offset &s);
 
+		// Absolute value.
 		Offset STORM_FN abs() const;
+
 	private:
 		// 32-bit offset.
 		Int o32;
@@ -198,6 +188,14 @@ namespace code {
 	 */
 	wostream &operator <<(wostream &to, const Offset &s);
 	StrBuf &STORM_FN operator <<(StrBuf &to, Offset s);
+
+	// Min/max operations.
+	using std::min;
+	using std::max;
+	Size STORM_FN min(Size a, Size b);
+	Size STORM_FN max(Size a, Size b);
+	Offset STORM_FN min(Offset a, Offset b);
+	Offset STORM_FN max(Offset a, Offset b);
 
 }
 

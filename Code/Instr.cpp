@@ -18,10 +18,7 @@ namespace code {
 	}
 
 	Size Instr::size() const {
-		if (iSrc.size() > iDest.size())
-			return iSrc.size();
-		else
-			return iDest.size();
+		return max(iSrc.size(), iDest.size());
 	}
 
 	op::Code Instr::op() const {
