@@ -112,11 +112,14 @@ namespace code {
 				initEax = false;
 			}
 
-			for (nat i = 0; i < s32; i += 4) {
-				if (s32 - i > 1) {
-					*dest << mov(intRel(ptrFrame, start + Offset(i)), eax);
+			nat pos = 0;
+			while (pos < s32) {
+				if (s32 - pos >= 4) {
+					*dest << mov(intRel(ptrFrame, start + Offset(pos)), eax);
+					pos += 4;
 				} else {
-					*dest << mov(byteRel(ptrFrame, start + Offset(i)), al);
+					*dest << mov(byteRel(ptrFrame, start + Offset(pos)), al);
+					pos += 1;
 				}
 			}
 		}
