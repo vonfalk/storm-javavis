@@ -67,8 +67,8 @@ namespace storm {
 		add(nativeFunction(e, valRef, S("get"), thisKey, address(&MapBase::getRaw))->makePure());
 		add(nativeFunction(e, valRef, S("get"), valList(e, 3, t, keyRef, valRef), address(&MapBase::getRawDef)));
 		add(nativeFunction(e, boolT, S("remove"), thisKey, address(&MapBase::removeRaw)));
-		add(nativeFunction(e, Value(), S("begin"), valList(e, 1, t), address(&MapBase::beginRaw))->makePure());
-		add(nativeFunction(e, Value(), S("end"), valList(e, 1, t), address(&MapBase::endRaw))->makePure());
+		add(nativeFunction(e, iter, S("begin"), valList(e, 1, t), address(&MapBase::beginRaw))->makePure());
+		add(nativeFunction(e, iter, S("end"), valList(e, 1, t), address(&MapBase::endRaw))->makePure());
 		add(nativeFunction(e, Value(), S("find"), thisKey, address(&MapBase::findRaw))->makePure());
 
 		addAccess();

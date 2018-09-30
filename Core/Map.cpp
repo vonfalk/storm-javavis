@@ -585,8 +585,6 @@ namespace storm {
 
 	MapBase::Iter::Iter() : info(null), key(null), val(null), pos(0) {}
 
-	MapBase::Iter::Iter(const Iter &o) : info(o.info), key(o.key), val(o.val), pos(o.pos) {}
-
 	MapBase::Iter::Iter(MapBase *owner) : info(owner->info), key(owner->key), val(owner->val), pos(0) {
 		// Find the first occupied position. This may place us at the end.
 		while (!atEnd() && info->v[pos].status == Info::free)
