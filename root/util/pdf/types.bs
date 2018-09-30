@@ -10,6 +10,9 @@ class Catalog extends StrObject {
 	// All pages in the document.
 	Page[] pages;
 
+	// Resources.
+	Resources resources;
+
 	// Create.
 	init() {
 		Pages p;
@@ -22,6 +25,7 @@ class Catalog extends StrObject {
 	// Called when added to somewhere.
 	void addedTo(File f) {
 		f.add(pagesData);
+		f.add(resources);
 	}
 
 	// Output.
@@ -76,7 +80,8 @@ class Page extends StrObject {
 	void output(StrBuf to) {
 		to << "<</Type /Page /MediaBox [";
 		to << mediaBox.p0.x << " " << mediaBox.p0.y << " " << mediaBox.p1.x << " " << mediaBox.p1.y;
-		to << "] /Contents " << content.id << " 0 R >>";
+		to << "] /Contents " << content.id << " 0 R ";
+		to << "/Resources " << file.root.resources.id << " 0 R >>";
 	}
 }
 
@@ -96,5 +101,96 @@ class Content extends StreamObject {
 		var t = textOutput(to);
 		t.write(data.toS);
 		t.flush();
+	}
+}
+
+
+/**
+ * Describes resources for one or more pages.
+ *
+ * This object keeps track of objects in Basic Storm and their corresponding representation in a PDF
+ * file.
+ *
+ * The Graphic object creates one global table of all resources so that it can be used for all pages
+ * easily.
+ */
+class Resources extends StrObject {
+
+	// Find (or create) a font specification matching the provided font.
+	Str font(ui:Font f) {
+		if (fonts.has(f.name)) {
+			fonts.get(f.name);
+		} else {
+			Str id = newId("F");
+			fonts.put(f.name, id);
+			res.put(id, FontResource(id, f));
+
+			id;
+		}
+	}
+
+	// Output.
+	void output(StrBuf to) {
+		to << "<</Font <<\n";
+		for (v in fonts) {
+			to << v << " ";
+			res.get(v).output(to);
+			to << "\n";
+		}
+		to << ">> >>";
+	}
+
+private:
+	// All resources stored here.
+	Str->Resource res;
+
+	// Fonts used. Refers to the font identifier.
+	Str->Str fonts;
+
+	// Generate a identifier for a resource (with the given prefix). The prefix should not start with "/"
+	Str newId(Str prefix) {
+		Nat id = 1;
+		Str candidate;
+		do {
+			candidate = "/${prefix}${id}";
+		} while (res.has(candidate)) {
+			id++;
+		}
+
+		candidate;
+	}
+}
+
+
+/**
+ * Describes a resource in a PDF file, such as a font or a bitmap.
+ */
+class Resource {
+	// The name of this resource.
+	Str name;
+
+	// Create.
+	init(Str name) {
+		init() { name = name; }
+	}
+
+	// Output.
+	void output(StrBuf to) : abstract;
+}
+
+
+/**
+ * A font resource.
+ */
+class FontResource extends Resource {
+ 	// Create.
+	init(Str name, ui:Font font) {
+		init(name) {}
+	}
+
+	// Output.
+	void output(StrBuf to) {
+		// Currently, we just ignore the actual font we should show...
+		to << "<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>";
 	}
 }

@@ -50,6 +50,9 @@ void draw(Graphics g, Size size) on Render {
 
 	g.oval(Rect(Point(130, 230), Size(40, 40)), blackBrush);
 	g.fillOval(Rect(Point(70, 230), Size(40, 40)), redBrush);
+
+	Font f("Arial", 20);
+	g.text("Hello!", f, redBrush, Rect(0, 0, 200, 20));
 }
 
 class Preview extends Frame {

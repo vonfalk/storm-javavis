@@ -18,6 +18,7 @@ class PdfGraphics extends Graphics {
 
 		init() {
 			pdf = pdf;
+			res = pdf.root.resources;
 			current = p;
 			output = p.content.data;
 			physical = physical;
@@ -107,9 +108,26 @@ class PdfGraphics extends Graphics {
 		putOval(r, "f\n");
 	}
 
+	// Draw text.
+	void text(Str text, Font font, Brush brush, Rect rect) {
+		putColor(brush, true);
+
+		// TODO: Set up the text clip rectangle properly!
+		// TODO: We need to escape the text, and probably adjust coordinate system etc.
+		Str f = res.font(font);
+		output << "BT\n";
+		output << "1 0 0 -1 0 " << rect.size.h << " Tm\n";
+		output << f << " " << font.height << " Tf\n";
+		put(rect.p0, "Td\n");
+		output << "(" << text << ")Tj\nET\n";
+	}
+
 private:
 	// Output to.
 	File pdf;
+
+	// Resources in the pdf.
+	Resources res;
 
 	// Current page.
 	Page current;
@@ -234,6 +252,7 @@ private:
 
 	// Output a solid color.
 	void putSolid(SolidBrush b, Bool stroke) {
+		print("TODO: Respect 'opacity' as well!");
 		if (stroke)
 			put(b.color, "RG ");
 		else
