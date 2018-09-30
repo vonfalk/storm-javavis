@@ -1,6 +1,7 @@
 use ui;
 use core:io;
 use core:geometry;
+use graphics;
 
 /**
  * Graphics object that outputs to a PDF file.
@@ -46,30 +47,64 @@ class PdfGraphics extends Graphics {
 
 	// Draw a line.
 	void line(Point a, Point b, Brush brush) {
+		putColor(brush, true);
 		put(a, "m ");
 		put(b, "l S\n");
 	}
 
 	// Draw a rectangle.
 	void draw(Rect r, Brush brush) {
+		putColor(brush, true);
 		put(r.p0, "");
 		put(r.size, "re S\n");
 	}
 
+	// Draw a rounded rectangle.
+	void draw(Rect r, Size edges, Brush brush) {
+		putColor(brush, true);
+		putRounded(r, edges, "S\n");
+	}
+
 	// Draw a path.
 	void draw(Path p, Brush brush) {
+		putColor(brush, true);
 		put(p, "S\n");
+	}
+
+	// Draw an oval.
+	void oval(Rect r, Brush brush) {
+		putColor(brush, true);
+		putOval(r, "S\n");
+	}
+
+	// Fill the entire page.
+	void fill(Brush brush) {
+		fill(Rect(Point(), virtual), brush);
 	}
 
 	// Fill a rectangle.
 	void fill(Rect r, Brush brush) {
+		putColor(brush, false);
 		put(r.p0, "");
 		put(r.size, "re f\n");
 	}
 
+	// Fill a rounded rectangle.
+	void fill(Rect r, Size edges, Brush brush) {
+		putColor(brush, false);
+		putRounded(r, edges, "f\n");
+	}
+
 	// Draw a path.
 	void fill(Path p, Brush brush) {
+		putColor(brush, false);
 		put(p, "f\n");
+	}
+
+	// Fill an oval.
+	void fillOval(Rect r, Brush brush) {
+		putColor(brush, false);
+		putOval(r, "f\n");
 	}
 
 private:
@@ -113,6 +148,11 @@ private:
 		output << sz.w << " " << sz.h << " " << after;
 	}
 
+	// Output a color.
+	void put(Color c, Str after) {
+		output << c.r << " " << c.g << " " << c.b << " " << after;
+	}
+
 	// Output a path.
 	void put(Path p, Str after) {
 		Point last;
@@ -138,6 +178,66 @@ private:
 			}
 		}
 		output << after;
+	}
+
+	// Output a quarter of a circle as a quadratic bezier curve. Uses 'before' to move to the first
+	// point if present.
+	void putArc(Point from, Str move, Point middle, Point to) {
+		Float ratio = 0.5522847498307935;
+		Point d1 = from + (middle - from)*ratio;
+		Point d2 = to   + (middle -   to)*ratio;
+
+		if (move.any)
+			put(from, move);
+
+		put(d1, "");
+		put(d2, "");
+		put(to, "c ");
+	}
+
+	// Output a rounded rectangle.
+	void putRounded(Rect r, Size edges, Str after) {
+		Point p0 = r.p0;
+		Point p1(r.p1.x, r.p0.y);
+		Point p2 = r.p1;
+		Point p3(r.p0.x, r.p1.y);
+
+		putArc(p0 + Size(0, edges.h), "m ", p0, p0 + Size(edges.w, 0));
+		putArc(p1 + Size(-edges.w, 0), "l ", p1, p1 + Size(0, edges.h));
+		putArc(p2 + Size(0, -edges.h), "l ", p2, p2 + Size(-edges.w, 0));
+		putArc(p3 + Size(edges.w, 0), "l ", p3, p3 + Size(0, -edges.h));
+		output << "h " << after;
+	}
+
+	// Output an oval.
+	void putOval(Rect r, Str after) {
+		Point c = r.center;
+
+		putArc(Point(r.p0.x, c.y), "m ", r.p0, Point(c.x, r.p0.y));
+		putArc(Point(c.x, r.p0.y), "", Point(r.p1.x, r.p0.y), Point(r.p1.x, c.y));
+		putArc(Point(r.p1.x, c.y), "", r.p1, Point(c.x, r.p1.y));
+		putArc(Point(c.x, r.p1.y), "", Point(r.p0.x, r.p1.y), Point(r.p0.x, c.y));
+
+		output << "h " << after;
+	}
+
+	// Output color information. 'stroke' indicates whether to set for stroke operations or fill operations.
+	void putColor(Brush b, Bool stroke) {
+		if (b as SolidBrush) {
+			putSolid(b, stroke);
+		// } else if (b as BitmapBrush) {
+		// } else if (b as LinearGradient) {
+		} else {
+			print("Unsupported brush found!");
+		}
+	}
+
+	// Output a solid color.
+	void putSolid(SolidBrush b, Bool stroke) {
+		if (stroke)
+			put(b.color, "RG ");
+		else
+			put(b.color, "rg ");
 	}
 }
 

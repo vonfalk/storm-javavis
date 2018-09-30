@@ -23,6 +23,9 @@ void basicTest() {
 }
 
 void draw(Graphics g, Size size) on Render {
+	SolidBrush blackBrush(black);
+	SolidBrush redBrush(red);
+
 	Path path;
 	path.start(Point(100, 100));
 	path.bezier(Point(100, 50), Point(50, 100), Point(50, 50));
@@ -31,18 +34,22 @@ void draw(Graphics g, Size size) on Render {
 	path.start(Point(50, 100));
 	path.bezier(Point(100, 100), Point(100, 150));
 
-	g.draw(path, SolidBrush(black));
+	g.draw(path, redBrush);
 
-	g.line(Point(10, 10), Point(40, 40), SolidBrush(black));
-	g.draw(Rect(Point(10, 10), a4 - Size(20)), SolidBrush(black));
+	g.line(Point(10, 10), Point(40, 40), blackBrush);
+	g.draw(Rect(Point(10, 10), a4 - Size(20)), blackBrush);
 
-
-	g.fill(Rect(Point(130, 30), Point(150, 40)), SolidBrush(black));
+	g.fill(Rect(Point(130, 30), Point(150, 40)), redBrush);
 	Path p2;
 	p2.start(Point(50, 200));
 	p2.bezier(Point(70, 200), Point(70, 260), Point(50, 260));
-	g.fill(p2, SolidBrush(black));
+	g.fill(p2, blackBrush);
 
+	g.draw(Rect(Point(130, 100), Size(50, 50)), Size(10), blackBrush);
+	g.fill(Rect(Point(130, 160), Size(50, 50)), Size(10), blackBrush);
+
+	g.oval(Rect(Point(130, 230), Size(40, 40)), blackBrush);
+	g.fillOval(Rect(Point(70, 230), Size(40, 40)), redBrush);
 }
 
 class Preview extends Frame {

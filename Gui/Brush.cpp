@@ -19,12 +19,12 @@ namespace gui {
 
 #endif
 
-	SolidBrush::SolidBrush(Color c) : opacity(1.0f), color(c) {}
+	SolidBrush::SolidBrush(Color c) : opacity(1.0f), col(c) {}
 
 #ifdef GUI_WIN32
 
 	void SolidBrush::create(Painter *owner, ID2D1Resource **out) {
-		owner->renderTarget()->CreateSolidColorBrush(dx(color), (ID2D1SolidColorBrush **)out);
+		owner->renderTarget()->CreateSolidColorBrush(dx(col), (ID2D1SolidColorBrush **)out);
 	}
 
 	void SolidBrush::prepare(const Rect &bound, ID2D1Brush *b) {
@@ -35,12 +35,12 @@ namespace gui {
 #ifdef GUI_GTK
 
 	OsResource *SolidBrush::create(Painter *owner) {
-		// return cairo_pattern_create_rgba(color.r, color.g, color.b, color.a);
+		// return cairo_pattern_create_rgba(col.r, col.g, col.b, col.a);
 		return 0;
 	}
 
 	void SolidBrush::prepare(const Rect &bound, cairo_t *cairo) {
-		cairo_set_source_rgba(cairo, color.r, color.g, color.b, color.a * opacity);
+		cairo_set_source_rgba(cairo, col.r, col.g, col.b, col.a * opacity);
 	}
 
 #endif

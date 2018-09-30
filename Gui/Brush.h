@@ -65,8 +65,12 @@ namespace gui {
 		// Opacity.
 		Float opacity;
 
+		// Color.
+		inline Color STORM_FN color() const { return col; }
+
 	private:
-		Color color;
+		// Color.
+		Color col;
 	};
 
 	/**
