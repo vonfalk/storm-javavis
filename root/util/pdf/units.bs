@@ -1,0 +1,23 @@
+use core:geometry;
+
+// Some common paper sizes.
+Size a0() { Size(841, 1189); }
+Size a1() { Size(594, 841); }
+Size a2() { Size(420, 594); }
+Size a3() { Size(297, 420); }
+Size a4() { Size(210, 297); }
+
+
+// Convert millimeters to points.
+package Float toPt(Float x) {
+	x * 2.83464567;
+}
+
+package Size toPt(Size x) {
+	x * 2.83464567;
+}
+
+// Convert points to millimeters.
+package Float fromPt(Float x) {
+	x / 2.83464567;
+}

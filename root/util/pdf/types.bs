@@ -183,14 +183,28 @@ class Resource {
  * A font resource.
  */
 class FontResource extends Resource {
+	// Font.
+	ui:Font font;
+
  	// Create.
 	init(Str name, ui:Font font) {
-		init(name) {}
+		init(name) {
+			font = font;
+		}
 	}
 
 	// Output.
 	void output(StrBuf to) {
-		// Currently, we just ignore the actual font we should show...
-		to << "<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>";
+		to << "<</Type /Font /Subtype /TrueType /BaseFont /";
+
+		// Remove spaces in the font's name.
+		Char space = " ".begin.v;
+		for (c in font.name) {
+			if (c != space)
+				to << c;
+		}
+
+		// TODO: Allow other encodings? We should eventually support UTF through custom encodings.
+		to << " /Encoding /WinAnsiEncoding >>";
 	}
 }

@@ -110,16 +110,27 @@ class PdfGraphics extends Graphics {
 
 	// Draw text.
 	void text(Str text, Font font, Brush brush, Rect rect) {
-		putColor(brush, true);
+		// TODO: We probably want to have some fancy text effects down the line, such as stroking the outline etc.
+		putColor(brush, false);
 
-		// TODO: Set up the text clip rectangle properly!
+		Float height = font.pxHeight;
+
+		// TODO: Set up the text clip rectangle properly (DX doesn't do this, maybe Cairo does?)
 		// TODO: We need to escape the text, and probably adjust coordinate system etc.
 		Str f = res.font(font);
 		output << "BT\n";
-		output << "1 0 0 -1 0 " << rect.size.h << " Tm\n";
-		output << f << " " << font.height << " Tf\n";
-		put(rect.p0, "Td\n");
-		output << "(" << text << ")Tj\nET\n";
+		output << f << " " << height << " Tf\n";
+		// Note: 0.9 is a guess of where the baseline of the font is relative to its top. There may
+		// be better ways of achieving this.
+		output << "1 0 0 -1 " << rect.p0.x << " " << (rect.p0.y + height*0.9) << " Tm\n";
+		// TODO: We should handle unicode somehow. It seems like we have to generate our own
+		// encoding for that to work properly... At the very least, we want to convert into
+		// iso-latin-1 or whatever the PDF is using.
+		output << "<";
+		for (c in text) {
+			output << hex(toANSI(c));
+		}
+		output << ">Tj\nET\n";
 	}
 
 private:
@@ -259,19 +270,3 @@ private:
 			put(b.color, "rg ");
 	}
 }
-
-// Convert millimeters to points.
-package Float toPt(Float x) {
-	x * 2.83464567;
-}
-
-package Size toPt(Size x) {
-	x * 2.83464567;
-}
-
-// Some common paper sizes.
-Size a0() { Size(841, 1189); }
-Size a1() { Size(594, 841); }
-Size a2() { Size(420, 594); }
-Size a3() { Size(297, 420); }
-Size a4() { Size(210, 297); }
