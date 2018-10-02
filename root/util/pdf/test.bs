@@ -85,10 +85,16 @@ class PreviewPainter extends Painter {
 }
 
 void test() {
-	save();
+	Font f("Arial", 20);
+	Text t("Hej sven!\nOst", f);
+	t.layoutBorder = Size(50, 200);
 
-	Preview p(a4, 3);
-	p.waitForClose;
+	print(t.lineInfo.toS);
+
+	// save();
+
+	// Preview p(a4, 3);
+	// p.waitForClose;
 }
 
 void save() on Render {

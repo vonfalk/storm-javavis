@@ -1,8 +1,31 @@
 #pragma once
 #include "Font.h"
 #include "Core/TObject.h"
+#include "Core/Array.h"
 
 namespace gui {
+
+	/**
+	 * Information about a single line of formatted text.
+	 */
+	class TextLine : public Object {
+		STORM_CLASS;
+	public:
+		// Create.
+		STORM_CTOR TextLine(Float height, Float baseline, Str *text);
+
+		// The height of this line, in device units.
+		Float height;
+
+		// The distance from the top of the line to the baseline.
+		Float baseline;
+
+		// Contents of the line.
+		Str *text;
+
+		// To string.
+		virtual void STORM_FN toS(StrBuf *to) const;
+	};
 
 	/**
 	 * Pre-formatted text prepared for rendering.
@@ -27,6 +50,9 @@ namespace gui {
 		Size STORM_FN layoutBorder();
 		void STORM_ASSIGN layoutBorder(Size size);
 
+		// Get information about each line of the formatted text.
+		Array<TextLine *> *STORM_FN lineInfo();
+
 		// TODO: We can add formatting options for parts of the string here. For example, it is
 		// possible to apply a font to a specific part of the string.
 
@@ -43,6 +69,9 @@ namespace gui {
 	private:
 		// The layout itself.
 		OsTextLayout *l;
+
+		// The text we represent.
+		Str *text;
 
 		// Create layout.
 		void init(Str *text, Font *font, Size size);

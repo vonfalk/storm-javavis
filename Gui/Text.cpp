@@ -5,15 +5,23 @@
 
 namespace gui {
 
+	TextLine::TextLine(Float height, Float baseline, Str *text) :
+		height(height), baseline(baseline), text(text) {}
+
+	void TextLine::toS(StrBuf *to) const {
+		*to << S("{height=") << height << S(" baseline=") << baseline << S(" text=")
+			<< text << S("}");
+	}
+
 	// Small extra space added around the border to prevent unneeded wrapping.
 	static const float borderExtra = 0.001f;
 
-	Text::Text(Str *text, Font *font) {
+	Text::Text(Str *text, Font *font) : text(text) {
 		float maxFloat = std::numeric_limits<float>::max();
 		init(text, font, Size(maxFloat, maxFloat));
 	}
 
-	Text::Text(Str *text, Font *font, Size size) {
+	Text::Text(Str *text, Font *font, Size size) : text(text) {
 		init(text, font, size);
 	}
 
@@ -53,6 +61,36 @@ namespace gui {
 	void Text::layoutBorder(Size s) {
 		l->SetMaxWidth(s.w);
 		l->SetMaxHeight(s.h);
+	}
+
+	Array<TextLine *> *Text::lineInfo() {
+		UINT32 numLines = 0;
+		l->GetLineMetrics(NULL, 0, &numLines);
+
+		DWRITE_LINE_METRICS *lines = new DWRITE_LINE_METRICS[numLines];
+		l->GetLineMetrics(lines, numLines, &numLines);
+
+		Array<TextLine *> *result = new (this) Array<TextLine *>();
+		Str::Iter start = text->begin();
+
+		for (Nat i = 0; i < numLines; i++) {
+			// TODO: I don't know if 'length' is the number of characters or codepoints.
+			DWRITE_LINE_METRICS &l = lines[i];
+			UINT32 trailing = l.newlineLength = l.trailingWhitespaceLength;
+			Str::Iter pos = start;
+			for (Nat j = 0; j < l.length - trailing; j++)
+				++pos;
+
+			*result << new (this) TextLine(l.height, l.baseline, text->substr(start, pos));
+
+			for (Nat j = 0; j < trailing; j++)
+				++pos;
+			start = pos;
+		}
+
+		delete []lines;
+
+		return result;
 	}
 
 #endif
@@ -100,6 +138,26 @@ namespace gui {
 			h = toPango(s.h);
 		pango_layout_set_width(l, w);
 		pango_layout_set_height(l, h);
+	}
+
+	Array<TextLine *> *Text::lineInfo() {
+		Array<TextLine *> *result = new (this) Array<TextLine *>();
+
+		Float baseline = fromPango(pango_layout_get_baseline(l));
+		Float spacing = fromPango(pango_layout_get_spacing(l));
+		const char *text = pango_layout_get_text(l);
+
+		int lines = pango_layout_get_line_count(l);
+		for (int i = 0; i < lines; i++) {
+			PangoLayoutLine *line = pango_layout_get_line_readonly(l, i);
+
+			int from = line->start_index;
+			int to = from + line->length;
+			Str *t = new (this) Str(toWChar(engine(), text + from, text + to));
+			*result << new (this) TextLine(spacing, baseline, t);
+		}
+
+		return result;
 	}
 
 #endif
