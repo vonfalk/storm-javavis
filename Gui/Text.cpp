@@ -17,12 +17,12 @@ namespace gui {
 	// Small extra space added around the border to prevent unneeded wrapping.
 	static const float borderExtra = 0.001f;
 
-	Text::Text(Str *text, Font *font) : text(text) {
+	Text::Text(Str *text, Font *font) : myText(text), myFont(font) {
 		float maxFloat = std::numeric_limits<float>::max();
 		init(text, font, Size(maxFloat, maxFloat));
 	}
 
-	Text::Text(Str *text, Font *font, Size size) : text(text) {
+	Text::Text(Str *text, Font *font, Size size) : myText(text), myFont(font) {
 		init(text, font, size);
 	}
 
@@ -72,7 +72,7 @@ namespace gui {
 		l->GetLineMetrics(lines, numLines, &numLines);
 
 		Array<TextLine *> *result = new (this) Array<TextLine *>();
-		Str::Iter start = text->begin();
+		Str::Iter start = myText->begin();
 
 		Float yPos = 0;
 
@@ -83,7 +83,7 @@ namespace gui {
 			for (Nat j = 0; j < l.length - l.newlineLength; j++)
 				++pos;
 
-			*result << new (this) TextLine(yPos + l.baseline, text->substr(start, pos));
+			*result << new (this) TextLine(yPos + l.baseline, myText->substr(start, pos));
 			yPos += l.height;
 
 			for (Nat j = 0; j < l.newlineLength; j++)

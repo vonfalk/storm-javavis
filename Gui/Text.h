@@ -39,6 +39,12 @@ namespace gui {
 		// Destroy.
 		virtual ~Text();
 
+		// Get the text in here.
+		inline Str *STORM_FN text() const { return myText; }
+
+		// Get the font used for this object.
+		inline Font *STORM_FN font() const { return myFont; }
+
 		// Size of the text inside the layout.
 		Size STORM_FN size();
 
@@ -68,7 +74,10 @@ namespace gui {
 		OsTextLayout *l;
 
 		// The text we represent.
-		Str *text;
+		Str *myText;
+
+		// Which font are we using?
+		Font *myFont;
 
 		// Create layout.
 		void init(Str *text, Font *font, Size size);

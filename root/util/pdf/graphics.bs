@@ -110,27 +110,45 @@ class PdfGraphics extends Graphics {
 
 	// Draw text.
 	void text(Str text, Font font, Brush brush, Rect rect) {
+		Text t(text, font);
+
+		// TODO: How do we handle clip rectangles etc? DX doesn't clip or line-wrap when using this
+		// mode. Maybe Pango does?
+		// t.layoutBorder = rect.size;
+
+		draw(t, brush, rect.p0);
+	}
+
+	// Draw text.
+	void draw(Text text, Brush brush, Point origin) {
 		// TODO: We probably want to have some fancy text effects down the line, such as stroking the outline etc.
 		putColor(brush, false);
 
-		Float height = font.pxHeight;
-
-		// TODO: Set up the text clip rectangle properly (DX doesn't do this, maybe Cairo does?)
-		// TODO: We need to escape the text, and probably adjust coordinate system etc.
+		Font font = text.font;
 		Str f = res.font(font);
 		output << "BT\n";
-		output << f << " " << height << " Tf\n";
-		// Note: 0.9 is a guess of where the baseline of the font is relative to its top. There may
-		// be better ways of achieving this.
-		output << "1 0 0 -1 " << rect.p0.x << " " << (rect.p0.y + height*0.9) << " Tm\n";
-		// TODO: We should handle unicode somehow. It seems like we have to generate our own
-		// encoding for that to work properly... At the very least, we want to convert into
-		// iso-latin-1 or whatever the PDF is using.
-		output << "<";
-		for (c in text) {
-			output << hex(toANSI(c));
+		// Set font.
+		output << f << " " << font.pxHeight << " Tf\n";
+		// Transform the coordinate system so the text is not upside down. Also translate so that
+		// the top-left of the layout box is at 0, 0.
+		output << "1 0 0 -1 " << origin.x << " " << origin.y << " Tm\n";
+
+		Float lastStart = 0;
+		for (line in text.lineInfo) {
+			output << "0 " << (lastStart - line.baseline) << " Td\n";
+			lastStart = line.baseline;
+
+			// TODO: We should handle unicode somehow. It seems like we have to generate our own
+			// encoding for that to work properly... At the moment, we blindly hope that ANSI
+			// encoding is sufficient (which in general, it isn't).
+			output << "<";
+			for (c in line.text) {
+				output << hex(toANSI(c));
+			}
+			output << ">Tj\n";
 		}
-		output << ">Tj\nET\n";
+
+		output << "ET\n";
 	}
 
 private:
