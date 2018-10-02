@@ -12,10 +12,7 @@ namespace gui {
 		STORM_CLASS;
 	public:
 		// Create.
-		STORM_CTOR TextLine(Float height, Float baseline, Str *text);
-
-		// The height of this line, in device units.
-		Float height;
+		STORM_CTOR TextLine(Float baseline, Str *text);
 
 		// The distance from the top of the line to the baseline.
 		Float baseline;

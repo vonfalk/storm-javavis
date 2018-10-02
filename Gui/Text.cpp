@@ -1,15 +1,16 @@
 #include "stdafx.h"
 #include "Text.h"
 #include "RenderMgr.h"
+#include "Core/Convert.h"
 #include <limits>
 
 namespace gui {
 
-	TextLine::TextLine(Float height, Float baseline, Str *text) :
-		height(height), baseline(baseline), text(text) {}
+	TextLine::TextLine(Float baseline, Str *text) :
+		baseline(baseline), text(text) {}
 
 	void TextLine::toS(StrBuf *to) const {
-		*to << S("{height=") << height << S(" baseline=") << baseline << S(" text=")
+		*to << S("{baseline=") << baseline << S(" text=")
 			<< text << S("}");
 	}
 
@@ -73,17 +74,19 @@ namespace gui {
 		Array<TextLine *> *result = new (this) Array<TextLine *>();
 		Str::Iter start = text->begin();
 
+		Float yPos = 0;
+
 		for (Nat i = 0; i < numLines; i++) {
 			// TODO: I don't know if 'length' is the number of characters or codepoints.
 			DWRITE_LINE_METRICS &l = lines[i];
-			UINT32 trailing = l.newlineLength = l.trailingWhitespaceLength;
 			Str::Iter pos = start;
-			for (Nat j = 0; j < l.length - trailing; j++)
+			for (Nat j = 0; j < l.length - l.newlineLength; j++)
 				++pos;
 
-			*result << new (this) TextLine(l.height, l.baseline, text->substr(start, pos));
+			*result << new (this) TextLine(yPos + l.baseline, text->substr(start, pos));
+			yPos += l.height;
 
-			for (Nat j = 0; j < trailing; j++)
+			for (Nat j = 0; j < l.newlineLength; j++)
 				++pos;
 			start = pos;
 		}
@@ -142,20 +145,19 @@ namespace gui {
 
 	Array<TextLine *> *Text::lineInfo() {
 		Array<TextLine *> *result = new (this) Array<TextLine *>();
-
-		Float baseline = fromPango(pango_layout_get_baseline(l));
-		Float spacing = fromPango(pango_layout_get_spacing(l));
 		const char *text = pango_layout_get_text(l);
 
-		int lines = pango_layout_get_line_count(l);
-		for (int i = 0; i < lines; i++) {
-			PangoLayoutLine *line = pango_layout_get_line_readonly(l, i);
+		PangoLayoutIter *iter = pango_layout_get_iter(l);
+		do {
+			Float baseline = fromPango(pango_layout_iter_get_baseline(iter));
 
+			PangoLayoutLine *line = pango_layout_iter_get_line_readonly(iter);
 			int from = line->start_index;
 			int to = from + line->length;
 			Str *t = new (this) Str(toWChar(engine(), text + from, text + to));
-			*result << new (this) TextLine(spacing, baseline, t);
-		}
+			*result << new (this) TextLine(baseline, t);
+		} while (pango_layout_iter_next_line(iter));
+		pango_layout_iter_free(iter);
 
 		return result;
 	}
