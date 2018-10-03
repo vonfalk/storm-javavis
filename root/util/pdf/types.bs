@@ -33,6 +33,11 @@ class Catalog extends StrObject {
 		to << "<</Type /Catalog /Pages " << pagesData.id << " 0 R >>";
 	}
 
+	// Get the ID of the 'pages' object.
+	Nat pagesId() {
+		pagesData.id;
+	}
+
 	// Reference to the 'pages' object.
 	private Pages pagesData;
 
@@ -81,6 +86,7 @@ class Page extends StrObject {
 		to << "<</Type /Page /MediaBox [";
 		to << mediaBox.p0.x << " " << mediaBox.p0.y << " " << mediaBox.p1.x << " " << mediaBox.p1.y;
 		to << "] /Contents " << content.id << " 0 R ";
+		to << "/Parent " << file.root.pagesId << " 0 R ";
 		to << "/Resources " << file.root.resources.id << " 0 R >>";
 	}
 }

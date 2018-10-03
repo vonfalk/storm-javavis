@@ -54,8 +54,8 @@ private:
 	void writeFooter(Word pos, Word[] offsets, OStream to) {
 		StrBuf out;
 		out << fill(Char(48)); // 0
-		out << "xref\n";
-		out << "0 " << offsets.count << "\n";
+		out << "xref\r\n";
+		out << "0 " << (offsets.count + 1) << "\n";
 
 		// First offset is special.
 		out << "0000000000 65535 f\n";
@@ -68,7 +68,11 @@ private:
 		out << "trailer <</Size " << (offsets.count + 1) << " /Root 1 0 R>>\n";
 		out << "startxref\n" << pos << "\n%%EOF";
 
-		var conv = textOutput(to);
+		// This section needs CR LF line endings as opposed to the rest of the file.
+		TextInfo info;
+		info.useCrLf = true;
+		info.useBom = false;
+		Utf8Output conv(to, info);
 		conv.write(out.toS);
 		conv.flush();
 	}
