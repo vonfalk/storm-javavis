@@ -35,7 +35,7 @@ namespace storm {
 			Transform *STORM_FN inverted();
 
 			// Get elements.
-			inline Float at(Nat row, Nat col) const { return (&v00)[row + 4*col]; }
+			inline Float STORM_FN at(Nat row, Nat col) const { return (&v00)[row + 4*col]; }
 
 			// To string.
 			virtual void STORM_FN toS(StrBuf *to) const;

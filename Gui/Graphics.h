@@ -30,13 +30,13 @@ namespace gui {
 		// Clear all state on the stack.
 		virtual void STORM_FN reset();
 
-		// Push the current state.
+		// Push the current state on the state stack.
 		virtual void STORM_FN push();
 
-		// Push the current state with a modified opacity.
+		// Push the current state with a modified opacity applied to the new state.
 		virtual void STORM_FN push(Float opacity);
 
-		// Push the current state with a clipping rectangle.
+		// Push the current state with a clipping rectangle applied to the new state.
 		virtual void STORM_FN push(Rect clip);
 
 		// Push current state, clipping and opacity.

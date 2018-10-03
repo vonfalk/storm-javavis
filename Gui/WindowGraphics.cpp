@@ -189,6 +189,7 @@ namespace gui {
 
 	void WindowGraphics::lineWidth(Float w) {
 		// TODO: How is the width of lines affected by scaling etc.? How do we want it to behave?
+		// TODO: PDF does not set the line width in relation to previous states. Maybe we should not either?
 		state.lineWidth = oldStates->last().lineWidth * w;
 	}
 

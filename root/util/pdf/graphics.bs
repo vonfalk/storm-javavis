@@ -46,6 +46,63 @@ class PdfGraphics extends Graphics {
 		preparePage();
 	}
 
+	// Clear the state stack.
+	void reset() {
+		while (pop())
+			;
+	}
+
+	// Push the current state on the state stack.
+	void push() {
+		// We have two states on the PDF stack for each state on our stack to make opacity and clip
+		// path work together with the semantics of the 'transform' function.
+		output << "q q\n";
+		stackDepth++;
+	}
+
+	// Push the current state with a modified opacity applied to the new state.
+	void push(Float opacity) {}
+
+	// Push the current state with a clipping rectangle applied to the new state.
+	void push(Rect clip) {
+		// Save the old state, then inject the clipping rect and save the state once
+		// more. Otherwise, we would lose the clipping rect when 'transform' is called.
+		output << "q ";
+		put(clip.p0, "");
+		put(clip.size, "re W n q\n");
+		stackDepth++;
+	}
+
+	// Push, set a clip and opacity.
+	void push(Rect clip, Float opacity) {}
+
+	// Pop the previous state.
+	Bool pop() {
+		unless (stackDepth > 0)
+			return false;
+
+		output << "Q Q\n";
+
+		--stackDepth;
+		true;
+	}
+
+	// Set the transform (in relation to the previous state).
+	assign transform(Transform tfm) {
+		// Since we're expected to *set* the state, first restore the previous state by popping the
+		// state stack and pushing again to keep a copy of the original.
+		output << "Q q\n";
+		output << tfm.at(0, 0) << " " << tfm.at(1, 0) << " "
+			   << tfm.at(0, 1) << " " << tfm.at(1, 1) << " "
+			   << tfm.at(0, 3) << " " << tfm.at(1, 3) << " cm\n";
+	}
+
+	// Set the line width (in relation to the previous state).
+	assign lineWidth(Float width) {
+		// TODO: This does not remember the line width in relation to previous states.
+		output << width << " w\n";
+	}
+
 	// Draw a line.
 	void line(Point a, Point b, Brush brush) {
 		putColor(brush, true);
@@ -80,6 +137,7 @@ class PdfGraphics extends Graphics {
 
 	// Fill the entire page.
 	void fill(Brush brush) {
+		// TODO: This does not work in the case of transformations.
 		fill(Rect(Point(), virtual), brush);
 	}
 
@@ -107,6 +165,12 @@ class PdfGraphics extends Graphics {
 		putColor(brush, false);
 		putOval(r, "f\n");
 	}
+
+	// Draw a bitmap.
+	void draw(Bitmap bitmap, Rect rect, Float opacity) {}
+
+	// Draw part of a bitmap.
+	void draw(Bitmap bitmap, Rect src, Rect dest, Float opacity) {}
 
 	// Draw text.
 	void text(Str text, Font font, Brush brush, Rect rect) {
@@ -168,12 +232,16 @@ private:
 	Size physical;
 	Size virtual;
 
+	// Number of states pushed on the stack.
+	Nat stackDepth;
+
 	// Prepare a new page.
 	void preparePage() {
 		output = current.content.data;
 		pdf.root.pages << current;
 
-		// reset()
+		// Reset our state regarding the state stack.
+		stackDepth = 0;
 
 		// Line join style, line end style and line width.
 		output << "1 j 1 J 1 w\n";
@@ -183,6 +251,9 @@ private:
 
 		// Invert the x axis, and scale to fit the new coordinate system.
 		output << (physical.w / virtual.w) << " 0 0 " << ((-physical.h) / virtual.h) << " 0 " << physical.h << " cm\n";
+
+		// Push this state to the stack, so that we can restore it later, eg. when we need to apply new transforms.
+		output << "q\n";
 	}
 
 	// Output a point to the current page.

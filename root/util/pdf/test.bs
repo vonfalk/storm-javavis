@@ -25,6 +25,7 @@ void basicTest() {
 void draw(Graphics g, Size size) on Render {
 	SolidBrush blackBrush(black);
 	SolidBrush redBrush(red);
+	SolidBrush greenBrush(green);
 
 	Path path;
 	path.start(Point(100, 100));
@@ -63,6 +64,15 @@ void draw(Graphics g, Size size) on Render {
 	Text t("Test Format!", f);
 	t.layoutBorder = Size(50, 50);
 	g.draw(t, blackBrush, Point(130, 40));
+
+	// Clipping.
+	g.push();
+	g.transform = translate(Point(65, 25)) * rotate(30 deg, Point(15, 15));
+
+	g.push(Rect(Point(), Size(30, 30)));
+	g.fill(redBrush);
+	g.fillOval(Rect(Point(-2, -2), Point(32, 32)), greenBrush);
+	g.pop();
 }
 
 class Preview extends Frame {
@@ -92,8 +102,8 @@ void test() {
 	Font f("Arial", 20);
 	save();
 
-	Preview p(a4, 3);
-	p.waitForClose;
+	// Preview p(a4, 3);
+	// p.waitForClose;
 }
 
 void save() on Render {
