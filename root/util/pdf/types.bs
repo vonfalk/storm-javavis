@@ -96,11 +96,73 @@ class Page extends StrObject {
  * Describes the content of a page.
  */
 class Content extends StreamObject {
-	// Physical coordinate system (in mm).
-	Size physical;
+	// Commands to execute.
+	StrBuf data;
+
+	// Output.
+	void output(OStream to) {
+		var t = textOutput(to);
+		t.write(data.toS);
+		t.flush();
+	}
+}
+
+
+/**
+ * Describes a Form XObject (distinct from PDF forms).
+ *
+ * These are used to group objects, most notably in order to describe transparency properly, and to
+ * embed images.
+ */
+class XObject extends StreamObject {
+	// Owning file.
+	File file;
+
+	// The name of this XObject in the resource dictionary.
+	Str name;
+
+	// Create, associated with a file.
+	init(File file) {
+		init() {
+			file = file;
+		}
+
+		// Add ourselves to the file.
+		file.add(this);
+
+		// Register ourselves with the global 'resources' object.
+		file.root.resources.xObj(this);
+	}
+}
+
+/**
+ * Class describing a Form XObject.
+ *
+ * We use these objects to implement transparency groups, but they may also be used to group
+ * operations together to improve the efficiency of the PDF file.
+ */
+class FormXObject extends XObject {
+	// Bounding box.
+	Rect bound;
 
 	// Commands to execute.
 	StrBuf data;
+
+	// Create.
+	init(File file, Rect bound) {
+		init(file) {
+			bound = bound;
+		}
+	}
+
+	// Output the header.
+	void outputHeader(TextOutput to) {
+		to.write("/Type /XObject ");
+		to.write("/Subtype /Form ");
+		to.write("/BBox [${bound.p0.x} ${bound.p0.y} ${bound.p1.x} ${bound.p1.y}] ");
+		to.write("/Resources ${file.root.resources.id} 0 R ");
+		to.write("/Group << /S /Transparency >> ");
+	}
 
 	// Output.
 	void output(OStream to) {
@@ -125,13 +187,34 @@ class Resources extends StrObject {
 	// Find (or create) a font specification matching the provided font.
 	Str font(ui:Font f) {
 		if (fonts.has(f.name)) {
-			fonts.get(f.name);
+			fonts.get(f.name).name;
 		} else {
-			Str id = newId("F");
-			fonts.put(f.name, id);
-			res.put(id, FontResource(id, f));
+			Str name = newName("F");
+			res.put(name);
+			fonts.put(f.name, FontResource(name, f));
 
-			id;
+			name;
+		}
+	}
+
+	// Add an XObject.
+	void xObj(XObject obj) {
+		obj.name = newName("X");
+		res.put(obj.name);
+		xObjs << obj;
+	}
+
+	// Add a graphics state that describes a desired alpha channel.
+	Str alpha(Float alpha) {
+		Int key = (alpha * 100).int;
+		if (alphas.has(key)) {
+			alphas.get(key).name;
+		} else {
+			Str name = newName("GS");
+			res.put(name);
+			alphas.put(key, GSResource(name, alpha));
+
+			name;
 		}
 	}
 
@@ -139,22 +222,44 @@ class Resources extends StrObject {
 	void output(StrBuf to) {
 		to << "<</Font <<\n";
 		for (v in fonts) {
-			to << v << " ";
-			res.get(v).output(to);
+			to << v.name << " ";
+			v.output(to);
 			to << "\n";
 		}
-		to << ">> >>";
+		to << ">> ";
+
+		to << "/XObject <<\n";
+		for (x in xObjs) {
+			to << x.name << " " << x.id << " 0 R\n";
+		}
+		to << ">> ";
+
+		to << "/ExtGState <<\n";
+		for (v in alphas) {
+			to << v.name << " ";
+			v.output(to);
+			to << "\n";
+		}
+		to << ">> ";
+
+		to << ">>";
 	}
 
 private:
-	// All resources stored here.
-	Str->Resource res;
+	// The names of all resources, so that we make sure to keep identifiers unique.
+	Set<Str> res;
 
-	// Fonts used. Refers to the font identifier.
-	Str->Str fonts;
+	// All fonts Font name -> resource.
+	Str->FontResource fonts;
+
+	// All graphics state resources.
+	Int->GSResource alphas;
+
+	// All XObjects.
+	XObject[] xObjs;
 
 	// Generate a identifier for a resource (with the given prefix). The prefix should not start with "/"
-	Str newId(Str prefix) {
+	Str newName(Str prefix) {
 		Nat id = 1;
 		Str candidate;
 		do {
@@ -169,32 +274,19 @@ private:
 
 
 /**
- * Describes a resource in a PDF file, such as a font or a bitmap.
- */
-class Resource {
-	// The name of this resource.
-	Str name;
-
-	// Create.
-	init(Str name) {
-		init() { name = name; }
-	}
-
-	// Output.
-	void output(StrBuf to) : abstract;
-}
-
-
-/**
  * A font resource.
  */
-class FontResource extends Resource {
+class FontResource {
+	// The name of this resource
+	Str name;
+
 	// Font.
 	ui:Font font;
 
  	// Create.
 	init(Str name, ui:Font font) {
-		init(name) {
+		init() {
+			name = name;
 			font = font;
 		}
 	}
@@ -212,5 +304,30 @@ class FontResource extends Resource {
 
 		// TODO: Allow other encodings? We should eventually support UTF through custom encodings.
 		to << " /Encoding /WinAnsiEncoding >>";
+	}
+}
+
+
+/**
+ * A graphics state resource.
+ */
+class GSResource {
+	// The name of this resource
+	Str name;
+
+	// Alpha value.
+	Float alpha;
+
+	// Create.
+	init(Str name, Float alpha) {
+		init() {
+			name = name;
+			alpha = alpha;
+		}
+	}
+
+	// Output.
+	void output(StrBuf to) {
+		to << "<</Type /ExtGState /CA " << alpha << " /ca " << alpha << ">>";
 	}
 }

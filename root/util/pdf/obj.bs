@@ -61,11 +61,16 @@ class StreamObject extends PdfObject {
 		MemOStream out;
 		output(out);
 
-		text.write("<</Length ${out.buffer.filled}>>\nstream\n");
+		text.write("<</Length ${out.buffer.filled} ");
+		outputHeader(text);
+		text.write(">>\nstream\n");
 		text.flush();
 		to.write(out.buffer);
 		text.write("\nendstream");
 	}
+
+	// Output additional parameters in the header.
+	void outputHeader(TextOutput to) {}
 
 	// Create the output.
 	void output(OStream to) : abstract;

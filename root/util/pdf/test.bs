@@ -27,6 +27,9 @@ void draw(Graphics g, Size size) on Render {
 	SolidBrush redBrush(red);
 	SolidBrush greenBrush(green);
 
+	SolidBrush transparentBlackBrush(black);
+	transparentBlackBrush.opacity = 0.8;
+
 	Path path;
 	path.start(Point(100, 100));
 	path.bezier(Point(100, 50), Point(50, 100), Point(50, 50));
@@ -47,7 +50,8 @@ void draw(Graphics g, Size size) on Render {
 	g.fill(p2, blackBrush);
 
 	g.draw(Rect(Point(130, 100), Size(50, 50)), Size(10), blackBrush);
-	g.fill(Rect(Point(130, 160), Size(50, 50)), Size(10), blackBrush);
+	g.oval(Rect(Point(140, 170), Size(30, 30)), redBrush);
+	g.fill(Rect(Point(130, 160), Size(50, 50)), Size(10), transparentBlackBrush);
 
 	g.oval(Rect(Point(130, 230), Size(40, 40)), blackBrush);
 	g.fillOval(Rect(Point(70, 230), Size(40, 40)), redBrush);
@@ -72,6 +76,17 @@ void draw(Graphics g, Size size) on Render {
 	g.push(Rect(Point(), Size(30, 30)));
 	g.fill(redBrush);
 	g.fillOval(Rect(Point(-2, -2), Point(32, 32)), greenBrush);
+	g.pop();
+
+	g.pop();
+
+	// Transparent overlays.
+	g.push(0.5);
+	g.transform = translate(Point(120, 50));
+
+	g.fill(Rect(0, 0, 30, 30), greenBrush);
+	g.fill(Rect(15, 0, 30, 30), redBrush);
+
 	g.pop();
 }
 

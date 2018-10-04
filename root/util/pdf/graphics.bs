@@ -7,6 +7,8 @@ use graphics;
  * Graphics object that outputs to a PDF file.
  *
  * Call 'nextPage' to start drawing on a new page.
+ *
+ * TODO: We leave one state on the state stack, which GS complains about. We should fix that some time.
  */
 class PdfGraphics extends Graphics {
 	// Create, specifying dimensions. 'physical' is the page's physical dimension in millimeters,
@@ -20,7 +22,6 @@ class PdfGraphics extends Graphics {
 			pdf = pdf;
 			res = pdf.root.resources;
 			current = p;
-			output = p.content.data;
 			physical = physical;
 			virtual = virtual;
 		}
@@ -30,6 +31,7 @@ class PdfGraphics extends Graphics {
 
 	// Save the finished file to a stream.
 	void save(OStream to) {
+		reset();
 		pdf.write(to);
 	}
 
@@ -42,6 +44,9 @@ class PdfGraphics extends Graphics {
 
 	// Start drawing to a new page.
 	void nextPage() {
+		// Paint any XObjects that have not yet been painted.
+		reset();
+
 		current = Page(pdf, Rect(Point(), toPt(physical)));
 		preparePage();
 	}
@@ -57,11 +62,13 @@ class PdfGraphics extends Graphics {
 		// We have two states on the PDF stack for each state on our stack to make opacity and clip
 		// path work together with the semantics of the 'transform' function.
 		output << "q q\n";
-		stackDepth++;
+		stack.push(State(stack.last));
 	}
 
 	// Push the current state with a modified opacity applied to the new state.
-	void push(Float opacity) {}
+	void push(Float opacity) {
+		stack.push(State(createForm(), opacity));
+	}
 
 	// Push the current state with a clipping rectangle applied to the new state.
 	void push(Rect clip) {
@@ -70,20 +77,38 @@ class PdfGraphics extends Graphics {
 		output << "q ";
 		put(clip.p0, "");
 		put(clip.size, "re W n q\n");
-		stackDepth++;
+
+		stack.push(State(stack.last));
 	}
 
 	// Push, set a clip and opacity.
-	void push(Rect clip, Float opacity) {}
+	void push(Rect clip, Float opacity) {
+		var form = createForm();
+		stack.push(State(form, opacity));
+
+		put(clip.p0, "");
+		put(clip.size, "re W n q\n");
+	}
 
 	// Pop the previous state.
 	Bool pop() {
-		unless (stackDepth > 0)
+		if (stack.count <= 1)
 			return false;
 
-		output << "Q Q\n";
+		State s = stack.last;
+		stack.pop();
 
-		--stackDepth;
+		if (form = s.form) {
+			// Draw the XObject. They have a bounding box of the entire page, so we reset the
+			// transform accordingly.
+			output << "q " << res.alpha(s.formAlpha) << " gs\n";
+			put(stack.last.tfm.inverted, "cm\n");
+			output << form.name << " Do Q\n";
+		} else {
+			// Pop the regular stack.
+			output << "Q Q\n";
+		}
+
 		true;
 	}
 
@@ -92,9 +117,7 @@ class PdfGraphics extends Graphics {
 		// Since we're expected to *set* the state, first restore the previous state by popping the
 		// state stack and pushing again to keep a copy of the original.
 		output << "Q q\n";
-		output << tfm.at(0, 0) << " " << tfm.at(1, 0) << " "
-			   << tfm.at(0, 1) << " " << tfm.at(1, 1) << " "
-			   << tfm.at(0, 3) << " " << tfm.at(1, 3) << " cm\n";
+		put(tfm, "cm\n");
 	}
 
 	// Set the line width (in relation to the previous state).
@@ -137,8 +160,11 @@ class PdfGraphics extends Graphics {
 
 	// Fill the entire page.
 	void fill(Brush brush) {
-		// TODO: This does not work in the case of transformations.
+		output << "q ";
+		put(stack.last.tfm.inverted, "cm\n");
+
 		fill(Rect(Point(), virtual), brush);
+		output << "Q\n";
 	}
 
 	// Fill a rectangle.
@@ -225,23 +251,56 @@ private:
 	// Current page.
 	Page current;
 
-	// Current stream (for convenience).
-	StrBuf output;
-
 	// Dimensions, physical and virtual.
 	Size physical;
 	Size virtual;
 
-	// Number of states pushed on the stack.
-	Nat stackDepth;
+	/**
+	 * Description of an entry in the state stack.
+	 */
+	class State {
+		// Current transform relative to the virtual coordinate space.
+		Transform tfm;
+
+		// The output stream for this layer;
+		StrBuf output;
+
+		// The Form XObject represented by this state (if any).
+		FormXObject? form;
+
+		// Alpha to be applied to the form, if any.
+		Float formAlpha;
+
+		// Create.
+		init(StrBuf output) {
+			init() { output = output; }
+		}
+
+		// Create, using a form.
+		init(FormXObject form, Float alpha) {
+			init() {
+				output = form.data;
+				form = form;
+				formAlpha = alpha;
+			}
+		}
+	}
+
+	// The state stack.
+	State[] stack;
+
+	// Current stream.
+	StrBuf output() {
+		stack.last.output;
+	}
 
 	// Prepare a new page.
 	void preparePage() {
-		output = current.content.data;
 		pdf.root.pages << current;
 
 		// Reset our state regarding the state stack.
-		stackDepth = 0;
+		stack = State[];
+		stack << State(current.content.data);
 
 		// Line join style, line end style and line width.
 		output << "1 j 1 J 1 w\n";
@@ -269,6 +328,13 @@ private:
 	// Output a color.
 	void put(Color c, Str after) {
 		output << c.r << " " << c.g << " " << c.b << " " << after;
+	}
+
+	// Output a matrix.
+	void put(Transform tfm, Str after) {
+		output << tfm.at(0, 0) << " " << tfm.at(1, 0) << " "
+			   << tfm.at(0, 1) << " " << tfm.at(1, 1) << " "
+			   << tfm.at(0, 3) << " " << tfm.at(1, 3) << " " << after;
 	}
 
 	// Output a path.
@@ -352,10 +418,19 @@ private:
 
 	// Output a solid color.
 	void putSolid(SolidBrush b, Bool stroke) {
-		print("TODO: Respect 'opacity' as well!");
+		output << res.alpha(b.opacity) << " gs ";
 		if (stroke)
-			put(b.color, "RG ");
+			put(b.color, "RG\n");
 		else
-			put(b.color, "rg ");
+			put(b.color, "rg\n");
+	}
+
+	// Create a form.
+	FormXObject createForm() {
+		FormXObject form(pdf, Rect(Point(), virtual));
+
+		// So that we can alter the transform as usual.
+		form.data << "q\n";
+		form;
 	}
 }
