@@ -66,6 +66,18 @@ namespace storm {
 		set(Nat(p.x), Nat(p.y), c);
 	}
 
+	Bool Image::hasAlpha() {
+		for (Nat y = 0; y < h; y++) {
+			for (Nat x = 0; x < w; x++) {
+				byte *b = buffer(x, y);
+				if (b[3] != 255)
+					return true;
+			}
+		}
+
+		return false;
+	}
+
 	Nat Image::stride() const {
 		return w * 4;
 	}

@@ -193,7 +193,11 @@ class PdfGraphics extends Graphics {
 	}
 
 	// Draw a bitmap.
-	void draw(Bitmap bitmap, Rect rect, Float opacity) {}
+	void draw(Bitmap bitmap, Rect rect, Float opacity) {
+		output << "q " << res.alpha(opacity) << " gs ";
+		put(translate(rect.p0 + Size(0, rect.size.h)) * scale(Size(rect.size.w, -rect.size.h)), "cm\n");
+		output << res.bitmap(pdf, bitmap) << " Do Q\n";
+	}
 
 	// Draw part of a bitmap.
 	void draw(Bitmap bitmap, Rect src, Rect dest, Float opacity) {}

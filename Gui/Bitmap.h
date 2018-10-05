@@ -21,6 +21,9 @@ namespace gui {
 		virtual OsResource *create(Painter *owner);
 #endif
 
+		// Source image.
+		inline Image *STORM_FN image() { return src; }
+
 		// Size.
 		Size STORM_FN size();
 

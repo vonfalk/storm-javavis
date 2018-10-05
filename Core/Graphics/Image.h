@@ -37,6 +37,9 @@ namespace storm {
 		void STORM_FN set(Nat x, Nat y, Color c);
 		void STORM_FN set(geometry::Point p, Color c);
 
+		// Does this image contain any alpha information?
+		Bool STORM_FN hasAlpha();
+
 		// Raw buffer information:
 
 		// Stride, difference between each row (in bytes).

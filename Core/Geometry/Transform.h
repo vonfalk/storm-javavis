@@ -82,6 +82,7 @@ namespace storm {
 		Transform *STORM_FN scale(EnginePtr e, Float scale);
 		Transform *STORM_FN scale(EnginePtr e, Vector scale);
 		Transform *STORM_FN scale(EnginePtr e, Float scale, Vector origin);
+		Transform *STORM_FN scale(EnginePtr e, Size scale);
 		Transform *STORM_FN skewX(EnginePtr e, Angle angle);
 		Transform *STORM_FN skewY(EnginePtr e, Angle angle);
 		Transform *STORM_FN skewZ(EnginePtr e, Angle angle);

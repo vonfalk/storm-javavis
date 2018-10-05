@@ -2,6 +2,7 @@ use core:io;
 use core:geometry;
 use graphics;
 use ui;
+use lang:bs:macro;
 
 /**
  * Utility functions for testing the implementation. Should be removed in the future.
@@ -90,6 +91,20 @@ void draw(Graphics g, Size size) on Render {
 
 	g.pop();
 	g.pop();
+
+	// An image!
+	if (x = named{res}.url) {
+		Image i = loadImage(x / "flower-raw.ppm");
+		Bitmap b(i);
+
+		g.draw(b, Rect(Point(15, 190), b.size * 0.15), 0.8);
+		g.draw(b, Rect(Point(120, 250), b.size * 0.10), 0.5);
+
+		Image j = loadImage(x / "ui_alpha.png");
+		Bitmap c(j);
+
+		g.draw(c, Rect(Point(20, 240), c.size * 0.4));
+	}
 }
 
 class Preview extends Frame {

@@ -328,6 +328,10 @@ namespace storm {
 			return CREATE(Transform, e.v, d);
 		}
 
+		Transform *scale(EnginePtr e, Size s) {
+			return scale(e, Vector(s.w, s.h, 0.0f));
+		}
+
 		Transform *skewX(EnginePtr e, Angle angle) {
 			float t = -tan(angle.rad());
 			float d[] = {

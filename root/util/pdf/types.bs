@@ -1,5 +1,7 @@
 use core:io;
 use core:geometry;
+use graphics;
+use ui;
 
 /**
  * This is the root object that describes general properties of the file itself.
@@ -172,6 +174,112 @@ class FormXObject extends XObject {
 	}
 }
 
+// Convert a color component to a byte.
+private Byte toByte(Float v) {
+	(v * 255.0).int.byte;
+}
+
+/**
+ * Class describing an image XObject.
+ */
+class ImageXObject extends XObject {
+	// Source bitmap.
+	Bitmap src;
+
+	// The alpha channel for this image, if we have one!
+	AlphaXObject? alpha;
+
+	// Create.
+	init(File file, Bitmap bitmap) {
+		init(file) { src = bitmap; }
+
+		if (src.image.hasAlpha) {
+			alpha = AlphaXObject(file, bitmap);
+		}
+	}
+
+	// Output the header.
+	void outputHeader(TextOutput to) {
+		to.write("/Type /XObject /Subtype /Image ");
+		to.write("/Width ${src.size.w.int} /Height ${src.size.h.int}");
+		to.write("/ColorSpace /DeviceRGB /BitsPerComponent 8 /Interpolate true ");
+		if (alpha) {
+			to.write("/SMask ${alpha.id} 0 R ");
+		}
+	}
+
+	// Output.
+	void output(OStream to) {
+		Image img = src.image;
+		for (Nat y = 0; y < img.height; y++) {
+			outputRow(to, img, y);
+		}
+	}
+
+	// Output a single scanline.
+	void outputRow(OStream to, Image img, Nat y) {
+		Buffer b = buffer(img.width * 3);
+
+		Nat at = 0;
+		for (Nat x = 0; x < img.width; x++) {
+			Color c = img.get(x, y);
+			b[at++] = toByte(c.r);
+			b[at++] = toByte(c.g);
+			b[at++] = toByte(c.b);
+		}
+
+		b.filled(img.width * 3);
+		to.write(b);
+	}
+}
+
+
+/**
+ * Class describing an image's alpha channel.
+ */
+class AlphaXObject extends XObject {
+	// Source bitmap.
+	Bitmap src;
+
+	// Create.
+	init(File file, Bitmap bitmap) {
+		init(file) { src = bitmap; }
+	}
+
+	// Output the header.
+	void outputHeader(TextOutput to) {
+		to.write("/Type /XObject /Subtype /Image ");
+		to.write("/Width ${src.size.w.int} /Height ${src.size.h.int}");
+		to.write("/ColorSpace /DeviceGray /BitsPerComponent 8 /Interpolate true ");
+	}
+
+	// Output.
+	void output(OStream to) {
+		Image img = src.image;
+		for (Nat y = 0; y < img.height; y++) {
+			outputRow(to, img, y);
+		}
+	}
+
+	// Output a single scanline.
+	void outputRow(OStream to, Image img, Nat y) {
+		Buffer b = buffer(img.width);
+
+		for (Nat x = 0; x < img.width; x++) {
+			Color c = img.get(x, y);
+			b[x] = toByte(c.a);
+		}
+
+		b.filled(img.width);
+		to.write(b);
+	}
+
+	// Convert a float value to a byte.
+	Byte toByte(Float v) : static {
+		(v * 255.0).int.byte;
+	}
+}
+
 
 /**
  * Describes resources for one or more pages.
@@ -202,6 +310,17 @@ class Resources extends StrObject {
 		obj.name = newName("X");
 		res.put(obj.name);
 		xObjs << obj;
+	}
+
+	// Get the name of a bitmap.
+	Str bitmap(File file, Bitmap b) {
+		if (bitmaps.has(b)) {
+			bitmaps.get(b).name;
+		} else {
+			ImageXObject obj(file, b);
+			bitmaps.put(b, obj);
+			obj.name;
+		}
 	}
 
 	// Add a graphics state that describes a desired alpha channel.
@@ -251,6 +370,9 @@ private:
 
 	// All fonts Font name -> resource.
 	Str->FontResource fonts;
+
+	// All bitmaps.
+	Bitmap->ImageXObject bitmaps;
 
 	// All graphics state resources.
 	Int->GSResource alphas;
