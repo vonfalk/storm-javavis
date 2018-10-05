@@ -81,12 +81,14 @@ void draw(Graphics g, Size size) on Render {
 	g.pop();
 
 	// Transparent overlays.
+	g.push();
+	g.transform = translate(Point(120, 50)) * rotate(10 deg);
 	g.push(0.5);
-	g.transform = translate(Point(120, 50));
 
 	g.fill(Rect(0, 0, 30, 30), greenBrush);
 	g.fill(Rect(15, 0, 30, 30), redBrush);
 
+	g.pop();
 	g.pop();
 }
 

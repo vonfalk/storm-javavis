@@ -67,7 +67,8 @@ class PdfGraphics extends Graphics {
 
 	// Push the current state with a modified opacity applied to the new state.
 	void push(Float opacity) {
-		stack.push(State(createForm(), opacity));
+		createForm(opacity);
+		output << "q\n";
 	}
 
 	// Push the current state with a clipping rectangle applied to the new state.
@@ -83,8 +84,7 @@ class PdfGraphics extends Graphics {
 
 	// Push, set a clip and opacity.
 	void push(Rect clip, Float opacity) {
-		var form = createForm();
-		stack.push(State(form, opacity));
+		createForm(opacity);
 
 		put(clip.p0, "");
 		put(clip.size, "re W n q\n");
@@ -426,11 +426,16 @@ private:
 	}
 
 	// Create a form.
-	FormXObject createForm() {
-		FormXObject form(pdf, Rect(Point(), virtual));
+	FormXObject createForm(Float opacity) {
+		var oldTfm = stack.last.tfm;
 
-		// So that we can alter the transform as usual.
-		form.data << "q\n";
+		FormXObject form(pdf, Rect(Point(), virtual));
+		stack.push(State(form, opacity));
+
+		// The new XObject will be painted in an identity-mapped coordinate system, so we need to
+		// re-apply the previous transform inside the form.
+		put(oldTfm, "cm\n");
+
 		form;
 	}
 }
