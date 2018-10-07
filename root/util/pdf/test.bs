@@ -97,8 +97,9 @@ void draw(Graphics g, Size size) on Render {
 		Image i = loadImage(x / "flower-raw.ppm");
 		Bitmap b(i);
 
-		g.draw(b, Rect(Point(15, 190), b.size * 0.15), 0.8);
-		g.draw(b, Rect(Point(120, 250), b.size * 0.10), 0.5);
+		Size bSz = b.size;
+		g.draw(b, Rect(Point(15, 190), bSz * 0.15), 0.8);
+		g.draw(b, Rect(Point(100, 100), bSz * 0.5), Rect(Point(120, 250), bSz * 0.1), 0.5);
 
 		Image j = loadImage(x / "ui_alpha.png");
 		Bitmap c(j);

@@ -115,10 +115,12 @@
   - [X] Implement shrink() for Map<> as well.
   - [X] Handles and templates does not work with built-in types (like Int).
 
-* Improvements [6/23]
+* Improvements [6/24]
   - [ ] Consider utilizing the transformations better in Basic Storm. We could, for example, skip the
     XxxDecl classes, and just have lists of AST nodes that are transformed as appropriate later in the
     compilation instead.
+  - [ ] Maybe we want to reverse the concatenation order of Transform to make it easier to understand.
+    It is currently right to left (since we're using a column vector), but maybe it should be left to right.
   - [ ] Add a type that represents byte sizes. Use that in eg. Socket::readBuffer.
   - [ ] The call to 'getaddrinfo' in the networking subsystem blocks an entire OS thread waiting for
     the network. This is not very good, as we might have other things to do in the meantime.

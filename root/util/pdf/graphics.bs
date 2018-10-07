@@ -195,12 +195,36 @@ class PdfGraphics extends Graphics {
 	// Draw a bitmap.
 	void draw(Bitmap bitmap, Rect rect, Float opacity) {
 		output << "q " << res.alpha(opacity) << " gs ";
-		put(translate(rect.p0 + Size(0, rect.size.h)) * scale(Size(rect.size.w, -rect.size.h)), "cm\n");
+		// Make the picture right side up and at the origin.
+		var tfm = translate(Point(0, 1)) * scale(Size(1, -1));
+
+		// Move it from the unit square to its proper location.
+		tfm = translate(rect.p0) * scale(rect.size) * tfm;
+		put(tfm, "cm\n");
 		output << res.bitmap(pdf, bitmap) << " Do Q\n";
 	}
 
 	// Draw part of a bitmap.
-	void draw(Bitmap bitmap, Rect src, Rect dest, Float opacity) {}
+	void draw(Bitmap bitmap, Rect src, Rect dest, Float opacity) {
+		output << "q " << res.alpha(opacity) << " gs ";
+		// Add a new clip region.
+		put(dest.p0, "");
+		put(dest.size, "re W n\n");
+
+		// Make the picture right side up and at the origin.
+		var tfm = translate(Point(0, 1)) * scale(Size(1, -1));
+
+		// Scale it so that the part we want is in the unit square.
+		Size sz = bitmap.size;
+		tfm = translate(Point(-src.p0.x / sz.w, -src.p0.y / sz.h)) * tfm;
+		tfm = scale(Size(sz.w / src.size.w, sz.h / src.size.h)) * tfm;
+
+		// Move it to its proper location.
+		tfm = translate(dest.p0) * scale(dest.size) * tfm;
+		put(tfm, "cm\n");
+
+		output << res.bitmap(pdf, bitmap) << " Do Q\n";
+	}
 
 	// Draw text.
 	void text(Str text, Font font, Brush brush, Rect rect) {
