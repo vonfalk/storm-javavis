@@ -106,6 +106,13 @@ void draw(Graphics g, Size size) on Render {
 
 		g.draw(c, Rect(Point(20, 240), c.size * 0.4));
 	}
+
+	// Gradients.
+	LinearGradient gradient([GradientStop(0.2, red), GradientStop(0.4, yellow), GradientStop(0.6, green), GradientStop(0.8, blue)], 0 deg);
+	g.fill(Rect(15, 40, 30, 120), gradient);
+
+	LinearGradient gradient2([GradientStop(0.2, red), GradientStop(0.4, yellow), GradientStop(0.6, green), GradientStop(0.8, blue)], 90 deg);
+	g.draw(Text("Nice!", f), gradient2, Point(70, 190));
 }
 
 class Preview extends Frame {
@@ -135,8 +142,8 @@ void test() {
 	Font f("Arial", 20);
 	save();
 
-	// Preview p(a4, 3);
-	// p.waitForClose;
+	Preview p(a4, 3);
+	p.waitForClose;
 }
 
 void save() on Render {

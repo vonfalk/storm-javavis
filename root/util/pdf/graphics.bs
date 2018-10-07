@@ -18,13 +18,29 @@ class PdfGraphics extends Graphics {
 		File pdf;
 		Page p(pdf, Rect(Point(), toPt(physical)));
 
+		// Compute the virtual to physical transform:
+
+		// Flip the Y-axis.
+		var tfm = scale(Size(1, -1));
+
+		// Move the pixels back onto the screen.
+		tfm = translate(Size(0, virtual.h)) * tfm;
+
+		// Convert to physical coordinates.
+		tfm = scale(Size(physical.w / virtual.w, physical.h / virtual.h)) * tfm;
+
+		// Convert to points.
+		tfm = scale(2.83464567) * tfm;
+
 		init() {
 			pdf = pdf;
 			res = pdf.root.resources;
 			current = p;
 			physical = physical;
 			virtual = virtual;
+			physicalTfm = tfm;
 		}
+
 
 		preparePage();
 	}
@@ -128,33 +144,33 @@ class PdfGraphics extends Graphics {
 
 	// Draw a line.
 	void line(Point a, Point b, Brush brush) {
-		putColor(brush, true);
+		putColor(brush, true, Rect(a, b).normalized);
 		put(a, "m ");
 		put(b, "l S\n");
 	}
 
 	// Draw a rectangle.
 	void draw(Rect r, Brush brush) {
-		putColor(brush, true);
+		putColor(brush, true, r);
 		put(r.p0, "");
 		put(r.size, "re S\n");
 	}
 
 	// Draw a rounded rectangle.
 	void draw(Rect r, Size edges, Brush brush) {
-		putColor(brush, true);
+		putColor(brush, true, r);
 		putRounded(r, edges, "S\n");
 	}
 
 	// Draw a path.
 	void draw(Path p, Brush brush) {
-		putColor(brush, true);
+		putColor(brush, true, p.bound);
 		put(p, "S\n");
 	}
 
 	// Draw an oval.
 	void oval(Rect r, Brush brush) {
-		putColor(brush, true);
+		putColor(brush, true, r);
 		putOval(r, "S\n");
 	}
 
@@ -169,26 +185,26 @@ class PdfGraphics extends Graphics {
 
 	// Fill a rectangle.
 	void fill(Rect r, Brush brush) {
-		putColor(brush, false);
+		putColor(brush, false, r);
 		put(r.p0, "");
 		put(r.size, "re f\n");
 	}
 
 	// Fill a rounded rectangle.
 	void fill(Rect r, Size edges, Brush brush) {
-		putColor(brush, false);
+		putColor(brush, false, r);
 		putRounded(r, edges, "f\n");
 	}
 
 	// Draw a path.
 	void fill(Path p, Brush brush) {
-		putColor(brush, false);
+		putColor(brush, false, p.bound);
 		put(p, "f\n");
 	}
 
 	// Fill an oval.
 	void fillOval(Rect r, Brush brush) {
-		putColor(brush, false);
+		putColor(brush, false, r);
 		putOval(r, "f\n");
 	}
 
@@ -240,7 +256,7 @@ class PdfGraphics extends Graphics {
 	// Draw text.
 	void draw(Text text, Brush brush, Point origin) {
 		// TODO: We probably want to have some fancy text effects down the line, such as stroking the outline etc.
-		putColor(brush, false);
+		putColor(brush, false, Rect(origin, text.size));
 
 		Font font = text.font;
 		Str f = res.font(font);
@@ -282,6 +298,9 @@ private:
 	// Dimensions, physical and virtual.
 	Size physical;
 	Size virtual;
+
+	// Transformation from the virtual coordinate space into the physical coordinate space.
+	Transform physicalTfm;
 
 	/**
 	 * Description of an entry in the state stack.
@@ -333,11 +352,8 @@ private:
 		// Line join style, line end style and line width.
 		output << "1 j 1 J 1 w\n";
 
-		// Scale the default coordinate system to millimeters.
-		output << "2.83464567 0 0 2.83464567 0 0 cm\n";
-
-		// Invert the x axis, and scale to fit the new coordinate system.
-		output << (physical.w / virtual.w) << " 0 0 " << ((-physical.h) / virtual.h) << " 0 " << physical.h << " cm\n";
+		// "convert" the coordinate system to virtual units.
+		put(physicalTfm, "cm\n");
 
 		// Push this state to the stack, so that we can restore it later, eg. when we need to apply new transforms.
 		output << "q\n";
@@ -434,11 +450,12 @@ private:
 	}
 
 	// Output color information. 'stroke' indicates whether to set for stroke operations or fill operations.
-	void putColor(Brush b, Bool stroke) {
+	void putColor(Brush b, Bool stroke, Rect bound) {
 		if (b as SolidBrush) {
 			putSolid(b, stroke);
 		// } else if (b as BitmapBrush) {
-		// } else if (b as LinearGradient) {
+		} else if (b as LinearGradient) {
+			putLinearGradient(b, stroke, bound);
 		} else {
 			print("Unsupported brush found!");
 		}
@@ -451,6 +468,17 @@ private:
 			put(b.color, "RG\n");
 		else
 			put(b.color, "rg\n");
+	}
+
+	// Output a linear gradient.
+	void putLinearGradient(LinearGradient g, Bool stroke, Rect bound) {
+		var tfm = physicalTfm * stack.last.tfm;
+		var pattern = res.pattern(AxialShading(pdf, g, bound, tfm));
+		if (stroke) {
+			output << "/Pattern CS " << pattern << " SCN ";
+		} else {
+			output << "/Pattern cs " << pattern << " scn ";
+		}
 	}
 
 	// Create a form.

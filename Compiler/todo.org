@@ -17,13 +17,16 @@
     but the scale of the issue should be assessed first.
   - [ ] Parsing core.lang.syntax.bnf takes about 80 ms, which is a bit on the high end when compiling code...
 
-* Loose ends so far [35/61]
+* Loose ends so far [35/62]
   - [ ] Asking for a random access stream from an IStream should produce a LazyIStream if nothing better
     is available. However, this is not yet implemented!
   - [ ] When a .bnf-file includes another package, productions from there are not automatically visible,
     which seems unintuitive. Even though a package (perhaps containing syntax helpers) is included, its
     productions are not visible. This could probably be solved nicely with 'package exports' or a similar
     mechanism.
+  - [ ] Gradients in the UI library should prehaps have a fixed origin, so that we can draw things
+    in multiple passes with the same gradient without issues... It seems like all graphic API:s are
+    designed this way, perhaps for a good reason.
   - [ ] Support documentation of templates from C++.
   - [ ] In Basic Storm, writing 1.2 currently produces a float by default. Is this desirable?
   - [ ] Lambda functions can not infer their proper type when being assigned to Maybe<T>.

@@ -120,6 +120,9 @@ namespace gui {
 		Gradient(Array<GradientStop> *stops);
 		~Gradient();
 
+		// Get the stops.
+		Array<GradientStop> *STORM_FN stops() const;
+
 		// Set the stops.
 		void STORM_ASSIGN stops(Array<GradientStop> *stops);
 
@@ -172,6 +175,10 @@ namespace gui {
 
 		// The angle.
 		Angle angle;
+
+		// Get the starting and ending point of the line given a rectangle.
+		Point STORM_FN startPoint(Rect rect);
+		Point STORM_FN endPoint(Rect rect);
 
 	private:
 		// Compute points.

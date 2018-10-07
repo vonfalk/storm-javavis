@@ -28,6 +28,9 @@ class Catalog extends StrObject {
 	void addedTo(File f) {
 		f.add(pagesData);
 		f.add(resources);
+		if (identityFn)
+			f.add(identityFn);
+		file = f;
 	}
 
 	// Output.
@@ -40,8 +43,24 @@ class Catalog extends StrObject {
 		pagesData.id;
 	}
 
+	// Get the identity function.
+	IdentityFunction identity() {
+		if (identityFn) {
+			identityFn;
+		} else {
+			IdentityFunction fn;
+			identityFn = fn;
+			if (file)
+				file.add(fn);
+			fn;
+		}
+	}
+
 	// Reference to the 'pages' object.
 	private Pages pagesData;
+
+	// File we've been added to.
+	private File? file;
 
 	// We need to split this object into two parts, and this object represents the 'Pages' part.
 	private class Pages extends StrObject {
@@ -56,6 +75,9 @@ class Catalog extends StrObject {
 			to << "] /Count " << pages.count << " >>";
 		}
 	}
+
+	// Identity function. Created when needed.
+	IdentityFunction? identityFn;
 }
 
 /**
@@ -337,6 +359,16 @@ class Resources extends StrObject {
 		}
 	}
 
+	// Add a pattern resource, return its new title. Generally, these are not reusable and as such
+	// we don't bother to de-duplicate them.
+	Str pattern(PatternResource p) {
+		var name = newName("P");
+		res.put(name);
+		p.name = name;
+		patterns << p;
+		name;
+	}
+
 	// Output.
 	void output(StrBuf to) {
 		to << "<</Font <<\n";
@@ -345,18 +377,26 @@ class Resources extends StrObject {
 			v.output(to);
 			to << "\n";
 		}
-		to << ">> ";
+		to << ">>\n";
 
 		to << "/XObject <<\n";
 		for (x in xObjs) {
 			to << x.name << " " << x.id << " 0 R\n";
 		}
-		to << ">> ";
+		to << ">>\n";
 
 		to << "/ExtGState <<\n";
 		for (v in alphas) {
 			to << v.name << " ";
 			v.output(to);
+			to << "\n";
+		}
+		to << ">>\n";
+
+		to << "/Pattern <<\n";
+		for (p in patterns) {
+			to << p.name << " ";
+			p.output(to);
 			to << "\n";
 		}
 		to << ">> ";
@@ -376,6 +416,9 @@ private:
 
 	// All graphics state resources.
 	Int->GSResource alphas;
+
+	// All patterns.
+	PatternResource[] patterns;
 
 	// All XObjects.
 	XObject[] xObjs;
@@ -451,5 +494,191 @@ class GSResource {
 	// Output.
 	void output(StrBuf to) {
 		to << "<</Type /ExtGState /CA " << alpha << " /ca " << alpha << ">>";
+	}
+}
+
+
+/**
+ * A Pattern resource.
+ */
+class PatternResource {
+	// The name of this resource. Set by the Resources class when added.
+	Str name;
+
+	// Pattern type.
+	Nat type;
+
+	// Current transformation matrix.
+	Transform tfm;
+
+	// Create.
+	init(Nat type, Transform tfm) {
+		init() {
+			type = type;
+			tfm = tfm;
+		}
+	}
+
+	// Output
+	void output(StrBuf to) {
+		to << "<</Type /Pattern /PatternType " << type << " ";
+		to << "/Matrix [ "
+		   << tfm.at(0, 0) << " " << tfm.at(1, 0) << " "
+		   << tfm.at(0, 1) << " " << tfm.at(1, 1) << " "
+		   << tfm.at(0, 3) << " " << tfm.at(1, 3) << " ] ";
+		outputData(to);
+		to << ">>";
+	}
+
+	// Output pattern-specific data.
+	void outputData(StrBuf to) : abstract;
+}
+
+/**
+ * A shading pattern.
+ */
+class ShadingPattern extends PatternResource {
+	// Shading type.
+	Nat shadingType;
+
+	// Functions for shading according to the stops.
+	StitchFunction redFn;
+	StitchFunction greenFn;
+	StitchFunction blueFn;
+
+	// Create.
+	init(File file, Nat shadingType, Gradient gradient, Transform tfm) {
+		Float[] p;
+		Float[] r;
+		Float[] g;
+		Float[] b;
+		for (s in gradient.stops) {
+			p << s.pos;
+			r << s.color.r;
+			g << s.color.g;
+			b << s.color.b;
+		}
+
+		init(2, tfm) {
+			redFn(file, p, r);
+			greenFn(file, p, g);
+			blueFn(file, p, b);
+			shadingType = shadingType;
+		}
+	}
+
+	// Output pattern-specific data.
+	void outputData(StrBuf to) {
+		to << "/Shading <<";
+		to << "/ShadingType " << shadingType;
+		to << " /ColorSpace /DeviceRGB ";
+		to << " /Function [ " << redFn.id << " 0 R " << greenFn.id << " 0 R " << blueFn.id << " 0 R ] ";
+		outputShading(to);
+		to << ">> ";
+	}
+
+	// Output shading specific data.
+	void outputShading(StrBuf to) : abstract;
+}
+
+/**
+ * A linear gradient pattern resource.
+ */
+class AxialShading extends ShadingPattern {
+	// Coordinates defining the line along which the pattern shall be applied.
+	Point p0;
+	Point p1;
+
+	// Create.
+	init(File file, LinearGradient gradient, Rect bound, Transform tfm) {
+		// We're an axial shading.
+		init(file, 2, gradient, tfm) {
+			p0 = gradient.startPoint(bound);
+			p1 = gradient.endPoint(bound);
+		}
+	}
+
+	// Output our data.
+	void outputShading(StrBuf to) {
+		to << "/Coords [" << p0.x << " " << p0.y << " " << p1.x << " " << p1.y << "] ";
+		to << "/Extend [true true] ";
+	}
+
+}
+
+
+/**
+ * An identity function in the PDF. Stitched together to make shading functions.
+ */
+class IdentityFunction extends StreamObject {
+	void outputHeader(TextOutput to) {
+		to.write("/FunctionType 0 ");
+		to.write("/Domain [ 0.0 1.0 ] ");
+		to.write("/Range [ 0.0 1.0 ] ");
+		to.write("/Size [ 2 ] ");
+		to.write("/BitsPerSample 16");
+	}
+
+	void output(OStream to) {
+		Buffer b = buffer(4);
+		b[0] = 0;
+		b[1] = 0;
+		b[2] = 0xFF;
+		b[3] = 0xFF;
+		b.filled(4);
+		to.write(b);
+	}
+}
+
+
+/**
+ * A unary stitched function usable to approximate shading functions.
+ */
+class StitchFunction extends StrObject {
+	// Identity function ID.
+	Nat identityId;
+
+	// Points where we have samples.
+	Float[] points;
+
+	// Sample values at those points.
+	Float[] values;
+
+	// Create.
+	init(File file, Float[] points, Float[] values) {
+		points = points.clone;
+		values = values.clone;
+
+		if (points.first > 0.0) {
+			points.insert(0, 0.0);
+			values.insert(0, values.first);
+		}
+
+		if (points.last < 1.0) {
+			points.push(1.0);
+			values.push(values.last);
+		}
+
+		init() {
+			identityId = file.root.identity.id;
+			points = points;
+			values = values;
+		}
+
+		file.add(this);
+	}
+
+	// Output.
+	void output(StrBuf to) {
+		to << "<</FunctionType 3 /Domain [ 0.0 1.0 ] /Range [ 0.0 1.0 ] /Functions [";
+		to << (" ${identityId} 0 R" * (points.count - 1));
+		to << " ] /Bounds [";
+		for (Nat i = 1; i < points.count - 1; i++)
+			to << " " << points[i];
+
+		to << " ] /Encode [";
+		for (Nat i = 1; i < points.count; i++)
+			to << " " << values[i - 1] << " " << values[i];
+		to << "] >>";
 	}
 }

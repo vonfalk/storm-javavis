@@ -102,6 +102,10 @@ namespace gui {
 		::release(dxObject);
 	}
 
+	Array<GradientStop> *Gradient::stops() const {
+		return new (this) Array<GradientStop>(*myStops);
+	}
+
 	void Gradient::stops(Array<GradientStop> *stops) {
 		myStops = new (this) Array<GradientStop>(*stops);
 		destroy();
@@ -199,6 +203,18 @@ namespace gui {
 
 		start += bound.p0;
 		end += bound.p0;
+	}
+
+	Point LinearGradient::startPoint(Rect rect) {
+		Point s, e;
+		compute(rect, s, e);
+		return s;
+	}
+
+	Point LinearGradient::endPoint(Rect rect) {
+		Point s, e;
+		compute(rect, s, e);
+		return e;
 	}
 
 }

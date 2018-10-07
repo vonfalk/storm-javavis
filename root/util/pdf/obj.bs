@@ -76,23 +76,3 @@ class StreamObject extends PdfObject {
 	void output(OStream to) : abstract;
 }
 
-
-/**
- * An object represented as a string.
- *
- * Useful for testing, will most likely be removed in the future.
- * TODO: Remove!
- */
-class PdfStrObject extends StrObject {
-	private Str cont;
-
-	init(Str contents) {
-		init() { cont = contents; }
-	}
-
-	void output(StrBuf to) {
-		to << cont;
-	}
-}
-
-
