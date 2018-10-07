@@ -423,12 +423,15 @@ SAssignableOp => lOperator(op, 470) : "|"@ op;
 // Expressions!
 ////////////////////////////////////////////////////////////////////
 
+Expr SUnary(Block block);
+SUnary => e : SAtom(block) e;
+SUnary => prePostOperator(block, o, e) : SPreOp o, SAtom(block) e;
+SUnary => prefixOperator(block, o, e) : SPrePostOp o, SAtom(block) e;
+SUnary => postfixOperator(block, o, e) : SAtom(block) e, SPrePostOp o;
+
 Expr SExpr(Block block);
-SExpr[20] => e : SAtom(block) e;
-SExpr => prePostOperator(block, o, e) : SPreOp o, SAtom(block) e;
-SExpr => prefixOperator(block, o, e) : SPrePostOp o, SAtom(block) e;
-SExpr => postfixOperator(block, o, e) : SAtom(block) e, SPrePostOp o;
-SExpr => mkOperator(block, lhs, op, rhs) : SAtom(block) lhs, SOperator op, SExpr(block) rhs;
+SExpr[20] => e : SUnary(block) e;
+SExpr => mkOperator(block, lhs, op, rhs) : SUnary(block) lhs, SOperator op, SExpr(block) rhs;
 // This must be larger than operators, as templates may be seen as the < operator otherwise.
 SExpr[10] => Var(block, t, name, actual) : SType t, SName name #varName, SFnActuals(block) actual;
 SExpr[10] => Var(block, t, name, init) : SType t, SName name #varName, "=", SExpr(block) init;

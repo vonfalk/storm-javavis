@@ -17,7 +17,7 @@
     but the scale of the issue should be assessed first.
   - [ ] Parsing core.lang.syntax.bnf takes about 80 ms, which is a bit on the high end when compiling code...
 
-* Loose ends so far [34/61]
+* Loose ends so far [35/61]
   - [ ] Asking for a random access stream from an IStream should produce a LazyIStream if nothing better
     is available. However, this is not yet implemented!
   - [ ] When a .bnf-file includes another package, productions from there are not automatically visible,
@@ -60,9 +60,9 @@
   - [ ] if (x = foo.bar) does not produce an error if 'foo.bar' is not Maybe<T>.
   - [ ] Support marking functions as 'pure' in C++.
   - [ ] Move the 'assign' declaration to being purely a decorator (ie. Foo field(Foo v) : assign)?
-  - [ ] There seems to be a small issues with expressions like ~10 | 5
   - [ ] If a type has a '==' or '<' outside the type itself, the corresponding operator will not be present in
     a Handle, like '<<' at the moment.
+  - [X] There seems to be a small issues with expressions like ~10 | 5
   - [X] Support marking functions as 'pure' in Storm.
   - [X] Missing bitwise operators and hexadecimal numbers.
   - [X] Add documentation for the built-in types (such as core.Int).
