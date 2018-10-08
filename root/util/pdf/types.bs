@@ -523,9 +523,9 @@ class PatternResource {
 	void output(StrBuf to) {
 		to << "<</Type /Pattern /PatternType " << type << " ";
 		to << "/Matrix [ "
-		   << tfm.at(0, 0) << " " << tfm.at(1, 0) << " "
-		   << tfm.at(0, 1) << " " << tfm.at(1, 1) << " "
-		   << tfm.at(0, 3) << " " << tfm.at(1, 3) << " ] ";
+		   << tfm.at(0, 0) << " " << tfm.at(0, 1) << " "
+		   << tfm.at(1, 0) << " " << tfm.at(1, 1) << " "
+		   << tfm.at(3, 0) << " " << tfm.at(3, 1) << " ] ";
 		outputData(to);
 		to << ">>";
 	}
@@ -590,11 +590,11 @@ class AxialShading extends ShadingPattern {
 	Point p1;
 
 	// Create.
-	init(File file, LinearGradient gradient, Rect bound, Transform tfm) {
+	init(File file, LinearGradient gradient, Transform tfm) {
 		// We're an axial shading.
 		init(file, 2, gradient, tfm) {
-			p0 = gradient.startPoint(bound);
-			p1 = gradient.endPoint(bound);
+			p0 = gradient.start;
+			p1 = gradient.end;
 		}
 	}
 

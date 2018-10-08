@@ -17,17 +17,16 @@
     but the scale of the issue should be assessed first.
   - [ ] Parsing core.lang.syntax.bnf takes about 80 ms, which is a bit on the high end when compiling code...
 
-* Loose ends so far [35/62]
+* Loose ends so far [36/64]
   - [ ] Asking for a random access stream from an IStream should produce a LazyIStream if nothing better
     is available. However, this is not yet implemented!
   - [ ] When a .bnf-file includes another package, productions from there are not automatically visible,
     which seems unintuitive. Even though a package (perhaps containing syntax helpers) is included, its
     productions are not visible. This could probably be solved nicely with 'package exports' or a similar
     mechanism.
-  - [ ] Gradients in the UI library should prehaps have a fixed origin, so that we can draw things
-    in multiple passes with the same gradient without issues... It seems like all graphic API:s are
-    designed this way, perhaps for a good reason.
   - [ ] Support documentation of templates from C++.
+  - [ ] It seems like the sound library crashes during shutdown from time to time, at least on Windows.
+  - [ ] The Ui library crashes if one uses "kill process" on windows.
   - [ ] In Basic Storm, writing 1.2 currently produces a float by default. Is this desirable?
   - [ ] Lambda functions can not infer their proper type when being assigned to Maybe<T>.
   - [ ] We probably want to allow creating documentation for an entire package. Possibly by creating
@@ -65,6 +64,9 @@
   - [ ] Move the 'assign' declaration to being purely a decorator (ie. Foo field(Foo v) : assign)?
   - [ ] If a type has a '==' or '<' outside the type itself, the corresponding operator will not be present in
     a Handle, like '<<' at the moment.
+  - [X] Gradients in the UI library should prehaps have a fixed origin, so that we can draw things
+    in multiple passes with the same gradient without issues... It seems like all graphic API:s are
+    designed this way, perhaps for a good reason.
   - [X] There seems to be a small issues with expressions like ~10 | 5
   - [X] Support marking functions as 'pure' in Storm.
   - [X] Missing bitwise operators and hexadecimal numbers.

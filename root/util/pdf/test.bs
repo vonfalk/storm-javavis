@@ -72,7 +72,7 @@ void draw(Graphics g, Size size) on Render {
 
 	// Clipping.
 	g.push();
-	g.transform = translate(Point(65, 25)) * rotate(30 deg, Point(15, 15));
+	g.transform = rotate(30 deg, Point(15, 15)) * translate(Point(65, 25));
 
 	g.push(Rect(Point(), Size(30, 30)));
 	g.fill(redBrush);
@@ -108,10 +108,10 @@ void draw(Graphics g, Size size) on Render {
 	}
 
 	// Gradients.
-	LinearGradient gradient([GradientStop(0.2, red), GradientStop(0.4, yellow), GradientStop(0.6, green), GradientStop(0.8, blue)], 0 deg);
+	LinearGradient gradient([GradientStop(0, red), GradientStop(0.3, yellow), GradientStop(0.6, green), GradientStop(0.9, blue)], Point(15, 40), Point(15, 120));
 	g.fill(Rect(15, 40, 30, 120), gradient);
 
-	LinearGradient gradient2([GradientStop(0.2, red), GradientStop(0.4, yellow), GradientStop(0.6, green), GradientStop(0.8, blue)], 90 deg);
+	LinearGradient gradient2([GradientStop(0.2, red), GradientStop(0.4, yellow), GradientStop(0.6, green), GradientStop(0.8, blue)], Point(70, 190), Point(150, 190));
 	g.draw(Text("Nice!", f), gradient2, Point(70, 190));
 }
 
@@ -142,8 +142,8 @@ void test() {
 	Font f("Arial", 20);
 	save();
 
-	Preview p(a4, 3);
-	p.waitForClose;
+	// Preview p(a4, 3);
+	// p.waitForClose;
 }
 
 void save() on Render {

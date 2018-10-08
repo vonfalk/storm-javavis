@@ -24,13 +24,13 @@ class PdfGraphics extends Graphics {
 		var tfm = scale(Size(1, -1));
 
 		// Move the pixels back onto the screen.
-		tfm = translate(Size(0, virtual.h)) * tfm;
+		tfm *= translate(Size(0, virtual.h));
 
 		// Convert to physical coordinates.
-		tfm = scale(Size(physical.w / virtual.w, physical.h / virtual.h)) * tfm;
+		tfm *= scale(Size(physical.w / virtual.w, physical.h / virtual.h));
 
 		// Convert to points.
-		tfm = scale(2.83464567) * tfm;
+		tfm *= scale(2.83464567);
 
 		init() {
 			pdf = pdf;
@@ -144,33 +144,33 @@ class PdfGraphics extends Graphics {
 
 	// Draw a line.
 	void line(Point a, Point b, Brush brush) {
-		putColor(brush, true, Rect(a, b).normalized);
+		putColor(brush, true);
 		put(a, "m ");
 		put(b, "l S\n");
 	}
 
 	// Draw a rectangle.
 	void draw(Rect r, Brush brush) {
-		putColor(brush, true, r);
+		putColor(brush, true);
 		put(r.p0, "");
 		put(r.size, "re S\n");
 	}
 
 	// Draw a rounded rectangle.
 	void draw(Rect r, Size edges, Brush brush) {
-		putColor(brush, true, r);
+		putColor(brush, true);
 		putRounded(r, edges, "S\n");
 	}
 
 	// Draw a path.
 	void draw(Path p, Brush brush) {
-		putColor(brush, true, p.bound);
+		putColor(brush, true);
 		put(p, "S\n");
 	}
 
 	// Draw an oval.
 	void oval(Rect r, Brush brush) {
-		putColor(brush, true, r);
+		putColor(brush, true);
 		putOval(r, "S\n");
 	}
 
@@ -185,26 +185,26 @@ class PdfGraphics extends Graphics {
 
 	// Fill a rectangle.
 	void fill(Rect r, Brush brush) {
-		putColor(brush, false, r);
+		putColor(brush, false);
 		put(r.p0, "");
 		put(r.size, "re f\n");
 	}
 
 	// Fill a rounded rectangle.
 	void fill(Rect r, Size edges, Brush brush) {
-		putColor(brush, false, r);
+		putColor(brush, false);
 		putRounded(r, edges, "f\n");
 	}
 
 	// Draw a path.
 	void fill(Path p, Brush brush) {
-		putColor(brush, false, p.bound);
+		putColor(brush, false);
 		put(p, "f\n");
 	}
 
 	// Fill an oval.
 	void fillOval(Rect r, Brush brush) {
-		putColor(brush, false, r);
+		putColor(brush, false);
 		putOval(r, "f\n");
 	}
 
@@ -212,10 +212,10 @@ class PdfGraphics extends Graphics {
 	void draw(Bitmap bitmap, Rect rect, Float opacity) {
 		output << "q " << res.alpha(opacity) << " gs ";
 		// Make the picture right side up and at the origin.
-		var tfm = translate(Point(0, 1)) * scale(Size(1, -1));
+		var tfm =  scale(Size(1, -1)) * translate(Point(0, 1));
 
 		// Move it from the unit square to its proper location.
-		tfm = translate(rect.p0) * scale(rect.size) * tfm;
+		tfm *= scale(rect.size) * translate(rect.p0);
 		put(tfm, "cm\n");
 		output << res.bitmap(pdf, bitmap) << " Do Q\n";
 	}
@@ -228,15 +228,15 @@ class PdfGraphics extends Graphics {
 		put(dest.size, "re W n\n");
 
 		// Make the picture right side up and at the origin.
-		var tfm = translate(Point(0, 1)) * scale(Size(1, -1));
+		var tfm = scale(Size(1, -1)) * translate(Point(0, 1));
 
 		// Scale it so that the part we want is in the unit square.
 		Size sz = bitmap.size;
-		tfm = translate(Point(-src.p0.x / sz.w, -src.p0.y / sz.h)) * tfm;
-		tfm = scale(Size(sz.w / src.size.w, sz.h / src.size.h)) * tfm;
+		tfm *= translate(Point(-src.p0.x / sz.w, -src.p0.y / sz.h));
+		tfm *= scale(Size(sz.w / src.size.w, sz.h / src.size.h));
 
 		// Move it to its proper location.
-		tfm = translate(dest.p0) * scale(dest.size) * tfm;
+		tfm *= scale(dest.size) * translate(dest.p0);
 		put(tfm, "cm\n");
 
 		output << res.bitmap(pdf, bitmap) << " Do Q\n";
@@ -256,7 +256,7 @@ class PdfGraphics extends Graphics {
 	// Draw text.
 	void draw(Text text, Brush brush, Point origin) {
 		// TODO: We probably want to have some fancy text effects down the line, such as stroking the outline etc.
-		putColor(brush, false, Rect(origin, text.size));
+		putColor(brush, false);
 
 		Font font = text.font;
 		Str f = res.font(font);
@@ -376,9 +376,9 @@ private:
 
 	// Output a matrix.
 	void put(Transform tfm, Str after) {
-		output << tfm.at(0, 0) << " " << tfm.at(1, 0) << " "
-			   << tfm.at(0, 1) << " " << tfm.at(1, 1) << " "
-			   << tfm.at(0, 3) << " " << tfm.at(1, 3) << " " << after;
+		output << tfm.at(0, 0) << " " << tfm.at(0, 1) << " "
+			   << tfm.at(1, 0) << " " << tfm.at(1, 1) << " "
+			   << tfm.at(3, 0) << " " << tfm.at(3, 1) << " " << after;
 	}
 
 	// Output a path.
@@ -450,12 +450,12 @@ private:
 	}
 
 	// Output color information. 'stroke' indicates whether to set for stroke operations or fill operations.
-	void putColor(Brush b, Bool stroke, Rect bound) {
+	void putColor(Brush b, Bool stroke) {
 		if (b as SolidBrush) {
 			putSolid(b, stroke);
 		// } else if (b as BitmapBrush) {
 		} else if (b as LinearGradient) {
-			putLinearGradient(b, stroke, bound);
+			putLinearGradient(b, stroke);
 		} else {
 			print("Unsupported brush found!");
 		}
@@ -471,9 +471,9 @@ private:
 	}
 
 	// Output a linear gradient.
-	void putLinearGradient(LinearGradient g, Bool stroke, Rect bound) {
+	void putLinearGradient(LinearGradient g, Bool stroke) {
 		var tfm = physicalTfm * stack.last.tfm;
-		var pattern = res.pattern(AxialShading(pdf, g, bound, tfm));
+		var pattern = res.pattern(AxialShading(pdf, g, tfm));
 		if (stroke) {
 			output << "/Pattern CS " << pattern << " SCN ";
 		} else {

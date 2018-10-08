@@ -214,7 +214,7 @@ class PresentPainter extends Painter {
 
 			Point p = s;
 			Size scaled = target * scaleFactor;
-			g.transform(translate(s.center - scaled.center) * scale(scaleFactor));
+			g.transform(scale(scaleFactor) * translate(s.center - scaled.center));
 
 			Rect targetRect(Point(), target);
 			g.push(targetRect);
