@@ -91,7 +91,7 @@ class MainPainter extends Painter {
 		g.pop();
 
 		g.push();
-		g.transform(translate(Point(100, 100)) * rotate(y * 4 deg));
+		g.transform(rotate(y * 4 deg) * translate(Point(100, 100)));
 		g.lineWidth(5);
 		g.fill(star, yellow);
 

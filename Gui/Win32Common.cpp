@@ -75,12 +75,10 @@ namespace gui {
 	}
 
 	D2D1_MATRIX_3X2_F dx(Transform *tfm) {
-		// Note that we are taking the transpose of the matrix, since DX uses a
-		// row vector when multiplying while we're using a column vector.
 		D2D1_MATRIX_3X2_F m = {
-			tfm->at(0, 0), tfm->at(1, 0),
-			tfm->at(0, 1), tfm->at(1, 1),
-			tfm->at(0, 3), tfm->at(1, 3),
+			tfm->at(0, 0), tfm->at(0, 1),
+			tfm->at(1, 0), tfm->at(1, 1),
+			tfm->at(3, 0), tfm->at(3, 1),
 		};
 		return m;
 	}

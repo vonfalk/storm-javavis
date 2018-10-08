@@ -10,8 +10,14 @@ namespace storm {
 
 		/**
 		 * Transform in 2 or 3 dimensions. 2d-coordinates are assumed to lie in the xy-plane.
-		 * Transforms are combined like this:
-		 * a * b * c, then c is applied first, then b, then c.
+		 *
+		 * We assume that points on the screen take the form of a row vector that is multiplied with
+		 * the matrix from the left. Transforms may therefore be combined by multiplying them from
+		 * left to right as follows:
+		 *
+		 * a * b * c
+		 *
+		 * Which means that a is applied first, then b and finally c.
 		 */
 		class Transform : public Object {
 			STORM_CLASS;

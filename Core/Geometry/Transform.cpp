@@ -61,17 +61,17 @@ namespace storm {
 		}
 
 		Vector Transform::operator *(Vector o) {
-			float x = v00*o.x + v01*o.y + v02*o.z + v03;
-			float y = v10*o.x + v11*o.y + v12*o.z + v13;
-			float z = v20*o.x + v21*o.y + v22*o.z + v23;
-			float w = v30*o.x + v31*o.y + v32*o.z + v33;
+			Float x = v00*o.x + v10*o.y + v20*o.z + v30;
+			Float y = v01*o.x + v11*o.y + v21*o.z + v31;
+			Float z = v02*o.x + v12*o.y + v22*o.z + v32;
+			Float w = v03*o.x + v13*o.y + v23*o.z + v33;
 			return Vector(x/w, y/w, z/w);
 		}
 
 		Point Transform::operator *(Point o) {
-			float x = v00*o.x + v01*o.y + v03;
-			float y = v10*o.x + v11*o.y + v13;
-			float w = v30*o.x + v31*o.y + v33;
+			float x = v00*o.x + v10*o.y + v30;
+			float y = v01*o.x + v11*o.y + v31;
+			float w = v03*o.x + v13*o.y + v33;
 			return Point(x/w, y/w);
 		}
 
@@ -208,10 +208,10 @@ namespace storm {
 
 		Transform *translate(EnginePtr e, Vector v) {
 			float d[] = {
-				1, 0, 0, v.x,
-				0, 1, 0, v.y,
-				0, 0, 1, v.z,
-				0, 0, 0, 1,
+				1,   0,   0,   0,
+				0,   1,   0,   0,
+				0,   0,   1,   0,
+				v.x, v.y, v.z, 1,
 			};
 			return CREATE(Transform, e.v, d);
 		}
@@ -228,8 +228,8 @@ namespace storm {
 			float s = sin(angle.rad()), c = cos(angle.rad());
 			float d[] = {
 				1, 0, 0, 0,
-				0, c, -s, 0,
-				0, s, c, 0,
+				0, c, s, 0,
+				0, -s, c, 0,
 				0, 0, 0, 1,
 			};
 			return CREATE(Transform, e.v, d);
@@ -239,9 +239,9 @@ namespace storm {
 			float s = sin(angle.rad()), c = cos(angle.rad());
 			float d[] = {
 				1, 0, 0, 0,
-				0, c, -s, -origin.y*c + origin.z*s + origin.y,
-				0, s, c, -origin.y*s - origin.z*c + origin.z,
-				0, 0, 0, 1,
+				0, c, s, 0,
+				0, -s, c, 0,
+				0, -origin.y*c + origin.z*s + origin.y, -origin.y*s - origin.z*c + origin.z, 1,
 			};
 			return CREATE(Transform, e.v, d);
 		}
@@ -249,9 +249,9 @@ namespace storm {
 		Transform *rotateY(EnginePtr e, Angle angle) {
 			float s = sin(angle.rad()), c = cos(angle.rad());
 			float d[] = {
-				c, 0, s, 0,
+				c, 0, -s, 0,
 				0, 1, 0, 0,
-				-s, 0, c, 0,
+				s, 0, c, 0,
 				0, 0, 0, 1,
 			};
 			return CREATE(Transform, e.v, d);
@@ -260,10 +260,10 @@ namespace storm {
 		Transform *rotateY(EnginePtr e, Angle angle, Vector origin) {
 			float s = sin(angle.rad()), c = cos(angle.rad());
 			float d[] = {
-				c, 0, s, -origin.x*c - origin.z*s + origin.x,
+				c, 0, -s, 0,
 				0, 1, 0, 0,
-				-s, 0, c, origin.x*s - origin.z*c + origin.z,
-				0, 0, 0, 1,
+				s, 0, c, 0,
+				-origin.x*c - origin.z*s + origin.x, 0, origin.x*s - origin.z*c + origin.z, 1,
 			};
 			return CREATE(Transform, e.v, d);
 		}
@@ -271,8 +271,8 @@ namespace storm {
 		Transform *rotateZ(EnginePtr e, Angle angle) {
 			float s = sin(angle.rad()), c = cos(angle.rad());
 			float d[] = {
-				c, -s, 0, 0,
-				s, c, 0, 0,
+				c, s, 0, 0,
+				-s, c, 0, 0,
 				0, 0, 1, 0,
 				0, 0, 0, 1,
 			};
@@ -282,10 +282,10 @@ namespace storm {
 		Transform *rotateZ(EnginePtr e, Angle angle, Vector origin) {
 			float s = sin(angle.rad()), c = cos(angle.rad());
 			float d[] = {
-				c, -s, 0, -origin.x*c + origin.y*s + origin.x,
-				s, c, 0, -origin.x*s - origin.y*c + origin.y,
+				c, s, 0, 0,
+				-s, c, 0, 0,
 				0, 0, 1, 0,
-				0, 0, 0, 1,
+				-origin.x*c + origin.y*s + origin.x, -origin.x*s - origin.y*c + origin.y, 0, 1,
 			};
 			return CREATE(Transform, e.v, d);
 		}
@@ -320,10 +320,10 @@ namespace storm {
 
 		Transform *scale(EnginePtr e, Float scale, Vector center) {
 			float d[] = {
-				scale, 0, 0, center.x - scale*center.x,
-				0, scale, 0, center.y - scale*center.y,
-				0, 0, scale, center.z - scale*center.z,
-				0, 0, 0, 1,
+				scale, 0, 0, 0,
+				0, scale, 0, 0,
+				0, 0, scale, 0,
+				center.x - scale*center.x, center.y - scale*center.y, center.z - scale*center.z, 1,
 			};
 			return CREATE(Transform, e.v, d);
 		}
@@ -335,9 +335,9 @@ namespace storm {
 		Transform *skewX(EnginePtr e, Angle angle) {
 			float t = -tan(angle.rad());
 			float d[] = {
-				1, t, t, 0,
-				0, 1, 0, 0,
-				0, 0, 1, 0,
+				1, 0, 0, 0,
+				t, 1, 0, 0,
+				t, 0, 1, 0,
 				0, 0, 0, 1,
 			};
 			return CREATE(Transform, e.v, d);
@@ -346,9 +346,9 @@ namespace storm {
 		Transform *skewY(EnginePtr e, Angle angle) {
 			float t = -tan(angle.rad());
 			float d[] = {
-				1, 0, 0, 0,
-				t, 1, t, 0,
-				0, 0, 1, 0,
+				1, t, 0, 0,
+				0, 1, 0, 0,
+				0, t, 1, 0,
 				0, 0, 0, 1,
 			};
 			return CREATE(Transform, e.v, d);
@@ -357,9 +357,9 @@ namespace storm {
 		Transform *skewZ(EnginePtr e, Angle angle) {
 			float t = -tan(angle.rad());
 			float d[] = {
-				1, 0, 0, 0,
-				0, 1, 0, 0,
-				t, t, 1, 0,
+				1, 0, t, 0,
+				0, 1, t, 0,
+				0, 0, 1, 0,
 				0, 0, 0, 1,
 			};
 			return CREATE(Transform, e.v, d);
