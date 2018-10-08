@@ -93,13 +93,21 @@ namespace code {
 			// Shift all registers.
 			Reg last = noReg;
 			for (Nat i = layout->registerCount(); i > 0; i--) {
-				Reg r = layout->registerSrc(i - 1);
+				Nat id = i - 1;
+
+				Reg r = layout->registerSrc(id);
 				// Interesting?
 				if (fpRegister(r))
 					continue;
+
+				Param par = layout->registerAt(id);
 				// Unused?
-				if (layout->registerAt(i - 1) == Param()) {
+				if (par == Param()) {
 					last = r;
+					continue;
+				}
+				// Result parameter? Don't touch that!
+				if (par.id() == Param::returnId) {
 					continue;
 				}
 				// All integer registers full?
