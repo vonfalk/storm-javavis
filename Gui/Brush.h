@@ -15,14 +15,14 @@ namespace gui {
 
 #ifdef GUI_WIN32
 		// Get a brush.
-		inline ID2D1Brush *brush(Painter *owner, const Rect &rect) {
+		inline ID2D1Brush *brush(Painter *owner) {
 			ID2D1Brush *b = get<ID2D1Brush>(owner);
-			prepare(rect, b);
+			prepare(b);
 			return b;
 		}
 
 		// Prepare for drawing a bounding box of 'bound'.
-		virtual void prepare(const Rect &bound, ID2D1Brush *b);
+		virtual void prepare(ID2D1Brush *b);
 #endif
 #ifdef GUI_GTK
 		// Set the source of the cairo_t to this brush.
@@ -54,7 +54,7 @@ namespace gui {
 #ifdef GUI_WIN32
 		virtual void create(Painter *owner, ID2D1Resource **out);
 
-		virtual void prepare(const Rect &bound, ID2D1Brush *b);
+		virtual void prepare(ID2D1Brush *b);
 #endif
 #ifdef GUI_GTK
 		virtual OsResource *create(Painter *owner);
@@ -80,11 +80,19 @@ namespace gui {
 		STORM_CLASS;
 	public:
 		STORM_CTOR BitmapBrush(Bitmap *bitmap);
+		STORM_CTOR BitmapBrush(Bitmap *bitmap, Transform *tfm);
+
+		// Get the bitmap.
+		inline Bitmap *STORM_FN bitmap() const { return myBitmap; }
+
+		// Get the current transform.
+		inline Transform *STORM_FN transform() const { return myTfm; }
+
+		// Set the current transform.
+		void STORM_ASSIGN transform(Transform *tfm);
 
 #ifdef GUI_WIN32
 		virtual void create(Painter *owner, ID2D1Resource **out);
-
-		virtual void prepare(const Rect &bound, ID2D1Brush *b);
 #endif
 #ifdef GUI_GTK
 		virtual OsResource *create(Painter *owner);
@@ -92,7 +100,11 @@ namespace gui {
 		virtual void prepare(const Rect &bound, cairo_pattern_t *brush);
 #endif
 	private:
-		Bitmap *bitmap;
+		// The actual bitmap.
+		Bitmap *myBitmap;
+
+		// The transform when applying the brush.
+		Transform *myTfm;
 	};
 
 	/**
@@ -150,10 +162,22 @@ namespace gui {
 	class LinearGradient : public Gradient {
 		STORM_CLASS;
 	public:
-		STORM_CTOR LinearGradient(Array<GradientStop> *stops, Angle angle);
+		// Provide the stops.
+		STORM_CTOR LinearGradient(Array<GradientStop> *stops, Point start, Point end);
 
 		// Create two stops at 0 and 1.
-		STORM_CTOR LinearGradient(Color c1, Color c2, Angle angle);
+		STORM_CTOR LinearGradient(Color c1, Color c2, Point start, Point end);
+
+		// Get start and end points.
+		inline Point STORM_FN start() const { return myStart; }
+		inline Point STORM_FN end() const { return myEnd; }
+
+		// Set start and end points.
+		void STORM_ASSIGN start(Point p);
+		void STORM_ASSIGN end(Point p);
+
+		// Set both.
+		void STORM_FN points(Point start, Point end);
 
 #ifdef GUI_WIN32
 		// Get the brush.
@@ -161,9 +185,6 @@ namespace gui {
 
 		// Create.
 		virtual void create(Painter *owner, ID2D1Resource **out);
-
-		// Prepare.
-		virtual void prepare(const Rect &s, ID2D1Brush *b);
 #endif
 #ifdef GUI_GTK
 		// Create.
@@ -173,16 +194,14 @@ namespace gui {
 		virtual void prepare(const Rect &s, cairo_pattern_t *b);
 #endif
 
-		// The angle.
-		Angle angle;
-
-		// Get the starting and ending point of the line given a rectangle.
-		Point STORM_FN startPoint(Rect rect);
-		Point STORM_FN endPoint(Rect rect);
-
 	private:
-		// Compute points.
-		void compute(const Rect &sz, Point &start, Point &end);
+		// Start and end point of the gradient.
+		Point myStart;
+		Point myEnd;
+
+		// Update the points in the underlying representation (if any).
+		void updatePoints();
+
 	};
 
 	// TODO: Implement a radial gradient as well!

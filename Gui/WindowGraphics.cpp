@@ -198,52 +198,52 @@ namespace gui {
 	 */
 
 	void WindowGraphics::line(Point from, Point to, Brush *style) {
-		info.target()->DrawLine(dx(from), dx(to), style->brush(owner, Rect(from, to).normalized()), state.lineWidth);
+		info.target()->DrawLine(dx(from), dx(to), style->brush(owner), state.lineWidth);
 	}
 
 	void WindowGraphics::draw(Rect rect, Brush *style) {
-		info.target()->DrawRectangle(dx(rect), style->brush(owner, rect), state.lineWidth);
+		info.target()->DrawRectangle(dx(rect), style->brush(owner), state.lineWidth);
 	}
 
 	void WindowGraphics::draw(Rect rect, Size edges, Brush *style) {
 		D2D1_ROUNDED_RECT r = { dx(rect), edges.w, edges.h };
-		info.target()->DrawRoundedRectangle(r, style->brush(owner, rect), state.lineWidth);
+		info.target()->DrawRoundedRectangle(r, style->brush(owner), state.lineWidth);
 	}
 
 	void WindowGraphics::oval(Rect rect, Brush *style) {
 		Size s = rect.size() / 2;
 		D2D1_ELLIPSE e = { dx(rect.center()), s.w, s.h };
-		info.target()->DrawEllipse(e, style->brush(owner, rect), state.lineWidth);
+		info.target()->DrawEllipse(e, style->brush(owner), state.lineWidth);
 	}
 
 	void WindowGraphics::draw(Path *path, Brush *style) {
-		info.target()->DrawGeometry(path->geometry(), style->brush(owner, path->bound()), state.lineWidth);
+		info.target()->DrawGeometry(path->geometry(), style->brush(owner), state.lineWidth);
 	}
 
 	void WindowGraphics::fill(Rect rect, Brush *style) {
-		info.target()->FillRectangle(dx(rect), style->brush(owner, rect));
+		info.target()->FillRectangle(dx(rect), style->brush(owner));
 	}
 
 	void WindowGraphics::fill(Rect rect, Size edges, Brush *style) {
 		D2D1_ROUNDED_RECT r = { dx(rect), edges.w, edges.h };
-		info.target()->FillRoundedRectangle(r, style->brush(owner, rect));
+		info.target()->FillRoundedRectangle(r, style->brush(owner));
 	}
 
 	void WindowGraphics::fill(Brush *style) {
-		Rect s = Rect(Point(), size());
+		Rect s(Point(), size());
 		info.target()->SetTransform(D2D1::Matrix3x2F::Identity());
-		info.target()->FillRectangle(dx(s), style->brush(owner, s));
+		info.target()->FillRectangle(dx(s), style->brush(owner));
 		info.target()->SetTransform(*state.transform());
 	}
 
 	void WindowGraphics::fillOval(Rect rect, Brush *style) {
 		Size s = rect.size() / 2;
 		D2D1_ELLIPSE e = { dx(rect.center()), s.w, s.h };
-		info.target()->FillEllipse(e, style->brush(owner, rect));
+		info.target()->FillEllipse(e, style->brush(owner));
 	}
 
 	void WindowGraphics::fill(Path *path, Brush *style) {
-		info.target()->FillGeometry(path->geometry(), style->brush(owner, path->bound()));
+		info.target()->FillGeometry(path->geometry(), style->brush(owner));
 	}
 
 	void WindowGraphics::draw(Bitmap *bitmap, Rect rect, Float opacity) {
@@ -255,12 +255,12 @@ namespace gui {
 	}
 
 	void WindowGraphics::text(Str *text, Font *font, Brush *style, Rect rect) {
-		ID2D1Brush *b = style->brush(owner, rect);
+		ID2D1Brush *b = style->brush(owner);
 		info.target()->DrawText(text->c_str(), text->peekLength(), font->textFormat(), dx(rect), b);
 	}
 
 	void WindowGraphics::draw(Text *text, Brush *style, Point origin) {
-		info.target()->DrawTextLayout(dx(origin), text->layout(), style->brush(owner, Rect(origin, text->size())));
+		info.target()->DrawTextLayout(dx(origin), text->layout(), style->brush(owner));
 	}
 
 	void WindowGraphics::Layer::release() {

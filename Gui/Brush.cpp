@@ -9,7 +9,7 @@ namespace gui {
 
 #ifdef GUI_WIN32
 
-	void Brush::prepare(const Rect &r, ID2D1Brush *b) {}
+	void Brush::prepare(ID2D1Brush *b) {}
 
 #endif
 #ifdef GUI_GTK
@@ -27,7 +27,7 @@ namespace gui {
 		owner->renderTarget()->CreateSolidColorBrush(dx(col), (ID2D1SolidColorBrush **)out);
 	}
 
-	void SolidBrush::prepare(const Rect &bound, ID2D1Brush *b) {
+	void SolidBrush::prepare(ID2D1Brush *b) {
 		b->SetOpacity(opacity);
 	}
 
@@ -45,7 +45,9 @@ namespace gui {
 
 #endif
 
-	BitmapBrush::BitmapBrush(Bitmap *bitmap) : bitmap(bitmap) {}
+	BitmapBrush::BitmapBrush(Bitmap *bitmap) : myBitmap(bitmap), myTfm(new (engine()) Transform()) {}
+
+	BitmapBrush::BitmapBrush(Bitmap *bitmap, Transform *tfm) : myBitmap(bitmap), myTfm(tfm) {}
 
 #ifdef GUI_WIN32
 
@@ -55,12 +57,19 @@ namespace gui {
 			D2D1_EXTEND_MODE_WRAP,
 			D2D1_BITMAP_INTERPOLATION_MODE_LINEAR,
 		};
-		owner->renderTarget()->CreateBitmapBrush(bitmap->bitmap(owner), props, (ID2D1BitmapBrush **)out);
+		ID2D1BitmapBrush *brush = null;
+		owner->renderTarget()->CreateBitmapBrush(myBitmap->bitmap(owner), props, &brush);
+		*out = brush;
+		brush->SetTransform(dx(myTfm));
 	}
 
-	void BitmapBrush::prepare(const Rect &bound, ID2D1Brush *r) {
-		r->SetTransform(D2D1::Matrix3x2F::Translation(D2D1::SizeF(bound.p0.x, bound.p0.y)));
+	void BitmapBrush::transform(Transform *tfm) {
+		myTfm = tfm;
+		if (ID2D1BitmapBrush *b = peek<ID2D1BitmapBrush>()) {
+			b->SetTransform(dx(myTfm));
+		}
 	}
+
 #endif
 #ifdef GUI_GTK
 
@@ -138,30 +147,46 @@ namespace gui {
 
 #endif
 
-	LinearGradient::LinearGradient(Array<GradientStop> *stops, Angle angle) : Gradient(stops), angle(angle) {}
+	LinearGradient::LinearGradient(Array<GradientStop> *stops, Point start, Point end) :
+		Gradient(stops), myStart(start), myEnd(end) {}
 
-	LinearGradient::LinearGradient(Color a, Color b, Angle angle) : Gradient(), angle(angle) {
+	LinearGradient::LinearGradient(Color a, Color b, Point start, Point end) :
+		Gradient(), myStart(start), myEnd(end) {
+
 		Array<GradientStop> *s = CREATE(Array<GradientStop>, this);
 		s->push(GradientStop(0, a));
 		s->push(GradientStop(1, b));
 		stops(s);
 	}
 
+	void LinearGradient::start(Point p) {
+		myStart = p;
+		updatePoints();
+	}
+
+	void LinearGradient::end(Point p) {
+		myEnd = p;
+		updatePoints();
+	}
+
+	void LinearGradient::points(Point start, Point end) {
+		myStart = start;
+		myEnd = end;
+		updatePoints();
+	}
+
 #ifdef GUI_WIN32
 
 	void LinearGradient::create(Painter *owner, ID2D1Resource **out) {
-		Point start(0, 0), end(1, 1);
-		D2D1_LINEAR_GRADIENT_BRUSH_PROPERTIES p = { dx(start), dx(end) };
+		D2D1_LINEAR_GRADIENT_BRUSH_PROPERTIES p = { dx(myStart), dx(myEnd) };
 		owner->renderTarget()->CreateLinearGradientBrush(p, dxStops(owner), (ID2D1LinearGradientBrush**)out);
 	}
 
-	void LinearGradient::prepare(const Rect &rect, ID2D1Brush *r) {
-		Point start, end;
-		compute(rect, start, end);
-
-		ID2D1LinearGradientBrush *o = (ID2D1LinearGradientBrush *)r;
-		o->SetStartPoint(dx(start));
-		o->SetEndPoint(dx(end));
+	void LinearGradient::updatePoints() {
+		if (ID2D1LinearGradientBrush *o = peek<ID2D1LinearGradientBrush>()) {
+			o->SetStartPoint(dx(myStart));
+			o->SetEndPoint(dx(myEnd));
+		}
 	}
 
 #endif
@@ -191,30 +216,5 @@ namespace gui {
 	}
 
 #endif
-
-	void LinearGradient::compute(const Rect &bound, Point &start, Point &end) {
-		Size size = bound.size();
-		Point dir = storm::geometry::angle(angle);
-		Point c = center(size);
-
-		float w = max(size.w, size.h);
-		start = c + dir * -w;
-		end = c + dir * w;
-
-		start += bound.p0;
-		end += bound.p0;
-	}
-
-	Point LinearGradient::startPoint(Rect rect) {
-		Point s, e;
-		compute(rect, s, e);
-		return s;
-	}
-
-	Point LinearGradient::endPoint(Rect rect) {
-		Point s, e;
-		compute(rect, s, e);
-		return e;
-	}
 
 }

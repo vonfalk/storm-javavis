@@ -31,7 +31,7 @@ class SimpleDraw extends Painter {
 
 	init() {
 		init() {
-			bgBrush(red, green, 45 deg);
+			bgBrush(red, green, Point(0, 0), Point(200, 200));
 			// bgBrush([GradientStop(0, red), GradientStop(0.5, green), GradientStop(1, blue)], 45 deg);
 			starColor = yellow;
 			solid = green;

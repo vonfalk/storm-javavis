@@ -41,7 +41,7 @@ class OverlayDraw extends Painter {
 
 	init() {
 		init() {
-			bgBrush(red, green, 45 deg);
+			bgBrush(red, green, Point(0, 0), Point(200, 200));
 			starColor = yellow;
 			solid = green;
 			textColor = blue;
