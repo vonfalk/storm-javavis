@@ -60,6 +60,12 @@ namespace gui {
 			return (As *)resource;
 		}
 
+		// Peek at the resource.
+		template <class As>
+		As *peek() {
+			return (As *)resource;
+		}
+
 		// Create the resource.
 		virtual OsResource *create(Painter *owner);
 

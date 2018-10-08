@@ -26,20 +26,17 @@ namespace gui {
 #endif
 #ifdef GUI_GTK
 		// Set the source of the cairo_t to this brush.
-		inline void setSource(Painter *owner, cairo_t *c, const Rect &bound) {
+		inline void setSource(Painter *owner, cairo_t *c) {
 			cairo_pattern_t *b = get<cairo_pattern_t>(owner);
-
 			if (b) {
-				prepare(bound, b);
 				cairo_set_source(c, b);
 			} else {
-				prepare(bound, c);
+				prepare(c);
 			}
 		}
 
-		// Prepare for drawing a bounding box of 'bound'.
-		virtual void prepare(const Rect &bound, cairo_pattern_t *brush);
-		virtual void prepare(const Rect &bound, cairo_t *cairo);
+		// Prepare for drawing, if 'create' returns null.
+		virtual void prepare(cairo_t *cairo);
 #endif
 	};
 
@@ -59,7 +56,7 @@ namespace gui {
 #ifdef GUI_GTK
 		virtual OsResource *create(Painter *owner);
 
-		virtual void prepare(const Rect &bound, cairo_t *cairo);
+		virtual void prepare(cairo_t *cairo);
 #endif
 
 		// Opacity.
@@ -96,8 +93,6 @@ namespace gui {
 #endif
 #ifdef GUI_GTK
 		virtual OsResource *create(Painter *owner);
-
-		virtual void prepare(const Rect &bound, cairo_pattern_t *brush);
 #endif
 	private:
 		// The actual bitmap.
@@ -189,9 +184,6 @@ namespace gui {
 #ifdef GUI_GTK
 		// Create.
 		virtual OsResource *create(Painter *owner);
-
-		// Prepare.
-		virtual void prepare(const Rect &s, cairo_pattern_t *b);
 #endif
 
 	private:
@@ -202,6 +194,10 @@ namespace gui {
 		// Update the points in the underlying representation (if any).
 		void updatePoints();
 
+#ifdef GUI_GTK
+		// Set the transform of 'p'.
+		void updatePoints(cairo_pattern_t *p);
+#endif
 	};
 
 	// TODO: Implement a radial gradient as well!

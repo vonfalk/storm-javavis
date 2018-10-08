@@ -14,8 +14,7 @@ namespace gui {
 #endif
 #ifdef GUI_GTK
 
-	void Brush::prepare(const Rect &r, cairo_pattern_t *b) {}
-	void Brush::prepare(const Rect &r, cairo_t *b) {}
+	void Brush::prepare(cairo_t *c) {}
 
 #endif
 
@@ -35,11 +34,10 @@ namespace gui {
 #ifdef GUI_GTK
 
 	OsResource *SolidBrush::create(Painter *owner) {
-		// return cairo_pattern_create_rgba(col.r, col.g, col.b, col.a);
 		return 0;
 	}
 
-	void SolidBrush::prepare(const Rect &bound, cairo_t *cairo) {
+	void SolidBrush::prepare(cairo_t *cairo) {
 		cairo_set_source_rgba(cairo, col.r, col.g, col.b, col.a * opacity);
 	}
 
@@ -74,15 +72,21 @@ namespace gui {
 #ifdef GUI_GTK
 
 	OsResource *BitmapBrush::create(Painter *owner) {
-		cairo_pattern_t *p = cairo_pattern_create_for_surface(bitmap->get<cairo_surface_t>(owner));
+		cairo_pattern_t *p = cairo_pattern_create_for_surface(myBitmap->get<cairo_surface_t>(owner));
 		cairo_pattern_set_extend(p, CAIRO_EXTEND_REPEAT);
+
+		cairo_matrix_t tfm = cairo(myTfm);
+		cairo_pattern_set_matrix(p, &tfm);
+
 		return p;
 	}
 
-	void BitmapBrush::prepare(const Rect &bound, cairo_pattern_t *brush) {
-		cairo_matrix_t tfm;
-		cairo_matrix_init_translate(&tfm, -bound.p0.x, -bound.p0.y);
-		cairo_pattern_set_matrix(brush, &tfm);
+	void BitmapBrush::transform(Transform *tfm) {
+		myTfm = tfm;
+		if (cairo_pattern_t *p = peek<cairo_pattern_t>()) {
+			cairo_matrix_t tfm = cairo(myTfm);
+			cairo_pattern_set_matrix(p, &tfm);
+		}
 	}
 
 #endif
@@ -193,26 +197,32 @@ namespace gui {
 #ifdef GUI_GTK
 
 	OsResource *LinearGradient::create(Painter *owner) {
-		// Using the points (0, 1) - (0, -1) (= 0 deg) for simplicity. We'll transform it later.
-		cairo_pattern_t *r = cairo_pattern_create_linear(0, 1, 0, -1);
+		// We're using the points (0, 0) - (0, -1) so that we can easily transform them later (= 0 deg).
+		cairo_pattern_t *r = cairo_pattern_create_linear(0, 0, 0, -1);
 		applyStops(r);
+		updatePoints(r);
+
 		return r;
 	}
 
-	void LinearGradient::prepare(const Rect &bound, cairo_pattern_t *r) {
-		Size size = bound.size();
-		Point center = bound.center();
+	void LinearGradient::updatePoints() {
+		if (cairo_pattern_t *p = peek<cairo_pattern_t>()) {
+			updatePoints(p);
+		}
+	}
 
-		float w = max(size.w, size.h);
-		float scale = 1.0f / w;
+	void LinearGradient::updatePoints(cairo_pattern_t *p) {
+		Point delta = myEnd - myStart;
+		Angle a = angle(delta);
+		Float scale = 1.0f / delta.length();
 
-		// Compute a matrix so that 'start' and 'end' map to the points (0, 0) and (1, 0).
+		// Compute a matrix so that 'start' and 'end' map to the points (0, 0) and (0, 1).
 		cairo_matrix_t tfm;
 		// Note: transformations are applied in reverse.
-		cairo_matrix_init_rotate(&tfm, -angle.rad());
+		cairo_matrix_init_rotate(&tfm, -a.rad());
 		cairo_matrix_scale(&tfm, scale, scale);
-		cairo_matrix_translate(&tfm, -center.x, -center.y);
-		cairo_pattern_set_matrix(r, &tfm);
+		cairo_matrix_translate(&tfm, -myStart.x, -myStart.y);
+		cairo_pattern_set_matrix(p, &tfm);
 	}
 
 #endif

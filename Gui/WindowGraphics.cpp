@@ -369,7 +369,7 @@ namespace gui {
 		cairo_move_to(info.target(), from.x, from.y);
 		cairo_line_to(info.target(), to.x, to.y);
 
-		style->setSource(owner, info.target(), Rect(from, to).normalized());
+		style->setSource(owner, info.target());
 
 		cairo_stroke(info.target());
 	}
@@ -377,7 +377,7 @@ namespace gui {
 	void WindowGraphics::draw(Rect rect, Brush *style) {
 		Size sz = rect.size();
 		cairo_rectangle(info.target(), rect.p0.x, rect.p0.y, sz.w, sz.h);
-		style->setSource(owner, info.target(), rect);
+		style->setSource(owner, info.target());
 		cairo_stroke(info.target());
 	}
 
@@ -408,7 +408,7 @@ namespace gui {
 	void WindowGraphics::draw(Rect rect, Size edges, Brush *style) {
 		rounded_rect(info, rect, edges);
 
-		style->setSource(owner, info.target(), rect);
+		style->setSource(owner, info.target());
 		cairo_stroke(info.target());
 	}
 
@@ -429,26 +429,26 @@ namespace gui {
 	void WindowGraphics::oval(Rect rect, Brush *style) {
 		cairo_oval(info, rect);
 
-		style->setSource(owner, info.target(), rect);
+		style->setSource(owner, info.target());
 		cairo_stroke(info.target());
 	}
 
 	void WindowGraphics::draw(Path *path, Brush *style) {
 		path->draw(info.target());
-		style->setSource(owner, info.target(), path->bound());
+		style->setSource(owner, info.target());
 		cairo_stroke(info.target());
 	}
 
 	void WindowGraphics::fill(Rect rect, Brush *style) {
 		rectangle(info, rect);
-		style->setSource(owner, info.target(), rect);
+		style->setSource(owner, info.target());
 		cairo_fill(info.target());
 	}
 
 	void WindowGraphics::fill(Rect rect, Size edges, Brush *style) {
 		rounded_rect(info, rect, edges);
 
-		style->setSource(owner, info.target(), rect);
+		style->setSource(owner, info.target());
 		cairo_fill(info.target());
 	}
 
@@ -457,7 +457,7 @@ namespace gui {
 		cairo_matrix_init_identity(&tfm);
 		cairo_set_matrix(info.target(), &tfm);
 
-		style->setSource(owner, info.target(), Rect(Point(0, 0), size()));
+		style->setSource(owner, info.target());
 		cairo_paint(info.target());
 
 		tfm = state.transform();
@@ -467,13 +467,13 @@ namespace gui {
 	void WindowGraphics::fillOval(Rect rect, Brush *style) {
 		cairo_oval(info, rect);
 
-		style->setSource(owner, info.target(), rect);
+		style->setSource(owner, info.target());
 		cairo_fill(info.target());
 	}
 
 	void WindowGraphics::fill(Path *path, Brush *style) {
 		path->draw(info.target());
-		style->setSource(owner, info.target(), path->bound());
+		style->setSource(owner, info.target());
 		cairo_fill(info.target());
 	}
 
@@ -528,7 +528,7 @@ namespace gui {
 		pango_layout_set_height(layout, toPango(rect.size().h + 0.3f));
 		pango_layout_set_text(layout, text->utf8_str(), -1);
 
-		style->setSource(owner, info.target(), rect);
+		style->setSource(owner, info.target());
 
 		cairo_move_to(info.target(), rect.p0.x, rect.p0.y);
 		pango_cairo_show_layout(info.target(), layout);
@@ -537,8 +537,7 @@ namespace gui {
 	}
 
 	void WindowGraphics::draw(Text *text, Brush *style, Point origin) {
-		Size sz = text->size();
-		style->setSource(owner, info.target(), Rect(origin, sz));
+		style->setSource(owner, info.target());
 
 		cairo_move_to(info.target(), origin.x, origin.y);
 		pango_cairo_show_layout(info.target(), text->layout());
