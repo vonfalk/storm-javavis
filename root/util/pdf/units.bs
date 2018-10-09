@@ -7,6 +7,9 @@ Size a2() { Size(420, 594); }
 Size a3() { Size(297, 420); }
 Size a4() { Size(210, 297); }
 
+// Beamer's default slide size.
+Size slide() { Size(128, 96); }
+Size wideSlide() { Size(160, 90); }
 
 // Convert millimeters to points.
 package Float toPt(Float x) {
