@@ -395,9 +395,7 @@ class Resources extends StrObject {
 
 		to << "/Pattern <<\n";
 		for (p in patterns) {
-			to << p.name << " ";
-			p.output(to);
-			to << "\n";
+			to << p.name << " " << p.id << " 0 R\n";
 		}
 		to << ">> ";
 
@@ -501,7 +499,7 @@ class GSResource {
 /**
  * A Pattern resource.
  */
-class PatternResource {
+class PatternResource extends StrObject {
 	// The name of this resource. Set by the Resources class when added.
 	Str name;
 
@@ -512,11 +510,13 @@ class PatternResource {
 	Transform tfm;
 
 	// Create.
-	init(Nat type, Transform tfm) {
+	init(File file, Nat type, Transform tfm) {
 		init() {
 			type = type;
 			tfm = tfm;
 		}
+
+		file.add(this);
 	}
 
 	// Output
@@ -559,7 +559,7 @@ class ShadingPattern extends PatternResource {
 			b << s.color.b;
 		}
 
-		init(2, tfm) {
+		init(file, 2, tfm) {
 			redFn(file, p, r);
 			greenFn(file, p, g);
 			blueFn(file, p, b);
