@@ -17,7 +17,7 @@
     but the scale of the issue should be assessed first.
   - [ ] Parsing core.lang.syntax.bnf takes about 80 ms, which is a bit on the high end when compiling code...
 
-* Loose ends so far [36/64]
+* Loose ends so far [36/65]
   - [ ] Asking for a random access stream from an IStream should produce a LazyIStream if nothing better
     is available. However, this is not yet implemented!
   - [ ] When a .bnf-file includes another package, productions from there are not automatically visible,
@@ -26,6 +26,7 @@
     mechanism.
   - [ ] Support documentation of templates from C++.
   - [ ] It seems like the sound library crashes during shutdown from time to time, at least on Windows.
+  - [ ] The core does not check the return type of overloaded functions, which leads to strange behaviours from time to time...
   - [ ] The Ui library crashes if one uses "kill process" on windows.
   - [ ] In Basic Storm, writing 1.2 currently produces a float by default. Is this desirable?
   - [ ] Lambda functions can not infer their proper type when being assigned to Maybe<T>.

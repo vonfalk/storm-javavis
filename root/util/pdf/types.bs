@@ -271,7 +271,7 @@ class AlphaXObject extends XObject {
 	// Output the header.
 	void outputHeader(TextOutput to) {
 		to.write("/Type /XObject /Subtype /Image ");
-		to.write("/Width ${src.size.w.int} /Height ${src.size.h.int}");
+		to.write("/Width ${src.size.w.int} /Height ${src.size.h.int} ");
 		to.write("/ColorSpace /DeviceGray /BitsPerComponent 8 /Interpolate true ");
 	}
 
@@ -546,17 +546,23 @@ class ShadingPattern extends PatternResource {
 	StitchFunction greenFn;
 	StitchFunction blueFn;
 
+	// Alpha shading (if any).
+	AlphaShadingPattern? alpha;
+
 	// Create.
 	init(File file, Nat shadingType, Gradient gradient, Transform tfm) {
 		Float[] p;
 		Float[] r;
 		Float[] g;
 		Float[] b;
+		Bool hasAlpha = false;
 		for (s in gradient.stops) {
 			p << s.pos;
 			r << s.color.r;
 			g << s.color.g;
 			b << s.color.b;
+
+			hasAlpha |= s.color.a < 0.99;
 		}
 
 		init(file, 2, tfm) {
@@ -565,6 +571,21 @@ class ShadingPattern extends PatternResource {
 			blueFn(file, p, b);
 			shadingType = shadingType;
 		}
+
+		if (hasAlpha) {
+			setupAlpha(file, gradient, tfm);
+		}
+	}
+
+	void setupAlpha(File file, Gradient gradient, Transform tfm) {
+		AlphaShadingPattern a(file, this, gradient, tfm);
+		// Str pattern = file.root.resources.pattern(a);
+
+		// TransparencyXObject g(file);
+		// g.data << "/Pattern cs " << pattern << " scn sh";
+
+		// alpha = a;
+		// alphaGroup = g;
 	}
 
 	// Output pattern-specific data.
@@ -573,12 +594,52 @@ class ShadingPattern extends PatternResource {
 		to << "/ShadingType " << shadingType;
 		to << " /ColorSpace /DeviceRGB ";
 		to << " /Function [ " << redFn.id << " 0 R " << greenFn.id << " 0 R " << blueFn.id << " 0 R ] ";
+		if (alpha) {
+			to << "/ExtGState << /SMask " << alpha.id << " 0 R >> ";
+		}
 		outputShading(to);
 		to << ">> ";
 	}
 
 	// Output shading specific data.
 	void outputShading(StrBuf to) : abstract;
+}
+
+
+/**
+ * A shading pattern suitable for the alpha channel. Re-uses the subclass implementation of other shadings.
+ */
+class AlphaShadingPattern extends PatternResource {
+	// The pattern we're embedded inside. We will ask that pattern to output the specifics so we don't have to.
+	ShadingPattern owner;
+
+	// Our function.
+	StitchFunction fn;
+
+	// Create.
+	init(File file, ShadingPattern owner, Gradient gradient, Transform tfm) {
+		Float[] p;
+		Float[] a;
+		for (s in gradient.stops) {
+			p << s.pos;
+			a << s.color.a;
+		}
+
+		init(file, 2, tfm) {
+			owner = owner;
+			fn(file, p, a);
+		}
+	}
+
+	// Output pattern-specific data.
+	void outputData(StrBuf to) {
+		to << "/Shading <<";
+		to << "/ShadingType " << owner.shadingType;
+		to << " /ColorSpace /DeviceGray ";
+		to << " /Function [ " << fn.id << " 0 R ] ";
+		owner.outputShading(to);
+		to << ">> ";
+	}
 }
 
 /**
@@ -603,7 +664,6 @@ class AxialShading extends ShadingPattern {
 		to << "/Coords [" << p0.x << " " << p0.y << " " << p1.x << " " << p1.y << "] ";
 		to << "/Extend [true true] ";
 	}
-
 }
 
 

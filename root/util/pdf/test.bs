@@ -113,6 +113,17 @@ void draw(Graphics g, Size size) on Render {
 
 	LinearGradient gradient2([GradientStop(0.2, red), GradientStop(0.4, yellow), GradientStop(0.6, green), GradientStop(0.8, blue)], Point(70, 190), Point(150, 190));
 	g.draw(Text("Nice!", f), gradient2, Point(70, 190));
+
+	// ...with transparency
+	g.push();
+	g.transform = translate(Point(100, 100));
+	g.push();
+	g.transform = rotate(45 deg);
+	LinearGradient transparentGradient(red, Color(1.0, 1.0, 0.0, 0.0), Point(0, 0), Point(30, 30));
+	g.fill(Rect(0, 0, 30, 30), transparentGradient);
+
+	g.pop();
+	g.pop();
 }
 
 class Preview extends Frame {
@@ -132,9 +143,11 @@ class PreviewPainter extends Painter {
 		init() { scale = scale; }
 	}
 
-	void render(Size sz, Graphics g) {
+	Bool render(Size sz, Graphics g) {
 		g.transform(scale(scale));
 		draw(g, sz);
+
+		false;
 	}
 }
 

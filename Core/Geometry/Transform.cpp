@@ -193,7 +193,7 @@ namespace storm {
 			float det = v00 * inv[0][0] + v10 * inv[0][1] + v20 * inv[0][2] + v30 * inv[0][3];
 
 			if (det == 0) {
-				assert(false);
+				assert(false, L"Non-invertible matrix found!");
 				return CREATE(Transform, this);
 			}
 
@@ -329,7 +329,7 @@ namespace storm {
 		}
 
 		Transform *scale(EnginePtr e, Size s) {
-			return scale(e, Vector(s.w, s.h, 0.0f));
+			return scale(e, Vector(s.w, s.h, 1.0f));
 		}
 
 		Transform *skewX(EnginePtr e, Angle angle) {

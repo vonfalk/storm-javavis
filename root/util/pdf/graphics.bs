@@ -134,6 +134,8 @@ class PdfGraphics extends Graphics {
 		// state stack and pushing again to keep a copy of the original.
 		output << "Q q\n";
 		put(tfm, "cm\n");
+
+		stack.last.tfm = tfm * stack[stack.count - 2].tfm;
 	}
 
 	// Set the line width (in relation to the previous state).
@@ -472,7 +474,7 @@ private:
 
 	// Output a linear gradient.
 	void putLinearGradient(LinearGradient g, Bool stroke) {
-		var tfm = physicalTfm * stack.last.tfm;
+		var tfm = stack.last.tfm * physicalTfm;
 		var pattern = res.pattern(AxialShading(pdf, g, tfm));
 		if (stroke) {
 			output << "/Pattern CS " << pattern << " SCN ";
