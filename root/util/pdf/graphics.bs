@@ -475,7 +475,13 @@ private:
 	// Output a linear gradient.
 	void putLinearGradient(LinearGradient g, Bool stroke) {
 		var tfm = stack.last.tfm * physicalTfm;
-		var pattern = res.pattern(AxialShading(pdf, g, tfm));
+		AxialShading shading(pdf, g, tfm, current.mediaBox);
+
+		if (alpha = shading.alpha) {
+			output << res.softMask(alpha) << " gs ";
+		}
+
+		var pattern = res.pattern(shading);
 		if (stroke) {
 			output << "/Pattern CS " << pattern << " SCN ";
 		} else {

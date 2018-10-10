@@ -87,7 +87,7 @@ class Page extends StrObject {
 	// Remember the owning file.
 	File file;
 
-	// Physical size of this page (in points, 1/74 inces).
+	// Physical size of this page (in points, 1/74 inches).
 	Rect mediaBox;
 
 	// Content of this page.
@@ -172,6 +172,12 @@ class FormXObject extends XObject {
 	// Commands to execute.
 	StrBuf data;
 
+	// Colorspace (if any)
+	Str? colorspace;
+
+	// Transform of this object.
+	Transform tfm;
+
 	// Create.
 	init(File file, Rect bound) {
 		init(file) {
@@ -179,13 +185,28 @@ class FormXObject extends XObject {
 		}
 	}
 
+	// Create.
+	init(File file, Rect bound, Transform tfm) {
+		init(file) {
+			bound = bound;
+			tfm = tfm;
+		}
+	}
+
 	// Output the header.
 	void outputHeader(TextOutput to) {
-		to.write("/Type /XObject ");
-		to.write("/Subtype /Form ");
-		to.write("/BBox [${bound.p0.x} ${bound.p0.y} ${bound.p1.x} ${bound.p1.y}] ");
-		to.write("/Resources ${file.root.resources.id} 0 R ");
-		to.write("/Group << /S /Transparency >> ");
+		StrBuf o;
+		o << "/Type /XObject ";
+		o << "/Subtype /Form ";
+		o << "/BBox [" << bound.p0.x << " " << bound.p0.y << " " << bound.p1.x << " " << bound.p1.y << "] ";
+		o << "/Resources " << file.root.resources.id << " 0 R ";
+		putMatrix(o, tfm);
+		o << "/Group << /S /Transparency ";
+		if (colorspace)
+			o << "/CS " << colorspace;
+		o << " >> ";
+
+		to.write(o.toS);
 	}
 
 	// Output.
@@ -353,10 +374,21 @@ class Resources extends StrObject {
 		} else {
 			Str name = newName("GS");
 			res.put(name);
-			alphas.put(key, GSResource(name, alpha));
+			GSResource r(name, alpha);
+			alphas.put(key, r);
+			gs << r;
 
 			name;
 		}
+	}
+
+	// Add a graphics state describing a form XObject as a soft mask.
+	Str softMask(FormXObject mask) {
+		Str name = newName("GS");
+		res.put(name);
+		gs << GSResource(name, mask);
+
+		name;
 	}
 
 	// Add a pattern resource, return its new title. Generally, these are not reusable and as such
@@ -386,7 +418,7 @@ class Resources extends StrObject {
 		to << ">>\n";
 
 		to << "/ExtGState <<\n";
-		for (v in alphas) {
+		for (v in gs) {
 			to << v.name << " ";
 			v.output(to);
 			to << "\n";
@@ -414,6 +446,9 @@ private:
 
 	// All graphics state resources.
 	Int->GSResource alphas;
+
+	// GS resources that are not for alpha.
+	GSResource[] gs;
 
 	// All patterns.
 	PatternResource[] patterns;
@@ -481,6 +516,9 @@ class GSResource {
 	// Alpha value.
 	Float alpha;
 
+	// A form object used as the soft mask for this object. If present, we don't use 'alpha'.
+	FormXObject? mask;
+
 	// Create.
 	init(Str name, Float alpha) {
 		init() {
@@ -489,10 +527,32 @@ class GSResource {
 		}
 	}
 
+	// Create.
+	init(Str name, FormXObject mask) {
+		init() {
+			name = name;
+			mask = mask;
+		}
+
+		mask.colorspace = "/DeviceGray";
+	}
+
 	// Output.
 	void output(StrBuf to) {
-		to << "<</Type /ExtGState /CA " << alpha << " /ca " << alpha << ">>";
+		if (mask) {
+			to << "<</Type /ExtGState /SMask << /S /Luminosity /G " << mask.id << " 0 R >> >>";
+		} else {
+			to << "<</Type /ExtGState /CA " << alpha << " /ca " << alpha << ">>";
+		}
 	}
+}
+
+// Output a matrix.
+private void putMatrix(StrBuf to, Transform tfm) {
+	to << "/Matrix [ "
+	   << tfm.at(0, 0) << " " << tfm.at(0, 1) << " "
+	   << tfm.at(1, 0) << " " << tfm.at(1, 1) << " "
+	   << tfm.at(3, 0) << " " << tfm.at(3, 1) << " ] ";
 }
 
 
@@ -506,14 +566,10 @@ class PatternResource extends StrObject {
 	// Pattern type.
 	Nat type;
 
-	// Current transformation matrix.
-	Transform tfm;
-
 	// Create.
-	init(File file, Nat type, Transform tfm) {
+	init(File file, Nat type) {
 		init() {
 			type = type;
-			tfm = tfm;
 		}
 
 		file.add(this);
@@ -522,10 +578,6 @@ class PatternResource extends StrObject {
 	// Output
 	void output(StrBuf to) {
 		to << "<</Type /Pattern /PatternType " << type << " ";
-		to << "/Matrix [ "
-		   << tfm.at(0, 0) << " " << tfm.at(0, 1) << " "
-		   << tfm.at(1, 0) << " " << tfm.at(1, 1) << " "
-		   << tfm.at(3, 0) << " " << tfm.at(3, 1) << " ] ";
 		outputData(to);
 		to << ">>";
 	}
@@ -547,10 +599,10 @@ class ShadingPattern extends PatternResource {
 	StitchFunction blueFn;
 
 	// Alpha shading (if any).
-	AlphaShadingPattern? alpha;
+	FormXObject? alpha;
 
 	// Create.
-	init(File file, Nat shadingType, Gradient gradient, Transform tfm) {
+	init(File file, Nat shadingType, Gradient gradient, Transform tfm, Rect pageBounds) {
 		Float[] p;
 		Float[] r;
 		Float[] g;
@@ -565,7 +617,7 @@ class ShadingPattern extends PatternResource {
 			hasAlpha |= s.color.a < 0.99;
 		}
 
-		init(file, 2, tfm) {
+		init(file, 2) {
 			redFn(file, p, r);
 			greenFn(file, p, g);
 			blueFn(file, p, b);
@@ -573,30 +625,31 @@ class ShadingPattern extends PatternResource {
 		}
 
 		if (hasAlpha) {
-			setupAlpha(file, gradient, tfm);
+			setupAlpha(file, gradient, tfm, pageBounds);
 		}
 	}
 
-	void setupAlpha(File file, Gradient gradient, Transform tfm) {
-		AlphaShadingPattern a(file, this, gradient, tfm);
+	void setupAlpha(File file, Gradient gradient, Transform tfm, Rect bound) {
+		AlphaShadingPattern a(file, this, gradient);
 		// Str pattern = file.root.resources.pattern(a);
 
-		// TransparencyXObject g(file);
-		// g.data << "/Pattern cs " << pattern << " scn sh";
+		FormXObject g(file, bound, tfm.inverted);
 
-		// alpha = a;
-		// alphaGroup = g;
+		g.data << "/Pattern cs " << file.root.resources.pattern(a) << " scn ";
+		// g.data << "0.5 g ";
+		g.data << bound.p0.x << " " << bound.p0.y << " " << bound.p1.x << " " << bound.p1.y << " re f";
+
+		// g.data << "0.5 G 0 0 m 85 756 l s";
+
+		alpha = g;
 	}
 
 	// Output pattern-specific data.
 	void outputData(StrBuf to) {
 		to << "/Shading <<";
 		to << "/ShadingType " << shadingType;
-		to << " /ColorSpace /DeviceRGB ";
+		to << " /ColorSpace /DeviceRGB";
 		to << " /Function [ " << redFn.id << " 0 R " << greenFn.id << " 0 R " << blueFn.id << " 0 R ] ";
-		if (alpha) {
-			to << "/ExtGState << /SMask " << alpha.id << " 0 R >> ";
-		}
 		outputShading(to);
 		to << ">> ";
 	}
@@ -617,7 +670,7 @@ class AlphaShadingPattern extends PatternResource {
 	StitchFunction fn;
 
 	// Create.
-	init(File file, ShadingPattern owner, Gradient gradient, Transform tfm) {
+	init(File file, ShadingPattern owner, Gradient gradient) {
 		Float[] p;
 		Float[] a;
 		for (s in gradient.stops) {
@@ -625,7 +678,7 @@ class AlphaShadingPattern extends PatternResource {
 			a << s.color.a;
 		}
 
-		init(file, 2, tfm) {
+		init(file, 2) {
 			owner = owner;
 			fn(file, p, a);
 		}
@@ -651,11 +704,11 @@ class AxialShading extends ShadingPattern {
 	Point p1;
 
 	// Create.
-	init(File file, LinearGradient gradient, Transform tfm) {
+	init(File file, LinearGradient gradient, Transform tfm, Rect pageBounds) {
 		// We're an axial shading.
-		init(file, 2, gradient, tfm) {
-			p0 = gradient.start;
-			p1 = gradient.end;
+		init(file, 2, gradient, tfm, pageBounds) {
+			p0 = gradient.start * tfm;
+			p1 = gradient.end * tfm;
 		}
 	}
 

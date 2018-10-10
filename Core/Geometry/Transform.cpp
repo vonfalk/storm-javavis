@@ -60,18 +60,18 @@ namespace storm {
 			return CREATE(Transform, this, r);
 		}
 
-		Vector Transform::operator *(Vector o) {
-			Float x = v00*o.x + v10*o.y + v20*o.z + v30;
-			Float y = v01*o.x + v11*o.y + v21*o.z + v31;
-			Float z = v02*o.x + v12*o.y + v22*o.z + v32;
-			Float w = v03*o.x + v13*o.y + v23*o.z + v33;
+		Vector operator *(Vector o, Transform *tfm) {
+			Float x = tfm->v00*o.x + tfm->v10*o.y + tfm->v20*o.z + tfm->v30;
+			Float y = tfm->v01*o.x + tfm->v11*o.y + tfm->v21*o.z + tfm->v31;
+			Float z = tfm->v02*o.x + tfm->v12*o.y + tfm->v22*o.z + tfm->v32;
+			Float w = tfm->v03*o.x + tfm->v13*o.y + tfm->v23*o.z + tfm->v33;
 			return Vector(x/w, y/w, z/w);
 		}
 
-		Point Transform::operator *(Point o) {
-			float x = v00*o.x + v10*o.y + v30;
-			float y = v01*o.x + v11*o.y + v31;
-			float w = v03*o.x + v13*o.y + v33;
+		Point operator *(Point o, Transform *tfm) {
+			float x = tfm->v00*o.x + tfm->v10*o.y + tfm->v30;
+			float y = tfm->v01*o.x + tfm->v11*o.y + tfm->v31;
+			float w = tfm->v03*o.x + tfm->v13*o.y + tfm->v33;
 			return Point(x/w, y/w);
 		}
 

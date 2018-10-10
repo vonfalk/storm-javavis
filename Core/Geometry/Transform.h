@@ -34,8 +34,6 @@ namespace storm {
 
 			// Operations...
 			Transform *STORM_FN operator *(Transform *o);
-			Vector STORM_FN operator *(Vector o);
-			Point STORM_FN operator *(Point o);
 
 			// Invert.
 			Transform *STORM_FN inverted();
@@ -71,7 +69,15 @@ namespace storm {
 			Float v13;
 			Float v23;
 			Float v33;
+
+			friend Vector operator *(Vector o, Transform *tfm);
+			friend Point operator *(Point o, Transform *tfm);
 		};
+
+		// Transform vectors and points.
+		Vector STORM_FN operator *(Vector o, Transform *tfm);
+		Point STORM_FN operator *(Point o, Transform *tfm);
+
 
 		// Translation transform.
 		Transform *STORM_FN translate(EnginePtr e, Vector v);
