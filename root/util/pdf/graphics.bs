@@ -181,6 +181,7 @@ class PdfGraphics extends Graphics {
 		output << "q ";
 		Transform old = stack.last.tfm;
 		put(old.inverted, "cm\n");
+		// Note: This seems to be a bit off for some reason...
 		stack.last.tfm = Transform();
 
 		fill(Rect(Point(), virtual), brush);
