@@ -47,8 +47,11 @@ class PdfGraphics extends Graphics {
 
 	// Save the finished file to a stream.
 	void save(OStream to) {
-		reset();
+		finishPage();
 		pdf.write(to);
+
+		// Open a new page, so that we behave in a sane manner if someone continues outputting data after saving.
+		nextPage();
 	}
 
 	// Save the finished file to a file.
@@ -60,17 +63,11 @@ class PdfGraphics extends Graphics {
 
 	// Start drawing to a new page.
 	void nextPage() {
-		// Paint any XObjects that have not yet been painted.
-		reset();
+		finishPage();
 
 		current = Page(pdf, Rect(Point(), toPt(physical)));
+		pageFinished = false;
 		preparePage();
-	}
-
-	// Clear the state stack.
-	void reset() {
-		while (pop())
-			;
 	}
 
 	// Push the current state on the state stack.
@@ -115,6 +112,9 @@ class PdfGraphics extends Graphics {
 		stack.pop();
 
 		if (form = s.form) {
+			// Pop the last element of the stack in the XObject.
+			form.data << "Q\n";
+
 			// Draw the XObject. They have a bounding box of the entire page, so we reset the
 			// transform accordingly.
 			output << "q " << res.alpha(s.formAlpha) << " gs\n";
@@ -179,9 +179,12 @@ class PdfGraphics extends Graphics {
 	// Fill the entire page.
 	void fill(Brush brush) {
 		output << "q ";
-		put(stack.last.tfm.inverted, "cm\n");
+		Transform old = stack.last.tfm;
+		put(old.inverted, "cm\n");
+		stack.last.tfm = Transform();
 
 		fill(Rect(Point(), virtual), brush);
+		stack.last.tfm = old;
 		output << "Q\n";
 	}
 
@@ -297,6 +300,9 @@ private:
 	// Current page.
 	Page current;
 
+	// Current page finished?
+	Bool pageFinished;
+
 	// Dimensions, physical and virtual.
 	Size physical;
 	Size virtual;
@@ -341,6 +347,15 @@ private:
 	// Current stream.
 	StrBuf output() {
 		stack.last.output;
+	}
+
+	// Get the transform from the current virtual coordinate system to the physical coordinate
+	// system of whatever we're writing to (either the page or a Form XObject).
+	Transform currentPhysicalTfm() {
+		if (stack.last.form)
+			Transform();
+		else
+			physicalTfm;
 	}
 
 	// Prepare a new page.
@@ -474,8 +489,7 @@ private:
 
 	// Output a linear gradient.
 	void putLinearGradient(LinearGradient g, Bool stroke) {
-		var tfm = stack.last.tfm * physicalTfm;
-		AxialShading shading(pdf, g, tfm, current.mediaBox);
+		AxialShading shading(pdf, g, stack.last.tfm, currentPhysicalTfm, current.mediaBox);
 
 		if (alpha = shading.alpha) {
 			output << res.softMask(alpha) << " gs ";
@@ -501,5 +515,17 @@ private:
 		put(oldTfm, "cm\n");
 
 		form;
+	}
+
+	// Finish the current page before starting to draw a new one, or before saving.
+	void finishPage() {
+		if (pageFinished)
+			return;
+
+		reset();
+		pageFinished = true;
+
+		// Pop the final state off the PDF state stack, this make readers extra happy!
+		output << "Q\n";
 	}
 }

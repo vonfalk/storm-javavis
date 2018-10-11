@@ -8,7 +8,8 @@ namespace gui {
 	Graphics::Graphics() {}
 
 	void Graphics::reset() {
-		throw NotSupported(L"Graphics::reset()");
+		while (pop())
+			;
 	}
 
 	void Graphics::push() {

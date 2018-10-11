@@ -164,6 +164,12 @@ class XObject extends StreamObject {
  *
  * We use these objects to implement transparency groups, but they may also be used to group
  * operations together to improve the efficiency of the PDF file.
+ *
+ * Note: It is possible to specify a transform to apply to XObjects. However, it seems like some PDF
+ * readers do not respect that property in all cases (for example, when using the form as a soft map
+ * for transparency). However, in those cases, the "bound" property seems to be either ignored or
+ * relative to the original coordinate system, which makes it possible to ignore the transform
+ * property. For this reason, we don't implement it here.
  */
 class FormXObject extends XObject {
 	// Bounding box.
@@ -175,21 +181,10 @@ class FormXObject extends XObject {
 	// Colorspace (if any)
 	Str? colorspace;
 
-	// Transform of this object.
-	Transform tfm;
-
 	// Create.
 	init(File file, Rect bound) {
 		init(file) {
 			bound = bound;
-		}
-	}
-
-	// Create.
-	init(File file, Rect bound, Transform tfm) {
-		init(file) {
-			bound = bound;
-			tfm = tfm;
 		}
 	}
 
@@ -200,7 +195,6 @@ class FormXObject extends XObject {
 		o << "/Subtype /Form ";
 		o << "/BBox [" << bound.p0.x << " " << bound.p0.y << " " << bound.p1.x << " " << bound.p1.y << "] ";
 		o << "/Resources " << file.root.resources.id << " 0 R ";
-		putMatrix(o, tfm);
 		o << "/Group << /S /Transparency ";
 		if (colorspace)
 			o << "/CS " << colorspace;
@@ -601,8 +595,11 @@ class ShadingPattern extends PatternResource {
 	// Alpha shading (if any).
 	FormXObject? alpha;
 
+	// Transform from the virtual coordinate system to the physical coordinate system.
+	Transform pageTfm;
+
 	// Create.
-	init(File file, Nat shadingType, Gradient gradient, Transform tfm, Rect pageBounds) {
+	init(File file, Nat shadingType, Gradient gradient, Transform virtualToPage, Rect pageBounds) {
 		Float[] p;
 		Float[] r;
 		Float[] g;
@@ -622,24 +619,20 @@ class ShadingPattern extends PatternResource {
 			greenFn(file, p, g);
 			blueFn(file, p, b);
 			shadingType = shadingType;
+			pageTfm = virtualToPage;
 		}
 
 		if (hasAlpha) {
-			setupAlpha(file, gradient, tfm, pageBounds);
+			setupAlpha(file, gradient, pageBounds);
 		}
 	}
 
-	void setupAlpha(File file, Gradient gradient, Transform tfm, Rect bound) {
+	void setupAlpha(File file, Gradient gradient, Rect bound) {
 		AlphaShadingPattern a(file, this, gradient);
-		// Str pattern = file.root.resources.pattern(a);
-
-		FormXObject g(file, bound, tfm.inverted);
+		FormXObject g(file, bound);
 
 		g.data << "/Pattern cs " << file.root.resources.pattern(a) << " scn ";
-		// g.data << "0.5 g ";
 		g.data << bound.p0.x << " " << bound.p0.y << " " << bound.p1.x << " " << bound.p1.y << " re f";
-
-		// g.data << "0.5 G 0 0 m 85 756 l s";
 
 		alpha = g;
 	}
@@ -650,12 +643,12 @@ class ShadingPattern extends PatternResource {
 		to << "/ShadingType " << shadingType;
 		to << " /ColorSpace /DeviceRGB";
 		to << " /Function [ " << redFn.id << " 0 R " << greenFn.id << " 0 R " << blueFn.id << " 0 R ] ";
-		outputShading(to);
+		outputShading(to, pageTfm);
 		to << ">> ";
 	}
 
 	// Output shading specific data.
-	void outputShading(StrBuf to) : abstract;
+	void outputShading(StrBuf to, Transform tfm) : abstract;
 }
 
 
@@ -690,7 +683,7 @@ class AlphaShadingPattern extends PatternResource {
 		to << "/ShadingType " << owner.shadingType;
 		to << " /ColorSpace /DeviceGray ";
 		to << " /Function [ " << fn.id << " 0 R ] ";
-		owner.outputShading(to);
+		owner.outputShading(to, Transform());
 		to << ">> ";
 	}
 }
@@ -704,17 +697,22 @@ class AxialShading extends ShadingPattern {
 	Point p1;
 
 	// Create.
-	init(File file, LinearGradient gradient, Transform tfm, Rect pageBounds) {
+	// 'currentToVirtual' is the transform from the currently active coordinate space to the virtual coordinate space.
+	// 'virtualToPage' is the transform from the virtual coordinate space to the physical coordinate space (identity
+	// if we're outputting to a Form XObject.
+	init(File file, LinearGradient gradient, Transform currentToVirtual, Transform virtualToPage, Rect pageBounds) {
 		// We're an axial shading.
-		init(file, 2, gradient, tfm, pageBounds) {
-			p0 = gradient.start * tfm;
-			p1 = gradient.end * tfm;
+		init(file, 2, gradient, currentToVirtual * virtualToPage, pageBounds) {
+			p0 = gradient.start;
+			p1 = gradient.end;
 		}
 	}
 
 	// Output our data.
-	void outputShading(StrBuf to) {
-		to << "/Coords [" << p0.x << " " << p0.y << " " << p1.x << " " << p1.y << "] ";
+	void outputShading(StrBuf to, Transform tfm) {
+		Point a = p0 * tfm;
+		Point b = p1 * tfm;
+		to << "/Coords [" << a.x << " " << a.y << " " << b.x << " " << b.y << "] ";
 		to << "/Extend [true true] ";
 	}
 }
