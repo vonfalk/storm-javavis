@@ -536,7 +536,7 @@ class GSResource {
 		if (mask) {
 			to << "<</Type /ExtGState /SMask << /S /Luminosity /G " << mask.id << " 0 R >> >>";
 		} else {
-			to << "<</Type /ExtGState /CA " << alpha << " /ca " << alpha << ">>";
+			to << "<</Type /ExtGState /SMask /None /CA " << alpha << " /ca " << alpha << ">>";
 		}
 	}
 }
@@ -548,7 +548,6 @@ private void putMatrix(StrBuf to, Transform tfm) {
 	   << tfm.at(1, 0) << " " << tfm.at(1, 1) << " "
 	   << tfm.at(3, 0) << " " << tfm.at(3, 1) << " ] ";
 }
-
 
 /**
  * A Pattern resource.
@@ -623,16 +622,27 @@ class ShadingPattern extends PatternResource {
 		}
 
 		if (hasAlpha) {
-			setupAlpha(file, gradient, pageBounds);
+			setupAlpha(file, gradient, virtualToPage, pageBounds);
 		}
 	}
 
-	void setupAlpha(File file, Gradient gradient, Rect bound) {
-		AlphaShadingPattern a(file, this, gradient);
-		FormXObject g(file, bound);
+	void setupAlpha(File file, Gradient gradient, Transform virtualToPage, Rect bound) {
+		Transform inv = virtualToPage.inverted;
+		Point a = bound.p0 * inv;
+		Point b = Point(bound.p0.x, bound.p1.y) * inv;
+		Point c = bound.p1 * inv;
+		Point d = Point(bound.p1.x, bound.p0.y) * inv;
 
-		g.data << "/Pattern cs " << file.root.resources.pattern(a) << " scn ";
-		g.data << bound.p0.x << " " << bound.p0.y << " " << bound.p1.x << " " << bound.p1.y << " re f";
+		Rect bbox = Rect(a, b).normalized.include(c).include(d);
+
+		AlphaShadingPattern alphaPattern(file, this, gradient);
+		FormXObject g(file, bbox);
+
+		g.data << "/Pattern cs " << file.root.resources.pattern(alphaPattern) << " scn ";
+		g.data << a.x << " " << a.y << " m\n";
+		g.data << b.x << " " << b.y << " l\n";
+		g.data << c.x << " " << c.y << " l\n";
+		g.data << d.x << " " << d.y << " l h f\n";
 
 		alpha = g;
 	}

@@ -124,7 +124,8 @@ void draw(Graphics g, Size size) on Render {
 	g.push();
 	g.transform = rotate(45 deg);
 	LinearGradient transparentGradient(red, Color(0.5, 1.0, 0.0, 0.0), Point(0, 0), Point(30, 30));
-	g.fill(Rect(-5, -5, 30, 30), transparentGradient);
+	g.fill(Rect(-2, -2, 32, 32), transparentGradient);
+	g.draw(Rect(0, 0, 30, 30), blackBrush);
 	g.fill(transparentGradient);
 
 	g.pop();
@@ -133,7 +134,8 @@ void draw(Graphics g, Size size) on Render {
 	// ... during a transform with transparency groups...
 	g.push(0.8);
 	g.transform = rotate(10 deg) * translate(Point(160, 20));
-	g.fill(Rect(0, 0, 30, 30), transparentGradient);
+	g.fill(Rect(-2, -2, 32, 32), transparentGradient);
+	g.draw(Rect(0, 0, 30, 30), blackBrush);
 
 	g.pop();
 }
