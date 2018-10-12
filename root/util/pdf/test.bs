@@ -142,7 +142,7 @@ void draw(Graphics g, Size size) on Render {
 	// What about radial gradients?
 	g.push();
 	g.transform = translate(Point(160, 220));
-	RadialGradient radial(blue, Color(0.2, 0.0, 0.8, 0.0), Point(0, 0), 20);
+	RadialGradient radial(blue, Color(0.0, 0.5, 0.5, 0.0), Point(0, 0), 20);
 	radial.transform = translate(Point(3, 0)) * scale(Size(1.5, 1.0));
 	g.fill(Rect(0, 0, 20, 20), radial);
 	g.pop();
@@ -177,8 +177,8 @@ void test() {
 	Font f("Arial", 20);
 	save();
 
-	Preview p(a4, 3);
-	p.waitForClose;
+	// Preview p(a4, 3);
+	// p.waitForClose;
 }
 
 void save() on Render {

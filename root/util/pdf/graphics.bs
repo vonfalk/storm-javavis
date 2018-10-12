@@ -474,6 +474,8 @@ private:
 		// } else if (b as BitmapBrush) {
 		} else if (b as LinearGradient) {
 			putLinearGradient(b, stroke);
+		} else if (b as RadialGradient) {
+			putRadialGradient(b, stroke);
 		} else {
 			print("Unsupported brush found!");
 		}
@@ -490,10 +492,20 @@ private:
 
 	// Output a linear gradient.
 	void putLinearGradient(LinearGradient g, Bool stroke) {
-		AxialShading shading(pdf, g, stack.last.tfm, currentPhysicalTfm, current.mediaBox);
+		putShading(AxialShading(pdf, g, stack.last.tfm * currentPhysicalTfm, current.mediaBox), stroke);
+	}
 
+	// Output a radial gradient.
+	void putRadialGradient(RadialGradient g, Bool stroke) {
+		putShading(RadialShading(pdf, g, stack.last.tfm * currentPhysicalTfm, current.mediaBox), stroke);
+	}
+
+	// Output a shading object of some sort.
+	void putShading(ShadingPattern shading, Bool stroke) {
 		if (alpha = shading.alpha) {
 			output << res.softMask(alpha) << " gs ";
+		} else {
+			output << res.alpha(1.0) << " gs ";
 		}
 
 		var pattern = res.pattern(shading);

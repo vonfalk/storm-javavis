@@ -649,6 +649,7 @@ class ShadingPattern extends PatternResource {
 
 	// Output pattern-specific data.
 	void outputData(StrBuf to) {
+		outputTransform(to, pageTfm);
 		to << "/Shading <<";
 		to << "/ShadingType " << shadingType;
 		to << " /ColorSpace /DeviceRGB";
@@ -656,6 +657,9 @@ class ShadingPattern extends PatternResource {
 		outputShading(to, pageTfm);
 		to << ">> ";
 	}
+
+	// Output any transformation matrix we desire.
+	void outputTransform(StrBuf to, Transform tfm) {}
 
 	// Output shading specific data.
 	void outputShading(StrBuf to, Transform tfm) : abstract;
@@ -689,6 +693,7 @@ class AlphaShadingPattern extends PatternResource {
 
 	// Output pattern-specific data.
 	void outputData(StrBuf to) {
+		owner.outputTransform(to, Transform());
 		to << "/Shading <<";
 		to << "/ShadingType " << owner.shadingType;
 		to << " /ColorSpace /DeviceGray ";
@@ -707,12 +712,11 @@ class AxialShading extends ShadingPattern {
 	Point p1;
 
 	// Create.
-	// 'currentToVirtual' is the transform from the currently active coordinate space to the virtual coordinate space.
-	// 'virtualToPage' is the transform from the virtual coordinate space to the physical coordinate space (identity
-	// if we're outputting to a Form XObject.
-	init(File file, LinearGradient gradient, Transform currentToVirtual, Transform virtualToPage, Rect pageBounds) {
+	// 'currentToPage' is the transform from the currently active coordinate space to the physical coordinates
+	// of whatever we're currently drawing to.
+	init(File file, LinearGradient gradient, Transform currentToPage, Rect pageBounds) {
 		// We're an axial shading.
-		init(file, 2, gradient, currentToVirtual * virtualToPage, pageBounds) {
+		init(file, 2, gradient, currentToPage, pageBounds) {
 			p0 = gradient.start;
 			p1 = gradient.end;
 		}
@@ -723,6 +727,37 @@ class AxialShading extends ShadingPattern {
 		Point a = p0 * tfm;
 		Point b = p1 * tfm;
 		to << "/Coords [" << a.x << " " << a.y << " " << b.x << " " << b.y << "] ";
+		to << "/Extend [true true] ";
+	}
+}
+
+/**
+ * A radial gradient pattern resource.
+ */
+class RadialShading extends ShadingPattern {
+	// Center point, radius and transform.
+	Point center;
+	Float radius;
+	Transform tfm;
+
+	// Create. See 'AxialShading' for details on parameters.
+	init(File file, RadialGradient gradient, Transform currentToPage, Rect pageBounds) {
+		// We're a radial shading.
+		init(file, 3, gradient, currentToPage, pageBounds) {
+			center = gradient.center;
+			radius = gradient.radius;
+			tfm = gradient.transform;
+		}
+	}
+
+	// Set a custom transform.
+	void outputTransform(StrBuf to, Transform t) {
+		putMatrix(to, tfm * t);
+	}
+
+	// Output our data.
+	void outputShading(StrBuf to, Transform tfm) {
+		to << "/Coords [" << center.x << " " << center.y << " 0 " << center.x << " " << center.y << " " << radius << "] ";
 		to << "/Extend [true true] ";
 	}
 }
