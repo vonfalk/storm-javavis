@@ -75,7 +75,7 @@ namespace gui {
 		cairo_pattern_t *p = cairo_pattern_create_for_surface(myBitmap->get<cairo_surface_t>(owner));
 		cairo_pattern_set_extend(p, CAIRO_EXTEND_REPEAT);
 
-		cairo_matrix_t tfm = cairo(myTfm);
+		cairo_matrix_t tfm = cairo(myTfm->inverted());
 		cairo_pattern_set_matrix(p, &tfm);
 
 		return p;
@@ -84,7 +84,7 @@ namespace gui {
 	void BitmapBrush::transform(Transform *tfm) {
 		myTfm = tfm;
 		if (cairo_pattern_t *p = peek<cairo_pattern_t>()) {
-			cairo_matrix_t tfm = cairo(myTfm);
+			cairo_matrix_t tfm = cairo(myTfm->inverted());
 			cairo_pattern_set_matrix(p, &tfm);
 		}
 	}
@@ -277,20 +277,26 @@ namespace gui {
 		// We're using the point (0, 0) and a radius of 1 so that we can easily transform it later.
 		cairo_pattern_t *r = cairo_pattern_create_radial(0, 0, 0, 0, 0, 1);
 		applyStops(r);
-		updatePoints(r);
+		update(r);
 		return r;
 	}
 
-	void RadialGradient::updatePoints() {
+	void RadialGradient::update() {
 		if (cairo_pattern_t *p = peek<cairo_pattern_t>()) {
-			updatePoints(p);
+			update(p);
 		}
 	}
 
-	void RadialGradient::UpdatePoints(cairo_pattern_t *p) {
+	void RadialGradient::update(cairo_pattern_t *p) {
+		Float r = 1.0f / myRadius;
+
 		cairo_matrix_t tfm;
-		cairo_matrix_init_scale(&tfm, myRadius, myRadius);
+		cairo_matrix_init_scale(&tfm, r, r);
 		cairo_matrix_translate(&tfm, -myCenter.x, -myCenter.y);
+
+		cairo_matrix_t our = cairo(myTransform->inverted());
+		cairo_matrix_multiply(&tfm, &our, &tfm);
+
 		cairo_pattern_set_matrix(p, &tfm);
 	}
 
