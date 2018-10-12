@@ -175,9 +175,6 @@ namespace gui {
 		void STORM_FN points(Point start, Point end);
 
 #ifdef GUI_WIN32
-		// Get the brush.
-		inline ID2D1LinearGradientBrush *brush(Painter *owner) { return get<ID2D1LinearGradientBrush>(owner); }
-
 		// Create.
 		virtual void create(Painter *owner, ID2D1Resource **out);
 #endif
@@ -200,6 +197,55 @@ namespace gui {
 #endif
 	};
 
-	// TODO: Implement a radial gradient as well!
+
+	/**
+	 * Radial gradient.
+	 */
+	class RadialGradient : public Gradient {
+		STORM_CLASS;
+	public:
+		// Provide the stops.
+		STORM_CTOR RadialGradient(Array<GradientStop> *stops, Point center, Float radius);
+
+		// Create two stops at 0 and 1.
+		STORM_CTOR RadialGradient(Color c1, Color c2, Point center, Float radius);
+
+		// Get/set the center point.
+		inline Point STORM_FN center() const { return myCenter; }
+		void STORM_ASSIGN center(Point pt);
+
+		// Get/set the radius.
+		inline Float STORM_FN radius() const { return myRadius; }
+		void STORM_ASSIGN radius(Float radius);
+
+		// Get/set a generic transform.
+		Transform *STORM_FN transform() const { return myTransform; }
+		void STORM_ASSIGN transform(Transform *tfm);
+
+#ifdef GUI_WIN32
+		// Create.
+		virtual void create(Painter *owner, ID2D1Resource **out);
+#endif
+#ifdef GUI_GTK
+		// Create.
+		virtual OsResource *create(Painter *owner);
+#endif
+
+	private:
+		// Center point and radius.
+		Point myCenter;
+		Float myRadius;
+
+		// Transform.
+		Transform *myTransform;
+
+		// Update the properties in the underlying representation (if any).
+		void update();
+
+#ifdef GUI_GTK
+		// Set the transform of 'p'.
+		void update(cairo_pattern_t *p);
+#endif
+	};
 
 }

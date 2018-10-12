@@ -154,12 +154,12 @@ namespace gui {
 	LinearGradient::LinearGradient(Array<GradientStop> *stops, Point start, Point end) :
 		Gradient(stops), myStart(start), myEnd(end) {}
 
-	LinearGradient::LinearGradient(Color a, Color b, Point start, Point end) :
+	LinearGradient::LinearGradient(Color c1, Color c2, Point start, Point end) :
 		Gradient(), myStart(start), myEnd(end) {
 
-		Array<GradientStop> *s = CREATE(Array<GradientStop>, this);
-		s->push(GradientStop(0, a));
-		s->push(GradientStop(1, b));
+		Array<GradientStop> *s = new (this) Array<GradientStop>();
+		s->push(GradientStop(0, c1));
+		s->push(GradientStop(1, c2));
 		stops(s);
 	}
 
@@ -201,7 +201,6 @@ namespace gui {
 		cairo_pattern_t *r = cairo_pattern_create_linear(0, 0, 0, -1);
 		applyStops(r);
 		updatePoints(r);
-
 		return r;
 	}
 
@@ -222,6 +221,76 @@ namespace gui {
 		cairo_matrix_init_rotate(&tfm, -a.rad());
 		cairo_matrix_scale(&tfm, scale, scale);
 		cairo_matrix_translate(&tfm, -myStart.x, -myStart.y);
+		cairo_pattern_set_matrix(p, &tfm);
+	}
+
+#endif
+
+	RadialGradient::RadialGradient(Array<GradientStop> *stops, Point center, Float radius) :
+		Gradient(stops), myCenter(center), myRadius(radius), myTransform(new (engine()) Transform()) {}
+
+	RadialGradient::RadialGradient(Color c1, Color c2, Point center, Float radius) :
+		Gradient(), myCenter(center), myRadius(radius), myTransform(new (engine()) Transform()) {
+
+		Array<GradientStop> *s = new (this) Array<GradientStop>();
+		s->push(GradientStop(0, c1));
+		s->push(GradientStop(1, c2));
+		stops(s);
+	}
+
+	void RadialGradient::center(Point p) {
+		myCenter = p;
+		update();
+	}
+
+	void RadialGradient::radius(Float v) {
+		myRadius = v;
+		update();
+	}
+
+	void RadialGradient::transform(Transform *tfm) {
+		myTransform = tfm;
+		update();
+	}
+
+#ifdef GUI_WIN32
+
+	void RadialGradient::create(Painter *owner, ID2D1Resource **out) {
+		D2D1_RADIAL_GRADIENT_BRUSH_PROPERTIES p = { dx(myCenter), { 0.0f, 0.0f }, myRadius, myRadius };
+		D2D1_BRUSH_PROPERTIES b = { 1.0f, dx(myTransform) };
+		owner->renderTarget()->CreateRadialGradientBrush(p, b, dxStops(owner), (ID2D1RadialGradientBrush**)out);
+	}
+
+	void RadialGradient::update() {
+		if (ID2D1RadialGradientBrush *o = peek<ID2D1RadialGradientBrush>()) {
+			o->SetCenter(dx(myCenter));
+			o->SetRadiusX(myRadius);
+			o->SetRadiusY(myRadius);
+			o->SetTransform(dx(myTransform));
+		}
+	}
+
+#endif
+#ifdef GUI_GTK
+
+	OsResource *RadialGradient::create(Painter *owner) {
+		// We're using the point (0, 0) and a radius of 1 so that we can easily transform it later.
+		cairo_pattern_t *r = cairo_pattern_create_radial(0, 0, 0, 0, 0, 1);
+		applyStops(r);
+		updatePoints(r);
+		return r;
+	}
+
+	void RadialGradient::updatePoints() {
+		if (cairo_pattern_t *p = peek<cairo_pattern_t>()) {
+			updatePoints(p);
+		}
+	}
+
+	void RadialGradient::UpdatePoints(cairo_pattern_t *p) {
+		cairo_matrix_t tfm;
+		cairo_matrix_init_scale(&tfm, myRadius, myRadius);
+		cairo_matrix_translate(&tfm, -myCenter.x, -myCenter.y);
 		cairo_pattern_set_matrix(p, &tfm);
 	}
 
