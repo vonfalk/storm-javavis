@@ -8,7 +8,10 @@ use graphics;
  *
  * Call 'nextPage' to start drawing on a new page.
  *
- * TODO: We leave one state on the state stack, which GS complains about. We should fix that some time.
+ * Note: Some PDF readers (for example Evince and GIMP) apparently do not support tiling patterns at
+ * all. These just display as a semi-transparent average of the color of the pattern rather than the
+ * pattern itself. This seems to be an issue with the PDF reader itself rather than with our output,
+ * since the problem is not solved by letting Ghostscript re-compile the PDF file.
  */
 class PdfGraphics extends Graphics {
 	// Create, specifying dimensions. 'physical' is the page's physical dimension in millimeters,
@@ -394,9 +397,8 @@ private:
 
 	// Output a matrix.
 	void put(Transform tfm, Str after) {
-		output << tfm.at(0, 0) << " " << tfm.at(0, 1) << " "
-			   << tfm.at(1, 0) << " " << tfm.at(1, 1) << " "
-			   << tfm.at(3, 0) << " " << tfm.at(3, 1) << " " << after;
+		putTransform(output, tfm);
+		output << " " << after;
 	}
 
 	// Output a path.
@@ -471,7 +473,8 @@ private:
 	void putColor(Brush b, Bool stroke) {
 		if (b as SolidBrush) {
 			putSolid(b, stroke);
-		// } else if (b as BitmapBrush) {
+		} else if (b as BitmapBrush) {
+			putBitmap(b, stroke);
 		} else if (b as LinearGradient) {
 			putLinearGradient(b, stroke);
 		} else if (b as RadialGradient) {
@@ -488,6 +491,18 @@ private:
 			put(b.color, "RG\n");
 		else
 			put(b.color, "rg\n");
+	}
+
+	// Output a bitmap brush.
+	void putBitmap(BitmapBrush b, Bool stroke) {
+		output << res.alpha(1.0) << " gs ";
+
+		var pattern = res.pattern(BitmapPattern(pdf, b, stack.last.tfm * currentPhysicalTfm));
+		if (stroke) {
+			output << "/Pattern CS " << pattern << " SCN ";
+		} else {
+			output << "/Pattern cs " << pattern << " scn ";
+		}
 	}
 
 	// Output a linear gradient.

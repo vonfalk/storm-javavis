@@ -107,8 +107,9 @@ void draw(Graphics g, Size size) on Render {
 		g.draw(c, Rect(Point(20, 240), c.size * 0.4));
 
 		// Using a bitmap as a pattern.
-		BitmapBrush bBrush(b, scale(0.05));
-		g.text("Pattern", f, bBrush, Rect(50, 0, 200, 40));
+		BitmapBrush bBrush(b, scale(0.08));
+		// g.text("Pattern", f, bBrush, Rect(50, 0, 200, 40));
+		g.fill(Rect(100, 0, 150, 30), Size(4, 4), bBrush);
 	}
 
 	// Gradients.

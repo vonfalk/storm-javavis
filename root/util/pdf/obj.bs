@@ -76,3 +76,36 @@ class StreamObject extends PdfObject {
 	void output(OStream to) : abstract;
 }
 
+
+/**
+ * An object that could be a stream.
+ *
+ * Override 'outputStream' to output the contents, and return true to indicate that the stream is used.
+ */
+class MaybeStreamObject extends PdfObject {
+	void output(OStream to, TextOutput text) : final {
+		text.write("<<");
+
+		StrBuf header;
+		output(header);
+
+		MemOStream s;
+		if (outputStream(s)) {
+			text.write(header.toS);
+			text.write("/Length ${s.buffer.filled} ");
+			text.write(">>\nstream\n");
+			text.flush();
+			to.write(s.buffer);
+			text.write("\nendstream");
+		} else {
+			text.write(header.toS);
+			text.write(">>");
+		}
+	}
+
+	// Output the text of the header.
+	void output(StrBuf to) : abstract;
+
+	// Output the stream (if any). Return 'true' if the stream shall be used.
+	Bool outputStream(OStream to) { false; }
+}

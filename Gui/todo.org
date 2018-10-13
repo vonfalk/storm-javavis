@@ -1,4 +1,5 @@
-* General [2/5]
+* General [2/6]
+  - [ ] Graphics::fill does not behave correctly with regards to gradient's coordinate systems.
   - [ ] Add a way to create proper modal dialogs with return codes.
   - [ ] Make the text view and the multiline text view separate, as we want
         to handle text separatly in the two cases.

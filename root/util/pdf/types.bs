@@ -238,7 +238,7 @@ class ImageXObject extends XObject {
 	// Output the header.
 	void outputHeader(TextOutput to) {
 		to.write("/Type /XObject /Subtype /Image ");
-		to.write("/Width ${src.size.w.int} /Height ${src.size.h.int}");
+		to.write("/Width ${src.size.w.int} /Height ${src.size.h.int} ");
 		to.write("/ColorSpace /DeviceRGB /BitsPerComponent 8 /Interpolate true ");
 		if (alpha) {
 			to.write("/SMask ${alpha.id} 0 R ");
@@ -357,6 +357,17 @@ class Resources extends StrObject {
 			ImageXObject obj(file, b);
 			bitmaps.put(b, obj);
 			obj.name;
+		}
+	}
+
+	// Get the ID of a bitmap object.
+	Nat bitmapId(File file, Bitmap b) {
+		if (bitmaps.has(b)) {
+			bitmaps.get(b).id;
+		} else {
+			ImageXObject obj(file, b);
+			bitmaps.put(b, obj);
+			obj.id;
 		}
 	}
 
@@ -541,28 +552,38 @@ class GSResource {
 	}
 }
 
+// Output a transform (inside a stream).
+package void putTransform(StrBuf to, Transform tfm) {
+	to << tfm.at(0, 0) << " " << tfm.at(0, 1) << " "
+	   << tfm.at(1, 0) << " " << tfm.at(1, 1) << " "
+	   << tfm.at(3, 0) << " " << tfm.at(3, 1);
+}
+
 // Output a matrix.
 private void putMatrix(StrBuf to, Transform tfm) {
-	to << "/Matrix [ "
-	   << tfm.at(0, 0) << " " << tfm.at(0, 1) << " "
-	   << tfm.at(1, 0) << " " << tfm.at(1, 1) << " "
-	   << tfm.at(3, 0) << " " << tfm.at(3, 1) << " ] ";
+	to << "/Matrix [ ";
+	putTransform(to, tfm);
+	to << " ] ";
 }
 
 /**
  * A Pattern resource.
  */
-class PatternResource extends StrObject {
+class PatternResource extends MaybeStreamObject {
 	// The name of this resource. Set by the Resources class when added.
 	Str name;
 
 	// Pattern type.
 	Nat type;
 
+	// File we're added to.
+	File file;
+
 	// Create.
 	init(File file, Nat type) {
 		init() {
 			type = type;
+			file = file;
 		}
 
 		file.add(this);
@@ -570,13 +591,71 @@ class PatternResource extends StrObject {
 
 	// Output
 	void output(StrBuf to) {
-		to << "<</Type /Pattern /PatternType " << type << " ";
+		to << "/Type /Pattern /PatternType " << type << " ";
 		outputData(to);
-		to << ">>";
 	}
 
 	// Output pattern-specific data.
 	void outputData(StrBuf to) : abstract;
+}
+
+/**
+ * A tiling bitmap pattern.
+ *
+ * This could be used to use any drawing as a tiling pattern, but we're only using it for bitmaps at
+ * the moment.
+ */
+class BitmapPattern extends PatternResource {
+	// ID of the bitmap we're repeating.
+	Nat repeat;
+
+	// Size of the bitmap.
+	Size repeatSize;
+
+	// Transform of the bitmap.
+	Transform bitmapTfm;
+
+	// Transform from the current coordinate system to the page.
+	Transform pageTfm;
+
+	// Create.
+	init(File file, BitmapBrush brush, Transform currentToPage) {
+		Bitmap b = brush.bitmap;
+
+		// 1 = tiling pattern
+		init(file, 1) {
+			repeat = file.root.resources.bitmapId(file, b);
+			repeatSize = b.size;
+			bitmapTfm = brush.transform;
+			pageTfm = currentToPage;
+		}
+	}
+
+	void outputData(StrBuf to) {
+		// Size of the bitmap, used for the bounding rectangle.
+		Size size = repeatSize;
+
+		// Transform of the pattern. Remember: Images are 1 by 1 unit large by default!
+		var transform = scale(Size(size.w, -size.h)) * bitmapTfm * pageTfm;
+
+		to << "/PaintType 1 "; // colored
+		to << "/TilingType 1 "; // constant spacing, may distort the image by at most 1 device pixel
+		to << "/BBox [ 0 0 1 1 ] ";
+		to << "/XStep 1 ";
+		to << "/YStep 1 ";
+		to << "/Resources << /XObject << /XO1 " << repeat << " 0 R >> >> ";
+		// to << "/Resources " << res.id << " 0 R ";
+		putMatrix(to, transform);
+	}
+
+	void outputStream(OStream to) {
+		var text = textOutput(to);
+		text.write("/XO1 Do");
+
+		// text.write("${repeat} Do");
+		// text.write("0 0 1 rg 0 0 0.5 0.5 re f");
+		text.flush();
+	}
 }
 
 /**
@@ -598,7 +677,7 @@ class ShadingPattern extends PatternResource {
 	Transform pageTfm;
 
 	// Create.
-	init(File file, Nat shadingType, Gradient gradient, Transform virtualToPage, Rect pageBounds) {
+	init(File file, Nat shadingType, Gradient gradient, Transform currentToPage, Rect pageBounds) {
 		Float[] p;
 		Float[] r;
 		Float[] g;
@@ -613,21 +692,22 @@ class ShadingPattern extends PatternResource {
 			hasAlpha |= s.color.a < 0.99;
 		}
 
+		// 2 = shading pattern
 		init(file, 2) {
 			redFn(file, p, r);
 			greenFn(file, p, g);
 			blueFn(file, p, b);
 			shadingType = shadingType;
-			pageTfm = virtualToPage;
+			pageTfm = currentToPage;
 		}
 
 		if (hasAlpha) {
-			setupAlpha(file, gradient, virtualToPage, pageBounds);
+			setupAlpha(file, gradient, currentToPage, pageBounds);
 		}
 	}
 
-	void setupAlpha(File file, Gradient gradient, Transform virtualToPage, Rect bound) {
-		Transform inv = virtualToPage.inverted;
+	void setupAlpha(File file, Gradient gradient, Transform currentToPage, Rect bound) {
+		Transform inv = currentToPage.inverted;
 		Point a = bound.p0 * inv;
 		Point b = Point(bound.p0.x, bound.p1.y) * inv;
 		Point c = bound.p1 * inv;
@@ -702,6 +782,7 @@ class AlphaShadingPattern extends PatternResource {
 		to << ">> ";
 	}
 }
+
 
 /**
  * A linear gradient pattern resource.
