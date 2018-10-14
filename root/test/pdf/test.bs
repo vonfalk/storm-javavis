@@ -2,6 +2,7 @@ use core:io;
 use core:geometry;
 use graphics;
 use ui;
+use ui:pdf;
 use lang:bs:macro;
 
 /**

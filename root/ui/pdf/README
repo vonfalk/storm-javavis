@@ -11,3 +11,6 @@ file using Ghostscript.
 Re-encoding can be done with the command:
 
 gs -dBATCH -dNOPAUSE -q -sDEVICE=pdfwrite -o new.pdf old.pdf
+
+
+Tests for this package can be found in test/pdf/test.bs
