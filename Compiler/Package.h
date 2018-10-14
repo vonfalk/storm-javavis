@@ -26,7 +26,7 @@ namespace storm {
 		STORM_CTOR Package(Str *name, Url *path);
 
 		// Get parent.
-		virtual NameLookup *STORM_FN parent() const;
+		virtual MAYBE(NameLookup *) STORM_FN parent() const;
 
 		// Get our url.
 		virtual MAYBE(Url *) STORM_FN url() const;

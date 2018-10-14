@@ -115,7 +115,11 @@ namespace storm {
 	 */
 	class EXCEPTION_EXPORT TypedefError : public CodeError {
 	public:
-		TypedefError(const String &msg) : CodeError(SrcPos()), msg(msg) { TODO("Require a SrcPos!"); }
+		TypedefError(const String &msg) : CodeError(SrcPos()), msg(msg) {
+#ifdef DEBUG
+			TODO("Require a SrcPos!");
+#endif
+		}
 		virtual String what() const {
 			return L"@" + ::toS(where) + L": Type definition error: " + msg;
 		}

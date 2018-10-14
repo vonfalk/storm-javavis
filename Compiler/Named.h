@@ -96,7 +96,7 @@ namespace storm {
 		Str *STORM_FN shortIdentifier() const;
 
 		// Better asserts for 'parent'.
-		virtual NameLookup *STORM_FN parent() const;
+		virtual MAYBE(NameLookup *) STORM_FN parent() const;
 
 		// Receive notifications from NameSet objects. (TODO: Move into separate class?)
 		virtual void STORM_FN notifyAdded(NameSet *to, Named *added);

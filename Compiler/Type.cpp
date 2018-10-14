@@ -1187,6 +1187,42 @@ namespace storm {
 			myVTable->insert(fn);
 	}
 
+	// See if the return type of a function matches the super function.
+	// If the result differs "too much" in some sense, the calling conventions of the two functions
+	// will differ, and we will either produce weird results or crash.
+	static bool checkResult(Function *parent, Function *child) {
+		Value p = parent->result;
+		Value c = child->result;
+
+		if (p.type == null) {
+			// void only allows void
+			return c.type == null;
+		} else if (p.isValue() && !p.ref) {
+			// We can't support inheritance in values, since that could potentially overwrite memory in the caller.
+			// If we're returning a reference, the situation is different. Then we treat values as if they were
+			// regular object types.
+			return p.type == c.type;
+		} else {
+			// Object, actor or reference. Regular inheritance rules apply.
+			return p.canStore(c.type);
+		}
+	}
+
+	// See if the function 'child' is allowed to override 'parent'.
+	static void checkOverride(Function *parent, Function *child) {
+		if (parent->fnFlags() & fnFinal) {
+			throw TypedefError(L"The function " + ::toS(child->identifier()) + L" attempts to "
+							L"override the final function " + ::toS(parent->identifier()));
+		}
+
+		if (!checkResult(parent, child)) {
+			throw TypedefError(L"The function " + ::toS(child->identifier()) + L" overrides " +
+							::toS(parent->identifier()) + L", but the return types are not compatible. "
+							L"Got " + ::toS(child->result) + L", but expected a type compatible with " +
+							::toS(parent->result) + L".");
+		}
+	}
+
 	Bool Type::vtableInsertSuper(OverridePart *fn, Function *original) {
 		// See if our parent contains an appropriate function.
 		Type *s = super();
@@ -1195,11 +1231,8 @@ namespace storm {
 
 		Function *found = as<Function>(s->tryFindHere(fn, Scope()));
 		if (found && found->visibleFrom(original)) {
-			// See if 'found' was marked 'final'.
-			if (found->fnFlags() & fnFinal) {
-				throw TypedefError(L"The function " + ::toS(original->identifier()) + L" attempts to "
-								L"override the final function " + ::toS(found->identifier()));
-			}
+			// Is this allowed?
+			checkOverride(found, original);
 
 			// Found it, no need to search further as all possible parent functions are in the
 			// vtable already.
@@ -1219,11 +1252,8 @@ namespace storm {
 			// not needed until it is instantiated anyway, and we will get notified when that happens.
 			Function *found = as<Function>(child->tryFindHere(fn, Scope()));
 			if (found && original->visibleFrom(found)) {
-				// Found something.
-				if (original->fnFlags() & fnFinal) {
-					throw TypedefError(L"The function " + ::toS(found->identifier()) + L" attempts to "
-									L"override the final function " + ::toS(original->identifier()));
-				}
+				// Found something. Is it allowed?
+				checkOverride(original, found);
 
 				// Insert it in the vtable. We do not need to go further down this particular path
 				// as any overriding functions there are already found by now.

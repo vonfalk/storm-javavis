@@ -30,3 +30,12 @@ class FinalC extends FinalBase {
 Int createFinalC() {
 	FinalC().b();
 }
+
+class FinalD extends FinalBase {
+	Long b() { 100; }
+}
+
+Int createFinalD() {
+	// Should fail: return type of 'b' does not match.
+	FinalD().b().int;
+}

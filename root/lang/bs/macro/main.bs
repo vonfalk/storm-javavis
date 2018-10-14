@@ -193,15 +193,15 @@ class PrintAsm extends Expr {
 		init(pos);
 	}
 
-	Value result() {
+	ExprResult result() : override {
 		Value();
 	}
 
-	void code(CodeGen state, CodeResult result) {
+	void code(CodeGen state, CodeResult result) : override {
 		print(state.toS);
 	}
 
-	Str toS() {
+	Str toS() : override {
 		"dumpAsm";
 	}
 }

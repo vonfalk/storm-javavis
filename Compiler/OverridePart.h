@@ -12,6 +12,9 @@ namespace storm {
 	/**
 	 * Lookup used for finding functions in superclasses which 'match' overrides. Can be created
 	 * once and used in the entire inheritance chain.
+	 *
+	 * Note: Does not check the return type of the found functions. This is so that the caller is
+	 * able to signal an error as would be expected rather than just ignoring the error.
 	 */
 	class OverridePart : public SimplePart {
 		STORM_CLASS;

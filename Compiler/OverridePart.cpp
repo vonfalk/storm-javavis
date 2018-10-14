@@ -43,11 +43,6 @@ namespace storm {
 				if (!c->at(i).canStore(params->at(i)))
 					return -1;
 			}
-
-			// Candidate may return a narrower range of types.
-			if (!fn->result.canStore(result))
-				return -1;
-
 		} else if (c->at(0).canStore(params->at(0))) {
 			// Candidate is in a superclass wrt us.
 			for (nat i = 1; i < c->count(); i++) {
@@ -59,11 +54,6 @@ namespace storm {
 				if (c->at(i).type != params->at(i).type)
 					penalty = 1;
 			}
-
-			// We may return a narrower range than candidate.
-			if (!result.canStore(fn->result))
-				return -1;
-
 		} else {
 			return -1;
 		}

@@ -42,13 +42,13 @@ class NullExpr extends Expr {
 		init(pos);
 	}
 
-	Value result() {
+	ExprResult result() : override {
 		// Standard result is void.
 		Value();
 	}
 
 	// Always castable to a 'maybe' type.
-	Int castPenalty(Value to) {
+	Int castPenalty(Value to) : override {
 		if (to.isMaybe) {
 			1;
 		} else {
@@ -57,7 +57,7 @@ class NullExpr extends Expr {
 	}
 
 	// Generate code.
-	void code(CodeGen g, CodeResult r) {
+	void code(CodeGen g, CodeResult r) : override {
 		if (t = r.type.type) {
 			Function? ctor = t.defaultCtor;
 			if (ctor) {
@@ -72,7 +72,7 @@ class NullExpr extends Expr {
 		}
 	}
 
-	Str toS() {
+	Str toS() : override {
 		"null";
 	}
 }

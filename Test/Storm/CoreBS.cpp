@@ -83,6 +83,8 @@ BEGIN_TEST(FinalTest, BS) {
 	CHECK_EQ(runFn<Int>(S("test.bs.createFinalB")), 30);
 	// Not overriding, even though 'override' is specified.
 	CHECK_ERROR(runFn<Int>(S("test.bs.createFinalC")), TypedefError);
+	// Overrides, but with invalid return type.
+	CHECK_ERROR(runFn<Int>(S("test.bs.createFinalD")), TypedefError);
 } END_TEST
 
 BEGIN_TEST(StaticTest, BS) {
