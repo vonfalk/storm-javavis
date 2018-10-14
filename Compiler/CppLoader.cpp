@@ -274,7 +274,10 @@ namespace storm {
 			t->offset[i] = Offset(type.ptrOffsets[i]).current();
 		}
 
-		t->finalizer = type.destructor;
+		// Don't set the finalizer for values. This GC type will be used for arrays, and will be
+		// called once for the entire array.
+		if (!(type.flags & typeValue))
+			t->finalizer = type.destructor;
 
 #ifdef DEBUG
 		if (!world->refTypes) {
