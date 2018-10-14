@@ -1,6 +1,7 @@
 #include "stdafx.h"
 #include "Stream.h"
 #include "Exception.h"
+#include "LazyMemStream.h"
 
 namespace storm {
 
@@ -43,9 +44,7 @@ namespace storm {
 	}
 
 	RIStream *IStream::randomAccess() {
-		assert(false, L"TODO: Use lazy memory stream!");
-		throw NotSupported(L"Not implemented yet!");
-		// return lazyIMemStream(this);
+		return new (this) LazyMemIStream(this);
 	}
 
 	void IStream::close() {}

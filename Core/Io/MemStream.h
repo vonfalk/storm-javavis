@@ -34,7 +34,7 @@ namespace storm {
 		// Seek.
 		virtual void STORM_FN seek(Word to);
 
-		// Peek.
+		// Tell.
 		virtual Word STORM_FN tell();
 
 		// Length.

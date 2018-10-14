@@ -162,7 +162,7 @@ namespace storm {
 			RunOn on = type->runOn();
 			if (on.state != RunOn::any)
 				notes->push(note(e, S("on"), on.thread));
-		} else if (Package *pkg = as<Package>(entity)) {
+		} else if (as<Package>(entity)) {
 			notes->push(note(e, S("(package)")));
 		}
 
