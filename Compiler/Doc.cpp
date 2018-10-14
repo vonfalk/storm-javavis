@@ -5,6 +5,7 @@
 #include "Function.h"
 #include "Variable.h"
 #include "Type.h"
+#include "Package.h"
 #include "Core/Join.h"
 
 namespace storm {
@@ -161,6 +162,8 @@ namespace storm {
 			RunOn on = type->runOn();
 			if (on.state != RunOn::any)
 				notes->push(note(e, S("on"), on.thread));
+		} else if (Package *pkg = as<Package>(entity)) {
+			notes->push(note(e, S("(package)")));
 		}
 
 		return notes;

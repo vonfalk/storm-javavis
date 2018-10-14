@@ -2,6 +2,7 @@
 #include "Package.h"
 #include "Core/StrBuf.h"
 #include "Core/Str.h"
+#include "Core/Io/Text.h"
 #include "Engine.h"
 #include "Reader.h"
 #include "Exception.h"
@@ -12,10 +13,14 @@ namespace storm {
 
 	Package::Package(Url *path) : NameSet(path->name()), pkgPath(path) {
 		engine().pkgMap()->put(pkgPath, this);
+
+		documentation = new (this) PackageDoc(this);
 	}
 
 	Package::Package(Str *name, Url *path) : NameSet(name), pkgPath(path) {
 		engine().pkgMap()->put(pkgPath, this);
+
+		documentation = new (this) PackageDoc(this);
 	}
 
 	NameLookup *Package::parent() const {
@@ -45,6 +50,9 @@ namespace storm {
 				p->setUrl(sub);
 			}
 		}
+
+		if (!documentation)
+			documentation = new (this) PackageDoc(this);
 	}
 
 	Bool Package::loadName(SimplePart *part) {
@@ -191,6 +199,28 @@ namespace storm {
 
 		return r;
 	}
+
+	/**
+	 * Documentation
+	 */
+
+	PackageDoc::PackageDoc(Package *owner) : pkg(owner) {}
+
+	Doc *PackageDoc::get() {
+		Doc *result = doc(pkg);
+
+		if (Url *url = pkg->url()) {
+			Url *file = url->push(new (this) Str(S("README")));
+			if (file->exists())
+				result->body = readAllText(file);
+		}
+
+		return result;
+	}
+
+	/**
+	 * Helpers for Storm.
+	 */
 
 	MAYBE(Package *) package(Url *path) {
 		return path->engine().package(path);

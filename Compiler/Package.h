@@ -59,6 +59,26 @@ namespace storm {
 		Package *loadPackage(Str *name);
 	};
 
+	/**
+	 * Documentation for a package.
+	 *
+	 * Looks for a file named README and uses the text in that file as documentation.
+	 */
+	class PackageDoc : public NamedDoc {
+		STORM_CLASS;
+	public:
+		// Create.
+		STORM_CTOR PackageDoc(Package *pkg);
+
+		// Generate documentation.
+		virtual Doc *STORM_FN get();
+
+	private:
+		// Owner.
+		Package *pkg;
+	};
+
+
 	// Find a package from a path.
 	MAYBE(Package *) STORM_FN package(Url *path);
 

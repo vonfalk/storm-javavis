@@ -17,7 +17,7 @@
     but the scale of the issue should be assessed first.
   - [ ] Parsing core.lang.syntax.bnf takes about 80 ms, which is a bit on the high end when compiling code...
 
-* Loose ends so far [36/66]
+* Loose ends so far [37/66]
   - [ ] Asking for a random access stream from an IStream should produce a LazyIStream if nothing better
     is available. However, this is not yet implemented!
   - [ ] When a .bnf-file includes another package, productions from there are not automatically visible,
@@ -32,8 +32,6 @@
   - [ ] The expression -1 can not be automatically casted to a float since the - operator is used rather than
     interpreting the entire thing as a numeric literal.
   - [ ] Lambda functions can not infer their proper type when being assigned to Maybe<T>.
-  - [ ] We probably want to allow creating documentation for an entire package. Possibly by creating
-    a file called 'doc.txt' or similar inside the appropriate folder.
   - [ ] Expose all function pointers the Engine knows about to Storm using a similar API to what is used now.
     This allows other languages to use "internal" features, for example, to access global variables properly.
   - [ ] Generalize the "weak cast" functionality so that new types may "overload" them. This can for example
@@ -67,6 +65,8 @@
   - [ ] Move the 'assign' declaration to being purely a decorator (ie. Foo field(Foo v) : assign)?
   - [ ] If a type has a '==' or '<' outside the type itself, the corresponding operator will not be present in
     a Handle, like '<<' at the moment.
+  - [X] We probably want to allow creating documentation for an entire package. Possibly by creating
+    a file called 'doc.txt' or similar inside the appropriate folder.
   - [X] Gradients in the UI library should prehaps have a fixed origin, so that we can draw things
     in multiple passes with the same gradient without issues... It seems like all graphic API:s are
     designed this way, perhaps for a good reason.

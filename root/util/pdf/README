@@ -1,0 +1,13 @@
+This package contains a class, PdfGraphics, that implements the interface of a Graphics object, but
+renders to PDF files. The implementation supports the entire graphics API, however, not all PDF
+readers seem to support pattern brushes, which are used if a BitmapBrush is used in a drawing.
+
+The output is not compressed in any way, meaning that the resulting PDF file becomes fairly large
+when using images. This can be solved by re-encoding the file with Ghostscript for
+example. Furthermore, any fonts used in the file are not embedded in the file, which may result in
+fonts looking different on different machines. This problem can also be solved by re-encoding the
+file using Ghostscript.
+
+Re-encoding can be done with the command:
+
+gs -dBATCH -dNOPAUSE -q -sDEVICE=pdfwrite -o new.pdf old.pdf
