@@ -112,6 +112,10 @@ namespace storm {
 			typeOf(object)->vtable()->insert(object);
 		}
 
+		bool liveObject(RootObject *object) {
+			return Gc::liveObject(object);
+		}
+
 		os::ThreadGroup &threadGroup(Engine &e) {
 			return e.threadGroup;
 		}

@@ -173,14 +173,20 @@ namespace storm {
 	 * visible to Storm.
 	 */
 	struct MpsObj {
-		union {
-			// Size of the code stored here (if tagged with a 1 in the least significant bit). This
-			// excludes the size of the metadata.
-			size_t size;
-
-			// The header of this object (if tagged with a 0 in the least significant bit).
-			const MpsHeader *header;
-		};
+		// Object information. This field contains the following data:
+		//
+		// 1: If the bit 0x1 is set, this is a code allocation, and the rest of this allocation
+		// denotes the size of the allocation, excluding the metadata.
+		//
+		// 2: If the bit 0x1 is clear, this is a regular allocation. The remainder of this field is
+		// a pointer to a MpsHeader containing information about this object.
+		//
+		// 3: If the bit 0x1 is clear, then the bit 0x2 indicates if this object is finalized. We
+		// need to be able to inform other parts of the system if certain allocations are finalized
+		// so that they may ignore finalized objects (eg. WeakSet) before we have collected them.
+		//
+		// Use IS_CODE, CODE_SIZE, OBJ_HEADER to extract the information properly.
+		size_t info;
 
 #if MPS_CHECK_MEMORY
 		// Size of this object in case the header is destroyed. This includes the size of the header and any barriers.
@@ -210,6 +216,55 @@ namespace storm {
 		};
 	};
 
+
+	/**
+	 * Extract information from 'info' in an MpsObj.
+	 */
+
+	// Is this a code allocation?
+	static inline bool objIsCode(const MpsObj *obj) {
+		return (obj->info & 0x1) != 0;
+	}
+
+	// Get the size of the code allocation. Assumes 'objIsCode' returned true.
+	static inline size_t objCodeSize(const MpsObj *obj) {
+		return obj->info & ~size_t(0x1);
+	}
+
+	// Get the header of this allocation. Assumes 'objIsCode' returned false.
+	static inline const MpsHeader *objHeader(const MpsObj *obj) {
+		return (const MpsHeader *)(obj->info & ~size_t(0x3));
+	}
+
+	// Check if this object is finalized. Assumes 'objIsCode' returned false.
+	static inline bool objIsFinalized(const MpsObj *obj) {
+		return (obj->info & size_t(0x2)) != 0;
+	}
+
+
+	/**
+	 * Set information in 'info' in an MpsObj.
+	 */
+
+	// Set the header to indicate a code allocation of 'codeSize' bytes. 'codeSize' is assumed to be
+	// rounded up to 'wordSize'.
+	static inline void objSetCode(MpsObj *obj, size_t codeSize) {
+		obj->info = codeSize | size_t(0x1);
+	}
+
+	// Set the header to indicate a regular allocation described by 'header'. Assumes 'header' is
+	// aligned to 'wordSize' and compatible with MpsHeader (eg. a single size_t, CppType...)
+	static inline void objSetHeader(MpsObj *obj, const void *header) {
+		assert((size_t(header) & size_t(0x3)) == 0, L"Nope!"); // TODO: REMOVE
+		obj->info = size_t(header);
+	}
+
+	// Mark this allocation as finalized. Assumes this is not a code allocation.
+	static inline void objSetFinalized(MpsObj *obj) {
+		obj->info |= size_t(0x2);
+	}
+
+
 #if MPS_CHECK_MEMORY
 
 	// Allocation id.
@@ -218,7 +273,7 @@ namespace storm {
 	// Dump information about an object.
 	static String objInfo(const MpsObj *o) {
 		std::wostringstream to;
-		to << L"Object " << (void *)o << L", header: " << (void *)o->header;
+		to << L"Object " << (void *)o << L", header: " << (void *)objHeader(o);
 		to << L", size " << o->totalSize << L", id: " << o->allocId << L" (of " << allocId << L")";
 		return to.str();
 	}
@@ -244,10 +299,6 @@ namespace storm {
 		o->weak.splatted = (o->weak.splatted + 0x10) | 0x01;
 	}
 
-	// Set the header of the object.
-	static inline void setHeader(mps_addr_t o, const void *to) {
-		((MpsObj *)o)->header = (MpsHeader *)to;
-	}
 
 	/**
 	 * Note: in the scanning functions below, we shall not touch any other garbage collected memory,
@@ -285,10 +336,6 @@ namespace storm {
 					+ MPS_CHECK_BYTES);
 	}
 
-	// See if an object is a code object.
-#define IS_CODE(obj) (((obj)->size & 0x1) != 0)
-#define CODE_SIZE(obj) ((obj)->size & ~size_t(0x1))
-
 	// Compute the size required for 'n' refs.
 	static inline size_t mpsSizeRefs(size_t refs) {
 		return sizeof(GcCode) - sizeof(GcCodeRef) + sizeof(GcCodeRef)*refs;
@@ -305,13 +352,13 @@ namespace storm {
 
 	// Get a pointer to the references inside a code allocation.
 	static inline GcCode *mpsRefsCode(MpsObj *obj) {
-		size_t code = CODE_SIZE(obj);
+		size_t code = objCodeSize(obj);
 		void *p = toClient(obj);
 		p = (byte *)p + code + MPS_CHECK_BYTES;
 		return (GcCode *)p;
 	}
 	static inline const GcCode *mpsRefsCode(const MpsObj *obj) {
-		size_t code = CODE_SIZE(obj);
+		size_t code = objCodeSize(obj);
 		const void *p = toClient(obj);
 		p = (const byte *)p + code + MPS_CHECK_BYTES;
 		return (const GcCode *)p;
@@ -319,12 +366,12 @@ namespace storm {
 
 	// Size of an object.
 	static inline size_t mpsSize(const MpsObj *o) {
-		if (IS_CODE(o)) {
-			size_t code = CODE_SIZE(o);
+		if (objIsCode(o)) {
+			size_t code = objCodeSize(o);
 			return mpsSizeCode(code, mpsRefsCode(o)->refCount);
 		}
 
-		const MpsHeader *h = o->header;
+		const MpsHeader *h = objHeader(o);
 
 		switch (h->type) {
 		case GcType::tFixed:
@@ -402,7 +449,7 @@ namespace storm {
 				MpsObj *o = fromClient(at);
 				MPS_VERIFY_OBJECT(o);
 
-				if (IS_CODE(o)) {
+				if (objIsCode(o)) {
 					// Scan code.
 					GcCode *c = mpsRefsCode(o);
 
@@ -418,7 +465,7 @@ namespace storm {
 					for (size_t i = 0; i < c->refCount; i++) {
 						GcCodeRef &ref = c->refs[i];
 #ifdef SLOW_DEBUG
-						dbg_assert(ref.offset < CODE_SIZE(o), L"Code offset is out of bounds!");
+						dbg_assert(ref.offset < objCodeSize(o), L"Code offset is out of bounds!");
 #endif
 						// Only some kind of references needs to be scanned.
 						if (ref.kind & 0x01) {
@@ -432,7 +479,7 @@ namespace storm {
 					code::updatePtrs(at, c);
 				} else {
 					// Scan regular objects.
-					const MpsHeader *h = o->header;
+					const MpsHeader *h = objHeader(o);
 					mps_addr_t pos = at;
 
 					switch (h->type) {
@@ -501,10 +548,10 @@ namespace storm {
 		dbg_assert(size >= headerSize + sizeof(MpsFwd1), L"Not enough space for a fwd object!");
 #endif
 		if (size <= headerSize + sizeof(MpsFwd1)) {
-			setHeader(o, &headerFwd1);
+			objSetHeader(o, &headerFwd1);
 			o->fwd1.to = to;
 		} else {
-			setHeader(o, &headerFwd);
+			objSetHeader(o, &headerFwd);
 			o->fwd.to = to;
 			o->fwd.size = size - headerSize;
 		}
@@ -519,10 +566,10 @@ namespace storm {
 		MpsObj *o = fromClient(at);
 		MPS_VERIFY_OBJECT(o);
 
-		if (IS_CODE(o))
+		if (objIsCode(o))
 			return null;
 
-		switch (o->header->type) {
+		switch (objHeader(o)->type) {
 		case mpsFwd1:
 			return o->fwd1.to;
 		case mpsFwd:
@@ -537,17 +584,17 @@ namespace storm {
 #ifdef SLOW_DEBUG
 		dbg_assert(size >= headerSize, L"Too small header!");
 #endif
+		MpsObj *o = (MpsObj *)at;
 
 		if (size <= headerSize) {
-			setHeader(at, &headerPad0);
+			objSetHeader(o, &headerPad0);
 		} else {
-			setHeader(at, &headerPad);
-			MpsObj *o = (MpsObj *)at;
+			objSetHeader(o, &headerPad);
 			o->pad.size = size - headerSize;
 		}
 
-		MPS_INIT_OBJECT((MpsObj *)at, size);
-		MPS_VERIFY_OBJECT((MpsObj *)at);
+		MPS_INIT_OBJECT(o, size);
+		MPS_VERIFY_OBJECT(o);
 	}
 
 
@@ -1114,9 +1161,10 @@ namespace storm {
 			// 1: Clear all to zero, so that we do not have any rouge pointers confusing MPS.
 			memset(memory, 0, size);
 			// 2: Set the header.
-			setHeader(memory, type);
+			MpsObj *o = (MpsObj *)memory;
+			objSetHeader(o, type);
 			// 3: Initialize any consistency-checking data.
-			MPS_INIT_OBJECT((MpsObj *)memory, size);
+			MPS_INIT_OBJECT(o, size);
 
 		} while (!mps_commit(ap, memory, size));
 
@@ -1152,9 +1200,10 @@ namespace storm {
 			// 1: Clear all to zero, so that we do not have any rouge pointers confusing MPS.
 			memset(memory, 0, size);
 			// 2: Set the header.
-			setHeader(memory, type);
+			MpsObj *o = (MpsObj *)memory;
+			objSetHeader(o, type);
 			// 3: Initialize any consistency-checking data.
-			MPS_INIT_OBJECT((MpsObj *)memory, size);
+			MPS_INIT_OBJECT(o, size);
 
 		} while (!mps_commit(typeAllocPoint, memory, size));
 
@@ -1184,11 +1233,12 @@ namespace storm {
 			// 1: Clear all to zero, so that we do not have any rouge pointers confusing MPS.
 			memset(memory, 0, size);
 			// 2: Set the header.
-			setHeader(memory, type);
+			MpsObj *o = (MpsObj *)memory;
+			objSetHeader(o, type);
 			// 3: Set size.
-			((MpsObj *)memory)->count = count;
+			o->count = count;
 			// 4: Initialize any consistency-checking data.
-			MPS_INIT_OBJECT((MpsObj *)memory, size);
+			MPS_INIT_OBJECT(o, size);
 
 		} while (!mps_commit(ioAllocPoint, memory, size));
 
@@ -1215,11 +1265,12 @@ namespace storm {
 			// 1: Clear all to zero, so that we do not have any rouge pointers confusing MPS.
 			memset(memory, 0, size);
 			// 2: Set the header.
-			setHeader(memory, type);
+			MpsObj *o = (MpsObj *)memory;
+			objSetHeader(o, type);
 			// 3: Set size.
-			((MpsObj *)memory)->count = elements;
+			o->count = elements;
 			// 4: Initialize any consistency-checking data.
-			MPS_INIT_OBJECT((MpsObj *)memory, size);
+			MPS_INIT_OBJECT(o, size);
 
 		} while (!mps_commit(ap, memory, size));
 
@@ -1251,12 +1302,13 @@ namespace storm {
 			// 1: Clear all to zero.
 			memset(memory, 0, size);
 			// 2: Set the header.
-			setHeader(memory, type);
+			MpsObj *o = (MpsObj *)memory;
+			objSetHeader(o, type);
 			// 3: Set size (tagged).
-			((MpsObj *)memory)->weak.count = (elements << 1) | 0x1;
-			((MpsObj *)memory)->weak.splatted = 0x1;
+			o->weak.count = (elements << 1) | 0x1;
+			o->weak.splatted = 0x1;
 			// 4: Initialize any consistency-checking data.
-			MPS_INIT_OBJECT((MpsObj *)memory, size);
+			MPS_INIT_OBJECT(o, size);
 
 		} while (!mps_commit(ap, memory, size));
 
@@ -1379,10 +1431,10 @@ namespace storm {
 
 	const GcType *Gc::typeOf(const void *mem) {
 		const MpsObj *o = fromClient(mem);
-		if (IS_CODE(o))
+		if (objIsCode(o))
 			return null;
 		else
-			return &o->header->obj;
+			return &(objHeader(o)->obj);
 	}
 
 	void Gc::switchType(void *mem, const GcType *type) {
@@ -1391,7 +1443,7 @@ namespace storm {
 
 		// Seems reasonable. Switch headers!
 		void *t = (byte *)mem - headerSize;
-		setHeader(t, type);
+		objSetHeader((MpsObj *)t, type);
 	}
 
 	void Gc::checkFinalizers() {
@@ -1430,11 +1482,14 @@ namespace storm {
 			// A code allocation. Call the finalizer over in the Code lib.
 			code::finalize(obj);
 		} else if (t->finalizer) {
-			// An object might not yet be initialized...
+			// If it is a tFixedObject, make sure it has been properly initialized before we're trying to destroy it!
 			if ((t->kind != GcType::tFixedObj) || (vtable::from((RootObject *)obj) != null)) {
 				typedef void (*Fn)(void *);
 				Fn fn = (Fn)t->finalizer;
 				(*fn)(obj);
+
+				// Mark the object as destroyed so that we can detect it later.
+				objSetFinalized(fromClient(obj));
 			}
 		}
 
@@ -1446,6 +1501,11 @@ namespace storm {
 		// obj = (char *)obj - headerSize;
 		// size_t size = mpsSize(obj);
 		// mpsMakePad(obj, size);
+	}
+
+	bool Gc::liveObject(RootObject *o) {
+		// See if we finalized the object. If so, it is not live anymore.
+		return o && !objIsFinalized(fromClient(o));
 	}
 
 	void *Gc::allocCode(size_t code, size_t refs) {
@@ -1465,7 +1525,7 @@ namespace storm {
 			memset(memory, 0, size);
 			// 2: Set the size.
 			MpsObj *obj = (MpsObj *)memory;
-			obj->size = code | 0x1;
+			objSetCode(obj, code);
 			// 3: Set self pointer and # of refs.
 			GcCode *codeRefs = mpsRefsCode(obj);
 			codeRefs->reserved = (byte *)memory + headerSize;
@@ -1490,8 +1550,8 @@ namespace storm {
 
 	size_t Gc::codeSize(const void *alloc) {
 		const MpsObj *o = fromClient(alloc);
-		if (IS_CODE(o)) {
-			return CODE_SIZE(o);
+		if (objIsCode(o)) {
+			return objCodeSize(o);
 		} else {
 			dbg_assert(false, L"Attempting to get the size of a non-code block.");
 			return 0;
@@ -1606,7 +1666,7 @@ namespace storm {
 		size_t size = obj->totalSize;
 		checkBarrier(obj, (const byte *)obj + size - MPS_CHECK_BYTES, MPS_CHECK_BYTES, MPS_FOOTER_DATA, L"footer");
 
-		if (IS_CODE(obj)) {
+		if (objIsCode(obj)) {
 			const GcCode *c = mpsRefsCode(obj);
 			checkBarrier(obj, (const byte *)c - MPS_CHECK_BYTES, MPS_CHECK_BYTES, MPS_MIDDLE_DATA, L"middle");
 
@@ -1617,10 +1677,10 @@ namespace storm {
 	}
 
 	static bool hasFooter(const MpsObj *obj) {
-		if (IS_CODE(obj))
+		if (objIsCode(obj))
 			return true;
 
-		switch (obj->header->type) {
+		switch (objHeader(obj)->type) {
 		case GcType::tFixed:
 		case GcType::tFixedObj:
 		case GcType::tType:
@@ -1653,18 +1713,18 @@ namespace storm {
 		memset(obj->barrier, MPS_HEADER_DATA, MPS_CHECK_BYTES);
 		if (hasFooter(obj))
 			memset((byte *)obj + size - MPS_CHECK_BYTES, MPS_FOOTER_DATA, MPS_CHECK_BYTES);
-		if (IS_CODE(obj))
+		if (objIsCode(obj))
 			memset((byte *)mpsRefsCode(obj) - MPS_CHECK_BYTES, MPS_MIDDLE_DATA, MPS_CHECK_BYTES);
 	}
 
 	void Gc::checkPoolMemory(const void *object, bool recursive) {
 		object = (const byte *)object - headerSize;
 		const MpsObj *obj = (const MpsObj *)object;
-		const MpsHeader *header = obj->header;
+		const MpsHeader *header = objHeader(obj);
 
 		checkHeader(obj);
 
-		if (IS_CODE(obj)) {
+		if (objIsCode(obj)) {
 			checkSize(obj);
 			if (hasFooter(obj))
 				checkFooter(obj);

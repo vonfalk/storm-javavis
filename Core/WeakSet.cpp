@@ -473,8 +473,15 @@ namespace storm {
 
 		while (data != null && pos < data->count()) {
 			nat last = pos++;
-			if (data->v[last])
-				return data->v[last];
+
+			// Make sure the object is not pulled from under our feet.
+			TObject *obj = atomicRead(data->v[last]);
+
+			// See if the object exists, and if it has been finalized but not yet
+			// collected. Otherwise we might return a reference to a finalized object, which will
+			// likely cause crashes.
+			if (obj && runtime::liveObject(obj))
+				return obj;
 		}
 
 		// At the end.

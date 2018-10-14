@@ -38,6 +38,7 @@ namespace storm {
 		GcCode *(*codeRefs)(void *code);
 		void (*codeUpdatePtrs)(void *code);
 		void (*setVTable)(RootObject *object);
+		bool (*liveObject)(RootObject *object);
 		os::ThreadGroup &(*threadGroup)(Engine &e);
 		util::Lock &(*threadLock)(Engine &e);
 		GcWatch *(*createWatch)(Engine &e);

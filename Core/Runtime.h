@@ -104,6 +104,11 @@ namespace storm {
 		// Re-set the vtable of an object to what it should be.
 		void setVTable(RootObject *object);
 
+		// Check if the current TObject is a live object. Objects may be finalized by the GC before
+		// they are collected, so we shall consider them as "nonexistent" during that time. This is
+		// relevant in the implementation of containers like WeakSet.
+		bool liveObject(RootObject *object);
+
 		// Get the thread group to use for all threads.
 		os::ThreadGroup &threadGroup(Engine &e);
 

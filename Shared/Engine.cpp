@@ -157,6 +157,10 @@ namespace storm {
 			(*fwd.setVTable)(object);
 		}
 
+		bool liveObject(RootObject *object) {
+			return (*fwd.liveObject)(object);
+		}
+
 		os::ThreadGroup &threadGroup(Engine &e) {
 			return (*fwd.threadGroup)(e);
 		}

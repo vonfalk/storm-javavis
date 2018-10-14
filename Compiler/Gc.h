@@ -106,6 +106,13 @@ namespace storm {
 		// Allocate an array of weak pointers.
 		void *allocWeakArray(size_t count);
 
+		// See if the object is live. An object is considered live until it has been
+		// finalized. Finalized objects may not be collected immediately after they have been
+		// finalized, and therefore they may still appear inside weak sets etc. after that. The GC
+		// implementation marks such objects, so that it is possible to see if they are finalized.
+		static bool liveObject(RootObject *obj);
+
+
 		/**
 		 * Notify the GC that we're trying to allocate a fairly large data structure from this
 		 * thread in the near future, most of which will be dead right after the work is
@@ -146,6 +153,7 @@ namespace storm {
 		// further.
 		static void switchType(void *mem, const GcType *to);
 
+
 		/**
 		 * Allocation of code storage. Code allocations are slightly more complex than regular data
 		 * allocations. First and foremost, this memory needs to be executable, but it also contains
@@ -171,6 +179,7 @@ namespace storm {
 
 		// Is this pointer allocated by the GC? May return false positives.
 		bool isCodeAlloc(void *ptr);
+
 
 		/**
 		 * Iterate through all objects on the heap.
@@ -205,6 +214,7 @@ namespace storm {
 		 */
 
 		GcWatch *createWatch();
+
 
 		/**
 		 * Debugging/testing.
