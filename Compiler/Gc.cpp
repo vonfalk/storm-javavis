@@ -255,7 +255,6 @@ namespace storm {
 	// Set the header to indicate a regular allocation described by 'header'. Assumes 'header' is
 	// aligned to 'wordSize' and compatible with MpsHeader (eg. a single size_t, CppType...)
 	static inline void objSetHeader(MpsObj *obj, const void *header) {
-		assert((size_t(header) & size_t(0x3)) == 0, L"Nope!"); // TODO: REMOVE
 		obj->info = size_t(header);
 	}
 
