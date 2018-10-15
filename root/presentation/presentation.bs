@@ -1,0 +1,50 @@
+use ui;
+use core:geometry;
+use graphics;
+
+/**
+ * A presentation.
+ *
+ * A presentation consists of a number of Slides, each of which contains a number of Elements to be
+ * laid out in a certain way and displayed on the screen. Each slide may contain animations that
+ * alter the state or layout of elements on the screen.
+ *
+ * In addition to the slides, the Presentation object contains global settings and resources for the
+ * presentation in its entirety, such as background color, page numbering etc.
+ */
+class Presentation on Render {
+	// Title of the presentation.
+	Str title;
+
+	// Size of the slides.
+	Size size;
+
+	// All slides in the presentation.
+	Slide[] slides;
+
+	// The background.
+	private Element myBackground;
+
+	// Create.
+	init(Str title) {
+		Size size(1024, 768);
+
+		init() {
+			title = title;
+			size = size;
+			myBackground = SolidElement(SolidBrush(white));
+		}
+
+		myBackground.pos = Rect(size);
+	}
+
+	// An element used to paint the background.
+	Element background() { myBackground; }
+
+	// Set the background element.
+	assign background(Element e) {
+		myBackground = e;
+		myBackground.pos = Rect(size);
+	}
+
+}

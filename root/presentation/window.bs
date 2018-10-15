@@ -1,0 +1,80 @@
+use ui;
+use core:geometry;
+use graphics;
+
+/**
+ * The main presentation window.
+ */
+class Presenter extends Frame {
+	// Painter.
+	private PresentPainter render;
+
+	// Create.
+	init(Presentation p) {
+		init(p.title, Size(1024, 768)) {
+			render(p);
+		}
+
+		cursorVisible = false;
+		painter = render;
+
+		create();
+	}
+
+	// Handle keypresses.
+	Bool onKey(Bool pressed, Key key, Modifiers modifiers) {
+		if (!pressed)
+			return false;
+
+		if (modifiers == Modifiers:none) {
+			if (key == Key:f) {
+				fullscreen = !fullscreen;
+			} else if (key == Key:esc | key == Key:q) {
+				close();
+			}
+		}
+
+		false;
+	}
+}
+
+/**
+ * Rendering of presentations.
+ */
+class PresentPainter extends Painter {
+	// Current presentation.
+	private Presentation p;
+
+	// Create.
+	init(Presentation p) {
+		init() {
+			p = p;
+		}
+
+		bgColor = black;
+	}
+
+	// Draw things!
+	Bool render(Size size, Graphics g) {
+		// Compute where the contents are supposed to be.
+		Size content = p.size;
+		Float scale = min(size.w / content.w, size.h / content.h);
+		Point move = (size - content*scale) / 2;
+		g.transform = scale(scale) * translate(move);
+		g.push(Rect(content));
+
+		p.background.draw(g);
+
+		// Draw the current slide.
+
+		g.pop();
+		false;
+	}
+}
+
+
+// Helper for showing a presentation.
+void show(Presentation p) on Ui {
+	Presenter w(p);
+	w.waitForClose();
+}

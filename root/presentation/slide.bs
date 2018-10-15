@@ -1,0 +1,27 @@
+use ui;
+
+/**
+ * A slide in a presentation.
+ *
+ * Contains a number of elements laid out according to the current layout.
+ *
+ * A slide is scaled to occupy 1024x768 virtual pixels regardless of the actual size of the output.
+ */
+class Slide on Render {
+	// All elements in this slide.
+	private Element[] elements;
+
+	// The layout for this slide.
+	private Layout layout;
+
+	// Draw this slide. 'animation' is the animation number currently being played, and 'time' is in
+	// the range 0-1 where 1 is complete. Animation number 0 is the intro animation of the entire
+	// slide.
+	void draw(Graphics g, Nat animation, Float time) {
+		// TODO: Consider animations!
+
+		for (element in elements) {
+			element.draw(g, 1);
+		}
+	}
+}

@@ -1,0 +1,23 @@
+use ui;
+use core:geometry;
+
+/**
+ * An elements that simply fills its assigned rectangle with a brush.
+ */
+class SolidElement extends Element {
+	// The color we're using to fill the screen.
+	Brush fill;
+
+	// Create.
+	init(Brush fill) {
+		init() { fill = fill; }
+	}
+
+	// Minimum size.
+	Size minSize() { Size(); }
+
+	// Draw.
+	void draw(Graphics g) {
+		g.fill(pos, fill);
+	}
+}

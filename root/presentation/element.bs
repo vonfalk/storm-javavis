@@ -1,0 +1,38 @@
+use ui;
+use core:geometry;
+
+/**
+ * An element on a slide.
+ */
+class Element on Render {
+	// Current position. Generally set by the layout.
+	private Rect myPos;
+
+	// Get/set the position.
+	Rect pos() : final { myPos; }
+	assign pos(Rect p) : final { myPos = p; }
+
+	// Get the minimum size of this element.
+	Size minSize() : abstract;
+
+	// Draw this element at the location indicated by 'pos'.
+	// TODO: We could add a parameter here that is used to denote the state of some kind
+	// of inherent animation, such as displaying single lines of text.
+	void draw(Graphics g) : abstract;
+}
+
+
+/**
+ * Connect elements to the layout system.
+ */
+private class ElementWrap extends layout:Component {
+	Element control;
+
+	init(Element e) {
+		init() { control = e; }
+	}
+
+	Rect pos() { control.pos; }
+	assign pos(Rect p) { control.pos = p; }
+	Size minSize() { control.minSize; }
+}

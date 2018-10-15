@@ -1,0 +1,12 @@
+use ui;
+use core:geometry;
+use graphics;
+
+// Main entry-point for testing.
+void test() {
+	Presentation p("Test presentation");
+
+	p.background = SolidElement(RadialGradient(blue, white, Point(p.size / 2), 500));
+
+	p.show();
+}
