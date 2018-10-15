@@ -41,14 +41,14 @@ namespace gui {
 #endif
 
 	static const KeyEntry keymap[] = {
-		KEYMAP(lShift, VK_LSHIFT, GDK_KEY_Shift_L),
-		KEYMAP(lControl, VK_LCONTROL, GDK_KEY_Control_L),
-		KEYMAP(lAlt, VK_LMENU, GDK_KEY_Alt_L),
-		KEYMAP(lSuper, VK_LWIN, GDK_KEY_Super_L),
-		KEYMAP(rShift, VK_RSHIFT, GDK_KEY_Shift_R),
-		KEYMAP(rControl, VK_RCONTROL, GDK_KEY_Control_R),
-		KEYMAP(rAlt, VK_RMENU, GDK_KEY_Alt_R),
-		KEYMAP(rSuper, VK_RWIN, GDK_KEY_Super_R),
+		KEYMAP(shift, VK_SHIFT, GDK_KEY_Shift_L),
+		KEYMAP(control, VK_CONTROL, GDK_KEY_Control_L),
+		KEYMAP(alt, VK_MENU, GDK_KEY_Alt_L),
+		KEYMAP(super, VK_LWIN, GDK_KEY_Super_L),
+		KEYMAP(shift, VK_SHIFT, GDK_KEY_Shift_R),
+		KEYMAP(control, VK_CONTROL, GDK_KEY_Control_R),
+		KEYMAP(alt, VK_MENU, GDK_KEY_Alt_R),
+		KEYMAP(super, VK_RWIN, GDK_KEY_Super_R),
 		KEYMAP(menu, VK_APPS, GDK_KEY_Menu),
 		KEYMAP(esc, VK_ESCAPE, GDK_KEY_Escape),
 		KEYMAP(backspace, VK_BACK, GDK_KEY_BackSpace),

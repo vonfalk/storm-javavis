@@ -540,7 +540,7 @@ SClassWrapItem[0] => classFn(owner, pos, name, result, params, body) :
 SClassWrapItem[0] => classAbstractFn(owner, pos, name, result, params, options) :
     SType result, SFnDeclName name #fnName, "(", SFormals params, ")", SClassOptions@ options, ";";
 SClassWrapItem[5] => classAssign(owner, pos, name, params, body) :
-    "assign" #keyword, SFnDeclName name #fnName, "(", SFormals params, ")", "{"[, SFunctionBody@ body,]+ "}";
+    "assign" #keyword, SFnDeclName name #fnName, "(", SFormals params, ")", SClassOptions(owner, me), "{"[, SFunctionBody@ body,]+ "}";
 SClassWrapItem[5] => classCtor(owner, pos, params, body) :
     "init" #keyword, "(", SCtorParams params, ")", "{"[, SCtorBody@ body,]+ "}";
 SClassWrapItem[5] => classCastCtor(owner, pos, params, body) :

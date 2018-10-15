@@ -31,8 +31,7 @@ namespace gui {
 			firstControl = 0xD800,
 
 			// Modifiers etc.
-			lShift, lControl, lAlt, lSuper,
-			rShift, rControl, rAlt, rSuper,
+			shift, control, alt, super,
 			menu,
 			esc,
 			backspace,
