@@ -66,7 +66,7 @@ namespace storm {
 				if (thread) {
 					NamedThread *t = as<NamedThread>(scope.find(thread));
 					if (!t)
-						throw SyntaxError(declared, L"Can not find the thread " + ::toS(name) + L".");
+						throw SyntaxError(declared, L"Can not find the thread " + ::toS(thread) + L".");
 
 					setThread(t);
 					thread = null;
