@@ -1,0 +1,49 @@
+use core:lang;
+use lang:bs;
+use lang:bs:macro;
+
+/**
+ * Functions used by the syntax.
+ */
+
+
+/**
+ * A presentation declaration.
+ */
+package class PresDecl extends NamedDecl {
+	SStr name;
+	Str title;
+	SPresCont content;
+
+	init(SStr name, Str title, SPresCont content) {
+		init() {
+			name = name;
+			title = title;
+			content = content;
+		}
+	}
+
+	// Create a named entity.
+	Named doCreate() {
+		PresFn(name, title, content);
+	}
+}
+
+
+/**
+ * A function that declares a presentation.
+ */
+package class PresFn extends BSRawFn {
+	Str title;
+	SPresCont content;
+
+	init(SStr name, Str title, SPresCont content) {
+		init(Value(named{Presentation}), name, ValParam[], named{ui:Render}) {
+			title = title;
+			content = content;
+		}
+	}
+
+	// Create the function's body.
+	// FnBody createBody() {}
+}

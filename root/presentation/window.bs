@@ -63,9 +63,7 @@ class PresentPainter extends Painter {
 		g.transform = scale(scale) * translate(move);
 		g.push(Rect(content));
 
-		p.background.draw(g);
-
-		// Draw the current slide.
+		p.draw(g);
 
 		g.pop();
 		false;

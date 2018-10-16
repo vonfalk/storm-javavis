@@ -1,4 +1,5 @@
 use ui;
+use layout;
 
 /**
  * A slide in a presentation.
@@ -9,7 +10,7 @@ use ui;
  */
 class Slide on Render {
 	// All elements in this slide.
-	private Element[] elements;
+	Element[] elements;
 
 	// The layout for this slide.
 	private Layout layout;
@@ -21,7 +22,7 @@ class Slide on Render {
 		// TODO: Consider animations!
 
 		for (element in elements) {
-			element.draw(g, 1);
+			element.draw(g);
 		}
 	}
 }

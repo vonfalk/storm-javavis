@@ -311,6 +311,19 @@ SIntFmt => setFill(pos, item, ch) : "f" #keyword - "." ch; // Note: does not sup
 SIntFmt => setHex(pos, item) : "x" #keyword;
 
 ////////////////////////////////////////////////////////////////////
+// Dumb string literals (for use in other languages or in cases
+// where we don't have a proper context).
+////////////////////////////////////////////////////////////////////
+
+Str SDumbString() #string;
+SDumbString => r : "\"" - (SDumbI) r - "\"";
+
+void SDumbI();
+SDumbI : ;
+SDumbI : "[^\"\n]*" - SDumbI;
+SDumbI : "\\." - SDumbI;
+
+////////////////////////////////////////////////////////////////////
 // Multiline string literals.
 ////////////////////////////////////////////////////////////////////
 

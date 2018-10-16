@@ -1,0 +1,28 @@
+use core.lang;
+use lang.bs;
+use layout;
+
+// TODO: Export 'layout'.
+
+
+// Borrow the low-level syntax from Basic Storm.
+delimiter = SDelimiter;
+
+// Entry point to the grammar: declare a presentation.
+SPlainFileItem => PresDecl(name, title, cont) : "presentation" #keyword, SName name #typeName, SDumbString title, "{" [, SPresCont @cont,]+ "}";
+
+// Contents of a presentation block...
+void SPresCont(Block block);
+SPresCont : (SPresStmt(block),)*;
+
+// either regular Basic Storm statements, or our special ones.
+void SPresStmt(Block block);
+SPresStmt : SStmt(block);
+SPresStmt : "slide " #keyword, (SName name, )? SPresLayout(block);
+
+// Our layout is a bit special. We always have a specific root element in the layout (border layout for margins).
+void SPresLayout(Block block);
+SPresLayout : "{" [, SLayoutContent(block), ]+ "}";
+
+// Extend the syntax of the layout to allow type declarations.
+SLayoutItem : SType type, SName name #varName, ("(", SParamList(block.block) params, ")",)? "{" [, SLayoutContent(me),]+ "}";

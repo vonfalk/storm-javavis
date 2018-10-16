@@ -47,4 +47,13 @@ class Presentation on Render {
 		myBackground.pos = Rect(size);
 	}
 
+	// Draw the presentation in its current state. Assumes 'g' has been setup to match the slide
+	// size.
+	void draw(Graphics g) {
+		background.draw(g);
+
+		if (slides.any)
+			slides.first.draw(g, 0, 0);
+	}
+
 }

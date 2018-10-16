@@ -1,5 +1,6 @@
 use ui;
 use core:geometry;
+use graphics;
 
 /**
  * An elements that simply fills its assigned rectangle with a brush.
@@ -13,11 +14,57 @@ class SolidElement extends Element {
 		init() { fill = fill; }
 	}
 
+	// Create, select a solid color.
+	init(Color color) {
+		init() { fill = SolidBrush(color); }
+	}
+
 	// Minimum size.
 	Size minSize() { Size(); }
 
 	// Draw.
 	void draw(Graphics g) {
 		g.fill(pos, fill);
+	}
+}
+
+
+/**
+ * An element that displays text. Useful for headings etc.
+ *
+ * Text is not re-flowed to fit the container, and the text will be centered horizontally in the
+ * given space.
+ */
+class TextElement extends Element {
+	// Pre-formatted text.
+	Text text;
+
+	// The color used to fill the text.
+	Brush brush;
+
+	// Create.
+	init(Str text, Font f, Brush brush) {
+		init() {
+			text(text, f);
+			brush = brush;
+		}
+	}
+
+	// Create, specifying a solid color.
+	init(Str text, Font f, Color color) {
+		init() {
+			text(text, f);
+			brush = SolidBrush(color);
+		}
+	}
+
+	// Minimum size.
+	Size minSize() { text.size; }
+
+	// Draw.
+	void draw(Graphics g) {
+		var p = pos;
+		Point center((p.size.w - text.size.w) / 2, 0);
+		g.draw(text, brush, p.p0 + center);
 	}
 }
