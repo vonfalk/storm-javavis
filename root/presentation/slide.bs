@@ -1,5 +1,6 @@
 use ui;
 use layout;
+use geometry;
 
 /**
  * A slide in a presentation.
@@ -15,6 +16,25 @@ class Slide on Render {
 	// The layout for this slide.
 	private Layout layout;
 
+	// Create without a layout.
+	init() {
+		init() {}
+	}
+
+	// Create, providing a layout. Traverses the layout to find all elements.
+	init(Layout layout) {
+		init() {
+			layout = layout;
+		}
+
+		layout.findAll(&this.addElement);
+	}
+
+	// Called when we're added to the presentation so that we get a chance to perform layout.
+	package void added(Presentation to) {
+		layout.pos(Rect(to.size));
+	}
+
 	// Draw this slide. 'animation' is the animation number currently being played, and 'time' is in
 	// the range 0-1 where 1 is complete. Animation number 0 is the intro animation of the entire
 	// slide.
@@ -23,6 +43,14 @@ class Slide on Render {
 
 		for (element in elements) {
 			element.draw(g);
+		}
+	}
+
+private:
+	// Add an element if we know about it.
+	void addElement(Component c) {
+		if (c as ElementWrap) {
+			elements << c.control;
 		}
 	}
 }

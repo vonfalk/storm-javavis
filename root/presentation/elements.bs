@@ -5,7 +5,7 @@ use graphics;
 /**
  * An elements that simply fills its assigned rectangle with a brush.
  */
-class SolidElement extends Element {
+class SolidFill extends Element {
 	// The color we're using to fill the screen.
 	Brush fill;
 
@@ -35,7 +35,7 @@ class SolidElement extends Element {
  * Text is not re-flowed to fit the container, and the text will be centered horizontally in the
  * given space.
  */
-class TextElement extends Element {
+class Heading extends Element {
 	// Pre-formatted text.
 	Text text;
 

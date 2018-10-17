@@ -31,11 +31,16 @@ class Layout extends Component {
 	}
 
 	// Re-compute the layout here.
-	void layout() {}
+	void layout() : abstract;
 
 	// Add a child to this layout.
 	Info add(Component child) {
 		Info();
+	}
+
+	// Make sure derived classes override 'findAll'. We provide a body so that it is callable as super:findAll().
+	void findAll(fn(Component)->void fn) : abstract {
+		super:findAll(fn);
 	}
 }
 
@@ -85,6 +90,13 @@ class Border extends Layout {
 		p.p1 -= border;
 
 		c.pos = p;
+	}
+
+	// Traverse.
+	void findAll(fn(Component)->void fn) : override {
+		super:findAll(fn);
+		if (child)
+			child.findAll(fn);
 	}
 
 }

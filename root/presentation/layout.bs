@@ -1,0 +1,17 @@
+use layout;
+
+/**
+ * Custom layouts that are useful when creating presentations.
+ */
+
+
+/**
+ * Custom root element. Adds a border, but a different size than layout:Border.
+ */
+class SlideBorder extends layout:Border {
+	init(Presentation p) {
+		init() {}
+
+		border = p.border;
+	}
+}

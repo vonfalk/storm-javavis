@@ -121,16 +121,24 @@ class Grid extends Layout {
 	void layout() {
 		update();
 
+		Point offset = pos.p0;
 		Size me = pos.size;
 
-		var row = toOffsets(adjust(rowMin(), border.h, me.h, rowWeights), border.h);
-		var col = toOffsets(adjust(colMin(), border.w, me.w, colWeights), border.w);
+		var row = toOffsets(adjust(rowMin(), border.h, me.h, rowWeights), offset.y, border.h);
+		var col = toOffsets(adjust(colMin(), border.w, me.w, colWeights), offset.x, border.w);
 
 		for (c in children) {
 			layout(c, row, col);
 		}
 	}
 
+	// Traverse.
+	void findAll(fn(Component)->void fn) : override {
+		super:findAll(fn);
+		for (c in children) {
+			c.component.findAll(fn);
+		}
+	}
 
 private:
 	/**
@@ -294,10 +302,10 @@ private:
 	}
 
 	// Convert to offsets.
-	Float[] toOffsets(Float[] elems, Float border) {
+	Float[] toOffsets(Float[] elems, Float offset, Float border) {
 		Float[] result;
 		result.reserve(elems.count + 1);
-		Float sum = border;
+		Float sum = offset;
 		for (x in elems) {
 			result << sum;
 			sum += x + border;

@@ -25,7 +25,7 @@ class Element on Render {
 /**
  * Connect elements to the layout system.
  */
-private class ElementWrap extends layout:Component {
+package class ElementWrap extends layout:Component {
 	Element control;
 
 	init(Element e) {
@@ -35,4 +35,9 @@ private class ElementWrap extends layout:Component {
 	Rect pos() { control.pos; }
 	assign pos(Rect p) { control.pos = p; }
 	Size minSize() { control.minSize; }
+}
+
+// Tell the layout how to wrap things.
+ElementWrap component(Element e) {
+	ElementWrap(e);
 }

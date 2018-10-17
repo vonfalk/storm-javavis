@@ -9,20 +9,16 @@ use layout;
 delimiter = SDelimiter;
 
 // Entry point to the grammar: declare a presentation.
-SPlainFileItem => PresDecl(name, title, cont) : "presentation" #keyword, SName name #typeName, SDumbString title, "{" [, SPresCont @cont,]+ "}";
+SPlainFileItem => PresDecl(name, title, env, cont) : "presentation" #keyword, SName name #typeName, SDumbString title, "{" [, SPresCont @cont,]+ "}";
 
 // Contents of a presentation block...
-void SPresCont(Block block);
-SPresCont : (SPresStmt(block),)*;
+void SPresCont(ExprBlock me);
+SPresCont : (SPresStmt(me) -> add,)*;
 
 // either regular Basic Storm statements, or our special ones.
-void SPresStmt(Block block);
-SPresStmt : SStmt(block);
-SPresStmt : "slide " #keyword, (SName name, )? SPresLayout(block);
-
-// Our layout is a bit special. We always have a specific root element in the layout (border layout for margins).
-void SPresLayout(Block block);
-SPresLayout : "{" [, SLayoutContent(block), ]+ "}";
+Expr SPresStmt(Block block);
+SPresStmt => e : SStmt(block) e;
+SPresStmt => slideLayout(block, layout, name) : (SName name, "=", )? "slide " #keyword, SLayoutRoot(block) layout;
 
 // Extend the syntax of the layout to allow type declarations.
-SLayoutItem : SType type, SName name #varName, ("(", SParamList(block.block) params, ")",)? "{" [, SLayoutContent(me),]+ "}";
+// SLayoutItem : SType type, SName name #varName, ("(", SParamList(block.block) params, ")",)? "{" [, SLayoutContent(me),]+ "}";

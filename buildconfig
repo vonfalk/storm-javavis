@@ -11,6 +11,7 @@ Main -a -f presentation.test.test
 #Main -a -r ../root/ -f test.ui.dialog
 #Main -a -r ../root/ -f test.ui.overlay
 #Main -a -r ../root/ -f test.layout.main
+#Main -a -f test.layout.gridTest
 #Main -a -r ../root/ -f test.ui.images
 
 #UI while running intensive memory allocations in the background.

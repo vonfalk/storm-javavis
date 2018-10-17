@@ -1,6 +1,7 @@
 use core:lang;
 use lang:bs;
 use lang:bs:macro;
+use layout;
 
 /**
  * Functions used by the syntax.
@@ -13,19 +14,21 @@ use lang:bs:macro;
 package class PresDecl extends NamedDecl {
 	SStr name;
 	Str title;
+	Scope scope;
 	SPresCont content;
 
-	init(SStr name, Str title, SPresCont content) {
+	init(SStr name, Str title, Scope scope, SPresCont content) {
 		init() {
 			name = name;
 			title = title;
+			scope = scope;
 			content = content;
 		}
 	}
 
 	// Create a named entity.
 	Named doCreate() {
-		PresFn(name, title, content);
+		PresFn(name, title, scope, content);
 	}
 }
 
@@ -35,15 +38,51 @@ package class PresDecl extends NamedDecl {
  */
 package class PresFn extends BSRawFn {
 	Str title;
+	Scope scope;
 	SPresCont content;
 
-	init(SStr name, Str title, SPresCont content) {
+	init(SStr name, Str title, Scope scope, SPresCont content) {
 		init(Value(named{Presentation}), name, ValParam[], named{ui:Render}) {
 			title = title;
+			scope = scope;
 			content = content;
 		}
 	}
 
 	// Create the function's body.
-	// FnBody createBody() {}
+	FnBody createBody() {
+		FnBody body(this, scope);
+
+		// Create a presentation in a variable named 'this'.
+		Var thisVar(body, Value(named{Presentation}), SStr("this"), Actuals(strConstant(SStr(title))));
+		body.add(thisVar);
+
+		content.transform(body);
+
+		// Return the presentation.
+		body.add(LocalVarAccess(SrcPos(), thisVar.var));
+
+		body;
+	}
+}
+
+
+// Apply the slide layout. Also: jam it inside a SlideBorder layout.
+Expr slideLayout(Block inside, LayoutRoot layout, SStr? name) {
+	var create = pattern (inside) {
+		presentation:SlideBorder layout(this);
+		layout.add(${layout.block});
+
+		presentation:Slide slide(layout);
+		this.add(slide);
+		slide;
+	};
+
+	if (name) {
+		// If we have a name, we want to create a variable!
+		Var(inside, name, create);
+	} else {
+		// Otherwise, we just execute the statements.
+		create;
+	}
 }

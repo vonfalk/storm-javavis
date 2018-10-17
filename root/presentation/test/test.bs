@@ -7,34 +7,21 @@ use layout;
 presentation Test "Test presentation" {
 	Font font("Arial", 32);
 
-	this.background = SolidElement(blue);
+	this.background = SolidFill(blue);
 
-	slide {
-		Text {}
+	slide Grid {
+	expandCol: 0;
+	expandCol: 1;
+	expandRow: 1;
+		Heading("Neat colored boxes!", font, black) { colspan: 2; }
+		nextLine;
+		SolidFill(RadialGradient(red, white, Point(320, 240), 300)) {}
+		SolidFill(RadialGradient(green, white, Point(320, 240), 300)) {}
 	}
 }
 
 
 // Main entry-point for testing.
 void test() {
-	doTest();
-}
-
-void doTest() on Render {
-	Presentation p("Test presentation");
-
-	p.background = SolidElement(RadialGradient(blue, white, Point(p.size / 2), 500));
-
-	Font font("Arial", 32);
-
-	Slide s;
-	s.elements << {
-		TextElement e("Hello!", font, black);
-		e.pos = Rect(Size(1024, 768));
-		e;
-	};
-
-	p.slides << s;
-
-	p.show();
+	Test.show();
 }

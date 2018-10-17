@@ -19,20 +19,25 @@ class Presentation on Render {
 	// Size of the slides.
 	Size size;
 
+	// Border around slides.
+	Size border;
+
 	// All slides in the presentation.
-	Slide[] slides;
+	private Slide[] slides;
 
 	// The background.
 	private Element myBackground;
 
 	// Create.
 	init(Str title) {
-		Size size(1024, 768);
+		Size size(640, 480);
+		Size border(10, 10);
 
 		init() {
 			title = title;
 			size = size;
-			myBackground = SolidElement(SolidBrush(white));
+			border = border;
+			myBackground = SolidFill(white);
 		}
 
 		myBackground.pos = Rect(size);
@@ -45,6 +50,12 @@ class Presentation on Render {
 	assign background(Element e) {
 		myBackground = e;
 		myBackground.pos = Rect(size);
+	}
+
+	// Add a slide.
+	void add(Slide s) {
+		slides << s;
+		s.added(this);
 	}
 
 	// Draw the presentation in its current state. Assumes 'g' has been setup to match the slide
