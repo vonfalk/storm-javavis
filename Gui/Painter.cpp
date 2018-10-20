@@ -247,7 +247,7 @@ namespace gui {
 			graphics->afterRender();
 		} catch (...) {
 			graphics->afterRender();
-			// target.target()->EndDraw();
+			target.target()->EndDraw();
 			throw;
 		}
 
