@@ -22,8 +22,21 @@ class Presentation on Render {
 	// Border around slides.
 	Size border;
 
+	// Default text styles.
+	TextStyle headingStyle;
+	TextStyle contentStyle;
+
+	// Default animation time.
+	Duration animationTime;
+
 	// All slides in the presentation.
 	private Slide[] slides;
+
+	// Current slide.
+	private Nat currentSlide;
+
+	// Last slide drawn. Used for good animations, even if we're jumping in the presentation.
+	private Slide? lastSlide;
 
 	// The background.
 	private Element myBackground;
@@ -38,6 +51,9 @@ class Presentation on Render {
 			size = size;
 			border = border;
 			myBackground = SolidFill(white);
+			headingStyle = defaultHeadingStyle;
+			contentStyle = defaultContentStyle;
+			animationTime = 200 ms;
 		}
 
 		myBackground.pos = Rect(size);
@@ -58,13 +74,95 @@ class Presentation on Render {
 		s.added(this);
 	}
 
-	// Draw the presentation in its current state. Assumes 'g' has been setup to match the slide
-	// size.
-	void draw(Graphics g) {
-		background.draw(g);
+	// Draw the presentation in its current state. Assumes 'g' has been set up to match the slide
+	// size. 'animationPos' is a number in the interval [0, 1] that indicates the position of the
+	// current animation. 1.0 means complete, and 0.0 means it has just started.
+	void draw(Graphics g, Float animationPos) {
+		if (currentSlide >= slides.count)
+			return;
 
-		if (slides.any)
-			slides.first.draw(g, 0, 0);
+		Slide curr = slides[currentSlide];
+		if (intro = curr.intro) {
+			if (curr.animationId == 0 & animationPos < 1.0) {
+				intro.draw(this, g, lastSlide, curr, animationPos);
+				return;
+			}
+		}
+
+		drawSlide(g, slides[currentSlide], animationPos);
+		lastSlide = curr;
 	}
 
+	// Draw a slide, complete with background and any overlays.
+	package void drawSlide(Graphics g, Slide slide, Float pos) {
+		background.draw(g);
+		slide.draw(g, pos);
+	}
+
+	// Go to a specific slide. Returns the duration of the intro animation.
+	Duration goTo(Nat id) {
+		currentSlide = min(id, slides.count);
+		// TODO: Reset animations on the new slide.
+
+		if (currentSlide < slides.count) {
+			if (intro = slides[currentSlide].intro) {
+				return intro.duration;
+			}
+		}
+
+		0 ms;
+	}
+
+	// Go to the next step in the presentation. Returns the length of the animation to play.
+	Duration next() {
+		// TODO: Play the next animation of the current slide, if any.
+
+		goTo(currentSlide + 1);
+	}
+
+	// Go to the previous step in the presentation.
+	Duration prev() {
+		if (currentSlide > 0)
+			goTo(currentSlide - 1);
+		else
+			0 ms;
+	}
 }
+
+
+/**
+ * A description of text-styles. Used to specify defaults in a presentation so that one doesn't need
+ * to specify the same style all over the place.
+ */
+class TextStyle on Render {
+	// Font.
+	Font font;
+
+	// Brush used to fill the text.
+	Brush fill;
+
+	// Spacing.
+	Float space;
+
+	// Create.
+	init(Font font, Brush fill, Float space) {
+		init() {
+			font = font;
+			fill = fill;
+			space = space;
+		}
+	}
+
+	// Create.
+	init(Font font, Color fill, Float space) {
+		init() {
+			font = font;
+			fill = SolidBrush(fill);
+			space = space;
+		}
+	}
+}
+
+// Default text styles.
+TextStyle defaultHeadingStyle() on Render { TextStyle(Font("Arial", 40), black, 10); }
+TextStyle defaultContentStyle() on Render { TextStyle(Font("Arial", 32), black, 10); }

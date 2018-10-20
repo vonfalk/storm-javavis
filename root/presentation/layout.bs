@@ -1,4 +1,5 @@
 use layout;
+use core:geometry;
 
 /**
  * Custom layouts that are useful when creating presentations.
@@ -13,5 +14,130 @@ class SlideBorder extends layout:Border {
 		init() {}
 
 		border = p.border;
+	}
+}
+
+
+/**
+ * A simple layout that handles a caption and content.
+ */
+class CaptionLayout extends layout:Layout {
+	// First component, the caption.
+	private Component? caption;
+
+	// Second component, the content.
+	private Component? content;
+
+	// Space below the caption.
+	Float space;
+
+	// Create.
+	init() {
+		init() {
+			// Default spacing.
+			space = 10;
+		}
+	}
+
+	// Add a component.
+	Layout:Info add(Component c) : override {
+		unless (caption) {
+			this.caption = c;
+			return Layout:Info();
+		}
+
+		content = c;
+		Layout:Info();
+	}
+
+	// Compute the minimum size.
+	Size minSize() : override {
+		Size sz;
+		if (caption) {
+			sz = caption.minSize;
+			sz.h += space;
+		}
+
+		if (content) {
+			Size s = content.minSize;
+			sz.w = max(sz.w, s.w);
+			sz.h += s.h;
+		}
+	}
+
+	// Re-compute the layout.
+	void layout() : override {
+		Rect p = pos;
+		if (caption) {
+			Size s = caption.minSize();
+			caption.pos = Rect(p.p0, Size(p.size.w, s.h));
+			p.p0.y += s.h + space;
+		}
+
+		if (content) {
+			content.pos = p;
+		}
+	}
+
+	// Traverse.
+	void findAll(fn(Component)->void fn) : override {
+		super:findAll(fn);
+		if (caption)
+			caption.findAll(fn);
+		if (content)
+			content.findAll(fn);
+	}
+}
+
+/**
+ * Put things in columns. The columns will always be the same size, regardless of their content.
+ */
+class ColumnLayout extends layout:Layout {
+	private Component[] components;
+
+	// Space between columns.
+	Float padding;
+
+	// Create.
+	init() {
+		init() { padding = 10; }
+	}
+
+	// Add a component.
+	Layout:Info add(Component c) : override {
+		components << c;
+		Layout:Info();
+	}
+
+	// Minimum size.
+	Size minSize() : override {
+		Size m(-padding, 0);
+		for (c in components) {
+			var s = c.minSize();
+			m.w += padding + s.w;
+			m.h = max(m.h, s.h);
+		}
+		m;
+	}
+
+	// Re-compute the layout.
+	void layout() : override {
+		Rect p = pos;
+		Float step = (p.size.w + padding) / components.count.int.float;
+		Size partSize(step - padding, p.size.h);
+
+		for (i, c in components) {
+			Point p0 = p.p0;
+			p0.x += step * i.int.float;
+
+			c.pos = Rect(p0, partSize);
+		}
+	}
+
+	// Traverse.
+	void findAll(fn(Component)->void fn) : override {
+		super:findAll(fn);
+		for (c in components)
+			c.findAll(fn);
 	}
 }

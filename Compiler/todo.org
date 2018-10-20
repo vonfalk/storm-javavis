@@ -17,9 +17,10 @@
     but the scale of the issue should be assessed first.
   - [ ] Parsing core.lang.syntax.bnf takes about 80 ms, which is a bit on the high end when compiling code...
 
-* Loose ends so far [39/67]
-  - [ ] Asking for a random access stream from an IStream should produce a LazyIStream if nothing better
-    is available. However, this is not yet implemented!
+* Loose ends so far [40/68]
+  - [ ] When using "unless (foo)", "foo" uses a local variable in the block as well as outside of the block,
+    which makes assignments to that variable to not write to the original variable even if one would expect so.
+    We should at least warn about this.
   - [ ] The documentation view in Emacs should probably show which package the type is located in as well.
     It is not easy to keep track of the current package oneself when navigating through the hyperlinks.
   - [ ] When a .bnf-file includes another package, productions from there are not automatically visible,
@@ -65,6 +66,8 @@
   - [ ] Move the 'assign' declaration to being purely a decorator (ie. Foo field(Foo v) : assign)?
   - [ ] If a type has a '==' or '<' outside the type itself, the corresponding operator will not be present in
     a Handle, like '<<' at the moment.
+  - [X] Asking for a random access stream from an IStream should produce a LazyIStream if nothing better
+    is available. However, this is not yet implemented!
   - [X] The Ui library crashes during shutdown under heavy rendering load.
   - [X] The core does not check the return type of overloaded functions, which leads to strange behaviours from time to time...
   - [X] We probably want to allow creating documentation for an entire package. Possibly by creating

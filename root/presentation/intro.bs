@@ -1,0 +1,113 @@
+use ui;
+use core:geometry;
+
+
+/**
+ * A slide intro animation. Used to define slide transitions.
+ *
+ * If 'duration' is zero when the animation is added to the presentation, the presentation will
+ * overwrite the duration with its default setting.
+ */
+class SlideIntro on Render {
+	// Duration of the animation.
+	Duration duration;
+
+	// Create, default duration.
+	init() {
+		init() {}
+	}
+
+	// Create.
+	init(Duration d) {
+		init() {
+			duration = d;
+		}
+	}
+
+	// Draw the animation. 'pos' ranges from 0 to 1.
+	void draw(Presentation p, Graphics g, Slide? prev, Slide curr, Float pos) : abstract;
+}
+
+
+/**
+ * A simple crossfade.
+ */
+class FadeIn extends SlideIntro {
+	// Create.
+	init() {
+		init() {}
+	}
+
+	// Create.
+	init(Duration d) {
+		init(d) {}
+	}
+
+	// Draw the animation.
+	void draw(Presentation p, Graphics g, Slide? prev, Slide curr, Float pos) : override {
+		if (prev) {
+			p.drawSlide(g, prev, 1.0);
+		}
+
+		g.push(pos);
+		p.drawSlide(g, curr, pos);
+		g.pop();
+	}
+}
+
+
+/**
+ * Slide the old slide down.
+ */
+class SlideDown extends SlideIntro {
+	// Should we fade as well?
+	Bool fade;
+
+	// Create.
+	init(Bool fade) { init() { fade = fade; } }
+
+	// Create.
+	init(Duration d, Bool fade) { init(d) { fade = fade; } }
+
+	// Draw!
+	void draw(Presentation p, Graphics g, Slide? prev, Slide curr, Float pos) : override {
+		p.drawSlide(g, curr, pos);
+
+		if (prev) {
+			// Get some acceleration!
+			pos = pos * pos;
+
+			if (fade) {
+				g.push(1.0 - pos);
+			} else {
+				g.push();
+			}
+			g.transform = translate(Size(0, pos * p.size.h));
+			p.drawSlide(g, prev, pos);
+			g.pop();
+		}
+	}
+}
+
+
+/**
+ * Enlarge the old slide and fade it out.
+ */
+class Enlarge extends SlideIntro {
+	// Create.
+	init() { init() {} }
+	init(Duration d) { init() {} }
+
+	// Draw!
+	void draw(Presentation p, Graphics g, Slide? prev, Slide curr, Float pos) : override {
+		p.drawSlide(g, curr, pos);
+
+		if (prev) {
+			Point center = p.size / 2;
+			g.push(1.0 - pos);
+			g.transform = scale(1.0 + pos * pos * 4, center);
+			p.drawSlide(g, prev, pos);
+			g.pop();
+		}
+	}
+}

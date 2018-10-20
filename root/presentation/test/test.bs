@@ -7,16 +7,26 @@ use layout;
 presentation Test "Test presentation" {
 	Font font("Arial", 32);
 
-	this.background = SolidFill(blue);
+	background = SolidFill(white);
+	animationTime = 500 ms;
 
-	slide Grid {
+	slide FadeIn => content "Testing!" {
+		SolidFill green {}
+	}
+
+	slide SlideDown false => columns "Two columns!" {
+		SolidFill green {}
+		SolidFill blue {}
+	}
+
+	slide Enlarge => Grid {
 	expandCol: 0;
 	expandCol: 1;
 	expandRow: 1;
-		Heading("Neat colored boxes!", font, black) { colspan: 2; }
+		Heading "Neat colored boxes!", font, black { colspan: 2; }
 		nextLine;
-		SolidFill(RadialGradient(red, white, Point(320, 240), 300)) {}
-		SolidFill(RadialGradient(green, white, Point(320, 240), 300)) {}
+		SolidFill RadialGradient(red, white, Point(320, 240), 300) {}
+		SolidFill RadialGradient(green, white, Point(320, 240), 300) {}
 	}
 }
 

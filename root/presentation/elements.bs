@@ -58,6 +58,14 @@ class Heading extends Element {
 		}
 	}
 
+	// Create from the supplied text style.
+	init(Str text, TextStyle style) {
+		init() {
+			text(text, style.font);
+			brush = style.fill;
+		}
+	}
+
 	// Minimum size.
 	Size minSize() { text.size; }
 

@@ -97,6 +97,7 @@ class LayoutBlock extends LayoutRoot {
 		ExprBlock block(name.pos, parent.root);
 		ExprBlock sub(name.pos, block);
 
+		// TODO: Allow 'this' as a first parameter to constructors?
 		Expr src = namedExpr(block, name, sane(params));
 		if (!Value(named{Layout}).canStore(src.result.type))
 			src = namedExpr(block, name.pos, "component", src);
@@ -137,7 +138,8 @@ class LayoutBlock extends LayoutRoot {
 
 	// Add a child block.
 	void add(LayoutBlock e) {
-		Expr add = namedExpr(sub, sub.pos, "add", result, Actuals(e.root));
+		Expr toAdd = namedExpr(sub, sub.pos, "toAdd", e.root, Actuals());
+		Expr add = namedExpr(sub, sub.pos, "add", result, Actuals(toAdd));
 		if (e.parent.empty) {
 			sub.add(add);
 			return;

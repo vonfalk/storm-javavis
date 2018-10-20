@@ -13,6 +13,20 @@ use core:geometry;
  * Generally, all information inside a particular component is assumed to be read-only.
  */
 class Component {
+	// Optional reference to the root of a hierarchy of components. The layout syntax examines this
+	// member whenever a component is added to the hierarchy and if it is set adds that component
+	// instead. This can be used to bundle layouts together inside a function, and still have the
+	// layout syntax add the proper root component.
+	Component? bundleRoot;
+
+	// Get either 'bundleRoot' if it is set, or 'this'.
+	Component toAdd() {
+		if (bundleRoot)
+			bundleRoot;
+		else
+			this;
+	}
+
 	// Get the position of this component.
 	Rect pos() {
 		Rect();

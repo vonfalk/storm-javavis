@@ -18,7 +18,17 @@ SPresCont : (SPresStmt(me) -> add,)*;
 // either regular Basic Storm statements, or our special ones.
 Expr SPresStmt(Block block);
 SPresStmt => e : SStmt(block) e;
-SPresStmt => slideLayout(block, layout, name) : (SName name, "=", )? "slide " #keyword, SLayoutRoot(block) layout;
+SPresStmt => slideLayout(block, layout, name, intro)
+	: (SName name, "=", )? "slide " #keyword, SIntro(block) intro, SLayoutRoot(block) layout;
+
+// Slide intro animation.
+Maybe<Expr> SIntro(Block block);
+SIntro => Maybe<Expr>() : ;
+SIntro => slideIntro(block, name, params) : SType name, SParamList(block) params, "=>";
+SIntro => slideIntro(block, name, params) : SType name, "(", SParamList(block) params, ")", "=>";
+
+// Extend the syntax to allow skipping parens around parameter lists.
+SLayout => LayoutBlock(block, name, params) : SType name, SParamList(block.block) params, "{" [, SLayoutContent(me), ]+ "}";
 
 // Extend the syntax of the layout to allow type declarations.
 // SLayoutItem : SType type, SName name #varName, ("(", SParamList(block.block) params, ")",)? "{" [, SLayoutContent(me),]+ "}";

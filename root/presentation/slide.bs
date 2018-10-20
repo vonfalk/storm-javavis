@@ -13,6 +13,12 @@ class Slide on Render {
 	// All elements in this slide.
 	Element[] elements;
 
+	// Intro animation.
+	SlideIntro? intro;
+
+	// Current animation number.
+	Nat animationId;
+
 	// The layout for this slide.
 	private Layout layout;
 
@@ -33,12 +39,18 @@ class Slide on Render {
 	// Called when we're added to the presentation so that we get a chance to perform layout.
 	package void added(Presentation to) {
 		layout.pos(Rect(to.size));
+
+		if (intro) {
+			if (intro.duration == 0 ms) {
+				intro.duration = to.animationTime;
+			}
+		}
 	}
 
 	// Draw this slide. 'animation' is the animation number currently being played, and 'time' is in
 	// the range 0-1 where 1 is complete. Animation number 0 is the intro animation of the entire
 	// slide.
-	void draw(Graphics g, Nat animation, Float time) {
+	void draw(Graphics g, Float time) {
 		// TODO: Consider animations!
 
 		for (element in elements) {

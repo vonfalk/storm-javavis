@@ -1,0 +1,35 @@
+use ui;
+use core:geometry;
+use graphics;
+use layout;
+
+/**
+ * Various styles for slides that set up parts of the layout hierarchy in one step.
+ */
+
+
+// Create a slide with a caption and a single space for content.
+CaptionLayout content(Presentation p, Str caption) on Render {
+	CaptionLayout l;
+	l.add(component(Heading(caption, p.headingStyle)));
+	l.space = p.headingStyle.space;
+	l;
+}
+
+// Create a slide with a caption and one or more columns with content.
+ColumnLayout columns(Presentation p, Str caption) on Render {
+	var root = content(p, caption);
+	ColumnLayout c;
+	c.bundleRoot = root;
+	root.add(c);
+	c;
+}
+
+// Create a slide with a caption and a grid layout.
+Grid grid(Presentation p, Str caption) on Render {
+	var root = content(p, caption);
+	Grid g;
+	g.bundleRoot = root;
+	root.add(c);
+	c;
+}

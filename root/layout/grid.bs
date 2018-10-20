@@ -59,7 +59,7 @@ class Grid extends Layout {
 	}
 
 	// Add a new child.
-	Info add(Component c) {
+	Info add(Component c) : override {
 		if ((wrapAt != 0) & (wrapAt == insertCol))
 			nextLine();
 

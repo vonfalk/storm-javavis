@@ -62,20 +62,33 @@ package class PresFn extends BSRawFn {
 		// Return the presentation.
 		body.add(LocalVarAccess(SrcPos(), thisVar.var));
 
+		// print(body.toS);
 		body;
 	}
 }
 
 
 // Apply the slide layout. Also: jam it inside a SlideBorder layout.
-Expr slideLayout(Block inside, LayoutRoot layout, SStr? name) {
-	var create = pattern (inside) {
-		presentation:SlideBorder layout(this);
-		layout.add(${layout.block});
+Expr slideLayout(Block inside, LayoutRoot layout, SStr? name, Expr? intro) {
+	var create = if (intro) {
+		pattern (inside) {
+			presentation:SlideBorder layout(this);
+			layout.add(layout:Component:toAdd(${layout.block}));
 
-		presentation:Slide slide(layout);
-		this.add(slide);
-		slide;
+			presentation:Slide slide(layout);
+			slide.intro = ${intro};
+			this.add(slide);
+			slide;
+		};
+	} else {
+		var create = pattern (inside) {
+			presentation:SlideBorder layout(this);
+			layout.add(layout:Component:toAdd(${layout.block}));
+
+			presentation:Slide slide(layout);
+			this.add(slide);
+			slide;
+		};
 	};
 
 	if (name) {
@@ -85,4 +98,9 @@ Expr slideLayout(Block inside, LayoutRoot layout, SStr? name) {
 		// Otherwise, we just execute the statements.
 		create;
 	}
+}
+
+// Get a slide intro expression.
+Expr slideIntro(Block block, SrcName name, Actuals params) {
+	namedExpr(block, name, params);
 }

@@ -9,11 +9,16 @@ class Presenter extends Frame {
 	// Painter.
 	private PresentPainter render;
 
+	// Key mappings.
+	private Map<Key, fn()->void> keymap;
+
 	// Create.
 	init(Presentation p) {
 		init(p.title, Size(1024, 768)) {
 			render(p);
 		}
+
+		initKeymap();
 
 		cursorVisible = false;
 		painter = render;
@@ -27,16 +32,47 @@ class Presenter extends Frame {
 			return false;
 
 		if (modifiers == Modifiers:none) {
-			if (key == Key:f) {
-				fullscreen = !fullscreen;
-			} else if (key == Key:esc | key == Key:q) {
-				close();
+			if (keymap.has(key)) {
+				keymap.get(key).call();
 			}
 		}
 
 		false;
 	}
+
+private:
+	// Initialize the keymap.
+	void initKeymap() {
+		putKeys([Key:esc, Key:q], &this.close());
+		putKeys([Key:right, Key:down, Key:return], &this.next());
+		putKeys([Key:left, Key:up], &this.prev());
+		keymap.put(Key:f, &this.toggleFullscreen());
+	}
+
+	// Add a series of keys for the same action.
+	void putKeys(Key[] keys, fn()->void fn) {
+		for (k in keys)
+			keymap.put(k, fn);
+	}
+
+	// Toggle fullscreen.
+	void toggleFullscreen() {
+		fullscreen = !fullscreen;
+	}
+
+	// Advance to the next slide/animation step.
+	void next() {
+		render.next();
+		repaint();
+	}
+
+	// Go back to a previous slide/animation step.
+	void prev() {
+		render.prev();
+		repaint();
+	}
 }
+
 
 /**
  * Rendering of presentations.
@@ -45,6 +81,15 @@ class PresentPainter extends Painter {
 	// Current presentation.
 	private Presentation p;
 
+	// Currently playing animation?
+	private Bool inAnimation;
+
+	// Start of the currently playing animation.
+	private Moment aniStart;
+
+	// Length of the currently playing animation.
+	private Duration aniLength;
+
 	// Create.
 	init(Presentation p) {
 		init() {
@@ -52,10 +97,23 @@ class PresentPainter extends Painter {
 		}
 
 		bgColor = black;
+
+		// Animate the first slide, if we should do that.
+		animate(p.goTo(0));
 	}
 
 	// Draw things!
 	Bool render(Size size, Graphics g) {
+		// How is the animation going?
+		Float aniPos = 1.0;
+		if (inAnimation) {
+			aniPos = (Moment() - aniStart) / aniLength;
+			if (aniPos >= 1.0) {
+				inAnimation = false;
+				aniPos = 1.0;
+			}
+		}
+
 		// Compute where the contents are supposed to be.
 		Size content = p.size;
 		Float scale = min(size.w / content.w, size.h / content.h);
@@ -63,10 +121,32 @@ class PresentPainter extends Painter {
 		g.transform = scale(scale) * translate(move);
 		g.push(Rect(content));
 
-		p.draw(g);
+		p.draw(g, aniPos);
 
 		g.pop();
-		false;
+
+		inAnimation;
+	}
+
+	// Advance the animation.
+	void next() {
+		animate(p.next());
+	}
+
+	// Go back.
+	void prev() {
+		animate(p.prev());
+	}
+
+	// Prepare for an animation of the specified length.
+	private void animate(Duration d) {
+		if (d > 0 ms) {
+			inAnimation = true;
+			aniStart = Moment();
+			aniLength = d;
+		} else {
+			inAnimation = false;
+		}
 	}
 }
 
