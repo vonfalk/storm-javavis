@@ -34,6 +34,9 @@ namespace storm {
 
 			// Length.
 			Float STORM_FN length() const;
+
+			// Normalize.
+			Point STORM_FN normalized() const;
 		};
 
 		wostream &operator <<(wostream &to, const Point &s);

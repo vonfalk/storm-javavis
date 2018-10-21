@@ -60,6 +60,10 @@ namespace storm {
 			return Rect(l, t, r, b);
 		}
 
+		Rect Rect::include(Rect other) const {
+			return include(other.p0).include(other.p1);
+		}
+
 		Rect Rect::scaled(Float scale) const {
 			Size s = size() / 2;
 			Float dx = s.w * scale - s.w;

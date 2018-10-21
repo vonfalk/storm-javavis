@@ -20,6 +20,15 @@ presentation Test "Test presentation" {
 	background = SolidFill(white);
 	animationTime = 500 ms;
 
+	slide SlideDown false => content "Drawn pictures!" {
+		Picture {
+			rectangle { id: "a"; size: 10, 20; margin: 10, 10; text: "Hello!"; fillColor: red; }
+			rectangle { eastOf: "a", 0; id: "b"; size: 10, 20; margin: 10, 10; text: "World!"; fillColor: green; }
+
+			node { southOf: "b", 5; relativeOrigin: southWest; text: "I am below!"; }
+		}
+	}
+
 	slide FadeIn => title "Test presentation", "My name here!" {}
 
 	slide FadeIn => content "Testing!" {
@@ -49,12 +58,6 @@ presentation Test "Test presentation" {
 
 	slide SlideDown false => content "Image!" {
 		image resUrl / "flower-raw.ppm" { fit; }
-	}
-
-	slide SlideDown false => content "Drawn pictures!" {
-		Picture {
-			Rectangle { size: 10, 20; text: "Hello!"; }
-		}
 	}
 
 	slide Enlarge => Grid {

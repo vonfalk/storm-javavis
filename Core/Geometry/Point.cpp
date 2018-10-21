@@ -24,6 +24,15 @@ namespace storm {
 			return sqrt(lengthSq());
 		}
 
+		Point Point::normalized() const {
+			Float len = length();
+			if (len == 0) {
+				return (*this);
+			} else {
+				return (*this) / len;
+			}
+		}
+
 		wostream &operator <<(wostream &to, const Point &p) {
 			return to << L"(" << p.x << L", " << p.y << L")";
 		}

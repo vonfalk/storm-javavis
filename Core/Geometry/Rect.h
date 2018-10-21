@@ -53,8 +53,11 @@ namespace storm {
 			Rect &STORM_FN operator +=(Point pt);
 			Rect &STORM_FN operator -=(Point pt);
 
-			// Include a point.
+			// Include a point in the bounding box.
 			Rect STORM_FN include(Point to) const;
+
+			// Include a rectangle. Yields the bounding box of this rectangle and 'other'.
+			Rect STORM_FN include(Rect other) const;
 
 			// Scale the entire rect around its center.
 			Rect STORM_FN scaled(Float scale) const;
