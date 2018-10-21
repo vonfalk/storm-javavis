@@ -20,6 +20,8 @@ presentation Test "Test presentation" {
 	background = SolidFill(white);
 	animationTime = 500 ms;
 
+	slide FadeIn => title "Test presentation", "My name here!" {}
+
 	slide FadeIn => content "Testing!" {
 		SolidFill green {}
 	}

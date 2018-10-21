@@ -46,3 +46,16 @@ class Component {
 	}
 }
 
+
+/**
+ * A component that just takes up space in the layout.
+ */
+class FillBox extends Component {
+	Size size;
+
+	init(Size size) { init() { size = size; } }
+
+	// Minimum size of the component.
+	Size minSize() : override { size; }
+}
+
