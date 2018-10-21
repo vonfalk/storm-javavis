@@ -1,0 +1,101 @@
+use ui;
+use core:geometry;
+use graphics;
+use layout;
+
+/**
+ * Create drawings with a more fine-grained layout. Similarly to Tikz in LaTeX.
+ *
+ * The Picture block itself is just a layout from the UI that handles positioning of the elements
+ * inside. The contents are therefore just regular elements that could be used in other situations
+ * as well. However, they are designed for each other, and using the components intended for the
+ * Picture layout may be cumbersome to use in other situations.
+ */
+class Picture extends layout:Layout {
+	// Information about a child.
+	class Info extends layout:Layout:Info {
+		// The child for which this info applies.
+		package Component child;
+
+		// Create.
+		package init(Component child) {
+			init() { child = child; }
+		}
+
+		// Size of the element.
+		Size size;
+		void size(Float w, Float h) { size = Size(w, h); }
+
+		// Position (relative to the center of the element, unless otherwise specified).
+		Point at;
+		void at(Float x, Float y) { at = Size(x, y); }
+
+		// TODO: Support relative positioning.
+	}
+
+	// Add a child.
+	Info add(Component child) : override {
+		Info info(child);
+		children << info;
+		info;
+	}
+
+	// Get our minimum size.
+	Size minSize() : override {
+		// TODO!
+		Size(0, 0);
+	}
+
+	// Do the layout.
+	void layout() : override {
+		// TODO!
+	}
+
+	// Find all children.
+	void findAll(fn(Component)->void fn) : override {
+		super:findAll(fn);
+		for (c in children) {
+			c.child.findAll(fn);
+		}
+	}
+
+private:
+	// Our children.
+	Info[] children;
+}
+
+
+/**
+ * A component for use inside pictures. Supports more operations compared to regular elements, so
+ * that we may connect arrows to them and so on.
+ */
+class PictureElement extends Element {
+	// Minimum size.
+	private Size size;
+
+	// Set conveniently.
+	void size(Float w, Float h) {
+		size = Size(w, h);
+	}
+
+	// Minimum size of this element.
+	Size minSize() {
+		// TODO: Take any text inside here into account!
+		size;
+	}
+
+	// Set the text of this node.
+	void text(Str t) {}
+
+	// TODO: More public interface!
+}
+
+/**
+ * A simple rectangle.
+ */
+class Rectangle extends PictureElement {
+	void draw(Graphics g) {
+		// TODO: Make it good!
+		g.draw(pos, SolidBrush(black));
+	}
+}

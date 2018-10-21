@@ -51,6 +51,12 @@ presentation Test "Test presentation" {
 		image resUrl / "flower-raw.ppm" { fit; }
 	}
 
+	slide SlideDown false => content "Drawn pictures!" {
+		Picture {
+			Rectangle { size: 10, 20; text: "Hello!"; }
+		}
+	}
+
 	slide Enlarge => Grid {
 	expandCol: 0;
 	expandCol: 1;
