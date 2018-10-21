@@ -76,8 +76,12 @@ class LayoutBlock extends LayoutRoot {
 	// positioned 'last' in the parent block.
 	private ExprBlock sub;
 
-	// Variable storing the resulting transform.
+	// Variable storing the resulting component.
 	private Expr result;
+
+	// If set, stores the created instance before it was passed to the 'component' function so that
+	// we may access properties in this object as well!
+	private Expr? preWrap;
 
 	// Properties that should be applied in the parent later on.
 	private value ParentExpr {
@@ -99,19 +103,28 @@ class LayoutBlock extends LayoutRoot {
 
 		// TODO: Allow 'this' as a first parameter to constructors?
 		Expr src = namedExpr(block, name, sane(params));
-		if (!Value(named{Layout}).canStore(src.result.type))
-			src = namedExpr(block, name.pos, "component", src);
+		Expr? preWrap;
+		if (!Value(named{Layout}).canStore(src.result.type)) {
+			// Store 'src' in a variable, before calling 'component', so that we may access it later!
+			Var raw(block, SStr("@ raw"), src);
+			block.add(raw);
+			LocalVarAccess rawAcc(name.pos, raw.var);
+			preWrap = rawAcc;
+
+			src = namedExpr(block, name.pos, "component", rawAcc);
+		}
+
 		Var result(block, SStr("@ result"), src);
-
-
 		block.add(result);
 		block.add(sub);
+
 		LocalVarAccess resultAcc(name.pos, result.var);
 		block.add(resultAcc);
 
 		init(block) {
 			sub = sub;
 			result = resultAcc;
+			preWrap = preWrap;
 		}
 	}
 
@@ -127,13 +140,21 @@ class LayoutBlock extends LayoutRoot {
 	// Add a property.
 	void add(SStr name, Actuals? params) {
 		// Look in this class.
-		Expr? e = applyProperty(sub, result, name, sane(params));
-		if (e) {
-			sub.add(e);
-		} else {
-			// Failed... try inside the info struct of the parent if available.
-			parent << ParentExpr(name, sane(params));
+		if (expr = applyProperty(sub, result, name, sane(params))) {
+			sub.add(expr);
+			return;
 		}
+
+		// Failed... See if we want to look inside the raw element.
+		if (preWrap) {
+			if (expr = applyProperty(sub, preWrap, name, sane(params))) {
+				sub.add(expr);
+				return;
+			}
+		}
+
+		// Nothing here. See if the parent has something useful to do.
+		parent << ParentExpr(name, sane(params));
 	}
 
 	// Add a child block.
@@ -157,7 +178,7 @@ class LayoutBlock extends LayoutRoot {
 			if (expr = applyProperty(child, access, x.name, x.params)) {
 				child.add(expr);
 			} else {
-				throwSyntaxError(x.name.pos, "Unable to find a suitable property " # x.name.v);
+				throwSyntaxError(x.name.pos, "Unable to find a suitable property: ${x.name.v}");
 			}
 		}
 	}

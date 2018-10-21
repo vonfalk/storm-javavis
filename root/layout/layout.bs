@@ -100,3 +100,42 @@ class Border extends Layout {
 	}
 
 }
+
+/**
+ * A simple layout that stacks components on top of each other.
+ */
+class Stack extends Layout {
+	// Our components.
+	private Component[] components;
+
+	// Get our minimum size.
+	Size minSize() : override {
+		Size s;
+		for (c in components) {
+			s = max(s, c.minSize);
+		}
+		s;
+	}
+
+	// Do layout.
+	void layout() : override {
+		Rect p = pos;
+		for (c in components) {
+			c.pos = p;
+		}
+	}
+
+	// Add a child to the layout.
+	Layout:Info add(Component c) {
+		components << c;
+		Layout:Info();
+	}
+
+	// Find all elements.
+	void findAll(fn(Component)->void fn) {
+		super:findAll(fn);
+		for (c in components) {
+			c.findAll(fn);
+		}
+	}
+}
