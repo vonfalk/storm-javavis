@@ -44,6 +44,7 @@ namespace storm {
 		Point STORM_FN operator +(Point a, Point b);
 		Point STORM_FN operator -(Point a, Point b);
 		Point STORM_FN operator -(Point a, Size b);
+		Point STORM_FN operator -(Point a);
 		Point &STORM_FN operator +=(Point &a, Point b);
 		Point &STORM_FN operator -=(Point &a, Point b);
 

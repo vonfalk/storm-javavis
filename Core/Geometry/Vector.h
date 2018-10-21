@@ -33,6 +33,7 @@ namespace storm {
 		// Operations.
 		Vector STORM_FN operator +(Vector a, Vector b);
 		Vector STORM_FN operator -(Vector a, Vector b);
+		Vector STORM_FN operator -(Vector a);
 
 		// Scaling.
 		Vector STORM_FN operator *(Vector a, Float b);

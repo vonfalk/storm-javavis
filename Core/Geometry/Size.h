@@ -23,7 +23,12 @@ namespace storm {
 			Float w;
 			Float h;
 
+			// Check if the components are non-negative.
 			Bool STORM_FN valid() const;
+
+			// Min/max, component wise.
+			Size STORM_FN min(Size o) const;
+			Size STORM_FN max(Size o) const;
 		};
 
 		Size STORM_FN operator +(Size a, Size b);

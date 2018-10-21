@@ -47,6 +47,14 @@ namespace storm {
 			return Size(a.w / s, a.h / s);
 		}
 
+		Size STORM_FN Size::min(Size o) const {
+			return Size(::min(w, o.w), ::min(h, o.h));
+		}
+
+		Size STORM_FN Size::max(Size o) const {
+			return Size(::max(w, o.w), ::max(h, o.h));
+		}
+
 		Size STORM_FN abs(Size a) {
 			return Size(::fabs(a.w), ::fabs(a.h));
 		}

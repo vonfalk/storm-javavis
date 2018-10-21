@@ -1,8 +1,18 @@
 use presentation;
 use ui;
 use core:geometry;
+use core:io;
 use graphics;
 use layout;
+use lang:bs:macro;
+
+Url resUrl() {
+	if (u = named{res}.url) {
+		u;
+	} else {
+		Url();
+	}
+}
 
 presentation Test "Test presentation" {
 	Font font("Arial", 32);
@@ -21,7 +31,22 @@ presentation Test "Test presentation" {
 
 	slide SlideDown true => columns "Text as well!" {
 		par "A single long paragraph in this column." {}
-		list ["Second column!", "Contains a list!", "Of nice elements!"] {}
+		Stack {
+			SolidFill green {}
+			list ["Second column!", "Contains a list!", "Of nice elements!"] {}
+		}
+	}
+
+	slide SlideDown false => columns "Various lists..." {
+		list ["Unordered list", "Foo", "Bar", "Baz"] {}
+		Stack {
+			SolidFill green {}
+			list ["Ordered list", "Foo", "Bar", "Baz"] { ordered; }
+		}
+	}
+
+	slide SlideDown false => content "Image!" {
+		image resUrl / "flower-raw.ppm" { fit; }
 	}
 
 	slide Enlarge => Grid {

@@ -28,6 +28,10 @@ namespace storm {
 			return Vector(a.x - b.x, a.y - b.y, a.z - b.z);
 		}
 
+		Vector operator -(Vector a) {
+			return Vector(-a.x, -a.y, -a.z);
+		}
+
 		Vector operator *(Vector a, Float b) {
 			return Vector(a.x * b, a.y * b, a.z * b);
 		}

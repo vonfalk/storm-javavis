@@ -44,7 +44,7 @@ class Presentation on Render {
 	// Create.
 	init(Str title) {
 		Size size(640, 480);
-		Size border(10, 10);
+		Size border(20, 20);
 
 		init() {
 			title = title;
@@ -164,5 +164,5 @@ class TextStyle on Render {
 }
 
 // Default text styles.
-TextStyle defaultHeadingStyle() on Render { TextStyle(Font("Arial", 40), black, 10); }
-TextStyle defaultContentStyle() on Render { TextStyle(Font("Arial", 32), black, 10); }
+TextStyle defaultHeadingStyle() on Render { TextStyle(Font("Arial", 32), black, 30); }
+TextStyle defaultContentStyle() on Render { TextStyle(Font("Arial", 22), black, 10); }

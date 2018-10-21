@@ -1,4 +1,5 @@
 use ui;
+use core:io;
 use core:geometry;
 use graphics;
 
@@ -77,6 +78,7 @@ class Heading extends Element {
 	}
 }
 
+
 /**
  * A paragraph of text. Fits the text to the given rectangle.
  *
@@ -112,9 +114,6 @@ class Paragraph extends Element {
 	}
 }
 
-// Create a regular paragraph, specifying text font and a brush.
-Paragraph par(Str t, Font f, Brush b) { Paragraph(t, f, b); }
-
 // Create a paragraph, specifying a solid color.
 Paragraph par(Str t, Font f, Color c) { Paragraph(t, f, SolidBrush(c)); }
 
@@ -130,31 +129,54 @@ Paragraph par(Presentation p, Str t) { par(t, p.contentStyle); }
  */
 class List extends Element {
 	// Text elements.
-	Text[] elements;
+	private Text[] elements;
+
+	// Height of the font.
+	private Float fontHeight;
 
 	// Brush used to fill the text.
 	Brush brush;
 
-	// Height of the font.
-	Float fontHeight;
-
 	// Size of the bullets.
 	Float bulletSize;
 
-	// Spacing around the bullets.
-	Float bulletSpace;
+	// Space from the left margin of this element to the start of the text.
+	Float margin;
+
+	// Space between the text and the bullet or the number.
+	Float padding;
+
+	// Pre-formatted text snippnets used if the list is numbered.
+	private Text[] numbers;
 
 	// Create.
 	init(Str[] text, Font f, Brush brush) {
 		init() {
 			brush = brush;
 			fontHeight = f.pxHeight;
-			bulletSpace = f.pxHeight / 2;
+			margin = f.pxHeight / 2;
+			padding = f.pxHeight / 4;
 			bulletSize = f.pxHeight / 4;
 		}
 
 		for (x in text) {
 			elements << Text(x, f);
+		}
+	}
+
+	// Create numbers.
+	void ordered() {
+		numbers.clear();
+
+		if (elements.empty)
+			return;
+
+		Font f = elements.first.font;
+		for (Nat i = 0; i < elements.count; i++) {
+			Text t("${i + 1}.", f);
+			numbers << t;
+
+			margin = max(margin, t.size.w + padding);
 		}
 	}
 
@@ -174,7 +196,7 @@ class List extends Element {
 		super:pos(r);
 
 		Size s = r.size;
-		s.w -= bulletSpace;
+		s.w -= margin;
 		for (e in elements) {
 			e.layoutBorder = s;
 		}
@@ -184,19 +206,22 @@ class List extends Element {
 	void draw(Graphics g) {
 		Point at = pos.p0;
 
-		for (e in elements) {
-			Rect ball(at + Point(0, (fontHeight - bulletSize) * 2 / 3), Size(bulletSize));
-			g.fillOval(ball, brush);
+		for (i, e in elements) {
+			if (i >= numbers.count) {
+				Point delta(margin - padding - bulletSize, (fontHeight - bulletSize) * 2 / 3);
+				Rect ball(at + delta, Size(bulletSize));
+				g.fillOval(ball, brush);
+			} else {
+				Size text = numbers[i].size;
+				g.draw(numbers[i], brush, at + Point(margin - padding - text.w, 0));
+			}
 
-			g.draw(e, brush, at + Point(bulletSpace, 0));
+			g.draw(e, brush, at + Point(margin, 0));
 
 			at.y += e.size.h;
 		}
 	}
 }
-
-// Create a regular list, specifying text font and a brush.
-List list(Str[] t, Font f, Brush b) { List(t, f, b); }
 
 // Create a list, specifying a solid color.
 List list(Str[] t, Font f, Color c) { List(t, f, SolidBrush(c)); }
@@ -206,3 +231,76 @@ List list(Str[] t, TextStyle style) { List(t, style.font, style.fill); }
 
 // Create a list with the default style.
 List list(Presentation p, Str[] t) { list(t, p.contentStyle); }
+
+
+/**
+ * An image.
+ */
+class Image extends Element {
+	// The bitmap we're painting.
+	private Bitmap image;
+
+	// Fill mode: 0 = scale according to scale factor, 1 = fit to container, 2 = fill container (no borders)
+	private Nat mode;
+
+	// Scale. Only relevant in mode 0.
+	private Float fixScale;
+
+	// Create.
+	init(Bitmap image) {
+		init() {
+			image = image;
+			mode = 1;
+			fixScale = 1.0;
+		}
+	}
+
+	// Set an explicit scale.
+	void scale(Float scale) {
+		fixScale = scale;
+		mode = 0;
+	}
+
+	// Fit to the container without clipping (default).
+	void fit() {
+		mode = 1;
+	}
+
+	// Fill the container (maybe clips).
+	void fill() {
+		mode = 2;
+	}
+
+	// Minimum size.
+	Size minSize() {
+		image.size * fixScale;
+	}
+
+	// Draw.
+	void draw(Graphics g) {
+		Size imageSz = image.size;
+		Size size = pos.size;
+		Point center = pos.center;
+
+		Float scale = fixScale;
+		if (mode == 1) {
+			scale = min(size.w / imageSz.w, size.h / imageSz.h);
+		} else if (mode == 2) {
+			scale = max(size.w / imageSz.w, size.h / imageSz.h);
+		}
+
+		g.push();
+		g.transform = core:geometry:scale(scale) * translate(center);
+		g.draw(image, -Point(imageSz/2));
+		g.pop();
+	}
+}
+
+// Create an image.
+Image image(Bitmap image) { Image(image); }
+
+// Create from an Image instance.
+Image image(Image image) { Image(Bitmap(image)); }
+
+// Create from an Url. TODO: Perhaps we want to de-duplicate these!
+Image image(Url url) { Image(Bitmap(url.loadImage)); }

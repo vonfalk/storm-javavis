@@ -48,6 +48,10 @@ namespace storm {
 			return Point(a.x - b.w, a.y - b.h);
 		}
 
+		Point operator -(Point a) {
+			return Point(-a.x, -a.y);
+		}
+
 		Point &STORM_FN operator +=(Point &a, Point b) {
 			a.x += b.x;
 			a.y += b.y;
