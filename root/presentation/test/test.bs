@@ -19,6 +19,11 @@ presentation Test "Test presentation" {
 		SolidFill blue {}
 	}
 
+	slide SlideDown true => columns "Text as well!" {
+		par "A single long paragraph in this column." {}
+		list ["Second column!", "Contains a list!", "Of nice elements!"] {}
+	}
+
 	slide Enlarge => Grid {
 	expandCol: 0;
 	expandCol: 1;

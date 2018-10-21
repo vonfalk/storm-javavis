@@ -10,7 +10,7 @@ class Element on Render {
 
 	// Get/set the position.
 	Rect pos() : final { myPos; }
-	assign pos(Rect p) : final { myPos = p; }
+	assign pos(Rect p) { myPos = p; }
 
 	// Get the minimum size of this element.
 	Size minSize() : abstract;

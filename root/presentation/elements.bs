@@ -6,7 +6,7 @@ use graphics;
  * An elements that simply fills its assigned rectangle with a brush.
  */
 class SolidFill extends Element {
-	// The color we're using to fill the screen.
+	// The brush we're using to fill the screen.
 	Brush fill;
 
 	// Create.
@@ -39,7 +39,7 @@ class Heading extends Element {
 	// Pre-formatted text.
 	Text text;
 
-	// The color used to fill the text.
+	// The brush used to fill the text.
 	Brush brush;
 
 	// Create.
@@ -76,3 +76,133 @@ class Heading extends Element {
 		g.draw(text, brush, p.p0 + center);
 	}
 }
+
+/**
+ * A paragraph of text. Fits the text to the given rectangle.
+ *
+ * Use 'par' for easy creation of paragraphs.
+ */
+class Paragraph extends Element {
+	// Pre-formatted text.
+	Text text;
+
+	// Brush used to fill the text.
+	Brush brush;
+
+	// Create.
+	init(Str text, Font f, Brush brush) {
+		init() {
+			text(text, f);
+			brush = brush;
+		}
+	}
+
+	// Minimum size (TODO: Can we do better somehow?)
+	Size minSize() { text.size; }
+
+	// Set size.
+	assign pos(Rect r) : override {
+		super:pos(r);
+		text.layoutBorder = r.size;
+	}
+
+	// Draw.
+	void draw(Graphics g) {
+		g.draw(text, brush, pos.p0);
+	}
+}
+
+// Create a regular paragraph, specifying text font and a brush.
+Paragraph par(Str t, Font f, Brush b) { Paragraph(t, f, b); }
+
+// Create a paragraph, specifying a solid color.
+Paragraph par(Str t, Font f, Color c) { Paragraph(t, f, SolidBrush(c)); }
+
+// Create a paragraph with a pre-defined style.
+Paragraph par(Str t, TextStyle style) { Paragraph(t, style.font, style.fill); }
+
+// Create a paragraph with the default style.
+Paragraph par(Presentation p, Str t) { par(t, p.contentStyle); }
+
+
+/**
+ * A list of strings, each with a bullet point to the left.
+ */
+class List extends Element {
+	// Text elements.
+	Text[] elements;
+
+	// Brush used to fill the text.
+	Brush brush;
+
+	// Height of the font.
+	Float fontHeight;
+
+	// Size of the bullets.
+	Float bulletSize;
+
+	// Spacing around the bullets.
+	Float bulletSpace;
+
+	// Create.
+	init(Str[] text, Font f, Brush brush) {
+		init() {
+			brush = brush;
+			fontHeight = f.pxHeight;
+			bulletSpace = f.pxHeight / 2;
+			bulletSize = f.pxHeight / 4;
+		}
+
+		for (x in text) {
+			elements << Text(x, f);
+		}
+	}
+
+	// Minimum size
+	Size minSize() {
+		Size sz;
+		for (e in elements) {
+			Size s = e.size;
+			sz.w = max(sz.w, s.w);
+			sz.h += s.h;
+		}
+		sz;
+	}
+
+	// Set size.
+	assign pos(Rect r) : override {
+		super:pos(r);
+
+		Size s = r.size;
+		s.w -= bulletSpace;
+		for (e in elements) {
+			e.layoutBorder = s;
+		}
+	}
+
+	// Draw.
+	void draw(Graphics g) {
+		Point at = pos.p0;
+
+		for (e in elements) {
+			Rect ball(at + Point(0, (fontHeight - bulletSize) * 2 / 3), Size(bulletSize));
+			g.fillOval(ball, brush);
+
+			g.draw(e, brush, at + Point(bulletSpace, 0));
+
+			at.y += e.size.h;
+		}
+	}
+}
+
+// Create a regular list, specifying text font and a brush.
+List list(Str[] t, Font f, Brush b) { List(t, f, b); }
+
+// Create a list, specifying a solid color.
+List list(Str[] t, Font f, Color c) { List(t, f, SolidBrush(c)); }
+
+// Create a list with a pre-defined style.
+List list(Str[] t, TextStyle style) { List(t, style.font, style.fill); }
+
+// Create a list with the default style.
+List list(Presentation p, Str[] t) { list(t, p.contentStyle); }
