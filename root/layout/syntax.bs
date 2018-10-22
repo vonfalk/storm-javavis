@@ -129,7 +129,7 @@ class LayoutBlock extends LayoutRoot {
 	}
 
 	// More basic creation for subclasses.
-	protected init(ExprBlock root, ExprBlock sub, Expr result) {
+	init(ExprBlock root, ExprBlock sub, Expr result) {
 		init(root) {
 			sub = sub;
 			result = result;

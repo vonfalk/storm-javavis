@@ -1,0 +1,83 @@
+use core:geometry;
+
+/**
+ * Cardinal directions.
+ */
+class Cardinal {
+	// Place a rectangle at this edge.
+	Rect place(Point pt, Size sz) : abstract;
+
+	// Pick this direction from a rectangle.
+	Point pick(Rect r) : abstract;
+
+	// Opposite direction.
+	Cardinal opposite() : abstract;
+
+	// Get a direction vector.
+	Point direction() {
+		pick(Rect(-1.0, -1.0, 1.0, 1.0)).normalized;
+	}
+}
+
+class center extends Cardinal {
+	Rect place(Point pt, Size sz) : override { Rect(pt - sz/2, sz); }
+	Point pick(Rect r) : override { r.center; }
+	Cardinal opposite() : override { center; }
+	Str toS() { "center"; }
+}
+
+class north extends Cardinal {
+	Rect place(Point pt, Size sz) : override { Rect(pt - Size(sz.w/2, 0), sz); }
+	Point pick(Rect r) : override { Point(r.center.x, r.p0.y); }
+	Cardinal opposite() : override { south; }
+	Str toS() { "north"; }
+}
+
+class northEast extends Cardinal {
+	Rect place(Point pt, Size sz) : override { Rect(pt - Size(sz.w, 0), sz); }
+	Point pick(Rect r) : override { Point(r.p1.x, r.p0.y); }
+	Cardinal opposite() : override { southWest; }
+	Str toS() { "north east"; }
+}
+
+class east extends Cardinal {
+	Rect place(Point pt, Size sz) : override { Rect(pt - Size(sz.w, sz.h/2), sz); }
+	Point pick(Rect r) : override { Point(r.p1.x, r.center.y); }
+	Cardinal opposite() : override { west; }
+	Str toS() { "east"; }
+}
+
+class southEast extends Cardinal {
+	Rect place(Point pt, Size sz) : override { Rect(pt - sz, sz); }
+	Point pick(Rect r) : override { r.p1; }
+	Cardinal opposite() : override { northWest; }
+	Str toS() { "south east"; }
+}
+
+class south extends Cardinal {
+	Rect place(Point pt, Size sz) : override { Rect(pt - Size(sz.w/2, sz.h), sz); }
+	Point pick(Rect r) : override { Point(r.center.x, r.p1.y); }
+	Cardinal opposite() : override { north; }
+	Str toS() { "south"; }
+}
+
+class southWest extends Cardinal {
+	Rect place(Point pt, Size sz) : override { Rect(pt - Size(0, sz.h), sz); }
+	Point pick(Rect r) : override { Point(r.p0.x, r.p1.y); }
+	Cardinal opposite() : override { northEast; }
+	Str toS() { "south west"; }
+}
+
+class west extends Cardinal {
+	Rect place(Point pt, Size sz) : override { Rect(pt - Size(0, sz.h/2), sz); }
+	Point pick(Rect r) : override { Point(r.p0.x, r.center.y); }
+	Cardinal opposite() : override { east; }
+	Str toS() { "west"; }
+}
+
+class northWest extends Cardinal {
+	Rect place(Point pt, Size sz) : override { Rect(pt, sz); }
+	Point pick(Rect r) : override { r.p0; }
+	Cardinal opposite() : override { southEast; }
+	Str toS() { "north west"; }
+}

@@ -1,0 +1,41 @@
+use core.lang;
+use lang.bs;
+use layout;
+
+// Syntax for the DSL used to define pictures. Uses syntax similar to the layout language, but uses
+// a different execution model and has some extensions relevant to defining pictures.
+
+delimiter = SDelimiter;
+
+// Entry point. Defines a picture environment.
+PictureBlock SPicture(Block block);
+SPicture => PictureBlock(pos, block) : "picture" #keyword, "{" [, (SPictureExpr(me),)* ]+ "}";
+
+// Expression inside a picture block.
+void SPictureExpr(PictureBlock block);
+SPictureExpr => pictureElem(pos, name, params, block)
+	: SType name, SParamList(block.block) params, "{" [, (SPictureProperty(me), ";", )* ]+ "}";
+SPictureExpr => PictureElem(var, name, params, block)
+	: SName var #varName, "=", SType name, SParamList(block.block) params, "{" [, (SPictureProperty(me), ";", )* ]+ "}";
+
+// Regular Basic Storm statements.
+SPictureExpr => add(block, expr) : SStmt(block.block) expr;
+
+// Properties.
+void SPictureProperty(PictureElem elem);
+SPictureProperty => set(elem, name, params) : SName name #varName - (, ":", SParamList(elem.block) params)?;
+
+// Special case for placement.
+SPictureProperty => place(elem, dir, distance, origin)
+	: SType dir #varName, ":", SExpr(elem.block) distance, "of" #keyword, SExpr(elem.block) origin;
+
+
+//////////////////////////////
+// Integration
+//////////////////////////////
+
+// Into Basic Storm.
+SExpr => block(p) : SPicture(block) p;
+
+// Into the syntax language.
+SLayout[50] => asLayoutBlock(block, p) : SPicture(block.block) p;

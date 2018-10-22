@@ -1,360 +1,186 @@
 use ui;
 use core:geometry;
 use graphics;
-use layout;
-
-// Constants for corners of the figures.
-Nat center() { 0; }
-Nat north() { 1; }
-Nat northEast() { 2; }
-Nat east() { 3; }
-Nat southEast() { 4; }
-Nat south() { 5; }
-Nat southWest() { 6; }
-Nat west() { 7; }
-Nat northWest() { 8; }
-
-// Pick a position of a rectangle.
-package Point pick(Rect r, Nat pos) {
-	if (pos == north) {
-		Point(r.center.x, r.p0.y);
-	} else if (pos == northEast) {
-		Point(r.p1.x, r.p0.y);
-	} else if (pos == east) {
-		Point(r.p1.x, r.center.y);
-	} else if (pos == southEast) {
-		r.p1;
-	} else if (pos == south) {
-		Point(r.center.x, r.p1.y);
-	} else if (pos == southWest) {
-		Point(r.p0.x, r.p1.y);
-	} else if (pos == west) {
-		Point(r.p0.x, r.center.y);
-	} else if (pos == northWest) {
-		r.p0;
-	} else {
-		r.center;
-	}
-}
-
-// Get the direction.
-package Point direction(Nat pos) {
-	pick(Rect(-1, -1, 1, 1), pos).normalized;
-}
-
-// Place the specified edge of a rectangle at the appropriate position.
-package Rect place(Point pt, Size sz, Nat pos) {
-	Size half = sz/2;
-	Point offset = if (pos == north) {
-		Point(half.w, 0);
-	} else if (pos == northEast) {
-		Point(sz.w, 0);
-	} else if (pos == east) {
-		Point(sz.w, half.h);
-	} else if (pos == southEast) {
-		Point(sz);
-	} else if (pos == south) {
-		Point(half.w, sz.h);
-	} else if (pos == southWest) {
-		Point(0, sz.h);
-	} else if (pos == west) {
-		Point(0, half.h);
-	} else if (pos == northWest) {
-		Point(0, 0);
-	} else {
-		Point(half);
-	};
-	Rect(pt - offset, sz);
-}
-
 
 /**
  * Create drawings with a more fine-grained layout. Similarly to Tikz in LaTeX.
  *
- * The Picture block itself is just a layout from the UI that handles positioning of the elements
- * inside. The contents are therefore just regular elements that could be used in other situations
- * as well. However, they are designed for each other, and using the components intended for the
- * Picture layout may be cumbersome to use in other situations.
+ * The picture element is created using a custom syntax, which is similar to the regular layout
+ * syntax. See 'pictureSyntax.bs' and 'pictureSyntax.bnf' for details on the syntax.
+ *
+ * The picture itself basically contains a set of nodes, each which has a bounding rectangle. These
+ * nodes do their own layout according to the specified properties, much like TikZ. The picture
+ * element does, however, keep track of the bounds of the picture so that it is able to fit the
+ * picture into the desired layout rectangle.
  */
-class Picture extends layout:Layout {
-	// Information about a child.
-	class Info extends layout:Layout:Info {
-		// The child for which this info applies.
-		package Component child;
+class Picture extends Element {
+	// Scale of the picture.
+	Float scale;
 
-		// Create.
-		package init(Component child) {
-			init() { child = child; anchor = center; }
+	// Current bounding rectangle.
+	private Rect boundingBox;
+
+	// Nodes added to the picture.
+	private Node[] nodes;
+
+	// Create.
+	init() {
+		init() {
+			scale = 1;
 		}
-
-		// ID of this element. Used to refer to other elements here.
-		Str id;
-
-		// Anchor point for this element.
-		Nat anchor;
-
-		// Size of the element.
-		Size size;
-		void size(Float w, Float h) { size = Size(w, h); }
-
-		// Position (relative to the center of the element, unless otherwise specified).
-		Point at;
-		void at(Float x, Float y) { at = Size(x, y); }
-
-		// Shift the position.
-		Size shift;
-		void shift(Float x, Float y) { shift = Size(x, y); }
-
-		// Relative position.
-		void eastOf(Str id, Float space) { eastOf(id, east, space); }
-		void eastOf(Str id, Nat origin, Float space) {
-			relativeTo = id;
-			anchor = west;
-			relativeOrigin = origin;
-			relativeDistance = Point(space, 0);
-		}
-		void westOf(Str id, Float space) { westOf(id, west, space); }
-		void westOf(Str id, Nat origin, Float space) {
-			relativeTo = id;
-			anchor = east;
-			relativeOrigin = origin;
-			relativeDistance = Point(-space, 0);
-		}
-		void northOf(Str id, Float space) { northOf(id, north, space); }
-		void northOf(Str id, Nat origin, Float space) {
-			relativeTo = id;
-			anchor = south;
-			relativeOrigin = origin;
-			relativeDistance = Point(0, -space);
-		}
-		void southOf(Str id, Float space) { southOf(id, south, space); }
-		void southOf(Str id, Nat origin, Float space) {
-			relativeTo = id;
-			anchor = north;
-			relativeOrigin = origin;
-			relativeDistance = Point(0, space);
-		}
-
-		// Position relative to.
-		Str relativeTo;
-		Nat relativeOrigin;
-		Size relativeDistance;
 	}
 
-	// Add a child.
-	Info add(Component child) : override {
-		Info info(child);
-		children << info;
-		info;
+	// Add an element.
+	void add(Node node) {
+		nodes << node;
+
+		if (nodes.count == 1) {
+			boundingBox = node.pos;
+		} else {
+			boundingBox = boundingBox.include(node.pos);
+		}
 	}
 
-	// Get our minimum size.
+	// Minimum size.
 	Size minSize() : override {
-		bound(computePositions()).size;
+		boundingBox.size;
 	}
 
-	// Do the layout.
-	void layout() : override {
-		Rect target = pos;
+	// Draw.
+	void draw(Graphics g) : override {
+		// Center the block according to the current position and draw everything.
+		Point offset = pos.p0 - boundingBox.p0*scale + (pos.size - boundingBox.size*scale)/2;
+		g.push();
+		g.transform = scale(scale) * translate(offset);
 
-		Rect[] positions = computePositions();
-		Rect b = bound(positions);
+		for (n in nodes)
+			n.draw(g);
 
-		// Center the picture...
-		Point offset = target.p0 - b.p0 + (target.size - b.size)/2;
-
-		for (i, p in positions) {
-			children[i].child.pos = p + offset;
-		}
-	}
-
-	// Find all children.
-	void findAll(fn(Component)->void fn) : override {
-		super:findAll(fn);
-		for (c in children) {
-			c.child.findAll(fn);
-		}
-	}
-
-private:
-	// Our children.
-	Info[] children;
-
-	// Compute the position for a single child, if possible.
-	Bool computeChild(Nat id, Info c, Rect[] result, Str->Rect names) {
-		Point at = c.at;
-
-		// Relative to something else.
-		if (c.relativeTo.any) {
-			if (!names.has(c.relativeTo))
-				return false;
-
-			at = pick(names.get(c.relativeTo), c.relativeOrigin) + c.relativeDistance;
-		}
-
-		// Store it.
-		Rect r = place(at + c.shift, c.child.minSize, c.anchor);
-		result[id] = r;
-		if (c.id.any)
-			names.put(c.id, r);
-		true;
-	}
-
-	// Compute positions for all children.
-	Rect[] computePositions() {
-		// Remember children with identifiers.
-		Str->Rect names;
-
-		Rect[] result(children.count, Rect());
-		Bool[] done(children.count, false);
-		Nat numDone = 0;
-		while (numDone < children.count) {
-			Bool anyNew = false;
-			for (i, c in children) {
-				if (!done[i]) {
-					if (computeChild(i, c, result, names)) {
-						done[i] = true;
-						anyNew = true;
-						numDone++;
-					}
-				}
-			}
-
-			if (!anyNew) {
-				print("ERROR: No progress!");
-				return result;
-			}
-		}
-
-		result;
-	}
-
-	// Generate a bounding rectangle for everything.
-	Rect bound(Rect[] of) : static {
-		if (of.empty)
-			return Rect();
-
-		Rect r = of.first;
-		for (o in of)
-			r = r.include(o);
-		r;
+		g.pop();
 	}
 }
 
 
 /**
- * A component for use inside pictures. Supports more operations compared to regular elements, so
- * that we may connect arrows to them and so on.
+ * A node in a picture. The node is specified in terms of a size, an origin and an anchor point.
  */
-class PictureNode extends Element {
-	// Text font.
-	private Font myFont;
-
-	// Text color.
-	Brush textBrush;
-
-	// Current text, if any.
-	private Text? myText;
-
-	// Border color.
-	Brush borderBrush;
-
-	// Fill color (if any).
-	Brush? fillBrush;
-
-	// Minimum size.
-	Size size;
-
-	// Margin around the text.
-	Size margin;
-
-	// Initialize, so that we know our font!
+class Node on Render {
+	// Create.
 	init(TextStyle style) {
 		init() {
 			myFont = style.font;
 			textBrush = style.fill;
 			borderBrush = SolidBrush(black);
+			anchor = center;
 		}
 	}
 
-	// Set conveniently.
-	void size(Float w, Float h) {
-		size = Size(w, h);
-	}
+	// Position.
+	Point at;
+	void at(Float x, Float y) { at = Point(x, y); }
 
-	// Set text margin.
-	void margin(Float w, Float h) {
-		margin = Size(w, h);
-	}
+	// Anchor point.
+	Cardinal anchor;
 
-	// Minimum size of this element.
-	Size minSize() {
-		Size s = size;
-		if (myText) {
-			s = max(s, myText.size + margin);
-		}
-		s;
-	}
+	// Minimum size.
+	Size minSize;
+	void minSize(Float w, Float h) { minSize = Size(w, h); }
 
-	// Set the text of this node.
-	void text(Str t) {
-		myText = Text(t, myFont);
-	}
+	// Margin around the text.
+	Size margin;
+	void margin(Float w, Float h) { margin = Size(w, h); }
 
-	// Set the font of this node.
+	// Current font.
+	private Font myFont;
 	void font(Font f) {
 		myFont = f;
 		if (myText)
 			text(myText.text);
 	}
 
-	// Set text color.
-	void textColor(Color color) {
-		textBrush = SolidBrush(color);
+	// Text.
+	private Text? myText;
+	void text(Str t) {
+		myText = Text(t, myFont);
 	}
 
-	// Set border color.
-	void borderColor(Color color) {
-		borderBrush = SolidBrush(color);
+	// Text color.
+	Brush textBrush;
+	void textColor(Color c) { textBrush = SolidBrush(c); }
+
+	// Border color.
+	Brush borderBrush;
+	void borderColor(Color c) { borderBrush = SolidBrush(c); }
+
+	// Fill color.
+	Brush? fillBrush;
+	void fillColor(Color c) { fillBrush = SolidBrush(c); }
+
+	// Get the current size.
+	Size size() {
+		Size s = minSize;
+		if (myText) {
+			s = max(s, myText.size + margin);
+		}
+		s;
 	}
 
-	// Set fill color.
-	void fillColor(Color color) {
-		fillBrush = SolidBrush(color);
+	// Get this node's position.
+	Rect pos() {
+		anchor.place(at, size);
 	}
 
-	// Draw the element; draws the text.
+	// Get different anchor points.
+	Point center() { pos.center; }
+	Point north() { north.pick(pos); }
+	Point northEast() { northEast.pick(pos); }
+	Point east() { east.pick(pos); }
+	Point southEast() { southEast.pick(pos); }
+	Point south() { south.pick(pos); }
+	Point southWest() { southWest.pick(pos); }
+	Point west() { west.pick(pos); }
+	Point northWest() { northWest.pick(pos); }
+
+	// Place at various positions.
+	void place(Cardinal dir, Float distance, Point origin) {
+		anchor = dir.opposite;
+		at = origin + dir.direction*distance;
+	}
+	void place(Cardinal dir, Float distance, Node origin) {
+		place(dir, distance, dir.pick(origin.pos));
+	}
+
+
+	// Draw this node.
 	void draw(Graphics g) {
 		if (myText) {
-			Point offset = pos.p0 + (pos.size - myText.size)/2;
+			Rect p = pos;
+			Point offset = p.p0 + (p.size - myText.size)/2;
 			g.draw(myText, textBrush, offset);
 		}
 	}
-
-	// TODO: More public interface!
 }
 
-// Raw node creation.
-PictureNode node(Presentation p) {
-	PictureNode(p.contentStyle);
+// Easy creation.
+Node node(Presentation p) {
+	Node(p.contentStyle);
 }
 
 
 /**
- * A simple rectangle.
+ * Rectangle node.
  */
-class Rectangle extends PictureNode {
+class Rectangle extends Node {
 	// Create.
 	init(TextStyle style) {
 		init(style) {}
 	}
 
-	void draw(Graphics g) {
+	void draw(Graphics g) : override {
 		Rect r = pos;
 		if (fillBrush)
 			g.fill(r, fillBrush);
 		g.draw(pos, borderBrush);
-
 		super:draw(g);
 	}
 }

@@ -14,6 +14,11 @@ Url resUrl() {
 	}
 }
 
+// A 'style' used in a picture...
+void myBox(Node n) on Render {
+	n.margin(10, 10);
+}
+
 presentation Test "Test presentation" {
 	Font font("Arial", 32);
 
@@ -21,11 +26,12 @@ presentation Test "Test presentation" {
 	animationTime = 500 ms;
 
 	slide SlideDown false => content "Drawn pictures!" {
-		Picture {
-			rectangle { id: "a"; size: 10, 20; margin: 10, 10; text: "Hello!"; fillColor: red; }
-			rectangle { eastOf: "a", 0; id: "b"; size: 10, 20; margin: 10, 10; text: "World!"; fillColor: green; }
+		picture {
+			picture.scale = 1;
 
-			node { southOf: "b", 5; relativeOrigin: southWest; text: "I am below!"; }
+			a = rectangle { myBox; text: "Hello!"; fillColor: red; }
+			b = rectangle { east: 0 of a; myBox; text: "World!"; fillColor: green; }
+			node { south: 0 of b.southWest; text: "I am below!"; }
 		}
 	}
 

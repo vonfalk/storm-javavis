@@ -1,0 +1,124 @@
+use core:lang;
+use lang:bs;
+use lang:bs:macro;
+use layout;
+
+class PictureBlock on Compiler {
+	// Root block.
+	private ExprBlock root;
+
+	// Sub-block, so that we can put the return statement last.
+	ExprBlock sub;
+
+	// Variable for accessing the picture object being created.
+	LocalVarAccess me;
+
+	// Create.
+	init(SrcPos pos, Block parent) {
+		ExprBlock root(pos, parent);
+		ExprBlock sub(pos, root);
+
+		Var me(root, SStr("picture"), namedExpr(root, name{presentation:Picture}, Actuals()));
+		root.add(me);
+		root.add(sub);
+		root.add(LocalVarAccess(pos, me.var));
+
+		init() {
+			root = root;
+			sub = sub;
+			me = LocalVarAccess(pos, me.var);
+		}
+	}
+
+	// Get the block.
+	ExprBlock block() { root; }
+
+	// Add an expression.
+	void add(Expr expr) {
+		sub.add(expr);
+	}
+}
+
+class PictureElem on Compiler {
+	// The block we insert things into.
+	private ExprBlock into;
+
+	// The variable we created in the parent block.
+	LocalVarAccess me;
+
+	// Create.
+	init(SStr var, SrcName create, Actuals params, PictureBlock parent) {
+		ExprBlock into(create.pos, parent.sub);
+		Expr created = namedExpr(parent.sub, create, params);
+		Var v(parent.sub, var, created);
+		parent.add(v);
+		parent.add(into);
+
+		init() {
+			into = into;
+			me(create.pos, v.var);
+		}
+
+		parent.add(namedExpr(parent.sub, SStr("add"), parent.me, Actuals(me)));
+	}
+
+	// Set a property.
+	void set(SStr name, Actuals? params) {
+		Actuals p = if (params) { params; } else { Actuals(); };
+		if (e = findProperty(name, p)) {
+			into.add(e);
+		} else {
+			throwSyntaxError(name.pos, "No suitable property '${name.v}' found for ${me.result} (parameters: ${p})");
+		}
+	}
+
+	// Generate a call for the property if it exists.
+	private Expr? findProperty(SStr name, Actuals params) {
+		Expr e = namedExpr(into, name, me, params);
+		unless (e as UnresolvedName) {
+			return e;
+		}
+
+		// If more than one parameter, we can't do assignment.
+		if (params.expressions.count != 1) {
+			return null;
+		}
+
+		// TODO: Consider calling the constructor of whatever type 'l' is, if we found something.
+		Expr l = namedExpr(into, name, me, Actuals());
+		if (l as UnresolvedName) {
+			return null;
+		}
+
+		AssignOpInfo assign(SStr("=", name.pos), 10, true);
+		return assign.meaning(into, l, params.expressions[0]);
+	}
+
+	// Get the block.
+	ExprBlock block() { into; }
+}
+
+PictureElem pictureElem(SrcPos pos, SrcName create, Actuals params, PictureBlock parent) {
+	PictureElem(SStr("@ node", pos), create, params, parent);
+}
+
+
+// Create a layout block from a picture block.
+package LayoutBlock asLayoutBlock(LayoutRoot parent, PictureBlock p) on Compiler {
+	var pBlock = p.block;
+
+	ExprBlock wrap(pBlock.pos, parent.block);
+	Var v(wrap, SStr("@ picture"), namedExpr(pBlock, SStr("component"), Actuals(pBlock)));
+	wrap.add(v);
+
+	LayoutBlock(wrap, pBlock, LocalVarAccess(pBlock.pos, v.var));
+}
+
+// Special case for 'of' syntax.
+void place(PictureElem to, SrcName dir, Expr distance, Expr origin) {
+	Actuals a;
+	a.add(namedExpr(to.block, dir, Actuals()));
+	a.add(distance);
+	a.add(origin);
+	to.set(SStr("place", dir.pos), a);
+}

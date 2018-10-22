@@ -995,6 +995,10 @@
   (unless (string= (car storm-complete-cache) string)
     ;; Update the cache.
     (let ((result (storm-query (list 'complete-name string default-directory) 2))) ;; Allow more timeout if compilation is needed.
+      ;; When storm-query fails due to timeout, it returns the symbol "complete-name". If so, just pretend we have no completions.
+      (when (symbolp result)
+	(setq result '()))
+
       (setcar storm-complete-cache string)
       (setcdr storm-complete-cache result)))
 

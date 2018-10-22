@@ -11,7 +11,7 @@ namespace storm {
 		/**
 		 * Look up a proper action from a name and a set of parameters.
 		 */
-		static Expr *findCtor(Scope scope, Type *t, Actuals *actual, const SrcPos &pos);
+		static MAYBE(Expr *) findCtor(Scope scope, Type *t, Actuals *actual, const SrcPos &pos);
 		static Expr *findTarget(Scope scope, Named *n, LocalVar *first, Actuals *actual, const SrcPos &pos, bool useLookup);
 		static Expr *findTargetThis(Block *block, SimpleName *name,
 									Actuals *params, const SrcPos &pos,
@@ -21,13 +21,14 @@ namespace storm {
 								bool useThis);
 
 		// Find a constructor.
-		static Expr *findCtor(Scope scope, Type *t, Actuals *actual, const SrcPos &pos) {
+		static MAYBE(Expr *) findCtor(Scope scope, Type *t, Actuals *actual, const SrcPos &pos) {
 			BSNamePart *part = new (t) BSNamePart(Type::CTOR, pos, actual);
 			part->insert(thisPtr(t));
 
 			Function *ctor = as<Function>(t->find(part, scope));
 			if (!ctor)
-				throw SyntaxError(pos, L"No constructor " + ::toS(t->identifier()) + L"." + ::toS(part) + L")");
+				return null;
+			// throw SyntaxError(pos, L"No constructor " + ::toS(t->identifier()) + L"." + ::toS(part) + L")");
 
 			return new (t) CtorCall(pos, scope, ctor, actual);
 		}
@@ -132,10 +133,13 @@ namespace storm {
 			// Type ctors and local variables have priority.
 			{
 				Named *n = scope.find(name);
-				if (Type *t = as<Type>(n))
-					return findCtor(block->scope, t, params, pos);
-				else if (as<LocalVar>(n) != null && params->empty())
+				if (Type *t = as<Type>(n)) {
+					// If we find a suitable constructor, go for it. Otherwise, continue.
+					if (Expr *e = findCtor(block->scope, t, params, pos))
+						return e;
+				} else if (as<LocalVar>(n) != null && params->empty()) {
 					return findTarget(block->scope, n, null, params, pos, false);
+				}
 			}
 
 			// If we have a this-pointer, try to use it!
