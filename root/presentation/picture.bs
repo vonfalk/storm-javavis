@@ -319,45 +319,273 @@ Circle circle(Presentation p) {
 
 // An edge.
 class Edge extends PElement {
-	// From.
-	Point from;
+	// From and to. Always the actual endpoints of the line.
+	private Point fromPt;
+	private Point toPt;
 
-	// To.
-	Point to;
+	// Control point in between 'from' and 'to'.
+	Point? through;
+
+	// From or to a node?
+	private Node? fromNode;
+	private Node? toNode;
+
+	// Arrow style at the beginning and end.
+	private Arrow? fromArrow;
+	private Arrow? toArrow;
+
+	// Path to draw.
+	private Path path;
+
+	// Brush.
+	Brush brush;
+	void color(Color c) { brush = SolidBrush(c); }
+
+	// Line width.
+	Float width;
 
 	// Create.
-	init(Point from, Point to) {
+	package init() {
 		init() {
-			from = from;
-			to = to;
+			brush = SolidBrush(black);
+			width = 1.2;
 		}
 	}
 
-	Rect boundingBox() : override {
-		Rect(from).include(to);
+	// Draw from a point.
+	void from(Point pt) {
+		fromPt = pt;
+		fromNode = null;
+		update();
 	}
 
+	// Draw from a node.
+	void from(Node node) {
+		fromPt = Point();
+		fromNode = node;
+		update();
+	}
+
+	// Draw to a point.
+	void to(Point pt) {
+		toPt = pt;
+		toNode = null;
+		update();
+	}
+
+	// Draw to a node.
+	void to(Node node) {
+		toPt = Point();
+		toNode = node;
+		update();
+	}
+
+	// Get the logical starting point.
+	Point fromPos() {
+		if (fromNode)
+			fromNode.pos.center;
+		else
+			fromPt;
+	}
+
+	// Get the logical ending point.
+	Point toPos() {
+		if (toNode)
+			toNode.pos.center;
+		else
+			toPt;
+	}
+
+	// Bend left/right. The amount is expressed as a fraction of the original line length.
+	void bendLeft() { bendLeft(0.1); }
+	void bendLeft(Float amount) { bendRight(-amount); }
+
+	void bendRight() { bendRight(0.1); }
+	void bendRight(Float amount) {
+		Point from = fromPos;
+		Point dir = toPos - from;
+		Point offset = dir.tangent * amount;
+		through = from + dir*0.5 + offset;
+		update();
+	}
+
+	// Set arrow tips.
+	void fromArrow(Arrow a) {
+		fromArrow = a;
+		update();
+	}
+
+	void toArrow(Arrow a) {
+		toArrow = a;
+		update();
+	}
+
+	// Compute the bounding box.
+	Rect boundingBox() : override {
+		Rect(fromPt).include(toPt);
+	}
+
+	// Draw.
 	void draw(Graphics g) : override {
-		g.line(from, to, SolidBrush(black));
+		g.push();
+		g.lineWidth = width;
+
+		g.draw(path, brush);
+		if (fromArrow)
+			fromArrow.draw(g, brush);
+		if (toArrow)
+			toArrow.draw(g, brush);
+
+		g.pop();
+	}
+
+	// Update points.
+	private void update() {
+		if (through) {
+			Angle fromA = angle(through - fromPos);
+			if (fromNode)
+				fromPt = fromNode.atEdge(fromA);
+			if (fromArrow)
+				fromArrow.update(fromPt, fromA);
+
+			Angle toA = angle(through - toPos);
+			if (toNode)
+				toPt = toNode.atEdge(toA);
+			if (toArrow)
+				toArrow.update(toPt, toA);
+
+
+			path.clear();
+			path.start(fromPt);
+			path.bezier(through, toPt);
+		} else {
+			Angle a = angle(toPos - fromPos);
+			if (fromNode)
+				fromPt = fromNode.atEdge(a);
+			if (fromArrow)
+				fromArrow.update(fromPt, a);
+			if (toNode)
+				toPt = toNode.atEdge(a.opposite);
+			if (toArrow)
+				toArrow.update(toPt, a.opposite);
+
+			path.clear();
+			path.start(fromPt);
+			path.line(toPt);
+		}
 	}
 }
 
 // Create edges.
 Edge edge(Point from, Point to) {
-	Edge(from, to);
+	Edge e;
+	e.from(from);
+	e.to(to);
+	e;
 }
 
 Edge edge(Point from, Node to) {
-	Angle a = angle(to.pos.center - from);
-	Edge(from, to.atEdge(a.opposite));
+	Edge e;
+	e.from(from);
+	e.to(to);
+	e;
 }
 
 Edge edge(Node from, Point to) {
-	Angle a = angle(to - from.pos.center);
-	Edge(from.atEdge(a), to);
+	Edge e;
+	e.from(from);
+	e.to(to);
+	e;
 }
 
 Edge edge(Node from, Node to) {
-	Angle a = angle(to.pos.center - from.pos.center);
-	Edge(from.atEdge(a), to.atEdge(a.opposite));
+	Edge e;
+	e.from(from);
+	e.to(to);
+	e;
+}
+
+/**
+ * Arrows at the end of an edge.
+ */
+class Arrow on Render {
+	// The path to draw.
+	Path path;
+
+	// Update the path.
+	void update(Point pt, Angle angle) : abstract;
+
+	// Draw the arrow.
+	void draw(Graphics g, Brush b) {
+		g.fill(path, b);
+	}
+}
+
+
+/**
+ * Arrow of two lines.
+ */
+class PlainArrow extends Arrow {
+	Float length;
+	Angle angle;
+
+	init() { init() { length = 10; angle = 30 deg; } }
+	init(Angle angle) { init() { length = 10; angle = angle; } }
+	init(Float length) { init() { length = length; angle = 30 deg; } }
+	init(Float length, Angle angle) { init() { length = length; angle = angle; } }
+
+	void update(Point pt, Angle a) {
+		path.clear();
+		path.start(pt + angle(a - angle)*length);
+		path.line(pt);
+		path.line(pt + angle(a + angle)*length);
+	}
+
+	// Draw the arrow.
+	void draw(Graphics g, Brush b) {
+		g.draw(path, b);
+	}
+}
+
+
+/**
+ * Arrow consisting of a filled triangle.
+ */
+class TriangleArrow extends Arrow {
+	Float length;
+	Angle angle;
+
+	init() { init() { length = 10; angle = 30 deg; } }
+	init(Angle angle) { init() { length = 10; angle = angle; } }
+	init(Float length) { init() { length = length; angle = 30 deg; } }
+	init(Float length, Angle angle) { init() { length = length; angle = angle; } }
+
+	void update(Point pt, Angle a) {
+		path.clear();
+		path.start(pt + angle(a - angle)*length);
+		path.line(pt);
+		path.line(pt + angle(a + angle)*length);
+	}
+}
+
+
+/**
+ * Fancy, filled arrow.
+ */
+class FancyArrow extends Arrow {
+	Float length;
+	Angle angle;
+
+	init() { init() { length = 12; angle = 20 deg; } }
+	init(Angle angle) { init() { length = 12; angle = angle; } }
+	init(Float length) { init() { length = length; angle = 20 deg; } }
+	init(Float length, Angle angle) { init() { length = length; angle = angle; } }
+
+	void update(Point pt, Angle a) {
+		path.clear();
+		path.start(pt);
+		path.line(pt + angle(a - angle)*length);
+		path.bezier(pt + angle(a)*length*2/3, pt + angle(a + angle)*length);
+		path.close();
+	}
 }

@@ -13,7 +13,7 @@ namespace storm {
 		}
 
 		Angle Angle::opposite() const {
-			return Angle(v + M_PI).normalized();
+			return Angle(Float(v + M_PI)).normalized();
 		}
 
 		wostream &operator <<(wostream &to, Angle a) {

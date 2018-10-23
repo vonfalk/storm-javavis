@@ -34,13 +34,13 @@ presentation Test "Test presentation" {
 			node { south: 0 of b.southWest; text: "I am below!"; }
 
 			r = rectangle { myBox; rounded: 10; text: "Above!"; north: 20 of a.northEast; }
-			ca = circle { text: "23"; north: 20 of r.northWest; }
-			cb = circle { oval; text: "Longer"; north: 20 of r.northEast; fillColor: green + blue; }
-			cd = rectangle { myBox; text: "Above"; north: 20 of cb; anchor: southEast; }
+			ca = circle { text: "23"; north: 20 of r.northWest - Size(60, 0); }
+			cb = circle { oval; text: "Longer"; north: 20 of r.northEast + Size(60, 0); fillColor: green + blue; }
+			cd = rectangle { myBox; text: "Above"; north: 100 of r; }
 
-			edge ca, cb {}
-			edge cd, cb {}
-			edge ca, cd {}
+			edge ca, cb { bendLeft: 0.1; toArrow: PlainArrow; }
+			edge cd, cb { fromArrow: TriangleArrow; toArrow: PlainArrow; }
+			edge ca, cd { fromArrow: FancyArrow; toArrow: FancyArrow; }
 		}
 	}
 
