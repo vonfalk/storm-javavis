@@ -17,27 +17,44 @@ class Picture extends Element {
 	// Scale of the picture.
 	Float scale;
 
+	// Function to apply on all nodes (such as styles).
+	fn(Node)->void allNodes;
+
+	// Function to apply on all edges (such as styles).
+	fn(Edge)->void allEdges;
+
 	// Current bounding rectangle.
 	private Rect boundingBox;
 
-	// Nodes added to the picture.
-	private Node[] nodes;
+	// Elements added to the picture.
+	private PElement[] elements;
 
 	// Create.
 	init() {
 		init() {
 			scale = 1;
+			allNodes = &noNode;
+			allEdges = &noEdge;
 		}
 	}
 
-	// Add an element.
-	void add(Node node) {
-		nodes << node;
+	// Dummy functions.
+	void noNode(Node n) : static {}
+	void noEdge(Edge e) : static {}
 
-		if (nodes.count == 1) {
-			boundingBox = node.pos;
+	// Add an element.
+	void add(PElement e) {
+		elements << e;
+
+		if (e as Node)
+			allNodes.call(e);
+		else if (e as Edge)
+			allEdges.call(e);
+
+		if (elements.count == 1) {
+			boundingBox = e.boundingBox;
 		} else {
-			boundingBox = boundingBox.include(node.pos);
+			boundingBox = boundingBox.include(e.boundingBox);
 		}
 	}
 
@@ -53,8 +70,8 @@ class Picture extends Element {
 		g.push();
 		g.transform = scale(scale) * translate(offset);
 
-		for (n in nodes)
-			n.draw(g);
+		for (e in elements)
+			e.draw(g);
 
 		g.pop();
 	}
@@ -62,9 +79,21 @@ class Picture extends Element {
 
 
 /**
+ * An element in a picture.
+ */
+class PElement on Render {
+	// Get the bounding box of this element.
+	Rect boundingBox() : abstract;
+
+	// Draw this element.
+	void draw(Graphics g) : abstract;
+}
+
+
+/**
  * A node in a picture. The node is specified in terms of a size, an origin and an anchor point.
  */
-class Node on Render {
+class Node extends PElement {
 	// Create.
 	init(TextStyle style) {
 		init() {
@@ -130,6 +159,9 @@ class Node on Render {
 		anchor.place(at, size);
 	}
 
+	// Bounding box.
+	Rect boundingBox() { pos(); }
+
 	// Get different anchor points.
 	Point center() { pos.center; }
 	Point north() { north.pick(pos); }
@@ -150,6 +182,10 @@ class Node on Render {
 		place(dir, distance, dir.pick(origin.pos));
 	}
 
+	// Get a point on the edge of this node. The point should be aimed towards 'angle'.
+	Point atEdge(Angle angle) {
+		pos.center;
+	}
 
 	// Draw this node.
 	void draw(Graphics g) {
@@ -171,16 +207,46 @@ Node node(Presentation p) {
  * Rectangle node.
  */
 class Rectangle extends Node {
+	// Rounded corners?
+	Size rounded;
+	void rounded(Float r) { rounded = Size(r); }
+
 	// Create.
 	init(TextStyle style) {
 		init(style) {}
 	}
 
+	// Get points at the edge.
+	Point atEdge(Angle a) : override {
+		// TODO: Respect rounded corners.
+
+		Rect p = pos;
+		Size s = p.size/2;
+		Point dir = a.angle;
+		Float scale = max(s.w, s.h);
+		if (dir.x != 0.0) {
+			scale = min(scale, abs(s.w / dir.x));
+		}
+		if (dir.y != 0.0) {
+			scale = min(scale, abs(s.h / dir.y));
+		}
+
+		p.center + dir*scale;
+	}
+
 	void draw(Graphics g) : override {
 		Rect r = pos;
-		if (fillBrush)
-			g.fill(r, fillBrush);
-		g.draw(pos, borderBrush);
+		if (rounded != Size()) {
+			if (fillBrush) {
+				g.fill(r, rounded, fillBrush);
+			}
+			g.draw(r, rounded, borderBrush);
+		} else {
+			if (fillBrush) {
+				g.fill(r, fillBrush);
+			}
+			g.draw(r, borderBrush);
+		}
 		super:draw(g);
 	}
 }
@@ -188,4 +254,110 @@ class Rectangle extends Node {
 // Easy creation.
 Rectangle rectangle(Presentation p) {
 	Rectangle(p.contentStyle);
+}
+
+
+/**
+ * Circle node.
+ */
+class Circle extends Node {
+	// Allowed to be oval?
+	Bool allowOval;
+	void oval() { allowOval = true; }
+
+	// Create.
+	init(TextStyle style) {
+		init(style) {
+			allowOval = false;
+		}
+	}
+
+	// Custom size computation to account for the extra space taken up by the circle.
+	Size size() {
+		Size s = super:size();
+		if (allowOval) {
+			s * 2.0.sqrt;
+		} else {
+			Size(max(s.w, s.h) * 2.0.sqrt);
+		}
+	}
+
+	// Get points at the edge.
+	Point atEdge(Angle a) : override {
+		Rect p = pos;
+		if (allowOval) {
+			Size sz = p.size/2;
+			Point dir = a.angle;
+			dir.x /= sz.w;
+			dir.y /= sz.h;
+			// We're now in unit space, normalize the direction vector and transform it back.
+			dir = dir.normalized;
+			dir.x *= sz.w;
+			dir.y *= sz.h;
+			p.center + dir;
+		} else {
+			p.center + a.angle * p.size.h/2;
+		}
+	}
+
+	void draw(Graphics g) : override {
+		Rect r = pos;
+
+		if (fillBrush) {
+			g.fillOval(r, fillBrush);
+		}
+		g.oval(r, borderBrush);
+
+		super:draw(g);
+	}
+}
+
+// Easy creation.
+Circle circle(Presentation p) {
+	Circle(p.contentStyle);
+}
+
+// An edge.
+class Edge extends PElement {
+	// From.
+	Point from;
+
+	// To.
+	Point to;
+
+	// Create.
+	init(Point from, Point to) {
+		init() {
+			from = from;
+			to = to;
+		}
+	}
+
+	Rect boundingBox() : override {
+		Rect(from).include(to);
+	}
+
+	void draw(Graphics g) : override {
+		g.line(from, to, SolidBrush(black));
+	}
+}
+
+// Create edges.
+Edge edge(Point from, Point to) {
+	Edge(from, to);
+}
+
+Edge edge(Point from, Node to) {
+	Angle a = angle(to.pos.center - from);
+	Edge(from, to.atEdge(a.opposite));
+}
+
+Edge edge(Node from, Point to) {
+	Angle a = angle(to - from.pos.center);
+	Edge(from.atEdge(a), to);
+}
+
+Edge edge(Node from, Node to) {
+	Angle a = angle(to.pos.center - from.pos.center);
+	Edge(from.atEdge(a), to.atEdge(a.opposite));
 }

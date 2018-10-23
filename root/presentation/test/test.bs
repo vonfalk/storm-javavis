@@ -32,6 +32,15 @@ presentation Test "Test presentation" {
 			a = rectangle { myBox; text: "Hello!"; fillColor: red; }
 			b = rectangle { east: 0 of a; myBox; text: "World!"; fillColor: green; }
 			node { south: 0 of b.southWest; text: "I am below!"; }
+
+			r = rectangle { myBox; rounded: 10; text: "Above!"; north: 20 of a.northEast; }
+			ca = circle { text: "23"; north: 20 of r.northWest; }
+			cb = circle { oval; text: "Longer"; north: 20 of r.northEast; fillColor: green + blue; }
+			cd = rectangle { myBox; text: "Above"; north: 20 of cb; anchor: southEast; }
+
+			edge ca, cb {}
+			edge cd, cb {}
+			edge ca, cd {}
 		}
 	}
 

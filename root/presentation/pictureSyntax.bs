@@ -13,6 +13,9 @@ class PictureBlock on Compiler {
 	// Variable for accessing the picture object being created.
 	LocalVarAccess me;
 
+	// Counter for generating unique identifiers.
+	private Nat unique;
+
 	// Create.
 	init(SrcPos pos, Block parent) {
 		ExprBlock root(pos, parent);
@@ -29,6 +32,9 @@ class PictureBlock on Compiler {
 			me = LocalVarAccess(pos, me.var);
 		}
 	}
+
+	// Generate a variable name.
+	Str uniqueName() { "@ node${unique++}"; }
 
 	// Get the block.
 	ExprBlock block() { root; }
@@ -99,7 +105,7 @@ class PictureElem on Compiler {
 }
 
 PictureElem pictureElem(SrcPos pos, SrcName create, Actuals params, PictureBlock parent) {
-	PictureElem(SStr("@ node", pos), create, params, parent);
+	PictureElem(SStr(parent.uniqueName, pos), create, params, parent);
 }
 
 

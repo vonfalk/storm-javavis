@@ -22,6 +22,9 @@ namespace storm {
 			// Normalized.
 			Angle STORM_FN normalized() const;
 
+			// Opposite direction.
+			Angle STORM_FN opposite() const;
+
 			// Convert to radians.
 			inline Float STORM_FN rad() const { return v; }
 
@@ -36,6 +39,7 @@ namespace storm {
 		// Add/subtract.
 		Angle STORM_FN operator +(Angle a, Angle b);
 		Angle STORM_FN operator -(Angle a, Angle b);
+		Angle STORM_FN operator -(Angle a);
 
 		// Scale.
 		Angle STORM_FN operator *(Angle a, Float b);

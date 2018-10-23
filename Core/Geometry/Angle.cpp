@@ -12,6 +12,10 @@ namespace storm {
 			return Angle(v - Float(sub * (2 * M_PI)));
 		}
 
+		Angle Angle::opposite() const {
+			return Angle(v + M_PI).normalized();
+		}
+
 		wostream &operator <<(wostream &to, Angle a) {
 			return to << a.deg() << L" deg";
 		}
@@ -34,6 +38,10 @@ namespace storm {
 
 		Angle operator -(Angle a, Angle b) {
 			return Angle(a.rad() - b.rad());
+		}
+
+		Angle operator -(Angle a) {
+			return Angle(-a.rad());
 		}
 
 		Angle operator *(Angle a, Float b) {
