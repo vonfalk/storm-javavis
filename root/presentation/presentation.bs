@@ -99,6 +99,36 @@ class Presentation on Render {
 		slide.draw(g, pos);
 	}
 
+	// Get the animation state representing the beginning of the presentation.
+	AnimationState begin() {
+		AnimationState(0, 0);
+	}
+
+	// Get the state representing the end of the presentation.
+	AnimationState end() {
+		AnimationState(slides.count, 0);
+	}
+
+	// Get the state for the n:th slide.
+	AnimationState at(Nat id) {
+		AnimationState(min(id, slides.count), 0);
+	}
+
+	// Get the next state.
+	AnimationState next(AnimationState s) {
+		// TODO: Play the next animation of the current slide, if any.
+		at(s.slide + 1, 0);
+	}
+
+	// Get the previous state.
+	AnimationState prev(AnimationState s) {
+		if (s.slide == 0)
+			begin();
+		else
+			AnimationState(s.slide - 1, 0);
+	}
+
+
 	// Go to a specific slide. Returns the duration of the intro animation.
 	Duration goTo(Nat id) {
 		currentSlide = min(id, slides.count);
@@ -166,3 +196,43 @@ class TextStyle on Render {
 // Default text styles.
 TextStyle defaultHeadingStyle() on Render { TextStyle(Font("Arial", 32), black, 30); }
 TextStyle defaultContentStyle() on Render { TextStyle(Font("Arial", 22), black, 10); }
+
+
+/**
+ * A description of the animation state for a presentation.
+ *
+ * The entire state is stored in this class, so that a single application may have multiple
+ * "cursors" to inside the same presentation. It is then possible to render the presentation at
+ * the different stages at will.
+ *
+ * Do not modify this object directly, use the corresponding functions inside the Presentation class
+ * instead.
+ */
+class AnimationState {
+	// Current slide.
+	package Nat slide;
+
+	// Current animation inside the slide.
+	package Nat animation;
+
+	// Create a state representing the first slide in a presentation.
+	init() {
+		init() {
+			slide = 0;
+			animation = 0;
+		}
+	}
+
+	// Convenience constructor for use internally.
+	package init(Nat slide, Nat animation) {
+		init() {
+			slide = slide;
+			animation = animation;
+		}
+	}
+
+	// To string.
+	void toS(StrBuf to) {
+		to << "{ slide " << slide << ", " << animation << " }";
+	}
+}
