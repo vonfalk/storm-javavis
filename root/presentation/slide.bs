@@ -10,17 +10,17 @@ use geometry;
  * A slide is scaled to occupy 1024x768 virtual pixels regardless of the actual size of the output.
  */
 class Slide on Render {
-	// All elements in this slide.
-	Element[] elements;
-
 	// Intro animation.
 	SlideIntro? intro;
 
-	// Current animation number.
-	Nat animationId;
-
 	// The layout for this slide.
 	private Layout layout;
+
+	// All elements in this slide.
+	private Element[] elements;
+
+	// Length of animations in this slide.
+	private Duration[] animationTimes;
 
 	// Create without a layout.
 	init() {
@@ -33,6 +33,8 @@ class Slide on Render {
 			layout = layout;
 		}
 
+		// The intro always exists, even if we don't have a specific animation for it.
+		animationTimes << 0 ms;
 		layout.findAll(&this.addElement);
 	}
 
@@ -45,17 +47,34 @@ class Slide on Render {
 				intro.duration = to.animationTime;
 			}
 		}
+
+		for (e in elements) {
+			e.setupAnimations(to);
+			for (a in e.animations) {
+				addAnimation(a);
+			}
+		}
 	}
 
-	// Draw this slide. 'animation' is the animation number currently being played, and 'time' is in
-	// the range 0-1 where 1 is complete. Animation number 0 is the intro animation of the entire
-	// slide.
-	void draw(Graphics g, Float time) {
-		// TODO: Consider animations!
-
+	// Draw this slide. 'step' is the animation number currently being played and 'time' determines
+	// the length of the current animation.
+	void draw(Graphics g, Nat step, Duration time) {
 		for (element in elements) {
-			element.draw(g);
+			element.draw(g, step, time);
 		}
+	}
+
+	// Get the total number of animations in this slide.
+	Nat stepCount() {
+		animationTimes.count;
+	}
+
+	// Get the total animation duration for a certain animation step.
+	Duration duration(Nat step) {
+		if (step < animationTimes.count)
+			animationTimes[step];
+		else
+			0 ms;
 	}
 
 private:
@@ -64,5 +83,14 @@ private:
 		if (c as ElementWrap) {
 			elements << c.control;
 		}
+	}
+
+	// Add an animation.
+	void addAnimation(Animation a) {
+		Nat step = a.step;
+		while (animationTimes.count <= step)
+			animationTimes << 0 ms;
+
+		animationTimes[step] = max(animationTimes[step], a.duration + a.offset);
 	}
 }

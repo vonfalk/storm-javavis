@@ -29,6 +29,8 @@ SPictureProperty => set(elem, name, params) : SName name #varName - (, ":", SPar
 SPictureProperty => place(elem, dir, distance, origin)
 	: SType dir #varName, ":", SExpr(elem.block) distance, "of" #keyword, SExpr(elem.block) origin;
 
+// Special case for animations.
+SPictureProperty => set(elem, ani) : SElemAni(elem.block) ani;
 
 //////////////////////////////
 // Integration

@@ -25,14 +25,19 @@ class SlideIntro on Render {
 	}
 
 	// Draw the animation. 'pos' ranges from 0 to 1.
-	void draw(Presentation p, Graphics g, Slide? prev, Slide curr, Float pos) : abstract;
+	void draw(Presentation p, Graphics g, Nat? prev, Nat curr, Presentation:Cursor pos, Duration time) : abstract;
+
+	// Convert a time into a float in the range 0..1.
+	package Float val(Duration d) {
+		clamp(d / duration, 0.0, 1.0);
+	}
 }
 
 
 /**
  * A simple crossfade.
  */
-class FadeIn extends SlideIntro {
+class FadeInIntro extends SlideIntro {
 	// Create.
 	init() {
 		init() {}
@@ -44,13 +49,13 @@ class FadeIn extends SlideIntro {
 	}
 
 	// Draw the animation.
-	void draw(Presentation p, Graphics g, Slide? prev, Slide curr, Float pos) : override {
+	void draw(Presentation p, Graphics g, Nat? prev, Nat curr, Presentation:Cursor pos, Duration time) : override {
 		if (prev) {
-			p.drawSlide(g, prev, 1.0);
+			p.drawSlide(g, prev);
 		}
 
-		g.push(pos);
-		p.drawSlide(g, curr, pos);
+		g.push(val(time));
+		p.drawSlide(g, curr, pos, time);
 		g.pop();
 	}
 }
@@ -59,7 +64,7 @@ class FadeIn extends SlideIntro {
 /**
  * Slide the old slide down.
  */
-class SlideDown extends SlideIntro {
+class SlideDownIntro extends SlideIntro {
 	// Should we fade as well?
 	Bool fade;
 
@@ -70,20 +75,20 @@ class SlideDown extends SlideIntro {
 	init(Duration d, Bool fade) { init(d) { fade = fade; } }
 
 	// Draw!
-	void draw(Presentation p, Graphics g, Slide? prev, Slide curr, Float pos) : override {
-		p.drawSlide(g, curr, pos);
+	void draw(Presentation p, Graphics g, Nat? prev, Nat curr, Presentation:Cursor pos, Duration time) : override {
+		p.drawSlide(g, curr, pos, time);
 
 		if (prev) {
 			// Get some acceleration!
-			pos = pos * pos;
+			var t = pow(val(time), 2);
 
 			if (fade) {
-				g.push(1.0 - pos);
+				g.push(1.0 - t);
 			} else {
 				g.push();
 			}
-			g.transform = translate(Size(0, pos * p.size.h));
-			p.drawSlide(g, prev, pos);
+			g.transform = translate(Size(0, t * p.size.h));
+			p.drawSlide(g, prev);
 			g.pop();
 		}
 	}
@@ -93,20 +98,21 @@ class SlideDown extends SlideIntro {
 /**
  * Enlarge the old slide and fade it out.
  */
-class Enlarge extends SlideIntro {
+class EnlargeIntro extends SlideIntro {
 	// Create.
 	init() { init() {} }
 	init(Duration d) { init() {} }
 
 	// Draw!
-	void draw(Presentation p, Graphics g, Slide? prev, Slide curr, Float pos) : override {
-		p.drawSlide(g, curr, pos);
+	void draw(Presentation p, Graphics g, Nat? prev, Nat curr, Presentation:Cursor pos, Duration time) : override {
+		p.drawSlide(g, curr, pos, time);
 
 		if (prev) {
+			var t = val(time);
 			Point center = p.size / 2;
-			g.push(1.0 - pos);
-			g.transform = scale(1.0 + pos * pos * 4, center);
-			p.drawSlide(g, prev, pos);
+			g.push(1.0 - t);
+			g.transform = scale(1.0 + t * t * 4, center);
+			p.drawSlide(g, prev);
 			g.pop();
 		}
 	}

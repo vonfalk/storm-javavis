@@ -63,17 +63,39 @@ class Picture extends Element {
 		boundingBox.size;
 	}
 
-	// Draw.
-	void draw(Graphics g) : override {
-		// Center the block according to the current position and draw everything.
-		Point offset = pos.p0 - boundingBox.p0*scale + (pos.size - boundingBox.size*scale)/2;
-		g.push();
-		g.transform = scale(scale) * translate(offset);
+	void draw(Graphics g, Nat step, Duration time) {
+		if (before(g, step, time)) {
+			// Center the block according to the current position and draw everything.
+			Point offset = pos.p0 - boundingBox.p0*scale + (pos.size - boundingBox.size*scale)/2;
+			g.push();
+			g.transform = scale(scale) * translate(offset);
 
+			for (e in elements)
+				e.draw(g, step, time);
+
+			g.pop();
+		}
+		after(g, step, time);
+	}
+
+	// Draw, never called.
+	void draw(Graphics g) : override {}
+
+	// Get animations.
+	Animation[] animations() : override {
+		Animation[] r = super:animations().clone();
 		for (e in elements)
-			e.draw(g);
+			for (a in e.animations)
+				r << a;
+		r;
+	}
 
-		g.pop();
+	// Initialize animations.
+	void setupAnimations(Presentation p) : override {
+		super:setupAnimations(p);
+		for (e in elements)
+			for (a in e.animations)
+				a.setup(p);
 	}
 }
 
@@ -82,11 +104,29 @@ class Picture extends Element {
  * An element in a picture.
  */
 class PElement on Render {
+	// Animations.
+	Animation[] animations;
+	void animation(Animation a) { animations << a; }
+
 	// Get the bounding box of this element.
 	Rect boundingBox() : abstract;
 
 	// Draw this element.
 	void draw(Graphics g) : abstract;
+
+	// Draw, consider animations.
+	void draw(Graphics g, Nat step, Duration time) {
+		Bool show = true;
+		Nat count = animations.count;
+		for (Nat i = 0; i < count; i++)
+			show &= animations[i].before(g, step, time);
+
+		if (show)
+			draw(g);
+
+		for (Nat i = count; i > 0; i--)
+			animations[i - 1].after(g, step, time);
+	}
 }
 
 

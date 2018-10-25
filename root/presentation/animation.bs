@@ -1,0 +1,78 @@
+use core:geometry;
+use ui;
+
+/**
+ * An animation for an element inside a slide.
+ *
+ * Similar to, but not identical to the animations used for slide intros. These animations are
+ * configurable to a higher degree, and multiple of these animations may play simultaneously.
+ *
+ * Note: Many aspects of the animation are configured from a custom syntax, so that new animations
+ * do not have to overload a large number of constructors for commonly used scenarios.
+ */
+class Animation on Render {
+	// Play at step number.
+	Nat step;
+
+	// Duration of this animation.
+	Duration duration;
+
+	// Offset from the start of this animation step.
+	Duration offset;
+
+	// Create, default duration.
+	init(Nat step) {
+		init() {
+			step = step;
+			duration = Duration();
+			offset = Duration();
+		}
+	}
+
+	// Setup the animation. Called when added to a slide so that we may set defaults.
+	void setup(Presentation p) {
+		if (duration == 0 ms)
+			duration = p.animationTime;
+	}
+
+	// Called before drawing the element. May return 'false' to prevent painting the element.
+	Bool before(Graphics g, Nat step, Duration time) : abstract;
+
+	// Called after drawing the element to restore any graphics state set up by 'before'.
+	void after(Graphics g, Nat step, Duration time) : abstract;
+
+	// Convert a time into a float in the range 0..1.
+	package Float val(Duration d) {
+		clamp((d - offset) / duration, 0.0, 1.0);
+	}
+}
+
+
+/**
+ * Fade in animation.
+ */
+class FadeInAnimation extends Animation {
+	// Create.
+	init(Nat step) {
+		init(step) {}
+	}
+
+	// Set up the animation.
+	Bool before(Graphics g, Nat cStep, Duration time) : override {
+		if (cStep < step) {
+			false;
+		} else if (cStep == step) {
+			g.push(val(time));
+			true;
+		} else {
+			true;
+		}
+	}
+
+	// Tear down.
+	void after(Graphics g, Nat cStep, Duration time) : override {
+		if (cStep == step)
+			g.pop();
+	}
+
+}

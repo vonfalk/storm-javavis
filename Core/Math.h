@@ -23,5 +23,14 @@ namespace storm {
 	Float STORM_FN abs(Float a);
 	Double STORM_FN abs(Double a);
 
+	// Clamp values.
+	Byte STORM_FN clamp(Byte v, Byte min, Byte max);
+	Int STORM_FN clamp(Int v, Int min, Int max);
+	Nat STORM_FN clamp(Nat v, Nat min, Nat max);
+	Long STORM_FN clamp(Long v, Long min, Long max);
+	Word STORM_FN clamp(Word v, Word min, Word max);
+	Float STORM_FN clamp(Float v, Float min, Float max);
+	Double STORM_FN clamp(Double v, Double min, Double max);
+
 }
 

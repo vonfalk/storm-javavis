@@ -27,8 +27,19 @@ SIntro => Maybe<Expr>() : ;
 SIntro => slideIntro(block, name, params) : SType name, SParamList(block) params, "=>";
 SIntro => slideIntro(block, name, params) : SType name, "(", SParamList(block) params, ")", "=>";
 
-// Extend the syntax to allow skipping parens around parameter lists. (Note: Ambiguous with variable declarations in the UI library).
+// Extend the syntax to allow skipping parens around parameter lists. (Note: Ambiguous with variable declarations in the UI library, we should fix this by moving somewhat into context sensitive grammars...).
 SLayout[10] => LayoutBlock(block, name, params) : SType name, SParamList(block.block) params, "{" [, SLayoutContent(me), ]+ "}";
 
-// Extend the syntax of the layout to allow type declarations.
-// SLayoutItem : SType type, SName name #varName, ("(", SParamList(block.block) params, ")",)? "{" [, SLayoutContent(me),]+ "}";
+// Specify animations for elements.
+SLayoutItem => add(block, ani) : SElemAni(block.block) ani, ";";
+
+
+// Create animations for elements.
+AniDecl SElemAni(Block block);
+SElemAni => AniDecl(block, step, name, params)
+	: "@" #keyword, "[0-9]+" step #constant, (SAniOpts(me, block),)* ":", SType name, SParamList(block) params;
+
+// Animation options.
+void SAniOpts(AniDecl to, Block block);
+SAniOpts => setOffset(to, time) : "+" #keyword, SExpr(block) time;
+SAniOpts => setDuration(to, time) : ",", SExpr(block) time;

@@ -78,12 +78,16 @@ namespace storm {
 	inline Duration STORM_FN operator -(Duration a, Duration b) { return Duration(a.v - b.v); }
 	inline Duration STORM_FN operator *(Duration a, Int factor) { return Duration(a.v * factor); }
 	inline Duration STORM_FN operator /(Duration a, Int factor) { return Duration(a.v / factor); }
+	inline Duration STORM_FN operator *(Duration a, Float factor) { return Duration(Long(a.v * Double(factor))); }
+	inline Duration STORM_FN operator /(Duration a, Float factor) { return Duration(Long(a.v / Double(factor))); }
 	inline Float STORM_FN operator /(Duration a, Duration b) { return float(double(a.v) / double(b.v)); }
 	inline Duration STORM_FN operator %(Duration a, Duration b) { return Duration(a.v % b.v); }
 	inline Duration &STORM_FN operator +=(Duration &a, Duration b) { a.v += b.v; return a; }
 	inline Duration &STORM_FN operator -=(Duration &a, Duration b) { a.v -= b.v; return a; }
 	inline Duration &STORM_FN operator *=(Duration &a, Int b) { a.v *= b; return a; }
 	inline Duration &STORM_FN operator /=(Duration &a, Int b) { a.v /= b; return a; }
+	inline Duration &STORM_FN operator *=(Duration &a, Float b) { a.v = Long(a.v * Double(b)); return a; }
+	inline Duration &STORM_FN operator /=(Duration &a, Float b) { a.v = Long(a.v / Double(b)); return a; }
 
 	// Comparisons. TODO: Consider wrapping of Moments.
 	inline Bool STORM_FN operator ==(Moment a, Moment b) { return a.v == b.v; }
@@ -99,6 +103,12 @@ namespace storm {
 	inline Bool STORM_FN operator >(Duration a, Duration b) { return a.v > b.v; }
 	inline Bool STORM_FN operator <=(Duration a, Duration b) { return a.v <= b.v; }
 	inline Bool STORM_FN operator >=(Duration a, Duration b) { return a.v >= b.v; }
+
+	// Tell Storm about these, without disturbing the C++ namespace.
+	namespace impl {
+		inline Duration STORM_FN min(Duration a, Duration b) { return ::min(a, b); }
+		inline Duration STORM_FN max(Duration a, Duration b) { return ::max(a, b); }
+	}
 
 	/**
 	 * Simple way of measuring accumulated time of calls. Results are printed at the end of the

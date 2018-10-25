@@ -8,6 +8,9 @@ class Element on Render {
 	// Current position. Generally set by the layout.
 	private Rect myPos;
 
+	// Animations.
+	private Animation[] myAni;
+
 	// Get/set the position.
 	Rect pos() : final { myPos; }
 	assign pos(Rect p) { myPos = p; }
@@ -15,10 +18,49 @@ class Element on Render {
 	// Get the minimum size of this element.
 	Size minSize() : abstract;
 
+	// Initialize any animations in here.
+	void setupAnimations(Presentation p) {
+		for (a in animations) {
+			a.setup(p);
+		}
+	}
+
+	// Extract the animations from this element. Expected to be called once on slide setup, so might
+	// be somewhat slow.
+	Animation[] animations() { myAni; }
+
+	// Add an animation.
+	void animation(Animation a) {
+		myAni << a;
+	}
+
+	// Draw, considering any animations in here.
+	void draw(Graphics g, Nat step, Duration time) {
+		if (before(g, step, time))
+			draw(g);
+		after(g, step, time);
+	}
+
 	// Draw this element at the location indicated by 'pos'.
 	// TODO: We could add a parameter here that is used to denote the state of some kind
 	// of inherent animation, such as displaying single lines of text.
 	void draw(Graphics g) : abstract;
+
+	// Call if you need to re-implement 'draw'.
+	protected Bool before(Graphics g, Nat step, Duration time) : final {
+		Bool show = true;
+		Nat count = myAni.count;
+		for (Nat i = 0; i < count; i++) {
+			show &= myAni[i].before(g, step, time);
+		}
+		show;
+	}
+
+	protected void after(Graphics g, Nat step, Duration time) : final {
+		for (Nat i = myAni.count; i > 0; i--) {
+			myAni[i - 1].after(g, step, time);
+		}
+	}
 }
 
 

@@ -90,16 +90,18 @@ class PresentPainter extends Painter {
 	// Length of the currently playing animation.
 	private Duration aniLength;
 
+	// Our cursor.
+	private Presentation:Cursor cursor;
+
 	// Create.
 	init(Presentation p) {
 		init() {
 			p = p;
+			cursor = p.begin;
 		}
 
 		bgColor = black;
-
-		// Animate the first slide, if we should do that.
-		animate(p.goTo(0));
+		animate();
 	}
 
 	// Draw things!
@@ -121,7 +123,7 @@ class PresentPainter extends Painter {
 		g.transform = scale(scale) * translate(move);
 		g.push(Rect(content));
 
-		p.draw(g, aniPos);
+		p.draw(g, cursor, aniPos);
 
 		g.pop();
 
@@ -130,16 +132,20 @@ class PresentPainter extends Painter {
 
 	// Advance the animation.
 	void next() {
-		animate(p.next());
+		cursor = p.next(cursor);
+		animate();
 	}
 
 	// Go back.
 	void prev() {
-		animate(p.prev());
+		cursor = p.prev(cursor);
+		animate();
 	}
 
-	// Prepare for an animation of the specified length.
-	private void animate(Duration d) {
+	// Set us up for a new animation specified by the current cursor.
+	private void animate() {
+		var d = p.duration(cursor);
+
 		if (d > 0 ms) {
 			inAnimation = true;
 			aniStart = Moment();

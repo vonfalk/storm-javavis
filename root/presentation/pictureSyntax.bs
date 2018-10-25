@@ -128,3 +128,9 @@ void place(PictureElem to, SrcName dir, Expr distance, Expr origin) {
 	a.add(origin);
 	to.set(SStr("place", dir.pos), a);
 }
+
+// Special case for animation syntax.
+void set(PictureElem to, AniDecl ani) {
+	ani.finalize();
+	to.set(SStr("animation", ani.block.pos), Actuals(ani.block));
+}

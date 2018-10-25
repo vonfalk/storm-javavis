@@ -25,6 +25,17 @@ presentation Test "Test presentation" {
 	background = SolidFill(white);
 	animationTime = 500 ms;
 
+	slide FadeIn => title "Test presentation", "My name here!" {}
+
+	slide FadeIn => content "Testing!" {
+		SolidFill green {}
+	}
+
+	slide SlideDown false => columns "Two columns!" {
+		SolidFill green { @1, 1 s: FadeIn; }
+		SolidFill blue { @1 +500 ms, 1 s: FadeIn; }
+	}
+
 	slide SlideDown false => content "Drawn pictures!" {
 		picture {
 			picture.scale = 1;
@@ -36,23 +47,12 @@ presentation Test "Test presentation" {
 			r = rectangle { myBox; rounded: 10; text: "Above!"; north: 20 of a.northEast; }
 			ca = circle { text: "23"; north: 20 of r.northWest - Size(60, 0); }
 			cb = circle { oval; text: "Longer"; north: 20 of r.northEast + Size(60, 0); fillColor: green + blue; }
-			cd = rectangle { myBox; text: "Above"; north: 100 of r; }
+			cd = rectangle { myBox; text: "Above"; north: 100 of r; @1, 1s: FadeIn; }
 
 			edge ca, cb { bendLeft: 0.1; toArrow: PlainArrow; }
 			edge cd, cb { fromArrow: TriangleArrow; toArrow: PlainArrow; }
-			edge ca, cd { fromArrow: FancyArrow; toArrow: FancyArrow; }
+			edge ca, cd { fromArrow: FancyArrow; toArrow: FancyArrow; @2, 1s: FadeIn; }
 		}
-	}
-
-	slide FadeIn => title "Test presentation", "My name here!" {}
-
-	slide FadeIn => content "Testing!" {
-		SolidFill green {}
-	}
-
-	slide SlideDown false => columns "Two columns!" {
-		SolidFill green {}
-		SolidFill blue {}
 	}
 
 	slide SlideDown true => columns "Text as well!" {

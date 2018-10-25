@@ -102,5 +102,54 @@ Expr slideLayout(Block inside, LayoutRoot layout, SStr? name, Expr? intro) {
 
 // Get a slide intro expression.
 Expr slideIntro(Block block, SrcName name, Actuals params) {
+	name.last.name = name.last.name + "Intro";
 	namedExpr(block, name, params);
+}
+
+// Animation declaration.
+class AniDecl on Compiler {
+	// Block where we store everything.
+	ExprBlock block;
+
+	// Variable accessing the created type.
+	LocalVarAccess created;
+
+	init(Block parent, Str step, SrcName type, Actuals params) {
+		ExprBlock b(type.pos, parent);
+		type.last.name = type.last.name + "Animation";
+		params.addFirst(intConstant(type.pos, step));
+		Var ani(b, SStr("@ animation", type.pos), namedExpr(b, type, params));
+		b.add(ani);
+
+		init() {
+			block = b;
+			created(type.pos, ani.var);
+		}
+	}
+
+	// Finalize this block.
+	void finalize() {
+		block.add(created);
+	}
+
+	// Set a property.
+	void setProperty(Str property, Expr to) {
+		var lhs = namedExpr(block, SStr(property, to.pos), created, Actuals());
+
+		AssignOpInfo assign(SStr("=", to.pos), 10, true);
+		block.add(assign.meaning(block, lhs, to));
+	}
+
+	void setDuration(Expr to) {
+		setProperty("duration", to);
+	}
+
+	void setOffset(Expr to) {
+		setProperty("offset", to);
+	}
+}
+
+void add(LayoutBlock block, AniDecl ani) {
+	ani.finalize();
+	block.add(SStr("animation", ani.block.pos), Actuals(ani.block));
 }
