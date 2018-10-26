@@ -49,7 +49,7 @@ presentation Test "Test presentation" {
 			cb = circle { oval; text: "Longer"; north: 20 of r.northEast + Size(60, 0); fillColor: green + blue; }
 			cd = rectangle { myBox; text: "Above"; north: 100 of r; @1, 1s: FadeIn; }
 
-			edge ca, cb { bendLeft: 0.1; toArrow: PlainArrow; }
+			edge ca, cb { bendLeft: 0.1; toArrow: PlainArrow; @3: Show; }
 			edge cd, cb { fromArrow: TriangleArrow; toArrow: PlainArrow; }
 			edge ca, cd { fromArrow: FancyArrow; toArrow: FancyArrow; @2, 1s: FadeIn; }
 		}
@@ -89,5 +89,6 @@ presentation Test "Test presentation" {
 
 // Main entry-point for testing.
 void test() {
+	// export(Test, cwdUrl / ".." / "presentation.pdf");
 	Test.show();
 }

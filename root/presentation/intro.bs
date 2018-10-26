@@ -25,7 +25,7 @@ class SlideIntro on Render {
 	}
 
 	// Draw the animation. 'pos' ranges from 0 to 1.
-	void draw(Presentation p, Graphics g, Nat? prev, Nat curr, Presentation:Cursor pos, Duration time) : abstract;
+	void draw(Presentation p, Graphics g, Presentation:Cursor pos, Presentation:Cursor? last, Duration time) : abstract;
 
 	// Convert a time into a float in the range 0..1.
 	package Float val(Duration d) {
@@ -49,13 +49,12 @@ class FadeInIntro extends SlideIntro {
 	}
 
 	// Draw the animation.
-	void draw(Presentation p, Graphics g, Nat? prev, Nat curr, Presentation:Cursor pos, Duration time) : override {
-		if (prev) {
-			p.drawSlide(g, prev);
-		}
+	void draw(Presentation p, Graphics g, Presentation:Cursor pos, Presentation:Cursor? last, Duration time) : override {
+		if (last)
+			p.drawSlide(g, last);
 
 		g.push(val(time));
-		p.drawSlide(g, curr, pos, time);
+		p.drawSlide(g, pos, time);
 		g.pop();
 	}
 }
@@ -75,10 +74,10 @@ class SlideDownIntro extends SlideIntro {
 	init(Duration d, Bool fade) { init(d) { fade = fade; } }
 
 	// Draw!
-	void draw(Presentation p, Graphics g, Nat? prev, Nat curr, Presentation:Cursor pos, Duration time) : override {
-		p.drawSlide(g, curr, pos, time);
+	void draw(Presentation p, Graphics g, Presentation:Cursor pos, Presentation:Cursor? last, Duration time) : override {
+		p.drawSlide(g, pos, time);
 
-		if (prev) {
+		if (last) {
 			// Get some acceleration!
 			var t = pow(val(time), 2);
 
@@ -88,7 +87,7 @@ class SlideDownIntro extends SlideIntro {
 				g.push();
 			}
 			g.transform = translate(Size(0, t * p.size.h));
-			p.drawSlide(g, prev);
+			p.drawSlide(g, last);
 			g.pop();
 		}
 	}
@@ -104,15 +103,15 @@ class EnlargeIntro extends SlideIntro {
 	init(Duration d) { init() {} }
 
 	// Draw!
-	void draw(Presentation p, Graphics g, Nat? prev, Nat curr, Presentation:Cursor pos, Duration time) : override {
-		p.drawSlide(g, curr, pos, time);
+	void draw(Presentation p, Graphics g, Presentation:Cursor pos, Presentation:Cursor? last, Duration time) : override {
+		p.drawSlide(g, pos, time);
 
-		if (prev) {
+		if (last) {
 			var t = val(time);
 			Point center = p.size / 2;
 			g.push(1.0 - t);
 			g.transform = scale(1.0 + t * t * 4, center);
-			p.drawSlide(g, prev);
+			p.drawSlide(g, last);
 			g.pop();
 		}
 	}

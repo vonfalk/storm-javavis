@@ -36,15 +36,33 @@ class Animation on Render {
 	}
 
 	// Called before drawing the element. May return 'false' to prevent painting the element.
-	Bool before(Graphics g, Nat step, Duration time) : abstract;
+	Bool before(Graphics g, Nat cStep, Duration time) : abstract;
 
 	// Called after drawing the element to restore any graphics state set up by 'before'.
-	void after(Graphics g, Nat step, Duration time) : abstract;
+	void after(Graphics g, Nat cStep, Duration time) : abstract;
 
 	// Convert a time into a float in the range 0..1.
 	package Float val(Duration d) {
 		clamp((d - offset) / duration, 0.0, 1.0);
 	}
+}
+
+/**
+ * Simple "show" animation. Simply displays the item at the specified step.
+ */
+class ShowAnimation extends Animation {
+	// Create.
+	init(Nat step) {
+		init(step) {}
+		// To indicate that we're not being animated.
+		duration = 1 ms;
+	}
+
+	Bool before(Graphics g, Nat cStep, Duration time) : override {
+		return cStep >= step;
+	}
+
+	void after(Graphics g, Nat cStep, Duration time) : override {}
 }
 
 

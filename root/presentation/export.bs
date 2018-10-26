@@ -1,0 +1,44 @@
+use ui;
+use ui:pdf;
+use core:io;
+use core:geometry;
+
+// Export a presentation as a PDF.
+void export(Presentation p, Url file) on Render {
+	export(p, file, true);
+}
+
+// Export a presentation as a PDF. 'all' specifies whether all animation steps shall be exported or not.
+void export(Presentation p, Url file, Bool all) on Render {
+	Size pageSize = ui:pdf:slide;
+	pageSize.h = pageSize.w * p.size.h / p.size.w;
+	export(p, file, pageSize);
+}
+
+// Export a presentation as a PDF, specifying the page size of the produced PDF.
+void export(Presentation p, Url file, Size pageSize) on Render {
+	export(p, file, pageSize, true);
+}
+
+// Export a presentation as a PDF, specifying the page size of the produced PDF. 'all' specifies
+// whether all animation steps shall be exported or not.
+void export(Presentation p, Url file, Size pageSize, Bool all) on Render {
+	PdfGraphics output(pageSize, p.size);
+
+	Bool first = true;
+	var cursor = p.begin;
+	while (cursor != p.end) {
+		if (!first)
+			output.nextPage();
+		first = false;
+
+		p.draw(output, cursor, null, 1.0);
+
+		if (all)
+			cursor = p.next(cursor);
+		else
+			cursor = p.nextSlide(cursor);
+	}
+
+	output.save(file);
+}

@@ -15,7 +15,7 @@ class Cardinal {
 
 	// Get a direction vector.
 	Point direction() {
-		pick(Rect(-1.0, -1.0, 1.0, 1.0)).normalized;
+		pick(Rect(-1, -1, 1, 1)).normalized;
 	}
 }
 
