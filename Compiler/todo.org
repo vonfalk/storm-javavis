@@ -17,7 +17,7 @@
     but the scale of the issue should be assessed first.
   - [ ] Parsing core.lang.syntax.bnf takes about 80 ms, which is a bit on the high end when compiling code...
 
-* Loose ends so far [40/68]
+* Loose ends so far [41/68]
   - [ ] When using "unless (foo)", "foo" uses a local variable in the block as well as outside of the block,
     which makes assignments to that variable to not write to the original variable even if one would expect so.
     We should at least warn about this.
@@ -30,8 +30,6 @@
   - [ ] Support documentation of templates from C++.
   - [ ] It seems like the sound library crashes during shutdown from time to time, at least on Windows.
   - [ ] In Basic Storm, writing 1.2 currently produces a float by default. Is this desirable?
-  - [ ] The expression -1 can not be automatically casted to a float since the - operator is used rather than
-    interpreting the entire thing as a numeric literal.
   - [ ] Lambda functions can not infer their proper type when being assigned to Maybe<T>.
   - [ ] Expose all function pointers the Engine knows about to Storm using a similar API to what is used now.
     This allows other languages to use "internal" features, for example, to access global variables properly.
@@ -66,6 +64,8 @@
   - [ ] Move the 'assign' declaration to being purely a decorator (ie. Foo field(Foo v) : assign)?
   - [ ] If a type has a '==' or '<' outside the type itself, the corresponding operator will not be present in
     a Handle, like '<<' at the moment.
+  - [X] The expression -1 can not be automatically casted to a float since the - operator is used rather than
+    interpreting the entire thing as a numeric literal.
   - [X] Asking for a random access stream from an IStream should produce a LazyIStream if nothing better
     is available. However, this is not yet implemented!
   - [X] The Ui library crashes during shutdown under heavy rendering load.

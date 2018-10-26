@@ -437,7 +437,7 @@ SAssignableOp => lOperator(op, 470) : "|"@ op;
 ////////////////////////////////////////////////////////////////////
 
 Expr SUnary(Block block);
-SUnary => e : SAtom(block) e;
+SUnary[10] => e : SAtom(block) e;
 SUnary => prePostOperator(block, o, e) : SPreOp o, SAtom(block) e;
 SUnary => prefixOperator(block, o, e) : SPrePostOp o, SAtom(block) e;
 SUnary => postfixOperator(block, o, e) : SAtom(block) e, SPrePostOp o;
