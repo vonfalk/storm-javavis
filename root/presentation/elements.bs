@@ -78,6 +78,9 @@ class Heading extends Element {
 	}
 }
 
+Heading heading(Presentation p, Str text) { Heading(text, p.headingStyle); }
+Heading subHeading(Presentation p, Str text) { Heading(text, p.contentStyle); }
+
 
 /**
  * A paragraph of text. Fits the text to the given rectangle.
