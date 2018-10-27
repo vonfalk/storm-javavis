@@ -116,6 +116,7 @@ class PresentPainter extends Painter {
 			if (aniPos >= 1.0) {
 				inAnimation = false;
 				aniPos = 1.0;
+				lastCursor = cursor;
 			}
 		}
 
@@ -135,14 +136,12 @@ class PresentPainter extends Painter {
 
 	// Advance the animation.
 	void next() {
-		lastCursor = cursor;
 		cursor = p.next(cursor);
 		animate();
 	}
 
 	// Go back.
 	void prev() {
-		lastCursor = cursor;
 		cursor = p.prev(cursor);
 		animate();
 	}
