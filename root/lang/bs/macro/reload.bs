@@ -64,24 +64,16 @@ void reloadBsUrl(Package pkg, Url url) on Compiler {
 }
 
 void reloadContents(Package pkg, Scope scope, Content c) on Compiler {
-	reloadFunctions(pkg, scope, c);
 	reloadTypes(pkg, scope, c);
+	reloadDecls(pkg, scope, c);
 }
 
-void reloadFunctions(Package pkg, Scope scope, Content c) on Compiler {
+void reloadDecls(Package pkg, Scope scope, Content c) on Compiler {
 	for (Nat i = 0; i < c.decls.count; i++) {
-		if (decl = c.decls[i] as FunctionDecl) {
-			NamePart name = decl.namePart();
-			Named? found = scope.find(Name(name));
-			if (found as BSFunction) {
-				decl.update(found);
-			} else if (found) {
-				print("Could not update " # name # ", the previous function was not found,"
-					# " or not declared in Basic Storm.");
-			} else {
-				print("New function: " # name);
-				pkg.add(decl.create());
-			}
+		NamedDecl decl = c.decls[i];
+		if (new = decl.update(scope)) {
+			print("New function: " # new.name);
+			pkg.add(new);
 		}
 	}
 }

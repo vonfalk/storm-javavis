@@ -12,6 +12,9 @@ class Presenter extends Frame {
 	// Key mappings.
 	private Map<Key, fn()->void> keymap;
 
+	// Source for the presentation. Used to reload the presentation.
+	lang:Function? source;
+
 	// Create.
 	init(Presentation p) {
 		init(p.title, Size(1024, 768)) {
@@ -53,6 +56,7 @@ private:
 		putKeys([Key:right, Key:down, Key:return], &this.next());
 		putKeys([Key:left, Key:up], &this.prev());
 		keymap.put(Key:f, &this.toggleFullscreen());
+		keymap.put(Key:F5, &this.reload());
 	}
 
 	// Add a series of keys for the same action.
@@ -76,6 +80,29 @@ private:
 	void prev() {
 		render.prev();
 		repaint();
+	}
+
+	// Reload the presentation.
+	void reload() {
+		unless (source)
+			return;
+
+		doReload(source);
+		if (fn = lang:pointer(source) as Fn<Presentation>) {
+			render.presentation = fn.call();
+			repaint();
+		}
+	}
+}
+
+// Helper for doing reload.
+private void doReload(lang:NameLookup entity) on Compiler {
+	// Find containing package.
+	if (entity as lang:Package) {
+		lang:bs:macro:reloadPkg(entity);
+	} else if (parent = entity.parent) {
+		// Try to find a parent package...
+		doReload(parent);
 	}
 }
 
@@ -158,6 +185,11 @@ class PresentPainter extends Painter {
 		animate();
 	}
 
+	// Set the presentation.
+	assign presentation(Presentation pr) {
+		p = pr;
+	}
+
 	// Set us up for a new animation specified by the current cursor.
 	private void animate() {
 		var d = p.duration(cursor);
@@ -184,4 +216,15 @@ void show(Presentation p, Nat slide) on Ui {
 	Presenter w(p);
 	w.goTo(slide);
 	w.waitForClose();
+}
+
+// Show a presentation in debug mode, allowing live-reloading changes to the presentation.
+void showDebug(lang:Function presentation) on Ui {
+	if (fn = lang:pointer(presentation) as Fn<Presentation>) {
+		Presenter w(fn.call());
+		w.source = presentation;
+		w.waitForClose();
+	} else {
+		print("Error: Not a presentation function!");
+	}
 }

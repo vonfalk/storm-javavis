@@ -53,10 +53,12 @@ namespace storm {
 			syntax::Node *body;
 
 			// Temporary solution for updating a function.
+			virtual MAYBE(Named *) STORM_FN update(Scope scope);
 			void STORM_FN update(BSFunction *fn);
 
 			// Get our name as a NamePart.
 			NamePart *STORM_FN namePart() const;
+
 
 			// To string.
 			virtual void STORM_FN toS(StrBuf *to) const;

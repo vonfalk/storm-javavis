@@ -46,6 +46,6 @@ Grid grid(Presentation p, Str caption) on Render {
 	var root = content(p, caption);
 	Grid g;
 	g.bundleRoot = root;
-	root.add(c);
-	c;
+	root.add(g);
+	g;
 }

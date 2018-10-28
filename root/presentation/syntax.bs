@@ -30,6 +30,20 @@ package class PresDecl extends NamedDecl {
 	Named doCreate() {
 		PresFn(name, title, scope, content);
 	}
+
+	// Update!
+	Named? update(Scope scope) {
+		var found = scope.find(Name(name.v));
+		if (found as PresFn) {
+			found.update(title, scope, content);
+		} else if (found.empty) {
+			var c = create();
+			resolve();
+			return c;
+		}
+
+		return null;
+	}
 }
 
 
@@ -47,6 +61,14 @@ package class PresFn extends BSRawFn {
 			scope = scope;
 			content = content;
 		}
+	}
+
+	// Update ourselves.
+	void update(Str title, Scope scope, SPresCont content) {
+		this.title = title;
+		this.scope = scope;
+		this.content = content;
+		reset();
 	}
 
 	// Create the function's body.

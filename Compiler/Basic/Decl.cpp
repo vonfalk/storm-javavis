@@ -26,6 +26,11 @@ namespace storm {
 				doResolve(created);
 		}
 
+		MAYBE(Named *) NamedDecl::update(Scope scope) {
+			// Not supported.
+			return null;
+		}
+
 		Named *NamedDecl::doCreate() {
 			throw InternalError(L"Please override 'doCreate'!");
 		}

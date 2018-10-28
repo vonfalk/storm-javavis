@@ -92,6 +92,22 @@ namespace storm {
 			return f;
 		}
 
+		MAYBE(Named *) bs::FunctionDecl::update(Scope scope) {
+			NamePart *name = namePart();
+			Named *found = scope.find(new (this) Name(name));
+			if (BSFunction *bs = as<BSFunction>(found)) {
+				update(bs);
+			} else if (found) {
+				// Can not update the function. We don't know it!
+			} else {
+				Named *c = create();
+				resolve();
+				return c;
+			}
+
+			return null;
+		}
+
 		void bs::FunctionDecl::update(BSFunction *fn) {
 			Value result;
 			if (this->result)

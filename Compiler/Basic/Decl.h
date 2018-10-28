@@ -30,6 +30,14 @@ namespace storm {
 			// Initialize the declaration previously created (if any).
 			void STORM_FN resolve();
 
+			// Update this declaration (if possible). If no previous implementation was found, a
+			// newly created instance of this element is returned. If something is returned from
+			// here, we don't expect 'resolve' to be called later.
+			//
+			// Note: This function will likely be removed in the future, when we have a more generic
+			// mechanism for updating functions.
+			virtual MAYBE(Named *) STORM_FN update(Scope scope);
+
 		protected:
 			// Do the actual creation.
 			virtual Named *STORM_FN doCreate();
