@@ -76,6 +76,22 @@ namespace storm {
 			return Rect(l, t, r, b);
 		}
 
+		Rect Rect::shrink(Size s) const {
+			Float l = p0.x + s.w;
+			Float t = p0.y + s.h;
+			Float r = p1.x - s.w;
+			Float b = p1.y - s.h;
+			return Rect(l, t, r, b);
+		}
+
+		Rect Rect::grow(Size s) const {
+			Float l = p0.x - s.w;
+			Float t = p0.y - s.h;
+			Float r = p1.x + s.w;
+			Float b = p1.y + s.h;
+			return Rect(l, t, r, b);
+		}
+
 		wostream &operator <<(wostream &to, Rect r) {
 			return to << r.p0 << L"-" << r.p1;
 		}

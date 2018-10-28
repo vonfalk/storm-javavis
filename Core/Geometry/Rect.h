@@ -61,6 +61,10 @@ namespace storm {
 
 			// Scale the entire rect around its center.
 			Rect STORM_FN scaled(Float scale) const;
+
+			// Shrink/grow according to a size.
+			Rect STORM_FN shrink(Size rate) const;
+			Rect STORM_FN grow(Size rate) const;
 		};
 
 		// Point inside.

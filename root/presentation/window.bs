@@ -40,6 +40,12 @@ class Presenter extends Frame {
 		false;
 	}
 
+	// Go to a specific slide.
+	void goTo(Nat slide) {
+		render.goTo(slide);
+		repaint();
+	}
+
 private:
 	// Initialize the keymap.
 	void initKeymap() {
@@ -146,6 +152,12 @@ class PresentPainter extends Painter {
 		animate();
 	}
 
+	// Go to specific slide.
+	void goTo(Nat slide) {
+		cursor = p.at(slide);
+		animate();
+	}
+
 	// Set us up for a new animation specified by the current cursor.
 	private void animate() {
 		var d = p.duration(cursor);
@@ -164,5 +176,12 @@ class PresentPainter extends Painter {
 // Helper for showing a presentation.
 void show(Presentation p) on Ui {
 	Presenter w(p);
+	w.waitForClose();
+}
+
+// Helper for showing a presentation, starts at the specified slide. Good when developing the presentation.
+void show(Presentation p, Nat slide) on Ui {
+	Presenter w(p);
+	w.goTo(slide);
 	w.waitForClose();
 }

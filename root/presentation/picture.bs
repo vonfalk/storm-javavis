@@ -136,11 +136,14 @@ class PElement on Render {
 class Node extends PElement {
 	// Create.
 	init(TextStyle style) {
+		center c;
+
 		init() {
 			myFont = style.font;
 			textBrush = style.fill;
 			borderBrush = SolidBrush(black);
-			anchor = center;
+			anchor = c;
+			textAlign = c;
 		}
 	}
 
@@ -157,6 +160,7 @@ class Node extends PElement {
 
 	// Margin around the text.
 	Size margin;
+	void margin(Float x) { margin = Size(x); }
 	void margin(Float w, Float h) { margin = Size(w, h); }
 
 	// Current font.
@@ -172,6 +176,9 @@ class Node extends PElement {
 	void text(Str t) {
 		myText = Text(t, myFont);
 	}
+
+	// Text alignment.
+	Cardinal textAlign;
 
 	// Text color.
 	Brush textBrush;
@@ -189,7 +196,7 @@ class Node extends PElement {
 	Size size() {
 		Size s = minSize;
 		if (myText) {
-			s = max(s, myText.size + margin);
+			s = max(s, myText.size + margin*2);
 		}
 		s;
 	}
@@ -231,14 +238,15 @@ class Node extends PElement {
 	void draw(Graphics g) {
 		if (myText) {
 			Rect p = pos;
-			Point offset = p.p0 + (p.size - myText.size)/2;
-			g.draw(myText, textBrush, offset);
+			Point origin = textAlign.pick(p.shrink(margin));
+			Rect textRect = textAlign.place(origin, myText.size);
+			g.draw(myText, textBrush, textRect.p0);
 		}
 	}
 }
 
 // Easy creation.
-Node node(Presentation p) {
+Node node(Presentation p) on Render {
 	Node(p.contentStyle);
 }
 
@@ -292,7 +300,7 @@ class Rectangle extends Node {
 }
 
 // Easy creation.
-Rectangle rectangle(Presentation p) {
+Rectangle rectangle(Presentation p) on Render {
 	Rectangle(p.contentStyle);
 }
 
@@ -313,7 +321,7 @@ class Circle extends Node {
 	}
 
 	// Custom size computation to account for the extra space taken up by the circle.
-	Size size() {
+	Size size() : override {
 		Size s = super:size();
 		if (allowOval) {
 			s * 2.0.sqrt;
@@ -353,8 +361,55 @@ class Circle extends Node {
 }
 
 // Easy creation.
-Circle circle(Presentation p) {
+Circle circle(Presentation p) on Render {
 	Circle(p.contentStyle);
+}
+
+// An image inside a picture element.
+class ImageNode extends Rectangle {
+	// Bitmap we're drawing.
+	Bitmap bitmap;
+
+	// Scale of the picture.
+	Float scale;
+
+	// Create.
+	init(TextStyle style, Bitmap bitmap) {
+		init(style) {
+			bitmap = bitmap;
+			scale = 1.0;
+		}
+
+		borderColor(transparent);
+	}
+
+	// Size.
+	Size size() : override {
+		max(super:size(), bitmap.size * scale);
+	}
+
+	void draw(Graphics g) : override {
+		Rect p = pos;
+		Size bSz = bitmap.size * scale;
+		g.draw(bitmap, Rect(p.center - bSz/2, bSz));
+
+		super:draw(g);
+	}
+
+	// Set width.
+	void width(Float w) {
+		scale = w / bitmap.size.w;
+	}
+
+	// Set height.
+	void height(Float h) {
+		scale = h / bitmap.size.h;
+	}
+}
+
+// Easy creation.
+ImageNode imageNode(Presentation p, Bitmap b) on Render {
+	ImageNode(p.contentStyle, b);
 }
 
 // An edge.
@@ -517,28 +572,28 @@ class Edge extends PElement {
 }
 
 // Create edges.
-Edge edge(Point from, Point to) {
+Edge edge(Point from, Point to) on Render {
 	Edge e;
 	e.from(from);
 	e.to(to);
 	e;
 }
 
-Edge edge(Point from, Node to) {
+Edge edge(Point from, Node to) on Render {
 	Edge e;
 	e.from(from);
 	e.to(to);
 	e;
 }
 
-Edge edge(Node from, Point to) {
+Edge edge(Node from, Point to) on Render {
 	Edge e;
 	e.from(from);
 	e.to(to);
 	e;
 }
 
-Edge edge(Node from, Node to) {
+Edge edge(Node from, Node to) on Render {
 	Edge e;
 	e.from(from);
 	e.to(to);

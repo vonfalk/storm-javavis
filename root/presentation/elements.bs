@@ -78,8 +78,8 @@ class Heading extends Element {
 	}
 }
 
-Heading heading(Presentation p, Str text) { Heading(text, p.headingStyle); }
-Heading subHeading(Presentation p, Str text) { Heading(text, p.contentStyle); }
+Heading heading(Presentation p, Str text) on Render { Heading(text, p.headingStyle); }
+Heading subHeading(Presentation p, Str text) on Render { Heading(text, p.contentStyle); }
 
 
 /**
@@ -118,13 +118,13 @@ class Paragraph extends Element {
 }
 
 // Create a paragraph, specifying a solid color.
-Paragraph par(Str t, Font f, Color c) { Paragraph(t, f, SolidBrush(c)); }
+Paragraph par(Str t, Font f, Color c) on Render { Paragraph(t, f, SolidBrush(c)); }
 
 // Create a paragraph with a pre-defined style.
-Paragraph par(Str t, TextStyle style) { Paragraph(t, style.font, style.fill); }
+Paragraph par(Str t, TextStyle style) on Render { Paragraph(t, style.font, style.fill); }
 
 // Create a paragraph with the default style.
-Paragraph par(Presentation p, Str t) { par(t, p.contentStyle); }
+Paragraph par(Presentation p, Str t) on Render { par(t, p.contentStyle); }
 
 
 /**
@@ -149,17 +149,21 @@ class List extends Element {
 	// Space between the text and the bullet or the number.
 	Float padding;
 
+	// Space between lines.
+	Float lineSpace;
+
 	// Pre-formatted text snippnets used if the list is numbered.
 	private Text[] numbers;
 
 	// Create.
-	init(Str[] text, Font f, Brush brush) {
+	init(Str[] text, Font f, Float lineSpace, Brush brush) {
 		init() {
 			brush = brush;
 			fontHeight = f.pxHeight;
 			margin = f.pxHeight / 2;
 			padding = f.pxHeight / 4;
 			bulletSize = f.pxHeight / 4;
+			lineSpace = lineSpace;
 		}
 
 		for (x in text) {
@@ -189,8 +193,9 @@ class List extends Element {
 		for (e in elements) {
 			Size s = e.size;
 			sz.w = max(sz.w, s.w);
-			sz.h += s.h;
+			sz.h += s.h + lineSpace;
 		}
+		sz.h -= lineSpace;
 		sz;
 	}
 
@@ -221,19 +226,19 @@ class List extends Element {
 
 			g.draw(e, brush, at + Point(margin, 0));
 
-			at.y += e.size.h;
+			at.y += e.size.h + lineSpace;
 		}
 	}
 }
 
 // Create a list, specifying a solid color.
-List list(Str[] t, Font f, Color c) { List(t, f, SolidBrush(c)); }
+List list(Str[] t, Font f, Color c) on Render { List(t, f, 0, SolidBrush(c)); }
 
 // Create a list with a pre-defined style.
-List list(Str[] t, TextStyle style) { List(t, style.font, style.fill); }
+List list(Str[] t, TextStyle style) on Render { List(t, style.font, style.space, style.fill); }
 
 // Create a list with the default style.
-List list(Presentation p, Str[] t) { list(t, p.contentStyle); }
+List list(Presentation p, Str[] t) on Render { list(t, p.contentStyle); }
 
 
 /**
@@ -300,10 +305,10 @@ class Image extends Element {
 }
 
 // Create an image.
-Image image(Bitmap image) { Image(image); }
+Image image(Bitmap image) on Render { Image(image); }
 
 // Create from an Image instance.
-Image image(Image image) { Image(Bitmap(image)); }
+Image image(Image image) on Render { Image(Bitmap(image)); }
 
 // Create from an Url. TODO: Perhaps we want to de-duplicate these!
-Image image(Url url) { Image(Bitmap(url.loadImage)); }
+Image image(Url url) on Render { Image(Bitmap(url.loadImage)); }
