@@ -17,7 +17,7 @@
     but the scale of the issue should be assessed first.
   - [ ] Parsing core.lang.syntax.bnf takes about 80 ms, which is a bit on the high end when compiling code...
 
-* Loose ends so far [41/68]
+* Loose ends so far [42/69]
   - [ ] When using "unless (foo)", "foo" uses a local variable in the block as well as outside of the block,
     which makes assignments to that variable to not write to the original variable even if one would expect so.
     We should at least warn about this.
@@ -64,6 +64,7 @@
   - [ ] Move the 'assign' declaration to being purely a decorator (ie. Foo field(Foo v) : assign)?
   - [ ] If a type has a '==' or '<' outside the type itself, the corresponding operator will not be present in
     a Handle, like '<<' at the moment.
+  - [X] We don't properly unescape \" in string literals in Basic Storm.
   - [X] The expression -1 can not be automatically casted to a float since the - operator is used rather than
     interpreting the entire thing as a numeric literal.
   - [X] Asking for a random access stream from an IStream should produce a LazyIStream if nothing better

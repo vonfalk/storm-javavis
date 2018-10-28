@@ -244,7 +244,7 @@ namespace storm {
 		}
 
 		void StrLiteral::toS(StrBuf *to) const {
-			*to << S("\"") << value->escape() << S("\"");
+			*to << S("\"") << value->escape(Char('"')) << S("\"");
 		}
 
 
@@ -253,7 +253,7 @@ namespace storm {
 		}
 
 		StrLiteral *strConstant(SrcPos pos, Str *v) {
-			return new (v) StrLiteral(pos, v->unescape());
+			return new (v) StrLiteral(pos, v->unescape(Char('"')));
 		}
 
 		StrLiteral *rawStrConstant(SrcPos pos, Str *v) {
