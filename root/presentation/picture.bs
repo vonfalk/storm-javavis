@@ -144,6 +144,7 @@ class Node extends PElement {
 			borderBrush = SolidBrush(black);
 			anchor = c;
 			textAlign = c;
+			margin = Size(6, 4);
 		}
 	}
 
@@ -271,7 +272,7 @@ class Rectangle extends Node {
 		Rect p = pos;
 		Size s = p.size/2;
 		Point dir = a.angle;
-		Float scale = max(s.w, s.h);
+		Float scale = Point(s).length - Point(rounded).length * 0.2;
 		if (dir.x != 0.0) {
 			scale = min(scale, abs(s.w / dir.x));
 		}

@@ -486,7 +486,7 @@ private:
 
 	// Output a solid color.
 	void putSolid(SolidBrush b, Bool stroke) {
-		output << res.alpha(b.opacity) << " gs ";
+		output << res.alpha(b.opacity * b.color.a) << " gs ";
 		if (stroke)
 			put(b.color, "RG\n");
 		else
