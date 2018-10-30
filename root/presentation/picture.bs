@@ -143,7 +143,7 @@ class Node extends PElement {
 			textBrush = style.fill;
 			borderBrush = SolidBrush(black);
 			anchor = c;
-			textAlign = c;
+			textAnchor = c;
 			margin = Size(6, 4);
 		}
 	}
@@ -179,7 +179,7 @@ class Node extends PElement {
 	}
 
 	// Text alignment.
-	Cardinal textAlign;
+	Cardinal textAnchor;
 
 	// Text color.
 	Brush textBrush;
@@ -239,8 +239,8 @@ class Node extends PElement {
 	void draw(Graphics g) {
 		if (myText) {
 			Rect p = pos;
-			Point origin = textAlign.pick(p.shrink(margin));
-			Rect textRect = textAlign.place(origin, myText.size);
+			Point origin = textAnchor.pick(p.shrink(margin));
+			Rect textRect = textAnchor.place(origin, myText.size);
 			g.draw(myText, textBrush, textRect.p0);
 		}
 	}

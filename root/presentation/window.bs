@@ -149,7 +149,6 @@ class PresentPainter extends Painter {
 			if (aniPos >= 1.0) {
 				inAnimation = false;
 				aniPos = 1.0;
-				lastCursor = cursor;
 			}
 		}
 
@@ -169,25 +168,29 @@ class PresentPainter extends Painter {
 
 	// Advance the animation.
 	void next() {
-		cursor = p.next(cursor);
-		animate();
+		setCursor(p.next(cursor));
 	}
 
 	// Go back.
 	void prev() {
-		cursor = p.prev(cursor);
-		animate();
+		setCursor(p.prev(cursor));
 	}
 
 	// Go to specific slide.
 	void goTo(Nat slide) {
-		cursor = p.at(slide);
-		animate();
+		setCursor(p.at(slide));
 	}
 
 	// Set the presentation.
 	assign presentation(Presentation pr) {
 		p = pr;
+	}
+
+	// Set the cursor to a new location.
+	private void setCursor(Presentation:Cursor c) {
+		lastCursor = cursor;
+		cursor = c;
+		animate();
 	}
 
 	// Set us up for a new animation specified by the current cursor.
