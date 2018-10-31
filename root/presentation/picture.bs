@@ -171,6 +171,10 @@ class Node extends PElement {
 		if (myText)
 			text(myText.text);
 	}
+	void style(TextStyle t) {
+		font(t.font);
+		textBrush = t.fill;
+	}
 
 	// Text.
 	private Text? myText;
@@ -232,7 +236,19 @@ class Node extends PElement {
 
 	// Get a point on the edge of this node. The point should be aimed towards 'angle'.
 	Point atEdge(Angle angle) {
-		pos.center;
+		// Basically the same as for rectangle, but no concern for rounded corners.
+		Rect p = pos;
+		Size s = p.size/2;
+		Point dir = angle.angle;
+		Float scale = Point(s).length;
+		if (dir.x != 0.0) {
+			scale = min(scale, abs(s.w / dir.x));
+		}
+		if (dir.y != 0.0) {
+			scale = min(scale, abs(s.h / dir.y));
+		}
+
+		p.center + dir*scale;
 	}
 
 	// Draw this node.
