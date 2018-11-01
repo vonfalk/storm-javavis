@@ -90,7 +90,7 @@ class Presentation on Render {
 
 		// To string.
 		void toS(StrBuf to) {
-			to << "{ slide " << slide << ", step " << animation << " }";
+			to << "{ slide " << slide << ", step " << step << " }";
 		}
 
 		// Compare.
