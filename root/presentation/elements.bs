@@ -312,3 +312,73 @@ Image image(Image image) on Render { Image(Bitmap(image)); }
 
 // Create from an Url. TODO: Perhaps we want to de-duplicate these!
 Image image(Url url) on Render { Image(Bitmap(url.loadImage)); }
+
+
+/**
+ * Page numbering.
+ */
+class PageNumber extends Element {
+	// Font.
+	private Font font;
+
+	// Fill.
+	private Brush fill;
+
+	// Margin, to make this element easy to position inside an anchor element.
+	Size border;
+	void border(Float w, Float h) {
+		border = Size(w, h);
+	}
+
+	// Offset.
+	Nat offset;
+
+	// Maximum size.
+	private Size maxSize;
+
+	// Cache of text objects to draw.
+	private Nat->Text cache;
+
+	// Create.
+	init(TextStyle style) {
+		init() {
+			font = style.font;
+			fill = style.fill;
+			offset = 1;
+			border = Size(20, 15);
+		}
+
+		maxSize = Text("99", font).size;
+	}
+
+	Size minSize() : override {
+		maxSize + border*2;
+	}
+
+	// We need access to 'step'.
+	void draw(Graphics g, Nat step, Duration time) : override {
+		if (before(g, step, time)) {
+			Text t = find(step);
+			Point at = pos.p1 - t.size - border;
+			g.draw(t, fill, at);
+		}
+		after(g, step, time);
+	}
+
+	void draw(Graphics g) : override {}
+
+	private Text find(Nat id) {
+		id += offset;
+
+		if (!cache.has(id)) {
+			cache.put(id, Text(id.toS, font));
+		}
+
+		cache.get(id);
+	}
+}
+
+// Create page numbering conveniently.
+PageNumber pageNumber(Presentation p) {
+	PageNumber(p.contentStyle);
+}

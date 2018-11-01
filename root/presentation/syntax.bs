@@ -122,6 +122,13 @@ Expr slideLayout(Block inside, LayoutRoot layout, SStr? name, Expr? intro) {
 	}
 }
 
+// Set the background. Does not use a SlideBorder layout.
+Expr slideBackground(Block inside, LayoutRoot layout) {
+	pattern(inside) {
+		this.background(presentation:Slide(${layout.block}));
+	};
+}
+
 // Get a slide intro expression.
 Expr slideIntro(Block block, SrcName name, Actuals params) {
 	name.last.name = name.last.name + "Intro";

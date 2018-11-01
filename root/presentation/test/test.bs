@@ -22,8 +22,14 @@ void myBox(Node n) on Render {
 presentation Test "Test presentation" {
 	Font font("Arial", 32);
 
-	background = SolidFill(white);
 	animationTime = 500 ms;
+
+	background Stack {
+		SolidFill white {}
+		anchor southEast {
+			pageNumber {}
+		}
+	}
 
 	slide FadeIn => title "Test presentation", "My name here!" {}
 

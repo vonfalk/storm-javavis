@@ -33,24 +33,28 @@ class Presentation on Render {
 	private Slide[] slides;
 
 	// The background.
-	private Element myBackground;
+	private Slide myBackground;
 
 	// Create.
 	init(Str title) {
 		Size size(640, 480);
 		Size border(20, 20);
 
+		layout:Border bgLayout;
+		bgLayout.border = Size(0);
+		bgLayout.add(component(SolidFill(white)));
+
 		init() {
 			title = title;
 			size = size;
 			border = border;
-			myBackground = SolidFill(white);
+			myBackground = Slide(bgLayout);
 			headingStyle = defaultHeadingStyle;
 			contentStyle = defaultContentStyle;
 			animationTime = 200 ms;
 		}
 
-		myBackground.pos = Rect(size);
+		myBackground.added(this);
 	}
 
 
@@ -99,14 +103,13 @@ class Presentation on Render {
 		}
 	}
 
+	// The background slide.
+	Slide background() { myBackground; }
 
-	// An element used to paint the background.
-	Element background() { myBackground; }
-
-	// Set the background element.
-	assign background(Element e) {
-		myBackground = e;
-		myBackground.pos = Rect(size);
+	// Set the background slide.
+	assign background(Slide s) {
+		myBackground = s;
+		s.added(this);
 	}
 
 	// Add a slide.
@@ -141,8 +144,9 @@ class Presentation on Render {
 	// Draw a slide, complete with background and any overlays. Expected to be used from intro
 	// animations.
 	void drawSlide(Graphics g, Cursor cursor, Duration time) {
-		if (cursor.slide < slides.count) {
-			background.draw(g);
+		var slide = cursor.slide;
+		if (slide < slides.count) {
+			background.draw(g, slide, background.duration(slide));
 			slides[cursor.slide].draw(g, cursor.step, time);
 		}
 	}

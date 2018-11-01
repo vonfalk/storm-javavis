@@ -20,6 +20,8 @@ Expr SPresStmt(Block block);
 SPresStmt => e : SStmt(block) e;
 SPresStmt => slideLayout(block, layout, name, intro)
 	: (SName name, "=", )? "slide " #keyword, SIntro(block) intro, SLayoutRoot(block) layout;
+SPresStmt => slideBackground(block, layout)
+	: "background " #keyword, SLayoutRoot(block) layout;
 
 // Slide intro animation.
 Maybe<Expr> SIntro(Block block);

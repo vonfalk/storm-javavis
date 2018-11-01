@@ -22,11 +22,6 @@ class Slide on Render {
 	// Length of animations in this slide.
 	private Duration[] animationTimes;
 
-	// Create without a layout.
-	init() {
-		init() {}
-	}
-
 	// Create, providing a layout. Traverses the layout to find all elements.
 	init(Layout layout) {
 		init() {
