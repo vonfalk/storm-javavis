@@ -1,5 +1,5 @@
 #include "stdafx.h"
-#include "Math.h"
+#include "StormMath.h"
 
 namespace storm {
 
