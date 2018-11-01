@@ -65,6 +65,23 @@ class ShowAnimation extends Animation {
 	void after(Graphics g, Nat cStep, Duration time) : override {}
 }
 
+/**
+ * Simple "hide" animation. Hides the item at the specified step.
+ */
+class HideAnimation extends Animation {
+	// Create.
+	init(Nat step) {
+		init(step) {}
+		duration = 1 ms;
+	}
+
+	Bool before(Graphics g, Nat cStep, Duration time) : override {
+		return cStep < step;
+	}
+
+	void after(Graphics g, Nat cStep, Duration time) : override {}
+}
+
 
 /**
  * Fade in animation.
