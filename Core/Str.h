@@ -88,10 +88,12 @@ namespace storm {
 		Word STORM_FN hexToWord() const;
 
 		// Escape/unescape characters. Any unknown escape sequences are kept as they are.
-		Str *unescape() const;
-		Str *unescape(Char extra) const;
-		Str *escape() const;
-		Str *escape(Char extra) const;
+		Str *STORM_FN unescape() const;
+		Str *STORM_FN unescape(Char extra) const;
+		Str *STORM_FN unescape(Char extra, Char extra2) const;
+		Str *STORM_FN escape() const;
+		Str *STORM_FN escape(Char extra) const;
+		Str *STORM_FN escape(Char extra, Char extra2) const;
 
 		// Starts/ends with?
 		Bool STORM_FN startsWith(const Str *s) const;

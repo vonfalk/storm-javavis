@@ -358,7 +358,7 @@ namespace storm {
 		return r;
 	}
 
-	static bool unescape(const wchar *&src, wchar *&out, Char extra) {
+	static bool unescape(const wchar *&src, wchar *&out, Char extra, Char extra2) {
 		switch (src[1]) {
 		case 'n':
 			*out++ = '\n';
@@ -401,6 +401,19 @@ namespace storm {
 				return true;
 			}
 
+			if (extra2.leading() != 0) {
+				if (src[1] == extra2.leading() && src[2] == extra2.trailing()) {
+					*out++ = extra2.leading();
+					*out++ = extra2.trailing();
+					src += 2;
+					return true;
+				}
+			} else if (src[1] == extra2.trailing()) {
+				*out++ = extra2.trailing();
+				src++;
+				return true;
+			}
+
 			return false;
 		}
 	}
@@ -410,6 +423,10 @@ namespace storm {
 	}
 
 	Str *Str::unescape(Char extra) const {
+		return unescape(extra, Char());
+	}
+
+	Str *Str::unescape(Char extra, Char extra2) const {
 		// Note: we never need more space after unescaping a string.
 		GcArray<wchar> *buf = runtime::allocArray<wchar>(engine(), &wcharArrayType, data->count);
 		wchar *to = buf->v;
@@ -417,7 +434,7 @@ namespace storm {
 		for (const wchar *from = data->v; *from; from++) {
 			wchar ch = *from;
 			if (ch == '\\') {
-				if (!storm::unescape(from, to, extra))
+				if (!storm::unescape(from, to, extra, extra2))
 					*to++ = '\\';
 			} else {
 				*to++ = ch;
@@ -427,7 +444,7 @@ namespace storm {
 		return new (this) Str(buf->v);
 	}
 
-	static bool escape(Char ch, StrBuf *to, Char extra) {
+	static bool escape(Char ch, StrBuf *to, Char extra, Char extra2) {
 		if (ch == Char('\n')) {
 			*to << L"\\n";
 			return true;
@@ -443,6 +460,9 @@ namespace storm {
 		} else if (ch == extra && extra != Char()) {
 			*to << L"\\" << extra;
 			return true;
+		} else if (ch == extra2 && extra2 != Char()) {
+			*to << L"\\" << extra2;
+			return true;
 		} else if (ch.codepoint() < 32) {
 			*to << L"\\x" << hex(Byte(ch.codepoint()));
 			return true;
@@ -456,13 +476,17 @@ namespace storm {
 	}
 
 	Str *Str::escape(Char extra) const {
+		return escape(extra, Char());
+	}
+
+	Str *Str::escape(Char extra, Char extra2) const {
 		// We do not know how much buffer we will need...
 		StrBuf *to = new (this) StrBuf();
 
 		for (Iter i = begin(), e = end(); i != e; ++i) {
 			Char ch = i.v();
 
-			if (!storm::escape(ch, to, extra))
+			if (!storm::escape(ch, to, extra, extra2))
 				*to << ch;
 		}
 
