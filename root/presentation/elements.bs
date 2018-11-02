@@ -21,10 +21,10 @@ class SolidFill extends Element {
 	}
 
 	// Minimum size.
-	Size minSize() { Size(); }
+	Size minSize() : override { Size(); }
 
 	// Draw.
-	void draw(Graphics g) {
+	void draw(Graphics g) : override {
 		g.fill(pos, fill);
 	}
 }
@@ -381,4 +381,55 @@ class PageNumber extends Element {
 // Create page numbering conveniently.
 PageNumber pageNumber(Presentation p) {
 	PageNumber(p.contentStyle);
+}
+
+
+/**
+ * Big arrow.
+ */
+class BigArrow extends Element {
+	// Fill color.
+	Brush brush;
+	void fill(Color color) { brush = SolidBrush(color); }
+
+	// Angle.
+	Angle angle;
+
+	// Size.
+	Float size;
+
+	// Arrow path.
+	private Path arrow;
+
+	// Initialize, specify direction.
+	init(Angle angle) {
+		init() {
+			angle = angle;
+			size = 40;
+			brush = SolidBrush(black);
+		}
+
+		arrow.start(Point(0, -0.8));
+		arrow.line(Point(1, 0.1));
+		arrow.line(Point(0.4, 0.0));
+		arrow.line(Point(0.4, 0.7));
+		arrow.line(Point(0, 0.5));
+		arrow.line(Point(-0.4, 0.7));
+		arrow.line(Point(-0.4, 0.0));
+		arrow.line(Point(-1, 0.1));
+		arrow.close();
+	}
+
+	// Minimum size.
+	Size minSize() : override {
+		Size(size);
+	}
+
+	// Draw.
+	void draw(Graphics g) {
+		g.push();
+		g.transform = scale(size/2) * rotate(angle) * translate(pos.center);
+		g.fill(arrow, brush);
+		g.pop();
+	}
 }

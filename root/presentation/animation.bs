@@ -59,7 +59,7 @@ class ShowAnimation extends Animation {
 	}
 
 	Bool before(Graphics g, Nat cStep, Duration time) : override {
-		return cStep >= step;
+		cStep >= step;
 	}
 
 	void after(Graphics g, Nat cStep, Duration time) : override {}
@@ -76,7 +76,7 @@ class HideAnimation extends Animation {
 	}
 
 	Bool before(Graphics g, Nat cStep, Duration time) : override {
-		return cStep < step;
+		cStep < step;
 	}
 
 	void after(Graphics g, Nat cStep, Duration time) : override {}
@@ -94,19 +94,15 @@ class FadeInAnimation extends Animation {
 
 	// Set up the animation.
 	Bool before(Graphics g, Nat cStep, Duration time) : override {
-		if (cStep < step) {
-			false;
-		} else if (cStep == step) {
+		if (cStep == step & time < duration)
 			g.push(val(time));
-			true;
-		} else {
-			true;
-		}
+
+		cStep >= step;
 	}
 
 	// Tear down.
 	void after(Graphics g, Nat cStep, Duration time) : override {
-		if (cStep == step)
+		if (cStep == step & time < duration)
 			g.pop();
 	}
 

@@ -1,0 +1,118 @@
+use ui;
+use core:io;
+use core:geometry;
+use graphics;
+
+/**
+ * An element that renders text colored as specified.
+ *
+ * Does not do automatic word wrapping.
+ */
+class ColoredText extends Element {
+	// Font for the text.
+	private Font font;
+
+	// Default fill brush.
+	private Brush defaultBrush;
+
+	// Lines of text to draw.
+	private Line[] lines;
+
+	// Create.
+	init(TextStyle style) {
+		init() {
+			font = style.font;
+			defaultBrush = style.fill;
+		}
+
+		// Start the first line.
+		nextLine();
+	}
+
+	// Add a chunk of text with the default color.
+	void text(Str t) {
+		text(t, defaultBrush);
+	}
+
+	// Add a chunk of text with the specified brush.
+	void text(Str t, Brush b) {
+		lines.last.add(Chunk(Text(t, font), b));
+	}
+
+	// Add a chunk of text with the specified color.
+	void text(Str t, Color c) {
+		text(t, SolidBrush(c));
+	}
+
+	// Skip to the next line.
+	void nextLine() {
+		lines << Line();
+	}
+
+	// Minimum size.
+	Size minSize() : override {
+		Size total;
+		for (l in lines) {
+			total.w = max(total.w, l.width);
+			total.h += l.height;
+		}
+		total;
+	}
+
+	// Draw.
+	void draw(Graphics g) : override {
+		Point at = pos.p0;
+		for (l in lines) {
+			l.draw(g, at);
+			at.y += l.height;
+		}
+	}
+
+	// Representation of a single line.
+	private class Line on Render {
+		// Total height of the line.
+		Float height;
+
+		// Total width of the line.
+		Float width;
+
+		// Get the size.
+		Size size() {
+			Size(width, height);
+		}
+
+		// Individual text chunks in the line.
+		Chunk[] chunks;
+
+		// Add a chunk, keep the height updated.
+		void add(Chunk chunk) {
+			chunks << chunk;
+			Size sz = chunk.text.size;
+			height = max(height, sz.h);
+			width += sz.w;
+		}
+
+		// Draw!
+		void draw(Graphics g, Point at) {
+			for (c in chunks) {
+				Size sz = c.text.size;
+				g.draw(c.text, c.fill, Point(at.x, at.y + height - sz.h));
+				at.x += sz.w;
+			}
+		}
+	}
+
+	// A chunk of text.
+	private value Chunk {
+		// Text.
+		Text text;
+
+		// Color.
+		Brush fill;
+
+		// Create.
+		init(Text t, Brush b) {
+			init() { text = t; fill = b; }
+		}
+	}
+}
