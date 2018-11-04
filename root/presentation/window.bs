@@ -57,6 +57,8 @@ private:
 		putKeys([Key:left, Key:up], &this.prev());
 		keymap.put(Key:f, &this.toggleFullscreen());
 		keymap.put(Key:F5, &this.reload());
+		keymap.put(Key:home, &this.first());
+		keymap.put(Key:end, &this.last());
 	}
 
 	// Add a series of keys for the same action.
@@ -79,6 +81,18 @@ private:
 	// Go back to a previous slide/animation step.
 	void prev() {
 		render.prev();
+		repaint();
+	}
+
+	// Go to the first slide.
+	void first() {
+		render.first();
+		repaint();
+	}
+
+	// Go to the last slide.
+	void last() {
+		render.last();
 		repaint();
 	}
 
@@ -179,6 +193,16 @@ class PresentPainter extends Painter {
 	// Go to specific slide.
 	void goTo(Nat slide) {
 		setCursor(p.at(slide));
+	}
+
+	// Go to the first slide.
+	void first() {
+		setCursor(p.at(0));
+	}
+
+	// Go to the last (interesting) slide.
+	void last() {
+		setCursor(p.prev(p.end));
 	}
 
 	// Set the presentation.
