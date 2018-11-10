@@ -73,10 +73,10 @@ The presentation language also uses syntax from the layout language, which is im
 ?Include:root/layout/syntax.bnf?
 ```
 
-Finally, these can be used as illustrated in the example in `root/presentation/text/simple.bs`:
+Finally, these can be used as illustrated in the example in `root/presentation/test/simple.bs`:
 
 ```
-?Include:root/presentation/text/simple.bs?
+?Include:root/presentation/test/simple.bs?
 ```
 
 Reload
