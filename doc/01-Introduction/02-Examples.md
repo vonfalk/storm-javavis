@@ -59,11 +59,24 @@ included, the syntax highlighting will be wrong. Now, uncomment the `use present
 of the file and see that the syntax highlighting is now correct since the proper grammar is now
 included.
 
-The grammar for the presentation language is available in the file `root/present/syntax.bnf`, which
+The grammar for the presentation language is available in the file `root/presentation/syntax.bnf`, which
 is shown below:
 
 ```
-?Include:root/present/syntax.bnf?
+?Include:root/presentation/syntax.bnf?
+```
+
+The presentation language also uses syntax from the layout language, which is implemented in
+`root/layout/syntax.bnf` as follows:
+
+```
+?Include:root/layout/syntax.bnf?
+```
+
+Finally, these can be used as illustrated in the example in `root/presentation/text/simple.bs`:
+
+```
+?Include:root/presentation/text/simple.bs?
 ```
 
 Reload

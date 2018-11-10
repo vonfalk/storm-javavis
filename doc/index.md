@@ -25,34 +25,16 @@ More information on the language server can be found
 The following example illustrates some of the possibilities of Storm:
 
 ```
-use present;
-
-void main() {
-	// Generate a random title for the presentation.
-	Str title = "Presentation number " + rand(1, 10).toS;
-
-	// Create the presentation. Uses an extension implemented in the package 'present'.
-	var p = presentation "My presentation" {
-		Title title;
-		Content "Hello!" {
-			List [ "Welcome to " + title, "In Storm!" ];
-		};
-	}
-
-
-	// Show the presentation in a window on the screen.
-	PresentWindow window(p);
-	win.waitForClose();
-}
+?Include:root/presentation/text/simple.bs?
 ```
 
 In this example, we use a language extension that allows creating presentation slides in a
 declarative manner. This extension is not a part of Basic Storm, it is implemented as a language
 extension that is included with the `use present;` statement on the first line. The language
-extension adds a `presentation`-block that evaluates to a value of the type `Presentation`, which is
-later passed to a `PresentationWindow` that shows the actual presentation. The example also shows
-that the language extension is able to use variables declared outside of the language extension with
-the variable `title`.
+extension adds a `presentation`-block declares functions that create presentation. This presentation
+is then used inside the `main` function to show the presentation. The example also shows that the
+language extension is able to execute arbitrary Storm code in most locations by creating a random
+caption and storing it in the variable `caption`, which is later used in the slide declarations.
 
 The syntax used to define the syntax language, together with other examples illustrating the
 capabilities of Storm can be found on the [Examples](md://Introduction/Examples) page.
