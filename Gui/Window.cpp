@@ -125,11 +125,11 @@ namespace gui {
 		return false;
 	}
 
-	Bool Window::onMouseVWheel(Point at, Int delta) {
+	Bool Window::onMouseVScroll(Point at, Int delta) {
 		return false;
 	}
 
-	Bool Window::onMouseHWheel(Point at, Int delta) {
+	Bool Window::onMouseHScroll(Point at, Int delta) {
 		return false;
 	}
 
@@ -239,11 +239,11 @@ namespace gui {
 				return msgResult(0);
 			break;
 		case WM_MOUSEWHEEL:
-			if (onMouseVWheel(mouseAbsPos(handle(), msg), GET_WHEEL_DELTA_WPARAM(msg.wParam)))
+			if (onMouseVScroll(mouseAbsPos(handle(), msg), GET_WHEEL_DELTA_WPARAM(msg.wParam)))
 				return msgResult(0);
 			break;
 		case WM_MOUSEHWHEEL:
-			if (onMouseVWheel(mouseAbsPos(handle(), msg), GET_WHEEL_DELTA_WPARAM(msg.wParam)))
+			if (onMouseVScroll(mouseAbsPos(handle(), msg), GET_WHEEL_DELTA_WPARAM(msg.wParam)))
 				return msgResult(0);
 			break;
 		}
@@ -521,6 +521,10 @@ namespace gui {
 	void Window::initSignals(GtkWidget *widget) {
 		Signal<gboolean, Window, GdkEvent *>::Connect<&Window::onKeyDown>::to(widget, "key-press-event", engine());
 		Signal<gboolean, Window, GdkEvent *>::Connect<&Window::onKeyUp>::to(widget, "key-release-event", engine());
+		Signal<gboolean, Window, GdkEvent *>::Connect<&Window::onButton>::to(widget, "button-press-event", engine());
+		Signal<gboolean, Window, GdkEvent *>::Connect<&Window::onButton>::to(widget, "button-release-event", engine());
+		Signal<gboolean, Window, GdkEvent *>::Connect<&Window::onMotion>::to(widget, "motion-notify-event", engine());
+		Signal<gboolean, Window, GdkEvent *>::Connect<&Window::onScroll>::to(widget, "scroll-event", engine());
 		Signal<void, Window, GdkRectangle *>::Connect<&Window::onSize>::to(widget, "size-allocate", engine());
 		Signal<void, Window>::Connect<&Window::onRealize>::to(drawWidget(), "realize", engine());
 		Signal<void, Window>::Connect<&Window::onUnrealize>::to(drawWidget(), "unrealize", engine());
@@ -548,6 +552,62 @@ namespace gui {
 		bool ok = onKey(true, keycode(k), modifiers(k));
 		if (ok)
 			ok = onChar(k.keyval);
+		return ok ? TRUE : FALSE;
+	}
+
+	gboolean Window::onButton(GdkEvent *event) {
+		GdkEventButton &b = event->button;
+		Point pt(Float(b.x), Float(b.y));
+		mouse::MouseButton button = mouse::MouseButton(b.button - 1);
+		bool ok = false;
+
+		if (button == mouse::left || button == mouse::middle || button == mouse::right) {
+			switch (b.type) {
+			case GDK_BUTTON_PRESS:
+				ok = onClick(true, pt, button);
+				break;
+			case GDK_BUTTON_RELEASE:
+				ok = onClick(false, pt, button);
+				break;
+			case GDK_2BUTTON_PRESS:
+				ok = onDblClick(pt, button);
+				break;
+			}
+		}
+		return ok ? TRUE : FALSE;
+	}
+
+	gboolean Window::onMotion(GdkEvent *event) {
+		GdkEventMotion &m = event->motion;
+		Point pt(Float(m.x), Float(m.y));
+
+		return onMouseMove(pt) ? TRUE : FALSE;
+	}
+
+	gboolean Window::onScroll(GdkEvent *event) {
+		GdkEventScroll &s = event->scroll;
+		Point pt(Float(s.x), Float(s.y));
+
+		gdouble dx = 0, dy = 0;
+		if (!gdk_event_get_scroll_deltas(event, &dx, &dy)) {
+			dx = 120; dy = 120;
+		}
+
+		bool ok = false;
+		switch (s.direction) {
+		case GDK_SCROLL_UP:
+			onMouseVScroll(pt, Int(dx));
+			break;
+		case GDK_SCROLL_DOWN:
+			onMouseVScroll(pt, -Int(dx));
+			break;
+		case GDK_SCROLL_LEFT:
+			onMouseHScroll(pt, -Int(dy));
+			break;
+		case GDK_SCROLL_RIGHT:
+			onMouseHScroll(pt, Int(dy));
+			break;
+		}
 		return ok ? TRUE : FALSE;
 	}
 
@@ -666,8 +726,10 @@ namespace gui {
 		if (gdkWindow)
 			return;
 
-		if (!useNativeWindow())
+		if (!useNativeWindow()) {
+			setWindowMask(gtk_widget_get_window(drawWidget()));
 			return;
+		}
 
 		// Create the window.
 		GdkWindowAttr attrs;
@@ -714,6 +776,7 @@ namespace gui {
 		if (myPainter) {
 			gtk_widget_set_double_buffered(drawTo, FALSE);
 		}
+		setWindowMask(gdkWindow);
 	}
 
 	void Window::onUnrealize() {
@@ -727,6 +790,19 @@ namespace gui {
 		if (myPainter)
 			myPainter->uiDetach();
 		gdkWindow = null;
+	}
+
+	void Window::setWindowMask(GdkWindow *window) {
+		if (window) {
+			int mask = gdk_window_get_events(window);
+			mask |= GDK_POINTER_MOTION_MASK;
+			mask |= GDK_BUTTON_MOTION_MASK;
+			mask |= GDK_BUTTON_PRESS_MASK;
+			mask |= GDK_BUTTON_RELEASE_MASK;
+			mask |= GDK_SCROLL_MASK;
+			mask |= GDK_SMOOTH_SCROLL_MASK;
+			gdk_window_set_events(window, GdkEventMask(mask));
+		}
 	}
 
 	static void recreate_widget(GtkWidget *widget) {

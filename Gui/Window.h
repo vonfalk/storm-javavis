@@ -143,8 +143,8 @@ namespace gui {
 		virtual Bool STORM_FN onClick(Bool pressed, Point at, mouse::MouseButton button);
 		virtual Bool STORM_FN onDblClick(Point at, mouse::MouseButton button);
 		virtual Bool STORM_FN onMouseMove(Point at);
-		virtual Bool STORM_FN onMouseVWheel(Point at, Int delta);
-		virtual Bool STORM_FN onMouseHWheel(Point at, Int delta);
+		virtual Bool STORM_FN onMouseVScroll(Point at, Int delta);
+		virtual Bool STORM_FN onMouseHScroll(Point at, Int delta);
 
 		// Set window contents (custom drawing).
 		void STORM_ASSIGN painter(MAYBE(Painter *) to);
@@ -247,10 +247,16 @@ namespace gui {
 		// Signal landing pads.
 		gboolean onKeyUp(GdkEvent *event);
 		gboolean onKeyDown(GdkEvent *event);
+		gboolean onButton(GdkEvent *event);
+		gboolean onMotion(GdkEvent *event);
+		gboolean onScroll(GdkEvent *event);
 		void onSize(GdkRectangle *alloc);
 		gboolean onDraw(cairo_t *ctx);
 		void onRealize();
 		void onUnrealize();
+
+		// Set window mask.
+		void setWindowMask(GdkWindow *window);
 
 		// Do we need to be a separate native window?
 		bool useNativeWindow() const;
