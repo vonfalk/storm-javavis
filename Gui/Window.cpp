@@ -113,6 +113,26 @@ namespace gui {
 		return false;
 	}
 
+	Bool Window::onClick(Bool pressed, Point at, mouse::MouseButton button) {
+		return false;
+	}
+
+	Bool Window::onDblClick(Point at, mouse::MouseButton button) {
+		return false;
+	}
+
+	Bool Window::onMouseMove(Point at) {
+		return false;
+	}
+
+	Bool Window::onMouseVWheel(Point at, Int delta) {
+		return false;
+	}
+
+	Bool Window::onMouseHWheel(Point at, Int delta) {
+		return false;
+	}
+
 	Bool Window::visible() {
 		return myVisible;
 	}
@@ -177,6 +197,55 @@ namespace gui {
 				return msgResult(0);
 			}
 		}
+			// TODO: Propagate mouse messages to parent windows?
+		case WM_LBUTTONDOWN:
+			if (onClick(true, mousePos(msg), mouse::left))
+				return msgResult(0);
+			break;
+		case WM_LBUTTONUP:
+			if (onClick(false, mousePos(msg), mouse::left))
+				return msgResult(0);
+			break;
+		case WM_LBUTTONDBLCLK:
+			if (onDblClick(mousePos(msg), mouse::left))
+				return msgResult(0);
+			break;
+		case WM_MBUTTONDOWN:
+			if (onClick(true, mousePos(msg), mouse::middle))
+				return msgResult(0);
+			break;
+		case WM_MBUTTONUP:
+			if (onClick(false, mousePos(msg), mouse::middle))
+				return msgResult(0);
+			break;
+		case WM_MBUTTONDBLCLK:
+			if (onDblClick(mousePos(msg), mouse::middle))
+				return msgResult(0);
+			break;
+		case WM_RBUTTONDOWN:
+			if (onClick(true, mousePos(msg), mouse::right))
+				return msgResult(0);
+			break;
+		case WM_RBUTTONUP:
+			if (onClick(false, mousePos(msg), mouse::right))
+				return msgResult(0);
+			break;
+		case WM_RBUTTONDBLCLK:
+			if (onDblClick(mousePos(msg), mouse::right))
+				return msgResult(0);
+			break;
+		case WM_MOUSEMOVE:
+			if (onMouseMove(mousePos(msg)))
+				return msgResult(0);
+			break;
+		case WM_MOUSEWHEEL:
+			if (onMouseVWheel(mouseAbsPos(handle(), msg), GET_WHEEL_DELTA_WPARAM(msg.wParam)))
+				return msgResult(0);
+			break;
+		case WM_MOUSEHWHEEL:
+			if (onMouseVWheel(mouseAbsPos(handle(), msg), GET_WHEEL_DELTA_WPARAM(msg.wParam)))
+				return msgResult(0);
+			break;
 		}
 		return noResult();
 	}

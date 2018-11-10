@@ -12,6 +12,9 @@ class Presenter extends Frame {
 	// Key mappings.
 	private Map<Key, fn()->void> keymap;
 
+	// Mouse button pressed?
+	private Bool showPointer;
+
 	// Source for the presentation. Used to reload the presentation.
 	lang:Function? source;
 
@@ -37,10 +40,35 @@ class Presenter extends Frame {
 		if (modifiers == Modifiers:none) {
 			if (keymap.has(key)) {
 				keymap.get(key).call();
+				return true;
 			}
 		}
 
 		false;
+	}
+
+	// Handle mouse clicks.
+	Bool onClick(Bool pressed, Point pos, MouseButton button) {
+		if (button != MouseButton:left)
+			return false;
+
+		showPointer = pressed;
+		if (pressed) {
+			render.showPointer(pos);
+		} else {
+			render.hidePointer();
+		}
+		repaint();
+		true;
+	}
+
+	// Mouse movement.
+	Bool onMouseMove(Point pos) {
+		if (showPointer) {
+			render.showPointer(pos);
+			repaint();
+		}
+		true;
 	}
 
 	// Go to a specific slide.
@@ -143,11 +171,25 @@ class PresentPainter extends Painter {
 	// Our cursor.
 	private Presentation:Cursor cursor;
 
+	// Show a pointer at some location?
+	private Bool showPointer;
+
+	// Show the pointer at this location (screen coordinates).
+	private Point pointerPos;
+
+	// Pointer brush.
+	private Brush pointerBrush;
+
+	// Size of the pointer.
+	private Float pointerSize;
+
 	// Create.
 	init(Presentation p) {
 		init() {
 			p = p;
 			cursor = p.begin;
+			pointerBrush = SolidBrush(Color(1, 0, 0, 0.7));
+			pointerSize = 10;
 		}
 
 		bgColor = black;
@@ -177,7 +219,23 @@ class PresentPainter extends Painter {
 
 		g.pop();
 
+		if (showPointer) {
+			g.transform = Transform();
+			var s = scale * pointerSize;
+			g.fillOval(Rect(pointerPos - Size(s), Size(s*2)), pointerBrush);
+		}
+
 		inAnimation;
+	}
+
+	// Manage the pointer.
+	void showPointer(Point at) {
+		showPointer = true;
+		pointerPos = at;
+	}
+
+	void hidePointer() {
+		showPointer = false;
 	}
 
 	// Advance the animation.

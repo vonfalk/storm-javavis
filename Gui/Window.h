@@ -3,6 +3,7 @@
 #include "Handle.h"
 #include "Font.h"
 #include "Key.h"
+#include "Mouse.h"
 #include "Core/Timing.h"
 #include "Core/TObject.h"
 #include "Utils/Bitmask.h"
@@ -137,6 +138,13 @@ namespace gui {
 		// Key events. Return 'true' if the message was handled and should not propagate further.
 		virtual Bool STORM_FN onKey(Bool pressed, key::Key keycode, mod::Modifiers modifiers);
 		virtual Bool STORM_FN onChar(Nat charCode);
+
+		// Mouse events. Return 'true' if the message was handled and should not propagate further.
+		virtual Bool STORM_FN onClick(Bool pressed, Point at, mouse::MouseButton button);
+		virtual Bool STORM_FN onDblClick(Point at, mouse::MouseButton button);
+		virtual Bool STORM_FN onMouseMove(Point at);
+		virtual Bool STORM_FN onMouseVWheel(Point at, Int delta);
+		virtual Bool STORM_FN onMouseHWheel(Point at, Int delta);
 
 		// Set window contents (custom drawing).
 		void STORM_ASSIGN painter(MAYBE(Painter *) to);
