@@ -201,7 +201,18 @@ namespace gui {
 	void App::processMessage(MSG &msg) {
 		if (Window *w = windows->get(Handle(msg.hwnd), null)) {
 			// Intercepted?
-			MsgResult r = w->beforeMessage(msg);
+
+			// Make sure we don't confuse the Win32 API by yeilding during this call.
+			MsgResult r = noResult();
+			appWait->disableMsg();
+			try {
+				r = w->beforeMessage(msg);
+			} catch (...) {
+				appWait->enableMsg();
+				throw;
+			}
+			appWait->enableMsg();
+
 			if (r.any) {
 				if (InSendMessage())
 					ReplyMessage(r.result);

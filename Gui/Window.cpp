@@ -184,10 +184,12 @@ namespace gui {
 	MsgResult Window::beforeMessage(const Message &msg) {
 		switch (msg.msg) {
 		case WM_KEYUP:
+		case WM_SYSKEYUP:
 			if (onKey(false, keycode(msg.wParam), modifiers()))
 				return msgResult(0);
 			break;
 		case WM_KEYDOWN:
+		case WM_SYSKEYDOWN:
 			if (onKey(true, keycode(msg.wParam), modifiers()))
 				return msgResult(0);
 			break;
