@@ -450,6 +450,10 @@ namespace storm {
 					chosen = i;
 			}
 
+			// If the first candidate was too large, we most likely need a large-scale reparse at this point.
+			if (!found && chosen == 0)
+				owner->postInvalidate(this, 0, true);
+
 			// Ignore nodes without production as far as possible.
 			while (chosen < path->count() && !path->at(chosen).node->production())
 				chosen++;
