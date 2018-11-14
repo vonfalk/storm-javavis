@@ -1,0 +1,26 @@
+// Testing non-context-free grammar in the syntax language.
+
+delimiter = SDelim;
+void SDelim();
+SDelim : "[ \n\r\t]+";
+
+void SBlock();
+SBlock : "{", (SStmt,)* "}";
+
+void SStmt();
+SStmt : "a";
+SStmt : "b";
+SStmt : SBlock;
+
+
+// Syntax extension: add a new block where 'c' may appear!
+SStmt : "extra c", SBlock = ExtraBlock;
+ExtraBlock..SStmt : "c";
+
+
+// We can also use an additional production.
+SStmt : SExtra;
+
+void SExtra();
+SExtra : "extra d", SBlock;
+SExtra..SStmt : "d";

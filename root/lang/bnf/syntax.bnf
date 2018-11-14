@@ -3,7 +3,8 @@ use core.lang;
 // Note: This file is parsed by the built-in parser during startup. Therefore, small differences in the
 // accepted languages may occur. For example, the built-in parser will does not accept actual parameters
 // of the form 'a.b.c', while the grammar specified here does. Furthermore, it is not possible to extend
-// the grammar in this file with 'use' statements, which is otherwise possible.
+// the grammar in this file with 'use' statements, which is otherwise possible. Furthermore, it is not
+// possible to specify other rules or productions as a parent requirement using the A..B syntax.
 
 delimiter = SDelim;
 
@@ -47,7 +48,10 @@ FileItem SFileItem();
 SFileItem => UseDecl(pkg) : "use" #keyword, SName pkg #typeName;
 SFileItem => DelimDecl(token) : "delimiter" #keyword, "=", SName token #typeName;
 SFileItem => RuleDecl(pos, name, result) : SName result #typeName, SIdent name #fnName, SFormals -> push - (, SColorName -> pushColor)?;
-SFileItem => ProductionDecl(pos, member) : SName member, SPriority -> pushPrio [, ("=>", SExpr(me),)? ":", SRepIndentTokens(me) - SProdName(me)]+;
+SFileItem => ProductionDecl(pos, member) : SParentReq parent, SName member, SPriority -> pushPrio [, ("=>", SExpr(me),)? ":", SRepIndentTokens(me) - SProdName(me)]+;
+
+Maybe<SrcName> SParentReq();
+SParentReq => name : (SName name, "..")?;
 
 Array<ParamDecl> SFormals();
 SFormals => Array<ParamDecl>() : "(", ")";

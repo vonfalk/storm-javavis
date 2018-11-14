@@ -31,6 +31,23 @@ static void parse(const wchar_t *root, const wchar_t *parse, Nat backend) {
 		p->throwError();
 }
 
+static bool parseC(const wchar_t *root, const wchar_t *parse, Nat backend) {
+	Package *pkg = gEngine().package(S("test.syntax.context"));
+#ifdef WINDOWS
+	Parser *p = Parser::create(pkg, root, createBackend(gEngine(), backend));
+#else
+	const wchar *r = toWChar(gEngine(), root)->v;
+	Parser *p = Parser::create(pkg, r, createBackend(gEngine(), backend));
+#endif
+
+	// PVAR(parse);
+	Url *empty = new (p) Url();
+	Str *s = new (p) Str(parse);
+
+	p->parse(s, empty);
+	return !p->hasError();
+}
+
 static String parseStr(const wchar_t *package, const wchar_t *root, const wchar_t *parse, Nat backend) {
 #ifdef WINDOWS
 	Package *pkg = gEngine().package(package);
@@ -216,6 +233,36 @@ BEGIN_TEST(SyntaxTest, BS) {
 // Previous odd crashes in the syntax.
 BEGIN_TEST(SyntaxCrashes, BS) {
 	CHECK_EQ(::toS(runFn<Name *>(S("test.syntax.complexName"))), L"a.b(c, d(e), f)");
+} END_TEST
+
+/**
+ * Test behavior regarding non-context-free grammar.
+ */
+BEGIN_TEST_(NonCFG, BS) {
+	Nat parser = 0; // GLR
+
+	// Should be accepted.
+	CHECK(parseC(L"SBlock", L"{ a b }", parser));
+
+	// We're using 'c' inside a regular block. Should fail!
+	CHECK(!parseC(L"SBlock", L"{ a c }", parser));
+
+	// So should using 'd'.
+	CHECK(!parseC(L"SBlock", L"{ a d }", parser));
+
+	// But using them inside their respective blocks should be fine!
+	CHECK(parseC(L"SBlock", L"{ a extra c { a c } b }", parser));
+	CHECK(parseC(L"SBlock", L"{ a extra d { a d } b }", parser));
+
+	// They should not overlap...
+	CHECK(!parseC(L"SBlock", L"{ extra c { d } }", parser));
+	CHECK(!parseC(L"SBlock", L"{ extra d { c } }", parser));
+
+	// But this should be allowed...
+	CHECK(parseC(L"SBlock", L"{ extra c { extra d { c d } } }", parser));
+	CHECK(parseC(L"SBlock", L"{ extra d { extra c { c d } } }", parser));
+
+	TODO(L"Make sure we give decent error messages here as well!");
 } END_TEST
 
 
