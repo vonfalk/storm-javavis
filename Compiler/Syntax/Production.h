@@ -94,6 +94,11 @@ namespace storm {
 			// Owning type.
 			MAYBE(ProductionType *) STORM_FN type() const;
 
+			// Parent syntax element. When parsing, this element needs to be an indirect parent of
+			// this production. Otherwise this production should not be considered. This is either a
+			// Rule or a ProductionType. May be reduced to just 'Rule' in the future.
+			MAYBE(Named *) parent;
+
 			// Tokens.
 			Array<Token *> *tokens;
 
@@ -189,7 +194,7 @@ namespace storm {
 
 		private:
 			// The declaration, stored only until the first time 'loadAll' is called.
-			ProductionDecl *decl;
+			MAYBE(ProductionDecl *) decl;
 
 			// Save the scope for a while.
 			Scope scope;

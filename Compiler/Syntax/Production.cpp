@@ -21,6 +21,7 @@ namespace storm {
 
 		Production::Production(ProductionType *owner, ProductionDecl *decl, MAYBE(Rule *) delim, Scope scope) {
 			this->owner = owner;
+			parent = null;
 			tokens = new (this) Array<Token *>();
 			priority = decl->priority;
 			repStart = decl->repStart;
@@ -29,6 +30,15 @@ namespace storm {
 			indentStart = decl->indentStart;
 			indentEnd = decl->indentEnd;
 			indentType = decl->indentType;
+
+			if (decl->parent) {
+				parent = scope.find(decl->parent);
+				if (!parent)
+					throw SyntaxError(decl->pos, L"The element " + ::toS(decl->parent) + L" was not found.");
+				if (!as<Rule>(parent) && !as<ProductionType>(parent))
+					throw SyntaxError(decl->pos, L"Parent elements must refer to either rules or productions. "
+									+ ::toS(decl->parent) + L" is a " + ::toS(parent) + L".");
+			}
 
 			Nat counter = 0;
 			if (decl->repCapture) {
@@ -146,13 +156,16 @@ namespace storm {
 		}
 
 		void Production::toS(StrBuf *to, Nat mark, Bool bindings) const {
+			if (parent)
+				*to << parent->identifier() << S("..");
+
 			if (Rule *r = rule())
 				*to << r->identifier();
 			else
-				*to << L"?";
+				*to << S("?");
 
 			if (priority != 0)
-				*to << L"[" << priority << L"]";
+				*to << S("[") << priority << S("]");
 
 			*to << L" : ";
 
@@ -167,22 +180,22 @@ namespace storm {
 					outputRepEnd(to, bindings);
 
 				if (usingIndent && indentEnd == i)
-					*to << L" ]" << indentType;
+					*to << S(" ]") << indentType;
 
 				if (i > 0 && !currentDelim && !prevDelim)
-					*to << L" - ";
+					*to << S(" - ");
 
 				if (usingIndent && indentStart == i)
-					*to << L"[";
+					*to << S("[");
 
 				if (usingRep && repStart == i)
-					*to << L"(";
+					*to << S("(");
 
 				if (i == mark)
-					*to << L"<>";
+					*to << S("<>");
 
 				if (currentDelim)
-					*to << L", ";
+					*to << S(", ");
 				else
 					token->toS(to, bindings);
 
@@ -193,24 +206,24 @@ namespace storm {
 				outputRepEnd(to, bindings);
 
 			if (usingIndent && indentEnd == tokens->count())
-				*to << L" ]" << indentType;
+				*to << S(" ]") << indentType;
 
 			if (mark == tokens->count())
-				*to << L"<>";
+				*to << S("<>");
 
 			if (owner)
-				*to << L" = " << owner->name;
+				*to << S(" = ") << owner->name;
 		}
 
 		void Production::outputRepEnd(StrBuf *to, Bool bindings) const {
-			*to << L")";
+			*to << S(")");
 
 			if (repType == repZeroOne) {
-				*to << L"?";
+				*to << S("?");
 			} else if (repType == repOnePlus) {
-				*to << L"+";
+				*to << S("+");
 			} else if (repType == repZeroPlus) {
-				*to << L"*";
+				*to << S("*");
 			} else if (repCapture) {
 				repCapture->toS(to, bindings);
 			}

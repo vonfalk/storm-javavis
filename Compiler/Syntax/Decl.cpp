@@ -203,7 +203,15 @@ namespace storm {
 		 * Productions.
 		 */
 
-		ProductionDecl::ProductionDecl(SrcPos pos, Name *memberOf) : pos(pos), rule(memberOf) {
+		ProductionDecl::ProductionDecl(SrcPos pos, Name *memberOf) : pos(pos), parent(null), rule(memberOf) {
+			tokens = new (this) Array<TokenDecl *>();
+			repType = repNone;
+			indentType = indentNone;
+		}
+
+		ProductionDecl::ProductionDecl(SrcPos pos, Name *memberOf, MAYBE(Name *) parent)
+			: pos(pos), parent(parent), rule(memberOf) {
+
 			tokens = new (this) Array<TokenDecl *>();
 			repType = repNone;
 			indentType = indentNone;
@@ -211,6 +219,7 @@ namespace storm {
 
 		void ProductionDecl::deepCopy(CloneEnv *env) {
 			cloned(pos, env);
+			cloned(parent, env);
 			cloned(rule, env);
 			cloned(tokens, env);
 			cloned(name, env);
@@ -220,6 +229,9 @@ namespace storm {
 		}
 
 		void ProductionDecl::toS(StrBuf *to) const {
+			if (parent)
+				*to << parent << S("..");
+
 			*to << rule;
 			if (priority != 0)
 				*to << S("[") << priority << S("]");

@@ -48,7 +48,7 @@ FileItem SFileItem();
 SFileItem => UseDecl(pkg) : "use" #keyword, SName pkg #typeName;
 SFileItem => DelimDecl(token) : "delimiter" #keyword, "=", SName token #typeName;
 SFileItem => RuleDecl(pos, name, result) : SName result #typeName, SIdent name #fnName, SFormals -> push - (, SColorName -> pushColor)?;
-SFileItem => ProductionDecl(pos, member) : SParentReq parent, SName member, SPriority -> pushPrio [, ("=>", SExpr(me),)? ":", SRepIndentTokens(me) - SProdName(me)]+;
+SFileItem => ProductionDecl(pos, member, parent) : SParentReq parent, SName member, SPriority -> pushPrio [, ("=>", SExpr(me),)? ":", SRepIndentTokens(me) - SProdName(me)]+;
 
 Maybe<SrcName> SParentReq();
 SParentReq => name : (SName name, "..")?;

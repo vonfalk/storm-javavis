@@ -206,12 +206,16 @@ namespace storm {
 		public:
 			// Create.
 			STORM_CTOR ProductionDecl(SrcPos pos, Name *memberOf);
+			STORM_CTOR ProductionDecl(SrcPos pos, Name *memberOf, MAYBE(Name *) parent);
 
 			// Where was this production declared?
 			SrcPos pos;
 
 			// Location of the documentation (if any).
 			SrcPos docPos;
+
+			// Do we require any parent?
+			MAYBE(Name *) parent;
 
 			// Which rule are we a member of?
 			Name *rule;
