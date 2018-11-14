@@ -88,32 +88,39 @@ private:
 		Expr expr = tree.transform(block);
 		block.add(expr);
 
-		if (expr as Var) {
+		if (var = expr as Var) {
 			// We are declaring a variable.
-			Str name = expr.var.name;
+			Str name = var.var.name;
 			Value result = block.result.type.asRef(false);
 
-			ReplCode code(block, thisPtr, name);
-			Function fn(result, "init", [thisPtr.result]);
-			fn.parentLookup = sandboxType;
-			fn.setCode(LazyCode(&code.loadGenerator));
+			if (result.type) {
+				ReplCode code(block, thisPtr, name);
+				Function fn(result, "init", [thisPtr.result]);
+				fn.parentLookup = sandboxType;
+				fn.setCode(LazyCode(&code.loadGenerator));
 
-			ReplSandbox sandbox(this);
-			GlobalVar var(name, result, named{Compiler}, fn.pointer(sandbox));
-			if (old = sandboxType.find(name, scope) as GlobalVar)
-				sandboxType.remove(old);
-			if (into = thisPtr.result.type)
-				into.add(var);
-			var.create();
-		} else {
-			Function replaceFn = named{ReplSandbox:evalFn<ReplSandbox>};
-			ReplCode code(block, thisPtr);
-			replaceFn.setCode(LazyCode(&code.load()));
+				ReplSandbox sandbox(this);
+				GlobalVar var(name, result, named{Compiler}, fn.pointer(sandbox));
+				if (old = sandboxType.find(name, scope) as GlobalVar)
+					sandboxType.remove(old);
+				if (into = thisPtr.result.type)
+					into.add(var);
+				var.create();
+				return;
+			}
 
-			// Now, run the replaced function!
-			ReplSandbox sandbox(this);
-			print("=> " # sandbox.evalFn());
+			// Otherwise, just try to evaluate the expression normally. Doing so will most likely
+			// result in an error anyway, and that error is more relevant than anything we can say
+			// at this point.
 		}
+
+		Function replaceFn = named{ReplSandbox:evalFn<ReplSandbox>};
+		ReplCode code(block, thisPtr);
+		replaceFn.setCode(LazyCode(&code.load()));
+
+		// Now, run the replaced function!
+		ReplSandbox sandbox(this);
+		print("=> " # sandbox.evalFn());
 	}
 }
 

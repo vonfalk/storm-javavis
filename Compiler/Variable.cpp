@@ -9,11 +9,22 @@
 
 namespace storm {
 
+	static void checkType(Value type) {
+		if (!type.type)
+			throw TypedefError(L"Unable to create a variable of type 'void'.");
+	}
+
 	Variable::Variable(Str *name, Value type) :
-		Named(name), type(type.asRef(false)) {}
+		Named(name), type(type.asRef(false)) {
+
+		checkType(type);
+	}
 
 	Variable::Variable(Str *name, Value type, Type *member) :
-		Named(name, new (name) Array<Value>(1, Value(member))), type(type) {}
+		Named(name, new (name) Array<Value>(1, Value(member))), type(type) {
+
+		checkType(type);
+	}
 
 
 	void Variable::toS(StrBuf *to) const {
