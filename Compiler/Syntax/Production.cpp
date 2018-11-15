@@ -19,6 +19,11 @@ namespace storm {
 			tokens = new (this) Array<Token *>();
 		}
 
+		Production::Production(ProductionType *owner) {
+			this->owner = owner;
+			tokens = new (this) Array<Token *>();
+		}
+
 		Production::Production(ProductionType *owner, ProductionDecl *decl, MAYBE(Rule *) delim, Scope scope) {
 			this->owner = owner;
 			parent = null;
@@ -32,11 +37,12 @@ namespace storm {
 			indentType = decl->indentType;
 
 			if (decl->parent) {
-				parent = scope.find(decl->parent);
-				if (!parent)
+				Named *p = scope.find(decl->parent);
+				if (!p)
 					throw SyntaxError(decl->pos, L"The element " + ::toS(decl->parent) + L" was not found.");
-				if (!as<Rule>(parent) && !as<ProductionType>(parent))
-					throw SyntaxError(decl->pos, L"Parent elements must refer to either rules or productions. "
+				parent = as<Rule>(p);
+				if (!parent)
+					throw SyntaxError(decl->pos, L"Parent elements must refer to a rule. "
 									+ ::toS(decl->parent) + L" is a " + ::toS(parent) + L".");
 			}
 
@@ -357,6 +363,16 @@ namespace storm {
 			documentation = new (this) SyntaxDoc(decl->docPos, this);
 		}
 
+		ProductionType::ProductionType(SrcPos pos, Str *name, Rule *parent)
+			: Type(name, typeClass),
+			  pos(pos),
+			  decl(null),
+			  scope() {
+
+			setSuper(parent);
+			production = new (this) Production(this);
+		}
+
 		void ProductionType::add(Named *m) {
 			Type::add(m);
 
@@ -429,26 +445,27 @@ namespace storm {
 		}
 
 		Bool ProductionType::loadAll() {
-			assert(decl, L"loadAll called twice!");
-
 			Engine &e = engine;
 			Value me = thisPtr(this);
-			Value strBuf = thisPtr(StrBuf::stormType(e));
 
-			add(createTransformFn(decl, this, scope));
-			add(createChildrenFn(decl, this, scope));
+			if (decl) {
+				Value strBuf = thisPtr(StrBuf::stormType(e));
 
-			Array<Value> *p = new (e) Array<Value>(2, me);
-			p->at(1) = strBuf;
-			add(nativeFunction(e, Value(), S("toS"), p, address(&productionToS)));
+				add(createTransformFn(decl, this, scope));
+				add(createChildrenFn(decl, this, scope));
+
+				Array<Value> *p = new (e) Array<Value>(2, me);
+				p->at(1) = strBuf;
+				add(nativeFunction(e, Value(), S("toS"), p, address(&productionToS)));
+
+				// Clear!
+				decl = null;
+			}
 
 			if (!me.isActor()) {
 				add(new (e) TypeCopyCtor(this));
 				add(new (e) TypeDeepCopy(this));
 			}
-
-			// Clear!
-			decl = null;
 
 			return Type::loadAll();
 		}

@@ -85,6 +85,9 @@ namespace storm {
 			// Create with no parent.
 			STORM_CTOR Production();
 
+			// Create, but populate manually.
+			STORM_CTOR Production(ProductionType *owner);
+
 			// Create.
 			STORM_CTOR Production(ProductionType *owner, ProductionDecl *decl, MAYBE(Rule *) delim, Scope scope);
 
@@ -95,9 +98,8 @@ namespace storm {
 			MAYBE(ProductionType *) STORM_FN type() const;
 
 			// Parent syntax element. When parsing, this element needs to be an indirect parent of
-			// this production. Otherwise this production should not be considered. This is either a
-			// Rule or a ProductionType. May be reduced to just 'Rule' in the future.
-			MAYBE(Named *) parent;
+			// this production. Otherwise this production should not be considered.
+			MAYBE(Rule *) parent;
 
 			// Tokens.
 			Array<Token *> *tokens;
@@ -169,6 +171,9 @@ namespace storm {
 		public:
 			// Create.
 			STORM_CTOR ProductionType(Str *name, ProductionDecl *decl, MAYBE(Rule *) delim, Scope scope);
+
+			// Create, populate manually later.
+			STORM_CTOR ProductionType(SrcPos pos, Str *name, Rule *rule);
 
 			// Declared at.
 			SrcPos pos;

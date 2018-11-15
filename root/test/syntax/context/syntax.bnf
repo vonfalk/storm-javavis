@@ -14,13 +14,16 @@ SStmt : SBlock;
 
 
 // Syntax extension: add a new block where 'c' may appear!
-SStmt : "extra c", SBlock = ExtraBlock;
-ExtraBlock..SStmt : "c";
+SStmt : SExtraC;
+
+void SExtraC();
+SExtraC : "extra c", SBlock;
+SExtraC..SStmt : "c";
 
 
 // We can also use an additional production.
-SStmt : SExtra;
+SStmt : SExtraD;
 
-void SExtra();
-SExtra : "extra d", SBlock;
-SExtra..SStmt : "d";
+void SExtraD();
+SExtraD : "extra d", SBlock;
+SExtraD..SStmt : "d";
