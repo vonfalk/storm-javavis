@@ -51,7 +51,7 @@ SFileItem => RuleDecl(pos, name, result) : SName result #typeName, SIdent name #
 SFileItem => ProductionDecl(pos, member, parent) : SParentReq parent, SName member, SPriority -> pushPrio [, ("=>", SExpr(me),)? ":", SRepIndentTokens(me) - SProdName(me)]+;
 
 Maybe<SrcName> SParentReq();
-SParentReq => name : (SName name, "..")?;
+SParentReq => name : (SName name, "\.\.")?;
 
 Array<ParamDecl> SFormals();
 SFormals => Array<ParamDecl>() : "(", ")";

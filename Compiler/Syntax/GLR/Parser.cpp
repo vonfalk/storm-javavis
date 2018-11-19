@@ -64,7 +64,7 @@ namespace storm {
 			}
 
 			/**
-			 * Interesting cases to watch out for and their solutions:
+			 * Interesting cases to watch out for, and their solutions:
 			 *
 			 * Terminals matching long strings could be a problem. For example, if a string
 			 * production is implemented as StrLiteral : "\"" - "[^\"\\]*" - "\"";, the middle
@@ -613,6 +613,14 @@ namespace storm {
 				PVAR(node);
 #endif
 
+				// Do we require any parent production being present?
+				Nat parent = syntax->productionParent(env.production);
+				if (parent != Syntax::ruleNoParent) {
+					// PVAR(syntax->production(env.production));
+					// PVAR(syntax->ruleName(parent));
+				}
+
+				// Accept?
 				if (accept) {
 					StackItem *add = new (this) StackItem(-1, currentPos, stack, node);
 

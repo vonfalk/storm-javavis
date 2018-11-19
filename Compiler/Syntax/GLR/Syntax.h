@@ -34,7 +34,9 @@ namespace storm {
 			 * scheme for the added rules:
 			 * - Rules with the highest bit set describe the added production if neccessary. This is
 			 *   never stored in the list in the Syntax class. Note that the remaining part of the
-			 *   number is an index to a *production*, not a rule.
+			 *   number is an index to a *production*, not a rule. If the second highest bit is set,
+			 *   this rule is considered to be a rule that has a single production that matches the
+			 *   empty string. This is used to properly handle productions that may match nothing.
 			 * - Productions stored in items with the highest bit set describe the epsilon production
 			 *   of the added rule. If the two highest bits are set, that means the other added production.
 			 */
@@ -123,6 +125,10 @@ namespace storm {
 				// Find a production from its id.
 				Production *production(Nat id) const;
 
+				// Get the rule this production depends on, if any. Returns a rule that is
+				// considered special if no dependency.
+				Nat productionParent(Nat id) const;
+
 				// Same syntax as another object?
 				Bool STORM_FN sameSyntax(Syntax *o) const;
 
@@ -145,6 +151,9 @@ namespace storm {
 				// All productions. A production's id can be found in 'lookup'.
 				Array<Production *> *productions;
 
+				// The parent id of a production. Stores 'ruleNoParent' if none.
+				Array<Nat> *prodParents;
+
 				// Add the follow-set of a production.
 				void addFollows(Production *p);
 				void addFollows(const Item &start, Production *p);
@@ -155,13 +164,14 @@ namespace storm {
 			public:
 				// Various masks for rules.
 				enum {
-					ruleMask    = 0xC0000000,
-					ruleRepeat  = 0x80000000,
-					ruleESkip   = 0x40000000,
-					prodEpsilon = 0x80000000,
-					prodESkip   = 0x40000000,
-					prodRepeat  = 0xC0000000,
-					prodMask    = 0xC0000000,
+					ruleMask     = 0xC0000000,
+					ruleRepeat   = 0x80000000,
+					ruleESkip    = 0x40000000,
+					ruleNoParent = 0xFFFFFFFF,
+					prodEpsilon  = 0x80000000,
+					prodESkip    = 0x40000000,
+					prodRepeat   = 0xC0000000,
+					prodMask     = 0xC0000000,
 				};
 
 				// Is this a special rule id? Returns ruleRepeat or ruleESkip.

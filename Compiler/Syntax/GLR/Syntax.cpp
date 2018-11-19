@@ -100,6 +100,7 @@ namespace storm {
 				ruleProds = new (this) Array<RuleInfo *>();
 				repRuleProds = new (this) Array<RuleInfo *>();
 				productions = new (this) Array<Production *>();
+				prodParents = new (this) Array<Nat>();
 			}
 
 			Nat Syntax::add(Rule *rule) {
@@ -124,8 +125,10 @@ namespace storm {
 				repRuleProds->push(null);
 				pLookup->put(p, id);
 
-				if (!rLookup->has(p->rule()))
-					add(p->rule());
+				Nat parentId = ruleNoParent;
+				if (p->parent)
+					parentId = lookup(p->parent);
+				prodParents->push(parentId);
 
 				Nat ruleId = lookup(p->rule());
 				ruleProds->at(ruleId)->push(id);
@@ -232,6 +235,10 @@ namespace storm {
 
 			Production *Syntax::production(Nat pid) const {
 				return productions->at(baseProd(pid));
+			}
+
+			Nat Syntax::productionParent(Nat pid) const {
+				return prodParents->at(baseProd(pid));
 			}
 
 			Bool Syntax::sameSyntax(Syntax *o) const {

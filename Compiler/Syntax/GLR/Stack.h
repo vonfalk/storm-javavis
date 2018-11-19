@@ -33,7 +33,7 @@ namespace storm {
 				// State at this point in the stack.
 				Nat state;
 
-				// Position in the input. TODO: Remove?
+				// Position in the input. TODO: Can we remove this somehow?
 				Nat pos;
 
 				// Part of the syntax tree for this node.
@@ -43,7 +43,7 @@ namespace storm {
 				MAYBE(StackItem *) prev;
 
 				// More previous states? Forms a linked list of multiple StackItem nodes at the same
-				// level (we ignore 'state' and 'reduced' there) of more previous items.
+				// level (we ignore 'state' there) of more previous items.
 				MAYBE(StackItem *) morePrev;
 
 				// Insert a node in the 'morePrev' chain if it is not already there. Returns 'true' if inserted.
