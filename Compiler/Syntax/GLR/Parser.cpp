@@ -614,8 +614,9 @@ namespace storm {
 #endif
 
 				// Do we require any parent production being present?
-				Nat parent = syntax->productionParent(env.production);
-				if (parent != Syntax::ruleNoParent) {
+				ParentReq parent = syntax->productionReq(env.production);
+				if (parent.any()) {
+					PVAR(parent);
 					// PVAR(syntax->production(env.production));
 					// PVAR(syntax->ruleName(parent));
 				}

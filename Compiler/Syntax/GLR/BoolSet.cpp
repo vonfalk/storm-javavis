@@ -5,15 +5,6 @@ namespace storm {
 	namespace syntax {
 		namespace glr {
 
-			static const GcType natArray = {
-				GcType::tArray,
-				null,
-				null,
-				sizeof(Nat),
-				0,
-				{},
-			};
-
 			BoolSet::BoolSet() : data(null) {}
 
 			Bool BoolSet::get(Nat id) {
@@ -44,7 +35,7 @@ namespace storm {
 				cap = max(Nat(minSize), cap);
 				cap = max(this->count(), cap);
 
-				GcArray<Nat> *n = runtime::allocArray<Nat>(engine(), &natArray, cap);
+				GcArray<Nat> *n = runtime::allocArray<Nat>(engine(), &natArrayType, cap);
 				if (data)
 					memcpy(n->v, data->v, sizeof(Nat)*data->count);
 				data = n;

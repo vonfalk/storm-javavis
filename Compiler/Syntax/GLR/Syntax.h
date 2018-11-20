@@ -5,6 +5,7 @@
 #include "Core/EnginePtr.h"
 #include "Compiler/Syntax/Rule.h"
 #include "Compiler/Syntax/Production.h"
+#include "ParentReq.h"
 
 namespace storm {
 	namespace syntax {
@@ -98,7 +99,12 @@ namespace storm {
 			/**
 			 * All syntax in a parser.
 			 *
-			 * Assigns an identifier to each production to make things easier down the line.
+			 * Assigns an identifier to each rule production to make things easier down the line.
+			 *
+			 * Each rule is also possibly assigned a "parent id". This is the rule's id when it is
+			 * referred to as a requirement for a production. These are distinct from the regular
+			 * IDs since we expect there to be relatively few of them in use simultaneously, meaning
+			 * that we can use them as offsets into a bitmask when storing them.
 			 *
 			 * Also, computes the follow set for each non-terminal encountered.
 			 */
@@ -125,9 +131,11 @@ namespace storm {
 				// Find a production from its id.
 				Production *production(Nat id) const;
 
-				// Get the rule this production depends on, if any. Returns a rule that is
-				// considered special if no dependency.
-				Nat productionParent(Nat id) const;
+				// Get the parent id for a rule, expressed as a ParentReq structure.
+				ParentReq parentId(Nat rule) const;
+
+				// Get the parent requirement of a production.
+				ParentReq productionReq(Nat id) const;
 
 				// Same syntax as another object?
 				Bool STORM_FN sameSyntax(Syntax *o) const;
@@ -151,8 +159,11 @@ namespace storm {
 				// All productions. A production's id can be found in 'lookup'.
 				Array<Production *> *productions;
 
-				// The parent id of a production. Stores 'ruleNoParent' if none.
-				Array<Nat> *prodParents;
+				// Parent id:s for all productions.
+				Map<Nat, ParentReq> *parentIds;
+
+				// The parent id of a production. Stores 'noParent' if none.
+				Array<ParentReq> *prodParents;
 
 				// Add the follow-set of a production.
 				void addFollows(Production *p);
@@ -162,16 +173,15 @@ namespace storm {
 				void addFollows(RuleInfo *into, const Item &pos);
 
 			public:
-				// Various masks for rules.
+				// Various masks for rules and productions.
 				enum {
-					ruleMask     = 0xC0000000,
-					ruleRepeat   = 0x80000000,
-					ruleESkip    = 0x40000000,
-					ruleNoParent = 0xFFFFFFFF,
-					prodEpsilon  = 0x80000000,
-					prodESkip    = 0x40000000,
-					prodRepeat   = 0xC0000000,
-					prodMask     = 0xC0000000,
+					ruleMask    = 0xC0000000,
+					ruleRepeat  = 0x80000000,
+					ruleESkip   = 0x40000000,
+					prodEpsilon = 0x80000000,
+					prodESkip   = 0x40000000,
+					prodRepeat  = 0xC0000000,
+					prodMask    = 0xC0000000,
 				};
 
 				// Is this a special rule id? Returns ruleRepeat or ruleESkip.
