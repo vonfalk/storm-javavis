@@ -247,11 +247,17 @@ namespace storm {
 			}
 
 			ParentReq Syntax::parentId(Nat rule) const {
-				return parentIds->at(rule);
+				if (specialRule(rule) != 0)
+					return ParentReq();
+				else
+					return parentIds->at(rule);
 			}
 
 			ParentReq Syntax::productionReq(Nat pid) const {
-				return prodParents->at(baseProd(pid));
+				if (specialProd(pid) != 0)
+					return ParentReq();
+				else
+					return prodParents->at(baseProd(pid));
 			}
 
 			Bool Syntax::sameSyntax(Syntax *o) const {

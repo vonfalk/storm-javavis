@@ -6,6 +6,7 @@
 #include "Compiler/Syntax/InfoErrors.h"
 #include "Syntax.h"
 #include "Tree.h"
+#include "ParentReq.h"
 
 namespace storm {
 	namespace syntax {
@@ -20,7 +21,7 @@ namespace storm {
 			 * can be chained together to represent all links.
 			 *
 			 * TODO: It could be useful to merge these into larger chunks and use one-dimensional
-			 * ID:s for pointers to them.
+			 * ID:s for pointers to them, like what we do with the tree representation.
 			 */
 			class StackItem : public Object {
 				STORM_CLASS;
@@ -29,6 +30,7 @@ namespace storm {
 				STORM_CTOR StackItem();
 				STORM_CTOR StackItem(Nat state, Nat pos);
 				STORM_CTOR StackItem(Nat state, Nat pos, StackItem *prev, Nat tree);
+				STORM_CTOR StackItem(Nat state, Nat pos, StackItem *prev, Nat tree, ParentReq req);
 
 				// State at this point in the stack.
 				Nat state;
@@ -45,6 +47,9 @@ namespace storm {
 				// More previous states? Forms a linked list of multiple StackItem nodes at the same
 				// level (we ignore 'state' there) of more previous items.
 				MAYBE(StackItem *) morePrev;
+
+				// Required parent productions for this state.
+				ParentReq required;
 
 				// Insert a node in the 'morePrev' chain if it is not already there. Returns 'true' if inserted.
 				Bool STORM_FN insert(TreeStore *store, StackItem *item);

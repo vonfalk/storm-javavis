@@ -60,7 +60,11 @@ namespace storm {
 				initParse(root, str, file, start);
 				doParse(startPos);
 				finishParse();
-				return acceptingStack != null;
+
+				if (!acceptingStack)
+					return false;
+
+				return acceptingStack->required.empty();
 			}
 
 			/**
@@ -126,6 +130,7 @@ namespace storm {
 				finishParse();
 				if (hasTree()) {
 					TreeNode node = store->at(acceptingStack->tree);
+					// TODO: Look at any unfullfilled parent requirements as well!
 					return node.errors();
 				} else {
 					return infoFailure();
@@ -220,6 +225,17 @@ namespace storm {
 
 				visited = null;
 				stacks = null;
+
+				// If we have multiple accepting stacks, find the one without requirements and put
+				// it first!
+				for (StackItem **prev = &acceptingStack; *prev; prev = &(*prev)->morePrev) {
+					if ((*prev)->required.empty()) {
+						// Put it first.
+						StackItem *chosen = *prev;
+						*prev = chosen->morePrev;
+						acceptingStack = chosen;
+					}
+				}
 			}
 
 			void Parser::advanceAll() {
@@ -546,13 +562,13 @@ namespace storm {
 
 					Path next = {
 						path,
-						0,
+						null,
 					};
 
 					// Keep on traversing...
 					for (StackItem *i = stack; i; i = i->morePrev) {
 						if (i->prev) {
-							next.treeNode = i->tree;
+							next.item = i;
 							reduce(env, i->prev, &next, i == through ? null : through, len);
 						}
 					}
@@ -562,6 +578,7 @@ namespace storm {
 			}
 
 			void Parser::finishReduce(const ReduceEnv &env, StackItem *stack, const Path *path) {
+				Engine &e = engine();
 				State *state = table->state(stack->state);
 				Map<Nat, Nat>::Iter to = state->rules->find(env.rule);
 
@@ -571,17 +588,22 @@ namespace storm {
 				if (!accept && !reduce)
 					return;
 
-				// Create the syntax tree node for this reduction.
+				// Create the syntax tree node for this reduction and compute required parent productions.
+				ParentReq required;
 
 				Bool usedNode = false;
 				Bool nontermErrors = false;
 				Nat node = 0;
 				InfoErrors errors = infoSuccess();
 				for (const Path *p = path; p; p = p->prev) {
-					TreeNode now = store->at(p->treeNode);
+					TreeNode now = store->at(p->item->tree);
 					InfoErrors err = now.errors();
 					errors += err;
 					nontermErrors = now.leaf() & err.any();
+					// TODO: Calling 'concat' in this manner is somewhat inefficient. It is better
+					// to pre-compute the length once and for all and then do the concatenation
+					// afterwards.
+					required = required.concat(e, p->item->required);
 				}
 				errors += infoShifts(env.errors);
 				if (env.errors || nontermErrors) {
@@ -598,7 +620,7 @@ namespace storm {
 					TreeArray children = fill.children();
 					const Path *top = path;
 					for (Nat i = 0; i < env.length; i++) {
-						children.set(i, top->treeNode);
+						children.set(i, top->item->tree);
 						top = top->prev;
 					}
 					if (env.length > 0)
@@ -613,17 +635,18 @@ namespace storm {
 				PVAR(node);
 #endif
 
-				// Do we require any parent production being present?
-				ParentReq parent = syntax->productionReq(env.production);
-				if (parent.any()) {
-					PVAR(parent);
-					// PVAR(syntax->production(env.production));
-					// PVAR(syntax->ruleName(parent));
-				}
+				// Remove the currently reduced requirement.
+				required = required.remove(e, syntax->parentId(env.rule));
+
+				// Do we require any parent production being present? If a production requires
+				// itself, that means it has to be nested. Ie. it does not immediately satisfy its
+				// own requirement.
+				required = required.concat(e, syntax->productionReq(env.production));
+
 
 				// Accept?
 				if (accept) {
-					StackItem *add = new (this) StackItem(-1, currentPos, stack, node);
+					StackItem *add = new (e) StackItem(-1, currentPos, stack, node, required);
 
 					if (acceptingStack && acceptingStack->pos == currentPos) {
 						usedNode |= acceptingStack->insert(store, add, usedNode);
@@ -635,7 +658,7 @@ namespace storm {
 
 				// Figure out which state to go to.
 				if (reduce) {
-					StackItem *add = new (this) StackItem(to.v(), currentPos, stack, node);
+					StackItem *add = new (e) StackItem(to.v(), currentPos, stack, node, required);
 #ifdef GLR_DEBUG
 					PLN(L"Added " << to.v() << L" with prev " << stack->state << L"(" << (void *)stack << L")");
 #endif
@@ -720,6 +743,8 @@ namespace storm {
 
 			Bool Parser::hasError() const {
 				if (!acceptingStack)
+					return true;
+				if (acceptingStack->required.any())
 					return true;
 				return acceptingStack->pos < source->peekLength();
 			}

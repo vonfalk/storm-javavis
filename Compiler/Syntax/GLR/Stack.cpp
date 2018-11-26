@@ -11,10 +11,13 @@ namespace storm {
 				: state(0), pos(0), prev(null), tree(0) {}
 
 			StackItem::StackItem(Nat state, Nat pos)
-				: state(state), pos(pos), prev(null), tree(0) {}
+				: state(state), pos(pos), prev(null), tree(0), required() {}
 
 			StackItem::StackItem(Nat state, Nat pos, StackItem *prev, Nat tree)
-				: state(state), pos(pos), prev(prev), tree(tree) {}
+				: state(state), pos(pos), prev(prev), tree(tree), required() {}
+
+			StackItem::StackItem(Nat state, Nat pos, StackItem *prev, Nat tree, ParentReq required)
+				: state(state), pos(pos), prev(prev), tree(tree), required(required) {}
 
 			Bool StackItem::insert(TreeStore *store, StackItem *insert) {
 				Bool z;
@@ -32,7 +35,7 @@ namespace storm {
 				for (StackItem *at = this; at; at = at->morePrev) {
 					last = at;
 
-					if (at->prev == insert->prev) {
+					if (at->prev == insert->prev && at->required == insert->required) {
 						// These are considered to be the same link. See which syntax tree to use!
 						usedTree |= at->updateTree(store, insert->tree);
 						return false;

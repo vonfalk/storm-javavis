@@ -63,7 +63,7 @@ namespace storm {
 				Nat to = ::min(data->count, other.data->count);
 				for (Nat i = 0; i < to; i++) {
 					if (data->v[i] & ~other.data->v[i])
-						count = i;
+						count = i + 1;
 				}
 
 				// Empty?
@@ -75,6 +75,18 @@ namespace storm {
 					r->v[i] = data->v[i] & ~other.data->v[i];
 
 				return ParentReq(r);
+			}
+
+			Bool ParentReq::operator ==(const ParentReq &o) const {
+				if (data && o.data) {
+					if (data->count != o.data->count)
+						return false;
+
+					return memcmp(data->v, o.data->v, data->count * sizeof(Nat)) == 0;
+				} else {
+					// At least one of them is null.
+					return data == o.data;
+				}
 			}
 
 			wostream &operator <<(wostream &to, const ParentReq &r) {

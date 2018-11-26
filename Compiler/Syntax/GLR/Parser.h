@@ -236,7 +236,7 @@ namespace storm {
 				// Linked list of entries, keeping track of the path currently being reduced.
 				struct Path {
 					const Path *prev;
-					Nat treeNode;
+					StackItem *item;
 				};
 
 				// Reduce a production of length 'len' from the current stack item. If 'through' is

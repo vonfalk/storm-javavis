@@ -43,6 +43,9 @@ namespace storm {
 				// Remove elements from another ParentReq.
 				ParentReq remove(Engine &e, ParentReq other) const;
 
+				// Compare.
+				Bool STORM_FN operator ==(const ParentReq &o) const;
+
 			private:
 				// Create, explicitly specifying the data.
 				ParentReq(GcArray<Nat> *data);
