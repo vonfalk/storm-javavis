@@ -1,0 +1,10 @@
+use core:lang;
+use lang:bs;
+use lang:bs:macro;
+
+void testPatternOutside() {
+	NumLiteral a(SrcPos(), 0);
+
+	// Should not compile. We should not be able to use these constructs outside a pattern block!
+	${a};
+}

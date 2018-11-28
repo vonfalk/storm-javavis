@@ -29,8 +29,8 @@ SIntro => Maybe<Expr>() : ;
 SIntro => slideIntro(block, name, params) : SType name, SParamList(block) params, "=>";
 SIntro => slideIntro(block, name, params) : SType name, "(", SParamList(block) params, ")", "=>";
 
-// Extend the syntax to allow skipping parens around parameter lists. (Note: Ambiguous with variable declarations in the UI library, we should fix this by moving somewhat into context sensitive grammars...).
-SLayout[10] => LayoutBlock(block, name, params) : SType name, SParamList(block.block) params, "{" [, SLayoutContent(me), ]+ "}";
+// Extend the syntax to allow skipping parens around parameter lists inside presentation blocks.
+SPresStmt..SLayout => LayoutBlock(block, name, params) : SType name, SParamList(block.block) params, "{" [, SLayoutContent(me), ]+ "}";
 
 // Specify animations for elements.
 SLayoutItem => add(block, ani) : SElemAni(block.block) ani, ";";

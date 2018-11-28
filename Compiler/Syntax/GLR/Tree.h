@@ -33,6 +33,10 @@ namespace storm {
 					return cnt;
 				}
 
+				// Any elements?
+				inline Bool STORM_FN any() const { return count() > 0; }
+				inline Bool STORM_FN empty() const { return count() == 0; }
+
 				// Get element #n.
 				inline Nat STORM_FN operator[] (Nat i) const {
 					return read(src, ptr + i + 2);

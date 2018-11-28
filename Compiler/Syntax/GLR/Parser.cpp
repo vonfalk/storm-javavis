@@ -226,14 +226,22 @@ namespace storm {
 				visited = null;
 				stacks = null;
 
-				// If we have multiple accepting stacks, find the one without requirements and put
-				// it first!
-				for (StackItem **prev = &acceptingStack; *prev; prev = &(*prev)->morePrev) {
-					if ((*prev)->required.empty()) {
-						// Put it first.
+				// If we have multiple accepting stacks, find the ones without requirements and put
+				// them first!
+				StackItem **prev = &acceptingStack;
+				StackItem **insert = &acceptingStack;
+				while (*prev) {
+					if ((*prev)->required.empty() && prev != insert) {
+						// Unlink it!
 						StackItem *chosen = *prev;
 						*prev = chosen->morePrev;
-						acceptingStack = chosen;
+
+						// Put it back in the beginning.
+						chosen->morePrev = *insert;
+						*insert = chosen;
+						insert = &chosen->morePrev;
+					} else {
+						prev = &(*prev)->morePrev;
 					}
 				}
 			}
@@ -751,12 +759,14 @@ namespace storm {
 
 			Str *Parser::errorMsg() const {
 				StrBuf *out = new (this) StrBuf();
-				if (lastPos == source->peekLength())
-					*out << L"Unexpected end of file.";
+				if (acceptingStack && acceptingStack->required.any())
+					reqErrorMsg(out, acceptingStack);
+				else if (lastPos == source->peekLength())
+					*out << S("Unexpected end of file.");
 				else if (lastSet)
 					errorMsg(out, lastPos, lastSet);
 				else
-					*out << L"No syntax provided.";
+					*out << S("No syntax provided.");
 
 				return out->toS();
 			}
@@ -769,12 +779,12 @@ namespace storm {
 				}
 
 				Str *ch = new (this) Str(source->posIter(pos).v());
-				*out << L"Unexpected '" << ch->escape() << L"'.";
+				*out << S("Unexpected '") << ch->escape() << S("'.");
 
 				if (errors->any()) {
-					*out << L" Expected:";
+					*out << S(" Expected:");
 					for (Set<Str *>::Iter i = errors->begin(); i != errors->end(); ++i) {
-						*out << L"\n  " << i.v();
+						*out << S("\n  ") << i.v();
 					}
 				}
 			}
@@ -790,12 +800,75 @@ namespace storm {
 					if (item.isRule(syntax)) {
 						errors->put(syntax->ruleName(item.nextRule(syntax)));
 					} else {
-						errors->put(TO_S(this, L"\"" << item.nextRegex(syntax) << L"\""));
+						errors->put(TO_S(this, S("\"") << item.nextRegex(syntax) << S("\"")));
 					}
 				}
 			}
 
+			void Parser::reqErrorMsg(StrBuf *out, StackItem *state) const {
+				for (StackItem *item = state; item; item = item->morePrev) {
+					// For each of these, we want to find a production with an unfullfilled requirement.
+					Nat found = findMissingReq(item->tree, item->required);
+					if (!found)
+						continue;
+
+					TreeNode node = store->at(found);
+					Production *p = syntax->production(node.production());
+					// Should hold, since we found the production...
+					if (!p->parent)
+						continue;
+
+					*out << S("The production ") << p->type()->identifier() << S(" (for the rule ")
+						 << p->rule()->identifier() << S(") needs to be used inside the rule ")
+						 << p->parent->identifier() << S(".");
+				}
+			}
+
+			Nat Parser::findMissingReq(Nat tree, ParentReq required) const {
+				TreeNode node = store->at(tree);
+
+				// Leaf nodes are not interesting. They're just shifts.
+				if (node.leaf())
+					return 0;
+
+				TreeArray children = node.children();
+
+				Nat production = children.production();
+				Nat rule = Item(syntax, production).rule(syntax);
+
+				// Is this the node we're looking for?
+				ParentReq here = syntax->productionReq(production);
+				if (here.any() && required.has(here)) {
+					return tree;
+				}
+
+				// If this rule was used as a dependency, remove it from the set now since it will
+				// fulfill that requirement of its children.
+				required = required.remove(engine(), syntax->parentId(rule));
+
+				// Search our children. Pick the first match.
+				for (Nat i = 0; i < children.count(); i++) {
+					if (Nat found = findMissingReq(children[i], required))
+						return found;
+				}
+
+				return 0;
+			}
+
 			SrcPos Parser::errorPos() const {
+				// See if we need to examine stacks and such. This condition and the contained loop
+				// should match what's in 'reqErrorMsg'.
+				if (acceptingStack && acceptingStack->required.any()) {
+					for (StackItem *item = acceptingStack; item; item = item->morePrev) {
+						Nat found = findMissingReq(item->tree, item->required);
+						if (found) {
+							// Just pick the first one!
+							return SrcPos(sourceUrl, store->at(found).pos());
+						}
+					}
+				}
+
+				// Otherwise, it's just 'lastPos'.
 				return SrcPos(sourceUrl, lastPos);
 			}
 

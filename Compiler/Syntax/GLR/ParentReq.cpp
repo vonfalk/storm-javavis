@@ -77,6 +77,23 @@ namespace storm {
 				return ParentReq(r);
 			}
 
+			Bool ParentReq::has(ParentReq other) const {
+				if (other.empty())
+					return true;
+				if (empty())
+					return false;
+				if (other.data->count > data->count)
+					return false;
+
+				Nat to = other.data->count;
+				for (Nat i = 0; i < to; i++) {
+					if ((data->v[i] & other.data->v[i]) != other.data->v[i])
+						return false;
+				}
+
+				return true;
+			}
+
 			Bool ParentReq::operator ==(const ParentReq &o) const {
 				if (data && o.data) {
 					if (data->count != o.data->count)

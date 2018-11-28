@@ -251,6 +251,10 @@ namespace storm {
 				void errorMsg(StrBuf *out, Nat pos, Set<StackItem *> *states) const;
 				void errorMsg(Set<Str *> *errors, Nat state) const;
 
+				// Produce error messages related to an unfullfilled requirement in the stack items provided.
+				void reqErrorMsg(StrBuf *out, StackItem *states) const;
+				Nat findMissingReq(Nat tree, ParentReq required) const;
+
 				/**
 				 * Tree computation.
 				 */

@@ -13,22 +13,13 @@ SClass => createWindow(pos, env, name, parent, body) : "window" #keyword, SName 
 
 // Custom class body definition to include some more things!
 ClassBody SWindowBody(Class owner);
-SWindowBody => WindowBody(owner) : (SDocWindowItem(owner) -> add)* - SDelimiter;
+SWindowBody => WindowBody(owner) : (SDocClassItem(owner) -> add)* - SDelimiter;
 
-TObject SDocWindowItem(Class owner);
-SDocWindowItem[0] => item : SDelimiter - SWindowAccessItem(owner) item;
-SDocWindowItem[5] => applyDoc(c, item) : SFindDoc c - SWindowAccessItem(owner) item;
+// The extra layout block only available inside 'window' declarations.
+SWindowBody..SClassItem => layout : "layout[ \t]" #keyword, SWindowLayout layout;
 
-TObject SWindowAccessItem(Class owner);
-SWindowAccessItem => item : SWindowItem(owner) item;
-SWindowAccessItem => item : [STypeAccess item - ":"]-;
-SWindowAccessItem => apply(pos, item, access) : STypeAccess access - " ", SWindowItem(owner) item;
-
-TObject SWindowItem(Class owner);
-SWindowItem => c : SClass(owner.scope) c;
-SWindowItem => layout : "layout[ \t]" #keyword, SLayoutRoot@ layout;
-SWindowItem => MemberWrap(item) : SClassWrapItem@ item;
-
+SLayoutRoot SWindowLayout();
+SWindowLayout => layout : SLayoutRoot @layout;
 
 // Allow type declarations in the layout.
-SLayout => LayoutDeclBlock(block, name) : SType type, SName name #varName, ("(", SParamList(block.block) params, ")",)? "{" [, SLayoutContent(me),]+ "}" = SLayoutMemberDecl;
+SWindowLayout..SLayout => LayoutDeclBlock(block, name) : SType type, SName name #varName, ("(", SParamList(block.block) params, ")",)? "{" [, SLayoutContent(me),]+ "}" = SLayoutMemberDecl;

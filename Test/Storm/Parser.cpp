@@ -238,7 +238,7 @@ BEGIN_TEST(SyntaxCrashes, BS) {
 /**
  * Test behavior regarding non-context-free grammar.
  */
-BEGIN_TEST_(NonCFG, BS) {
+BEGIN_TEST(NonCFG, BS) {
 	Nat parser = 0; // GLR
 
 	// Should be accepted.
@@ -262,7 +262,17 @@ BEGIN_TEST_(NonCFG, BS) {
 	CHECK(parseC(L"SBlock", L"{ extra c { extra d { c d } } }", parser));
 	CHECK(parseC(L"SBlock", L"{ extra d { extra c { c d } } }", parser));
 
-	TODO(L"Make sure we give decent error messages here as well!");
+	// Check so that the position of the error is proper as well. Should return the first error.
+	{
+		Package *pkg = gEngine().package(S("test.syntax.context"));
+		Parser *p = Parser::create(pkg, S("SBlock"), createBackend(gEngine(), parser));
+		Url *empty = new (p) Url();
+		Str *s = new (p) Str(S("{ extra c { c d d } }"));
+		p->parse(s, empty);
+
+		CHECK(p->hasError());
+		CHECK_EQ(p->error().where.pos, 14);
+	}
 } END_TEST
 
 

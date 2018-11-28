@@ -43,6 +43,9 @@ namespace storm {
 				// Remove elements from another ParentReq.
 				ParentReq remove(Engine &e, ParentReq other) const;
 
+				// Does this one contain all elements in 'other'?
+				Bool has(ParentReq other) const;
+
 				// Compare.
 				Bool STORM_FN operator ==(const ParentReq &o) const;
 

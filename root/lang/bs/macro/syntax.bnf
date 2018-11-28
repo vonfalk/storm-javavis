@@ -31,17 +31,21 @@ SClassItem => Generate(owner, name, param, body) :
     SName name #fnName, ":", "generate" #keyword, "(", SName param #varName, ")", "{", SFunctionBody@ body, "}";
 
 // Pattern-based block- and expr generation. TODO: It would be nice to have whole function generation as well!
-SExpr => TemplateExpr(block, env, expr) : "pattern" #keyword, "(", SExpr(block) env, ")", SExpr @expr;
+SExpr => TemplateExpr(block, env, body) : "pattern" #keyword, "(", SExpr(block) env, ")", SPatternBody body;
+
+// Expression inside a pattern. We only allow the special syntax inside here!
+SExpr SPatternBody();
+SPatternBody => e : SExpr @e;
 
 // Inserting expressions into templates.
-SAtom => insertExpr(pos, block, pattern) : "$" #keyword - SPatternExpr @pattern = PatternAtom;
+SPatternBody..SAtom => insertExpr(pos, block, pattern) : "$" #keyword - SPatternExpr @pattern = PatternAtom;
 
 // Insert zero or more expressions into a parameter list...
-SActual => insertActuals(pos, to, block, pattern) : "@" #keyword - SPatternExpr @pattern = PatternActual;
+SPatternBody..SActual => insertActuals(pos, to, block, pattern) : "@" #keyword - SPatternExpr @pattern = PatternActual;
 // .. or inside array initializations...
-SArrayInitItem => insertExprs(pos, to, block, pattern) : "@" #keyword - SPatternExpr @pattern = PatternArray;
+SPatternBody..SArrayInitItem => insertExprs(pos, to, block, pattern) : "@" #keyword - SPatternExpr @pattern = PatternArray;
 // .. or inside a regular block.
-SBlockItem => insertExprs(pos, parent, pattern) : "@" #keyword - SPatternExpr @pattern = PatternBlockItem;
+SPatternBody..SBlockItem => insertExprs(pos, parent, pattern) : "@" #keyword - SPatternExpr @pattern = PatternBlockItem;
 
 void SPatternExpr();
 SPatternExpr : SName name #keyword = PatternVar;
