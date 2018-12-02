@@ -42,6 +42,8 @@ namespace storm {
 				Rule *owner = as<Rule>(t->super());
 				if (!owner)
 					throw InternalError(::toS(t->identifier()) + L" is not defined correctly.");
+				if (t->production->parent)
+					throw SyntaxError(t->pos, L"Using parent productions is not supported by the Earley parser.");
 				rules->at(owner).push(t->production);
 			}
 

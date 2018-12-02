@@ -50,7 +50,6 @@ productions visible while parsing the syntax in the file. Just like in Basic Sto
 statements must be the first statements in the file. `use` statements can be located anywhere, even
 if it is good practice to put them right after any `extend` statements.
 
-
 Function calls
 ---------------
 
@@ -215,6 +214,64 @@ characters `Match` matched to the variable `v` and return it. Of course, more th
 included inside the parenthesis. This is very useful when matching complex identifiers, or skipping
 parts of the input for parsing later on, possibly with a different syntax. The `->` and `@` syntax
 is also supported with captures.
+
+Context sensitivity
+-------------------
+
+Storm supports a simple form of context sensitive syntax in order to improve extensibility of
+grammars from different origins without causing different extensions to accidentally interfere with
+each other. Consider the following case: You want to specialize a syntax extension that provides
+some domain specific syntax. You do this by adding productions to one or more of the rules in the
+extension. However, your additions only make sense when the extension is used in your specific
+context, so you want to make sure that the extension is not used outside of the expected
+context. This is possible with context free grammars, but it is cumbersome as it requires
+duplicating some of the productions inside the extension. For this reason, Storm allows restricting
+the use of certain productions to certain contexts by specifying that a rule needs to have a
+particular (direct or indirect) parent.
+
+A production may be declared to be usable only in a certain context by prepending the name of a rule
+followed by two dots to the production declaration, as for the last production in the following
+example:
+
+```
+void Root();
+Root : A;
+Root : B;
+
+void A();
+A : "a" - B;
+
+void B();
+B : "b";
+A..B : "c";
+```
+
+In this case, the last production is only usable if the rule `A` is a direct or indirect parent to
+an application of the rule `B`. Therefore, the string `c` is not matched by this grammar, but the
+string `ac` is. Thus, `c` is only usable in the context of the rule `A`.
+
+While these requirements generally do not incur a great performance penalty, the parser in Storm is
+implemented based on the assumption that the number of unique rules used as requirements to
+productions (ie. appearing to the left of the dots) is fairly small. If many requirements and many
+unique rules are used, parsing performance could suffer, even though it should not be much worse
+than parsing and resolving the ambiguities in the context free grammar created by removing all
+context sensitivity.
+
+A concrete example of the usefulness of this ability is the implementation of patterns in Basic
+Storm. This extension introduces a new block to Basic Storm, which can contain arbitrary Basic Storm
+expressions. However, inside this block it is also possible to use the syntax `${...}`, which only
+makes sense inside these blocks. In order allow other extensions to be used inside the blocks, and
+to avoid duplicating the grammar of Basic Storm, the pattern block can contain any expressions
+described by the regular `SExpr` rule, and the additional syntax is added by an additional
+production to `SAtom`.
+
+Without context sensitivity, the new syntax would be usable outside the pattern blocks, meaning that
+the new syntax needs to check for the proper context manually. Furthermore, this could cause
+problems when using other extensions that potentially use the same syntax for something else. In
+this case, Storm does not define which extension takes precedence (unless priorities are used),
+which could result in unexpected results. This problem is easily solved by making the new production
+usable only in the context of the pattern block, much like the last production in the example above.
+
 
 Syntax Highlighting and Indentation
 ====================================
