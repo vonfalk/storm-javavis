@@ -306,7 +306,21 @@ namespace storm {
 		InfoNode *Part::parse(InfoNode *node, Rule *root, MAYBE(InfoErrors *) out) {
 			parser->root(root);
 			Str *src = node->toS();
-			InfoErrors e = parser->parseApprox(src, path);
+			InfoErrors e;
+
+			// Do we have any context?
+			if (node->parent()) {
+				Set<Rule *> *ctx = new (this) Set<Rule *>();
+				for (InfoInternal *at = node->parent(); at; at = at->parent())
+					if (Production *p = at->production())
+						ctx->put(p->rule());
+
+				e = parser->parseApprox(src, path, ctx);
+			} else {
+				e = parser->parseApprox(src, path);
+			}
+
+			// Store error count if we were requested to.
 			if (out)
 				*out = e;
 
