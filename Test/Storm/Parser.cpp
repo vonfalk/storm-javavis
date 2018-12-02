@@ -238,7 +238,7 @@ BEGIN_TEST(SyntaxCrashes, BS) {
 /**
  * Test behavior regarding non-context-free grammar.
  */
-BEGIN_TEST(NonCFG, BS) {
+BEGIN_TEST(SyntaxContext, BS) {
 	Nat parser = 0; // GLR
 
 	// Should be accepted.
@@ -272,6 +272,25 @@ BEGIN_TEST(NonCFG, BS) {
 
 		CHECK(p->hasError());
 		CHECK_EQ(p->error().where.pos, 14);
+	}
+
+	// Make sure the context parameter to 'parseApprox' works properly.
+	{
+		Package *pkg = gEngine().package(S("test.syntax.context"));
+		InfoParser *p = InfoParser::create(pkg, S("SBlock"), createBackend(gEngine(), parser));
+		Rule *dep = as<Rule>(gEngine().scope().find(parseSimpleName(gEngine(), S("test.syntax.context.SExtraC"))));
+		VERIFY(dep);
+
+		Url *empty = new (p) Url();
+		Str *s = new (p) Str(S("{ c a }"));
+
+		// Should be considered erroneous. We don't have any context yet!
+		CHECK(p->parseApprox(s, empty).any());
+
+		// But, if we add the context, it should be fine!
+		Set<Rule *> *ctx = new (p) Set<Rule *>();
+		ctx->put(dep);
+		CHECK(!p->parseApprox(s, empty, ctx).any());
 	}
 } END_TEST
 

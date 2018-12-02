@@ -23,3 +23,9 @@ nat trailingZeros(nat number) {
 	return r;
 }
 
+nat setBitCount(nat number) {
+	// From Bit Twiddling Hacks: https://graphics.stanford.edu/~seander/bithacks.html
+	number = number - ((number >> 1) & 0x55555555);
+	number = (number & 0x33333333) + ((number >> 2) & 0x33333333);
+	return ((number + (number >> 4) & 0x0F0F0F0F) * 0x01010101) >> 24;
+}

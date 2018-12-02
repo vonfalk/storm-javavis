@@ -31,6 +31,9 @@ namespace storm {
 				Bool STORM_FN empty() const { return data == null; }
 				Bool STORM_FN any() const { return data != null; }
 
+				// Count the number of set bits.
+				Nat STORM_FN count() const;
+
 				// Maximum possible set bit. May be larger than the actual maximum.
 				Nat STORM_FN max() const;
 

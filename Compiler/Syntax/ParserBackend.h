@@ -6,6 +6,7 @@
 #include "Compiler/Syntax/Production.h"
 #include "Compiler/Syntax/Node.h"
 #include "Compiler/Syntax/InfoNode.h"
+#include "Core/Set.h"
 
 namespace storm {
 	namespace syntax {
@@ -46,7 +47,7 @@ namespace storm {
 
 			// Parse a string, doing error recovery. Only call 'infoTree' after parsing in this
 			// manner, as the resulting syntax tree is not neccessarily complete.
-			virtual InfoErrors parseApprox(Rule *root, Str *str, Url *file, Str::Iter start);
+			virtual InfoErrors parseApprox(Rule *root, Str *str, Url *file, Str::Iter start, MAYBE(Set<Rule *> *) ctx);
 
 			// Clear all parse-related information. Included packages are retained.
 			virtual void clear();

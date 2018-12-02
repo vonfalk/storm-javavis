@@ -13,6 +13,9 @@ nat nextPowerOfTwo(nat number);
 // Get the number of trailing zeros (assumed to be a power of two).
 nat trailingZeros(nat number);
 
+// Count the number of set bits.
+nat setBitCount(nat number);
+
 // Round up to the nearest multiple of "multiple"
 // T should be an integer number, preferrably unsigned.
 template <class T>

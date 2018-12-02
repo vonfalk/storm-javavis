@@ -19,7 +19,7 @@ namespace storm {
 			// Was this parse successful at all?
 			Bool STORM_FN success() const;
 
-			// Any errors in here? (succes() == false yields error() == true)
+			// Any errors in here? (succes() == false yields any() == true)
 			Bool STORM_FN any() const;
 
 			// Get # of shifts during error corrections.
@@ -77,6 +77,7 @@ namespace storm {
 
 		// Output.
 		StrBuf &STORM_FN operator <<(StrBuf &to, InfoErrors e);
+		wostream &operator <<(wostream &to, InfoErrors e);
 
 	}
 }

@@ -25,9 +25,6 @@ namespace storm {
 		 * C++. Therefore, the interface differs a bit (C++ loses some type safety compared to
 		 * Storm).
 		 *
-		 * The parser here is the main parser in Storm and is based on the parser described by Jay
-		 * Earley in An Efficient Context-Free Parsing Algorithm.
-		 *
 		 * TODO: Make it possible to parse things on other threads than the compiler thread.
 		 */
 		class ParserBase : public ObjectOn<Compiler> {
@@ -109,8 +106,8 @@ namespace storm {
 
 		protected:
 			// Call 'parseApprox'. Only available from 'InfoParser'.
-			inline InfoErrors parseApprox(Str *str, Url *file, Str::Iter start) {
-				return use->parseApprox(root(), str, file, start);
+			inline InfoErrors parseApprox(Str *str, Url *file, Str::Iter start, MAYBE(Set<Rule *> *) context) {
+				return use->parseApprox(root(), str, file, start, context);
 			}
 
 			// Get the raw info tree. Never throws an exception.
@@ -149,12 +146,15 @@ namespace storm {
 			using ParserBase::parse;
 			virtual Bool STORM_FN parse(Str *str, Url *file, Str::Iter start);
 
-			// Parse a syntax tree using error recovery. Do not use 'tree' after calling this, as
-			// 'tree' assumes a complete syntax tree. This is not possible to do from Storm, as
-			// 'tree' is not exposed to the Storm type system.
+			// Parse a syntax tree using error recovery, optionally providing a context to properly
+			// resolve dependencies when parsing parts of the input. Do not use 'tree' after calling
+			// this, as 'tree' assumes a complete syntax tree (not possible from Storm, as 'tree' is
+			// not exposed).
 			// TODO: Support giving an explicit end as well.
 			InfoErrors STORM_FN parseApprox(Str *str, Url *file);
 			InfoErrors STORM_FN parseApprox(Str *str, Url *file, Str::Iter start);
+			InfoErrors STORM_FN parseApprox(Str *str, Url *file, Set<Rule *> *context);
+			InfoErrors STORM_FN parseApprox(Str *str, Url *file, Str::Iter start, Set<Rule *> *context);
 
 			// Clear.
 			virtual void STORM_FN clear();

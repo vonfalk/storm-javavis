@@ -98,6 +98,21 @@ namespace storm {
 		StrBuf &operator <<(StrBuf &to, InfoErrors e) {
 			if (e.success()) {
 				if (!e.any()) {
+					to << S("success");
+				} else {
+					to << e.chars() << (e.chars() == 1 ? S(" char") : S(" chars")) << L", ";
+					to << e.shifts() << (e.shifts() == 1 ? S(" correction") : S(" corrections"));
+				}
+			} else {
+				to << S("failure");
+			}
+
+			return to;
+		}
+
+		wostream &operator <<(wostream &to, InfoErrors e) {
+			if (e.success()) {
+				if (!e.any()) {
 					to << L"success";
 				} else {
 					to << e.chars() << (e.chars() == 1 ? L" char" : L" chars") << L", ";

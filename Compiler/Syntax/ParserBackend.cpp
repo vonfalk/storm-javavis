@@ -19,7 +19,7 @@ namespace storm {
 			return false;
 		}
 
-		InfoErrors ParserBackend::parseApprox(Rule *root, Str *str, Url *file, Str::Iter start) {
+		InfoErrors ParserBackend::parseApprox(Rule *root, Str *str, Url *file, Str::Iter start, MAYBE(Set<Rule *> *) ctx) {
 			return infoFailure();
 		}
 

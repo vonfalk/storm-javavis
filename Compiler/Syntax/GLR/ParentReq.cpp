@@ -18,6 +18,17 @@ namespace storm {
 
 			ParentReq::ParentReq(GcArray<Nat> *data) : data(data) {}
 
+			Nat ParentReq::count() const {
+				if (!data)
+					return 0;
+
+				Nat result = 0;
+				for (Nat i = 0; i < data->count; i++)
+					result += setBitCount(data->v[i]);
+
+				return result;
+			}
+
 			Nat ParentReq::max() const {
 				if (data)
 					return data->count * bitsPerEntry;

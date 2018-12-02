@@ -59,7 +59,7 @@ namespace storm {
 			Bool Parser::parse(Rule *root, Str *str, Url *file, Str::Iter start) {
 				initParse(root, str, file, start);
 				doParse(startPos);
-				finishParse();
+				finishParse(null);
 
 				if (!acceptingStack)
 					return false;
@@ -89,7 +89,7 @@ namespace storm {
 			 * possibly skipping the offending characters using the error recovery rather than in a
 			 * regex.
 			 */
-			InfoErrors Parser::parseApprox(Rule *root, Str *str, Url *file, Str::Iter start) {
+			InfoErrors Parser::parseApprox(Rule *root, Str *str, Url *file, Str::Iter start, MAYBE(Set<Rule *> *) ctx) {
 				initParse(root, str, file, start);
 
 				// Start as usual.
@@ -127,11 +127,11 @@ namespace storm {
 					}
 				}
 
-				finishParse();
+				finishParse(ctx);
 				if (hasTree()) {
 					TreeNode node = store->at(acceptingStack->tree);
-					// TODO: Look at any unfullfilled parent requirements as well!
-					return node.errors();
+					// Count any unfullfilled requirements as additional shifts.
+					return node.errors() + infoShifts(acceptingStack->required.count());
 				} else {
 					return infoFailure();
 				}
@@ -218,7 +218,7 @@ namespace storm {
 			}
 #endif
 
-			void Parser::finishParse() {
+			void Parser::finishParse(MAYBE(Set<Rule *> *) context) {
 #ifdef GLR_DEBUG
 				PVAR(table);
 #endif
@@ -226,11 +226,23 @@ namespace storm {
 				visited = null;
 				stacks = null;
 
+				// See which productions are acceptable to us...
+				Engine &e = engine();
+				ParentReq ctx;
+				if (context) {
+					for (Set<Rule *>::Iter i = context->begin(); i != context->end(); ++i) {
+						ctx = ctx.concat(e, syntax->parentId(syntax->lookup(i.v())));
+					}
+				}
+
 				// If we have multiple accepting stacks, find the ones without requirements and put
 				// them first!
 				StackItem **prev = &acceptingStack;
 				StackItem **insert = &acceptingStack;
 				while (*prev) {
+					if (ctx.any())
+						(*prev)->required = (*prev)->required.remove(e, ctx);
+
 					if ((*prev)->required.empty() && prev != insert) {
 						// Unlink it!
 						StackItem *chosen = *prev;
