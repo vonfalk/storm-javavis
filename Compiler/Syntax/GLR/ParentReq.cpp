@@ -2,6 +2,7 @@
 #include "ParentReq.h"
 #include "Core/StrBuf.h"
 #include "Utils/Bitwise.h"
+#include <climits>
 
 namespace storm {
 	namespace syntax {
