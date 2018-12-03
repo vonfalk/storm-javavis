@@ -89,7 +89,7 @@ namespace storm {
 			 * possibly skipping the offending characters using the error recovery rather than in a
 			 * regex.
 			 */
-			InfoErrors Parser::parseApprox(Rule *root, Str *str, Url *file, Str::Iter start, MAYBE(Set<Rule *> *) ctx) {
+			InfoErrors Parser::parseApprox(Rule *root, Str *str, Url *file, Str::Iter start, MAYBE(InfoInternal *) ctx) {
 				initParse(root, str, file, start);
 
 				// Start as usual.
@@ -218,7 +218,7 @@ namespace storm {
 			}
 #endif
 
-			void Parser::finishParse(MAYBE(Set<Rule *> *) context) {
+			void Parser::finishParse(MAYBE(InfoInternal *) context) {
 #ifdef GLR_DEBUG
 				PVAR(table);
 #endif
@@ -229,14 +229,14 @@ namespace storm {
 				// See which productions are acceptable to us...
 				Engine &e = engine();
 				ParentReq ctx;
-				if (context) {
-					for (Set<Rule *>::Iter i = context->begin(); i != context->end(); ++i) {
-						ctx = ctx.concat(e, syntax->parentId(syntax->lookup(i.v())));
-					}
+				for (InfoInternal *at = context; at; at = at->parent()) {
+					ctx = ctx.concat(e, syntax->parentId(syntax->lookup(at->production()->rule())));
 				}
 
 				// If we have multiple accepting stacks, find the ones without requirements and put
 				// them first!
+				// TODO: If no such stack exists, we want to pick the one with the least dependency errors.
+				// This only affects the quality of highlighting in error cases, so it is fairly minor.
 				StackItem **prev = &acceptingStack;
 				StackItem **insert = &acceptingStack;
 				while (*prev) {

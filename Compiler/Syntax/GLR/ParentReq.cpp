@@ -43,9 +43,6 @@ namespace storm {
 			}
 
 			ParentReq ParentReq::concat(Engine &e, ParentReq other) const {
-				if (empty() && other.empty())
-					return *this;
-
 				if (empty())
 					return other;
 				if (other.empty())

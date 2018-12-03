@@ -306,21 +306,9 @@ namespace storm {
 		InfoNode *Part::parse(InfoNode *node, Rule *root, MAYBE(InfoErrors *) out) {
 			parser->root(root);
 			Str *src = node->toS();
-			InfoErrors e;
 
-			// Do we have any context?
-			if (node->parent()) {
-				Set<Rule *> *ctx = new (this) Set<Rule *>();
-				for (InfoInternal *at = node->parent(); at; at = at->parent())
-					if (Production *p = at->production())
-						ctx->put(p->rule());
-
-				e = parser->parseApprox(src, path, ctx);
-			} else {
-				e = parser->parseApprox(src, path);
-			}
-
-			// Store error count if we were requested to.
+			// Note: It's actually fine to pass NULL as a context, even if the interface does not say so.
+			InfoErrors e = parser->parseApprox(src, path, node->parent());
 			if (out)
 				*out = e;
 

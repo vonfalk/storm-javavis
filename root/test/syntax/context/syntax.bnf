@@ -1,29 +1,30 @@
 // Testing non-context-free grammar in the syntax language.
 
-delimiter = SDelim;
-void SDelim();
-SDelim : "[ \n\r\t]+";
+delimiter = Delim;
 
-void SBlock();
-SBlock : "{", (SStmt,)* "}";
+void Delim();
+Delim : "[ \n\r\t]+";
 
-void SStmt();
-SStmt : "a";
-SStmt : "b";
-SStmt : SBlock;
+void Block();
+Block : "{", (Stmt,)* "}";
+
+void Stmt();
+Stmt : "a";
+Stmt : "b";
+Stmt : Block;
 
 
 // Syntax extension: add a new block where 'c' may appear!
-SStmt : SExtraC;
+Stmt : ExtraC;
 
-void SExtraC();
-SExtraC : "extra c", SBlock;
-SExtraC..SStmt : "c";
+void ExtraC();
+ExtraC : "extra c", Block = ExtraCProd;
+ExtraC..Stmt : "c";
 
 
 // We can also use an additional production.
-SStmt : SExtraD;
+Stmt : ExtraD;
 
-void SExtraD();
-SExtraD : "extra d", SBlock;
-SExtraD..SStmt : "d";
+void ExtraD();
+ExtraD : "extra d", Block;
+ExtraD..Stmt : "d";

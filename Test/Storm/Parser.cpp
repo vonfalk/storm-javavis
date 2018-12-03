@@ -242,30 +242,30 @@ BEGIN_TEST(SyntaxContext, BS) {
 	Nat parser = 0; // GLR
 
 	// Should be accepted.
-	CHECK(parseC(L"SBlock", L"{ a b }", parser));
+	CHECK(parseC(L"Block", L"{ a b }", parser));
 
 	// We're using 'c' inside a regular block. Should fail!
-	CHECK(!parseC(L"SBlock", L"{ a c }", parser));
+	CHECK(!parseC(L"Block", L"{ a c }", parser));
 
 	// So should using 'd'.
-	CHECK(!parseC(L"SBlock", L"{ a d }", parser));
+	CHECK(!parseC(L"Block", L"{ a d }", parser));
 
 	// But using them inside their respective blocks should be fine!
-	CHECK(parseC(L"SBlock", L"{ a extra c { a c } b }", parser));
-	CHECK(parseC(L"SBlock", L"{ a extra d { a d } b }", parser));
+	CHECK(parseC(L"Block", L"{ a extra c { a c } b }", parser));
+	CHECK(parseC(L"Block", L"{ a extra d { a d } b }", parser));
 
 	// They should not overlap...
-	CHECK(!parseC(L"SBlock", L"{ extra c { d } }", parser));
-	CHECK(!parseC(L"SBlock", L"{ extra d { c } }", parser));
+	CHECK(!parseC(L"Block", L"{ extra c { d } }", parser));
+	CHECK(!parseC(L"Block", L"{ extra d { c } }", parser));
 
 	// But this should be allowed...
-	CHECK(parseC(L"SBlock", L"{ extra c { extra d { c d } } }", parser));
-	CHECK(parseC(L"SBlock", L"{ extra d { extra c { c d } } }", parser));
+	CHECK(parseC(L"Block", L"{ extra c { extra d { c d } } }", parser));
+	CHECK(parseC(L"Block", L"{ extra d { extra c { c d } } }", parser));
 
 	// Check so that the position of the error is proper as well. Should return the first error.
 	{
 		Package *pkg = gEngine().package(S("test.syntax.context"));
-		Parser *p = Parser::create(pkg, S("SBlock"), createBackend(gEngine(), parser));
+		Parser *p = Parser::create(pkg, S("Block"), createBackend(gEngine(), parser));
 		Url *empty = new (p) Url();
 		Str *s = new (p) Str(S("{ extra c { c d d } }"));
 		p->parse(s, empty);
@@ -277,8 +277,8 @@ BEGIN_TEST(SyntaxContext, BS) {
 	// Make sure the context parameter to 'parseApprox' works properly.
 	{
 		Package *pkg = gEngine().package(S("test.syntax.context"));
-		InfoParser *p = InfoParser::create(pkg, S("SBlock"), createBackend(gEngine(), parser));
-		Rule *dep = as<Rule>(gEngine().scope().find(parseSimpleName(gEngine(), S("test.syntax.context.SExtraC"))));
+		InfoParser *p = InfoParser::create(pkg, S("Block"), createBackend(gEngine(), parser));
+		ProductionType *dep = as<ProductionType>(gEngine().scope().find(parseSimpleName(gEngine(), S("test.syntax.context.ExtraCProd"))));
 		VERIFY(dep);
 
 		Url *empty = new (p) Url();
@@ -288,8 +288,7 @@ BEGIN_TEST(SyntaxContext, BS) {
 		CHECK(p->parseApprox(s, empty).any());
 
 		// But, if we add the context, it should be fine!
-		Set<Rule *> *ctx = new (p) Set<Rule *>();
-		ctx->put(dep);
+		InfoInternal *ctx = new (p) InfoInternal(dep->production, 0);
 		CHECK(!p->parseApprox(s, empty, ctx).any());
 	}
 } END_TEST

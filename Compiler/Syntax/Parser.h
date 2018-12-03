@@ -106,7 +106,7 @@ namespace storm {
 
 		protected:
 			// Call 'parseApprox'. Only available from 'InfoParser'.
-			inline InfoErrors parseApprox(Str *str, Url *file, Str::Iter start, MAYBE(Set<Rule *> *) context) {
+			inline InfoErrors parseApprox(Str *str, Url *file, Str::Iter start, MAYBE(InfoInternal *) context) {
 				return use->parseApprox(root(), str, file, start, context);
 			}
 
@@ -147,14 +147,14 @@ namespace storm {
 			virtual Bool STORM_FN parse(Str *str, Url *file, Str::Iter start);
 
 			// Parse a syntax tree using error recovery, optionally providing a context to properly
-			// resolve dependencies when parsing parts of the input. Do not use 'tree' after calling
-			// this, as 'tree' assumes a complete syntax tree (not possible from Storm, as 'tree' is
-			// not exposed).
-			// TODO: Support giving an explicit end as well.
+			// resolve dependencies when parsing parts of the input. If provided, the context is the
+			// node that will be the parent of the node produced by this parse. Do not use 'tree'
+			// after calling this, as 'tree' assumes a complete syntax tree (not possible from
+			// Storm, as 'tree' is not exposed).  TODO: Support giving an explicit end as well.
 			InfoErrors STORM_FN parseApprox(Str *str, Url *file);
 			InfoErrors STORM_FN parseApprox(Str *str, Url *file, Str::Iter start);
-			InfoErrors STORM_FN parseApprox(Str *str, Url *file, Set<Rule *> *context);
-			InfoErrors STORM_FN parseApprox(Str *str, Url *file, Str::Iter start, Set<Rule *> *context);
+			InfoErrors STORM_FN parseApprox(Str *str, Url *file, InfoInternal *context);
+			InfoErrors STORM_FN parseApprox(Str *str, Url *file, Str::Iter start, InfoInternal *context);
 
 			// Clear.
 			virtual void STORM_FN clear();

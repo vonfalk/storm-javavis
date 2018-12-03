@@ -1,0 +1,17 @@
+use test:syntax:context;
+
+// See if we handle context-sensitive grammars properly in the language server.
+
+void test() {
+
+	extra a {
+		#a;
+	};
+
+	extra b {
+		#a;
+	};
+
+	// Try to add #a here. The language server will pick one variant and use it for all cases!
+	// #a
+}

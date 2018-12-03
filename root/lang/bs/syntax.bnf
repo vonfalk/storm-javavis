@@ -212,7 +212,7 @@ SFnActuals => v : "(", SActuals(block) v, ")";
 Block SBlock(Block parent);
 SBlock => ExprBlock(pos, parent) : "{" [, (SBlockItem(me), )* ]+ "}";
 
-// Single item inside a block.
+// Single item inside a block (not inlined in SBlock for extensibility).
 void SBlockItem(ExprBlock parent);
 SBlockItem => parent : SStmt(parent) -> add;
 

@@ -1,0 +1,17 @@
+use lang.bs;
+
+delimiter = SDelimiter;
+
+
+SExpr => c : SExtraA(block) c;
+SExpr => c : SExtraB(block) c;
+
+Expr SExtraA(Block block);
+SExtraA => c : "extra a" #keyword, SBlock(block) c;
+
+Expr SExtraB(Block block);
+SExtraB => c : "extra b" #keyword, SBlock(block) c;
+
+
+SExtraA..SExpr => Expr(pos) : "#a" #fnName;
+SExtraB..SExpr => Expr(pos) : "#a" #typeName;

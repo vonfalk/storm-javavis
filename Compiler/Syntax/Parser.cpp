@@ -188,11 +188,11 @@ namespace storm {
 			return parseApprox(str, file, start, null);
 		}
 
-		InfoErrors InfoParser::parseApprox(Str *str, Url *file, Set<Rule *> *context) {
+		InfoErrors InfoParser::parseApprox(Str *str, Url *file, InfoInternal *context) {
 			return parseApprox(str, file, str->begin(), context);
 		}
 
-		InfoErrors InfoParser::parseApprox(Str *str, Url *file, Str::Iter start, Set<Rule *> *context) {
+		InfoErrors InfoParser::parseApprox(Str *str, Url *file, Str::Iter start, InfoInternal *context) {
 			lastStr = str;
 			lastOffset = start.offset();
 			return ParserBase::parseApprox(str, file, start, context);
