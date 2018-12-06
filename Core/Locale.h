@@ -2,7 +2,7 @@
 #include <locale.h>
 
 #ifdef WINDOWS
-typedef locale_t _locale_t
+typedef _locale_t locale_t;
 #endif
 
 namespace storm {
