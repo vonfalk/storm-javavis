@@ -5,6 +5,7 @@
 #include "Convert.h"
 #include "GcType.h"
 #include "GcArray.h"
+#include "Locale.h"
 
 namespace storm {
 
@@ -372,12 +373,15 @@ namespace storm {
 #ifdef WINDOWS
 		const Nat size = 50;
 		wchar buf[size];
-		_snwprintf_s(buf, size, size, L"%f", f);
+		_snwprintf_s_l(buf, size, size, L"%f", defaultLocale(), f);
 		return add(buf);
 #else
 		const Nat size = 50;
 		char buf[size];
+		// Sorry, have to set the locale for this thread...
+		locale_t old = uselocale(defaultLocale());
 		snprintf(buf, size, "%f", f);
+		uselocale(old);
 		wchar wbuf[size] = {0};
 		for (Nat i = 0; buf[i]; i++)
 			wbuf[i] = buf[i];

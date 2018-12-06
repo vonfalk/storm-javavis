@@ -410,6 +410,9 @@ namespace gui {
 		// We'll be using threads with X from time to time. Mainly while painting in the background through Cairo.
 		XInitThreads();
 
+		// Tell Gtk to not mess with the locale... This is not safe to do here, as we have multiple threads running!
+		gtk_disable_setlocale();
+
 		// TODO? Pass 'standard' parameters from the command line somehow...
 		gtk_init(NULL, NULL);
 

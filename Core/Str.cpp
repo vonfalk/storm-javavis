@@ -4,6 +4,7 @@
 #include "GcType.h"
 #include "Utf.h"
 #include "Convert.h"
+#include "Locale.h"
 
 namespace storm {
 
@@ -48,14 +49,14 @@ namespace storm {
 	WRAP_STRFN(long long, wcstoll)
 	WRAP_STRFN(unsigned long long, wcstoull)
 
-	static double wcstod(const wchar *v, wchar **e) {
+	static double wcstod_l(const wchar *v, wchar **e, locale_t locale) {
 		const nat maxlen = 50;
 		wchar_t data[maxlen + 1] = { 0 };
 		for (nat i = 0; i < maxlen && v[i]; i++)
 			data[i] = v[i];
 
 		wchar_t *err = null;
-		double r = ::wcstod(data, &err);
+		double r = ::wcstod_l(data, &err, locale);
 		if (e)
 			*e = (wchar *)(v + (err - data));
 		return r;
@@ -65,6 +66,7 @@ namespace storm {
 #elif defined(WINDOWS)
 #define wcstoll _wcstoi64
 #define wcstoull _wcstoui64
+#define wcstod_l _wcstod_l
 #endif
 
 	static GcArray<wchar> empty = {
@@ -318,7 +320,7 @@ namespace storm {
 
 	Float Str::toFloat() const {
 		wchar *end;
-		Float r = (Float)wcstod(data->v, &end);
+		Float r = (Float)wcstod_l(data->v, &end, defaultLocale());
 		if (end != data->v + data->count - 1)
 			throw StrError(L"Not a floating-point number");
 		return r;
@@ -326,7 +328,7 @@ namespace storm {
 
 	Double Str::toDouble() const {
 		wchar *end;
-		Double r = wcstod(data->v, &end);
+		Double r = wcstod_l(data->v, &end, defaultLocale());
 		if (end != data->v + data->count - 1)
 			throw StrError(L"Not a floating-point number");
 		return r;
