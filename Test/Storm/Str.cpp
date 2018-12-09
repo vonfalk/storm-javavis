@@ -8,7 +8,13 @@ BEGIN_TEST(StrConcatTest, BS) {
 
 	CHECK_EQ(::toS(runFn<Str *>(S("test.bs.strInterpolate"))), L"|30|   20|20   |   20|+++30|00000028|");
 
+	// Note: We probably want to use 2 digits after the "e" always. But for this, we need to provide
+	// our own implementation...
+#ifdef WINDOWS
 	CHECK_EQ(::toS(runFn<Str *>(S("test.bs.strInterpolateFloat"))), L"|2.3|1e+003|2.35|1000.20|2.35e+000|1.00e+003|2.3456|1000.2|");
+#else
+	CHECK_EQ(::toS(runFn<Str *>(S("test.bs.strInterpolateFloat"))), L"|2.3|1e+03|2.35|1000.20|2.35e+00|1.00e+03|2.3456|1000.2|");
+#endif
 } END_TEST
 
 
