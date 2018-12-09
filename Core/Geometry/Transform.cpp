@@ -30,21 +30,20 @@ namespace storm {
 		}
 
 		void Transform::toS(StrBuf *w) const {
-			// TODO: Use the StrBuf directly when Float output is implemented better!
-			std::wostringstream to;
-			to << std::fixed << std::setprecision(2);
-			for (nat r = 0; r < 4; r++) {
-				to << endl;
-				to << L"(";
-				for (nat c = 0; c < 4; c++) {
+			StrFmt old = w->format();
+			*w << fixed(2);
+
+			for (Nat r = 0; r < 4; r++) {
+				*w << S("\n(");
+				for (Nat c = 0; c < 4; c++) {
 					if (c != 0)
-						to << L" ";
-					to << std::setw(7) << at(r, c);
+						*w << S(" ");
+					*w << right(7) << at(r, c);
 				}
-				to << L")";
+				*w << S(")");
 			}
 
-			*w << to.str().c_str();
+			w->format(old);
 		}
 
 		Transform *Transform::operator *(Transform *o) {

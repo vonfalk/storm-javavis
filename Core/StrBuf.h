@@ -176,6 +176,10 @@ namespace storm {
 		// Indentation string.
 		void STORM_FN indentBy(Str *str);
 
+		// Get/set the current format.
+		inline StrFmt STORM_FN format() { return fmt; }
+		inline void STORM_ASSIGN format(StrFmt f) { fmt = f; }
+
 	private:
 		// Buffer. Always zero-terminated as memory is filled with zero from the start.
 		GcArray<wchar> *buf;
