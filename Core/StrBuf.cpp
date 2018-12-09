@@ -9,63 +9,84 @@
 
 namespace storm {
 
-	StrFmt::StrFmt() : width(0), align(alignNone), fill(Char(' ')) {}
+	StrFmt::StrFmt() : width(0), flags(defaultFlags), fill(Char(' ')) {}
 
-	StrFmt::StrFmt(Nat width, Char fill) : width(width), align(alignNone), fill(fill) {}
-
-	StrFmt::StrFmt(Nat width, Byte align, Char fill) : width(width), align(align), fill(fill) {}
+	StrFmt::StrFmt(Nat width, Byte digits, Byte flags, Char fill) :
+		width(width), flags(flags), digits(digits), fill(fill) {}
 
 	void StrFmt::reset() {
 		width = 0;
-		align = alignRight;
+		flags = (flags & ~alignMask) | alignNone;
 	}
 
 	void StrFmt::clear() {
 		width = 0;
-		align = alignNone;
+		flags = alignNone | floatNone;
+		digits = 0;
 		fill = Char(' ');
 	}
 
 	void StrFmt::merge(const StrFmt &o) {
 		if (o.width)
 			width = o.width;
-		if (o.align != alignNone)
-			align = o.align;
+		if (o.digits)
+			digits = o.digits;
 		if (o.fill != Char('\0'))
 			fill = o.fill;
+
+		if ((o.flags & alignMask) != alignNone)
+			flags = (flags & ~alignMask) | (o.flags & alignMask);
+		if ((o.flags & floatMask) != floatNone)
+			flags = (flags & ~floatMask) | (o.flags & floatMask);
 	}
 
 	static Bool isLeft(const StrFmt &f) {
-		return f.align == StrFmt::alignLeft;
+		return (f.flags & StrFmt::alignMask) == StrFmt::alignLeft;
 	}
 
 	static Bool isRight(const StrFmt &f) {
 		// Default is 'right'.
-		return f.align != StrFmt::alignLeft;
+		return (f.flags & StrFmt::alignMask) != StrFmt::alignLeft;
 	}
 
 	StrFmt width(Nat w) {
-		return StrFmt(w, Char('\0'));
+		return StrFmt(w, 0, StrFmt::defaultFlags, Char('\0'));
 	}
 
 	StrFmt left() {
-		return StrFmt(0, StrFmt::alignLeft, Char('\0'));
+		return StrFmt(0, 0, StrFmt::alignLeft, Char('\0'));
 	}
 
 	StrFmt left(Nat w) {
-		return StrFmt(w, StrFmt::alignLeft, Char('\0'));
+		return StrFmt(w, 0, StrFmt::alignLeft, Char('\0'));
 	}
 
 	StrFmt right() {
-		return StrFmt(0, StrFmt::alignRight, Char('\0'));
+		return StrFmt(0, 0, StrFmt::alignRight, Char('\0'));
 	}
 
 	StrFmt right(Nat w) {
-		return StrFmt(w, StrFmt::alignRight, Char('\0'));
+		return StrFmt(w, 0, StrFmt::alignRight, Char('\0'));
 	}
 
 	StrFmt fill(Char c) {
-		return StrFmt(0, c);
+		return StrFmt(0, 0, StrFmt::defaultFlags, c);
+	}
+
+	StrFmt precision(Nat digits) {
+		return StrFmt(0, digits, StrFmt::defaultFlags, Char('\0'));
+	}
+
+	StrFmt fixed(Nat digits) {
+		return StrFmt(0, digits, StrFmt::floatFixed, Char('\0'));
+	}
+
+	StrFmt significant(Nat digits) {
+		return StrFmt(0, digits, StrFmt::floatSignificant, Char('\0'));
+	}
+
+	StrFmt scientific(Nat digits) {
+		return StrFmt(0, digits, StrFmt::floatScientific, Char('\0'));
 	}
 
 	HexFmt::HexFmt(Word v, Nat d) : value(v), digits(d) {}
@@ -373,8 +394,21 @@ namespace storm {
 		std::wostream stream(&buf);
 		stream.imbue(std::locale::classic());
 
-		// TODO: Allow flags specifying format for floats!
-		stream << std::fixed;
+		stream << std::setprecision(fmt.digits);
+
+		switch (fmt.flags & StrFmt::floatMask) {
+		case StrFmt::floatSignificant:
+			// Nothing needs to be done. This is the default!
+			break;
+		case StrFmt::floatNone:
+		case StrFmt::floatFixed:
+			stream << std::fixed;
+			break;
+		case StrFmt::floatScientific:
+			stream << std::scientific;
+			break;
+		}
+
 		stream << f;
 
 		wchar b[100];
@@ -421,6 +455,9 @@ namespace storm {
 		// Note: clear and reset have slightly different semantics.
 		fmt.clear();
 		fmt.reset();
+
+		// Default precision is 6 digits.
+		fmt.digits = 6;
 	}
 
 	void StrBuf::indent() {

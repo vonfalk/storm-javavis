@@ -14,7 +14,7 @@ namespace storm {
 	class StdIBuf : public std::basic_streambuf<wchar_t> {
 	public:
 		StdIBuf(const wchar *buffer, Nat count) {
-			count = min(count, size);
+			count = ::min(count, size);
 			for (Nat i = 0; i < count; i++)
 				data[i] = buffer[i];
 			setg(data, data, data + count);
@@ -38,7 +38,7 @@ namespace storm {
 		}
 
 		void copy(wchar *to, Nat count) {
-			count = min(count, size) - 1;
+			count = ::min(count, size) - 1;
 			for (Nat i = 0; i < count; i++)
 				to[i] = data[i];
 			to[count] = 0;

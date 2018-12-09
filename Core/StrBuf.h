@@ -21,17 +21,19 @@ namespace storm {
 		STORM_VALUE;
 	public:
 		StrFmt();
-		StrFmt(Nat width, Char fill);
-		StrFmt(Nat width, Byte align, Char fill);
+		StrFmt(Nat width, Byte digits, Byte flags, Char fill);
 
 		// Min width of the next output.
 		Nat width;
 
-		// Text alignment (0 = not set, 1 = left, 2 = right).
-		Byte align;
-
 		// Fill character.
 		Char fill;
+
+		// Flags. Text alignment and float mode.
+		Byte flags;
+
+		// Number of digits in float numbers.
+		Byte digits;
 
 		// Reset after outputting something. May contain values that affects the formatting.
 		void reset();
@@ -42,11 +44,22 @@ namespace storm {
 		// Merge with another StrFmt.
 		void merge(const StrFmt &o);
 
-		// Constants for text alignment.
+		// Contants for flags.
 		enum {
-			alignNone = 0,
-			alignLeft = 1,
-			alignRight = 2,
+			alignNone = 0x00,
+			alignLeft = 0x01,
+			alignRight = 0x02,
+
+			alignMask = 0x03, // 0000 0011
+
+			floatNone = 0x00,
+			floatFixed = 0x04,
+			floatSignificant = 0x08,
+			floatScientific = 0x0C,
+
+			floatMask = 0x0C, // 0000 1100
+
+			defaultFlags = alignNone | floatNone,
 		};
 	};
 
@@ -57,6 +70,12 @@ namespace storm {
 	StrFmt STORM_FN right();
 	StrFmt STORM_FN right(Nat width);
 	StrFmt STORM_FN fill(Char fill);
+	StrFmt STORM_FN precision(Nat digits);
+
+	// Formats for outputting floating-point values.
+	StrFmt STORM_FN fixed(Nat decimals);
+	StrFmt STORM_FN significant(Nat digits);
+	StrFmt STORM_FN scientific(Nat digits);
 
 	/**
 	 * Hex format for numbers. Use the helper functions below to create instances of this object.

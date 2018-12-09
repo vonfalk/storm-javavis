@@ -68,6 +68,23 @@ BEGIN_TEST(StrBufTest, Core) {
 	*buf << left(3) << -3 << 3 << left(3) << S("a") << S("a") << left(3) << Word(3);
 	CHECK_EQ(toS(buf), L"-3 3a  a3  ");
 
+	buf->clear();
+	// Default unless previously set should be fixed(6).
+	*buf << 1.23 << S(" ") << 1000.0 << S(" ") << 0.0001;
+	CHECK_EQ(toS(buf), L"1.230000 1000.000000 0.000100");
+
+	buf->clear();
+	*buf << fixed(5) << 1.23 << S(" ") << 1000.0 << S(" ") << 0.0001;
+	CHECK_EQ(toS(buf), L"1.23000 1000.00000 0.00010");
+
+	buf->clear();
+	*buf << significant(5) << 1.23 << S(" ") << 1000.0 << S(" ") << 0.0001;
+	CHECK_EQ(toS(buf), L"1.23 1000 0.0001");
+
+	buf->clear();
+	*buf << scientific(2) << 1.23 << S(" ") << 1000.0 << S(" ") << 0.0001;
+	CHECK_EQ(toS(buf), L"1.23e+000 1.00e+003 1.00e-004");
+
 } END_TEST
 
 
