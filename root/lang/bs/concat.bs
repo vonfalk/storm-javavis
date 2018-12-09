@@ -48,6 +48,9 @@ class ConcatExpr extends Expr {
 	ExprBlock inner;
 	Var strBufVar;
 
+	// Saved state, if any.
+	Var? savedState;
+
 	// Create the root node.
 	init(SrcPos pos, Block parent) {
 		ExprBlock outer(pos, parent);
@@ -62,6 +65,27 @@ class ConcatExpr extends Expr {
 		outer.add(strBufVar);
 		outer.add(inner);
 		outer.add(namedExpr(outer, SStr("toS"), LocalVarAccess(pos, strBufVar.var), Actuals()));
+	}
+
+	// Save the state of the string buffer. Only done the first time called.
+	void saveState() {
+		if (savedState)
+			return;
+
+		Var v(inner, SStr("fmt"), namedExpr(inner, SStr("format"), LocalVarAccess(SrcPos(), strBufVar.var)));
+		savedState = v;
+		inner.add(v);
+	}
+
+	// Restore the state of the string buffer.
+	void restoreState() {
+		unless (savedState) {
+			return;
+		}
+
+		LocalVarAccess buf(SrcPos(), strBufVar.var);
+		LocalVarAccess fmt(SrcPos(), savedState.var);
+		inner.add(namedExpr(inner, SStr("format"), buf, Actuals(fmt)));
 	}
 
 	// Append a node to the end of the concatenation.
@@ -204,10 +228,19 @@ Expr interpolateStr(Block parent, Expr first, InterpolatedItem item, Str second)
 		r;
 	};
 
-	// Append 'item' with any modifiers.
-	for (m in item.modifiers)
-		r.append(m);
-	r.append(item.insert);
+	// Append 'item' with any modifiers. If we have any modifiers, save the state first, so that we
+	// can restore it later!
+	if (item.modifiers.any) {
+		r.saveState();
+
+		for (m in item.modifiers)
+			r.append(m);
+
+		r.append(item.insert);
+		r.restoreState();
+	} else {
+		r.append(item.insert);
+	}
 
 	r.append(strConstant(first.pos, second));
 	r;
@@ -242,3 +275,17 @@ void setFill(SrcPos pos, InterpolatedItem item, Str fill) {
 void setHex(SrcPos pos, InterpolatedItem item) {
 	item.wrap(pos, "hex");
 }
+
+// Set significant digits.
+void setSignificant(SrcPos pos, InterpolatedItem item, Str digits) {
+	item.modify(pos, "significant", Actuals(intConstant(pos, digits)));
+}
+
+void setDecimals(SrcPos pos, InterpolatedItem item, Str digits) {
+	item.modify(pos, "fixed", Actuals(intConstant(pos, digits)));
+}
+
+void setScientific(SrcPos pos, InterpolatedItem item, Str digits) {
+	item.modify(pos, "scientific", Actuals(intConstant(pos, digits)));
+}
+

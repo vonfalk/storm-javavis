@@ -53,8 +53,8 @@ namespace storm {
 			alignMask = 0x03, // 0000 0011
 
 			floatNone = 0x00,
-			floatFixed = 0x04,
-			floatSignificant = 0x08,
+			floatSignificant = 0x04,
+			floatFixed = 0x08,
 			floatScientific = 0x0C,
 
 			floatMask = 0x0C, // 0000 1100
@@ -70,11 +70,19 @@ namespace storm {
 	StrFmt STORM_FN right();
 	StrFmt STORM_FN right(Nat width);
 	StrFmt STORM_FN fill(Char fill);
+
+	// Set precision of the floating point output without modifying the mode.
 	StrFmt STORM_FN precision(Nat digits);
 
-	// Formats for outputting floating-point values.
-	StrFmt STORM_FN fixed(Nat decimals);
+	// Output floating point numbers with the specified number of significant digits, at
+	// maximum. This is the default.
 	StrFmt STORM_FN significant(Nat digits);
+
+	// Output floating point numbers with this number of decimal places.
+	StrFmt STORM_FN fixed(Nat decimals);
+
+	// Output floating point numbers in scientific notations with the specified number of decimal
+	// digits.
 	StrFmt STORM_FN scientific(Nat digits);
 
 	/**

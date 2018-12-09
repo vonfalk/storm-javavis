@@ -309,6 +309,9 @@ SIntFmt => setRight(pos, item) : "r" #keyword;
 SIntFmt => setLeft(pos, item) : "l" #keyword;
 SIntFmt => setFill(pos, item, ch) : "f" #keyword - "." ch; // Note: does not support surrogate pairs...
 SIntFmt => setHex(pos, item) : "x" #keyword;
+SIntFmt => setSignificant(pos, item, nr) : "d" #keyword - "[0-9]+" nr;
+SIntFmt => setDecimals(pos, item, nr) : "\." #keyword - "[0-9]+" nr;
+SIntFmt => setScientific(pos, item, nr) : "s" #keyword - "[0-9]+" nr;
 
 ////////////////////////////////////////////////////////////////////
 // Dumb string literals (for use in other languages or in cases

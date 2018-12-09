@@ -77,12 +77,12 @@ namespace storm {
 		return StrFmt(0, digits, StrFmt::defaultFlags, Char('\0'));
 	}
 
-	StrFmt fixed(Nat digits) {
-		return StrFmt(0, digits, StrFmt::floatFixed, Char('\0'));
-	}
-
 	StrFmt significant(Nat digits) {
 		return StrFmt(0, digits, StrFmt::floatSignificant, Char('\0'));
+	}
+
+	StrFmt fixed(Nat digits) {
+		return StrFmt(0, digits, StrFmt::floatFixed, Char('\0'));
 	}
 
 	StrFmt scientific(Nat digits) {
@@ -397,10 +397,10 @@ namespace storm {
 		stream << std::setprecision(fmt.digits);
 
 		switch (fmt.flags & StrFmt::floatMask) {
+		case StrFmt::floatNone:
 		case StrFmt::floatSignificant:
 			// Nothing needs to be done. This is the default!
 			break;
-		case StrFmt::floatNone:
 		case StrFmt::floatFixed:
 			stream << std::fixed;
 			break;

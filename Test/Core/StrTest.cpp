@@ -69,9 +69,9 @@ BEGIN_TEST(StrBufTest, Core) {
 	CHECK_EQ(toS(buf), L"-3 3a  a3  ");
 
 	buf->clear();
-	// Default unless previously set should be fixed(6).
+	// Default unless previously set should be significant(6).
 	*buf << 1.23 << S(" ") << 1000.0 << S(" ") << 0.0001;
-	CHECK_EQ(toS(buf), L"1.230000 1000.000000 0.000100");
+	CHECK_EQ(toS(buf), L"1.23 1000 0.0001");
 
 	buf->clear();
 	*buf << fixed(5) << 1.23 << S(" ") << 1000.0 << S(" ") << 0.0001;

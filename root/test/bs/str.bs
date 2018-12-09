@@ -16,6 +16,12 @@ Str strInterpolate() {
 	"|${b}|${a,5}|${a,5l}|${a,5r}|${b,5f+}|${c,x}|";
 }
 
+Str strInterpolateFloat() {
+	Float a = 2.3456;
+	Float b = 1000.2;
+	"|${a,d2}|${b,d2}|${a,.2}|${b,.2}|${a,s2}|${b,s2}|${a}|${b}|";
+}
+
 value NoToS {
 	Int v;
 }

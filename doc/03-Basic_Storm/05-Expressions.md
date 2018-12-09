@@ -80,6 +80,9 @@ formatting options. The following formatting options are supported:
 * __f<char>__: Set the fill character. Equivalent to `out << fill(<char>)`.
 * __x__: Output as hexadecimal. Note that this only works for unsigned numbers. Equivalent to
   `out << hex(<expression>)`.
+* __d__ (followed by a number): Output the floating point number with at most the specified number of digits.
+* __.__ (followed by a number): Output the floating point number with the specific number of decimal digits.
+* __s__ (followed by a number): Output the floating point number in scientific notation with the specified number of decimal digits.
 
 The formatting is evaluated left to right, so in case any formatting overrides some other
 formatting, only the last one will be visible.
