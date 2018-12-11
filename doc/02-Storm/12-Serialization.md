@@ -28,13 +28,39 @@ Primitive types are encoded as follows:
 - `Byte`: A single byte containing the value.
 - `Int` and `Nat`: 4 bytes stored in big endian.
 - `Long` and `Word`: 8 bytes stored in big endian.
-- `Str`: A `Nat` containing the length of the string followed by that many bytes of data, encoded in utf-8.
+- `Str`: A `Nat` containing the length of the string followed by that many bytes of data, encoded in UTF-8.
 
-The primitive types have pre-defined type ids, that are described by the enum `core.io.StoredId`.
+Each serialized type is assigned a type id in the form of a `Nat` in order to refer to types in an
+efficient manner. Type identifiers may appear before they are defined in the stream, for example
+when referring to member types in a class. However, types are always defined whenever the first
+instance of that particular type is read or written to the stream, so that the reader knows the
+format of the serialized objects without access to the actual implementation. Primitive types
+have pre-defined ids, defined by the enum `core.io.StoredId`. The id `core.io.StoredId.endId` (value
+0) is of special interest. It is used to indicate the absence of a type, or the end of a
+list. Identifiers below `core.io.StoredId.firstCustomId` are reserved for future primitive types,
+and shall not be used.
 
-Each object in a session then starts with a single `Nat` that describes the type of the object. If
-the highest bit of the object identifier is set, the root is an `Object`, otherwise it is a value
-type or a primitive type. If the type identifier indicates an object, the id shall be ignored, as
-the header for an object contains a type id for the actual type of the object.
+A type definition starts with a single `Byte` indicating what kind of type is stored, described by
+the `core.io.TypeInfo` enum. This is followed by the full name of the type in a format similar to
+`core.lang.SimpleName`, serialized as a single string with parts delimited by the ascii character 1,
+start parenthesis as 2, end parenthesis as 3 and parameters delimited by ascii character 4 (these
+are used in order not to disallow any characters in class names). After the name, a `Nat` containing
+the type id of the parent class follows. `endId` is used to indicate the absence of a parent class
+(for value types), or that the parent is `Object` (for class types). After the parent class is a
+list of data members. Each member consists of a `Nat` containing the type id of the member, and the
+name of the member as a string. The end of the list is indicated by a `Nat` with the value
+`endId`. No string follows this last type id.
 
-
+Each object in a session starts with a single `Nat` describing the type of the stored object,
+followed by the object itself (which, for the first object in a session, starts with a type
+definition unless a primitive type was stored). Value types are simple, they consist of each member
+variable serialized in the order they appear in the corresponding type definition (data member of
+parent classes before the derived class). Each of these data members may start with a type
+definition, if that type has not been encountered before. Classes, on the other hand, are a bit more
+complex as we need to consider the possibility of cyclic object hierarchies and inheritance. A
+serialized class starts with a `Nat` that identifies this particular object instance inside this
+serialized object (instance identifiers are cleared between each object in a session, a single
+top-level object may cause the creation of several instances). If the instance has been serialized
+before, no more data follows. Otherwise, another `Nat` follows, indicating the actual type of the
+instance (which may differ from the formal type stored in the type definition). After this id, the
+members of the actual type is stored, just as for value types.
