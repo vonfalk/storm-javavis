@@ -27,16 +27,16 @@ class Data : persist {
 			// TODO: Parent class.
 			to.member("a", named{core:Int});
 			to.member("b", named{core:Int});
-			to.member("data1", named{Employee});
-			to.member("data2", named{Employee});
+			// to.member("data1", named{Employee});
+			// to.member("data2", named{Employee});
 			to.endMembers();
 		}
 		if (mode & Serialize:body) {
 			// TODO: Parent class.
 			a.write(to);
 			b.write(to);
-			data1.write(to);
-			data2.write(to);
+			// data1.write(to);
+			// data2.write(to);
 			to.endBody();
 		}
 	}
@@ -94,6 +94,7 @@ class Manager extends Employee {
 
 	init() {
 		init() { title = "Manager"; }
+		name = "Mr. " # name;
 		coolness *= 10;
 	}
 
@@ -126,6 +127,7 @@ void testSerialize() {
 	ObjOStream obj(out);
 
 	x.write(obj);
+	print("Raw data\n" # out);
 
 	MemIStream in(out.buffer);
 	util:TextObjStream read(in);

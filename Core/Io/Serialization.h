@@ -39,6 +39,19 @@ namespace storm {
 		BITMASK_OPERATORS(Serialize);
 	}
 
+	namespace typeInfo {
+		/**
+		 * Information about a serialized type
+		 */
+		enum TypeInfo {
+			// Value type.
+			valueType = 0x00,
+
+			// Class type.
+			classType = 0x01,
+		};
+	}
+
 
 	/**
 	 * Input stream for objects.
