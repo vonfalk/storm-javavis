@@ -82,4 +82,150 @@ namespace storm {
 
 	void OStream::close() {}
 
+
+	/**
+	 * Read/write primitive types.
+	 */
+
+	static void checkBuffer(const Buffer &b) {
+		if (!b.full())
+			throw IoError(L"Not enough data to read primitive.");
+	}
+
+	Byte IStream::readByte() {
+		GcPreArray<Byte, 1> d;
+		Buffer b = read(emptyBuffer(d));
+		checkBuffer(b);
+		return d.v[0];
+	}
+
+	Int IStream::readInt() {
+		GcPreArray<Byte, 4> d;
+		Buffer b = read(emptyBuffer(d));
+		checkBuffer(b);
+		Int r = Int(b[0]) << 24;
+		r |= Int(b[1]) << 16;
+		r |= Int(b[2]) << 8;
+		r |= Int(b[3]) << 0;
+		return r;
+	}
+
+	Nat IStream::readNat() {
+		GcPreArray<Byte, 4> d;
+		Buffer b = read(emptyBuffer(d));
+		checkBuffer(b);
+		Nat r = Nat(b[0]) << 24;
+		r |= Nat(b[1]) << 16;
+		r |= Nat(b[2]) << 8;
+		r |= Nat(b[3]) << 0;
+		return r;
+	}
+
+	Long IStream::readLong() {
+		GcPreArray<Byte, 8> d;
+		Buffer b = read(emptyBuffer(d));
+		checkBuffer(b);
+		Long r = Long(b[0]) << 56;
+		r |= Long(b[1]) << 48;
+		r |= Long(b[2]) << 40;
+		r |= Long(b[3]) << 32;
+		r |= Long(b[4]) << 24;
+		r |= Long(b[5]) << 16;
+		r |= Long(b[6]) << 8;
+		r |= Long(b[7]) << 0;
+		return r;
+	}
+
+	Word IStream::readWord() {
+		GcPreArray<Byte, 8> d;
+		Buffer b = read(emptyBuffer(d));
+		checkBuffer(b);
+		Long r = Long(b[0]) << 56;
+		r |= Long(b[1]) << 48;
+		r |= Long(b[2]) << 40;
+		r |= Long(b[3]) << 32;
+		r |= Long(b[4]) << 24;
+		r |= Long(b[5]) << 16;
+		r |= Long(b[6]) << 8;
+		r |= Long(b[7]) << 0;
+		return r;
+	}
+
+	Float IStream::readFloat() {
+		Nat repr = readNat();
+		Float r;
+		memcpy(&r, &repr, sizeof(repr));
+		return r;
+	}
+
+	Double IStream::readDouble() {
+		Word repr = readWord();
+		Double r;
+		memcpy(&r, &repr, sizeof(repr));
+		return r;
+	}
+
+
+	void OStream::writeByte(Byte v) {
+		GcPreArray<Byte, 1> d;
+		d.v[0] = v;
+		write(fullBuffer(d));
+	}
+
+	void OStream::writeInt(Int v) {
+		GcPreArray<Byte, 4> d;
+		d.v[0] = Byte((v >> 24) & 0xFF);
+		d.v[1] = Byte((v >> 16) & 0xFF);
+		d.v[2] = Byte((v >>  8) & 0xFF);
+		d.v[3] = Byte((v >>  0) & 0xFF);
+		write(fullBuffer(d));
+	}
+
+	void OStream::writeNat(Nat v) {
+		GcPreArray<Byte, 4> d;
+		d.v[0] = Byte((v >> 24) & 0xFF);
+		d.v[1] = Byte((v >> 16) & 0xFF);
+		d.v[2] = Byte((v >>  8) & 0xFF);
+		d.v[3] = Byte((v >>  0) & 0xFF);
+		write(fullBuffer(d));
+	}
+
+	void OStream::writeLong(Long v) {
+		GcPreArray<Byte, 8> d;
+		d.v[0] = Byte((v >> 56) & 0xFF);
+		d.v[1] = Byte((v >> 48) & 0xFF);
+		d.v[2] = Byte((v >> 40) & 0xFF);
+		d.v[3] = Byte((v >> 32) & 0xFF);
+		d.v[4] = Byte((v >> 24) & 0xFF);
+		d.v[5] = Byte((v >> 16) & 0xFF);
+		d.v[6] = Byte((v >>  8) & 0xFF);
+		d.v[7] = Byte((v >>  0) & 0xFF);
+		write(fullBuffer(d));
+	}
+
+	void OStream::writeWord(Word v) {
+		GcPreArray<Byte, 8> d;
+		d.v[0] = Byte((v >> 56) & 0xFF);
+		d.v[1] = Byte((v >> 48) & 0xFF);
+		d.v[2] = Byte((v >> 40) & 0xFF);
+		d.v[3] = Byte((v >> 32) & 0xFF);
+		d.v[4] = Byte((v >> 24) & 0xFF);
+		d.v[5] = Byte((v >> 16) & 0xFF);
+		d.v[6] = Byte((v >>  8) & 0xFF);
+		d.v[7] = Byte((v >>  0) & 0xFF);
+		write(fullBuffer(d));
+	}
+
+	void OStream::writeFloat(Float v) {
+		Nat repr;
+		memcpy(&repr, &v, sizeof(v));
+		writeNat(repr);
+	}
+
+	void OStream::writeDouble(Double v) {
+		Word repr;
+		memcpy(&repr, &v, sizeof(v));
+		writeWord(repr);
+	}
+
 }

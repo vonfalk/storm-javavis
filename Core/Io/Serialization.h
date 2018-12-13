@@ -8,6 +8,73 @@
 
 namespace storm {
 	STORM_PKG(core.io);
+	namespace serialize {
+
+		/**
+		 * A single member inside an object description.
+		 */
+		class TypeMember {
+			STORM_VALUE;
+		public:
+			STORM_CTOR TypeMember(Str *name, Type *type);
+
+			Str *name;
+			Type *type;
+		};
+
+
+		/**
+		 * Description of the members of a class that are being serialized. Used with the standard
+		 * serialization mechanisms in ObjIStream and ObjOStream.
+		 */
+		class TypeDesc : public Object {
+			STORM_CLASS;
+		public:
+			// Create a description of an object of the type 't'.
+			STORM_CTOR TypeDesc(Type *t);
+
+			// Create a description of an object of the type 't', with the parent 'p'.
+			STORM_CTOR TypeDesc(Type *t, Type *parent);
+
+			// The type.
+			Type *type;
+
+			// Parent type.
+			MAYBE(Type *) parent;
+
+			// All fields in here.
+			Array<TypeMember> *members;
+
+			// Add a member.
+			void STORM_FN add(Str *name, Type *type);
+		};
+
+
+		/**
+		 * Cursor into a TypeDesc.
+		 */
+		class Cursor {
+			STORM_VALUE;
+		public:
+			STORM_CTOR Cursor();
+			STORM_CTOR Cursor(TypeDesc *type);
+
+			// More elements?
+			inline Bool STORM_FN more() const { return type && pos < type->members->count(); }
+
+			// Current element?
+			inline TypeMember STORM_FN current() const { return type->members->at(pos); }
+
+			// Advance.
+			inline void STORM_FN next() { if (more()) pos++; }
+
+		private:
+			// Note: Type may be null.
+			TypeDesc *type;
+			Nat pos;
+		};
+	}
+
 
 	/**
 	 * Error during serialization.
@@ -20,24 +87,6 @@ namespace storm {
 		String w;
 	};
 
-
-	namespace serialize {
-		/**
-		 * Request for different parts of the serialization interfaces.
-		 */
-		enum Serialize {
-			// Nothing.
-			none = 0x00,
-
-			// Need to serialize the members.
-			members = 0x01,
-
-			// Need to serialize the body of the object.
-			body = 0x02,
-		};
-
-		BITMASK_OPERATORS(Serialize);
-	}
 
 	namespace typeInfo {
 		/**
@@ -68,98 +117,6 @@ namespace storm {
 
 		// Source stream.
 		IStream *from;
-
-		// Read various primitive types from the stream. Throws an exception on error.
-		// Call Int:read() etc. from Storm to access these members!
-		Byte readByte();
-		Int readInt();
-		Nat readNat();
-		Long readLong();
-		Word readWord();
-		Float readFloat();
-		Double readDouble();
-	};
-
-
-	/**
-	 * Output stream for objects.
-	 *
-	 * Generic serialization is implemented as follows:
-	 * 1: call 'startValue', 'startObject' depending on what is appropriate.
-	 * 2: if the function returns false, abort serialization of the current instance; it has already
-	 *    been serialized before.
-	 * 3: call 'member' once for each member that is going to be serialized.
-	 * 4: call 'endMembers'.
-	 * 5: serialize the members by calling their serialization function.
-	 * 6: call 'end'
-	 *
-	 * Note: Serialization of threaded objects is not yet supported.
-	 */
-	class ObjOStream : public Object {
-		STORM_CLASS;
-	public:
-		// Create.
-		STORM_CTOR ObjOStream(OStream *to);
-
-		// Destination stream. Used to implement custom serialization.
-		OStream *to;
-
-		// Write various primitive types to the stream. Used to implement custom serialization.
-		// Call Int:write etc. from storm to access these members!
-		void writeByte(Byte v);
-		void writeInt(Int v);
-		void writeNat(Nat v);
-		void writeLong(Long v);
-		void writeWord(Word v);
-		void writeFloat(Float v);
-		void writeDouble(Double v);
-
-		// Indicate the start of serialization of the given object. Value types just pass the type
-		// of the object. The functions return a combination of the values 'header' and 'body',
-		// indicating which parts of the object that should be serialized at this time.
-		serialize::Serialize STORM_FN startValue(Type *t);
-		serialize::Serialize STORM_FN startObject(Object *v);
-
-		// Specify the parent class of the current class. Directly following this call, the current
-		// class is expected to call 'write' for the parent class in order to possibly specify the
-		// layout for that class.
-		void STORM_FN parent(Type *t);
-
-		// Indicate a new member being serialized.
-		void STORM_FN member(Str *name, Type *t);
-
-		// Indicate the end of serializing members.
-		void STORM_FN endMembers();
-
-		// Indicate the end of serialization of the body.
-		void STORM_FN endBody();
-
-	private:
-		// Directory of previously serialized objects. Note: hashes object identity rather than
-		// regular equality.
-		Map<Object *, Nat> *objIds;
-
-		// Directory of allocated type id:s (actually Map<Type *, Nat>). Types that have been
-		// assigned an identifier but not yet been written to the stream have their highest bit set.
-		Map<TObject *, Nat> *typeIds;
-
-		// Next available type id.
-		Nat nextId;
-
-		// Depth of the output.
-		Nat depth;
-
-		// Find the type id for 't'. Generate a new one if none exists.
-		Nat typeId(Type *t);
-
-		// Clear 'objIds'.
-		void clearObjects();
-
-		// Output any header before the current object.
-		void putHeader(Type *t, Bool value);
-
-		// Output a type description if necessary.
-		serialize::Serialize putTypeDesc(Type *t);
 	};
 
 
@@ -189,6 +146,75 @@ namespace storm {
 
 		// First ID usable by custom types.
 		firstCustomId = 0x20
+	};
+
+
+	/**
+	 * Output stream for objects.
+	 *
+	 * Generic serialization is implemented as follows:
+	 * 1: call 'startValue', 'startObject' depending on what is appropriate.
+	 * 2: if the function returns false, abort serialization of the current instance; it has already
+	 *    been serialized before.
+	 * 3: call 'member' once for each member that is going to be serialized.
+	 * 4: call 'endMembers'.
+	 * 5: serialize the members by calling their serialization function.
+	 * 6: call 'end'
+	 *
+	 * Note: Serialization of threaded objects is not yet supported.
+	 *
+	 * TODO: Provide 'deepCopy' and copy ctor! Perhaps they should assert...
+	 */
+	class ObjOStream : public Object {
+		STORM_CLASS;
+	public:
+		// Create.
+		STORM_CTOR ObjOStream(OStream *to);
+
+		// Destination stream. Used to implement custom serialization.
+		OStream *to;
+
+		// Inidicate the start of serialization of the given object. Returns 'true' if the object
+		// should be serialized, false if it has already been serialized and should be skipped
+		// (including the call to 'end').
+		Bool STORM_FN startValue(serialize::TypeDesc *type);
+		Bool STORM_FN startObject(serialize::TypeDesc *type, Object *v);
+
+		// Indicate the start of serialization of a custom type.
+		void STORM_FN startCustom(Type *type);
+		void STORM_FN startCustom(StoredId id);
+
+		// Indicate the end of an object serialization. Not called if 'startXxx' returned false.
+		void STORM_FN end();
+
+	private:
+		// Keep track of how the serialization is progressing. Used as a stack.
+		Array<serialize::Cursor> *depth;
+
+		// Directory of previously serialized objects. Note: hashes object identity rather than
+		// regular equality.
+		Map<Object *, Nat> *objIds;
+
+		// Directory of allocated type id:s (actually Map<Type *, Nat>). Types that have been
+		// assigned an identifier but not yet been written to the stream have their highest bit set.
+		Map<TObject *, Nat> *typeIds;
+
+		// Next available type id.
+		Nat nextId;
+
+		// Find the type id for 't'. Generate a new one if none exists.
+		Nat typeId(Type *t);
+
+		// Clear 'objIds'.
+		void clearObjects();
+
+		// Called before writing an object of type 'type'. Initializes 'depth' for the object, and
+		// possibly writes the header if it was the topmost object. Returns the type we're expecting
+		// to write (if we know).
+		Type *start(serialize::TypeDesc *type);
+
+		// Write the header for Type if it is needed.
+		void writeHeader(Type *type, Byte flags);
 	};
 
 }

@@ -71,12 +71,18 @@ namespace storm {
 		*p.state->l << mov(byteRel(p.regParam(0), Offset()), byteRel(p.regParam(1), Offset()));
 	}
 
-	static Bool boolRead(ObjIStream *from) {
+	static Bool boolRead(IStream *from) {
 		return from->readByte() != 0;
 	}
 
-	static void boolWrite(Bool v, ObjOStream *to) {
+	static void boolWrite(Bool v, OStream *to) {
 		to->writeByte(v ? 1 : 0);
+	}
+
+	static void boolWriteS(Bool v, ObjOStream *to) {
+		to->startCustom(boolId);
+		to->to->writeByte(v ? 1 : 0);
+		to->end();
 	}
 
 
@@ -99,12 +105,16 @@ namespace storm {
 		add(inlinedFunction(engine, Value(), Type::CTOR, rr, fnPtr(engine, &boolCopyCtor))->makePure());
 		add(inlinedFunction(engine, Value(this, true), S("="), rv, fnPtr(engine, &boolAssign))->makePure());
 
-		Array<Value> *is = new (this) Array<Value>(1, Value(StormInfo<ObjIStream>::type(engine)));
+		Array<Value> *is = new (this) Array<Value>(1, Value(StormInfo<IStream>::type(engine)));
 		add(nativeFunction(engine, Value(this), S("read"), is, address(&boolRead)));
 
 		Array<Value> *os = new (this) Array<Value>(2, Value(this, false));
-		os->at(1) = Value(StormInfo<ObjOStream>::type(engine));
+		os->at(1) = Value(StormInfo<OStream>::type(engine));
 		add(nativeFunction(engine, Value(), S("write"), os, address(&boolWrite)));
+
+		os = new (this) Array<Value>(2, Value(this, false));
+		os->at(1) = Value(StormInfo<ObjOStream>::type(engine));
+		add(nativeFunction(engine, Value(), S("write"), os, address(&boolWriteS)));
 
 		return Type::loadAll();
 	}

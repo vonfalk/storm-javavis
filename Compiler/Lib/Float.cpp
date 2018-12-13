@@ -111,12 +111,18 @@ namespace storm {
 		return max(a, b);
 	}
 
-	static Float floatRead(ObjIStream *from) {
+	static Float floatRead(IStream *from) {
 		return from->readFloat();
 	}
 
-	static void floatWrite(Float v, ObjOStream *to) {
+	static void floatWrite(Float v, OStream *to) {
 		to->writeFloat(v);
+	}
+
+	static void floatWriteS(Float v, ObjOStream *to) {
+		to->startCustom(floatId);
+		to->to->writeFloat(v);
+		to->end();
 	}
 
 	FloatType::FloatType(Str *name, GcType *type) : Type(name, typeValue | typeFinal, Size::sFloat, type, null) {}
@@ -156,12 +162,16 @@ namespace storm {
 		add(nativeFunction(engine, Value(this), S("min"), vv, address(&floatMin))->makePure());
 		add(nativeFunction(engine, Value(this), S("max"), vv, address(&floatMax))->makePure());
 
-		Array<Value> *is = new (this) Array<Value>(1, Value(StormInfo<ObjIStream>::type(engine)));
+		Array<Value> *is = new (this) Array<Value>(1, Value(StormInfo<IStream>::type(engine)));
 		add(nativeFunction(engine, Value(this), S("read"), is, address(&floatRead)));
 
 		Array<Value> *os = new (this) Array<Value>(2, Value(this, false));
-		os->at(1) = Value(StormInfo<ObjOStream>::type(engine));
+		os->at(1) = Value(StormInfo<OStream>::type(engine));
 		add(nativeFunction(engine, Value(), S("write"), os, address(&floatWrite)));
+
+		os = new (this) Array<Value>(2, Value(this, false));
+		os->at(1) = Value(StormInfo<ObjOStream>::type(engine));
+		add(nativeFunction(engine, Value(), S("write"), os, address(&floatWriteS)));
 
 		return Type::loadAll();
 	}
@@ -262,12 +272,18 @@ namespace storm {
 		*p.state->l << fstp(doubleRel(p.regParam(0), Offset()));
 	}
 
-	static Double doubleRead(ObjIStream *from) {
+	static Double doubleRead(IStream *from) {
 		return from->readDouble();
 	}
 
-	static void doubleWrite(Double v, ObjOStream *to) {
+	static void doubleWrite(Double v, OStream *to) {
 		to->writeDouble(v);
+	}
+
+	static void doubleWriteS(Double v, ObjOStream *to) {
+		to->startCustom(doubleId);
+		to->to->writeDouble(v);
+		to->end();
 	}
 
 	DoubleType::DoubleType(Str *name, GcType *type) : Type(name, typeValue | typeFinal, Size::sDouble, type, null) {}
@@ -310,12 +326,16 @@ namespace storm {
 		add(nativeFunction(engine, Value(this), S("min"), vv, address(&doubleMin))->makePure());
 		add(nativeFunction(engine, Value(this), S("max"), vv, address(&doubleMax))->makePure());
 
-		Array<Value> *is = new (this) Array<Value>(1, Value(StormInfo<ObjIStream>::type(engine)));
+		Array<Value> *is = new (this) Array<Value>(1, Value(StormInfo<IStream>::type(engine)));
 		add(nativeFunction(engine, Value(this), S("read"), is, address(&doubleRead)));
 
 		Array<Value> *os = new (this) Array<Value>(2, Value(this, false));
-		os->at(1) = Value(StormInfo<ObjOStream>::type(engine));
+		os->at(1) = Value(StormInfo<OStream>::type(engine));
 		add(nativeFunction(engine, Value(), S("write"), os, address(&doubleWrite)));
+
+		os = new (this) Array<Value>(2, Value(this, false));
+		os->at(1) = Value(StormInfo<ObjOStream>::type(engine));
+		add(nativeFunction(engine, Value(), S("write"), os, address(&doubleWriteS)));
 
 		return Type::loadAll();
 	}

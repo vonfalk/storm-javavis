@@ -26,6 +26,8 @@ namespace storm {
 	class StrBuf;
 	class Thread;
 	class Handle;
+	class IStream;
+	class OStream;
 	class ObjOStream;
 	class ObjIStream;
 

@@ -23,12 +23,18 @@ namespace storm {
 		*p.state->l << fstp(p.result->location(p.state).v);
 	}
 
-	static Int intRead(ObjIStream *from) {
+	static Int intRead(IStream *from) {
 		return from->readInt();
 	}
 
-	static void intWrite(Int v, ObjOStream *to) {
-		return to->writeInt(v);
+	static void intWrite(Int v, OStream *to) {
+		to->writeInt(v);
+	}
+
+	static void intWriteS(Int v, ObjOStream *to) {
+		to->startCustom(intId);
+		to->to->writeInt(v);
+		to->end();
 	}
 
 	IntType::IntType(Str *name, GcType *type) : Type(name, typeValue | typeFinal, Size::sInt, type, null) {}
@@ -84,12 +90,16 @@ namespace storm {
 		add(inlinedFunction(engine, Value(this), S("max"), vv, fnPtr(engine, &numMax<Int>))->makePure());
 		add(inlinedFunction(engine, Value(this), S("delta"), vv, fnPtr(engine, &numDelta<Int>))->makePure());
 
-		Array<Value> *is = new (this) Array<Value>(1, Value(StormInfo<ObjIStream>::type(engine)));
+		Array<Value> *is = new (this) Array<Value>(1, Value(StormInfo<IStream>::type(engine)));
 		add(nativeFunction(engine, Value(this), S("read"), is, address(&intRead)));
 
 		Array<Value> *os = new (this) Array<Value>(2, Value(this, false));
-		os->at(1) = Value(StormInfo<ObjOStream>::type(engine));
+		os->at(1) = Value(StormInfo<OStream>::type(engine));
 		add(nativeFunction(engine, Value(), S("write"), os, address(&intWrite)));
+
+		os = new (this) Array<Value>(2, Value(this, false));
+		os->at(1) = Value(StormInfo<ObjOStream>::type(engine));
+		add(nativeFunction(engine, Value(), S("write"), os, address(&intWriteS)));
 
 		return Type::loadAll();
 	}
@@ -104,13 +114,20 @@ namespace storm {
 		*p.state->l << ucast(intRel(p.regParam(0), Offset()), p.param(1));
 	}
 
-	static Nat natRead(ObjIStream *from) {
+	static Nat natRead(IStream *from) {
 		return from->readNat();
 	}
 
-	static void natWrite(Nat v, ObjOStream *to) {
-		return to->writeNat(v);
+	static void natWrite(Nat v, OStream *to) {
+		to->writeNat(v);
 	}
+
+	static void natWriteS(Nat v, ObjOStream *to) {
+		to->startCustom(natId);
+		to->to->writeNat(v);
+		to->end();
+	}
+
 
 	NatType::NatType(Str *name, GcType *type) : Type(name, typeValue | typeFinal, Size::sNat, type, null) {}
 
@@ -175,12 +192,16 @@ namespace storm {
 		add(inlinedFunction(engine, Value(this), S("max"), vv, fnPtr(engine, &numMax<Nat>))->makePure());
 		add(inlinedFunction(engine, Value(this), S("delta"), vv, fnPtr(engine, &numDelta<Nat>))->makePure());
 
-		Array<Value> *is = new (this) Array<Value>(1, Value(StormInfo<ObjIStream>::type(engine)));
+		Array<Value> *is = new (this) Array<Value>(1, Value(StormInfo<IStream>::type(engine)));
 		add(nativeFunction(engine, Value(this), S("read"), is, address(&natRead)));
 
 		Array<Value> *os = new (this) Array<Value>(2, Value(this, false));
-		os->at(1) = Value(StormInfo<ObjOStream>::type(engine));
+		os->at(1) = Value(StormInfo<OStream>::type(engine));
 		add(nativeFunction(engine, Value(), S("write"), os, address(&natWrite)));
+
+		os = new (this) Array<Value>(2, Value(this, false));
+		os->at(1) = Value(StormInfo<ObjOStream>::type(engine));
+		add(nativeFunction(engine, Value(), S("write"), os, address(&natWriteS)));
 
 		return Type::loadAll();
 	}
