@@ -680,18 +680,18 @@ namespace storm {
 		return result;
 	}
 
-	void Str::write(ObjOStream *to) const {
+	void Str::write(OStream *to) const {
 		GcArray<char> *buf = toChar(engine(), data->v);
 		Buffer b = fullBuffer((GcArray<Byte> *)buf);
 		b.filled(b.count() - 1);
 
 		to->writeNat(b.filled());
-		to->to->write(b);
+		to->write(b);
 	}
 
-	Str *Str::read(ObjIStream *from) {
+	Str *Str::read(IStream *from) {
 		Nat count = from->readNat();
-		Buffer b = from->from->read(count);
+		Buffer b = from->read(count);
 		if (!b.full())
 			throw SerializationError(L"Not enough data.");
 
@@ -699,6 +699,17 @@ namespace storm {
 		GcArray<wchar> *result = runtime::allocArray<wchar>(from->engine(), &wcharArrayType, sz);
 		convert((char *)b.dataPtr(), count, result->v, sz);
 		return new (from) Str(result);
+	}
+
+	void Str::write(ObjOStream *to) const {
+		to->startCustom(strId);
+		write(to->to);
+		to->end();
+	}
+
+	Str *Str::read(ObjIStream *from) {
+		// TODO: inform the object stream?
+		return read(from->from);
 	}
 
 	const wchar *Str::toPtr(const Iter &i) const {

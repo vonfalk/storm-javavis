@@ -18,12 +18,18 @@ namespace storm {
 		return new (name) ByteType(name, type);
 	}
 
-	Byte byteRead(ObjIStream *from) {
+	Byte byteRead(IStream *from) {
 		return from->readByte();
 	}
 
-	void byteWrite(Byte b, ObjOStream *to) {
+	void byteWrite(Byte b, OStream *to) {
 		to->writeByte(b);
+	}
+
+	void byteWriteS(Byte b, ObjOStream *to) {
+		to->startCustom(byteId);
+		to->to->writeByte(b);
+		to->end();
 	}
 
 
@@ -89,12 +95,16 @@ namespace storm {
 		add(inlinedFunction(engine, Value(this), S("max"), vv, fnPtr(engine, &numMax<Byte>))->makePure());
 		add(inlinedFunction(engine, Value(this), S("delta"), vv, fnPtr(engine, &numDelta<Byte>))->makePure());
 
-		Array<Value> *is = new (this) Array<Value>(1, Value(StormInfo<ObjIStream>::type(engine)));
+		Array<Value> *is = new (this) Array<Value>(1, Value(StormInfo<IStream>::type(engine)));
 		add(nativeFunction(engine, Value(this), S("read"), is, address(&byteRead)));
 
 		Array<Value> *os = new (this) Array<Value>(2, Value(this, false));
-		os->at(1) = Value(StormInfo<ObjOStream>::type(engine));
+		os->at(1) = Value(StormInfo<OStream>::type(engine));
 		add(nativeFunction(engine, Value(), S("write"), os, address(&byteWrite)));
+
+		os = new (this) Array<Value>(2, Value(this, false));
+		os->at(1) = Value(StormInfo<ObjOStream>::type(engine));
+		add(nativeFunction(engine, Value(), S("write"), os, address(&byteWriteS)));
 
 		return Type::loadAll();
 	}

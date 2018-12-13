@@ -192,6 +192,10 @@ namespace storm {
 		Iter STORM_FN findLast(Char ch) const;
 		Iter STORM_FN findLast(Char ch, Iter last) const;
 
+		// Read/write (raw).
+		void STORM_FN write(OStream *to) const;
+		static Str *STORM_FN read(IStream *from);
+
 		// Serialization.
 		void STORM_FN write(ObjOStream *to) const;
 		static Str *STORM_FN read(ObjIStream *from);

@@ -5,6 +5,14 @@
 namespace storm {
 	STORM_PKG(core.io);
 
+	class EXCEPTION_EXPORT IoError : public Exception {
+	public:
+		IoError(const String &w) : w(w) {}
+		virtual String what() const { return w; }
+	private:
+		String w;
+	};
+
 	/**
 	 * Input and Output streams for Storm. These are abstract base classes
 	 * and concrete implementations are provided for at least file system IO
@@ -51,7 +59,18 @@ namespace storm {
 
 		// Close this stream.
 		virtual void STORM_FN close();
+
+		// Read various primitive types from the stream. Throws an exception on error.
+		// Call Int:read() etc. from Storm to access these members!
+		Byte readByte();
+		Int readInt();
+		Nat readNat();
+		Long readLong();
+		Word readWord();
+		Float readFloat();
+		Double readDouble();
 	};
+
 
 	/**
 	 * Random access input stream.
@@ -99,6 +118,16 @@ namespace storm {
 
 		// Close.
 		virtual void STORM_FN close();
+
+		// Write various primitive types to the stream. Used to implement custom serialization.
+		// Call Int:write etc. from storm to access these members!
+		void writeByte(Byte v);
+		void writeInt(Int v);
+		void writeNat(Nat v);
+		void writeLong(Long v);
+		void writeWord(Word v);
+		void writeFloat(Float v);
+		void writeDouble(Double v);
 	};
 
 }

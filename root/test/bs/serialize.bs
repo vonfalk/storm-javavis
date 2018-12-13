@@ -22,22 +22,15 @@ class Data : persist {
 
 	// Write. Should be automatically generated...
 	void write(ObjOStream to) {
-		var mode = to.startObject(this);
-		if (mode & Serialize:members) {
-			// TODO: Parent class.
-			to.member("a", named{core:Int});
-			to.member("b", named{core:Int});
-			// to.member("data1", named{Employee});
-			// to.member("data2", named{Employee});
-			to.endMembers();
-		}
-		if (mode & Serialize:body) {
-			// TODO: Parent class.
+		// NOTE: Should be done once!
+		TypeDesc desc(named{Data});
+		desc.add("a", named{core:Int});
+		desc.add("b", named{core:Int});
+
+		if (to.startObject(desc, this)) {
 			a.write(to);
 			b.write(to);
-			// data1.write(to);
-			// data2.write(to);
-			to.endBody();
+			to.end();
 		}
 	}
 
@@ -72,17 +65,17 @@ class Employee {
 	}
 
 	void write(ObjOStream to) {
-		var mode = to.startObject(this);
-		if (mode & Serialize:members) {
-			to.member("name", named{core:Str});
-			to.member("coolness", named{core:Int});
-			to.endMembers();
-		}
-		if (mode & Serialize:body) {
-			name.write(to);
-			coolness.write(to);
-			to.endBody();
-		}
+		// var mode = to.startObject(this);
+		// if (mode & Serialize:members) {
+		// 	to.member("name", named{core:Str});
+		// 	to.member("coolness", named{core:Int});
+		// 	to.endMembers();
+		// }
+		// if (mode & Serialize:body) {
+		// 	name.write(to);
+		// 	coolness.write(to);
+		// 	to.endBody();
+		// }
 	}
 }
 
@@ -99,18 +92,18 @@ class Manager extends Employee {
 	}
 
 	void write(ObjOStream to) {
-		var mode = to.startObject(this);
-		if (mode & Serialize:members) {
-			to.parent(named{Employee});
-			super:write(to);
-			to.member("title", named{core:Str});
-			to.endMembers();
-		}
-		if (mode & Serialize:body) {
-			super:write(to);
-			title.write(to);
-			to.endBody();
-		}
+		// var mode = to.startObject(this);
+		// if (mode & Serialize:members) {
+		// 	to.parent(named{Employee});
+		// 	super:write(to);
+		// 	to.member("title", named{core:Str});
+		// 	to.endMembers();
+		// }
+		// if (mode & Serialize:body) {
+		// 	super:write(to);
+		// 	title.write(to);
+		// 	to.endBody();
+		// }
 	}
 }
 
