@@ -4,31 +4,46 @@
 #include "Exception.h"
 
 namespace storm {
-	namespace serialize {
 
-		/**
-		 * Object descriptions.
-		 */
+	/**
+	 * MemberInfo.
+	 */
 
-		TypeMember::TypeMember(Str *name, Type *type) : name(name), type(type) {}
+	MemberInfo::MemberInfo(Str *name, Nat offset, Fn<TypeSerialization *> *type)
+		: name(name), offset(offset), type(type) {}
 
-		TypeDesc::TypeDesc(Type *t)
-			: type(t), parent(null), members(new (engine()) Array<TypeMember>()) {}
+	/**
+	 * TypeSerialization.
+	 */
 
-		TypeDesc::TypeDesc(Type *t, Type *parent)
-			: type(t), parent(parent), members(new (engine()) Array<TypeMember>()) {}
+	TypeSerialization::TypeSerialization(Type *type, Array<MemberInfo> *members)
+		: type(type), a(members), b(null), automaticMode(true) {}
 
-		void TypeDesc::add(Str *name, Type *type) {
-			members->push(TypeMember(name, type));
-		}
+	TypeSerialization::TypeSerialization(Type *type, Array<MemberInfo> *members, Fn<TypeSerialization *> *parent)
+		: type(type), a(members), b(parent), automaticMode(true) {}
 
-		Cursor::Cursor() : type(null), pos(0) {}
+	TypeSerialization::TypeSerialization(Type *type, FnBase *write, FnBase *read)
+		: type(type), a(write), b(read) {}
 
-		Cursor::Cursor(TypeDesc *type) : type(type), pos(0) {}
-
+	Array<MemberInfo> *TypeSerialization::members() const {
+		assert(automaticMode);
+		return (Array<MemberInfo> *)a;
 	}
 
-	using namespace serialize;
+	MAYBE(Fn<TypeSerialization *> *) TypeSerialization::parent() const {
+		assert(automaticMode);
+		return (Fn<TypeSerialization *> *)b;
+	}
+
+	FnBase *TypeSerialization::write() const {
+		assert(!automaticMode);
+		return (FnBase *)a;
+	}
+
+	FnBase *TypeSerialization::read() const {
+		assert(!automaticMode);
+		return (FnBase *)b;
+	}
 
 
 	/**

@@ -3,89 +3,14 @@
 #include "Utils/Bitmask.h"
 #include "Core/Array.h"
 #include "Core/Map.h"
+#include "Core/Fn.h"
 #include "Core/CloneEnv.h"
 #include "Stream.h"
 
 namespace storm {
 	STORM_PKG(core.io);
-	namespace serialize {
 
-		/**
-		 * A single member inside an object description.
-		 */
-		class TypeMember {
-			STORM_VALUE;
-		public:
-			STORM_CTOR TypeMember(Str *name, Type *type);
-
-			Str *name;
-			Type *type;
-		};
-
-
-		/**
-		 * Description of the members of a class that are being serialized. Used with the standard
-		 * serialization mechanisms in ObjIStream and ObjOStream.
-		 */
-		class TypeDesc : public Object {
-			STORM_CLASS;
-		public:
-			// Create a description of an object of the type 't'.
-			STORM_CTOR TypeDesc(Type *t);
-
-			// Create a description of an object of the type 't', with the parent 'p'.
-			STORM_CTOR TypeDesc(Type *t, Type *parent);
-
-			// The type.
-			Type *type;
-
-			// Parent type.
-			MAYBE(Type *) parent;
-
-			// All fields in here.
-			Array<TypeMember> *members;
-
-			// Add a member.
-			void STORM_FN add(Str *name, Type *type);
-		};
-
-
-		/**
-		 * Cursor into a TypeDesc.
-		 */
-		class Cursor {
-			STORM_VALUE;
-		public:
-			STORM_CTOR Cursor();
-			STORM_CTOR Cursor(TypeDesc *type);
-
-			// More elements?
-			inline Bool STORM_FN more() const { return type && pos < type->members->count(); }
-
-			// Current element?
-			inline TypeMember STORM_FN current() const { return type->members->at(pos); }
-
-			// Advance.
-			inline void STORM_FN next() { if (more()) pos++; }
-
-		private:
-			// Note: Type may be null.
-			TypeDesc *type;
-			Nat pos;
-		};
-	}
-
-
-	/**
-	 * Error during serialization.
-	 */
-	class EXCEPTION_EXPORT SerializationError : public Exception {
-	public:
-		SerializationError(const String &w) : w(w) {}
-		virtual String what() const { return w; }
-	private:
-		String w;
-	};
+	class TypeSerialization;
 
 
 	namespace typeInfo {
@@ -100,6 +25,90 @@ namespace storm {
 			classType = 0x01,
 		};
 	}
+
+
+	/**
+	 * Description of an automatically serialized member.
+	 */
+	class MemberInfo {
+		STORM_VALUE;
+	public:
+		STORM_CTOR MemberInfo(Str *name, Nat offset, Fn<TypeSerialization *> *type);
+
+		// Name of the member.
+		Str *name;
+
+		// Offset of the member inside the class.
+		Nat offset;
+
+		// Pointer to a function that generates information about this member.
+		Fn<TypeSerialization *> *type;
+	};
+
+
+	/**
+	 * Description of how to serialize a class. There are two ways of doing this:
+	 *
+	 * 1. The description contains a description of the members of the class. Serialization will be
+	 * performed automatically according to this information.
+	 *
+	 * 2. The description contains a serialization and deserialization function which perform
+	 * serialization and deserialization respectively.
+	 *
+	 * Instances of these objects are immutable, so that we can avoid copies even though we
+	 * serialize from multiple threads.
+	 */
+	class TypeSerialization : public Object {
+		STORM_CLASS;
+	public:
+		// Create for automatic serialization.
+		STORM_CTOR TypeSerialization(Type *type, Array<MemberInfo> *members);
+
+		// Create for automatic serialization, with a parent class.
+		STORM_CTOR TypeSerialization(Type *type, Array<MemberInfo> *members, Fn<TypeSerialization *> *parent);
+
+		// Create for manual serialization.
+		STORM_CTOR TypeSerialization(Type *type, FnBase *write, FnBase *read);
+
+		// Is this an automatic serialization?
+		Bool automatic() const { return automaticMode; }
+
+		// Automatic serialization properties.
+		Array<MemberInfo> *members() const;
+		MAYBE(Fn<TypeSerialization *> *) parent() const;
+
+		// Manual serialization properties.
+		FnBase *write() const;
+		FnBase *read() const;
+
+	private:
+		// The type we're representing.
+		Type *type;
+
+		// Two pointers. Either, only the first one is present, which means that we're in case
+		// #1. Otherwise, both are filled and we're in case #2, and a = write, b = read.
+		UNKNOWN(PTR_GC) void *a;
+		UNKNOWN(PTR_GC) void *b;
+
+		// Automatic mode?
+		Bool automaticMode;
+
+		// TODO: We need to know if we're a class or not.
+	};
+
+
+
+
+	/**
+	 * Error during serialization.
+	 */
+	class EXCEPTION_EXPORT SerializationError : public Exception {
+	public:
+		SerializationError(const String &w) : w(w) {}
+		virtual String what() const { return w; }
+	private:
+		String w;
+	};
 
 
 	/**
