@@ -15,7 +15,7 @@ namespace storm {
 		TypeDesc::TypeDesc(Type *t)
 			: type(t), parent(null), members(new (engine()) Array<TypeMember>()) {}
 
-		TypeDesc::TypeDesc(Type *t, Type *parent)
+		TypeDesc::TypeDesc(Type *t, TypeDesc *parent)
 			: type(t), parent(parent), members(new (engine()) Array<TypeMember>()) {}
 
 		void TypeDesc::add(Str *name, Type *type) {
@@ -87,10 +87,28 @@ namespace storm {
 	}
 
 	Bool ObjOStream::startObject(TypeDesc *type, Object *v) {
-		Type *expected = start(type);
-		writeHeader(expected, typeInfo::classType);
+		// TODO: What about serializing the parent type?
 
-		// TODO!
+		Type *expected = start(type);
+		// Find the expected type from the description. It should be a direct or indirect parent!
+		TypeDesc *expectedDesc = type;
+		while (expected && expectedDesc->type != expected)
+			expectedDesc = expectedDesc->parent;
+		writeInfo(expectedDesc, typeInfo::classType);
+
+		// Now, the reader knows what we're talking about. Now we can bother with references...
+		Nat objId = objIds->get(v, objIds->count());
+		to->writeNat(objId);
+
+		if (objId != objIds->count()) {
+			// Already existing object?
+			return false;
+		}
+
+		// New object. Write its actual type.
+		to->writeNat(typeId(type->type) & ~typeMask);
+		writeInfo(type, typeInfo::classType);
+
 		return true;
 	}
 
@@ -136,18 +154,35 @@ namespace storm {
 		depth->pop();
 	}
 
-	void ObjOStream::writeHeader(Type *t, Byte flags) {
-		Nat id = typeId(t);
+	void ObjOStream::writeInfo(TypeDesc *t, Byte flags) {
+		// Already written?
+		Nat id = typeId(t->type);
 		if ((id & typeMask) == 0)
 			return;
 
-		typeIds->put((TObject *)t, id & ~typeMask);
+		typeIds->put((TObject *)t->type, id & ~typeMask);
 
 		to->writeByte(flags);
 		// TODO: We want to output a mangled name of the class!
-		runtime::typeName(t)->write(to);
+		runtime::typeName(t->type)->write(to);
 
-		// TODO: Write members!
+		if (t->parent) {
+			to->writeNat(typeId(t->parent->type) & ~typeMask);
+		} else {
+			to->writeNat(endId);
+		}
+
+		// Members.
+		for (Nat i = 0; i < t->members->count(); i++) {
+			const TypeMember &member = t->members->at(i);
+
+			Nat id = typeId(member.type);
+			to->writeNat(id & ~typeMask);
+			member.name->write(to);
+		}
+
+		// End of members.
+		to->writeNat(endId);
 	}
 
 }

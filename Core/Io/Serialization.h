@@ -34,13 +34,13 @@ namespace storm {
 			STORM_CTOR TypeDesc(Type *t);
 
 			// Create a description of an object of the type 't', with the parent 'p'.
-			STORM_CTOR TypeDesc(Type *t, Type *parent);
+			STORM_CTOR TypeDesc(Type *t, TypeDesc *parent);
 
 			// The type.
 			Type *type;
 
 			// Parent type.
-			MAYBE(Type *) parent;
+			MAYBE(TypeDesc *) parent;
 
 			// All fields in here.
 			Array<TypeMember> *members;
@@ -213,8 +213,8 @@ namespace storm {
 		// to write (if we know).
 		Type *start(serialize::TypeDesc *type);
 
-		// Write the header for Type if it is needed.
-		void writeHeader(Type *type, Byte flags);
+		// Write the type info provided, if needed.
+		void writeInfo(serialize::TypeDesc *desc, Byte flags);
 	};
 
 }
