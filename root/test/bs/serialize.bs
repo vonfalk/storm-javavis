@@ -23,13 +23,17 @@ class Data : persist {
 	// Write. Should be automatically generated...
 	void write(ObjOStream to) {
 		// NOTE: Should be done once!
-		TypeDesc desc(named{Data});
+		SerializedType desc(named{Data});
 		desc.add("a", named{core:Int});
 		desc.add("b", named{core:Int});
+		desc.add("data1", named{Employee});
+		desc.add("data2", named{Employee});
 
 		if (to.startObject(desc, this)) {
 			a.write(to);
 			b.write(to);
+			data1.write(to);
+			data2.write(to);
 			to.end();
 		}
 	}
@@ -64,18 +68,20 @@ class Employee {
 		init() { name = "John Smith"; coolness = 500; }
 	}
 
+	SerializedType serializedDesc() : static {
+		// NOTE: Should only be done once!
+		SerializedType desc(named{Employee});
+		desc.add("name", named{Str});
+		desc.add("coolness", named{Int});
+		desc;
+	}
+
 	void write(ObjOStream to) {
-		// var mode = to.startObject(this);
-		// if (mode & Serialize:members) {
-		// 	to.member("name", named{core:Str});
-		// 	to.member("coolness", named{core:Int});
-		// 	to.endMembers();
-		// }
-		// if (mode & Serialize:body) {
-		// 	name.write(to);
-		// 	coolness.write(to);
-		// 	to.endBody();
-		// }
+		if (to.startObject(serializedDesc(), this)) {
+			name.write(to);
+			coolness.write(to);
+			to.end();
+		}
 	}
 }
 
@@ -86,24 +92,19 @@ class Manager extends Employee {
 	Str title;
 
 	init() {
-		init() { title = "Manager"; }
+		init() { title = "Executive"; }
 		name = "Mr. " # name;
 		coolness *= 10;
 	}
 
 	void write(ObjOStream to) {
-		// var mode = to.startObject(this);
-		// if (mode & Serialize:members) {
-		// 	to.parent(named{Employee});
-		// 	super:write(to);
-		// 	to.member("title", named{core:Str});
-		// 	to.endMembers();
-		// }
-		// if (mode & Serialize:body) {
-		// 	super:write(to);
-		// 	title.write(to);
-		// 	to.endBody();
-		// }
+		SerializedType desc(named{Manager}, Employee:serializedDesc);
+		desc.add("title", named{Str});
+		if (to.startObject(desc, this)) {
+			super:write(to);
+			title.write(to);
+			to.end();
+		}
 	}
 }
 

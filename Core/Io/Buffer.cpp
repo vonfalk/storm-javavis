@@ -83,7 +83,7 @@ namespace storm {
 			if (i % width == 0) {
 				if (i > 0)
 					to << S("\n");
-				to << hex(i) << S(":");
+				to << hex(i) << S(" ");
 			}
 
 			if (i == b.filled() && i == mark)

@@ -7,7 +7,7 @@ use core:io;
 class TextObjStream {
 	// Create.
 	init(IStream src) {
-		init() { src = ObjIStream(src); }
+		init() { src = src; }
 	}
 
 	// Read an object to a StrBuf.
@@ -30,11 +30,15 @@ private:
 	 */
 	class Type {
 		Str name;
+		Byte flags;
+		Nat parent;
 		Member[] members;
 
-		init(Str name) {
+		init(Str name, Byte flags, Nat parent) {
 			init() {
 				name = name;
+				flags = flags;
+				parent = parent;
 			}
 		}
 	}
@@ -55,7 +59,7 @@ private:
 	}
 
 	// Source stream.
-	ObjIStream src;
+	IStream src;
 
 	// Remember all types.
 	Nat->Type types;
@@ -65,40 +69,66 @@ private:
 
 	// Read an object of a known type.
 	void read(StrBuf to, Nat type) {
-		Nat mask = 0x80000000;
-		Bool value = (mask & type) != 0;
-		type &= ~mask;
-
-		// Check for primitive types!
 		if (readPrimitive(to, type))
 			return;
 
-		Nat objId;
-		if (!value) {
-			// Previous object?
-			objId = Nat:read(src);
-			if (objects.has(objId)) {
-				to << "<previous object, id " << objId << ">";
-				return;
-			}
-			objects.put(objId);
-			type = Nat:read(src);
-		}
-
 		Type t = findType(type);
-		to << t.name;
-		if (!value)
-			to << " (" << objId << ")";
-		to << " {\n";
-		{
-			Indent z(to);
-			for (m in t.members) {
-				to << m.name << ": ";
-				read(to, m.type);
-				to << "\n";
-			}
+
+		if ((t.flags & TypeInfo:classType.v) != 0) {
+			readObject(to, t);
+		} else {
+			readValue(to, t);
 		}
+	}
+
+	// Read an object.
+	void readObject(StrBuf to, Type type) {
+		// A previous object?
+		Nat objId = Nat:read(src);
+		if (objects.has(objId)) {
+			to << "<previous instance " << objId << ">\n";
+			return;
+		}
+		objects.put(objId);
+
+		// Actual type?
+		Nat actualType = Nat:read(src);
+		Type actual = findType(actualType);
+
+		to << actual.name << " (instance " << objId << ") {\n";
+		to.indent();
+
+		readMembers(to, actual);
+
+		to.dedent();
 		to << "}";
+	}
+
+	// Read a value.
+	void readValue(StrBuf to, Type type) {
+		to << type.name << " {\n";
+		to.indent();
+
+		readMembers(to, type);
+
+		to.dedent();
+		to << "}";
+	}
+
+	// Read members from a type.
+	void readMembers(StrBuf to, Nat typeId) {
+		readMembers(to, findType(typeId));
+	}
+
+	void readMembers(StrBuf to, Type type) {
+		if (type.parent != 0)
+			readMembers(to, type.parent);
+
+		for (m in type.members) {
+			to << m.name << ": ";
+			read(to, m.type);
+			to << "\n";
+		}
 	}
 
 	// Find the type 'type'. Read it if necessary.
@@ -106,8 +136,10 @@ private:
 		if (types.has(type))
 			return types.get(type);
 
+		Byte flags = Byte:read(src);
 		Str name = Str:read(src);
-		Type t(name);
+		Nat parent = Nat:read(src);
+		Type t(name, flags, parent);
 
 		do {
 			Nat type = Nat:read(src);
@@ -115,6 +147,8 @@ private:
 			Str name = Str:read(src);
 			t.members << Member(type, name);
 		}
+
+		types.put(type, t);
 
 		t;
 	}

@@ -8,72 +8,75 @@
 
 namespace storm {
 	STORM_PKG(core.io);
-	namespace serialize {
 
-		/**
-		 * A single member inside an object description.
-		 */
-		class TypeMember {
-			STORM_VALUE;
-		public:
-			STORM_CTOR TypeMember(Str *name, Type *type);
+	/**
+	 * A single member inside an object description.
+	 */
+	class SerializedMember {
+		STORM_VALUE;
+	public:
+		STORM_CTOR SerializedMember(Str *name, Type *type);
 
-			Str *name;
-			Type *type;
-		};
-
-
-		/**
-		 * Description of the members of a class that are being serialized. Used with the standard
-		 * serialization mechanisms in ObjIStream and ObjOStream.
-		 */
-		class TypeDesc : public Object {
-			STORM_CLASS;
-		public:
-			// Create a description of an object of the type 't'.
-			STORM_CTOR TypeDesc(Type *t);
-
-			// Create a description of an object of the type 't', with the parent 'p'.
-			STORM_CTOR TypeDesc(Type *t, TypeDesc *parent);
-
-			// The type.
-			Type *type;
-
-			// Parent type.
-			MAYBE(TypeDesc *) parent;
-
-			// All fields in here.
-			Array<TypeMember> *members;
-
-			// Add a member.
-			void STORM_FN add(Str *name, Type *type);
-		};
+		Str *name;
+		Type *type;
+	};
 
 
-		/**
-		 * Cursor into a TypeDesc.
-		 */
-		class Cursor {
-			STORM_VALUE;
-		public:
-			STORM_CTOR Cursor();
-			STORM_CTOR Cursor(TypeDesc *type);
+	/**
+	 * Description of the members of a class that are being serialized. Used with the standard
+	 * serialization mechanisms in ObjIStream and ObjOStream.
+	 */
+	class SerializedType : public Object {
+		STORM_CLASS;
+	public:
+		// Create a description of an object of the type 't'.
+		STORM_CTOR SerializedType(Type *t);
 
-			// More elements?
-			inline Bool STORM_FN more() const { return type && pos < type->members->count(); }
+		// Create a description of an object of the type 't', with the parent 'p'.
+		STORM_CTOR SerializedType(Type *t, SerializedType *parent);
 
-			// Current element?
-			inline TypeMember STORM_FN current() const { return type->members->at(pos); }
+		// The type.
+		Type *type;
 
-			// Advance.
-			inline void STORM_FN next() { if (more()) pos++; }
+		// Parent type.
+		MAYBE(SerializedType *) parent;
 
-		private:
-			// Note: Type may be null.
-			TypeDesc *type;
-			Nat pos;
-		};
-	}
+		// All fields in here.
+		Array<SerializedMember> *members;
+
+		// Add a member.
+		void STORM_FN add(Str *name, Type *type);
+	};
+
+
+	/**
+	 * Cursor into a SerializedType.
+	 *
+	 * Note: Treats the parent class (if any) as the first member.
+	 */
+	class Cursor {
+		STORM_VALUE;
+	public:
+		STORM_CTOR Cursor();
+		STORM_CTOR Cursor(SerializedType *type);
+
+		// Is this cursor referring to a parent class?
+		inline Bool STORM_FN isParent() const { return pos == 0; }
+
+		// More elements?
+		inline Bool STORM_FN more() const { return type && pos <= type->members->count(); }
+
+		// Current element?
+		Type *STORM_FN current() const;
+
+		// Advance.
+		inline void STORM_FN next() { if (more()) pos++; }
+
+	private:
+		// Note: Type may be null.
+		SerializedType *type;
+		Nat pos;
+	};
 
 
 	/**
@@ -177,8 +180,8 @@ namespace storm {
 		// Inidicate the start of serialization of the given object. Returns 'true' if the object
 		// should be serialized, false if it has already been serialized and should be skipped
 		// (including the call to 'end').
-		Bool STORM_FN startValue(serialize::TypeDesc *type);
-		Bool STORM_FN startObject(serialize::TypeDesc *type, Object *v);
+		Bool STORM_FN startValue(SerializedType *type);
+		Bool STORM_FN startObject(SerializedType *type, Object *v);
 
 		// Indicate the start of serialization of a custom type.
 		void STORM_FN startCustom(Type *type);
@@ -189,7 +192,7 @@ namespace storm {
 
 	private:
 		// Keep track of how the serialization is progressing. Used as a stack.
-		Array<serialize::Cursor> *depth;
+		Array<Cursor> *depth;
 
 		// Directory of previously serialized objects. Note: hashes object identity rather than
 		// regular equality.
@@ -211,10 +214,11 @@ namespace storm {
 		// Called before writing an object of type 'type'. Initializes 'depth' for the object, and
 		// possibly writes the header if it was the topmost object. Returns the type we're expecting
 		// to write (if we know).
-		Type *start(serialize::TypeDesc *type);
+		// If we're expecting to serialize a parent type to a previously serialized type, "null" is returned.
+		MAYBE(Type *) start(SerializedType *type);
 
 		// Write the type info provided, if needed.
-		void writeInfo(serialize::TypeDesc *desc, Byte flags);
+		void writeInfo(SerializedType *desc, Byte flags);
 	};
 
 }

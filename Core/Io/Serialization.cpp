@@ -4,31 +4,36 @@
 #include "Exception.h"
 
 namespace storm {
-	namespace serialize {
 
-		/**
-		 * Object descriptions.
-		 */
+	/**
+	 * Object descriptions.
+	 */
 
-		TypeMember::TypeMember(Str *name, Type *type) : name(name), type(type) {}
+	SerializedMember::SerializedMember(Str *name, Type *type) : name(name), type(type) {}
 
-		TypeDesc::TypeDesc(Type *t)
-			: type(t), parent(null), members(new (engine()) Array<TypeMember>()) {}
+	SerializedType::SerializedType(Type *t)
+		: type(t), parent(null), members(new (engine()) Array<SerializedMember>()) {}
 
-		TypeDesc::TypeDesc(Type *t, TypeDesc *parent)
-			: type(t), parent(parent), members(new (engine()) Array<TypeMember>()) {}
+	SerializedType::SerializedType(Type *t, SerializedType *parent)
+		: type(t), parent(parent), members(new (engine()) Array<SerializedMember>()) {}
 
-		void TypeDesc::add(Str *name, Type *type) {
-			members->push(TypeMember(name, type));
-		}
-
-		Cursor::Cursor() : type(null), pos(0) {}
-
-		Cursor::Cursor(TypeDesc *type) : type(type), pos(0) {}
-
+	void SerializedType::add(Str *name, Type *type) {
+		members->push(SerializedMember(name, type));
 	}
 
-	using namespace serialize;
+	Cursor::Cursor() : type(null), pos(1) {}
+
+	Cursor::Cursor(SerializedType *type) : type(type), pos(0) {
+		if (!type->parent)
+			pos++;
+	}
+
+	Type *Cursor::current() const {
+		if (pos == 0)
+			return type->parent->type;
+		else
+			return type->members->at(pos - 1).type;
+	}
 
 
 	/**
@@ -81,34 +86,51 @@ namespace storm {
 		return id;
 	}
 
-	Bool ObjOStream::startValue(TypeDesc *type) {
-		// TODO!
+	Bool ObjOStream::startValue(SerializedType *type) {
+		Type *expected = start(type);
+		if (expected) {
+			// We can assume that the actual type is exactly what we're expecting since value types
+			// are sliced. Therefore, we don't need to search for the proper type as we need to do
+			// for classes.
+			assert(type->type == expected, L"Internal serialization error.");
+		}
+
+		writeInfo(type, typeInfo::valueType);
 		return true;
 	}
 
-	Bool ObjOStream::startObject(TypeDesc *type, Object *v) {
-		// TODO: What about serializing the parent type?
-
+	Bool ObjOStream::startObject(SerializedType *type, Object *v) {
 		Type *expected = start(type);
-		// Find the expected type from the description. It should be a direct or indirect parent!
-		TypeDesc *expectedDesc = type;
-		while (expected && expectedDesc->type != expected)
-			expectedDesc = expectedDesc->parent;
-		writeInfo(expectedDesc, typeInfo::classType);
+		if (expected) {
+			// This is the start of a new type.
 
-		// Now, the reader knows what we're talking about. Now we can bother with references...
-		Nat objId = objIds->get(v, objIds->count());
-		to->writeNat(objId);
+			// Find the expected type from the description. It should be a direct or indirect parent!
+			SerializedType *expectedDesc = type;
+			while (expected && expectedDesc->type != expected)
+				expectedDesc = expectedDesc->parent;
+			writeInfo(expectedDesc, typeInfo::classType);
 
-		if (objId != objIds->count()) {
-			// Already existing object?
-			return false;
+			// Now, the reader knows what we're talking about. Now we can bother with references...
+			Nat objId = objIds->get(v, objIds->count());
+			to->writeNat(objId);
+
+			if (objId != objIds->count()) {
+				// Already existing object?
+
+				// Discard the serialization step for that. If we call 'end', an exception will be thrown.
+				depth->pop();
+				return false;
+			}
+
+			// New object. Write its actual type.
+			to->writeNat(typeId(type->type) & ~typeMask);
+			objIds->put(v, objId);
+		} else {
+			// This is the parent of an object we're already serializing. We don't need any
+			// additional headers for that, just possibly the class description.
 		}
 
-		// New object. Write its actual type.
-		to->writeNat(typeId(type->type) & ~typeMask);
 		writeInfo(type, typeInfo::classType);
-
 		return true;
 	}
 
@@ -126,7 +148,7 @@ namespace storm {
 		depth->push(Cursor());
 	}
 
-	Type *ObjOStream::start(TypeDesc *type) {
+	Type *ObjOStream::start(SerializedType *type) {
 		Type *r = type->type;
 		if (depth->empty()) {
 			// We're the root object, write a header.
@@ -134,7 +156,10 @@ namespace storm {
 		} else {
 			Cursor &at = depth->last();
 			// Note: Will crash if we ever let a custom serialization call "regular" serialization (eg. containers).
-			r = at.current().type;
+			if (at.isParent())
+				r = null;
+			else
+				r = at.current();
 			at.next();
 		}
 
@@ -145,16 +170,21 @@ namespace storm {
 
 	void ObjOStream::end() {
 		if (depth->empty())
-			throw SerializationError(L"Mismatched calls to startX and end during serialization!");
+			throw SerializationError(L"Mismatched calls to startX during serialization!");
 
 		Cursor end = depth->last();
 		if (end.more())
 			throw SerializationError(L"Missing fields during serialization!");
 
 		depth->pop();
+
+		if (depth->empty()) {
+			// Last one, clear the object cache.
+			objIds->clear();
+		}
 	}
 
-	void ObjOStream::writeInfo(TypeDesc *t, Byte flags) {
+	void ObjOStream::writeInfo(SerializedType *t, Byte flags) {
 		// Already written?
 		Nat id = typeId(t->type);
 		if ((id & typeMask) == 0)
@@ -174,7 +204,7 @@ namespace storm {
 
 		// Members.
 		for (Nat i = 0; i < t->members->count(); i++) {
-			const TypeMember &member = t->members->at(i);
+			const SerializedMember &member = t->members->at(i);
 
 			Nat id = typeId(member.type);
 			to->writeNat(id & ~typeMask);
