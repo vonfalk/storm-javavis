@@ -193,8 +193,7 @@ namespace storm {
 		typeIds->put((TObject *)t->type, id & ~typeMask);
 
 		to->writeByte(flags);
-		// TODO: We want to output a mangled name of the class!
-		runtime::typeName(t->type)->write(to);
+		runtime::typeIdentifier(t->type)->write(to);
 
 		if (t->parent) {
 			to->writeNat(typeId(t->parent->type) & ~typeMask);

@@ -52,6 +52,9 @@ namespace storm {
 		// Get the name of a type (expected to be used for pretty-printing).
 		Str *typeName(Type *t);
 
+		// Get a (mangled) identifier of a type that is suitable for serialization.
+		Str *typeIdentifier(Type *t);
+
 		// Is 't' a value type?
 		bool isValue(Type *t);
 

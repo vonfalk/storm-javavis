@@ -1,5 +1,6 @@
 #include "stdafx.h"
 #include "Name.h"
+#include "Type.h"
 #include "Core/CloneEnv.h"
 #include "Core/StrBuf.h"
 #include "Core/Str.h"
@@ -290,6 +291,44 @@ namespace storm {
 		if (*at != '\0')
 			return null;
 		return result;
+	}
+
+	// ASCII codes used for name mangling.
+	static const Char mangleDot(1u);
+	static const Char mangleStartParen(2u);
+	static const Char mangleEndParen(3u);
+	static const Char mangleComma(4u);
+	static const Char mangleCommaRef(5u);
+
+	static void mangleName(StrBuf *to, SimpleName *name);
+
+	static void mangleName(StrBuf *to, SimplePart *part) {
+		*to << part->name;
+
+		if (part->params->any()) {
+			*to << mangleStartParen;
+			for (Nat i = 0; i < part->params->count(); i++) {
+				Value v = part->params->at(i);
+				if (v.type)
+					mangleName(to, v.type->path());
+				*to << (v.ref ? mangleCommaRef : mangleComma);
+			}
+			*to << mangleEndParen;
+		}
+	}
+
+	static void mangleName(StrBuf *to, SimpleName *name) {
+		for (Nat i = 0; i < name->count(); i++) {
+			if (i != 0)
+				*to << mangleDot;
+			mangleName(to, name->at(i));
+		}
+	}
+
+	Str *mangleName(SimpleName *name) {
+		StrBuf *to = new (name) StrBuf();
+		mangleName(to, name);
+		return to->toS();
 	}
 
 }

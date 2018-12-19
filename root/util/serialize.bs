@@ -137,7 +137,7 @@ private:
 			return types.get(type);
 
 		Byte flags = Byte:read(src);
-		Str name = Str:read(src);
+		Str name = demangle(Str:read(src));
 		Nat parent = Nat:read(src);
 		Type t(name, flags, parent);
 
@@ -180,4 +180,32 @@ private:
 		true;
 	}
 
+	// Prettify a mangled name.
+	Str demangle(Str name) {
+		StrBuf to;
+		Bool addComma = false;
+		for (ch in name) {
+			Bool comma = false;
+
+			if (ch == Char(1)) {
+				to << ".";
+			} else if (ch == Char(2)) {
+				to << "(";
+			} else if (ch == Char(3)) {
+				to << ")";
+			} else if (ch == Char(4)) {
+				comma = true;
+			} else if (ch == Char(5)) {
+				to << " &";
+				comma = true;
+			} else {
+				if (addComma)
+					to << ", ";
+				to << ch;
+			}
+
+			addComma = comma;
+		}
+		to.toS;
+	}
 }

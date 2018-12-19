@@ -50,6 +50,10 @@ namespace storm {
 			return t->shortIdentifier();
 		}
 
+		Str *typeIdentifier(Type *t) {
+			return mangleName(t->path());
+		}
+
 		bool isValue(Type *t) {
 			return (t->typeFlags & typeValue) == typeValue;
 		}

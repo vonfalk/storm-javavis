@@ -101,6 +101,10 @@ namespace storm {
 			return (*fwd.typeName)(t);
 		}
 
+		Str *typeIdentifier(Type *t) {
+			return (*fwd.typeIdentifier)(t);
+		}
+
 		bool isValue(Type *t) {
 			return (*fwd.isValue)(t);
 		}

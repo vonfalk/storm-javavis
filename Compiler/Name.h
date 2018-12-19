@@ -150,4 +150,7 @@ namespace storm {
 	// failure (ie. non-matching parentheses).
 	MAYBE(Name *) STORM_FN parseComplexName(Str *str);
 
+	// Mangle a simple name into a unique, machine-readable form.
+	Str *STORM_FN mangleName(SimpleName *name);
+
 }
