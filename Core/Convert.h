@@ -17,6 +17,7 @@ namespace storm {
 	size_t convert(const char *from, wchar *to, size_t maxCount);
 	size_t convert(const char *from, size_t inputCount, wchar *to, size_t maxCount);
 	GcArray<wchar> *toWChar(Engine &e, const char *from);
+	GcArray<wchar> *toWChar(Engine &e, const char *from, size_t maxCount);
 
 	// Convert from 'wchar' to 'char'.
 	size_t convert(const wchar *from, char *to, size_t maxCount);

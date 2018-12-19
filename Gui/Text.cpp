@@ -153,8 +153,7 @@ namespace gui {
 
 			PangoLayoutLine *line = pango_layout_iter_get_line_readonly(iter);
 			int from = line->start_index;
-			int to = from + line->length;
-			Str *t = new (this) Str(toWChar(engine(), text + from, text + to));
+			Str *t = new (this) Str(toWChar(engine(), text + from, line->length));
 			*result << new (this) TextLine(baseline, t);
 		} while (pango_layout_iter_next_line(iter));
 		pango_layout_iter_free(iter);

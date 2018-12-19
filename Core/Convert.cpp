@@ -117,6 +117,14 @@ namespace storm {
 	WRAP_CONVERT(toWChar, char, wchar, wcharArrayType);
 	WRAP_CONVERT(toChar, wchar, char, byteArrayType);
 
+	GcArray<wchar> *toWChar(Engine &e, const char *from, size_t maxCount) {
+		size_t space = convert(from, maxCount, (wchar *)null, 0);
+		GcArray<wchar> *r = runtime::allocArray<wchar>(e, &wcharArrayType, space);
+		convert(from, maxCount, r->v, space);
+		return r;
+	}
+
+
 #ifdef POSIX
 
 	size_t convert(const wchar_t *from, wchar *to, size_t maxCount) {
