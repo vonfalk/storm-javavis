@@ -27,6 +27,13 @@ namespace storm {
 		return from->readInt();
 	}
 
+	static Int intReadS(ObjIStream *from) {
+		from->startCustom(intId);
+		Int r = from->from->readInt();
+		from->end();
+		return r;
+	}
+
 	static void intWrite(Int v, OStream *to) {
 		to->writeInt(v);
 	}
@@ -93,6 +100,9 @@ namespace storm {
 		Array<Value> *is = new (this) Array<Value>(1, Value(StormInfo<IStream>::type(engine)));
 		add(nativeFunction(engine, Value(this), S("read"), is, address(&intRead)));
 
+		is = new (this) Array<Value>(1, Value(StormInfo<ObjIStream>::type(engine)));
+		add(nativeFunction(engine, Value(this), S("read"), is, address(&intReadS)));
+
 		Array<Value> *os = new (this) Array<Value>(2, Value(this, false));
 		os->at(1) = Value(StormInfo<OStream>::type(engine));
 		add(nativeFunction(engine, Value(), S("write"), os, address(&intWrite)));
@@ -116,6 +126,13 @@ namespace storm {
 
 	static Nat natRead(IStream *from) {
 		return from->readNat();
+	}
+
+	static Nat natReadS(ObjIStream *from) {
+		from->startCustom(natId);
+		Nat r = from->from->readNat();
+		from->end();
+		return r;
 	}
 
 	static void natWrite(Nat v, OStream *to) {
@@ -194,6 +211,9 @@ namespace storm {
 
 		Array<Value> *is = new (this) Array<Value>(1, Value(StormInfo<IStream>::type(engine)));
 		add(nativeFunction(engine, Value(this), S("read"), is, address(&natRead)));
+
+		is = new (this) Array<Value>(1, Value(StormInfo<ObjIStream>::type(engine)));
+		add(nativeFunction(engine, Value(this), S("read"), is, address(&natReadS)));
 
 		Array<Value> *os = new (this) Array<Value>(2, Value(this, false));
 		os->at(1) = Value(StormInfo<OStream>::type(engine));

@@ -20,41 +20,60 @@ class Data : persist {
 		}
 	}
 
-	// Write. Should be automatically generated...
-	void write(ObjOStream to) {
-		// NOTE: Should be done once!
+	void toS(StrBuf to) {
+		to << "{ a: " << a << ", b: " << b << " data1: " << data1 << " data2: " << data2 << " }";
+	}
+
+	SerializedType serializedDesc() : static {
+		// NOTE: Should only be done once!
 		SerializedType desc(named{Data});
 		desc.add("a", named{core:Int});
 		desc.add("b", named{core:Int});
-		desc.add("data1", named{Employee});
-		desc.add("data2", named{Employee});
+		// desc.add("data1", named{Employee});
+		// desc.add("data2", named{Employee});
+		desc;
+	}
 
+	// Write. Should be automatically generated...
+	void write(ObjOStream to) {
+		SerializedType desc = serializedDesc();
 		if (to.startObject(desc, this)) {
 			a.write(to);
 			b.write(to);
-			data1.write(to);
-			data2.write(to);
+			// data1.write(to);
+			// data2.write(to);
 			to.end();
 		}
 	}
 
 	// Read. Should be automatically generated...
-	// static Data read(ObjIStream from) {
-	// 	// TODO: How do we handle inheritance?
-	// 	var mode = from.startObject();
-	// 	if (mode & Serialize:members) {
-	// 		from.member("a", named{core:Int});
-	// 		from.member("b", named{core:Int});
-	// 		from.member("c", named{core:Bool});
-	// 		from.member("data", named{Employee});
-	// 		from.endMembers();
-	// 	}
-	// 	if (mode & Serialize:body) {
-	// 		// Create an instance of the object and load data from it.
-	// 	} else {
-	// 		// Retrieve a previously stored object.
-	// 	}
-	// }
+	Data read(ObjIStream from) : static {
+		Object? r = from.startObject(serializedDesc());
+		if (r as Data)
+			r;
+		else
+			Data(from);
+	}
+
+	// Read. Should be automatically generated...
+	private init(ObjIStream from) {
+		// Should be done when inheritance is present.
+		// super(from);
+
+		var a = Int:read(from);
+		var b = Int:read(from);
+		// var data1 = Employee:read(from);
+		// var data2 = Employee:read(from);
+
+		init {
+			a = a;
+			b = b;
+			// data1 = data1;
+			// data2 = data2;
+		}
+
+		from.end();
+	}
 }
 
 /**
@@ -123,7 +142,15 @@ void testSerialize() {
 	x.write(obj);
 	print("Raw data\n" # out);
 
-	MemIStream in(out.buffer);
-	util:TextObjStream read(in);
-	print("Result: " # read.read());
+	{
+		MemIStream in(out.buffer);
+		util:TextObjStream read(in);
+		print("Result: " # read.read());
+	}
+
+	{
+		MemIStream in(out.buffer);
+		ObjIStream read(in);
+		print("Deserialization: " # Data:read(read));
+	}
 }

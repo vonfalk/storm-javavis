@@ -32,6 +32,13 @@ namespace storm {
 		return from->readLong();
 	}
 
+	static Long longReadS(ObjIStream *from) {
+		from->startCustom(longId);
+		Long r = from->from->readLong();
+		from->end();
+		return r;
+	}
+
 	static void longWrite(Long v, OStream *to) {
 		to->writeLong(v);
 	}
@@ -101,6 +108,9 @@ namespace storm {
 		Array<Value> *is = new (this) Array<Value>(1, Value(StormInfo<IStream>::type(engine)));
 		add(nativeFunction(engine, Value(this), S("read"), is, address(&longRead)));
 
+		is = new (this) Array<Value>(1, Value(StormInfo<ObjIStream>::type(engine)));
+		add(nativeFunction(engine, Value(this), S("read"), is, address(&longReadS)));
+
 		Array<Value> *os = new (this) Array<Value>(2, Value(this, false));
 		os->at(1) = Value(StormInfo<OStream>::type(engine));
 		add(nativeFunction(engine, Value(), S("write"), os, address(&longWrite)));
@@ -124,6 +134,13 @@ namespace storm {
 
 	static Word wordRead(IStream *from) {
 		return from->readWord();
+	}
+
+	static Word wordReadS(ObjIStream *from) {
+		from->startCustom(wordId);
+		Word r = from->from->readWord();
+		from->end();
+		return r;
 	}
 
 	static void wordWrite(Word v, OStream *to) {
@@ -203,6 +220,9 @@ namespace storm {
 
 		Array<Value> *is = new (this) Array<Value>(1, Value(StormInfo<IStream>::type(engine)));
 		add(nativeFunction(engine, Value(this), S("read"), is, address(&wordRead)));
+
+		is = new (this) Array<Value>(1, Value(StormInfo<ObjIStream>::type(engine)));
+		add(nativeFunction(engine, Value(this), S("read"), is, address(&wordReadS)));
 
 		Array<Value> *os = new (this) Array<Value>(2, Value(this, false));
 		os->at(1) = Value(StormInfo<OStream>::type(engine));

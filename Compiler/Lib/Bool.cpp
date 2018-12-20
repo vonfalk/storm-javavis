@@ -75,6 +75,13 @@ namespace storm {
 		return from->readByte() != 0;
 	}
 
+	static Bool boolReadS(ObjIStream *from) {
+		from->startCustom(boolId);
+		Bool r = boolRead(from->from);
+		from->end();
+		return r;
+	}
+
 	static void boolWrite(Bool v, OStream *to) {
 		to->writeByte(v ? 1 : 0);
 	}
@@ -107,6 +114,9 @@ namespace storm {
 
 		Array<Value> *is = new (this) Array<Value>(1, Value(StormInfo<IStream>::type(engine)));
 		add(nativeFunction(engine, Value(this), S("read"), is, address(&boolRead)));
+
+		is = new (this) Array<Value>(1, Value(StormInfo<ObjIStream>::type(engine)));
+		add(nativeFunction(engine, Value(this), S("read"), is, address(&boolReadS)));
 
 		Array<Value> *os = new (this) Array<Value>(2, Value(this, false));
 		os->at(1) = Value(StormInfo<OStream>::type(engine));

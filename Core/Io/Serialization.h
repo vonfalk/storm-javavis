@@ -106,24 +106,6 @@ namespace storm {
 
 
 	/**
-	 * Input stream for objects.
-	 *
-	 * Note that the serialization mechanism may store metadata required for multiple objects only
-	 * once in the stream, which means that objects written using a single instance of an OObjStream
-	 * has to be read using a single instance of an IObjStream.
-	 */
-	class ObjIStream : public Object {
-		STORM_CLASS;
-	public:
-		// Create.
-		STORM_CTOR ObjIStream(IStream *src);
-
-		// Source stream.
-		IStream *from;
-	};
-
-
-	/**
 	 * Reserved type id:s. These denote the primitive types known natively by the serialization system.
 	 */
 	enum StoredId {
@@ -149,6 +131,47 @@ namespace storm {
 
 		// First ID usable by custom types.
 		firstCustomId = 0x20
+	};
+
+
+	/**
+	 * Input stream for objects.
+	 *
+	 * Note that the serialization mechanism may store metadata required for multiple objects only
+	 * once in the stream, which means that objects written using a single instance of an OObjStream
+	 * has to be read using a single instance of an IObjStream.
+	 */
+	class ObjIStream : public Object {
+		STORM_CLASS;
+	public:
+		// Create.
+		STORM_CTOR ObjIStream(IStream *src);
+
+		// Source stream.
+		IStream *from;
+
+		// Start deserialization of an object. Returns either an instance of the object, or null to
+		// indicate that deserialization shall be performed here by calling the constructor.
+		MAYBE(Object *) STORM_FN startObject(SerializedType *type);
+
+		// Indicate the start of a custom type.
+		void STORM_FN startCustom(StoredId id);
+
+		// Indicate the end of an object.
+		void STORM_FN end();
+
+	private:
+		// Keep track of how the serialization is progressing. Used as a stack.
+		Array<Cursor> *depth;
+
+		// Directory of previously deserialized objects.
+		Map<Nat, Object *> *objIds;
+
+		// Start a serialization. Returns the object id we're expecting to read.
+		Nat start(SerializedType *type);
+
+		// Clear object ids.
+		void clearObjects();
 	};
 
 

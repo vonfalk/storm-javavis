@@ -22,6 +22,13 @@ namespace storm {
 		return from->readByte();
 	}
 
+	Byte byteReadS(ObjIStream *from) {
+		from->startCustom(byteId);
+		Byte r = from->from->readByte();
+		from->end();
+		return r;
+	}
+
 	void byteWrite(Byte b, OStream *to) {
 		to->writeByte(b);
 	}
@@ -97,6 +104,9 @@ namespace storm {
 
 		Array<Value> *is = new (this) Array<Value>(1, Value(StormInfo<IStream>::type(engine)));
 		add(nativeFunction(engine, Value(this), S("read"), is, address(&byteRead)));
+
+		is = new (this) Array<Value>(1, Value(StormInfo<ObjIStream>::type(engine)));
+		add(nativeFunction(engine, Value(this), S("read"), is, address(&byteReadS)));
 
 		Array<Value> *os = new (this) Array<Value>(2, Value(this, false));
 		os->at(1) = Value(StormInfo<OStream>::type(engine));

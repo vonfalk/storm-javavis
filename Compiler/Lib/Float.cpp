@@ -115,6 +115,13 @@ namespace storm {
 		return from->readFloat();
 	}
 
+	static Float floatReadS(ObjIStream *from) {
+		from->startCustom(floatId);
+		Float r = from->from->readFloat();
+		from->end();
+		return r;
+	}
+
 	static void floatWrite(Float v, OStream *to) {
 		to->writeFloat(v);
 	}
@@ -164,6 +171,9 @@ namespace storm {
 
 		Array<Value> *is = new (this) Array<Value>(1, Value(StormInfo<IStream>::type(engine)));
 		add(nativeFunction(engine, Value(this), S("read"), is, address(&floatRead)));
+
+		is = new (this) Array<Value>(1, Value(StormInfo<ObjIStream>::type(engine)));
+		add(nativeFunction(engine, Value(this), S("read"), is, address(&floatReadS)));
 
 		Array<Value> *os = new (this) Array<Value>(2, Value(this, false));
 		os->at(1) = Value(StormInfo<OStream>::type(engine));
@@ -274,6 +284,13 @@ namespace storm {
 
 	static Double doubleRead(IStream *from) {
 		return from->readDouble();
+	}
+
+	static Double doubleReadS(ObjIStream *from) {
+		from->startCustom(doubleId);
+		Double r = from->from->readDouble();
+		from->end();
+		return r;
 	}
 
 	static void doubleWrite(Double v, OStream *to) {

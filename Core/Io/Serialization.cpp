@@ -40,7 +40,70 @@ namespace storm {
 	 * ObjIStream
 	 */
 
-	ObjIStream::ObjIStream(IStream *src) : from(src) {}
+	ObjIStream::ObjIStream(IStream *src) : from(src) {
+		clearObjects();
+
+		depth = new (this) Array<Cursor>();
+	}
+
+	MAYBE(Object *) ObjIStream::startObject(SerializedType *type) {
+		Nat expected = start(type);
+		PVAR(expected);
+
+		return null;
+	}
+
+	void ObjIStream::startCustom(StoredId id) {
+		if (depth->empty()) {
+			// We need to read this type...
+			Nat expected = from->readNat();
+			if (expected != id)
+				throw SerializationError(L"Type mismatch during deserialization!");
+		} else {
+			depth->last().next();
+			// TODO: Verify the type!
+		}
+
+		depth->push(Cursor());
+	}
+
+	Nat ObjIStream::start(SerializedType *type) {
+		Nat expected = 0;
+		if (depth->empty()) {
+			// First type. Check what type that is!
+			expected = from->readNat();
+		} else {
+			Cursor &at = depth->last();
+			if (at.isParent())
+				expected = 0;
+			else
+				expected = 0; //at.current();
+			depth->last().next();
+		}
+
+		depth->push(Cursor(type));
+		return expected;
+	}
+
+	void ObjIStream::end() {
+		if (depth->empty())
+			throw SerializationError(L"Mismatched calls to startX during deserialization!");
+
+		Cursor end = depth->last();
+		if (end.more())
+			throw SerializationError(L"Missing fields during serialization!");
+
+		depth->pop();
+
+		if (depth->empty()) {
+			// Last one, clear the object cache.
+			clearObjects();
+		}
+	}
+
+	void ObjIStream::clearObjects() {
+		objIds = new (this) Map<Nat, Object *>();
+	}
 
 
 	/**
@@ -180,7 +243,7 @@ namespace storm {
 
 		if (depth->empty()) {
 			// Last one, clear the object cache.
-			objIds->clear();
+			clearObjects();
 		}
 	}
 
