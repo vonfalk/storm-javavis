@@ -42,6 +42,9 @@ namespace storm {
 		// Set less-than function.
 		void STORM_FN setLess(code::Ref ref);
 
+		// Set the type-info function.
+		void STORM_FN setSerializedType(code::Ref ref);
+
 	private:
 		// Content to use when creating references.
 		code::Content *content;
@@ -66,6 +69,9 @@ namespace storm {
 
 		// Ref to less-than fn.
 		code::MemberRef *lessRef;
+
+		// Ref to type-info fn.
+		code::MemberRef *serializedTypeRef;
 	};
 
 

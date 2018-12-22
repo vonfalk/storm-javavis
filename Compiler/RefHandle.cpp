@@ -61,6 +61,11 @@ namespace storm {
 		lessRef = new (this) code::MemberRef(this, OFFSET_OF(RefHandle, lessFn), ref, content);
 	}
 
+	void RefHandle::setSerializedType(code::Ref ref) {
+		if (serializedTypeRef)
+			serializedTypeRef->disable();
+		serializedTypeRef = new (this) code::MemberRef(this, OFFSET_OF(RefHandle, serializedTypeFn), ref, content);
+	}
 
 	code::Binary *toSThunk(Function *fn) {
 		assert(fn->params->count() == 2);

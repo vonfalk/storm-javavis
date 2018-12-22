@@ -42,7 +42,7 @@ and shall not be used.
 
 A type definition starts with a single `Byte` indicating what kind of type is stored, described by
 the `core.io.TypeInfo` enum. This is followed by the full name of the type in a format similar to
-`core.lang.SimpleName`, serialized as a single string with parts delimited by the ascii character 1,
+`core.lang.SimpleName`, serialized as a single string with parts ending with the ascii character 1,
 start parenthesis as 2, end parenthesis as 3 and parameters are trailed by either character 4 if
 they are passed by value or 5 if they are passed by reference (these are used in order not to
 disallow any characters in class names). After the name, a `Nat` containing the type id of the

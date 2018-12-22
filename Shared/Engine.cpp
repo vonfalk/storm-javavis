@@ -105,6 +105,10 @@ namespace storm {
 			return (*fwd.typeIdentifier)(t);
 		}
 
+		MAYBE(Type *) fromIdentifier(Str *name) {
+			return (*fwd.fromIdentifier)(name);
+		}
+
 		bool isValue(Type *t) {
 			return (*fwd.isValue)(t);
 		}

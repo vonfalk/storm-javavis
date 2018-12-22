@@ -4,6 +4,7 @@
 #include "Core/CloneEnv.h"
 #include "Core/StrBuf.h"
 #include "Core/Str.h"
+#include "Exception.h"
 
 namespace storm {
 
@@ -319,9 +320,8 @@ namespace storm {
 
 	static void mangleName(StrBuf *to, SimpleName *name) {
 		for (Nat i = 0; i < name->count(); i++) {
-			if (i != 0)
-				*to << mangleDot;
 			mangleName(to, name->at(i));
+			*to << mangleDot;
 		}
 	}
 
@@ -331,4 +331,86 @@ namespace storm {
 		return to->toS();
 	}
 
+	static void mangleError(Str *name) {
+		throw InternalError(L"Invalid name mangling encountered: " + ::toS(name->escape()));
+	}
+
+	// We need to differentiate between 'void' and 'not found'.
+	struct LookupResult {
+		Bool ok;
+		MAYBE(Type *) type;
+	};
+
+	static LookupResult lookupPart(Engine &e, Scope scope, Str *original, Str::Iter &at) {
+		SimpleName *name = new (e) SimpleName();
+		Str::Iter end = original->end();
+		Str::Iter partStart = at;
+
+		LookupResult r = {
+			true,
+			null
+		};
+
+		while (at != end) {
+			Char c = at.v();
+
+			if (c == mangleDot) {
+				name->add(original->substr(partStart, at));
+				++at;
+				partStart = at;
+			} else if (c == mangleStartParen) {
+				Str *n = original->substr(partStart, at);
+				++at;
+
+				Array<Value> *p = new (e) Array<Value>();
+				while (at.v() != mangleEndParen) {
+					LookupResult param = lookupPart(e, scope, original, at);
+					if (!param.ok) {
+						r.ok = false;
+						return r;
+					}
+
+					Value v(param.type);
+					if (at.v() == mangleCommaRef) {
+						v.ref = true;
+					} else if (at.v() != mangleComma) {
+						mangleError(original);
+					}
+					++at;
+
+					p->push(v);
+				}
+				++at;
+				if (at.v() != mangleDot)
+					mangleError(original);
+
+				name->add(n, p);
+				++at;
+				partStart = at;
+			} else if (c == mangleEndParen) {
+				mangleError(original);
+			} else if (c == mangleComma) {
+				break;
+			} else if (c == mangleCommaRef) {
+				break;
+			} else {
+				++at;
+			}
+		}
+
+		// Not void, make sure that the type exists!
+		if (name->count() > 0) {
+			// It 't' was null, then we failed. That failure should propagate the entire way.
+			r.type = as<Type>(scope.find(name));
+			if (!r.type)
+				r.ok = false;
+		}
+
+		return r;
+	}
+
+	MAYBE(Type *) lookupMangledName(const Scope &scope, Str *name) {
+		Str::Iter at = name->begin();
+		return lookupPart(name->engine(), scope, name, at).type;
+	}
 }

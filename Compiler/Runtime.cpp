@@ -54,6 +54,11 @@ namespace storm {
 			return mangleName(t->path());
 		}
 
+		MAYBE(Type *) fromIdentifier(Str *name) {
+			Engine &e = name->engine();
+			return lookupMangledName(e.scope(), name);
+		}
+
 		bool isValue(Type *t) {
 			return (t->typeFlags & typeValue) == typeValue;
 		}

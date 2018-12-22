@@ -708,8 +708,10 @@ namespace storm {
 	}
 
 	Str *Str::read(ObjIStream *from) {
-		// TODO: inform the object stream?
-		return read(from->from);
+		from->startCustom(strId);
+		Str *r = read(from->from);
+		from->end();
+		return r;
 	}
 
 	const wchar *Str::toPtr(const Iter &i) const {

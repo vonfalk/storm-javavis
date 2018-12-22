@@ -13,6 +13,7 @@ namespace storm {
 			&runtime::gcTypeOf,
 			&runtime::typeName,
 			&runtime::typeIdentifier,
+			&runtime::fromIdentifier,
 			&runtime::isValue,
 			&runtime::isA,
 			&runtime::allocEngine,

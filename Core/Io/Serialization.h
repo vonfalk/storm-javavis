@@ -4,6 +4,7 @@
 #include "Core/Array.h"
 #include "Core/Map.h"
 #include "Core/CloneEnv.h"
+#include "Core/Fn.h"
 #include "Stream.h"
 
 namespace storm {
@@ -30,13 +31,16 @@ namespace storm {
 		STORM_CLASS;
 	public:
 		// Create a description of an object of the type 't'.
-		STORM_CTOR SerializedType(Type *t);
+		STORM_CTOR SerializedType(Type *t, FnBase *ctor);
 
 		// Create a description of an object of the type 't', with the parent 'p'.
-		STORM_CTOR SerializedType(Type *t, SerializedType *parent);
+		STORM_CTOR SerializedType(Type *t, FnBase *ctor, SerializedType *parent);
 
 		// The type.
 		Type *type;
+
+		// Function pointer to the constructor of the class.
+		FnBase *readCtor;
 
 		// Parent type.
 		MAYBE(SerializedType *) parent;
@@ -46,36 +50,35 @@ namespace storm {
 
 		// Add a member.
 		void STORM_FN add(Str *name, Type *type);
-	};
 
+		/**
+		 * Cursor into a SerializedType.
+		 *
+		 * Note: Treats the parent class (if any) as the first member.
+		 */
+		class Cursor {
+			STORM_VALUE;
+		public:
+			STORM_CTOR Cursor();
+			STORM_CTOR Cursor(SerializedType *type);
 
-	/**
-	 * Cursor into a SerializedType.
-	 *
-	 * Note: Treats the parent class (if any) as the first member.
-	 */
-	class Cursor {
-		STORM_VALUE;
-	public:
-		STORM_CTOR Cursor();
-		STORM_CTOR Cursor(SerializedType *type);
+			// Is this cursor referring to a parent class?
+			inline Bool STORM_FN isParent() const { return pos == 0; }
 
-		// Is this cursor referring to a parent class?
-		inline Bool STORM_FN isParent() const { return pos == 0; }
+			// More elements?
+			inline Bool STORM_FN more() const { return type && pos <= type->members->count(); }
 
-		// More elements?
-		inline Bool STORM_FN more() const { return type && pos <= type->members->count(); }
+			// Current element?
+			Type *STORM_FN current() const;
 
-		// Current element?
-		Type *STORM_FN current() const;
+			// Advance.
+			inline void STORM_FN next() { if (more()) pos++; }
 
-		// Advance.
-		inline void STORM_FN next() { if (more()) pos++; }
-
-	private:
-		// Note: Type may be null.
-		SerializedType *type;
-		Nat pos;
+		private:
+			// Note: Type may be null.
+			SerializedType *type;
+			Nat pos;
+		};
 	};
 
 
@@ -150,9 +153,14 @@ namespace storm {
 		// Source stream.
 		IStream *from;
 
+		// Deserialize an object of the given type. The result is always an instance of the type
+		// described by 'type', even if this is not possible to express in the type system.
+		Object *STORM_FN readObject(Type *type);
+
+
 		// Start deserialization of an object. Returns either an instance of the object, or null to
 		// indicate that deserialization shall be performed here by calling the constructor.
-		MAYBE(Object *) STORM_FN startObject(SerializedType *type);
+		// MAYBE(Object *) STORM_FN startObject(SerializedType *type);
 
 		// Indicate the start of a custom type.
 		void STORM_FN startCustom(StoredId id);
@@ -161,14 +169,70 @@ namespace storm {
 		void STORM_FN end();
 
 	private:
+		// Description of a type. Contains a pointer to an actual type once we know that.
+		class Desc : public Object {
+			STORM_CLASS;
+		public:
+			// Create.
+			Desc(Byte flags, Nat parent, Str *name);
+
+			// Flags.
+			Byte flags;
+
+			// ID of the parent class.
+			Nat parent;
+
+			// Member names and types.
+			Array<Str *> *memberNames;
+			Array<Nat> *memberTypes;
+
+			// What we know about the serialization.
+			SerializedType *info;
+		};
+
+		// Cursor into the Desc object. Only worries about members in contrast to the cursor in
+		// SerializedType.
+		class Cursor {
+			STORM_VALUE;
+		public:
+			Cursor();
+			Cursor(Desc *desc);
+
+			// More elements?
+			inline Bool more() const { return desc && pos < desc->memberTypes->count(); }
+
+			// Current element?
+			Nat current() const;
+
+			// Advance.
+			inline void next() { if (more()) pos++; }
+
+		private:
+			Desc *desc;
+			Nat pos;
+		};
+
 		// Keep track of how the serialization is progressing. Used as a stack.
 		Array<Cursor> *depth;
 
 		// Directory of previously deserialized objects.
 		Map<Nat, Object *> *objIds;
 
-		// Start a serialization. Returns the object id we're expecting to read.
-		Nat start(SerializedType *type);
+		// Directory of known type ids.
+		Map<Nat, Desc *> *typeIds;
+
+		// Figure out the type we're supposed to read at the moment. Assumes we start reading that
+		// type afterwards, as internal state is updated so that the next call to 'expectedType'
+		// returns something different.
+		Nat expectedType();
+
+
+		// Start a serialization. Returns the object id we're expecting to read, after possibly
+		// reading it.
+		Desc *start(SerializedType *type);
+
+		// Get the description for an object id, reading it if necessary.
+		Desc *findInfo(Nat id);
 
 		// Clear object ids.
 		void clearObjects();
@@ -215,7 +279,7 @@ namespace storm {
 
 	private:
 		// Keep track of how the serialization is progressing. Used as a stack.
-		Array<Cursor> *depth;
+		Array<SerializedType::Cursor> *depth;
 
 		// Directory of previously serialized objects. Note: hashes object identity rather than
 		// regular equality.
@@ -244,4 +308,6 @@ namespace storm {
 		void writeInfo(SerializedType *desc, Byte flags);
 	};
 
+	// Demangle a name.
+	Str *STORM_FN demangleName(Str *name);
 }

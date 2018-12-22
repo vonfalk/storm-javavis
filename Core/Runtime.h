@@ -55,6 +55,9 @@ namespace storm {
 		// Get a (mangled) identifier of a type that is suitable for serialization.
 		Str *typeIdentifier(Type *t);
 
+		// Get the type with the mangled name 'name'.
+		MAYBE(Type *) fromIdentifier(Str *name);
+
 		// Is 't' a value type?
 		bool isValue(Type *t);
 

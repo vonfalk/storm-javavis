@@ -10,6 +10,7 @@
 #include "Core/Handle.h"
 #include "Core/Gen/CppTypes.h"
 #include "Core/StrBuf.h"
+#include "Core/Io/Serialization.h" // for SerializedType
 #include "OS/UThread.h"
 #include "OS/Future.h"
 #include "Utils/Memory.h"
@@ -908,6 +909,10 @@ namespace storm {
 		// Find less-than function.
 		if (Function *f = as<Function>(find(S("<"), vv, scope)))
 			updateHandle(f);
+
+		// Find the 'serializedType' function.
+		if (Function *f = as<Function>(find(S("serializedType"), new (engine) Array<Value>(), scope)))
+			updateHandle(f);
 	}
 
 	void Type::updateHandleToS(bool first, Function *newFn) {
@@ -992,45 +997,51 @@ namespace storm {
 		bool val = value();
 		RefHandle *h = (RefHandle *)tHandle;
 		Array<Value> *params = fn->params;
-
-		if (params->count() < 1)
-			return;
-		bool refThis = params->at(0).ref;
-
-		// Do not add constructor, destructor or deepCopy to the handle if this is a built-in type,
-		// as that allows containers etc to use raw memcpy which is more efficient in many cases.
-		// Also: it prevents infinite loops during startup due to recursive dependencies.
-		bool userType = as<code::PrimitiveDesc>(typeDesc()) == null;
 		Str *name = fn->name;
-		if (val && *name == CTOR) {
-			if (refThis && params->count() == 2 && params->at(1) == Value(this, true) && userType)
-				h->setCopyCtor(fn->ref());
-		} else if (val && *name == DTOR) {
-			if (refThis && params->count() == 1 && userType)
-				h->setDestroy(fn->ref());
-		} else if (val && *name == S("deepCopy") && userType) {
-			if (refThis && params->count() == 2 && params->at(1) == Value(CloneEnv::stormType(engine)))
-				h->setDeepCopy(fn->ref());
-		} else if (*name == S("hash")) {
-			if (params->count() == 1) {
-				if (allRefParams(fn))
-					h->setHash(fn->ref());
-				else
-					h->hashFn = (Handle::HashFn)makeRefParams(fn);
+
+		if (fn->isMember()) {
+			if (params->count() < 1)
+				return;
+			bool refThis = params->at(0).ref;
+
+			// Do not add constructor, destructor or deepCopy to the handle if this is a built-in type,
+			// as that allows containers etc to use raw memcpy which is more efficient in many cases.
+			// Also: it prevents infinite loops during startup due to recursive dependencies.
+			bool userType = as<code::PrimitiveDesc>(typeDesc()) == null;
+			if (val && *name == CTOR) {
+				if (refThis && params->count() == 2 && params->at(1) == Value(this, true) && userType)
+					h->setCopyCtor(fn->ref());
+			} else if (val && *name == DTOR) {
+				if (refThis && params->count() == 1 && userType)
+					h->setDestroy(fn->ref());
+			} else if (val && *name == S("deepCopy") && userType) {
+				if (refThis && params->count() == 2 && params->at(1) == Value(CloneEnv::stormType(engine)))
+					h->setDeepCopy(fn->ref());
+			} else if (*name == S("hash")) {
+				if (params->count() == 1) {
+					if (allRefParams(fn))
+						h->setHash(fn->ref());
+					else
+						h->hashFn = (Handle::HashFn)makeRefParams(fn);
+				}
+			} else if (*name == S("==")) {
+				if (params->count() == 2) {
+					if (allRefParams(fn))
+						h->setEqual(fn->ref());
+					else
+						h->equalFn = (Handle::EqualFn)makeRefParams(fn);
+				}
+			} else if (*name == S("<")) {
+				if (params->count() == 2) {
+					if (allRefParams(fn))
+						h->setLess(fn->ref());
+					else
+						h->lessFn = (Handle::LessFn)makeRefParams(fn);
+				}
 			}
-		} else if (*name == S("==")) {
-			if (params->count() == 2) {
-				if (allRefParams(fn))
-					h->setEqual(fn->ref());
-				else
-					h->equalFn = (Handle::EqualFn)makeRefParams(fn);
-			}
-		} else if (*name == S("<")) {
-			if (params->count() == 2) {
-				if (allRefParams(fn))
-					h->setLess(fn->ref());
-				else
-					h->lessFn = (Handle::LessFn)makeRefParams(fn);
+		} else {
+			if (*name == S("serializedType") && fn->result.type == StormInfo<SerializedType>::type(engine)) {
+				h->setSerializedType(fn->ref());
 			}
 		}
 	}

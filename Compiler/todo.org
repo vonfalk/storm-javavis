@@ -17,10 +17,12 @@
     but the scale of the issue should be assessed first.
   - [ ] Parsing core.lang.syntax.bnf takes about 80 ms, which is a bit on the high end when compiling code...
 
-* Loose ends so far [43/71]
+* Loose ends so far [43/72]
   - [ ] When using "unless (foo)", "foo" uses a local variable in the block as well as outside of the block,
     which makes assignments to that variable to not write to the original variable even if one would expect so.
     We should at least warn about this.
+  - [ ] Inside Type::updateHandle, we should check return types for the found functions! Otherwise, things
+    may end badly if the return type differ from what we expect!
   - [ ] The documentation view in Emacs should probably show which package the type is located in as well.
     It is not easy to keep track of the current package oneself when navigating through the hyperlinks.
   - [ ] When editing a file that uses parent requirements in the language server, and there are multiple

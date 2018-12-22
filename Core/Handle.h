@@ -85,6 +85,10 @@ namespace storm {
 				return !(*lessFn)(a, b) && !(*lessFn)(a, b);
 			}
 		}
+
+		// Acquire information about serializing this type. May be null.
+		typedef SerializedType *(*SerializedTypeFn)();
+		UNKNOWN(PTR_GC) SerializedTypeFn serializedTypeFn;
 	};
 
 	/**

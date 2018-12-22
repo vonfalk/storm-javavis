@@ -5,6 +5,7 @@
 namespace storm {
 	STORM_PKG(core.lang);
 
+	class Scope;
 	class SimpleName;
 
 	/**
@@ -150,7 +151,13 @@ namespace storm {
 	// failure (ie. non-matching parentheses).
 	MAYBE(Name *) STORM_FN parseComplexName(Str *str);
 
+
+	STORM_PKG(core.io);
+
 	// Mangle a simple name into a unique, machine-readable form.
 	Str *STORM_FN mangleName(SimpleName *name);
+
+	// Look up a mangled name.
+	MAYBE(Type *) STORM_FN lookupMangledName(const Scope &scope, Str *name);
 
 }

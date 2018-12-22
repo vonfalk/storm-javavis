@@ -21,55 +21,58 @@ class Data : persist {
 	}
 
 	void toS(StrBuf to) {
-		to << "{ a: " << a << ", b: " << b << " data1: " << data1 << " data2: " << data2 << " }";
+		to << "{ a: " << a << ", b: " << b << ", data1: " << data1 << ", data2: " << data2 << " }";
 	}
 
-	SerializedType serializedDesc() : static {
+	SerializedType serializedType() : static {
 		// NOTE: Should only be done once!
-		SerializedType desc(named{Data});
+		SerializedType desc(named{Data}, &__init(Data, ObjIStream));
 		desc.add("a", named{core:Int});
 		desc.add("b", named{core:Int});
-		// desc.add("data1", named{Employee});
-		// desc.add("data2", named{Employee});
+		desc.add("data1", named{Employee});
+		desc.add("data2", named{Employee});
+
 		desc;
 	}
 
 	// Write. Should be automatically generated...
 	void write(ObjOStream to) {
-		SerializedType desc = serializedDesc();
+		SerializedType desc = serializedType();
 		if (to.startObject(desc, this)) {
 			a.write(to);
 			b.write(to);
-			// data1.write(to);
-			// data2.write(to);
+			data1.write(to);
+			data2.write(to);
 			to.end();
 		}
 	}
 
 	// Read. Should be automatically generated...
 	Data read(ObjIStream from) : static {
-		Object? r = from.startObject(serializedDesc());
-		if (r as Data)
+		Object r = from.readObject(named{Data});
+		if (r as Data) {
 			r;
-		else
-			Data(from);
+		} else {
+			// Note: This case never happens.
+			Data();
+		}
 	}
 
 	// Read. Should be automatically generated...
-	private init(ObjIStream from) {
+	protected init(ObjIStream from) {
 		// Should be done when inheritance is present.
 		// super(from);
 
 		var a = Int:read(from);
 		var b = Int:read(from);
-		// var data1 = Employee:read(from);
-		// var data2 = Employee:read(from);
+		var data1 = Employee:read(from);
+		var data2 = Employee:read(from);
 
 		init {
 			a = a;
 			b = b;
-			// data1 = data1;
-			// data2 = data2;
+			data1 = data1;
+			data2 = data2;
 		}
 
 		from.end();
@@ -87,20 +90,46 @@ class Employee {
 		init() { name = "John Smith"; coolness = 500; }
 	}
 
-	SerializedType serializedDesc() : static {
+	void toS(StrBuf to) {
+		to << "Employee: { name: " << name << ", coolness: " << coolness << " }";
+	}
+
+	SerializedType serializedType() : static {
 		// NOTE: Should only be done once!
-		SerializedType desc(named{Employee});
+		SerializedType desc(named{Employee}, &__init(Employee, ObjIStream));
 		desc.add("name", named{Str});
 		desc.add("coolness", named{Int});
 		desc;
 	}
 
 	void write(ObjOStream to) {
-		if (to.startObject(serializedDesc(), this)) {
+		if (to.startObject(serializedType(), this)) {
 			name.write(to);
 			coolness.write(to);
 			to.end();
 		}
+	}
+
+	Employee read(ObjIStream from) : static {
+		Object r = from.readObject(named{Employee});
+		if (r as Employee)
+			r;
+		else
+			Employee();
+	}
+
+	protected init(ObjIStream from) {
+		// super(from);
+
+		var name = Str:read(from);
+		var coolness = Int:read(from);
+
+		init {
+			name = name;
+			coolness = coolness;
+		}
+
+		from.end();
 	}
 }
 
@@ -116,14 +145,39 @@ class Manager extends Employee {
 		coolness *= 10;
 	}
 
-	void write(ObjOStream to) {
-		SerializedType desc(named{Manager}, Employee:serializedDesc);
+	void toS(StrBuf to) {
+		to << "Manager: { name: " << name << ", coolness: " << coolness << ", title: " << title << " }";
+	}
+
+	SerializedType serializedType() : static {
+		SerializedType desc(named{Manager}, &__init(Manager, ObjIStream), Employee:serializedType);
 		desc.add("title", named{Str});
-		if (to.startObject(desc, this)) {
+		desc;
+	}
+
+	void write(ObjOStream to) {
+		if (to.startObject(serializedType(), this)) {
 			super:write(to);
 			title.write(to);
 			to.end();
 		}
+	}
+
+	Manager read(ObjIStream from) : static {
+		Object r = from.readObject(named{Manager});
+		if (r as Manager)
+			r;
+		else
+			Manager();
+	}
+
+	protected init(ObjIStream from) {
+		// TODO: This should be done in two steps to ensure proper initialization order inside the initializer list!
+		init(from) {
+			title = Str:read(from);
+		}
+
+		from.end();
 	}
 }
 

@@ -26,6 +26,7 @@ namespace storm {
 		const GcType *(*gcTypeOf)(const void *alloc);
 		Str *(*typeName)(Type *t);
 		Str *(*typeIdentifier)(Type *t);
+		MAYBE(Type *) (*fromIdentifier)(Str *name);
 		bool (*isValue)(Type *t);
 		Bool (*isA)(const RootObject *a, const Type *b);
 		Engine &(*allocEngine)(const RootObject *o);

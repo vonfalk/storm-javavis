@@ -28,6 +28,7 @@ namespace storm {
 	class Handle;
 	class IStream;
 	class OStream;
+	class SerializedType;
 	class ObjOStream;
 	class ObjIStream;
 
