@@ -172,9 +172,12 @@ class Manager extends Employee {
 	}
 
 	protected init(ObjIStream from) {
-		// TODO: This should be done in two steps to ensure proper initialization order inside the initializer list!
-		init(from) {
-			title = Str:read(from);
+		super(from);
+
+		var title = Str:read(from);
+
+		init {
+			title = title;
 		}
 
 		from.end();
