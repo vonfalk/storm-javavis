@@ -208,6 +208,11 @@ Actuals SFnActuals(Block block);
 SFnActuals => Actuals() : ;
 SFnActuals => v : "(", SActuals(block) v, ")";
 
+// Actual parameters that indicate whether or not parenthesis were present.
+Maybe<Actuals> SMaybeActuals(Block block);
+SMaybeActuals => Maybe<Actuals>() : ;
+SMaybeActuals => v : "(", SActuals(block) v, ")";
+
 // Block.
 Block SBlock(Block parent);
 SBlock => ExprBlock(pos, parent) : "{" [, (SBlockItem(me), )* ]+ "}";
@@ -503,21 +508,25 @@ SFreeAccess => freePrivate() : "private";
 FnBody SFunctionBody(BSFunction fn);
 SFunctionBody => FnBody(fn) : (SStmt(me) -> add, )*;
 
-// Special statement for calling super constructor.
-SuperCall SSuperCall(CtorBody block);
-SSuperCall => SuperCall(pos, block, params) : "init" #keyword, SFnActuals(block) params, ";";
-SSuperCall => SuperCall(pos, block, params, init) : "init" #keyword, SFnActuals(block) params, "{", (SInitializer(block) init, ";", )* "}";
-
 Initializer SInitializer(Block block);
 SInitializer => Initializer(name, value) : SName name #varName, "=", SExpr(block) value;
 SInitializer => Initializer(name, params) : SName name #varName, SFnActuals(block) params;
 
 // Root rule for parsing constructor bodies.
 CtorBody SCtorBody(BSCtor fn);
-SCtorBody => CtorBody(fn) : SCtorStmts(me) -> add, SSuperCall(me) -> add, SCtorStmts(me) -> add;
+SCtorBody => CtorBody(fn) : (SCtorStmt(me) -> add, )*;
 
-Array<Expr> SCtorStmts(Block block);
-SCtorStmts => v : (SStmt(block) v, )*;
+// Statements available in the constructor.
+Expr SCtorStmt(CtorBody block);
+SCtorStmt => v : SStmt(block) v;
+
+// Special statement for initializing the class.
+SCtorStmt[20] => InitBlock(pos, block, params) : "init" #keyword, SMaybeActuals(block) params, ";";
+SCtorStmt[20] => InitBlock(pos, block, params, init) : "init" #keyword, SMaybeActuals(block) params, "{", (SInitializer(block) init, ";", )* "}";
+
+// Special knowledge about "super(...)" to initialize the parent class.
+SCtorStmt[20] => SuperCall(pos, block, params) : "super" #keyword, SFnActuals(block) params, ";";
+
 
 // Constructor parameters. May include a nameless first parameter.
 Array<NameParam> SCtorParams();

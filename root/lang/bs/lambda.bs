@@ -163,7 +163,7 @@ class LambdaExpr extends Expr {
 					init << Initializer(SStr(v.name), LocalVarAccess(pos, formal));
 				}
 			}
-			SuperCall s(pos, b, Actuals(), init);
+			InitBlock s(pos, b, Actuals(), init);
 			b.add(s);
 			b;
 		};

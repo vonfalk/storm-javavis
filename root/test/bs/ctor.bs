@@ -125,3 +125,21 @@ Int testDefaultCtor() {
 	// Default ctor should create all objects.
 	d.sum;
 }
+
+
+class ImplicitInitClass {
+	CtorClass a;
+
+	init() {
+		// 'init' will be called implicitly for us!
+	}
+
+	Int sum() {
+		a.a + a.b.get;
+	}
+}
+
+Int testImplicitInit() {
+	ImplicitInitClass d;
+	d.sum;
+}

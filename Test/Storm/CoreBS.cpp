@@ -268,10 +268,15 @@ BEGIN_TEST(StormCtorTest, BS) {
 	CHECK_ERROR(runFn<Int>(S("test.bs.ctorErrorTest")), CodeError);
 	CHECK_ERROR(runFn<Int>(S("test.bs.memberAssignErrorTest")), CodeError);
 	CHECK_EQ(runFn<Int>(S("test.bs.testDefaultCtor")), 60);
+	CHECK_EQ(runFn<Int>(S("test.bs.testImplicitInit")), 50);
 
 	// Initialization order.
 	CHECK_EQ(runFn<Int>(S("test.bs.checkInitOrder")), 321);
 	CHECK_EQ(runFn<Int>(S("test.bs.checkInitOrder2")), 123);
+
+	// Two-step initialization.
+	CHECK_RUNS(runFn<void>(S("test.bs.twoStepInit")));
+	CHECK_ERROR(runFn<void>(S("test.bs.twoStepFail")), SyntaxError);
 } END_TEST
 
 

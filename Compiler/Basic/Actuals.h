@@ -31,6 +31,7 @@ namespace storm {
 
 			// Empty?
 			inline Bool STORM_FN empty() { return expressions->empty(); }
+			inline Bool STORM_FN any() { return expressions->any(); }
 
 			// Add a parameter.
 			void STORM_FN add(Expr *expr);

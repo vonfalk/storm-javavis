@@ -1,0 +1,65 @@
+
+class StepBase {
+	Int a;
+
+	init(Int a) {
+		init {
+			a = a;
+		}
+	}
+}
+
+class StepOther {
+	StepBase base;
+
+	init(StepBase base) {
+		init {
+			base = base;
+		}
+	}
+
+	init(StepDerived d, Int z) {
+		init {
+			base = d;
+		}
+	}
+}
+
+class StepDerived extends StepBase {
+	Int b;
+	StepOther other;
+
+	init(Int a, Int b) {
+		super(a);
+
+		StepOther o(this);
+
+		init {
+			b = b;
+			other = o;
+		}
+	}
+
+	// Failing constructor.
+	init(Int a) {
+		super(a);
+
+		// This constructor requires a 'StepDerived', while 'this' should be a 'StepBase' now.
+		StepOther o(this, a);
+
+		init {
+			b = 10;
+			other = o;
+		}
+	}
+}
+
+// If it compiles and runs, it is ok.
+void twoStepInit() {
+	StepDerived z(1, 2);
+}
+
+// This should fail.
+void twoStepFail() {
+	StepDerived z(1);
+}

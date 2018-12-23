@@ -210,7 +210,7 @@ namespace storm {
 				}
 
 				*to << S("(");
-				for (Nat i = 1; ptrType.type->params->count(); i++) {
+				for (Nat i = 1; i < ptrType.type->params->count(); i++) {
 					if (i != 1)
 						*to << S(", ");
 					*to << ptrType.type->params->at(i);

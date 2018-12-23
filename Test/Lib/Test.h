@@ -54,9 +54,13 @@ inline std::wostream &operator <<(std::wostream &to, const TestResult &r) {
 	else
 		to << r.passed() << L" of ";
 	to << r.total << L" tests";
-	if (r.failed > 0)
+	if (r.failed == 1)
+		to << L"\nFailed 1 test!";
+	else if (r.failed > 0)
 		to << L"\nFailed " << r.failed << L" tests!";
-	if (r.crashed > 0)
+	if (r.crashed == 1)
+		to << L"\nCrashed 1 test!";
+	else if (r.crashed > 0)
 		to << L"\nCrashed " << r.crashed << L" tests!";
 	if (r.aborted)
 		to << L"\nABORTED";

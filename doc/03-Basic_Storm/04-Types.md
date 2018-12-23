@@ -54,23 +54,44 @@ or, if the constructor represents a type cast that can be performed implicitly:
 
 `cast(<parameters>) { <body> }`
 
-The constructor is special, because it needs to contain the special `init` statement at top-level in
-its body. This `init` statement is in charge of calling constructors of the super class (if any) and
-the constructors of any member variables. It is another interpretation of the initializer list in
-C++, but more powerful, since it allows execution of arbitrary code before any initialization is
-actually done. Note that `this` and thereby any member functions or variables are not accessible
-before the `init` block. The `init` statement looks like this:
+The constructor is special. Because it is in charge of creating an object, no object exists at the
+start of the constructor. Because of this, the variable `this` is not available until the object has
+been initialized. The initialization is similar to initializer lists in C++, but allows executing
+arbitrary code before, during, or after initialization. The initialization is performed in two
+steps. First, the constructor of the super class is called as follows:
 
-`init(<params>) { <init-list> }`
+`super(<parameters>);`
 
-Where `<params>` are the parameters to be passed to the super class constructor, and `<init-list>`
-is a list of what to initialize all member variables to. If a member variable is not present in
-`<init-list>`, it is constructed using the empty constructor (we do not initialize things to null,
-use Maybe<T>, or T? for that). `<init-list>` is a list of assignments (`<name> = <expr>`) or
-constructor calls (`<name>(<params>)`) separated by a semicolon (`;`). These initializers are
-always executed in the order they are declared, regardless of the original order of the initialized
-members. Any members that are initialized implicitly are initialized before the explicitly initialized
-members.
+After calling `super` in this manner (which has to be done at the top-level, not inside any other
+blocks such as if-statements), the `this` parameter is available in the function. If no superclass
+is present, this step can be omitted.However, as only the super class is initialized, `this` will
+have the type of the parent class and not the current class until the object is fully
+initialized. The second stage of the initialization is done using the init block as follows:
+
+`init { <init-list> }`
+
+Where `<init-list>` is a list containing initializers for zero or more of the member variables in
+the type. Member variables not present in the list are initialized using their default constructor
+(Basic Storm does not initialize things to `null`, use `Maybe<T>` or `T?` for that). `<init-list>`
+is a list of assignments (`<name> = <expr>`) or constructor calls (`<name>(<params>)`) separated by
+semicolons (`;`). These initializers are always executed in the order they are declared, regardless
+of the original order of the initialized members. Any members that are initialized implicitly are
+initialized before the explicitly initialized members.
+
+For convenience, if no code needs to be executed between the call to `super` and the init block, all
+initialization can be done at once by the `init` block. If the superclass' constructor has not been
+called when the init block is reached, the init block will call the superclass'
+constructor. Parameters to the constructor can be provided as follows:
+
+`init(<parameters>) { <init-list> }`
+
+Note that `init {}` and `init() {}` are not equivalent. The first one does not explicitly try to
+call the constructor of the superclass, and is allowed after an explicit `super` call. The second
+one indicates that the constructor should be called, and is therefore not allowed after an explicit
+call to `super`.
+
+Finally, if no explicit initialization is necessary, both `super` and `init` (or only one of them)
+can be omitted.
 
 The constructor acts a little special when working with actors that have not been declared to be
 executed on a specific thread (using the `on ?` syntax). These constructors need to take a `Thread`

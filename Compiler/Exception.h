@@ -85,7 +85,6 @@ namespace storm {
 			return L"@" + ::toS(where) + L": Syntax error: " + msg;
 		}
 
-	private:
 		String msg;
 	};
 

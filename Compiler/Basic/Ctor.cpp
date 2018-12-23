@@ -56,6 +56,7 @@ namespace storm {
 
 		CodeGen *BSRawCtor::generateCode() {
 			CtorBody *body = createBody();
+			body->checkInit();
 
 			using namespace code;
 			CodeGen *state = new (this) CodeGen(runOn(), true, Value());
@@ -131,7 +132,7 @@ namespace storm {
 		CtorBody *BSCtor::defaultParse() {
 			CtorBody *r = new (this) CtorBody(this, scope);
 			Actuals *actual = new (this) Actuals();
-			SuperCall *super = new (this) SuperCall(pos, r, actual);
+			InitBlock *super = new (this) InitBlock(pos, r, actual);
 			super->pos = pos;
 			r->add(super);
 			return r;
@@ -164,7 +165,7 @@ namespace storm {
 		 * Constructor body.
 		 */
 
-		CtorBody::CtorBody(BSCtor *ctor) : ExprBlock(ctor->pos, ctor->scope) {
+		CtorBody::CtorBody(BSCtor *ctor) : ExprBlock(ctor->pos, ctor->scope), superCalled(false), initDone(false) {
 			threadParam = ctor->addParams(this);
 		}
 
@@ -172,9 +173,17 @@ namespace storm {
 			threadParam = ctor->addParams(this);
 		}
 
-		void CtorBody::add(Array<Expr *> *exprs) {
-			for (nat i = 0; i < exprs->count(); i++) {
-				add(exprs->at(i));
+		void CtorBody::checkInit() {
+			// Check if init and super calls are present!
+			if (!initDone) {
+				// Automatically insert a 'init' block at the end. That will call the super
+				// constructor as well if it is necessary.
+				try {
+					add(new (this) InitBlock(pos, this, null));
+				} catch (const SyntaxError &e) {
+					throw SyntaxError(e.where, L"Failed to initialize the object implicitly: " + e.msg +
+									L"\nInitialize the object manually with an 'init' block instead.");
+				}
 			}
 		}
 
@@ -187,86 +196,47 @@ namespace storm {
 			Block::blockCode(state, to, block);
 		}
 
-		Initializer::Initializer(syntax::SStr *name, Expr *expr) : name(name), expr(expr) {}
 
-		Initializer::Initializer(syntax::SStr *name, Actuals *params) : name(name), params(params) {}
+		/**
+		 * SuperCall.
+		 */
 
-		void Initializer::toS(StrBuf *to) const {
-			*to << name->v;
-			if (params) {
-				*to << params;
-			} else if (expr) {
-				*to << S(" = ") << expr;
-			}
-		}
+		SuperCall::SuperCall(SrcPos pos, CtorBody *block, Actuals *params) : Expr(pos), block(block) {
+			if (block->superCalled)
+				throw SyntaxError(pos, L"Only one call to the super class constructor is allowed inside a constructor,"
+					L" and the call has to be done before the 'init' block.");
+			block->superCalled = true;
 
-		SuperCall::SuperCall(SrcPos pos, CtorBody *block, Actuals *params, Array<Initializer *> *init)
-			: Expr(pos) {
-
-			this->init(block, params);
-			for (nat i = 0; i < init->count(); i++)
-				this->init(init->at(i));
-		}
-
-		SuperCall::SuperCall(SrcPos pos, CtorBody *block, Actuals *params) : Expr(pos) {
-			init(block, params);
-		}
-
-		void SuperCall::init(CtorBody *block, Actuals *params) {
-			rootBlock = block;
-
-			initializers = new (this) Array<Initializer *>();
-			initialized = new (this) Set<Str *>();
-
-			// Add the regular this parameter!
-			SimplePart *name = new (this) SimplePart(new (this) Str(L" this"));
-			thisVar = block->variable(name);
+			// Add the regular 'this' parameter.
+			thisVar = block->variable(new (this) SimplePart(S(" this")));
 			thisPtr = thisVar->result;
-			LocalVar *created = new (this) LocalVar(new (this) Str(L"this"), thisPtr, thisVar->pos, true);
+
+			Type *super = thisPtr.type->super();
+			if (!super)
+				throw SyntaxError(pos, L"Can not call the super class constructor unless a parent class is present.");
+
+			Value superPtr = thisPtr;
+			superPtr.type = super;
+			LocalVar *created = new (this) LocalVar(new (this) Str(L"this"), superPtr, thisVar->pos, true);
 			created->constant = true;
 			block->add(created);
 
 			this->params = params;
 			LocalVarAccess *l = new (this) LocalVarAccess(pos, thisVar);
 			params->addFirst(l);
-
-			scope = block->scope;
 		}
 
 		ExprResult SuperCall::result() {
 			return ExprResult();
 		}
 
-		void SuperCall::init(Initializer *init) {
-			Str *name = init->name->v;
-			MemberVar *v = as<MemberVar>(thisPtr.type->find(name, new (this) Array<Value>(1, thisPtr), scope));
-			if (v == null || v->params->at(0).type != thisPtr.type)
-				throw SyntaxError(init->name->pos, L"The member variable " + ::toS(name) + L" was not found in "
-								+ ::toS(thisPtr));
-
-			if (initialized->has(name))
-				throw SyntaxError(init->name->pos, L"The member " + ::toS(name) + L" has already been initialized.");
-
-			initializers->push(init);
-			initialized->put(name);
-		}
-
 		void SuperCall::toS(StrBuf *to) const {
-			*to << S("init") << params << S(" {\n");
-			to->indent();
-
-			for (Nat i = 0; i < initializers->count(); i++) {
-				*to << initializers->at(i) << S(";\n");
-			}
-
-			to->dedent();
-			*to << S("}");
+			*to << S("super") << params;
 		}
 
-		void SuperCall::callParent(CodeGen *s) {
+		void SuperCall::code(CodeGen *s, CodeResult *r) {
+			// Note: We already checked so that we have a super class.
 			Type *parent = thisPtr.type->super();
-			if (!parent)
-				return;
 
 			RunOn runOn = thisPtr.type->runOn();
 			bool hiddenThread = runOn.state == RunOn::runtime;
@@ -282,7 +252,7 @@ namespace storm {
 			if (hiddenThread)
 				values->insert(storm::thisPtr(Thread::stormType(engine())), 1);
 
-			Function *ctor = as<Function>(parent->find(values, scope));
+			Function *ctor = as<Function>(parent->find(values, block->scope));
 			if (!ctor)
 				throw SyntaxError(pos, L"No constructor (" + ::toS(values) + L") found in " + ::toS(parent->identifier()));
 
@@ -290,13 +260,13 @@ namespace storm {
 			actuals->reserve(values->params->count());
 
 			if (hiddenThread) {
-				actuals->push(params->code(0, s, ctor->params->at(0), scope));
-				actuals->push(rootBlock->threadParam->var.v);
+				actuals->push(params->code(0, s, ctor->params->at(0), block->scope));
+				actuals->push(block->threadParam->var.v);
 				for (nat i = 2; i < values->params->count(); i++)
-					actuals->push(params->code(i - 1, s, ctor->params->at(i), scope));
+					actuals->push(params->code(i - 1, s, ctor->params->at(i), block->scope));
 			} else {
 				for (nat i = 0; i < values->params->count(); i++)
-					actuals->push(params->code(i, s, ctor->params->at(i), scope));
+					actuals->push(params->code(i, s, ctor->params->at(i), block->scope));
 			}
 
 			CodeResult *t = CREATE(CodeResult, this);
@@ -311,17 +281,120 @@ namespace storm {
 			Type *parent = TObject::stormType(engine());
 			Array<Value> *values = new (this) Array<Value>(2, Value(parent));
 			values->at(1) = Value(Thread::stormType(engine()));
-			Function *ctor = as<Function>(parent->find(Type::CTOR, values, scope));
+			Function *ctor = as<Function>(parent->find(Type::CTOR, values, block->scope));
 			if (!ctor)
 				throw InternalError(L"The constructor of TObject: __ctor(TObject, Thread) was not found!");
 
 			// Call the constructor.
 			Array<code::Operand> *actuals = new (this) Array<code::Operand>();
-			actuals->push(params->code(0, s, ctor->params->at(0), scope));
+			actuals->push(params->code(0, s, ctor->params->at(0), block->scope));
 			actuals->push(t->ref());
 
 			CodeResult *res = new (this) CodeResult();
 			ctor->localCall(s, actuals, res, false);
+		}
+
+
+		/**
+		 * Initializer.
+		 */
+
+		Initializer::Initializer(syntax::SStr *name, Expr *expr) : name(name), expr(expr) {}
+
+		Initializer::Initializer(syntax::SStr *name, Actuals *params) : name(name), params(params) {}
+
+		void Initializer::toS(StrBuf *to) const {
+			*to << name->v;
+			if (params) {
+				*to << params;
+			} else if (expr) {
+				*to << S(" = ") << expr;
+			}
+		}
+
+
+		/**
+		 * InitBlock.
+		 */
+
+		InitBlock::InitBlock(SrcPos pos, CtorBody *block, MAYBE(Actuals *)params, Array<Initializer *> *init)
+			: Expr(pos) {
+
+			this->init(block, params);
+			for (nat i = 0; i < init->count(); i++)
+				this->init(init->at(i));
+		}
+
+		InitBlock::InitBlock(SrcPos pos, CtorBody *block, MAYBE(Actuals *) params) : Expr(pos) {
+			init(block, params);
+		}
+
+		void InitBlock::init(CtorBody *block, MAYBE(Actuals *) params) {
+			if (block->superCalled && params)
+				throw SyntaxError(pos, L"It is not possible to call super twice by first calling 'super' and "
+								L"then 'init' with parameters. Either remove the call to 'super' or remove the "
+								L"parameters from the init block.");
+
+			if (block->initDone)
+				throw SyntaxError(pos, L"Only one init block is allowed in each constructor.");
+			block->initDone = true;
+
+			initializers = new (this) Array<Initializer *>();
+			initialized = new (this) Set<Str *>();
+
+			// Look at what is happening.
+			thisVar = block->variable(new (this) SimplePart(S(" this")));
+			thisPtr = thisVar->result;
+
+			// See if we need to call the parent constructor.
+			if (!block->superCalled && thisPtr.type->super()) {
+				if (!params)
+					params = new (this) Actuals();
+				block->add(new (this) SuperCall(pos, block, params));
+			}
+
+			if (block->superCalled) {
+				// Find the current 'this' variable and modify its type.
+				LocalVar *created = block->variable(new (this) SimplePart(S("this")));
+				created->result = thisPtr;
+			} else {
+				// We need to create it.
+				LocalVar *created = new (this) LocalVar(new (this) Str(L"this"), thisPtr, thisVar->pos, true);
+				created->constant = true;
+				block->add(created);
+			}
+
+			scope = block->scope;
+		}
+
+		ExprResult InitBlock::result() {
+			return ExprResult();
+		}
+
+		void InitBlock::init(Initializer *init) {
+			Str *name = init->name->v;
+			MemberVar *v = as<MemberVar>(thisPtr.type->find(name, new (this) Array<Value>(1, thisPtr), scope));
+			if (v == null || v->params->at(0).type != thisPtr.type)
+				throw SyntaxError(init->name->pos, L"The member variable " + ::toS(name) + L" was not found in "
+								+ ::toS(thisPtr));
+
+			if (initialized->has(name))
+				throw SyntaxError(init->name->pos, L"The member " + ::toS(name) + L" has already been initialized.");
+
+			initializers->push(init);
+			initialized->put(name);
+		}
+
+		void InitBlock::toS(StrBuf *to) const {
+			*to << S("init {\n");
+			to->indent();
+
+			for (Nat i = 0; i < initializers->count(); i++) {
+				*to << initializers->at(i) << S(";\n");
+			}
+
+			to->dedent();
+			*to << S("}");
 		}
 
 		// Protect (=make sure it is destroyed) the newly created value in the indicated variable if required.
@@ -337,11 +410,8 @@ namespace storm {
 			}
 		}
 
-		void SuperCall::code(CodeGen *s, CodeResult *r) {
+		void InitBlock::code(CodeGen *s, CodeResult *r) {
 			using namespace code;
-
-			// Super class should be called first.
-			callParent(s);
 
 			code::Var dest = thisVar->var.v;
 			Type *type = thisPtr.type;
@@ -401,7 +471,7 @@ namespace storm {
 			}
 		}
 
-		void SuperCall::initVarDefault(CodeGen *s, MemberVar *v) {
+		void InitBlock::initVarDefault(CodeGen *s, MemberVar *v) {
 			using namespace code;
 
 			Value t = v->type;
@@ -435,7 +505,7 @@ namespace storm {
 			}
 		}
 
-		void SuperCall::initVar(CodeGen *s, MemberVar *v, Initializer *to) {
+		void InitBlock::initVar(CodeGen *s, MemberVar *v, Initializer *to) {
 			using namespace code;
 
 			Value t = v->type;
@@ -460,7 +530,7 @@ namespace storm {
 
 		}
 
-		void SuperCall::initVarCtor(CodeGen *s, MemberVar *v, Actuals *to) {
+		void InitBlock::initVarCtor(CodeGen *s, MemberVar *v, Actuals *to) {
 			using namespace code;
 
 			Value t = v->type;
@@ -501,7 +571,7 @@ namespace storm {
 			}
 		}
 
-		void SuperCall::initVarAssign(CodeGen *s, MemberVar *v, Expr *to) {
+		void InitBlock::initVarAssign(CodeGen *s, MemberVar *v, Expr *to) {
 			using namespace code;
 
 			Value t = v->type;

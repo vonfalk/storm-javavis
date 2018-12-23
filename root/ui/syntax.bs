@@ -166,7 +166,7 @@ class CtorBodyWrap extends SCtorBody {
 		for (Nat i = 0; i < result.count; i++) {
 			Expr e = result[i];
 
-			if (e as SuperCall) {
+			if (e as InitBlock) {
 				i += fixSuper(result, i, e);
 			}
 		}
@@ -175,7 +175,7 @@ class CtorBodyWrap extends SCtorBody {
 	}
 
 	// Add things to the super call. Returns number of statements inserted.
-	private Nat fixSuper(ExprBlock block, Nat pos, SuperCall s) {
+	private Nat fixSuper(ExprBlock block, Nat pos, InitBlock s) {
 		var decls = layout.allDecls();
 		Nat added = 0;
 		Expr[] vars;

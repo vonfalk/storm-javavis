@@ -107,9 +107,6 @@ namespace storm {
 			STORM_CTOR CtorBody(BSCtor *owner);
 			STORM_CTOR CtorBody(BSRawCtor *owner, Scope scope);
 
-			using ExprBlock::add;
-			void STORM_FN add(Array<Expr *> *exprs);
-
 			// Temporary storage of the actual LocalVar that stores the parameter we need to capture.
 			LocalVar *threadParam;
 
@@ -119,8 +116,56 @@ namespace storm {
 			// ctor(Thread a) { a = x; init(); }.
 			code::Var thread;
 
+			// Is a call to the super class' constructor present?
+			Bool superCalled;
+
+			// Is an initialization block present?
+			Bool initDone;
+
+			// Make sure we're properly initialized.
+			void STORM_FN checkInit();
+
 			// Code generation.
 			virtual void blockCode(CodeGen *state, CodeResult *to, const code::Block &block);
+		};
+
+		/**
+		 * Call the constructor of the super class.
+		 *
+		 * After this, 'this' will be available in the function, but the type will be that of the
+		 * super class, not the current class. That only happens after the current class is properly
+		 * initialized by using InitBlock.
+		 */
+		class SuperCall : public Expr {
+			STORM_CLASS;
+		public:
+			// Create.
+			STORM_CTOR SuperCall(SrcPos pos, CtorBody *block, Actuals *params);
+
+			// Result (always void).
+			virtual ExprResult STORM_FN result();
+
+			// Code.
+			virtual void STORM_FN code(CodeGen *s, CodeResult *r);
+
+			// To string.
+			virtual void STORM_FN toS(StrBuf *to) const;
+
+		private:
+			// Parameters.
+			Actuals *params;
+
+			// The variable for the 'this' pointer.
+			LocalVar *thisVar;
+
+			// Our type.
+			Value thisPtr;
+
+			// Scope.
+			CtorBody *block;
+
+			// Call the TObject's ctor, assuming we want to run on 't'.
+			void callTObject(CodeGen *s, NamedThread *t);
 		};
 
 		/**
@@ -149,14 +194,16 @@ namespace storm {
 		};
 
 		/**
-		 * Call the super class.
+		 * Initialize the class, optionally also calling the constructor of the super class.
+		 *
+		 * After this, 'this' will be available and of the proper type.
 		 */
-		class SuperCall : public Expr {
+		class InitBlock : public Expr {
 			STORM_CLASS;
 		public:
-			// Create.
-			STORM_CTOR SuperCall(SrcPos pos, CtorBody *block, Actuals *params);
-			STORM_CTOR SuperCall(SrcPos pos, CtorBody *block, Actuals *params, Array<Initializer *> *init);
+			// Create. Missing 'params' means that no parameters were provided.
+			STORM_CTOR InitBlock(SrcPos pos, CtorBody *block, MAYBE(Actuals *) params);
+			STORM_CTOR InitBlock(SrcPos pos, CtorBody *block, MAYBE(Actuals *) params, Array<Initializer *> *init);
 
 			// Add a new initializer.
 			void STORM_FN init(Initializer *init);
@@ -174,14 +221,8 @@ namespace storm {
 			// Member of.
 			Value thisPtr;
 
-			// Actual parameters.
-			Actuals *params;
-
 			// This parameter.
 			LocalVar *thisVar;
-
-			// Body.
-			CtorBody *rootBlock;
 
 			// Scope.
 			Scope scope;
@@ -194,13 +235,7 @@ namespace storm {
 			Set<Str *> *initialized;
 
 			// Init.
-			void init(CtorBody *block, Actuals *params);
-
-			// Call the parent constructor (if any).
-			void callParent(CodeGen *s);
-
-			// Call the TObject's ctor, assuming we want to run on 't'.
-			void callTObject(CodeGen *s, NamedThread *t);
+			void init(CtorBody *block, MAYBE(Actuals *) params);
 
 			// Initialize a variable.
 			void initVar(CodeGen *s, MemberVar *var, Initializer *to);
