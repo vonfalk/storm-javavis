@@ -215,7 +215,8 @@ namespace storm {
 		void SuperCall::init(CtorBody *block, Actuals *params) {
 			rootBlock = block;
 
-			initMap = new (this) InitMap();
+			initializers = new (this) Array<Initializer *>();
+			initialized = new (this) Set<Str *>();
 
 			// Add the regular this parameter!
 			SimplePart *name = new (this) SimplePart(new (this) Str(L" this"));
@@ -243,18 +244,19 @@ namespace storm {
 				throw SyntaxError(init->name->pos, L"The member variable " + ::toS(name) + L" was not found in "
 								+ ::toS(thisPtr));
 
-			if (initMap->has(name))
+			if (initialized->has(name))
 				throw SyntaxError(init->name->pos, L"The member " + ::toS(name) + L" has already been initialized.");
 
-			initMap->put(name, init);
+			initializers->push(init);
+			initialized->put(name);
 		}
 
 		void SuperCall::toS(StrBuf *to) const {
 			*to << S("init") << params << S(" {\n");
 			to->indent();
 
-			for (InitMap::Iter i = initMap->begin(); i != initMap->end(); ++i) {
-				*to << i.v() << S(";\n");
+			for (Nat i = 0; i < initializers->count(); i++) {
+				*to << initializers->at(i) << S(";\n");
 			}
 
 			to->dedent();
@@ -322,6 +324,19 @@ namespace storm {
 			ctor->localCall(s, actuals, res, false);
 		}
 
+		// Protect (=make sure it is destroyed) the newly created value in the indicated variable if required.
+		static void protect(CodeGen *s, code::Var object, code::Block varBlock, MemberVar *var) {
+			Value type = var->type;
+			if (type.isValue() && type.destructor() != code::Operand()) {
+				code::Part part = s->l->createPart(varBlock);
+				*s->l << begin(part);
+
+				code::Var v = s->l->createVar(part, Size::sPtr, type.destructor(), code::freeOnException);
+				*s->l << mov(v, object);
+				*s->l << add(v, ptrConst(var->offset()));
+			}
+		}
+
 		void SuperCall::code(CodeGen *s, CodeResult *r) {
 			using namespace code;
 
@@ -344,23 +359,29 @@ namespace storm {
 				}
 			}
 
-			// Initialize any member variables.
+			// Child scope for proper creation.
+			CodeGen *child = s->child(varBlock);
+
+			// Initialize any member variables that don't have explicit initialization first.
 			Array<MemberVar *> *vars = type->variables();
-			for (nat i = 0; i < vars->count(); i++) {
+			Map<Str *, MemberVar *> *names = new (this) Map<Str *, MemberVar *>();
+			for (Nat i = 0; i < vars->count(); i++) {
 				MemberVar *var = vars->at(i);
-				CodeGen *child = s->child(varBlock);
-				initVar(child, var);
-
-				Value type = var->type;
-				if (type.isValue() && type.destructor() != code::Operand()) {
-					// If we get an exception, this variable should be cleared from here on.
-					Part part = s->l->createPart(varBlock);
-					*s->l << begin(part);
-
-					code::Var v = s->l->createVar(part, Size::sPtr, type.destructor(), freeOnException);
-					*s->l << mov(v, dest);
-					*s->l << add(v, ptrConst(var->offset()));
+				if (initialized->has(var->name)) {
+					names->put(var->name, var);
+				} else {
+					initVarDefault(child, var);
+					protect(s, dest, varBlock, var);
 				}
+			}
+
+			// Initialize the remaining variables in the order they appear in the declaration.
+			for (Nat i = 0; i < initializers->count(); i++) {
+				Initializer *init = initializers->at(i);
+				MemberVar *var = names->get(init->name->v);
+
+				initVar(child, var, init);
+				protect(s, dest, varBlock, var);
 			}
 
 			// Remove all destructors here, since we can call the real destructor of 'this' now.
@@ -378,14 +399,6 @@ namespace storm {
 				code::Var thisCleanup = s->l->createVar(p, Size::sPtr, fn->directRef(), freeOnException);
 				*s->l << mov(thisCleanup, dest);
 			}
-		}
-
-		void SuperCall::initVar(CodeGen *s, MemberVar *v) {
-			InitMap::Iter i = initMap->find(v->name);
-			if (i == initMap->end())
-				initVarDefault(s, v);
-			else
-				initVar(s, v, i.v());
 		}
 
 		void SuperCall::initVarDefault(CodeGen *s, MemberVar *v) {

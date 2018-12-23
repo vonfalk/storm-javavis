@@ -268,6 +268,10 @@ BEGIN_TEST(StormCtorTest, BS) {
 	CHECK_ERROR(runFn<Int>(S("test.bs.ctorErrorTest")), CodeError);
 	CHECK_ERROR(runFn<Int>(S("test.bs.memberAssignErrorTest")), CodeError);
 	CHECK_EQ(runFn<Int>(S("test.bs.testDefaultCtor")), 60);
+
+	// Initialization order.
+	CHECK_EQ(runFn<Int>(S("test.bs.checkInitOrder")), 321);
+	CHECK_EQ(runFn<Int>(S("test.bs.checkInitOrder2")), 123);
 } END_TEST
 
 

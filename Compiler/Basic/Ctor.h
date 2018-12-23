@@ -1,5 +1,6 @@
 #pragma once
 #include "Core/Map.h"
+#include "Core/Set.h"
 #include "Core/Array.h"
 #include "Compiler/Function.h"
 #include "Compiler/Syntax/SStr.h"
@@ -185,9 +186,12 @@ namespace storm {
 			// Scope.
 			Scope scope;
 
-			// Initializers.
-			typedef Map<Str *, Initializer *> InitMap;
-			Map<Str *, Initializer *> *initMap;
+			// Initializers. Remember the order so that we can initialize members in the order they
+			// appear in the source code.
+			Array<Initializer *> *initializers;
+
+			// Remember which variables have initializers.
+			Set<Str *> *initialized;
 
 			// Init.
 			void init(CtorBody *block, Actuals *params);
@@ -199,7 +203,6 @@ namespace storm {
 			void callTObject(CodeGen *s, NamedThread *t);
 
 			// Initialize a variable.
-			void initVar(CodeGen *s, MemberVar *var);
 			void initVar(CodeGen *s, MemberVar *var, Initializer *to);
 			void initVarCtor(CodeGen *s, MemberVar *var, Actuals *to);
 			void initVarAssign(CodeGen *s, MemberVar *var, Expr *to);
