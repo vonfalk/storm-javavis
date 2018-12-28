@@ -50,9 +50,13 @@ namespace storm {
 	 * ObjIStream
 	 */
 
+	ObjIStream::Member::Member(Str *name, Nat type) : name(name), type(type), read(0) {}
+
+	ObjIStream::Member::Member(const Member &o, Int read) : name(o.name), type(o.type), read(read) {}
+
+
 	ObjIStream::Desc::Desc(Byte flags, Nat parent, Str *name) : flags(flags), parent(parent) {
-		memberNames = new (this) Array<Str *>();
-		memberTypes = new (this) Array<Nat>();
+		members = new (this) Array<Member>();
 
 		Type *t = runtime::fromIdentifier(name);
 		if (!t)
@@ -62,8 +66,13 @@ namespace storm {
 			throw SerializationError(L"The type " + ::toS(demangleName(name)) + L" is not serializable.");
 
 		info = (*h.serializedTypeFn)();
+	}
 
-		// TOOD: Make sure that our view of the type matches with the one in the serialized stream.
+	Nat ObjIStream::Desc::findMember(Str *name) const {
+		for (Nat i = 0; i < members->count(); i++)
+			if (*members->at(i).name == *name)
+				return i;
+		return members->count();
 	}
 
 
@@ -71,8 +80,8 @@ namespace storm {
 
 	ObjIStream::Cursor::Cursor(Desc *desc) : desc(desc), pos(0) {}
 
-	Nat ObjIStream::Cursor::current() const {
-		return desc->memberTypes->at(pos);
+	const ObjIStream::Member &ObjIStream::Cursor::current() const {
+		return desc->members->at(pos);
 	}
 
 
@@ -88,7 +97,7 @@ namespace storm {
 		// since the types used at the root of deserialization do not need to be equal. However,
 		// 'type' needs to be a parent of whatever we find as 'actual' later on, which is a subclass
 		// of 'expected'.
-		Nat expectedId = expectedType();
+		Nat expectedId = start();
 		Desc *expected = findInfo(expectedId);
 		if ((expected->flags & typeInfo::classType) != typeInfo::classType)
 			throw SerializationError(L"Expected a class type, but got a value type.");
@@ -132,22 +141,31 @@ namespace storm {
 
 
 	void ObjIStream::startCustom(StoredId id) {
-		Nat expected = expectedType();
+		Nat expected = start();
 		if (expected != id)
 			throw SerializationError(L"Type mismatch during deserialization!");
 
 		depth->push(Cursor());
 	}
 
-	Nat ObjIStream::expectedType() {
+	Nat ObjIStream::start() {
 		if (depth->empty()) {
-			// First type. Read from the stream.
+			// First type. Read its id from the stream.
 			return from->readNat();
+		}
+
+		Cursor &at = depth->last();
+		const Member &expected = at.current();
+		if (expected.read < 0) {
+			// TODO: Read this object into temporary storage!
+			throw InternalError(L"Not implemented yet!");
+		} else if (expected.read > 0) {
+			// TODO: Retrieve this object from temporary storage rather than reading it.
+			throw InternalError(L"Not implemented yet!");
 		} else {
-			Cursor &at = depth->last();
-			Nat expected = at.current();
-			depth->last().next();
-			return expected;
+			// Read it now!
+			at.next();
+			return expected.type;
 		}
 	}
 
@@ -181,12 +199,70 @@ namespace storm {
 		// Members.
 		for (Nat type = from->readNat(); type != 0; type = from->readNat()) {
 			Str *name = Str::read(from);
-			result->memberNames->push(name);
-			result->memberTypes->push(type);
+			result->members->push(Member(name, type));
 		}
+
+		validate(result);
 
 		typeIds->put(id, result);
 		return result;
+	}
+
+	void ObjIStream::validate(Desc *stream) {
+		SerializedType *our = stream->info;
+
+		// Note: We check the parent type when reading objects. Otherwise, we need quite a bit of
+		// bookkeeping to know when to validate parents of all types unless we want to check all
+		// types every time a new type is found in the stream.
+
+		// Note: We can not check the types of members here, as all member types are not necessarily
+		// known at this point. This is instead done when 'readXxx' is called.
+
+		// Check the members we need to find, and match them to the members in the stream. During
+		// the process, figure out how to use the temporary storage to store some members there if
+		// necessary.
+		Nat streamPos = 0;
+		Map<Str *, Member> *tempPos = new (this) Map<Str *, Member>();
+		// Note: Original count, not updated when we grow the array. This is intentional in order to
+		// not catch the duplicate entries referring to temporary storage!
+		Nat memberCount = stream->members->count();
+		for (Nat i = 0; i < our->members->count(); i++) {
+			const SerializedMember &ourMember = our->members->at(i);
+
+			// Look until we find it in the stream, saving intermediate members to temporary storage.
+			while (streamPos < memberCount) {
+				Member &m = stream->members->at(streamPos);
+				if (*m.name == *ourMember.name)
+					break;
+
+				// Store it in temporary storage and remember its location (indexed from 1).
+				m.read = -1;
+				tempPos->put(m.name, Member(m, tempPos->count() + 1));
+				streamPos++;
+			}
+
+			if (streamPos < memberCount) {
+				// If we do, we can read it without temporary storage.
+				stream->members->at(streamPos).read = 0;
+				streamPos++;
+			} else if (tempPos->has(ourMember.name)) {
+				// If we skipped it earlier, read it from temporary storage.
+				stream->members->push(tempPos->get(ourMember.name));
+			} else {
+				// Otherwise, an error.
+
+				// TODO: When we have support for default initialization, take that into consideration here!
+				throw SerializationError(L"The member " + ::toS(ourMember.name) + L", required for type " +
+										::toS(runtime::typeName(our->type)) + L", is not present in the stream.");
+			}
+		}
+
+		PLN(L"Members of " << runtime::typeName(our->type));
+		for (Nat i = 0; i < stream->members->count(); i++) {
+			Member t = stream->members->at(i);
+
+			PLN(L"  " << t.name << L", " << t.type << L", " << t.read);
+		}
 	}
 
 	void ObjIStream::clearObjects() {
@@ -257,8 +333,11 @@ namespace storm {
 
 			// Find the expected type from the description. It should be a direct or indirect parent!
 			SerializedType *expectedDesc = type;
-			while (expected && expectedDesc->type != expected)
+			while (expectedDesc && expectedDesc->type != expected)
 				expectedDesc = expectedDesc->parent;
+			if (!expectedDesc)
+				throw SerializationError(L"The provided type description does not match the serialized object.");
+
 			writeInfo(expectedDesc, typeInfo::classType);
 
 			// Now, the reader knows what we're talking about. Now we can bother with references...

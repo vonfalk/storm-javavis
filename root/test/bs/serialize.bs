@@ -47,6 +47,23 @@ class Data : persist {
 		}
 	}
 
+	// Write the members in another order. Should still be readable by 'read'.
+	void writeShuffled(ObjOStream to) {
+		SerializedType desc(named{Data}, &__init(Data, ObjIStream));
+		desc.add("b", named{core:Int});
+		desc.add("data2", named{Employee});
+		desc.add("a", named{core:Int});
+		desc.add("data1", named{Employee});
+
+		if (to.startObject(desc, this)) {
+			b.write(to);
+			data2.write(to);
+			a.write(to);
+			data1.write(to);
+			to.end();
+		}
+	}
+
 	// Read. Should be automatically generated...
 	Data read(ObjIStream from) : static {
 		Object r = from.readObject(named{Data});
@@ -190,24 +207,38 @@ void persist(Class c) {
 	print("Decorator: " # c);
 }
 
-// Test serialization.
-void testSerialize() {
-	Data x;
-	MemOStream out;
-	ObjOStream obj(out);
-
-	x.write(obj);
-	print("Raw data\n" # out);
-
+// Deserialize things.
+void deserialize(MemOStream from) {
 	{
-		MemIStream in(out.buffer);
+		MemIStream in(from.buffer);
 		util:TextObjStream read(in);
 		print("Result: " # read.read());
 	}
 
 	{
-		MemIStream in(out.buffer);
+		MemIStream in(from.buffer);
 		ObjIStream read(in);
 		print("Deserialization: " # Data:read(read));
+	}
+}
+
+// Test serialization.
+void testSerialize() {
+	Data x;
+
+	{
+		MemOStream out;
+		ObjOStream obj(out);
+		x.write(obj);
+		deserialize(out);
+	}
+
+	print("Shuffled output:");
+
+	{
+		MemOStream out;
+		ObjOStream obj(out);
+		x.writeShuffled(obj);
+		deserialize(out);
 	}
 }

@@ -157,11 +157,6 @@ namespace storm {
 		// described by 'type', even if this is not possible to express in the type system.
 		Object *STORM_FN readObject(Type *type);
 
-
-		// Start deserialization of an object. Returns either an instance of the object, or null to
-		// indicate that deserialization shall be performed here by calling the constructor.
-		// MAYBE(Object *) STORM_FN startObject(SerializedType *type);
-
 		// Indicate the start of a custom type.
 		void STORM_FN startCustom(StoredId id);
 
@@ -169,6 +164,36 @@ namespace storm {
 		void STORM_FN end();
 
 	private:
+		// Description of a member.
+		//
+		// Note that since some members are read in multiple steps, the same name is possibly
+		// repeated inside a single Desc instance.
+		class Member {
+			STORM_VALUE;
+		public:
+			// Create.
+			Member(Str *name, Nat type);
+
+			// Create a copy with a different 'read' member.
+			Member(const Member &o, Int read);
+
+			// Name of the member.
+			Str *name;
+
+			// Type of the member.
+			Nat type;
+
+			// How to read the member:
+			// =0: just read the member as usual.
+			// <0: read this member and push it to temporary storage. Do not return it immediately.
+			// >0: read the member from an object previously saved in temporary storage, not from the stream.
+			// This allows reading members in a different order compared to what is expected
+			// by the constructor of the object we're constructing. It does, however, incur
+			// additional memory allocation in cases where we need to reorder members. This is
+			// fine since we expect that case to be rare.
+			Int read;
+		};
+
 		// Description of a type. Contains a pointer to an actual type once we know that.
 		class Desc : public Object {
 			STORM_CLASS;
@@ -182,12 +207,14 @@ namespace storm {
 			// ID of the parent class.
 			Nat parent;
 
-			// Member names and types.
-			Array<Str *> *memberNames;
-			Array<Nat> *memberTypes;
+			// Members.
+			Array<Member> *members;
 
 			// What we know about the serialization.
 			SerializedType *info;
+
+			// Find a member by name. Returns an id >= members->count() on failure.
+			Nat findMember(Str *name) const;
 		};
 
 		// Cursor into the Desc object. Only worries about members in contrast to the cursor in
@@ -199,10 +226,10 @@ namespace storm {
 			Cursor(Desc *desc);
 
 			// More elements?
-			inline Bool more() const { return desc && pos < desc->memberTypes->count(); }
+			inline Bool more() const { return desc && pos < desc->members->count(); }
 
 			// Current element?
-			Nat current() const;
+			const Member &current() const;
 
 			// Advance.
 			inline void next() { if (more()) pos++; }
@@ -221,18 +248,16 @@ namespace storm {
 		// Directory of known type ids.
 		Map<Nat, Desc *> *typeIds;
 
-		// Figure out the type we're supposed to read at the moment. Assumes we start reading that
-		// type afterwards, as internal state is updated so that the next call to 'expectedType'
-		// returns something different.
-		Nat expectedType();
-
-
-		// Start a serialization. Returns the object id we're expecting to read, after possibly
-		// reading it.
-		Desc *start(SerializedType *type);
+		// Start deserialization of an object. As a part of the process, figures out which object to
+		// read and returns its id. Will also make sure to read any objects that are supposed to be
+		// stored in temporary storage if necessary.
+		Nat start();
 
 		// Get the description for an object id, reading it if necessary.
 		Desc *findInfo(Nat id);
+
+		// Validate a type description against our view of the corresponding type.
+		void validate(Desc *desc);
 
 		// Clear object ids.
 		void clearObjects();
