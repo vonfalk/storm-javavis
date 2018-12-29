@@ -7,6 +7,8 @@
 
 #ifdef WINDOWS
 #define WIN32_LEAN_AND_MEAN
+// We don't want Windows.h to define min and max as macros!
+#define NOMINMAX
 
 #include <Windows.h>
 
@@ -15,13 +17,6 @@
 #undef small
 #endif
 
-// We need to remove min and max macros...
-#ifdef min
-#undef min
-#endif
-#ifdef max
-#undef max
-#endif
 
 #endif
 
