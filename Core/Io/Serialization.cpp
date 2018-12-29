@@ -9,38 +9,45 @@ namespace storm {
 	 * Object descriptions.
 	 */
 
-	SerializedMember::SerializedMember(Str *name, Type *type) : name(name), type(type) {}
-
 	static void checkCtor(Type *t, FnBase *ctor) {
 		// TODO: Check!
 	}
 
 	SerializedType::SerializedType(Type *t, FnBase *ctor)
-		: type(t), readCtor(ctor), parent(null), members(new (engine()) Array<SerializedMember>()) {
+		: type(t), readCtor(ctor), super(null) {
 
 		checkCtor(t, ctor);
 	}
 
-	SerializedType::SerializedType(Type *t, FnBase *ctor, SerializedType *parent)
-		: type(t), readCtor(ctor), parent(parent), members(new (engine()) Array<SerializedMember>()) {
+	SerializedType::SerializedType(Type *t, FnBase *ctor, SerializedType *super)
+		: type(t), readCtor(ctor), super(super) {
 
 		checkCtor(t, ctor);
 	}
 
-	void SerializedType::add(Str *name, Type *type) {
+
+	SerializedMember::SerializedMember(Str *name, Type *type) : name(name), type(type) {}
+
+	SerializedStdType::SerializedStdType(Type *t, FnBase *ctor)
+		: SerializedType(t, ctor), members(new (engine()) Array<SerializedMember>()) {}
+
+	SerializedStdType::SerializedStdType(Type *t, FnBase *ctor, SerializedType *parent)
+		: SerializedType(t, ctor, parent), members(new (engine()) Array<SerializedMember>()) {}
+
+	void SerializedStdType::add(Str *name, Type *type) {
 		members->push(SerializedMember(name, type));
 	}
 
-	SerializedType::Cursor::Cursor() : type(null), pos(1) {}
+	SerializedStdType::Cursor::Cursor() : type(null), pos(1) {}
 
-	SerializedType::Cursor::Cursor(SerializedType *type) : type(type), pos(0) {
-		if (!type->parent)
+	SerializedStdType::Cursor::Cursor(SerializedStdType *type) : type(type), pos(0) {
+		if (!type->super)
 			pos++;
 	}
 
-	Type *SerializedType::Cursor::current() const {
+	Type *SerializedStdType::Cursor::current() const {
 		if (pos == 0)
-			return type->parent->type;
+			return type->super->type;
 		else
 			return type->members->at(pos - 1).type;
 	}
@@ -55,7 +62,7 @@ namespace storm {
 	ObjIStream::Member::Member(const Member &o, Int read) : name(o.name), type(o.type), read(read) {}
 
 
-	ObjIStream::Desc::Desc(Byte flags, Nat parent, Str *name) : flags(flags), parent(parent) {
+	ObjIStream::Desc::Desc(Byte flags, Nat parent, Str *name) : data(Nat(flags) << 24), parent(parent) {
 		members = new (this) Array<Member>();
 
 		Type *t = runtime::fromIdentifier(name);
@@ -68,6 +75,11 @@ namespace storm {
 		info = (*h.serializedTypeFn)();
 	}
 
+	ObjIStream::Desc::Desc(Byte flags, Type *type, FnBase *ctor) : data(Nat(flags) << 24), parent(0) {
+		members = null;
+		info = new (this) SerializedType(type, ctor);
+	}
+
 	Nat ObjIStream::Desc::findMember(Str *name) const {
 		for (Nat i = 0; i < members->count(); i++)
 			if (*members->at(i).name == *name)
@@ -76,20 +88,83 @@ namespace storm {
 	}
 
 
-	ObjIStream::Cursor::Cursor() : desc(null), pos(0) {}
+	ObjIStream::Cursor::Cursor() : desc(null), tmp(null), pos(0) {}
 
-	ObjIStream::Cursor::Cursor(Desc *desc) : desc(desc), pos(0) {}
+	ObjIStream::Cursor::Cursor(Desc *desc) : desc(desc), tmp(null), pos(0) {
+		Nat entries = desc->storage();
+		if (entries > 0) {
+			// TODO: Maybe cache the array type somewhere?
+			Engine &e = desc->engine();
+			tmp = runtime::allocArray<Variant>(e, StormInfo<Variant>::handle(e).gcArrayType, entries);
+		}
+	}
 
 	const ObjIStream::Member &ObjIStream::Cursor::current() const {
 		return desc->members->at(pos);
 	}
 
+	void ObjIStream::Cursor::pushTemporary(const Variant &v) {
+		tmp->v[tmp->filled++] = v;
+	}
+
+
+	template <class T, T (IStream::* readFn)()>
+	static void CODECALL read(T *out, ObjIStream *from) {
+		new (out) T((from->from->*readFn)());
+		from->end();
+	}
+
+	static void readStr(Str **out, ObjIStream *from) {
+		new (Place(out)) Str(from->from);
+		from->end();
+	}
 
 	ObjIStream::ObjIStream(IStream *src) : from(src) {
 		clearObjects();
 
 		depth = new (this) Array<Cursor>();
 		typeIds = new (this) Map<Nat, Desc *>();
+
+#define ADD_BUILTIN(id, t)												\
+		typeIds->put(id, new (this) Desc(								\
+						typeInfo::valueType,							\
+						StormInfo<t>::type(e),							\
+						new (e) FnBase(address(&read<t, &IStream::read ## t>), null, false, null)))
+
+		// Add built-in types here to avoid special cases later on.
+		Engine &e = engine();
+		ADD_BUILTIN(boolId, Bool);
+		ADD_BUILTIN(byteId, Byte);
+		ADD_BUILTIN(intId, Int);
+		ADD_BUILTIN(natId, Nat);
+		ADD_BUILTIN(longId, Long);
+		ADD_BUILTIN(wordId, Word);
+		ADD_BUILTIN(floatId, Float);
+		ADD_BUILTIN(doubleId, Double);
+
+#undef ADD_BUILTIN
+
+		// String is a special case.
+		typeIds->put(strId, new (this) Desc(typeInfo::classType, StormInfo<Str>::type(e),
+														new (e) FnBase(address(&readStr), null, false, null)));
+	}
+
+	void ObjIStream::readValue(Type *type, PTR_GC out) {
+		Info info = start();
+		if (info.result.any()) {
+			// TODO: Check type!
+			info.result.moveValue(out);
+			return;
+		}
+
+		Desc *expected = findInfo(info.expectedType);
+		if (!expected->isValue())
+			throw SerializationError(L"Expected a value type, but got a class type.");
+		if (expected->info->type != type)
+			throw SerializationError(L"Type mismatch. Expected " + ::toS(runtime::typeName(expected->info->type)) +
+									L" but got " + ::toS(runtime::typeName(type)) + L".");
+
+		readValueI(expected, out);
 	}
 
 	Object *ObjIStream::readObject(Type *type) {
@@ -97,75 +172,154 @@ namespace storm {
 		// since the types used at the root of deserialization do not need to be equal. However,
 		// 'type' needs to be a parent of whatever we find as 'actual' later on, which is a subclass
 		// of 'expected'.
-		Nat expectedId = start();
-		Desc *expected = findInfo(expectedId);
-		if ((expected->flags & typeInfo::classType) != typeInfo::classType)
-			throw SerializationError(L"Expected a class type, but got a value type.");
+		Info info = start();
+		if (info.result.any()) {
+			// TODO: Check type!
+			return (Object *)info.result.getObject();
+		}
 
+		Desc *expected = findInfo(info.expectedType);
+
+		if (expected->isValue()) {
+			// If this type has turned into a class type, just go ahead. There is no problem with
+			// this as long as the members match.
+			Object *created = (Object *)runtime::allocObject(0, expected->info->type);
+			readValueI(expected, created);
+			return created;
+		}
+
+		return readObjectI(expected, type);
+	}
+
+	void ObjIStream::readCustomValue(StoredId id, PTR_GC out) {
+		Info info = start();
+		Desc *expected = findInfo(info.expectedType);
+		if (!expected->isValue())
+			throw SerializationError(L"Expected a value type, but got a class type.");
+		if (id != info.expectedType)
+			throw SerializationError(L"Mismatch of built-in types!");
+
+		if (info.result.any()) {
+			// TODO: Check type!
+			info.result.moveValue(out);
+			return;
+		}
+
+		readValueI(expected, out);
+	}
+
+	Object *ObjIStream::readCustomObject(StoredId id) {
+		Info info = start();
+		Desc *expected = findInfo(info.expectedType);
+		if (expected->isValue())
+			throw SerializationError(L"Expected a class type, but got a value type.");
+		if (id != info.expectedType)
+			throw SerializationError(L"Mismatch of built-in types!");
+
+		if (info.result.any()) {
+			// TODO: Check type?
+			return (Object *)info.result.getObject();
+		}
+
+		Object *created = (Object *)runtime::allocObject(0, expected->info->type);
+		readValueI(expected, created);
+		return created;
+	}
+
+	Variant ObjIStream::readObject(Nat typeId) {
+		Desc *type = findInfo(typeId);
+		if (type->isValue()) {
+			Type *t = type->info->type;
+			if (runtime::isValue(t)) {
+				Variant v = Variant::uninitializedValue(t);
+				readValueI(type, v.getValue());
+				v.valueInitialized();
+				return v;
+			} else {
+				// We support turning values into classes.
+				Object *created = (Object *)runtime::allocObject(0, t);
+				readValueI(type, created);
+				return Variant(created);
+			}
+		} else {
+			return Variant(readObjectI(type, type->info->type));
+		}
+	}
+
+	void ObjIStream::readValueI(Desc *type, void *out) {
+		// Find the parent classes and push them on the stack to keep track of what we're doing.
+		Desc *d = type;
+		while (d != null) {
+			depth->push(Cursor(d));
+
+			if (d->parent)
+				d = findInfo(d->parent);
+			else
+				d = null;
+		}
+
+		// Call the constructor!
+		ObjIStream *me = this;
+		os::FnCall<void, 2> call = os::fnCall().add(out).add(me);
+		type->info->readCtor->callRaw(call, null, null);
+	}
+
+	Object *ObjIStream::readObjectI(Desc *expected, Type *t) {
+		// Did we encounter this instance before?
 		Nat objId = from->readNat();
-		if (Object *old = objIds->get(objId, null))
+		if (Object *old = objIds->get(objId, null)) {
+			if (!runtime::isA(old, t))
+				throw SerializationError(L"Wrong type found during deserialization.");
 			return old;
+		}
 
 		// Read the actual type.
 		Nat actualId = from->readNat();
 		Desc *actual = findInfo(actualId);
 
-		// Allocate the object and make sure the type is appropriate.
-		Object *created = (Object *)runtime::allocObject(0, actual->info->type);
-		if (!runtime::isA(created, type))
+		// Make sure the type we're about to create is appropriate.
+		if (!runtime::isA(actual->info->type, t))
 			throw SerializationError(L"Wrong type found during deserialization.");
 
+		// Allocate the object and deserialize by calling the constructor, just like we do with value types.
+		Object *created = (Object *)runtime::allocObject(0, actual->info->type);
 		objIds->put(objId, created);
 
-		// Find the parent classes, and push them on the stack so that we remember what we are
-		// doing.
-		{
-			Desc *d = actual;
-			while (d != null) {
-				depth->push(Cursor(d));
-
-				if (d->parent)
-					d = findInfo(d->parent);
-				else
-					d = null;
-			}
-		}
-
-		// Read everything by calling the constructor.
-		ObjIStream *me = this;
-		os::FnCall<void, 2> call = os::fnCall().add(created).add(me);
-		actual->info->readCtor->callRaw(call, null, null);
+		readValueI(actual, created);
 
 		return created;
 	}
 
+	ObjIStream::Info ObjIStream::start() {
+		Info r = { 0, Variant() };
 
-	void ObjIStream::startCustom(StoredId id) {
-		Nat expected = start();
-		if (expected != id)
-			throw SerializationError(L"Type mismatch during deserialization!");
-
-		depth->push(Cursor());
-	}
-
-	Nat ObjIStream::start() {
 		if (depth->empty()) {
 			// First type. Read its id from the stream.
-			return from->readNat();
+			r.expectedType = from->readNat();
+			return r;
 		}
 
+		// Some other type. Examine what we expect to read.
 		Cursor &at = depth->last();
-		const Member &expected = at.current();
-		if (expected.read < 0) {
-			// TODO: Read this object into temporary storage!
-			throw InternalError(L"Not implemented yet!");
-		} else if (expected.read > 0) {
-			// TODO: Retrieve this object from temporary storage rather than reading it.
-			throw InternalError(L"Not implemented yet!");
-		} else {
-			// Read it now!
+		assert(!at.customDesc(), L"We don't handle serializing other types inside custom serialization yet!");
+
+		// Process objects until we find something we can return!
+		while (true) {
+			const Member &expected = at.current();
 			at.next();
-			return expected.type;
+
+			if (expected.read < 0) {
+				// Read one object into temporary storage and continue.
+				at.pushTemporary(readObject(expected.type));
+			} else if (expected.read > 0) {
+				r.expectedType = expected.type;
+				r.result = at.temporary(Nat(expected.read - 1));
+				return r;
+			} else {
+				// Read it now!
+				r.expectedType = expected.type;
+				return r;
+			}
 		}
 	}
 
@@ -209,7 +363,12 @@ namespace storm {
 	}
 
 	void ObjIStream::validate(Desc *stream) {
-		SerializedType *our = stream->info;
+		SerializedStdType *our = as<SerializedStdType>(stream->info);
+		if (!our) {
+			// Custom type description. Nothing to validate!
+			stream->members = null;
+			return;
+		}
 
 		// Note: We check the parent type when reading objects. Otherwise, we need quite a bit of
 		// bookkeeping to know when to validate parents of all types unless we want to check all
@@ -257,12 +416,16 @@ namespace storm {
 			}
 		}
 
-		PLN(L"Members of " << runtime::typeName(our->type));
-		for (Nat i = 0; i < stream->members->count(); i++) {
-			Member t = stream->members->at(i);
+		// Remember the number of bytes required in temporary storage.
+		stream->storage(tempPos->count());
 
-			PLN(L"  " << t.name << L", " << t.type << L", " << t.read);
-		}
+		// PLN(L"Members of " << runtime::typeName(our->type));
+		// for (Nat i = 0; i < stream->members->count(); i++) {
+		// 	Member t = stream->members->at(i);
+
+		// 	PLN(L"  " << t.name << L", " << t.type << L", " << t.read);
+		// }
+		// PLN(L"  (" << stream->storage() << L" temporary entries required)");
 	}
 
 	void ObjIStream::clearObjects() {
@@ -279,7 +442,7 @@ namespace storm {
 	ObjOStream::ObjOStream(OStream *to) : to(to) {
 		clearObjects();
 
-		depth = new (this) Array<SerializedType::Cursor>();
+		depth = new (this) Array<SerializedStdType::Cursor>();
 		typeIds = new (this) Map<TObject *, Nat>();
 		nextId = firstCustomId;
 
@@ -334,7 +497,7 @@ namespace storm {
 			// Find the expected type from the description. It should be a direct or indirect parent!
 			SerializedType *expectedDesc = type;
 			while (expectedDesc && expectedDesc->type != expected)
-				expectedDesc = expectedDesc->parent;
+				expectedDesc = expectedDesc->super;
 			if (!expectedDesc)
 				throw SerializationError(L"The provided type description does not match the serialized object.");
 
@@ -365,6 +528,7 @@ namespace storm {
 	}
 
 	void ObjOStream::startCustom(Type *type) {
+		// TODO: Revise this! We could probably make it a special case of 'start' below.
 		startCustom(StoredId(typeId(type)));
 	}
 
@@ -375,7 +539,7 @@ namespace storm {
 			depth->last().next();
 		}
 
-		depth->push(SerializedType::Cursor());
+		depth->push(SerializedStdType::Cursor());
 	}
 
 	Type *ObjOStream::start(SerializedType *type) {
@@ -384,7 +548,7 @@ namespace storm {
 			// We're the root object, write a header.
 			to->writeNat(typeId(type->type) & ~typeMask);
 		} else {
-			SerializedType::Cursor &at = depth->last();
+			SerializedStdType::Cursor &at = depth->last();
 			// Note: Will crash if we ever let a custom serialization call "regular" serialization (eg. containers).
 			if (at.isParent())
 				r = null;
@@ -394,7 +558,12 @@ namespace storm {
 		}
 
 		// Add a cursor to 'depth' to keep track of what we're doing!
-		depth->push(SerializedType::Cursor(type));
+		if (SerializedStdType *t = as<SerializedStdType>(type)) {
+			depth->push(SerializedStdType::Cursor(t));
+		} else {
+			// Custom type. We don't know about it.
+			depth->push(SerializedStdType::Cursor());
+		}
 		return r;
 	}
 
@@ -402,7 +571,7 @@ namespace storm {
 		if (depth->empty())
 			throw SerializationError(L"Mismatched calls to startX during serialization!");
 
-		SerializedType::Cursor end = depth->last();
+		SerializedStdType::Cursor end = depth->last();
 		if (end.more())
 			throw SerializationError(L"Missing fields during serialization!");
 
@@ -425,23 +594,28 @@ namespace storm {
 		to->writeByte(flags);
 		runtime::typeIdentifier(t->type)->write(to);
 
-		if (t->parent) {
-			to->writeNat(typeId(t->parent->type) & ~typeMask);
+		if (t->super) {
+			to->writeNat(typeId(t->super->type) & ~typeMask);
 		} else {
 			to->writeNat(endId);
 		}
 
-		// Members.
-		for (Nat i = 0; i < t->members->count(); i++) {
-			const SerializedMember &member = t->members->at(i);
+		if (SerializedStdType *s = as<SerializedStdType>(t)) {
+			// Members.
+			for (Nat i = 0; i < s->members->count(); i++) {
+				const SerializedMember &member = s->members->at(i);
 
-			Nat id = typeId(member.type);
-			to->writeNat(id & ~typeMask);
-			member.name->write(to);
+				Nat id = typeId(member.type);
+				to->writeNat(id & ~typeMask);
+				member.name->write(to);
+			}
+
+			// End of members.
+			to->writeNat(endId);
+		} else {
+			// Note: We need to indicate the absence of members in the flags.
+			assert(false, L"Not writing members is not yet supported!");
 		}
-
-		// End of members.
-		to->writeNat(endId);
 	}
 
 	Str *demangleName(Str *name) {

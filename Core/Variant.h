@@ -17,6 +17,7 @@ namespace storm {
 
 		// Copy the variant.
 		Variant(const Variant &o);
+		Variant &operator =(const Variant &o);
 
 		// Create a variant referring to an object.
 		explicit Variant(RootObject *t);
@@ -37,11 +38,37 @@ namespace storm {
 		void STORM_FN deepCopy(CloneEnv *env);
 
 		// Empty/any value?
-		Bool STORM_FN empty() const { return data == null; }
-		Bool STORM_FN any() const { return data != null; }
+		Bool STORM_FN empty() const;
+		Bool STORM_FN any() const { return !empty(); }
 
 		// Does this variant contain the specified type?
 		Bool STORM_FN has(Type *type) const;
+
+	public:
+
+		/**
+		 * Low-level API for C++.
+		 */
+
+		// Create a uninitialized variant referring to a type. Call 'getValue' and 'valueInitialized'
+		// to initialize the value.
+		static Variant uninitializedValue(Type *type);
+
+		// Get a pointer to the value stored in here, assuming it is a value.
+		void *getValue();
+
+		// Note that we have initialized the value.
+		void valueInitialized();
+
+		// Note that we have moved the value somewhere else, clearing the variant without calling
+		// the destructor. It is possible to call 'valueInitialized' again.
+		void valueRemoved();
+
+		// Move the value somewhere else.
+		void moveValue(void *to);
+
+		// Get the object stored in here.
+		RootObject *getObject();
 
 	private:
 		// The stored data. Either an array with one element, or a pointer to an object.

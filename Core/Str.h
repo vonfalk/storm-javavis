@@ -196,6 +196,9 @@ namespace storm {
 		void STORM_FN write(OStream *to) const;
 		static Str *STORM_FN read(IStream *from);
 
+		// Create a string from the stream. Use 'read' from Storm.
+		explicit Str(IStream *from);
+
 		// Serialization.
 		void STORM_FN write(ObjOStream *to) const;
 		static Str *STORM_FN read(ObjIStream *from);

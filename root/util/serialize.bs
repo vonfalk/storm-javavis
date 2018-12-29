@@ -86,7 +86,7 @@ private:
 		// A previous object?
 		Nat objId = Nat:read(src);
 		if (objects.has(objId)) {
-			to << "<previous instance " << objId << ">\n";
+			to << "<link to instance " << objId << ">";
 			return;
 		}
 		objects.put(objId);
@@ -158,21 +158,22 @@ private:
 		if (type == StoredId:boolId.v) {
 			to << Bool:read(src);
 		} else if (type == StoredId:byteId.v) {
-			to << Byte:read(src);
+			to << Byte:read(src) << "b";
 		} else if (type == StoredId:intId.v) {
-			to << Int:read(src);
+			to << Int:read(src) << "i";
 		} else if (type == StoredId:natId.v) {
-			to << Nat:read(src);
+			to << Nat:read(src) << "n";
 		} else if (type == StoredId:longId.v) {
-			to << Long:read(src);
+			to << Long:read(src) << "l";
 		} else if (type == StoredId:wordId.v) {
-			to << Word:read(src);
+			to << Word:read(src) << "w";
 		} else if (type == StoredId:floatId.v) {
-			to << Float:read(src);
+			to << Float:read(src) << "f";
 		} else if (type == StoredId:doubleId.v) {
-			to << Double:read(src);
+			to << Double:read(src) << "d";
 		} else if (type == StoredId:strId.v) {
-			to << Str:read(src);
+			var quote = "\"".begin().v();
+			to << "\"" << Str:read(src).escape(quote) << "\"";
 		} else {
 			return false;
 		}

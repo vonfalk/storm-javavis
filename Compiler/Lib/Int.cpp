@@ -28,9 +28,8 @@ namespace storm {
 	}
 
 	static Int intReadS(ObjIStream *from) {
-		from->startCustom(intId);
-		Int r = from->from->readInt();
-		from->end();
+		Int r;
+		from->readCustomValue(intId, &r);
 		return r;
 	}
 
@@ -129,9 +128,8 @@ namespace storm {
 	}
 
 	static Nat natReadS(ObjIStream *from) {
-		from->startCustom(natId);
-		Nat r = from->from->readNat();
-		from->end();
+		Nat r;
+		from->readCustomValue(natId, &r);
 		return r;
 	}
 

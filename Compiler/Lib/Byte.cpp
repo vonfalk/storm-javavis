@@ -23,9 +23,8 @@ namespace storm {
 	}
 
 	Byte byteReadS(ObjIStream *from) {
-		from->startCustom(byteId);
-		Byte r = from->from->readByte();
-		from->end();
+		Byte r;
+		from->readCustomValue(byteId, &r);
 		return r;
 	}
 

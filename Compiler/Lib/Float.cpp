@@ -116,9 +116,8 @@ namespace storm {
 	}
 
 	static Float floatReadS(ObjIStream *from) {
-		from->startCustom(floatId);
-		Float r = from->from->readFloat();
-		from->end();
+		Float r;
+		from->readCustomValue(floatId, &r);
 		return r;
 	}
 
@@ -287,9 +286,8 @@ namespace storm {
 	}
 
 	static Double doubleReadS(ObjIStream *from) {
-		from->startCustom(doubleId);
-		Double r = from->from->readDouble();
-		from->end();
+		Double r;
+		from->readCustomValue(doubleId, &r);
 		return r;
 	}
 

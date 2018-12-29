@@ -26,7 +26,7 @@ class Data : persist {
 
 	SerializedType serializedType() : static {
 		// NOTE: Should only be done once!
-		SerializedType desc(named{Data}, &__init(Data, ObjIStream));
+		SerializedStdType desc(named{Data}, &__init(Data, ObjIStream));
 		desc.add("a", named{core:Int});
 		desc.add("b", named{core:Int});
 		desc.add("data1", named{Employee});
@@ -49,7 +49,7 @@ class Data : persist {
 
 	// Write the members in another order. Should still be readable by 'read'.
 	void writeShuffled(ObjOStream to) {
-		SerializedType desc(named{Data}, &__init(Data, ObjIStream));
+		SerializedStdType desc(named{Data}, &__init(Data, ObjIStream));
 		desc.add("b", named{core:Int});
 		desc.add("data2", named{Employee});
 		desc.add("a", named{core:Int});
@@ -113,7 +113,7 @@ class Employee {
 
 	SerializedType serializedType() : static {
 		// NOTE: Should only be done once!
-		SerializedType desc(named{Employee}, &__init(Employee, ObjIStream));
+		SerializedStdType desc(named{Employee}, &__init(Employee, ObjIStream));
 		desc.add("name", named{Str});
 		desc.add("coolness", named{Int});
 		desc;
@@ -167,7 +167,7 @@ class Manager extends Employee {
 	}
 
 	SerializedType serializedType() : static {
-		SerializedType desc(named{Manager}, &__init(Manager, ObjIStream), Employee:serializedType);
+		SerializedStdType desc(named{Manager}, &__init(Manager, ObjIStream), Employee:serializedType);
 		desc.add("title", named{Str});
 		desc;
 	}

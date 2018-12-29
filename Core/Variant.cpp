@@ -23,6 +23,12 @@ namespace storm {
 		}
 	}
 
+	Variant &Variant::operator =(const Variant &o) {
+		Variant t(o);
+		std::swap(t.data, data);
+		return *this;
+	}
+
 	Variant::Variant(RootObject *o) : data(o) {}
 
 	Variant::Variant(const void *value, Type *type) {
@@ -35,6 +41,7 @@ namespace storm {
 
 		GcArray<Byte> *alloc = (GcArray<Byte> *)data;
 		h.safeCopy(alloc->v, value);
+		alloc->filled = 1;
 	}
 
 	Variant::~Variant() {
@@ -46,6 +53,9 @@ namespace storm {
 			return;
 
 		GcArray<Byte> *alloc = (GcArray<Byte> *)data;
+		if (!alloc->filled)
+			return; // Not initialized.
+
 		const Handle &h = runtime::typeHandle(t->type);
 		h.safeDestroy(alloc->v);
 	}
@@ -69,12 +79,64 @@ namespace storm {
 		}
 	}
 
+	Bool Variant::empty() const {
+		if (!data)
+			return true;
+
+		const GcType *t = runtime::gcTypeOf(data);
+		if (t->kind == GcType::tArray) {
+			// We have data, but is it initialized?
+			GcArray<Byte> *alloc = (GcArray<Byte> *)data;
+			return alloc->filled == 0;
+		} else {
+			return false;
+		}
+	}
+
 	Bool Variant::has(Type *type) const {
 		if (!data)
 			return false;
 
 		const GcType *t = runtime::gcTypeOf(data);
 		return runtime::isA(type, t->type);
+	}
+
+	void *Variant::getValue() {
+		GcArray<Byte> *alloc = (GcArray<Byte> *)data;
+		return alloc->v;
+	}
+
+	Variant Variant::uninitializedValue(Type *type) {
+		assert(runtime::isValue(type));
+
+		Variant v;
+
+		const Handle &h = runtime::typeHandle(type);
+		v.data = runtime::allocArray(h.engine(), h.gcArrayType, 1);
+
+		return v;
+	}
+
+	void Variant::valueInitialized() {
+		GcArray<Byte> *alloc = (GcArray<Byte> *)data;
+		alloc->filled = 1;
+	}
+
+	void Variant::valueRemoved() {
+		GcArray<Byte> *alloc = (GcArray<Byte> *)data;
+		alloc->filled = 0;
+	}
+
+	void Variant::moveValue(void *to) {
+		const GcType *t = runtime::gcTypeOf(data);
+		GcArray<Byte> *alloc = (GcArray<Byte> *)data;
+		memcpy(to, alloc->v, t->stride);
+		memset(alloc->v, 0, t->stride);
+		valueRemoved();
+	}
+
+	RootObject *Variant::getObject() {
+		return (RootObject *)data;
 	}
 
 	Engine &Variant::engine() const {

@@ -62,6 +62,7 @@ namespace storm {
 
 		// Read various primitive types from the stream. Throws an exception on error.
 		// Call Int:read() etc. from Storm to access these members!
+		Bool readBool();
 		Byte readByte();
 		Int readInt();
 		Nat readNat();
@@ -121,6 +122,7 @@ namespace storm {
 
 		// Write various primitive types to the stream. Used to implement custom serialization.
 		// Call Int:write etc. from storm to access these members!
+		void writeBool(Bool v);
 		void writeByte(Byte v);
 		void writeInt(Int v);
 		void writeNat(Nat v);

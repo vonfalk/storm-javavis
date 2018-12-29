@@ -72,23 +72,22 @@ namespace storm {
 	}
 
 	static Bool boolRead(IStream *from) {
-		return from->readByte() != 0;
+		return from->readBool();
 	}
 
 	static Bool boolReadS(ObjIStream *from) {
-		from->startCustom(boolId);
-		Bool r = boolRead(from->from);
-		from->end();
+		Bool r;
+		from->readCustomValue(boolId, &r);
 		return r;
 	}
 
 	static void boolWrite(Bool v, OStream *to) {
-		to->writeByte(v ? 1 : 0);
+		to->writeBool(v);
 	}
 
 	static void boolWriteS(Bool v, ObjOStream *to) {
 		to->startCustom(boolId);
-		to->to->writeByte(v ? 1 : 0);
+		to->to->writeBool(v);
 		to->end();
 	}
 

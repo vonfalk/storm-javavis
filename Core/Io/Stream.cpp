@@ -92,6 +92,10 @@ namespace storm {
 			throw IoError(L"Not enough data to read primitive.");
 	}
 
+	Bool IStream::readBool() {
+		return readByte() != 0;
+	}
+
 	Byte IStream::readByte() {
 		GcPreArray<Byte, 1> d;
 		Buffer b = read(emptyBuffer(d));
@@ -165,6 +169,10 @@ namespace storm {
 		return r;
 	}
 
+
+	void OStream::writeBool(Bool v) {
+		writeByte(v ? 1 : 0);
+	}
 
 	void OStream::writeByte(Byte v) {
 		GcPreArray<Byte, 1> d;

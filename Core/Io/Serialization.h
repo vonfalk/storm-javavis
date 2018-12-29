@@ -5,10 +5,40 @@
 #include "Core/Map.h"
 #include "Core/CloneEnv.h"
 #include "Core/Fn.h"
+#include "Core/Variant.h"
+#include "Core/Unknown.h"
 #include "Stream.h"
 
 namespace storm {
 	STORM_PKG(core.io);
+
+	/**
+	 * Description of a class that is serialized. Instances of the subclass, SerializedType,
+	 * describe classes consisting of a fixed set of data members (that are serialized
+	 * automatically), while instances of this class may use custom serialization mechanisms.
+	 *
+	 * All serializable classes need to provide their superclass (if any), and a function pointer to
+	 * a constructor that deserializes the object.
+	 */
+	class SerializedType : public Object {
+		STORM_CLASS;
+	public:
+		// Create a description of an object of the type 't'.
+		STORM_CTOR SerializedType(Type *t, FnBase *ctor);
+
+		// Create a description of an object of the type 't', whith the super type 'p'.
+		STORM_CTOR SerializedType(Type *t, FnBase *ctor, SerializedType *super);
+
+		// The type.
+		Type *type;
+
+		// Function pointer to the constructor of the class.
+		FnBase *readCtor;
+
+		// Super type.
+		MAYBE(SerializedType *) super;
+	};
+
 
 	/**
 	 * A single member inside an object description.
@@ -22,28 +52,18 @@ namespace storm {
 		Type *type;
 	};
 
-
 	/**
 	 * Description of the members of a class that are being serialized. Used with the standard
 	 * serialization mechanisms in ObjIStream and ObjOStream.
 	 */
-	class SerializedType : public Object {
+	class SerializedStdType : public SerializedType {
 		STORM_CLASS;
 	public:
 		// Create a description of an object of the type 't'.
-		STORM_CTOR SerializedType(Type *t, FnBase *ctor);
+		STORM_CTOR SerializedStdType(Type *t, FnBase *ctor);
 
-		// Create a description of an object of the type 't', with the parent 'p'.
-		STORM_CTOR SerializedType(Type *t, FnBase *ctor, SerializedType *parent);
-
-		// The type.
-		Type *type;
-
-		// Function pointer to the constructor of the class.
-		FnBase *readCtor;
-
-		// Parent type.
-		MAYBE(SerializedType *) parent;
+		// Create a description of an object of the type 't', with the super type 'p'.
+		STORM_CTOR SerializedStdType(Type *t, FnBase *ctor, SerializedType *super);
 
 		// All fields in here.
 		Array<SerializedMember> *members;
@@ -60,7 +80,7 @@ namespace storm {
 			STORM_VALUE;
 		public:
 			STORM_CTOR Cursor();
-			STORM_CTOR Cursor(SerializedType *type);
+			STORM_CTOR Cursor(SerializedStdType *type);
 
 			// Is this cursor referring to a parent class?
 			inline Bool STORM_FN isParent() const { return pos == 0; }
@@ -76,7 +96,7 @@ namespace storm {
 
 		private:
 			// Note: Type may be null.
-			SerializedType *type;
+			SerializedStdType *type;
 			Nat pos;
 		};
 	};
@@ -104,6 +124,9 @@ namespace storm {
 
 			// Class type.
 			classType = 0x01,
+
+			// Mask for class/value.
+			typeMask = 0x01,
 		};
 	}
 
@@ -153,12 +176,17 @@ namespace storm {
 		// Source stream.
 		IStream *from;
 
+		// Deserialize a value of the given type. The type is stored in memory previously allocated
+		// and passed in as 'out'. This memory will be initialized by this call.
+		void STORM_FN readValue(Type *type, PTR_GC out);
+
 		// Deserialize an object of the given type. The result is always an instance of the type
 		// described by 'type', even if this is not possible to express in the type system.
 		Object *STORM_FN readObject(Type *type);
 
-		// Indicate the start of a custom type.
-		void STORM_FN startCustom(StoredId id);
+		// Read a custom value of some type.
+		void readCustomValue(StoredId id, PTR_GC out);
+		Object *readCustomObject(StoredId id);
 
 		// Indicate the end of an object.
 		void STORM_FN end();
@@ -201,13 +229,28 @@ namespace storm {
 			// Create.
 			Desc(Byte flags, Nat parent, Str *name);
 
+			// Create as a wrapper for a built-in type.
+			Desc(Byte flags, Type *type, FnBase *ctor);
+
+			// Data. Flags (in the highest 8 bits) and number of temporary entries required.
+			Nat data;
+
 			// Flags.
-			Byte flags;
+			Byte flags() const { return (data >> 24) & 0xFF; }
+
+			// Is this a value type?
+			Bool isValue() const { return (flags() & typeInfo::typeMask) == typeInfo::valueType; }
+
+			// Entries required in the temporary storage.
+			Nat storage() const { return data & 0x00FFFFFF; }
+
+			// Set entries in temporary storage.
+			void storage(Nat v) { data = (Nat(flags()) << 24) | (v & 0x00FFFFFF); }
 
 			// ID of the parent class.
 			Nat parent;
 
-			// Members.
+			// Members. If 'null', this type has custom serialization.
 			Array<Member> *members;
 
 			// What we know about the serialization.
@@ -225,8 +268,11 @@ namespace storm {
 			Cursor();
 			Cursor(Desc *desc);
 
+			// Does this cursor refer to a description of a custom type?
+			inline Bool customDesc() const { return desc->members == null; }
+
 			// More elements?
-			inline Bool more() const { return desc && pos < desc->members->count(); }
+			inline Bool more() const { return desc && desc->members && pos < desc->members->count(); }
 
 			// Current element?
 			const Member &current() const;
@@ -234,8 +280,15 @@ namespace storm {
 			// Advance.
 			inline void next() { if (more()) pos++; }
 
+			// Access an element in the temporary storage.
+			Variant &temporary(Nat n) { return tmp->v[n]; }
+
+			// Add a new temporary object.
+			void pushTemporary(const Variant &v);
+
 		private:
 			Desc *desc;
+			GcArray<Variant> *tmp;
 			Nat pos;
 		};
 
@@ -248,16 +301,34 @@ namespace storm {
 		// Directory of known type ids.
 		Map<Nat, Desc *> *typeIds;
 
+		// Information from 'start'.
+		struct Info {
+			// Type we're expecting.
+			Nat expectedType;
+
+			// Set if a previously existing value should be returned.
+			Variant result;
+		};
+
 		// Start deserialization of an object. As a part of the process, figures out which object to
 		// read and returns its id. Will also make sure to read any objects that are supposed to be
 		// stored in temporary storage if necessary.
-		Nat start();
+		Info start();
 
 		// Get the description for an object id, reading it if necessary.
 		Desc *findInfo(Nat id);
 
 		// Validate a type description against our view of the corresponding type.
 		void validate(Desc *desc);
+
+		// Read an object into a variant.
+		Variant readObject(Nat type);
+
+		// Read a value (internal version, does not call 'start').
+		void readValueI(Desc *type, void *out);
+
+		// Read a class (internal version, does not call 'start').
+		Object *readObjectI(Desc *type, Type *t);
 
 		// Clear object ids.
 		void clearObjects();
@@ -304,7 +375,7 @@ namespace storm {
 
 	private:
 		// Keep track of how the serialization is progressing. Used as a stack.
-		Array<SerializedType::Cursor> *depth;
+		Array<SerializedStdType::Cursor> *depth;
 
 		// Directory of previously serialized objects. Note: hashes object identity rather than
 		// regular equality.
