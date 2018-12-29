@@ -67,6 +67,10 @@ namespace storm {
 			return Gc::typeOf(alloc);
 		}
 
+		bool isA(const Type *a, const Type *b) {
+			return a->chain->isA(b);
+		}
+
 		bool isA(const RootObject *a, const Type *t) {
 			return typeOf(a)->chain->isA(t);
 		}

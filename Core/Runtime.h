@@ -62,6 +62,9 @@ namespace storm {
 		bool isValue(Type *t);
 
 		// Is type A an instance of type B?
+		bool isA(const Type *a, const Type *b);
+
+		// Is the object A an instance of type B?
 		bool isA(const RootObject *a, const Type *b);
 
 		// Get the engine object for an allocation.

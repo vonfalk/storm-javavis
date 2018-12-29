@@ -117,6 +117,10 @@ namespace storm {
 			return (*fwd.gcTypeOf)(alloc);
 		}
 
+		bool isA(const Type *a, const Type *b) {
+			return (*fwd.typeIsA)(a, b);
+		}
+
 		bool isA(const RootObject *a, const Type *b) {
 			return (*fwd.isA)(a, b);
 		}

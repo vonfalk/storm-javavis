@@ -16,6 +16,7 @@ namespace storm {
 			&runtime::fromIdentifier,
 			&runtime::isValue,
 			&runtime::isA,
+			&runtime::isA,
 			&runtime::allocEngine,
 			&runtime::allocRaw,
 			&runtime::allocStaticRaw,

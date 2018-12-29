@@ -56,7 +56,7 @@ namespace storm {
 		typedef void (*DeepCopyFn)(void *obj, CloneEnv *env);
 		UNKNOWN(PTR_GC) DeepCopyFn deepCopyFn;
 
-		// ToS implementation.
+		// ToS implementation (always present).
 		typedef void (*ToSFn)(const void *obj, StrBuf *to);
 		UNKNOWN(PTR_GC) ToSFn toSFn;
 
