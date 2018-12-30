@@ -1068,16 +1068,17 @@ namespace storm {
 		else
 			*to << new (this) SimplePart(name);
 
+		bool extends = false;
 		if (chain != null && chain->super() != null) {
 			if (chain->super() == TObject::stormType(engine)) {
 			} else if (chain->super() == Object::stormType(engine)) {
 			} else {
+				extends = true;
 				*to << S(" extends ") << chain->super()->identifier();
-				return;
 			}
 		}
 
-		if (useThread) {
+		if (useThread && !extends) {
 			*to << S(" on ") << useThread->identifier();
 		}
 

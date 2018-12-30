@@ -1,6 +1,7 @@
 use lang:bs;
 use lang:bs:macro;
 use core:io;
+use util:serialize;
 
 /**
  * Serializable class.
@@ -99,7 +100,7 @@ class Data : persist {
 /**
  * Another serializable class.
  */
-class Employee {
+class Employee : persist {
 	Str name;
 	Int coolness;
 
@@ -150,10 +151,11 @@ class Employee {
 	}
 }
 
+
 /**
  * A sub-class to Employee.
  */
-class Manager extends Employee {
+class Manager : extends Employee, persist {
 	Str title;
 
 	init() {
@@ -201,17 +203,11 @@ class Manager extends Employee {
 	}
 }
 
-
-// Persist decorator
-void persist(Class c) {
-	print("Decorator: " # c);
-}
-
 // Deserialize things.
 void deserialize(MemOStream from) {
 	{
 		MemIStream in(from.buffer);
-		util:TextObjStream read(in);
+		TextObjStream read(in);
 		print("Result: " # read.read());
 	}
 

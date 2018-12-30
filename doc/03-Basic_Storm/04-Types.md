@@ -143,9 +143,9 @@ just as one would expect for member functions.
 Aside from that, member functions can be declared as assignment functions by replacing the return
 type with the keyword `assign`.
 
-Aside from assignment functions, Basic Storm provides the keywords `final`, `abstract` and
-`override` that tell Storm your intentions with regards to inheritance. These keywords are specified
-after the parameter list of the function but before the function body like this:
+Aside from assignment functions, Basic Storm provides the decorators `final`, `abstract`, `override`
+and `static` that tell Storm your intentions with regards to inheritance. These keywords are
+specified after the parameter list of the function but before the function body like this:
 
 ```
 class Foo {
@@ -153,13 +153,58 @@ class Foo {
 }
 ```
 
-These keywords correspond to the function flags `fnFinal`, `fnAbstract` and `fnOverride`
+These keywords correspond to the function flags `fnFinal`, `fnAbstract`, `fnOverride` and `fnStatic`
 respectively, which are documented [here](md://Storm/Type_system). If a function is marked
 `abstract`, it is possible to omit the function body entirely. If the function is ever called (for
-example by `super.foo`), it will throw an appropriate exception. For example:
+example by `super:foo`), it will throw an appropriate exception. For example:
 
 ```
 class Foo {
     Int bar() : abstract;
 }
 ```
+
+To summarize, the following decorators are available for member functions in addition to those
+available for [nonmember functions](md://Storm/Functions):
+
+* `final`: Indicates that subclasses may not override this function.
+* `abstract`: Indicates that subclasses must override this function.
+* `override`: Indicates that this function should override a function in the superclass.
+* `static`: Indicates that this function does not operate on an instance of the enclosing class, much like
+  a nonmember function.
+
+
+Decorators for types
+---------------------
+
+Types may also be decorated, just like functions. Actually, the keywords `extends` and `on` used
+above are implemented as decorators. Decorators for classes are more general than for functions; a
+decorator is the name of a function which may modify the class in some way (or a special form
+defined with custom grammar). As such, it is fairly easy to create and use decorators for
+classes. Just create a function taking a type to modify as a parameter, and make sure it is visible
+where it is used.
+
+Decorators for types are specified, much like for functions, after a colon (`:`) following the name
+of the type. Multiple decorators are separated by commas. For example:
+
+```
+class Foo : extends Bar, persist {}
+```
+
+Here, the class `Foo` is decorated with `extends Bar` and `persist`. The syntax seen at the top of
+this page, where only one of the special decorators are used, are just a special case of the general
+decorator syntax. As such, they can be written as follows as well:
+
+`value Foo : extends T { <contents> }`
+
+`class Foo : extends T { <contents> }`
+
+`class Foo : on T { <contents> }`
+
+`class Foo : on ? { <contents> }`
+
+Note that the general form has to be used when multiple decorators are to be applied. It is not
+possible to declare a type like this:
+
+`class Wrong extends T, persist {}`
+

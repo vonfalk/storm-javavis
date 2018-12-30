@@ -1,0 +1,9 @@
+use core:lang;
+use lang:bs;
+
+/**
+ * A decorator for types that adds members required for automatic serialization and deserialization.
+ */
+void persist(Type type) {
+	print("Decorator for: " # type);
+}

@@ -20,63 +20,72 @@ namespace storm {
 			return new (name) Class(typeValue, pos, env, name->v, body);
 		}
 
-		Class *extendClass(SrcPos pos, Scope env, syntax::SStr *name, Name *from, syntax::Node *body) {
-			Class *c = new (name) Class(typeClass, pos, env, name->v, body);
-			c->base = from;
-			return c;
-		}
-
-		Class *extendValue(SrcPos pos, Scope env, syntax::SStr *name, Name *from, syntax::Node *body) {
-			Class *c = new (name) Class(typeValue, pos, env, name->v, body);
-			c->base = from;
-			return c;
-		}
-
-		Class *threadClass(SrcPos pos, Scope env, syntax::SStr *name, Name *thread, syntax::Node *body) {
-			Class *c = new (name) Class(typeClass, pos, env, name->v, body);
-			c->thread = thread;
-			return c;
-		}
-
-		Class *threadClass(SrcPos pos, Scope env, syntax::SStr *name, syntax::Node *body) {
-			Class *c = new (name) Class(typeClass, pos, env, name->v, body);
-			c->setSuper(TObject::stormType(c->engine));
-			return c;
-		}
-
 
 		Class::Class(TypeFlags flags, SrcPos pos, Scope scope, Str *name, syntax::Node *body)
 			: Type(name, flags), scope(scope, this), declared(pos), body(body), allowLazyLoad(true) {}
 
 
 		void Class::lookupTypes() {
+			if (!otherName)
+				return;
+
 			allowLazyLoad = false;
 			try {
-
-				if (base) {
-					Named *n = scope.find(base);
-					Type *b = as<Type>(n);
-					if (!b)
-						throw SyntaxError(declared, L"Base class " + ::toS(base) + L" undefined!");
-
-					setSuper(b);
-					base = null;
-				}
-
-				if (thread) {
-					NamedThread *t = as<NamedThread>(scope.find(thread));
+				if (nameIsThread) {
+					NamedThread *t = as<NamedThread>(scope.find(otherName));
 					if (!t)
-						throw SyntaxError(declared, L"Can not find the thread " + ::toS(thread) + L".");
+						throw SyntaxError(otherName->pos, L"Can not find the named thread " + ::toS(otherName) + L".");
 
 					setThread(t);
-					thread = null;
+				} else {
+					Type *t = as<Type>(scope.find(otherName));
+					if (!t)
+						throw SyntaxError(otherName->pos, L"Can not find the super class " + ::toS(otherName) + L".");
+
+					setSuper(t);
 				}
 
+				otherName = null;
 			} catch (...) {
 				allowLazyLoad = true;
 				throw;
 			}
 			allowLazyLoad = true;
+		}
+
+		void Class::super(SrcName *super) {
+			if (nameIsThread)
+				throw SyntaxError(super->pos, L"The 'extends' keyword may not be used together with 'on'.");
+
+			if (otherName)
+				throw SyntaxError(super->pos, L"Only one instance of 'extends' may be used for a single type. "
+								L"Multiple inheritance is not supported.");
+
+			otherName = super;
+			nameIsThread = false;
+		}
+
+		void Class::thread(SrcName *thread) {
+			if (nameIsThread)
+				throw SyntaxError(thread->pos, L"The 'on' keyword may only be used once.");
+
+			if (otherName)
+				throw SyntaxError(thread->pos, L"The 'on' keyword may not be used together with 'extends'.");
+
+			otherName = thread;
+			nameIsThread = true;
+		}
+
+		void Class::unknownThread(SrcPos pos) {
+			if (nameIsThread)
+				throw SyntaxError(pos, L"The 'on' keyword may only be used once.");
+
+			if (otherName)
+				throw SyntaxError(pos, L"The 'on' keyword may not be used together with 'extends'.");
+
+			otherName = null;
+			nameIsThread = true;
+			setSuper(StormInfo<TObject>::type(engine));
 		}
 
 		void Class::decorate(SrcName *decorator) {

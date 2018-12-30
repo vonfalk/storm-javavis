@@ -31,11 +31,15 @@ namespace storm {
 			// Declared at.
 			SrcPos declared;
 
-			// Base class (if any).
-			Name *base;
+			// Set the super class from a decorator.
+			void STORM_FN super(SrcName *super);
+			using Type::super;
 
-			// Associated thread (if any).
-			Name *thread;
+			// Set the current thread from a decorator.
+			void STORM_FN thread(SrcName *thread);
+
+			// Set the current thread to "unknown" from a decorator.
+			void STORM_FN unknownThread(SrcPos pos);
 
 			// Add a decorator.
 			void STORM_FN decorate(SrcName *decorator);
@@ -51,8 +55,14 @@ namespace storm {
 			// Decorators used.
 			MAYBE(Array<SrcName *> *) decorators;
 
+			// Name for either the parent class, or the named thread we shall use. Depending on 'nameIsThread'.
+			MAYBE(SrcName *) otherName;
+
+			// Is 'otherName' a super class or the name of a thread?
+			Bool nameIsThread;
+
 			// Allowing lazy loads?
-			bool allowLazyLoad;
+			Bool allowLazyLoad;
 
 			// State used to keep track of what is added.
 			struct AddState {
@@ -69,17 +79,9 @@ namespace storm {
 		};
 
 
-		// Create a class not extended from anything.
+		// Create a class or a value.
 		Class *STORM_FN createClass(SrcPos pos, Scope env, syntax::SStr *name, syntax::Node *body);
 		Class *STORM_FN createValue(SrcPos pos, Scope env, syntax::SStr *name, syntax::Node *body);
-
-		// Create a class extended from a base class.
-		Class *STORM_FN extendClass(SrcPos pos, Scope env, syntax::SStr *name, Name *from, syntax::Node *body);
-		Class *STORM_FN extendValue(SrcPos pos, Scope env, syntax::SStr *name, Name *from, syntax::Node *body);
-
-		// Create an actor class.
-		Class *STORM_FN threadClass(SrcPos pos, Scope env, syntax::SStr *name, syntax::Node *body);
-		Class *STORM_FN threadClass(SrcPos pos, Scope env, syntax::SStr *name, Name *thread, syntax::Node *body);
 
 
 		/**

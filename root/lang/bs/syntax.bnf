@@ -129,20 +129,39 @@ SFnDeclName => name : (SPrePostOp - "\*")@ name;
 SFnDeclName => name : ("\*" - SPrePostOp)@ name;
 
 
-// List of decorators. Specifies behaviours of components in the system (eg. classes).
-// Currently, only classes are supported. Functions and member variables will likely be supported in the future.
-void SDecorators(Class me);
-SDecorators : ;
-SDecorators : ":", SType -> decorate #keyword - (, ",", SType -> decorate #keyword)*;
+// A decorator that can be applied to a class.
+// A decorator is either defined by custom grammar rules (as for "extends" and "on"), or by creating a function
+// somewhere that accepts a Class (or Type) instance as a parameter. This function will then get the opportunity
+// to modify the class during creation, perhaps injecting and/or modifying members.
+void SClassOption(Class me);
+
+// A function.
+SClassOption : SType -> decorate #keyword;
+
+// Special options.
+SClassOption : SClassSpecialOption(me);
+
+
+// A special option?
+void SClassSpecialOption(Class class);
+
+// Extending another class.
+SClassSpecialOption => super(class, super) : "extends" #keyword, SType super;
+
+// Set a thread for a class (making it into an actor). Note: We could use the .. syntax if we have additional rules for SClass.
+SClassSpecialOption => thread(class, thread) : "on" #keyword, SType thread;
+SClassSpecialOption => unknownThread(class, pos) : "on" #keyword, "\?";
+
+// List of decorators. Either nothing, a list of decorators, or one of the special decorators (i.e. "extends" or "on").
+void SClassOptions(Class me);
+SClassOptions : ;
+SClassOptions : SClassSpecialOption(me);
+SClassOptions : ":", SClassOption(me) - (, ",", SClassOption(me))*;
 
 // Class/value.
 Class SClass(Scope env);
-SClass => createClass(pos, env, name, body) : "class" #keyword, SName name #typeName, SDecorators(me), "{" - [SClassBody@ body, ]+ "}";
-SClass => createValue(pos, env, name, body) : "value" #keyword, SName name #typeName, SDecorators(me), "{" - [SClassBody@ body, ]+ "}";
-SClass => extendClass(pos, env, name, base, body) : "class" #keyword , SName name #typeName, "extends" #keyword, SType base, SDecorators(me), "{" - [SClassBody@ body, ]+ "}";
-SClass => extendValue(pos, env, name, base, body) : "value" #keyword, SName name #typeName, "extends" #keyword, SType base, SDecorators(me), "{" - [SClassBody@ body, ]+ "}";
-SClass => threadClass(pos, env, name, thread, body) : "class" #keyword, SName name #typeName, "on" #keyword, SType thread, SDecorators(me), "{" - [SClassBody@ body, ]+ "}";
-SClass => threadClass(pos, env, name, body) : "class" #keyword, SName name #typeName, "on" #keyword, "\?", SDecorators(me), "{" - [SClassBody@ body, ]+ "}";
+SClass => createClass(pos, env, name, body) : "class" #keyword, SName name #typeName, SClassOptions(me), "{" - [SClassBody@ body, ]+ "}";
+SClass => createValue(pos, env, name, body) : "value" #keyword, SName name #typeName, SClassOptions(me), "{" - [SClassBody@ body, ]+ "}";
 
 // Named thread declaration.
 NamedThread SNamedThread();
@@ -544,17 +563,17 @@ NameParam SFirstFormal();
 SFirstFormal => nameless(type) : SType type;
 
 // Decorators we can apply to a named element in a class.
-void SClassOption(Class owner, BSRawFn item) #keyword;
-SClassOption : SFreeOption(item);
-SClassOption => makeAbstract(item) : "abstract";
-SClassOption => makeFinal(item) : "final";
-SClassOption => makeOverride(item) : "override";
-SClassOption => makeStatic(item) : "static";
+void SMemberOption(Class owner, BSRawFn item) #keyword;
+SMemberOption : SFreeOption(item);
+SMemberOption => makeAbstract(item) : "abstract";
+SMemberOption => makeFinal(item) : "final";
+SMemberOption => makeOverride(item) : "override";
+SMemberOption => makeStatic(item) : "static";
 // etc. (we might want to handle 'override' differently)
 
-void SClassOptions(Class owner, BSRawFn item);
-SClassOptions : ;
-SClassOptions : ":", SClassOption(owner, item) - (, ",", SClassOption(owner, item))*;
+void SMemberOptions(Class owner, BSRawFn item);
+SMemberOptions : ;
+SMemberOptions : ":", SMemberOption(owner, item) - (, ",", SMemberOption(owner, item))*;
 
 // Possible contents of a class. Note that all except types are captured and loaded later
 // to make sure nested types work as expected.
@@ -567,11 +586,11 @@ Named SClassWrapItem(Class owner);
 SClassWrapItem[0] => classVar(owner, t, n) :
     SType t, SName n #varName, ";";
 SClassWrapItem[0] => classFn(owner, pos, name, result, params, body) :
-    SType result, SFnDeclName name #fnName, "(", SFormals params, ")", SClassOptions(owner, me), "{"[, SFunctionBody@ body,]+ "}";
+    SType result, SFnDeclName name #fnName, "(", SFormals params, ")", SMemberOptions(owner, me), "{"[, SFunctionBody@ body,]+ "}";
 SClassWrapItem[0] => classAbstractFn(owner, pos, name, result, params, options) :
-    SType result, SFnDeclName name #fnName, "(", SFormals params, ")", SClassOptions@ options, ";";
+    SType result, SFnDeclName name #fnName, "(", SFormals params, ")", SMemberOptions@ options, ";";
 SClassWrapItem[5] => classAssign(owner, pos, name, params, body) :
-    "assign" #keyword, SFnDeclName name #fnName, "(", SFormals params, ")", SClassOptions(owner, me), "{"[, SFunctionBody@ body,]+ "}";
+    "assign" #keyword, SFnDeclName name #fnName, "(", SFormals params, ")", SMemberOptions(owner, me), "{"[, SFunctionBody@ body,]+ "}";
 SClassWrapItem[5] => classCtor(owner, pos, params, body) :
     "init" #keyword, "(", SCtorParams params, ")", "{"[, SCtorBody@ body,]+ "}";
 SClassWrapItem[5] => classCastCtor(owner, pos, params, body) :
