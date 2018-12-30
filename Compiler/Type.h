@@ -145,7 +145,7 @@ namespace storm {
 		void STORM_FN doLayout();
 
 		// Get all variables in here.
-		Array<MemberVar *> *variables() const;
+		Array<MemberVar *> *STORM_FN variables() const;
 
 		// Inheritance chain and membership lookup. TODO: Make private?
 		TypeChain *chain;
