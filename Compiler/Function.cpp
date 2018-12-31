@@ -78,8 +78,26 @@ namespace storm {
 	}
 
 	void Function::toS(StrBuf *to) const {
-		*to << result << L" ";
+		*to << result << S(" ");
 		Named::toS(to);
+
+		if (myFlags != fnNone) {
+			*to << S(" :");
+			if (myFlags & fnPure)
+				*to << S(" pure");
+			if (myFlags & fnAutoCast)
+				*to << S(" cast");
+			if (myFlags & fnAssign)
+				*to << S(" assign");
+			if (myFlags & fnFinal)
+				*to << S(" final");
+			if (myFlags & fnAbstract)
+				*to << S(" abstract");
+			if (myFlags & fnOverride)
+				*to << S(" override");
+			if (myFlags & fnStatic)
+				*to << S(" static");
+		}
 	}
 
 	void Function::setCode(Code *code) {

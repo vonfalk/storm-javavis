@@ -65,16 +65,16 @@ class Data : persist {
 		}
 	}
 
-	// Read. Should be automatically generated...
-	Data read(ObjIStream from) : static {
-		Object r = from.readObject(named{Data});
-		if (r as Data) {
-			r;
-		} else {
-			// Note: This case never happens.
-			Data();
-		}
-	}
+	// Read. Automatically generated.
+	// Data read(ObjIStream from) : static {
+	// 	Object r = from.readObject(named{Data});
+	// 	if (r as Data) {
+	// 		r;
+	// 	} else {
+	// 		// Note: This case never happens.
+	// 		Data();
+	// 	}
+	// }
 
 	// Read. Should be automatically generated...
 	protected init(ObjIStream from) {
@@ -128,14 +128,6 @@ class Employee : persist {
 		}
 	}
 
-	Employee read(ObjIStream from) : static {
-		Object r = from.readObject(named{Employee});
-		if (r as Employee)
-			r;
-		else
-			Employee();
-	}
-
 	protected init(ObjIStream from) {
 		// super(from);
 
@@ -180,14 +172,6 @@ class Manager : extends Employee, persist {
 			title.write(to);
 			to.end();
 		}
-	}
-
-	Manager read(ObjIStream from) : static {
-		Object r = from.readObject(named{Manager});
-		if (r as Manager)
-			r;
-		else
-			Manager();
 	}
 
 	protected init(ObjIStream from) {

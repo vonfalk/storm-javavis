@@ -2,6 +2,7 @@ use core:lang;
 use core:io;
 use lang:bs;
 use lang:bs:macro;
+use core:asm;
 
 // All functions here shall be executed on the compiler thread.
 on Compiler:
@@ -41,8 +42,10 @@ void persist(Type type) {
 	}
 }
 
+private:
+
 // Throw a suitable error.
-private void error(Type type, Str msg) {
+void error(Type type, Str msg) {
 	SrcPos pos;
 	if (type as Class)
 		pos = type.declared;
@@ -50,14 +53,14 @@ private void error(Type type, Str msg) {
 }
 
 // Find a function inside 'type'.
-private Function? findFn(Type type, Str name, Value[] params) {
+Function? findFn(Type type, Str name, Value[] params) {
 	if (fn = type.findHere(SimplePart(name, params), Scope(type)) as Function)
 		return fn;
 	null;
 }
 
 // Check if a function is present, and has the proper return type.
-private Bool checkFn(Type type, Str name, Value[] params, Value result) {
+Bool checkFn(Type type, Str name, Value[] params, Value result) {
 	if (fn = findFn(type, name, params)) {
 		// TODO: Perhaps we should throw here.
 		return result.canStore(fn.result);
@@ -68,7 +71,7 @@ private Bool checkFn(Type type, Str name, Value[] params, Value result) {
 /**
  * Information about a member to serialize.
  */
-private class Member {
+class Member {
 	// Serialized name (could differ from the member's actual name).
 	Str name;
 
@@ -87,7 +90,7 @@ private class Member {
 }
 
 // Find all members to serialize.
-private Member[] serializedMembers(Type t) {
+Member[] serializedMembers(Type t) {
 	// TODO: It should be possible to mark variables for inclusion or exclusion by including other annotations.
 
 	Member[] result;
@@ -103,13 +106,55 @@ private Member[] serializedMembers(Type t) {
 }
 
 // Add the member 'serializedType'.
-private void addType(Type type, Member[] members) {}
+void addType(Type type, Member[] members) {}
 
 // Add the member 'write'.
-private void addWrite(Type type, Member[] members) {}
+void addWrite(Type type, Member[] members) {}
 
 // Add the constructor for deserialization.
-private void addCtor(Type type, Member[] members) {}
+void addCtor(Type type, Member[] members) {}
 
-// Add the member 'read'.
-private void addRead(Type type) {}
+
+/**
+ * Function implementing the 'read' member required for deserialization.
+ *
+ * Roughly equivalent to the following (explicitly circumventing some type-checks, as we know they
+ * will never fail):
+ *
+ * T read(ObjIStream from) : static {
+ *   from.readObject(named{T});
+ * }
+ */
+void addRead(Type type) {
+	Value t(type);
+	Value objStream(named{ObjIStream});
+
+	Listing l(false, t.desc);
+	var stream = l.createParam(objStream.desc);
+	l << prolog();
+
+	if (t.isValue) {
+		var tmp = l.createVar(l.root, t.size);
+		var toCall = named{ObjIStream:readValue<ObjIStream, Type, core:lang:unknown:PTR_GC>}.ref;
+
+		l << lea(ptrA, tmp);
+		l << fnParam(objStream.desc, stream);
+		l << fnParam(ptrDesc, type.typeRef);
+		l << fnParam(ptrDesc, ptrA);
+		l << fnCall(toCall, true);
+		l << fnRet(tmp);
+	} else {
+		// Class or actor.
+		var toCall = named{ObjIStream:readObject<ObjIStream, Type>}.ref;
+
+		l << fnParam(objStream.desc, stream);
+		l << fnParam(ptrDesc, type.typeRef);
+		l << fnCall(toCall, true, t.desc, ptrA);
+		l << fnRet(ptrA);
+	}
+
+	Function fun(t, "read", [objStream]);
+	fun.make(FnFlags:fnStatic);
+	fun.setCode(DynamicCode(l));
+	type.add(fun);
+}

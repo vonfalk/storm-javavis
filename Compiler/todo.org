@@ -17,10 +17,13 @@
     but the scale of the issue should be assessed first.
   - [ ] Parsing core.lang.syntax.bnf takes about 80 ms, which is a bit on the high end when compiling code...
 
-* Loose ends so far [43/72]
+* Loose ends so far [43/74]
   - [ ] When using "unless (foo)", "foo" uses a local variable in the block as well as outside of the block,
     which makes assignments to that variable to not write to the original variable even if one would expect so.
     We should at least warn about this.
+  - [ ] Nested classes declared in C++ are not private in Storm, even if they are declared as such in C++.
+  - [ ] We could remove Type::typeRef, since we can store pointers directly in the generated machine code.
+    Do we want an explicit reference for the type, or are we fine with using anonymous pointers?
   - [ ] Inside Type::updateHandle, we should check return types for the found functions! Otherwise, things
     may end badly if the return type differ from what we expect!
   - [ ] The documentation view in Emacs should probably show which package the type is located in as well.
