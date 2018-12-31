@@ -3,10 +3,18 @@
 #include "Exception.h"
 #include "Type.h"
 #include "Engine.h"
+#include "Class.h"
 #include "Core/Str.h"
 
 namespace storm {
 	namespace bs {
+
+		UseThreadDecl::UseThreadDecl(SrcName *name) : thread(name) {}
+
+		void UseThreadDecl::toS(StrBuf *to) const {
+			*to << L"use " << thread << L":";
+		}
+
 
 		Content::Content() {
 			types = new (this) Array<Type *>();
@@ -39,6 +47,10 @@ namespace storm {
 			defaultVisibility = v;
 		}
 
+		void Content::add(UseThreadDecl *t) {
+			defaultThread = t->thread;
+		}
+
 		void Content::add(TObject *o) {
 			if (Type *t = as<Type>(o))
 				add(t);
@@ -50,6 +62,8 @@ namespace storm {
 				add(t);
 			else if (Visibility *v = as<Visibility>(o))
 				add(v);
+			else if (UseThreadDecl *u = as<UseThreadDecl>(o))
+				add(u);
 			else
 				throw InternalError(L"add for Content does not expect " + ::toS(runtime::typeOf(o)->identifier()));
 		}
@@ -57,11 +71,20 @@ namespace storm {
 		void Content::update(Named *n) {
 			if (!n->visibility)
 				n->visibility = defaultVisibility;
+
+			if (defaultThread) {
+				if (Class *c = as<Class>(n)) {
+					c->defaultThread(defaultThread);
+				}
+			}
 		}
 
 		void Content::update(NamedDecl *fn) {
 			if (!fn->visibility)
 				fn->visibility = defaultVisibility;
+
+			if (!fn->thread)
+				fn->thread = defaultThread;
 		}
 
 	}

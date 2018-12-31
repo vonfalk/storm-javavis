@@ -40,3 +40,24 @@ available for non-member functions:
 
 There are other decorators available for member functions. See [Types](md://Storm/Types) for more
 information.
+
+For nonmember functions, it is also possible to specify a thread that shall execute the function. If
+this is done, Storm ensures that the function is always executed by the specified thread. This
+declaration is a decorator, for example:
+
+`Int foo(Int a) : on Compiler {}`
+
+Since this is common, this declaration may be present on its own, without a colon. However, this
+syntax disallows additional decorators.
+
+If all functions in a source file are suppoed to be executed by a specified thread, a single
+top-level declaration can be used instead of adding `on T` to all functions and classes in the
+file. This is done by adding:
+
+`on T:`
+
+to the beginning of the file (after the `use` statements). This indicates that everything that
+follows shall be executed on the specified thread unless otherwise specified. This is equivalent to
+adding `on T` as a decorator to all functions and types in the file. Multiple such statements may
+appear in the same file, which behaves in the same way as for
+[visibility](md://Basic_Storm/Visibility).

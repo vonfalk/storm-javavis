@@ -3,10 +3,13 @@ use core:io;
 use lang:bs;
 use lang:bs:macro;
 
+// All functions here shall be executed on the compiler thread.
+on Compiler:
+
 /**
  * A decorator for types that adds members required for automatic serialization and deserialization.
  */
-void persist(Type type) on Compiler {
+void persist(Type type) {
 	Value t = thisPtr(type);
 	Bool hasType = checkFn(type, "serializedType", [], Value(named{SerializedType}));
 	Bool hasWrite = checkFn(type, "write", [t, Value(named{ObjOStream})], Value());
@@ -47,14 +50,14 @@ private void error(Type type, Str msg) {
 }
 
 // Find a function inside 'type'.
-private Function? findFn(Type type, Str name, Value[] params) on Compiler {
+private Function? findFn(Type type, Str name, Value[] params) {
 	if (fn = type.findHere(SimplePart(name, params), Scope(type)) as Function)
 		return fn;
 	null;
 }
 
 // Check if a function is present, and has the proper return type.
-private Bool checkFn(Type type, Str name, Value[] params, Value result) on Compiler {
+private Bool checkFn(Type type, Str name, Value[] params, Value result) {
 	if (fn = findFn(type, name, params)) {
 		// TODO: Perhaps we should throw here.
 		return result.canStore(fn.result);
@@ -65,7 +68,7 @@ private Bool checkFn(Type type, Str name, Value[] params, Value result) on Compi
 /**
  * Information about a member to serialize.
  */
-private class Member on Compiler {
+private class Member {
 	// Serialized name (could differ from the member's actual name).
 	Str name;
 
@@ -84,7 +87,7 @@ private class Member on Compiler {
 }
 
 // Find all members to serialize.
-private Member[] serializedMembers(Type t) on Compiler {
+private Member[] serializedMembers(Type t) {
 	// TODO: It should be possible to mark variables for inclusion or exclusion by including other annotations.
 
 	Member[] result;
@@ -100,13 +103,13 @@ private Member[] serializedMembers(Type t) on Compiler {
 }
 
 // Add the member 'serializedType'.
-private void addType(Type type, Member[] members) on Compiler {}
+private void addType(Type type, Member[] members) {}
 
 // Add the member 'write'.
-private void addWrite(Type type, Member[] members) on Compiler {}
+private void addWrite(Type type, Member[] members) {}
 
 // Add the constructor for deserialization.
-private void addCtor(Type type, Member[] members) on Compiler {}
+private void addCtor(Type type, Member[] members) {}
 
 // Add the member 'read'.
-private void addRead(Type type) on Compiler {}
+private void addRead(Type type) {}

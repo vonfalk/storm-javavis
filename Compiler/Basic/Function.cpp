@@ -16,18 +16,10 @@ namespace storm {
 		FunctionDecl *assignDecl(Scope scope,
 								syntax::SStr *name,
 								Array<NameParam> *params,
+								syntax::Node *options,
 								syntax::Node *body) {
 
-			return new (name) FunctionDecl(scope, null, name, params, body);
-		}
-
-		FunctionDecl *assignDecl(Scope scope,
-								syntax::SStr *name,
-								Array<NameParam> *params,
-								SrcName *thread,
-								syntax::Node *body) {
-
-			return new (name) FunctionDecl(scope, null, name, params, thread, body);
+			return new (name) FunctionDecl(scope, null, name, params, options, body);
 		}
 
 
@@ -36,30 +28,16 @@ namespace storm {
 								MAYBE(SrcName *) result,
 								syntax::SStr *name,
 								Array<NameParam> *params,
+								syntax::Node *options,
 								syntax::Node *body)
 			: scope(scope),
 			  name(name),
 			  result(result),
 			  params(params),
-			  thread(null),
+			  options(options),
 			  body(body) {}
 
-		FunctionDecl::FunctionDecl(Scope scope,
-								MAYBE(SrcName *) result,
-								syntax::SStr *name,
-								Array<NameParam> *params,
-								SrcName *thread,
-								syntax::Node *body)
-			: scope(scope),
-			  name(name),
-			  result(result),
-			  params(params),
-			  thread(thread),
-			  body(body) {}
 
-		void FunctionDecl::options(syntax::Node *node) {
-			optionNode = node;
-		}
 
 		Named *FunctionDecl::doCreate() {
 			Scope fScope = fileScope(scope, name->pos);
@@ -67,27 +45,22 @@ namespace storm {
 			Value result;
 			if (this->result)
 				result = fScope.value(this->result);
-			NamedThread *thread = null;
-
-			if (this->thread) {
-				if (NamedThread *t = as<NamedThread>(fScope.find(this->thread))) {
-					thread = t;
-				} else {
-					throw SyntaxError(this->thread->pos, ::toS(this->thread) + L" is not a thread.");
-				}
-			}
 
 			// if (*name->v == S("asyncPostObject"))
 			// 	PVAR(body);
 
 			Array<ValParam> *par = bs::resolve(params, fScope);
-			BSFunction *f = new (this) BSFunction(result, name, par, scope, thread, body);
+			BSFunction *f = new (this) BSFunction(result, name, par, scope, null, body);
+
+			// Default thread?
+			if (thread)
+				f->thread(scope, thread);
 
 			if (!this->result)
 				f->make(fnAssign);
 
-			if (optionNode)
-				syntax::transformNode<void, BSRawFn *>(optionNode, f);
+			if (options)
+				syntax::transformNode<void, Scope, BSRawFn *>(options, fScope, f);
 
 			return f;
 		}
@@ -146,13 +119,24 @@ namespace storm {
 			setCode(new (this) LazyCode(fnPtr(engine(), &BSRawFn::generateCode, this)));
 		}
 
+		void BSRawFn::thread(Scope scope, SrcName *name) {
+			if (parentLookup)
+				throw InternalError(L"Can not call BSRawFn:thread after the function is attached somewhere.");
+
+			Scope fScope = fileScope(scope, name->pos);
+			NamedThread *t = as<NamedThread>(fScope.find(name));
+			if (!t)
+				throw SyntaxError(name->pos, ::toS(name) + L" is not a named thread.");
+			runOn(t);
+		}
+
 		FnBody *BSRawFn::createBody() {
 			throw InternalError(L"A BSRawFn can not be used without overriding 'createBody'!");
 		}
 
 		void BSRawFn::makeStatic() {
 			if (parentLookup)
-				throw InternalError(L"Don't call 'removeThis' after adding the function to the name tree.");
+				throw InternalError(L"Don't call 'makeStatic' after adding the function to the name tree.");
 
 			// Already static?
 			if (fnFlags() & fnStatic)

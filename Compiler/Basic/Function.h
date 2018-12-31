@@ -31,25 +31,15 @@ namespace storm {
 									MAYBE(SrcName *) result,
 									syntax::SStr *name,
 									Array<NameParam> *params,
+									syntax::Node *options,
 									syntax::Node *body);
-
-			STORM_CTOR FunctionDecl(Scope scope,
-									MAYBE(SrcName *) result,
-									syntax::SStr *name,
-									Array<NameParam> *params,
-									SrcName *thread,
-									syntax::Node *body);
-
-			// Optionally set options (type: SFreeOptions).
-			void STORM_FN options(syntax::Node *options);
 
 			// Values.
 			Scope scope;
 			syntax::SStr *name;
 			MAYBE(SrcName *) result;
 			Array<NameParam> *params;
-			MAYBE(SrcName *) thread;
-			MAYBE(syntax::Node *) optionNode;
+			MAYBE(syntax::Node *) options;
 			syntax::Node *body;
 
 			// Temporary solution for updating a function.
@@ -72,12 +62,7 @@ namespace storm {
 		FunctionDecl *STORM_FN assignDecl(Scope scope,
 										syntax::SStr *name,
 										Array<NameParam> *params,
-										syntax::Node *body);
-
-		FunctionDecl *STORM_FN assignDecl(Scope scope,
-										syntax::SStr *name,
-										Array<NameParam> *params,
-										SrcName *thread,
+										syntax::Node *options,
 										syntax::Node *body);
 
 
@@ -92,6 +77,10 @@ namespace storm {
 
 			// Declared at.
 			SrcPos pos;
+
+			// Set the thread for this function. Should be done before code is generated for the
+			// first time, and before someone else start depending on this function.
+			void STORM_FN thread(Scope scope, SrcName *name);
 
 			// Override this to create the syntax tree to compile.
 			virtual FnBody *STORM_FN createBody();

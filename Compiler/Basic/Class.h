@@ -41,6 +41,9 @@ namespace storm {
 			// Set the current thread to "unknown" from a decorator.
 			void STORM_FN unknownThread(SrcPos pos);
 
+			// Set the thread to use by default if no other thread is specified.
+			void STORM_FN defaultThread(SrcName *thread);
+
 			// Add a decorator.
 			void STORM_FN decorate(SrcName *decorator);
 
@@ -58,8 +61,22 @@ namespace storm {
 			// Name for either the parent class, or the named thread we shall use. Depending on 'nameIsThread'.
 			MAYBE(SrcName *) otherName;
 
-			// Is 'otherName' a super class or the name of a thread?
-			Bool nameIsThread;
+			// What does 'otherName' mean currently?
+			Byte otherMeaning;
+
+			enum {
+				// Nothing yet.
+				otherNone,
+
+				// Default thread to use.
+				otherDefaultThread,
+
+				// Thread to use (non-default, should not be set again). 'otherName' may be null.
+				otherThread,
+
+				// Super class to use.
+				otherSuper,
+			};
 
 			// Allowing lazy loads?
 			Bool allowLazyLoad;

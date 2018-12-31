@@ -8,6 +8,9 @@ namespace storm {
 	namespace bs {
 		STORM_PKG(lang.bs);
 
+		class UseThreadDecl;
+
+
 		/**
 		 * Content of a single source file.
 		 */
@@ -31,6 +34,9 @@ namespace storm {
 			// Set the default access modifier.
 			void STORM_FN add(Visibility *v);
 
+			// Set the default thread for subsequent entries.
+			void STORM_FN add(UseThreadDecl *t);
+
 			// Add either of the above types.
 			void STORM_FN add(TObject *obj);
 
@@ -49,10 +55,29 @@ namespace storm {
 			// Default access modifier.
 			Visibility *defaultVisibility;
 
+			// Default thread to use.
+			MAYBE(SrcName *) defaultThread;
+
 		private:
 			// Apply visibility to named objects.
 			void update(Named *named);
 			void update(NamedDecl *fn);
+		};
+
+
+		/**
+		 * Declare that a specific thread should be applied to all functions/classes in this file.
+		 */
+		class UseThreadDecl : public ObjectOn<Compiler> {
+			STORM_CLASS;
+		public:
+			STORM_CTOR UseThreadDecl(SrcName *name);
+
+			// The name of the thread to use.
+			SrcName *thread;
+
+			// To string.
+			void STORM_FN toS(StrBuf *to) const;
 		};
 
 	}

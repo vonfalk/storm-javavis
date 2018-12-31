@@ -32,3 +32,4 @@ The following types of visibility can be used inside types (both classes and val
 * `protected` visible from the current class and sub-classes.
 * `package` visible from the current package and any sub-packages.
 * `private` visible only from the current type.
+

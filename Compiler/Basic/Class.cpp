@@ -22,27 +22,37 @@ namespace storm {
 
 
 		Class::Class(TypeFlags flags, SrcPos pos, Scope scope, Str *name, syntax::Node *body)
-			: Type(name, flags), scope(scope, this), declared(pos), body(body), allowLazyLoad(true) {}
+			: Type(name, flags), scope(scope, this), declared(pos), body(body),
+			  otherName(null), otherMeaning(otherNone), allowLazyLoad(true) {}
 
 
 		void Class::lookupTypes() {
-			if (!otherName)
-				return;
-
 			allowLazyLoad = false;
 			try {
-				if (nameIsThread) {
+				switch (otherMeaning) {
+				case otherDefaultThread:
+				case otherThread:
+				{
+					// Already done?
+					if (!otherName)
+						break;
+
 					NamedThread *t = as<NamedThread>(scope.find(otherName));
 					if (!t)
 						throw SyntaxError(otherName->pos, L"Can not find the named thread " + ::toS(otherName) + L".");
 
 					setThread(t);
-				} else {
+					break;
+				}
+				case otherSuper:
+				{
 					Type *t = as<Type>(scope.find(otherName));
 					if (!t)
 						throw SyntaxError(otherName->pos, L"Can not find the super class " + ::toS(otherName) + L".");
 
 					setSuper(t);
+					break;
+				}
 				}
 
 				otherName = null;
@@ -54,38 +64,47 @@ namespace storm {
 		}
 
 		void Class::super(SrcName *super) {
-			if (nameIsThread)
+			if (otherMeaning == otherThread)
 				throw SyntaxError(super->pos, L"The 'extends' keyword may not be used together with 'on'.");
 
-			if (otherName)
+			if (otherMeaning == otherSuper)
 				throw SyntaxError(super->pos, L"Only one instance of 'extends' may be used for a single type. "
 								L"Multiple inheritance is not supported.");
 
 			otherName = super;
-			nameIsThread = false;
+			otherMeaning = otherSuper;
 		}
 
 		void Class::thread(SrcName *thread) {
-			if (nameIsThread)
+			if (otherMeaning == otherThread)
 				throw SyntaxError(thread->pos, L"The 'on' keyword may only be used once.");
 
-			if (otherName)
+			if (otherMeaning == otherSuper)
 				throw SyntaxError(thread->pos, L"The 'on' keyword may not be used together with 'extends'.");
 
 			otherName = thread;
-			nameIsThread = true;
+			otherMeaning = otherThread;
 		}
 
 		void Class::unknownThread(SrcPos pos) {
-			if (nameIsThread)
+			if (otherMeaning == otherThread)
 				throw SyntaxError(pos, L"The 'on' keyword may only be used once.");
 
-			if (otherName)
+			if (otherMeaning == otherSuper)
 				throw SyntaxError(pos, L"The 'on' keyword may not be used together with 'extends'.");
 
 			otherName = null;
-			nameIsThread = true;
+			otherMeaning = otherThread;
 			setSuper(StormInfo<TObject>::type(engine));
+		}
+
+		void Class::defaultThread(SrcName *thread) {
+			// Just ignore the default if it is already set!
+			if (otherMeaning != otherNone)
+				return;
+
+			otherName = thread;
+			otherMeaning = otherDefaultThread;
 		}
 
 		void Class::decorate(SrcName *decorator) {

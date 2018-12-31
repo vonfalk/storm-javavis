@@ -21,6 +21,9 @@ namespace storm {
 			// Visibility (if set).
 			MAYBE(Visibility *) visibility;
 
+			// Default thread (if set).
+			MAYBE(SrcName *) thread;
+
 			// Location of the documentation (if set).
 			SrcPos docPos;
 

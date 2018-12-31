@@ -101,7 +101,7 @@ namespace storm {
 
 	void Package::toS(StrBuf *to) const {
 		if (parent())
-			*to << L"Pkg " << identifier();
+			*to << L"Package " << identifier();
 		else
 			*to << L"Root package (" << name << L")";
 

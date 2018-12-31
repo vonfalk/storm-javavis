@@ -100,25 +100,32 @@ SFormals => Array<NameParam>() : SFormal -> push - (, ",", SFormal -> push)*;
 NameParam SFormal();
 SFormal => NameParam(type, name) : SType type, SName name #varName;
 
-// Decorators applicable to free functions.
-void SFreeOption(BSRawFn item) #keyword;
-SFreeOption => makePure(item) : "pure";
+// Decorators applicable both to free functions and to member functions.
+void SCommonOption(BSRawFn item);
+SCommonOption => makePure(item) : "pure" #keyword;
 
-void SFreeOptions(BSRawFn item);
+// Decorators applicable to free functions.
+void SFreeOption(Scope scope, BSRawFn item);
+SFreeOption : SCommonOption(item);
+SFreeOption : SFreeSpecialOption(scope, item);
+
+// Special option(s) that are allowed without a ":" before.
+void SFreeSpecialOption(Scope scope, BSRawFn item);
+SFreeSpecialOption => thread(item, scope, thread) : "on" #keyword, SType thread;
+
+
+void SFreeOptions(Scope scope, BSRawFn item);
 SFreeOptions : ;
-SFreeOptions : ":", SFreeOption(item) - (, ",", SFreeOption(item))*;
+SFreeOptions : SFreeSpecialOption(scope, item);
+SFreeOptions : ":", SFreeOption(scope, item) - (, ",", SFreeOption(scope, item))*;
 
 
 // Function.
 FunctionDecl SFunction(Scope env);
-SFunction[0] => FunctionDecl(env, result, name, params, body) :
-    SType result, SFnDeclName name #fnName, "(", SFormals params, ")", SFreeOptions@ -> options, "{" [, SFunctionBody@ body, ]+ "}";
-SFunction[5] => assignDecl(env, name, params, body) :
-    "assign" #keyword, SFnDeclName name #fnName, "(", SFormals params, ")", "{" [, SFunctionBody@ body, ]+ "}";
-SFunction[0] => FunctionDecl(env, result, name, params, thread, body) :
-    SType result, SFnDeclName name #fnName, "(", SFormals params, ")", "on" #keyword, SType thread, SFreeOptions@ -> options, "{" [, SFunctionBody@ body, ]+ "}";
-SFunction[5] => assignDecl(env, name, params, thread, body) :
-    "assign" #keyword, SFnDeclName name #fnName, "(", SFormals params, ")", "on" #keyword, SType thread, "{" [, SFunctionBody@ body, ]+ "}";
+SFunction[0] => FunctionDecl(env, result, name, params, options, body) :
+    SType result, SFnDeclName name #fnName, "(", SFormals params, ")", SFreeOptions@ options, "{" [, SFunctionBody@ body, ]+ "}";
+SFunction[5] => assignDecl(env, name, params, options, body) :
+    "assign" #keyword, SFnDeclName name #fnName, "(", SFormals params, ")", SFreeOptions@ options, "{" [, SFunctionBody@ body, ]+ "}";
 
 // Function names. Slightly wider than a regular Name, since we allow operators here as well.
 SStr SFnDeclName();
@@ -176,6 +183,7 @@ TObject SFileItem(Scope env);
 SFileItem => item : SPlainFileItem(env) item;
 SFileItem => apply(pos, item, access) : SFreeAccess access - " ", SPlainFileItem(env) item;
 SFileItem => access : SDelimiter - [SFreeAccess access - ":"]-;
+SFileItem => UseThreadDecl(thread) : SDelimiter - ["on" #keyword, SType thread - ":"]-;
 
 TObject SPlainFileItem(Scope env);
 SPlainFileItem => f : SFunction(env) f;
@@ -564,7 +572,7 @@ SFirstFormal => nameless(type) : SType type;
 
 // Decorators we can apply to a named element in a class.
 void SMemberOption(Class owner, BSRawFn item) #keyword;
-SMemberOption : SFreeOption(item);
+SMemberOption : SCommonOption(item);
 SMemberOption => makeAbstract(item) : "abstract";
 SMemberOption => makeFinal(item) : "final";
 SMemberOption => makeOverride(item) : "override";
