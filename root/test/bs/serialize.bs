@@ -25,29 +25,6 @@ class Data : persist {
 		to << "{ a: " << a << ", b: " << b << ", data1: " << data1 << ", data2: " << data2 << " }";
 	}
 
-	SerializedType serializedType() : static {
-		// NOTE: Should only be done once!
-		SerializedStdType desc(named{Data}, &__init(Data, ObjIStream));
-		desc.add("a", named{core:Int});
-		desc.add("b", named{core:Int});
-		desc.add("data1", named{Employee});
-		desc.add("data2", named{Employee});
-
-		desc;
-	}
-
-	// Write. Should be automatically generated...
-	void write(ObjOStream to) {
-		SerializedType desc = serializedType();
-		if (to.startObject(desc, this)) {
-			a.write(to);
-			b.write(to);
-			data1.write(to);
-			data2.write(to);
-			to.end();
-		}
-	}
-
 	// Write the members in another order. Should still be readable by 'read'.
 	void writeShuffled(ObjOStream to) {
 		SerializedStdType desc(named{Data}, &__init(Data, ObjIStream));
@@ -64,37 +41,6 @@ class Data : persist {
 			to.end();
 		}
 	}
-
-	// Read. Automatically generated.
-	// Data read(ObjIStream from) : static {
-	// 	Object r = from.readObject(named{Data});
-	// 	if (r as Data) {
-	// 		r;
-	// 	} else {
-	// 		// Note: This case never happens.
-	// 		Data();
-	// 	}
-	// }
-
-	// Read. Should be automatically generated...
-	protected init(ObjIStream from) {
-		// Should be done when inheritance is present.
-		// super(from);
-
-		var a = Int:read(from);
-		var b = Int:read(from);
-		var data1 = Employee:read(from);
-		var data2 = Employee:read(from);
-
-		init {
-			a = a;
-			b = b;
-			data1 = data1;
-			data2 = data2;
-		}
-
-		from.end();
-	}
 }
 
 /**
@@ -110,36 +56,6 @@ class Employee : persist {
 
 	void toS(StrBuf to) {
 		to << "Employee: { name: " << name << ", coolness: " << coolness << " }";
-	}
-
-	SerializedType serializedType() : static {
-		// NOTE: Should only be done once!
-		SerializedStdType desc(named{Employee}, &__init(Employee, ObjIStream));
-		desc.add("name", named{Str});
-		desc.add("coolness", named{Int});
-		desc;
-	}
-
-	void write(ObjOStream to) {
-		if (to.startObject(serializedType(), this)) {
-			name.write(to);
-			coolness.write(to);
-			to.end();
-		}
-	}
-
-	protected init(ObjIStream from) {
-		// super(from);
-
-		var name = Str:read(from);
-		var coolness = Int:read(from);
-
-		init {
-			name = name;
-			coolness = coolness;
-		}
-
-		from.end();
 	}
 }
 
@@ -158,32 +74,6 @@ class Manager : extends Employee, persist {
 
 	void toS(StrBuf to) {
 		to << "Manager: { name: " << name << ", coolness: " << coolness << ", title: " << title << " }";
-	}
-
-	SerializedType serializedType() : static {
-		SerializedStdType desc(named{Manager}, &__init(Manager, ObjIStream), Employee:serializedType);
-		desc.add("title", named{Str});
-		desc;
-	}
-
-	void write(ObjOStream to) {
-		if (to.startObject(serializedType(), this)) {
-			super:write(to);
-			title.write(to);
-			to.end();
-		}
-	}
-
-	protected init(ObjIStream from) {
-		super(from);
-
-		var title = Str:read(from);
-
-		init {
-			title = title;
-		}
-
-		from.end();
 	}
 }
 

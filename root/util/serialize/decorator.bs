@@ -12,16 +12,14 @@ on Compiler:
  */
 void persist(Type type) {
 	Value t = thisPtr(type);
+	Value oStream(named{ObjOStream});
+	Value iStream(named{ObjIStream});
 	Bool hasType = checkFn(type, "serializedType", [], Value(named{SerializedType}));
-	Bool hasWrite = checkFn(type, "write", [t, Value(named{ObjOStream})], Value());
-	Bool hasCtor = checkFn(type, "__init", [t, Value(named{ObjIStream})], Value());
-	Bool hasRead = checkFn(type, "read", [Value(named{ObjIStream})], Value(type));
+	Bool hasWrite = checkFn(type, "write", [t, oStream], Value());
+	Bool hasCtor = checkFn(type, "__init", [t, iStream], Value());
+	Bool hasRead = checkFn(type, "read", [iStream], Value(type));
 
-	print("Type: ${type}");
-	print(" type: ${hasType}");
-	print(" ctor: ${hasCtor}");
-	print(" read: ${hasRead}");
-	print(" write: ${hasWrite}");
+	print("TODO: If both 'read' and a constructor are present, we should probably generate a 'serializedType'!");
 
 	if (hasType & hasWrite & hasCtor) {
 		// All is good!
@@ -31,9 +29,9 @@ void persist(Type type) {
 		// Add them!
 		var members = serializedMembers(type);
 
-		addType(type, members);
-		addWrite(type, members);
-		addCtor(type, members);
+		var ctorFun = addCtor(type, members);
+		var typeFun = addType(type, members, ctorFun);
+		addWrite(type, members, typeFun);
 	}
 
 	if (!hasRead) {
@@ -105,14 +103,180 @@ Member[] serializedMembers(Type t) {
 	result;
 }
 
-// Add the member 'serializedType'.
-void addType(Type type, Member[] members) {}
+// Throw on failure.
+LocalVar safeVariable(Block block, Str name) {
+	if (x = block.variable(SimplePart(name))) {
+		x;
+	} else {
+		throwSyntaxError(SrcPos(), "Internal error: the variable was not found!");
+		// Should be removed when we have exceptions!
+		LocalVar(name, Value(), SrcPos(), false);
+	}
+}
 
-// Add the member 'write'.
-void addWrite(Type type, Member[] members) {}
+// Find a suitable read or write function for a type, as accessed from 'from'.
+Function findReadFunction(SrcPos pos, Value type, Type from) {
+	if (type.type) {
+		Value param(named{ObjIStream});
+		if (x = type.find(SimplePart("read", [param]), Scope(from)) as Function) {
+			return x;
+		}
+	}
 
-// Add the constructor for deserialization.
-void addCtor(Type type, Member[] members) {}
+	throwSyntaxError(pos, "The type ${type} is not serializable.");
+	return Function(Value(), "", []);
+}
+
+
+/**
+ * Add the constructor for deserialization. Returns the created function.
+ *
+ * Roughly equivalent to the following:
+ *
+ * init(ObjIStream from) {
+ *   init(from) {
+ *     foo = T:read(from);
+ *     bar = T:read(from);
+ *     // ...
+ *   }
+ *   from.end();
+ * }
+ */
+Function addCtor(Type type, Member[] members) {
+	Value t = thisPtr(type);
+	Value objStream(named{ObjIStream});
+	SrcPos pos;
+
+	BSTreeCtor ctor([ValParam(t, "this"), ValParam(objStream, "from")], pos);
+	CtorBody body(ctor, Scope(type, BSLookup()));
+	LocalVarAccess from(pos, body.safeVariable("from"));
+
+	Initializer[] init;
+	for (m in members) {
+		Function toCall = findReadFunction(pos, m.member.type, type);
+		FnCall expr(pos, body.scope, toCall, Actuals(from));
+		init << Initializer(SStr(m.name), expr);
+	}
+
+	// We don't want to pass parameters to the superclass if it is Object or TObject.
+	if (type.declaredSuper) {
+		body.add(InitBlock(pos, body, Actuals(from), init));
+	} else {
+		body.add(InitBlock(pos, body, Actuals(), init));
+	}
+
+	// Call 'end'.
+	body.add(namedExpr(body, pos, "end", from));
+
+	ctor.body = body;
+
+	type.add(ctor);
+	ctor;
+}
+
+// Find the type description in the parent class.
+SerializedType findSerializedType(Type type, Type from) {
+	if (fn = type.findHere(SimplePart("serializedType"), Scope(from)) as Function) {
+		if (ptr = fn.pointer as fn()->SerializedType) {
+			return ptr.call();
+		}
+	}
+
+	throwSyntaxError(SrcPos(), "The type ${type} is not serializable.");
+	// TODO: Remove once we have exceptions.
+	SerializedType(type, &findSerializedType(Type, Type));
+}
+
+/**
+ * Add the member 'serializedType'. Returns the created function.
+ */
+Function addType(Type type, Member[] members, Function ctorFun) {
+	SerializedStdType desc = if (t = type.declaredSuper) {
+		SerializedStdType(type, ctorFun.pointer, findSerializedType(t, type));
+	} else {
+		SerializedStdType(type, ctorFun.pointer);
+	};
+	for (m in members) {
+		if (t = m.member.type.type) {
+			desc.add(m.name, t);
+		}
+	}
+
+	Value result(named{SerializedType});
+
+	Listing l(false, result.desc);
+	l << prolog();
+	l << fnRet(objPtr(desc));
+
+	Function fun(result, "serializedType", []);
+	fun.make(FnFlags:static);
+	fun.setCode(DynamicCode(l));
+	type.add(fun);
+	fun;
+}
+
+/**
+ * Add the member 'write'.
+ *
+ * Roughly equivalent to the following:
+ *
+ * void write(ObjOStream to) {
+ *   if (to.startObject(desc, this)) {
+ *     foo.write(to);
+ *     bar.write(to);
+ *     ...
+ *     to.end();
+ *   }
+ * }
+ */
+void addWrite(Type type, Member[] members, Function typeFun) {
+	SrcPos pos;
+	Value t = thisPtr(type);
+	Value objStream(named{ObjOStream});
+	BSTreeFn fun(Value(), SStr("write", pos), [ValParam(t, "this"), ValParam(objStream, "to")], null);
+	FnBody body(fun, Scope(type, BSLookup()));
+	LocalVarAccess me(pos, body.safeVariable("this"));
+	LocalVarAccess to(pos, body.safeVariable("to"));
+
+	FnCall desc(pos, body.scope, typeFun, Actuals(), false, true);
+	Expr startCall = if (t.isValue()) {
+		namedExpr(body, pos, "startValue", to, Actuals(desc));
+	} else {
+		Actuals params;
+		params.add(desc);
+		params.add(me);
+		namedExpr(body, pos, "startObject", to, params);
+	};
+
+	If check(body, startCall);
+	IfTrue ifTrue(pos, check);
+	check.trueExpr(ifTrue);
+	ExprBlock writeCalls(pos, ifTrue);
+	ifTrue.set(writeCalls);
+	body.add(check);
+
+	if (s = type.declaredSuper) {
+		// Call the super function.
+		if (fn = s.findHere(SimplePart("write", [t, objStream]), body.scope) as Function) {
+			Actuals a;
+			a.add(me);
+			a.add(to);
+			writeCalls.add(FnCall(pos, body.scope, fn, a, false, true));
+		} else {
+			throwSyntaxError(pos, "The type ${s} does not have a write function!");
+		}
+	}
+
+	for (m in members) {
+		MemberVarAccess v(pos, me, m.member, true);
+		writeCalls.add(namedExpr(writeCalls, pos, "write", v, Actuals(to)));
+	}
+
+	writeCalls.add(namedExpr(writeCalls, pos, "end", to));
+
+	fun.body = body;
+	type.add(fun);
+}
 
 
 /**
@@ -154,7 +318,7 @@ void addRead(Type type) {
 	}
 
 	Function fun(t, "read", [objStream]);
-	fun.make(FnFlags:fnStatic);
+	fun.make(FnFlags:static);
 	fun.setCode(DynamicCode(l));
 	type.add(fun);
 }

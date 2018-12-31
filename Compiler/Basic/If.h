@@ -17,10 +17,10 @@ namespace storm {
 			STORM_CTOR IfExpr(SrcPos pos, Block *parent);
 
 			// True branch.
-			IfTrue *trueCode;
+			MAYBE(IfTrue *) trueCode;
 
 			// False branch, may be null.
-			Expr *falseCode;
+			MAYBE(Expr *) falseCode;
 
 			// Set variables from the parser.
 			void STORM_FN trueExpr(IfTrue *e);

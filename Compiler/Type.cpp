@@ -277,6 +277,17 @@ namespace storm {
 			c->updateSuper();
 	}
 
+	MAYBE(Type *) Type::declaredSuper() const {
+		Type *s = super();
+
+		if (s == Object::stormType(engine))
+			s = null;
+		else if (s == TObject::stormType(engine))
+			s = null;
+
+		return s;
+	}
+
 	void Type::setThread(NamedThread *thread) {
 		useThread = thread;
 

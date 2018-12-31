@@ -37,6 +37,9 @@ namespace storm {
 
 		// Super type.
 		MAYBE(SerializedType *) super;
+
+		// To string.
+		virtual void STORM_FN toS(StrBuf *to) const;
 	};
 
 
@@ -70,6 +73,9 @@ namespace storm {
 
 		// Add a member.
 		void STORM_FN add(Str *name, Type *type);
+
+		// To string.
+		virtual void STORM_FN toS(StrBuf *to) const;
 
 		/**
 		 * Cursor into a SerializedType.

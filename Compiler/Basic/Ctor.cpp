@@ -269,7 +269,7 @@ namespace storm {
 					actuals->push(params->code(i, s, ctor->params->at(i), block->scope));
 			}
 
-			CodeResult *t = CREATE(CodeResult, this);
+			CodeResult *t = new (this) CodeResult();
 			ctor->localCall(s, actuals, t, false);
 		}
 

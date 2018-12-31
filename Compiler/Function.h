@@ -15,31 +15,31 @@ namespace storm {
 	 */
 	enum FnFlags {
 		// Nothing special about this function.
-		fnNone = 0x00,
+		STORM_NAME(fnNone, none) = 0x00,
 
 		// This function is pure, meaning that it has no side effects and accesses no global
 		// data. This means that two calls with the same parameters will always yield the same
 		// results, which in turn means that the result can be cached or computed compile-time.
-		fnPure = 0x01,
+		STORM_NAME(fnPure, pure) = 0x01,
 
 		// This function is a constructor suitable for automatic type casts. Only relevant for constructors.
-		fnAutoCast = 0x02,
+		STORM_NAME(fnAutoCast, autoCast) = 0x02,
 
 		// This is a setter function, and as such we want to be able to use the function as the
 		// target of an assignment.
-		fnAssign = 0x04,
+		STORM_NAME(fnAssign, assign) = 0x04,
 
 		// This function is final.
-		fnFinal = 0x08,
+		STORM_NAME(fnFinal, final) = 0x08,
 
 		// This function is abstract (ie. has to be overridden).
-		fnAbstract = 0x10,
+		STORM_NAME(fnAbstract, abstract) = 0x10,
 
 		// This function is expected to override something.
-		fnOverride = 0x20,
+		STORM_NAME(fnOverride, override) = 0x20,
 
 		// This function is static (ie. 'isMember' never returns true).
-		fnStatic = 0x40,
+		STORM_NAME(fnStatic, static) = 0x40,
 	};
 
 	BITMASK_OPERATORS(FnFlags);

@@ -25,6 +25,17 @@ namespace storm {
 		checkCtor(t, ctor);
 	}
 
+	void SerializedType::toS(StrBuf *to) const {
+		*to << S("Serialization info for ") << runtime::typeName(type) << S(":");
+		if (super) {
+			*to << S("\n  super: ");
+			to->indent();
+			super->toS(to);
+			to->dedent();
+		}
+		*to << S("\n  constructor: ") << readCtor;
+	}
+
 
 	SerializedMember::SerializedMember(Str *name, Type *type) : name(name), type(type) {}
 
@@ -36,6 +47,12 @@ namespace storm {
 
 	void SerializedStdType::add(Str *name, Type *type) {
 		members->push(SerializedMember(name, type));
+	}
+
+	void SerializedStdType::toS(StrBuf *to) const {
+		SerializedType::toS(to);
+		for (Nat i = 0; i < members->count(); i++)
+			*to << S("\n  ") << members->at(i).name << S(": ") << runtime::typeName(members->at(i).type);
 	}
 
 	SerializedStdType::Cursor::Cursor() : type(null), pos(1) {}
