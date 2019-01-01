@@ -12,6 +12,8 @@ class TextObjStream {
 
 	// Read an object to a StrBuf.
 	void read(StrBuf to) {
+		objects.clear();
+
 		Nat type = Nat:read(src);
 		read(to, type);
 	}
@@ -139,6 +141,8 @@ private:
 		Byte flags = Byte:read(src);
 		Str name = demangleName(Str:read(src));
 		Nat parent = Nat:read(src);
+		// TODO: if (parent == type), we should throw an exception or similar. Otherwise, we will
+		// recurse infinitely when trying to read this type.
 		Type t(name, flags, parent);
 
 		do {

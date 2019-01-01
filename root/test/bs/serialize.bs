@@ -6,23 +6,26 @@ use util:serialize;
 /**
  * Serializable class.
  */
-class Data : persist {
+class Data : serializable {
 	Int a;
 	Int b;
 	Employee data1;
 	Employee data2;
+	Employee data3;
 
 	init() {
+		Employee shared;
 		init() {
 			a = 5;
 			b = 8;
-			data1 = Employee();
+			data1 = shared;
 			data2 = Manager();
+			data3 = shared;
 		}
 	}
 
 	void toS(StrBuf to) {
-		to << "{ a: " << a << ", b: " << b << ", data1: " << data1 << ", data2: " << data2 << " }";
+		to << "{ a: " << a << ", b: " << b << ", data1: " << data1 << ", data2: " << data2 << ", data3: " << data3 << " }";
 	}
 
 	// Write the members in another order. Should still be readable by 'read'.
@@ -30,32 +33,125 @@ class Data : persist {
 		SerializedStdType desc(named{Data}, &__init(Data, ObjIStream));
 		desc.add("b", named{core:Int});
 		desc.add("data2", named{Employee});
+		desc.add("data3", named{Employee});
 		desc.add("a", named{core:Int});
 		desc.add("data1", named{Employee});
 
 		if (to.startObject(desc, this)) {
 			b.write(to);
-			data2.write(to);
+			data2.writeShuffled(to);
+			data3.writeShuffled(to);
 			a.write(to);
-			data1.write(to);
+			data1.writeShuffled(to);
 			to.end();
 		}
 	}
+
+	// Compare to another object to see if their structure are the same.
+	Bool compare(Data other) {
+		Bool ok = true;
+		ok &= a == other.a;
+		ok &= b == other.b;
+		ok &= data1.compare(other.data1);
+		ok &= data2.compare(other.data2);
+		ok &= data3.compare(other.data3);
+
+		// Check so that references are properly preserved.
+		ok &= check(data1, data2, other.data1, other.data2);
+		ok &= check(data1, data3, other.data1, other.data3);
+		ok &= check(data2, data3, other.data2, other.data3);
+
+		ok;
+	}
+
+	private Bool check(Object a, Object b, Object c, Object d) : static {
+		if (a is b)
+			c is d;
+		else
+			c !is d;
+	}
+}
+
+/**
+ * A serializable value.
+ */
+value Salary : serializable {
+	Nat amount;
+	Str currency;
+
+	init(Nat amount, Str currency) {
+		init {
+			amount = amount;
+			currency = currency;
+		}
+	}
+
+	void writeShuffled(ObjOStream to) {
+		SerializedStdType desc(named{Salary}, &__init(Salary, ObjIStream));
+		desc.add("currency", named{Str});
+		desc.add("amount", named{Nat});
+		if (to.startValue(desc)) {
+			currency.write(to);
+			amount.write(to);
+			to.end();
+		}
+	}
+
+	Bool ==(Salary other) {
+		amount == other.amount & currency == other.currency;
+	}
+}
+
+StrBuf <<(StrBuf to, Salary c) {
+	to << c.amount << " " << c.currency;
 }
 
 /**
  * Another serializable class.
  */
-class Employee : persist {
+class Employee : serializable {
 	Str name;
 	Int coolness;
+	Salary salary;
 
 	init() {
-		init() { name = "John Smith"; coolness = 500; }
+		init {
+			name = "John Smith";
+			coolness = 500;
+			salary = Salary(100, "SEK");
+		}
+	}
+
+	Bool compare(Employee other) {
+		if (!sameType(this, other))
+			return false;
+
+		Bool ok = name == other.name;
+		ok &= coolness == other.coolness;
+		ok &= salary == other.salary;
+
+		ok;
+	}
+
+	SerializedType shuffledType() : static {
+		SerializedStdType desc(named{Employee}, &__init(Employee, ObjIStream));
+		desc.add("salary", named{Salary});
+		desc.add("name", named{Str});
+		desc.add("coolness", named{Int});
+		desc;
+	}
+
+	void writeShuffled(ObjOStream to) {
+		if (to.startObject(shuffledType(), this)) {
+			salary.write(to);
+			name.write(to);
+			coolness.write(to);
+			to.end();
+		}
 	}
 
 	void toS(StrBuf to) {
-		to << "Employee: { name: " << name << ", coolness: " << coolness << " }";
+		to << "Employee: { name: " << name << ", coolness: " << coolness << ", salary: " << salary << " }";
 	}
 }
 
@@ -63,52 +159,173 @@ class Employee : persist {
 /**
  * A sub-class to Employee.
  */
-class Manager : extends Employee, persist {
+class Manager : extends Employee, serializable {
 	Str title;
 
 	init() {
 		init() { title = "Executive"; }
 		name = "Mr. " # name;
 		coolness *= 10;
+		salary.amount *= 10;
+	}
+
+	SerializedType shuffledType() : static {
+		SerializedStdType desc(named{Manager}, &__init(Manager, ObjIStream), Employee:shuffledType());
+		desc.add("title", named{Str});
+		desc;
+	}
+
+	void writeShuffled(ObjOStream to) {
+		if (to.startObject(shuffledType(), this)) {
+			super:writeShuffled(to);
+			title.write(to);
+			to.end();
+		}
+	}
+
+	Bool compare(Employee other) {
+		if (other as Manager) {
+			Bool ok = super:compare(other);
+			ok &= title == other.title;
+			ok;
+		} else {
+			false;
+		}
 	}
 
 	void toS(StrBuf to) {
-		to << "Manager: { name: " << name << ", coolness: " << coolness << ", title: " << title << " }";
+		to << "Manager: { name: " << name << ", coolness: " << coolness << ", salary: " << salary << ", title: " << title << " }";
 	}
 }
 
-// Deserialize things.
-void deserialize(MemOStream from) {
-	{
-		MemIStream in(from.buffer);
-		TextObjStream read(in);
-		print("Result: " # read.read());
-	}
-
-	{
-		MemIStream in(from.buffer);
-		ObjIStream read(in);
-		print("Deserialization: " # Data:read(read));
-	}
+// Show the string representation of serialized data.
+private void showString(Buffer data) {
+	print(TextObjStream(MemIStream(data)).read());
 }
 
-// Test serialization.
-void testSerialize() {
-	Data x;
+// Just serialize an object and then de-serialize it.
+Bool simpleSerialization() {
+	Data original;
 
-	{
-		MemOStream out;
-		ObjOStream obj(out);
-		x.write(obj);
-		deserialize(out);
+	MemOStream out;
+	original.write(ObjOStream(out));
+
+	// showString(out.buffer);
+
+	MemIStream in(out.buffer);
+	Data copy = Data:read(ObjIStream(in));
+
+	original.compare(copy);
+}
+
+// Serialize one object multiple times in the same stream.
+Bool multipleSerialization() {
+	Data original;
+
+	MemOStream out;
+	ObjOStream objOut(out);
+	original.write(objOut);
+	Nat size1 = out.buffer.filled;
+	original.write(objOut);
+	Nat size2 = out.buffer.filled - size1;
+
+	// The second serialization should be smaller, as it does not require duplicating metadata.
+	if (size2 >= size1) {
+		print("Second serialization should be smaller!");
+		return false;
 	}
 
-	print("Shuffled output:");
+	ObjIStream objIn(MemIStream(out.buffer));
+	Data copy1 = Data:read(objIn);
+	Data copy2 = Data:read(objIn);
 
-	{
-		MemOStream out;
-		ObjOStream obj(out);
-		x.writeShuffled(obj);
-		deserialize(out);
+	// These are separate entities, and should not have anything in common, as if we would have
+	// cloned them.
+	if (copy1 is copy2) {
+		print("The objects are the same!");
+		return false;
 	}
+	if (copy1.data1 is copy2.data1) {
+		print("The objects share data!");
+		return false;
+	}
+
+	return original.compare(copy1) & original.compare(copy2);
+}
+
+// Serialize an object, but with some members in the wrong order!
+Bool shuffledSerialization() {
+	Data original;
+
+	MemOStream out;
+	original.writeShuffled(ObjOStream(out));
+
+	// showString(out.buffer);
+
+	MemIStream in(out.buffer);
+	Data copy = Data:read(ObjIStream(in));
+
+	original.compare(copy);
+}
+
+// Serialize some primitives.
+Bool primitiveSerialization() {
+	MemOStream out;
+	ObjOStream objOut(out);
+	1b.write(objOut);
+	1l.write(objOut);
+	"Hello".write(objOut);
+
+	ObjIStream objIn(MemIStream(out.buffer));
+	Bool ok = true;
+	ok &= Byte:read(objIn) == 1b;
+	ok &= Long:read(objIn) == 1l;
+	ok &= Str:read(objIn) == "Hello";
+	ok;
+}
+
+// Read and write objects with differing formal types at top-level.
+Bool typeDiffSerialization() {
+	Manager original;
+
+	MemOStream out;
+	ObjOStream objOut(out);
+	original.write(objOut);
+
+	ObjIStream objIn(MemIStream(out.buffer));
+	var e = Employee:read(objIn);
+
+	original.compare(e);
+}
+
+// Simple measurements of serialization performance.
+void serializationPerf() {
+	Data original;
+	Nat runs = 1000;
+	Nat times = 1000;
+
+	MemOStream out;
+	Moment start1;
+	for (Nat i = 0; i < runs; i++) {
+		out = MemOStream();
+		ObjOStream objOut(out);
+		for (Nat j = 0; j < times; j++) {
+			original.write(objOut);
+		}
+	}
+	Moment end1;
+
+	Moment start2;
+	for (Nat i = 0; i < runs; i++) {
+		ObjIStream objIn(MemIStream(out.buffer));
+		for (Nat j = 0; j < times; j++) {
+			Data:read(objIn);
+		}
+	}
+	Moment end2;
+
+	print("Serialization time for ${runs} runs, ${times} times:");
+	print("Serialized size: ${out.buffer.filled} bytes");
+	print("Serialization  : ${end1 - start1}");
+	print("Deserialization: ${end2 - start1}");
 }

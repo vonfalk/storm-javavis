@@ -17,12 +17,13 @@
     but the scale of the issue should be assessed first.
   - [ ] Parsing core.lang.syntax.bnf takes about 80 ms, which is a bit on the high end when compiling code...
 
-* Loose ends so far [43/75]
+* Loose ends so far [43/76]
   - [ ] When using "unless (foo)", "foo" uses a local variable in the block as well as outside of the block,
     which makes assignments to that variable to not write to the original variable even if one would expect so.
     We should at least warn about this.
   - [ ] Nested classes declared in C++ are not private in Storm, even if they are declared as such in C++.
   - [ ] Calling init(1, 2) {} when the superclass is Object will not raise an error as expected.
+  - [ ] It should be easier to write toS functions for values. Ideally, they should look the same as for classes.
   - [ ] We could remove Type::typeRef, since we can store pointers directly in the generated machine code.
     Do we want an explicit reference for the type, or are we fine with using anonymous pointers?
   - [ ] Inside Type::updateHandle, we should check return types for the found functions! Otherwise, things

@@ -10,7 +10,7 @@ on Compiler:
 /**
  * A decorator for types that adds members required for automatic serialization and deserialization.
  */
-void persist(Type type) {
+void serializable(Type type) {
 	Value t = thisPtr(type);
 	Value oStream(named{ObjOStream});
 	Value iStream(named{ObjIStream});
@@ -169,6 +169,9 @@ Function addCtor(Type type, Member[] members) {
 	body.add(namedExpr(body, pos, "end", from));
 
 	ctor.body = body;
+
+	// Should be protected; external actors should call "read" instead.
+	ctor.visibility = typeProtected();
 
 	type.add(ctor);
 	ctor;
