@@ -1,4 +1,5 @@
 #pragma once
+#include "Handle.h"
 
 namespace storm {
 	STORM_PKG(core);
