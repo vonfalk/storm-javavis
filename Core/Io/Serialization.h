@@ -12,6 +12,57 @@
 namespace storm {
 	STORM_PKG(core.io);
 
+	namespace typeInfo {
+		/**
+		 * Information about a serialized type
+		 */
+		enum TypeInfo {
+			// Nothing in particular.
+			none = 0x00,
+
+			// Is this a class-type? If not set, it is a value type.
+			classType = 0x01,
+
+			// Is this a tuple-type?
+			tuple = 0x02,
+
+			// Completely custom type?
+			custom = 0x04,
+		};
+
+		BITMASK_OPERATORS(TypeInfo);
+	}
+
+
+	/**
+	 * Reserved type id:s. These denote the primitive types known natively by the serialization system.
+	 */
+	enum StoredId {
+		// Indicates the end of the members table.
+		endId = 0x00,
+
+		// Built in types.
+		boolId = 0x01,
+		byteId = 0x02,
+		intId = 0x03,
+		natId = 0x04,
+		longId = 0x05,
+		wordId = 0x06,
+		floatId = 0x07,
+		doubleId = 0x08,
+		strId = 0x09,
+
+		// Containers.
+		arrayId = 0x10,
+		mapId = 0x11,
+		setId = 0x12,
+		pqId = 0x13,
+
+		// First ID usable by custom types.
+		firstCustomId = 0x20
+	};
+
+
 	/**
 	 * Description of a class that is serialized. Instances of the subclass, SerializedType,
 	 * describe classes consisting of a fixed set of data members (that are serialized
@@ -38,8 +89,15 @@ namespace storm {
 		// Super type.
 		MAYBE(SerializedType *) super;
 
+		// Get the TypeInfo bitmask for this type.
+		typeInfo::TypeInfo STORM_FN info() const;
+
 		// To string.
 		virtual void STORM_FN toS(StrBuf *to) const;
+
+	protected:
+		// Overridden in subclasses to provide the base info.
+		virtual typeInfo::TypeInfo STORM_FN baseInfo() const;
 	};
 
 
@@ -105,6 +163,47 @@ namespace storm {
 			SerializedStdType *type;
 			Nat pos;
 		};
+
+	protected:
+		typeInfo::TypeInfo STORM_FN baseInfo() const;
+	};
+
+
+	/**
+	 * Description of a sequence of tuples. Used to serialize containers using a format
+	 * understandable by readers unaware of the underlying types.
+	 *
+	 * The standard serialization mechanisms do not use this serialization automatically; custom
+	 * serialization is required. However, in practice this will not be required as the containers
+	 * implement the appropriate custom serialization automatically.
+	 *
+	 * An array is just a sequence of 1-tuples, while a map is a sequence of 2-tuples, for example.
+	 */
+	class SerializedTuples : public SerializedType {
+		STORM_CLASS;
+	public:
+		// Create a type description.
+		STORM_CTOR SerializedTuples(Type *t, FnBase *ctor);
+		STORM_CTOR SerializedTuples(Type *t, FnBase *ctor, SerializedType *super);
+
+		// Add a type.
+		void STORM_FN add(Type *t) { elements->push((TObject *)t); }
+
+		// Count.
+		Nat STORM_FN count() const { return elements->count(); }
+
+		// Element.
+		Type *STORM_FN at(Nat i) const { return (Type *)elements->at(i); }
+
+		// To string.
+		virtual void STORM_FN toS(StrBuf *to) const;
+
+	protected:
+		typeInfo::TypeInfo STORM_FN baseInfo() const;
+
+	private:
+		// The types in each tuple. We can't use Type, so we use TObject instead.
+		Array<TObject *> *elements;
 	};
 
 
@@ -117,52 +216,6 @@ namespace storm {
 		virtual String what() const { return w; }
 	private:
 		String w;
-	};
-
-
-	namespace typeInfo {
-		/**
-		 * Information about a serialized type
-		 */
-		enum TypeInfo {
-			// Value type.
-			valueType = 0x00,
-
-			// Class type.
-			classType = 0x01,
-
-			// Mask for class/value.
-			typeMask = 0x01,
-		};
-	}
-
-
-	/**
-	 * Reserved type id:s. These denote the primitive types known natively by the serialization system.
-	 */
-	enum StoredId {
-		// Indicates the end of the members table.
-		endId = 0x00,
-
-		// Built in types.
-		boolId = 0x01,
-		byteId = 0x02,
-		intId = 0x03,
-		natId = 0x04,
-		longId = 0x05,
-		wordId = 0x06,
-		floatId = 0x07,
-		doubleId = 0x08,
-		strId = 0x09,
-
-		// Containers.
-		arrayId = 0x10,
-		mapId = 0x11,
-		setId = 0x12,
-		pqId = 0x13,
-
-		// First ID usable by custom types.
-		firstCustomId = 0x20
 	};
 
 
@@ -245,7 +298,7 @@ namespace storm {
 			Byte flags() const { return (data >> 24) & 0xFF; }
 
 			// Is this a value type?
-			Bool isValue() const { return (flags() & typeInfo::typeMask) == typeInfo::valueType; }
+			Bool isValue() const { return (flags() & typeInfo::classType) == typeInfo::none; }
 
 			// Entries required in the temporary storage.
 			Nat storage() const { return data & 0x00FFFFFF; }
@@ -407,7 +460,7 @@ namespace storm {
 		MAYBE(Type *) start(SerializedType *type);
 
 		// Write the type info provided, if needed.
-		void writeInfo(SerializedType *desc, Byte flags);
+		void writeInfo(SerializedType *desc);
 	};
 
 	// Demangle a name.

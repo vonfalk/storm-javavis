@@ -25,6 +25,17 @@ namespace storm {
 		checkCtor(t, ctor);
 	}
 
+	typeInfo::TypeInfo SerializedType::info() const {
+		typeInfo::TypeInfo r = baseInfo();
+		if (!runtime::isValue(type))
+			r |= typeInfo::classType;
+		return r;
+	}
+
+	typeInfo::TypeInfo SerializedType::baseInfo() const {
+		return typeInfo::custom;
+	}
+
 	void SerializedType::toS(StrBuf *to) const {
 		*to << S("Serialization info for ") << runtime::typeName(type) << S(":");
 		if (super) {
@@ -49,6 +60,10 @@ namespace storm {
 		members->push(SerializedMember(name, type));
 	}
 
+	typeInfo::TypeInfo SerializedStdType::baseInfo() const {
+		return typeInfo::none;
+	}
+
 	void SerializedStdType::toS(StrBuf *to) const {
 		SerializedType::toS(to);
 		for (Nat i = 0; i < members->count(); i++)
@@ -67,6 +82,22 @@ namespace storm {
 			return type->super->type;
 		else
 			return type->members->at(pos - 1).type;
+	}
+
+	SerializedTuples::SerializedTuples(Type *t, FnBase *ctor)
+		: SerializedType(t, ctor), elements(new (engine()) Array<TObject *>()) {}
+
+	SerializedTuples::SerializedTuples(Type *t, FnBase *ctor, SerializedType *super)
+		: SerializedType(t, ctor), elements(new (engine()) Array<TObject *>()) {}
+
+	typeInfo::TypeInfo SerializedTuples::baseInfo() const {
+		return typeInfo::tuple;
+	}
+
+	void SerializedTuples::toS(StrBuf *to) const {
+		SerializedType::toS(to);
+		for (Nat i = 0; i < count(); i++)
+			*to << S("\n  ") << runtime::typeName(at(i));
 	}
 
 
@@ -144,7 +175,7 @@ namespace storm {
 
 #define ADD_BUILTIN(id, t)												\
 		typeIds->put(id, new (this) Desc(								\
-						typeInfo::valueType,							\
+						typeInfo::none,									\
 						StormInfo<t>::type(e),							\
 						new (e) FnBase(address(&read<t, &IStream::read ## t>), null, false, null)))
 
@@ -495,14 +526,17 @@ namespace storm {
 
 	Bool ObjOStream::startValue(SerializedType *type) {
 		Type *expected = start(type);
-		if (expected) {
+		if (expected && expected != type->type) {
 			// We can assume that the actual type is exactly what we're expecting since value types
 			// are sliced. Therefore, we don't need to search for the proper type as we need to do
 			// for classes.
-			assert(type->type == expected, L"Internal serialization error.");
+			throw SerializationError(L"Unexpected value type during serialization.");
 		}
 
-		writeInfo(type, typeInfo::valueType);
+		if (type->info() & typeInfo::classType)
+			throw SerializationError(L"Expected a class type, but a value type was provided!");
+
+		writeInfo(type);
 		return true;
 	}
 
@@ -518,7 +552,7 @@ namespace storm {
 			if (!expectedDesc)
 				throw SerializationError(L"The provided type description does not match the serialized object.");
 
-			writeInfo(expectedDesc, typeInfo::classType);
+			writeInfo(expectedDesc);
 
 			// Now, the reader knows what we're talking about. Now we can bother with references...
 			Nat objId = objIds->get(v, objIds->count());
@@ -540,7 +574,10 @@ namespace storm {
 			// additional headers for that, just possibly the class description.
 		}
 
-		writeInfo(type, typeInfo::classType);
+		if ((type->info() & typeInfo::classType) != typeInfo::classType)
+			throw SerializationError(L"Expected a value type, but a class type was provided.");
+
+		writeInfo(type);
 		return true;
 	}
 
@@ -600,7 +637,7 @@ namespace storm {
 		}
 	}
 
-	void ObjOStream::writeInfo(SerializedType *t, Byte flags) {
+	void ObjOStream::writeInfo(SerializedType *t) {
 		// Already written?
 		Nat id = typeId(t->type);
 		if ((id & typeMask) == 0)
@@ -608,7 +645,7 @@ namespace storm {
 
 		typeIds->put((TObject *)t->type, id & ~typeMask);
 
-		to->writeByte(flags);
+		to->writeByte(Byte(t->info()));
 		runtime::typeIdentifier(t->type)->write(to);
 
 		if (t->super) {
@@ -629,9 +666,17 @@ namespace storm {
 
 			// End of members.
 			to->writeNat(endId);
+		} else if (SerializedTuples *tuples = as<SerializedTuples>(t)) {
+			// Types.
+			for (Nat i = 0; i < tuples->count(); i++) {
+				Nat id = typeId(tuples->at(i));
+				to->writeNat(id & ~typeMask);
+			}
+
+			// End.
+			to->writeNat(endId);
 		} else {
-			// Note: We need to indicate the absence of members in the flags.
-			assert(false, L"Not writing members is not yet supported!");
+			// This is an unsupported type. We don't need to write that description.
 		}
 	}
 
