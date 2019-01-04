@@ -88,10 +88,15 @@ namespace storm {
 		Array<Value> *vv = new (this) Array<Value>(2, Value(this, false));
 		Array<Value> *rv = new (this) Array<Value>(2, Value(this, true));
 		rv->at(1) = Value(this);
-		Value b(StormInfo<Bool>::type(engine));
 
-		add(inlinedFunction(engine, Value(), Type::CTOR, rr, fnPtr(engine, &numCopyCtor<Int>))->makePure());
-		add(inlinedFunction(engine, Value(), S("="), rv, fnPtr(engine, &numAssign<Int>))->makePure());
+		Value nat(StormInfo<Nat>::type(engine));
+		Value b(StormInfo<Bool>::type(engine));
+		Array<Value> *rn = new (this) Array<Value>(2, Value(this, true));
+		rn->at(1) = Value(StormInfo<Nat>::type(engine));
+
+		add(inlinedFunction(engine, Value(), Type::CTOR, rr, fnPtr(engine, &numCopyCtor<Nat>))->makePure());
+		add(inlinedFunction(engine, Value(), Type::CTOR, rn, fnPtr(engine, &numAssign<Nat>))->makePure());
+		add(inlinedFunction(engine, Value(), S("="), rv, fnPtr(engine, &numAssign<Nat>))->makePure());
 		add(inlinedFunction(engine, b, S("=="), vv, fnPtr(engine, &numCmp<ifEqual>))->makePure());
 		add(inlinedFunction(engine, b, S("!="), vv, fnPtr(engine, &numCmp<ifNotEqual>))->makePure());
 
@@ -102,7 +107,6 @@ namespace storm {
 			add(inlinedFunction(engine, b, S("has"), vv, fnPtr(engine, &enumOverlaps))->makePure());
 		}
 
-		Value nat(StormInfo<Nat>::type(engine));
 		add(inlinedFunction(engine, nat, S("v"), v, fnPtr(engine, &enumGet))->makePure());
 		add(nativeFunction(engine, nat, S("hash"), v, address(&intHash))->makePure());
 

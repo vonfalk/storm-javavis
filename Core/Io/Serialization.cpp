@@ -70,19 +70,6 @@ namespace storm {
 			*to << S("\n  ") << members->at(i).name << S(": ") << runtime::typeName(members->at(i).type);
 	}
 
-	SerializedStdType::Cursor::Cursor() : type(null), pos(1) {}
-
-	SerializedStdType::Cursor::Cursor(SerializedStdType *type) : type(type), pos(0) {
-		if (!type->super)
-			pos++;
-	}
-
-	Type *SerializedStdType::Cursor::current() const {
-		if (pos == 0)
-			return type->super->type;
-		else
-			return type->members->at(pos - 1).type;
-	}
 
 	SerializedTuples::SerializedTuples(Type *t, FnBase *ctor)
 		: SerializedType(t, ctor), elements(new (engine()) Array<TObject *>()) {}
@@ -98,6 +85,73 @@ namespace storm {
 		SerializedType::toS(to);
 		for (Nat i = 0; i < count(); i++)
 			*to << S("\n  ") << runtime::typeName(at(i));
+	}
+
+
+	SerializedCursor::SerializedCursor() : type(null), pos(1) {}
+
+	SerializedCursor::SerializedCursor(SerializedStdType *type) : type(type), pos(0) {
+		if (!type->super)
+			pos++;
+	}
+
+	SerializedCursor::SerializedCursor(SerializedTuples *type) : type(type), pos(posMask) {
+		if (!type->super)
+			pos++;
+	}
+
+	Bool SerializedCursor::any() const {
+		if (pos == 0)
+			return true;
+		if (!type)
+			return false;
+
+		if (pos & posMask) {
+			Nat p = pos & ~posMask;
+			return ((SerializedTuples *)type)->count() > 0;
+		} else {
+			return pos < ((SerializedStdType *)type)->members->count() + 1;
+		}
+	}
+
+	Bool SerializedCursor::atEnd() const {
+		if (pos == 0)
+			return false;
+		if (!type)
+			return true;
+
+		if (pos & posMask) {
+			Nat p = pos & ~posMask;
+			return (p - 2) % (((SerializedTuples *)type)->count()) == 0;
+		} else {
+			return pos >= ((SerializedStdType *)type)->members->count() + 1;
+		}
+	}
+
+	Type *SerializedCursor::current() const {
+		if (pos & posMask) {
+			Nat p = pos & ~posMask;
+			if (p == 0) {
+				return type->super->type;
+			} else if (p == 1) {
+				return StormInfo<Nat>::type(type->engine());
+			} else {
+				SerializedTuples *t = (SerializedTuples *)type;
+				return t->at((pos - 2) % t->count());
+			}
+		} else {
+			if (pos == 0) {
+				return type->super->type;
+			} else {
+				return ((SerializedStdType *)type)->members->at(pos - 1).type;
+			}
+		}
+	}
+
+	void SerializedCursor::next() {
+		// Note: Incrementing "pos" works even if the highest bit is set!
+		if (any())
+			pos++;
 	}
 
 
@@ -376,7 +430,7 @@ namespace storm {
 			throw SerializationError(L"Mismatched calls to startX during deserialization!");
 
 		Cursor end = depth->last();
-		if (end.more())
+		if (end.any())
 			throw SerializationError(L"Missing fields during serialization!");
 
 		depth->pop();
@@ -490,7 +544,7 @@ namespace storm {
 	ObjOStream::ObjOStream(OStream *to) : to(to) {
 		clearObjects();
 
-		depth = new (this) Array<SerializedStdType::Cursor>();
+		depth = new (this) Array<SerializedCursor>();
 		typeIds = new (this) Map<TObject *, Nat>();
 		nextId = firstCustomId;
 
@@ -593,7 +647,7 @@ namespace storm {
 			depth->last().next();
 		}
 
-		depth->push(SerializedStdType::Cursor());
+		depth->push(SerializedCursor());
 	}
 
 	Type *ObjOStream::start(SerializedType *type) {
@@ -602,8 +656,10 @@ namespace storm {
 			// We're the root object, write a header.
 			to->writeNat(typeId(type->type) & ~typeMask);
 		} else {
-			SerializedStdType::Cursor &at = depth->last();
-			// Note: Will crash if we ever let a custom serialization call "regular" serialization (eg. containers).
+			SerializedCursor &at = depth->last();
+			if (!at.any())
+				throw SerializationError(L"Trying to serialize too many fields.");
+
 			if (at.isParent())
 				r = null;
 			else
@@ -612,11 +668,13 @@ namespace storm {
 		}
 
 		// Add a cursor to 'depth' to keep track of what we're doing!
-		if (SerializedStdType *t = as<SerializedStdType>(type)) {
-			depth->push(SerializedStdType::Cursor(t));
+		if (SerializedStdType *std = as<SerializedStdType>(type)) {
+			depth->push(SerializedCursor(std));
+		} else if (SerializedTuples *tuple = as<SerializedTuples>(type)) {
+			depth->push(SerializedCursor(tuple));
 		} else {
 			// Custom type. We don't know about it.
-			depth->push(SerializedStdType::Cursor());
+			depth->push(SerializedCursor());
 		}
 		return r;
 	}
@@ -625,8 +683,8 @@ namespace storm {
 		if (depth->empty())
 			throw SerializationError(L"Mismatched calls to startX during serialization!");
 
-		SerializedStdType::Cursor end = depth->last();
-		if (end.more())
+		SerializedCursor end = depth->last();
+		if (!end.atEnd())
 			throw SerializationError(L"Missing fields during serialization!");
 
 		depth->pop();
@@ -683,14 +741,14 @@ namespace storm {
 	Str *demangleName(Str *name) {
 		StrBuf *to = new (name) StrBuf();
 		Bool addComma = false;
+		Bool addDot = false;
 		for (Str::Iter i = name->begin(); i != name->end(); ++i) {
 			Char ch = i.v();
 			Bool comma = false;
+			Bool dot = false;
 
 			if (ch == Char(1u)) {
-				Str::Iter j = i;
-				if (++j != name->end())
-					*to << S(".");
+				dot = true;
 			} else if (ch == Char(2u)) {
 				*to << S("(");
 			} else if (ch == Char(3u)) {
@@ -703,10 +761,13 @@ namespace storm {
 			} else {
 				if (addComma)
 					*to << S(", ");
+				if (addDot)
+					*to << S(".");
 				*to << ch;
 			}
 
 			addComma = comma;
+			addDot = dot;
 		}
 		return to->toS();
 	}

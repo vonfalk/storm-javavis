@@ -73,6 +73,52 @@ class Data : serializable {
 }
 
 /**
+ * Serializable class containing an array.
+ *
+ * TODO: Should be marked "serializable".
+ */
+class ArrayData {
+	Int a;
+	Employee[] data;
+
+	init() {
+		Employee e;
+		Manager m;
+		init { a = 20; }
+		data << e << m << e << m << Employee();
+	}
+
+	void toS(StrBuf to) {
+		to << "{ a: " << a << ", data: " << data << " }";
+	}
+
+	// This should be generated automatically later on.
+	void write(ObjOStream to) {
+		SerializedStdType type(named{ArrayData}, &__init(ArrayData, ObjIStream));
+		type.add("a", named{Int});
+		type.add("data", named{Employee[]});
+		if (to.startObject(type, this)) {
+			a.write(to);
+
+			// BEGIN Array:write
+			SerializedTuples t(named{Employee[]}, &toS(ArrayData, StrBuf));
+			t.add(named{Employee});
+			if (to.startObject(t, data)) {
+				data.count.write(to);
+				for (e in data)
+					e.write(to);
+				to.end();
+			}
+			// END Array:write
+
+			to.end();
+		}
+	}
+
+	init(ObjIStream from) {}
+}
+
+/**
  * A serializable value.
  */
 value Salary : serializable {
@@ -296,6 +342,21 @@ Bool typeDiffSerialization() {
 	var e = Employee:read(objIn);
 
 	original.compare(e);
+}
+
+// Array serialization.
+Bool arraySerialization() {
+	ArrayData data;
+	MemOStream out;
+	ObjOStream objOut(out);
+	data.write(objOut);
+
+	showString(out.buffer);
+
+	// TODO: Read it back!
+
+	// Not done yet.
+	false;
 }
 
 // Simple measurements of serialization performance.

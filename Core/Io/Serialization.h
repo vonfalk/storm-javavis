@@ -135,35 +135,6 @@ namespace storm {
 		// To string.
 		virtual void STORM_FN toS(StrBuf *to) const;
 
-		/**
-		 * Cursor into a SerializedType.
-		 *
-		 * Note: Treats the parent class (if any) as the first member.
-		 */
-		class Cursor {
-			STORM_VALUE;
-		public:
-			STORM_CTOR Cursor();
-			STORM_CTOR Cursor(SerializedStdType *type);
-
-			// Is this cursor referring to a parent class?
-			inline Bool STORM_FN isParent() const { return pos == 0; }
-
-			// More elements?
-			inline Bool STORM_FN more() const { return type && pos <= type->members->count(); }
-
-			// Current element?
-			Type *STORM_FN current() const;
-
-			// Advance.
-			inline void STORM_FN next() { if (more()) pos++; }
-
-		private:
-			// Note: Type may be null.
-			SerializedStdType *type;
-			Nat pos;
-		};
-
 	protected:
 		typeInfo::TypeInfo STORM_FN baseInfo() const;
 	};
@@ -205,6 +176,50 @@ namespace storm {
 		// The types in each tuple. We can't use Type, so we use TObject instead.
 		Array<TObject *> *elements;
 	};
+
+
+	/**
+	 * Cursor into a SerializedType.
+	 */
+	class SerializedCursor {
+		STORM_VALUE;
+	public:
+		// Create. Empty.
+		STORM_CTOR SerializedCursor();
+
+		// Create, referring to a StdType.
+		STORM_CTOR SerializedCursor(SerializedStdType *type);
+
+		// Create, referring to a Tuples type.
+		STORM_CTOR SerializedCursor(SerializedTuples *type);
+
+		// Referring to the parent class?
+		inline Bool STORM_FN isParent() const { return (pos & ~posMask) == 0; }
+
+		// Referring to any element?
+		Bool STORM_FN any() const;
+
+		// At the end? Closely related to 'any', but returns 'true' if a complete tuple has been writen as well.
+		Bool STORM_FN atEnd() const;
+
+		// Current element?
+		Type *STORM_FN current() const;
+
+		// Advance.
+		void STORM_FN next();
+
+	private:
+		// Either a StdType, Tuples or null.
+		MAYBE(SerializedType *) type;
+
+		// Position. Highest bit is set if 'type' is a Tuple.
+		Nat pos;
+
+		enum {
+			posMask = 0x80000000
+		};
+	};
+
 
 
 	/**
@@ -330,14 +345,14 @@ namespace storm {
 			// Does this cursor refer to a description of a custom type?
 			inline Bool customDesc() const { return desc->members == null; }
 
-			// More elements?
-			inline Bool more() const { return desc && desc->members && pos < desc->members->count(); }
+			// Any element?
+			inline Bool any() const { return desc && desc->members && pos < desc->members->count(); }
 
 			// Current element?
 			const Member &current() const;
 
 			// Advance.
-			inline void next() { if (more()) pos++; }
+			inline void next() { if (any()) pos++; }
 
 			// Access an element in the temporary storage.
 			Variant &temporary(Nat n) { return tmp->v[n]; }
@@ -434,7 +449,7 @@ namespace storm {
 
 	private:
 		// Keep track of how the serialization is progressing. Used as a stack.
-		Array<SerializedStdType::Cursor> *depth;
+		Array<SerializedCursor> *depth;
 
 		// Directory of previously serialized objects. Note: hashes object identity rather than
 		// regular equality.

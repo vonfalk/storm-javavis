@@ -32,16 +32,30 @@ private:
 	 */
 	class Type {
 		Str name;
-		Byte flags;
+		TypeInfo flags;
 		Nat parent;
 		Member[] members;
 
-		init(Str name, Byte flags, Nat parent) {
+		init(Str name, TypeInfo flags, Nat parent) {
 			init() {
 				name = name;
 				flags = flags;
 				parent = parent;
 			}
+		}
+
+		Str beginSym() {
+			if (flags & TypeInfo:tuple)
+				"[";
+			else
+				"{";
+		}
+
+		Str endSym() {
+			if (flags & TypeInfo:tuple)
+				"]";
+			else
+				"}";
 		}
 	}
 
@@ -76,7 +90,7 @@ private:
 
 		Type t = findType(type);
 
-		if ((t.flags & TypeInfo:classType.v) != 0) {
+		if (t.flags & TypeInfo:classType) {
 			readObject(to, t);
 		} else {
 			readValue(to, t);
@@ -97,39 +111,67 @@ private:
 		Nat actualType = Nat:read(src);
 		Type actual = findType(actualType);
 
-		to << actual.name << " (instance " << objId << ") {\n";
-		to.indent();
-
+		to << actual.name << " (instance " << objId << ") ";
 		readMembers(to, actual);
-
-		to.dedent();
-		to << "}";
 	}
 
 	// Read a value.
 	void readValue(StrBuf to, Type type) {
-		to << type.name << " {\n";
-		to.indent();
-
+		to << type.name << " ";
 		readMembers(to, type);
-
-		to.dedent();
-		to << "}";
 	}
 
 	// Read members from a type.
-	void readMembers(StrBuf to, Nat typeId) {
-		readMembers(to, findType(typeId));
+	void readMembers(StrBuf to, Type type) {
+		readMembers(to, type, null);
 	}
 
-	void readMembers(StrBuf to, Type type) {
-		if (type.parent != 0)
-			readMembers(to, type.parent);
+	void readMembers(StrBuf to, Nat typeId, Type? parent) {
+		readMembers(to, findType(typeId), parent);
+	}
 
-		for (m in type.members) {
-			to << m.name << ": ";
-			read(to, m.type);
-			to << "\n";
+	void readMembers(StrBuf to, Type type, Type? parent) {
+		Bool brackets = true;
+		if (parent) {
+			if (parent.beginSym() == type.beginSym())
+				brackets = false;
+		}
+
+		if (brackets) {
+			to << type.beginSym() << "\n";
+			to.indent();
+		}
+
+		if (type.parent != 0)
+			readMembers(to, type.parent, type);
+
+		if (type.flags & TypeInfo:tuple) {
+			Nat count = Nat:read(src);
+			for (Nat i = 0; i < count; i++) {
+				if (type.members.count > 1)
+					to << "(";
+
+				for (i, m in type.members) {
+					if (i > 0)
+						to << ", ";
+					read(to, m.type);
+				}
+
+				if (type.members.count > 1)
+					to << ")";
+				to << "\n";
+			}
+		} else {
+			for (m in type.members) {
+				to << m.name << ": ";
+				read(to, m.type);
+				to << "\n";
+			}
+		}
+
+		if (brackets) {
+			to.dedent();
+			to << type.endSym();
 		}
 	}
 
@@ -143,13 +185,21 @@ private:
 		Nat parent = Nat:read(src);
 		// TODO: if (parent == type), we should throw an exception or similar. Otherwise, we will
 		// recurse infinitely when trying to read this type.
-		Type t(name, flags, parent);
+		Type t(name, TypeInfo(flags.nat), parent);
 
-		do {
-			Nat type = Nat:read(src);
-		} while (type > 0) {
-			Str name = Str:read(src);
-			t.members << Member(type, name);
+		if (t.flags & TypeInfo:tuple) {
+			do {
+				Nat type = Nat:read(src);
+			} while (type > 0) {
+				t.members << Member(type, "");
+			}
+		} else {
+			do {
+				Nat type = Nat:read(src);
+			} while (type > 0) {
+				Str name = Str:read(src);
+				t.members << Member(type, name);
+			}
 		}
 
 		types.put(type, t);
