@@ -191,7 +191,7 @@ namespace storm {
 	}
 
 	void ArrayType::notifyAdded(NameSet *to, Named *added) {
-		if (added == param().type) {
+		if (to == param().type) {
 			Function *fn = as<Function>(added);
 			if (fn &&
 				*fn->name == S("<") &&
