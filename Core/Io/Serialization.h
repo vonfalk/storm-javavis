@@ -87,7 +87,7 @@ namespace storm {
 		FnBase *readCtor;
 
 		// Super type.
-		MAYBE(SerializedType *) super;
+		inline MAYBE(SerializedType *) STORM_FN super() const { return mySuper; }
 
 		// Get the TypeInfo bitmask for this type.
 		typeInfo::TypeInfo STORM_FN info() const;
@@ -95,9 +95,70 @@ namespace storm {
 		// To string.
 		virtual void STORM_FN toS(StrBuf *to) const;
 
+		/**
+		 * Cursor. The first element will be the super type, if present.
+		 */
+		class Cursor {
+			STORM_VALUE;
+		public:
+			// Create. Empty.
+			STORM_CTOR Cursor();
+
+			// Create, referring to a type.
+			STORM_CTOR Cursor(SerializedType *type);
+
+			// Referring to the parent class?
+			inline Bool STORM_FN isParent() const { return pos == 0; }
+
+			// Referring to any element?
+			inline Bool STORM_FN any() const { return type && pos < type->types->count() + 1; }
+
+			// At the end? Closely related to 'any', but returns 'true' if a complete tuple has been writen as well.
+			inline Bool STORM_FN atEnd() const { return !type || pos == type->typesRepeat + 1; }
+
+			// Current element?
+			inline Type *STORM_FN current() const { return (pos == 0) ? type->mySuper->type : type->typeAt(pos - 1); }
+
+			// Advance.
+			void STORM_FN next();
+
+		private:
+			// The type.
+			MAYBE(SerializedType *) type;
+
+			// Position.
+			Nat pos;
+		};
+
 	protected:
 		// Overridden in subclasses to provide the base info.
 		virtual typeInfo::TypeInfo STORM_FN baseInfo() const;
+
+		// Access the type storage.
+		inline void typeAdd(Type *t) { types->push((TObject *)t); }
+
+		// Get a type.
+		inline Type *typeAt(Nat id) const { return (Type *)types->at(id); }
+
+		// Number of types.
+		inline Nat typeCount() const { return types->count(); }
+
+		// Set the repeat.
+		inline void typeRepeat(Nat r) { typesRepeat = r; }
+
+	private:
+		// The super type.
+		MAYBE(SerializedType *) mySuper;
+
+		// All types in this class, so that the Cursor can iterate over them easily.
+		Array<TObject *> *types;
+
+		// Are the types above repeating? From which index in that case? If 'typesRepeat >=
+		// types->count()', then no repeat is in effect.
+		Nat typesRepeat;
+
+		// Common initialization.
+		void init();
 	};
 
 
@@ -126,17 +187,24 @@ namespace storm {
 		// Create a description of an object of the type 't', with the super type 'p'.
 		STORM_CTOR SerializedStdType(Type *t, FnBase *ctor, SerializedType *super);
 
-		// All fields in here.
-		Array<SerializedMember> *members;
-
 		// Add a member.
 		void STORM_FN add(Str *name, Type *type);
+
+		// Number of members.
+		inline Nat STORM_FN count() const { return names->count(); }
+
+		// Get a member.
+		SerializedMember at(Nat i) const;
 
 		// To string.
 		virtual void STORM_FN toS(StrBuf *to) const;
 
 	protected:
 		typeInfo::TypeInfo STORM_FN baseInfo() const;
+
+	private:
+		// Names of the members.
+		Array<Str *> *names;
 	};
 
 
@@ -158,66 +226,19 @@ namespace storm {
 		STORM_CTOR SerializedTuples(Type *t, FnBase *ctor, SerializedType *super);
 
 		// Add a type.
-		void STORM_FN add(Type *t) { elements->push((TObject *)t); }
+		void STORM_FN add(Type *t) { typeAdd(t); }
 
 		// Count.
-		Nat STORM_FN count() const { return elements->count(); }
+		Nat STORM_FN count() const { return typeCount() - 1; }
 
 		// Element.
-		Type *STORM_FN at(Nat i) const { return (Type *)elements->at(i); }
+		Type *STORM_FN at(Nat i) const { return typeAt(i + 1); }
 
 		// To string.
 		virtual void STORM_FN toS(StrBuf *to) const;
 
 	protected:
 		typeInfo::TypeInfo STORM_FN baseInfo() const;
-
-	private:
-		// The types in each tuple. We can't use Type, so we use TObject instead.
-		Array<TObject *> *elements;
-	};
-
-
-	/**
-	 * Cursor into a SerializedType.
-	 */
-	class SerializedCursor {
-		STORM_VALUE;
-	public:
-		// Create. Empty.
-		STORM_CTOR SerializedCursor();
-
-		// Create, referring to a StdType.
-		STORM_CTOR SerializedCursor(SerializedStdType *type);
-
-		// Create, referring to a Tuples type.
-		STORM_CTOR SerializedCursor(SerializedTuples *type);
-
-		// Referring to the parent class?
-		inline Bool STORM_FN isParent() const { return (pos & ~posMask) == 0; }
-
-		// Referring to any element?
-		Bool STORM_FN any() const;
-
-		// At the end? Closely related to 'any', but returns 'true' if a complete tuple has been writen as well.
-		Bool STORM_FN atEnd() const;
-
-		// Current element?
-		Type *STORM_FN current() const;
-
-		// Advance.
-		void STORM_FN next();
-
-	private:
-		// Either a StdType, Tuples or null.
-		MAYBE(SerializedType *) type;
-
-		// Position. Highest bit is set if 'type' is a Tuple.
-		Nat pos;
-
-		enum {
-			posMask = 0x80000000
-		};
 	};
 
 
@@ -449,7 +470,7 @@ namespace storm {
 
 	private:
 		// Keep track of how the serialization is progressing. Used as a stack.
-		Array<SerializedCursor> *depth;
+		Array<SerializedType::Cursor> *depth;
 
 		// Directory of previously serialized objects. Note: hashes object identity rather than
 		// regular equality.

@@ -14,15 +14,20 @@ namespace storm {
 	}
 
 	SerializedType::SerializedType(Type *t, FnBase *ctor)
-		: type(t), readCtor(ctor), super(null) {
+		: type(t), readCtor(ctor), mySuper(null) {
 
-		checkCtor(t, ctor);
+		init();
 	}
 
 	SerializedType::SerializedType(Type *t, FnBase *ctor, SerializedType *super)
-		: type(t), readCtor(ctor), super(super) {
+		: type(t), readCtor(ctor), mySuper(super) {
 
-		checkCtor(t, ctor);
+		init();
+	}
+
+	void SerializedType::init() {
+		checkCtor(type, readCtor);
+		types = new (this) Array<TObject *>();
 	}
 
 	typeInfo::TypeInfo SerializedType::info() const {
@@ -38,26 +43,46 @@ namespace storm {
 
 	void SerializedType::toS(StrBuf *to) const {
 		*to << S("Serialization info for ") << runtime::typeName(type) << S(":");
-		if (super) {
+		if (mySuper) {
 			*to << S("\n  super: ");
 			to->indent();
-			super->toS(to);
+			mySuper->toS(to);
 			to->dedent();
 		}
 		*to << S("\n  constructor: ") << readCtor;
+	}
+
+	SerializedType::Cursor::Cursor() : type(null), pos(1) {}
+
+	SerializedType::Cursor::Cursor(SerializedType *type) : type(type), pos(0) {
+		if (!type->super())
+			pos++;
+	}
+
+	void SerializedType::Cursor::next() {
+		if (!any())
+			return;
+		if (++pos == type->types->count() + 1)
+			pos = type->typesRepeat + 1;
 	}
 
 
 	SerializedMember::SerializedMember(Str *name, Type *type) : name(name), type(type) {}
 
 	SerializedStdType::SerializedStdType(Type *t, FnBase *ctor)
-		: SerializedType(t, ctor), members(new (engine()) Array<SerializedMember>()) {}
+		: SerializedType(t, ctor), names(new (engine()) Array<Str *>()) {}
 
 	SerializedStdType::SerializedStdType(Type *t, FnBase *ctor, SerializedType *parent)
-		: SerializedType(t, ctor, parent), members(new (engine()) Array<SerializedMember>()) {}
+		: SerializedType(t, ctor, parent), names(new (engine()) Array<Str *>()) {}
 
 	void SerializedStdType::add(Str *name, Type *type) {
-		members->push(SerializedMember(name, type));
+		typeAdd(type);
+		names->push(name);
+		typeRepeat(typeCount());
+	}
+
+	SerializedMember SerializedStdType::at(Nat i) const {
+		return SerializedMember(names->at(i), typeAt(i));
 	}
 
 	typeInfo::TypeInfo SerializedStdType::baseInfo() const {
@@ -66,16 +91,20 @@ namespace storm {
 
 	void SerializedStdType::toS(StrBuf *to) const {
 		SerializedType::toS(to);
-		for (Nat i = 0; i < members->count(); i++)
-			*to << S("\n  ") << members->at(i).name << S(": ") << runtime::typeName(members->at(i).type);
+		for (Nat i = 0; i < names->count(); i++)
+			*to << S("\n  ") << names->at(i) << S(": ") << runtime::typeName(typeAt(i));
 	}
 
 
-	SerializedTuples::SerializedTuples(Type *t, FnBase *ctor)
-		: SerializedType(t, ctor), elements(new (engine()) Array<TObject *>()) {}
+	SerializedTuples::SerializedTuples(Type *t, FnBase *ctor) : SerializedType(t, ctor) {
+		typeAdd(StormInfo<Nat>::type(engine()));
+		typeRepeat(typeCount());
+	}
 
-	SerializedTuples::SerializedTuples(Type *t, FnBase *ctor, SerializedType *super)
-		: SerializedType(t, ctor), elements(new (engine()) Array<TObject *>()) {}
+	SerializedTuples::SerializedTuples(Type *t, FnBase *ctor, SerializedType *super) : SerializedType(t, ctor) {
+		typeAdd(StormInfo<Nat>::type(engine()));
+		typeRepeat(typeCount());
+	}
 
 	typeInfo::TypeInfo SerializedTuples::baseInfo() const {
 		return typeInfo::tuple;
@@ -85,73 +114,6 @@ namespace storm {
 		SerializedType::toS(to);
 		for (Nat i = 0; i < count(); i++)
 			*to << S("\n  ") << runtime::typeName(at(i));
-	}
-
-
-	SerializedCursor::SerializedCursor() : type(null), pos(1) {}
-
-	SerializedCursor::SerializedCursor(SerializedStdType *type) : type(type), pos(0) {
-		if (!type->super)
-			pos++;
-	}
-
-	SerializedCursor::SerializedCursor(SerializedTuples *type) : type(type), pos(posMask) {
-		if (!type->super)
-			pos++;
-	}
-
-	Bool SerializedCursor::any() const {
-		if (pos == 0)
-			return true;
-		if (!type)
-			return false;
-
-		if (pos & posMask) {
-			Nat p = pos & ~posMask;
-			return ((SerializedTuples *)type)->count() > 0;
-		} else {
-			return pos < ((SerializedStdType *)type)->members->count() + 1;
-		}
-	}
-
-	Bool SerializedCursor::atEnd() const {
-		if (pos == 0)
-			return false;
-		if (!type)
-			return true;
-
-		if (pos & posMask) {
-			Nat p = pos & ~posMask;
-			return (p - 2) % (((SerializedTuples *)type)->count()) == 0;
-		} else {
-			return pos >= ((SerializedStdType *)type)->members->count() + 1;
-		}
-	}
-
-	Type *SerializedCursor::current() const {
-		if (pos & posMask) {
-			Nat p = pos & ~posMask;
-			if (p == 0) {
-				return type->super->type;
-			} else if (p == 1) {
-				return StormInfo<Nat>::type(type->engine());
-			} else {
-				SerializedTuples *t = (SerializedTuples *)type;
-				return t->at((pos - 2) % t->count());
-			}
-		} else {
-			if (pos == 0) {
-				return type->super->type;
-			} else {
-				return ((SerializedStdType *)type)->members->at(pos - 1).type;
-			}
-		}
-	}
-
-	void SerializedCursor::next() {
-		// Note: Incrementing "pos" works even if the highest bit is set!
-		if (any())
-			pos++;
 	}
 
 
@@ -487,8 +449,8 @@ namespace storm {
 		// Note: Original count, not updated when we grow the array. This is intentional in order to
 		// not catch the duplicate entries referring to temporary storage!
 		Nat memberCount = stream->members->count();
-		for (Nat i = 0; i < our->members->count(); i++) {
-			const SerializedMember &ourMember = our->members->at(i);
+		for (Nat i = 0; i < our->count(); i++) {
+			SerializedMember ourMember = our->at(i);
 
 			// Look until we find it in the stream, saving intermediate members to temporary storage.
 			while (streamPos < memberCount) {
@@ -544,7 +506,7 @@ namespace storm {
 	ObjOStream::ObjOStream(OStream *to) : to(to) {
 		clearObjects();
 
-		depth = new (this) Array<SerializedCursor>();
+		depth = new (this) Array<SerializedType::Cursor>();
 		typeIds = new (this) Map<TObject *, Nat>();
 		nextId = firstCustomId;
 
@@ -602,7 +564,7 @@ namespace storm {
 			// Find the expected type from the description. It should be a direct or indirect parent!
 			SerializedType *expectedDesc = type;
 			while (expectedDesc && expectedDesc->type != expected)
-				expectedDesc = expectedDesc->super;
+				expectedDesc = expectedDesc->super();
 			if (!expectedDesc)
 				throw SerializationError(L"The provided type description does not match the serialized object.");
 
@@ -647,7 +609,7 @@ namespace storm {
 			depth->last().next();
 		}
 
-		depth->push(SerializedCursor());
+		depth->push(SerializedType::Cursor());
 	}
 
 	Type *ObjOStream::start(SerializedType *type) {
@@ -656,7 +618,7 @@ namespace storm {
 			// We're the root object, write a header.
 			to->writeNat(typeId(type->type) & ~typeMask);
 		} else {
-			SerializedCursor &at = depth->last();
+			SerializedType::Cursor &at = depth->last();
 			if (!at.any())
 				throw SerializationError(L"Trying to serialize too many fields.");
 
@@ -668,14 +630,7 @@ namespace storm {
 		}
 
 		// Add a cursor to 'depth' to keep track of what we're doing!
-		if (SerializedStdType *std = as<SerializedStdType>(type)) {
-			depth->push(SerializedCursor(std));
-		} else if (SerializedTuples *tuple = as<SerializedTuples>(type)) {
-			depth->push(SerializedCursor(tuple));
-		} else {
-			// Custom type. We don't know about it.
-			depth->push(SerializedCursor());
-		}
+		depth->push(SerializedType::Cursor(type));
 		return r;
 	}
 
@@ -683,7 +638,7 @@ namespace storm {
 		if (depth->empty())
 			throw SerializationError(L"Mismatched calls to startX during serialization!");
 
-		SerializedCursor end = depth->last();
+		SerializedType::Cursor end = depth->last();
 		if (!end.atEnd())
 			throw SerializationError(L"Missing fields during serialization!");
 
@@ -706,16 +661,16 @@ namespace storm {
 		to->writeByte(Byte(t->info()));
 		runtime::typeIdentifier(t->type)->write(to);
 
-		if (t->super) {
-			to->writeNat(typeId(t->super->type) & ~typeMask);
+		if (t->super()) {
+			to->writeNat(typeId(t->super()->type) & ~typeMask);
 		} else {
 			to->writeNat(endId);
 		}
 
 		if (SerializedStdType *s = as<SerializedStdType>(t)) {
 			// Members.
-			for (Nat i = 0; i < s->members->count(); i++) {
-				const SerializedMember &member = s->members->at(i);
+			for (Nat i = 0; i < s->count(); i++) {
+				const SerializedMember &member = s->at(i);
 
 				Nat id = typeId(member.type);
 				to->writeNat(id & ~typeMask);
