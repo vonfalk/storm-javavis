@@ -1,4 +1,5 @@
 #pragma once
+#include "Core/Io/Serialization.h"
 #include "Compiler/Function.h"
 
 namespace storm {
@@ -30,5 +31,9 @@ namespace storm {
 
 	// Get information about how to serialize a type.
 	MAYBE(SerializeInfo *) STORM_FN serializeInfo(Type *t) ON(Compiler);
+
+
+	// Generate a function that provides the "serializedType" instance provided.
+	Function *STORM_FN serializedTypeFn(SerializedType *type);
 
 }

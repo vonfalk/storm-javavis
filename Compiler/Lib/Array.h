@@ -5,6 +5,8 @@
 namespace storm {
 	STORM_PKG(core.lang);
 
+	class SerializeInfo;
+
 	/**
 	 * Implements the template interface for the Array<> class in Storm.
 	 */
@@ -38,12 +40,27 @@ namespace storm {
 		// Content type.
 		Type *contents;
 
+		// Added functions, to know when we can stop watching.
+		enum {
+			watchNone = 0x00,
+			watchLess = 0x01,
+			watchSerialization = 0x02,
+		};
+
+		Nat watchFor;
+
 		// Helpers.
 		void loadClassFns();
 		void loadValueFns();
 
 		// Add 'sort' without parameters.
 		void addSort();
+
+		// Add serialization functions.
+		void addSerialization(SerializeInfo *info);
+
+		// Generate the 'write' function.
+		Function *writeFn(SerializedType *type, SerializeInfo *info);
 	};
 
 	/**

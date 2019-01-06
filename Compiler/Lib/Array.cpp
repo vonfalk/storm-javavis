@@ -4,6 +4,7 @@
 #include "Exception.h"
 #include "Fn.h"
 #include "Core/Str.h"
+#include "Serialization.h"
 
 namespace storm {
 
@@ -98,7 +99,7 @@ namespace storm {
 		return copy;
 	}
 
-	ArrayType::ArrayType(Str *name, Type *contents) : Type(name, typeClass), contents(contents) {
+	ArrayType::ArrayType(Str *name, Type *contents) : Type(name, typeClass), contents(contents), watchFor(0) {
 		if (engine.has(bootTemplates))
 			lateInit();
 
@@ -148,7 +149,7 @@ namespace storm {
 		if (param().type->handle().lessFn) {
 			addSort();
 		} else {
-			param().type->watchAdd(this);
+			watchFor |= watchLess;
 		}
 
 
@@ -161,6 +162,17 @@ namespace storm {
 			add(nativeFunction(e, Value(), S("sort"), valList(e, 2, t, predicate), address(&ArrayBase::sortRawPred)));
 			add(nativeFunction(e, t, S("sorted"), valList(e, 2, t, predicate), address(&sortedRawPred))->makePure());
 		}
+
+		if (!param().type->isA(StormInfo<TObject>::type(engine))) {
+			if (SerializeInfo *info = serializeInfo(param().type)) {
+				addSerialization(info);
+			} else {
+				watchFor |= watchSerialization;
+			}
+		}
+
+		if (watchFor)
+			param().type->watchAdd(this);
 
 		return Type::loadAll();
 	}
@@ -191,19 +203,31 @@ namespace storm {
 	}
 
 	void ArrayType::notifyAdded(NameSet *to, Named *added) {
-		if (to == param().type) {
-			Function *fn = as<Function>(added);
-			if (fn &&
-				*fn->name == S("<") &&
-				fn->result == Value(StormInfo<Bool>::type(engine)) &&
-				fn->params->count() == 2 &&
-				fn->params->at(0).type == to &&
-				fn->params->at(1).type == to) {
+		if (to != param().type)
+			return;
 
-				addSort();
-				to->watchRemove(this);
+		Function *fn = as<Function>(added);
+		if (!fn)
+			return;
+
+		if (*fn->name == S("<") &&
+			fn->result == Value(StormInfo<Bool>::type(engine)) &&
+			fn->params->count() == 2 &&
+			fn->params->at(0).type == to &&
+			fn->params->at(1).type == to) {
+
+			watchFor &= ~watchLess;
+			addSort();
+		} else if (SerializeInfo *info = serializeInfo(param().type)) {
+			if (watchFor & watchSerialization) {
+				watchFor &= ~watchSerialization;
+				addSerialization(info);
 			}
 		}
+
+
+		if (watchFor == watchNone)
+			to->watchRemove(this);
 	}
 
 	void ArrayType::addSort() {
@@ -213,6 +237,81 @@ namespace storm {
 		// Sort using <.
 		add(nativeFunction(e, Value(), S("sort"), params, address(&ArrayBase::sortRaw)));
 		add(nativeFunction(e, Value(this), S("sorted"), params, address(&sortedRaw))->makePure());
+
+		// TODO: Would be nice to have < for comparison as well!
+	}
+
+	void ArrayType::addSerialization(SerializeInfo *info) {
+		Value param = this->param();
+
+		// TODO: We should provide a constructor!
+		SerializedTuples *type = new (this) SerializedTuples(this, null);
+		type->add(param.type);
+		add(serializedTypeFn(type));
+
+		// Add the 'write' function.
+		add(writeFn(type, info));
+	}
+
+	Function *ArrayType::writeFn(SerializedType *type, SerializeInfo *info) {
+		using namespace code;
+
+		Value me = thisPtr(this);
+		Value objStream(StormInfo<ObjOStream>::type(engine));
+
+		Function *startFn, *endFn;
+		Function *countFn, *atFn;
+		{
+			SimplePart *startName = new (this) SimplePart(S("startObject"));
+			*startName->params << thisPtr(objStream.type)
+							   << Value(StormInfo<SerializedType>::type(engine))
+							   << Value(StormInfo<Object>::type(engine));
+			startFn = as<Function>(objStream.type->find(startName, Scope()));
+
+			SimplePart *endName = new (this) SimplePart(S("end"));
+			*endName->params << thisPtr(objStream.type);
+			endFn = as<Function>(objStream.type->find(endName, Scope()));
+
+			if (!startFn || !endFn)
+				throw InternalError(L"ObjIStream does not have 'startObject' and 'end' as expected.");
+
+			SimplePart *countName = new (this) SimplePart(S("count"));
+			*countName->params << me;
+			countFn = as<Function>(find(countName, Scope()));
+
+			SimplePart *atName = new (this) SimplePart(S("[]"));
+			*atName->params << me << Value(StormInfo<Nat>::type(engine));
+			atFn = as<Function>(find(atName, Scope()));
+
+			if (!countFn || !atFn)
+				throw InternalError(L"The array does not have 'count' and '[]' as expected.");
+		}
+
+		Listing *l = new (this) Listing(true, engine.voidDesc());
+		code::Var meVar = l->createParam(me.desc(engine));
+		code::Var streamVar = l->createParam(objStream.desc(engine));
+		code::Var count = l->createVar(l->root(), Size::sInt);
+		code::Var curr = l->createVar(l->root(), Size::sInt);
+
+		TypeDesc *natDesc = intDesc(engine); // int === nat in this context.
+
+		*l << prolog();
+
+		// Find number of elements.
+		*l << fnParam(me.desc(engine), meVar);
+		*l << fnCall(countFn->ref(), true, natDesc, count);
+
+
+		*l << fnRet();
+
+		PVAR(l);
+
+		Array<Value> *params = new (this) Array<Value>();
+		params->reserve(2);
+		*params << me << objStream;
+		Function *fn = new (this) Function(Value(), new (this) Str(S("write")), params);
+		fn->setCode(new (this) DynamicCode(l));
+		return fn;
 	}
 
 	/**

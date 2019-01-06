@@ -4,6 +4,8 @@
 #include "Compiler/Engine.h"
 #include "Core/Handle.h"
 #include "Core/Io/Serialization.h"
+#include "Code/Instr.h"
+#include "Code/Listing.h"
 
 namespace storm {
 
@@ -47,6 +49,22 @@ namespace storm {
 
 	Bool serializable(Type *type) {
 		return serializeInfo(type) != null;
+	}
+
+	Function *serializedTypeFn(SerializedType *type) {
+		Engine &e = type->engine();
+		Value result(StormInfo<SerializedType>::type(e));
+
+		using namespace code;
+		Listing *l = new (e) Listing(false, result.desc(e));
+		*l << prolog();
+		*l << fnRet(objPtr(type));
+
+		Array<Value> *params = new (e) Array<Value>();
+		Function *fn = new (e) Function(result, new (e) Str(S("serializedType")), params);
+		fn->make(fnStatic);
+		fn->setCode(new (e) DynamicCode(l));
+		return fn;
 	}
 
 }

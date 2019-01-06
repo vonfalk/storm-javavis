@@ -113,7 +113,7 @@ namespace storm {
 	void SerializedTuples::toS(StrBuf *to) const {
 		SerializedType::toS(to);
 		for (Nat i = 0; i < count(); i++)
-			*to << S("\n  ") << runtime::typeName(at(i));
+			*to << S("\n  tuple ") << i << S(": ") << runtime::typeName(at(i));
 	}
 
 
