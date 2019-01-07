@@ -260,6 +260,7 @@ namespace storm {
 		Value objStream(StormInfo<ObjOStream>::type(engine));
 
 		Function *startFn, *endFn;
+		Function *natWriteFn;
 		Function *countFn, *atFn;
 		{
 			SimplePart *startName = new (this) SimplePart(S("startObject"));
@@ -274,6 +275,14 @@ namespace storm {
 
 			if (!startFn || !endFn)
 				throw InternalError(L"ObjIStream does not have 'startObject' and 'end' as expected.");
+
+			SimplePart *natWriteName = new (this) SimplePart(S("write"));
+			*natWriteName->params << Value(StormInfo<Nat>::type(engine))
+								  << objStream;
+			natWriteFn = as<Function>(StormInfo<Nat>::type(engine)->find(natWriteName, Scope()));
+
+			if (!natWriteFn)
+				throw InternalError(L"Nat:write does not exist.");
 
 			SimplePart *countName = new (this) SimplePart(S("count"));
 			*countName->params << me;
@@ -293,18 +302,64 @@ namespace storm {
 		code::Var count = l->createVar(l->root(), Size::sInt);
 		code::Var curr = l->createVar(l->root(), Size::sInt);
 
-		TypeDesc *natDesc = intDesc(engine); // int === nat in this context.
+		TypeDesc *natDesc = code::intDesc(engine); // int === nat in this context.
+		TypeDesc *ptrDesc = code::ptrDesc(engine);
+
+		code::Label lblEnd = l->label();
+		code::Label lblLoop = l->label();
+		code::Label lblLoopEnd = l->label();
 
 		*l << prolog();
+
+		// Call "start".
+		*l << fnParam(objStream.desc(engine), streamVar);
+		*l << fnParam(engine.ptrDesc(), objPtr(type));
+		*l << fnParam(me.desc(engine), meVar);
+		*l << fnCall(startFn->ref(), true, byteDesc(engine), al);
+
+		// See if we need to serialize ourselves.
+		*l << cmp(al, byteConst(0));
+		*l << jmp(lblEnd, ifEqual);
 
 		// Find number of elements.
 		*l << fnParam(me.desc(engine), meVar);
 		*l << fnCall(countFn->ref(), true, natDesc, count);
 
+		// Write number of elements.
+		*l << fnParam(natDesc, count);
+		*l << fnParam(objStream.desc(engine), streamVar);
+		*l << fnCall(natWriteFn->ref(), true);
 
+		// Serialize each element.
+		*l << lblLoop;
+		*l << cmp(curr, count);
+		*l << jmp(lblLoopEnd, ifAboveEqual);
+
+		// Get the element.
+		*l << fnParam(me.desc(engine), meVar);
+		*l << fnParam(natDesc, curr);
+		*l << fnCall(atFn->ref(), true, ptrDesc, ptrA);
+
+		// If it is a pointer, we need to read the actual pointer.
+		if (param().isHeapObj())
+			*l << mov(ptrA, ptrRel(ptrA, Offset()));
+
+		// Call 'write'.
+		*l << fnParam(ptrDesc, ptrA);
+		*l << fnParam(objStream.desc(engine), streamVar);
+		*l << fnCall(info->write->ref(), true);
+
+		*l << code::add(curr, natConst(1));
+		*l << jmp(lblLoop);
+
+		*l << lblLoopEnd;
+
+		// Call "end".
+		*l << fnParam(objStream.desc(engine), streamVar);
+		*l << fnCall(endFn->ref(), true);
+
+		*l << lblEnd;
 		*l << fnRet();
-
-		PVAR(l);
 
 		Array<Value> *params = new (this) Array<Value>();
 		params->reserve(2);

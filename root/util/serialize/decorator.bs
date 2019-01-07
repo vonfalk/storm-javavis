@@ -242,7 +242,7 @@ void addWrite(Type type, Member[] members, Function typeFun) {
 	LocalVarAccess to(pos, body.safeVariable("to"));
 
 	FnCall desc(pos, body.scope, typeFun, Actuals(), false, true);
-	Expr startCall = if (t.isValue()) {
+	Expr startCall = if (!t.isHeapObj()) {
 		namedExpr(body, pos, "startValue", to, Actuals(desc));
 	} else {
 		Actuals params;
@@ -300,7 +300,15 @@ void addRead(Type type) {
 	var stream = l.createParam(objStream.desc);
 	l << prolog();
 
-	if (t.isValue) {
+	if (t.isHeapObj) {
+		// Class or actor.
+		var toCall = named{ObjIStream:readObject<ObjIStream, Type>}.ref;
+
+		l << fnParam(objStream.desc, stream);
+		l << fnParam(ptrDesc, type.typeRef);
+		l << fnCall(toCall, true, t.desc, ptrA);
+		l << fnRet(ptrA);
+	} else {
 		var tmp = l.createVar(l.root, t.size);
 		var toCall = named{ObjIStream:readValue<ObjIStream, Type, core:lang:unknown:PTR_GC>}.ref;
 
@@ -310,14 +318,6 @@ void addRead(Type type) {
 		l << fnParam(ptrDesc, ptrA);
 		l << fnCall(toCall, true);
 		l << fnRet(tmp);
-	} else {
-		// Class or actor.
-		var toCall = named{ObjIStream:readObject<ObjIStream, Type>}.ref;
-
-		l << fnParam(objStream.desc, stream);
-		l << fnParam(ptrDesc, type.typeRef);
-		l << fnCall(toCall, true, t.desc, ptrA);
-		l << fnRet(ptrA);
 	}
 
 	Function fun(t, "read", [objStream]);

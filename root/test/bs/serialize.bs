@@ -99,18 +99,7 @@ class ArrayData {
 		type.add("data", named{Employee[]});
 		if (to.startObject(type, this)) {
 			a.write(to);
-
-			// BEGIN Array:write
-			SerializedTuples t(named{Employee[]}, &toS(ArrayData, StrBuf));
-			t.add(named{Employee});
-			if (to.startObject(t, data)) {
-				data.count.write(to);
-				for (e in data)
-					e.write(to);
-				to.end();
-			}
-			// END Array:write
-
+			data.write(to);
 			to.end();
 		}
 	}
