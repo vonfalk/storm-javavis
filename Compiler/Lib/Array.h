@@ -61,6 +61,9 @@ namespace storm {
 
 		// Generate the 'write' function.
 		Function *writeFn(SerializedType *type, SerializeInfo *info);
+
+		// Generate the 'read' ctor.
+		Function *readCtor(SerializeInfo *info);
 	};
 
 	/**

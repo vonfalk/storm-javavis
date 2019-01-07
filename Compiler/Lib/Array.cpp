@@ -244,8 +244,11 @@ namespace storm {
 	void ArrayType::addSerialization(SerializeInfo *info) {
 		Value param = this->param();
 
+		Function *ctor = readCtor(info);
+		add(ctor);
+
 		// TODO: We should provide a constructor!
-		SerializedTuples *type = new (this) SerializedTuples(this, null);
+		SerializedTuples *type = new (this) SerializedTuples(this, pointer(ctor));
 		type->add(param.type);
 		add(serializedTypeFn(type));
 
@@ -365,6 +368,129 @@ namespace storm {
 		params->reserve(2);
 		*params << me << objStream;
 		Function *fn = new (this) Function(Value(), new (this) Str(S("write")), params);
+		fn->setCode(new (this) DynamicCode(l));
+		return fn;
+	}
+
+	Function *ArrayType::readCtor(SerializeInfo *info) {
+				using namespace code;
+
+		Value me = thisPtr(this);
+		Value param = this->param();
+		Value objStream(StormInfo<ObjIStream>::type(engine));
+
+		Function *initFn;
+		Function *endFn;
+		Function *natReadFn;
+		Function *reserveFn, *pushFn;
+		{
+			SimplePart *initName = new (this) SimplePart(Type::CTOR);
+			*initName->params << me;
+			initFn = as<Function>(findHere(initName, Scope()));
+
+			if (!initFn)
+				throw InternalError(L"Default constructor for the array was not found.");
+
+			SimplePart *endName = new (this) SimplePart(S("end"));
+			*endName->params << thisPtr(objStream.type);
+			endFn = as<Function>(objStream.type->find(endName, Scope()));
+
+			if (!endFn)
+				throw InternalError(L"ObjOStream does not have 'end' as expected.");
+
+			SimplePart *natWriteName = new (this) SimplePart(S("read"));
+			*natWriteName->params << objStream;
+			natReadFn = as<Function>(StormInfo<Nat>::type(engine)->find(natWriteName, Scope()));
+
+			if (!natReadFn)
+				throw InternalError(L"Nat:read does not exist.");
+
+			SimplePart *reserveName = new (this) SimplePart(S("reserve"));
+			*reserveName->params << me << Value(StormInfo<Nat>::type(engine));
+			reserveFn = as<Function>(find(reserveName, Scope()));
+
+			SimplePart *pushName = new (this) SimplePart(S("<<"));
+			*pushName->params << me << param.asRef(true);
+			pushFn = as<Function>(find(pushName, Scope()));
+
+			if (!reserveFn || !pushFn)
+				throw InternalError(L"The array does not have 'reserve' and '<<' as expected.");
+		}
+
+		Listing *l = new (this) Listing(true, engine.voidDesc());
+		code::Var meVar = l->createParam(me.desc(engine));
+		code::Var streamVar = l->createParam(objStream.desc(engine));
+		code::Var count = l->createVar(l->root(), Size::sInt);
+		code::Var curr = l->createVar(l->root(), Size::sInt);
+
+		TypeDesc *natDesc = code::intDesc(engine); // int === nat in this context.
+		TypeDesc *ptrDesc = code::ptrDesc(engine);
+
+		code::Label lblEnd = l->label();
+		code::Label lblLoop = l->label();
+		code::Label lblLoopEnd = l->label();
+
+		*l << prolog();
+
+		// Call the default constructor.
+		*l << fnParam(me.desc(engine), meVar);
+		*l << fnCall(initFn->ref(), true);
+
+		// Find number of elements.
+		*l << fnParam(objStream.desc(engine), streamVar);
+		*l << fnCall(natReadFn->ref(), false, natDesc, count);
+
+		// Reserve elements.
+		*l << fnParam(me.desc(engine), meVar);
+		*l << fnParam(natDesc, count);
+		*l << fnCall(reserveFn->ref(), true);
+
+		// Serialize each element.
+		*l << lblLoop;
+		*l << cmp(curr, count);
+		*l << jmp(lblLoopEnd, ifAboveEqual);
+
+		code::Block sub = l->createBlock(l->root());
+		code::Part subPart = l->createPart(sub);
+		code::Var tmp = l->createVar(subPart, param.size(), param.destructor());
+
+		*l << code::begin(sub);
+
+		// Get the element.
+		*l << fnParam(objStream.desc(engine), streamVar);
+		*l << fnCall(info->read->ref(), false, param.desc(engine), tmp);
+
+		// Make sure it is properly destroyed if we get an exception.
+		*l << code::begin(subPart);
+
+		// Write it to the array by calling 'push'.
+		*l << lea(ptrA, tmp);
+		*l << fnParam(me.desc(engine), meVar);
+		*l << fnParam(ptrDesc, ptrA);
+		*l << fnCall(pushFn->ref(), true, ptrDesc, ptrA); // It returns a ptr to itself, but we don't need that.
+
+		// Now, we're done with 'tmp'.
+		*l << code::end(sub);
+
+		*l << code::add(curr, natConst(1));
+		*l << jmp(lblLoop);
+
+		*l << lblLoopEnd;
+
+		// Call "end".
+		*l << fnParam(objStream.desc(engine), streamVar);
+		*l << fnCall(endFn->ref(), true);
+
+		*l << lblEnd;
+		*l << fnRet();
+
+		TODO(L"Check this!");
+		PVAR(l);
+
+		Array<Value> *params = new (this) Array<Value>();
+		params->reserve(2);
+		*params << me << objStream;
+		Function *fn = new (this) Function(Value(), new (this) Str(Type::CTOR), params);
 		fn->setCode(new (this) DynamicCode(l));
 		return fn;
 	}
