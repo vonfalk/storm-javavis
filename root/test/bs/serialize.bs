@@ -3,6 +3,15 @@ use lang:bs:macro;
 use core:io;
 use util:serialize;
 
+// Check pointers for equality: if a is b, then c is d.
+private Bool check(Object a, Object b, Object c, Object d) {
+	if (a is b)
+		c is d;
+	else
+		c !is d;
+}
+
+
 /**
  * Serializable class.
  */
@@ -63,48 +72,45 @@ class Data : serializable {
 
 		ok;
 	}
-
-	private Bool check(Object a, Object b, Object c, Object d) : static {
-		if (a is b)
-			c is d;
-		else
-			c !is d;
-	}
 }
 
 /**
  * Serializable class containing an array.
- *
- * TODO: Should be marked "serializable".
  */
-class ArrayData {
+class ArrayData : serializable {
 	Int a;
+	Int[] numbers;
 	Employee[] data;
 
 	init() {
 		Employee e;
 		Manager m;
 		init { a = 20; }
+		numbers << 1 << 3 << 5;
 		data << e << m << e << m << Employee();
 	}
 
 	void toS(StrBuf to) {
-		to << "{ a: " << a << ", data: " << data << " }";
+		to << "{ a: " << a << ", numbers: " << numbers << ", data: " << data << " }";
 	}
 
-	// This should be generated automatically later on.
-	void write(ObjOStream to) {
-		SerializedStdType type(named{ArrayData}, &__init(ArrayData, ObjIStream));
-		type.add("a", named{Int});
-		type.add("data", named{Employee[]});
-		if (to.startObject(type, this)) {
-			a.write(to);
-			data.write(to);
-			to.end();
+	Bool compare(ArrayData other) {
+		Bool ok = a == other.a;
+		if (data.count != other.data.count)
+			return false;
+
+		for (i, a in numbers) {
+			ok &= a == other.numbers[i];
 		}
-	}
 
-	init(ObjIStream from) {}
+		for (i, a in data) {
+			for (j, b in data) {
+				ok &= check(a, b, other.data[i], other.data[j]);
+			}
+		}
+
+		ok;
+	}
 }
 
 /**
@@ -340,12 +346,12 @@ Bool arraySerialization() {
 	ObjOStream objOut(out);
 	data.write(objOut);
 
-	showString(out.buffer);
+	// showString(out.buffer);
 
-	// TODO: Read it back!
+	ObjIStream objIn(MemIStream(out.buffer));
+	var copy = ArrayData:read(objIn);
 
-	// Not done yet.
-	false;
+	data.compare(copy);
 }
 
 // Simple measurements of serialization performance.

@@ -24,7 +24,18 @@ void serializable(Type type) {
 	if (hasType & hasWrite & hasCtor) {
 		// All is good!
 	} else if (hasType | hasWrite | hasCtor) {
-		error(type, "You need to provide either all or none of 'serializedType', 'write' and a constructor.");
+		StrBuf msg;
+		msg << "You need to provide either all or none of 'serializedType', 'write' and a constructor for ";
+		msg << type.identifier << ". Missing:";
+		if (!hasType)
+			msg << " 'serializedType'";
+		if (!hasWrite)
+			msg << " 'write'";
+		if (!hasCtor)
+			msg << " constructor";
+		msg << ".";
+
+		error(type, msg.toS);
 	} else {
 		// Add them!
 		var members = serializedMembers(type);

@@ -301,7 +301,7 @@ namespace storm {
 			Member(const Member &o, Int read);
 
 			// Name of the member.
-			Str *name;
+			MAYBE(Str *) name;
 
 			// Type of the member.
 			Nat type;
@@ -336,6 +336,9 @@ namespace storm {
 			// Is this a value type?
 			Bool isValue() const { return (flags() & typeInfo::classType) == typeInfo::none; }
 
+			// Is this a tuple?
+			Bool isTuple() const { return (flags() & typeInfo::tuple) != 0; }
+
 			// Entries required in the temporary storage.
 			Nat storage() const { return data & 0x00FFFFFF; }
 
@@ -369,11 +372,16 @@ namespace storm {
 			// Any element?
 			inline Bool any() const { return desc && desc->members && pos < desc->members->count(); }
 
+			// At the end of serialization? Allows repetition in case of tuples.
+			inline Bool atEnd() const {
+				return !desc || !desc->members || pos >= desc->members->count() || (pos == 1 && desc->isTuple());
+			}
+
 			// Current element?
 			const Member &current() const;
 
 			// Advance.
-			inline void next() { if (any()) pos++; }
+			void next();
 
 			// Access an element in the temporary storage.
 			Variant &temporary(Nat n) { return tmp->v[n]; }
@@ -413,8 +421,11 @@ namespace storm {
 		// Get the description for an object id, reading it if necessary.
 		Desc *findInfo(Nat id);
 
-		// Validate a type description against our view of the corresponding type.
-		void validate(Desc *desc);
+		// Validate a type description for members against our view of the corresponding type.
+		void validateMembers(Desc *desc);
+
+		// Validate a type description for tuples against our view of the corresponding type.
+		void validateTuple(Desc *desc);
 
 		// Read an object into a variant.
 		Variant readObject(Nat type);

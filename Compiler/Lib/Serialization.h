@@ -36,4 +36,11 @@ namespace storm {
 	// Generate a function that provides the "serializedType" instance provided.
 	Function *STORM_FN serializedTypeFn(SerializedType *type);
 
+	// Generate a function that provides the default implementation of the "read" function for
+	// serialization. Roughly equivalent to:
+	// T read(ObjIStream is) {
+	//   return is.readObject(named{T});
+	// }
+	Function *STORM_FN serializedReadFn(Type *type) ON(Compiler);
+
 }

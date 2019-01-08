@@ -193,6 +193,8 @@ private:
 			} while (type > 0) {
 				t.members << Member(type, "");
 			}
+		} else if (t.flags & TypeInfo:custom) {
+			// Nothing to read.
 		} else {
 			do {
 				Nat type = Nat:read(src);

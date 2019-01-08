@@ -167,6 +167,17 @@ namespace storm {
 		return desc->members->at(pos);
 	}
 
+	void ObjIStream::Cursor::next() {
+		if (!any())
+			return;
+
+		pos++;
+
+		// Repeat if we're a tuple!
+		if (desc->isTuple() && pos == desc->members->count())
+			pos = 1;
+	}
+
 	void ObjIStream::Cursor::pushTemporary(const Variant &v) {
 		tmp->v[tmp->filled++] = v;
 	}
@@ -365,10 +376,14 @@ namespace storm {
 
 		// Some other type. Examine what we expect to read.
 		Cursor &at = depth->last();
-		assert(!at.customDesc(), L"We don't handle serializing other types inside custom serialization yet!");
+		if (at.customDesc())
+			throw SerializationError(L"Can not use 'start' when serializing custom types.");
 
 		// Process objects until we find something we can return!
 		while (true) {
+			if (!at.any())
+				throw SerializationError(L"Trying to deserialize too many members.");
+
 			const Member &expected = at.current();
 			at.next();
 
@@ -389,11 +404,11 @@ namespace storm {
 
 	void ObjIStream::end() {
 		if (depth->empty())
-			throw SerializationError(L"Mismatched calls to startX during deserialization!");
+			throw SerializationError(L"Mismatched calls to startX during dedeserialization!");
 
 		Cursor end = depth->last();
-		if (end.any())
-			throw SerializationError(L"Missing fields during serialization!");
+		if (!end.atEnd())
+			throw SerializationError(L"Missing fields during deserialization!");
 
 		depth->pop();
 
@@ -414,25 +429,37 @@ namespace storm {
 
 		result = new (this) Desc(flags, parent, name);
 
-		// Members.
-		for (Nat type = from->readNat(); type != 0; type = from->readNat()) {
-			Str *name = Str::read(from);
-			result->members->push(Member(name, type));
-		}
+		if (flags & typeInfo::tuple) {
+			// Tuple.
+			result->members->push(Member(null, natId));
 
-		validate(result);
+			for (Nat type = from->readNat(); type != endId; type = from->readNat()) {
+				result->members->push(Member(null, type));
+			}
+
+			validateTuple(result);
+		} else if (flags & typeInfo::custom) {
+			// Nothing to read for custom types. Indicate the absence of known serialization by
+			// setting 'members' to 'null'.
+			result->members = null;
+		} else {
+			// Members.
+			for (Nat type = from->readNat(); type != endId; type = from->readNat()) {
+				Str *name = Str::read(from);
+				result->members->push(Member(name, type));
+			}
+
+			validateMembers(result);
+		}
 
 		typeIds->put(id, result);
 		return result;
 	}
 
-	void ObjIStream::validate(Desc *stream) {
+	void ObjIStream::validateMembers(Desc *stream) {
 		SerializedStdType *our = as<SerializedStdType>(stream->info);
-		if (!our) {
-			// Custom type description. Nothing to validate!
-			stream->members = null;
-			return;
-		}
+		if (!our)
+			throw SerializationError(L"Trying to deserialize a standard type into a non-compatible type!");
 
 		// Note: We check the parent type when reading objects. Otherwise, we need quite a bit of
 		// bookkeeping to know when to validate parents of all types unless we want to check all
@@ -490,6 +517,19 @@ namespace storm {
 		// 	PLN(L"  " << t.name << L", " << t.type << L", " << t.read);
 		// }
 		// PLN(L"  (" << stream->storage() << L" temporary entries required)");
+	}
+
+	void ObjIStream::validateTuple(Desc *stream) {
+		SerializedTuples *our = as<SerializedTuples>(stream->info);
+		if (!our)
+			throw SerializationError(L"Trying to deserialize a type type into a non-compatible type!");
+
+		// We don't try to do anything intelligent here. We just check so that the number of
+		// elements in each tuple match.
+		Nat tupleCount = stream->members->count() - 1;
+		if (our->count() != tupleCount)
+			throw SerializationError(L"Tuple size mismatch. Stream: " + ::toS(tupleCount) +
+									L", here: " + ::toS(our->count()) + L".");
 	}
 
 	void ObjIStream::clearObjects() {

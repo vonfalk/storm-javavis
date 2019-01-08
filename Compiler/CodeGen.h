@@ -191,4 +191,23 @@ namespace storm {
 	// version if at least one parameter was flushed to memory.
 	Array<code::Operand> *STORM_FN spillRegisters(CodeGen *s, Array<code::Operand> *params);
 
+	// Helper for C++ code to conveniently find function objects in Storm. Throws an exception on
+	// error. Tip: Use 'valList' to create 'params' conveniently. Uses Scope() as a scope for the lookup.
+	// This is not exposed to Storm, since the "named{}" syntax both more efficient and more convenient there.
+	Function *findStormFn(NameSet *inside, const wchar *name, Array<Value> *params);
+	Function *findStormFn(Value inside, const wchar *name, Array<Value> *params);
+	Function *findStormFn(Value inside, const wchar *name);
+	Function *findStormFn(Value inside, const wchar *name, Value param0);
+	Function *findStormFn(Value inside, const wchar *name, Value param0, Value param1);
+	Function *findStormFn(Value inside, const wchar *name, Value param0, Value param1, Value param2);
+
+	// Helper for C++ code to conveniently find a member function. Works like 'findStormFunction',
+	// but adds a 'this' pointer as the first parameter automatically.
+	Function *findStormMemberFn(Type *inside, const wchar *name, Array<Value> *params);
+	Function *findStormMemberFn(Value inside, const wchar *name, Array<Value> *params);
+	Function *findStormMemberFn(Value inside, const wchar *name);
+	Function *findStormMemberFn(Value inside, const wchar *name, Value param0);
+	Function *findStormMemberFn(Value inside, const wchar *name, Value param0, Value param1);
+	Function *findStormMemberFn(Value inside, const wchar *name, Value param0, Value param1, Value param2);
+
 }

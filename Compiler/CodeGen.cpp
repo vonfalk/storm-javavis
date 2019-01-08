@@ -236,7 +236,7 @@ namespace storm {
 		}
 	}
 
-	code::Var STORM_FN createFnCall(CodeGen *to, Array<Value> *formals, Array<code::Operand> *actuals, Bool copy) {
+	code::Var createFnCall(CodeGen *to, Array<Value> *formals, Array<code::Operand> *actuals, Bool copy) {
 		using namespace code;
 		assert(formals->count() == actuals->count(), L"Size of formals array does not match actuals!");
 
@@ -392,7 +392,7 @@ namespace storm {
 	}
 
 
-	Array<code::Operand> *STORM_FN spillRegisters(CodeGen *s, Array<code::Operand> *params) {
+	Array<code::Operand> *spillRegisters(CodeGen *s, Array<code::Operand> *params) {
 		Bool hasReg = false;
 		for (Nat i = 0; i < params->count(); i++) {
 			hasReg |= params->at(i).hasRegister();
@@ -415,6 +415,62 @@ namespace storm {
 		}
 
 		return result;
+	}
+
+
+	Function *findStormFn(NameSet *inside, const wchar *name, Array<Value> *params) {
+		SimplePart *part = new (inside) SimplePart(new (inside) Str(name), params);
+		Function *result = as<Function>(inside->find(part, Scope()));
+		if (result)
+			return result;
+
+		throw InternalError(L"The function " + ::toS(part) + L" is not inside " + ::toS(inside->identifier()) + L".");
+	}
+
+	Function *findStormFn(Value inside, const wchar *name, Array<Value> *params) {
+		return findStormFn(inside.type, name, params);
+	}
+
+	Function *findStormFn(Value inside, const wchar *name) {
+		return findStormFn(inside, name, valList(inside.type->engine, 0));
+	}
+
+	Function *findStormFn(Value inside, const wchar *name, Value param0) {
+		return findStormFn(inside, name, valList(inside.type->engine, 1, param0));
+	}
+
+	Function *findStormFn(Value inside, const wchar *name, Value param0, Value param1) {
+		return findStormFn(inside, name, valList(inside.type->engine, 2, param0, param1));
+	}
+
+	Function *findStormFn(Value inside, const wchar *name, Value param0, Value param1, Value param2) {
+		return findStormFn(inside, name, valList(inside.type->engine, 3, param0, param1, param2));
+	}
+
+	Function *findStormMemberFn(Type *inside, const wchar *name, Array<Value> *params) {
+		return findStormMemberFn(thisPtr(inside), name, params);
+	}
+
+	Function *findStormMemberFn(Value inside, const wchar *name, Array<Value> *params) {
+		Array<Value> *copy = new (inside.type) Array<Value>(*params);
+		copy->insert(0, inside);
+		return findStormFn(inside.type, name, copy);
+	}
+
+	Function *findStormMemberFn(Value inside, const wchar *name) {
+		return findStormMemberFn(inside, name, valList(inside.type->engine, 0));
+	}
+
+	Function *findStormMemberFn(Value inside, const wchar *name, Value param0) {
+		return findStormMemberFn(inside, name, valList(inside.type->engine, 1, param0));
+	}
+
+	Function *findStormMemberFn(Value inside, const wchar *name, Value param0, Value param1) {
+		return findStormMemberFn(inside, name, valList(inside.type->engine, 2, param0, param1));
+	}
+
+	Function *findStormMemberFn(Value inside, const wchar *name, Value param0, Value param1, Value param2) {
+		return findStormMemberFn(inside, name, valList(inside.type->engine, 3, param0, param1, param2));
 	}
 
 }

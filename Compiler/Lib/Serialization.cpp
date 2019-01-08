@@ -1,5 +1,6 @@
 #include "stdafx.h"
 #include "Serialization.h"
+#include "Compiler/Exception.h"
 #include "Compiler/Type.h"
 #include "Compiler/Engine.h"
 #include "Core/Handle.h"
@@ -60,6 +61,47 @@ namespace storm {
 
 		Array<Value> *params = new (e) Array<Value>();
 		Function *fn = new (e) Function(result, new (e) Str(S("serializedType")), params);
+		fn->make(fnStatic);
+		fn->setCode(new (e) DynamicCode(l));
+		return fn;
+	}
+
+	Function *serializedReadFn(Type *type) {
+		using namespace code;
+		Engine &e = type->engine;
+
+		Value result(type);
+		Value streamType(StormInfo<ObjIStream>::type(e));
+		Value typeType(StormInfo<Type>::type(e));
+
+		Listing *l = new (e) Listing(false, result.desc(e));
+		code::Var stream = l->createParam(streamType.desc(e));
+
+		*l << prolog();
+		if (result.isHeapObj()) {
+			Function *fn = findStormMemberFn(streamType, L"readObject", typeType);
+
+			*l << fnParam(streamType.desc(e), stream);
+			*l << fnParam(typeType.desc(e), type->typeRef());
+			*l << fnCall(fn->ref(), true, result.desc(e), ptrA);
+			*l << fnRet(ptrA);
+		} else {
+			code::Var tmp = l->createVar(l->root(), result.size());
+			Type *unkType = as<Type>(e.scope().find(parseSimpleName(e, S("core.lang.unknown.PTR_GC"))));
+			if (!unkType)
+				throw InternalError(L"The type core.lang.unknown.PTR_GC does not exist!");
+			Function *fn = findStormMemberFn(streamType, L"readValue", typeType, Value(unkType));
+
+			*l << lea(ptrA, tmp);
+			*l << fnParam(streamType.desc(e), stream);
+			*l << fnParam(typeType.desc(e), type->typeRef());
+			*l << fnParam(e.ptrDesc(), ptrA);
+			*l << fnCall(fn->ref(), true);
+			*l << fnRet(tmp);
+		}
+
+		Array<Value> *params = new (e) Array<Value>(1, streamType);
+		Function *fn = new (e) Function(result, new (e) Str(S("read")), params);
 		fn->make(fnStatic);
 		fn->setCode(new (e) DynamicCode(l));
 		return fn;
