@@ -21,8 +21,6 @@ namespace storm {
 
 		Function *read = null;
 		Function *write = null;
-		Function *info = null;
-
 
 		{
 			SimplePart *name = new (e) SimplePart(S("read"));
