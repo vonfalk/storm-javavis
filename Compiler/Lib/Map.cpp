@@ -1,8 +1,10 @@
 #include "stdafx.h"
 #include "Map.h"
+#include "Fn.h"
 #include "Core/Map.h"
 #include "Core/Str.h"
-#include "Engine.h"
+#include "Compiler/Engine.h"
+#include "Serialization.h"
 
 namespace storm {
 
@@ -73,14 +75,37 @@ namespace storm {
 
 		addAccess();
 
+		Type *tObj = StormInfo<TObject>::type(e);
+		if (!k->isA(tObj) && !v->isA(tObj)) {
+			SerializeInfo *kInfo = serializeInfo(k);
+			SerializeInfo *vInfo = serializeInfo(v);
+
+			if (!kInfo)
+				watchFor |= watchKeySerialization;
+			if (!vInfo)
+				watchFor |= watchValueSerialization;
+
+			if (kInfo && vInfo)
+				addSerialization(kInfo, vInfo);
+		}
+
+		if (watchFor & watchKeyMask)
+			k->watchAdd(this);
+		if (watchFor & watchValueMask)
+			v->watchAdd(this);
+
 		return Type::loadAll();
 	}
 
 	void MapType::addAccess() {
 		Function *ctor = k->defaultCtor();
 		// The 'at' member can only be implemented if 'val' has a default constructor.
-		if (!ctor)
+		if (!ctor) {
+			watchFor |= watchKeyDefaultCtor;
 			return;
+		}
+
+		watchFor &= ~watchKeyDefaultCtor;
 
 		using namespace code;
 		TypeDesc *ptr = engine.ptrDesc();
@@ -98,6 +123,256 @@ namespace storm {
 		*l << fnRet(ptrA);
 
 		add(dynamicFunction(engine, Value(v, true), S("[]"), valList(engine, 2, thisPtr(this), Value(k, true)), l));
+	}
+
+	void MapType::notifyAdded(NameSet *to, Named *added) {
+		SerializeInfo *kInfo = null;
+		SerializeInfo *vInfo = null;
+
+		if (to == k) {
+			if (watchFor & watchKeyDefaultCtor) {
+				addAccess();
+			}
+
+			if (watchFor & watchKeySerialization) {
+				if (kInfo = serializeInfo(k))
+					watchFor &= ~watchKeySerialization;
+			}
+
+			if ((watchFor & watchKeyMask) == 0)
+				k->watchRemove(this);
+		}
+
+		if (to == v) {
+			if (watchFor & watchValueSerialization) {
+				if (vInfo = serializeInfo(v))
+					watchFor &= ~watchValueSerialization;
+			}
+
+			if ((watchFor & watchValueMask) == 0)
+				v->watchRemove(this);
+		}
+
+		if ((kInfo || vInfo) && (watchFor & (watchKeySerialization | watchValueSerialization)) == 0) {
+			if (!kInfo)
+				kInfo = serializeInfo(k);
+			if (!vInfo)
+				vInfo = serializeInfo(v);
+
+			// Should always be true...
+			if (kInfo && vInfo)
+				addSerialization(kInfo, vInfo);
+		}
+	}
+
+	void MapType::addSerialization(SerializeInfo *kInfo, SerializeInfo *vInfo) {
+		Function *ctor = readCtor(kInfo, vInfo);
+		add(ctor);
+
+		SerializedTuples *type = new (this) SerializedTuples(this, pointer(ctor));
+		type->add(k);
+		type->add(v);
+		add(serializedTypeFn(type));
+		add(writeFn(type, kInfo, vInfo));
+		add(serializedReadFn(this));
+	}
+
+	static void doWrite(code::Listing *l, code::Var iter, code::Var stream, Type *type, Function *retrieve, SerializeInfo *info) {
+		Engine &e = l->engine();
+
+		using namespace code;
+		*l << lea(ptrA, iter);
+		*l << fnParam(e.ptrDesc(), ptrA);
+		*l << fnCall(retrieve->ref(), true, e.ptrDesc(), ptrA);
+
+		Value t(type);
+		if (t.isHeapObj())
+			*l << mov(ptrA, ptrRel(ptrA, Offset()));
+		if (!t.isHeapObj() && !info->write->params->at(0).ref)
+			*l << fnParamRef(t.desc(e), ptrA);
+		else
+			*l << fnParam(e.ptrDesc(), ptrA);
+		*l << fnParam(e.ptrDesc(), stream);
+		*l << fnCall(info->write->ref(), true);
+	}
+
+	Function *MapType::writeFn(SerializedType *type, SerializeInfo *kInfo, SerializeInfo *vInfo) {
+		using namespace code;
+
+		Value me = thisPtr(this);
+		Value objStream(StormInfo<ObjOStream>::type(engine));
+		Value natType(StormInfo<Nat>::type(engine));
+
+		Function *startObjFn = findStormMemberFn(objStream, S("startObject"),
+											Value(StormInfo<SerializedType>::type(engine)),
+											Value(StormInfo<Object>::type(engine)));
+		Function *endObjFn = findStormMemberFn(objStream, S("end"));
+		Function *natWriteFn = findStormMemberFn(natType, S("write"), objStream);
+		Function *countFn = findStormMemberFn(me, S("count"));
+		Function *beginFn = findStormMemberFn(me, S("begin"));
+		Function *endFn = findStormMemberFn(me, S("end"));
+
+		Value iter = beginFn->result.asRef(false);
+		Value refIter = iter.asRef();
+		Function *iterNext = findStormMemberFn(refIter, S("++*"));
+		Function *iterEq = findStormMemberFn(refIter, S("=="), refIter);
+		Function *iterKey = findStormMemberFn(refIter, S("k"));
+		Function *iterVal = findStormMemberFn(refIter, S("v"));
+
+		Listing *l = new (this) Listing(true, engine.voidDesc());
+		code::Var meVar = l->createParam(me.desc(engine));
+		code::Var streamVar = l->createParam(objStream.desc(engine));
+		// Note: We know that we don't need destructors for the iterators...
+		code::Var iterVar = l->createVar(l->root(), iter.size());
+		code::Var endVar = l->createVar(l->root(), iter.size());
+
+		code::Label lblEnd = l->label();
+		code::Label lblLoop = l->label();
+		code::Label lblLoopEnd = l->label();
+
+		*l << prolog();
+
+		// Call "start".
+		*l << fnParam(objStream.desc(engine), streamVar);
+		*l << fnParam(engine.ptrDesc(), objPtr(type));
+		*l << fnParam(me.desc(engine), meVar);
+		*l << fnCall(startObjFn->ref(), true, byteDesc(engine), al);
+
+		// See if we need to serialize ourselves.
+		*l << cmp(al, byteConst(0));
+		*l << jmp(lblEnd, ifEqual);
+
+		// Find and write number of elements.
+		*l << fnParam(me.desc(engine), meVar);
+		*l << fnCall(countFn->ref(), true, natType.desc(engine), eax);
+		*l << fnParam(natType.desc(engine), eax);
+		*l << fnParam(objStream.desc(engine), streamVar);
+		*l << fnCall(natWriteFn->ref(), true);
+
+		// Extract 'begin' and 'end'.
+		*l << fnParam(me.desc(engine), meVar);
+		*l << fnCall(beginFn->ref(), true, iter.desc(engine), iterVar);
+		*l << fnParam(me.desc(engine), meVar);
+		*l << fnCall(endFn->ref(), true, iter.desc(engine), endVar);
+
+		// Compare 'begin' and 'end'.
+		*l << lblLoop;
+		*l << lea(ptrA, endVar);
+		*l << lea(ptrC, iterVar);
+		*l << fnParam(refIter.desc(engine), ptrA);
+		*l << fnParam(refIter.desc(engine), ptrC);
+		*l << fnCall(iterEq->ref(), true, byteDesc(engine), al);
+
+		*l << cmp(al, byteConst(0));
+		*l << jmp(lblLoopEnd, ifNotEqual);
+
+		// Output.
+		doWrite(l, iterVar, streamVar, k, iterKey, kInfo);
+		doWrite(l, iterVar, streamVar, v, iterVal, vInfo);
+
+		// Increment the iterator.
+		*l << lea(ptrA, iterVar);
+		*l << fnParam(refIter.desc(engine), ptrA);
+		*l << fnCall(iterNext->ref(), true);
+
+		*l << jmp(lblLoop);
+		*l << lblLoopEnd;
+
+		// Call "end".
+		*l << fnParam(objStream.desc(engine), streamVar);
+		*l << fnCall(endObjFn->ref(), true);
+
+		*l << lblEnd;
+		*l << fnRet();
+
+		Array<Value> *params = new (this) Array<Value>();
+		params->reserve(2);
+		*params << me << objStream;
+		Function *fn = new (this) Function(Value(), new (this) Str(S("write")), params);
+		fn->setCode(new (this) DynamicCode(l));
+		return fn;
+	}
+
+	Function *MapType::readCtor(SerializeInfo *kInfo, SerializeInfo *vInfo) {
+		using namespace code;
+
+		Value me = thisPtr(this);
+		Value objStream(StormInfo<ObjIStream>::type(engine));
+		Value natType(StormInfo<Nat>::type(engine));
+		Value kType(k);
+		Value vType(v);
+
+		Function *initFn = findStormMemberFn(me, Type::CTOR);
+		Function *endFn = findStormMemberFn(objStream, S("end"));
+		Function *natReadFn = findStormFn(natType, S("read"), objStream);
+		Function *putFn = findStormMemberFn(me, S("put"), Value(k, true), Value(v, true));
+
+		Listing *l = new (this) Listing(true, engine.voidDesc());
+		code::Var meVar = l->createParam(me.desc(engine));
+		code::Var streamVar = l->createParam(objStream.desc(engine));
+		code::Var count = l->createVar(l->root(), Size::sInt);
+		code::Var curr = l->createVar(l->root(), Size::sInt);
+
+		code::Label lblLoop = l->label();
+		code::Label lblLoopEnd = l->label();
+
+		*l << prolog();
+
+		// Call the default constructor.
+		*l << fnParam(me.desc(engine), meVar);
+		*l << fnCall(initFn->ref(), true);
+
+		// Find number of elements.
+		*l << fnParam(objStream.desc(engine), streamVar);
+		*l << fnCall(natReadFn->ref(), false, natType.desc(engine), count);
+
+		// Read each element.
+		*l << lblLoop;
+		*l << cmp(curr, count);
+		*l << jmp(lblLoopEnd, ifAboveEqual);
+
+		code::Block sub = l->createBlock(l->root());
+		*l << code::begin(sub);
+
+		// Read key.
+		code::Part keyPart = l->createPart(sub);
+		code::Var keyVar = l->createVar(keyPart, kType.size(), kType.destructor());
+		*l << fnParam(objStream.desc(engine), streamVar);
+		*l << fnCall(kInfo->read->ref(), false, kType.desc(engine), keyVar);
+		*l << code::begin(keyPart);
+
+		// Read value.
+		code::Part valPart = l->createPart(keyPart);
+		code::Var valVar = l->createVar(valPart, vType.size(), vType.destructor());
+		*l << fnParam(objStream.desc(engine), streamVar);
+		*l << fnCall(vInfo->read->ref(), false, vType.desc(engine), valVar);
+		*l << code::begin(valPart);
+
+		// Call 'push'.
+		*l << lea(ptrA, keyVar);
+		*l << lea(ptrC, valVar);
+		*l << fnParam(me.desc(engine), meVar);
+		*l << fnParam(engine.ptrDesc(), ptrA);
+		*l << fnParam(engine.ptrDesc(), ptrC);
+		*l << fnCall(putFn->ref(), true);
+
+		// Repeat!
+		*l << code::add(curr, natConst(1));
+		*l << jmp(lblLoop);
+
+		// Call 'end'.
+		*l << lblLoopEnd;
+		*l << fnParam(objStream.desc(engine), streamVar);
+		*l << fnCall(endFn->ref(), true);
+
+		*l << fnRet();
+
+		Array<Value> *params = new (this) Array<Value>();
+		params->reserve(2);
+		*params << me << objStream;
+		Function *fn = new (this) Function(Value(), new (this) Str(Type::CTOR), params);
+		fn->setCode(new (this) DynamicCode(l));
+		return fn;
 	}
 
 

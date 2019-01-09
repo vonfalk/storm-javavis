@@ -18,8 +18,9 @@ BEGIN_TEST_(Serialize, BS) {
 	// Reading/writing different formal types.
 	CHECK(runFn<Bool>(S("test.bs.typeDiffSerialization")));
 
-	// Serialization of arrays.
+	// Serialization of containers.
 	CHECK(runFn<Bool>(S("test.bs.arraySerialization")));
+	CHECK(runFn<Bool>(S("test.bs.mapSerialization")));
 
 } END_TEST
 

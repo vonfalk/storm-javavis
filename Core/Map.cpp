@@ -81,10 +81,9 @@ namespace storm {
 			if (info->v[i].status == Info::free)
 				continue;
 
-			if (!first) {
+			if (!first)
 				*to << L", ";
-				first = false;
-			}
+			first = false;
 
 			(*keyT.toSFn)(keyPtr(i), to);
 			*to << L" -> ";

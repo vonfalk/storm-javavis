@@ -107,11 +107,14 @@ class ArrayData : serializable {
 			for (j, b in data) {
 				ok &= check(a, b, other.data[i], other.data[j]);
 			}
+
+			ok &= a.compare(other.data[i]);
 		}
 
 		ok;
 	}
 }
+
 
 /**
  * A serializable value.
@@ -352,6 +355,39 @@ Bool arraySerialization() {
 	var copy = ArrayData:read(objIn);
 
 	data.compare(copy);
+}
+
+// Map serialization.
+Bool mapSerialization() {
+	Int->Employee data;
+	Employee e;
+	data.put(1, Employee());
+	data.put(5, e);
+	data.put(8, e);
+	data.put(3, Manager());
+	print(data.toS);
+
+	MemOStream out;
+	ObjOStream objOut(out);
+	data.write(objOut);
+
+	// showString(out.buffer);
+
+	ObjIStream objIn(MemIStream(out.buffer));
+	var copy = Map<Int, Employee>:read(objIn);
+
+	if (copy.count != data.count)
+		return false;
+
+	Bool ok = true;
+	for (k1, v1 in data) {
+		for (k2, v2 in data) {
+			ok &= check(v1, v2, copy.get(k1), copy.get(k2));
+		}
+
+		ok &= v1.compare(copy.get(k1));
+	}
+	ok;
 }
 
 // Simple measurements of serialization performance.

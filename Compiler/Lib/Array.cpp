@@ -242,13 +242,11 @@ namespace storm {
 	}
 
 	void ArrayType::addSerialization(SerializeInfo *info) {
-		Value param = this->param();
-
 		Function *ctor = readCtor(info);
 		add(ctor);
 
 		SerializedTuples *type = new (this) SerializedTuples(this, pointer(ctor));
-		type->add(param.type);
+		type->add(param().type);
 		add(serializedTypeFn(type));
 
 		// Add the 'write' function.
@@ -350,7 +348,7 @@ namespace storm {
 	}
 
 	Function *ArrayType::readCtor(SerializeInfo *info) {
-				using namespace code;
+		using namespace code;
 
 		Value me = thisPtr(this);
 		Value param = this->param();
@@ -371,7 +369,6 @@ namespace storm {
 		TypeDesc *natDesc = code::intDesc(engine); // int === nat in this context.
 		TypeDesc *ptrDesc = code::ptrDesc(engine);
 
-		code::Label lblEnd = l->label();
 		code::Label lblLoop = l->label();
 		code::Label lblLoopEnd = l->label();
 
@@ -390,7 +387,7 @@ namespace storm {
 		*l << fnParam(natDesc, count);
 		*l << fnCall(reserveFn->ref(), true);
 
-		// Serialize each element.
+		// Read each element.
 		*l << lblLoop;
 		*l << cmp(curr, count);
 		*l << jmp(lblLoopEnd, ifAboveEqual);
@@ -428,16 +425,15 @@ namespace storm {
 			*l << code::end(sub);
 		}
 
+		// Repeat!
 		*l << code::add(curr, natConst(1));
 		*l << jmp(lblLoop);
 
-		*l << lblLoopEnd;
-
 		// Call "end".
+		*l << lblLoopEnd;
 		*l << fnParam(objStream.desc(engine), streamVar);
 		*l << fnCall(endFn->ref(), true);
 
-		*l << lblEnd;
 		*l << fnRet();
 
 		Array<Value> *params = new (this) Array<Value>();

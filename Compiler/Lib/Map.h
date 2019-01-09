@@ -6,6 +6,7 @@ namespace storm {
 	STORM_PKG(core.lang);
 
 	class MapBase;
+	class SerializeInfo;
 
 	/**
 	 * Implements the template interface for the Map<> class in Storm.
@@ -26,6 +27,9 @@ namespace storm {
 		// Late initialization.
 		virtual void lateInit();
 
+		// Notifications.
+		virtual void STORM_FN notifyAdded(NameSet *to, Named *added);
+
 	protected:
 		// Load members.
 		virtual Bool STORM_FN loadAll();
@@ -35,8 +39,30 @@ namespace storm {
 		Type *k;
 		Type *v;
 
+		// Added functions, to know when we can stop watching.
+		enum {
+			watchNone = 0x00,
+
+			watchKeySerialization = 0x01,
+			watchKeyDefaultCtor = 0x02,
+			watchKeyMask = 0x0F,
+
+			watchValueSerialization = 0x10,
+			watchValueMask = 0xF0,
+		};
+		Nat watchFor;
+
 		// Add the 'at' member if applicable.
 		void addAccess();
+
+		// Add serialization.
+		void addSerialization(SerializeInfo *kInfo, SerializeInfo *vInfo);
+
+		// Create a 'write' function.
+		Function *writeFn(SerializedType *type, SerializeInfo *kInfo, SerializeInfo *vInfo);
+
+		// Create a 'read' constructor.
+		Function *readCtor(SerializeInfo *kInfo, SerializeInfo *vInfo);
 
 		// Helpers for creating instances.
 		static void createClass(void *mem);
