@@ -79,7 +79,7 @@ namespace storm {
 
 		*l << prolog();
 		if (result.isHeapObj()) {
-			Function *fn = findStormMemberFn(streamType, L"readObject", typeType);
+			Function *fn = findStormMemberFn(streamType, S("readObject"), typeType);
 
 			*l << fnParam(streamType.desc(e), stream);
 			*l << fnParam(typeType.desc(e), type->typeRef());
@@ -90,7 +90,7 @@ namespace storm {
 			Type *unkType = as<Type>(e.scope().find(parseSimpleName(e, S("core.lang.unknown.PTR_GC"))));
 			if (!unkType)
 				throw InternalError(L"The type core.lang.unknown.PTR_GC does not exist!");
-			Function *fn = findStormMemberFn(streamType, L"readValue", typeType, Value(unkType));
+			Function *fn = findStormMemberFn(streamType, S("readValue"), typeType, Value(unkType));
 
 			*l << lea(ptrA, tmp);
 			*l << fnParam(streamType.desc(e), stream);
