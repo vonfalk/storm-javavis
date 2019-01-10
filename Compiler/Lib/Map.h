@@ -39,7 +39,7 @@ namespace storm {
 		Type *k;
 		Type *v;
 
-		// Added functions, to know when we can stop watching.
+		// What we're watching for, to know when we can stop watching.
 		enum {
 			watchNone = 0x00,
 

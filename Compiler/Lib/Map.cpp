@@ -348,7 +348,7 @@ namespace storm {
 		*l << fnCall(vInfo->read->ref(), false, vType.desc(engine), valVar);
 		*l << code::begin(valPart);
 
-		// Call 'push'.
+		// Call 'put'.
 		*l << lea(ptrA, keyVar);
 		*l << lea(ptrC, valVar);
 		*l << fnParam(me.desc(engine), meVar);

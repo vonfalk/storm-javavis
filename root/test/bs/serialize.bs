@@ -365,7 +365,6 @@ Bool mapSerialization() {
 	data.put(5, e);
 	data.put(8, e);
 	data.put(3, Manager());
-	print(data.toS);
 
 	MemOStream out;
 	ObjOStream objOut(out);
@@ -387,6 +386,39 @@ Bool mapSerialization() {
 
 		ok &= v1.compare(copy.get(k1));
 	}
+	ok;
+}
+
+// Set serialization.
+Bool setSerialization() {
+	Set<Str> data;
+	data.put("Hello");
+	data.put("Goodbye");
+	data.put("Storm");
+
+	Set<Int> ints;
+	ints.put(5);
+	ints.put(7);
+	ints.put(18);
+
+	MemOStream out;
+	ObjOStream objOut(out);
+	data.write(objOut);
+	ints.write(objOut);
+
+	ObjIStream objIn(MemIStream(out.buffer));
+	var copy = Set<Str>:read(objIn);
+	var intsCopy = Set<Int>:read(objIn);
+
+	Bool ok = true;
+	for (k in data)
+		ok &= copy.has(k);
+	ok &= data.count == copy.count;
+
+	for (k in ints)
+		ok &= intsCopy.has(k);
+	ok &= ints.count == intsCopy.count;
+
 	ok;
 }
 

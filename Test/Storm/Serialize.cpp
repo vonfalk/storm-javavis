@@ -21,6 +21,7 @@ BEGIN_TEST_(Serialize, BS) {
 	// Serialization of containers.
 	CHECK(runFn<Bool>(S("test.bs.arraySerialization")));
 	CHECK(runFn<Bool>(S("test.bs.mapSerialization")));
+	CHECK(runFn<Bool>(S("test.bs.setSerialization")));
 
 } END_TEST
 
