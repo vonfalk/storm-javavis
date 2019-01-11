@@ -117,6 +117,22 @@ namespace storm {
 	}
 
 
+	SerializedMaybe::SerializedMaybe(Type *t, FnBase *ctor, Type *contained) : SerializedType(t, ctor) {
+		typeAdd(StormInfo<Bool>::type(engine()));
+		typeAdd(contained);
+		typeRepeat(1);
+	}
+
+	void SerializedMaybe::toS(StrBuf *to) const {
+		SerializedType::toS(to);
+		*to << S("\n  maybe: ") << runtime::typeName(contained());
+	}
+
+	typeInfo::TypeInfo SerializedMaybe::baseInfo() const {
+		return typeInfo::maybe;
+	}
+
+
 	/**
 	 * ObjIStream
 	 */
@@ -438,6 +454,12 @@ namespace storm {
 			}
 
 			validateTuple(result);
+		} else if (flags & typeInfo::maybe) {
+			// Maybe-type.
+			result->members->push(Member(null, boolId));
+			result->members->push(Member(null, from->readNat()));
+
+			validateMaybe(result);
 		} else if (flags & typeInfo::custom) {
 			// Nothing to read for custom types. Indicate the absence of known serialization by
 			// setting 'members' to 'null'.
@@ -532,6 +554,14 @@ namespace storm {
 									L", here: " + ::toS(our->count()) + L".");
 	}
 
+	void ObjIStream::validateMaybe(Desc *stream) {
+		SerializedMaybe *our = as<SerializedMaybe>(stream->info);
+		if (!our)
+			throw SerializationError(L"Trying to deserialize a type into a non-compatible type!");
+
+		// Nothing more to verify.
+	}
+
 	void ObjIStream::clearObjects() {
 		objIds = new (this) Map<Nat, Object *>();
 	}
@@ -586,6 +616,7 @@ namespace storm {
 			// We can assume that the actual type is exactly what we're expecting since value types
 			// are sliced. Therefore, we don't need to search for the proper type as we need to do
 			// for classes.
+			PVAR(runtime::typeName(expected));
 			throw SerializationError(L"Unexpected value type during serialization.");
 		}
 
@@ -728,6 +759,8 @@ namespace storm {
 
 			// End.
 			to->writeNat(endId);
+		} else if (SerializedMaybe *maybe = as<SerializedMaybe>(t)) {
+			to->writeNat(typeId(maybe->contained()) & ~typeMask);
 		} else {
 			// This is an unsupported type. We don't need to write that description.
 		}

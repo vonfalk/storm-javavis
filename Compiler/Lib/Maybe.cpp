@@ -1,11 +1,13 @@
 #include "stdafx.h"
 #include "Maybe.h"
-#include "Engine.h"
-#include "Package.h"
-#include "Exception.h"
+#include "Compiler/Engine.h"
+#include "Compiler/Package.h"
+#include "Compiler/Exception.h"
 #include "Core/CloneEnv.h"
 #include "Core/Str.h"
 #include "Core/StrBuf.h"
+#include "Serialization.h"
+#include "Fn.h"
 
 namespace storm {
 
@@ -178,7 +180,17 @@ namespace storm {
 			Array<Value> *clone = new (e) Array<Value>(2, t);
 			clone->at(1) = Value(CloneEnv::stormType(e));
 			add(nativeFunction(e, Value(), S("deepCopy"), clone, address(&maybeCloneClass)));
+
+			// Check for serialization.
+			if (SerializeInfo *info = serializeInfo(contained)) {
+				addSerialization(info);
+			} else {
+				watchFor |= watchSerialization;
+			}
 		}
+
+		if (watchFor)
+			contained->watchAdd(this);
 
 		// Create copy ctors for derived versions of Maybe<T> and T.
 		add(new (e) TemplateFn(new (e) Str(CTOR), fnPtr(e, &MaybeClassType::createCopy, this)));
@@ -187,6 +199,21 @@ namespace storm {
 		add(new (e) TemplateFn(new (e) Str(S("=")), fnPtr(e, &MaybeClassType::createAssign, this)));
 
 		return MaybeType::loadAll();
+	}
+
+	void MaybeClassType::notifyAdded(NameSet *to, Named *added) {
+		if (to != contained)
+			return;
+
+		if (watchFor & watchSerialization) {
+			if (SerializeInfo *info = serializeInfo(contained)) {
+				watchFor &= ~watchSerialization;
+				addSerialization(info);
+			}
+		}
+
+		if (!watchFor)
+			contained->watchRemove(this);
 	}
 
 	Named *MaybeClassType::createAssign(Str *name, SimplePart *part) {
@@ -230,6 +257,139 @@ namespace storm {
 
 		return inlinedFunction(engine, Value(), CTOR, rv, fnPtr(engine, &copyMaybeClass))->makeAutoCast();
 	}
+
+	void MaybeClassType::addSerialization(SerializeInfo *info) {
+		Function *ctor = readCtor(info);
+		add(ctor);
+
+		SerializedMaybe *type = new (this) SerializedMaybe(this, pointer(ctor), contained);
+		add(serializedTypeFn(type));
+		add(writeFn(type, info));
+		add(serializedReadFn(this));
+	}
+
+	Function *MaybeClassType::writeFn(SerializedType *type, SerializeInfo *info) {
+		using namespace code;
+
+		Value me = thisPtr(this);
+		Value objStream(StormInfo<ObjOStream>::type(engine));
+		Value boolType(StormInfo<Bool>::type(engine));
+
+		Function *startValueFn = findStormMemberFn(objStream, S("startValue"),
+												Value(StormInfo<SerializedType>::type(engine)));
+		Function *endFn = findStormMemberFn(objStream, S("end"));
+		Function *byteWriteFn = findStormMemberFn(boolType, S("write"), objStream);
+
+		Listing *l = new (this) Listing(true, engine.voidDesc());
+		code::Var meVar = l->createParam(me.desc(engine));
+		code::Var streamVar = l->createParam(objStream.desc(engine));
+
+		code::Label lblEnd = l->label();
+		code::Label lblEmpty = l->label();
+
+		*l << prolog();
+
+		// Call "start".
+		*l << fnParam(objStream.desc(engine), streamVar);
+		*l << fnParam(engine.ptrDesc(), objPtr(type));
+		*l << fnCall(startValueFn->ref(), true, byteDesc(engine), al);
+
+		*l << cmp(al, byteConst(0));
+		*l << jmp(lblEnd, ifEqual);
+
+		*l << mov(ptrA, meVar);
+		*l << cmp(ptrA, ptrConst(0));
+		*l << jmp(lblEmpty, ifEqual);
+
+		// We have something to write! Write it!
+		*l << fnParam(boolType.desc(engine), byteConst(1));
+		*l << fnParam(objStream.desc(engine), streamVar);
+		*l << fnCall(byteWriteFn->ref(), true);
+
+		// We know it is a pointer...
+		*l << fnParam(engine.ptrDesc(), meVar);
+		*l << fnParam(objStream.desc(engine), streamVar);
+		*l << fnCall(info->write->ref(), true);
+
+		*l << jmp(lblEnd);
+		*l << lblEmpty;
+
+		*l << fnParam(boolType.desc(engine), byteConst(0));
+		*l << fnParam(objStream.desc(engine), streamVar);
+		*l << fnCall(byteWriteFn->ref(), true);
+
+		*l << lblEnd;
+
+		// Call 'end'.
+		*l << fnParam(objStream.desc(engine), streamVar);
+		*l << fnCall(endFn->ref(), true);
+
+		*l << fnRet();
+
+
+		Array<Value> *params = new (this) Array<Value>();
+		params->reserve(2);
+		*params << me << objStream;
+		Function *fn = new (this) Function(Value(), new (this) Str(S("write")), params);
+		fn->setCode(new (this) DynamicCode(l));
+		return fn;
+	}
+
+	Function *MaybeClassType::readCtor(SerializeInfo *info) {
+		using namespace code;
+
+		Value me = thisPtr(this);
+		Value objStream(StormInfo<ObjIStream>::type(engine));
+		Value boolType(StormInfo<Bool>::type(engine));
+
+		Function *endFn = findStormMemberFn(objStream, S("end"));
+		Function *readBoolFn = findStormFn(boolType, S("read"), objStream);
+
+		Listing *l = new (this) Listing(true, engine.voidDesc());
+		code::Var meVar = l->createParam(me.desc(engine));
+		code::Var streamVar = l->createParam(objStream.desc(engine));
+
+		code::Label lblEnd = l->label();
+		code::Label lblEmpty = l->label();
+
+		*l << prolog();
+
+		// Read the bool variable.
+		*l << fnParam(objStream.desc(engine), streamVar);
+		*l << fnCall(readBoolFn->ref(), false, boolType.desc(engine), al);
+
+		*l << cmp(al, byteConst(0));
+		*l << jmp(lblEmpty, ifEqual);
+
+		// Read the value.
+		*l << fnParam(objStream.desc(engine), streamVar);
+		*l << fnCall(info->read->ref(), false, engine.ptrDesc(), ptrA);
+		*l << mov(ptrC, meVar);
+		*l << mov(ptrRel(ptrC, Offset()), ptrA);
+		*l << jmp(lblEnd);
+
+		// Empty?
+		*l << lblEmpty;
+		*l << mov(ptrA, meVar);
+		*l << mov(ptrRel(ptrA, Offset()), ptrConst(0));
+
+		*l << lblEnd;
+
+		// Call 'end'.
+		*l << fnParam(objStream.desc(engine), streamVar);
+		*l << fnCall(endFn->ref(), true);
+
+		*l << fnRet();
+
+		Array<Value> *params = new (this) Array<Value>();
+		params->reserve(2);
+		*params << me << objStream;
+		Function *fn = new (this) Function(Value(), new (this) Str(Type::CTOR), params);
+		fn->setCode(new (this) DynamicCode(l));
+		fn->visibility = typePrivate(engine);
+		return fn;
+	}
+
 
 	/**
 	 * For values.
@@ -318,6 +478,16 @@ namespace storm {
 			add(nativeFunction(e, Value(), S("deepCopy"), clone, fnPtr(e, &MaybeValueType::cloneMaybe, this)));
 		}
 
+		// Check for serialization.
+		if (SerializeInfo *info = serializeInfo(contained)) {
+			addSerialization(info);
+		} else {
+			watchFor |= watchSerialization;
+		}
+
+		if (watchFor)
+			contained->watchAdd(this);
+
 		// Create copy ctors for derived versions of Maybe<T> and T.
 		add(new (e) TemplateFn(new (e) Str(CTOR), fnPtr(e, &MaybeValueType::createCopy, this)));
 
@@ -325,6 +495,21 @@ namespace storm {
 		add(new (e) TemplateFn(new (e) Str(S("=")), fnPtr(e, &MaybeValueType::createAssign, this)));
 
 		return MaybeType::loadAll();
+	}
+
+	void MaybeValueType::notifyAdded(NameSet *to, Named *added) {
+		if (to != contained)
+			return;
+
+		if (watchFor & watchSerialization) {
+			if (SerializeInfo *info = serializeInfo(contained)) {
+				watchFor &= ~watchSerialization;
+				addSerialization(info);
+			}
+		}
+
+		if (!watchFor)
+			contained->watchRemove(this);
 	}
 
 	void MaybeValueType::initMaybe(InlineParams p) {
@@ -532,4 +717,7 @@ namespace storm {
 		return inlinedFunction(engine, Value(), S("="), rr, fnPtr(engine, &MaybeValueType::copyMaybe, this))->makeAutoCast();
 	}
 
+	void MaybeValueType::addSerialization(SerializeInfo *info) {
+		// TODO!
+	}
 }

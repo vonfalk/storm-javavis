@@ -22,6 +22,7 @@ BEGIN_TEST_(Serialize, BS) {
 	CHECK(runFn<Bool>(S("test.bs.arraySerialization")));
 	CHECK(runFn<Bool>(S("test.bs.mapSerialization")));
 	CHECK(runFn<Bool>(S("test.bs.setSerialization")));
+	CHECK(runFn<Bool>(S("test.bs.maybeSerialization")));
 
 } END_TEST
 

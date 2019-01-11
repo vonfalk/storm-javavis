@@ -47,6 +47,8 @@ private:
 		Str beginSym() {
 			if (flags & TypeInfo:tuple)
 				"[";
+			else if (flags & TypeInfo:maybe)
+				":";
 			else
 				"{";
 		}
@@ -54,6 +56,8 @@ private:
 		Str endSym() {
 			if (flags & TypeInfo:tuple)
 				"]";
+			else if (flags & TypeInfo:maybe)
+				"";
 			else
 				"}";
 		}
@@ -161,6 +165,16 @@ private:
 					to << ")";
 				to << "\n";
 			}
+		} else if (type.flags & TypeInfo:maybe) {
+			if (Bool:read(src)) {
+				read(to, type.members[0].type);
+			} else {
+				to << "<empty>";
+			}
+		} else if (type.flags & TypeInfo:custom) {
+			to << "<custom type>";
+			// Note, we need to abort reading here. We can not continue any further since we don't
+			// know what the custom type looks like.
 		} else {
 			for (m in type.members) {
 				to << m.name << ": ";
@@ -193,6 +207,9 @@ private:
 			} while (type > 0) {
 				t.members << Member(type, "");
 			}
+		} else if (t.flags & TypeInfo:maybe) {
+			// Always exactly one member.
+			t.members << Member(Nat:read(src), "");
 		} else if (t.flags & TypeInfo:custom) {
 			// Nothing to read.
 		} else {

@@ -4,6 +4,8 @@
 namespace storm {
 	STORM_PKG(core.lang);
 
+	class SerializeInfo;
+
 	/**
 	 * Implements the Maybe<T> type in Storm. This type acts like a pointer, but is nullable. This
 	 * type does not exist in C++, use MAYBE(Foo *) to mark pointers as nullable. Nullable value
@@ -33,17 +35,36 @@ namespace storm {
 	public:
 		STORM_CTOR MaybeClassType(Str *name, Type *param);
 
+		// Notifications.
+		virtual void STORM_FN notifyAdded(NameSet *to, Named *added);
+
 	protected:
 		// Lazy-loading.
 		virtual Bool STORM_FN loadAll();
 		virtual code::TypeDesc *STORM_FN createTypeDesc();
 
 	private:
+		// Keep track of whether or not the contained type is serializable.
+		enum {
+			watchNone = 0x00,
+			watchSerialization = 0x01,
+		};
+		Nat watchFor;
+
 		// Create copy ctors.
 		Named *CODECALL createCopy(Str *name, SimplePart *part);
 
 		// Create assignment operators.
 		Named *CODECALL createAssign(Str *name, SimplePart *part);
+
+		// Add serialization.
+		void addSerialization(SerializeInfo *info);
+
+		// Create the 'write' function.
+		Function *writeFn(SerializedType *type, SerializeInfo *info);
+
+		// Create the 'read' ctor.
+		Function *readCtor(SerializeInfo *info);
 	};
 
 
@@ -65,6 +86,9 @@ namespace storm {
 		// Offset of the boolean flag. Corresponds to 'any', ie. 1 if value present, otherwise 0.
 		Offset boolOffset() const { return Offset(contained->size()); }
 
+		// Notifications.
+		virtual void STORM_FN notifyAdded(NameSet *to, Named *added);
+
 	protected:
 		// Lazy-loading.
 		virtual Bool STORM_FN loadAll();
@@ -74,14 +98,25 @@ namespace storm {
 		// Handle to the type stored in here, so that we can use toS properly.
 		const Handle *handle;
 
-		// Offset of the boolean at the end of the type.
+		// Offset of the boolean at the end of the type. Mainly used for the toS function, ensuring
+		// that we don't call into the compiler from the wrong thread or similar.
 		Nat offset;
+
+		// Keep track of whether or not the contained type is serializable.
+		enum {
+			watchNone = 0x00,
+			watchSerialization = 0x01,
+		};
+		Nat watchFor;
 
 		// Create copy ctors.
 		Named *CODECALL createCopy(Str *name, SimplePart *part);
 
 		// Create assignment operators.
 		Named *CODECALL createAssign(Str *name, SimplePart *part);
+
+		// Add serialization.
+		void addSerialization(SerializeInfo *info);
 
 		// Other misc. code generation helpers.
 		void CODECALL initMaybe(InlineParams p);

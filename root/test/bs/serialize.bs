@@ -115,6 +115,32 @@ class ArrayData : serializable {
 	}
 }
 
+/**
+ * Serialization of various Maybe-types.
+ */
+class MaybeData : serializable {
+	Employee? a;
+	Employee? b;
+
+	init() {
+		init {
+			a = Employee();
+		}
+	}
+
+	void toS(StrBuf to) {
+		// TODO: Why don't << work out of the box?
+		to << "{ a: " << a.toS << ", b: " << b.toS << " }";
+	}
+
+	Bool compare(MaybeData other) {
+		Bool ok = true;
+		ok &= a.any == other.a.any;
+		ok &= b.any == other.b.any;
+		ok;
+	}
+}
+
 
 /**
  * A serializable value.
@@ -420,6 +446,23 @@ Bool setSerialization() {
 	ok &= ints.count == intsCopy.count;
 
 	ok;
+}
+
+// Maybe serialization.
+Bool maybeSerialization() {
+	MaybeData data;
+	MemOStream out;
+	ObjOStream objOut(out);
+	data.write(objOut);
+
+	// showString(out.buffer);
+
+	ObjIStream objIn(MemIStream(out.buffer));
+	var copy = MaybeData:read(objIn);
+	// print(copy.toS);
+
+	data.compare(copy);
+	false; // Not complete yet, we don't support Int? yet.
 }
 
 // Simple measurements of serialization performance.

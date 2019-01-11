@@ -60,7 +60,8 @@ namespace storm {
 		}
 
 		bool isValue(Type *t) {
-			return (t->typeFlags & typeValue) == typeValue;
+			return (t->typeFlags & typeValue) != 0
+				|| (t->typeFlags & typeRawPtr) != 0;
 		}
 
 		const GcType *gcTypeOf(const void *alloc) {

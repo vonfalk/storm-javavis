@@ -26,8 +26,11 @@ namespace storm {
 			// Is this a tuple-type?
 			tuple = 0x02,
 
+			// Is this a maybe-type?
+			maybe = 0x04,
+
 			// Completely custom type?
-			custom = 0x04,
+			custom = 0x08,
 		};
 
 		BITMASK_OPERATORS(TypeInfo);
@@ -242,6 +245,26 @@ namespace storm {
 	};
 
 
+	/**
+	 * Description of a serialized maybe-type. Fairly similar to "SerializedTuples", but expects a
+	 * boolean to be written first rather than an entire integer.
+	 */
+	class SerializedMaybe : public SerializedType {
+		STORM_CLASS;
+	public:
+		// Create a type description.
+		STORM_CTOR SerializedMaybe(Type *t, FnBase *ctor, Type *contained);
+
+		// Get the contained type.
+		inline Type *STORM_FN contained() const { return typeAt(1); }
+
+		// To string.
+		virtual void STORM_FN toS(StrBuf *to) const;
+
+	protected:
+		typeInfo::TypeInfo STORM_FN baseInfo() const;
+	};
+
 
 	/**
 	 * Error during serialization.
@@ -339,6 +362,12 @@ namespace storm {
 			// Is this a tuple?
 			Bool isTuple() const { return (flags() & typeInfo::tuple) != 0; }
 
+			// Is this a maybe-type?
+			Bool isMaybe() const { return (flags() & typeInfo::maybe) != 0; }
+
+			// Does this type allow early-out?
+			Bool isEarlyOut() const { return (flags() & (typeInfo::maybe | typeInfo::tuple)) != 0; }
+
 			// Entries required in the temporary storage.
 			Nat storage() const { return data & 0x00FFFFFF; }
 
@@ -374,7 +403,7 @@ namespace storm {
 
 			// At the end of serialization? Allows repetition in case of tuples.
 			inline Bool atEnd() const {
-				return !desc || !desc->members || pos >= desc->members->count() || (pos == 1 && desc->isTuple());
+				return !desc || !desc->members || pos >= desc->members->count() || (pos == 1 && desc->isEarlyOut());
 			}
 
 			// Current element?
@@ -426,6 +455,9 @@ namespace storm {
 
 		// Validate a type description for tuples against our view of the corresponding type.
 		void validateTuple(Desc *desc);
+
+		// Validate a maybe-description.
+		void validateMaybe(Desc *desc);
 
 		// Read an object into a variant.
 		Variant readObject(Nat type);

@@ -58,7 +58,8 @@ namespace storm {
 		// Get the type with the mangled name 'name'.
 		MAYBE(Type *) fromIdentifier(Str *name);
 
-		// Is 't' a value type?
+		// Is 't' a value type? Note: This differs from Value::isValue. We include primitives as
+		// values, while Value::isValue does not.
 		bool isValue(Type *t);
 
 		// Is type A an instance of type B?

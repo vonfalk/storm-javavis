@@ -441,6 +441,7 @@ namespace storm {
 		*params << me << objStream;
 		Function *fn = new (this) Function(Value(), new (this) Str(Type::CTOR), params);
 		fn->setCode(new (this) DynamicCode(l));
+		fn->visibility = typePrivate(engine);
 		return fn;
 	}
 
