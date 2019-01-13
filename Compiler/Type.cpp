@@ -57,6 +57,19 @@ namespace storm {
 		init(null);
 	}
 
+	Type::Type(Str *name, Array<Value> *params, TypeFlags flags, Size size) :
+		NameSet(name, params),
+		engine(RootObject::engine()),
+		myGcType(null),
+		tHandle(null),
+		typeFlags(flags | typeCpp),
+		mySize(size) {
+
+		if ((flags & typeValue) == 0)
+			throw InternalError(L"Can not use the Type constructor taking a Size to create class types.");
+		init(null);
+	}
+
 	Type::Type(Str *name, TypeFlags flags, Size size, GcType *gcType, const void *vtable) :
 		NameSet(name),
 		engine(RootObject::engine()),
@@ -101,9 +114,6 @@ namespace storm {
 
 	void Type::init(const void *vtable) {
 		assert((typeFlags & typeValue) == typeValue || (typeFlags & typeClass) == typeClass, L"Invalid type flags!");
-		if (rawPtr()) {
-			assert(typeFlags & typeClass, L"typeRawPtr has to be used with typeClass");
-		}
 
 		// Generally, we want this on types.
 		flags |= namedMatchNoInheritance;
@@ -122,7 +132,7 @@ namespace storm {
 	}
 
 	void Type::vtableInit(const void *vtab) {
-		if (value() || rawPtr())
+		if (value())
 			return;
 
 		myVTable = new (engine) VTable(this);
@@ -196,7 +206,7 @@ namespace storm {
 	}
 
 	Type *Type::defaultSuper() const {
-		if (value() || rawPtr())
+		if (value())
 			return null;
 		else if (useThread)
 			return TObject::stormType(engine);
@@ -263,7 +273,7 @@ namespace storm {
 		// TODO: Invalidate the Layout as well.
 		// TODO: Invalidate the handle as well.
 
-		if ((typeFlags & typeCpp) != typeCpp && !value() && !rawPtr()) {
+		if ((typeFlags & typeCpp) != typeCpp && !value()) {
 			// Re-initialize the vtable.
 			myVTable->createStorm(to->myVTable);
 		}
@@ -579,7 +589,7 @@ namespace storm {
 		if (super())
 			return super()->size();
 
-		if (value() || rawPtr())
+		if (value())
 			return Size();
 
 		assert(false, L"We are a class which does not inherit from TObject or Object!");
@@ -758,6 +768,44 @@ namespace storm {
 		myGcType->type = this;
 	}
 
+	// Create a GcType from a TypeDesc for a type, assuming no parent class is present and no layout
+	// has been initialized (ie. no explicit members).
+	static GcType *gcTypeFromDesc(Type *type, code::TypeDesc *desc) {
+		Engine &e = type->engine;
+		Nat size = type->size().current();
+		GcType *result = null;
+
+		if (code::PrimitiveDesc *primitive = as<code::PrimitiveDesc>(desc)) {
+			if (primitive->v.kind() == code::primitive::pointer) {
+				result = e.gc.allocType(GcType::tArray, type, size, 1);
+				result->offset[0] = 0;
+			} else {
+				result = e.gc.allocType(GcType::tArray, type, size, 0);
+			}
+		} else if (code::SimpleDesc *simple = as<code::SimpleDesc>(desc)) {
+			Nat ptrCount = 0;
+			for (Nat i = 0; i < simple->count(); i++) {
+				if (simple->at(i).kind() == code::primitive::pointer)
+					ptrCount++;
+			}
+
+			result = e.gc.allocType(GcType::tArray, type, size, ptrCount);
+			Nat offsetAt = 0;
+			for (Nat i = 0; i < simple->count(); i++) {
+				if (simple->at(i).kind() == code::primitive::pointer)
+					result->offset[offsetAt++] = simple->at(i).offset().current();
+			}
+		} else if (code::ComplexDesc *complex = as<code::ComplexDesc>(desc)) {
+			// If we get here, the type should be empty.
+			result = e.gc.allocType(GcType::tArray, type, size, 0);
+		} else {
+			throw InternalError(L"Unsupported type description of a value.");
+		}
+
+		assert(result);
+		return result;
+	}
+
 	const GcType *Type::gcType() {
 		// Already created?
 		if (myGcType != null)
@@ -775,7 +823,8 @@ namespace storm {
 		}
 
 		// We're on the correct thread. Compute the type!
-		assert((typeFlags & typeCpp) != typeCpp, L"C++ types should be given a GcType on creation!");
+		assert(value() || (typeFlags & typeCpp) != typeCpp, L"C++ types should be given a GcType on creation!");
+
 
 		// Make sure everything is loaded.
 		forceLoad();
@@ -790,14 +839,14 @@ namespace storm {
 
 		if (!layout) {
 			// We do not have any variables of our own.
-			if (superGc)
+			if (superGc) {
 				myGcType = engine.gc.allocType(superGc);
-			else if (value())
-				myGcType = engine.gc.allocType(GcType::tArray, this, size().current(), 0);
-			else if (rawPtr())
-				myGcType = engine.gc.allocType(&pointerArrayType);
-			else
+			} else if (value()) {
+				// Look at our TypeDesc to see what we shall do.
+				myGcType = gcTypeFromDesc(this, typeDesc());
+			} else {
 				assert(false, L"We're a non-value not inheriting from Object or TObject!");
+			}
 
 		} else {
 			// Merge our parent's and our offsets (if we have a parent).
@@ -843,7 +892,7 @@ namespace storm {
 	}
 
 	void Type::buildHandle() {
-		bool val = value() || rawPtr();
+		bool val = value();
 
 		if (!val) {
 			// The above check is not strictly necessary for correctness. However, we crash during
@@ -1066,9 +1115,7 @@ namespace storm {
 	}
 
 	void Type::toS(StrBuf *to) const {
-		if (typeFlags & typeRawPtr) {
-			*to << S("class (raw ptr) ");
-		} else if (value()) {
+		if (value()) {
 			*to << S("value ");
 		} else {
 			*to << S("class ");
@@ -1174,7 +1221,7 @@ namespace storm {
 
 	void Type::vtableFnAdded(Function *fn) {
 		// If we are a value, we do not have a vtable.
-		if (value() || rawPtr())
+		if (value())
 			return;
 
 		// If the function is a static function, don't use it in vtables.

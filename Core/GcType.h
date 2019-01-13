@@ -76,4 +76,7 @@ namespace storm {
 	inline size_t gcTypeSize(size_t entries) {
 		return sizeof(GcType) + entries*sizeof(size_t) - sizeof(size_t);
 	}
+
+	// Print a GcType instance, mostly for debugging.
+	void printGcType(const GcType *type);
 }

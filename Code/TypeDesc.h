@@ -41,7 +41,7 @@ namespace code {
 			return primitive::Kind((dataA & 0x1) | ((dataB & 0x1) << 1));
 		}
 
-		// Get the size (we do not preserve offsets).
+		// Get the size (we do not preserve alignment).
 		inline Size STORM_FN size() const {
 			Nat s32 = (dataA & 0xFE) >> 1;
 			Nat s64 = (dataB & 0xFE) >> 1;

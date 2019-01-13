@@ -266,6 +266,9 @@ namespace storm {
 	}
 
 	static void allocNormalObject(CodeGen *s, Function *ctor, Array<code::Operand> *params, code::Var to) {
+	}
+
+	void allocObject(CodeGen *s, Function *ctor, Array<code::Operand> *params, code::Var to) {
 		using namespace code;
 
 		Type *type = ctor->params->at(0).type;
@@ -280,26 +283,6 @@ namespace storm {
 		params = new (s) Array<code::Operand>(*params);
 		params->insert(0, to);
 		ctor->autoCall(s, params, r);
-	}
-
-	static void allocRawObject(CodeGen *s, Function *ctor, Array<code::Operand> *params, code::Var to) {
-		using namespace code;
-
-		*s->l << lea(ptrA, to);
-
-		CodeResult *r = new (s) CodeResult();
-		params = new (s) Array<code::Operand>(*params);
-		params->insert(0, ptrA);
-		ctor->autoCall(s, params, r);
-	}
-
-	void allocObject(CodeGen *s, Function *ctor, Array<code::Operand> *params, code::Var to) {
-		Value t = ctor->params->at(0);
-
-		if (t.type->typeFlags & typeRawPtr)
-			allocRawObject(s, ctor, params, to);
-		else
-			allocNormalObject(s, ctor, params, to);
 	}
 
 	code::Var allocObject(CodeGen *s, Function *ctor, Array<code::Operand> *params) {

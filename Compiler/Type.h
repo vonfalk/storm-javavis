@@ -58,6 +58,13 @@ namespace storm {
 		STORM_CTOR Type(Str *name, TypeFlags flags);
 		STORM_CTOR Type(Str *name, Array<Value> *params, TypeFlags flags);
 
+	protected:
+		// Create a type of a particular size, its contents defined by whatever is returned from
+		// 'createDesc' and the supplied size rather than the members defined here. Only usable for
+		// value types.
+		STORM_CTOR Type(Str *name, Array<Value> *params, TypeFlags flags, Size size);
+
+	public:
 		// Create a type declared in C++.
 		Type(Str *name, TypeFlags flags, Size size, GcType *gcType, const void *vtable);
 		Type(Str *name, Array<Value> *params, TypeFlags flags, Size size, GcType *gcType, const void *vtable);
@@ -282,9 +289,6 @@ namespace storm {
 
 		// Is this a value type?
 		inline bool value() const { return (typeFlags & typeValue) == typeValue; }
-
-		// Is this a raw pointer type?
-		inline bool rawPtr() const { return (typeFlags & typeRawPtr) == typeRawPtr; }
 
 		// Generate a handle for this type.
 		void buildHandle();

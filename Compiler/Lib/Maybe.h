@@ -15,6 +15,7 @@ namespace storm {
 		STORM_CLASS;
 	public:
 		MaybeType(Str *name, Type *param, TypeFlags flags, Size size, GcType *gcType);
+		MaybeType(Str *name, Type *param, TypeFlags flags, Size size);
 
 		// Get the parameter.
 		Value STORM_FN param() const;

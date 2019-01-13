@@ -75,6 +75,9 @@ namespace storm {
 	MaybeType::MaybeType(Str *name, Type *param, TypeFlags flags, Size size, GcType *gcType)
 		: Type(name, new (name) Array<Value>(1, Value(param)), flags, size, gcType, null), contained(param) {}
 
+	MaybeType::MaybeType(Str *name, Type *param, TypeFlags flags, Size size)
+		: Type(name, new (name) Array<Value>(1, Value(param)), flags, size), contained(param) {}
+
 
 	Value MaybeType::param() const {
 		return Value(contained);
@@ -85,7 +88,7 @@ namespace storm {
 	 */
 
 	MaybeClassType::MaybeClassType(Str *name, Type *param)
-		: MaybeType(name, param, typeClass | typeRawPtr | typeFinal, Size::sPtr, allocType(name->engine())) {}
+		: MaybeType(name, param, typeValue | typeFinal, Size::sPtr) {}
 
 	static void initMaybeClass(InlineParams p) {
 		using namespace code;
@@ -151,19 +154,18 @@ namespace storm {
 
 	Bool MaybeClassType::loadAll() {
 		Engine &e = engine;
-		Value t = thisPtr(this);
 		Value b = Value(StormInfo<Bool>::type(e));
 
-		Array<Value> *v = new (e) Array<Value>(1, t);
-		Array<Value> *r = new (e) Array<Value>(1, t.asRef(true));
-		Array<Value> *rv = new (e) Array<Value>(2, t);
-		rv->at(0) = t.asRef(true);
-		Array<Value> *rp = new (e) Array<Value>(2, t.asRef(true));
+		Array<Value> *v = new (e) Array<Value>(1, Value(this, false));
+		Array<Value> *r = new (e) Array<Value>(1, Value(this, true));
+		Array<Value> *rv = new (e) Array<Value>(2, Value(this, false));
+		rv->at(0) = Value(this, true);
+		Array<Value> *rp = new (e) Array<Value>(2, Value(this, true));
 		rp->at(1) = param();
 
 		add(inlinedFunction(e, Value(), CTOR, r, fnPtr(e, &initMaybeClass)));
 		add(inlinedFunction(e, Value(), CTOR, rv, fnPtr(e, &copyMaybeClass)));
-		add(inlinedFunction(e, t.asRef(true), S("="), rv, fnPtr(e, &copyMaybeClass)));
+		add(inlinedFunction(e, Value(this, true), S("="), rv, fnPtr(e, &copyMaybeClass)));
 		add(inlinedFunction(e, b, S("empty"), v, fnPtr(e, &emptyMaybeClass)));
 		add(inlinedFunction(e, b, S("any"), v, fnPtr(e, &anyMaybeClass)));
 
@@ -172,12 +174,12 @@ namespace storm {
 
 		add(nativeEngineFunction(e, Value(Str::stormType(e)), S("toS"), v, address(&maybeToSClass)));
 
-		Array<Value> *strBuf = new (e) Array<Value>(2, t);
+		Array<Value> *strBuf = new (e) Array<Value>(2, Value(this, false));
 		strBuf->at(1) = Value(StrBuf::stormType(e));
 		add(nativeFunction(e, Value(), S("toS"), strBuf, address(&maybeToSBufClass)));
 
 		if (!contained->isA(TObject::stormType(e))) {
-			Array<Value> *clone = new (e) Array<Value>(2, t);
+			Array<Value> *clone = new (e) Array<Value>(2, Value(this, false));
 			clone->at(1) = Value(CloneEnv::stormType(e));
 			add(nativeFunction(e, Value(), S("deepCopy"), clone, address(&maybeCloneClass)));
 
@@ -271,7 +273,7 @@ namespace storm {
 	Function *MaybeClassType::writeFn(SerializedType *type, SerializeInfo *info) {
 		using namespace code;
 
-		Value me = thisPtr(this);
+		Value me = Value(this); // We want to get a value passed to us.
 		Value objStream(StormInfo<ObjOStream>::type(engine));
 		Value boolType(StormInfo<Bool>::type(engine));
 
@@ -408,7 +410,7 @@ namespace storm {
 	}
 
 	MaybeValueType::MaybeValueType(Str *name, Type *param)
-		: MaybeType(name, param, typeValue, maybeValSize(param), allocTypeValue(param)) {}
+		: MaybeType(name, param, typeValue | typeFinal, maybeValSize(param), allocTypeValue(param)) {}
 
 	code::TypeDesc *MaybeValueType::createTypeDesc() {
 		using namespace code;

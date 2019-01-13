@@ -20,15 +20,10 @@ namespace storm {
 		// This type is final.
 		typeFinal = 0x10,
 
-		// Used together with the class type and indicates that this type is a raw pointer of some
-		// kind. This means several things: no vtables will be used (just like values), and
-		// constructors are assumed to take a void ** as their first parameter instead of void * (as
-		// values do). Used to implement Maybe<T> and other special pointer types. Use with typeClass.
-		typeRawPtr = 0x20,
-
 		// More to come!
 
-		// This is a type that comes from C++.
+		// This is a type that comes from C++. This means that Storm will not attempt to create a
+		// layout for the object automatically.
 		typeCpp = 0x1000,
 
 		// This type comes from C++ and is a POD type.

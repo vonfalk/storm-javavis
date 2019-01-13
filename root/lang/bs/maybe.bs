@@ -65,15 +65,12 @@ class NullExpr extends Expr {
 			Function? ctor = t.defaultCtor;
 			if (ctor) {
 				VarInfo info = r.location(g);
-				if (r.type.isValue) {
-					// Just call the constructor.
-					g.l << lea(ptrA, info.v);
-					Array<Operand> vals;
-					vals << ptrA;
-					ctor.localCall(g, vals, CodeResult(Value(), g.block), false);
-				} else {
-					allocObject(g, ctor, Array<Operand>(), info.v);
-				}
+
+				// Call the constructor.
+				g.l << lea(ptrA, info.v);
+				Array<Operand> vals;
+				vals << ptrA;
+				ctor.localCall(g, vals, CodeResult(Value(), g.block), false);
 				info.created(g);
 			} else {
 				throwSyntaxError(pos, "Failed to locate the default constructor of " + r.type.toS);
