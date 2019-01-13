@@ -50,7 +50,7 @@ namespace storm {
 		}
 
 		void Var::initTo(Actuals *actuals) {
-			if (var->result.isBuiltIn()) {
+			if (var->result.isPrimitive()) {
 				// Assignment is the same as initialization here...
 				nat size = actuals->expressions->count();
 				if (size == 1) {
@@ -87,7 +87,7 @@ namespace storm {
 
 			const Value &t = var->result;
 
-			if (t.isValue()) {
+			if (t.isValue() && !t.isPrimitive()) {
 				Expr *ctor = null;
 
 				if (initCtor)

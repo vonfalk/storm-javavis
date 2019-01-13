@@ -20,6 +20,7 @@
 #include "Utils/Memory.h"
 #include "StdIoThread.h"
 #include "Visibility.h"
+#include "Exception.h"
 
 // Only included from here:
 #include "OS/SharedMaster.h"
@@ -296,6 +297,10 @@ namespace storm {
 		// The null function in Storm!
 	}
 
+	static void throwAbstractError(Str *identifier) {
+		throw AbstractFnCalled(::toS(identifier));
+	}
+
 	code::RefSource *Engine::createRef(RefType ref) {
 #define W(x) S(x)
 #define FNREF(x) arena()->externalSource(S("C++:") W(#x), address(&x))
@@ -341,6 +346,8 @@ namespace storm {
 			return FNREF(MaybeValueType::toSHelper);
 		case rGlobalAddr:
 			return FNREF(GlobalVar::dataPtr);
+		case rThrowAbstractError:
+			return FNREF(throwAbstractError);
 		default:
 			assert(false, L"Unknown reference: " + ::toS(ref));
 			return null;

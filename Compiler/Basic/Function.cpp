@@ -134,30 +134,7 @@ namespace storm {
 			throw InternalError(L"A BSRawFn can not be used without overriding 'createBody'!");
 		}
 
-		void BSRawFn::makeStatic() {
-			if (parentLookup)
-				throw InternalError(L"Don't call 'makeStatic' after adding the function to the name tree.");
-
-			// Already static?
-			if (fnFlags() & fnStatic)
-				return;
-
-			FnFlags outlawed = fnAbstract | fnFinal | fnOverride;
-			if (fnFlags() & outlawed)
-				throw SyntaxError(pos, L"Can not make functions marked abstract, final or override into static functions.");
-
-			if (valParams->empty())
-				return;
-			if (*valParams->at(0).name != S("this"))
-				return;
-
-			// All seems well, proceed.
-			make(fnStatic);
-			valParams->remove(0);
-			params->remove(0);
-		}
-
-		CodeGen *BSRawFn::generateCode() {
+		CodeGen *BSRawFn::createRawBody() {
 			FnBody *body = createBody();
 
 			// Expression possibly wrapped around the body (casting the value if needed).
@@ -206,6 +183,33 @@ namespace storm {
 			// PLN(bodyExpr);
 			// PLN(identifier() << L": " << l);
 			return state;
+		}
+
+		void BSRawFn::makeStatic() {
+			if (parentLookup)
+				throw InternalError(L"Don't call 'makeStatic' after adding the function to the name tree.");
+
+			// Already static?
+			if (fnFlags() & fnStatic)
+				return;
+
+			FnFlags outlawed = fnAbstract | fnFinal | fnOverride;
+			if (fnFlags() & outlawed)
+				throw SyntaxError(pos, L"Can not make functions marked abstract, final or override into static functions.");
+
+			if (valParams->empty())
+				return;
+			if (*valParams->at(0).name != S("this"))
+				return;
+
+			// All seems well, proceed.
+			make(fnStatic);
+			valParams->remove(0);
+			params->remove(0);
+		}
+
+		CodeGen *BSRawFn::generateCode() {
+			return createRawBody();
 		}
 
 		void BSRawFn::reset() {
@@ -322,10 +326,25 @@ namespace storm {
 			makeAbstract();
 		}
 
-		FnBody *BSAbstractFn::createBody() {
-			// We don't have anything to return, and we don't really care if this is a bit slower if
-			// we were to actually generate machine code for throwing the exception:
-			throw AbstractFnCalled(::toS(identifier()));
+		CodeGen *BSAbstractFn::createRawBody() {
+			using namespace code;
+
+			CodeGen *g = new (this) CodeGen(runOn(), isMember(), result);
+
+			// Parameters.
+			for (Nat i = 0; i < valParams->count(); i++) {
+				g->createParam(valParams->at(i).type);
+			}
+
+			*g->l << prolog();
+			*g->l << fnParam(engine().ptrDesc(), objPtr(identifier()));
+			*g->l << fnCall(engine().ref(Engine::rThrowAbstractError), false);
+
+			// 'throwAbstractError' does not return, so just to be sure.
+			*g->l << epilog();
+			*g->l << ret(Size());
+
+			return g;
 		}
 
 

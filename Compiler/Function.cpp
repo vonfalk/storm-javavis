@@ -305,7 +305,7 @@ namespace storm {
 			res->location(to).created(to);
 
 		// Clone the result.
-		if (result.isValue() && !result.isBuiltIn()) {
+		if (result.isValue() && !result.isPrimitive()) {
 			if (Function *f = result.type->deepCopyFn()) {
 				CodeGen *child = to->child();
 				*to->l << begin(child->block);

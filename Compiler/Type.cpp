@@ -529,7 +529,7 @@ namespace storm {
 			Offset offset = v->offset();
 			Value type = v->type;
 
-			if (type.isHeapObj() || type.ref) {
+			if (type.isObject() || type.ref) {
 				// This is a pointer to something.
 				if (into)
 					into->at(pos) = Primitive(primitive::pointer, Size::sPtr, offset);

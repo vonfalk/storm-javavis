@@ -18,7 +18,7 @@ namespace storm {
 		Value type = params->at(0).asRef(false);
 
 		// Only ever needed for value types or built-in types.
-		if (!type.isValue() && !type.isBuiltIn())
+		if (!type.isValue())
 			return null;
 
 		if (type.type == null)

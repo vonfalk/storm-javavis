@@ -308,7 +308,7 @@ class Image extends Element {
 Image image(Bitmap image) on Render { Image(image); }
 
 // Create from an Image instance.
-Image image(Image image) on Render { Image(Bitmap(image)); }
+Image image(graphics:Image image) on Render { Image(Bitmap(image)); }
 
 // Create from an Url. TODO: Perhaps we want to de-duplicate these!
 Image image(Url url) on Render { Image(Bitmap(url.loadImage)); }

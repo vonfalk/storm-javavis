@@ -47,8 +47,10 @@ SUITE(Storm, 8);
 SUITE(SimpleBS, 9);
 // More heavy tests of Basic Storm
 SUITE(BS, 10);
-// Syntax server logic.
-SUITE(Server, 11);
+// Some compilation tests that make sure the provided code compiles. Nice to have these last.
+SUITE(Compile, 11);
+// Language server logic.
+SUITE(Server, 12);
 
 // UI library. Sadly not too many automated tests.
 SUITED(Gui, 20);

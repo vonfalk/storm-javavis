@@ -30,11 +30,11 @@ namespace storm {
 				continue;
 
 			// Primitives are trivial to copy.
-			if (!t.isBuiltIn())
+			if (t.isPrimitive())
 				continue;
 
 			// Classes and actors need initialization!
-			if (!t.isValue())
+			if (t.isObject())
 				return false;
 
 			Function *ctor = t.type->defaultCtor();
@@ -93,7 +93,9 @@ namespace storm {
 		Array<MemberVar *> *vars = owner->variables();
 		for (nat i = 0; i < vars->count(); i++) {
 			MemberVar *v = vars->at(i);
-			if (v->type.isValue()) {
+			if (v->type.isPrimitive()) {
+				// No need for initialization.
+			} else if (v->type.isValue()) {
 				Function *ctor = v->type.type->defaultCtor();
 				if (!ctor)
 					throw InternalError(L"Can not use TypeDefaultCtor if a member does not have a default "
@@ -102,7 +104,7 @@ namespace storm {
 				*l << add(ptrA, ptrConst(v->offset()));
 				*l << fnParam(ptr, ptrA);
 				*l << fnCall(ctor->ref(), true);
-			} else if (v->type.isHeapObj()) {
+			} else {
 				Function *ctor = v->type.type->defaultCtor();
 				if (!ctor)
 					throw InternalError(L"Can not use TypeDefaultCtor if a member does not have a default "
@@ -111,8 +113,6 @@ namespace storm {
 				Var created = allocObject(t, ctor, new (this) Array<Operand>());
 				*l << mov(ptrA, me);
 				*l << mov(ptrRel(ptrA, v->offset()), created);
-			} else {
-				// Built-in types do not need initialization.
 			}
 		}
 
@@ -148,7 +148,7 @@ namespace storm {
 				continue;
 
 			// Classes, actors and built-ins are trivial to copy!
-			if (!t.isValue())
+			if (t.isAsmType())
 				continue;
 
 			Function *ctor = t.type->copyCtor();
@@ -190,7 +190,7 @@ namespace storm {
 
 			*l << mov(ptrA, me);
 			*l << mov(ptrC, src);
-			if (v->type.isValue()) {
+			if (!v->type.isAsmType()) {
 				Function *ctor = v->type.type->copyCtor();
 				if (!ctor)
 					throw InternalError(L"No copy constructor for " + ::toS(v->type.type->identifier())
@@ -239,7 +239,7 @@ namespace storm {
 				continue;
 
 			// Classes and actors are trivial to copy.
-			if (!t.isValue())
+			if (t.isAsmType())
 				continue;
 
 			Function *assign = t.type->assignFn();
@@ -281,7 +281,7 @@ namespace storm {
 
 			*l << mov(ptrA, me);
 			*l << mov(ptrC, src);
-			if (v->type.isValue()) {
+			if (!v->type.isAsmType()) {
 				Function *ctor = v->type.type->assignFn();
 				if (!ctor)
 					throw InternalError(L"No assignment operator for " + ::toS(v->type.type->identifier())
@@ -343,7 +343,9 @@ namespace storm {
 			Value type = var->type;
 
 
-			if (type.isValue()) {
+			if (type.isPrimitive()) {
+				// Nothing needs to be done for actors or built-in types.
+			} else if (type.isValue()) {
 				// No need to copy, just call 'deepCopy'.
 				Function *toCall = type.type->deepCopyFn();
 				if (!toCall) {
@@ -369,7 +371,7 @@ namespace storm {
 				*l << mov(ptrC, me);
 				*l << mov(ptrRel(ptrC, var->offset()), ptrA);
 			} else {
-				// Nothing needs to be done for actors or built-in types.
+				// We don't need to be concerned with actors.
 			}
 		}
 

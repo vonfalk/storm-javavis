@@ -27,7 +27,7 @@ namespace storm {
 
 		if (type.isActor())
 			return nativeFunction(e, type, S("clone"), params, address(&returnPtr));
-		else if (type.isHeapObj())
+		else if (type.isClass())
 			return nativeFunction(e, type, S("clone"), params, address(&runtime::cloneObject));
 
 		// Value or built-in type. We need to generate some code...
@@ -57,7 +57,7 @@ namespace storm {
 
 		if (type.isActor())
 			return nativeFunction(e, type, S("clone"), params, address(&returnPtrEnv));
-		else if (type.isHeapObj())
+		else if (type.isObject())
 			return nativeFunction(e, type, S("clone"), params, address(&runtime::cloneObjectEnv));
 
 		// Value or built-in type. We need to generate some code...

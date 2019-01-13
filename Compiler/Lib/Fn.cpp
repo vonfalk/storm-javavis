@@ -134,7 +134,7 @@ namespace storm {
 			}
 
 			*s->l << fnRet(resultMem);
-		} else if (result.isBuiltIn() || result.isActor()) {
+		} else if (result.type == null || result.isPrimitive() || result.isActor()) {
 			// No need to copy!
 			Var r;
 			if (result != Value()) {

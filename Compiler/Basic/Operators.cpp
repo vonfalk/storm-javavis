@@ -37,7 +37,7 @@ namespace storm {
 								L"and if an assignment function is available.");
 			}
 
-			if (l.isHeapObj() && l.ref && castable(rhs, l.asRef(false), block->scope)) {
+			if (l.isObject() && l.ref && castable(rhs, l.asRef(false), block->scope)) {
 				return new (block) ClassAssign(lhs, rhs, block->scope);
 			} else {
 				// Make sure we do not allow automatic conversion of the 'this' parameter during

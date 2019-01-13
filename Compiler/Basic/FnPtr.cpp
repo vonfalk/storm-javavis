@@ -10,7 +10,7 @@ namespace storm {
 
 		static void checkDot(Expr *dotExpr) {
 			Value dotResult = dotExpr->result().type();
-			if (dotResult.isValue() || dotResult.isBuiltIn())
+			if (dotResult.isValue())
 				throw SyntaxError(dotExpr->pos, L"Only classes and actors can be bound to a function pointer. Not values.");
 		}
 

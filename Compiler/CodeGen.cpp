@@ -42,7 +42,7 @@ namespace storm {
 	VarInfo CodeGen::createVar(Value type, code::Block in) {
 		code::FreeOpt opt = code::freeOnBoth;
 		code::Operand dtor;
-		bool needsPart = type.isValue() && !type.ref;
+		bool needsPart = !type.isAsmType() && !type.ref;
 
 		if (needsPart) {
 			dtor = type.destructor();
@@ -189,7 +189,7 @@ namespace storm {
 	}
 
 	static bool needsCloneEnv(Value type) {
-		if (type.isBuiltIn() || type.ref)
+		if (type.ref || type.isPrimitive())
 			return false;
 		else if (type.isActor())
 			return false;
@@ -204,7 +204,7 @@ namespace storm {
 			return actual;
 
 		Engine &e = to->engine();
-		if (formal.isHeapObj()) {
+		if (formal.isObject()) {
 			VarInfo clone = to->createVar(formal);
 
 			*to->l << fnParam(formal.desc(e), actual);
@@ -265,14 +265,11 @@ namespace storm {
 		return call;
 	}
 
-	static void allocNormalObject(CodeGen *s, Function *ctor, Array<code::Operand> *params, code::Var to) {
-	}
-
 	void allocObject(CodeGen *s, Function *ctor, Array<code::Operand> *params, code::Var to) {
 		using namespace code;
 
 		Type *type = ctor->params->at(0).type;
-		assert(Value(type).isHeapObj(), L"Must allocate a class type! (not " + ::toS(type) + L")");
+		assert(Value(type).isObject(), L"Must allocate a class type! (not " + ::toS(type) + L")");
 
 		Engine &e = ctor->engine();
 

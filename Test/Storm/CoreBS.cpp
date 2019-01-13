@@ -301,19 +301,6 @@ BEGIN_TEST(UnitTest, BS) {
 
 
 /**
- * Compile all code and see what happens.
- */
-
-BEGIN_TEST(CompileTest, BS) {
-	Engine &e = gEngine();
-
-	// Compile all code in core and lang. Not everything in test is supposed to compile cleanly.
-	CHECK_RUNS(e.package(S("core"))->compile());
-	CHECK_RUNS(e.package(S("lang"))->compile());
-} END_TEST
-
-
-/**
  * Return.
  */
 

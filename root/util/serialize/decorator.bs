@@ -253,7 +253,7 @@ void addWrite(Type type, Member[] members, Function typeFun) {
 	LocalVarAccess to(pos, body.safeVariable("to"));
 
 	FnCall desc(pos, body.scope, typeFun, Actuals(), false, true);
-	Expr startCall = if (!t.isHeapObj()) {
+	Expr startCall = if (!t.isObject()) {
 		namedExpr(body, pos, "startValue", to, Actuals(desc));
 	} else {
 		Actuals params;
@@ -311,7 +311,7 @@ void addRead(Type type) {
 	var stream = l.createParam(objStream.desc);
 	l << prolog();
 
-	if (t.isHeapObj) {
+	if (t.isObject) {
 		// Class or actor.
 		var toCall = named{ObjIStream:readObject<ObjIStream, Type>}.ref;
 

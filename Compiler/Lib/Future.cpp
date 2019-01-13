@@ -94,7 +94,7 @@ namespace storm {
 		// Members differing between implementations.
 		if (param == Value()) {
 			loadVoid();
-		} else if (param.isHeapObj()) {
+		} else if (param.isObject()) {
 			loadClass();
 		} else {
 			loadValue();

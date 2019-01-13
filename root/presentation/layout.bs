@@ -63,6 +63,7 @@ class CaptionLayout extends layout:Layout {
 			sz.w = max(sz.w, s.w);
 			sz.h += s.h;
 		}
+		sz;
 	}
 
 	// Re-compute the layout.

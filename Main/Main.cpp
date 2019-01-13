@@ -103,7 +103,7 @@ int runFunction(Engine &e, const wchar_t *function) {
 	}
 
 	Value r = fn->result;
-	if (r.isValue()) {
+	if (!r.returnInReg()) {
 		wcout << function << L" returns a value-type. This is not yet supported." << endl;
 		wcout << L"Try running it through the REPL instead!" << endl;
 		return 1;

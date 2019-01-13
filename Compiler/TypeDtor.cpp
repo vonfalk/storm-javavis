@@ -53,7 +53,7 @@ namespace storm {
 		Array<MemberVar *> *vars = owner->variables();
 		for (nat i = 0; i < vars->count(); i++) {
 			MemberVar *v = vars->at(i);
-			if (!v->type.isValue())
+			if (v->type.isAsmType())
 				continue;
 
 			Function *dtor = v->type.type->destructor();

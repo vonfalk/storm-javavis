@@ -50,7 +50,7 @@ namespace storm {
 			if (isMaybe(from))
 				from = unwrapMaybe(from);
 
-			if (!from.isHeapObj())
+			if (!from.isObject())
 				throw SyntaxError(expr->pos, L"The 'as' operator is only applicable to class or actor types.");
 			if (!to.type->isA(from.type))
 				throw SyntaxError(expr->pos, L"Condition is always false. " + ::toS(to) +
@@ -158,7 +158,7 @@ namespace storm {
 			// Copy it if we want a result, and if we weren't null.
 			if (var) {
 				*state->l << lea(ptrA, var->var.v);
-				if (c->param().isBuiltIn()) {
+				if (c->param().isAsmType()) {
 					Size sz = c->param().size();
 					*state->l << mov(xRel(sz, ptrA, Offset()), xRel(sz, ptrC, Offset()));
 				} else {

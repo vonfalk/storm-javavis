@@ -78,7 +78,7 @@ namespace storm {
 		code::Var stream = l->createParam(streamType.desc(e));
 
 		*l << prolog();
-		if (result.isHeapObj()) {
+		if (result.isObject()) {
 			Function *fn = findStormMemberFn(streamType, S("readObject"), typeType);
 
 			*l << fnParam(streamType.desc(e), stream);

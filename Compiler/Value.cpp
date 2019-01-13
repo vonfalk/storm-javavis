@@ -48,7 +48,7 @@ namespace storm {
 		// For objects: We can not create references from values.
 		// For values, we need to be able to. In the future, maybe const refs from values?
 		if (ref && !v.ref)
-			if (isClass() || v.isClass())
+			if (isObject() || v.isObject())
 				return false;
 		return canStore(v.type);
 	}
@@ -83,7 +83,7 @@ namespace storm {
 			return Size();
 		} else if (ref) {
 			return Size::sPtr;
-		} else if (isValue() || isBuiltIn()) {
+		} else if (isValue()) {
 			return type->size();
 		} else {
 			return Size::sPtr;
@@ -146,58 +146,54 @@ namespace storm {
 	Bool Value::returnInReg() const {
 		if (ref)
 			return true;
-		if (isBuiltIn())
-			return true;
-		return !isValue();
-	}
-
-	Bool Value::isBuiltIn() const {
 		if (!type)
-			// Void is considered built-in.
 			return true;
-
-		// Class types are never built in types, and we can not distinguish them from pointers.
-		if (type->typeFlags & typeClass)
-			return false;
-
-		code::TypeDesc *desc = type->typeDesc();
-		if (as<code::PrimitiveDesc>(desc)) {
-			return true;
-		} else {
-			return false;
-		}
+		return isAsmType();
 	}
 
 	Bool Value::isValue() const {
 		if (!type)
 			return false;
-		if (isBuiltIn())
-			return false;
 		return (type->typeFlags & typeValue) == typeValue;
 	}
 
-	Bool Value::isClass() const {
-		if (!type)
-			return false;
-		if (type->typeFlags & typeClass)
-			return type->isA(Object::stormType(type->engine));
-		else
-			return false;
-	}
-
-	Bool Value::isActor() const {
-		if (!type)
-			return false;
-		if (type->typeFlags & typeClass)
-			return type->isA(TObject::stormType(type->engine));
-		else
-			return false;
-	}
-
-	Bool Value::isHeapObj() const {
+	Bool Value::isObject() const {
 		if (!type)
 			return false;
 		return (type->typeFlags & typeClass) == typeClass;
+	}
+
+	Bool Value::isClass() const {
+		if (!isObject())
+			return false;
+		return type->isA(StormInfo<Object>::type(type->engine));
+	}
+
+	Bool Value::isActor() const {
+		if (!isObject())
+			return false;
+		return type->isA(StormInfo<TObject>::type(type->engine));
+	}
+
+	Bool Value::isPrimitive() const {
+		if (!type) {
+			::dumpStack();
+			DebugBreak();
+			return false;
+		}
+
+		if (type->typeFlags & typeClass)
+			return false;
+
+		code::TypeDesc *desc = type->typeDesc();
+		return as<code::PrimitiveDesc>(desc) != null;
+	}
+
+	Bool Value::isAsmType() const {
+		if (!type)
+			return false;
+
+		return isObject() || isPrimitive();
 	}
 
 	Bool Value::isPtr() const {
@@ -205,11 +201,13 @@ namespace storm {
 			return false;
 		if ((type->typeFlags & typeClass) == typeClass)
 			return true;
+		if (code::PrimitiveDesc *desc = as<code::PrimitiveDesc>(type->typeDesc()))
+			return desc->v.kind() == code::primitive::pointer;
 		return false;
 	}
 
 	code::Operand Value::copyCtor() const {
-		if (isValue()) {
+		if (isValue() && !isPrimitive()) {
 			Function *ctor = type->copyCtor();
 			if (!ctor) {
 				WARNING(L"Not returning a proper copy-constructor!");
@@ -223,7 +221,7 @@ namespace storm {
 	}
 
 	code::Operand Value::destructor() const {
-		if (isValue()) {
+		if (isValue() && !isPrimitive()) {
 			if (Function *dtor = type->destructor())
 				return dtor->ref();
 		}

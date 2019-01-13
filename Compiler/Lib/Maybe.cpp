@@ -11,12 +11,8 @@
 
 namespace storm {
 
-	static Bool isValue(Value v) {
-		return v.isValue() || v.isBuiltIn();
-	}
-
 	static Bool isValue(Type *t) {
-		return isValue(Value(t));
+		return Value(t).isValue();
 	}
 
 	Type *createMaybe(Str *name, ValueArray *val) {
@@ -29,7 +25,7 @@ namespace storm {
 		if (isMaybe(p))
 			return null;
 
-		if (isValue(p))
+		if (p.isValue())
 			return new (name) MaybeValueType(name, p.type);
 		else
 			return new (name) MaybeClassType(name, p.type);
@@ -543,7 +539,7 @@ namespace storm {
 		*p.state->l << jmp(empty, ifEqual);
 
 		// Copy.
-		if (Value(contained).isBuiltIn()) {
+		if (Value(contained).isAsmType()) {
 			// Just move the value.
 			Size sz = contained->size();
 			*p.state->l << mov(xRel(sz, dest, Offset()), xRel(sz, src, Offset()));
@@ -576,7 +572,7 @@ namespace storm {
 		*p.state->l << mov(byteRel(dest, boolOffset()), byteConst(1));
 
 		// Copy.
-		if (Value(contained).isBuiltIn()) {
+		if (Value(contained).isAsmType()) {
 			// Just move the value.
 			Size sz = contained->size();
 			*p.state->l << mov(xRel(sz, dest, Offset()), xRel(sz, src, Offset()));

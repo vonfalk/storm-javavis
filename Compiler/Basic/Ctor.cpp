@@ -480,15 +480,15 @@ namespace storm {
 			if (t.ref)
 				throw SyntaxError(pos, L"Can not initialize reference " + ::toS(v->name) + L", not implemented yet!");
 
-			if (t.isValue()) {
+			if (t.isPrimitive()) {
+				// Default value is already there.
+			} else if (t.isValue()) {
 				*s->l << mov(ptrA, dest);
 				*s->l << add(ptrA, ptrConst(v->offset()));
 				*s->l << fnParam(engine().ptrDesc(), ptrA);
 				Function *c = t.type->defaultCtor();
 				assert(c, L"No default constructor!");
 				*s->l << fnCall(c->ref(), false);
-			} else if (t.isBuiltIn()) {
-				// Default value is already there.
 			} else {
 				Function *ctor = t.type->defaultCtor();
 				if (!ctor)
@@ -517,7 +517,7 @@ namespace storm {
 
 			if (to->expr) {
 				Expr *init = castTo(to->expr, t, scope);
-				if (t.isHeapObj() && init) {
+				if (t.isObject() && init) {
 					initVarAssign(s, v, init);
 				} else {
 					Actuals *p = new (this) Actuals();
@@ -544,7 +544,7 @@ namespace storm {
 			if (!ctor)
 				throw SyntaxError(pos, L"No constructor for " + ::toS(t) + L"(" + ::toS(values) + L").");
 
-			if (t.isHeapObj()) {
+			if (t.isObject()) {
 				// Easy way, call the constructor as normal.
 				CtorCall *call = new (this) CtorCall(pos, scope, ctor, to);
 				CodeResult *created = new (this) CodeResult(t, s->block);
@@ -576,7 +576,7 @@ namespace storm {
 
 			Value t = v->type;
 			code::Var dest = thisVar->var.v;
-			assert(t.isHeapObj());
+			assert(t.isObject());
 
 			CodeResult *result = new (this) CodeResult(t, s->block);
 			to->code(s, result);

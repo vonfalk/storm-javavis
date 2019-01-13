@@ -53,21 +53,30 @@ namespace storm {
 		 * Code generation information.
 		 */
 
-		// Return this type in a register?
+		// Return this type in a register? We count 'void' as being returned in a register.
 		Bool STORM_FN returnInReg() const;
 
-		// Is this a value type, a class, an actor or built in? These are mutually exclusive, ie. at most one is true.
+		// Is this a value-type or an object-type (that is heap-allocated)? Either 'isValue' or
+		// 'isObject' returns true, except for 'void', where none returns true.
 		Bool STORM_FN isValue() const;
+		Bool STORM_FN isObject() const;
+
+		// Is this a class- or an actor type? One of these return true if 'isObject' returns true.
 		Bool STORM_FN isClass() const;
 		Bool STORM_FN isActor() const;
-		// Is this a built-in type? (eg. Int, Float, etc.)
-		// TODO: Rename to 'isPrimitive'.
-		Bool STORM_FN isBuiltIn() const;
 
-		// Combination of 'isClass' and 'isActor'.
-		Bool STORM_FN isHeapObj() const;
+		// Is this a primitive type? e.g. int, float, etc. These do not need explicit construction
+		// and can be stored in registers. Note: Object-types and references are not primitives in
+		// this regard, as pointers generally need initialization. 'void' is not considered a
+		// primitive.
+		Bool STORM_FN isPrimitive() const;
 
-		// Is this some kind of pointer?
+		// Can this type be manipulated by the CPU directly. This includes the primitive types, but
+		// also reference types and object types. ASM types never have destructors. Does not
+		// consider references to be AsmTypes, as they are expected to be handled at a different level.
+		Bool STORM_FN isAsmType() const;
+
+		// Is this some kind of pointer that could need garbage collection?
 		Bool STORM_FN isPtr() const;
 
 		// The size of this type.

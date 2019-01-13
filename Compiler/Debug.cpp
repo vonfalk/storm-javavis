@@ -175,7 +175,7 @@ namespace storm {
 							(*fn)(o, v, depth, data);
 						traverse(o, runtime::typeOf(o), visited, depth + 1, fn, data);
 					}
-				} else if (t.isBuiltIn()) {
+				} else if (t.isPrimitive()) {
 					// Built-in type, never a problem. Ignore.
 					void *o = &OFFSET_IN(base, offset.current(), void *);
 					if (fn)
@@ -210,7 +210,7 @@ namespace storm {
 				value = ::toS(obj) + L" @" + toHex(obj);
 				if (o->has(obj))
 					hilight = true;
-			} else if (v.isBuiltIn()) {
+			} else if (v.isPrimitive()) {
 				// Built in type.
 				if (v.type == StormInfo<Int>::type(var->engine())) {
 					value = ::toS(*(Int *)object);

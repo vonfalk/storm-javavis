@@ -126,7 +126,7 @@ namespace storm {
 		Type *iter = new (this) ArrayIterType(contents);
 		add(iter);
 
-		if (param().isHeapObj())
+		if (param().isObject())
 			loadClassFns();
 		else
 			loadValueFns();
@@ -315,12 +315,12 @@ namespace storm {
 		*l << fnCall(atFn->ref(), true, ptrDesc, ptrA);
 
 		// If it is a pointer, we need to read the actual pointer.
-		if (param().isHeapObj())
+		if (param().isObject())
 			*l << mov(ptrA, ptrRel(ptrA, Offset()));
 
 		// Call 'write'. If the object is a value, and does not take a reference parameter as the
 		// 'this' parameter (some primitive types do that), we need to dereference it.
-		if (!param().isHeapObj() && !info->write->params->at(0).ref)
+		if (!param().isObject() && !info->write->params->at(0).ref)
 			*l << fnParamRef(param().desc(engine), ptrA);
 		else
 			*l << fnParam(ptrDesc, ptrA);
@@ -392,7 +392,7 @@ namespace storm {
 		*l << cmp(curr, count);
 		*l << jmp(lblLoopEnd, ifAboveEqual);
 
-		if (param.isHeapObj()) {
+		if (param.isObject()) {
 			// Get the element.
 			*l << fnParam(objStream.desc(engine), streamVar);
 			*l << fnCall(info->read->ref(), false, param.desc(engine), ptrA);

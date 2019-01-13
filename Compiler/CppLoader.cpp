@@ -385,7 +385,7 @@ namespace storm {
 
 		if (ref.ref) {
 			// Not applicable to class types.
-			if (!result.isHeapObj())
+			if (!result.isObject())
 				result = result.asRef(true);
 		}
 

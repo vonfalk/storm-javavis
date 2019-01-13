@@ -5,13 +5,17 @@ use lang:bs:macro;
 
 // Create "classes" for the keyword "window". TODO: Allow custom subclasses.
 Class createWindow(SrcPos pos, Scope env, SStr name, SWindowBody body) {
-	extendClass(pos, env, name, name{ui:Frame}, body);
+	Class c = createClass(pos, env, name, body);
+	c.super(name{ui:Frame});
+	c;
 }
 
-Class createWindow(SrcPos pos, Scope env, SStr name, Name parent, SWindowBody body) {
+Class createWindow(SrcPos pos, Scope env, SStr name, SrcName parent, SWindowBody body) {
 	// TODO: Check so that we inherit from a window. We can not necessarily do that right now, since
 	// that particular class might not be loaded yet.
-	extendClass(pos, env, name, parent, body);
+	Class c = createClass(pos, env, name, body);
+	c.super(parent);
+	c;
 }
 
 // Get all SLayoutMemberDecls inside a syntax node.

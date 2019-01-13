@@ -175,9 +175,9 @@ namespace storm {
 		*l << fnCall(iterVal->ref(), true, engine.ptrDesc(), ptrA);
 
 		Value keyT(k);
-		if (keyT.isHeapObj())
+		if (keyT.isObject())
 			*l << mov(ptrA, ptrRel(ptrA, Offset()));
-		if (!keyT.isHeapObj() && !info->write->params->at(0).ref)
+		if (!keyT.isObject() && !info->write->params->at(0).ref)
 			*l << fnParamRef(keyT.desc(engine), ptrA);
 		else
 			*l << fnParam(engine.ptrDesc(), ptrA);

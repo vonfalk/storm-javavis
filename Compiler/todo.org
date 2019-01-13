@@ -17,20 +17,17 @@
     but the scale of the issue should be assessed first.
   - [ ] Parsing core.lang.syntax.bnf takes about 80 ms, which is a bit on the high end when compiling code...
 
-* Loose ends so far [43/79]
+* Loose ends so far [44/79]
   - [ ] When using "unless (foo)", "foo" uses a local variable in the block as well as outside of the block,
     which makes assignments to that variable to not write to the original variable even if one would expect so.
     We should at least warn about this.
   - [ ] Nested classes declared in C++ are not private in Storm, even if they are declared as such in C++.
   - [ ] The expression Int[]:foo does not parse properly. I don't know if we want it to or not, but it is
     nice when calling static functions (which is rare for these).
-  - [ ] It would be nice to rework the semantics of Value::isValue to also return "true" for primitive types. 
-    It is easier to think of it that way in many cases.
   - [ ] Finish the implementation of core:Variant. It is currently lacking a typesafe Storm interface (usable with "as").
   - [ ] Calling init(1, 2) {} when the superclass is Object will not raise an error as expected.
   - [ ] It should be easier to write toS functions for values. Ideally, they should look the same as for classes.
-  - [ ] We could remove Type::typeRef, since we can store pointers directly in the generated machine code.
-    Do we want an explicit reference for the type, or are we fine with using anonymous pointers?
+  - [ ] Update the grammar inside the "ui" package so that "window Foo extends Bar" uses a decorator.
   - [ ] Inside Type::updateHandle, we should check return types for the found functions! Otherwise, things
     may end badly if the return type differ from what we expect!
   - [ ] The documentation view in Emacs should probably show which package the type is located in as well.
@@ -79,6 +76,8 @@
   - [ ] Move the 'assign' declaration to being purely a decorator (ie. Foo field(Foo v) : assign)?
   - [ ] If a type has a '==' or '<' outside the type itself, the corresponding operator will not be present in
     a Handle, like '<<' at the moment.
+  - [X] It would be nice to rework the semantics of Value::isValue to also return "true" for primitive types. 
+    It is easier to think of it that way in many cases.
   - [X] Finish integrating the Double class in the system. Basic Storm should be able to instantiate them from
     literals. Str and StrBuf should be able to parse and stringify them, and conversions between built-in
     types should be implemented. Finally, the implementation needs to be tested.

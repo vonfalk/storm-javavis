@@ -69,7 +69,7 @@ namespace storm {
 				if (to)
 					to->offset[pos] = offset.current();
 				pos++;
-			} else if (vType.isValue() || vType.isBuiltIn()) {
+			} else if (vType.isValue()) {
 				// Copy and offset all members of this value.
 				const GcType *src = vType.type->gcType();
 				for (nat j = 0; j < src->count; j++) {

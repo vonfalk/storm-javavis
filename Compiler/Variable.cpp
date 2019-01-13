@@ -72,7 +72,7 @@ namespace storm {
 		if (fnType->params->count() != 1)
 			throw RuntimeError(L"An initializer provided to GlobalVar may not take parameters.");
 
-		hasArray = type.isValue() || type.isBuiltIn();
+		hasArray = type.isValue();
 	}
 
 	Bool GlobalVar::accessibleFrom(RunOn thread) {

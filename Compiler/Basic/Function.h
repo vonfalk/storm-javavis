@@ -83,6 +83,7 @@ namespace storm {
 			void STORM_FN thread(Scope scope, SrcName *name);
 
 			// Override this to create the syntax tree to compile.
+			// TODO: Mark as abstract.
 			virtual FnBody *STORM_FN createBody();
 
 			// Make this function static by removing the 'this' parameter. Only do this before the
@@ -101,6 +102,9 @@ namespace storm {
 
 			// Re-compile at next execution.
 			void STORM_FN reset();
+
+			// Override if you want to create a CodeGen object yourself.
+			virtual CodeGen *STORM_FN createRawBody();
 
 		private:
 			// Generate code.
@@ -167,8 +171,9 @@ namespace storm {
 		public:
 			STORM_CTOR BSAbstractFn(Value result, syntax::SStr *name, Array<ValParam> *params);
 
+		protected:
 			// Override to use the body.
-			virtual FnBody *STORM_FN createBody();
+			virtual CodeGen *STORM_FN createRawBody();
 		};
 
 

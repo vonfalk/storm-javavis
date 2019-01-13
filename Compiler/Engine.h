@@ -186,6 +186,8 @@ namespace storm {
 			rMaybeToS,
 			// Get the address of a global variable.
 			rGlobalAddr,
+			// Throw an "Abstract function called"-exception.
+			rThrowAbstractError,
 			// Should be the last one.
 			refCount,
 		};

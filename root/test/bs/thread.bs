@@ -1,5 +1,6 @@
 use core;
 use core:debug;
+use lang:bs:macro;
 
 // Declare a named thread. Threads are a special kind of global variables, since
 // the compiler have to impose stricter checks on threads compared to regular global

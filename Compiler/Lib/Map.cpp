@@ -186,9 +186,9 @@ namespace storm {
 		*l << fnCall(retrieve->ref(), true, e.ptrDesc(), ptrA);
 
 		Value t(type);
-		if (t.isHeapObj())
+		if (t.isObject())
 			*l << mov(ptrA, ptrRel(ptrA, Offset()));
-		if (!t.isHeapObj() && !info->write->params->at(0).ref)
+		if (!t.isObject() && !info->write->params->at(0).ref)
 			*l << fnParamRef(t.desc(e), ptrA);
 		else
 			*l << fnParam(e.ptrDesc(), ptrA);

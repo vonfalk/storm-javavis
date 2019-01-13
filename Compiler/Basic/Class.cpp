@@ -166,9 +166,6 @@ namespace storm {
 				add(body->templates->at(i));
 			}
 
-			// We do not need the syntax tree anymore!
-			this->body = null;
-
 			// Call any decorators.
 			if (decorators) {
 				for (Nat i = 0; i < decorators->count(); i++) {
@@ -189,6 +186,9 @@ namespace storm {
 					(*fn)(this);
 				}
 			}
+
+			// We do not need the syntax tree anymore!
+			this->body = null;
 
 			// Super needs to be called!
 			return Type::loadAll();

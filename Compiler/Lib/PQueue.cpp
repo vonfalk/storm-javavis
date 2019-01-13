@@ -91,7 +91,7 @@ namespace storm {
 		add(nativeFunction(e, Value(), Type::CTOR, valList(e, 2, t, f), address(&createPQFn))->makePure());
 		add(nativeFunction(e, Value(), Type::CTOR, valList(e, 3, t, a, f), address(&createPQArrayFn))->makePure());
 
-		if (param().isHeapObj()) {
+		if (param().isObject()) {
 			add(nativeFunction(e, Value(), S("push"), valList(e, 2, t, param()), address(&pushPQObj)));
 			add(nativeFunction(e, t, S("<<"), valList(e, 2, t, param()), address(&pushPQObj)));
 			add(nativeFunction(e, param(), S("top"), valList(e, 1, t), address(&topPQObj))->makePure());

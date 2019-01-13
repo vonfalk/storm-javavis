@@ -45,7 +45,7 @@ namespace storm {
 			if (to->type().ref) {
 				// Dangerous...
 				*s->l << lea(r.v, ptrRel(t->location(s).v, Offset()));
-			} else if (to->type().isValue()) {
+			} else if (!to->type().isAsmType()) {
 				// Need to copy...
 				*s->l << lea(ptrA, ptrRel(r.v, Offset()));
 				*s->l << fnParam(e.ptrDesc(), ptrA);
@@ -161,7 +161,7 @@ namespace storm {
 		}
 
 		void CtorCall::code(CodeGen *s, CodeResult *to) {
-			if (toCreate.isValue() || toCreate.isBuiltIn())
+			if (toCreate.isValue())
 				createValue(s, to);
 			else
 				createClass(s, to);
@@ -256,7 +256,7 @@ namespace storm {
 			} else if (!to->suggest(s, var->var.v)) {
 
 				VarInfo v = to->location(s);
-				if (var->result.isValue()) {
+				if (!var->result.isAsmType()) {
 					*s->l << lea(ptrA, var->var.v);
 					*s->l << lea(ptrC, v.v);
 					*s->l << fnParam(engine().ptrDesc(), ptrC);
@@ -294,7 +294,7 @@ namespace storm {
 				v.created(s);
 			} else if (!to->suggest(s, var)) {
 				VarInfo v = to->location(s);
-				if (type.isValue()) {
+				if (!type.isAsmType()) {
 					*s->l << lea(ptrA, var);
 					*s->l << lea(ptrC, v.v);
 					*s->l << fnParam(engine().ptrDesc(), ptrC);
@@ -397,7 +397,7 @@ namespace storm {
 			if (to->type().ref) {
 				*s->l << add(ptrA, ptrConst(var->offset()));
 				*s->l << mov(result.v, ptrA);
-			} else if (var->type.isValue()) {
+			} else if (!to->type().isAsmType()) {
 				*s->l << add(ptrA, ptrConst(var->offset()));
 				*s->l << lea(ptrC, result.v);
 				*s->l << fnParam(engine().ptrDesc(), ptrC);
@@ -490,7 +490,7 @@ namespace storm {
 			} else {
 				// We need to make a copy...
 				VarInfo d = to->location(s);
-				if (var->type.isValue()) {
+				if (!var->type.isAsmType()) {
 					*s->l << lea(ptrC, d.v);
 					*s->l << fnParam(engine().ptrDesc(), ptrC);
 					*s->l << fnParam(engine().ptrDesc(), ptrA);
