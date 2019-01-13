@@ -122,15 +122,23 @@ class MaybeData : serializable {
 	Employee? a;
 	Employee? b;
 
+	Int? c;
+	Int? d;
+
+	Salary? e;
+	Salary? f;
+
 	init() {
 		init {
 			a = Employee();
+			c = 20;
+			e = Salary(128, "USD");
 		}
 	}
 
 	void toS(StrBuf to) {
 		// TODO: Why don't << work out of the box?
-		to << "{ a: " << a.toS << ", b: " << b.toS << " }";
+		to << "{a: ${a}, b: ${b}, c: ${c}, d: ${d}, e: ${e}, f: ${f} }";
 	}
 
 	Bool compare(MaybeData other) {
@@ -452,16 +460,17 @@ Bool setSerialization() {
 Bool maybeSerialization() {
 	MaybeData data;
 	MemOStream out;
+	print(data.toS);
 	ObjOStream objOut(out);
 	data.write(objOut);
 
-	// showString(out.buffer);
+	showString(out.buffer);
 
 	ObjIStream objIn(MemIStream(out.buffer));
 	var copy = MaybeData:read(objIn);
 	// print(copy.toS);
 
-	data.compare(copy);
+	// data.compare(copy);
 	false; // Not complete yet, we don't support Int? yet.
 }
 

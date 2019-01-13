@@ -716,6 +716,139 @@ namespace storm {
 	}
 
 	void MaybeValueType::addSerialization(SerializeInfo *info) {
-		// TODO!
+		Function *ctor = readCtor(info);
+		add(ctor);
+
+		SerializedMaybe *type = new (this) SerializedMaybe(this, pointer(ctor), contained);
+		add(serializedTypeFn(type));
+		add(writeFn(type, info));
+		add(serializedReadFn(this));
 	}
+
+	Function *MaybeValueType::writeFn(SerializedType *type, SerializeInfo *info) {
+		using namespace code;
+
+		Value me = Value(this, true);
+		Value objStream(StormInfo<ObjOStream>::type(engine));
+		Value boolType(StormInfo<Bool>::type(engine));
+
+		Function *startValueFn = findStormMemberFn(objStream, S("startValue"),
+												Value(StormInfo<SerializedType>::type(engine)));
+		Function *endFn = findStormMemberFn(objStream, S("end"));
+		Function *byteWriteFn = findStormMemberFn(boolType, S("write"), objStream);
+
+		Listing *l = new (this) Listing(true, engine.voidDesc());
+		code::Var meVar = l->createParam(me.desc(engine));
+		code::Var streamVar = l->createParam(objStream.desc(engine));
+
+		code::Label lblEnd = l->label();
+		code::Label lblEmpty = l->label();
+
+		*l << prolog();
+
+		// Call "start".
+		*l << fnParam(objStream.desc(engine), streamVar);
+		*l << fnParam(engine.ptrDesc(), objPtr(type));
+		*l << fnCall(startValueFn->ref(), true, byteDesc(engine), al);
+
+		*l << cmp(al, byteConst(0));
+		*l << jmp(lblEnd, ifEqual);
+
+		*l << mov(ptrA, meVar);
+		*l << cmp(byteRel(ptrA, boolOffset()), byteConst(0));
+		*l << jmp(lblEmpty, ifEqual);
+
+		// We have something to write! Write it!
+		*l << fnParam(boolType.desc(engine), byteConst(1));
+		*l << fnParam(objStream.desc(engine), streamVar);
+		*l << fnCall(byteWriteFn->ref(), true);
+
+		// Call 'write'.
+		if (info->write->params->at(0).ref)
+			*l << fnParam(engine.ptrDesc(), meVar);
+		else
+			*l << fnParamRef(info->write->params->at(0).desc(engine), meVar);
+		*l << fnParam(objStream.desc(engine), streamVar);
+		*l << fnCall(info->write->ref(), true);
+
+		*l << jmp(lblEnd);
+		*l << lblEmpty;
+
+		*l << fnParam(boolType.desc(engine), byteConst(0));
+		*l << fnParam(objStream.desc(engine), streamVar);
+		*l << fnCall(byteWriteFn->ref(), true);
+
+		*l << lblEnd;
+
+		// Call 'end'.
+		*l << fnParam(objStream.desc(engine), streamVar);
+		*l << fnCall(endFn->ref(), true);
+
+		*l << fnRet();
+
+
+		Array<Value> *params = new (this) Array<Value>();
+		params->reserve(2);
+		*params << me << objStream;
+		Function *fn = new (this) Function(Value(), new (this) Str(S("write")), params);
+		fn->setCode(new (this) DynamicCode(l));
+		return fn;
+	}
+
+	Function *MaybeValueType::readCtor(SerializeInfo *info) {
+		using namespace code;
+
+		Value me = thisPtr(this);
+		Value objStream(StormInfo<ObjIStream>::type(engine));
+		Value boolType(StormInfo<Bool>::type(engine));
+
+		Function *endFn = findStormMemberFn(objStream, S("end"));
+		Function *readBoolFn = findStormFn(boolType, S("read"), objStream);
+
+		Listing *l = new (this) Listing(true, engine.voidDesc());
+		code::Var meVar = l->createParam(me.desc(engine));
+		code::Var streamVar = l->createParam(objStream.desc(engine));
+
+		code::Label lblEnd = l->label();
+		code::Label lblEmpty = l->label();
+
+		*l << prolog();
+
+		// Read the bool variable.
+		*l << fnParam(objStream.desc(engine), streamVar);
+		*l << fnCall(readBoolFn->ref(), false, boolType.desc(engine), al);
+
+		*l << cmp(al, byteConst(0));
+		*l << jmp(lblEmpty, ifEqual);
+
+		// Read the value and initialize ourselves with it.
+		*l << fnParam(objStream.desc(engine), streamVar);
+		*l << fnCallRef(info->read->ref(), false, Value(contained).desc(engine), meVar);
+		*l << mov(ptrA, meVar);
+		*l << mov(byteRel(ptrA, boolOffset()), byteConst(1));
+
+		*l << jmp(lblEnd);
+
+		// Empty?
+		*l << lblEmpty;
+		*l << mov(ptrA, meVar);
+		*l << mov(byteRel(ptrA, boolOffset()), byteConst(0));
+
+		*l << lblEnd;
+
+		// Call 'end'.
+		*l << fnParam(objStream.desc(engine), streamVar);
+		*l << fnCall(endFn->ref(), true);
+
+		*l << fnRet();
+
+		Array<Value> *params = new (this) Array<Value>();
+		params->reserve(2);
+		*params << me << objStream;
+		Function *fn = new (this) Function(Value(), new (this) Str(Type::CTOR), params);
+		fn->setCode(new (this) DynamicCode(l));
+		fn->visibility = typePrivate(engine);
+		return fn;
+	}
+
 }

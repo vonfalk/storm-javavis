@@ -119,6 +119,12 @@ namespace storm {
 		// Add serialization.
 		void addSerialization(SerializeInfo *info);
 
+		// Create the 'write' function.
+		Function *writeFn(SerializedType *type, SerializeInfo *info);
+
+		// Create the 'read' ctor.
+		Function *readCtor(SerializeInfo *info);
+
 		// Other misc. code generation helpers.
 		void CODECALL initMaybe(InlineParams p);
 		void CODECALL copyMaybe(InlineParams p);
