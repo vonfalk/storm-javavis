@@ -23,6 +23,7 @@ BEGIN_TEST(BSThread, BS) {
 	// Basic thread tests.
 	CHECK_EQ(runFn<Int>(S("test.bs.postObject")), 13);
 	CHECK_EQ(runFn<Int>(S("test.bs.postVal")), 33);
+	CHECK_EQ(runFn<Int>(S("test.bs.postMaybeVal")), 33);
 	CHECK_EQ(runFn<Int>(S("test.bs.threadObj")), 20);
 	CHECK_EQ(runFn<Int>(S("test.bs.threadActor")), 20);
 	CHECK_EQ(runFn<Int>(S("test.bs.actorObj")), 31);

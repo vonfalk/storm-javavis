@@ -145,6 +145,13 @@ class MaybeData : serializable {
 		Bool ok = true;
 		ok &= a.any == other.a.any;
 		ok &= b.any == other.b.any;
+		ok &= c.any == other.c.any;
+		ok &= d.any == other.d.any;
+		ok &= e.any == other.e.any;
+		ok &= f.any == other.f.any;
+
+		// Crude, but OK.
+		ok &= toS == other.toS;
 		ok;
 	}
 }
@@ -460,18 +467,15 @@ Bool setSerialization() {
 Bool maybeSerialization() {
 	MaybeData data;
 	MemOStream out;
-	print(data.toS);
 	ObjOStream objOut(out);
 	data.write(objOut);
 
-	showString(out.buffer);
+	// showString(out.buffer);
 
 	ObjIStream objIn(MemIStream(out.buffer));
 	var copy = MaybeData:read(objIn);
-	// print(copy.toS);
 
-	// data.compare(copy);
-	false; // Not complete yet, we don't support Int? yet.
+	data.compare(copy);
 }
 
 // Simple measurements of serialization performance.

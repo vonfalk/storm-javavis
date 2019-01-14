@@ -473,7 +473,7 @@ namespace storm {
 		if (contained->deepCopyFn()) {
 			Array<Value> *clone = new (e) Array<Value>(2, t);
 			clone->at(1) = Value(CloneEnv::stormType(e));
-			add(nativeFunction(e, Value(), S("deepCopy"), clone, fnPtr(e, &MaybeValueType::cloneMaybe, this)));
+			add(inlinedFunction(e, Value(), S("deepCopy"), clone, fnPtr(e, &MaybeValueType::cloneMaybe, this)));
 		}
 
 		// Check for serialization.

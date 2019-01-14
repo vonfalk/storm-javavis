@@ -80,6 +80,27 @@ ThreadVal otherValFn(ThreadVal v) on Other {
 	v;
 }
 
+Int postMaybeVal() {
+	ThreadVal v;
+	ThreadVal? maybe = v;
+	ThreadVal r = otherMaybeValFn(maybe);
+	if (disjoint(v.v, r.v)) {
+		r.v.c + r.z;
+	} else {
+		0;
+	}
+}
+
+ThreadVal otherMaybeValFn(ThreadVal? v) on Other {
+	if (v) {
+		v.v = otherObjectFn(v.v);
+		v.z = 20;
+		v;
+	} else {
+		ThreadVal();
+	}
+}
+
 
 class ThreadObj on Other {
 	Int v;
