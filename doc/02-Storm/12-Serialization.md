@@ -20,8 +20,23 @@ writes two objects using one instance of `ObjOStream`, but the reader reads the 
 different instances of `ObjIStream`, deserialization will likely fail.
 
 
+Serializing types
+------------------
+
+- `ObjIStream`, `ObjOStream` and the `read` and `write` functions.
+- The decorator in `util.serialize`.
+
+
+The serialization interface
+----------------------------
+
+- `read`, `write`, `serializedType` and the read constructor.
+- Interactions between the types and the streams.
+- Custom serialization - limitations.
+
+
 The binary format
--------------------
+------------------
 
 Primitive types are encoded as follows:
 
