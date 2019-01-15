@@ -72,9 +72,13 @@ namespace storm {
 		size_t offset[1];
 	};
 
-	// Size of a GcType object.
+	// Size of a GcType object. Note: Since the last member is an array of 0 elements, the last
+	// position is sometimes automatically initialized to zero by C++ (for example, when embedding
+	// it in a class that has constructors). Therefore, we actually report the size of a GcType with
+	// zero entries as the size for one entry in order to avoid potentially overwriting memory
+	// outside an allocation.
 	inline size_t gcTypeSize(size_t entries) {
-		return sizeof(GcType) + entries*sizeof(size_t) - sizeof(size_t);
+		return sizeof(GcType) + max(size_t(1), entries)*sizeof(size_t) - sizeof(size_t);
 	}
 
 	// Print a GcType instance, mostly for debugging.

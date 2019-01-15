@@ -176,11 +176,8 @@ namespace storm {
 	}
 
 	Bool Value::isPrimitive() const {
-		if (!type) {
-			::dumpStack();
-			DebugBreak();
+		if (!type)
 			return false;
-		}
 
 		if (type->typeFlags & typeClass)
 			return false;

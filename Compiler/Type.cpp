@@ -797,6 +797,7 @@ namespace storm {
 			}
 		} else if (code::ComplexDesc *complex = as<code::ComplexDesc>(desc)) {
 			// If we get here, the type should be empty.
+			(void)complex;
 			result = e.gc.allocType(GcType::tArray, type, size, 0);
 		} else {
 			throw InternalError(L"Unsupported type description of a value.");
