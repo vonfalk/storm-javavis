@@ -24,6 +24,9 @@ BEGIN_TEST_(Serialize, BS) {
 	CHECK(runFn<Bool>(S("test.bs.setSerialization")));
 	CHECK(runFn<Bool>(S("test.bs.maybeSerialization")));
 
+	// Custom serialization.
+	CHECK(runFn<Bool>(S("test.bs.customSerialization")));
+
 } END_TEST
 
 

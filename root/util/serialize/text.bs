@@ -14,8 +14,12 @@ class TextObjStream {
 	void read(StrBuf to) {
 		objects.clear();
 
-		Nat type = Nat:read(src);
-		read(to, type);
+		if (bad) {
+			to << "<bad stream>";
+		} else {
+			Nat type = Nat:read(src);
+			read(to, type);
+		}
 	}
 
 	// Read to a string.
@@ -87,12 +91,21 @@ private:
 	// Remember previously stored objects.
 	Set<Nat> objects;
 
+	// Did we encounter something bad, and cannot continue reading?
+	Bool bad;
+
 	// Read an object of a known type.
 	void read(StrBuf to, Nat type) {
+		// Stop reading if the stream is bad.
+		if (bad)
+			return;
+
 		if (readPrimitive(to, type))
 			return;
 
-		Type t = findType(type);
+		Type t = findType(type, to);
+		if (bad)
+			return;
 
 		if (t.flags & TypeInfo:classType) {
 			readObject(to, t);
@@ -113,7 +126,9 @@ private:
 
 		// Actual type?
 		Nat actualType = Nat:read(src);
-		Type actual = findType(actualType);
+		Type actual = findType(actualType, to);
+		if (bad)
+			return;
 
 		to << actual.name << " (instance " << objId << ") ";
 		readMembers(to, actual);
@@ -131,10 +146,13 @@ private:
 	}
 
 	void readMembers(StrBuf to, Nat typeId, Type? parent) {
-		readMembers(to, findType(typeId), parent);
+		readMembers(to, findType(typeId, to), parent);
 	}
 
 	void readMembers(StrBuf to, Type type, Type? parent) {
+		if (bad)
+			return;
+
 		Bool brackets = true;
 		if (parent) {
 			if (parent.beginSym() == type.beginSym())
@@ -172,9 +190,10 @@ private:
 				to << "<empty>";
 			}
 		} else if (type.flags & TypeInfo:custom) {
-			to << "<custom type>";
 			// Note, we need to abort reading here. We can not continue any further since we don't
 			// know what the custom type looks like.
+			to << "<custom type, unable to read further>\n";
+			bad = true;
 		} else {
 			for (m in type.members) {
 				to << m.name << ": ";
@@ -190,15 +209,21 @@ private:
 	}
 
 	// Find the type 'type'. Read it if necessary.
-	Type findType(Nat type) {
+	Type findType(Nat type, StrBuf to) {
 		if (types.has(type))
 			return types.get(type);
 
 		Byte flags = Byte:read(src);
 		Str name = demangleName(Str:read(src));
 		Nat parent = Nat:read(src);
-		// TODO: if (parent == type), we should throw an exception or similar. Otherwise, we will
-		// recurse infinitely when trying to read this type.
+		if (parent == type) {
+			// if (parent == type), we should throw an exception or similar. Otherwise, we will
+			// recurse infinitely when trying to read this type.
+			bad = true;
+			to << "<invalid parent in type description found>";
+			parent = 0;
+		}
+
 		Type t(name, TypeInfo(flags.nat), parent);
 
 		if (t.flags & TypeInfo:tuple) {

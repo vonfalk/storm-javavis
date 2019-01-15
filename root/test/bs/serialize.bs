@@ -283,6 +283,42 @@ class Manager : extends Employee, serializable {
 	}
 }
 
+/**
+ * A class with completely custom serialization.
+ */
+class CustomData : serializable {
+	Int a;
+	Int b;
+
+	init() {
+		init {
+			a = 20;
+			b = 30;
+		}
+	}
+
+	init(ObjIStream from) {
+		init {
+			a = Byte:read(from.from).int;
+			b = Byte:read(from.from).int;
+		}
+		from.end();
+	}
+
+	void write(ObjOStream to) {
+		if (to.startObject(serializedType, this)) {
+			a.byte.write(to.to);
+			b.byte.write(to.to);
+			to.end();
+		}
+	}
+
+	Bool compare(CustomData other) {
+		return a == other.a & b == other.b;
+	}
+}
+
+
 // Show the string representation of serialized data.
 private void showString(Buffer data) {
 	print(TextObjStream(MemIStream(data)).read());
@@ -474,6 +510,21 @@ Bool maybeSerialization() {
 
 	ObjIStream objIn(MemIStream(out.buffer));
 	var copy = MaybeData:read(objIn);
+
+	data.compare(copy);
+}
+
+// Custom serialization.
+Bool customSerialization() {
+	CustomData data;
+	MemOStream out;
+	ObjOStream objOut(out);
+	data.write(objOut);
+
+	// showString(out.buffer);
+
+	ObjIStream objIn(MemIStream(out.buffer));
+	var copy = CustomData:read(objIn);
 
 	data.compare(copy);
 }

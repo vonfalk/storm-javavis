@@ -14,39 +14,61 @@ void serializable(Type type) {
 	Value t = thisPtr(type);
 	Value oStream(named{ObjOStream});
 	Value iStream(named{ObjIStream});
-	Bool hasType = checkFn(type, "serializedType", [], Value(named{SerializedType}));
-	Bool hasWrite = checkFn(type, "write", [t, oStream], Value());
-	Bool hasCtor = checkFn(type, "__init", [t, iStream], Value());
-	Bool hasRead = checkFn(type, "read", [iStream], Value(type));
 
-	print("TODO: If both 'read' and a constructor are present, we should probably generate a 'serializedType'!");
+	// Original functions.
+	Function? oTypeFn = findFn(type, "serializedType", [], Value(named{SerializedType}));
+	Function? oWriteFn = findFn(type, "write", [t, oStream], Value());
+	Function? oReadCtor = findFn(type, "__init", [t, iStream], Value());
+	Function? oReadFn = findFn(type, "read", [iStream], Value(type));
 
-	if (hasType & hasWrite & hasCtor) {
-		// All is good!
-	} else if (hasType | hasWrite | hasCtor) {
+	Member[] members;
+	if (oTypeFn.any & oWriteFn.any & oReadCtor.any) {
+		// Ok.
+	} else if (oWriteFn.any & oReadCtor.any) {
+		// Ok, we can generate 'serializedType' in this case!
+	} else if (oTypeFn.any | oWriteFn.any | oReadCtor.any) {
+		// Bad, we can't generate just one of 'write' and 'read', especially if the type function is defined.
 		StrBuf msg;
-		msg << "You need to provide either all or none of 'serializedType', 'write' and a constructor for ";
-		msg << type.identifier << ". Missing:";
-		if (!hasType)
-			msg << " 'serializedType'";
-		if (!hasWrite)
-			msg << " 'write'";
-		if (!hasCtor)
-			msg << " constructor";
+		msg << "You need to provide either both a write function and a read constructor or none of them for ";
+		msg << type.identifier << ". The serializedType function is recommended, but not necessary. Missing:";
+		if (oTypeFn.empty)
+			msg << " serializedType";
+		if (oWriteFn.empty)
+			msg << " write";
+		if (oReadCtor.empty)
+			msg << " read constructor";
 		msg << ".";
 
 		error(type, msg.toS);
 	} else {
-		// Add them!
-		var members = serializedMembers(type);
-
-		var ctorFun = addCtor(type, members);
-		var typeFun = addType(type, members, ctorFun);
-		addWrite(type, members, typeFun);
+		// Ok! None of the members are present!
+		members = serializedMembers(type);
 	}
 
-	if (!hasRead) {
-		// We can generate the 'read' function, just to be nice!
+	Function readCtor = if (oReadCtor) {
+		oReadCtor;
+	} else {
+		addCtor(type, members);
+	};
+
+	Function typeFn = if (oTypeFn) {
+		oTypeFn;
+	} else {
+		// Add the proper type function.
+		if (oReadCtor.any | oWriteFn.any)
+			addCustomType(type, readCtor);
+		else
+			addStdType(type, members, readCtor);
+	};
+
+	Function writeFn = if (oWriteFn) {
+		oWriteFn;
+	} else {
+		addWrite(type, members, typeFn);
+	};
+
+	if (!oReadFn.any) {
+		// Generate the read function, just to be nice!
 		addRead(type);
 	}
 }
@@ -61,21 +83,16 @@ void error(Type type, Str msg) {
 	throwSyntaxError(pos, msg);
 }
 
-// Find a function inside 'type'.
-Function? findFn(Type type, Str name, Value[] params) {
-	if (fn = type.findHere(SimplePart(name, params), Scope(type)) as Function)
-		return fn;
+// Find a function inside 'type', and make sure it has the proper return type.
+Function? findFn(Type type, Str name, Value[] params, Value result) {
+	if (fn = type.findHere(SimplePart(name, params), Scope(type)) as Function) {
+		if (result.canStore(fn.result)) {
+			return fn;
+		}
+	}
 	null;
 }
 
-// Check if a function is present, and has the proper return type.
-Bool checkFn(Type type, Str name, Value[] params, Value result) {
-	if (fn = findFn(type, name, params)) {
-		// TODO: Perhaps we should throw here.
-		return result.canStore(fn.result);
-	}
-	false;
-}
 
 /**
  * Information about a member to serialize.
@@ -202,9 +219,9 @@ SerializedType findSerializedType(Type type, Type from) {
 }
 
 /**
- * Add the member 'serializedType'. Returns the created function.
+ * Add the member 'serializedType' for standard types.
  */
-Function addType(Type type, Member[] members, Function ctorFun) {
+Function addStdType(Type type, Member[] members, Function ctorFun) {
 	SerializedStdType desc = if (t = type.declaredSuper) {
 		SerializedStdType(type, ctorFun.pointer, findSerializedType(t, type));
 	} else {
@@ -216,6 +233,26 @@ Function addType(Type type, Member[] members, Function ctorFun) {
 		}
 	}
 
+	addType(type, desc);
+}
+
+/**
+ * Add the member 'serializedType' for custom types.
+ */
+Function addCustomType(Type type, Function ctorFun) {
+	SerializedType desc = if (t = type.declaredSuper) {
+		SerializedType(type, ctorFun.pointer, findSerializedType(t, type));
+	} else {
+		SerializedType(type, ctorFun.pointer);
+	};
+	addType(type, desc);
+}
+
+
+/**
+ * Add the member 'serializedType'. Returns the created function.
+ */
+Function addType(Type type, SerializedType desc) {
 	Value result(named{SerializedType});
 
 	Listing l(false, result.desc);
@@ -243,7 +280,7 @@ Function addType(Type type, Member[] members, Function ctorFun) {
  *   }
  * }
  */
-void addWrite(Type type, Member[] members, Function typeFun) {
+Function addWrite(Type type, Member[] members, Function typeFun) {
 	SrcPos pos;
 	Value t = thisPtr(type);
 	Value objStream(named{ObjOStream});
@@ -290,6 +327,7 @@ void addWrite(Type type, Member[] members, Function typeFun) {
 
 	fun.body = body;
 	type.add(fun);
+	fun;
 }
 
 
