@@ -9,26 +9,96 @@ and `write` for the classes that should be serialized.
 
 The format used for serialization contains enough information to inspect it without having access to
 the original type information; the needed type information is stored inside the serialization
-stream. The class `util.TextObjStream` can be used to inspect and pretty-print previously serialized
-objects.
+stream. The class `util.serialize.TextObjStream` can be used to inspect and pretty-print previously
+serialized objects.
 
 The serialization format is designed to allow serializing multiple objects inside a single stream
 while minimizing overhead. Therefore, type information is only sent once in one session (represented
 by an instance of `ObjIStream` or `ObjOStream` respectively), and thus care needs to be taken to
 ensure that the encoder and decoder use the same length of sessions. For example, if the encoder
 writes two objects using one instance of `ObjOStream`, but the reader reads the two objects using
-different instances of `ObjIStream`, deserialization will likely fail.
+different instances of `ObjIStream`, deserialization will most likely fail.
 
 
-Serializing types
+Serializing data
 ------------------
 
-- `ObjIStream`, `ObjOStream` and the `read` and `write` functions.
-- The decorator in `util.serialize`.
+Using the serialization is fairly easy. All serializable types provide a `write` and a `read`
+function that handles serialization and deserialization respectively. They shall have the following
+signatures (`T` is the type being serialized):
+
+- `void write(T this, ObjOStream to)`: The `write` function is a member function of `T`. It writes the
+  entire object recursively to the stream.
+- `T read(ObjIStream from)` : The `read` function is a static member function of `T` that reads an
+  instance of `T` from the stream and returns the created instance.
+
+Both `ObjOStream` and `ObjIStream` have a constructor that takes a single `IStream` or `OStream`,
+and they are thus easily created. As mentioned above, these object streams keep track of state
+associated with the serialization in order to not duplicate data in the stream, and to keep the
+serialized data stream intact. Therefore, if multiple objects are written using one `OStream`
+instance, they have to be read back using one `IStream` instance. Conversely, if multiple objects
+are written using multiple `OStream` instances, they have to be read back using multiple `IStream`
+instances.
+
+The serialization handles inheritance, shared instances and cyclic structures, just like the clone
+mechanism does. This means an object that contains (directly or indirectly) two references to the
+same object will be serialized and deserialized just like expected, each distinct object is
+serialized once, and all references that were originally referring to the same object will still
+refer to the same object in the deserialized object. The same is true for structures containing
+cycles. Each object serialized at the top-level (i.e. the first call to `write` or `read`) are
+considered separate entities in this regard, meaning that two top-level objects will not share any
+data with each other, even if they have some objects in common. This means that reading two objects
+from a single `ObjIStream` at top-level guarantees that the two object hierarchies are disjoint
+(both of them are, of course, also disjoint with the original, serialized object, which may no
+longer exist).
+
+As mentioned earlier, it is possible to inspect serialized data in textual format using the class
+`util.serialize.TextObjStream`. This object works much like `ObjIStream`, but instead of producing
+objects, it produces human readable text. For this stream, just like with `ObjIStream`, it is
+important to match the number of instances when reading with the number of instances when writing.
+
+
+Making classes serializable
+----------------------------
+
+Usually, you don't want to serialize a large amount of primitive types. Usually, it makes more sense
+to create a type that represents the data you want to serialize, and treat it as a whole unit. Of
+course this is possible in Storm as well, and as long as all data members are serializable, Storm
+can generate the serialization code for you automatically.
+
+The function `util.serialize.serializalble(Type)` does just that. Call `serializable` and give a
+type, and the function will examine the type and generate `write` and `read` functions that
+correspond to the data in the class. The function is designed to be usable with
+[decorators](md://Basic_Storm/Types) in Basic Storm. As such, in Basic Storm (and other languages
+with similar mechanisms), one can easily make a class serializable as follows:
+
+```
+class MyClass : serializable {
+    Int a;
+    Str b;
+    OtherClass c;
+}
+```
 
 
 The serialization interface
 ----------------------------
+
+There might be times when you need to serialize types that consist of non-serializable types, or
+when the standard representation is not suitable for some reason. This is also possible to solve,
+but requires more knowledge on the interfaces used by the serialization.
+
+The serialization interface assumes that all serializable types (except for primitive types) contain
+four functions (two of which are `read` and `write` discussed earlier) as follows:
+- `void write(T this, ObjOStream to)`: Write the object to the stream, as mentioned earlier.
+- `T read(ObjIStream from)` (static): Read an object from the stream, as mentioned earlier.
+- `SerializedType serializedType()` (static): Generate a type description of this type for the serialization.
+- `void __init(T this, ObjIStream from)` (constructor): Initialize the object from a stream, used while reading.
+
+All of these functions are generated automatically when using the `serializable` function mentioned
+earlier. However, for types where the functions can not be generated automatically, it is possible
+to create these functions manually, and the type will still be considered serializable. In order to
+be able to do this, we need to look at what each function is doing.
 
 - `read`, `write`, `serializedType` and the read constructor.
 - Interactions between the types and the streams.
@@ -61,9 +131,9 @@ and shall not be used.
 A type description is stored as follows:
 - A `Byte` indicating what kind of type is stored, described by the `core.io.TypeInfo` enum.
 - A `Str` containing the name of the type, serialized as follows: The format is similar to the
-  textual representation of `core.lang.Name`. Each part is stored as a string ending with the ascii
-  character 1. If parameters are present, they are surrounded by the ascii character 2 and 3 (for
-  start- and end parentheses). Each parameter ends in either the ascii character 4 if passed by
+  textual representation of `core.lang.Name`. Each part is stored as a string ending with the ASCII
+  character 1. If parameters are present, they are surrounded by the ASCII character 2 and 3 (for
+  start- and end parentheses). Each parameter ends in either the ASCII character 4 if passed by
   value or 5 if passed by reference.
 - A `Nat` containing the id of the parent type, or `core.io.StoredId.endId` if none.
 
