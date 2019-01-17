@@ -707,13 +707,13 @@ namespace storm {
 	}
 
 	void Str::write(ObjOStream *to) const {
-		to->startCustom(strId);
+		to->startPrimitive(strId);
 		write(to->to);
 		to->end();
 	}
 
 	Str *Str::read(ObjIStream *from) {
-		return (Str *)from->readCustomObject(strId);
+		return (Str *)from->readPrimitiveObject(strId);
 	}
 
 	const wchar *Str::toPtr(const Iter &i) const {

@@ -79,7 +79,7 @@ namespace storm {
 
 		*l << prolog();
 		if (result.isObject()) {
-			Function *fn = findStormMemberFn(streamType, S("readObject"), typeType);
+			Function *fn = findStormMemberFn(streamType, S("readClass"), typeType);
 
 			*l << fnParam(streamType.desc(e), stream);
 			*l << fnParam(typeType.desc(e), type->typeRef());

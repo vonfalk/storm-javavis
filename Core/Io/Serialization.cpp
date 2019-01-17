@@ -258,7 +258,7 @@ namespace storm {
 		readValueI(expected, out);
 	}
 
-	Object *ObjIStream::readObject(Type *type) {
+	Object *ObjIStream::readClass(Type *type) {
 		// Note: the type represented by 'expectedId' may not always exactly match that of 'type'
 		// since the types used at the root of deserialization do not need to be equal. However,
 		// 'type' needs to be a parent of whatever we find as 'actual' later on, which is a subclass
@@ -279,10 +279,10 @@ namespace storm {
 			return created;
 		}
 
-		return readObjectI(expected, type);
+		return readClassI(expected, type);
 	}
 
-	void ObjIStream::readCustomValue(StoredId id, PTR_GC out) {
+	void ObjIStream::readPrimitiveValue(StoredId id, PTR_GC out) {
 		Info info = start();
 		Desc *expected = findInfo(info.expectedType);
 		if (!expected->isValue())
@@ -299,7 +299,7 @@ namespace storm {
 		readValueI(expected, out);
 	}
 
-	Object *ObjIStream::readCustomObject(StoredId id) {
+	Object *ObjIStream::readPrimitiveObject(StoredId id) {
 		Info info = start();
 		Desc *expected = findInfo(info.expectedType);
 		if (expected->isValue())
@@ -317,7 +317,7 @@ namespace storm {
 		return created;
 	}
 
-	Variant ObjIStream::readObject(Nat typeId) {
+	Variant ObjIStream::readClass(Nat typeId) {
 		Desc *type = findInfo(typeId);
 		if (type->isValue()) {
 			Type *t = type->info->type;
@@ -333,7 +333,7 @@ namespace storm {
 				return Variant(created);
 			}
 		} else {
-			return Variant(readObjectI(type, type->info->type));
+			return Variant(readClassI(type, type->info->type));
 		}
 	}
 
@@ -355,7 +355,7 @@ namespace storm {
 		type->info->readCtor->callRaw(call, null, null);
 	}
 
-	Object *ObjIStream::readObjectI(Desc *expected, Type *t) {
+	Object *ObjIStream::readClassI(Desc *expected, Type *t) {
 		// Did we encounter this instance before?
 		Nat objId = from->readNat();
 		if (Object *old = objIds->get(objId, null)) {
@@ -405,7 +405,7 @@ namespace storm {
 
 			if (expected.read < 0) {
 				// Read one object into temporary storage and continue.
-				at.pushTemporary(readObject(expected.type));
+				at.pushTemporary(readClass(expected.type));
 			} else if (expected.read > 0) {
 				r.expectedType = expected.type;
 				r.result = at.temporary(Nat(expected.read - 1));
@@ -627,7 +627,7 @@ namespace storm {
 		return true;
 	}
 
-	Bool ObjOStream::startObject(SerializedType *type, Object *v) {
+	Bool ObjOStream::startClass(SerializedType *type, Object *v) {
 		Type *expected = start(type);
 		if (expected) {
 			// This is the start of a new type.
@@ -668,12 +668,7 @@ namespace storm {
 		return true;
 	}
 
-	void ObjOStream::startCustom(Type *type) {
-		// TODO: Revise this! We could probably make it a special case of 'start' below.
-		startCustom(StoredId(typeId(type)));
-	}
-
-	void ObjOStream::startCustom(StoredId id) {
+	void ObjOStream::startPrimitive(StoredId id) {
 		if (depth->empty()) {
 			to->writeNat(id & ~typeMask);
 		} else {

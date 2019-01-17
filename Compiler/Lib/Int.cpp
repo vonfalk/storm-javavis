@@ -29,7 +29,7 @@ namespace storm {
 
 	static Int intReadS(ObjIStream *from) {
 		Int r;
-		from->readCustomValue(intId, &r);
+		from->readPrimitiveValue(intId, &r);
 		return r;
 	}
 
@@ -38,7 +38,7 @@ namespace storm {
 	}
 
 	static void intWriteS(Int v, ObjOStream *to) {
-		to->startCustom(intId);
+		to->startPrimitive(intId);
 		to->to->writeInt(v);
 		to->end();
 	}
@@ -129,7 +129,7 @@ namespace storm {
 
 	static Nat natReadS(ObjIStream *from) {
 		Nat r;
-		from->readCustomValue(natId, &r);
+		from->readPrimitiveValue(natId, &r);
 		return r;
 	}
 
@@ -138,7 +138,7 @@ namespace storm {
 	}
 
 	static void natWriteS(Nat v, ObjOStream *to) {
-		to->startCustom(natId);
+		to->startPrimitive(natId);
 		to->to->writeNat(v);
 		to->end();
 	}

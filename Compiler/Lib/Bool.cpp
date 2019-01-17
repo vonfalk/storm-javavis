@@ -77,7 +77,7 @@ namespace storm {
 
 	static Bool boolReadS(ObjIStream *from) {
 		Bool r;
-		from->readCustomValue(boolId, &r);
+		from->readPrimitiveValue(boolId, &r);
 		return r;
 	}
 
@@ -86,7 +86,7 @@ namespace storm {
 	}
 
 	static void boolWriteS(Bool v, ObjOStream *to) {
-		to->startCustom(boolId);
+		to->startPrimitive(boolId);
 		to->to->writeBool(v);
 		to->end();
 	}

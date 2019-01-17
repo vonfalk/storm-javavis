@@ -117,7 +117,7 @@ namespace storm {
 
 	static Float floatReadS(ObjIStream *from) {
 		Float r;
-		from->readCustomValue(floatId, &r);
+		from->readPrimitiveValue(floatId, &r);
 		return r;
 	}
 
@@ -126,7 +126,7 @@ namespace storm {
 	}
 
 	static void floatWriteS(Float v, ObjOStream *to) {
-		to->startCustom(floatId);
+		to->startPrimitive(floatId);
 		to->to->writeFloat(v);
 		to->end();
 	}
@@ -287,7 +287,7 @@ namespace storm {
 
 	static Double doubleReadS(ObjIStream *from) {
 		Double r;
-		from->readCustomValue(doubleId, &r);
+		from->readPrimitiveValue(doubleId, &r);
 		return r;
 	}
 
@@ -296,7 +296,7 @@ namespace storm {
 	}
 
 	static void doubleWriteS(Double v, ObjOStream *to) {
-		to->startCustom(doubleId);
+		to->startPrimitive(doubleId);
 		to->to->writeDouble(v);
 		to->end();
 	}

@@ -203,7 +203,7 @@ namespace storm {
 		Value objStream(StormInfo<ObjOStream>::type(engine));
 		Value natType(StormInfo<Nat>::type(engine));
 
-		Function *startObjFn = findStormMemberFn(objStream, S("startObject"),
+		Function *startObjFn = findStormMemberFn(objStream, S("startClass"),
 											Value(StormInfo<SerializedType>::type(engine)),
 											Value(StormInfo<Object>::type(engine)));
 		Function *endObjFn = findStormMemberFn(objStream, S("end"));

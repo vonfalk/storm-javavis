@@ -300,11 +300,11 @@ namespace storm {
 
 		// Deserialize an object of the given type. The result is always an instance of the type
 		// described by 'type', even if this is not possible to express in the type system.
-		Object *STORM_FN readObject(Type *type);
+		Object *STORM_FN readClass(Type *type);
 
-		// Read a custom value of some type.
-		void readCustomValue(StoredId id, PTR_GC out);
-		Object *readCustomObject(StoredId id);
+		// Read a primitive value of some sort.
+		void readPrimitiveValue(StoredId id, PTR_GC out);
+		Object *readPrimitiveObject(StoredId id);
 
 		// Indicate the end of an object.
 		void STORM_FN end();
@@ -460,13 +460,13 @@ namespace storm {
 		void validateMaybe(Desc *desc);
 
 		// Read an object into a variant.
-		Variant readObject(Nat type);
+		Variant readClass(Nat type);
 
 		// Read a value (internal version, does not call 'start').
 		void readValueI(Desc *type, void *out);
 
 		// Read a class (internal version, does not call 'start').
-		Object *readObjectI(Desc *type, Type *t);
+		Object *readClassI(Desc *type, Type *t);
 
 		// Clear object ids.
 		void clearObjects();
@@ -477,7 +477,7 @@ namespace storm {
 	 * Output stream for objects.
 	 *
 	 * Generic serialization is implemented as follows:
-	 * 1: call 'startValue', 'startObject' depending on what is appropriate.
+	 * 1: call 'startValue', 'startClass' depending on what is appropriate.
 	 * 2: if the function returns false, abort serialization of the current instance; it has already
 	 *    been serialized before.
 	 * 3: call 'member' once for each member that is going to be serialized.
@@ -502,11 +502,10 @@ namespace storm {
 		// should be serialized, false if it has already been serialized and should be skipped
 		// (including the call to 'end').
 		Bool STORM_FN startValue(SerializedType *type);
-		Bool STORM_FN startObject(SerializedType *type, Object *v);
+		Bool STORM_FN startClass(SerializedType *type, Object *v);
 
-		// Indicate the start of serialization of a custom type.
-		void STORM_FN startCustom(Type *type);
-		void STORM_FN startCustom(StoredId id);
+		// Indicate the start of serialization of a primitive type.
+		void STORM_FN startPrimitive(StoredId id);
 
 		// Indicate the end of an object serialization. Not called if 'startXxx' returned false.
 		void STORM_FN end();

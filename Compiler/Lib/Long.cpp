@@ -34,7 +34,7 @@ namespace storm {
 
 	static Long longReadS(ObjIStream *from) {
 		Long r;
-		from->readCustomValue(longId, &r);
+		from->readPrimitiveValue(longId, &r);
 		return r;
 	}
 
@@ -43,7 +43,7 @@ namespace storm {
 	}
 
 	static void longWriteS(Long v, ObjOStream *to) {
-		to->startCustom(longId);
+		to->startPrimitive(longId);
 		to->to->writeLong(v);
 		to->end();
 	}
@@ -137,7 +137,7 @@ namespace storm {
 
 	static Word wordReadS(ObjIStream *from) {
 		Word r;
-		from->readCustomValue(wordId, &r);
+		from->readPrimitiveValue(wordId, &r);
 		return r;
 	}
 
@@ -146,7 +146,7 @@ namespace storm {
 	}
 
 	static void wordWriteS(Word v, ObjOStream *to) {
-		to->startCustom(wordId);
+		to->startPrimitive(wordId);
 		to->to->writeWord(v);
 		to->end();
 	}

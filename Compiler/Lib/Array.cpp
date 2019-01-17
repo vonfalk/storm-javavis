@@ -262,7 +262,7 @@ namespace storm {
 		Value me = thisPtr(this);
 		Value objStream(StormInfo<ObjOStream>::type(engine));
 
-		Function *startFn = findStormMemberFn(objStream, S("startObject"),
+		Function *startFn = findStormMemberFn(objStream, S("startClass"),
 											Value(StormInfo<SerializedType>::type(engine)),
 											Value(StormInfo<Object>::type(engine)));
 		Function *endFn = findStormMemberFn(objStream, S("end"));

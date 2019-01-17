@@ -96,13 +96,305 @@ four functions (two of which are `read` and `write` discussed earlier) as follow
 - `void __init(T this, ObjIStream from)` (constructor): Initialize the object from a stream, used while reading.
 
 All of these functions are generated automatically when using the `serializable` function mentioned
-earlier. However, for types where the functions can not be generated automatically, it is possible
-to create these functions manually, and the type will still be considered serializable. In order to
-be able to do this, we need to look at what each function is doing.
+earlier. However, all types implementing `write`, `read` and `serializedType` are considered
+serializable, and as such it is possible to make all types serializable by implementing these
+functions manually. Therefore, we will take a closer look at each function below:
 
-- `read`, `write`, `serializedType` and the read constructor.
-- Interactions between the types and the streams.
-- Custom serialization - limitations.
+### The write function
+
+The write function is responsible for writing the entire object to the stream. This function is
+responsible for informing the `ObjOStream` of the extents of the object by calling the `startX` and
+`end` functions as appropriate.
+
+The write function is expected to start by calling `startValue` if the type is a value or
+`startClass` if the type is a class type. `startValue` takes one parameter, an instance of the
+`SerializedType` class describing the type to be serialized. This is usually obtained by calling
+`serializedType`, but may be obtained by other means if desired. `startValue` then returns a boolean
+indicating whether or not this instance needs serialization. If serialization is required, the read
+function is expected to serialize any data contained in the object, and then call the `end` function
+of the `ObjOStream` class to indicate that serialization is complete. If the class has a superclass,
+the superclass is expected to be serialized before any data is serialized by calling the superclass'
+`write` function. Serialization of the contained data depends on the contents of the `SerializedType`
+provided, as will be explained later.
+
+If the serialized object is a class type, the `write` function is expected to call `startClass`
+instead of `startValue`. `startClass` works very much like `startValue`, but in order to properly
+handle shared instances and cyclic hierarchies, `startClass` takes an additional parameter: a
+reference to the instance being serialized. Except for this difference, serialization of class types
+work the same as for value types. As such, a `write` function usually looks like this:
+
+```
+class MyClass {
+    Int a;
+    Str b;
+
+    // other members...
+
+    void write(ObjOStream to) {
+        if (to.startClass(serializedType(), this)) {
+	    // call super:write(to) if it exists
+	    a.write(to);
+	    b.write(to);
+	    to.end();
+	}
+    }
+}
+```
+
+Note that `end` is not called if `startClass` or `startValue` returns `false`.
+
+The write function is the only function (except for `serializedType`, if used) that is required for
+serialization of objects.
+
+### The read function
+
+Since the built-in serialization attempts to be robust, deserialization is a bit more complicated
+than serialization. Deserialization starts in the `read` function. However, the `read` function is
+usually very simple, and can be implemented automatically by the `serializable` function provided
+the other three functions are present. The `write` functions job is simply to call `readValue` or
+`readClass` depending on what is being read from the stream.
+
+The `readValue` function takes two parameters: a `Type` instance corresponding to the type being
+deserialized and a raw pointer to previously allocated memory big enough to hold an instance of the
+deserialized type. Because of this generic, low-level API, it is not generally possible to call this
+function from higher level languages, such as Basic Storm, since they do not allow access to raw
+memory in this fashion. However, if the other three functions are present, the `serializable`
+function will happily generate a suitable `read` function for any type.
+
+The `readClass` function is a bit better in this regard, as it only takes a `Type` parameter
+indicating the type to deserialize. The resulting instance is returned in the form of an `Object`
+reference. As such, the `read` function for class types can be implemented as follows (note that the
+implementation provided by the `serializable` function is slightly more efficient, as it skips the
+type check required in Basic Storm):
+
+```
+class MyClass {
+    // ...
+    MyClass read(ObjIStream from) : static {
+        if (x = from.readClass(named{MyClass})) {
+	    x;
+	} else {
+	   // Or something else...
+	   MyClass();
+	}
+    }
+}
+```
+
+Both `readClass` and `readValue` will locate the `serializedType` member of the type that is to be
+deserialized (in the case of `readClass`, it may be a subclass), call that function, and call the
+deserialization constructor contained in the resulting `SerializedType` class to create an instance
+of the deserialized type. Do not assume that objects are created in the same order that the
+corresponding 'read' functions are called; the `ObjIStream` may need to cache objects when the order
+of members in the stream don't match the order of members in the current code, and it may even
+re-use previously created instances in case multiple references refer to the same object.
+
+
+### The serializedType function
+
+The `serializedType` function is sometimes called by the serialization mechanism during
+deserialization to retrieve type information about arbitrary types in the system. The task of this
+function is therefore simple: return an instance of `SerializedType` that describes the aspects of
+the type relevant for serialization.
+
+There are three subclasses of `SerializedType` that are recognized by the serialization system:
+`SeralizedStdType`, `SerializedTuples` and `SerializedMaybe`. All of these subclasses, or the base
+class, may be returned from the `serializedType` function. Each subclass represent a standard
+serialization format that can be interpreted without having access to the implementation of the
+class itself. The base class, however, represents an object that is serialized in a nonstandard way
+and thus not possible to deserialize without access to the actual implementation.
+
+- `SerializedType`: Contains the minimum amount of information required by the serialization system
+  to function: A reference to the `Type` and a pointer to the read constructor used for
+  deserialization. If a `serializedType` returns an instance of this type, it indicates that the
+  serialized representation of the type is custom. Since the high-level serialization relies on type
+  information that is not available during custom serialization, custom serialization functions may
+  **not** call any serialization functions for other objects. Custom serialization **must** instead
+  call low-level operations on the underlying stream (available as a member variable of the
+  `ObjOStream` and `ObjIStream`). It is still possible to serialize primitive types in this manner,
+  as they provide `read` and `write` functions for regular `OStream` and `IStream` objects.
+- `SerializedStdType`: Indicates that the type is a standard type, consisting of a number of named
+  member variables. Thus, this class contains the name of each member variable and its type. The
+  type is expected to serialize its members in the order specified in this type by calling the
+  corresponding `write` and `read` functions. This is the type generated by `serializable` if
+  nothing else is specified.
+- `SerializedTuples`: Indicates that the type consists of a number of tuples, each tuple consisting
+  of a fixed number of elements with pre-defined types. Thus, this class contains information on
+  which types are stored in each tuple. The type is expected to serialize its data by first writing
+  a `Nat` containing the number of tuples stored, followed by that many tuples stored by calling the
+  `write` or `read` function of each type in the tuple the specified number of times. This type is
+  used by the standard containers, such as `Array` and `Map`.
+- `SerializedMaybe`: Indicates that the type may contain a value of some type. The class contains
+  information about a single type that may be stored in the stream. The type is expected to be
+  serialized by writing a single `Bool` that indicates if the type is present or not. If so, the
+  bool is followed by the type itself. This type is used by the `Maybe` type.
+
+In most languages, it is necessary to implement this function by creating the desired instance each
+time the function is called, which is slightly inefficient (the object streams make sure to only
+call the function once for each instance). The `serialized` function generates a version that always
+returns the same instance, which makes this implementation slightly more efficient. If a `write`
+function and a read constructor is present, the `serialized` function will generate a
+`serializedType` function that returns an instance of `SerializedType` to indicate that the type has
+custom serialization.
+
+### The read constructor
+
+The read constructor takes a single `ObjIStream` as a parameter, and is responsible for populating
+an object from a stream, the opposite of the `write` function. As previously mentioned, the read
+constructor is called as needed by the serialization system, and it is located using the
+`serializedType` function.
+
+The read constructor is usually a bit simpler than the `write` function. Since the `read` function
+is responsible for calling `readX` (corresponding to `startX` for `write`), the read constructor
+does not need to do that. The read constructor can simply assume that an instance of the current
+type is to be read from the stream immediately. For both value and class types, the constructor is
+assumed to read the data for the class in the same way data is written (except, of course, calling
+`read` instead of `write`), and using the retrieved data to initialize the object. If the object has
+a superclass, the superclass is expected to be read before any members of the subclass. As such,
+read constructors are typically implemented as follows in Basic Storm:
+
+```
+class MyClass {
+    Int a;
+    Str b;
+
+    // other members...
+
+    init(ObjIStream from) {
+        // call super(from) if it exists
+	init {
+	    a = Int:read(from);
+	    b = Int:read(from);
+	}
+	from.end();
+    }
+}
+```
+
+### Examples
+
+To summarize custom serialization, we provide two examples in Basic Storm. The first example shows
+how one can implement the standard serialization using the custom serialization mechanisms described
+above. Here, we have class with two members, `a` and `b` that are serialized:
+
+```
+class MyClass : serializable /* provides "read", which is difficult to implement in Basic Storm */ {
+    Int a;
+    Str b;
+
+    SerializedType serializedType() : static {
+        SerializedStdType t(named{MyClass}, &__init(MyClass, ObjIStream));
+	t.add("a", named{Int});
+	t.add("b", named{Str});
+	t;
+    }
+
+    void write(ObjOStream to) {
+        if (to.startObject(serializedType(), this)) {
+	    a.write(to);
+	    b.write(to);
+	    to.end();
+	}
+    }
+
+    init(ObjIStream from) {
+        init {
+	    a = Int:read(from);
+	    b = Str:read(from);
+	}
+	from.end();
+    }
+}
+```
+
+The next example shows how to implement custom serialization of the same class. This version will
+produce a serialized stream that does not contain enough information to read without the
+implementation of `MyClass`. Note, that this is unnecessary, as `MyClass` is simple enough to be
+serializable using the standard mechanisms:
+
+```
+class MyClass : serializable /* provides "read" and "serializedType" */ {
+    Int a;
+    Str b;
+
+    void write(ObjOStream to) {
+        // Note: 'serializedType' is generated by the 'serializable' decorator.
+        if (to.startObject(serializdType(), this)) {
+	    // Note: We're writing to the underlying 'OStream' rather than the 'ObjOStream'.
+	    OStream stream = to.to;
+	    a.write(stream);
+	    b.write(stream);
+	    to.end();
+	}
+    }
+
+    init(ObjIStream from) {
+        // Note: We're reading from the underlying 'IStream' rather than the 'ObjIStream'.
+        IStream stream = from.from;
+        init {
+	    a = Int:read(stream);
+	    b = Str:read(stream);
+	}
+	from.end();
+    }
+}
+```
+
+Robustness of the format
+-------------------------
+
+When storing data for longer periods of time, it is important to know what changes can be made to
+the serialized classes without losing the ability to read previously stored data. For this reason,
+this section describes what changes are handled by the serialization mechanism, and which are not.
+
+All of the following scenarios assume that some data structure is serialized to an external
+location. The data representation is then changed as indicated before the previously stored data is
+deserialized again. Furthermore, we assume that the implementation of any classes that have custom
+serialization remain unchanged, as the serialization system can make no guarantees about them. The
+serialized data may, however, include types that use custom serialization as long as that
+implementation remain compatible with the previous version.
+
+### Member variables
+
+Member variables are usually stored in the serialized stream in the order they were declared in the
+class (or, more precisely, the order in which they are stored in memory, which currently correspond
+to the order the member variables are declared, but may change in the future). Thus, it is
+reasonable to question if re-ordering the member variables break compatibility.
+
+Indeed, changing the order of member variables will change the order in which they are written to
+the stream. However, the serialization system will detect this using the names of the members and
+act as if the members appear in the order the deserializing program expects them to. This does,
+however, cause a small impact to deserialization performance as it requires additional
+bookkeeping. This does, however, mean that care must be taken when renaming member variables in
+order to not break compatibility. Compatibility can be retained by implementing custom serialization
+as shown above, and using the old name for the variable in the `SerializedStdType` instance returned
+from `serializedType`. In the future, it will be possible to specify this without implementing
+serialization manually.
+
+Adding and removing member variables is not supported. In theory, nothing prevents deserializing a
+stream that contains a member variable that has been removed in the current version, as long as all
+types that use custom serialization remain in the system. However, this is not currently
+allowed. Similarly, adding new member variables is also possible as long as all these variables
+specify a value to use when they are not present in the stream. Default initialization for members
+would be perfect for this situation, but since Storm does not yet support default initializers, this
+is not yet supported by the serialization either. Instead, one can add new member variables by
+adding a new subclass that contains the new variables. This would, however, make older versions of
+the software unable to read streams from newer versions.
+
+### Types
+
+It is possible to deserialize a stream into an object representation as long as all types used in
+the stream are still present in the program. All types need to have the same name and reside in the
+same package as the time they were serialized. If inheritance is used, the superclasses of all
+serialized objects also need to remain the same. It is, however, possible to deserialize a value
+type into a class type (assuming the contents match), but not vice versa.
+
+The serialization system only examines the types that actually appear in a stream. This means that
+types that *could* appear in a stream, but do not actually appear in the stream, may be changed in
+any way without impacting the ability to deserialize streams. This means that it is possible to add
+new subclasses to previously serialized classes without impairing the ability to deserialize old
+streams, and newly serialized streams will be readable by old implementations as long as the new
+classes are not actually serialized.
 
 
 The binary format

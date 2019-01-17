@@ -24,7 +24,7 @@ namespace storm {
 
 	Byte byteReadS(ObjIStream *from) {
 		Byte r;
-		from->readCustomValue(byteId, &r);
+		from->readPrimitiveValue(byteId, &r);
 		return r;
 	}
 
@@ -33,7 +33,7 @@ namespace storm {
 	}
 
 	void byteWriteS(Byte b, ObjOStream *to) {
-		to->startCustom(byteId);
+		to->startPrimitive(byteId);
 		to->to->writeByte(b);
 		to->end();
 	}

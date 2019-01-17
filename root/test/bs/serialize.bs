@@ -46,7 +46,7 @@ class Data : serializable {
 		desc.add("a", named{core:Int});
 		desc.add("data1", named{Employee});
 
-		if (to.startObject(desc, this)) {
+		if (to.startClass(desc, this)) {
 			b.write(to);
 			data2.writeShuffled(to);
 			data3.writeShuffled(to);
@@ -227,7 +227,7 @@ class Employee : serializable {
 	}
 
 	void writeShuffled(ObjOStream to) {
-		if (to.startObject(shuffledType(), this)) {
+		if (to.startClass(shuffledType(), this)) {
 			salary.write(to);
 			name.write(to);
 			coolness.write(to);
@@ -261,7 +261,7 @@ class Manager : extends Employee, serializable {
 	}
 
 	void writeShuffled(ObjOStream to) {
-		if (to.startObject(shuffledType(), this)) {
+		if (to.startClass(shuffledType(), this)) {
 			super:writeShuffled(to);
 			title.write(to);
 			to.end();
@@ -306,7 +306,7 @@ class CustomData : serializable {
 	}
 
 	void write(ObjOStream to) {
-		if (to.startObject(serializedType, this)) {
+		if (to.startClass(serializedType, this)) {
 			a.byte.write(to.to);
 			b.byte.write(to.to);
 			to.end();

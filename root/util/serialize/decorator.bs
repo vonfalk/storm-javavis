@@ -272,7 +272,7 @@ Function addType(Type type, SerializedType desc) {
  * Roughly equivalent to the following:
  *
  * void write(ObjOStream to) {
- *   if (to.startObject(desc, this)) {
+ *   if (to.startClass(desc, this)) {
  *     foo.write(to);
  *     bar.write(to);
  *     ...
@@ -296,7 +296,7 @@ Function addWrite(Type type, Member[] members, Function typeFun) {
 		Actuals params;
 		params.add(desc);
 		params.add(me);
-		namedExpr(body, pos, "startObject", to, params);
+		namedExpr(body, pos, "startClass", to, params);
 	};
 
 	If check(body, startCall);
@@ -351,7 +351,7 @@ void addRead(Type type) {
 
 	if (t.isObject) {
 		// Class or actor.
-		var toCall = named{ObjIStream:readObject<ObjIStream, Type>}.ref;
+		var toCall = named{ObjIStream:readClass<ObjIStream, Type>}.ref;
 
 		l << fnParam(objStream.desc, stream);
 		l << fnParam(ptrDesc, type.typeRef);
