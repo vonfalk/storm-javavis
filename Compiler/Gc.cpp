@@ -1329,6 +1329,10 @@ namespace storm {
 		return gcTypeSize(entries) + sizeof(MpsType) - sizeof(GcType);
 	}
 
+	// Note: We don't want to initialize 'type' here. We memset() it to zero anyway, and C++ does
+	// not know the type of it statically anyway.
+	Gc::MpsType::MpsType() {}
+
 	GcType *Gc::allocType(GcType::Kind kind, Type *type, size_t stride, size_t entries) {
 		size_t s = mpsTypeSize(entries);
 		MpsType *t; // = (MpsType *)malloc(s);

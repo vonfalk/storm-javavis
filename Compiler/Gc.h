@@ -311,6 +311,11 @@ namespace storm {
 		// Struct used for GcTypes inside MPS. As it is not always possible to delete all GcType objects
 		// immediatly, we store the freed ones in an InlineSet until we can actually reclaim them.
 		struct MpsType : public os::SetMember<MpsType> {
+			// Constructor. If we don't provide a constructor, 'type' will be default-initialized to
+			// zero (from C++11 onwards), which is wasteful. The actual implementation of the
+			// constructor will be inlined anyway.
+			MpsType();
+
 			// Reachable?
 			bool reachable;
 
