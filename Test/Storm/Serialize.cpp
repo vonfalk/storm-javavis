@@ -1,7 +1,7 @@
 #include "stdafx.h"
 #include "Fn.h"
 
-BEGIN_TEST_(Serialize, BS) {
+BEGIN_TEST(Serialize, BS) {
 
 	// Simple serialization.
 	CHECK(runFn<Bool>(S("test.bs.simpleSerialization")));
