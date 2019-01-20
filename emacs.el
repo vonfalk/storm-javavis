@@ -257,6 +257,7 @@
 	  ((string-equal name "runtime") "storm")
 	  ((string-equal name "compiler") "storm")
 	  ((string-equal name "core") "storm")
+	  ((string-equal name "gc") "storm")
 	  (t name))))
 
 (defun insert-namespace ()

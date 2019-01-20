@@ -1,7 +1,7 @@
 #include "stdafx.h"
 #include "Utils/Mode.h"
 #include "Utils/Platform.h"
-#include "mps.h"
+#include "MpsLib.h"
 
 #ifdef STORM_GC_MPS
 

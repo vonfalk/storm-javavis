@@ -1,5 +1,5 @@
 #pragma once
-#include "Gc.h"
+#include "Gc/Gc.h"
 
 namespace storm {
 

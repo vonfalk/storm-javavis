@@ -1,23 +1,10 @@
 #include "stdafx.h"
+#include "Mps.h"
+#ifdef STORM_GC_MPS
+
 #include "Gc.h"
-#include "VTableCpp.h" // We need to know how VTables are stored.
-#include "Type.h" // For debugging heap corruptions.
-#include "Core/Str.h"  // For debugging heap corruptions.
 #include "Code/Refs.h"
 #include "Utils/Memory.h"
-#include "Utils/Bitwise.h"
-
-#ifdef POSIX
-#include <sys/mman.h>
-#endif
-
-#pragma GCC diagnostic ignored "-Wclass-memaccess"
-
-#if defined(STORM_GC_MPS)
-
-/**
- * MPS version.
- */
 
 // If enabled, add and verify data after each object allocated in the Gc-heap in order to find
 // memory-corruption bugs.
@@ -412,7 +399,7 @@ namespace storm {
 	} while (false)
 
 	// # of bytes before the vtable the allocation actually starts.
-	static const nat vtableOffset = VTableCpp::vtableAllocOffset();
+	static const nat vtableOffset = 0; //VTableCpp::vtableAllocOffset();
 
 	// Helper for interpreting and scanning a vtable.
 	// Note: we can pass the interior pointer to MPS_FIX1
@@ -625,6 +612,7 @@ namespace storm {
 #endif
 	};
 
+
 	/**
 	 * Platform specific scanning of threads.
 	 *
@@ -816,7 +804,9 @@ namespace storm {
 		}
 	}
 
-	Gc::Gc(size_t arenaSize, nat finalizationInterval) : finalizationInterval(finalizationInterval) {
+	GcData::GcData(Gc &gc) {
+		finalizationInterval = gc.finalizationInterval;
+
 		// We work under these assumptions.
 		assert(wordSize == sizeof(size_t), L"Invalid word-size");
 		assert(wordSize == sizeof(void *), L"Invalid word-size");
@@ -828,7 +818,7 @@ namespace storm {
 		mpsInit();
 
 		MPS_ARGS_BEGIN(args) {
-			MPS_ARGS_ADD(args, MPS_KEY_ARENA_SIZE, arenaSize);
+			MPS_ARGS_ADD(args, MPS_KEY_ARENA_SIZE, gc.initialArena);
 			check(mps_arena_create_k(&arena, mps_arena_class_vm(), args), L"Failed to create GC arena.");
 		} MPS_ARGS_END(args);
 
@@ -941,12 +931,7 @@ namespace storm {
 		ignoreFreeType = false;
 	}
 
-	Gc::~Gc() {
-		if (arena)
-			destroy();
-	}
-
-	void Gc::destroy() {
+	void GcData::destroy() {
 		// Destroy all remaining threads (if any).
 		{
 			util::Lock::L z(threadLock);
@@ -997,24 +982,24 @@ namespace storm {
 	}
 
 	void Gc::collect() {
-		mps_arena_collect(arena);
-		mps_arena_release(arena);
+		mps_arena_collect(data.arena);
+		mps_arena_release(data.arena);
 		// mps_arena_step(arena, 10.0, 1);
-		checkFinalizers();
+		data.checkFinalizers();
 	}
 
 	bool Gc::collect(nat time) {
 		TODO(L"Better value for 'multiplier' here?");
 		// mps_bool_t != bool...
-		return mps_arena_step(arena, time / 1000.0, 1) ? true : false;
+		return mps_arena_step(data.arena, time / 1000.0, 1) ? true : false;
 	}
 
 	void Gc::attachThread() {
 		os::Thread thread = os::Thread::current();
-		util::Lock::L z(threadLock);
+		util::Lock::L z(data.threadLock);
 
-		ThreadMap::iterator i = threads.find(thread.id());
-		if (i != threads.end()) {
+		GcData::ThreadMap::iterator i = data.threads.find(thread.id());
+		if (i != data.threads.end()) {
 			// Already attached, increase the attached count.
 			i->second->attachCount++;
 		} else {
@@ -1022,18 +1007,18 @@ namespace storm {
 		    // Note: we may leak memory here if a check() fails. This is rare enough
 			// for it not to be a problem.
 			GcThread *desc = new GcThread;
-			threads.insert(make_pair(thread.id(), desc));
+			data.threads.insert(make_pair(thread.id(), desc));
 
 			// Register the thread with MPS.
-			attach(desc, thread);
+			data.attach(desc, thread);
 		}
 	}
 
 	void Gc::reattachThread(const os::Thread &thread) {
-		util::Lock::L z(threadLock);
+		util::Lock::L z(data.threadLock);
 
-		ThreadMap::iterator i = threads.find(thread.id());
-		if (i != threads.end()) {
+		GcData::ThreadMap::iterator i = data.threads.find(thread.id());
+		if (i != data.threads.end()) {
 			i->second->attachCount++;
 		} else {
 			assert(false, L"Trying to re-attach a new thread!");
@@ -1041,10 +1026,10 @@ namespace storm {
 	}
 
 	void Gc::detachThread(const os::Thread &thread) {
-		util::Lock::L z(threadLock);
+		util::Lock::L z(data.threadLock);
 
-		ThreadMap::iterator i = threads.find(thread.id());
-		if (i == threads.end())
+		GcData::ThreadMap::iterator i = data.threads.find(thread.id());
+		if (i == data.threads.end())
 			return;
 
 		if (i->second->attachCount > 1) {
@@ -1053,15 +1038,15 @@ namespace storm {
 		} else {
 			// Detach the thread now.
 			GcThread *desc = i->second;
-			threads.erase(i);
+			data.threads.erase(i);
 
 			// Detach from MPS.
-			detach(desc);
+			data.detach(desc);
 			delete desc;
 		}
 	}
 
-	void Gc::attach(GcThread *desc, const os::Thread &thread) {
+	void GcData::attach(GcThread *desc, const os::Thread &thread) {
 		desc->attachCount = 1;
 		desc->lastFinalization = 0;
 
@@ -1092,7 +1077,7 @@ namespace storm {
 		check(mps_ap_create_k(&desc->ap, pool, mps_args_none), L"Failed to create an allocoation point.");
 	}
 
-	void Gc::detach(GcThread *desc) {
+	void GcData::detach(GcThread *desc) {
 		mps_ap_destroy(desc->ap);
 		mps_root_destroy(desc->root);
 		mps_thread_dereg(desc->thread);
@@ -1101,10 +1086,10 @@ namespace storm {
 	// Thread-local variables for remembering the current thread's allocation point. We need some
 	// integrity checking to support the (rare) case of one thread allocating from different
 	// Engine:s. We do this by remembering which Gc-instance the saved ap is valid for.
-	static THREAD Gc *currentInfoOwner = null;
+	static THREAD GcData *currentInfoOwner = null;
 	static THREAD GcThread *currentInfo = null;
 
-	mps_ap_t &Gc::currentAllocPoint() {
+	mps_ap_t &GcData::currentAllocPoint() {
 		GcThread *info = null;
 
 		// Check if everything is as we left it. This should be fast as it is called for every allocation!
@@ -1145,13 +1130,13 @@ namespace storm {
 	void *Gc::alloc(const GcType *type) {
 		// Types are special.
 		if (type->kind == GcType::tType)
-			return allocTypeObj(type);
+			return data.allocTypeObj(type);
 
 		assert(type->kind == GcType::tFixed
 			|| type->kind == GcType::tFixedObj, L"Wrong type for calling alloc().");
 
 		size_t size = mpsSizeObj(type);
-		mps_ap_t &ap = currentAllocPoint();
+		mps_ap_t &ap = data.currentAllocPoint();
 		mps_addr_t memory;
 		do {
 			check(mps_reserve(&memory, ap, size), L"Out of memory (alloc).");
@@ -1173,7 +1158,7 @@ namespace storm {
 		void *result = (byte *)memory + headerSize;
 
 		if (type->finalizer)
-			mps_finalize(arena, &result);
+			mps_finalize(data.arena, &result);
 
 		return result;
 	}
@@ -1893,323 +1878,7 @@ namespace storm {
 	GcWatch *Gc::createWatch() {
 		return new (alloc(&MpsGcWatch::type)) MpsGcWatch(*this);
 	}
+
 }
-
-#elif defined(STORM_GC_MALLOC)
-
-namespace storm {
-
-	// Word-align something.
-	static inline size_t align(size_t data) {
-		return (data + sizeof(size_t) - 1) & ~(sizeof(size_t) - 1);
-	}
-
-	static const size_t headerSizeWords = 4;
-
-	// Very primitive pool allocator without support for freeing memory.
-	static byte *allocStart = null;
-	static byte *allocEnd = null;
-	static const size_t allocChunk = 1024*1024; // 1MB at a time.
-	static util::Lock allocLock;
-
-#if defined(WINDOWS)
-
-	static void newPool() {
-		allocStart = (byte *)VirtualAlloc(null, allocChunk, MEM_COMMIT | MEM_RESERVE, PAGE_EXECUTE_READWRITE);
-		allocEnd = allocStart + allocChunk;
-	}
-
-#elif defined(POSIX)
-
-	static void newPool() {
-		allocStart = (byte *)mmap(null, allocChunk, PROT_READ | PROT_WRITE | PROT_EXEC, MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
-		allocEnd = allocStart + allocChunk;
-	}
 
 #endif
-
-	static void *poolAlloc(size_t bytes) {
-		util::Lock::L z(allocLock);
-
-		if (size_t(allocEnd - allocStart) < bytes)
-			newPool();
-
-		void *result = allocStart;
-		allocStart += bytes;
-		return result;
-	}
-
-	Gc::Gc(size_t initial, nat finalizationInterval) : finalizationInterval(finalizationInterval) {}
-
-	Gc::~Gc() {}
-
-	void Gc::destroy() {}
-
-	void Gc::collect() {}
-
-	bool Gc::collect(nat time) {
-		return false;
-	}
-
-	void Gc::attachThread() {}
-
-	void Gc::reattachThread(const os::Thread &thread) {}
-
-	void Gc::detachThread(const os::Thread &thread) {}
-
-	void *Gc::alloc(const GcType *type) {
-		size_t size = align(type->stride) + headerSizeWords*sizeof(size_t);
-		void *mem = poolAlloc(size);
-		memset(mem, 0, size);
-		memset(mem, 0xFF, headerSizeWords*sizeof(size_t));
-
-		*(const GcType **)mem = type;
-		void *start = (size_t *)mem + headerSizeWords;
-		assert(typeOf(start) == type);
-		return start;
-	}
-
-	void *Gc::allocStatic(const GcType *type) {
-		return alloc(type);
-	}
-
-	GcArray<Byte> *Gc::allocBuffer(size_t count) {
-		return (GcArray<Byte> *)allocArray(&byteArrayType, count);
-	}
-
-	void *Gc::allocArray(const GcType *type, size_t count) {
-		size_t size = align(type->stride)*count + 2*sizeof(size_t) + headerSizeWords*sizeof(size_t);
-		void *mem = poolAlloc(size);
-		memset(mem, 0, size);
-		memset(mem, 0xFF, headerSizeWords*sizeof(size_t));
-
-		*(const GcType **)mem = type;
-
-		void *start = (size_t *)mem + headerSizeWords;
-		*(size_t *)start = count;
-		return start;
-	}
-
-	void *Gc::allocWeakArray(size_t count) {
-		size_t size = sizeof(void*)*count + 2*sizeof(size_t) + headerSizeWords*sizeof(size_t);
-		void *mem = poolAlloc(size);
-		memset(mem, 0, size);
-		memset(mem, 0xFF, headerSizeWords*sizeof(size_t));
-
-		*(const GcType **)mem = &weakArrayType;
-
-		void *start = (size_t *)mem + headerSizeWords;
-		*(size_t *)start = (count << 1) | 1;
-		return start;
-	}
-
-	Gc::RampAlloc::RampAlloc(Gc &owner) : owner(owner) {}
-
-	Gc::RampAlloc::~RampAlloc() {}
-
-	GcType *Gc::allocType(GcType::Kind kind, Type *type, size_t stride, size_t entries) {
-		size_t s = gcTypeSize(entries);
-		GcType *t = (GcType *)malloc(s);
-		memset(t, 0, s);
-		t->kind = kind;
-		t->type = type;
-		t->stride = stride;
-		t->count = entries;
-		return t;
-	}
-
-	GcType *Gc::allocType(const GcType *src) {
-		size_t s = gcTypeSize(src->count);
-		GcType *t = (GcType *)malloc(s);
-		memcpy(t, src, s);
-		return t;
-	}
-
-	void Gc::freeType(GcType *type) {
-		free(type);
-	}
-
-	const GcType *Gc::typeOf(const void *mem) {
-		const GcType **data = (const GcType **)mem;
-
-		// for (nat i = 0; i < (headerSizeWords-1)*sizeof(size_t); i++) {
-		// 	byte *addr = (byte *)data - i - 1;
-		// 	if (*addr != 0xFF) {
-		// 		PLN(L"Wrote before the object: " << mem << L" offset: -" << (i+1));
-		// 	}
-		// }
-
-		return *(data - headerSizeWords);
-	}
-
-	void Gc::switchType(void *mem, const GcType *to) {
-		const GcType **data = (const GcType **)mem;
-		*(data - headerSizeWords) = to;
-	}
-
-	void *Gc::allocCode(size_t code, size_t refs) {
-		// static memory::Manager mgr;
-
-		code = align(code);
-		size_t size = code + sizeof(GcCode) + refs*sizeof(GcCodeRef) - sizeof(GcCodeRef) + headerSizeWords*sizeof(size_t);
-		void *mem = poolAlloc(size);
-		// void *mem = mgr.allocate(size);
-		memset(mem, 0, size);
-		memset((size_t *)mem + 1, 0xFF, (headerSizeWords - 1)*sizeof(size_t));
-
-		*(size_t *)mem = code;
-
-		void *start = (void **)mem + headerSizeWords;
-		void *refPtr = (byte *)start + code;
-		*(size_t *)refPtr = refs;
-
-		return start;
-	}
-
-	size_t Gc::codeSize(const void *alloc) {
-		const size_t *d = (const size_t *)alloc;
-		return *(d - headerSizeWords);
-	}
-
-	GcCode *Gc::codeRefs(void *alloc) {
-		void *p = ((byte *)alloc) + align(codeSize(alloc));
-		return (GcCode *)p;
-	}
-
-	void Gc::walkObjects(WalkCb fn, void *param) {
-		// Nothing to do...
-	}
-
-	bool Gc::isCodeAlloc(void *ptr) {
-		// Maybe... We do not know.
-		return true;
-	}
-
-	Gc::Root *Gc::createRoot(void *data, size_t count) {
-		// No roots here!
-		return null;
-	}
-
-	Gc::Root *Gc::createRoot(void *data, size_t count, bool ambiguous) {
-		// No roots here!
-		return null;
-	}
-
-	void Gc::destroyRoot(Root *root) {}
-
-	class MallocWatch : public GcWatch {
-	public:
-		virtual void add(const void *addr) {}
-		virtual void remove(const void *addr) {}
-		virtual void clear() {}
-		virtual bool moved() { return false; }
-		virtual bool moved(const void *addr) { return false; }
-		virtual GcWatch *clone() const {
-			return new MallocWatch();
-		}
-	};
-
-	GcWatch *Gc::createWatch() {
-		return new MallocWatch();
-	}
-
-	void Gc::checkMemory() {}
-
-	void Gc::checkMemory(const void *object) {
-		checkMemory(object, true);
-	}
-
-	void Gc::checkMemory(const void *object, bool recursive) {
-		const GcType **data = (const GcType **)object;
-
-		for (nat i = 0; i < (headerSizeWords-1)*sizeof(size_t); i++) {
-			byte *addr = (byte *)data - i - 1;
-			if (*addr != 0xFF) {
-				PLN(L"Wrote before the object: " << object << L" offset: -" << (i+1));
-			}
-		}
-	}
-
-	void Gc::checkMemoryCollect() {}
-
-}
-
-#else
-
-#error "Unsupported or unknown GC chosen. See Storm.h for details."
-
-#endif
-
-
-namespace storm {
-
-	/**
-	 * Shared stuff.
-	 */
-
-	const GcType Gc::weakArrayType = {
-		GcType::tWeakArray,
-		null,
-		null,
-		sizeof(void *),
-		1,
-		{}
-	};
-
-	/**
-	 * Simple linked list to test gc.
-	 */
-	struct GcLink {
-	    nat value;
-		GcLink *next;
-	};
-
-	static const GcType linkType = {
-		GcType::tFixed,
-		null,
-		null,
-		sizeof(GcLink),
-		1,
-		{ OFFSET_OF(GcLink, next) }
-	};
-
-	bool Gc::test(nat times) {
-		bool ok = true;
-
-		for (nat j = 0; j < times && ok; j++) {
-			GcLink *first = null;
-			GcLink *at = null;
-			for (nat i = 0; i < 10000; i++) {
-				GcLink *l = (GcLink *)alloc(&linkType);
-				l->value = i;
-
-				if (at) {
-					at->next = l;
-					at = l;
-				} else {
-					first = at = l;
-				}
-			}
-
-			at = first;
-			for (nat i = 0; i < 10000; i++) {
-				if (!at) {
-					PLN("Premature end at " << i);
-					ok = false;
-					break;
-				}
-
-				if (at->value != i) {
-					PLN("Failed: " << at->value << " should be " << i);
-					ok = false;
-				}
-
-				at = at->next;
-			}
-			// collect();
-		}
-
-		return ok;
-	}
-
-}
