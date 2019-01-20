@@ -1,7 +1,7 @@
 #pragma once
 #include "NameSet.h"
 #include "TypeChain.h"
-#include "Gc.h"
+#include "Gc/Gc.h"
 #include "RunOn.h"
 #include "RefHandle.h"
 #include "Layout.h"

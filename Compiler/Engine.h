@@ -1,6 +1,6 @@
 #pragma once
 
-#include "Gc.h"
+#include "Gc/Gc.h"
 #include "BootStatus.h"
 #include "World.h"
 #include "Scope.h"

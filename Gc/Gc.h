@@ -1,51 +1,36 @@
 #pragma once
 #include "Utils/Exception.h"
 #include "Utils/Lock.h"
-#include "OS/InlineSet.h"
-#include "OS/Thread.h"
 
-#include "Gc/mps.h"
-
-#include "Core/GcArray.h"
 #include "Core/GcType.h"
+#include "Core/GcArray.h"
 #include "Core/GcWatch.h"
 #include "Core/GcCode.h"
+
+/**
+ * Include all possible GC implementations. Only one will be selected.
+ */
+#include "Mps.h"
+#include "Malloc.h"
+
+#ifndef STORM_HAS_GC
+// If this happens, an unselected GC has been selected in Core/Storm.h.
+#error "No GC selected!"
+#endif
 
 namespace storm {
 
 	class Type;
 
 	/**
-	 * This file contains the interface to the garbage collector. To reliably run a GC, we need to
-	 * be able to describe where each type hides its pointers, and possibly what finalizers to
-	 * run.
+	 * This is the interface to the garbage collector. To reliably run a GC, we need to be able to
+	 * describe where each type stores its pointers, and possibly what finalizers to execute.
+	 *
+	 * Storm supports multiple garbage collectors. See 'Core/Storm.h' for details on how to select
+	 * between them.
 	 *
 	 * Note: Any types describing data layout should be allocated from the corresponding Gc class,
 	 * as special care might need to be taken not to interfere with the garbage collector.
-	 *
-	 * TODO: Revise the sizes of data types used on 64-bit systems. Some sizes and offsets can be
-	 * stored as 32-bit numbers instead of 64-bit numbers to save space.
-	 */
-
-	// For MPS: use a special non-moving pool for IO buffers. The MPS manual states that the LO pool
-	// is suitable for this task as it neither protects nor moves its objects. The AMCZ could also be
-	// a decent fit, as it does not protect the objects in the pool and does not move the objects
-	// when there is an ambiguous reference to the objects.
-	// NOTE: The documentation does not tell wether segmens in LO pools can be 'nailed' by ambiguous
-	// pointers to other parts than the start of the object. This is neccessary and provided by AMCZ.
-	// Possible values: <undefined>, LO = 1, AMCZ = 2
-#define MPS_USE_IO_POOL 2
-
-
-	/**
-	 * Internal description of thread-local data for the garbage collector.
-	 */
-	struct GcThread;
-
-	/**
-	 * Interface to the garbage collector. Storm supports multiple garbage collectors, see Storm.h
-	 * on how to choose between them. An instance of this class represents an isolated gc arena,
-	 * from which we can allocate memory.
 	 */
 	class Gc : NoCopy {
 	public:
@@ -61,6 +46,7 @@ namespace storm {
 		// Destroy the Gc before the destructor is executed.
 		void destroy();
 
+
 		/**
 		 * Manual garbage collection hints.
 		 */
@@ -72,6 +58,7 @@ namespace storm {
 		bool collect(nat time);
 
 		// TODO: Add interface for managing pause times and getting information about allocations.
+
 
 		/**
 		 * Thread management.
@@ -85,6 +72,7 @@ namespace storm {
 
 		// Unregister a thread from the gc. This has to be done before the thread is destroyed.
 		void detachThread(const os::Thread &thread);
+
 
 		/**
 		 * Memory allocation.
@@ -129,6 +117,7 @@ namespace storm {
 
 			Gc &owner;
 		};
+
 
 		/**
 		 * Management of Gc types.
@@ -196,6 +185,7 @@ namespace storm {
 		// Walk the heap. This usually incurs a full Gc, so it is not a cheap operation.
 		void walkObjects(WalkCb fn, void *param);
 
+
 		/**
 		 * Roots.
 		 */
@@ -208,6 +198,7 @@ namespace storm {
 
 		// Destroy a root.
 		static void destroyRoot(Root *root);
+
 
 		/**
 		 * Watch object.
@@ -238,109 +229,17 @@ namespace storm {
 		// GcType for weak arrays.
 		static const GcType weakArrayType;
 
+		// Initial arena size.
+		size_t initialArena;
+
 		// Finalization interval.
 		nat finalizationInterval;
 
-		// Internal variables which are implementation-specific:
-#ifdef STORM_GC_MPS
-		friend class MpsGcWatch;
+		// GC-specific things. Defined in the header file corresponding to the GC:s entry point.
+		// Called with a reference to this object, so that it can be initialized properly.
+		GcData data;
 
-		// Current arena, pool and format.
-		mps_arena_t arena;
-		mps_pool_t pool;
-		mps_fmt_t format;
-		mps_chain_t chain;
-
-		// Separate non-protected pool for GcType objects.
-		mps_pool_t gcTypePool;
-
-		// Separate non-moving pool for storing Type-objects. Note: we only have one allocation
-		// point for the types since they are rarely allocated. This pool is also used when
-		// interfacing with external libraries which require their objects to not move around.
-		mps_pool_t typePool;
-		mps_ap_t typeAllocPoint;
-		util::Lock typeAllocLock;
-
-		// Pool for objects with weak references.
-		mps_pool_t weakPool;
-		mps_ap_t weakAllocPoint;
-		util::Lock weakAllocLock;
-
-#ifdef MPS_USE_IO_POOL
-		// Non-moving, non-protected pool for interaction with foreign code (eg. IO operations in
-		// the operating system).
-		mps_pool_t ioPool;
-		mps_ap_t ioAllocPoint;
-		util::Lock ioAllocLock;
-#endif
-
-		// Pool for runnable code.
-		mps_pool_t codePool;
-		mps_ap_t codeAllocPoint;
-		util::Lock codeAllocLock;
-
-		// Description of all attached threads.
-		typedef map<uintptr_t, GcThread *> ThreadMap;
-		ThreadMap threads;
-
-		// Lock for manipulating the attached threads.
-		util::Lock threadLock;
-
-		// Allocate an object in the Type pool.
-		void *allocTypeObj(const GcType *type);
-
-		// Attach/detach thread. Sets up/tears down all members in Thread, nothing else.
-		void attach(GcThread *thread, const os::Thread &oThread);
-		void detach(GcThread *thread);
-
-		// Find the allocation point for the current thread. May run finalizers.
-		mps_ap_t &currentAllocPoint();
-
-		// See if there are any finalizers to run at the moment.
-		void checkFinalizers();
-
-		// Second stage. Assumes we have exclusive access to the message stream.
-		void checkFinalizersLocked();
-
-		// Finalize an object.
-		void finalizeObject(void *obj);
-
-		// Are we running finalizers at the moment? Used for synchronization.
-		volatile nat runningFinalizers;
-
-		// Struct used for GcTypes inside MPS. As it is not always possible to delete all GcType objects
-		// immediatly, we store the freed ones in an InlineSet until we can actually reclaim them.
-		struct MpsType : public os::SetMember<MpsType> {
-			// Constructor. If we don't provide a constructor, 'type' will be default-initialized to
-			// zero (from C++11 onwards), which is wasteful. The actual implementation of the
-			// constructor will be inlined anyway.
-			MpsType();
-
-			// Reachable?
-			bool reachable;
-
-			// The actual GcType. Must be last, as it contains a 'dynamic' array.
-			GcType type;
-		};
-
-		// All freed GcType-objects which have not yet been reclaimed.
-		os::InlineSet<MpsType> freeTypes;
-
-		// During destruction - ignore any freeType() calls?
-		bool ignoreFreeType;
-
-		// Size of an MpsType.
-		static size_t mpsTypeSize(size_t offsets);
-
-		// Worker function for 'scanning' the MpsType objects.
-		static void markType(mps_addr_t addr, mps_fmt_t fmt, mps_pool_t pool, void *p, size_t);
-
-		// Internal helper for 'checkMemory()'.
-		friend void checkObject(mps_addr_t addr, mps_fmt_t fmt, mps_pool_t pool, void *p, size_t);
-
-		// Check memory, assuming the object is in a GC pool.
-		void checkPoolMemory(const void *object, bool recursive);
-#endif
+		friend class GcData;
 	};
 
 
@@ -354,5 +253,6 @@ namespace storm {
 	private:
 		String msg;
 	};
+
 
 }

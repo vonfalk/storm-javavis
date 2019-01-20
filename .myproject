@@ -36,6 +36,7 @@ Code+=lib
 Compiler+=lib
 OS+=lib
 Shared+=lib
+Gc+=lib
 Utils+=lib
 SoundLib+=lib
 SoundLib+=extern_lib
@@ -56,7 +57,7 @@ Graphics+=sharedlib
 Sound+=sharedlib
 
 #Libraries that require position independent code on some platforms. If you intend to put the compiler itself
-#inside a shared library, add 'Compiler+=pic' here.
+#inside a shared library, add 'Compiler+=pic' and 'Gc+=pic' here.
 Core+=pic
 OS+=pic
 Shared+=pic

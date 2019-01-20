@@ -1,16 +1,15 @@
 #pragma once
 
-/**
- * The MPS gc. Only includes something if the MPS gc is chosen.
- */
-
 #ifdef STORM_GC_MPS
+
+// Includes the C-library part of MPS.
+// Note: This header is also included in C-mode, so we need to detect that properly.
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-#if defined(SLOW_DEBUG)
+	#if defined(SLOW_DEBUG)
 	// Run MPS in its cool (as opposed to hot) configuration when in debug mode.
 #define CONFIG_VAR_COOL
 #else
