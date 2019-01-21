@@ -1,6 +1,7 @@
 #include "stdafx.h"
 #include "Mps.h"
-#ifdef STORM_GC_MPS
+
+#if STORM_GC == STORM_GC_MPS
 
 #include "Gc.h"
 #include "Code/Refs.h"

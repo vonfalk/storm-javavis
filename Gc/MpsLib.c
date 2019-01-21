@@ -3,7 +3,7 @@
 #include "Utils/Platform.h"
 #include "MpsLib.h"
 
-#ifdef STORM_GC_MPS
+#if STORM_GC == STORM_GC_MPS
 
 #pragma warning(disable: 4068) // Do not warn about unknown pragmas.
 #pragma GCC diagnostic ignored "-Wimplicit-fallthrough"

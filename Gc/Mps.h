@@ -1,6 +1,6 @@
 #pragma once
 
-#ifdef STORM_GC_MPS
+#if STORM_GC == STORM_GC_MPS
 #define STORM_HAS_GC
 
 #include "MpsLib.h"

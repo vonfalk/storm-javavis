@@ -1,6 +1,6 @@
 #include "stdafx.h"
 #include "Runtime.h"
-#include "Gc.h"
+#include "Gc/Gc.h"
 #include "Type.h"
 #include "Engine.h"
 #include "Core/Str.h"
