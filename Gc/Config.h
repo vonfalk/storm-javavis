@@ -3,10 +3,10 @@
 /**
  * Select the GC to use here.
  *
+ * ZERO is just allocating memory without ever returning it.
+ *
  * MPS is currently the fastest GC supported, but requires all programs using it to make the source
  * code available (or to acquire another license for the MPS).
- *
- * MALLOC is just using malloc() for allocating memory, but never returns it.
  */
 
 #ifdef DEBUG
@@ -14,7 +14,11 @@
 //#define SLOW_DEBUG
 #endif
 
-// Use MPS?
-#define STORM_GC_MPS
-// Use MALLOC?
-//#define STORM_GC_MALLOC
+// Constants for selecting a GC.
+#define STORM_GC_ZERO 0
+#define STORM_GC_MPS 1
+// ...
+
+// Select the GC to use.
+#define STORM_GC STORM_GC_MALLOC
+

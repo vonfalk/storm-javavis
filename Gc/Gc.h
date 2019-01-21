@@ -10,8 +10,8 @@
 /**
  * Include all possible GC implementations. Only one will be selected.
  */
+#include "Zero.h"
 #include "Mps.h"
-#include "Malloc.h"
 
 #ifndef STORM_HAS_GC
 // If this happens, an unselected GC has been selected in Core/Storm.h.
@@ -26,19 +26,22 @@ namespace storm {
 	 * This is the interface to the garbage collector. To reliably run a GC, we need to be able to
 	 * describe where each type stores its pointers, and possibly what finalizers to execute.
 	 *
-	 * Storm supports multiple garbage collectors. See 'Core/Storm.h' for details on how to select
-	 * between them.
-	 *
 	 * Note: Any types describing data layout should be allocated from the corresponding Gc class,
 	 * as special care might need to be taken not to interfere with the garbage collector.
+	 *
+	 * Storm supports multiple garbage collectors. See 'Core/Storm.h' for details on how to select
+	 * between them. This class mainly performs sanity checking and forwards calls to the selected
+	 * back-end. The design does not support switching garbage collectors during run-time. See
+	 * "Malloc.h" for a simple implementation of the GC interface using malloc. This can be used as
+	 * a template for new GC implementations.
 	 */
 	class Gc : NoCopy {
 	public:
 		// Create.
-		// 'initialArena' - an initial estimate of the arena size. May be disregarded by the gc if needed.
+		// 'initialArenaSize' - an initial estimate of the arena size. May be disregarded by the gc if needed.
 		// 'finalizationInterval' - how seldom the gc should check for finalizations. An interval of 500 means
 		//                          every 500 allocations.
-		Gc(size_t initialArena, nat finalizationInterval);
+		Gc(size_t initialArenaSize, nat finalizationInterval);
 
 		// Destroy.
 		~Gc();
@@ -55,7 +58,7 @@ namespace storm {
 		void collect();
 
 		// Spend approx 'time' ms on an incremental collection if possible. Returns true if there is more to do.
-		bool collect(nat time);
+		bool collect(Nat time);
 
 		// TODO: Add interface for managing pause times and getting information about allocations.
 
@@ -78,45 +81,51 @@ namespace storm {
 		 * Memory allocation.
 		 */
 
-		// Allocate an object of a specific type. Assumes type->type == tFixed.
-		void *alloc(const GcType *type);
+		// Allocate an object of a specific type. Assumes type->type != t(Weak)Array.
+		inline void *alloc(const GcType *type) {
+			assert(type->kind == GcType::tType
+				|| type->kind == GcType::tFixed
+				|| type->kind == GcType::tFixedObj,
+				L"Wrong type for calling alloc().");
+
+			return impl.alloc(type);
+		}
 
 		// Allocate an object of a specific type in a non-moving pool.
-		void *allocStatic(const GcType *type);
+		inline void *allocStatic(const GcType *type) {
+			assert(type->kind == GcType::tType
+				|| type->kind == GcType::tFixed
+				|| type->kind == GcType::tFixedObj,
+				L"Wrong type for calling allocStatic().");
+
+			return impl.allocStatic(type);
+		}
 
 		// Allocate a buffer which is not moving nor protected. The memory allocated from here is
 		// also safe to access from threads unknown to the garbage collector.
-		GcArray<byte> *allocBuffer(size_t count);
+		inline GcArray<Byte> *allocBuffer(size_t count) {
+			return impl.allocBuffer(count);
+		}
 
 		// Allocate an array of objects. Assumes type->type == tArray.
-		void *allocArray(const GcType *type, size_t count);
+		inline void *allocArray(const GcType *type, size_t count) {
+			assert(type->kind == GcType::tArray, L"Wrong type for calling allocArray().");
+
+			return impl.allocArray(type, count);
+		}
 
 		// Allocate an array of weak pointers.
-		void *allocWeakArray(size_t count);
+		inline void *allocWeakArray(size_t count) {
+			return impl.allocWeakArray(&weakArrayType, count);
+		}
 
 		// See if the object is live. An object is considered live until it has been
 		// finalized. Finalized objects may not be collected immediately after they have been
 		// finalized, and therefore they may still appear inside weak sets etc. after that. The GC
 		// implementation marks such objects, so that it is possible to see if they are finalized.
-		static bool liveObject(RootObject *obj);
-
-
-		/**
-		 * Notify the GC that we're trying to allocate a fairly large data structure from this
-		 * thread in the near future, most of which will be dead right after the work is
-		 * complete. This hint could be ignored by the underlying implementation.
-		 */
-		class RampAlloc {
-		public:
-			RampAlloc(Gc &owner);
-			~RampAlloc();
-
-		private:
-			RampAlloc(const RampAlloc &);
-			RampAlloc &operator =(const RampAlloc &);
-
-			Gc &owner;
-		};
+		static inline Bool liveObject(RootObject *obj) {
+			return GcImpl::liveObject(obj);
+		}
 
 
 		/**
@@ -125,6 +134,8 @@ namespace storm {
 		 * These objects are semi-managed by the GC. They are not collected automatically, but they
 		 * are destroyed together with the GC object. That means, small leaks of GcType objects are
 		 * not a problem as long as they don't grow over time.
+		 *
+		 * GC backends may collect these automatically if they desire, but are not required to do so.
 		 */
 
 		// Allocate a gc type.
@@ -135,7 +146,9 @@ namespace storm {
 		void freeType(GcType *type);
 
 		// Get the gc type of an allocation.
-		static const GcType *typeOf(const void *mem);
+		static inline const GcType *typeOf(const void *mem) {
+			return GcImpl::typeOf(mem);
+		}
 
 		// Change the gc type of an allocation. Used during startup to change header from a fake one
 		// (to allow basic scanning) to a real one (with a proper Type) when startup has progressed
@@ -158,16 +171,37 @@ namespace storm {
 		 */
 
 		// Allocate a code block with 'code' bytes of machine code storage and 'refs' entries of reference data.
-		void *allocCode(size_t code, size_t refs);
+		inline void *allocCode(size_t code, size_t refs) {
+			return impl.allocCode(code, refs);
+		}
 
 		// Get the size of a code allocation.
-		static size_t codeSize(const void *alloc);
+		static inline size_t codeSize(const void *alloc) {
+			return GcImpl::codeSize(alloc);
+		}
 
 		// Access the metadata of a code allocation. Note: all references must be scannable at *any* time.
-		static GcCode *codeRefs(void *alloc);
+		static inline GcCode *codeRefs(void *alloc) {
+			return GcImpl::codeRefs(alloc);
+		}
 
-		// Is this pointer allocated by the GC? May return false positives.
-		bool isCodeAlloc(void *ptr);
+
+		/**
+		 * Notify the GC that we're trying to allocate a fairly large data structure from this
+		 * thread in the near future, most of which will be dead right after the work is
+		 * complete. This hint could be ignored by the underlying implementation.
+		 */
+		class RampAlloc {
+		public:
+			RampAlloc(Gc &owner);
+			~RampAlloc();
+
+		private:
+			RampAlloc(const RampAlloc &);
+			RampAlloc &operator =(const RampAlloc &);
+
+			Gc &owner;
+		};
 
 
 		/**
@@ -190,21 +224,30 @@ namespace storm {
 		 * Roots.
 		 */
 
-		struct Root;
+		typedef GcImpl::Root Root;
 
 		// Allocate a root that scans an array of pointers.
-		Root *createRoot(void *data, size_t count);
-		Root *createRoot(void *data, size_t count, bool ambiguous);
+		inline Root *createRoot(void *data, size_t count) {
+			return createRoot(data, count, false);
+		}
+
+		inline Root *createRoot(void *data, size_t count, bool ambiguous) {
+			return impl.createRoot(data, count, ambiguous);
+		}
 
 		// Destroy a root.
-		static void destroyRoot(Root *root);
+		static inline void destroyRoot(Root *root) {
+			GcImpl::destroyRoot(root);
+		}
 
 
 		/**
 		 * Watch object.
 		 */
 
-		GcWatch *createWatch();
+		inline GcWatch *createWatch() {
+			return impl.createWatch();
+		}
 
 
 		/**
@@ -218,10 +261,9 @@ namespace storm {
 		void checkMemory();
 
 		// Check consistency of a single object. Note: Enable checking in 'Gc.cpp' for this to work.
-		void checkMemory(const void *object);
 		void checkMemory(const void *object, bool recursive);
 
-		// Do a gc and check memory collection (sometimes forces memory issues to appear better than
+		// Do a gc and check memory consistency (sometimes forces memory issues to appear better than
 		// just calling 'checkMemory').
 		void checkMemoryCollect();
 
@@ -229,17 +271,28 @@ namespace storm {
 		// GcType for weak arrays.
 		static const GcType weakArrayType;
 
-		// Initial arena size.
-		size_t initialArena;
-
-		// Finalization interval.
-		nat finalizationInterval;
-
 		// GC-specific things. Defined in the header file corresponding to the GC:s entry point.
 		// Called with a reference to this object, so that it can be initialized properly.
-		GcData data;
+		GcImpl impl;
 
-		friend class GcData;
+		// Data for a thread.
+		struct ThreadData {
+			size_t refs;
+			GcImpl::ThreadData data;
+		};
+
+		// Remember all threads.
+		typedef map<uintptr_t, ThreadData> ThreadMap;
+		ThreadMap threads;
+
+		// Lock for manipulating the attached threads.
+		util::Lock threadLock;
+
+		// Remember the current depth of "ramp" allocations.
+		size_t rampDepth;
+
+		// Lock for the ramp allocations.
+		util::Lock rampLock;
 	};
 
 

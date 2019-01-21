@@ -1,6 +1,6 @@
 #pragma once
 
-#ifdef STORM_GC_MPS
+#if STORM_GC == STORM_GC_MPS
 
 // Includes the C-library part of MPS.
 // Note: This header is also included in C-mode, so we need to detect that properly.

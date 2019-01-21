@@ -1,7 +1,8 @@
 #include "stdafx.h"
-#include "Malloc.h"
+#include "Zero.h"
 
-#ifdef STORM_GC_MALLOC
+#if STORM_GC == STORM_GC_ZERO
+#include "Gc.h"
 
 namespace storm {
 
@@ -11,30 +12,25 @@ namespace storm {
 	}
 
 	static const size_t headerSizeWords = 4;
-
-	// Very primitive pool allocator without support for freeing memory.
-	static byte *allocStart = null;
-	static byte *allocEnd = null;
 	static const size_t allocChunk = 1024*1024; // 1MB at a time.
-	static util::Lock allocLock;
 
 #if defined(WINDOWS)
 
-	static void newPool() {
+	void GcImpl::newPool() {
 		allocStart = (byte *)VirtualAlloc(null, allocChunk, MEM_COMMIT | MEM_RESERVE, PAGE_EXECUTE_READWRITE);
 		allocEnd = allocStart + allocChunk;
 	}
 
 #elif defined(POSIX)
 
-	static void newPool() {
+	void GcImpl::newPool() {
 		allocStart = (byte *)mmap(null, allocChunk, PROT_READ | PROT_WRITE | PROT_EXEC, MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
 		allocEnd = allocStart + allocChunk;
 	}
 
 #endif
 
-	static void *poolAlloc(size_t bytes) {
+	void *GcImpl::poolAlloc(size_t bytes) {
 		util::Lock::L z(allocLock);
 
 		if (size_t(allocEnd - allocStart) < bytes)
@@ -45,25 +41,23 @@ namespace storm {
 		return result;
 	}
 
-	Gc::Gc(size_t initial, nat finalizationInterval) : finalizationInterval(finalizationInterval) {}
+	GcImpl::GcImpl(size_t, nat) : allocStart(null), allocEnd(null) {}
 
-	Gc::~Gc() {}
+	void GcImpl::destroy() {}
 
-	void Gc::destroy() {}
+	void GcImpl::collect() {}
 
-	void Gc::collect() {}
-
-	bool Gc::collect(nat time) {
+	Bool GcImpl::collect(Nat time) {
 		return false;
 	}
 
-	void Gc::attachThread() {}
+	GcImpl::ThreadData GcImpl::attachThread() {
+		return 0;
+	}
 
-	void Gc::reattachThread(const os::Thread &thread) {}
+	void GcImpl::detachThread(ThreadData &) {}
 
-	void Gc::detachThread(const os::Thread &thread) {}
-
-	void *Gc::alloc(const GcType *type) {
+	void *GcImpl::alloc(const GcType *type) {
 		size_t size = align(type->stride) + headerSizeWords*sizeof(size_t);
 		void *mem = poolAlloc(size);
 		memset(mem, 0, size);
@@ -75,15 +69,15 @@ namespace storm {
 		return start;
 	}
 
-	void *Gc::allocStatic(const GcType *type) {
+	void *GcImpl::allocStatic(const GcType *type) {
 		return alloc(type);
 	}
 
-	GcArray<Byte> *Gc::allocBuffer(size_t count) {
+	GcArray<Byte> *GcImpl::allocBuffer(size_t count) {
 		return (GcArray<Byte> *)allocArray(&byteArrayType, count);
 	}
 
-	void *Gc::allocArray(const GcType *type, size_t count) {
+	void *GcImpl::allocArray(const GcType *type, size_t count) {
 		size_t size = align(type->stride)*count + 2*sizeof(size_t) + headerSizeWords*sizeof(size_t);
 		void *mem = poolAlloc(size);
 		memset(mem, 0, size);
@@ -96,24 +90,24 @@ namespace storm {
 		return start;
 	}
 
-	void *Gc::allocWeakArray(size_t count) {
-		size_t size = sizeof(void*)*count + 2*sizeof(size_t) + headerSizeWords*sizeof(size_t);
+	void *GcImpl::allocWeakArray(const GcType *type, size_t count) {
+		size_t size = sizeof(type->stride)*count + 2*sizeof(size_t) + headerSizeWords*sizeof(size_t);
 		void *mem = poolAlloc(size);
 		memset(mem, 0, size);
 		memset(mem, 0xFF, headerSizeWords*sizeof(size_t));
 
-		*(const GcType **)mem = &weakArrayType;
+		*(const GcType **)mem = type;
 
 		void *start = (size_t *)mem + headerSizeWords;
 		*(size_t *)start = (count << 1) | 1;
 		return start;
 	}
 
-	Gc::RampAlloc::RampAlloc(Gc &owner) : owner(owner) {}
+	Bool GcImpl::liveObject(RootObject *obj) {
+		return true;
+	}
 
-	Gc::RampAlloc::~RampAlloc() {}
-
-	GcType *Gc::allocType(GcType::Kind kind, Type *type, size_t stride, size_t entries) {
+	GcType *GcImpl::allocType(GcType::Kind kind, Type *type, size_t stride, size_t entries) {
 		size_t s = gcTypeSize(entries);
 		GcType *t = (GcType *)malloc(s);
 		memset(t, 0, s);
@@ -124,20 +118,14 @@ namespace storm {
 		return t;
 	}
 
-	GcType *Gc::allocType(const GcType *src) {
-		size_t s = gcTypeSize(src->count);
-		GcType *t = (GcType *)malloc(s);
-		memcpy(t, src, s);
-		return t;
-	}
-
-	void Gc::freeType(GcType *type) {
+	void GcImpl::freeType(GcType *type) {
 		free(type);
 	}
 
-	const GcType *Gc::typeOf(const void *mem) {
+	const GcType *GcImpl::typeOf(const void *mem) {
 		const GcType **data = (const GcType **)mem;
 
+		// Crude memory validation...
 		// for (nat i = 0; i < (headerSizeWords-1)*sizeof(size_t); i++) {
 		// 	byte *addr = (byte *)data - i - 1;
 		// 	if (*addr != 0xFF) {
@@ -148,18 +136,15 @@ namespace storm {
 		return *(data - headerSizeWords);
 	}
 
-	void Gc::switchType(void *mem, const GcType *to) {
+	void GcImpl::switchType(void *mem, const GcType *to) {
 		const GcType **data = (const GcType **)mem;
 		*(data - headerSizeWords) = to;
 	}
 
-	void *Gc::allocCode(size_t code, size_t refs) {
-		// static memory::Manager mgr;
-
+	void *GcImpl::allocCode(size_t code, size_t refs) {
 		code = align(code);
 		size_t size = code + sizeof(GcCode) + refs*sizeof(GcCodeRef) - sizeof(GcCodeRef) + headerSizeWords*sizeof(size_t);
 		void *mem = poolAlloc(size);
-		// void *mem = mgr.allocate(size);
 		memset(mem, 0, size);
 		memset((size_t *)mem + 1, 0xFF, (headerSizeWords - 1)*sizeof(size_t));
 
@@ -172,36 +157,30 @@ namespace storm {
 		return start;
 	}
 
-	size_t Gc::codeSize(const void *alloc) {
+	size_t GcImpl::codeSize(const void *alloc) {
 		const size_t *d = (const size_t *)alloc;
 		return *(d - headerSizeWords);
 	}
 
-	GcCode *Gc::codeRefs(void *alloc) {
+	GcCode *GcImpl::codeRefs(void *alloc) {
 		void *p = ((byte *)alloc) + align(codeSize(alloc));
 		return (GcCode *)p;
 	}
 
-	void Gc::walkObjects(WalkCb fn, void *param) {
+	void GcImpl::startRamp() {}
+
+	void GcImpl::endRamp() {}
+
+	void GcImpl::walkObjects(WalkCb fn, void *param) {
 		// Nothing to do...
 	}
 
-	bool Gc::isCodeAlloc(void *ptr) {
-		// Maybe... We do not know.
-		return true;
-	}
-
-	Gc::Root *Gc::createRoot(void *data, size_t count) {
+	GcImpl::Root *GcImpl::createRoot(void *data, size_t count, bool ambiguous) {
 		// No roots here!
 		return null;
 	}
 
-	Gc::Root *Gc::createRoot(void *data, size_t count, bool ambiguous) {
-		// No roots here!
-		return null;
-	}
-
-	void Gc::destroyRoot(Root *root) {}
+	void GcImpl::destroyRoot(Root *root) {}
 
 	class MallocWatch : public GcWatch {
 	public:
@@ -215,17 +194,13 @@ namespace storm {
 		}
 	};
 
-	GcWatch *Gc::createWatch() {
+	GcWatch *GcImpl::createWatch() {
 		return new MallocWatch();
 	}
 
-	void Gc::checkMemory() {}
+	void GcImpl::checkMemory() {}
 
-	void Gc::checkMemory(const void *object) {
-		checkMemory(object, true);
-	}
-
-	void Gc::checkMemory(const void *object, bool recursive) {
+	void GcImpl::checkMemory(const void *object, bool recursive) {
 		const GcType **data = (const GcType **)object;
 
 		for (nat i = 0; i < (headerSizeWords-1)*sizeof(size_t); i++) {
@@ -236,7 +211,7 @@ namespace storm {
 		}
 	}
 
-	void Gc::checkMemoryCollect() {}
+	void GcImpl::checkMemoryCollect() {}
 
 }
 
