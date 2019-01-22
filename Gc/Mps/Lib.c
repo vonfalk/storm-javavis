@@ -1,7 +1,7 @@
 #include "stdafx.h"
 #include "Utils/Mode.h"
 #include "Utils/Platform.h"
-#include "MpsLib.h"
+#include "Lib.h"
 
 #if STORM_GC == STORM_GC_MPS
 

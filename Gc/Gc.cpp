@@ -73,6 +73,17 @@ namespace storm {
 		threads.erase(i);
 	}
 
+	GcImpl::ThreadData Gc::threadData(GcImpl *from, const os::Thread &thread, const GcImpl::ThreadData &default) {
+		Gc *me = BASE_PTR(Gc, from, impl);
+		util::Lock::L z(me->threadLock);
+
+		ThreadMap::iterator i = me->threads.find(thread.id());
+		if (i == me->threads.end())
+			return default;
+		else
+			return i->second.data;
+	}
+
 
 	GcType *Gc::allocType(GcType::Kind kind, Type *type, size_t stride, size_t entries) {
 		return impl.allocType(kind, type, stride, entries);
@@ -98,15 +109,11 @@ namespace storm {
 	}
 
 	Gc::RampAlloc::RampAlloc(Gc &owner) : owner(owner) {
-		util::Lock::L z(owner.rampLock);
-		if (owner.rampDepth++ == 0)
-			owner.impl.startRamp();
+		owner.impl.startRamp();
 	}
 
 	Gc::RampAlloc::~RampAlloc() {
-		util::Lock::L z(owner.rampLock);
-		if (owner.rampDepth-- == 0)
-			owner.impl.endRamp();
+		owner.impl.endRamp();
 	}
 
 	void Gc::walkObjects(WalkCb fn, void *param) {

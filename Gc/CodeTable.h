@@ -2,7 +2,7 @@
 #include "Utils/Lock.h"
 #include <vector>
 
-namespace code {
+namespace storm {
 
 	/**
 	 * A table that stores a set of pointers to Gc-allocated machine code. This implementation
@@ -110,4 +110,6 @@ namespace code {
 		static bool contains(Elem *elem, const void *ptr);
 	};
 
+	// Get a global instance of the code table.
+	CodeTable &codeTable();
 }

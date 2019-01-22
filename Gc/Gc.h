@@ -11,7 +11,7 @@
  * Include all possible GC implementations. Only one will be selected.
  */
 #include "Zero.h"
-#include "Mps.h"
+#include "Mps/Impl.h"
 
 #ifndef STORM_HAS_GC
 // If this happens, an unselected GC has been selected in Core/Storm.h.
@@ -75,6 +75,10 @@ namespace storm {
 
 		// Unregister a thread from the gc. This has to be done before the thread is destroyed.
 		void detachThread(const os::Thread &thread);
+
+		// Get the thread data for a thread, given a pointer to the implementation. Returns
+		// "default" if the thread is not registered with the GC.
+		static GcImpl::ThreadData threadData(GcImpl *from, const os::Thread &thread, const GcImpl::ThreadData &default);
 
 
 		/**
@@ -287,12 +291,6 @@ namespace storm {
 
 		// Lock for manipulating the attached threads.
 		util::Lock threadLock;
-
-		// Remember the current depth of "ramp" allocations.
-		size_t rampDepth;
-
-		// Lock for the ramp allocations.
-		util::Lock rampLock;
 	};
 
 
