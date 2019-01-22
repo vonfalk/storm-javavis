@@ -72,7 +72,7 @@ namespace storm {
 		// Get the metadata of a code allocation.
 		static GcCode *codeRefs(void *alloc);
 
-		// Start/end of a ramp allocation. Calls to these functions are not nested and not concurrent.
+		// Start/end of a ramp allocation. Calls may be nested.
 		void startRamp();
 		void endRamp();
 

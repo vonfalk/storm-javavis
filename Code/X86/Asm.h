@@ -138,8 +138,5 @@ namespace code {
 		// parameter for the result?
 		bool resultParam(TypeDesc *desc);
 
-		// Get the code table used for all code.
-		CodeTable &codeTable();
-
 	}
 }

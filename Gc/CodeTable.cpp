@@ -2,7 +2,7 @@
 #include "CodeTable.h"
 #include <algorithm>
 
-namespace code {
+namespace storm {
 
 	/**
 	 * The allocator.
@@ -139,4 +139,8 @@ namespace code {
 		return start <= test && test < end;
 	}
 
+	CodeTable &codeTable() {
+		static CodeTable t;
+		return t;
+	}
 }

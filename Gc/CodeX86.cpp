@@ -1,9 +1,9 @@
 #include "stdafx.h"
-#include "Refs.h"
-#include "Asm.h"
+#include "CodeX86.h"
 #include "Core/GcCode.h"
+#include "CodeTable.h"
 
-namespace code {
+namespace storm {
 	namespace x86 {
 
 		void writePtr(void *code, const GcCode *refs, Nat id) {
