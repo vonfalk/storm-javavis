@@ -7,10 +7,6 @@
 #include "Function.h"
 #include "Engine.h"
 
-#ifdef POSIX
-#include <link.h>
-#endif
-
 namespace storm {
 
 	VTableCpp *VTableCpp::wrap(Engine &e, const void *vtable) {

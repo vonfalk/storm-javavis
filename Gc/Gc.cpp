@@ -77,13 +77,13 @@ namespace storm {
 		threads.erase(i);
 	}
 
-	GcImpl::ThreadData Gc::threadData(GcImpl *from, const os::Thread &thread, const GcImpl::ThreadData &default) {
+	GcImpl::ThreadData Gc::threadData(GcImpl *from, const os::Thread &thread, const GcImpl::ThreadData &def) {
 		Gc *me = BASE_PTR(Gc, from, impl);
 		util::Lock::L z(me->threadLock);
 
 		ThreadMap::iterator i = me->threads.find(thread.id());
 		if (i == me->threads.end())
-			return default;
+			return def;
 		else
 			return i->second.data;
 	}

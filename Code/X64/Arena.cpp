@@ -5,6 +5,7 @@
 #include "AsmOut.h"
 #include "RemoveInvalid.h"
 #include "Layout.h"
+#include "PosixEh.h"
 #include "../Exception.h"
 
 namespace code {
@@ -13,6 +14,10 @@ namespace code {
 		Arena::Arena() {}
 
 		Listing *Arena::transform(Listing *l, Binary *owner) const {
+#if defined(POSIX) && defined(X64)
+			activateInfo();
+#endif
+
 			// Remove unsupported OP-codes, replacing them with their equivalents.
 			l = code::transform(l, this, new (this) RemoveInvalid());
 

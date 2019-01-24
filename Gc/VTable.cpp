@@ -2,6 +2,10 @@
 #include "VTable.h"
 #include "Utils/Memory.h"
 
+#ifdef POSIX
+#include <link.h>
+#endif
+
 namespace storm {
 
 	namespace vtable {

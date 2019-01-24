@@ -78,7 +78,7 @@ namespace storm {
 
 		// Get the thread data for a thread, given a pointer to the implementation. Returns
 		// "default" if the thread is not registered with the GC.
-		static GcImpl::ThreadData threadData(GcImpl *from, const os::Thread &thread, const GcImpl::ThreadData &default);
+		static GcImpl::ThreadData threadData(GcImpl *from, const os::Thread &thread, const GcImpl::ThreadData &def);
 
 
 		/**
