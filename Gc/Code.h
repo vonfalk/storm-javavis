@@ -18,7 +18,6 @@ namespace storm {
 
 		// Write a specific pointer to a code allocation.
 		void writePtr(void *code, Nat id);
-		void writePtr(void *code, Nat id, void *ptr);
 
 		// Do code segments require finalization?
 		Bool needFinalization();

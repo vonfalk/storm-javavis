@@ -5,6 +5,7 @@
 
 #include "Gc/Code.h"
 #include "Gc/Gc.h"
+#include "Gc/VTable.h"
 #include "Core/GcCode.h"
 #include "Utils/Memory.h"
 
@@ -401,7 +402,7 @@ namespace storm {
 	} while (false)
 
 	// # of bytes before the vtable the allocation actually starts.
-	static const nat vtableOffset = VTableCpp::vtableAllocOffset();
+	static const nat vtableOffset = vtable::allocOffset();
 
 	// Helper for interpreting and scanning a vtable.
 	// Note: we can pass the interior pointer to MPS_FIX1
@@ -1520,38 +1521,25 @@ namespace storm {
 		mps_arena_release(arena);
 	}
 
-	bool GcImpl::isCodeAlloc(void *ptr) {
-		mps_pool_t pool = null;
-		if (!mps_addr_pool(&pool, arena, ptr))
-			return false;
-
-		return pool == codePool;
-	}
-
 	struct GcImpl::Root {
 		mps_root_t root;
 	};
 
-	GcImpl::Root *GcImpl::createRoot(void *data, size_t count) {
-		return createRoot(data, count, false);
-	}
-
 	GcImpl::Root *GcImpl::createRoot(void *data, size_t count, bool ambig) {
 		Root *r = new Root;
-		try {
-			check(mps_root_create(&r->root,
-									arena,
-									ambig ? mps_rank_ambig() : mps_rank_exact(),
-									(mps_rm_t)0,
-									&mpsScanArray,
-									data,
-									count),
-				L"Failed to create a root.");
-		} catch (...) {
-			delete r;
-			throw;
-		}
-		return r;
+		mps_res_t res = mps_root_create(&r->root,
+										arena,
+										ambig ? mps_rank_ambig() : mps_rank_exact(),
+										(mps_rm_t)0,
+										&mpsScanArray,
+										data,
+										count);
+
+		if (res == MPS_RES_OK)
+			return r;
+
+		delete r;
+		throw GcError(L"Failed to create a root.");
 	}
 
 	void GcImpl::destroyRoot(Root *r) {
@@ -1753,17 +1741,13 @@ namespace storm {
 	}
 #endif
 
-	void GcImpl::checkMemory(const void *ptr) {
-		checkMemory(ptr, true);
-	}
-
 	class MpsGcWatch : public GcWatch {
 	public:
-		MpsGcWatch(Gc &gc) : gc(gc) {
+		MpsGcWatch(GcImpl &gc) : gc(gc) {
 			mps_ld_reset(&ld, gc.arena);
 		}
 
-		MpsGcWatch(Gc &gc, const mps_ld_s &ld) : gc(gc), ld(ld) {}
+		MpsGcWatch(GcImpl &gc, const mps_ld_s &ld) : gc(gc), ld(ld) {}
 
 		virtual void add(const void *addr) {
 			mps_ld_add(&ld, gc.arena, (mps_addr_t)addr);
@@ -1793,7 +1777,7 @@ namespace storm {
 		static const GcType type;
 
 	private:
-		Gc &gc;
+		GcImpl &gc;
 		mps_ld_s ld;
 	};
 

@@ -291,6 +291,9 @@ namespace storm {
 
 		// Lock for manipulating the attached threads.
 		util::Lock threadLock;
+
+		// Destroyed already?
+		Bool destroyed;
 	};
 
 

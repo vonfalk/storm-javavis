@@ -4,13 +4,17 @@
 
 namespace storm {
 
-	Gc::Gc(size_t initialArena, nat finalizationInterval) : impl(initialArena, finalizationInterval) {}
+	Gc::Gc(size_t initialArena, nat finalizationInterval) : impl(initialArena, finalizationInterval), destroyed(false) {}
 
 	Gc::~Gc() {
 		destroy();
 	}
 
 	void Gc::destroy() {
+		if (destroyed)
+			return;
+		destroyed = true;
+
 		{
 			util::Lock::L z(threadLock);
 			for (ThreadMap::iterator i = threads.begin(); i != threads.end(); ++i) {

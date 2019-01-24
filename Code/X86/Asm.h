@@ -3,7 +3,6 @@
 #include "../Output.h"
 #include "../Operand.h"
 #include "../TypeDesc.h"
-#include "../CodeTable.h"
 #include "Core/EnginePtr.h"
 
 namespace code {
