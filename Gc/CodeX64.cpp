@@ -1,16 +1,21 @@
 #include "stdafx.h"
-#include "Refs.h"
-#include "Asm.h"
-#include "DwarfTable.h"
+#include "CodeX64.h"
 #include "Core/GcCode.h"
+#include "DwarfTable.h"
 
-namespace code {
+namespace storm {
 	namespace x64 {
 
 		// Will not work properly unless on a 64-bit machine.
 #ifdef X64
 
-		void writeJump(void *code, const GcCodeRef &ref) {
+		static inline bool singleInt(Word value) {
+			const Long limit = Long(1) << Long(31);
+			Long v(value);
+			return v >= -limit && v < limit;
+		}
+
+		static inline void writeJump(void *code, const GcCodeRef &ref) {
 			// We're dealing with 6 bytes of data. The pointer, located at 'now->offset' and two
 			// bytes of op-codes located just before the pointer. For simplicity, we will read 2
 			// additional bytes after the pointer so that we can manipulate an entire machine word
@@ -106,9 +111,10 @@ namespace code {
 					FDE *ptr = (FDE *)ref.pointer;
 					// Set it to null so we do not accidentally scan or free it again.
 					atomicWrite(ref.pointer, null);
-					dwarfTable.free(ptr);
+					dwarfTable().free(ptr);
 				}
 			}
 		}
+
 	}
 }

@@ -1255,10 +1255,10 @@ namespace storm {
 
 	GcType *GcImpl::allocType(GcType::Kind kind, Type *type, size_t stride, size_t entries) {
 		size_t s = mpsTypeSize(entries);
-		MpsType *t; // = (MpsType *)malloc(s);
-		check(mps_alloc((mps_addr_t *)&t, gcTypePool, s), L"Failed to allocate type info.");
-		memset(t, 0, s);
-		new (t) MpsType();
+		void *mem;
+		check(mps_alloc((mps_addr_t *)&mem, gcTypePool, s), L"Failed to allocate type info.");
+		memset(mem, 0, s);
+		MpsType *t = new (mem) MpsType();
 		t->type.kind = kind;
 		t->type.type = type;
 		t->type.stride = stride;

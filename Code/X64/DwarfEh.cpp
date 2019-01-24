@@ -7,7 +7,6 @@
 namespace code {
 	namespace x64 {
 
-
 		/**
 		 * Definitions of some useful DWARF constants.
 		 */
@@ -214,19 +213,13 @@ namespace code {
 
 
 		/**
-		 * Records
+		 * Initialize CIE records to match the output from FnInfo.
 		 */
 
-		void Record::setLen(void *end) {
-			char *from = (char *)(void *)this;
-			char *to = (char *)end;
-			length = to - (from + 4);
-		}
-
-		void CIE::init() {
-			id = 0;
-			version = 1;
-			DStream out(data, CIE_DATA);
+		void initDwarfCIE(CIE *cie) {
+			cie->id = 0;
+			cie->version = 1;
+			DStream out(cie->data, CIE_DATA);
 			out.putByte('z'); // There is a size of all augmentation data.
 			out.putByte('R'); // FDE encoding of addresses.
 			out.putByte('P'); // Personality function.
@@ -247,10 +240,6 @@ namespace code {
 			assert(!out.overflow(), L"Increase CIE_DATA!");
 		}
 
-		void FDE::setCie(CIE *to) {
-			char *me = (char *)&cieOffset;
-			cieOffset = me - (char *)to;
-		}
 
 		/**
 		 * Emit function information.
@@ -308,7 +297,6 @@ namespace code {
 				lastPos = pos;
 			}
 		}
-
 
 	}
 }

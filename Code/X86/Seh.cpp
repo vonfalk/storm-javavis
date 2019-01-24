@@ -96,7 +96,6 @@ namespace code {
 		class SehInfo : public StackInfo {
 		public:
 			virtual void collect(::StackFrame &to, void *frame) const {
-				// TODO: Detect frames that do not use SEH as well!
 				to.data = null;
 
 				CodeTable &table = codeTable();

@@ -73,7 +73,7 @@ namespace storm {
 
 		private:
 			enum {
-				chunkSize = 512
+				chunkSize = 10240
 			};
 
 			// Allocated chunks.

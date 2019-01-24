@@ -1,6 +1,6 @@
 #include "stdafx.h"
 #include "Output.h"
-#include "DwarfTable.h"
+#include "Gc/DwarfTable.h"
 #include "../Binary.h"
 #include "Utils/Bitwise.h"
 
@@ -22,7 +22,7 @@ namespace code {
 			GcCode *refs = runtime::codeRefs(code);
 
 			// An entry for the DWARF unwinding information.
-			FDE *unwind = dwarfTable.alloc(code);
+			FDE *unwind = dwarfTable().alloc(code, &initDwarfCIE);
 			fnInfo.set(unwind);
 			refs->refs[0].offset = 0;
 			refs->refs[0].kind = GcCodeRef::unwindInfo;
