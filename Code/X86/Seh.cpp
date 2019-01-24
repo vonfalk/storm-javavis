@@ -5,6 +5,7 @@
 #include "StackFrame.h"
 #include "Asm.h"
 #include "Core/Str.h"
+#include "Gc/CodeTable.h"
 #include "Utils/Memory.h"
 #include "Utils/StackInfo.h"
 

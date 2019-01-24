@@ -53,6 +53,16 @@ namespace storm {
 			}
 		}
 
+		void updatePtrs(void *code, const GcCode *refs) {
+			for (Nat i = 0; i < refs->refCount; i++)
+				doWritePtr(code, refs, i);
+		}
+
+		void writePtr(void *code, Nat id) {
+			GcCode *refs = runtime::codeRefs(code);
+			doWritePtr(code, refs, id);
+		}
+
 		Bool needFinalization() {
 			return ARCH::needFinalization();
 		}

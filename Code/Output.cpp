@@ -1,6 +1,6 @@
 #include "stdafx.h"
 #include "Output.h"
-#include "Refs.h"
+#include "Gc/Code.h"
 #include "Core/Runtime.h"
 #include "Core/GcCode.h"
 #include "Utils/Bitwise.h"
@@ -254,7 +254,7 @@ namespace code {
 		GcCodeRef &ref = refs->refs[slot];
 
 		atomicWrite(ref.pointer, (void *)newAddr);
-		writePtr(code, slot);
+		storm::code::writePtr(code, slot);
 	}
 
 }

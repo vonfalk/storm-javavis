@@ -2,6 +2,7 @@
 #include "Output.h"
 #include "Binary.h"
 #include "Asm.h"
+#include "Gc/CodeTable.h"
 #include "Utils/Bitwise.h"
 
 namespace code {

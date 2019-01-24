@@ -5,7 +5,7 @@
 #include "Engine.h"
 #include "Core/Str.h"
 #include "Core/Io/StdStream.h"
-#include "Code/Refs.h"
+#include "Gc/Code.h"
 #include "StdIoThread.h"
 
 namespace storm {
