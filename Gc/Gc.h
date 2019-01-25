@@ -7,6 +7,9 @@
 #include "Core/GcWatch.h"
 #include "Core/GcCode.h"
 
+// In case we're included from somewhere other than the Gc module.
+#include "Config.h"
+
 /**
  * Include all possible GC implementations. Only one will be selected.
  */

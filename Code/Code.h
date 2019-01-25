@@ -3,7 +3,6 @@
 #include "Utils/Platform.h"
 #include "OS/Types.h"
 #include "Core/Storm.h"
-#include "Gc/Config.h"
 
 namespace code {
 
