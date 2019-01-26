@@ -10,387 +10,32 @@
 #include "Core/GcCode.h"
 #include "Utils/Memory.h"
 
-// If enabled, add and verify data after each object allocated in the Gc-heap in order to find
-// memory-corruption bugs.
-#define MPS_CHECK_MEMORY 0
-
 // Use debug pools in MPS (behaves slightly differently from the standard and may not trigger errors).
 #define MPS_DEBUG_POOL 0
-
-// Number of words that shall be verified before and after each allocation.
-#define MPS_CHECK_WORDS 32
-
-// Data to check against. TODO: Put the data tightly around allocations. Currently, there may be a
-// gap of up to 'headerSize' bytes before the barrier actually starts. This could be solved by
-// setting MPS_CHECK_WORDS to 1 if larger values do not show the sought after bug.
-#define MPS_HEADER_DATA 0xBB
-#define MPS_MIDDLE_DATA 0xCC
-#define MPS_FOOTER_DATA 0xAA
 
 // Check the heap after this many allocations.
 #define MPS_CHECK_INTERVAL 100000
 
 
-#if MPS_CHECK_MEMORY
-#define MPS_CHECK_BYTES (sizeof(void *)*MPS_CHECK_WORDS)
-#define MPS_VERIFY_OBJECT(object) checkObject(object)
-#define MPS_VERIFY_SIZE(object) checkSize(object);
-#define MPS_INIT_OBJECT(object, size) initObject((MpsObj *)(object), size);
-#define SLOW_DEBUG // additional asserts in the GC code.
-#else
-#define MPS_CHECK_BYTES 0
-#define MPS_VERIFY_OBJECT(object)
-#define MPS_VERIFY_SIZE(object)
-#define MPS_INIT_OBJECT(object, size)
-#endif
-
 namespace storm {
 
 	/**
-	 * In MPS, we allocate objects with an extra pointer just before the object. This points to a
-	 * MpsObj union which contains the information required for scanning. If the least significant
-	 * bit of the header is set, this allocation is a code allocation, and the header pointer
-	 * indicates the size of the code portion of the allocation (always word-aligned, so the lsb is
-	 * discarded). After the code portion, the code allocation contains data about pointers in the
-	 * allocation in the form of a GcCode struct.
+	 * MPS uses the standard object format in Format.h. See more details there.
 	 *
 	 * Objects are always allocated in multiples of the alignment, as that is required by the MPS
 	 * and it makes it easier to reason about how forwarders and padding behave.
 	 *
 	 * Convention: Base pointers are always passed as MpsObj * while client pointers are always
 	 * passed as either void * or mps_addr_t.
+	 *
+	 * MPS specific functions generally start with 'mps'.
 	 */
-
-
-	static const size_t wordSize = sizeof(void *);
-
-#if MPS_CHECK_MEMORY
-	static const size_t headerSize = wordSize * (3 + MPS_CHECK_WORDS);
-
-	static inline size_t align(size_t data) {
-		nat a = nextPowerOfTwo(headerSize);
-		return (data + a - 1) & ~(a - 1);
-	}
-#else
-	static const size_t headerSize = wordSize;
-
-	// Word-align something.
-	static inline size_t align(size_t data) {
-		return (data + wordSize - 1) & ~(wordSize - 1);
-	}
-#endif
-
-	static const size_t arrayHeaderSize = wordSize * 2;
-
-	static inline size_t wordAlign(size_t data) {
-		return (data + wordSize - 1) & ~(wordSize - 1);
-	}
-
-
-	/**
-	 * Extra data types for forwarding and padding.
-	 */
-	enum MpsTypes {
-		// Padding object (0 word).
-		mpsPad0 = 0x100,
-
-		// Padding object (multi-word).
-		mpsPad,
-
-		// Forwarding object (1 word).
-		mpsFwd1,
-
-		// Forwarding object (multi-word).
-		mpsFwd,
-	};
-
-	/**
-	 * Padding object (0 words).
-	 */
-	struct MpsPad0 {};
-
-	/**
-	 * Padding object (multi-word).
-	 */
-	struct MpsPad {
-		size_t size;
-	};
-
-	/**
-	 * Forwarding object (1 word).
-	 */
-	struct MpsFwd1 {
-		void *to;
-	};
-
-	/**
-	 * Forwarding object (multi-word).
-	 */
-	struct MpsFwd {
-		void *to;
-		size_t size;
-	};
-
-
-	/**
-	 * Union for easy access.
-	 */
-	union MpsHeader {
-		size_t type;
-
-		// Only valid if type is one of the types known in GcType.
-		GcType obj;
-	};
-
-	/**
-	 * Static allocated headers for the MPS-specific types. MPS-specific types will have their
-	 * headers point here.
-	 */
-	static const size_t headerPad0 = mpsPad0;
-	static const size_t headerPad = mpsPad;
-	static const size_t headerFwd1 = mpsFwd1;
-	static const size_t headerFwd = mpsFwd;
-
-	/**
-	 * Weak object data. Note that these members are tagged with a 1 in the lowest bit.
-	 */
-	struct MpsWeakHead {
-		size_t count;
-		size_t splatted;
-	};
-
-	/**
-	 * Object on the heap (for convenience). Note that the 'header' is not inside objects when
-	 * visible to Storm.
-	 */
-	struct MpsObj {
-		// Object information. This field contains the following data:
-		//
-		// 1: If the bit 0x1 is set, this is a code allocation, and the rest of this allocation
-		// denotes the size of the allocation, excluding the metadata.
-		//
-		// 2: If the bit 0x1 is clear, this is a regular allocation. The remainder of this field is
-		// a pointer to a MpsHeader containing information about this object.
-		//
-		// 3: If the bit 0x1 is clear, then the bit 0x2 indicates if this object is finalized. We
-		// need to be able to inform other parts of the system if certain allocations are finalized
-		// so that they may ignore finalized objects (eg. WeakSet) before we have collected them.
-		//
-		// Use IS_CODE, CODE_SIZE, OBJ_HEADER to extract the information properly.
-		size_t info;
-
-#if MPS_CHECK_MEMORY
-		// Size of this object in case the header is destroyed. This includes the size of the header and any barriers.
-		size_t totalSize;
-
-		// Allocation number for this object.
-		size_t allocId;
-
-		// Padding before the object.
-		size_t barrier[MPS_CHECK_WORDS];
-#endif
-
-		// This is at offset 0 as far as C++ and Storm knows:
-		union {
-			// If header->type == tArray, this is the number of elements in the array.
-			size_t count;
-
-			// If header->type == tWeakArray, this is valid. Use 'weakCount' and 'weakSplat' to avoid
-			// destroying the tag bit.
-			MpsWeakHead weak;
-
-			// Special MPS objects.
-			MpsPad0 pad0;
-			MpsPad pad;
-			MpsFwd1 fwd1;
-			MpsFwd fwd;
-		};
-	};
-
-
-	/**
-	 * Extract information from 'info' in an MpsObj.
-	 */
-
-	// Is this a code allocation?
-	static inline bool objIsCode(const MpsObj *obj) {
-		return (obj->info & 0x1) != 0;
-	}
-
-	// Get the size of the code allocation. Assumes 'objIsCode' returned true.
-	static inline size_t objCodeSize(const MpsObj *obj) {
-		return obj->info & ~size_t(0x1);
-	}
-
-	// Get the header of this allocation. Assumes 'objIsCode' returned false.
-	static inline const MpsHeader *objHeader(const MpsObj *obj) {
-		return (const MpsHeader *)(obj->info & ~size_t(0x3));
-	}
-
-	// Check if this object is finalized. Assumes 'objIsCode' returned false.
-	static inline bool objIsFinalized(const MpsObj *obj) {
-		return (obj->info & size_t(0x2)) != 0;
-	}
-
-
-	/**
-	 * Set information in 'info' in an MpsObj.
-	 */
-
-	// Set the header to indicate a code allocation of 'codeSize' bytes. 'codeSize' is assumed to be
-	// rounded up to 'wordSize'.
-	static inline void objSetCode(MpsObj *obj, size_t codeSize) {
-		obj->info = codeSize | size_t(0x1);
-	}
-
-	// Set the header to indicate a regular allocation described by 'header'. Assumes 'header' is
-	// aligned to 'wordSize' and compatible with MpsHeader (eg. a single size_t, CppType...)
-	static inline void objSetHeader(MpsObj *obj, const void *header) {
-		obj->info = size_t(header);
-	}
-
-	// Mark this allocation as finalized. Assumes this is not a code allocation.
-	static inline void objSetFinalized(MpsObj *obj) {
-		obj->info |= size_t(0x2);
-	}
-
-
-#if MPS_CHECK_MEMORY
-
-	// Allocation id.
-	static nat allocId = 0;
-
-	// Dump information about an object.
-	static String objInfo(const MpsObj *o) {
-		std::wostringstream to;
-		to << L"Object " << (void *)o << L", header: " << (void *)objHeader(o);
-		to << L", size " << o->totalSize << L", id: " << o->allocId << L" (of " << allocId << L")";
-		return to.str();
-	}
-
-	// Check object barriers and size.
-	static void checkObject(const MpsObj *o);
-
-	// Check size for the object.
-	static void checkSize(const MpsObj *o);
-
-	// Initialize object.
-	static void initObject(MpsObj *o, size_t size);
-
-#endif
-
-	// Return the size of a weak array.
-	static inline size_t weakCount(const MpsObj *o) {
-		return o->weak.count >> 1;
-	}
-
-	// Splat an additional reference in a weak array.
-	static inline void weakSplat(MpsObj *o) {
-		o->weak.splatted = (o->weak.splatted + 0x10) | 0x01;
-	}
-
-
-	/**
-	 * Note: in the scanning functions below, we shall not touch any other garbage collected memory,
-	 * nor consume too much stack.
-	 */
-
-	// Convert to/from client pointers.
-	static inline MpsObj *fromClient(mps_addr_t o) {
-		o = (byte *)o - headerSize;
-		return (MpsObj *)o;
-	}
-	static inline const MpsObj *fromClient(const void *o) {
-		o = (const byte *)o - headerSize;
-		return (const MpsObj *)o;
-	}
-	static inline mps_addr_t toClient(MpsObj *o) {
-		// Note: Any of the objects in the union will work.
-		return &o->count;
-	}
-	static inline const void *toClient(const MpsObj *o) {
-		// Note: Any of the objects in the union will work.
-		return &o->count;
-	}
-
-	// Compute the size of an object given its header.
-	static inline size_t mpsSizeObj(const GcType *type) {
-		return align(headerSize
-					+ type->stride
-					+ MPS_CHECK_BYTES);
-	}
-	static inline size_t mpsSizeArray(const GcType *type, size_t count) {
-		return align(headerSize
-					+ arrayHeaderSize
-					+ type->stride*count
-					+ MPS_CHECK_BYTES);
-	}
-
-	// Compute the size required for 'n' refs.
-	static inline size_t mpsSizeRefs(size_t refs) {
-		return sizeof(GcCode) - sizeof(GcCodeRef) + sizeof(GcCodeRef)*refs;
-	}
-
-	// Compute the size needed for an object containing code of the specified size and 'n' references.
-	static inline size_t mpsSizeCode(size_t code, size_t refs) {
-		return align(headerSize
-					+ code
-					+ MPS_CHECK_BYTES
-					+ mpsSizeRefs(refs)
-					+ MPS_CHECK_BYTES);
-	}
-
-	// Get a pointer to the references inside a code allocation.
-	static inline GcCode *mpsRefsCode(MpsObj *obj) {
-		size_t code = objCodeSize(obj);
-		void *p = toClient(obj);
-		p = (byte *)p + code + MPS_CHECK_BYTES;
-		return (GcCode *)p;
-	}
-	static inline const GcCode *mpsRefsCode(const MpsObj *obj) {
-		size_t code = objCodeSize(obj);
-		const void *p = toClient(obj);
-		p = (const byte *)p + code + MPS_CHECK_BYTES;
-		return (const GcCode *)p;
-	}
-
-	// Size of an object.
-	static inline size_t mpsSize(const MpsObj *o) {
-		if (objIsCode(o)) {
-			size_t code = objCodeSize(o);
-			return mpsSizeCode(code, mpsRefsCode(o)->refCount);
-		}
-
-		const MpsHeader *h = objHeader(o);
-
-		switch (h->type) {
-		case GcType::tFixed:
-		case GcType::tFixedObj:
-		case GcType::tType:
-			return mpsSizeObj(&h->obj);
-		case GcType::tArray:
-			return mpsSizeArray(&h->obj, o->count);
-		case GcType::tWeakArray:
-			return mpsSizeArray(&h->obj, weakCount(o));
-		case mpsPad0:
-			return headerSize;
-		case mpsPad:
-			return headerSize + o->pad.size;
-		case mpsFwd1:
-			return headerSize + sizeof(MpsFwd1);
-		case mpsFwd:
-			return headerSize + o->fwd.size;
-		default:
-			dbg_assert(false, L"Unknown object found!");
-			return 0;
-		}
-	}
+	using namespace fmt;
 
 	// Skip objects. Figure out the size of an object, and return a pointer to after the end of it
 	// (including the next object's header, it seems).
 	static mps_addr_t mpsSkip(mps_addr_t at) {
-		MPS_VERIFY_OBJECT(fromClient(at));
-		return (byte *)at + mpsSize(fromClient(at));
+		return fmt::skip(at);
 	}
 
 	// Helper for interpreting and scanning a GcType block.
@@ -435,13 +80,13 @@ namespace storm {
 	// quickly as possible.
 	static mps_res_t mpsScan(mps_ss_t ss, mps_addr_t base, mps_addr_t limit) {
 		MPS_SCAN_BEGIN(ss) {
-			for (mps_addr_t at = base; at < limit; at = mpsSkip(at)) {
-				MpsObj *o = fromClient(at);
-				MPS_VERIFY_OBJECT(o);
+			for (mps_addr_t at = base; at < limit; at = fmt::skip(at)) {
+				Obj *o = fromClient(at);
+				FMT_CHECK_OBJ(o);
 
 				if (objIsCode(o)) {
 					// Scan code.
-					GcCode *c = mpsRefsCode(o);
+					GcCode *c = refsCode(o);
 
 					// Scan our self-pointer to ensure that this object will be scanned after it has
 					// been moved.
@@ -469,7 +114,7 @@ namespace storm {
 					code::updatePtrs(at, c);
 				} else {
 					// Scan regular objects.
-					const MpsHeader *h = objHeader(o);
+					const Header *h = objHeader(o);
 					mps_addr_t pos = at;
 
 					switch (h->type) {
@@ -477,7 +122,6 @@ namespace storm {
 						FIX_VTABLE(pos);
 						// Fall thru.
 					case GcType::tFixed:
-						// PLN(L"OBJECT");
 						FIX_HEADER(h->obj);
 						FIX_GCTYPE(h, 0, pos);
 						break;
@@ -497,7 +141,7 @@ namespace storm {
 						FIX_HEADER(h->obj);
 						// Skip the header.
 						pos = (byte *)pos + arrayHeaderSize;
-						for (size_t i = 0; i < o->count; i++, pos = (byte *)pos + h->obj.stride) {
+						for (size_t i = 0; i < o->array.count; i++, pos = (byte *)pos + h->obj.stride) {
 							FIX_GCTYPE(h, 0, pos);
 						}
 						break;
@@ -505,7 +149,7 @@ namespace storm {
 						FIX_HEADER(h->obj);
 						// Skip the header.
 						pos = (byte *)pos + arrayHeaderSize;
-						for (size_t i = 0; i < weakCount(o); i++, pos = (byte *)pos + h->obj.stride) {
+						for (size_t i = 0; i < weakCount(&o->weak); i++, pos = (byte *)pos + h->obj.stride) {
 							for (nat j = 0; j < h->obj.count; j++) {
 								size_t offset = h->obj.offset[j];
 								mps_addr_t *data = (mps_addr_t *)((byte *)pos + offset);
@@ -515,7 +159,7 @@ namespace storm {
 										return r;
 									// Splatted?
 									if (*data == null)
-										weakSplat(o);
+										weakSplat(&o->weak);
 								}
 							}
 						}
@@ -529,62 +173,18 @@ namespace storm {
 
 	// Create a forwarding object at 'at' referring to 'to'. These must be recognized by mpsSize, mpsSkip and mpsScan.
 	static void mpsMakeFwd(mps_addr_t at, mps_addr_t to) {
-		MpsObj *o = fromClient(at);
-		MPS_VERIFY_OBJECT(o);
-
-		// Create the forwarding object.
-		size_t size = mpsSize(o);
-#ifdef SLOW_DEBUG
-		dbg_assert(size >= headerSize + sizeof(MpsFwd1), L"Not enough space for a fwd object!");
-#endif
-		if (size <= headerSize + sizeof(MpsFwd1)) {
-			objSetHeader(o, &headerFwd1);
-			o->fwd1.to = to;
-		} else {
-			objSetHeader(o, &headerFwd);
-			o->fwd.to = to;
-			o->fwd.size = size - headerSize;
-		}
-
-		// Make sure our object is still valid.
-		MPS_VERIFY_OBJECT(o);
+		fmt::makeFwd(at, to);
 	}
 
-	// See if object at 'at' is a forwarder, and if so, where it points to.
+	// Check if the object is a forwarding object.
 	static mps_addr_t mpsIsFwd(mps_addr_t at) {
-		// Convert to base pointers:
-		MpsObj *o = fromClient(at);
-		MPS_VERIFY_OBJECT(o);
-
-		if (objIsCode(o))
-			return null;
-
-		switch (objHeader(o)->type) {
-		case mpsFwd1:
-			return o->fwd1.to;
-		case mpsFwd:
-			return o->fwd.to;
-		default:
-			return null;
-		}
+		return fmt::isFwd(at);
 	}
 
-	// Create a padding object. These must be recognized by mpsSize, mpsSkip and mpsScan.
+	// Create a padding object. These must be recognized by mpsSize, mpsSkip and mpsScan. Note: Does
+	// not work with client pointers.
 	static void mpsMakePad(mps_addr_t at, size_t size) {
-#ifdef SLOW_DEBUG
-		dbg_assert(size >= headerSize, L"Too small header!");
-#endif
-		MpsObj *o = (MpsObj *)at;
-
-		if (size <= headerSize) {
-			objSetHeader(o, &headerPad0);
-		} else {
-			objSetHeader(o, &headerPad);
-			o->pad.size = size - headerSize;
-		}
-
-		MPS_INIT_OBJECT(o, size);
-		MPS_VERIFY_OBJECT(o);
+		fmt::objMakePad((Obj *)at, size);
 	}
 
 
@@ -810,10 +410,7 @@ namespace storm {
 
 	GcImpl::GcImpl(size_t initialArena, Nat finalizationInterval) : finalizationInterval(finalizationInterval) {
 		// We work under these assumptions.
-		assert(wordSize == sizeof(size_t), L"Invalid word-size");
-		assert(wordSize == sizeof(void *), L"Invalid word-size");
-		assert(wordSize == sizeof(MpsFwd1), L"Invalid size of MpsFwd1");
-		assert(headerSize == OFFSET_OF(MpsObj, count), L"Invalid header size.");
+		fmt::init();
 		assert(vtableOffset >= sizeof(void *), L"Invalid vtable offset (initialization failed?)");
 
 		// Note: This is defined in Gc/mps.c, and only aids in debugging.
@@ -1080,27 +677,14 @@ namespace storm {
 		assert(type->kind == GcType::tFixed
 			|| type->kind == GcType::tFixedObj, L"Wrong type for calling alloc().");
 
-		size_t size = mpsSizeObj(type);
+		size_t size = sizeObj(type);
 		mps_ap_t &ap = currentAllocPoint();
 		mps_addr_t memory;
+		void *result;
 		do {
 			check(mps_reserve(&memory, ap, size), L"Out of memory (alloc).");
-
-			// Make sure we can scan the newly allocated memory:
-			// 1: Clear all to zero, so that we do not have any rouge pointers confusing MPS.
-			memset(memory, 0, size);
-			// 2: Set the header.
-			MpsObj *o = (MpsObj *)memory;
-			objSetHeader(o, type);
-			// 3: Initialize any consistency-checking data.
-			MPS_INIT_OBJECT(o, size);
-
+			result = initObj(memory, type, size);
 		} while (!mps_commit(ap, memory, size));
-
-		MPS_VERIFY_SIZE((MpsObj *)memory);
-
-		// Exclude our header, and return the allocated memory.
-		void *result = (byte *)memory + headerSize;
 
 		if (type->finalizer)
 			mps_finalize(arena, &result);
@@ -1120,26 +704,13 @@ namespace storm {
 		// Since we're sharing one allocation point, take the lock for it.
 		util::Lock::L z(typeAllocLock);
 
-		size_t size = mpsSizeObj(type);
+		size_t size = sizeObj(type);
 		mps_addr_t memory;
+		void *result;
 		do {
 			check(mps_reserve(&memory, typeAllocPoint, size), L"Out of memory (alloc type).");
-
-			// Make sure we can scan the newly allocated memory:
-			// 1: Clear all to zero, so that we do not have any rouge pointers confusing MPS.
-			memset(memory, 0, size);
-			// 2: Set the header.
-			MpsObj *o = (MpsObj *)memory;
-			objSetHeader(o, type);
-			// 3: Initialize any consistency-checking data.
-			MPS_INIT_OBJECT(o, size);
-
+			result = initObj(memory, type, size);
 		} while (!mps_commit(typeAllocPoint, memory, size));
-
-		MPS_VERIFY_SIZE((MpsObj *)memory);
-
-		// Exclude our header, and return the allocated memory.
-		void *result = (byte *)memory + headerSize;
 
 		if (type->finalizer)
 			mps_finalize(arena, &result);
@@ -1150,31 +721,17 @@ namespace storm {
 	GcArray<Byte> *GcImpl::allocBuffer(size_t count) {
 #ifdef MPS_USE_IO_POOL
 		const GcType *type = &byteArrayType;
-		size_t size = mpsSizeArray(type, count);
+		size_t size = sizeArray(type, count);
 
 		util::Lock::L z(ioAllocLock);
 
 		mps_addr_t memory;
+		void *result;
 		do {
 			check(mps_reserve(&memory, ioAllocPoint, size), L"Out of memory (alloc buffer).");
-
-			// Make sure we can scan the newly allocated memory:
-			// 1: Clear all to zero, so that we do not have any rouge pointers confusing MPS.
-			memset(memory, 0, size);
-			// 2: Set the header.
-			MpsObj *o = (MpsObj *)memory;
-			objSetHeader(o, type);
-			// 3: Set size.
-			o->count = count;
-			// 4: Initialize any consistency-checking data.
-			MPS_INIT_OBJECT(o, size);
-
+			result = initArray(memory, type, size, count);
 		} while (!mps_commit(ioAllocPoint, memory, size));
 
-		MPS_VERIFY_SIZE((MpsObj *)memory);
-
-		// Exclude our header, return memory.
-		void *result = (byte *)memory + headerSize;
 		return (GcArray<Byte> *)result;
 #else
 		return (GcArray<Byte> *)allocArray(&byteArrayType, count);
@@ -1184,29 +741,14 @@ namespace storm {
 	void *GcImpl::allocArray(const GcType *type, size_t elements) {
 		assert(type->kind == GcType::tArray, L"Wrong type for calling allocArray().");
 
-		size_t size = mpsSizeArray(type, elements);
+		size_t size = sizeArray(type, elements);
 		mps_ap_t &ap = currentAllocPoint();
 		mps_addr_t memory;
+		void *result;
 		do {
 			check(mps_reserve(&memory, ap, size), L"Out of memory (alloc array).");
-
-			// Make sure we can scan the newly allocated memory:
-			// 1: Clear all to zero, so that we do not have any rouge pointers confusing MPS.
-			memset(memory, 0, size);
-			// 2: Set the header.
-			MpsObj *o = (MpsObj *)memory;
-			objSetHeader(o, type);
-			// 3: Set size.
-			o->count = elements;
-			// 4: Initialize any consistency-checking data.
-			MPS_INIT_OBJECT(o, size);
-
+			result = initArray(memory, type, size, elements);
 		} while (!mps_commit(ap, memory, size));
-
-		MPS_VERIFY_SIZE((MpsObj *)memory);
-
-		// Exclude our header, and return the allocated memory.
-		void *result = (byte *)memory + headerSize;
 
 		if (type->finalizer)
 			mps_finalize(arena, &result);
@@ -1220,30 +762,16 @@ namespace storm {
 
 		util::Lock::L z(weakAllocLock);
 
-		size_t size = mpsSizeArray(type, elements);
+		size_t size = sizeArray(type, elements);
 		mps_ap_t &ap = weakAllocPoint;
 		mps_addr_t memory;
+		void *result;
 		do {
 			check(mps_reserve(&memory, ap, size), L"Out of memory.");
-
-			// Make sure we can scan the newly allocated memory:
-			// 1: Clear all to zero.
-			memset(memory, 0, size);
-			// 2: Set the header.
-			MpsObj *o = (MpsObj *)memory;
-			objSetHeader(o, type);
-			// 3: Set size (tagged).
-			o->weak.count = (elements << 1) | 0x1;
-			o->weak.splatted = 0x1;
-			// 4: Initialize any consistency-checking data.
-			MPS_INIT_OBJECT(o, size);
-
+			result = initWeakArray(memory, type, size, elements);
 		} while (!mps_commit(ap, memory, size));
 
-		MPS_VERIFY_SIZE((MpsObj *)memory);
-
-		// Exclude our header, and return the allocated memory.
-		return (byte *)memory + headerSize;
+		return result;
 	}
 
 	size_t GcImpl::mpsTypeSize(size_t entries) {
@@ -1344,7 +872,7 @@ namespace storm {
 	}
 
 	const GcType *GcImpl::typeOf(const void *mem) {
-		const MpsObj *o = fromClient(mem);
+		const Obj *o = fromClient(mem);
 		if (objIsCode(o))
 			return null;
 		else
@@ -1352,9 +880,8 @@ namespace storm {
 	}
 
 	void GcImpl::switchType(void *mem, const GcType *type) {
-		// Seems reasonable. Switch headers!
-		void *t = (byte *)mem - headerSize;
-		objSetHeader((MpsObj *)t, type);
+		// No checking required, Gc does that for us.
+		objSetHeader(fromClient(mem), type);
 	}
 
 	void GcImpl::checkFinalizers() {
@@ -1423,35 +950,17 @@ namespace storm {
 	void *GcImpl::allocCode(size_t code, size_t refs) {
 		code = wordAlign(code);
 
-		size_t size = mpsSizeCode(code, refs);
+		size_t size = sizeCode(code, refs);
 		dbg_assert(size > headerSize, L"Can not allocate zero-sized chunks of code!");
 
 		mps_addr_t memory;
+		void *result;
 		util::Lock::L z(codeAllocLock);
 
 		do {
 			check(mps_reserve(&memory, codeAllocPoint, size), L"Out of memory.");
-
-			// Make sure we can scan the newly allocated memory:
-			// 1: Clear all to zero, so that we do not have any rouge pointers confusing MPS.
-			memset(memory, 0, size);
-			// 2: Set the size.
-			MpsObj *obj = (MpsObj *)memory;
-			objSetCode(obj, code);
-			// 3: Set self pointer and # of refs.
-			GcCode *codeRefs = mpsRefsCode(obj);
-			codeRefs->reserved = (byte *)memory + headerSize;
-			void *refPtr = codeRefs;
-			*(size_t *)refPtr = refs;
-			// 4: Init checking data.
-			MPS_INIT_OBJECT(obj, size);
-
+			result = initCode(memory, size, code, refs);
 		} while (!mps_commit(codeAllocPoint, memory, size));
-
-		MPS_VERIFY_SIZE((MpsObj *)memory);
-
-		// Exclude our header, and return the allocated memory.
-		void *result = (byte *)memory + headerSize;
 
 		// Register for finalization if the backend asks us to.
 		if (code::needFinalization())
@@ -1461,7 +970,7 @@ namespace storm {
 	}
 
 	size_t GcImpl::codeSize(const void *alloc) {
-		const MpsObj *o = fromClient(alloc);
+		const Obj *o = fromClient(alloc);
 		if (objIsCode(o)) {
 			return objCodeSize(o);
 		} else {
@@ -1471,8 +980,7 @@ namespace storm {
 	}
 
 	GcCode *GcImpl::codeRefs(void *alloc) {
-		MpsObj *o = fromClient(alloc);
-		return mpsRefsCode(o);
+		return refsCode(fromClient(alloc));
 	}
 
 	void GcImpl::startRamp() {
