@@ -6,6 +6,7 @@
 #include "Gc/Code.h"
 #include "Gc/Gc.h"
 #include "Gc/VTable.h"
+#include "Gc/Format.h"
 #include "Core/GcCode.h"
 #include "Utils/Memory.h"
 
@@ -1351,9 +1352,6 @@ namespace storm {
 	}
 
 	void GcImpl::switchType(void *mem, const GcType *type) {
-		assert(typeOf(mem)->stride == type->stride, L"Can not change size of allocations.");
-		assert(typeOf(mem)->kind == type->kind, L"Can not change kind of allocations.");
-
 		// Seems reasonable. Switch headers!
 		void *t = (byte *)mem - headerSize;
 		objSetHeader((MpsObj *)t, type);
