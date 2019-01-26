@@ -20,9 +20,12 @@ namespace storm {
 	 *
 	 * To differentiate between base-pointers (pointers to the beginning of the actual allocation)
 	 * and client pointers (seen by the rest of Storm), we always pass base pointers as fmt::Obj *
-	 * and client pointers as void *.
+	 * and client pointers as void *. Furthermore, functions taking fmt::Obj * generally start with
+	 * 'objXxx' while the corresponding functions for client pointers do not start with 'obj'.
 	 *
-	 * Objects are always word-aligned.
+	 * Objects are always at least word-aligned.
+	 *
+	 * The function 'init' checks the assumptions made by this object format with assertions.
 	 */
 	namespace fmt {
 		/**
@@ -32,7 +35,7 @@ namespace storm {
 		 * If FMT_CHECK_MEMORY is nonzero, that many words of padding will be appended before and
 		 * after each allocation.
 		 */
-#define FMT_CHECK_MEMORY 1
+#define FMT_CHECK_MEMORY 0
 
 		// Data to check against when memory checking is enabled. TODO: Put the data tightly around
 		// allocations. Currently, there may be a gap of up to 'headerSize' bytes before the barrier
@@ -62,9 +65,14 @@ namespace storm {
 
 		// Align the size of an allocation.
 		static inline size_t alignAlloc(size_t data) {
-			return (data + wordSize - 1) & ~(wordSize - 1);
+			return (data + headerSize - 1) & ~(headerSize - 1);
 		}
 #endif
+
+		// Align to a word.
+		static inline size_t wordAlign(size_t data) {
+			return (data + wordSize - 1) & ~(wordSize - 1);
+		}
 
 		// An array contains 2 words before the actual allocation.
 		static const size_t arrayHeaderSize = OFFSET_OF(GcArray<void *>, v[0]);
@@ -158,7 +166,7 @@ namespace storm {
 		}
 
 		// Add another splatted object to the weak header.
-		static inline size_t weakSplat(WeakHeader *weak) {
+		static inline void weakSplat(WeakHeader *weak) {
 			weak->splatted = (weak->splatted + 0x10) | 0x1;
 		}
 
@@ -359,6 +367,9 @@ namespace storm {
 				return 0;
 			}
 		}
+		static inline size_t size(const void *at) {
+			return objSize(fromClient(at));
+		}
 
 		// Skip an object; return a pointer to whatever is directly after the current object.
 		static inline Obj *objSkip(Obj *obj) {
@@ -366,7 +377,7 @@ namespace storm {
 			void *next = (byte *)obj + objSize(obj);
 			return (Obj *)next;
 		}
-		static inline void *objSkip(void *at) {
+		static inline void *skip(void *at) {
 			return (byte *)at + objSize(fromClient(at));
 		}
 
@@ -481,6 +492,8 @@ namespace storm {
 			// 4: Intialize any padding we need.
 			FMT_INIT_PAD(o, size);
 			FMT_CHECK_SIZE(o);
+
+			return toClient(o);
 		}
 
 		// Initialize a weak array.
@@ -496,6 +509,8 @@ namespace storm {
 			// 4: Intialize any padding we need.
 			FMT_INIT_PAD(o, size);
 			FMT_CHECK_SIZE(o);
+
+			return toClient(o);
 		}
 
 		// Initialize a code allocation.
@@ -513,13 +528,23 @@ namespace storm {
 			// Initialize any padding we need.
 			FMT_INIT_PAD(o, size);
 			FMT_CHECK_SIZE(o);
+
+			return toClient(o);
 		}
 
-
 		/**
-		 * Validation, if present.
+		 * Validation.
 		 */
-#ifdef FMT_CHECK_MEMORY
+
+		// Check our assumptions.
+		void init() {
+			assert(wordSize == sizeof(size_t), L"Invalid word-size");
+			assert(wordSize == sizeof(void *), L"Invalid word-size");
+			assert(wordSize == sizeof(Fwd1), L"Invalid size of MpsFwd1");
+			assert(headerSize == OFFSET_OF(Obj, array), L"Invalid header size.");
+		}
+
+#if FMT_CHECK_MEMORY
 		static String objInfo(const Obj *o) {
 			std::wostringstream to;
 			to << L"Object " << (void *)o << L", header: " << (void *)objHeader(o);
