@@ -17,6 +17,9 @@
 // Check the heap after this many allocations.
 #define MPS_CHECK_INTERVAL 100000
 
+// Use the old scanning (for comparing performance)?
+// #define MPS_OLD_SCAN
+
 
 namespace storm {
 
@@ -33,11 +36,148 @@ namespace storm {
 	 */
 	using namespace fmt;
 
+
 	// Skip objects. Figure out the size of an object, and return a pointer to after the end of it
 	// (including the next object's header, it seems).
 	static mps_addr_t mpsSkip(mps_addr_t at) {
 		return fmt::skip(at);
 	}
+
+	// Create a forwarding object at 'at' referring to 'to'. These must be recognized by mpsSize, mpsSkip and mpsScan.
+	static void mpsMakeFwd(mps_addr_t at, mps_addr_t to) {
+		fmt::makeFwd(at, to);
+	}
+
+	// Check if the object is a forwarding object.
+	static mps_addr_t mpsIsFwd(mps_addr_t at) {
+		return fmt::isFwd(at);
+	}
+
+	// Create a padding object. These must be recognized by mpsSize, mpsSkip and mpsScan. Note: Does
+	// not work with client pointers.
+	static void mpsMakePad(mps_addr_t at, size_t size) {
+		fmt::objMakePad((Obj *)at, size);
+	}
+
+	/**
+	 * Thread description.
+	 */
+	struct GcThread {
+		// # of times attached.
+		nat attachCount;
+
+		// # of allocations since last check for finalization messages.
+		nat lastFinalization;
+
+		// MPS thread description.
+		mps_thr_t thread;
+
+		// Allocation point.
+		mps_ap_t ap;
+
+		// Root for this thread.
+		mps_root_t root;
+
+		// All threads running on this thread.
+		const os::InlineSet<os::UThreadStack> *stacks;
+
+#if MPS_CHECK_MEMORY
+		// How many allocations ago did we validate memory?
+		nat lastCheck;
+#endif
+	};
+
+
+
+
+#ifndef MPS_OLD_SCAN
+
+	/**
+	 * Custom scanning for MPS.
+	 *
+	 * We emulate the effect of the macro MPS_SCAN_BEGIN here.
+	 */
+	struct MpsScanner {
+		typedef mps_res_t Result;
+		typedef mps_ss_t Source;
+
+		// State, as defined in MPS_SCAN_BEGIN.
+		mps_ss_t _ss;
+		mps_word_t _mps_zs;
+		mps_word_t _mps_w;
+		mps_word_t _mps_ufs;
+
+		MpsScanner(mps_ss_t ss) : _ss(ss), _mps_zs(ss->_zs), _mps_w(ss->_w), _mps_ufs(ss->_ufs) {}
+
+		~MpsScanner() {
+			_ss->_ufs = _mps_ufs;
+		}
+
+		inline bool fix1(mps_addr_t ptr) {
+			mps_word_t _mps_wt;
+			return MPS_FIX1(_ss, ptr);
+		}
+
+		inline mps_res_t fix2(mps_addr_t *ptr) {
+			return MPS_FIX2(_ss, ptr);
+		}
+
+		inline bool fixHeader1(GcType *ptr) {
+			if (ptr) {
+				// Note: We don't return the result here, which is not ideal, but should work fine.
+				mps_addr_t *d = (mps_addr_t *)&(ptr->type);
+				mps_word_t _mps_wt;
+				MPS_FIX12(_ss, d);
+			}
+
+			// We only scan the 'type' member in the header. No need for step 2.
+			return false;
+		}
+
+		inline Result fixHeader2(GcType **) { return MPS_RES_OK; }
+	};
+
+	static mps_res_t mpsScan(mps_ss_t ss, mps_addr_t base, mps_addr_t limit) {
+		return fmt::Scan<MpsScanner>::objects(ss, base, limit);
+	}
+
+	// Stack dummy used to recognize when the MPS wants to scan an entire stack. This is the largest
+	// possible address (word aligned). Ie. 0xFF...F0
+	static void *const stackDummy = (void *)((size_t)-1 & ~(wordSize - 1));
+
+	// Note: We're checking all word-aligned positions as we need to make sure we're scanning
+	// the return addresses into functions (which are also in this pool). MPS currently scans
+	// EIP as well, which is good as the currently executing function might otherwise be moved.
+	static mps_res_t mpsScanThread(mps_ss_t ss, void *base, void *limit, void *closure) {
+		GcThread *thread = (GcThread *)closure;
+		void **from = (void **)base;
+		void **to = (void **)limit;
+		mps_res_t r;
+
+		if (limit == stackDummy) {
+			// We shall scan the entire stack! This is a bit special, as we will more or less
+			// completely ignore what MPS told us and figure it out ourselves.
+			mps_decrease_scanned(ss, (char *)limit - (char *)base);
+
+			size_t scanned = 0;
+			r = storm::Scan<MpsScanner>::stacks(ss, *thread->stacks, base, &scanned);
+
+			// Tell the MPS what we did.
+			mps_increase_scanned(ss, scanned);
+		} else {
+			// Just scan as if it was an array.
+			r = storm::Scan<MpsScanner>::array(ss, base, limit);
+		}
+
+		return r;
+	}
+
+	static mps_res_t mpsScanArray(mps_ss_t ss, void *base, size_t count) {
+		return storm::Scan<MpsScanner>::array(ss, base, count);
+	}
+
+#else
+
 
 	// Helper for interpreting and scanning a GcType block.
 #define FIX_HEADER(header)									\
@@ -171,52 +311,6 @@ namespace storm {
 		} MPS_SCAN_END(ss);
 		return MPS_RES_OK;
 	}
-
-	// Create a forwarding object at 'at' referring to 'to'. These must be recognized by mpsSize, mpsSkip and mpsScan.
-	static void mpsMakeFwd(mps_addr_t at, mps_addr_t to) {
-		fmt::makeFwd(at, to);
-	}
-
-	// Check if the object is a forwarding object.
-	static mps_addr_t mpsIsFwd(mps_addr_t at) {
-		return fmt::isFwd(at);
-	}
-
-	// Create a padding object. These must be recognized by mpsSize, mpsSkip and mpsScan. Note: Does
-	// not work with client pointers.
-	static void mpsMakePad(mps_addr_t at, size_t size) {
-		fmt::objMakePad((Obj *)at, size);
-	}
-
-
-	/**
-	 * Thread description.
-	 */
-	struct GcThread {
-		// # of times attached.
-		nat attachCount;
-
-		// # of allocations since last check for finalization messages.
-		nat lastFinalization;
-
-		// MPS thread description.
-		mps_thr_t thread;
-
-		// Allocation point.
-		mps_ap_t ap;
-
-		// Root for this thread.
-		mps_root_t root;
-
-		// All threads running on this thread.
-		const os::InlineSet<os::UThreadStack> *stacks;
-
-#if MPS_CHECK_MEMORY
-		// How many allocations ago did we validate memory?
-		nat lastCheck;
-#endif
-	};
-
 
 	/**
 	 * Platform specific scanning of threads.
@@ -363,6 +457,8 @@ namespace storm {
 		return MPS_RES_OK;
 	}
 
+#endif
+
 
 	// Check return codes from MPS.
 	static void check(mps_res_t result, const wchar_t *msg) {
@@ -409,7 +505,7 @@ namespace storm {
 	GcImpl::GcImpl(size_t initialArena, Nat finalizationInterval) : finalizationInterval(finalizationInterval) {
 		// We work under these assumptions.
 		fmt::init();
-		assert(vtableOffset >= sizeof(void *), L"Invalid vtable offset (initialization failed?)");
+		assert(vtable::allocOffset() >= sizeof(void *), L"Invalid vtable offset (initialization failed?)");
 
 		// Note: This is defined in Gc/mps.c, and only aids in debugging.
 		mpsInit();

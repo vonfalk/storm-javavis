@@ -275,6 +275,11 @@ namespace storm {
 			return (const Header *)(obj->info & ~size_t(0x3));
 		}
 
+		// Get the header of this allocation. Assumes 'objIsCode' returned false.
+		static inline Header *objHeader(Obj *obj) {
+			return (Header *)(obj->info & ~size_t(0x3));
+		}
+
 		// Check if this object is finalized. Assumes 'objIsCode' returned false.
 		static inline bool objIsFinalized(const Obj *obj) {
 			return (obj->info & size_t(0x2)) != 0;
@@ -293,7 +298,7 @@ namespace storm {
 		}
 
 		// Replace the header of this allocation. Assumes 'objIsCode' returned false. Preserves any other flags.
-		static inline void objReplaceHeader(Obj *obj, const Header *newHeader) {
+		static inline void objReplaceHeader(Obj *obj, const GcType *newHeader) {
 			obj->info &= size_t(0x3);
 			obj->info |= size_t(newHeader);
 		}
@@ -651,11 +656,15 @@ namespace storm {
 				return Result();
 			}
 
-			static inline Result fixHeader(Scanner &s, Obj *obj, const Header *header) {
-				if (s.fixHeader1(header)) {
-					s.fixHeader2(&header);
-					objReplaceHeader(obj, header);
+			static inline Result fixHeader(Scanner &s, Obj *obj, Header *header) {
+				if (s.fixHeader1(&header->obj)) {
+					GcType *t = &header->obj;
+					Result r = s.fixHeader2(&t);
+					objReplaceHeader(obj, t);
+					return r;
 				}
+
+				return Result();
 			}
 
 			// Helper for interpreting and scanning a vtable.
@@ -666,7 +675,7 @@ namespace storm {
 				if (s.fix1(d)) {							\
 					d = (byte *)d - vtable::allocOffset();	\
 					r = s.fix2(&d);							\
-					if (r == Result())						\
+					if (r != Result())						\
 						return r;							\
 					d = (byte *)d + vtable::allocOffset();	\
 					*(void **)(base) = d;					\
@@ -688,7 +697,7 @@ namespace storm {
 		public:
 			// Scan a set of objects stat are stored back-to-back. Assumes the entire region
 			// [base,limit) is filled entirely with objects.
-			static Result scan(Source source, void *base, void *limit) {
+			static Result objects(Source source, void *base, void *limit) {
 				Scanner s(source);
 				Result r;
 				for (void *at = base; at < limit; at = fmt::skip(at)) {
@@ -726,7 +735,7 @@ namespace storm {
 						code::updatePtrs(at, c);
 					} else {
 						// Scan the regular object.
-						const Header *h = objHeader(o);
+						Header *h = objHeader(o);
 						void *tmp = at;
 
 						switch (h->type) {
@@ -745,7 +754,7 @@ namespace storm {
 							if (r != Result())
 								return r;
 
-							GcType **data = (GcType **)((byte *)pos + h->obj.offset[0]);
+							GcType **data = (GcType **)((byte *)tmp + h->obj.offset[0]);
 							if (s.fixHeader1(*data)) {
 								r = s.fixHeader2(data);
 								if (r != Result())
@@ -774,6 +783,7 @@ namespace storm {
 								return r;
 
 							tmp = (byte *)tmp + arrayHeaderSize;
+							size_t stride = h->obj.stride;
 							size_t count = weakCount(&o->weak);
 							for (size_t i = 0; i < count; i++, tmp = (byte *)tmp + stride) {
 								for (size_t j = 0; j < h->obj.count; j++) {
@@ -804,6 +814,8 @@ namespace storm {
 						}
 					}
 				}
+
+				return Result();
 			}
 		};
 	}

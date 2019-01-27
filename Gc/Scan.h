@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Utils/Platform.h"
+#include "Core/GcType.h"
 #include "OS/UThread.h"
 
 #if !defined(X86) && !defined(X64)
@@ -8,10 +9,6 @@
 #endif
 
 namespace storm {
-
-	namespace fmt {
-		union Header;
-	}
 
 	/**
 	 * Generic implementation of stack- and object scanning.
@@ -42,6 +39,19 @@ namespace storm {
 		// Shorthand for stacks.
 		typedef os::InlineSet<os::UThreadStack> StackSet;
 
+		// Scan an array of pointers.
+		static Result array(Source source, void *base, size_t count) {
+			void **from = (void **)base;
+			Scanner s(source);
+			for (size_t i = 0; i < count; i++) {
+				Result r = fix12(s, from + i);
+				if (r != Result())
+					return r;
+			}
+
+			return Result();
+		}
+
 		// Scan an array of pointers. Also supports scanning a part of a stack where the full extent
 		// of the stack is known.
 		static Result array(Source source, void *base, void *limit) {
@@ -64,7 +74,6 @@ namespace storm {
 		// Additionally, returns the number of bytes scanned, which may be interesting for some GC
 		// implementations.
 		static Result stacks(Source source, const StackSet &stacks, void *current, size_t *scanned) {
-			void **curr = (void **)current;
 			size_t bytesScanned = 0;
 
 			// We scan all UThreads on this thread, if one of them is the currently running thread
@@ -86,7 +95,7 @@ namespace storm {
 			// stack grows towards lower addresses.
 
 			// Remember we did not find a running stack.
-			to = null;
+			void **to = null;
 
 			Scanner s(source);
 			StackSet::iterator end = stacks.end();
@@ -102,7 +111,7 @@ namespace storm {
 					// contain sensible data. For example, 'desc' is probably null even if this
 					// stack is not the currently running stack. If 'stackLimit' is also null we
 					// will not only be confused, but we will also crash.
-					if (stack->intializing)
+					if (stack->initializing)
 						continue;
 
 					// Is this the currently scheduled UThread for this thread?
@@ -138,13 +147,18 @@ namespace storm {
 				PLN(L"------------ We found an UThread in the process of switching! ------------");
 #endif
 			} else {
-				bytesScanned += (char *)to - (char *)curr;
-				for (; curr < to; curr++) {
-					Result r = fix12(s, low);
+				bytesScanned += (char *)to - (char *)current;
+				for (void **at = (void **)current; at < to; at++) {
+					Result r = fix12(s, at);
 					if (r != Result())
 						return r;
 				}
 			}
+
+			if (scanned)
+				*scanned = bytesScanned;
+
+			return Result();
 		}
 
 	};
@@ -184,7 +198,7 @@ namespace storm {
 		// Called by the object scanning in "Format.h" for each object header, in case those need
 		// special treatment. Works like 'fix1' and 'fix2', except that both steps require proper
 		// base pointers, as indicated by the type.
-		inline bool fixHeader1(const fmt::Header *header) { return false; }
-		inline Result fixHeader2(const fmt::Header **header) { return Result(); }
+		inline bool fixHeader1(GcType *header) { return false; }
+		inline Result fixHeader2(GcType **header) { return Result(); }
 	};
 }
