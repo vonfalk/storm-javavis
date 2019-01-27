@@ -1,0 +1,190 @@
+#pragma once
+
+#include "Utils/Platform.h"
+#include "OS/UThread.h"
+
+#if !defined(X86) && !defined(X64)
+#error "Stack scanning for machines other than X86 and X86-64 is not implemented yet."
+#endif
+
+namespace storm {
+
+	namespace fmt {
+		union Header;
+	}
+
+	/**
+	 * Generic implementation of stack- and object scanning.
+	 *
+	 * The stack scanning can be used regardless of what object format is used, but the
+	 * heap-scanning functions assume that the object format implemented in "Format.h" is used.
+	 *
+	 * How objects are scanned are described by the template parameter 'Scanner'. See the
+	 * implementation of 'NullScanner' below to see what is required by a scanner implementation.
+	 *
+	 * TODO: We could skip return values and use exceptions exclusively, and use exceptions instead,
+	 * as suggested by MPS.
+	 */
+	template <class Scanner>
+	struct Scan {
+	private:
+		typedef typename Scanner::Result Result;
+		typedef typename Scanner::Source Source;
+
+		// Helper functions. The public interface is below.
+		static inline Result fix12(Scanner &s, void **ptr) {
+			if (s.fix1(*ptr))
+				return s.fix2(ptr);
+			return Result();
+		}
+
+	public:
+		// Shorthand for stacks.
+		typedef os::InlineSet<os::UThreadStack> StackSet;
+
+		// Scan an array of pointers. Also supports scanning a part of a stack where the full extent
+		// of the stack is known.
+		static Result array(Source source, void *base, void *limit) {
+			void **from = (void **)base;
+			void **to = (void **)limit;
+
+			Scanner s(source);
+			for (; from != to; from++) {
+				Result r = fix12(s, from);
+				if (r != Result())
+					return r;
+			}
+
+			return Result();
+		}
+
+		// Scan all UThreads running on a specific thread. 'stacks' is the set of all stacks that
+		// are tied to this particular thread. Out of those threads, one may be scheduled
+		// currently. The extent of this thread is specified by 'current' (the lower end, on X86).
+		// Additionally, returns the number of bytes scanned, which may be interesting for some GC
+		// implementations.
+		static Result stacks(Source source, const StackSet &stacks, void *current, size_t *scanned) {
+			void **curr = (void **)current;
+			size_t bytesScanned = 0;
+
+			// We scan all UThreads on this thread, if one of them is the currently running thread
+			// their 'desc' is null. In that case we delay scanning that thread until after the
+			// other threads. If we do not find an 'active' thread, we're in the middle of a thread
+			// switch, which means that we can scan all threads as if they were sleeping.
+
+			// Aside from that, we need to be aware that UThreads may be executed by another thread
+			// during detours. The UThreads will always be located inside the stacks set on the
+			// thread where they are intended to run. They can not be moved around while they
+			// contain anything useful since it is not possible to move the UThreads between sets
+			// atomically. Instead, the UThreadStack objects participating in a thread switch are
+			// marked with a 'detourActive' != 0. Any such UThread shall be ignored during stack
+			// scanning since they are considered to belong to another thread. The UThread is
+			// instead associated with the proper thread by following the pointer inside the
+			// 'detourTo' member.
+
+			// Note: This code currently contains bits that are specific to X86 CPUs, e.g. that the
+			// stack grows towards lower addresses.
+
+			// Remember we did not find a running stack.
+			to = null;
+
+			Scanner s(source);
+			StackSet::iterator end = stacks.end();
+			for (StackSet::iterator i = stacks.begin(); i != end; ++i) {
+				// If this thread is used as a detour thread, do not scan it at all.
+				const os::UThreadStack *first = *i;
+				if (first->detourActive)
+					continue;
+
+				// Examine the main stack and all detours for this thread.
+				for (const os::UThreadStack *stack = first; stack; stack = stack->detourTo) {
+					// Is this thread being initialized? During initialization, a stack does not
+					// contain sensible data. For example, 'desc' is probably null even if this
+					// stack is not the currently running stack. If 'stackLimit' is also null we
+					// will not only be confused, but we will also crash.
+					if (stack->intializing)
+						continue;
+
+					// Is this the currently scheduled UThread for this thread?
+					if (!stack->desc) {
+						// We should not find two of these for any given thread.
+						dbg_assert(to == null, L"We found two potential main stacks.");
+
+						// This is the main stack. Scan it later!
+						to = (void **)stack->stackLimit;
+						continue;
+					}
+
+					// All is well. Commence scanning!
+					void **low = (void **)stack->desc->low;
+					void **high = (void **)stack->stackLimit;
+					bytesScanned += (char *)high - (char *)low;
+					for (; low < high; low++) {
+						Result r = fix12(s, low);
+						if (r != Result())
+							return r;
+					}
+				}
+			}
+
+			// If we are right in the middle of a thread switch, we will fail to find a main
+			// stack. This means we have already scanned all stacks, and thus we do not need to do
+			// anything more.
+			if (to == null) {
+#ifdef DEBUG
+				// To see if this ever happens, and if it is handled correctly. This is *really*
+				// rare, as we have to hit a window of ~6 machine instructions when pausing another
+				// thread to see this.
+				PLN(L"------------ We found an UThread in the process of switching! ------------");
+#endif
+			} else {
+				bytesScanned += (char *)to - (char *)curr;
+				for (; curr < to; curr++) {
+					Result r = fix12(s, low);
+					if (r != Result())
+						return r;
+				}
+			}
+		}
+
+	};
+
+
+	/**
+	 * Simple implementation of a scanner for illustration purposes. Contains all members required
+	 * by a full scanner.
+	 *
+	 * This class is instantiated on the stack inside the scanning function, in order to provide a
+	 * place where implementations may place variables that benefit from being inlined by the
+	 * compiler, and hopefully placed in registers.
+	 */
+	struct NullScanner {
+		// Describes the type of results returned from the 'fix' functions, and subsequently also by
+		// the scanning functions. The value Result() is considered 'success'.
+		typedef int Result;
+
+		// Where we get the scanning information from initially. This class/struct need to be
+		// constructible from an instance of this type.
+		typedef void *Source;
+
+		// Constructor from 'Source'.
+		NullScanner(Source source) {}
+
+		// Called once for each reference. Assumed to be a quick "early-out" check that the GC can
+		// use to quickly discard references that are not interesting at the moment. We also assume
+		// that this check can be called for internal pointers to objects without harm. Returns
+		// 'true' if 'fix2' need to be called.
+		inline bool fix1(void *ptr) { return false; }
+
+		// Called whenever a reference passes the check in 'fix1'. If required by the GC, only base
+		// pointers to objects may be passed to this function. Note that the pointer may be altered
+		// by this function in case the object moved.
+		inline Result fix2(void **ptr) { return Result(); }
+
+		// Called by the object scanning in "Format.h" for each object header, in case those need
+		// special treatment. Works like 'fix1' and 'fix2', except that both steps require proper
+		// base pointers, as indicated by the type.
+		inline bool fixHeader1(const fmt::Header *header) { return false; }
+		inline Result fixHeader2(const fmt::Header **header) { return Result(); }
+	};
+}
