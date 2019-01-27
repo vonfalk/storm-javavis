@@ -6,6 +6,7 @@
 #include "Gc/Code.h"
 #include "Gc/Gc.h"
 #include "Gc/VTable.h"
+#include "Gc/Scan.h"
 #include "Gc/Format.h"
 #include "Core/GcCode.h"
 #include "Utils/Memory.h"
@@ -233,9 +234,6 @@ namespace storm {
 	// Stack dummy used to recognize when the MPS wants to scan an entire stack. This is the largest
 	// possible address (word aligned). Ie. 0xFF...F0
 	static void *const stackDummy = (void *)((size_t)-1 & ~(wordSize - 1));
-
-	// Get the read lower bound for the stack.
-	static void *mpsStackLimit(GcThread *thread);
 
 	// Note: We're checking all word-aligned positions as we need to make sure we're scanning
 	// the return addresses into functions (which are also in this pool). MPS currently scans

@@ -1,6 +1,8 @@
 #pragma once
 #include "Utils/Memory.h"
 #include "Utils/Bitwise.h"
+#include "Scan.h"
+#include "VTable.h"
 
 namespace storm {
 
@@ -285,9 +287,15 @@ namespace storm {
 		}
 
 		// Set the header to indicate a regular allocation described by 'header'. Assumes 'header'
-		// is aligned to 'headerAlign' and compatible with MpsHeader (e.g. a single size_t, CppType, ...).
+		// is aligned to 'headerAlign' and compatible with Header (e.g. a single size_t, CppType, ...).
 		static inline void objSetHeader(Obj *obj, const void *header) {
 			obj->info = size_t(header);
+		}
+
+		// Replace the header of this allocation. Assumes 'objIsCode' returned false. Preserves any other flags.
+		static inline void objReplaceHeader(Obj *obj, const Header *newHeader) {
+			obj->info &= size_t(0x3);
+			obj->info |= size_t(newHeader);
 		}
 
 		// Mark this allocation as finalized. Assumes it is not a code allocation.
@@ -626,5 +634,178 @@ namespace storm {
 		}
 #endif
 
+
+		/**
+		 * Scanning of objects with the standard layout.
+		 */
+		template <class Scanner>
+		struct Scan {
+		private:
+			typedef typename Scanner::Result Result;
+			typedef typename Scanner::Source Source;
+
+			// Helper functions. The public interface is below.
+			static inline Result fix12(Scanner &s, void **ptr) {
+				if (s.fix1(*ptr))
+					return s.fix2(ptr);
+				return Result();
+			}
+
+			static inline Result fixHeader(Scanner &s, Obj *obj, const Header *header) {
+				if (s.fixHeader1(header)) {
+					s.fixHeader2(&header);
+					objReplaceHeader(obj, header);
+				}
+			}
+
+			// Helper for interpreting and scanning a vtable.
+			// We assume vtables are at offset 0.
+#define FMT_FIX_VTABLE(base)								\
+			do {											\
+				void *d = *(void **)(base);					\
+				if (s.fix1(d)) {							\
+					d = (byte *)d - vtable::allocOffset();	\
+					r = s.fix2(&d);							\
+					if (r == Result())						\
+						return r;							\
+					d = (byte *)d + vtable::allocOffset();	\
+					*(void **)(base) = d;					\
+				}											\
+			} while (false)
+
+			// Helper for interpreting and scanning a block of data described by a GcType.
+#define FMT_FIX_GCTYPE(header, start, base)								\
+			do {														\
+				for (size_t _i = (start); _i < (header)->obj.count; _i++) { \
+					size_t offset = (header)->obj.offset[_i];			\
+					void **data = (void **)((byte *)(base) + offset);	\
+					r = fix12(s, data);									\
+					if (r != Result())									\
+						return r;										\
+				}														\
+			} while (false)
+
+		public:
+			// Scan a set of objects stat are stored back-to-back. Assumes the entire region
+			// [base,limit) is filled entirely with objects.
+			static Result scan(Source source, void *base, void *limit) {
+				Scanner s(source);
+				Result r;
+				for (void *at = base; at < limit; at = fmt::skip(at)) {
+					Obj *o = fromClient(at);
+					FMT_CHECK_OBJ(o);
+
+					if (objIsCode(o)) {
+						// Scan the code segment.
+						GcCode *c = refsCode(o);
+
+						// Scan our self-pointer to make sure that this object will be scanned
+						// whenever it is moved.
+						r = fix12(s, &c->reserved);
+						if (r != Result())
+							return r;
+
+#ifdef SLOW_DEBUG
+						dbg_assert(c->reserved == at, L"Invalid self-pointer!");
+#endif
+
+						for (size_t i = 0; i < c->refCount; i++) {
+							GcCodeRef &ref = c->refs[i];
+#ifdef SLOW_DEBUG
+							dbg_assert(ref.offset < objCodeSize(o), L"Code offset is out of bounds!");
+#endif
+							// Only some kind of references need to be scanned.
+							if (ref.kind & 0x01) {
+								r = fix12(s, &ref.pointer);
+								if (r != Result())
+									return r;
+							}
+						}
+
+						// Update the pointers in the code blob as well.
+						code::updatePtrs(at, c);
+					} else {
+						// Scan the regular object.
+						const Header *h = objHeader(o);
+						void *tmp = at;
+
+						switch (h->type) {
+						case GcType::tFixedObj:
+							FMT_FIX_VTABLE(tmp);
+							// Fall thru.
+						case GcType::tFixed:
+							r = fixHeader(s, o, h);
+							if (r != Result())
+								return r;
+							FMT_FIX_GCTYPE(h, 0, tmp);
+							break;
+						case GcType::tType: {
+							FMT_FIX_VTABLE(tmp);
+							r = fixHeader(s, o, h);
+							if (r != Result())
+								return r;
+
+							GcType **data = (GcType **)((byte *)pos + h->obj.offset[0]);
+							if (s.fixHeader1(*data)) {
+								r = s.fixHeader2(data);
+								if (r != Result())
+									return r;
+							}
+
+							FMT_FIX_GCTYPE(h, 1, tmp);
+							break;
+						}
+						case GcType::tArray: {
+							r = fixHeader(s, o, h);
+							if (r != Result())
+								return r;
+
+							tmp = (byte *)tmp + arrayHeaderSize;
+							size_t stride = h->obj.stride;
+							size_t count = o->array.count;
+							for (size_t i = 0; i < count; i++, tmp = (byte *)tmp + stride) {
+								FMT_FIX_GCTYPE(h, 0, tmp);
+							}
+							break;
+						}
+						case GcType::tWeakArray: {
+							r = fixHeader(s, o, h);
+							if (r != Result())
+								return r;
+
+							tmp = (byte *)tmp + arrayHeaderSize;
+							size_t count = weakCount(&o->weak);
+							for (size_t i = 0; i < count; i++, tmp = (byte *)tmp + stride) {
+								for (size_t j = 0; j < h->obj.count; j++) {
+									size_t offset = h->obj.offset[j];
+									void **data = (void **)((byte *)tmp + offset);
+									if (s.fix1(*data)) {
+										r = s.fix2(data);
+										if (r != Result())
+											return r;
+										// Splatted?
+										if (*data == null)
+											weakSplat(&o->weak);
+									}
+								}
+							}
+							break;
+						}
+#ifdef SLOW_DEBUG
+						case pad0:
+						case pad:
+						case fwd1:
+						case fwd:
+							break;
+						default:
+							dbg_assert(false, L"Unknown object type scanned!");
+							break;
+#endif
+						}
+					}
+				}
+			}
+		};
 	}
+
 }
