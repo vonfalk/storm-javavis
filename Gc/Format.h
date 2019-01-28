@@ -1,7 +1,9 @@
 #pragma once
 #include "Utils/Memory.h"
 #include "Utils/Bitwise.h"
+#include "Core/GcCode.h"
 #include "Scan.h"
+#include "Code.h"
 #include "VTable.h"
 
 namespace storm {
@@ -283,6 +285,9 @@ namespace storm {
 		// Check if this object is finalized. Assumes 'objIsCode' returned false.
 		static inline bool objIsFinalized(const Obj *obj) {
 			return (obj->info & size_t(0x2)) != 0;
+		}
+		static inline bool isFinalized(const void *obj) {
+			return objIsFinalized(fromClient(obj));
 		}
 
 		// Set the header to indicate a code allocation of 'codeSize' bytes. 'codeSize' is assumed
