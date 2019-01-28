@@ -1038,7 +1038,7 @@ namespace storm {
 
 	bool GcImpl::liveObject(RootObject *o) {
 		// See if we finalized the object. If so, it is not live anymore.
-		return o && !objIsFinalized(fromClient(o));
+		return o && !isFinalized(o);
 	}
 
 	void *GcImpl::allocCode(size_t code, size_t refs) {

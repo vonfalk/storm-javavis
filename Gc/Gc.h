@@ -15,6 +15,7 @@
  */
 #include "Zero.h"
 #include "Mps/Impl.h"
+#include "SMM/Impl.h"
 
 #ifndef STORM_HAS_GC
 // If this happens, an unselected GC has been selected in Core/Storm.h.
