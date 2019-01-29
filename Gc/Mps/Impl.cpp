@@ -150,8 +150,6 @@ namespace storm {
 	// EIP as well, which is good as the currently executing function might otherwise be moved.
 	static mps_res_t mpsScanThread(mps_ss_t ss, void *base, void *limit, void *closure) {
 		GcThread *thread = (GcThread *)closure;
-		void **from = (void **)base;
-		void **to = (void **)limit;
 		mps_res_t r;
 
 		if (limit == stackDummy) {
