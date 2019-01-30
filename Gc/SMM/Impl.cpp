@@ -8,7 +8,7 @@
 
 namespace storm {
 
-	GcImpl::GcImpl(size_t initialArenaSize, Nat finalizationInterval) {}
+	GcImpl::GcImpl(size_t initialArenaSize, Nat finalizationInterval) : arena(initialArenaSize) {}
 
 	void GcImpl::destroy() {}
 

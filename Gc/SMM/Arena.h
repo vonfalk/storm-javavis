@@ -18,11 +18,27 @@ namespace storm {
 		 */
 		class Arena {
 		public:
+			// Create the arena, initially try to reserve (but not commit) 'initialSize' bytes of
+			// memory for the arena.
+			Arena(size_t initialSize);
+
+			// Destroy.
+			~Arena();
 
 		private:
 			// No copying!
 			Arena(const Arena &o);
 			Arena &operator =(const Arena &o);
+
+			// Granularity of allocations (sometimes not equal to the pagesize).
+			size_t allocGranularity;
+
+			// Current pagesize. This is the granularity with which we can affect memory protection
+			// in an allocation.
+			size_t pageSize;
+
+			// Platform-specific initialization.
+			void platformInit();
 		};
 
 	}
