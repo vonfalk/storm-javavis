@@ -3,6 +3,8 @@
 #if STORM_GC == STORM_GC_SMM
 #define STORM_HAS_GC
 
+#include "Arena.h"
+
 namespace storm {
 
 	/**
@@ -97,6 +99,10 @@ namespace storm {
 		void checkMemory();
 		void checkMemory(const void *object, bool recursive);
 		void checkMemoryCollect();
+
+	private:
+		// The arena we're using.
+		smm::Arena arena;
 	};
 
 }
