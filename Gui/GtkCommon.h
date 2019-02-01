@@ -9,6 +9,7 @@
 #include "CairoGL.h"
 #include <gtk/gtk.h>
 #include <gtk/gtkx.h>
+#include <gdk/gdkwayland.h>
 #include "GtkLayout.h"
 
 // Some headers define 'Bool' for us. That is not good...

@@ -157,21 +157,23 @@ namespace gui {
 	GlContext *GlContext::create(Engine &e) {
 		// Should be safe to call 'app' here since it is created by now.
 		App *app = gui::app(e);
-		// Note: We should support Wayland as well.
-		Display *display = GDK_DISPLAY_XDISPLAY(app->defaultDisplay());
 
 #if GTK_RENDER_IS_SW(GTK_MODE)
 		return new GlSoftwareContext();
 #endif
 
-		// It seems GLX is faster in practice. It is also more stable using X11 forwarding. Might be
-		// required for Wayland support, though. EGL works fine when running locally, so it is a
-		// good fallback.
-		GlContext *result = GlxContext::create(display);
+		GlContext *result = null;
+		GdkDisplay *gdkDisplay = app->defaultDisplay();
+		if (GDK_IS_WAYLAND_DISPLAY(gdkDisplay)) {
+			result = createWaylandContext(gdkDisplay);
+		} else if (GDK_IS_X11_DISPLAY(gdkDisplay)) {
+			result = createX11Context(gdkDisplay);
+		} else {
+			throw GuiError(L"You are using an unsupported windowing system. X11 and Wayland are supported.");
+		}
+
 		if (!result)
-			result = EglContext::create(display);
-		if (!result)
-			throw GuiError(L"Failed to initialize OpenGL");
+			throw GuiError(L"Failed to initialize OpenGL.");
 
 		result->device = result->createDevice();
 		if (result->device) {
@@ -182,6 +184,24 @@ namespace gui {
 		}
 
 		return result;
+	}
+
+	GlContext *GlContext::createX11Context(GdkDisplay *gdkDisplay) {
+		Display *display = GDK_DISPLAY_XDISPLAY(gdkDisplay);
+
+		// It seems GLX is faster in practice. It is also more stable using X11 forwarding. Might be
+		// required for Wayland support, though. EGL works fine when running locally, so it is a
+		// good fallback.
+		GlContext *result = GlxContext::create(display);
+		if (!result)
+			result = EglContext::create(display);
+		return result;
+	}
+
+	GlContext *GlContext::createWaylandContext(GdkDisplay *gdkDisplay) {
+		// EGL is the only option for Wayland.
+		GdkWaylandDisplay *display = GDK_WAYLAND_DISPLAY(gdkDisplay);
+		return EglContext::create(gdk_wayland_display_get_wl_display(display));
 	}
 
 	void GlContext::destroyDevice() {
@@ -240,6 +260,21 @@ namespace gui {
 
 	EglContext *EglContext::create(Display *xDisplay) {
 		EGLDisplay display = eglGetDisplay(xDisplay);
+		if (!eglInitialize(display, NULL, NULL))
+			return null;
+
+		EglContext *me = new EglContext(display);
+		if (!me->initialize()) {
+			delete me;
+			return null;
+		} else {
+			return me;
+		}
+	}
+
+	EglContext *EglContext::create(struct wl_display *wlDisplay) {
+		EGLDisplay display = eglGetDisplay((NativeDisplayType)wlDisplay);
+		// Initialization has most likely been done already, but initializing it again is not bad.
 		if (!eglInitialize(display, NULL, NULL))
 			return null;
 

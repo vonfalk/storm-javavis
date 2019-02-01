@@ -149,6 +149,12 @@ namespace gui {
 		// Destroy the current device. Called by subclasses to destroy the cairo_device before any
 		// GL context is destroyed.
 		void destroyDevice();
+
+		// Create a device usable with X11.
+		static GlContext *createX11Context(GdkDisplay *display);
+
+		// Create a device usable with Wayland.
+		static GlContext *createWaylandContext(GdkDisplay *display);
 	};
 
 	/**
@@ -196,6 +202,9 @@ namespace gui {
 
 		// Create an EGL device, returns null on failure.
 		static EglContext *create(Display *display);
+
+		// Create an EGL device for Wayland. Returns null on failure.
+		static EglContext *create(struct wl_display *display);
 
 		// Create a surface.
 		virtual GlSurface *createSurface(GdkWindow *window, Size size);
