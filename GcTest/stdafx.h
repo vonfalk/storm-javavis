@@ -4,3 +4,6 @@
 #include "Core/Storm.h"
 #include "Gc/Config.h"
 #include "Gc/Gc.h"
+
+
+using namespace storm;

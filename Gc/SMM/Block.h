@@ -21,13 +21,23 @@ namespace storm {
 		 */
 		class Block {
 		public:
-			Block(size_t size) : size(size), filled(0) {}
+			Block(size_t size) : size(size), committed(0), reserved(0) {}
 
 			// Current size (excluding the block itself).
-			size_t size;
+			const size_t size;
 
-			// Amount of memory used (excluding the block itself).
-			size_t filled;
+			// Amount of memory committed (excluding the block itself).
+			size_t committed;
+
+			// Amount of memory reserved. 'reserved >= committed'. Memory that is reserved but not
+			// committed is being initialized, and can not be assumed to contain usable data.
+			size_t reserved;
+
+			// Get a pointer to a particular byte of the memory in this block.
+			inline void *mem(size_t offset) {
+				void *ptr = this;
+				return (byte *)ptr + sizeof(Block) + offset;
+			}
 
 		private:
 			// No copying!
