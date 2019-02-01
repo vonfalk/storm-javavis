@@ -3,6 +3,7 @@
 
 #if STORM_GC == STORM_GC_SMM
 
+#include "Gc/Gc.h"
 #include "Gc/Scan.h"
 #include "Gc/Format.h"
 
@@ -18,14 +19,60 @@ namespace storm {
 		return false;
 	}
 
-	GcImpl::ThreadData GcImpl::attachThread() {
-		return null;
+	struct ThreadInfo {
+		smm::Allocator alloc;
+
+		ThreadInfo(smm::Arena &arena) : alloc(arena) {}
+	};
+
+	static ThreadInfo *currInfo = null;
+	static GcImpl *currOwner = null;
+
+	GcImpl::ThreadData GcImpl::currentData() {
+		ThreadInfo *info = null;
+
+		if (currInfo != null && currOwner == this) {
+			// We set this up earlier: fast path!
+			info = currInfo;
+		} else {
+			// Either first time allocation, or first time since some other Engine has been
+			// used. New setup.
+			info = Gc::threadData(this, os::Thread::current(), null);
+			if (!info)
+				throw GcError(L"Trying to allocate memory from a thread not registered with the GC.");
+
+			currInfo = info;
+			currOwner = this;
+		}
+
+		return info;
 	}
 
-	void GcImpl::detachThread(ThreadData data) {}
+	smm::Allocator &GcImpl::currentAlloc() {
+		return currentData()->alloc;
+	}
+
+	GcImpl::ThreadData GcImpl::attachThread() {
+		return new ThreadInfo(arena);
+	}
+
+	void GcImpl::detachThread(ThreadData data) {
+		delete data;
+	}
 
 	void *GcImpl::alloc(const GcType *type) {
-		return null;
+		size_t size = fmt::sizeObj(type);
+		smm::Allocator &allocator = currentAlloc();
+		smm::PendingAlloc alloc;
+		void *result;
+		do {
+			alloc = allocator.reserve(size);
+			if (!alloc)
+				throw GcError(L"Out of memory (alloc).");
+			result = fmt::initObj(alloc.mem(), type, size);
+		} while (!alloc.commit());
+
+		return result;
 	}
 
 	void *GcImpl::allocStatic(const GcType *type) {

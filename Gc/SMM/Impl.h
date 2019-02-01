@@ -4,8 +4,11 @@
 #define STORM_HAS_GC
 
 #include "Arena.h"
+#include "Allocator.h"
 
 namespace storm {
+
+	struct ThreadInfo;
 
 	/**
 	 * The interface to Storm's native memory manager.
@@ -27,7 +30,7 @@ namespace storm {
 		Bool collect(Nat time);
 
 		// Type we use to store data with a thread.
-		typedef void *ThreadData;
+		typedef ThreadInfo *ThreadData;
 
 		// Register/deregister a thread with us. The Gc interface handles re-registering for us. It
 		// even makes sure that these functions are not called in parallel.
@@ -103,6 +106,12 @@ namespace storm {
 	private:
 		// The arena we're using.
 		smm::Arena arena;
+
+		// Get the data for the current thread.
+		ThreadData currentData();
+
+		// Get the current Allocator.
+		smm::Allocator &currentAlloc();
 	};
 
 }

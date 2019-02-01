@@ -3,39 +3,40 @@
 
 #if STORM_GC == STORM_GC_SMM
 
+#include "Utils/Bitwise.h"
+#include "Block.h"
+
 namespace storm {
 	namespace smm {
 
-		Arena::Arena(size_t initialSize) {
-			platformInit();
+		// TODO: Make the nursery generation size customizable.
+		Arena::Arena(size_t initialSize) : nurserySize(100*1024) {
+			allocGranularity = vmAllocGranularity();
+			pageSize = vmPageSize();
 
-			// TODO: Reserve virtual memory according to the initial size; we want to be able to
-			// tell other parts of the system whether or not a pointer is inside memory we control
-			// or not. This is faster if we control a few large blocks of memory, rather than many
-			// smaller blocks.
+			// TODO: If we need to be able to tell if some pointer may point inside a buffer, it is
+			// probably a good idea to reserve a fair amount of virtual memory and then allocate
+			// from there.
 		}
 
 		Arena::~Arena() {}
 
+		Block *Arena::allocMin(size_t size) {
+			size_t actual = sizeof(Block) + size;
 
-
-#if defined(WINDOWS)
-
-		void Arena::platformInit() {
-			SYSTEM_INFO info;
-			GetSystemInfo(&info);
-
-			allocGranularity = info.dwAllocationGranularity;
-			pageSize = info.dwPageSize;
+			// Make sure we leave no holes!
+			actual = roundUp(actual, allocGranularity);
+			void *mem = vmAlloc(actual);
+			return new (mem) Block(actual - sizeof(Block));
 		}
 
-#elif defined(POSIX)
+		void Arena::free(Block *block) {
+			vmFree(block, sizeof(Block) + block->size);
+		}
 
-#error "Please implement Arena for Posix systems!"
-
-#else
-#error "Please implement the Arena for your platform!"
-#endif
+		Block *Arena::allocNursery() {
+			return allocMin(nurserySize);
+		}
 
 	}
 }

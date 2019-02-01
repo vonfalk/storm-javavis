@@ -1,7 +1,7 @@
 #include "stdafx.h"
 #include "$header$"
 
-#if STORM_GC == STORM_GC_SMM 
+#if STORM_GC == STORM_GC_SMM
 
 namespace storm {
 	namespace smm {
