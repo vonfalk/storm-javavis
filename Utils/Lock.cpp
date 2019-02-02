@@ -25,6 +25,15 @@ namespace util {
 		if (l)
 			LeaveCriticalSection(&l->cs);
 	}
+
+	void Lock::lock() {
+		EnterCriticalSection(&cs);
+	}
+
+	void Lock::unlock() {
+		LeaveCriticalSection(&cs);
+	}
+
 #endif
 
 #ifdef POSIX
@@ -54,6 +63,14 @@ namespace util {
 	Lock::L::~L() {
 		if (l)
 			pthread_mutex_unlock(&l->cs);
+	}
+
+	void Lock::lock() {
+		pthread_mutex_lock(&cs);
+	}
+
+	void Lock::unlock() {
+		pthread_mutex_unlock(&cs);
 	}
 
 #endif
