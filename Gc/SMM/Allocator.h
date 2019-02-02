@@ -33,15 +33,20 @@ namespace storm {
 			bool commit() {
 				// Note: Only 'reserved' may be changed during collections.
 				size_t res = atomicRead(source->reserved);
-				if (res <= source->committed)
+				if (res <= source->committed) {
+					if (release)
+						release->unlock();
 					return false;
+				}
 
 				atomicWrite(source->committed, source->reserved);
+				if (release)
+					release->unlock();
 				return true;
 			}
 
 		private:
-			PendingAlloc(Block *source, size_t size) : source(source) {
+			PendingAlloc(Block *source, size_t size, util::Lock *release = null) : source(source), release(release) {
 				// Note: We only need this to be atomic wrt garbage collections, not other threads
 				// using this object concurrently.
 				atomicWrite(source->reserved, source->committed + size);
@@ -49,6 +54,9 @@ namespace storm {
 
 			// The source of the allocation.
 			Block *source;
+
+			// Lock we need to release when the allocation is committed (if any).
+			util::Lock *release;
 		};
 
 
@@ -67,6 +75,9 @@ namespace storm {
 			// Allocate memory. The allocated memory needs to be committed later, otherwise it will
 			// not be scanned and will be overwritten by subsequent allocations.
 			inline PendingAlloc reserve(size_t size) {
+				if (size >= largeLimit)
+					return allocLarge(size);
+
 				if (!source || source->committed + size >= source->size) {
 					fill(size);
 					if (!source)
@@ -93,7 +104,7 @@ namespace storm {
 			// Fill the allocator with more memory from the arena!
 			void fill(size_t desiredMin);
 
-			// Allocate a large object.
+			// Make a large allocation (in a higher-numbered generation).
 			PendingAlloc allocLarge(size_t size);
 		};
 

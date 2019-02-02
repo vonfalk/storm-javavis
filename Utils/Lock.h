@@ -26,6 +26,10 @@ namespace util {
 			Lock *l;
 		};
 
+		// Manual lock and unlock (required in some cases).
+		void lock();
+		void unlock();
+
 	private:
 		Lock(const Lock &o);
 		Lock &operator =(const Lock &o);
