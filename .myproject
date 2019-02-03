@@ -158,7 +158,7 @@ flags+=-falign-functions=2
 flags+=-fvisibility=hidden
 cflags+=-fvisibility=hidden
 
-library+=pthread
+linkFlags+=-pthread
 library+=dl
 
 ext+=s

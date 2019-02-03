@@ -617,7 +617,12 @@ namespace gui {
 			gdk_window_move_resize(gdkWindow, alloc->x, alloc->y, alloc->width, alloc->height);
 		}
 
-		Size s(alloc->width, alloc->height);
+		// Note: We're interested in forwarding the size of the drawing widget (if it differs from
+		// the root-widget of the window).
+		GtkAllocation drawAlloc;
+		gtk_widget_get_allocation(drawWidget(), &drawAlloc);
+
+		Size s(drawAlloc.width, drawAlloc.height);
 		if (myPainter)
 			myPainter->uiResize(s);
 		onResize(s);
