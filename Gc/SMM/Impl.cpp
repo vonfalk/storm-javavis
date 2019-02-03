@@ -9,7 +9,17 @@
 
 namespace storm {
 
-	GcImpl::GcImpl(size_t initialArenaSize, Nat finalizationInterval) : arena(initialArenaSize) {}
+#define KB(n) ((n) * 1024)
+#define MB(n) (KB((n) * 1024))
+
+	static const size_t generations[] = {
+		MB(1), // Nursery generation
+		MB(10), // Intermediate generation
+		MB(100), // Persistent generation.
+	};
+
+	GcImpl::GcImpl(size_t initialArenaSize, Nat finalizationInterval)
+		: arena(initialArenaSize, generations, ARRAY_COUNT(generations)) {}
 
 	void GcImpl::destroy() {}
 
@@ -22,7 +32,7 @@ namespace storm {
 	struct ThreadInfo {
 		smm::Allocator alloc;
 
-		ThreadInfo(smm::Arena &arena) : alloc(arena) {}
+		ThreadInfo(smm::Arena &arena) : alloc(arena.generations[0]) {}
 	};
 
 	static ThreadInfo *currInfo = null;

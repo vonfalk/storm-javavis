@@ -1,7 +1,8 @@
 #pragma once
 
 #if STORM_GC == STORM_GC_SMM
-#include "Arena.h"
+
+#include "InlineSet.h"
 
 namespace storm {
 	namespace smm {
@@ -19,7 +20,7 @@ namespace storm {
 		 * simply by bumping a pointer, and the Block keeps track of this. Blocks are never moved,
 		 * even though objects inside a block may move inside or between blocks.
 		 */
-		class Block {
+		class Block : public SetMember<Block> {
 		public:
 			Block(size_t size) : size(size), committed(0), reserved(0) {}
 
@@ -32,6 +33,11 @@ namespace storm {
 			// Amount of memory reserved. 'reserved >= committed'. Memory that is reserved but not
 			// committed is being initialized, and can not be assumed to contain usable data.
 			size_t reserved;
+
+			// Get the number of bytes remaining in this block (ignoring any reserved memory).
+			inline size_t remaining() const {
+				return size - committed;
+			}
 
 			// Get a pointer to a particular byte of the memory in this block.
 			inline void *mem(size_t offset) {

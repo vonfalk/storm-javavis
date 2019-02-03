@@ -7,7 +7,7 @@
 namespace storm {
 	namespace smm {
 
-		class Arena;
+		class Generation;
 
 		/**
 		 * A pending allocation returned from an allocator. Call 'commit' when the allocation is
@@ -69,8 +69,11 @@ namespace storm {
 		 */
 		class Allocator {
 		public:
-			// Create an allocator for a specific arena.
-			Allocator(Arena &arena);
+			// Create an allocator for a specific generation.
+			Allocator(Generation &generation);
+
+			// Destroy the allocator.
+			~Allocator();
 
 			// Allocate memory. The allocated memory needs to be committed later, otherwise it will
 			// not be scanned and will be overwritten by subsequent allocations.
@@ -78,7 +81,7 @@ namespace storm {
 				if (size >= largeLimit)
 					return allocLarge(size);
 
-				if (!source || source->committed + size >= source->size) {
+				if (!source || source->remaining() < size) {
 					fill(size);
 					if (!source)
 						return PendingAlloc();
@@ -93,7 +96,7 @@ namespace storm {
 			Allocator &operator =(const Allocator &o);
 
 			// Owner.
-			Arena &owner;
+			Generation &owner;
 
 			// Current block we're allocating from.
 			Block *source;

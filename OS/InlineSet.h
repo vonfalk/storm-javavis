@@ -175,9 +175,6 @@ namespace os {
 		T *first;
 		T *last;
 		nat size;
-
-		// ensure integrity of this set, used for debugging
-		void validate() const;
 	};
 
 
