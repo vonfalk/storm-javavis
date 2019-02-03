@@ -3,17 +3,26 @@
 
 #if STORM_GC == STORM_GC_SMM
 
-#include "Arena.h"
+#include "Generation.h"
 
 namespace storm {
 	namespace smm {
 
 		// TODO: Is the large allocation limit reasonable?
-		Allocator::Allocator(Arena &arena) : owner(arena), source(null), largeLimit(arena.nurserySize / 4) {}
+		Allocator::Allocator(Generation &gen) : owner(gen), source(null), largeLimit(gen.blockSize / 4) {}
+
+		Allocator::~Allocator() {
+			if (source)
+				owner.done(source);
+		}
 
 		void Allocator::fill(size_t minSize) {
-			// We might need to do something more...
-			source = owner.allocNursery();
+			if (source) {
+				owner.done(source);
+				source = null;
+			}
+
+			source = owner.alloc();
 
 			// Our "large allocation" limit should make this impossible.
 			assert(source->size >= minSize);
@@ -24,9 +33,12 @@ namespace storm {
 			// large buffer. This requires using a lock for that generation's buffer, since we share
 			// it with others.
 
-			util::Lock *l = null;
-			Block *b = owner.allocMin(size);
-			return PendingAlloc(b, size, l);
+			Generation *into = owner.next;
+			if (!into)
+				into = &owner;
+
+			into->lock.lock();
+			return PendingAlloc(owner.fillBlock(size), size, &into->lock);
 		}
 
 	}

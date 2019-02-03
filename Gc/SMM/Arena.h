@@ -3,6 +3,7 @@
 #if STORM_GC == STORM_GC_SMM
 
 #include "VM.h"
+#include "Generation.h"
 
 namespace storm {
 	namespace smm {
@@ -23,14 +24,18 @@ namespace storm {
 		class Arena {
 		public:
 			// Create the arena, initially try to reserve (but not commit) 'initialSize' bytes of
-			// memory for the arena.
-			Arena(size_t initialSize);
+			// memory for the arena. Also, create 'generationCount' generations, each with the
+			// specified size (in bytes).
+			Arena(size_t initialSize, const size_t *generations, size_t generationCount);
 
 			// Destroy.
 			~Arena();
 
-			// Size of the nursery generation.
-			const size_t nurserySize;
+			// The generations in use (array).
+			Generation *generations;
+
+			// Number of generations.
+			const size_t generationCount;
 
 			// Allocate a block with a specified minimum size. The actual size may be larger. 'size'
 			// excludes the bytes required for the Block-header.
@@ -39,20 +44,13 @@ namespace storm {
 			// Free a block.
 			void free(Block *block);
 
-			// Allocate a block for use in a nursery generation by an Allocation instance.
-			Block *allocNursery();
-
 		private:
 			// No copying!
 			Arena(const Arena &o);
 			Arena &operator =(const Arena &o);
 
-			// Granularity of allocations (sometimes not equal to the pagesize).
-			size_t allocGranularity;
-
-			// Current pagesize. This is the granularity with which we can affect memory protection
-			// in an allocation.
-			size_t pageSize;
+			// VM management.
+			VM *vm;
 		};
 
 	}

@@ -2,24 +2,38 @@
 
 #if STORM_GC == STORM_GC_SMM
 
+#include "Utils/Object.h"
+
 namespace storm {
 	namespace smm {
 
 		/**
-		 * Platform-specific functions for managing virtual memory.
+		 * Management of virtual memory.
+		 *
+		 * There are several implementations available, depending on the current operatins system in
+		 * use, and what features are supported.
 		 */
+		class VM : NoCopy {
+		public:
+			// Create a VM instance suitable for the current system.
+			static VM *create(size_t reservedSize);
 
-		// Get the current pagesize.
-		size_t vmPageSize();
+			// Page size.
+			const size_t pageSize;
 
-		// Get the current allocation granularity (may differ from the page size).
-		size_t vmAllocGranularity();
+			// Current granularity of allocations (made through this interface, not necessarily the
+			// granularity provided by the underlying operating system).
+			const size_t allocGranularity;
 
-		// Allocate virtual memory, immediately committing it.
-		void *vmAlloc(size_t size);
+			// Allocate a chunk of memory.
+			virtual void *alloc(size_t size) = 0;
 
-		// Free previously allocated virtual memory.
-		void vmFree(void *mem, size_t size);
+			// Free previously allocated memory.
+			virtual void free(void *mem, size_t size) = 0;
+
+		protected:
+			VM(size_t pageSize, size_t granularity) : pageSize(pageSize), allocGranularity(granularity) {}
+		};
 
 	}
 }
