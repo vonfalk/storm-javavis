@@ -200,7 +200,7 @@ namespace gui {
 		// Destroy.
 		~EglContext();
 
-		// Create an EGL device, returns null on failure.
+		// Create an EGL device for X, returns null on failure.
 		static EglContext *create(Display *display);
 
 		// Create an EGL device for Wayland. Returns null on failure.

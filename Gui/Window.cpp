@@ -644,21 +644,29 @@ namespace gui {
 	}
 
 	gboolean Window::onDraw(cairo_t *ctx) {
+		GdkWindow *window = gdkWindow;
+		if (!window)
+			window = gtk_widget_get_window(drawWidget());
+
 		// Anything we should do at all?
-		if (!gdkWindow)
+		if (!window)
 			return FALSE;
 
 		// Is this draw event for us?
-		if (!gtk_cairo_should_draw_window(ctx, gdkWindow))
+		if (!gtk_cairo_should_draw_window(ctx, window))
 			return FALSE;
 
 		// Do we have a painter?
 		if (myPainter) {
-			RepaintParams params = { gdkWindow, drawWidget(), ctx };
+			RepaintParams params = { window, drawWidget(), ctx };
 			myPainter->uiRepaint(&params);
 
 			return TRUE;
 		}
+
+		// Do we have our own window and need to paint the background?
+		if (!gdkWindow)
+			return FALSE;
 
 		// Do we have a window and need to paint the background?
 		if (!drawing) {
@@ -714,7 +722,13 @@ namespace gui {
 		return FALSE;
 	}
 
-	bool Window::useNativeWindow() const {
+	bool Window::useNativeWindow() {
+		// On Wayland, we don't need a separate window for things we're rendering into. That only
+		// confuses the window manager!
+		if (GDK_IS_WAYLAND_WINDOW(gtk_widget_get_window(drawWidget()))) {
+			return false;
+		}
+
 		// Check if we need to create a separate window for this widget. There are two cases in
 		// which we need that:
 		// 1: we have a painter attached to us

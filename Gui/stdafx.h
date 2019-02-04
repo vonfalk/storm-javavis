@@ -66,6 +66,7 @@
 // properly, but the image on the screen is not always updated. I think this is due to us
 // fighting with Gtk+, as everything seems to work better with the GTK_MT_HW_CAIRO (even
 // though there are more VSync artifacts in that case).
+// Note: GTK_*_CAIRO are currently the only modes that are supported by Wayland.
 #define GTK_MODE GTK_MT_HW_CAIRO
 
 

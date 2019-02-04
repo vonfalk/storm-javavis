@@ -344,9 +344,11 @@ namespace gui {
 	void Painter::beforeRepaint(RepaintParams *p) {
 		// Required when we're rendering directly to a window surface.
 		if (!target.any()) {
-			target = mgr->create(p);
-			if (graphics)
-				graphics->updateTarget(target);
+			if (attached()) {
+				target = mgr->create(p);
+				if (graphics)
+					graphics->updateTarget(target);
+			}
 		}
 	}
 

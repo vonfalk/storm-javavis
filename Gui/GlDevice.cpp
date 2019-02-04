@@ -59,6 +59,9 @@ namespace gui {
 
 	// Create a surface that renders to an actual window.
 	RenderInfo Device::create(RepaintParams *params) {
+#if GTK_RENDER_IS_CAIRO(GTK_MODE) || GTK_RENDER_IS_COPY(GTK_MODE)
+		WARNING(L"This should not happen when rendering to cairo!");
+#endif
 		RenderInfo info;
 		info.size = Size(gtk_widget_get_allocated_width(params->widget),
 						gtk_widget_get_allocated_height(params->widget));

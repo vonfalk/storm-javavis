@@ -259,7 +259,7 @@ namespace gui {
 		void setWindowMask(GdkWindow *window);
 
 		// Do we need to be a separate native window?
-		bool useNativeWindow() const;
+		bool useNativeWindow();
 #endif
 	};
 

@@ -103,6 +103,10 @@ namespace gui {
 		// not do anything, instead we rely on RenderMgr to repaint us every frame.
 		Bool continuous;
 
+		// Are we attached to anything? If we get detached while waiting to render the screen, we
+		// need to be able to detect that.
+		inline bool attached() const { return graphics != null; }
+
 		// Ready to render? Called by the render manager to determine if the painter is ready to
 		// render when it is in continuous mode. Some implementations may need to wait for some
 		// event even when they are in continuous mode. If a painter ever returns false from
