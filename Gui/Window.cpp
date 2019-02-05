@@ -555,9 +555,23 @@ namespace gui {
 		return ok ? TRUE : FALSE;
 	}
 
+	static bool translatePoint(GtkWidget *widget, gdouble x, gdouble y, Point &out) {
+		GtkAllocation alloc;
+		gtk_widget_get_allocation(widget, &alloc);
+
+		out.x = x - alloc.x;
+		out.y = y - alloc.y;
+
+		return out.x >= 0.0f && out.y >= 0.0f
+			&& out.x < alloc.width && out.y < alloc.height;
+	}
+
 	gboolean Window::onButton(GdkEvent *event) {
+		Point pt;
 		GdkEventButton &b = event->button;
-		Point pt(Float(b.x), Float(b.y));
+		if (!translatePoint(drawWidget(), b.x, b.y, pt))
+			return FALSE;
+
 		mouse::MouseButton button = mouse::MouseButton(b.button - 1);
 		bool ok = false;
 
@@ -578,15 +592,19 @@ namespace gui {
 	}
 
 	gboolean Window::onMotion(GdkEvent *event) {
+		Point pt;
 		GdkEventMotion &m = event->motion;
-		Point pt(Float(m.x), Float(m.y));
+		if (!translatePoint(drawWidget(), m.x, m.y, pt))
+			return FALSE;
 
 		return onMouseMove(pt) ? TRUE : FALSE;
 	}
 
 	gboolean Window::onScroll(GdkEvent *event) {
+		Point pt;
 		GdkEventScroll &s = event->scroll;
-		Point pt(Float(s.x), Float(s.y));
+		if (!translatePoint(drawWidget(), s.x, s.y, pt))
+			return FALSE;
 
 		gdouble dx = 0, dy = 0;
 		if (!gdk_event_get_scroll_deltas(event, &dx, &dy)) {
