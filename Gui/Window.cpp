@@ -674,10 +674,43 @@ namespace gui {
 		if (!gtk_cairo_should_draw_window(ctx, window))
 			return FALSE;
 
+		// We will call ourselves in some cases.
+		if (drawing)
+			return FALSE;
+
 		// Do we have a painter?
 		if (myPainter) {
 			RepaintParams params = { window, drawWidget(), ctx };
 			myPainter->uiRepaint(&params);
+
+			if (GDK_IS_WAYLAND_WINDOW(window)) {
+				// This is a variant of what we're doing below.
+				GtkWidget *me = drawWidget();
+				GtkWidget *parentWidget = gtk_widget_get_parent(me);
+				if (!parentWidget || !GTK_IS_CONTAINER(parentWidget)) {
+					// If no parent exists, or the parent is not a container, we simply delegate to the
+					// default behaviour. This should not happen in practice, but it is good to have a
+					// decent fallback. Since the parent is not a container, the default implementation
+					// will probably work anyway.
+					return false;
+				}
+
+				GtkContainer *parent = GTK_CONTAINER(gtk_widget_get_parent(me));
+
+				// It seems Gtk+ does not understand what we're doing and therefore miscalculates the x-
+				// and y- positions of the layout during drawing. We correct this by using the offset in
+				// the cairo_t.
+				GtkAllocation position;
+				gtk_widget_get_allocation(me, &position);
+
+				// Since we have to pretend that the current child does not have a window when calling
+				// 'gtk_container_propagate_draw' below, the current widget's offset will be applied twice.
+				cairo_translate(ctx, -position.x, -position.y);
+
+				drawing = true;
+				gtk_container_propagate_draw(parent, me, ctx);
+				drawing = false;
+			}
 
 			return TRUE;
 		}
@@ -687,57 +720,53 @@ namespace gui {
 			return FALSE;
 
 		// Do we have a window and need to paint the background?
-		if (!drawing) {
-			GtkWidget *me = drawWidget();
-			GtkWidget *parentWidget = gtk_widget_get_parent(me);
-			if (!parentWidget || !GTK_IS_CONTAINER(parentWidget)) {
-				// If no parent exists, or the parent is not a container, we simply delegate to the
-				// default behaviour. This should not happen in practice, but it is good to have a
-				// decent fallback. Since the parent is not a container, the default implementation
-				// will probably work anyway.
-				return FALSE;
-			}
-			GtkContainer *parent = GTK_CONTAINER(gtk_widget_get_parent(me));
-
-
-			// Fill with the background color we figured out earlier.
-			App *app = gui::app(engine());
-			Color bg = app->defaultBgColor;
-			cairo_set_source_rgba(ctx, bg.r, bg.g, bg.b, bg.a);
-			cairo_paint(ctx);
-
-			// It seems Gtk+ does not understand what we're doing and therefore miscalculates the x-
-			// and y- positions of the layout during drawing. We correct this by using the offset in
-			// the cairo_t.
-			GtkAllocation position;
-			gtk_widget_get_allocation(me, &position);
-
-			// Since we have to pretend that the current child does not have a window when calling
-			// 'gtk_container_propagate_draw' below, the current widget's offset will be applied twice.
-			cairo_translate(ctx, -position.x*2, -position.y*2);
-
-			// Call the original draw function here, with our translated context.
-			// typedef gboolean (*DrawFn)(GtkWidget *, cairo_t *);
-			// DrawFn original = GTK_WIDGET_GET_CLASS(me)->draw;
-			// if (original)
-			// 	(*original)(me, ctx);
-
-			// Call 'gtk_container_propagate_draw' to draw ourselves again. Remember that we are
-			// currently drawing so that we do not get into an infinite recursion when we are called
-			// again. We could call 'GTK_WIDGET_GET_CLASS(me)->draw' instead, but that function
-			// assumes that the cairo_t is properly transformed so that (0, 0) is at the top left of
-			// the widget. That is not the case now, due to the possible bug inside
-			// 'gtk_container_propagate_draw'.
-			gtk_widget_set_has_window(me, FALSE);
-			drawing = true;
-			gtk_container_propagate_draw(parent, me, ctx);
-			drawing = false;
-			gtk_widget_set_has_window(me, TRUE);
-
-			return TRUE;
+		GtkWidget *me = drawWidget();
+		GtkWidget *parentWidget = gtk_widget_get_parent(me);
+		if (!parentWidget || !GTK_IS_CONTAINER(parentWidget)) {
+			// If no parent exists, or the parent is not a container, we simply delegate to the
+			// default behaviour. This should not happen in practice, but it is good to have a
+			// decent fallback. Since the parent is not a container, the default implementation
+			// will probably work anyway.
+			return FALSE;
 		}
+		GtkContainer *parent = GTK_CONTAINER(gtk_widget_get_parent(me));
 
-		return FALSE;
+
+		// Fill with the background color we figured out earlier.
+		App *app = gui::app(engine());
+		Color bg = app->defaultBgColor;
+		cairo_set_source_rgba(ctx, bg.r, bg.g, bg.b, bg.a);
+		cairo_paint(ctx);
+
+		// It seems Gtk+ does not understand what we're doing and therefore miscalculates the x-
+		// and y- positions of the layout during drawing. We correct this by using the offset in
+		// the cairo_t.
+		GtkAllocation position;
+		gtk_widget_get_allocation(me, &position);
+
+		// Since we have to pretend that the current child does not have a window when calling
+		// 'gtk_container_propagate_draw' below, the current widget's offset will be applied twice.
+		cairo_translate(ctx, -position.x*2, -position.y*2);
+
+		// Call the original draw function here, with our translated context.
+		// typedef gboolean (*DrawFn)(GtkWidget *, cairo_t *);
+		// DrawFn original = GTK_WIDGET_GET_CLASS(me)->draw;
+		// if (original)
+		// 	(*original)(me, ctx);
+
+		// Call 'gtk_container_propagate_draw' to draw ourselves again. Remember that we are
+		// currently drawing so that we do not get into an infinite recursion when we are called
+		// again. We could call 'GTK_WIDGET_GET_CLASS(me)->draw' instead, but that function
+		// assumes that the cairo_t is properly transformed so that (0, 0) is at the top left of
+		// the widget. That is not the case now, due to the possible bug inside
+		// 'gtk_container_propagate_draw'.
+		gtk_widget_set_has_window(me, FALSE);
+		drawing = true;
+		gtk_container_propagate_draw(parent, me, ctx);
+		drawing = false;
+		gtk_widget_set_has_window(me, TRUE);
+
+		return TRUE;
 	}
 
 	bool Window::useNativeWindow() {
