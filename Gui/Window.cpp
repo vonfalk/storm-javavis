@@ -641,6 +641,8 @@ namespace gui {
 		gtk_widget_get_allocation(drawWidget(), &drawAlloc);
 
 		Size s(drawAlloc.width, drawAlloc.height);
+		myPos.size(s);
+
 		if (myPainter)
 			myPainter->uiResize(s);
 		onResize(s);
