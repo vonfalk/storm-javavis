@@ -200,6 +200,11 @@ inline float eq(float a, float b, float tolerance = defTolerance) {
 size_t atomicIncrement(volatile size_t &v);
 size_t atomicDecrement(volatile size_t &v);
 
+// Atomic bitwise operations.
+size_t atomicAnd(volatile size_t &v, size_t with);
+size_t atomicOr(volatile size_t &v, size_t with);
+size_t atomicXor(volatile size_t &v, size_t with);
+
 // Compare and swap (atomic)
 size_t atomicCAS(volatile size_t &v, size_t compare, size_t exchange);
 void *atomicCAS(void *volatile &v, void *compare, void *exchange);

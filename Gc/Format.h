@@ -1,6 +1,7 @@
 #pragma once
 #include "Utils/Memory.h"
 #include "Utils/Bitwise.h"
+#include "Core/GcType.h"
 #include "Core/GcCode.h"
 #include "Scan.h"
 #include "Code.h"
@@ -27,7 +28,8 @@ namespace storm {
 	 * and client pointers as void *. Furthermore, functions taking fmt::Obj * generally start with
 	 * 'objXxx' while the corresponding functions for client pointers do not start with 'obj'.
 	 *
-	 * Objects are always at least word-aligned.
+	 * Objects are always at least word-aligned. GcType objects, or other objects containing
+	 * metadata, need to be aligned at an 8 byte boundary.
 	 *
 	 * The function 'init' checks the assumptions made by this object format with assertions.
 	 */
@@ -48,6 +50,11 @@ namespace storm {
 #define FMT_HEADER_DATA 0xBB
 #define FMT_MIDDLE_DATA 0xCC
 #define FMT_FOOTER_DATA 0xAA
+
+		// Make sure the alignment of GcType is at least 8.
+#if GCTYPE_ALIGNMENT < 8
+#error "Too narrow alignment for GcType!"
+#endif
 
 		// The size of a word on this machine.
 		static const size_t wordSize = sizeof(void *);
@@ -142,10 +149,10 @@ namespace storm {
 		/**
 		 * Static allocated headers for our types.
 		 */
-		static const size_t headerPad0 = pad0;
-		static const size_t headerPad = pad;
-		static const size_t headerFwd1 = fwd1;
-		static const size_t headerFwd = fwd;
+		static const size_t ALIGN_AS(GCTYPE_ALIGNMENT) headerPad0 = pad0;
+		static const size_t ALIGN_AS(GCTYPE_ALIGNMENT) headerPad = pad;
+		static const size_t ALIGN_AS(GCTYPE_ALIGNMENT) headerFwd1 = fwd1;
+		static const size_t ALIGN_AS(GCTYPE_ALIGNMENT) headerFwd = fwd;
 
 		/**
 		 * Array object data.
@@ -180,18 +187,27 @@ namespace storm {
 		 * is the last member of the object.
 		 */
 		struct Obj {
-			// Object information. Contains the following data:
+			// Object information. Describes the kind of object, and indirectly, its size. The three
+			// least significant bits also contain information on the state of the object as follows:
 			//
-			// 1: If the lowest bit is set, this is a code allocation, and the rest of this field
-			// denotes the size of the allocation, excluding the metadata.
+			// ??0: This is a regular allocation. The remaining bits are a pointer to a Header object
+			//      containing information about this object. Depending on the contents of the Header,
+			//      one of the members in the union below may be valid.
 			//
-			// 2: If the lowest bit is clear, this is a regular allocation. The remainder of this
-			// field is a pointer to a Header object containing information about this object.
+			// ??1: This is a code allocation. The rest of the field denotes the size of the allocation,
+			//      excluding the metadata. The size of the metadata is stored in the metadata itself,
+			//      which is stored directly after the code. The size is rounded up to at least 4 bytes
+			//      so the actual size is computed by masking out the three least significant bits and
+			//      dividing by two. This allows storing code segments the size of about half of
+			//      the available address space, which should be enough.
 			//
-			// 3: If the lowest bit is clear, then the second lowest bit (0x2) indicates whether
-			// this object is finalized or not. We need to be able to inform other parts of the
-			// system if certain allocations are finalized so that they may ignore finalized objects
-			// (e.g. WeakSet) before we have collected them.
+			// ?X?: Indicates whether or not this object is finalized. Since pointers to finalized
+			//      objects might linger in weak sets and the like, we need the ability to inform other
+			//      parts of the system that an object is actually finalized.
+			//
+			// X??: One bit of information reserved by the collector. The collector may use this to
+			//      mark objects in any way it pleases. The object format is not concerned about the
+			//      use of this information.
 			//
 			// Use the objIsXxx functions to extract information from this member.
 			size_t info;
@@ -269,20 +285,20 @@ namespace storm {
 
 		// Get the size of the code allocation. Assumes 'objIsCode' is true.
 		static inline size_t objCodeSize(const Obj *obj) {
-			return obj->info & ~size_t(0x1);
+			return (obj->info & ~size_t(0x7)) >> 1;
 		}
 
 		// Get the header of this allocation. Assumes 'objIsCode' returned false.
 		static inline const Header *objHeader(const Obj *obj) {
-			return (const Header *)(obj->info & ~size_t(0x3));
+			return (const Header *)(obj->info & ~size_t(0x7));
 		}
 
 		// Get the header of this allocation. Assumes 'objIsCode' returned false.
 		static inline Header *objHeader(Obj *obj) {
-			return (Header *)(obj->info & ~size_t(0x3));
+			return (Header *)(obj->info & ~size_t(0x7));
 		}
 
-		// Check if this object is finalized. Assumes 'objIsCode' returned false.
+		// Check if this object is finalized. Works for both code- and regular allocations.
 		static inline bool objIsFinalized(const Obj *obj) {
 			return (obj->info & size_t(0x2)) != 0;
 		}
@@ -291,26 +307,54 @@ namespace storm {
 		}
 
 		// Set the header to indicate a code allocation of 'codeSize' bytes. 'codeSize' is assumed
-		// to be rounded up to 'wordSize'.
+		// to be rounded up to 'wordSize' (or at least 4).
 		static inline void objSetCode(Obj *obj, size_t codeSize) {
-			obj->info = codeSize | size_t(0x1);
+			obj->info = (codeSize << 1) | size_t(0x1);
 		}
 
 		// Set the header to indicate a regular allocation described by 'header'. Assumes 'header'
 		// is aligned to 'headerAlign' and compatible with Header (e.g. a single size_t, CppType, ...).
 		static inline void objSetHeader(Obj *obj, const void *header) {
+			dbg_assert((size_t(header) & 0x7) == 0x0, L"All header descriptions need to be aligned to at least 8 bytes!");
 			obj->info = size_t(header);
 		}
 
 		// Replace the header of this allocation. Assumes 'objIsCode' returned false. Preserves any other flags.
 		static inline void objReplaceHeader(Obj *obj, const GcType *newHeader) {
-			obj->info &= size_t(0x3);
-			obj->info |= size_t(newHeader);
+			dbg_assert((size_t(newHeader) & 0x7) == 0x0, L"All header descriptions need to be aligned to at least 8 bytes!");
+
+			// Note: We want to do this in one instruction to not mess up any use of the flag in the
+			// GC.  We could do with an XOR operation, but since we will only be replacing an
+			// object's header very rarely, we use CAS instead, since that will more likely be
+			// correct.
+			size_t old, replace;
+			do {
+				old = atomicRead(obj->info);
+				replace = old;
+				replace &= size_t(0x7);
+				replace |= size_t(newHeader);
+			} while (atomicCAS(obj->info, old, replace) != old);
 		}
 
 		// Mark this allocation as finalized. Assumes it is not a code allocation.
 		static inline void objSetFinalized(Obj *obj) {
-			obj->info |= size_t(0x2);
+			// Make sure to do this in one instruction to not mess up the GC flag, if it is used.
+			atomicOr(obj->info, size_t(0x2));
+		}
+
+		// Get the GC flag.
+		static inline bool objGetFlag(const Obj *obj) {
+			return (obj->info & size_t(0x4)) != 0x0;
+		}
+
+		// Set the GC flag.
+		static inline void objSetFlag(Obj *obj) {
+			atomicOr(obj->info, size_t(0x4));
+		}
+
+		// Clear the GC flag.
+		static inline void objClearFlag(Obj *obj) {
+			atomicAnd(obj->info, ~size_t(0x4));
 		}
 
 		// Compute the size of an object given its header.

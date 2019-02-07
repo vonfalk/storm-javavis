@@ -52,6 +52,12 @@
  */
 
 /**
+ * ALIGN_AS(x):
+ * Specify alignment for a structure. Only expect this to work for automatic allocations, i.e. not
+ * for allocations using "new", since this macro may expand to a nonstandard extension.
+ */
+
+/**
  * SHARED_EXPORT:
  * Used to mark functions that shall be exported from a shared library.
  */
@@ -113,6 +119,7 @@
 #define THREAD __declspec(thread)
 #define NAKED __declspec(naked)
 #define SHARED_EXPORT __declspec(dllexport)
+#define ALIGN_AS(x) __declspec(align(x))
 #define EXCEPTION_EXPORT
 
 #if VISUAL_STUDIO >= 2010
@@ -130,6 +137,7 @@
 // We require support for these features.
 #define USE_MOVE
 #define USE_VA_TEMPLATE
+#define ALIGN_AS(x) alignas(x)
 #endif
 
 #if defined(X86) || defined(X64)
