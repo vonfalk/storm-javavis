@@ -159,6 +159,21 @@ static void skipArray(Tokenizer &tok, bool skippable) {
 	}
 }
 
+// Skip an ALIGN_AS definition if present.
+static void skipAlignAs(Tokenizer &tok) {
+	if (tok.skipIf(L"ALIGN_AS")) {
+		tok.expect(L"(");
+		nat level = 1;
+		while (level > 0) {
+			Token t = tok.next();
+			if (t.token == L"(")
+				level++;
+			else if (t.token == L")")
+				level--;
+		}
+	}
+}
+
 // Parse a variable or function.
 static void parseMember(Tokenizer &tok, ParseEnv &env, Namespace &addTo, Access access, bool isStatic) {
 	if (!tok.more() || tok.skipIf(L";"))
@@ -477,6 +492,7 @@ static void parseType(Tokenizer &tok, ParseEnv &env, const CppName &inside) {
 			break;
 		} else if (t.token == L"class" || t.token == L"struct") {
 			tok.skip();
+			skipAlignAs(tok);
 			ParseEnv sub = env;
 			if (sub.pkg.empty())
 				sub.pkg = name.token;
@@ -536,6 +552,7 @@ static void parseNamespace(Tokenizer &tok, ParseEnv &env, const CppName &name) {
 
 		if (t.token == L"class" || t.token == L"struct") {
 			tok.skip();
+			skipAlignAs(tok);
 			parseType(tok, env, name);
 		} else if (t.token == L"enum") {
 			tok.skip();

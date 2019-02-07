@@ -43,6 +43,31 @@ nat atomicDecrement(volatile nat &v) {
 	return (size_t)InterlockedDecrement((volatile LONG *)&v);
 }
 
+size_t atomicIncrement(volatile size_t &v) {
+	check_aligned_ptr(v);
+	return (size_t)InterlockedIncrement64((volatile LONG64 *)&v);
+}
+
+size_t atomicDecrement(volatile size_t &v) {
+	check_aligned_ptr(v);
+	return (size_t)InterlockedDecrement64((volatile LONG64 *)&v);
+}
+
+size_t atomicAnd(volatile size_t &v, size_t with) {
+	check_aligned_ptr(v);
+	return (size_t)InterlockedAnd64((volatile LONG64 *)&v, with);
+}
+
+size_t atomicOr(volatile size_t &v, size_t with) {
+	check_aligned_ptr(v);
+	return (size_t)InterlockedOr64((volatile LONG64 *)&v, with);
+}
+
+size_t atomicXor(volatile size_t &v, size_t with) {
+	check_aligned_ptr(v);
+	return (size_t)InterlockedXor64((volatile LONG64 *)&v, with);
+}
+
 nat atomicRead(volatile nat &v) {
 	check_aligned_nat(v);
 	_ReadWriteBarrier();
@@ -57,7 +82,7 @@ void atomicWrite(volatile nat &v, nat value) {
 	v = value;
 }
 
-#endif
+#else
 
 size_t atomicIncrement(volatile size_t &v) {
 	check_aligned_ptr(v);
@@ -68,6 +93,24 @@ size_t atomicDecrement(volatile size_t &v) {
 	check_aligned_ptr(v);
 	return (size_t)InterlockedDecrement((volatile LONG *)&v);
 }
+
+size_t atomicAnd(volatile size_t &v, size_t with) {
+	check_aligned_ptr(v);
+	return (size_t)_InterlockedAnd((volatile LONG *)&v, with);
+}
+
+size_t atomicOr(volatile size_t &v, size_t with) {
+	check_aligned_ptr(v);
+	return (size_t)_InterlockedOr((volatile LONG *)&v, with);
+}
+
+size_t atomicXor(volatile size_t &v, size_t with) {
+	check_aligned_ptr(v);
+	return (size_t)_InterlockedXor((volatile LONG *)&v, with);
+}
+
+#endif
+
 
 size_t atomicCAS(volatile size_t &v, size_t compare, size_t exchange) {
 	check_aligned_ptr(v);
@@ -155,6 +198,21 @@ size_t atomicIncrement(volatile size_t &v) {
 size_t atomicDecrement(volatile size_t &v) {
 	check_aligned_ptr(v);
 	return __sync_sub_and_fetch(&v, 1);
+}
+
+size_t atomicAnd(volatile size_t &v, size_t with) {
+	check_aligned_ptr(v);
+	return __sync_fetch_and_and(&v, with);
+}
+
+size_t atomicOr(volatile size_t &v, size_t with) {
+	check_aligned_ptr(v);
+	return __sync_fetch_and_or(&v, with);
+}
+
+size_t atomicXor(volatile size_t &v, size_t with) {
+	check_aligned_ptr(v);
+	return __sync_fetch_and_xor(&v, with);
 }
 
 size_t atomicCAS(volatile size_t &v, size_t compare, size_t exchange) {
