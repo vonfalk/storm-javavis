@@ -4,6 +4,7 @@
 
 #include "VM.h"
 #include "Generation.h"
+#include "Thread.h"
 
 namespace storm {
 	namespace smm {
@@ -44,13 +45,27 @@ namespace storm {
 			// Free a block.
 			void free(Block *block);
 
+			// Attach the current thread to the arena.
+			Thread *attachThread();
+
+			// Detach a thread from the arena.
+			void detachThread(Thread *thread);
+
 		private:
 			// No copying!
 			Arena(const Arena &o);
 			Arena &operator =(const Arena &o);
 
+			// Top-level arena lock. We assume this lock will be taken whenever a thread does
+			// something that can impact garbage collection, ie. that could cause issues if a thread
+			// would be stopped while owning the lock.
+			util::Lock lock;
+
 			// VM management.
 			VM *vm;
+
+			// Threads running in this arena.
+			InlineSet<Thread> threads;
 		};
 
 	}

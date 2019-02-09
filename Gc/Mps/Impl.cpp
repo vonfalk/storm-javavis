@@ -63,9 +63,6 @@ namespace storm {
 	 * Thread description.
 	 */
 	struct GcThread {
-		// # of times attached.
-		nat attachCount;
-
 		// # of allocations since last check for finalization messages.
 		nat lastFinalization;
 
@@ -680,7 +677,6 @@ namespace storm {
 	GcThread *GcImpl::attachThread() {
 		// Note: We will leak memory if "check" fails. This is rare enough that we don't care.
 		GcThread *desc = new GcThread;
-		desc->attachCount = 1;
 		desc->lastFinalization = 0;
 
 #if MPS_CHECK_MEMORY

@@ -30,7 +30,7 @@ namespace storm {
 		Bool collect(Nat time);
 
 		// Type we use to store data with a thread.
-		typedef ThreadInfo *ThreadData;
+		typedef smm::Thread *ThreadData;
 
 		// Register/deregister a thread with us. The Gc interface handles re-registering for us. It
 		// even makes sure that these functions are not called in parallel.

@@ -38,6 +38,8 @@ namespace storm {
 		}
 
 		Block *Arena::allocMin(size_t size) {
+			util::Lock::L z(lock);
+
 			size_t actual = sizeof(Block) + size;
 
 			// Make sure we leave no holes!
@@ -47,7 +49,23 @@ namespace storm {
 		}
 
 		void Arena::free(Block *block) {
+			util::Lock::L z(lock);
+
 			vm->free(block, sizeof(Block) + block->size);
+		}
+
+		Thread *Arena::attachThread() {
+			Thread *t = new Thread(*this);
+			{
+				util::Lock::L z(lock);
+				threads.insert(t);
+			}
+			return t;
+		}
+
+		void Arena::detachThread(Thread *thread) {
+			util::Lock::L z(lock);
+			threads.erase(thread);
 		}
 
 	}
