@@ -29,33 +29,27 @@ namespace storm {
 		return false;
 	}
 
-	struct ThreadInfo {
-		smm::Allocator alloc;
-
-		ThreadInfo(smm::Arena &arena) : alloc(arena.generations[0]) {}
-	};
-
-	static ThreadInfo *currInfo = null;
-	static GcImpl *currOwner = null;
+	static THREAD smm::Thread *currThread = null;
+	static THREAD GcImpl *currOwner = null;
 
 	GcImpl::ThreadData GcImpl::currentData() {
-		ThreadInfo *info = null;
+		smm::Thread *thread = null;
 
-		if (currInfo != null && currOwner == this) {
+		if (currThread != null && currOwner == this) {
 			// We set this up earlier: fast path!
-			info = currInfo;
+			thread = currThread;
 		} else {
 			// Either first time allocation, or first time since some other Engine has been
 			// used. New setup.
-			info = Gc::threadData(this, os::Thread::current(), null);
-			if (!info)
+			thread = Gc::threadData(this, os::Thread::current(), null);
+			if (!thread)
 				throw GcError(L"Trying to allocate memory from a thread not registered with the GC.");
 
-			currInfo = info;
+			currThread = thread;
 			currOwner = this;
 		}
 
-		return info;
+		return thread;
 	}
 
 	smm::Allocator &GcImpl::currentAlloc() {
@@ -63,11 +57,11 @@ namespace storm {
 	}
 
 	GcImpl::ThreadData GcImpl::attachThread() {
-		return new ThreadInfo(arena);
+		return arena.attachThread();
 	}
 
 	void GcImpl::detachThread(ThreadData data) {
-		delete data;
+		arena.detachThread(data);
 	}
 
 	void *GcImpl::alloc(const GcType *type) {
