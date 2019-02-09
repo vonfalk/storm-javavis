@@ -14,7 +14,7 @@
  * Include all possible GC implementations. Only one will be selected.
  */
 #include "Zero.h"
-#include "Mps/Impl.h"
+#include "MPS/Impl.h"
 #include "SMM/Impl.h"
 
 #ifndef STORM_HAS_GC

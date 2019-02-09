@@ -135,11 +135,22 @@ namespace storm {
 		};
 
 		/**
+		 * Pre-allocated headers with custom types.
+		 */
+		struct ALIGN_AS(GCTYPE_ALIGNMENT) InternalHeader {
+			size_t type;
+		};
+
+
+		/**
 		 * Union for easy access.
 		 */
 		union Header {
 			// Read the type.
 			size_t type;
+
+			// Always valid, equivalent to "type".
+			InternalHeader internal;
 
 			// Only valid if the type is a type known to GcType.
 			GcType obj;
@@ -149,10 +160,10 @@ namespace storm {
 		/**
 		 * Static allocated headers for our types.
 		 */
-		static const size_t ALIGN_AS(GCTYPE_ALIGNMENT) headerPad0 = pad0;
-		static const size_t ALIGN_AS(GCTYPE_ALIGNMENT) headerPad = pad;
-		static const size_t ALIGN_AS(GCTYPE_ALIGNMENT) headerFwd1 = fwd1;
-		static const size_t ALIGN_AS(GCTYPE_ALIGNMENT) headerFwd = fwd;
+		static const InternalHeader headerPad0 = { pad0 };
+		static const InternalHeader headerPad = { pad };
+		static const InternalHeader headerFwd1 = { fwd1 };
+		static const InternalHeader headerFwd = { fwd };
 
 		/**
 		 * Array object data.
@@ -314,7 +325,11 @@ namespace storm {
 
 		// Set the header to indicate a regular allocation described by 'header'. Assumes 'header'
 		// is aligned to 'headerAlign' and compatible with Header (e.g. a single size_t, CppType, ...).
-		static inline void objSetHeader(Obj *obj, const void *header) {
+		static inline void objSetHeader(Obj *obj, const GcType *header) {
+			dbg_assert((size_t(header) & 0x7) == 0x0, L"All header descriptions need to be aligned to at least 8 bytes!");
+			obj->info = size_t(header);
+		}
+		static inline void objSetHeader(Obj *obj, const InternalHeader *header) {
 			dbg_assert((size_t(header) & 0x7) == 0x0, L"All header descriptions need to be aligned to at least 8 bytes!");
 			obj->info = size_t(header);
 		}
