@@ -4,6 +4,7 @@
 
 #include "InlineSet.h"
 #include "Allocator.h"
+#include "AddrSet.h"
 #include "OS/Thread.h"
 
 namespace storm {
