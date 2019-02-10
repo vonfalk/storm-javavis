@@ -27,7 +27,7 @@ int main() {
 
 	for (Nat i = 0; i < 100; i++) {
 		Dummy *d = (Dummy *)gc.alloc(&dummyType);
-		PVAR(d);
+		// PVAR(d);
 	}
 
 	return 0;
