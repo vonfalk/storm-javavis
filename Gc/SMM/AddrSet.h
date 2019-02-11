@@ -26,10 +26,58 @@ namespace storm {
 		 */
 		template <size_t minBytes>
 		class AddrSet {
-			static const size_t totalBytes = NextPowerOfTwo<minBytes>::value;
 		public:
+			static const size_t totalBytes = NextPowerOfTwo<minBytes>::value;
+
 			// Create empty.
+			AddrSet(void *from, void *to) {
+				init(size_t(from), size_t(to));
+			}
 			AddrSet(size_t from, size_t to) {
+				init(from, to);
+			}
+
+			// Clear.
+			void clear() {
+				for (size_t i = 0; i < totalBytes; i++)
+					marked[i] = 0;
+			}
+
+			// Add an address.
+			void add(void *addr) { add(size_t(addr)); }
+			void add(size_t addr) {
+				size_t id = (addr - offset()) >> shift();
+				marked[(id / CHAR_BIT) & (totalBytes - 1)] |= (id < totalBytes * CHAR_BIT) << (id % CHAR_BIT);
+			}
+
+			// Test if an address is set.
+			bool has(void *addr) const { return test(size_t(addr)); }
+			bool has(size_t addr) const {
+				size_t id = (addr - offset()) >> shift();
+				// Make sure to return false if "addr" is out of bounds.
+				return (id < totalBytes * CHAR_BIT)
+					& ((marked[(id / CHAR_BIT) & (totalBytes - 1)] & (1 << (id % CHAR_BIT))) != 0);
+			}
+
+			// Get the offset.
+			inline size_t offset() const {
+				return data & ~size_t(0x3F);
+			}
+
+			// Get the shift.
+			inline size_t shift() const {
+				return data & size_t(0x3f);
+			}
+
+		private:
+			// Data. Contains an offset and a shift (the lowest 6 bits).
+			size_t data;
+
+			// Marked regions.
+			byte marked[totalBytes];
+
+			// Initialize.
+			void init(size_t from, size_t to) {
 				size_t offset = from & ~size_t(0x3F);
 				size_t len = nextPowerOfTwo(to - offset);
 				size_t shift = trailingZeros(len);
@@ -44,43 +92,20 @@ namespace storm {
 
 				clear();
 			}
-
-			// Clear.
-			void clear() {
-				memset(marked, 0, totalBytes);
-			}
-
-			// Add an address.
-			void add(size_t addr) {
-				size_t id = (addr - offset()) >> shift();
-				marked[(id / CHAR_BIT) & (totalBytes - 1)] |= (id < totalBytes) << (id % CHAR_BIT);
-			}
-
-			// Test if an address is set.
-			bool test(size_t addr) const {
-				size_t id = (addr - offset()) >> shift();
-				// Make sure to return false if "addr" is out of bounds.
-				return (id < totalBytes)
-					& ((marked[(id / CHAR_BIT) & (totalBytes - 1)] & (1 << (id % CHAR_BIT))) != 0);
-			}
-
-		private:
-			// Data. Contains an offset and a shift (the lowest 6 bits).
-			size_t data;
-
-			// Get the offset.
-			inline size_t offset() {
-				return data & ~size_t(0x3F);
-			}
-
-			// Get the shift.
-			inline size_t shift() {
-				return data & size_t(0x3f);
-			}
-
-			// Marked regions.
-			byte marked[totalBytes];
 		};
+
+		template <size_t sz>
+		wostream &operator <<(wostream &out, const AddrSet<sz> &s) {
+			size_t from = s.offset();
+			size_t bitSz = size_t(1) << s.shift();
+			size_t to = s.offset() + bitSz * s.totalBytes * CHAR_BIT;
+
+			out << (void *)from << L" ";
+			for (size_t i = from; i < to; i += bitSz)
+				out << (s.has(i) ? '+' : '-');
+			out << L" " << (void *)to << L" (resolution: " << bitSz << L" bytes)";
+			return out;
+		}
 
 	}
 }

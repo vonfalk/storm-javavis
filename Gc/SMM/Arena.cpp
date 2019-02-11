@@ -68,6 +68,12 @@ namespace storm {
 			threads.erase(thread);
 		}
 
+		void Arena::collect() {
+			// We're just testing stack scanning for the moment...
+			for (size_t i = 0; i < generationCount; i++)
+				generations[i].collect();
+		}
+
 	}
 }
 

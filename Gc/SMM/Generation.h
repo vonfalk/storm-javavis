@@ -51,6 +51,9 @@ namespace storm {
 			// memory is needed in the returned block.
 			Block *fillBlock(size_t freeBytes);
 
+			// Collect garbage in this generation (API will likely change).
+			void collect();
+
 		private:
 			// No copy.
 			Generation(const Generation &o);

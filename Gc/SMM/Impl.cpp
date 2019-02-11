@@ -21,9 +21,13 @@ namespace storm {
 	GcImpl::GcImpl(size_t initialArenaSize, Nat finalizationInterval)
 		: arena(initialArenaSize, generations, ARRAY_COUNT(generations)) {}
 
-	void GcImpl::destroy() {}
+	void GcImpl::destroy() {
+		// TODO: We should destroy everything here already!
+	}
 
-	void GcImpl::collect() {}
+	void GcImpl::collect() {
+		arena.collect();
+	}
 
 	Bool GcImpl::collect(Nat time) {
 		return false;

@@ -761,7 +761,7 @@ namespace storm {
 		public:
 			// Scan a set of objects stat are stored back-to-back. Assumes the entire region
 			// [base,limit) is filled entirely with objects.
-			static Result objects(Source source, void *base, void *limit) {
+			static Result objects(Source &source, void *base, void *limit) {
 				Scanner s(source);
 				Result r;
 				for (void *at = base; at < limit; at = fmt::skip(at)) {
