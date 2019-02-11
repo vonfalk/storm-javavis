@@ -4,12 +4,14 @@
 #if STORM_GC == STORM_GC_SMM
 
 #include "Arena.h"
+#include "Scanner.h"
 
 namespace storm {
 	namespace smm {
 
+		// TODO: What is a reasonable block size here?
 		Generation::Generation(Arena &owner, size_t size)
-			: totalSize(size), blockSize(size / 2),
+			: totalSize(size), blockSize(size / 32),
 			  next(null), owner(owner), sharedBlock(null) {}
 
 		Generation::~Generation() {
@@ -52,6 +54,17 @@ namespace storm {
 				blocks.insert(b);
 
 			return b;
+		}
+
+		void Generation::collect() {
+			for (InlineSet<Block>::iterator i = blocks.begin(); i != blocks.end(); ++i) {
+				Block *b = *i;
+				AddrSet<8> data(b->mem(0), b->mem(b->size));
+
+				owner.scanRoots<AddrSummary<8>>(data);
+
+				PVAR(data);
+			}
 		}
 
 	}

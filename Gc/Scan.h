@@ -40,7 +40,7 @@ namespace storm {
 		typedef os::InlineSet<os::UThreadStack> StackSet;
 
 		// Scan an array of pointers.
-		static Result array(Source source, void *base, size_t count) {
+		static Result array(Source &source, void *base, size_t count) {
 			void **from = (void **)base;
 			Scanner s(source);
 			for (size_t i = 0; i < count; i++) {
@@ -54,7 +54,7 @@ namespace storm {
 
 		// Scan an array of pointers. Also supports scanning a part of a stack where the full extent
 		// of the stack is known.
-		static Result array(Source source, void *base, void *limit) {
+		static Result array(Source &source, void *base, void *limit) {
 			void **from = (void **)base;
 			void **to = (void **)limit;
 
@@ -73,7 +73,7 @@ namespace storm {
 		// currently. The extent of this thread is specified by 'current' (the lower end, on X86).
 		// Additionally, returns the number of bytes scanned, which may be interesting for some GC
 		// implementations.
-		static Result stacks(Source source, const StackSet &stacks, void *current, size_t *scanned) {
+		static Result stacks(Source &source, const StackSet &stacks, void *current, size_t *scanned) {
 			size_t bytesScanned = 0;
 
 			// We scan all UThreads on this thread, if one of them is the currently running thread
@@ -182,7 +182,7 @@ namespace storm {
 		typedef void *Source;
 
 		// Constructor from 'Source'.
-		NullScanner(Source source) {}
+		NullScanner(Source &source) {}
 
 		// Called once for each reference. Assumed to be a quick "early-out" check that the GC can
 		// use to quickly discard references that are not interesting at the moment. We also assume

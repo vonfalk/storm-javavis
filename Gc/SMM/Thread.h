@@ -5,7 +5,12 @@
 #include "InlineSet.h"
 #include "Allocator.h"
 #include "AddrSet.h"
+#include "Gc/Scan.h"
 #include "OS/Thread.h"
+
+#include "ThreadWin.h"
+
+#include <csetjmp>
 
 namespace storm {
 	namespace smm {
@@ -26,6 +31,12 @@ namespace storm {
 			// Allocator specific for this thread.
 			Allocator alloc;
 
+			// Scan the contents of this thread. If this thread is a different thread than the
+			// currently executing thread, the thread is assumed to have been successfully stopped
+			// at an earlier point in time.
+			template <class Scanner>
+			typename Scanner::Result scan(typename Scanner::Source &source);
+
 		private:
 			// No copying.
 			Thread(const Thread &o);
@@ -34,7 +45,43 @@ namespace storm {
 			// A reference to all UThreads that may be running on this thread, so that we may access
 			// them cheaply during scanning.
 			const InlineSet<os::UThreadStack> &stacks;
+
+			// Handle to the current thread, along with additional operations not provided by the
+			// OS/ threading library (these abilities do not belong there).
+			OSThread thread;
 		};
+
+
+		// Implementation of the 'scan' function.
+		template <class Scanner>
+		typename Scanner::Result Thread::scan(typename Scanner::Source &source) {
+			typename Scanner::Result r;
+
+			// The extent of the current stack (ie. its ESP).
+			void *extent;
+
+			if (thread.running()) {
+				// We assume this is the current thread.
+
+				// Scan our registers by saving them to the stack with setjmp.
+				std::jmp_buf buf;
+				(void)setjmp(buf);
+
+				r = Scan<Scanner>::array(source, buf, sizeof(buf)/sizeof(void *));
+				if (r != typename Scanner::Result())
+					return r;
+
+				// Just pick a variable on the stack somewhere as our extent. That is good enough.
+				extent = &extent;
+			} else {
+				// A paused thread!
+				r = thread.scan<Scanner>(source, &extent);
+				if (r != typename Scanner::Result())
+					return r;
+			}
+
+			return Scan<Scanner>::stacks(source, stacks, extent, null);
+		}
 
 	}
 }
