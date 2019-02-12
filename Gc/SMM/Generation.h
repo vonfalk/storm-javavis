@@ -5,6 +5,7 @@
 #include "Utils/Lock.h"
 #include "Block.h"
 #include "InlineSet.h"
+#include "ArenaEntry.h"
 
 namespace storm {
 	namespace smm {
@@ -52,7 +53,7 @@ namespace storm {
 			Block *fillBlock(size_t freeBytes);
 
 			// Collect garbage in this generation (API will likely change).
-			void collect();
+			void collect(ArenaEntry &entry);
 
 		private:
 			// No copy.

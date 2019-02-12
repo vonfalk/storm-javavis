@@ -10,6 +10,9 @@
 namespace storm {
 	namespace smm {
 
+		// Creates an ArenaEntry and initializes it properly.
+#define ARENA_ENTRY(name) ArenaEntry name(*this); setjmp(name.buf)
+
 		// TODO: Make the nursery generation size customizable.
 		Arena::Arena(size_t initialSize, const size_t *genSize, size_t generationCount)
 			: generationCount(generationCount) {
@@ -69,9 +72,11 @@ namespace storm {
 		}
 
 		void Arena::collect() {
+			ARENA_ENTRY(entry);
+
 			// We're just testing stack scanning for the moment...
 			for (size_t i = 0; i < generationCount; i++)
-				generations[i].collect();
+				generations[i].collect(entry);
 		}
 
 	}

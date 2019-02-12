@@ -5,6 +5,7 @@
 #include "VM.h"
 #include "Generation.h"
 #include "Thread.h"
+#include "ArenaEntry.h"
 
 namespace storm {
 	namespace smm {
@@ -54,23 +55,12 @@ namespace storm {
 			// Perform a full GC (API will most likely change).
 			void collect();
 
-
-			// Scanning.
-			template <class Scanner>
-			typename Scanner::Result scanRoots(typename Scanner::Source &source) {
-				typename Scanner::Result r;
-				for (InlineSet<Thread>::iterator i = threads.begin(); i != threads.end(); ++i) {
-					r = i->scan<Scanner>(source);
-					if (r != typename Scanner::Result())
-						return r;
-				}
-				return r;
-			}
-
 		private:
 			// No copying!
 			Arena(const Arena &o);
 			Arena &operator =(const Arena &o);
+
+			friend class ArenaEntry;
 
 			// Top-level arena lock. We assume this lock will be taken whenever a thread does
 			// something that can impact garbage collection, ie. that could cause issues if a thread
@@ -83,6 +73,7 @@ namespace storm {
 			// Threads running in this arena.
 			InlineSet<Thread> threads;
 		};
+
 
 	}
 }
