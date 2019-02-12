@@ -56,12 +56,12 @@ namespace storm {
 			return b;
 		}
 
-		void Generation::collect() {
+		void Generation::collect(ArenaEntry &entry) {
 			for (InlineSet<Block>::iterator i = blocks.begin(); i != blocks.end(); ++i) {
 				Block *b = *i;
 				AddrSet<8> data(b->mem(0), b->mem(b->size));
 
-				owner.scanRoots<AddrSummary<8>>(data);
+				entry.scanRoots<AddrSummary<8>>(data);
 
 				PVAR(data);
 			}
