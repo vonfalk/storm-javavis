@@ -7,7 +7,8 @@ namespace storm {
 	namespace smm {
 
 		// Flags that applies to all allocations.
-		static const DWORD allocFlags = 0;
+		static const DWORD reserveFlags = 0;
+		static const DWORD commitFlags = 0;
 		static const DWORD allocProt = PAGE_EXECUTE_READWRITE;
 
 		VMWin *VMWin::create(size_t initialSize) {
@@ -19,12 +20,20 @@ namespace storm {
 
 		VMWin::VMWin(size_t pageSize, size_t granularity) : VM(pageSize, granularity) {}
 
-		void *VMWin::alloc(size_t size) {
-			return VirtualAlloc(NULL, size, MEM_COMMIT | MEM_RESERVE | allocFlags, allocProt);
+		void *VMWin::reserve(void *at, size_t size) {
+			return VirtualAlloc(at, size, MEM_RESERVE | reserveFlags, PAGE_NOACCESS);
 		}
 
-		void VMWin::free(void *mem, size_t size) {
-			VirtualFree(mem, 0, MEM_RELEASE);
+		void VMWin::commit(void *at, size_t size) {
+			VirtualAlloc(at, size, MEM_COMMIT | commitFlags, allocProt);
+		}
+
+		void VMWin::decommit(void *at, size_t size) {
+			VirtualFree(at, size, MEM_DECOMMIT);
+		}
+
+		void VMWin::free(void *at, size_t size) {
+			VirtualFree(at, 0, MEM_RELEASE);
 		}
 
 	}
