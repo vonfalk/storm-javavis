@@ -15,11 +15,17 @@ namespace storm {
 			// Create.
 			static VMWin *create(size_t initialSize);
 
-			// Allocate memory.
-			virtual void *alloc(size_t size);
+			// Reserve.
+			virtual void *reserve(void *at, size_t size);
 
-			// Free memory.
-			virtual void free(void *mem, size_t size);
+			// Commit.
+			virtual void commit(void *at, size_t size);
+
+			// Decommit.
+			virtual void decommit(void *at, size_t size);
+
+			// Free.
+			virtual void free(void *at, size_t size);
 
 		private:
 			VMWin(size_t pageSize, size_t granularity);

@@ -47,14 +47,17 @@ namespace storm {
 
 			// Make sure we leave no holes!
 			actual = roundUp(actual, vm->allocGranularity);
-			void *mem = vm->alloc(actual);
+			void *mem = vm->reserve(null, actual);
+			vm->commit(mem, actual);
 			return new (mem) Block(actual - sizeof(Block));
 		}
 
 		void Arena::free(Block *block) {
 			util::Lock::L z(lock);
 
-			vm->free(block, sizeof(Block) + block->size);
+			size_t size = sizeof(Block) + block->size;
+			vm->decommit(block, size);
+			vm->free(block, size);
 		}
 
 		Thread *Arena::attachThread() {
