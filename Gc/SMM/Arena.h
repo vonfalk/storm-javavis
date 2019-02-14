@@ -3,6 +3,7 @@
 #if STORM_GC == STORM_GC_SMM
 
 #include "VM.h"
+#include "BlockAlloc.h"
 #include "Generation.h"
 #include "Thread.h"
 #include "ArenaEntry.h"
@@ -67,8 +68,11 @@ namespace storm {
 			// would be stopped while owning the lock.
 			util::Lock lock;
 
-			// VM management.
+			// VM management. TODO: Remove when 'alloc' is working properly!
 			VM *vm;
+
+			// Block allocations.
+			BlockAlloc alloc;
 
 			// Threads running in this arena.
 			InlineSet<Thread> threads;

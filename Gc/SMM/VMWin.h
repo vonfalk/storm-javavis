@@ -13,7 +13,7 @@ namespace storm {
 		class VMWin : public VM {
 		public:
 			// Create.
-			static VMWin *create(size_t initialSize);
+			static VMWin *create();
 
 			// Reserve.
 			virtual void *reserve(void *at, size_t size);

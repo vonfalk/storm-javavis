@@ -11,7 +11,7 @@ namespace storm {
 		static const DWORD commitFlags = 0;
 		static const DWORD allocProt = PAGE_EXECUTE_READWRITE;
 
-		VMWin *VMWin::create(size_t initialSize) {
+		VMWin *VMWin::create() {
 			SYSTEM_INFO info;
 			GetSystemInfo(&info);
 
