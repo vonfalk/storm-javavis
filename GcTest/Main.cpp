@@ -69,7 +69,7 @@ int main() {
 	int z;
 	os::Thread::setStackBase(&z);
 
-	Gc gc(10*1024*1024, 1000);
+	Gc gc(100*1024*1024, 1000);
 	gc.attachThread();
 
 	run(gc);

@@ -10,8 +10,8 @@ namespace storm {
 
 #if defined(WINDOWS)
 
-		VM *VM::create(size_t initialSize) {
-			return VMWin::create(initialSize);
+		VM *VM::create() {
+			return VMWin::create();
 		}
 
 #elif defined (POSIX)

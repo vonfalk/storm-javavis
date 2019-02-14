@@ -20,7 +20,7 @@ namespace storm {
 		class VM : NoCopy {
 		public:
 			// Create a VM instance suitable for the current system.
-			static VM *create(size_t reservedSize);
+			static VM *create();
 
 			// Page size.
 			const size_t pageSize;
