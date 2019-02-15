@@ -5,6 +5,7 @@
  *
  * Assumes they are called with some *unsigned* type, preferrably 4 or 8 byte ones.
  */
+#include <climits>
 
 /**
  * Helper class for size-dependent specializations.
@@ -97,9 +98,9 @@ inline T roundUp(T number, T multiple) {
 /**
  * Compile-time computation of powers of two.
  */
-template <size_t value, size_t iter = 1>
+template <size_t v, size_t iter = 1>
 struct NextPowerOfTwo {
-	static const size_t value = NextPowerOfTwo<((value - 1) | ((value - 1) >> iter)) + 1>::value;
+	static const size_t value = NextPowerOfTwo<((v - 1) | ((v - 1) >> iter)) + 1, iter + 1>::value;
 };
 
 template <size_t val>

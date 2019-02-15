@@ -3,6 +3,7 @@
 #if STORM_GC == STORM_GC_SMM
 
 #include "Utils/Lock.h"
+#include "Thread.h"
 #include <csetjmp>
 
 namespace storm {
@@ -34,7 +35,8 @@ namespace storm {
 			template <class Scanner>
 			typename Scanner::Result scanRoots(typename Scanner::Source &source) {
 				typename Scanner::Result r;
-				for (InlineSet<Thread>::iterator i = owner.threads.begin(); i != owner.threads.end(); ++i) {
+				InlineSet<Thread> &threads = this->threads();
+				for (InlineSet<Thread>::iterator i = threads.begin(); i != threads.end(); ++i) {
 					r = i->scan<Scanner>(source, *this);
 					if (r != typename Scanner::Result())
 						return r;
@@ -48,6 +50,9 @@ namespace storm {
 
 			// The lock we're holding inside the arena.
 			util::Lock::L lock;
+
+			// Get all threads from the arena (needs to be done in the cpp-file).
+			InlineSet<Thread> &threads();
 		};
 
 	}

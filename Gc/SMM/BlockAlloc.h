@@ -3,6 +3,7 @@
 #if STORM_GC == STORM_GC_SMM
 
 #include "VM.h"
+#include "Block.h"
 #include "Utils/Bitwise.h"
 #include <vector>
 
@@ -29,10 +30,19 @@ namespace storm {
 			// Destroy.
 			~BlockAlloc();
 
+			// Allocate a block, containing a minimum of 'size' bytes (excluding the header).
+			Block *alloc(size_t size);
+
+			// Free a previously allocated block.
+			void free(Block *block);
+
 		private:
 			// No copy!
 			BlockAlloc(const BlockAlloc &o);
 			BlockAlloc &operator =(const BlockAlloc &o);
+
+			// Header of a chunk.
+			struct ChunkHeader;
 
 			/**
 			 * A chunk of memory inside the BlockAlloc.
@@ -45,31 +55,25 @@ namespace storm {
 			 */
 			struct Chunk {
 				// Create.
-				Chunk(void *at, size_t size, size_t header) : at(at), size(size), header(header) {}
+				Chunk(void *at, size_t size, size_t headerSize) : at(at), size(size), headerSize(headerSize) {}
 
 				// The region itself.
 				void *at;
 				size_t size;
 
 				// Offset of the header, so we don't have to compute it all the time.
-				size_t header;
-			};
+				size_t headerSize;
 
-			/**
-			 * The header of a chunk for convenient access.
-			 */
-			struct ChunkHeader {
-				// Location of the next potential allocation. We're currently using a "round-robin"
-				// allocation strategy.
-				size_t nextAlloc;
-
-				// The actual data. One bit per page.
-				size_t data[1];
+				// Get the header.
+				inline ChunkHeader *header() const { return (ChunkHeader *)at; }
 			};
 
 
 			// VM backend.
 			VM *vm;
+
+			// Our copy of the page size (we need it very often).
+			const size_t pageSize;
 
 			// Keep track of all chunks. We strive to keep this array small. Otherwise, the
 			// "contains pointer" query will be expensive.
@@ -81,6 +85,10 @@ namespace storm {
 			// Add a chunk we recently reserved. This will initialize the allocation bitmap, and any
 			// other data structures in the chunk, and finally add it to 'chunks'.
 			void addChunk(void *mem, size_t size);
+
+			// Find a suitable chunk to allocate memory in. Attempts to allocate a new chunk if none
+			// is present.
+			Chunk *findChunk(size_t size);
 		};
 
 	}
