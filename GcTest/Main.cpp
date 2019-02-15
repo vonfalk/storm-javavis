@@ -65,7 +65,7 @@ void run(Gc &gc) {
  * Simple GC tests that can be used during the creation of a new GC so that large parts of the
  * compiler does not need to be rebiult so often during development.
  */
-int main() {
+int main(int argc, const char *argv[]) {
 	int z;
 	os::Thread::setStackBase(&z);
 

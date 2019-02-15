@@ -5,17 +5,18 @@
 #include "InlineSet.h"
 #include "Allocator.h"
 #include "AddrSet.h"
-#include "ArenaEntry.h"
 #include "Gc/Scan.h"
 #include "OS/Thread.h"
 
 #include "ThreadWin.h"
+#include "ThreadPosix.h"
 
 
 namespace storm {
 	namespace smm {
 
 		class Arena;
+		class ArenaEntry;
 
 		/**
 		 * A thread known by the GC.

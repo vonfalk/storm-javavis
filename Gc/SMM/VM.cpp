@@ -4,6 +4,7 @@
 #if STORM_GC == STORM_GC_SMM
 
 #include "VMWin.h"
+#include "VMPosix.h"
 
 namespace storm {
 	namespace smm {
@@ -16,7 +17,9 @@ namespace storm {
 
 #elif defined (POSIX)
 
-#error "Please implement the virtual memory functions for POSIX!"
+		VM *VM::create() {
+			return VMPosix::create();
+		}
 
 #else
 #error "Please implement the virtual memory functions for your platform!"

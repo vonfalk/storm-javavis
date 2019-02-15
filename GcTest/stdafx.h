@@ -1,4 +1,5 @@
-#pragma once
+#ifndef GC_TEST_PROJ
+#define GC_TEST_PROJ
 
 #include "Utils/Utils.h"
 #include "Core/Storm.h"
@@ -7,3 +8,5 @@
 
 
 using namespace storm;
+
+#endif
