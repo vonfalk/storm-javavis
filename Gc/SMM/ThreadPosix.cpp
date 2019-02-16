@@ -1,7 +1,7 @@
 #include "stdafx.h"
 #include "ThreadPosix.h"
 
-#if STORM_GC == STORM_GC_SMM
+#if STORM_GC == STORM_GC_SMM && defined(POSIX)
 
 namespace storm {
 	namespace smm {

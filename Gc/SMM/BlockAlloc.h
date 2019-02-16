@@ -86,9 +86,8 @@ namespace storm {
 			// other data structures in the chunk, and finally add it to 'chunks'.
 			void addChunk(void *mem, size_t size);
 
-			// Find a suitable chunk to allocate memory in. Attempts to allocate a new chunk if none
-			// is present.
-			Chunk *findChunk(size_t size);
+			// Allocate memory in a specific chunk. Returns 'null' on failure.
+			Block *alloc(Chunk &c, size_t pages);
 		};
 
 	}
