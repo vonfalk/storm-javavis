@@ -15,13 +15,13 @@ namespace storm {
 
 		// TODO: Make the nursery generation size customizable.
 		Arena::Arena(size_t initialSize, const size_t *genSize, size_t generationCount)
-			: generationCount(generationCount), vm(VM::create()), alloc(vm, initialSize) {
+			: generationCount(generationCount), alloc(VM::create(), initialSize) {
 
 			// Allocate the individual generations.
 			generations = (Generation *)malloc(generationCount * sizeof(Generation));
 
 			for (size_t i = 0; i < generationCount; i++) {
-				size_t genSz = roundUp(genSize[i], vm->allocGranularity);
+				size_t genSz = roundUp(genSize[i], alloc.pageSize);
 				new (&generations[i]) Generation(*this, genSz);
 				if (i + 1 < generationCount)
 					generations[i].next = &generations[i + 1];
@@ -40,22 +40,12 @@ namespace storm {
 
 		Block *Arena::allocMin(size_t size) {
 			util::Lock::L z(lock);
-
-			size_t actual = sizeof(Block) + size;
-
-			// Make sure we leave no holes!
-			actual = roundUp(actual, vm->allocGranularity);
-			void *mem = vm->reserve(null, actual);
-			vm->commit(mem, actual);
-			return new (mem) Block(actual - sizeof(Block));
+			return alloc.alloc(size);
 		}
 
 		void Arena::free(Block *block) {
 			util::Lock::L z(lock);
-
-			size_t size = sizeof(Block) + block->size;
-			vm->decommit(block, size);
-			vm->free(block, size);
+			return alloc.free(block);
 		}
 
 		Thread *Arena::attachThread() {
