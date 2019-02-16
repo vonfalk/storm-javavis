@@ -68,9 +68,6 @@ namespace storm {
 			// would be stopped while owning the lock.
 			util::Lock lock;
 
-			// VM management. TODO: Remove when 'alloc' is working properly!
-			VM *vm;
-
 			// Block allocations.
 			BlockAlloc alloc;
 

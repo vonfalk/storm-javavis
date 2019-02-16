@@ -10,6 +10,9 @@
 namespace storm {
 	namespace smm {
 
+		// Header of a chunk.
+		struct ChunkHeader;
+
 		/**
 		 * Allocation management of blocks.
 		 *
@@ -36,13 +39,13 @@ namespace storm {
 			// Free a previously allocated block.
 			void free(Block *block);
 
+			// Our copy of the page size (we need it very often).
+			const size_t pageSize;
+
 		private:
 			// No copy!
 			BlockAlloc(const BlockAlloc &o);
 			BlockAlloc &operator =(const BlockAlloc &o);
-
-			// Header of a chunk.
-			struct ChunkHeader;
 
 			/**
 			 * A chunk of memory inside the BlockAlloc.
@@ -55,25 +58,27 @@ namespace storm {
 			 */
 			struct Chunk {
 				// Create.
-				Chunk(void *at, size_t size, size_t headerSize) : at(at), size(size), headerSize(headerSize) {}
+				Chunk(void *at, size_t pages, size_t headerSize) : at(at), pages(pages), headerSize(headerSize) {}
 
 				// The region itself.
 				void *at;
-				size_t size;
 
-				// Offset of the header, so we don't have to compute it all the time.
+				// Size, expressed in number of pages.
+				size_t pages;
+
+				// Offset of the header, in bytes, so we don't have to compute it all the time.
 				size_t headerSize;
 
 				// Get the header.
 				inline ChunkHeader *header() const { return (ChunkHeader *)at; }
+
+				// Get memory at offset (bytes) into the chunk.
+				inline void *memory(size_t offset) const { return (char *)at + headerSize + offset; }
 			};
 
 
 			// VM backend.
 			VM *vm;
-
-			// Our copy of the page size (we need it very often).
-			const size_t pageSize;
 
 			// Keep track of all chunks. We strive to keep this array small. Otherwise, the
 			// "contains pointer" query will be expensive.
@@ -85,6 +90,9 @@ namespace storm {
 			// Add a chunk we recently reserved. This will initialize the allocation bitmap, and any
 			// other data structures in the chunk, and finally add it to 'chunks'.
 			void addChunk(void *mem, size_t size);
+
+			// Find the chunk that contains a particular address.
+			Chunk *findChunk(void *addr);
 
 			// Allocate memory in a specific chunk. Returns 'null' on failure.
 			Block *alloc(Chunk &c, size_t pages);
