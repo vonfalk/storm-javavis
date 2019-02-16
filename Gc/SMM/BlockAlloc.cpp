@@ -67,23 +67,26 @@ namespace storm {
 			chunks.push_back(chunk);
 		}
 
-		BlockAlloc::Chunk *BlockAlloc::findChunk(size_t size) {
+		Block *BlockAlloc::alloc(size_t size) {
+			// Round up to nearest multiple and compute # of pages.
+			size_t pages = (size + pageSize - 1) / pageSize;
+
+			// A simple 'first-fit' algorithm should be enough. We assume that there are few (< 5) chunks in the array.
 			for (size_t i = 0; i < chunks.size(); i++) {
 				Chunk &c = chunks[i];
-				if (c.header()->freePages * pageSize >= size)
-					return &c;
+				if (c.header()->freePages() < pages)
+					continue;
+
+				if (Block *b = alloc(c, pages))
+					return b;
 			}
 
-			// TODO: Reserve more memory!
-			assert(false, L"TODO: Reserve more memory!");
+			assert(false, L"TODO: Try to allocate a new chunk!");
 			return null;
 		}
 
-		Block *BlockAlloc::alloc(size_t size) {
-			Chunk *c = findChunk(size);
-
-			// TODO: Finish the implementation!
-
+		Block *BlockAlloc::alloc(Chunk &c, size_t pages) {
+			// Try to find a sequence of length 'pages' in the bitmap, starting at 'nextAlloc'.
 			return null;
 		}
 
