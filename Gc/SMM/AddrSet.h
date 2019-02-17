@@ -3,6 +3,7 @@
 #if STORM_GC == STORM_GC_SMM
 
 #include "Utils/Bitwise.h"
+#include "Config.h"
 
 namespace storm {
 	namespace smm {
@@ -140,6 +141,9 @@ namespace storm {
 				clear();
 			}
 		};
+
+		// Summary type.
+		typedef AddrSet<summaryBytes> AddrSummary;
 
 		template <size_t sz>
 		wostream &operator <<(wostream &out, const AddrSet<sz> &s) {

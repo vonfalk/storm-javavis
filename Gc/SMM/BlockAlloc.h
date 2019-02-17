@@ -5,6 +5,7 @@
 #include "VM.h"
 #include "Block.h"
 #include "Utils/Bitwise.h"
+#include "AddrSet.h"
 #include <vector>
 
 namespace storm {
@@ -33,14 +34,28 @@ namespace storm {
 			// Destroy.
 			~BlockAlloc();
 
+			// Our copy of the page size (we need it very often).
+			const size_t pageSize;
+
 			// Allocate a block, containing a minimum of 'size' bytes (excluding the header).
 			Block *alloc(size_t size);
 
 			// Free a previously allocated block.
 			void free(Block *block);
 
-			// Our copy of the page size (we need it very often).
-			const size_t pageSize;
+			// Check if a pointer refers to an object managed by this instance. Returns 'true' if
+			// the block is in the range reserved by any of the chunks here. This does not
+			// necessarily mean that the pointer is actually allocated currently.
+			inline bool has(void *addr) {
+				size_t test = size_t(addr);
+				for (size_t i = 0; i < chunks.size(); i++) {
+					Chunk &c = chunks[i];
+					size_t base = size_t(c.at);
+					if (test >= base && test < base + c.pages * pageSize)
+						return true;
+				}
+				return false;
+			}
 
 		private:
 			// No copy!
@@ -55,10 +70,14 @@ namespace storm {
 			 *
 			 * Most of the functions that manipulate a chunk are inside BlockAlloc, as they also
 			 * need access to the VM instance in use.
+			 *
+			 * Note: Keep this one as small as possible. We're searching through it inside 'has',
+			 * which is on the hot path of the GC. Ideally, most things will be stored in the header
+			 * itself.
 			 */
 			struct Chunk {
 				// Create.
-				Chunk(void *at, size_t pages, size_t headerSize) : at(at), pages(pages), headerSize(headerSize) {}
+				Chunk(void *at, size_t pages) : at(at), pages(pages) {}
 
 				// The region itself.
 				void *at;
@@ -66,14 +85,8 @@ namespace storm {
 				// Size, expressed in number of pages.
 				size_t pages;
 
-				// Offset of the header, in bytes, so we don't have to compute it all the time.
-				size_t headerSize;
-
 				// Get the header.
 				inline ChunkHeader *header() const { return (ChunkHeader *)at; }
-
-				// Get memory at offset (bytes) into the chunk.
-				inline void *memory(size_t offset) const { return (char *)at + headerSize + offset; }
 			};
 
 
