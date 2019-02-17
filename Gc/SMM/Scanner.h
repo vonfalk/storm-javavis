@@ -16,13 +16,13 @@ namespace storm {
 		 * Scan into an AddrSet, to keep track of ambiguous references.
 		 */
 		template <size_t size>
-		struct AddrSummary {
+		struct ScanSummary {
 			typedef int Result;
 			typedef AddrSet<size> Source;
 
 			Source &src;
 
-			AddrSummary(Source &source) : src(source) {}
+			ScanSummary(Source &source) : src(source) {}
 
 			inline bool fix1(void *ptr) {
 				src.add(ptr);

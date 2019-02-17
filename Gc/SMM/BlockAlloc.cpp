@@ -12,6 +12,9 @@ namespace storm {
 		 * The header of a chunk for convenient access.
 		 */
 		struct ChunkHeader {
+			// Size of the header (in bytes), rounded to the nearest page boundary.
+			size_t size;
+
 			// Number of free pages.
 			size_t freePages;
 
@@ -142,15 +145,17 @@ namespace storm {
 		}
 
 		void BlockAlloc::addChunk(void *mem, size_t size) {
-			Chunk chunk(mem, size / pageSize, headerSize(size));
+			size_t headerSz = headerSize(size);
+			Chunk chunk(mem, size / pageSize);
 			ChunkHeader *header = chunk.header();
 
 			// Commit the memory for the header.
-			vm->commit(mem, chunk.headerSize);
+			vm->commit(mem, headerSz);
 
 			// We don't need to initialize it to zero, the OS will do this for us. We do need some
 			// initialization, though.
-			header->freePages = (size - chunk.headerSize) / pageSize;
+			header->size = headerSz;
+			header->freePages = (size - headerSz) / pageSize;
 			header->nextAlloc = 0;
 
 			// Add it to our list of chunks!
@@ -199,9 +204,10 @@ namespace storm {
 			// Mark them as used!
 			mark(c.header(), found, pages);
 			c.header()->nextAlloc = found + pages;
+			c.header()->freePages -= pages;
 
 			// Commit the memory, and return.
-			void *mem = c.memory(found * pageSize);
+			void *mem = (byte *)c.at + found*pageSize + c.header()->size;
 			vm->commit(mem, pages * pageSize);
 			return new (mem) Block(pages * pageSize - sizeof(Block));
 		}
@@ -213,7 +219,9 @@ namespace storm {
 				vm->decommit(block, size);
 
 				size_t page = (size_t(block) - size_t(c->at)) / pageSize;
-				clear(c->header(), page, size / pageSize);
+				size_t pageCount = size / pageSize;
+				clear(c->header(), page, pageCount);
+				c->header()->freePages += pageCount;
 			} else {
 				throw GcError(L"Invalid pointer passed to 'free'");
 			}
