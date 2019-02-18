@@ -732,6 +732,29 @@ namespace storm {
 				return Result();
 			}
 
+			// Detect and call 'skip' if it exists.
+
+			template <class T, T> struct Check;
+
+			typedef char HasSkip[1];
+			typedef char NoSkip[2];
+
+			template <class T>
+			static HasSkip &hasSkip(Check<T, &T::skip> *);
+
+			template <class T>
+			static NoSkip &hasSkip(...);
+
+			template <size_t skip>
+			struct Skip {
+				static inline bool skip(Scanner &s, Obj *obj) { return false; }
+			};
+
+			template <>
+			struct Skip<sizeof(HasSkip)> {
+				static inline bool skip(Scanner &s, Obj *obj) { return s.skip(obj); }
+			};
+
 			// Helper for interpreting and scanning a vtable.
 			// We assume vtables are at offset 0.
 #define FMT_FIX_VTABLE(base)								\
@@ -761,23 +784,17 @@ namespace storm {
 
 		public:
 			// Scan a set of objects that are stored back-to-back. Assumes the entire region
-			// [base,limit) is filled entirely with objects.
+			// [base,limit) is filled entirely with objects. If Scanner has a 'skip' function, it
+			// will be called for every object to see if that object shall be skipped.
 			static Result objects(Source &source, void *base, void *limit) {
-				return objects(source, base, limit, templates::False<Obj *>());
-			}
-
-			// Scan a set of objects that are stored back-to-back. Assumes the entire region is
-			// filled with objects. Objects where 'skip' returns 'true' will not be scanned.
-			template <class Skip>
-			static Result objects(Source &source, void *base, void *limit, Skip skip) {
 				Scanner s(source);
 				Result r;
 				for (void *at = base; at < limit; at = fmt::skip(at)) {
 					Obj *o = fromClient(at);
 					FMT_CHECK_OBJ(o);
 
-					// Note: When 'Skip' is templates::False<Obj *>, this will be optimized away entirely.
-					if (skip(o))
+					// Note: when this function does not exist, the check will be avoided completely.
+					if (Skip<sizeof(hasSkip<Scanner>(0))>::skip(s, o))
 						continue;
 
 					if (objIsCode(o)) {
