@@ -61,7 +61,7 @@ namespace storm {
 				Block *b = *i;
 				AddrSet<8> data(b->mem(0), b->mem(b->size));
 
-				entry.scanRoots<ScanSummary<8>>(data);
+				entry.scanStackRoots<ScanSummary<8>>(data);
 
 				PVAR(data);
 			}

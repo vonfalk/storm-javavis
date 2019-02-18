@@ -31,9 +31,9 @@ namespace storm {
 			// Collected state of the stack when we entered the arena.
 			std::jmp_buf buf;
 
-			// Scanning.
+			// Scan all stacks using the given scanner. This will scan inexact references.
 			template <class Scanner>
-			typename Scanner::Result scanRoots(typename Scanner::Source &source) {
+			typename Scanner::Result scanStackRoots(typename Scanner::Source &source) {
 				typename Scanner::Result r;
 				InlineSet<Thread> &threads = this->threads();
 				for (InlineSet<Thread>::iterator i = threads.begin(); i != threads.end(); ++i) {
@@ -43,6 +43,11 @@ namespace storm {
 				}
 				return r;
 			}
+
+			// Scan all blocks in all generation that may refer to a block in the current
+			// generation. The current generation is never scanned.
+			template <class Scanner>
+			typename Scanner::Result scanGenerations(typename Scanner::Source &source) {}
 
 		private:
 			// Associated arena.
