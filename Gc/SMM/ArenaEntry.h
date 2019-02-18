@@ -4,6 +4,7 @@
 
 #include "Utils/Lock.h"
 #include "Thread.h"
+#include "Arena.h"
 #include <csetjmp>
 
 namespace storm {
@@ -33,21 +34,12 @@ namespace storm {
 
 			// Scan all stacks using the given scanner. This will scan inexact references.
 			template <class Scanner>
-			typename Scanner::Result scanStackRoots(typename Scanner::Source &source) {
-				typename Scanner::Result r;
-				InlineSet<Thread> &threads = this->threads();
-				for (InlineSet<Thread>::iterator i = threads.begin(); i != threads.end(); ++i) {
-					r = i->scan<Scanner>(source, *this);
-					if (r != typename Scanner::Result())
-						return r;
-				}
-				return r;
-			}
+			typename Scanner::Result scanStackRoots(typename Scanner::Source &source);
 
 			// Scan all blocks in all generation that may refer to a block in the current
 			// generation. The current generation is never scanned.
 			template <class Scanner>
-			typename Scanner::Result scanGenerations(typename Scanner::Source &source) {}
+			typename Scanner::Result scanGenerations(typename Scanner::Source &source, Generation *gen, Block *block);
 
 		private:
 			// Associated arena.
@@ -55,10 +47,50 @@ namespace storm {
 
 			// The lock we're holding inside the arena.
 			util::Lock::L lock;
-
-			// Get all threads from the arena (needs to be done in the cpp-file).
-			InlineSet<Thread> &threads();
 		};
+
+
+		/**
+		 * Implementation of template members.
+		 */
+
+
+		template <class Scanner>
+		typename Scanner::Result ArenaEntry::scanStackRoots(typename Scanner::Source &source) {
+			typename Scanner::Result r;
+			InlineSet<Thread> &threads = owner.threads;
+			for (InlineSet<Thread>::iterator i = threads.begin(); i != threads.end(); ++i) {
+				r = i->scan<Scanner>(source, *this);
+				if (r != typename Scanner::Result())
+					return r;
+			}
+			return r;
+		}
+
+
+		template <class Scanner>
+		typename Scanner::Result ArenaEntry::scanGenerations(typename Scanner::Source &source, Generation *current, Block *block) {
+			typename Scanner::Result r;
+
+			for (size_t i = 0; i < owner.generationCount; i++) {
+				Generation *gen = &owner.generations[i];
+
+				// Don't scan the current generation, we want to handle that with more care.
+				if (gen == current)
+					continue;
+
+				// Skip the entire block if it reports it may not contain any pointers we're interested in.
+				if (!gen->mayReferTo(block))
+					continue;
+
+				// Go ahead and scan it.
+				r = gen->scan<Scanner>(source);
+				if (r != typename Scanner::Result())
+					return r;
+			}
+
+			return r;
+		}
 
 	}
 }

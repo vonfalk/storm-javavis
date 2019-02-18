@@ -615,7 +615,7 @@ namespace storm {
 		 */
 
 		// Check our assumptions.
-		void init() {
+		static void init() {
 			assert(wordSize == sizeof(size_t), L"Invalid word-size");
 			assert(wordSize == sizeof(void *), L"Invalid word-size");
 			assert(wordSize == sizeof(Fwd1), L"Invalid size of MpsFwd1");
@@ -708,7 +708,7 @@ namespace storm {
 		/**
 		 * Scanning of objects with the standard layout.
 		 */
-		template <class Scanner = templates::False<Obj *>>
+		template <class Scanner>
 		struct Scan {
 		private:
 			typedef typename Scanner::Result Result;
@@ -740,7 +740,7 @@ namespace storm {
 			typedef char NoSkip[2];
 
 			template <class T>
-			static HasSkip &hasSkip(Check<T, &T::skip> *);
+			static HasSkip &hasSkip(Check<bool (T::*)(Obj *), &T::skip> *);
 
 			template <class T>
 			static NoSkip &hasSkip(...);

@@ -10,10 +10,6 @@ namespace storm {
 
 		ArenaEntry::ArenaEntry(Arena &owner) : owner(owner), lock(owner.lock) {}
 
-		InlineSet<Thread> &ArenaEntry::threads() {
-			return owner.threads;
-		}
-
 	}
 }
 
