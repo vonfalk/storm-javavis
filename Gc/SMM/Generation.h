@@ -55,6 +55,30 @@ namespace storm {
 			// Collect garbage in this generation (API will likely change).
 			void collect(ArenaEntry &entry);
 
+			// Check if this generation *may* contain pointers to the provided block. May return
+			// false positives, but never false negatives.
+			// TODO: Make sure to re-scan any blocks that contain invalidated or empty summaries the
+			// next time they're scanned by someone.
+			bool mayReferTo(Block *block) const {
+				// TODO: Implement me!
+				return true;
+			}
+
+			// Scan all blocks in this generation using the specified scanner.
+			template <class Scanner>
+			typename Scanner::Result scan(typename Scanner::Source &source) const {
+				typename Scanner::Result r;
+
+				for (InlineSet<Block>::iterator i = blocks.begin(), end = blocks.end(); i != end; ++i) {
+					Block *b = *i;
+					r = b->scan<Scanner>(source);
+					if (r != typename Scanner::Result())
+						return r;
+				}
+
+				return r;
+			}
+
 		private:
 			// No copy.
 			Generation(const Generation &o);
@@ -63,7 +87,7 @@ namespace storm {
 			// Owning arena.
 			Arena &owner;
 
-			// All blocks in this generation.
+			// All blocks in this generation, including 'sharedBlock'.
 			InlineSet<Block> blocks;
 
 			// The last block, currently being filled. May be null.

@@ -3,6 +3,7 @@
 #if STORM_GC == STORM_GC_SMM
 
 #include "InlineSet.h"
+#include "Gc/Format.h"
 
 namespace storm {
 	namespace smm {
@@ -43,6 +44,19 @@ namespace storm {
 			inline void *mem(size_t offset) {
 				void *ptr = this;
 				return (byte *)ptr + sizeof(Block) + offset;
+			}
+
+			// Scan this block using a scanner.
+			template <class Scanner>
+			typename Scanner::Result scan(typename Scanner::Source &source) {
+				// Always reset 'reserved' when we scan. Otherwise, we might miss something
+				// important if we're scanning during an allocation.
+				reserved = committed;
+				return storm::fmt::Scan<Scanner>::objects(
+					source,
+					// Note: We need to pass client pointers to the scanning functions.
+					mem(0 + fmt::headerSize),
+					mem(committed + fmt::headerSize));
 			}
 
 		private:

@@ -6,7 +6,6 @@
 #include "BlockAlloc.h"
 #include "Generation.h"
 #include "Thread.h"
-#include "ArenaEntry.h"
 
 namespace storm {
 	namespace smm {

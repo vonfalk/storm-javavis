@@ -3,6 +3,7 @@
 #if STORM_GC == STORM_GC_SMM
 
 #include "AddrSet.h"
+#include "Gc/Format.h"
 
 namespace storm {
 	namespace smm {
@@ -24,11 +25,17 @@ namespace storm {
 
 			ScanSummary(Source &source) : src(source) {}
 
+			inline bool skip(fmt::Obj *ptr) {
+				// For testing.
+				return false;
+			}
+
 			inline bool fix1(void *ptr) {
 				src.add(ptr);
 				return false;
 			}
 
+			// TODO: We want to generalize the fixHeader functions so that we don't have to add them everywhere.
 			inline bool fixHeader1(GcType *header) {
 				src.add(header);
 				return false;

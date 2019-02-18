@@ -60,10 +60,13 @@ namespace storm {
 			for (InlineSet<Block>::iterator i = blocks.begin(); i != blocks.end(); ++i) {
 				Block *b = *i;
 				AddrSet<8> data(b->mem(0), b->mem(b->size));
+				AddrSet<8> data2(b->mem(0), b->mem(b->size));
 
 				entry.scanStackRoots<ScanSummary<8>>(data);
-
 				PVAR(data);
+
+				b->scan<ScanSummary<8>>(data2);
+				PVAR(data2);
 			}
 		}
 
