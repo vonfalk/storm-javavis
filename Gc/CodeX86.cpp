@@ -1,5 +1,6 @@
 #include "stdafx.h"
 #include "CodeX86.h"
+#include "Gc.h"
 #include "Core/GcCode.h"
 #include "CodeTable.h"
 
@@ -20,7 +21,7 @@ namespace storm {
 		}
 
 		void finalize(void *code) {
-			GcCode *refs = runtime::codeRefs(code);
+			GcCode *refs = Gc::codeRefs(code);
 			for (size_t i = 0; i < refs->refCount; i++) {
 				GcCodeRef &ref = refs->refs[i];
 				if (ref.kind == GcCodeRef::unwindInfo && ref.pointer) {

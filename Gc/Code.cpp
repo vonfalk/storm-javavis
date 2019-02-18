@@ -1,5 +1,6 @@
 #include "stdafx.h"
 #include "Code.h"
+#include "Gc.h"
 #include "Core/GcCode.h"
 
 #include "CodeX86.h"
@@ -59,7 +60,7 @@ namespace storm {
 		}
 
 		void writePtr(void *code, Nat id) {
-			GcCode *refs = runtime::codeRefs(code);
+			GcCode *refs = Gc::codeRefs(code);
 			doWritePtr(code, refs, id);
 		}
 

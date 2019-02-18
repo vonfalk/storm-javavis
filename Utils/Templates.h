@@ -8,6 +8,18 @@ namespace templates {
 		inline T &operator()(T &a) { return a; }
 	};
 
+	template <class T>
+	class True {
+	public:
+		inline bool operator()(const T &) const { return true; }
+	};
+
+	template <class T>
+	class False {
+	public:
+		inline bool operator()(const T &) const { return false; }
+	};
+
 }
 
 

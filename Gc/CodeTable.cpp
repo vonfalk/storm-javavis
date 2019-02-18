@@ -1,5 +1,6 @@
 #include "stdafx.h"
 #include "CodeTable.h"
+#include "Gc.h"
 #include <algorithm>
 
 namespace storm {
@@ -133,7 +134,7 @@ namespace storm {
 
 	bool CodeTable::contains(Elem *elem, const void *ptr) {
 		size_t start = size_t(elem->code);
-		size_t end = start + runtime::codeSize(elem->code);
+		size_t end = start + Gc::codeSize(elem->code);
 		size_t test = size_t(ptr);
 
 		return start <= test && test < end;

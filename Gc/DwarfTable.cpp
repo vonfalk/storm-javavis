@@ -1,5 +1,6 @@
 #include "stdafx.h"
 #include "DwarfTable.h"
+#include "Gc.h"
 #include "Utils/Memory.h"
 
 namespace storm {
@@ -89,7 +90,7 @@ namespace storm {
 		// Initialize the newly found data.
 		use->ptr.owner = this;
 		use->data.codeStart() = fn;
-		use->data.codeSize() = runtime::codeSize(fn);
+		use->data.codeSize() = Gc::codeSize(fn);
 		use->data.augSize() = 0;
 		use->data.setCie(&header);
 		use->data.setLen(&use->ptr.nextFree);
