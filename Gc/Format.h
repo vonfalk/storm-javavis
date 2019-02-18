@@ -1,6 +1,7 @@
 #pragma once
 #include "Utils/Memory.h"
 #include "Utils/Bitwise.h"
+#include "Utils/Templates.h"
 #include "Core/GcType.h"
 #include "Core/GcCode.h"
 #include "Scan.h"
@@ -707,7 +708,7 @@ namespace storm {
 		/**
 		 * Scanning of objects with the standard layout.
 		 */
-		template <class Scanner>
+		template <class Scanner = templates::False<Obj *>>
 		struct Scan {
 		private:
 			typedef typename Scanner::Result Result;
@@ -759,14 +760,25 @@ namespace storm {
 			} while (false)
 
 		public:
-			// Scan a set of objects stat are stored back-to-back. Assumes the entire region
+			// Scan a set of objects that are stored back-to-back. Assumes the entire region
 			// [base,limit) is filled entirely with objects.
 			static Result objects(Source &source, void *base, void *limit) {
+				return objects(source, base, limit, templates::False<Obj *>());
+			}
+
+			// Scan a set of objects that are stored back-to-back. Assumes the entire region is
+			// filled with objects. Objects where 'skip' returns 'true' will not be scanned.
+			template <class Skip>
+			static Result objects(Source &source, void *base, void *limit, Skip skip) {
 				Scanner s(source);
 				Result r;
 				for (void *at = base; at < limit; at = fmt::skip(at)) {
 					Obj *o = fromClient(at);
 					FMT_CHECK_OBJ(o);
+
+					// Note: When 'Skip' is templates::False<Obj *>, this will be optimized away entirely.
+					if (skip(o))
+						continue;
 
 					if (objIsCode(o)) {
 						// Scan the code segment.
