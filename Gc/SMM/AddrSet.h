@@ -61,8 +61,8 @@ namespace storm {
 			}
 
 			// See if any address in the range [from, to[ is set.
-			bool has(void *from, void *to) { return has(size_t(from), size_t(to)); }
-			bool has(size_t from, size_t to) {
+			bool has(void *from, void *to) const { return has(size_t(from), size_t(to)); }
+			bool has(size_t from, size_t to) const {
 				size_t off = offset();
 				size_t ext = off + size();
 
@@ -142,8 +142,11 @@ namespace storm {
 			}
 		};
 
-		// Summary type.
+		// Summary type for the entire address space.
 		typedef AddrSet<summaryBytes> AddrSummary;
+
+		// Summary type for object pinning.
+		typedef AddrSet<pinnedBytes> PinnedSet;
 
 		template <size_t sz>
 		wostream &operator <<(wostream &out, const AddrSet<sz> &s) {

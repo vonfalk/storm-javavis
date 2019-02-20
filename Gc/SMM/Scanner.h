@@ -12,14 +12,19 @@ namespace storm {
 		 * Assorted scanners used in the SMM GC.
 		 */
 
+		// Macro used to add 'fixHeader1' and 'fixHeader2' to call 'fix1' and 'fix2' respectively.
+#define SCAN_FIX_HEADER													\
+		inline bool fixHeader1(GcType *header) { return fix1(header); } \
+		inline Result fixHeader2(GcType **header) { return fix2((void **)header); }
+
 
 		/**
 		 * Scan into an AddrSet, to keep track of ambiguous references.
 		 */
-		template <size_t size>
+		template <class AddrSet>
 		struct ScanSummary {
 			typedef int Result;
-			typedef AddrSet<size> Source;
+			typedef AddrSet Source;
 
 			Source &src;
 
@@ -35,14 +40,9 @@ namespace storm {
 				return false;
 			}
 
-			// TODO: We want to generalize the fixHeader functions so that we don't have to add them everywhere.
-			inline bool fixHeader1(GcType *header) {
-				src.add(header);
-				return false;
-			}
-
 			inline Result fix2(void **ptr) { return 0; }
-			inline Result fixHeader2(GcType **header) { return 0; }
+
+			SCAN_FIX_HEADER
 		};
 
 	}

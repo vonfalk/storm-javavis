@@ -358,18 +358,18 @@ namespace storm {
 			atomicOr(obj->info, size_t(0x2));
 		}
 
-		// Get the GC flag.
-		static inline bool objGetFlag(const Obj *obj) {
+		// Get the GC mark.
+		static inline bool objIsMarked(const Obj *obj) {
 			return (obj->info & size_t(0x4)) != 0x0;
 		}
 
 		// Set the GC flag.
-		static inline void objSetFlag(Obj *obj) {
+		static inline void objSetMark(Obj *obj) {
 			atomicOr(obj->info, size_t(0x4));
 		}
 
 		// Clear the GC flag.
-		static inline void objClearFlag(Obj *obj) {
+		static inline void objClearMark(Obj *obj) {
 			atomicAnd(obj->info, ~size_t(0x4));
 		}
 
