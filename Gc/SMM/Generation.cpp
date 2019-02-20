@@ -5,6 +5,7 @@
 
 #include "Arena.h"
 #include "Scanner.h"
+#include "ObjWalk.h"
 
 namespace storm {
 	namespace smm {
@@ -56,18 +57,47 @@ namespace storm {
 			return b;
 		}
 
-		void Generation::collect(ArenaEntry &entry) {
-			for (InlineSet<Block>::iterator i = blocks.begin(); i != blocks.end(); ++i) {
-				Block *b = *i;
-				AddrSet<8> data(b->mem(0), b->mem(b->size));
-				AddrSet<8> data2(b->mem(0), b->mem(b->size));
-
-				entry.scanStackRoots<ScanSummary<8>>(data);
-				PVAR(data);
-
-				b->scan<ScanSummary<8>>(data2);
-				PVAR(data2);
+		struct ClearMark {
+			void operator() (fmt::Obj *obj) const {
+				fmt::objClearMark(obj);
 			}
+		};
+
+		struct MarkPinned {
+			MarkPinned(PinnedSet pinned) : pinned(pinned) {}
+
+			PinnedSet pinned;
+
+			void operator() (fmt::Obj *obj) const {
+				size_t size = fmt::objSize(obj);
+				void *start = fmt::toClient(obj);
+				if (pinned.has(start, (byte *)start + size)) {
+					// Mark the object, and its descendants in this generation. TODO: We might want
+					// to copy the objects right away.
+					objWalk<128>(obj);
+				}
+			}
+		};
+
+		void Generation::collect(ArenaEntry &entry) {
+			// First, clear any marked bits for all blocks.
+			traverse(ClearMark());
+
+			// Then, scan the roots and see which refer to the block. Note: We might want to scan
+			// the stacks once and get pinned objects to all blocks we intend to scan at once. That
+			// requires some kind of dynamic structure (which may be allocated in the block we intend
+			// to copy to), that I am to lazy to implement at the moment.
+			for (InlineSet<Block>::iterator i = blocks.begin(), end = blocks.end(); i != end; ++i) {
+				Block *b = *i;
+
+				PinnedSet pinned = b->addrSet<PinnedSet>();
+				entry.scanStackRoots<ScanSummary<PinnedSet>>(pinned);
+
+				// Mark pinned objects as reachable.
+				b->traverse(MarkPinned(pinned));
+			}
+
+			// TODO: Mark all objects indirectly reachable (perhaps even copy them directly).
 		}
 
 	}

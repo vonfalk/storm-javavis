@@ -13,6 +13,9 @@ namespace storm {
 		// Number of bytes used to represent pointer summaries in the GC and in the block allocator.
 		static const size_t summaryBytes = sizeof(size_t) * 2;
 
+		// Number of bytes used to represent a set of pointers to pinned objects.
+		static const size_t pinnedBytes = sizeof(size_t) * 2;
+
 	}
 }
 

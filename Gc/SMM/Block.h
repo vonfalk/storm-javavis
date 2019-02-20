@@ -46,6 +46,12 @@ namespace storm {
 				return (byte *)ptr + sizeof(Block) + offset;
 			}
 
+			// Get an AddrSet initialized to the range contained in the block.
+			template <class AddrSet>
+			AddrSet addrSet() {
+				return AddrSet(mem(0), mem(committed));
+			}
+
 			// Scan this block using a scanner.
 			template <class Scanner>
 			typename Scanner::Result scan(typename Scanner::Source &source) {
@@ -57,6 +63,16 @@ namespace storm {
 					// Note: We need to pass client pointers to the scanning functions.
 					mem(0 + fmt::headerSize),
 					mem(committed + fmt::headerSize));
+			}
+
+			// Iterate through each object and apply the function to them. Obj * pointers are passed
+			// to the provided function.
+			template <class Fn>
+			void traverse(Fn fn) {
+				fmt::Obj *end = (fmt::Obj *)mem(committed);
+				for (fmt::Obj *at = (fmt::Obj *)mem(0); at != end; at = fmt::objSkip(at)) {
+					fn(at);
+				}
 			}
 
 		private:

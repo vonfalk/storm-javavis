@@ -79,6 +79,15 @@ namespace storm {
 				return r;
 			}
 
+			// Apply a function to all objects in this generation.
+			template <class Fn>
+			void traverse(Fn fn) {
+				for (InlineSet<Block>::iterator i = blocks.begin(), end = blocks.end(); i != end; ++i) {
+					Block *b = *i;
+					b->traverse(fn);
+				}
+			}
+
 		private:
 			// No copy.
 			Generation(const Generation &o);
