@@ -45,6 +45,33 @@ namespace storm {
 			SCAN_FIX_HEADER
 		};
 
+
+		/**
+		 * Scan objects, updating any references that currently point to forwarding references.
+		 */
+		template <class Predicate>
+		struct UpdateFwd {
+			typedef int Result;
+			typedef Predicate Source;
+
+			Predicate &predicate;
+
+			UpdateFwd(Predicate &predicate) : predicate(predicate) {}
+
+			inline bool fix1(void *ptr) {
+				return predicate(ptr);
+			}
+
+			inline Result fix2(void **ptr) {
+				fmt::Obj *o = fmt::fromClient(*ptr);
+				// This will not update 'ptr' if it isn't a forwarding object.
+				objIsFwd(o, ptr);
+				return 0;
+			}
+
+			SCAN_FIX_HEADER
+		};
+
 	}
 }
 
