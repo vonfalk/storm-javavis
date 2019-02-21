@@ -23,7 +23,7 @@ namespace storm {
 		 */
 		class Block : public SetMember<Block> {
 		public:
-			Block(size_t size) : size(size), committed(0), reserved(0) {}
+			Block(size_t size) : size(size), committed(0), reserved(0), flags(0) {}
 
 			// Current size (excluding the block itself).
 			const size_t size;
@@ -34,6 +34,13 @@ namespace storm {
 			// Amount of memory reserved. 'reserved >= committed'. Memory that is reserved but not
 			// committed is being initialized, and can not be assumed to contain usable data.
 			size_t reserved;
+
+			// Various flags for this block.
+			enum Flags {
+				// This block is empty and can be deallocated. Used during GC phases.
+				fEmpty = 0x01,
+			};
+			size_t flags;
 
 			// Get the number of bytes remaining in this block (ignoring any reserved memory).
 			inline size_t remaining() const {
@@ -68,7 +75,7 @@ namespace storm {
 			// Iterate through each object and apply the function to them. Obj * pointers are passed
 			// to the provided function.
 			template <class Fn>
-			void traverse(Fn fn) {
+			void walk(Fn &fn) {
 				fmt::Obj *end = (fmt::Obj *)mem(committed);
 				for (fmt::Obj *at = (fmt::Obj *)mem(0); at != end; at = fmt::objSkip(at)) {
 					fn(at);

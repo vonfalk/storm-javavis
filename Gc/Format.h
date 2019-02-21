@@ -414,7 +414,7 @@ namespace storm {
 		 * Functions for high-level information about object instances.
 		 */
 
-		// Size of an object.
+		// Size of an object (including the header, so that we can skip objects using this size).
 		static inline size_t objSize(const Obj *o) {
 			if (objIsCode(o)) {
 				size_t code = objCodeSize(o);
@@ -485,6 +485,26 @@ namespace storm {
 			objMakePad(fromClient(at), size);
 		}
 
+		// Make the object 'at' into a forwarding object to the specified address, assuming we know
+		// its size from earlier. The size is the size returned from 'objSize'.
+		static inline void objMakeFwd(Obj *o, size_t size, void *to) {
+			FMT_CHECK_OBJ(o);
+#ifdef SLOW_DEBUG
+			dbg_assert(size >= headerSize + sizeof(Fwd1), L"Not enough space for a fwd object!");
+#endif
+			if (size <= headerSize + sizeof(Fwd1)) {
+				objSetHeader(o, &headerFwd1);
+				o->fwd1.to = to;
+			} else {
+				objSetHeader(o, &headerFwd);
+				o->fwd.to = to;
+				o->fwd.size = size - headerSize;
+			}
+
+			FMT_INIT_PAD(o, size0);
+			FMT_CHECK_OBJ(o);
+		}
+
 		// Make the object 'at' into a forwarding object to the specified address.
 		static inline void objMakeFwd(Obj *o, void *to) {
 			FMT_CHECK_OBJ(o);
@@ -528,9 +548,50 @@ namespace storm {
 			}
 		}
 
+		// Version that allows detecting pointers to 'null'.
+		static inline bool objIsFwd(const Obj *o, void **out) {
+			FMT_CHECK_OBJ(o);
+
+			if (objIsCode(o))
+				return null;
+
+			switch (objHeader(o)->type) {
+			case fwd1:
+				*out = o->fwd1.to;
+				return true;
+			case fwd:
+				*out = o->fwd.to;
+				return true;
+			default:
+				return false;
+			}
+		}
+
 		// Is the object a forwarder? Using client pointers.
 		static inline void *isFwd(const void *o) {
 			return objIsFwd(fromClient(o));
+		}
+
+		// Is this a special object (ie. a forwarder or a padding object)?
+		static inline bool objIsSpecial(const Obj *o) {
+			FMT_CHECK_OBJ(o);
+			if (objIsCode(o))
+				return false;
+
+			switch (objHeader(o)->type) {
+			case pad0:
+			case pad:
+			case fwd1:
+			case fwd:
+				return true;
+			default:
+				return false;
+			}
+		}
+
+		// Is this a special object (ie. a forwarder or a padding object)?
+		static inline bool isSpecial(const void *o) {
+			return objIsSpecial(fromClient(o));
 		}
 
 

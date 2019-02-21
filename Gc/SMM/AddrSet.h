@@ -51,6 +51,46 @@ namespace storm {
 				marked[(id / CHAR_BIT) & (totalBytes - 1)] |= (id < totalBytes * CHAR_BIT) << (id % CHAR_BIT);
 			}
 
+			// Add a range of addresses.
+			void add(void *from, void *to) { add(size_t(from), size_t(to)); }
+			void add(size_t from, size_t to) {
+				size_t off = offset();
+				size_t ext = off + size();
+
+				// Completely outside our range?
+				if (from >= ext || to <= off)
+					return;
+
+				// Note: We don't need min and max on both, since we know that [from, to[ overlaps our range.
+				from = max(from, off);
+				to = min(to, ext) - 1;
+
+				size_t idF = (from - offset()) >> shift();
+				size_t idT = (to - offset()) >> shift();
+
+				size_t chF = idF / CHAR_BIT;
+				byte bitF = idF % CHAR_BIT;
+				size_t chT = idT / CHAR_BIT;
+				byte bitT = idT % CHAR_BIT;
+
+				if (chF == chT) {
+					// Same chunk. Make a mask with a series of ones.
+					byte mask = (2 << bitT) - 1;
+					mask &= ~byte((1 << bitF) - 1);
+					marked[chF] |= mask;
+				} else {
+					// Different chunks. Check multiple bits in a range of slots.
+
+					// All bits in the first chunk, from the specified bit and upward.
+					marked[chF] |= ~byte((1 << bitF) - 1);
+					// All bits in the chunks between.
+					for (size_t ch = chF + 1; ch < chT; ch++)
+						marked[ch] |= std::numeric_limits<size_t>::max();
+					// All bits in the last chunk, from the specified bit and downward.
+					marked[chT] |= ((2 << bitT) - 1);
+				}
+			}
+
 			// Test if an address is set.
 			bool has(void *addr) const { return has(size_t(addr)); }
 			bool has(size_t addr) const {
@@ -92,11 +132,11 @@ namespace storm {
 
 					// All bits in the first chunk, from the specified bit and upward.
 					byte r = marked[chF] & ~byte((1 << bitF) - 1);
-					// All bits in the last chunk, from the specified bit and downward.
-					r |= marked[chT] & ((2 << bitT) - 1);
 					// All bits in the chunks between.
 					for (size_t ch = chF + 1; ch < chT; ch++)
 						r |= marked[ch];
+					// All bits in the last chunk, from the specified bit and downward.
+					r |= marked[chT] & ((2 << bitT) - 1);
 
 					return r != 0;
 				}

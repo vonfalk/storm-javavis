@@ -38,7 +38,7 @@ void verifyList(Dummy *head, size_t count) {
 		}
 
 		if (head->data[0] != i) {
-			PLN(L"Invalid element: " << head->data[0] << L", but expected " << i);
+			PLN(L"Invalid element at " << head << L": " << head->data[0] << L", expected " << i);
 			return;
 		}
 

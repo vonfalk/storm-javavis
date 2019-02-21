@@ -52,6 +52,33 @@ namespace storm {
 			// memory is needed in the returned block.
 			Block *fillBlock(size_t freeBytes);
 
+			// Get an AddrSet initialized to a range suitable for expressing all addresses in this generation.
+			template <class AddrSet>
+			AddrSet addrSet() const {
+				InlineSet<Block>::iterator i = blocks.begin();
+				InlineSet<Block>::iterator end = blocks.end();
+				if (i == end)
+					return AddrSet(0, 1);
+
+				size_t low = size_t((*i)->mem(0));
+				size_t high = size_t((*i)->mem((*i)->committed));
+				for (++i; i != end; ++i) {
+					low = min(low, size_t((*i)->mem(0)));
+					high = max(high, size_t((*i)->mem((*i)->committed)));
+				}
+
+				return AddrSet(low, high);
+			}
+
+			// Get a filled AddrSet indicating all blocks here.
+			template <class AddrSet>
+			AddrSet filledAddrSet() const {
+				AddrSet s = addrSet<AddrSet>();
+				for (InlineSet<Block>::iterator i = blocks.begin(), end = blocks.end(); i != end; ++i)
+					s.add((*i)->mem(0), (*i)->mem((*i)->committed));
+				return s;
+			}
+
 			// Collect garbage in this generation (API will likely change).
 			void collect(ArenaEntry &entry);
 
@@ -81,11 +108,41 @@ namespace storm {
 
 			// Apply a function to all objects in this generation.
 			template <class Fn>
-			void traverse(Fn fn) {
+			void walk(Fn &fn) {
 				for (InlineSet<Block>::iterator i = blocks.begin(), end = blocks.end(); i != end; ++i) {
 					Block *b = *i;
-					b->traverse(fn);
+					b->walk(fn);
 				}
+			}
+
+			/**
+			 * Predicate that tells if a particular address is inside the generation or not.
+			 */
+			struct Contains {
+				Contains(AddrSummary overview, const Generation *gen) : overview(overview), gen(gen) {}
+
+				AddrSummary overview;
+				const Generation *gen;
+
+				inline bool operator() (void *ptr) const {
+					size_t p = size_t(ptr);
+					if (overview.has(ptr)) {
+						// TODO: We might want to do something faster... If we know 'AddrSummary' is precise enough
+						// then we could rely entirely on that.
+						for (InlineSet<Block>::iterator i = gen->blocks.begin(), end = gen->blocks.end(); i != end; ++i) {
+							Block *b = *i;
+							if (p >= size_t(b->mem(0)) && p < size_t(b->mem(b->committed)))
+								return true;
+						}
+					}
+
+					return false;
+				}
+			};
+
+			// Create a predicate that checks if a particular address is contained within this generation.
+			inline Contains containsPredicate() const {
+				return Contains(filledAddrSet<AddrSummary>(), this);
 			}
 
 		private:

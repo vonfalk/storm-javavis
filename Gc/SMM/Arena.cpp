@@ -66,8 +66,8 @@ namespace storm {
 			ARENA_ENTRY(entry);
 
 			// We're just testing stack scanning for the moment...
-			for (size_t i = 0; i < generationCount; i++)
-				generations[i].collect(entry);
+			for (size_t i = generationCount; i > 0; i--)
+				generations[i - 1].collect(entry);
 		}
 
 	}

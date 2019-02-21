@@ -9,25 +9,25 @@
 namespace storm {
 	namespace smm {
 
-		template <size_t qSize>
+		template <class Filter, size_t qSize>
 		struct WalkScanner {
 			typedef int Result;
-			typedef FixedQueue<fmt::Obj *, qSize> Source;
+			typedef WalkScanner Source;
 
 			FixedQueue<fmt::Obj *, qSize> &q;
+			Filter &filter;
 
-			WalkScanner(Source &source) : q(source) {}
+			WalkScanner(FixedQueue<fmt::Obj *, qSize> &q, Filter &filter) : q(q), filter(filter) {}
+
+			WalkScanner(WalkScanner &self) : q(self.q), filter(self.filter) {}
 
 			inline bool fix1(void *ptr) {
-				// TODO: We only want to examine objects managed by the arena we're operating in!
-				// Otherwise we will crash badly.
-				// TODO: We might want to do an early out here.
-				return ptr != null;
+				return filter(ptr);
 			}
 
 			inline Result fix2(void **ptr) {
 				fmt::Obj *o = fmt::fromClient(*ptr);
-				if (fmt::objIsFwd(o) || fmt::objIsMarked(o))
+				if (fmt::objIsSpecial(o) || fmt::objIsMarked(o))
 					return 0;
 
 				fmt::objSetMark(o);
@@ -46,14 +46,23 @@ namespace storm {
 		 * a queue of a fixed maximum size. Whenever the queue is full, the current object is added
 		 * to the stack and some other objects are processed. Then, the object that caused the
 		 * overflow is examined once more to find the remaining pointers.
+		 *
+		 * 'filter' is called to exclude certain pointers that should not be scanned. This implementation
+		 * will be given a client pointer that is possibly not exactly a client pointer, but it has to
+		 * reside inside the object.
+		 * 'apply' is called for each marked object in the region, when the algorithm does not need
+		 * to examine the object anymore.
 		 */
-		template <size_t qSize>
-		void objWalk(fmt::Obj *start) {
+		template <class Filter, class Apply, size_t qSize>
+		void objWalk(fmt::Obj *start, Filter &filter, Apply &apply) {
 			FixedQueue<fmt::Obj *, qSize> queue;
+			typedef WalkScanner<Filter, qSize> Scanner;
+			Scanner scanner(queue, filter);
 
 			// Nothing needs to be done.
 			if (fmt::objIsMarked(start))
 				return;
+			fmt::objSetMark(start);
 
 			fmt::Obj *at = start;
 			while (at) {
@@ -61,7 +70,7 @@ namespace storm {
 
 				// Scan this object.
 				void *client = fmt::toClient(at);
-				if (fmt::Scan<WalkScanner<qSize>>::objects(queue, client, fmt::skip(client))) {
+				if (fmt::Scan<Scanner>::objects(scanner, client, fmt::skip(client))) {
 					// We failed to add an element to the queue. Add the current object and try to
 					// scan some additional objects to free up space.
 					next = queue.top();
@@ -73,7 +82,8 @@ namespace storm {
 					queue.pop();
 				}
 
-				// TODO: notify that we found a new object.
+				// Notify the caller.
+				apply(at);
 
 				at = next;
 			}
