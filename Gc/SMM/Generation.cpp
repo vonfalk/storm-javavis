@@ -117,25 +117,6 @@ namespace storm {
 			}
 		};
 
-		/**
-		 * Sweep unmarked objects, replacing them with forwarders to NULL. Reports if any object
-		 * remains marked in the scanned are.
-		 */
-		struct Sweep {
-			Sweep() : any(false) {}
-
-			bool any;
-
-			void operator() (fmt::Obj *obj) {
-				bool marked = fmt::objIsMarked(obj);
-				any |= marked;
-				if (marked || fmt::objIsSpecial(obj))
-					return;
-
-				fmt::objMakeFwd(obj, null);
-			}
-		};
-
 
 		void Generation::collect(ArenaEntry &entry) {
 			// Copy objects into the next generation if it exists, otherwise just into this generation.
@@ -165,7 +146,7 @@ namespace storm {
 				entry.scanStackRoots<ScanSummary<PinnedSet>>(pinned);
 
 				// Mark pinned objects as reachable and scan from there.
-				// TODO: Limit traversal to only some generations!
+				// TODO: Which generations do we want to walk?
 				b->walk(WalkPinned(pinned, nextGen, predicate));
 			}
 
@@ -174,10 +155,10 @@ namespace storm {
 			for (InlineSet<Block>::iterator i = blocks.begin(); i != end; ++i) {
 				Block *b = *i;
 
-				Sweep sweep;
-				b->walk(sweep);
-				if (!sweep.any)
+				if (!b->sweep())
 					b->flags |= Block::fEmpty;
+				else
+					b->flags |= Block::fSwept;
 			}
 
 			// Update pointers in objects that referred to the objects we moved.
@@ -188,7 +169,8 @@ namespace storm {
 			}
 
 			// Also scan the new blocks!
-			nextGen->scan<UpdateFwd<Contains>>(predicate);
+			if (nextGen != this)
+				nextGen->scan<UpdateFwd<Contains>>(predicate);
 
 			// Reclaim empty blocks. TODO: Most of these will contain a fair amount of unused space
 			// in the form of forwarding objects. It would be nice to be able to re-use that memory,
@@ -203,6 +185,10 @@ namespace storm {
 					if (b->flags & Block::fEmpty) {
 						blocks.erase(b);
 						owner.free(b);
+					} else if (b->flags & Block::fSwept) {
+						// Make the block more efficient to scan by merging adjacent garbage objects.
+						b->clean();
+						b->flags &= ~Block::fSwept;
 					}
 				}
 			}
