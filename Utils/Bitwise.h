@@ -94,6 +94,13 @@ inline T roundUp(T number, T multiple) {
 	return number + (multiple - remainder);
 }
 
+// Round down to the nearest multiple of "multiple"
+// T should be an integer number, preferrably unsigned.
+template <class T>
+inline T roundDown(T number, T multiple) {
+	return number - (number % multiple);
+}
+
 
 /**
  * Compile-time computation of powers of two.

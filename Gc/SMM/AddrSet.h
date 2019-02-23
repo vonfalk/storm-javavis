@@ -157,6 +157,23 @@ namespace storm {
 				return (size_t(1) << shift()) * totalBytes * CHAR_BIT;
 			}
 
+			// Output as a string, but for a particular range of addresses.
+			String toS(void *from, void *to) { return toS(size_t(from), size_t(to)); }
+			String toS(size_t from, size_t to) {
+				std::wostringstream out;
+
+				size_t bitSz = size_t(1) << shift();
+				from = roundDown(from, bitSz);
+				to = roundUp(to, bitSz);
+
+				out << (void *)from << L" ";
+				for (size_t i = from; i < to; i += bitSz)
+					out << (has(i) ? '+' : '-');
+				out << L" " << (void *)to << L" (resolution: " << bitSz << L" bytes)";
+
+				return out.str();
+			}
+
 		private:
 			// Data. Contains an offset and a shift (the lowest 6 bits).
 			size_t data;

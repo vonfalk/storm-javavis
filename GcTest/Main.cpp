@@ -15,7 +15,7 @@ static GcType dummyType = {
 };
 
 // Build a linked list of a few elements.
-Dummy *makeList(Gc &gc, size_t count) {
+__declspec(noinline) Dummy *makeList(Gc &gc, size_t count) {
 	Dummy *first = (Dummy *)gc.alloc(&dummyType);
 	first->data[0] = 0;
 

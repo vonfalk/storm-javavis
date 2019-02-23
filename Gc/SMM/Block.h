@@ -39,6 +39,9 @@ namespace storm {
 			enum Flags {
 				// This block is empty and can be deallocated. Used during GC phases.
 				fEmpty = 0x01,
+
+				// This block is sweeped and can be cleaned without losing data.
+				fSwept = 0x02,
 			};
 			size_t flags;
 
@@ -81,6 +84,14 @@ namespace storm {
 					fn(at);
 				}
 			}
+
+			// Sweep this block, replacing any unmarked objects with forwarders to null. Returns
+			// 'true' if the block contained any live (marked) objects.
+			bool sweep();
+
+			// Clean this block, replacing sequences of forwarding objects and padding with padding
+			// and decrease "committed" and "reserved" as much as possible.
+			void clean();
 
 		private:
 			// No copying!
