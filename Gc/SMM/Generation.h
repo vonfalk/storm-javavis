@@ -86,9 +86,15 @@ namespace storm {
 			// false positives, but never false negatives.
 			// TODO: Make sure to re-scan any blocks that contain invalidated or empty summaries the
 			// next time they're scanned by someone.
+			// TODO: We could implement this a bit more efficiently by keeping a summary that is the
+			// union of all summaries here, so that we can do an early-out.
 			bool mayReferTo(Block *block) const {
-				// TODO: Implement me!
-				return true;
+				for (InlineSet<Block>::iterator i = blocks.begin(), end = blocks.end(); i != end; ++i) {
+					if ((*i)->mayReferTo(block))
+						return true;
+				}
+
+				return false;
 			}
 
 			// Scan all blocks in this generation using the specified scanner.

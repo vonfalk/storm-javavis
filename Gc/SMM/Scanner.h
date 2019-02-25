@@ -30,11 +30,6 @@ namespace storm {
 
 			ScanSummary(Source &source) : src(source) {}
 
-			inline bool skip(fmt::Obj *ptr) {
-				// For testing.
-				return false;
-			}
-
 			inline bool fix1(void *ptr) {
 				src.add(ptr);
 				return false;
@@ -62,7 +57,7 @@ namespace storm {
 				return predicate(ptr);
 			}
 
-			inline Result fix2(void **ptr) {
+			inline Result fix2(void **ptr) const {
 				fmt::Obj *o = fmt::fromClient(*ptr);
 				// This will not update 'ptr' if it isn't a forwarding object.
 				objIsFwd(o, ptr);
@@ -70,6 +65,44 @@ namespace storm {
 			}
 
 			SCAN_FIX_HEADER
+		};
+
+
+		/**
+		 * Perform some other scanning, and produce an address summary of all contained pointers.
+		 */
+		template <class AddrSet, class Other>
+		struct WithSummary {
+			typedef typename Other::Result Result;
+			struct Source {
+				AddrSet &set;
+				typename Other::Source &src;
+
+				Source(AddrSet &set, typename Other::Source &src) : set(set), src(src) {}
+			};
+
+			AddrSet &set;
+			Other other;
+
+			WithSummary(Source source) : set(source.set), other(source.src) {}
+
+			inline bool fix1(void *ptr) {
+				set.add(ptr);
+				return other.fix1(ptr);
+			}
+
+			inline Result fix2(void **ptr) {
+				return other.fix2(ptr);
+			}
+
+			inline bool fixHeader1(GcType *header) {
+				set.add(header);
+				return other.fixHeader1(header);
+			}
+
+			inline Result fixHeader2(GcType **header) {
+				return other.fixHeader2(header);
+			}
 		};
 
 	}
