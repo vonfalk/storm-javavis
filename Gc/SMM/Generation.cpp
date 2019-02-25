@@ -95,6 +95,29 @@ namespace storm {
 			}
 		};
 
+		/**
+		 * Mark objects inside the specified block.
+		 */
+		struct MarkInBlock {
+			typedef Block *Source;
+			typedef int Result;
+
+			size_t from, to;
+
+			MarkInBlock(Block *block) : from(size_t(block->mem(0))), to(size_t(block->mem(block->committed))) {}
+
+			bool fix1(void *ptr) const {
+				size_t p = size_t(ptr);
+				return (p >= from) & (p < to);
+			}
+
+			Result fix2(void **ptr) const {
+				fmt::objSetMark(fmt::fromClient(*ptr));
+				return 0;
+			}
+
+			SCAN_FIX_HEADER
+		};
 
 		/**
 		 * Mark and move pinned objects.
@@ -133,14 +156,15 @@ namespace storm {
 			// First, clear any marked bits for all blocks.
 			walk(ClearMark());
 
-			// TODO: Mark any objects in this generation from other generations.
-
 			// Then, scan the roots and see which refer to the block. Note: We might want to scan
 			// the stacks once and get pinned objects to all blocks we intend to scan at once. That
 			// requires some kind of dynamic structure (which may be allocated in the block we intend
 			// to copy to), that I am to lazy to implement at the moment.
 			for (InlineSet<Block>::iterator i = blocks.begin(); i != end; ++i) {
 				Block *b = *i;
+
+				// Mark any objects in this generation from other generations.
+				entry.scanGenerations<MarkInBlock>(b, this, b);
 
 				PinnedSet pinned = b->addrSet<PinnedSet>();
 				entry.scanStackRoots<ScanSummary<PinnedSet>>(pinned);
@@ -174,7 +198,7 @@ namespace storm {
 
 			// Reclaim empty blocks. TODO: Most of these will contain a fair amount of unused space
 			// in the form of forwarding objects. It would be nice to be able to re-use that memory,
-			// or at least the memory at the end of the block!
+			// especially when we're dealing with blocks containing non-moving objects.
 			{
 				InlineSet<Block>::iterator i = blocks.begin();
 				while (i != end) {
