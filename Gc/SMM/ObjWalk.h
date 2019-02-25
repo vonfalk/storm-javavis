@@ -35,10 +35,7 @@ namespace storm {
 				return q.push(o) ? 0 : 1;
 			}
 
-			// SCAN_FIX_HEADER
-			// For now: Don't scan object formats. TODO: Fix!
-			inline bool fixHeader1(GcType *) { return false; }
-			inline Result fixHeader2(GcType **) { return 0; }
+			SCAN_FIX_HEADER
 		};
 
 		/**
