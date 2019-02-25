@@ -1,4 +1,5 @@
 #include "stdafx.h"
+#include "Utils/Timer.h"
 
 struct Dummy {
 	Dummy *next;
@@ -55,7 +56,11 @@ void run(Gc &gc) {
 	for (size_t i = 0; i < 10; i++) {
 		d = makeList(gc, 100);
 	}
-	gc.collect();
+
+	{
+		util::Timer t(L"gc");
+		gc.collect();
+	}
 
 	verifyList(d, 100);
 }

@@ -13,7 +13,7 @@ namespace util {
 	// Example:
 	// static FramerateTimer timer(L"Rendering");
 	// FramerateTimer::Time timerTime(timer);
-	// 
+	//
 	// This is what is done by the macro FRAMERATE_TIME(L"Rendering");
 	class FramerateTimer : NoCopy {
 	public:

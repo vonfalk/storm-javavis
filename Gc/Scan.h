@@ -184,11 +184,6 @@ namespace storm {
 		// Constructor from 'Source'.
 		NullScanner(Source &source) {}
 
-		// If this function exists, the default object format calls it for every object to ask if
-		// the object shall be skipped. If the function does not exist, it is assumed to always
-		// return 'false'.
-		// inline bool skip(Obj *obj) { return false; }
-
 		// Called once for each reference. Assumed to be a quick "early-out" check that the GC can
 		// use to quickly discard references that are not interesting at the moment. We also assume
 		// that this check can be called for internal pointers to objects without harm. Returns

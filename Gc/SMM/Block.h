@@ -3,10 +3,14 @@
 #if STORM_GC == STORM_GC_SMM
 
 #include "InlineSet.h"
+#include "AddrSet.h"
+#include "BlockAlloc.h"
 #include "Gc/Format.h"
 
 namespace storm {
 	namespace smm {
+
+		class BlockAlloc;
 
 		/**
 		 * A block of memory allocated by an Arena, with some associated metadata required by the
@@ -23,7 +27,8 @@ namespace storm {
 		 */
 		class Block : public SetMember<Block> {
 		public:
-			Block(size_t size) : size(size), committed(0), reserved(0), flags(0) {}
+			Block(BlockAlloc *inside, size_t size)
+				: size(size), committed(0), reserved(0), flags(0), inside(inside), summary(0, 1) {}
 
 			// Current size (excluding the block itself).
 			const size_t size;
@@ -62,17 +67,36 @@ namespace storm {
 				return AddrSet(mem(0), mem(committed));
 			}
 
+			// Is it possible that this block contains a reference to the block indicated in the
+			// parameter? May return false positives, but never false negatives.
+			bool mayReferTo(Block *block) const {
+				if (summary.offset() == 0 && summary.shift() == 0)
+					// Empty. We need to re-scan at some point!
+					return true;
+
+				// TODO: Check if the summary is stale!
+				TODO(L"Check if the summary is stale!");
+
+				return summary.has(block->mem(0), block->mem(block->committed));
+			}
+
 			// Scan this block using a scanner.
 			template <class Scanner>
 			typename Scanner::Result scan(typename Scanner::Source &source) {
 				// Always reset 'reserved' when we scan. Otherwise, we might miss something
 				// important if we're scanning during an allocation.
 				reserved = committed;
-				return storm::fmt::Scan<Scanner>::objects(
-					source,
+				summary = inside->addrSet<AddrSummary>();
+				typedef WithSummary<AddrSummary, Scanner> S;
+				typename Scanner::Result r = fmt::Scan<S>::objects(
+					S::Source(summary, source),
 					// Note: We need to pass client pointers to the scanning functions.
 					mem(0 + fmt::headerSize),
 					mem(committed + fmt::headerSize));
+
+				// TODO: Reset the memory watch, we updated the summary!
+
+				return r;
 			}
 
 			// Iterate through each object and apply the function to them. Obj * pointers are passed
@@ -97,6 +121,12 @@ namespace storm {
 			// No copying!
 			Block(const Block &o);
 			Block &operator =(const Block &o);
+
+			// A summary of objects we refer to.
+			AddrSummary summary;
+
+			// The BlockAlloc we're allocated inside.
+			BlockAlloc *inside;
 		};
 
 	}

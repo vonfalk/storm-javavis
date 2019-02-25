@@ -3,13 +3,14 @@
 #if STORM_GC == STORM_GC_SMM
 
 #include "VM.h"
-#include "Block.h"
 #include "Utils/Bitwise.h"
 #include "AddrSet.h"
 #include <vector>
 
 namespace storm {
 	namespace smm {
+
+		class Block;
 
 		// Header of a chunk.
 		struct ChunkHeader;
@@ -57,6 +58,13 @@ namespace storm {
 				return false;
 			}
 
+			// Create an AddrSet that is large enough to contain addresses in the entire arena
+			// managed by this instance.
+			template <class AddrSet>
+			AddrSet addrSet() const {
+				return AddrSet(minAddr, maxAddr);
+			}
+
 		private:
 			// No copy!
 			BlockAlloc(const BlockAlloc &o);
@@ -96,6 +104,13 @@ namespace storm {
 			// Keep track of all chunks. We strive to keep this array small. Otherwise, the
 			// "contains pointer" query will be expensive.
 			vector<Chunk> chunks;
+
+			// Min- and max address managed in this instance.
+			size_t minAddr;
+			size_t maxAddr;
+
+			// Update 'minAddr' and 'maxAddr'.
+			void updateMinMax();
 
 			// Compute the size of a chunk's header (rounded up to the next page boundary).
 			size_t headerSize(size_t size);

@@ -137,6 +137,22 @@ namespace storm {
 			delete vm;
 		}
 
+		void BlockAlloc::updateMinMax() {
+			if (chunks.empty()) {
+				minAddr = 0;
+				maxAddr = 1;
+			}
+
+			minAddr = size_t(chunks[0].at);
+			maxAddr = minAddr + chunks[0].pages * pageSize;
+
+			for (size_t i = 1; i < chunks.size(); i++) {
+				size_t base = size_t(chunks[i].at);
+				minAddr = min(minAddr, base);
+				maxAddr = max(maxAddr, base + chunks[i].pages * pageSize);
+			}
+		}
+
 		size_t BlockAlloc::headerSize(size_t size) {
 			size_t pages = (size + pageSize - 1) / pageSize;
 			size_t bytes = (pages + CHAR_BIT - 1) / CHAR_BIT;
@@ -160,6 +176,7 @@ namespace storm {
 
 			// Add it to our list of chunks!
 			chunks.push_back(chunk);
+			updateMinMax();
 		}
 
 		BlockAlloc::Chunk *BlockAlloc::findChunk(void *ptr) {
@@ -209,7 +226,7 @@ namespace storm {
 			// Commit the memory, and return.
 			void *mem = (byte *)c.at + found*pageSize + c.header()->size;
 			vm->commit(mem, pages * pageSize);
-			return new (mem) Block(pages * pageSize - sizeof(Block));
+			return new (mem) Block(this, pages * pageSize - sizeof(Block));
 		}
 
 		void BlockAlloc::free(Block *block) {
