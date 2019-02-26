@@ -7,7 +7,7 @@ namespace storm {
 	namespace smm {
 
 		// Flags that applies to all allocations.
-		static const DWORD reserveFlags = 0;
+		static const DWORD reserveFlags = MEM_WRITE_WATCH;
 		static const DWORD commitFlags = 0;
 		static const DWORD allocProt = PAGE_EXECUTE_READWRITE;
 

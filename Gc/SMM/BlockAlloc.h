@@ -65,6 +65,10 @@ namespace storm {
 				return AddrSet(minAddr, maxAddr);
 			}
 
+			// Find the block containing an address inside here. Fairly efficient, needs to traverse
+			// a maximum of sizeof(size_t) * CHAR_BIT (ie. 32 or 64) blocks to find the correct one.
+			Block *findBlock(void *addr);
+
 		private:
 			// No copy!
 			BlockAlloc(const BlockAlloc &o);
@@ -112,8 +116,11 @@ namespace storm {
 			// Update 'minAddr' and 'maxAddr'.
 			void updateMinMax();
 
-			// Compute the size of a chunk's header (rounded up to the next page boundary).
-			size_t headerSize(size_t size);
+			// Convert from a page index inside a chunk to an address.
+			void *pageToAddr(ChunkHeader *header, size_t offset) const;
+
+			// Convert from a pointer to a page index inside a chunk.
+			size_t addrToPage(ChunkHeader *header, void *addr) const;
 
 			// Add a chunk we recently reserved. This will initialize the allocation bitmap, and any
 			// other data structures in the chunk, and finally add it to 'chunks'.
