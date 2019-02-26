@@ -76,6 +76,14 @@ namespace storm {
 
 				// TODO: Check if the summary is stale!
 				TODO(L"Check if the summary is stale!");
+				// void *addr[100];
+				// ULONG_PTR count = 1;
+				// DWORD granularity = 0;
+				// GetWriteWatch(0, block, block->size + sizeof(Block), addr, &count, &granularity);
+				// PVAR(count);
+				// PVAR(granularity);
+				// PVAR(addr[0]);
+				// PVAR(addr[1]);
 
 				return summary.has(block->mem(0), block->mem(block->committed));
 			}
