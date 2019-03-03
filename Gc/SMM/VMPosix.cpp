@@ -3,6 +3,7 @@
 
 #if STORM_GC == STORM_GC_SMM && defined(POSIX)
 
+#include "BlockAlloc.h"
 #include <sys/mman.h>
 
 namespace storm {
@@ -35,6 +36,19 @@ namespace storm {
 
 		void VMPosix::free(void *at, size_t size) {
 			munmap(at, size);
+		}
+
+		void VMPosix::watchWrites(BlockAlloc *alloc, void *at, size_t size) {
+			assert(false, L"watchWrites is not implemented yet!");
+
+			// In order for scanning to work properly, we mark the block as 'updated' immediately.
+			Block *b = alloc->findBlock(at);
+			if (b)
+				b->flags |= Block::fUpdated;
+		}
+
+		void notifyWrites(BlockAlloc *alloc, void **buffer) {
+			// Not needed on Posix.
 		}
 
 	}

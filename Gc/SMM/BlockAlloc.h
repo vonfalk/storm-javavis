@@ -44,6 +44,13 @@ namespace storm {
 			// Free a previously allocated block.
 			void free(Block *block);
 
+			// Check for writes to any blocks we manage. Some backends only update the 'fUpdated'
+			// flag for blocks this function is called, others do it during the actual write.
+			void checkWrites(void **arenaBuffer);
+
+			// Notify 'block' whenever it is written to.
+			void watchWrites(Block *block);
+
 			// Check if a pointer refers to an object managed by this instance. Returns 'true' if
 			// the block is in the range reserved by any of the chunks here. This does not
 			// necessarily mean that the pointer is actually allocated currently.
@@ -69,10 +76,12 @@ namespace storm {
 			// a maximum of sizeof(size_t) * CHAR_BIT (ie. 32 or 64) blocks to find the correct one.
 			Block *findBlock(void *addr);
 
-		private:
-			// No copy!
-			BlockAlloc(const BlockAlloc &o);
-			BlockAlloc &operator =(const BlockAlloc &o);
+			// Mark all blocks in the contained addresses as 'updated'. Assumes that the buffer is
+			// sorted, so that the internal structures can be traversed more efficiently compared to
+			// calling 'findBlock' for every address. Any addresses not currently referring to a
+			// block are simply ignored.
+			void markBlocks(void **addr, size_t count);
+
 
 			/**
 			 * A chunk of memory inside the BlockAlloc.
@@ -101,6 +110,13 @@ namespace storm {
 				inline ChunkHeader *header() const { return (ChunkHeader *)at; }
 			};
 
+			// Get all chunks in this allocator. Mainly intended for VM subclasses.
+			const vector<Chunk> &chunkList() const { return chunks; }
+
+		private:
+			// No copy!
+			BlockAlloc(const BlockAlloc &o);
+			BlockAlloc &operator =(const BlockAlloc &o);
 
 			// VM backend.
 			VM *vm;
@@ -122,6 +138,10 @@ namespace storm {
 			// Convert from a pointer to a page index inside a chunk.
 			size_t addrToPage(ChunkHeader *header, void *addr) const;
 
+			// Same as 'addrToPage', but supports addresses inside the chunk header as well (returns
+			// page 0 for them). Is slightly more expensive than 'addrToPage' for this reason.
+			size_t addrToPageSafe(ChunkHeader *header, void *addr) const;
+
 			// Add a chunk we recently reserved. This will initialize the allocation bitmap, and any
 			// other data structures in the chunk, and finally add it to 'chunks'.
 			void addChunk(void *mem, size_t size);
@@ -131,6 +151,9 @@ namespace storm {
 
 			// Allocate memory in a specific chunk. Returns 'null' on failure.
 			Block *alloc(Chunk &c, size_t pages);
+
+			// Mark blocks inside one particular chunk.
+			void markBlocks(Chunk &c, void **begin, void **end);
 		};
 
 	}

@@ -26,10 +26,6 @@ namespace storm {
 				if (i + 1 < generationCount)
 					generations[i].next = &generations[i + 1];
 			}
-
-			// TODO: If we need to be able to tell if some pointer may point inside a buffer, it is
-			// probably a good idea to reserve a fair amount of virtual memory and then allocate
-			// from there.
 		}
 
 		Arena::~Arena() {

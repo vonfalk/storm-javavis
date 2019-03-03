@@ -27,8 +27,17 @@ namespace storm {
 			// Free.
 			virtual void free(void *at, size_t size);
 
+			// Watch for writes.
+			virtual void watchWrites(BlockAlloc *alloc, void *at, size_t size);
+
+			// Check for writes.
+			virtual void notifyWrites(BlockAlloc *alloc, void **buffer);
+
 		private:
 			VMWin(size_t pageSize, size_t granularity);
+
+			// Check a number of pages for writes.
+			void notifyWrites(BlockAlloc *alloc, void **buffer, void *at, size_t size);
 		};
 
 	}
