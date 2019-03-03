@@ -51,6 +51,13 @@ namespace storm {
 			reserved = committed = (byte *)free - (byte *)mem(0);
 		}
 
+		void Block::watchWrites() {
+			// We need to clear the 'updated' flag first. If we clear it afterwards, we will
+			// immediately activate it again since we write to ourselves.
+			atomicAnd(flags, ~fUpdated);
+			inside->watchWrites(this);
+		}
+
 	}
 }
 

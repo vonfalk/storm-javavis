@@ -16,6 +16,10 @@ namespace storm {
 		// Number of bytes used to represent a set of pointers to pinned objects.
 		static const size_t pinnedBytes = sizeof(size_t) * 2;
 
+		// Size of the shared buffer in the Arena instance that is used by various parts of the system.
+		// Note: Unit is # of pointers, not bytes.
+		static const size_t arenaBufferWords = 128;
+
 	}
 }
 

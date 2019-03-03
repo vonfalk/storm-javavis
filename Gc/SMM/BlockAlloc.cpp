@@ -296,6 +296,11 @@ namespace storm {
 			return (offset - header->size) / pageSize;
 		}
 
+		size_t BlockAlloc::addrToPageSafe(ChunkHeader *header, void *addr) const {
+			size_t offset = (byte *)addr - (byte *)header;
+			return (max(offset, header->size) - header->size) / pageSize;
+		}
+
 		Block *BlockAlloc::alloc(Chunk &c, size_t pages) {
 			// Try to find a sequence of length 'pages' in the bitmap, starting at 'nextAlloc'.
 			size_t found = findFree(c.header(), c.pages, pages);
@@ -326,6 +331,14 @@ namespace storm {
 			} else {
 				throw GcError(L"Invalid pointer passed to 'free'");
 			}
+		}
+
+		void BlockAlloc::checkWrites(void **buffer) {
+			vm->notifyWrites(this, buffer);
+		}
+
+		void BlockAlloc::watchWrites(Block *block) {
+			vm->watchWrites(this, block, sizeof(Block) + block->size);
 		}
 
 		Block *BlockAlloc::findBlock(void *ptr) {
@@ -379,6 +392,143 @@ namespace storm {
 
 			// Nothing found.
 			return null;
+		}
+
+		struct AddrCmp {
+			bool operator ()(void *l, void *r) const {
+				return size_t(l) < size_t(r);
+			}
+		};
+
+		void BlockAlloc::markBlocks(void **addr, size_t count) {
+			if (count <= 0)
+				return;
+
+			// Partition the addresses to each of the chunks, so we don't have to deal with that later.
+			for (size_t i = 0; i < chunks.size(); i++) {
+				Chunk &c = chunks[i];
+
+				void **first = std::lower_bound(addr, addr + count, c.at, AddrCmp());
+				void **last = std::lower_bound(addr, addr + count, (char *)c.at + c.pages*pageSize, AddrCmp());
+
+				if (first != last)
+					markBlocks(c, first, last);
+			}
+		}
+
+		void BlockAlloc::markBlocks(Chunk &c, void **begin, void **end) {
+			byte *bStart = blockStart(c.header(), c.pages);
+
+			// We have a loop here since we might want to re-start if there are large enogugh gaps
+			// in the address ranges supplied. Otherwise, we may end up traversing large parts of
+			// the memory even though there are only a few blocks we actually need to mark!
+			while (begin < end) {
+				size_t page = addrToPageSafe(c.header(), *begin);
+				size_t index = page / wordBits;
+
+				size_t lastPage = addrToPageSafe(c.header(), *(end - 1));
+				size_t lastIndex = lastPage / wordBits;
+
+				// Does the index directly here contain the block we're looking for?
+				if (bStart[index] > page % wordBits) {
+					// No, it is either 0xFF or the first block in this index is after the one we're
+					// looking for. Walk backwards to find the start of the block! Note: If we don't
+					// find the block, we keep 'index' at its original position so that we can quickly
+					// exclude addresses that are outside of the rage we're interested in.
+					size_t i = index;
+					while (i > 0) {
+						i--;
+
+						// This is the start of a new block, use that!
+						if (bStart[i] != 0xFF) {
+							index = i;
+							break;
+						}
+					}
+				}
+
+
+				// At this point, 'index' indicates the index of the first page group that may be
+				// interesting to us. However, 'bStart[index]' may be 0xFF in some cases.
+
+				// Fix that by finding a bStart that has something other than 0xFF, so that we find a
+				// block that interests us!
+				while (bStart[index] == 0xFF) {
+					// If this is true, no addresses refer to any valid blocks since we didn't find any
+					// block-starts in the indicated range.
+					if (index == lastIndex)
+						return;
+
+					index++;
+				}
+
+				// Now, we have at least one block! Traverse adjacent blocks as far as possible and mark
+				// them if we need to.
+				page = index*wordBits + bStart[index];
+				while (page <= lastPage) {
+					index = page / wordBits;
+					size_t offset = page % wordBits;
+
+					if ((c.header()->used[index] >> offset) & 0x1) {
+						// This block is in use (should always be true the first iteration, maybe not on subsequent ones).
+						Block *block = (Block *)pageToAddr(c.header(), page);
+						size_t blockSize = sizeof(Block) + block->size;
+						size_t blockStart = size_t(block);
+						size_t blockEnd = size_t(block) + blockSize;
+
+						// Skip any entries in the list that are before the start of this block.
+						while (size_t(*begin) < blockStart) {
+							if (++begin >= end)
+								return;
+						}
+
+						// If the current pointer is not too far off, we should mark the block!
+						if (size_t(*begin) < blockEnd) {
+							block->flags |= Block::fUpdated;
+
+							// Skip any pointers inside the block.
+							while (size_t(*begin) < blockEnd) {
+								if (++begin >= end)
+									return;
+							}
+						}
+
+						// Jump to the next block.
+						page += blockSize / pageSize;
+					} else {
+						// Try to find the next block.
+						if (bStart[index] == 0xFF) {
+							// Empty block?
+							page = (index + 1) * wordBits;
+						} else if (offset == wordBits - 1) {
+							// Go to the next index, use the block-start table to skip some indices.
+							// Note: There is never a tight fit after the block-start table due to how
+							// the size of blocks are computed.
+							offset = bStart[index + 1];
+							if (offset == 0xFF) {
+								// Skip the entire next block...
+								page = (index + 2) * wordBits;
+							} else {
+								// Go to the proper position directly.
+								page = (index + 1) * wordBits + offset;
+							}
+						} else {
+							// Just go on until we find something more.
+							page++;
+						}
+					}
+
+					// If the next block is far enough away, it is beneficial to try to jump directly there.
+					if ((index + 4) * wordBits < addrToPageSafe(c.header(), *begin))
+						break;
+				}
+
+				// If we hit the end-condition of the previous loop, we're done.
+				if (page > lastPage)
+					break;
+			}
+
+			// If there are any pointers left here, they all refer to memory after the last block in this chunk.
 		}
 
 	}

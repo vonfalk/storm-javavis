@@ -53,7 +53,7 @@ void verifyList(Dummy *head, size_t count) {
 void run(Gc &gc) {
 	Dummy *d;
 
-	for (size_t i = 0; i < 10; i++) {
+	for (size_t i = 0; i < 20; i++) {
 		d = makeList(gc, 100);
 	}
 

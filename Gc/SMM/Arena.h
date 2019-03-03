@@ -55,6 +55,9 @@ namespace storm {
 			// Perform a full GC (API will most likely change).
 			void collect();
 
+			// Get the buffer. Always of size 'arenaBuffer'.
+			inline void **buffer() { return genericBuffer; }
+
 		private:
 			// No copying!
 			Arena(const Arena &o);
@@ -72,6 +75,10 @@ namespace storm {
 
 			// Threads running in this arena.
 			InlineSet<Thread> threads;
+
+			// Staticly allocated buffer used by various parts of the system, so we don't have to
+			// allocate it on the stack and risk getting a stack overflow at unsuitable times.
+			void *genericBuffer[arenaBufferWords];
 		};
 
 

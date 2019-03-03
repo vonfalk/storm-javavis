@@ -28,7 +28,7 @@ namespace storm {
 		class Block : public SetMember<Block> {
 		public:
 			Block(BlockAlloc *inside, size_t size)
-				: size(size), committed(0), reserved(0), flags(0), inside(inside), summary(0, 1) {}
+				: size(size), committed(0), reserved(0), flags(fUpdated), inside(inside), summary(0, 1) {}
 
 			// Current size (excluding the block itself).
 			const size_t size;
@@ -45,8 +45,11 @@ namespace storm {
 				// This block is empty and can be deallocated. Used during GC phases.
 				fEmpty = 0x01,
 
-				// This block is sweeped and can be cleaned without losing data.
+				// This block is swept and can be cleaned without losing data.
 				fSwept = 0x02,
+
+				// This block has been written to since the last call to 'watchWrites'.
+				fUpdated = 0x04,
 			};
 			size_t flags;
 
@@ -70,20 +73,9 @@ namespace storm {
 			// Is it possible that this block contains a reference to the block indicated in the
 			// parameter? May return false positives, but never false negatives.
 			bool mayReferTo(Block *block) const {
-				if (summary.offset() == 0 && summary.shift() == 0)
-					// Empty. We need to re-scan at some point!
+				if (flags & fUpdated)
+					// Empty summary or stale summary.
 					return true;
-
-				// TODO: Check if the summary is stale!
-				TODO(L"Check if the summary is stale!");
-				// void *addr[100];
-				// ULONG_PTR count = 1;
-				// DWORD granularity = 0;
-				// GetWriteWatch(0, block, block->size + sizeof(Block), addr, &count, &granularity);
-				// PVAR(count);
-				// PVAR(granularity);
-				// PVAR(addr[0]);
-				// PVAR(addr[1]);
 
 				return summary.has(block->mem(0), block->mem(block->committed));
 			}
@@ -102,7 +94,8 @@ namespace storm {
 					mem(0 + fmt::headerSize),
 					mem(committed + fmt::headerSize));
 
-				// TODO: Reset the memory watch, we updated the summary!
+				// TODO: We might not always want to trigger the memory watch, it may be expensive.
+				watchWrites();
 
 				return r;
 			}
@@ -135,6 +128,9 @@ namespace storm {
 
 			// The BlockAlloc we're allocated inside.
 			BlockAlloc *inside;
+
+			// Arrange so that we will be notified about writes to the contents of this block. Clears 'fUpdated' flag.
+			void watchWrites();
 		};
 
 	}

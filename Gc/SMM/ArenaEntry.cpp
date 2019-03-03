@@ -8,7 +8,9 @@
 namespace storm {
 	namespace smm {
 
-		ArenaEntry::ArenaEntry(Arena &owner) : owner(owner), lock(owner.lock) {}
+		ArenaEntry::ArenaEntry(Arena &owner) : owner(owner), lock(owner.lock) {
+			owner.alloc.checkWrites(owner.buffer());
+		}
 
 	}
 }
