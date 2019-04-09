@@ -105,9 +105,6 @@ namespace storm {
 
 				// Size, expressed in number of pages.
 				size_t pages;
-
-				// Get the header.
-				inline ChunkHeader *header() const { return (ChunkHeader *)at; }
 			};
 
 			// Get all chunks in this allocator. Mainly intended for VM subclasses.
@@ -130,30 +127,31 @@ namespace storm {
 			size_t maxAddr;
 
 			// Update 'minAddr' and 'maxAddr'.
-			void updateMinMax();
+			void updateMinMax(size_t &minAddr, size_t &maxAddr);
 
-			// Convert from a page index inside a chunk to an address.
-			void *pageToAddr(ChunkHeader *header, size_t offset) const;
+			// Current location of the memory information data. Allocated in one of the
+			// chunks. Covers 'minAddr' to 'maxAddr' regardless of the number of chunks actually in
+			// use.
+			byte *info;
 
-			// Convert from a pointer to a page index inside a chunk.
-			size_t addrToPage(ChunkHeader *header, void *addr) const;
+			// Get the size of the info block, given a range of addresses. Note: We round down so
+			// that any partial last block will not be contained in the info, since it will be
+			// unusable anyway.
+			inline size_t infoCount(size_t min, size_t max) const {
+				return (max - min) >> blockBits;
+			}
+			inline size_t infoCount() const {
+				return infoCount(minAddr, maxAddr);
+			}
 
-			// Same as 'addrToPage', but supports addresses inside the chunk header as well (returns
-			// page 0 for them). Is slightly more expensive than 'addrToPage' for this reason.
-			size_t addrToPageSafe(ChunkHeader *header, void *addr) const;
+			// Get the index in 'info' for a particular address. Undefined for ranges outside [minAddr, maxAddr].
+			inline size_t infoOffset(void *mem) const {
+				size_t ptr = size_t(mem);
+				return (ptr - minAddr) >> blockBits;
+			}
 
-			// Add a chunk we recently reserved. This will initialize the allocation bitmap, and any
-			// other data structures in the chunk, and finally add it to 'chunks'.
+			// Add a chunk to our pool.
 			void addChunk(void *mem, size_t size);
-
-			// Find the chunk that contains a particular address.
-			Chunk *findChunk(void *addr);
-
-			// Allocate memory in a specific chunk. Returns 'null' on failure.
-			Block *alloc(Chunk &c, size_t pages);
-
-			// Mark blocks inside one particular chunk.
-			void markBlocks(Chunk &c, void **begin, void **end);
 		};
 
 	}
