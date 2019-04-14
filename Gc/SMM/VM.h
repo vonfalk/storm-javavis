@@ -7,7 +7,7 @@
 namespace storm {
 	namespace smm {
 
-		class BlockAlloc;
+		class VMAlloc;
 
 		/**
 		 * Management of virtual memory.
@@ -52,12 +52,12 @@ namespace storm {
 			// flag for the corresponding block to be set. After the 'fUpdated' flag has been set,
 			// the pages need to be registered once more if further write notifications are to be
 			// sent. It is assumed that the indicated addresses do not span more than one block.
-			virtual void watchWrites(BlockAlloc *alloc, void *at, size_t size) = 0;
+			virtual void watchWrites(VMAlloc *alloc, void *at, size_t size) = 0;
 
 			// Called by the system to tell the VM subsystem to check for any writes that needs to
 			// be notified. Some implementations require calls to this function for 'watchWrites' to
 			// work properly. "buffer" is assumed to be at least "arenaBuffer" words long.
-			virtual void notifyWrites(BlockAlloc *alloc, void **buffer) = 0;
+			virtual void notifyWrites(VMAlloc *alloc, void **buffer) = 0;
 
 		protected:
 			VM(size_t pageSize, size_t granularity) : pageSize(pageSize), allocGranularity(granularity) {}

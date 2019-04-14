@@ -4,13 +4,13 @@
 
 #include "InlineSet.h"
 #include "AddrSet.h"
-#include "BlockAlloc.h"
+#include "VMAlloc.h"
 #include "Gc/Format.h"
 
 namespace storm {
 	namespace smm {
 
-		class BlockAlloc;
+		class VMAlloc;
 
 		/**
 		 * A block of memory allocated by an Arena, with some associated metadata required by the
@@ -27,7 +27,7 @@ namespace storm {
 		 */
 		class Block : public SetMember<Block> {
 		public:
-			Block(BlockAlloc *inside, size_t size)
+			Block(VMAlloc *inside, size_t size)
 				: size(size), committed(0), reserved(0), flags(fUpdated), inside(inside), summary(0, 1) {}
 
 			// Current size (excluding the block itself).
@@ -126,8 +126,8 @@ namespace storm {
 			// A summary of objects we refer to.
 			AddrSummary summary;
 
-			// The BlockAlloc we're allocated inside.
-			BlockAlloc *inside;
+			// The VMAlloc we're allocated inside.
+			VMAlloc *inside;
 
 			// Arrange so that we will be notified about writes to the contents of this block. Clears 'fUpdated' flag.
 			void watchWrites();

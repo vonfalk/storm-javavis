@@ -20,11 +20,11 @@ namespace storm {
 		// Note: Unit is # of pointers, not bytes.
 		static const size_t arenaBufferWords = 128;
 
-		// Granularity of memory allocations in the BlockAlloc class. For each 2^blockBits bytes
+		// Granularity of memory allocations in the VMAlloc class. For each 2^vmAllocBits bytes
 		// managed, one byte of additional memory is needed. For a value of 16, blocks are 64KiB and
 		// 32KiB memory is needed for managing 2GiB memory.
-		static const size_t blockBits = 16;
-		static const size_t blockMinSize = 1 << blockBits;
+		static const size_t vmAllocBits = 16;
+		static const size_t vmAllocMinSize = 1 << vmAllocBits;
 
 	}
 }

@@ -3,7 +3,7 @@
 
 #if STORM_GC == STORM_GC_SMM && defined(WINDOWS)
 
-#include "BlockAlloc.h"
+#include "VMAlloc.h"
 
 namespace storm {
 	namespace smm {
@@ -38,15 +38,15 @@ namespace storm {
 			VirtualFree(at, 0, MEM_RELEASE);
 		}
 
-		void VMWin::watchWrites(BlockAlloc *alloc, void *at, size_t size) {
+		void VMWin::watchWrites(VMAlloc *alloc, void *at, size_t size) {
 			// Just reset the state here, so that we don't report writes that may have occurred before this call.
 			ResetWriteWatch(at, size);
 		}
 
-		void VMWin::notifyWrites(BlockAlloc *alloc, void **buffer) {
-			const vector<BlockAlloc::Chunk> &chunks = alloc->chunkList();
+		void VMWin::notifyWrites(VMAlloc *alloc, void **buffer) {
+			const vector<Chunk> &chunks = alloc->chunkList();
 			for (size_t i = 0; i < chunks.size(); i++) {
-				notifyWrites(alloc, buffer, chunks[i].at, chunks[i].pages * pageSize);
+				notifyWrites(alloc, buffer, chunks[i].at, chunks[i].size);
 			}
 		}
 
@@ -56,7 +56,7 @@ namespace storm {
 			}
 		};
 
-		void VMWin::notifyWrites(BlockAlloc *alloc, void **buffer, void *at, size_t size) {
+		void VMWin::notifyWrites(VMAlloc *alloc, void **buffer, void *at, size_t size) {
 			ULONG_PTR count = 0;
 			DWORD granularity = 0;
 			do {
@@ -66,14 +66,9 @@ namespace storm {
 				// mark all pages in the interval if that happens.
 				assert(r == 0, L"GetWriteWatch failed");
 
-				// Note: It seems like the output from GetWriteWatch is always sorted, but as it is
-				// not documented anywhere, we sort it just to be sure. std::sort will most likely
-				// detect that this is the case and not do too much extra work anyway.
-				std::sort(buffer, buffer + count, AddrCmp());
-
 				// Mark the blocks that contain the addresses as updated. We do this in a batch so
 				// that the implementation doesn't need to use the lookup table for every address.
-				alloc->markBlocks(buffer, size_t(count));
+				alloc->markBlockWrites(buffer, size_t(count));
 
 				// Reset the watch for the pages we just marked. Otherwise they will show up again
 				// in the next iteration...

@@ -50,11 +50,12 @@ namespace storm {
 		}
 
 		Block *Generation::allocBlock(size_t size) {
-			Block *b = owner.allocMin(size);
-			if (b)
-				blocks.insert(b);
+			// Block *b = owner.allocMin(size);
+			// if (b)
+			// 	blocks.insert(b);
 
-			return b;
+			// return b;
+			return null;
 		}
 
 		struct ClearMark {
@@ -208,7 +209,7 @@ namespace storm {
 					// Note: Freeing the memory *after* the iterator goes past it.
 					if (b->flags & Block::fEmpty) {
 						blocks.erase(b);
-						owner.free(b);
+						// owner.free(b);
 					} else if (b->flags & Block::fSwept) {
 						// Make the block more efficient to scan by merging adjacent garbage objects.
 						b->clean();

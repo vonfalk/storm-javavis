@@ -26,6 +26,16 @@ namespace storm {
 				if (i + 1 < generationCount)
 					generations[i].next = &generations[i + 1];
 			}
+
+			// For testing...
+			PVAR(alloc.alloc(1024, 10));
+			PVAR(alloc.alloc(1024, 10));
+			PVAR(alloc.alloc(1024, 10));
+			PVAR(alloc.alloc(1024, 10));
+			PVAR(alloc.alloc(1024, 10));
+			PVAR(alloc.alloc(1024, 10));
+			PVAR(alloc.alloc(1024, 10));
+			exit(1);
 		}
 
 		Arena::~Arena() {
@@ -34,14 +44,14 @@ namespace storm {
 			::free(generations);
 		}
 
-		Block *Arena::allocMin(size_t size) {
+		Chunk Arena::allocChunk(size_t size, byte identifier) {
 			util::Lock::L z(lock);
-			return alloc.alloc(size);
+			return alloc.alloc(size, identifier);
 		}
 
-		void Arena::free(Block *block) {
+		void Arena::freeChunk(Chunk chunk) {
 			util::Lock::L z(lock);
-			return alloc.free(block);
+			alloc.free(chunk);
 		}
 
 		Thread *Arena::attachThread() {

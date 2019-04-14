@@ -3,7 +3,7 @@
 #if STORM_GC == STORM_GC_SMM
 
 #include "VM.h"
-#include "BlockAlloc.h"
+#include "VMAlloc.h"
 #include "Generation.h"
 #include "Thread.h"
 
@@ -39,12 +39,11 @@ namespace storm {
 			// Number of generations.
 			const size_t generationCount;
 
-			// Allocate a block with a specified minimum size. The actual size may be larger. 'size'
-			// excludes the bytes required for the Block-header.
-			Block *allocMin(size_t size);
+			// Allocate a chunk of memory from the VMAlloc instance.
+			Chunk allocChunk(size_t size, byte identifier);
 
-			// Free a block.
-			void free(Block *block);
+			// Free a chunk of memory from the VMAlloc instance.
+			void freeChunk(Chunk chunk);
 
 			// Attach the current thread to the arena.
 			Thread *attachThread();
@@ -70,8 +69,8 @@ namespace storm {
 			// would be stopped while owning the lock.
 			util::Lock lock;
 
-			// Block allocations.
-			BlockAlloc alloc;
+			// Virtual memory allocations.
+			VMAlloc alloc;
 
 			// Threads running in this arena.
 			InlineSet<Thread> threads;

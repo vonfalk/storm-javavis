@@ -55,7 +55,7 @@ namespace storm {
 			// We need to clear the 'updated' flag first. If we clear it afterwards, we will
 			// immediately activate it again since we write to ourselves.
 			atomicAnd(flags, ~fUpdated);
-			inside->watchWrites(this);
+			// inside->watchWrites(this);
 		}
 
 	}
