@@ -13,7 +13,7 @@ namespace storm {
 #define MB(n) (KB((n) * 1024))
 
 	static const size_t generations[] = {
-		MB(1), // Nursery generation
+		KB(128), // Nursery generation
 		MB(10), // Intermediate generation
 		MB(100), // Persistent generation.
 	};

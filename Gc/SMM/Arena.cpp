@@ -22,19 +22,19 @@ namespace storm {
 
 			for (size_t i = 0; i < generationCount; i++) {
 				size_t genSz = roundUp(genSize[i], alloc.pageSize);
-				new (&generations[i]) Generation(*this, genSz);
+				new (&generations[i]) Generation(*this, genSz, i + 1);
 				if (i + 1 < generationCount)
 					generations[i].next = &generations[i + 1];
 			}
 
 			// For testing...
-			PVAR(alloc.alloc(1024, 10));
-			PVAR(alloc.alloc(1024, 10));
-			PVAR(alloc.alloc(1024, 10));
-			PVAR(alloc.alloc(1024, 10));
-			PVAR(alloc.alloc(1024, 10));
-			PVAR(alloc.alloc(1024, 10));
-			PVAR(alloc.alloc(1024, 10));
+			PVAR(generations[0].alloc(1024));
+			Block *b = generations[0].alloc(256);
+			PVAR(b);
+			b->committed = b->reserved = 128;
+			generations[0].done(b);
+			PVAR(generations[0].alloc(32));
+
 			exit(1);
 		}
 
@@ -71,9 +71,11 @@ namespace storm {
 		void Arena::collect() {
 			ARENA_ENTRY(entry);
 
+			TODO(L"Implement collection!");
+
 			// We're just testing stack scanning for the moment...
-			for (size_t i = generationCount; i > 0; i--)
-				generations[i - 1].collect(entry);
+			// for (size_t i = generationCount; i > 0; i--)
+			// 	generations[i - 1].collect(entry);
 		}
 
 	}

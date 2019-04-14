@@ -22,9 +22,10 @@ namespace storm {
 				source = null;
 			}
 
-			source = owner.alloc();
+			source = owner.alloc(minSize);
 
 			// Our "large allocation" limit should make this impossible.
+			assert(source);
 			assert(source->size >= minSize);
 		}
 
