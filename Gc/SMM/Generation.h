@@ -54,6 +54,13 @@ namespace storm {
 			// memory is needed in the returned block.
 			Block *fillBlock(size_t freeBytes);
 
+			// Perform a full collection of this generation. We probably want a more fine-grained
+			// API in the future.
+			void collect(ArenaEntry &entry);
+
+			// Verify the integrity of all blocks in this generation.
+			void dbg_verify();
+
 		private:
 			// No copy.
 			Generation(const Generation &o);
@@ -87,6 +94,9 @@ namespace storm {
 
 				// Mark the block as no longer in use, allowing re-use of any remaining memory inside.
 				void releaseBlock(Block *block);
+
+				// Verify this chunk.
+				void dbg_verify();
 			};
 
 			struct ChunkCompare {

@@ -15,6 +15,22 @@ namespace storm {
 			// inside->watchWrites(this);
 		}
 
+		void Block::dbg_verify() {
+			// Note: We're working with client pointers for convenience.
+			byte *at = (byte *)mem(fmt::headerSize);
+			byte *end = (byte *)mem(committed + fmt::headerSize);
+
+			while (at < end) {
+				// Validate the object if we're able to.
+				FMT_CHECK_OBJ(fmt::fromClient(at));
+
+				at += fmt::size(at);
+				assert(at <= end, L"An object is larger than the allocated portion of a block!");
+			}
+
+			assert(at == end, L"Invalid allocation size in a block!");
+		}
+
 	}
 }
 

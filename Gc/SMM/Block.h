@@ -83,6 +83,9 @@ namespace storm {
 				return summary.has(block->mem(0), block->mem(block->committed));
 			}
 
+			// Verify the contents of this block.
+			void dbg_verify();
+
 		private:
 			// No copying!
 			Block(const Block &o);

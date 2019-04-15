@@ -17,8 +17,17 @@ namespace storm {
 		Arena::Arena(size_t initialSize, const size_t *genSize, size_t generationCount)
 			: generationCount(generationCount), alloc(VM::create(), initialSize) {
 
+			// Check assumptions of the formatting code.
+			fmt::init();
+
 			// Allocate the individual generations.
 			generations = (Generation *)malloc(generationCount * sizeof(Generation));
+
+			// TODO: We most likely want to connect the generations in a more interesting pattern,
+			// e.g. duplicating the last generation and connecting them in a cycle to avoid special
+			// cases for the last generation. Additionally, it is worth investigating whether it is
+			// useful to have parallel "lanes" for objects of certain types. E.g. objects with
+			// finalizers.
 
 			for (size_t i = 0; i < generationCount; i++) {
 				size_t genSz = roundUp(genSize[i], alloc.pageSize);
@@ -26,16 +35,6 @@ namespace storm {
 				if (i + 1 < generationCount)
 					generations[i].next = &generations[i + 1];
 			}
-
-			// For testing...
-			PVAR(generations[0].alloc(1024));
-			Block *b = generations[0].alloc(256);
-			PVAR(b);
-			b->committed = b->reserved = 128;
-			generations[0].done(b);
-			PVAR(generations[0].alloc(32));
-
-			exit(1);
 		}
 
 		Arena::~Arena() {
@@ -71,11 +70,11 @@ namespace storm {
 		void Arena::collect() {
 			ARENA_ENTRY(entry);
 
-			TODO(L"Implement collection!");
-
-			// We're just testing stack scanning for the moment...
-			// for (size_t i = generationCount; i > 0; i--)
-			// 	generations[i - 1].collect(entry);
+			// The user program asked us for a full collection, causing all generations to be
+			// collected (not simultaneously at the moment, we might want to do that in order to
+			// reduce memory usage as much as possible without requiring multiple calls to 'collect').
+			for (size_t i = generationCount; i > 0; i--)
+				generations[i - 1].collect(entry);
 		}
 
 	}

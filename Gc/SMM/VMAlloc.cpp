@@ -8,10 +8,6 @@
 namespace storm {
 	namespace smm {
 
-		wostream &operator <<(wostream &to, const Chunk &c) {
-			return to << L"Chunk: " << c.at << L"+" << c.size;
-		}
-
 		VMAlloc::VMAlloc(VM *vm, size_t initSize) :
 			vm(vm), pageSize(vm->pageSize),
 			minAddr(0), maxAddr(1),
@@ -85,7 +81,7 @@ namespace storm {
 			info = totalInfo;
 
 			// Mark the new information struct as 'allocated' so that we don't overwrite it later!
-			for (size_t at = infoOffset(info), to = infoOffset(info + count); at < to; at++) {
+			for (size_t at = infoOffset(info), to = infoOffset(info + count - 1); at <= to; at++) {
 				info[at] = INFO_USED;
 			}
 		}

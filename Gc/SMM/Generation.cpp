@@ -79,10 +79,21 @@ namespace storm {
 			// deallocate unused blocks as well...
 			pos = chunks.insert(pos, GenChunk(c));
 
-			PLN(L"New allocation!");
-
 			return pos->allocBlock(minSize, maxSize, minFragment());
 		}
+
+		void Generation::collect(ArenaEntry &entry) {}
+
+		void Generation::dbg_verify() {
+			for (size_t i = 0; i < chunks.size(); i++) {
+				chunks[i].dbg_verify();
+			}
+		}
+
+
+		/**
+		 * A chunk.
+		 */
 
 		Generation::GenChunk::GenChunk(Chunk chunk) : memory(chunk) {
 			lastAlloc = new (memory.at) Block(memory.size - sizeof(Block));
@@ -150,6 +161,18 @@ namespace storm {
 		void Generation::GenChunk::releaseBlock(Block *block) {
 			block->clearFlag(Block::fUsed);
 			freeBytes += block->remaining();
+		}
+
+		void Generation::GenChunk::dbg_verify() {
+			Block *at = (Block *)memory.at;
+			while ((byte *)at < (byte *)memory.end()) {
+				assert(memory.has(at), L"Invalid block size detected. Leads to outside the specified chunk!");
+
+				at->dbg_verify();
+				at = (Block *)at->mem(at->size);
+			}
+
+			assert(at == memory.end(), L"A chunk is overfilled!");
 		}
 
 	}
