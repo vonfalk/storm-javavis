@@ -33,6 +33,12 @@ namespace storm {
 			void *end() const {
 				return (byte *)at + size;
 			}
+
+			// Get a suitable AddrSet.
+			template <class T>
+			T addrSet() const {
+				return T(at, end());
+			}
 		};
 
 		wostream &operator <<(wostream &to, const Chunk &c);

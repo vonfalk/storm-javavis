@@ -20,6 +20,9 @@ namespace storm {
 			// Check assumptions of the formatting code.
 			fmt::init();
 
+			// Check our limit on generations. If this is broken, things will go very wrong.
+			assert(generationCount < (1 << 6), L"Must have less than 2^6 generations.");
+
 			// Allocate the individual generations.
 			generations = (Generation *)malloc(generationCount * sizeof(Generation));
 

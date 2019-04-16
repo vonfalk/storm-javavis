@@ -79,12 +79,49 @@ namespace storm {
 			// deallocate unused blocks as well...
 			pos = chunks.insert(pos, GenChunk(c));
 
+			while (pinnedSets.size() < chunks.size())
+				pinnedSets.push_back(PinnedSet(0, 1));
+
 			return pos->allocBlock(minSize, maxSize, minFragment());
 		}
 
-		void Generation::collect(ArenaEntry &entry) {}
+		void Generation::collect(ArenaEntry &entry) {
+			// Note: This assumes a generation where objects may move. Non-moving objects need to be
+			// treated differently (especially since we don't expect there to be very many of them).
+
+			// Scan all non-exact roots (the stacks of all threads), and keep track of non-moving
+			// objects.
+
+			for (size_t i = 0; i < chunks.size(); i++)
+				pinnedSets[i] = chunks[i].memory.addrSet<PinnedSet>();
+
+			// TODO: We might want to do an 'early out' inside the scanning by using
+			// VMAlloc::identifier before attempting to access the sets. We need to measure the benefits of this!
+			entry.scanStackRoots<ScanSummaries<PinnedSet>>(pinnedSets);
+
+			for (size_t i = 0; i < chunks.size(); i++) {
+				PLN(i << L": " << pinnedSets[i]);
+			}
+
+			// Allocate a new block from the next generation where we keep surviving objects.
+
+			// For all blocks containing at least one pinned object, traverse it entirely to find
+			// and scan the pinned objects. The pinned objects are copied to the new block.
+
+			// Traverse all other generations that could contain references to this generation and
+			// copy any referred objects to the new block. Idea: Rather than a pointer summary, it
+			// would be useful to keep a 'generation summary' for each block that stores a summary
+			// of which *generations* are stored rather than pointer ranges. We can only have a
+			// maximum of 64 generations at the moment, so these will be compact, exact, and easy to
+			// manage!
+
+			// Finally, traverse the newly copied objects in the new block and copy any new
+			// references until no more objects are found.
+		}
 
 		void Generation::dbg_verify() {
+			assert(chunks.size() == pinnedSets.size());
+
 			for (size_t i = 0; i < chunks.size(); i++) {
 				chunks[i].dbg_verify();
 			}

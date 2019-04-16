@@ -42,6 +42,30 @@ namespace storm {
 
 
 		/**
+		 * Scan into a number of AddrSets to keep track of ambiguous references.
+		 */
+		template <class AddrSet>
+		struct ScanSummaries {
+			typedef int Result;
+			typedef vector<AddrSet> Source;
+
+			Source &src;
+
+			ScanSummaries(Source &source) : src(source) {}
+
+			inline bool fix1(void *ptr) {
+				for (Source::iterator i = src.begin(), end = src.end(); i != end; ++i)
+					i->add(ptr);
+				return false;
+			}
+
+			inline Result fix2(void **ptr) { return 0; }
+
+			SCAN_FIX_HEADER
+		};
+
+
+		/**
 		 * Scan objects, updating any references that currently point to forwarding references.
 		 */
 		template <class Predicate>

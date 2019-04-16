@@ -72,6 +72,13 @@ namespace storm {
 			// Our identifier.
 			byte identifier;
 
+			/**
+			 * A chunk managed by a generation. Perhaps this should be moved outside of the generation class.
+			 *
+			 * TODO: Since the underlying memory manager does not necessarily have a granularity
+			 * better than these chunks, perhaps we should move summaries to these chunks rather
+			 * than keeping them inside the blocks.
+			 */
 			struct GenChunk {
 				// Create. Initializes the chunk to contain a single empty block.
 				GenChunk(Chunk chunk);
@@ -126,6 +133,11 @@ namespace storm {
 			// Elements here are sorted according to their address.
 			typedef vector<GenChunk> ChunkList;
 			ChunkList chunks;
+
+			// Pre-allocated vector of pointer summaries for each block. Used when scanning inexact
+			// roots, and due to the heavy usage it is useful to keep them together. The individual
+			// elements are neither initialized nor kept up to date outside the scanning functions.
+			vector<PinnedSet> pinnedSets;
 
 			// Get the minimum size we want our blocks to be when we're splitting them.
 			inline size_t minFragment() const { return blockSize >> 2; }
