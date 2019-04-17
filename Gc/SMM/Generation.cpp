@@ -5,7 +5,7 @@
 
 #include "Arena.h"
 #include "Scanner.h"
-#include "ObjWalk.h"
+#include "ScanState.h"
 
 namespace storm {
 	namespace smm {
@@ -39,6 +39,16 @@ namespace storm {
 
 			// TODO: Look at the amount of memory we're using, and consider triggering a garbage
 			// collection, at least for this generation.
+		}
+
+		bool Generation::isPinned(void *obj, void *end) {
+			ChunkList::iterator pos = std::lower_bound(chunks.begin(), chunks.end(), obj, PtrCompare());
+			if (pos != chunks.end()) {
+				return pinnedSets[pos - chunks.begin()].has(obj, end);
+			} else {
+				// Should not happen...
+				return false;
+			}
 		}
 
 		Block *Generation::fillBlock(size_t size) {
@@ -99,24 +109,25 @@ namespace storm {
 			// VMAlloc::identifier before attempting to access the sets. We need to measure the benefits of this!
 			entry.scanStackRoots<ScanSummaries<PinnedSet>>(pinnedSets);
 
-			for (size_t i = 0; i < chunks.size(); i++) {
-				PLN(i << L": " << pinnedSets[i]);
-			}
-
-			// Allocate a new block from the next generation where we keep surviving objects.
+			// Keep track of surviving objects inside a ScanState object, which allocates memory
+			// from the next generation.
+			ScanState state(this, next);
 
 			// For all blocks containing at least one pinned object, traverse it entirely to find
-			// and scan the pinned objects. The pinned objects are copied to the new block.
+			// and scan the pinned objects. Any non-pinned objects are copied to the new block.
+			for (size_t i = 0; i < chunks.size(); i++)
+				chunks[i].scanPinned(pinnedSets[i], state);
 
 			// Traverse all other generations that could contain references to this generation and
-			// copy any referred objects to the new block. Idea: Rather than a pointer summary, it
-			// would be useful to keep a 'generation summary' for each block that stores a summary
-			// of which *generations* are stored rather than pointer ranges. We can only have a
-			// maximum of 64 generations at the moment, so these will be compact, exact, and easy to
-			// manage!
+			// copy any referred objects to the new block.
+			// entry.scanGenerations<ScanState::Move>(state, this);
 
-			// Finally, traverse the newly copied objects in the new block and copy any new
-			// references until no more objects are found.
+			// Traverse the newly copied objects in the new block and copy any new references until
+			// no more objects are found.
+
+			// Update any references to objects we just moved.
+
+			// Finally, release and/or compact any remaining blocks in this generation.
 		}
 
 		void Generation::dbg_verify() {
@@ -198,6 +209,27 @@ namespace storm {
 		void Generation::GenChunk::releaseBlock(Block *block) {
 			block->clearFlag(Block::fUsed);
 			freeBytes += block->remaining();
+		}
+
+		struct IfPinned {
+			IfPinned(const PinnedSet &pinned) : pinned(pinned) {}
+
+			PinnedSet pinned;
+
+			bool operator() (void *from, void *to) const {
+				return pinned.has(from, to);
+			}
+		};
+
+		void Generation::GenChunk::scanPinned(const PinnedSet &pinned, ScanState &scan) {
+			if (pinned.empty())
+				return;
+
+			// Walk all blocks and scan the relevant ones.
+			for (Block *at = (Block *)memory.at; at != (Block *)memory.end(); at = (Block *)at->mem(at->size)) {
+				if (pinned.has(at->mem(0), at->mem(at->committed)))
+					at->scanIf<IfPinned, ScanState::Move>(pinned, scan);
+			}
 		}
 
 		void Generation::GenChunk::dbg_verify() {

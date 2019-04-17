@@ -48,12 +48,23 @@ namespace storm {
 				return infoData(info[infoOffset(addr)]);
 			}
 
+			// Get the identifier for an allocation safely. Returns 0xFF on failure.
+			inline byte safeIdentifier(void *addr) const {
+				size_t a = size_t(addr);
+				if (a >= minAddr && a < maxAddr) {
+					byte data = info[infoOffset(addr)];
+					if (infoClientUse(data))
+						return infoData(data);
+				}
+				return 0xFF;
+			}
+
 			// Check if a pointer refers to an object managed by this instance. Returns 'true' if
 			// the pointer refers to a block currently allocated here.
 			inline bool has(void *addr) {
 				size_t a = size_t(addr);
 				if (a >= minAddr && a < maxAddr)
-					return infoUsed(info[infoOffset(addr)]);
+					return infoClientUse(info[infoOffset(addr)]);
 				return false;
 			}
 
@@ -83,6 +94,9 @@ namespace storm {
 
 			// Mark all blocks in the contained addresses as 'updated'.
 			void markBlockWrites(void **addr, size_t count);
+
+			// Dump the allocation information.
+			void dbg_dump();
 
 		private:
 			// No copy!
@@ -120,6 +134,9 @@ namespace storm {
 			 * Bit 0: In use (1) or free (0).
 			 * Bit 1: Contents altered since last check?
 			 * Bit 2-7: User data.
+			 *
+			 * Note: If only bit 1 is set, the block is marked as in use by the memory management
+			 * system, as a written, unallocated block does not make sense.
 			 */
 
 			// Current location of the memory information data. Allocated in one of the
@@ -155,18 +172,24 @@ namespace storm {
 			// Constants for some useful info values.
 			enum {
 				INFO_FREE = 0x00,
-				INFO_USED = 0x01,
-				INFO_WRITTEN = 0x02
+				INFO_USED_CLIENT = 0x01,
+				INFO_USED_WRITTEN = 0x03,
+				INFO_USED_INTERNAL = 0x02
 			};
 
-			// Check if a particular byte in 'info' is marked as 'used'.
-			static inline bool infoUsed(byte b) {
-				return b & 0x01;
+			// Check if a particular byte in 'info' is marked as 'used', either by us or by the client.
+			static inline bool infoInUse(byte b) {
+				return (b & 0x03) != 0;
+			}
+
+			// Check if a particular byte in 'info' is marked as 'used' by the client.
+			static inline bool infoClientUse(byte b) {
+				return (b & 0x01) == 1;
 			}
 
 			// Check if a particular byte in 'info' is marked as 'written'.
 			static inline bool infoWritten(byte b) {
-				return (b >> 1) & 0x01;
+				return (b & 0x03) == INFO_USED_WRITTEN;
 			}
 
 			// Get the data portion of a byte in 'info'.

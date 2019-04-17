@@ -4,13 +4,13 @@
 
 #include "VM.h"
 #include "VMAlloc.h"
-#include "Generation.h"
 #include "Thread.h"
 
 namespace storm {
 	namespace smm {
 
 		class Block;
+		class Generation;
 
 		/**
 		 * An Arena keeps track of all allocations made by the GC, and represents the entire world
@@ -44,6 +44,11 @@ namespace storm {
 
 			// Free a chunk of memory from the VMAlloc instance.
 			void freeChunk(Chunk chunk);
+
+			// Query memory information for a pointer. Returns either the generation number or 0xFF on failure.
+			byte memGeneration(void *ptr) const {
+				return alloc.safeIdentifier(ptr);
+			}
 
 			// Attach the current thread to the arena.
 			Thread *attachThread();

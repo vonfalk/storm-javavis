@@ -82,14 +82,14 @@ namespace storm {
 
 			// Mark the new information struct as 'allocated' so that we don't overwrite it later!
 			for (size_t at = infoOffset(info), to = infoOffset(info + count - 1); at <= to; at++) {
-				info[at] = INFO_USED;
+				info[at] = INFO_USED_INTERNAL;
 			}
 		}
 
 		static inline size_t findRange(byte *in, size_t from, size_t to, size_t size) {
 			size_t start = from;
 			for (size_t i = from; i < to; i++) {
-				if (in[i] & 0x01) {
+				if (in[i] & 0x03) {
 					start = i + 1;
 				} else if (i - start + 1 >= size) {
 					return start;
@@ -118,7 +118,7 @@ namespace storm {
 			lastAlloc = start + pieces;
 
 			// Mark the memory as in use.
-			memset(info + start, INFO_USED | ((identifier & 0x3F) << 2), pieces);
+			memset(info + start, INFO_USED_CLIENT | ((identifier & 0x3F) << 2), pieces);
 
 			Chunk mem(infoPtr(start), pieces*vmAllocMinSize);
 			vm->commit(mem.at, mem.size);
@@ -127,7 +127,7 @@ namespace storm {
 
 		void VMAlloc::free(Chunk chunk) {
 			// Mark as free.
-			memset(info + infoOffset(chunk.at), 0, chunk.size / vmAllocMinSize);
+			memset(info + infoOffset(chunk.at), INFO_FREE, chunk.size / vmAllocMinSize);
 
 			// Decommit from OS.
 			vm->decommit(chunk.at, chunk.size);
@@ -139,7 +139,20 @@ namespace storm {
 
 		void VMAlloc::markBlockWrites(void **addr, size_t count) {
 			for (size_t i = 0; i < count; i++) {
-				info[infoOffset(addr[i])] |= INFO_WRITTEN;
+				// Note: This will work regardless of whether the block is used internally or externally.
+				info[infoOffset(addr[i])] |= 0x02;
+			}
+		}
+
+		void VMAlloc::dbg_dump() {
+			const char *mode[4];
+			mode[INFO_FREE] = "free";
+			mode[INFO_USED_CLIENT] = "client";
+			mode[INFO_USED_WRITTEN] = "client, written";
+			mode[INFO_USED_INTERNAL] = "internal";
+
+			for (size_t i = 0; i < infoCount(); i++) {
+				PLN(infoPtr(i) << L" - " << infoPtr(i + 1) << L": " << infoData(info[i]) << L" " << mode[info[i] & 0x03]);
 			}
 		}
 

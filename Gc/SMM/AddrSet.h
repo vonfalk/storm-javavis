@@ -44,6 +44,14 @@ namespace storm {
 					marked[i] = 0;
 			}
 
+			// Empty?
+			bool empty() const {
+				size_t d = 0;
+				for (size_t i = 0; i < totalBytes; i++)
+					d |= marked[i];
+				return d == 0;
+			}
+
 			// Add an address.
 			void add(void *addr) { add(size_t(addr)); }
 			void add(size_t addr) {

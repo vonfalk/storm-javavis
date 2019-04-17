@@ -11,6 +11,7 @@ namespace storm {
 	namespace smm {
 
 		class Arena;
+		class ScanState;
 
 		/**
 		 * A generation is a set of blocks that belong together, and that will be collected
@@ -30,6 +31,12 @@ namespace storm {
 
 			// The next generation in the chain. May be null.
 			Generation *next;
+
+			// Owning arena.
+			Arena &owner;
+
+			// Our identifier.
+			const byte identifier;
 
 			// The size of this generation. We strive to keep below this size, but it may
 			// occasionally be broken.
@@ -62,15 +69,11 @@ namespace storm {
 			void dbg_verify();
 
 		private:
+			friend class ScanState;
+
 			// No copy.
 			Generation(const Generation &o);
 			Generation &operator =(const Generation &o);
-
-			// Owning arena.
-			Arena &owner;
-
-			// Our identifier.
-			byte identifier;
 
 			/**
 			 * A chunk managed by a generation. Perhaps this should be moved outside of the generation class.
@@ -101,6 +104,9 @@ namespace storm {
 
 				// Mark the block as no longer in use, allowing re-use of any remaining memory inside.
 				void releaseBlock(Block *block);
+
+				// Scan all pinned objects in this chunk.
+				void scanPinned(const PinnedSet &pinned, ScanState &state);
 
 				// Verify this chunk.
 				void dbg_verify();
@@ -150,6 +156,9 @@ namespace storm {
 
 			// Allocate a block with a (usable) size in the specified range. For internal use.
 			Block *allocBlock(size_t minSize, size_t maxSize);
+
+			// Check if a particular object is pinned. Only reasonable to call during an ongoing scan.
+			bool isPinned(void *obj, void *end);
 		};
 
 	}

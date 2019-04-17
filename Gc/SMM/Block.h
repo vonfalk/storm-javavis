@@ -2,7 +2,7 @@
 
 #if STORM_GC == STORM_GC_SMM
 
-#include "AddrSet.h"
+#include "GenSet.h"
 #include "VMAlloc.h"
 #include "Gc/Format.h"
 
@@ -26,7 +26,7 @@ namespace storm {
 		class Block {
 		public:
 			// Create.
-			Block(size_t size) : size(size), committed(0), reserved(0), flags(0), summary(0, 1) {}
+			Block(size_t size) : size(size), committed(0), reserved(0), flags(0) {}
 
 			// Current size (excluding the block itself).
 			const size_t size;
@@ -75,12 +75,40 @@ namespace storm {
 				return AddrSet(mem(0), mem(committed));
 			}
 
-			// Is it possible that this block contains a reference to the block indicated in the
-			// parameter? May return false positives, but never false negatives.
-			bool mayReferTo(Block *block) const {
-				// TODO: Check for stale summary!
+			// Is it possible that this block contains references to a generation with the specified
+			// number?
+			bool mayReferTo(byte gen) const {
+				// TODO: Check stale memory!
+				return true;
 
-				return summary.has(block->mem(0), block->mem(block->committed));
+				return summary.has(gen);
+			}
+
+			// Scan all objects in this block using the supplied scanner.
+			template <class Scanner>
+			typename Scanner::Result scan(typename Scanner::Source &source) {
+				// TODO: Perhaps we should update our summary here?
+				return fmt::Scan<Scanner>::objects(source, mem(fmt::headerSize), mem(fmt::headerSize + committed));
+			}
+
+			// Scan all objects that fulfill a specified predicate using the supplied scanner.
+			template <class Predicate, class Scanner>
+			typename Scanner::Result scanIf(const Predicate &predicate, typename Scanner::Source &source) {
+				void *at = mem(fmt::headerSize);
+				void *limit = mem(fmt::headerSize + committed);
+
+				while (at < limit) {
+					void *next = fmt::skip(at);
+					if (predicate(at, (char *)next - fmt::headerSize)) {
+						typename Scanner::Result r = fmt::Scan<Scanner>::objects(source, at, fmt::skip(at));
+						if (r)
+							return r;
+					}
+
+					at = next;
+				}
+
+				return typename Scanner::Result();
 			}
 
 			// Verify the contents of this block.
@@ -91,8 +119,8 @@ namespace storm {
 			Block(const Block &o);
 			Block &operator =(const Block &o);
 
-			// A summary of objects we refer to.
-			AddrSummary summary;
+			// A summary of the references contained in here.
+			GenSet summary;
 
 			// Our flags (updated atomically by the corresponding functions).
 			size_t flags;

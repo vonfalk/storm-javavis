@@ -39,7 +39,7 @@ namespace storm {
 			// Scan all blocks in all generation that may refer to a block in the current
 			// generation. The current generation is never scanned.
 			template <class Scanner>
-			typename Scanner::Result scanGenerations(typename Scanner::Source &source, Generation *gen, Block *block);
+			typename Scanner::Result scanGenerations(typename Scanner::Source &source, Generation *gen);
 
 		private:
 			// Associated arena.
@@ -69,7 +69,7 @@ namespace storm {
 
 
 		template <class Scanner>
-		typename Scanner::Result ArenaEntry::scanGenerations(typename Scanner::Source &source, Generation *current, Block *block) {
+		typename Scanner::Result ArenaEntry::scanGenerations(typename Scanner::Source &source, Generation *current) {
 			typename Scanner::Result r;
 
 			for (size_t i = 0; i < owner.generationCount; i++) {
@@ -80,7 +80,7 @@ namespace storm {
 					continue;
 
 				// Skip the entire block if it reports it may not contain any pointers we're interested in.
-				if (!gen->mayReferTo(block))
+				if (!gen->mayReferTo(current->identifier))
 					continue;
 
 				// Go ahead and scan it.

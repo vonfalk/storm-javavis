@@ -822,8 +822,7 @@ namespace storm {
 
 		public:
 			// Scan a set of objects that are stored back-to-back. Assumes the entire region
-			// [base,limit) is filled entirely with objects. If Scanner has a 'skip' function, it
-			// will be called for every object to see if that object shall be skipped.
+			// [base,limit) is filled entirely with objects.
 			static Result objects(Source &source, void *base, void *limit) {
 				Scanner s(source);
 				Result r;
