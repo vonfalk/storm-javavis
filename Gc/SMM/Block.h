@@ -26,25 +26,18 @@ namespace storm {
 		class Block {
 		public:
 			// Create.
-			Block(size_t size) : size(size), committed(0), reserved(0), flags(0) {}
+			Block(size_t size) : size(size), commit(0), reserveNext(0), flags(0) {}
 
 			// Current size (excluding the block itself).
 			const size_t size;
 
-			// Amount of memory committed (excluding the block itself).
-			size_t committed;
-
-			// Amount of memory reserved. 'reserved >= committed'. Memory that is reserved but not
-			// committed is being initialized, and can not be assumed to contain usable data.
-			size_t reserved;
-
 			// Various flags for this block.
 			enum Flags {
 				// This block is empty and can be deallocated.
-				fEmpty = 0x01,
+				fEmpty = 0x00000001,
 
 				// This block is in use by an allocator.
-				fUsed = 0x02,
+				fUsed = 0x00000002,
 			};
 
 			// Modify flags.
@@ -58,9 +51,42 @@ namespace storm {
 				atomicAnd(flags, ~flag);
 			}
 
+			// Amount of memory committed (excluding the block itself).
+			size_t committed() const { return atomicRead(commit); }
+			void committed(size_t val) { atomicWrite(commit, val); }
+
+			// Amount of memory reserved. 'reserved >= committed'. Memory that is reserved but
+			// not committed is being initialized, and can not be assumed to contain usable
+			// data. If 'next' is used, this value is set to 'size'.
+			size_t reserved() const {
+				size_t v = atomicRead(reserveNext);
+				if (v & 0x1)
+					return size;
+				else
+					return v;
+			}
+			void reserved(size_t val) {
+				dbg_assert((val & 0x1) == 0, L"LSB must be clear!");
+				atomicWrite(reserveNext, val);
+			}
+
+			// Pointer to another block. Used when copying blocks to link a filled block to the next
+			// block where objects are copied to. Whenever 'next' is used, 'reserved' is set to
+			// 'size', since the two fields use the same storage.
+			Block *next() const {
+				size_t v = atomicRead(reserveNext);
+				if (v & 0x1)
+					return (Block *)(v & ~size_t(0x1));
+				else
+					return null;
+			}
+			void next(Block *val) {
+				atomicWrite(reserveNext, size_t(val) | 0x1);
+			}
+
 			// Get the number of bytes remaining in this block (ignoring any reserved memory).
 			inline size_t remaining() const {
-				return size - committed;
+				return size - committed();
 			}
 
 			// Get a pointer to a particular byte of the memory in this block.
@@ -95,7 +121,7 @@ namespace storm {
 			template <class Predicate, class Scanner>
 			typename Scanner::Result scanIf(const Predicate &predicate, typename Scanner::Source &source) {
 				void *at = mem(fmt::headerSize);
-				void *limit = mem(fmt::headerSize + committed);
+				void *limit = mem(fmt::headerSize + committed());
 
 				while (at < limit) {
 					void *next = fmt::skip(at);
@@ -119,11 +145,17 @@ namespace storm {
 			Block(const Block &o);
 			Block &operator =(const Block &o);
 
-			// A summary of the references contained in here.
-			GenSet summary;
+			// Bytes committed.
+			size_t commit;
+
+			// Bytes reserved, or a pointer to another block (when the LSB is set).
+			size_t reserveNext;
 
 			// Our flags (updated atomically by the corresponding functions).
 			size_t flags;
+
+			// A summary of the references contained in here.
+			GenSet summary;
 
 			// Arrange so that we will be notified about writes to the contents of this block. Clears 'fUpdated' flag.
 			void watchWrites();

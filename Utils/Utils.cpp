@@ -3,20 +3,20 @@
 
 // Check alignment of value.
 #if defined(X86)
-static inline bool alignedPtr(volatile void *v) {
+static inline bool alignedPtr(volatile const void *v) {
 	size_t i = (size_t)v;
 	return (i & 0x3) == 0;
 }
-static inline bool alignedNat(volatile void *v) {
+static inline bool alignedNat(volatile const void *v) {
 	size_t i = (size_t)v;
 	return (i & 0x3) == 0;
 }
 #elif defined(X64)
-static inline bool alignedPtr(volatile void *v) {
+static inline bool alignedPtr(volatile const void *v) {
 	size_t i = (size_t)v;
 	return (i & 0x7) == 0;
 }
-static inline bool alignedNat(volatile void *v) {
+static inline bool alignedNat(volatile const void *v) {
 	size_t i = (size_t)v;
 	return (i & 0x3) == 0;
 }
@@ -68,7 +68,7 @@ size_t atomicXor(volatile size_t &v, size_t with) {
 	return (size_t)InterlockedXor64((volatile LONG64 *)&v, with);
 }
 
-nat atomicRead(volatile nat &v) {
+nat atomicRead(volatile const nat &v) {
 	check_aligned_nat(v);
 	_ReadWriteBarrier();
 	// Volatile reads are atomic on X86/X64 as long as they are aligned.
@@ -123,14 +123,14 @@ void *atomicCAS(void *volatile &v, void *compare, void *exchange) {
 }
 
 
-size_t atomicRead(volatile size_t &v) {
+size_t atomicRead(volatile const size_t &v) {
 	check_aligned_ptr(v);
 	_ReadWriteBarrier();
 	// Volatile reads are atomic on X86/X64 as long as they are aligned.
 	return v;
 }
 
-void *atomicRead(void *volatile &v) {
+void *atomicRead(void *volatile const &v) {
 	check_aligned_ptr(v);
 	_ReadWriteBarrier();
 	// Volatile reads are atomic on X86/X64 as long as they are aligned.
@@ -153,8 +153,8 @@ void atomicWrite(void *volatile &v, void *value) {
 
 #ifdef X86
 
-size_t unalignedAtomicRead(volatile size_t &v) {
-	volatile size_t *addr = &v;
+size_t unalignedAtomicRead(volatile const size_t &v) {
+	volatile const size_t *addr = &v;
 	size_t result;
 	__asm {
 		mov eax, 0;
@@ -241,7 +241,7 @@ nat atomicCAS(volatile nat &v, nat compare, nat exchange) {
 	return __sync_val_compare_and_swap(&v, compare, exchange);
 }
 
-nat atomicRead(volatile nat &v) {
+nat atomicRead(volatile const nat &v) {
 	check_aligned_nat(v);
 	BARRIER;
 	// Volatile reads are atomic on X86/X64 as long as they are aligned.
@@ -259,14 +259,14 @@ void atomicWrite(volatile nat &v, nat value) {
 
 #if defined(X86) || defined(X64)
 
-size_t atomicRead(volatile size_t &v) {
+size_t atomicRead(volatile const size_t &v) {
 	check_aligned_ptr(v);
 	BARRIER;
 	// Volatile reads are atomic on X86/X64 as long as they are aligned.
 	return v;
 }
 
-void *atomicRead(void *volatile &v) {
+void *atomicRead(void *volatile const &v) {
 	check_aligned_ptr(v);
 	BARRIER;
 	// Volatile reads are atomic on X86/X64 as long as they are aligned.

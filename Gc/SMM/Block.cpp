@@ -18,7 +18,7 @@ namespace storm {
 		void Block::dbg_verify() {
 			// Note: We're working with client pointers for convenience.
 			byte *at = (byte *)mem(fmt::headerSize);
-			byte *end = (byte *)mem(committed + fmt::headerSize);
+			byte *end = (byte *)mem(commit + fmt::headerSize);
 
 			while (at < end) {
 				// Validate the object if we're able to.

@@ -22,18 +22,37 @@ namespace storm {
 			// Create a new scan state. Scanning objects in 'from', moving them to 'to'.
 			ScanState(Generation *from, Generation *to);
 
+			// Destroy.
+			~ScanState();
+
 			// Scanner that can be used to move relevant objects to a scan state.
 			class Move;
 
+			// Move an object from its current location into the new generation. The old object is
+			// replaced with a forwarding object.
+			void move(void *obj);
+
 		private:
+			// No copying!
+			ScanState(const ScanState &o);
+			ScanState &operator =(const ScanState &o);
+
 			// Source generation.
 			Generation *sourceGen;
 
 			// The generation where we shall store objects.
 			Generation *targetGen;
 
-			// Current block where we may put new objects. May be null.
-			Block *block;
+			// First block containing objects that have been copied but not yet scanned. Objects
+			// from 'committed' up to 'reserved' should be scanned.
+			Block *targetHead;
+
+			// Last block containing copied objects. This is also where new objects are copied to.
+			Block *targetTail;
+
+			// Allocate a new block for us to use, having a minimum of 'size' bytes free. This block
+			// is allocated at the end of the target queue as 'targetTail'.
+			void newBlock(size_t minSize);
 		};
 
 
@@ -49,7 +68,7 @@ namespace storm {
 			Arena &arena;
 			byte srcGen;
 
-			Move(Source source) : state(source), arena(source.sourceGen->owner), srcGen(source.sourceGen->identifier) {}
+			Move(Source &source) : state(source), arena(source.sourceGen->owner), srcGen(source.sourceGen->identifier) {}
 
 			inline bool fix1(void *ptr) {
 				return arena.memGeneration(ptr) == srcGen;
@@ -63,8 +82,8 @@ namespace storm {
 				if (state.sourceGen->isPinned(obj, end))
 					return 0;
 
-				PLN(L"Found an object to move: " << obj);
-				// TODO!
+				// TODO: Forward any errors!
+				state.move(obj);
 				return 0;
 			}
 

@@ -29,6 +29,7 @@ namespace storm {
 
 		void Generation::done(Block *block) {
 			util::Lock::L z(lock);
+			block->reserved(block->committed());
 
 			ChunkList::iterator pos = std::lower_bound(chunks.begin(), chunks.end(), block, PtrCompare());
 			if (pos != chunks.end()) {
@@ -96,6 +97,12 @@ namespace storm {
 		}
 
 		void Generation::collect(ArenaEntry &entry) {
+			if (!next || next == this) {
+				TODO(L"Set up generations so that all generations have a 'next' generation!");
+				return;
+			}
+
+
 			// Note: This assumes a generation where objects may move. Non-moving objects need to be
 			// treated differently (especially since we don't expect there to be very many of them).
 
@@ -128,6 +135,10 @@ namespace storm {
 			// Update any references to objects we just moved.
 
 			// Finally, release and/or compact any remaining blocks in this generation.
+
+			// TODO: At some point during garbage collection, we shall ensure that 'reserved' is set
+			// to 'committed' of each block in this generation, indicating that any ongoing
+			// allocations need to be re-tried.
 		}
 
 		void Generation::dbg_verify() {
@@ -184,7 +195,7 @@ namespace storm {
 					// Split at either the maximum size, or at the size that yeilds 'minFragment'
 					// bytes in the other block.
 					size_t splitAfter = min(maxSize, remaining - minFragment - sizeof(Block));
-					size_t used = atomicRead(at->committed);
+					size_t used = at->committed();
 
 					// Create the new block.
 					new (at->mem(used + splitAfter)) Block(at->size - used - splitAfter - sizeof(Block));
@@ -192,7 +203,8 @@ namespace storm {
 
 					// Re-create the old block to change its size.
 					new (at) Block(used + splitAfter);
-					at->committed = at->reserved = used;
+					at->committed(used);
+					at->reserved(used);
 				}
 
 				// This is the one we want!
@@ -227,7 +239,7 @@ namespace storm {
 
 			// Walk all blocks and scan the relevant ones.
 			for (Block *at = (Block *)memory.at; at != (Block *)memory.end(); at = (Block *)at->mem(at->size)) {
-				if (pinned.has(at->mem(0), at->mem(at->committed)))
+				if (pinned.has(at->mem(0), at->mem(at->committed())))
 					at->scanIf<IfPinned, ScanState::Move>(pinned, scan);
 			}
 		}

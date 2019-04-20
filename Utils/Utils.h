@@ -214,8 +214,8 @@ T *atomicCAS(T *volatile &v, T *compare, T *exchange) {
 }
 
 // Atomic read/write. Also prevents the compiler from reordering memory accesses around the call.
-size_t atomicRead(volatile size_t &v);
-void *atomicRead(void *volatile &v);
+size_t atomicRead(volatile const size_t &v);
+void *atomicRead(void *volatile const &v);
 void atomicWrite(volatile size_t &v, size_t value);
 void atomicWrite(void *volatile &v, void * value);
 
@@ -224,12 +224,12 @@ void atomicWrite(T *volatile &v, T *value) {
 	atomicWrite((void *volatile&)v, value);
 }
 template <class T>
-T *atomicRead(T *volatile &v) {
-	return (T *)atomicRead((void *volatile&)v);
+T *atomicRead(T *volatile const &v) {
+	return (T *)atomicRead((void *volatile const&)v);
 }
 
 // Atomic read/write. These two does not need aligned data.
-size_t unalignedAtomicRead(volatile size_t &v);
+size_t unalignedAtomicRead(volatile const size_t &v);
 void unalignedAtomicWrite(volatile size_t &v, size_t value);
 void shortUnalignedAtomicWrite(volatile nat &v, nat value);
 
@@ -237,7 +237,7 @@ void shortUnalignedAtomicWrite(volatile nat &v, nat value);
 nat atomicIncrement(volatile nat &v);
 nat atomicDecrement(volatile nat &v);
 nat atomicCAS(volatile nat &v, nat compare, nat exchange);
-nat atomicRead(volatile nat &v);
+nat atomicRead(volatile const nat &v);
 void atomicWrite(volatile nat &v, nat value);
 #endif
 

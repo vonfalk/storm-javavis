@@ -26,20 +26,20 @@ namespace storm {
 
 			// Get the actual memory.
 			inline void *mem() const {
-				return source->mem(source->committed);
+				return source->mem(source->committed());
 			}
 
 			// Commit! This means that the allocated memory can be scanned properly.
 			bool commit() {
 				// Note: Only 'reserved' may be changed during collections.
-				size_t res = atomicRead(source->reserved);
-				if (res <= source->committed) {
+				size_t res = source->reserved();
+				if (res <= source->committed()) {
 					if (release)
 						release->unlock();
 					return false;
 				}
 
-				atomicWrite(source->committed, source->reserved);
+				source->committed(source->reserved());
 				if (release)
 					release->unlock();
 				return true;
@@ -49,7 +49,7 @@ namespace storm {
 			PendingAlloc(Block *source, size_t size, util::Lock *release = null) : source(source), release(release) {
 				// Note: We only need this to be atomic wrt garbage collections, not other threads
 				// using this object concurrently.
-				atomicWrite(source->reserved, source->committed + size);
+				source->reserved(source->committed() + size);
 			}
 
 			// The source of the allocation.
