@@ -32,6 +32,9 @@ namespace storm {
 			// replaced with a forwarding object.
 			void move(void *obj);
 
+			// Scan and move all objects reachable by the newly copied objects to the 'to' generation.
+			void scanNew();
+
 		private:
 			// No copying!
 			ScanState(const ScanState &o);
@@ -53,6 +56,11 @@ namespace storm {
 			// Allocate a new block for us to use, having a minimum of 'size' bytes free. This block
 			// is allocated at the end of the target queue as 'targetTail'.
 			void newBlock(size_t minSize);
+
+			// Perform one step (= one contiguous range of addresses) of scanning new
+			// objects. Returns 'true' if anything was done, and 'false' if there is nothing more to
+			// do.
+			bool scanStep();
 		};
 
 
@@ -80,6 +88,10 @@ namespace storm {
 
 				// Don't touch pinned objects!
 				if (state.sourceGen->isPinned(obj, end))
+					return 0;
+
+				// We don't need to copy forwarders again.
+				if (fmt::isFwd(obj))
 					return 0;
 
 				// TODO: Forward any errors!

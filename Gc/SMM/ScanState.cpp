@@ -31,9 +31,9 @@ namespace storm {
 			fmt::Obj *obj = fmt::fromClient(client);
 			size_t size = fmt::objSize(obj);
 
-			PLN(L"Found an object to move: " << obj << L", " << size << L" bytes");
+			// PLN(L"Found an object to move: " << obj << L", " << size << L" bytes");
 
-			if (!targetTail || size - targetTail->reserved() < size)
+			if (!targetTail || targetTail->size - targetTail->reserved() < size)
 				newBlock(size);
 
 			size_t off = targetTail->reserved();
@@ -67,6 +67,41 @@ namespace storm {
 			}
 
 			targetTail = n;
+		}
+
+		void ScanState::scanNew() {
+			while (scanStep())
+				;
+		}
+
+		bool ScanState::scanStep() {
+			Block *b = targetHead;
+			if (!b)
+				return false;
+
+			size_t from = b->committed();
+			size_t to = b->reserved();
+			if (from >= to)
+				return false;
+
+			// TODO: Handle errors!
+			fmt::Scan<Move>::objects(*this, b->mem(from + fmt::headerSize), b->mem(to + fmt::headerSize));
+			b->committed(to);
+
+			// Are we done scanning this block?
+			if (to == b->size) {
+				Block *next = b->next();
+				if (next) {
+					targetHead = next;
+				} else {
+					targetHead = null;
+					targetTail = null;
+				}
+
+				targetGen->done(b);
+			}
+
+			return true;
 		}
 
 	}

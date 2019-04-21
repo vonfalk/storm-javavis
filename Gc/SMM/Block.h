@@ -109,12 +109,18 @@ namespace storm {
 
 				return summary.has(gen);
 			}
+			bool mayReferTo(GenSet gen) const {
+				// TODO: Check stale memory!
+				return true;
+
+				return summary.has(gen);
+			}
 
 			// Scan all objects in this block using the supplied scanner.
 			template <class Scanner>
 			typename Scanner::Result scan(typename Scanner::Source &source) {
 				// TODO: Perhaps we should update our summary here?
-				return fmt::Scan<Scanner>::objects(source, mem(fmt::headerSize), mem(fmt::headerSize + committed));
+				return fmt::Scan<Scanner>::objects(source, mem(fmt::headerSize), mem(fmt::headerSize + committed()));
 			}
 
 			// Scan all objects that fulfill a specified predicate using the supplied scanner.

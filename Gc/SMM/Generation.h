@@ -65,6 +65,14 @@ namespace storm {
 			// API in the future.
 			void collect(ArenaEntry &entry);
 
+			// Scan all blocks in this generation with the specified scanner.
+			template <class Scanner>
+			typename Scanner::Result scan(typename Scanner::Source &source);
+
+			// Scan all blocks that may contain references to anything in the provided GenSet.
+			template <class Scanner>
+			typename Scanner::Result scan(GenSet refsTo, typename Scanner::Source &source);
+
 			// Verify the integrity of all blocks in this generation.
 			void dbg_verify();
 
@@ -105,8 +113,24 @@ namespace storm {
 				// Mark the block as no longer in use, allowing re-use of any remaining memory inside.
 				void releaseBlock(Block *block);
 
+				// Compact the blocks in this chunk, making sure to preserve the location of any
+				// pinned objects. All non-pinned objects are assumed to be collectable. Returns
+				// 'true' if the entire block is empty after compaction. Compaction will re-set the
+				// 'reserved' parts of all remaining blocks to indicate that allocations have to be
+				// re-tried. Blocks marked as 'used' are not re-allocated as other parts of the
+				// system may have pointers to them. They will, however, be emptied if possible.
+				bool compact(const PinnedSet &pinned);
+
 				// Scan all pinned objects in this chunk.
 				void scanPinned(const PinnedSet &pinned, ScanState &state);
+
+				// Scan object using the selected scanner.
+				template <class Scanner>
+				typename Scanner::Result scan(typename Scanner::Source &source);
+
+				// Scan blocks which may refer to objects in the specified generations.
+				template <class Scanner>
+				typename Scanner::Result scan(GenSet toScan, typename Scanner::Source &source);
 
 				// Verify this chunk.
 				void dbg_verify();
@@ -160,6 +184,57 @@ namespace storm {
 			// Check if a particular object is pinned. Only reasonable to call during an ongoing scan.
 			bool isPinned(void *obj, void *end);
 		};
+
+
+		template <class Scanner>
+		typename Scanner::Result Generation::scan(typename Scanner::Source &source) {
+			typename Scanner::Result r = typename Scanner::Result();
+			for (size_t i = 0; i < chunks.size(); i++) {
+				r = chunks[i].scan<Scanner>(source);
+				if (r != typename Scanner::Result())
+					return r;
+			}
+			return r;
+		}
+
+		template <class Scanner>
+		typename Scanner::Result Generation::scan(GenSet toScan, typename Scanner::Source &source) {
+			typename Scanner::Result r = typename Scanner::Result();
+			for (size_t i = 0; i < chunks.size(); i++) {
+				chunks[i].scan<Scanner>(toScan, source);
+				if (r != typename Scanner::Result())
+					return r;
+			}
+			return r;
+		}
+
+
+		template <class Scanner>
+		typename Scanner::Result Generation::GenChunk::scan(typename Scanner::Source &source) {
+			typename Scanner::Result r = typename Scanner::Result();
+			for (Block *at = (Block *)memory.at; at != (Block *)memory.end(); at = (Block *)at->mem(at->size)) {
+				r = at->scan<Scanner>(source);
+				if (r != typename Scanner::Result())
+					return r;
+			}
+			return r;
+		}
+
+		template <class Scanner>
+		typename Scanner::Result Generation::GenChunk::scan(GenSet toScan, typename Scanner::Source &source) {
+			// TODO: It would be useful to have some kind of 'early out' here!
+
+			typename Scanner::Result r = typename Scanner::Result();
+			for (Block *at = (Block *)memory.at; at != (Block *)memory.end(); at = (Block *)at->mem(at->size)) {
+				if (!at->mayReferTo(toScan))
+					continue;
+
+				r = at->scan<Scanner>(source);
+				if (r != typename Scanner::Result())
+					return r;
+			}
+			return r;
+		}
 
 	}
 }

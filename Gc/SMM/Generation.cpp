@@ -96,12 +96,26 @@ namespace storm {
 			return pos->allocBlock(minSize, maxSize, minFragment());
 		}
 
+		struct IfInGen {
+			Arena &arena;
+			byte id;
+
+			IfInGen(Generation *gen) : arena(gen->owner), id(gen->identifier) {}
+
+			inline bool operator ()(void *ptr) const {
+				return arena.memGeneration(ptr) == id;
+			}
+		};
+
 		void Generation::collect(ArenaEntry &entry) {
 			if (!next || next == this) {
 				TODO(L"Set up generations so that all generations have a 'next' generation!");
 				return;
 			}
 
+			// No need for GC if we're empty.
+			if (chunks.empty())
+				return;
 
 			// Note: This assumes a generation where objects may move. Non-moving objects need to be
 			// treated differently (especially since we don't expect there to be very many of them).
@@ -127,18 +141,29 @@ namespace storm {
 
 			// Traverse all other generations that could contain references to this generation and
 			// copy any referred objects to the new block.
-			// entry.scanGenerations<ScanState::Move>(state, this);
+			entry.scanGenerations<ScanState::Move>(state, this);
 
 			// Traverse the newly copied objects in the new block and copy any new references until
 			// no more objects are found.
+			state.scanNew();
 
-			// Update any references to objects we just moved.
+			// Update any references to objects we just moved. Note: For this to work, we must make
+			// sure that the newly created blocks in the new generation are scanned by this statement!
+			entry.scanGenerations<UpdateFwd<IfInGen>>(IfInGen(this), this);
+			scan<UpdateFwd<IfInGen>>(IfInGen(this));
 
 			// Finally, release and/or compact any remaining blocks in this generation.
+			for (size_t i = 0; i < chunks.size(); i++) {
+				GenChunk &chunk = chunks[i];
+				PinnedSet &pinned = pinnedSets[i];
 
-			// TODO: At some point during garbage collection, we shall ensure that 'reserved' is set
-			// to 'committed' of each block in this generation, indicating that any ongoing
-			// allocations need to be re-tried.
+				// TODO: We need to consider objects with finalizers as well!
+				if (chunk.compact(pinned)) {
+					owner.freeChunk(chunk.memory);
+					chunks.erase(chunks.begin() + i);
+					i--;
+				}
+			}
 		}
 
 		void Generation::dbg_verify() {
@@ -221,6 +246,29 @@ namespace storm {
 		void Generation::GenChunk::releaseBlock(Block *block) {
 			block->clearFlag(Block::fUsed);
 			freeBytes += block->remaining();
+		}
+
+		bool Generation::GenChunk::compact(const PinnedSet &pinned) {
+			bool empty = true;
+
+			// TODO: Essentially, we want to walk the entire chunk and remember the location of any
+			// pinned objects (all other objects can be assumed dead at this point). Then we can
+			// simply re-create the blocks around those ranges. To avoid traversing all objects, we
+			// probably want to only look at blocks that actually contain pinned
+			// objects. Eventually, we could keep track of the number of 'used' block inside each
+			// chunk so that we could quickly conclude that nothing needs to be done and just sweep
+			// the entire chunk without looking at anything.
+
+			for (Block *at = (Block *)memory.at; at != (Block *)memory.end(); at = (Block *)at->mem(at->size)) {
+				if (at->hasFlag(Block::fUsed)) {
+					empty = false;
+				}
+
+				// TODO: We can be more aggressive in most cases!
+				at->reserved(at->committed());
+			}
+
+			return empty;
 		}
 
 		struct IfPinned {

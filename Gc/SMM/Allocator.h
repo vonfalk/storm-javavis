@@ -31,9 +31,8 @@ namespace storm {
 
 			// Commit! This means that the allocated memory can be scanned properly.
 			bool commit() {
-				// Note: Only 'reserved' may be changed during collections.
-				size_t res = source->reserved();
-				if (res <= source->committed()) {
+				// Shall we re-try the allocation?
+				if (source->reserved() <= source->committed()) {
 					if (release)
 						release->unlock();
 					return false;

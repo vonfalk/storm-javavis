@@ -71,6 +71,8 @@ namespace storm {
 		template <class Scanner>
 		typename Scanner::Result ArenaEntry::scanGenerations(typename Scanner::Source &source, Generation *current) {
 			typename Scanner::Result r;
+			GenSet scanFor;
+			scanFor.add(current->identifier);
 
 			for (size_t i = 0; i < owner.generationCount; i++) {
 				Generation *gen = &owner.generations[i];
@@ -79,12 +81,8 @@ namespace storm {
 				if (gen == current)
 					continue;
 
-				// Skip the entire block if it reports it may not contain any pointers we're interested in.
-				if (!gen->mayReferTo(current->identifier))
-					continue;
-
-				// Go ahead and scan it.
-				r = gen->scan<Scanner>(source);
+				// Scan it, instructing the generation to only scan references to the current generation.
+				r = gen->scan<Scanner>(scanFor, source);
 				if (r != typename Scanner::Result())
 					return r;
 			}
