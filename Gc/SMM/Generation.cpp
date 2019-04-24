@@ -152,6 +152,8 @@ namespace storm {
 			entry.scanGenerations<UpdateFwd<IfInGen>>(IfInGen(this), this);
 			scan<UpdateFwd<IfInGen>>(IfInGen(this));
 
+			dbg_dump();
+
 			// Finally, release and/or compact any remaining blocks in this generation.
 			for (size_t i = 0; i < chunks.size(); i++) {
 				GenChunk &chunk = chunks[i];
@@ -164,13 +166,27 @@ namespace storm {
 					i--;
 				}
 			}
+
+			dbg_dump();
 		}
 
 		void Generation::dbg_verify() {
 			assert(chunks.size() == pinnedSets.size());
 
 			for (size_t i = 0; i < chunks.size(); i++) {
+				if (i > 0) {
+					assert((byte *)chunks[i - 1].memory.at < (byte *)chunks[i].memory.at, L"Unordered chunks!");
+				}
+
 				chunks[i].dbg_verify();
+			}
+		}
+
+		void Generation::dbg_dump() {
+			PLN(L"Generation with id " << identifier << L", " << chunks.size() << L" chunks:");
+			for (size_t i = 0; i < chunks.size(); i++) {
+				PNN(i << L": ");
+				chunks[i].dbg_dump();
 			}
 		}
 
@@ -249,26 +265,159 @@ namespace storm {
 		}
 
 		bool Generation::GenChunk::compact(const PinnedSet &pinned) {
-			bool empty = true;
+			// The block that is currently being expanded.
+			Block *current = (Block *)memory.at;
 
-			// TODO: Essentially, we want to walk the entire chunk and remember the location of any
-			// pinned objects (all other objects can be assumed dead at this point). Then we can
-			// simply re-create the blocks around those ranges. To avoid traversing all objects, we
-			// probably want to only look at blocks that actually contain pinned
-			// objects. Eventually, we could keep track of the number of 'used' block inside each
-			// chunk so that we could quickly conclude that nothing needs to be done and just sweep
-			// the entire chunk without looking at anything.
+			// Reset internal data structures.
+			lastAlloc = current;
+			freeBytes = 0;
 
-			for (Block *at = (Block *)memory.at; at != (Block *)memory.end(); at = (Block *)at->mem(at->size)) {
+			// Traverse the blocks inside this chunk to find things we need to preserve. We need to
+			// keep chunks marked as used and pinned objects. The rest is known to be free. We do,
+			// however, need to consider finalizers.
+			Block *at = (Block *)memory.at;
+			while (at != (Block *)memory.end()) {
+				// We need to read this first. Otherwise, we might destroy the old value when we're compacting!
+				Block *next = (Block *)at->mem(at->size);
+
 				if (at->hasFlag(Block::fUsed)) {
-					empty = false;
+					// Used block, we need to keep this pointer valid and the size
+					// constant. However, we are free to decrease 'committed' if we are able to!
+
+					compactFinishBlock(current, at);
+					shrinkBlock(at, pinned);
+
+					// Skip ahead, don't touch the size of this block anymore.
+					current = (Block *)at->mem(at->size);
+				} else if (pinned.has(at->mem(0), at->mem(at->committed()))) {
+					// Unused block with pinned objects. We need to preserve those...
+					current = compactPinned(current, at, pinned);
+				} else {
+					// Unused block. We are free to remove this block entirely without looking at it anymore.
+					current->committed(0);
+					current->reserved(0);
 				}
 
-				// TODO: We can be more aggressive in most cases!
-				at->reserved(at->committed());
+				at = next;
 			}
 
-			return empty;
+			// Finish the last block if necessary.
+			compactFinishBlock(current, (Block *)memory.end());
+
+			// If the compaction resulted in a single empty block that is not marked as used, we're empty.
+			Block *first = (Block *)memory.at;
+			return first->mem(first->size) == memory.end()    // one block
+				&& first->committed() == 0                    // empty
+				&& !first->hasFlag(Block::fUsed);             // not in use
+		}
+
+		Block *Generation::GenChunk::compactFinishObj(Block *current, void *until) {
+			// Usable size in 'current'. If we are unable to fit a second block header there, we
+			// need to merge them into one large block instead!
+			size_t size = (byte *)until - (byte *)current - sizeof(Block);
+			size_t used = current->committed();
+
+			if (size <= sizeof(Block) + used) {
+				// One large object. Just add a padding object and continue!
+				fmt::objMakePad((fmt::Obj *)current->mem(used), size - used);
+				current->committed(size);
+				current->reserved(size);
+				return current;
+			}
+
+			// We are better off creating a new object, so that we can use the gap!
+			size -= sizeof(Block);
+			current = new (current) Block(size);
+			current->committed(used);
+			current->reserved(used);
+
+			freeBytes += current->remaining();
+
+			// Create a new block with a temporary size of zero. It will be recreated later with the
+			// proper size, and we just need a header! Note: Block initializes 'committed' and
+			// 'reserved' to zero.
+			return new (current->mem(size)) Block(0);
+		}
+
+		void Generation::GenChunk::compactFinishBlock(Block *current, Block *next) {
+			// If they are the same, just ignore the request.
+			if (current == next)
+				return;
+
+			// Note: If we get past the previous check, we know that 'current' does not have the
+			// 'used' flag set due to how 'compact' works. Thus, we can ignore the flags in the block.
+			size_t size = (byte *)next - (byte *)current - sizeof(Block);
+			size_t used = current->committed();
+
+			current = new (current) Block(size);
+			current->committed(used);
+			current->reserved(used);
+
+			freeBytes += current->remaining();
+		}
+
+		Block *Generation::GenChunk::compactPinned(Block *current, Block *scan, const PinnedSet &pinned) {
+			fmt::Obj *at = (fmt::Obj *)scan->mem(0);
+			fmt::Obj *to = (fmt::Obj *)scan->mem(scan->committed());
+
+			// Find rising and falling 'edges' in the usage, and structure the blocks accordingly.
+			bool lastInUse = false;
+
+			while (at != to) {
+				fmt::Obj *next = fmt::objSkip(at);
+				bool inUse = pinned.has(fmt::toClient(at), next);
+
+				if (inUse & !lastInUse) {
+					// First object in use. We might want to start a new block.
+					current = compactFinishObj(current, at);
+				} else if (!inUse & lastInUse) {
+					// Last object in a hunk, mark the size accordingly.
+					size_t sz = (byte *)next - (byte *)current->mem(0);
+					current->committed(sz);
+					current->reserved(sz);
+				}
+
+				lastInUse = inUse;
+				at = next;
+			}
+
+			// If the last few objects were in use, mark the size accordingly.
+			if (lastInUse) {
+				size_t sz = (byte *)to - (byte *)current->mem(0);
+				current->committed(sz);
+				current->reserved(sz);
+			}
+
+			return current;
+		}
+
+		void Generation::GenChunk::shrinkBlock(Block *block, const PinnedSet &pinned) {
+			fmt::Obj *at = (fmt::Obj *)block->mem(0);
+			fmt::Obj *to = (fmt::Obj *)block->mem(block->committed());
+
+			// First free location as far as we know.
+			fmt::Obj *freeFrom = at;
+
+			while (at != to) {
+				fmt::Obj *next = fmt::objSkip(at);
+
+				if (pinned.has(fmt::toClient(at), next)) {
+					// Replace previous objects with padding?
+					size_t padSize = (byte *)at - (byte *)freeFrom;
+					if (padSize > fmt::headerSize) {
+						fmt::objMakePad(freeFrom, padSize);
+					}
+
+					// Remember where the free space starts.
+					freeFrom = next;
+				}
+
+				at = next;
+			}
+
+			size_t used = (byte *)at - (byte *)freeFrom;
+			block->committed(used);
+			block->reserved(used);
 		}
 
 		struct IfPinned {
@@ -293,15 +442,34 @@ namespace storm {
 		}
 
 		void Generation::GenChunk::dbg_verify() {
+			size_t free = 0;
 			Block *at = (Block *)memory.at;
 			while ((byte *)at < (byte *)memory.end()) {
 				assert(memory.has(at), L"Invalid block size detected. Leads to outside the specified chunk!");
+
+				if (!at->hasFlag(Block::fUsed))
+					free += at->remaining();
 
 				at->dbg_verify();
 				at = (Block *)at->mem(at->size);
 			}
 
 			assert(at == memory.end(), L"A chunk is overfilled!");
+			assert(free == freeBytes, L"The number of free bytes is not correct. "
+				L"Stored: " + ::toS(freeBytes) + L", actual: " + ::toS(free));
+		}
+
+		void Generation::GenChunk::dbg_dump() {
+			PLN(L"Chunk at " << memory << L", " << freeBytes << L" bytes free");
+
+			for (Block *at = (Block *)memory.at; at != (Block *)memory.end(); at = (Block *)at->mem(at->size)) {
+				if (at == lastAlloc)
+					PNN(L"-> ");
+				else
+					PNN(L"   ");
+
+				at->dbg_dump();
+			}
 		}
 
 	}

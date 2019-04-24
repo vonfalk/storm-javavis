@@ -146,6 +146,9 @@ namespace storm {
 			// Verify the contents of this block.
 			void dbg_verify();
 
+			// Output a summary of this block.
+			void dbg_dump();
+
 		private:
 			// No copying!
 			Block(const Block &o);

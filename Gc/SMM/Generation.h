@@ -76,6 +76,9 @@ namespace storm {
 			// Verify the integrity of all blocks in this generation.
 			void dbg_verify();
 
+			// Output a summary.
+			void dbg_dump();
+
 		private:
 			friend class ScanState;
 
@@ -90,7 +93,8 @@ namespace storm {
 			 * better than these chunks, perhaps we should move summaries to these chunks rather
 			 * than keeping them inside the blocks.
 			 */
-			struct GenChunk {
+			class GenChunk {
+			public:
 				// Create. Initializes the chunk to contain a single empty block.
 				GenChunk(Chunk chunk);
 
@@ -134,6 +138,29 @@ namespace storm {
 
 				// Verify this chunk.
 				void dbg_verify();
+
+				// Output a summary.
+				void dbg_dump();
+
+			private:
+				// Called when 'until' has been determined as in use by an object during
+				// compaction. Updates the header of the previous block and returns a header to the
+				// new current header.
+				Block *compactFinishObj(Block *current, void *until);
+
+				// Similar to 'compactFinish', but 'until' is known to be a valid block header. As
+				// such, this function does not need to create a new block header, but rather reuses
+				// the one already present in 'next'.
+				void compactFinishBlock(Block *current, Block *next);
+
+				// Compact an unused block, 'block', keeping pinned objects intact. 'last' is the
+				// most recent block header that has been determined to remain. The most recently
+				// created block header is returned, as an update to 'last'.
+				Block *compactPinned(Block *last, Block *block, const PinnedSet &pinned);
+
+				// Shrink a block as much as possible while keeping pinned objects intact. Replaces
+				// non-pinned objects with padding.
+				void shrinkBlock(Block *block, const PinnedSet &pinned);
 			};
 
 			struct ChunkCompare {
