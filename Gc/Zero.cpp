@@ -213,6 +213,8 @@ namespace storm {
 
 	void GcImpl::checkMemoryCollect() {}
 
+	void GcImpl::dbg_dump() {}
+
 }
 
 #endif

@@ -96,6 +96,8 @@ namespace storm {
 		void checkMemory(const void *object, bool recursive);
 		void checkMemoryCollect();
 
+		void dbg_dump();
+
 	private:
 		// This is a very simple pool allocator for memory acquired from the OS (it is executable).
 		Byte *allocStart;

@@ -15,7 +15,7 @@ namespace storm {
 
 
 		Thread::Thread(Arena &owner)
-			: alloc(owner.generations[0]),
+			: alloc(owner.nurseryGen()),
 			  stacks(os::Thread::current().stacks()) {}
 
 	}

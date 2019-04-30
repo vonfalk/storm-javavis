@@ -110,6 +110,9 @@ namespace storm {
 		void checkMemory(const void *object, bool recursive);
 		void checkMemoryCollect();
 
+		// Debug output.
+		void dbg_dump();
+
 	private:
 		friend class MpsGcWatch;
 

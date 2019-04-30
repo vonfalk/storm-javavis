@@ -275,6 +275,9 @@ namespace storm {
 		// just calling 'checkMemory').
 		void checkMemoryCollect();
 
+		// Dump memory information to stdout.
+		void dbg_dump();
+
 	private:
 		// GcType for weak arrays.
 		static const GcType weakArrayType;

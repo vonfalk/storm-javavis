@@ -155,11 +155,17 @@ namespace storm {
 		return null;
 	}
 
-	void GcImpl::checkMemory() {}
+	void GcImpl::checkMemory() {
+		arena.dbg_verify();
+	}
 
 	void GcImpl::checkMemory(const void *object, bool recursive) {}
 
 	void GcImpl::checkMemoryCollect() {}
+
+	void GcImpl::dbg_dump() {
+		arena.dbg_dump();
+	}
 
 }
 

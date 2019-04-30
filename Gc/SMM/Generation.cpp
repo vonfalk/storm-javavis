@@ -13,7 +13,10 @@ namespace storm {
 		// TODO: What is a reasonable block size here?
 		Generation::Generation(Arena &owner, size_t size, byte identifier)
 			: totalSize(size), blockSize(size / 32),
-			  next(null), owner(owner), identifier(identifier), sharedBlock(null) {}
+			  next(null), owner(owner), identifier(identifier), sharedBlock(null) {
+
+			blockSize = min(size_t(64 * 1024), blockSize);
+		}
 
 		Generation::~Generation() {
 			// Free all blocks we are in charge of.
@@ -78,7 +81,7 @@ namespace storm {
 			}
 
 			// We need to allocate more memory. TODO: How much?
-			Chunk c = owner.allocChunk(blockSize * 32, identifier);
+			Chunk c = owner.allocChunk(max(minSize, blockSize * 32), identifier);
 
 			// Out of memory?
 			if (c.empty())
@@ -108,10 +111,8 @@ namespace storm {
 		};
 
 		void Generation::collect(ArenaEntry &entry) {
-			if (!next || next == this) {
-				TODO(L"Set up generations so that all generations have a 'next' generation!");
-				return;
-			}
+			dbg_assert(next, L"Need a next generation for collection!");
+			dbg_assert(next != this, L"We can't collect to ourselves!");
 
 			// No need for GC if we're empty.
 			if (chunks.empty())
@@ -152,8 +153,6 @@ namespace storm {
 			entry.scanGenerations<UpdateFwd<IfInGen>>(IfInGen(this), this);
 			scan<UpdateFwd<IfInGen>>(IfInGen(this));
 
-			dbg_dump();
-
 			// Finally, release and/or compact any remaining blocks in this generation.
 			for (size_t i = 0; i < chunks.size(); i++) {
 				GenChunk &chunk = chunks[i];
@@ -166,8 +165,6 @@ namespace storm {
 					i--;
 				}
 			}
-
-			dbg_dump();
 		}
 
 		void Generation::dbg_verify() {

@@ -1336,6 +1336,8 @@ namespace storm {
 	}
 #endif
 
+	void GcImpl::dbg_dump() {}
+
 	class MpsGcWatch : public GcWatch {
 	public:
 		MpsGcWatch(GcImpl &gc) : gc(gc) {

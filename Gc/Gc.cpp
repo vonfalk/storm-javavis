@@ -136,6 +136,10 @@ namespace storm {
 		impl.checkMemoryCollect();
 	}
 
+	void Gc::dbg_dump() {
+		impl.dbg_dump();
+	}
+
 	const GcType Gc::weakArrayType = {
 		GcType::tWeakArray,
 		null,

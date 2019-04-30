@@ -33,11 +33,8 @@ namespace storm {
 			// Destroy.
 			~Arena();
 
-			// The generations in use (array).
-			Generation *generations;
-
-			// Number of generations.
-			const size_t generationCount;
+			// Get the nursery generation, where all new objects are allocated.
+			Generation &nurseryGen() const { return *generations[0]; }
 
 			// Allocate a chunk of memory from the VMAlloc instance.
 			Chunk allocChunk(size_t size, byte identifier);
@@ -62,6 +59,12 @@ namespace storm {
 			// Get the buffer. Always of size 'arenaBuffer'.
 			inline void **buffer() { return genericBuffer; }
 
+			// Verify the contents of the entire arena.
+			void dbg_verify();
+
+			// Output a summary.
+			void dbg_dump();
+
 		private:
 			// No copying!
 			Arena(const Arena &o);
@@ -74,6 +77,12 @@ namespace storm {
 			// would be stopped while owning the lock.
 			util::Lock lock;
 
+			// The generations in use. Objects are promoted from lower to higher numbered
+			// generations. Furthermore, we duplicate the last generation passed as a parameter to
+			// the constructor so that we can collect it more conveniently. Assuming two long-lived
+			// generations, we can simply collect one into the other and swap their locations.
+			vector<Generation *> generations;
+
 			// Virtual memory allocations.
 			VMAlloc alloc;
 
@@ -83,6 +92,10 @@ namespace storm {
 			// Staticly allocated buffer used by various parts of the system, so we don't have to
 			// allocate it on the stack and risk getting a stack overflow at unsuitable times.
 			void *genericBuffer[arenaBufferWords];
+
+			// Swap the last two generations. Should be called after a GC so that the last
+			// generation can be collected the next GC cycle.
+			void swapLastGens();
 		};
 
 

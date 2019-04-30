@@ -103,6 +103,9 @@ namespace storm {
 		void checkMemory(const void *object, bool recursive);
 		void checkMemoryCollect();
 
+		// Dump memory information.
+		void dbg_dump();
+
 	private:
 		// The arena we're using.
 		smm::Arena arena;

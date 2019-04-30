@@ -74,8 +74,8 @@ namespace storm {
 			GenSet scanFor;
 			scanFor.add(current->identifier);
 
-			for (size_t i = 0; i < owner.generationCount; i++) {
-				Generation *gen = &owner.generations[i];
+			for (size_t i = 0; i < owner.generations.size(); i++) {
+				Generation *gen = owner.generations[i];
 
 				// Don't scan the current generation, we want to handle that with more care.
 				if (gen == current)
