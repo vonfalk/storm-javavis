@@ -27,7 +27,7 @@ namespace storm {
 			}
 		}
 
-		void ScanState::move(void *client) {
+		void *ScanState::move(void *client) {
 			fmt::Obj *obj = fmt::fromClient(client);
 			size_t size = fmt::objSize(obj);
 
@@ -41,7 +41,9 @@ namespace storm {
 			memcpy(target, obj, size);
 			targetTail->reserved(off + size);
 
-			fmt::objMakeFwd(obj, size, fmt::toClient(target));
+			void *clientTarget = fmt::toClient(target);
+			fmt::objMakeFwd(obj, size, clientTarget);
+			return clientTarget;
 		}
 
 		void ScanState::newBlock(size_t minSize) {

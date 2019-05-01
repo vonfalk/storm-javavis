@@ -148,14 +148,16 @@ namespace storm {
 			// no more objects are found.
 			state.scanNew();
 
-			// Update any references to objects we just moved. Note: For this to work, we must make
-			// sure that the newly created blocks in the new generation are scanned by this statement!
-			entry.scanGenerations<UpdateFwd<IfInGen>>(IfInGen(this), this);
+			// Update any references to objects we just moved.
 
-			// In this generation, we only need to scan pinned objects. The other ones will be
-			// collected soon anyway.
-			for (size_t i = 0; i < chunks.size(); i++)
-				chunks[i].scanPinned<UpdateFwd<IfInGen>>(pinnedSets[i], IfInGen(this));
+			// Note: We don't need to scan objects we have moved. The ScanState makes sure to update
+			// all pointers when we have to scan them anyway! Therefore, we don't need to scan this
+			// generation again. (Perhaps any objects that need finalization though).
+
+			// Note: It would be nice if we could avoid scanning the objects in the generation we
+			// moved objects to already. Currently, we have no real way of pointing them out, but
+			// the 'IfInGen' condition will not scan them at least.
+			entry.scanGenerations<UpdateFwd<IfInGen>>(IfInGen(this), this);
 
 			// Finally, release and/or compact any remaining blocks in this generation.
 			for (size_t i = 0; i < chunks.size(); i++) {

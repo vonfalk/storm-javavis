@@ -572,6 +572,11 @@ namespace storm {
 			return objIsFwd(fromClient(o));
 		}
 
+		// Version that allows detecting pointers to 'null'.
+		static inline bool isFwd(const void *o, void **out) {
+			return objIsFwd(fromClient(o), out);
+		}
+
 		// Is this a special object (ie. a forwarder or a padding object)?
 		static inline bool objIsSpecial(const Obj *o) {
 			FMT_CHECK_OBJ(o);

@@ -29,8 +29,8 @@ namespace storm {
 			class Move;
 
 			// Move an object from its current location into the new generation. The old object is
-			// replaced with a forwarding object.
-			void move(void *obj);
+			// replaced with a forwarding object, and the address to the new object is returned.
+			void *move(void *obj);
 
 			// Scan and move all objects reachable by the newly copied objects to the 'to' generation.
 			void scanNew();
@@ -66,6 +66,9 @@ namespace storm {
 
 		/**
 		 * Scanner class that moves objects into a ScanState.
+		 *
+		 * In order to avoid re-scanning objects we've already touched, we make sure to update all
+		 * scanned references immediately.
 		 */
 		class ScanState::Move {
 		public:
@@ -90,12 +93,13 @@ namespace storm {
 				if (state.sourceGen->isPinned(obj, end))
 					return 0;
 
-				// We don't need to copy forwarders again.
-				if (fmt::isFwd(obj))
+				// We don't need to copy forwarders again. Note: Will update the pointer if
+				// necessary!
+				if (fmt::isFwd(obj, ptr))
 					return 0;
 
 				// TODO: Forward any errors!
-				state.move(obj);
+				*ptr = state.move(obj);
 				return 0;
 			}
 
