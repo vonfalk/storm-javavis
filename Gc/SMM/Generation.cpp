@@ -138,7 +138,7 @@ namespace storm {
 			// For all blocks containing at least one pinned object, traverse it entirely to find
 			// and scan the pinned objects. Any non-pinned objects are copied to the new block.
 			for (size_t i = 0; i < chunks.size(); i++)
-				chunks[i].scanPinned(pinnedSets[i], state);
+				chunks[i].scanPinned<ScanState::Move>(pinnedSets[i], state);
 
 			// Traverse all other generations that could contain references to this generation and
 			// copy any referred objects to the new block.
@@ -151,7 +151,11 @@ namespace storm {
 			// Update any references to objects we just moved. Note: For this to work, we must make
 			// sure that the newly created blocks in the new generation are scanned by this statement!
 			entry.scanGenerations<UpdateFwd<IfInGen>>(IfInGen(this), this);
-			scan<UpdateFwd<IfInGen>>(IfInGen(this));
+
+			// In this generation, we only need to scan pinned objects. The other ones will be
+			// collected soon anyway.
+			for (size_t i = 0; i < chunks.size(); i++)
+				chunks[i].scanPinned<UpdateFwd<IfInGen>>(pinnedSets[i], IfInGen(this));
 
 			// Finally, release and/or compact any remaining blocks in this generation.
 			for (size_t i = 0; i < chunks.size(); i++) {
@@ -422,27 +426,6 @@ namespace storm {
 			size_t used = (byte *)at - (byte *)freeFrom;
 			block->committed(used);
 			block->reserved(used);
-		}
-
-		struct IfPinned {
-			IfPinned(const PinnedSet &pinned) : pinned(pinned) {}
-
-			PinnedSet pinned;
-
-			bool operator() (void *from, void *to) const {
-				return pinned.has(from, to);
-			}
-		};
-
-		void Generation::GenChunk::scanPinned(const PinnedSet &pinned, ScanState &scan) {
-			if (pinned.empty())
-				return;
-
-			// Walk all blocks and scan the relevant ones.
-			for (Block *at = (Block *)memory.at; at != (Block *)memory.end(); at = (Block *)at->mem(at->size)) {
-				if (pinned.has(at->mem(0), at->mem(at->committed())))
-					at->scanIf<IfPinned, ScanState::Move>(pinned, scan);
-			}
 		}
 
 		void Generation::GenChunk::dbg_verify() {

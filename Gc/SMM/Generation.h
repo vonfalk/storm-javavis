@@ -125,9 +125,6 @@ namespace storm {
 				// system may have pointers to them. They will, however, be emptied if possible.
 				bool compact(const PinnedSet &pinned);
 
-				// Scan all pinned objects in this chunk.
-				void scanPinned(const PinnedSet &pinned, ScanState &state);
-
 				// Scan object using the selected scanner.
 				template <class Scanner>
 				typename Scanner::Result scan(typename Scanner::Source &source);
@@ -135,6 +132,10 @@ namespace storm {
 				// Scan blocks which may refer to objects in the specified generations.
 				template <class Scanner>
 				typename Scanner::Result scan(GenSet toScan, typename Scanner::Source &source);
+
+				// Scan all pinned objects in this chunk.
+				template <class Scanner>
+				typename Scanner::Result scanPinned(const PinnedSet &pinned, typename Scanner::Source &source);
 
 				// Verify this chunk.
 				void dbg_verify();
@@ -161,6 +162,17 @@ namespace storm {
 				// Shrink a block as much as possible while keeping pinned objects intact. Replaces
 				// non-pinned objects with padding.
 				void shrinkBlock(Block *block, const PinnedSet &pinned);
+
+				// Predicate that checks if a particular object is pinned.
+				struct IfPinned {
+					IfPinned(const PinnedSet &pinned) : pinned(pinned) {}
+
+					PinnedSet pinned;
+
+					bool operator() (void *from, void *to) const {
+						return pinned.has(from, to);
+					}
+				};
 			};
 
 			struct ChunkCompare {
@@ -260,6 +272,26 @@ namespace storm {
 				if (r != typename Scanner::Result())
 					return r;
 			}
+			return r;
+		}
+
+		template <class Scanner>
+		typename Scanner::Result Generation::GenChunk::scanPinned(const PinnedSet &pinned,
+																typename Scanner::Source &source) {
+
+			typename Scanner::Result r = typename Scanner::Result();
+			if (pinned.empty())
+				return r;
+
+			// Walk all blocks and scan the relevant ones.
+			for (Block *at = (Block *)memory.at; at != (Block *)memory.end(); at = (Block *)at->mem(at->size)) {
+				if (pinned.has(at->mem(0), at->mem(at->committed()))) {
+					r = at->scanIf<IfPinned, Scanner>(pinned, source);
+					if (r != typename Scanner::Result())
+						return r;
+				}
+			}
+
 			return r;
 		}
 
