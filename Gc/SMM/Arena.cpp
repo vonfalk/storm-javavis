@@ -107,6 +107,19 @@ namespace storm {
 			generations[gens - 3]->next = generations[gens - 1];
 		}
 
+		MemorySummary Arena::summary() {
+			util::Lock::L z(lock);
+
+			MemorySummary summary;
+			alloc.fillSummary(summary);
+
+			for (size_t i = 0; i < generations.size(); i++) {
+				generations[i]->fillSummary(summary);
+			}
+
+			return summary;
+		}
+
 		void Arena::dbg_verify() {
 			// Check so that the only pointer to gen-2 is from gen-3.
 			size_t gens = generations.size();
@@ -120,7 +133,7 @@ namespace storm {
 		}
 
 		void Arena::dbg_dump() {
-			// TODO: Fetch memory usage stats!
+			PLN(summary());
 
 			for (size_t i = 0; i < generations.size(); i++) {
 				PLN(L"Generation " << (i + 1) << L":");

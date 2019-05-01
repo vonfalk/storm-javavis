@@ -73,6 +73,9 @@ namespace storm {
 			template <class Scanner>
 			typename Scanner::Result scan(GenSet refsTo, typename Scanner::Source &source);
 
+			// Fill a memory summary with information.
+			void fillSummary(MemorySummary &summary) const;
+
 			// Verify the integrity of all blocks in this generation.
 			void dbg_verify();
 
@@ -136,6 +139,9 @@ namespace storm {
 				// Scan all pinned objects in this chunk.
 				template <class Scanner>
 				typename Scanner::Result scanPinned(const PinnedSet &pinned, typename Scanner::Source &source);
+
+				// Memory summary.
+				void fillSummary(MemorySummary &summary) const;
 
 				// Verify this chunk.
 				void dbg_verify();

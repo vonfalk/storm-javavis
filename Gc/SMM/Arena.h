@@ -5,6 +5,7 @@
 #include "VM.h"
 #include "VMAlloc.h"
 #include "Thread.h"
+#include "Gc/MemorySummary.h"
 
 namespace storm {
 	namespace smm {
@@ -58,6 +59,9 @@ namespace storm {
 
 			// Get the buffer. Always of size 'arenaBuffer'.
 			inline void **buffer() { return genericBuffer; }
+
+			// Provide a memory summary. This traverses all objects, and is fairly expensive.
+			MemorySummary summary();
 
 			// Verify the contents of the entire arena.
 			void dbg_verify();

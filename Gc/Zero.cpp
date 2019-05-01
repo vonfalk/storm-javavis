@@ -19,6 +19,7 @@ namespace storm {
 	void GcImpl::newPool() {
 		allocStart = (byte *)VirtualAlloc(null, allocChunk, MEM_COMMIT | MEM_RESERVE, PAGE_EXECUTE_READWRITE);
 		allocEnd = allocStart + allocChunk;
+		totalOsAlloc += allocChunk;
 	}
 
 #elif defined(POSIX)
@@ -26,6 +27,7 @@ namespace storm {
 	void GcImpl::newPool() {
 		allocStart = (byte *)mmap(null, allocChunk, PROT_READ | PROT_WRITE | PROT_EXEC, MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
 		allocEnd = allocStart + allocChunk;
+		totalOsAlloc += allocChunk;
 	}
 
 #endif
@@ -44,6 +46,13 @@ namespace storm {
 	GcImpl::GcImpl(size_t, nat) : allocStart(null), allocEnd(null) {}
 
 	void GcImpl::destroy() {}
+
+	MemorySummary GcImpl::summary() {
+		MemorySummary s;
+		s.objects = totalAlloc;
+		s.allocated = s.reserved = totalOsAlloc;
+		return s;
+	}
 
 	void GcImpl::collect() {}
 

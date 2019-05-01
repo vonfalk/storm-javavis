@@ -3,6 +3,7 @@
 #if STORM_GC == STORM_GC_SMM
 
 #include "VM.h"
+#include "Gc/MemorySummary.h"
 #include "Utils/Bitwise.h"
 #include "AddrSet.h"
 #include "Chunk.h"
@@ -94,6 +95,14 @@ namespace storm {
 
 			// Mark all blocks in the contained addresses as 'updated'.
 			void markBlockWrites(void **addr, size_t count);
+
+
+			/**
+			 * Misc.
+			 */
+
+			// Fill the memory summary information we can provide.
+			void fillSummary(MemorySummary &summary) const;
 
 			// Dump the allocation information.
 			void dbg_dump();

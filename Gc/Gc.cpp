@@ -26,6 +26,10 @@ namespace storm {
 		impl.destroy();
 	}
 
+	MemorySummary Gc::summary() {
+		return impl.summary();
+	}
+
 	void Gc::collect() {
 		impl.collect();
 	}

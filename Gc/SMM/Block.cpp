@@ -15,6 +15,24 @@ namespace storm {
 			// inside->watchWrites(this);
 		}
 
+		void Block::fillSummary(MemorySummary &summary) {
+			summary.bookkeeping += sizeof(Block);
+
+			void *tmp;
+			for (void *at = mem(fmt::headerSize); at != mem(committed() + fmt::headerSize); at = fmt::skip(at)) {
+				size_t size = fmt::size(at);
+				if (fmt::isFwd(at, &tmp)) {
+					summary.bookkeeping += size;
+				} else if (fmt::isPad(at)) {
+					summary.fragmented += size;
+				} else {
+					summary.objects += size;
+				}
+			}
+
+			summary.free += remaining();
+		}
+
 		void Block::dbg_verify() {
 			// Note: We're working with client pointers for convenience.
 			byte *at = (byte *)mem(fmt::headerSize);

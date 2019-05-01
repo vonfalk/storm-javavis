@@ -23,6 +23,9 @@ namespace storm {
 		// Destroy. This function is always called, but may be called twice.
 		void destroy();
 
+		// Get a memory summary.
+		MemorySummary summary();
+
 		// Do a full GC now.
 		void collect();
 

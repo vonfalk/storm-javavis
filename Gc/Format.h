@@ -485,6 +485,22 @@ namespace storm {
 			objMakePad(fromClient(at), size);
 		}
 
+		// Check if an object is a padding object.
+		static inline bool objIsPad(Obj *at) {
+			switch (objHeader(at)->type) {
+			case pad0:
+			case pad:
+				return true;
+			default:
+				return false;
+			}
+		}
+
+		// Check if an object is a padding object with client pointers.
+		static inline bool isPad(void *at) {
+			return objIsPad(fromClient(at));
+		}
+
 		// Make the object 'at' into a forwarding object to the specified address, assuming we know
 		// its size from earlier. The size is the size returned from 'objSize'.
 		static inline void objMakeFwd(Obj *o, size_t size, void *to) {

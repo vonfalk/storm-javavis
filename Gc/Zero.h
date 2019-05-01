@@ -16,6 +16,9 @@ namespace storm {
 		// Destroy. This function is always called, but may be called twice.
 		void destroy();
 
+		// Memory summary.
+		MemorySummary summary();
+
 		// Do a full GC now.
 		void collect();
 
@@ -102,6 +105,8 @@ namespace storm {
 		// This is a very simple pool allocator for memory acquired from the OS (it is executable).
 		Byte *allocStart;
 		Byte *allocEnd;
+		size_t totalOsAlloc;
+		size_t totalAlloc;
 		util::Lock allocLock;
 
 		// Allocate a new pool.

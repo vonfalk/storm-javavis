@@ -10,6 +10,11 @@
 namespace storm {
 	namespace smm {
 
+		// TODO: We need to think about the locks here. Since 'done' is called during a GC phase, it
+		// is possible for a deadlock to occur if a thread has acquired the generation's lock and
+		// then become paused. Perhaps we shall only use a global GC lock?
+
+
 		// TODO: What is a reasonable block size here?
 		Generation::Generation(Arena &owner, size_t size, byte identifier)
 			: totalSize(size), blockSize(size / 32),
@@ -170,6 +175,13 @@ namespace storm {
 					chunks.erase(chunks.begin() + i);
 					i--;
 				}
+			}
+		}
+
+		void Generation::fillSummary(MemorySummary &summary) const {
+			for (size_t i = 0; i < chunks.size(); i++) {
+				summary.allocated += chunks[i].memory.size;
+				chunks[i].fillSummary(summary);
 			}
 		}
 
@@ -428,6 +440,12 @@ namespace storm {
 			size_t used = (byte *)at - (byte *)freeFrom;
 			block->committed(used);
 			block->reserved(used);
+		}
+
+		void Generation::GenChunk::fillSummary(MemorySummary &summary) const {
+			for (Block *at = (Block *)memory.at; at != (Block *)memory.end(); at = (Block *)at->mem(at->size)) {
+				at->fillSummary(summary);
+			}
 		}
 
 		void Generation::GenChunk::dbg_verify() {

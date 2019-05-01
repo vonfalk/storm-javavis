@@ -25,6 +25,10 @@ namespace storm {
 		// TODO: We should destroy everything here already!
 	}
 
+	MemorySummary GcImpl::summary() {
+		return arena.summary();
+	}
+
 	void GcImpl::collect() {
 		arena.collect();
 	}

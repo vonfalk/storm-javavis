@@ -131,6 +131,9 @@ namespace storm {
 																mem(fmt::headerSize + committed()));
 			}
 
+			// Fill memory summary.
+			void fillSummary(MemorySummary &summary);
+
 			// Verify the contents of this block.
 			void dbg_verify();
 

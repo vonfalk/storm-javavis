@@ -9,6 +9,7 @@
 
 // In case we're included from somewhere other than the Gc module.
 #include "Config.h"
+#include "MemorySummary.h"
 
 /**
  * Include all possible GC implementations. Only one will be selected.
@@ -52,6 +53,9 @@ namespace storm {
 
 		// Destroy the Gc before the destructor is executed.
 		void destroy();
+
+		// Memory information.
+		MemorySummary summary();
 
 
 		/**

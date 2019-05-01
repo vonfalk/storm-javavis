@@ -1,4 +1,4 @@
-* Performance improvements [3/8]
+* Performance improvements [4/8]
   - [X] The main culprit of the startup time is loading all functions in the system (about 50%). Investigate why.
     It seems much of the time can be traced to filling in the VTables, out of which the main culprit is
     'fn->directRef()', which initializes references.
@@ -8,7 +8,7 @@
     as their "names" instead of strings.
   - [X] TypeChain is currently always allocating an array of size 1 before it is properly initialized. This is very
     wasteful, as it is almost always overwritten with a new array an instant later.
-  - [ ] Move the atomic operations in Utils/Utils.h to a separate header, and implement them inline in the
+  - [X] Move the atomic operations in Utils/Utils.h to a separate header, and implement them inline in the
     header so that they can be properly inlined in more cases. Also reduce the harsh checking of alignment,
     it likely bloats the code quite a bit.
   - [ ] Take a look at improving the performance of Map<>. On Linux, it actually performs worse than std::map

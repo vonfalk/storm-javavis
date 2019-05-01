@@ -661,6 +661,11 @@ namespace storm {
 		arena = null;
 	}
 
+	MemorySummary GcImpl::summary() {
+		TODO(L"Provide a memory summary for MPS!");
+		return MemorySummary();
+	}
+
 	void GcImpl::collect() {
 		mps_arena_collect(arena);
 		mps_arena_release(arena);
