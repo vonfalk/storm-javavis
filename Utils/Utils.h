@@ -196,50 +196,6 @@ inline float eq(float a, float b, float tolerance = defTolerance) {
 	return a + tolerance >= b && a - tolerance <= b;
 }
 
-// Atomic increase and decrease of variables
-size_t atomicIncrement(volatile size_t &v);
-size_t atomicDecrement(volatile size_t &v);
-
-// Atomic bitwise operations.
-size_t atomicAnd(volatile size_t &v, size_t with);
-size_t atomicOr(volatile size_t &v, size_t with);
-size_t atomicXor(volatile size_t &v, size_t with);
-
-// Compare and swap (atomic)
-size_t atomicCAS(volatile size_t &v, size_t compare, size_t exchange);
-void *atomicCAS(void *volatile &v, void *compare, void *exchange);
-template <class T>
-T *atomicCAS(T *volatile &v, T *compare, T *exchange) {
-	return (T *)atomicCAS((void *volatile&)v, compare, exchange);
-}
-
-// Atomic read/write. Also prevents the compiler from reordering memory accesses around the call.
-size_t atomicRead(volatile const size_t &v);
-void *atomicRead(void *volatile const &v);
-void atomicWrite(volatile size_t &v, size_t value);
-void atomicWrite(void *volatile &v, void * value);
-
-template <class T>
-void atomicWrite(T *volatile &v, T *value) {
-	atomicWrite((void *volatile&)v, value);
-}
-template <class T>
-T *atomicRead(T *volatile const &v) {
-	return (T *)atomicRead((void *volatile const&)v);
-}
-
-// Atomic read/write. These two does not need aligned data.
-size_t unalignedAtomicRead(volatile const size_t &v);
-void unalignedAtomicWrite(volatile size_t &v, size_t value);
-void shortUnalignedAtomicWrite(volatile nat &v, nat value);
-
-#ifdef X64
-nat atomicIncrement(volatile nat &v);
-nat atomicDecrement(volatile nat &v);
-nat atomicCAS(volatile nat &v, nat compare, nat exchange);
-nat atomicRead(volatile const nat &v);
-void atomicWrite(volatile nat &v, nat value);
-#endif
 
 /**
  * Convenient vector comparisions.
@@ -320,6 +276,7 @@ private:
 
 #include "Object.h"
 #include "Debug.h"
+#include "InlineAtomics.h" // Must be below 'debug.h' for some reason...
 #include "Assert.h"
 
 template <class T>
