@@ -793,6 +793,10 @@ namespace storm {
 				return Result();
 			}
 
+			struct ScanAll {
+				inline bool operator() (void *, void *) const { return true; }
+			};
+
 			// Helper for interpreting and scanning a vtable.
 			// We assume vtables are at offset 0.
 #define FMT_FIX_VTABLE(base)								\
@@ -824,11 +828,27 @@ namespace storm {
 			// Scan a set of objects that are stored back-to-back. Assumes the entire region
 			// [base,limit) is filled entirely with objects.
 			static Result objects(Source &source, void *base, void *limit) {
+				return objectsIf<ScanAll>(ScanAll(), source, base, limit);
+			}
+
+
+			// Scan a set of objects that are stored back-to-back. Only scans objects where the
+			// predicate returns "true".
+			template <class Predicate>
+			static Result objectsIf(const Predicate &predicate, Source &source, void *base, void *limit) {
 				Scanner s(source);
 				Result r;
-				for (void *at = base; at < limit; at = fmt::skip(at)) {
+				void *next = base;
+				for (void *at = base; at < limit; at = next) {
 					Obj *o = fromClient(at);
 					FMT_CHECK_OBJ(o);
+
+					next = fmt::skip(at);
+
+					// Note: This call will be optimized away entirely if 'predicate' is an object
+					// that always returns true, as is the case with 'ScanAll'.
+					if (!predicate(at, (byte *)next - fmt::headerSize))
+						continue;
 
 					if (objIsCode(o)) {
 						// Scan the code segment.

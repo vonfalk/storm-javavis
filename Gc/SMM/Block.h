@@ -126,21 +126,9 @@ namespace storm {
 			// Scan all objects that fulfill a specified predicate using the supplied scanner.
 			template <class Predicate, class Scanner>
 			typename Scanner::Result scanIf(const Predicate &predicate, typename Scanner::Source &source) {
-				void *at = mem(fmt::headerSize);
-				void *limit = mem(fmt::headerSize + committed());
-
-				while (at < limit) {
-					void *next = fmt::skip(at);
-					if (predicate(at, (char *)next - fmt::headerSize)) {
-						typename Scanner::Result r = fmt::Scan<Scanner>::objects(source, at, fmt::skip(at));
-						if (r)
-							return r;
-					}
-
-					at = next;
-				}
-
-				return typename Scanner::Result();
+				return fmt::Scan<Scanner>::objectsIf<Predicate>(predicate, source,
+																mem(fmt::headerSize),
+																mem(fmt::headerSize + committed()));
 			}
 
 			// Verify the contents of this block.
