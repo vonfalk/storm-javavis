@@ -57,22 +57,19 @@ namespace storm {
 		};
 
 		void VMWin::notifyWrites(VMAlloc *alloc, void **buffer, void *at, size_t size) {
+			// Note: This is fairly expensive...
 			ULONG_PTR count = 0;
 			DWORD granularity = 0;
 			do {
 				count = arenaBufferWords;
-				UINT r = GetWriteWatch(0, at, size, buffer, &count, &granularity);
+				UINT r = GetWriteWatch(WRITE_WATCH_FLAG_RESET, at, size, buffer, &count, &granularity);
 				// TODO: If GetWriteWatch fails, something is *really* bad. Perhaps we should try to
 				// mark all pages in the interval if that happens.
-				assert(r == 0, L"GetWriteWatch failed");
+				dbg_assert(r == 0, L"GetWriteWatch failed");
 
 				// Mark the blocks that contain the addresses as updated. We do this in a batch so
 				// that the implementation doesn't need to use the lookup table for every address.
 				alloc->markBlockWrites(buffer, size_t(count));
-
-				// Reset the watch for the pages we just marked. Otherwise they will show up again
-				// in the next iteration...
-				ResetWriteWatch(buffer[0], (char *)buffer[count - 1] - (char *)buffer[0] + pageSize);
 			} while (count == arenaBufferWords);
 		}
 

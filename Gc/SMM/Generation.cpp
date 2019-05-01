@@ -291,8 +291,8 @@ namespace storm {
 					current = compactPinned(current, at, pinned);
 				} else {
 					// Unused block. We are free to remove this block entirely without looking at it anymore.
-					current->committed(0);
-					current->reserved(0);
+					at->committed(0);
+					at->reserved(0);
 				}
 
 				at = next;
@@ -316,7 +316,9 @@ namespace storm {
 
 			if (size <= sizeof(Block) + used) {
 				// One large object. Just add a padding object and continue!
-				fmt::objMakePad((fmt::Obj *)current->mem(used), size - used);
+				size_t padSz = size - used;
+				if (padSz > 0)
+					fmt::objMakePad((fmt::Obj *)current->mem(used), size - used);
 				current->committed(size);
 				current->reserved(size);
 				return current;
@@ -356,6 +358,11 @@ namespace storm {
 		Block *Generation::GenChunk::compactPinned(Block *current, Block *scan, const PinnedSet &pinned) {
 			fmt::Obj *at = (fmt::Obj *)scan->mem(0);
 			fmt::Obj *to = (fmt::Obj *)scan->mem(scan->committed());
+
+			// If 'scan == current', this is vital. Otherwise 'compactFinishObj' will be confused
+			// when we call it the first time and the current object is before the extend of the
+			// current block.
+			scan->committed(0);
 
 			// Find rising and falling 'edges' in the usage, and structure the blocks accordingly.
 			bool lastInUse = false;

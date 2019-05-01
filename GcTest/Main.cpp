@@ -51,9 +51,9 @@ void verifyList(Dummy *head, size_t count) {
 }
 
 void run(Gc &gc) {
-	// Dummy *longlived = makeList(gc, 100);
+	Dummy *longlived = makeList(gc, 100);
 
-	// for (size_t t = 0; t < 10; t++) {
+	for (size_t t = 0; t < 1000; t++) {
 		Dummy *d;
 
 		for (size_t i = 0; i < 20; i++) {
@@ -61,13 +61,13 @@ void run(Gc &gc) {
 		}
 
 		{
-			util::Timer t(L"gc");
+			// util::Timer t(L"gc");
 			gc.collect();
 		}
 
 		verifyList(d, 100);
-	// 	verifyList(longlived, 100);
-	// }
+		verifyList(longlived, 100);
+	}
 }
 
 
@@ -82,7 +82,10 @@ int main(int argc, const char *argv[]) {
 	Gc gc(100*1024*1024, 1000);
 	gc.attachThread();
 
-	run(gc);
+	{
+		util::Timer t(L"test");
+		run(gc);
+	}
 
 	gc.collect();
 	gc.dbg_dump();

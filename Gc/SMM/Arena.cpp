@@ -42,6 +42,10 @@ namespace storm {
 			for (size_t i = 0; i < generationCount; i++)
 				generations[i]->next = generations[i + 1];
 
+			// Make the next-to-last generation collect into the duplicated one, just as the last
+			// one. Otherwise garbage will get out of sync.
+			generations[generationCount - 2]->next = generations[generationCount];
+
 
 			// TODO: We most likely want to connect the generations in a more interesting pattern,
 			// Additionally, it is worth investigating whether it is useful to have parallel "lanes"
@@ -86,8 +90,9 @@ namespace storm {
 			// Note: We're not collecting the last generation (the duplicate one), since that generation
 			// do not have anything to collect into. Instead we swap the last two generations when
 			// we are done so that it is collected the next time.
-			for (size_t i = generations.size() - 1; i > 0; i--)
+			for (size_t i = generations.size() - 1; i > 0; i--) {
 				generations[i - 1]->collect(entry);
+			}
 
 			swapLastGens();
 		}
@@ -99,7 +104,7 @@ namespace storm {
 			// Fix pointers. Assumes that we only need to look at the second-to-last one.
 			generations[gens - 1]->next = null;
 			generations[gens - 2]->next = generations[gens - 1];
-			generations[gens - 3]->next = generations[gens - 2];
+			generations[gens - 3]->next = generations[gens - 1];
 		}
 
 		void Arena::dbg_verify() {
