@@ -57,6 +57,11 @@ namespace storm {
 		};
 
 		void VMWin::notifyWrites(VMAlloc *alloc, void **buffer, void *at, size_t size) {
+			// TODO: Calling GetWriteWatch with the entire VM size is hugely inefficient. We
+			// probably only want to call it to investigate the pages we're actually interested
+			// in. Perhaps we should write protect chunks of memory to get notified of modifications
+			// rather than having to poll for them all the time, which could be cheaper...
+
 			// Note: This is fairly expensive...
 			ULONG_PTR count = 0;
 			DWORD granularity = 0;
@@ -70,6 +75,8 @@ namespace storm {
 				// Mark the blocks that contain the addresses as updated. We do this in a batch so
 				// that the implementation doesn't need to use the lookup table for every address.
 				alloc->markBlockWrites(buffer, size_t(count));
+
+				// TODO: If we have more work to do, we should reset the addresses where the bookkeeping is!
 			} while (count == arenaBufferWords);
 		}
 

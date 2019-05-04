@@ -146,7 +146,8 @@ namespace storm {
 
 		void VMAlloc::fillSummary(MemorySummary &summary) const {
 			size_t infoSz = infoCount() * sizeof(*info);
-			summary.bookkeeping += roundUp(infoSz, vmAllocMinSize);
+			summary.bookkeeping += infoSz;
+			summary.fragmented += roundUp(infoSz, vmAllocMinSize) - infoSz;
 
 			for (size_t i = 0; i < reserved.size(); i++)
 				summary.reserved += reserved[i].size;
