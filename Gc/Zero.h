@@ -3,6 +3,8 @@
 #if STORM_GC == STORM_GC_ZERO
 #define STORM_HAS_GC
 
+#include "MemorySummary.h"
+
 namespace storm {
 
 	/**

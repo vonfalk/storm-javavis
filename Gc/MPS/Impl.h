@@ -4,6 +4,7 @@
 #define STORM_HAS_GC
 
 #include "Lib.h"
+#include "Gc/MemorySummary.h"
 
 namespace storm {
 
