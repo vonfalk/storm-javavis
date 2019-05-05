@@ -101,10 +101,11 @@ namespace storm {
 			// Special type description for GcType instances (which are describing other types).
 			gcType,
 
-			// A type description that is used as a forwarder. We use the 'finalizer' field of the
-			// typedesc for storing the forwarded reference. The only requirement is that we shall
-			// be able to use this object while it is a forwarder to scan other objects that have
-			// not yet been updated.
+			// A type description that is used as a forwarder. We use the 'type' field of the
+			// typedesc for storing the forwarded reference, as that is completely uninteresting to
+			// the garbage collector (the finalizer could be used, but that is in fact interesting
+			// in some cases). The only requirement is that we shall be able to use this object
+			// while it is a forwarder to scan other objects that have not yet been updated.
 			gcTypeFwd,
 		};
 
@@ -510,7 +511,7 @@ namespace storm {
 			case gcType:
 			case gcTypeFwd:
 				objSetHeader(o, &headerGcTypeFwd);
-				o->gcType.finalizer = to;
+				o->gcType.type = (Type *)to;
 				break;
 			default:
 				if (size <= headerSize + sizeof(Fwd1)) {
@@ -537,7 +538,7 @@ namespace storm {
 			case gcType:
 			case gcTypeFwd:
 				objSetHeader(o, &headerGcTypeFwd);
-				o->gcType.finalizer = to;
+				o->gcType.type = (Type *)to;
 				break;
 			default:
 				size = objSize(o);
@@ -576,7 +577,7 @@ namespace storm {
 			case fwd:
 				return o->fwd.to;
 			case gcTypeFwd:
-				return (void *)o->gcType.finalizer;
+				return (void *)o->gcType.type;
 			default:
 				return null;
 			}
@@ -597,7 +598,7 @@ namespace storm {
 				*out = o->fwd.to;
 				return true;
 			case gcTypeFwd:
-				*out = (void *)o->gcType.finalizer;
+				*out = (void *)o->gcType.type;
 				return true;
 			default:
 				return false;
