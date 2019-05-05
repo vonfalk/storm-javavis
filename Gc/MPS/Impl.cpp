@@ -545,7 +545,7 @@ namespace storm {
 		// them since we can remove all of them easily whenever the Gc object is destroyed.
 		MPS_ARGS_BEGIN(args) {
 			MPS_ARGS_ADD(args, MPS_KEY_MEAN_SIZE, sizeof(GcType) + 10*sizeof(size_t));
-			MPS_ARGS_ADD(args, MPS_KEY_ALIGN, max(wordSize, size_t(GCTYPE_ALIGNMENT)));
+			MPS_ARGS_ADD(args, MPS_KEY_ALIGN, wordSize);
 			MPS_ARGS_ADD(args, MPS_KEY_SPARE, 0.50); // Low spare, as these objects are seldom allocated/deallocated.
 			check(mps_pool_create_k(&gcTypePool, arena, mps_class_mvff(), args), L"Failed to create a pool for types.");
 		} MPS_ARGS_END(args);

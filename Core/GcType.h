@@ -2,13 +2,6 @@
 
 namespace storm {
 
-	// Alignment required for GcType instances.
-	// If the garbage collector being used uses the default object format, alignment needs to be
-	// at least 8, otherwise it will not function properly. Therefore, we always align GcType
-	// instances to 8. On X86-64, this is no difference from the default alignment, and on X86
-	// we only waste 4 bytes occasionally (when "count" is even).
-#define GCTYPE_ALIGNMENT 8
-
 	/**
 	 * Description of a type from the view of the garbage collector. In general, we maintain one
 	 * GcType for each Type in the system. A GcType is different from a Type as it only describes
@@ -22,7 +15,7 @@ namespace storm {
 	 * TODO: Revise the sizes of data types used on 64-bit systems. Some sizes and offsets can be
 	 * stored as 32-bit numbers instead of 64-bit numbers to save space.
 	 */
-	struct ALIGN_AS(GCTYPE_ALIGNMENT) GcType {
+	struct GcType {
 		// Possible variations in the description.
 		enum Kind {
 			// A type that has a fixed layout and size (ie. classes, structs).

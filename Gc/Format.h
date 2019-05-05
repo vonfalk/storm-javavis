@@ -52,11 +52,6 @@ namespace storm {
 #define FMT_MIDDLE_DATA 0xCC
 #define FMT_FOOTER_DATA 0xAA
 
-		// Make sure the alignment of GcType is at least 8.
-#if GCTYPE_ALIGNMENT < 8
-#error "Too narrow alignment for GcType!"
-#endif
-
 		// The size of a word on this machine.
 		static const size_t wordSize = sizeof(void *);
 
@@ -101,7 +96,16 @@ namespace storm {
 			fwd1,
 
 			// Forwarding object (>= 2 words long).
-			fwd
+			fwd,
+
+			// Special type description for GcType instances (which are describing other types).
+			gcType,
+
+			// A type description that is used as a forwarder. We use the 'finalizer' field of the
+			// typedesc for storing the forwarded reference. The only requirement is that we shall
+			// be able to use this object while it is a forwarder to scan other objects that have
+			// not yet been updated.
+			gcTypeFwd,
 		};
 
 		/**
@@ -138,7 +142,7 @@ namespace storm {
 		/**
 		 * Pre-allocated headers with custom types.
 		 */
-		struct ALIGN_AS(GCTYPE_ALIGNMENT) InternalHeader {
+		struct InternalHeader {
 			size_t type;
 		};
 
@@ -165,6 +169,8 @@ namespace storm {
 		static const InternalHeader headerPad = { pad };
 		static const InternalHeader headerFwd1 = { fwd1 };
 		static const InternalHeader headerFwd = { fwd };
+		static const InternalHeader headerGcType = { gcType };
+		static const InternalHeader headerGcTypeFwd = { gcTypeFwd };
 
 		/**
 		 * Array object data.
@@ -199,27 +205,23 @@ namespace storm {
 		 * is the last member of the object.
 		 */
 		struct Obj {
-			// Object information. Describes the kind of object, and indirectly, its size. The three
+			// Object information. Describes the kind of object, and indirectly, its size. The two
 			// least significant bits also contain information on the state of the object as follows:
 			//
-			// ??0: This is a regular allocation. The remaining bits are a pointer to a Header object
-			//      containing information about this object. Depending on the contents of the Header,
-			//      one of the members in the union below may be valid.
+			// ?0: This is a regular allocation. The remaining bits are a pointer to a Header object
+			//     containing information about this object. Depending on the contents of the Header,
+			//     one of the members in the union below may be valid.
 			//
-			// ??1: This is a code allocation. The rest of the field denotes the size of the allocation,
-			//      excluding the metadata. The size of the metadata is stored in the metadata itself,
-			//      which is stored directly after the code. The size is rounded up to at least 4 bytes
-			//      so the actual size is computed by masking out the three least significant bits and
-			//      dividing by two. This allows storing code segments the size of about half of
-			//      the available address space, which should be enough.
+			// ?1: This is a code allocation. The rest of the field denotes the size of the allocation,
+			//     excluding the metadata. The size of the metadata is stored in the metadata itself,
+			//     which is stored directly after the code. The size is rounded up to at least 4 bytes
+			//     so the actual size is computed by masking out the three least significant bits and
+			//     dividing by two. This allows storing code segments the size of about half of
+			//     the available address space, which should be enough.
 			//
-			// ?X?: Indicates whether or not this object is finalized. Since pointers to finalized
-			//      objects might linger in weak sets and the like, we need the ability to inform other
-			//      parts of the system that an object is actually finalized.
-			//
-			// X??: One bit of information reserved by the collector. The collector may use this to
-			//      mark objects in any way it pleases. The object format is not concerned about the
-			//      use of this information.
+			// X?: Indicates whether or not this object is finalized. Since pointers to finalized
+			//     objects might linger in weak sets and the like, we need the ability to inform other
+			//     parts of the system that an object is actually finalized.
 			//
 			// Use the objIsXxx functions to extract information from this member.
 			size_t info;
@@ -244,6 +246,7 @@ namespace storm {
 				Pad pad;
 				Fwd1 fwd1;
 				Fwd fwd;
+				GcType gcType;
 			};
 		};
 
@@ -297,17 +300,26 @@ namespace storm {
 
 		// Get the size of the code allocation. Assumes 'objIsCode' is true.
 		static inline size_t objCodeSize(const Obj *obj) {
-			return (obj->info & ~size_t(0x7)) >> 1;
+			return (obj->info & ~size_t(0x3)) >> 1;
 		}
 
 		// Get the header of this allocation. Assumes 'objIsCode' returned false.
 		static inline const Header *objHeader(const Obj *obj) {
-			return (const Header *)(obj->info & ~size_t(0x7));
+			return (const Header *)(obj->info & ~size_t(0x3));
 		}
 
 		// Get the header of this allocation. Assumes 'objIsCode' returned false.
 		static inline Header *objHeader(Obj *obj) {
-			return (Header *)(obj->info & ~size_t(0x7));
+			return (Header *)(obj->info & ~size_t(0x3));
+		}
+
+		// Mark this allocation as finalized. Assumes it is not a code allocation.
+		static inline void objSetFinalized(Obj *obj) {
+			// Make sure to do this in one instruction to not mess up the GC flag, if it is used.
+			atomicOr(obj->info, size_t(0x2));
+		}
+		static inline void setFinalized(void *obj) {
+			objSetFinalized(fromClient(obj));
 		}
 
 		// Check if this object is finalized. Works for both code- and regular allocations.
@@ -327,18 +339,14 @@ namespace storm {
 		// Set the header to indicate a regular allocation described by 'header'. Assumes 'header'
 		// is aligned to 'headerAlign' and compatible with Header (e.g. a single size_t, CppType, ...).
 		static inline void objSetHeader(Obj *obj, const GcType *header) {
-			dbg_assert((size_t(header) & 0x7) == 0x0, L"All header descriptions need to be aligned to at least 8 bytes!");
 			obj->info = size_t(header);
 		}
 		static inline void objSetHeader(Obj *obj, const InternalHeader *header) {
-			dbg_assert((size_t(header) & 0x7) == 0x0, L"All header descriptions need to be aligned to at least 8 bytes!");
 			obj->info = size_t(header);
 		}
 
 		// Replace the header of this allocation. Assumes 'objIsCode' returned false. Preserves any other flags.
 		static inline void objReplaceHeader(Obj *obj, const GcType *newHeader) {
-			dbg_assert((size_t(newHeader) & 0x7) == 0x0, L"All header descriptions need to be aligned to at least 8 bytes!");
-
 			// Note: We want to do this in one instruction to not mess up any use of the flag in the
 			// GC.  We could do with an XOR operation, but since we will only be replacing an
 			// object's header very rarely, we use CAS instead, since that will more likely be
@@ -347,30 +355,9 @@ namespace storm {
 			do {
 				old = atomicRead(obj->info);
 				replace = old;
-				replace &= size_t(0x7);
+				replace &= size_t(0x3);
 				replace |= size_t(newHeader);
 			} while (atomicCAS(obj->info, old, replace) != old);
-		}
-
-		// Mark this allocation as finalized. Assumes it is not a code allocation.
-		static inline void objSetFinalized(Obj *obj) {
-			// Make sure to do this in one instruction to not mess up the GC flag, if it is used.
-			atomicOr(obj->info, size_t(0x2));
-		}
-
-		// Get the GC mark.
-		static inline bool objIsMarked(const Obj *obj) {
-			return (obj->info & size_t(0x4)) != 0x0;
-		}
-
-		// Set the GC flag.
-		static inline void objSetMark(Obj *obj) {
-			atomicOr(obj->info, size_t(0x4));
-		}
-
-		// Clear the GC flag.
-		static inline void objClearMark(Obj *obj) {
-			atomicAnd(obj->info, ~size_t(0x4));
 		}
 
 		// Compute the size of an object given its header.
@@ -439,6 +426,9 @@ namespace storm {
 				return headerSize + sizeof(Fwd1);
 			case fwd:
 				return headerSize + o->fwd.size;
+			case gcType:
+			case gcTypeFwd:
+				return headerSize + gcTypeSize(o->gcType.count);
 			default:
 				// Most likely, memory was corrupted somehow.
 				dbg_assert(false, L"Unknown object found!");
@@ -508,16 +498,25 @@ namespace storm {
 #ifdef SLOW_DEBUG
 			dbg_assert(size >= headerSize + sizeof(Fwd1), L"Not enough space for a fwd object!");
 #endif
-			if (size <= headerSize + sizeof(Fwd1)) {
-				objSetHeader(o, &headerFwd1);
-				o->fwd1.to = to;
-			} else {
-				objSetHeader(o, &headerFwd);
-				o->fwd.to = to;
-				o->fwd.size = size - headerSize;
+
+			switch (objHeader(o)->type) {
+			case gcType:
+			case gcTypeFwd:
+				objSetHeader(o, &headerGcTypeFwd);
+				o->gcType.finalizer = to;
+				break;
+			default:
+				if (size <= headerSize + sizeof(Fwd1)) {
+					objSetHeader(o, &headerFwd1);
+					o->fwd1.to = to;
+				} else {
+					objSetHeader(o, &headerFwd);
+					o->fwd.to = to;
+					o->fwd.size = size - headerSize;
+				}
 			}
 
-			FMT_INIT_PAD(o, size0);
+			FMT_INIT_PAD(o, size);
 			FMT_CHECK_OBJ(o);
 		}
 
@@ -525,17 +524,27 @@ namespace storm {
 		static inline void objMakeFwd(Obj *o, void *to) {
 			FMT_CHECK_OBJ(o);
 
-			size_t size = objSize(o);
+			size_t size;
+
+			switch (objHeader(o)->type) {
+			case gcType:
+			case gcTypeFwd:
+				objSetHeader(o, &headerGcTypeFwd);
+				o->gcType.finalizer = to;
+				break;
+			default:
+				size = objSize(o);
 #ifdef SLOW_DEBUG
-			dbg_assert(size >= headerSize + sizeof(Fwd1), L"Not enough space for a fwd object!");
+				dbg_assert(size >= headerSize + sizeof(Fwd1), L"Not enough space for a fwd object!");
 #endif
-			if (size <= headerSize + sizeof(Fwd1)) {
-				objSetHeader(o, &headerFwd1);
-				o->fwd1.to = to;
-			} else {
-				objSetHeader(o, &headerFwd);
-				o->fwd.to = to;
-				o->fwd.size = size - headerSize;
+				if (size <= headerSize + sizeof(Fwd1)) {
+					objSetHeader(o, &headerFwd1);
+					o->fwd1.to = to;
+				} else {
+					objSetHeader(o, &headerFwd);
+					o->fwd.to = to;
+					o->fwd.size = size - headerSize;
+				}
 			}
 
 			FMT_INIT_PAD(o, size);
@@ -559,6 +568,8 @@ namespace storm {
 				return o->fwd1.to;
 			case fwd:
 				return o->fwd.to;
+			case gcTypeFwd:
+				return (void *)o->gcType.finalizer;
 			default:
 				return null;
 			}
@@ -577,6 +588,9 @@ namespace storm {
 				return true;
 			case fwd:
 				*out = o->fwd.to;
+				return true;
+			case gcTypeFwd:
+				*out = (void *)o->gcType.finalizer;
 				return true;
 			default:
 				return false;
@@ -604,6 +618,7 @@ namespace storm {
 			case pad:
 			case fwd1:
 			case fwd:
+			case gcTypeFwd:
 				return true;
 			default:
 				return false;
@@ -686,6 +701,24 @@ namespace storm {
 			void *refPtr = codeRefs;
 			*(size_t *)refPtr = refs;
 			// Initialize any padding we need.
+			FMT_INIT_PAD(o, size);
+			FMT_CHECK_SIZE(o);
+
+			return toClient(o);
+		}
+
+		// Initialize a GcType allocation.
+		static inline void *initGcType(void *memory, size_t entries) {
+			size_t size = gcTypeSize(entries);
+			// 1: Clear all memory to zero.
+			memset(memory, 0, size);
+			// 2: Set the header.
+			Obj *o = (Obj *)memory;
+			objSetHeader(o, &headerGcType);
+			// 3: Set the number of entries.
+			o->gcType.count = entries;
+
+			// Initialize padding.
 			FMT_INIT_PAD(o, size);
 			FMT_CHECK_SIZE(o);
 
@@ -968,11 +1001,16 @@ namespace storm {
 							}
 							break;
 						}
+						case gcType:
+							// We only need to scan the type!
+							r = fix12(s, (void **)&(o->gcType.type));
+							break;
 #ifdef SLOW_DEBUG
 						case pad0:
 						case pad:
 						case fwd1:
 						case fwd:
+						case gcTypeFwd:
 							break;
 						default:
 							dbg_assert(false, L"Unknown object type scanned!");
