@@ -360,6 +360,13 @@ namespace storm {
 			} while (atomicCAS(obj->info, old, replace) != old);
 		}
 
+		// Unsafe header replacement used inside scanning. Avoids atomics, as that may slow down scanning.
+		static inline void objReplaceHeaderUnsafe(Obj *obj, const GcType *newHeader) {
+			size_t h = obj->info & size_t(0x3);
+			h |= size_t(newHeader);
+			obj->info = h;
+		}
+
 		// Compute the size of an object given its header.
 		static inline size_t sizeObj(const GcType *type) {
 			return alignAlloc(headerSize + type->stride + FMT_CHECK_BYTES);
@@ -708,7 +715,7 @@ namespace storm {
 		}
 
 		// Initialize a GcType allocation.
-		static inline void *initGcType(void *memory, size_t entries) {
+		static inline GcType *initGcType(void *memory, size_t entries) {
 			size_t size = gcTypeSize(entries);
 			// 1: Clear all memory to zero.
 			memset(memory, 0, size);
@@ -722,7 +729,7 @@ namespace storm {
 			FMT_INIT_PAD(o, size);
 			FMT_CHECK_SIZE(o);
 
-			return toClient(o);
+			return (GcType *)toClient(o);
 		}
 
 		/**
@@ -840,7 +847,7 @@ namespace storm {
 				if (s.fixHeader1(&header->obj)) {
 					GcType *t = &header->obj;
 					Result r = s.fixHeader2(&t);
-					objReplaceHeader(obj, t);
+					objReplaceHeaderUnsafe(obj, t);
 					return r;
 				}
 

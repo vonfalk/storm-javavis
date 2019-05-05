@@ -108,7 +108,23 @@ namespace storm {
 	}
 
 	GcType *GcImpl::allocType(GcType::Kind kind, Type *type, size_t stride, size_t entries) {
-		return null;
+		size_t size = gcTypeSize(entries) + fmt::headerSize;
+		smm::Allocator &allocator = currentAlloc();
+		smm::PendingAlloc alloc;
+		GcType *result;
+		do {
+			alloc = allocator.reserve(size);
+			if (!alloc)
+				throw GcError(L"Out of memory (allocType).");
+			result = fmt::initGcType(alloc.mem(), entries);
+		} while (!alloc.commit());
+
+		result->kind = kind;
+		result->type = type;
+		result->stride = stride;
+		// Note: entries is set by fmt::initGcType.
+
+		return result;
 	}
 
 	void GcImpl::freeType(GcType *type) {}

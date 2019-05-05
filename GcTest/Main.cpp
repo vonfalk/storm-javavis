@@ -1,28 +1,37 @@
 #include "stdafx.h"
 #include "Utils/Timer.h"
 
+
 struct Dummy {
 	Dummy *next;
 	size_t data[9];
 };
 
-static GcType dummyType = {
+
+// Indirect storage of types, so that the GcType instance may move.
+struct TypeStore {
+	GcType *dummy;
+};
+
+static GcType storeType = {
 	GcType::tFixed,
 	null,
 	null,
-	10 * sizeof(void *),
+	sizeof(TypeStore),
 	1,
 	{ 0 }
 };
 
+#define NOINLINE __declspec(noinline)
+
 // Build a linked list of a few elements.
-__declspec(noinline) Dummy *makeList(Gc &gc, size_t count) {
-	Dummy *first = (Dummy *)gc.alloc(&dummyType);
+NOINLINE Dummy *makeList(Gc &gc, TypeStore *store, size_t count) {
+	Dummy *first = (Dummy *)gc.alloc(store->dummy);
 	first->data[0] = 0;
 
 	Dummy *current = first;
 	for (size_t i = 1; i < count; i++) {
-		current->next = (Dummy *)gc.alloc(&dummyType);
+		current->next = (Dummy *)gc.alloc(store->dummy);
 		current->next->data[0] = i;
 		current = current->next;
 	}
@@ -50,15 +59,20 @@ void verifyList(Dummy *head, size_t count) {
 		PLN(L"List has extra elements.");
 }
 
-void run(Gc &gc) {
-	Dummy *longlived = makeList(gc, 100);
+NOINLINE Dummy *makeLists(Gc &gc, TypeStore *store) {
+	Dummy *d;
+	for (size_t i = 0; i < 20; i++) {
+		d = makeList(gc, store, 100);
+	}
+	return d;
+}
+
+NOINLINE void lists(Gc &gc, TypeStore *store) {
+	Dummy *longlived = makeList(gc, store, 100);
 
 	for (size_t t = 0; t < 1000; t++) {
-		Dummy *d;
-
-		for (size_t i = 0; i < 20; i++) {
-			d = makeList(gc, 100);
-		}
+		// We put 'makeLists' inside another function, otherwise it seems we keep store->dummy on the stack.
+		Dummy *d = makeLists(gc, store);
 
 		{
 			// util::Timer t(L"gc");
@@ -70,6 +84,28 @@ void run(Gc &gc) {
 	}
 }
 
+NOINLINE TypeStore *createTypes(Gc &gc) {
+	TypeStore *store = (TypeStore *)gc.alloc(&storeType);
+
+	// Create some room after the first type, so that it may be moved!
+	for (size_t i = 0; i < 1000; i++)
+		gc.alloc(&storeType);
+
+	store->dummy = gc.allocType(GcType::tFixed, null, sizeof(Dummy), 1);
+	store->dummy->offset[0] = 0;
+	return store;
+}
+
+NOINLINE void run(Gc &gc) {
+	TypeStore *store = createTypes(gc);
+
+	// Move the allocation to another location before we allocate 'longlived' inside
+	// 'lists'. Otherwise, it will likely not move!
+	gc.collect();
+	// gc.dbg_dump();
+
+	lists(gc, store);
+}
 
 /**
  * Simple GC tests that can be used during the creation of a new GC so that large parts of the

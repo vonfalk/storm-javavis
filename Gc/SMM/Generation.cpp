@@ -437,7 +437,7 @@ namespace storm {
 				at = next;
 			}
 
-			size_t used = (byte *)at - (byte *)freeFrom;
+			size_t used = (byte *)freeFrom - (byte *)block->mem(0);
 			block->committed(used);
 			block->reserved(used);
 		}
