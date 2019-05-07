@@ -3,6 +3,7 @@
 #if STORM_GC == STORM_GC_SMM
 
 #include "Block.h"
+#include "Arena.h"
 
 namespace storm {
 	namespace smm {
@@ -63,6 +64,9 @@ namespace storm {
 		 * An allocator is the interface the rest of the system uses to request memory from the GC
 		 * in units smaller than whole blocks.
 		 *
+		 * This is one of the few classes that can be used safely without acquiring the GC lock, as
+		 * it manages the needed synchronization internally.
+		 *
 		 * Each allocator instance have their own Block (nursery generation) used for allocations,
 		 * so that the majority of allocations can be performed without acquiring any locks.
 		 */
@@ -105,6 +109,7 @@ namespace storm {
 
 			// Fill the allocator with more memory from the arena!
 			void fill(size_t desiredMin);
+			void fillI(Arena::Entry &entry, size_t desiredMin);
 
 			// Make a large allocation (in a higher-numbered generation).
 			PendingAlloc allocLarge(size_t size);

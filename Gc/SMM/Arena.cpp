@@ -6,16 +6,14 @@
 #include "Utils/Bitwise.h"
 #include "Generation.h"
 #include "Block.h"
+#include "Thread.h"
 
 namespace storm {
 	namespace smm {
 
-		// Creates an ArenaEntry and initializes it properly.
-#define ARENA_ENTRY(name) ArenaEntry name(*this); setjmp(name.buf)
-
 		// TODO: Make the nursery generation size customizable.
 		Arena::Arena(size_t initialSize, const size_t *genSize, size_t generationCount)
-			: alloc(VM::create(), initialSize) {
+			: alloc(VM::create(), initialSize), entries(0) {
 
 			// Check assumptions of the formatting code.
 			fmt::init();
@@ -59,15 +57,19 @@ namespace storm {
 
 		Chunk Arena::allocChunk(size_t size, byte identifier) {
 			util::Lock::L z(lock);
+
 			return alloc.alloc(size, identifier);
 		}
 
 		void Arena::freeChunk(Chunk chunk) {
 			util::Lock::L z(lock);
+
 			alloc.free(chunk);
 		}
 
 		Thread *Arena::attachThread() {
+			util::Lock::L z(lock);
+
 			Thread *t = new Thread(*this);
 			{
 				util::Lock::L z(lock);
@@ -78,12 +80,15 @@ namespace storm {
 
 		void Arena::detachThread(Thread *thread) {
 			util::Lock::L z(lock);
+
 			threads.erase(thread);
 		}
 
 		void Arena::collect() {
-			ARENA_ENTRY(entry);
+			withEntry(*this, &Arena::collectI);
+		}
 
+		void Arena::collectI(Entry &entry) {
 			// The user program asked us for a full collection, causing all generations to be
 			// collected (not simultaneously at the moment, we might want to do that in order to
 			// reduce memory usage as much as possible without requiring multiple calls to 'collect').
@@ -121,6 +126,8 @@ namespace storm {
 		}
 
 		void Arena::dbg_verify() {
+			util::Lock::L z(lock);
+
 			// Check so that the only pointer to gen-2 is from gen-3.
 			size_t gens = generations.size();
 			for (size_t i = 0; i < gens; i++)
@@ -133,6 +140,8 @@ namespace storm {
 		}
 
 		void Arena::dbg_dump() {
+			util::Lock::L z(lock);
+
 			PLN(summary());
 
 			for (size_t i = 0; i < generations.size(); i++) {
@@ -140,6 +149,21 @@ namespace storm {
 				Indent z(util::debugStream());
 				generations[i]->dbg_dump();
 			}
+		}
+
+		/**
+		 * The Entry class.
+		 */
+
+		Arena::Entry::Entry(Arena &owner) : owner(owner) {
+			owner.lock.lock();
+			dbg_assert(owner.entries == 0, L"Recursive arena entry!");
+			owner.entries++;
+		}
+
+		Arena::Entry::~Entry() {
+			owner.entries--;
+			owner.lock.unlock();
 		}
 
 	}

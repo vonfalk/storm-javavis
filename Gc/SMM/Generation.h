@@ -5,35 +5,33 @@
 #include "Utils/Lock.h"
 #include "Block.h"
 #include "InlineSet.h"
-#include "ArenaEntry.h"
+#include "Arena.h"
 
 namespace storm {
 	namespace smm {
 
-		class Arena;
 		class ScanState;
 
 		/**
 		 * A generation is a set of blocks that belong together, and that will be collected
 		 * together. A generation additionaly contains information on the typical size of the
 		 * contained blocks, and other useful information.
+		 *
+		 * Note that it is required to acquire the GC lock before interfacing with this class.
 		 */
 		class Generation {
 		public:
 			// Create a generation, and provide an approximate size of the generation.
-			Generation(Arena &owner, size_t size, byte identifier);
+			Generation(Arena &arena, size_t size, byte identifier);
 
 			// Destroy.
 			~Generation();
-
-			// Lock for this generation.
-			util::Lock lock;
 
 			// The next generation in the chain. May be null.
 			Generation *next;
 
 			// Owning arena.
-			Arena &owner;
+			Arena &arena;
 
 			// Our identifier.
 			const byte identifier;
@@ -49,21 +47,24 @@ namespace storm {
 			// finished by calling 'done'. The size of the returned block has at least 'minSize'
 			// free memory. Allocations where 'minSize' is much larger than 'blockSize' may not be
 			// fulfilled.
-			Block *alloc(size_t minSize);
+			Block *alloc(Arena::Entry &entry, size_t minSize);
 
 			// Notify the generation that a block is full and will no longer be used by an
 			// allocator.
-			void done(Block *block);
+			void done(Arena::Entry &entry, Block *block);
+
+			// Lock for accessing the shared block.
+			util::Lock sharedBlockLock;
 
 			// Access a shared block that is considered to be at the "end of the generation", where
 			// anyone may add objects to this generation. When using this block, the lock needs to
 			// be held while the filling is in progress. The parameter indicates how much free
 			// memory is needed in the returned block.
-			Block *fillBlock(size_t freeBytes);
+			Block *sharedBlock(Arena::Entry &entry, size_t freeBytes);
 
 			// Perform a full collection of this generation. We probably want a more fine-grained
 			// API in the future.
-			void collect(ArenaEntry &entry);
+			void collect(Arena::Entry &entry);
 
 			// Scan all blocks in this generation with the specified scanner.
 			template <class Scanner>
@@ -220,8 +221,8 @@ namespace storm {
 			// Last chunk examined for free memory. The next allocation will continue from here.
 			size_t lastChunk;
 
-			// The last block, currently being filled. May be null.
-			Block *sharedBlock;
+			// The shared block.
+			Block *shared;
 
 			// Allocate a block with a (usable) size in the specified range. For internal use.
 			Block *allocBlock(size_t minSize, size_t maxSize);

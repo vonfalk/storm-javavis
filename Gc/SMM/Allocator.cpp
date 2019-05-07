@@ -12,17 +12,22 @@ namespace storm {
 		Allocator::Allocator(Generation &gen) : owner(gen), source(null), largeLimit(gen.blockSize / 4) {}
 
 		Allocator::~Allocator() {
-			if (source)
-				owner.done(source);
+			if (source) {
+				owner.arena.withEntry(owner, &Generation::done, source);
+			}
 		}
 
 		void Allocator::fill(size_t minSize) {
+			owner.arena.withEntry(*this, &Allocator::fillI, minSize);
+		}
+
+		void Allocator::fillI(Arena::Entry &e, size_t minSize) {
 			if (source) {
-				owner.done(source);
+				owner.done(e, source);
 				source = null;
 			}
 
-			source = owner.alloc(minSize);
+			source = owner.alloc(e, minSize);
 
 			// Our "large allocation" limit should make this impossible.
 			assert(source);
@@ -38,8 +43,9 @@ namespace storm {
 			if (!into)
 				into = &owner;
 
-			into->lock.lock();
-			return PendingAlloc(owner.fillBlock(size), size, &into->lock);
+			into->sharedBlockLock.lock();
+			Block *shared = owner.arena.withEntry(owner, &Generation::sharedBlock, size);
+			return PendingAlloc(shared, size, &into->sharedBlockLock);
 		}
 
 	}

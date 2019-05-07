@@ -103,7 +103,8 @@ namespace storm {
 			return impl.alloc(type);
 		}
 
-		// Allocate an object of a specific type in a non-moving pool.
+		// Allocate an object of a specific type in a non-moving pool. We assume that non-moving
+		// objects are rare, and they may thus be implemented less efficient than movable objects.
 		inline void *allocStatic(const GcType *type) {
 			assert(type->kind == GcType::tType
 				|| type->kind == GcType::tFixed

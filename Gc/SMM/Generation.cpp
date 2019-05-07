@@ -6,19 +6,15 @@
 #include "Arena.h"
 #include "Scanner.h"
 #include "ScanState.h"
+#include "Thread.h"
 
 namespace storm {
 	namespace smm {
 
-		// TODO: We need to think about the locks here. Since 'done' is called during a GC phase, it
-		// is possible for a deadlock to occur if a thread has acquired the generation's lock and
-		// then become paused. Perhaps we shall only use a global GC lock?
-
-
 		// TODO: What is a reasonable block size here?
-		Generation::Generation(Arena &owner, size_t size, byte identifier)
+		Generation::Generation(Arena &arena, size_t size, byte identifier)
 			: totalSize(size), blockSize(size / 32),
-			  next(null), owner(owner), identifier(identifier), sharedBlock(null) {
+			  next(null), arena(arena), identifier(identifier), shared(null) {
 
 			blockSize = min(size_t(64 * 1024), blockSize);
 		}
@@ -26,17 +22,16 @@ namespace storm {
 		Generation::~Generation() {
 			// Free all blocks we are in charge of.
 			for (size_t i = 0; i < chunks.size(); i++) {
-				owner.freeChunk(chunks[i].memory);
+				arena.freeChunk(chunks[i].memory);
 			}
 		}
 
-		Block *Generation::alloc(size_t minSize) {
-			util::Lock::L z(lock);
+		Block *Generation::alloc(Arena::Entry &entry, size_t minSize) {
+			// TODO: Perhaps triger a GC here as well, and not only in 'done'?
 			return allocBlock(minSize, blockSize);
 		}
 
-		void Generation::done(Block *block) {
-			util::Lock::L z(lock);
+		void Generation::done(Arena::Entry &entry, Block *block) {
 			block->reserved(block->committed());
 
 			ChunkList::iterator pos = std::lower_bound(chunks.begin(), chunks.end(), block, PtrCompare());
@@ -60,16 +55,16 @@ namespace storm {
 			}
 		}
 
-		Block *Generation::fillBlock(size_t size) {
-			if (sharedBlock && sharedBlock->remaining() < size) {
-				done(sharedBlock);
-				sharedBlock = null;
+		Block *Generation::sharedBlock(Arena::Entry &entry, size_t size) {
+			if (shared && shared->remaining() < size) {
+				done(entry, shared);
+				shared = null;
 			}
 
-			if (!sharedBlock)
-				sharedBlock = allocBlock(size, max(size + (size >> 1), blockSize));
+			if (!shared)
+				shared = allocBlock(size, max(size + (size >> 1), blockSize));
 
-			return sharedBlock;
+			return shared;
 		}
 
 		Block *Generation::allocBlock(size_t minSize, size_t maxSize) {
@@ -86,7 +81,7 @@ namespace storm {
 			}
 
 			// We need to allocate more memory. TODO: How much?
-			Chunk c = owner.allocChunk(max(minSize, blockSize * 32), identifier);
+			Chunk c = arena.allocChunk(max(minSize, blockSize * 32), identifier);
 
 			// Out of memory?
 			if (c.empty())
@@ -108,14 +103,14 @@ namespace storm {
 			Arena &arena;
 			byte id;
 
-			IfInGen(Generation *gen) : arena(gen->owner), id(gen->identifier) {}
+			IfInGen(Generation *gen) : arena(gen->arena), id(gen->identifier) {}
 
 			inline bool operator ()(void *ptr) const {
 				return arena.memGeneration(ptr) == id;
 			}
 		};
 
-		void Generation::collect(ArenaEntry &entry) {
+		void Generation::collect(Arena::Entry &entry) {
 			dbg_assert(next, L"Need a next generation for collection!");
 			dbg_assert(next != this, L"We can't collect to ourselves!");
 
@@ -138,7 +133,7 @@ namespace storm {
 
 			// Keep track of surviving objects inside a ScanState object, which allocates memory
 			// from the next generation.
-			ScanState state(this, next);
+			ScanState state(entry, this, next);
 
 			// For all blocks containing at least one pinned object, traverse it entirely to find
 			// and scan the pinned objects. Any non-pinned objects are copied to the new block.
@@ -171,7 +166,7 @@ namespace storm {
 
 				// TODO: We need to consider objects with finalizers as well!
 				if (chunk.compact(pinned)) {
-					owner.freeChunk(chunk.memory);
+					arena.freeChunk(chunk.memory);
 					chunks.erase(chunks.begin() + i);
 					i--;
 				}

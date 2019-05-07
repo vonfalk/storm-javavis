@@ -6,6 +6,7 @@
 #include "Gc/Gc.h"
 #include "Gc/Scan.h"
 #include "Gc/Format.h"
+#include "Thread.h"
 
 namespace storm {
 

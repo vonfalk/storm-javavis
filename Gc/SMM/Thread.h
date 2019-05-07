@@ -7,6 +7,7 @@
 #include "AddrSet.h"
 #include "Gc/Scan.h"
 #include "OS/Thread.h"
+#include "Arena.h"
 
 #include "ThreadWin.h"
 #include "ThreadPosix.h"
@@ -14,9 +15,6 @@
 
 namespace storm {
 	namespace smm {
-
-		class Arena;
-		class ArenaEntry;
 
 		/**
 		 * A thread known by the GC.
@@ -36,7 +34,7 @@ namespace storm {
 			// currently executing thread, the thread is assumed to have been successfully stopped
 			// at an earlier point in time.
 			template <class Scanner>
-			typename Scanner::Result scan(typename Scanner::Source &source, ArenaEntry &entry);
+			typename Scanner::Result scan(typename Scanner::Source &source, Arena::Entry &entry);
 
 		private:
 			// No copying.
@@ -55,7 +53,7 @@ namespace storm {
 
 		// Implementation of the 'scan' function.
 		template <class Scanner>
-		typename Scanner::Result Thread::scan(typename Scanner::Source &source, ArenaEntry &entry) {
+		typename Scanner::Result Thread::scan(typename Scanner::Source &source, Arena::Entry &entry) {
 			typename Scanner::Result r;
 
 			// The extent of the current stack (ie. its ESP).

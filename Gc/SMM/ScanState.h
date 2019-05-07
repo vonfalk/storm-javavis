@@ -5,6 +5,7 @@
 #include "Block.h"
 #include "Generation.h"
 #include "Scanner.h"
+#include "Arena.h"
 
 namespace storm {
 	namespace smm {
@@ -20,7 +21,7 @@ namespace storm {
 		class ScanState {
 		public:
 			// Create a new scan state. Scanning objects in 'from', moving them to 'to'.
-			ScanState(Generation *from, Generation *to);
+			ScanState(Arena::Entry &entry, Generation *from, Generation *to);
 
 			// Destroy.
 			~ScanState();
@@ -39,6 +40,9 @@ namespace storm {
 			// No copying!
 			ScanState(const ScanState &o);
 			ScanState &operator =(const ScanState &o);
+
+			// Arena entry.
+			Arena::Entry &entry;
 
 			// Source generation.
 			Generation *sourceGen;
@@ -79,7 +83,7 @@ namespace storm {
 			Arena &arena;
 			byte srcGen;
 
-			Move(Source &source) : state(source), arena(source.sourceGen->owner), srcGen(source.sourceGen->identifier) {}
+			Move(Source &source) : state(source), arena(source.sourceGen->arena), srcGen(source.sourceGen->identifier) {}
 
 			inline bool fix1(void *ptr) {
 				return arena.memGeneration(ptr) == srcGen;

@@ -62,22 +62,22 @@ namespace storm {
 			// in. Perhaps we should write protect chunks of memory to get notified of modifications
 			// rather than having to poll for them all the time, which could be cheaper...
 
-			// Note: This is fairly expensive...
-			ULONG_PTR count = 0;
-			DWORD granularity = 0;
-			do {
-				count = arenaBufferWords;
-				UINT r = GetWriteWatch(WRITE_WATCH_FLAG_RESET, at, size, buffer, &count, &granularity);
-				// TODO: If GetWriteWatch fails, something is *really* bad. Perhaps we should try to
-				// mark all pages in the interval if that happens.
-				dbg_assert(r == 0, L"GetWriteWatch failed");
+			// // Note: This is fairly expensive...
+			// ULONG_PTR count = 0;
+			// DWORD granularity = 0;
+			// do {
+			// 	count = arenaBufferWords;
+			// 	UINT r = GetWriteWatch(WRITE_WATCH_FLAG_RESET, at, size, buffer, &count, &granularity);
+			// 	// TODO: If GetWriteWatch fails, something is *really* bad. Perhaps we should try to
+			// 	// mark all pages in the interval if that happens.
+			// 	dbg_assert(r == 0, L"GetWriteWatch failed");
 
-				// Mark the blocks that contain the addresses as updated. We do this in a batch so
-				// that the implementation doesn't need to use the lookup table for every address.
-				alloc->markBlockWrites(buffer, size_t(count));
+			// 	// Mark the blocks that contain the addresses as updated. We do this in a batch so
+			// 	// that the implementation doesn't need to use the lookup table for every address.
+			// 	alloc->markBlockWrites(buffer, size_t(count));
 
-				// TODO: If we have more work to do, we should reset the addresses where the bookkeeping is!
-			} while (count == arenaBufferWords);
+			// 	// TODO: If we have more work to do, we should reset the addresses where the bookkeeping is!
+			// } while (count == arenaBufferWords);
 		}
 
 	}
