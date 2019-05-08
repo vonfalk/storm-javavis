@@ -5,6 +5,7 @@
 #include "VM.h"
 #include "VMAlloc.h"
 #include "InlineSet.h"
+#include "GenSet.h"
 #include "Gc/MemorySummary.h"
 #include <csetjmp>
 
@@ -97,6 +98,11 @@ namespace storm {
 				// Collected state of the stack when we entered the arena.
 				std::jmp_buf buf;
 
+				// Tell the Entry that a generation desires to be collected. This will trigger a
+				// collection whenever the system has completed its current action (e.g. when the
+				// Entry is being released).
+				void requestCollection(Generation *gen);
+
 				// Scan all stacks using the given scanner. This will scan inexact references.
 				template <class Scanner>
 				typename Scanner::Result scanStackRoots(typename Scanner::Source &source);
@@ -109,6 +115,12 @@ namespace storm {
 			private:
 				// Associated arena.
 				Arena &owner;
+
+				// Did any generation trigger a garbage collection?
+				GenSet triggered;
+
+				// Called to perform any scheduled tasks, such as collecting certain generations.
+				void finalize();
 			};
 
 			// Create an ArenaEntry instance and call a specified function.
@@ -157,6 +169,10 @@ namespace storm {
 
 			// Perform a garbage collection.
 			void collectI(Entry &e);
+
+			// The Entry tells us we need to collect certain generations. Returns a GenSet
+			// describing the generations actually collected.
+			GenSet collectI(Entry &e, GenSet collect);
 
 			// Swap the last two generations. Should be called after a GC so that the last
 			// generation can be collected the next GC cycle.

@@ -14,7 +14,8 @@ namespace storm {
 		// TODO: What is a reasonable block size here?
 		Generation::Generation(Arena &arena, size_t size, byte identifier)
 			: totalSize(size), blockSize(size / 32),
-			  next(null), arena(arena), identifier(identifier), shared(null) {
+			  next(null), arena(arena), identifier(identifier),
+			  totalAllocBytes(0), totalFreeBytes(0), shared(null) {
 
 			blockSize = min(size_t(64 * 1024), blockSize);
 		}
@@ -36,13 +37,23 @@ namespace storm {
 
 			ChunkList::iterator pos = std::lower_bound(chunks.begin(), chunks.end(), block, PtrCompare());
 			if (pos != chunks.end()) {
+				totalFreeBytes -= pos->freeBytes;
+
 				pos->releaseBlock(block);
+
+				totalFreeBytes += pos->freeBytes;
 			} else {
 				assert(false, L"Calling 'done' for a block not belonging to this generation!");
 			}
 
-			// TODO: Look at the amount of memory we're using, and consider triggering a garbage
-			// collection, at least for this generation.
+			// If we're using more memory than we're allowed, trigger a collection of us!
+			if (totalUsedBytes() > totalSize)
+				entry.requestCollection(this);
+
+			// TODO: We also want to trigger a collection when we're running out of memory in our
+			// allocated chunks, at least if we're somewhat close to our limit. Otherwise, we risk
+			// repeatedly allocating a new chunk to just use it for a few blocks, and then
+			// deallocate the chunk even though it is just barely filled repeatedly...
 		}
 
 		bool Generation::isPinned(void *obj, void *end) {
@@ -73,8 +84,13 @@ namespace storm {
 
 			// Find a chunk where the allocation may fit.
 			for (size_t i = 0; i < chunks.size(); i++) {
-				if (Block *r = chunks[i].allocBlock(minSize, maxSize, minFragment()))
+				size_t chunkFree = chunks[i].freeBytes;
+
+				if (Block *r = chunks[i].allocBlock(minSize, maxSize, minFragment())) {
+					totalFreeBytes -= chunkFree;
+					totalFreeBytes += chunks[i].freeBytes;
 					return r;
+				}
 
 				if (++lastChunk == chunks.size())
 					lastChunk = 0;
@@ -96,7 +112,10 @@ namespace storm {
 			while (pinnedSets.size() < chunks.size())
 				pinnedSets.push_back(PinnedSet(0, 1));
 
-			return pos->allocBlock(minSize, maxSize, minFragment());
+			totalAllocBytes += c.size;
+			Block *r = pos->allocBlock(minSize, maxSize, minFragment());
+			totalFreeBytes += pos->freeBytes;
+			return r;
 		}
 
 		struct IfInGen {
@@ -146,6 +165,9 @@ namespace storm {
 
 			// Traverse the newly copied objects in the new block and copy any new references until
 			// no more objects are found.
+			// Note: If we're sure that the scanned objects contain no references to themselves, we
+			// can actually avoid this step entirely. We would, however, tell the ScanState to
+			// release the held Blocks in this case.
 			state.scanNew();
 
 			// Update any references to objects we just moved.
@@ -160,6 +182,8 @@ namespace storm {
 			entry.scanGenerations<UpdateFwd<IfInGen>>(IfInGen(this), this);
 
 			// Finally, release and/or compact any remaining blocks in this generation.
+			totalAllocBytes = 0;
+			totalFreeBytes = 0;
 			for (size_t i = 0; i < chunks.size(); i++) {
 				GenChunk &chunk = chunks[i];
 				PinnedSet &pinned = pinnedSets[i];
@@ -169,6 +193,9 @@ namespace storm {
 					arena.freeChunk(chunk.memory);
 					chunks.erase(chunks.begin() + i);
 					i--;
+				} else {
+					totalAllocBytes += chunk.memory.size;
+					totalFreeBytes += chunk.freeBytes;
 				}
 			}
 		}
@@ -183,13 +210,22 @@ namespace storm {
 		void Generation::dbg_verify() {
 			assert(chunks.size() == pinnedSets.size());
 
+			size_t alloc = 0;
+			size_t free = 0;
+
 			for (size_t i = 0; i < chunks.size(); i++) {
 				if (i > 0) {
 					assert((byte *)chunks[i - 1].memory.at < (byte *)chunks[i].memory.at, L"Unordered chunks!");
 				}
 
 				chunks[i].dbg_verify();
+
+				alloc += chunks[i].memory.size;
+				free += chunks[i].freeBytes;
 			}
+
+			assert(totalAllocBytes == alloc, L"The count of total allocated bytes is incorrect!");
+			assert(totalFreeBytes == free, L"The count of total free bytes is incorrect!");
 		}
 
 		void Generation::dbg_dump() {
@@ -198,6 +234,7 @@ namespace storm {
 				PNN(i << L": ");
 				chunks[i].dbg_dump();
 			}
+			PLN(L"Allocated: " << totalAllocBytes << L", used: " << totalUsedBytes() << L", free: " << totalFreeBytes);
 		}
 
 

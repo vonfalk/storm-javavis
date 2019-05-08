@@ -55,6 +55,14 @@ namespace storm {
 				return (data & s.data) != 0;
 			}
 
+			// Is the set empty?
+			bool empty() const {
+				return data == 0;
+			}
+			bool any() const {
+				return data != 0;
+			}
+
 		private:
 			enum {
 				// Maximum number of generations.

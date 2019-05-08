@@ -53,7 +53,7 @@ namespace storm {
 			// allocator.
 			void done(Arena::Entry &entry, Block *block);
 
-			// Lock for accessing the shared block.
+			// Lock for accessing the shared block returned by 'sharedBlock'.
 			util::Lock sharedBlockLock;
 
 			// Access a shared block that is considered to be at the "end of the generation", where
@@ -220,6 +220,15 @@ namespace storm {
 
 			// Last chunk examined for free memory. The next allocation will continue from here.
 			size_t lastChunk;
+
+			// Total number of allocated bytes in all chunks.
+			size_t totalAllocBytes;
+
+			// Total number of free bytes in all chunks.
+			size_t totalFreeBytes;
+
+			// Total number of used bytes.
+			inline size_t totalUsedBytes() const { return totalAllocBytes - totalFreeBytes; }
 
 			// The shared block.
 			Block *shared;

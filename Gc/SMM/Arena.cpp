@@ -89,7 +89,7 @@ namespace storm {
 		}
 
 		void Arena::collectI(Entry &entry) {
-			// The user program asked us for a full collection, causing all generations to be
+			// The client program asked us for a full collection, causing all generations to be
 			// collected (not simultaneously at the moment, we might want to do that in order to
 			// reduce memory usage as much as possible without requiring multiple calls to 'collect').
 			// Note: We're not collecting the last generation (the duplicate one), since that generation
@@ -100,6 +100,31 @@ namespace storm {
 			}
 
 			swapLastGens();
+		}
+
+		GenSet Arena::collectI(Entry &entry, GenSet collect) {
+			size_t last = generations.size() - 1;
+
+			// If we're collecting one of the last generations, collect the other one as
+			// well. Otherwise, we'll get out of sync with the swapping of the last generations!
+			bool swapLast = collect.has(generations[last - 1]->identifier)
+				|| collect.has(generations[last - 2]->identifier);
+
+			if (swapLast) {
+				collect.add(generations[last - 1]->identifier);
+				collect.add(generations[last - 2]->identifier);
+			}
+
+			for (size_t i = last; i > 0; i--) {
+				Generation *gen = generations[i - 1];
+				if (collect.has(gen->identifier))
+					gen->collect(entry);
+			}
+
+			if (swapLast)
+				swapLastGens();
+
+			return collect;
 		}
 
 		void Arena::swapLastGens() {
@@ -162,8 +187,32 @@ namespace storm {
 		}
 
 		Arena::Entry::~Entry() {
+			// TODO: Putting this here may be a bit much...
+			finalize();
+
 			owner.entries--;
 			owner.lock.unlock();
+		}
+
+		void Arena::Entry::requestCollection(Generation *gen) {
+			triggered.add(gen->identifier);
+		}
+
+		void Arena::Entry::finalize() {
+			if (triggered.any()) {
+				GenSet collected;
+				GenSet old;
+
+				do {
+					// Don't collect the same generation twice!
+					old = triggered;
+					old.remove(collected);
+					triggered.clear();
+
+					if (old.any())
+						collected.add(owner.collectI(*this, old));
+				} while (old.any());
+			}
 		}
 
 	}

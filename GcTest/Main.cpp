@@ -76,7 +76,7 @@ NOINLINE void lists(Gc &gc, TypeStore *store) {
 
 		{
 			// util::Timer t(L"gc");
-			gc.collect();
+			// gc.collect();
 		}
 
 		verifyList(d, 100);
@@ -123,7 +123,10 @@ int main(int argc, const char *argv[]) {
 		run(gc);
 	}
 
-	gc.collect();
+	{
+		util::Timer t(L"gc");
+		gc.collect();
+	}
 	gc.dbg_dump();
 
 	return 0;
