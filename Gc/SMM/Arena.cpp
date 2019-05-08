@@ -187,9 +187,6 @@ namespace storm {
 		}
 
 		Arena::Entry::~Entry() {
-			// TODO: Putting this here may be a bit much...
-			finalize();
-
 			owner.entries--;
 			owner.lock.unlock();
 		}

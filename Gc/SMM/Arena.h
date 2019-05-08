@@ -7,6 +7,7 @@
 #include "InlineSet.h"
 #include "GenSet.h"
 #include "Gc/MemorySummary.h"
+#include "Utils/Templates.h"
 #include <csetjmp>
 
 namespace storm {
@@ -120,27 +121,55 @@ namespace storm {
 				GenSet triggered;
 
 				// Called to perform any scheduled tasks, such as collecting certain generations.
+				// Could be called in the destructor, but I'm not comfortable doing that much work there...
 				void finalize();
 			};
 
 			// Create an ArenaEntry instance and call a specified function.
 			template <class R, class M>
-			R withEntry(M &memberOf, R (M::*fn)(Entry &)) {
+			typename IfNotVoid<R>::t withEntry(M &memberOf, R (M::*fn)(Entry &)) {
 				Entry e(*this);
 				setjmp(e.buf);
-				return (memberOf.*fn)(e);
+				R r = (memberOf.*fn)(e);
+				e.finalize();
+				return r;
+			}
+			template <class R, class M>
+			typename IfVoid<R>::t withEntry(M &memberOf, R (M::*fn)(Entry &)) {
+				Entry e(*this);
+				setjmp(e.buf);
+				(memberOf.*fn)(e);
+				e.finalize();
 			}
 			template <class R, class M, class P>
-			R withEntry(M &memberOf, R (M::*fn)(Entry &, P), P p) {
+			typename IfNotVoid<R>::t withEntry(M &memberOf, R (M::*fn)(Entry &, P), P p) {
 				Entry e(*this);
 				setjmp(e.buf);
-				return (memberOf.*fn)(e, p);
+				R r = (memberOf.*fn)(e, p);
+				e.finalize();
+				return r;
+			}
+			template <class R, class M, class P>
+			typename IfVoid<R>::t withEntry(M &memberOf, R (M::*fn)(Entry &, P), P p) {
+				Entry e(*this);
+				setjmp(e.buf);
+				(memberOf.*fn)(e, p);
+				e.finalize();
 			}
 			template <class R, class M, class P, class Q>
-			R withEntry(M &memberOf, R (M::*fn)(Entry &, P, Q), P p, Q q) {
+			typename IfNotVoid<R>::t withEntry(M &memberOf, R (M::*fn)(Entry &, P, Q), P p, Q q) {
 				Entry e(*this);
 				setjmp(e.buf);
-				return (memberOf.*fn)(e, p, q);
+				R r = (memberOf.*fn)(e, p, q);
+				e.finalize();
+				return r;
+			}
+			template <class R, class M, class P, class Q>
+			typename IfVoid<R>::t withEntry(M &memberOf, R (M::*fn)(Entry &, P, Q), P p, Q q) {
+				Entry e(*this);
+				setjmp(e.buf);
+				(memberOf.*fn)(e, p, q);
+				e.finalize();
 			}
 
 		private:

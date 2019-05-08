@@ -98,6 +98,23 @@ struct EnableIf {};
 template <class T>
 struct EnableIf<true, T> { typedef T t; };
 
+/**
+ * Enable if combined with is void (common thing to do with return values).
+ */
+template <class T>
+struct IfVoid {};
+template <>
+struct IfVoid<void> {
+	typedef void t;
+};
+
+template <class T>
+struct IfNotVoid {
+	typedef T t;
+};
+template <>
+struct IfNotVoid<void> {};
+
 
 /**
  * Is T a floating point value?
