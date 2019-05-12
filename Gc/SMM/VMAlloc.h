@@ -31,6 +31,9 @@ namespace storm {
 			// Destroy.
 			~VMAlloc();
 
+			// Number of bits available for use through identifiers.
+			static const size_t identifierBits = CHAR_BIT - 2;
+
 			// The page size of this system.
 			const size_t pageSize;
 

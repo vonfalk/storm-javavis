@@ -20,7 +20,7 @@ namespace storm {
 
 			// Check our limit on generations. If this is broken, things will go very wrong.
 			assert(generationCount >= 2, L"Must have at least two generations.");
-			assert(generationCount + 2 < (1 << 6), L"Must have less than 2^6 generations.");
+			assert(generationCount + 2 < GenSet::maxGen, L"Must have less than " + ::toS(GenSet::maxGen) + L" generations.");
 
 			// Allocate the individual generations.
 			byte genId = 1;

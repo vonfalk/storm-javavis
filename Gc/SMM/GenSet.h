@@ -2,6 +2,8 @@
 
 #if STORM_GC == STORM_GC_SMM
 
+#include "VMAlloc.h"
+
 namespace storm {
 	namespace smm {
 
@@ -63,17 +65,19 @@ namespace storm {
 				return data != 0;
 			}
 
+			// Maximum number of generations supported. This is the smallest of the number of bits
+			// in a size_t and the number of generations addressable by the bits provided by VMAlloc.
+			static const size_t maxGen =
+				(sizeof(size_t)*CHAR_BIT) < (size_t(1) << VMAlloc::identifierBits) ?
+														  (sizeof(size_t)*CHAR_BIT) :
+														  (size_t(1) << VMAlloc::identifierBits);
+
 		private:
-			enum {
-				// Maximum number of generations.
-				maxGen = 64,
+			// Mask for the generations.
+			static const size_t genMask = maxGen - 1;
 
-				// Mask for generations.
-				genMask = maxGen - 1
-			};
-
-			// The one and only 64-bit value we need.
-			nat64 data;
+			// The one and only value we need.
+			size_t data;
 
 			// Create a mask for a particular generation.
 			static inline nat64 mask(byte gen) {
