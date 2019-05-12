@@ -32,18 +32,27 @@ namespace storm {
 
 			// Commit! This means that the allocated memory can be scanned properly.
 			bool commit() {
+				// Note: The ordering here is important. The GC may decrease 'committed' during a
+				// collection. Since we read 'committed' first, we will correctly bail out both if
+				// we were interrupted before or after reading 'committed'. We will always set
+				// 'committed' equal to 'reserved' during a collection, so the comparison below will
+				// take care of these cases correctly.
+				size_t committed = source->committed();
+				size_t reserved = source->reserved();
+
 				// Shall we re-try the allocation?
-				if (source->reserved() <= source->committed()) {
+				if (reserved <= committed) {
 					if (release)
 						release->unlock();
 					return false;
 				}
 
-				// TODO: If a GC occurs here, the recently allocated object will not have been
-				// scanned, and we need to re-try the allocation. The current implementation does
-				// not properly catch this issue.
-
-				source->committed(source->reserved());
+				// Attempt to apply the allocation. Note: We're using a CAS operation here to make
+				// sure that nothing changed since we read 'committed' and 'reserved'. The CAS
+				// operation only needs to detect if something happened between the point we read
+				// 'committed' and this point. Anything happening before we read the two values will
+				// be caught by the condition above.
+				bool ok = source->committedCAS(committed, reserved);
 				if (release)
 					release->unlock();
 				return true;

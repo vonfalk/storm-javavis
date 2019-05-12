@@ -55,6 +55,11 @@ namespace storm {
 			size_t committed() const { return atomicRead(commit); }
 			void committed(size_t val) { atomicWrite(commit, val); }
 
+			// Perform a CAS on 'committed'. Returns 'true' if successfully updated.
+			bool committedCAS(size_t check, size_t replace) {
+				return atomicCAS(commit, check, replace) == check;
+			}
+
 			// Amount of memory reserved. 'reserved >= committed'. Memory that is reserved but
 			// not committed is being initialized, and can not be assumed to contain usable
 			// data. If 'next' is used, this value is set to 'size'.
