@@ -31,7 +31,7 @@ namespace storm {
 			}
 
 			// Commit! This means that the allocated memory can be scanned properly.
-			bool commit() {
+			bool commit(bool finalizer) {
 				// Note: The ordering here is important. The GC may decrease 'committed' during a
 				// collection. Since we read 'committed' first, we will correctly bail out both if
 				// we were interrupted before or after reading 'committed'. We will always set
@@ -46,6 +46,14 @@ namespace storm {
 						release->unlock();
 					return false;
 				}
+
+				// If the object has a finalizer, mark the block accordingly now, since we're
+				// reasonably sure that we'll successfully commit the newly allocated object. If the
+				// CAS below fails, we will just incur a small performance penalty for this block in
+				// the worst case. Most likely, the next allocation attempt will be in the same
+				// block, and that will succeed, which means that this does not matter.
+				if (finalizer)
+					source->setFlag(Block::fFinalizers);
 
 				// Attempt to apply the allocation. Note: We're using a CAS operation here to make
 				// sure that nothing changed since we read 'committed' and 'reserved'. The CAS

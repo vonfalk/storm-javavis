@@ -1,6 +1,6 @@
 #include "stdafx.h"
 #include "Utils/Timer.h"
-
+#include "Utils/Platform.h"
 
 struct Dummy {
 	Dummy *next;
@@ -22,7 +22,23 @@ static GcType storeType = {
 	{ 0 }
 };
 
-#define NOINLINE __declspec(noinline)
+struct Finalizable {
+	size_t data;
+};
+
+void CODECALL finalizer(Finalizable *fn) {
+	PLN(L"Finalizing object: " << fn << L", " << fn->data);
+}
+
+static GcType finalizeType = {
+	GcType::tFixed,
+	null,
+	&finalizer,
+	sizeof(Finalizable),
+	0,
+	{ 0 }
+};
+
 
 // Build a linked list of a few elements.
 NOINLINE Dummy *makeList(Gc &gc, TypeStore *store, size_t count) {
@@ -64,13 +80,24 @@ NOINLINE Dummy *makeLists(Gc &gc, TypeStore *store) {
 	for (size_t i = 0; i < 20; i++) {
 		d = makeList(gc, store, 100);
 	}
+
 	return d;
+}
+
+NOINLINE void makeFinalizable(Gc &gc, size_t id) {
+	// Make an object with a finalizer, just for fun!
+	Finalizable *f = (Finalizable *)gc.alloc(&finalizeType);
+	f->data = id;
 }
 
 NOINLINE void lists(Gc &gc, TypeStore *store) {
 	Dummy *longlived = makeList(gc, store, 100);
 
 	for (size_t t = 0; t < 1000; t++) {
+		// Make an object with a finalizer from time to time.
+		if (t % 100 == 0)
+			makeFinalizable(gc, t);
+
 		// We put 'makeLists' inside another function, otherwise it seems we keep store->dummy on the stack.
 		Dummy *d = makeLists(gc, store);
 

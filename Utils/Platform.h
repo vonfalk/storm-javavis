@@ -69,6 +69,11 @@
  * See https://gcc.gnu.org/wiki/Visibility for details.
  */
 
+/**
+ * NOINLINE:
+ * Disable inlining of the specified function. Mostly used while debugging.
+ */
+
 
 
 // Detect the current architecture and platform.
@@ -125,6 +130,7 @@
 #define SHARED_EXPORT __declspec(dllexport)
 #define ALIGN_AS(x) __declspec(align(x))
 #define EXCEPTION_EXPORT
+#define NOINLINE __declspec(noinline)
 
 #if VISUAL_STUDIO >= 2010
 #define USE_MOVE // Not sure about this one...
@@ -137,6 +143,7 @@
 #define NAKED error // not supported.
 #define SHARED_EXPORT __attribute__((visibility ("default")))
 #define EXCEPTION_EXPORT __attribute__((visibility ("default")))
+#define NOINLINE __attribute__((noinline))
 
 // We require support for these features.
 #define USE_MOVE

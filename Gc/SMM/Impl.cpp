@@ -78,12 +78,13 @@ namespace storm {
 		smm::Allocator &allocator = currentAlloc();
 		smm::PendingAlloc alloc;
 		void *result;
+		bool finalizer = type->finalizer != null;
 		do {
 			alloc = allocator.reserve(size);
 			if (!alloc)
 				throw GcError(L"Out of memory (alloc).");
 			result = fmt::initObj(alloc.mem(), type, size);
-		} while (!alloc.commit());
+		} while (!alloc.commit(finalizer));
 
 		return result;
 	}
@@ -104,12 +105,13 @@ namespace storm {
 		smm::Allocator &allocator = currentAlloc();
 		smm::PendingAlloc alloc;
 		void *result;
+		bool finalizer = type->finalizer != null;
 		do {
 			alloc = allocator.reserve(size);
 			if (!alloc)
 				throw GcError(L"Out of memory (allocArray).");
 			result = fmt::initArray(alloc.mem(), type, size, count);
-		} while (!alloc.commit());
+		} while (!alloc.commit(finalizer));
 
 		return result;
 	}
@@ -133,7 +135,7 @@ namespace storm {
 			if (!alloc)
 				throw GcError(L"Out of memory (allocType).");
 			result = fmt::initGcType(alloc.mem(), entries);
-		} while (!alloc.commit());
+		} while (!alloc.commit(false));
 
 		result->kind = kind;
 		result->type = type;
@@ -169,7 +171,7 @@ namespace storm {
 			if (!alloc)
 				throw GcError(L"Out of memory (allocCode).");
 			result = fmt::initCode(alloc.mem(), size, code, refs);
-		} while (!alloc.commit());
+		} while (!alloc.commit(code::needFinalization()));
 
 		return result;
 	}

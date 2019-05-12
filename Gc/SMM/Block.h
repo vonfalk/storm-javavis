@@ -37,7 +37,7 @@ namespace storm {
 				fUsed = 0x00000001,
 
 				// This block may contain at least one object that needs finalization.
-				fFinalize = 0x00000002,
+				fFinalizers = 0x00000002,
 			};
 
 			// Modify flags.
