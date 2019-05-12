@@ -33,11 +33,11 @@ namespace storm {
 
 			// Various flags for this block.
 			enum Flags {
-				// This block is empty and can be deallocated.
-				fEmpty = 0x00000001,
-
 				// This block is in use by an allocator.
-				fUsed = 0x00000002,
+				fUsed = 0x00000001,
+
+				// This block may contain at least one object that needs finalization.
+				fFinalize = 0x00000002,
 			};
 
 			// Modify flags.

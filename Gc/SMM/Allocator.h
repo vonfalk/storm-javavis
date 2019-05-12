@@ -39,6 +39,10 @@ namespace storm {
 					return false;
 				}
 
+				// TODO: If a GC occurs here, the recently allocated object will not have been
+				// scanned, and we need to re-try the allocation. The current implementation does
+				// not properly catch this issue.
+
 				source->committed(source->reserved());
 				if (release)
 					release->unlock();

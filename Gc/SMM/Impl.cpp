@@ -89,18 +89,33 @@ namespace storm {
 	}
 
 	void *GcImpl::allocStatic(const GcType *type) {
+		assert(false, L"Static objects are not yet supported!");
 		return null;
 	}
 
 	GcArray<Byte> *GcImpl::allocBuffer(size_t count) {
+		// TODO: Could probably be implemented using 'allocStatic', but probably also separately.
+		assert(false, L"Buffer allocations are not yet supported!");
 		return null;
 	}
 
 	void *GcImpl::allocArray(const GcType *type, size_t count) {
-		return null;
+		size_t size = fmt::sizeArray(type, count);
+		smm::Allocator &allocator = currentAlloc();
+		smm::PendingAlloc alloc;
+		void *result;
+		do {
+			alloc = allocator.reserve(size);
+			if (!alloc)
+				throw GcError(L"Out of memory (allocArray).");
+			result = fmt::initArray(alloc.mem(), type, size, count);
+		} while (!alloc.commit());
+
+		return result;
 	}
 
 	void *GcImpl::allocWeakArray(const GcType *type, size_t count) {
+		assert(false, L"Weak arrays are not yet supported!");
 		return null;
 	}
 
@@ -128,7 +143,9 @@ namespace storm {
 		return result;
 	}
 
-	void GcImpl::freeType(GcType *type) {}
+	void GcImpl::freeType(GcType *type) {
+		// No need to free type descriptions when using the SMM GC. We will collect them automatically.
+	}
 
 	const GcType *GcImpl::typeOf(const void *mem) {
 		const fmt::Obj *o = fmt::fromClient(mem);
@@ -143,7 +160,18 @@ namespace storm {
 	}
 
 	void *GcImpl::allocCode(size_t code, size_t refs) {
-		return null;
+		size_t size = fmt::sizeCode(code, refs);
+		smm::Allocator &allocator = currentAlloc();
+		smm::PendingAlloc alloc;
+		void *result;
+		do {
+			alloc = allocator.reserve(size);
+			if (!alloc)
+				throw GcError(L"Out of memory (allocCode).");
+			result = fmt::initCode(alloc.mem(), size, code, refs);
+		} while (!alloc.commit());
+
+		return result;
 	}
 
 	size_t GcImpl::codeSize(const void *alloc) {
@@ -160,19 +188,25 @@ namespace storm {
 		return fmt::refsCode(fmt::fromClient(alloc));
 	}
 
-	void GcImpl::startRamp() {}
+	void GcImpl::startRamp() {
+		TODO(L"Implement ramp behavior!");
+	}
 
 	void GcImpl::endRamp() {}
 
-	void GcImpl::walkObjects(WalkCb fn, void *param) {}
+	void GcImpl::walkObjects(WalkCb fn, void *param) {
+		assert(false, L"Walking objects is not yet supported!");
+	}
 
 	GcImpl::Root *GcImpl::createRoot(void *data, size_t count, bool ambiguous) {
+		assert(false, L"Creating roots is not yet supported!");
 		return null;
 	}
 
 	void GcImpl::destroyRoot(Root *root) {}
 
 	GcWatch *GcImpl::createWatch() {
+		assert(false, L"Creating watch objects is not yet supported!");
 		return null;
 	}
 
