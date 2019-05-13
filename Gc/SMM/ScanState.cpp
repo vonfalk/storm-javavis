@@ -42,6 +42,10 @@ namespace storm {
 			memcpy(target, obj, size);
 			targetTail->reserved(off + size);
 
+			// Check if the object is registered for finalization, and update the target block accordingly.
+			if (fmt::objHasFinalizer(target))
+				targetTail->setFlag(Block::fFinalizers);
+
 			void *clientTarget = fmt::toClient(target);
 			fmt::objMakeFwd(obj, size, clientTarget);
 			return clientTarget;

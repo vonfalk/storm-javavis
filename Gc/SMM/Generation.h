@@ -163,12 +163,20 @@ namespace storm {
 
 				// Compact an unused block, 'block', keeping pinned objects intact. 'last' is the
 				// most recent block header that has been determined to remain. The most recently
-				// created block header is returned, as an update to 'last'.
+				// created block header is returned, as an update to 'last'. Takes care of objects
+				// in need of finalization.
 				Block *compactPinned(Block *last, Block *block, const PinnedSet &pinned);
 
 				// Shrink a block as much as possible while keeping pinned objects intact. Replaces
-				// non-pinned objects with padding.
+				// non-pinned objects with padding. Takes care of objects in need of finalization.
 				void shrinkBlock(Block *block, const PinnedSet &pinned);
+
+				// Remove objects that need finalization from the supplied block. Assumes that no
+				// objects are pinned.
+				void finalizeObjects(Block *block);
+
+				// Finalize a single object.
+				void finalizeObject(fmt::Obj *obj);
 
 				// Predicate that checks if a particular object is pinned.
 				struct IfPinned {

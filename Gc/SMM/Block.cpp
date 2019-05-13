@@ -38,14 +38,20 @@ namespace storm {
 			byte *at = (byte *)mem(fmt::headerSize);
 			byte *end = (byte *)mem(commit + fmt::headerSize);
 
+			bool finalizers = false;
+
 			while (at < end) {
 				// Validate the object if we're able to.
 				FMT_CHECK_OBJ(fmt::fromClient(at));
+
+				finalizers |= fmt::hasFinalizer(at);
 
 				at += fmt::size(at);
 				assert(at <= end, L"An object is larger than the allocated portion of a block!");
 			}
 
+			assert(hasFlag(Block::fFinalizers) || !finalizers,
+				L"The block " + ::toHex(this) + L" contains finalizers without the finalizer flag being set!");
 			assert(at == end, L"Invalid allocation size in a block!");
 		}
 

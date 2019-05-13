@@ -4,7 +4,7 @@
 
 #include "GenSet.h"
 #include "VMAlloc.h"
-#include "Gc/Format.h"
+#include "Format.h"
 
 namespace storm {
 	namespace smm {

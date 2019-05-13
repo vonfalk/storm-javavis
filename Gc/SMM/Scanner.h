@@ -3,7 +3,7 @@
 #if STORM_GC == STORM_GC_SMM
 
 #include "AddrSet.h"
-#include "Gc/Format.h"
+#include "Format.h"
 
 namespace storm {
 	namespace smm {

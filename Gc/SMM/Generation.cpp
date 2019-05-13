@@ -284,6 +284,7 @@ namespace storm {
 					// bytes in the other block.
 					size_t splitAfter = min(maxSize, remaining - minFragment - sizeof(Block));
 					size_t used = at->committed();
+					bool finalizers = at->hasFlag(Block::fFinalizers);
 
 					// Create the new block.
 					new (at->mem(used + splitAfter)) Block(at->size - used - splitAfter - sizeof(Block));
@@ -293,6 +294,8 @@ namespace storm {
 					new (at) Block(used + splitAfter);
 					at->committed(used);
 					at->reserved(used);
+					if (finalizers)
+						at->setFlag(Block::fFinalizers);
 				}
 
 				// This is the one we want!
@@ -341,6 +344,9 @@ namespace storm {
 					current = compactPinned(current, at, pinned);
 				} else {
 					// Unused block. We are free to remove this block entirely without looking at it anymore.
+					if (at->hasFlag(Block::fFinalizers))
+						finalizeObjects(at);
+
 					at->committed(0);
 					at->reserved(0);
 				}
@@ -363,6 +369,7 @@ namespace storm {
 			// need to merge them into one large block instead!
 			size_t size = (byte *)until - (byte *)current - sizeof(Block);
 			size_t used = current->committed();
+			bool finalizers = current->hasFlag(Block::fFinalizers);
 
 			if (size <= sizeof(Block) + used) {
 				// One large object. Just add a padding object and continue!
@@ -379,6 +386,8 @@ namespace storm {
 			current = new (current) Block(size);
 			current->committed(used);
 			current->reserved(used);
+			if (finalizers)
+				current->setFlag(Block::fFinalizers);
 
 			freeBytes += current->remaining();
 
@@ -397,10 +406,13 @@ namespace storm {
 			// 'used' flag set due to how 'compact' works. Thus, we can ignore the flags in the block.
 			size_t size = (byte *)next - (byte *)current - sizeof(Block);
 			size_t used = current->committed();
+			bool finalizers = current->hasFlag(Block::fFinalizers);
 
 			current = new (current) Block(size);
 			current->committed(used);
 			current->reserved(used);
+			if (finalizers)
+				current->setFlag(Block::fFinalizers);
 
 			freeBytes += current->remaining();
 		}
@@ -414,12 +426,26 @@ namespace storm {
 			// current block.
 			scan->committed(0);
 
+			// We will check for finalizers while we scan the block. If it was previously set and
+			// all finalizers are eliminated, it will remain set otherwise, which is wasteful.
+			scan->clearFlag(Block::fFinalizers);
+
+			// Keep track of any finalizers in this block.
+			bool finalizers = false;
+
 			// Find rising and falling 'edges' in the usage, and structure the blocks accordingly.
 			bool lastInUse = false;
 
 			while (at != to) {
 				fmt::Obj *next = fmt::objSkip(at);
 				bool inUse = pinned.has(fmt::toClient(at), next);
+
+				if (fmt::objHasFinalizer(at)) {
+					if (inUse)
+						finalizers = true;
+					else
+						finalizeObject(at);
+				}
 
 				if (inUse & !lastInUse) {
 					// First object in use. We might want to start a new block.
@@ -429,6 +455,8 @@ namespace storm {
 					size_t sz = (byte *)next - (byte *)current->mem(0);
 					current->committed(sz);
 					current->reserved(sz);
+					if (finalizers)
+						current->setFlag(Block::fFinalizers);
 				}
 
 				lastInUse = inUse;
@@ -440,6 +468,8 @@ namespace storm {
 				size_t sz = (byte *)to - (byte *)current->mem(0);
 				current->committed(sz);
 				current->reserved(sz);
+				if (finalizers)
+					current->setFlag(Block::fFinalizers);
 			}
 
 			return current;
@@ -451,6 +481,7 @@ namespace storm {
 
 			// First free location as far as we know.
 			fmt::Obj *freeFrom = at;
+			bool finalizers = false;
 
 			while (at != to) {
 				fmt::Obj *next = fmt::objSkip(at);
@@ -464,6 +495,11 @@ namespace storm {
 
 					// Remember where the free space starts.
 					freeFrom = next;
+
+					// Check for finalizers.
+					finalizers |= fmt::objHasFinalizer(at);
+				} else if (fmt::objHasFinalizer(at)) {
+					finalizeObject(at);
 				}
 
 				at = next;
@@ -472,6 +508,29 @@ namespace storm {
 			size_t used = (byte *)freeFrom - (byte *)block->mem(0);
 			block->committed(used);
 			block->reserved(used);
+
+			if (finalizers)
+				block->setFlag(Block::fFinalizers);
+			else
+				block->clearFlag(Block::fFinalizers);
+		}
+
+		void Generation::GenChunk::finalizeObjects(Block *block) {
+			fmt::Obj *at = (fmt::Obj *)block->mem(0);
+			fmt::Obj *to = (fmt::Obj *)block->mem(block->committed());
+
+			while (at != to) {
+				fmt::Obj *next = fmt::objSkip(at);
+
+				if (fmt::objHasFinalizer(at))
+					finalizeObject(at);
+
+				at = next;
+			}
+		}
+
+		void Generation::GenChunk::finalizeObject(fmt::Obj *obj) {
+			PLN(L"Found an object in need of finalization: " << obj);
 		}
 
 		void Generation::GenChunk::fillSummary(MemorySummary &summary) const {

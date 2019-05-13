@@ -18,7 +18,7 @@ namespace storm {
 		class PendingAlloc {
 			friend class Allocator;
 		public:
-			PendingAlloc() : source(null) {}
+			PendingAlloc() : source(null), memory(null) {}
 
 			// Does this pending allocation contain any memory?
 			operator bool() const {
@@ -27,23 +27,28 @@ namespace storm {
 
 			// Get the actual memory.
 			inline void *mem() const {
-				return source->mem(source->committed());
+				return memory;
 			}
 
-			// Commit! This means that the allocated memory can be scanned properly.
-			bool commit(bool finalizer) {
+			// Commit! This means that the allocated memory can be scanned properly. If the object
+			// allocated is marked with 'fmt::setHasFinalizer', it will be registered for finalization.
+			bool commit() {
 				// Note: The ordering here is important. The GC may decrease 'committed' during a
 				// collection. Since we read 'committed' first, we will correctly bail out both if
 				// we were interrupted before or after reading 'committed'. We will always set
 				// 'committed' equal to 'reserved' during a collection, so the comparison below will
-				// take care of these cases correctly.
+				// take care of these cases correctly. Note: We also check so that 'committed' is
+				// the same as we would expect.
 				size_t committed = source->committed();
 				size_t reserved = source->reserved();
 
 				// Shall we re-try the allocation?
-				if (reserved <= committed) {
+				if (source->mem(committed) != memory || reserved <= committed) {
 					if (release)
 						release->unlock();
+
+					// Update 'memory' so that the next allocation might work.
+					memory = source->mem(source->committed());
 					return false;
 				}
 
@@ -52,7 +57,7 @@ namespace storm {
 				// CAS below fails, we will just incur a small performance penalty for this block in
 				// the worst case. Most likely, the next allocation attempt will be in the same
 				// block, and that will succeed, which means that this does not matter.
-				if (finalizer)
+				if (fmt::objHasFinalizer((fmt::Obj *)memory))
 					source->setFlag(Block::fFinalizers);
 
 				// Attempt to apply the allocation. Note: We're using a CAS operation here to make
@@ -69,12 +74,17 @@ namespace storm {
 		private:
 			PendingAlloc(Block *source, size_t size, util::Lock *release = null) : source(source), release(release) {
 				// Note: We only need this to be atomic wrt garbage collections, not other threads
-				// using this object concurrently.
-				source->reserved(source->committed() + size);
+				// using this object or the block concurrently.
+				size_t committed = source->committed();
+				source->reserved(committed + size);
+				memory = source->mem(committed);
 			}
 
 			// The source of the allocation.
 			Block *source;
+
+			// Our view of where we placed the object.
+			void *memory;
 
 			// Lock we need to release when the allocation is committed (if any).
 			util::Lock *release;

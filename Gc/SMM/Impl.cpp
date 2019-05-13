@@ -5,7 +5,7 @@
 
 #include "Gc/Gc.h"
 #include "Gc/Scan.h"
-#include "Gc/Format.h"
+#include "Format.h"
 #include "Thread.h"
 
 namespace storm {
@@ -78,13 +78,14 @@ namespace storm {
 		smm::Allocator &allocator = currentAlloc();
 		smm::PendingAlloc alloc;
 		void *result;
-		bool finalizer = type->finalizer != null;
 		do {
 			alloc = allocator.reserve(size);
 			if (!alloc)
 				throw GcError(L"Out of memory (alloc).");
 			result = fmt::initObj(alloc.mem(), type, size);
-		} while (!alloc.commit(finalizer));
+			if (type->finalizer)
+				fmt::setHasFinalizer(result);
+		} while (!alloc.commit());
 
 		return result;
 	}
@@ -105,13 +106,14 @@ namespace storm {
 		smm::Allocator &allocator = currentAlloc();
 		smm::PendingAlloc alloc;
 		void *result;
-		bool finalizer = type->finalizer != null;
 		do {
 			alloc = allocator.reserve(size);
 			if (!alloc)
 				throw GcError(L"Out of memory (allocArray).");
 			result = fmt::initArray(alloc.mem(), type, size, count);
-		} while (!alloc.commit(finalizer));
+			if (type->finalizer)
+				fmt::setHasFinalizer(result);
+		} while (!alloc.commit());
 
 		return result;
 	}
@@ -122,7 +124,11 @@ namespace storm {
 	}
 
 	Bool GcImpl::liveObject(RootObject *obj) {
-		return obj && !fmt::isFinalized(obj);
+		// All objects are destroyed promptly by us, so we don't need this functionality.
+
+		// TODO: Consider what happens with weak references. Since we're treating finalization
+		// specially, it should still be fine.
+		return true;
 	}
 
 	GcType *GcImpl::allocType(GcType::Kind kind, Type *type, size_t stride, size_t entries) {
@@ -135,7 +141,8 @@ namespace storm {
 			if (!alloc)
 				throw GcError(L"Out of memory (allocType).");
 			result = fmt::initGcType(alloc.mem(), entries);
-		} while (!alloc.commit(false));
+			fmt::setHasFinalizer(result);
+		} while (!alloc.commit());
 
 		result->kind = kind;
 		result->type = type;
@@ -171,7 +178,9 @@ namespace storm {
 			if (!alloc)
 				throw GcError(L"Out of memory (allocCode).");
 			result = fmt::initCode(alloc.mem(), size, code, refs);
-		} while (!alloc.commit(code::needFinalization()));
+			if (code::needFinalization())
+				fmt::setHasFinalizer(result);
+		} while (!alloc.commit());
 
 		return result;
 	}
