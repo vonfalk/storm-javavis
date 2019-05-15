@@ -68,7 +68,7 @@ namespace storm {
 				bool ok = source->committedCAS(committed, reserved);
 				if (release)
 					release->unlock();
-				return true;
+				return ok;
 			}
 
 		private:

@@ -54,7 +54,7 @@ namespace storm {
 			ScanSummaries(Source &source) : src(source) {}
 
 			inline bool fix1(void *ptr) {
-				for (Source::iterator i = src.begin(), end = src.end(); i != end; ++i)
+				for (typename Source::iterator i = src.begin(), end = src.end(); i != end; ++i)
 					i->add(ptr);
 				return false;
 			}

@@ -588,7 +588,7 @@ namespace storm {
 			FMT_CHECK_OBJ(o);
 
 			if (objIsCode(o))
-				return null;
+				return false;
 
 			switch (objHeader(o)->type) {
 			case fwd1:

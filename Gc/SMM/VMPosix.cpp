@@ -4,6 +4,7 @@
 #if STORM_GC == STORM_GC_SMM && defined(POSIX)
 
 #include "VMAlloc.h"
+#include "Block.h"
 #include <sys/mman.h>
 
 namespace storm {
@@ -42,9 +43,9 @@ namespace storm {
 			assert(false, L"watchWrites is not implemented yet!");
 
 			// In order for scanning to work properly, we mark the block as 'updated' immediately.
-			Block *b = alloc->findBlock(at);
-			if (b)
-				b->flags |= Block::fUpdated;
+			// Block *b = alloc->findBlock(at);
+			// if (b)
+			// 	b->flags |= Block::fUpdated;
 		}
 
 		void notifyWrites(VMAlloc *alloc, void **buffer) {

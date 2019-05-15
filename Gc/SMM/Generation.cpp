@@ -179,7 +179,7 @@ namespace storm {
 			// Note: It would be nice if we could avoid scanning the objects in the generation we
 			// moved objects to already. Currently, we have no real way of pointing them out, but
 			// the 'IfInGen' condition will not scan them at least.
-			entry.scanGenerations<UpdateFwd<IfInGen>>(IfInGen(this), this);
+			entry.scanGenerations<UpdateFwd<const IfInGen>>(IfInGen(this), this);
 
 			// Finally, release and/or compact any remaining blocks in this generation.
 			totalAllocBytes = 0;

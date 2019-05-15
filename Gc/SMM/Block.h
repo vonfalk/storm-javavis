@@ -103,7 +103,7 @@ namespace storm {
 			// Get an AddrSet initialized to the range contained in the block.
 			template <class AddrSet>
 			AddrSet addrSet() {
-				return AddrSet(mem(0), mem(committed));
+				return AddrSet(mem(0), mem(committed()));
 			}
 
 			// Is it possible that this block contains references to a generation with the specified
@@ -131,9 +131,9 @@ namespace storm {
 			// Scan all objects that fulfill a specified predicate using the supplied scanner.
 			template <class Predicate, class Scanner>
 			typename Scanner::Result scanIf(const Predicate &predicate, typename Scanner::Source &source) {
-				return fmt::Scan<Scanner>::objectsIf<Predicate>(predicate, source,
-																mem(fmt::headerSize),
-																mem(fmt::headerSize + committed()));
+				return fmt::Scan<Scanner>::template objectsIf<Predicate>(predicate, source,
+																		mem(fmt::headerSize),
+																		mem(fmt::headerSize + committed()));
 			}
 
 			// Fill memory summary.

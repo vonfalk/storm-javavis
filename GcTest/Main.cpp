@@ -33,7 +33,7 @@ void CODECALL finalizer(Finalizable *fn) {
 static GcType finalizeType = {
 	GcType::tFixed,
 	null,
-	&finalizer,
+	address(&finalizer),
 	sizeof(Finalizable),
 	0,
 	{ 0 }
