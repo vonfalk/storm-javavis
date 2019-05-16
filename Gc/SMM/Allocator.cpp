@@ -13,15 +13,15 @@ namespace storm {
 
 		Allocator::~Allocator() {
 			if (source) {
-				owner.arena.withEntry(owner, &Generation::done, source);
+				owner.arena.enter(owner, &Generation::done, source);
 			}
 		}
 
 		void Allocator::fill(size_t minSize) {
-			owner.arena.withEntry(*this, &Allocator::fillI, minSize);
+			owner.arena.enter(*this, &Allocator::fillI, minSize);
 		}
 
-		void Allocator::fillI(Arena::Entry &e, size_t minSize) {
+		void Allocator::fillI(ArenaTicket &e, size_t minSize) {
 			if (source) {
 				owner.done(e, source);
 				source = null;
@@ -44,7 +44,7 @@ namespace storm {
 				into = &owner;
 
 			into->sharedBlockLock.lock();
-			Block *shared = owner.arena.withEntry(owner, &Generation::sharedBlock, size);
+			Block *shared = owner.arena.enter(owner, &Generation::sharedBlock, size);
 			return PendingAlloc(shared, size, &into->sharedBlockLock);
 		}
 

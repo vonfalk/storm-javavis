@@ -6,8 +6,8 @@
 namespace storm {
 	namespace smm {
 
-		ScanState::ScanState(Arena::Entry &entry, Generation *from, Generation *to) :
-			entry(entry),
+		ScanState::ScanState(ArenaTicket &ticket, Generation *from, Generation *to) :
+			ticket(ticket),
 			sourceGen(from), targetGen(to),
 			targetHead(null), targetTail(null) {
 
@@ -24,7 +24,7 @@ namespace storm {
 			while (targetHead) {
 				Block *b = targetHead;
 				targetHead = targetHead->next();
-				targetGen->done(entry, b);
+				targetGen->done(ticket, b);
 			}
 		}
 
@@ -54,7 +54,7 @@ namespace storm {
 		void ScanState::newBlock(size_t minSize) {
 			// TODO: We might want to handle cases where 'minSize' is large enough not to fit
 			// here. This should not handle if generation sizes are set up appropriately, however.
-			Block *n = targetGen->alloc(entry, minSize);
+			Block *n = targetGen->alloc(ticket, minSize);
 			if (!n) {
 				TODO(L"Handle out of memory conditions!");
 				assert(false);
@@ -105,7 +105,7 @@ namespace storm {
 					targetTail = null;
 				}
 
-				targetGen->done(entry, b);
+				targetGen->done(ticket, b);
 			}
 
 			return true;

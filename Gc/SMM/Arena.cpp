@@ -85,10 +85,10 @@ namespace storm {
 		}
 
 		void Arena::collect() {
-			withEntry(*this, &Arena::collectI);
+			enter(*this, &Arena::collectI);
 		}
 
-		void Arena::collectI(Entry &entry) {
+		void Arena::collectI(ArenaTicket &entry) {
 			// The client program asked us for a full collection, causing all generations to be
 			// collected (not simultaneously at the moment, we might want to do that in order to
 			// reduce memory usage as much as possible without requiring multiple calls to 'collect').
@@ -102,7 +102,7 @@ namespace storm {
 			swapLastGens();
 		}
 
-		GenSet Arena::collectI(Entry &entry, GenSet collect) {
+		GenSet Arena::collectI(ArenaTicket &entry, GenSet collect) {
 			size_t last = generations.size() - 1;
 
 			// If we're collecting one of the last generations, collect the other one as
@@ -173,42 +173,6 @@ namespace storm {
 				PLN(L"Generation " << (i + 1) << L":");
 				Indent z(util::debugStream());
 				generations[i]->dbg_dump();
-			}
-		}
-
-		/**
-		 * The Entry class.
-		 */
-
-		Arena::Entry::Entry(Arena &owner) : owner(owner) {
-			owner.lock.lock();
-			dbg_assert(owner.entries == 0, L"Recursive arena entry!");
-			owner.entries++;
-		}
-
-		Arena::Entry::~Entry() {
-			owner.entries--;
-			owner.lock.unlock();
-		}
-
-		void Arena::Entry::requestCollection(Generation *gen) {
-			triggered.add(gen->identifier);
-		}
-
-		void Arena::Entry::finalize() {
-			if (triggered.any()) {
-				GenSet collected;
-				GenSet old;
-
-				do {
-					// Don't collect the same generation twice!
-					old = triggered;
-					old.remove(collected);
-					triggered.clear();
-
-					if (old.any())
-						collected.add(owner.collectI(*this, old));
-				} while (old.any());
 			}
 		}
 

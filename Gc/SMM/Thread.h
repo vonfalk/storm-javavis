@@ -34,7 +34,7 @@ namespace storm {
 			// currently executing thread, the thread is assumed to have been successfully stopped
 			// at an earlier point in time.
 			template <class Scanner>
-			typename Scanner::Result scan(typename Scanner::Source &source, Arena::Entry &entry);
+			typename Scanner::Result scan(typename Scanner::Source &source, ArenaTicket &ticket);
 
 		private:
 			// No copying.
@@ -53,7 +53,7 @@ namespace storm {
 
 		// Implementation of the 'scan' function.
 		template <class Scanner>
-		typename Scanner::Result Thread::scan(typename Scanner::Source &source, Arena::Entry &entry) {
+		typename Scanner::Result Thread::scan(typename Scanner::Source &source, ArenaTicket &ticket) {
 			typename Scanner::Result r;
 
 			// The extent of the current stack (ie. its ESP).
@@ -62,11 +62,11 @@ namespace storm {
 			if (thread.running()) {
 				// We assume this is the current thread.
 
-				// We only need to set 'extent' to the 'entry' stored on the stack. It contains the
+				// We only need to set 'extent' to the 'ticket' stored on the stack. It contains the
 				// state of the thread as it was when we entered the Arena, so that we don't
 				// overscan. Since it is on the stack, we only need to make sure to scan the stack
 				// from there to get everything in one go.
-				extent = &entry;
+				extent = &ticket;
 			} else {
 				// A paused thread!
 				r = thread.scan<Scanner>(source, &extent);

@@ -47,11 +47,11 @@ namespace storm {
 			// finished by calling 'done'. The size of the returned block has at least 'minSize'
 			// free memory. Allocations where 'minSize' is much larger than 'blockSize' may not be
 			// fulfilled.
-			Block *alloc(Arena::Entry &entry, size_t minSize);
+			Block *alloc(ArenaTicket &entry, size_t minSize);
 
 			// Notify the generation that a block is full and will no longer be used by an
 			// allocator.
-			void done(Arena::Entry &entry, Block *block);
+			void done(ArenaTicket &entry, Block *block);
 
 			// Lock for accessing the shared block returned by 'sharedBlock'.
 			util::Lock sharedBlockLock;
@@ -60,11 +60,11 @@ namespace storm {
 			// anyone may add objects to this generation. When using this block, the lock needs to
 			// be held while the filling is in progress. The parameter indicates how much free
 			// memory is needed in the returned block.
-			Block *sharedBlock(Arena::Entry &entry, size_t freeBytes);
+			Block *sharedBlock(ArenaTicket &entry, size_t freeBytes);
 
 			// Perform a full collection of this generation. We probably want a more fine-grained
 			// API in the future.
-			void collect(Arena::Entry &entry);
+			void collect(ArenaTicket &entry);
 
 			// Scan all blocks in this generation with the specified scanner.
 			template <class Scanner>

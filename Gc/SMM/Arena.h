@@ -27,8 +27,15 @@ namespace storm {
 		 * The arena also keeps track of a set of mutator threads that may access the memory
 		 * allocated inside the arena. Other threads accessing the memory may cause unintended
 		 * results.
+		 *
+		 * In order to access certain functionality of the arena (such as stack scanning), it is
+		 * necessary to acquire a ticket by entering the arena. See ArenaTicket.
 		 */
 		class Arena {
+			// Make sure the ArenaTicket class can access the arena. That is often the only way to access
+			// some of the state here!
+			friend class ArenaTicket;
+
 		public:
 			// Create the arena, initially try to reserve (but not commit) 'initialSize' bytes of
 			// memory for the arena. Also, create 'generationCount' generations, each with the
@@ -70,114 +77,12 @@ namespace storm {
 			// Output a summary.
 			void dbg_dump();
 
-			/**
-			 * Operations on the arena that requires holding the arena lock and collecting some
-			 * information that allows garbage collection to occur.
-			 *
-			 * Initialization of the Entry class is a bit special. Therefore, it can not be
-			 * constructed as a regular class. Rather, use the 'withEntry' function provided in the
-			 * Arena class.
-			 *
-			 * Furthermore, we assume that Entry instances reside on the stack at the last location
-			 * where references to garbage collected memory may be stored by the client
-			 * program. This means that when an Entry is held, no client code may be called.
-			 */
-			class Entry {
-			private:
-				friend class Arena;
-
-				// Create.
-				Entry(Arena &arena);
-				Entry();
-				Entry(const Entry &o);
-				Entry &operator =(const Entry &o);
-
-			public:
-				// Destroy.
-				~Entry();
-
-				// Collected state of the stack when we entered the arena.
-				std::jmp_buf buf;
-
-				// Tell the Entry that a generation desires to be collected. This will trigger a
-				// collection whenever the system has completed its current action (e.g. when the
-				// Entry is being released).
-				void requestCollection(Generation *gen);
-
-				// Scan all stacks using the given scanner. This will scan inexact references.
-				template <class Scanner>
-				typename Scanner::Result scanStackRoots(typename Scanner::Source &source);
-
-				// Scan all blocks in all generations that may refer to a block in the given
-				// generation. The given generation is never scanned.
-				template <class Scanner>
-				typename Scanner::Result scanGenerations(typename Scanner::Source &source, Generation *curr);
-
-			private:
-				// Associated arena.
-				Arena &owner;
-
-				// Did any generation trigger a garbage collection?
-				GenSet triggered;
-
-				// Called to perform any scheduled tasks, such as collecting certain generations.
-				// Could be called in the destructor, but I'm not comfortable doing that much work there...
-				void finalize();
-			};
-
-			// Create an ArenaEntry instance and call a specified function.
-			template <class R, class M>
-			typename IfNotVoid<R>::t withEntry(M &memberOf, R (M::*fn)(Entry &)) {
-				Entry e(*this);
-				setjmp(e.buf);
-				R r = (memberOf.*fn)(e);
-				e.finalize();
-				return r;
-			}
-			template <class R, class M>
-			typename IfVoid<R>::t withEntry(M &memberOf, R (M::*fn)(Entry &)) {
-				Entry e(*this);
-				setjmp(e.buf);
-				(memberOf.*fn)(e);
-				e.finalize();
-			}
-			template <class R, class M, class P>
-			typename IfNotVoid<R>::t withEntry(M &memberOf, R (M::*fn)(Entry &, P), P p) {
-				Entry e(*this);
-				setjmp(e.buf);
-				R r = (memberOf.*fn)(e, p);
-				e.finalize();
-				return r;
-			}
-			template <class R, class M, class P>
-			typename IfVoid<R>::t withEntry(M &memberOf, R (M::*fn)(Entry &, P), P p) {
-				Entry e(*this);
-				setjmp(e.buf);
-				(memberOf.*fn)(e, p);
-				e.finalize();
-			}
-			template <class R, class M, class P, class Q>
-			typename IfNotVoid<R>::t withEntry(M &memberOf, R (M::*fn)(Entry &, P, Q), P p, Q q) {
-				Entry e(*this);
-				setjmp(e.buf);
-				R r = (memberOf.*fn)(e, p, q);
-				e.finalize();
-				return r;
-			}
-			template <class R, class M, class P, class Q>
-			typename IfVoid<R>::t withEntry(M &memberOf, R (M::*fn)(Entry &, P, Q), P p, Q q) {
-				Entry e(*this);
-				setjmp(e.buf);
-				(memberOf.*fn)(e, p, q);
-				e.finalize();
-			}
-
 		private:
 			// No copying!
 			Arena(const Arena &o);
 			Arena &operator =(const Arena &o);
 
-			// Top-level arena lock, acquired whenever an Entry is created.
+			// Top-level arena lock, acquired whenever an ArenaTicket is created.
 			util::Lock lock;
 
 			// Count the number of time we tried to enter the arena, so that we can detect recursive
@@ -197,57 +102,36 @@ namespace storm {
 			InlineSet<Thread> threads;
 
 			// Perform a garbage collection.
-			void collectI(Entry &e);
+			void collectI(ArenaTicket &e);
 
-			// The Entry tells us we need to collect certain generations. Returns a GenSet
+			// The ArenaTicket tells us we need to collect certain generations. Returns a GenSet
 			// describing the generations actually collected.
-			GenSet collectI(Entry &e, GenSet collect);
+			GenSet collectI(ArenaTicket &e, GenSet collect);
 
 			// Swap the last two generations. Should be called after a GC so that the last
 			// generation can be collected the next GC cycle.
 			void swapLastGens();
+
+		public:
+			/**
+			 * Enter the arena by acquiring a ticket.
+			 *
+			 * Note: These are actually implemented in ArenaTicket to resolve header includes, and
+			 * since they logically belong to that class anyway.
+			 */
+			template <class R, class M>
+			typename IfNotVoid<R>::t enter(M &memberOf, R (M::*fn)(ArenaTicket &));
+			template <class R, class M>
+			typename IfVoid<R>::t enter(M &memberOf, R (M::*fn)(ArenaTicket &));
+			template <class R, class M, class P>
+			typename IfNotVoid<R>::t enter(M &memberOf, R (M::*fn)(ArenaTicket &, P), P p);
+			template <class R, class M, class P>
+			typename IfVoid<R>::t enter(M &memberOf, R (M::*fn)(ArenaTicket &, P), P p);
+			template <class R, class M, class P, class Q>
+			typename IfNotVoid<R>::t enter(M &memberOf, R (M::*fn)(ArenaTicket &, P, Q), P p, Q q);
+			template <class R, class M, class P, class Q>
+			typename IfVoid<R>::t enter(M &memberOf, R (M::*fn)(ArenaTicket &, P, Q), P p, Q q);
 		};
-
-
-		/**
-		 * Implementation of template members.
-		 */
-
-
-		template <class Scanner>
-		typename Scanner::Result Arena::Entry::scanStackRoots(typename Scanner::Source &source) {
-			typename Scanner::Result r;
-			InlineSet<Thread> &threads = owner.threads;
-			for (InlineSet<Thread>::iterator i = threads.begin(); i != threads.end(); ++i) {
-				r = i->scan<Scanner>(source, *this);
-				if (r != typename Scanner::Result())
-					return r;
-			}
-			return r;
-		}
-
-
-		template <class Scanner>
-		typename Scanner::Result Arena::Entry::scanGenerations(typename Scanner::Source &source, Generation *current) {
-			typename Scanner::Result r;
-			GenSet scanFor;
-			scanFor.add(current->identifier);
-
-			for (size_t i = 0; i < owner.generations.size(); i++) {
-				Generation *gen = owner.generations[i];
-
-				// Don't scan the current generation, we want to handle that with more care.
-				if (gen == current)
-					continue;
-
-				// Scan it, instructing the generation to only scan references to the current generation.
-				r = gen->scan<Scanner>(scanFor, source);
-				if (r != typename Scanner::Result())
-					return r;
-			}
-
-			return r;
-		}
 
 	}
 }

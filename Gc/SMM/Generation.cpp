@@ -27,12 +27,12 @@ namespace storm {
 			}
 		}
 
-		Block *Generation::alloc(Arena::Entry &entry, size_t minSize) {
+		Block *Generation::alloc(ArenaTicket &entry, size_t minSize) {
 			// TODO: Perhaps triger a GC here as well, and not only in 'done'?
 			return allocBlock(minSize, blockSize);
 		}
 
-		void Generation::done(Arena::Entry &entry, Block *block) {
+		void Generation::done(ArenaTicket &entry, Block *block) {
 			block->reserved(block->committed());
 
 			ChunkList::iterator pos = std::lower_bound(chunks.begin(), chunks.end(), block, PtrCompare());
@@ -66,7 +66,7 @@ namespace storm {
 			}
 		}
 
-		Block *Generation::sharedBlock(Arena::Entry &entry, size_t size) {
+		Block *Generation::sharedBlock(ArenaTicket &entry, size_t size) {
 			if (shared && shared->remaining() < size) {
 				done(entry, shared);
 				shared = null;
@@ -129,7 +129,7 @@ namespace storm {
 			}
 		};
 
-		void Generation::collect(Arena::Entry &entry) {
+		void Generation::collect(ArenaTicket &entry) {
 			dbg_assert(next, L"Need a next generation for collection!");
 			dbg_assert(next != this, L"We can't collect to ourselves!");
 

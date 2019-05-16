@@ -3,7 +3,7 @@
 #if STORM_GC == STORM_GC_SMM
 
 #include "Block.h"
-#include "Arena.h"
+#include "ArenaTicket.h"
 
 namespace storm {
 	namespace smm {
@@ -140,7 +140,7 @@ namespace storm {
 
 			// Fill the allocator with more memory from the arena!
 			void fill(size_t desiredMin);
-			void fillI(Arena::Entry &entry, size_t desiredMin);
+			void fillI(ArenaTicket &entry, size_t desiredMin);
 
 			// Make a large allocation (in a higher-numbered generation).
 			PendingAlloc allocLarge(size_t size);
