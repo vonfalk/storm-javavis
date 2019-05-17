@@ -4,6 +4,7 @@
 #if STORM_GC == STORM_GC_SMM
 
 #include "Generation.h"
+#include "ArenaTicket.cpp"
 
 namespace storm {
 	namespace smm {

@@ -7,6 +7,7 @@
 #include "Generation.h"
 #include "Block.h"
 #include "Thread.h"
+#include "ArenaTicket.h"
 
 namespace storm {
 	namespace smm {

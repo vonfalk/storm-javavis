@@ -7,6 +7,7 @@
 #include "Scanner.h"
 #include "ScanState.h"
 #include "Thread.h"
+#include "ArenaTicket.h"
 
 namespace storm {
 	namespace smm {

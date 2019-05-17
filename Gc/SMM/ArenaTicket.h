@@ -4,6 +4,7 @@
 
 #include "Arena.h"
 #include "Generation.h"
+#include "Thread.h"
 #include "Utils/Templates.h"
 
 namespace storm {

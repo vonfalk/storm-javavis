@@ -3,12 +3,12 @@
 #if STORM_GC == STORM_GC_SMM
 
 #include "Block.h"
-#include "ArenaTicket.h"
 
 namespace storm {
 	namespace smm {
 
 		class Generation;
+		class ArenaTicket;
 
 		/**
 		 * A pending allocation returned from an allocator. Call 'commit' when the allocation is

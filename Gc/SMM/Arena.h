@@ -16,6 +16,7 @@ namespace storm {
 		class Thread;
 		class Block;
 		class Generation;
+		class ArenaTicket;
 
 		/**
 		 * An Arena keeps track of all allocations made by the GC, and represents the entire world
