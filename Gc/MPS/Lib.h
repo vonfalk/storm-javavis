@@ -1,5 +1,7 @@
 #pragma once
 
+#include "Gc/Config.h"
+
 #if STORM_GC == STORM_GC_MPS
 
 // Includes the C-library part of MPS.
