@@ -63,6 +63,9 @@ namespace storm {
 			// Scanner that moves objects into the finalizer pool.
 			class Move;
 
+			// Function object that moves objects with finalizers into the finalizer pool. Used with 'traverse'.
+			class MoveFinalizers;
+
 		private:
 			// No copy!
 			FinalizerPool(const FinalizerPool &o);
@@ -145,6 +148,19 @@ namespace storm {
 			}
 
 			SCAN_FIX_HEADER
+		};
+
+
+		class FinalizerPool::MoveFinalizers {
+		public:
+			FinalizerPool &to;
+
+			MoveFinalizers(FinalizerPool &to) : to(to) {}
+
+			void operator ()(void *obj) const {
+				if (fmt::hasFinalizer(obj))
+					to.move(obj);
+			}
 		};
 
 	}

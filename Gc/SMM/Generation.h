@@ -74,6 +74,11 @@ namespace storm {
 			template <class Scanner>
 			typename Scanner::Result scan(GenSet refsTo, typename Scanner::Source &source);
 
+			// Run all finalizers in this block. Most likely only called before the entire Arena is
+			// destroyed, so no need for efficiency.
+			void runFinalizers();
+
+
 			/**
 			 * Class that is handed out to give additional information during a collection.
 			 *
@@ -180,6 +185,9 @@ namespace storm {
 																typename Scanner::Source &source,
 																Block *&finalizers);
 
+				// Run all finalizers in this chunk.
+				void runFinalizers();
+
 				// Memory summary.
 				void fillSummary(MemorySummary &summary) const;
 
@@ -275,9 +283,6 @@ namespace storm {
 
 			// Allocate a block with a (usable) size in the specified range. For internal use.
 			Block *allocBlock(size_t minSize, size_t maxSize);
-
-			// Scan a chain of blocks for finalizers.
-			void moveFinalizers(ArenaTicket &ticket, Block *finalizers);
 
 			// Check if a particular object is pinned. Only reasonable to call during an ongoing scan.
 			bool isPinned(void *obj, void *end);

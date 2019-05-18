@@ -58,6 +58,9 @@ namespace storm {
 				}
 			}
 		}
+		static inline void finalize(void *obj) {
+			return objFinalize(fromClient(obj));
+		}
 
 	}
 }

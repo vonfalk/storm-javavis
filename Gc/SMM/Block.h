@@ -130,6 +130,21 @@ namespace storm {
 				return summary.has(gen);
 			}
 
+			// Traverse all objects in this block. Calling the supplied function on each
+			// object. Client pointers are passed to the function.
+			template <class Fn>
+			void traverse(Fn fn) {
+				fmt::Obj *at = (fmt::Obj *)mem(0);
+				fmt::Obj *end = (fmt::Obj *)mem(committed());
+				while (at != end) {
+					fmt::Obj *next = fmt::objSkip(at);
+
+					fn(fmt::toClient(at));
+
+					at = next;
+				}
+			}
+
 			// Scan all objects in this block using the supplied scanner.
 			template <class Scanner>
 			typename Scanner::Result scan(typename Scanner::Source &source) {

@@ -58,12 +58,22 @@ namespace storm {
 		}
 
 		Arena::~Arena() {
-			// TODO: Make sure to execute any remaining finalizers in all generations!
-			finalizers->finalize();
+			destroy();
+		}
+
+		void Arena::destroy() {
+			// Note: This causes 'finalizers' to execute all pending finalizers as well!
+			delete finalizers;
+			finalizers = null;
+
+			// Look through the memory for additional finalizers that need to be executed.
+			for (size_t i = 0; i < generations.size(); i++)
+				generations[i]->runFinalizers();
 
 			for (size_t i = 0; i < generations.size(); i++)
 				delete generations[i];
-			delete finalizers;
+			generations.clear();
+
 		}
 
 		Chunk Arena::allocChunk(size_t size, byte identifier) {

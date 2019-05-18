@@ -176,7 +176,13 @@ namespace storm {
 
 			// Check the blocks containing finalizers found before and grab all objects with
 			// finalizers along with their dependencies and put them inside the finalizer pool.
-			moveFinalizers(ticket, finalizerBlocks);
+			FinalizerPool &pool = ticket.finalizerPool();
+			for (Block *at = finalizerBlocks; at; at = at->next()) {
+				at->traverse(FinalizerPool::MoveFinalizers(pool));
+			}
+
+			// Copy all objects depending on the finalized objects.
+			pool.scanNew(ticket, State(*this));
 
 			// Update any references to objects we just moved.
 
@@ -208,24 +214,10 @@ namespace storm {
 			}
 		}
 
-		void Generation::moveFinalizers(ArenaTicket &ticket, Block *finalizerBlocks) {
-			FinalizerPool &pool = ticket.finalizerPool();
-			for (Block *at = finalizerBlocks; at; at = at->next()) {
-				fmt::Obj *obj = (fmt::Obj *)at->mem(0);
-				fmt::Obj *end = (fmt::Obj *)at->mem(at->committed());
-
-				while (obj != end) {
-					fmt::Obj *next = fmt::objSkip(obj);
-
-					if (fmt::objHasFinalizer(obj))
-						pool.move(toClient(obj));
-
-					obj = next;
-				}
+		void Generation::runFinalizers() {
+			for (size_t i = 0; i < chunks.size(); i++) {
+				chunks[i].runFinalizers();
 			}
-
-			// Copy all objects depending on the finalized objects.
-			pool.scanNew(ticket, State(*this));
 		}
 
 		void Generation::fillSummary(MemorySummary &summary) const {
@@ -532,6 +524,19 @@ namespace storm {
 				block->setFlag(Block::fFinalizers);
 			else
 				block->clearFlag(Block::fFinalizers);
+		}
+
+		struct Finalize {
+			void operator ()(void *obj) const {
+				if (fmt::hasFinalizer(obj))
+					fmt::finalize(obj);
+			}
+		};
+
+		void Generation::GenChunk::runFinalizers() {
+			for (Block *at = (Block *)memory.at; at != (Block *)memory.end(); at = (Block *)at->mem(at->size)) {
+				at->traverse(Finalize());
+			}
 		}
 
 		void Generation::GenChunk::fillSummary(MemorySummary &summary) const {

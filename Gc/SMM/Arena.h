@@ -47,6 +47,9 @@ namespace storm {
 			// Destroy.
 			~Arena();
 
+			// Finalize the arena prematurely.
+			void destroy();
+
 			// Get the nursery generation, where all new objects are allocated.
 			Generation &nurseryGen() const { return *generations[0]; }
 

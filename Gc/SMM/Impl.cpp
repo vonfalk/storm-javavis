@@ -141,7 +141,6 @@ namespace storm {
 			if (!alloc)
 				throw GcError(L"Out of memory (allocType).");
 			result = fmt::initGcType(alloc.mem(), entries);
-			fmt::setHasFinalizer(result);
 		} while (!alloc.commit());
 
 		result->kind = kind;
