@@ -47,11 +47,11 @@ namespace storm {
 			// finished by calling 'done'. The size of the returned block has at least 'minSize'
 			// free memory. Allocations where 'minSize' is much larger than 'blockSize' may not be
 			// fulfilled.
-			Block *alloc(ArenaTicket &entry, size_t minSize);
+			Block *alloc(ArenaTicket &ticket, size_t minSize);
 
 			// Notify the generation that a block is full and will no longer be used by an
 			// allocator.
-			void done(ArenaTicket &entry, Block *block);
+			void done(ArenaTicket &ticket, Block *block);
 
 			// Lock for accessing the shared block returned by 'sharedBlock'.
 			util::Lock sharedBlockLock;
@@ -60,11 +60,11 @@ namespace storm {
 			// anyone may add objects to this generation. When using this block, the lock needs to
 			// be held while the filling is in progress. The parameter indicates how much free
 			// memory is needed in the returned block.
-			Block *sharedBlock(ArenaTicket &entry, size_t freeBytes);
+			Block *sharedBlock(ArenaTicket &ticket, size_t freeBytes);
 
 			// Perform a full collection of this generation. We probably want a more fine-grained
 			// API in the future.
-			void collect(ArenaTicket &entry);
+			void collect(ArenaTicket &ticket);
 
 			// Scan all blocks in this generation with the specified scanner.
 			template <class Scanner>
@@ -173,6 +173,13 @@ namespace storm {
 				template <class Scanner>
 				typename Scanner::Result scanPinned(const PinnedSet &pinned, typename Scanner::Source &source);
 
+				// Scan pinned objects in this chunk, also collecting all blocks marked as
+				// containing finalizers in a big list.
+				template <class Scanner>
+				typename Scanner::Result scanPinnedFindFinalizers(const PinnedSet &pinned,
+																typename Scanner::Source &source,
+																Block *&finalizers);
+
 				// Memory summary.
 				void fillSummary(MemorySummary &summary) const;
 
@@ -202,13 +209,6 @@ namespace storm {
 				// Shrink a block as much as possible while keeping pinned objects intact. Replaces
 				// non-pinned objects with padding. Takes care of objects in need of finalization.
 				void shrinkBlock(Block *block, const PinnedSet &pinned);
-
-				// Remove objects that need finalization from the supplied block. Assumes that no
-				// objects are pinned.
-				void finalizeObjects(Block *block);
-
-				// Finalize a single object.
-				void finalizeObject(fmt::Obj *obj);
 
 				// Predicate that checks if a particular object is pinned.
 				struct IfPinned {
@@ -275,6 +275,9 @@ namespace storm {
 
 			// Allocate a block with a (usable) size in the specified range. For internal use.
 			Block *allocBlock(size_t minSize, size_t maxSize);
+
+			// Scan a chain of blocks for finalizers.
+			void moveFinalizers(ArenaTicket &ticket, Block *finalizers);
 
 			// Check if a particular object is pinned. Only reasonable to call during an ongoing scan.
 			bool isPinned(void *obj, void *end);
@@ -345,6 +348,31 @@ namespace storm {
 					r = at->scanIf<IfPinned, Scanner>(pinned, source);
 					if (r != typename Scanner::Result())
 						return r;
+				}
+			}
+
+			return r;
+		}
+
+		template <class Scanner>
+		typename Scanner::Result Generation::GenChunk::scanPinnedFindFinalizers(const PinnedSet &pinned,
+																				typename Scanner::Source &source,
+																				Block *&finalizers) {
+
+			typename Scanner::Result r = typename Scanner::Result();
+
+			// Walk all blocks and scan the relevant ones.
+			for (Block *at = (Block *)memory.at; at != (Block *)memory.end(); at = (Block *)at->mem(at->size)) {
+				if (pinned.has(at->mem(0), at->mem(at->committed()))) {
+					r = at->scanIf<IfPinned, Scanner>(pinned, source);
+					if (r != typename Scanner::Result())
+						return r;
+				}
+
+				if (at->hasFlag(Block::fFinalizers)) {
+					// We're going to trash 'reserved' anyway, so we don't need any extra padding to use 'next'.
+					at->next(finalizers);
+					finalizers = at;
 				}
 			}
 

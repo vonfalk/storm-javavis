@@ -8,6 +8,7 @@
 #include "ScanState.h"
 #include "Thread.h"
 #include "ArenaTicket.h"
+#include "FinalizerPool.h"
 
 namespace storm {
 	namespace smm {
@@ -28,12 +29,12 @@ namespace storm {
 			}
 		}
 
-		Block *Generation::alloc(ArenaTicket &entry, size_t minSize) {
+		Block *Generation::alloc(ArenaTicket &ticket, size_t minSize) {
 			// TODO: Perhaps triger a GC here as well, and not only in 'done'?
 			return allocBlock(minSize, blockSize);
 		}
 
-		void Generation::done(ArenaTicket &entry, Block *block) {
+		void Generation::done(ArenaTicket &ticket, Block *block) {
 			block->reserved(block->committed());
 
 			ChunkList::iterator pos = std::lower_bound(chunks.begin(), chunks.end(), block, PtrCompare());
@@ -49,7 +50,7 @@ namespace storm {
 
 			// If we're using more memory than we're allowed, trigger a collection of us!
 			if (totalUsedBytes() > totalSize)
-				entry.requestCollection(this);
+				ticket.requestCollection(this);
 
 			// TODO: We also want to trigger a collection when we're running out of memory in our
 			// allocated chunks, at least if we're somewhat close to our limit. Otherwise, we risk
@@ -67,9 +68,9 @@ namespace storm {
 			}
 		}
 
-		Block *Generation::sharedBlock(ArenaTicket &entry, size_t size) {
+		Block *Generation::sharedBlock(ArenaTicket &ticket, size_t size) {
 			if (shared && shared->remaining() < size) {
-				done(entry, shared);
+				done(ticket, shared);
 				shared = null;
 			}
 
@@ -130,7 +131,7 @@ namespace storm {
 			}
 		};
 
-		void Generation::collect(ArenaTicket &entry) {
+		void Generation::collect(ArenaTicket &ticket) {
 			dbg_assert(next, L"Need a next generation for collection!");
 			dbg_assert(next != this, L"We can't collect to ourselves!");
 
@@ -149,20 +150,22 @@ namespace storm {
 
 			// TODO: We might want to do an 'early out' inside the scanning by using
 			// VMAlloc::identifier before attempting to access the sets. We need to measure the benefits of this!
-			entry.scanStackRoots<ScanSummaries<PinnedSet>>(pinnedSets);
+			ticket.scanStackRoots<ScanSummaries<PinnedSet>>(pinnedSets);
 
 			// Keep track of surviving objects inside a ScanState object, which allocates memory
 			// from the next generation.
-			ScanState state(entry, State(*this), next);
+			ScanState state(ticket, State(*this), next);
 
+			Block *finalizerBlocks = null;
 			// For all blocks containing at least one pinned object, traverse it entirely to find
 			// and scan the pinned objects. Any non-pinned objects are copied to the new block.
 			for (size_t i = 0; i < chunks.size(); i++)
-				chunks[i].scanPinned<ScanState::Move>(pinnedSets[i], state);
+				// chunks[i].scanPinned<ScanState::Move>(pinnedSets[i], state);
+				chunks[i].scanPinnedFindFinalizers<ScanState::Move>(pinnedSets[i], state, finalizerBlocks);
 
 			// Traverse all other generations that could contain references to this generation and
 			// copy any referred objects to the new block.
-			entry.scanGenerations<ScanState::Move>(state, this);
+			ticket.scanGenerations<ScanState::Move>(state, this);
 
 			// Traverse the newly copied objects in the new block and copy any new references until
 			// no more objects are found.
@@ -171,8 +174,9 @@ namespace storm {
 			// release the held Blocks in this case.
 			state.scanNew();
 
-			// TODO: Pick up any objects in need of finalization and move them to a separate
-			// finalization pool.
+			// Check the blocks containing finalizers found before and grab all objects with
+			// finalizers along with their dependencies and put them inside the finalizer pool.
+			moveFinalizers(ticket, finalizerBlocks);
 
 			// Update any references to objects we just moved.
 
@@ -183,7 +187,7 @@ namespace storm {
 			// Note: It would be nice if we could avoid scanning the objects in the generation we
 			// moved objects to already. Currently, we have no real way of pointing them out, but
 			// the 'IfInGen' condition will not scan them at least.
-			entry.scanGenerations<UpdateFwd<const IfInGen>>(IfInGen(this), this);
+			ticket.scanGenerations<UpdateFwd<const IfInGen>>(IfInGen(this), this);
 
 			// Finally, release and/or compact any remaining blocks in this generation.
 			totalAllocBytes = 0;
@@ -202,6 +206,26 @@ namespace storm {
 					totalFreeBytes += chunk.freeBytes;
 				}
 			}
+		}
+
+		void Generation::moveFinalizers(ArenaTicket &ticket, Block *finalizerBlocks) {
+			FinalizerPool &pool = ticket.finalizerPool();
+			for (Block *at = finalizerBlocks; at; at = at->next()) {
+				fmt::Obj *obj = (fmt::Obj *)at->mem(0);
+				fmt::Obj *end = (fmt::Obj *)at->mem(at->committed());
+
+				while (obj != end) {
+					fmt::Obj *next = fmt::objSkip(obj);
+
+					if (fmt::objHasFinalizer(obj))
+						pool.move(toClient(obj));
+
+					obj = next;
+				}
+			}
+
+			// Copy all objects depending on the finalized objects.
+			pool.scanNew(ticket, State(*this));
 		}
 
 		void Generation::fillSummary(MemorySummary &summary) const {
@@ -348,9 +372,6 @@ namespace storm {
 					current = compactPinned(current, at, pinned);
 				} else {
 					// Unused block. We are free to remove this block entirely without looking at it anymore.
-					if (at->hasFlag(Block::fFinalizers))
-						finalizeObjects(at);
-
 					at->committed(0);
 					at->reserved(0);
 				}
@@ -442,14 +463,10 @@ namespace storm {
 
 			while (at != to) {
 				fmt::Obj *next = fmt::objSkip(at);
-				bool inUse = pinned.has(fmt::toClient(at), next);
+				// Note: We don't need to preserve padding objects, even if they happen to be pinned.
+				bool inUse = pinned.has(fmt::toClient(at), next) & !fmt::objIsPad(at);
 
-				if (fmt::objHasFinalizer(at)) {
-					if (inUse)
-						finalizers = true;
-					else
-						finalizeObject(at);
-				}
+				finalizers |= inUse & fmt::objHasFinalizer(at);
 
 				if (inUse & !lastInUse) {
 					// First object in use. We might want to start a new block.
@@ -490,7 +507,7 @@ namespace storm {
 			while (at != to) {
 				fmt::Obj *next = fmt::objSkip(at);
 
-				if (pinned.has(fmt::toClient(at), next)) {
+				if (pinned.has(fmt::toClient(at), next) & !fmt::objIsPad(at)) {
 					// Replace previous objects with padding?
 					size_t padSize = (byte *)at - (byte *)freeFrom;
 					if (padSize > fmt::headerSize) {
@@ -502,8 +519,6 @@ namespace storm {
 
 					// Check for finalizers.
 					finalizers |= fmt::objHasFinalizer(at);
-				} else if (fmt::objHasFinalizer(at)) {
-					finalizeObject(at);
 				}
 
 				at = next;
@@ -517,24 +532,6 @@ namespace storm {
 				block->setFlag(Block::fFinalizers);
 			else
 				block->clearFlag(Block::fFinalizers);
-		}
-
-		void Generation::GenChunk::finalizeObjects(Block *block) {
-			fmt::Obj *at = (fmt::Obj *)block->mem(0);
-			fmt::Obj *to = (fmt::Obj *)block->mem(block->committed());
-
-			while (at != to) {
-				fmt::Obj *next = fmt::objSkip(at);
-
-				if (fmt::objHasFinalizer(at))
-					finalizeObject(at);
-
-				at = next;
-			}
-		}
-
-		void Generation::GenChunk::finalizeObject(fmt::Obj *obj) {
-			PLN(L"Found an object in need of finalization: " << obj);
 		}
 
 		void Generation::GenChunk::fillSummary(MemorySummary &summary) const {

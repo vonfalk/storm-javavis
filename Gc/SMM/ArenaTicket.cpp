@@ -3,18 +3,22 @@
 
 #if STORM_GC == STORM_GC_SMM
 
+#include "FinalizerPool.h"
+
 namespace storm {
 	namespace smm {
 
-		ArenaTicket::ArenaTicket(Arena &owner) : owner(owner) {
+		ArenaTicket::ArenaTicket(Arena &owner) : owner(owner), unlocked(false) {
 			owner.lock.lock();
 			dbg_assert(owner.entries == 0, L"Recursive arena entry!");
 			owner.entries++;
 		}
 
 		ArenaTicket::~ArenaTicket() {
-			owner.entries--;
-			owner.lock.unlock();
+			if (!unlocked) {
+				owner.entries--;
+				owner.lock.unlock();
+			}
 		}
 
 		void ArenaTicket::requestCollection(Generation *gen) {
@@ -36,6 +40,13 @@ namespace storm {
 						collected.add(owner.collectI(*this, old));
 				} while (old.any());
 			}
+
+			// Unlock and run finalizers!
+			owner.entries--;
+			owner.lock.unlock();
+			unlocked = true;
+
+			owner.finalizers->finalize();
 		}
 
 
