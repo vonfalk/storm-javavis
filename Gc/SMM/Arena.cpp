@@ -8,6 +8,7 @@
 #include "Block.h"
 #include "Thread.h"
 #include "ArenaTicket.h"
+#include "FinalizerPool.h"
 
 namespace storm {
 	namespace smm {
@@ -23,10 +24,15 @@ namespace storm {
 			assert(generationCount >= 2, L"Must have at least two generations.");
 			assert(generationCount + 2 < GenSet::maxGen, L"Must have less than " + ::toS(GenSet::maxGen) + L" generations.");
 
+			// Create the finalizer pool.
+			finalizers = new FinalizerPool(*this);
+
 			// Allocate the individual generations.
 			byte genId = 1;
 			generations = vector<Generation *>(generationCount + 1, null);
 			for (size_t i = 0; i < generationCount; i++) {
+				assert(genId != finalizerIdentifier);
+
 				size_t genSz = roundUp(genSize[i], alloc.pageSize);
 				generations[i] = new Generation(*this, genSz, genId++);
 			}
@@ -52,8 +58,12 @@ namespace storm {
 		}
 
 		Arena::~Arena() {
+			// TODO: Make sure to execute any remaining finalizers in all generations!
+			finalizers->finalize();
+
 			for (size_t i = 0; i < generations.size(); i++)
 				delete generations[i];
+			delete finalizers;
 		}
 
 		Chunk Arena::allocChunk(size_t size, byte identifier) {

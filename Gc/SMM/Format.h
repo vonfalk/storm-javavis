@@ -33,6 +33,32 @@ namespace storm {
 			return objHasFinalizer(fromClient(obj));
 		}
 
+		// Call the finalizer of an object.
+		static inline void objFinalize(Obj *obj) {
+			if (objIsSpecial(obj))
+				return;
+
+			void *client = toClient(obj);
+			if (objIsCode(obj)) {
+				code::finalize(client);
+				return;
+			}
+
+			const GcType &h = objHeader(obj)->obj;
+			if (h.finalizer) {
+				// Make sure the object was initialized properly!
+				bool finalize = true;
+				if (h.kind == GcType::tFixedObj || h.kind == GcType::tType)
+					finalize = vtable::from((RootObject *)client) != null;
+
+				if (finalize) {
+					typedef void (*Fn)(void *);
+					Fn fn = (Fn)h.finalizer;
+					(*fn)(client);
+				}
+			}
+		}
+
 	}
 }
 

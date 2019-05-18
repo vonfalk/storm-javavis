@@ -21,7 +21,7 @@ namespace storm {
 		class ScanState {
 		public:
 			// Create a new scan state. Scanning objects in 'from', moving them to 'to'.
-			ScanState(ArenaTicket &ticket, Generation *from, Generation *to);
+			ScanState(ArenaTicket &ticket, Generation::State &from, Generation *to);
 
 			// Destroy.
 			~ScanState();
@@ -33,7 +33,7 @@ namespace storm {
 			// replaced with a forwarding object, and the address to the new object is returned.
 			void *move(void *obj);
 
-			// Scan and move all objects reachable by the newly copied objects to the 'to' generation.
+			// Scan all recently copied objects and recursively move reachable objects to the 'to' generation.
 			void scanNew();
 
 		private:
@@ -45,7 +45,7 @@ namespace storm {
 			ArenaTicket &ticket;
 
 			// Source generation.
-			Generation *sourceGen;
+			Generation::State &sourceGen;
 
 			// The generation where we shall store objects.
 			Generation *targetGen;
@@ -83,7 +83,8 @@ namespace storm {
 			Arena &arena;
 			byte srcGen;
 
-			Move(Source &source) : state(source), arena(source.sourceGen->arena), srcGen(source.sourceGen->identifier) {}
+			Move(Source &source)
+				: state(source), arena(source.sourceGen.arena()), srcGen(source.sourceGen.identifier()) {}
 
 			inline bool fix1(void *ptr) {
 				return arena.memGeneration(ptr) == srcGen;
@@ -94,7 +95,7 @@ namespace storm {
 				void *end = (char *)fmt::skip(obj) - fmt::headerSize;
 
 				// Don't touch pinned objects!
-				if (state.sourceGen->isPinned(obj, end))
+				if (state.sourceGen.isPinned(obj, end))
 					return 0;
 
 				// We don't need to copy forwarders again. Note: Will update the pointer if

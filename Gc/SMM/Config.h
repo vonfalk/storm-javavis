@@ -22,6 +22,9 @@ namespace storm {
 		static const size_t vmAllocBits = 16;
 		static const size_t vmAllocMinSize = 1 << vmAllocBits;
 
+		// Identifier used by the finalizer generation.
+		static const byte finalizerIdentifier = 0;
+
 	}
 }
 

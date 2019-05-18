@@ -17,6 +17,7 @@ namespace storm {
 		class Block;
 		class Generation;
 		class ArenaTicket;
+		class FinalizerPool;
 
 		/**
 		 * An Arena keeps track of all allocations made by the GC, and represents the entire world
@@ -95,6 +96,9 @@ namespace storm {
 			// the constructor so that we can collect it more conveniently. Assuming two long-lived
 			// generations, we can simply collect one into the other and swap their locations.
 			vector<Generation *> generations;
+
+			// Pool for storing objects that need finalization.
+			FinalizerPool *finalizers;
 
 			// Virtual memory allocations.
 			VMAlloc alloc;

@@ -74,6 +74,39 @@ namespace storm {
 			template <class Scanner>
 			typename Scanner::Result scan(GenSet refsTo, typename Scanner::Source &source);
 
+			/**
+			 * Class that is handed out to give additional information during a collection.
+			 *
+			 * Instances of this class are only handed out during an ongoing scan, and since it can
+			 * not be copied, it ensures that it is not possible to call 'isPinned' if there is no
+			 * data to return from 'isPinned'.
+			 */
+			class State {
+				friend class Generation;
+			public:
+				// The generation itself.
+				Generation &gen;
+
+				// Get the generation id.
+				inline byte identifier() const {
+					return gen.identifier;
+				}
+
+				// Get information on pinned objects in this generation.
+				inline bool isPinned(void *obj, void *end) const {
+					return gen.isPinned(obj, end);
+				}
+
+				// Get the arena.
+				inline Arena &arena() const {
+					return gen.arena;
+				}
+
+			private:
+				State(Generation &gen) : gen(gen) {}
+				State(State &o);
+			};
+
 			// Fill a memory summary with information.
 			void fillSummary(MemorySummary &summary) const;
 
@@ -84,7 +117,6 @@ namespace storm {
 			void dbg_dump();
 
 		private:
-			friend class ScanState;
 
 			// No copy.
 			Generation(const Generation &o);

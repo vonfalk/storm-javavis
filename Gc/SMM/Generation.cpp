@@ -153,7 +153,7 @@ namespace storm {
 
 			// Keep track of surviving objects inside a ScanState object, which allocates memory
 			// from the next generation.
-			ScanState state(entry, this, next);
+			ScanState state(entry, State(*this), next);
 
 			// For all blocks containing at least one pinned object, traverse it entirely to find
 			// and scan the pinned objects. Any non-pinned objects are copied to the new block.
@@ -170,6 +170,9 @@ namespace storm {
 			// can actually avoid this step entirely. We would, however, tell the ScanState to
 			// release the held Blocks in this case.
 			state.scanNew();
+
+			// TODO: Pick up any objects in need of finalization and move them to a separate
+			// finalization pool.
 
 			// Update any references to objects we just moved.
 

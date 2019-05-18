@@ -6,13 +6,13 @@
 namespace storm {
 	namespace smm {
 
-		ScanState::ScanState(ArenaTicket &ticket, Generation *from, Generation *to) :
+		ScanState::ScanState(ArenaTicket &ticket, Generation::State &from, Generation *to) :
 			ticket(ticket),
 			sourceGen(from), targetGen(to),
 			targetHead(null), targetTail(null) {
 
 			// This could cause 'alloc' below to fail!
-			assert(sourceGen->blockSize <= targetGen->blockSize,
+			assert(sourceGen.gen.blockSize <= targetGen->blockSize,
 				L"Can not copy objects between generations with decreasing block size!");
 		}
 
@@ -53,7 +53,7 @@ namespace storm {
 
 		void ScanState::newBlock(size_t minSize) {
 			// TODO: We might want to handle cases where 'minSize' is large enough not to fit
-			// here. This should not handle if generation sizes are set up appropriately, however.
+			// here. This should not happen if generation sizes are set up appropriately, however.
 			Block *n = targetGen->alloc(ticket, minSize);
 			if (!n) {
 				TODO(L"Handle out of memory conditions!");
@@ -61,12 +61,7 @@ namespace storm {
 			}
 
 			if (targetTail) {
-				size_t reserved = targetTail->reserved();
-				size_t total = targetTail->size;
-				// Add a 'pad' object so that we can scan the entire block without issues later. We
-				// need to set the 'next' pointer of this block, meaning we will set 'reserved' to
-				// 'size'.
-				fmt::objMakePad((fmt::Obj *)targetTail->mem(reserved), total - reserved);
+				targetTail->padReserved();
 				targetTail->next(n);
 			} else {
 				// Empty list. Put the same one at both locations.
@@ -108,7 +103,7 @@ namespace storm {
 				targetGen->done(ticket, b);
 			}
 
-			return true;
+			return targetHead != null;
 		}
 
 	}

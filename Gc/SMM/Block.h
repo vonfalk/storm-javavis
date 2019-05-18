@@ -106,6 +106,15 @@ namespace storm {
 				return AddrSet(mem(0), mem(committed()));
 			}
 
+			// Add padding to the end of the block if required, so that it is safe to use the 'next' pointer.
+			void padReserved() {
+				size_t reserved = this->reserved();
+				if (reserved < size) {
+					fmt::objMakePad((fmt::Obj *)mem(reserved), size - reserved);
+					this->reserved(size);
+				}
+			}
+
 			// Is it possible that this block contains references to a generation with the specified
 			// number?
 			bool mayReferTo(byte gen) const {
