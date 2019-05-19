@@ -6,7 +6,7 @@
 namespace storm {
 	namespace smm {
 
-		ScanState::ScanState(ArenaTicket &ticket, Generation::State &from, Generation *to) :
+		ScanState::ScanState(ArenaTicket &ticket, const Generation::State &from, Generation *to) :
 			ticket(ticket),
 			sourceGen(from), targetGen(to),
 			targetHead(null), targetTail(null) {

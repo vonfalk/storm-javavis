@@ -49,7 +49,7 @@ namespace storm {
 			scanTail = block;
 		}
 
-		void FinalizerPool::scanNew(ArenaTicket &, Generation::State &gen) {
+		void FinalizerPool::scanNew(ArenaTicket &, const Generation::State &gen) {
 			if (!scanFirst)
 				return;
 
@@ -76,7 +76,7 @@ namespace storm {
 			scanFirst = scanHead = scanTail = null;
 		}
 
-		bool FinalizerPool::scanStep(Generation::State &gen) {
+		bool FinalizerPool::scanStep(const Generation::State &gen) {
 			Block *b = scanHead;
 			if (!b)
 				return false;

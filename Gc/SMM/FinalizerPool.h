@@ -55,7 +55,7 @@ namespace storm {
 			void *move(void *obj);
 
 			// Scan all recently copied objects and recursively move the objects into this pool.
-			void scanNew(ArenaTicket &ticket, Generation::State &source);
+			void scanNew(ArenaTicket &ticket, const Generation::State &source);
 
 			// Call finalizers fo all objects in this pool, and empty the pool afterwards. This
 			// operation assumes the global arena lock is *not* held as it executes client code.
@@ -105,7 +105,7 @@ namespace storm {
 			void newBlock(size_t minSize);
 
 			// Perform a step of scanning. Return 'true' if there might be more to do.
-			bool scanStep(Generation::State &gen);
+			bool scanStep(const Generation::State &gen);
 
 			// Finalize a chain of blocks. Deallocates the blocks after running finalizers.
 			void finalizeChain(Block *first);
@@ -135,9 +135,9 @@ namespace storm {
 		public:
 			struct Params {
 				FinalizerPool &to;
-				Generation::State &source;
+				const Generation::State &source;
 
-				Params(FinalizerPool &to, Generation::State &source)
+				Params(FinalizerPool &to, const Generation::State &source)
 					: to(to), source(source) {}
 			};
 
@@ -147,7 +147,7 @@ namespace storm {
 			FinalizerPool &target;
 			Arena &arena;
 			byte srcGen;
-			Generation::State &source;
+			const Generation::State &source;
 
 			Move(const Params &p)
 				: target(p.to), arena(p.to.arena), srcGen(p.source.identifier()), source(p.source) {}

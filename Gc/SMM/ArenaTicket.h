@@ -36,6 +36,9 @@ namespace storm {
 			~ArenaTicket();
 
 			// Collected state of the stack when we entered the arena.
+			// TODO: This does not work on Linux in certain cases. For example, rbp may contain
+			// important values, but it is not always saved. We should make our own implementation
+			// of this (we're deep enough into undefined land so that this is not an issue)
 			std::jmp_buf buf;
 
 			// Tell the ArenaTicket that a generation desires to be collected. This will trigger a
@@ -83,7 +86,7 @@ namespace storm {
 
 		template <class Scanner>
 		typename Scanner::Result ArenaTicket::scanStackRoots(typename Scanner::Source &source) {
-			typename Scanner::Result r;
+			typename Scanner::Result r = typename Scanner::Result();
 			InlineSet<Thread> &threads = owner.threads;
 			for (InlineSet<Thread>::iterator i = threads.begin(); i != threads.end(); ++i) {
 				r = i->scan<Scanner>(source, *this);
@@ -96,7 +99,7 @@ namespace storm {
 
 		template <class Scanner>
 		typename Scanner::Result ArenaTicket::scanGenerations(typename Scanner::Source &source, Generation *current) {
-			typename Scanner::Result r;
+			typename Scanner::Result r = typename Scanner::Result();
 			GenSet scanFor;
 			scanFor.add(current->identifier);
 

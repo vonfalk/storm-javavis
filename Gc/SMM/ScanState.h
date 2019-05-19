@@ -21,7 +21,7 @@ namespace storm {
 		class ScanState {
 		public:
 			// Create a new scan state. Scanning objects in 'from', moving them to 'to'.
-			ScanState(ArenaTicket &ticket, Generation::State &from, Generation *to);
+			ScanState(ArenaTicket &ticket, const Generation::State &from, Generation *to);
 
 			// Destroy.
 			~ScanState();
@@ -45,7 +45,7 @@ namespace storm {
 			ArenaTicket &ticket;
 
 			// Source generation.
-			Generation::State &sourceGen;
+			const Generation::State &sourceGen;
 
 			// The generation where we shall store objects.
 			Generation *targetGen;
