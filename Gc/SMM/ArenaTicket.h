@@ -64,8 +64,12 @@ namespace storm {
 			// Did any generation trigger a garbage collection?
 			GenSet triggered;
 
-			// Did we unlock the lock yet?
-			bool unlocked;
+			// Are we holding the lock?
+			bool locked;
+
+			// Lock and unlock the arena. This includes stopping threads etc.
+			void lock();
+			void unlock();
 
 			// Called to perform any scheduled tasks, such as collecting certain generations.
 			// Could be called in the destructor, but I'm not comfortable doing that much work there...

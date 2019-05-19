@@ -9,7 +9,7 @@ namespace storm {
 	namespace smm {
 
 		FinalizerPool::FinalizerPool(Arena &arena)
-			: arena(arena), finalizeHead(null),
+			: arena(arena), finalizeHead(null), executing(null),
 			  scanFirst(null), scanHead(null), scanTail(null) {}
 
 		FinalizerPool::~FinalizerPool() {
@@ -106,16 +106,46 @@ namespace storm {
 		}
 
 		void FinalizerPool::finalize() {
-			// Grab a chunk of memory and start finalizing!
-			Block *finalize;
-			do {
-				finalize = atomicRead(finalizeHead);
-				if (!finalize)
-					return;
-			} while (atomicCAS(finalizeHead, finalize, null) != finalize);
+			// Early out, so we don't have to take the lock.
+			Block *finalize = atomicRead(finalizeHead);
+			if (!finalize)
+				return;
 
-			// Now, we're the only one that knows 'finalize'.
-			finalizeChain(finalize);
+			// Something is probably already running, we don't have to try.
+			if (atomicRead(executing))
+				return;
+
+			{
+				util::Lock::L z(finalizerLock);
+
+				// Re-check that we're alone.
+				if (atomicRead(executing))
+					return;
+
+				// Grab a chunk of memory. Note: We need to do this atomically wrt any scanning threads.
+				do {
+					finalize = atomicRead(finalizeHead);
+					// Nothing to do anymore...
+					if (!finalize) {
+						atomicWrite(executing, (Block *)null);
+						return;
+					}
+
+					// Set 'executing' now, so that all objects are reachable at all times if the
+					// CAS below succeeds. If it fails, 'executing' will still refer to valid
+					// memory, but some objects may be scanned twice for a brief period of time.
+					atomicWrite(executing, finalize);
+				} while (atomicCAS(finalizeHead, finalize, null) != finalize);
+
+				// At this point, we know we're alone in executing finalizers!
+				for (Block *at = finalize; at; at = at->next())
+					finalizeBlock(at);
+
+				// Now, we don't need objects to be valid anymore!
+				atomicWrite(executing, (Block *)null);
+
+				freeChain(finalize);
+			}
 		}
 
 		void FinalizerPool::finalizeChain(Block *chain) {
@@ -123,12 +153,14 @@ namespace storm {
 				finalizeBlock(at);
 
 			// Everything is finalized. Now, we can deallocate it all!
-			while (chain) {
-				Block *next = chain->next();
+			freeChain(chain);
+		}
 
-				arena.freeChunk(Chunk(chain, chain->size + sizeof(Block)));
-
-				chain = next;
+		void FinalizerPool::freeChain(Block *first) {
+			while (first) {
+				Block *next = first->next();
+				arena.freeChunk(Chunk(first, first->size + sizeof(Block)));
+				first = next;
 			}
 		}
 
@@ -140,6 +172,17 @@ namespace storm {
 				if (fmt::objHasFinalizer(at))
 					fmt::objFinalize(at);
 			}
+		}
+
+		void FinalizerPool::fillSummary(MemorySummary &summary) const {
+			// Note: This isn't entirely safe to do actually...
+			fillSummary(summary, atomicRead(finalizeHead));
+			fillSummary(summary, scanFirst);
+		}
+
+		void FinalizerPool::fillSummary(MemorySummary &summary, Block *chain) const {
+			for (Block *at = chain; at; at = at->next())
+				at->fillSummary(summary);
 		}
 
 	}

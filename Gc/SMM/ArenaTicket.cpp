@@ -8,17 +8,28 @@
 namespace storm {
 	namespace smm {
 
-		ArenaTicket::ArenaTicket(Arena &owner) : owner(owner), unlocked(false) {
-			owner.lock.lock();
-			dbg_assert(owner.entries == 0, L"Recursive arena entry!");
-			owner.entries++;
+		ArenaTicket::ArenaTicket(Arena &owner) : owner(owner), locked(false) {
+			lock();
 		}
 
 		ArenaTicket::~ArenaTicket() {
-			if (!unlocked) {
-				owner.entries--;
-				owner.lock.unlock();
-			}
+			unlock();
+		}
+
+		void ArenaTicket::lock() {
+			owner.lock.lock();
+			dbg_assert(owner.entries == 0, L"Recursive arena entry!");
+			owner.entries++;
+			locked = true;
+		}
+
+		void ArenaTicket::unlock() {
+			if (!locked)
+				return;
+
+			owner.entries--;
+			owner.lock.unlock();
+			locked = false;
 		}
 
 		void ArenaTicket::requestCollection(Generation *gen) {
@@ -42,10 +53,7 @@ namespace storm {
 			}
 
 			// Unlock and run finalizers!
-			owner.entries--;
-			owner.lock.unlock();
-			unlocked = true;
-
+			unlock();
 			owner.finalizers->finalize();
 		}
 

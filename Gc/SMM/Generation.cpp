@@ -174,14 +174,19 @@ namespace storm {
 			// release the held Blocks in this case.
 			state.scanNew();
 
-			// Check the blocks containing finalizers found before and grab all objects with
-			// finalizers along with their dependencies and put them inside the finalizer pool.
+			// Grab objects referred to only by old finalizers and keep them alive in the finalizing
+			// generation for the time being. We want to keep objects being finalized intact for as
+			// long as possible, so that finalizers will see a fairly good view of the world.
 			FinalizerPool &pool = ticket.finalizerPool();
+			pool.scan<FinalizerPool::Move>(ticket, FinalizerPool::Move::Params(pool, State(*this)));
+
+			// Check the blocks containing finalizers found before and grab all objects with
+			// finalizers and put them inside the finalizer pool.
 			for (Block *at = finalizerBlocks; at; at = at->next()) {
 				at->traverse(FinalizerPool::MoveFinalizers(pool));
 			}
 
-			// Copy all objects depending on the finalized objects.
+			// Recursively grab all dependencies of the objects we moved to the finalizer pool!
 			pool.scanNew(ticket, State(*this));
 
 			// Update any references to objects we just moved.
@@ -194,6 +199,9 @@ namespace storm {
 			// moved objects to already. Currently, we have no real way of pointing them out, but
 			// the 'IfInGen' condition will not scan them at least.
 			ticket.scanGenerations<UpdateFwd<const IfInGen>>(IfInGen(this), this);
+
+			// Update any old finalizer references as well.
+			pool.scan<UpdateFwd<const IfInGen>>(ticket, IfInGen(this));
 
 			// Finally, release and/or compact any remaining blocks in this generation.
 			totalAllocBytes = 0;

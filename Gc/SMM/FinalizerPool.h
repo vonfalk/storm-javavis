@@ -6,6 +6,7 @@
 #include "Block.h"
 #include "Scanner.h"
 #include "Generation.h"
+#include "Utils/Lock.h"
 
 namespace storm {
 	namespace smm {
@@ -60,6 +61,13 @@ namespace storm {
 			// operation assumes the global arena lock is *not* held as it executes client code.
 			void finalize();
 
+			// Scan all objects currently in the finalizer pool.
+			template <class Scanner>
+			typename Scanner::Result scan(ArenaTicket &ticket, typename Scanner::Source &source);
+
+			// Add information to a scan summary.
+			void fillSummary(MemorySummary &summary) const;
+
 			// Scanner that moves objects into the finalizer pool.
 			class Move;
 
@@ -71,10 +79,18 @@ namespace storm {
 			FinalizerPool(const FinalizerPool &o);
 			FinalizerPool &operator =(const FinalizerPool &o);
 
+			// Lock taken by the thread executing finalizers, making sure that only one thread may
+			// run finalizers at any given time, in turn making sure that the 'executing' variable
+			// can be used to reach all memory held by this thread.
+			util::Lock finalizerLock;
+
 			// Sequence of blocks that contain objects ready for finalization. This variable is
 			// modified both while holding the arena lock and without holding any lock, so care must
 			// be taken!
 			Block *finalizeHead;
+
+			// Objects currently being finalized by a thread.
+			Block *executing;
 
 			// The queue used while scanning finalized objects. This queue of blocks is only
 			// manipulated while holding the arena lock, and is cleared after 'scanNew' is finished.
@@ -94,8 +110,18 @@ namespace storm {
 			// Finalize a chain of blocks. Deallocates the blocks after running finalizers.
 			void finalizeChain(Block *first);
 
+			// Deallocate an entire chain.
+			void freeChain(Block *first);
+
 			// Finalize all objects in a single block.
 			void finalizeBlock(Block *block);
+
+			// Scan a chain of blocks.
+			template <class Scanner>
+			typename Scanner::Result scanChain(Block *head, typename Scanner::Source &source);
+
+			// Add information to a scan summary.
+			void fillSummary(MemorySummary &summary, Block *chain) const;
 		};
 
 
@@ -162,6 +188,30 @@ namespace storm {
 					to.move(obj);
 			}
 		};
+
+
+		// Scanning.
+		template <class Scanner>
+		typename Scanner::Result FinalizerPool::scan(ArenaTicket &, typename Scanner::Source &source) {
+			typename Scanner::Result r;
+			r = scanChain<Scanner>(scanFirst, source);
+			if (r != typename Scanner::Result())
+				return r;
+			r = scanChain<Scanner>(finalizeHead, source);
+			if (r != typename Scanner::Result())
+				return r;
+			return scanChain<Scanner>(executing, source);
+		}
+
+		template <class Scanner>
+		typename Scanner::Result FinalizerPool::scanChain(Block *head, typename Scanner::Source &source) {
+			for (Block *at = head; at; at = at->next()) {
+				typename Scanner::Result r = at->scan<Scanner>(source);
+				if (r != typename Scanner::Result())
+					return r;
+			}
+			return typename Scanner::Result();
+		}
 
 	}
 }

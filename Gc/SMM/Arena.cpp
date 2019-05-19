@@ -168,6 +168,8 @@ namespace storm {
 				generations[i]->fillSummary(summary);
 			}
 
+			finalizers->fillSummary(summary);
+
 			return summary;
 		}
 
