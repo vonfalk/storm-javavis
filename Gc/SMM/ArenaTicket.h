@@ -5,7 +5,9 @@
 #include "Arena.h"
 #include "Generation.h"
 #include "Thread.h"
+#include "SpilledRegs.h"
 #include "Utils/Templates.h"
+#include <csetjmp>
 
 namespace storm {
 	namespace smm {
@@ -35,11 +37,9 @@ namespace storm {
 			// Destroy.
 			~ArenaTicket();
 
-			// Collected state of the stack when we entered the arena.
-			// TODO: This does not work on Linux in certain cases. For example, rbp may contain
-			// important values, but it is not always saved. We should make our own implementation
-			// of this (we're deep enough into undefined land so that this is not an issue)
-			std::jmp_buf buf;
+			// Collected state of the stack when we entered the arena, so that we can easily scan
+			// parts of the CPU state along with the rest of the stack.
+			SpilledRegs regs;
 
 			// Tell the ArenaTicket that a generation desires to be collected. This will trigger a
 			// collection whenever the system has completed its current action (e.g. when the
@@ -127,48 +127,48 @@ namespace storm {
 
 		template <class R, class M>
 		typename IfNotVoid<R>::t Arena::enter(M &memberOf, R (M::*fn)(ArenaTicket &)) {
-			ArenaTicket e(*this);
-			setjmp(e.buf);
-			R r = (memberOf.*fn)(e);
-			e.finalize();
+			ArenaTicket t(*this);
+			spillRegs(&t.regs);
+			R r = (memberOf.*fn)(t);
+			t.finalize();
 			return r;
 		}
 		template <class R, class M>
 		typename IfVoid<R>::t Arena::enter(M &memberOf, R (M::*fn)(ArenaTicket &)) {
-			ArenaTicket e(*this);
-			setjmp(e.buf);
-			(memberOf.*fn)(e);
-			e.finalize();
+			ArenaTicket t(*this);
+			spillRegs(&t.regs);
+			(memberOf.*fn)(t);
+			t.finalize();
 		}
 		template <class R, class M, class P>
 		typename IfNotVoid<R>::t Arena::enter(M &memberOf, R (M::*fn)(ArenaTicket &, P), P p) {
-			ArenaTicket e(*this);
-			setjmp(e.buf);
-			R r = (memberOf.*fn)(e, p);
-			e.finalize();
+			ArenaTicket t(*this);
+			spillRegs(&t.regs);
+			R r = (memberOf.*fn)(t, p);
+			t.finalize();
 			return r;
 		}
 		template <class R, class M, class P>
 		typename IfVoid<R>::t Arena::enter(M &memberOf, R (M::*fn)(ArenaTicket &, P), P p) {
-			ArenaTicket e(*this);
-			setjmp(e.buf);
-			(memberOf.*fn)(e, p);
-			e.finalize();
+			ArenaTicket t(*this);
+			spillRegs(&t.regs);
+			(memberOf.*fn)(t, p);
+			t.finalize();
 		}
 		template <class R, class M, class P, class Q>
 		typename IfNotVoid<R>::t Arena::enter(M &memberOf, R (M::*fn)(ArenaTicket &, P, Q), P p, Q q) {
-			ArenaTicket e(*this);
-			setjmp(e.buf);
-			R r = (memberOf.*fn)(e, p, q);
-			e.finalize();
+			ArenaTicket t(*this);
+			spillRegs(&t.regs);
+			R r = (memberOf.*fn)(t, p, q);
+			t.finalize();
 			return r;
 		}
 		template <class R, class M, class P, class Q>
 		typename IfVoid<R>::t Arena::enter(M &memberOf, R (M::*fn)(ArenaTicket &, P, Q), P p, Q q) {
-			ArenaTicket e(*this);
-			setjmp(e.buf);
-			(memberOf.*fn)(e, p, q);
-			e.finalize();
+			ArenaTicket t(*this);
+			spillRegs(&t.regs);
+			(memberOf.*fn)(t, p, q);
+			t.finalize();
 		}
 
 

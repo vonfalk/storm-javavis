@@ -8,7 +8,6 @@
 #include "GenSet.h"
 #include "Gc/MemorySummary.h"
 #include "Utils/Templates.h"
-#include <csetjmp>
 
 namespace storm {
 	namespace smm {
