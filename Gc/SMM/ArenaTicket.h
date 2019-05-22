@@ -41,10 +41,23 @@ namespace storm {
 			// parts of the CPU state along with the rest of the stack.
 			SpilledRegs regs;
 
+			// Tell the ticket that we're currently performing garbage collection, and shall deny
+			// suggested requests for collection.
+			void gcRunning() { gc = true; }
+
+			// Make sure that all threads that may interact with garbage collected memory are not
+			// running. Threads are started again when the ticket is destroyed.
+			void stopThreads();
+
 			// Tell the ArenaTicket that a generation desires to be collected. This will trigger a
 			// collection whenever the system has completed its current action (e.g. when the
 			// ArenaTicket is being released).
-			void requestCollection(Generation *gen);
+			void scheduleCollection(Generation *gen);
+
+			// Tell the ArenaTicket that we would like to collect the indicated generation at this
+			// moment. The Ticket will immediately collect the desired generation as long as no
+			// other generation is being collected. Otherwise, nothing is done.
+			bool suggestCollection(Generation *gen);
 
 			// Get the finalizer object in the arena.
 			inline FinalizerPool &finalizerPool() const {
@@ -69,6 +82,12 @@ namespace storm {
 
 			// Are we holding the lock?
 			bool locked;
+
+			// Are we collecting garbage somewhere?
+			bool gc;
+
+			// Have we stopped threads?
+			bool threads;
 
 			// Lock and unlock the arena. This includes stopping threads etc.
 			void lock();

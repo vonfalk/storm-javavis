@@ -30,8 +30,7 @@ namespace storm {
 		}
 
 		Block *Generation::alloc(ArenaTicket &ticket, size_t minSize) {
-			// TODO: Perhaps triger a GC here as well, and not only in 'done'?
-			return allocBlock(minSize, blockSize);
+			return allocBlock(ticket, minSize, blockSize);
 		}
 
 		void Generation::done(ArenaTicket &ticket, Block *block) {
@@ -49,13 +48,8 @@ namespace storm {
 			}
 
 			// If we're using more memory than we're allowed, trigger a collection of us!
-			if (totalUsedBytes() > totalSize)
-				ticket.requestCollection(this);
-
-			// TODO: We also want to trigger a collection when we're running out of memory in our
-			// allocated chunks, at least if we're somewhat close to our limit. Otherwise, we risk
-			// repeatedly allocating a new chunk to just use it for a few blocks, and then
-			// deallocate the chunk even though it is just barely filled repeatedly...
+			if (totalAllocBytes > totalSize)
+				ticket.scheduleCollection(this);
 		}
 
 		bool Generation::isPinned(void *obj, void *end) {
@@ -75,31 +69,32 @@ namespace storm {
 			}
 
 			if (!shared)
-				shared = allocBlock(size, max(size + (size >> 1), blockSize));
+				shared = allocBlock(ticket, size, max(size + (size >> 1), blockSize));
 
 			return shared;
 		}
 
-		Block *Generation::allocBlock(size_t minSize, size_t maxSize) {
+		Block *Generation::allocBlock(ArenaTicket &ticket, size_t minSize, size_t maxSize) {
 			if (minSize > maxSize)
 				return null;
 
 			// Find a chunk where the allocation may fit.
-			for (size_t i = 0; i < chunks.size(); i++) {
-				size_t chunkFree = chunks[i].freeBytes;
+			if (Block *r = findFreeBlock(minSize, maxSize))
+				return r;
 
-				if (Block *r = chunks[i].allocBlock(minSize, maxSize, minFragment())) {
-					totalFreeBytes -= chunkFree;
-					totalFreeBytes += chunks[i].freeBytes;
+			// Try to do collect this generation!
+			if (ticket.suggestCollection(this)) {
+				// Success! There might be more to gain!
+				if (Block *r = findFreeBlock(minSize, maxSize))
 					return r;
-				}
-
-				if (++lastChunk == chunks.size())
-					lastChunk = 0;
+			} else if (totalAllocBytes >= totalSize) {
+				// If we're using too much memory, we definitely need to be collected!
+				ticket.scheduleCollection(this);
 			}
 
+
 			// We need to allocate more memory. TODO: How much?
-			Chunk c = arena.allocChunk(max(minSize, blockSize * 32), identifier);
+			Chunk c = arena.allocChunk(max(minSize, defaultChunkSize()), identifier);
 
 			// Out of memory?
 			if (c.empty())
@@ -120,6 +115,27 @@ namespace storm {
 			return r;
 		}
 
+		Block *Generation::findFreeBlock(size_t minSize, size_t maxSize) {
+			if (minSize > maxSize)
+				return null;
+
+			// Find a chunk where the allocation may fit.
+			for (size_t i = 0; i < chunks.size(); i++) {
+				size_t chunkFree = chunks[i].freeBytes;
+
+				if (Block *r = chunks[i].allocBlock(minSize, maxSize, minFragment())) {
+					totalFreeBytes -= chunkFree;
+					totalFreeBytes += chunks[i].freeBytes;
+					return r;
+				}
+
+				if (++lastChunk == chunks.size())
+					lastChunk = 0;
+			}
+
+			return null;
+		}
+
 		struct IfInGen {
 			Arena &arena;
 			byte id;
@@ -138,6 +154,8 @@ namespace storm {
 			// No need for GC if we're empty.
 			if (chunks.empty())
 				return;
+
+			ticket.gcRunning();
 
 			// Note: This assumes a generation where objects may move. Non-moving objects need to be
 			// treated differently (especially since we don't expect there to be very many of them).

@@ -278,11 +278,19 @@ namespace storm {
 			// Total number of used bytes.
 			inline size_t totalUsedBytes() const { return totalAllocBytes - totalFreeBytes; }
 
+			// Chunk size requested from the underlying system by default.
+			// TODO: What is good here?
+			inline size_t defaultChunkSize() const { return blockSize * 32; }
+
 			// The shared block.
 			Block *shared;
 
 			// Allocate a block with a (usable) size in the specified range. For internal use.
-			Block *allocBlock(size_t minSize, size_t maxSize);
+			Block *allocBlock(ArenaTicket &ticket, size_t minSize, size_t maxSize);
+
+			// Find a suitable block to allocate. Never attempts to allocate more memory from the
+			// Arena. Use 'allocBlock' for that.
+			Block *findFreeBlock(size_t minSize, size_t maxSize);
 
 			// Check if a particular object is pinned. Only reasonable to call during an ongoing scan.
 			bool isPinned(void *obj, void *end);

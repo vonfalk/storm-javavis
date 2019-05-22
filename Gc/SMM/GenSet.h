@@ -22,6 +22,11 @@ namespace storm {
 			// Create an empty set.
 			GenSet() : data(0) {}
 
+			// Create a set with one element.
+			explicit GenSet(byte id) : data(0) {
+				add(id);
+			}
+
 			// Clear.
 			void clear() {
 				data = 0;

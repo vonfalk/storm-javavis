@@ -8,7 +8,7 @@
 namespace storm {
 	namespace smm {
 
-		ArenaTicket::ArenaTicket(Arena &owner) : owner(owner), locked(false) {
+		ArenaTicket::ArenaTicket(Arena &owner) : owner(owner), locked(false), gc(false), threads(false) {
 			lock();
 		}
 
@@ -27,13 +27,35 @@ namespace storm {
 			if (!locked)
 				return;
 
+			if (threads) {
+				TODO(L"Re-start threads!");
+				threads = false;
+			}
+
 			owner.entries--;
 			owner.lock.unlock();
 			locked = false;
 		}
 
-		void ArenaTicket::requestCollection(Generation *gen) {
+		void ArenaTicket::stopThreads() {
+			if (threads)
+				return;
+
+			assert(false, L"We don't have the ability to stop threads yet!");
+
+			threads = true;
+		}
+
+		void ArenaTicket::scheduleCollection(Generation *gen) {
 			triggered.add(gen->identifier);
+		}
+
+		bool ArenaTicket::suggestCollection(Generation *gen) {
+			if (gc)
+				return false;
+
+			owner.collectI(*this, GenSet(gen->identifier));
+			return true;
 		}
 
 		void ArenaTicket::finalize() {
