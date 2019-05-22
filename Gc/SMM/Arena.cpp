@@ -22,7 +22,7 @@ namespace storm {
 
 			// Check our limit on generations. If this is broken, things will go very wrong.
 			assert(generationCount >= 2, L"Must have at least two generations.");
-			assert(generationCount + 2 < GenSet::maxGen, L"Must have less than " + ::toS(GenSet::maxGen) + L" generations.");
+			assert(generationCount + 2 < GenSet::maxGen, L"Must have fewer than " + ::toS(GenSet::maxGen) + L" generations.");
 
 			// Create the finalizer pool.
 			finalizers = new FinalizerPool(*this);
