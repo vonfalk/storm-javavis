@@ -3,6 +3,7 @@
 #if STORM_GC == STORM_GC_SMM
 
 #include "Arena.h"
+#include "Root.h"
 #include "Generation.h"
 #include "Thread.h"
 #include "SpilledRegs.h"
@@ -64,12 +65,16 @@ namespace storm {
 				return *owner.finalizers;
 			}
 
-			// Scan all stacks using the given scanner. This will scan inexact references.
+			// Scan inexact roots (e.g. stacks) using the given scanner.
 			template <class Scanner>
-			typename Scanner::Result scanStackRoots(typename Scanner::Source &source);
+			typename Scanner::Result scanInexactRoots(typename Scanner::Source &source);
+
+			// Scan exact roots.
+			template <class Scanner>
+			typename Scanner::Result scanExactRoots(typename Scanner::Source &source);
 
 			// Scan all blocks in all generations that may refer to a block in the given
-			// generation. The given generation is never scanned.
+			// generation.
 			template <class Scanner>
 			typename Scanner::Result scanGenerations(typename Scanner::Source &source, Generation *curr);
 
@@ -104,7 +109,7 @@ namespace storm {
 		 */
 
 		template <class Scanner>
-		typename Scanner::Result ArenaTicket::scanStackRoots(typename Scanner::Source &source) {
+		typename Scanner::Result ArenaTicket::scanInexactRoots(typename Scanner::Source &source) {
 			typename Scanner::Result r = typename Scanner::Result();
 			InlineSet<Thread> &threads = owner.threads;
 			for (InlineSet<Thread>::iterator i = threads.begin(); i != threads.end(); ++i) {
@@ -112,9 +117,27 @@ namespace storm {
 				if (r != typename Scanner::Result())
 					return r;
 			}
+
+			InlineSet<Root> &roots = owner.inexactRoots;
+			for (InlineSet<Root>::iterator i = roots.begin(); i != roots.end(); ++i) {
+				r = i->scan<Scanner>(source);
+				if (r != typename Scanner::Result())
+					return r;
+			}
 			return r;
 		}
 
+		template <class Scanner>
+		typename Scanner::Result ArenaTicket::scanExactRoots(typename Scanner::Source &source) {
+			typename Scanner::Result r = typename Scanner::Result();
+			InlineSet<Root> &roots = owner.exactRoots;
+			for (InlineSet<Root>::iterator i = roots.begin(); i != roots.end(); ++i) {
+				r = i->scan<Scanner>(source);
+				if (r != typename Scanner::Result())
+					return r;
+			}
+			return r;
+		}
 
 		template <class Scanner>
 		typename Scanner::Result ArenaTicket::scanGenerations(typename Scanner::Source &source, Generation *current) {

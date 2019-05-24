@@ -7,6 +7,7 @@
 #include "Gc/Scan.h"
 #include "Format.h"
 #include "Thread.h"
+#include "Root.h"
 
 namespace storm {
 
@@ -208,12 +209,40 @@ namespace storm {
 		assert(false, L"Walking objects is not yet supported!");
 	}
 
-	GcImpl::Root *GcImpl::createRoot(void *data, size_t count, bool ambiguous) {
-		assert(false, L"Creating roots is not yet supported!");
-		return null;
+	struct GcImpl::Root {
+		smm::Root root;
+
+		// Inexact root?
+		bool inexact;
+
+		// The arena.
+		smm::Arena &arena;
+
+		Root(void **data, size_t count, bool inexact, smm::Arena &arena)
+			: root(data, count), inexact(inexact), arena(arena) {}
+	};
+
+	GcImpl::Root *GcImpl::createRoot(void *data, size_t count, bool inexact) {
+		Root *r = new Root((void **)data, count / sizeof(void *), inexact, arena);
+
+		if (inexact) {
+			arena.addInexact(r->root);
+		} else {
+			arena.addExact(r->root);
+		}
+
+		return r;
 	}
 
-	void GcImpl::destroyRoot(Root *root) {}
+	void GcImpl::destroyRoot(Root *root) {
+		if (root->inexact) {
+			root->arena.removeInexact(root->root);
+		} else {
+			root->arena.removeExact(root->root);
+		}
+
+		delete root;
+	}
 
 	GcWatch *GcImpl::createWatch() {
 		assert(false, L"Creating watch objects is not yet supported!");

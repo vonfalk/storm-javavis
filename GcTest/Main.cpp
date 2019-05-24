@@ -111,12 +111,14 @@ NOINLINE void lists(Gc &gc, TypeStore *store) {
 	}
 }
 
+void *globalRoot = null;
+
 NOINLINE TypeStore *createTypes(Gc &gc) {
 	TypeStore *store = (TypeStore *)gc.alloc(&storeType);
 
 	// Create some room after the first type, so that it may be moved!
 	for (size_t i = 0; i < 1000; i++)
-		gc.alloc(&storeType);
+		globalRoot = gc.alloc(&storeType);
 
 	store->dummy = gc.allocType(GcType::tFixed, null, sizeof(Dummy), 1);
 	store->dummy->offset[0] = 0;
@@ -125,6 +127,7 @@ NOINLINE TypeStore *createTypes(Gc &gc) {
 
 NOINLINE void run(Gc &gc) {
 	TypeStore *store = createTypes(gc);
+	PVAR(globalRoot);
 
 	// Move the allocation to another location before we allocate 'longlived' inside
 	// 'lists'. Otherwise, it will likely not move!
@@ -145,6 +148,7 @@ int main(int argc, const char *argv[]) {
 	Gc gc(100*1024*1024, 1000);
 	gc.attachThread();
 
+	Gc::Root *r = gc.createRoot(&globalRoot, sizeof(globalRoot));
 	{
 		util::Timer t(L"test");
 		run(gc);
@@ -154,7 +158,9 @@ int main(int argc, const char *argv[]) {
 		util::Timer t(L"gc");
 		gc.collect();
 	}
+	PVAR(globalRoot);
 	gc.dbg_dump();
+	gc.destroyRoot(r);
 
 	return 0;
 }

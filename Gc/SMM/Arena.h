@@ -12,8 +12,9 @@
 namespace storm {
 	namespace smm {
 
-		class Thread;
+		class Root;
 		class Block;
+		class Thread;
 		class Generation;
 		class ArenaTicket;
 		class FinalizerPool;
@@ -69,6 +70,14 @@ namespace storm {
 			// Detach a thread from the arena.
 			void detachThread(Thread *thread);
 
+			// Add/remove exact roots.
+			void addExact(Root &root);
+			void removeExact(Root &root);
+
+			// Add/remove inexact roots.
+			void addInexact(Root &root);
+			void removeInexact(Root &root);
+
 			// Perform a full GC (API will most likely change).
 			void collect();
 
@@ -107,6 +116,12 @@ namespace storm {
 
 			// Threads running in this arena.
 			InlineSet<Thread> threads;
+
+			// Exact roots.
+			InlineSet<Root> exactRoots;
+
+			// Inexact roots. We assume there are not too many of these.
+			InlineSet<Root> inexactRoots;
 
 			// Perform a garbage collection.
 			void collectI(ArenaTicket &e);

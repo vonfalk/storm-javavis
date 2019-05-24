@@ -168,7 +168,7 @@ namespace storm {
 
 			// TODO: We might want to do an 'early out' inside the scanning by using
 			// VMAlloc::identifier before attempting to access the sets. We need to measure the benefits of this!
-			ticket.scanStackRoots<ScanSummaries<PinnedSet>>(pinnedSets);
+			ticket.scanInexactRoots<ScanSummaries<PinnedSet>>(pinnedSets);
 
 			// Keep track of surviving objects inside a ScanState object, which allocates memory
 			// from the next generation.
@@ -184,6 +184,9 @@ namespace storm {
 			// Traverse all other generations that could contain references to this generation and
 			// copy any referred objects to the new block.
 			ticket.scanGenerations<ScanState::Move>(state, this);
+
+			// Also traverse exact roots.
+			ticket.scanExactRoots<ScanState::Move>(state);
 
 			// Traverse the newly copied objects in the new block and copy any new references until
 			// no more objects are found.
@@ -217,6 +220,9 @@ namespace storm {
 			// moved objects to already. Currently, we have no real way of pointing them out, but
 			// the 'IfInGen' condition will not scan them at least.
 			ticket.scanGenerations<UpdateFwd<const IfInGen>>(IfInGen(this), this);
+
+			// Update exact roots.
+			ticket.scanExactRoots<UpdateFwd<const IfInGen>>(IfInGen(this));
 
 			// Update any old finalizer references as well.
 			pool.scan<UpdateFwd<const IfInGen>>(ticket, IfInGen(this));

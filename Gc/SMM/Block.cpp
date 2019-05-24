@@ -57,9 +57,9 @@ namespace storm {
 
 		void Block::dbg_dump() {
 			PNN(L"Block at " << this);
-			PNN(L", size " << std::setw(5) << size);
-			PNN(L", committed " << std::setw(5) << committed());
-			PNN(L", reserved " << std::setw(5) << reserved());
+			PNN(L", size " << std::setw(5) << (void *)size);
+			PNN(L", committed " << std::setw(5) << (void *)committed());
+			PNN(L", reserved " << std::setw(5) << (void *)reserved());
 			PNN(L", next " << next());
 			PLN(L", flags " << flags);
 		}

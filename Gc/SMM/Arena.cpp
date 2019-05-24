@@ -5,6 +5,7 @@
 
 #include "Utils/Bitwise.h"
 #include "Generation.h"
+#include "Root.h"
 #include "Block.h"
 #include "Thread.h"
 #include "ArenaTicket.h"
@@ -62,6 +63,9 @@ namespace storm {
 		}
 
 		void Arena::destroy() {
+			exactRoots.clear();
+			inexactRoots.clear();
+
 			// Note: This causes 'finalizers' to execute all pending finalizers as well!
 			delete finalizers;
 			finalizers = null;
@@ -84,7 +88,6 @@ namespace storm {
 
 		void Arena::freeChunk(Chunk chunk) {
 			util::Lock::L z(lock);
-
 			alloc.free(chunk);
 		}
 
@@ -101,8 +104,27 @@ namespace storm {
 
 		void Arena::detachThread(Thread *thread) {
 			util::Lock::L z(lock);
-
 			threads.erase(thread);
+		}
+
+		void Arena::addExact(Root &root) {
+			util::Lock::L z(lock);
+			exactRoots.insert(&root);
+		}
+
+		void Arena::removeExact(Root &root) {
+			util::Lock::L z(lock);
+			exactRoots.erase(&root);
+		}
+
+		void Arena::addInexact(Root &root) {
+			util::Lock::L z(lock);
+			inexactRoots.insert(&root);
+		}
+
+		void Arena::removeInexact(Root &root) {
+			util::Lock::L z(lock);
+			inexactRoots.erase(&root);
 		}
 
 		void Arena::collect() {
