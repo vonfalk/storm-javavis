@@ -180,12 +180,18 @@ namespace storm {
 		class FinalizerPool::MoveFinalizers {
 		public:
 			FinalizerPool &to;
+			PinnedSet pinned;
 
-			MoveFinalizers(FinalizerPool &to) : to(to) {}
+			MoveFinalizers(FinalizerPool &to, const PinnedSet &pinned) : to(to), pinned(pinned) {}
 
 			void operator ()(void *obj) const {
-				if (fmt::hasFinalizer(obj))
-					to.move(obj);
+				if (fmt::hasFinalizer(obj)) {
+					// Don't touch pinned objects!
+					void *end = (char *)fmt::skip(obj) - fmt::headerSize;
+					if (!pinned.has(obj, end)) {
+						to.move(obj);
+					}
+				}
 			}
 		};
 

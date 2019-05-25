@@ -204,7 +204,9 @@ namespace storm {
 			// Check the blocks containing finalizers found before and grab all objects with
 			// finalizers and put them inside the finalizer pool.
 			for (Block *at = finalizerBlocks; at; at = at->next()) {
-				at->traverse(FinalizerPool::MoveFinalizers(pool));
+				ChunkList::iterator pos = std::lower_bound(chunks.begin(), chunks.end(), at, PtrCompare());
+				dbg_assert(pos != chunks.end(), L"Could not find a pinned set!");
+				at->traverse(FinalizerPool::MoveFinalizers(pool, pinnedSets[pos - chunks.begin()]));
 			}
 
 			// Recursively grab all dependencies of the objects we moved to the finalizer pool!
@@ -234,7 +236,6 @@ namespace storm {
 				GenChunk &chunk = chunks[i];
 				PinnedSet &pinned = pinnedSets[i];
 
-				// TODO: We need to consider objects with finalizers as well!
 				if (chunk.compact(pinned)) {
 					arena.freeChunk(chunk.memory);
 					chunks.erase(chunks.begin() + i);

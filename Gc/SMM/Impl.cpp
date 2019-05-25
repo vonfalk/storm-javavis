@@ -120,8 +120,20 @@ namespace storm {
 	}
 
 	void *GcImpl::allocWeakArray(const GcType *type, size_t count) {
-		assert(false, L"Weak arrays are not yet supported!");
-		return null;
+		size_t size = fmt::sizeArray(type, count);
+		smm::Allocator &allocator = currentAlloc();
+		smm::PendingAlloc alloc;
+		void *result;
+		do {
+			alloc = allocator.reserve(size);
+			if (!alloc)
+				throw GcError(L"Out of memory (allocWeakArray).");
+			result = fmt::initWeakArray(alloc.mem(), type, size, count);
+			if (type->finalizer)
+				fmt::setHasFinalizer(result);
+		} while (!alloc.commit());
+
+		return result;
 	}
 
 	Bool GcImpl::liveObject(RootObject *obj) {
