@@ -421,11 +421,11 @@ namespace storm {
 			size_t used = current->committed();
 			bool finalizers = current->hasFlag(Block::fFinalizers);
 
-			if (size <= sizeof(Block) + used) {
+			if (size < sizeof(Block) + used) {
 				// One large object. Just add a padding object and continue!
 				size_t padSz = size - used;
 				if (padSz > 0)
-					fmt::objMakePad((fmt::Obj *)current->mem(used), size - used);
+					fmt::objMakePad((fmt::Obj *)current->mem(used), padSz);
 				current->committed(size);
 				current->reserved(size);
 				return current;
@@ -498,7 +498,7 @@ namespace storm {
 					current = compactFinishObj(current, at);
 				} else if (!inUse & lastInUse) {
 					// Last object in a hunk, mark the size accordingly.
-					size_t sz = (byte *)next - (byte *)current->mem(0);
+					size_t sz = (byte *)at - (byte *)current->mem(0);
 					current->committed(sz);
 					current->reserved(sz);
 					if (finalizers)

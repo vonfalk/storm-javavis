@@ -140,7 +140,6 @@ NOINLINE void createGlobals(Gc &gc) {
 
 NOINLINE void run(Gc &gc) {
 	createGlobals(gc);
-	void *volatile x = globals.store;
 
 	// Move the allocation to another location before we allocate 'longlived' inside
 	// 'lists'. Otherwise, it will likely not move!
