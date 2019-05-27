@@ -44,7 +44,9 @@ void CODECALL finalizer(Finalizable *fn) {
 
 	PLN(L"Global is at " << globals.weak);
 	for (size_t i = 0; i < globals.weak->count(); i++) {
-		PLN(i << L" - " << globals.weak->v[i]);
+		Finalizable *v = globals.weak->v[i];
+		PLN(i << L" - " << v << L" - " << (v ? v->data : 0));
+		dbg_assert(v != fn, L"ERROR! We should not find ourselves in the global array when we're being finalized!");
 	}
 }
 

@@ -36,35 +36,101 @@ namespace storm {
 			// Scan all recently copied objects and recursively move reachable objects to the 'to' generation.
 			void scanNew();
 
+			// Scan all weak objects. This will mark the weak objects as scanned, and will only be possible once.
+			template <class Scanner>
+			typename Scanner::Result scanWeak(typename Scanner::Source &source) {
+				typename Scanner::Result error;
+				while (weak.scanStep<Scanner>(source, error)) {
+					if (error != typename Scanner::Result())
+						return error;
+				}
+				return error;
+			}
+
 		private:
 			// No copying!
 			ScanState(const ScanState &o);
 			ScanState &operator =(const ScanState &o);
 
-			// Arena ticket.
-			ArenaTicket &ticket;
-
 			// Source generation.
 			const Generation::State &sourceGen;
 
-			// The generation where we shall store objects.
-			Generation *targetGen;
+			/**
+			 * A queue of objects that may be scanned at a later point.
+			 */
+			struct Queue {
+				// Target generation, where we allocate memory from.
+				Generation *target;
 
-			// First block containing objects that have been copied but not yet scanned. Objects
-			// from 'committed' up to 'reserved' should be scanned.
-			Block *targetHead;
+				// Arena ticket.
+				ArenaTicket &ticket;
 
-			// Last block containing copied objects. This is also where new objects are copied to.
-			Block *targetTail;
+				// First block containing objects that have been copied but not yet scanned. Objects
+				// from 'committed' up to 'reserved' should be scanned.
+				Block *head;
 
-			// Allocate a new block for us to use, having a minimum of 'size' bytes free. This block
-			// is allocated at the end of the target queue as 'targetTail'.
-			void newBlock(size_t minSize);
+				// Last block containing copied objects. This is also where new objects are copied to.
+				Block *tail;
 
-			// Perform one step (= one contiguous range of addresses) of scanning new
-			// objects. Returns 'true' if anything was done, and 'false' if there is nothing more to
-			// do.
-			bool scanStep();
+				// Create.
+				Queue(Generation *target, ArenaTicket &ticket)
+					: target(target), ticket(ticket), head(null), tail(null) {}
+
+				// Finish.
+				~Queue();
+
+				// Allocate a new block from 'sourceGen' and store it in 'tail'. Make sure we have
+				// at least 'minSize' bytes free in the 'tail' block.
+				void newBlock(size_t minSize);
+
+				// Perform one step (= one contiguous range of addresses) of scanning new
+				// objects. Returns 'true' if anything was done, or 'false' if there is nothing more
+				// to do.
+				// TODO: We need error handling somehow!
+				template <class Scanner>
+				bool scanStep(typename Scanner::Source &source, typename Scanner::Result &error) {
+					error = typename Scanner::Result();
+
+					Block *b = head;
+					if (!b)
+						return false;
+
+					size_t from = b->committed();
+					size_t to = b->reserved();
+					if (from >= to)
+						return false;
+
+					// TODO: Handle errors!
+					error = fmt::Scan<Scanner>::objects(source,
+														b->mem(from + fmt::headerSize),
+														b->mem(to + fmt::headerSize));
+					if (error != typename Scanner::Result())
+						return false;
+
+					b->committed(to);
+
+					// Are we done scanning this block?
+					if (to == b->size) {
+						Block *next = b->next();
+						if (next) {
+							head = next;
+						} else {
+							head = null;
+							tail = null;
+						}
+
+						target->done(ticket, b);
+					}
+
+					return head != null;
+				}
+			};
+
+			// Queue for regular objects. These are scanned during the copying.
+			Queue target;
+
+			// Queue for objects with weak references. These are scanned once at the end of the process.
+			Queue weak;
 		};
 
 

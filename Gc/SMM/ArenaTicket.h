@@ -78,6 +78,11 @@ namespace storm {
 			template <class Scanner>
 			typename Scanner::Result scanGenerations(typename Scanner::Source &source, Generation *curr);
 
+			template <class Predicate, class Scanner>
+			typename Scanner::Result scanGenerations(const Predicate &predicate,
+													typename Scanner::Source &source,
+													Generation *curr);
+
 		private:
 			// Associated arena.
 			Arena &owner;
@@ -141,6 +146,13 @@ namespace storm {
 
 		template <class Scanner>
 		typename Scanner::Result ArenaTicket::scanGenerations(typename Scanner::Source &source, Generation *current) {
+			return scanGenerations<fmt::ScanAll, Scanner>(fmt::ScanAll(), source, current);
+		}
+
+		template <class Predicate, class Scanner>
+		typename Scanner::Result ArenaTicket::scanGenerations(const Predicate &predicate,
+															typename Scanner::Source &source,
+															Generation *current) {
 			typename Scanner::Result r = typename Scanner::Result();
 			GenSet scanFor;
 			scanFor.add(current->identifier);
@@ -153,7 +165,7 @@ namespace storm {
 					continue;
 
 				// Scan it, instructing the generation to only scan references to the current generation.
-				r = gen->scan<Scanner>(scanFor, source);
+				r = gen->scan<Predicate, Scanner>(predicate, scanFor, source);
 				if (r != typename Scanner::Result())
 					return r;
 			}

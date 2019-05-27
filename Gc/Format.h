@@ -829,6 +829,14 @@ namespace storm {
 
 
 		/**
+		 * Always-true predicate.
+		 */
+		struct ScanAll {
+			inline bool operator() (void *, void *) const { return true; }
+		};
+
+
+		/**
 		 * Scanning of objects with the standard layout.
 		 */
 		template <class Scanner>
@@ -854,10 +862,6 @@ namespace storm {
 
 				return Result();
 			}
-
-			struct ScanAll {
-				inline bool operator() (void *, void *) const { return true; }
-			};
 
 			// Helper for interpreting and scanning a vtable.
 			// We assume vtables are at offset 0.

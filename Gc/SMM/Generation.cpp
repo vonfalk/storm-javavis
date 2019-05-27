@@ -9,6 +9,7 @@
 #include "Thread.h"
 #include "ArenaTicket.h"
 #include "FinalizerPool.h"
+#include "UpdateFwd.h"
 
 namespace storm {
 	namespace smm {
@@ -136,17 +137,6 @@ namespace storm {
 			return null;
 		}
 
-		struct IfInGen {
-			Arena &arena;
-			byte id;
-
-			IfInGen(Generation *gen) : arena(gen->arena), id(gen->identifier) {}
-
-			inline bool operator ()(void *ptr) const {
-				return arena.memGeneration(ptr) == id;
-			}
-		};
-
 		void Generation::collect(ArenaTicket &ticket) {
 			dbg_assert(next, L"Need a next generation for collection!");
 			dbg_assert(next != this, L"We can't collect to ourselves!");
@@ -178,12 +168,11 @@ namespace storm {
 			// For all blocks containing at least one pinned object, traverse it entirely to find
 			// and scan the pinned objects. Any non-pinned objects are copied to the new block.
 			for (size_t i = 0; i < chunks.size(); i++)
-				// chunks[i].scanPinned<ScanState::Move>(pinnedSets[i], state);
-				chunks[i].scanPinnedFindFinalizers<ScanState::Move>(pinnedSets[i], state, finalizerBlocks);
+				chunks[i].scanPinnedFindFinalizers<IfNotWeak, ScanState::Move>(IfNotWeak(), pinnedSets[i], state, finalizerBlocks);
 
 			// Traverse all other generations that could contain references to this generation and
 			// copy any referred objects to the new block.
-			ticket.scanGenerations<ScanState::Move>(state, this);
+			ticket.scanGenerations<IfNotWeak, ScanState::Move>(IfNotWeak(), state, this);
 
 			// Also traverse exact roots.
 			ticket.scanExactRoots<ScanState::Move>(state);
@@ -218,16 +207,29 @@ namespace storm {
 			// all pointers when we have to scan them anyway! Therefore, we don't need to scan this
 			// generation again. (Perhaps any objects that need finalization though).
 
+			// Note: We do, however, need to scan any weak references we found, since they may
+			// contain references that turned stale during scanning. The ScanState helpfully keeps
+			// track of this for us, so this is fairly cheap.
+			state.scanWeak<UpdateWeakFwd>(State(*this));
+
 			// Note: It would be nice if we could avoid scanning the objects in the generation we
 			// moved objects to already. Currently, we have no real way of pointing them out, but
-			// the 'IfInGen' condition will not scan them at least.
-			ticket.scanGenerations<UpdateFwd<const IfInGen>>(IfInGen(this), this);
+			// the early out checks will not do much work for those pointers at least.
+			// TODO: We could let ScanState mark newly allocated blocks with some flag that
+			// 'scanGenerations' makes sure to clear.
+			{
+				State s(*this);
+				MixedPredicate p(s);
+				ticket.scanGenerations<MixedPredicate, UpdateMixedFwd>(p, p, this);
+			}
+			// ticket.scanGenerations<UpdateFwd>(State(*this), this);
 
 			// Update exact roots.
-			ticket.scanExactRoots<UpdateFwd<const IfInGen>>(IfInGen(this));
+			ticket.scanExactRoots<UpdateFwd>(State(*this));
 
-			// Update any old finalizer references as well.
-			pool.scan<UpdateFwd<const IfInGen>>(ticket, IfInGen(this));
+			// Update any old finalizer references as well (we don't need to be careful with weak
+			// references here, they'll be destroyed soon enough anyway!).
+			pool.scan<UpdateFwd>(ticket, State(*this));
 
 			// Finally, release and/or compact any remaining blocks in this generation.
 			totalAllocBytes = 0;
