@@ -197,7 +197,7 @@ namespace storm {
 
 		// Add another splatted object to the weak header.
 		static inline void weakSplat(WeakHeader *weak) {
-			weak->splatted = (weak->splatted + 0x10) | 0x1;
+			weak->splatted = (weak->splatted + 0x2) | 0x1;
 		}
 
 

@@ -42,7 +42,7 @@ void CODECALL finalizer(Finalizable *fn) {
 	if (!globals.weak)
 		return;
 
-	PLN(L"Global is at " << globals.weak);
+	PLN(L"Global is at " << globals.weak << L", splats: " << globals.weak->splatted());
 	for (size_t i = 0; i < globals.weak->count(); i++) {
 		Finalizable *v = globals.weak->v[i];
 		PLN(i << L" - " << v << L" - " << (v ? v->data : 0));
