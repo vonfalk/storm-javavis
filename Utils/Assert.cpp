@@ -27,3 +27,21 @@ String AssertionException::what() const {
 	s << file << L"(L" << line << L")";
 	return s.str();
 }
+
+
+#ifdef VISUAL_STUDIO
+
+void debugAssertFailed(const wchar *msg) {
+	PLN(msg);
+	DebugBreak();
+	std::terminate();
+}
+
+#else
+
+void debugAssertFailed(const wchar *msg) {
+	PLN(msg);
+	std::terminate();
+}
+
+#endif
