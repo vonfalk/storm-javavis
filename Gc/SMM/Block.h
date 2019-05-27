@@ -38,6 +38,9 @@ namespace storm {
 
 				// This block may contain at least one object that needs finalization.
 				fFinalizers = 0x00000002,
+
+				// This block should not be scanned the next time we attempt to.
+				fSkipScan = 0x00000004,
 			};
 
 			// Modify flags.

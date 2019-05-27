@@ -88,6 +88,10 @@ namespace storm {
 				head = n;
 			}
 
+			// If it is empty, we don't need to scan it during the cleanup phase. That has already been done.
+			if (n->committed() == 0)
+				n->setFlag(Block::fSkipScan);
+
 			tail = n;
 		}
 

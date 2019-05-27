@@ -364,6 +364,11 @@ namespace storm {
 		typename Scanner::Result Generation::GenChunk::scan(const Predicate &p, typename Scanner::Source &source) {
 			typename Scanner::Result r = typename Scanner::Result();
 			for (Block *at = (Block *)memory.at; at != (Block *)memory.end(); at = (Block *)at->mem(at->size)) {
+				if (at->hasFlag(Block::fSkipScan)) {
+					at->clearFlag(Block::fSkipScan);
+					continue;
+				}
+
 				r = at->scanIf<Predicate, Scanner>(p, source);
 				if (r != typename Scanner::Result())
 					return r;
@@ -384,6 +389,11 @@ namespace storm {
 
 			typename Scanner::Result r = typename Scanner::Result();
 			for (Block *at = (Block *)memory.at; at != (Block *)memory.end(); at = (Block *)at->mem(at->size)) {
+				if (at->hasFlag(Block::fSkipScan)) {
+					at->clearFlag(Block::fSkipScan);
+					continue;
+				}
+
 				if (!at->mayReferTo(toScan))
 					continue;
 

@@ -212,11 +212,15 @@ namespace storm {
 			// track of this for us, so this is fairly cheap.
 			state.scanWeak<UpdateWeakFwd>(State(*this));
 
-			// Note: It would be nice if we could avoid scanning the objects in the generation we
-			// moved objects to already. Currently, we have no real way of pointing them out, but
-			// the early out checks will not do much work for those pointers at least.
-			// TODO: We could let ScanState mark newly allocated blocks with some flag that
-			// 'scanGenerations' makes sure to clear.
+			// Note: We try to not scan the objects we moved to a new generation immediately at this
+			// point. ScanState sets the flag fSkipScan on all blocks that were empty when they were
+			// allocated, and 'scan' in the generations will then ignore scanning once if that flag
+			// is set. We know that the ticket will not perform an early out and not check the next
+			// generation here, because we just added new blocks to that generation, which requires
+			// a good enough re-scan of the relevant blocks.
+			// This avoids scanning some objects twice at least. This is improved if the generation
+			// would be a bit more aggressive at splitting blocks during allocations, being more
+			// likely to return new blocks even though the already existing ones are suitable.
 			{
 				State s(*this);
 				MixedPredicate p(s);
