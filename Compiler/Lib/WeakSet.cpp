@@ -53,7 +53,7 @@ namespace storm {
 		add(nativeFunction(e, Value(), S("put"), thisKey, address(&WeakSetBase::putRaw)));
 		add(nativeFunction(e, boolT, S("has"), thisKey, address(&WeakSetBase::hasRaw)));
 		add(nativeFunction(e, boolT, S("remove"), thisKey, address(&WeakSetBase::removeRaw)));
-		add(nativeFunction(e, Value(), S("iter"), valList(e, 1, t), address(&WeakSetBase::iterRaw)));
+		add(nativeFunction(e, iter, S("iter"), valList(e, 1, t), address(&WeakSetBase::iterRaw)));
 
 		return Type::loadAll();
 	}

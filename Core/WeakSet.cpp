@@ -463,8 +463,6 @@ namespace storm {
 
 	WeakSetBase::Iter::Iter() : data(null), pos(0) {}
 
-	WeakSetBase::Iter::Iter(const Iter &o) : data(o.data), pos(o.pos) {}
-
 	WeakSetBase::Iter::Iter(WeakSetBase *owner) : data(owner->data), pos(0) {}
 
 	TObject *WeakSetBase::Iter::nextRaw() {

@@ -175,9 +175,6 @@ namespace storm {
 			// Create empty iterator.
 			Iter();
 
-			// Copy.
-			Iter(const Iter &o);
-
 			// Pointing to the first element.
 			Iter(WeakSetBase *owner);
 
