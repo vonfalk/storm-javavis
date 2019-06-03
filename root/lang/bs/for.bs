@@ -5,6 +5,10 @@ use core:lang;
  * var i = c.begin();
  * var end = c.end();
  * for (; i != end; ++i) { name = i.v; ... }
+ *
+ * Or, for range-style iterators:
+ * var i = c.iter();
+ * while (name = i.next) { ... }
  */
 class RangeFor extends ExprBlock {
 	ExprBlock? loopBlock;

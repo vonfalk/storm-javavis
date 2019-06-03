@@ -1,0 +1,35 @@
+use core:debug;
+
+Int iterateSet(Set<Int> data) {
+	Int r = 0;
+	for (k in data) {
+		r += k;
+	}
+	r;
+}
+
+Int iterateWeakSet(WeakSet<DbgActor> data) {
+	Int r = 0;
+	print("TODO: Fix the range-based for loop!");
+	// for (k in data) {
+	// 	r += k.get();
+	// }
+
+	// Step 1: This is what the for loop should expand to!
+	// var iter = data.iter;
+	// while (x = iter.next) {
+	// 	r += k.get();
+	// }
+
+	var iter = data.iter;
+	Bool ok = false;
+	do {
+		ok = false;
+		if (k = iter.next) {
+			ok = true;
+			r += k.get();
+		}
+	} while (ok);
+
+	r;
+}

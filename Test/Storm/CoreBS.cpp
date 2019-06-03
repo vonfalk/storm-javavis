@@ -4,6 +4,7 @@
 #include "Compiler/Exception.h"
 #include "Compiler/Package.h"
 #include "Core/Timing.h"
+#include "Core/Set.h"
 
 using storm::debug::DbgVal;
 using storm::debug::Dbg;
@@ -360,6 +361,73 @@ BEGIN_TEST(BSPQTest, BS) {
 	CHECK_EQ(runFn<Int>(S("test.bs.pqCompare")), 5);
 	CHECK_EQ(runFn<Int>(S("test.bs.pqCompareInit")), 2);
 	CHECK_EQ(toS(runFn<Str *>(S("test.bs.pqStr"))), L"World");
+} END_TEST
+
+/**
+ * Map.
+ */
+
+BEGIN_TEST(BSMapTest, BS) {
+	Engine &e = gEngine();
+	{
+		Array<Int> *keys = new (e) Array<Int>();
+		Array<Int> *vals = new (e) Array<Int>();
+
+		keys->push(10);
+		keys->push(100);
+		vals->push(5);
+		vals->push(8);
+
+		Map<Int, Int> *map = runFn<Map<Int, Int> *>(S("test.bs.intMapTest"), keys, vals);
+		CHECK_EQ(map->count(), 2);
+		CHECK_EQ(map->get(10), 5);
+		CHECK_EQ(map->get(100), 8);
+
+		CHECK_EQ(runFn<Int>(S("test.bs.iterateMap"), map), 850);
+	}
+
+	{
+		Array<Str *> *keys = new (e) Array<Str *>();
+		Array<Str *> *vals = new (e) Array<Str *>();
+
+		keys->push(new (e) Str(S("A")));
+		keys->push(new (e) Str(S("B")));
+		vals->push(new (e) Str(S("80")));
+		vals->push(new (e) Str(S("90")));
+
+		Map<Str *, Str *> *map = runFn<Map<Str *, Str *> *>(S("test.bs.strMapTest"), keys, vals);
+		CHECK_EQ(map->count(), 2);
+		CHECK_EQ(toS(runFn<Str *>(S("test.bs.readStrMap"), map, new (e) Str(S("A")))), S("80"));
+		CHECK_EQ(toS(runFn<Str *>(S("test.bs.readStrMap"), map, new (e) Str(S("B")))), S("90"));
+	}
+
+} END_TEST
+
+
+/**
+ * Set.
+ */
+
+BEGIN_TEST(BSSetTest, BS) {
+	Set<Int> *s = new (gEngine()) Set<Int>();
+	s->put(100);
+	s->put(80);
+	s->put(9);
+
+	CHECK_EQ(runFn<Int>(S("test.bs.iterateSet"), s), 189);
+} END_TEST
+
+BEGIN_TEST_(BSWeakSetTest, BS) {
+	Array<DbgActor *> *a = new (gEngine()) Array<DbgActor *>();
+	a->push(new (gEngine()) DbgActor(10));
+	a->push(new (gEngine()) DbgActor(80));
+	a->push(new (gEngine()) DbgActor(200));
+
+	WeakSet<DbgActor> *s = new (gEngine()) WeakSet<DbgActor>();
+	for (Nat i = 0; i < a->count(); i++)
+		s->put(a->at(i));
+
+	CHECK_EQ(runFn<Int>(S("test.bs.iterateWeakSet"), s), 290);
 } END_TEST
 
 

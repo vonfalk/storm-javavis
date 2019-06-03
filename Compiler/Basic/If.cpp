@@ -178,8 +178,7 @@ namespace storm {
 
 		IfTrue::IfTrue(SrcPos pos, Block *parent) : Block(pos, parent) {
 			if (IfWeak *weak = as<IfWeak>(parent)) {
-				LocalVar *override = weak->overwrite();
-				if (override) {
+				if (LocalVar *override = weak->overwrite()) {
 					add(override);
 				}
 			}

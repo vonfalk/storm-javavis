@@ -2,6 +2,7 @@
 #include "WeakSet.h"
 #include "Core/Str.h"
 #include "Core/WeakSet.h"
+#include "Maybe.h"
 
 namespace storm {
 
@@ -76,7 +77,7 @@ namespace storm {
 	Bool WeakSetIterType::loadAll() {
 		Engine &e = engine;
 
-		Value key = Value(k);
+		Value key = wrapMaybe(Value(k));
 
 		Value v = Value(this);
 		Value r = v.asRef();

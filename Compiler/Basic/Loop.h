@@ -18,15 +18,15 @@ namespace storm {
 			STORM_CTOR Loop(SrcPos pos, Block *parent);
 
 			// Condition (if any).
-			Expr *condExpr;
+			MAYBE(Expr *) condExpr;
 			void STORM_FN cond(Expr *e);
 
 			// Do content (if any). Will adopt any variables in the block 'e' to make scoping correct in 'while'.
-			Expr *doExpr;
+			MAYBE(Expr *) doExpr;
 			void STORM_FN doBody(Expr *e);
 
 			// While content (if any).
-			Expr *whileExpr;
+			MAYBE(Expr *) whileExpr;
 			void STORM_FN whileBody(Expr *e);
 
 			// Result (always void).

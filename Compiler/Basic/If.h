@@ -100,7 +100,7 @@ namespace storm {
 			STORM_CTOR IfTrue(SrcPos pos, Block *parent);
 
 			// Single contained expression.
-			Expr *expr;
+			MAYBE(Expr *) expr;
 			void STORM_FN set(Expr *expr);
 
 			// Generate code.
