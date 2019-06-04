@@ -19,15 +19,19 @@ namespace storm {
 			variables = new (this) VarMap();
 		}
 
+		void Block::initVariables(CodeGen *child) {
+			for (VarMap::Iter i = variables->begin(), end = variables->end(); i != end; ++i) {
+				i.v()->create(child);
+			}
+		}
+
 		void Block::code(CodeGen *state, CodeResult *to) {
 			using namespace code;
 
 			code::Block block = state->l->createBlock(state->l->last(state->block));
 			CodeGen *child = state->child(block);
 
-			for (VarMap::Iter i = variables->begin(), end = variables->end(); i != end; ++i) {
-				i.v()->create(child);
-			}
+			initVariables(child);
 
 			blockCode(state, to, block);
 

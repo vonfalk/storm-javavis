@@ -417,7 +417,7 @@ BEGIN_TEST(BSSetTest, BS) {
 	CHECK_EQ(runFn<Int>(S("test.bs.iterateSet"), s), 189);
 } END_TEST
 
-BEGIN_TEST_(BSWeakSetTest, BS) {
+BEGIN_TEST(BSWeakSetTest, BS) {
 	Array<DbgActor *> *a = new (gEngine()) Array<DbgActor *>();
 	a->push(new (gEngine()) DbgActor(10));
 	a->push(new (gEngine()) DbgActor(80));
@@ -427,6 +427,7 @@ BEGIN_TEST_(BSWeakSetTest, BS) {
 	for (Nat i = 0; i < a->count(); i++)
 		s->put(a->at(i));
 
+	CHECK_EQ(runFn<Int>(S("test.bs.iterateWeakSetPlain"), s), 290);
 	CHECK_EQ(runFn<Int>(S("test.bs.iterateWeakSet"), s), 290);
 } END_TEST
 

@@ -1,13 +1,28 @@
 #include "stdafx.h"
 #include "Loop.h"
+#include "Compiler/Exception.h"
 
 namespace storm {
 	namespace bs {
 
 		Loop::Loop(SrcPos pos, Block *parent) : Block(pos, parent) {}
 
-		void Loop::cond(Expr *e) {
-			condExpr = e;
+		void Loop::cond(Condition *cond) {
+			condition = cond;
+		}
+
+		Condition *Loop::cond() {
+			if (!condition)
+				throw RuntimeError(L"Must call 'cond' before creating a while body!");
+			return condition;
+		}
+
+		void Loop::condExpr(Expr *e) {
+			cond(new (this) BoolCondition(e));
+		}
+
+		void Loop::condWeak(WeakCast *w) {
+			cond(new (this) WeakCondition(w));
 		}
 
 		void Loop::doBody(Expr *e) {
@@ -16,8 +31,14 @@ namespace storm {
 				liftVars(b);
 		}
 
-		void Loop::whileBody(Expr *e) {
+		void Loop::whileBody(CondSuccess *e) {
 			whileExpr = e;
+		}
+
+		CondSuccess *Loop::createWhileBody() {
+			if (!condition)
+				throw RuntimeError(L"Must call 'cond' before creating a while body!");
+			return new (this) CondSuccess(pos, this, condition);
 		}
 
 		ExprResult Loop::result() {
@@ -25,49 +46,72 @@ namespace storm {
 			return ExprResult();
 		}
 
-		void Loop::blockCode(CodeGen *s, CodeResult *r, const code::Block &block) {
+		void Loop::code(CodeGen *s, CodeResult *r) {
 			using namespace code;
 
-			Label before = s->l->label();
-			CodeGen *subState = s->child(block);
+			// Outer state where we store our control variable!
+			CodeGen *outer = s->child(s->l->createBlock(s->l->last(s->block)));
+			*s->l << begin(outer->block);
+
+			// Inner state, which represents the actual block we're in.
+			CodeGen *inner = outer->child(outer->l->createBlock(outer->l->last(outer->block)));
+
+			// Initialize variables in the scope.
+			initVariables(inner);
+
+
+			code(outer, inner, r);
+
+			*s->l << end(outer->block);
+
+			// May be delayed...
+			if (r->needed())
+				r->location(s).created(s);
+		}
+
+		void Loop::code(CodeGen *outerState, CodeGen *innerState, CodeResult *r) {
+			using namespace code;
+
+			Label before = innerState->l->label();
 			CodeResult *condResult = null;
 
-			// Begin code generation!
-			*s->l << before;
-			*s->l << begin(block);
+			*innerState->l << before;
+			*innerState->l << begin(innerState->block);
 
 			if (doExpr) {
-				CodeResult *doResult = CREATE(CodeResult, this);
-				doExpr->code(subState, doResult);
+				CodeResult *doResult = new (this) CodeResult();
+				doExpr->code(innerState, doResult);
 			}
 
-			if (condExpr) {
-				// Place a control variable outside of this scope. This should maybe be in a separate scope.
-				condResult = new (this) CodeResult(Value(StormInfo<Bool>::type(engine())), s->block);
-				condExpr->code(subState, condResult);
+			if (condition) {
+				condResult = new (this) CodeResult(Value(StormInfo<Bool>::type(engine())), outerState->block);
+				condition->code(innerState, condResult);
 			}
 
 			if (whileExpr) {
-				Label after = s->l->label();
+				Label after = innerState->l->label();
 
-				if (condExpr) {
-					code::Var c = condResult->location(s).v;
-					*s->l << cmp(c, byteConst(0));
-					*s->l << jmp(after, ifEqual);
+				if (condResult) {
+					code::Var c = condResult->location(innerState).v;
+					*innerState->l << cmp(c, byteConst(0));
+					*innerState->l << jmp(after, ifEqual);
 				}
 
-				CodeResult *whileResult = CREATE(CodeResult, this);
-				whileExpr->code(subState, whileResult);
+				CodeResult *whileResult = new (this) CodeResult();
+				whileExpr->code(innerState, whileResult);
 
-				*s->l << after;
-				*s->l << end(block);
+				*innerState->l << after;
 			}
 
-			if (condExpr) {
-				code::Var c = condResult->location(s).v;
-				*s->l << cmp(c, byteConst(0));
+			*innerState->l << end(innerState->block);
+
+			if (condResult) {
+				code::Var c = condResult->location(outerState).v;
+				*innerState->l << cmp(c, byteConst(0));
+				*innerState->l << jmp(before, ifNotEqual);
+			} else {
+				*innerState->l << jmp(before);
 			}
-			*s->l << jmp(before, ifNotEqual);
 		}
 
 		void Loop::toS(StrBuf *to) const {
@@ -75,8 +119,8 @@ namespace storm {
 				*to << S("do ") << doExpr;
 			}
 
-			if (condExpr) {
-				*to << S("while (") << condExpr << S(") ");
+			if (condition) {
+				*to << S("while (") << condition << S(") ");
 			}
 
 			if (whileExpr) {

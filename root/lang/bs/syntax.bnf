@@ -265,18 +265,23 @@ WeakCast SAllWeakCast(Block block);
 SAllWeakCast => WeakMaybeCast(expr) : SExpr(block) expr;
 SAllWeakCast => r : SWeakCast(block) r;
 
-// If.
-IfExpr SIf(Block block);
-SIf[0] => createIf(block, expr) :
-    "if" #keyword, "(", SExpr(block) expr, ")" - SIfTrue(me) -> trueExpr - (, "else" #keyword - [, SStmt(me) -> falseExpr]?)?;
-SIf[0] => IfWeak(block, cast) :
-    "if" #keyword, "(", SWeakCast(block) cast, ")" - SIfTrue(me) -> trueExpr - (, "else" #keyword - [, SStmt(me) -> falseExpr]?)?;
-SIf[5] => IfWeak(block, cast, name) :
-    "if" #keyword, "(", SName name #varName, "=", SAllWeakCast(block) cast, ")" - SIfTrue(me) -> trueExpr - (, "else" #keyword - [, SStmt(me) -> falseExpr]?)?;
+// Conditions usable in if- and while-statements.
+Condition SCondition(Block block);
+// A regular expression.
+SCondition[0] => createCondition(expr) : SExpr(block) expr;
+// A weak cast.
+SCondition[0] => WeakCondition(cast) : SWeakCast(block) cast;
+// A weak cast with an assignment.
+SCondition[5] => WeakCondition(name, cast) : SName name #varName, "=", SAllWeakCast(block) cast;
 
-// Scoping for if and as expressions.
-IfTrue SIfTrue(Block parent); // Really only If and IfWeak.
-SIfTrue => IfTrue(pos, parent) : [SDelimiter - SStmt(me) -> set]?;
+// A success block in a condition.
+CondSuccess SCondSuccess(Block block, Condition cond);
+SCondSuccess => CondSuccess(pos, block, cond) : [SDelimiter - SStmt(me) -> set]?;
+
+// If.
+If SIf(Block block);
+SIf => If(block, cond) :
+    "if" #keyword, "(", SCondition(block) cond, ")" - SCondSuccess(me, cond) -> trueBranch - (, "else" #keyword - [, SStmt(me) -> falseBranch]?)?;
 
 // Return.
 Return SReturn(Block block);
@@ -285,8 +290,8 @@ SReturn => Return(pos, block, expr) : "return" #keyword, SExpr(block) expr;
 
 // The loop.
 Expr SLoop(Block block);
-SLoop => Loop(pos, block) : "do[ \n\r\t]" #keyword, SStmt(me) -> doBody - (, "while" #keyword, "(", SExpr(me) -> cond, ")", SStmt(me) -> whileBody)?;
-SLoop => Loop(pos, block) : "while" #keyword, "(", SExpr(me) -> cond, ")" [, SStmt(me) -> whileBody]?;
+SLoop => Loop(pos, block) : "do[ \n\r\t]" #keyword, SStmt(me) -> doBody - (, "while" #keyword, "(", SCondition(me) -> cond, ")" - SCondSuccess(me, me.cond) -> whileBody)?;
+SLoop => Loop(pos, block) : "while" #keyword, "(", SCondition(block) -> cond, ")" - SCondSuccess(me, me.cond) -> whileBody;
 
 // The for loop. Divided into two to get correct scoping.
 SLoop => ExprBlock(pos, block) : "for" #keyword, "(", SExpr(me) -> add, ";", SForInner(me) -> add;

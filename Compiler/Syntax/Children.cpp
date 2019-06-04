@@ -121,13 +121,13 @@ namespace storm {
 
 			Expr *src = new (this) MemberVarAccess(pos, thisExpr(block), token->target, true);
 			WeakCast *cast = new (this) WeakMaybeCast(src);
-			IfWeak *check = new (this) IfWeak(block, cast);
-			IfTrue *trueBlock = new (this) IfTrue(pos, check);
+			If *check = new (this) If(block, cast);
+			CondSuccess *trueBlock = new (this) CondSuccess(pos, check, check->condition);
 
-			LocalVar *overwrite = check->overwrite();
+			LocalVar *overwrite = check->condition->result();
 			assert(overwrite, L"Weak cast did not overwrite variable as expected.");
 			trueBlock->set(push(trueBlock, result, new (this) LocalVarAccess(pos, overwrite)));
-			check->trueExpr(trueBlock);
+			check->trueBranch(trueBlock);
 			block->add(check);
 		}
 

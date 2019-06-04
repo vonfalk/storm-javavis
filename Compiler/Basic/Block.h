@@ -47,6 +47,10 @@ namespace storm {
 			// time to not cause strange scoping issues.
 			virtual void STORM_FN liftVars(Block *from);
 
+		protected:
+			// Initialize variables in a scope, if you're overriding "code" directly.
+			void STORM_FN initVariables(CodeGen *child);
+
 		private:
 			// Variables in this block.
 			typedef Map<Str *, LocalVar *> VarMap;
@@ -85,14 +89,15 @@ namespace storm {
 			// Auto-casting should work across the boundaries of an expression.
 			virtual Int STORM_FN castPenalty(Value to);
 
-			// To string.
-			virtual void STORM_FN toS(StrBuf *to) const;
-
 			// Get expression at location i.
 			Expr *STORM_FN operator [](Nat i) const;
 
 			// Get number of expressions.
 			Nat STORM_FN count() const;
+
+		protected:
+			// To string.
+			virtual void STORM_FN toS(StrBuf *to) const;
 
 		private:
 			// Expressions here.

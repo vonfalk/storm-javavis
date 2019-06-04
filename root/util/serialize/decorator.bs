@@ -300,8 +300,8 @@ Function addWrite(Type type, Member[] members, Function typeFun) {
 	};
 
 	If check(body, startCall);
-	IfTrue ifTrue(pos, check);
-	check.trueExpr(ifTrue);
+	CondSuccess ifTrue(pos, check, check.condition);
+	check.trueBranch(ifTrue);
 	ExprBlock writeCalls(pos, ifTrue);
 	ifTrue.set(writeCalls);
 	body.add(check);
