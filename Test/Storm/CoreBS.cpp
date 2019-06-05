@@ -407,8 +407,8 @@ BEGIN_TEST(BSMapTest, BS) {
 
 		Map<Str *, Str *> *map = runFn<Map<Str *, Str *> *>(S("test.bs.strMapTest"), keys, vals);
 		CHECK_EQ(map->count(), 2);
-		CHECK_EQ(toS(runFn<Str *>(S("test.bs.readStrMap"), map, new (e) Str(S("A")))), S("80"));
-		CHECK_EQ(toS(runFn<Str *>(S("test.bs.readStrMap"), map, new (e) Str(S("B")))), S("90"));
+		CHECK_EQ(toS(runFn<Str *>(S("test.bs.readStrMap"), map, new (e) Str(S("A")))), L"80");
+		CHECK_EQ(toS(runFn<Str *>(S("test.bs.readStrMap"), map, new (e) Str(S("B")))), L"90");
 	}
 
 } END_TEST
