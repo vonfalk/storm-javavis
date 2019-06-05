@@ -437,6 +437,22 @@ void foo(Int? to) {
 This is, as we can see, more similar to the C++ version, but keeps the null-safety of Basic
 Storm. Aside from that, it is more readable if there are multiple checks for null and/or downcasts.
 
+Finally, since some iterators (for example, `WeakSet`) has a single member `next` that returns a
+`Maybe<T>` to indicate either the next element or the end of the sequence. In this situation it is
+useful to also use weak casts in loop conditionals as follows:
+
+```
+void foo(WeakSet<Foo> set) {
+    var iter = set.iter();
+    while (elem = iter.next()) {
+        // Do something
+    }
+}
+```
+
+As can be seen from the above example, weak casts in loops work just like for if-statements.
+
+
 Function pointers
 ------------------
 

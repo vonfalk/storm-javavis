@@ -17,12 +17,12 @@
     but the scale of the issue should be assessed first.
   - [ ] Parsing core.lang.syntax.bnf takes about 80 ms, which is a bit on the high end when compiling code...
 
-* Loose ends so far [44/81]
+* Loose ends so far [45/81]
   - [ ] When using "unless (foo)", "foo" uses a local variable in the block as well as outside of the block,
     which makes assignments to that variable to not write to the original variable even if one would expect so.
     We should at least warn about this.
-  - [ ] The for loop does not work for WeakSet<>.
-  - [ ] Perhaps the new Condition logic should be used inside "unless" and even "for(;;)".
+  - [ ] Perhaps most containers shall provide a range-iterator as well? It is probably easier to provide
+    some generic facility to convert from a pair of iterators to a range and use that.
   - [ ] Nested classes declared in C++ are not private in Storm, even if they are declared as such in C++.
   - [ ] The expression Int[]:foo does not parse properly. I don't know if we want it to or not, but it is
     nice when calling static functions (which is rare for these).
@@ -78,6 +78,7 @@
   - [ ] Move the 'assign' declaration to being purely a decorator (ie. Foo field(Foo v) : assign)?
   - [ ] If a type has a '==' or '<' outside the type itself, the corresponding operator will not be present in
     a Handle, like '<<' at the moment.
+  - [X] The for loop does not work for WeakSet<>.
   - [X] It would be nice to rework the semantics of Value::isValue to also return "true" for primitive types. 
     It is easier to think of it that way in many cases.
   - [X] Finish integrating the Double class in the system. Basic Storm should be able to instantiate them from
