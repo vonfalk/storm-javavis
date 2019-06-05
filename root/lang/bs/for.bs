@@ -2,9 +2,9 @@ use core:lang;
 
 /**
  * The range-based for-loop. Expands to (more or less):
- * var i = c.begin();
+ * var at = c.begin();
  * var end = c.end();
- * for (; i != end; ++i) { name = i.v; ... }
+ * for (; at != end; ++i) { name = at.v; ... }
  *
  * Or, for range-style iterators:
  * var i = c.iter();
@@ -32,35 +32,6 @@ class RangeFor extends ExprBlock {
 		createCode(container);
 	}
 
-	void createCode(Expr container) {
-		Var cont(this, SStr(" c", pos), container);
-		LocalVarAccess getCont(pos, cont.var);
-		add(cont);
-
-		Var atDecl(this, SStr(" at", pos), namedExpr(this, SStr("begin", pos), getCont, Actuals()));
-		LocalVarAccess getAt(pos, atDecl.var);
-		add(atDecl);
-
-		Var endDecl(this, SStr(" end", pos), namedExpr(this, SStr("end", pos), getCont, Actuals()));
-		LocalVarAccess getEnd(pos, endDecl.var);
-		add(endDecl);
-
-		For loop(pos, this);
-		add(loop);
-
-		ExprBlock body(pos, loop);
-		loop.test(namedExpr(loop, SStr("!=", pos), getAt, Actuals(getEnd)));
-		loop.update(namedExpr(loop, SStr("++*", pos), getAt, Actuals()));
-		loop.body(body);
-
-		if (keyName) {
-			body.add(Var(body, SStr(keyName, pos), namedExpr(loop, SStr("k", pos), getAt, Actuals())));
-		}
-
-		body.add(Var(body, SStr(valName), namedExpr(loop, SStr("v", pos), getAt, Actuals())));
-		loopBlock = body;
-	}
-
 	void body(Expr expr) {
 		unless (loopBlock)
 			return;
@@ -85,6 +56,91 @@ class RangeFor extends ExprBlock {
 		}
 
 		super:variable(part);
+	}
+
+private:
+
+	void createCode(Expr container) {
+		Var cont(this, SStr(" c", pos), container);
+		LocalVarAccess getCont(pos, cont.var);
+		add(cont);
+
+		if (createIterCode(getCont))
+			return;
+
+		if (createRangeCode(getCont))
+			return;
+
+		// Note: May not use fancy strings, their implementation depend on us!
+		throwSyntaxError(pos, container.toS + " is not iterable.");
+	}
+
+	Bool createIterCode(LocalVarAccess container) {
+		Expr beginExpr = namedExpr(this, SStr("begin", pos), container, Actuals());
+		Expr endExpr = namedExpr(this, SStr("end", pos), container, Actuals());
+
+		if (beginExpr as UnresolvedName)
+			return false;
+		if (endExpr as UnresolvedName)
+			return false;
+
+		Var atDecl(this, SStr(" at", pos), beginExpr);
+		LocalVarAccess getAt(pos, atDecl.var);
+		add(atDecl);
+
+		Var endDecl(this, SStr(" end", pos), endExpr);
+		LocalVarAccess getEnd(pos, endDecl.var);
+		add(endDecl);
+
+		For loop(pos, this);
+		add(loop);
+
+		ExprBlock body(pos, loop);
+		loop.test(namedExpr(loop, SStr("!=", pos), getAt, Actuals(getEnd)));
+		loop.update(namedExpr(loop, SStr("++*", pos), getAt, Actuals()));
+		loop.body(body);
+
+		if (keyName) {
+			body.add(Var(body, SStr(keyName, pos), namedExpr(loop, SStr("k", pos), getAt, Actuals())));
+		}
+
+		body.add(Var(body, SStr(valName), namedExpr(loop, SStr("v", pos), getAt, Actuals())));
+		loopBlock = body;
+
+		true;
+	}
+
+	Bool createRangeCode(LocalVarAccess container) {
+		Expr iterExpr = namedExpr(this, SStr("iter", pos), container, Actuals());
+		if (iterExpr as UnresolvedName)
+			return false;
+
+		Var iterDecl(this, SStr(" iter", pos), iterExpr);
+		LocalVarAccess getIter(pos, iterDecl.var);
+
+		Expr nextExpr = namedExpr(this, SStr("next", pos), getIter, Actuals());
+		if (nextExpr as UnresolvedName)
+			return false;
+
+		add(iterDecl);
+
+		Loop loop(pos, this);
+		add(loop);
+
+		if (keyName)
+			throwSyntaxError(pos, "Keys are not supported for range-based iterators.");
+
+		WeakCondition cond(SStr(valName, pos), WeakMaybeCast(nextExpr));
+		loop.cond(cond);
+
+		CondSuccess body(pos, loop, cond);
+		loop.whileBody(body);
+
+		ExprBlock eBody(pos, body);
+		body.set(eBody);
+		loopBlock = eBody;
+
+		true;
 	}
 
 }

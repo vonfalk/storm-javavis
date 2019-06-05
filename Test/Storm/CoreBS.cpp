@@ -418,7 +418,9 @@ BEGIN_TEST(BSSetTest, BS) {
 } END_TEST
 
 BEGIN_TEST(BSWeakSetTest, BS) {
-	Array<DbgActor *> *a = new (gEngine()) Array<DbgActor *>();
+	// Note: "a" has to be volatile, otherwise the compiler sometimes optimizes the variable away
+	// when we need it to keep values in the weak set alive!
+	Array<DbgActor *> *volatile a = new (gEngine()) Array<DbgActor *>();
 	a->push(new (gEngine()) DbgActor(10));
 	a->push(new (gEngine()) DbgActor(80));
 	a->push(new (gEngine()) DbgActor(200));

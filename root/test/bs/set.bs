@@ -20,9 +20,8 @@ Int iterateWeakSetPlain(WeakSet<DbgActor> data) {
 
 Int iterateWeakSet(WeakSet<DbgActor> data) {
 	Int r = 0;
-	print("TODO: Fix the range-based for loop!");
-	// for (k in data) {
-	// 	r += k.get();
-	// }
+	for (k in data) {
+		r += k.get();
+	}
 	r;
 }
