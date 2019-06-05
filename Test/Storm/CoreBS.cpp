@@ -94,6 +94,16 @@ BEGIN_TEST(StaticTest, BS) {
 	CHECK_EQ(runFn<Int>(S("test.bs.testStaticInheritance"), 1), 10);
 } END_TEST
 
+BEGIN_TEST(VisibilityTest, BS) {
+	CHECK_EQ(runFn<Int>(S("test.bs.localPrivate")), 10);
+	CHECK_EQ(runFn<Int>(S("test.bs.localInner")), 10);
+	CHECK_ERROR(runFn<Int>(S("test.bs.localSecret")), SyntaxError);
+
+	CHECK_ERROR(runFn<Int>(S("test.bs.remotePrivate")), SyntaxError);
+	CHECK_ERROR(runFn<Int>(S("test.bs.remoteInner")), SyntaxError);
+	CHECK_ERROR(runFn<Int>(S("test.bs.remoteSecret")), SyntaxError);
+} END_TEST
+
 /**
  * Values.
  */

@@ -1,0 +1,47 @@
+/**
+ * A class that is private to this file, to test visibility.
+ */
+private class PrivateClass {
+	Int x;
+
+	init(Int x) {
+		init() { x = x; }
+	}
+
+	// A public class inside of it. Should not be accessible from the outside.
+	class Inner {
+		Int y;
+
+		init(Int x) {
+			init() { y = x; }
+		}
+	}
+
+	// A private class inside of it. Should not be accessible from the outside or this file.
+	private class Secret {
+		Int y;
+
+		init(Int x) {
+			init() { y = x; }
+		}
+	}
+}
+
+
+// Try accessing the local class from this file, this should work.
+Int localPrivate() {
+	PrivateClass x(10);
+	x.x;
+}
+
+// Try accessing the local class from this file, this should also work.
+Int localInner() {
+	PrivateClass:Inner x(10);
+	x.y;
+}
+
+// Try accessing the secret inner class from this file. This should not work.
+Int localSecret() {
+	PrivateClass:Secret x(10);
+	x.y;
+}

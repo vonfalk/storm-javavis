@@ -1,0 +1,24 @@
+
+/**
+ * Test visiblity.
+ *
+ * Uses the class 'PrivateClass' in 'private.bs'.
+ *
+ * None of these should be allowed since PrivateClass is private.
+ */
+
+Int remotePrivate() {
+	PrivateClass x(10);
+	x.x;
+}
+
+Int remoteInner() {
+	PrivateClass:Inner x(10);
+	x.y;
+}
+
+Int remoteSecret() {
+	PrivateClass:Secret x(10);
+	x.y;
+}
+
