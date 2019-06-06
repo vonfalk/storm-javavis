@@ -1,6 +1,6 @@
 #pragma once
 #include "Block.h"
-#include "WeakCast.h"
+#include "Condition.h"
 
 namespace storm {
 	namespace bs {
@@ -13,11 +13,10 @@ namespace storm {
 			STORM_CLASS;
 		public:
 			// Create.
-			STORM_CTOR Unless(Block *block, WeakCast *cast);
-			STORM_CTOR Unless(Block *block, WeakCast *cast, syntax::SStr *name);
+			STORM_CTOR Unless(Block *block, Condition *cond);
 
-			// Cast.
-			WeakCast *cast;
+			// Condition.
+			Condition *cond;
 
 			// Statement to be executed if the cast fails.
 			Expr *failStmt;
@@ -42,11 +41,8 @@ namespace storm {
 			virtual void STORM_FN toS(StrBuf *to) const;
 
 		private:
-			// Variable to overwrite.
-			LocalVar *overwrite;
-
-			// Set up ourselves.
-			void init(Str *name);
+			// The CondSuccess that is the root of the success block.
+			CondSuccess *successRoot;
 		};
 
 

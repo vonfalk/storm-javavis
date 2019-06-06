@@ -5,24 +5,10 @@
 namespace storm {
 	namespace bs {
 
-		Unless::Unless(Block *parent, WeakCast *cast) : Block(cast->pos(), parent), cast(cast) {
-			init(null);
-		}
-
-		Unless::Unless(Block *parent, WeakCast *cast, syntax::SStr *name) : Block(cast->pos(), parent), cast(cast) {
-			init(name->v);
-		}
-
-		void Unless::init(Str *name) {
-			successBlock = new (this) ExprBlock(pos, this);
-
-			if (!name)
-				name = cast->overwrite();
-			if (!name)
-				return;
-
-			overwrite = new (this) LocalVar(name, cast->resultType(), cast->pos(), false);
-			Block::add(overwrite);
+		Unless::Unless(Block *parent, Condition *cond) : Block(cond->pos(), parent), cond(cond) {
+			successRoot = new (this) CondSuccess(pos, this, cond);
+			successBlock = new (this) ExprBlock(pos, successRoot);
+			successRoot->set(successBlock);
 		}
 
 		void Unless::fail(Expr *expr) {
@@ -36,22 +22,18 @@ namespace storm {
 		}
 
 		ExprResult Unless::result() {
-			return successBlock->result();
+			return successRoot->result();
 		}
 
 		void Unless::blockCode(CodeGen *state, CodeResult *r) {
 			using namespace code;
 
-			// Create the 'created' variable here. The extra scoping-time will not matter too much.
-			if (overwrite)
-				overwrite->create(state);
-
-			CodeResult *cond = new (this) CodeResult(Value(StormInfo<Bool>::type(engine())), state->block);
-			cast->castCode(state, cond, overwrite);
+			CodeResult *ok = new (this) CodeResult(Value(StormInfo<Bool>::type(engine())), state->block);
+			cond->code(state, ok);
 
 			Label skipLbl = state->l->label();
 
-			*state->l << cmp(cond->location(state).v, byteConst(0));
+			*state->l << cmp(ok->location(state).v, byteConst(0));
 			*state->l << jmp(skipLbl, ifNotEqual);
 
 			CodeResult *failResult = CREATE(CodeResult, this);
@@ -64,7 +46,7 @@ namespace storm {
 		}
 
 		void Unless::toS(StrBuf *to) const {
-			*to << S("unless (") << cast << S(") ") << failStmt << S(";\n") << successBlock;
+			*to << S("unless (") << cond << S(") ") << failStmt << S(";\n") << successBlock;
 		}
 
 

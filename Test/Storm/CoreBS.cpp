@@ -254,6 +254,9 @@ BEGIN_TEST(MaybeTest, BS) {
 	CHECK_EQ(runFn<Int>(S("test.bs.testMaybeInv2"), 0), 10);
 	CHECK_EQ(runFn<Int>(S("test.bs.testMaybeInv2"), 1), 1);
 
+	CHECK_EQ(runFn<Int>(S("test.bs.testPlainUnless"), 5), 5);
+	CHECK_EQ(runFn<Int>(S("test.bs.testPlainUnless"), 10), 18);
+
 	// Values!
 	CHECK_EQ(runFn<Int>(S("test.bs.testMaybeValue"), 0), 8);
 	CHECK_EQ(runFn<Int>(S("test.bs.testMaybeValue"), 1), 1);

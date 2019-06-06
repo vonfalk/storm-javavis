@@ -17,7 +17,7 @@
     but the scale of the issue should be assessed first.
   - [ ] Parsing core.lang.syntax.bnf takes about 80 ms, which is a bit on the high end when compiling code...
 
-* Loose ends so far [45/81]
+* Loose ends so far [46/80]
   - [ ] When using "unless (foo)", "foo" uses a local variable in the block as well as outside of the block,
     which makes assignments to that variable to not write to the original variable even if one would expect so.
     We should at least warn about this.
@@ -53,9 +53,6 @@
   - [ ] Generalize the "weak cast" functionality so that new types may "overload" them. This can for example
     be done by providing an entity type WeakCast that one can include (named "as" for example) that provides
     the desired functionality. It can then be injected using generators.
-  - [ ] Support two-stage initialization. First a call to 'super' or similarly, after which 'this' is accessible
-    as the parent class, then a call to 'init {}' which initializes the rest of the object. Slightly tricky
-    to implement wrt the 'as' operator.
   - [ ] It is not possible to chain 'assignment' functions using the = operator.
   - [ ] Allow declaring member functions (at least in values) as a different thread than the owner. Possible
     in C++, not in Basic Storm.
@@ -68,7 +65,6 @@
   - [ ] Destructors in maps and arrays are not working properly yet. Idea: add (yet another) member
     to array headers, and let the user provide a custom destructor in there if neccessary.
   - [ ] Make sure Array<>, Map<> and Set<> clear the memory when an element is removed (and call destructors).
-  - [ ] Verify so that integers can not be casted to integers.
   - [ ] Function pointers should maybe allow casting to less specific types of parameters.
   - [ ] Add a 'pos' member to Named. Then we can implement a generic 'file private' and use that in Basic Storm.
     If this is done, we should remove or replace storm::bs::FileScope in Basic/Scope.h, as it is most likely not
@@ -78,6 +74,9 @@
   - [ ] Move the 'assign' declaration to being purely a decorator (ie. Foo field(Foo v) : assign)?
   - [ ] If a type has a '==' or '<' outside the type itself, the corresponding operator will not be present in
     a Handle, like '<<' at the moment.
+  - [X] Support two-stage initialization. First a call to 'super' or similarly, after which 'this' is accessible
+    as the parent class, then a call to 'init {}' which initializes the rest of the object. Slightly tricky
+    to implement wrt the 'as' operator.
   - [X] The for loop does not work for WeakSet<>.
   - [X] It would be nice to rework the semantics of Value::isValue to also return "true" for primitive types. 
     It is easier to think of it that way in many cases.

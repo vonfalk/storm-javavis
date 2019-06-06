@@ -93,6 +93,13 @@ Int testMaybeInv2(Int v) {
 	w.get;
 }
 
+Int testPlainUnless(Int v) {
+	unless (v == 10)
+		return v;
+
+	18;
+}
+
 // See if we can return Maybe<T> properly.
 Int? createMaybe(Int v) {
 	Int? result;
