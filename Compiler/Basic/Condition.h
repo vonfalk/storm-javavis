@@ -1,15 +1,22 @@
 #pragma once
 #include "Expr.h"
-#include "WeakCast.h"
+#include "Var.h"
+#include "Block.h"
 
 namespace storm {
 	namespace bs {
 		STORM_PKG(lang.bs);
 
 		/**
-		 * A condition that is either a regular condition or a weak condition.
+		 * A condition used in the if-statement and the loop.
 		 *
-		 * Used to implement the logic common between the if- and the loop-statements.
+		 * A condition in Basic Storm can provide a bit more functionality than just an
+		 * expression. Conditions may also provide a single variable that is to be visible only in
+		 * the "true" case of the conditional statement. This is used to implement "weak casts",
+		 * i.e. casts that may fail. For this reason, the condition provides a 'result' member in
+		 * addition to code generation. The generated code always produces a boolean expression, and
+		 * if 'result' returned something other than 'null', that variable is initialized if the
+		 * condition was true.
 		 */
 		class Condition : public ObjectOn<Compiler> {
 			STORM_CLASS;
@@ -18,14 +25,14 @@ namespace storm {
 			STORM_CTOR Condition();
 
 			// Get a suitable position for this condition.
-			virtual SrcPos pos();
+			virtual SrcPos STORM_FN pos();
 
 			// Get the variable that will be created by this condition if it is successful.
-			virtual MAYBE(LocalVar *) result();
+			virtual MAYBE(LocalVar *) STORM_FN result();
 
 			// Generate code for the condition. This will create and initialize the "result"
 			// variable, if applicable. Will return a boolean value as the CodeResult value.
-			virtual void code(CodeGen *state, CodeResult *ok);
+			virtual void STORM_FN code(CodeGen *state, CodeResult *ok);
 		};
 
 
@@ -39,13 +46,13 @@ namespace storm {
 			STORM_CTOR BoolCondition(Expr *expr);
 
 			// Get a suitable position for this condition.
-			virtual SrcPos pos();
+			virtual SrcPos STORM_FN pos();
 
 			// Result variable.
-			virtual MAYBE(LocalVar *) result();
+			virtual MAYBE(LocalVar *) STORM_FN result();
 
 			// Generate code.
-			virtual void code(CodeGen *state, CodeResult *ok);
+			virtual void STORM_FN code(CodeGen *state, CodeResult *ok);
 
 		protected:
 			// To string.
@@ -54,43 +61,6 @@ namespace storm {
 		private:
 			// The expression we're evaluating.
 			Expr *expr;
-		};
-
-
-		/**
-		 * A weak cast used as a conditional.
-		 */
-		class WeakCondition : public Condition {
-			STORM_CLASS;
-		public:
-			// Create with a weak cast created previously.
-			STORM_CTOR WeakCondition(WeakCast *cast);
-
-			// Create with a weak cast created previously and a suggested variable name.
-			STORM_CTOR WeakCondition(syntax::SStr *varName, WeakCast *cast);
-
-			// Get a suitable position for this condition.
-			virtual SrcPos pos();
-
-			// Result variable.
-			virtual MAYBE(LocalVar *) result();
-
-			// Generate code.
-			virtual void code(CodeGen *state, CodeResult *ok);
-
-		protected:
-			// To string.
-			virtual void STORM_FN toS(StrBuf *to) const;
-
-		private:
-			// Weak cast used.
-			WeakCast *cast;
-
-			// Name of the additional variable, if any.
-			syntax::SStr *varName;
-
-			// Created variable, if any.
-			MAYBE(LocalVar *) created;
 		};
 
 

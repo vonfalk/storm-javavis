@@ -17,7 +17,6 @@ namespace storm {
 			STORM_CTOR If(Block *parent, Condition *cond);
 
 			// Some shorthands for creating an if-statement.
-			STORM_CTOR If(Block *parent, WeakCast *weak);
 			STORM_CTOR If(Block *parent, Expr *expr);
 
 			// The condition.

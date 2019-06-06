@@ -270,9 +270,9 @@ Condition SCondition(Block block);
 // A regular expression.
 SCondition[0] => createCondition(expr) : SExpr(block) expr;
 // A weak cast.
-SCondition[0] => WeakCondition(cast) : SWeakCast(block) cast;
+SCondition[0] => cast : SWeakCast(block) cast;
 // A weak cast with an assignment.
-SCondition[5] => WeakCondition(name, cast) : SName name #varName, "=", SAllWeakCast(block) cast;
+SCondition[5] => cast : SName -> name #varName, "=", SAllWeakCast(block) cast;
 
 // A success block in a condition.
 CondSuccess SCondSuccess(Block block, Condition cond);

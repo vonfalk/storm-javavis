@@ -130,7 +130,8 @@ private:
 		if (keyName)
 			throwSyntaxError(pos, "Keys are not supported for range-based iterators.");
 
-		WeakCondition cond(SStr(valName, pos), WeakMaybeCast(nextExpr));
+		WeakMaybeCast cond(nextExpr);
+		cond.name(SStr(valName, pos));
 		loop.cond(cond);
 
 		CondSuccess body(pos, loop, cond);

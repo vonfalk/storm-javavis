@@ -8,10 +8,65 @@
 namespace storm {
 	namespace bs {
 
-		WeakCast::WeakCast(SrcPos pos) : pos(pos) {}
+		WeakCast::WeakCast() {}
+
+		SrcPos WeakCast::pos() {
+			throw AbstractFnCalled(L"WeakCast::code");
+		}
+
+		MAYBE(LocalVar *) STORM_FN WeakCast::result() {
+			if (created)
+				return created;
+
+			Str *name = null;
+			SrcPos pos;
+			if (varName) {
+				name = varName->v;
+				pos = varName->pos;
+			} else {
+				name = overwrite();
+				pos = this->pos();
+			}
+
+			if (!name)
+				return null;
+
+			created = new (this) LocalVar(name, resultType(), pos, false);
+			return created;
+		}
+
+		void WeakCast::code(CodeGen *state, CodeResult *ok) {
+			LocalVar *var = result();
+			if (var)
+				var->create(state);
+
+			castCode(state, ok, var);
+		}
 
 		MAYBE(Str *) WeakCast::overwrite() {
 			return null;
+		}
+
+		Value WeakCast::resultType() {
+			throw AbstractFnCalled(L"WeakCast::resultType");
+		}
+
+		void WeakCast::castCode(CodeGen *state, CodeResult *ok, MAYBE(LocalVar *) var) {
+			using namespace code;
+
+			// Always indicate cast faile.d
+			*state->l << mov(ok->location(state).v, byteConst(0));
+		}
+
+		void WeakCast::name(syntax::SStr *name) {
+			varName = name;
+		}
+
+		void WeakCast::output(StrBuf *to) const {
+			if (varName) {
+				*to << varName->v;
+				*to << S(" = ");
+			}
 		}
 
 		MAYBE(Str *) WeakCast::defaultOverwrite(Expr *expr) {
@@ -25,24 +80,13 @@ namespace storm {
 			return null;
 		}
 
-		Value WeakCast::result() {
-			return Value();
-		}
-
-		void WeakCast::code(CodeGen *state, CodeResult *boolResult, MAYBE(LocalVar *) var) {
-			using namespace code;
-
-			// Always indicate cast failed.
-			*state->l << mov(boolResult->location(state).v, byteConst(0));
-		}
-
 
 		/**
 		 * 'as' cast.
 		 */
 
 		WeakDowncast::WeakDowncast(Block *block, Expr *expr, SrcName *type)
-			: WeakCast(expr->pos), expr(expr) {
+			: WeakCast(), expr(expr) {
 
 			to = block->scope.value(type);
 
@@ -57,15 +101,19 @@ namespace storm {
 								L" does not inherit from " + ::toS(from) + L".");
 		}
 
+		SrcPos WeakDowncast::pos() {
+			return expr->pos;
+		}
+
 		MAYBE(Str *) WeakDowncast::overwrite() {
 			return defaultOverwrite(expr);
 		}
 
-		Value WeakDowncast::result() {
+		Value WeakDowncast::resultType() {
 			return to;
 		}
 
-		void WeakDowncast::code(CodeGen *state, CodeResult *boolResult, MAYBE(LocalVar *) var) {
+		void WeakDowncast::castCode(CodeGen *state, CodeResult *boolResult, MAYBE(LocalVar *) var) {
 			using namespace code;
 
 			// Get the value...
@@ -97,6 +145,7 @@ namespace storm {
 		}
 
 		void WeakDowncast::toS(StrBuf *to) const {
+			output(to);
 			*to << expr << S(" as ") << this->to;
 		}
 
@@ -104,17 +153,21 @@ namespace storm {
 		 * MaybeCast.
 		 */
 
-		WeakMaybeCast::WeakMaybeCast(Expr *expr) : WeakCast(expr->pos), expr(expr) {}
+		WeakMaybeCast::WeakMaybeCast(Expr *expr) : WeakCast(), expr(expr) {}
+
+		SrcPos WeakMaybeCast::pos() {
+			return expr->pos;
+		}
 
 		MAYBE(Str *) WeakMaybeCast::overwrite() {
 			return defaultOverwrite(expr);
 		}
 
-		Value WeakMaybeCast::result() {
+		Value WeakMaybeCast::resultType() {
 			return unwrapMaybe(expr->result().type());
 		}
 
-		void WeakMaybeCast::code(CodeGen *state, CodeResult *boolResult, MAYBE(LocalVar *) var) {
+		void WeakMaybeCast::castCode(CodeGen *state, CodeResult *boolResult, MAYBE(LocalVar *) var) {
 			using namespace code;
 
 			Value srcType = expr->result().type();

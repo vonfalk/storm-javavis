@@ -21,10 +21,6 @@ namespace storm {
 			cond(new (this) BoolCondition(e));
 		}
 
-		void Loop::condWeak(WeakCast *w) {
-			cond(new (this) WeakCondition(w));
-		}
-
 		void Loop::doBody(Expr *e) {
 			doExpr = e;
 			if (Block *b = as<Block>(e))

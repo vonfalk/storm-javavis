@@ -1,6 +1,6 @@
 #pragma once
 #include "Block.h"
-#include "Condition.h"
+#include "WeakCast.h"
 
 namespace storm {
 	namespace bs {
@@ -23,7 +23,6 @@ namespace storm {
 
 			// Helpers for common tasks.
 			void STORM_FN condExpr(Expr *expr);
-			void STORM_FN condWeak(WeakCast *weak);
 
 			// Get the condition. Throw on failure.
 			Condition *STORM_FN cond();

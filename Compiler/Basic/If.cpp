@@ -11,10 +11,6 @@ namespace storm {
 
 		If::If(Block *parent, Condition *cond) : Block(cond->pos(), parent), condition(cond) {}
 
-		If::If(Block *parent, WeakCast *weak) : Block(weak->pos, parent) {
-			condition = new (this) WeakCondition(weak);
-		}
-
 		If::If(Block *parent, Expr *expr) : Block(expr->pos, parent) {
 			condition = new (this) BoolCondition(expr);
 		}

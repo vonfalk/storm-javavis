@@ -5,11 +5,11 @@
 namespace storm {
 	namespace bs {
 
-		Unless::Unless(Block *parent, WeakCast *cast) : Block(cast->pos, parent), cast(cast) {
+		Unless::Unless(Block *parent, WeakCast *cast) : Block(cast->pos(), parent), cast(cast) {
 			init(null);
 		}
 
-		Unless::Unless(Block *parent, WeakCast *cast, syntax::SStr *name) : Block(cast->pos, parent), cast(cast) {
+		Unless::Unless(Block *parent, WeakCast *cast, syntax::SStr *name) : Block(cast->pos(), parent), cast(cast) {
 			init(name->v);
 		}
 
@@ -21,7 +21,7 @@ namespace storm {
 			if (!name)
 				return;
 
-			overwrite = new (this) LocalVar(name, cast->result(), cast->pos, false);
+			overwrite = new (this) LocalVar(name, cast->resultType(), cast->pos(), false);
 			Block::add(overwrite);
 		}
 
@@ -47,7 +47,7 @@ namespace storm {
 				overwrite->create(state);
 
 			CodeResult *cond = new (this) CodeResult(Value(StormInfo<Bool>::type(engine())), state->block);
-			cast->code(state, cond, overwrite);
+			cast->castCode(state, cond, overwrite);
 
 			Label skipLbl = state->l->label();
 

@@ -1,6 +1,8 @@
 #include "stdafx.h"
 #include "Condition.h"
+#include "WeakCast.h"
 #include "Compiler/Exception.h"
+#include "Compiler/Lib/Maybe.h"
 
 namespace storm {
 	namespace bs {
@@ -51,54 +53,6 @@ namespace storm {
 		}
 
 
-		/**
-		 * Weak condition.
-		 */
-
-		WeakCondition::WeakCondition(WeakCast *cast) : cast(cast), varName(null) {}
-
-		WeakCondition::WeakCondition(syntax::SStr *name, WeakCast *cast) : cast(cast), varName(name) {}
-
-		SrcPos WeakCondition::pos() {
-			return cast->pos;
-		}
-
-		MAYBE(LocalVar *) WeakCondition::result() {
-			if (created)
-				return created;
-
-			Str *name = null;
-			SrcPos pos;
-			if (varName) {
-				name = varName->v;
-				pos = varName->pos;
-			} else {
-				name = cast->overwrite();
-				pos = cast->pos;
-			}
-
-			if (!name)
-				return null;
-
-			created = new (this) LocalVar(name, cast->result(), pos, false);
-			return created;
-		}
-
-		void WeakCondition::code(CodeGen *state, CodeResult *ok) {
-			LocalVar *var = result();
-			if (var)
-				var->create(state);
-
-			cast->code(state, ok, var);
-		}
-
-		void WeakCondition::toS(StrBuf *to) const {
-			if (varName)
-				*to << varName->v << S(" = ");
-			*to << cast;
-		}
-
-
 		// Create suitable conditions.
 		Condition *STORM_FN createCondition(Expr *expr) {
 			Value result = expr->result().type().asRef(false);
@@ -106,8 +60,7 @@ namespace storm {
 			if (result == Value(StormInfo<Bool>::type(expr->engine()))) {
 				return new (expr) BoolCondition(expr);
 			} else if (isMaybe(result)) {
-				WeakCast *cast = new (expr) WeakMaybeCast(expr);
-				return new (expr) WeakCondition(cast);
+				return new (expr) WeakMaybeCast(expr);
 			} else {
 				throw SyntaxError(expr->pos, L"You can not use the type " + ::toS(result) + L" as a condition.");
 			}
