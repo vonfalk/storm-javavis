@@ -4,15 +4,14 @@ echo "Release notes"
 echo "===="
 echo ""
 
-# Generate release notes from the Git repository.
-for c in $(git for-each-ref "refs/tags/release/" --sort='-*committerdate' --format="%(objectname)")
+git for-each-ref "refs/tags/release/" --sort='-*committerdate' --format="%(objectname) %(tag) %(taggerdate:iso)" | while read hash tag date time timezone
 do
-    if [[ $(git cat-file -t $c) == "tag" ]]
+    if [[ $(git cat-file -t $hash) == "tag" ]]
     then
-	git cat-file -p $c | grep "tag " | sed -E 's!tag +release/!!'
+	echo "${tag/release\//} ($date)"
 	echo "---"
 	echo ""
-	git cat-file -p $c | tail -n +6
+	git cat-file -p $hash | tail -n +6
 	echo ""
     fi
 done

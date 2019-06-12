@@ -1,7 +1,7 @@
 Downloads
 ===========
 
-The current version of Storm is `?StormVersion?`, released on ?FileDate:storm.zip?. Only the latest release is
+The current version of Storm is `?StormVersion?`, released on ?StormDate?. Only the latest release is
 provided in binary form. Earlier releases have to be compiled from source. All releases are marked
 in the Git repository by a tag with the name `release/<version>`.
 
