@@ -23,13 +23,14 @@ namespace storm {
 
 			// Check our limit on generations. If this is broken, things will go very wrong.
 			assert(generationCount >= 2, L"Must have at least two generations.");
-			assert(generationCount + 2 < GenSet::maxGen, L"Must have fewer than " + ::toS(GenSet::maxGen) + L" generations.");
+			byte limit = GenSet::maxGen - firstFreeIdentifier;
+			assert(generationCount < limit, L"Must have fewer than " + ::toS(limit) + L" generations.");
 
 			// Create the finalizer pool.
 			finalizers = new FinalizerPool(*this);
 
 			// Allocate the individual generations.
-			byte genId = 1;
+			byte genId = firstFreeIdentifier;
 			generations = vector<Generation *>(generationCount + 1, null);
 			for (size_t i = 0; i < generationCount; i++) {
 				assert(genId != finalizerIdentifier);

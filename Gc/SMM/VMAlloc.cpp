@@ -13,6 +13,8 @@ namespace storm {
 			minAddr(0), maxAddr(1),
 			info(null), lastAlloc(0) {
 
+			dbg_assert((1 << identifierBits) ==  (1 + infoData(0xFF)), L"Invalid value of 'identifierBits' found in Config.h!");
+
 			size_t granularity = max(vmAllocMinSize, vm->allocGranularity);
 
 			// Try to allocate the initial block!
@@ -101,6 +103,9 @@ namespace storm {
 
 
 		Chunk VMAlloc::alloc(size_t size, byte identifier) {
+			byte packedIdentifier = (identifier & 0x3F) << 2;
+			dbg_assert(infoData(packedIdentifier) == identifier, L"Identifier too large!");
+
 			size_t pieces = (size + vmAllocMinSize - 1) / vmAllocMinSize;
 
 			size_t wrap = infoCount();
@@ -118,7 +123,7 @@ namespace storm {
 			lastAlloc = start + pieces;
 
 			// Mark the memory as in use.
-			memset(info + start, INFO_USED_CLIENT | ((identifier & 0x3F) << 2), pieces);
+			memset(info + start, INFO_USED_CLIENT | packedIdentifier, pieces);
 
 			Chunk mem(infoPtr(start), pieces*vmAllocMinSize);
 			vm->commit(mem.at, mem.size);

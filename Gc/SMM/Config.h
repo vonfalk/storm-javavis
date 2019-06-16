@@ -22,8 +22,16 @@ namespace storm {
 		static const size_t vmAllocBits = 16;
 		static const size_t vmAllocMinSize = 1 << vmAllocBits;
 
-		// Identifier used by the finalizer generation.
-		static const byte finalizerIdentifier = 0;
+		// Maximum number of bits for use in generation identifiers. Enforced by VMAlloc.h.
+		static const size_t identifierBits = CHAR_BIT - 2;
+		static const byte identifierMaxVal = byte(1) << identifierBits;
+
+		// Reserved number of identifiers = first free identifier number.
+		static const byte firstFreeIdentifier = 0;
+
+		// Identifier used by the finalizer generation. This is outside of what we can store in a
+		// GenSet, but that is fine since it does not count as a generation.
+		static const byte finalizerIdentifier = identifierMaxVal - 1;
 
 	}
 }

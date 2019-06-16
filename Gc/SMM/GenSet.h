@@ -73,9 +73,9 @@ namespace storm {
 			// Maximum number of generations supported. This is the smallest of the number of bits
 			// in a size_t and the number of generations addressable by the bits provided by VMAlloc.
 			static const size_t maxGen =
-				(sizeof(size_t)*CHAR_BIT) < (size_t(1) << VMAlloc::identifierBits) ?
+				(sizeof(size_t)*CHAR_BIT) < (size_t(1) << identifierBits) ?
 														  (sizeof(size_t)*CHAR_BIT) :
-														  (size_t(1) << VMAlloc::identifierBits);
+														  (size_t(1) << identifierBits);
 
 		private:
 			// Mask for the generations.
