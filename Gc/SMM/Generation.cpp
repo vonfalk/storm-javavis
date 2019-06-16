@@ -106,6 +106,7 @@ namespace storm {
 			// TODO: We might want to merge blocks, but that requires us to be able to split and
 			// deallocate unused blocks as well...
 			pos = chunks.insert(pos, GenChunk(c));
+			lastChunk = pos - chunks.begin();
 
 			while (pinnedSets.size() < chunks.size())
 				pinnedSets.push_back(PinnedSet(0, 1));
@@ -120,13 +121,17 @@ namespace storm {
 			if (minSize > maxSize)
 				return null;
 
+			if (lastChunk >= chunks.size())
+				lastChunk = 0;
+
 			// Find a chunk where the allocation may fit.
 			for (size_t i = 0; i < chunks.size(); i++) {
-				size_t chunkFree = chunks[i].freeBytes;
+				GenChunk &chunk = chunks[lastChunk];
+				size_t chunkFree = chunk.freeBytes;
 
-				if (Block *r = chunks[i].allocBlock(minSize, maxSize, minFragment())) {
+				if (Block *r = chunk.allocBlock(minSize, maxSize, minFragment())) {
 					totalFreeBytes -= chunkFree;
-					totalFreeBytes += chunks[i].freeBytes;
+					totalFreeBytes += chunk.freeBytes;
 					return r;
 				}
 
@@ -249,6 +254,8 @@ namespace storm {
 				} else {
 					totalAllocBytes += chunk.memory.size;
 					totalFreeBytes += chunk.freeBytes;
+					if (lastChunk >= i && lastChunk > 0)
+						lastChunk--;
 				}
 			}
 		}
