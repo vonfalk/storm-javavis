@@ -10,6 +10,7 @@
 #include "ArenaTicket.h"
 #include "FinalizerPool.h"
 #include "UpdateFwd.h"
+#include "Util.h"
 
 namespace storm {
 	namespace smm {
@@ -45,7 +46,7 @@ namespace storm {
 
 				totalFreeBytes += pos->freeBytes;
 			} else {
-				assert(false, L"Calling 'done' for a block not belonging to this generation!");
+				dbg_assert(false, L"Calling 'done' for a block not belonging to this generation!");
 			}
 
 			// If we're using more memory than we're allowed, trigger a collection of us!
@@ -101,19 +102,19 @@ namespace storm {
 			if (c.empty())
 				return null;
 
-			// Find a place to insert the new chunk!
-			ChunkList::iterator pos = std::lower_bound(chunks.begin(), chunks.end(), c, ChunkCompare());
+			// Insert the new chunk at the proper location.
+			size_t pos = insertSorted(chunks, GenChunk(c), ChunkCompare());
+			lastChunk = pos;
+
 			// TODO: We might want to merge blocks, but that requires us to be able to split and
 			// deallocate unused blocks as well...
-			pos = chunks.insert(pos, GenChunk(c));
-			lastChunk = pos - chunks.begin();
 
 			while (pinnedSets.size() < chunks.size())
 				pinnedSets.push_back(PinnedSet(0, 1));
 
 			totalAllocBytes += c.size;
-			Block *r = pos->allocBlock(minSize, maxSize, minFragment());
-			totalFreeBytes += pos->freeBytes;
+			Block *r = chunks[pos].allocBlock(minSize, maxSize, minFragment());
+			totalFreeBytes += chunks[pos].freeBytes;
 			return r;
 		}
 
@@ -135,7 +136,7 @@ namespace storm {
 					return r;
 				}
 
-				if (++lastChunk == chunks.size())
+				if (++lastChunk >= chunks.size())
 					lastChunk = 0;
 			}
 

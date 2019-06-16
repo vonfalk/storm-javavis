@@ -46,6 +46,8 @@ namespace storm {
 
 			into->sharedBlockLock.lock();
 			Block *shared = owner.arena.enter(owner, &Generation::sharedBlock, size);
+			if (!shared)
+				return PendingAlloc();
 			return PendingAlloc(shared, size, &into->sharedBlockLock);
 		}
 

@@ -9,6 +9,7 @@
 #include "Block.h"
 #include "Thread.h"
 #include "ArenaTicket.h"
+#include "StaticAllocs.h"
 #include "FinalizerPool.h"
 
 namespace storm {
@@ -25,6 +26,9 @@ namespace storm {
 			assert(generationCount >= 2, L"Must have at least two generations.");
 			byte limit = GenSet::maxGen - firstFreeIdentifier;
 			assert(generationCount < limit, L"Must have fewer than " + ::toS(limit) + L" generations.");
+
+			// Create the static allocations.
+			staticAllocs = new StaticAllocs(*this);
 
 			// Create the finalizer pool.
 			finalizers = new FinalizerPool(*this);

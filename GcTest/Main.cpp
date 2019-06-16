@@ -11,6 +11,7 @@ struct Dummy {
 // Indirect storage of types, so that the GcType instance may move.
 struct TypeStore {
 	GcType *dummy;
+	GcType *nonmoving;
 };
 
 static GcType storeType = {
@@ -26,12 +27,21 @@ struct Finalizable {
 	size_t data;
 };
 
+struct Nonmoving {
+	// Containing a pointer, so that we can see that it is updated correctly!
+	TypeStore *store;
+};
+
 struct Globals {
 	TypeStore *store;
 	GcWeakArray<Finalizable> *weak;
+	Nonmoving *nonmoving;
 };
 
 Globals globals;
+
+// Non-scanned reference to a nonmoving object. Refers to the same object as in 'globals'.
+Nonmoving *nonmoving;
 
 size_t globalWeakPos = 0;
 
@@ -137,7 +147,18 @@ NOINLINE void createGlobals(Gc &gc) {
 	globals.store->dummy = gc.allocType(GcType::tFixed, null, sizeof(Dummy), 1);
 	globals.store->dummy->offset[0] = 0;
 
+	globals.store->nonmoving = gc.allocType(GcType::tFixed, null, sizeof(Nonmoving), 1);
+	globals.store->nonmoving->offset[0] = 0;
+
 	globals.weak = (GcWeakArray<Finalizable> *)gc.allocWeakArray(30);
+	nonmoving = globals.nonmoving = (Nonmoving *)gc.allocStatic(globals.store->nonmoving);
+}
+
+NOINLINE void checkGlobals() {
+	assert(nonmoving->store == globals.store, L"The nonmoving object does not seem to be scanned correctly!");
+
+	assert(nonmoving == globals.nonmoving, L"The nonmoving object moved from " + ::toHex(nonmoving) + L" to "
+		+ ::toHex(globals.nonmoving) + L"!");
 }
 
 NOINLINE void run(Gc &gc) {
@@ -149,6 +170,7 @@ NOINLINE void run(Gc &gc) {
 	// gc.dbg_dump();
 
 	lists(gc);
+	checkGlobals();
 }
 
 /**

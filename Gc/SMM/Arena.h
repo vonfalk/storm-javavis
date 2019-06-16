@@ -17,6 +17,7 @@ namespace storm {
 		class Thread;
 		class Generation;
 		class ArenaTicket;
+		class StaticAllocs;
 		class FinalizerPool;
 
 		/**
@@ -52,6 +53,9 @@ namespace storm {
 
 			// Get the nursery generation, where all new objects are allocated.
 			Generation &nurseryGen() const { return *generations[0]; }
+
+			// Get the area for static allocations.
+			StaticAllocs &staticGen() const { return *staticAllocs; }
 
 			// Allocate a chunk of memory from the VMAlloc instance.
 			Chunk allocChunk(size_t size, byte identifier);
@@ -107,6 +111,10 @@ namespace storm {
 			// the constructor so that we can collect it more conveniently. Assuming two long-lived
 			// generations, we can simply collect one into the other and swap their locations.
 			vector<Generation *> generations;
+
+			// Static allocations. This is basically a "generation" that is considered belonging to
+			// all generations.
+			StaticAllocs *staticAllocs;
 
 			// Pool for storing objects that need finalization.
 			FinalizerPool *finalizers;

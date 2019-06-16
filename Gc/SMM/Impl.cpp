@@ -8,6 +8,8 @@
 #include "Format.h"
 #include "Thread.h"
 #include "Root.h"
+#include "StaticAllocs.h"
+#include "ArenaTicket.h"
 
 namespace storm {
 
@@ -92,12 +94,18 @@ namespace storm {
 	}
 
 	void *GcImpl::allocStatic(const GcType *type) {
-		assert(false, L"Static objects are not yet supported!");
-		return null;
+		smm::StaticAllocs &allocs = arena.staticGen();
+		void *result = arena.enter(allocs, &smm::StaticAllocs::alloc, type);
+		if (!result)
+			throw GcError(L"Out of memory (allocStatic).");
+
+		return result;
 	}
 
 	GcArray<Byte> *GcImpl::allocBuffer(size_t count) {
-		// TODO: Could probably be implemented using 'allocStatic', but probably also separately.
+		// TODO: Will most likely work best with a regular 'alloc', but could benefit from a
+		// separate implementation without any scanning. 'allocStatic' could work, but the current
+		// implementation is not suitable for large amounts of data.
 		assert(false, L"Buffer allocations are not yet supported!");
 		return null;
 	}
