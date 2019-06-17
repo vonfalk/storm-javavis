@@ -31,7 +31,7 @@ String AssertionException::what() const {
 
 #ifdef VISUAL_STUDIO
 
-void debugAssertFailed(const wchar *msg) {
+void debugAssertFailed(const wchar_t *msg) {
 	PLN(msg);
 	DebugBreak();
 	std::terminate();
@@ -39,7 +39,7 @@ void debugAssertFailed(const wchar *msg) {
 
 #else
 
-void debugAssertFailed(const wchar *msg) {
+void debugAssertFailed(const wchar_t *msg) {
 	PLN(msg);
 	std::terminate();
 }

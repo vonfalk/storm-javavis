@@ -12,7 +12,7 @@
 #define assert(X, ...) if (!(X)) throw AssertionException(WIDEN(__FILE__), __LINE__, WIDEN(#X), ##__VA_ARGS__)
 #endif
 
-void debugAssertFailed(const wchar *msg);
+void debugAssertFailed(const wchar_t *msg);
 #define dbg_assert(X, msg) if (!(X)) { ::debugAssertFailed(msg); }
 
 #else
