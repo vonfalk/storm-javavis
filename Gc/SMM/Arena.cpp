@@ -78,11 +78,12 @@ namespace storm {
 			// Look through the memory for additional finalizers that need to be executed.
 			for (size_t i = 0; i < generations.size(); i++)
 				generations[i]->runFinalizers();
+			staticAllocs->runFinalizers();
 
 			for (size_t i = 0; i < generations.size(); i++)
 				delete generations[i];
 			generations.clear();
-
+			delete staticAllocs;
 		}
 
 		Chunk Arena::allocChunk(size_t size, byte identifier) {
@@ -195,6 +196,7 @@ namespace storm {
 				generations[i]->fillSummary(summary);
 			}
 
+			staticAllocs->fillSummary(summary);
 			finalizers->fillSummary(summary);
 
 			return summary;
@@ -212,6 +214,10 @@ namespace storm {
 			// Verify the generations!
 			for (size_t i = 0; i < gens; i++)
 				generations[i]->dbg_verify();
+
+			staticAllocs->dbg_verify();
+
+			// TODO: Check finalizer pool as well?
 		}
 
 		void Arena::dbg_dump() {
@@ -224,6 +230,10 @@ namespace storm {
 				Indent z(util::debugStream());
 				generations[i]->dbg_dump();
 			}
+
+			staticAllocs->dbg_dump();
+
+			// TODO: Dump finalizer pool as well?
 		}
 
 	}

@@ -5,6 +5,7 @@
 #include "Arena.h"
 #include "Config.h"
 #include "Format.h"
+#include "Gc/MemorySummary.h"
 #include <vector>
 
 namespace storm {
@@ -52,6 +53,18 @@ namespace storm {
 			// Free an allocation (expected to be called from inside the GC).
 			void free(ArenaTicket &ticket, void *mem);
 
+			// Run finalizers for all objects in here. Assumed to be called before destruction.
+			void runFinalizers();
+
+			// Fill a memory summary with information.
+			void fillSummary(MemorySummary &summary) const;
+
+			// Verify the integrity of the static allocations.
+			void dbg_verify();
+
+			// Output a summary.
+			void dbg_dump();
+
 		private:
 			// Header for a single static allocation. The data managed by the format starts at the
 			// end of this object, and client pointers point further ahead.
@@ -74,6 +87,9 @@ namespace storm {
 
 					// This allocation is marked as used during a GC phase.
 					fMarked = 0x02,
+
+					// This allocation was deemed unreachable, but must be finalized before it can be reclaimed.
+					fFinalize = 0x04,
 				};
 
 				// Data on this object. The 8 low bits are reserved for flags, while the remaining
@@ -110,7 +126,7 @@ namespace storm {
 			// A chunk of static allocations. Allocated as a header in the actual allocation.
 			class Chunk {
 			public:
-				// Create, with a given size. The size includes the header.
+				// Create, with a given size. The size excludes the header.
 				Chunk(size_t size);
 
 				// The size of this chunk, excluding the header.
@@ -142,6 +158,9 @@ namespace storm {
 				Header *header(size_t offset) {
 					return (Header *)mem(offset);
 				}
+				const Header *header(size_t offset) const {
+					return (const Header *)mem(offset);
+				}
 
 				// Compute the offset of a header.
 				size_t offset(Header *header) {
@@ -158,6 +177,18 @@ namespace storm {
 				// with 'alloc'. Expected to be called from inside the GC, and not explicitly from
 				// client code.
 				void free(fmt::Obj *obj);
+
+				// Run all finalizers in this block.
+				void runFinalizers();
+
+				// Fill a memory summary with information about this chunk.
+				void fillSummary(MemorySummary &summary) const;
+
+				// Verify the integrity of this chunk.
+				void dbg_verify();
+
+				// Output a summary of this chunk.
+				void dbg_dump();
 
 			private:
 				// Reserve an object inside the specified address range.
