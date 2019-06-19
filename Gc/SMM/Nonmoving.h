@@ -55,6 +55,13 @@ namespace storm {
 			// Run finalizers for all objects in here. Assumed to be called before destruction.
 			void runFinalizers();
 
+			// Get an address set initialized to a suitable range for us (we assume there are few
+			// enough objects so that one is enough).
+			template <class AddrSet>
+			AddrSet addrSet() const {
+				return AddrSet(memMin, memMax);
+			}
+
 			/**
 			 * Object traversal.
 			 */
@@ -72,12 +79,32 @@ namespace storm {
 			typename Scanner::Result scan(typename Scanner::Source &source) {
 				typename Scanner::Result result = typename Scanner::Result();
 				for (size_t i = 0; i < chunks.size(); i++) {
-					result = chunks[i]->scan(source);
+					result = chunks[i]->scan<Scanner>(source);
 					if (result != typename Scanner::Result())
 						break;
 				}
 				return result;
 			}
+
+			// Scan all pinned objects.
+			template <class Scanner>
+			typename Scanner::Result scanPinned(const PinnedSet &pinned, typename Scanner::Source &source) {
+				typename Scanner::Result result = typename Scanner::Result();
+				for (size_t i = 0; i < chunks.size(); i++) {
+					Chunk *chunk = chunks[i];
+					if (!pinned.has(chunk, chunk->mem(chunk->size)))
+						break;
+
+					result = chunk->scanPinned<Scanner>(pinned, source);
+					if (result != typename Scanner::Result())
+						break;
+				}
+				return result;
+			}
+
+			// Sweep unmarked objects.
+			void sweep(ArenaTicket &ticket);
+
 
 			/**
 			 * Debugging.
@@ -222,6 +249,10 @@ namespace storm {
 				template <class Scanner>
 				typename Scanner::Result scan(typename Scanner::Source &source);
 
+				// Scan pinned objects, update the mark bit accordingly.
+				template <class Scanner>
+				typename Scanner::Result scanPinned(const PinnedSet &pinned, typename Scanner::Source &source);
+
 				// Fill a memory summary with information about this chunk.
 				void fillSummary(MemorySummary &summary) const;
 
@@ -261,6 +292,9 @@ namespace storm {
 			// the next allocation as well!
 			size_t lastChunk;
 
+			// Min- and max addresses.
+			size_t memMin, memMax;
+
 			// Allocate memory for an allocation, but don't initialize it. Returns 'null' on failure.
 			void *allocMem(size_t size);
 
@@ -293,6 +327,31 @@ namespace storm {
 				result = fmt::Scan<Scanner>::objects(source, obj, fmt::skip(obj));
 				if (result != typename Scanner::Result())
 					return result;
+			}
+			return result;
+		}
+
+		template <class Scanner>
+		typename Scanner::Result Nonmoving::Chunk::scanPinned(const PinnedSet &pinned, typename Scanner::Source &source) {
+			typename Scanner::Result result = typename Scanner::Result();
+			for (size_t i = 0; i < size; i += header(i)->size() + sizeof(Header)) {
+				Header *h = header(i);
+				if (h->hasFlag(Header::fFree | Header::fFinalize))
+					continue;
+
+				PVAR(h->hasFlag(Header::fFree));
+
+				void *obj = fmt::toClient(h->object());
+				void *end = fmt::skip(obj);
+				if (pinned.has(obj, (byte *)end - fmt::headerSize)) {
+					h->setFlag(Header::fMarked);
+
+					result = fmt::Scan<Scanner>::objects(source, obj, end);
+					if (result != typename Scanner::Result())
+						return result;
+				} else {
+					h->clearFlag(Header::fMarked);
+				}
 			}
 			return result;
 		}

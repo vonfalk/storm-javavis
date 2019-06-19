@@ -105,7 +105,7 @@ namespace storm {
 
 			// Get an AddrSet initialized to the range contained in the block.
 			template <class AddrSet>
-			AddrSet addrSet() {
+			AddrSet addrSet() const {
 				return AddrSet(mem(0), mem(committed()));
 			}
 

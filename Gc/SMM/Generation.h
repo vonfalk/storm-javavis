@@ -286,6 +286,7 @@ namespace storm {
 			// Pre-allocated vector of pointer summaries for each block. Used when scanning inexact
 			// roots, and due to the heavy usage it is useful to keep them together. The individual
 			// elements are neither initialized nor kept up to date outside the scanning functions.
+			// Note: We use the last element here to keep track of shared objects!
 			vector<PinnedSet> pinnedSets;
 
 			// Get the minimum size we want our blocks to be when we're splitting them.

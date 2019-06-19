@@ -7,6 +7,7 @@
 #include "Scanner.h"
 #include "ScanState.h"
 #include "Thread.h"
+#include "Nonmoving.h"
 #include "ArenaTicket.h"
 #include "FinalizerPool.h"
 #include "UpdateFwd.h"
@@ -19,9 +20,10 @@ namespace storm {
 		Generation::Generation(Arena &arena, size_t size, byte identifier)
 			: totalSize(size), blockSize(size / 32),
 			  next(null), arena(arena), identifier(identifier),
-			  totalAllocBytes(0), totalFreeBytes(0), shared(null) {
+			  lastChunk(0), totalAllocBytes(0), totalFreeBytes(0), shared(null) {
 
 			blockSize = min(size_t(64 * 1024), blockSize);
+			pinnedSets.push_back(PinnedSet(0, 1));
 		}
 
 		Generation::~Generation() {
@@ -109,7 +111,7 @@ namespace storm {
 			// TODO: We might want to merge blocks, but that requires us to be able to split and
 			// deallocate unused blocks as well...
 
-			while (pinnedSets.size() < chunks.size())
+			while (pinnedSets.size() < chunks.size() + 1)
 				pinnedSets.push_back(PinnedSet(0, 1));
 
 			totalAllocBytes += c.size;
@@ -153,6 +155,9 @@ namespace storm {
 
 			ticket.gcRunning();
 
+			// We use mark and sweep for the non-moving objects.
+			Nonmoving &nonmoving = ticket.nonmoving();
+
 			// Note: This assumes a generation where objects may move. Non-moving objects need to be
 			// treated differently (especially since we don't expect there to be very many of them).
 
@@ -161,6 +166,7 @@ namespace storm {
 
 			for (size_t i = 0; i < chunks.size(); i++)
 				pinnedSets[i] = chunks[i].memory.addrSet<PinnedSet>();
+			pinnedSets[chunks.size()] = nonmoving.addrSet<PinnedSet>();
 
 			// TODO: We might want to do an 'early out' inside the scanning by using
 			// VMAlloc::identifier before attempting to access the sets. We need to measure the benefits of this!
@@ -169,6 +175,10 @@ namespace storm {
 			// Keep track of surviving objects inside a ScanState object, which allocates memory
 			// from the next generation.
 			ScanState state(ticket, State(*this), next);
+
+			// Scan the nonmoving objects first, then we can update the marks there at the same time!
+			nonmoving.scanPinned<ScanState::Move>(pinnedSets[chunks.size()], state);
+			TODO(L"We still need to properly scan objects in the nonmoving pool. Currently they are not kept alive at all!");
 
 			Block *finalizerBlocks = null;
 			// For all blocks containing at least one pinned object, traverse it entirely to find
@@ -240,6 +250,9 @@ namespace storm {
 			// Update any old finalizer references as well (we don't need to be careful with weak
 			// references here, they'll be destroyed soon enough anyway!).
 			pool.scan<UpdateFwd>(ticket, State(*this));
+
+			// Sweep objects in the nonmoving pool.
+			nonmoving.sweep(ticket);
 
 			// Finally, release and/or compact any remaining blocks in this generation.
 			totalAllocBytes = 0;

@@ -11,7 +11,7 @@ namespace storm {
 		 * Nonmoving.
 		 */
 
-		Nonmoving::Nonmoving(Arena &arena) : arena(arena), lastChunk(0) {}
+		Nonmoving::Nonmoving(Arena &arena) : arena(arena), lastChunk(0), memMin(0), memMax(1) {}
 
 		Nonmoving::~Nonmoving() {
 			for (size_t i = 0; i < chunks.size(); i++)
@@ -67,6 +67,20 @@ namespace storm {
 			size_t pos = insertSorted(chunks, Chunk::create(alloc), PtrCompare());
 			lastChunk = pos;
 
+			// Update address range.
+			{
+				size_t low = size_t(alloc.at);
+				size_t high = size_t(alloc.end());
+
+				if (chunks.size() == 1) {
+					memMin = low;
+					memMax = high;
+				} else {
+					memMin = min(memMin, low);
+					memMax = max(memMax, high);
+				}
+			}
+
 			// TODO: Update range of objects, or other metadata?
 
 			return pos;
@@ -79,11 +93,33 @@ namespace storm {
 			} else {
 				dbg_assert(false, L"Trying to 'free' nonmoving memory from a different pool!");
 			}
+
+			// TODO: We would like to reclaim memory at some point! Remember to update 'memMin' and 'memMax'!
 		}
 
 		void Nonmoving::runFinalizers() {
 			for (size_t i = 0; i < chunks.size(); i++)
 				chunks[i]->runFinalizers();
+		}
+
+		struct Sweeper {
+			Nonmoving &owner;
+			ArenaTicket &ticket;
+
+			Sweeper(Nonmoving &owner, ArenaTicket &ticket) : owner(owner), ticket(ticket) {}
+
+			void operator ()(void *obj) const {
+				Nonmoving::Header *header = Nonmoving::Header::fromClient(obj);
+				if (!header->hasFlag(Nonmoving::Header::fMarked)) {
+					// Note: This is fine, since it will not break any headers.
+					owner.free(ticket, obj);
+				}
+			}
+		};
+
+		void Nonmoving::sweep(ArenaTicket &ticket) {
+			// Just call 'free' on all allocations that should be freed!
+			traverse(Sweeper(*this, ticket));
 		}
 
 		void Nonmoving::fillSummary(MemorySummary &summary) const {
