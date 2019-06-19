@@ -1,5 +1,5 @@
 #include "stdafx.h"
-#include "StaticAllocs.h"
+#include "Nonmoving.h"
 #include "Util.h"
 
 #if STORM_GC == STORM_GC_SMM
@@ -8,17 +8,17 @@ namespace storm {
 	namespace smm {
 
 		/**
-		 * StaticAllocs.
+		 * Nonmoving.
 		 */
 
-		StaticAllocs::StaticAllocs(Arena &arena) : arena(arena), lastChunk(0) {}
+		Nonmoving::Nonmoving(Arena &arena) : arena(arena), lastChunk(0) {}
 
-		StaticAllocs::~StaticAllocs() {
+		Nonmoving::~Nonmoving() {
 			for (size_t i = 0; i < chunks.size(); i++)
 				arena.freeChunk(chunks[i]->chunk());
 		}
 
-		void *StaticAllocs::alloc(ArenaTicket &ticket, const GcType *type) {
+		void *Nonmoving::alloc(ArenaTicket &ticket, const GcType *type) {
 			// TODO: If the object has a finalizer, we might want to allocate a bit of extra memory
 			// at the end, so that we can make a list of objects in need of finalization!
 			size_t size = fmt::sizeObj(type);
@@ -29,7 +29,7 @@ namespace storm {
 			return result;
 		}
 
-		void *StaticAllocs::allocMem(size_t size) {
+		void *Nonmoving::allocMem(size_t size) {
 			// Disallow large allocations. We won't do well with them!
 			if (size > vmAllocMinSize / 2) {
 				dbg_assert(false, L"Trying to allocate a too large object as a non-moving object.");
@@ -59,8 +59,8 @@ namespace storm {
 			return null;
 		}
 
-		size_t StaticAllocs::allocChunk() {
-			smm::Chunk alloc = arena.allocChunk(vmAllocMinSize, staticIdentifier);
+		size_t Nonmoving::allocChunk() {
+			smm::Chunk alloc = arena.allocChunk(vmAllocMinSize, nonmovingIdentifier);
 			if (alloc.empty())
 				return chunks.size();
 
@@ -72,32 +72,32 @@ namespace storm {
 			return pos;
 		}
 
-		void StaticAllocs::free(ArenaTicket &ticket, void *mem) {
+		void Nonmoving::free(ArenaTicket &ticket, void *mem) {
 			ChunkList::iterator pos = std::lower_bound(chunks.begin(), chunks.end(), mem, PtrCompare());
 			if (pos != chunks.end()) {
 				(*pos)->free(fmt::fromClient(mem));
 			} else {
-				dbg_assert(false, L"Trying to 'free' static memory from a different pool!");
+				dbg_assert(false, L"Trying to 'free' nonmoving memory from a different pool!");
 			}
 		}
 
-		void StaticAllocs::runFinalizers() {
+		void Nonmoving::runFinalizers() {
 			for (size_t i = 0; i < chunks.size(); i++)
 				chunks[i]->runFinalizers();
 		}
 
-		void StaticAllocs::fillSummary(MemorySummary &summary) const {
+		void Nonmoving::fillSummary(MemorySummary &summary) const {
 			for (size_t i = 0; i < chunks.size(); i++)
 				chunks[i]->fillSummary(summary);
 		}
 
-		void StaticAllocs::dbg_verify() {
+		void Nonmoving::dbg_verify() {
 			for (size_t i = 0; i < chunks.size(); i++)
 				chunks[i]->dbg_verify();
 		}
 
-		void StaticAllocs::dbg_dump() {
-			PLN(L"Static allocations, " << chunks.size() << L" chunks:");
+		void Nonmoving::dbg_dump() {
+			PLN(L"Nonmoving allocations, " << chunks.size() << L" chunks:");
 			for (size_t i = 0; i < chunks.size(); i++) {
 				PNN(i << L": ");
 				chunks[i]->dbg_dump();
@@ -109,12 +109,12 @@ namespace storm {
 		 * Chunk.
 		 */
 
-		StaticAllocs::Chunk::Chunk(size_t size) : size(size), lastAlloc(0) {
+		Nonmoving::Chunk::Chunk(size_t size) : size(size), lastAlloc(0) {
 			Header *first = header(0);
 			first->makeFree(size - sizeof(Header));
 		}
 
-		fmt::Obj *StaticAllocs::Chunk::alloc(size_t size) {
+		fmt::Obj *Nonmoving::Chunk::alloc(size_t size) {
 			if (fmt::Obj *r = allocRange(size, lastAlloc, size))
 				return r;
 			if (fmt::Obj *r = allocRange(size, 0, lastAlloc))
@@ -123,7 +123,7 @@ namespace storm {
 			return null;
 		}
 
-		fmt::Obj *StaticAllocs::Chunk::allocRange(size_t size, size_t from, size_t to) {
+		fmt::Obj *Nonmoving::Chunk::allocRange(size_t size, size_t from, size_t to) {
 			size_t at = from;
 			while (at < to) {
 				Header *o = header(at);
@@ -154,7 +154,7 @@ namespace storm {
 			return null;
 		}
 
-		void StaticAllocs::Chunk::free(fmt::Obj *obj) {
+		void Nonmoving::Chunk::free(fmt::Obj *obj) {
 			Header *h = Header::fromObject(obj);
 			h->setFlag(Header::fFree);
 
@@ -162,7 +162,7 @@ namespace storm {
 			mergeFree(h);
 		}
 
-		void StaticAllocs::Chunk::mergeFree(Header *first) {
+		void Nonmoving::Chunk::mergeFree(Header *first) {
 			size_t at = offset(first);
 			do {
 				// Skip ahead to the next one.
@@ -173,7 +173,7 @@ namespace storm {
 			first->makeFree(at - offset(first) - sizeof(Header));
 		}
 
-		void StaticAllocs::Chunk::runFinalizers() {
+		void Nonmoving::Chunk::runFinalizers() {
 			for (size_t at = 0; at < size; at += header(at)->size() + sizeof(Header)) {
 				Header *h = header(at);
 				if (fmt::objHasFinalizer(h->object())) {
@@ -182,7 +182,7 @@ namespace storm {
 			}
 		}
 
-		void StaticAllocs::Chunk::fillSummary(MemorySummary &summary) const {
+		void Nonmoving::Chunk::fillSummary(MemorySummary &summary) const {
 			summary.allocated += size;
 			summary.bookkeeping += sizeof(Chunk);
 
@@ -197,7 +197,7 @@ namespace storm {
 			}
 		}
 
-		void StaticAllocs::Chunk::dbg_verify() {
+		void Nonmoving::Chunk::dbg_verify() {
 			bool lastFound = false;
 			size_t at = 0;
 			while (at < size) {
@@ -216,7 +216,7 @@ namespace storm {
 			assert(lastFound, L"lastAlloc does not refer to a valid object!");
 		}
 
-		void StaticAllocs::Chunk::dbg_dump() {
+		void Nonmoving::Chunk::dbg_dump() {
 			PLN(L"Chunk at " << (void *)this << L", " << size << L" bytes:");
 			for (size_t at = 0; at < size; at += header(at)->size() + sizeof(Header)) {
 				if (at == lastAlloc)

@@ -60,6 +60,12 @@ namespace storm {
 			// other generation is being collected. Otherwise, nothing is done.
 			bool suggestCollection(Generation *gen);
 
+			// Get the static object pool. This is considered being a part of all generations, since
+			// it is assumed to contain a very small number of objects.
+			inline Nonmoving &nonmoving() const {
+				return owner.nonmoving();
+			}
+
 			// Get the finalizer object in the arena.
 			inline FinalizerPool &finalizerPool() const {
 				return *owner.finalizers;

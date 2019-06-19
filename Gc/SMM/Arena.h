@@ -15,9 +15,9 @@ namespace storm {
 		class Root;
 		class Block;
 		class Thread;
+		class Nonmoving;
 		class Generation;
 		class ArenaTicket;
-		class StaticAllocs;
 		class FinalizerPool;
 
 		/**
@@ -55,7 +55,7 @@ namespace storm {
 			Generation &nurseryGen() const { return *generations[0]; }
 
 			// Get the area for static allocations.
-			StaticAllocs &staticGen() const { return *staticAllocs; }
+			Nonmoving &nonmoving() const { return *nonmovingAllocs; }
 
 			// Allocate a chunk of memory from the VMAlloc instance.
 			Chunk allocChunk(size_t size, byte identifier);
@@ -112,9 +112,9 @@ namespace storm {
 			// generations, we can simply collect one into the other and swap their locations.
 			vector<Generation *> generations;
 
-			// Static allocations. This is basically a "generation" that is considered belonging to
+			// Nonmoving allocations. This is basically a "generation" that is considered belonging to
 			// all generations.
-			StaticAllocs *staticAllocs;
+			Nonmoving *nonmovingAllocs;
 
 			// Pool for storing objects that need finalization.
 			FinalizerPool *finalizers;

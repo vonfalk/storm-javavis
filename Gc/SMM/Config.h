@@ -33,9 +33,9 @@ namespace storm {
 		// GenSet, but that is fine since it does not count as a generation.
 		static const byte finalizerIdentifier = identifierMaxVal - 1;
 
-		// Identifier used by the static allocations. This is outside of what we can store in a
-		// GenSet, but that is fine since static allocations don't belong to any particular generation.
-		static const byte staticIdentifier = identifierMaxVal - 2;
+		// Identifier used by the nonmoving allocations. This is outside of what we can store in a
+		// GenSet, but that is fine since nonmoving allocations don't belong to any particular generation.
+		static const byte nonmovingIdentifier = identifierMaxVal - 2;
 
 	}
 }

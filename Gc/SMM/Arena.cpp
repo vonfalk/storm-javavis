@@ -8,8 +8,8 @@
 #include "Root.h"
 #include "Block.h"
 #include "Thread.h"
+#include "Nonmoving.h"
 #include "ArenaTicket.h"
-#include "StaticAllocs.h"
 #include "FinalizerPool.h"
 
 namespace storm {
@@ -28,7 +28,7 @@ namespace storm {
 			assert(generationCount < limit, L"Must have fewer than " + ::toS(limit) + L" generations.");
 
 			// Create the static allocations.
-			staticAllocs = new StaticAllocs(*this);
+			nonmovingAllocs = new Nonmoving(*this);
 
 			// Create the finalizer pool.
 			finalizers = new FinalizerPool(*this);
@@ -78,12 +78,12 @@ namespace storm {
 			// Look through the memory for additional finalizers that need to be executed.
 			for (size_t i = 0; i < generations.size(); i++)
 				generations[i]->runFinalizers();
-			staticAllocs->runFinalizers();
+			nonmovingAllocs->runFinalizers();
 
 			for (size_t i = 0; i < generations.size(); i++)
 				delete generations[i];
 			generations.clear();
-			delete staticAllocs;
+			delete nonmovingAllocs;
 		}
 
 		Chunk Arena::allocChunk(size_t size, byte identifier) {
@@ -196,7 +196,7 @@ namespace storm {
 				generations[i]->fillSummary(summary);
 			}
 
-			staticAllocs->fillSummary(summary);
+			nonmovingAllocs->fillSummary(summary);
 			finalizers->fillSummary(summary);
 
 			return summary;
@@ -215,7 +215,7 @@ namespace storm {
 			for (size_t i = 0; i < gens; i++)
 				generations[i]->dbg_verify();
 
-			staticAllocs->dbg_verify();
+			nonmovingAllocs->dbg_verify();
 
 			// TODO: Check finalizer pool as well?
 		}
@@ -231,7 +231,7 @@ namespace storm {
 				generations[i]->dbg_dump();
 			}
 
-			staticAllocs->dbg_dump();
+			nonmovingAllocs->dbg_dump();
 
 			// TODO: Dump finalizer pool as well?
 		}

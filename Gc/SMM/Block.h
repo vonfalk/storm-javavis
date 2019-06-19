@@ -133,7 +133,7 @@ namespace storm {
 				return summary.has(gen);
 			}
 
-			// Traverse all objects in this block. Calling the supplied function on each
+			// Traverse all objects in this block, calling the supplied function on each
 			// object. Client pointers are passed to the function.
 			template <class Fn>
 			void traverse(Fn fn) {

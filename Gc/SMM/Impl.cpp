@@ -8,7 +8,7 @@
 #include "Format.h"
 #include "Thread.h"
 #include "Root.h"
-#include "StaticAllocs.h"
+#include "Nonmoving.h"
 #include "ArenaTicket.h"
 
 namespace storm {
@@ -94,8 +94,8 @@ namespace storm {
 	}
 
 	void *GcImpl::allocStatic(const GcType *type) {
-		smm::StaticAllocs &allocs = arena.staticGen();
-		void *result = arena.enter(allocs, &smm::StaticAllocs::alloc, type);
+		smm::Nonmoving &allocs = arena.nonmoving();
+		void *result = arena.enter(allocs, &smm::Nonmoving::alloc, type);
 		if (!result)
 			throw GcError(L"Out of memory (allocStatic).");
 

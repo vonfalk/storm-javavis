@@ -12,7 +12,7 @@ namespace storm {
 	namespace smm {
 
 		/**
-		 * Storage for static (i.e. non-moving) objects.
+		 * Storage for non-moving objects.
 		 *
 		 * We assume that there will be a relatively small number of allocations here, and as such,
 		 * it is not as efficient as moving objects. At the moment, objects are considered a member
@@ -35,14 +35,13 @@ namespace storm {
 		 *
 		 * We assume that an ArenaTicket is acquired when using this class.
 		 */
-		class StaticAllocs {
-			struct Header;
+		class Nonmoving {
 		public:
 			// Create the chunk, associating it with an arena.
-			StaticAllocs(Arena &arena);
+			Nonmoving(Arena &arena);
 
 			// Destroy.
-			~StaticAllocs();
+			~Nonmoving();
 
 			// Owning arena.
 			Arena &arena;
@@ -56,17 +55,45 @@ namespace storm {
 			// Run finalizers for all objects in here. Assumed to be called before destruction.
 			void runFinalizers();
 
+			/**
+			 * Object traversal.
+			 */
+
+			// Traverse all objects in this block. Calls Fn for each object, passing client pointers
+			// to the function.
+			template <class Fn>
+			void traverse(Fn fn) {
+				for (size_t i = 0; i < chunks.size(); i++)
+					chunks[i]->traverse(fn);
+			}
+
+			// Scan all objects.
+			template <class Scanner>
+			typename Scanner::Result scan(typename Scanner::Source &source) {
+				typename Scanner::Result result = typename Scanner::Result();
+				for (size_t i = 0; i < chunks.size(); i++) {
+					result = chunks[i]->scan(source);
+					if (result != typename Scanner::Result())
+						break;
+				}
+				return result;
+			}
+
+			/**
+			 * Debugging.
+			 */
+
 			// Fill a memory summary with information.
 			void fillSummary(MemorySummary &summary) const;
 
-			// Verify the integrity of the static allocations.
+			// Verify the integrity of the nonmoving allocations.
 			void dbg_verify();
 
 			// Output a summary.
 			void dbg_dump();
 
-		private:
-			// Header for a single static allocation. The data managed by the format starts at the
+		public:
+			// Header for a single nonmoving allocation. The data managed by the format starts at the
 			// end of this object, and client pointers point further ahead.
 			struct Header {
 				// Get the pointer to the allocation as the object format code sees it.
@@ -79,6 +106,11 @@ namespace storm {
 				static inline Header *fromObject(fmt::Obj *obj) {
 					byte *data = (byte *)obj;
 					return (Header *)(data - sizeof(Header));
+				}
+
+				// Compute a header pointer from a client pointer.
+				static inline Header *fromClient(void *client) {
+					return fromObject(fmt::fromClient(client));
 				}
 
 				enum {
@@ -123,7 +155,8 @@ namespace storm {
 				}
 			};
 
-			// A chunk of static allocations. Allocated as a header in the actual allocation.
+		private:
+			// A chunk of nonmoving allocations. Allocated as a header in the actual allocation.
 			class Chunk {
 			public:
 				// Create, with a given size. The size excludes the header.
@@ -181,6 +214,14 @@ namespace storm {
 				// Run all finalizers in this block.
 				void runFinalizers();
 
+				// Traverse objects in here.
+				template <class Fn>
+				void traverse(Fn fn);
+
+				// Scan objects.
+				template <class Scanner>
+				typename Scanner::Result scan(typename Scanner::Source &source);
+
 				// Fill a memory summary with information about this chunk.
 				void fillSummary(MemorySummary &summary) const;
 
@@ -227,6 +268,34 @@ namespace storm {
 			// ID if the allocation failed.
 			size_t allocChunk();
 		};
+
+
+		template <class Fn>
+		void Nonmoving::Chunk::traverse(Fn fn) {
+			for (size_t i = 0; i < size; i += header(i)->size() + sizeof(Header)) {
+				Header *h = header(i);
+				if (h->hasFlag(Header::fFree | Header::fFinalize))
+					continue;
+
+				fn(fmt::toClient(h->object()));
+			}
+		}
+
+		template <class Scanner>
+		typename Scanner::Result Nonmoving::Chunk::scan(typename Scanner::Source &source) {
+			typename Scanner::Result result = typename Scanner::Result();
+			for (size_t i = 0; i < size; i += header(i)->size() + sizeof(Header)) {
+				Header *h = header(i);
+				if (h->hasFlag(Header::fFree | Header::fFinalize))
+					continue;
+
+				void *obj = fmt::toClient(h->object());
+				result = fmt::Scan<Scanner>::objects(source, obj, fmt::skip(obj));
+				if (result != typename Scanner::Result())
+					return result;
+			}
+			return result;
+		}
 
 	}
 }
