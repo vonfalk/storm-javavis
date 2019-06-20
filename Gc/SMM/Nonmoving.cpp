@@ -151,7 +151,7 @@ namespace storm {
 		}
 
 		fmt::Obj *Nonmoving::Chunk::alloc(size_t size) {
-			if (fmt::Obj *r = allocRange(size, lastAlloc, size))
+			if (fmt::Obj *r = allocRange(size, lastAlloc, this->size))
 				return r;
 			if (fmt::Obj *r = allocRange(size, 0, lastAlloc))
 				return r;
@@ -193,6 +193,8 @@ namespace storm {
 		void Nonmoving::Chunk::free(fmt::Obj *obj) {
 			Header *h = Header::fromObject(obj);
 			h->setFlag(Header::fFree);
+
+			TODO(L"Handle finalizers!");
 
 			// Merge any free blocks that follow us!
 			mergeFree(h);

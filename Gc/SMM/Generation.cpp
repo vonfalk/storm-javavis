@@ -176,22 +176,25 @@ namespace storm {
 			// from the next generation.
 			ScanState state(ticket, State(*this), next);
 
+			// Scanner to use when moving to the next generation.
+			typedef ScanNonmoving<ScanState::Move, fmt::ScanAll, true> GenScanner;
+			typedef ScanNonmoving<ScanState::Move, IfNotWeak, true> GenNoWeakScanner;
+
 			// Scan the nonmoving objects first, then we can update the marks there at the same time!
-			nonmoving.scanPinned<ScanState::Move>(pinnedSets[chunks.size()], state);
-			TODO(L"We still need to properly scan objects in the nonmoving pool. Currently they are not kept alive at all!");
+			nonmoving.scanPinned<GenNoWeakScanner>(pinnedSets[chunks.size()], state);
 
 			Block *finalizerBlocks = null;
 			// For all blocks containing at least one pinned object, traverse it entirely to find
 			// and scan the pinned objects. Any non-pinned objects are copied to the new block.
 			for (size_t i = 0; i < chunks.size(); i++)
-				chunks[i].scanPinnedFindFinalizers<IfNotWeak, ScanState::Move>(IfNotWeak(), pinnedSets[i], state, finalizerBlocks);
+				chunks[i].scanPinnedFindFinalizers<IfNotWeak, GenNoWeakScanner>(IfNotWeak(), pinnedSets[i], state, finalizerBlocks);
 
 			// Traverse all other generations that could contain references to this generation and
 			// copy any referred objects to the new block.
-			ticket.scanGenerations<IfNotWeak, ScanState::Move>(IfNotWeak(), state, this);
+			ticket.scanGenerations<IfNotWeak, GenNoWeakScanner>(IfNotWeak(), state, this);
 
 			// Also traverse exact roots.
-			ticket.scanExactRoots<ScanState::Move>(state);
+			ticket.scanExactRoots<GenNoWeakScanner>(state);
 
 			// Traverse the newly copied objects in the new block and copy any new references until
 			// no more objects are found.
@@ -251,8 +254,8 @@ namespace storm {
 			// references here, they'll be destroyed soon enough anyway!).
 			pool.scan<UpdateFwd>(ticket, State(*this));
 
-			// Sweep objects in the nonmoving pool.
-			nonmoving.sweep(ticket);
+			// Sweep objects in the nonmoving pool, and update references while we're at it.
+			nonmoving.scanSweep<UpdateFwd>(State(*this));
 
 			// Finally, release and/or compact any remaining blocks in this generation.
 			totalAllocBytes = 0;

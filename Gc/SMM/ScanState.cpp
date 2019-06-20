@@ -1,5 +1,6 @@
 #include "stdafx.h"
 #include "ScanState.h"
+#include "Nonmoving.h"
 
 #if STORM_GC == STORM_GC_SMM
 
@@ -52,7 +53,8 @@ namespace storm {
 
 		void ScanState::scanNew() {
 			int error = 0;
-			while (target.scanStep<Move>(*this, error)) {
+			typedef ScanNonmoving<Move, IfNotWeak, true> Scanner;
+			while (target.scanStep<Scanner>(*this, error)) {
 				dbg_assert(error == 0, L"TODO: We need to handle allocation errors while scanning!");
 			}
 		}

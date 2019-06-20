@@ -102,6 +102,36 @@ namespace storm {
 			}
 		};
 
+
+		/**
+		 * Scan using a reference to another scanner. Useful when making scanners re-entrant.
+		 */
+		template <class Original>
+		struct RefScanner {
+			typedef typename Original::Result Result;
+			typedef Original Source;
+
+			Original &original;
+
+			RefScanner(Source &source) : original(source) {}
+
+			inline bool fix1(void *ptr) {
+				return original.fix1(ptr);
+			}
+
+			inline Result fix2(void **ptr) {
+				return original.fix2(ptr);
+			}
+
+			inline bool fixHeader1(GcType *header) {
+				return original.fixHeader1(header);
+			}
+
+			inline Result fixHeader2(GcType **header) {
+				return original.fixHeader2(header);
+			}
+		};
+
 	}
 }
 

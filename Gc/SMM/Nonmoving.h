@@ -5,6 +5,7 @@
 #include "Arena.h"
 #include "Config.h"
 #include "Format.h"
+#include "Scanner.h"
 #include "Gc/MemorySummary.h"
 #include <vector>
 
@@ -102,6 +103,18 @@ namespace storm {
 				return result;
 			}
 
+			// Scan marked objects and sweep unmarked objects.
+			template <class Scanner>
+			typename Scanner::Result scanSweep(typename Scanner::Source &source) {
+				typename Scanner::Result result = typename Scanner::Result();
+				for (size_t i = 0; i < chunks.size(); i++) {
+					result = chunks[i]->scanSweep<Scanner>(source);
+					if (result != typename Scanner::Result())
+						break;
+				}
+				return result;
+			}
+
 			// Sweep unmarked objects.
 			void sweep(ArenaTicket &ticket);
 
@@ -147,8 +160,11 @@ namespace storm {
 					// This allocation is marked as used during a GC phase.
 					fMarked = 0x02,
 
+					// Are we traversing this object right now? This is used to avoid cyclic scanning of a single object.
+					fTraversing = 0x04,
+
 					// This allocation was deemed unreachable, but must be finalized before it can be reclaimed.
-					fFinalize = 0x04,
+					fFinalize = 0x08,
 				};
 
 				// Data on this object. The 8 low bits are reserved for flags, while the remaining
@@ -253,6 +269,10 @@ namespace storm {
 				template <class Scanner>
 				typename Scanner::Result scanPinned(const PinnedSet &pinned, typename Scanner::Source &source);
 
+				// Scan objects while sweeping.
+				template <class Scanner>
+				typename Scanner::Result scanSweep(typename Scanner::Source &source);
+
 				// Fill a memory summary with information about this chunk.
 				void fillSummary(MemorySummary &summary) const;
 
@@ -339,7 +359,7 @@ namespace storm {
 				if (h->hasFlag(Header::fFree | Header::fFinalize))
 					continue;
 
-				PVAR(h->hasFlag(Header::fFree));
+				h->clearFlag(Header::fTraversing);
 
 				void *obj = fmt::toClient(h->object());
 				void *end = fmt::skip(obj);
@@ -355,6 +375,99 @@ namespace storm {
 			}
 			return result;
 		}
+
+		template <class Scanner>
+		typename Scanner::Result Nonmoving::Chunk::scanSweep(typename Scanner::Source &source) {
+			typename Scanner::Result result = typename Scanner::Result();
+			for (size_t i = 0; i < size; i += header(i)->size() + sizeof(Header)) {
+				Header *h = header(i);
+				if (h->hasFlag(Header::fFree | Header::fFinalize))
+					continue;
+
+				if (h->hasFlag(Header::fMarked)) {
+					void *obj = fmt::toClient(h->object());
+					result = fmt::Scan<Scanner>::objects(source, obj, fmt::skip(obj));
+					if (result != typename Scanner::Result())
+						return result;
+				} else {
+					free(h->object());
+				}
+			}
+			return result;
+		}
+
+
+		/**
+		 * Amend another scanner with the ability to detect and correctly handle nonmoving objects.
+		 *
+		 * This implementation assumes that the regular scanner has a member 'srcGen' that contains
+		 * the generation that is interesting to it, so that calling 'fix1' is not necessary. Also
+		 * uses the member 'arena' inside the wrapped object to access the arena instance. Also
+		 * assumes that there is no difference between 'fix' and 'fixHeader'.
+		 */
+		template <class Wrap, class Predicate = fmt::ScanAll, bool mark = true>
+		class ScanNonmoving {
+		public:
+			typedef typename Wrap::Result Result;
+			typedef typename Wrap::Source Source;
+
+			// Wrapped scanner.
+			Wrap wrap;
+
+			// Create.
+			ScanNonmoving(Source &source) : wrap(source) {}
+
+			// Check if the pointer is interesting to us.
+			inline bool fix1(void *ptr) {
+				byte gen = wrap.arena.memGeneration(ptr);
+				isNonmoving = gen == nonmovingIdentifier;
+				return isNonmoving | (gen == wrap.srcGen);
+			}
+
+			// Perform the scanning.
+			inline Result fix2(void **ptr) {
+				// Is it ours?
+				if (isNonmoving)
+					return scanNonmoving(ptr);
+
+				return wrap.fix2(ptr);
+			}
+
+			SCAN_FIX_HEADER
+		private:
+			// Was the last object examined with 'fix1' a nonmoving object? We remember this so that
+			// we don't have to check again.
+			mutable bool isNonmoving;
+
+			// For convenience.
+			typedef Nonmoving::Header Header;
+
+			// Scan a pointer to a nonmoving object. If we see one of these, we mark the object as
+			// scanned and immediately scan the object recursively. This is fine, since we assume
+			// there are few nonmoving objects, which means that the recursion won't be very deep.
+			inline Result scanNonmoving(void **ptr) {
+				Header *header = Header::fromClient(*ptr);
+
+				// Mark it as reachable.
+				if (mark)
+					header->setFlag(Header::fMarked);
+
+				// Don't traverse the object in a cycle!
+				if (header->hasFlag(Header::fTraversing))
+					return Result();
+
+				// Remember we're traversing it.
+				header->setFlag(Header::fTraversing);
+
+				typedef RefScanner<ScanNonmoving<Wrap, Predicate, mark>> ScanType;
+				Result result = fmt::Scan<ScanType>::objectsIf(Predicate(), *this, *ptr, fmt::skip(*ptr));
+
+				// Now, we're done. Make sure we can traverse it next time as well!
+				header->clearFlag(Header::fTraversing);
+
+				return result;
+			}
+		};
 
 	}
 }

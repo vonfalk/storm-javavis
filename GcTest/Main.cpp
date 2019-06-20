@@ -152,6 +152,10 @@ NOINLINE void createGlobals(Gc &gc) {
 
 	globals.weak = (GcWeakArray<Finalizable> *)gc.allocWeakArray(30);
 	nonmoving = globals.nonmoving = (Nonmoving *)gc.allocStatic(globals.store->nonmoving);
+	nonmoving->store = globals.store;
+
+	// Static allocation that should be collected.
+	gc.allocStatic(globals.store->nonmoving);
 }
 
 NOINLINE void checkGlobals() {
