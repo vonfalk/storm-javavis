@@ -207,7 +207,8 @@ namespace storm {
 			// generation for the time being. We want to keep objects being finalized intact for as
 			// long as possible, so that finalizers will see a fairly good view of the world.
 			FinalizerPool &pool = ticket.finalizerPool();
-			pool.scan<FinalizerPool::Move>(ticket, FinalizerPool::Move::Params(pool, State(*this)));
+			typedef ScanNonmoving<FinalizerPool::Move, fmt::ScanAll, true> FinalizerScanner;
+			pool.scan<FinalizerScanner>(ticket, FinalizerPool::Move::Params(pool, State(*this)));
 
 			// Check the blocks containing finalizers found before and grab all objects with
 			// finalizers and put them inside the finalizer pool.
@@ -216,6 +217,13 @@ namespace storm {
 				dbg_assert(pos != chunks.end(), L"Could not find a pinned set!");
 				at->traverse(FinalizerPool::MoveFinalizers(pool, pinnedSets[pos - chunks.begin()]));
 			}
+
+			// Also grab any objects that need to be kept alive by nonmoving objects with
+			// finalizers. At this point, we don't know which objects will die in the nonmoving
+			// pool. However, if we just scan all objects with finalizers, the ones previously
+			// scanned will simply not preserve anything new, while the ones who are going to perish
+			// is going to preserve their references as we want them to.
+			nonmoving.scanIf<IfFinalizer, FinalizerScanner>(IfFinalizer(), FinalizerPool::Move::Params(pool, State(*this)));
 
 			// Recursively grab all dependencies of the objects we moved to the finalizer pool!
 			pool.scanNew(ticket, State(*this));
@@ -277,9 +285,9 @@ namespace storm {
 			}
 		}
 
-		void Generation::runFinalizers() {
+		void Generation::runAllFinalizers() {
 			for (size_t i = 0; i < chunks.size(); i++) {
-				chunks[i].runFinalizers();
+				chunks[i].runAllFinalizers();
 			}
 		}
 
@@ -596,7 +604,7 @@ namespace storm {
 			}
 		};
 
-		void Generation::GenChunk::runFinalizers() {
+		void Generation::GenChunk::runAllFinalizers() {
 			for (Block *at = (Block *)memory.at; at != (Block *)memory.end(); at = (Block *)at->mem(at->size)) {
 				at->traverse(Finalize());
 			}

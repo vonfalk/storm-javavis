@@ -4,6 +4,7 @@
 #if STORM_GC == STORM_GC_SMM
 
 #include "Arena.h"
+#include "Nonmoving.h"
 
 namespace storm {
 	namespace smm {
@@ -86,9 +87,10 @@ namespace storm {
 			if (from >= to)
 				return false;
 
-			fmt::Scan<Move>::objects(Move::Params(*this, gen),
-									b->mem(from + fmt::headerSize),
-									b->mem(to + fmt::headerSize));
+			typedef ScanNonmoving<Move, fmt::ScanAll, true> Scanner;
+			fmt::Scan<Scanner>::objects(Move::Params(*this, gen),
+										b->mem(from + fmt::headerSize),
+										b->mem(to + fmt::headerSize));
 			b->committed(to);
 
 			// Done scanning?
@@ -106,7 +108,7 @@ namespace storm {
 		}
 
 		void FinalizerPool::finalize() {
-			// Early out, so we don't have to take the lock.
+			// Early out, so we don't always have to take the lock.
 			Block *finalize = atomicRead(finalizeHead);
 			if (!finalize)
 				return;

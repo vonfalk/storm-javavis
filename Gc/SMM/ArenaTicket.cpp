@@ -3,6 +3,7 @@
 
 #if STORM_GC == STORM_GC_SMM
 
+#include "Nonmoving.h"
 #include "FinalizerPool.h"
 
 namespace storm {
@@ -77,6 +78,7 @@ namespace storm {
 			// Unlock and run finalizers!
 			unlock();
 			owner.finalizers->finalize();
+			owner.nonmoving().runFinalizers();
 		}
 
 

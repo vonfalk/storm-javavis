@@ -83,7 +83,7 @@ namespace storm {
 
 			// Run all finalizers in this block. Most likely only called before the entire Arena is
 			// destroyed, so no need for efficiency.
-			void runFinalizers();
+			void runAllFinalizers();
 
 
 			/**
@@ -211,7 +211,7 @@ namespace storm {
 																Block *&finalizers);
 
 				// Run all finalizers in this chunk.
-				void runFinalizers();
+				void runAllFinalizers();
 
 				// Memory summary.
 				void fillSummary(MemorySummary &summary) const;

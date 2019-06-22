@@ -77,8 +77,8 @@ namespace storm {
 
 			// Look through the memory for additional finalizers that need to be executed.
 			for (size_t i = 0; i < generations.size(); i++)
-				generations[i]->runFinalizers();
-			nonmovingAllocs->runFinalizers();
+				generations[i]->runAllFinalizers();
+			nonmovingAllocs->runAllFinalizers();
 
 			for (size_t i = 0; i < generations.size(); i++)
 				delete generations[i];

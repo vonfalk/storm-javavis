@@ -19,12 +19,15 @@ namespace storm {
 		}
 
 		void *Nonmoving::alloc(ArenaTicket &ticket, const GcType *type) {
-			// TODO: If the object has a finalizer, we might want to allocate a bit of extra memory
-			// at the end, so that we can make a list of objects in need of finalization!
+			bool finalizer = type->finalizer != null;
 			size_t size = fmt::sizeObj(type);
-			void *mem = allocMem(size);
+
+			// If the object has a finalizer, we might want to allocate a bit of extra memory at the
+			// end, so that we can make a list of objects in need of finalization!
+			void *mem = allocMem(finalizer ? (size + sizeof(void *)) : size);
 			void *result = fmt::initObj(mem, type, size);
-			if (type->finalizer)
+
+			if (finalizer)
 				fmt::setHasFinalizer(result);
 			return result;
 		}
@@ -89,7 +92,7 @@ namespace storm {
 		void Nonmoving::free(ArenaTicket &ticket, void *mem) {
 			ChunkList::iterator pos = std::lower_bound(chunks.begin(), chunks.end(), mem, PtrCompare());
 			if (pos != chunks.end()) {
-				(*pos)->free(fmt::fromClient(mem));
+				(*pos)->free(this, fmt::fromClient(mem));
 			} else {
 				dbg_assert(false, L"Trying to 'free' nonmoving memory from a different pool!");
 			}
@@ -98,6 +101,14 @@ namespace storm {
 		}
 
 		void Nonmoving::runFinalizers() {
+			Header *first = atomicRead(toFinalize);
+			if (!first)
+				return;
+
+			TODO(L"Run finalizers!");
+		}
+
+		void Nonmoving::runAllFinalizers() {
 			for (size_t i = 0; i < chunks.size(); i++)
 				chunks[i]->runFinalizers();
 		}
@@ -190,14 +201,28 @@ namespace storm {
 			return null;
 		}
 
-		void Nonmoving::Chunk::free(fmt::Obj *obj) {
+		bool Nonmoving::Chunk::free(Nonmoving *owner, fmt::Obj *obj) {
 			Header *h = Header::fromObject(obj);
-			h->setFlag(Header::fFree);
 
-			TODO(L"Handle finalizers!");
+			if (fmt::objHasFinalizer(h->object())) {
+				// If the object has a finalizer, remember it and free it when we have executed finalizers.
+				Header *next;
+				do {
+					next = atomicRead(owner->toFinalize);
+					h->next(next);
+					h->setFlag(Header::fFinalize);
+				} while (atomicCAS(owner->toFinalize, next, h) != next);
 
-			// Merge any free blocks that follow us!
-			mergeFree(h);
+				return false;
+			} else {
+				// Nothing more needs to be done. We can just free it now.
+				h->setFlag(Header::fFree);
+
+				// Merge any free blocks that follow us!
+				mergeFree(h);
+
+				return true;
+			}
 		}
 
 		void Nonmoving::Chunk::mergeFree(Header *first) {
@@ -214,6 +239,9 @@ namespace storm {
 		void Nonmoving::Chunk::runFinalizers() {
 			for (size_t at = 0; at < size; at += header(at)->size() + sizeof(Header)) {
 				Header *h = header(at);
+				if (h->hasFlag(Header::fFree))
+					continue;
+
 				if (fmt::objHasFinalizer(h->object())) {
 					fmt::objFinalize(h->object());
 				}

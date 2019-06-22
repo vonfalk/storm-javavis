@@ -34,7 +34,7 @@ namespace storm {
 		 * smaller proxy-object can be statically allocated and refer to the larger allocation to
 		 * work around the problem.
 		 *
-		 * We assume that an ArenaTicket is acquired when using this class.
+		 * We assume that an ArenaTicket is acquired when using this class, except for 'runFinalizers'.
 		 */
 		class Nonmoving {
 		public:
@@ -53,8 +53,11 @@ namespace storm {
 			// Free an allocation (expected to be called from inside the GC).
 			void free(ArenaTicket &ticket, void *mem);
 
-			// Run finalizers for all objects in here. Assumed to be called before destruction.
+			// Run any pending finalizers.
 			void runFinalizers();
+
+			// Run all finalizers for all objects in here. Assumed to be called before destruction.
+			void runAllFinalizers();
 
 			// Get an address set initialized to a suitable range for us (we assume there are few
 			// enough objects so that one is enough).
@@ -87,6 +90,18 @@ namespace storm {
 				return result;
 			}
 
+			// Scan all objects with a predicate.
+			template <class Predicate, class Scanner>
+			typename Scanner::Result scanIf(const Predicate &pred, typename Scanner::Source &source) {
+				typename Scanner::Result result = typename Scanner::Result();
+				for (size_t i = 0; i < chunks.size(); i++) {
+					result = chunks[i]->scanIf<Predicate, Scanner>(pred, source);
+					if (result != typename Scanner::Result())
+						break;
+				}
+				return result;
+			}
+
 			// Scan all pinned objects.
 			template <class Scanner>
 			typename Scanner::Result scanPinned(const PinnedSet &pinned, typename Scanner::Source &source) {
@@ -103,12 +118,12 @@ namespace storm {
 				return result;
 			}
 
-			// Scan marked objects and sweep unmarked objects.
+			// Scan marked objects and sweep unmarked objects. Note: Also scans objects marked as finalizable.
 			template <class Scanner>
 			typename Scanner::Result scanSweep(typename Scanner::Source &source) {
 				typename Scanner::Result result = typename Scanner::Result();
 				for (size_t i = 0; i < chunks.size(); i++) {
-					result = chunks[i]->scanSweep<Scanner>(source);
+					result = chunks[i]->scanSweep<Scanner>(this, source);
 					if (result != typename Scanner::Result())
 						break;
 				}
@@ -135,6 +150,10 @@ namespace storm {
 		public:
 			// Header for a single nonmoving allocation. The data managed by the format starts at the
 			// end of this object, and client pointers point further ahead.
+			//
+			// Note: Objects with finalizers allocate some extra memory at the end of the allocation
+			// so that we can store a linked list of finalizable objects, and thereby quickly find
+			// objects in need of finalization.
 			struct Header {
 				// Get the pointer to the allocation as the object format code sees it.
 				inline fmt::Obj *object() {
@@ -196,6 +215,19 @@ namespace storm {
 					data = fFree;
 					size(sz);
 				}
+
+				// Get/set the 'next'-pointer at the end of this allocation. Only meaningful if the
+				// contained object has a finalizer, and the allocation is "too large" compared to
+				// the actual object inside. Only expext a valid result from this "member" when
+				// 'fFinalize' is set.
+				inline Header *next() const {
+					const byte *me = (const byte *)this;
+					return *(Header *const*)(me + size() - sizeof(void *));
+				}
+				inline void next(Header *v) {
+					byte *me = (byte *)this;
+					*(Header **)(me + size() - sizeof(void *)) = v;
+				}
 			};
 
 		private:
@@ -251,8 +283,11 @@ namespace storm {
 
 				// Free memory from this chunk. Assumes that the pointer was previously allocated
 				// with 'alloc'. Expected to be called from inside the GC, and not explicitly from
-				// client code.
-				void free(fmt::Obj *obj);
+				// client code. 'owner' is the owning Nonmoving object, so that we can notify it of
+				// any objects in need of finalization.
+				// Returns 'true' if the object was freed now, and 'false' if the object requires
+				// finalization.
+				bool free(Nonmoving *owner, fmt::Obj *obj);
 
 				// Run all finalizers in this block.
 				void runFinalizers();
@@ -265,13 +300,17 @@ namespace storm {
 				template <class Scanner>
 				typename Scanner::Result scan(typename Scanner::Source &source);
 
+				// Scan with predicate.
+				template <class Predicate, class Scanner>
+				typename Scanner::Result scanIf(const Predicate &predicate, typename Scanner::Source &source);
+
 				// Scan pinned objects, update the mark bit accordingly.
 				template <class Scanner>
 				typename Scanner::Result scanPinned(const PinnedSet &pinned, typename Scanner::Source &source);
 
 				// Scan objects while sweeping.
 				template <class Scanner>
-				typename Scanner::Result scanSweep(typename Scanner::Source &source);
+				typename Scanner::Result scanSweep(Nonmoving *owner, typename Scanner::Source &source);
 
 				// Fill a memory summary with information about this chunk.
 				void fillSummary(MemorySummary &summary) const;
@@ -312,6 +351,10 @@ namespace storm {
 			// the next allocation as well!
 			size_t lastChunk;
 
+			// List of finalizers ready to be executed. Accessed from outside the arena lock, so
+			// care needs to be taken when manipulating this!
+			Header *toFinalize;
+
 			// Min- and max addresses.
 			size_t memMin, memMax;
 
@@ -351,6 +394,25 @@ namespace storm {
 			return result;
 		}
 
+		template <class Predicate, class Scanner>
+		typename Scanner::Result Nonmoving::Chunk::scanIf(const Predicate &pred, typename Scanner::Source &source) {
+			typename Scanner::Result result = typename Scanner::Result();
+			for (size_t i = 0; i < size; i += header(i)->size() + sizeof(Header)) {
+				Header *h = header(i);
+				if (h->hasFlag(Header::fFree | Header::fFinalize))
+					continue;
+
+				void *obj = fmt::toClient(h->object());
+				if (!pred(obj))
+					continue;
+
+				result = fmt::Scan<Scanner>::objects(source, obj, fmt::skip(obj));
+				if (result != typename Scanner::Result())
+					return result;
+			}
+			return result;
+		}
+
 		template <class Scanner>
 		typename Scanner::Result Nonmoving::Chunk::scanPinned(const PinnedSet &pinned, typename Scanner::Source &source) {
 			typename Scanner::Result result = typename Scanner::Result();
@@ -377,20 +439,22 @@ namespace storm {
 		}
 
 		template <class Scanner>
-		typename Scanner::Result Nonmoving::Chunk::scanSweep(typename Scanner::Source &source) {
+		typename Scanner::Result Nonmoving::Chunk::scanSweep(Nonmoving *owner, typename Scanner::Source &source) {
 			typename Scanner::Result result = typename Scanner::Result();
 			for (size_t i = 0; i < size; i += header(i)->size() + sizeof(Header)) {
 				Header *h = header(i);
-				if (h->hasFlag(Header::fFree | Header::fFinalize))
+				if (h->hasFlag(Header::fFree))
 					continue;
 
-				if (h->hasFlag(Header::fMarked)) {
+				bool scan = true;
+				if (!h->hasFlag(Header::fMarked))
+					scan = !free(owner, h->object());
+
+				if (scan) {
 					void *obj = fmt::toClient(h->object());
 					result = fmt::Scan<Scanner>::objects(source, obj, fmt::skip(obj));
 					if (result != typename Scanner::Result())
 						return result;
-				} else {
-					free(h->object());
 				}
 			}
 			return result;
@@ -466,6 +530,15 @@ namespace storm {
 				header->clearFlag(Header::fTraversing);
 
 				return result;
+			}
+		};
+
+		/**
+		 * Predicate to check for finalizable objects.
+		 */
+		struct IfFinalizer {
+			inline bool operator() (void *obj) const {
+				return fmt::hasFinalizer(obj);
 			}
 		};
 

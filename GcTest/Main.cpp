@@ -32,6 +32,10 @@ struct Nonmoving {
 	TypeStore *store;
 };
 
+void CODECALL nonmovingFinalizer(Nonmoving *obj) {
+	PLN(L"Finalizing nonmoving object: " << obj);
+}
+
 struct Globals {
 	TypeStore *store;
 	GcWeakArray<Finalizable> *weak;
@@ -149,6 +153,7 @@ NOINLINE void createGlobals(Gc &gc) {
 
 	globals.store->nonmoving = gc.allocType(GcType::tFixed, null, sizeof(Nonmoving), 1);
 	globals.store->nonmoving->offset[0] = 0;
+	globals.store->nonmoving->finalizer = address(&nonmovingFinalizer);
 
 	globals.weak = (GcWeakArray<Finalizable> *)gc.allocWeakArray(30);
 	nonmoving = globals.nonmoving = (Nonmoving *)gc.allocStatic(globals.store->nonmoving);
