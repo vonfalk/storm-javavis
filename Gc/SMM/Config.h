@@ -18,8 +18,8 @@ namespace storm {
 
 		// Size of the history stored. A longer history uses more memory, but makes hash tables (or
 		// other code that depends on actual pointer values) take the slow path more
-		// often. Preferrably a power of two.
-		static const size_t historySize = 16;
+		// often. Must be a power of two!
+		static const nat historySize = 16;
 
 		// Granularity of memory allocations in the VMAlloc class. For each 2^vmAllocBits bytes
 		// managed, one byte of additional memory is needed. For a value of 16, blocks are 64KiB and

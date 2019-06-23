@@ -109,6 +109,12 @@ namespace storm {
 				return *owner.finalizers;
 			}
 
+			// Get an addrset describing the full range currently reserved by the VM backend.
+			template <class AddrSet>
+			AddrSet reservedSet() const {
+				return owner.alloc.addrSet<AddrSet>();
+			}
+
 			// Scan inexact roots (e.g. stacks) using the given scanner.
 			template <class Scanner>
 			typename Scanner::Result scanInexactRoots(typename Scanner::Source &source);

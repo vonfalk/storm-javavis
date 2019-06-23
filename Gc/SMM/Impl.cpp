@@ -264,7 +264,7 @@ namespace storm {
 
 	class SMMWatch : public GcWatch {
 	public:
-		SMMWatch(GcImpl &impl) : impl(impl) {}
+		SMMWatch(GcImpl &impl) : impl(impl), watch(impl.arena.history) {}
 		SMMWatch(GcImpl &impl, const smm::AddrWatch &watch) : impl(impl), watch(watch) {}
 
 		virtual void add(const void *addr) {
@@ -280,7 +280,7 @@ namespace storm {
 		}
 
 		virtual bool moved() {
-			return watch.check(impl.arena.history);
+			return watch.check();
 		}
 
 		virtual bool moved(const void *) {
