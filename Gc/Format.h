@@ -323,6 +323,14 @@ namespace storm {
 			objSetFinalized(fromClient(obj));
 		}
 
+		// Remove the finalized mark.
+		static inline void objClearFinalized(Obj *obj) {
+			atomicAnd(obj->info, ~size_t(0x2));
+		}
+		static inline void clearFinalized(void *obj) {
+			objClearFinalized(fromClient(obj));
+		}
+
 		// Check if this object is finalized. Works for both code- and regular allocations.
 		static inline bool objIsFinalized(const Obj *obj) {
 			return (obj->info & size_t(0x2)) != 0;

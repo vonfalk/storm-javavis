@@ -14,17 +14,51 @@ namespace storm {
 	namespace smm {
 
 		/**
-		 * Operations on the arena that requires holding the arena lock and collecting some
-		 * information that allows garbage collection to occur.
+		 * There are two types of ticket to the arena: ArenaTicket and LockTicket. Both of them make
+		 * sure that the arena lock is held while the ticket exists. The difference is that an
+		 * ArenaTicket collects more information than the LockTicket. This information is essential
+		 * for proper garbage collections, but may be unnecessary if a garbage collection is known
+		 * not to happen. Therefore, LockTicket only holds the arena lock, and little
+		 * more. Furthermore, ArenaTicket may trigger finalizers upon destruction while LockTicket
+		 * does not. Having an ArenaTicket implies also having a LockTicket.
 		 *
-		 * Initialization of the ArenaTicket class is a bit special. Therefore, it can not be
-		 * constructed as a regular class. Rather, use the 'enter' function provided below.
-		 *
-		 * Furthermore, we assume that ArenaTicket instances reside on the stack at the last
+		 * Initialization of these classes are a bit special. Therefore, it can not be constructed
+		 * as a regular class. Rather, use the 'enter' function provided in the Arena class.
+		 */
+		class LockTicket {
+		private:
+			friend class Arena;
+			friend class ArenaTicket;
+
+			// Create.
+			LockTicket(Arena &arena);
+			LockTicket();
+			LockTicket(const LockTicket &o);
+			LockTicket &operator =(const LockTicket &o);
+
+		public:
+			// Destroy.
+			~LockTicket();
+
+		protected:
+			// Associated arena.
+			Arena &owner;
+
+			// Are we holding the lock?
+			bool locked;
+
+			// Lock and unlock the arena. This includes stopping threads etc.
+			void lock();
+			void unlock();
+		};
+
+
+		/**
+		 * We assume that ArenaTicket instances reside on the stack at the last
 		 * location where references to garbage collected memory may be stored by the client
 		 * program. This means that when an ArenaTicket is held, no client code may be called.
 		 */
-		class ArenaTicket {
+		class ArenaTicket : public LockTicket {
 		private:
 			friend class Arena;
 
@@ -49,6 +83,10 @@ namespace storm {
 			// Make sure that all threads that may interact with garbage collected memory are not
 			// running. Threads are started again when the ticket is destroyed.
 			void stopThreads();
+
+			// Start any stopped threads. Threads will automatically be re-started as soon as the
+			// ticket is destroyed anyway, but an earlier start can sometimes be desired.
+			void startThreads();
 
 			// Tell the ArenaTicket that a generation desires to be collected. This will trigger a
 			// collection whenever the system has completed its current action (e.g. when the
@@ -90,24 +128,14 @@ namespace storm {
 													Generation *curr);
 
 		private:
-			// Associated arena.
-			Arena &owner;
-
 			// Did any generation trigger a garbage collection?
 			GenSet triggered;
-
-			// Are we holding the lock?
-			bool locked;
 
 			// Are we collecting garbage somewhere?
 			bool gc;
 
 			// Have we stopped threads?
 			bool threads;
-
-			// Lock and unlock the arena. This includes stopping threads etc.
-			void lock();
-			void unlock();
 
 			// Called to perform any scheduled tasks, such as collecting certain generations.
 			// Could be called in the destructor, but I'm not comfortable doing that much work there...
@@ -231,6 +259,26 @@ namespace storm {
 			t.finalize();
 		}
 
+		/**
+		 * Lock the arena.
+		 */
+		template <class R, class M>
+		R Arena::lock(M &memberOf, R (M::*fn)(LockTicket &)) {
+			LockTicket t(*this);
+			return (memberOf.*fn)(t);
+		}
+
+		template <class R, class M, class P>
+		R Arena::lock(M &memberOf, R (M::*fn)(LockTicket &, P), P p) {
+			LockTicket t(*this);
+			return (memberOf.*fn)(t, p);
+		}
+
+		template <class R, class M, class P, class Q>
+		R Arena::lock(M &memberOf, R (M::*fn)(LockTicket &, P, Q), P p, Q q) {
+			LockTicket t(*this);
+			return (memberOf.*fn)(t, p, q);
+		}
 
 	}
 }

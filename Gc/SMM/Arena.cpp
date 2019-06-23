@@ -87,49 +87,47 @@ namespace storm {
 		}
 
 		Chunk Arena::allocChunk(size_t size, byte identifier) {
-			util::Lock::L z(lock);
+			util::Lock::L z(arenaLock);
 
 			return alloc.alloc(size, identifier);
 		}
 
 		void Arena::freeChunk(Chunk chunk) {
-			util::Lock::L z(lock);
+			util::Lock::L z(arenaLock);
 			alloc.free(chunk);
 		}
 
 		Thread *Arena::attachThread() {
-			util::Lock::L z(lock);
-
 			Thread *t = new Thread(*this);
 			{
-				util::Lock::L z(lock);
+				util::Lock::L z(arenaLock);
 				threads.insert(t);
 			}
 			return t;
 		}
 
 		void Arena::detachThread(Thread *thread) {
-			util::Lock::L z(lock);
+			util::Lock::L z(arenaLock);
 			threads.erase(thread);
 		}
 
 		void Arena::addExact(Root &root) {
-			util::Lock::L z(lock);
+			util::Lock::L z(arenaLock);
 			exactRoots.insert(&root);
 		}
 
 		void Arena::removeExact(Root &root) {
-			util::Lock::L z(lock);
+			util::Lock::L z(arenaLock);
 			exactRoots.erase(&root);
 		}
 
 		void Arena::addInexact(Root &root) {
-			util::Lock::L z(lock);
+			util::Lock::L z(arenaLock);
 			inexactRoots.insert(&root);
 		}
 
 		void Arena::removeInexact(Root &root) {
-			util::Lock::L z(lock);
+			util::Lock::L z(arenaLock);
 			inexactRoots.erase(&root);
 		}
 
@@ -187,7 +185,7 @@ namespace storm {
 		}
 
 		MemorySummary Arena::summary() {
-			util::Lock::L z(lock);
+			util::Lock::L z(arenaLock);
 
 			MemorySummary summary;
 			alloc.fillSummary(summary);
@@ -203,7 +201,7 @@ namespace storm {
 		}
 
 		void Arena::dbg_verify() {
-			util::Lock::L z(lock);
+			util::Lock::L z(arenaLock);
 
 			// Check so that the only pointer to gen-2 is from gen-3.
 			size_t gens = generations.size();
@@ -221,7 +219,7 @@ namespace storm {
 		}
 
 		void Arena::dbg_dump() {
-			util::Lock::L z(lock);
+			util::Lock::L z(arenaLock);
 
 			PLN(summary());
 

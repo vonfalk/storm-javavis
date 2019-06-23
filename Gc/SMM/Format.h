@@ -25,6 +25,14 @@ namespace storm {
 			objSetHasFinalizer(fromClient(obj));
 		}
 
+		// Remove the note about finalizers.
+		static inline void objClearHasFinalizer(Obj *obj) {
+			objClearFinalized(obj);
+		}
+		static inline void clearHasFinalizer(void *obj) {
+			objClearHasFinalizer(fromClient(obj));
+		}
+
 		// Check if the object has a finalizer.
 		static inline bool objHasFinalizer(const Obj *obj) {
 			return objIsFinalized(obj);

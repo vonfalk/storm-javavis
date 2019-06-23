@@ -9,33 +9,36 @@
 namespace storm {
 	namespace smm {
 
-		ArenaTicket::ArenaTicket(Arena &owner) : owner(owner), locked(false), gc(false), threads(false) {
+		LockTicket::LockTicket(Arena &owner) : owner(owner), locked(false) {
 			lock();
 		}
 
-		ArenaTicket::~ArenaTicket() {
+		LockTicket::~LockTicket() {
 			unlock();
 		}
 
-		void ArenaTicket::lock() {
-			owner.lock.lock();
+		void LockTicket::lock() {
+			owner.arenaLock.lock();
 			dbg_assert(owner.entries == 0, L"Recursive arena entry!");
 			owner.entries++;
 			locked = true;
 		}
 
-		void ArenaTicket::unlock() {
+		void LockTicket::unlock() {
 			if (!locked)
 				return;
 
-			if (threads) {
-				TODO(L"Re-start threads!");
-				threads = false;
-			}
-
 			owner.entries--;
-			owner.lock.unlock();
+			owner.arenaLock.unlock();
 			locked = false;
+		}
+
+
+		ArenaTicket::ArenaTicket(Arena &owner) : LockTicket(owner), gc(false), threads(false) {}
+
+		ArenaTicket::~ArenaTicket() {
+			startThreads();
+			unlock();
 		}
 
 		void ArenaTicket::stopThreads() {
@@ -45,6 +48,13 @@ namespace storm {
 			assert(false, L"We don't have the ability to stop threads yet!");
 
 			threads = true;
+		}
+
+		void ArenaTicket::startThreads() {
+			if (!threads)
+				return;
+
+			threads = false;
 		}
 
 		void ArenaTicket::scheduleCollection(Generation *gen) {
@@ -76,9 +86,13 @@ namespace storm {
 			}
 
 			// Unlock and run finalizers!
+			startThreads();
 			unlock();
-			owner.finalizers->finalize();
+
+			// Note: Since references from finalizers keep nonmoving objects alive, but not the
+			// other way around, we want to run finalizers for nonmoving objects first.
 			owner.nonmoving().runFinalizers();
+			owner.finalizers->finalize();
 		}
 
 

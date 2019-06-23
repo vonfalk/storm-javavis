@@ -95,7 +95,7 @@ namespace storm {
 
 	void *GcImpl::allocStatic(const GcType *type) {
 		smm::Nonmoving &allocs = arena.nonmoving();
-		void *result = arena.enter(allocs, &smm::Nonmoving::alloc, type);
+		void *result = arena.lock(allocs, &smm::Nonmoving::alloc, type);
 		if (!result)
 			throw GcError(L"Out of memory (allocStatic).");
 

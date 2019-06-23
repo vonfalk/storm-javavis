@@ -4,6 +4,8 @@
 
 #if STORM_GC == STORM_GC_SMM
 
+#include "ArenaTicket.h"
+
 namespace storm {
 	namespace smm {
 
@@ -18,7 +20,7 @@ namespace storm {
 				arena.freeChunk(chunks[i]->chunk());
 		}
 
-		void *Nonmoving::alloc(ArenaTicket &ticket, const GcType *type) {
+		void *Nonmoving::alloc(LockTicket &ticket, const GcType *type) {
 			bool finalizer = type->finalizer != null;
 			size_t size = fmt::sizeObj(type);
 
@@ -89,7 +91,7 @@ namespace storm {
 			return pos;
 		}
 
-		void Nonmoving::free(ArenaTicket &ticket, void *mem) {
+		void Nonmoving::free(LockTicket &, void *mem) {
 			ChunkList::iterator pos = std::lower_bound(chunks.begin(), chunks.end(), mem, PtrCompare());
 			if (pos != chunks.end()) {
 				(*pos)->free(this, fmt::fromClient(mem));
@@ -101,11 +103,37 @@ namespace storm {
 		}
 
 		void Nonmoving::runFinalizers() {
-			Header *first = atomicRead(toFinalize);
-			if (!first)
-				return;
+			Header *first;
 
-			TODO(L"Run finalizers!");
+			// Grab the list of finalizers to execute.
+			do {
+				first = atomicRead(toFinalize);
+				if (!first)
+					return;
+			} while (atomicCAS(toFinalize, first, null) != first);
+
+
+			for (Header *at = first; at; at = at->next()) {
+				fmt::Obj *obj = at->object();
+				if (first->hasFlag(Header::fFinalize) && fmt::objHasFinalizer(obj))
+					fmt::objFinalize(obj);
+
+				// Make sure it doesn't go to the finalization queue again!
+				fmt::objClearHasFinalizer(obj);
+			}
+
+			// Free them all!
+			arena.lock(*this, &Nonmoving::freeChain, first);
+		}
+
+		void Nonmoving::freeChain(LockTicket &ticket, Header *first) {
+			while (first) {
+				Header *next = first->next();
+
+				free(ticket, toClient(first->object()));
+
+				first = next;
+			}
 		}
 
 		void Nonmoving::runAllFinalizers() {

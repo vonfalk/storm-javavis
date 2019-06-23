@@ -48,10 +48,10 @@ namespace storm {
 			Arena &arena;
 
 			// Allocate an object of the given type. Returns a properly initialized client pointer.
-			void *alloc(ArenaTicket &ticket, const GcType *type);
+			void *alloc(LockTicket &ticket, const GcType *type);
 
 			// Free an allocation (expected to be called from inside the GC).
-			void free(ArenaTicket &ticket, void *mem);
+			void free(LockTicket &ticket, void *mem);
 
 			// Run any pending finalizers.
 			void runFinalizers();
@@ -364,6 +364,9 @@ namespace storm {
 			// Allocate another chunk. Returns the ID of the newly allocated chunk, or an non-valid
 			// ID if the allocation failed.
 			size_t allocChunk();
+
+			// Free a range of linked allocations.
+			void freeChain(LockTicket &ticket, Header *first);
 		};
 
 

@@ -17,6 +17,7 @@ namespace storm {
 		class Thread;
 		class Nonmoving;
 		class Generation;
+		class LockTicket;
 		class ArenaTicket;
 		class FinalizerPool;
 
@@ -37,6 +38,7 @@ namespace storm {
 		class Arena {
 			// Make sure the ArenaTicket class can access the arena. That is often the only way to access
 			// some of the state here!
+			friend class LockTicket;
 			friend class ArenaTicket;
 
 		public:
@@ -100,7 +102,7 @@ namespace storm {
 			Arena &operator =(const Arena &o);
 
 			// Top-level arena lock, acquired whenever an ArenaTicket is created.
-			util::Lock lock;
+			util::Lock arenaLock;
 
 			// Count the number of time we tried to enter the arena, so that we can detect recursive
 			// entries (which will be bad).
@@ -161,6 +163,16 @@ namespace storm {
 			typename IfNotVoid<R>::t enter(M &memberOf, R (M::*fn)(ArenaTicket &, P, Q), P p, Q q);
 			template <class R, class M, class P, class Q>
 			typename IfVoid<R>::t enter(M &memberOf, R (M::*fn)(ArenaTicket &, P, Q), P p, Q q);
+
+			/**
+			 * Lock the arena, acquiring a LockTicket.
+			 */
+			template <class R, class M>
+			R lock(M &memberOf, R (M::*fn)(LockTicket &));
+			template <class R, class M, class P>
+			R lock(M &memberOf, R (M::*fn)(LockTicket &, P), P p);
+			template <class R, class M, class P, class Q>
+			R lock(M &memberOf, R (M::*fn)(LockTicket &, P, Q), P p, Q q);
 		};
 
 	}
