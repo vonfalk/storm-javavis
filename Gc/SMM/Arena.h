@@ -6,6 +6,7 @@
 #include "VMAlloc.h"
 #include "InlineSet.h"
 #include "GenSet.h"
+#include "History.h"
 #include "Gc/MemorySummary.h"
 #include "Utils/Templates.h"
 
@@ -86,6 +87,9 @@ namespace storm {
 
 			// Perform a full GC (API will most likely change).
 			void collect();
+
+			// Object movement history, to allow implementing location dependencies.
+			History history;
 
 			// Provide a memory summary. This traverses all objects, and is fairly expensive.
 			MemorySummary summary();

@@ -110,6 +110,8 @@ namespace storm {
 		void dbg_dump();
 
 	private:
+		friend class SMMWatch;
+
 		// The arena we're using.
 		smm::Arena arena;
 

@@ -10,6 +10,7 @@
 #include "Root.h"
 #include "Nonmoving.h"
 #include "ArenaTicket.h"
+#include "History.h"
 
 namespace storm {
 
@@ -146,9 +147,6 @@ namespace storm {
 
 	Bool GcImpl::liveObject(RootObject *obj) {
 		// All objects are destroyed promptly by us, so we don't need this functionality.
-
-		// TODO: Consider what happens with weak references. Since we're treating finalization
-		// specially, it should still be fine.
 		return true;
 	}
 
@@ -264,9 +262,53 @@ namespace storm {
 		delete root;
 	}
 
+	class SMMWatch : public GcWatch {
+	public:
+		SMMWatch(GcImpl &impl) : impl(impl) {}
+		SMMWatch(GcImpl &impl, const smm::AddrWatch &watch) : impl(impl), watch(watch) {}
+
+		virtual void add(const void *addr) {
+			watch.add(addr);
+		}
+
+		virtual void remove(const void *addr) {
+			// Not supported, but we just give false positives, which is OK.
+		}
+
+		virtual void clear() {
+			watch.clear();
+		}
+
+		virtual bool moved() {
+			return watch.check(impl.arena.history);
+		}
+
+		virtual bool moved(const void *) {
+			return moved();
+		}
+
+		virtual GcWatch *clone() const {
+			return new (impl.alloc(&type)) SMMWatch(impl, watch);
+		}
+
+		static const GcType type;
+
+	private:
+		GcImpl &impl;
+		smm::AddrWatch watch;
+	};
+
+	const GcType SMMWatch::type = {
+		GcType::tFixed,
+		null,
+		null,
+		sizeof(SMMWatch),
+		0,
+		{}
+	};
+
 	GcWatch *GcImpl::createWatch() {
-		assert(false, L"Creating watch objects is not yet supported!");
-		return null;
+		return new (alloc(&SMMWatch::type)) SMMWatch(*this);
 	}
 
 	void GcImpl::checkMemory() {

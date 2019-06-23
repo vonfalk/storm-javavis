@@ -31,6 +31,9 @@ namespace storm {
 			static const size_t totalBytes = NextPowerOfTwo<minBytes>::value;
 
 			// Create empty.
+			AddrSet() {
+				init(0, 1);
+			}
 			AddrSet(void *from, void *to) {
 				init(size_t(from), size_t(to));
 			}
