@@ -1,0 +1,67 @@
+use core:io;
+use util:serialize;
+
+value Val : serializable {
+	Int a;
+	Str b;
+
+	init(Int a, Str b) {
+		init() { a = a; b = b; }
+	}
+}
+
+class Base : serializable {
+	Int a;
+
+	init(Int a) {
+		init() { a = a; }
+	}
+}
+
+class Derived : extends Base, serializable {
+	Int b;
+
+	init(Int a, Int b) {
+		init(a) { b = b; }
+	}
+}
+
+class Wrap : serializable {
+	Val a;
+	Val b;
+	Base c;
+	Base d;
+	Base e;
+
+	init() {
+		Base shared(5);
+		init() {
+			a = Val(1, "One");
+			b = Val(2, "Two");
+			c = Derived(3, 4);
+			d = shared;
+			e = shared;
+		}
+	}
+}
+
+void serializeExample() {
+	MemOStream buffer;
+	ObjOStream out(buffer);
+
+	// First session, an entire Wrap object.
+	Wrap().write(out);
+
+	// Second session, an array of Val objects.
+	[Val(10, "Ten"), Val(20, "Twenty")].write(out);
+
+	// Print a textual version to the screen.
+	TextObjStream text(MemIStream(buffer.buffer));
+	print("Session 1:");
+	print(text.read());
+	print("Session 2:");
+	print(text.read());
+
+	// Print the data to the screen as well.
+	print(buffer.buffer.toS);
+}
