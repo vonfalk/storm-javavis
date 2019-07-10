@@ -143,6 +143,81 @@ class ColumnLayout extends layout:Layout {
 	}
 }
 
+/**
+ * A layout for putting each element below the previous one. Does not attempt to fill the remaining
+ * space below all elements. A simpler alternative to the grid layout, possibly combined with anchor
+ * elements.
+ */
+class RowLayout extends layout:Layout {
+	private Component[] components;
+	private Cardinal anchor;
+
+	// Space between rows.
+	Float padding;
+
+	// Create.
+	init() {
+		init() {
+			padding = 10;
+			anchor = north;
+		}
+	}
+
+	// Align elements to the left.
+	void left() {
+		anchor = northWest;
+	}
+
+	// Align elements to the right.
+	void right() {
+		anchor = northEast;
+	}
+
+	// Align elements to the center (default).
+	void center() {
+		anchor = north;
+	}
+
+	// Add a component.
+	Layout:Info add(Component c) : override {
+		components << c;
+		Layout:Info();
+	}
+
+	// Minimum size.
+	Size minSize() : override {
+		Size m(0, -padding);
+		for (c in components) {
+			var s = c.minSize();
+			m.h += padding + s.h;
+			m.w = max(m.w, s.w);
+		}
+		m;
+	}
+
+	// Re-compute the layout.
+	void layout() : override {
+		Rect p = pos;
+		Float y = p.p0.y;
+
+		for (c in components) {
+			var s = c.minSize();
+			s.w = min(s.w, p.size.w);
+			s.h = min(s.h, p.p1.y - y);
+
+			Rect box(Point(p.p0.x, y), Point(p.p1.x, y + s.h));
+			c.pos = anchor.align(box, s);
+			y += s.h + padding;
+		}
+	}
+
+	// Traverse.
+	void findAll(fn(Component)->void fn) : override {
+		super:findAll(fn);
+		for (c in components)
+			c.findAll(fn);
+	}
+}
 
 /**
  * A layout that fits the contained element according to a cardinal direction.

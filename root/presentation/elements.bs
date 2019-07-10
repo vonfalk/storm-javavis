@@ -187,6 +187,22 @@ class List extends Element {
 		}
 	}
 
+	// Create alphabetical letters.
+	void letters() {
+		numbers.clear();
+
+		if (elements.empty)
+			return;
+
+		Font f = elements.first.font;
+		for (Nat i = 0; i < elements.count; i++) {
+			Text t(Char(65 + i).toS + ":", f);
+			numbers << t;
+
+			margin = max(margin, t.size.w + padding);
+		}
+	}
+
 	// Minimum size
 	Size minSize() {
 		Size sz;

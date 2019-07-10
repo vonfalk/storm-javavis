@@ -5,10 +5,15 @@ use core:geometry;
  */
 class Cardinal {
 	// Place a rectangle at this edge.
-	Rect place(Point pt, Size sz) : abstract;
+	Rect place(Point pt, Size size) : abstract;
 
 	// Pick this direction from a rectangle.
 	Point pick(Rect r) : abstract;
+
+	// Align a rectangle inside another rectangle at the specified edge.
+	Rect align(Rect inside, Size size) {
+		place(pick(inside), size);
+	}
 
 	// Opposite direction.
 	Cardinal opposite() : abstract;
