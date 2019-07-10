@@ -131,12 +131,12 @@ class MyClass {
     // other members...
 
     void write(ObjOStream to) {
-	if (to.startClass(serializedType(), this)) {
+        if (to.startClass(serializedType(), this)) {
             // call super:write(to) if it exists
             a.write(to);
             b.write(to);
             to.end();
-	}
+        }
     }
 }
 ```
