@@ -14,6 +14,26 @@ template <class T, size_t numSize>
 struct BitwiseImpl {};
 
 template <class T>
+struct BitwiseImpl<T, 1> {
+	static nat trailingZeros(T v) {
+		// From Bit Twiddling Hacks: https://graphics.stanford.edu/~seander/bithacks.html
+		static const byte vals[] = { 0xAA, 0xCC, 0xF0 };
+		nat r = (v & vals[0]) != 0;
+		for (nat i = 2; i > 0; i--)
+			r |= ((v & vals[i]) != 0) << i;
+		return r;
+	}
+
+	static nat setBitCount(T number) {
+		nat v = number;
+		v = ((v & 0xAA) >> 1) + (v & 0x55);
+		v = ((v & 0xCC) >> 2) + (v & 0x33);
+		v = ((v & 0xF0) >> 4) + (v & 0x0F);
+		return v;
+	}
+};
+
+template <class T>
 struct BitwiseImpl<T, 4> {
 	static nat trailingZeros(T v) {
 		// From Bit Twiddling Hacks: https://graphics.stanford.edu/~seander/bithacks.html
@@ -73,9 +93,11 @@ inline T nextPowerOfTwo(T number) {
 	return number + 1;
 }
 
-// Get the number of trailing zeros, assuming "number" is a power of two.
+// Get the number of trailing zeros.
 template <class T>
 inline nat trailingZeros(T number) {
+	// Extract the least set bit, so that BitwiseImpl may assume it is a power of two.
+	number &= T() - number;
 	return BitwiseImpl<T, sizeof(T)>::trailingZeros(number);
 }
 

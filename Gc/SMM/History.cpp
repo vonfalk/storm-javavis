@@ -15,7 +15,7 @@ namespace storm {
 		History::History() : epochLow(1), epochHigh(0) {}
 
 		void History::step(ArenaTicket &ticket) {
-			// This must be done atomically wrt. to other threads. Generally, we will only call this
+			// This must be done atomically wrt. other threads. Generally, we will only call this
 			// function when we need to stop threads anyway, so this is mostly a precaution.
 			ticket.stopThreads();
 
@@ -31,7 +31,8 @@ namespace storm {
 
 		void History::add(ArenaTicket &ticket, size_t from, size_t to) {
 			for (nat i = 0; i < historySize; i++) {
-				// history[i].resize_to_include(from, to);
+				if (!history[i].covers(from, to))
+					history[i] = history[i].resize(from, to);
 				history[i].add(from, to);
 			}
 		}
@@ -63,9 +64,9 @@ namespace storm {
 			}
 
 
-			TODO(L"Implement me!");
-			// watching.resize_to_include(addr);
-			// watching.add(addr, addr + 1);
+			if (!watching.covers(addr))
+				watching = watching.resize(addr, (const byte *)addr + 1);
+			watching.add(addr);
 		}
 
 		void AddrWatch::clear() {
@@ -112,10 +113,7 @@ namespace storm {
 				}
 			}
 
-			// return watching.intersects(moved);
-
-			TODO(L"Implement me!");
-			return true;
+			return watching.intersects(moved);
 		}
 
 		bool AddrWatch::empty() const {

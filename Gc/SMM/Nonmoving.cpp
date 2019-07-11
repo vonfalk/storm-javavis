@@ -13,7 +13,7 @@ namespace storm {
 		 * Nonmoving.
 		 */
 
-		Nonmoving::Nonmoving(Arena &arena) : arena(arena), lastChunk(0), memMin(0), memMax(1) {}
+		Nonmoving::Nonmoving(Arena &arena) : arena(arena), lastChunk(0), memMin(0), memMax(1), toFinalize(null) {}
 
 		Nonmoving::~Nonmoving() {
 			for (size_t i = 0; i < chunks.size(); i++)
