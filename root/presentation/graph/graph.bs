@@ -4,252 +4,267 @@ use graphics;
 use ui;
 
 /**
- * Class representing a bar graph (horizontal).
+ * Class representing the axis environment for a horizontal bar graph. This class is basically a
+ * layout manager for the individual components of the graph.
  */
 class BarGraph extends Element {
-	// Data series.
-	private class Series on Render {
-		// Title of the series (shown in the legend).
-		Text title;
+	// The axis owned by the graph.
+	private GraphAxis axis;
 
-		// Data points.
-		Float[] data;
+	// Style used for labels in the graph itself.
+	private TextStyle labelStyle;
 
-		// Text for the data points, if any.
-		Text[] labels;
+	// Labels in use.
+	private GraphLabel[] labels;
 
-		// Color of this series.
-		Brush color;
+	// Data sets to plot.
+	private GraphData[] data;
 
-		init(Text title, Float[] data, Text[] labels, Brush color) {
-			init {
-				title = title;
-				data = data;
-				labels = labels;
-				color = color;
-			}
+	// Create.
+	init(Presentation p) {
+		init() {
+			axis(p.contentStyle);
+			labelStyle = p.contentStyle;
 		}
 	}
 
-	// Labels for the different data-points on the y-axis.
-	private Text[] labels;
+	// Set the font used in the axis.
+	void axisStyle(TextStyle style) {
+		axis.style = style;
+	}
 
-	// Labels for the numbers on the x-axis.
-	private Text[] numbers;
+	// Set the label style.
+	void labelStyle(TextStyle style) {
+		labelStyle = style;
+	}
 
-	// Different data series.
-	private Series[] series;
+	// Set the ticks on the x-axis.
+	void ticks(Float min, Float step, Float max) {
+		axis.ticks(min, step, max);
+	}
 
-	// Text style used here.
-	private TextStyle textStyle;
+	// Set margin on the left.
+	void leftMargin(Float margin) {
+		axis.leftMargin = margin;
+	}
 
-	// Min and max values on the X axis.
-	private Float xMin;
-	private Float xMax;
-	private Float xTick;
+	// Set margin on the right.
+	void rightMargin(Float margin) {
+		axis.rightMargin = margin;
+	}
 
-	// Text color.
-	private Brush textBrush;
+	// Set labels on the y-axis.
+	void labels(Str[] labels) {
+		this.labels.clear();
 
-	// Axis color.
-	private Brush axisBrush;
+		for (l in labels)
+			this.labels << GraphLabel(Text(l, labelStyle.font));
+	}
 
-	// Right margin, used only for the arrow.
-	private Float arrowMargin;
+	// Add some data.
+	void data(Float[] values) {
+		data << GraphData(values);
+	}
 
-	// Size of the arrow on the right side of the graph.
-	private Float arrowSize;
+	// Generate labels for the bars by using a lambda function.
+	void dataLabels(fn(Float)->Str fn) {}
+
+	// Get the minimum size of the layout.
+	Size minSize() {
+		Size(0, 0);
+	}
+
+	// Draw this element.
+	void draw(Graphics g) {
+		Rect graph = pos;
+		graph.p1.y -= axis.tickHeight() + axis.labelMargin;
+
+		Float leftMargin;
+		Float height = graph.size.h / labels.count.int.float;
+		Float y;
+		for (label in labels) {
+			// TODO: Handle things being partially visible, etc.
+			label.offset = y + height / 2;
+			y += height;
+
+			leftMargin = max(leftMargin, label.text.size.w);
+		}
+
+		graph.p0.x += leftMargin + axis.labelMargin;;
+
+		axis.draw(g, graph, labels);
+	}
+}
+
+// Helper for creating the bar graph.
+BarGraph barGraph(Presentation p) {
+	BarGraph(p);
+}
+
+
+/**
+ * Class responsible for drawing the axis itself.
+ */
+class GraphAxis on Render {
+	// The style of the text on the axis.
+	TextStyle style;
+
+	// Created tick labels.
+	private Text[] ticks;
+
+	// Minimum value.
+	private Float min;
+
+	// Maximum value.
+	private Float max;
+
+	// Step for the ticks.
+	private Float step;
+
+	// Margin on the left side (pixels).
+	Float marginLeft;
+
+	// Margin on the right side (pixels).
+	Float marginRight;
+
+	// Size of the markers.
+	Float markSize;
+
+	// Margin between the axis and the labels.
+	Float labelMargin;
 
 	// The arrow we will draw.
 	private Path arrow;
 
-	// Size of the markers on the axes lines.
-	private Float markSize;
-
-	// Margin between labels and the axes.
-	private Float labelMargin;
-
-	// Space between different bar entries.
-	private Float labelSpace;
-
-	// Space between two bars in different series.
-	private Float seriesSpace;
-
-	// Create. Specifies the data-points on the y-axis.
-	init(TextStyle style, Str[] labels) {
+	// Create.
+	init(TextStyle style) {
 		init() {
-			textStyle = style;
-			textBrush = style.fill;
-			axisBrush = style.fill;
-			arrowMargin = 20;
-			arrowSize = 8;
-			markSize = 6;
-			labelMargin = 5;
-			labelSpace = 15;
-			seriesSpace = 5;
-
-			xMin = 0;
-			xMax = 100;
-			xTick = 20;
+			style = style;
+			min = 0;
+			max = 1;
+			step = 1;
+			marginLeft = 0;
+			marginRight = 20;
+			markSize = 4;
+			labelMargin = 4;
 		}
 
-		for (label in labels) {
-			this.labels << Text(label, style.font);
+		ticks(0, 1, 1);
+		arrowSize(10);
+	}
+
+	// Create ticks for the graph.
+	void ticks(Float min, Float step, Float max) {
+		ticks.clear();
+		this.min = min;
+		this.max = max;
+		this.step = step;
+
+		Int index = 0;
+		do {
+			Float at = min + index.float*step;
+		} while (at <= max) {
+			ticks << Text("${at}", style.font);
+			index++;
 		}
-
-		updateScale();
-		updateArrow();
 	}
 
-	// Set the range of the X axis.
-	void range(Float min, Float max, Float tick) {
-		xMin = min;
-		xMax = max;
-		xTick = tick;
-		updateScale();
+	// Compute the height of the tick labels.
+	Float tickHeight() {
+		Float h;
+		for (l in ticks)
+			h = max(h, l.size.h);
+		h;
 	}
 
-	// Add a series to the graph.
-	void series(Str name, Float[] data, Color color) {
-		series << Series(Text(name, textStyle.font), data, [], SolidBrush(color));
-	}
-
-	// Add a series with labels to the graph.
-	void series(Str name, Float[] data, Str[] labels, Color color) {
-		Text[] l;
-		for (label in labels)
-			l << Text(label, textStyle.font);
-		series << Series(Text(name, textStyle.font), data, l, SolidBrush(color));
-	}
-
-	// Minimum size.
-	Size minSize() : override {
-		Size margin;
-		for (l in labels)
-			margin.w = max(margin.w, l.size.w);
-		for (n in numbers)
-			margin.h = max(margin.h, n.size.h);
-
-		margin + Size(arrowMargin + labelMargin, labelMargin);
-	}
-
-	// Draw.
-	void draw(Graphics g) : override {
-		Size margin;
-		for (l in labels)
-			margin.w = max(margin.w, l.size.w);
-		for (n in numbers)
-			margin.h = max(margin.h, n.size.h);
-
-		margin.h += labelMargin;
-		margin.w += labelMargin;
-
-		Rect graph(pos.p0 + Point(margin.w, 0), pos.p1 - Point(arrowMargin, margin.h));
-
-		drawData(g, graph);
-		drawAxes(g, graph);
-	}
-
-	// Draw the axes of the graph with corresponding labels.
-	private void drawAxes(Graphics g, Rect graphPos) {
+	// Draw the axis.
+	void draw(Graphics g, Rect graph, GraphLabel[] labels) {
 		// The Y axis.
-		g.line(graphPos.p0, Point(graphPos.p0.x, graphPos.p1.y + markSize / 2), axisBrush);
+		if (marginLeft > 0.1) {
+			g.line(graph.p0, Point(graph.p0.x, graph.p1.y), style.fill);
+		} else {
+			g.line(graph.p0, Point(graph.p0.x, graph.p1.y + markSize / 2), style.fill);
+		}
 
-		Float step = graphPos.size.h / labels.count.int.float;
-		for (i, l in labels) {
-			Size sz = l.size;
-			Point align = graphPos.p0 + Point(0, step * (i.int.float + 0.5));
+		for (l in labels) {
+			Size sz = l.text.size;
+			Point align = graph.p0 + Point(0, l.offset);
 
-			// g.line(align - Point(markSize / 2, 0), align + Point(markSize / 2, 0), axisBrush);
-			g.line(align - Point(markSize / 2, 0), align, axisBrush);
+			g.line(align - Point(markSize / 2, 0), align, style.fill);
 
 			align -= Size(sz.w + labelMargin, sz.h / 2);
-			g.draw(l, textBrush, align);
+			g.draw(l.text, style.fill, align);
 		}
 
 		// The X axis.
-		Point edge = graphPos.p1 + Point(arrowMargin, 0);
-		g.line(Point(graphPos.p0.x, graphPos.p1.y), edge, axisBrush);
+		g.line(Point(graph.p0.x, graph.p1.y), graph.p1, style.fill);
 
-		// The arrow
 		g.push();
-		g.transform(translate(edge));
-		g.draw(arrow, axisBrush);
+		g.transform(translate(graph.p1));
+		g.draw(arrow, style.fill);
 		g.pop();
 
-		step = xTick * graphPos.size.w / (xMax - xMin);
-		for (i, n in numbers) {
-			Size sz = n.size;
-			Point align(graphPos.p0.x + step * i.int.float, graphPos.p1.y);
+		for (id, text in ticks) {
+			Float y = min + step*id.int.float;
+			Point p(coordToPx(graph, y), graph.p1.y);
 
-			if (i > 0)
-				g.line(align - Point(0, markSize / 2), align + Point(0, markSize / 2), axisBrush);
+			if (id > 0 | marginLeft > 0.1)
+				g.line(p - Point(0, markSize/2), p + Point(0, markSize/2), style.fill);
 
-			align -= Size(sz.w / 2, -labelMargin);
-			g.draw(n, textBrush, align);
+			Size sz = text.size;
+			p -= Size(sz.w / 2, -labelMargin);
+			g.draw(text, style.fill, p);
 		}
 	}
 
-	// Draw the data in the graph.
-	private void drawData(Graphics g, Rect graph) {
-		// Size available for each element.
-		Float entrySz = (graph.size.h / labels.count.int.float) - labelSpace;
-
-		// Size available for each bar.
-		Float numSeries = series.count.int.float;
-		Float barSz = (entrySz - (numSeries - 1) * seriesSpace) / numSeries;
-
-		for (i, s in series) {
-			Float offset = i.int.float * (barSz + seriesSpace) - entrySz / 2;
-			drawData(g, s, graph, offset, barSz);
-		}
+	// Compute the pixel value of a coordinate (x coordinate)
+	Float coordToPx(Rect graph, Float y) {
+		Float l = graph.p0.x + marginLeft;
+		Float r = graph.p1.x - marginRight;
+		Float step = (r - l) / (max - min);
+		l + step*(y - min);
 	}
 
-	// Draw a single series.
-	private void drawData(Graphics g, Series s, Rect graph, Float offset, Float height) {
-		Float scale = graph.size.w / (xMax - xMin);
-		Float step = graph.size.h / labels.count.int.float;
-		for (i, pt in s.data) {
-			Point zero = graph.p0 + Point(0, step * (i.int.float + 0.5) + offset);
-			Point tip = zero + Point(scale * pt, height);
-
-			g.draw(Rect(zero, tip), axisBrush);
-			g.fill(Rect(zero, tip), s.color);
-
-			if (i < s.labels.count) {
-				Text label = s.labels[i];
-				Size sz = label.size;
-				Point pt = tip + Point(labelMargin, -height / 2 - sz.h / 2);
-
-				// If we don't have room on the right, draw it inside the bar instead.
-				if (pt.x + sz.w > graph.p1.x + arrowMargin)
-					pt.x = tip.x - labelMargin - sz.w;
-
-				g.draw(label, textBrush, pt);
-			}
-		}
-	}
-
-	// Update the text labels for the X axis.
-	private void updateScale() {
-		numbers.clear();
-
-		Int step = 0;
-		do {
-			Float at = xMin + step.float * xTick;
-		} while (at <= xMax) {
-			numbers << Text("${at}", textStyle.font);
-			step++;
-		}
-	}
-
-	// Update the arrow.
-	private void updateArrow() {
+	// Set the arrow size.
+	assign arrowSize(Float size) {
 		arrow.clear();
 
-		Float height = arrowSize * 2 / 3;
-		arrow.start(Point(-arrowSize, -height));
+		Float height = size * 2 / 3;
+		arrow.start(Point(-size, -height));
 		arrow.line(Point(0, 0));
-		arrow.line(Point(-arrowSize, height));
+		arrow.line(Point(-size, height));
+	}
+}
+
+/**
+ * Class representing a label in a graph.
+ */
+class GraphLabel on Render {
+	// The title of this label.
+	Text text;
+
+	// Y-offset of this label.
+	Float offset;
+
+	// Create.
+	init(Text text) {
+		init {
+			text = text;
+		}
+	}
+}
+
+/**
+ * Class representing one set of data-points in a graph.
+ */
+class GraphData on Render {
+	// Data points in the graph.
+	Float[] values;
+
+	// Create the data.
+	init(Float[] values) {
+		init {
+			values = values;
+		}
 	}
 }

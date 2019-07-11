@@ -558,7 +558,7 @@ context. In such cases, they may be left out. This can be done when the lambda f
 directly as a parameter to a function, or if it is being assigned to a variable. For example:
 
 ```
-Array<Int> x; // initialize with som data.
+Array<Int> x; // initialize with some data.
 x.sort((a, b) => a > b);
 ```
 
