@@ -15,13 +15,17 @@ class BarGraph extends Element {
 		// Data points.
 		Float[] data;
 
+		// Text for the data points, if any.
+		Text[] labels;
+
 		// Color of this series.
 		Brush color;
 
-		init(Text title, Float[] data, Brush color) {
+		init(Text title, Float[] data, Text[] labels, Brush color) {
 			init {
 				title = title;
 				data = data;
+				labels = labels;
 				color = color;
 			}
 		}
@@ -50,8 +54,14 @@ class BarGraph extends Element {
 	// Axis color.
 	private Brush axisBrush;
 
+	// Right margin, used only for the arrow.
+	private Float arrowMargin;
+
 	// Size of the arrow on the right side of the graph.
 	private Float arrowSize;
+
+	// The arrow we will draw.
+	private Path arrow;
 
 	// Size of the markers on the axes lines.
 	private Float markSize;
@@ -59,15 +69,24 @@ class BarGraph extends Element {
 	// Margin between labels and the axes.
 	private Float labelMargin;
 
+	// Space between different bar entries.
+	private Float labelSpace;
+
+	// Space between two bars in different series.
+	private Float seriesSpace;
+
 	// Create. Specifies the data-points on the y-axis.
 	init(TextStyle style, Str[] labels) {
 		init() {
 			textStyle = style;
 			textBrush = style.fill;
 			axisBrush = style.fill;
-			arrowSize = 14;
+			arrowMargin = 20;
+			arrowSize = 8;
 			markSize = 6;
 			labelMargin = 5;
+			labelSpace = 15;
+			seriesSpace = 5;
 
 			xMin = 0;
 			xMax = 100;
@@ -79,6 +98,7 @@ class BarGraph extends Element {
 		}
 
 		updateScale();
+		updateArrow();
 	}
 
 	// Set the range of the X axis.
@@ -91,7 +111,15 @@ class BarGraph extends Element {
 
 	// Add a series to the graph.
 	void series(Str name, Float[] data, Color color) {
-		series << Series(Text(name, textStyle.font), data, SolidBrush(color));
+		series << Series(Text(name, textStyle.font), data, [], SolidBrush(color));
+	}
+
+	// Add a series with labels to the graph.
+	void series(Str name, Float[] data, Str[] labels, Color color) {
+		Text[] l;
+		for (label in labels)
+			l << Text(label, textStyle.font);
+		series << Series(Text(name, textStyle.font), data, l, SolidBrush(color));
 	}
 
 	// Minimum size.
@@ -102,7 +130,7 @@ class BarGraph extends Element {
 		for (n in numbers)
 			margin.h = max(margin.h, n.size.h);
 
-		margin + Size(arrowSize + labelMargin, labelMargin);
+		margin + Size(arrowMargin + labelMargin, labelMargin);
 	}
 
 	// Draw.
@@ -116,7 +144,7 @@ class BarGraph extends Element {
 		margin.h += labelMargin;
 		margin.w += labelMargin;
 
-		Rect graph(pos.p0 + Point(margin.w, 0), pos.p1 - Point(arrowSize, margin.h));
+		Rect graph(pos.p0 + Point(margin.w, 0), pos.p1 - Point(arrowMargin, margin.h));
 
 		drawData(g, graph);
 		drawAxes(g, graph);
@@ -132,19 +160,22 @@ class BarGraph extends Element {
 			Size sz = l.size;
 			Point align = graphPos.p0 + Point(0, step * (i.int.float + 0.5));
 
-			g.line(align - Point(markSize / 2, 0), align + Point(markSize / 2, 0), axisBrush);
+			// g.line(align - Point(markSize / 2, 0), align + Point(markSize / 2, 0), axisBrush);
+			g.line(align - Point(markSize / 2, 0), align, axisBrush);
 
 			align -= Size(sz.w + labelMargin, sz.h / 2);
 			g.draw(l, textBrush, align);
 		}
 
 		// The X axis.
-		Point edge = graphPos.p1 + Point(arrowSize, 0);
+		Point edge = graphPos.p1 + Point(arrowMargin, 0);
 		g.line(Point(graphPos.p0.x, graphPos.p1.y), edge, axisBrush);
 
-		// The arrow (TODO: Proper line joints)
-		g.line(edge, edge - Point(arrowSize / 2, arrowSize / 3), axisBrush);
-		g.line(edge, edge - Point(arrowSize / 2, -arrowSize / 3), axisBrush);
+		// The arrow
+		g.push();
+		g.transform(translate(edge));
+		g.draw(arrow, axisBrush);
+		g.pop();
 
 		step = xTick * graphPos.size.w / (xMax - xMin);
 		for (i, n in numbers) {
@@ -161,22 +192,41 @@ class BarGraph extends Element {
 
 	// Draw the data in the graph.
 	private void drawData(Graphics g, Rect graph) {
-		// TODO: Compute bar width and offsets.
+		// Size available for each element.
+		Float entrySz = (graph.size.h / labels.count.int.float) - labelSpace;
 
-		for (i, s in series)
-			drawData(g, s, graph, i.int.float * 5);
+		// Size available for each bar.
+		Float numSeries = series.count.int.float;
+		Float barSz = (entrySz - (numSeries - 1) * seriesSpace) / numSeries;
+
+		for (i, s in series) {
+			Float offset = i.int.float * (barSz + seriesSpace) - entrySz / 2;
+			drawData(g, s, graph, offset, barSz);
+		}
 	}
 
 	// Draw a single series.
-	private void drawData(Graphics g, Series s, Rect graph, Float offset) {
+	private void drawData(Graphics g, Series s, Rect graph, Float offset, Float height) {
 		Float scale = graph.size.w / (xMax - xMin);
 		Float step = graph.size.h / labels.count.int.float;
 		for (i, pt in s.data) {
 			Point zero = graph.p0 + Point(0, step * (i.int.float + 0.5) + offset);
-			Point tip = zero + Point(scale * pt, 0);
+			Point tip = zero + Point(scale * pt, height);
 
-			// TODO: Draw an actual bar...
-			g.line(zero, tip, s.color);
+			g.draw(Rect(zero, tip), axisBrush);
+			g.fill(Rect(zero, tip), s.color);
+
+			if (i < s.labels.count) {
+				Text label = s.labels[i];
+				Size sz = label.size;
+				Point pt = tip + Point(labelMargin, -height / 2 - sz.h / 2);
+
+				// If we don't have room on the right, draw it inside the bar instead.
+				if (pt.x + sz.w > graph.p1.x + arrowMargin)
+					pt.x = tip.x - labelMargin - sz.w;
+
+				g.draw(label, textBrush, pt);
+			}
 		}
 	}
 
@@ -191,5 +241,15 @@ class BarGraph extends Element {
 			numbers << Text("${at}", textStyle.font);
 			step++;
 		}
+	}
+
+	// Update the arrow.
+	private void updateArrow() {
+		arrow.clear();
+
+		Float height = arrowSize * 2 / 3;
+		arrow.start(Point(-arrowSize, -height));
+		arrow.line(Point(0, 0));
+		arrow.line(Point(-arrowSize, height));
 	}
 }
