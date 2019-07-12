@@ -21,7 +21,7 @@ class Element on Render {
 	// Initialize any animations in here.
 	void setupAnimations(Presentation p) {
 		for (a in animations) {
-			a.setup(p);
+			a.setup(p, this);
 		}
 	}
 
@@ -51,14 +51,14 @@ class Element on Render {
 		Bool show = true;
 		Nat count = myAni.count;
 		for (Nat i = 0; i < count; i++) {
-			show &= myAni[i].before(g, step, time);
+			show &= myAni[i].before(this, g, step, time);
 		}
 		show;
 	}
 
 	protected void after(Graphics g, Nat step, Duration time) : final {
 		for (Nat i = myAni.count; i > 0; i--) {
-			myAni[i - 1].after(g, step, time);
+			myAni[i - 1].after(this, g, step, time);
 		}
 	}
 }

@@ -9,13 +9,13 @@ use ui;
  */
 class BarGraph extends Element {
 	// The axis owned by the graph.
-	private GraphAxis axis;
+	package GraphAxis axis;
 
 	// Labels in use.
-	private GraphLabel[] labels;
+	package GraphLabel[] labels;
 
 	// Data sets to plot.
-	private GraphData[] data;
+	package GraphData[] data;
 
 	// Create.
 	init(Presentation p) {
@@ -88,8 +88,18 @@ class BarGraph extends Element {
 		Size(0, 0);
 	}
 
+	// Animation handling.
+	void draw(Graphics g, Nat step, Duration time) : override {
+		for (label in labels)
+			label.animationDefault = 0xFFFFFFFF;
+
+		if (before(g, step, time))
+			draw(g);
+		after(g, step, time);
+	}
+
 	// Draw this element.
-	void draw(Graphics g) {
+	void draw(Graphics g) : override {
 		Rect graph = pos;
 		graph.p1.y -= axis.tickHeight() + axis.labelMargin;
 
@@ -102,9 +112,10 @@ class BarGraph extends Element {
 		Float y;
 		for (label in labels) {
 			// TODO: Handle things being partially visible, etc.
-			label.height = barHeight;
-			label.offset = y + height / 2;
-			y += height;
+			Float h = height * label.scale;
+			label.height = (h - axis.barGroupMargin) / data.count.int.float;
+			label.offset = y + h / 2;
+			y += h;
 
 			leftMargin = max(leftMargin, label.text.size.w);
 		}
@@ -236,13 +247,15 @@ class GraphAxis on Render {
 		}
 
 		for (l in labels) {
-			Size sz = l.text.size;
-			Point align = graph.p0 + Point(0, l.offset);
+			if (l.scale > 0) {
+				Size sz = l.text.size;
+				Point align = graph.p0 + Point(0, l.offset);
 
-			g.line(align - Point(markSize / 2, 0), align, textStyle.fill);
+				g.line(align - Point(markSize / 2, 0), align, textStyle.fill);
 
-			align -= Size(sz.w + labelMargin, sz.h / 2);
-			g.draw(l.text, textStyle.fill, align);
+				align -= Size(sz.w + labelMargin, sz.h / 2);
+				g.draw(l.text, textStyle.fill, align);
+			}
 		}
 
 		// The X axis.
@@ -298,10 +311,17 @@ class GraphLabel on Render {
 	// Height of each bar in this label.
 	Float height;
 
+	// Scale of this label (used to show/hide parts of the graph). Not shown if zero.
+	Float scale;
+
+	// The lowest animation ID that has set the default value for 'scale'.
+	Nat animationDefault;
+
 	// Create.
 	init(Text text) {
 		init {
 			text = text;
+			scale = 1.0;
 		}
 	}
 }
@@ -371,6 +391,9 @@ class GraphData on Render {
 		Float to = axis.coordToPx(graph, value.point);
 
 		Float height = (label.height - axis.barMargin) / 2;
+		if (height <= 0.0)
+			return;
+
 		Rect bar(Point(from, y - height), Point(to, y + height));
 		g.draw(bar, axis.labelStyle.fill);
 		g.fill(bar, color);
@@ -384,4 +407,86 @@ class GraphData on Render {
 			g.draw(text, axis.labelStyle.fill, anchor);
 		}
 	}
+}
+
+
+/**
+ * Animation that shows a particular sub-graph at the given time.
+ */
+class ShowLabelAnimation extends Animation {
+	// The label id we shall work with.
+	private Nat labelId;
+
+	init(Nat step, Nat id) {
+		init(step) {
+			labelId = id;
+		}
+	}
+
+	void setup(Presentation p, Element element) : override {
+		super:setup(p, element);
+
+		if (element as BarGraph) {
+			element.labels[labelId].scale = 0;
+		}
+	}
+
+	Bool before(Element element, Graphics g, Nat cStep, Duration time) : override {
+		if (element as BarGraph) {
+			var label = element.labels[labelId];
+
+			if (label.animationDefault > step & cStep <= step) {
+				label.scale = 0;
+				label.animationDefault = step;
+			}
+
+
+			if (cStep == step) {
+				label.scale = smoothVal(time);
+			}
+		}
+
+		true;
+	}
+	void after(Element element, Graphics g, Nat cStep, Duration time) : override {}
+}
+
+/**
+ * Animation that shows a particular sub-graph at the given time.
+ */
+class HideLabelAnimation extends Animation {
+	// The label id we shall work with.
+	private Nat labelId;
+
+	init(Nat step, Nat id) {
+		init(step) {
+			labelId = id;
+		}
+	}
+
+	void setup(Presentation p, Element element) : override {
+		super:setup(p, element);
+
+		if (element as BarGraph) {
+			element.labels[labelId].scale = 1;
+		}
+	}
+
+	Bool before(Element element, Graphics g, Nat cStep, Duration time) : override {
+		if (element as BarGraph) {
+			var label = element.labels[labelId];
+
+			if (label.animationDefault > step & cStep <= step) {
+				label.scale = 1;
+				label.animationDefault = step;
+			}
+
+			if (step == cStep) {
+				label.scale = 1.0 - smoothVal(time);
+			}
+		}
+
+		true;
+	}
+	void after(Element element, Graphics g, Nat cStep, Duration time) : override {}
 }

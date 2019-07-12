@@ -30,20 +30,26 @@ class Animation on Render {
 	}
 
 	// Setup the animation. Called when added to a slide so that we may set defaults.
-	void setup(Presentation p) {
+	void setup(Presentation p, Element element) {
 		if (duration == 0 ms)
 			duration = p.animationTime;
 	}
 
 	// Called before drawing the element. May return 'false' to prevent painting the element.
-	Bool before(Graphics g, Nat cStep, Duration time) : abstract;
+	Bool before(Element element, Graphics g, Nat cStep, Duration time) : abstract;
 
 	// Called after drawing the element to restore any graphics state set up by 'before'.
-	void after(Graphics g, Nat cStep, Duration time) : abstract;
+	void after(Element element, Graphics g, Nat cStep, Duration time) : abstract;
 
 	// Convert a time into a float in the range 0..1.
-	package Float val(Duration d) {
+	Float val(Duration d) {
 		clamp((d - offset) / duration, 0.0, 1.0);
+	}
+
+	// Convert to a smooth value in the range 0..1.
+	Float smoothVal(Duration d) {
+		Angle v = rad(((d - offset) / duration) * pi);
+		0.5 - v.cos()*0.5;
 	}
 }
 
@@ -58,11 +64,11 @@ class ShowAnimation extends Animation {
 		duration = 1 ms;
 	}
 
-	Bool before(Graphics g, Nat cStep, Duration time) : override {
+	Bool before(Element element, Graphics g, Nat cStep, Duration time) : override {
 		cStep >= step;
 	}
 
-	void after(Graphics g, Nat cStep, Duration time) : override {}
+	void after(Element element, Graphics g, Nat cStep, Duration time) : override {}
 }
 
 /**
@@ -75,11 +81,11 @@ class HideAnimation extends Animation {
 		duration = 1 ms;
 	}
 
-	Bool before(Graphics g, Nat cStep, Duration time) : override {
+	Bool before(Element element, Graphics g, Nat cStep, Duration time) : override {
 		cStep < step;
 	}
 
-	void after(Graphics g, Nat cStep, Duration time) : override {}
+	void after(Element element, Graphics g, Nat cStep, Duration time) : override {}
 }
 
 
@@ -93,7 +99,7 @@ class FadeInAnimation extends Animation {
 	}
 
 	// Set up the animation.
-	Bool before(Graphics g, Nat cStep, Duration time) : override {
+	Bool before(Element element, Graphics g, Nat cStep, Duration time) : override {
 		if (cStep == step & time < duration)
 			g.push(val(time));
 
@@ -101,7 +107,7 @@ class FadeInAnimation extends Animation {
 	}
 
 	// Tear down.
-	void after(Graphics g, Nat cStep, Duration time) : override {
+	void after(Element element, Graphics g, Nat cStep, Duration time) : override {
 		if (cStep == step & time < duration)
 			g.pop();
 	}
