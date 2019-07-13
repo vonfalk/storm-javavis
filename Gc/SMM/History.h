@@ -38,7 +38,7 @@ namespace storm {
 
 			// Add a range of addresses to the current epoch.
 			void add(ArenaTicket &lock, size_t from, size_t to);
-			inline void add(ArenaTicket &lock, void *from, void *to) { add(lock, size_t(from), size_t(to)); }
+			inline void add(ArenaTicket &lock, const void *from, const void *to) { add(lock, size_t(from), size_t(to)); }
 
 		private:
 			History(const History &o);

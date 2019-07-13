@@ -98,6 +98,12 @@ namespace storm {
 			// other generation is being collected. Otherwise, nothing is done.
 			bool suggestCollection(Generation *gen);
 
+			// Note that we moved an object from 'from' to 'to'.
+			inline void objectMoved(const void *from, const void *to, size_t size) {
+				objectsMoved = true;
+				owner.history.add(*this, size_t(from), size_t(from) + size);
+			}
+
 			// Get the static object pool. This is considered being a part of all generations, since
 			// it is assumed to contain a very small number of objects.
 			inline Nonmoving &nonmoving() const {
@@ -142,6 +148,9 @@ namespace storm {
 
 			// Have we stopped threads?
 			bool threads;
+
+			// Did we move any object?
+			bool objectsMoved;
 
 			// Called to perform any scheduled tasks, such as collecting certain generations.
 			// Could be called in the destructor, but I'm not comfortable doing that much work there...

@@ -45,7 +45,7 @@ namespace storm {
 			if (threads)
 				return;
 
-			assert(false, L"We don't have the ability to stop threads yet!");
+			// assert(false, L"We don't have the ability to stop threads yet!");
 
 			threads = true;
 		}
@@ -84,6 +84,10 @@ namespace storm {
 						collected.add(owner.collectI(*this, old));
 				} while (old.any());
 			}
+
+			// Check if we need to update the history.
+			if (objectsMoved)
+				owner.history.step(*this);
 
 			// Unlock and run finalizers!
 			startThreads();

@@ -40,9 +40,15 @@ struct Globals {
 	TypeStore *store;
 	GcWeakArray<Finalizable> *weak;
 	Nonmoving *nonmoving;
+
+	// Location watcher for the global objects.
+	GcWatch *watch;
 };
 
 Globals globals;
+
+// Non-scanned global objects. Used to check if location dependencies are working properly.
+Globals staleGlobals;
 
 // Non-scanned reference to a nonmoving object. Refers to the same object as in 'globals'.
 Nonmoving *nonmoving;
@@ -60,7 +66,9 @@ void CODECALL finalizer(Finalizable *fn) {
 	for (size_t i = 0; i < globals.weak->count(); i++) {
 		Finalizable *v = globals.weak->v[i];
 		PLN(i << L" - " << v << L" - " << (v ? v->data : 0));
+#if STORM_GC == STORM_GC_SMM
 		dbg_assert(v != fn, L"ERROR! We should not find ourselves in the global array when we're being finalized!");
+#endif
 	}
 }
 
@@ -125,6 +133,8 @@ NOINLINE void makeFinalizable(Gc &gc, size_t id) {
 	f->data = id;
 }
 
+void checkGlobals();
+
 NOINLINE void lists(Gc &gc) {
 	Dummy *longlived = makeList(gc, 100);
 
@@ -143,6 +153,8 @@ NOINLINE void lists(Gc &gc) {
 
 		verifyList(d, 100);
 		verifyList(longlived, 100);
+
+		checkGlobals();
 	}
 }
 
@@ -161,13 +173,59 @@ NOINLINE void createGlobals(Gc &gc) {
 
 	// Static allocation that should be collected.
 	gc.allocStatic(globals.store->nonmoving);
+
+	// Gc watch.
+	globals.watch = gc.createWatch();
+	globals.watch->add(globals.store);
+	globals.watch->add(globals.weak);
+	globals.watch->add(globals.nonmoving);
+	globals.watch->add(globals.watch);
+
+	staleGlobals = globals;
 }
+
+// Keep track of the watch false positive rate.
+size_t watchChecks = 0;
+size_t watchPositives = 0;
 
 NOINLINE void checkGlobals() {
 	assert(nonmoving->store == globals.store, L"The nonmoving object does not seem to be scanned correctly!");
 
 	assert(nonmoving == globals.nonmoving, L"The nonmoving object moved from " + ::toHex(nonmoving) + L" to "
 		+ ::toHex(globals.nonmoving) + L"!");
+
+	bool redoWatch = false;
+	if (globals.store != staleGlobals.store) {
+		redoWatch = true;
+		assert(globals.watch->moved(globals.store), L"Watch failed to indicate movement of 'store' ("
+			+ ::toHex(staleGlobals.store) + L" -> " + ::toHex(globals.store) + L")");
+	}
+
+	if (globals.weak != staleGlobals.weak) {
+		redoWatch = true;
+		assert(globals.watch->moved(globals.weak), L"Watch failed to indicate movement of 'weak' ("
+			+ ::toHex(staleGlobals.weak) + L" -> " + ::toHex(globals.weak) + L")");
+	}
+
+	if (globals.watch != staleGlobals.watch) {
+		redoWatch = true;
+		assert(globals.watch->moved(globals.watch), L"Watch failed to indicate movement of 'watch' ("
+			+ ::toHex(staleGlobals.watch) + L" -> " + ::toHex(globals.watch) + L")");
+	}
+
+	watchChecks++;
+	if (globals.watch->moved() && !redoWatch)
+		watchPositives++;
+
+	if (redoWatch) {
+		globals.watch->clear();
+		globals.watch->add(globals.store);
+		globals.watch->add(globals.weak);
+		globals.watch->add(globals.nonmoving);
+		globals.watch->add(globals.watch);
+
+		staleGlobals = globals;
+	}
 }
 
 NOINLINE void run(Gc &gc) {
@@ -207,6 +265,8 @@ int main(int argc, const char *argv[]) {
 	globals.weak = null;
 	gc.dbg_dump();
 	gc.destroyRoot(r);
+
+	PLN(L"Watch false positive percentage: " << (float(watchPositives * 100) / float(watchChecks)));
 
 	return 0;
 }

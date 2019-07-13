@@ -26,7 +26,8 @@ namespace storm {
 				epochLow++;
 			}
 
-			history[epochLow % historySize] = ticket.reservedSet<AddrSummary>();
+			// history[epochLow % historySize] = ticket.reservedSet<AddrSummary>();
+			history[epochLow % historySize] = AddrSummary();
 		}
 
 		void History::add(ArenaTicket &ticket, size_t from, size_t to) {
@@ -35,6 +36,10 @@ namespace storm {
 					history[i] = history[i].resize(from, to);
 				history[i].add(from, to);
 			}
+
+			if (!preHistory.covers(from, to))
+				preHistory = preHistory.resize(from, to);
+			preHistory.add(from, to);
 		}
 
 
@@ -78,6 +83,11 @@ namespace storm {
 		bool AddrWatch::check() const {
 			if (empty())
 				return false;
+
+			// TODO: We could keep track of a second set of summaries inside History: one for "moved
+			// from" (which we're doing now), and one "moved to". Then we could support checking
+			// individual addresses as well by checking if the desired pointer has been moved
+			// recently. This could reduce the rate of false positives slightly.
 
 			// Read the epoch from the history object. By reading 'low' before 'high', we ensure
 			// that we will get a too large number if we are interrupted between the two reads. This

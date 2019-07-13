@@ -1,6 +1,7 @@
 #include "stdafx.h"
 #include "ScanState.h"
 #include "Nonmoving.h"
+#include "ArenaTicket.h"
 
 #if STORM_GC == STORM_GC_SMM
 
@@ -48,6 +49,10 @@ namespace storm {
 
 			void *clientTarget = fmt::toClient(target);
 			fmt::objMakeFwd(obj, size, clientTarget);
+
+			// Notify that we moved an object.
+			this->target.ticket.objectMoved(client, clientTarget, size);
+
 			return clientTarget;
 		}
 

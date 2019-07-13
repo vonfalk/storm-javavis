@@ -222,6 +222,9 @@ namespace storm {
 				return resize(size_t(from), size_t(to));
 			}
 			AddrSet resize(size_t from, size_t to) const {
+				if (empty())
+					return AddrSet(from, to);
+
 				from = min(from, offset());
 				to = max(to, offset() + size());
 
