@@ -67,6 +67,6 @@ namespace storm {
 		Angle STORM_FN angle(Point pt);
 
 		// Get pi.
-		inline Float STORM_FN pi() { return M_PI; }
+		inline Float STORM_FN pi() { return Float(M_PI); }
 	}
 }

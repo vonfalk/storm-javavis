@@ -41,12 +41,12 @@ class BarGraph extends Element {
 
 	// Set margin on the left.
 	void leftMargin(Float margin) {
-		axis.leftMargin = margin;
+		axis.marginLeft = margin;
 	}
 
 	// Set margin on the right.
 	void rightMargin(Float margin) {
-		axis.rightMargin = margin;
+		axis.marginRight = margin;
 	}
 
 	// Set labels on the y-axis.

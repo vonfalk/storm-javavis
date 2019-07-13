@@ -48,7 +48,7 @@ class Animation on Render {
 
 	// Convert to a smooth value in the range 0..1.
 	Float smoothVal(Duration d) {
-		Angle v = rad(((d - offset) / duration) * pi);
+		Angle v = rad(val(d) * pi);
 		0.5 - v.cos()*0.5;
 	}
 }

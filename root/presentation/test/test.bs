@@ -1,4 +1,5 @@
 use presentation;
+use presentation:graph;
 use ui;
 use core:geometry;
 use core:io;
@@ -89,6 +90,22 @@ presentation Test "Test presentation" {
 		nextLine;
 		SolidFill RadialGradient(red, white, Point(320, 240), 300) {}
 		SolidFill RadialGradient(green, white, Point(320, 240), 300) {}
+	}
+
+	slide Enlarge => content "Bar graphs!" {
+		barGraph {
+		labels: ["A", "B", "C", "D"];
+		ticks: 0, 10, 40;
+		data: [10, 20, 30, 8], red;
+		data: [12, 14, 40, 10], green;
+		dataLabels: (x) => "${x}%";
+
+		@1: ShowLabel 1;
+		@1+400ms: ShowLabel 2;
+		@2: HideLabel 1;
+		@3: ShowLabel 3;
+		@4: HideLabel 3;
+		}
 	}
 }
 

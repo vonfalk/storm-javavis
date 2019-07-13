@@ -13,7 +13,7 @@ Test
 #Main -a -f test.layout.gridTest
 #Main -a -r ../root/ -f test.ui.images
 #Main -a -f presentation.test.test
-#Main -a -f presentation.test.main
+#Main -a -f presentation.test.simple
 
 #UI while running intensive memory allocations in the background.
 #Main -a -r ../root/ -f test.ui.simpleMem
