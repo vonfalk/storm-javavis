@@ -228,8 +228,35 @@ NOINLINE void checkGlobals() {
 	}
 }
 
-NOINLINE void run(Gc &gc) {
+struct OtherThread {
+	Gc &gc;
+
+	OtherThread(Gc &gc) : gc(gc) {}
+
+	void startThread() {
+		gc.attachThread();
+	}
+
+	void stopThread() {
+		gc.detachThread(os::Thread::current());
+	}
+
+	void fn() {
+		Dummy *l = makeList(gc, 10);
+
+		os::UThread::sleep(50);
+
+		verifyList(l, 10);
+	}
+};
+
+NOINLINE void createThread(OtherThread &other, os::ThreadGroup &group) {
+	os::Thread::spawn(util::memberVoidFn(&other, &OtherThread::fn), group);
+}
+
+NOINLINE void run(Gc &gc, OtherThread &other, os::ThreadGroup &group) {
 	createGlobals(gc);
+	createThread(other, group);
 
 	// Move the allocation to another location before we allocate 'longlived' inside
 	// 'lists'. Otherwise, it will likely not move!
@@ -239,6 +266,7 @@ NOINLINE void run(Gc &gc) {
 	lists(gc);
 	checkGlobals();
 }
+
 
 /**
  * Simple GC tests that can be used during the creation of a new GC so that large parts of the
@@ -251,11 +279,17 @@ int main(int argc, const char *argv[]) {
 	Gc gc(100*1024*1024, 1000);
 	gc.attachThread();
 
+	OtherThread other(gc);
+	os::ThreadGroup threads(util::memberVoidFn(&other, &OtherThread::startThread),
+							util::memberVoidFn(&other, &OtherThread::stopThread));
+
 	Gc::Root *r = gc.createRoot(&globals, sizeof(globals));
 	{
 		util::Timer t(L"test");
-		run(gc);
+		run(gc, other, threads);
 	}
+
+	threads.join();
 
 	{
 		util::Timer t(L"gc");

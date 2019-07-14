@@ -36,6 +36,18 @@ namespace storm {
 			template <class Scanner>
 			typename Scanner::Result scan(typename Scanner::Source &source, ArenaTicket &ticket);
 
+			// Request that this thread is stopped.
+			inline void requestStop() { thread.requestStop(); }
+
+			// Verify that the thread is stopped.
+			inline void ensureStop() { thread.ensureStop(); }
+
+			// Start the thread again.
+			inline void start() { thread.start(); }
+
+			// Get the thread id.
+			inline size_t id() const { return thread.id(); }
+
 		private:
 			// No copying.
 			Thread(const Thread &o);
@@ -46,7 +58,7 @@ namespace storm {
 			const InlineSet<os::UThreadStack> &stacks;
 
 			// Handle to the current thread, along with additional operations not provided by the
-			// OS/ threading library (these abilities do not belong there).
+			// OS/threading library (these abilities do not belong there).
 			OSThread thread;
 		};
 

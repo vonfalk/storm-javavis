@@ -168,6 +168,9 @@ namespace storm {
 				pinnedSets[i] = chunks[i].memory.addrSet<PinnedSet>();
 			pinnedSets[chunks.size()] = nonmoving.addrSet<PinnedSet>();
 
+			// We need other threads stopped from here onwards.
+			ticket.stopThreads();
+
 			// TODO: We might want to do an 'early out' inside the scanning by using
 			// VMAlloc::identifier before attempting to access the sets. We need to measure the benefits of this!
 			ticket.scanInexactRoots<ScanSummaries<PinnedSet>>(pinnedSets);

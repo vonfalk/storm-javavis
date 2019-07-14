@@ -10,7 +10,11 @@ namespace storm {
 
 		OSThread::~OSThread() {}
 
-		void OSThread::stop() {
+		void OSThread::requestStop() {
+			assert(false, L"TODO");
+		}
+
+		void OSThread::ensureStop() {
 			assert(false, L"TODO");
 		}
 

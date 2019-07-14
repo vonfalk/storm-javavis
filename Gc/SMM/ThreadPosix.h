@@ -21,11 +21,22 @@ namespace storm {
 				return stopCount == 0;
 			}
 
-			// Stop the thread.
-			void stop();
+			// Ask the scheduler to stop the thread. The thread is not necessarily stopped until
+			// 'ensureStop' is called. This is done in two steps to allow multiple stop requests
+			// to be issued concurrently. Assumes 'ensureStop' is called afterwards.
+			void requestStop();
+
+			// Make sure the thread is actually stopped. Must be called after 'requestStop'.
+			void ensureStop();
 
 			// Start the thread.
 			void start();
+
+			// Get a thread identifier.
+			inline size_t id() const { assert(false, L"FIXME"); return 0; }
+
+			// Get the current thread identifier.
+			static inline size_t currentId() const { assert(false, L"FIXME"); return 0; }
 
 			// Scan the context of a paused thread. Also return the extend of the current stack (ie. the ESP).
 			template <class Scanner>

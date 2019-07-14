@@ -6,6 +6,8 @@
 #include "Nonmoving.h"
 #include "FinalizerPool.h"
 
+#include "Thread.h"
+
 namespace storm {
 	namespace smm {
 
@@ -45,7 +47,27 @@ namespace storm {
 			if (threads)
 				return;
 
-			// assert(false, L"We don't have the ability to stop threads yet!");
+			size_t currentId = OSThread::currentId();
+
+			InlineSet<Thread>::iterator begin = owner.threads.begin();
+			InlineSet<Thread>::iterator end = owner.threads.end();
+
+			// Request all other threads to stop.
+			for (InlineSet<Thread>::iterator i = begin; i != end; ++i) {
+				if (currentId == i->id())
+					continue;
+
+				i->requestStop();
+			}
+
+			// Then make sure they are stopped. This two-stage system makes it possible for multiple
+			// stop "messages" to be in flight concurrently.
+			for (InlineSet<Thread>::iterator i = begin; i != end; ++i) {
+				if (currentId == i->id())
+					continue;
+
+				i->ensureStop();
+			}
 
 			threads = true;
 		}
@@ -53,6 +75,14 @@ namespace storm {
 		void ArenaTicket::startThreads() {
 			if (!threads)
 				return;
+
+			InlineSet<Thread>::iterator begin = owner.threads.begin();
+			InlineSet<Thread>::iterator end = owner.threads.end();
+
+			// Start all threads. Calling 'start' on a non-stopped thread is fine.
+			for (InlineSet<Thread>::iterator i = begin; i != end; ++i) {
+				i->start();
+			}
 
 			threads = false;
 		}

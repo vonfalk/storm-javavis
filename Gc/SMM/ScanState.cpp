@@ -30,6 +30,7 @@ namespace storm {
 			Queue *to = &target;
 			if (fmt::objHeader(obj)->type == GcType::tWeakArray) {
 				to = &weak;
+				DebugBreak();
 			}
 
 			Block *tail = to->tail;
