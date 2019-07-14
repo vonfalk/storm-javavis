@@ -244,7 +244,7 @@ struct OtherThread {
 	void fn() {
 		Dummy *l = makeList(gc, 10);
 
-		os::UThread::sleep(50);
+		os::UThread::sleep(100);
 
 		verifyList(l, 10);
 	}

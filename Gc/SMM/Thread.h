@@ -66,8 +66,6 @@ namespace storm {
 		// Implementation of the 'scan' function.
 		template <class Scanner>
 		typename Scanner::Result Thread::scan(typename Scanner::Source &source, ArenaTicket &ticket) {
-			typename Scanner::Result r;
-
 			// The extent of the current stack (ie. its ESP).
 			void *extent;
 
@@ -81,7 +79,7 @@ namespace storm {
 				extent = &ticket;
 			} else {
 				// A paused thread!
-				r = thread.scan<Scanner>(source, &extent);
+				typename Scanner::Result r = thread.scan<Scanner>(source, &extent);
 				if (r != typename Scanner::Result())
 					return r;
 			}

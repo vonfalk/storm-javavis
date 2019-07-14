@@ -242,6 +242,10 @@ namespace storm {
 			// track of this for us, so this is fairly cheap.
 			state.scanWeak<UpdateWeakFwd>(State(*this));
 
+			// We also need to scan any pinned weak objects. Otherwise they will contain stale references!
+			for (size_t i = 0; i < chunks.size(); i++)
+				chunks[i].scanPinned<IfWeak, UpdateWeakFwd>(IfWeak(), pinnedSets[i], State(*this));
+
 			// Note: We try to not scan the objects we moved to a new generation immediately at this
 			// point. ScanState sets the flag fSkipScan on all blocks that were empty when they were
 			// allocated, and 'scan' in the generations will then ignore scanning once if that flag

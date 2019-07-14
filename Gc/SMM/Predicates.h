@@ -11,6 +11,15 @@ namespace storm {
 		 * Some useful predicates while scanning.
 		 */
 
+		/**
+		 * Check if an object is a weak array.
+		 */
+		struct IfWeak {
+			inline bool operator ()(void *ptr, void *) const {
+				return fmt::objHeader(fmt::fromClient(ptr))->type == GcType::tWeakArray;
+			}
+		};
+
 
 		/**
 		 * Check if an object is not a weak array.

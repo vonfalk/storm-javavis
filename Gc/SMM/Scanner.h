@@ -64,6 +64,29 @@ namespace storm {
 			SCAN_FIX_HEADER
 		};
 
+		/**
+		 * Scan and just print all addresses scanned.
+		 */
+		struct ScanPrint {
+			typedef int Result;
+			typedef const wchar_t *Source;
+
+			const wchar_t *prefix;
+
+			ScanPrint(const wchar_t *prefix) : prefix(prefix) {}
+
+			inline bool fix1(void *ptr) {
+				return true;
+			}
+
+			inline Result fix2(void **ptr) {
+				PLN(prefix << *ptr << L" (" << ptr << L")");
+				return 0;
+			}
+
+			SCAN_FIX_HEADER;
+		};
+
 
 		/**
 		 * Perform some other scanning, and produce an address summary of all contained pointers.
