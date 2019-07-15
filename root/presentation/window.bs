@@ -313,3 +313,15 @@ void showDebug(lang:Function presentation) on Ui {
 		print("Error: Not a presentation function!");
 	}
 }
+
+// Show a presentation in debug mode, allowing live-reloading changes to the presentation.
+void showDebug(lang:Function presentation, Nat slide) on Ui {
+	if (fn = lang:pointer(presentation) as Fn<Presentation>) {
+		Presenter w(fn.call());
+		w.source = presentation;
+		w.goTo(slide);
+		w.waitForClose();
+	} else {
+		print("Error: Not a presentation function!");
+	}
+}

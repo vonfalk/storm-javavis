@@ -57,6 +57,26 @@ class BarGraph extends Element {
 			this.labels << GraphLabel(Text(l, axis.textStyle.font));
 	}
 
+	// Indent a specific label to the right margin. Used to indicate sub-groups.
+	void indentLabel(Nat id) {
+		labels[id].indent = axis.marginLeft;
+	}
+
+	// Set the indentation color.
+	void indentColor(Color color) {
+		axis.indentColor = SolidBrush(color);
+	}
+
+	// Scale a specific label relative to the default size.
+	void scaleLabel(Nat id, Float scale) {
+		scaleLabel(id, scale, 1.0);
+	}
+
+	void scaleLabel(Nat id, Float heightScale, Float textScale) {
+		labels[id].displayScale = heightScale;
+		labels[id].textScale = textScale;
+	}
+
 	// Margin between individual bars.
 	void barMargin(Float v) {
 		axis.barMargin = v;
@@ -103,16 +123,20 @@ class BarGraph extends Element {
 		Rect graph = pos;
 		graph.p1.y -= axis.tickHeight() + axis.labelMargin;
 
+		Float numBars = 0;
+		for (label in labels)
+			numBars += label.scale;
+
 		Float leftMargin;
-		Float height = graph.size.h / labels.count.int.float;
+		Float height = graph.size.h / numBars;
 		Float barHeight = (height - axis.barGroupMargin) / data.count.int.float;
 		barHeight = min(barHeight, axis.barMaxHeight);
 		height = barHeight * data.count.int.float + axis.barGroupMargin;
 
 		Float y;
 		for (label in labels) {
-			// TODO: Handle things being partially visible, etc.
 			Float h = height * label.scale;
+			label.totalHeight = h;
 			label.height = (h - axis.barGroupMargin) / data.count.int.float;
 			label.offset = y + h / 2;
 			y += h;
@@ -156,6 +180,9 @@ class GraphAxis on Render {
 	// Style of labels.
 	TextStyle labelStyle;
 
+	// Color of indentations.
+	Brush indentColor;
+
 	// Created tick labels.
 	private Text[] ticks;
 
@@ -197,6 +224,7 @@ class GraphAxis on Render {
 		init() {
 			textStyle = style;
 			labelStyle = style;
+			indentColor = SolidBrush(white * 0.5);
 			min = 0;
 			max = 1;
 			step = 1;
@@ -246,6 +274,9 @@ class GraphAxis on Render {
 			g.line(graph.p0, Point(graph.p0.x, graph.p1.y + markSize / 2), textStyle.fill);
 		}
 
+		Point indentFrom(0, graph.p0.y);
+		Float indentTo;
+
 		for (l in labels) {
 			if (l.scale > 0) {
 				Size sz = l.text.size;
@@ -253,9 +284,38 @@ class GraphAxis on Render {
 
 				g.line(align - Point(markSize / 2, 0), align, textStyle.fill);
 
-				align -= Size(sz.w + labelMargin, sz.h / 2);
-				g.draw(l.text, textStyle.fill, align);
+				align.x -= labelMargin;
+				if (l.textScale == 1.0) {
+					align -= Size(sz.w, sz.h / 2);
+					g.draw(l.text, textStyle.fill, align);
+				} else {
+					g.push();
+					g.transform(scale(l.textScale) * translate(align));
+					g.draw(l.text, textStyle.fill, Point(-sz.w, -sz.h / 2));
+					g.pop();
+				}
+
+				if (indentFrom.x != l.indent) {
+					Float y = graph.p0.y + l.offset - l.totalHeight/2;
+					if (indentFrom.x > 0) {
+						indentFrom.x += graph.p0.x;
+						Rect bump = Rect(indentFrom, Point(graph.p0.x, y)).normalized;
+						g.fill(bump, indentColor);
+						g.draw(bump, textStyle.fill);
+					} else {
+						indentTo = indentFrom.y + l.totalHeight;
+					}
+
+					indentFrom = Point(l.indent, y);
+				}
 			}
+		}
+
+		if (indentFrom.x > 0) {
+			indentFrom.x += graph.p0.x;
+			Rect bump = Rect(indentFrom, Point(graph.p0.x, indentTo)).normalized;
+			g.fill(bump, indentColor);
+			g.draw(bump, textStyle.fill);
 		}
 
 		// The X axis.
@@ -308,11 +368,28 @@ class GraphLabel on Render {
 	// Y-offset of this label.
 	Float offset;
 
+	// Label indentation (i.e. start bars at this x-offset).
+	Float indent;
+
 	// Height of each bar in this label.
 	Float height;
 
+	// Total height of all bars in this label.
+	Float totalHeight;
+
 	// Scale of this label (used to show/hide parts of the graph). Not shown if zero.
-	Float scale;
+	Float scale() {
+		animationScale * displayScale;
+	}
+
+	// Scaling applied by animations.
+	Float animationScale;
+
+	// Scaling applied by config.
+	Float displayScale;
+
+	// Text scale for this label (not the text inside the graph).
+	Float textScale;
 
 	// The lowest animation ID that has set the default value for 'scale'.
 	Nat animationDefault;
@@ -321,7 +398,9 @@ class GraphLabel on Render {
 	init(Text text) {
 		init {
 			text = text;
-			scale = 1.0;
+			animationScale = 1.0;
+			displayScale = 1.0;
+			textScale = 1.0;
 		}
 	}
 }
@@ -387,7 +466,7 @@ class GraphData on Render {
 		Float y = label.offset + graph.p0.y;
 		y += offset * label.height;
 
-		Float from = graph.p0.x;
+		Float from = graph.p0.x + label.indent;
 		Float to = axis.coordToPx(graph, value.point);
 
 		Float height = (label.height - axis.barMargin) / 2;
@@ -399,12 +478,21 @@ class GraphData on Render {
 		g.fill(bar, color);
 
 		if (text = value.label) {
-			Size sz = text.size;
-			Point anchor(to + axis.labelMargin, y - sz.h / 2);
-			if (anchor.x + sz.w > graph.p1.x)
-				anchor.x = to - axis.labelMargin - sz.w;
+			Float scale = label.textScale;
 
-			g.draw(text, axis.labelStyle.fill, anchor);
+			Size sz = text.size;
+			Point anchor(to + axis.labelMargin, y - sz.h * scale / 2);
+			if (anchor.x + sz.w * scale > graph.p1.x)
+				anchor.x = to - axis.labelMargin - sz.w * scale;
+
+			if (scale == 1) {
+				g.draw(text, axis.labelStyle.fill, anchor);
+			} else {
+				g.push();
+				g.transform(scale(scale) * translate(anchor));
+				g.draw(text, axis.labelStyle.fill, Point());
+				g.pop();
+			}
 		}
 	}
 }
@@ -423,26 +511,18 @@ class ShowLabelAnimation extends Animation {
 		}
 	}
 
-	void setup(Presentation p, Element element) : override {
-		super:setup(p, element);
-
-		if (element as BarGraph) {
-			element.labels[labelId].scale = 0;
-		}
-	}
-
 	Bool before(Element element, Graphics g, Nat cStep, Duration time) : override {
 		if (element as BarGraph) {
 			var label = element.labels[labelId];
 
 			if (label.animationDefault > step & cStep <= step) {
-				label.scale = 0;
+				label.animationScale = 0;
 				label.animationDefault = step;
 			}
 
 
 			if (cStep == step) {
-				label.scale = smoothVal(time);
+				label.animationScale = smoothVal(time);
 			}
 		}
 
@@ -464,25 +544,17 @@ class HideLabelAnimation extends Animation {
 		}
 	}
 
-	void setup(Presentation p, Element element) : override {
-		super:setup(p, element);
-
-		if (element as BarGraph) {
-			element.labels[labelId].scale = 1;
-		}
-	}
-
 	Bool before(Element element, Graphics g, Nat cStep, Duration time) : override {
 		if (element as BarGraph) {
 			var label = element.labels[labelId];
 
 			if (label.animationDefault > step & cStep <= step) {
-				label.scale = 1;
+				label.animationScale = 1;
 				label.animationDefault = step;
 			}
 
 			if (step == cStep) {
-				label.scale = 1.0 - smoothVal(time);
+				label.animationScale = 1.0 - smoothVal(time);
 			}
 		}
 
