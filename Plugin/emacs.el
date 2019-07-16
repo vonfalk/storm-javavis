@@ -749,7 +749,8 @@
 (defun storm-output-string (text &optional face)
   (when storm-process-output
     (with-current-buffer storm-process-output
-      (let* ((buffer-read-only nil)
+      (let* (deactivate-mark ;; Don't mess with the mark in other buffers!
+	     (buffer-read-only nil)
 	     (old-point (point))
 	     (start (point-max)))
 	(goto-char (point-max))
@@ -890,16 +891,20 @@
 
 (defun storm-encode (msg)
   "Encode a s-expression."
-  (with-temp-buffer
-    (set-buffer-multibyte nil)
-    (storm-encode-buffer msg)
-    (let ((msg-len (- (point-max) (point-min))))
-      (goto-char (point-min))
-      ;; Start of message marker.
-      (insert-char #x00)
-      ;; Message length.
-      (storm-encode-number msg-len))
-    (buffer-string)))
+  ;; We make sure not to clobber 'deactivate-mark' by saving it inside a let statement.
+  ;; Writing into a buffer sets 'deactivate-mark', which causes the mark to be deactivated
+  ;; during editing at unexpected times.
+  (let (deactivate-mark)
+    (with-temp-buffer
+      (set-buffer-multibyte nil)
+      (storm-encode-buffer msg)
+      (let ((msg-len (- (point-max) (point-min))))
+	(goto-char (point-min))
+	;; Start of message marker.
+	(insert-char #x00)
+	;; Message length.
+	(storm-encode-number msg-len))
+      (buffer-string))))
 
 (defun storm-encode-buffer (msg)
   "Encode a s-expression. Output to the current buffer."
