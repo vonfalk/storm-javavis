@@ -22,7 +22,8 @@ namespace storm {
 			  next(null), arena(arena), identifier(identifier),
 			  lastChunk(0), totalAllocBytes(0), totalFreeBytes(0), shared(null) {
 
-			blockSize = min(size_t(64 * 1024), blockSize);
+			// Maximum of 1 MB blocks
+			blockSize = min(size_t(1024 * 1024 / 32), blockSize);
 			pinnedSets.push_back(PinnedSet(0, 1));
 		}
 

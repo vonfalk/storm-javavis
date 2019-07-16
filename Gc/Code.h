@@ -1,7 +1,7 @@
 #pragma once
 
 namespace storm {
-	namespace code {
+	namespace gccode {
 
 		/**
 		 * Interfaces for managing code allocations in the GC implementations.

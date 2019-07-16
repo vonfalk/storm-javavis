@@ -15,7 +15,7 @@
 #endif
 
 namespace storm {
-	namespace code {
+	namespace gccode {
 
 		// The generic cases. These are implemented the same on every platform.
 		static void doWritePtr(void *code, const GcCode *refs, Nat id) {
@@ -74,3 +74,4 @@ namespace storm {
 
 	}
 }
+

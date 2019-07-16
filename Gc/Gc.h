@@ -185,7 +185,7 @@ namespace storm {
 
 		// Allocate a code block with 'code' bytes of machine code storage and 'refs' entries of reference data.
 		inline void *allocCode(size_t code, size_t refs) {
-			return impl.allocCode(code, refs);
+			return impl.allocCode(fmt::wordAlign(code), refs);
 		}
 
 		// Get the size of a code allocation.

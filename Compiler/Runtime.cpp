@@ -122,7 +122,7 @@ namespace storm {
 		}
 
 		void codeUpdatePtrs(void *code) {
-			code::updatePtrs(code, Gc::codeRefs(code));
+			gccode::updatePtrs(code, Gc::codeRefs(code));
 		}
 
 		void setVTable(RootObject *object) {

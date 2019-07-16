@@ -16,7 +16,7 @@ namespace storm {
 		 */
 		struct IfWeak {
 			inline bool operator ()(void *ptr, void *) const {
-				return fmt::objHeader(fmt::fromClient(ptr))->type == GcType::tWeakArray;
+				return fmt::objIsWeak(fmt::fromClient(ptr));
 			}
 		};
 
@@ -26,7 +26,7 @@ namespace storm {
 		 */
 		struct IfNotWeak {
 			inline bool operator ()(void *ptr, void *) const {
-				return fmt::objHeader(fmt::fromClient(ptr))->type != GcType::tWeakArray;
+				return !fmt::objIsWeak(fmt::fromClient(ptr));
 			}
 		};
 

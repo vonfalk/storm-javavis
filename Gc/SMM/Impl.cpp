@@ -196,7 +196,7 @@ namespace storm {
 			if (!alloc)
 				throw GcError(L"Out of memory (allocCode).");
 			result = fmt::initCode(alloc.mem(), size, code, refs);
-			if (code::needFinalization())
+			if (gccode::needFinalization())
 				fmt::setHasFinalizer(result);
 		} while (!alloc.commit());
 

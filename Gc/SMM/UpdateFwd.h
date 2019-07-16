@@ -88,7 +88,7 @@ namespace storm {
 			MixedPredicate(const Generation::State &state) : state(state), isWeak(false) {}
 
 			inline bool operator()(void *obj, void *) const {
-				isWeak = fmt::objHeader(fmt::fromClient(obj))->type == GcType::tWeakArray;
+				isWeak = fmt::objIsWeak(fmt::fromClient(obj));
 				return true;
 			}
 		};

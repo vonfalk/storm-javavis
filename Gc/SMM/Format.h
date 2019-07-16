@@ -48,7 +48,7 @@ namespace storm {
 
 			void *client = toClient(obj);
 			if (objIsCode(obj)) {
-				code::finalize(client);
+				gccode::finalize(client);
 				return;
 			}
 
@@ -68,6 +68,11 @@ namespace storm {
 		}
 		static inline void finalize(void *obj) {
 			return objFinalize(fromClient(obj));
+		}
+
+		// Is this a weak object?
+		static inline bool objIsWeak(Obj *obj) {
+			return !objIsCode(obj) && objHeader(obj)->type == GcType::tWeakArray;
 		}
 
 	}

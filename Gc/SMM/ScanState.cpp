@@ -28,7 +28,7 @@ namespace storm {
 			// PLN(L"Found an object to move: " << obj << L", " << size << L" bytes");
 
 			Queue *to = &target;
-			if (fmt::objHeader(obj)->type == GcType::tWeakArray) {
+			if (fmt::objIsWeak(obj)) {
 				to = &weak;
 			}
 
@@ -83,6 +83,7 @@ namespace storm {
 			// here. This should not happen if generation sizes are set up appropriately, however.
 			Block *n = target->alloc(ticket, minSize);
 			if (!n) {
+				target->arena.dbg_dump();
 				TODO(L"Handle out of memory conditions!");
 				assert(false);
 			}

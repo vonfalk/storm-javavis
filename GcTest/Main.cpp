@@ -256,13 +256,13 @@ NOINLINE void createThread(OtherThread &other, os::ThreadGroup &group) {
 
 NOINLINE void run(Gc &gc, OtherThread &other, os::ThreadGroup &group) {
 	createGlobals(gc);
-	createThread(other, group);
 
 	// Move the allocation to another location before we allocate 'longlived' inside
 	// 'lists'. Otherwise, it will likely not move!
 	gc.collect();
 	// gc.dbg_dump();
 
+	createThread(other, group);
 	lists(gc);
 	checkGlobals();
 }

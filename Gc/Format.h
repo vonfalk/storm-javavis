@@ -493,6 +493,9 @@ namespace storm {
 
 		// Check if an object is a padding object.
 		static inline bool objIsPad(Obj *at) {
+			if (objIsCode(at))
+				return false;
+
 			switch (objHeader(at)->type) {
 			case pad0:
 			case pad:
@@ -515,7 +518,11 @@ namespace storm {
 			dbg_assert(size >= headerSize + sizeof(Fwd1), L"Not enough space for a fwd object!");
 #endif
 
-			switch (objHeader(o)->type) {
+			size_t type = 0;
+			if (!objIsCode(o))
+				type = objHeader(o)->type;
+
+			switch (type) {
 			case gcType:
 			case gcTypeFwd:
 				objSetHeader(o, &headerGcTypeFwd);
@@ -530,6 +537,7 @@ namespace storm {
 					o->fwd.to = to;
 					o->fwd.size = size - headerSize;
 				}
+				break;
 			}
 
 			FMT_INIT_PAD(o, size);
@@ -541,8 +549,11 @@ namespace storm {
 			FMT_CHECK_OBJ(o);
 
 			size_t size;
+			size_t type = 0;
+			if (!objIsCode(o))
+				type = objHeader(o)->type;
 
-			switch (objHeader(o)->type) {
+			switch (type) {
 			case gcType:
 			case gcTypeFwd:
 				objSetHeader(o, &headerGcTypeFwd);
@@ -561,6 +572,7 @@ namespace storm {
 					o->fwd.to = to;
 					o->fwd.size = size - headerSize;
 				}
+				break;
 			}
 
 			FMT_INIT_PAD(o, size);
@@ -952,7 +964,7 @@ namespace storm {
 						}
 
 						// Update the pointers in the code blob as well.
-						code::updatePtrs(at, c);
+						gccode::updatePtrs(at, c);
 					} else {
 						// Scan the regular object.
 						Header *h = objHeader(o);

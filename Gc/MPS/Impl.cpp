@@ -1041,8 +1041,6 @@ namespace storm {
 	}
 
 	void *GcImpl::allocCode(size_t code, size_t refs) {
-		code = wordAlign(code);
-
 		size_t size = sizeCode(code, refs);
 		dbg_assert(size > headerSize, L"Can not allocate zero-sized chunks of code!");
 

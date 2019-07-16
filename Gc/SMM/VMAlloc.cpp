@@ -115,6 +115,7 @@ namespace storm {
 
 				// Out of memory!
 				if (start > lastAlloc) {
+					TODO(L"Unable to serve request of size " << size);
 					TODO(L"We should try to reserve more memory here!");
 					return Chunk();
 				}

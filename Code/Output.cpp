@@ -254,7 +254,7 @@ namespace code {
 		GcCodeRef &ref = refs->refs[slot];
 
 		atomicWrite(ref.pointer, (void *)newAddr);
-		storm::code::writePtr(code, slot);
+		storm::gccode::writePtr(code, slot);
 	}
 
 }
