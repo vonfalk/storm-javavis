@@ -1,5 +1,6 @@
 use layout;
 use core:geometry;
+use graphics;
 
 /**
  * Custom layouts that are useful when creating presentations.
@@ -276,4 +277,84 @@ class AnchorLayout extends layout:Layout {
 // Create easily.
 AnchorLayout anchor(Cardinal c) {
 	AnchorLayout(c);
+}
+
+
+/**
+ * Layout that draws a background behind an element.
+ *
+ * TODO: This might behave strange when animations are applied to the sub-elements, since the
+ * animation is copied. It would be better to generate a new element that is in charge of drawing
+ * everything, which makes it possible to only apply the animation once.
+ */
+class WithBackground extends layout:Layout {
+	// The solid-fill component that paints the background.
+	private SolidFill background;
+
+	// The component we apply the background to.
+	private Component? component;
+
+	// Margin to add.
+	private Size margin;
+
+	// Create.
+	init(Color color) {
+		init() {
+			background = SolidFill(color);
+			margin = Size(5, 5);
+		}
+	}
+
+	// Set the margin.
+	void margin(Float w, Float h) {
+		margin = Size(w, h);
+	}
+
+	// Set the border.
+	void border(Color c) {
+		background.border(c);
+	}
+
+	// Add an animation.
+	void animation(Animation a) {
+		background.animation(a);
+		if (component) {
+			component.findAll((x) => if (x as ElementWrap) { x.control.animation(a); });
+		}
+	}
+
+	// Add a component.
+	Layout:Info add(Component c) : override{
+		component = c;
+		Layout:Info();
+	}
+
+	// Minimum size.
+	Size minSize() : override {
+		if (component) {
+			component.minSize + margin * 2;
+		} else {
+			margin * 2;
+		}
+	}
+
+	// Re-compute the layout.
+	void layout() : override {
+		Rect p = pos;
+		background.pos = p;
+		if (component) {
+			p.p0 += margin;
+			p.p1 -= margin;
+
+			component.pos = p;
+		}
+	}
+
+	// Traverse.
+	void findAll(fn(Component)->void fn) : override {
+		super:findAll(fn);
+		ElementWrap(background).findAll(fn);
+		if (component)
+			component.findAll(fn);
+	}
 }

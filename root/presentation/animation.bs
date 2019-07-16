@@ -65,7 +65,11 @@ class ShowAnimation extends Animation {
 	}
 
 	Bool before(Element element, Graphics g, Nat cStep, Duration time) : override {
-		cStep >= step;
+		if (step == cStep) {
+			time >= offset;
+		} else {
+			cStep >= step;
+		}
 	}
 
 	void after(Element element, Graphics g, Nat cStep, Duration time) : override {}
@@ -82,7 +86,11 @@ class HideAnimation extends Animation {
 	}
 
 	Bool before(Element element, Graphics g, Nat cStep, Duration time) : override {
-		cStep < step;
+		if (step == cStep) {
+			time < offset;
+		} else {
+			cStep < step;
+		}
 	}
 
 	void after(Element element, Graphics g, Nat cStep, Duration time) : override {}
@@ -100,8 +108,69 @@ class FadeInAnimation extends Animation {
 
 	// Set up the animation.
 	Bool before(Element element, Graphics g, Nat cStep, Duration time) : override {
-		if (cStep == step & time < duration)
+		if (cStep == step & time < duration + offset)
 			g.push(val(time));
+
+		cStep >= step;
+	}
+
+	// Tear down.
+	void after(Element element, Graphics g, Nat cStep, Duration time) : override {
+		if (cStep == step & time < duration + offset)
+			g.pop();
+	}
+
+}
+
+/**
+ * Fade out animation.
+ */
+class FadeOutAnimation extends Animation {
+	// Create.
+	init(Nat step) {
+		init(step) {}
+	}
+
+	// Set up the animation.
+	Bool before(Element element, Graphics g, Nat cStep, Duration time) : override {
+		if (cStep == step & time < duration + offset) {
+			g.push(1 - val(time));
+			return true;
+		}
+
+		cStep < step;
+	}
+
+	// Tear down.
+	void after(Element element, Graphics g, Nat cStep, Duration time) : override {
+		if (cStep == step & time < duration + offset)
+			g.pop();
+	}
+
+}
+
+
+/**
+ * Grow vertically.
+ */
+class GrowAnimation extends Animation {
+	// Create.
+	init(Nat step) {
+		init(step) {}
+	}
+
+	// Set up the animation.
+	Bool before(Element element, Graphics g, Nat cStep, Duration time) : override {
+		if (cStep == step & time < duration + offset) {
+			Float scale = smoothVal(time);
+			g.push(scale);
+
+			if (scale == 0)
+				return false;
+
+			Point center = element.pos.center;
+			g.transform(translate(-center) * scale(Size(1, scale)) * translate(center));
+		}
 
 		cStep >= step;
 	}
@@ -111,5 +180,37 @@ class FadeInAnimation extends Animation {
 		if (cStep == step & time < duration)
 			g.pop();
 	}
+}
 
+/**
+ * Shrink vertically.
+ */
+class ShrinkAnimation extends Animation {
+	// Create.
+	init(Nat step) {
+		init(step) {}
+	}
+
+	// Set up the animation.
+	Bool before(Element element, Graphics g, Nat cStep, Duration time) : override {
+		if (cStep == step & time < duration + offset) {
+			Float scale = 1 - smoothVal(time);
+			g.push(scale);
+
+			if (scale == 0)
+				return false;
+
+			Point center = element.pos.center;
+			g.transform(translate(-center) * scale(Size(1, scale)) * translate(center));
+			return true;
+		}
+
+		cStep < step;
+	}
+
+	// Tear down.
+	void after(Element element, Graphics g, Nat cStep, Duration time) : override {
+		if (cStep == step & time < duration + offset)
+			g.pop();
+	}
 }

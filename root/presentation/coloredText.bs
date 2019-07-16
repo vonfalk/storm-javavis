@@ -18,6 +18,12 @@ class ColoredText extends Element {
 	// Lines of text to draw.
 	private Line[] lines;
 
+	// Marked regions.
+	private Marked[] marked;
+
+	// Remember where labels start.
+	private Str->Nat labels;
+
 	// Create.
 	init(TextStyle style) {
 		init() {
@@ -49,6 +55,34 @@ class ColoredText extends Element {
 		lines << Line();
 	}
 
+	// Begin a marked text region.
+	void begin(Str label) {
+		Nat id = lines.count;
+		if (id > 0) id--;
+		labels.put(label, id);
+	}
+
+	// End a marked text region.
+	void end(Str label, Color border, Color fill) {
+		Nat from = labels.get(label);
+		Nat to = lines.count;
+
+		Rect pos;
+		Float y = 0;
+		for (i, line in lines) {
+			pos.p1.x = max(pos.p1.x, line.width);
+			if (i == from) {
+				pos.p0.y = y;
+			} else if (i < to) {
+				pos.p1.y = y;
+			}
+
+			y += line.height;
+		}
+
+		marked << Marked(pos, SolidBrush(border), SolidBrush(fill));
+	}
+
 	// Minimum size.
 	Size minSize() : override {
 		Size total;
@@ -62,6 +96,13 @@ class ColoredText extends Element {
 	// Draw.
 	void draw(Graphics g) : override {
 		Point at = pos.p0;
+		for (m in marked) {
+			Rect r = m.rect + at;
+			g.draw(r, m.border);
+			if (fill = m.fill)
+				g.fill(r, fill);
+		}
+
 		for (l in lines) {
 			l.draw(g, at);
 			at.y += l.height;
@@ -113,6 +154,23 @@ class ColoredText extends Element {
 		// Create.
 		init(Text t, Brush b) {
 			init() { text = t; fill = b; }
+		}
+	}
+
+	// A marked region of text.
+	private value Marked {
+		// Border color.
+		Brush border;
+
+		// Fill color.
+		Brush? fill;
+
+		// Rectangle to fill.
+		Rect rect;
+
+		// Create.
+		init(Rect rect, Brush border, Brush? fill) {
+			init() { border = border; fill = fill; rect = rect; }
 		}
 	}
 }

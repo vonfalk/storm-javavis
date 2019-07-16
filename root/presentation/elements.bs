@@ -10,6 +10,9 @@ class SolidFill extends Element {
 	// The brush we're using to fill the screen.
 	Brush fill;
 
+	// Brush used to border the solid box, if any.
+	Brush? border;
+
 	// Create.
 	init(Brush fill) {
 		init() { fill = fill; }
@@ -20,11 +23,19 @@ class SolidFill extends Element {
 		init() { fill = SolidBrush(color); }
 	}
 
+	// Set the border.
+	void border(Color c) {
+		border = SolidBrush(c);
+	}
+
 	// Minimum size.
 	Size minSize() : override { Size(); }
 
 	// Draw.
 	void draw(Graphics g) : override {
+		if (border) {
+			g.draw(pos, border);
+		}
 		g.fill(pos, fill);
 	}
 }
