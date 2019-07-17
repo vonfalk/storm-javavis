@@ -1,6 +1,7 @@
 use layout;
 use core:geometry;
 use graphics;
+use ui;
 
 /**
  * Custom layouts that are useful when creating presentations.
@@ -279,20 +280,115 @@ AnchorLayout anchor(Cardinal c) {
 	AnchorLayout(c);
 }
 
+/**
+ * Group an entire sub-layout into one element, so that animations can be applied to the entire
+ * group rather than individual elements.
+ *
+ * Extending this class allows modifiers, such as 'WithBackground' below, to be implemented conveniently.
+ */
+class Group extends layout:Layout {
+	// Components managed inside this layout.
+	protected Component[] children;
+
+	// The "real" element we show to the presentation system.
+	private Elem elem;
+
+	// Add an element.
+	Layout:Info add(Component c) : override {
+		children << c;
+		Layout:Info();
+	}
+
+	// Get our minimum size.
+	Size minSize() : override {
+		Size s;
+		for (c in children)
+			s = max(s, c.minSize);
+		s;
+	}
+
+	// Do layout. Override and call 'layout(Rect)' to modify the layout if desired.
+	void layout() : override {
+		layout(pos);
+	}
+
+	// Call from derived classes to add borders etc.
+	void layout(Rect pos) {
+		for (c in children) {
+			c.pos = pos;
+		}
+		elem.pos = pos;
+	}
+
+	// Add an animation.
+	void animation(Animation a) {
+		elem.animation(a);
+	}
+
+	// Find all child elements (we won't propagate them since we handle that ourselves).
+	void findAll(fn(Component)->void fn) {
+		super:findAll(fn);
+
+		for (c in children) {
+			c.findAll(&elem.addChild);
+		}
+
+		ElementWrap(elem).findAll(fn);
+	}
+
+	/**
+	 * Element that is seen by the presentation.
+	 */
+	class Elem extends Element {
+		// Child elements.
+		private Element[] children;
+
+		// Minimum size. Not really needed.
+		Size minSize() : override { Size(); }
+
+		// Initialize animations.
+		void setupAnimations(Presentation p) {
+			super:setupAnimations(p);
+
+			for (c in children)
+				c.setupAnimations(p);
+		}
+
+		// Extract animations.
+		Animation[] animations() : override {
+			var here = Animation[](super:animations());
+			for (c in children)
+				here.append(c.animations());
+			here;
+		}
+
+		// Low-level drawing.
+		void draw(Graphics g, Nat step, Duration time) : override {
+			if (before(g, step, time)) {
+				for (c in children) {
+					c.draw(g, step, time);
+				}
+			}
+			after(g, step, time);
+		}
+
+		// Regular drawing (not required).
+		void draw(Graphics g) : override {}
+
+		// Add a child.
+		void addChild(Component e) {
+			if (e as ElementWrap)
+				children << e.control;
+		}
+	}
+}
 
 /**
  * Layout that draws a background behind an element.
- *
- * TODO: This might behave strange when animations are applied to the sub-elements, since the
- * animation is copied. It would be better to generate a new element that is in charge of drawing
- * everything, which makes it possible to only apply the animation once.
  */
-class WithBackground extends layout:Layout {
+class WithBackground extends Group {
 	// The solid-fill component that paints the background.
 	private SolidFill background;
-
-	// The component we apply the background to.
-	private Component? component;
 
 	// Margin to add.
 	private Size margin;
@@ -303,6 +399,8 @@ class WithBackground extends layout:Layout {
 			background = SolidFill(color);
 			margin = Size(5, 5);
 		}
+
+		add(ElementWrap(background));
 	}
 
 	// Set the margin.
@@ -315,46 +413,75 @@ class WithBackground extends layout:Layout {
 		background.border(c);
 	}
 
-	// Add an animation.
-	void animation(Animation a) {
-		background.animation(a);
-		if (component) {
-			component.findAll((x) => if (x as ElementWrap) { x.control.animation(a); });
-		}
-	}
-
-	// Add a component.
-	Layout:Info add(Component c) : override{
-		component = c;
-		Layout:Info();
-	}
-
 	// Minimum size.
 	Size minSize() : override {
-		if (component) {
-			component.minSize + margin * 2;
-		} else {
-			margin * 2;
-		}
+		super:minSize() + margin*2;
 	}
 
 	// Re-compute the layout.
 	void layout() : override {
 		Rect p = pos;
-		background.pos = p;
-		if (component) {
-			p.p0 += margin;
-			p.p1 -= margin;
+		p.p0 += margin;
+		p.p1 -= margin;
+		super:layout(p);
 
-			component.pos = p;
+		background.pos = pos;
+	}
+}
+
+
+/**
+ * Layout that adds a caption to another element.
+ */
+class WithCaption extends Group {
+	// Caption text.
+	private Heading text;
+
+	// Space between text and the content.
+	private Float space;
+
+	// Direction of the text.
+	private Cardinal textDir;
+
+	// Create.
+	init(Str text, Cardinal where, TextStyle font) {
+		init() {
+			text = Heading(text, font);
+			space = font.space;
+			textDir = where;
 		}
+
+		add(ElementWrap(this.text));
 	}
 
-	// Traverse.
-	void findAll(fn(Component)->void fn) : override {
-		super:findAll(fn);
-		ElementWrap(background).findAll(fn);
-		if (component)
-			component.findAll(fn);
+	// Compute minimum size.
+	Size minSize() {
+		Size s;
+		for (i, c in children)
+			if (i > 0)
+				s = max(s, c.minSize());
+
+		s.h += space + text.minSize.h;
+		s;
+	}
+
+	// Re-compute the layout.
+	void layout() {
+		Rect p = pos;
+		Point dir = textDir.direction;
+
+		Size textSize = text.minSize;
+		Rect textRect = p;
+		Rect contentRect = p;
+		if (dir.y > 0) {
+			textRect.p0.y = p.p1.y - textSize.h;
+			contentRect.p1.y = textRect.p0.y - space;
+		} else {
+			textRect.p1.y = p.p0.y + textSize.h;
+			contentRect.p0.y = textRect.p1.y + space;
+		}
+
+		super:layout(contentRect);
+		text.pos = textDir.align(textRect, textSize);
 	}
 }

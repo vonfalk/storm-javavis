@@ -522,9 +522,13 @@ class ShowLabelAnimation extends Animation {
 		if (element as BarGraph) {
 			var label = element.labels[labelId];
 
-			if (label.animationDefault > step & cStep <= step) {
-				label.animationScale = 0;
-				label.animationDefault = step;
+			if (cStep <= step) {
+				if (label.animationDefault > step) {
+					label.animationScale = 0;
+					label.animationDefault = step;
+				}
+			} else {
+				label.animationScale = 1;
 			}
 
 
@@ -555,9 +559,13 @@ class HideLabelAnimation extends Animation {
 		if (element as BarGraph) {
 			var label = element.labels[labelId];
 
-			if (label.animationDefault > step & cStep <= step) {
-				label.animationScale = 1;
-				label.animationDefault = step;
+			if (cStep <= step) {
+				if (label.animationDefault > step) {
+					label.animationScale = 1;
+					label.animationDefault = step;
+				}
+			} else {
+				label.animationScale = 0;
 			}
 
 			if (step == cStep) {

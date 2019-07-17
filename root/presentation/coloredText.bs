@@ -73,7 +73,8 @@ class ColoredText extends Element {
 			pos.p1.x = max(pos.p1.x, line.width);
 			if (i == from) {
 				pos.p0.y = y;
-			} else if (i < to) {
+			}
+			if (i < to) {
 				pos.p1.y = y;
 			}
 
