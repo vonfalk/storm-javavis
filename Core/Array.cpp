@@ -110,11 +110,11 @@ namespace storm {
 		data->filled++;
 	}
 
-	void ArrayBase::appendRaw(ArrayBase *from) {
+	ArrayBase *ArrayBase::appendRaw(ArrayBase *from) {
 		Nat here = count();
 		Nat copy = from->count();
 		if (here + copy == 0)
-			return;
+			return this;
 
 		ensure(here + copy);
 
@@ -130,6 +130,8 @@ namespace storm {
 		}
 
 		data->filled = here + copy;
+
+		return this;
 	}
 
 	static void arraySwap(void *a, void *b, size_t size) {

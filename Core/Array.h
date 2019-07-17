@@ -64,7 +64,7 @@ namespace storm {
 		void CODECALL insertRaw(Nat id, const void *item);
 
 		// Append the entire contents of another array.
-		void CODECALL appendRaw(ArrayBase *from);
+		ArrayBase *CODECALL appendRaw(ArrayBase *from);
 
 		// Reverse the array.
 		void STORM_FN reverse();
@@ -243,8 +243,9 @@ namespace storm {
 		}
 
 		// Append another array.
-		void append(Array<T> *from) {
+		Array<T> *append(Array<T> *from) {
 			appendRaw(from);
+			return this;
 		}
 
 		// Random element.

@@ -142,6 +142,7 @@ namespace storm {
 		add(nativeFunction(e, ref, S("last"), valList(e, 1, t), address(&ArrayBase::lastRaw))->makePure());
 		add(nativeFunction(e, ref, S("first"), valList(e, 1, t), address(&ArrayBase::firstRaw))->makePure());
 		add(nativeFunction(e, ref, S("random"), valList(e, 1, t), address(&ArrayBase::randomRaw)));
+		add(nativeFunction(e, t, S("append"), valList(e, 2, t, t), address(&ArrayBase::appendRaw)));
 		add(nativeFunction(e, Value(iter), S("begin"), valList(e, 1, t), address(&ArrayBase::beginRaw))->makePure());
 		add(nativeFunction(e, Value(iter), S("end"), valList(e, 1, t), address(&ArrayBase::endRaw))->makePure());
 
