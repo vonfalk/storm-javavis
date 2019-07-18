@@ -1,6 +1,7 @@
 use ui;
 use core:geometry;
 use graphics;
+use lang:bs:macro;
 
 /**
  * The main presentation window.
@@ -289,15 +290,26 @@ class PresentPainter extends Painter {
 	}
 }
 
+// Make sure the entire presentation library is compiled.
+void ensureCompiled() {
+	print("Compiling...");
+	Moment start;
+	compile(named{presentation});
+	compile(named{layout});
+	Moment end;
+	print("Done in ${end - start}");
+}
 
 // Helper for showing a presentation.
 void show(Presentation p) on Ui {
+	ensureCompiled();
 	Presenter w(p);
 	w.waitForClose();
 }
 
 // Helper for showing a presentation, starts at the specified slide. Good when developing the presentation.
 void show(Presentation p, Nat slide) on Ui {
+	ensureCompiled();
 	Presenter w(p);
 	w.goTo(slide);
 	w.waitForClose();

@@ -172,7 +172,7 @@ class List extends Element {
 			brush = brush;
 			fontHeight = f.pxHeight;
 			margin = f.pxHeight / 2;
-			padding = f.pxHeight / 4;
+			padding = f.pxHeight / 3;
 			bulletSize = f.pxHeight / 4;
 			lineSpace = lineSpace;
 		}
@@ -223,6 +223,7 @@ class List extends Element {
 			sz.h += s.h + lineSpace;
 		}
 		sz.h -= lineSpace;
+		sz.w += margin;
 		sz;
 	}
 
