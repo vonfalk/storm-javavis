@@ -128,6 +128,11 @@ namespace gui {
 				v = layer;
 			}
 
+			// Return a dummy value usable for non-pointers. Used in D2D to indicate PushAxisAlignedClip.
+			static Layer dummy() {
+				return Layer((OsLayer)1);
+			}
+
 			inline operator bool() {
 				return v != OsLayer(0);
 			}

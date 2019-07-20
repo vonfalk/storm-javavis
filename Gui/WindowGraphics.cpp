@@ -92,9 +92,13 @@ namespace gui {
 	void WindowGraphics::reset() {
 		// Do any PopLayer calls required.
 		while (oldStates->count() > 1) {
-			if (state.layer.v) {
-				layers->push(state.layer);
-				info.target()->PopLayer();
+			if (state.layer) {
+				if (state.layer == Layer::dummy()) {
+					info.target()->PopAxisAlignedClip();
+				} else {
+					layers->push(state.layer);
+					info.target()->PopLayer();
+				}
 			}
 			state = oldStates->last();
 			oldStates->pop();
@@ -108,9 +112,13 @@ namespace gui {
 	}
 
 	Bool WindowGraphics::pop() {
-		if (state.layer.v) {
-			layers->push(state.layer);
-			info.target()->PopLayer();
+		if (state.layer) {
+			if (state.layer == Layer::dummy()) {
+				info.target()->PopAxisAlignedClip();
+			} else {
+				layers->push(state.layer);
+				info.target()->PopLayer();
+			}
 		}
 
 		state = oldStates->last();
@@ -155,6 +163,12 @@ namespace gui {
 	}
 
 	void WindowGraphics::push(Float opacity) {
+		// Optimization for cases when opacity >= 1.
+		if (opacity >= 1.0f) {
+			push();
+			return;
+		}
+
 		oldStates->push(state);
 		state.layer = layer();
 
@@ -165,14 +179,18 @@ namespace gui {
 
 	void WindowGraphics::push(Rect clip) {
 		oldStates->push(state);
-		state.layer = layer();
+		state.layer = Layer::dummy();
 
-		D2D1_LAYER_PARAMETERS p = defaultParameters();
-		p.contentBounds = dx(clip);
-		info.target()->PushLayer(&p, state.layer.v);
+		info.target()->PushAxisAlignedClip(dx(clip), D2D1_ANTIALIAS_MODE_PER_PRIMITIVE);
 	}
 
 	void WindowGraphics::push(Rect clip, Float opacity) {
+		// Optimization for cases when opacity >= 1.
+		if (opacity >= 1.0f) {
+			push(clip);
+			return;
+		}
+
 		oldStates->push(state);
 		state.layer = layer();
 
@@ -260,7 +278,7 @@ namespace gui {
 	}
 
 	void WindowGraphics::draw(Text *text, Brush *style, Point origin) {
-		info.target()->DrawTextLayout(dx(origin), text->layout(), style->brush(owner));
+			info.target()->DrawTextLayout(dx(origin), text->layout(), style->brush(owner));
 	}
 
 	void WindowGraphics::Layer::release() {
