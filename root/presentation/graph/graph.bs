@@ -195,6 +195,9 @@ class GraphAxis on Render {
 	// Step for the ticks.
 	private Float step;
 
+	// Text color. Copy so that we can freely modify its opacity!
+	private SolidBrush textBrush;
+
 	// Margin on the left side (pixels).
 	Float marginLeft;
 
@@ -221,10 +224,19 @@ class GraphAxis on Render {
 
 	// Create.
 	init(TextStyle style) {
+		Color textColor = black;
+		if (b = style.fill as SolidBrush) {
+			textColor = b.color;
+			textColor.a *= b.opacity;
+		} else {
+			print("WARNING: We ignore non-solid text styles for axis labels in a graph!");
+		}
+
 		init() {
 			textStyle = style;
 			labelStyle = style;
 			indentColor = SolidBrush(white * 0.5);
+			textBrush = SolidBrush(textColor);
 			min = 0;
 			max = 1;
 			step = 1;
@@ -284,23 +296,20 @@ class GraphAxis on Render {
 
 				g.line(align - Point(markSize / 2, 0), align, textStyle.fill);
 
-				Bool transparency = l.animationScale < 0.95;
-				if (transparency)
-					g.push(l.animationScale);
+				textBrush.opacity = l.animationScale;
 
 				align.x -= labelMargin;
 				if (l.textScale == 1.0) {
 					align -= Size(sz.w, sz.h / 2);
-					g.draw(l.text, textStyle.fill, align);
+					g.draw(l.text, textBrush, align);
 				} else {
 					g.push();
 					g.transform(scale(l.textScale) * translate(align));
-					g.draw(l.text, textStyle.fill, Point(-sz.w, -sz.h / 2));
+					g.draw(l.text, textBrush, Point(-sz.w, -sz.h / 2));
 					g.pop();
 				}
 
-				if (transparency)
-					g.pop();
+				textBrush.opacity = 1;
 
 				if (indentFrom.x != l.indent) {
 					Float y = graph.p0.y + l.offset - l.totalHeight/2;
