@@ -51,3 +51,18 @@ layout. These variables will become member variables inside the class itself, an
 will be performed inside the constructor. Since the initialization will be performed inside the
 constructors of the class, it is possible to use any local variables declared before the `init`
 block in the constructor inside the initialization, even though this easily gets confusing.
+
+
+Notes
+------
+
+Below are some things to consider when developing applications with the UI library:
+
+- When drawing text, do not attempt to reduce its size too much by scaling it with a
+  transformation. If text is drawn in a too small size (at least vertical size, most likely also
+  horizontal), the underlying text libraries do not behave very well. Pango (used on Linux) seems to
+  enter an infinite loop if attempting to draw with a vertical scale factor of zero (possibly also
+  very small scales). DirectWrite (used on Windows) does not enter an infinite loop, but seems to
+  fail internally with a FileFormatException in similar circumstances, which causes sporadic
+  performance irregularities during rendering. Limiting the scale factor to a minimum of 0.05 seems
+  to work sufficiently well on both platforms, but for small font sizes this might be too small.

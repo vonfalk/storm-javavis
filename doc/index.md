@@ -30,7 +30,7 @@ The following example illustrates some of the possibilities of Storm:
 
 In this example, we use a language extension that allows creating presentation slides in a
 declarative manner. This extension is not a part of Basic Storm, it is implemented as a language
-extension that is included with the `use present;` statement on the first line. The language
+extension that is included with the `use presentation;` statement on the first line. The language
 extension adds a `presentation`-block declares functions that create presentation. This presentation
 is then used inside the `main` function to show the presentation. The example also shows that the
 language extension is able to execute arbitrary Storm code in most locations by creating a random
