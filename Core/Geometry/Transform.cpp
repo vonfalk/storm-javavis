@@ -327,6 +327,16 @@ namespace storm {
 			return CREATE(Transform, e.v, d);
 		}
 
+		Transform *scale(EnginePtr e, Vector scale, Vector center) {
+			float d[] = {
+				scale.x, 0, 0, 0,
+				0, scale.y, 0, 0,
+				0, 0, scale.z, 0,
+				center.x - scale.x*center.x, center.y - scale.y*center.y, center.z - scale.z*center.z, 1,
+			};
+			return CREATE(Transform, e.v, d);
+		}
+
 		Transform *scale(EnginePtr e, Size s) {
 			return scale(e, Vector(s.w, s.h, 1.0f));
 		}

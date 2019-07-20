@@ -79,22 +79,35 @@ namespace storm {
 		Point STORM_FN operator *(Point o, Transform *tfm);
 
 
-		// Translation transform.
+		// Translation.
 		Transform *STORM_FN translate(EnginePtr e, Vector v);
 		Transform *STORM_FN translate(EnginePtr e, Point v);
 		Transform *STORM_FN translate(EnginePtr e, Size v);
+
+		// Rotation.
 		Transform *STORM_FN rotateX(EnginePtr e, Angle angle);
-		Transform *STORM_FN rotateX(EnginePtr e, Angle angle, Vector origin);
 		Transform *STORM_FN rotateY(EnginePtr e, Angle angle);
-		Transform *STORM_FN rotateY(EnginePtr e, Angle angle, Vector origin);
 		Transform *STORM_FN rotateZ(EnginePtr e, Angle angle);
+
+		// Rotate around the specified point.
+		Transform *STORM_FN rotateX(EnginePtr e, Angle angle, Vector origin);
+		Transform *STORM_FN rotateY(EnginePtr e, Angle angle, Vector origin);
 		Transform *STORM_FN rotateZ(EnginePtr e, Angle angle, Vector origin);
-		Transform *STORM_FN rotate(EnginePtr e, Angle angle); // Same as rotateZ
+
+		// Rotation around the Z axis (in 2D).
+		Transform *STORM_FN rotate(EnginePtr e, Angle angle);
 		Transform *STORM_FN rotate(EnginePtr e, Angle angle, Point origin);
+
+		// Scale.
 		Transform *STORM_FN scale(EnginePtr e, Float scale);
 		Transform *STORM_FN scale(EnginePtr e, Vector scale);
-		Transform *STORM_FN scale(EnginePtr e, Float scale, Vector origin);
 		Transform *STORM_FN scale(EnginePtr e, Size scale);
+
+		// Scale, keeping the point 'origin' unchanged (i.e. scaling around 'origin').
+		Transform *STORM_FN scale(EnginePtr e, Float scale, Vector origin);
+		Transform *STORM_FN scale(EnginePtr e, Vector scale, Vector origin);
+
+		// Skew.
 		Transform *STORM_FN skewX(EnginePtr e, Angle angle);
 		Transform *STORM_FN skewY(EnginePtr e, Angle angle);
 		Transform *STORM_FN skewZ(EnginePtr e, Angle angle);

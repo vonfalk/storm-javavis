@@ -165,11 +165,12 @@ class GrowAnimation extends Animation {
 			Float scale = smoothVal(time);
 			g.push(scale);
 
-			if (scale == 0)
-				return false;
+			// The font drawing does not seem to like zero scaling, at least in the Y direction
+			// neither on Windows nor on Linux.
+			scale = max(scale, 0.05);
 
 			Point center = element.pos.center;
-			g.transform(translate(-center) * scale(Size(1, scale)) * translate(center));
+			g.transform(scale(Point(1, scale), center));
 		}
 
 		cStep >= step;
@@ -177,7 +178,7 @@ class GrowAnimation extends Animation {
 
 	// Tear down.
 	void after(Element element, Graphics g, Nat cStep, Duration time) : override {
-		if (cStep == step & time < duration)
+		if (cStep == step & time < duration + offset)
 			g.pop();
 	}
 }
@@ -197,11 +198,12 @@ class ShrinkAnimation extends Animation {
 			Float scale = 1 - smoothVal(time);
 			g.push(scale);
 
-			if (scale == 0)
-				return false;
+			// The font drawing does not seem to like zero scaling, at least in the Y direction
+			// neither on Windows nor on Linux.
+			scale = max(scale, 0.05);
 
 			Point center = element.pos.center;
-			g.transform(translate(-center) * scale(Size(1, scale)) * translate(center));
+			g.transform(scale(Point(1, scale), center));
 			return true;
 		}
 
