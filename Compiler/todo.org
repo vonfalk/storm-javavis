@@ -17,7 +17,21 @@
     but the scale of the issue should be assessed first.
   - [ ] Parsing core.lang.syntax.bnf takes about 80 ms, which is a bit on the high end when compiling code...
 
-* Loose ends so far [46/80]
+* Loose ends so far [46/82]
+  - [ ] Sometimes when reloading a large presentation quite a few times, Storm runs out of memory, failing
+    to spawn new UThreads for handling UI events. The error message tells that around 30000 threads are alive
+    at the point of failure, hinting at a resource leak somewhere. An utility that outputs stack traces for
+    all UThreads would be very useful in finding this bug!
+  - [ ] A new thread association for Actors would be useful. In many cases inside libraries, we want to be
+    able to provide some object that is able to execute on any thread, yet have the semantics of an actor,
+    since copying does not really make sense (e.g. ui.Painter, util.FileStream). Here, we would like to say:
+    this object should remain on the thread it was created on, disallow passing it to other threads (perhaps
+    "on same"). It should be possible to subclass such classes and associate them with a particular thread.
+    This allows a caller to be "unaware" of threads, while code in the subclasses may still avoid thread
+    switches since the actual thread is known there. Of course, such subclasses shall only be possible to
+    create on the specified thread. This is potentially also useful for implementing the generated types
+    in the syntax language. The base classes can be locked, and the derived classes could be placed
+    on threads inside the syntax language.
   - [ ] When using "unless (foo)", "foo" uses a local variable in the block as well as outside of the block,
     which makes assignments to that variable to not write to the original variable even if one would expect so.
     We should at least warn about this.
