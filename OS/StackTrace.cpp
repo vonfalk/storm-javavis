@@ -4,12 +4,6 @@
 
 namespace os {
 
-	vector<StackTrace> stackTraces(const Thread &thread) {
-		vector<Thread> threads(1, thread);
-		return stackTraces(threads)[0];
-	}
-
-
 	/**
 	 * Global trace data. Shared information.
 	 */
@@ -61,27 +55,26 @@ namespace os {
 		// Capture.
 		void capture(bool thisThread) {
 			if (thisThread)
-				results.push_back(::stackTrace(1));
+				results.push_back(::stackTrace(2));
 
-			// TODO: Perhaps we should lock our read of this list.
-			const InlineSet<UThreadStack> &stacks = Thread::current().stacks();
-			InlineSet<UThreadStack>::iterator at = stacks.begin(), end = stacks.end();
-			for (; at != end; ++at) {
-				if (at->initializing)
-					continue;
+			UThreadState *current = UThreadState::current();
+			vector<UThread> stacks = current->idleThreads();
 
-				// Ignore this thread.
-				if (!at->desc)
-					continue;
-
-				TODO(L"Capture the uthread!");
-				// Here, we want to alter the stack of this thread, so that we may execute code
-				// there for a little while before we return it to its original state again.
-				results.push_back(StackTrace());
+			results.reserve(stacks.size());
+			for (size_t i = 0; i < stacks.size(); i++) {
+				if (!stacks[i].detour(util::memberVoidFn(this, &TraceData::captureUThread))) {
+					WARNING(L"Failed to execute detour!");
+				}
 			}
 
 			// Signal again.
 			shared.signal.up();
+		}
+
+		// Function called from all UThreads in the context of that UThread. Performs the actual
+		// stack trace capturing.
+		void captureUThread() {
+			results.push_back(::stackTrace(2));
 		}
 	};
 
@@ -127,6 +120,11 @@ namespace os {
 			result[i] = data[i].results;
 		}
 		return result;
+	}
+
+	vector<StackTrace> stackTraces(const Thread &thread) {
+		vector<Thread> threads(1, thread);
+		return stackTraces(threads)[0];
 	}
 
 }

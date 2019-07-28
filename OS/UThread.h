@@ -5,6 +5,7 @@
 #include "InlineSet.h"
 #include "Utils/Function.h"
 #include "Utils/Lock.h"
+#include "Utils/Memory.h"
 #include "Future.h"
 
 namespace os {
@@ -132,7 +133,20 @@ namespace os {
 			return spawnRaw(fn, memberFn, null, call, result.impl(), result.data(), on);
 		}
 
+		// Execute a detour function on this uthread. Assumes that this thread is currently not
+		// running and belongs to the same thread as the caller of this function. The detour will be
+		// executed synchronously, ie. the current thread will be suspended until the detour is
+		// completed.
+		// This function is intended to provide stack traces for suspended threads. As such, the
+		// stack during the detour will look like the suspended thread called the function in the
+		// detour.
+		// Returns 'false' if unable to execute the detour, usually since the thread is currently
+		// being executed.
+		bool detour(const util::Fn<void, void> &fn);
+
 	private:
+		friend class UThreadState;
+
 		// Create
 		UThread(UThreadData *data);
 
@@ -232,6 +246,11 @@ namespace os {
 		UThreadData *detourOrigin;
 		void *detourResult;
 
+		// Find the pointer to an UThreadData from the contained 'stack' member.
+		static inline UThreadData *fromStack(UThreadStack *stackPtr) {
+			return BASE_PTR(UThreadData, stackPtr, stack);
+		}
+
 		// Move this UThread to another Thread.
 		void move(UThreadState *from, UThreadState *to);
 
@@ -247,13 +266,20 @@ namespace os {
 		// parameters that shall be passed to that function.
 		void pushContext(const void *returnTo);
 		void pushContext(const void *returnTo, void *param);
+
+		// Push a new context on top of an already initialized stack, assuming the current thread is
+		// not currently executing. Returns the old saved context so that it can be restored later.
+		UThreadStack::Desc *pushSubContext(const void *returnTo, void *param);
+
+		// Restore an old context returned from 'pushSubContext'.
+		void restoreContext(UThreadStack::Desc *context);
 	};
 
 	/**
-	 * Thread-specific state of the scheduler. It is designed to avoid
-	 * locks as far as possible, to ensure high performance in thread
-	 * switching.
-	 * This class is not threadsafe, except where noted.
+	 * Thread-specific state of the scheduler. It is designed to avoid locks as far as possible, to
+	 * ensure high performance in thread switching.
+	 *
+	 * This class is not threadsafe except where explicitly noted.
 	 */
 	class UThreadState : NoCopy {
 	public:
@@ -270,6 +296,10 @@ namespace os {
 		// threads not on the ready-queue, and allows garbage collecting the UThreads.
 		// Protected by the same lock as the Ready-queue.
 		InlineSet<UThreadStack> stacks;
+
+		// Get all idle threads. Protects accesses to 'stacks' with the appropriate lock. Assumed to
+		// be executed from the appropriate OS thread.
+		vector<UThread> idleThreads();
 
 		// Get the state for the current thread.
 		static UThreadState *current();

@@ -242,6 +242,50 @@ namespace os {
 		return insert(t, thread);
 	}
 
+	static void detourMain(const util::Fn<void, void> *fn) {
+		try {
+			(*fn)();
+		} catch (...) {
+			onUncaughtException();
+		}
+
+		// End the detour.
+		typedef void (*EndFn)();
+		EndFn endFn = (EndFn)(endDetourFn(false));
+		(*endFn)();
+	}
+
+	bool UThread::detour(const util::Fn<void, void> &fn) {
+		UThread current = UThread::current();
+
+		// Current thread?
+		if (data == current.data)
+			return false;
+
+		// Same Thread?
+		if (data->owner != current.data->owner)
+			return false;
+
+		// Running?
+		if (!data->stack.desc)
+			return false;
+
+		// Should be safe for now.
+
+		// Add the new context on top of the stack frame containing the old resume point.
+		StackDesc *old = data->pushSubContext(address(&detourMain), (void *)&fn);
+
+		// Need to reset the owner to make the detour system happy.
+		data->owner = null;
+		current.data->owner->startDetour(data);
+		data->owner = current.data->owner;
+
+		// Now, the detour has finished execution. Restore the old state.
+		data->restoreContext(old);
+
+		return true;
+	}
+
 
 	/**
 	 * UThread data and UThreadStack.
@@ -324,6 +368,24 @@ namespace os {
 	void UThreadState::newStack(UThreadData *v) {
 		util::Lock::L z(lock);
 		stacks.insert(&v->stack);
+	}
+
+	vector<UThread> UThreadState::idleThreads() {
+		vector<UThread> result;
+
+		// Note: The lock mainly protects against insertions from other threads. We don't have to
+		// worry about deletions, as those are always performed by this OS thread.
+		util::Lock::L z(lock);
+		for (InlineSet<UThreadStack>::iterator at = stacks.begin(), end = stacks.end(); at != end; ++at) {
+			if (at->initializing)
+				continue;
+			if (!at->desc)
+				continue;
+
+			result.push_back(UThread(UThreadData::fromStack(at)));
+		}
+
+		return result;
 	}
 
 	UThreadState *UThreadState::current() {
@@ -665,13 +727,56 @@ namespace os {
 		push(stack.desc->low); // current stack pointer (approximate, this is enough)
 
 		// Set the 'desc' of 'stack' to the actual stack pointer, so that we can run code on this stack.
-		stack.desc = (StackDesc *)(stack.desc->low);
+		atomicWrite(stack.desc, (StackDesc *)(stack.desc->low));
 	}
 
 	void UThreadData::pushContext(const void *fn, void *param) {
 		push(param);
-		push(null); // return to
+		push(null); // return address used for 'fn'.
 		pushContext(fn);
+	}
+
+	StackDesc *UThreadData::pushSubContext(const void *fn, void *param) {
+		StackDesc *old = stack.desc;
+
+		// Extract things from the old context.
+		size_t *oldStack = (size_t *)old;
+		size_t limit = oldStack[1];
+		size_t high = oldStack[2];
+		size_t seh = oldStack[3];
+		size_t edi = oldStack[4];
+		size_t esi = oldStack[5];
+		size_t ebx = oldStack[6];
+		size_t ebp = oldStack[7];
+		size_t eip = oldStack[8];
+
+		// Create a new stack. Note: We can't use 'push' since we don't want to destroy the old context.
+		size_t *newStack = oldStack - 11;
+
+		// Parameters to the called function.
+		newStack[10] = size_t(param);
+		newStack[9] = size_t(eip); // return address so that stack traces work even though we don't
+								   // assume we will ever return.
+
+		// New context.
+		newStack[8] = size_t(fn);
+		newStack[7] = size_t(ebp);
+		newStack[6] = size_t(ebx);
+		newStack[5] = size_t(esi);
+		newStack[4] = size_t(edi);
+		newStack[3] = size_t(seh);
+		newStack[2] = size_t(high);
+		newStack[1] = size_t(limit);
+		newStack[0] = size_t(stack.desc->low);
+
+		// Set the 'desc' of 'stack' to the actual stack pointer so that we can run code!
+		atomicWrite(stack.desc, (StackDesc *)(newStack));
+
+		return old;
+	}
+
+	void UThreadData::restoreContext(StackDesc *desc) {
+		atomicWrite(stack.desc, desc);
 	}
 
 #pragma warning (disable: 4733)

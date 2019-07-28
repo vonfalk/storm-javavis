@@ -125,6 +125,10 @@ namespace os {
 				return at;
 			}
 
+			inline operator T *() const {
+				return at;
+			}
+
 			inline iterator &operator ++() {
 				at = next;
 				if (next)
