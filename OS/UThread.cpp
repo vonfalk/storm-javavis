@@ -29,7 +29,7 @@ namespace os {
 	// Switch the currently running threads. *oldEsp is set to the old esp.
 	// This returns as another thread, which may mean that it returns to the
 	// beginning of another function in the case of newly started UThreads.
-	void doSwitch(StackDesc **newEsp, StackDesc **oldEsp);
+	extern "C" void doSwitch(StackDesc **newEsp, StackDesc **oldEsp);
 
 	// Switch back to the previously running UThread, allocating an additional return address on the
 	// stack and remembering the location of that stack so that it can be altered later.
@@ -750,7 +750,7 @@ namespace os {
 		size_t ebp = oldStack[7];
 		size_t eip = oldStack[8];
 
-		// Create a new stack. Note: We can't use 'push' since we don't want to destroy the old context.
+		// Create a new context. Note: We can't use 'push' since we don't want to destroy the old context.
 		size_t *newStack = oldStack - 11;
 
 		// Parameters to the called function.
@@ -970,11 +970,6 @@ namespace os {
 		pushContext(fn, null);
 	}
 
-	// static void errorFn() {
-	// 	PLN(L"UThread boot function returned. This is an implementation bug!");
-	// 	std::terminate();
-	// }
-
 	void UThreadData::pushContext(const void *fn, void *param) {
 		// Previous function's return to. Needed to align the stack properly.  Note: we can not push
 		// an address to the start of a function here since that would break stack traces when using
@@ -990,12 +985,65 @@ namespace os {
 		push((void *)0); // r14
 		push((void *)0); // r15
 
+		// Dummy value to make it possible to chain contexts.
+		push((void *)0);
+
 		push(stack.desc->high);
 		push(stack.desc->dummy);
 		push(stack.desc->low);
 
 		// Set the 'desc' of 'stack' to the actual stack pointer, so that we can run code on this stack.
-		stack.desc = (StackDesc *)(stack.desc->low);
+		atomicWrite(stack.desc, (StackDesc *)(stack.desc->low));
+	}
+
+	// Logical location where thread switches are made. Used to get good backtraces.
+	extern "C" void *doSwitchReturn;
+
+	StackDesc *UThreadData::pushSubContext(const void *fn, void *param) {
+		StackDesc *old = stack.desc;
+
+		// Extract things from the old context.
+		size_t *oldStack = (size_t *)old;
+		size_t low = oldStack[0];
+		size_t dummy = oldStack[1];
+		size_t high = oldStack[2];
+		size_t r15 = oldStack[4];
+		size_t r14 = oldStack[5];
+		size_t r13 = oldStack[6];
+		size_t r12 = oldStack[7];
+		size_t rbx = oldStack[8];
+		// size_t rdi = oldStack[9]; // Not needed.
+		size_t rbp = oldStack[10];
+		// size_t rip = oldStack[11]; // Not needed.
+
+		// Create a new context. Note: We can't use 'push' since we don't want to destroy the old context.
+		size_t *newStack = oldStack - 13;
+
+		// Return address for the new function. Needed for stack traces, but we don't expect we will
+		// ever return there.
+		newStack[12] = size_t(doSwitchReturn);
+
+		newStack[11] = size_t(fn);
+		newStack[10] = size_t(rbp);
+		newStack[9] = size_t(param);
+		newStack[8] = size_t(rbx);
+		newStack[7] = size_t(r12);
+		newStack[6] = size_t(r13);
+		newStack[5] = size_t(r14);
+		newStack[4] = size_t(r15);
+		newStack[3] = 0;
+		newStack[2] = size_t(high);
+		newStack[1] = size_t(dummy);
+		newStack[0] = size_t(low);
+
+		// Set the 'desc'!
+		atomicWrite(stack.desc, (StackDesc *)(newStack));
+
+		return old;
+	}
+
+	void UThreadData::restoreContext(StackDesc *desc) {
+		atomicWrite(stack.desc, (StackDesc *)(desc));
 	}
 
 	// Called from UThreadX64.S

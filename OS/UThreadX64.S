@@ -1,32 +1,56 @@
 	.text
 
 	# os::doSwitch(...) is _ZN2os8doSwitchEPPNS_12UThreadStack4DescES3_
-	.globl _ZN2os8doSwitchEPPNS_12UThreadStack4DescES3_
-	.type _ZN2os8doSwitchEPPNS_12UThreadStack4DescES3_, @function
+	.globl doSwitch
+	.type doSwitch, @function
 	.align 4
-_ZN2os8doSwitchEPPNS_12UThreadStack4DescES3_:
+doSwitch:
 	# NOTE: newDesc is in RDI
 	# NOTE: oldDesc is in RSI
 
+	# NOTE: We need CFI here to allow stack traces for all UThreads in the system.
+	.cfi_startproc
+
 	# Prolog. Bonus: saves RBP!
 	push %rbp
+	.cfi_def_cfa_offset 16
+	.cfi_offset rbp, -16
 	movq %rsp, %rbp
 
 	# Save state. We're saving 'rdi' even though it is not strictly neccessary in order to call simple functions.
 	pushq %rdi
+	.cfi_def_cfa_offset 24
+	.cfi_offset rdi, -24
 	pushq %rbx
+	.cfi_def_cfa_offset 32
+	.cfi_offset rbx, -32
 	pushq %r12
+	.cfi_def_cfa_offset 40
+	.cfi_offset r12, -40
 	pushq %r13
+	.cfi_def_cfa_offset 48
+	.cfi_offset r13, -48
 	pushq %r14
+	.cfi_def_cfa_offset 56
+	.cfi_offset r14, -56
 	pushq %r15
+	.cfi_def_cfa_offset 64
+	.cfi_offset r15, -64
+
+	# Dummy value to keep stack alignment when we're ready for a stack switch.
+	pushq $0
+	.cfi_def_cfa_offset 72
 
 	# Save stack information. Creating a StackDesc structure on the stack.
 	# We do not know anything about the stack on X86-64...
 	pushq $0
+	.cfi_def_cfa_offset 80
 	pushq $0
+	.cfi_def_cfa_offset 88
 	# Current stack pointer, overlaps with 'high' in StackDesc.
 	leaq -8(%rsp), %rbx
 	pushq %rbx
+	.cfi_def_cfa_offset 96
 
 	# Report the state of the old thread. This makes it possible for the GC to scan that properly.
 	movq %rsp, (%rsi)
@@ -34,19 +58,36 @@ _ZN2os8doSwitchEPPNS_12UThreadStack4DescES3_:
 	# Switch to the new stack.
 	movq (%rdi), %rsp
 
-	# Skip the ThreadDesc struct.
-	addq $24, %rsp
+	# This is the 'logical' location where threads are paused. We will use this as the "return address"
+	# when using detours to get good stack traces.
+.Lret_location:
 
+	# Skip the ThreadDesc struct.
+	addq $32, %rsp
+
+	.cfi_def_cfa_offset 64
 	# Store newDesc in RAX so that we do not overwrite it.
 	movq %rdi, %rax
 
 	# Restore state.
 	popq %r15
+	.cfi_def_cfa_offset 56
+	.cfi_restore r15
 	popq %r14
+	.cfi_def_cfa_offset 48
+	.cfi_restore r14
 	popq %r13
+	.cfi_def_cfa_offset 40
+	.cfi_restore r13
 	popq %r12
+	.cfi_def_cfa_offset 32
+	.cfi_restore r12
 	popq %rbx
+	.cfi_def_cfa_offset 24
+	.cfi_restore rbx
 	popq %rdi
+	.cfi_def_cfa_offset 16
+	.cfi_restore rdi
 
 	# Clear the new thread's description. This means that the GC will start scanning the
 	# stack based on RSP rather than what is in the StackDesc.
@@ -54,8 +95,17 @@ _ZN2os8doSwitchEPPNS_12UThreadStack4DescES3_:
 
 	# Epilog. Bonus: restores RBP!
 	pop %rbp
+	.cfi_restore rbp
+	.cfi_def_cfa rsp, 8
 	retq
 
+	.cfi_endproc
+
+	.globl doSwitchReturn
+doSwitchReturn:
+	.quad .Lret_location
+
+	.text
 	.align 8
 doEndDetour2Ptr:
 	# Store a pointer to the 'doEndDetour2' function so we can call it using RIP relative addressing.

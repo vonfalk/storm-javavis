@@ -296,15 +296,19 @@ static void formatError(void *data, const char *msg, int errnum) {
 static void formatOk(void *data, uintptr_t pc, const char *symname, uintptr_t symval, uintptr_t symsize) {
 	FormatData *d = (FormatData *)data;
 
-	int status = 0;
-	char *demangled = abi::__cxa_demangle(symname, null, null, &status);
-	if (status == 0) {
-		d->to << demangled;
+	if (symname) {
+		int status = 0;
+		char *demangled = abi::__cxa_demangle(symname, null, null, &status);
+		if (status == 0) {
+			d->to << demangled;
+		} else {
+			d->to << symname;
+		}
+		free(demangled);
+		d->any = true;
 	} else {
-		d->to << symname;
+		d->any = false;
 	}
-	free(demangled);
-	d->any = true;
 }
 
 bool CppInfo::format(std::wostream &to, const StackFrame &frame) const {
