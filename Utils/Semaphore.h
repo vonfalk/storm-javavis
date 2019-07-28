@@ -15,6 +15,9 @@ public:
 	// Timeout. Returns true if the semaphore was lowered normally, false if the timeout passed.
 	bool down(nat msTimeout);
 private:
+	Semaphore(const Semaphore &o);
+	Semaphore &operator =(const Semaphore &o);
+
 #if defined(WINDOWS)
 	HANDLE semaphore;
 #elif defined(POSIX)

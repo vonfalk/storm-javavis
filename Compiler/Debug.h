@@ -116,11 +116,11 @@ namespace storm {
 		void STORM_FN dumpObject(Object *obj);
 		void STORM_FN dumpObject(TObject *obj);
 
-		// Print the stack (machine specific, for debug).
-		void STORM_FN dumpStack();
-
 		// Print a stack trace.
 		void STORM_FN stackTrace();
+
+		// Print a summary of all running threads in the system.
+		void STORM_FN threadSummary(EnginePtr e);
 
 		// Throw an exception.
 		void STORM_FN throwError();

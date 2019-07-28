@@ -7,6 +7,7 @@
 #include "Core/Set.h"
 #include "Code/Debug.h"
 #include "Utils/Memory.h"
+#include "Engine.h"
 
 #ifdef POSIX
 #include <signal.h>
@@ -98,12 +99,12 @@ namespace storm {
 			PLN((void *)obj);
 		}
 
-		void dumpStack() {
-			code::dumpStack();
-		}
-
 		void stackTrace() {
 			::dumpStack();
+		}
+
+		void threadSummary(EnginePtr e) {
+			e.v.threadSummary();
 		}
 
 		void throwError() {

@@ -237,6 +237,9 @@ namespace storm {
 		void attachThread();
 		void detachThread();
 
+		// Print a summary of all threads in the system. Accessible from Storm as debug.threadSummary().
+		void threadSummary();
+
 	private:
 		// The compiler C++ world.
 		World world;

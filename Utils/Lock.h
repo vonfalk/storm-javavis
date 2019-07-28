@@ -27,6 +27,9 @@ namespace util {
 		};
 
 	private:
+		Lock(const Lock &o);
+		Lock &operator =(const Lock &o);
+
 		// Underlying implementation.
 #if defined(WINDOWS)
 		CRITICAL_SECTION cs;

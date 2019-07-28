@@ -57,6 +57,10 @@ namespace storm {
 		gc.detachThread(os::Thread::current());
 	}
 
+	void Engine::threadSummary() {
+		TODO(L"Implement me!");
+	}
+
 	// Starts at -1 so that the first Engine will get id=0.
 	static Nat engineId = -1;
 
