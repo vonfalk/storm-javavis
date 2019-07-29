@@ -4,6 +4,7 @@
 #include "IOCondition.h"
 #include "IOHandle.h"
 #include "UThread.h"
+#include "InlineSet.h"
 
 namespace os {
 
@@ -42,7 +43,7 @@ namespace os {
 		~Thread();
 
 		// Compare.
-		bool operator ==(const Thread &o) const;
+		inline bool operator ==(const Thread &o) const { return data == o.data; }
 		inline bool operator !=(const Thread &o) const { return !(*this == o); }
 
 		// Get the thread data.
@@ -83,6 +84,8 @@ namespace os {
 
 		friend wostream &operator <<(wostream &to, const Thread &o);
 	private:
+		friend class ThreadGroupData;
+
 		// Create.
 		explicit Thread(ThreadData *data);
 
@@ -95,7 +98,7 @@ namespace os {
 	/**
 	 * Internal thread data.
 	 */
-	class ThreadData {
+	class ThreadData : public SetMember<ThreadData> {
 	public:
 		// Number of references.
 		nat references;

@@ -35,6 +35,10 @@ namespace storm {
 		return osThread;
 	}
 
+	bool Thread::sameAs(const os::Thread &o) const {
+		return o == osThread;
+	}
+
 	STORM_DEFINE_THREAD(Compiler);
 
 }

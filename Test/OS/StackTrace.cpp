@@ -11,7 +11,7 @@ static void auxThread() {
 }
 
 
-BEGIN_TEST_(StackTraceTest, OS) {
+BEGIN_TESTX(StackTraceTest, OS) {
 	os::ThreadGroup g;
 
 	{
@@ -20,9 +20,9 @@ BEGIN_TEST_(StackTraceTest, OS) {
 		os::UThread::spawn(util::simpleVoidFn(auxThread));
 		os::UThread::spawn(util::simpleVoidFn(auxThread), &b);
 
-		vector<os::Thread> threads;
+		vector<os::Thread> threads = g.threads();
 		threads.push_back(a);
-		threads.push_back(b);
+
 		vector<vector<StackTrace>> traces = os::stackTraces(threads);
 
 		for (int i = 0; i < 4; i++)

@@ -88,10 +88,6 @@ namespace os {
 		return *this;
 	}
 
-	bool Thread::operator ==(const Thread &o) const {
-		return data == o.data;
-	}
-
 	wostream &operator <<(wostream &to, const Thread &o) {
 		return to << L"thread @" << o.data;
 	}
@@ -180,7 +176,7 @@ namespace os {
 
 		// Initialize our group.
 		group->addRef();
-		group->threadStarted();
+		group->threadStarted(&d);
 
 		// Initialize any 'wait' struct before anyone is able to call 'signal' on it.
 		if (wait)
@@ -228,8 +224,14 @@ namespace os {
 			// this case we can not have any race-conditions.
 
 			if (atomicRead(d.references) == 0) {
-				if (!UThread::any())
-					break;
+				if (!UThread::any()) {
+					// Attempt to shutdown!
+					if (group->threadUnreachable(&d))
+						break;
+
+					// If we get here, the thread group handed out a new reference while we were
+					// looking, and we need to continue working for a while.
+				}
 			}
 
 			// Wait for the condition to fire. This is done whenever the

@@ -1,5 +1,6 @@
 #include "stdafx.h"
 #include "ThreadGroup.h"
+#include "Thread.h"
 
 namespace os {
 
@@ -22,6 +23,10 @@ namespace os {
 		return *this;
 	}
 
+	vector<Thread> ThreadGroup::threads() const {
+		return data->threads();
+	}
+
 	void ThreadGroup::join() {
 		data->join();
 	}
@@ -34,14 +39,41 @@ namespace os {
 
 	ThreadGroupData::~ThreadGroupData() {}
 
-	void ThreadGroupData::threadStarted() {
+	void ThreadGroupData::threadStarted(ThreadData *data) {
 		atomicIncrement(attached);
 		start();
+
+		util::Lock::L z(runningLock);
+		running.insert(data);
+	}
+
+	bool ThreadGroupData::threadUnreachable(ThreadData *data) {
+		util::Lock::L z(runningLock);
+
+		// We handed out another reference. Abort!
+		if (atomicRead(data->references) > 0)
+			return false;
+
+		running.erase(data);
+		return true;
 	}
 
 	void ThreadGroupData::threadTerminated() {
 		stop();
 		sema.up();
+
+		// TODO: Perhaps we shall decrease 'attached' at some time to avoid overflow?
+	}
+
+	vector<Thread> ThreadGroupData::threads() {
+		vector<Thread> result;
+
+		util::Lock::L z(runningLock);
+		for (InlineSet<ThreadData>::iterator i = running.begin(); i != running.end(); ++i) {
+			result.push_back(Thread(i));
+		}
+
+		return result;
 	}
 
 	void ThreadGroupData::join() {

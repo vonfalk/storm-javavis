@@ -35,6 +35,10 @@ namespace storm {
 		// Get the thread handle.
 		const os::Thread &thread();
 
+		// Check if this is the same thread as the one passed as a parameter. This will not cause
+		// any threads to be created.
+		bool sameAs(const os::Thread &other) const;
+
 #ifdef STORM_COMPILER
 		/**
 		 * Allow stand-alone allocation of the first Thread.

@@ -1,6 +1,7 @@
 #pragma once
 #include "Thread.h"
 #include "Sync.h"
+#include "Utils/Lock.h"
 #include "Utils/Function.h"
 
 namespace os {
@@ -31,6 +32,9 @@ namespace os {
 
 		// Assign.
 		ThreadGroup &operator =(const ThreadGroup &o);
+
+		// Get a list of all threads currently in the group.
+		vector<Thread> threads() const;
 
 		// Wait for all threads in this group to exit. Only call from one thread!
 		void join();
@@ -63,10 +67,19 @@ namespace os {
 		}
 
 		// Notify a new thread has started.
-		void threadStarted();
+		void threadStarted(ThreadData *data);
 
-		// Notify a thread is terminated.
+		// Notify that a thread is about to terminate. This is called when the thread believes that
+		// it is no longer reachable. This is not a final decision as we may hand out references to
+		// it. If 'false' is returned, there is a reference to the thread again, and termination
+		// shall be held off for a while.
+		bool threadUnreachable(ThreadData *data);
+
+		// Notify a thread is terminated. This is a final decision, and should be called after 'threadUnreachable'.
 		void threadTerminated();
+
+		// Get all threads in this group.
+		vector<Thread> threads();
 
 		// Wait for all threads to terminate.
 		void join();
@@ -75,8 +88,14 @@ namespace os {
 		// Number of references.
 		nat references;
 
-		// Number of live threads. This is synced using atomic operations.
+		// Total number of threads attached.
 		nat attached;
+
+		// All threads currently running. Used to be able to produce a list of threads in the thread group.
+		InlineSet<ThreadData> running;
+
+		// Lock for the thread set.
+		util::Lock runningLock;
 
 		// Semaphore for waiting.
 		Sema sema;
