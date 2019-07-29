@@ -88,6 +88,7 @@ private:
 		keymap.put(Key:F5, &this.reload());
 		keymap.put(Key:home, &this.first());
 		keymap.put(Key:end, &this.last());
+		keymap.put(Key:F8, &debug:threadSummary());
 	}
 
 	// Add a series of keys for the same action.

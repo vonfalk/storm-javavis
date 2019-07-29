@@ -87,8 +87,10 @@ namespace storm {
 
 	void Engine::threadSummary() {
 		vector<os::Thread> threads = threadGroup.threads();
-		if (std::find(threads.begin(), threads.end(), os::Thread::current()) == threads.end())
-			threads.insert(threads.begin(), os::Thread::current());
+
+		os::Thread compiler = world.threads[0]->thread();
+		if (std::find(threads.begin(), threads.end(), compiler) == threads.end())
+			threads.insert(threads.begin(), compiler);
 
 		vector<vector<StackTrace>> traces = os::stackTraces(threads);
 

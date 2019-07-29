@@ -120,7 +120,7 @@ namespace storm {
 		void STORM_FN stackTrace();
 
 		// Print a summary of all running threads in the system.
-		void STORM_FN threadSummary(EnginePtr e);
+		void STORM_FN threadSummary(EnginePtr e) ON(Compiler);
 
 		// Throw an exception.
 		void STORM_FN throwError();
