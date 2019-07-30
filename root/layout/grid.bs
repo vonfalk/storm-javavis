@@ -46,6 +46,11 @@ class Grid extends Layout {
 	// Space between elements.
 	Size border;
 
+	// Set it.
+	void border(Float w, Float h) {
+		border = Size(w, h);
+	}
+
 	// Initialize.
 	init() {
 		init() {

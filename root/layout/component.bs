@@ -54,6 +54,7 @@ class FillBox extends Component {
 	Size size;
 
 	init(Size size) { init() { size = size; } }
+	init(Float w, Float h) { init() { size(w, h); } }
 
 	// Minimum size of the component.
 	Size minSize() : override { size; }

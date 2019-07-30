@@ -43,6 +43,11 @@ class ColoredText extends Element {
 	// Add a chunk of text with the specified brush.
 	void text(Str t, Brush b) {
 		lines.last.add(Chunk(Text(t, font), b));
+
+		var w = lines.last.width;
+		for (m in marked) {
+			m.rect.p1.x = max(m.rect.p1.x, w);
+		}
 	}
 
 	// Add a chunk of text with the specified color.
@@ -159,7 +164,7 @@ class ColoredText extends Element {
 	}
 
 	// A marked region of text.
-	private value Marked {
+	private class Marked {
 		// Border color.
 		Brush border;
 
