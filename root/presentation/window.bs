@@ -16,6 +16,12 @@ class Presenter extends Frame {
 	// Mouse button pressed?
 	private Bool showPointer;
 
+	// Any digits entered?
+	private Bool anyDigits;
+
+	// Number being entered.
+	private Nat number;
+
 	// Source for the presentation. Used to reload the presentation.
 	lang:Function? source;
 
@@ -82,13 +88,26 @@ private:
 	// Initialize the keymap.
 	void initKeymap() {
 		putKeys([Key:esc, Key:q], &this.close());
-		putKeys([Key:right, Key:down, Key:return], &this.next());
+		putKeys([Key:right, Key:down], &this.next());
 		putKeys([Key:left, Key:up], &this.prev());
+		keymap.put(Key:return, &this.enter());
 		keymap.put(Key:f, &this.toggleFullscreen());
 		keymap.put(Key:F5, &this.reload());
 		keymap.put(Key:home, &this.first());
 		keymap.put(Key:end, &this.last());
 		keymap.put(Key:F8, &debug:threadSummary());
+
+		var me = this;
+		keymap.put(Key:num0, () => me.numKey(0));
+		keymap.put(Key:num1, () => me.numKey(1));
+		keymap.put(Key:num2, () => me.numKey(2));
+		keymap.put(Key:num3, () => me.numKey(3));
+		keymap.put(Key:num4, () => me.numKey(4));
+		keymap.put(Key:num5, () => me.numKey(5));
+		keymap.put(Key:num6, () => me.numKey(6));
+		keymap.put(Key:num7, () => me.numKey(7));
+		keymap.put(Key:num8, () => me.numKey(8));
+		keymap.put(Key:num9, () => me.numKey(9));
 	}
 
 	// Add a series of keys for the same action.
@@ -100,6 +119,25 @@ private:
 	// Toggle fullscreen.
 	void toggleFullscreen() {
 		fullscreen = !fullscreen;
+	}
+
+	// A number has been entered.
+	void numKey(Nat num) {
+		if (!anyDigits)
+			number = 0;
+
+		anyDigits = true;
+		number = number * 10 + num;
+	}
+
+	// Called when "enter" has been pressed. Either advances one slide or moves to the slide previously entered.
+	void enter() {
+		if (anyDigits) {
+			goTo(number);
+			anyDigits = false;
+		} else {
+			next();
+		}
 	}
 
 	// Advance to the next slide/animation step.
