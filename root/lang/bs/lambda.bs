@@ -308,6 +308,8 @@ private NameLookup lambdaParent(Block block) on Compiler {
 		// print(at.toS);
 		if (at as Package) {
 			return at;
+		} else if (at as Type) {
+			return at;
 		} else if (parent = at.parent) {
 			at = parent;
 		} else {

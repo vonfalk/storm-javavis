@@ -17,7 +17,7 @@
     but the scale of the issue should be assessed first.
   - [ ] Parsing core.lang.syntax.bnf takes about 80 ms, which is a bit on the high end when compiling code...
 
-* Loose ends so far [46/82]
+* Loose ends so far [47/84]
   - [ ] Sometimes when reloading a large presentation quite a few times, Storm runs out of memory, failing
     to spawn new UThreads for handling UI events. The error message tells that around 30000 threads are alive
     at the point of failure, hinting at a resource leak somewhere. An utility that outputs stack traces for
@@ -32,6 +32,8 @@
     create on the specified thread. This is potentially also useful for implementing the generated types
     in the syntax language. The base classes can be locked, and the derived classes could be placed
     on threads inside the syntax language.
+  - [ ] We can not use 'this' captured inside a lambda function since 'this' refers to the one already present
+    in the lambda function.
   - [ ] When using "unless (foo)", "foo" uses a local variable in the block as well as outside of the block,
     which makes assignments to that variable to not write to the original variable even if one would expect so.
     We should at least warn about this.
@@ -88,6 +90,8 @@
   - [ ] Move the 'assign' declaration to being purely a decorator (ie. Foo field(Foo v) : assign)?
   - [ ] If a type has a '==' or '<' outside the type itself, the corresponding operator will not be present in
     a Handle, like '<<' at the moment.
+  - [X] The scope for lambda functions is not correct. A lambda function inside a class should be able to
+    access a private member in that class. That is currently not the case.
   - [X] Support two-stage initialization. First a call to 'super' or similarly, after which 'this' is accessible
     as the parent class, then a call to 'init {}' which initializes the rest of the object. Slightly tricky
     to implement wrt the 'as' operator.
