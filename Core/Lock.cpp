@@ -34,8 +34,7 @@ namespace storm {
 	}
 
 	void Lock::unlock() {
-		size_t owner = (size_t)os::UThread::current().threadData();
-		assert(owner == alloc->owner, L"Attempting to unlock from wrong thread!");
+		assert((size_t)os::UThread::current().threadData() == alloc->owner, L"Attempting to unlock from wrong thread!");
 
 		if (--alloc->recursion == 0) {
 			alloc->owner = 0;

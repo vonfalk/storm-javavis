@@ -65,7 +65,7 @@ namespace storm {
 
 		// Just fill in the current element!
 		work->v[work->filled++] = elem.object;
-		work->v[work->filled++] = elem.dtor;
+		work->v[work->filled++] = (void *)elem.dtor;
 	}
 
 	ThreadFinalizers::Element ThreadFinalizers::pop() {
