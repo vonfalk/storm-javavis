@@ -1487,12 +1487,13 @@ namespace storm {
 		} else if (t->finalizer) {
 			// If it is a tFixedObject, make sure it has been properly initialized before we're trying to destroy it!
 			if ((t->kind != GcType::tFixedObj) || (vtable::from((RootObject *)obj) != null)) {
+				// Mark the object as destroyed so that we can detect it later.
+				objSetFinalized(fromClient(obj));
+
+				// Run the finalizer itself.
 				typedef void (*Fn)(void *);
 				Fn fn = (Fn)t->finalizer;
 				(*fn)(obj);
-
-				// Mark the object as destroyed so that we can detect it later.
-				objSetFinalized(fromClient(obj));
 			}
 		}
 

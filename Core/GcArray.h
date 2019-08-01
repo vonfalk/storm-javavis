@@ -55,7 +55,7 @@ namespace storm {
 	};
 
 
-	// GcType for arrays of pointers. This is very commonly done, so it is provided here.
+	// Some common GcTypes for arrays, so we don't need to have multiple definitions of them hanging around.
 	extern const GcType pointerArrayType;
 	extern const GcType sizeArrayType; // size_t
 	extern const GcType wordArrayType;

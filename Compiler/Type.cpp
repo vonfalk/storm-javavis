@@ -696,13 +696,10 @@ namespace storm {
 				// We might need to switch threads...
 				TObject *obj = (TObject *)object;
 				if (obj->thread) {
-					os::Thread t = obj->thread->thread();
-					if (t != os::Thread::current()) {
-						// Post a message to that thread (no need to wait).
-						// TODO: This is a bad idea, as we might flood the system with threads for finalization.
-						// We should at least batch this in some fashion to avoid creating a large number of UThreads!
-						os::FnCall<void, 1> params = os::fnCall().add(object);
-						os::UThread::spawn((const void *)f, true, params, &t);
+					os::Thread thread = obj->thread->thread();
+					if (thread != os::Thread::current()) {
+						// Put it in the finalizer pool!
+						t->engine.finalizersFor(thread)->finalize(thread, object, f);
 						return;
 					}
 				}

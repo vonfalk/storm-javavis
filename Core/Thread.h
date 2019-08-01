@@ -8,7 +8,7 @@ namespace storm {
 	 * A thread known by Storm.
 	 *
 	 * NOTE: due to the startup process, this thread may *not* contain any pointers to other Storm
-	 * object, as they are not reported to the GC during startup.
+	 * objects, as they are not reported to the GC during startup.
 	 *
 	 * NOTE: These may be copied, so never assume that if a != b, then they represent different
 	 * threads. However, the reverse holds. Ie. if a == b then they represent the same thread.
@@ -43,7 +43,6 @@ namespace storm {
 		/**
 		 * Allow stand-alone allocation of the first Thread.
 		 */
-
 		struct First {
 			Engine &e;
 			First(Engine &e) : e(e) {}

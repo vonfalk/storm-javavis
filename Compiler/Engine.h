@@ -9,6 +9,7 @@
 #include "Code/Arena.h"
 #include "Code/RefSource.h"
 #include "Code/Reference.h"
+#include "Core/ThreadFinalizers.h"
 #include "Utils/Lock.h"
 #include "Utils/StackInfo.h"
 
@@ -209,6 +210,9 @@ namespace storm {
 		// Get a visibility object.
 		Visibility *visibility(VisType type);
 
+		// Get the ThreadFinalizers object for a particular thread.
+		ThreadFinalizers *finalizersFor(const os::Thread &thread);
+
 		// Get the StdIo object.
 		StdIo *stdIo();
 
@@ -283,6 +287,9 @@ namespace storm {
 			Function *readObj;
 			Function *readTObj;
 
+			// Keep track of all active threads so that we can run finalizers on them.
+			Map<Word, ThreadFinalizers *> *finalizerPools;
+
 			// Default visibility objects.
 			Visibility *visibility[visCount];
 
@@ -305,6 +312,9 @@ namespace storm {
 
 		// Lock used for syncronizing object creation.
 		util::Lock createLock;
+
+		// Lock used for synchronizing access to the finalizer pools.
+		util::Lock finalizerLock;
 
 		// Create references.
 		code::RefSource *createRef(RefType ref);

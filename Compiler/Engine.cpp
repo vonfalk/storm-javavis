@@ -55,7 +55,16 @@ namespace storm {
 	}
 
 	void Engine::detachThread() {
-		gc.detachThread(os::Thread::current());
+		os::Thread c = os::Thread::current();
+
+		if (!has(bootShutdown)) {
+			// Remove the finalizer object from the map so we don't leak it.
+			util::Lock::L z(finalizerLock);
+			if (o.finalizerPools)
+				o.finalizerPools->remove(c.id());
+		}
+
+		gc.detachThread(c);
 	}
 
 	static void findThreads(Array<NamedThread *> *result, Named *root) {
@@ -435,6 +444,25 @@ namespace storm {
 			assert(false, L"Unknown visibility: " + ::toS(t));
 			return null;
 		}
+	}
+
+	ThreadFinalizers *Engine::finalizersFor(const os::Thread &thread) {
+		util::Lock::L z(finalizerLock);
+
+		if (!o.finalizerPools) {
+			// Good enough as long as we don't try to print the contents of the map!
+			o.finalizerPools = (Map<Word, ThreadFinalizers *> *)new (*this) Map<Word, Object *>();
+		}
+
+		Word id = thread.id();
+		ThreadFinalizers *f = o.finalizerPools->get(id, null);
+
+		if (!f) {
+			// Not found, create it!
+			f = ThreadFinalizers::create(*this);
+			o.finalizerPools->put(id, f);
+		}
+		return f;
 	}
 
 	StdIo *Engine::stdIo() {
