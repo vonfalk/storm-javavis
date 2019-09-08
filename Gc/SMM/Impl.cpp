@@ -241,7 +241,7 @@ namespace storm {
 	};
 
 	GcImpl::Root *GcImpl::createRoot(void *data, size_t count, bool inexact) {
-		Root *r = new Root((void **)data, count / sizeof(void *), inexact, arena);
+		Root *r = new Root((void **)data, count, inexact, arena);
 
 		if (inexact) {
 			arena.addInexact(r->root);

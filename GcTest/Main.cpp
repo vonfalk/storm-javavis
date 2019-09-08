@@ -283,7 +283,7 @@ int main(int argc, const char *argv[]) {
 	os::ThreadGroup threads(util::memberVoidFn(&other, &OtherThread::startThread),
 							util::memberVoidFn(&other, &OtherThread::stopThread));
 
-	Gc::Root *r = gc.createRoot(&globals, sizeof(globals));
+	Gc::Root *r = gc.createRoot(&globals, sizeof(globals) / sizeof(void *));
 	{
 		util::Timer t(L"test");
 		run(gc, other, threads);

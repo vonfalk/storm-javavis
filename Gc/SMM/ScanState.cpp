@@ -84,7 +84,7 @@ namespace storm {
 			Block *n = target->alloc(ticket, minSize);
 			if (!n) {
 				target->arena.dbg_dump();
-				TODO(L"Handle out of memory conditions!");
+				TODO(L"Handle out of memory conditions! We attempted to allocate " << minSize << " bytes.");
 				assert(false);
 			}
 

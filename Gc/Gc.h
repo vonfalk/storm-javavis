@@ -239,7 +239,8 @@ namespace storm {
 
 		typedef GcImpl::Root Root;
 
-		// Allocate a root that scans an array of pointers.
+		// Allocate a root that scans an array of pointers. 'count' is the number of pointers
+		// contained in the array, not the size of the allocation.
 		inline Root *createRoot(void *data, size_t count) {
 			return createRoot(data, count, false);
 		}

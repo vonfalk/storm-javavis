@@ -35,7 +35,13 @@ namespace storm {
 		}
 
 		Block *Generation::alloc(ArenaTicket &ticket, size_t minSize) {
-			return allocBlock(ticket, minSize, blockSize);
+			if (minSize < blockSize) {
+				// Regular allocation. Allocate up to the block size.
+				return allocBlock(ticket, minSize, blockSize);
+			} else {
+				// Large allocation, try to keep it fairly small.
+				return allocBlock(ticket, minSize, max(minSize + (minSize >> 2), blockSize));
+			}
 		}
 
 		void Generation::done(ArenaTicket &ticket, Block *block) {
@@ -643,7 +649,7 @@ namespace storm {
 		}
 
 		void Generation::GenChunk::dbg_dump() {
-			PLN(L"Chunk at " << memory << L", " << freeBytes << L" bytes free");
+			PLN(memory << L", " << freeBytes << L" bytes free");
 
 			for (Block *at = (Block *)memory.at; at != (Block *)memory.end(); at = (Block *)at->mem(at->size)) {
 				if (at == lastAlloc)
