@@ -334,6 +334,27 @@ public:
 	virtual void print(wostream &to) const;
 };
 
+/**
+ * GcType type.
+ */
+class GcTypeType : public TypeRef {
+public:
+	GcTypeType(const SrcPos &pos) : TypeRef(pos) {}
+
+	// Get the size of this type.
+	virtual Size size() const;
+
+	// Is this a gc:d type?
+	virtual bool gcType() const { return true; }
+
+
+	// Resolve.
+	virtual Auto<TypeRef> resolve(World &in, const CppName &context) const;
+
+	// Print.
+	virtual void print(wostream &to) const;
+};
+
 
 class UnknownPrimitive;
 

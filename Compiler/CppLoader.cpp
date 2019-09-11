@@ -99,9 +99,7 @@ namespace storm {
 
 		// If this type inherits from 'Type', it needs special care in its Gc-description.
 		if (type.kind == CppType::superClassType) {
-			GcType *t = Type::makeType(*e, gcType);
-			e->gc.freeType(gcType);
-			gcType = t;
+			Type::makeType(*e, gcType);
 		}
 
 		return new (*e) Type(null, flags, Size(type.size), gcType, typeVTable(type));

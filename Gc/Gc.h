@@ -10,6 +10,7 @@
 // In case we're included from somewhere other than the Gc module.
 #include "Config.h"
 #include "MemorySummary.h"
+#include "Format.h" // for fmt::wordAlign
 
 /**
  * Include all possible GC implementations. Only one will be selected.

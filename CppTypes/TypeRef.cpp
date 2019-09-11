@@ -120,6 +120,8 @@ Auto<TypeRef> NamedType::resolve(World &in, const CppName &context) const {
 		return new GcWatchType(pos);
 	else if (name == L"EnginePtr" || name == L"storm::EnginePtr")
 		return new EnginePtrType(pos);
+	else if (name == L"GcType" || name == L"storm::GcType")
+		return new GcTypeType(pos);
 
 	// Last restort: built in type?
 	map<String, Size>::const_iterator i = in.builtIn.find(name);
@@ -216,6 +218,18 @@ Size EnginePtrType::size() const {
 
 void EnginePtrType::print(wostream &to) const {
 	to << L"storm::EnginePtr";
+}
+
+Auto<TypeRef> GcTypeType::resolve(World &in, const CppName &context) const {
+	return new GcTypeType(*this);
+}
+
+Size GcTypeType::size() const {
+	throw Error(L"GcType should only be used as a pointer.", pos);
+}
+
+void GcTypeType::print(wostream &to) const {
+	to << L"storm::GcType";
 }
 
 

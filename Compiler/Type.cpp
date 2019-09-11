@@ -166,15 +166,25 @@ namespace storm {
 		t->~Type();
 	}
 
-	GcType *Type::makeType(Engine &e, const GcType *src) {
-		GcType *r = e.gc.allocType(GcType::tType, src->type, src->stride, src->count + 1);
+	void Type::makeType(Engine &e, GcType *src) {
+		// Find the entry containing OFFSET_OF(Type, myGcType).
+		nat myTypePos = src->count;
+		for (nat i = 0; i < src->count; i++) {
+			if (src->offset[i] == OFFSET_OF(Type, myGcType)) {
+				myTypePos = i;
+				break;
+			}
+		}
 
-		r->finalizer = src->finalizer;
-		r->offset[0] = OFFSET_OF(Type, myGcType);
-		for (nat i = 0; i < src->count; i++)
-			r->offset[i+1] = src->offset[i];
+		assert(myTypePos < src->count, L"The type definition for a type inheriting from core.lang.Type does not contain an entry for 'myGcType'!");
 
-		return r;
+		// Move elements one step back to make room at location 0.
+		for (nat i = myTypePos; i > 0; i--) {
+			src->offset[i] = src->offset[i - 1];
+		}
+
+		src->offset[0] = OFFSET_OF(Type, myGcType);
+		src->kind = GcType::tType;
 	}
 
 	Type *Type::createType(Engine &e, const CppType *type) {
@@ -187,12 +197,22 @@ namespace storm {
 		for (; type->ptrOffsets[entries] != CppOffset::invalid; entries++)
 			;
 
-		GcType *t = e.gc.allocType(GcType::tType, null, sizeof(Type), entries + 1);
+		GcType *t = e.gc.allocType(GcType::tType, null, sizeof(Type), entries);
 
 		// Insert 'myGcType' as the first (special) pointer:
 		t->offset[0] = OFFSET_OF(Type, myGcType);
-		for (nat i = 0; i < entries; i++)
-			t->offset[i+1] = Offset(type->ptrOffsets[i]).current();
+
+		// Insert the other ones afterwards. The 'ptrOffsets' array should contain the special
+		// offset as well, since GcType pointers are garbage collected. If it is not found, we will
+		// assert.
+		nat pos = 1;
+		for (nat i = 0; i < entries; i++) {
+			size_t offset = Offset(type->ptrOffsets[i]).current();
+			if (offset != OFFSET_OF(Type, myGcType)) {
+				assert(pos < entries, L"The entry for 'myGcType' was not found in the type description for core.lang.Type.");
+				t->offset[pos++] = Offset(type->ptrOffsets[i]).current();
+			}
+		}
 
 		// Ensure we're finalized.
 		t->finalizer = address(&destroyType);

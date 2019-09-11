@@ -1011,7 +1011,7 @@ namespace storm {
 
 		if (!t) {
 			// A code allocation. Call the finalizer over in the Code lib.
-			code::finalize(obj);
+			gccode::finalize(obj);
 		} else if (t->finalizer) {
 			// If it is a tFixedObject, make sure it has been properly initialized before we're trying to destroy it!
 			if ((t->kind != GcType::tFixedObj) || (vtable::from((RootObject *)obj) != null)) {
@@ -1054,7 +1054,7 @@ namespace storm {
 		} while (!mps_commit(codeAllocPoint, memory, size));
 
 		// Register for finalization if the backend asks us to.
-		if (code::needFinalization())
+		if (gccode::needFinalization())
 			mps_finalize(arena, &result);
 
 		return result;
