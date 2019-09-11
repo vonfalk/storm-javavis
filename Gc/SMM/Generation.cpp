@@ -289,6 +289,7 @@ namespace storm {
 				if (chunk.compact(pinned)) {
 					arena.freeChunk(chunk.memory);
 					chunks.erase(chunks.begin() + i);
+					pinnedSets.erase(pinnedSets.begin() + i);
 					i--;
 				} else {
 					totalAllocBytes += chunk.memory.size;
@@ -313,7 +314,8 @@ namespace storm {
 		}
 
 		void Generation::dbg_verify() {
-			assert(chunks.size() == pinnedSets.size());
+			// One extra for the nonmoving objects.
+			assert(chunks.size() + 1 == pinnedSets.size());
 
 			size_t alloc = 0;
 			size_t free = 0;
