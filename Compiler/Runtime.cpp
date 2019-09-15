@@ -6,6 +6,7 @@
 #include "Core/Str.h"
 #include "Core/Io/StdStream.h"
 #include "Gc/Code.h"
+#include "Debug.h"
 #include "StdIoThread.h"
 
 namespace storm {
@@ -91,9 +92,25 @@ namespace storm {
 			return e.gc.allocBuffer(count);
 		}
 
+		static NOINLINE void allocFailSize(const GcType *t, size_t size) {
+			PLN(L"Invalid type description found! " << size << L" vs " << t->stride);
+			debug::dbgBreak();
+		}
+
+		static NOINLINE void allocFailType(const GcType *t, Type *type) {
+			PLN(L"Invalid type reference found! GcType: " << (void *)t << L", actual: " << type);
+			debug::dbgBreak();
+		}
+
 		void *allocObject(size_t size, Type *type) {
 			const GcType *t = type->gcType();
-			assert(size <= t->stride, L"Invalid type description found! " + ::toS(size) + L" vs " + ::toS(t->stride));
+#ifdef DEBUG
+			// Try to keep the failure case out of the normal case, even in debug mode.
+			if (size > t->stride)
+				allocFailSize(t, size);
+			if (t->type != type)
+				allocFailType(t, type);
+#endif
 			return type->engine.gc.alloc(t);
 		}
 

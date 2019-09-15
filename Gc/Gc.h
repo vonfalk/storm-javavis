@@ -252,7 +252,8 @@ namespace storm {
 
 		// Destroy a root.
 		static inline void destroyRoot(Root *root) {
-			GcImpl::destroyRoot(root);
+			if (root)
+				GcImpl::destroyRoot(root);
 		}
 
 

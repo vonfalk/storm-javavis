@@ -1141,10 +1141,8 @@ namespace storm {
 	}
 
 	void GcImpl::destroyRoot(Root *r) {
-		if (r) {
-			mps_root_destroy(r->root);
-			delete r;
-		}
+		mps_root_destroy(r->root);
+		delete r;
 	}
 
 #if MPS_CHECK_MEMORY

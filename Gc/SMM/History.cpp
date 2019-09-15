@@ -103,7 +103,7 @@ namespace storm {
 			// Read the history entry from the proper location. If this is written to while we read
 			// it, we will discard it later. This means we don't have to worry too much about
 			// atomicity here...
-			AddrSummary moved = history.history[histLow % historySize];
+			AddrSummary moved = history.history[epochLow % historySize];
 
 			// Re-read the epoch and see if whatever we just read is still valid.
 			histLow = atomicRead(history.epochLow);
