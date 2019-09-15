@@ -107,8 +107,9 @@ namespace storm {
 		// TODO: Will most likely work best with a regular 'alloc', but could benefit from a
 		// separate implementation without any scanning. 'allocStatic' could work, but the current
 		// implementation is not suitable for large amounts of data.
-		assert(false, L"Buffer allocations are not yet supported!");
-		return null;
+
+		// TODO: We would like to make sure that this chunk of memory is never protected.
+		return (GcArray<Byte> *)allocArray(&byteArrayType, count);
 	}
 
 	void *GcImpl::allocArray(const GcType *type, size_t count) {

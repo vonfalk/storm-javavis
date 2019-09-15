@@ -31,7 +31,7 @@ BEGIN_TEST(WeakSetTest, Core) {
 	PtrKey *lone = new (e) PtrKey();
 	set->put(lone);
 
-	for (nat i = 0; i < 10; i++)
+	for (nat i = 0; i < 100; i++)
 		set->put(new (e) PtrKey());
 
 	CHECK(set->any());
@@ -48,7 +48,7 @@ BEGIN_TEST(WeakSetTest, Core) {
 
 	CHECK(setFind(set, lone));
 	// Should have forgot some of the elements by now.
-	CHECK(setCount(set) < 10);
+	CHECK(setCount(set) < 100);
 
 } END_TEST
 

@@ -6,7 +6,6 @@
 #include "Core/Str.h"
 #include "Core/Io/StdStream.h"
 #include "Gc/Code.h"
-#include "Debug.h"
 #include "StdIoThread.h"
 
 namespace storm {
@@ -94,12 +93,12 @@ namespace storm {
 
 		static NOINLINE void allocFailSize(const GcType *t, size_t size) {
 			PLN(L"Invalid type description found! " << size << L" vs " << t->stride);
-			debug::dbgBreak();
+			debugAssertFailed();
 		}
 
 		static NOINLINE void allocFailType(const GcType *t, Type *type) {
 			PLN(L"Invalid type reference found! GcType: " << (void *)t << L", actual: " << type);
-			debug::dbgBreak();
+			debugAssertFailed();
 		}
 
 		void *allocObject(size_t size, Type *type) {

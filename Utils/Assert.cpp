@@ -29,18 +29,21 @@ String AssertionException::what() const {
 }
 
 
-#ifdef VISUAL_STUDIO
-
 void debugAssertFailed(const wchar_t *msg) {
 	PLN(msg);
+	debugAssertFailed();
+}
+
+#ifdef VISUAL_STUDIO
+
+void debugAssertFailed() {
 	DebugBreak();
 	std::terminate();
 }
 
 #else
 
-void debugAssertFailed(const wchar_t *msg) {
-	PLN(msg);
+void debugAssertFailed() {
 	std::terminate();
 }
 

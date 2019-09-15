@@ -1001,6 +1001,10 @@ namespace storm {
 							if (r != Result())
 								return r;
 
+							// Early out if the array elements contain no pointers to scan.
+							if (h->obj.count == 0)
+								break;
+
 							tmp = (byte *)tmp + arrayHeaderSize;
 							size_t stride = h->obj.stride;
 							size_t count = o->array.count;
