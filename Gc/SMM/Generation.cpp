@@ -40,7 +40,7 @@ namespace storm {
 				return allocBlock(ticket, minSize, blockSize);
 			} else {
 				// Large allocation, try to keep it fairly small.
-				return allocBlock(ticket, minSize, max(minSize + (minSize >> 2), blockSize));
+				return allocBlock(ticket, minSize, max(fmt::wordAlign(minSize + (minSize >> 2)), blockSize));
 			}
 		}
 
@@ -80,7 +80,7 @@ namespace storm {
 			}
 
 			if (!shared)
-				shared = allocBlock(ticket, size, max(size + (size >> 1), blockSize));
+				shared = allocBlock(ticket, size, max(fmt::wordAlign(size + (size >> 1)), blockSize));
 
 			return shared;
 		}

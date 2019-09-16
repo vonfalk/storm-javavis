@@ -268,7 +268,8 @@ namespace storm {
 			// element directly, rather than us having to step back one step each time.
 			struct PtrCompare {
 				inline bool operator ()(const GenChunk &a, const void *ptr) const {
-					return size_t(a.memory.at) + a.memory.size < size_t(ptr);
+					// Note: -1 so that the first address in a chunk will match the proper chunk, and not the previous one.
+					return size_t(a.memory.at) + a.memory.size - 1 < size_t(ptr);
 				}
 			};
 
