@@ -62,7 +62,7 @@ namespace storm {
 
 			// Check if a pointer refers to an object managed by this instance. Returns 'true' if
 			// the pointer refers to a block currently allocated here.
-			inline bool has(void *addr) {
+			inline bool has(void *addr) const {
 				size_t a = size_t(addr);
 				if (a >= minAddr && a < maxAddr)
 					return infoClientUse(info[infoOffset(addr)]);

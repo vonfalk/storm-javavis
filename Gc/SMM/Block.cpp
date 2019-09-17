@@ -1,5 +1,7 @@
 #include "stdafx.h"
 #include "Block.h"
+#include "Scanner.h"
+#include "Arena.h"
 
 #if STORM_GC == STORM_GC_SMM
 
@@ -33,7 +35,32 @@ namespace storm {
 			summary.free += remaining();
 		}
 
-		void Block::dbg_verify() {
+		struct VerifyPtr {
+			typedef int Result;
+			typedef Arena *Source;
+
+			Arena &arena;
+
+			VerifyPtr(Arena *arena) : arena(*arena) {}
+
+			bool fix1(void *ptr) const {
+				return arena.has(ptr);
+			}
+
+			int fix2(void **ptr) const {
+				// Check padding etc. if possible.
+				FMT_CHECK_OBJ(*ptr);
+
+				// Make sure the header is sensible by computing the size of the object.
+				fmt::size(*ptr);
+
+				return 0;
+			}
+
+			SCAN_FIX_HEADER
+		};
+
+		void Block::dbg_verify(Arena *arena) {
 			// Note: We're working with client pointers for convenience.
 			byte *at = (byte *)mem(fmt::headerSize);
 			byte *end = (byte *)mem(commit + fmt::headerSize);
@@ -41,13 +68,19 @@ namespace storm {
 			bool finalizers = false;
 
 			while (at < end) {
-				// Validate the object if we're able to.
+				// Validate object headers if we're able to.
 				FMT_CHECK_OBJ(fmt::fromClient(at));
 
 				finalizers |= fmt::hasFinalizer(at);
 
-				at += fmt::size(at);
-				assert(at <= end, L"An object is larger than the allocated portion of a block!");
+				byte *next = at + fmt::size(at);
+				assert(next <= end, L"An object is larger than the allocated portion of a block!");
+
+				// Check containing pointers if possible.
+				if (arena)
+					fmt::Scan<VerifyPtr>::objects(arena, at, next);
+
+				at = next;
 			}
 
 			assert(hasFlag(Block::fFinalizers) || !finalizers,

@@ -9,7 +9,7 @@
 namespace storm {
 	namespace smm {
 
-		class VMAlloc;
+		class Arena;
 
 		/**
 		 * A block of memory allocated in some generation with some associated metadata used by the
@@ -166,8 +166,9 @@ namespace storm {
 			// Fill memory summary.
 			void fillSummary(MemorySummary &summary);
 
-			// Verify the contents of this block.
-			void dbg_verify();
+			// Verify the contents of this block. If an Arena is provided, we also check
+			// pointer validity.
+			void dbg_verify(Arena *arena);
 
 			// Output a summary of this block.
 			void dbg_dump();

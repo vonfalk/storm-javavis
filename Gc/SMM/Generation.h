@@ -217,7 +217,7 @@ namespace storm {
 				void fillSummary(MemorySummary &summary) const;
 
 				// Verify this chunk.
-				void dbg_verify();
+				void dbg_verify(Arena *arena);
 
 				// Output a summary.
 				void dbg_dump();

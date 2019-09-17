@@ -94,6 +94,10 @@ namespace storm {
 			// Provide a memory summary. This traverses all objects, and is fairly expensive.
 			MemorySummary summary();
 
+			// Check if an address is managed by this arena. Mostly useful for debugging.
+			// TODO: Should we lock the access to the VMAlloc instance?
+			inline bool has(void *addr) const { return alloc.has(addr); }
+
 			// Verify the contents of the entire arena.
 			void dbg_verify();
 

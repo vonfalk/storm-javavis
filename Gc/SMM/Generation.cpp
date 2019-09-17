@@ -232,7 +232,7 @@ namespace storm {
 			// finalizers. At this point, we don't know which objects will die in the nonmoving
 			// pool. However, if we just scan all objects with finalizers, the ones previously
 			// scanned will simply not preserve anything new, while the ones who are going to perish
-			// is going to preserve their references as we want them to.
+			// are going to preserve their references as we want them to.
 			nonmoving.scanIf<IfFinalizer, FinalizerScanner>(IfFinalizer(), FinalizerPool::Move::Params(pool, State(*this)));
 
 			// Recursively grab all dependencies of the objects we moved to the finalizer pool!
@@ -325,7 +325,7 @@ namespace storm {
 					assert((byte *)chunks[i - 1].memory.at < (byte *)chunks[i].memory.at, L"Unordered chunks!");
 				}
 
-				chunks[i].dbg_verify();
+				chunks[i].dbg_verify(&arena);
 
 				alloc += chunks[i].memory.size;
 				free += chunks[i].freeBytes;
@@ -632,7 +632,7 @@ namespace storm {
 			}
 		}
 
-		void Generation::GenChunk::dbg_verify() {
+		void Generation::GenChunk::dbg_verify(Arena *arena) {
 			size_t free = 0;
 			Block *at = (Block *)memory.at;
 			while ((byte *)at < (byte *)memory.end()) {
@@ -641,7 +641,7 @@ namespace storm {
 				if (!at->hasFlag(Block::fUsed))
 					free += at->remaining();
 
-				at->dbg_verify();
+				at->dbg_verify(arena);
 				at = (Block *)at->mem(at->size);
 			}
 
