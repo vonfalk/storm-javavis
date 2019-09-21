@@ -226,12 +226,17 @@ namespace storm {
 				// Called when 'until' has been determined as in use by an object during
 				// compaction. Updates the header of the previous block and returns a header to the
 				// new current header.
-				Block *compactFinishObj(Block *current, void *until);
+				Block *compactFinishObj(Block *current, fmt::Obj *until);
 
 				// Similar to 'compactFinish', but 'until' is known to be a valid block header. As
 				// such, this function does not need to create a new block header, but rather reuses
 				// the one already present in 'next'.
 				void compactFinishBlock(Block *current, Block *next);
+
+				// Adjust a pointer to an object that is about to be overwritten with 'space' bytes,
+				// so that any GcType description objects will not be overwritten. Examines object
+				// up to 'end'. Marks any skipped GcType instances as 'dead'.
+				static fmt::Obj *skipDeadGcTypes(fmt::Obj *start, fmt::Obj *end, size_t space);
 
 				// Compact an unused block, 'block', keeping pinned objects intact. 'last' is the
 				// most recent block header that has been determined to remain. The most recently

@@ -280,23 +280,46 @@ namespace storm {
 			nonmoving.scanSweep<UpdateFwd>(State(*this));
 
 			// Finally, release and/or compact any remaining blocks in this generation.
+			// Note: We need to be able to traverse all objects during the compaction. As such, we need to
+			// be careful to not destroy any (possibly forwarded) type descriptions that are still referred
+			// to by dead objects.
+			// This means two things:
+			// - We may not deallocate chunks until we're done compacting all chunks in this generation.
+			// - We must make sure to not accidentally corrupt any GcType instances by writing Block header
+			//   over them during compaction. This is avoided by extending a previous block slightly so
+			//   that the new header misses any GcType objects. This means that they are kept alive slightly
+			//   longer than needed, but we mark them with a special header so that they are cleaned the next
+			//   time a similar situation occurs (even though it is fairly unlikely).
 			totalAllocBytes = 0;
 			totalFreeBytes = 0;
+			size_t freeLast = chunks.size();
 			for (size_t i = 0; i < chunks.size(); i++) {
 				GenChunk &chunk = chunks[i];
 				PinnedSet &pinned = pinnedSets[i];
 
 				if (chunk.compact(pinned)) {
-					arena.freeChunk(chunk.memory);
-					chunks.erase(chunks.begin() + i);
-					pinnedSets.erase(pinnedSets.begin() + i);
-					i--;
+					// We know that the first few bytes inside the chunk is a Block header. As such,
+					// we can use that memory to create a linked list of chunk id:s to free later on.
+					*(size_t *)chunk.memory.at = freeLast;
+					freeLast = i;
 				} else {
 					totalAllocBytes += chunk.memory.size;
 					totalFreeBytes += chunk.freeBytes;
 					if (lastChunk >= i && lastChunk > 0)
 						lastChunk--;
 				}
+			}
+
+			// Finally, we can free the empty blocks.
+			// Note: Due to how we create our linked list, we know indexes are decreasing.
+			while (freeLast < chunks.size()) {
+				size_t id = freeLast;
+				GenChunk &chunk = chunks[id];
+				freeLast = *(size_t *)chunk.memory.at;
+
+				arena.freeChunk(chunk.memory);
+				chunks.erase(chunks.begin() + id);
+				pinnedSets.erase(pinnedSets.begin() + id);
 			}
 		}
 
@@ -451,6 +474,8 @@ namespace storm {
 					current = compactPinned(current, at, pinned);
 				} else {
 					// Unused block. We are free to remove this block entirely without looking at it anymore.
+					// Note: We set committed and reserved to zero in case this is the first block. Otherwise
+					// it is not important.
 					at->committed(0);
 					at->reserved(0);
 				}
@@ -468,7 +493,7 @@ namespace storm {
 				&& !first->hasFlag(Block::fUsed);             // not in use
 		}
 
-		Block *Generation::GenChunk::compactFinishObj(Block *current, void *until) {
+		Block *Generation::GenChunk::compactFinishObj(Block *current, fmt::Obj *until) {
 			// Usable size in 'current'. If we are unable to fit a second block header there, we
 			// need to merge them into one large block instead!
 			size_t size = (byte *)until - (byte *)current - sizeof(Block);
@@ -521,12 +546,41 @@ namespace storm {
 			freeBytes += current->remaining();
 		}
 
+		static inline bool isGcType(fmt::Obj *obj) {
+			const fmt::Header *h = objHeader(obj);
+			return (h->type == fmt::gcType) || (h->type == fmt::gcTypeFwd);
+		}
+
+		fmt::Obj *Generation::GenChunk::skipDeadGcTypes(fmt::Obj *start, fmt::Obj *end, size_t space) {
+			// start: first address we believe is safe to put a new Block header in.
+			// safeUntil: first address we haven't checked for the presence of GcType objects.
+			fmt::Obj *safeUntil = start;
+
+			while (safeUntil < end && size_t((byte *)safeUntil - (byte *)start) < space) {
+				if (isGcType(safeUntil)) {
+					// A GcType object we want to preserve. Mark it as dead and skip ahead.
+					fmt::objSetHeader(safeUntil, &fmt::headerGcTypeDead);
+					start = safeUntil = fmt::objSkip(safeUntil);
+				} else {
+					// Nothing. We might still need to check further though.
+					safeUntil = fmt::objSkip(safeUntil);
+				}
+			}
+
+			return start;
+		}
+
 		Block *Generation::GenChunk::compactPinned(Block *current, Block *scan, const PinnedSet &pinned) {
 			fmt::Obj *at = (fmt::Obj *)scan->mem(0);
 			fmt::Obj *to = (fmt::Obj *)scan->mem(scan->committed());
 
+			// Keep track of GcType objects that might need to be preserved. Initialize to a value
+			// directly below the threshold for being relevant.
+			fmt::Obj *typeFrom = (fmt::Obj *)scan;
+			fmt::Obj *typeTo = typeFrom;
+
 			// If 'scan == current', this is vital. Otherwise 'compactFinishObj' will be confused
-			// when we call it the first time and the current object is before the extend of the
+			// when we call it the first time and the current object is before the extent of the
 			// current block.
 			scan->committed(0);
 
@@ -543,12 +597,19 @@ namespace storm {
 			while (at != to) {
 				fmt::Obj *next = fmt::objSkip(at);
 				// Note: We don't need to preserve padding objects, even if they happen to be pinned.
-				bool inUse = pinned.has(fmt::toClient(at), next) & !fmt::objIsPad(at);
+				bool pin = pinned.has(fmt::toClient(at), next);
+				bool inUse = pin & !fmt::objIsPad(at);
 
 				finalizers |= inUse & fmt::objHasFinalizer(at);
 
 				if (inUse & !lastInUse) {
 					// First object in use. We might want to start a new block.
+
+					// Make sure we preserve any GcType objects present by extending the block
+					// boundaries slightly.
+					if ((byte *)at - (byte *)typeTo < sizeof(Block))
+						at = typeFrom;
+
 					current = compactFinishObj(current, at);
 				} else if (!inUse & lastInUse) {
 					// Last object in a hunk, mark the size accordingly.
@@ -557,6 +618,22 @@ namespace storm {
 					current->reserved(sz);
 					if (finalizers)
 						current->setFlag(Block::fFinalizers);
+					finalizers = false;
+				}
+
+				// Update our knowledge about GcType objects.
+				if (!pin) {
+					bool isNear = (byte *)at - (byte *)typeTo < sizeof(Block);
+
+					if (isGcType(at)) {
+						fmt::objSetHeader(at, &fmt::headerGcTypeDead);
+
+						if (!isNear)
+							typeFrom = at;
+						typeTo = next;
+					} else if (isNear) {
+						fmt::objMakePad(at, (byte *)next - (byte *)at);
+					}
 				}
 
 				lastInUse = inUse;
@@ -587,6 +664,9 @@ namespace storm {
 				fmt::Obj *next = fmt::objSkip(at);
 
 				if (pinned.has(fmt::toClient(at), next) & !fmt::objIsPad(at)) {
+					// Skip any GcType objects we need to preserve.
+					freeFrom = skipDeadGcTypes(freeFrom, at, sizeof(fmt::Pad) + fmt::headerSize);
+
 					// Replace previous objects with padding?
 					size_t padSize = (byte *)at - (byte *)freeFrom;
 					if (padSize > fmt::headerSize) {

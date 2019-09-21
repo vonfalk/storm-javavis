@@ -107,6 +107,11 @@ namespace storm {
 			// in some cases). The only requirement is that we shall be able to use this object
 			// while it is a forwarder to scan other objects that have not yet been updated.
 			gcTypeFwd,
+
+			// Special description of a GcType instance that is dead, but has been preserved anyway
+			// for some reason. If such an object is found, it can safely be reclaimed as it has no
+			// references from live objects.
+			gcTypeDead,
 		};
 
 		/**
@@ -172,6 +177,7 @@ namespace storm {
 		static const InternalHeader headerFwd = { fwd };
 		static const InternalHeader headerGcType = { gcType };
 		static const InternalHeader headerGcTypeFwd = { gcTypeFwd };
+		static const InternalHeader headerGcTypeDead = { gcTypeDead };
 
 		/**
 		 * Array object data.
@@ -444,6 +450,7 @@ namespace storm {
 				return headerSize + o->fwd.size;
 			case gcType:
 			case gcTypeFwd:
+			case gcTypeDead:
 				return headerSize + gcTypeSize(o->gcType.count);
 			default:
 				// Most likely, memory was corrupted somehow.
@@ -525,6 +532,7 @@ namespace storm {
 			switch (type) {
 			case gcType:
 			case gcTypeFwd:
+			case gcTypeDead: // Should not really forward it, but anyway.
 				objSetHeader(o, &headerGcTypeFwd);
 				o->gcType.type = (Type *)to;
 				break;
@@ -556,6 +564,7 @@ namespace storm {
 			switch (type) {
 			case gcType:
 			case gcTypeFwd:
+			case gcTypeDead: // Should not really forward it, but anyway.
 				objSetHeader(o, &headerGcTypeFwd);
 				o->gcType.type = (Type *)to;
 				break;
@@ -1047,6 +1056,7 @@ namespace storm {
 						case fwd1:
 						case fwd:
 						case gcTypeFwd:
+						case gcTypeDead:
 							break;
 						default:
 							dbg_assert(false, L"Unknown object type scanned!");
