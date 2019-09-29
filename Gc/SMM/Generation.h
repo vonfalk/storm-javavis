@@ -173,43 +173,6 @@ namespace storm {
 				// system may have pointers to them. They will, however, be emptied if possible.
 				bool compact(const PinnedSet &pinned);
 
-				// Scan object using the selected scanner.
-				template <class Scanner>
-				typename Scanner::Result scan(typename Scanner::Source &source);
-
-				template <class Predicate, class Scanner>
-				typename Scanner::Result scan(const Predicate &predicate, typename Scanner::Source &source);
-
-				// Scan blocks which may refer to objects in the specified generations.
-				template <class Scanner>
-				typename Scanner::Result scan(GenSet toScan, typename Scanner::Source &source);
-
-				template <class Predicate, class Scanner>
-				typename Scanner::Result scan(const Predicate &p, GenSet toScan, typename Scanner::Source &source);
-
-				// Scan all pinned objects in this chunk.
-				template <class Scanner>
-				typename Scanner::Result scanPinned(const PinnedSet &pinned,
-													typename Scanner::Source &source);
-
-				template <class Predicate, class Scanner>
-				typename Scanner::Result scanPinned(const Predicate &predicate,
-													const PinnedSet &pinned,
-													typename Scanner::Source &source);
-
-				// Scan pinned objects in this chunk, also collecting all blocks marked as
-				// containing finalizers in a big list.
-				template <class Scanner>
-				typename Scanner::Result scanPinnedFindFinalizers(const PinnedSet &pinned,
-																typename Scanner::Source &source,
-																Block *&finalizers);
-
-				template <class Predicate, class Scanner>
-				typename Scanner::Result scanPinnedFindFinalizers(const Predicate &predicate,
-																const PinnedSet &pinned,
-																typename Scanner::Source &source,
-																Block *&finalizers);
-
 				// Run all finalizers in this chunk.
 				void runAllFinalizers();
 
@@ -247,17 +210,6 @@ namespace storm {
 				// Shrink a block as much as possible while keeping pinned objects intact. Replaces
 				// non-pinned objects with padding. Takes care of objects in need of finalization.
 				void shrinkBlock(Block *block, const PinnedSet &pinned);
-
-				// Predicate that checks if a particular object is pinned.
-				struct IfPinned {
-					IfPinned(const PinnedSet &pinned) : pinned(pinned) {}
-
-					PinnedSet pinned;
-
-					bool operator() (void *from, void *to) const {
-						return pinned.has(from, to);
-					}
-				};
 			};
 
 			struct ChunkCompare {
@@ -275,6 +227,17 @@ namespace storm {
 				inline bool operator ()(const GenChunk &a, const void *ptr) const {
 					// Note: -1 so that the first address in a chunk will match the proper chunk, and not the previous one.
 					return size_t(a.memory.at) + a.memory.size - 1 < size_t(ptr);
+				}
+			};
+
+			// Predicate that checks if a particular object is pinned.
+			struct IfPinned {
+				IfPinned(const PinnedSet &pinned) : pinned(pinned) {}
+
+				PinnedSet pinned;
+
+				bool operator() (void *from, void *to) const {
+					return pinned.has(from, to);
 				}
 			};
 
@@ -326,6 +289,70 @@ namespace storm {
 
 			// Check if a particular object is pinned. Only reasonable to call during an ongoing scan.
 			bool isPinned(void *obj, void *end);
+
+
+			/**
+			 * Scan a particular GenChunk.
+			 *
+			 * Note: These are not members of GenChunk since the array of chunks may change during
+			 * scanning (e.g. when a scanner allocates memory from the generation currently being
+			 * scanned, using ScanState::Move). This means that we need to read all data from the
+			 * GenChunk before doing any scanning as the reference could otherwise be
+			 * invalidated. This is much easier to get right when the functions are *not* members of
+			 * GenChunk, as the dependency becomes more clearly visible then.
+			 *
+			 * Note: It is interesting to note that block layout might change while scanning due to
+			 * new allocations being made in the generation being scanned. Generally, this is fine
+			 * as the scanning functions read the size of blocks as late as possible during their
+			 * scanning. It can, however, be confusing to see that the size of a block changes
+			 * during scanning.
+			 */
+
+			template <class Scanner>
+			static typename Scanner::Result scan(GenChunk &chunk, typename Scanner::Source &source);
+
+			template <class Predicate, class Scanner>
+			static typename Scanner::Result scan(GenChunk &chunk,
+												const Predicate &predicate,
+												typename Scanner::Source &source);
+
+			// Only scan blocks which may refer to objects in the specified generations.
+			template <class Scanner>
+			static typename Scanner::Result scan(GenChunk &chunk, GenSet toScan, typename Scanner::Source &source);
+
+			template <class Predicate, class Scanner>
+			static typename Scanner::Result scan(GenChunk &chunk,
+												const Predicate &p,
+												GenSet toScan,
+												typename Scanner::Source &source);
+
+			// Scan all pinned objects in this chunk.
+			template <class Scanner>
+			static typename Scanner::Result scanPinned(GenChunk &chunk,
+													const PinnedSet &pinned,
+													typename Scanner::Source &source);
+
+			template <class Predicate, class Scanner>
+			static typename Scanner::Result scanPinned(GenChunk &chunk,
+													const Predicate &predicate,
+													const PinnedSet &pinned,
+													typename Scanner::Source &source);
+
+			// Scan pinned objects in this chunk, also collecting all blocks marked as
+			// containing finalizers in a big list.
+			template <class Scanner>
+			static typename Scanner::Result scanPinnedFindFinalizers(GenChunk &chunk,
+																	const PinnedSet &pinned,
+																	typename Scanner::Source &source,
+																	Block *&finalizers);
+
+			template <class Predicate, class Scanner>
+			static typename Scanner::Result scanPinnedFindFinalizers(GenChunk &chunk,
+																	const Predicate &predicate,
+																	const PinnedSet &pinned,
+																	typename Scanner::Source &source,
+																	Block *&finalizers);
+
 		};
 
 
@@ -338,7 +365,7 @@ namespace storm {
 		typename Scanner::Result Generation::scan(const Predicate &predicate, typename Scanner::Source &source) {
 			typename Scanner::Result r = typename Scanner::Result();
 			for (size_t i = 0; i < chunks.size(); i++) {
-				r = chunks[i].scan<Predicate, Scanner>(predicate, source);
+				r = scan<Predicate, Scanner>(chunks[i], predicate, source);
 				if (r != typename Scanner::Result())
 					return r;
 			}
@@ -354,7 +381,7 @@ namespace storm {
 		typename Scanner::Result Generation::scan(const Predicate &p, GenSet toScan, typename Scanner::Source &source) {
 			typename Scanner::Result r = typename Scanner::Result();
 			for (size_t i = 0; i < chunks.size(); i++) {
-				chunks[i].scan<Predicate, Scanner>(p, toScan, source);
+				scan<Predicate, Scanner>(chunks[i], p, toScan, source);
 				if (r != typename Scanner::Result())
 					return r;
 			}
@@ -363,14 +390,16 @@ namespace storm {
 
 
 		template <class Scanner>
-		typename Scanner::Result Generation::GenChunk::scan(typename Scanner::Source &source) {
-			return scan<fmt::ScanAll, Scanner>(fmt::ScanAll(), source);
+		typename Scanner::Result Generation::scan(GenChunk &chunk, typename Scanner::Source &source) {
+			return scan<fmt::ScanAll, Scanner>(chunk, fmt::ScanAll(), source);
 		}
 
 		template <class Predicate, class Scanner>
-		typename Scanner::Result Generation::GenChunk::scan(const Predicate &p, typename Scanner::Source &source) {
+		typename Scanner::Result Generation::scan(GenChunk &chunk, const Predicate &p, typename Scanner::Source &source) {
+			Block *end = chunk.memory.end();
+
 			typename Scanner::Result r = typename Scanner::Result();
-			for (Block *at = (Block *)memory.at; at != (Block *)memory.end(); at = (Block *)at->mem(at->size)) {
+			for (Block *at = (Block *)chunk.memory.at; at != end; at = (Block *)at->mem(at->size)) {
 				if (at->hasFlag(Block::fSkipScan)) {
 					at->clearFlag(Block::fSkipScan);
 					continue;
@@ -384,18 +413,20 @@ namespace storm {
 		}
 
 		template <class Scanner>
-		typename Scanner::Result Generation::GenChunk::scan(GenSet toScan, typename Scanner::Source &source) {
-			return scan<fmt::ScanAll, Scanner>(fmt::ScanAll(), toScan, source);
+		typename Scanner::Result Generation::scan(GenChunk &chunk, GenSet toScan, typename Scanner::Source &source) {
+			return scan<fmt::ScanAll, Scanner>(chunk, fmt::ScanAll(), toScan, source);
 		}
 
 		template <class Predicate, class Scanner>
-		typename Scanner::Result Generation::GenChunk::scan(const Predicate &predicate,
-															GenSet toScan,
-															typename Scanner::Source &source) {
+		typename Scanner::Result Generation::scan(GenChunk &chunk,
+												const Predicate &predicate,
+												GenSet toScan,
+												typename Scanner::Source &source) {
 			// TODO: It would be useful to have some kind of 'early out' here!
 
 			typename Scanner::Result r = typename Scanner::Result();
-			for (Block *at = (Block *)memory.at; at != (Block *)memory.end(); at = (Block *)at->mem(at->size)) {
+			Block *end = (Block *)chunk.memory.end();
+			for (Block *at = (Block *)chunk.memory.at; at != end; at = (Block *)at->mem(at->size)) {
 				if (at->hasFlag(Block::fSkipScan)) {
 					at->clearFlag(Block::fSkipScan);
 					continue;
@@ -408,19 +439,22 @@ namespace storm {
 				if (r != typename Scanner::Result())
 					return r;
 			}
+
 			return r;
 		}
 
 		template <class Scanner>
-		typename Scanner::Result Generation::GenChunk::scanPinned(const PinnedSet &pinned,
-																typename Scanner::Source &source) {
-			return scanPinned<fmt::ScanAll, Scanner>(fmt::ScanAll(), pinned, source);
+		typename Scanner::Result Generation::scanPinned(GenChunk &chunk,
+														const PinnedSet &pinned,
+														typename Scanner::Source &source) {
+			return scanPinned<fmt::ScanAll, Scanner>(chunk, fmt::ScanAll(), pinned, source);
 		}
 
 		template <class Predicate, class Scanner>
-		typename Scanner::Result Generation::GenChunk::scanPinned(const Predicate &predicate,
-																const PinnedSet &pinned,
-																typename Scanner::Source &source) {
+		typename Scanner::Result Generation::scanPinned(GenChunk &chunk,
+														const Predicate &predicate,
+														const PinnedSet &pinned,
+														typename Scanner::Source &source) {
 
 			typename Scanner::Result r = typename Scanner::Result();
 			if (pinned.empty())
@@ -430,7 +464,8 @@ namespace storm {
 			P p(pinned, predicate);
 
 			// Walk all blocks and scan the relevant ones.
-			for (Block *at = (Block *)memory.at; at != (Block *)memory.end(); at = (Block *)at->mem(at->size)) {
+			Block *end = (Block *)chunk.memory.end();
+			for (Block *at = (Block *)chunk.memory.at; at != (Block *)end; at = (Block *)at->mem(at->size)) {
 				if (pinned.has(at->mem(0), at->mem(at->committed()))) {
 					r = at->scanIf<P, Scanner>(p, source);
 					if (r != typename Scanner::Result())
@@ -442,17 +477,19 @@ namespace storm {
 		}
 
 		template <class Scanner>
-		typename Scanner::Result Generation::GenChunk::scanPinnedFindFinalizers(const PinnedSet &pinned,
-																				typename Scanner::Source &source,
-																				Block *&finalizers) {
-			return scanPinnedFindFinalizers<fmt::ScanAll, Scanner>(fmt::ScanAll(), pinned, source, finalizers);
+		typename Scanner::Result Generation::scanPinnedFindFinalizers(GenChunk &chunk,
+																	const PinnedSet &pinned,
+																	typename Scanner::Source &source,
+																	Block *&finalizers) {
+			return scanPinnedFindFinalizers<fmt::ScanAll, Scanner>(chunk, fmt::ScanAll(), pinned, source, finalizers);
 		}
 
 		template <class Predicate, class Scanner>
-		typename Scanner::Result Generation::GenChunk::scanPinnedFindFinalizers(const Predicate &predicate,
-																				const PinnedSet &pinned,
-																				typename Scanner::Source &source,
-																				Block *&finalizers) {
+		typename Scanner::Result Generation::scanPinnedFindFinalizers(GenChunk &chunk,
+																	const Predicate &predicate,
+																	const PinnedSet &pinned,
+																	typename Scanner::Source &source,
+																	Block *&finalizers) {
 
 			typename Scanner::Result r = typename Scanner::Result();
 
@@ -460,7 +497,8 @@ namespace storm {
 			P p(pinned, predicate);
 
 			// Walk all blocks and scan the relevant ones.
-			for (Block *at = (Block *)memory.at; at != (Block *)memory.end(); at = (Block *)at->mem(at->size)) {
+			Block *end = (Block *)chunk.memory.end();
+			for (Block *at = (Block *)chunk.memory.at; at != (Block *)end; at = (Block *)at->mem(at->size)) {
 				if (pinned.has(at->mem(0), at->mem(at->committed()))) {
 					r = at->scanIf<P, Scanner>(p, source);
 					if (r != typename Scanner::Result())

@@ -149,6 +149,11 @@ String toS(T *v) {
 		to << L"<null>";
 	return to.str();
 }
+inline String toS(void *v) {
+	std::wostringstream to;
+	to << v;
+	return to.str();
+}
 template <class T>
 String toS(const T &v) {
 	std::wostringstream to;

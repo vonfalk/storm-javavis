@@ -197,7 +197,7 @@ namespace storm {
 			// For all blocks containing at least one pinned object, traverse it entirely to find
 			// and scan the pinned objects. Any non-pinned objects are copied to the new block.
 			for (size_t i = 0; i < chunks.size(); i++)
-				chunks[i].scanPinnedFindFinalizers<IfNotWeak, GenNoWeakScanner>(IfNotWeak(), pinnedSets[i], state, finalizerBlocks);
+				scanPinnedFindFinalizers<IfNotWeak, GenNoWeakScanner>(chunks[i], IfNotWeak(), pinnedSets[i], state, finalizerBlocks);
 
 			// Traverse all other generations that could contain references to this generation and
 			// copy any referred objects to the new block.
@@ -251,7 +251,7 @@ namespace storm {
 
 			// We also need to scan any pinned weak objects. Otherwise they will contain stale references!
 			for (size_t i = 0; i < chunks.size(); i++)
-				chunks[i].scanPinned<IfWeak, UpdateWeakFwd>(IfWeak(), pinnedSets[i], State(*this));
+				scanPinned<IfWeak, UpdateWeakFwd>(chunks[i], IfWeak(), pinnedSets[i], State(*this));
 
 			// Note: We try to not scan the objects we moved to a new generation immediately at this
 			// point. ScanState sets the flag fSkipScan on all blocks that were empty when they were
