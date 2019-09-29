@@ -171,8 +171,13 @@ namespace storm {
 			// Scan all non-exact roots (the stacks of all threads), and keep track of non-moving
 			// objects.
 
-			for (size_t i = 0; i < chunks.size(); i++)
+			for (size_t i = 0; i < chunks.size(); i++) {
 				pinnedSets[i] = chunks[i].memory.addrSet<PinnedSet>();
+
+				// We might make this assumption during compaction etc. Should not happen,
+				// but scream loudly if it ever does.
+				dbg_assert(pinnedSets[i].resolution() >= 2*fmt::headerSize, L"Too high resolution for pinned sets.");
+			}
 			pinnedSets[chunks.size()] = nonmoving.addrSet<PinnedSet>();
 
 			// We need other threads stopped from here onwards.

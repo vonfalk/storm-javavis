@@ -243,6 +243,11 @@ namespace storm {
 				return data & size_t(0x3f);
 			}
 
+			// Get the resolution (alternate view of the shift).
+			inline size_t resolution() const {
+				return size_t(1) << shift();
+			}
+
 			// Get the total size covered.
 			inline size_t size() const {
 				return (size_t(1) << shift()) * totalBytes * elemBits;
@@ -352,7 +357,7 @@ namespace storm {
 		template <size_t sz>
 		wostream &operator <<(wostream &out, const AddrSet<sz> &s) {
 			size_t from = s.offset();
-			size_t bitSz = size_t(1) << s.shift();
+			size_t bitSz = s.resolution();
 			size_t to = s.offset() + s.size();
 
 			out << (void *)from << L" ";

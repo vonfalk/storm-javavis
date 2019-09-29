@@ -27,7 +27,7 @@ namespace storm {
 		: arena(initialArenaSize, generations, ARRAY_COUNT(generations)) {}
 
 	void GcImpl::destroy() {
-		// TODO: We should destroy everything here already!
+		arena.destroy();
 	}
 
 	MemorySummary GcImpl::summary() {

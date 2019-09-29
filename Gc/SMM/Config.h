@@ -14,6 +14,9 @@ namespace storm {
 		static const size_t summaryBytes = sizeof(size_t) * 2;
 
 		// Number of bytes used to represent a set of pointers to pinned objects.
+		// TODO: We probably want to increase this a bit, it lowers false positives and thus increases
+		// the number of objects we can reclaim in many cases. The cost is fairly negligible
+		// (pinnedBytes + sizeof(size_t) bytes for every allocated chunk).
 		static const size_t pinnedBytes = sizeof(size_t) * 2;
 
 		// Size of the history stored. A longer history uses more memory, but makes hash tables (or

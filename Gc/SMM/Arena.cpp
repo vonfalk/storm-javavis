@@ -68,6 +68,9 @@ namespace storm {
 		}
 
 		void Arena::destroy() {
+			// Note: We might call 'destroy' multiple times, since it is called from the destructor
+			// but also possibly earlier than that.
+
 			exactRoots.clear();
 			inexactRoots.clear();
 
@@ -78,12 +81,15 @@ namespace storm {
 			// Look through the memory for additional finalizers that need to be executed.
 			for (size_t i = 0; i < generations.size(); i++)
 				generations[i]->runAllFinalizers();
-			nonmovingAllocs->runAllFinalizers();
+			if (nonmovingAllocs)
+				nonmovingAllocs->runAllFinalizers();
 
 			for (size_t i = 0; i < generations.size(); i++)
 				delete generations[i];
 			generations.clear();
+
 			delete nonmovingAllocs;
+			nonmovingAllocs = null;
 		}
 
 		Chunk Arena::allocChunk(size_t size, byte identifier) {
