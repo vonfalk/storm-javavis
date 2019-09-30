@@ -25,7 +25,8 @@ namespace storm {
 		 * parameters to the constructor. Note that the address range will be rounded up to the
 		 * nearest power of two for efficiency.
 		 *
-		 * TODO: Is it better to work with nat:s or size_t:s rather than bytes?
+		 * Note: We use bytes internally to avoid having to deal with overflows in shift, as 1 << 32
+		 * is undefined if size_t is 32 bits.
 		 */
 		template <size_t minBytes>
 		class AddrSet {

@@ -51,7 +51,7 @@ BEGIN_TEST(SetTestMove, Core) {
 	// Do we handle moving objects properly?
 	Engine &e = gEngine();
 
-	const nat count = 100;
+	const nat count = 10;
 
 	// Store these in arrays so the GC can move them properly.
 	Array<PtrKey *> *k = new (e) Array<PtrKey *>();

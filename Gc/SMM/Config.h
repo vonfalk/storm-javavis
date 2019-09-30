@@ -17,7 +17,7 @@ namespace storm {
 		// TODO: We probably want to increase this a bit, it lowers false positives and thus increases
 		// the number of objects we can reclaim in many cases. The cost is fairly negligible
 		// (pinnedBytes + sizeof(size_t) bytes for every allocated chunk).
-		static const size_t pinnedBytes = sizeof(size_t) * 2;
+		static const size_t pinnedBytes = sizeof(size_t) * 16;
 
 		// Size of the history stored. A longer history uses more memory, but makes hash tables (or
 		// other code that depends on actual pointer values) take the slow path more
