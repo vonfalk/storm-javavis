@@ -184,7 +184,7 @@ namespace storm {
 	}
 
 	void GcImpl::switchType(void *mem, const GcType *to) {
-		fmt::objSetHeader(fmt::fromClient(mem), to);
+		fmt::objReplaceHeader(fmt::fromClient(mem), to);
 	}
 
 	void *GcImpl::allocCode(size_t code, size_t refs) {
