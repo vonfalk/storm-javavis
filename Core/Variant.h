@@ -1,5 +1,6 @@
 #pragma once
 #include "Handle.h"
+#include "Utils/Templates.h"
 
 namespace storm {
 	STORM_PKG(core);
@@ -23,14 +24,18 @@ namespace storm {
 		// Create a variant referring to an object.
 		explicit Variant(RootObject *t);
 
-		// Create a variant referring to a value.
+		// Create a variant referring to some known type known to be a value.
+		Variant(const void *value, Type *type);
+
+		// Generic creation. The overloads make sure to act correctly regardless if the contained
+		// type is a value or an object. The second parameter is Engine &. Sorry for the template mess...
 		template <class T>
-		Variant(const T &v, Engine &e) {
+		Variant(const T &v, typename EnableIf<!IsPointer<T>::value, Engine &>::t e) {
 			init(&v, StormInfo<T>::type(e));
 		}
 
-		// Create a variant referring to some known type known to be a value.
-		Variant(const void *value, Type *type);
+		template <class T>
+		Variant(T v, typename EnableIf<IsPointer<T>::value, Engine &>::t) : data(v) {}
 
 		// Destroy. Call the destructor of the contained element, if any.
 		~Variant();
@@ -49,6 +54,10 @@ namespace storm {
 
 		/**
 		 * Low-level API for C++.
+		 *
+		 * Make sure to differentiate usage depending on wether the contained type is a value or a
+		 * class! This API does no checking of the contents of the variant, and may crash horribly
+		 * if care is not taken externally.
 		 */
 
 		// Create a uninitialized variant referring to a type. Call 'getValue' and 'valueInitialized'
@@ -56,7 +65,7 @@ namespace storm {
 		static Variant uninitializedValue(Type *type);
 
 		// Get a pointer to the value stored in here, assuming it is a value.
-		void *getValue();
+		void *getValue() const;
 
 		// Note that we have initialized the value.
 		void valueInitialized();
@@ -69,7 +78,44 @@ namespace storm {
 		void moveValue(void *to);
 
 		// Get the object stored in here.
-		RootObject *getObject();
+		RootObject *getObject() const;
+
+
+		/**
+		 * High-level API for C++.
+		 */
+
+		// Templated function for extracting the contained type. Works regardless if the contained
+		// type is a value or an object. Assumes that the variant actually contains a value unless T
+		// is a pointer, in which case null is returned if the variant is empty. Returns T, sorry
+		// for the template mess...
+		template <class T>
+		typename EnableIf<!IsPointer<T>::value, T>::t get() const {
+			Type *t = StormInfo<T>::type(engine());
+			assert(has(t), L"Attempting to get an incorrect type from a variant.");
+
+			const GcType *g = runtime::gcTypeOf(data);
+			assert(g->kind == GcType::tArray, L"Should specify a pointer with this type to 'get'.");
+
+			return *(T *)getValue();
+		}
+
+		template <class T>
+		typename EnableIf<IsPointer<T>::value, T>::t get() const {
+			if (data == null)
+				return null;
+
+			Type *t = StormInfo<BaseType<T>::Type>::type(engine());
+			if (!has(t))
+				return null;
+
+			const GcType *g = runtime::gcTypeOf(data);
+			if (g->kind == GcType::tArray) {
+				return (T)getValue();
+			} else {
+				return (T)getObject();
+			}
+		}
 
 	private:
 		// The stored data. Either an array with one element, or a pointer to an object.

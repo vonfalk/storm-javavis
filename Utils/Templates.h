@@ -60,6 +60,20 @@ struct IsReference<T &> {
 
 
 /**
+ * Is it a pointer?
+ */
+template <class T>
+struct IsPointer {
+	enum { value = false };
+};
+
+template <class T>
+struct IsPointer<T *> {
+	enum { value = true };
+};
+
+
+/**
  * Is the type void?
  */
 

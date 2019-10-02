@@ -44,4 +44,34 @@ BEGIN_TEST(VariantTest, Core) {
 		CHECK_EQ(::toS(j), L"20");
 	}
 
+	/**
+	 * Check the high-level C++ API as well!
+	 */
+
+	{
+		Variant empty;
+
+		// Should call the pointer overload.
+		Variant str(new (e) Str(S("Hello!")), e);
+		CHECK_EQ(::toS(str), L"Hello!");
+
+		// Should call the template overload.
+		Variant num(Int(100), e);
+		CHECK_EQ(::toS(num), L"100");
+
+		// Check contents.
+		CHECK(str.has(StormInfo<Str *>::type(e)));
+		CHECK(num.has(StormInfo<Int>::type(e)));
+
+		// Extraction.
+		CHECK_EQ(::toS(str.get<Str *>()), L"Hello!");
+		CHECK_EQ(num.get<Int>(), 100);
+		CHECK_EQ(*num.get<Int *>(), 100);
+		CHECK_EQ(empty.get<Int *>(), (Int *)null);
+		CHECK_EQ(str.get<Int *>(), (Int *)null);
+
+		// Cant easily test this, as it prints.
+		// CHECK_ERROR(str.get<Str>(), AssertionException);
+	}
+
 } END_TEST

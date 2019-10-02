@@ -101,7 +101,7 @@ namespace storm {
 		return runtime::isA(type, t->type);
 	}
 
-	void *Variant::getValue() {
+	void *Variant::getValue() const {
 		GcArray<Byte> *alloc = (GcArray<Byte> *)data;
 		return alloc->v;
 	}
@@ -135,7 +135,7 @@ namespace storm {
 		valueRemoved();
 	}
 
-	RootObject *Variant::getObject() {
+	RootObject *Variant::getObject() const {
 		return (RootObject *)data;
 	}
 
