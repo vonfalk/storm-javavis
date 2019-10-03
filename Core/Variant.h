@@ -105,7 +105,7 @@ namespace storm {
 			if (data == null)
 				return null;
 
-			Type *t = StormInfo<BaseType<T>::Type>::type(engine());
+			Type *t = StormInfo<typename BaseType<T>::Type>::type(engine());
 			if (!has(t))
 				return null;
 
