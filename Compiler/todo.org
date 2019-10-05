@@ -1,3 +1,23 @@
+* SMM bugs/improvements [0/7]
+  - [ ] GcWatch objects seem to fail to notify their owner of moved objects in rare circumstances. Investigate
+    further to see if the bug is remaining after the recent refactor. MapMoveTest could fail from time to time.
+  - [ ] Investigate how often the history should be advanced. It seems to be wasteful to always increase it
+    whenever we do some GC work since that happens quite often for the nursery generation. It would be more
+    useful to tick the history whenever we have a gen-1 or larger collection, or whenever we have collected
+    the nursery a certain number of time, or moved a certain amount of objects.
+  - [ ] Calling 'objectMoved' for individual objects is probably wasteful. We could batch calls to 'objectMoved'
+    by updating history during compaction rather than object movement. At that time, we can simply mark all
+    reclaimed memory as moved (with some exceptions related to GcType objects).
+  - [ ] Perhaps we should have some exponential back-off in the history, so that the resolution in time
+    is fine-grained in recent history, but rougher towards the end.
+  - [ ] Tweak collection frequency. Currently, it seems gen 1 collections are always triggered because
+    we try to allocate large objects from gen 0 rather than objects from gen 0 spilling into gen 1. This
+    could mean that we're too aggressive with collections (we try as soon as we would otherwise need
+    to allocate memory, even though we're way below our threshold).
+  - [ ] Utilize memory protection (write barriers) to improve performance.
+  - [ ] Perhaps we should move the pointer summaries from individual Blocks to Chunks, since we generally
+    don't have better resolution than that from the VMAlloc class.
+
 * Performance improvements [4/8]
   - [X] The main culprit of the startup time is loading all functions in the system (about 50%). Investigate why.
     It seems much of the time can be traced to filling in the VTables, out of which the main culprit is

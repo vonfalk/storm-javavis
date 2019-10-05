@@ -19,10 +19,13 @@ namespace storm {
 		// (pinnedBytes + sizeof(size_t) bytes for every allocated chunk).
 		static const size_t pinnedBytes = sizeof(size_t) * 16;
 
+		// Number of bytes used to represent pointer summaries in the history entries.
+		static const size_t historyBytes = sizeof(size_t) * 16;
+
 		// Size of the history stored. A longer history uses more memory, but makes hash tables (or
 		// other code that depends on actual pointer values) take the slow path more
 		// often. Must be a power of two!
-		static const nat historySize = 16;
+		static const nat historyLength = 16;
 
 		// Granularity of memory allocations in the VMAlloc class. For each 2^vmAllocBits bytes
 		// managed, one byte of additional memory is needed. For a value of 16, blocks are 64KiB and

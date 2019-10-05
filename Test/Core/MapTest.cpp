@@ -112,6 +112,9 @@ BEGIN_TEST(MapTestMove, Core) {
 	for (nat i = 0; i < count; i++) {
 		k->push(new (e) PtrKey());
 		v->push(new (e) Str(::toS(i).c_str()));
+
+		// Make it less likely that we pin all objects.
+		runtime::allocArray<Byte>(e, &byteArrayType, 1000);
 	}
 
 	Map<PtrKey *, Str *> *map = new (e) Map<PtrKey *, Str *>();

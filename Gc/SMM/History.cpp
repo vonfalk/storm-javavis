@@ -9,6 +9,25 @@ namespace storm {
 	namespace smm {
 
 		/**
+		 * Address summary.
+		 */
+
+		HistorySummary::HistorySummary() : summary(), version(0) {}
+
+		void HistorySummary::clear() {
+			summary = AddrSet<historyBytes>();
+			bump();
+		}
+
+		void HistorySummary::add(size_t from, size_t to) {
+			if (!summary.covers(from, to))
+				summary = summary.resize(from, to);
+			summary.add(from, to);
+			bump();
+		}
+
+
+		/**
 		 * History.
 		 */
 
@@ -26,19 +45,15 @@ namespace storm {
 				epochLow++;
 			}
 
-			// history[epochLow % historySize] = ticket.reservedSet<AddrSummary>();
-			history[epochLow % historySize] = AddrSummary();
+			// history[epochLow % historyLength] = ticket.reservedSet<AddrSummary>();
+			history[epochLow % historyLength].clear();
 		}
 
 		void History::add(ArenaTicket &ticket, size_t from, size_t to) {
-			for (nat i = 0; i < historySize; i++) {
-				if (!history[i].covers(from, to))
-					history[i] = history[i].resize(from, to);
+			for (nat i = 0; i < historyLength; i++) {
 				history[i].add(from, to);
 			}
 
-			if (!preHistory.covers(from, to))
-				preHistory = preHistory.resize(from, to);
 			preHistory.add(from, to);
 		}
 
@@ -75,9 +90,22 @@ namespace storm {
 		}
 
 		void AddrWatch::clear() {
-			watching = AddrSummary();
+			watching = Summary();
 			epochLow = 0;
 			epochHigh = 0;
+		}
+
+		// Epoch is the one we're looking at, 'hist' is where we're at now. Ie. 'epoch' <= 'hist'.
+		static bool inHistory(nat epochLow, nat epochHigh, nat histLow, nat histHigh) {
+			if (histLow - epochLow > historyLength) {
+				return false;
+			} else {
+				// The low part is close enough, but did we wrap?
+				if (histLow < epochLow)
+					return histHigh == epochHigh + 1;
+				else
+					return histHigh == epochHigh;
+			}
 		}
 
 		bool AddrWatch::check() const {
@@ -96,34 +124,27 @@ namespace storm {
 			nat histLow = atomicRead(history.epochLow);
 			nat histHigh = atomicRead(history.epochHigh);
 
-			// If we're not behind at all, then we know that nothing has changed.
-			if (histLow == epochLow && histHigh == epochHigh)
-				return false;
+			// If we are too far behind, we're done now. The HistorySummary handles the rest.
+			if (!inHistory(epochLow, epochHigh, histLow, histHigh))
+				return history.preHistory.intersects(watching);
 
-			// Read the history entry from the proper location. If this is written to while we read
-			// it, we will discard it later. This means we don't have to worry too much about
-			// atomicity here...
-			AddrSummary moved = history.history[epochLow % historySize];
+			// Otherwise, we should check the history.
+			bool moved = history.history[epochLow % historyLength].intersects(watching);
 
-			// Re-read the epoch and see if whatever we just read is still valid.
-			histLow = atomicRead(history.epochLow);
-			histHigh = atomicRead(history.epochHigh);
+			// Re-check so that we read the right element. If 'histLow' changed, we need to re-check
+			// if we did read valid data.
+			nat newHistLow = atomicRead(history.epochLow);
+			if (newHistLow != histLow) {
+				histLow = newHistLow;
+				histHigh = atomicRead(history.epochHigh);
 
-			// See if we're too far behind. If we are, use the prehistory instead.
-			if (histLow - epochLow > historySize) {
-				moved = history.preHistory;
-			} else {
-				// The low part is close enough, but did we wrap?
-				if (histLow < epochLow) {
-					if (histHigh != epochHigh + 1)
-						moved = history.preHistory;
-				} else {
-					if (histHigh != epochHigh)
-						moved = history.preHistory;
-				}
+				// If it is no longer in history, we might have read a value that turned stale
+				// during our read. Therefore, we need to fall back to pre-history.
+				if (!inHistory(epochLow, epochHigh, histLow, histHigh))
+					return history.preHistory.intersects(watching);
 			}
 
-			return watching.intersects(moved);
+			return moved;
 		}
 
 		bool AddrWatch::empty() const {

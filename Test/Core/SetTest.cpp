@@ -58,6 +58,9 @@ BEGIN_TEST(SetTestMove, Core) {
 
 	for (nat i = 0; i < count; i++) {
 		k->push(new (e) PtrKey());
+
+		// Make it less likely that we pin all objects.
+		runtime::allocArray<Byte>(e, &byteArrayType, 1000);
 	}
 
 	Set<PtrKey *> *set = new (e) Set<PtrKey *>();
