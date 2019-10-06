@@ -71,7 +71,7 @@ namespace storm {
 			do {
 				old = atomicRead(finalizeHead);
 				scanTail->next(old);
-			} while (atomicCAS(finalizeHead, old, scanHead) != old);
+			} while (atomicCAS(finalizeHead, old, scanFirst) != old);
 
 			// Clear the data, so that we can keep going at a later time!
 			scanFirst = scanHead = scanTail = null;
