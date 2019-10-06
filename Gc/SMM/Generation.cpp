@@ -302,7 +302,7 @@ namespace storm {
 				GenChunk &chunk = chunks[i];
 				PinnedSet &pinned = pinnedSets[i];
 
-				if (chunk.compact(pinned)) {
+				if (chunk.compact(ticket, pinned)) {
 					// We know that the first few bytes inside the chunk is a Block header. As such,
 					// we can use that memory to create a linked list of chunk id:s to free later on.
 					*(size_t *)chunk.memory.at = freeLast;
@@ -449,7 +449,7 @@ namespace storm {
 			freeBytes += block->remaining();
 		}
 
-		bool Generation::GenChunk::compact(const PinnedSet &pinned) {
+		bool Generation::GenChunk::compact(ArenaTicket &ticket, const PinnedSet &pinned) {
 			// The block that is currently being expanded.
 			Block *current = (Block *)memory.at;
 
@@ -470,19 +470,22 @@ namespace storm {
 					// constant. However, we are free to decrease 'committed' if we are able to!
 
 					compactFinishBlock(current, at);
-					shrinkBlock(at, pinned);
+					shrinkBlock(ticket, at, pinned);
 
 					// Skip ahead, don't touch the size of this block anymore.
 					current = (Block *)at->mem(at->size);
 				} else if (pinned.has(at->mem(0), at->mem(at->committed()))) {
 					// Unused block with pinned objects. We need to preserve those...
-					current = compactPinned(current, at, pinned);
+					current = compactPinned(ticket, current, at, pinned);
 				} else {
 					// Unused block. We are free to remove this block entirely without looking at it anymore.
 					// Note: We set committed and reserved to zero in case this is the first block. Otherwise
 					// it is not important.
 					at->committed(0);
 					at->reserved(0);
+
+					// Tell any watch objects that these objects were moved.
+					ticket.objectsMovedFrom(at->mem(0), at->mem(at->size));
 				}
 
 				at = next;
@@ -537,7 +540,8 @@ namespace storm {
 				return;
 
 			// Note: If we get past the previous check, we know that 'current' does not have the
-			// 'used' flag set due to how 'compact' works. Thus, we can ignore the flags in the block.
+			// 'used' flag set due to how 'compact' works. Thus, we can ignore the flags in the
+			// block, except for the 'finalizer' flag.
 			size_t size = (byte *)next - (byte *)current - sizeof(Block);
 			size_t used = current->committed();
 			bool finalizers = current->hasFlag(Block::fFinalizers);
@@ -575,7 +579,7 @@ namespace storm {
 			return start;
 		}
 
-		Block *Generation::GenChunk::compactPinned(Block *current, Block *scan, const PinnedSet &pinned) {
+		Block *Generation::GenChunk::compactPinned(ArenaTicket &ticket, Block *current, Block *scan, const PinnedSet &pinned) {
 			fmt::Obj *at = (fmt::Obj *)scan->mem(0);
 			fmt::Obj *to = (fmt::Obj *)scan->mem(scan->committed());
 
@@ -609,6 +613,9 @@ namespace storm {
 
 				if (inUse & !lastInUse) {
 					// First object in use. We might want to start a new block.
+
+					// Mark unused object accordingly.
+					ticket.objectsMovedFrom(current->mem(current->committed()), at);
 
 					// Make sure we preserve any GcType objects present by extending the block
 					// boundaries slightly.
@@ -652,12 +659,14 @@ namespace storm {
 				current->reserved(sz);
 				if (finalizers)
 					current->setFlag(Block::fFinalizers);
+
+				ticket.objectsMovedFrom(to, current->mem(current->size));
 			}
 
 			return current;
 		}
 
-		void Generation::GenChunk::shrinkBlock(Block *block, const PinnedSet &pinned) {
+		void Generation::GenChunk::shrinkBlock(ArenaTicket &ticket, Block *block, const PinnedSet &pinned) {
 			fmt::Obj *at = (fmt::Obj *)block->mem(0);
 			fmt::Obj *to = (fmt::Obj *)block->mem(block->committed());
 
@@ -676,6 +685,10 @@ namespace storm {
 					size_t padSize = (byte *)at - (byte *)freeFrom;
 					if (padSize > fmt::headerSize) {
 						fmt::objMakePad(freeFrom, padSize);
+
+						// Note: We sometimes mis a few GcType objects. This should be fine as long
+						// as we don't keep them in location dependent hashes.
+						ticket.objectsMovedFrom(freeFrom, padSize);
 					}
 
 					// Remember where the free space starts.
@@ -696,6 +709,8 @@ namespace storm {
 				block->setFlag(Block::fFinalizers);
 			else
 				block->clearFlag(Block::fFinalizers);
+
+			ticket.objectsMovedFrom(freeFrom, block->mem(block->size));
 		}
 
 		struct Finalize {

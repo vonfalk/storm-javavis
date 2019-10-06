@@ -76,7 +76,12 @@ namespace storm {
 				// Note: Atomics are actually overkill. A barrier would suffice.
 				atomicIncrement(version);
 			}
+
+			friend wostream &operator <<(wostream &to, const HistorySummary &o);
 		};
+
+		// Output.
+		wostream &operator <<(wostream &to, const HistorySummary &o);
 
 
 		/**
@@ -105,9 +110,11 @@ namespace storm {
 			// Note the beginning of a new epoch.
 			void step(ArenaTicket &lock);
 
-			// Add a range of addresses to the current epoch.
-			void add(ArenaTicket &lock, size_t from, size_t to);
-			inline void add(ArenaTicket &lock, const void *from, const void *to) { add(lock, size_t(from), size_t(to)); }
+			// Add a range of addresses objects have been moved from.
+			void addFrom(ArenaTicket &lock, size_t begin, size_t end);
+
+			// Add a range of addresses objects have been moved to.
+			void addTo(ArenaTicket &lock, size_t begin, size_t end);
 
 		private:
 			History(const History &o);

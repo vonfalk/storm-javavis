@@ -26,6 +26,10 @@ namespace storm {
 			bump();
 		}
 
+		wostream &operator <<(wostream &to, const HistorySummary &o) {
+			return to << o.summary;
+		}
+
 
 		/**
 		 * History.
@@ -49,12 +53,16 @@ namespace storm {
 			history[epochLow % historyLength].clear();
 		}
 
-		void History::add(ArenaTicket &ticket, size_t from, size_t to) {
+		void History::addFrom(ArenaTicket &ticket, size_t from, size_t to) {
 			for (nat i = 0; i < historyLength; i++) {
 				history[i].add(from, to);
 			}
 
 			preHistory.add(from, to);
+		}
+
+		void History::addTo(ArenaTicket &ticket, size_t from, size_t to) {
+			// TODO: Nothing here yet.
 		}
 
 

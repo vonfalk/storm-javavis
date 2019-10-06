@@ -98,10 +98,24 @@ namespace storm {
 			// other generation is being collected. Otherwise, nothing is done.
 			bool suggestCollection(Generation *gen);
 
-			// Note that we moved an object from 'from' to 'to'.
-			inline void objectMoved(const void *from, const void *to, size_t size) {
+			// Note that objects have been moved from the specified range.
+			inline void objectsMovedFrom(const void *from, size_t size) {
 				objectsMoved = true;
-				owner.history.add(*this, size_t(from), size_t(from) + size);
+				owner.history.addFrom(*this, size_t(from), size_t(from) + size);
+			}
+			inline void objectsMovedFrom(const void *from, const void *to) {
+				objectsMoved = true;
+				owner.history.addFrom(*this, size_t(from), size_t(to));
+			}
+
+			// Note that objects have been moved to the specified range.
+			inline void objectsMovedTo(const void *to, size_t size) {
+				objectsMoved = true;
+				owner.history.addTo(*this, size_t(to), size_t(to) + size);
+			}
+			inline void objectsMovedTo(const void *from, const void *to) {
+				objectsMoved = true;
+				owner.history.addTo(*this, size_t(from), size_t(to));
 			}
 
 			// Get the static object pool. This is considered being a part of all generations, since

@@ -50,9 +50,6 @@ namespace storm {
 			void *clientTarget = fmt::toClient(target);
 			fmt::objMakeFwd(obj, size, clientTarget);
 
-			// Notify that we moved an object.
-			this->target.ticket.objectMoved(client, clientTarget, size);
-
 			return clientTarget;
 		}
 

@@ -171,7 +171,7 @@ namespace storm {
 				// 'reserved' parts of all remaining blocks to indicate that allocations have to be
 				// re-tried. Blocks marked as 'used' are not re-allocated as other parts of the
 				// system may have pointers to them. They will, however, be emptied if possible.
-				bool compact(const PinnedSet &pinned);
+				bool compact(ArenaTicket &ticket, const PinnedSet &pinned);
 
 				// Run all finalizers in this chunk.
 				void runAllFinalizers();
@@ -205,11 +205,11 @@ namespace storm {
 				// most recent block header that has been determined to remain. The most recently
 				// created block header is returned, as an update to 'last'. Takes care of objects
 				// in need of finalization.
-				Block *compactPinned(Block *last, Block *block, const PinnedSet &pinned);
+				Block *compactPinned(ArenaTicket &ticket, Block *last, Block *block, const PinnedSet &pinned);
 
 				// Shrink a block as much as possible while keeping pinned objects intact. Replaces
 				// non-pinned objects with padding. Takes care of objects in need of finalization.
-				void shrinkBlock(Block *block, const PinnedSet &pinned);
+				void shrinkBlock(ArenaTicket &ticket, Block *block, const PinnedSet &pinned);
 			};
 
 			struct ChunkCompare {
