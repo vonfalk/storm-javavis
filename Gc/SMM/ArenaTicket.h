@@ -163,7 +163,7 @@ namespace storm {
 			// Have we stopped threads?
 			bool threads;
 
-			// Did we move any object?
+			// Did we move any objects?
 			bool objectsMoved;
 
 			// Called to perform any scheduled tasks, such as collecting certain generations.

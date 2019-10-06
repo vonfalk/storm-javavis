@@ -109,6 +109,10 @@ namespace storm {
 
 					b->committed(to);
 
+					// Make sure that the objects we scanned are marked as new objects, ie. we moved
+					// things to these blocks during the GC cycle.
+					ticket.objectsMovedTo(b->mem(from), b->mem(to));
+
 					// Are we done scanning this block?
 					if (to == b->size) {
 						Block *next = b->next();

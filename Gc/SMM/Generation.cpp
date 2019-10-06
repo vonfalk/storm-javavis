@@ -94,6 +94,8 @@ namespace storm {
 				return r;
 
 			// Try to do collect this generation!
+			// TODO: Perhaps we should not suggest to be collected this early. For generations higher
+			// than zero, it is probably too early.
 			if (ticket.suggestCollection(this)) {
 				// Success! There might be more to gain!
 				if (Block *r = findFreeBlock(minSize, maxSize))

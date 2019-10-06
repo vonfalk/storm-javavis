@@ -7,6 +7,7 @@
 namespace storm {
 	namespace smm {
 
+		class History;
 		class AddrWatch;
 		class ArenaTicket;
 
@@ -60,6 +61,23 @@ namespace storm {
 				return result;
 			}
 
+			// Check if a value is contained in this summary. Safe to call without stopping other threads.
+			inline bool has(const void *addr) const {
+				bool result;
+				size_t old;
+				do {
+					// Read version.
+					old = atomicRead(version);
+
+					// Check intersections.
+					result = summary.has(addr);
+
+					// Read again, and check if it is the same.
+				} while (old != atomicRead(version));
+
+				return result;
+			}
+
 
 		private:
 			// The actual summary.
@@ -85,6 +103,48 @@ namespace storm {
 
 
 		/**
+		 * A set of entries describing the history of some objects.
+		 *
+		 * This class is used by the History class to store histor of where objects have been moved
+		 * to and from separately.
+		 *
+		 * Assumes that an epoch is stored somewhere else.
+		 */
+		class HistorySet {
+		public:
+			// Create.
+			HistorySet();
+
+			// Get the history at location 'query' in the history, falling back to pre-history if
+			// not available.
+			bool query(const AddrSet<historyBytes> &watch, const History &ref, nat queryLow, nat queryHigh) const;
+			bool query(const void *addr, const History &ref, nat queryLow, nat queryHigh) const;
+
+			// Called to notify the history set that the epoch has advanced.
+			void step(nat newEpoch);
+
+			// Add a range of addresses to the history at the current epoch.
+			void add(size_t begin, size_t end);
+
+		private:
+			/**
+			 * The data is stored as a queue of fixed size, with the topmost element being
+			 * 'top'. 'preHistory' contains the element that is considered to be the last one in the
+			 * queue. The queue is always full, so we don't have to consider partially empty queues.
+			 *
+			 * The top element is always at the location of 'epochLow' modulo the lenght of the
+			 * history, with earlier elements at 'epochLow - 1' etc.
+			 */
+
+			// All history elements.
+			HistorySummary history[historyLength];
+
+			// Pre-history, for elements outside of the history.
+			HistorySummary preHistory;
+		};
+
+
+		/**
 		 * Class that stores object movement history, so that we can implement the ability to ask
 		 * whether or not certain objects have been moved or not.
 		 *
@@ -103,6 +163,7 @@ namespace storm {
 		 */
 		class History {
 			friend class AddrWatch;
+			friend class HistorySet;
 		public:
 			// Create.
 			History();
@@ -111,20 +172,24 @@ namespace storm {
 			void step(ArenaTicket &lock);
 
 			// Add a range of addresses objects have been moved from.
-			void addFrom(ArenaTicket &lock, size_t begin, size_t end);
+			inline void addFrom(ArenaTicket &lock, size_t begin, size_t end) {
+				from.add(begin, end);
+			}
 
 			// Add a range of addresses objects have been moved to.
-			void addTo(ArenaTicket &lock, size_t begin, size_t end);
+			inline void addTo(ArenaTicket &lock, size_t begin, size_t end) {
+				to.add(begin, end);
+			}
 
 		private:
 			History(const History &o);
 			History &operator =(const History &o);
 
-			// All history elements.
-			HistorySummary history[historyLength];
+			// History of objects' original position.
+			HistorySet from;
 
-			// Pre-history, for accesses further behind the current epoch than 'historyLength'.
-			HistorySummary preHistory;
+			// History of objects' new positions.
+			HistorySet to;
 
 			// Current epoch. We're manually creating a 64-bit numbers using two 32-bit numbers in
 			// order to ensure sufficient atomicity on 32-bit systems.
@@ -151,6 +216,9 @@ namespace storm {
 
 			// Check if any of the addresses have changed. Possibly gives false positives.
 			bool check() const;
+
+			// Check if a particular address have changed. Possibly gives false positives.
+			bool check(const void *addr) const;
 
 		private:
 			// Reference to the history instance we're associated with.

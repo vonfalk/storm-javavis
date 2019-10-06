@@ -284,8 +284,8 @@ namespace storm {
 			return watch.check();
 		}
 
-		virtual bool moved(const void *) {
-			return moved();
+		virtual bool moved(const void *ptr) {
+			return watch.check(ptr);
 		}
 
 		virtual GcWatch *clone() const {

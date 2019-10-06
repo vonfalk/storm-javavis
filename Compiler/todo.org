@@ -1,4 +1,4 @@
-* SMM bugs/improvements [1/7]
+* SMM bugs/improvements [1/8]
   - [ ] GcWatch objects seem to fail to notify their owner of moved objects in rare circumstances. Investigate
     further to see if the bug is remaining after the recent refactor. MapMoveTest could fail from time to time.
   - [ ] Investigate how often the history should be advanced. It seems to be wasteful to always increase it
@@ -14,6 +14,7 @@
   - [ ] Utilize memory protection (write barriers) to improve performance.
   - [ ] Perhaps we should move the pointer summaries from individual Blocks to Chunks, since we generally
     don't have better resolution than that from the VMAlloc class.
+  - [ ] Investigate where we should put 'suggestCollection' in 'allocBlock'. Currently, we're a bit aggressive.
   - [X] Calling 'objectMoved' for individual objects is probably wasteful. We could batch calls to 'objectMoved'
     by updating history during compaction rather than object movement. At that time, we can simply mark all
     reclaimed memory as moved (with some exceptions related to GcType objects).
