@@ -26,6 +26,9 @@ namespace storm {
 		// Lazily create the underlying thread when needed.
 		Thread(DeclThread::CreateFn fn);
 
+		// Make sure that the previous thread has been created during a copy.
+		Thread(const Thread &o);
+
 		// Destroy.
 		~Thread();
 

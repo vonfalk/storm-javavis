@@ -9,6 +9,8 @@ namespace storm {
 
 	Thread::Thread(DeclThread::CreateFn fn) : osThread(os::Thread::invalid), create(fn) {}
 
+	Thread::Thread(const Thread &o) : osThread(const_cast<Thread &>(o).thread()), create(null) {}
+
 	Thread::~Thread() {
 		// We need to call the destructor of 'thread', so we need to declare a destructor to tell
 		// Storm that the destructor needs to be called.
