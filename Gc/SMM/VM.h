@@ -21,8 +21,11 @@ namespace storm {
 		 */
 		class VM : NoCopy {
 		public:
-			// Create a VM instance suitable for the current system.
-			static VM *create();
+			virtual ~VM();
+
+			// Create a VM instance suitable for the current system. 'alloc' will be notified of any
+			// writes that occur to write protected pages.
+			static VM *create(VMAlloc *alloc);
 
 			// Page size.
 			const size_t pageSize;
@@ -52,15 +55,33 @@ namespace storm {
 			// flag for the corresponding block to be set. After the 'fUpdated' flag has been set,
 			// the pages need to be registered once more if further write notifications are to be
 			// sent. It is assumed that the indicated addresses do not span more than one block.
-			virtual void watchWrites(VMAlloc *alloc, void *at, size_t size) = 0;
+			virtual void watchWrites(void *at, size_t size) = 0;
 
-			// Called by the system to tell the VM subsystem to check for any writes that needs to
-			// be notified. Some implementations require calls to this function for 'watchWrites' to
-			// work properly. "buffer" is assumed to be at least "arenaBuffer" words long.
-			virtual void notifyWrites(VMAlloc *alloc, void **buffer) = 0;
+			// Remove the write notification for all pages in the specified range.
+			virtual void stopWriteWatch(void *at, size_t size) = 0;
 
 		protected:
-			VM(size_t pageSize, size_t granularity) : pageSize(pageSize), allocGranularity(granularity) {}
+			VM(VMAlloc *alloc, size_t pageSize, size_t granularity);
+
+			// The VMAlloc instance to be notified of writes.
+			VMAlloc *notify;
+
+			// VMAlloc objects registered at a global level.
+			static VMAlloc **globalArenas;
+
+			// Any 'notifyWrite' instances currently using 'globalArenas'?
+			static size_t usingGlobal;
+
+			// Lock used when modifying 'globalArenas'.
+			static util::Lock globalLock;
+
+			// Notify the proper VMAlloc instance of a detected write. Returns 'true' if we found
+			// someone that handled the write notification.
+			static bool notifyWrite(void *addr);
+
+			// Initialize write notifications for the current backend.
+			static void initNotify();
+			static void destroyNotify();
 		};
 
 	}

@@ -149,6 +149,9 @@ namespace storm {
 				// The entire chunk.
 				Chunk memory;
 
+				// Summary of references in this chunk.
+				GenSet summary;
+
 				// Pointer to the block that was allocated last. Empty memory is likely just after this block!
 				Block *lastAlloc;
 

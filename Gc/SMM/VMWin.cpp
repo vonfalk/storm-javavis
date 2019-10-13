@@ -9,18 +9,48 @@ namespace storm {
 	namespace smm {
 
 		// Flags that applies to all allocations.
-		static const DWORD reserveFlags = MEM_WRITE_WATCH;
+		static const DWORD reserveFlags = 0;
 		static const DWORD commitFlags = 0;
 		static const DWORD allocProt = PAGE_EXECUTE_READWRITE;
+		static const DWORD wpProt = PAGE_EXECUTE_READ;
 
-		VMWin *VMWin::create() {
+		static PVOID handlerHandle = 0;
+
+		VMWin *VMWin::create(VMAlloc *alloc) {
 			SYSTEM_INFO info;
 			GetSystemInfo(&info);
 
-			return new VMWin(info.dwPageSize, info.dwAllocationGranularity);
+			return new VMWin(alloc, info.dwPageSize, info.dwAllocationGranularity);
 		}
 
-		VMWin::VMWin(size_t pageSize, size_t granularity) : VM(pageSize, granularity) {}
+		void VMWin::initNotify() {
+			handlerHandle = AddVectoredExceptionHandler(1, &VMWin::onException);
+		}
+
+		void VMWin::destroyNotify() {
+			RemoveVectoredExceptionHandler(handlerHandle);
+		}
+
+		LONG VMWin::onException(struct _EXCEPTION_POINTERS *info) {
+			EXCEPTION_RECORD *record = info->ExceptionRecord;
+
+			if (record->ExceptionCode == EXCEPTION_ACCESS_VIOLATION) {
+				ULONG_PTR mode = record->ExceptionInformation[0];
+				ULONG_PTR addr = record->ExceptionInformation[1];
+
+				// Is it a write?
+				if (mode == 1) {
+					if (VM::notifyWrite((void *)addr)) {
+						return EXCEPTION_CONTINUE_EXECUTION;
+					}
+				}
+			}
+
+			// Fall through to continue searching for all unknown exceptions.
+			return EXCEPTION_CONTINUE_SEARCH;
+		}
+
+		VMWin::VMWin(VMAlloc *alloc, size_t pageSize, size_t granularity) : VM(alloc, pageSize, granularity) {}
 
 		void *VMWin::reserve(void *at, size_t size) {
 			return VirtualAlloc(at, size, MEM_RESERVE | reserveFlags, PAGE_NOACCESS);
@@ -38,47 +68,16 @@ namespace storm {
 			VirtualFree(at, 0, MEM_RELEASE);
 		}
 
-		void VMWin::watchWrites(VMAlloc *alloc, void *at, size_t size) {
-			// Just reset the state here, so that we don't report writes that may have occurred before this call.
-			ResetWriteWatch(at, size);
+		void VMWin::watchWrites(void *at, size_t size) {
+			DWORD old;
+			VirtualProtect(at, size, wpProt, &old);
 		}
 
-		void VMWin::notifyWrites(VMAlloc *alloc, void **buffer) {
-			const vector<Chunk> &chunks = alloc->chunkList();
-			for (size_t i = 0; i < chunks.size(); i++) {
-				notifyWrites(alloc, buffer, chunks[i].at, chunks[i].size);
-			}
+		void VMWin::stopWriteWatch(void *at, size_t size) {
+			DWORD old;
+			VirtualProtect(at, size, allocProt, &old);
 		}
 
-		struct AddrCmp {
-			bool operator ()(void *l, void *r) const {
-				return size_t(l) < size_t(r);
-			}
-		};
-
-		void VMWin::notifyWrites(VMAlloc *alloc, void **buffer, void *at, size_t size) {
-			// TODO: Calling GetWriteWatch with the entire VM size is hugely inefficient. We
-			// probably only want to call it to investigate the pages we're actually interested
-			// in. Perhaps we should write protect chunks of memory to get notified of modifications
-			// rather than having to poll for them all the time, which could be cheaper...
-
-			// // Note: This is fairly expensive...
-			// ULONG_PTR count = 0;
-			// DWORD granularity = 0;
-			// do {
-			// 	count = arenaBufferWords;
-			// 	UINT r = GetWriteWatch(WRITE_WATCH_FLAG_RESET, at, size, buffer, &count, &granularity);
-			// 	// TODO: If GetWriteWatch fails, something is *really* bad. Perhaps we should try to
-			// 	// mark all pages in the interval if that happens.
-			// 	dbg_assert(r == 0, L"GetWriteWatch failed");
-
-			// 	// Mark the blocks that contain the addresses as updated. We do this in a batch so
-			// 	// that the implementation doesn't need to use the lookup table for every address.
-			// 	alloc->markBlockWrites(buffer, size_t(count));
-
-			// 	// TODO: If we have more work to do, we should reset the addresses where the bookkeeping is!
-			// } while (count == arenaBufferWords);
-		}
 
 	}
 }

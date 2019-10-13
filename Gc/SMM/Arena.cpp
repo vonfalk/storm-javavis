@@ -17,7 +17,7 @@ namespace storm {
 
 		// TODO: Make the nursery generation size customizable.
 		Arena::Arena(size_t initialSize, const size_t *genSize, size_t generationCount)
-			: alloc(VM::create(), initialSize), entries(0) {
+			: alloc(initialSize), entries(0) {
 
 			// Check assumptions of the formatting code.
 			fmt::init();

@@ -1,4 +1,4 @@
-* SMM bugs/improvements [1/8]
+* SMM bugs/improvements [1/9]
   - [ ] GcWatch objects seem to fail to notify their owner of moved objects in rare circumstances. Investigate
     further to see if the bug is remaining after the recent refactor. MapMoveTest could fail from time to time.
   - [ ] Investigate how often the history should be advanced. It seems to be wasteful to always increase it
@@ -12,6 +12,8 @@
     could mean that we're too aggressive with collections (we try as soon as we would otherwise need
     to allocate memory, even though we're way below our threshold).
   - [ ] Utilize memory protection (write barriers) to improve performance.
+  - [ ] We probably want a fenwich tree to provide quick range queries regarding write barriers (perhaps
+    other operations as well) in the VMAlloc system.
   - [ ] Perhaps we should move the pointer summaries from individual Blocks to Chunks, since we generally
     don't have better resolution than that from the VMAlloc class.
   - [ ] Investigate where we should put 'suggestCollection' in 'allocBlock'. Currently, we're a bit aggressive.

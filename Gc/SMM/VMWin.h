@@ -13,7 +13,11 @@ namespace storm {
 		class VMWin : public VM {
 		public:
 			// Create.
-			static VMWin *create();
+			static VMWin *create(VMAlloc *alloc);
+
+			// Initialize/destroy write notification mechanisms.
+			static void initNotify();
+			static void destroyNotify();
 
 			// Reserve.
 			virtual void *reserve(void *at, size_t size);
@@ -28,16 +32,15 @@ namespace storm {
 			virtual void free(void *at, size_t size);
 
 			// Watch for writes.
-			virtual void watchWrites(VMAlloc *alloc, void *at, size_t size);
+			virtual void watchWrites(void *at, size_t size);
 
-			// Check for writes.
-			virtual void notifyWrites(VMAlloc *alloc, void **buffer);
+			// Stop watching.
+			virtual void stopWriteWatch(void *at, size_t size);
 
 		private:
-			VMWin(size_t pageSize, size_t granularity);
+			VMWin(VMAlloc *alloc, size_t pageSize, size_t granularity);
 
-			// Check a number of pages for writes.
-			void notifyWrites(VMAlloc *alloc, void **buffer, void *at, size_t size);
+			static LONG WINAPI onException(struct _EXCEPTION_POINTERS *info);
 		};
 
 	}

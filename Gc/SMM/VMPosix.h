@@ -30,9 +30,6 @@ namespace storm {
 			// Watch for writes.
 			virtual void watchWrites(VMAlloc *alloc, void *at, size_t size);
 
-			// Notify writes.
-			virtual void notifyWrites(VMAlloc *alloc, void **buffer);
-
 		private:
 			VMPosix(size_t pageSize);
 		};

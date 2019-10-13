@@ -48,10 +48,6 @@ namespace storm {
 			// 	b->flags |= Block::fUpdated;
 		}
 
-		void VMPosix::notifyWrites(VMAlloc *alloc, void **buffer) {
-			// Not needed on Posix.
-		}
-
 	}
 }
 

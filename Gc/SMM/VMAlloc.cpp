@@ -8,8 +8,8 @@
 namespace storm {
 	namespace smm {
 
-		VMAlloc::VMAlloc(VM *vm, size_t initSize) :
-			vm(vm), pageSize(vm->pageSize),
+		VMAlloc::VMAlloc(size_t initSize) :
+			vm(VM::create(this)), pageSize(vm->pageSize),
 			minAddr(0), maxAddr(1),
 			info(null), lastAlloc(0) {
 
@@ -123,8 +123,8 @@ namespace storm {
 
 			lastAlloc = start + pieces;
 
-			// Mark the memory as in use.
-			memset(info + start, INFO_USED_CLIENT | packedIdentifier, pieces);
+			// Mark the memory as in use, and potentially changed.
+			memset(info + start, INFO_USED_WRITTEN | packedIdentifier, pieces);
 
 			Chunk mem(infoPtr(start), pieces*vmAllocMinSize);
 			vm->commit(mem.at, mem.size);
@@ -139,15 +139,33 @@ namespace storm {
 			vm->decommit(chunk.at, chunk.size);
 		}
 
-		void VMAlloc::checkWrites(void **buffer) {
-			vm->notifyWrites(this, buffer);
+		void VMAlloc::watchWrites(Chunk chunk) {
+			size_t first = infoOffset(chunk.at);
+			size_t pieces = (size_t(chunk.end()) - size_t(infoPtr(first)) + vmAllocMinSize - 1) / vmAllocMinSize;
+
+			for (size_t i = first; i < first + pieces; i++) {
+				// Remove the 'modified' flag.
+				info[i] &= ~0x02;
+			}
+
+			// And set memory protection.
+			vm->watchWrites(infoPtr(first), pieces*vmAllocMinSize);
 		}
 
-		void VMAlloc::markBlockWrites(void **addr, size_t count) {
-			for (size_t i = 0; i < count; i++) {
-				// Note: This will work regardless of whether the block is used internally or externally.
-				info[infoOffset(addr[i])] |= 0x02;
-			}
+		bool VMAlloc::anyWrites(Chunk chunk) {
+			size_t first = infoOffset(chunk.at);
+			size_t pieces = (size_t(chunk.end()) - size_t(infoPtr(first)) + vmAllocMinSize - 1) / vmAllocMinSize;
+
+			// TODO: A fenwick tree would speed up this operation quite a bit if the chunk is large.
+			for (size_t i = first; i < first + pieces; i++)
+				if (info[i] & 0x02)
+					return true;
+
+			return false;
+		}
+
+		void VMAlloc::markBlockWrites(void *addr) {
+			TODO(L"Implement me!");
 		}
 
 		void VMAlloc::fillSummary(MemorySummary &summary) const {

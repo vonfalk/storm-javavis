@@ -25,14 +25,11 @@ namespace storm {
 		 */
 		class VMAlloc {
 		public:
-			// Create, with a backing VM instance. Making an initial reservation of approx. 'init' bytes.
-			VMAlloc(VM *backend, size_t initialSize);
+			// Create. Making an initial reservation of approx. 'init' bytes.
+			VMAlloc(size_t initialSize);
 
 			// Destroy.
 			~VMAlloc();
-
-			// The page size of this system.
-			const size_t pageSize;
 
 			/**
 			 * Memory management.
@@ -78,12 +75,16 @@ namespace storm {
 
 
 			/**
-			 * API for the Arena class.
+			 * Memory protection.
 			 */
 
-			// Check for writes to any blocks we manage. Some backends only update the 'fUpdated'
-			// flag for blocks this function is called, others do it during the actual write.
-			void checkWrites(void **arenaBuffer);
+			// Protect a chunk of memory in order to detect writes to it. Will round the boundaries
+			// of the chunk to a suitable granularity.
+			void watchWrites(Chunk chunk);
+
+			// Check for writes to a range of addresses. Returns true if any addresses in the range
+			// are either unprotected, or if they were protected but have been written to.
+			bool anyWrites(Chunk chunk);
 
 
 			/**
@@ -93,8 +94,8 @@ namespace storm {
 			// Get all chunks in this allocator. Mainly intended for VM subclasses.
 			const vector<Chunk> &chunkList() const { return reserved; }
 
-			// Mark all blocks in the contained addresses as 'updated'.
-			void markBlockWrites(void **addr, size_t count);
+			// Mark 'ptr' as written. We will also reset protection on these pages to read/write.
+			void markBlockWrites(void *ptr);
 
 
 			/**
@@ -141,7 +142,7 @@ namespace storm {
 			 *
 			 * The content of each byte is as follows:
 			 * Bit 0: In use (1) or free (0).
-			 * Bit 1: Contents altered since last check?
+			 * Bit 1: Contents maybe altered since the last check? Only clear for write-protected memory.
 			 * Bit 2-7: User data.
 			 *
 			 * Note: If only bit 1 is set, the block is marked as in use by the memory management
@@ -205,6 +206,10 @@ namespace storm {
 			static inline byte infoData(byte b) {
 				return b >> 2;
 			}
+
+		public:
+			// The page size of this system (must be initialized after 'vm', so it is moved here).
+			const size_t pageSize;
 
 		};
 
