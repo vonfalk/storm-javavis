@@ -10,7 +10,8 @@ namespace storm {
 
 		// Query is the one we're looking at, 'epoch' is where we're at now. Ie. 'query' <= 'epoch'.
 		static bool inHistory(nat queryLow, nat queryHigh, nat epochLow, nat epochHigh) {
-			if (epochLow - queryLow > historyLength) {
+			// Note: If the distance is exactly 'historyLength', it is just outside of the history.
+			if (epochLow - queryLow >= historyLength) {
 				return false;
 			} else {
 				// The low part is close enough, but did we wrap?
