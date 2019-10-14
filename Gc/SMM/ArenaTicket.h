@@ -98,6 +98,14 @@ namespace storm {
 			// other generation is being collected. Otherwise, nothing is done.
 			bool suggestCollection(Generation *gen);
 
+			// Memory protection.
+			inline void watchWrites(Chunk chunk) const {
+				owner.alloc.watchWrites(chunk);
+			}
+			inline void stopWatchWrites(Chunk chunk) const {
+				owner.alloc.stopWatchWrites(chunk);
+			}
+
 			// Note that objects have been moved from the specified range.
 			inline void objectsMovedFrom(const void *from, size_t size) {
 				objectsMoved = true;

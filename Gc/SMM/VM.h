@@ -58,7 +58,7 @@ namespace storm {
 			virtual void watchWrites(void *at, size_t size) = 0;
 
 			// Remove the write notification for all pages in the specified range.
-			virtual void stopWriteWatch(void *at, size_t size) = 0;
+			virtual void stopWatchWrites(void *at, size_t size) = 0;
 
 		protected:
 			VM(VMAlloc *alloc, size_t pageSize, size_t granularity);

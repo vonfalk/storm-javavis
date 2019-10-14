@@ -82,6 +82,12 @@ namespace storm {
 			// of the chunk to a suitable granularity.
 			void watchWrites(Chunk chunk);
 
+			// Stop watching writes for a chunk of memory. Immediately marks all parts of the memory
+			// as 'potentially altered'. This is useful to do when one page in a range has been
+			// changed, and we know we will change lots of adjacent pages without hitting the
+			// pagefault barrier too often.
+			void stopWatchWrites(Chunk chunk);
+
 			// Check for writes to a range of addresses. Returns true if any addresses in the range
 			// are either unprotected, or if they were protected but have been written to.
 			bool anyWrites(Chunk chunk);
@@ -94,8 +100,9 @@ namespace storm {
 			// Get all chunks in this allocator. Mainly intended for VM subclasses.
 			const vector<Chunk> &chunkList() const { return reserved; }
 
-			// Mark 'ptr' as written. We will also reset protection on these pages to read/write.
-			void markBlockWrites(void *ptr);
+			// Mark 'ptr' as written. We will also reset protection on these pages to
+			// read/write. Returns 'true' if this was a previously protected range of memory.
+			bool onProtectedWrite(void *ptr);
 
 
 			/**
@@ -200,6 +207,11 @@ namespace storm {
 			// Check if a particular byte in 'info' is marked as 'written'.
 			static inline bool infoWritten(byte b) {
 				return (b & 0x03) == INFO_USED_WRITTEN;
+			}
+
+			// Check if a particular byte in 'info' is unchanged and protected.
+			static inline bool infoProtected(byte b) {
+				return (b & 0x03) == INFO_USED_CLIENT;
 			}
 
 			// Get the data portion of a byte in 'info'.

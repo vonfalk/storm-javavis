@@ -73,7 +73,7 @@ namespace storm {
 			VirtualProtect(at, size, wpProt, &old);
 		}
 
-		void VMWin::stopWriteWatch(void *at, size_t size) {
+		void VMWin::stopWatchWrites(void *at, size_t size) {
 			DWORD old;
 			VirtualProtect(at, size, allocProt, &old);
 		}

@@ -128,6 +128,7 @@ namespace storm {
 
 			Chunk mem(infoPtr(start), pieces*vmAllocMinSize);
 			vm->commit(mem.at, mem.size);
+
 			return mem;
 		}
 
@@ -143,13 +144,32 @@ namespace storm {
 			size_t first = infoOffset(chunk.at);
 			size_t pieces = (size_t(chunk.end()) - size_t(infoPtr(first)) + vmAllocMinSize - 1) / vmAllocMinSize;
 
+			bool any = false;
 			for (size_t i = first; i < first + pieces; i++) {
+				any |= infoWritten(info[i]);
+
 				// Remove the 'modified' flag.
 				info[i] &= ~0x02;
 			}
 
-			// And set memory protection.
-			vm->watchWrites(infoPtr(first), pieces*vmAllocMinSize);
+			// And set memory protection if needed.
+			if (any)
+				vm->watchWrites(infoPtr(first), pieces*vmAllocMinSize);
+		}
+
+		void VMAlloc::stopWatchWrites(Chunk chunk) {
+			size_t first = infoOffset(chunk.at);
+			size_t pieces = (size_t(chunk.end()) - size_t(infoPtr(first)) + vmAllocMinSize - 1) / vmAllocMinSize;
+
+			bool any = false;
+			for (size_t i = first; i < first + pieces; i++) {
+				any |= infoProtected(info[i]);
+				info[i] |= 0x02;
+			}
+
+			// Remove memory protection if needed.
+			if (any)
+				vm->stopWatchWrites(infoPtr(first), pieces*vmAllocMinSize);
 		}
 
 		bool VMAlloc::anyWrites(Chunk chunk) {
@@ -158,14 +178,26 @@ namespace storm {
 
 			// TODO: A fenwick tree would speed up this operation quite a bit if the chunk is large.
 			for (size_t i = first; i < first + pieces; i++)
-				if (info[i] & 0x02)
+				if (infoWritten(info[i]))
 					return true;
 
 			return false;
 		}
 
-		void VMAlloc::markBlockWrites(void *addr) {
-			TODO(L"Implement me!");
+		bool VMAlloc::onProtectedWrite(void *addr) {
+			// Outside of memory managed by us?
+			if (size_t(addr) < minAddr || size_t(addr) >= maxAddr)
+				return false;
+
+			size_t offset = infoOffset(addr);
+
+			// Check so that it is allocated and protected.
+			if (infoProtected(info[offset])) {
+				vm->stopWatchWrites(infoPtr(offset), vmAllocMinSize);
+				return true;
+			}
+
+			return false;
 		}
 
 		void VMAlloc::fillSummary(MemorySummary &summary) const {

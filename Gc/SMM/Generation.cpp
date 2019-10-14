@@ -185,6 +185,11 @@ namespace storm {
 			// We need other threads stopped from here onwards.
 			ticket.stopThreads();
 
+			// Remove any write barriers for all blocks in this generation. We will be making many
+			// changes, and as such the penalities for write barriers would be fairly large.
+			for (size_t i = 0; i < chunks.size(); i++)
+				ticket.stopWatchWrites(chunks[i].memory);
+
 			// TODO: We might want to do an 'early out' inside the scanning by using
 			// VMAlloc::identifier before attempting to access the sets. We need to measure the benefits of this!
 			ticket.scanInexactRoots<ScanSummaries<PinnedSet>>(pinnedSets);
@@ -270,6 +275,8 @@ namespace storm {
 			// would be a bit more aggressive at splitting blocks during allocations, being more
 			// likely to return new blocks even though the already existing ones are suitable.
 			{
+				// TODO: We should tell the ticket that we're almost done and thereby encourage
+				// other generations to raise their barriers.
 				State s(*this);
 				MixedPredicate p(s);
 				ticket.scanGenerations<MixedPredicate, UpdateMixedFwd>(p, p, this);
@@ -452,6 +459,9 @@ namespace storm {
 		}
 
 		bool Generation::GenChunk::compact(ArenaTicket &ticket, const PinnedSet &pinned) {
+			// TODO: Consider raising the write barrier after compaction. We have to scan most
+			// objects anyway, so we might as well record where pointers lead while we're at it.
+
 			// The block that is currently being expanded.
 			Block *current = (Block *)memory.at;
 

@@ -35,7 +35,7 @@ namespace storm {
 			virtual void watchWrites(void *at, size_t size);
 
 			// Stop watching.
-			virtual void stopWriteWatch(void *at, size_t size);
+			virtual void stopWatchWrites(void *at, size_t size);
 
 		private:
 			VMWin(VMAlloc *alloc, size_t pageSize, size_t granularity);

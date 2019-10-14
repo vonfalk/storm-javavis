@@ -5,6 +5,7 @@
 
 #include "VMWin.h"
 #include "VMPosix.h"
+#include "VMAlloc.h"
 
 namespace storm {
 	namespace smm {
@@ -84,7 +85,7 @@ namespace storm {
 
 			if (table) {
 				for (; *table; table++) {
-					// TODO: Notify the arena.
+					any |= (*table)->onProtectedWrite(addr);
 				}
 			}
 
