@@ -76,10 +76,23 @@ namespace storm {
 
 			// Scan all blocks that may contain references to anything in the provided GenSet.
 			template <class Scanner>
-			typename Scanner::Result scan(GenSet refsTo, typename Scanner::Source &source);
+			typename Scanner::Result scan(ArenaTicket &ticket,
+										GenSet refsTo,
+										typename Scanner::Source &source);
 
 			template <class Predicate, class Scanner>
-			typename Scanner::Result scan(const Predicate &predicate, GenSet refsTo, typename Scanner::Source &source);
+			typename Scanner::Result scan(ArenaTicket &ticket,
+										const Predicate &predicate,
+										GenSet refsTo,
+										typename Scanner::Source &source);
+
+			// Scan all blocks that may contain references to anything in the provided GenSet,
+			// possibly raising write barriers since a garbage collection sycle is almost over.
+			template <class Predicate, class Scanner>
+			typename Scanner::Result scanFinal(ArenaTicket &ticket,
+											const Predicate &predicate,
+											GenSet refsTo,
+											typename Scanner::Source &source);
 
 			// Run all finalizers in this block. Most likely only called before the entire Arena is
 			// destroyed, so no need for efficiency.
@@ -321,13 +334,33 @@ namespace storm {
 
 			// Only scan blocks which may refer to objects in the specified generations.
 			template <class Scanner>
-			static typename Scanner::Result scan(GenChunk &chunk, GenSet toScan, typename Scanner::Source &source);
+			static typename Scanner::Result scan(ArenaTicket &ticket,
+												GenChunk &chunk,
+												GenSet toScan,
+												typename Scanner::Source &source);
 
 			template <class Predicate, class Scanner>
-			static typename Scanner::Result scan(GenChunk &chunk,
+			static typename Scanner::Result scan(ArenaTicket &ticket,
+												GenChunk &chunk,
 												const Predicate &p,
 												GenSet toScan,
 												typename Scanner::Source &source);
+
+			// Scan blocks, and possibly raise a write barrier.
+			template <class Predicate, class Scanner>
+			static typename Scanner::Result scanFinal(ArenaTicket &ticket,
+													GenChunk &chunk,
+													const Predicate &p,
+													GenSet toScan,
+													typename Scanner::Source &source);
+
+			// Internal version that does not check memory protection for early-outs.
+			template <class Predicate, class Scanner>
+			static typename Scanner::Result scanImpl(ArenaTicket &ticket,
+													GenChunk &chunk,
+													const Predicate &p,
+													GenSet toScan,
+													typename Scanner::Source &source);
 
 			// Scan all pinned objects in this chunk.
 			template <class Scanner>
@@ -376,15 +409,34 @@ namespace storm {
 		}
 
 		template <class Scanner>
-		typename Scanner::Result Generation::scan(GenSet toScan, typename Scanner::Source &source) {
-			return scan<fmt::ScanAll, Scanner>(fmt::ScanAll(), toScan, source);
+		typename Scanner::Result Generation::scan(ArenaTicket &ticket,
+												GenSet toScan,
+												typename Scanner::Source &source) {
+			return scan<fmt::ScanAll, Scanner>(ticket, fmt::ScanAll(), toScan, source);
 		}
 
 		template <class Predicate, class Scanner>
-		typename Scanner::Result Generation::scan(const Predicate &p, GenSet toScan, typename Scanner::Source &source) {
+		typename Scanner::Result Generation::scan(ArenaTicket &ticket,
+												const Predicate &p,
+												GenSet toScan,
+												typename Scanner::Source &source) {
 			typename Scanner::Result r = typename Scanner::Result();
 			for (size_t i = 0; i < chunks.size(); i++) {
-				scan<Predicate, Scanner>(chunks[i], p, toScan, source);
+				scan<Predicate, Scanner>(ticket, chunks[i], p, toScan, source);
+				if (r != typename Scanner::Result())
+					return r;
+			}
+			return r;
+		}
+
+		template <class Predicate, class Scanner>
+		typename Scanner::Result Generation::scanFinal(ArenaTicket &ticket,
+													const Predicate &p,
+													GenSet toScan,
+													typename Scanner::Source &source) {
+			typename Scanner::Result r = typename Scanner::Result();
+			for (size_t i = 0; i < chunks.size(); i++) {
+				scanFinal<Predicate, Scanner>(ticket, chunks[i], p, toScan, source);
 				if (r != typename Scanner::Result())
 					return r;
 			}
@@ -416,16 +468,59 @@ namespace storm {
 		}
 
 		template <class Scanner>
-		typename Scanner::Result Generation::scan(GenChunk &chunk, GenSet toScan, typename Scanner::Source &source) {
-			return scan<fmt::ScanAll, Scanner>(chunk, fmt::ScanAll(), toScan, source);
+		typename Scanner::Result Generation::scan(ArenaTicket &ticket,
+												GenChunk &chunk,
+												GenSet toScan,
+												typename Scanner::Source &source) {
+			return scan<fmt::ScanAll, Scanner>(ticket, chunk, fmt::ScanAll(), toScan, source);
 		}
 
 		template <class Predicate, class Scanner>
-		typename Scanner::Result Generation::scan(GenChunk &chunk,
+		typename Scanner::Result Generation::scan(ArenaTicket &ticket,
+												GenChunk &chunk,
 												const Predicate &predicate,
 												GenSet toScan,
 												typename Scanner::Source &source) {
-			// TODO: It would be useful to have some kind of 'early out' here!
+			// No changes? Then we can use the summary!
+			if (!ticket.anyWrites(chunk.memory)) {
+				// Not interesting? If so, we can just bail out.
+				if (!chunk.summary.has(toScan))
+					return typename Scanner::Result();
+			}
+
+			return scanImpl<Predicate, Scanner>(ticket, chunk, predicate, toScan, source);
+		}
+
+		template <class Predicate, class Scanner>
+		typename Scanner::Result Generation::scanFinal(ArenaTicket &ticket,
+													GenChunk &chunk,
+													const Predicate &predicate,
+													GenSet toScan,
+													typename Scanner::Source &source) {
+
+			// Was this block changed since we last prepared our summary?
+			if (!ticket.anyWrites(chunk.memory)) {
+				// No changes, we can ask the summary!
+				if (chunk.summary.has(toScan)) {
+					return scanImpl<Predicate, Scanner>(ticket, chunk, predicate, toScan, source);
+				} else {
+					return typename Scanner::Result();
+				}
+			}
+
+			// TODO: We need to determine if we should update the summary or not.
+
+
+			// Fallback.
+			return scanImpl<Predicate, Scanner>(ticket, chunk, predicate, toScan, source);
+		}
+
+		template <class Predicate, class Scanner>
+		typename Scanner::Result Generation::scanImpl(ArenaTicket &ticket,
+													GenChunk &chunk,
+													const Predicate &predicate,
+													GenSet toScan,
+													typename Scanner::Source &source) {
 
 			typename Scanner::Result r = typename Scanner::Result();
 			Block *end = (Block *)chunk.memory.end();

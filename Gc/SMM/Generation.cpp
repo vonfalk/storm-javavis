@@ -164,6 +164,10 @@ namespace storm {
 
 			ticket.gcRunning();
 
+			// GenSet only containing us.
+			GenSet self;
+			self.add(identifier);
+
 			// We use mark and sweep for the non-moving objects.
 			Nonmoving &nonmoving = ticket.nonmoving();
 
@@ -213,7 +217,7 @@ namespace storm {
 
 			// Traverse all other generations that could contain references to this generation and
 			// copy any referred objects to the new block.
-			ticket.scanGenerations<IfNotWeak, GenNoWeakScanner>(IfNotWeak(), state, this);
+			ticket.scanGenerations<IfNotWeak, GenNoWeakScanner>(IfNotWeak(), state, self);
 
 			// Also traverse exact roots.
 			ticket.scanExactRoots<GenNoWeakScanner>(state);
@@ -279,9 +283,8 @@ namespace storm {
 				// other generations to raise their barriers.
 				State s(*this);
 				MixedPredicate p(s);
-				ticket.scanGenerations<MixedPredicate, UpdateMixedFwd>(p, p, this);
+				ticket.scanGenerationsFinal<MixedPredicate, UpdateMixedFwd>(p, p, self);
 			}
-			// ticket.scanGenerations<UpdateFwd>(State(*this), this);
 
 			// Update exact roots.
 			ticket.scanExactRoots<UpdateFwd>(State(*this));

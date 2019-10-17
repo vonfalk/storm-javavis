@@ -105,6 +105,9 @@ namespace storm {
 			inline void stopWatchWrites(Chunk chunk) const {
 				owner.alloc.stopWatchWrites(chunk);
 			}
+			inline bool anyWrites(Chunk chunk) const {
+				return owner.alloc.anyWrites(chunk);
+			}
 
 			// Note that objects have been moved from the specified range.
 			inline void objectsMovedFrom(const void *from, size_t size) {
@@ -151,15 +154,24 @@ namespace storm {
 			template <class Scanner>
 			typename Scanner::Result scanExactRoots(typename Scanner::Source &source);
 
-			// Scan all blocks in all generations that may refer to a block in the given
-			// generation.
+			// Scan all blocks in all generations that may refer to a block in any generation
+			// indicated by 'current'. We don't scan the generations indicated in 'current', as
+			// those usually need to be handled with more care.
 			template <class Scanner>
-			typename Scanner::Result scanGenerations(typename Scanner::Source &source, Generation *curr);
+			typename Scanner::Result scanGenerations(typename Scanner::Source &source, GenSet current);
 
 			template <class Predicate, class Scanner>
 			typename Scanner::Result scanGenerations(const Predicate &predicate,
 													typename Scanner::Source &source,
-													Generation *curr);
+													GenSet current);
+
+			// Scan all blocks, just as above. However, indicate that we're just about done with
+			// garbage collection, and that we might want to take the opportunity to raise memory
+			// barriers now to avoid scanning in the future.
+			template <class Predicate, class Scanner>
+			typename Scanner::Result scanGenerationsFinal(const Predicate &predicate,
+														typename Scanner::Source &source,
+														GenSet current);
 
 		private:
 			// Did any generation trigger a garbage collection?
@@ -216,27 +228,47 @@ namespace storm {
 		}
 
 		template <class Scanner>
-		typename Scanner::Result ArenaTicket::scanGenerations(typename Scanner::Source &source, Generation *current) {
+		typename Scanner::Result ArenaTicket::scanGenerations(typename Scanner::Source &source, GenSet current) {
 			return scanGenerations<fmt::ScanAll, Scanner>(fmt::ScanAll(), source, current);
 		}
 
 		template <class Predicate, class Scanner>
 		typename Scanner::Result ArenaTicket::scanGenerations(const Predicate &predicate,
 															typename Scanner::Source &source,
-															Generation *current) {
+															GenSet current) {
 			typename Scanner::Result r = typename Scanner::Result();
-			GenSet scanFor;
-			scanFor.add(current->identifier);
 
 			for (size_t i = 0; i < owner.generations.size(); i++) {
 				Generation *gen = owner.generations[i];
 
-				// Don't scan the current generation, we want to handle that with more care.
-				if (gen == current)
+				// Don't scan the current generations, we want to handle those with more care.
+				if (current.has(gen->identifier))
 					continue;
 
 				// Scan it, instructing the generation to only scan references to the current generation.
-				r = gen->scan<Predicate, Scanner>(predicate, scanFor, source);
+				r = gen->scan<Predicate, Scanner>(*this, predicate, current, source);
+				if (r != typename Scanner::Result())
+					return r;
+			}
+
+			return r;
+		}
+
+		template <class Predicate, class Scanner>
+		typename Scanner::Result ArenaTicket::scanGenerationsFinal(const Predicate &predicate,
+																typename Scanner::Source &source,
+																GenSet current) {
+			typename Scanner::Result r = typename Scanner::Result();
+
+			for (size_t i = 0; i < owner.generations.size(); i++) {
+				Generation *gen = owner.generations[i];
+
+				// Don't scan the current generations, we want to handle those with more care.
+				if (current.has(gen->identifier))
+					continue;
+
+				// Scan it, instructing the generation to only scan references to the current generation.
+				r = gen->scanFinal<Predicate, Scanner>(*this, predicate, current, source);
 				if (r != typename Scanner::Result())
 					return r;
 			}
