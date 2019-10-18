@@ -193,7 +193,9 @@ namespace storm {
 
 			// Check so that it is allocated and protected.
 			if (infoProtected(info[offset])) {
+				// Then, unprotect, and mark as changed.
 				vm->stopWatchWrites(infoPtr(offset), vmAllocMinSize);
+				info[offset] |= INFO_USED_WRITTEN;
 				return true;
 			}
 

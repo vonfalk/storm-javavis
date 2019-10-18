@@ -9,6 +9,7 @@
 #include "Thread.h"
 #include "Nonmoving.h"
 #include "ArenaTicket.h"
+#include "ArenaTicketImpl.h"
 #include "FinalizerPool.h"
 #include "UpdateFwd.h"
 #include "Util.h"

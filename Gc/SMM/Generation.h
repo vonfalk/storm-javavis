@@ -362,6 +362,14 @@ namespace storm {
 													GenSet toScan,
 													typename Scanner::Source &source);
 
+			// Scan and update the internal summaries simultaneously.
+			template <class Predicate, class Scanner>
+			static typename Scanner::Result scanUpdate(ArenaTicket &ticket,
+													GenChunk &chunk,
+													const Predicate &p,
+													GenSet toScan,
+													typename Scanner::Source &source);
+
 			// Scan all pinned objects in this chunk.
 			template <class Scanner>
 			static typename Scanner::Result scanPinned(GenChunk &chunk,
@@ -484,8 +492,9 @@ namespace storm {
 			// No changes? Then we can use the summary!
 			if (!ticket.anyWrites(chunk.memory)) {
 				// Not interesting? If so, we can just bail out.
-				if (!chunk.summary.has(toScan))
+				if (!chunk.summary.has(toScan)) {
 					return typename Scanner::Result();
+				}
 			}
 
 			return scanImpl<Predicate, Scanner>(ticket, chunk, predicate, toScan, source);
@@ -509,10 +518,11 @@ namespace storm {
 			}
 
 			// TODO: We need to determine if we should update the summary or not.
-
-
-			// Fallback.
-			return scanImpl<Predicate, Scanner>(ticket, chunk, predicate, toScan, source);
+			bool update = true;
+			if (update)
+				return scanUpdate<Predicate, Scanner>(ticket, chunk, predicate, toScan, source);
+			else
+				return scanImpl<Predicate, Scanner>(ticket, chunk, predicate, toScan, source);
 		}
 
 		template <class Predicate, class Scanner>
@@ -530,13 +540,44 @@ namespace storm {
 					continue;
 				}
 
-				if (!at->mayReferTo(toScan))
+				if (!at->mayReferTo(ticket, toScan))
 					continue;
 
 				r = at->scanIf<Predicate, Scanner>(predicate, source);
 				if (r != typename Scanner::Result())
 					return r;
 			}
+
+			return r;
+		}
+
+		template <class Predicate, class Scanner>
+		typename Scanner::Result Generation::scanUpdate(ArenaTicket &ticket,
+													GenChunk &chunk,
+													const Predicate &predicate,
+													GenSet toScan,
+													typename Scanner::Source &source) {
+
+			GenSet summary;
+
+			typename Scanner::Result r = typename Scanner::Result();
+			Block *end = (Block *)chunk.memory.end();
+			for (Block *at = (Block *)chunk.memory.at; at != end; at = (Block *)at->mem(at->size)) {
+				// We need to scan these...
+				at->clearFlag(Block::fSkipScan);
+
+				if (at->mayReferTo(ticket, toScan)) {
+					r = at->scanUpdate<Predicate, Scanner>(ticket, predicate, source);
+					if (r != typename Scanner::Result())
+						return r;
+				}
+
+				summary.add(at->genSummary());
+			}
+
+			// Update memory protection and remember the references.
+			chunk.summary = summary;
+			ticket.watchWrites(chunk.memory);
 
 			return r;
 		}

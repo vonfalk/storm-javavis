@@ -5,6 +5,8 @@
 #include "GenSet.h"
 #include "VMAlloc.h"
 #include "Format.h"
+#include "GenScanner.h"
+#include "ArenaTicket.h"
 
 namespace storm {
 	namespace smm {
@@ -52,6 +54,11 @@ namespace storm {
 			}
 			inline void clearFlag(Flags flag) {
 				atomicAnd(flags, ~flag);
+			}
+
+			// Get a chunk representing this block.
+			inline Chunk chunk() const {
+				return Chunk((void *)this, sizeof(Block) + size);
 			}
 
 			// Amount of memory committed (excluding the block itself).
@@ -120,17 +127,16 @@ namespace storm {
 
 			// Is it possible that this block contains references to a generation with the specified
 			// number?
-			bool mayReferTo(byte gen) const {
-				// TODO: Check stale memory!
-				return true;
-
-				return summary.has(gen);
+			bool mayReferTo(ArenaTicket &ticket, byte gen) const {
+				return summary.has(gen) || ticket.anyWrites(chunk());
 			}
-			bool mayReferTo(GenSet gen) const {
-				// TODO: Check stale memory!
-				return true;
+			bool mayReferTo(ArenaTicket &ticket, GenSet gen) const {
+				return summary.has(gen) || ticket.anyWrites(chunk());
+			}
 
-				return summary.has(gen);
+			// Get the pointer summary.
+			inline GenSet genSummary() const {
+				return summary;
 			}
 
 			// Traverse all objects in this block, calling the supplied function on each
@@ -151,7 +157,6 @@ namespace storm {
 			// Scan all objects in this block using the supplied scanner.
 			template <class Scanner>
 			typename Scanner::Result scan(typename Scanner::Source &source) {
-				// TODO: Perhaps we should update our summary here?
 				return fmt::Scan<Scanner>::objects(source, mem(fmt::headerSize), mem(fmt::headerSize + committed()));
 			}
 
@@ -161,6 +166,19 @@ namespace storm {
 				return fmt::Scan<Scanner>::template objectsIf<Predicate>(predicate, source,
 																		mem(fmt::headerSize),
 																		mem(fmt::headerSize + committed()));
+			}
+
+			// Scan all objects, and update the summary.
+			template <class Predicate, class Scanner>
+			typename Scanner::Result scanUpdate(ArenaTicket &ticket,
+												const Predicate &predicate,
+												typename Scanner::Source &source) {
+
+				typedef GenScanner<Predicate, Scanner> Scan;
+				Scan::Source s(ticket, predicate, source);
+				typename Scanner::Result r = scanIf<Scan::Pred, Scan>(s.predicate, s);
+				summary = s.result;
+				return r;
 			}
 
 			// Fill memory summary.

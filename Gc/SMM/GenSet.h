@@ -84,11 +84,13 @@ namespace storm {
 			// The one and only value we need.
 			size_t data;
 
-			// Create a mask for a particular generation.
+			// Create a mask for a particular generation, or zero if none exists.
 			static inline nat64 mask(byte gen) {
-				return nat64(1) << (gen & genMask);
+				return nat64(gen < maxGen) << (gen & genMask);
 			}
 		};
+
+		wostream &operator <<(wostream &to, GenSet genSet);
 
 
 	}
