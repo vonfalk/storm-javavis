@@ -49,6 +49,16 @@ namespace storm {
 			// Get the identifier for an allocation safely. Returns 0xFF on failure.
 			inline byte safeIdentifier(void *addr) const {
 				size_t a = size_t(addr);
+				// We're doing this without branches for performance. It is called quite frequently
+				// during scanning, and the branch predictor will not do a good job there.
+				// This branch-free implementation seems slower than the original (not by much).
+				// bool mask = (a >= minAddr) & (a < maxAddr);
+				// byte data = info[infoOffset(addr) * mask] * mask;
+
+				// byte used = (~data) & 0x01;
+				// return infoData(data) | (used * 0xFF);
+
+				// Original implementation:
 				if (a >= minAddr && a < maxAddr) {
 					byte data = info[infoOffset(addr)];
 					if (infoClientUse(data))

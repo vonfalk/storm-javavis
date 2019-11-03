@@ -85,8 +85,8 @@ namespace storm {
 			size_t data;
 
 			// Create a mask for a particular generation, or zero if none exists.
-			static inline nat64 mask(byte gen) {
-				return nat64(gen < maxGen) << (gen & genMask);
+			static inline size_t mask(byte gen) {
+				return size_t(gen < maxGen) << (gen & genMask);
 			}
 		};
 
