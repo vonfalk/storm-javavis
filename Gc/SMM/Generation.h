@@ -563,8 +563,9 @@ namespace storm {
 			typename Scanner::Result r = typename Scanner::Result();
 			Block *end = (Block *)chunk.memory.end();
 			for (Block *at = (Block *)chunk.memory.at; at != end; at = (Block *)at->mem(at->size)) {
-				// We need to scan these...
-				at->clearFlag(Block::fSkipScan);
+				// We need to scan these... (Some memory might be protected, so needlessly writing might be a bad idea).
+				if (at->hasFlag(Block::fSkipScan))
+					at->clearFlag(Block::fSkipScan);
 
 				if (at->mayReferTo(ticket, toScan)) {
 					r = at->scanUpdate<Predicate, Scanner>(ticket, predicate, source);
