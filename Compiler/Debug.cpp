@@ -462,6 +462,16 @@ namespace storm {
 
 		void docFunction(Int param) {}
 
+		DbgAbstract::DbgAbstract() {}
+
+		Int DbgAbstract::member() {
+			return 0;
+		}
+
+		Int DbgAbstract::real() {
+			return 100;
+		}
+
 	}
 }
 

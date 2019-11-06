@@ -493,6 +493,9 @@ static void genFunctions(wostream &to, World &w) {
 		if (!f.isVirtual && f.isMember)
 			to << L" | CppFunction::fnFinal";
 
+		if (f.isAbstract)
+			to << L" | CppFunction::fnAbstract";
+
 		to << L", ";
 
 		// Access.

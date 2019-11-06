@@ -277,10 +277,26 @@ static void parseMember(Tokenizer &tok, ParseEnv &env, Namespace &addTo, Access 
 		if (tok.skipIf(L"const"))
 			f.isConst = true;
 
-		if (tok.skipIf(L"ON")) {
-			tok.expect(L"(");
-			f.thread = parseName(tok);
-			tok.expect(L")");
+		while (true) {
+			Token next = tok.peek();
+			if (next.token == L";" || next.token == L"{")
+				break;
+
+			if (tok.skipIf(L"ON")) {
+				tok.expect(L"(");
+				f.thread = parseName(tok);
+				tok.expect(L")");
+			} else if (tok.skipIf(L"ABSTRACT")) {
+				f.isAbstract = true;
+			} else if (tok.skipIf(L"override")) {
+				// We don't really handle this, but why not allow it?
+				// TODO: Perhaps we want to set 'isVirtual'?
+			} else if (tok.skipIf(L"final")) {
+				// This means 'final'.
+				f.isVirtual = false;
+			} else {
+				throw Error(L"Unsupported function modifier: " + tok.peek().token, tok.peek().pos);
+			}
 		}
 
 		f.isStatic = isStatic;

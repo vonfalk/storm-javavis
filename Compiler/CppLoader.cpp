@@ -473,7 +473,8 @@ namespace storm {
 		if (fnKind(fn) == CppFunction::fnStatic)
 			f->make(fnStatic);
 
-		// Note: CppFunction::fnFinal has no meaning for free functions, so we can ignore it here.
+		// Note: CppFunction::fnFinal or CppFunction::fnAbstract has no meaning for free functions,
+		// so we can ignore it here.
 
 		f->visibility = visibility(fn.access);
 		setDoc(f, fn.doc, fn.params);
@@ -514,6 +515,9 @@ namespace storm {
 
 		if (fnHasFlag(fn, CppFunction::fnFinal))
 			f->make(fnFinal);
+
+		if (fnHasFlag(fn, CppFunction::fnAbstract))
+			f->make(fnAbstract);
 
 		f->visibility = visibility(fn.access);
 		setDoc(f, fn.doc, fn.params);

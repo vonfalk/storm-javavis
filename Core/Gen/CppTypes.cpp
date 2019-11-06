@@ -1,4 +1,9 @@
 #include "stdafx.h"
+
+// Make all exposed classes non-abstract.
+#undef ABSTRACT
+#define ABSTRACT
+
 #include "Utils/Memory.h"
 #include "Utils/TypeInfo.h"
 #include "Core/Gen/CppTypes.h"
@@ -19,6 +24,8 @@
 // THREAD_GLOBALS
 
 // VTABLE_DECLS
+
+// ABSTRACT_IMPLS
 
 // Turn off optimizations in this file. It takes quite a long time, and since it is only executed
 // once during compiler startup, it is not very useful to optimize these functions. Especially not

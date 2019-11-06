@@ -18,3 +18,25 @@ Int createNoAbstract() {
 	NoAbstract x;
 	x.fun();
 }
+
+
+
+class CppNoAbstract extends debug:DbgAbstract {
+	Int member() {
+		10;
+	}
+
+	Int real() {
+		50;
+	}
+}
+
+Int createCppAbstract() {
+	debug:DbgAbstract x;
+	x.member();
+}
+
+Int createCppNoAbstract() {
+	CppNoAbstract x;
+	x.member() + x.real();
+}

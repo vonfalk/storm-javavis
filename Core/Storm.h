@@ -227,6 +227,14 @@
 #define STORM_NAME(x, y) x
 
 /**
+ * Allow using abstract functions with the 'abstract' keyword.
+ *
+ * This allows us to re-define it in order to instantiate abstract classes to make them extensible
+ * from Storm.
+ */
+#define ABSTRACT = 0
+
+/**
  * The name of entry points for this build. The debug and release builds look slightly different
  * memory-wise here and there, so the entry points of the shared libraries have different name to
  * avoid confusion and strange crashes.

@@ -268,5 +268,15 @@ namespace storm {
 		// Check documentation
 		void STORM_FN docFunction(Int param);
 
+		// Check so that abstract classes in C++ can be instantiated in Storm.
+		class DbgAbstract : public Object {
+			STORM_CLASS;
+		public:
+			STORM_CTOR DbgAbstract();
+
+			virtual Int STORM_FN member() ABSTRACT;
+			virtual Int STORM_FN real();
+		};
+
 	}
 }

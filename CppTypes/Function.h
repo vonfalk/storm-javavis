@@ -53,8 +53,11 @@ public:
 	// Trailing const modifier?
 	bool isConst;
 
-	// Leading 'virtual' modifier?
+	// Leading 'virtual' modifier? Means it is not final.
 	bool isVirtual;
+
+	// Is this function marked 'abstract'?
+	bool isAbstract;
 
 	// Assignment function (marked STORM_ASSIGN).
 	bool isAssign;

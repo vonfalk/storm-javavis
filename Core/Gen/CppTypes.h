@@ -206,6 +206,9 @@ namespace storm {
 
 			// This function is final (ie. non-virtual in C++).
 			fnFinal = 0x200,
+
+			// This function is abstract.
+			fnAbstract = 0x400,
 		};
 
 		// Kind.
