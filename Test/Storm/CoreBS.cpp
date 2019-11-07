@@ -71,7 +71,7 @@ BEGIN_TEST(InheritanceTest, BS) {
 	CHECK_EQ(runFn<Int>(S("test.bs.testInner")), 25);
 } END_TEST
 
-BEGIN_TEST_(AbstractTest, BS) {
+BEGIN_TEST(AbstractTest, BS) {
 	CHECK_EQ(runFn<Int>(S("test.bs.createNoAbstract")), 10);
 	CHECK_ERROR(runFn<Int>(S("test.bs.createAbstract")), InstantiationError);
 

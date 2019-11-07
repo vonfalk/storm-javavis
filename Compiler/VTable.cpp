@@ -246,8 +246,8 @@ namespace storm {
 	VTableSlot VTable::findSlot(Function *fn, bool setLookup) {
 		Code *c = fn->getCode();
 		bool cppType = (owner->typeFlags & typeCpp) == typeCpp;
-		if (cppType && as<StaticCode>(c) != null) {
-			// Might be a function from C++.
+		if (cppType && (as<StaticCode>(c) || as<CppMemberFunction>(fn))) {
+			// Might be a function from C++!
 			const void *addr = fn->originalPtr();
 			nat r = cpp->findSlot(addr);
 			if (r != vtable::invalid) {

@@ -137,6 +137,9 @@ static void genAbstractImpls(wostream &to, World &w) {
 		if (!fn.isMember || !fn.isAbstract)
 			continue;
 
+		// Output the overload of the abstract function (this will most likely never be called as we
+		// generate our own versions in Storm, as the vtable might link directly to a C++ function
+		// that calls 'terminate').
 		to << fn.result << L" " << fn.name << L"(";
 		for (nat i = 1; i < fn.params.size(); i++) {
 			if (i > 1)

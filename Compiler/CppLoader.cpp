@@ -494,7 +494,6 @@ namespace storm {
 
 		const void *ptr = deVirtualize(firstParam.type, fn.ptr);
 		Function *f = new (*e) CppMemberFunction(result, new (*e) Str(fn.name), params, fn.ptr);
-		f->setCode(new (*e) StaticCode(ptr));
 
 		if (cast)
 			f->makeAutoCast();
@@ -516,13 +515,20 @@ namespace storm {
 		if (fnHasFlag(fn, CppFunction::fnFinal))
 			f->make(fnFinal);
 
-		if (fnHasFlag(fn, CppFunction::fnAbstract))
-			f->make(fnAbstract);
-
 		f->visibility = visibility(fn.access);
 		setDoc(f, fn.doc, fn.params);
 
 		params->at(0).type->add(f);
+
+		// We don't rely on the vtable to be correct in this particular case. Depending on which
+		// instance of the vtable we get, we might get a version that calls the C++ runtime's
+		// version of "pure virtual call", which we don't want.
+		if (fnHasFlag(fn, CppFunction::fnAbstract)) {
+			f->make(fnAbstract);
+			f->setCode(abstractThrowCode(result, params, f->identifier()));
+		} else {
+			f->setCode(new (*e) StaticCode(ptr));
+		}
 	}
 
 	Array<Value> *CppLoader::loadFnParams(const CppParam *params) {

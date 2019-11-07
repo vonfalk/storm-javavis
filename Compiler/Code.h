@@ -189,4 +189,8 @@ namespace storm {
 		CodeGen *CODECALL generatePtr();
 	};
 
+
+	// Create code that throws an AbstractFnCalled exception, suitable to use for abstract functions.
+	Code *STORM_FN abstractThrowCode(Value result, Array<Value> *params, Str *name);
+
 }

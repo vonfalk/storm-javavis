@@ -230,4 +230,23 @@ namespace storm {
 		return state;
 	}
 
+	Code *STORM_FN abstractThrowCode(Value result, Array<Value> *params, Str *name) {
+		using namespace code;
+		Engine &e = params->engine();
+
+		CodeGen *g = new (e) CodeGen(RunOn(), true, result);
+		for (Nat i = 0; i < params->count(); i++)
+			g->createParam(params->at(i));
+
+		*g->l << prolog();
+		*g->l << fnParam(e.ptrDesc(), objPtr(name));
+		*g->l << fnCall(e.ref(Engine::rThrowAbstractError), false);
+
+		// 'throwAbstractError' does not return, but to be sure.
+		*g->l << epilog();
+		*g->l << ret(Size());
+
+		return new (e) DynamicCode(g->l);
+	}
+
 }
