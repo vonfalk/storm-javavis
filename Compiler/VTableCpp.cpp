@@ -444,7 +444,17 @@ namespace storm {
 			// something which does not look like a pointer. We also know that all member functions
 			// are aligned at even addresses at the very least. Since vtables generally start with
 			// null or something that is not code, we can use that to find the end of the VTable.
-			nat size = 1;
+
+			// The layout of VTables for GCC seems to be (at least in our case):
+			// -2: Some kind of offset, probably for multiple inheritance.
+			// -1: Type information.
+			// 0: Destructor (scalar or array)
+			// 1: Destructor (scalar or array)
+			// 2: Function 1.
+
+			// Since the destructors might be null in some cases (abstract classes), we always assume they are there.
+
+			nat size = 2;
 			while (addrInfo(table + size) == addrData) {
 				const void *entry = table[size];
 
