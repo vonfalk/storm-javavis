@@ -37,6 +37,8 @@
  * Some implementations (most notably GCC) require a 'key method' to be declared as the first member
  * in a class, that is defined in the CppTypes.cpp-file in order to make sure that vtables are
  * generated properly for abstract classes.
+ *
+ * See "Vague Linkage" in the GCC manual for details: https://gcc.gnu.org/onlinedocs/gcc/Vague-Linkage.html
  */
 #if defined(GCC)
 #define STORM_NEED_KEY_FUNCTION
@@ -110,6 +112,15 @@
 
 // Mark a class or actor.
 #define STORM_CLASS								\
+	public:										\
+	STORM_TYPE_DECL								\
+	STORM_OBJ_COMMON							\
+	using storm::RootObject::toS;				\
+	private:
+
+// Mark an abstract class or actor. Same as 'STORM_CLASS', but sometimes need to introduce an
+// additional 'key method' for proper vtable generation in C++ (see above for details).
+#define STORM_ABSTRACT_CLASS					\
 	public:										\
 	STORM_KEY_FUNCTION_DECL						\
 	STORM_TYPE_DECL								\

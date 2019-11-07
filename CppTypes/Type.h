@@ -78,6 +78,10 @@ public:
 	// Is this a value-type?
 	bool valueType;
 
+	// Is this an abstract type? If it is abstract, we allow it to contain abstract
+	// functions. Otherwise we don't.
+	bool abstractType;
+
 	// Parent class (if any).
 	CppName parent;
 

@@ -37,8 +37,8 @@ wostream &operator <<(wostream &to, const Type &type) {
  */
 
 Class::Class(const CppName &name, const String &pkg, const SrcPos &pos, const Auto<Doc> &doc) :
-	Type(name, pkg, pos, doc), valueType(false), parent(L""), hiddenParent(false),
-	dtorFound(false), parentType(null), threadType(null) {}
+	Type(name, pkg, pos, doc), valueType(false), abstractType(false), parent(L""),
+	hiddenParent(false), dtorFound(false), parentType(null), threadType(null) {}
 
 void Class::resolveTypes(World &in) {
 	CppName ctx = name;
@@ -241,6 +241,10 @@ void ClassNamespace::add(const Variable &v) {
 void ClassNamespace::add(const Function &f) {
 	if (f.name == Function::dtor)
 		owner.dtorFound = true;
+
+	if (f.isAbstract && !owner.abstractType)
+		throw Error(L"The member function \"" + f.name + L"\" is marked abstract, "
+					L"but the class is not marked with STORM_ABSTRACT_CLASS.", f.pos);
 
 	Function g = f;
 	g.name = owner.name + f.name;

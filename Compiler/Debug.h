@@ -270,7 +270,7 @@ namespace storm {
 
 		// Check so that abstract classes in C++ can be instantiated in Storm.
 		class DbgAbstract : public Object {
-			STORM_CLASS;
+			STORM_ABSTRACT_CLASS;
 		public:
 			STORM_CTOR DbgAbstract();
 
@@ -280,7 +280,7 @@ namespace storm {
 
 		// Check abstract classes with destructors.
 		class DbgAbstractDtor : public Object {
-			STORM_CLASS;
+			STORM_ABSTRACT_CLASS;
 		public:
 			STORM_CTOR DbgAbstractDtor();
 			~DbgAbstractDtor();
