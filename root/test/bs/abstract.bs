@@ -25,10 +25,6 @@ class CppNoAbstract extends debug:DbgAbstract {
 	Int member() {
 		10;
 	}
-
-	Int real() {
-		50;
-	}
 }
 
 Int createCppAbstract() {
@@ -39,4 +35,27 @@ Int createCppAbstract() {
 Int createCppNoAbstract() {
 	CppNoAbstract x;
 	x.member() + x.real();
+}
+
+class CppCallSuper extends debug:DbgAbstract {
+	Int member() {
+		super:member();
+		10;
+	}
+}
+
+Int cppCallSuper() {
+	CppCallSuper s;
+	s.member();
+}
+
+class CppAbstractDtor extends debug:DbgAbstractDtor {
+	Int member() {
+		10;
+	}
+}
+
+Int cppAbstractDtor() {
+	CppAbstractDtor x;
+	x.member();
 }

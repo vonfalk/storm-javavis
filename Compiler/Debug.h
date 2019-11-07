@@ -274,8 +274,20 @@ namespace storm {
 		public:
 			STORM_CTOR DbgAbstract();
 
-			virtual Int STORM_FN member() ABSTRACT;
+			virtual Int STORM_FN member() const ABSTRACT;
 			virtual Int STORM_FN real();
+		};
+
+		// Check abstract classes with destructors.
+		class DbgAbstractDtor : public Object {
+			STORM_CLASS;
+		public:
+			STORM_CTOR DbgAbstractDtor();
+			~DbgAbstractDtor();
+
+			virtual Int STORM_FN member() ABSTRACT;
+
+			static Int destroyCount;
 		};
 
 	}

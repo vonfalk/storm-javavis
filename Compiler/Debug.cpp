@@ -464,12 +464,16 @@ namespace storm {
 
 		DbgAbstract::DbgAbstract() {}
 
-		Int DbgAbstract::member() {
-			return 0;
-		}
-
 		Int DbgAbstract::real() {
 			return 100;
+		}
+
+		Int DbgAbstractDtor::destroyCount = 0;
+
+		DbgAbstractDtor::DbgAbstractDtor() {}
+
+		DbgAbstractDtor::~DbgAbstractDtor() {
+			destroyCount++;
 		}
 
 	}

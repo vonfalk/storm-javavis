@@ -75,8 +75,19 @@ BEGIN_TEST_(AbstractTest, BS) {
 	CHECK_EQ(runFn<Int>(S("test.bs.createNoAbstract")), 10);
 	CHECK_ERROR(runFn<Int>(S("test.bs.createAbstract")), InstantiationError);
 
-	CHECK_EQ(runFn<Int>(S("test.bs.createCppNoAbstract")), 60);
+	CHECK_EQ(runFn<Int>(S("test.bs.createCppNoAbstract")), 110);
 	CHECK_ERROR(runFn<Int>(S("test.bs.createCppAbstract")), InstantiationError);
+
+	CHECK_ERROR(runFn<Int>(S("test.bs.cppCallSuper")), AbstractFnCalled);
+
+	debug::DbgAbstractDtor::destroyCount = 0;
+	CHECK_RUNS(runFn<Int>(S("test.bs.cppAbstractDtor")));
+	for (int i = 0; i < 10; i++) {
+		gEngine().gc.collect();
+		if (debug::DbgAbstractDtor::destroyCount)
+			break;
+	}
+	CHECK_NEQ(debug::DbgAbstractDtor::destroyCount, 0);
 } END_TEST
 
 BEGIN_TEST(FinalTest, BS) {

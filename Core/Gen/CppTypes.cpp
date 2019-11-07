@@ -8,6 +8,7 @@
 #include "Utils/TypeInfo.h"
 #include "Core/Gen/CppTypes.h"
 #include "Core/Runtime.h"
+#include "Core/Exception.h"
 
 /**
  * Template for the generated cpp file.

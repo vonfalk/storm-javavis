@@ -26,4 +26,27 @@ namespace storm {
 	};
 
 
+	/**
+	 * Runtime errors.
+	 */
+
+	class EXCEPTION_EXPORT RuntimeError : public Exception {
+	public:
+		RuntimeError(const String &w) : w(w) {}
+		virtual String what() const { return w; }
+	private:
+		String w;
+	};
+
+
+	/**
+	 * Calling an abstract function.
+	 */
+	class EXCEPTION_EXPORT AbstractFnCalled : public RuntimeError {
+	public:
+		AbstractFnCalled(const String &name) : RuntimeError(L"Called an abstract function: " + name) {}
+	};
+
+
+
 }

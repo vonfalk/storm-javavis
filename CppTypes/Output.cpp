@@ -128,6 +128,29 @@ static void genVTableFns(wostream &to, World &w) {
 	}
 }
 
+static void genAbstractImpls(wostream &to, World &w) {
+	for (nat i = 0; i < w.functions.size(); i++) {
+		const Function &fn = w.functions[i];
+		if (!fn.isMember || !fn.isAbstract)
+			continue;
+
+		to << fn.result << L" " << fn.name << L"(";
+		for (nat i = 1; i < fn.params.size(); i++) {
+			if (i > 1)
+				to << L", ";
+			to << fn.params[i];
+		}
+		to << L") ";
+		if (fn.isConst)
+			to << L"const ";
+		to << L"{\n";
+
+		to << L"\tthrow storm::AbstractFnCalled(L\"" << fn.name << L"\");\n";
+
+		to << L"}\n";
+	}
+}
+
 static void genTypes(wostream &to, World &w) {
 	for (nat i = 0; i < w.types.size(); i++) {
 		Type &t = *w.types[i];
@@ -859,6 +882,7 @@ GenerateMap genMap() {
 		{ L"PTR_OFFSETS", &genPtrOffsets },
 		{ L"CPP_TYPES", &genTypes },
 		{ L"VTABLE_DECLS", &genVTableFns },
+		{ L"ABSTRACT_IMPLS", &genAbstractImpls },
 		{ L"TEMPLATE_ARRAYS", &genTemplateArrays },
 		{ L"FN_PARAMETERS", &genFnParams },
 		{ L"CPP_FUNCTIONS", &genFunctions },
