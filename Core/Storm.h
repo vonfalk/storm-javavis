@@ -11,8 +11,9 @@
  * being compiled to an external library of some kind.
  */
 
-// Detect debug mode.
+// Detect debug mode and platform.
 #include "Utils/Mode.h"
+#include "Utils/Platform.h"
 
 
 /**
@@ -31,6 +32,23 @@
  * TO_S(engine(), foo << L", " << bar);
  */
 #define TO_S(engine, concat) (*new (engine) storm::StrBuf() << concat).toS()
+
+/**
+ * Some implementations (most notably GCC) require a 'key method' to be declared as the first member
+ * in a class, that is defined in the CppTypes.cpp-file in order to make sure that vtables are
+ * generated properly for abstract classes.
+ */
+#if defined(GCC)
+#define STORM_NEED_KEY_FUNCTION
+#endif
+
+#ifdef STORM_NEED_KEY_FUNCTION
+#define STORM_KEY_FUNCTION_DECL virtual void storm_key_function();
+#define STORM_KEY_FUNCTION_IMPL(x) void x::storm_key_function() {}
+#else
+#define STORM_KEY_FUNCTION_DECL
+#define STORM_KEY_FUNCTION_IMPL(x)
+#endif
 
 /**
  * Common parts of STORM_CLASS and STORM_VALUE
@@ -93,6 +111,7 @@
 // Mark a class or actor.
 #define STORM_CLASS								\
 	public:										\
+	STORM_KEY_FUNCTION_DECL						\
 	STORM_TYPE_DECL								\
 	STORM_OBJ_COMMON							\
 	using storm::RootObject::toS;				\
@@ -251,7 +270,6 @@
 
 
 #include "Utils/Utils.h"
-#include "Utils/Platform.h"
 #include "Types.h"
 #include "Runtime.h"
 #include "Compare.h"

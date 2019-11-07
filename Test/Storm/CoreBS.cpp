@@ -79,6 +79,7 @@ BEGIN_TEST_(AbstractTest, BS) {
 	CHECK_ERROR(runFn<Int>(S("test.bs.createCppAbstract")), InstantiationError);
 
 	CHECK_ERROR(runFn<Int>(S("test.bs.cppCallSuper")), AbstractFnCalled);
+	CHECK_ERROR(runFn<Int>(S("test.bs.cppAbstractSuper")), AbstractFnCalled);
 
 	debug::DbgAbstractDtor::destroyCount = 0;
 	CHECK_RUNS(runFn<Int>(S("test.bs.cppAbstractDtor")));

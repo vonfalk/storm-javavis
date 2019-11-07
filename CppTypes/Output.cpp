@@ -84,6 +84,8 @@ static void genGlobals(wostream &to, World &w) {
 			to << L"const storm::Nat " << c->name << L"::stormTypeId = " << i << L";\n";
 			to << L"storm::Type *" << c->name << L"::stormType(storm::Engine &e) { return runtime::cppType(e, " << i << L"); }\n";
 			to << L"storm::Type *" << c->name << L"::stormType(const storm::RootObject *o) { return runtime::cppType(o->engine(), " << i << L"); }\n";
+			if (!c->valueType)
+				to << L"STORM_KEY_FUNCTION_IMPL(" << c->name << L");\n";
 		}
 	}
 }

@@ -51,11 +51,16 @@ Int cppCallSuper() {
 
 class CppAbstractDtor extends debug:DbgAbstractDtor {
 	Int member() {
+		super:member();
 		10;
 	}
 }
 
 Int cppAbstractDtor() {
+	CppAbstractDtor x;
+	10;
+}
+Int cppAbstractSuper() {
 	CppAbstractDtor x;
 	x.member();
 }

@@ -17,8 +17,7 @@
     but the scale of the issue should be assessed first.
   - [ ] Parsing core.lang.syntax.bnf takes about 80 ms, which is a bit on the high end when compiling code...
 
-* Loose ends so far [48/85]
-  - [ ] Destructors for abstract classes are not currently executed on Linux. We should warn about that!
+* Loose ends so far [48/84]
   - [ ] A new thread association for Actors would be useful. In many cases inside libraries, we want to be
     able to provide some object that is able to execute on any thread, yet have the semantics of an actor,
     since copying does not really make sense (e.g. ui.Painter, util.FileStream). Here, we would like to say:
