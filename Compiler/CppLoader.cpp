@@ -515,6 +515,9 @@ namespace storm {
 		if (fnHasFlag(fn, CppFunction::fnFinal))
 			f->make(fnFinal);
 
+		if (fnHasFlag(fn, CppFunction::fnAbstract))
+			f->make(fnAbstract);
+
 		f->visibility = visibility(fn.access);
 		setDoc(f, fn.doc, fn.params);
 
@@ -524,7 +527,6 @@ namespace storm {
 		// instance of the vtable we get, we might get a version that calls the C++ runtime's
 		// version of "pure virtual call", which we don't want.
 		if (fnHasFlag(fn, CppFunction::fnAbstract)) {
-			f->make(fnAbstract);
 			f->setCode(abstractThrowCode(result, params, f->identifier()));
 		} else {
 			f->setCode(new (*e) StaticCode(ptr));
