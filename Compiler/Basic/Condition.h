@@ -19,7 +19,7 @@ namespace storm {
 		 * condition was true.
 		 */
 		class Condition : public ObjectOn<Compiler> {
-			STORM_CLASS;
+			STORM_ABSTRACT_CLASS;
 		public:
 			// Create.
 			STORM_CTOR Condition();
@@ -32,7 +32,7 @@ namespace storm {
 
 			// Generate code for the condition. This will create and initialize the "result"
 			// variable, if applicable. Will return a boolean value as the CodeResult value.
-			virtual void STORM_FN code(CodeGen *state, CodeResult *ok);
+			virtual void STORM_FN code(CodeGen *state, CodeResult *ok) ABSTRACT;
 		};
 
 

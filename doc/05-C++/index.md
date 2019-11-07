@@ -41,7 +41,34 @@ There is also an additional marker, `STORM_ASSIGN`, that marks a function as an 
 in Storm. For details on the available markers, see the file `Core/Storm.h`.
 
 Note: If a function is not explicitly declared `virtual`, Storm assumes it is `final` even if the
-function overrides a virtual function in a parent class.
+function overrides a virtual function in a parent class. Storm understands the keyword `final` from
+C++11, so if a function is marked both `virtual` and `final` it is considered `final` anyway.
+
+
+Abstract classes
+----------------
+
+Abstract classes in C++ need special attention. In order to allow extending abstract classes from
+languages in Storm, Storm needs to be able to instantiate abstract classes even though it would
+normally not be allowed by C++. Therefore, this case needs special attention to work properly.
+
+Abstract functions (or in C++ terms, pure virtual functions) need to be marked with `ABSTRACT` as
+follows:
+
+```
+class MyInterface : public Object {
+    STORM_ABSTRACT_CLASS;
+public:
+    STORM_CTOR MyInterface();
+    void STORM_FN foo() ABSTRACT;
+};
+```
+
+Also note that classes containing any abstract functions need to be marked with
+`STORM_ABSTRACT_CLASS` rather than `STORM_CLASS`. The preprocessor will warn you if you have
+abstract functions in a class marked `STORM_CLASS`, but currently not the other way around. Having
+`STORM_ABSTRACT_CLASS` without abstract functions do not hurt, but it incurs a small overhead (more
+work to do by the preprocessor, and sometimes slightly larger virtual function tables).
 
 
 Garbage Collection

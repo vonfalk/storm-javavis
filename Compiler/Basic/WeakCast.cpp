@@ -10,10 +10,6 @@ namespace storm {
 
 		WeakCast::WeakCast() {}
 
-		SrcPos WeakCast::pos() {
-			throw AbstractFnCalled(L"WeakCast::code");
-		}
-
 		MAYBE(LocalVar *) STORM_FN WeakCast::result() {
 			if (created)
 				return created;
@@ -45,10 +41,6 @@ namespace storm {
 
 		MAYBE(Str *) WeakCast::overwrite() {
 			return null;
-		}
-
-		Value WeakCast::resultType() {
-			throw AbstractFnCalled(L"WeakCast::resultType");
 		}
 
 		void WeakCast::castCode(CodeGen *state, CodeResult *ok, MAYBE(LocalVar *) var) {

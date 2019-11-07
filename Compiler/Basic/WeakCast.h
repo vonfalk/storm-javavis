@@ -15,7 +15,7 @@ namespace storm {
 		 * casts in the system.
 		 */
 		class WeakCast : public Condition {
-			STORM_CLASS;
+			STORM_ABSTRACT_CLASS;
 		public:
 			// Create.
 			STORM_CTOR WeakCast();
@@ -25,7 +25,7 @@ namespace storm {
 			 */
 
 			// Get a suitable position for the cast.
-			virtual SrcPos STORM_FN pos();
+			virtual SrcPos STORM_FN pos() ABSTRACT;
 
 			// Get the result variable created by this cast.
 			virtual MAYBE(LocalVar *) STORM_FN result();
@@ -42,7 +42,7 @@ namespace storm {
 			virtual MAYBE(Str *) STORM_FN overwrite();
 
 			// Get the type of the variable we wish to create.
-			virtual Value STORM_FN resultType();
+			virtual Value STORM_FN resultType() ABSTRACT;
 
 			// Generate code for the type-cast.
 			virtual void STORM_FN castCode(CodeGen *state, CodeResult *ok, MAYBE(LocalVar *) var);

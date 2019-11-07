@@ -21,10 +21,6 @@ namespace storm {
 			return null;
 		}
 
-		void Condition::code(CodeGen *state, CodeResult *ok) {
-			throw AbstractFnCalled(L"Condition::code");
-		}
-
 
 		/**
 		 * Boolean condition.
