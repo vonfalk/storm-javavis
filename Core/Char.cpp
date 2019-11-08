@@ -49,6 +49,8 @@ namespace storm {
 		return new (e.v) Str(ch);
 	}
 
+#ifdef VISUAL_STUDIO
+	// "wchar_t" is 16-bit UTF-16 on Windows.
 	wostream &operator <<(wostream &to, const Char &ch) {
 		wchar leading = ch.leading();
 		if (leading)
@@ -56,5 +58,11 @@ namespace storm {
 		to << ch.trailing();
 		return to;
 	}
+#else
+	// We assume that "wchar_t" is 32-bit UTF-32 here.
+	wostream &operator <<(wostream &to, const Char &ch) {
+		return to << (wchar_t)ch.codepoint();
+	}
+#endif
 
 }
