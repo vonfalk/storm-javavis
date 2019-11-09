@@ -88,6 +88,10 @@ namespace storm {
 			}
 		}
 
+		bool VMAlloc::expandAlloc(size_t minPieces) {
+			return false;
+		}
+
 		static inline size_t findRange(byte *in, size_t from, size_t to, size_t size) {
 			size_t start = from;
 			for (size_t i = from; i < to; i++) {
@@ -111,13 +115,20 @@ namespace storm {
 			size_t wrap = infoCount();
 			size_t start = findRange(info, lastAlloc, wrap, pieces);
 			if (start >= wrap) {
-				start = findRange(info, 0, min(wrap, lastAlloc + pieces), pieces);
+				size_t upperBound = min(wrap, lastAlloc + pieces);
+				start = findRange(info, 0, upperBound, pieces);
 
-				// Out of memory!
-				if (start > lastAlloc) {
-					TODO(L"Unable to serve request of size " << size);
-					TODO(L"We should try to reserve more memory here!");
-					return Chunk();
+				if (start >= upperBound) {
+					// Out of memory! Try to expand our allocated range!
+					if (!expandAlloc(pieces))
+						return Chunk();
+
+					wrap = infoCount();
+					start = findRange(info, 0, wrap, pieces);
+
+					// Still not enough? If so, we give up.
+					if (start >= wrap)
+						return Chunk();
 				}
 			}
 

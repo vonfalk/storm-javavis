@@ -108,7 +108,15 @@ namespace storm {
 
 
 			// We need to allocate more memory. TODO: How much?
-			Chunk c = arena.allocChunk(max(minSize, defaultChunkSize()), identifier);
+			// Start by attempting a fairly large allocation, and then back of if that fails.
+			Chunk c;
+			size_t allocSz = max(minSize, defaultChunkSize());
+			size_t lowerBound = max(minSize, vmAllocMinSize);
+			c = arena.allocChunk(allocSz, identifier);
+			while (c.empty() && allocSz > lowerBound) {
+				allocSz /= 2;
+				c = arena.allocChunk(allocSz, identifier);
+			}
 
 			// Out of memory?
 			if (c.empty())

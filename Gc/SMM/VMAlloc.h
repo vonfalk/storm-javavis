@@ -147,6 +147,10 @@ namespace storm {
 			// Add a chunk of reserved memory to our pool.
 			void addReserved(Chunk chunk);
 
+			// Attempt to allocate more memory, a minimum of 'minPieces' usable pieces, to
+			// serve a pending allocation request. Returns 'true' if successful.
+			bool expandAlloc(size_t minPieces);
+
 
 			/**
 			 * Contents of the 'info' member describing each chunk.
