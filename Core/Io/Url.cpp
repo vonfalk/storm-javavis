@@ -5,6 +5,7 @@
 #include "CloneEnv.h"
 #include "Protocol.h"
 #include "Core/Convert.h"
+#include "Core/Exception.h"
 
 namespace storm {
 
@@ -405,13 +406,16 @@ namespace storm {
 #elif defined(POSIX)
 	Url *cwdUrl(EnginePtr e) {
 		char path[PATH_MAX + 1] = { 0 };
-		getcwd(path, PATH_MAX);
+		if (!getcwd(path, PATH_MAX))
+			throw InternalError(L"Failed to get the current working directory.");
 		return parsePath(e.v, toWChar(e.v, path)->v);
 	}
 
 	Url *executableFileUrl(Engine &e) {
 		char path[PATH_MAX + 1] = { 0 };
-		readlink("/proc/self/exe", path, PATH_MAX);
+		ssize_t r = readlink("/proc/self/exe", path, PATH_MAX);
+		if (r >= PATH_MAX || r < 0)
+			throw InternalError(L"Failed to get the path of the executable.");
 		return parsePath(e, toWChar(e, path)->v);
 	}
 #else
