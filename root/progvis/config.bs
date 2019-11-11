@@ -1,0 +1,22 @@
+use ui;
+use graphics;
+use core:geometry;
+
+/**
+ * Defaults for the visualizations.
+ */
+
+// Default font when drawing data.
+Font dataFont on Render = defaultFont();
+
+// Background color when drawing data.
+Brush dataBg on Render = SolidBrush(white);
+
+// Text color when drawing text.
+Brush dataFg on Render = SolidBrush(black);
+
+// Border for data elements.
+Size dataBorder on Render = Size(4, 4);
+
+// Border for composite data elements.
+Size compositeBorder on Render = Size(8, 8);

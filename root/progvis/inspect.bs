@@ -1,0 +1,48 @@
+use core:lang;
+use lang:bs:macro;
+
+Str? convertPrimitive(Type t, unsafe:RawPtr object, Nat offset) {
+	if (t is named{core:Bool})
+		return object.readBool(offset).toS();
+	if (t is named{core:Byte})
+		return object.readByte(offset).toS();
+	if (t is named{core:Int})
+		return object.readInt(offset).toS();
+	if (t is named{core:Nat})
+		return object.readNat(offset).toS();
+	if (t is named{core:Long})
+		return object.readLong(offset).toS();
+	if (t is named{core:Word})
+		return object.readWord(offset).toS();
+	if (t is named{core:Float})
+		return object.readFloat(offset).toS();
+	if (t is named{core:Double})
+		return object.readDouble(offset).toS();
+
+	null;
+}
+
+value MemberOffset {
+	Str name;
+	Nat offset;
+	Value type;
+
+	init(Str name, Nat offset, Value type) {
+		init {
+			name = name;
+			offset = offset;
+			type = type;
+		}
+	}
+}
+
+MemberOffset[] findMembers(Type t) on Compiler {
+	t.forceLoad();
+	MemberOffset[] result;
+	for (elem in t) {
+		if (elem as MemberVar) {
+			result << MemberOffset(elem.name, elem.offset.current.nat, elem.type);
+		}
+	}
+	result;
+}

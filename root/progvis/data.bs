@@ -1,0 +1,240 @@
+use ui;
+use graphics;
+use core:geometry;
+use lang:bs:macro;
+
+// Create a suitable representation for a type.
+Data createData(Workspace work, core:lang:Value type, unsafe:RawPtr object, Nat offset) {
+	if (t = type.type) {
+		if (type.isValue) {
+			if (c = convertPrimitive(t, object, offset)) {
+				return Primitive(t, c);
+			} else {
+				return Composite(work, t, object, offset);
+			}
+		} else {
+			return Pointer(work, t, object, offset);
+		}
+	}
+
+	UnknownData();
+}
+
+// Create a suitable representation of an object from a pointer.
+Data createData(Workspace work, unsafe:RawPtr object) on Render {
+	// Pointers are always composite objects at the first level.
+	Composite(work, object.type, object, 0);
+}
+
+/**
+ * A data structure instantiated somewhere. Managed by a Workspace.
+ */
+class Data on Render {
+	init() {
+		init() {
+			pos = Point();
+		}
+	}
+
+	// Current position.
+	Point pos;
+
+	// Current size.
+	Size size() : abstract;
+
+	// Compute the bounding rectangle of this data element.
+	Rect rect() {
+		Rect(pos, size);
+	}
+
+	// Draw this data item at its current location.
+	void draw(Graphics g) : abstract {
+		Rect r = rect;
+		g.fill(r, dataBg);
+		g.draw(r, dataFg);
+	}
+
+	// Update the contents of the visualization from the actual data.
+	void update(Workspace work, unsafe:RawPtr object, Nat offset) : abstract;
+}
+
+/**
+ * Unknown data element.
+ */
+class UnknownData extends Data {
+	private Text text;
+
+	init() {
+		init() {
+			text = Text("?", dataFont);
+		}
+	}
+
+	Size size() : override {
+		text.size + dataBorder;
+	}
+
+	void draw(Graphics g) : override {
+		super:draw(g);
+		g.draw(text, dataFg, pos + dataBorder / 2);
+	}
+
+	void update(Workspace work, unsafe:RawPtr object, Nat offset) : override {}
+}
+
+
+/**
+ * A primitive datatype, such as an integer. Represented as text.
+ */
+class Primitive extends Data {
+	// The text to draw.
+	private Text text;
+
+	// Type of the data we're displaying.
+	core:lang:Type type;
+
+	init(core:lang:Type type, Str initial) {
+		init() {
+			text = Text(initial, dataFont);
+			type = type;
+		}
+	}
+
+	Size size() : override {
+		text.size + dataBorder;
+	}
+
+	void draw(Graphics g) : override {
+		super:draw(g);
+		g.draw(text, dataFg, pos + dataBorder / 2);
+	}
+
+	void update(Workspace work, unsafe:RawPtr object, Nat offset) : override {
+		if (s = convertPrimitive(type, object, offset))
+			text = Text(s, dataFont);
+	}
+}
+
+/**
+ * A pointer type, referring to some other data.
+ */
+class Pointer extends Data {
+	private Size sz;
+	private Data to;
+
+	init(Workspace work, core:lang:Type type, unsafe:RawPtr object, Nat offset) {
+		init() {
+			sz = Text("????", dataFont).size;
+			to = work.traverse(object.readPtr(offset));
+		}
+	}
+
+	Size size() : override {
+		sz + dataBorder;
+	}
+
+	void draw(Graphics g) : override {
+		super:draw(g);
+		g.line(rect.center, to.pos, dataFg);
+	}
+
+	void update(Workspace work, unsafe:RawPtr object, Nat offset) : override {
+		to = work.traverse(object.readPtr(offset));
+	}
+}
+
+/**
+ * A composite type, consisting of one or more variables of other types.
+ */
+class Composite extends Data {
+	init(Workspace work, core:lang:Type type, unsafe:RawPtr object, Nat offset) {
+		init() {
+			sizeComputed = false;
+		}
+
+		var members = findMembers(type);
+		members.sort((x, y) => x.offset < y.offset);
+
+		for (m in members) {
+			if (!m.type.ref) {
+				var data = createData(work, m.type, object, offset + m.offset);
+				content << Var(m.name, data, m.offset);
+			} else {
+				// Create a 'pointer' instance, or ignore.
+			}
+		}
+	}
+
+	Size size() : override {
+		if (!sizeComputed)
+			updateSize();
+		Size(namesWidth + dataWidth, height) + compositeBorder;
+	}
+
+	void draw(Graphics g) : override {
+		super:draw(g);
+
+		Point at = pos + compositeBorder/2;
+		for (v in content) {
+			var nameSz = v.text.size;
+			var dataSz = v.value.size;
+
+			g.draw(v.text, dataFg, at);
+
+			v.value.pos = at + Point(namesWidth + dataWidth - dataSz.w, 0);
+			v.value.draw(g);
+
+			at.y += max(nameSz.h, dataSz.h) + dataBorder.h;
+		}
+	}
+
+	void update(Workspace work, unsafe:RawPtr object, Nat offset) : override {
+		for (v in content) {
+			v.value.update(work, object, offset + v.offset);
+		}
+
+		sizeComputed = false;
+	}
+
+private:
+	class Var on Render {
+		Str name;
+		Text text;
+		Data value;
+		Nat offset;
+
+		init(Str name, Data value, Nat offset) {
+			init() {
+				name = name;
+				text = Text(name, dataFont);
+				value = value;
+				offset = offset;
+			}
+		}
+	}
+
+	Var[] content;
+	Float namesWidth;
+	Float dataWidth;
+	Float height;
+	Bool sizeComputed;
+
+	void updateSize() {
+		// TODO: It would probably be nice to recurse into
+		// the values that are themselves variables and render them
+		// more compactly.
+		namesWidth = 0;
+		dataWidth = 0;
+		height = 0;
+		for (v in content) {
+			var nameSz = v.text.size;
+			var dataSz = v.value.size;
+
+			namesWidth = max(namesWidth, nameSz.w + dataBorder.w);
+			dataWidth = max(dataWidth, dataSz.w);
+			height += max(nameSz.h, dataSz.h) + dataBorder.h;
+		}
+
+		height -= dataBorder.h;
+	}
+}

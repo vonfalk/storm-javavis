@@ -1,0 +1,98 @@
+use ui;
+use graphics;
+use core:geometry;
+
+/**
+ * A workspace, where we place all variables and other data structures currently
+ * visible to the user.
+ */
+class Workspace on Render {
+	init() {
+		init();
+	}
+
+	// Draw the workspace. Assumes we can clip anything not inside 'viewport'.
+	void render(Rect viewport, Graphics g) {
+		for (d in data) {
+			// TODO: Clipping?
+			d.visual.draw(g);
+		}
+	}
+
+	// Notify the workspace that we will start traversing objects now.
+	void beginTraversal() {
+		objMap.clear();
+		maxX = 0;
+		for (i, d in data) {
+			d.visited = false;
+			objMap.put(d.object, i);
+			maxX = max(maxX, d.visual.rect.p1.x);
+		}
+	}
+
+	// Recursively add an object to the workspace.
+	Data traverse(unsafe:RawPtr object) {
+		Nat id = objMap.get(object, data.count);
+		if (id < data.count) {
+			// Update the old instance if it is not yet traversed.
+			var elem = data[id];
+			if (!elem.visited) {
+				elem.visited = true;
+				elem.visual.update(this, object, 0);
+			}
+			return elem.visual;
+		} else {
+			// Create a new instance.
+			var xpos = maxX + 10;
+			maxX += 100;
+
+			// TODO: This will not work for cyclic structures. We need to update
+			// the map before traversal for that to work!
+			var visual = createData(this, object);
+			data << Val(object, visual);
+			objMap.put(object, id);
+
+			visual.pos = Point(xpos, 10);
+
+			return visual;
+		}
+	}
+
+	// Notify the workspace that traversal is over, and that any remaning objects may be removed.
+	void endTraversal() {
+		Nat to = 0;
+		for (Nat i = 0; i < data.count; i++) {
+			if (to < i)
+				data[to] = data[i];
+			if (data[i].visited)
+				to++;
+		}
+		while (to < data.count) {
+			data.pop();
+		}
+	}
+
+private:
+	class Val on Render {
+		unsafe:RawPtr object;
+		Data visual;
+		Bool visited;
+
+		init(unsafe:RawPtr object, Data visual) {
+			init {
+				object = object;
+				visual = visual;
+				visited = true;
+			}
+		}
+	}
+
+	// Data elements contained in the workspace.
+	Val[] data;
+
+	// Map of object pointers to the corresponding data elements.
+	unsafe:RawPtr->Nat objMap;
+
+	// Basic layout: Keep track of the next x-position in during the update.
+	Float maxX;
+}

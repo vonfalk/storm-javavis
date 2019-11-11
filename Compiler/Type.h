@@ -221,6 +221,9 @@ namespace storm {
 		// result is cached.
 		virtual code::TypeDesc *STORM_FN createTypeDesc();
 
+		// Modify the type handle, if desired. Called when the default construction is complete.
+		virtual void STORM_FN modifyHandle(Handle *handle);
+
 	private:
 		// Special constructor for creating the first type.
 		Type(Engine &e, TypeFlags flags, Size size, GcType *gcType);

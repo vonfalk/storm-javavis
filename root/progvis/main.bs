@@ -1,0 +1,79 @@
+use ui;
+use layout;
+use graphics;
+use core:geometry;
+
+/**
+ * Main window.
+ */
+window MainWin {
+	layout Border {
+		Window draw {}
+	}
+
+	private MainPainter painter;
+
+	init() {
+		init("Progvis", Size(800, 800)) {}
+		draw.painter(painter);
+		create();
+	}
+}
+
+class SampleType3 {
+	Int w;
+
+	init() {
+		init { w = 11; }
+	}
+}
+
+class SampleType2 {
+	Int z;
+	SampleType3 next;
+
+	init() {
+		init { z = 123; }
+	}
+}
+
+class SampleType {
+	Int x;
+	Int y;
+	SampleType2 ptr;
+	Point z;
+
+	init() {
+		init {
+			x = 10;
+			y = 20;
+			z = Point(2, 3);
+		}
+	}
+}
+
+class MainPainter extends Painter {
+	// The workspace we want to draw.
+	private Workspace workspace;
+
+	init() {
+		init();
+		bgColor = Color(0.8, 0.8, 0.8);
+
+		// Traverse a sample object hierarchy.
+		workspace.beginTraversal();
+		workspace.traverse(unsafe:RawPtr(SampleType()));
+		workspace.endTraversal();
+	}
+
+	Bool render(Size me, Graphics g) {
+		// TODO: Support navigation?
+		workspace.render(Rect(Point(), me), g);
+		false;
+	}
+}
+
+void main() {
+	MainWin win;
+	win.waitForClose();
+}

@@ -10,6 +10,7 @@
 #include "Lib/Clone.h"
 #include "Lib/Enum.h"
 #include "Lib/ToS.h"
+#include "Lib/RawPtr.h"
 #include "NameSet.h"
 #include "Package.h"
 #include "License.h"
@@ -75,6 +76,10 @@ namespace storm {
 			Str *body = new (e) Str(l->body);
 			core->add(new (e) License(id, title, author, body));
 		}
+
+		// Load other types.
+		Package *unsafe = e.package(S("unsafe"));
+		unsafe->add(new (e) RawPtrType(e));
 	}
 
 }

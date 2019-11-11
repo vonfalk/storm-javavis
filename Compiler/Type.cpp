@@ -1038,7 +1038,11 @@ namespace storm {
 		// Find the 'serializedType' function.
 		if (Function *f = as<Function>(find(S("serializedType"), new (engine) Array<Value>(), scope)))
 			updateHandle(f);
+
+		modifyHandle(h);
 	}
+
+	void Type::modifyHandle(Handle *) {}
 
 	void Type::updateHandleToS(bool first, Function *newFn) {
 		if (!value())
