@@ -557,7 +557,7 @@ SCtorStmt => v : SStmt(block) v;
 
 // Special statement for initializing the class.
 SCtorStmt[20] => InitBlock(pos, block, params) : "init" #keyword, SMaybeActuals(block) params, ";";
-SCtorStmt[20] => InitBlock(pos, block, params, init) : "init" #keyword, SMaybeActuals(block) params, "{", (SInitializer(block) init, ";", )* "}";
+SCtorStmt[20] => InitBlock(pos, block, params, init) : "init" #keyword, SMaybeActuals(block) params, "{"[, (SInitializer(block) init, ";", )* ]+ "}";
 
 // Special knowledge about "super(...)" to initialize the parent class.
 SCtorStmt[20] => SuperCall(pos, block, params) : "super" #keyword, SFnActuals(block) params, ";";
