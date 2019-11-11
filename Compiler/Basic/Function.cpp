@@ -158,7 +158,7 @@ namespace storm {
 			}
 
 			if (result == Value()) {
-				CodeResult *r = CREATE(CodeResult, this);
+				CodeResult *r = new (this) CodeResult();
 				bodyExpr->code(state, r);
 				state->returnValue(code::Var());
 			} else {
