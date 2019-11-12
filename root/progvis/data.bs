@@ -3,28 +3,6 @@ use graphics;
 use core:geometry;
 use lang:bs:macro;
 
-// Create a suitable representation for a type.
-Data createData(Workspace work, core:lang:Value type, unsafe:RawPtr object, Nat offset) {
-	if (t = type.type) {
-		if (type.isValue) {
-			if (c = convertPrimitive(t, object, offset)) {
-				return Primitive(t, c);
-			} else {
-				return Composite(work, t, object, offset);
-			}
-		} else {
-			return Pointer(work, t, object, offset);
-		}
-	}
-
-	UnknownData();
-}
-
-// Create a suitable representation of an object from a pointer.
-Data createData(Workspace work, unsafe:RawPtr object) on Render {
-	// Pointers are always composite objects at the first level.
-	Composite(work, object.type, object, 0);
-}
 
 /**
  * A data structure instantiated somewhere. Managed by a Workspace.
@@ -120,12 +98,11 @@ class Primitive extends Data {
  */
 class Pointer extends Data {
 	private Size sz;
-	private Data to;
+	private Data? to;
 
-	init(Workspace work, core:lang:Type type, unsafe:RawPtr object, Nat offset) {
+	init() {
 		init() {
 			sz = Text("????", dataFont).size;
-			to = work.traverse(object.readPtr(offset));
 		}
 	}
 
@@ -135,11 +112,21 @@ class Pointer extends Data {
 
 	void draw(Graphics g) : override {
 		super:draw(g);
-		g.line(rect.center, to.pos, dataFg);
+		Rect r = rect;
+		if (to) {
+			g.line(r.center, to.pos, dataFg);
+		} else {
+			g.line(rect.p0, rect.p1, dataFg);
+		}
 	}
 
 	void update(Workspace work, unsafe:RawPtr object, Nat offset) : override {
-		to = work.traverse(object.readPtr(offset));
+		var ptr = object.readPtr(offset);
+		if (ptr.any) {
+			to = work.traverse(ptr);
+		} else {
+			to = null;
+		}
 	}
 }
 
@@ -147,22 +134,15 @@ class Pointer extends Data {
  * A composite type, consisting of one or more variables of other types.
  */
 class Composite extends Data {
-	init(Workspace work, core:lang:Type type, unsafe:RawPtr object, Nat offset) {
+	init() {
 		init() {
 			sizeComputed = false;
 		}
+	}
 
-		var members = findMembers(type);
-		members.sort((x, y) => x.offset < y.offset);
-
-		for (m in members) {
-			if (!m.type.ref) {
-				var data = createData(work, m.type, object, offset + m.offset);
-				content << Var(m.name, data, m.offset);
-			} else {
-				// Create a 'pointer' instance, or ignore.
-			}
-		}
+	void add(Str name, Nat offset, Data data) {
+		content << Var(name, data, offset);
+		sizeComputed = false;
 	}
 
 	Size size() : override {

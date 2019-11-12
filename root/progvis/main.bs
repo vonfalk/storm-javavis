@@ -18,41 +18,65 @@ window MainWin {
 		draw.painter(painter);
 		create();
 	}
-}
 
-class SampleType3 {
-	Int w;
+	Bool onClick(Bool pressed, Point pt, MouseButton button) : override {
+		if (pressed) {
+			painter.advance();
+			repaint();
+		}
 
-	init() {
-		init { w = 11; }
+		true;
 	}
 }
 
-class SampleType2 {
-	Int z;
-	SampleType3 next;
+class Node {
+	Int value;
+	Node? next;
 
-	init() {
-		init { z = 123; }
+	init(Int value) {
+		init { value = value; }
 	}
 }
 
 class SampleType {
+	Node data;
+	Node data2;
 	Int x;
 	Int y;
-	SampleType2 ptr;
 	Point z;
 
 	init() {
+		Node tmp(8);
+
 		init {
+			data = tmp;
+			data2 = tmp;
 			x = 10;
 			y = 20;
-			z = Point(2, 3);
+			z = Point(2.5, 3.1);
+		}
+	}
+
+	void advance() {
+		z.x += 1;
+		Int count = 1;
+		Node at = data;
+		while (true) {
+			if (n = at.next) {
+				at = n;
+			} else {
+				at.next = Node(count);
+				return;
+			}
+			count++;
 		}
 	}
 }
 
 class MainPainter extends Painter {
+	// Temporary: data we're showing.
+	private SampleType data;
+
 	// The workspace we want to draw.
 	private Workspace workspace;
 
@@ -62,7 +86,16 @@ class MainPainter extends Painter {
 
 		// Traverse a sample object hierarchy.
 		workspace.beginTraversal();
-		workspace.traverse(unsafe:RawPtr(SampleType()));
+		workspace.traverse(unsafe:RawPtr(data));
+		workspace.endTraversal();
+	}
+
+	// Temporary: advance the animation.
+	void advance() {
+		data.advance();
+
+		workspace.beginTraversal();
+		workspace.traverse(unsafe:RawPtr(data));
 		workspace.endTraversal();
 	}
 

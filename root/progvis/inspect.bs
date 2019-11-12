@@ -22,12 +22,30 @@ Str? convertPrimitive(Type t, unsafe:RawPtr object, Nat offset) {
 	null;
 }
 
+/**
+ * Type information usable from other threads than the Compiler thread.
+ */
+value TypeInfo {
+	Type type;
+	Bool isValue;
+	Bool isRef;
+
+	init(Type type, Bool isValue, Bool isRef) {
+		init {
+			type = type; isValue = isValue; isRef = isRef;
+		}
+	}
+}
+
+/**
+ * Description of members.
+ */
 value MemberOffset {
 	Str name;
 	Nat offset;
-	Value type;
+	TypeInfo type;
 
-	init(Str name, Nat offset, Value type) {
+	init(Str name, Nat offset, TypeInfo type) {
 		init {
 			name = name;
 			offset = offset;
@@ -41,7 +59,19 @@ MemberOffset[] findMembers(Type t) on Compiler {
 	MemberOffset[] result;
 	for (elem in t) {
 		if (elem as MemberVar) {
-			result << MemberOffset(elem.name, elem.offset.current.nat, elem.type);
+			Value memberType = elem.type;
+
+			// We can just ignore maybe-types!
+			if (!memberType.ref) {
+				var unwrapped = unwrapMaybe(memberType);
+				if (!unwrapped.isValue)
+					memberType = unwrapped;
+			}
+
+			if (type = memberType.type) {
+				TypeInfo info(type, memberType.isValue, memberType.ref);
+				result << MemberOffset(elem.name, elem.offset.current.nat, info);
+			}
 		}
 	}
 	result;

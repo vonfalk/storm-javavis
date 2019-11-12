@@ -43,16 +43,18 @@ class Workspace on Render {
 			return elem.visual;
 		} else {
 			// Create a new instance.
-			var xpos = maxX + 10;
-			maxX += 100;
-
-			// TODO: This will not work for cyclic structures. We need to update
-			// the map before traversal for that to work!
 			var visual = createData(this, object);
 			data << Val(object, visual);
 			objMap.put(object, id);
 
-			visual.pos = Point(xpos, 10);
+			visual.pos = Point(maxX + 10, 10);
+			maxX += visual.size.w + 20;
+
+			// Follow pointers.
+			// TODO: We could actually let the creation of pointer-nodes handle
+			// this using a queue in a BFS fashion, so that we can lay out nodes
+			// in nice layers as a decent heuristic.
+			visual.update(this, object, 0);
 
 			return visual;
 		}
@@ -95,4 +97,34 @@ private:
 
 	// Basic layout: Keep track of the next x-position in during the update.
 	Float maxX;
+
+	// Create a new node for an object. Called by 'traverse'.
+	Data createData(unsafe:RawPtr object) {
+		// Note: We know that this is always a composite object.
+		createComposite(object.type, object, 0);
+	}
+
+	// Create a new node for some object.
+	Data createData(TypeInfo info, unsafe:RawPtr object, Nat offset) {
+		if (info.isRef | !info.isValue) {
+			return Pointer();
+		} else if (c = convertPrimitive(info.type, object, offset)) {
+			return Primitive(info.type, c);
+		} else {
+			return createComposite(info.type, object, offset);
+		}
+	}
+
+	// Create a new node for a composite object.
+	Composite createComposite(core:lang:Type type, unsafe:RawPtr object, Nat offset) {
+		Composite result;
+
+		var members = findMembers(type);
+		members.sort((x, y) => x.offset < y.offset);
+		for (m in members) {
+			result.add(m.name, m.offset, createData(m.type, object, offset + m.offset));
+		}
+
+		result;
+	}
 }

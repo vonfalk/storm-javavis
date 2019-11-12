@@ -36,9 +36,23 @@ namespace storm {
 		}
 	}
 
+	void rawPtrEmpty(InlineParams p) {
+		using namespace code;
+
+		*p.state->l << cmp(p.param(0), ptrConst(0));
+		*p.state->l << setCond(p.result->location(p.state).v, ifEqual);
+	}
+
+	void rawPtrAny(InlineParams p) {
+		using namespace code;
+
+		*p.state->l << cmp(p.param(0), ptrConst(0));
+		*p.state->l << setCond(p.result->location(p.state).v, ifNotEqual);
+	}
+
 	Str *CODECALL rawPtrToS(EnginePtr e, RootObject *ptr) {
 		StrBuf *buf = new (e) StrBuf();
-		*buf << hex(ptr);
+		*buf << S("0x") << hex(ptr);
 		return buf->toS();
 	}
 
@@ -80,7 +94,9 @@ namespace storm {
 		add(inlinedFunction(e, b, S("=="), vv, fnPtr(e, &numCmp<code::ifEqual>))->makePure());
 		add(inlinedFunction(e, b, S("!="), vv, fnPtr(e, &numCmp<code::ifNotEqual>))->makePure());
 		add(nativeFunction(e, n, S("hash"), v, address(&ptrHash)));
-		add(nativeFunction(e, str, S("toS"), v, address(&rawPtrToS)));
+		add(nativeEngineFunction(e, str, S("toS"), v, address(&rawPtrToS)));
+		add(inlinedFunction(e, b, S("empty"), v, fnPtr(e, &rawPtrEmpty))->makePure());
+		add(inlinedFunction(e, b, S("any"), v, fnPtr(e, &rawPtrAny))->makePure());
 
 		// Access.
 		Array<Value> *vo = new (this) Array<Value>(2, Value(this, false));
