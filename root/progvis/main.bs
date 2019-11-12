@@ -8,7 +8,13 @@ use core:geometry;
  */
 window MainWin {
 	layout Border {
-		Window draw {}
+		Grid {
+			wrapCols: 1;
+			expandCol: 0;
+			expandRow: 0;
+			Window draw {}
+			Button next("Next") {}
+		}
 	}
 
 	private MainPainter painter;
@@ -17,15 +23,13 @@ window MainWin {
 		init("Progvis", Size(800, 800)) {}
 		draw.painter(painter);
 		create();
+
+		next.onClick = &this.advance(Button);
 	}
 
-	Bool onClick(Bool pressed, Point pt, MouseButton button) : override {
-		if (pressed) {
-			painter.advance();
-			repaint();
-		}
-
-		true;
+	void advance(Button b) {
+		painter.advance();
+		draw.repaint();
 	}
 }
 
