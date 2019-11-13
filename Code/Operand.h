@@ -6,6 +6,7 @@
 #include "Block.h"
 #include "Label.h"
 #include "Reference.h"
+#include "Core/SrcPos.h"
 
 namespace code {
 	STORM_PKG(core.asm);
@@ -65,6 +66,9 @@ namespace code {
 
 		// Condition flag.
 		opCondFlag,
+
+		// Source code reference (SrcPos).
+		opSrcPos,
 	};
 
 	/**
@@ -94,6 +98,9 @@ namespace code {
 		// Reference.
 		STORM_CAST_CTOR Operand(Ref ref);
 		STORM_CAST_CTOR Operand(Reference *ref);
+
+		// SrcPos.
+		STORM_CAST_CTOR Operand(SrcPos pos);
 
 		/**
 		 * Operations.
@@ -143,6 +150,8 @@ namespace code {
 		Var STORM_FN var() const; // NOTE: The size of this variable is equal to the size
 		                          // we want to read, which is not always the size of the
 								  // original variable!
+
+		SrcPos STORM_FN srcPos() const;
 
 		/**
 		 * Debug.

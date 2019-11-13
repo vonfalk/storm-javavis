@@ -224,12 +224,12 @@ namespace storm {
 
 			// Skip until we reach the indicated position.
 			Nat pos = 0;
-			while (src->more() && pos < docPos.pos) {
+			while (src->more() && pos < docPos.start) {
 				src->read();
 				pos++;
 			}
 
-			if (pos != docPos.pos) {
+			if (pos != docPos.start) {
 				s->close();
 				throw DocError(L"Unable to find a comment in " + ::toS(docPos) + L". Is the file changed?");
 			}

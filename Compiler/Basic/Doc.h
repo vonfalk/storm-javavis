@@ -1,5 +1,5 @@
 #pragma once
-#include "SrcPos.h"
+#include "Core/SrcPos.h"
 #include "Compiler/Doc.h"
 
 namespace storm {

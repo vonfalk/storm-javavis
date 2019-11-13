@@ -1,7 +1,7 @@
 #pragma once
 #include "Core/Object.h"
 #include "Core/Str.h"
-#include "Compiler/SrcPos.h"
+#include "Core/SrcPos.h"
 
 namespace storm {
 	namespace syntax {

@@ -1,6 +1,6 @@
 #include "stdafx.h"
 #include "NamePart.h"
-#include "SrcPos.h"
+#include "Core/SrcPos.h"
 #include "Scope.h"
 #include "Name.h"
 #include "Type.h"

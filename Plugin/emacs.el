@@ -52,18 +52,15 @@
 (pushnew '(storm-pp "^ *\\([0-9]+>\\)?\\([^(\n\t]+\\)(\\([0-9]+\\),\\([0-9]+\\)):" 2 3 4 nil)
 	 compilation-error-regexp-alist-alist)
 (add-to-list 'compilation-error-regexp-alist 'storm-pp)
-(pushnew '(storm "^ *\\([0-9]+>\\)?@\\([^(\n\t]+\\)(\\([0-9]+\\)): [A-Za-z ]+ error:" 2 storm-compute-line 3 nil)
+(pushnew '(storm "^ *\\([0-9]+>\\)?@\\([^(\n\t]+\\)(\\([0-9]+\\)\\(-[0-9]+\\)?): [A-Za-z ]+ error:" 2 storm-compute-line 3 nil)
 	 compilation-error-regexp-alist-alist)
 (add-to-list 'compilation-error-regexp-alist 'storm)
 
-;; Needed for the indexing below to work.
-(setq compilation-error-screen-columns nil)
-(defun find-char-coords (buffer pos)
-  (with-current-buffer buffer
-    (save-excursion
-      (goto-char pos)
-      (list (line-number-at-pos)
-	    (1+ (- pos (line-beginning-position)))))))
+(defun storm-find-error-buffer (full-file)
+  (let ((buffer (find-buffer-visiting full-file)))
+    (if buffer
+	buffer
+      (find-file-noselect full-file))))
 
 (defun storm-compute-line (data col)
   (let* ((file (nth 0 data))
@@ -71,15 +68,13 @@
 	 (args (nth 2 data))
 	 (char (1+ (string-to-int col)))
 	 (full-file (expand-file-name file dir))
-	 (buffer (find-buffer-visiting full-file))
-	 (pos (if buffer
-		  (find-char-coords buffer char)
-		(find-char-coords (find-file-noselect full-file) char))))
+	 (buffer (storm-find-error-buffer full-file)))
 
-    (list nil ; Should be a marker, but is ignored by compile.el
-	  (list file dir)
-	  (nth 0 pos)
-	  (nth 1 pos))))
+    (with-current-buffer buffer
+      (save-excursion
+	(goto-char char)
+	(cons nil ; Should be a marker, but is ignored by compile.el
+	      (point-marker))))))
 
 ;; Storm-mode for buffers.
 (defun global-storm-mode (enable)

@@ -1,6 +1,6 @@
 #pragma once
 #include "Compiler/ExprResult.h"
-#include "Compiler/SrcPos.h"
+#include "Core/SrcPos.h"
 #include "Compiler/NamedThread.h"
 #include "Compiler/CodeGen.h"
 #include "Compiler/Syntax/SStr.h"

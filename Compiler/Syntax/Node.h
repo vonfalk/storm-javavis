@@ -1,6 +1,6 @@
 #pragma once
 #include "Compiler/NamedThread.h"
-#include "Compiler/SrcPos.h"
+#include "Core/SrcPos.h"
 
 namespace storm {
 	namespace syntax {

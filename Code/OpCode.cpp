@@ -72,6 +72,7 @@ namespace code {
 		OP_CODE(prolog, destNone),
 		OP_CODE(epilog, destNone),
 		OP_CODE(preserve, destWrite),
+		OP_CODE(location, destNone),
 		OP_CODE(beginBlock, destNone),
 		OP_CODE(endBlock, destNone),
 		OP_CODE(threadLocal, destNone),

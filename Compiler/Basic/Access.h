@@ -1,7 +1,7 @@
 #pragma once
 #include "Core/EnginePtr.h"
 #include "Compiler/Visibility.h"
-#include "Compiler/SrcPos.h"
+#include "Core/SrcPos.h"
 #include "Decl.h"
 
 namespace storm {

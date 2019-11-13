@@ -212,6 +212,9 @@ namespace code {
 	// Note that a register has been preserved on the stack.
 	Instr *STORM_FN preserve(EnginePtr e, Operand dest, Reg reg);
 
+	// Node a source position.
+	Instr *STORM_FN location(EnginePtr e, SrcPos pos);
+
 	// Scope management. A scope is assumed to be open on all instructions between "begin(scope)" and "end(scope)".
 	// Do not, for example, have all begin/end scopes in the end of the listing and jump forth and back between them.
 	// That makes the exception handling fail to detect what to destroy. NOTE: Does not preserve registers!

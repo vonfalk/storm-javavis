@@ -633,6 +633,10 @@ namespace code {
 			to->align(Nat(instr->src().constant()));
 		}
 
+		void locationOut(Output *, Instr *) {
+			// We don't currently offer the ability to lookup source locations in the final binary.
+		}
+
 		const OpEntry<OutputFn> outputMap[] = {
 			OUTPUT(mov),
 			OUTPUT(swap),
@@ -679,6 +683,7 @@ namespace code {
 			OUTPUT(dat),
 			OUTPUT(lblOffset),
 			OUTPUT(align),
+			OUTPUT(location),
 		};
 
 		void output(Listing *src, Output *to) {

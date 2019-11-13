@@ -13,7 +13,7 @@ namespace storm {
 		}
 
 		const wchar *Token::start() const {
-			return str->c_str() + pos.pos;
+			return str->c_str() + pos.start;
 		}
 
 		bool Token::operator ==(const wchar *t) const {
@@ -86,7 +86,7 @@ namespace storm {
 			  file(path),
 			  pos(start),
 			  commentStart(invalid),
-			  lookahead(src, 0, SrcPos(path, 0)) {
+			  lookahead(src, 0, SrcPos(path, 0, 0)) {
 
 			lookahead = findNext();
 		}
@@ -143,7 +143,7 @@ namespace storm {
 			if (commentStart == invalid)
 				return SrcPos();
 			else
-				return SrcPos(file, commentStart);
+				return SrcPos(file, commentStart, commentStart);
 		}
 
 		void Tokenizer::clearComment() {
@@ -158,7 +158,7 @@ namespace storm {
 			while (state != sDone)
 				processChar(start, state, firstComment);
 
-			return Token(src, pos - start, SrcPos(file, start));
+			return Token(src, pos - start, SrcPos(file, start, pos));
 		}
 
 		void Tokenizer::processChar(Nat &start, State &state, bool &firstComment) {

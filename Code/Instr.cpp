@@ -457,6 +457,10 @@ namespace code {
 		return instrDestSrc(e, op::preserve, dest, reg);
 	}
 
+	Instr *location(EnginePtr e, SrcPos pos) {
+		return instrLoose(e, op::location, Operand(), pos);
+	}
+
 	Instr *begin(EnginePtr e, Part part) {
 		return instrLoose(e, op::beginBlock, Operand(), part);
 	}

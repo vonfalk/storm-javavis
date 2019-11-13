@@ -98,9 +98,10 @@ namespace storm {
 			Bool Parser::parse(Rule *root, Str *str, Url *file, Str::Iter start) {
 				// Remember what we parsed.
 				src = str;
-				srcPos = SrcPos(file, start.offset());
-				Nat len = str->peekLength() + 1 - srcPos.pos;
+				Nat len = str->peekLength() + 1 - start.offset();
 				lastFinish = len + 1;
+				srcFile = file;
+				srcOffset = start.offset();
 
 				// Set up storage.
 				Engine &e = engine();
@@ -219,15 +220,14 @@ namespace storm {
 				if (!regex)
 					return;
 
-				nat offset = srcPos.pos;
-				nat matched = regex->regex.matchRaw(src, ptr.step + offset);
+				nat matched = regex->regex.matchRaw(src, ptr.step + srcOffset);
 				if (matched == Regex::NO_MATCH)
 					return;
 
 				// Should not happen, but better safe than sorry!
-				if (matched < offset)
+				if (matched < srcOffset)
 					return;
-				matched -= offset;
+				matched -= srcOffset;
 				if (matched > steps->count)
 					return;
 
@@ -312,7 +312,7 @@ namespace storm {
 
 			Str::Iter Parser::matchEnd() const {
 				if (finish())
-					return src->posIter(srcPos.pos + lastFinish);
+					return src->posIter(srcOffset + lastFinish);
 				else
 					return src->begin();
 			}
@@ -326,7 +326,7 @@ namespace storm {
 				} else if (pos == steps->count - 1) {
 					*msg << L"Unexpected end of stream.";
 				} else {
-					Char ch(src->c_str()[pos + srcPos.pos]);
+					Char ch(src->c_str()[pos + srcOffset]);
 					Str *chStr = new (this) Str(ch);
 					*msg << L"Unexpected '" << chStr->escape() << L"'.";
 				}
@@ -342,7 +342,8 @@ namespace storm {
 			}
 
 			SrcPos Parser::errorPos() const {
-				return srcPos + lastStep();
+				Nat step = srcOffset + lastStep();
+				return SrcPos(srcFile, step, step + 1);
 			}
 
 			nat Parser::lastStep() const {
@@ -418,7 +419,7 @@ namespace storm {
 
 			Node *Parser::tree(StatePtr fromPtr) const {
 				const State &from = state(fromPtr);
-				Node *result = allocNode(from);
+				Node *result = allocNode(from, fromPtr.step);
 				Production *prod = from.production();
 
 				// Remember capture start and capture end. Set 'repStart' to first token since we will
@@ -441,10 +442,11 @@ namespace storm {
 
 					if (token->target) {
 						if (as<RegexToken>(token)) {
-							Str::Iter from = src->posIter(at->prev.step + srcPos.pos);
-							Str::Iter to = src->posIter(atPtr.step + srcPos.pos);
+							Str::Iter from = src->posIter(at->prev.step + srcOffset);
+							Str::Iter to = src->posIter(atPtr.step + srcOffset);
 
-							setValue(result, token->target, new (this) SStr(src->substr(from, to), srcPos + at->prev.step));
+							SrcPos pos(srcFile, srcOffset + repStart, srcOffset + repEnd);
+							setValue(result, token->target, new (this) SStr(src->substr(from, to), pos));
 						} else if (as<RuleToken>(token)) {
 							assert(at->completed != StatePtr(), L"Rule token not completed!");
 							setValue(result, token->target, tree(at->completed));
@@ -459,10 +461,11 @@ namespace storm {
 
 				// Remember the capture.
 				if (prod->repCapture && prod->repCapture->target && repStart <= repEnd) {
-					Str::Iter from = src->posIter(repStart + srcPos.pos);
-					Str::Iter to = src->posIter(repEnd + srcPos.pos);
+					Str::Iter from = src->posIter(repStart + srcOffset);
+					Str::Iter to = src->posIter(repEnd + srcOffset);
 
-					setValue(result, prod->repCapture->target, new (this) SStr(src->substr(from, to), srcPos + repStart));
+					SrcPos pos(srcFile, srcOffset + repStart, srcOffset + repEnd);
+					setValue(result, prod->repCapture->target, new (this) SStr(src->substr(from, to), pos));
 				}
 
 				// Reverse all arrays in this node, as we're adding them backwards.
@@ -470,13 +473,13 @@ namespace storm {
 				return result;
 			}
 
-			Node *Parser::allocNode(const State &from) const {
+			Node *Parser::allocNode(const State &from, Nat endStep) const {
 				ProductionType *type = from.production()->type();
 
 				// A bit ugly, but this is enough for the object to be considered a proper object when
 				// it is populated.
 				void *mem = runtime::allocObject(type->size().current(), type);
-				Node *r = new (Place(mem)) Node(srcPos + from.from);
+				Node *r = new (Place(mem)) Node(SrcPos(srcFile, srcOffset + from.from, srcOffset + endStep));
 				type->vtable()->insert(r);
 
 				// Create any arrays needed.
@@ -558,8 +561,8 @@ namespace storm {
 						if (as<DelimToken>(token))
 							child->delimiter(true);
 					} else {
-						Str::Iter from = src->posIter(at->prev.step + srcPos.pos);
-						Str::Iter to = src->posIter(atPtr.step + srcPos.pos);
+						Str::Iter from = src->posIter(at->prev.step + srcOffset);
+						Str::Iter to = src->posIter(atPtr.step + srcOffset);
 						Str *s = emptyString;
 						if (from != to)
 							s = src->substr(from, to);

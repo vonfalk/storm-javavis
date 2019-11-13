@@ -22,6 +22,10 @@ namespace code {
 			to->markSaved(instr->src().reg(), instr->dest().offset());
 		}
 
+		void locationOut(Output *, Instr *) {
+			// We don't currently offer the ability to lookup source locations in the final binary.
+		}
+
 		void pushOut(Output *to, Instr *instr) {
 			const Operand &src = instr->src();
 			switch (src.type()) {
@@ -700,6 +704,7 @@ namespace code {
 			OUTPUT(prolog),
 			OUTPUT(epilog),
 			OUTPUT(preserve),
+			OUTPUT(location),
 
 			// Floating point.
 			OUTPUT(fstp),

@@ -269,7 +269,7 @@ namespace storm {
 				void setToken(Node *result, TreeNode &node, Nat endPos, Token *token) const;
 
 				// Create a syntax node for the production 'p'.
-				Node *allocNode(Production *p, Nat pos) const;
+				Node *allocNode(Production *p, Nat start, Nat end) const;
 
 				/**
 				 * Info tree computation.

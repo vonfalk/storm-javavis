@@ -103,8 +103,9 @@ namespace storm {
 				// Parsed source string.
 				Str *src;
 
-				// Initial position in 'src'. '.offset' contains the first char parsed (this corresponds to states[0]).
-				SrcPos srcPos;
+				// Current file and start position.
+				MAYBE(Url *) srcFile;
+				Nat srcOffset;
 
 				// Root production.
 				Production *rootProd;
@@ -144,7 +145,7 @@ namespace storm {
 				Node *tree(StatePtr end) const;
 
 				// Allocate a tree node.
-				Node *allocNode(const State &from) const;
+				Node *allocNode(const State &from, Nat endStep) const;
 
 				// Reverse all arrays in a node.
 				void reverseNode(Node *node) const;

@@ -74,6 +74,9 @@ namespace code {
 			// Note that a register has been preserved somewhere. Used to generate debugging information.
 			preserve,
 
+			// Source code reference, used for debug information or other transformations.
+			location,
+
 			// Blocks.
 			beginBlock,
 			endBlock,

@@ -1,7 +1,7 @@
 #pragma once
 #include "Expr.h"
 #include "Var.h"
-#include "Compiler/SrcPos.h"
+#include "Core/SrcPos.h"
 #include "Compiler/Scope.h"
 #include "Core/Map.h"
 

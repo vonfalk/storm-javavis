@@ -22,26 +22,34 @@ namespace code {
 	Operand::Operand() : opType(opNone), opPtr(null), opNum(0) {}
 
 	Operand::Operand(Reg r) : opType(opRegister), opPtr(null), opNum(r), opSize(code::size(r)) {
-		assert(r != noReg);
+		if (r == noReg)
+			throw InvalidValue(L"noReg is not a proper register!");
 	}
 
 	Operand::Operand(CondFlag c) : opType(opCondFlag), opPtr(null), opNum(c), opSize() {}
 
 	Operand::Operand(Part p) : opType(opPart), opPtr(null), opNum(p.id), opSize() {
-		assert(p != Part());
+		if (p == Part())
+			throw InvalidValue(L"Can not create an operand of an empty part.");
 	}
 
 	Operand::Operand(Var v) : opType(opVariable), opPtr(null), opNum(v.id), opSize(v.size()) {
-		assert(v != Var());
+		if (v == Var())
+			throw InvalidValue(L"Can not create an operand of an empty variable.");
 	}
 
 	Operand::Operand(Label l) : opType(opLabel), opPtr(null), opNum(l.id), opSize(Size::sPtr) {
-		assert(l != Label());
+		if (l == Label())
+			throw InvalidValue(L"Can not create an operand of an empty label.");
 	}
 
 	Operand::Operand(Ref ref) : opType(opReference), opPtr(ref.to), opNum(0), opSize(Size::sPtr) {}
 
 	Operand::Operand(Reference *ref) : opType(opReference), opPtr(ref->to), opNum(0), opSize(Size::sPtr) {}
+
+	Operand::Operand(SrcPos pos) : opType(opSrcPos), opPtr(pos.file), opNum(), opSize() {
+		opNum = Word(pos.start) | (Word(pos.end) << 32);
+	}
 
 	Operand::Operand(Word c, Size size) : opType(opConstant), opPtr(null), opNum(c), opSize(size) {}
 
@@ -56,11 +64,13 @@ namespace code {
 	}
 
 	Operand::Operand(Var v, Offset offset, Size size) : opType(opVariable), opPtr(null), opNum(v.id), opOffset(offset), opSize(size) {
-		assert(v != Var());
+		if (v == Var())
+			throw InvalidValue(L"Can not create an operand of an empty variable.");
 	}
 
 	Operand::Operand(Label l, Offset offset, Size size) : opType(opRelativeLbl), opPtr(null), opNum(l.id), opOffset(offset), opSize(size) {
-		assert(l != Label());
+		if (l == Label())
+			throw InvalidValue(L"Can not create an operand of an empty label.");
 	}
 
 	Bool Operand::operator ==(const Operand &o) const {
@@ -85,6 +95,14 @@ namespace code {
 		case opReference:
 		case opObjReference:
 			return opPtr == o.opPtr;
+		case opSrcPos:
+			if (opNum != o.opNum)
+				return false;
+			if (opPtr == null && o.opPtr == null)
+				return true;
+			if (opPtr == null || o.opPtr == null)
+				return false;
+			return *(Url *)opPtr == *(Url *)o.opPtr;
 		default:
 			assert(false, L"Unknown type!");
 			return false;
@@ -119,6 +137,7 @@ namespace code {
 		case opNone:
 		case opCondFlag:
 		case opPart:
+		case opSrcPos:
 			// TODO: Add more returning false here.
 			return false;
 		default:
@@ -158,7 +177,8 @@ namespace code {
 	}
 
 	Word Operand::constant() const {
-		assert(type() == opConstant, L"Not a constant!");
+		if (type() != opConstant)
+			throw InvalidValue(L"Not a constant!");
 		if (opType == opConstant) {
 			return opNum;
 		} else {
@@ -167,7 +187,8 @@ namespace code {
 	}
 
 	Reg Operand::reg() const {
-		assert(hasRegister(), L"Not a register!");
+		if (!hasRegister())
+			throw InvalidValue(L"Not a register!");
 		return Reg(opNum);
 	}
 
@@ -180,43 +201,63 @@ namespace code {
 	}
 
 	CondFlag Operand::condFlag() const {
-		assert(type() == opCondFlag, L"Not a CondFlag!");
+		if (type() != opCondFlag)
+			throw InvalidValue(L"Not a CondFlag!");
 		return CondFlag(opNum);
 	}
 
 	Part Operand::part() const {
-		assert(type() == opPart, L"Not a part!");
+		if (type() != opPart)
+			throw InvalidValue(L"Not a part!");
 		return Part(Nat(opNum));
 	}
 
 	Var Operand::var() const {
-		assert(type() == opVariable, L"Not a variable!");
+		if (type() != opVariable)
+			throw InvalidValue(L"Not a variable!");
 		return Var(Nat(opNum), size());
 	}
 
 	Ref Operand::ref() const {
-		assert(type() == opReference, L"Not a reference!");
+		if (type() != opReference)
+			throw InvalidValue(L"Not a reference!");
 		RefSource *s = (RefSource *)opPtr;
 		return Ref(s);
 	}
 
 	RefSource *Operand::refSource() const {
-		assert(type() == opReference, L"Not a reference!");
+		if (type() != opReference)
+			throw InvalidValue(L"Not a reference!");
 		return (RefSource *)opPtr;
 	}
 
 	RootObject *Operand::object() const {
-		assert(type() == opObjReference, L"Not an object reference!");
+		if (type() != opObjReference)
+			throw InvalidValue(L"Not an object reference!");
 		return (RootObject *)opPtr;
 	}
 
 	Label Operand::label() const {
-		assert(type() == opLabel || type() == opRelativeLbl, L"Not a label!");
+		if (type() != opLabel && type() != opRelativeLbl)
+			throw InvalidValue(L"Not a label!");
 		return Label(Nat(opNum));
 	}
 
+	SrcPos Operand::srcPos() const {
+		if (type() != opSrcPos)
+			throw InvalidValue(L"Not a SrcPos!");
+		Nat start = opNum & 0xFFFFFFFF;
+		Nat end = opNum >> 32;
+		return SrcPos((Url *)opPtr, start, end);
+	}
+
 	wostream &operator <<(wostream &to, const Operand &o) {
-		if (o.type() != opRegister && o.type() != opCondFlag && o.type() != opNone && o.type() != opPart) {
+		if (o.type() != opRegister
+			&& o.type() != opCondFlag
+			&& o.type() != opNone
+			&& o.type() != opPart
+			&& o.type() != opSrcPos) {
+
 			Size s = o.size();
 			if (s == Size::sPtr)
 				to << L"p";
@@ -269,6 +310,8 @@ namespace code {
 			}
 		case opCondFlag:
 			return to << code::name(o.condFlag());
+		case opSrcPos:
+			return to << o.srcPos();
 		default:
 			assert(false, L"Unknown type!");
 			return to << L"<invalid>";

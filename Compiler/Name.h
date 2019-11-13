@@ -1,6 +1,6 @@
 #pragma once
 #include "NamePart.h"
-#include "SrcPos.h"
+#include "Core/SrcPos.h"
 
 namespace storm {
 	STORM_PKG(core.lang);

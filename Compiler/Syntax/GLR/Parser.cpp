@@ -875,13 +875,14 @@ namespace storm {
 						Nat found = findMissingReq(item->tree, item->required);
 						if (found) {
 							// Just pick the first one!
-							return SrcPos(sourceUrl, store->at(found).pos());
+							Nat pos = store->at(found).pos();
+							return SrcPos(sourceUrl, pos, pos + 1);
 						}
 					}
 				}
 
 				// Otherwise, it's just 'lastPos'.
-				return SrcPos(sourceUrl, lastPos);
+				return SrcPos(sourceUrl, lastPos, lastPos + 1);
 			}
 
 			Node *Parser::tree() const {
@@ -920,7 +921,7 @@ namespace storm {
 					if (as<RegexToken>(token)) {
 						Str::Iter from = source->posIter(node.pos());
 						Str::Iter to = source->posIter(endPos);
-						SrcPos pos(sourceUrl, node.pos());
+						SrcPos pos(sourceUrl, node.pos(), endPos);
 						setValue(result, token->target, new (this) SStr(source->substr(from, to), pos));
 					} else if (as<RuleToken>(token)) {
 						setValue(result, token->target, tree(node, endPos));
@@ -934,7 +935,7 @@ namespace storm {
 				assert(node.children(), L"Trying to create a tree from a non-reduced node!");
 
 				Production *p = syntax->production(node.production());
-				Node *result = allocNode(p, node.pos());
+				Node *result = allocNode(p, node.pos(), endPos);
 
 				Item item = last(node.production());
 				Nat pos = endPos;
@@ -970,7 +971,7 @@ namespace storm {
 				if (p->repCapture) {
 					Str::Iter from = source->posIter(repStart);
 					Str::Iter to = source->posIter(repEnd);
-					SrcPos pos(sourceUrl, repStart);
+					SrcPos pos(sourceUrl, repStart, repEnd);
 					setValue(result, p->repCapture->target, new (this) SStr(source->substr(from, to), pos));
 				}
 
@@ -1022,13 +1023,13 @@ namespace storm {
 				}
 			}
 
-			Node *Parser::allocNode(Production *from, Nat pos) const {
+			Node *Parser::allocNode(Production *from, Nat start, Nat end) const {
 				ProductionType *type = from->type();
 
 				// A bit ugly, but this is enough for the object to be considered a proper object
 				// when it is populated.
 				void *mem = runtime::allocObject(type->size().current(), type);
-				Node *r = new (Place(mem)) Node(SrcPos(sourceUrl, pos));
+				Node *r = new (Place(mem)) Node(SrcPos(sourceUrl, start, end));
 				type->vtable()->insert(r);
 
 				// Create any arrays needed.

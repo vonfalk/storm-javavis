@@ -2,10 +2,12 @@
 #include "Core/Io/Url.h"
 
 namespace storm {
-	STORM_PKG(core);
+	STORM_PKG(core.lang);
 
 	/**
 	 * Source position.
+	 *
+	 * Describes a range of characters somewhere in the source code.
 	 */
 	class SrcPos {
 		STORM_VALUE;
@@ -14,13 +16,14 @@ namespace storm {
 		STORM_CTOR SrcPos();
 
 		// Create.
-		STORM_CTOR SrcPos(Url *file, Nat pos);
+		STORM_CTOR SrcPos(Url *file, Nat start, Nat end);
 
 		// File. If unknown, 'file' is null.
 		MAYBE(Url *) file;
 
-		// Position inside the file.
-		Nat pos;
+		// Start- and end position in the file.
+		Nat start;
+		Nat end;
 
 		// Unknown position?
 		Bool STORM_FN unknown() const;
@@ -28,8 +31,11 @@ namespace storm {
 		// Any data?
 		Bool STORM_FN any() const;
 
-		// Increase the position.
+		// Increase the positions.
 		SrcPos STORM_FN operator +(Nat v) const;
+
+		// Merge with another range.
+		SrcPos STORM_FN extend(SrcPos other) const;
 
 		// Deep copy.
 		void STORM_FN deepCopy(CloneEnv *env);
@@ -42,4 +48,5 @@ namespace storm {
 	// Output.
 	wostream &operator <<(wostream &to, const SrcPos &p);
 	StrBuf &STORM_FN operator <<(StrBuf &to, SrcPos p);
+
 }

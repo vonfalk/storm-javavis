@@ -284,7 +284,7 @@ namespace storm {
 
 		Version *version = parseVersion(ver);
 		if (!version)
-			throw SyntaxError(SrcPos(file, 0), L"Invalid version syntax.");
+			throw SyntaxError(SrcPos(file, 0, ver->peekLength()), L"Invalid version syntax.");
 
 		return new (this) VersionTag(file->title(), version);
 	}

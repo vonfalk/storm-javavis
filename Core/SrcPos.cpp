@@ -5,9 +5,9 @@
 
 namespace storm {
 
-	SrcPos::SrcPos() : file(null), pos(0) {}
+	SrcPos::SrcPos() : file(null), start(0), end(0) {}
 
-	SrcPos::SrcPos(Url *file, Nat pos) : file(file), pos(pos) {}
+	SrcPos::SrcPos(Url *file, Nat start, Nat end) : file(file), start(min(start, end)), end(max(start, end)) {}
 
 	Bool SrcPos::unknown() const {
 		return file == null;
@@ -18,7 +18,22 @@ namespace storm {
 	}
 
 	SrcPos SrcPos::operator +(Nat v) const {
-		return SrcPos(file, pos + v);
+		return SrcPos(file, start + v, end + v);
+	}
+
+	SrcPos SrcPos::extend(SrcPos o) const {
+		if (file != o.file) {
+			if (unknown())
+				return o;
+			if (o.unknown())
+				return *this;
+
+			if (*file != *o.file)
+				return *this;
+		}
+
+		// Now we know they are equal.
+		return SrcPos(file, min(start, o.start), max(end, o.end));
 	}
 
 	void SrcPos::deepCopy(CloneEnv *env) {
@@ -31,7 +46,8 @@ namespace storm {
 		if (!file || !o.file)
 			return false;
 		return *file == *o.file
-			&& pos == o.pos;
+			&& start == o.start
+			&& end == o.end;
 	}
 
 	Bool SrcPos::operator !=(SrcPos o) const {
@@ -42,14 +58,14 @@ namespace storm {
 		if (p.unknown())
 			return to << L"<unknown location>";
 		else
-			return to << p.file << L"(" << p.pos << L")";
+			return to << p.file << L"(" << p.start << L"-" << p.end << L")";
 	}
 
 	StrBuf &operator <<(StrBuf &to, SrcPos p) {
 		if (p.unknown())
-			return to << L"<unknown location>";
+			return to << S("<unknown location>");
 		else
-			return to << p.file << L"(" << p.pos << L")";
+			return to << p.file << S("()") << p.start << S("-") << p.end << S(")");
 	}
 
 }
