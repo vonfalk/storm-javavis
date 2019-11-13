@@ -276,7 +276,9 @@ public:
 
 	LookupState() {
 		memset(name, 0, PATH_MAX + 1);
-		readlink("/proc/self/exe", name, PATH_MAX);
+		ssize_t r = readlink("/proc/self/exe", name, PATH_MAX);
+		if (r >= PATH_MAX || r < 0)
+			throw UserError(L"Failed to read the path of the current executable.");
 
 		state = backtrace_create_state(name, 1, &backtraceError, null);
 	}

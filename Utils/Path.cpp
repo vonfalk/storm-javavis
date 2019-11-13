@@ -334,7 +334,9 @@ Path Path::executableFile() {
 	static Path e;
 	if (e.parts.size() == 0) {
 		char tmp[PATH_MAX + 1] = { 0 };
-		readlink("/proc/self/exe", tmp, PATH_MAX);
+		ssize_t r = readlink("/proc/self/exe", tmp, PATH_MAX);
+		if (r >= PATH_MAX || r < 0)
+			throw UserError(L"Failed to read the path of the current executable.");
 		e = Path(String(tmp));
 	}
 	return e;
