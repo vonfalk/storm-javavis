@@ -6,7 +6,7 @@ namespace util {
 	MemoryPool::MemoryPool(nat size) : data(new byte[size]), dataSize(size), firstFree(0), allocCount(0) {}
 
 	MemoryPool::~MemoryPool() {
-		assert(allocCount == 0);
+		dbg_assert(allocCount == 0, L"Outstanding allocations!");
 		delete []data;
 	}
 

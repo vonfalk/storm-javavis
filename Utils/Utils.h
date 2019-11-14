@@ -71,7 +71,7 @@ typedef char16_t wchar;
 
 #include "Containers.h"
 
-#ifdef WINDOWS
+#if defined(VISUAL_STUDIO) && VISUAL_STUDIO < 2013
 inline int64 abs(int64 v) {
 	return v < 0 ? -v : v;
 }

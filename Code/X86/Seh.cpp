@@ -121,8 +121,10 @@ namespace code {
 	}
 }
 
+#ifndef EXCEPTION_UNWINDING
 // No proper definition found...
 #define EXCEPTION_UNWINDING 2
+#endif
 
 using namespace code::x86;
 

@@ -91,7 +91,11 @@
 // Detect the current compiler.
 #if defined(_MSC_VER)
 // Visual Studio compiler!
-#if _MSC_VER >= 1800
+#if _MSC_VER >= 1923
+#define VISUAL_STUDIO 2019
+#elif _MSC_VER >= 1900
+#define VISUAL_STUDIO 2015
+#elif _MSC_VER >= 1800
 #define VISUAL_STUDIO 2013
 #elif _MSC_VER >= 1700
 #define VISUAL_STUDIO 2012

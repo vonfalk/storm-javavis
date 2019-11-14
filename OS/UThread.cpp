@@ -361,8 +361,8 @@ namespace os {
 			atomicDecrement(aliveCount);
 		}
 
-		assert(aliveCount == 0, L"An OS thread tried to terminate before all its UThreads terminated.");
-		assert(stacks.empty(), L"Consistency issue. aliveCount says zero, but we still have stacks we can scan!");
+		dbg_assert(aliveCount == 0, L"An OS thread tried to terminate before all its UThreads terminated.");
+		dbg_assert(stacks.empty(), L"Consistency issue. aliveCount says zero, but we still have stacks we can scan!");
 	}
 
 	void UThreadState::newStack(UThreadData *v) {

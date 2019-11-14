@@ -448,17 +448,23 @@ BEGIN_TEST(BSSetTest, BS) {
 BEGIN_TEST(BSWeakSetTest, BS) {
 	// Note: "a" has to be volatile, otherwise the compiler sometimes optimizes the variable away
 	// when we need it to keep values in the weak set alive!
-	Array<DbgActor *> *volatile a = new (gEngine()) Array<DbgActor *>();
-	a->push(new (gEngine()) DbgActor(10));
-	a->push(new (gEngine()) DbgActor(80));
-	a->push(new (gEngine()) DbgActor(200));
+	Array<DbgActor *> *volatile data = new (gEngine()) Array<DbgActor *>();
+	data->push(new (gEngine()) DbgActor(10));
+	data->push(new (gEngine()) DbgActor(80));
+	data->push(new (gEngine()) DbgActor(200));
 
 	WeakSet<DbgActor> *s = new (gEngine()) WeakSet<DbgActor>();
-	for (Nat i = 0; i < a->count(); i++)
-		s->put(a->at(i));
+	for (Nat i = 0; i < data->count(); i++)
+		s->put(data->at(i));
 
 	CHECK_EQ(runFn<Int>(S("test.bs.iterateWeakSetPlain"), s), 290);
 	CHECK_EQ(runFn<Int>(S("test.bs.iterateWeakSet"), s), 290);
+
+	// To make sure that the compiler does not optimize the data array away...
+	Nat tmp = 0;
+	for (Nat i = 0; i < data->count(); i++)
+		tmp += data->at(i)->get();
+	CHECK_EQ(tmp, 290);
 } END_TEST
 
 

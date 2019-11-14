@@ -26,7 +26,7 @@ using std::endl;
 
 // Good way of indicating something possibly interesting during debugging.
 #if defined(VISUAL_STUDIO)
-#define WARNING(str) PLN("WARNING "__FUNCTION__": " << str);
+#define WARNING(str) PLN("WARNING " << __FUNCTION__ << ": " << str);
 #elif defined(GCC)
 #define WARNING(str) PLN("WARNING " << __PRETTY_FUNCTION__ << ": " << str);
 #endif

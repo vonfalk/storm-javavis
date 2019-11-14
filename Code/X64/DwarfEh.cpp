@@ -206,7 +206,7 @@ namespace code {
 
 			~FDEStream() {
 				dest = pos;
-				assert(!overflow(), L"Increase FDE_DATA to at least " + ::toS(roundUp(pos, nat(sizeof(void *)))) + L"!");
+				dbg_assert(!overflow(), L"Increase FDE_DATA to at least " + ::toS(roundUp(pos, nat(sizeof(void *)))) + L"!");
 			}
 
 			Nat &dest;

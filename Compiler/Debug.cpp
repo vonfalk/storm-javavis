@@ -394,7 +394,7 @@ namespace storm {
 				PLN("Trying to destroy a non-live object at " << this);
 				PLN(format(::stackTrace()));
 				dbg_dumpNolock();
-				assert(false);
+				dbg_assert(false, L"Trying to destroy a non-live object!");
 			}
 			live.erase(this);
 		}

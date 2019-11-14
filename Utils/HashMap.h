@@ -1,6 +1,7 @@
 #pragma once
 
-#ifdef WINDOWS
+// Note: This is approximate...
+#if defined(VISUAL_STUDIO) && VISUAL_STUDIO < 2013
 
 #include <hash_map>
 #include <hash_set>

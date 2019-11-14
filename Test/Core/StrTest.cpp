@@ -85,7 +85,7 @@ BEGIN_TEST(StrBufTest, Core) {
 	*buf << scientific(2) << 1.23 << S(" ") << 1000.0 << S(" ") << 0.0001;
 	// Note: We probably want to use 2 digits after the "e" always. But for this, we need to provide
 	// our own implementation...
-#ifdef WINDOWS
+#if defined(VISUAL_STUDIO) && VISUAL_STUDIO < 2013
 	CHECK_EQ(toS(buf), L"1.23e+000 1.00e+003 1.00e-004");
 #else
 	CHECK_EQ(toS(buf), L"1.23e+00 1.00e+03 1.00e-04");
