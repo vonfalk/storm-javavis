@@ -932,7 +932,7 @@ namespace storm {
 				break;
 		}
 
-		return str->substr(str->posIter(start), str->posIter(end - start));
+		return str->substr(str->posIter(start), str->posIter(end));
 	}
 
 }

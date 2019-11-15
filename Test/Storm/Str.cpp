@@ -38,6 +38,21 @@ BEGIN_TEST(RemoveIndentTest, BS) {
 
 } END_TEST
 
+BEGIN_TEST(TrimBlankLinesTest, BS) {
+	Engine &e = gEngine();
+
+	CHECK_EQ(::toS(trimBlankLines(new (e) Str(S("hello\n\nworld")))), L"hello\n\nworld");
+
+	CHECK_EQ(::toS(trimBlankLines(new (e) Str(S("\n\nhello\n\nworld")))), L"hello\n\nworld");
+
+	CHECK_EQ(::toS(trimBlankLines(new (e) Str(S("hello\n\nworld\n")))), L"hello\n\nworld");
+
+	CHECK_EQ(::toS(trimBlankLines(new (e) Str(S("hello\n\nworld\n\n")))), L"hello\n\nworld");
+
+	CHECK_EQ(::toS(trimBlankLines(new (e) Str(S("\n\nhello\n\nworld\n\n")))), L"hello\n\nworld");
+
+} END_TEST
+
 static const wchar *utfString = S("a\u00D6\u0D36\u3042\u79C1\U0001F639e");
 static nat codepoints[] = {
 	nat('a'), 0xD6, 0x0D36, 0x3042, 0x79C1, 0x0001F639, nat('e')
