@@ -73,9 +73,13 @@ namespace storm {
 		add(nativeFunction(e, iter, S("end"), valList(e, 1, t), address(&MapBase::endRaw))->makePure());
 		add(nativeFunction(e, Value(), S("find"), thisKey, address(&MapBase::findRaw))->makePure());
 
-		addAccess();
-
 		Type *tObj = StormInfo<TObject>::type(e);
+
+		if (!v->isA(tObj)) {
+			// We currently don't support TObjects as values, that would break thread safety.
+			addAccess();
+		}
+
 		if (!k->isA(tObj) && !v->isA(tObj)) {
 			SerializeInfo *kInfo = serializeInfo(k);
 			SerializeInfo *vInfo = serializeInfo(v);
@@ -98,8 +102,8 @@ namespace storm {
 	}
 
 	void MapType::addAccess() {
-		Function *ctor = k->defaultCtor();
-		// The 'at' member can only be implemented if 'val' has a default constructor.
+		Function *ctor = v->defaultCtor();
+		// The 'at' member can only be implemented if 'v' has a default constructor.
 		if (!ctor) {
 			watchFor |= watchKeyDefaultCtor;
 			return;
@@ -115,10 +119,18 @@ namespace storm {
 
 		*l << prolog();
 
-		*l << fnParam(ptr, me);
-		*l << fnParam(ptr, key);
-		*l << fnParam(ptr, ctor->ref());
-		*l << fnCall(engine.ref(Engine::rMapAt), true, ptr, ptrA);
+		if (Value(v).isValue()) {
+			*l << fnParam(ptr, me);
+			*l << fnParam(ptr, key);
+			*l << fnParam(ptr, ctor->ref());
+			*l << fnCall(engine.ref(Engine::rMapAtValue), true, ptr, ptrA);
+		} else {
+			*l << fnParam(ptr, me);
+			*l << fnParam(ptr, key);
+			*l << fnParam(ptr, v->typeRef());
+			*l << fnParam(ptr, ctor->ref());
+			*l << fnCall(engine.ref(Engine::rMapAtClass), true, ptr, ptrA);
+		}
 
 		*l << fnRet(ptrA);
 

@@ -1,4 +1,5 @@
 use core:debug;
+use lang:bs:macro;
 
 void intMapAdd(Int->Int to, Int[] keys, Int[] values) {
 	if (keys.count == values.count) {
@@ -85,4 +86,19 @@ Int iterateMap(Int->Int data) {
 		r += k*v;
 	}
 	r;
+}
+
+Int defaultMapInt() {
+	Int->Int m;
+	m[1];
+}
+
+Str defaultMapStr() {
+	Int->Str m;
+	m[1];
+}
+
+Str[] defaultMapArray() {
+	Map<Int, Str[]> m;
+	m[1];
 }

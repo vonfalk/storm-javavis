@@ -93,8 +93,30 @@ namespace storm {
 		void *CODECALL getRawDef(const void *key, const void *def);
 
 		// Get a value. Create using the constructor if it does not exist.
-		typedef void (*CreateCtor)(void *to, Engine &e);
-		void *CODECALL atRaw(const void *key, CreateCtor fn);
+		template <class CreateCtor>
+		void *atRaw(const void *key, CreateCtor fn) {
+			nat hash = (*keyT.hashFn)(key);
+			nat slot = findSlot(key, hash);
+
+			if (slot == Info::free) {
+				if (watch)
+					// In case the object moved, we need to re-compute the hash.
+					hash = newHash(key);
+				nat w = Info::free;
+				slot = insert(key, hash, w);
+				fn(valPtr(slot), engine());
+			}
+
+			return valPtr(slot);
+		}
+
+		// Get a value. Create using the constructor if it does not exist. Assumes that 'v' is a value-type.
+		typedef void (*SimpleCtor)(void *to);
+		void *CODECALL atRawValue(const void *key, SimpleCtor fn);
+
+		// Get a value. Create using the constructor if it does not exist. Assumes that 'V' is a pointer-type, we
+		// will allocate memory for it before calling the constructor.
+		void *CODECALL atRawClass(const void *key, Type *type, SimpleCtor fn);
 
 		// Remove a value. Returns 'true' if we found one to remove.
 		Bool CODECALL removeRaw(const void *key);

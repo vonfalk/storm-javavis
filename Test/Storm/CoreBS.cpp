@@ -429,6 +429,16 @@ BEGIN_TEST(BSMapTest, BS) {
 		CHECK_EQ(toS(runFn<Str *>(S("test.bs.readStrMap"), map, new (e) Str(S("B")))), L"90");
 	}
 
+	{
+		CHECK_EQ(runFn<Int>(S("test.bs.defaultMapInt")), 0);
+		CHECK_EQ(::toS(runFn<Str *>(S("test.bs.defaultMapStr"))), L"");
+		Array<Str *> *arr = runFn<Array<Str *> *>(S("test.bs.defaultMapArray"));
+		CHECK_EQ(arr->count(), 0);
+
+		Map<Int, Str *> *map = new (e) Map<Int, Str *>();
+		CHECK_EQ(::toS(map->at(1)), L"");
+	}
+
 } END_TEST
 
 

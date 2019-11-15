@@ -168,7 +168,8 @@ namespace storm {
 			// # of bytes inside TObject the thread is stored
 			rTObjectOffset,
 			// Access the 'atRaw' member of Map.
-			rMapAt,
+			rMapAtValue,
+			rMapAtClass,
 			// Acces the generic 'EnumType::toString'.
 			rEnumToS,
 			// Access to 'postRaw' and 'resultRaw' in Future.

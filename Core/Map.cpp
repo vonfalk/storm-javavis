@@ -158,20 +158,32 @@ namespace storm {
 		}
 	}
 
-	void *MapBase::atRaw(const void *key, CreateCtor fn) {
-		nat hash = (*keyT.hashFn)(key);
-		nat slot = findSlot(key, hash);
+	void *MapBase::atRawValue(const void *key, SimpleCtor fn) {
+		struct Fn {
+			SimpleCtor fn;
+			Fn(SimpleCtor fn) : fn(fn) {}
+			void operator()(void *at, Engine &) const {
+				(*fn)(at);
+			}
+		};
 
-		if (slot == Info::free) {
-			if (watch)
-				// In case the object moved, we need to re-compute the hash.
-				hash = newHash(key);
-			nat w = Info::free;
-			slot = insert(key, hash, w);
-			(*fn)(valPtr(slot), engine());
-		}
+		return atRaw(key, Fn(fn));
+	}
 
-		return valPtr(slot);
+	void *MapBase::atRawClass(const void *key, Type *type, SimpleCtor fn) {
+		struct Fn {
+			SimpleCtor fn;
+			Type *type;
+			size_t size;
+			Fn(SimpleCtor fn, size_t size, Type *type) : fn(fn), type(type), size(size) {}
+			void operator()(void *at, Engine &) const {
+				void *mem = runtime::allocObject(size, type);
+				(*fn)(mem);
+				*(void **)at = mem;
+			}
+		};
+
+		return atRaw(key, Fn(fn, valT.size, type));
 	}
 
 	MapBase::Iter MapBase::findRaw(const void *key) {

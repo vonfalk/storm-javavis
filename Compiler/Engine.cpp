@@ -391,8 +391,10 @@ namespace storm {
 			return arena()->externalSource(S("vtableAllocOffset"), (const void *)VTableCpp::vtableAllocOffset());
 		case rTObjectOffset:
 			return arena()->externalSource(S("threadOffset"), (const void *)OFFSET_OF(TObject, thread));
-		case rMapAt:
-			return FNREF(MapBase::atRaw);
+		case rMapAtValue:
+			return FNREF(MapBase::atRawValue);
+		case rMapAtClass:
+			return FNREF(MapBase::atRawClass);
 		case rEnumToS:
 			return FNREF(Enum::toString);
 		case rFuturePost:
