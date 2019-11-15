@@ -9,15 +9,15 @@
 
 namespace storm {
 
-	Package::Package(Str *name) : NameSet(name) {}
+	Package::Package(Str *name) : NameSet(name), discardOnLoad(true) {}
 
-	Package::Package(Url *path) : NameSet(path->name()), pkgPath(path) {
+	Package::Package(Url *path) : NameSet(path->name()), pkgPath(path), discardOnLoad(true) {
 		engine().pkgMap()->put(pkgPath, this);
 
 		documentation = new (this) PackageDoc(this);
 	}
 
-	Package::Package(Str *name, Url *path) : NameSet(name), pkgPath(path) {
+	Package::Package(Str *name, Url *path) : NameSet(name), pkgPath(path), discardOnLoad(true) {
 		engine().pkgMap()->put(pkgPath, this);
 
 		documentation = new (this) PackageDoc(this);
@@ -99,6 +99,14 @@ namespace storm {
 		return true;
 	}
 
+	void Package::noDiscard() {
+		discardOnLoad = false;
+	}
+
+	void Package::discardSource() {
+		// We don't need to propagate this message, we emit it ourselves.
+	}
+
 	void Package::toS(StrBuf *to) const {
 		if (parent())
 			*to << L"Package " << identifier();
@@ -144,23 +152,12 @@ namespace storm {
 			Map<SimpleName *, PkgFiles *> *readers = readerName(files);
 			Array<PkgReader *> *load = createReaders(readers);
 
-			for (Nat i = 0; i < load->count(); i++)
-				load->at(i)->readSyntaxRules();
+			// Load everything!
+			read(load);
 
-			for (Nat i = 0; i < load->count(); i++)
-				load->at(i)->readSyntaxProductions();
-
-			for (Nat i = 0; i < load->count(); i++)
-				load->at(i)->readTypes();
-
-			for (Nat i = 0; i < load->count(); i++)
-				load->at(i)->resolveTypes();
-
-			for (Nat i = 0; i < load->count(); i++)
-				load->at(i)->readFunctions();
-
-			for (Nat i = 0; i < load->count(); i++)
-				load->at(i)->resolveFunctions();
+			// Ask functions to discard their sources.
+			if (discardOnLoad)
+				NameSet::discardSource();
 
 		} catch (...) {
 			TODO(L"Try to restore!");

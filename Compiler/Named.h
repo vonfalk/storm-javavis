@@ -107,6 +107,9 @@ namespace storm {
 		// Force compilation of this named (and any sub-objects contained in here).
 		virtual void STORM_FN compile();
 
+		// Discard any source code for functions in here.
+		virtual void STORM_FN discardSource();
+
 		// String representation.
 		virtual void STORM_FN toS(StrBuf *buf) const;
 

@@ -38,12 +38,21 @@ namespace storm {
 		virtual Bool STORM_FN loadName(SimplePart *part);
 		virtual Bool STORM_FN loadAll();
 
+		// Inhibit discard messages from propagating.
+		void STORM_FN noDiscard();
+
+		// We don't need to propagate the discard source message in general.
+		virtual void STORM_FN discardSource();
+
 		// Output.
 		virtual void STORM_FN toS(StrBuf *to) const;
 
 	private:
 		// Our path. Points tu null if we're a virtual package.
 		Url *pkgPath;
+
+		// Shall we emit 'discardSource' messages on load?
+		Bool discardOnLoad;
 
 		/**
 		 * Loading of sub-packages.

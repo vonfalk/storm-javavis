@@ -147,5 +147,8 @@ namespace storm {
 		void loadReaders();
 	};
 
+	// Load everything from a number of readers in the proper order.
+	// Calls 'readSyntaxRules', 'readSyntaxProductions', ...
+	void STORM_FN read(Array<PkgReader *> *readers);
 
 }

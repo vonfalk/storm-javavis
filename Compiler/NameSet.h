@@ -124,6 +124,9 @@ namespace storm {
 		// Force compilation.
 		virtual void STORM_FN compile();
 
+		// Discard source information.
+		virtual void STORM_FN discardSource();
+
 		// Iterator. TODO: How to do wrt threading?
 		class Iter {
 			STORM_VALUE;

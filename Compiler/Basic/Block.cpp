@@ -127,6 +127,7 @@ namespace storm {
 			// Generate code for the entire block. Stop whenever we find a block that does not return.
 			for (Nat i = 0; i < exprs->count() - 1; i++) {
 				Expr *e = exprs->at(i);
+				*state->l << code::location(e->pos);
 
 				CodeResult *s = new (this) CodeResult();
 				e->code(state, s);
@@ -136,6 +137,7 @@ namespace storm {
 					return;
 			}
 
+			*state->l << code::location(exprs->last()->pos);
 			exprs->last()->code(state, to);
 		}
 

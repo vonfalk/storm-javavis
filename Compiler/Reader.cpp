@@ -202,4 +202,24 @@ namespace storm {
 		return create->call(new (this) FileInfo(src, src->begin(), file, pkg));
 	}
 
+	void read(Array<PkgReader *> *load) {
+		for (Nat i = 0; i < load->count(); i++)
+			load->at(i)->readSyntaxRules();
+
+		for (Nat i = 0; i < load->count(); i++)
+			load->at(i)->readSyntaxProductions();
+
+		for (Nat i = 0; i < load->count(); i++)
+			load->at(i)->readTypes();
+
+		for (Nat i = 0; i < load->count(); i++)
+			load->at(i)->resolveTypes();
+
+		for (Nat i = 0; i < load->count(); i++)
+			load->at(i)->readFunctions();
+
+		for (Nat i = 0; i < load->count(); i++)
+			load->at(i)->resolveFunctions();
+	}
+
 }

@@ -140,6 +140,13 @@ namespace storm {
 			lookup->compile();
 	}
 
+	void Function::discardSource() {
+		if (GeneratedCode *c = as<GeneratedCode>(code))
+			c->discardSource();
+		if (GeneratedCode *l = as<GeneratedCode>(lookup))
+			l->discardSource();
+	}
+
 	const void *Function::originalPtr() {
 		return directRef().address();
 	}

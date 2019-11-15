@@ -116,6 +116,8 @@ namespace storm {
 
 	void Named::compile() {}
 
+	void Named::discardSource() {}
+
 	void Named::toS(StrBuf *buf) const {
 		*buf << identifier() << S(" [");
 		putVisibility(buf);

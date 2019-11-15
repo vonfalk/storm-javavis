@@ -125,6 +125,9 @@ namespace storm {
 		// Forcefully compile this function.
 		void STORM_FN compile();
 
+		// Indicate that we don't need the source code for this function anymore.
+		void STORM_FN discardSource();
+
 		// Get the original C++ function pointer. If none exists, returns
 		// 'directRef->address()'. Intended to be used to find vtable slots for this function.
 		virtual const void *originalPtr();

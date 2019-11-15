@@ -137,6 +137,11 @@ namespace storm {
 			i.v()->compile();
 	}
 
+	void NameSet::discardSource() {
+		for (Iter i = begin(), e = end(); i != e; ++i)
+			i.v()->discardSource();
+	}
+
 	void NameSet::watchAdd(Named *notifyTo) {
 		if (!notify)
 			notify = new (this) WeakSet<Named>();

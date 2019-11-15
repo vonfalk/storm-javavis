@@ -42,19 +42,6 @@ namespace storm {
 
 
 	/**
-	 * Dynamic code.
-	 */
-
-	DynamicCode::DynamicCode(code::Listing *code) {
-		binary = new (this) code::Binary(engine().arena(), code);
-	}
-
-	void DynamicCode::newRef() {
-		toUpdate->set(binary);
-	}
-
-
-	/**
 	 * Delegated code.
 	 */
 
@@ -101,17 +88,66 @@ namespace storm {
 		return e.arena()->engineRedirect(result.desc(e), p, ref, e.ref(Engine::rEngine));
 	}
 
+	/**
+	 * GeneratedCode.
+	 */
+
+	MAYBE(code::Listing *) GeneratedCode::source() {
+		return null;
+	}
+
+	void GeneratedCode::discardSource() {}
+
+
+	/**
+	 * Dynamic code.
+	 */
+
+	DynamicCode::DynamicCode(code::Listing *code) : code(code) {
+		binary = new (this) code::Binary(engine().arena(), code);
+	}
+
+	MAYBE(code::Listing *) DynamicCode::source() {
+		return code;
+	}
+
+	void DynamicCode::discardSource() {
+		code = null;
+	}
+
+	void DynamicCode::newRef() {
+		toUpdate->set(binary);
+	}
+
 
 	/**
 	 * Lazy code.
 	 */
 
-	LazyCode::LazyCode(Fn<CodeGen *> *generate) : binary(null), generate(generate) {}
+	LazyCode::LazyCode(Fn<CodeGen *> *generate) : binary(null), sourceData(generate), state(sUnloaded) {}
 
 	void LazyCode::compile() {
 		// We're always running on the Compiler thread, so it is safe to call 'updateCodeLocal'.
-		if (!loading)
+		if ((state & sMask) != sLoading)
 			updateCodeLocal(this);
+	}
+
+	MAYBE(code::Listing *) LazyCode::source() {
+		// Load our code if we need to.
+		if ((state & sMask) != sLoaded)
+			updateCodeLocal(this);
+
+		if (state & sDiscardSource)
+			return null;
+		else
+			return (code::Listing *)sourceData;
+	}
+
+	void LazyCode::discardSource() {
+		state |= sDiscardSource;
+
+		if ((state & sMask) == sLoaded)
+			sourceData = null;
 	}
 
 	void LazyCode::newRef() {
@@ -121,7 +157,7 @@ namespace storm {
 	}
 
 	void LazyCode::createRedirect() {
-		loaded = false;
+		state = (state & ~sMask) | sUnloaded;
 		Engine &e = engine();
 		using code::TypeDesc;
 
@@ -159,29 +195,34 @@ namespace storm {
 	}
 
 	const void *LazyCode::updateCodeLocal(LazyCode *me) {
-		while (me->loading) {
+		while ((me->state & sMask) == sLoading) {
 			// Wait for the other one loading this function.
 			// TODO: Try to detect when a function is recursively loaded!
 			os::UThread::leave();
 		}
 
-		if (!me->loaded) {
-			if (me->loading)
+		if ((me->state & sMask) != sLoaded) {
+			if ((me->state & sMask) == sLoading)
 				throw InternalError(L"Trying to update " + ::toS(me->owner->identifier()) + L" recursively.");
 
-			me->loading = true;
+			me->state = (me->state & ~sMask) | sLoading;
 
 			try {
-				CodeGen *l = me->generate->call();
+				CodeGen *l = me->generate()->call();
 				// Append any data needed.
 				me->setCode(l->l);
+
+				// Store the listing unless we don't need it anymore.
+				if (me->state & sDiscardSource)
+					me->sourceData = null;
+				else
+					me->sourceData = l->l;
 			} catch (...) {
-				me->loading = false;
+				me->state = (me->state & ~sMask) | sUnloaded;
 				throw;
 			}
 
-			me->loaded = true;
-			me->loading = false;
+			me->state = (me->state & ~sMask) | sLoaded;
 		}
 
 		return me->binary->address();

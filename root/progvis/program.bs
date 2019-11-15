@@ -1,0 +1,66 @@
+use core:io;
+use core:lang;
+use lang;
+
+/**
+ * Class representing some loaded program that we want to execute and possibly single-step, etc.
+ */
+class Program on Compiler {
+	private Package pkg;
+	private Function main;
+
+	private init(Package pkg, Function main) {
+		init() {
+			pkg = pkg;
+			main = main;
+		}
+	}
+
+	public Program? load(Url file) : static {
+		load([file]);
+	}
+
+	public Program? load(Url[] files) : static {
+		Package pkg("<sandbox>");
+		pkg.parentLookup = rootPkg;
+
+		Map<Str, Url[]> exts;
+		for (f in files) {
+			exts[f.ext] << f;
+		}
+
+		PkgReader[] readers;
+		for (ext, files in exts) {
+			if (name = readerName(ext))
+				if (r = createReader(name, files, pkg))
+					readers << r;
+		}
+
+		if (readers.empty()) {
+			print("No reader for the desired file type!");
+			return null;
+		}
+
+		// Load all code.
+		read(readers);
+
+		// Produce errors now rather than later.
+		pkg.compile();
+
+		// Find the function 'main'.
+		if (main = pkg.find(SimplePart("main"), Scope(pkg)) as Function) {
+			print(main.toS);
+			if (gen = main.getCode() as GeneratedCode) {
+				if (code = gen.source) {
+					print("Found source:");
+					print(code.toS);
+				}
+			}
+			return Program(pkg, main);
+		} else {
+			print("No main function found!");
+			return null;
+		}
+	}
+}
+
