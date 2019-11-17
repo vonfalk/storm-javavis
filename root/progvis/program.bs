@@ -141,7 +141,7 @@ class Program on Compiler {
 	// This function will be called by the executed code to notify us of their current state in
 	// their execution. This also lets us execute them at any location.
 	private void newLocation(Url file, Nat from, Nat to) {
-		print("Executed: ${file} ${from} ${to}");
+		print("Executed: ${file} ${from} ${to} on ${currentUThread}");
 	}
 }
 

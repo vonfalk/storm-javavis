@@ -71,6 +71,9 @@ namespace os {
 		inline bool operator ==(const UThread &o) const { return data == o.data; }
 		inline bool operator !=(const UThread &o) const { return data != o.data; }
 
+		// Get an unique identifier for this thread.
+		inline uintptr_t id() const { return (uintptr_t)data; }
+
 		// Yield to another UThread. Returns sometime in the future. Returns 'true' if other
 		// threads were run between the call and the return.
 		static bool leave();

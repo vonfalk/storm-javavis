@@ -30,4 +30,8 @@ namespace storm {
 
 	void Thread::operator delete(void *mem, First d) {}
 
+	Word STORM_FN currentUThread() {
+		return (Word)os::UThread::current().id();
+	}
+
 }
