@@ -106,6 +106,7 @@ namespace code {
 		// Add instructions and labels.
 		Listing &STORM_FN operator <<(Instr *op);
 		Listing &STORM_FN operator <<(Label l);
+		Listing &STORM_FN operator <<(MAYBE(Array<Label> *) l);
 
 		// Access instructions.
 		inline Nat STORM_FN count() const { return code->count(); }
@@ -119,6 +120,7 @@ namespace code {
 
 		// Create a shell, ie. a Listing containing only the scope information from this listing,
 		// thus making variables, blocks and part from this listing valid in the shell as well.
+		Listing *STORM_FN createShell() const;
 		Listing *STORM_FN createShell(MAYBE(const Arena *) arena) const;
 
 		/**

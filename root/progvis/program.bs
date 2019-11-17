@@ -1,6 +1,8 @@
 use core:io;
 use core:lang;
+use core:asm;
 use lang;
+use lang:bs:macro;
 
 /**
  * Class representing some loaded program that we want to execute and possibly single-step, etc.
@@ -14,6 +16,13 @@ class Program on Compiler {
 			pkg = pkg;
 			main = main;
 		}
+
+		patchFunctions(pkg);
+
+		// Temporary: Execute the main function to see if everything works!
+		if (x = main.pointer() as Fn<void>) {
+			x.call();
+		}
 	}
 
 	public Program? load(Url file) : static {
@@ -23,6 +32,7 @@ class Program on Compiler {
 	public Program? load(Url[] files) : static {
 		Package pkg("<sandbox>");
 		pkg.parentLookup = rootPkg;
+		pkg.noDiscard();
 
 		Map<Str, Url[]> exts;
 		for (f in files) {
@@ -49,18 +59,97 @@ class Program on Compiler {
 
 		// Find the function 'main'.
 		if (main = pkg.find(SimplePart("main"), Scope(pkg)) as Function) {
-			print(main.toS);
-			if (gen = main.getCode() as GeneratedCode) {
-				if (code = gen.source) {
-					print("Found source:");
-					print(code.toS);
-				}
-			}
 			return Program(pkg, main);
 		} else {
 			print("No main function found!");
 			return null;
 		}
 	}
+
+	// Patch all functions in the specified NameSet recursively.
+	// TODO: We don't really support threads at the moment, perhaps we should
+	// explicitly disallow that somehow?
+	private void patchFunctions(NameSet inside) {
+		inside.forceLoad();
+
+		for (named in inside) {
+			if (named as Function) {
+				patchFunction(named);
+			} else if (named as NameSet) {
+				patchFunctions(named);
+			}
+		}
+	}
+
+	// Patch a single function, adding code for instrumentation at each "location" statement in the
+	// listing. This makes it possible for us to "single step" the program, since we get called
+	// at each relevant location.
+	private void patchFunction(Function fn) {
+		unless (code = fn.getCode() as GeneratedCode)
+			return;
+
+		unless (source = code.source) {
+			print("Warning: Unable to patch ${fn}, no code!");
+			return;
+		}
+
+		// If it does not have any "source" instructions, ignore it.
+		if (!anyLocation(source)) {
+			print("Skipping ${fn}, no location metadata.");
+			return;
+		}
+
+		Listing patched = patchListing(source);
+		fn.setCode(DynamicCode(patched));
+	}
+
+	// Patch a source listing.
+	private Listing patchListing(Listing source) {
+		Listing dest = source.createShell();
+
+		// TODO: Keep track of the current scope so that we can generate code that extracts the
+		// proper local variables!
+		for (Nat i = 0; i < source.count; i++) {
+			dest << source.labels(i);
+			Instr instr = source[i];
+			dest << source[i];
+
+			if (instr.op == OpCode:location) {
+				generateCall(dest, instr.src.srcPos);
+			}
+		}
+
+		dest << source.labels(source.count);
+
+		dest;
+	}
+
+	// Generate a call to this cless in order to keep track of the execution.
+	private void generateCall(Listing to, SrcPos pos) {
+		unless (file = pos.file)
+			return;
+
+		var fn = named{Program:newLocation<Program, Url, Nat, Nat>};
+
+		to << fnParam(ptrDesc, objPtr(this));
+		to << fnParam(ptrDesc, objPtr(file));
+		to << fnParam(intDesc, natConst(pos.start));
+		to << fnParam(intDesc, natConst(pos.end));
+		to << fnCall(fn.ref, true);
+	}
+
+	// This function will be called by the executed code to notify us of their current state in
+	// their execution. This also lets us execute them at any location.
+	private void newLocation(Url file, Nat from, Nat to) {
+		print("Executed: ${file} ${from} ${to}");
+	}
+}
+
+private Bool anyLocation(Listing l) {
+	for (Nat i = 0; i < l.count; i++) {
+		if (l[i].op == OpCode:location)
+			return true;
+	}
+	return false;
 }
 

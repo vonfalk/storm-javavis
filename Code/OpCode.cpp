@@ -78,16 +78,16 @@ namespace code {
 		OP_CODE(threadLocal, destNone),
 	};
 
-	static const OpInfo &info(op::Code op) {
+	static const OpInfo &info(op::OpCode op) {
 		static OpTable<OpInfo> ops(descs, ARRAY_COUNT(descs));
 		return ops[op];
 	}
 
-	const wchar *name(op::Code op) {
+	const wchar *name(op::OpCode op) {
 		return info(op).name;
 	}
 
-	DestMode destMode(op::Code op) {
+	DestMode destMode(op::OpCode op) {
 		return info(op).mode;
 	}
 

@@ -7,9 +7,9 @@ namespace code {
 	 * Declare all virtual op-codes.
 	 */
 	namespace op {
-		STORM_PKG(core.asm.op);
+		STORM_PKG(core.asm);
 
-		enum Code {
+		enum OpCode {
 			nop,
 			mov,
 			lea,
@@ -100,6 +100,6 @@ namespace code {
 
 	BITMASK_OPERATORS(DestMode);
 
-	const wchar *name(op::Code op);
-	DestMode destMode(op::Code op);
+	const wchar *name(op::OpCode op);
+	DestMode destMode(op::OpCode op);
 }

@@ -125,8 +125,8 @@ namespace code {
 		Bool STORM_FN writable() const;
 
 		// Throw an exception unless the value is readable/writable.
-		void STORM_FN ensureReadable(op::Code op) const;
-		void STORM_FN ensureWritable(op::Code op) const;
+		void STORM_FN ensureReadable(op::OpCode op) const;
+		void STORM_FN ensureWritable(op::OpCode op) const;
 
 		// Does this operand use a register (Note: local variables that will use ptrBase later are
 		// not considered to be using a register). This currently includes raw registers and memory

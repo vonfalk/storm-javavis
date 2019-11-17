@@ -11,7 +11,7 @@ namespace code {
 
 	Instr::Instr(const Instr &o) : iOp(o.iOp), iSrc(o.iSrc), iDest(o.iDest) {}
 
-	Instr::Instr(op::Code op, const Operand &dest, const Operand &src) : iOp(op), iDest(dest), iSrc(src) {}
+	Instr::Instr(op::OpCode op, const Operand &dest, const Operand &src) : iOp(op), iDest(dest), iSrc(src) {}
 
 	void Instr::deepCopy(CloneEnv *env) {
 		// Everything is constant here anyway. No need!
@@ -21,7 +21,7 @@ namespace code {
 		return max(iSrc.size(), iDest.size());
 	}
 
-	op::Code Instr::op() const {
+	op::OpCode Instr::op() const {
 		return iOp;
 	}
 
@@ -63,16 +63,16 @@ namespace code {
 		}
 	}
 
-	Instr *instr(EnginePtr e, op::Code op) {
+	Instr *instr(EnginePtr e, op::OpCode op) {
 		return new (e.v) Instr(op, Operand(), Operand());
 	}
 
-	Instr *instrSrc(EnginePtr e, op::Code op, Operand src) {
+	Instr *instrSrc(EnginePtr e, op::OpCode op, Operand src) {
 		src.ensureReadable(op);
 		return new (e.v) Instr(op, Operand(), src);
 	}
 
-	Instr *instrDest(EnginePtr e, op::Code op, Operand dest) {
+	Instr *instrDest(EnginePtr e, op::OpCode op, Operand dest) {
 		DestMode mode = destMode(op);
 		if (mode == destNone)
 			throw InvalidValue(L"Can not pass 'destNone' to 'instrDest'.");
@@ -83,7 +83,7 @@ namespace code {
 		return new (e.v) Instr(op, dest, Operand());
 	}
 
-	Instr *instrDestSrc(EnginePtr e, op::Code op, Operand dest, Operand src) {
+	Instr *instrDestSrc(EnginePtr e, op::OpCode op, Operand dest, Operand src) {
 		DestMode mode = destMode(op);
 		if (mode == destNone)
 			throw InvalidValue(L"Can not pass 'destNone' to 'instrDestSrc'.");
@@ -98,7 +98,7 @@ namespace code {
 		return new (e.v) Instr(op, dest, src);
 	}
 
-	Instr *instrLoose(EnginePtr e, op::Code op, Operand dest, Operand src) {
+	Instr *instrLoose(EnginePtr e, op::OpCode op, Operand dest, Operand src) {
 		return new (e.v) Instr(op, dest, src);
 	}
 
@@ -106,7 +106,7 @@ namespace code {
 	 * Additional information, used with function calls.
 	 */
 
-	TypeInstr::TypeInstr(op::Code opCode, const Operand &dest, const Operand &src, TypeDesc *type, Bool member)
+	TypeInstr::TypeInstr(op::OpCode opCode, const Operand &dest, const Operand &src, TypeDesc *type, Bool member)
 		: Instr(opCode, dest, src), type(type), member(member) {}
 
 	void TypeInstr::deepCopy(CloneEnv *env) {

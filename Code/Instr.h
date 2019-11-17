@@ -28,7 +28,7 @@ namespace code {
 		virtual void STORM_FN deepCopy(CloneEnv *env);
 
 		// Access to the members:
-		op::Code STORM_FN op() const;
+		op::OpCode STORM_FN op() const;
 		Operand STORM_FN src() const;
 		Operand STORM_FN dest() const;
 		DestMode STORM_FN mode() const;
@@ -46,21 +46,21 @@ namespace code {
 
 	protected:
 		// Private constructor, used by 'instrXxx()' functions below.
-		Instr(op::Code opCode, const Operand &dest, const Operand &src);
+		Instr(op::OpCode opCode, const Operand &dest, const Operand &src);
 
 		// Op-code.
-		op::Code iOp;
+		op::OpCode iOp;
 
 		// Src and dest fields.
 		Operand iSrc;
 		Operand iDest;
 
 		// Creators.
-		friend Instr *instr(EnginePtr e, op::Code op);
-		friend Instr *instrSrc(EnginePtr e, op::Code op, Operand src);
-		friend Instr *instrDest(EnginePtr e, op::Code op, Operand dest);
-		friend Instr *instrDestSrc(EnginePtr e, op::Code op, Operand dest, Operand src);
-		friend Instr *instrLoose(EnginePtr e, op::Code op, Operand dest, Operand src);
+		friend Instr *instr(EnginePtr e, op::OpCode op);
+		friend Instr *instrSrc(EnginePtr e, op::OpCode op, Operand src);
+		friend Instr *instrDest(EnginePtr e, op::OpCode op, Operand dest);
+		friend Instr *instrDestSrc(EnginePtr e, op::OpCode op, Operand dest, Operand src);
+		friend Instr *instrLoose(EnginePtr e, op::OpCode op, Operand dest, Operand src);
 	};
 
 	/**
@@ -74,7 +74,7 @@ namespace code {
 		STORM_CLASS;
 	public:
 		// Create.
-		TypeInstr(op::Code opCode, const Operand &dest, const Operand &src, TypeDesc *type, Bool member);
+		TypeInstr(op::OpCode opCode, const Operand &dest, const Operand &src, TypeDesc *type, Bool member);
 
 		// The type of used in this instruction.
 		TypeDesc *type;
@@ -95,13 +95,13 @@ namespace code {
 	};
 
 	// Create an instruction without operands.
-	Instr *STORM_FN instr(EnginePtr e, op::Code op);
-	Instr *STORM_FN instrSrc(EnginePtr e, op::Code op, Operand src);
-	Instr *STORM_FN instrDest(EnginePtr e, op::Code op, Operand dest);
-	Instr *STORM_FN instrDestSrc(EnginePtr e, op::Code op, Operand dest, Operand src);
+	Instr *STORM_FN instr(EnginePtr e, op::OpCode op);
+	Instr *STORM_FN instrSrc(EnginePtr e, op::OpCode op, Operand src);
+	Instr *STORM_FN instrDest(EnginePtr e, op::OpCode op, Operand dest);
+	Instr *STORM_FN instrDestSrc(EnginePtr e, op::OpCode op, Operand dest, Operand src);
 
 	// Create without checking the sanity of the parameters. Used for pseudo-instructions and predicates among others.
-	Instr *STORM_FN instrLoose(EnginePtr e, op::Code op, Operand dest, Operand src);
+	Instr *STORM_FN instrLoose(EnginePtr e, op::OpCode op, Operand dest, Operand src);
 
 	/**
 	 * Create instructions:

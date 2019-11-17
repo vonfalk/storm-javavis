@@ -192,6 +192,10 @@ namespace code {
 		parts->deepCopy(env);
 	}
 
+	Listing *Listing::createShell() const {
+		return createShell(arena);
+	}
+
 	Listing *Listing::createShell(const Arena *arena) const {
 		Listing *shell = arena ? new (this) Listing(arena) : new (this) Listing();
 
@@ -206,7 +210,8 @@ namespace code {
 		shell->parts = new (this) Array<IPart>(*parts);
 		shell->needEH = needEH;
 
-		// Note: we're doing this the hard way since deepCopy did not work properly at the time this was written.
+		// Note: we're doing this the hard way since deepCopy did not work properly at the time this
+		// was written.
 		CloneEnv *env = new (this) CloneEnv();
 		for (nat i = 0; i < shell->vars->count(); i++)
 			shell->vars->at(i).deepCopy(env);
@@ -230,6 +235,14 @@ namespace code {
 		if (!nextLabels)
 			nextLabels = new (this) Array<Label>();
 		nextLabels->push(l);
+		return *this;
+	}
+
+	Listing &Listing::operator <<(MAYBE(Array<Label> *) l) {
+		if (l)
+			for (Nat i = 0; i < l->count(); i++)
+				*this << l->at(i);
+
 		return *this;
 	}
 

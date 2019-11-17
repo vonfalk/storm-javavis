@@ -156,12 +156,12 @@ namespace code {
 		}
 	}
 
-	void Operand::ensureReadable(op::Code op) const {
+	void Operand::ensureReadable(op::OpCode op) const {
 		if (!readable())
 			throw InvalidValue(L"For instruction " + String(name(op)) + L": " + ::toS(*this) + L" is not readable.");
 	}
 
-	void Operand::ensureWritable(op::Code op) const {
+	void Operand::ensureWritable(op::OpCode op) const {
 		if (!writable())
 			throw InvalidValue(L"For instruction " + String(name(op)) + L": " + ::toS(*this) + L" is not writable.");
 	}

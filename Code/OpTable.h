@@ -8,7 +8,7 @@ namespace code {
 
 	template <class T>
 	struct OpEntry {
-		op::Code opCode;
+		op::OpCode opCode;
 		T data;
 	};
 
@@ -28,7 +28,7 @@ namespace code {
 		}
 
 		// Get the op-code at location 'o'.
-		T &operator[](op::Code o) { return data[o]; }
+		T &operator[](op::OpCode o) { return data[o]; }
 
 	private:
 		// Data.
@@ -42,18 +42,18 @@ namespace code {
 	class OpSet {
 	public:
 		// Create.
-		inline OpSet(const op::Code *opCodes, nat count) {
+		inline OpSet(const op::OpCode *opCodes, nat count) {
 			for (nat i = 0; i < ARRAY_COUNT(data); i++)
 				data[i] = false;
 
 			for (nat i = 0; i < count; i++) {
-				op::Code c = opCodes[i];
+				op::OpCode c = opCodes[i];
 				data[c] = true;
 			}
 		}
 
 		// Get the op-code at 'o'.
-		inline bool operator[](op::Code o) { return data[o]; }
+		inline bool operator[](op::OpCode o) { return data[o]; }
 
 	private:
 		// Data.
