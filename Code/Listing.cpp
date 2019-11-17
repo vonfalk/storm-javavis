@@ -53,11 +53,6 @@ namespace code {
 
 	Listing::Entry::Entry() : instr(null), labels(null) {}
 
-	Listing::Entry::Entry(const Entry &o) {
-		instr = o.instr;
-		labels = o.labels;
-	}
-
 	Listing::Entry::Entry(Instr *i) : instr(i), labels(null) {}
 
 	Listing::Entry::Entry(Instr *i, Array<Label> *l) : instr(i), labels(l) {}

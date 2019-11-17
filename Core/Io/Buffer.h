@@ -22,9 +22,6 @@ namespace storm {
 		// Default constructor. Empty buffer.
 		STORM_CTOR Buffer();
 
-		// Copy a buffer.
-		Buffer(const Buffer &src);
-
 		// Number of bytes in total.
 		inline Nat STORM_FN count() const { return data ? data->count : 0; }
 

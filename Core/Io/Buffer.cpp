@@ -9,8 +9,6 @@ namespace storm {
 
 	Buffer::Buffer(GcArray<Byte> *buf) : data(buf) {}
 
-	Buffer::Buffer(const Buffer &o) : data(o.data) {}
-
 	void Buffer::deepCopy(CloneEnv *env) {
 		if (data) {
 			GcArray<Byte> *n = runtime::allocBuffer(env->engine(), data->count);

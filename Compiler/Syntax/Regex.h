@@ -18,9 +18,6 @@ namespace storm {
 			// Create a matcher for the pattern.
 			STORM_CTOR Regex(Str *pattern);
 
-			// Copy.
-			Regex(const Regex &o);
-
 			// Deep copy.
 			void STORM_FN deepCopy(CloneEnv *env);
 

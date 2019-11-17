@@ -23,8 +23,6 @@ namespace storm {
 			parse(pattern);
 		}
 
-		Regex::Regex(const Regex &o) : states(o.states), lastMatch(o.lastMatch) {}
-
 		void Regex::deepCopy(CloneEnv *env) {
 			// Note: there is no need to deeply copy things in here, as everything is read only from
 			// now on.

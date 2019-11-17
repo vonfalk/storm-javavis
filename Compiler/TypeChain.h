@@ -39,9 +39,6 @@ namespace storm {
 			STORM_VALUE;
 			friend class TypeChain;
 		public:
-			// Copy.
-			Iter(const Iter &o);
-
 			// Get the next element.
 			MAYBE(Type *) STORM_FN next();
 

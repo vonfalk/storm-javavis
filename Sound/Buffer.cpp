@@ -17,8 +17,6 @@ namespace sound {
 
 	Buffer::Buffer(GcArray<Float> *buf) : data(buf) {}
 
-	Buffer::Buffer(const Buffer &o) : data(o.data) {}
-
 	void Buffer::deepCopy(CloneEnv *env) {
 		if (data) {
 			GcArray<Float> *n = runtime::allocArray<Float>(env->engine(), &bufType, data->count);

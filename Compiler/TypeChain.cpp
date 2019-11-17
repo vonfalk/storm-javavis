@@ -119,8 +119,6 @@ namespace storm {
 
 	TypeChain::Iter::Iter() : src() {}
 
-	TypeChain::Iter::Iter(const Iter &o) : src(o.src) {}
-
 	TypeChain::Iter::Iter(WeakSet<TypeChain> *src) : src(src->iter()) {}
 
 	Type *TypeChain::Iter::next() {

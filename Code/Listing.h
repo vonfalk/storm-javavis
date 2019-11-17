@@ -87,7 +87,6 @@ namespace code {
 			STORM_VALUE;
 		public:
 			STORM_CTOR Entry();
-			Entry(const Entry &o);
 			STORM_CTOR Entry(Instr *instr);
 			STORM_CTOR Entry(Instr *instr, MAYBE(Array<Label> *) labels);
 
