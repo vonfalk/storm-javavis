@@ -66,7 +66,7 @@
   (let* ((file (nth 0 data))
 	 (dir (nth 1 data))
 	 (args (nth 2 data))
-	 (char (1+ (string-to-int col)))
+	 (char (1+ (string-to-number col)))
 	 (full-file (expand-file-name file dir))
 	 (buffer (storm-find-error-buffer full-file)))
 
