@@ -30,7 +30,7 @@ namespace code {
 	};
 
 	wostream &operator <<(wostream &to, Block l);
-	StrBuf &operator <<(StrBuf &to, Block l);
+	StrBuf &STORM_FN operator <<(StrBuf &to, Block l);
 
 	/**
 	 * Represents a part of a block. These parts are a simple way of telling the runtime when to
@@ -64,6 +64,6 @@ namespace code {
 	};
 
 	wostream &operator <<(wostream &to, Part l);
-	StrBuf &operator <<(StrBuf &to, Part l);
+	StrBuf &STORM_FN operator <<(StrBuf &to, Part l);
 
 }

@@ -106,16 +106,21 @@ class Program on Compiler {
 	// Patch a source listing.
 	private Listing patchListing(Listing source) {
 		Listing dest = source.createShell();
+		Part part;
 
-		// TODO: Keep track of the current scope so that we can generate code that extracts the
-		// proper local variables!
 		for (Nat i = 0; i < source.count; i++) {
 			dest << source.labels(i);
 			Instr instr = source[i];
 			dest << source[i];
 
 			if (instr.op == OpCode:location) {
-				generateCall(dest, instr.src.srcPos);
+				generateCall(dest, instr.src.srcPos, part);
+			} else if (instr.op == OpCode:prolog) {
+				part = source.root;
+			} else if (instr.op == OpCode:beginBlock) {
+				part = instr.src.part;
+			} else if (instr.op == OpCode:endBlock) {
+				part = source.prev(instr.src.part);
 			}
 		}
 
@@ -125,7 +130,7 @@ class Program on Compiler {
 	}
 
 	// Generate a call to this cless in order to keep track of the execution.
-	private void generateCall(Listing to, SrcPos pos) {
+	private void generateCall(Listing to, SrcPos pos, Part part) {
 		unless (file = pos.file)
 			return;
 
