@@ -12,6 +12,10 @@ class ProgThread on Render {
 	// Current location. Set to null if the thread is currently running.
 	SrcPos? pos;
 
+	// Entries of called functions. We expect this array to contain at least one element when we
+	// receive calls to 'onNewLocation'.
+	StackFrame[] frames;
+
 	// Create.
 	init() {
 		init() {
@@ -25,7 +29,20 @@ class ProgThread on Render {
 		print("Thread reached ${pos}");
 		this.pos = pos;
 		// TODO: Save the stack contents as well!
-		sema.down();
+		// sema.down();
+		sleep(100 ms);
+	}
+
+	// Called when a new function was entered.
+	void onFunctionEntered(Str name) {
+		print("Function ${name} entered.");
+		frames.push(StackFrame(name));
+	}
+
+	// Called when a function is about to return.
+	void onFunctionExited() {
+		print("Function ${frames.last.function} exited.");
+		frames.pop();
 	}
 
 	// Resume the thread if it is not stopped.
@@ -47,4 +64,22 @@ class ProgThread on Render {
 			false;
 	}
 
+}
+
+
+/**
+ * A stack frame of a thread.
+ */
+class StackFrame on Render {
+	// Name of the function. (TODO: Add a SrcPos?)
+	Str function;
+
+	// TODO: Should contain a copy of all variables as well!
+
+	// Create.
+	init(Str name) {
+		init {
+			function = name;
+		}
+	}
 }

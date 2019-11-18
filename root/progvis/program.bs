@@ -38,23 +38,14 @@ class Program on Render {
 	Word->ProgThread threads;
 
 	// Start a new thread executing a particular function assumed to be located inside the
-	// environment specified earlier. The calling thread will execute the code. Use 'spawn'
-	// if that behavior is not desired.
-	void run(Fn<void> fn) {
-		ProgThread t;
-		Word id = currentUThread();
-		threads.put(id, t);
-
-		// TODO: We should pretect from exceptions here...
-		fn.call();
-
-		threads.remove(id);
-	}
-
-	// Start a new thread executing a particular function assumed to be located inside the
 	// environment specified earlier. Always spawns a new thread..
 	void spawn(Fn<void> fn) {
 		spawn run(fn);
+	}
+
+	// Run the function.
+	void run(Fn<void> fn) {
+		fn.call();
 	}
 
 	// This function will be called by the executed code to notify us of their current state in
@@ -64,6 +55,35 @@ class Program on Render {
 		ProgThread t = threads.get(id);
 
 		t.onNewLocation(SrcPos(file, from, to));
+	}
+
+	// This function will be called by the executed code to notify that a new (traced) function was
+	// called, and that we shall open a new scope.
+	package void functionEntered(Str name) {
+		Word id = currentUThread();
+		ProgThread t = if (threads.has(id)) {
+			threads.get(id);
+		} else {
+			ProgThread t;
+			threads.put(id, t);
+			t;
+		};
+
+		t.onFunctionEntered(name);
+	}
+
+	// This function will be called by the executed code to notify that a (traced) function is about
+	// to exit.
+	package void functionExited() {
+		Word id = currentUThread();
+		if (!threads.has(id))
+			return;
+
+		ProgThread t = threads.get(id);
+		t.onFunctionExited();
+		if (t.frames.empty()) {
+			threads.remove(id);
+		}
 	}
 }
 
@@ -145,7 +165,7 @@ private void patchFunction(Program program, Function fn) on Compiler {
 		return;
 	}
 
-	Listing patched = patchListing(program, source);
+	Listing patched = patchListing(program, source, fn);
 	fn.setCode(DynamicCode(patched));
 }
 
@@ -181,7 +201,7 @@ class PatchParams on Compiler {
 }
 
 // Patch a source listing.
-private Listing patchListing(Program program, Listing source) on Compiler {
+private Listing patchListing(Program program, Listing source, Function fn) on Compiler {
 	Listing dest = source.createShell();
 	Part part;
 	PatchParams params(dest);
@@ -195,6 +215,7 @@ private Listing patchListing(Program program, Listing source) on Compiler {
 			generateCall(program, params, instr.src.srcPos, part);
 		} else if (instr.op == OpCode:prolog) {
 			part = source.root;
+			generateCallTracking(program, params, fn);
 		} else if (instr.op == OpCode:beginBlock) {
 			part = instr.src.part;
 		} else if (instr.op == OpCode:endBlock) {
@@ -221,6 +242,26 @@ private void generateCall(Program program, PatchParams to, SrcPos pos, Part part
 	to.to << fnParam(intDesc, natConst(pos.end));
 	to.to << fnCall(fn.ref, true);
 	to.restoreRegs();
+}
+
+// Generate the call to 'functionEntered' and make sure 'functionExited' is called on function exit.
+private void generateCallTracking(Program program, PatchParams to, Function fn) on Compiler {
+	var enterFn = named{Program:functionEntered<Program, Str>};
+	// TODO: It is not always safe to do this... The destructor is expected to be a free function,
+	// but in almost all cases, it does not matter.
+	var exitFn = named{Program:functionExited<Program>};
+
+	// Find a clean function name.
+	var fnName = fn.path().from(1).toS();
+	if (!fnName.endsWith(")"))
+		fnName = fnName + "()";
+
+	Var v = to.to.createVar(to.to.root, sPtr, exitFn.ref);
+
+	to.to << mov(v, objPtr(program));
+	to.to << fnParam(ptrDesc, objPtr(program));
+	to.to << fnParam(ptrDesc, objPtr(fnName));
+	to.to << fnCall(enterFn.ref, true);
 }
 
 // Check if the listing contains any location information at all.
