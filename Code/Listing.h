@@ -134,6 +134,29 @@ namespace code {
 		Label STORM_FN label();
 
 		/**
+		 * Additional source-level information about variables. Front-ends may tag variables in this
+		 * way to provide a better debugging experience, but doing so is optional.
+		 */
+		class VarInfo : public Object {
+			STORM_CLASS;
+		public:
+			// Name of the variable.
+			Str *name;
+
+			// Type of the variable.
+			Type *type;
+
+			// Source location.
+			SrcPos pos;
+
+			// Create.
+			STORM_CTOR VarInfo(Str *name, Type *type, SrcPos pos);
+
+			// Deep copy.
+			void STORM_FN deepCopy(CloneEnv *env);
+		};
+
+		/**
 		 * Scope management.
 		 */
 
@@ -192,6 +215,12 @@ namespace code {
 
 		// Get parameter info about a variable.
 		MAYBE(TypeDesc *) STORM_FN paramDesc(Var v) const;
+
+		// Get debug info about a variable.
+		MAYBE(VarInfo *) STORM_FN varInfo(Var v) const;
+
+		// Set debug info.
+		void STORM_FN varInfo(Var v, MAYBE(VarInfo *) info);
 
 		// Get all blocks.
 		Array<Block> *STORM_FN allBlocks() const;
@@ -303,7 +332,10 @@ namespace code {
 			Size size;
 
 			// Parameter? If so: description of the parameter.
-			TypeDesc *param;
+			MAYBE(TypeDesc *) param;
+
+			// Optional variable information.
+			MAYBE(VarInfo *) info;
 
 			// Function to call on free.
 			Operand freeFn;

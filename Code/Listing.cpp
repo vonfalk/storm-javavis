@@ -96,16 +96,30 @@ namespace code {
 		return to;
 	}
 
+	/**
+	 * Variable information.
+	 */
+
+	Listing::VarInfo::VarInfo(Str *name, Type *type, SrcPos pos)
+		: name(name), type(type), pos(pos) {}
+
+	void Listing::VarInfo::deepCopy(CloneEnv *env) {
+		// No need.
+	}
+
 
 	/**
 	 * Internal storage.
 	 */
 
 	Listing::IVar::IVar(Nat parent, Size size, TypeDesc *param, Operand freeFn, FreeOpt opt) :
-		parent(parent), size(size), param(param), freeFn(freeFn), freeOpt(opt) {}
+		parent(parent), size(size), param(param), info(null), freeFn(freeFn), freeOpt(opt) {}
 
 	void Listing::IVar::deepCopy(CloneEnv *env) {
-		// No need.
+		if (info) {
+			info = new (env) VarInfo(*info);
+			info->deepCopy(env);
+		}
 	}
 
 	Listing::IBlock::IBlock(Engine &e) : parts(new (e) Array<Nat>()), parent(Block().id) {}
@@ -504,6 +518,18 @@ namespace code {
 		return vars->at(v.id).param;
 	}
 
+	MAYBE(Listing::VarInfo *) Listing::varInfo(Var v) const {
+		if (v.id >= vars->count())
+			return null;
+
+		return vars->at(v.id).info;
+	}
+
+	void Listing::varInfo(Var v, MAYBE(VarInfo *) info) {
+		if (v.id < vars->count())
+			vars->at(v.id).info = info;
+	}
+
 	Operand Listing::freeFn(Var v) const {
 		if (v.id >= vars->count())
 			return Operand();
@@ -734,7 +760,13 @@ namespace code {
 
 	void Listing::putVar(StrBuf &to, Nat var) const {
 		IVar &v = vars->at(var);
-		to << width(3) << var << L": size " << v.size << L" free " << v.freeOpt << L" using " << v.freeFn << L"\n";
+		to << width(3) << var
+		   << S(": size ") << v.size
+		   << S(" free ") << v.freeOpt
+		   << S(" using ") << v.freeFn;
+		if (v.info)
+			to << S(" (name: ") << v.info->name << S(")");
+		to << S("\n");
 	}
 
 }

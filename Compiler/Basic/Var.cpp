@@ -151,6 +151,7 @@ namespace storm {
 				assert(state->l->accessible(var.v, state->block));
 			} else {
 				var = state->createVar(result);
+				addInfo(state->l, var.v);
 			}
 		}
 
@@ -162,6 +163,13 @@ namespace storm {
 			assert(var.v == code::Var(), L"Already created!");
 
 			var = VarInfo(state->createParam(result));
+			addInfo(state->l, var.v);
+		}
+
+		void LocalVar::addInfo(code::Listing *l, code::Var var) {
+			// TODO: We should likely support references as well...
+			if (!result.ref)
+				l->varInfo(var, new (this) code::Listing::VarInfo(name, result.type, pos));
 		}
 
 

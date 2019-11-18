@@ -38,6 +38,9 @@ namespace storm {
 			// Create the parameter.
 			void STORM_FN createParam(CodeGen *state);
 
+		private:
+			// Create debug information.
+			void addInfo(code::Listing *l, code::Var var);
 		};
 
 		class Block;
