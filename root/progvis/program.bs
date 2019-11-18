@@ -149,10 +149,42 @@ private void patchFunction(Program program, Function fn) on Compiler {
 	fn.setCode(DynamicCode(patched));
 }
 
+// Common parameters to the code generation functions.
+class PatchParams on Compiler {
+	Listing to;
+	Var saveA;
+	Var saveB;
+	Var saveC;
+
+	init(Listing to) {
+		init() {
+			to = to;
+			saveA = to.createVar(to.root, sLong);
+			saveB = to.createVar(to.root, sLong);
+			saveC = to.createVar(to.root, sLong);
+		}
+	}
+
+	// Save registers.
+	void saveRegs() {
+		to << mov(saveA, rax);
+		to << mov(saveB, rbx);
+		to << mov(saveC, rcx);
+	}
+
+	// Restore registers.
+	void restoreRegs() {
+		to << mov(rax, saveA);
+		to << mov(rbx, saveB);
+		to << mov(rcx, saveC);
+	}
+}
+
 // Patch a source listing.
 private Listing patchListing(Program program, Listing source) on Compiler {
 	Listing dest = source.createShell();
 	Part part;
+	PatchParams params(dest);
 
 	for (Nat i = 0; i < source.count; i++) {
 		dest << source.labels(i);
@@ -160,7 +192,7 @@ private Listing patchListing(Program program, Listing source) on Compiler {
 		dest << source[i];
 
 		if (instr.op == OpCode:location) {
-			generateCall(program, dest, instr.src.srcPos, part);
+			generateCall(program, params, instr.src.srcPos, part);
 		} else if (instr.op == OpCode:prolog) {
 			part = source.root;
 		} else if (instr.op == OpCode:beginBlock) {
@@ -176,17 +208,19 @@ private Listing patchListing(Program program, Listing source) on Compiler {
 }
 
 // Generate a call to this cless in order to keep track of the execution.
-private void generateCall(Program program, Listing to, SrcPos pos, Part part) on Compiler {
+private void generateCall(Program program, PatchParams to, SrcPos pos, Part part) on Compiler {
 	unless (file = pos.file)
 		return;
 
 	var fn = named{Program:newLocation<Program, Url, Nat, Nat>};
 
-	to << fnParam(ptrDesc, objPtr(program));
-	to << fnParam(ptrDesc, objPtr(file));
-	to << fnParam(intDesc, natConst(pos.start));
-	to << fnParam(intDesc, natConst(pos.end));
-	to << fnCall(fn.ref, true);
+	to.saveRegs();
+	to.to << fnParam(ptrDesc, objPtr(program));
+	to.to << fnParam(ptrDesc, objPtr(file));
+	to.to << fnParam(intDesc, natConst(pos.start));
+	to.to << fnParam(intDesc, natConst(pos.end));
+	to.to << fnCall(fn.ref, true);
+	to.restoreRegs();
 }
 
 // Check if the listing contains any location information at all.
