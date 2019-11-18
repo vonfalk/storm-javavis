@@ -65,7 +65,7 @@ namespace storm {
 		if (p.unknown())
 			return to << S("<unknown location>");
 		else
-			return to << p.file << S("()") << p.start << S("-") << p.end << S(")");
+			return to << p.file << S("(") << p.start << S("-") << p.end << S(")");
 	}
 
 }

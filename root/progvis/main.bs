@@ -32,10 +32,27 @@ window MainWin {
 
 	void open(Url file) {
 		program = Program:load(file);
+		if (program) {
+			// program.onChange = &this.updateData();
+			program.spawn(program.main);
+		} else {
+			print("Failed to load your program.");
+		}
 	}
 
-	void advance(Button b) {
+	private void advance(Button b) {
+		if (program) {
+			for (t in program.threads) {
+				t.resume();
+			}
+		}
 		painter.advance();
+		draw.repaint();
+	}
+
+	// Called when a thread has reached a new breakpoint.
+	private void updateData() {
+		// TODO: Update the model as well!
 		draw.repaint();
 	}
 }

@@ -20,7 +20,7 @@ namespace storm {
 		STORM_CTOR Sema();
 
 		// Initialize the semaphore to 'count'.
-		Sema(Nat count);
+		STORM_CTOR Sema(Nat count);
 
 		// Copy.
 		Sema(const Sema &o);

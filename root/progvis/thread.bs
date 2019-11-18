@@ -1,0 +1,50 @@
+use ui;
+use core:sync;
+use core:lang;
+
+/**
+ * Represents a running thread inside the program.
+ */
+class ProgThread on Render {
+	// Semaphore used to pause the monitored thread.
+	Sema sema;
+
+	// Current location. Set to null if the thread is currently running.
+	SrcPos? pos;
+
+	// Create.
+	init() {
+		init() {
+			sema(0);
+		}
+	}
+
+	// Called by a monitored thread to possible pause execution.
+	void onNewLocation(SrcPos pos) {
+		// TODO: Decide if we should break.
+		print("Thread reached ${pos}");
+		this.pos = pos;
+		// TODO: Save the stack contents as well!
+		sema.down();
+	}
+
+	// Resume the thread if it is not stopped.
+	Bool resume() {
+		if (pos) {
+			this.pos = null;
+			sema.up();
+			true;
+		} else {
+			false;
+		}
+	}
+
+	// Check if the thread is currently running.
+	Bool running() {
+		if (pos)
+			true;
+		else
+			false;
+	}
+
+}

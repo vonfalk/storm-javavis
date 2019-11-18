@@ -1,27 +1,28 @@
+use ui;
 use core:io;
 use core:lang;
 use core:asm;
+use core:sync;
 use lang;
 use lang:bs:macro;
 
 /**
  * Class representing some loaded program that we want to execute and possibly single-step, etc.
  */
-class Program on Compiler {
+class Program on Render {
+	// Package created by us as a temporary workspace.
 	private Package pkg;
-	private Function main;
 
-	private init(Package pkg, Function main) {
+	// Pointer to the 'main' function.
+	public Fn<void> main;
+
+	// Event called whenever the state of a thread changed.
+	public Fn<void>? onChange;
+
+	package init(Package pkg, Fn<void> main) {
 		init() {
 			pkg = pkg;
 			main = main;
-		}
-
-		patchFunctions(pkg);
-
-		// Temporary: Execute the main function to see if everything works!
-		if (x = main.pointer() as Fn<void>) {
-			x.call();
 		}
 	}
 
@@ -30,126 +31,165 @@ class Program on Compiler {
 	}
 
 	public Program? load(Url[] files) : static {
-		Package pkg("<sandbox>");
-		pkg.parentLookup = rootPkg;
-		pkg.noDiscard();
-
-		Map<Str, Url[]> exts;
-		for (f in files) {
-			exts[f.ext] << f;
-		}
-
-		PkgReader[] readers;
-		for (ext, files in exts) {
-			if (name = readerName(ext))
-				if (r = createReader(name, files, pkg))
-					readers << r;
-		}
-
-		if (readers.empty()) {
-			print("No reader for the desired file type!");
-			return null;
-		}
-
-		// Load all code.
-		read(readers);
-
-		// Produce errors now rather than later.
-		pkg.compile();
-
-		// Find the function 'main'.
-		if (main = pkg.find(SimplePart("main"), Scope(pkg)) as Function) {
-			return Program(pkg, main);
-		} else {
-			print("No main function found!");
-			return null;
-		}
+		loadProgram(files);
 	}
 
-	// Patch all functions in the specified NameSet recursively.
-	// TODO: We don't really support threads at the moment, perhaps we should
-	// explicitly disallow that somehow?
-	private void patchFunctions(NameSet inside) {
-		inside.forceLoad();
+	// All threads in the program. The key is the ID of the UThread that executes the code.
+	Word->ProgThread threads;
 
-		for (named in inside) {
-			if (named as Function) {
-				patchFunction(named);
-			} else if (named as NameSet) {
-				patchFunctions(named);
-			}
-		}
+	// Start a new thread executing a particular function assumed to be located inside the
+	// environment specified earlier. The calling thread will execute the code. Use 'spawn'
+	// if that behavior is not desired.
+	void run(Fn<void> fn) {
+		ProgThread t;
+		Word id = currentUThread();
+		threads.put(id, t);
+
+		// TODO: We should pretect from exceptions here...
+		fn.call();
+
+		threads.remove(id);
 	}
 
-	// Patch a single function, adding code for instrumentation at each "location" statement in the
-	// listing. This makes it possible for us to "single step" the program, since we get called
-	// at each relevant location.
-	private void patchFunction(Function fn) {
-		unless (code = fn.getCode() as GeneratedCode)
-			return;
-
-		unless (source = code.source) {
-			print("Warning: Unable to patch ${fn}, no code!");
-			return;
-		}
-
-		// If it does not have any "source" instructions, ignore it.
-		if (!anyLocation(source)) {
-			print("Skipping ${fn}, no location metadata.");
-			return;
-		}
-
-		Listing patched = patchListing(source);
-		fn.setCode(DynamicCode(patched));
-	}
-
-	// Patch a source listing.
-	private Listing patchListing(Listing source) {
-		Listing dest = source.createShell();
-		Part part;
-
-		for (Nat i = 0; i < source.count; i++) {
-			dest << source.labels(i);
-			Instr instr = source[i];
-			dest << source[i];
-
-			if (instr.op == OpCode:location) {
-				generateCall(dest, instr.src.srcPos, part);
-			} else if (instr.op == OpCode:prolog) {
-				part = source.root;
-			} else if (instr.op == OpCode:beginBlock) {
-				part = instr.src.part;
-			} else if (instr.op == OpCode:endBlock) {
-				part = source.prev(instr.src.part);
-			}
-		}
-
-		dest << source.labels(source.count);
-
-		dest;
-	}
-
-	// Generate a call to this cless in order to keep track of the execution.
-	private void generateCall(Listing to, SrcPos pos, Part part) {
-		unless (file = pos.file)
-			return;
-
-		var fn = named{Program:newLocation<Program, Url, Nat, Nat>};
-
-		to << fnParam(ptrDesc, objPtr(this));
-		to << fnParam(ptrDesc, objPtr(file));
-		to << fnParam(intDesc, natConst(pos.start));
-		to << fnParam(intDesc, natConst(pos.end));
-		to << fnCall(fn.ref, true);
+	// Start a new thread executing a particular function assumed to be located inside the
+	// environment specified earlier. Always spawns a new thread..
+	void spawn(Fn<void> fn) {
+		spawn run(fn);
 	}
 
 	// This function will be called by the executed code to notify us of their current state in
 	// their execution. This also lets us execute them at any location.
-	private void newLocation(Url file, Nat from, Nat to) {
-		print("Executed: ${file} ${from} ${to} on ${currentUThread}");
+	package void newLocation(Url file, Nat from, Nat to) {
+		Word id = currentUThread();
+		ProgThread t = threads.get(id);
+
+		t.onNewLocation(SrcPos(file, from, to));
 	}
 }
 
+// Helper to load a program on a different thread.
+private Program? loadProgram(Url[] files) on Compiler {
+	Package pkg("<sandbox>");
+	pkg.parentLookup = rootPkg;
+	pkg.noDiscard();
+
+	Map<Str, Url[]> exts;
+	for (f in files) {
+		exts[f.ext] << f;
+	}
+
+	PkgReader[] readers;
+	for (ext, files in exts) {
+		if (name = readerName(ext))
+			if (r = createReader(name, files, pkg))
+				readers << r;
+	}
+
+	if (readers.empty()) {
+		print("No reader for the desired file type!");
+		return null;
+	}
+
+	// Load all code.
+	read(readers);
+
+	// Produce errors now rather than later.
+	pkg.compile();
+
+	// Find the function 'main'.
+	unless (main = pkg.find(SimplePart("main"), Scope(pkg)) as Function) {
+		print("No main function found!");
+		return null;
+	}
+
+	unless(mainPtr = pointer(main) as Fn<void>) {
+		print("Wrong signature of the main function.");
+		return null;
+	}
+
+	Program program(pkg, mainPtr);
+	patchFunctions(program, pkg);
+	return program;
+}
+
+// Patch all functions in the specified NameSet recursively.
+// TODO: We don't really support threads at the moment, perhaps we should
+// explicitly disallow that somehow?
+private void patchFunctions(Program program, NameSet inside) on Compiler {
+	inside.forceLoad();
+
+	for (named in inside) {
+		if (named as Function) {
+			patchFunction(program, named);
+		} else if (named as NameSet) {
+			patchFunctions(program, named);
+		}
+	}
+}
+
+// Patch a single function, adding code for instrumentation at each "location" statement in the
+// listing. This makes it possible for us to "single step" the program, since we get called
+// at each relevant location.
+private void patchFunction(Program program, Function fn) on Compiler {
+	unless (code = fn.getCode() as GeneratedCode)
+		return;
+
+	unless (source = code.source) {
+		print("Warning: Unable to patch ${fn}, no code!");
+		return;
+	}
+
+	// If it does not have any "source" instructions, ignore it.
+	if (!anyLocation(source)) {
+		print("Skipping ${fn}, no location metadata.");
+		return;
+	}
+
+	Listing patched = patchListing(program, source);
+	fn.setCode(DynamicCode(patched));
+}
+
+// Patch a source listing.
+private Listing patchListing(Program program, Listing source) on Compiler {
+	Listing dest = source.createShell();
+	Part part;
+
+	for (Nat i = 0; i < source.count; i++) {
+		dest << source.labels(i);
+		Instr instr = source[i];
+		dest << source[i];
+
+		if (instr.op == OpCode:location) {
+			generateCall(program, dest, instr.src.srcPos, part);
+		} else if (instr.op == OpCode:prolog) {
+			part = source.root;
+		} else if (instr.op == OpCode:beginBlock) {
+			part = instr.src.part;
+		} else if (instr.op == OpCode:endBlock) {
+			part = source.prev(instr.src.part);
+		}
+	}
+
+	dest << source.labels(source.count);
+
+	dest;
+}
+
+// Generate a call to this cless in order to keep track of the execution.
+private void generateCall(Program program, Listing to, SrcPos pos, Part part) on Compiler {
+	unless (file = pos.file)
+		return;
+
+	var fn = named{Program:newLocation<Program, Url, Nat, Nat>};
+
+	to << fnParam(ptrDesc, objPtr(program));
+	to << fnParam(ptrDesc, objPtr(file));
+	to << fnParam(intDesc, natConst(pos.start));
+	to << fnParam(intDesc, natConst(pos.end));
+	to << fnCall(fn.ref, true);
+}
+
+// Check if the listing contains any location information at all.
 private Bool anyLocation(Listing l) {
 	for (Nat i = 0; i < l.count; i++) {
 		if (l[i].op == OpCode:location)
@@ -157,4 +197,3 @@ private Bool anyLocation(Listing l) {
 	}
 	return false;
 }
-
