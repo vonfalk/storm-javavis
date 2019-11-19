@@ -236,12 +236,36 @@ private void generateCall(Program program, PatchParams to, SrcPos pos, Part part
 	var fn = named{Program:newLocation<Program, Url, Nat, Nat>};
 
 	to.saveRegs();
+
+	print("-"*40);
+	saveVariables(to, part);
+
 	to.to << fnParam(ptrDesc, objPtr(program));
 	to.to << fnParam(ptrDesc, objPtr(file));
 	to.to << fnParam(intDesc, natConst(pos.start));
 	to.to << fnParam(intDesc, natConst(pos.end));
 	to.to << fnCall(fn.ref, true);
 	to.restoreRegs();
+}
+
+// Save all variables to a data structure.
+private void saveVariables(PatchParams to, Part part) on Compiler {
+	Part parent = to.to.prev(part);
+	if (parent != Part()) {
+		saveVariables(to, parent);
+	} else {
+		saveVariables(to, to.to.allParams());
+	}
+
+	saveVariables(to, to.to.partVars(part));
+}
+
+private void saveVariables(PatchParams to, Var[] vars) on Compiler {
+	for (var in vars) {
+		if (info = to.to.varInfo(var)) {
+			print("Variable ${info.name}, ${info.type.identifier}");
+		}
+	}
 }
 
 // Generate the call to 'functionEntered' and make sure 'functionExited' is called on function exit.

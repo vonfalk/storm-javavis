@@ -3,6 +3,7 @@
 #include "Compiler/Engine.h"
 #include "Number.h"
 #include "Core/Hash.h"
+#include "Core/Variant.h"
 
 namespace storm {
 
@@ -39,15 +40,31 @@ namespace storm {
 	void rawPtrEmpty(InlineParams p) {
 		using namespace code;
 
-		*p.state->l << cmp(p.param(0), ptrConst(0));
-		*p.state->l << setCond(p.result->location(p.state).v, ifEqual);
+		if (p.result->needed()) {
+			*p.state->l << cmp(p.param(0), ptrConst(0));
+			*p.state->l << setCond(p.result->location(p.state).v, ifEqual);
+		}
 	}
 
 	void rawPtrAny(InlineParams p) {
 		using namespace code;
 
-		*p.state->l << cmp(p.param(0), ptrConst(0));
-		*p.state->l << setCond(p.result->location(p.state).v, ifNotEqual);
+		if (p.result->needed()) {
+			*p.state->l << cmp(p.param(0), ptrConst(0));
+			*p.state->l << setCond(p.result->location(p.state).v, ifNotEqual);
+		}
+	}
+
+	void rawPtrGet(InlineParams p) {
+		using namespace code;
+
+		if (p.result->needed()) {
+			if (p.result->type().ref) {
+				*p.state->l << lea(p.result->location(p.state).v, p.param(0));
+			} else if (!p.result->suggest(p.state, p.param(0))) {
+				*p.state->l << mov(p.result->location(p.state).v, p.param(0));
+			}
+		}
 	}
 
 	Str *CODECALL rawPtrToS(EnginePtr e, RootObject *ptr) {
@@ -60,11 +77,44 @@ namespace storm {
 		return runtime::typeOf(ptr);
 	}
 
+	template <class T>
+	T CODECALL rawPtrRead(const void *ptr, Nat offset) {
+		const GcType *t = runtime::gcTypeOf(ptr);
+		if (t->kind == GcType::tArray || t->kind == GcType::tWeakArray) {
+			offset += OFFSET_OF(GcArray<Byte>, v);
+		}
+
+		return *(T *)((byte *)ptr + offset);
+	}
+
+	Nat CODECALL rawPtrCount(const void *ptr) {
+		const GcType *t = runtime::gcTypeOf(ptr);
+		if (t->kind == GcType::tArray) {
+			return Nat(*(const size_t *)ptr);
+		} else if (t->kind == GcType::tWeakArray) {
+			return Nat(((GcWeakArray<void *> *)ptr)->count());
+		} else {
+			return 1;
+		}
+	}
+
+
 	template <Size T()>
 	void rawPtrRead(InlineParams p) {
 		using namespace code;
 
+		if (!p.result->needed())
+			return;
+
 		p.spillParams();
+
+		// Check if it is an array...
+		*p.state->l << mov(ptrA, p.param(0));
+		*p.state->l << mov(ptrA, ptrRel(ptrA, -Offset::sPtr)); // read type info
+		*p.state->l << mov(ptrA, ptrRel(ptrA, Offset())); // read 'kind'.
+		*p.state->l << cmp(ptrA, ptrConst(GcType::tArray));
+		*p.state->l << cmp(ptrA, ptrConst(GcType::tWeakArray));
+
 		*p.state->l << ucast(ptrA, p.param(1));
 		*p.state->l << add(ptrA, p.param(0));
 
@@ -101,25 +151,33 @@ namespace storm {
 		// Access.
 		Array<Value> *vo = new (this) Array<Value>(2, Value(this, false));
 		vo->at(1) = Value(StormInfo<Nat>::type(e));
-		add(inlinedFunction(e, Value(StormInfo<Bool>::type(e)), S("readBool"), vo, fnPtr(e, &rawPtrRead<code::sByte>)));
-		add(inlinedFunction(e, Value(StormInfo<Byte>::type(e)), S("readByte"), vo, fnPtr(e, &rawPtrRead<code::sByte>)));
-		add(inlinedFunction(e, Value(StormInfo<Int>::type(e)), S("readInt"), vo, fnPtr(e, &rawPtrRead<code::sInt>)));
-		add(inlinedFunction(e, Value(StormInfo<Nat>::type(e)), S("readNat"), vo, fnPtr(e, &rawPtrRead<code::sNat>)));
-		add(inlinedFunction(e, Value(StormInfo<Long>::type(e)), S("readLong"), vo, fnPtr(e, &rawPtrRead<code::sLong>)));
-		add(inlinedFunction(e, Value(StormInfo<Word>::type(e)), S("readWord"), vo, fnPtr(e, &rawPtrRead<code::sWord>)));
-		add(inlinedFunction(e, Value(StormInfo<Float>::type(e)), S("readFloat"), vo, fnPtr(e, &rawPtrRead<code::sFloat>)));
-		add(inlinedFunction(e, Value(StormInfo<Double>::type(e)), S("readDouble"), vo, fnPtr(e, &rawPtrRead<code::sDouble>)));
-		add(inlinedFunction(e, me, S("readPtr"), vo, fnPtr(e, &rawPtrRead<code::sPtr>)));
+		add(nativeFunction(e, Value(StormInfo<Bool>::type(e)), S("readBool"), vo, address(&rawPtrRead<Bool>)));
+		add(nativeFunction(e, Value(StormInfo<Byte>::type(e)), S("readByte"), vo, address(&rawPtrRead<Byte>)));
+		add(nativeFunction(e, Value(StormInfo<Int>::type(e)), S("readInt"), vo, address(&rawPtrRead<Int>)));
+		add(nativeFunction(e, Value(StormInfo<Nat>::type(e)), S("readNat"), vo, address(&rawPtrRead<Nat>)));
+		add(nativeFunction(e, Value(StormInfo<Long>::type(e)), S("readLong"), vo, address(&rawPtrRead<Long>)));
+		add(nativeFunction(e, Value(StormInfo<Word>::type(e)), S("readWord"), vo, address(&rawPtrRead<Word>)));
+		add(nativeFunction(e, Value(StormInfo<Float>::type(e)), S("readFloat"), vo, address(&rawPtrRead<Float>)));
+		add(nativeFunction(e, Value(StormInfo<Double>::type(e)), S("readDouble"), vo, address(&rawPtrRead<Double>)));
+		add(nativeFunction(e, me, S("readPtr"), vo, address(&rawPtrRead<void *>)));
+		add(nativeFunction(e, Value(StormInfo<Nat>::type(e)), S("readCount"), v, address(&rawPtrCount)));
 
 		// Create from pointers:
-		Array<Value> *obj = valList(e, 2, me, Value(StormInfo<Object>::type(e)));
-		add(inlinedFunction(e, Value(), Type::CTOR, obj, fnPtr(e, &rawPtrInit)));
-		Array<Value> *tobj = valList(e, 2, me, Value(StormInfo<TObject>::type(e)));
-		add(inlinedFunction(e, Value(), Type::CTOR, tobj, fnPtr(e, &rawPtrInit)));
+		Value obj(StormInfo<Object>::type(e));
+		Array<Value> *objPar = valList(e, 2, me, obj);
+		add(inlinedFunction(e, Value(), Type::CTOR, objPar, fnPtr(e, &rawPtrInit)));
+		Value tobj(StormInfo<TObject>::type(e));
+		Array<Value> *tobjPar = valList(e, 2, me, tobj);
+		add(inlinedFunction(e, Value(), Type::CTOR, tobjPar, fnPtr(e, &rawPtrInit)));
+		Value variant(StormInfo<Variant>::type(e));
+		Array<Value> *variantPar = valList(e, 2, me, variant);
+		add(inlinedFunction(e, Value(), Type::CTOR, variantPar, fnPtr(e, &rawPtrInit)));
 
 		// Inspect the data.
 		Value type(StormInfo<Type *>::type(e));
 		add(nativeFunction(e, type, S("type"), v, address(&rawPtrType)));
+		add(inlinedFunction(e, obj, S("asObject"), v, fnPtr(e, &rawPtrGet))->makePure());
+		add(inlinedFunction(e, tobj, S("asTObject"), v, fnPtr(e, &rawPtrGet))->makePure());
 
 		return Type::loadAll();
 	}

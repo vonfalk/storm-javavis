@@ -11,6 +11,7 @@
 #include "Lib/Enum.h"
 #include "Lib/ToS.h"
 #include "Lib/RawPtr.h"
+#include "Lib/Variant.h"
 #include "NameSet.h"
 #include "Package.h"
 #include "License.h"
@@ -78,8 +79,10 @@ namespace storm {
 		}
 
 		// Load other types.
-		Package *unsafe = e.package(S("unsafe"));
+		Package *unsafe = e.package(S("core.unsafe"));
 		unsafe->add(new (e) RawPtrType(e));
+
+		addVariant(e.nameSet(parseSimpleName(e, S("core.Variant"))));
 	}
 
 }

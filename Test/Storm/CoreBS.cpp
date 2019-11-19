@@ -5,6 +5,7 @@
 #include "Compiler/Package.h"
 #include "Core/Timing.h"
 #include "Core/Set.h"
+#include "Core/Variant.h"
 
 using storm::debug::DbgVal;
 using storm::debug::Dbg;
@@ -592,6 +593,18 @@ BEGIN_TEST(Globals, BS) {
 	// Make sure we have the proper initialization order.
 	CHECK_EQ(toS(runFn<Str *>(S("tests.bs.getInitGlobal"))), L"Global: A");
 
+} END_TEST
+
+/**
+ * Using a variant from within Storm.
+ */
+BEGIN_TEST(VariantStormTest, BS) {
+	CHECK_EQ(::toS(runFn<Variant>(S("test.bs.createStrVariant")).get<Str *>()), L"test");
+	CHECK_EQ(runFn<Variant>(S("test.bs.createIntVariant")).get<Int>(), 15);
+
+	// Using it together with RawPtr:
+	CHECK(runFn<Bool>(S("test.bs.variantRawObj")));
+	CHECK(runFn<Bool>(S("test.bs.variantRawInt")));
 } END_TEST
 
 /**

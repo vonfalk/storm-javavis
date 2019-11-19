@@ -1,6 +1,9 @@
 #pragma once
 #include "Handle.h"
 #include "Utils/Templates.h"
+#include "Core/Object.h"
+#include "Core/TObject.h"
+#include "Exception.h"
 
 namespace storm {
 	STORM_PKG(core);
@@ -23,6 +26,8 @@ namespace storm {
 
 		// Create a variant referring to an object.
 		explicit Variant(RootObject *t);
+		STORM_CAST_CTOR Variant(Object *o);
+		STORM_CAST_CTOR Variant(TObject *o);
 
 		// Create a variant referring to some known type known to be a value.
 		Variant(const void *value, Type *type);
@@ -91,7 +96,9 @@ namespace storm {
 		// for the template mess...
 		template <class T>
 		typename EnableIf<!IsPointer<T>::value, T>::t get() const {
-			assert(has(StormInfo<T>::type(engine())), L"Attempting to get an incorrect type from a variant.");
+			if (!data || !has(StormInfo<T>::type(engine())))
+				throw InternalError(L"Attempting to get an incorrect type from a variant.");
+
 			assert(runtime::gcTypeOf(data)->kind == GcType::tArray, L"Should specify a pointer with this type to 'get'.");
 
 			return *(T *)getValue();

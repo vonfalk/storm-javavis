@@ -13,6 +13,7 @@
 #include "Core/Handle.h"
 #include "Core/Io/Utf8Text.h"
 #include "Core/Convert.h"
+#include "Core/Variant.h"
 #include "Lib/Enum.h"
 #include "Lib/Fn.h"
 #include "Lib/Maybe.h"
@@ -361,6 +362,10 @@ namespace storm {
 		throw AbstractFnCalled(::toS(identifier));
 	}
 
+	static void CODECALL createVariant(void *obj, const void *src, Type *type) {
+		new (Place(obj)) Variant(src, type);
+	}
+
 	code::RefSource *Engine::createRef(RefType ref) {
 #define W(x) S(x)
 #define FNREF(x) arena()->externalSource(S("C++:") W(#x), address(&x))
@@ -410,6 +415,8 @@ namespace storm {
 			return FNREF(GlobalVar::dataPtr);
 		case rThrowAbstractError:
 			return FNREF(throwAbstractError);
+		case rCreateValVariant:
+			return FNREF(createVariant);
 		default:
 			assert(false, L"Unknown reference: " + ::toS(ref));
 			return null;

@@ -189,6 +189,8 @@ namespace storm {
 			rGlobalAddr,
 			// Throw an "Abstract function called"-exception.
 			rThrowAbstractError,
+			// Create a Variant instance from a value (a constructor).
+			rCreateValVariant,
 			// Should be the last one.
 			refCount,
 		};

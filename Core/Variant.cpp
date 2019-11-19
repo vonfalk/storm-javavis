@@ -31,6 +31,10 @@ namespace storm {
 
 	Variant::Variant(RootObject *o) : data(o) {}
 
+	Variant::Variant(Object *o) : data(o) {}
+
+	Variant::Variant(TObject *o) : data(o) {}
+
 	Variant::Variant(const void *value, Type *type) {
 		init(value, type);
 	}

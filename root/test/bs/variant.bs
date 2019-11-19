@@ -1,0 +1,36 @@
+use core:unsafe;
+use lang:bs:macro;
+
+Variant createStrVariant() {
+	Variant("test");
+}
+
+Variant createIntVariant() {
+	Variant(15);
+}
+
+Bool variantRawObj() {
+	Variant v("test");
+	RawPtr raw(v);
+
+	if (raw.type is named{core:Str}) {
+		if (s = raw.asObject() as Str) {
+			s == "test";
+		} else {
+			false;
+		}
+	} else {
+		false;
+	}
+}
+
+Bool variantRawInt() {
+	Variant v(10);
+	RawPtr raw(v);
+
+	if (raw.type is named{core:Int}) {
+		raw.readInt(0) == 10;
+	} else {
+		false;
+	}
+}
