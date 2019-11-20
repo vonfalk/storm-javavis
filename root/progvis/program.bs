@@ -50,16 +50,16 @@ class Program on Render {
 
 	// This function will be called by the executed code to notify us of their current state in
 	// their execution. This also lets us execute them at any location.
-	package void newLocation(Url file, Nat from, Nat to) {
+	package void newLocation(Url file, Nat from, Nat to, StackVar[] vars) {
 		Word id = currentUThread();
 		ProgThread t = threads.get(id);
 
-		t.onNewLocation(SrcPos(file, from, to));
+		t.onNewLocation(SrcPos(file, from, to), vars);
 	}
 
 	// This function will be called by the executed code to notify that a new (traced) function was
 	// called, and that we shall open a new scope.
-	package void functionEntered(Str name) {
+	package void functionEntered(Str name, StackVar[] vars) {
 		Word id = currentUThread();
 		ProgThread t = if (threads.has(id)) {
 			threads.get(id);
@@ -69,7 +69,7 @@ class Program on Render {
 			t;
 		};
 
-		t.onFunctionEntered(name);
+		t.onFunctionEntered(name, vars);
 	}
 
 	// This function will be called by the executed code to notify that a (traced) function is about
@@ -225,8 +225,6 @@ private Listing patchListing(Program program, Listing source, Function fn) on Co
 
 	dest << source.labels(source.count);
 
-	print(dest.toS);
-
 	dest;
 }
 
@@ -235,7 +233,7 @@ private void generateCall(Program program, PatchParams to, SrcPos pos, Part part
 	unless (file = pos.file)
 		return;
 
-	var fn = named{Program:newLocation<Program, Url, Nat, Nat>};
+	var fn = named{Program:newLocation<Program, Url, Nat, Nat, StackVar[]>};
 
 	to.saveRegs();
 	Listing l = to.to;
@@ -244,7 +242,25 @@ private void generateCall(Program program, PatchParams to, SrcPos pos, Part part
 
 	l << begin(subBlock);
 
-	Var array = l.createVar(subBlock, sPtr);
+	Var array = saveVariables(to, part, subBlock);
+
+	l << fnParam(ptrDesc, objPtr(program));
+	l << fnParam(ptrDesc, objPtr(file));
+	l << fnParam(intDesc, natConst(pos.start));
+	l << fnParam(intDesc, natConst(pos.end));
+	l << fnParam(ptrDesc, array);
+	l << fnCall(fn.ref, true);
+
+	l << end(subBlock);
+	to.restoreRegs();
+}
+
+// Save all variables to a data structure in the current block.
+private Var saveVariables(PatchParams to, Part investigate, Block current) on Compiler {
+	Listing l = to.to;
+
+	Var array = l.createVar(current, sPtr);
+	Var stackVar = l.createVar(current, named{StackVar}.size);
 	Type arrayType = named{StackVar[]};
 	l << fnParam(ptrDesc, named{StackVar[]}.typeRef);
 	l << fnCall(allocObjectRef, false, ptrDesc, array);
@@ -254,42 +270,54 @@ private void generateCall(Program program, PatchParams to, SrcPos pos, Part part
 		l << fnCall(ctor.ref, true);
 	}
 
-	print("-"*40);
-	saveVariables(to, part);
+	saveVariables(to, investigate, array, stackVar);
 
-	l << fnParam(ptrDesc, objPtr(program));
-	l << fnParam(ptrDesc, objPtr(file));
-	l << fnParam(intDesc, natConst(pos.start));
-	l << fnParam(intDesc, natConst(pos.end));
-	l << fnCall(fn.ref, true);
-
-	l << end(subBlock);
-	to.restoreRegs();
+	array;
 }
 
 // Save all variables to a data structure.
-private void saveVariables(PatchParams to, Part part) on Compiler {
+private void saveVariables(PatchParams to, Part part, Var array, Var stackVar) on Compiler {
 	Part parent = to.to.prev(part);
 	if (parent != Part()) {
-		saveVariables(to, parent);
-	} else {
-		saveVariables(to, to.to.allParams());
+		saveVariables(to, parent, array, stackVar);
 	}
 
-	saveVariables(to, to.to.partVars(part));
+	saveVariables(to, to.to.partVars(part), array, stackVar);
 }
 
-private void saveVariables(PatchParams to, Var[] vars) on Compiler {
+private void saveVariables(PatchParams to, Var[] vars, Var array, Var stackVar) on Compiler {
+	Listing l = to.to;
+
 	for (var in vars) {
 		if (info = to.to.varInfo(var)) {
-			print("Variable ${info.name}, ${info.type.identifier}");
+			Type variant = named{Variant};
+			SimplePart ctorName("__init", [Value(variant, true), Value(info.type, true)]);
+			if (ctor = variant.find(ctorName, Scope()) as Function) {
+				// Set 'name'.
+				l << mov(ptrRel(stackVar, Offset()), objPtr(info.name));
+				// Create the variant.
+				l << lea(ptrA, ptrRel(stackVar, Offset(sPtr)));
+				l << lea(ptrB, var);
+				l << fnParam(ptrDesc, ptrA);
+				l << fnParam(ptrDesc, ptrB);
+				l << fnCall(ctor.ref(), true);
+
+				// Add the object to the array.
+				Function push = named{Array<StackVar>:push<StackVar[], StackVar>};
+				l << lea(ptrA, stackVar);
+				l << fnParam(ptrDesc, array);
+				l << fnParam(ptrDesc, ptrA);
+				l << fnCall(push.ref, true);
+			} else {
+				print("No ctor for ${info.type.identifier}");
+			}
 		}
 	}
 }
 
 // Generate the call to 'functionEntered' and make sure 'functionExited' is called on function exit.
 private void generateCallTracking(Program program, PatchParams to, Function fn) on Compiler {
-	var enterFn = named{Program:functionEntered<Program, Str>};
+	var enterFn = named{Program:functionEntered<Program, Str, StackVar[]>};
 	// TODO: It is not always safe to do this... The destructor is expected to be a free function,
 	// but in almost all cases, it does not matter.
 	var exitFn = named{Program:functionExited<Program>};
@@ -299,12 +327,21 @@ private void generateCallTracking(Program program, PatchParams to, Function fn) 
 	if (!fnName.endsWith(")"))
 		fnName = fnName + "()";
 
-	Var v = to.to.createVar(to.to.root, sPtr, exitFn.ref);
+	Listing l = to.to;
 
-	to.to << mov(v, objPtr(program));
-	to.to << fnParam(ptrDesc, objPtr(program));
-	to.to << fnParam(ptrDesc, objPtr(fnName));
-	to.to << fnCall(enterFn.ref, true);
+	Var v = l.createVar(l.root, sPtr, exitFn.ref);
+	l << mov(v, objPtr(program));
+
+	Block subBlock = l.createBlock(l.root);
+	l << begin(subBlock);
+	Var array = saveVariables(to, l.root, subBlock);
+
+	l << fnParam(ptrDesc, objPtr(program));
+	l << fnParam(ptrDesc, objPtr(fnName));
+	l << fnParam(ptrDesc, array);
+	l << fnCall(enterFn.ref, true);
+
+	l << end(subBlock);
 }
 
 // Check if the listing contains any location information at all.

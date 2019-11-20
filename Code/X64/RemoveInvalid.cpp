@@ -243,7 +243,6 @@ namespace code {
 		void RemoveInvalid::fnParamTfm(Listing *dest, Instr *instr, Nat line) {
 			TypeInstr *i = as<TypeInstr>(instr);
 			if (!i) {
-				TODO(L"REMOVE ME"); return;
 				throw InvalidValue(L"Expected a TypeInstr for 'fnParam'.");
 			}
 
@@ -253,7 +252,6 @@ namespace code {
 		void RemoveInvalid::fnParamRefTfm(Listing *dest, Instr *instr, Nat line) {
 			TypeInstr *i = as<TypeInstr>(instr);
 			if (!i) {
-				TODO(L"REMOVE ME"); return;
 				throw InvalidValue(L"Expected a TypeInstr for 'fnParamRef'.");
 			}
 
@@ -263,7 +261,6 @@ namespace code {
 		void RemoveInvalid::fnCallTfm(Listing *dest, Instr *instr, Nat line) {
 			TypeInstr *t = as<TypeInstr>(instr);
 			if (!t) {
-				TODO(L"Remove me!"); return;
 				throw InvalidValue(L"Using a fnCall that was not created properly.");
 			}
 
@@ -274,7 +271,6 @@ namespace code {
 		void RemoveInvalid::fnCallRefTfm(Listing *dest, Instr *instr, Nat line) {
 			TypeInstr *t = as<TypeInstr>(instr);
 			if (!t) {
-				TODO(L"Remove me!"); return;
 				throw InvalidValue(L"Using a fnCall that was not created properly.");
 			}
 

@@ -24,19 +24,22 @@ class ProgThread on Render {
 	}
 
 	// Called by a monitored thread to possible pause execution.
-	void onNewLocation(SrcPos pos) {
+	void onNewLocation(SrcPos pos, StackVar[] vars) {
 		// TODO: Decide if we should break.
 		print("Thread reached ${pos}");
+		this.frames.last.variables = vars;
 		this.pos = pos;
-		// TODO: Save the stack contents as well!
 		// sema.down();
 		sleep(100 ms);
 	}
 
 	// Called when a new function was entered.
-	void onFunctionEntered(Str name) {
+	void onFunctionEntered(Str name, StackVar[] vars) {
 		print("Function ${name} entered.");
-		frames.push(StackFrame(name));
+		// TODO: Set the position as well!
+		frames.push(StackFrame(name, vars));
+		// sema.down();
+		sleep(100 ms);
 	}
 
 	// Called when a function is about to return.
@@ -68,6 +71,8 @@ class ProgThread on Render {
 
 /**
  * A variable in a stack-frame.
+ *
+ * Note: We fill in this type directly from machine code, don't alter the layout!
  */
 value StackVar {
 	Str name;
@@ -86,12 +91,14 @@ class StackFrame on Render {
 	// Name of the function. (TODO: Add a SrcPos?)
 	Str function;
 
-	// TODO: Should contain a copy of all variables as well!
+	// The current state of all variables. Ordered roughly as they appear in the source.
+	StackVar[] variables;
 
 	// Create.
-	init(Str name) {
+	init(Str name, StackVar[] vars) {
 		init {
 			function = name;
+			variables = vars;
 		}
 	}
 }
