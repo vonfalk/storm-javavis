@@ -265,6 +265,10 @@ namespace storm {
 		return call;
 	}
 
+	code::Ref allocObjectRef(EnginePtr e) {
+		return e.v.ref(Engine::rAlloc);
+	}
+
 	void allocObject(CodeGen *s, Function *ctor, Array<code::Operand> *params, code::Var to) {
 		using namespace code;
 

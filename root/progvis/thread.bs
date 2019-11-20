@@ -66,6 +66,18 @@ class ProgThread on Render {
 
 }
 
+/**
+ * A variable in a stack-frame.
+ */
+value StackVar {
+	Str name;
+	Value value;
+
+	init(Str name, Value value) {
+		init { name = name; value = value; }
+	}
+}
+
 
 /**
  * A stack frame of a thread.

@@ -225,6 +225,8 @@ private Listing patchListing(Program program, Listing source, Function fn) on Co
 
 	dest << source.labels(source.count);
 
+	print(dest.toS);
+
 	dest;
 }
 
@@ -236,15 +238,32 @@ private void generateCall(Program program, PatchParams to, SrcPos pos, Part part
 	var fn = named{Program:newLocation<Program, Url, Nat, Nat>};
 
 	to.saveRegs();
+	Listing l = to.to;
+
+	Block subBlock = l.createBlock(part);
+
+	l << begin(subBlock);
+
+	Var array = l.createVar(subBlock, sPtr);
+	Type arrayType = named{StackVar[]};
+	l << fnParam(ptrDesc, named{StackVar[]}.typeRef);
+	l << fnCall(allocObjectRef, false, ptrDesc, array);
+
+	if (ctor = arrayType.defaultCtor) {
+		l << fnParam(ptrDesc, array);
+		l << fnCall(ctor.ref, true);
+	}
 
 	print("-"*40);
 	saveVariables(to, part);
 
-	to.to << fnParam(ptrDesc, objPtr(program));
-	to.to << fnParam(ptrDesc, objPtr(file));
-	to.to << fnParam(intDesc, natConst(pos.start));
-	to.to << fnParam(intDesc, natConst(pos.end));
-	to.to << fnCall(fn.ref, true);
+	l << fnParam(ptrDesc, objPtr(program));
+	l << fnParam(ptrDesc, objPtr(file));
+	l << fnParam(intDesc, natConst(pos.start));
+	l << fnParam(intDesc, natConst(pos.end));
+	l << fnCall(fn.ref, true);
+
+	l << end(subBlock);
 	to.restoreRegs();
 }
 
