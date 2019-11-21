@@ -49,12 +49,12 @@ class UnknownData extends Data {
 	}
 
 	Size size() : override {
-		text.size + dataBorder;
+		text.size + dataBorder*2;
 	}
 
 	void draw(Graphics g) : override {
 		super:draw(g);
-		g.draw(text, dataFg, pos + dataBorder / 2);
+		g.draw(text, dataFg, pos + dataBorder);
 	}
 
 	void update(Workspace work, unsafe:RawPtr object, Nat offset) : override {}
@@ -79,12 +79,12 @@ class Primitive extends Data {
 	}
 
 	Size size() : override {
-		text.size + dataBorder;
+		text.size + dataBorder*2;
 	}
 
 	void draw(Graphics g) : override {
 		super:draw(g);
-		g.draw(text, dataFg, pos + dataBorder / 2);
+		g.draw(text, dataFg, pos + dataBorder);
 	}
 
 	void update(Workspace work, unsafe:RawPtr object, Nat offset) : override {
@@ -98,7 +98,7 @@ class Primitive extends Data {
  */
 class Pointer extends Data {
 	private Size sz;
-	private Data? to;
+	protected Data? to;
 
 	init() {
 		init() {
@@ -107,7 +107,7 @@ class Pointer extends Data {
 	}
 
 	Size size() : override {
-		sz + dataBorder;
+		sz + dataBorder*2;
 	}
 
 	void draw(Graphics g) : override {
@@ -124,6 +124,20 @@ class Pointer extends Data {
 		var ptr = object.readPtr(offset);
 		if (ptr.any) {
 			to = work.traverse(ptr);
+		} else {
+			to = null;
+		}
+	}
+}
+
+/**
+ * A pointer on the stack. Examines the pointer passed directly to the object rather than
+ * dereferencing it once first.
+ */
+class StackPointer extends Pointer {
+	void update(Workspace work, unsafe:RawPtr object, Nat offset) : override {
+		if (object.any) {
+			to = work.traverse(object);
 		} else {
 			to = null;
 		}
@@ -148,13 +162,13 @@ class Composite extends Data {
 	Size size() : override {
 		if (!sizeComputed)
 			updateSize();
-		Size(namesWidth + dataWidth, height) + compositeBorder;
+		Size(namesWidth + dataWidth, height) + compositeBorder*2;
 	}
 
 	void draw(Graphics g) : override {
 		super:draw(g);
 
-		Point at = pos + compositeBorder/2;
+		Point at = pos + compositeBorder;
 		for (v in content) {
 			var nameSz = v.text.size;
 			var dataSz = v.value.size;

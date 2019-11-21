@@ -191,6 +191,8 @@ namespace storm {
 			rThrowAbstractError,
 			// Create a Variant instance from a value (a constructor).
 			rCreateValVariant,
+			// Create a Variant instance from a class (a constructor).
+			rCreateClassVariant,
 			// Should be the last one.
 			refCount,
 		};

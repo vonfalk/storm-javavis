@@ -2,6 +2,7 @@
 #include "RawPtr.h"
 #include "Compiler/Engine.h"
 #include "Number.h"
+#include "Maybe.h"
 #include "Core/Hash.h"
 #include "Core/Variant.h"
 
@@ -74,7 +75,20 @@ namespace storm {
 	}
 
 	Type *CODECALL rawPtrType(RootObject *ptr) {
-		return runtime::typeOf(ptr);
+		if (ptr)
+			return runtime::typeOf(ptr);
+		else
+			return null;
+	}
+
+	Bool CODECALL rawPtrIsValue(const void *ptr) {
+		if (!ptr)
+			return false;
+		const GcType *type = runtime::gcTypeOf(ptr);
+		if (type->kind == GcType::tArray || type->kind == GcType::tWeakArray)
+			return type->type != null;
+		else
+			return false;
 	}
 
 	template <class T>
@@ -175,7 +189,8 @@ namespace storm {
 
 		// Inspect the data.
 		Value type(StormInfo<Type *>::type(e));
-		add(nativeFunction(e, type, S("type"), v, address(&rawPtrType)));
+		add(nativeFunction(e, wrapMaybe(type), S("type"), v, address(&rawPtrType)));
+		add(nativeFunction(e, Value(StormInfo<Bool>::type(e)), S("isValue"), v, address(&rawPtrIsValue)));
 		add(inlinedFunction(e, obj, S("asObject"), v, fnPtr(e, &rawPtrGet))->makePure());
 		add(inlinedFunction(e, tobj, S("asTObject"), v, fnPtr(e, &rawPtrGet))->makePure());
 

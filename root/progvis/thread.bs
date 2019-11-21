@@ -76,9 +76,9 @@ class ProgThread on Render {
  */
 value StackVar {
 	Str name;
-	Value value;
+	Variant value;
 
-	init(Str name, Value value) {
+	init(Str name, Variant value) {
 		init { name = name; value = value; }
 	}
 }

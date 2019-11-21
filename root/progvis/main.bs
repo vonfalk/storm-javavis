@@ -20,7 +20,6 @@ window MainWin {
 	}
 
 	private MainPainter painter;
-	private Program? program;
 
 	init() {
 		init("Progvis", Size(800, 800)) {}
@@ -31,13 +30,7 @@ window MainWin {
 	}
 
 	void open(Url file) {
-		program = Program:load(file);
-		if (program) {
-			// program.onChange = &this.updateData();
-			program.spawn(program.main);
-		} else {
-			print("Failed to load your program.");
-		}
+		painter.open(file);
 	}
 
 	private void advance(Button b) {
@@ -108,29 +101,55 @@ class MainPainter extends Painter {
 	// The workspace we want to draw.
 	private Workspace workspace;
 
+	// The program we're currently executing.
+	private Program? program;
+
 	init() {
 		init();
 		bgColor = Color(0.8, 0.8, 0.8);
 
-		// Traverse a sample object hierarchy.
-		workspace.beginTraversal();
-		workspace.traverse(unsafe:RawPtr(data));
-		workspace.endTraversal();
+		update();
+	}
+
+	// Open a program.
+	void open(Url file) {
+		program = Program:load(file);
+		if (program) {
+			program.spawn(program.main);
+			sleep(500 ms);
+
+			update();
+		} else {
+			print("Failed to load ${file}!");
+		}
 	}
 
 	// Temporary: advance the animation.
 	void advance() {
 		data.advance();
-
-		workspace.beginTraversal();
-		workspace.traverse(unsafe:RawPtr(data));
-		workspace.endTraversal();
+		update();
 	}
 
 	Bool render(Size me, Graphics g) {
 		// TODO: Support navigation?
 		workspace.render(Rect(Point(), me), g);
 		false;
+	}
+
+	// Update the visualization of the data.
+	void update() {
+		workspace.beginTraversal();
+
+		if (program) {
+			for (id, thread in program.threads) {
+				workspace.traverse(thread);
+			}
+		}
+
+		workspace.traverse(unsafe:RawPtr(data));
+		workspace.endTraversal();
+
+		repaint();
 	}
 }
 

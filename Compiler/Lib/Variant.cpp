@@ -2,6 +2,7 @@
 #include "Variant.h"
 #include "Type.h"
 #include "Code/Listing.h"
+#include "Maybe.h"
 #include "Engine.h"
 
 namespace storm {
@@ -28,12 +29,23 @@ namespace storm {
 		Var pMe = l->createParam(e.ptrDesc());
 		Var pVal = l->createParam(e.ptrDesc());
 
-		*l << prolog();
-		*l << fnParam(e.ptrDesc(), pMe);
-		*l << fnParam(e.ptrDesc(), pVal);
-		*l << fnParam(e.ptrDesc(), value.type->typeRef());
-		*l << fnCall(e.ref(Engine::rCreateValVariant), false);
-		*l << fnRet();
+		if (!unwrapMaybe(value.asRef(false)).isValue()) {
+			// Just stuff the object into the variant as usual.
+			*l << prolog();
+			*l << mov(ptrA, pVal);
+			*l << mov(ptrA, ptrRel(ptrA, Offset()));
+			*l << fnParam(e.ptrDesc(), pMe);
+			*l << fnParam(e.ptrDesc(), ptrA);
+			*l << fnCall(e.ref(Engine::rCreateClassVariant), false);
+			*l << fnRet();
+		} else {
+			*l << prolog();
+			*l << fnParam(e.ptrDesc(), pMe);
+			*l << fnParam(e.ptrDesc(), pVal);
+			*l << fnParam(e.ptrDesc(), value.type->typeRef());
+			*l << fnCall(e.ref(Engine::rCreateValVariant), false);
+			*l << fnRet();
+		}
 
 		Array<Value> *params = new (e) Array<Value>(2, me);
 		params->at(1) = value;

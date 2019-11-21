@@ -9,14 +9,26 @@ use core:geometry;
 // Default font when drawing data.
 Font dataFont on Render = defaultFont();
 
+// Font for captions.
+Font captionFont on Render = defaultFont();
+
 // Background color when drawing data.
 Brush dataBg on Render = SolidBrush(white);
 
 // Text color when drawing text.
 Brush dataFg on Render = SolidBrush(black);
 
+// Background color when drawing captions.
+Brush captionBg on Render = SolidBrush(white * 0.8);
+
+// Text color when drawing captions.
+Brush captionFg on Render = SolidBrush(black);
+
 // Border for data elements.
-Size dataBorder on Render = Size(4, 4);
+Size dataBorder on Render = Size(2, 2);
 
 // Border for composite data elements.
-Size compositeBorder on Render = Size(8, 8);
+Size compositeBorder on Render = Size(4, 4);
+
+// Offset for each stack frame.
+Float stackOffset on Render = 4;

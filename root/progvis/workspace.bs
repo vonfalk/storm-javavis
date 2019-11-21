@@ -17,6 +17,19 @@ class Workspace on Render {
 			// TODO: Clipping?
 			d.visual.draw(g);
 		}
+
+		// Do some basic layout for the active threads.
+		Float space = 10;
+		Float x = space;
+		for (t in threads) {
+			Size sz = t.size;
+			t.pos.x = x;
+			t.pos.y = viewport.p1.y - space - sz.h;
+
+			x += sz.w + space;
+
+			t.draw(g);
+		}
 	}
 
 	// Notify the workspace that we will start traversing objects now.
@@ -27,6 +40,10 @@ class Workspace on Render {
 			d.visited = false;
 			objMap.put(d.object, i);
 			maxX = max(maxX, d.visual.rect.p1.x);
+		}
+
+		for (t in threads) {
+			t.visited = false;
 		}
 	}
 
@@ -60,6 +77,23 @@ class Workspace on Render {
 		}
 	}
 
+	// Traverse the current contents of a thread.
+	void traverse(ProgThread thread) {
+		// We assume there are few enough threads for this to be viable.
+		for (t in threads) {
+			if (t is thread) {
+				t.visited = true;
+				t.traverse(this);
+				return;
+			}
+		}
+
+		// Not found. Add a new entry.
+		ThreadVal t(thread);
+		threads.push(t);
+		t.traverse(this);
+	}
+
 	// Notify the workspace that traversal is over, and that any remaning objects may be removed.
 	void endTraversal() {
 		Nat to = 0;
@@ -71,6 +105,17 @@ class Workspace on Render {
 		}
 		while (to < data.count) {
 			data.pop();
+		}
+
+		to = 0;
+		for (Nat i = 0; i < threads.count; i++) {
+			if (to < i)
+				threads[to] = threads[i];
+			if (threads[i].visited)
+				to++;
+		}
+		while (to < threads.count) {
+			threads.pop();
 		}
 	}
 
@@ -95,16 +140,38 @@ private:
 	// Map of object pointers to the corresponding data elements.
 	unsafe:RawPtr->Nat objMap;
 
+	// Threads. These are handled specially with respect to layout and functionality, so we keep
+	// them separate for now.
+	ThreadVal[] threads;
+
 	// Basic layout: Keep track of the next x-position in during the update.
 	Float maxX;
 
 	// Create a new node for an object. Called by 'traverse'.
-	Data createData(unsafe:RawPtr object) {
-		// Note: We know that this is always a composite object.
-		createComposite(object.type, object, 0);
+	public Data createData(unsafe:RawPtr object) {
+		if (t = object.type) {
+			createComposite(t, object, 0);
+		} else {
+			UnknownData();
+		}
 	}
 
-	// Create a new node for some object.
+	// Create data for an element on the stack. Respects if it was a pointer or not.
+	public Data createStackData(unsafe:RawPtr object) {
+		if (t = object.type) {
+			TypeInfo info(t, object.isValue, false);
+			if (!info.isValue) {
+				StackPointer();
+			} else {
+				createData(info, object, 0);
+			}
+		} else {
+			// It is probably a pointer that's NULL at the moment.
+			StackPointer();
+		}
+	}
+
+	// Create a new node for some object that is a part of another object.
 	Data createData(TypeInfo info, unsafe:RawPtr object, Nat offset) {
 		if (info.isRef | !info.isValue) {
 			return Pointer();

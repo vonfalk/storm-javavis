@@ -1,0 +1,250 @@
+use ui;
+use graphics;
+use core:geometry;
+use core:lang;
+use lang:bs:macro;
+
+/**
+ * Class representing the visual state of a thread.
+ */
+class ThreadVal on Render {
+	// Thread that contains the source data.
+	ProgThread thread;
+
+	// Current position.
+	Point pos;
+
+	// Visited during traversal?
+	Bool visited;
+
+	// Do we need to update our size?
+	Bool updateSize;
+
+	// Last known good size.
+	private Size lastSize;
+
+	// Stack frames.
+	FrameVal[] frames;
+
+	// Create.
+	init(ProgThread thread) {
+		init {
+			thread = thread;
+			visited = true;
+			updateSize = true;
+		}
+	}
+
+	// Compute our size.
+	Size size() {
+		if (updateSize) {
+			updateSize = false;
+			lastSize = computeSize();
+		}
+
+		lastSize;
+	}
+
+	// Get a rectangle.
+	Rect rect() {
+		Rect(pos, size);
+	}
+
+	// Draw the thread.
+	void draw(Graphics g) {
+		g.fill(rect, dataBg);
+		g.draw(rect, dataFg);
+
+		Rect contents = rect.shrink(compositeBorder);
+		contents.p1.x -= (frames.count.int.float - 1) * stackOffset;
+		for (id, frame in frames) {
+			frame.draw(g, contents, id == frames.count - 1);
+
+			contents.p0.x += stackOffset;
+			contents.p0.y += frame.captionHeight + compositeBorder.h;
+			contents.p1.x += stackOffset;
+			contents.p1.y -= compositeBorder.h;
+		}
+	}
+
+	// Update our contents.
+	void traverse(Workspace ws) {
+		for (k, v in thread.frames) {
+			if (k >= frames.count)
+				frames.push(FrameVal(v));
+			// Different frame?
+			if (frames[k].source !is v)
+				frames[k] = FrameVal(v);
+			frames[k].traverse(ws);
+		}
+
+		while (frames.count > thread.frames.count)
+			frames.pop();
+
+		updateSize = true;
+	}
+
+	private Size computeSize() {
+		Float w;
+		Float h;
+
+		for (Nat i = frames.count; i > 0; i--) {
+			var frame = frames[i - 1];
+
+			h += frame.captionHeight + compositeBorder.h * 2;
+
+			Size sz = frame.size;
+			h = max(h, sz.h);
+			w = max(w, sz.w);
+		}
+
+		w += (frames.count.int.float - 1) * stackOffset;
+		Size(w, h) + compositeBorder*2;
+	}
+}
+
+
+/**
+ * A single stack frame in a thread.
+ */
+class FrameVal on Render {
+	// Caption text.
+	Text caption;
+
+	// The stack frame we represent.
+	StackFrame source;
+
+	init(StackFrame frame) {
+		init {
+			caption = Text(frame.function, captionFont);
+			source = frame;
+		}
+	}
+
+	// Update our contents.
+	void traverse(Workspace ws) {
+		for (k, v in source.variables) {
+			if (k >= vars.count) {
+				vars.push(Var(ws, v));
+			} else {
+				vars[k].update(ws, v);
+			}
+		}
+
+		while (vars.count > source.variables.count)
+			vars.pop();
+
+		updateSize();
+	}
+
+	// Get the height of the caption.
+	Float captionHeight() {
+		caption.size.h + compositeBorder.h*2;
+	}
+
+	// Get the size.
+	Size size() {
+		Float w = namesWidth + dataWidth + compositeBorder.w*3;
+		Float h = height + captionHeight + compositeBorder.h*2;
+		Size(w, h);
+	}
+
+	// Draw ourselves.
+	void draw(Graphics g, Rect pos, Bool active) {
+		g.fill(pos, dataBg);
+		g.draw(pos, dataFg);
+
+		Rect captionPos(pos.p0, Size(pos.size.w, caption.size.h + compositeBorder.h*2));
+		g.fill(captionPos, captionBg);
+		g.draw(captionPos, captionFg);
+		g.draw(caption, captionFg, pos.p0 + compositeBorder);
+
+		Point at = pos.p0 + compositeBorder;
+		at.y = captionPos.p1.y + compositeBorder.h;
+		for (v in vars) {
+			var nameSz = v.text.size;
+			var dataSz = v.value.size;
+
+			if (active)
+				g.draw(v.text, dataFg, at);
+			v.value.pos.x = pos.p1.x - dataSz.w - compositeBorder.w;
+			v.value.pos.y = at.y;
+			v.value.draw(g);
+
+			at.y += max(nameSz.h, dataSz.h) + dataBorder.h;
+		}
+	}
+
+private:
+	// A variable inside a frame.
+	class Var on Render {
+		Str name;
+		Text text;
+		Data value;
+		Type? originalType;
+
+		init(Workspace ws, StackVar var) {
+			unsafe:RawPtr ptr(var.value);
+
+			init() {
+				name = var.name;
+				text = Text(var.name, dataFont);
+				value = ws.createStackData(ptr);
+				originalType = ptr.type;
+			}
+
+			update(ws, var);
+		}
+
+		void update(Workspace ws, StackVar var) {
+			unsafe:RawPtr ptr(var.value);
+
+			if (name != var.name) {
+				name = var.name;
+				text = Text(name, dataFont);
+			}
+
+			Bool updateData = false;
+			if (originalType) {
+				if (t = ptr.type) {
+					updateData = t !is originalType;
+				}
+			} else {
+				if (t = ptr.type) {
+					updateData = true;
+				}
+			}
+
+			if (updateData) {
+				originalType = ptr.type;
+				value = ws.createStackData(ptr);
+			}
+
+			value.update(ws, ptr, 0);
+		}
+	}
+
+	// Values in here.
+	Var[] vars;
+
+	Float namesWidth;
+	Float dataWidth;
+	Float height;
+
+	void updateSize() {
+		namesWidth = 0;
+		dataWidth = 0;
+		height = 0;
+		for (v in vars) {
+			var nameSz = v.text.size;
+			var dataSz = v.value.size;
+
+			namesWidth = max(namesWidth, nameSz.w + dataBorder.w);
+			dataWidth = max(dataWidth, dataSz.w);
+			height += max(nameSz.h, dataSz.h) + dataBorder.h;
+		}
+
+		height -= dataBorder.h;
+	}
+}
+

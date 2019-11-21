@@ -362,8 +362,12 @@ namespace storm {
 		throw AbstractFnCalled(::toS(identifier));
 	}
 
-	static void CODECALL createVariant(void *obj, const void *src, Type *type) {
+	static void CODECALL createValVariant(void *obj, const void *src, Type *type) {
 		new (Place(obj)) Variant(src, type);
+	}
+
+	static void CODECALL createClassVariant(void *obj, Object *src) {
+		new (Place(obj)) Variant(src);
 	}
 
 	code::RefSource *Engine::createRef(RefType ref) {
@@ -416,7 +420,9 @@ namespace storm {
 		case rThrowAbstractError:
 			return FNREF(throwAbstractError);
 		case rCreateValVariant:
-			return FNREF(createVariant);
+			return FNREF(createValVariant);
+		case rCreateClassVariant:
+			return FNREF(createClassVariant);
 		default:
 			assert(false, L"Unknown reference: " + ::toS(ref));
 			return null;

@@ -1,3 +1,5 @@
+use core:geometry;
+
 class Node {
 	Int val;
 	Node? next;
@@ -8,6 +10,7 @@ class Node {
 }
 
 void main() {
+	Point pt(1, 2);
 	Int i = 0;
 	Node? list;
 
