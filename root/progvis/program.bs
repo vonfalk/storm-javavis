@@ -291,13 +291,17 @@ private void saveVariables(PatchParams to, Var[] vars, Var array, Var stackVar) 
 	for (var in vars) {
 		if (info = to.to.varInfo(var)) {
 			Type variant = named{Variant};
-			SimplePart ctorName("__init", [Value(variant, true), Value(info.type, true)]);
+			Value param(info.type);
+			SimplePart ctorName("__init", [Value(variant, true), param]);
 			if (ctor = variant.find(ctorName, Scope()) as Function) {
 				// Set 'name'.
 				l << mov(ptrRel(stackVar, Offset()), objPtr(info.name));
 				// Create the variant.
 				l << lea(ptrA, ptrRel(stackVar, Offset(sPtr)));
-				l << lea(ptrB, var);
+				if (param.isValue())
+					l << lea(ptrB, var);
+				else
+					l << mov(ptrB, var);
 				l << fnParam(ptrDesc, ptrA);
 				l << fnParam(ptrDesc, ptrB);
 				l << fnCall(ctor.ref(), true);
