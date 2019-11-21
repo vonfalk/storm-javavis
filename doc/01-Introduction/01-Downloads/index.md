@@ -77,6 +77,18 @@ development version of the main entry point and the test suite respectively.
 To specify which garbage collector to use, either edit `Gc/Config.h`, or compile storm with `mm mps
 Main` or `mm smm Main`.
 
+On Linux (Debian), the following packages need to be installed to successfully compile Storm, in addition
+to Mymake and GCC:
+
+- `libgtk-3-dev` Gtk+ 3 headers
+- `libturbojpeg-dev` Headers for JPEG decoding
+- `libpng-dev` Headers for PNG decoding
+- `libopenal-dev` OpenAL headers for sound output
+- `autotools-dev`, `autoconf`, `libtool`  Build-tools required for building a custom Cairo
+
+These are not required on Windows, as Storm relies on the corresponding functionality in the Windows
+API instead of separate libraries.
+
 
 License
 --------
