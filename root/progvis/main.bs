@@ -23,24 +23,13 @@ window MainWin {
 
 	init() {
 		init("Progvis", Size(800, 800)) {}
+
 		draw.painter(painter);
 		create();
-
-		next.onClick = &this.advance(Button);
 	}
 
 	void open(Url file) {
 		painter.open(file);
-	}
-
-	private void advance(Button b) {
-		if (program) {
-			for (t in program.threads) {
-				t.resume();
-			}
-		}
-		painter.advance();
-		draw.repaint();
 	}
 
 	// Called when a thread has reached a new breakpoint.
@@ -50,54 +39,7 @@ window MainWin {
 	}
 }
 
-class Node {
-	Int value;
-	Node? next;
-
-	init(Int value) {
-		init { value = value; }
-	}
-}
-
-class SampleType {
-	Node data;
-	Node data2;
-	Int x;
-	Int y;
-	Point z;
-
-	init() {
-		Node tmp(8);
-
-		init {
-			data = tmp;
-			data2 = tmp;
-			x = 10;
-			y = 20;
-			z = Point(2.5, 3.1);
-		}
-	}
-
-	void advance() {
-		z.x += 1;
-		Int count = 1;
-		Node at = data;
-		while (true) {
-			if (n = at.next) {
-				at = n;
-			} else {
-				at.next = Node(count);
-				return;
-			}
-			count++;
-		}
-	}
-}
-
 class MainPainter extends Painter {
-	// Temporary: data we're showing.
-	private SampleType data;
-
 	// The workspace we want to draw.
 	private Workspace workspace;
 
@@ -107,18 +49,15 @@ class MainPainter extends Painter {
 	init() {
 		init();
 		bgColor = Color(0.8, 0.8, 0.8);
-
-		update();
 	}
 
 	// Open a program.
 	void open(Url file) {
 		program = Program:load(file);
 		if (program) {
-			program.spawn(program.main);
-			sleep(500 ms);
-
+			program.onChange = &this.update();
 			update();
+			program.spawn(program.main);
 		} else {
 			print("Failed to load ${file}!");
 		}
@@ -146,7 +85,6 @@ class MainPainter extends Painter {
 			}
 		}
 
-		workspace.traverse(unsafe:RawPtr(data));
 		workspace.endTraversal();
 
 		repaint();
@@ -158,7 +96,9 @@ void main() on Compiler {
 		for (file in url.children) {
 			if (file.ext == "bs") {
 				MainWin win;
+				print("Going to open.");
 				win.open(file);
+				print("Done!");
 				win.waitForClose();
 				return;
 			}

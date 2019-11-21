@@ -17,7 +17,19 @@ class Program on Render {
 	public Fn<void> main;
 
 	// Event called whenever the state of a thread changed.
-	public Fn<void>? onChange;
+	private Fn<void>? changeNotification;
+
+	// Set the change notification.
+	public assign onChange(Fn<void> fn) {
+		changeNotification = fn;
+		fn;
+	}
+
+	// Call the notification.
+	void notifyChange() {
+		if (changeNotification)
+			changeNotification.call();
+	}
 
 	package init(Package pkg, Fn<void> main) {
 		init() {
@@ -64,7 +76,7 @@ class Program on Render {
 		ProgThread t = if (threads.has(id)) {
 			threads.get(id);
 		} else {
-			ProgThread t;
+			ProgThread t(this);
 			threads.put(id, t);
 			t;
 		};

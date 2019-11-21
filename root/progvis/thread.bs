@@ -16,35 +16,41 @@ class ProgThread on Render {
 	// receive calls to 'onNewLocation'.
 	StackFrame[] frames;
 
+	// Owning Program object, so we can access the callback.
+	Program owner;
+
 	// Create.
-	init() {
+	init(Program owner) {
 		init() {
 			sema(0);
+			owner = owner;
 		}
 	}
 
 	// Called by a monitored thread to possible pause execution.
 	void onNewLocation(SrcPos pos, StackVar[] vars) {
 		// TODO: Decide if we should break.
-		print("Thread reached ${pos}");
+		// print("Thread reached ${pos}");
 		this.frames.last.variables = vars;
 		this.pos = pos;
+		owner.notifyChange();
 		// sema.down();
 		sleep(100 ms);
 	}
 
 	// Called when a new function was entered.
 	void onFunctionEntered(Str name, StackVar[] vars) {
-		print("Function ${name} entered.");
+		// print("Function ${name} entered.");
 		// TODO: Set the position as well!
 		frames.push(StackFrame(name, vars));
+		owner.notifyChange();
 		// sema.down();
 		sleep(100 ms);
 	}
 
 	// Called when a function is about to return.
 	void onFunctionExited() {
-		print("Function ${frames.last.function} exited.");
+		// print("Function ${frames.last.function} exited.");
 		frames.pop();
 	}
 
