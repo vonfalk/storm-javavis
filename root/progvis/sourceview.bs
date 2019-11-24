@@ -1,8 +1,10 @@
 use ui;
 use graphics;
+use core:io;
+use core:lang;
 use core:geometry;
 
-class SrcView on Render {
+class SourceView on Render {
 	// Program context.
 	Program program;
 
@@ -25,7 +27,7 @@ class SrcView on Render {
 	// Switch to a new view.
 	void display(SrcPos pos) {
 		if (file = pos.file) {
-			display(file, pos.begin, pos.end);
+			display(file, pos.start, pos.end);
 		}
 	}
 
@@ -33,6 +35,16 @@ class SrcView on Render {
 	void display(Url file, Nat from, Nat to) {
 		if (file != this.file) {
 			text = program.source(file);
+		}
+	}
+
+	// Draw.
+	void draw(Graphics g, Rect pos) {
+		g.draw(pos, dataFg);
+		if (text) {
+			g.push(pos);
+			g.draw(text, dataFg, pos.p0);
+			g.pop();
 		}
 	}
 }

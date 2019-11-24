@@ -81,7 +81,7 @@ class Workspace on Render {
 	void traverse(ProgThread thread) {
 		// We assume there are few enough threads for this to be viable.
 		for (t in threads) {
-			if (t is thread) {
+			if (t.thread is thread) {
 				t.visited = true;
 				t.traverse(this);
 				return;

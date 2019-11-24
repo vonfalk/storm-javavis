@@ -599,13 +599,16 @@ namespace storm {
 		ClassCompare::ClassCompare(SrcPos pos, Expr *lhs, Expr *rhs, Bool negate) :
 			Expr(pos), lhs(lhs), rhs(rhs), negate(negate) {
 
-			Value r = lhs->result().type();
-			if ((r.type->typeFlags & typeClass) != typeClass)
+			Value l = lhs->result().type();
+			if (!l.type || (l.type->typeFlags & typeClass) != typeClass)
 				throw TypeError(lhs->pos, L"The default comparison operator can not be used with other types than classes.");
 
-			r = rhs->result().type();
-			if ((r.type->typeFlags & typeClass) != typeClass)
+			Value r = rhs->result().type();
+			if (!r.type || (r.type->typeFlags & typeClass) != typeClass)
 				throw TypeError(rhs->pos, L"The default comparison operator can not be used with other types than classes.");
+
+			if (!r.type->isA(l.type) && !l.type->isA(r.type))
+				throw TypeError(lhs->pos, L"The left- and right-hand types are unrelated.");
 		}
 
 		ExprResult ClassCompare::result() {

@@ -63,12 +63,6 @@ class MainPainter extends Painter {
 		}
 	}
 
-	// Temporary: advance the animation.
-	void advance() {
-		data.advance();
-		update();
-	}
-
 	Bool render(Size me, Graphics g) {
 		// TODO: Support navigation?
 		workspace.render(Rect(Point(), me), g);
@@ -92,6 +86,8 @@ class MainPainter extends Painter {
 }
 
 void main() on Compiler {
+	named{progvis}.compile();
+
 	if (url = named{progvis:test2}.url) {
 		for (file in url.children) {
 			if (file.ext == "bs") {

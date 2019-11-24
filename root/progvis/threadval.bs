@@ -26,12 +26,16 @@ class ThreadVal on Render {
 	// Stack frames.
 	FrameVal[] frames;
 
+	// Source code view.
+	SourceView source;
+
 	// Create.
 	init(ProgThread thread) {
 		init {
 			thread = thread;
 			visited = true;
 			updateSize = true;
+			source(thread.owner);
 		}
 	}
 
@@ -56,7 +60,7 @@ class ThreadVal on Render {
 		g.draw(rect, dataFg);
 
 		Point offset = rect.p0 + compositeBorder;
-		Size minSize(0, rect.size.h - compositeBorder.h*2);
+		Size minSize(0, rect.size.h - compositeBorder.h*3 - sourceSize.h);
 		for (id, frame in frames) {
 			Size sz = frame.size;
 			minSize.w = max(minSize.w, sz.w);
@@ -68,6 +72,11 @@ class ThreadVal on Render {
 			offset.y += delta;
 			minSize.h -= delta + compositeBorder.h;
 		}
+
+		Rect sourcePos(rect.p0, rect.p1 - compositeBorder);
+		sourcePos.p0.x = rect.p0.x + compositeBorder.w;
+		sourcePos.p0.y = sourcePos.p1.y - sourceSize.h;
+		source.draw(g, sourcePos);
 	}
 
 	// Update our contents.
@@ -83,6 +92,10 @@ class ThreadVal on Render {
 
 		while (frames.count > thread.frames.count)
 			frames.pop();
+
+		// Update the source view.
+		if (pos = thread.pos)
+			source.display(pos);
 
 		updateSize = true;
 	}
@@ -101,7 +114,11 @@ class ThreadVal on Render {
 			w = max(w, sz.w + i.int.float*stackOffset);
 		}
 
-		Size(max(threadMinWidth, w), h) + compositeBorder*2;
+		w = max(threadMinWidth, w);
+		w = max(sourceSize.w, w);
+		h += compositeBorder.h + sourceSize.h;
+
+		Size(w, h) + compositeBorder*2;
 	}
 }
 
