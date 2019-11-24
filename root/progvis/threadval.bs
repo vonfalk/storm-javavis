@@ -55,15 +55,18 @@ class ThreadVal on Render {
 		g.fill(rect, dataBg);
 		g.draw(rect, dataFg);
 
-		Rect contents = rect.shrink(compositeBorder);
-		contents.p1.x -= (frames.count.int.float - 1) * stackOffset;
+		Point offset = rect.p0 + compositeBorder;
+		Size minSize(0, rect.size.h - compositeBorder.h*2);
 		for (id, frame in frames) {
-			frame.draw(g, contents, id == frames.count - 1);
+			Size sz = frame.size;
+			minSize.w = max(minSize.w, sz.w);
 
-			contents.p0.x += stackOffset;
-			contents.p0.y += frame.captionHeight + compositeBorder.h;
-			contents.p1.x += stackOffset;
-			contents.p1.y -= compositeBorder.h;
+			frame.draw(g, Rect(offset, minSize), id == frames.count - 1);
+
+			Float delta = frame.captionHeight + compositeBorder.h;
+			offset.x += stackOffset;
+			offset.y += delta;
+			minSize.h -= delta + compositeBorder.h;
 		}
 	}
 
@@ -95,10 +98,9 @@ class ThreadVal on Render {
 
 			Size sz = frame.size;
 			h = max(h, sz.h);
-			w = max(w, sz.w);
+			w = max(w, sz.w + i.int.float*stackOffset);
 		}
 
-		w += (frames.count.int.float - 1) * stackOffset;
 		Size(max(threadMinWidth, w), h) + compositeBorder*2;
 	}
 }
