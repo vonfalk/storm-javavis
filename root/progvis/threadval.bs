@@ -99,7 +99,7 @@ class ThreadVal on Render {
 		}
 
 		w += (frames.count.int.float - 1) * stackOffset;
-		Size(w, h) + compositeBorder*2;
+		Size(max(threadMinWidth, w), h) + compositeBorder*2;
 	}
 }
 
@@ -144,9 +144,9 @@ class FrameVal on Render {
 
 	// Get the size.
 	Size size() {
-		Float w = namesWidth + dataWidth + compositeBorder.w*3;
-		Float h = height + captionHeight + compositeBorder.h*2;
-		Size(w, h);
+		Float w = max(namesWidth + dataWidth + compositeBorder.w, caption.size.w);
+		Float h = height + captionHeight;
+		Size(w, h) + compositeBorder*2;
 	}
 
 	// Draw ourselves.

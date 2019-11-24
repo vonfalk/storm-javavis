@@ -1,0 +1,38 @@
+use ui;
+use graphics;
+use core:geometry;
+
+class SrcView on Render {
+	// Program context.
+	Program program;
+
+	// Current file.
+	Url file;
+
+	// Current text object being rendered.
+	Text? text;
+
+	// Where to fill at the moment.
+	Rect fill;
+
+	// Create.
+	init(Program program) {
+		init {
+			program = program;
+		}
+	}
+
+	// Switch to a new view.
+	void display(SrcPos pos) {
+		if (file = pos.file) {
+			display(file, pos.begin, pos.end);
+		}
+	}
+
+	// Switch to a new view.
+	void display(Url file, Nat from, Nat to) {
+		if (file != this.file) {
+			text = program.source(file);
+		}
+	}
+}
