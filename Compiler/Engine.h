@@ -345,4 +345,9 @@ namespace storm {
 		void destroy();
 	};
 
+
+	STORM_PKG(core);
+	// Force garbage collection from Storm.
+	void STORM_FN gc(EnginePtr e);
+
 }

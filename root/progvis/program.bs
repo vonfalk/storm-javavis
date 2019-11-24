@@ -140,21 +140,21 @@ private Program? loadProgram(Url[] files) on Compiler {
 	}
 
 	Program program(pkg, mainPtr);
-	patchFunctions(program, pkg);
+	patchFunctions(program, pkg, pkg);
 	return program;
 }
 
 // Patch all functions in the specified NameSet recursively.
 // TODO: We don't really support threads at the moment, perhaps we should
 // explicitly disallow that somehow?
-private void patchFunctions(Program program, NameSet inside) on Compiler {
+private void patchFunctions(Program program, Package pkg, NameSet inside) on Compiler {
 	inside.forceLoad();
 
 	for (named in inside) {
 		if (named as Function) {
-			patchFunction(program, named);
+			patchFunction(program, pkg, named);
 		} else if (named as NameSet) {
-			patchFunctions(program, named);
+			patchFunctions(program, pkg, named);
 		}
 	}
 }
@@ -162,7 +162,7 @@ private void patchFunctions(Program program, NameSet inside) on Compiler {
 // Patch a single function, adding code for instrumentation at each "location" statement in the
 // listing. This makes it possible for us to "single step" the program, since we get called
 // at each relevant location.
-private void patchFunction(Program program, Function fn) on Compiler {
+private void patchFunction(Program program, Package pkg, Function fn) on Compiler {
 	unless (code = fn.getCode() as GeneratedCode)
 		return;
 
@@ -177,19 +177,21 @@ private void patchFunction(Program program, Function fn) on Compiler {
 		return;
 	}
 
-	Listing patched = patchListing(program, source, fn);
+	Listing patched = patchListing(program, pkg, source, fn);
 	fn.setCode(DynamicCode(patched));
 }
 
 // Common parameters to the code generation functions.
 class PatchParams on Compiler {
+	Package pkg;
 	Listing to;
 	Var saveA;
 	Var saveB;
 	Var saveC;
 
-	init(Listing to) {
+	init(Package pkg, Listing to) {
 		init() {
+			pkg = pkg;
 			to = to;
 			saveA = to.createVar(to.root, sLong);
 			saveB = to.createVar(to.root, sLong);
@@ -213,10 +215,10 @@ class PatchParams on Compiler {
 }
 
 // Patch a source listing.
-private Listing patchListing(Program program, Listing source, Function fn) on Compiler {
+private Listing patchListing(Program program, Package pkg, Listing source, Function fn) on Compiler {
 	Listing dest = source.createShell();
 	Part part;
-	PatchParams params(dest);
+	PatchParams params(pkg, dest);
 
 	for (Nat i = 0; i < source.count; i++) {
 		dest << source.labels(i);
@@ -339,7 +341,7 @@ private void generateCallTracking(Program program, PatchParams to, Function fn) 
 	var exitFn = named{Program:functionExited<Program>};
 
 	// Find a clean function name.
-	var fnName = fn.path().from(1).toS();
+	var fnName = cleanName(fn, to.pkg).toS();
 	if (!fnName.endsWith(")"))
 		fnName = fnName + "()";
 
@@ -367,4 +369,40 @@ private Bool anyLocation(Listing l) {
 			return true;
 	}
 	return false;
+}
+
+// Generate the name of a function, ignoring everything above "remove".
+private Name cleanName(Function f, Package remove) on Compiler {
+	Name name;
+	addParts(name, f, remove, true);
+	name;
+}
+
+private void addParts(Name to, Named at, Package remove, Bool skipFirst) on Compiler {
+	if (at is remove)
+		return;
+	if (at is named{core})
+		return;
+
+	// Don't include the root package either.
+	unless (parent = at.parent as Named)
+		return;
+
+	addParts(to, parent, remove, false);
+
+	Name[] params;
+	for (p in at.params) {
+		if (skipFirst) {
+			skipFirst = false;
+		} else {
+			if (t = p.type) {
+				Name n;
+				addParts(n, t, remove, false);
+				params << n;
+			}
+		}
+	}
+
+	RecPart p(at.name, params);
+	to.add(p);
 }

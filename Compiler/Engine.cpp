@@ -227,6 +227,9 @@ namespace storm {
 
 	void Engine::forNamed(NamedFn fn) {
 		world.forNamed(fn);
+
+		// TODO: Do more packages need this?
+		package()->lateInit();
 	}
 
 	/**
@@ -660,6 +663,10 @@ namespace storm {
 
 	Thread *DeclThread::thread(Engine &e) const {
 		return e.cppThread(identifier);
+	}
+
+	void gc(EnginePtr e) {
+		e.v.gc.collect();
 	}
 
 }
