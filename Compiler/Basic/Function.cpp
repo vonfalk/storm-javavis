@@ -360,7 +360,7 @@ namespace storm {
 		}
 
 		bs::FnBody::FnBody(BSFunction *owner)
-			: ExprBlock(owner->pos, owner->scope), type(owner->result) {
+			: ExprBlock(owner->body ? owner->body->pos : owner->pos, owner->scope), type(owner->result) {
 			owner->addParams(this);
 		}
 

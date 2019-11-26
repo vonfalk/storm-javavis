@@ -59,6 +59,7 @@ class Workspace on Render {
 			}
 			return elem.visual;
 		} else {
+			print("Miss: ${object} was not found.");
 			// Create a new instance.
 			var visual = createData(this, object);
 			data << Val(object, visual);
@@ -104,6 +105,7 @@ class Workspace on Render {
 				to++;
 		}
 		while (to < data.count) {
+			print("Removing ${data.last.object}");
 			data.pop();
 		}
 

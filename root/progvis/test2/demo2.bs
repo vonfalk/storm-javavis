@@ -5,12 +5,17 @@ class N {
 	init(Int val) {
 		init { val = val; }
 	}
+
+	init(Int val, N? next) {
+		init { val = val; next = next; }
+	}
 }
 
 N? makeList(Int depth) {
 	if (depth > 0) {
 		N n(depth);
 		n.next = makeList(depth - 1);
+		// N n(depth, makeList(depth - 1));
 		return n;
 	} else {
 		return null;

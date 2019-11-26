@@ -171,7 +171,17 @@ namespace storm {
 		 * Constructor body.
 		 */
 
-		CtorBody::CtorBody(BSCtor *ctor) : ExprBlock(ctor->pos, ctor->scope), superCalled(false), initDone(false) {
+		static SrcPos pickPos(BSCtor *ctor) {
+			if (ctor->body) {
+				SrcPos pos = ctor->body->pos;
+				pos.end++;
+				return pos;
+			} else {
+				return ctor->pos;
+			}
+		}
+
+		CtorBody::CtorBody(BSCtor *ctor) : ExprBlock(pickPos(ctor), ctor->scope), superCalled(false), initDone(false) {
 			threadParam = ctor->addParams(this);
 		}
 

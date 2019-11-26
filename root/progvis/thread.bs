@@ -44,7 +44,7 @@ class ProgThread on Render {
 		this.pos = pos;
 		owner.notifyChange();
 		// sema.down();
-		sleep(100 ms);
+		sleep(500 ms);
 	}
 
 	// Called when a new function was entered.
@@ -57,7 +57,7 @@ class ProgThread on Render {
 
 		owner.notifyChange();
 		// sema.down();
-		sleep(100 ms);
+		sleep(500 ms);
 	}
 
 	// Called when a function is about to return.

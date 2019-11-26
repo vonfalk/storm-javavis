@@ -15,7 +15,10 @@ class SourceView on Render {
 	Text? text;
 
 	// Where to fill at the moment.
-	Rect fill;
+	Rect[] fill;
+
+	// Bounds of the fill area. We try to center this in the source view.
+	Rect fillBounds;
 
 	// Create.
 	init(Program program) {
@@ -35,6 +38,22 @@ class SourceView on Render {
 	void display(Url file, Nat from, Nat to) {
 		if (file != this.file) {
 			text = program.source(file);
+			this.file = file;
+		}
+
+		if (text) {
+			var begin = text.text.begin + from;
+			var end = text.text.begin + to;
+			fill = text.boundsOf(begin, end);
+
+			if (fill.any)
+				fillBounds = fill[0];
+			for (Nat i = 1; i < fill.count; i++) {
+				fillBounds = fillBounds.include(fill[i]);
+			}
+		} else {
+			fill = [];
+			// We don't re-set the bounds to prevent scrolling.
 		}
 	}
 
@@ -42,8 +61,18 @@ class SourceView on Render {
 	void draw(Graphics g, Rect pos) {
 		g.draw(pos, dataFg);
 		if (text) {
+			pos = pos.shrink(dataBorder);
+
 			g.push(pos);
-			g.draw(text, dataFg, pos.p0);
+
+			Float yOffset = pos.p0.y - fillBounds.p0.y + (pos.size.h - fillBounds.size.h) / 2;
+			Point offset(pos.p0.x, yOffset);
+
+			for (f in fill) {
+				g.fill(f + offset, sourceHighlight);
+			}
+
+			g.draw(text, dataFg, offset);
 			g.pop();
 		}
 	}

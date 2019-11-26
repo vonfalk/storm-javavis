@@ -9,14 +9,7 @@ use lang:bs:macro;
  * Main window.
  */
 window MainWin {
-	layout Border {
-		Grid {
-			wrapCols: 1;
-			expandCol: 0;
-			expandRow: 0;
-			Window draw {}
-		}
-	}
+	layout Window draw {}
 
 	private MainPainter painter;
 
@@ -91,9 +84,7 @@ void main() on Compiler {
 		for (file in url.children) {
 			if (file.ext == "bs") {
 				MainWin win;
-				print("Going to open.");
 				win.open(file);
-				print("Done!");
 				win.waitForClose();
 				return;
 			}

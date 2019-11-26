@@ -13,7 +13,7 @@ Font dataFont on Render = defaultFont();
 Font captionFont on Render = defaultFont();
 
 // Font for code.
-Font codeFont on Render = Font("Liberation Mono", 12);
+Font codeFont on Render = Font("Liberation Mono", 12, 20);
 
 // Background color when drawing data.
 Brush dataBg on Render = SolidBrush(white);
@@ -40,5 +40,7 @@ Float stackOffset on Render = 4;
 Float threadMinWidth on Render = 200;
 
 // Default code view size.
-Size sourceSize on Render = Size(200, 150);
+Size sourceSize on Render = Size(300, 200);
 
+// Highlight color for source code.
+Brush sourceHighlight on Render = SolidBrush(yellow);

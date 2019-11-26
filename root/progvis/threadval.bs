@@ -223,18 +223,7 @@ private:
 				text = Text(name, dataFont);
 			}
 
-			Bool updateData = false;
-			if (originalType) {
-				if (t = ptr.type) {
-					updateData = t !is originalType;
-				}
-			} else {
-				if (t = ptr.type) {
-					updateData = true;
-				}
-			}
-
-			if (updateData) {
+			if (originalType !is ptr.type) {
 				originalType = ptr.type;
 				value = ws.createStackData(ptr);
 			}

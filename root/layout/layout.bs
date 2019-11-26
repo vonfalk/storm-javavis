@@ -65,6 +65,11 @@ class Border extends Layout {
 		init() { border = defaultBorder; }
 	}
 
+	// Set the border size.
+	void border(Float w, Float h) {
+		border = Size(w, h);
+	}
+
 	// Add/set the child.
 	Layout:Info add(Component c) {
 		child = c;

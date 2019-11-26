@@ -15,6 +15,9 @@ namespace gui {
 		// Create a font.
 		STORM_CTOR Font(Str *typeface, Float height);
 
+		// Create a font, specify the width of tab stops (in pixels).
+		STORM_CTOR Font(Str *typeface, Float height, Float tabWidth);
+
 		// Copy.
 		Font(const Font &o);
 
@@ -61,6 +64,10 @@ namespace gui {
 		inline Bool STORM_FN strikeOut() { return fStrikeOut; }
 		void STORM_ASSIGN strikeOut(Bool u);
 
+		// Tab stop size.
+		inline Float STORM_FN tabWidth() { return fTabWidth; }
+		void STORM_ASSIGN tabWidth(Float w);
+
 		// To string.
 		virtual void STORM_FN toS(StrBuf *to) const;
 
@@ -91,6 +98,9 @@ namespace gui {
 
 		// Weight?
 		Int fWeight;
+
+		// Tab width.
+		Float fTabWidth;
 
 		// Italic.
 		Bool fItalic;

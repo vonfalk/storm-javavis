@@ -111,6 +111,18 @@ namespace gui {
 		fName = face;
 		fHeight = height;
 		fWeight = FW_NORMAL;
+		fTabWidth = 0;
+		fItalic = false;
+		fUnderline = false;
+		fStrikeOut = false;
+		shared = new FontData();
+	}
+
+	Font::Font(Str *face, Float height, Float tabWidth) {
+		fName = face;
+		fHeight = height;
+		fWeight = FW_NORMAL;
+		fTabWidth = tabWidth;
 		fItalic = false;
 		fUnderline = false;
 		fStrikeOut = false;
@@ -121,6 +133,7 @@ namespace gui {
 		fName = f.fName;
 		fHeight = f.fHeight;
 		fWeight = f.fWeight;
+		fTabWidth = f.fTabWidth;
 		fItalic = f.fItalic;
 		fUnderline = f.fUnderline;
 		fStrikeOut = f.fStrikeOut;
@@ -144,6 +157,11 @@ namespace gui {
 
 	void Font::weight(Int w) {
 		fWeight = w;
+		changed();
+	}
+
+	void Font::tabWidth(Float w) {
+		fTabWidth = w;
 		changed();
 	}
 
@@ -185,6 +203,7 @@ namespace gui {
 		fHeight = (float)abs(f.lfHeight);
 		fWeight = (int)f.lfWeight;
 		fItalic = f.lfItalic == TRUE;
+		fTabSize = 0;
 		fUnderline = f.lfUnderline == TRUE;
 		fStrikeOut = f.lfStrikeOut == TRUE;
 		shared = new FontData();
@@ -231,6 +250,9 @@ namespace gui {
 			if (FAILED(r)) {
 				WARNING(L"Failed to create font: " << ::toS(r));
 			}
+
+			if (fTabWidth > 0)
+				shared->textFmt->SetIncrementalTabStop(fTabWidth);
 		}
 		return shared->textFmt;
 	}
@@ -259,6 +281,7 @@ namespace gui {
 		fHeight = fromPango(pango_font_description_get_size(&desc));
 		fWeight = pango_font_description_get_weight(&desc);
 		fItalic = pango_font_description_get_style(&desc) == PANGO_STYLE_ITALIC;
+		fTabWidth = 0;
 		// TODO: How do I get/set these?
 		fUnderline = false;
 		fStrikeOut = false;

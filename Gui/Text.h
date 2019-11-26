@@ -1,5 +1,6 @@
 #pragma once
 #include "Font.h"
+#include "Brush.h"
 #include "Core/TObject.h"
 #include "Core/Array.h"
 
@@ -56,9 +57,15 @@ namespace gui {
 		// Get information about each line of the formatted text.
 		Array<TextLine *> *STORM_FN lineInfo();
 
+		// Set the color of a particular range of characters.
+		void STORM_FN color(Str::Iter begin, Str::Iter end, Color color);
+		void STORM_FN color(Str::Iter begin, Str::Iter end, SolidBrush *color);
+
+		// Get a set of rectangles that cover a range of characters.
+		Array<Rect> *STORM_FN boundsOf(Str::Iter begin, Str::Iter end);
+
 		// TODO: We can add formatting options for parts of the string here. For example, it is
 		// possible to apply a font to a specific part of the string.
-
 
 #ifdef GUI_WIN32
 		// Get the layout.
