@@ -36,6 +36,17 @@ namespace storm {
 		return SrcPos(file, min(start, o.start), max(end, o.end));
 	}
 
+	SrcPos SrcPos::firstCh() const {
+		return SrcPos(file, start, start + 1);
+	}
+
+	SrcPos SrcPos::lastCh() const {
+		if (end > 0)
+			return SrcPos(file, end - 1, end);
+		else
+			return SrcPos(file, end, end);
+	}
+
 	void SrcPos::deepCopy(CloneEnv *env) {
 		cloned(file, env);
 	}

@@ -15,7 +15,6 @@ window MainWin {
 			expandCol: 0;
 			expandRow: 0;
 			Window draw {}
-			Button next("Next") {}
 		}
 	}
 

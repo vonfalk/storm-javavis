@@ -73,6 +73,12 @@ namespace storm {
 				LocalVar *normal = body->variable(normalName);
 				hidden->var = VarInfo(thisVar);
 				normal->var = VarInfo(thisVar);
+
+				// Add variable info. In the debug info, we always give the this
+				// variable. Otherwise, we would need additional temporary variables etc, which is
+				// not really worth the trouble.
+				Listing::VarInfo *info = new (this) Listing::VarInfo(normalName->name, params->at(0).type.type, pos);
+				state->l->varInfo(thisVar, info);
 			}
 
 			for (nat i = 1; i < params->count(); i++) {
@@ -83,7 +89,7 @@ namespace storm {
 				var->createParam(state);
 			}
 
-			CodeResult *r = CREATE(CodeResult, this);
+			CodeResult *r = new (this) CodeResult();
 			body->code(state, r);
 
 			*l << fnRet();
@@ -566,7 +572,7 @@ namespace storm {
 				*s->l << mov(ptrA, dest);
 				*s->l << add(ptrA, ptrConst(v->offset()));
 
-				CodeResult *nothing = CREATE(CodeResult, this);
+				CodeResult *nothing = new (this) CodeResult();
 				ctor->localCall(s, actuals, nothing, true);
 			}
 		}

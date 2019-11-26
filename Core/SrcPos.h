@@ -37,6 +37,10 @@ namespace storm {
 		// Merge with another range.
 		SrcPos STORM_FN extend(SrcPos other) const;
 
+		// Get an SrcPos that represents the first or last character.
+		SrcPos STORM_FN firstCh() const;
+		SrcPos STORM_FN lastCh() const;
+
 		// Deep copy.
 		void STORM_FN deepCopy(CloneEnv *env);
 

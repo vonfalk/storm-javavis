@@ -112,8 +112,9 @@ class Program on Render {
 
 		ProgThread t = threads.get(id);
 		t.onFunctionExited();
-		if (t.frames.empty()) {
+		if (t.callDepth == 0) {
 			threads.remove(id);
+			// notifyChange();
 		}
 	}
 }

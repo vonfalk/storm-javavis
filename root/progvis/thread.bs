@@ -12,6 +12,12 @@ class ProgThread on Render {
 	// Current location. Set to null if the thread is currently running.
 	SrcPos? pos;
 
+	// Current call depth. There may be additional entries in 'frames', as we might have exited a
+	// function but not yet received any new information. In this case, we will still show the old
+	// state since it might contain references to values that are still known by the code, but not
+	// otherwise reachable (eg. the return value).
+	Nat callDepth;
+
 	// Entries of called functions. We expect this array to contain at least one element when we
 	// receive calls to 'onNewLocation'.
 	StackFrame[] frames;
@@ -23,12 +29,15 @@ class ProgThread on Render {
 	init(Program owner) {
 		init() {
 			sema(0);
+			callDepth = 0;
 			owner = owner;
 		}
 	}
 
 	// Called by a monitored thread to possible pause execution.
 	void onNewLocation(SrcPos pos, StackVar[] vars) {
+		popFrames();
+
 		// TODO: Decide if we should break.
 		// print("Thread reached ${pos}");
 		this.frames.last.variables = vars;
@@ -40,9 +49,12 @@ class ProgThread on Render {
 
 	// Called when a new function was entered.
 	void onFunctionEntered(Str name, StackVar[] vars) {
-		// print("Function ${name} entered.");
 		// TODO: Set the position as well!
+		popFrames();
+
+		callDepth++;
 		frames.push(StackFrame(name, vars));
+
 		owner.notifyChange();
 		// sema.down();
 		sleep(100 ms);
@@ -51,7 +63,8 @@ class ProgThread on Render {
 	// Called when a function is about to return.
 	void onFunctionExited() {
 		// print("Function ${frames.last.function} exited.");
-		frames.pop();
+		if (callDepth > 0)
+			callDepth--;
 	}
 
 	// Resume the thread if it is not stopped.
@@ -73,6 +86,11 @@ class ProgThread on Render {
 			false;
 	}
 
+	// Decrease the stack frames until the proper depth is reached.
+	private void popFrames() {
+		while (frames.count > callDepth)
+			frames.pop();
+	}
 }
 
 /**
