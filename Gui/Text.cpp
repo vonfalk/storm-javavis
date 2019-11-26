@@ -18,12 +18,12 @@ namespace gui {
 	// Small extra space added around the border to prevent unneeded wrapping.
 	static const float borderExtra = 0.001f;
 
-	Text::Text(Str *text, Font *font) : myText(text), myFont(font) {
+	Text::Text(Str *text, Font *font) : myText(text), myFont(font), effects(null) {
 		float maxFloat = std::numeric_limits<float>::max();
 		init(text, font, Size(maxFloat, maxFloat));
 	}
 
-	Text::Text(Str *text, Font *font, Size size) : myText(text), myFont(font) {
+	Text::Text(Str *text, Font *font, Size size) : myText(text), myFont(font), effects(null) {
 		init(text, font, size);
 	}
 
@@ -34,6 +34,9 @@ namespace gui {
 	void Text::color(Str::Iter begin, Str::Iter end, SolidBrush *color) {
 		this->color(begin, end, color->color());
 	}
+
+	Text::Effect::Effect(Nat from, Nat to, Color color) : from(from), to(to), color(color) {}
+
 
 #ifdef GUI_WIN32
 
@@ -69,6 +72,24 @@ namespace gui {
 		l->SetMaxHeight(s.h);
 	}
 
+	IDWriteTextLayout *Text::layout(Painter *owner) {
+		if (effects) {
+			for (Nat i = 0; i < effects->count(); i++) {
+				Effect &e = effects->at(i);
+				DWRITE_TEXT_RANGE range = { e.from, e.to };
+				ID2D1SolidColorBrush *brush;
+				owner->renderTarget()->CreateSolidColorBrush(dx(e.color), &brush);
+				l->SetDrawingEffect(brush, range);
+				brush->Release();
+			}
+
+			// No need to update the effects any other time, the solid color brush is device independent.
+			effects = null;
+		}
+
+		return l;
+	}
+
 	Array<TextLine *> *Text::lineInfo() {
 		UINT32 numLines = 0;
 		l->GetLineMetrics(NULL, 0, &numLines);
@@ -102,9 +123,55 @@ namespace gui {
 	}
 
 	void Text::color(Str::Iter begin, Str::Iter end, Color color) {
-		DWRITE_TEXT_RANGE range = { begin.offset(), end.offset() };
-		ID2D1SolidColorBrush *brush = TODO;
-		l->SetDrawingEffect(brush, range);
+		if (!effects)
+			effects = new (this) Array<Effect>();
+
+		*effects << Effect(begin.offset(), end.offset(), color);
+	}
+
+	static inline Rect computeRect(IDWriteTextLayout *l, Nat from, Nat to) {
+		Rect total;
+		DWRITE_HIT_TEST_METRICS metrics;
+		for (Nat i = from; i < to; i += metrics.length) {
+			FLOAT x, y;
+			l->HitTestTextPosition(i, false, &x, &y, &metrics);
+
+			Rect ch(Point(metrics.left, metrics.top), Size(metrics.width, metrics.height));
+			if (i == from)
+				total = ch;
+			else
+				total = total.include(ch);
+		}
+
+		return total;
+	}
+
+	Array<Rect> *Text::boundsOf(Str::Iter begin, Str::Iter end) {
+		Array<Rect> *result = new (this) Array<Rect>();
+
+		UINT32 numLines = 0;
+		l->GetLineMetrics(NULL, 0, &numLines);
+
+		DWRITE_LINE_METRICS *lines = new DWRITE_LINE_METRICS[numLines];
+		l->GetLineMetrics(lines, numLines, &numLines);
+
+		Nat lineBegin = 0;
+		for (Nat line = 0; line < numLines; line++) {
+			Nat lineEnd = lineBegin + lines[line].length;
+
+			if (lineEnd > begin.offset())
+				*result << computeRect(l, max(lineBegin, begin.offset()), min(lineEnd, end.offset()));
+
+			// Done?
+			if (end.offset() <= lineEnd)
+				break;
+
+			lineBegin = lineEnd;
+		}
+
+		delete [] lines;
+
+		return result;
 	}
 
 #endif

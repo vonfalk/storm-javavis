@@ -69,11 +69,11 @@ namespace gui {
 
 #ifdef GUI_WIN32
 		// Get the layout.
-		inline IDWriteTextLayout *layout() const { return l; }
+		IDWriteTextLayout *layout(Painter *owner);
 #endif
 #ifdef GUI_GTK
 		// Get the layout.
-		inline PangoLayout *layout() const { return l; }
+		inline PangoLayout *layout(Painter *p) { return l; }
 #endif
 
 	private:
@@ -85,6 +85,24 @@ namespace gui {
 
 		// Which font are we using?
 		Font *myFont;
+
+		// Effect (currently only text color) to apply next time "prepare" is called.
+		class Effect {
+			STORM_VALUE;
+		public:
+			// Range.
+			Nat from;
+			Nat to;
+
+			// Color.
+			Color color;
+
+			// Create.
+			Effect(Nat from, Nat to, Color color);
+		};
+
+		// Any effects that should be applied before rendering.
+		Array<Effect> *effects;
 
 		// Create layout.
 		void init(Str *text, Font *font, Size size);

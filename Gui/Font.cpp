@@ -203,7 +203,7 @@ namespace gui {
 		fHeight = (float)abs(f.lfHeight);
 		fWeight = (int)f.lfWeight;
 		fItalic = f.lfItalic == TRUE;
-		fTabSize = 0;
+		fTabWidth = 0;
 		fUnderline = f.lfUnderline == TRUE;
 		fStrikeOut = f.lfStrikeOut == TRUE;
 		shared = new FontData();

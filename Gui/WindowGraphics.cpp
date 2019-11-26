@@ -278,7 +278,7 @@ namespace gui {
 	}
 
 	void WindowGraphics::draw(Text *text, Brush *style, Point origin) {
-			info.target()->DrawTextLayout(dx(origin), text->layout(), style->brush(owner));
+			info.target()->DrawTextLayout(dx(origin), text->layout(owner), style->brush(owner));
 	}
 
 	void WindowGraphics::Layer::release() {
