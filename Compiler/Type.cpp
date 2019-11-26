@@ -1133,19 +1133,21 @@ namespace storm {
 				return;
 			bool refThis = params->at(0).ref;
 
-			// Do not add constructor, destructor or deepCopy to the handle if this is a built-in type,
-			// as that allows containers etc to use raw memcpy which is more efficient in many cases.
-			// Also: it prevents infinite loops during startup due to recursive dependencies.
-			bool userType = as<code::PrimitiveDesc>(typeDesc()) == null;
+			// Note: We only insert constructors, destructors, etc if they are not pure. Pure
+			// functions imply that they do mostly nothing, and we might as well use a large scale
+			// memcpy in containers etc.
 			if (val && *name == CTOR) {
-				if (refThis && params->count() == 2 && params->at(1) == Value(this, true) && userType)
+				if (refThis && params->count() == 2 && params->at(1) == Value(this, true) && !fn->pure()) {
 					h->setCopyCtor(fn->ref());
+				}
 			} else if (val && *name == DTOR) {
-				if (refThis && params->count() == 1 && userType)
+				if (refThis && params->count() == 1 && !fn->pure()) {
 					h->setDestroy(fn->ref());
-			} else if (val && *name == S("deepCopy") && userType) {
-				if (refThis && params->count() == 2 && params->at(1) == Value(CloneEnv::stormType(engine)))
+				}
+			} else if (val && *name == S("deepCopy")) {
+				if (refThis && params->count() == 2 && params->at(1) == Value(CloneEnv::stormType(engine)) && !fn->pure()) {
 					h->setDeepCopy(fn->ref());
+				}
 			} else if (*name == S("hash")) {
 				if (params->count() == 1) {
 					if (allRefParams(fn))
