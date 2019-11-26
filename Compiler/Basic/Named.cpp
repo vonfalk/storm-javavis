@@ -7,6 +7,7 @@
 #include "Block.h"
 #include "Resolve.h"
 #include "Compiler/Engine.h"
+#include "Compiler/Lib/Maybe.h"
 #include "Compiler/Lib/Future.h"
 
 namespace storm {
@@ -600,12 +601,20 @@ namespace storm {
 			Expr(pos), lhs(lhs), rhs(rhs), negate(negate) {
 
 			Value l = lhs->result().type();
-			if (!l.type || (l.type->typeFlags & typeClass) != typeClass)
-				throw TypeError(lhs->pos, L"The default comparison operator can not be used with other types than classes.");
-
 			Value r = rhs->result().type();
-			if (!r.type || (r.type->typeFlags & typeClass) != typeClass)
-				throw TypeError(rhs->pos, L"The default comparison operator can not be used with other types than classes.");
+
+			l = unwrapMaybe(l);
+			r = unwrapMaybe(r);
+
+			SrcPos errorPos;
+			if (!l.isObject())
+				errorPos = lhs->pos;
+			else if (!r.isObject())
+				errorPos = rhs->pos;
+
+			if (errorPos.any())
+				throw TypeError(errorPos, L"The default comparison operator can only be used with classes and actors. "
+								L"Found: " + ::toS(l) + L" and " + ::toS(r));
 
 			if (!r.type->isA(l.type) && !l.type->isA(r.type))
 				throw TypeError(lhs->pos, L"The left- and right-hand types are unrelated.");
