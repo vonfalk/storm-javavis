@@ -37,6 +37,10 @@ namespace storm {
 
 		void FinalizerPool::newBlock(size_t minSize) {
 			Chunk chunk = arena.allocChunk(minSize, finalizerIdentifier);
+			if (chunk.empty()) {
+				PLN(L"Failed allocation of " << minSize << L" bytes during GC.");
+				dbg_assert(false, L"Out of memory!");
+			}
 			Block *block = new (chunk.at) Block(chunk.size - sizeof(Block));
 
 			if (scanTail) {

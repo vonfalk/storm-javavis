@@ -88,56 +88,145 @@ namespace storm {
 			}
 		}
 
+		size_t VMAlloc::totalPieces() const {
+			size_t pieces = 0;
+			for (size_t i = 0; i < reserved.size(); i++) {
+				pieces += reserved[i].size >> vmAllocBits;
+			}
+			return pieces;
+		}
+
 		bool VMAlloc::expandAlloc(size_t minPieces) {
+			// Attempt to double our reserved range if we are able to.
+			size_t maxPieces = max(minPieces * 10, totalPieces());
+
+			for (size_t attempt = maxPieces; attempt >= minPieces; attempt /= 2) {
+				Chunk alloc = attemptAlloc(attempt);
+				if (!alloc.empty()) {
+					// Success!
+					addReserved(alloc);
+					return true;
+				}
+			}
+
 			return false;
 		}
 
-		static inline size_t findRange(byte *in, size_t from, size_t to, size_t size) {
-			size_t start = from;
-			for (size_t i = from; i < to; i++) {
-				if (in[i] & 0x03) {
-					start = i + 1;
-				} else if (i - start + 1 >= size) {
-					return start;
+		Chunk VMAlloc::attemptAlloc(size_t pieces) {
+			size_t bytes = roundUp(pieces*vmAllocMinSize, vm->allocGranularity);
+
+			// Try between blocks.
+			for (size_t i = 1; i < reserved.size(); i++) {
+				Chunk start = reserved[i - 1];
+				Chunk end = reserved[i];
+
+				size_t hole = (byte *)end.at - (byte *)start.end();
+				if (hole >= bytes) {
+					// Small enough to attempt to fill it entirely?
+					if (hole / 2 < bytes) {
+						if (void *mem = vm->reserve(start.end(), hole))
+							return Chunk(mem, hole);
+					}
+
+					// Start of the hole.
+					if (void *mem = vm->reserve(start.end(), bytes))
+						return Chunk(mem, bytes);
+
+					// End of the hole.
+					if (void *mem = vm->reserve((byte *)end.at - bytes, bytes))
+						return Chunk(mem, bytes);
 				}
 			}
 
-			return to;
+			// After the last block.
+			if (void *mem = vm->reserve(reserved.back().end(), bytes))
+				return Chunk(mem, bytes);
+
+			// Before the first block.
+			if (void *mem = vm->reserve((byte *)reserved.front().at - bytes, bytes))
+				return Chunk(mem, bytes);
+
+			// Anywhere.
+			if (void *mem = vm->reserve(null, bytes))
+				return Chunk(mem, bytes);
+
+			// Failure.
+			return Chunk();
 		}
 
+		struct PieceRange {
+			size_t start;
+			size_t count;
+		};
+
+		static inline PieceRange findRange(byte *in, size_t from, size_t to, size_t min, size_t preferred) {
+			PieceRange candidate = { from, 0 };
+			size_t start = from;
+
+			for (size_t i = from; i < to; i++) {
+				if (in[i] & 0x03) {
+					// Not free...
+					start = i + 1;
+				} else {
+					size_t count = i - start + 1;
+					if (count >= candidate.count) {
+						candidate.start = start;
+						candidate.count = count;
+					}
+
+					if (candidate.count >= preferred) {
+						return candidate;
+					}
+				}
+			}
+
+			// Largest chunk was too small. Indicate failure.
+			if (candidate.count < min)
+				candidate.count = 0;
+
+			return candidate;
+		}
 
 		Chunk VMAlloc::alloc(size_t size, byte identifier) {
+			return alloc(size, size, identifier);
+		}
+
+		Chunk VMAlloc::alloc(size_t minSize, size_t preferredSize, byte identifier) {
 			byte packedIdentifier = (identifier & 0x3F) << 2;
 			dbg_assert(infoData(packedIdentifier) == identifier, L"Identifier too large!");
 
-			size_t pieces = (size + vmAllocMinSize - 1) / vmAllocMinSize;
+			size_t minPieces = (minSize + vmAllocMinSize - 1) / vmAllocMinSize;
+			size_t preferredPieces = (preferredSize + vmAllocMinSize - 1) / vmAllocMinSize;
 
 			size_t wrap = infoCount();
-			size_t start = findRange(info, lastAlloc, wrap, pieces);
-			if (start >= wrap) {
-				size_t upperBound = min(wrap, lastAlloc + pieces);
-				start = findRange(info, 0, upperBound, pieces);
+			PieceRange range = findRange(info, lastAlloc, wrap, minPieces, preferredPieces);
+			if (range.count != preferredPieces) {
+				size_t upperBound = min(wrap, lastAlloc + minPieces);
+				PieceRange alternative = findRange(info, 0, upperBound, minPieces, preferredPieces);
 
-				if (start >= upperBound) {
+				if (alternative.count > range.count)
+					range = alternative;
+
+				if (alternative.count == 0) {
 					// Out of memory! Try to expand our allocated range!
-					if (!expandAlloc(pieces))
+					if (!expandAlloc(preferredPieces))
 						return Chunk();
 
 					wrap = infoCount();
-					start = findRange(info, 0, wrap, pieces);
+					range = findRange(info, 0, wrap, minPieces, preferredPieces);
 
 					// Still not enough? If so, we give up.
-					if (start >= wrap)
+					if (range.count == 0)
 						return Chunk();
 				}
 			}
 
-			lastAlloc = start + pieces;
+			lastAlloc = range.start + range.count;
 
 			// Mark the memory as in use, and potentially changed.
-			memset(info + start, INFO_USED_WRITTEN | packedIdentifier, pieces);
+			memset(info + range.start, INFO_USED_WRITTEN | packedIdentifier, range.count);
 
-			Chunk mem(infoPtr(start), pieces*vmAllocMinSize);
+			Chunk mem(infoPtr(range.start), range.count*vmAllocMinSize);
 			vm->commit(mem.at, mem.size);
 
 			return mem;

@@ -98,6 +98,12 @@ namespace storm {
 			return alloc.alloc(size, identifier);
 		}
 
+		Chunk Arena::allocChunk(size_t min, size_t preferred, byte identifier) {
+			util::Lock::L z(arenaLock);
+
+			return alloc.alloc(min, preferred, identifier);
+		}
+
 		void Arena::freeChunk(Chunk chunk) {
 			util::Lock::L z(arenaLock);
 			alloc.free(chunk);

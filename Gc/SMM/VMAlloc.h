@@ -38,6 +38,10 @@ namespace storm {
 			// Allocate at least 'size' bytes and associate it with the given identifier.
 			Chunk alloc(size_t size, byte id);
 
+			// Allocate at least 'min' bytes, but preferably 'preferred' bytes and associate it with
+			// the given identifier.
+			Chunk alloc(size_t min, size_t preferred, byte id);
+
 			// Free a chunk of memory. Not necessarily the exact same chunk as allocated previously.
 			void free(Chunk chunk);
 
@@ -134,7 +138,8 @@ namespace storm {
 			VM *vm;
 
 			// Keep track of all reserved memory. We strive to keep this array small. Otherwise, the
-			// "contains pointer" query will be expensive.
+			// "contains pointer" query will be expensive. Elements are sorted by their starting
+			// address, and not overlapping with each other.
 			vector<Chunk> reserved;
 
 			// Min- and max address managed in this instance.
@@ -147,9 +152,18 @@ namespace storm {
 			// Add a chunk of reserved memory to our pool.
 			void addReserved(Chunk chunk);
 
+			// Compute the total number of pieces managed by this instance.
+			size_t totalPieces() const;
+
 			// Attempt to allocate more memory, a minimum of 'minPieces' usable pieces, to
 			// serve a pending allocation request. Returns 'true' if successful.
 			bool expandAlloc(size_t minPieces);
+
+			// Attempt to allocate 'pieces' pieces of virtual memory from the OS. We prefer to
+			// allocate it between any chunks we've already allocated if possible. Otherwise, we
+			// prefer before or after the current allocation, or as a last resort the new allocation
+			// may be anywhere.
+			Chunk attemptAlloc(size_t pieces);
 
 
 			/**

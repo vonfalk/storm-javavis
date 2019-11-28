@@ -63,6 +63,10 @@ namespace storm {
 			// Allocate a chunk of memory from the VMAlloc instance.
 			Chunk allocChunk(size_t size, byte identifier);
 
+			// Allocate a chunk of memory, indicating how much memory we would like, but also the
+			// bare minimum required.
+			Chunk allocChunk(size_t min, size_t preferred, byte identifier);
+
 			// Free a chunk of memory from the VMAlloc instance.
 			void freeChunk(Chunk chunk);
 
