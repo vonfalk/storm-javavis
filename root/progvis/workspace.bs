@@ -191,7 +191,7 @@ private:
 		var members = findMembers(type);
 		members.sort((x, y) => x.offset < y.offset);
 		for (m in members) {
-			result.add(m.name, m.offset, createData(m.type, object, offset + m.offset));
+			result.add(m.name, m.offset, createData(m.type, object, offset + m.offset), m.first);
 		}
 
 		result;

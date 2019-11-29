@@ -154,8 +154,11 @@ class Composite extends Data {
 		}
 	}
 
-	void add(Str name, Nat offset, Data data) {
-		content << Var(name, data, offset);
+	void add(Str name, Nat offset, Data data, Bool divider) {
+		if (content.empty)
+			divider = false;
+
+		content << Var(name, data, offset, divider);
 		sizeComputed = false;
 	}
 
@@ -173,7 +176,13 @@ class Composite extends Data {
 			var nameSz = v.text.size;
 			var dataSz = v.value.size;
 
-			g.draw(v.text, dataFg, at);
+			if (v.line) {
+				g.line(Point(pos.x, at.y), Point(pos.x + size.w, at.y), dataFg);
+				at.y += dataBorder.h;
+			}
+
+			// Align the text a bit nicer on the y-axis, to line up the baselines...
+			g.draw(v.text, dataFg, at + Point(0, dataBorder.h));
 
 			v.value.pos = at + Point(namesWidth + dataWidth - dataSz.w, 0);
 			v.value.draw(g);
@@ -196,13 +205,16 @@ private:
 		Text text;
 		Data value;
 		Nat offset;
+		// Line before?
+		Bool line;
 
-		init(Str name, Data value, Nat offset) {
+		init(Str name, Data value, Nat offset, Bool divider) {
 			init() {
 				name = name;
 				text = Text(name, dataFont);
 				value = value;
 				offset = offset;
+				line = divider;
 			}
 		}
 	}
@@ -227,6 +239,9 @@ private:
 			namesWidth = max(namesWidth, nameSz.w + dataBorder.w);
 			dataWidth = max(dataWidth, dataSz.w);
 			height += max(nameSz.h, dataSz.h) + dataBorder.h;
+
+			if (v.line)
+				height += dataBorder.h;
 		}
 
 		height -= dataBorder.h;

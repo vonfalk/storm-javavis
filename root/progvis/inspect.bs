@@ -44,19 +44,23 @@ value MemberOffset {
 	Str name;
 	Nat offset;
 	TypeInfo type;
+	Bool first;
 
-	init(Str name, Nat offset, TypeInfo type) {
+	init(Str name, Nat offset, TypeInfo type, Bool first) {
 		init {
 			name = name;
 			offset = offset;
 			type = type;
+			first = first;
 		}
 	}
 }
 
-MemberOffset[] findMembers(Type t) on Compiler {
-	t.forceLoad();
-	MemberOffset[] result;
+void appendMembers(Type t, MemberOffset[] result) on Compiler {
+	if (super = t.super)
+		appendMembers(super, result);
+
+	Bool first = true;
 	for (elem in t) {
 		if (elem as MemberVar) {
 			Value memberType = elem.type;
@@ -70,9 +74,16 @@ MemberOffset[] findMembers(Type t) on Compiler {
 
 			if (type = memberType.type) {
 				TypeInfo info(type, memberType.isValue, memberType.ref);
-				result << MemberOffset(elem.name, elem.offset.current.nat, info);
+				result << MemberOffset(elem.name, elem.offset.current.nat, info, first);
+				first = false;
 			}
 		}
 	}
+}
+
+MemberOffset[] findMembers(Type t) on Compiler {
+	t.forceLoad();
+	MemberOffset[] result;
+	appendMembers(t, result);
 	result;
 }

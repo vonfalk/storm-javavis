@@ -28,7 +28,7 @@ Brush captionBg on Render = SolidBrush(white * 0.8);
 Brush captionFg on Render = SolidBrush(black);
 
 // Border for data elements.
-Size dataBorder on Render = Size(2, 2);
+Size dataBorder on Render = Size(4, 4);
 
 // Border for composite data elements.
 Size compositeBorder on Render = Size(4, 4);

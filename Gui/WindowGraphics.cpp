@@ -558,7 +558,7 @@ namespace gui {
 		style->setSource(owner, info.target());
 
 		cairo_move_to(info.target(), origin.x, origin.y);
-		pango_cairo_show_layout(info.target(), text->layout());
+		pango_cairo_show_layout(info.target(), text->layout(owner));
 	}
 
 #endif

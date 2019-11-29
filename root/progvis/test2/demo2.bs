@@ -1,4 +1,8 @@
-class N {
+class Base {
+	Int t;
+}
+
+class N extends Base {
 	Int val;
 	N? next;
 
