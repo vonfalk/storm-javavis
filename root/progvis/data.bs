@@ -7,24 +7,7 @@ use lang:bs:macro;
 /**
  * A data structure instantiated somewhere. Managed by a Workspace.
  */
-class Data on Render {
-	init() {
-		init() {
-			pos = Point();
-		}
-	}
-
-	// Current position.
-	Point pos;
-
-	// Current size.
-	Size size() : abstract;
-
-	// Compute the bounding rectangle of this data element.
-	Rect rect() {
-		Rect(pos, size);
-	}
-
+class Data extends Drawable {
 	// Draw this data item at its current location.
 	void draw(Graphics g) : abstract {
 		Rect r = rect;
@@ -37,6 +20,52 @@ class Data on Render {
 }
 
 /**
+ * Data element with a caption.
+ */
+class DataWithCaption extends Data {
+	init(Data wrap, Str caption) {
+		Text c(caption, captionFont);
+
+		init() {
+			wrap = wrap;
+			caption = c;
+			captionSz = c.size + compositeBorder*2;
+		}
+	}
+
+	Size size() : override {
+		Size sz = wrap.size();
+		sz.w = max(sz.w, captionSz.w);
+		sz.h += captionSz.h;
+		sz;
+	}
+
+	void draw(Graphics g) : override {
+		Size cSz = captionSz;
+		cSz.w = max(cSz.w, wrap.size.w);
+		g.fill(Rect(pos, cSz), captionBg);
+		g.draw(caption, captionFg, pos + compositeBorder);
+		g.draw(Rect(pos, cSz), captionFg);
+
+		wrap.pos = pos + Size(0, captionSz.h);
+		wrap.draw(g);
+	}
+
+	void update(Workspace work, unsafe:RawPtr object, Nat offset) : override {
+		wrap.update(work, object, offset);
+	}
+
+	// The drawable we're wrapping.
+	private Data wrap;
+
+	// Caption text.
+	private Text caption;
+
+	// Size of the caption area.
+	private Size captionSz;
+}
+
+/**
  * Unknown data element.
  */
 class UnknownData extends Data {
@@ -46,10 +75,8 @@ class UnknownData extends Data {
 		init() {
 			text = Text("?", dataFont);
 		}
-	}
 
-	Size size() : override {
-		text.size + dataBorder*2;
+		size = text.size + dataBorder*2;
 	}
 
 	void draw(Graphics g) : override {
@@ -76,10 +103,8 @@ class Primitive extends Data {
 			text = Text(initial, dataFont);
 			type = type;
 		}
-	}
 
-	Size size() : override {
-		text.size + dataBorder*2;
+		size = text.size + dataBorder*2;
 	}
 
 	void draw(Graphics g) : override {
@@ -97,17 +122,12 @@ class Primitive extends Data {
  * A pointer type, referring to some other data.
  */
 class Pointer extends Data {
-	private Size sz;
 	protected Data? to;
 
 	init() {
-		init() {
-			sz = Text("????", dataFont).size;
-		}
-	}
+		init() {}
 
-	Size size() : override {
-		sz + dataBorder*2;
+		size = Text("????", dataFont).size + dataBorder*2;
 	}
 
 	void draw(Graphics g) : override {
@@ -148,11 +168,8 @@ class StackPointer extends Pointer {
  * A composite type, consisting of one or more variables of other types.
  */
 class Composite extends Data {
-	init(Str name) {
-		init() {
-			caption = Text(name, captionFont);
-			sizeComputed = false;
-		}
+	init() {
+		init() {}
 	}
 
 	void add(Str name, Nat offset, Data data, Bool divider) {
@@ -160,34 +177,13 @@ class Composite extends Data {
 			divider = false;
 
 		content << Var(name, data, offset, divider);
-		sizeComputed = false;
-	}
-
-	Size size() : override {
-		if (!sizeComputed)
-			updateSize();
-		Size(namesWidth + dataWidth, height) + compositeBorder*2;
+		invalidateSize();
 	}
 
 	void draw(Graphics g) : override {
-		Rect me = rect;
+		super:draw(g);
 		Float width = rect.size.w;
-
-		g.fill(me, dataBg);
-
 		Point at = pos + compositeBorder;
-
-		{
-			Float height = caption.size.h;
-			Point bottom(pos.x + width, at.y + height + compositeBorder.h);
-			g.fill(Rect(pos, bottom), captionBg);
-
-			g.draw(caption, captionFg, at);
-			g.line(Point(pos.x, bottom.y), bottom, dataFg);
-			at.y = bottom.y + compositeBorder.h;
-		}
-
-		g.draw(me, dataFg);
 
 		for (v in content) {
 			var nameSz = v.text.size;
@@ -213,7 +209,7 @@ class Composite extends Data {
 			v.value.update(work, object, offset + v.offset);
 		}
 
-		sizeComputed = false;
+		invalidateSize();
 	}
 
 private:
@@ -236,20 +232,18 @@ private:
 		}
 	}
 
-	Text caption;
 	Var[] content;
 	Float namesWidth;
 	Float dataWidth;
 	Float height;
-	Bool sizeComputed;
 
-	void updateSize() {
+	Size computeSize() : override {
 		// TODO: It would probably be nice to recurse into
 		// the values that are themselves variables and render them
 		// more compactly.
 		namesWidth = 0;
 		dataWidth = 0;
-		height = caption.size.h + compositeBorder.h*2;
+		height = 0;
 		for (v in content) {
 			var nameSz = v.text.size;
 			var dataSz = v.value.size;
@@ -263,5 +257,6 @@ private:
 		}
 
 		height -= dataBorder.h;
+		Size(namesWidth + dataWidth, height) + compositeBorder*2;
 	}
 }

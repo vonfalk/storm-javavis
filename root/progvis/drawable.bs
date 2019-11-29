@@ -1,0 +1,98 @@
+use ui;
+use graphics;
+use core:geometry;
+
+/**
+ * An element that can be drawn to the screen. Saves its position from the last paint so that it is
+ * possible to interact with it at a later stage without having to re-implement the layout logic.
+ */
+class Drawable on Render {
+	init() {
+		init() {
+			pos = Point();
+		}
+	}
+
+	// Current position.
+	Point pos;
+
+	// Current size. Computed on demand.
+	Size size() {
+		if (cachedSize) {
+			cachedSize;
+		} else {
+			Size s = computeSize();
+			cachedSize = s;
+			s;
+		}
+	}
+
+	// Compute the bounding rectangle of this data element.
+	Rect rect() {
+		Rect(pos, size);
+	}
+
+	// Draw.
+	void draw(Graphics g) : abstract;
+
+	// Cached size.
+	private Size? cachedSize;
+
+	// Set the size.
+	assign size(Size s) {
+		cachedSize = s;
+		s;
+	}
+
+	// Clear the size.
+	protected void invalidateSize() {
+		cachedSize = null;
+	}
+
+	// Override to compute the size.
+	protected Size computeSize() { Size(); }
+
+}
+
+
+/**
+ * Drawable class that wraps another drawable to give it a caption.
+ */
+class WithCaption extends Drawable {
+	init(Drawable wrap, Str caption) {
+		Text c(caption, captionFont);
+
+		init() {
+			wrap = wrap;
+			caption = c;
+			captionSz = c.size + compositeBorder*2;
+		}
+	}
+
+	Size size() : override {
+		Size sz = wrap.size();
+		sz.w = max(sz.w, captionSz.w);
+		sz.h += captionSz.h;
+		sz;
+	}
+
+	void draw(Graphics g) : override {
+		Size cSz = captionSz;
+		cSz.w = max(cSz.w, wrap.size.w);
+		g.fill(Rect(pos, cSz), captionBg);
+		g.draw(caption, captionFg, pos + compositeBorder);
+		g.draw(Rect(pos, cSz), captionFg);
+
+		wrap.pos = pos + Size(0, captionSz.h);
+		wrap.draw(g);
+	}
+
+	// The drawable we're wrapping.
+	Drawable wrap;
+
+	// Caption text.
+	private Text caption;
+
+	// Size of the caption area.
+	private Size captionSz;
+}

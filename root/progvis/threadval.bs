@@ -7,21 +7,12 @@ use lang:bs:macro;
 /**
  * Class representing the visual state of a thread.
  */
-class ThreadVal on Render {
+class ThreadVal extends Drawable {
 	// Thread that contains the source data.
 	ProgThread thread;
 
-	// Current position.
-	Point pos;
-
 	// Visited during traversal?
 	Bool visited;
-
-	// Do we need to update our size?
-	Bool updateSize;
-
-	// Last known good size.
-	private Size lastSize;
 
 	// Stack frames.
 	FrameVal[] frames;
@@ -34,24 +25,8 @@ class ThreadVal on Render {
 		init {
 			thread = thread;
 			visited = true;
-			updateSize = true;
 			source(thread.owner);
 		}
-	}
-
-	// Compute our size.
-	Size size() {
-		if (updateSize) {
-			updateSize = false;
-			lastSize = computeSize();
-		}
-
-		lastSize;
-	}
-
-	// Get a rectangle.
-	Rect rect() {
-		Rect(pos, size);
 	}
 
 	// Draw the thread.
@@ -97,10 +72,10 @@ class ThreadVal on Render {
 		if (pos = thread.pos)
 			source.display(pos);
 
-		updateSize = true;
+		invalidateSize();
 	}
 
-	private Size computeSize() {
+	protected Size computeSize() : override {
 		Float w;
 		Float h;
 
