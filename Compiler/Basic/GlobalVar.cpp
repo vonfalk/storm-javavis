@@ -32,7 +32,7 @@ namespace storm {
 				throw SyntaxError(this->thread->pos, L"The name " + ::toS(this->thread) +
 								L" does not refer to a named thread.");
 
-			Function *init = createInitializer(type, scope);
+			Function *init = createInitializer(type, scope, thread);
 			return new (this) GlobalVar(name->v, type, thread, pointer(init));
 		}
 
@@ -42,12 +42,13 @@ namespace storm {
 			}
 		}
 
-		Function *GlobalVarDecl::createInitializer(Value type, Scope scope) {
+		Function *GlobalVarDecl::createInitializer(Value type, Scope scope, NamedThread *thread) {
 			GlobalInitializer *r = new (this) GlobalInitializer(this->type->pos, type, scope, initExpr);
 			// Trick the function into believing that it has a proper name (just like
 			// lambdas). Necessary in order to be able to call 'runOn', which is done when we create
 			// function pointers to the function.
 			r->parentLookup = scope.top;
+			r->runOn(thread);
 			return r;
 		}
 

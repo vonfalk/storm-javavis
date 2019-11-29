@@ -50,7 +50,7 @@ namespace storm {
 
 		private:
 			// Create an initializer for the variable.
-			Function *createInitializer(Value type, Scope scope);
+			Function *createInitializer(Value type, Scope scope, NamedThread *thread);
 		};
 
 
