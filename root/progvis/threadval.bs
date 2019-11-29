@@ -11,9 +11,6 @@ class ThreadVal extends Drawable {
 	// Thread that contains the source data.
 	ProgThread thread;
 
-	// Visited during traversal?
-	Bool visited;
-
 	// Stack frames.
 	FrameVal[] frames;
 
@@ -24,7 +21,6 @@ class ThreadVal extends Drawable {
 	init(ProgThread thread) {
 		init {
 			thread = thread;
-			visited = true;
 			source(thread.owner);
 		}
 	}

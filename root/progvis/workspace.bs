@@ -13,22 +13,21 @@ class Workspace on Render {
 
 	// Draw the workspace. Assumes we can clip anything not inside 'viewport'.
 	void render(Rect viewport, Graphics g) {
-		for (d in data) {
-			// TODO: Clipping?
-			d.visual.draw(g);
-		}
-
-		// Do some basic layout for the active threads.
+		// Do some basic layout for the active threads. We probably don't want to do this at some point.
 		Float space = 10;
 		Float x = space;
-		for (t in threads) {
-			Size sz = t.size;
-			t.pos.x = x;
-			t.pos.y = viewport.p1.y - space - sz.h;
 
-			x += sz.w + space;
+		for (e in elements) {
+			if (e.thread) {
+				Size sz = e.visual.size;
+				e.visual.pos.x = x;
+				e.visual.pos.y = viewport.p1.y - space - sz.h;
 
-			t.draw(g);
+				x += sz.w + space;
+			}
+
+			// TODO: Clipping?
+			e.visual.draw(g);
 		}
 	}
 
@@ -36,115 +35,143 @@ class Workspace on Render {
 	void beginTraversal() {
 		objMap.clear();
 		maxX = 0;
-		for (i, d in data) {
+		for (i, d in elements) {
 			d.visited = false;
-			objMap.put(d.object, i);
-			maxX = max(maxX, d.visual.rect.p1.x);
-		}
-
-		for (t in threads) {
-			t.visited = false;
+			if (d.object.any)
+				objMap.put(d.object, i);
+			if (!d.thread)
+				maxX = max(maxX, d.visual.rect.p1.x);
 		}
 	}
 
 	// Recursively add an object to the workspace.
 	Data traverse(unsafe:RawPtr object) {
-		Nat id = objMap.get(object, data.count);
-		if (id < data.count) {
+		Nat id = objMap.get(object, elements.count);
+		if (id < elements.count) {
 			// Update the old instance if it is not yet traversed.
-			var elem = data[id];
-			if (!elem.visited) {
-				elem.visited = true;
-				elem.visual.update(this, object, 0);
+			var elem = elements[id];
+			if (data = elem.visual as Data) {
+				if (!elem.visited) {
+					elem.visited = true;
+					data.update(this, object, 0);
+				}
+				return data;
 			}
-			return elem.visual;
-		} else {
-			print("Miss: ${object} was not found.");
-			// Create a new instance.
-			var visual = createData(this, object);
-			data << Val(object, visual);
-			objMap.put(object, id);
-
-			visual.pos = Point(maxX + 10, 10);
-			maxX += visual.size.w + 20;
-
-			// Follow pointers.
-			// TODO: We could actually let the creation of pointer-nodes handle
-			// this using a queue in a BFS fashion, so that we can lay out nodes
-			// in nice layers as a decent heuristic.
-			visual.update(this, object, 0);
-
-			return visual;
 		}
+
+		print("Miss: ${object} was not found.");
+		// Create a new instance.
+		var visual = createData(this, object);
+		elements << Element(object, visual);
+		objMap.put(object, id);
+
+		visual.pos = Point(maxX + 10, 10);
+		maxX += visual.size.w + 20;
+
+		// Follow pointers.
+		// TODO: We could actually let the creation of pointer-nodes handle
+		// this using a queue in a BFS fashion, so that we can lay out nodes
+		// in nice layers as a decent heuristic.
+		visual.update(this, object, 0);
+
+		return visual;
 	}
 
 	// Traverse the current contents of a thread.
 	void traverse(ProgThread thread) {
-		// We assume there are few enough threads for this to be viable.
-		for (t in threads) {
-			if (t.thread is thread) {
-				t.visited = true;
-				t.traverse(this);
-				return;
-			}
-		}
+		unsafe:RawPtr key(thread);
+		Nat id = objMap.get(key, elements.count);
+		if (id < elements.count) {
+			// Update the old one if possible.
+			var elem = elements[id];
+			elem.visited = true;
 
-		// Not found. Add a new entry.
-		ThreadVal t(thread);
-		threads.push(t);
-		t.traverse(this);
+			Drawable data = elem.visual;
+			if (caption = data as WithCaption) {
+				data = caption.wrap;
+			}
+
+			if (data as ThreadVal) {
+				data.traverse(this);
+			}
+		} else {
+			ThreadVal t(thread);
+			t.traverse(this);
+
+			elements << Element(thread, WithCaption(t, "Thread"));
+			objMap.put(key, id);
+		}
 	}
 
 	// Notify the workspace that traversal is over, and that any remaning objects may be removed.
 	void endTraversal() {
 		Nat to = 0;
-		for (Nat i = 0; i < data.count; i++) {
+		for (Nat i = 0; i < elements.count; i++) {
+			Element here = elements[i];
 			if (to < i)
-				data[to] = data[i];
-			if (data[i].visited)
+				elements[to] = here;
+			if (here.visited | !here.autoRemove)
 				to++;
 		}
-		while (to < data.count) {
-			print("Removing ${data.last.object}");
-			data.pop();
-		}
-
-		to = 0;
-		for (Nat i = 0; i < threads.count; i++) {
-			if (to < i)
-				threads[to] = threads[i];
-			if (threads[i].visited)
-				to++;
-		}
-		while (to < threads.count) {
-			threads.pop();
+		while (to < elements.count) {
+			print("Removing ${elements.last.object}");
+			elements.pop();
 		}
 	}
 
 private:
-	class Val on Render {
+	// A single element on the screen, with some additional metadata.
+	class Element on Render {
+		// Which object this corresponds to, if any.
 		unsafe:RawPtr object;
-		Data visual;
+
+		// Visual part of the object.
+		Drawable visual;
+
+		// Was this visited during a traversal?
 		Bool visited;
 
-		init(unsafe:RawPtr object, Data visual) {
+		// Should this object be removed when it is no longer reachable?
+		Bool autoRemove;
+
+		// Is this a thread? (impacts layout etc.)
+		Bool thread;
+
+		// Create, attach to an object.
+		init(unsafe:RawPtr object, Drawable visual) {
 			init {
 				object = object;
 				visual = visual;
 				visited = true;
+				autoRemove = true;
+			}
+		}
+
+		// Create, for a thread.
+		init(ProgThread thread, Drawable visual) {
+			init {
+				object = unsafe:RawPtr(thread);
+				visual = visual;
+				visited = true;
+				autoRemove = false;
+				thread = true;
+			}
+		}
+
+		// Create independet object.
+		init(Drawable visual) {
+			init {
+				visual = visual;
+				autoRemove = false;
 			}
 		}
 	}
 
-	// Data elements contained in the workspace.
-	Val[] data;
+	// All elements in the workspace, in drawing order (back to front).
+	Element[] elements;
 
-	// Map of object pointers to the corresponding data elements.
+	// Map of object pointers to the corresponding data elements. Only valid during an object traversal.
 	unsafe:RawPtr->Nat objMap;
-
-	// Threads. These are handled specially with respect to layout and functionality, so we keep
-	// them separate for now.
-	ThreadVal[] threads;
 
 	// Basic layout: Keep track of the next x-position in during the update.
 	Float maxX;
