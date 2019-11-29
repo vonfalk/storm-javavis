@@ -29,6 +29,11 @@ class Workspace on Render {
 			// TODO: Clipping?
 			e.visual.draw(g);
 		}
+
+		// Draw pointers etc above all other elements.
+		for (i, e in elements) {
+			e.visual.drawLinks(g, i % 2 == 0);
+		}
 	}
 
 	// Notify the workspace that we will start traversing objects now.

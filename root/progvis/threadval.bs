@@ -26,7 +26,7 @@ class ThreadVal extends Drawable {
 	}
 
 	// Draw the thread.
-	void draw(Graphics g) {
+	void draw(Graphics g) : override {
 		g.fill(rect, dataBg);
 		g.draw(rect, dataFg);
 
@@ -48,6 +48,13 @@ class ThreadVal extends Drawable {
 		sourcePos.p0.x = rect.p0.x + compositeBorder.w;
 		sourcePos.p0.y = sourcePos.p1.y - sourceSize.h;
 		source.draw(g, sourcePos);
+	}
+
+	// Draw all links.
+	void drawLinks(Graphics g, Bool active) : override {
+		for (frame in frames) {
+			frame.drawLinks(g, active);
+		}
 	}
 
 	// Update our contents.
@@ -162,6 +169,12 @@ class FrameVal on Render {
 			v.value.draw(g);
 
 			at.y += max(nameSz.h, dataSz.h) + dataBorder.h;
+		}
+	}
+
+	void drawLinks(Graphics g, Bool active) {
+		for (v in vars) {
+			v.value.drawLinks(g, active);
 		}
 	}
 

@@ -21,6 +21,10 @@ Brush dataBg on Render = SolidBrush(white);
 // Text color when drawing text.
 Brush dataFg on Render = SolidBrush(black);
 
+// Regular link.
+Brush activeLink on Render = SolidBrush(black);
+Brush inactiveLink on Render = SolidBrush(Color(0, 0, 0, 0.5));
+
 // Background color when drawing captions.
 Brush captionBg on Render = SolidBrush(white * 0.8);
 

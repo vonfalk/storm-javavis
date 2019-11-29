@@ -35,6 +35,9 @@ class Drawable on Render {
 	// Draw.
 	void draw(Graphics g) : abstract;
 
+	// Draw links.
+	void drawLinks(Graphics g, Bool active) : abstract;
+
 	// Cached size.
 	private Size? cachedSize;
 
@@ -85,6 +88,10 @@ class WithCaption extends Drawable {
 
 		wrap.pos = pos + Size(0, captionSz.h);
 		wrap.draw(g);
+	}
+
+	void drawLinks(Graphics g, Bool active) : override {
+		wrap.drawLinks(g, active);
 	}
 
 	// The drawable we're wrapping.
