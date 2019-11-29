@@ -185,10 +185,12 @@ private:
 	}
 
 	// Create a new node for a composite object.
-	Composite createComposite(core:lang:Type type, unsafe:RawPtr object, Nat offset) {
-		Composite result;
-
+	Data createComposite(core:lang:Type type, unsafe:RawPtr object, Nat offset) {
 		var members = findMembers(type);
+		if (members.empty)
+			return UnknownData();
+
+		Composite result(type.name);
 		members.sort((x, y) => x.offset < y.offset);
 		for (m in members) {
 			result.add(m.name, m.offset, createData(m.type, object, offset + m.offset), m.first);

@@ -362,7 +362,7 @@ private void generateCallTracking(Program program, PatchParams to, Function fn) 
 	var exitFn = named{Program:functionExited<Program>};
 
 	// Find a clean function name.
-	var fnName = cleanName(fn, to.pkg).toS();
+	var fnName = cleanName(fn, to.pkg);
 	if (!fnName.endsWith(")"))
 		fnName = fnName + "()";
 
@@ -393,10 +393,10 @@ private Bool anyLocation(Listing l) {
 }
 
 // Generate the name of a function, ignoring everything above "remove".
-private Name cleanName(Function f, Package remove) on Compiler {
+private Str cleanName(Function f, Package remove) on Compiler {
 	Name name;
 	addParts(name, f, remove, true);
-	name;
+	name.toS;
 }
 
 private void addParts(Name to, Named at, Package remove, Bool skipFirst) on Compiler {

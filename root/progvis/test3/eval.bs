@@ -1,0 +1,7 @@
+use demo;
+use core:lang;
+use core:io;
+
+void main() {
+	var x = tree("10 + 8 * 2");
+}

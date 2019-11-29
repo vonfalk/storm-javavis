@@ -57,8 +57,11 @@ value MemberOffset {
 }
 
 void appendMembers(Type t, MemberOffset[] result) on Compiler {
-	if (super = t.super)
-		appendMembers(super, result);
+	if (super = t.super) {
+		// Don't add members from TObject...
+		if (super !is named{TObject})
+			appendMembers(super, result);
+	}
 
 	Bool first = true;
 	for (elem in t) {

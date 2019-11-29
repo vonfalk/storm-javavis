@@ -148,8 +148,9 @@ class StackPointer extends Pointer {
  * A composite type, consisting of one or more variables of other types.
  */
 class Composite extends Data {
-	init() {
+	init(Str name) {
 		init() {
+			caption = Text(name, captionFont);
 			sizeComputed = false;
 		}
 	}
@@ -169,15 +170,31 @@ class Composite extends Data {
 	}
 
 	void draw(Graphics g) : override {
-		super:draw(g);
+		Rect me = rect;
+		Float width = rect.size.w;
+
+		g.fill(me, dataBg);
 
 		Point at = pos + compositeBorder;
+
+		{
+			Float height = caption.size.h;
+			Point bottom(pos.x + width, at.y + height + compositeBorder.h);
+			g.fill(Rect(pos, bottom), captionBg);
+
+			g.draw(caption, captionFg, at);
+			g.line(Point(pos.x, bottom.y), bottom, dataFg);
+			at.y = bottom.y + compositeBorder.h;
+		}
+
+		g.draw(me, dataFg);
+
 		for (v in content) {
 			var nameSz = v.text.size;
 			var dataSz = v.value.size;
 
 			if (v.line) {
-				g.line(Point(pos.x, at.y), Point(pos.x + size.w, at.y), dataFg);
+				g.line(Point(pos.x, at.y), Point(pos.x + width, at.y), dataFg);
 				at.y += dataBorder.h;
 			}
 
@@ -219,6 +236,7 @@ private:
 		}
 	}
 
+	Text caption;
 	Var[] content;
 	Float namesWidth;
 	Float dataWidth;
@@ -231,7 +249,7 @@ private:
 		// more compactly.
 		namesWidth = 0;
 		dataWidth = 0;
-		height = 0;
+		height = caption.size.h + compositeBorder.h*2;
 		for (v in content) {
 			var nameSz = v.text.size;
 			var dataSz = v.value.size;
