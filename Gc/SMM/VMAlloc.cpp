@@ -87,7 +87,10 @@ namespace storm {
 		}
 
 		void VMAlloc::markInaccessible(void *from, void *to) {
-			for (size_t at = infoOffset(info), end = infoOffset((byte *)to - 1); at <= end; at++) {
+			if (size_t(from) >= size_t(to))
+				return;
+
+			for (size_t at = infoOffset(from), end = infoOffset((byte *)to - 1); at <= end; at++) {
 				info[at] = INFO_USED_INTERNAL;
 			}
 		}
@@ -125,13 +128,18 @@ namespace storm {
 				newMin = alignedMin;
 			}
 
-			// Examine if the new size fits inside the old allocation.
 			size_t oldCount = infoCount(minAddr, maxAddr);
 			size_t newCount = infoCount(newMin, newMax);
+
+			// Mark the old info table as 'free', so that we can try to re-allocate it.
+			for (size_t at = infoOffset(info), to = infoOffset(info + oldCount - 1); at <= to; at++) {
+				info[at] = INFO_FREE;
+			}
+
+			// Examine if the new size fits inside the old allocation.
 			bool reuseOld = true;
-			TODO(L"We don't know if a block marked as 'CLIENT USE' is used by the table, or marking a hole in the table. We should mark the current table as 'free' first, and then check. Then we know!");
 			for (size_t at = infoOffset(info), to = infoOffset(info + newCount - 1); at <= to; at++) {
-				if (infoClientUse(info[at]))
+				if (info[at] != INFO_FREE)
 					reuseOld = false;
 			}
 
@@ -155,7 +163,25 @@ namespace storm {
 				}
 
 			} else {
-				assert(false, L"The case where we have to move the info allocation is not yet implemented!");
+				// Insert the table at the start of the new allocation. That is empty anyway. We
+				// assume it is large enough. This is likely always the case, as the table is
+				// compact. For 32-bit systems, we only ever need 64k (i.e. this case currently
+				// never happens as blocks are 64k minimum). For 64-bit systems with 48 bit virtual
+				// addresses, we need 2^32 bytes at a maximum, which could be a problem. However, we
+				// have other problems if our allocations are that spread out...
+				dbg_assert(chunk.size >= newCount, L"Not enough space for bookkeeping data!");
+
+				byte *newInfo = (byte *)chunk.at;
+				memset(newInfo, INFO_FREE, newCount);
+
+				// Copy the old data over to its new location.
+				if (minAddr > newMin) {
+					size_t delta = (minAddr - newMin) / vmAllocMinSize;
+					memcpy(newInfo + delta, info, min(oldCount, newCount - delta));
+				} else {
+					size_t delta = (newMin - minAddr) / vmAllocMinSize;
+					memcpy(newInfo, info + delta, min(oldCount - delta, newCount));
+				}
 			}
 
 			// Start using the new info table.
@@ -180,8 +206,6 @@ namespace storm {
 			for (size_t i = 1; i < reserved.size(); i++) {
 				markInaccessible(reserved[i - 1].end(), reserved[i].at);
 			}
-
-			exit(1);
 		}
 
 		size_t VMAlloc::totalPieces() const {
