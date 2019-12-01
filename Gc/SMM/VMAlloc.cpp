@@ -4,9 +4,16 @@
 #if STORM_GC == STORM_GC_SMM
 
 #include "Gc/Gc.h"
+#include "Util.h"
 
 namespace storm {
 	namespace smm {
+
+		struct ChunkCompare {
+			inline bool operator() (const Chunk &a, const Chunk &b) const {
+				return size_t(a.at) < size_t(b.at);
+			}
+		};
 
 		VMAlloc::VMAlloc(size_t initSize) :
 			vm(VM::create(this)), pageSize(vm->pageSize),
@@ -53,39 +60,128 @@ namespace storm {
 		}
 
 		void VMAlloc::addReserved(Chunk chunk) {
-			reserved.push_back(chunk);
+			insertSorted(reserved, chunk, ChunkCompare());
 
-			size_t totalMin, totalMax;
-			updateMinMax(totalMin, totalMax);
-
-			size_t count = infoCount(totalMin, totalMax);
-			byte *totalInfo = null;
 			if (info) {
-				// Note: This is a bit tricky. Since allocations may not be aligned to our
-				// granularity by the underlying system's memory manager, we might have to adjust
-				// 'min' and 'max' a bit so that the alignment of the old data structure remains
-				// correct. (Example: old allocation was at 0x20000, new allocation is at 0x11000
-				// with an alignment of 0x10000 will require poking 'min' to 0x10000, otherwise
-				// blocks in the old allocation are shifted by 0x1000). This will sadly waste some
-				// of the virtual address space, but that is fine as we don't expect to have many
-				// disjoint blocks of memory to manage.
-				assert(false, L"TODO: Update the already existing memory info!");
+				resizeInfo(chunk);
 			} else {
-				// New allocation, just put it in the beginning of the first block. This will always
-				// work since the info table will always be smaller than the one single allocation.
-				vm->commit(chunk.at, roundUp(count, vmAllocMinSize));
-				totalInfo = (byte *)chunk.at;
-				memset(totalInfo, INFO_FREE, count);
+				createInfo(chunk);
 			}
+		}
 
-			minAddr = totalMin;
-			maxAddr = totalMax;
-			info = totalInfo;
+		void VMAlloc::createInfo(Chunk chunk) {
+			// New allocation, just put it in the beginning of the first block. This will always
+			// work since the info table will always be smaller than the one single allocation.
+
+			updateMinMax(minAddr, maxAddr);
+			size_t count = infoCount(minAddr, maxAddr);
+
+			vm->commit(chunk.at, roundUp(count, vmAllocMinSize));
+			info = (byte *)chunk.at;
+			memset(info, INFO_FREE, count);
 
 			// Mark the new information struct as 'allocated' so that we don't overwrite it later!
 			for (size_t at = infoOffset(info), to = infoOffset(info + count - 1); at <= to; at++) {
 				info[at] = INFO_USED_INTERNAL;
 			}
+		}
+
+		void VMAlloc::markInaccessible(void *from, void *to) {
+			for (size_t at = infoOffset(info), end = infoOffset((byte *)to - 1); at <= end; at++) {
+				info[at] = INFO_USED_INTERNAL;
+			}
+		}
+
+		void VMAlloc::resizeInfo(Chunk chunk) {
+			// Note: This is a bit tricky. Since allocations may not be aligned to our
+			// granularity by the underlying system's memory manager, we might have to adjust
+			// 'min' and 'max' a bit so that the alignment of the old data structure remains
+			// correct. (Example: old allocation was at 0x20000, new allocation is at 0x11000
+			// with an alignment of 0x10000 will require poking 'min' to 0x10000, otherwise
+			// blocks in the old allocation are shifted by 0x1000). This will sadly waste some
+			// of the virtual address space, but that is fine as we don't expect to have many
+			// disjoint blocks of memory to manage.
+
+			// We have two options here:
+			// 1: If the old info allocation contains enough space to accommodate the new
+			//    allocation (or if we can trivially expand it), we re-use it. This might
+			//    require moving the data already there if the new block was 'before'
+			//    the old limits.
+			// 2: If that is not possible, we allocate space for a new info block in the
+			//    new allocation and copy the data there.
+
+			// Compute the new bounds.
+			size_t newMin, newMax;
+			updateMinMax(newMin, newMax);
+
+			// Modify 'min' to preserve block alignment. We don't need to do anything with 'max',
+			// rounding will handle that.
+			{
+				size_t currentAlignment = minAddr % vmAllocMinSize;
+				size_t alignedMin = newMin - (newMin % vmAllocMinSize) + currentAlignment;
+				if (alignedMin < newMin)
+					alignedMin += vmAllocMinSize;
+
+				newMin = alignedMin;
+			}
+
+			// Examine if the new size fits inside the old allocation.
+			size_t oldCount = infoCount(minAddr, maxAddr);
+			size_t newCount = infoCount(newMin, newMax);
+			bool reuseOld = true;
+			TODO(L"We don't know if a block marked as 'CLIENT USE' is used by the table, or marking a hole in the table. We should mark the current table as 'free' first, and then check. Then we know!");
+			for (size_t at = infoOffset(info), to = infoOffset(info + newCount - 1); at <= to; at++) {
+				if (infoClientUse(info[at]))
+					reuseOld = false;
+			}
+
+			if (reuseOld) {
+				// We have room to expand the current allocation. Shuffle the data around!
+				// Note: If 'min' expands, it always shrinks. Therefore, we can always copy
+				// data from high indexes to low indexes to avoid destroying the old data.
+				dbg_assert(newMin <= minAddr, L"Min address should always shrink!");
+
+				size_t delta = (minAddr - newMin) / vmAllocMinSize;
+				for (size_t i = oldCount; i > 0; i--) {
+					info[i + delta - 1] = info[i - 1];
+				}
+
+				// Initialize the remainder of the table.
+				for (size_t i = 0; i < delta; i++) {
+					info[i] = INFO_FREE;
+				}
+				for (size_t i = delta + oldCount; i < delta + newCount; i++) {
+					info[i] = INFO_FREE;
+				}
+
+			} else {
+				assert(false, L"The case where we have to move the info allocation is not yet implemented!");
+			}
+
+			// Start using the new info table.
+			minAddr = newMin;
+			maxAddr = newMax;
+
+			// Mark the newly allocated chunk as 'free'. It might previously have been a part of
+			// memory that was a 'hole' between two other allocations. We might mark a bit too much
+			// in this loop, but that is fine since we will explicitly mark any 'holes' as
+			// unavailable later on.
+			for (size_t at = infoOffset(chunk.at); at < infoOffset(chunk.end()); at++) {
+				info[at] = INFO_FREE;
+			}
+
+			// Mark the new allocation as 'used' (might be partially done already).
+			for (size_t at = infoOffset(info), to = infoOffset(info + newCount - 1); at <= to; at++) {
+				info[at] = INFO_USED_INTERNAL;
+			}
+
+			// Mark all holes as inaccessible. We don't need to care about the ranges, since that
+			// will be covered by 'addrMin' and 'addrMax'.
+			for (size_t i = 1; i < reserved.size(); i++) {
+				markInaccessible(reserved[i - 1].end(), reserved[i].at);
+			}
+
+			exit(1);
 		}
 
 		size_t VMAlloc::totalPieces() const {

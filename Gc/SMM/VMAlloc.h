@@ -152,6 +152,15 @@ namespace storm {
 			// Add a chunk of reserved memory to our pool.
 			void addReserved(Chunk chunk);
 
+			// Create a new info data structure for the specified chunk.
+			void createInfo(Chunk chunk);
+
+			// Resize (and possibly move) the info data structure to acommodate a newly allocated chunk.
+			void resizeInfo(Chunk chunk);
+
+			// Mark a range of addresses as inaccessible.
+			void markInaccessible(void *from, void *to);
+
 			// Compute the total number of pieces managed by this instance.
 			size_t totalPieces() const;
 
@@ -207,9 +216,17 @@ namespace storm {
 				size_t ptr = size_t(mem);
 				return (ptr - minAddr) >> vmAllocBits;
 			}
+			inline size_t infoOffset(void *mem, size_t minAddr) const {
+				size_t ptr = size_t(mem);
+				return (ptr - minAddr) >> vmAllocBits;
+			}
 
 			// Get the address of a particular offset in 'index'.
 			inline void *infoPtr(size_t index) const {
+				size_t addr = minAddr + (index << vmAllocBits);
+				return (void *)addr;
+			}
+			inline void *infoPtr(size_t index, size_t minAddr) const {
 				size_t addr = minAddr + (index << vmAllocBits);
 				return (void *)addr;
 			}
