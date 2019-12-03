@@ -219,10 +219,13 @@ namespace storm {
 	}
 
 	void GcImpl::startRamp() {
-		TODO(L"Implement ramp behavior!");
+		// Strangely enough, SMM works better without ramp behavior at the moment.
+		// arena.startRamp();
 	}
 
-	void GcImpl::endRamp() {}
+	void GcImpl::endRamp() {
+		// arena.endRamp();
+	}
 
 	void GcImpl::walkObjects(WalkCb fn, void *param) {
 		assert(false, L"Walking objects is not yet supported!");

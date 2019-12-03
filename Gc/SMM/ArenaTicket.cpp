@@ -95,6 +95,12 @@ namespace storm {
 			if (gc)
 				return false;
 
+			// We always deny suggestions when we're in ramp mode.
+			if (atomicRead(owner.rampAttempts) > 0) {
+				atomicOr(owner.rampAttempts, size_t(1) << size_t(gen->identifier));
+				return false;
+			}
+
 			owner.collectI(*this, GenSet(gen->identifier));
 			return true;
 		}

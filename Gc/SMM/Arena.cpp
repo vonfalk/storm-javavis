@@ -212,6 +212,26 @@ namespace storm {
 			return summary;
 		}
 
+		void Arena::startRamp() {
+			atomicIncrement(rampAttempts);
+		}
+
+		void Arena::endRamp() {
+			if (atomicDecrement(rampAttempts) == 1) {
+				// Reset and read.
+				size_t collect = atomicAnd(rampBlockedCollections, 0);
+
+				// Collect the generations that wished to be collected.
+				GenSet gens;
+				for (byte i = 0; collect; i++, collect >>= 1) {
+					if (collect & 0x1)
+						gens.add(i);
+				}
+
+				enter(*this, &Arena::collectI, gens);
+			}
+		}
+
 		void Arena::dbg_verify() {
 			util::Lock::L z(arenaLock);
 

@@ -92,6 +92,10 @@ namespace storm {
 			// Perform a full GC (API will most likely change).
 			void collect();
 
+			// Begin/end ramp allocations.
+			void startRamp();
+			void endRamp();
+
 			// Object movement history, to allow implementing location dependencies.
 			History history;
 
@@ -119,6 +123,12 @@ namespace storm {
 			// Count the number of time we tried to enter the arena, so that we can detect recursive
 			// entries (which will be bad).
 			size_t entries;
+
+			// Count the number of ramp allocation requests.
+			size_t rampAttempts;
+
+			// Remember which generations asked to be collected during the ramp mode.
+			size_t rampBlockedCollections;
 
 			// The generations in use. Objects are promoted from lower to higher numbered
 			// generations. Furthermore, we duplicate the last generation passed as a parameter to
