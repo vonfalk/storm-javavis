@@ -30,7 +30,7 @@ namespace storm {
 
 			VMAlloc **n = new VMAlloc*[count + 2];
 			for (size_t i = 0; i < count; i++)
-				n[i] = globalArenas[count];
+				n[i] = globalArenas[i];
 			n[count] = notify;
 			n[count + 1] = null; // Mark the end.
 
@@ -68,6 +68,10 @@ namespace storm {
 				n[to++] = null;
 			}
 
+			// Publish our new result.
+			atomicWrite(globalArenas, n);
+
+			// Wait for anyone who might know about the old value to be done.
 			while (atomicRead(usingGlobal) != 0)
 				;
 			delete []old;

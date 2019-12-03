@@ -28,7 +28,7 @@ Gc &gc();
 // Basic threading, no GC yet.
 SUITEX(OS, 0);
 // Basic gc operation, scanning simple objects without anything strange.
-SUITE_(GcScan, 1);
+SUITEX(GcScan, 1);
 // Gc operation on Storm objects declared in C++.
 SUITEX(GcObjects, 2);
 // GC along with threads.
