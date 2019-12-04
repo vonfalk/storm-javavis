@@ -4,12 +4,16 @@
 
 #include "GenSet.h"
 #include "ArenaTicket.h"
+#include "Scanner.h"
 
 namespace storm {
 	namespace smm {
 
 		/**
 		 * Scan, creating a GenSet that summarizes all pointers while using another pair of scanners.
+		 *
+		 * Note: We must make sure to record the contents of all pointers *after* the other scanner
+		 * has been executed completely, as it is allowed to change the contents of the pointers!
 		 */
 		template <class Predicate, class Scanner>
 		struct GenScanner {
@@ -50,31 +54,66 @@ namespace storm {
 				  result(source.result) {}
 
 			inline bool fix1(void *ptr) {
-				result.add(ticket.safeIdentifier(ptr));
-
 				if (predicate.forward)
-					return scanner.fix1(ptr);
-				else
-					return false;
+					if (scanner.fix1(ptr))
+						return true;
+
+				result.add(ticket.safeIdentifier(ptr));
+				return false;
 			}
 
 			inline Result fix2(void **ptr) {
-				return scanner.fix2(ptr);
+				Result r = scanner.fix2(ptr);
+				result.add(ticket.safeIdentifier(*ptr));
+				return r;
 			}
 
 			inline bool fixHeader1(GcType *header) {
-				result.add(ticket.safeIdentifier(header));
-
 				if (predicate.forward)
-					return scanner.fixHeader1(header);
-				else
-					return false;
+					if (scanner.fixHeader1(header))
+						return true;
+
+				result.add(ticket.safeIdentifier(header));
+				return false;
 			}
 
 			inline Result fixHeader2(GcType **header) {
-				return scanner.fixHeader2(header);
+				Result r = scanner.fixHeader2(header);
+				result.add(ticket.safeIdentifier(*header));
+				return r;
 			}
 
+		};
+
+		/**
+		 * Special version of the template above that only produces a summary.
+		 */
+		template <>
+		struct GenScanner<void, void> {
+			typedef int Result;
+
+			struct Source {
+				ArenaTicket &ticket;
+				GenSet result;
+
+				Source(ArenaTicket &ticket) : ticket(ticket) {}
+			};
+
+			ArenaTicket &ticket;
+			GenSet &result;
+
+			GenScanner(Source &source) : ticket(source.ticket), result(source.result) {}
+
+			inline bool fix1(void *ptr) {
+				result.add(ticket.safeIdentifier(ptr));
+				return false;
+			}
+
+			inline Result fix2(void **ptr) {
+				return 0;
+			}
+
+			SCAN_FIX_HEADER
 		};
 
 	}

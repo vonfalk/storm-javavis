@@ -35,6 +35,12 @@ namespace storm {
 			summary.free += remaining();
 		}
 
+		GenSet Block::dbg_summary(ArenaTicket &ticket) {
+			GenScanner<void, void>::Source s(ticket);
+			scan<GenScanner<void, void>>(s);
+			return s.result;
+		}
+
 		struct VerifyPtr {
 			typedef int Result;
 			typedef Arena *Source;

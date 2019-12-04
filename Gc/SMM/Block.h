@@ -174,15 +174,24 @@ namespace storm {
 												const Predicate &predicate,
 												typename Scanner::Source &source) {
 
+				// Simple alternative.
+				// typename Scanner::Result r = scanIf<Predicate, Scanner>(predicate, source);
+				// summary = dbg_summary(ticket);
+
+				// Possibly quicker for large-ish blocks.
 				typedef GenScanner<Predicate, Scanner> Scan;
 				Scan::Source s(ticket, predicate, source);
 				typename Scanner::Result r = scanIf<Scan::Pred, Scan>(s.predicate, s);
 				summary = s.result;
+
 				return r;
 			}
 
 			// Fill memory summary.
 			void fillSummary(MemorySummary &summary);
+
+			// Generate a summary for this block.
+			GenSet dbg_summary(ArenaTicket &ticket);
 
 			// Verify the contents of this block. If an Arena is provided, we also check
 			// pointer validity.

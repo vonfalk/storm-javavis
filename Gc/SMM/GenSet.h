@@ -70,6 +70,14 @@ namespace storm {
 				return data != 0;
 			}
 
+			// Compare.
+			bool operator ==(const GenSet &o) const {
+				return data == o.data;
+			}
+			bool operator !=(const GenSet &o) const {
+				return data != o.data;
+			}
+
 			// Maximum number of generations supported. This is the smallest of the number of bits
 			// in a size_t and the number of generations addressable by the bits provided by VMAlloc.
 			static const size_t maxGen =

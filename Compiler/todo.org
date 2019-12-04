@@ -1,8 +1,4 @@
-* SMM bugs/improvements [5/11]
-  - [ ] SMM crashes fairly consistently when running the test suite with an additional generation of 1 MB.
-    (Seemingly always when scanning a weak array). Making VMAlloc::anyWrites always return 'true' seems to
-    alleviate this issue, pointing towards an issue with keeping track of references between generations.
-    We should investigate this further!
+* SMM bugs/improvements [6/11]
   - [ ] Currently, we treat the header pointer of weak objects as a weak pointer. This is not correct,
     as the object would be unusable if the type was splatted.
   - [ ] Investigate how often the history should be advanced. It seems to be wasteful to always increase it
@@ -15,6 +11,10 @@
     other operations as well) in the VMAlloc system.
   - [ ] Perhaps we should move the pointer summaries from individual Blocks to Chunks, since we generally
     don't have better resolution than that from the VMAlloc class.
+  - [X] SMM crashes fairly consistently when running the test suite with an additional generation of 1 MB.
+    (Seemingly always when scanning a weak array). Making VMAlloc::anyWrites always return 'true' seems to
+    alleviate this issue, pointing towards an issue with keeping track of references between generations.
+    We should investigate this further!
   - [X] Investigate where we should put 'suggestCollection' in 'allocBlock'. Currently, we're a bit aggressive.
   - [X] Tweak collection frequency. Currently, it seems gen 1 collections are always triggered because
     we try to allocate large objects from gen 0 rather than objects from gen 0 spilling into gen 1. This
