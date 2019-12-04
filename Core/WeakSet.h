@@ -85,7 +85,7 @@ namespace storm {
 		Nat size;
 
 		// Minimum capacity.
-		static const nat minCapacity;
+		static const nat minCapacity = 4;
 
 		// Gc-type for the info.
 		static const GcType infoType;
