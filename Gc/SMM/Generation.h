@@ -252,8 +252,8 @@ namespace storm {
 
 				PinnedSet pinned;
 
-				bool operator() (void *from, void *to) const {
-					return pinned.has(from, to);
+				fmt::ScanOption operator() (void *from, void *to) const {
+					return pinned.has(from, to) ? fmt::scanAll : fmt::scanNone;
 				}
 			};
 

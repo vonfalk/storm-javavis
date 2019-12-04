@@ -540,8 +540,8 @@ namespace storm {
 		 * Predicate to check for finalizable objects.
 		 */
 		struct IfFinalizer {
-			inline bool operator() (void *obj) const {
-				return fmt::hasFinalizer(obj);
+			inline fmt::ScanOption operator() (void *obj) const {
+				return fmt::hasFinalizer(obj) ? fmt::scanAll : fmt::scanNone;
 			}
 		};
 

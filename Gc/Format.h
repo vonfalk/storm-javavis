@@ -858,10 +858,25 @@ namespace storm {
 
 
 		/**
+		 * Options to control scanning.
+		 */
+		enum ScanOption {
+			// Scan nothing.
+			scanNone,
+
+			// Scan only the header (if one exists).
+			scanHeader,
+
+			// Scan all pointers.
+			scanAll,
+		};
+
+
+		/**
 		 * Always-true predicate.
 		 */
 		struct ScanAll {
-			inline bool operator() (void *, void *) const { return true; }
+			inline ScanOption operator() (void *, void *) const { return scanAll; }
 		};
 
 
@@ -927,8 +942,7 @@ namespace storm {
 			}
 
 
-			// Scan a set of objects that are stored back-to-back. Only scans objects where the
-			// predicate returns "true".
+			// Scan a set of objects that are stored back-to-back. Only scans objects according to the predicate.
 			template <class Predicate>
 			static Result objectsIf(const Predicate &predicate, Source &source, void *base, void *limit) {
 				Scanner s(source);
@@ -942,10 +956,14 @@ namespace storm {
 
 					// Note: This call will be optimized away entirely if 'predicate' is an object
 					// that always returns true, as is the case with 'ScanAll'.
-					if (!predicate(at, (byte *)next - fmt::headerSize))
+					ScanOption opt = predicate(at, (byte *)next - fmt::headerSize);
+					if (opt == scanNone)
 						continue;
 
 					if (objIsCode(o)) {
+						if (opt == scanHeader)
+							continue;
+
 						// Scan the code segment.
 						GcCode *c = refsCode(o);
 
@@ -974,6 +992,22 @@ namespace storm {
 
 						// Update the pointers in the code blob as well.
 						gccode::updatePtrs(at, c);
+					} else if (opt == scanHeader) {
+						Header *h = objHeader(o);
+						switch (h->type) {
+						case GcType::tFixedObj:
+						case GcType::tFixed:
+						case GcType::tType:
+						case GcType::tArray:
+						case GcType::tWeakArray:
+							r = fixHeader(s, o, h);
+							if (r != Result())
+								return r;
+							break;
+						default:
+							// Built-in object, don't scan it.
+							break;
+						}
 					} else {
 						// Scan the regular object.
 						Header *h = objHeader(o);

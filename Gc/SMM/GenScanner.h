@@ -24,12 +24,12 @@ namespace storm {
 
 				Pred(const Predicate &original) : original(original) {}
 
-				bool operator ()(void *start, void *end) const {
-					forward = original(start, end);
-					return true;
+				fmt::ScanOption operator ()(void *start, void *end) const {
+					option = original(start, end);
+					return fmt::scanAll;
 				}
 
-				mutable bool forward;
+				mutable fmt::ScanOption option;
 			};
 
 			struct Source {
@@ -54,7 +54,7 @@ namespace storm {
 				  result(source.result) {}
 
 			inline bool fix1(void *ptr) {
-				if (predicate.forward)
+				if (predicate.option == fmt::scanAll)
 					if (scanner.fix1(ptr))
 						return true;
 
@@ -69,7 +69,7 @@ namespace storm {
 			}
 
 			inline bool fixHeader1(GcType *header) {
-				if (predicate.forward)
+				if (predicate.option != fmt::scanNone)
 					if (scanner.fixHeader1(header))
 						return true;
 

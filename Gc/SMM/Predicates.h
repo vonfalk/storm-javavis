@@ -15,8 +15,8 @@ namespace storm {
 		 * Check if an object is a weak array.
 		 */
 		struct IfWeak {
-			inline bool operator ()(void *ptr, void *) const {
-				return fmt::objIsWeak(fmt::fromClient(ptr));
+			inline fmt::ScanOption operator ()(void *ptr, void *) const {
+				return fmt::objIsWeak(fmt::fromClient(ptr)) ? fmt::scanAll : fmt::scanNone;
 			}
 		};
 
@@ -25,8 +25,8 @@ namespace storm {
 		 * Check if an object is not a weak array.
 		 */
 		struct IfNotWeak {
-			inline bool operator ()(void *ptr, void *) const {
-				return !fmt::objIsWeak(fmt::fromClient(ptr));
+			inline fmt::ScanOption operator ()(void *ptr, void *) const {
+				return fmt::objIsWeak(fmt::fromClient(ptr)) ? fmt::scanHeader : fmt::scanAll;
 			}
 		};
 
@@ -40,9 +40,8 @@ namespace storm {
 
 			IfBoth(const A &a, const B &b) : a(a), b(b) {}
 
-			inline bool operator ()(void *ptr, void *end) const {
-				return a(ptr, end)
-					&& b(ptr, end);
+			inline fmt::ScanOption operator ()(void *ptr, void *end) const {
+				return fmt::ScanOption(::min(int(a(ptr, end)), int(b(ptr, end))));
 			}
 		};
 

@@ -87,9 +87,9 @@ namespace storm {
 
 			MixedPredicate(const Generation::State &state) : state(state), isWeak(false) {}
 
-			inline bool operator()(void *obj, void *) const {
+			inline fmt::ScanOption operator()(void *obj, void *) const {
 				isWeak = fmt::objIsWeak(fmt::fromClient(obj));
-				return true;
+				return fmt::scanAll;
 			}
 		};
 
@@ -127,7 +127,23 @@ namespace storm {
 				return 0;
 			}
 
-			SCAN_FIX_HEADER
+			inline bool fixHeader1(GcType *header) { return fix1(header); }
+			inline Result fixHeader2(GcType **header) {
+				void **ptr = (void **)header;
+
+				// We should always scan the header!
+				fmt::Obj *o = fmt::fromClient(*ptr);
+				bool wasFwd = objIsFwd(o, ptr);
+
+				if (wasFwd) {
+					if (arena.memGeneration(*ptr) == finalizerIdentifier)
+						*ptr = null;
+				} else if (!state.isPinned(*ptr, fmt::objSkip(o))) {
+					*ptr = null;
+				}
+
+				return 0;
+			}
 		};
 
 	}
