@@ -7,13 +7,14 @@
 
 namespace storm {
 
-	License::License(Str *id, Str *title, Str *body) : Named(id), title(title), body(body) {}
+	License::License(Str *id, Str *title, Str *author, Str *body)
+		: Named(id), title(title), author(author), body(body) {}
 
 	void License::toS(StrBuf *to) const {
 		const wchar *line = S("-----------------------------------");
 		if (Named *p = as<Named>(parentLookup))
 			*to << p->identifier() << S(": ");
-		*to << title << S("\n") << line << S("\n") << body << S("\n") << line;
+		*to << title << S("\n") << author << S("\n") << line << S("\n") << body << S("\n") << line;
 	}
 
 	static void licenses(Array<License *> *r, Named *root) {

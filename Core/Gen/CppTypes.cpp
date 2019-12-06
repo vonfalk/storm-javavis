@@ -203,7 +203,7 @@ namespace storm {
 	const CppLicense *CppMeta::cppLicenses() {
 		static const CppLicense licenses[] = {
 			// LICENSES
-			{ null, null, null, null },
+			{ null, null, null, null, null },
 		};
 		return licenses;
 	}

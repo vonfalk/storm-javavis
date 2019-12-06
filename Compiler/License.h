@@ -11,10 +11,13 @@ namespace storm {
 		STORM_CLASS;
 	public:
 		// Create. 'id' is the identifier in the name tree.
-		STORM_CTOR License(Str *id, Str *title, Str *body);
+		STORM_CTOR License(Str *id, Str *title, Str *author, Str *body);
 
 		// License title.
 		Str *title;
+
+		// License author.
+		Str *author;
 
 		// License body.
 		Str *body;

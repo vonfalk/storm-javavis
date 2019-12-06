@@ -847,6 +847,8 @@ static void genLicenses(wostream &to, World &w) {
 		to << L"S(\"" << l.pkg << L"\"), ";
 		outputStr(to, l.title);
 		to << L",\n";
+		outputStr(to, l.author);
+		to << L",\n";
 		outputStr(to, l.body);
 		to << L" },\n";
 

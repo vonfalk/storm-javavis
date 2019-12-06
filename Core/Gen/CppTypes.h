@@ -342,6 +342,9 @@ namespace storm {
 		// Title.
 		const wchar *title;
 
+		// Author(s).
+		const wchar *author;
+
 		// Contents.
 		const wchar *body;
 	};

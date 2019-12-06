@@ -686,11 +686,12 @@ static void parseLicense(const Path &path, World &world) {
 		pkg = src->getLine();
 	}
 	String title = src->getLine();
+	String author = src->getLine();
 	String body = src->getAll();
 
 	delete src;
 
-	world.licenses.push_back(License(path.titleNoExt(), pkg, cond, title, body));
+	world.licenses.push_back(License(path.titleNoExt(), pkg, cond, title, author, body));
 }
 
 // Parse a version file.

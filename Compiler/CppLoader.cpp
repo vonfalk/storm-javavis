@@ -607,7 +607,9 @@ namespace storm {
 		for (Nat i = 0; i < count; i++) {
 			const CppLicense &l = world->licenses[i];
 			NameSet *into = findPkg(l.pkg);
-			into->add(new (*e) License(new (*e) Str(l.name), new (*e) Str(l.title), new (*e) Str(l.body)));
+			into->add(new (*e) License(
+						new (*e) Str(l.name), new (*e) Str(l.title),
+						new (*e) Str(l.author), new (*e) Str(l.body)));
 		}
 	}
 

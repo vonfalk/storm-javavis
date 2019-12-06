@@ -1,6 +1,7 @@
 #!defined(WINDOWS)
 
 libpng License
+Glenn Randers-Pehrson and others
 This code is released under the libpng license.
 
 libpng versions 1.2.6, August 15, 2004, through 1.2.50, July 10, 2012, are

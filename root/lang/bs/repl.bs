@@ -125,7 +125,7 @@ private:
 }
 
 private void outputLicense(core:info:License l, Bool full) on Compiler {
-	print(l.identifier # ": " # l.title);
+	print(l.identifier # ": " # l.title # " (" # l.author # ")");
 	if (full) {
 		Str line = "-" * 80;
 		print(line);

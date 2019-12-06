@@ -2,7 +2,7 @@
 
 class License {
 public:
-	License(const String &id, const String &pkg, const String &cond, const String &title, const String &body);
+	License(const String &id, const String &pkg, const String &cond, const String &title, const String &author, const String &body);
 
 	// Identifier.
 	String id;
@@ -15,6 +15,9 @@ public:
 
 	// Title.
 	String title;
+
+	// Author(s).
+	String author;
 
 	// Body.
 	String body;

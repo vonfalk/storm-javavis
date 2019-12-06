@@ -1,6 +1,7 @@
 #defined(STORM_GC_MPS)
 core
 Memory Pool System Kit Open Source License
+Ravenbrook Limited
 Copyright © 2001–2013 Ravenbrook Limited. All rights reserved. This is the open
 source license for the Memory Pool System, but it is not the only one. Contact
 Ravenbrook at mailto:mps-questions@ravenbrook.com if you would like a different
