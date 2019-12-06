@@ -35,8 +35,10 @@ namespace storm {
 
 	STORM_PKG(lang.license);
 
-	// Reader for licenses.
-	PkgReader *STORM_FN reader(Array<Url *> *files, Package *pkg) ON(Compiler);
+	namespace license {
+		// Reader for licenses.
+		PkgReader *STORM_FN reader(Array<Url *> *files, Package *pkg) ON(Compiler);
+	}
 
 	/**
 	 * Reader for license files.

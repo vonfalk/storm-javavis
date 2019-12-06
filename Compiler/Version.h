@@ -1,5 +1,6 @@
 #pragma once
 #include "Named.h"
+#include "Reader.h"
 
 namespace storm {
 	STORM_PKG(core.info);
@@ -70,4 +71,32 @@ namespace storm {
 	Array<VersionTag *> *STORM_FN versions(EnginePtr e) ON(Compiler);
 	Array<VersionTag *> *STORM_FN versions(Named *root) ON(Compiler);
 
+
+
+	STORM_PKG(lang.version);
+
+	namespace version {
+		// Reader for version annotations.
+		PkgReader *STORM_FN reader(Array<Url *> *files, Package *pkg) ON(Compiler);
+	}
+
+	/**
+	 * Reader for version files.
+	 *
+	 * We don't bother implementing individual file readers, as syntax highlighting is not very
+	 * important for this file type.
+	 */
+	class VersionReader : public PkgReader {
+		STORM_CLASS;
+	public:
+		// Create.
+		STORM_CTOR VersionReader(Array<Url *> *files, Package *pkg);
+
+		// We read versions as types.
+		virtual void STORM_FN readTypes();
+
+	private:
+		// Load a single license.
+		VersionTag *STORM_FN readVersion(Url *file);
+	};
 }

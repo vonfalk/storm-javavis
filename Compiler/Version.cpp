@@ -6,6 +6,7 @@
 #include "Core/Str.h"
 #include "Core/Hash.h"
 #include "Core/Join.h"
+#include "Core/Io/Text.h"
 
 #ifdef major
 #undef major
@@ -255,6 +256,37 @@ namespace storm {
 
 	Array<VersionTag *> *versions(EnginePtr e) {
 		return versions(e.v.package());
+	}
+
+
+	/**
+	 * Reader.
+	 */
+
+	namespace version {
+		PkgReader *reader(Array<Url *> *files, Package *pkg) {
+			return new (pkg->engine()) VersionReader(files, pkg);
+		}
+	}
+
+	VersionReader::VersionReader(Array<Url *> *files, Package *pkg) : PkgReader(files, pkg) {}
+
+	void VersionReader::readTypes() {
+		for (Nat i = 0; i < files->count(); i++) {
+			pkg->add(readVersion(files->at(i)));
+		}
+	}
+
+	VersionTag *VersionReader::readVersion(Url *file) {
+		TextInput *text = readText(file);
+		Str *ver = text->readLine();
+		text->close();
+
+		Version *version = parseVersion(ver);
+		if (!version)
+			throw SyntaxError(SrcPos(file, 0), L"Invalid version syntax.");
+
+		return new (this) VersionTag(file->title(), version);
 	}
 
 }

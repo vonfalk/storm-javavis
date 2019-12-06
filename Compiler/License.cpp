@@ -43,8 +43,11 @@ namespace storm {
 		return licenses(e.v.package());
 	}
 
-	PkgReader *reader(Array<Url *> *files, Package *pkg) {
-		return new (pkg->engine()) LicenseReader(files, pkg);
+
+	namespace license {
+		PkgReader *reader(Array<Url *> *files, Package *pkg) {
+			return new (pkg->engine()) LicenseReader(files, pkg);
+		}
 	}
 
 	LicenseReader::LicenseReader(Array<Url *> *files, Package *pkg) : PkgReader(files, pkg) {}
