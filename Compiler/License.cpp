@@ -4,6 +4,7 @@
 #include "Engine.h"
 #include "Package.h"
 #include "Core/StrBuf.h"
+#include "Core/Io/Text.h"
 
 namespace storm {
 
@@ -14,7 +15,7 @@ namespace storm {
 		const wchar *line = S("-----------------------------------");
 		if (Named *p = as<Named>(parentLookup))
 			*to << p->identifier() << S(": ");
-		*to << title << S("\n") << author << S("\n") << line << S("\n") << body << S("\n") << line;
+		*to << title << S(" (") << author << S(")\n") << line << S("\n") << body << S("\n") << line;
 	}
 
 	static void licenses(Array<License *> *r, Named *root) {
@@ -42,4 +43,25 @@ namespace storm {
 		return licenses(e.v.package());
 	}
 
+	PkgReader *reader(Array<Url *> *files, Package *pkg) {
+		return new (pkg->engine()) LicenseReader(files, pkg);
+	}
+
+	LicenseReader::LicenseReader(Array<Url *> *files, Package *pkg) : PkgReader(files, pkg) {}
+
+	void LicenseReader::readTypes() {
+		for (Nat i = 0; i < files->count(); i++) {
+			pkg->add(readLicense(files->at(i)));
+		}
+	}
+
+	License *LicenseReader::readLicense(Url *file) {
+		TextInput *text = readText(file);
+		Str *title = text->readLine();
+		Str *author = text->readLine();
+		Str *body = text->readAll();
+		text->close();
+
+		return new (this) License(file->title(), title, author, body);
+	}
 }
