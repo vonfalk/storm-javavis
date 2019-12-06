@@ -97,7 +97,7 @@ namespace storm {
 	// We need to set myGcType->type first, therefore we call setMyType!
 	Type::Type(Engine &e, TypeFlags flags, Size size, GcType *gcType) :
 		NameSet(setMyType(null, this, gcType, e)), engine(e), myGcType(gcType),
-		tHandle(null), typeFlags(typeClass | typeCpp) {
+		tHandle(null), typeFlags(typeClass | typeCpp), mySize(size) {
 
 		init(null);
 	}
