@@ -73,6 +73,9 @@ namespace storm {
 		// More data in the file?
 		Bool STORM_FN more();
 
+		// Close the underlying stream.
+		virtual void STORM_FN close();
+
 	protected:
 		// Override in derived readers, read one character.
 		virtual Char STORM_FN readChar();
@@ -97,6 +100,7 @@ namespace storm {
 
 	// Create a reader. Identifies the encoding automatically.
 	TextInput *STORM_FN readText(IStream *stream);
+	TextInput *STORM_FN readText(Url *file);
 
 	// Read a string.
 	TextInput *STORM_FN readStr(Str *from);
@@ -133,6 +137,9 @@ namespace storm {
 
 		// Flush all buffered output to the underlying stream.
 		virtual void STORM_FN flush();
+
+		// Close the underlying stream.
+		virtual void STORM_FN close();
 
 	protected:
 		// Override in derived writers. Write one character.

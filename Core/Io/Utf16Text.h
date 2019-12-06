@@ -16,6 +16,9 @@ namespace storm {
 		// Create with a buffer containing the initial few bytes of the stream.
 		STORM_CTOR Utf16Input(IStream *src, Bool byteSwap, Buffer start);
 
+		// Close the stream.
+		virtual void STORM_FN close();
+
 	protected:
 		// Read a character.
 		virtual Char STORM_FN readChar();
@@ -57,6 +60,9 @@ namespace storm {
 
 		// Flush output.
 		virtual void STORM_FN flush();
+
+		// Close the stream.
+		virtual void STORM_FN close();
 
 	protected:
 		// Write character.

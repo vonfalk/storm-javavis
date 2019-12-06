@@ -12,6 +12,10 @@ namespace storm {
 		memcpy(buf.dataPtr(), start.dataPtr(), start.filled());
 	}
 
+	void Utf8Input::close() {
+		src->close();
+	}
+
 	Char Utf8Input::readChar() {
 		byte ch = readByte();
 		nat left;
@@ -78,6 +82,10 @@ namespace storm {
 		if (buf.filled() > 0)
 			dest->write(buf);
 		buf.filled(0);
+	}
+
+	void Utf8Output::close() {
+		dest->close();
 	}
 
 	void Utf8Output::writeChar(Char ch) {

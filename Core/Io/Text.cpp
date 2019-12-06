@@ -115,6 +115,8 @@ namespace storm {
 		return to->toS();
 	}
 
+	void TextInput::close() {}
+
 	Char TextInput::readChar() {
 		return Char(nat(0));
 	}
@@ -136,6 +138,10 @@ namespace storm {
 			return new (stream) Utf16Input(stream, true, buf);
 		else
 			return new (stream) Utf8Input(stream, buf);
+	}
+
+	TextInput *STORM_FN readText(Url *from) {
+		return readText(from->read());
 	}
 
 	TextInput *STORM_FN readStr(Str *from) {
@@ -200,5 +206,7 @@ namespace storm {
 	void TextOutput::writeChar(Char ch) {}
 
 	void TextOutput::flush() {}
+
+	void TextOutput::close() {}
 
 }

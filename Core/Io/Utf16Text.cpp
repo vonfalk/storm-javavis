@@ -12,6 +12,10 @@ namespace storm {
 		memcpy(buf.dataPtr(), start.dataPtr(), start.filled());
 	}
 
+	void Utf16Input::close() {
+		src->close();
+	}
+
 	Char Utf16Input::readChar() {
 		using namespace utf16;
 
@@ -84,6 +88,10 @@ namespace storm {
 		if (buf.filled() > 0)
 			dest->write(buf);
 		buf.filled(0);
+	}
+
+	void Utf16Output::close() {
+		dest->close();
 	}
 
 	void Utf16Output::write(byte *to, wchar ch) {
