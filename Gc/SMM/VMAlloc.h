@@ -65,8 +65,14 @@ namespace storm {
 				// Original implementation:
 				if (a >= minAddr && a < maxAddr) {
 					byte data = info[infoOffset(addr)];
-					if (infoClientUse(data))
-						return infoData(data);
+
+					// Original code.
+					// if (infoClientUse(data))
+					// 	return infoData(data);
+
+					// Branchless version. This part seems to make a difference.
+					byte used = (~data) & 0x01;
+					return infoData(data) | (used * 0xFF);
 				}
 				return 0xFF;
 			}
