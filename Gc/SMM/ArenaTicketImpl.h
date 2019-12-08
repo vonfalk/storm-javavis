@@ -47,13 +47,6 @@ namespace storm {
 
 		template <class Scanner>
 		typename Scanner::Result ArenaTicket::scanGenerations(typename Scanner::Source &source, GenSet current) {
-			return scanGenerations<fmt::ScanAll, Scanner>(fmt::ScanAll(), source, current);
-		}
-
-		template <class Predicate, class Scanner>
-		typename Scanner::Result ArenaTicket::scanGenerations(const Predicate &predicate,
-															typename Scanner::Source &source,
-															GenSet current) {
 			typename Scanner::Result r = typename Scanner::Result();
 
 			for (size_t i = 0; i < owner.generations.size(); i++) {
@@ -64,7 +57,7 @@ namespace storm {
 					continue;
 
 				// Scan it, instructing the generation to only scan references to the current generation.
-				r = gen->scan<Predicate, Scanner>(*this, predicate, current, source);
+				r = gen->scan<Scanner>(*this, current, source);
 				if (r != typename Scanner::Result())
 					return r;
 			}
@@ -72,10 +65,8 @@ namespace storm {
 			return r;
 		}
 
-		template <class Predicate, class Scanner>
-		typename Scanner::Result ArenaTicket::scanGenerationsFinal(const Predicate &predicate,
-																typename Scanner::Source &source,
-																GenSet current) {
+		template <class Scanner>
+		typename Scanner::Result ArenaTicket::scanGenerationsFinal(typename Scanner::Source &source, GenSet current) {
 			typename Scanner::Result r = typename Scanner::Result();
 
 			for (size_t i = 0; i < owner.generations.size(); i++) {
@@ -86,7 +77,7 @@ namespace storm {
 					continue;
 
 				// Scan it, instructing the generation to only scan references to the current generation.
-				r = gen->scanFinal<Predicate, Scanner>(*this, predicate, current, source);
+				r = gen->scanFinal<Scanner>(*this, current, source);
 				if (r != typename Scanner::Result())
 					return r;
 			}

@@ -163,18 +163,11 @@ namespace storm {
 			template <class Scanner>
 			typename Scanner::Result scanGenerations(typename Scanner::Source &source, GenSet current);
 
-			template <class Predicate, class Scanner>
-			typename Scanner::Result scanGenerations(const Predicate &predicate,
-													typename Scanner::Source &source,
-													GenSet current);
-
 			// Scan all blocks, just as above. However, indicate that we're just about done with
 			// garbage collection, and that we might want to take the opportunity to raise memory
 			// barriers now to avoid scanning in the future.
-			template <class Predicate, class Scanner>
-			typename Scanner::Result scanGenerationsFinal(const Predicate &predicate,
-														typename Scanner::Source &source,
-														GenSet current);
+			template <class Scanner>
+			typename Scanner::Result scanGenerationsFinal(typename Scanner::Source &source, GenSet current);
 
 		private:
 			// Did any generation trigger a garbage collection?

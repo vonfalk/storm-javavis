@@ -3,6 +3,7 @@
 #if STORM_GC == STORM_GC_SMM
 
 #include "Format.h"
+#include "Scanner.h"
 
 namespace storm {
 	namespace smm {
@@ -12,36 +13,34 @@ namespace storm {
 		 */
 
 		/**
-		 * Check if an object is a weak array.
+		 * Only scan objects that contain weak references.
 		 */
-		struct IfWeak {
-			inline fmt::ScanOption operator ()(void *ptr, void *) const {
-				return fmt::objIsWeak(fmt::fromClient(ptr)) ? fmt::scanAll : fmt::scanNone;
+		template <class Scanner>
+		struct OnlyWeak : public Scanner {
+			OnlyWeak(typename Scanner::Source &source) : Scanner(source) {}
+
+			inline ScanOption object(void *ptr, void *end) {
+				if (fmt::objIsWeak(fmt::fromClient(ptr)))
+					return Scanner::object(ptr, end);
+				else
+					return scanNone;
 			}
 		};
 
 
 		/**
-		 * Check if an object is not a weak array.
+		 * Only scan non-weak references (i.e. only headers of weak arrays and normal objects).
 		 */
-		struct IfNotWeak {
-			inline fmt::ScanOption operator ()(void *ptr, void *) const {
-				return fmt::objIsWeak(fmt::fromClient(ptr)) ? fmt::scanHeader : fmt::scanAll;
-			}
-		};
+		template <class Scanner>
+		struct NoWeak : public Scanner {
+			NoWeak(typename Scanner::Source &source) : Scanner(source) {}
 
-		/**
-		 * Create the logical AND of two predicates.
-		 */
-		template <class A, class B>
-		struct IfBoth {
-			A a;
-			B b;
-
-			IfBoth(const A &a, const B &b) : a(a), b(b) {}
-
-			inline fmt::ScanOption operator ()(void *ptr, void *end) const {
-				return fmt::ScanOption(::min(int(a(ptr, end)), int(b(ptr, end))));
+			inline ScanOption object(void *ptr, void *end) {
+				ScanOption opt = Scanner::object(ptr, end);
+				if ((opt == scanAll) && fmt::objIsWeak(fmt::fromClient(ptr))) {
+					opt = scanHeader;
+				}
+				return opt;
 			}
 		};
 

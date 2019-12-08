@@ -210,8 +210,8 @@ namespace storm {
 			ScanState state(ticket, State(*this), next);
 
 			// Scanner to use when moving to the next generation.
-			typedef ScanNonmoving<ScanState::Move, fmt::ScanAll, true> GenScanner;
-			typedef ScanNonmoving<ScanState::Move, IfNotWeak, true> GenNoWeakScanner;
+			typedef ScanNonmoving<ScanState::Move, true> GenScanner;
+			typedef NoWeak<ScanNonmoving<NoWeak<ScanState::Move>, true>> GenNoWeakScanner;
 
 			// Scan the nonmoving objects first, then we can update the marks there at the same time!
 			nonmoving.scanPinned<GenNoWeakScanner>(pinnedSets[chunks.size()], state);
@@ -220,11 +220,11 @@ namespace storm {
 			// For all blocks containing at least one pinned object, traverse it entirely to find
 			// and scan the pinned objects. Any non-pinned objects are copied to the new block.
 			for (size_t i = 0; i < chunks.size(); i++)
-				scanPinnedFindFinalizers<IfNotWeak, GenNoWeakScanner>(chunks[i], IfNotWeak(), pinnedSets[i], state, finalizerBlocks);
+				scanPinnedFindFinalizers<GenNoWeakScanner>(chunks[i], pinnedSets[i], state, finalizerBlocks);
 
 			// Traverse all other generations that could contain references to this generation and
 			// copy any referred objects to the new block.
-			ticket.scanGenerations<IfNotWeak, GenNoWeakScanner>(IfNotWeak(), state, self);
+			ticket.scanGenerations<GenNoWeakScanner>(state, self);
 
 			// Also traverse exact roots.
 			ticket.scanExactRoots<GenNoWeakScanner>(state);
@@ -240,7 +240,7 @@ namespace storm {
 			// generation for the time being. We want to keep objects being finalized intact for as
 			// long as possible, so that finalizers will see a fairly good view of the world.
 			FinalizerPool &pool = ticket.finalizerPool();
-			typedef ScanNonmoving<FinalizerPool::Move, fmt::ScanAll, true> FinalizerScanner;
+			typedef ScanNonmoving<FinalizerPool::Move, true> FinalizerScanner;
 			pool.scan<FinalizerScanner>(ticket, FinalizerPool::Move::Params(pool, State(*this)));
 
 			// Check the blocks containing finalizers found before and grab all objects with
@@ -256,7 +256,7 @@ namespace storm {
 			// pool. However, if we just scan all objects with finalizers, the ones previously
 			// scanned will simply not preserve anything new, while the ones who are going to perish
 			// are going to preserve their references as we want them to.
-			nonmoving.scanIf<IfFinalizer, FinalizerScanner>(IfFinalizer(), FinalizerPool::Move::Params(pool, State(*this)));
+			nonmoving.scan<IfFinalizer<FinalizerScanner>>(FinalizerPool::Move::Params(pool, State(*this)));
 
 			// Recursively grab all dependencies of the objects we moved to the finalizer pool!
 			pool.scanNew(ticket, State(*this));
@@ -274,7 +274,7 @@ namespace storm {
 
 			// We also need to scan any pinned weak objects. Otherwise they will contain stale references!
 			for (size_t i = 0; i < chunks.size(); i++)
-				scanPinned<IfWeak, UpdateWeakFwd>(chunks[i], IfWeak(), pinnedSets[i], State(*this));
+				scanPinned<OnlyWeak<UpdateWeakFwd>>(chunks[i], pinnedSets[i], State(*this));
 
 			// Note: We try to not scan the objects we moved to a new generation immediately at this
 			// point. ScanState sets the flag fSkipScan on all blocks that were empty when they were
@@ -285,13 +285,8 @@ namespace storm {
 			// This avoids scanning some objects twice at least. This is improved if the generation
 			// would be a bit more aggressive at splitting blocks during allocations, being more
 			// likely to return new blocks even though the already existing ones are suitable.
-			{
-				// TODO: We should tell the ticket that we're almost done and thereby encourage
-				// other generations to raise their barriers.
-				State s(*this);
-				MixedPredicate p(s);
-				ticket.scanGenerationsFinal<MixedPredicate, UpdateMixedFwd>(p, p, self);
-			}
+			// We tell generations that we're almost done and encourage them to raise their barrier.
+			ticket.scanGenerationsFinal<UpdateMixedFwd>(State(*this), self);
 
 			// Update exact roots.
 			ticket.scanExactRoots<UpdateFwd>(State(*this));

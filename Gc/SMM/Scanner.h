@@ -30,6 +30,10 @@ namespace storm {
 
 			ScanSummary(Source &source) : src(source) {}
 
+			inline ScanOption object(void *, void *) {
+				return scanAll;
+			}
+
 			inline bool fix1(void *ptr) {
 				src.add(ptr);
 				return false;
@@ -53,6 +57,10 @@ namespace storm {
 
 			ScanSummaries(Source &source) : src(source) {}
 
+			inline ScanOption object(void *, void *) {
+				return scanAll;
+			}
+
 			inline bool fix1(void *ptr) {
 				for (typename Source::iterator i = src.begin(), end = src.end(); i != end; ++i)
 					i->add(ptr);
@@ -74,6 +82,10 @@ namespace storm {
 			const wchar_t *prefix;
 
 			ScanPrint(const wchar_t *prefix) : prefix(prefix) {}
+
+			inline ScanOption object(void *, void *) {
+				return scanAll;
+			}
 
 			inline bool fix1(void *ptr) {
 				return true;
@@ -106,6 +118,10 @@ namespace storm {
 
 			WithSummary(Source source) : set(source.set), other(source.src) {}
 
+			inline ScanOption object(void *start, void *end) {
+				return other.object(start, end);
+			}
+
 			inline bool fix1(void *ptr) {
 				set.add(ptr);
 				return other.fix1(ptr);
@@ -137,6 +153,10 @@ namespace storm {
 			Original &original;
 
 			RefScanner(Source &source) : original(source) {}
+
+			inline ScanOption object(void *start, void *end) {
+				return original.object(start, end);
+			}
 
 			inline bool fix1(void *ptr) {
 				return original.fix1(ptr);

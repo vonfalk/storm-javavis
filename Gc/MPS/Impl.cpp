@@ -110,6 +110,10 @@ namespace storm {
 			_ss->_ufs = _mps_ufs;
 		}
 
+		inline ScanOption object(void *, void *) const {
+			return scanAll;
+		}
+
 		inline bool fix1(mps_addr_t ptr) {
 			mps_word_t _mps_wt;
 			return MPS_FIX1(_ss, ptr);

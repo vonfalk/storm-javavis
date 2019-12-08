@@ -11,6 +11,21 @@
 namespace storm {
 
 	/**
+	 * Options to control scanning.
+	 */
+	enum ScanOption {
+		// Scan nothing.
+		scanNone,
+
+		// Scan only the header (if one exists).
+		scanHeader,
+
+		// Scan all pointers.
+		scanAll,
+	};
+
+
+	/**
 	 * Generic implementation of stack- and object scanning.
 	 *
 	 * The stack scanning can be used regardless of what object format is used, but the
@@ -184,6 +199,12 @@ namespace storm {
 		// Constructor from 'Source'.
 		NullScanner(Source &source) {}
 
+		// Called before each object is scanned when scanning formatted objects (not called when
+		// scanning a bunch of raw pointers, such as when scanning the stack). Determines if a
+		// particular object should be scanned, and to what degree it should be scanned (eg. not at
+		// all, only the header, or everything).
+		inline ScanOption object(void *start, void *end) { return scanAll; }
+
 		// Called once for each reference. Assumed to be a quick "early-out" check that the GC can
 		// use to quickly discard references that are not interesting at the moment. We also assume
 		// that this check can be called for internal pointers to objects without harm. Returns
@@ -201,4 +222,5 @@ namespace storm {
 		inline bool fixHeader1(GcType *header) { return false; }
 		inline Result fixHeader2(GcType **header) { return Result(); }
 	};
+
 }

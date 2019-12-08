@@ -5,6 +5,7 @@
 #include "Utils/Lock.h"
 #include "Block.h"
 #include "InlineSet.h"
+#include "Scanner.h"
 #include "Arena.h"
 #include "Predicates.h"
 
@@ -71,26 +72,16 @@ namespace storm {
 			template <class Scanner>
 			typename Scanner::Result scan(typename Scanner::Source &source);
 
-			template <class Predicate, class Scanner>
-			typename Scanner::Result scan(const Predicate &predicate, typename Scanner::Source &source);
-
 			// Scan all blocks that may contain references to anything in the provided GenSet.
 			template <class Scanner>
 			typename Scanner::Result scan(ArenaTicket &ticket,
 										GenSet refsTo,
 										typename Scanner::Source &source);
 
-			template <class Predicate, class Scanner>
-			typename Scanner::Result scan(ArenaTicket &ticket,
-										const Predicate &predicate,
-										GenSet refsTo,
-										typename Scanner::Source &source);
-
 			// Scan all blocks that may contain references to anything in the provided GenSet,
 			// possibly raising write barriers since a garbage collection sycle is almost over.
-			template <class Predicate, class Scanner>
+			template <class Scanner>
 			typename Scanner::Result scanFinal(ArenaTicket &ticket,
-											const Predicate &predicate,
 											GenSet refsTo,
 											typename Scanner::Source &source);
 
@@ -247,13 +238,25 @@ namespace storm {
 			};
 
 			// Predicate that checks if a particular object is pinned.
-			struct IfPinned {
-				IfPinned(const PinnedSet &pinned) : pinned(pinned) {}
+			template <class Scanner>
+			struct IfPinned : public Scanner {
+				struct Source {
+					const PinnedSet &pinned;
+					typename Scanner::Source &source;
+
+					Source(const PinnedSet &pinned, typename Scanner::Source &source)
+						: pinned(pinned), source(source) {}
+				};
 
 				PinnedSet pinned;
 
-				fmt::ScanOption operator() (void *from, void *to) const {
-					return pinned.has(from, to) ? fmt::scanAll : fmt::scanNone;
+				IfPinned(Source source) : Scanner(source.source), pinned(source.pinned) {}
+
+				inline ScanOption object(void *start, void *end) {
+					if (!pinned.has(start, end))
+						return scanNone;
+
+					return Scanner::object(start, end);
 				}
 			};
 
@@ -327,11 +330,6 @@ namespace storm {
 			template <class Scanner>
 			static typename Scanner::Result scan(GenChunk &chunk, typename Scanner::Source &source);
 
-			template <class Predicate, class Scanner>
-			static typename Scanner::Result scan(GenChunk &chunk,
-												const Predicate &predicate,
-												typename Scanner::Source &source);
-
 			// Only scan blocks which may refer to objects in the specified generations.
 			template <class Scanner>
 			static typename Scanner::Result scan(ArenaTicket &ticket,
@@ -339,46 +337,30 @@ namespace storm {
 												GenSet toScan,
 												typename Scanner::Source &source);
 
-			template <class Predicate, class Scanner>
-			static typename Scanner::Result scan(ArenaTicket &ticket,
-												GenChunk &chunk,
-												const Predicate &p,
-												GenSet toScan,
-												typename Scanner::Source &source);
-
 			// Scan blocks, and possibly raise a write barrier.
-			template <class Predicate, class Scanner>
+			template <class Scanner>
 			static typename Scanner::Result scanFinal(ArenaTicket &ticket,
 													GenChunk &chunk,
-													const Predicate &p,
 													GenSet toScan,
 													typename Scanner::Source &source);
 
 			// Internal version that does not check memory protection for early-outs.
-			template <class Predicate, class Scanner>
+			template <class Scanner>
 			static typename Scanner::Result scanImpl(ArenaTicket &ticket,
 													GenChunk &chunk,
-													const Predicate &p,
 													GenSet toScan,
 													typename Scanner::Source &source);
 
 			// Scan and update the internal summaries simultaneously.
-			template <class Predicate, class Scanner>
+			template <class Scanner>
 			static typename Scanner::Result scanUpdate(ArenaTicket &ticket,
 													GenChunk &chunk,
-													const Predicate &p,
 													GenSet toScan,
 													typename Scanner::Source &source);
 
 			// Scan all pinned objects in this chunk.
 			template <class Scanner>
 			static typename Scanner::Result scanPinned(GenChunk &chunk,
-													const PinnedSet &pinned,
-													typename Scanner::Source &source);
-
-			template <class Predicate, class Scanner>
-			static typename Scanner::Result scanPinned(GenChunk &chunk,
-													const Predicate &predicate,
 													const PinnedSet &pinned,
 													typename Scanner::Source &source);
 
@@ -390,26 +372,14 @@ namespace storm {
 																	typename Scanner::Source &source,
 																	Block *&finalizers);
 
-			template <class Predicate, class Scanner>
-			static typename Scanner::Result scanPinnedFindFinalizers(GenChunk &chunk,
-																	const Predicate &predicate,
-																	const PinnedSet &pinned,
-																	typename Scanner::Source &source,
-																	Block *&finalizers);
-
 		};
 
 
 		template <class Scanner>
 		typename Scanner::Result Generation::scan(typename Scanner::Source &source) {
-			return scan<fmt::ScanAll, Scanner>(fmt::ScanAll(), source);
-		}
-
-		template <class Predicate, class Scanner>
-		typename Scanner::Result Generation::scan(const Predicate &predicate, typename Scanner::Source &source) {
 			typename Scanner::Result r = typename Scanner::Result();
 			for (size_t i = 0; i < chunks.size(); i++) {
-				r = scan<Predicate, Scanner>(chunks[i], predicate, source);
+				r = scan<Scanner>(chunks[i], source);
 				if (r != typename Scanner::Result())
 					return r;
 			}
@@ -420,31 +390,22 @@ namespace storm {
 		typename Scanner::Result Generation::scan(ArenaTicket &ticket,
 												GenSet toScan,
 												typename Scanner::Source &source) {
-			return scan<fmt::ScanAll, Scanner>(ticket, fmt::ScanAll(), toScan, source);
-		}
-
-		template <class Predicate, class Scanner>
-		typename Scanner::Result Generation::scan(ArenaTicket &ticket,
-												const Predicate &p,
-												GenSet toScan,
-												typename Scanner::Source &source) {
 			typename Scanner::Result r = typename Scanner::Result();
 			for (size_t i = 0; i < chunks.size(); i++) {
-				scan<Predicate, Scanner>(ticket, chunks[i], p, toScan, source);
+				scan<Scanner>(ticket, chunks[i], toScan, source);
 				if (r != typename Scanner::Result())
 					return r;
 			}
 			return r;
 		}
 
-		template <class Predicate, class Scanner>
+		template <class Scanner>
 		typename Scanner::Result Generation::scanFinal(ArenaTicket &ticket,
-													const Predicate &p,
 													GenSet toScan,
 													typename Scanner::Source &source) {
 			typename Scanner::Result r = typename Scanner::Result();
 			for (size_t i = 0; i < chunks.size(); i++) {
-				scanFinal<Predicate, Scanner>(ticket, chunks[i], p, toScan, source);
+				scanFinal<Scanner>(ticket, chunks[i], toScan, source);
 				if (r != typename Scanner::Result())
 					return r;
 			}
@@ -454,11 +415,6 @@ namespace storm {
 
 		template <class Scanner>
 		typename Scanner::Result Generation::scan(GenChunk &chunk, typename Scanner::Source &source) {
-			return scan<fmt::ScanAll, Scanner>(chunk, fmt::ScanAll(), source);
-		}
-
-		template <class Predicate, class Scanner>
-		typename Scanner::Result Generation::scan(GenChunk &chunk, const Predicate &p, typename Scanner::Source &source) {
 			Block *end = chunk.memory.end();
 
 			typename Scanner::Result r = typename Scanner::Result();
@@ -468,7 +424,7 @@ namespace storm {
 					continue;
 				}
 
-				r = at->scanIf<Predicate, Scanner>(p, source);
+				r = at->scanIf<Scanner>(source);
 				if (r != typename Scanner::Result())
 					return r;
 			}
@@ -478,15 +434,6 @@ namespace storm {
 		template <class Scanner>
 		typename Scanner::Result Generation::scan(ArenaTicket &ticket,
 												GenChunk &chunk,
-												GenSet toScan,
-												typename Scanner::Source &source) {
-			return scan<fmt::ScanAll, Scanner>(ticket, chunk, fmt::ScanAll(), toScan, source);
-		}
-
-		template <class Predicate, class Scanner>
-		typename Scanner::Result Generation::scan(ArenaTicket &ticket,
-												GenChunk &chunk,
-												const Predicate &predicate,
 												GenSet toScan,
 												typename Scanner::Source &source) {
 			// No changes? Then we can use the summary!
@@ -497,13 +444,12 @@ namespace storm {
 				}
 			}
 
-			return scanImpl<Predicate, Scanner>(ticket, chunk, predicate, toScan, source);
+			return scanImpl<Scanner>(ticket, chunk, toScan, source);
 		}
 
-		template <class Predicate, class Scanner>
+		template <class Scanner>
 		typename Scanner::Result Generation::scanFinal(ArenaTicket &ticket,
 													GenChunk &chunk,
-													const Predicate &predicate,
 													GenSet toScan,
 													typename Scanner::Source &source) {
 
@@ -511,7 +457,7 @@ namespace storm {
 			if (!ticket.anyWrites(chunk.memory)) {
 				// No changes, we can ask the summary!
 				if (chunk.summary.has(toScan)) {
-					return scanImpl<Predicate, Scanner>(ticket, chunk, predicate, toScan, source);
+					return scanImpl<Scanner>(ticket, chunk, toScan, source);
 				} else {
 					return typename Scanner::Result();
 				}
@@ -520,15 +466,14 @@ namespace storm {
 			// TODO: We need to determine if we should update the summary or not.
 			bool update = true;
 			if (update)
-				return scanUpdate<Predicate, Scanner>(ticket, chunk, predicate, toScan, source);
+				return scanUpdate<Scanner>(ticket, chunk, toScan, source);
 			else
-				return scanImpl<Predicate, Scanner>(ticket, chunk, predicate, toScan, source);
+				return scanImpl<Scanner>(ticket, chunk, toScan, source);
 		}
 
-		template <class Predicate, class Scanner>
+		template <class Scanner>
 		typename Scanner::Result Generation::scanImpl(ArenaTicket &ticket,
 													GenChunk &chunk,
-													const Predicate &predicate,
 													GenSet toScan,
 													typename Scanner::Source &source) {
 
@@ -543,7 +488,7 @@ namespace storm {
 				if (!at->mayReferTo(ticket, toScan))
 					continue;
 
-				r = at->scanIf<Predicate, Scanner>(predicate, source);
+				r = at->scan<Scanner>(source);
 				if (r != typename Scanner::Result())
 					return r;
 			}
@@ -551,10 +496,9 @@ namespace storm {
 			return r;
 		}
 
-		template <class Predicate, class Scanner>
+		template <class Scanner>
 		typename Scanner::Result Generation::scanUpdate(ArenaTicket &ticket,
 													GenChunk &chunk,
-													const Predicate &predicate,
 													GenSet toScan,
 													typename Scanner::Source &source) {
 
@@ -568,7 +512,7 @@ namespace storm {
 					at->clearFlag(Block::fSkipScan);
 
 				if (at->mayReferTo(ticket, toScan)) {
-					r = at->scanUpdate<Predicate, Scanner>(ticket, predicate, source);
+					r = at->scanUpdate<Scanner>(ticket, source);
 					if (r != typename Scanner::Result())
 						return r;
 				}
@@ -587,27 +531,19 @@ namespace storm {
 		typename Scanner::Result Generation::scanPinned(GenChunk &chunk,
 														const PinnedSet &pinned,
 														typename Scanner::Source &source) {
-			return scanPinned<fmt::ScanAll, Scanner>(chunk, fmt::ScanAll(), pinned, source);
-		}
-
-		template <class Predicate, class Scanner>
-		typename Scanner::Result Generation::scanPinned(GenChunk &chunk,
-														const Predicate &predicate,
-														const PinnedSet &pinned,
-														typename Scanner::Source &source) {
 
 			typename Scanner::Result r = typename Scanner::Result();
 			if (pinned.empty())
 				return r;
 
-			typedef IfBoth<IfPinned, Predicate> P;
-			P p(pinned, predicate);
+			typedef IfPinned<Scanner> Pinned;
+			Pinned::Source s(pinned, source);
 
 			// Walk all blocks and scan the relevant ones.
 			Block *end = (Block *)chunk.memory.end();
 			for (Block *at = (Block *)chunk.memory.at; at != (Block *)end; at = (Block *)at->mem(at->size)) {
 				if (pinned.has(at->mem(0), at->mem(at->committed()))) {
-					r = at->scanIf<P, Scanner>(p, source);
+					r = at->scan<Pinned>(s);
 					if (r != typename Scanner::Result())
 						return r;
 				}
@@ -621,26 +557,17 @@ namespace storm {
 																	const PinnedSet &pinned,
 																	typename Scanner::Source &source,
 																	Block *&finalizers) {
-			return scanPinnedFindFinalizers<fmt::ScanAll, Scanner>(chunk, fmt::ScanAll(), pinned, source, finalizers);
-		}
-
-		template <class Predicate, class Scanner>
-		typename Scanner::Result Generation::scanPinnedFindFinalizers(GenChunk &chunk,
-																	const Predicate &predicate,
-																	const PinnedSet &pinned,
-																	typename Scanner::Source &source,
-																	Block *&finalizers) {
 
 			typename Scanner::Result r = typename Scanner::Result();
 
-			typedef IfBoth<IfPinned, Predicate> P;
-			P p(pinned, predicate);
+			typedef IfPinned<Scanner> Pinned;
+			Pinned::Source s(pinned, source);
 
 			// Walk all blocks and scan the relevant ones.
 			Block *end = (Block *)chunk.memory.end();
 			for (Block *at = (Block *)chunk.memory.at; at != (Block *)end; at = (Block *)at->mem(at->size)) {
 				if (pinned.has(at->mem(0), at->mem(at->committed()))) {
-					r = at->scanIf<P, Scanner>(p, source);
+					r = at->scan<Pinned>(s);
 					if (r != typename Scanner::Result())
 						return r;
 				}

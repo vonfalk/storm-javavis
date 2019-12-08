@@ -15,46 +15,39 @@ namespace storm {
 		 * Note: We must make sure to record the contents of all pointers *after* the other scanner
 		 * has been executed completely, as it is allowed to change the contents of the pointers!
 		 */
-		template <class Predicate, class Scanner>
+		template <class Scanner>
 		struct GenScanner {
 			typedef typename Scanner::Result Result;
-
-			struct Pred {
-				const Predicate &original;
-
-				Pred(const Predicate &original) : original(original) {}
-
-				fmt::ScanOption operator ()(void *start, void *end) const {
-					option = original(start, end);
-					return fmt::scanAll;
-				}
-
-				mutable fmt::ScanOption option;
-			};
 
 			struct Source {
 				ArenaTicket &ticket;
 				typename Scanner::Source &source;
-				Pred predicate;
 				GenSet result;
 
-				Source(ArenaTicket &ticket, const Predicate &predicate, typename Scanner::Source &source)
-					: ticket(ticket), predicate(predicate), source(source) {}
+				Source(ArenaTicket &ticket, typename Scanner::Source &source)
+					: ticket(ticket), source(source) {}
 			};
 
 			ArenaTicket &ticket;
-			Pred &predicate;
+			ScanOption scan;
 			Scanner scanner;
 			GenSet &result;
 
 			GenScanner(Source &source)
 				: ticket(source.ticket),
-				  predicate(source.predicate),
 				  scanner(source.source),
-				  result(source.result) {}
+				  result(source.result),
+				  scan(scanAll) {}
+
+			inline ScanOption object(void *start, void *end) {
+				scan = scanner.object(start, end);
+
+				// We need to scan all pointers.
+				return scanAll;
+			}
 
 			inline bool fix1(void *ptr) {
-				if (predicate.option == fmt::scanAll)
+				if (scan == scanAll)
 					if (scanner.fix1(ptr))
 						return true;
 
@@ -69,7 +62,7 @@ namespace storm {
 			}
 
 			inline bool fixHeader1(GcType *header) {
-				if (predicate.option != fmt::scanNone)
+				if (scan != scanNone)
 					if (scanner.fixHeader1(header))
 						return true;
 
@@ -89,7 +82,7 @@ namespace storm {
 		 * Special version of the template above that only produces a summary.
 		 */
 		template <>
-		struct GenScanner<void, void> {
+		struct GenScanner<void> {
 			typedef int Result;
 
 			struct Source {
@@ -103,6 +96,10 @@ namespace storm {
 			GenSet &result;
 
 			GenScanner(Source &source) : ticket(source.ticket), result(source.result) {}
+
+			inline ScanOption object(void *, void *) const {
+				return scanAll;
+			}
 
 			inline bool fix1(void *ptr) {
 				result.add(ticket.safeIdentifier(ptr));

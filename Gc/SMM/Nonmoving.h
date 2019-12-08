@@ -90,18 +90,6 @@ namespace storm {
 				return result;
 			}
 
-			// Scan all objects with a predicate.
-			template <class Predicate, class Scanner>
-			typename Scanner::Result scanIf(const Predicate &pred, typename Scanner::Source &source) {
-				typename Scanner::Result result = typename Scanner::Result();
-				for (size_t i = 0; i < chunks.size(); i++) {
-					result = chunks[i]->scanIf<Predicate, Scanner>(pred, source);
-					if (result != typename Scanner::Result())
-						break;
-				}
-				return result;
-			}
-
 			// Scan all pinned objects.
 			template <class Scanner>
 			typename Scanner::Result scanPinned(const PinnedSet &pinned, typename Scanner::Source &source) {
@@ -300,10 +288,6 @@ namespace storm {
 				template <class Scanner>
 				typename Scanner::Result scan(typename Scanner::Source &source);
 
-				// Scan with predicate.
-				template <class Predicate, class Scanner>
-				typename Scanner::Result scanIf(const Predicate &predicate, typename Scanner::Source &source);
-
 				// Scan pinned objects, update the mark bit accordingly.
 				template <class Scanner>
 				typename Scanner::Result scanPinned(const PinnedSet &pinned, typename Scanner::Source &source);
@@ -397,25 +381,6 @@ namespace storm {
 			return result;
 		}
 
-		template <class Predicate, class Scanner>
-		typename Scanner::Result Nonmoving::Chunk::scanIf(const Predicate &pred, typename Scanner::Source &source) {
-			typename Scanner::Result result = typename Scanner::Result();
-			for (size_t i = 0; i < size; i += header(i)->size() + sizeof(Header)) {
-				Header *h = header(i);
-				if (h->hasFlag(Header::fFree | Header::fFinalize))
-					continue;
-
-				void *obj = fmt::toClient(h->object());
-				if (!pred(obj))
-					continue;
-
-				result = fmt::Scan<Scanner>::objects(source, obj, fmt::skip(obj));
-				if (result != typename Scanner::Result())
-					return result;
-			}
-			return result;
-		}
-
 		template <class Scanner>
 		typename Scanner::Result Nonmoving::Chunk::scanPinned(const PinnedSet &pinned, typename Scanner::Source &source) {
 			typename Scanner::Result result = typename Scanner::Result();
@@ -472,7 +437,7 @@ namespace storm {
 		 * uses the member 'arena' inside the wrapped object to access the arena instance. Also
 		 * assumes that there is no difference between 'fix' and 'fixHeader'.
 		 */
-		template <class Wrap, class Predicate = fmt::ScanAll, bool mark = true>
+		template <class Wrap, bool mark = true>
 		class ScanNonmoving {
 		public:
 			typedef typename Wrap::Result Result;
@@ -483,6 +448,11 @@ namespace storm {
 
 			// Create.
 			ScanNonmoving(Source &source) : wrap(source) {}
+
+			// Predicate (always true).
+			inline ScanOption object(void *start, void *end) {
+				return wrap.object(start, end);
+			}
 
 			// Check if the pointer is interesting to us.
 			inline bool fix1(void *ptr) {
@@ -500,7 +470,19 @@ namespace storm {
 				return wrap.fix2(ptr);
 			}
 
-			SCAN_FIX_HEADER
+			// Handle headers.
+			inline bool fixHeader1(GcType *ptr) {
+				byte gen = wrap.arena.memGeneration(ptr);
+				isNonmoving = gen == nonmovingIdentifier;
+				return isNonmoving | (gen == wrap.srcGen);
+			}
+			inline Result fixHeader2(GcType **ptr) {
+				if (isNonmoving)
+					return scanNonmoving((void **)ptr);
+
+				return wrap.fixHeader2(ptr);
+			}
+
 		private:
 			// Was the last object examined with 'fix1' a nonmoving object? We remember this so that
 			// we don't have to check again.
@@ -526,8 +508,8 @@ namespace storm {
 				// Remember we're traversing it.
 				header->setFlag(Header::fTraversing);
 
-				typedef RefScanner<ScanNonmoving<Wrap, Predicate, mark>> ScanType;
-				Result result = fmt::Scan<ScanType>::objectsIf(Predicate(), *this, *ptr, fmt::skip(*ptr));
+				typedef RefScanner<ScanNonmoving<Wrap, mark>> ScanType;
+				Result result = fmt::Scan<ScanType>::objects(*this, *ptr, fmt::skip(*ptr));
 
 				// Now, we're done. Make sure we can traverse it next time as well!
 				header->clearFlag(Header::fTraversing);
@@ -539,9 +521,15 @@ namespace storm {
 		/**
 		 * Predicate to check for finalizable objects.
 		 */
-		struct IfFinalizer {
-			inline fmt::ScanOption operator() (void *obj) const {
-				return fmt::hasFinalizer(obj) ? fmt::scanAll : fmt::scanNone;
+		template <class Scanner>
+		struct IfFinalizer : public Scanner {
+			IfFinalizer(typename Scanner::Source &source) : Scanner(source) {}
+
+			inline ScanOption object(void *start, void *end) {
+				if (fmt::hasFinalizer(start))
+					return Scanner::object(start, end);
+				else
+					return scanNone;
 			}
 		};
 

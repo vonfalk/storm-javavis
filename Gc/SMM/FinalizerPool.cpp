@@ -91,7 +91,7 @@ namespace storm {
 			if (from >= to)
 				return false;
 
-			typedef ScanNonmoving<Move, fmt::ScanAll, true> Scanner;
+			typedef ScanNonmoving<Move, true> Scanner;
 			fmt::Scan<Scanner>::objects(Move::Params(*this, gen),
 										b->mem(from + fmt::headerSize),
 										b->mem(to + fmt::headerSize));

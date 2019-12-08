@@ -152,6 +152,10 @@ namespace storm {
 			Move(const Params &p)
 				: target(p.to), arena(p.to.arena), srcGen(p.source.identifier()), source(p.source) {}
 
+			inline ScanOption object(void *, void *) const {
+				return scanAll;
+			}
+
 			inline bool fix1(void *ptr) {
 				return arena.memGeneration(ptr) == srcGen;
 			}

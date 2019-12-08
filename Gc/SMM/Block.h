@@ -160,28 +160,17 @@ namespace storm {
 				return fmt::Scan<Scanner>::objects(source, mem(fmt::headerSize), mem(fmt::headerSize + committed()));
 			}
 
-			// Scan all objects that fulfill a specified predicate using the supplied scanner.
-			template <class Predicate, class Scanner>
-			typename Scanner::Result scanIf(const Predicate &predicate, typename Scanner::Source &source) {
-				return fmt::Scan<Scanner>::template objectsIf<Predicate>(predicate, source,
-																		mem(fmt::headerSize),
-																		mem(fmt::headerSize + committed()));
-			}
-
 			// Scan all objects, and update the summary.
-			template <class Predicate, class Scanner>
-			typename Scanner::Result scanUpdate(ArenaTicket &ticket,
-												const Predicate &predicate,
-												typename Scanner::Source &source) {
-
+			template <class Scanner>
+			typename Scanner::Result scanUpdate(ArenaTicket &ticket, typename Scanner::Source &source) {
 				// Simple alternative.
 				// typename Scanner::Result r = scanIf<Predicate, Scanner>(predicate, source);
 				// summary = dbg_summary(ticket);
 
 				// Possibly quicker for large-ish blocks.
-				typedef GenScanner<Predicate, Scanner> Scan;
-				Scan::Source s(ticket, predicate, source);
-				typename Scanner::Result r = scanIf<Scan::Pred, Scan>(s.predicate, s);
+				typedef GenScanner<Scanner> Scan;
+				Scan::Source s(ticket, source);
+				typename Scanner::Result r = scan<Scan>(s);
 				summary = s.result;
 
 				return r;

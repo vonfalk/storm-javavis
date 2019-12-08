@@ -36,8 +36,8 @@ namespace storm {
 		}
 
 		GenSet Block::dbg_summary(ArenaTicket &ticket) {
-			GenScanner<void, void>::Source s(ticket);
-			scan<GenScanner<void, void>>(s);
+			GenScanner<void>::Source s(ticket);
+			scan<GenScanner<void>>(s);
 			return s.result;
 		}
 
@@ -48,6 +48,10 @@ namespace storm {
 			Arena &arena;
 
 			VerifyPtr(Arena *arena) : arena(*arena) {}
+
+			inline ScanOption object(void *, void *) const {
+				return scanAll;
+			}
 
 			bool fix1(void *ptr) const {
 				return arena.has(ptr);
