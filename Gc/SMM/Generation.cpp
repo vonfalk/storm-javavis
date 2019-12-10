@@ -236,11 +236,6 @@ namespace storm {
 			// release the held Blocks in this case.
 			state.scanNew();
 
-			// TODO: For completeness, we should make sure to scan the type description of any weak
-			// objects. Otherwise they will be treated as weak references as well (which is not
-			// currently a problem). This is likely most convenient to do inside ScanState whenever
-			// an object is added to the weak queue.
-
 			// Grab objects referred to only by old finalizers and keep them alive in the finalizing
 			// generation for the time being. We want to keep objects being finalized intact for as
 			// long as possible, so that finalizers will see a fairly good view of the world.

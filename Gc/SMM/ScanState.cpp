@@ -30,6 +30,14 @@ namespace storm {
 			Queue *to = &target;
 			if (fmt::objIsWeak(obj)) {
 				to = &weak;
+
+				// We need to scan the object reference of the weak object now. Otherwise, the type
+				// information could be lost since we would otherwise treat it as a weak reference.
+				// This involves some amount of recursion, but since the GcType objects never
+				// contain any weak references, this is fine. We also make sure to only scan the
+				// header here.
+				typedef OnlyHeader<ScanNonmoving<Move, true>> Scanner;
+				fmt::Scan<Scanner>::objects(*this, client, (byte *)client + size);
 			}
 
 			Block *tail = to->tail;

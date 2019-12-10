@@ -60,6 +60,20 @@ namespace storm {
 			}
 		};
 
+
+		/**
+		 * Only scan the header.
+		 */
+		template <class Scanner>
+		struct OnlyHeader : public Scanner {
+			OnlyHeader(typename Scanner::Source &source) : Scanner(source) {}
+
+			inline ScanOption object(void *ptr, void *end) {
+				Scanner::object(ptr, end);
+				return scanHeader;
+			}
+		};
+
 	}
 }
 
