@@ -164,7 +164,7 @@ namespace storm {
 			template <class Scanner>
 			typename Scanner::Result scanUpdate(ArenaTicket &ticket, typename Scanner::Source &source) {
 				// Simple alternative.
-				// typename Scanner::Result r = scanIf<Predicate, Scanner>(predicate, source);
+				// typename Scanner::Result r = scan<Scanner>(source);
 				// summary = dbg_summary(ticket);
 
 				// Possibly quicker for large-ish blocks.
@@ -205,9 +205,6 @@ namespace storm {
 
 			// A summary of the references contained in here.
 			GenSet summary;
-
-			// Arrange so that we will be notified about writes to the contents of this block. Clears 'fUpdated' flag.
-			void watchWrites();
 		};
 
 	}

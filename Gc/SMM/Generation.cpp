@@ -211,7 +211,7 @@ namespace storm {
 
 			// Scanner to use when moving to the next generation.
 			typedef ScanNonmoving<ScanState::Move, true> GenScanner;
-			typedef NoWeak<ScanNonmoving<NoWeak<ScanState::Move>, true>> GenNoWeakScanner;
+			typedef ScanNonmoving<NoWeak<ScanState::Move>, true> GenNoWeakScanner;
 
 			// Scan the nonmoving objects first, then we can update the marks there at the same time!
 			nonmoving.scanPinned<GenNoWeakScanner>(pinnedSets[chunks.size()], state);
@@ -235,6 +235,11 @@ namespace storm {
 			// can actually avoid this step entirely. We would, however, tell the ScanState to
 			// release the held Blocks in this case.
 			state.scanNew();
+
+			// TODO: For completeness, we should make sure to scan the type description of any weak
+			// objects. Otherwise they will be treated as weak references as well (which is not
+			// currently a problem). This is likely most convenient to do inside ScanState whenever
+			// an object is added to the weak queue.
 
 			// Grab objects referred to only by old finalizers and keep them alive in the finalizing
 			// generation for the time being. We want to keep objects being finalized intact for as

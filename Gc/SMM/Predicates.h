@@ -45,6 +45,21 @@ namespace storm {
 		};
 
 
+		/**
+		 * Template to force a scanner to always execute, regardless of any other predicates.
+		 *
+		 * Might not always work in case of nested scanners. Mainly intended for debugging.
+		 */
+		template <class Scanner>
+		struct Always : public Scanner {
+			Always(typename Scanner::Source &source) : Scanner(source) {}
+
+			inline ScanOption object(void *ptr, void *end) {
+				Scanner::object(ptr, end);
+				return scanAll;
+			}
+		};
+
 	}
 }
 

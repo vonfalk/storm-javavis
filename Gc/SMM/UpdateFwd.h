@@ -109,7 +109,7 @@ namespace storm {
 			bool isWeak;
 
 			UpdateMixedFwd(const Generation::State &source)
-				: arena(source.arena()), state(source), isWeak(false) {}
+				: arena(source.arena()), state(source), id(source.identifier()), isWeak(false) {}
 
 			inline ScanOption object(void *obj, void *) {
 				isWeak = fmt::objIsWeak(fmt::fromClient(obj));

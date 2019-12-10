@@ -424,7 +424,7 @@ namespace storm {
 					continue;
 				}
 
-				r = at->scanIf<Scanner>(source);
+				r = at->scan<Scanner>(source);
 				if (r != typename Scanner::Result())
 					return r;
 			}

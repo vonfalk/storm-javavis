@@ -55,7 +55,7 @@ namespace storm {
 
 		void ScanState::scanNew() {
 			int error = 0;
-			typedef NoWeak<ScanNonmoving<NoWeak<Move>, true>> Scanner;
+			typedef ScanNonmoving<NoWeak<Move>, true> Scanner;
 			while (target.scanStep<Scanner>(*this, error)) {
 				dbg_assert(error == 0, L"TODO: We need to handle allocation errors while scanning!");
 			}

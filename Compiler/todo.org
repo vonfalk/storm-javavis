@@ -1,8 +1,10 @@
-* SMM bugs/improvements [7/11]
+* SMM bugs/improvements [7/12]
   - [ ] Investigate how often the history should be advanced. It seems to be wasteful to always increase it
     whenever we do some GC work since that happens quite often for the nursery generation. It would be more
     useful to tick the history whenever we have a gen-1 or larger collection, or whenever we have collected
     the nursery a certain number of time, or moved a certain amount of objects.
+  - [ ] Properly scan the type descriptions of weak objects in the ScanState weak queue. See TODO: comment
+    in Generation::collect.
   - [ ] Perhaps we should have some exponential back-off in the history, so that the resolution in time
     is fine-grained in recent history, but rougher towards the end.
   - [ ] We probably want a fenwich tree to provide quick range queries regarding write barriers (perhaps

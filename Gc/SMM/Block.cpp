@@ -8,15 +8,6 @@
 namespace storm {
 	namespace smm {
 
-		void Block::watchWrites() {
-			// We need to clear the 'updated' flag first. If we clear it afterwards, we will
-			// immediately activate it again since we write to ourselves.
-
-			TODO(L"Fixme!");
-			// atomicAnd(flags, ~fUpdated);
-			// inside->watchWrites(this);
-		}
-
 		void Block::fillSummary(MemorySummary &summary) {
 			summary.bookkeeping += sizeof(Block);
 
