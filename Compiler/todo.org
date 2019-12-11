@@ -1,19 +1,20 @@
-* SMM bugs/improvements [8/14]
+* SMM bugs/improvements [9/14]
   - [ ] Examine why the SMM Gc has much worse performance when running the main Storm binary compared
     to the test suite.
-  - [ ] Attempt to collect higher generations that are almost full before attempting to collect lower
-    generations. Otherwise, recently allocated objects may propagate all the way to the highest generation
-    instantly.
   - [ ] Investigate how often the history should be advanced. It seems to be wasteful to always increase it
     whenever we do some GC work since that happens quite often for the nursery generation. It would be more
     useful to tick the history whenever we have a gen-1 or larger collection, or whenever we have collected
-    the nursery a certain number of time, or moved a certain amount of objects.
+    the nursery a certain number of time, or moved a certain number of objects.
   - [ ] Perhaps we should have some exponential back-off in the history, so that the resolution in time
     is fine-grained in recent history, but rougher towards the end.
-  - [ ] We probably want a fenwich tree to provide quick range queries regarding write barriers (perhaps
-    other operations as well) in the VMAlloc system.
   - [ ] Perhaps we should move the pointer summaries from individual Blocks to Chunks, since we generally
     don't have better resolution than that from the VMAlloc class.
+  - [ ] We probably want a fenwick tree to provide quick range queries regarding write barriers (perhaps
+    other operations as well) in the VMAlloc system (Note: This is not critical at the moment, as generations
+    prefer to allocate 32K blocks, which is exactly the resolution of the VMAlloc system).
+  - [X] Attempt to collect higher generations that are almost full before attempting to collect lower
+    generations. Otherwise, recently allocated objects may propagate all the way to the highest generation
+    instantly.
   - [X] Properly scan the type descriptions of weak objects in the ScanState weak queue.
   - [X] Currently, we treat the header pointer of weak objects as a weak pointer. This is not correct,
     as the object would be unusable if the type was splatted.

@@ -17,7 +17,7 @@ namespace storm {
 
 		// TODO: Make the nursery generation size customizable.
 		Arena::Arena(size_t initialSize, const size_t *genSize, size_t generationCount)
-			: alloc(initialSize), entries(0) {
+			: alloc(initialSize), entries(0), rampAttempts(0) {
 
 			// Check assumptions of the formatting code.
 			fmt::init();
@@ -161,6 +161,29 @@ namespace storm {
 			swapLastGens();
 		}
 
+		// Collect the specified generation, but first see if there is enough free space in the
+		// following generations. Any generations in 'ignore' are assumed to have been collected
+		// already and are ignored.
+		// Doing this prevents objects from an early generation to be moved multiple steps through
+		// the generations during a single GC cycle, making it age unnecessarily quickly, which
+		// causes extra work for the GC in the long run.
+		static void collectRecursive(ArenaTicket &entry, Generation *gen, GenSet ignore) {
+			Generation *next = gen->next;
+			if (!next)
+				return;
+
+			if (gen->currentUsed() > next->currentGrace()) {
+				if (ignore.has(next->identifier))
+					return;
+
+				// The data from 'gen' might not fit. We need to collect the next one as well!
+				collectRecursive(entry, next, ignore);
+			}
+
+			// Now, we can collect this one.
+			gen->collect(entry);
+		}
+
 		GenSet Arena::collectI(ArenaTicket &entry, GenSet collect) {
 			size_t last = generations.size() - 1;
 
@@ -176,8 +199,9 @@ namespace storm {
 
 			for (size_t i = last; i > 0; i--) {
 				Generation *gen = generations[i - 1];
-				if (collect.has(gen->identifier))
-					gen->collect(entry);
+				if (collect.has(gen->identifier)) {
+					collectRecursive(entry, gen, collect);
+				}
 			}
 
 			if (swapLast)

@@ -45,6 +45,19 @@ namespace storm {
 			// The default size of newly allocated blocks in this generation.
 			size_t blockSize;
 
+			// Get the number of bytes currently allocated in this generation.
+			size_t currentAlloc() const { return totalAllocBytes; }
+
+			// Get the number of bytes used by objects etc. in this generation.
+			size_t currentUsed() const { return totalAllocBytes - totalFreeBytes; }
+
+			// Get the number of free bytes in this generation.
+			size_t currentFree() const { return totalFreeBytes; }
+
+			// Get the number of bytes we're able to allocate before overriding our allocation
+			// limit. Returns zero if the limit has already been broken.
+			size_t currentGrace() const { return totalSize - min(totalSize, totalAllocBytes) + totalFreeBytes; }
+
 			// Allocate a new block in this generation. When the block is full, it should be
 			// finished by calling 'done'. The size of the returned block has at least 'minSize'
 			// free memory. Allocations where 'minSize' is much larger than 'blockSize' may not be
