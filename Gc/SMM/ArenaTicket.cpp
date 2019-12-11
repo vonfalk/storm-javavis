@@ -36,7 +36,7 @@ namespace storm {
 		}
 
 
-		ArenaTicket::ArenaTicket(Arena &owner) : LockTicket(owner), gc(false), threads(false) {}
+		ArenaTicket::ArenaTicket(Arena &owner) : LockTicket(owner), gc(false), threads(false), objectsMoved(false) {}
 
 		ArenaTicket::~ArenaTicket() {
 			startThreads();
