@@ -80,7 +80,7 @@ class MainPainter extends Painter {
 void main() on Compiler {
 	named{progvis}.compile();
 
-	if (url = named{progvis:test3}.url) {
+	if (url = named{progvis:test2}.url) {
 		for (file in url.children) {
 			if (file.ext == "bs") {
 				MainWin win;

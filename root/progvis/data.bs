@@ -109,8 +109,6 @@ class Primitive extends Data {
 			text = Text(initial, dataFont);
 			type = type;
 		}
-
-		size = text.size + dataBorder*2;
 	}
 
 	void draw(Graphics g) : override {
@@ -119,8 +117,14 @@ class Primitive extends Data {
 	}
 
 	void update(Workspace work, unsafe:RawPtr object, Nat offset) : override {
-		if (s = convertPrimitive(type, object, offset))
+		if (s = convertPrimitive(type, object, offset)) {
 			text = Text(s, dataFont);
+			invalidateSize();
+		}
+	}
+
+	Size computeSize() {
+		text.size + dataBorder*2;
 	}
 }
 
@@ -138,16 +142,19 @@ class Pointer extends Data {
 
 	void draw(Graphics g) : override {
 		super:draw(g);
+		if (to) {
+		} else {
+			// Null.
+			Rect r = rect;
+			g.line(rect.p0, rect.p1, activeLink);
+		}
 	}
 
 	void drawLinks(Graphics g, Bool active) : override {
-		Brush color = if (active) { activeLink; } else { inactiveLink; };
-
-		Rect r = rect;
 		if (to) {
+			Brush color = if (active) { activeLink; } else { inactiveLink; };
+			Rect r = rect;
 			g.line(r.center, to.pos, color);
-		} else {
-			g.line(rect.p0, rect.p1, color);
 		}
 	}
 

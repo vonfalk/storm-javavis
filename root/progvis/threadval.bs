@@ -32,11 +32,11 @@ class ThreadVal extends Drawable {
 
 		Point offset = rect.p0 + compositeBorder;
 		Size minSize(0, rect.size.h - compositeBorder.h*3 - sourceSize.h);
-		for (id, frame in frames) {
+		for (frame in frames) {
 			Size sz = frame.size;
 			minSize.w = max(minSize.w, sz.w);
 
-			frame.draw(g, Rect(offset, minSize), id == frames.count - 1);
+			frame.pos = Rect(offset, minSize);
 
 			Float delta = frame.captionHeight + compositeBorder.h;
 			offset.x += stackOffset;
@@ -50,9 +50,11 @@ class ThreadVal extends Drawable {
 		source.draw(g, sourcePos);
 	}
 
-	// Draw all links.
+	// Draw all links and all stack contents to make it appear on top of everything else.
 	void drawLinks(Graphics g, Bool active) : override {
-		for (frame in frames) {
+		for (id, frame in frames) {
+			Bool active = id == frames.count - 1;
+			frame.draw(g, active);
 			frame.drawLinks(g, active);
 		}
 	}
@@ -111,6 +113,9 @@ class FrameVal on Render {
 	// The stack frame we represent.
 	StackFrame source;
 
+	// Position.
+	Rect pos;
+
 	init(StackFrame frame) {
 		init {
 			caption = Text(frame.function, captionFont);
@@ -147,7 +152,7 @@ class FrameVal on Render {
 	}
 
 	// Draw ourselves.
-	void draw(Graphics g, Rect pos, Bool active) {
+	void draw(Graphics g, Bool active) {
 		g.fill(pos, dataBg);
 		g.draw(pos, dataFg);
 
