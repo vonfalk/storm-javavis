@@ -8,15 +8,13 @@ use lang:bs:macro;
 /**
  * Main window.
  */
-window MainWin {
-	layout Window draw {}
-
+class MainWin extends Frame {
 	private MainPainter painter;
 
 	init() {
 		init("Progvis", Size(800, 800)) {}
 
-		draw.painter(painter);
+		painter(painter);
 		create();
 	}
 
@@ -24,10 +22,14 @@ window MainWin {
 		painter.open(file);
 	}
 
-	// Called when a thread has reached a new breakpoint.
-	private void updateData() {
-		// TODO: Update the model as well!
-		draw.repaint();
+	Bool onMouseMove(Point pt) : override {
+		painter.mouseMoved(pt);
+		true;
+	}
+
+	Bool onClick(Bool down, Point pt, MouseButton button) {
+		painter.mouseClicked(pt, down, button);
+		true;
 	}
 }
 
@@ -37,6 +39,18 @@ class MainPainter extends Painter {
 
 	// The program we're currently executing.
 	private Program? program;
+
+	// Left mouse button pressed?
+	private Bool mouseDown;
+
+	// Current drawable object in focus. Only useful when 'mousedown' is pressed.
+	private Drawable? mouseFocus;
+
+	// Location mouse was pressed at.
+	private Point mouseOffset;
+
+	// Offset for the workspace.
+	private Point offset;
 
 	init() {
 		init();
@@ -56,8 +70,8 @@ class MainPainter extends Painter {
 	}
 
 	Bool render(Size me, Graphics g) {
-		// TODO: Support navigation?
-		workspace.render(Rect(Point(), me), g);
+		g.transform(translate(-offset));
+		workspace.render(Rect(offset, me), g);
 		false;
 	}
 
@@ -74,6 +88,38 @@ class MainPainter extends Painter {
 		workspace.endTraversal();
 
 		repaint();
+	}
+
+	// Called when the mouse is moved.
+	void mouseMoved(Point pt) {
+		if (!mouseDown)
+			return;
+
+		pt += offset;
+
+		if (mouseFocus) {
+			// Call 'inFocus'
+		} else {
+			// Update our transform.
+			offset -= pt - mouseOffset;
+			repaint();
+		}
+	}
+
+	// Called when a mouse button is clicked.
+	void mouseClicked(Point pt, Bool down, MouseButton button) {
+		pt += offset;
+
+		if (button == MouseButton:left) {
+			if (down) {
+				mouseDown = true;
+				mouseOffset = pt;
+				mouseFocus = workspace.findAt(pt);
+			} else {
+				mouseDown = false;
+				mouseFocus = null;
+			}
+		}
 	}
 }
 

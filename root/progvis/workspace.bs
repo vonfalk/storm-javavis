@@ -15,7 +15,7 @@ class Workspace on Render {
 	void render(Rect viewport, Graphics g) {
 		// Do some basic layout for the active threads. We probably don't want to do this at some point.
 		Float space = 10;
-		Float x = space;
+		Float x = space + viewport.p0.x;
 
 		for (e in elements) {
 			if (e.thread) {
@@ -35,6 +35,20 @@ class Workspace on Render {
 			e.visual.drawLinks(g, i % 2 == 0);
 		}
 	}
+
+	// Find an object at the specified location.
+	Drawable? findAt(Point pt) {
+		for (Nat i = elements.count; i > 0; i--) {
+			Drawable d = elements[i-1].visual;
+			if (d.rect.contains(pt))
+				return d;
+		}
+		return null;
+	}
+
+	/**
+	 * Object traversal.
+	 */
 
 	// Notify the workspace that we will start traversing objects now.
 	void beginTraversal() {
