@@ -146,6 +146,11 @@ namespace gui {
 		virtual Bool STORM_FN onMouseVScroll(Point at, Int delta);
 		virtual Bool STORM_FN onMouseHScroll(Point at, Int delta);
 
+		// Mouse enter/mouse leave. Mouse enter always gets called, and is to return true if the
+		// 'leave' notification is required.
+		virtual void STORM_FN onMouseEnter();
+		virtual void STORM_FN onMouseLeave();
+
 		// Set window contents (custom drawing).
 		void STORM_ASSIGN painter(MAYBE(Painter *) to);
 
@@ -249,6 +254,8 @@ namespace gui {
 		gboolean onKeyDown(GdkEvent *event);
 		gboolean onButton(GdkEvent *event);
 		gboolean onMotion(GdkEvent *event);
+		gboolean onEnter(GdkEvent *event);
+		gboolean onLeave(GdkEvent *event);
 		gboolean onScroll(GdkEvent *event);
 		void onSize(GdkRectangle *alloc);
 		gboolean onDraw(cairo_t *ctx);

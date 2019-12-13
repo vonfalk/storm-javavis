@@ -27,6 +27,12 @@ class MainWin extends Frame {
 		true;
 	}
 
+	void onMouseEnter() : override {}
+
+	void onMouseLeave() : override {
+		painter.mouseLeave();
+	}
+
 	Bool onClick(Bool down, Point pt, MouseButton button) {
 		painter.mouseClicked(pt, down, button);
 		true;
@@ -116,10 +122,15 @@ class MainPainter extends Painter {
 				mouseOffset = pt;
 				mouseFocus = workspace.findAt(pt);
 			} else {
-				mouseDown = false;
-				mouseFocus = null;
+				mouseLeave();
 			}
 		}
+	}
+
+	// Called when the mouse leaves the window.
+	void mouseLeave() {
+		mouseDown = false;
+		mouseFocus = null;
 	}
 }
 

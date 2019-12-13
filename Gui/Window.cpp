@@ -125,6 +125,10 @@ namespace gui {
 		return false;
 	}
 
+	void Window::onMouseEnter() {}
+
+	void Window::onMouseLeave() {}
+
 	Bool Window::onMouseVScroll(Point at, Int delta) {
 		return false;
 	}
@@ -235,6 +239,7 @@ namespace gui {
 				return msgResult(0);
 			break;
 		case WM_MOUSEMOVE:
+			TODO(L"Implement onMouseLeave!");
 			if (onMouseMove(mousePos(msg)))
 				return msgResult(0);
 			break;
@@ -524,6 +529,8 @@ namespace gui {
 		Signal<gboolean, Window, GdkEvent *>::Connect<&Window::onButton>::to(widget, "button-press-event", engine());
 		Signal<gboolean, Window, GdkEvent *>::Connect<&Window::onButton>::to(widget, "button-release-event", engine());
 		Signal<gboolean, Window, GdkEvent *>::Connect<&Window::onMotion>::to(widget, "motion-notify-event", engine());
+		Signal<gboolean, Window, GdkEvent *>::Connect<&Window::onEnter>::to(drawWidget(), "enter-notify-event", engine());
+		Signal<gboolean, Window, GdkEvent *>::Connect<&Window::onLeave>::to(drawWidget(), "leave-notify-event", engine());
 		Signal<gboolean, Window, GdkEvent *>::Connect<&Window::onScroll>::to(widget, "scroll-event", engine());
 		Signal<void, Window, GdkRectangle *>::Connect<&Window::onSize>::to(widget, "size-allocate", engine());
 		Signal<void, Window>::Connect<&Window::onRealize>::to(drawWidget(), "realize", engine());
@@ -598,6 +605,20 @@ namespace gui {
 			return FALSE;
 
 		return onMouseMove(pt) ? TRUE : FALSE;
+	}
+
+	gboolean Window::onEnter(GdkEvent *) {
+		onMouseEnter();
+
+		// No propagation.
+		return TRUE;
+	}
+
+	gboolean Window::onLeave(GdkEvent *) {
+		onMouseLeave();
+
+		// No propagation.
+		return TRUE;
 	}
 
 	gboolean Window::onScroll(GdkEvent *event) {
@@ -824,7 +845,7 @@ namespace gui {
 		attrs.y = alloc.y;
 		attrs.width = alloc.width;
 		attrs.height = alloc.height;
-		attrs.event_mask = gtk_widget_get_events(drawTo) | GDK_EXPOSURE_MASK;
+		attrs.event_mask = gtk_widget_get_events(drawTo) | GDK_EXPOSURE_MASK | GDK_ENTER_NOTIFY_MASK | GDK_LEAVE_NOTIFY_MASK;
 		attrs.window_type = GDK_WINDOW_CHILD; // GDK_WINDOW_SUBSURFACE is nice on Wayland.
 		attrs.wclass = GDK_INPUT_OUTPUT;
 		// Probably good. We could use *_get_system_visual() instead.
