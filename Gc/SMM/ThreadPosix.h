@@ -5,6 +5,8 @@
 namespace storm {
 	namespace smm {
 
+		class ThreadInfo;
+
 		/**
 		 * Platform specific threading code for Posix.
 		 */
@@ -33,10 +35,10 @@ namespace storm {
 			void start();
 
 			// Get a thread identifier.
-			inline size_t id() const { assert(false, L"FIXME"); return 0; }
+			inline size_t id() const { return tid; }
 
 			// Get the current thread identifier.
-			static inline size_t currentId() const { assert(false, L"FIXME"); return 0; }
+			static inline size_t currentId() { return pthread_self(); }
 
 			// Scan the context of a paused thread. Also return the extend of the current stack (ie. the ESP).
 			template <class Scanner>
@@ -54,6 +56,9 @@ namespace storm {
 
 			// How many times have we tried to stop the thread?
 			size_t stopCount;
+
+			// Thread-local info.
+			ThreadInfo *info;
 		};
 
 	}

@@ -6,19 +6,56 @@
 #include "VMAlloc.h"
 #include "Block.h"
 #include <sys/mman.h>
+#include <signal.h>
 
+/**
+ * The generic implementation for all Posix systems.
+ *
+ * Note: We can't use userfaultfd on Linux at the moment, since it does not support handling
+ * notifications for write-protected pages, only missing pages.
+ */
 namespace storm {
 	namespace smm {
 
 		static const int protection = PROT_EXEC | PROT_READ | PROT_WRITE;
+		static const int protectionWp = PROT_EXEC | PROT_READ;
 		static const int flags = MAP_ANONYMOUS | MAP_PRIVATE;
 
-		VMPosix *VMPosix::create() {
-			size_t pageSize = sysconf(_SC_PAGESIZE);
-			return new VMPosix(pageSize);
+		static struct sigaction oldAction;
+
+		void VMPosix::sigsegv(int signal, siginfo_t *info, void *context) {
+			(void)signal;
+			(void)context;
+
+			// If we can do something about the error, we don't need to panic.
+			if (VM::notifyWrite(info->si_addr))
+				return;
+
+			// We don't know this memory. Trigger another signal to terminate us.
+			raise(SIGINT);
 		}
 
-		VMPosix::VMPosix(size_t pageSize) : VM(pageSize, pageSize) {}
+		void VMPosix::initNotify() {
+			// Insert the signal handler for SIGSEGV.
+			struct sigaction action;
+			action.sa_sigaction = &VMPosix::sigsegv;
+			action.sa_flags = SA_SIGINFO | SA_RESTART;
+			sigemptyset(&action.sa_mask);
+
+			sigaction(SIGSEGV, &action, &oldAction);
+		}
+
+		void VMPosix::destroyNotify() {
+			sigaction(SIGSEGV, &oldAction, NULL);
+		}
+
+
+		VMPosix *VMPosix::create(VMAlloc *alloc) {
+			size_t pageSize = sysconf(_SC_PAGESIZE);
+			return new VMPosix(alloc, pageSize);
+		}
+
+		VMPosix::VMPosix(VMAlloc *alloc, size_t pageSize) : VM(alloc, pageSize, pageSize) {}
 
 		void *VMPosix::reserve(void *at, size_t size) {
 			return mmap(at, size, PROT_NONE, flags, -1, 0);
@@ -39,13 +76,12 @@ namespace storm {
 			munmap(at, size);
 		}
 
-		void VMPosix::watchWrites(VMAlloc *alloc, void *at, size_t size) {
-			assert(false, L"watchWrites is not implemented yet!");
+		void VMPosix::watchWrites(void *at, size_t size) {
+			mprotect(at, size, protectionWp);
+		}
 
-			// In order for scanning to work properly, we mark the block as 'updated' immediately.
-			// Block *b = alloc->findBlock(at);
-			// if (b)
-			// 	b->flags |= Block::fUpdated;
+		void VMPosix::stopWatchWrites(void *at, size_t size) {
+			mprotect(at, size, protection);
 		}
 
 	}

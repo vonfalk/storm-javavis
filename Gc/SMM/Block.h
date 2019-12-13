@@ -109,6 +109,10 @@ namespace storm {
 				void *ptr = this;
 				return (byte *)ptr + sizeof(Block) + offset;
 			}
+			inline const void *mem(size_t offset) const {
+				const void *ptr = this;
+				return (const byte *)ptr + sizeof(Block) + offset;
+			}
 
 			// Get an AddrSet initialized to the range contained in the block.
 			template <class AddrSet>
@@ -169,7 +173,7 @@ namespace storm {
 
 				// Possibly quicker for large-ish blocks.
 				typedef GenScanner<Scanner> Scan;
-				Scan::Source s(ticket, source);
+				typename Scan::Source s(ticket, source);
 				typename Scanner::Result r = scan<Scan>(s);
 				summary = s.result;
 

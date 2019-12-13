@@ -3,6 +3,7 @@
 #if STORM_GC == STORM_GC_SMM && defined(POSIX)
 
 #include "VM.h"
+#include <signal.h>
 
 namespace storm {
 	namespace smm {
@@ -13,7 +14,11 @@ namespace storm {
 		class VMPosix : public VM {
 		public:
 			// Create.
-			static VMPosix *create();
+			static VMPosix *create(VMAlloc *alloc);
+
+			// Initialize/destroy write notification mechanisms.
+			static void initNotify();
+			static void destroyNotify();
 
 			// Reserve.
 			virtual void *reserve(void *at, size_t size);
@@ -28,10 +33,16 @@ namespace storm {
 			virtual void free(void *at, size_t size);
 
 			// Watch for writes.
-			virtual void watchWrites(VMAlloc *alloc, void *at, size_t size);
+			virtual void watchWrites(void *at, size_t size);
+
+			// Stop watching.
+			virtual void stopWatchWrites(void *at, size_t size);
 
 		private:
-			VMPosix(size_t pageSize);
+			VMPosix(VMAlloc *alloc, size_t pageSize);
+
+			// Handle segmentation faults.
+			static void sigsegv(int signal, siginfo_t *info, void *context);
 		};
 
 	}

@@ -550,7 +550,7 @@ namespace storm {
 				return r;
 
 			typedef IfPinned<Scanner> Pinned;
-			Pinned::Source s(pinned, source);
+			typename Pinned::Source s(pinned, source);
 
 			// Walk all blocks and scan the relevant ones.
 			Block *end = (Block *)chunk.memory.end();
@@ -574,7 +574,7 @@ namespace storm {
 			typename Scanner::Result r = typename Scanner::Result();
 
 			typedef IfPinned<Scanner> Pinned;
-			Pinned::Source s(pinned, source);
+			typename Pinned::Source s(pinned, source);
 
 			// Walk all blocks and scan the relevant ones.
 			Block *end = (Block *)chunk.memory.end();
