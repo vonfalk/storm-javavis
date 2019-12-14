@@ -34,6 +34,11 @@ void debugAssertFailed(const wchar_t *msg) {
 	debugAssertFailed();
 }
 
+void debugAssertFailed(const String &msg) {
+	PLN(msg);
+	debugAssertFailed();
+}
+
 #ifdef VISUAL_STUDIO
 
 void debugAssertFailed() {

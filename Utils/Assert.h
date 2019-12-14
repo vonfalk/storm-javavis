@@ -23,6 +23,7 @@
 
 void debugAssertFailed();
 void debugAssertFailed(const wchar_t *msg);
+void debugAssertFailed(const String &str);
 
 #include "Exception.h"
 
