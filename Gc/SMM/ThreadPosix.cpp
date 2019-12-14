@@ -4,40 +4,20 @@
 #if STORM_GC == STORM_GC_SMM && defined(POSIX)
 
 #include <signal.h>
-#include <ucontext.h>
 
 namespace storm {
 	namespace smm {
 
 		// Signals to use.
-		static int sigStop = SIGXCPU;
+		static const int sigStop = SIGXCPU;
 
 		// Number of threads currently active. If >= 0, we have inserted a global signal handler.
 		static size_t activeThreadCount = 0;
 
 		// Old signal handler.
-		static siginfo_t oldStopSig;
+		static struct sigaction oldStopSig;
 
-		// Per-thread information.
-		struct ThreadInfo {
-			// Number of references.
-			size_t refs;
-
-			// Pointer to the thread-local variable, so that we can clear it.
-			ThreadInfo **self;
-
-			// If stopped, pointer to the current context.
-			ucontext_t *context;
-
-			// Semaphore we wait on when we're stopped.
-			Semaphore onResume;
-
-			// Semaphore notified when the thread is actually stopped.
-			Semaphore onStop;
-
-			// Create.
-			ThreadInfo() : refs(0) {}
-		};
+		// Per-thread information. We reuse this between multiple instances of the GC.
 		static THREAD ThreadInfo *tlInfo = null;
 
 		// Handle signals.
@@ -80,20 +60,30 @@ namespace storm {
 
 			if (atomicDecrement(activeThreadCount) == 0) {
 				// We're last.
-				sigaction(sigStop, &oldStopSig);
+				sigaction(sigStop, &oldStopSig, NULL);
 			}
 		}
 
 		void OSThread::requestStop() {
-			assert(false, L"TODO");
+			if (stopCount++ == 0) {
+				pthread_kill(tid, sigStop);
+			}
+			stopQueries++;
 		}
 
 		void OSThread::ensureStop() {
-			assert(false, L"TODO");
+			assert(stopQueries > 0, L"ensureStop called without requestStop");
+			--stopQueries;
+
+			info->onStop.down();
 		}
 
 		void OSThread::start() {
-			// assert(false, L"TODO");
+			if (stopCount > 0) {
+				if (--stopCount == 0) {
+					info->onResume.up();
+				}
+			}
 		}
 
 	}

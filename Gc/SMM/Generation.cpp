@@ -210,7 +210,6 @@ namespace storm {
 			ScanState state(ticket, State(*this), next);
 
 			// Scanner to use when moving to the next generation.
-			typedef ScanNonmoving<ScanState::Move, true> GenScanner;
 			typedef ScanNonmoving<NoWeak<ScanState::Move>, true> GenNoWeakScanner;
 
 			// Scan the nonmoving objects first, then we can update the marks there at the same time!
@@ -636,7 +635,7 @@ namespace storm {
 
 					// Make sure we preserve any GcType objects present by extending the block
 					// boundaries slightly.
-					if ((byte *)at - (byte *)typeTo < sizeof(Block))
+					if (size_t((byte *)at - (byte *)typeTo) < sizeof(Block))
 						at = typeFrom;
 
 					current = compactFinishObj(current, at);
@@ -652,7 +651,7 @@ namespace storm {
 
 				// Update our knowledge about GcType objects.
 				if (!pin) {
-					bool isNear = (byte *)at - (byte *)typeTo < sizeof(Block);
+					bool isNear = size_t((byte *)at - (byte *)typeTo) < sizeof(Block);
 
 					if (isGcType(at)) {
 						fmt::objSetHeader(at, &fmt::headerGcTypeDead);

@@ -43,9 +43,10 @@ namespace storm {
 
 		void OSThread::start() {
 			if (stopCount > 0) {
-				--stopCount;
-				if (ResumeThread(handle) == (DWORD)-1) {
-					assert(false, L"ResumeThread failed!");
+				if (--stopCount == 0) {
+					if (ResumeThread(handle) == (DWORD)-1) {
+						assert(false, L"ResumeThread failed!");
+					}
 				}
 			}
 		}
