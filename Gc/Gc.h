@@ -21,6 +21,7 @@
 #include "Core/GcCode.h"
 
 // In case we're included from somewhere other than the Gc module.
+#include "License.h"
 #include "Format.h" // for fmt::wordAlign
 #include "SampleImpl.h"
 
@@ -33,6 +34,7 @@
 #include "Zero.h"
 #include "MPS/Impl.h"
 #include "SMM/Impl.h"
+#include "Debug.h"
 
 #ifndef STORM_HAS_GC
 // If this happens, an unselected GC has been selected in Core/Storm.h.

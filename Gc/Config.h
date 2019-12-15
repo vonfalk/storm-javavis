@@ -23,6 +23,7 @@
 #define STORM_GC_ZERO 0
 #define STORM_GC_MPS 1
 #define STORM_GC_SMM 2
+#define STORM_GC_DEBUG 3
 // ...
 
 #ifndef STORM_GC

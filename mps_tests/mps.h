@@ -7,6 +7,7 @@ extern "C" {
 #include "mps/code/mps.h"
 #include "mps/code/mpsavm.h"
 #include "mps/code/mpscamc.h"
+#include "mps/code/mpscams.h"
 #include "mps/code/mpsclo.h"
 
 #ifdef __cplusplus

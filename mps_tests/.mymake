@@ -1,3 +1,4 @@
 []
-input=slow_shutdown.cpp
+#input=slow_shutdown.cpp
+input=nonmoving.cpp
 pch=
