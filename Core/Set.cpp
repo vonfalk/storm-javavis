@@ -9,7 +9,7 @@
 
 namespace storm {
 
-	const nat SetBase::minCapacity;
+	const nat SetBase::minCapacity = 4;
 
 	const GcType SetBase::infoType = {
 		GcType::tArray,

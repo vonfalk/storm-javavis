@@ -106,6 +106,10 @@ static void genPtrOffsets(wostream &to, World &w) {
 }
 
 static bool isType(World &w, Type &t) {
+	// The Type-type is only avaliable if we're the compiler.
+	if (!config.compiler)
+		return false;
+
 	for (Class *now = as<Class>(&t); now; now = as<Class>(now->parentType))
 		if (now == w.types[0].borrow())
 			return true;

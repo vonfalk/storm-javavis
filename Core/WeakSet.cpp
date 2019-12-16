@@ -8,7 +8,7 @@
 
 namespace storm {
 
-	const nat WeakSetBase::minCapacity;
+	const nat WeakSetBase::minCapacity = 4;
 
 	const GcType WeakSetBase::infoType = {
 		GcType::tArray,
