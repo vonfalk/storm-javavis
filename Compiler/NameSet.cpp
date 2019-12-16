@@ -126,7 +126,8 @@ namespace storm {
 	void NameSet::lateInit() {
 		Named::lateInit();
 
-		overloads = new (this) Map<Str *, NameOverloads *>();
+		if (!overloads)
+			overloads = new (this) Map<Str *, NameOverloads *>();
 	}
 
 	void NameSet::compile() {
