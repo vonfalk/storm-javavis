@@ -568,7 +568,8 @@ namespace storm {
 			// Store types in the last generation, as they are very long-lived.
 			MPS_ARGS_ADD(args, MPS_KEY_GEN, ARRAY_COUNT(generationParams) - 1);
 			MPS_ARGS_ADD(args, MPS_KEY_FORMAT, format);
-			MPS_ARGS_ADD(args, MPS_KEY_AMS_SUPPORT_AMBIGUOUS, false);
+			// We want to support ambiguous references to this pool (eg. from the stack).
+			MPS_ARGS_ADD(args, MPS_KEY_AMS_SUPPORT_AMBIGUOUS, true);
 			check(mps_pool_create_k(&typePool, arena, mps_class_ams(), args), L"Failed to create a GC pool for types.");
 		} MPS_ARGS_END(args);
 
