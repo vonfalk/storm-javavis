@@ -9,7 +9,7 @@ use lang:bs:macro;
  */
 class Data extends Drawable {
 	// Draw this data item at its current location.
-	void draw(Graphics g) : abstract {
+	void draw(Graphics g, Bool active) : abstract {
 		Rect r = rect;
 		g.fill(r, dataBg);
 		g.draw(r, dataFg);
@@ -42,15 +42,15 @@ class DataWithCaption extends Data {
 		sz;
 	}
 
-	void draw(Graphics g) : override {
+	void draw(Graphics g, Bool active) : override {
 		Size cSz = captionSz;
 		cSz.w = max(cSz.w, wrap.size.w);
-		g.fill(Rect(pos, cSz), captionBg);
+		g.fill(Rect(pos, cSz), if (active) { captionActiveBg; } else { captionBg; });
 		g.draw(caption, captionFg, pos + compositeBorder);
 		g.draw(Rect(pos, cSz), captionFg);
 
 		wrap.pos = pos + Size(0, captionSz.h);
-		wrap.draw(g);
+		wrap.draw(g, active);
 	}
 
 	void drawLinks(Graphics g, Bool active) : override {
@@ -61,6 +61,34 @@ class DataWithCaption extends Data {
 		wrap.update(work, object, offset);
 	}
 
+	// Return the sub-drawable if the click is there.
+	Drawable findAt(Point pt) : override {
+		if (wrap.rect.contains(pt))
+			wrap;
+		else
+			this;
+	}
+
+	// Called when the mouse is pressed inside this drawable.
+	Bool mouseClicked(Point pt, Bool down) {
+		if (down) {
+			mouseOrigin = pt - pos;
+		} else {
+			mouseOrigin = null;
+		}
+		false;
+	}
+
+	// Called when the mouse is moved inside this drawable. "origin" is the location (in world space) where it was pressed.
+	Bool mouseMoved(Point pt, Point origin) {
+		if (mouseOrigin) {
+			pos = pt - mouseOrigin;
+			return true;
+		}
+
+		false;
+	}
+
 	// The drawable we're wrapping.
 	private Data wrap;
 
@@ -69,6 +97,9 @@ class DataWithCaption extends Data {
 
 	// Size of the caption area.
 	private Size captionSz;
+
+	// Origin of mouse when pressed.
+	private Point? mouseOrigin;
 }
 
 /**
@@ -85,8 +116,8 @@ class UnknownData extends Data {
 		size = text.size + dataBorder*2;
 	}
 
-	void draw(Graphics g) : override {
-		super:draw(g);
+	void draw(Graphics g, Bool active) : override {
+		super:draw(g, active);
 		g.draw(text, dataFg, pos + dataBorder);
 	}
 
@@ -111,8 +142,8 @@ class Primitive extends Data {
 		}
 	}
 
-	void draw(Graphics g) : override {
-		super:draw(g);
+	void draw(Graphics g, Bool active) : override {
+		super:draw(g, active);
 		g.draw(text, dataFg, pos + dataBorder);
 	}
 
@@ -140,8 +171,8 @@ class Pointer extends Data {
 		size = Text("????", dataFont).size + dataBorder*2;
 	}
 
-	void draw(Graphics g) : override {
-		super:draw(g);
+	void draw(Graphics g, Bool active) : override {
+		super:draw(g, active);
 		if (to) {
 		} else {
 			// Null.
@@ -198,8 +229,8 @@ class Composite extends Data {
 		invalidateSize();
 	}
 
-	void draw(Graphics g) : override {
-		super:draw(g);
+	void draw(Graphics g, Bool active) : override {
+		super:draw(g, active);
 		Float width = rect.size.w;
 		Point at = pos + compositeBorder;
 
@@ -216,7 +247,7 @@ class Composite extends Data {
 			g.draw(v.text, dataFg, at + Point(0, dataBorder.h));
 
 			v.value.pos = at + Point(namesWidth + dataWidth - dataSz.w, 0);
-			v.value.draw(g);
+			v.value.draw(g, active);
 
 			at.y += max(nameSz.h, dataSz.h) + dataBorder.h;
 		}

@@ -27,6 +27,7 @@ Brush inactiveLink on Render = SolidBrush(Color(0, 0, 0, 0.5));
 
 // Background color when drawing captions.
 Brush captionBg on Render = SolidBrush(white * 0.8);
+Brush captionActiveBg on Render = SolidBrush(white * 0.6 + blue);
 
 // Text color when drawing captions.
 Brush captionFg on Render = SolidBrush(black);

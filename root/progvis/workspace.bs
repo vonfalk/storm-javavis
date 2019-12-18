@@ -27,24 +27,47 @@ class Workspace on Render {
 			}
 
 			// TODO: Clipping?
-			e.visual.draw(g);
+			if (!e.topmost) {
+				e.visual.draw(g, active is e.visual);
+			}
 		}
 
 		// Draw pointers etc above all other elements.
 		for (i, e in elements) {
-			e.visual.drawLinks(g, i % 2 == 0);
+			var visual = e.visual;
+			if (!e.topmost) {
+				visual.drawLinks(g, active is visual);
+			} else {
+				visual.draw(g, active is visual);
+			}
+		}
+
+		// Topmost elements.
+		for (i, e in elements) {
+			if (e.topmost) {
+				var visual = e.visual;
+				visual.drawLinks(g, active is visual);
+			}
 		}
 	}
 
 	// Find an object at the specified location.
-	Drawable? findAt(Point pt) {
+	private Drawable? findAt(Point pt, Bool activate) {
 		for (Nat i = elements.count; i > 0; i--) {
 			Drawable d = elements[i-1].visual;
-			if (d.rect.contains(pt))
-				return d;
+			if (d.rect.contains(pt)) {
+				if (activate) {
+					active = d;
+				}
+				return d.findAt(pt);
+			}
 		}
+		active = null;
 		return null;
 	}
+	Drawable? findAt(Point pt) { findAt(pt, false); }
+	Drawable? findAtActivate(Point pt) { findAt(pt, true); }
+	void deactivate() { active = null; }
 
 	/**
 	 * Object traversal.
@@ -156,6 +179,9 @@ private:
 		// Is this a thread? (impacts layout etc.)
 		Bool thread;
 
+		// Always on top?
+		Bool topmost;
+
 		// Create, attach to an object.
 		init(unsafe:RawPtr object, Drawable visual) {
 			init {
@@ -163,6 +189,7 @@ private:
 				visual = visual;
 				visited = true;
 				autoRemove = true;
+				topmost = false;
 			}
 		}
 
@@ -174,6 +201,7 @@ private:
 				visited = true;
 				autoRemove = false;
 				thread = true;
+				topmost = true;
 			}
 		}
 
@@ -188,6 +216,9 @@ private:
 
 	// All elements in the workspace, in drawing order (back to front).
 	Element[] elements;
+
+	// Active drawable.
+	Drawable? active;
 
 	// Map of object pointers to the corresponding data elements. Only valid during an object traversal.
 	unsafe:RawPtr->Nat objMap;

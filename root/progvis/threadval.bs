@@ -26,7 +26,7 @@ class ThreadVal extends Drawable {
 	}
 
 	// Draw the thread.
-	void draw(Graphics g) : override {
+	void draw(Graphics g, Bool active) : override {
 		g.fill(rect, dataBg);
 		g.draw(rect, dataFg);
 
@@ -53,9 +53,9 @@ class ThreadVal extends Drawable {
 	// Draw all links and all stack contents to make it appear on top of everything else.
 	void drawLinks(Graphics g, Bool active) : override {
 		for (id, frame in frames) {
-			Bool active = id == frames.count - 1;
-			frame.draw(g, active);
-			frame.drawLinks(g, active);
+			Bool a = id == frames.count - 1;
+			frame.draw(g, a);
+			frame.drawLinks(g, a & active);
 		}
 	}
 
@@ -171,7 +171,7 @@ class FrameVal on Render {
 				g.draw(v.text, dataFg, at);
 			v.value.pos.x = pos.p1.x - dataSz.w - compositeBorder.w;
 			v.value.pos.y = at.y;
-			v.value.draw(g);
+			v.value.draw(g, active);
 
 			at.y += max(nameSz.h, dataSz.h) + dataBorder.h;
 		}

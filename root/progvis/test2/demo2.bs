@@ -27,5 +27,5 @@ N? makeList(Int depth) {
 }
 
 void main() {
-	var x = makeList(10);
+	var x = makeList(5);
 }

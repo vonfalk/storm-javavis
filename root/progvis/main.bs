@@ -104,7 +104,9 @@ class MainPainter extends Painter {
 		pt += offset;
 
 		if (mouseFocus) {
-			// Call 'inFocus'
+			// Call the drawable.
+			if (mouseFocus.mouseMoved(pt, mouseOffset))
+				repaint();
 		} else {
 			// Update our transform.
 			offset -= pt - mouseOffset;
@@ -120,8 +122,15 @@ class MainPainter extends Painter {
 			if (down) {
 				mouseDown = true;
 				mouseOffset = pt;
-				mouseFocus = workspace.findAt(pt);
+				mouseFocus = workspace.findAtActivate(pt);
+
+				if (mouseFocus) {
+					mouseFocus.mouseClicked(pt, down);
+				}
+
+				repaint();
 			} else {
+				mouseOffset = pt;
 				mouseLeave();
 			}
 		}
@@ -129,6 +138,12 @@ class MainPainter extends Painter {
 
 	// Called when the mouse leaves the window.
 	void mouseLeave() {
+		if (mouseFocus) {
+			// Tell it we released the cursor. We might want to differentiate between the two cases later on...
+			if (mouseFocus.mouseClicked(mouseOffset, false))
+				repaint();
+		}
+
 		mouseDown = false;
 		mouseFocus = null;
 	}

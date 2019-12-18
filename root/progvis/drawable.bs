@@ -33,7 +33,7 @@ class Drawable on Render {
 	}
 
 	// Draw.
-	void draw(Graphics g) : abstract;
+	void draw(Graphics g, Bool active) : abstract;
 
 	// Draw links.
 	void drawLinks(Graphics g, Bool active) : abstract;
@@ -54,6 +54,17 @@ class Drawable on Render {
 
 	// Override to compute the size.
 	protected Size computeSize() { Size(); }
+
+	// Find a sub-drawable, if applicable. 'pt' is relative to the world coordinates.
+	Drawable findAt(Point pt) {
+		this;
+	}
+
+	// Called when the mouse is pressed inside this drawable (return true for repaint).
+	Bool mouseClicked(Point pt, Bool down) { false; }
+
+	// Called when the mouse is moved inside this drawable. "origin" is the location (in world space) where it was pressed.
+	Bool mouseMoved(Point pt, Point origin) { false; }
 
 }
 
@@ -79,15 +90,15 @@ class WithCaption extends Drawable {
 		sz;
 	}
 
-	void draw(Graphics g) : override {
+	void draw(Graphics g, Bool active) : override {
 		Size cSz = captionSz;
 		cSz.w = max(cSz.w, wrap.size.w);
-		g.fill(Rect(pos, cSz), captionBg);
+		g.fill(Rect(pos, cSz), if (active) { captionActiveBg; } else { captionBg; });
 		g.draw(caption, captionFg, pos + compositeBorder);
 		g.draw(Rect(pos, cSz), captionFg);
 
 		wrap.pos = pos + Size(0, captionSz.h);
-		wrap.draw(g);
+		wrap.draw(g, active);
 	}
 
 	void drawLinks(Graphics g, Bool active) : override {
@@ -102,4 +113,12 @@ class WithCaption extends Drawable {
 
 	// Size of the caption area.
 	private Size captionSz;
+
+	// Return the sub-drawable if the click is there.
+	Drawable findAt(Point pt) : override {
+		if (wrap.rect.contains(pt))
+			wrap;
+		else
+			this;
+	}
 }
