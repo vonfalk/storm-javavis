@@ -247,7 +247,7 @@ class Composite extends Data {
 			g.draw(v.text, dataFg, at + Point(0, dataBorder.h));
 
 			v.value.pos = at + Point(namesWidth + dataWidth - dataSz.w, 0);
-			v.value.draw(g, active);
+			v.value.draw(g, false);
 
 			at.y += max(nameSz.h, dataSz.h) + dataBorder.h;
 		}
