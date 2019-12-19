@@ -132,6 +132,10 @@ namespace storm {
 		os::UThread::sleep(nat(d.inMs()));
 	}
 
+	void yield() {
+		os::UThread::leave();
+	}
+
 
 	/**
 	 * Timing.

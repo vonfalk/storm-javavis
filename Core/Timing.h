@@ -60,6 +60,9 @@ namespace storm {
 	// Sleep. Do not expect more than ms precision.
 	void STORM_FN sleep(Duration d);
 
+	// Yield.
+	void STORM_FN yield();
+
 	// Output.
 	wostream &operator <<(wostream &to, Moment m);
 	wostream &operator <<(wostream &to, Duration d);
