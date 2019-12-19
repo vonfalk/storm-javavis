@@ -1,0 +1,127 @@
+use ui;
+use graphics;
+use core:geometry;
+
+/**
+ * A simple button. Given a path to draw as a decoration.
+ */
+class Button extends Drawable {
+	private Path path;
+	private Brush fill;
+	private Bool pressed;
+	private Maybe<fn()->void> click;
+
+	init(Path path, Brush fill, Size size) {
+		init() {
+			path = path;
+			fill = fill;
+		}
+
+		this.size(size);
+	}
+
+	assign onClick(fn()->void f) {
+		click = f;
+	}
+
+	void draw(Graphics g, Bool active) : override {
+		Rect r = rect;
+		g.fill(r, if (pressed) { buttonMarked; } else { buttonBg; });
+		g.draw(r, dataFg);
+
+		Rect decoration = path.bound;
+		g.push();
+		g.transform(translate(r.p0 + (r.size - decoration.size) / 2));
+		g.fill(path, fill);
+		g.pop();
+	}
+
+	void drawLinks(Graphics g, Bool active) : override {}
+
+	Bool mouseClicked(Point pt, Bool down) : override {
+		if (down) {
+			pressed = true;
+		} else {
+			if (pressed) {
+				if (click)
+					click.call();
+			}
+			pressed = false;
+		}
+		true;
+	}
+}
+
+// Create a path for a run button.
+Path runDecoration() {
+	Path p;
+	p.start(Point(0, 0));
+	p.line(Point(16, 10));
+	p.line(Point(0, 20));
+	p.close();
+	p;
+}
+
+// Create a path for a "run fast" button.
+Path runFastDecoration() {
+	Path p;
+	p.start(Point(0, 0));
+	p.line(Point(10, 10));
+	p.line(Point(0, 20));
+	p.close();
+
+	p.start(Point(10, 0));
+	p.line(Point(20, 10));
+	p.line(Point(10, 20));
+	p.close();
+	p;
+}
+
+// Create a path for a "run fast" button.
+Path runVeryFastDecoration() {
+	Path p;
+	p.start(Point(0, 0));
+	p.line(Point(6.3, 10));
+	p.line(Point(0, 20));
+	p.close();
+
+	p.start(Point(6.3, 0));
+	p.line(Point(12.6, 10));
+	p.line(Point(6.3, 20));
+	p.close();
+
+	p.start(Point(12.6, 0));
+	p.line(Point(20, 10));
+	p.line(Point(12.6, 20));
+	p.close();
+	p;
+}
+
+// Create a path for a step button.
+Path stepDecoration() {
+	Path p = runDecoration();
+	p.start(Point(16, 0));
+	p.line(Point(20, 0));
+	p.line(Point(20, 20));
+	p.line(Point(16, 20));
+	p.close();
+	p;
+}
+
+// Pause decoration.
+Path pauseDecoration() {
+	Path p;
+	p.start(Point(0, 0));
+	p.line(Point(5, 0));
+	p.line(Point(5, 20));
+	p.line(Point(0, 20));
+	p.close();
+
+	p.start(Point(10, 0));
+	p.line(Point(15, 0));
+	p.line(Point(15, 20));
+	p.line(Point(10, 20));
+	p.close();
+
+	p;
+}

@@ -17,21 +17,45 @@ class ThreadData extends Drawable {
 	// Source code view.
 	SourceView source;
 
+	// Buttons.
+	Button step;
+	Button pause;
+	Button runSlow;
+	Button runFast;
+	Button runVeryFast;
+
+	// Buttons. Duplicates of the variables for easier layout.
+	Button[] buttons;
+
 	// Create.
 	init(ProgThread thread) {
 		init {
 			thread = thread;
 			source(thread.owner);
+			step(stepDecoration, SolidBrush(yellow*0.5 + red), buttonSize);
+			pause(pauseDecoration, SolidBrush(black), buttonSize);
+			runSlow(runDecoration, SolidBrush(green), buttonSize);
+			runFast(runFastDecoration, SolidBrush(green), buttonSize);
+			runVeryFast(runVeryFastDecoration, SolidBrush(green), buttonSize);
 		}
+
+		step.onClick = &this.onStep;
+		pause.onClick = &this.onPause;
+		runSlow.onClick = &this.onRunSlow;
+		runFast.onClick = &this.onRunFast;
+		runVeryFast.onClick = &this.onRunVeryFast;
+
+		buttons = [step, pause, runSlow, runFast, runVeryFast];
 	}
 
 	// Draw the thread.
 	void draw(Graphics g, Bool active) : override {
+		Rect rect = this.rect;
 		g.fill(rect, dataBg);
 		g.draw(rect, dataFg);
 
 		Point offset = rect.p0 + compositeBorder;
-		Size minSize(0, rect.size.h - compositeBorder.h*3 - sourceSize.h);
+		Size minSize(0, rect.size.h - compositeBorder.h*4 - sourceSize.h - buttonSize.h);
 		for (frame in frames) {
 			Size sz = frame.size;
 			minSize.w = max(minSize.w, sz.w);
@@ -45,9 +69,17 @@ class ThreadData extends Drawable {
 		}
 
 		Rect sourcePos(rect.p0, rect.p1 - compositeBorder);
+		sourcePos.p1.y -= compositeBorder.h + buttonSize.h;
 		sourcePos.p0.x = rect.p0.x + compositeBorder.w;
 		sourcePos.p0.y = sourcePos.p1.y - sourceSize.h;
 		source.draw(g, sourcePos);
+
+		Point p(sourcePos.p0.x, sourcePos.p1.y + compositeBorder.h);
+		for (b in buttons) {
+			b.pos = p;
+			b.draw(g, false);
+			p.x += buttonSize.w + compositeBorder.w;
+		}
 	}
 
 	// Draw all links and all stack contents to make it appear on top of everything else.
@@ -98,7 +130,37 @@ class ThreadData extends Drawable {
 		w = max(sourceSize.w, w);
 		h += compositeBorder.h + sourceSize.h;
 
+		h += compositeBorder.h + buttonSize.h;
+
 		Size(w, h) + compositeBorder*2;
+	}
+
+	Drawable findAt(Point pt) : override {
+		for (b in buttons) {
+			if (b.rect.contains(pt))
+				return b;
+		}
+		this;
+	}
+
+	private void onStep() {
+		thread.resume();
+	}
+
+	private void onPause() {
+		thread.pause();
+	}
+
+	private void onRunSlow() {
+		thread.resume(1 s);
+	}
+
+	private void onRunFast() {
+		thread.resume(500 ms);
+	}
+
+	private void onRunVeryFast() {
+		thread.resume(100 ms);
 	}
 }
 

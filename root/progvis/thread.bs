@@ -7,9 +7,12 @@ use core:lang;
  */
 class ProgThread on Render {
 	// Semaphore used to pause the monitored thread.
-	Sema sema;
+	private Sema sema;
 
-	// Current location. Set to null if the thread is currently running.
+	// Duration for automatic stepping. If zero, we will wait for user input instead.
+	private Duration autoStep;
+
+	// Current location, if known.
 	SrcPos? pos;
 
 	// Current call depth. There may be additional entries in 'frames', as we might have exited a
@@ -25,12 +28,19 @@ class ProgThread on Render {
 	// Owning Program object, so we can access the callback.
 	Program owner;
 
+	// Currently running? This is 'true' even if the thread is currently waiting in an animation.
+	Bool running;
+
+	// Terminate the thread at the next opportunity to do so.
+	private Bool doTerminate;
+
 	// Create.
 	init(Program owner) {
 		init() {
 			sema(0);
 			callDepth = 0;
 			owner = owner;
+			running = true;
 		}
 	}
 
@@ -38,13 +48,9 @@ class ProgThread on Render {
 	void onNewLocation(SrcPos pos, StackVar[] vars) {
 		popFrames();
 
-		// TODO: Decide if we should break.
-		// print("Thread reached ${pos}");
 		this.frames.last.variables = vars;
 		this.pos = pos;
-		owner.notifyChange();
-		// sema.down();
-		sleep(100 ms);
+		wait();
 	}
 
 	// Called when a new function was entered.
@@ -55,9 +61,7 @@ class ProgThread on Render {
 		callDepth++;
 		frames.push(StackFrame(name, vars));
 
-		owner.notifyChange();
-		// sema.down();
-		sleep(100 ms);
+		wait();
 	}
 
 	// Called when a function is about to return.
@@ -67,29 +71,64 @@ class ProgThread on Render {
 			callDepth--;
 	}
 
-	// Resume the thread if it is not stopped.
-	Bool resume() {
-		if (pos) {
-			this.pos = null;
+	// Set the animation delay. Resumes the thread if it was stopped.
+	void resume(Duration duration) {
+		autoStep = duration;
+
+		if (!running)
 			sema.up();
-			true;
-		} else {
-			false;
-		}
 	}
 
-	// Check if the thread is currently running.
-	Bool running() {
-		if (pos)
-			true;
-		else
-			false;
+	// Resume execution, stopping at the next location.
+	void resume() {
+		if (running)
+			return;
+
+		autoStep = Duration();
+		sema.up();
+	}
+
+	// Pause the thread at the nearest convenient location.
+	void pause() {
+		autoStep = Duration();
+	}
+
+	// Terminate the thread.
+	void terminate() {
+		doTerminate = true;
+		autoStep = Duration();
+		sema.up();
+		// Once more, just to be safe...
+		sema.up();
 	}
 
 	// Decrease the stack frames until the proper depth is reached.
 	private void popFrames() {
 		while (frames.count > callDepth)
 			frames.pop();
+	}
+
+	// Determine whether or not we shall wait.
+	private void wait() {
+		owner.notifyChange();
+		if (autoStep == Duration()) {
+			running = false;
+			sema.down();
+		} else {
+			sleep(autoStep);
+
+			// If paused during sleep, keep waiting.
+			if (autoStep == Duration()) {
+				running = false;
+				sema.down();
+			}
+		}
+		running = true;
+
+		if (doTerminate) {
+			// TODO: Other exception...
+			throwSyntaxError(SrcPos(), "Time to terminate");
+		}
 	}
 }
 

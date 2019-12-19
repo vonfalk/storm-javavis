@@ -79,6 +79,18 @@ class Program on Render {
 			return null;
 	}
 
+	// Terminate any threads running in the program, and wait for them to exit properly.
+	void terminate() {
+		for (t in threads) {
+			t.terminate();
+		}
+
+		// Wait for them to terminate...
+		while (threads.count > 0) {
+			yield();
+		}
+	}
+
 	// This function will be called by the executed code to notify us of their current state in
 	// their execution. This also lets us execute them at any location.
 	package void newLocation(Url file, Nat from, Nat to, StackVar[] vars) {

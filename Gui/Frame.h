@@ -7,7 +7,7 @@ namespace gui {
 	/**
 	 * A frame is a window with a border, present on the desktop. Creating the Frame does not make it visible.
 	 *
-	 * The frame has a little special life time management. The frame will keep itself alive until it is closed.
+	 * The frame has a somewhat special life time management. The frame will keep itself alive until it is closed.
 	 */
 	class Frame : public Container {
 		STORM_CLASS;

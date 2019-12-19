@@ -117,7 +117,7 @@ class WithCaption extends Drawable {
 	// Return the sub-drawable if the click is there.
 	Drawable findAt(Point pt) : override {
 		if (wrap.rect.contains(pt))
-			wrap;
+			wrap.findAt(pt);
 		else
 			this;
 	}

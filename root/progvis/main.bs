@@ -22,6 +22,12 @@ class MainWin extends Frame {
 		painter.open(file);
 	}
 
+	// Called when the frame is closed.
+	void close() : override {
+		painter.cleanup();
+		super:close();
+	}
+
 	Bool onMouseMove(Point pt) : override {
 		painter.mouseMoved(pt);
 		true;
@@ -73,6 +79,12 @@ class MainPainter extends Painter {
 		} else {
 			print("Failed to load ${file}!");
 		}
+	}
+
+	// Clean up the running program (i.e. make sure all threads are terminated).
+	void cleanup() {
+		if (program)
+			program.terminate();
 	}
 
 	Bool render(Size me, Graphics g) {
@@ -152,14 +164,9 @@ class MainPainter extends Painter {
 void main() on Compiler {
 	named{progvis}.compile();
 
-	if (url = named{progvis:test2}.url) {
-		for (file in url.children) {
-			if (file.ext == "bs") {
-				MainWin win;
-				win.open(file);
-				win.waitForClose();
-				return;
-			}
-		}
+	if (url = named{progvis_demo}.url) {
+		MainWin win;
+		win.open(url / "demo2.bs");
+		win.waitForClose();
 	}
 }
