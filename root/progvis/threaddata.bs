@@ -7,7 +7,7 @@ use lang:bs:macro;
 /**
  * Class representing the visual state of a thread.
  */
-class ThreadVal extends Drawable {
+class ThreadData extends Drawable {
 	// Thread that contains the source data.
 	ProgThread thread;
 
