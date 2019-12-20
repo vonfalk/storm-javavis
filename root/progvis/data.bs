@@ -315,3 +315,84 @@ private:
 		Size(namesWidth + dataWidth, height) + compositeBorder*2;
 	}
 }
+
+/**
+ * A class describing an array.
+ */
+class ArrayData extends Data {
+	init(core:lang:Type type) {
+		init() {
+			type = type;
+			typeSize = type.size.current;
+		}
+	}
+
+	void draw(Graphics g, Bool active) : override {
+		super:draw(g, active);
+		Float width = rect.size.w;
+		Point at = pos + compositeBorder;
+
+		for (v in content) {
+			var nameSz = v.text.size;
+			var dataSz = v.value.size;
+
+			// Align the text a bit nicer on the y-axis, to line up the baselines...
+			g.draw(v.text, dataFg, at + Point(0, dataBorder.h));
+
+			v.value.pos = at + Point(namesWidth + dataWidth - dataSz.w, 0);
+			v.value.draw(g, false);
+
+			at.y += max(nameSz.h, dataSz.h) + dataBorder.h;
+		}
+	}
+
+	void drawLinks(Graphics g, Bool active) : override {
+		for (v in content) {
+			v.value.drawLinks(g, active);
+		}
+	}
+
+	void update(Workspace work, unsafe:RawPtr object, Nat offset) : override {
+		// TODO: Extract the actual size!
+		unsafe:RawPtr data = object.readPtr(object.readSize - core:asm:sPtr.current);
+		print("Count ${data.readSize}");
+	}
+
+private:
+	core:lang:Type type;
+	Nat typeSize;
+
+	class Var on Render {
+		Text text;
+		Data value;
+
+		init(Nat id, Data value) {
+			init() {
+				text = Text(id.toS, dataFont);
+				value = value;
+			}
+		}
+	}
+
+	Var[] content;
+	Float namesWidth;
+	Float dataWidth;
+	Float height;
+
+	Size computeSize() : override {
+		namesWidth = 0;
+		dataWidth = 0;
+		height = 0;
+		for (v in content) {
+			var nameSz = v.text.size;
+			var dataSz = v.value.size;
+
+			namesWidth = max(namesWidth, nameSz.w + dataBorder.w);
+			dataWidth = max(dataWidth, dataSz.w);
+			height += max(nameSz.h, dataSz.h) + dataBorder.h;
+		}
+
+		height -= dataBorder.h;
+		Size(namesWidth + dataWidth, height) + compositeBorder*2;
+	}
+}

@@ -112,6 +112,11 @@ namespace storm {
 		}
 	}
 
+	Nat CODECALL rawPtrSize(const void *ptr) {
+		const GcType *t = runtime::gcTypeOf(ptr);
+		return t->stride;
+	}
+
 
 	template <Size T()>
 	void rawPtrRead(InlineParams p) {
@@ -175,6 +180,7 @@ namespace storm {
 		add(nativeFunction(e, Value(StormInfo<Double>::type(e)), S("readDouble"), vo, address(&rawPtrRead<Double>)));
 		add(nativeFunction(e, me, S("readPtr"), vo, address(&rawPtrRead<void *>)));
 		add(nativeFunction(e, Value(StormInfo<Nat>::type(e)), S("readCount"), v, address(&rawPtrCount)));
+		add(nativeFunction(e, Value(StormInfo<Nat>::type(e)), S("readSize"), v, address(&rawPtrSize)));
 
 		// Create from pointers:
 		Value obj(StormInfo<Object>::type(e));

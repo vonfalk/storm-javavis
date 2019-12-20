@@ -166,7 +166,8 @@ void main() on Compiler {
 
 	if (url = named{progvis_demo}.url) {
 		MainWin win;
-		win.open(url / "demo2.bs");
+		// win.open(url / "demo2.bs");
+		win.open(url / "array.bs");
 		win.waitForClose();
 	}
 }

@@ -272,6 +272,10 @@ private:
 
 	// Create a new node for a composite object.
 	Data createComposite(core:lang:Type type, unsafe:RawPtr object, Nat offset) {
+		if (type as core:lang:ArrayType) {
+			return createArray(type, object, offset);
+		}
+
 		var members = findMembers(type);
 		if (members.empty)
 			return UnknownData();
@@ -283,5 +287,14 @@ private:
 		}
 
 		DataWithCaption(result, type.name);
+	}
+
+	// Create a new node for an array.
+	Data createArray(core:lang:ArrayType type, unsafe:RawPtr object, Nat offset) {
+		if (t = type.param.type) {
+			DataWithCaption(ArrayData(t), t.name);
+		} else {
+			UnknownData();
+		}
 	}
 }
