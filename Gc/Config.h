@@ -26,4 +26,4 @@
 // ...
 
 // Select the GC to use.
-#define STORM_GC STORM_GC_SMM
+#define STORM_GC STORM_GC_MPS
