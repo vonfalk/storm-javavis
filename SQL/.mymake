@@ -1,0 +1,10 @@
+[]
+package=sql
+input=*
+stormUsingNamespace=storm
+
+noIncludes+=*/sqlite3.c
+
+[unix]
+cflags+=-Wno-cast-function-type
+cflags+=-Wno-implicit-fallthrough

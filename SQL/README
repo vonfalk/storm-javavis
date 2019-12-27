@@ -1,0 +1,68 @@
+SQLite in Storm:
+
+SQLite exists as a subclass of SQL, which is a general class for the purpose of expanding more database languages into storm.
+
+An SQLite connection can be established in memory or in a file using the following syntax:
+ * SQLite db();
+ * SQLite db(cwdUrl/"chinook.db");
+
+An SQLite_Statement of the before mentioned connection can be created using the following syntax:
+ * SQLite_Statement playlist = db.prepare(*valid SQLite statement* ex: "SELECT * FROM playlists");
+
+The SQLite_Statement can be executed with the following syntax:
+ * playlist.execute();
+
+An error massage may be looked at after performing an execute with the following syntax:
+ * playlist.errMsg();
+
+If execute is successful, the statement may be iterated and appropriate get may be used to extract
+information in the columns:
+ * for (row in playlist)
+            print("id: " + row.getInt(0).toS + ", name: " + row.getStr(1));
+
+The last row id can be identified using the follow syntax:
+ * Long id = db.lastRowId();
+ * Long id = playlist.lastRowId();
+
+Our SQLite implementation also supports bind of different types to counter injections, syntax:
+ * Int int_bind = 16;
+   Statement stmt_int = db.prepare("SELECT * FROM playlists WHERE Playlistid = ?");
+   stmt_int.bind(1, int_bind);
+
+It is possible to display all tables in an SQLite connection with the following syntax:
+ * for (table in db.tables)
+       print(table);
+
+Schema of a connection may be looked at with the following syntax:
+ * var s = db.schema("tracks");
+
+   print("Table name: " + s.getTable());
+   for (Int i = 0; i < s.size(); ++i) {
+       var cont = s.getRow(i);
+       var a = cont.getAttr();
+       Str s ="";
+       for (var it = a.begin(); it != a.end(); it++) {
+       	   s = s + " " + it.v;
+        }
+       print(cont.getName() + " " + cont.getDt() + s);
+    }
+
+
+An issue with these are that you have to handle strings as well as having to go through
+many steps manually. Wouldn't it be nice to just have to write queries directly in built in language?
+
+After having created an SQLite connection the following queries may be written directly in the language:
+ * [] = optional
+ * var result = SELECT Playlistid, Name FROM playlists [WHERE playlistid = 2] DB db;
+ * CREATE TABLE [IF NOT EXISTS] newTable( int INTEGER, double REAL, string TEXT) DB db;
+ * INSERT INTO newTable[(int, double, charPtr)] VALUES(1, 2.0, "three") DB db;
+ * UPDATE newTable SET charPtr = "four" WHERE int = 1 DB db;
+ * DELETE FROM newTable WHERE charPtr = "four" DB db;
+
+Bind is also supported in these direct queries where they are supported in actual SQLite:
+ * Str testString = "Movies";
+   Int testId = 2;
+   var result = SELECT Playlistid, Name FROM playlists WHERE Playlistid = testId OR Name = testString DB db;
+
+
+
