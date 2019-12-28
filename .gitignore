@@ -72,3 +72,5 @@ External/
 root/doc
 *_doc
 
+# Database files (sqlite)
+*.db
