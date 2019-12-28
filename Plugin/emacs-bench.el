@@ -6,7 +6,7 @@
 (global-set-key (kbd "C-c C-c b") 'storm-run-benchmark-file)
 
 ;; Test root directory.
-(defvar benchmark-root-dir "test/server-tests/simple/" "Benchmarks root directory, relative to 'storm-mode-root'.")
+(defvar benchmark-root-dir "tests/server-tests/simple/" "Benchmarks root directory, relative to 'storm-mode-root'.")
 (defvar bench-batch-run nil "Run in batch mode, producing either 'error or 'time data.")
 (defvar bench-use-emacs nil "Use Emacs built-in Java mode.")
 (defvar bench-incr-buffer "bench-incr.result" "Name of the buffer holding incremental results.")

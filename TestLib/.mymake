@@ -1,4 +1,4 @@
 []
-package=test/shared
+package=tests/shared
 input=*
 stormUsingNamespace=storm

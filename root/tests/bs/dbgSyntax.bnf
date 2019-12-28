@@ -1,4 +1,4 @@
-extend test.bnf;
+extend tests.bnf;
 
 // Syntax for debugging...
 use lang.bs;

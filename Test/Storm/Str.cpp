@@ -3,17 +3,17 @@
 #include "Compiler/Exception.h"
 
 BEGIN_TEST(StrConcatTest, BS) {
-	CHECK_EQ(::toS(runFn<Str *>(S("test.bs.strConcatTest"))), L"ab1cvoid");
-	CHECK_ERROR(runFn<Str *>(S("test.bs.strConcatError")), SyntaxError);
+	CHECK_EQ(::toS(runFn<Str *>(S("tests.bs.strConcatTest"))), L"ab1cvoid");
+	CHECK_ERROR(runFn<Str *>(S("tests.bs.strConcatError")), SyntaxError);
 
-	CHECK_EQ(::toS(runFn<Str *>(S("test.bs.strInterpolate"))), L"|30|   20|20   |   20|+++30|00000028|");
+	CHECK_EQ(::toS(runFn<Str *>(S("tests.bs.strInterpolate"))), L"|30|   20|20   |   20|+++30|00000028|");
 
 	// Note: We probably want to use 2 digits after the "e" always. But for this, we need to provide
 	// our own implementation...
 #if defined(VISUAL_STUDIO) && VISUAL_STUDIO < 2013
-	CHECK_EQ(::toS(runFn<Str *>(S("test.bs.strInterpolateFloat"))), L"|2.3|1e+003|2.35|1000.20|2.35e+000|1.00e+003|2.3456|1000.2|");
+	CHECK_EQ(::toS(runFn<Str *>(S("tests.bs.strInterpolateFloat"))), L"|2.3|1e+003|2.35|1000.20|2.35e+000|1.00e+003|2.3456|1000.2|");
 #else
-	CHECK_EQ(::toS(runFn<Str *>(S("test.bs.strInterpolateFloat"))), L"|2.3|1e+03|2.35|1000.20|2.35e+00|1.00e+03|2.3456|1000.2|");
+	CHECK_EQ(::toS(runFn<Str *>(S("tests.bs.strInterpolateFloat"))), L"|2.3|1e+03|2.35|1000.20|2.35e+00|1.00e+03|2.3456|1000.2|");
 #endif
 } END_TEST
 
@@ -73,13 +73,13 @@ BEGIN_TEST(StrIteratorTest, BS) {
 	CHECK_EQ(at, ARRAY_COUNT(codepoints));
 
 
-	CHECK_EQ(runFn<Int>(S("test.bs.iterateStr"), v), ARRAY_COUNT(codepoints));
+	CHECK_EQ(runFn<Int>(S("tests.bs.iterateStr"), v), ARRAY_COUNT(codepoints));
 
 	Array<Char> *ref = new (e) Array<Char>();
 	for (nat i = 0; i < ARRAY_COUNT(codepoints); i++) {
 		ref->push(Char(codepoints[i]));
 	}
 
-	CHECK_EQ(runFn<Int>(S("test.bs.verifyStr"), v, ref), 1);
+	CHECK_EQ(runFn<Int>(S("tests.bs.verifyStr"), v, ref), 1);
 
 } END_TEST

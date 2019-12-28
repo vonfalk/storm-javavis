@@ -14,7 +14,7 @@ using syntax::Parser;
 using namespace storm::syntax;
 
 static void parse(const wchar_t *root, const wchar_t *parse, Nat backend) {
-	Package *pkg = gEngine().package(S("test.syntax"));
+	Package *pkg = gEngine().package(S("tests.syntax"));
 #ifdef WINDOWS
 	Parser *p = Parser::create(pkg, root, createBackend(gEngine(), backend));
 #else
@@ -32,7 +32,7 @@ static void parse(const wchar_t *root, const wchar_t *parse, Nat backend) {
 }
 
 static bool parseC(const wchar_t *root, const wchar_t *parse, Nat backend) {
-	Package *pkg = gEngine().package(S("test.syntax.context"));
+	Package *pkg = gEngine().package(S("tests.syntax.context"));
 #ifdef WINDOWS
 	Parser *p = Parser::create(pkg, root, createBackend(gEngine(), backend));
 #else
@@ -72,13 +72,13 @@ static String parseStr(const wchar_t *package, const wchar_t *root, const wchar_
 }
 
 static String parseStr(const wchar_t *root, const wchar_t *parse, Nat backend) {
-	return parseStr(L"test.syntax", root, parse, backend);
+	return parseStr(L"tests.syntax", root, parse, backend);
 }
 
 BEGIN_TEST(ParserTest, Storm) {
 	Engine &e = gEngine();
 
-	Package *pkg = as<Package>(e.scope().find(parseSimpleName(e, S("test.grammar"))));
+	Package *pkg = as<Package>(e.scope().find(parseSimpleName(e, S("tests.grammar"))));
 	VERIFY(pkg);
 
 	for (Nat id = 0; id < backendCount(); id++) {
@@ -148,7 +148,7 @@ BEGIN_TEST(ParserExt, BS) {
 	// Extensible syntax in the parser.
 	Engine &e = gEngine();
 
-	Package *pkg = as<Package>(e.scope().find(parseSimpleName(e, S("test.syntax"))));
+	Package *pkg = as<Package>(e.scope().find(parseSimpleName(e, S("tests.syntax"))));
 	VERIFY(pkg);
 
 	Parser *p = Parser::create(pkg, S("SCommaList"));
@@ -212,27 +212,27 @@ BEGIN_TEST(ParseOrderTest, BS) {
 BEGIN_TEST(SyntaxTest, BS) {
 	Engine &e = gEngine();
 
-	CHECK_RUNS(runFn<void>(S("test.syntax.testSimple")));
-	CHECK(runFn<Bool>(S("test.syntax.testSentence")));
-	CHECK_EQ(toS(runFn<Str *>(S("test.syntax.testManualTfm"), new (e) Str(S("dogs sleep")))), L"Plural dog");
-	CHECK_EQ(toS(runFn<Str *>(S("test.syntax.testManualTfm"), new (e) Str(S("the dog sleeps")))), L"Singular dog");
-	CHECK_EQ(toS(runFn<Str *>(S("test.syntax.testManualTfm"), new (e) Str(S("do dogs sleep?")))), L"Question dog");
-	CHECK(runFn<Bool>(S("test.syntax.testMaybe")));
-	CHECK(runFn<Bool>(S("test.syntax.testArray")));
-	CHECK(runFn<Bool>(S("test.syntax.testCall")));
-	CHECK(runFn<Bool>(S("test.syntax.testCallMaybe")));
-	CHECK_EQ(runFn<Nat>(S("test.syntax.testRaw")), 2);
-	CHECK_EQ(runFn<Nat>(S("test.syntax.testRawCall")), 2);
-	CHECK(runFn<Bool>(S("test.syntax.testCapture")));
-	CHECK(runFn<Bool>(S("test.syntax.testRawCapture")));
-	CHECK_RUNS(runFn<void>(S("test.syntax.testParams")));
-	CHECK(runFn<Bool>(S("test.syntax.testEmpty")));
-	CHECK_EQ(runFn<Int>(S("test.syntax.testExpr")), 40);
+	CHECK_RUNS(runFn<void>(S("tests.syntax.testSimple")));
+	CHECK(runFn<Bool>(S("tests.syntax.testSentence")));
+	CHECK_EQ(toS(runFn<Str *>(S("tests.syntax.testManualTfm"), new (e) Str(S("dogs sleep")))), L"Plural dog");
+	CHECK_EQ(toS(runFn<Str *>(S("tests.syntax.testManualTfm"), new (e) Str(S("the dog sleeps")))), L"Singular dog");
+	CHECK_EQ(toS(runFn<Str *>(S("tests.syntax.testManualTfm"), new (e) Str(S("do dogs sleep?")))), L"Question dog");
+	CHECK(runFn<Bool>(S("tests.syntax.testMaybe")));
+	CHECK(runFn<Bool>(S("tests.syntax.testArray")));
+	CHECK(runFn<Bool>(S("tests.syntax.testCall")));
+	CHECK(runFn<Bool>(S("tests.syntax.testCallMaybe")));
+	CHECK_EQ(runFn<Nat>(S("tests.syntax.testRaw")), 2);
+	CHECK_EQ(runFn<Nat>(S("tests.syntax.testRawCall")), 2);
+	CHECK(runFn<Bool>(S("tests.syntax.testCapture")));
+	CHECK(runFn<Bool>(S("tests.syntax.testRawCapture")));
+	CHECK_RUNS(runFn<void>(S("tests.syntax.testParams")));
+	CHECK(runFn<Bool>(S("tests.syntax.testEmpty")));
+	CHECK_EQ(runFn<Int>(S("tests.syntax.testExpr")), 40);
 } END_TEST
 
 // Previous odd crashes in the syntax.
 BEGIN_TEST(SyntaxCrashes, BS) {
-	CHECK_EQ(::toS(runFn<Name *>(S("test.syntax.complexName"))), L"a.b(c, d(e), f)");
+	CHECK_EQ(::toS(runFn<Name *>(S("tests.syntax.complexName"))), L"a.b(c, d(e), f)");
 } END_TEST
 
 /**
@@ -264,7 +264,7 @@ BEGIN_TEST(SyntaxContext, BS) {
 
 	// Check so that the position of the error is proper as well. Should return the first error.
 	{
-		Package *pkg = gEngine().package(S("test.syntax.context"));
+		Package *pkg = gEngine().package(S("tests.syntax.context"));
 		Parser *p = Parser::create(pkg, S("Block"), createBackend(gEngine(), parser));
 		Url *empty = new (p) Url();
 		Str *s = new (p) Str(S("{ extra c { c d d } }"));
@@ -276,9 +276,9 @@ BEGIN_TEST(SyntaxContext, BS) {
 
 	// Make sure the context parameter to 'parseApprox' works properly.
 	{
-		Package *pkg = gEngine().package(S("test.syntax.context"));
+		Package *pkg = gEngine().package(S("tests.syntax.context"));
 		InfoParser *p = InfoParser::create(pkg, S("Block"), createBackend(gEngine(), parser));
-		ProductionType *dep = as<ProductionType>(gEngine().scope().find(parseSimpleName(gEngine(), S("test.syntax.context.ExtraCProd"))));
+		ProductionType *dep = as<ProductionType>(gEngine().scope().find(parseSimpleName(gEngine(), S("tests.syntax.context.ExtraCProd"))));
 		VERIFY(dep);
 
 		Url *empty = new (p) Url();
@@ -301,7 +301,7 @@ BEGIN_TESTX(ParserPerformance, BS) {
 	Engine &e = gEngine();
 
 	Package *root = e.package();
-	Package *pkg = e.package(S("test.large"));
+	Package *pkg = e.package(S("tests.large"));
 	VERIFY(pkg);
 
 	Url *file = pkg->url()->push(new (e) Str(S("eval.bs")));

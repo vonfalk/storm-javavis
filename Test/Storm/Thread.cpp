@@ -8,41 +8,41 @@ BEGIN_TEST(BSThread, BS) {
 
 	Engine &e = gEngine();
 
-	Thread *thread = runFn<Thread *>(S("test.bs.getThread"));
+	Thread *thread = runFn<Thread *>(S("tests.bs.getThread"));
 	CHECK_NEQ(thread, storm::Compiler::thread(e));
-	thread = runFn<Thread *>(S("test.bs.getCompilerThread"));
+	thread = runFn<Thread *>(S("tests.bs.getCompilerThread"));
 	CHECK_EQ(thread, storm::Compiler::thread(e));
 
-	CHECK_EQ(runFn<Int>(S("test.bs.postInt")), 9);
+	CHECK_EQ(runFn<Int>(S("tests.bs.postInt")), 9);
 
 	// Check so that we keep reference counting correct.
 	DbgVal::clear();
-	CHECK_EQ(runFn<Int>(S("test.bs.postDbgVal")), 18);
+	CHECK_EQ(runFn<Int>(S("tests.bs.postDbgVal")), 18);
 	CHECK(DbgVal::clear());
 
 	// Basic thread tests.
-	CHECK_EQ(runFn<Int>(S("test.bs.postObject")), 13);
-	CHECK_EQ(runFn<Int>(S("test.bs.postVal")), 33);
-	CHECK_EQ(runFn<Int>(S("test.bs.postMaybeVal")), 33);
-	CHECK_EQ(runFn<Int>(S("test.bs.threadObj")), 20);
-	CHECK_EQ(runFn<Int>(S("test.bs.threadActor")), 20);
-	CHECK_EQ(runFn<Int>(S("test.bs.actorObj")), 31);
-	CHECK_EQ(runFn<Int>(S("test.bs.actorDerObj")), 22);
+	CHECK_EQ(runFn<Int>(S("tests.bs.postObject")), 13);
+	CHECK_EQ(runFn<Int>(S("tests.bs.postVal")), 33);
+	CHECK_EQ(runFn<Int>(S("tests.bs.postMaybeVal")), 33);
+	CHECK_EQ(runFn<Int>(S("tests.bs.threadObj")), 20);
+	CHECK_EQ(runFn<Int>(S("tests.bs.threadActor")), 20);
+	CHECK_EQ(runFn<Int>(S("tests.bs.actorObj")), 31);
+	CHECK_EQ(runFn<Int>(S("tests.bs.actorDerObj")), 22);
 
 	// Future tests.
-	CHECK_EQ(runFn<Int>(S("test.bs.basicFuture")), 8);
-	CHECK_EQ(runFn<Int>(S("test.bs.valueFuture")), 8);
-	CHECK_EQ(runFn<Int>(S("test.bs.intFuture")), 22);
-	CHECK_RUNS(runFn<void>(S("test.bs.noResultFuture")));
+	CHECK_EQ(runFn<Int>(S("tests.bs.basicFuture")), 8);
+	CHECK_EQ(runFn<Int>(S("tests.bs.valueFuture")), 8);
+	CHECK_EQ(runFn<Int>(S("tests.bs.intFuture")), 22);
+	CHECK_RUNS(runFn<void>(S("tests.bs.noResultFuture")));
 
 	// Check 'spawn'.
-	CHECK_EQ(runFn<Int>(S("test.bs.asyncPostInt")), 9);
-	CHECK_EQ(runFn<Int>(S("test.bs.asyncPostObject")), 13);
-	CHECK_EQ(runFn<Int>(S("test.bs.asyncPostObject2")), 13);
-	CHECK_EQ(runFn<Int>(S("test.bs.asyncPostVal")), 33);
-	CHECK_RUNS(runFn<void>(S("test.bs.spawnVoid")));
+	CHECK_EQ(runFn<Int>(S("tests.bs.asyncPostInt")), 9);
+	CHECK_EQ(runFn<Int>(S("tests.bs.asyncPostObject")), 13);
+	CHECK_EQ(runFn<Int>(S("tests.bs.asyncPostObject2")), 13);
+	CHECK_EQ(runFn<Int>(S("tests.bs.asyncPostVal")), 33);
+	CHECK_RUNS(runFn<void>(S("tests.bs.spawnVoid")));
 
 	// Check variable accesses in other threads.
-	CHECK_EQ(runFn<Int>(S("test.bs.threadVarAccess")), 6); // 1 copy, 1 deep copy. Starts at 4.
-	CHECK_ERROR(runFn<void>(S("test.bs.threadVarAssign")), SyntaxError);
+	CHECK_EQ(runFn<Int>(S("tests.bs.threadVarAccess")), 6); // 1 copy, 1 deep copy. Starts at 4.
+	CHECK_ERROR(runFn<void>(S("tests.bs.threadVarAssign")), SyntaxError);
 } END_TEST

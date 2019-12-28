@@ -27,7 +27,7 @@ BEGIN_TEST(Doc2Test, Storm) {
 
 	Value intVal(StormInfo<Int>::type(e));
 
-	SimpleName *name = parseSimpleName(e, S("test.bs.doc1Fn"));
+	SimpleName *name = parseSimpleName(e, S("tests.bs.doc1Fn"));
 	name->last()->params->push(intVal);
 	Named *fn = e.scope().find(name);
 	VERIFY(fn);
@@ -48,7 +48,7 @@ BEGIN_TEST(Doc3Test, Storm) {
 
 	Value intVal(StormInfo<Int>::type(e));
 
-	SimpleName *name = parseSimpleName(e, S("test.bs.doc2Fn"));
+	SimpleName *name = parseSimpleName(e, S("tests.bs.doc2Fn"));
 	name->last()->params->push(intVal);
 	Named *fn = e.scope().find(name);
 	VERIFY(fn);
