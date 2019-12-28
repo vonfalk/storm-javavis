@@ -279,7 +279,9 @@ namespace storm {
 			// null-pointer.
 			*to->l << mov(ptrB, ptrConst(Offset(0)));
 		} else {
-			resultPos = res->safeLocation(sub, this->result);
+			// Note: We always create the result in the parent scope if we need to, otherwise we
+			// will fail to clone it later on.
+			resultPos = res->safeLocation(to, this->result);
 			*to->l << lea(ptrB, resultPos.v);
 		}
 
@@ -296,13 +298,10 @@ namespace storm {
 		*to->l << fnParam(ptr, ptrB); // result
 		*to->l << fnParam(ptr, thread); // on
 		*to->l << fnCall(e.ref(Engine::rSpawnResult), false);
-		resultPos.created(sub);
 
 		*to->l << end(sub->block);
 
-		// May be delayed...
-		if (res->needed())
-			res->location(to).created(to);
+		resultPos.created(to);
 
 		// Clone the result.
 		if (result.isValue() && !result.isPrimitive()) {
@@ -322,6 +321,7 @@ namespace storm {
 			*to->l << fnParam(ptr, resultPos.v);
 			*to->l << fnCall(cloneFn(result.type)->ref(), false, ptr, resultPos.v);
 		}
+
 	}
 
 	void Function::asyncThreadCall(CodeGen *to, Array<code::Operand> *params, CodeResult *result) {

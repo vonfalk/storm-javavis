@@ -39,7 +39,7 @@ namespace storm {
 			if (decl->parent) {
 				Named *p = scope.find(decl->parent);
 				if (!p)
-					throw SyntaxError(decl->pos, L"The element " + ::toS(decl->parent) + L" was not found.");
+					throw SyntaxError(decl->pos, L"The element " + ::toS(decl->parent) + L" was not found. It must refer to a rule.");
 				parent = as<Rule>(p);
 				if (!parent)
 					throw SyntaxError(decl->pos, L"Parent elements must refer to a rule. "
