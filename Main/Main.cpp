@@ -126,6 +126,41 @@ int runFunction(Engine &e, const wchar_t *function) {
 	return 0;
 }
 
+int runTests(Engine &e, const wchar_t *package, bool recursive) {
+	SimpleName *name = parseSimpleName(new (e) Str(package));
+	Named *found = e.scope().find(name);
+	if (!found) {
+		wcerr << L"Could not find " << package << endl;
+		return 1;
+	}
+
+	Package *pkg = as<Package>(found);
+	if (!pkg) {
+		wcerr << package << L" is not a package." << endl;
+		return 1;
+	}
+
+	SimpleName *testMain = parseSimpleName(e, S("test.runCmdline"));
+	testMain->last()->params->push(Value(StormInfo<Package>::type(e)));
+	testMain->last()->params->push(Value(StormInfo<Bool>::type(e)));
+	Function *f = as<Function>(e.scope().find(testMain));
+	if (!f) {
+		wcerr << L"Could not find the test implementation's main function: " << testMain << endl;
+		return 1;
+	}
+
+	if (f->result.type != StormInfo<Bool>::type(e)) {
+		wcerr << L"The signature of the test implementation's main function ("
+			  << testMain << L") is incorrect. Expected Bool, but got "
+			  << f->result.type->identifier() << endl;
+		return 1;
+	}
+
+	os::FnCall<Bool> c = os::fnCall().add(pkg).add(recursive);
+	Bool ok = c.call(f->ref().address(), false);
+	return ok ? 0 : 1;
+}
+
 void importPkgs(Engine &into, const Params &p) {
 	for (Nat i = 0; i < p.import.size(); i++) {
 		const Import &import = p.import[i];
@@ -206,6 +241,12 @@ int stormMain(int argc, const wchar_t *argv[]) {
 			break;
 		case Params::modeFunction:
 			result = runFunction(e, p.modeParam);
+			break;
+		case Params::modeTests:
+			result = runTests(e, p.modeParam, false);
+			break;
+		case Params::modeTestsRec:
+			result = runTests(e, p.modeParam, true);
 			break;
 		case Params::modeVersion:
 			showVersion(e);

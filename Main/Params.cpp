@@ -31,6 +31,12 @@ static StatePtr function(const wchar_t *arg, Params &result) {
 	return &start;
 }
 
+static StatePtr tests(const wchar_t *arg, Params &result) {
+	EXPECT_MORE(L"Missing package name.");
+	result.modeParam = arg;
+	return &start;
+}
+
 static StatePtr replCommand(const wchar_t *arg, Params &result) {
 	EXPECT_MORE(L"Missing repl command.");
 	result.modeParam2 = arg;
@@ -71,6 +77,12 @@ static StatePtr start(const wchar_t *arg, Params &result) {
 	} else if (wcscmp(arg, L"-f") == 0) {
 		result.mode = Params::modeFunction;
 		return &function;
+	} else if (wcscmp(arg, L"-t") == 0) {
+		result.mode = Params::modeTests;
+		return &tests;
+	} else if (wcscmp(arg, L"-T") == 0) {
+		result.mode = Params::modeTestsRec;
+		return &tests;
 	} else if (wcscmp(arg, L"-c") == 0) {
 		result.mode = Params::modeRepl;
 		return &replCommand;
@@ -122,6 +134,8 @@ void help(const wchar_t *cmd) {
 	wcout << cmd << L"                  - launch the default REPL." << endl;
 	wcout << cmd << L" <language>       - launch the REPL for <language>." << endl;
 	wcout << cmd << L" -f <function>    - run <function> then exit." << endl;
+	wcout << cmd << L" -t <package>     - run all tests in <package> then exit." << endl;
+	wcout << cmd << L" -T <package>     - run all tests in <package> and all sub-packages then exit." << endl;
 	wcout << cmd << L" -i <name> <path> - import package at <path> as <name>." << endl;
 	wcout << cmd << L" -c <expr>        - evaluate <expr> in the default REPL." << endl;
 	wcout << cmd << L" -r <path>        - use <path> as the root path." << endl;

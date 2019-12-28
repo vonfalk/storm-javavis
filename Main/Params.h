@@ -23,6 +23,8 @@ public:
 		modeHelp,
 		modeRepl,
 		modeFunction,
+		modeTests,
+		modeTestsRec,
 		modeServer,
 		modeVersion,
 		modeError,

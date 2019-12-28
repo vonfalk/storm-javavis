@@ -96,3 +96,9 @@ TestResult runTests(Package pkg, Bool verbose, Bool recurse) on Compiler {
 		print(result.toS);
 	result;
 }
+
+// Called from the command-line to execute tests.
+Bool runCmdline(Package pkg, Bool recursive) {
+	var result = runTests(pkg, true, recursive);
+	result.ok;
+}
