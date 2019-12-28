@@ -38,7 +38,7 @@ namespace storm {
 			// Create a CondSuccess for use with 'whileBody'. This can be done manually as well.
 			CondSuccess *STORM_FN createWhileBody();
 
-			// Result (always void).
+			// Result (always void or 'no return').
 			virtual ExprResult STORM_FN result();
 
 			// Code.

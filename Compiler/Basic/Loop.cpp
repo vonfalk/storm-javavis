@@ -38,8 +38,13 @@ namespace storm {
 		}
 
 		ExprResult Loop::result() {
-			// No reliable value, the last expression in the do part could be used.
-			return ExprResult();
+			if (condition) {
+				// No reliable value, the last expression in the do part could be used.
+				return ExprResult();
+			} else {
+				// If we don't have a condition, we never return.
+				return noReturn();
+			}
 		}
 
 		void Loop::code(CodeGen *s, CodeResult *r) {
