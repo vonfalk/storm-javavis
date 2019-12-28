@@ -93,40 +93,29 @@ namespace storm {
 
 
 		ExprBlock::ExprBlock(SrcPos pos, Scope scope) :
-			Block(pos, scope), exprs(new (this) Array<Expr *>()), firstNoReturn(invalid) {}
+			Block(pos, scope), exprs(new (this) Array<Expr *>()) {}
 
 		ExprBlock::ExprBlock(SrcPos pos, Block *parent) :
-			Block(pos, parent), exprs(new (this) Array<Expr *>()), firstNoReturn(invalid) {}
+			Block(pos, parent), exprs(new (this) Array<Expr *>()) {}
 
 		void ExprBlock::add(Expr *expr) {
-			if (firstNoReturn == invalid)
-				if (expr->result().nothing())
-					firstNoReturn = exprs->count();
-
 			exprs->push(expr);
 		}
 
 		void ExprBlock::insert(Nat pos, Expr *expr) {
-			if (firstNoReturn != invalid) {
-				if (firstNoReturn >= pos)
-					firstNoReturn++;
-			}
-
-			if (firstNoReturn == invalid || firstNoReturn >= pos)
-				if (expr->result().nothing())
-					firstNoReturn = pos;
-
 			exprs->insert(pos, expr);
 		}
 
 		ExprResult ExprBlock::result() {
-			if (firstNoReturn != invalid) {
-				return noReturn();
-			} else if (exprs->any()) {
-				return exprs->last()->result();
-			} else {
+			if (exprs->empty())
 				return ExprResult();
+
+			for (Nat i = 0; i < exprs->count() - 1; i++) {
+				if (exprs->at(i)->result().nothing())
+					return noReturn();
 			}
+
+			return exprs->last()->result();
 		}
 
 		void ExprBlock::code(CodeGen *state, CodeResult *to) {
@@ -135,24 +124,19 @@ namespace storm {
 		}
 
 		void ExprBlock::blockCode(CodeGen *state, CodeResult *to) {
-			if (firstNoReturn == invalid) {
-				// Generate code for the entire block. Skip the last expression, as that is supposed to
-				// return something.
-				for (nat i = 0; i < exprs->count() - 1; i++) {
-					CodeResult *s = new (this) CodeResult();
-					exprs->at(i)->code(state, s);
-				}
+			// Generate code for the entire block. Stop whenever we find a block that does not return.
+			for (Nat i = 0; i < exprs->count() - 1; i++) {
+				Expr *e = exprs->at(i);
 
-				// Pass the return value on to the last expression.
-				exprs->last()->code(state, to);
+				CodeResult *s = new (this) CodeResult();
+				e->code(state, s);
 
-			} else {
-				// Generate code until the first dead block.
-				for (nat i = 0; i <= firstNoReturn; i++) {
-					CodeResult *s = new (this) CodeResult();
-					exprs->at(i)->code(state, s);
-				}
+				// Stop if this statement never returns.
+				if (e->result().nothing())
+					return;
 			}
+
+			exprs->last()->code(state, to);
 		}
 
 		Int ExprBlock::castPenalty(Value to) {
@@ -164,11 +148,15 @@ namespace storm {
 		void ExprBlock::toS(StrBuf *to) const {
 			*to << S("{\n");
 			{
+				Bool unreachable = false;
 				Indent i(to);
 				for (nat i = 0; i < exprs->count(); i++) {
 					*to << exprs->at(i) << S(";\n");
-					if (i == firstNoReturn && i != exprs->count() - 1)
-						*to << S("// unreachable code:\n");
+					if (i != exprs->count() - 1 && exprs->at(i)->result().nothing()) {
+						if (!unreachable)
+							*to << S("// unreachable code:\n");
+						unreachable = true;
+					}
 				}
 			}
 			*to << S("}");

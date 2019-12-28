@@ -166,16 +166,18 @@ namespace storm {
 				CodeResult *r = new (this) CodeResult(result, l->root());
 				bodyExpr->code(state, r);
 
+				// TODO: If the body indicates that it never returns, we could skip the following
+				// two operations to avoid generating some dead code.
 				VarInfo rval = r->location(state);
 				state->returnValue(rval.v);
 			}
 
 			// if (!identifier()->startsWith(S("lang.bs"))) {
-			// if (identifier()->startsWith(S("test.bs."))) {
+			// if (identifier()->startsWith(S("tests.bs."))) {
 			// 	PLN(bodyExpr);
 			// 	PLN(identifier() << L": " << l);
 			// 	// This can be used to see the transformed machine code as well:
-			// 	PLN(engine().arena()->transform(l, null));
+			// 	// PLN(engine().arena()->transform(l, null));
 			// 	// See transformed machine code and binary output (similar to above).
 			// 	// PVAR(new (this) Binary(engine().arena(), l, true));
 			// }

@@ -22,6 +22,7 @@ Test
 #Main -a -r ../root/ -f tests.asm.testInlineLabel
 #Main -a -r ../root/ -f tests.sound.play
 #Main -a -r ../root/ -f tests.pdf.test
+#Main -a -f test.example.main
 
 #Presentations
 #Main -a -r ../root/ -i present ../External/present -i final ../External/final -f final.configura

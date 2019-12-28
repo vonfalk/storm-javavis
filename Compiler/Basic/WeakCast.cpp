@@ -217,6 +217,7 @@ namespace storm {
 		}
 
 		void WeakMaybeCast::toS(StrBuf *to) const {
+			output(to);
 			*to << expr;
 		}
 

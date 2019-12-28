@@ -102,12 +102,6 @@ namespace storm {
 		private:
 			// Expressions here.
 			Array<Expr *>*exprs;
-
-			// Index of first expression declaring it will never return. 'invalid' if none.
-			nat firstNoReturn;
-
-			// Invalid index.
-			static const nat invalid = -1;
 		};
 
 
