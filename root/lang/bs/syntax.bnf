@@ -125,7 +125,7 @@ FunctionDecl SFunction(Scope env);
 SFunction[0] => FunctionDecl(env, result, name, params, options, body) :
     SType result, SFnDeclName name #fnName, "(", SFormals params, ")", SFreeOptions@ options, "{" [, SFunctionBody@ body, ]+ "}";
 SFunction[5] => assignDecl(env, name, params, options, body) :
-    "assign" #keyword, SFnDeclName name #fnName, "(", SFormals params, ")", SFreeOptions@ options, "{" [, SFunctionBody@ body, ]+ "}";
+    "assign[ \t]+" #keyword, SFnDeclName name #fnName, "(", SFormals params, ")", SFreeOptions@ options, "{" [, SFunctionBody@ body, ]+ "}";
 
 // Function names. Slightly wider than a regular Name, since we allow operators here as well.
 SStr SFnDeclName();

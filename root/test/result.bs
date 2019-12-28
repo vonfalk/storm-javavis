@@ -1,0 +1,99 @@
+use core:lang;
+
+/**
+ * Results from running one or more tests.
+ */
+class TestResult {
+	// Number of tests executed.
+	Nat total;
+
+	// Number of failed tests.
+	Nat failed;
+
+	// Number of crashed tests.
+	Nat crashed;
+
+	// Did we abort the tests at some point?
+	Bool aborted;
+
+	// Number of passed tests.
+	Nat passed() {
+		total - failed - crashed;
+	}
+
+	// Everything ok?
+	Bool ok() {
+		failed == 0 & crashed == 0 & !aborted;
+	}
+
+	// Add another set of results to this object.
+	void add(TestResult other) {
+		total += other.total;
+		failed += other.failed;
+		crashed += other.crashed;
+		aborted |= other.aborted;
+	}
+
+	// To string.
+	void toS(StrBuf to) {
+		to << "Passed ";
+		if (failed == 0 & crashed == 0) {
+			to << "all ";
+		} else {
+			to << passed << " of ";
+		}
+		to << total << " tests";
+
+		if (failed == 1) {
+			to << "\nFailed 1 test!";
+		} else if (failed > 0) {
+			to << "\nFailed " << failed << " tests!";
+		}
+
+		if (crashed == 1) {
+			to << "\nCrashed 1 test!";
+		} else if (crashed > 0) {
+			to << "\nCrashed " << crashed << " tests!";
+		}
+
+		if (aborted) {
+			to << "\nABORTED";
+		}
+	}
+}
+
+
+// Run all tests inside 'pkg'.
+TestResult runTests(Package pkg) on Compiler { runTests(pkg, true, false); }
+TestResult runTests(Package pkg, Bool verbose) on Compiler { runTests(pkg, verbose, false); }
+
+// Run all tests inside 'pkg', possibly recursively.
+TestResult runTests(Package pkg, Bool verbose, Bool recurse) on Compiler {
+	TestResult result;
+
+	pkg.forceLoad();
+	for (item in pkg) {
+		if (item as Function) {
+			if (ptr = item.pointer() as Fn<TestResult>) {
+				if (verbose)
+					print("Running ${item.name}...");
+				result.add(ptr.call());
+			}
+		} else if (item as Package) {
+			if (recurse) {
+				result.add(runTests(item, recurse));
+			}
+		}
+
+		// Exit early if aborted.
+		if (result.aborted) {
+			if (verbose)
+				print(result.toS);
+			return result;
+		}
+	}
+
+	if (verbose)
+		print(result.toS);
+	result;
+}

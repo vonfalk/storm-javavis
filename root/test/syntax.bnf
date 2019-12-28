@@ -1,0 +1,32 @@
+use lang.bs;
+use core.lang;
+
+delimiter = lang.bs.SDelimiter;
+
+// Operators that makes sense to use for tests. We give them very low priority to avoid suprises.
+OpInfo STestOp() #string; // Mark it so that it is clearly visible.
+STestOp => compareLt(op, 0) : "<"@ op;
+STestOp => compareGt(op, 0) : ">"@ op;
+STestOp => compareLte(op, 0) : "<="@ op;
+STestOp => compareGte(op, 0) : ">="@ op;
+STestOp => compareEq(op, 0) : "=="@ op;
+STestOp => compareNeq(op, 0) : "!="@ op;
+STestOp => IsOperator(op, 0, false) : "is"@ op;
+STestOp => IsOperator(op, 0, true) : "!is"@ op;
+
+// An expression together with its captured source text.
+ExprText SExprText(Block block);
+SExprText => ExprText(expr, text) : (SExpr(block) expr) text;
+
+// Main test logic, the test-statement.
+SSuiteBody..SStmt => testExpr(pos, block, lhs, op, rhs) : "test[ \t]+" #keyword, SExprText(block) lhs, STestOp op, SExprText(block) rhs, ";";
+
+// Abort the entire test run.
+SSuiteBody..SStmt[100] => abortExpr(pos, block) : "abort" #keyword, ";";
+
+// Allow creating test suites.
+SPlainFileItem => SuiteDecl(env, name, options, body) : "suite[ \t]+" #keyword, SName name #fnName, SFreeOptions@ options, "{" [, SSuiteBody@ body, ]+ "}" = SSuiteDecl;
+
+// Extra rule for the body, so that we can allow special syntax only inside suites.
+void SSuiteBody(ExprBlock block);
+SSuiteBody => block : (SStmt(block) -> add, )*;

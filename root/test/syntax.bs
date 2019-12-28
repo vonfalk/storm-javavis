@@ -1,0 +1,181 @@
+use core:lang;
+use lang:bs;
+use lang:bs:macro;
+
+/**
+ * Test-suite declaration.
+ */
+package class SuiteDecl extends NamedDecl {
+	SStr name;
+	Scope scope;
+	SFreeOptions options;
+	SSuiteBody body;
+
+	init(Scope scope, SStr name, SFreeOptions options, SSuiteBody body) {
+		init() {
+			name = name;
+			scope = scope;
+			options = options;
+			body = body;
+		}
+	}
+
+	// Create.
+	Named doCreate() {
+		SuiteFn fn(scope, name, body);
+		options.transform(fileScope(scope, name.pos), fn);
+		fn;
+	}
+
+	// Update.
+	Named? update(Scope scope) {
+		var found = scope.find(Name(name.v));
+		if (found as SuiteFn) {
+			found.update(scope, body);
+		} else if (found.empty) {
+			var c = create();
+			resolve();
+			return c;
+		}
+
+		return null;
+	}
+}
+
+/**
+ * Test-suite function.
+ */
+package class SuiteFn extends BSRawFn {
+	Scope scope;
+	SSuiteBody body;
+
+	init(Scope scope, SStr name, SSuiteBody body) {
+		init(Value(named{TestResult}), name, ValParam[], null) {
+			scope = scope;
+			body = body;
+		}
+	}
+
+	// Update ourselves.
+	void update(Scope scope, SSuiteBody body) {
+		this.scope = scope;
+		this.body = body;
+		reset();
+	}
+
+	FnBody createBody() {
+		SuiteBody body(this, scope);
+
+		this.body.transform(body);
+
+		// Return the result.
+		body.add(LocalVarAccess(SrcPos(), body.resultVar));
+
+		// print(body.toS);
+		body;
+	}
+}
+
+/**
+ * Custom body block that stores the result variable for easier access.
+ */
+package class SuiteBody extends FnBody {
+	init(BSRawFn owner, Scope scope) {
+		super(owner, scope);
+
+		Var r(this, Value(named{TestResult}), SStr("test-result"), Actuals());
+
+		init {
+			resultVar = r.var;
+		}
+
+		add(r);
+	}
+
+	LocalVar resultVar;
+}
+
+// Find the 'result' variable.
+package LocalVar findResult(Block block) {
+	BlockLookup lookup = block.lookup;
+	do {
+		if (suite = lookup.block as SuiteBody) {
+			return suite.resultVar;
+		}
+
+		if (p = lookup.parent as BlockLookup) {
+			lookup = p;
+		} else {
+			throwSyntaxError(block.pos, "Must be used inside a test-suite!");
+		}
+	}
+}
+
+// Captured expression/text pair.
+class ExprText on Compiler {
+	Expr expr;
+	Str text;
+
+	init(Expr expr, Str text) {
+		init {
+			expr = expr;
+			text = text;
+		}
+	}
+}
+
+
+// Expression for a single test.
+package Expr testExpr(SrcPos pos, Block block, ExprText lhs, OpInfo op, ExprText rhs) on Compiler {
+	LocalVar resultVar = findResult(block);
+	LocalVarAccess result(pos, resultVar);
+
+	ExprBlock sub(pos, block);
+
+	// Increment 'total'.
+	sub.add(namedExpr(sub, pos, "++*", namedExpr(sub, pos, "total", result)));
+
+	// Evaluate lhs and rhs and save them.
+	Var lhsVar(sub, SStr(" l", pos), lhs.expr);
+	sub.add(lhsVar);
+	LocalVarAccess l(pos, lhsVar.var);
+
+	Var rhsVar(sub, SStr(" r", pos), rhs.expr);
+	sub.add(rhsVar);
+	LocalVarAccess r(pos, rhsVar.var);
+
+	// Check if they are equal.
+	BoolCondition cond(mkOperator(sub, l, op, r));
+	If check(sub, cond);
+	check.trueCode = CondSuccess(pos, check, cond);
+	sub.add(check);
+
+	ExprBlock fail(pos, check);
+	check.falseCode = fail;
+
+	fail.add(namedExpr(fail, pos, "++*", namedExpr(fail, pos, "failed", result)));
+
+	// Generate a nice message on failure.
+	ConcatExpr msg(pos, fail);
+	msg.append(StrLiteral(pos, "Failed: ${lhs.text} ${op.name} ${rhs.text} ==> "));
+	msg.append(l);
+	msg.append(StrLiteral(pos, " ${op.name} "));
+	msg.append(r);
+
+	fail.add(FnCall(pos, fail.scope, named{print<Str>}, Actuals(msg)));
+
+	sub;
+}
+
+package Expr abortExpr(SrcPos pos, Block block) on Compiler {
+	LocalVar resultVar = findResult(block);
+	LocalVarAccess result(pos, resultVar);
+
+	ExprBlock sub(pos, block);
+	AssignOpInfo assignOp(SStr("=", pos), 0, false);
+	sub.add(mkOperator(sub, namedExpr(sub, pos, "aborted", result), assignOp, BoolLiteral(pos, true)));
+
+	sub.add(Return(pos, sub, result));
+
+	sub;
+}
