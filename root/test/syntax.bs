@@ -126,6 +126,7 @@ class ExprText on Compiler {
 
 
 // Expression for a single test.
+// TODO: We should handle exceptions as well.
 package Expr testExpr(SrcPos pos, Block block, ExprText lhs, OpInfo op, ExprText rhs) on Compiler {
 	LocalVar resultVar = findResult(block);
 	LocalVarAccess result(pos, resultVar);

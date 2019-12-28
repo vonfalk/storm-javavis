@@ -75,8 +75,7 @@ TestResult runTests(Package pkg, Bool verbose, Bool recurse) on Compiler {
 	for (item in pkg) {
 		if (item as Function) {
 			if (ptr = item.pointer() as Fn<TestResult>) {
-				if (verbose)
-					print("Running ${item.name}...");
+				print("Running ${item.name}...");
 				result.add(ptr.call());
 			}
 		} else if (item as Package) {

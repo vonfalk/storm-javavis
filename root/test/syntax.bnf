@@ -4,7 +4,7 @@ use core.lang;
 delimiter = lang.bs.SDelimiter;
 
 // Operators that makes sense to use for tests. We give them very low priority to avoid suprises.
-OpInfo STestOp() #string; // Mark it so that it is clearly visible.
+OpInfo STestOp() #fnName; // Mark it so that it is clearly visible.
 STestOp => compareLt(op, 0) : "<"@ op;
 STestOp => compareGt(op, 0) : ">"@ op;
 STestOp => compareLte(op, 0) : "<="@ op;
