@@ -55,5 +55,5 @@ void fn() {
 }
 ```
 
-See the README-file in the package for more information by typing `help sql` in the Basic Storm
+For more information, see the README-file in the package by typing `help sql` in the Basic Storm
 interactive prompt.

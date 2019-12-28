@@ -22,7 +22,7 @@ then
     exit 1
 fi
 
-./Storm -c 'test:bf:inlineBf' > output.txt
+./Storm -c 'tests:bf:inlineBf' > output.txt
 if [[ $? -ne 0 ]]
 then
     echo "Failed to execute BS code. Test in release/storm"
