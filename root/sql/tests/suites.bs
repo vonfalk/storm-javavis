@@ -72,13 +72,13 @@ suite droptest // TESTING DROP TABLE (IF EXISTS)
     var res2 = CREATE TABLE IF NOT EXISTS gebaIsNotIllegal( Geba INTEGER, bacon REAL, Illegal TEXT) DB connection;
 
     print("Printing all tables in db before dropping");
-    for(table in db.tables)   
+    for(table in db.tables)
         print("Table name: " + table );
 
     var res3 = DROP TABLE IF EXISTS gebaIsIllegal DB connection;
 
     print("Removing gebaIsIllegal from db");
-    for(table in db.tables)   
+    for(table in db.tables)
         print("Table name: " + table );
 
     print("");
@@ -95,7 +95,7 @@ suite deltest
 
     print("Inserting geba 1 and 2 into table gebaIsIllegal");
 
-    INSERT INTO gebaIsIllegal(geba, bacon, Illegal) VALUES (1, 13.37, "no") DB connection; 
+    INSERT INTO gebaIsIllegal(geba, bacon, Illegal) VALUES (1, 13.37, "no") DB connection;
     INSERT INTO gebaIsIllegal(geba, bacon, Illegal) VALUES (2, 4.20, "yes") DB connection;
 
     var res = SELECT geba, bacon, Illegal FROM gebaIsIllegal DB connection;
@@ -110,7 +110,7 @@ suite deltest
 
     var res2 = SELECT geba, bacon, Illegal FROM gebaIsIllegal DB connection;
     for (row in res2)
-        print("geba: " + row.getInt(0).toS + " bacon: " + row.getDouble(1).toS + " Illegal: " + row.getStr(2)); 
+        print("geba: " + row.getInt(0).toS + " bacon: " + row.getDouble(1).toS + " Illegal: " + row.getStr(2));
 
     print("");
 
@@ -122,7 +122,7 @@ suite instest
     SQLite db();
     Dummy connection;
     connection.connect(db);
-    CREATE TABLE IF NOT EXISTS generic( id INTEGER, name TEXT) DB connection; 
+    CREATE TABLE IF NOT EXISTS generic( id INTEGER, name TEXT) DB connection;
 
     INSERT INTO generic(id, name) VALUES (1, "Lorem asd") DB connection;
     var res = SELECT id, name FROM generic DB connection;
