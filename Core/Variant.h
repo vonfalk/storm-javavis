@@ -91,11 +91,8 @@ namespace storm {
 		// for the template mess...
 		template <class T>
 		typename EnableIf<!IsPointer<T>::value, T>::t get() const {
-			Type *t = StormInfo<T>::type(engine());
-			assert(has(t), L"Attempting to get an incorrect type from a variant.");
-
-			const GcType *g = runtime::gcTypeOf(data);
-			assert(g->kind == GcType::tArray, L"Should specify a pointer with this type to 'get'.");
+			assert(has(StormInfo<T>::type(engine())), L"Attempting to get an incorrect type from a variant.");
+			assert(runtime::gcTypeOf(data)->kind == GcType::tArray, L"Should specify a pointer with this type to 'get'.");
 
 			return *(T *)getValue();
 		}
