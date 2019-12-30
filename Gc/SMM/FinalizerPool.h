@@ -215,10 +215,12 @@ namespace storm {
 
 		template <class Scanner>
 		typename Scanner::Result FinalizerPool::scanChain(Block *head, typename Scanner::Source &source) {
-			for (Block *at = head; at; at = at->next()) {
-				typename Scanner::Result r = at->scan<Scanner>(source);
-				if (r != typename Scanner::Result())
-					return r;
+			if (head) {
+				for (Block *at = head; at; at = at->next()) {
+					typename Scanner::Result r = at->scan<Scanner>(source);
+					if (r != typename Scanner::Result())
+						return r;
+				}
 			}
 			return typename Scanner::Result();
 		}
