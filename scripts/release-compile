@@ -16,4 +16,4 @@ mm release -ne || { echo "Compilation failed!"; exit 1; }
 
 echo "Done! Running test suite..."
 release/Test --all || { echo "Tests failed!"; exit 1; }
-
+echo "Success!"
