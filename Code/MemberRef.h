@@ -14,7 +14,7 @@ namespace code {
 		STORM_CLASS;
 	public:
 		// Update a pointer inside 'obj'.
-		MemberRef(Object *obj, size_t offset, code::Ref ref, code::Content *from);
+		MemberRef(RootObject *obj, size_t offset, code::Ref ref, code::Content *from);
 
 		// Update an entry inside 'arr'.
 		MemberRef(GcArray<const void *> *arr, size_t entry, code::Ref ref, code::Content *from);
@@ -23,7 +23,7 @@ namespace code {
 		virtual void moved(const void *newAddr);
 
 		// Move the pointer we're to update.
-		void move(Object *obj, size_t offset);
+		void move(RootObject *obj, size_t offset);
 		void move(GcArray<const void *> *arr, size_t entry);
 
 		// Disable the updating.

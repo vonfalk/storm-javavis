@@ -21,6 +21,8 @@ namespace storm {
 	const wchar *Type::DTOR = S("__destroy");
 
 
+	static void CODECALL stormDtor(RootObject *object);
+
 	// Set 'type->type' to 'me' while forwarding 'name'. This has to be done before invoking the
 	// parent constructor, since that relies on 'engine()' working properly, which is not the case
 	// for the first object otherwise.
@@ -121,7 +123,12 @@ namespace storm {
 		if (myGcType) {
 			if (value())
 				myGcType->kind = GcType::tArray;
-			rawDtor = (DtorFn)myGcType->finalizer;
+
+			if (myGcType->finalizer) {
+				// Set up the finalizer so that the generic callback is called instead.
+				rawDtor = (DtorFn)myGcType->finalizer;
+				myGcType->finalizer = address(&stormDtor);
+			}
 		}
 
 		if (engine.has(bootTypes))
@@ -735,17 +742,28 @@ namespace storm {
 		if (!engine.has(bootDone))
 			return;
 
-		if (dtor)
-			rawDtor = (DtorFn)dtor->directRef().address();
-		else
-			rawDtor = null;
+		if (rawDtorRef) {
+			rawDtorRef->disable();
+			rawDtorRef = null;
+		}
+		rawDtor = null;
 
-		if (!value() && myGcType)
-			myGcType->finalizer = address(&stormDtor);
+		// Keep 'rawDtor' updated if we have a destructor.
+		if (dtor) {
+			rawDtorRef = new (this) code::MemberRef(this, OFFSET_OF(Type, rawDtor), dtor->ref(), refContent());
+
+			// Make sure we have a proper finalizer.
+			if (!value() && myGcType)
+				myGcType->finalizer = address(&stormDtor);
+		}
 	}
 
 	void Type::updateCtor(Function *ctor) {
 		// Clear the cache.
+		if (rawCtorRef) {
+			rawCtorRef->disable();
+			rawCtorRef = null;
+		}
 		rawCtor = null;
 	}
 
@@ -770,7 +788,8 @@ namespace storm {
 		if (!ctor)
 			return null;
 
-		rawCtor = (CopyCtorFn)ctor->ref().address();
+		// And keep 'rawCtor' updated.
+		rawCtorRef = new (this) code::MemberRef(this, OFFSET_OF(Type, rawCtor), ctor->ref(), refContent());
 		return rawCtor;
 	}
 
@@ -911,6 +930,12 @@ namespace storm {
 		*to << o;
 	}
 
+	code::Content *Type::refContent() {
+		if (!myContent)
+			myContent = new (engine) code::Content();
+		return myContent;
+	}
+
 	void Type::buildHandle() {
 		bool val = value();
 
@@ -924,10 +949,7 @@ namespace storm {
 			}
 		}
 
-		if (!handleContent)
-			handleContent = new (engine) code::Content();
-
-		RefHandle *h = new (engine) RefHandle(handleContent);
+		RefHandle *h = new (engine) RefHandle(refContent());
 		tHandle = h;
 
 		// We need to fill in enough members in 'h' to be able to create the arrays below. Note: We

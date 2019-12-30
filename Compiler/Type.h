@@ -234,8 +234,11 @@ namespace storm {
 		// Handle (lazily created). If we're a value, this will be a RefHandle.
 		const Handle *tHandle;
 
-		// The content we're using for all references in the handle. TODO: Place it inside a RefSource?
-		code::Content *handleContent;
+		// The content we're using for all references in the handle, and in the type. TODO: Place it inside a RefSource?
+		code::Content *myContent;
+
+		// Get the content.
+		code::Content *refContent();
 
 		enum {
 			toSFound,
@@ -293,14 +296,20 @@ namespace storm {
 		// Generate a handle for this type.
 		void buildHandle();
 
-		// The current destructor to be used.
+		// The current destructor to be used. Updated by 'rawDtorRef'.
 		UNKNOWN(PTR_GC) DtorFn rawDtor;
+
+		// Reference to the dtor to track changes. Possibly null.
+		code::MemberRef * rawDtorRef;
 
 		// Called whenever a new destructor is added.
 		void updateDtor(Function *dtor);
 
-		// Cache of the copy constructor for this type (if any).
+		// Cache of the copy constructor for this type (if any). Updated by 'rawCtorRef'.
 		UNKNOWN(PTR_GC) CopyCtorFn rawCtor;
+
+		// Reference to the ctor to track changes. Possibly null.
+		code::MemberRef *rawCtorRef;
 
 		// Called whenever a new constructor is added.
 		void updateCtor(Function *ctor);

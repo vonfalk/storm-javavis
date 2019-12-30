@@ -4,7 +4,7 @@
 
 namespace code {
 
-	MemberRef::MemberRef(Object *obj, size_t offset, code::Ref ref, code::Content *from) :
+	MemberRef::MemberRef(RootObject *obj, size_t offset, code::Ref ref, code::Content *from) :
 		Reference(ref, from) {
 
 		move(obj, offset);
@@ -19,11 +19,11 @@ namespace code {
 	void MemberRef::moved(const void *newAddr) {
 		if (update) {
 			void *obj = (byte *)update + offset;
-			*(const void **)obj = newAddr;
+			atomicWrite(*(size_t*)obj, (size_t)newAddr);
 		}
 	}
 
-	void MemberRef::move(Object *obj, size_t offset) {
+	void MemberRef::move(RootObject *obj, size_t offset) {
 		update = obj;
 		this->offset = offset;
 		moved(address());
