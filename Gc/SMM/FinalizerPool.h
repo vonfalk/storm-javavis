@@ -125,7 +125,7 @@ namespace storm {
 			void fillSummary(MemorySummary &summary, Block *chain) const;
 
 			// Last part of the finalization steps.
-			void finalizeTail();
+			void finalizeTail(void *aux);
 		};
 
 

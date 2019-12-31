@@ -14,9 +14,14 @@ namespace storm {
 			  scanFirst(null), scanHead(null), scanTail(null) {}
 
 		FinalizerPool::~FinalizerPool() {
-			FinalizerContext context;
-			finalizeChain(context, scanFirst);
-			finalizeChain(context, finalizeHead);
+			{
+				FinalizerContext context;
+				finalizeChain(context, scanFirst);
+			}
+			{
+				FinalizerContext context;
+				finalizeChain(context, finalizeHead);
+			}
 		}
 
 		void *FinalizerPool::move(void *client) {
@@ -148,7 +153,7 @@ namespace storm {
 				for (Block *at = finalize; at; at = at->next())
 					finalizeBlock(context, at);
 
-				context.cleanup(this, &FinalizerPool::finalizeTail);
+				context.cleanup(this, &FinalizerPool::finalizeTail, finalize);
 				// The following lines are done by 'finalizeTail':
 
 				// // Now, we don't need objects to be valid anymore!
@@ -158,9 +163,9 @@ namespace storm {
 			}
 		}
 
-		void FinalizerPool::finalizeTail() {
-			Block *finalize = atomicRead(executing);
-			assert(finalize, L"'finalizeTail' was executed in the wrong context.");
+		void FinalizerPool::finalizeTail(void *aux) {
+			Block *finalize = (Block *)aux;
+			// assert(finalize, L"'finalizeTail' was executed in the wrong context.");
 
 			// We don't need objects to be valid anymore.
 			atomicWrite(executing, (Block *)null);
@@ -173,7 +178,8 @@ namespace storm {
 				finalizeBlock(context, at);
 
 			// Everything is finalized. Now, we can deallocate it all!
-			freeChain(chain);
+			// freeChain(chain);
+			context.cleanup(this, &FinalizerPool::finalizeTail, chain);
 		}
 
 		void FinalizerPool::freeChain(Block *first) {

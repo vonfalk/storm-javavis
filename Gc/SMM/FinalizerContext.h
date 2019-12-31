@@ -28,8 +28,8 @@ namespace storm {
 			void finalize(fmt::Obj *object, const os::Thread &thread);
 
 			// Called by FinalizerPool to register cleanup.
-			typedef void (FinalizerPool::*FinalizerPoolFn)();
-			void cleanup(FinalizerPool *pool, FinalizerPoolFn fn);
+			typedef void (FinalizerPool::*FinalizerPoolFn)(void *aux);
+			void cleanup(FinalizerPool *pool, FinalizerPoolFn fn, void *aux);
 
 		private:
 			// No copy.
@@ -51,6 +51,7 @@ namespace storm {
 				// Cleanup needed by the finalizer pool, if any.
 				FinalizerPool *pool;
 				FinalizerPoolFn poolFn;
+				void *poolAux;
 			};
 
 			// Used if no threads were spawned.

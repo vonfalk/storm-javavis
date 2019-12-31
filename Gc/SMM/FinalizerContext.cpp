@@ -20,7 +20,7 @@ namespace storm {
 			} else {
 				// We need to clean up now.
 				if (local.pool) {
-					((local.pool)->*(local.poolFn))();
+					((local.pool)->*(local.poolFn))(local.poolAux);
 				}
 			}
 		}
@@ -47,15 +47,17 @@ namespace storm {
 			worker->avail.up();
 		}
 
-		void FinalizerContext::cleanup(FinalizerPool *pool, FinalizerPoolFn fn) {
+		void FinalizerContext::cleanup(FinalizerPool *pool, FinalizerPoolFn fn, void *aux) {
 			if (shared) {
 				assert(shared->pool == null, L"Cannot cleanup a finalizer pool multiple times!");
 				shared->pool = pool;
 				shared->poolFn = fn;
+				shared->poolAux = aux;
 			} else {
 				assert(local.pool == null, L"Cannot cleanup a finalizer pool multiple times!");
 				local.pool = pool;
 				local.poolFn = fn;
+				local.poolAux = aux;
 			}
 		}
 
@@ -70,7 +72,7 @@ namespace storm {
 				// We were last. Clean up!
 
 				if (pool) {
-					(pool->*poolFn)();
+					(pool->*poolFn)(poolAux);
 				}
 
 				delete this;
