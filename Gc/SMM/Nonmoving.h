@@ -6,6 +6,7 @@
 #include "Config.h"
 #include "Format.h"
 #include "Scanner.h"
+#include "FinalizerContext.h"
 #include "Gc/MemorySummary.h"
 #include <vector>
 
@@ -54,10 +55,10 @@ namespace storm {
 			void free(LockTicket &ticket, void *mem);
 
 			// Run any pending finalizers.
-			void runFinalizers();
+			void runFinalizers(FinalizerContext &context);
 
 			// Run all finalizers for all objects in here. Assumed to be called before destruction.
-			void runAllFinalizers();
+			void runAllFinalizers(FinalizerContext &context);
 
 			// Get an address set initialized to a suitable range for us (we assume there are few
 			// enough objects so that one is enough).
@@ -278,7 +279,7 @@ namespace storm {
 				bool free(Nonmoving *owner, fmt::Obj *obj);
 
 				// Run all finalizers in this block.
-				void runFinalizers();
+				void runFinalizers(FinalizerContext &context);
 
 				// Traverse objects in here.
 				template <class Fn>

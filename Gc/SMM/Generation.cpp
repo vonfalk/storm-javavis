@@ -341,9 +341,9 @@ namespace storm {
 			}
 		}
 
-		void Generation::runAllFinalizers() {
+		void Generation::runAllFinalizers(FinalizerContext &context) {
 			for (size_t i = 0; i < chunks.size(); i++) {
-				chunks[i].runAllFinalizers();
+				chunks[i].runAllFinalizers(context);
 			}
 		}
 
@@ -730,15 +730,25 @@ namespace storm {
 		}
 
 		struct Finalize {
+			FinalizerContext &ctx;
+
+			Finalize(FinalizerContext &c) : ctx(c) {}
+
 			void operator ()(void *obj) const {
-				if (fmt::hasFinalizer(obj))
-					fmt::finalize(obj);
+				if (fmt::hasFinalizer(obj)) {
+					os::Thread t = os::Thread::invalid;
+					fmt::finalize(obj, &t);
+
+					if (t != os::Thread::invalid) {
+						ctx.finalize(fmt::fromClient(obj), t);
+					}
+				}
 			}
 		};
 
-		void Generation::GenChunk::runAllFinalizers() {
+		void Generation::GenChunk::runAllFinalizers(FinalizerContext &context) {
 			for (Block *at = (Block *)memory.at; at != (Block *)memory.end(); at = (Block *)at->mem(at->size)) {
-				at->traverse(Finalize());
+				at->traverse(Finalize(context));
 			}
 		}
 

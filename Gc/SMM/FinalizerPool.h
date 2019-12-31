@@ -6,6 +6,7 @@
 #include "Block.h"
 #include "Scanner.h"
 #include "Generation.h"
+#include "FinalizerContext.h"
 #include "Utils/Lock.h"
 
 namespace storm {
@@ -59,7 +60,7 @@ namespace storm {
 
 			// Call finalizers fo all objects in this pool, and empty the pool afterwards. This
 			// operation assumes the global arena lock is *not* held as it executes client code.
-			void finalize();
+			void finalize(FinalizerContext &context);
 
 			// Scan all objects currently in the finalizer pool.
 			template <class Scanner>
@@ -108,13 +109,13 @@ namespace storm {
 			bool scanStep(const Generation::State &gen);
 
 			// Finalize a chain of blocks. Deallocates the blocks after running finalizers.
-			void finalizeChain(Block *first);
+			void finalizeChain(FinalizerContext &context, Block *first);
 
 			// Deallocate an entire chain.
 			void freeChain(Block *first);
 
 			// Finalize all objects in a single block.
-			void finalizeBlock(Block *block);
+			void finalizeBlock(FinalizerContext &context, Block *block);
 
 			// Scan a chain of blocks.
 			template <class Scanner>
@@ -122,6 +123,9 @@ namespace storm {
 
 			// Add information to a scan summary.
 			void fillSummary(MemorySummary &summary, Block *chain) const;
+
+			// Last part of the finalization steps.
+			void finalizeTail();
 		};
 
 

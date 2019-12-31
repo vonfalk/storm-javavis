@@ -129,10 +129,13 @@ namespace storm {
 			startThreads();
 			unlock();
 
-			// Note: Since references from finalizers keep nonmoving objects alive, but not the
-			// other way around, we want to run finalizers for nonmoving objects first.
-			owner.nonmoving().runFinalizers();
-			owner.finalizers->finalize();
+			{
+				FinalizerContext context;
+				// Note: Since references from finalizers keep nonmoving objects alive, but not the
+				// other way around, we want to run finalizers for nonmoving objects first.
+				owner.nonmoving().runFinalizers(context);
+				owner.finalizers->finalize(context);
+			}
 		}
 
 

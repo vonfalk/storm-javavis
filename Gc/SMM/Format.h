@@ -41,8 +41,9 @@ namespace storm {
 			return objHasFinalizer(fromClient(obj));
 		}
 
-		// Call the finalizer of an object.
-		static inline void objFinalize(Obj *obj) {
+		// Call the finalizer of an object. Alters 'thread' if execution on another thread is
+		// necessary.
+		static inline void objFinalize(Obj *obj, os::Thread *thread) {
 			if (objIsSpecial(obj))
 				return;
 
@@ -60,14 +61,12 @@ namespace storm {
 					finalize = vtable::from((RootObject *)client) != null;
 
 				if (finalize) {
-					typedef void (*Fn)(void *);
-					Fn fn = (Fn)h.finalizer;
-					(*fn)(client);
+					(*h.finalizer)(client, thread);
 				}
 			}
 		}
-		static inline void finalize(void *obj) {
-			return objFinalize(fromClient(obj));
+		static inline void finalize(void *obj, os::Thread *thread) {
+			return objFinalize(fromClient(obj), thread);
 		}
 
 		// Is this a weak object?

@@ -14,8 +14,9 @@ namespace storm {
 			  scanFirst(null), scanHead(null), scanTail(null) {}
 
 		FinalizerPool::~FinalizerPool() {
-			finalizeChain(scanFirst);
-			finalizeChain(finalizeHead);
+			FinalizerContext context;
+			finalizeChain(context, scanFirst);
+			finalizeChain(context, finalizeHead);
 		}
 
 		void *FinalizerPool::move(void *client) {
@@ -111,7 +112,7 @@ namespace storm {
 			return true;
 		}
 
-		void FinalizerPool::finalize() {
+		void FinalizerPool::finalize(FinalizerContext &context) {
 			// Early out, so we don't always have to take the lock.
 			Block *finalize = atomicRead(finalizeHead);
 			if (!finalize)
@@ -145,18 +146,31 @@ namespace storm {
 
 				// At this point, we know we're alone in executing finalizers!
 				for (Block *at = finalize; at; at = at->next())
-					finalizeBlock(at);
+					finalizeBlock(context, at);
 
-				// Now, we don't need objects to be valid anymore!
-				atomicWrite(executing, (Block *)null);
+				context.cleanup(this, &FinalizerPool::finalizeTail);
+				// The following lines are done by 'finalizeTail':
 
-				freeChain(finalize);
+				// // Now, we don't need objects to be valid anymore!
+				// atomicWrite(executing, (Block *)null);
+
+				// freeChain(finalize);
 			}
 		}
 
-		void FinalizerPool::finalizeChain(Block *chain) {
+		void FinalizerPool::finalizeTail() {
+			Block *finalize = atomicRead(executing);
+			assert(finalize, L"'finalizeTail' was executed in the wrong context.");
+
+			// We don't need objects to be valid anymore.
+			atomicWrite(executing, (Block *)null);
+
+			freeChain(finalize);
+		}
+
+		void FinalizerPool::finalizeChain(FinalizerContext &context, Block *chain) {
 			for (Block *at = chain; at; at = at->next())
-				finalizeBlock(at);
+				finalizeBlock(context, at);
 
 			// Everything is finalized. Now, we can deallocate it all!
 			freeChain(chain);
@@ -170,13 +184,20 @@ namespace storm {
 			}
 		}
 
-		void FinalizerPool::finalizeBlock(Block *block) {
+		void FinalizerPool::finalizeBlock(FinalizerContext &context, Block *block) {
 			fmt::Obj *at = (fmt::Obj *)block->mem(0);
 			fmt::Obj *to = (fmt::Obj *)block->mem(block->committed());
 
+			os::Thread thread = os::Thread::invalid;
 			for (; at != to; at = fmt::objSkip(at)) {
-				if (fmt::objHasFinalizer(at))
-					fmt::objFinalize(at);
+				if (fmt::objHasFinalizer(at)) {
+					fmt::objFinalize(at, &thread);
+
+					if (thread != os::Thread::invalid) {
+						context.finalize(at, thread);
+					}
+					thread = os::Thread::invalid;
+				}
 			}
 		}
 

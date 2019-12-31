@@ -8,6 +8,7 @@
 #include "Scanner.h"
 #include "Arena.h"
 #include "Predicates.h"
+#include "FinalizerContext.h"
 
 namespace storm {
 	namespace smm {
@@ -100,7 +101,7 @@ namespace storm {
 
 			// Run all finalizers in this block. Most likely only called before the entire Arena is
 			// destroyed, so no need for efficiency.
-			void runAllFinalizers();
+			void runAllFinalizers(FinalizerContext &context);
 
 
 			/**
@@ -194,7 +195,7 @@ namespace storm {
 				bool compact(ArenaTicket &ticket, const PinnedSet &pinned);
 
 				// Run all finalizers in this chunk.
-				void runAllFinalizers();
+				void runAllFinalizers(FinalizerContext &context);
 
 				// Memory summary.
 				void fillSummary(MemorySummary &summary) const;

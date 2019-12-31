@@ -102,7 +102,7 @@ namespace storm {
 			// TODO: We would like to reclaim memory at some point! Remember to update 'memMin' and 'memMax'!
 		}
 
-		void Nonmoving::runFinalizers() {
+		void Nonmoving::runFinalizers(FinalizerContext &context) {
 			Header *first;
 
 			// Grab the list of finalizers to execute.
@@ -113,13 +113,20 @@ namespace storm {
 			} while (atomicCAS(toFinalize, first, null) != first);
 
 
+			os::Thread thread = os::Thread::invalid;
 			for (Header *at = first; at; at = at->next()) {
 				fmt::Obj *obj = at->object();
-				if (first->hasFlag(Header::fFinalize) && fmt::objHasFinalizer(obj))
-					fmt::objFinalize(obj);
+				if (first->hasFlag(Header::fFinalize) && fmt::objHasFinalizer(obj)) {
+					fmt::objFinalize(obj, &thread);
 
-				// Make sure it doesn't go to the finalization queue again!
-				fmt::objClearHasFinalizer(obj);
+					if (thread != os::Thread::invalid) {
+						context.finalize(obj, thread);
+					} else {
+						// Make sure it doesn't go to the finalization queue again!
+						fmt::objClearHasFinalizer(obj);
+					}
+					thread = os::Thread::invalid;
+				}
 			}
 
 			// Free them all!
@@ -136,9 +143,9 @@ namespace storm {
 			}
 		}
 
-		void Nonmoving::runAllFinalizers() {
+		void Nonmoving::runAllFinalizers(FinalizerContext &context) {
 			for (size_t i = 0; i < chunks.size(); i++)
-				chunks[i]->runFinalizers();
+				chunks[i]->runFinalizers(context);
 		}
 
 		struct Sweeper {
@@ -264,14 +271,21 @@ namespace storm {
 			first->makeFree(at - offset(first) - sizeof(Header));
 		}
 
-		void Nonmoving::Chunk::runFinalizers() {
+		void Nonmoving::Chunk::runFinalizers(FinalizerContext &context) {
+			os::Thread thread = os::Thread::invalid;
+
 			for (size_t at = 0; at < size; at += header(at)->size() + sizeof(Header)) {
 				Header *h = header(at);
 				if (h->hasFlag(Header::fFree))
 					continue;
 
 				if (fmt::objHasFinalizer(h->object())) {
-					fmt::objFinalize(h->object());
+					fmt::objFinalize(h->object(), &thread);
+
+					if (thread != os::Thread::invalid) {
+						context.finalize(h->object(), thread);
+					}
+					thread = os::Thread::invalid;
 				}
 			}
 		}
