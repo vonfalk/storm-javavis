@@ -9,7 +9,7 @@ namespace sound {
 	const GcType FlacSound::dataType = {
 		GcType::tFixed,
 		null,
-		address(&FlacSound::destroyData),
+		&FlacSound::dataFinalizer,
 		sizeof(Data),
 		1,
 		{ OFFSET_OF(Data, owner) }
@@ -255,6 +255,10 @@ namespace sound {
 			FLAC__stream_decoder_delete(me->flac);
 			me->flac = null;
 		}
+	}
+
+	void FlacSound::dataFinalizer(void *obj, os::Thread *) {
+		destroyData((Data *)obj);
 	}
 
 	FlacSound *openFlac(RIStream *src) {

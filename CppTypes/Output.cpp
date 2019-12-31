@@ -237,11 +237,11 @@ static void genTypes(wostream &to, World &w) {
 		}
 
 		// Destructor (if any).
-		if (c != null && c->hasDtor()) {
-			to << L"address(&destroy<" << c->name << L">), ";
-		} else {
-			to << L"null, ";
-		}
+		// if (c != null && c->hasDtor()) {
+		// 	to << L"address(&destroy<" << c->name << L">), ";
+		// } else {
+		// 	to << L"null, ";
+		// }
 
 		// VTable (if any).
 		if (hasVTable(t)) {

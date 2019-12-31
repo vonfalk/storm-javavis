@@ -3,6 +3,7 @@
 
 #if STORM_GC == STORM_GC_MPS
 
+#include "FinalizerQueue.h"
 #include "Gc/Code.h"
 #include "Gc/Gc.h"
 #include "Gc/VTable.h"
@@ -78,6 +79,12 @@ namespace storm {
 		// All threads running on this thread.
 		const os::InlineSet<os::UThreadStack> *stacks;
 
+		// Queue of finalizers for this thread.
+		FinalizerQueue finalizers;
+
+		// Is there a thread running finalizers?
+		size_t runningFinalizers;
+
 #if MPS_CHECK_MEMORY
 		// How many allocations ago did we validate memory?
 		nat lastCheck;
@@ -152,6 +159,10 @@ namespace storm {
 	static mps_res_t mpsScanThread(mps_ss_t ss, void *base, void *limit, void *closure) {
 		GcThread *thread = (GcThread *)closure;
 		mps_res_t r;
+
+		// Scan the finalizer queue as well. It is scanned as ambiguous, even though it is
+		// exact. That is fine, however, as it is generally cleared quite quickly.
+		storm::Scan<MpsScanner>::array(ss, &thread->finalizers.head, 1);
 
 		if (limit == stackDummy) {
 			// We shall scan the entire stack! This is a bit special, as we will more or less
@@ -688,6 +699,7 @@ namespace storm {
 		// Note: We will leak memory if "check" fails. This is rare enough that we don't care.
 		GcThread *desc = new GcThread;
 		desc->lastFinalization = 0;
+		desc->runningFinalizers = 0;
 
 #if MPS_CHECK_MEMORY
 		desc->lastCheck = 0;
@@ -1011,6 +1023,32 @@ namespace storm {
 		}
 	}
 
+	// Allocation function used by the finalizer queue.
+	static void *finAlloc(void *data, const GcType *type, size_t size) {
+		GcImpl *me = (GcImpl *)data;
+		return me->allocArray(type, size);
+	}
+
+	static void CODECALL runFinalizers(GcThread *data) {
+		while (void *obj = data->finalizers.pop()) {
+			const GcType *t = GcImpl::typeOf(obj);
+			if (t->finalizer) {
+				os::Thread thread = os::Thread::invalid;
+				(*t->finalizer)(obj, &thread);
+
+				// We ignore if the finalizer screams again.
+#ifdef DEBUG
+				if (thread != os::Thread::invalid) {
+					WARNING(L"The finalizer for " << obj << L" failed to execute, even when run on another thread.");
+				}
+#endif
+			}
+		}
+
+		// Done. Signal.
+		atomicWrite(data->runningFinalizers, 0);
+	}
+
 	void GcImpl::finalizeObject(void *obj) {
 		const GcType *t = typeOf(obj);
 
@@ -1023,21 +1061,25 @@ namespace storm {
 				// Mark the object as destroyed so that we can detect it later.
 				objSetFinalized(fromClient(obj));
 
-				// Run the finalizer itself.
-				typedef void (*Fn)(void *);
-				Fn fn = (Fn)t->finalizer;
-				(*fn)(obj);
+				os::Thread thread = os::Thread::invalid;
+				(*t->finalizer)(obj, &thread);
+
+				// Need to execute on another thread?
+				if (thread != os::Thread::invalid) {
+					GcThread *data = Gc::threadData(this, thread, null);
+					if (!data)
+						throw GcError(L"Attempting to finalize on a thread not registered with the GC!");
+
+					data->finalizers.push(&finAlloc, this, obj);
+					// Note: This is fine since we know only we may start threads at the moment, and we hold a lock.
+					if (atomicRead(data->runningFinalizers) == 0) {
+						atomicWrite(data->runningFinalizers, 1);
+						os::FnCall<void, 2> call = os::fnCall().add(data);
+						os::UThread::spawn(address(&runFinalizers), false, call, &thread);
+					}
+				}
 			}
 		}
-
-		// NOTE: It is not a good idea to replace finalized objects with padding as we might have
-		// finalization cycles, which means that one object depends on another object. If we were to
-		// convert the objects into padding, then the vtables would be destroyed.
-
-		// Replace the object with padding, as it is not neccessary to scan it anymore.
-		// obj = (char *)obj - headerSize;
-		// size_t size = mpsSize(obj);
-		// mpsMakePad(obj, size);
 	}
 
 	bool GcImpl::liveObject(RootObject *o) {

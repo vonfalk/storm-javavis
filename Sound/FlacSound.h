@@ -109,6 +109,7 @@ namespace sound {
 
 		// Finalizer for data objects.
 		static void destroyData(Data *me);
+		static void dataFinalizer(void *object, os::Thread *thread);
 	};
 
 	// Open a vorbis file. Throws on failure.

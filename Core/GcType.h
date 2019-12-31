@@ -1,6 +1,19 @@
 #pragma once
 
+namespace os {
+	class Thread;
+}
+
 namespace storm {
+
+	// Finalizer function.
+	// The garbage collector executes the finalizer function when an object is about to be
+	// collected. If the finalizer needs to be executed on a particular thread, the finalizer
+	// needs to check this. If the finalizer was invoked from a thread other than the expected
+	// one, then the finalizer should not perform any cleanup and instead set the 'thread'
+	// parameter to the thread that should be used instead. The finalizer will then be called
+	// again from the correct thread.
+	typedef void (CODECALL Finalizer)(void *object, os::Thread *thread);
 
 	/**
 	 * Description of a type from the view of the garbage collector. In general, we maintain one
@@ -11,9 +24,6 @@ namespace storm {
 	 * Make sure to allocate these through the garbage collector interface or statically, as these
 	 * might need to be kept separate from other data to ensure the garbage collector will work
 	 * properly.
-	 *
-	 * TODO: Revise the sizes of data types used on 64-bit systems. Some sizes and offsets can be
-	 * stored as 32-bit numbers instead of 64-bit numbers to save space.
 	 */
 	struct GcType {
 		// Possible variations in the description.
@@ -54,9 +64,9 @@ namespace storm {
 		// remote reference. Not declared const due to how we are using it.
 		Type *type;
 
-		// Any finalizer to be run when this type is not reachable any more.
-		// NOTE: this pointer is *not* scanned, so it can not point to any generated code at the moment!
-		const void *finalizer;
+		// Finalizer executed when this type is about to be reclaimed.
+		// NOTE: This pointer is *not* scanned, so it can not point to code generated at runtime.
+		Finalizer *finalizer;
 
 		/**
 		 * Description of pointer offsets:

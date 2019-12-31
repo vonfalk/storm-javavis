@@ -21,7 +21,7 @@ namespace storm {
 	const wchar *Type::DTOR = S("__destroy");
 
 
-	static void CODECALL stormDtor(RootObject *object);
+	static void CODECALL stormDtor(void *object, os::Thread *thread);
 
 	// Set 'type->type' to 'me' while forwarding 'name'. This has to be done before invoking the
 	// parent constructor, since that relies on 'engine()' working properly, which is not the case
@@ -106,8 +106,9 @@ namespace storm {
 
 	Type::~Type() {
 		GcType *g = myGcType;
-		myGcType = null;
-		// Barrier here?
+
+		// Make sure we abandon the GcType before we free it by using an atomic op (they imply barriers).
+		atomicWrite(myGcType, (GcType *)null);
 
 		// The GC will ignore these during shutdown, when it is crucial not to destroy anything too
 		// early.
@@ -124,11 +125,7 @@ namespace storm {
 			if (value())
 				myGcType->kind = GcType::tArray;
 
-			if (myGcType->finalizer) {
-				// Set up the finalizer so that the generic callback is called instead.
-				rawDtor = (DtorFn)myGcType->finalizer;
-				myGcType->finalizer = address(&stormDtor);
-			}
+			// Note: If there was a finalizer specified, we will overwrite it with our own later on anyway.
 		}
 
 		if (engine.has(bootTypes))
@@ -169,7 +166,8 @@ namespace storm {
 	}
 
 	// Our finalizer.
-	static void destroyType(Type *t) {
+	static void CODECALL destroyType(void *obj, os::Thread *) {
+		Type *t = (Type *)obj;
 		t->~Type();
 	}
 
@@ -222,7 +220,7 @@ namespace storm {
 		}
 
 		// Ensure we're finalized.
-		t->finalizer = address(&destroyType);
+		t->finalizer = &destroyType;
 
 		// Now we can allocate the type and let the constructor handle the rest!
 		return new (e, t) Type(e, typeClass, Size(type->size), t);
@@ -707,8 +705,8 @@ namespace storm {
 		return *tHandle;
 	}
 
-	static void CODECALL stormDtor(RootObject *object) {
-		Type *t = runtime::typeOf(object);
+	static void CODECALL stormDtor(void *object, os::Thread *thread) {
+		Type *t = runtime::typeOf((RootObject *)object);
 		if (!t)
 			return;
 
@@ -723,10 +721,10 @@ namespace storm {
 				// We might need to switch threads...
 				TObject *obj = (TObject *)object;
 				if (obj->thread) {
-					os::Thread thread = obj->thread->thread();
-					if (thread != os::Thread::current()) {
-						// Put it in the finalizer pool!
-						t->engine.finalizersFor(thread)->finalize(thread, object, f);
+					os::Thread desired = obj->thread->thread();
+					if (desired != os::Thread::current()) {
+						// We can't execute it on this thread. Tell the GC we need a different one!
+						*thread = desired;
 						return;
 					}
 				}
@@ -738,10 +736,6 @@ namespace storm {
 	}
 
 	void Type::updateDtor(Function *dtor) {
-		// Nothing interesting happens until here.
-		if (!engine.has(bootDone))
-			return;
-
 		if (rawDtorRef) {
 			rawDtorRef->disable();
 			rawDtorRef = null;
@@ -750,12 +744,41 @@ namespace storm {
 
 		// Keep 'rawDtor' updated if we have a destructor.
 		if (dtor) {
-			rawDtorRef = new (this) code::MemberRef(this, OFFSET_OF(Type, rawDtor), dtor->ref(), refContent());
+			// Make sure we have a proper finalizer. Needs to be done before the line below,
+			// otherwise recursion stops at the first level.
+			if (!value())
+				updateChildFinalizers();
 
-			// Make sure we have a proper finalizer.
-			if (!value() && myGcType)
-				myGcType->finalizer = address(&stormDtor);
+			// Set 'rawDtor'.
+			rawDtorRef = new (this) code::MemberRef(this, OFFSET_OF(Type, rawDtor), dtor->ref(), refContent());
 		}
+	}
+
+	void Type::updateChildFinalizers() {
+		// If we have a destructor already, we don't need to keep recursing.
+		if (rawDtor)
+			return;
+
+		if (myGcType) {
+			myGcType->finalizer = &stormDtor;
+		}
+
+		if (chain) {
+			TypeChain::Iter i = chain->children();
+			while (Type *t = i.next()) {
+				t->updateChildFinalizers();
+			}
+		}
+	}
+
+	Type::DtorFn Type::rawDestructor() {
+		if (rawDtor)
+			return rawDtor;
+
+		if (Type *s = super())
+			return s->rawDestructor();
+
+		return null;
 	}
 
 	void Type::updateCtor(Function *ctor) {

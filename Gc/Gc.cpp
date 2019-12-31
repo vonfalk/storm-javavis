@@ -99,6 +99,7 @@ namespace storm {
 
 	GcType *Gc::allocType(const GcType *original) {
 		GcType *t = allocType(GcType::Kind(original->kind), original->type, original->stride, original->count);
+		t->finalizer = original->finalizer;
 		for (Nat i = 0; i < original->count; i++) {
 			t->offset[i] = original->offset[i];
 		}

@@ -204,7 +204,7 @@ namespace storm {
 
 		// Get the raw destructor to be used for this type. Mainly used by the GC for finalization.
 		typedef void (*DtorFn)(void *);
-		inline DtorFn rawDestructor() { return rawDtor; }
+		DtorFn rawDestructor();
 
 		// Get the raw copy constructor for this type. This differs from the one found in the handle
 		// if this Type represents a GC:d object, as this function alwas operates on the actual
@@ -304,6 +304,9 @@ namespace storm {
 
 		// Called whenever a new destructor is added.
 		void updateDtor(Function *dtor);
+
+		// Update finalizers in all child classes.
+		void updateChildFinalizers();
 
 		// Cache of the copy constructor for this type (if any). Updated by 'rawCtorRef'.
 		UNKNOWN(PTR_GC) CopyCtorFn rawCtor;

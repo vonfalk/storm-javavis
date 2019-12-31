@@ -10,14 +10,15 @@ namespace storm {
 	 */
 
 
-	static void destroyThread(Thread *t) {
+	static void destroyThread(void *obj, os::Thread *) {
+		Thread *t = (Thread *)obj;
 		t->~Thread();
 	}
 
 	static const GcType firstDesc = {
 		GcType::tFixedObj,
 		null, // Type
-		address(&destroyThread), // Finalizer
+		&destroyThread, // Finalizer
 		sizeof(Thread), // stride/size
 		0, // # of offsets
 		{},
