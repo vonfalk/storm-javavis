@@ -77,7 +77,7 @@ namespace storm {
 			}
 		}
 
-		FinalizerContext::Worker::Worker(Finish *finish) : avail(0, 0x7FFFFFFF), finish(finish) {
+		FinalizerContext::Worker::Worker(Finish *finish) : avail(0), finish(finish) {
 			finish->addRef();
 		}
 

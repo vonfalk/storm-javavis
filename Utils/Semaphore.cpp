@@ -3,8 +3,8 @@
 
 #ifdef WINDOWS
 
-Semaphore::Semaphore(long count, long maxCount) {
-	semaphore = CreateSemaphore(NULL, count, max(count, maxCount), NULL);
+Semaphore::Semaphore(long count) {
+	semaphore = CreateSemaphore(NULL, count, 0x7FFFFFFF, NULL);
 }
 
 Semaphore::~Semaphore() {
@@ -28,8 +28,7 @@ bool Semaphore::down(nat msTimeout) {
 
 #ifdef POSIX
 
-Semaphore::Semaphore(long count, long maxCount) {
-	UNUSED(maxCount);
+Semaphore::Semaphore(long count) {
 	sem_init(&semaphore, 0, count);
 }
 
