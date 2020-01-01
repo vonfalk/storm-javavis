@@ -12,6 +12,7 @@
 #include "Lib/ToS.h"
 #include "NameSet.h"
 #include "Package.h"
+#include "License.h"
 
 namespace storm {
 
@@ -65,6 +66,15 @@ namespace storm {
 		core->add(new (e) CloneTemplate());
 		core->add(new (e) ToSTemplate());
 		core->add(new (e) EnumOutput());
+
+		// Add the GC license, if any.
+		if (const GcLicense *l = e.gc.license()) {
+			Str *id = new (e) Str(l->id);
+			Str *title = new (e) Str(l->title);
+			Str *author = new (e) Str(l->author);
+			Str *body = new (e) Str(l->body);
+			core->add(new (e) License(id, title, author, body));
+		}
 	}
 
 }

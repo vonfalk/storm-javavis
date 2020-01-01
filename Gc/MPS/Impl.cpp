@@ -1440,6 +1440,61 @@ namespace storm {
 		return new (alloc(&MpsGcWatch::type)) MpsGcWatch(*this);
 	}
 
+	static const GcLicense mpsLicense = {
+		S("MPS"),
+		S("Memory Pool System Kit Open Source License"),
+		S("Ravenbrook Limited"),
+		S("Copyright \u00A9")S(" 2001\u2013")S("2013 Ravenbrook Limited. All rights reserved. This is the open\n")
+		S("source license for the Memory Pool System, but it is not the only one. Contact\n")
+		S("Ravenbrook at mailto:mps-questions@ravenbrook.com if you would like a different\n")
+		S("license.\n")
+		S("\n")
+		S("Redistribution and use in source and binary forms, with or without modification,\n")
+		S("are permitted provided that the following conditions are met:\n")
+		S("\n")
+		S("1. Redistributions of source code must retain the above copyright notice, this\n")
+		S("list of conditions and the following disclaimer.\n")
+		S("\n")
+		S("2. Redistributions in binary form must reproduce the above copyright notice,\n")
+		S("this list of conditions and the following disclaimer in the documentation and/or\n")
+		S("other materials provided with the distribution.\n")
+		S("\n")
+		S("3. Redistributions in any form must be accompanied by information on how to\n")
+		S("obtain complete source code for this software and any accompanying software that\n")
+		S("uses this software. The source code must either be included in the distribution\n")
+		S("or be available for no more than the cost of distribution plus a nominal fee,\n")
+		S("and must be freely redistributable under reasonable conditions. For an\n")
+		S("executable file, complete source code means the source code for all modules it\n")
+		S("contains. It does not include source code for modules or files that typically\n")
+		S("accompany the major components of the operating system on which the executable\n")
+		S("file runs.\n")
+		S("\n")
+		S("THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS \x22")S("AS IS\x22")S(" AND\n")
+		S("ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED\n")
+		S("WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE, OR\n")
+		S("NON-INFRINGEMENT, ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDERS AND\n")
+		S("CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY,\n")
+		S("OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF\n")
+		S("SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS\n")
+		S("INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN\n")
+		S("CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING\n")
+		S("IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY\n")
+		S("OF SUCH DAMAGE.\n")
+		S("\n")
+		S("If the licensing terms aren't suitable for you (for example, you're developing a\n")
+		S("closed-source commercial product or a compiler run-time system) you can easily\n")
+		S("license the MPS under different terms from Ravenbrook. Please write to us at\n")
+		S("mailto:mps-questions@ravenbrook.com for more information.\n")
+		S("\n")
+		S("The open source license for the MPS is the Sleepycat License also known as the\n")
+		S("\x22")S("Berkeley Database License\x22")S(". This license is GPL compatible and OSI\n")
+		S("approved. The MPS is \x22")S("multi licensed\x22")S(" in a manner similar to MySQL.")
+	};
+
+	const GcLicense *GcImpl::license() {
+		return &mpsLicense;
+	}
+
 }
 
 #endif

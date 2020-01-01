@@ -16,6 +16,7 @@
 
 // In case we're included from somewhere other than the Gc module.
 #include "MemorySummary.h"
+#include "License.h"
 #include "Format.h" // for fmt::wordAlign
 
 namespace storm {
@@ -236,6 +237,9 @@ namespace storm {
 
 		// Dump memory information to stdout.
 		void dbg_dump();
+
+		// Get license information. Returns null if none.
+		const GcLicense *license();
 
 		// Allocated type. Size unknown in the header.
 		class Impl;

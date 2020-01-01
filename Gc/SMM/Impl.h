@@ -5,6 +5,7 @@
 
 #include "Arena.h"
 #include "Allocator.h"
+#include "Gc/License.h"
 
 namespace storm {
 
@@ -108,6 +109,9 @@ namespace storm {
 
 		// Dump memory information.
 		void dbg_dump();
+
+		// License.
+		inline const GcLicense *license() { return null; }
 
 	private:
 		friend class SMMWatch;

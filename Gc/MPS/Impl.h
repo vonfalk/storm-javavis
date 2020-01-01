@@ -5,6 +5,7 @@
 
 #include "Lib.h"
 #include "Gc/MemorySummary.h"
+#include "Gc/License.h"
 
 namespace storm {
 
@@ -116,6 +117,9 @@ namespace storm {
 
 		// Debug output.
 		void dbg_dump();
+
+		// License.
+		const GcLicense *license();
 
 	private:
 		friend class MpsGcWatch;

@@ -4,6 +4,7 @@
 #define STORM_HAS_GC
 
 #include "MemorySummary.h"
+#include "License.h"
 
 namespace storm {
 
@@ -102,6 +103,9 @@ namespace storm {
 		void checkMemoryCollect();
 
 		void dbg_dump();
+
+		// License.
+		inline const GcLicense *license() { return null; }
 
 	private:
 		// This is a very simple pool allocator for memory acquired from the OS (it is executable).

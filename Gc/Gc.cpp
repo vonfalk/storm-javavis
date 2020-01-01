@@ -276,6 +276,10 @@ namespace storm {
 		impl->dbg_dump();
 	}
 
+	const GcLicense *Gc::license() {
+		return impl->license();
+	}
+
 	const GcType Gc::weakArrayType = {
 		GcType::tWeakArray,
 		null,
