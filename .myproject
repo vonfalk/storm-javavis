@@ -1,9 +1,9 @@
 #Storm has a bit weird concept of release and debug configurations.
-#The default debug configuration, is acutally a release configuration,
+#The default debug configuration is acutally a release configuration,
 #but with some debug flags added. This is since Storm is painfully slow
 #without compiler optimizations on, and when using other debug features
 #like the debug heap. There is a mode, called "slow" that will enable
-#full debugging like this.
+#the actual debug mode (i.e. no optimizations etc.)
 
 [project]
 #Only build targets containing .mymake-files.
@@ -79,6 +79,23 @@ Compiler+=Gui
 Compiler+=Graphics
 Compiler+=Sound
 Compiler+=SQL
+
+#Selection GC to use.
+[build,mps]
+all+=mps
+
+[build,smm]
+all+=smm
+
+#Add variables that indicate the GC choice. We add them to the entire project, even though
+#it is only necessary for Gc, Compiler, Test and Main
+[mps]
+gcSuffix=_mps
+define+=STORM_GC=STORM_GC_MPS
+
+[smm]
+gcSuffix=_smm
+define+=STORM_GC=STORM_GC_SMM
 
 [!extern_lib]
 #Global build parameters

@@ -1,4 +1,11 @@
 #pragma once
+
+/**
+ * Note: This file is designed to be included from other projects (namely, Compiler) without needing
+ * to have full knowledge of which GC is the active one at the moment. Thus, care needs to be taken
+ * when editing this file not to depend on such knowledge.
+ */
+
 #include "Utils/Exception.h"
 #include "Utils/Lock.h"
 
@@ -8,25 +15,13 @@
 #include "Core/GcCode.h"
 
 // In case we're included from somewhere other than the Gc module.
-#include "Config.h"
 #include "MemorySummary.h"
 #include "Format.h" // for fmt::wordAlign
-
-/**
- * Include all possible GC implementations. Only one will be selected.
- */
-#include "Zero.h"
-#include "MPS/Impl.h"
-#include "SMM/Impl.h"
-
-#ifndef STORM_HAS_GC
-// If this happens, an unselected GC has been selected in Core/Storm.h.
-#error "No GC selected!"
-#endif
 
 namespace storm {
 
 	class Type;
+	class GcImpl;
 
 	/**
 	 * This is the interface to the garbage collector. To reliably run a GC, we need to be able to
@@ -85,62 +80,33 @@ namespace storm {
 		// Unregister a thread from the gc. This has to be done before the thread is destroyed.
 		void detachThread(const os::Thread &thread);
 
-		// Get the thread data for a thread, given a pointer to the implementation. Returns
-		// "default" if the thread is not registered with the GC.
-		static GcImpl::ThreadData threadData(GcImpl *from, const os::Thread &thread, const GcImpl::ThreadData &def);
-
 
 		/**
 		 * Memory allocation.
 		 */
 
 		// Allocate an object of a specific type. Assumes type->type != t(Weak)Array.
-		inline void *alloc(const GcType *type) {
-			assert(type->kind == GcType::tType
-				|| type->kind == GcType::tFixed
-				|| type->kind == GcType::tFixedObj,
-				L"Wrong type for calling alloc().");
-
-			return impl.alloc(type);
-		}
+		void *alloc(const GcType *type);
 
 		// Allocate an object of a specific type in a non-moving pool. We assume that non-moving
 		// objects are rare, and they may thus be implemented less efficient than movable objects.
-		inline void *allocStatic(const GcType *type) {
-			assert(type->kind == GcType::tType
-				|| type->kind == GcType::tFixed
-				|| type->kind == GcType::tFixedObj,
-				L"Wrong type for calling allocStatic().");
-
-			return impl.allocStatic(type);
-		}
+		void *allocStatic(const GcType *type);
 
 		// Allocate a buffer which is not moving nor protected. The memory allocated from here is
 		// also safe to access from threads unknown to the garbage collector.
-		inline GcArray<Byte> *allocBuffer(size_t count) {
-			return impl.allocBuffer(count);
-		}
+		GcArray<Byte> *allocBuffer(size_t count);
 
 		// Allocate an array of objects. Assumes type->type == tArray.
-		inline void *allocArray(const GcType *type, size_t count) {
-			assert(type->kind == GcType::tArray, L"Wrong type for calling allocArray().");
-
-			return impl.allocArray(type, count);
-		}
+		void *allocArray(const GcType *type, size_t count);
 
 		// Allocate an array of weak pointers.
-		inline void *allocWeakArray(size_t count) {
-			return impl.allocWeakArray(&weakArrayType, count);
-		}
+		void *allocWeakArray(size_t count);
 
 		// See if the object is live. An object is considered live until it has been
 		// finalized. Finalized objects may not be collected immediately after they have been
 		// finalized, and therefore they may still appear inside weak sets etc. after that. The GC
 		// implementation marks such objects, so that it is possible to see if they are finalized.
-		static inline Bool liveObject(RootObject *obj) {
-			return GcImpl::liveObject(obj);
-		}
-
+		static Bool liveObject(RootObject *obj);
 
 		/**
 		 * Management of Gc types.
@@ -160,9 +126,7 @@ namespace storm {
 		void freeType(GcType *type);
 
 		// Get the gc type of an allocation.
-		static inline const GcType *typeOf(const void *mem) {
-			return GcImpl::typeOf(mem);
-		}
+		static const GcType *typeOf(const void *mem);
 
 		// Change the gc type of an allocation. Used during startup to change header from a fake one
 		// (to allow basic scanning) to a real one (with a proper Type) when startup has progressed
@@ -185,19 +149,13 @@ namespace storm {
 		 */
 
 		// Allocate a code block with 'code' bytes of machine code storage and 'refs' entries of reference data.
-		inline void *allocCode(size_t code, size_t refs) {
-			return impl.allocCode(fmt::wordAlign(code), refs);
-		}
+		void *allocCode(size_t code, size_t refs);
 
 		// Get the size of a code allocation.
-		static inline size_t codeSize(const void *alloc) {
-			return GcImpl::codeSize(alloc);
-		}
+		static size_t codeSize(const void *alloc);
 
 		// Access the metadata of a code allocation. Note: all references must be scannable at *any* time.
-		static inline GcCode *codeRefs(void *alloc) {
-			return GcImpl::codeRefs(alloc);
-		}
+		static GcCode *codeRefs(void *alloc);
 
 
 		/**
@@ -238,7 +196,7 @@ namespace storm {
 		 * Roots.
 		 */
 
-		typedef GcImpl::Root Root;
+		class Root;
 
 		// Allocate a root that scans an array of pointers. 'count' is the number of pointers
 		// contained in the array, not the size of the allocation.
@@ -246,24 +204,17 @@ namespace storm {
 			return createRoot(data, count, false);
 		}
 
-		inline Root *createRoot(void *data, size_t count, bool ambiguous) {
-			return impl.createRoot(data, count, ambiguous);
-		}
+		Root *createRoot(void *data, size_t count, bool ambiguous);
 
 		// Destroy a root.
-		static inline void destroyRoot(Root *root) {
-			if (root)
-				GcImpl::destroyRoot(root);
-		}
+		static void destroyRoot(Root *root);
 
 
 		/**
 		 * Watch object.
 		 */
 
-		inline GcWatch *createWatch() {
-			return impl.createWatch();
-		}
+		GcWatch *createWatch();
 
 
 		/**
@@ -286,29 +237,16 @@ namespace storm {
 		// Dump memory information to stdout.
 		void dbg_dump();
 
+		// Allocated type. Size unknown in the header.
+		class Impl;
+
 	private:
 		// GcType for weak arrays.
 		static const GcType weakArrayType;
 
 		// GC-specific things. Defined in the header file corresponding to the GC:s entry point.
 		// Called with a reference to this object, so that it can be initialized properly.
-		GcImpl impl;
-
-		// Data for a thread.
-		struct ThreadData {
-			size_t refs;
-			GcImpl::ThreadData data;
-		};
-
-		// Remember all threads.
-		typedef map<uintptr_t, ThreadData> ThreadMap;
-		ThreadMap threads;
-
-		// Lock for manipulating the attached threads.
-		util::Lock threadLock;
-
-		// Destroyed already?
-		Bool destroyed;
+		Impl *impl;
 	};
 
 

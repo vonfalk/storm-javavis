@@ -1,3 +1,14 @@
 []
-# Eventually, we want to be able to switch GC implementations as a parameter to mymake.
+#GC selection is mainly handled in ../.myproject
+#Here, we only need to concern ourselves with keeping the build files separate.
 
+output=Gc<gcSuffix>
+
+[storm_debug]
+buildDir=build<gcSuffix>/
+
+[storm_release]
+buildDir=release<gcSuffix>/
+
+[storm_slow]
+buildDir=slow<gcSuffix>/

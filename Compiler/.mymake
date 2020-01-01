@@ -3,3 +3,6 @@ stormppFlags+=--compiler
 stormProvides+=../Core/
 stormProvides+=../Code/
 stormUses=
+
+#Different versions depending on which GC is used.
+output=Compiler<gcSuffix>

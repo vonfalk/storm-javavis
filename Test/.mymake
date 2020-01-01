@@ -1,5 +1,8 @@
 []
 input=*
 
+#Different versions depending on the GC used.
+output=Test<gcSuffix>
+
 [unix]
 flags+=-Wno-sign-compare

@@ -25,5 +25,9 @@
 #define STORM_GC_SMM 2
 // ...
 
-// Select the GC to use.
-#define STORM_GC STORM_GC_SMM
+#ifndef STORM_GC
+
+// Select the GC to use if nothing else is specified.
+#define STORM_GC STORM_GC_MPS
+
+#endif
