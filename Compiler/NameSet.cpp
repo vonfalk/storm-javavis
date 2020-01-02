@@ -42,7 +42,6 @@ namespace storm {
 	void NameOverloads::add(Named *item) {
 		for (Nat i = 0; i < items->count(); i++)
 			if (storm::equals(item->params, items->at(i)->params)) {
-				PVAR(items->at(i)->identifier());
 				throw TypedefError(::toS(item) + L" is already defined as " + ::toS(items->at(i)->identifier()));
 			}
 

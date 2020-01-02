@@ -12,3 +12,9 @@ buildDir=release<gcSuffix>/
 
 [storm_slow]
 buildDir=slow<gcSuffix>/
+
+[mps]
+define+=STORM_GC=STORM_GC_MPS
+
+[smm]
+define+=STORM_GC=STORM_GC_SMM

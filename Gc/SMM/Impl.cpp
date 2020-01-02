@@ -3,7 +3,6 @@
 
 #if STORM_GC == STORM_GC_SMM
 
-#include "Gc/GcImpl.h"
 #include "Gc/Gc.h"
 #include "Gc/Scan.h"
 #include "Format.h"
@@ -55,7 +54,7 @@ namespace storm {
 		} else {
 			// Either first time allocation, or first time since some other Engine has been
 			// used. New setup.
-			thread = threadData(this, os::Thread::current(), null);
+			thread = Gc::threadData(this, os::Thread::current(), null);
 			if (!thread)
 				throw GcError(L"Trying to allocate memory from a thread not registered with the GC.");
 

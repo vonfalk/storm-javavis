@@ -1,21 +1,20 @@
 #pragma once
 
-#if STORM_GC == STORM_GC_SMM
-#define STORM_HAS_GC
+#ifndef STORM_GC
 
-#include "Arena.h"
-#include "Allocator.h"
-#include "Gc/License.h"
+#include "MemorySummary.h"
+#include "License.h"
 
 namespace storm {
 
-	struct ThreadInfo;
-
 	/**
-	 * The interface to Storm's native memory manager.
+	 * Example of the public interface of a GC implementation.
 	 *
-	 * See SMM.h for details on the implementation.
+	 * This class is used as an implementation when the file Gc.h is included from anywhere other
+	 * than the Gc itself in order to allow inlining of certain functions to improve performance in
+	 * builds that do not use link-time code generation.
 	 */
+
 	class GcImpl {
 	public:
 		// Create.
@@ -24,7 +23,7 @@ namespace storm {
 		// Destroy. This function is always called, but may be called twice.
 		void destroy();
 
-		// Get a memory summary.
+		// Memory usage summary.
 		MemorySummary summary();
 
 		// Do a full GC now.
@@ -34,7 +33,7 @@ namespace storm {
 		Bool collect(Nat time);
 
 		// Type we use to store data with a thread.
-		typedef smm::Thread *ThreadData;
+		typedef void *ThreadData;
 
 		// Register/deregister a thread with us. The Gc interface handles re-registering for us. It
 		// even makes sure that these functions are not called in parallel.
@@ -107,25 +106,14 @@ namespace storm {
 		void checkMemory(const void *object, bool recursive);
 		void checkMemoryCollect();
 
-		// Dump memory information.
+		// Debug output.
 		void dbg_dump();
 
 		// License.
-		const GcLicense *license() { return null; }
-
-	private:
-		friend class SMMWatch;
-
-		// The arena we're using.
-		smm::Arena arena;
-
-		// Get the data for the current thread.
-		ThreadData currentData();
-
-		// Get the current Allocator.
-		smm::Allocator &currentAlloc();
+		const GcLicense *license();
 	};
 
 }
 
 #endif
+

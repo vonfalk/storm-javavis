@@ -91,11 +91,9 @@ all+=smm
 #it is only necessary for Gc, Compiler, Test and Main
 [mps]
 gcSuffix=_mps
-define+=STORM_GC=STORM_GC_MPS
 
 [smm]
 gcSuffix=_smm
-define+=STORM_GC=STORM_GC_SMM
 
 [!extern_lib]
 #Global build parameters

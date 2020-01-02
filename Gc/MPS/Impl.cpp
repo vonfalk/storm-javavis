@@ -4,7 +4,6 @@
 #if STORM_GC == STORM_GC_MPS
 
 #include "FinalizerQueue.h"
-#include "Gc/GcImpl.h"
 #include "Gc/Code.h"
 #include "Gc/Gc.h"
 #include "Gc/VTable.h"
@@ -755,7 +754,7 @@ namespace storm {
 		} else {
 			// Either first time or allocations from another Gc in this thread since last time.
 			// This is expected to happen rarely, so it is ok to be a bit slow here.
-			GcThread *thread = threadData(this, os::Thread::current(), null);
+			GcThread *thread = Gc::threadData(this, os::Thread::current(), null);
 			if (!thread)
 				throw GcError(L"Trying to allocate memory from a thread not registered with the GC.");
 
@@ -1067,7 +1066,7 @@ namespace storm {
 
 				// Need to execute on another thread?
 				if (thread != os::Thread::invalid) {
-					GcThread *data = threadData(this, thread, null);
+					GcThread *data = Gc::threadData(this, thread, null);
 					if (!data)
 						throw GcError(L"Attempting to finalize on a thread not registered with the GC!");
 
