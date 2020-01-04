@@ -2,24 +2,32 @@
 
 notes_from=""
 
+OUT_BASE=$STORM_ROOT/release/storm
 if [[ $1 == "zip" ]]
 then
-    OUT=$STORM_ROOT/release/storm.zip
-    add="7z a $OUT"
+    OUT_EXT=.zip
+    add="7z a"
     exe=".exe"
     lib=".dll"
 else
-    OUT=$STORM_ROOT/release/storm.tar
-    add="tar -rf $OUT"
+    OUT_EXT=.tar
+    add="tar -rf"
     exe=""
     lib=".so"
     notes_from=$1
 fi
+OUT=$OUT_BASE$OUT_EXT
 
 function add_rename {
     cp $1 $2
-    eval $add $2 > /dev/null
+    eval $add $OUT $2 > /dev/null
     rm $2
+}
+
+function add_rename_custom {
+    cp $2 $3
+    eval $add $1 $3 > /dev/null
+    rm $3
 }
 
 if [[ -e $OUT ]]
@@ -29,11 +37,8 @@ fi
 
 cd $STORM_ROOT
 
-# Main executable.
-add_rename release/Storm$exe Storm$exe
-
 # Documentation.
-find doc/ -type f | xargs --delimiter='\n' $add > /dev/null
+find doc/ -type f | xargs --delimiter='\n' $add $OUT > /dev/null
 
 # Release notes.
 if [[ -f $notes_from ]]
@@ -43,11 +48,11 @@ else
     release-notes > doc/release_notes.md
 fi
 
-$add doc/release_notes.md > /dev/null
+$add $OUT doc/release_notes.md > /dev/null
 rm doc/release_notes.md
 
 # Source code.
-find root/ -type f -not -name "*$lib" | grep -v "server-tests/" | xargs --delimiter='\n' $add > /dev/null
+find root/ -type f -not -name "*$lib" | grep -v "server-tests/" | xargs --delimiter='\n' $add $OUT > /dev/null
 
 # Rename and add dynamic libraries
 IFS=$'\n'
@@ -60,11 +65,27 @@ done
 # Add the Emacs plugin.
 add_rename Plugin/emacs.el storm-mode.el
 
+# Copy the file to two separate ones, one for each release:
+cp $OUT ${OUT_BASE}_mps$OUT_EXT
+cp $OUT ${OUT_BASE}_smm$OUT_EXT
+
+# Add the main executables
+add_rename_custom ${OUT_BASE}_mps$OUT_EXT release/Storm_mps$exe Storm$exe
+add_rename_custom ${OUT_BASE}_smm$OUT_EXT release/Storm_smm$exe Storm$exe
+
 if [[ $1 != "zip" ]]
 then
-    if [[ -e $OUT.gz ]]
+    if [[ -e ${OUT_BASE}_mps.tar.gz ]]
     then
-	rm $OUT.gz
+	rm ${OUT_BASE}_mps.tar.gz
     fi
-    gzip $OUT
+    if [[ -e ${OUT_BASE}_smm.tar.gz ]]
+    then
+	rm ${OUT_BASE}_smm.tar.gz
+    fi
+
+    gzip ${OUT_BASE}_mps.tar
+    gzip ${OUT_BASE}_smm.tar
 fi
+
+rm ${OUT}

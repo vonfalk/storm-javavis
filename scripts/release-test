@@ -1,16 +1,14 @@
 #!/bin/bash
 
-if [[ $1 == "zip" ]]
+IN="$1"
+if [[ "$IN" == *.zip ]]
 then
-    IN=$STORM_ROOT/release/storm.zip
     extract="7z x $IN"
 else
-    IN=$STORM_ROOT/release/storm.tar.gz
     extract="tar xzf $IN"
 fi
 
-
-echo "Making sure the release works..."
+echo "Making sure the release $(basename "$IN") works..."
 mkdir -p $STORM_ROOT/release/storm
 cd $STORM_ROOT/release/storm
 

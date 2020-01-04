@@ -12,8 +12,13 @@ echo "core.info" > ${STORM_ROOT}/Compiler/COMPILER.version
 echo "$version" >> ${STORM_ROOT}/Compiler/COMPILER.version
 
 cd $STORM_ROOT
-mm release -ne || { echo "Compilation failed!"; exit 1; }
+
+# Seems to be more or less standard in Git bash at least. If we fail, we will just run the build
+# less efficiently, so it is not a big problem.
+mm release mps -ne || { echo "Compilation (mps) failed!"; exit 1; }
+mm release smm -ne || { echo "Compilation (smm) failed!"; exit 1; }
 
 echo "Done! Running test suite..."
-release/Test --all || { echo "Tests failed!"; exit 1; }
+release/Test_mps --all || { echo "Tests failed (mps)!"; exit 1; }
+release/Test_smm --all || { echo "Tests failed (smm)!"; exit 1; }
 echo "Success!"

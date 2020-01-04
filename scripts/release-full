@@ -18,9 +18,14 @@ fi
 
 release-compile || exit 1
 release-package zip || exit 1
-release-test zip || exit 1
+release-test $STORM_ROOT/release/storm_mps.zip || exit 1
+release-test $STORM_ROOT/release/storm_smm.zip || exit 1
 echo "All seems well, uploading the file..."
 hash=$(git rev-parse HEAD)
-cat $STORM_ROOT/release/storm.zip | ssh filip-www@fprg.se /home/filip-www/upload-storm.sh $version $hash
+function tar_it {
+    cd $STORM_ROOT/release
+    tar cz storm_mps.zip storm_smm.zip
+}
+tar_it | ssh filip-www@fprg.se /home/filip-www/upload-storm.sh $version $hash || { echo "Build failed on the server. Try again!"; exit 1; }
 
 echo "Finished! Remember to push tags!"
