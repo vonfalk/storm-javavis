@@ -12,20 +12,44 @@ annotated release tags in the Git repository.
 Binary releases
 -----------------
 
+Binary releases for Windows (32-bit) and Linux (64-bit) are provided below. For each platform, two
+variants are available depending on which garbage collector is desired.
+
+- MPS releases
+
+  These releases use the [Memory Pool System](http://www.ravenbrook.com/project/mps/) from
+  Ravenbrook Ltd. for memory management. The Memory Pool System is very stable and performant, but
+  is covered by a license requiring source code for all programs using the MPS to be available. It
+  is possible to use the Memory Pool System in other settings as well, but that requires a license
+  from Ravenbrook Ltd.
+
+  - [Windows (32-bit), MPS](storm_mps.zip)
+  - [Linux (64-bit), SMM](storm_mps.tar.gz)
+
+- SMM releases
+
+  These releases use the Storm Memory Manager for memory management, which is a homegrown garbage
+  collector for Storm. The SMM generally performs worse compared to the Memory Pool System
+  (approximately 2-3x runtimes when using the MPS, and occationally longer pause times), and it is
+  not as mature as the MPS. This option does, however, not come with any additional license
+  requirements.
+
+  This option is currently experimental, but seems to work well in many cases.
+
+  - [Windows (32-bit), SMM](storm_smm.zip)
+  - [Linux (64-bit), SMM](storm_smm.tar.gz)
+
+
 To run the compiler, simply unpack the archive file and run `Storm` (`Storm.exe` on Windows), and
 the top loop for Basic Storm should start. For more detaled instructions, see
 [Introduction](md://Introduction/).
 
-- [Windows (32-bit)](storm.zip)
+For Windows, no external libraries are required, except for `dbghelp.dll`, which is included with
+Windows. The Ui library requires Windows 7 or later.
 
-  No external libraries are required, except for `dbghelp.dll`, which is included with Windows. The
-  Ui library requires Windows 7 or later.
-
-- [Linux (X86-64)](storm.tar.gz)
-
-  The C standard library for GCC 6.2.0 or later is required. For the Ui library, Gtk+ 3.10 or later
-  is required. `libpng` and `libjpeg` are also required for proper image decoding, but they are
-  included in the download since there are many incompatible versions of these libraries.
+For Linux, the C standard library for GCC 6.2.0 or later is required. For the Ui library, Gtk+ 3.10
+or later is required. `libpng` and `libjpeg` are also required for proper image decoding, but they
+are included in the download since there are many incompatible versions of these libraries.
 
 
 Source releases
@@ -50,13 +74,19 @@ To build Storm, you need `mymake`, available at [GitHub](http://github.com/fstro
 to make a release build. During development, use `mm Main` or `mm Test` to build the
 development version of the main entry point and the test suite respectively.
 
+To specify which garbage collector to use, either edit `Gc/Config.h`, or compile storm with `mm mps
+Main` or `mm smm Main`.
+
 
 License
----------
+--------
 
-For information on licenses used in the system, type `licenses` in the Basic Storm top loop, or call
-`core.info.licenses` from your code. Note that while Storm is licensed under the LGPL version 2.1,
-Storm uses the [Memory Pool System](http://www.ravenbrook.com/project/mps/) from Ravenbrook Ltd. for
-memory management, which requires the source code for all programs using the MPS being freely
-available unless another license is acquired. Furthermore, it is possible to integrate other garbage
-collectors into Storm if the MPS license is an issue.
+Storm is licensed under the LGPL version 2.1. Note, however, that the MPS release uses the
+[Memory Pool System](http://www.ravenbrook.com/project/mps/) from Ravenbrook Ltd. which has a
+separate license. The SMM is licensed under the LGPL version 2.1, just like Storm.
+
+Parts of the libraries, such as the Ui library, may rely on other third party libraries. To check
+which libraries are used and which licenses apply, type `licenses` in the Basic Storm top loop, or
+call `core.info.licenses` from your code. Note that this only shows loaded libraries. You might want
+to use the library you are interested in (e.g. by typing `help ui`) to make sure they are loaded
+before querying the license information.
