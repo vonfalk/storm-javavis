@@ -7,4 +7,5 @@ prepared="$2"
 
 release-compile "$version" || { echo "Compilation failed."; exit 1; }
 release-package "$packaged"
-release-test || { echo "The packaged compiler does not seem to be working."; exit 1; }
+release-test $STORM_ROOT/release/storm_mps.tar.gz || { echo "The packaged compiler (mps) does not seem to be working."; exit 1; }
+release-test $STORM_ROOT/release/storm_smm.tar.gz || { echo "The packaged compiler (smm) does not seem to be working."; exit 1; }

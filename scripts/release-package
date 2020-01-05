@@ -37,6 +37,8 @@ fi
 
 cd $STORM_ROOT
 
+echo "Packing release..."
+
 # Documentation.
 find doc/ -type f | xargs --delimiter='\n' $add $OUT > /dev/null
 
@@ -67,7 +69,7 @@ add_rename Plugin/emacs.el storm-mode.el
 
 # Copy the file to two separate ones, one for each release:
 cp $OUT ${OUT_BASE}_mps$OUT_EXT
-cp $OUT ${OUT_BASE}_smm$OUT_EXT
+mv $OUT ${OUT_BASE}_smm$OUT_EXT
 
 # Add the main executables
 add_rename_custom ${OUT_BASE}_mps$OUT_EXT release/Storm_mps$exe Storm$exe
@@ -88,4 +90,4 @@ then
     gzip ${OUT_BASE}_smm.tar
 fi
 
-rm ${OUT}
+echo "Done!"
