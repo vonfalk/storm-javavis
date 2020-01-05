@@ -5,6 +5,6 @@
 version="$1"
 prepared="$2"
 
-release-compile "$version" || { echo "Compilation failed."; exit 1 }
+release-compile "$version" || { echo "Compilation failed."; exit 1; }
 release-package "$packaged"
 release-test || { echo "The packaged compiler does not seem to be working."; exit 1; }
