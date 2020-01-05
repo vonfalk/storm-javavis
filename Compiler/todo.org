@@ -1,6 +1,5 @@
-* SMM bugs/improvements [9/14]
-  - [ ] Examine why the SMM Gc has much worse performance when running the main Storm binary compared
-    to the test suite.
+* SMM bugs/improvements [10/14]
+  - [ ] Investigate why compiling SMM with O2 (at least on the build server) breaks it.
   - [ ] Investigate how often the history should be advanced. It seems to be wasteful to always increase it
     whenever we do some GC work since that happens quite often for the nursery generation. It would be more
     useful to tick the history whenever we have a gen-1 or larger collection, or whenever we have collected
@@ -12,6 +11,8 @@
   - [ ] We probably want a fenwick tree to provide quick range queries regarding write barriers (perhaps
     other operations as well) in the VMAlloc system (Note: This is not critical at the moment, as generations
     prefer to allocate 32K blocks, which is exactly the resolution of the VMAlloc system).
+  - [X] Examine why the SMM Gc has much worse performance when running the main Storm binary compared
+    to the test suite.
   - [X] Attempt to collect higher generations that are almost full before attempting to collect lower
     generations. Otherwise, recently allocated objects may propagate all the way to the highest generation
     instantly.

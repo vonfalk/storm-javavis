@@ -88,7 +88,7 @@ all+=mps
 all+=smm
 
 #Add variables that indicate the GC choice. We add them to the entire project, even though
-#it is only necessary for Gc, Compiler, Test and Main
+#it is only necessary for Gc, Test and Main
 [mps]
 gcSuffix=_mps
 
@@ -113,10 +113,14 @@ define+=FAST_DEBUG
 flags+=/Zi /Fd<path|buildDir>
 linkFlags+=/DEBUG /INCREMENTAL:NO /PDB:<path|execDir><titleNoExt|output>.pdb
 
+[unix]
+flags=-std=c++11
+flags+=<opt>
+
+
 [storm_debug,unix]
 #We do not need that aggressive optimizations...
-flags=-std=c++11
-flags+=-O1
+opt+=-O1
 #Generate debug information.
 flags+=-g
 cflags+=-g
@@ -136,8 +140,7 @@ link=lib /LTCG <files> /nologo /OUT:<output>
 
 [storm_release,unix]
 #We do not need O3
-flags=-std=c++11
-flags+=-O2
+opt=-O2
 
 [pic,unix]
 #All libraries need to be compiled with the -fPIC flag. At least on X86-64.
