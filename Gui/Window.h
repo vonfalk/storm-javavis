@@ -147,7 +147,9 @@ namespace gui {
 		virtual Bool STORM_FN onMouseHScroll(Point at, Int delta);
 
 		// Mouse enter/mouse leave. Mouse enter always gets called, and is to return true if the
-		// 'leave' notification is required.
+		// 'leave' notification is required. The mouse is considered inside the window only as long
+		// as the mouse is directly on top of this window, i.e. not when the current window is
+		// obscured by a child window.
 		virtual void STORM_FN onMouseEnter();
 		virtual void STORM_FN onMouseLeave();
 
@@ -213,6 +215,9 @@ namespace gui {
 
 		// Currently drawing anything to this window?
 		Bool drawing;
+
+		// Is the mouse inside this window? (Used on Win32 to implement enter/leave notifications)
+		Bool mouseInside;
 
 		// Text.
 		const Str *myText;

@@ -17,7 +17,7 @@ namespace gui {
 
 	Window::Window() :
 		myHandle(invalid), myParent(null), myRoot(null),
-		myVisible(true), drawing(false),
+		myVisible(true), drawing(false), mouseInside(false),
 		gdkWindow(null), gTimer(null),
 		myPos(0, 0, 40, 40) /* large enought to not generate warnings in Gtk+ */ {
 
@@ -239,7 +239,18 @@ namespace gui {
 				return msgResult(0);
 			break;
 		case WM_MOUSEMOVE:
-			TODO(L"Implement onMouseLeave!");
+			if (!mouseInside) {
+				TRACKMOUSEEVENT track;
+				track.cbSize = sizeof(track);
+				track.dwFlags = TME_LEAVE;
+				track.hwndTrack = handle().hwnd();
+				track.dwHoverTime = 0;
+				TrackMouseEvent(&track);
+
+				mouseInside = true;
+				onMouseEnter();
+			}
+
 			if (onMouseMove(mousePos(msg)))
 				return msgResult(0);
 			break;
@@ -250,6 +261,10 @@ namespace gui {
 		case WM_MOUSEHWHEEL:
 			if (onMouseVScroll(mouseAbsPos(handle(), msg), GET_WHEEL_DELTA_WPARAM(msg.wParam)))
 				return msgResult(0);
+			break;
+		case WM_MOUSELEAVE:
+			mouseInside = false;
+			onMouseLeave();
 			break;
 		}
 		return noResult();
