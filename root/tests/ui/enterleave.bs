@@ -1,0 +1,47 @@
+use ui;
+use core:geometry;
+
+class ELCont extends Container {
+	Str label;
+
+	init(Str label) {
+		init() { label = label; }
+	}
+
+	void onMouseEnter() : override {
+		print("Entered " # label);
+	}
+
+	void onMouseLeave() : override {
+		print("Left " # label);
+	}
+}
+
+class ELWin extends Frame {
+	init() {
+		init("Enter/leave", Size(300, 300)) {}
+
+		ELCont l1("A");
+		l1.pos = Rect(50, 50, 250, 250);
+		add(l1);
+
+		ELCont l2("B");
+		l2.pos = Rect(50, 50, 100, 100);
+		l1.add(l2);
+
+		create();
+	}
+
+	void onMouseEnter() : override {
+		print("Entered main window");
+	}
+
+	void onMouseLeave() : override {
+		print("Left main window");
+	}
+}
+
+void enterLeave() {
+	ELWin win;
+	win.waitForClose;
+}

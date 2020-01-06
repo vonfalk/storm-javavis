@@ -1,4 +1,4 @@
-* General [3/8]
+* General [3/9]
   - [ ] There is a chance that copying the rendered cairo surface on Wayland is done in software.
   - [ ] Graphics::fill does not behave correctly with regards to gradient's coordinate systems.
   - [ ] Add a way to create proper modal dialogs with return codes.
@@ -6,6 +6,7 @@
         to handle text separatly in the two cases.
   - [ ] Investigate why GTK_MT_HW_COPY experiences fairly large (around 500 ms) stutters from time to time.
         This could be due to our handling of double buffers, but also due to Gtk+ not liking that we're bypassing it.
+  - [ ] 'waitForClose' when called on a frame that has not been shown blocks forever. This is not ideal.
   - [X] Window should probably update 'myPos' whenever a window is resized.
   - [X] Investigate why OpenGL rendering fails when maximizing a window containing GL rendering over X forwarding to Windows.
   - [X] Figure out a way to unify the onKey and onChar messages. They are different on Win32 and the same on GTK.

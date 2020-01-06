@@ -529,8 +529,8 @@ namespace gui {
 		Signal<gboolean, Window, GdkEvent *>::Connect<&Window::onButton>::to(widget, "button-press-event", engine());
 		Signal<gboolean, Window, GdkEvent *>::Connect<&Window::onButton>::to(widget, "button-release-event", engine());
 		Signal<gboolean, Window, GdkEvent *>::Connect<&Window::onMotion>::to(widget, "motion-notify-event", engine());
-		Signal<gboolean, Window, GdkEvent *>::Connect<&Window::onEnter>::to(drawWidget(), "enter-notify-event", engine());
-		Signal<gboolean, Window, GdkEvent *>::Connect<&Window::onLeave>::to(drawWidget(), "leave-notify-event", engine());
+		Signal<gboolean, Window, GdkEvent *>::Connect<&Window::onEnter>::to(widget, "enter-notify-event", engine());
+		Signal<gboolean, Window, GdkEvent *>::Connect<&Window::onLeave>::to(widget, "leave-notify-event", engine());
 		Signal<gboolean, Window, GdkEvent *>::Connect<&Window::onScroll>::to(widget, "scroll-event", engine());
 		Signal<void, Window, GdkRectangle *>::Connect<&Window::onSize>::to(widget, "size-allocate", engine());
 		Signal<void, Window>::Connect<&Window::onRealize>::to(drawWidget(), "realize", engine());
@@ -890,6 +890,7 @@ namespace gui {
 			mask |= GDK_BUTTON_RELEASE_MASK;
 			mask |= GDK_SCROLL_MASK;
 			mask |= GDK_SMOOTH_SCROLL_MASK;
+			mask |= GDK_LEAVE_NOTIFY_MASK;
 			gdk_window_set_events(window, GdkEventMask(mask));
 		}
 	}

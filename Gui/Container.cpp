@@ -134,12 +134,20 @@ namespace gui {
 #ifdef GUI_GTK
 
 	bool Container::create(Container *parent, nat id) {
-		initWidget(parent, gtk_fixed_new());
+		// We need an event box to catch events.
+		GtkWidget *box = gtk_event_box_new();
+
+		GtkWidget *container = basic_new();
+		gtk_container_add(GTK_CONTAINER(box), container);
+		gtk_widget_show(container);
+
+		initWidget(parent, box);
 		return true;
 	}
 
 	Basic *Container::container() {
-		return BASIC(handle().container());
+		// There is a BASIC layout inside the frame.
+		return BASIC(gtk_bin_get_child(GTK_BIN(handle().widget())));
 	}
 
 #endif
