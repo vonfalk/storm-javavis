@@ -194,8 +194,10 @@ namespace code {
 		cloned(result, env);
 		code = new (this) Array<Entry>(*code);
 		code->deepCopy(env);
-		nextLabels = new (this) Array<Label>(*nextLabels);
-		nextLabels->deepCopy(env);
+		if (nextLabels) {
+			nextLabels = new (this) Array<Label>(*nextLabels);
+			nextLabels->deepCopy(env);
+		}
 		params = new (this) Array<Nat>(*params);
 		params->deepCopy(env);
 		vars = new (this) Array<IVar>(*vars);
