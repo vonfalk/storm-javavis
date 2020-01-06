@@ -354,8 +354,11 @@ class ArrayData extends Data {
 
 	void update(Workspace work, unsafe:RawPtr object, Nat offset) : override {
 		// TODO: Extract the actual size!
+		print("Size: ${object.readSize}");
 		unsafe:RawPtr data = object.readPtr(object.readSize - core:asm:sPtr.current);
-		print("Count ${data.readSize}");
+		if (data.any) {
+			print("Count ${data.readSize}, ${data.readFilled}");
+		}
 	}
 
 private:

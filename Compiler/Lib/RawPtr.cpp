@@ -102,9 +102,12 @@ namespace storm {
 	}
 
 	Nat CODECALL rawPtrCount(const void *ptr) {
+		if (!ptr)
+			return 0;
+
 		const GcType *t = runtime::gcTypeOf(ptr);
 		if (t->kind == GcType::tArray) {
-			return Nat(*(const size_t *)ptr);
+			return Nat(((GcArray<byte> *)ptr)->count);
 		} else if (t->kind == GcType::tWeakArray) {
 			return Nat(((GcWeakArray<void *> *)ptr)->count());
 		} else {
@@ -112,7 +115,24 @@ namespace storm {
 		}
 	}
 
+	Nat CODECALL rawPtrFilled(const void *ptr) {
+		if (!ptr)
+			return 0;
+
+		const GcType *t = runtime::gcTypeOf(ptr);
+		if (t->kind == GcType::tArray) {
+			return Nat(((GcArray<byte> *)ptr)->filled);
+		} else if (t->kind == GcType::tWeakArray) {
+			return Nat(((GcWeakArray<void *> *)ptr)->splatted());
+		} else {
+			return 1;
+		}
+	}
+
 	Nat CODECALL rawPtrSize(const void *ptr) {
+		if (!ptr)
+			return 0;
+
 		const GcType *t = runtime::gcTypeOf(ptr);
 		return t->stride;
 	}
@@ -180,17 +200,18 @@ namespace storm {
 		add(nativeFunction(e, Value(StormInfo<Double>::type(e)), S("readDouble"), vo, address(&rawPtrRead<Double>)));
 		add(nativeFunction(e, me, S("readPtr"), vo, address(&rawPtrRead<void *>)));
 		add(nativeFunction(e, Value(StormInfo<Nat>::type(e)), S("readCount"), v, address(&rawPtrCount)));
+		add(nativeFunction(e, Value(StormInfo<Nat>::type(e)), S("readFilled"), v, address(&rawPtrFilled)));
 		add(nativeFunction(e, Value(StormInfo<Nat>::type(e)), S("readSize"), v, address(&rawPtrSize)));
 
 		// Create from pointers:
 		Value obj(StormInfo<Object>::type(e));
-		Array<Value> *objPar = valList(e, 2, me, obj);
+		Array<Value> *objPar = valList(e, 2, me.asRef(), obj);
 		add(inlinedFunction(e, Value(), Type::CTOR, objPar, fnPtr(e, &rawPtrInit)));
 		Value tobj(StormInfo<TObject>::type(e));
-		Array<Value> *tobjPar = valList(e, 2, me, tobj);
+		Array<Value> *tobjPar = valList(e, 2, me.asRef(), tobj);
 		add(inlinedFunction(e, Value(), Type::CTOR, tobjPar, fnPtr(e, &rawPtrInit)));
 		Value variant(StormInfo<Variant>::type(e));
-		Array<Value> *variantPar = valList(e, 2, me, variant);
+		Array<Value> *variantPar = valList(e, 2, me.asRef(), variant);
 		add(inlinedFunction(e, Value(), Type::CTOR, variantPar, fnPtr(e, &rawPtrInit)));
 
 		// Inspect the data.
