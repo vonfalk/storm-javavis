@@ -18,7 +18,3 @@ define+=STORM_GC=STORM_GC_MPS
 
 [smm]
 define+=STORM_GC=STORM_GC_SMM
-
-[smm,unix]
-#Something breaks when running with -O2
-opt=-O2
