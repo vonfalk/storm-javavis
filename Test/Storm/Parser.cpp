@@ -271,7 +271,7 @@ BEGIN_TEST(SyntaxContext, BS) {
 		p->parse(s, empty);
 
 		CHECK(p->hasError());
-		CHECK_EQ(p->error().where.pos, 14);
+		CHECK_EQ(p->error().where.start, 14);
 	}
 
 	// Make sure the context parameter to 'parseApprox' works properly.
