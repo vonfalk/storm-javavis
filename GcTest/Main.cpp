@@ -32,7 +32,7 @@ struct Nonmoving {
 	TypeStore *store;
 };
 
-void CODECALL nonmovingFinalizer(Nonmoving *obj) {
+void nonmovingFinalizer(void *obj, os::Thread *) {
 	PLN(L"Finalizing nonmoving object: " << obj);
 }
 
@@ -55,7 +55,8 @@ Nonmoving *nonmoving;
 
 size_t globalWeakPos = 0;
 
-void CODECALL finalizer(Finalizable *fn) {
+void CODECALL finalizer(void *obj, os::Thread *) {
+	Finalizable *fn = (Finalizable *)obj;
 	PLN(L"Finalizing object: " << fn << L", " << fn->data);
 
 	// Check so that it is *not* present in the weak array!
@@ -75,7 +76,7 @@ void CODECALL finalizer(Finalizable *fn) {
 static GcType finalizeType = {
 	GcType::tFixed,
 	null,
-	address(&finalizer),
+	&finalizer,
 	sizeof(Finalizable),
 	0,
 	{ 0 }
@@ -165,7 +166,7 @@ NOINLINE void createGlobals(Gc &gc) {
 
 	globals.store->nonmoving = gc.allocType(GcType::tFixed, null, sizeof(Nonmoving), 1);
 	globals.store->nonmoving->offset[0] = 0;
-	globals.store->nonmoving->finalizer = address(&nonmovingFinalizer);
+	globals.store->nonmoving->finalizer = &nonmovingFinalizer;
 
 	globals.weak = (GcWeakArray<Finalizable> *)gc.allocWeakArray(30);
 	nonmoving = globals.nonmoving = (Nonmoving *)gc.allocStatic(globals.store->nonmoving);
