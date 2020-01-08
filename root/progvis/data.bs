@@ -44,10 +44,13 @@ class DataWithCaption extends Data {
 
 	void draw(Graphics g, Bool active) : override {
 		Size cSz = captionSz;
-		cSz.w = max(cSz.w, wrap.size.w);
+		Size wSz = wrap.size;
+		cSz.w = max(cSz.w, wSz.w);
 		g.fill(Rect(pos, cSz), if (active) { captionActiveBg; } else { captionBg; });
 		g.draw(caption, captionFg, pos + compositeBorder);
 		g.draw(Rect(pos, cSz), captionFg);
+
+		wrap.size(Size(cSz.w, wSz.h));
 
 		wrap.pos = pos + Size(0, captionSz.h);
 		wrap.draw(g, active);
@@ -322,8 +325,7 @@ private:
 class ArrayData extends Data {
 	init(core:lang:Type type) {
 		init() {
-			type = type;
-			typeSize = type.size.current;
+			typeInfo = TypeInfo(type, core:lang:Value(type).isValue, false);
 		}
 	}
 
@@ -353,17 +355,39 @@ class ArrayData extends Data {
 	}
 
 	void update(Workspace work, unsafe:RawPtr object, Nat offset) : override {
-		// TODO: Extract the actual size!
-		print("Size: ${object.readSize}");
-		unsafe:RawPtr data = object.readPtr(object.readSize - core:asm:sPtr.current);
-		if (data.any) {
-			print("Count ${data.readSize}, ${data.readFilled}");
+		// TODO: Extract the actual offset!
+		Nat dataOffset = object.readSize - core:asm:sPtr.current;
+		unsafe:RawPtr data = object.readPtr(offset + dataOffset);
+		if (data.empty) {
+			// TODO: Write "empty" or something like that.
+			return;
 		}
+
+		Nat stride = data.readSize;
+		Nat count = data.readFilled;
+
+		// Update the elements that are already present.
+		for (Nat i = 0; i < content.count; i++) {
+			content[i].value.update(work, data, i*stride);
+		}
+
+		// Create new elements.
+		for (Nat i = content.count; i < count; i++) {
+			Var v(i, work.createData(typeInfo, data, i*stride));
+			content << v;
+			v.value.update(work, data, i*stride);
+		}
+
+		// Remove any extra.
+		while (content.count > count) {
+			content.pop();
+		}
+
+		invalidateSize();
 	}
 
 private:
-	core:lang:Type type;
-	Nat typeSize;
+	TypeInfo typeInfo;
 
 	class Var on Render {
 		Text text;
@@ -371,7 +395,7 @@ private:
 
 		init(Nat id, Data value) {
 			init() {
-				text = Text(id.toS, dataFont);
+				text = Text(id.toS + ":", dataFont);
 				value = value;
 			}
 		}

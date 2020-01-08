@@ -260,7 +260,7 @@ private:
 	}
 
 	// Create a new node for some object that is a part of another object.
-	Data createData(TypeInfo info, unsafe:RawPtr object, Nat offset) {
+	public Data createData(TypeInfo info, unsafe:RawPtr object, Nat offset) {
 		if (info.isRef | !info.isValue) {
 			return Pointer();
 		} else if (c = convertPrimitive(info.type, object, offset)) {
@@ -286,15 +286,24 @@ private:
 			result.add(m.name, m.offset, createData(m.type, object, offset + m.offset), m.first);
 		}
 
-		DataWithCaption(result, type.name);
+		DataWithCaption(result, typeTitle(type));
 	}
 
 	// Create a new node for an array.
 	Data createArray(core:lang:ArrayType type, unsafe:RawPtr object, Nat offset) {
 		if (t = type.param.type) {
-			DataWithCaption(ArrayData(t), t.name);
+			DataWithCaption(ArrayData(t), typeTitle(type));
 		} else {
 			UnknownData();
 		}
 	}
+}
+
+private Str typeTitle(core:lang:Type type) on Compiler {
+	if (type as core:lang:ArrayType) {
+		if (t = type.param.type)
+			return typeTitle(t) + "[]";
+	}
+
+	type.name;
 }

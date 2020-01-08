@@ -92,10 +92,13 @@ class WithCaption extends Drawable {
 
 	void draw(Graphics g, Bool active) : override {
 		Size cSz = captionSz;
-		cSz.w = max(cSz.w, wrap.size.w);
+		Size wSz = wrap.size;
+		cSz.w = max(cSz.w, wSz.w);
 		g.fill(Rect(pos, cSz), if (active) { captionActiveBg; } else { captionBg; });
 		g.draw(caption, captionFg, pos + compositeBorder);
 		g.draw(Rect(pos, cSz), captionFg);
+
+		wrap.size(Size(cSz.w, wSz.h));
 
 		wrap.pos = pos + Size(0, captionSz.h);
 		wrap.draw(g, active);

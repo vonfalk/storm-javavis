@@ -1,5 +1,14 @@
 void main() {
-	Int[] x;
-	x << 8;
-	x << 10;
+	Int[][] result;
+	for (Int i = 0; i < 5; i++) {
+		result << create(i + 1);
+	}
+}
+
+Int[] create(Int a) {
+	Int[] r;
+	for (Int i = 0; i < a; i++) {
+		r << i;
+	}
+	r;
 }
