@@ -6,7 +6,9 @@ namespace storm {
 
 #if defined(WINDOWS)
 
-#error "Not implemented yet!"
+	// Not needed on Windows, as long as we don't use std::exception_ptr to store GC allocated
+	// exceptions (which we don't want to do on POSIX either). Thus, we only need to stub out the
+	// API here.
 
 #elif defined(POSIX)
 

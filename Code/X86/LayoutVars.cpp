@@ -76,6 +76,10 @@ namespace code {
 			*dest << alignAs(Size::sPtr);
 			*dest << dest->meta();
 
+			// Total stack size.
+			*dest << dat(ptrConst(layout->last()));
+
+			// All variables.
 			Array<Var> *vars = src->allVars();
 
 			for (nat i = 0; i < vars->count(); i++) {

@@ -1,5 +1,6 @@
 #include "stdafx.h"
 #include "Binary.h"
+#include "Exception.h"
 #include "Core/StrBuf.h"
 
 namespace code {
@@ -21,6 +22,8 @@ namespace code {
 
 		LabelOutput *labels = arena->labelOutput();
 		arena->output(tfm, labels);
+
+		fillTryParts(tfm, labels);
 
 		if (tfm->meta().id < labels->offsets->count()) {
 			metaOffset = labels->offsets->at(tfm->meta().id);
@@ -75,12 +78,21 @@ namespace code {
 		{},
 	};
 
+	const GcType Binary::tryInfoArrayType = {
+		GcType::tArray,
+		null,
+		null,
+		sizeof(TryInfo),
+		1,
+		{ OFFSET_OF(TryInfo, type) },
+	};
+
 	void Binary::fillParts(Listing *src) {
 		Array<code::Part> *srcParts = src->allParts();
 
 		parts = runtime::allocArray<Part *>(engine(), &partArrayType, srcParts->count());
 
-		for (nat i = 0; i < srcParts->count(); i++) {
+		for (Nat i = 0; i < srcParts->count(); i++) {
 			code::Part part = srcParts->at(i);
 			Array<Var> *vars = src->partVars(part);
 
@@ -91,8 +103,51 @@ namespace code {
 			for (nat j = 0; j < vars->count(); j++) {
 				const Var &v = vars->at(j);
 				p->vars[j].id = v.key();
-				p->vars[j].freeOpt = src->freeOpt(v);
-				p->vars[j].size = v.size();
+
+				Nat flags = src->freeOpt(v);
+				if (flags & freeOnException) {
+					// No additional flags needed, but we set sPtr for good measure.
+					flags |= Variable::sPtr;
+				} else if (v.size() == Size::sPtr) {
+					flags |= Variable::sPtr;
+				} else if (v.size() == Size::sByte) {
+					flags |= Variable::sByte;
+				} else if (v.size() == Size::sInt) {
+					flags |= Variable::sInt;
+				} else if (v.size() == Size::sLong) {
+					flags |= Variable::sLong;
+				} else {
+					throw InvalidValue(L"Can only use bytes, integers, longs and pointers for variable cleanup. "
+						L"Specify 'freePtr' to get a pointer to the value instead!");
+				}
+			}
+		}
+	}
+
+	void Binary::fillTryParts(Listing *src, LabelOutput *labels) {
+		Nat count = 0;
+
+		Array<code::Block> *blocks = src->allBlocks();
+		for (Nat i = 0; i < blocks->count(); i++) {
+			if (src->tryResume(blocks->at(i)) != Label())
+				count++;
+		}
+
+		if (count == 0) {
+			tryParts = 0;
+			return;
+		}
+
+		tryParts = runtime::allocArray<TryInfo>(engine(), &tryInfoArrayType, count);
+		Nat at = 0;
+		for (Nat i = 0; i < blocks->count(); i++) {
+			Block b = blocks->at(i);
+			Label l = src->tryResume(b);
+			if (l != Label()) {
+				tryParts->v[at].partId = code::Part(b).key();
+				tryParts->v[at].resumeOffset = labels->offsets->at(l.id);
+				tryParts->v[at].type = src->tryType(b);
+				at++;
 			}
 		}
 	}
@@ -109,16 +164,17 @@ namespace code {
 	}
 
 	void Binary::cleanup(StackFrame &frame, Variable &v) {
-		if ((v.freeOpt & freeOnException) != 0) {
+		if (v.flags & freeOnException) {
 			byte *data = (byte *)address();
 			size_t *table = (size_t *)(data + metaOffset);
 
-			void *freeFn = (void *)table[v.id*2];
-			size_t offset = table[v.id*2 + 1];
+			// Element #0 is the total size. Table starts at one pointer offset.
+			void *freeFn = (void *)table[v.id*2 + 1];
+			size_t offset = table[v.id*2 + 2];
 
 			void *ptr = frame.toPtr(offset);
 
-			if (v.freeOpt & freeIndirection)
+			if (v.flags & freeIndirection)
 				ptr = *(void **)ptr;
 
 			typedef void (*FPtr)(void *v);
@@ -126,25 +182,78 @@ namespace code {
 			typedef void (*FInt)(Int v);
 			typedef void (*FLong)(Long v);
 
-			if (v.freeOpt & freePtr) {
+			if (v.flags & freePtr) {
 				FPtr p = (FPtr)freeFn;
 				(*p)(ptr);
-			} else if (v.size == Size::sPtr) {
-				FPtr p = (FPtr)freeFn;
-				(*p)(*(void **)ptr);
-			} else if (v.size == Size::sByte) {
-				FByte p = (FByte)freeFn;
-				(*p)(*(Byte *)ptr);
-			} else if (v.size == Size::sInt) {
-				FInt p = (FInt)freeFn;
-				(*p)(*(Int *)ptr);
-			} else if (v.size == Size::sLong) {
-				FLong p = (FLong)freeFn;
-				(*p)(*(Long *)ptr);
 			} else {
-				WARNING(L"Unsupported size for destruction (" + ::toS(v.size) + L". Use 'freePtr' instead!");
+				switch (v.flags & Variable::sMask) {
+				case Variable::sPtr: {
+					FPtr p = (FPtr)freeFn;
+					(*p)(*(void **)ptr);
+					break;
+				}
+				case Variable::sByte: {
+					FByte p = (FByte)freeFn;
+					(*p)(*(Byte *)ptr);
+					break;
+				}
+				case Variable::sInt: {
+					FInt p = (FInt)freeFn;
+					(*p)(*(Int *)ptr);
+					break;
+				}
+				case Variable::sLong: {
+					FLong p = (FLong)freeFn;
+					(*p)(*(Long *)ptr);
+					break;
+				}
+				}
 			}
 		}
+	}
+
+	bool Binary::hasCatch(Nat active, RootObject *exception, Resume &resume) {
+		if (!tryParts)
+			return false;
+
+		for (Nat i = active; i != code::Part().key(); i = parts->v[i]->prev) {
+			// TODO: We might want to be able to catch multiple exceptions!
+			TryInfo *part = findTryInfo(i);
+			if (!part)
+				continue;
+
+			// Is it the one we're looking for?
+			if (runtime::isA(exception, part->type)) {
+				byte *data = (byte *)address();
+				resume.ip = data + part->resumeOffset;
+
+				size_t *table = (size_t *)(data + metaOffset);
+				resume.stackDepth = table[0];
+
+				resume.cleanUntil = i;
+
+				return true;
+			}
+		}
+
+		return false;
+	}
+
+	Binary::TryInfo *Binary::findTryInfo(Nat part) {
+		struct Compare {
+			inline bool operator() (const TryInfo &l, Nat r) const {
+				return l.partId < r;
+			}
+		};
+
+		TryInfo *end = tryParts->v + tryParts->count;
+		TryInfo *found = std::lower_bound(tryParts->v, end, part, Compare());
+		if (found == end)
+			return null;
+
+		if (found->partId != part)
+			return null;
+		return found;
 	}
 
 }

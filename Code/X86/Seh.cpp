@@ -81,6 +81,22 @@ namespace code {
 				}
 			}
 
+			// Check if we want to catch any object at all in this frame.
+			bool hasCatch() {
+				Binary *owner = codeBinary(self);
+				if (!owner)
+					return false;
+				return owner->hasCatch();
+			}
+
+			// Check if we want to catch this exception.
+			bool hasCatch(storm::RootObject *exception, Binary::Resume &resume) {
+				Binary *owner = codeBinary(self);
+				if (!owner)
+					return false;
+				return owner->hasCatch(activePart, exception, resume);
+			}
+
 		};
 
 
@@ -128,14 +144,149 @@ namespace code {
 
 using namespace code::x86;
 
+
+// The low-level stuff here is inspired from the code in OS/Future.cpp, which is in turn inspired by
+// boost::exception_ptr.
+
+static const nat cppExceptionCode = 0xE06D7363;
+static const nat cppExceptionMagic = 0x19930520;
+static const nat cppExceptionParams = 3;
+#if _MSC_VER==1310
+static const nat exceptionInfoOffset = 0x74;
+#elif (_MSC_VER == 1400 || _MSC_VER == 1500)
+static const nat exceptionInfoOffset = 0x80;
+#else
+#error "Unknown MSC version."
+#endif
+
+static bool isCppException(_EXCEPTION_RECORD *record) {
+	return record->ExceptionCode == cppExceptionCode
+		&& record->NumberParameters >= cppExceptionParams
+		&& record->ExceptionInformation[0] == cppExceptionMagic;
+}
+
+enum CppTypeFlags {
+	simpleType = 1,
+	virtualBaseType = 4,
+};
+
+struct CppTypeInfo {
+	unsigned flags;
+	std::type_info * typeInfo;
+	int thisOffset;
+	int vbaseDescr;
+	int vbaseOffset;
+	unsigned long size;
+};
+
+struct CppTypeInfoTable {
+	unsigned count;
+	const CppTypeInfo *info[1];
+};
+
+struct CppExceptionType {
+	unsigned flags;
+	void *dtor;
+	void(*handler)();
+	const CppTypeInfoTable *table;
+};
+
+static bool isVoidPtr(const CppTypeInfoTable *table) {
+	for (unsigned i = 0; i < table->count; i++) {
+		// if (*table->info[i]->typeInfo == typeid(void *))
+		// 	return true;
+
+		// Only catch Storm objects.
+		if (*table->info[i]->typeInfo == typeid(storm::RootObject *))
+			return true;
+	}
+	return false;
+}
+
+// Called when we catch an exception.
+static void *__stdcall cleanupFrame(SEHFrame *frame, size_t cleanUntil, void *exception) {
+	TODO(L"Make sure to execute any destructors, and update the current scope variable!");
+	PVAR(cleanUntil);
+	PVAR(exception);
+
+	return exception;
+}
+
 extern "C"
 EXCEPTION_DISPOSITION __cdecl x86SEH(_EXCEPTION_RECORD *er, void *frame, _CONTEXT *ctx, void *dispatchCtx) {
+	SEHFrame *f = SEHFrame::fromSEH(frame);
 	if (er->ExceptionFlags & EXCEPTION_UNWINDING) {
-		SEHFrame *f = SEHFrame::fromSEH(frame);
+		// We just need to do cleanup.
 		f->cleanup();
-	} else {
-		// TODO: Find any exception handlers here!
+		return ExceptionContinueSearch;
 	}
+
+	// Early out if this frame doesn't have any catch clauses at all.
+	if (!f->hasCatch())
+		return ExceptionContinueSearch;
+
+	// Note: If we need to do this on X64, treat parameter 3 as a HINSTANCE and treat remaining
+	// pointers as relative to that.
+	if (!isCppException(er))
+		return ExceptionContinueSearch;
+
+	if (!er->ExceptionInformation[2]) {
+		// Re-throw, we need to get the info from TLS.
+		byte *t = (byte *)_errno();
+		er = *(_EXCEPTION_RECORD **)(t + exceptionInfoOffset);
+
+		if (!isCppException(er))
+			return ExceptionContinueSearch;
+	}
+
+	const CppExceptionType *type = (const CppExceptionType *)er->ExceptionInformation[2];
+
+	// If it's not a simple type, don't bother looking for a void *.
+	if ((type->flags & simpleType) != 0)
+		return ExceptionContinueSearch;
+
+
+	// The table seems to be a table of possible types that can catch the exception. We look for
+	// 'void *' in that, then we know if it's a pointer or not!
+	if (!isVoidPtr(type->table))
+		return ExceptionContinueSearch;
+
+	// It seems like we don't have to worry about extra padding etc for simple types at least.
+	storm::RootObject **object = (storm::RootObject **)er->ExceptionInformation[1];
+	if (!object)
+		return ExceptionContinueSearch;
+
+	code::Binary::Resume resume;
+	if (f->hasCatch(*object, resume)) {
+		// No, we can continue from the exception... Clear the noncontinuable flag.
+		er->ExceptionFlags = 0;
+
+		// Build a stack frame that continues execution in another exception handler function, but
+		// make sure that when that function returns, we get a valid stack that the executing code
+		// expects.
+		size_t *esp = (size_t *)((size_t)f->ebp() - resume.stackDepth - sizeof(void *)*4);
+		esp[0] = (size_t)resume.ip;
+		esp[1] = (size_t)f;
+		esp[2] = resume.cleanUntil;
+		esp[3] = (size_t)*object;
+
+		ctx->Eip = (UINT_PTR)&cleanupFrame;
+		ctx->Esp = (UINT_PTR)esp;
+		ctx->Ebp = (UINT_PTR)f->ebp();
+
+		// This is the state we want to accomplish after 'cleanupFrame' returns.
+		// ctx->Eip = (UINT_PTR)resume.ip;
+		// ctx->Ebp = (UINT_PTR)f->ebp();
+		// ctx->Esp = ctx->Ebp - resume.stackDepth;
+		// ctx->Eax = (UINT_PTR)*object;
+
+		// PVAR((void *)ctx->Eip);
+		// PVAR((void *)ctx->Ebp);
+		// PVAR((void *)ctx->Esp);
+
+		return ExceptionContinueExecution;
+	}
+
 	return ExceptionContinueSearch;
 }
 

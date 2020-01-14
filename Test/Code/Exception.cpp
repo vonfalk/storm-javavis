@@ -332,3 +332,39 @@ BEGIN_TEST(ExceptionLayers, Code) {
 	CHECK_ERROR((*fn)(), Error);
 
 } END_TEST
+
+static void CODECALL throwPtr() {
+	Str *obj = new (gEngine()) Str(S("Throw me!"));
+	PLN(L"Throwing " << (void *)obj << L", " << obj);
+	throw obj;
+}
+
+BEGIN_TEST_(ExceptionCatch, Code) {
+	Engine &e = gEngine();
+	Arena *arena = code::arena(e);
+
+	Ref errorFn = arena->external(S("errorFn"), address(&::throwPtr));
+
+	Listing *l = new (e) Listing(false, ptrDesc(e));
+
+	Label caught = l->label();
+	Block block = l->createTryBlock(l->root(), StormInfo<Str>::type(e), caught);
+	*l << prolog();
+	*l << begin(block);
+	*l << fnCall(errorFn, false);
+	*l << end(block);
+	*l << fnRet(ptrConst(0));
+	*l << caught;
+	*l << fnRet(ptrA);
+
+	Binary *b = new (e) Binary(arena, l);
+	typedef Str *(*Fn)();
+	Fn fn = (Fn)b->address();
+
+	try {
+		Str *r = (*fn)();
+		PLN(L"Got result: " << (void *)r << L", " << r);
+	} catch (Str *s) {
+		PLN(L"Caught string: " << (void *)s << L", " << s);
+	}
+} END_TEST

@@ -167,6 +167,12 @@ namespace code {
 		// any part inside that block.
 		Block STORM_FN createBlock(Part parent);
 
+		// Create a block inside 'parent' with the ability to catch exceptions. When an exception is
+		// caught, execution is resumed at 'resume' with the exception (must be a pointer) in 'ptrA'.
+		// Only catches exceptions which are a subclass of 'type'.
+		// TODO: Re-work to handle multiple catch clauses for a single block.
+		Block STORM_FN createTryBlock(Part parent, Type *type, Label resume);
+
 		// Create a part after 'after'. If 'after' is not the last part of the block, the last part is
 		// added instead.
 		Part STORM_FN createPart(Part after);
@@ -247,6 +253,10 @@ namespace code {
 		// Get when to free a variable or a parameter.
 		FreeOpt STORM_FN freeOpt(Var v) const;
 		void STORM_FN freeOpt(Var v, FreeOpt opt);
+
+		// Get the type desired to be caught by the block, and the label from which execution should continue.
+		MAYBE(Type *) STORM_FN tryType(Block block) const;
+		Label STORM_FN tryResume(Block block) const;
 
 		// Do this block need an exception handler?
 		inline Bool STORM_FN exceptionHandler() const { return needEH; }
@@ -356,6 +366,12 @@ namespace code {
 		public:
 			// Parent part.
 			Nat parent;
+
+			// Label to resume from, if any.
+			Nat tryResume;
+
+			// Type to catch, if any.
+			Type *tryType;
 
 			// All parts in this block.
 			Array<Nat> *parts;

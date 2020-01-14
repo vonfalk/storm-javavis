@@ -122,9 +122,11 @@ namespace code {
 		}
 	}
 
-	Listing::IBlock::IBlock(Engine &e) : parts(new (e) Array<Nat>()), parent(Block().id) {}
+	Listing::IBlock::IBlock(Engine &e)
+		: parts(new (e) Array<Nat>()), tryResume(-1), tryType(null), parent(Block().id) {}
 
-	Listing::IBlock::IBlock(Engine &e, Nat parent) : parts(new (e) Array<Nat>()), parent(parent) {}
+	Listing::IBlock::IBlock(Engine &e, Nat parent)
+		: parts(new (e) Array<Nat>()), tryResume(-1), tryType(null), parent(parent) {}
 
 	void Listing::IBlock::deepCopy(CloneEnv *env) {
 		parts = new (parts) Array<Nat>(*parts);
@@ -295,6 +297,23 @@ namespace code {
 		parts->push(IPart(engine(), blockId, 0));
 
 		return Block(partId);
+	}
+
+	Block Listing::createTryBlock(Part parent, Type *type, Label resume) {
+		if (resume.id >= nextLabel)
+			return Block();
+
+		Block created = createBlock(parent);
+		if (created == Block())
+			return created;
+
+		IBlock &b = blocks->at(created.id);
+		b.tryType = type;
+		b.tryResume = resume.id;
+
+		needEH = true;
+
+		return created;
 	}
 
 	Part Listing::createPart(Part in) {
@@ -686,6 +705,22 @@ namespace code {
 		for (nat i = 0; i < params->count(); i++)
 			r->push(createVar(params->at(i)));
 		return r;
+	}
+
+	MAYBE(Type *) Listing::tryType(Block block) const {
+		Nat bId = findBlock(block.id);
+		if (bId == invalid)
+			return null;
+
+		return blocks->at(bId).tryType;
+	}
+
+	Label Listing::tryResume(Block block) const {
+		Nat bId = findBlock(block.id);
+		if (bId == invalid)
+			return Label();
+
+		return Label(blocks->at(bId).tryResume);
 	}
 
 	static Str *toS(Engine &e, Array<Label> *l) {
