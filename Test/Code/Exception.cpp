@@ -333,7 +333,16 @@ BEGIN_TEST(ExceptionLayers, Code) {
 
 } END_TEST
 
+struct Dummy {
+	~Dummy() {
+		PLN(L"Destroying the dummy!");
+	}
+};
+
 static void CODECALL throwPtr() {
+	// To make sure destructors in this frame are executed properly!
+	Dummy d;
+
 	Str *obj = new (gEngine()) Str(S("Throw me!"));
 	PLN(L"Throwing " << (void *)obj << L", " << obj);
 	throw obj;
@@ -348,7 +357,9 @@ BEGIN_TEST_(ExceptionCatch, Code) {
 	Listing *l = new (e) Listing(false, ptrDesc(e));
 
 	Label caught = l->label();
-	Block block = l->createTryBlock(l->root(), StormInfo<Str>::type(e), caught);
+	Block block = l->createBlock(l->root());
+	l->addCatch(block, Listing::CatchInfo(StormInfo<Str>::type(e), caught));
+
 	*l << prolog();
 	*l << begin(block);
 	*l << fnCall(errorFn, false);
@@ -361,6 +372,7 @@ BEGIN_TEST_(ExceptionCatch, Code) {
 	typedef Str *(*Fn)();
 	Fn fn = (Fn)b->address();
 
+	// DebugBreak();
 	try {
 		Str *r = (*fn)();
 		PLN(L"Got result: " << (void *)r << L", " << r);

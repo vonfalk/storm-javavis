@@ -81,6 +81,18 @@ namespace code {
 				}
 			}
 
+			// Partial cleanup of this frame. Will set 'activePart' accordingly.
+			void cleanup(Nat until) {
+				Binary *owner = codeBinary(self);
+				if (owner) {
+					Frame f(this);
+					activePart = owner->cleanup(f, until);
+					PVAR(activePart);
+				} else {
+					WARNING(L"Using SEH, but no link to the metadata provided!");
+				}
+			}
+
 			// Check if we want to catch any object at all in this frame.
 			bool hasCatch() {
 				Binary *owner = codeBinary(self);
@@ -140,6 +152,9 @@ namespace code {
 #ifndef EXCEPTION_UNWINDING
 // No proper definition found...
 #define EXCEPTION_UNWINDING 2
+#endif
+#ifndef EXCEPTION_NONCONTINUABLE
+#define EXCEPTION_NONCONTINUABLE 1
 #endif
 
 using namespace code::x86;
@@ -203,18 +218,17 @@ static bool isVoidPtr(const CppTypeInfoTable *table) {
 	return false;
 }
 
-// Called when we catch an exception.
-static void *__stdcall cleanupFrame(SEHFrame *frame, size_t cleanUntil, void *exception) {
-	TODO(L"Make sure to execute any destructors, and update the current scope variable!");
-	PVAR(cleanUntil);
-	PVAR(exception);
-
+// Called when we catch an exception. Called from a shim in assembler located in SafeSeh.asm
+extern "C"
+void *x86SEHCleanup(SEHFrame *frame, size_t cleanUntil, void *exception) {
+	frame->cleanup(cleanUntil);
 	return exception;
 }
 
 extern "C"
 EXCEPTION_DISPOSITION __cdecl x86SEH(_EXCEPTION_RECORD *er, void *frame, _CONTEXT *ctx, void *dispatchCtx) {
 	SEHFrame *f = SEHFrame::fromSEH(frame);
+	PLN(L"In SEH: " << er->ExceptionFlags);
 	if (er->ExceptionFlags & EXCEPTION_UNWINDING) {
 		// We just need to do cleanup.
 		f->cleanup();
@@ -259,30 +273,32 @@ EXCEPTION_DISPOSITION __cdecl x86SEH(_EXCEPTION_RECORD *er, void *frame, _CONTEX
 	code::Binary::Resume resume;
 	if (f->hasCatch(*object, resume)) {
 		// No, we can continue from the exception... Clear the noncontinuable flag.
-		er->ExceptionFlags = 0;
+		er->ExceptionFlags &= ~DWORD(EXCEPTION_NONCONTINUABLE);
 
-		// Build a stack frame that continues execution in another exception handler function, but
-		// make sure that when that function returns, we get a valid stack that the executing code
-		// expects.
-		size_t *esp = (size_t *)((size_t)f->ebp() - resume.stackDepth - sizeof(void *)*4);
-		esp[0] = (size_t)resume.ip;
-		esp[1] = (size_t)f;
-		esp[2] = resume.cleanUntil;
-		esp[3] = (size_t)*object;
+		// It seems we need to initiate stack unwinding for cleanup ourselves.
+		er->ExceptionFlags |= EXCEPTION_UNWINDING;
+		x86Unwind(er, frame);
+		er->ExceptionFlags &= ~DWORD(EXCEPTION_UNWINDING);
 
-		ctx->Eip = (UINT_PTR)&cleanupFrame;
-		ctx->Esp = (UINT_PTR)esp;
+		// Build a stack "frame" that executes 'x86EhEntry' and returns to the resume point with Eax
+		// set as intended. This approach places all data in registers, so that data on the stack is
+		// not clobbered if we need it. It is also nice, as we don't have to think too carefully about
+		// calling conventions and stack manipulations.
 		ctx->Ebp = (UINT_PTR)f->ebp();
+		ctx->Esp = ctx->Ebp - resume.stackDepth;
 
-		// This is the state we want to accomplish after 'cleanupFrame' returns.
-		// ctx->Eip = (UINT_PTR)resume.ip;
-		// ctx->Ebp = (UINT_PTR)f->ebp();
-		// ctx->Esp = ctx->Ebp - resume.stackDepth;
-		// ctx->Eax = (UINT_PTR)*object;
+		// Run.
+		ctx->Eip = (UINT_PTR)&x86EhEntry;
+		// Return to.
+		ctx->Edx = (UINT_PTR)resume.ip;
+		// Exception.
+		ctx->Eax = (UINT_PTR)*object;
+		// Current part.
+		ctx->Ebx = (UINT_PTR)resume.cleanUntil;
+		// Current frame.
+		ctx->Ecx = (UINT_PTR)f;
 
-		// PVAR((void *)ctx->Eip);
-		// PVAR((void *)ctx->Ebp);
-		// PVAR((void *)ctx->Esp);
+		// Note: We also need to restore the EH chain (fs:[0]). The ASM shim does this for us.
 
 		return ExceptionContinueExecution;
 	}

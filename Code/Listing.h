@@ -167,12 +167,6 @@ namespace code {
 		// any part inside that block.
 		Block STORM_FN createBlock(Part parent);
 
-		// Create a block inside 'parent' with the ability to catch exceptions. When an exception is
-		// caught, execution is resumed at 'resume' with the exception (must be a pointer) in 'ptrA'.
-		// Only catches exceptions which are a subclass of 'type'.
-		// TODO: Re-work to handle multiple catch clauses for a single block.
-		Block STORM_FN createTryBlock(Part parent, Type *type, Label resume);
-
 		// Create a part after 'after'. If 'after' is not the last part of the block, the last part is
 		// added instead.
 		Part STORM_FN createPart(Part after);
@@ -254,9 +248,34 @@ namespace code {
 		FreeOpt STORM_FN freeOpt(Var v) const;
 		void STORM_FN freeOpt(Var v, FreeOpt opt);
 
-		// Get the type desired to be caught by the block, and the label from which execution should continue.
-		MAYBE(Type *) STORM_FN tryType(Block block) const;
-		Label STORM_FN tryResume(Block block) const;
+		/**
+		 * Information of how to catch exceptions.
+		 *
+		 * All catch clauses have the following form:
+		 * If an exception of type <type> is thrown, goto <resume> which is assumed to reside in the
+		 * block level immediately outside the current block.
+		 */
+		class CatchInfo {
+			STORM_VALUE;
+		public:
+			// Create. 'type' is the type to catch, 'resume' is where to resume execution.
+			STORM_CTOR CatchInfo(Type *type, Label resume);
+
+			// Type.
+			Type *type;
+
+			// Resume. Assumed to refer to a location in a block immediately outside the block used
+			// as a catch handler.
+			Label resume;
+		};
+
+		// Add a catch handler to a block. Multiple handlers may be added to a single block. If so,
+		// they are evaluated in the order they were added.
+		void STORM_FN addCatch(Block block, CatchInfo add);
+		void STORM_FN addCatch(Block block, Type *type, Label resume);
+
+		// Get all catch clauses for a block.
+		MAYBE(Array<CatchInfo> *) STORM_FN catchInfo(Block block) const;
 
 		// Do this block need an exception handler?
 		inline Bool STORM_FN exceptionHandler() const { return needEH; }
@@ -367,14 +386,11 @@ namespace code {
 			// Parent part.
 			Nat parent;
 
-			// Label to resume from, if any.
-			Nat tryResume;
-
-			// Type to catch, if any.
-			Type *tryType;
-
 			// All parts in this block.
 			Array<Nat> *parts;
+
+			// Catch handlers, if any.
+			MAYBE(Array<CatchInfo> *) catchInfo;
 
 			// Create.
 			IBlock(Engine &e);

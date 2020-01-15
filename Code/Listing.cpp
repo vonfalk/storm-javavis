@@ -123,13 +123,17 @@ namespace code {
 	}
 
 	Listing::IBlock::IBlock(Engine &e)
-		: parts(new (e) Array<Nat>()), tryResume(-1), tryType(null), parent(Block().id) {}
+		: parent(Block().id), parts(new (e) Array<Nat>()), catchInfo(null) {}
 
 	Listing::IBlock::IBlock(Engine &e, Nat parent)
-		: parts(new (e) Array<Nat>()), tryResume(-1), tryType(null), parent(parent) {}
+		: parent(parent), parts(new (e) Array<Nat>()), catchInfo(null) {}
 
 	void Listing::IBlock::deepCopy(CloneEnv *env) {
 		parts = new (parts) Array<Nat>(*parts);
+		if (catchInfo) {
+			// No need for recursive deep copies.
+			catchInfo = new (catchInfo) Array<CatchInfo>(*catchInfo);
+		}
 	}
 
 	Listing::IPart::IPart(Engine &e, Nat block, Nat id) : vars(new (e) Array<Nat>()), block(block), index(id) {}
@@ -297,23 +301,6 @@ namespace code {
 		parts->push(IPart(engine(), blockId, 0));
 
 		return Block(partId);
-	}
-
-	Block Listing::createTryBlock(Part parent, Type *type, Label resume) {
-		if (resume.id >= nextLabel)
-			return Block();
-
-		Block created = createBlock(parent);
-		if (created == Block())
-			return created;
-
-		IBlock &b = blocks->at(created.id);
-		b.tryType = type;
-		b.tryResume = resume.id;
-
-		needEH = true;
-
-		return created;
 	}
 
 	Part Listing::createPart(Part in) {
@@ -707,20 +694,31 @@ namespace code {
 		return r;
 	}
 
-	MAYBE(Type *) Listing::tryType(Block block) const {
+	Listing::CatchInfo::CatchInfo(Type *type, Label resume) : type(type), resume(resume) {}
+
+	void Listing::addCatch(Block block, CatchInfo add) {
+		Nat bId = findBlock(block.id);
+		if (bId == invalid)
+			return;
+
+		Array<CatchInfo> *&info = blocks->at(bId).catchInfo;
+		if (!info)
+			info = new (this) Array<CatchInfo>();
+		info->push(add);
+
+		needEH = true;
+	}
+
+	void Listing::addCatch(Block block, Type *type, Label resume) {
+		addCatch(block, CatchInfo(type, resume));
+	}
+
+	MAYBE(Array<Listing::CatchInfo> *) Listing::catchInfo(Block block) const {
 		Nat bId = findBlock(block.id);
 		if (bId == invalid)
 			return null;
 
-		return blocks->at(bId).tryType;
-	}
-
-	Label Listing::tryResume(Block block) const {
-		Nat bId = findBlock(block.id);
-		if (bId == invalid)
-			return Label();
-
-		return Label(blocks->at(bId).tryResume);
+		return blocks->at(bId).catchInfo;
 	}
 
 	static Str *toS(Engine &e, Array<Label> *l) {

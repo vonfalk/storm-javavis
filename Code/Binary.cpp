@@ -129,8 +129,8 @@ namespace code {
 
 		Array<code::Block> *blocks = src->allBlocks();
 		for (Nat i = 0; i < blocks->count(); i++) {
-			if (src->tryResume(blocks->at(i)) != Label())
-				count++;
+			if (Array<Listing::CatchInfo> *info = src->catchInfo(blocks->at(i)))
+				count += info->count();
 		}
 
 		if (count == 0) {
@@ -142,12 +142,13 @@ namespace code {
 		Nat at = 0;
 		for (Nat i = 0; i < blocks->count(); i++) {
 			Block b = blocks->at(i);
-			Label l = src->tryResume(b);
-			if (l != Label()) {
-				tryParts->v[at].partId = code::Part(b).key();
-				tryParts->v[at].resumeOffset = labels->offsets->at(l.id);
-				tryParts->v[at].type = src->tryType(b);
-				at++;
+			if (Array<Listing::CatchInfo> *info = src->catchInfo(b)) {
+				for (Nat j = 0; j < info->count(); j++) {
+					tryParts->v[at].partId = code::Part(b).key();
+					tryParts->v[at].resumeOffset = labels->offsets->at(info->at(j).resume.id);
+					tryParts->v[at].type = info->at(j).type;
+					at++;
+				}
 			}
 		}
 	}
@@ -161,6 +162,24 @@ namespace code {
 				cleanup(frame, p->vars[j - 1]);
 			}
 		}
+	}
+
+	Nat Binary::cleanup(StackFrame &frame, Nat until) {
+		for (Nat i = frame.part; i != code::Part().key(); i = parts->v[i]->prev) {
+			Part *p = parts->v[i];
+
+			// Reverse order is common.
+			for (Nat j = p->count; j > 0; j--) {
+				cleanup(frame, p->vars[j - 1]);
+			}
+
+			// Done?
+			if (i == until)
+				return parts->v[i]->prev;
+		}
+
+		// Outside of all blocks.
+		return code::Part().key();
 	}
 
 	void Binary::cleanup(StackFrame &frame, Variable &v) {
@@ -213,47 +232,39 @@ namespace code {
 	}
 
 	bool Binary::hasCatch(Nat active, RootObject *exception, Resume &resume) {
-		if (!tryParts)
-			return false;
-
-		for (Nat i = active; i != code::Part().key(); i = parts->v[i]->prev) {
-			// TODO: We might want to be able to catch multiple exceptions!
-			TryInfo *part = findTryInfo(i);
-			if (!part)
-				continue;
-
-			// Is it the one we're looking for?
-			if (runtime::isA(exception, part->type)) {
-				byte *data = (byte *)address();
-				resume.ip = data + part->resumeOffset;
-
-				size_t *table = (size_t *)(data + metaOffset);
-				resume.stackDepth = table[0];
-
-				resume.cleanUntil = i;
-
-				return true;
-			}
-		}
-
-		return false;
-	}
-
-	Binary::TryInfo *Binary::findTryInfo(Nat part) {
 		struct Compare {
 			inline bool operator() (const TryInfo &l, Nat r) const {
 				return l.partId < r;
 			}
 		};
 
-		TryInfo *end = tryParts->v + tryParts->count;
-		TryInfo *found = std::lower_bound(tryParts->v, end, part, Compare());
-		if (found == end)
-			return null;
+		if (!tryParts)
+			return false;
 
-		if (found->partId != part)
-			return null;
-		return found;
+		for (Nat part = active; part != code::Part().key(); part = parts->v[part]->prev) {
+			TryInfo *end = tryParts->v + tryParts->count;
+			TryInfo *found = std::lower_bound(tryParts->v, end, part, Compare());
+
+			// Check all possible matches.
+			for (; found != end && found->partId == part; found++) {
+				if (runtime::isA(exception, found->type)) {
+					// Find where to resume.
+					byte *data = (byte *)address();
+					resume.ip = data + found->resumeOffset;
+
+					// The first entry is the total stack depth.
+					size_t *table = (size_t *)(data + metaOffset);
+					resume.stackDepth = table[0];
+
+					// Remember how far to clean.
+					resume.cleanUntil = part;
+
+					return true;
+				}
+			}
+		}
+
+		return false;
 	}
 
 }

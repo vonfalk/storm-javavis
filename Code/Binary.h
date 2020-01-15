@@ -31,6 +31,10 @@ namespace code {
 		// Clean up a stack frame from this function.
 		void cleanup(StackFrame &frame);
 
+		// Clean up a stack fraome from this function from the current block, up to and including
+		// 'until'. Returns the parent of 'until', which is now to be considered the current part.
+		Nat cleanup(StackFrame &frame, Nat until);
+
 		// Check if we have any catch-clauses at all (used for pre-screening in exception handlers).
 		inline bool hasCatch() const { return tryParts != 0; }
 
@@ -112,9 +116,6 @@ namespace code {
 
 		// Fill the 'tryParts' array if necessary.
 		void fillTryParts(Listing *src, LabelOutput *labels);
-
-		// Find a try-part corresponding to a given part. Returns null if none exists.
-		TryInfo *findTryInfo(Nat part);
 
 		// Clean a single variable.
 		void cleanup(StackFrame &frame, Variable &v);
