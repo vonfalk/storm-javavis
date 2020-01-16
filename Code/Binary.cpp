@@ -102,7 +102,6 @@ namespace code {
 
 			for (nat j = 0; j < vars->count(); j++) {
 				const Var &v = vars->at(j);
-				p->vars[j].id = v.key();
 
 				Nat flags = src->freeOpt(v);
 				if (flags & freeOnException) {
@@ -120,6 +119,9 @@ namespace code {
 					throw InvalidValue(L"Can only use bytes, integers, longs and pointers for variable cleanup. "
 						L"Specify 'freePtr' to get a pointer to the value instead!");
 				}
+
+				p->vars[j].id = v.key();
+				p->vars[j].flags = flags;
 			}
 		}
 	}

@@ -87,7 +87,6 @@ namespace code {
 				if (owner) {
 					Frame f(this);
 					activePart = owner->cleanup(f, until);
-					PVAR(activePart);
 				} else {
 					WARNING(L"Using SEH, but no link to the metadata provided!");
 				}
@@ -228,7 +227,6 @@ void *x86SEHCleanup(SEHFrame *frame, size_t cleanUntil, void *exception) {
 extern "C"
 EXCEPTION_DISPOSITION __cdecl x86SEH(_EXCEPTION_RECORD *er, void *frame, _CONTEXT *ctx, void *dispatchCtx) {
 	SEHFrame *f = SEHFrame::fromSEH(frame);
-	PLN(L"In SEH: " << er->ExceptionFlags);
 	if (er->ExceptionFlags & EXCEPTION_UNWINDING) {
 		// We just need to do cleanup.
 		f->cleanup();

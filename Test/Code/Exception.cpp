@@ -1,6 +1,7 @@
 #include "stdafx.h"
 #include "Code/Binary.h"
 #include "Code/Listing.h"
+#include "Compiler/Debug.h"
 
 using namespace code;
 
@@ -333,19 +334,25 @@ BEGIN_TEST(ExceptionLayers, Code) {
 
 } END_TEST
 
-struct Dummy {
-	~Dummy() {
-		PLN(L"Destroying the dummy!");
-	}
-};
-
-static void CODECALL throwPtr() {
+static void CODECALL throwPtr(Nat i) {
 	// To make sure destructors in this frame are executed properly!
-	Dummy d;
+	debug::DbgVal dtorCheck;
 
-	Str *obj = new (gEngine()) Str(S("Throw me!"));
-	PLN(L"Throwing " << (void *)obj << L", " << obj);
-	throw obj;
+	if (i == 1) {
+		Str *obj = new (gEngine()) Str(S("Throw me!"));
+		// PLN(L"Throwing " << (void *)obj << L", " << obj);
+		throw obj;
+	} else if (i == 2 || i == 10) {
+		StrBuf *buf = new (gEngine()) StrBuf();
+		*buf << S("Buffer");
+		// PLN(L"Throwing " << (void *)buf << L", " << buf);
+		throw buf;
+	}
+}
+
+static StrBuf *CODECALL addBuf(StrBuf *to) {
+	*to << S("!");
+	return to;
 }
 
 BEGIN_TEST_(ExceptionCatch, Code) {
@@ -353,30 +360,89 @@ BEGIN_TEST_(ExceptionCatch, Code) {
 	Arena *arena = code::arena(e);
 
 	Ref errorFn = arena->external(S("errorFn"), address(&::throwPtr));
+	Ref appendFn = arena->external(S("appendFn"), address(&::addBuf));
+	Ref freeInt = arena->external(S("freeInt"), address(&::intCleanup));
 
 	Listing *l = new (e) Listing(false, ptrDesc(e));
 
-	Label caught = l->label();
+	Var tmp = l->createVar(l->root(), Size::sPtr);
+	Var param = l->createParam(intDesc(e));
+
+	Label caught1 = l->label();
+	Label caught2 = l->label();
+
 	Block block = l->createBlock(l->root());
-	l->addCatch(block, Listing::CatchInfo(StormInfo<Str>::type(e), caught));
+	l->addCatch(block, StormInfo<StrBuf>::type(e), caught1);
+	l->addCatch(block, StormInfo<Object>::type(e), caught2);
+
+	Var outerInt = l->createVar(l->root(), Size::sInt, freeInt);
+	Var innerInt = l->createVar(block, Size::sInt, freeInt);
 
 	*l << prolog();
+	*l << mov(outerInt, intConst(8));
 	*l << begin(block);
+	*l << mov(innerInt, intConst(4));
+	*l << fnParam(intDesc(e), param);
 	*l << fnCall(errorFn, false);
 	*l << end(block);
 	*l << fnRet(ptrConst(0));
-	*l << caught;
-	*l << fnRet(ptrA);
+
+	// A StrBuf was caught.
+	*l << caught1;
+	*l << add(outerInt, intConst(10));
+	*l << fnParam(ptrDesc(e), ptrA);
+	*l << fnCall(appendFn, false, ptrDesc(e), ptrA);
+
+	// Generic object was caught.
+	*l << caught2;
+
+	*l << mov(tmp, ptrA);
+	*l << mov(eax, param);
+	*l << sub(eax, intConst(1));
+	*l << fnParam(intDesc(e), eax);
+	*l << fnCall(errorFn, false);
+
+	*l << sub(outerInt, intConst(1));
+	*l << fnRet(tmp);
+
 
 	Binary *b = new (e) Binary(arena, l);
-	typedef Str *(*Fn)();
+	typedef Object *(*Fn)(Int i);
 	Fn fn = (Fn)b->address();
 
-	// DebugBreak();
-	try {
-		Str *r = (*fn)();
-		PLN(L"Got result: " << (void *)r << L", " << r);
-	} catch (Str *s) {
-		PLN(L"Caught string: " << (void *)s << L", " << s);
-	}
+	using debug::DbgVal;
+
+	DbgVal::clear();
+	destroyed = 0;
+	// Easy: No exception thrown.
+	CHECK_EQ((*fn)(0), (Object *)null);
+	CHECK(DbgVal::clear());
+	CHECK_EQ(destroyed, 4 + 8);
+
+	// Throws an exception at first, then catches it as an object.
+	destroyed = 0;
+	CHECK_EQ(::toS((*fn)(1)), L"Throw me!");
+	CHECK(DbgVal::clear());
+	CHECK_EQ(destroyed, 4 + 7);
+
+	// Throws a StrBuf at first, then catches it as a StrBuf and adds an!
+	destroyed = 0;
+	CHECK_EQ(::toS((*fn)(10)), L"Buffer!");
+	CHECK(DbgVal::clear());
+	CHECK_EQ(destroyed, 4 + 17);
+
+	// Throws a StrBuf, catches it, and throws another exception.
+	destroyed = 0;
+	CHECK_ERROR(::toS((*fn)(2)), Str *);
+	CHECK(DbgVal::clear());
+	CHECK_EQ(destroyed, 4 + 18);
+
+
+	// // DebugBreak();
+	// try {
+	// 	Str *r = (*fn)();
+	// 	PLN(L"Got result: " << (void *)r << L", " << r);
+	// } catch (Str *s) {
+	// 	PLN(L"Caught string: " << (void *)s << L", " << s);
+	// }
 } END_TEST
