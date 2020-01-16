@@ -150,6 +150,23 @@ namespace code {
 			data->owner->cleanup(frame);
 		}
 
+		static bool isStormException(_Unwind_Exception_Class type, struct _Unwind_Exception *data) {
+			// TODO: We probably want to handle LLVM exceptions as well!
+			// This is 'GNUCC++\0' in hex.
+			if (type != 0x474e5543432b2b00LL)
+				return false;
+
+			byte *dataPtr = (byte *)data;
+			std::type_info *info = *(std::type_info **)(dataPtr + 10*sizeof(void *));
+			PVAR(info->name());
+
+			void *obj = dataPtr + sizeof(_Unwind_Exception);
+			// What is "outer"? I'll pass 0.
+			// typeid(storm::RootObject*).__do_catch(info, &obj, 0);
+
+			return true;
+		}
+
 		// The personality function called by the C++ runtime.
 		_Unwind_Reason_Code stormPersonality(int version, _Unwind_Action actions, _Unwind_Exception_Class type,
 											struct _Unwind_Exception *data, struct _Unwind_Context *context) {
@@ -161,6 +178,9 @@ namespace code {
 
 			if (actions & _UA_SEARCH_PHASE) {
 				// Phase 1: Search for handlers.
+				if (isStormException(type, data)) {
+					PLN(L"Storm exception!");
+				}
 				// TODO: Return _URC_HANDLER_FOUND if we know how to handle it!
 				return _URC_CONTINUE_UNWIND;
 			} else if (actions & _UA_CLEANUP_PHASE) {
