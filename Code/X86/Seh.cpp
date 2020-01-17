@@ -205,7 +205,7 @@ struct CppExceptionType {
 	const CppTypeInfoTable *table;
 };
 
-static bool isVoidPtr(const CppTypeInfoTable *table) {
+static bool isObjPtr(const CppTypeInfoTable *table) {
 	for (unsigned i = 0; i < table->count; i++) {
 		// if (*table->info[i]->typeInfo == typeid(void *))
 		// 	return true;
@@ -259,8 +259,8 @@ EXCEPTION_DISPOSITION __cdecl x86SEH(_EXCEPTION_RECORD *er, void *frame, _CONTEX
 
 
 	// The table seems to be a table of possible types that can catch the exception. We look for
-	// 'void *' in that, then we know if it's a pointer or not!
-	if (!isVoidPtr(type->table))
+	// 'RootObject *' in that, then we know if it's a pointer or not!
+	if (!isObjPtr(type->table))
 		return ExceptionContinueSearch;
 
 	// It seems like we don't have to worry about extra padding etc for simple types at least.

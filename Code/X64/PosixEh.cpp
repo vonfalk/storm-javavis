@@ -5,6 +5,10 @@
 #include "Utils/StackInfo.h"
 #include "Core/Str.h"
 
+#ifdef POSIX
+#include <cxxabi.h>
+#endif
+
 namespace code {
 	namespace x64 {
 
@@ -150,22 +154,82 @@ namespace code {
 			data->owner->cleanup(frame);
 		}
 
-		static bool isStormException(_Unwind_Exception_Class type, struct _Unwind_Exception *data) {
-			// TODO: We probably want to handle LLVM exceptions as well!
+		static RootObject *isStormException(_Unwind_Exception_Class type, struct _Unwind_Exception *data) {
+			// Find the type info, and a pointer to the exception we're catching.
+			const std::type_info *info = null;
+			void *object = null;
+
+			// For GCC:
 			// This is 'GNUCC++\0' in hex.
-			if (type != 0x474e5543432b2b00LL)
-				return false;
+			if (type == 0x474e5543432b2b00LL) {
+				byte *dataPtr = (byte *)data;
+				info = *(const std::type_info **)(dataPtr - 10*sizeof(void *));
+				object = dataPtr + sizeof(_Unwind_Exception);
+			}
 
-			byte *dataPtr = (byte *)data;
-			std::type_info *info = *(std::type_info **)(dataPtr + 10*sizeof(void *));
-			PVAR(info->name());
+			// TODO: Handle LLVM exceptions as well. They have another type signature, but I believe
+			// the layout of the 'data' is the same.
 
-			void *obj = dataPtr + sizeof(_Unwind_Exception);
-			// What is "outer"? I'll pass 0.
-			// typeid(storm::RootObject*).__do_catch(info, &obj, 0);
+			// Unable to find type-info. The exception probably originated from somewhere we don't
+			// know about.
+			if (!info)
+				return null;
 
-			return true;
+			// This should actually be platform independent as long as the C++ Itanium ABI is used!
+			// However, the Itanium ABI does not specify how to check if one typeid is a subclass
+			// of another. That is GCC specific, but Clang most likely follows the same convention.
+
+#if 0
+			// This is likely slower and less appropriate than calling "do_catch" directly. It does,
+			// however, seem to work, and shows what we're trying to accomplish.
+
+			// We only support pointers.
+			const abi::__pointer_type_info *ptr = dynamic_cast<const abi::__pointer_type_info *>(info);
+			if (!ptr)
+				return null;
+
+			// Must point to a class.
+			const abi::__class_type_info *srcClass = dynamic_cast<const abi::__class_type_info *>(ptr->__pointee);
+			if (!srcClass)
+				return null;
+
+			object = *(void **)object;
+
+#if 0
+			// This is a bit clumsy and unreliable as we don't have the definition of the type __upcast_result.
+			const abi::__class_type_info *target = (const abi::__class_type_info *)&typeid(storm::RootObject);
+
+			// We don't have the type declaration for __class_type_info::__upcast_result.
+			struct upcast_result {
+				size_t data[10];
+			} result;
+			if (!srcClass->__do_upcast(target, object, (abi::__class_type_info::__upcast_result &)result))
+				return null;
+#else
+			// This seems more appropriate. It calls __do_upcast eventually, but has access to the
+			// upcast_result type, so it is likely more robust. Tell the implementation that the
+			// pointer is const.
+			if (!typeid(RootObject).__do_catch(srcClass, &object, abi::__pbase_type_info::__const_mask))
+				return null;
+
+			return (RootObject *)object;
+#endif
+
+#else
+			// This is likely the best option. We avoid doing many dynamic_casts ourselves, and rely
+			// on vtables instead. This is not ABI-compliant, as __do_catch is not mandated by the ABI.
+
+			// Try to catch a storm::RootObject *.
+			if (!typeid(RootObject * const).__do_catch(info, &object, abi::__pbase_type_info::__const_mask))
+				return null;
+
+			return *(RootObject **)object;
+#endif
+
 		}
+
+		// Register #6 is RBP
+#define RBP 6
 
 		// The personality function called by the C++ runtime.
 		_Unwind_Reason_Code stormPersonality(int version, _Unwind_Action actions, _Unwind_Exception_Class type,
@@ -176,20 +240,28 @@ namespace code {
 			// 'data' is compiler specific information about the exception. See 'unwind.h' for details.
 			// 'context' is the unwinder state.
 
+			size_t fn = _Unwind_GetRegionStart(context);
+			size_t pc = _Unwind_GetIP(context);
+			size_t rbp = _Unwind_GetGR(context, RBP);
+
 			if (actions & _UA_SEARCH_PHASE) {
 				// Phase 1: Search for handlers.
-				if (isStormException(type, data)) {
-					PLN(L"Storm exception!");
-				}
+				RootObject *object = isStormException(type, data);
+				if (!object)
+					return _URC_CONTINUE_UNWIND;
+
+
+				PLN(L"Storm exception: " << (void *)object << L", " << object);
 				// TODO: Return _URC_HANDLER_FOUND if we know how to handle it!
+
 				return _URC_CONTINUE_UNWIND;
 			} else if (actions & _UA_CLEANUP_PHASE) {
 				// Phase 2: Cleanup!
 				// if (actions & _UA_HANDLER_FRAME), we should return _URC_INSTALL_CONTEXT.
 
-				// Clean up what we can! (register #6 is RBP)
+				// Clean up what we can!
 				// Note: using _Unwind_GetCFA seems to return the CFA of the previous frame.
-				stormCleanup(_Unwind_GetRegionStart(context), _Unwind_GetIP(context), _Unwind_GetGR(context, 6));
+				stormCleanup(fn, pc, rbp);
 				return _URC_CONTINUE_UNWIND;
 			} else {
 				// Just pretend we did something useful...
