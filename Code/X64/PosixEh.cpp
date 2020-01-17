@@ -4,6 +4,7 @@
 #include "Gc/DwarfTable.h"
 #include "Utils/StackInfo.h"
 #include "Core/Str.h"
+#include "DwarfRegs.h"
 
 #ifdef POSIX
 #include <cxxabi.h>
@@ -127,9 +128,8 @@ namespace code {
 			byte *rbp;
 		};
 
-		// Perform cleanup using the tables present in the code.
-		static void stormCleanup(size_t fn, size_t pc, size_t rbp) {
-			const FnData *data = getData((const void *)fn);
+		// Find the currently active part.
+		static Nat stormFindPart(const FnData *data, size_t fn, size_t pc) {
 			const FnPart *parts = getParts(data);
 
 			Nat offset = pc - fn;
@@ -141,17 +141,11 @@ namespace code {
 			const FnPart *found = std::lower_bound(parts, parts + data->partCount, offset, PartCompare());
 			if (found == parts) {
 				// Before any part, nothing to do!
-				return;
+				return invalid;
 			}
 			found--;
-			if (found->part == invalid) {
-				// A part that specifies outside the prolog and epilog. Nothing to do!
-				return;
-			}
 
-			// Create a stack frame and pass it on to the Binary object for cleanup.
-			StackFrame frame(found->part, (void *)rbp);
-			data->owner->cleanup(frame);
+			return found->part;
 		}
 
 		static RootObject *isStormException(_Unwind_Exception_Class type, struct _Unwind_Exception *data) {
@@ -228,9 +222,6 @@ namespace code {
 
 		}
 
-		// Register #6 is RBP
-#define RBP 6
-
 		// The personality function called by the C++ runtime.
 		_Unwind_Reason_Code stormPersonality(int version, _Unwind_Action actions, _Unwind_Exception_Class type,
 											struct _Unwind_Exception *data, struct _Unwind_Context *context) {
@@ -240,28 +231,99 @@ namespace code {
 			// 'data' is compiler specific information about the exception. See 'unwind.h' for details.
 			// 'context' is the unwinder state.
 
+			// Storage from phase 1 to phase 2. Binary compatible with parts of __cxa_exception in GCC.
+			// Names from the GCC implementation for simplicity.
+			struct ExStore {
+				void *nextException;
+				int handlerCount;
+				int handlerSwitchValue;
+				const byte *actionRecord;
+				const byte *languageSpecificData;
+				void *catchTemp;
+				void *adjustedPtr;
+
+				struct _Unwind_Exception exception;
+			};
+
+			// Note: using _Unwind_GetCFA seems to return the CFA of the previous frame.
 			size_t fn = _Unwind_GetRegionStart(context);
 			size_t pc = _Unwind_GetIP(context);
-			size_t rbp = _Unwind_GetGR(context, RBP);
+			size_t rbp = _Unwind_GetGR(context, DW_REG_RBP);
+
+			const FnData *fnData = getData((const void *)fn);
 
 			if (actions & _UA_SEARCH_PHASE) {
 				// Phase 1: Search for handlers.
+
+				// See if this function has any handlers at all.
+				if (!fnData->owner->hasCatch())
+					return _URC_CONTINUE_UNWIND;
+
+				// See if this is an exception Storm can catch (somewhat expensive).
 				RootObject *object = isStormException(type, data);
 				if (!object)
 					return _URC_CONTINUE_UNWIND;
 
+				// Find if it is desirable to actually catch it.
+				Nat part = stormFindPart(fnData, fn, pc);
+				if (part == Part().key())
+					return _URC_CONTINUE_UNWIND;
 
-				PLN(L"Storm exception: " << (void *)object << L", " << object);
-				// TODO: Return _URC_HANDLER_FOUND if we know how to handle it!
+				Binary::Resume resume;
+				if (!fnData->owner->hasCatch(part, object, resume))
+					return _URC_CONTINUE_UNWIND;
 
-				return _URC_CONTINUE_UNWIND;
+				// Store things to phase 2, right above the _Unwind_Exception, just like GCC does:
+				ExStore *store = BASE_PTR(ExStore, data, exception);
+
+				// Adjusted pointer (otherwise __cxa_begin_catch won't work):
+				store->adjustedPtr = object;
+
+				// The following two are not too important, but we keep them at reasonable places as
+				// to not confuse the GCC implementation:
+				store->catchTemp = resume.ip;
+				store->handlerSwitchValue = part;
+
+				PLN(L"Storm exception we want to catch: " << (void *)object << L", " << object);
+
+				// Tell the system we have a handler! It will call us with _UA_HANDLER_FRAME later.
+				return _URC_HANDLER_FOUND;
+			} else if ((actions & _UA_CLEANUP_PHASE) && (actions & _UA_HANDLER_FRAME)) {
+				// Phase 2: Cleanup, but resume here!
+
+				// Read data from the exception object, like GCC does. We saved this data earlier.
+				ExStore *store = BASE_PTR(ExStore, data, exception);
+				Nat part = store->handlerSwitchValue;
+				pc = (size_t)store->catchTemp;
+
+				// Cleanup our frame.
+				StackFrame frame(part, (void *)rbp);
+				fnData->owner->cleanup(frame, part);
+
+				// Get the exception. Since it is a pointer, we can deallocate directly.
+				// Note that we store the dereferenced pointer inside the EH table, so we don't need
+				// to dereference it again here!
+				void *exception = __cxa_begin_catch(data);
+				// We don't need the data to be alive anymore. We can deallocate it now!
+				__cxa_end_catch();
+
+				// Set up the context as desired. It should be unwound for us, so we just need to
+				// modify RAX and IP, then we're good to go!
+				// Note: It seems we can only set "RAX" and "RDX" here. Probably, we may only set
+				// registers that are preserved between function calls.
+				_Unwind_SetGR(context, DW_REG_RAX, (_Unwind_Word)exception);
+				_Unwind_SetIP(context, pc);
+
+				return _URC_INSTALL_CONTEXT;
 			} else if (actions & _UA_CLEANUP_PHASE) {
 				// Phase 2: Cleanup!
-				// if (actions & _UA_HANDLER_FRAME), we should return _URC_INSTALL_CONTEXT.
 
 				// Clean up what we can!
-				// Note: using _Unwind_GetCFA seems to return the CFA of the previous frame.
-				stormCleanup(fn, pc, rbp);
+				Nat part = stormFindPart(fnData, fn, pc);
+				if (part != Part().key()) {
+					StackFrame frame(part, (void *)rbp);
+					fnData->owner->cleanup(frame);
+				}
 				return _URC_CONTINUE_UNWIND;
 			} else {
 				// Just pretend we did something useful...

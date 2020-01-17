@@ -48,6 +48,8 @@ namespace code {
 			void *self;
 
 			// The topmost active part.
+			// TODO: We could use an approach similar to Posix here, i.e. generating a part-table.
+			// Then we don't need to store it on the stack.
 			size_t activePart;
 
 			// Current EBP points to this.

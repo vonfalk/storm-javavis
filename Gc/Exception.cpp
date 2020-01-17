@@ -23,7 +23,7 @@ namespace storm {
 			allocEx = (AbiAllocEx)dlsym(RTLD_NEXT, "__cxa_allocate_exception");
 
 		void *result = (*allocEx)(thrown_size);
-		printf("Allocated exception %p, %d bytes\n", result, (int)thrown_size);
+		PLN(L"Allocated exception " << result << L", " << thrown_size << L" bytes.");
 		return result;
 	}
 
@@ -31,7 +31,7 @@ namespace storm {
 		if (!freeEx)
 			freeEx = (AbiFreeEx)dlsym(RTLD_NEXT, "__cxa_free_exception");
 
-		printf("Freeing exception! %p\n", thrown_object);
+		PLN(L"Freeing exception " << thrown_object << L"!");
 		return (*freeEx)(thrown_object);
 	}
 
