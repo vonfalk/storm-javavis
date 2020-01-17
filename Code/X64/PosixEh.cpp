@@ -284,8 +284,6 @@ namespace code {
 				store->catchTemp = resume.ip;
 				store->handlerSwitchValue = part;
 
-				PLN(L"Storm exception we want to catch: " << (void *)object << L", " << object);
-
 				// Tell the system we have a handler! It will call us with _UA_HANDLER_FRAME later.
 				return _URC_HANDLER_FOUND;
 			} else if ((actions & _UA_CLEANUP_PHASE) && (actions & _UA_HANDLER_FRAME)) {
