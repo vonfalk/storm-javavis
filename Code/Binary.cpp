@@ -96,15 +96,26 @@ namespace code {
 			code::Part part = srcParts->at(i);
 			Array<Var> *vars = src->partVars(part);
 
-			Part *p = (Part *)runtime::allocArray(engine(), &partType, vars->count());
+			// Count variables that need finalization. Those are the only ones we need.
+			size_t count = 0;
+			for (Nat j = 0; j < vars->count(); j++)
+				if (src->freeOpt(vars->at(j)) & freeOnException)
+					count++;
+
+			Part *p = (Part *)runtime::allocArray(engine(), &partType, count);
 			parts->v[i] = p;
 			p->prev = src->prev(part).key();
 
-			for (nat j = 0; j < vars->count(); j++) {
+			size_t at = 0;
+			for (Nat j = 0; j < vars->count(); j++) {
 				const Var &v = vars->at(j);
-
 				Nat flags = src->freeOpt(v);
-				if (flags & freeOnException) {
+
+				// We only include the ones we actually need.
+				if ((flags & freeOnException) == 0)
+					continue;
+
+				if (flags & freePtr) {
 					// No additional flags needed, but we set sPtr for good measure.
 					flags |= Variable::sPtr;
 				} else if (v.size() == Size::sPtr) {
@@ -120,8 +131,9 @@ namespace code {
 						L"Specify 'freePtr' to get a pointer to the value instead!");
 				}
 
-				p->vars[j].id = v.key();
-				p->vars[j].flags = flags;
+				p->vars[at].id = v.key();
+				p->vars[at].flags = flags;
+				at++;
 			}
 		}
 	}
