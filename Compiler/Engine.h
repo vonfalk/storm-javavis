@@ -329,6 +329,9 @@ namespace storm {
 			virtual void alloc(StackFrame *frames, nat count) const;
 			virtual void free(StackFrame *frames, nat count) const;
 
+			virtual bool translate(void *ip, void *&fnBase, int &offset) const;
+			virtual void format(GenericOutput &to, void *fnBase, int offset) const;
+
 		private:
 			Gc &gc;
 

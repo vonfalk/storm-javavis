@@ -99,8 +99,8 @@ namespace storm {
 			PLN((void *)obj);
 		}
 
-		void stackTrace() {
-			::dumpStack();
+		void stackTrace(EnginePtr e) {
+			PLN(collectStackTrace(e).format());
 		}
 
 		void threadSummary(EnginePtr e) {

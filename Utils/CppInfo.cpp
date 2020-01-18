@@ -3,6 +3,13 @@
 #include "Path.h"
 #include "DbgHelper.h"
 
+bool CppInfo::translate(void *ip, void *&fn, int &offset) const {
+	// We don't know very much... We do, however, know that we're last. So we can always return 'true'.
+	fn = ip;
+	offset = 0;
+	return true;
+}
+
 #if defined(WINDOWS)
 
 // Easy creation of a SYMBOL_INFO
@@ -81,70 +88,70 @@ enum SymTagEnum {
 	SymTagHLSLType
 };
 
-static bool baseType(wostream &to, DWORD index) {
+static bool baseType(GenericOutput &to, DWORD index) {
 	switch (index) {
 	case btVoid:
-		to << L"void";
+		to.put(L"void");
 		return true;
 	case btChar:
-		to << L"char";
+		to.put(L"char");
 		return true;
 	case btWChar:
-		to << L"wchar";
+		to.put(L"wchar_t");
 		return true;
 	case btInt:
-		to << L"int";
+		to.put(L"int");
 		return true;
 	case btUInt:
-		to << L"nat";
+		to.put(L"nat");
 		return true;
 	case btFloat:
-		to << L"float";
+		to.put(L"float");
 		return true;
 	case btBCD:
-		to << L"BCD";
+		to.put(L"BCD");
 		return true;
 	case btBool:
-		to << L"bool";
+		to.put(L"bool");
 		return true;
 	case btEnum:
-		to << L"enum";
+		to.put(L"enum");
 		return true;
 	case btLong:
-		to << L"long";
+		to.put(L"long");
 		return true;
 	case btULong:
-		to << L"ulong";
+		to.put(L"ulong");
 		return true;
 	case btCurrency:
-		to << L"Currency";
+		to.put(L"Currency");
 		return true;
 	case btDate:
-		to << L"Date";
+		to.put(L"Date");
 		return true;
 	case btVariant:
-		to << L"Variant";
+		to.put(L"Variant");
 		return true;
 	case btComplex:
-		to << L"Complex";
+		to.put(L"Complex");
 		return true;
 	case btBit:
-		to << L"bit";
+		to.put(L"bit");
 		return true;
 	case btBSTR:
-		to << L"BSTR";
+		to.put(L"BSTR");
 		return true;
 	case btHresult:
-		to << L"HRESULT";
+		to.put(L"HRESULT");
 		return true;
 	}
 	return false;
 }
 
 
-static void outputSymbol(wostream &to, SymInfo &symbol);
+static void outputSymbol(GenericOutput &to, SymInfo &symbol);
 
-static void outputSymbol(wostream &to, ULONG64 base, DWORD index) {
+static void outputSymbol(GenericOutput &to, ULONG64 base, DWORD index) {
 	DbgHelp &h = dbgHelp();
 
 	DWORD tag;
@@ -165,7 +172,7 @@ static void outputSymbol(wostream &to, ULONG64 base, DWORD index) {
 	case SymTagPointerType:
 		SymGetTypeInfo(h.process, base, index, TI_GET_TYPEID, &tmp);
 		outputSymbol(to, base, tmp);
-		to << L"*";
+		to.put(L"*");
 		break;
 	case SymTagFunctionArgType:
 		SymGetTypeInfo(h.process, base, index, TI_GET_TYPEID, &tmp);
@@ -173,32 +180,34 @@ static void outputSymbol(wostream &to, ULONG64 base, DWORD index) {
 		// There may be a name here somewhere!
 		break;
 	case SymTagFunctionType:
-		to << L"<function ptr>";
+		to.put(L"<function ptr>");
 		break;
 	case SymTagEnum:
-		to << L"<enum>";
+		to.put(L"<enum>");
 		break;
 		// ...
 	default:
-		to << L"<tag: " << tag << L">";
+		to.put(L"<tag: ");
+		to.put(tag);
+		to.put(L">");
 	}
 
 }
 
 // Output a symbol (with parameters).
-static void outputSymbol(wostream &to, SymInfo &symbol) {
+static void outputSymbol(GenericOutput &to, SymInfo &symbol) {
 	DbgHelp &h = dbgHelp();
 
 	// Type of item:
 	DWORD type;
 	if (SymGetTypeInfo(h.process, symbol.ModBase, symbol.TypeIndex, TI_GET_TYPE, &type)) {
 		outputSymbol(to, symbol.ModBase, type);
-		to << L" ";
+		to.put(L" ");
 	}
 
 
 	// Name
-	to << symbol.Name;
+	to.put(symbol.Name);
 
 	// Function?
 	if (symbol.Tag != SymTagFunction)
@@ -207,7 +216,7 @@ static void outputSymbol(wostream &to, SymInfo &symbol) {
 	// Parameters.
 	DWORD children = 0;
 	SymGetTypeInfo(h.process, symbol.ModBase, symbol.TypeIndex, TI_GET_CHILDRENCOUNT, &children);
-	to << L"(";
+	to.put(L"(");
 
 	byte *mem = new byte[sizeof(TI_FINDCHILDREN_PARAMS) + sizeof(ULONG)*children];
 	TI_FINDCHILDREN_PARAMS *params = (TI_FINDCHILDREN_PARAMS *)mem;
@@ -217,21 +226,21 @@ static void outputSymbol(wostream &to, SymInfo &symbol) {
 	SymGetTypeInfo(h.process, symbol.ModBase, symbol.TypeIndex, TI_FINDCHILDREN, params);
 	for (nat i = 0; i < nat(children); i++) {
 		if (i != 0)
-			to << L", ";
+			to.put(L", ");
 		outputSymbol(to, symbol.ModBase, params->ChildId[i]);
 	}
 
 	delete []mem;
 
-	to << L")";
+	to.put(L")");
 }
 
-bool CppInfo::format(std::wostream &to, const StackFrame &frame) const {
+void CppInfo::format(GenericOutput &to, void *fnBase, int offset) const {
 	DbgHelp &h = dbgHelp();
 
 	const nat maxNameLen = 512;
 	SymInfo symbol;
-	DWORD64 ptr = (DWORD64)frame.code;
+	DWORD64 ptr = (DWORD64)fnBase + offset;
 	DWORD64 codeDisplacement;
 	bool hasSymName = SymFromAddr(h.process, ptr, &codeDisplacement, &symbol) ? true : false;
 
@@ -240,25 +249,27 @@ bool CppInfo::format(std::wostream &to, const StackFrame &frame) const {
 	line.SizeOfStruct = sizeof(line);
 	bool hasLine = SymGetLineFromAddr64(h.process, ptr, &lineDisplacement, &line) ? true : false;
 
-	if (!hasSymName && !hasLine)
-		return false;
-
 	if (hasLine) {
 		Path path(line.FileName);
 #ifdef DEBUG
 		path = path.makeRelative(Path::dbgRoot());
 #endif
-		to << path << L"(L" << line.LineNumber << L"): ";
+		std::wostringstream p;
+		p << path;
+		to.put(p.str().c_str());
+		to.put(L"(L");
+		to.put(line.LineNumber);
+		to.put(L"): ");
 	} else {
-		to << L"<unknown location>: ";
+		to.put(L"<unknown location>: ");
 	}
 
-	if (hasSymName)
+	if (hasSymName) {
 		outputSymbol(to, symbol);
-	else
-		to << L"Unknown function @" << toHex(frame.code);
-
-	return true;
+	} else {
+		to.put(L"Unknown function @");
+		to.putHex((size_t)ptr);
+	}
 }
 
 #elif defined(POSIX)
@@ -286,7 +297,7 @@ public:
 };
 
 struct FormatData {
-	std::wostream &to;
+	GenericOutput &to;
 	bool any;
 };
 
@@ -302,9 +313,9 @@ static void formatOk(void *data, uintptr_t pc, const char *symname, uintptr_t sy
 		int status = 0;
 		char *demangled = abi::__cxa_demangle(symname, null, null, &status);
 		if (status == 0) {
-			d->to << demangled;
+			d->to.put(demangled);
 		} else {
-			d->to << symname;
+			d->to.put(symname);
 		}
 		free(demangled);
 		d->any = true;
@@ -313,12 +324,16 @@ static void formatOk(void *data, uintptr_t pc, const char *symname, uintptr_t sy
 	}
 }
 
-bool CppInfo::format(std::wostream &to, const StackFrame &frame) const {
+bool CppInfo::format(GenericOutput &to, void *base, int offset) const {
 	static LookupState state;
 
 	FormatData data = { to, false };
-	backtrace_syminfo(state.state, (uintptr_t)frame.code, &formatOk, &formatError, &data);
-	return data.any;
+	backtrace_syminfo(state.state, (uintptr_t)base + offset, &formatOk, &formatError, &data);
+
+	if (!data.any) {
+		to.put("Unknown function @");
+		to.putHex((size_t)ptr);
+	}
 }
 
 #else

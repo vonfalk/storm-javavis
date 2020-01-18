@@ -1,6 +1,7 @@
 #include "stdafx.h"
 #include "StackTrace.h"
 #include "CppInfo.h"
+#include "StackInfoSet.h"
 
 #include <iomanip>
 
@@ -64,19 +65,20 @@ void StackTrace::push(const StackFrame &frame) {
 void StackTrace::output(wostream &to) const {
 	for (nat i = 0; i < count(); i++) {
 		to << endl << std::setw(3) << i;
-		to << L": " << frames[i].code;
+		to << L": " << (void *)((byte *)frames[i].fnBase + frames[i].offset);
 	}
 }
 
 String format(const StackTrace &t) {
-	// Make sure the CppLookup is registered.
-	static RegisterInfo<CppInfo> z;
-
 	std::wostringstream to;
+	StdOutput sOut(to);
 	StackInfoSet &l = stackInfo();
+
 	for (nat i = 0; i < t.count(); i++) {
+		const StackFrame &frame = t[i];
+
 		to << std::setw(3) << i << L": ";
-		l.format(to, t[i]);
+		l.format(sOut, frame.id, frame.fnBase, frame.offset);
 		to << endl;
 	}
 
@@ -120,7 +122,7 @@ static void initFrame(CONTEXT &context, STACKFRAME64 &frame) {
 // Warning about not being able to protect from stack-overruns...
 #pragma warning ( disable : 4748 )
 
-StackTrace stackTrace(nat skip) {
+void createStackTrace(TraceGen &gen, nat skip) {
 	// Initialize the library if it is not already done.
 	dbgHelp();
 
@@ -145,7 +147,7 @@ StackTrace stackTrace(nat skip) {
 	zeroMem(frame);
 	initFrame(context, frame);
 
-	StackTrace r;
+	gen.init(0);
 	StackInfoSet &s = stackInfo();
 	while (StackWalk64(machineType, process, thread, &frame, &context, NULL, NULL, NULL, NULL)) {
 		if (skip > 0) {
@@ -154,14 +156,10 @@ StackTrace stackTrace(nat skip) {
 		}
 
 		StackFrame f;
+		f.id = s.translate((void *)frame.AddrPC.Offset, f.fnBase, f.offset);
 
-		f.code = (void *)frame.AddrPC.Offset;
-		s.collect(f, (void *)frame.AddrFrame.Offset);
-
-		r.push(f);
+		gen.put(f);
 	}
-
-	return r;
 }
 
 #endif
@@ -200,7 +198,7 @@ static NT_TIB *getTIB() {
 	return tib;
 }
 
-StackTrace stackTrace(nat skip) {
+void createStackTrace(TraceGen &gen, nat skip) {
 	NT_TIB *tib = getTIB();
 	void *stackMax = tib->StackBase;
 	void *stackMin = tib->StackLimit;
@@ -221,19 +219,19 @@ StackTrace stackTrace(nat skip) {
 		skip = 0;
 
 	// Collect the trace itself.
-	StackTrace r(frames);
+	gen.init(frames);
+	StackInfoSet &s = stackInfo();
 	void *now = base;
 	for (nat i = 0; i < skip; i++)
 		now = prevFrame(now);
 
 	for (nat i = 0; i < frames; i++) {
-		StackFrame &f = r[i];
-		f.code = prevIp(now);
-		s.collect(f, prevFrame(now));
+		StackFrame f;
+		f.id = s.translate(prevIp(now), f.fnBase, f.offset);
 		now = prevFrame(now);
-	}
 
-	return r;
+		gen.put(f);
+	}
 }
 
 #endif
@@ -241,29 +239,47 @@ StackTrace stackTrace(nat skip) {
 #ifdef POSIX
 #include <execinfo.h>
 
-StackTrace stackTrace(nat skip) {
+void createStackTrace(TraceGen &gen, nat skip) {
 	// Note: We could call _Unwind_Backtrace directly to avoid any size limitations.
 	const int MAX_DEPTH = 100;
 	void *buffer[MAX_DEPTH];
 	int depth = backtrace(buffer, MAX_DEPTH);
 	if (depth < 0)
-		return StackTrace();
+		return;
 
 	nat levels = nat(depth);
 	if (levels <= skip)
-		return StackTrace();
+		return;
+
 	levels -= skip;
 
-	StackTrace result(levels);
-	for (nat i = 0; i < levels; i++)
-		result[i].code = buffer[i + skip];
+	gen.init(levels);
+	StackInfoSet &s = stackInfo();
+	for (nat i = 0; i < levels; i++) {
+		StackFrame frame;
+		frame.id = s.translate(buffer[i + skip], frame.fnBase, frame.offset);
+
+		gen.put(frame);
+	}
 
 	return result;
 }
 
 #endif
 
-void dumpStack() {
-	StackTrace s = stackTrace();
-	PLN(format(s));
+class STGen : public TraceGen {
+public:
+	StackTrace trace;
+
+	void init(size_t count) {}
+
+	void put(const StackFrame &frame) {
+		trace.push(frame);
+	}
+};
+
+StackTrace stackTrace(nat skip) {
+	STGen gen;
+	createStackTrace(gen, skip);
+	return gen.trace;
 }

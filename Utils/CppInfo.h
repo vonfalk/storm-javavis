@@ -6,6 +6,9 @@
  */
 class CppInfo : public StackInfo {
 public:
+	// Collect data.
+	virtual bool translate(void *ip, void *&fnBase, int &offset) const;
+
 	// Format a function call.
-	virtual bool format(std::wostream &to, const StackFrame &frame) const;
+	virtual void format(GenericOutput &to, void *fnBase, int offset) const;
 };

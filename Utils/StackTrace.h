@@ -9,14 +9,16 @@
 
 /**
  * Fixed-size data entry for stack traces.
- * TODO: Some local variables as well?
  */
 struct StackFrame {
-	// Return address, points inside some function.
-	const void *code;
+	StackFrame() : fnBase(null), offset(0), id(0) {}
 
-	// Additional data if required by some backend.
-	void *data;
+	// Base and offset for the function.
+	void *fnBase;
+	int offset;
+
+	// Which backend produced the data above.
+	int id;
 };
 
 
@@ -76,5 +78,14 @@ StackTrace stackTrace(nat skip = 0);
 // Fromat an entire trace.
 String format(const StackTrace &trace);
 
-// Print the stack here.
-void dumpStack();
+
+// Generate a stack trace using a custom container.
+class TraceGen {
+public:
+	// Initialize the data structure with 'count' elements.
+	virtual void init(size_t count) = 0;
+
+	// Add a frame.
+	virtual void put(const StackFrame &frame) = 0;
+};
+void createStackTrace(TraceGen &gen, nat skip = 0);

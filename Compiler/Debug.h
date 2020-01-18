@@ -117,7 +117,7 @@ namespace storm {
 		void STORM_FN dumpObject(TObject *obj);
 
 		// Print a stack trace.
-		void STORM_FN stackTrace();
+		void STORM_FN stackTrace(EnginePtr e);
 
 		// Print a summary of all running threads in the system.
 		void STORM_FN threadSummary(EnginePtr e) ON(Compiler);

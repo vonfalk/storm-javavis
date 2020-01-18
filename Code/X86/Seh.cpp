@@ -7,7 +7,7 @@
 #include "Core/Str.h"
 #include "Gc/CodeTable.h"
 #include "Utils/Memory.h"
-#include "Utils/StackInfo.h"
+#include "Utils/StackInfoSet.h"
 
 #if defined(WINDOWS) && defined(X86)
 
@@ -124,22 +124,25 @@ namespace code {
 
 		class SehInfo : public StackInfo {
 		public:
-			virtual void collect(::StackFrame &to, void *frame) const {
-				to.data = null;
-
+			virtual bool translate(void *ip, void *&fnBase, int &offset) const {
 				CodeTable &table = codeTable();
-				void *code = table.find(to.code);
-				if (code)
-					to.data = codeBinary(code);
+				void *code = table.find(ip);
+				if (!code)
+					return false;
+
+				fnBase = code;
+				offset = (byte *)ip - (byte *)code;
+				return true;
 			}
 
-			virtual bool format(std::wostream &to, const ::StackFrame &frame) const {
-				if (frame.data) {
-					Binary *b = (Binary *)frame.data;
-					to << b->ownerName();
-					return true;
+			virtual void format(GenericOutput &to, void *fnBase, int offset) const {
+				Binary *owner = codeBinary(fnBase);
+				Str *name = owner->ownerName();
+				if (name) {
+					to.put(name->c_str());
+				} else {
+					to.put(S("<unnamed Storm function>"));
 				}
-				return false;
 			}
 		};
 

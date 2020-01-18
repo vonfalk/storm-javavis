@@ -10,7 +10,7 @@ namespace os {
 			if (hasError()) {
 				try {
 					throwError();
-				} catch (const Exception &e) {
+				} catch (const ::Exception &e) {
 					PLN(L"Unhandled exception from abandoned future: " << e);
 				} catch (...) {
 					PLN(L"Unknown unhandled exception from abandoned future.");

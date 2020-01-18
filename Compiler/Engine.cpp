@@ -19,6 +19,7 @@
 #include "Lib/Maybe.h"
 #include "Syntax/Node.h"
 #include "Utils/Memory.h"
+#include "Utils/StackInfoSet.h"
 #include "StdIoThread.h"
 #include "Visibility.h"
 #include "Exception.h"
@@ -93,7 +94,7 @@ namespace storm {
 		if (std::find(threads.begin(), threads.end(), compiler) == threads.end())
 			threads.insert(threads.begin(), compiler);
 
-		vector<vector<StackTrace>> traces = os::stackTraces(threads);
+		vector<vector<::StackTrace>> traces = os::stackTraces(threads);
 
 		Array<NamedThread *> *threadNames = new (*this) Array<NamedThread *>();
 		findThreads(threadNames, package());
@@ -102,7 +103,7 @@ namespace storm {
 
 		for (size_t t = 0; t < threads.size(); t++) {
 			const os::Thread &thread = threads[t];
-			vector<StackTrace> &trace = traces[t];
+			vector<::StackTrace> &trace = traces[t];
 
 			outputThread(output, thread, threadNames);
 			*output << L":\n";
@@ -655,6 +656,11 @@ namespace storm {
 		}
 	}
 
+	bool Engine::StormInfo::translate(void *ip, void *&fnBase, int &offset) const {
+		return false;
+	}
+
+	void Engine::StormInfo::format(GenericOutput &to, void *fnBase, int offset) const {}
 
 	/**
 	 * Interface which only exists in the compiler. Dynamic libraries have their own implementations

@@ -2,7 +2,7 @@
 #include "PosixEh.h"
 #include "Binary.h"
 #include "Gc/DwarfTable.h"
-#include "Utils/StackInfo.h"
+#include "Utils/StackInfoSet.h"
 #include "Core/Str.h"
 #include "DwarfRegs.h"
 
@@ -366,26 +366,32 @@ namespace code {
 
 		class DwarfInfo : public StackInfo {
 		public:
-			virtual bool format(std::wostream &to, const ::StackFrame &frame) const {
-				FDE *fde = dwarfTable().find(frame.code);
+			virtual bool translate(void *ip, void *&fnBase, int &offset) const {
+				FDE *fde = dwarfTable().find(ip);
 				if (!fde)
 					return false;
 
-				char *start = (char *)fde->codeStart();
+				byte *start = (byte *)fde->codeStart();
 				if (fde->codeSize() != runtime::codeSize(start)) {
-					// Something is fishy!
+					// Something is strange...
 					WARNING(L"This does not seem like code we know...");
 					return false;
 				}
-				start += runtime::codeSize(start) - 2*sizeof(void *);
-				Binary *owner = *(Binary **)start;
+
+				fnBase = start;
+				offset = (byte *)ip - start;
+				return true;
+			}
+
+			virtual void format(GenericOutput &to, void *fnBase, int offset) const {
+				void *meta = (byte *)fnBase + runtime::codeSize(fnBase) - 2*sizeof(void *);
+				Binary *owner = *(Binary **)meta;
 				Str *name = owner->ownerName();
 				if (name) {
-					to << name->c_str();
+					to.put(name->c_str());
 				} else {
-					to << L"<unnamed Storm function>";
+					to.put(S("<unnamed Storm function>"));
 				}
-				return true;
 			}
 		};
 
