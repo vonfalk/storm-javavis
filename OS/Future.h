@@ -33,17 +33,23 @@ namespace os {
 		// Detect unhandled exceptions and print them.
 		~FutureBase();
 
-		// Wait for the result. This function will either return
-		// normally, indicating the result is written to 'target',
-		// or throw an exception posted.
-		void result();
+		// Cleanup with better diagnostics in case pointer errors were thrown.
+		void destroy(void *ptrStorage);
+
+		// Wait for the result. This function will either return normally, indicating the result is
+		// written to 'target', or throw an exception posted.
+		void result(void *ptrStorage);
+
+		// Detach this exception, ie. don't complain about uncaught errors.
+		void detach();
 
 		// Tell the waiting thread we have posted a result.
 		void posted();
 
-		// Post an error. This function must be called from within a
-		// throw-catch block. Otherwise the runtime crashes.
-		void error();
+		// Post an error. This function must be called from within a throw-catch block. Otherwise
+		// the runtime crashes. The 'ptrStorage' pointer shall refer to memory where it is safe to
+		// store pointers to garbage collected objects.
+		void error(void **ptrStorage);
 
 		// Has any result been posted?
 		bool dataPosted();
@@ -65,11 +71,6 @@ namespace os {
 		void saveError();
 
 #ifdef CUSTOM_EXCEPTION_PTR
-		// Any error?
-		inline bool hasError() const {
-			return errorData.data != null;
-		}
-
 		class Cloned : NoCopy {
 		public:
 			Cloned();
@@ -97,15 +98,43 @@ namespace os {
 #else
 		// Exception.
 		std::exception_ptr errorData;
-
-		// Any error?
-		inline bool hasError() const {
-			return bool(errorData);
-		}
 #endif
 
-		// Anything posted? 0 or 1
+		// Any error?
+		bool hasError() const {
+			nat r = atomicRead(resultPosted);
+			return r == resultError || r == resultErrorPtr;
+		}
+
+		// What kind of result was posted?
+		enum {
+			// No result.
+			resultEmpty,
+
+			// A regular value.
+			resultValue,
+
+			// A generic C++ exception.
+			resultError,
+
+			// A pointer to PtrThrowable.
+			resultErrorPtr,
+		};
+
+		// Anything posted? Any of 'result*'
 		nat resultPosted;
+
+		// Did we read the result?
+		enum {
+			// Not read.
+			readNone,
+
+			// Read at least once.
+			readOnce,
+
+			// Detached. i.e. will not be read.
+			readDetached,
+		};
 
 		// Anything read?
 		nat resultRead;

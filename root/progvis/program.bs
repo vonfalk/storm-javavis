@@ -55,7 +55,7 @@ class Program on Render {
 	// Start a new thread executing a particular function assumed to be located inside the
 	// environment specified earlier. Always spawns a new thread..
 	void spawn(Fn<void> fn) {
-		spawn run(fn);
+		(spawn run(fn)).detach();
 	}
 
 	// Run the function.

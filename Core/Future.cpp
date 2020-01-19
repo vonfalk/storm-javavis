@@ -51,12 +51,21 @@ namespace storm {
 	}
 
 	void FutureBase::resultRaw(void *to) {
-		data->future.result();
+		try {
+			data->future.result();
+		} catch (const Object *o) {
+			// Make sure to copy it!
+			throw clone(o);
+		}
 		handle.safeCopy(to, result->v);
 		if (handle.deepCopyFn) {
 			CloneEnv *e = new (this) CloneEnv();
 			(*handle.deepCopyFn)(to, e);
 		}
+	}
+
+	void FutureBase::detach() {
+		data->future.detach();
 	}
 
 	os::FutureBase *FutureBase::rawFuture() {

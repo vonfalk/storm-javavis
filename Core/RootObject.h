@@ -1,5 +1,6 @@
 #pragma once
 #include "Runtime.h"
+#include "OS/PtrThrowable.h"
 
 namespace storm {
 	STORM_PKG(core.lang);
@@ -12,7 +13,7 @@ namespace storm {
 	/**
 	 * The shared parts between Object and TObject. Not exposed to Storm.
 	 */
-	class RootObject {
+	class RootObject : public PtrThrowable {
 		STORM_ROOT_CLASS;
 	public:
 		// Default constructor.
@@ -38,6 +39,9 @@ namespace storm {
 		inline bool isA(const Type *o) const {
 			return runtime::isA(this, o);
 		}
+
+		// Exception magic. More or less only used to produce nice error messages in some cases.
+		virtual wchar *toCStr() const;
 
 		// To string.
 		virtual Str *STORM_FN toS() const;

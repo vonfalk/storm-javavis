@@ -11,6 +11,10 @@ namespace storm {
 
 	RootObject::~RootObject() {}
 
+	wchar *RootObject::toCStr() const {
+		return toS()->c_str();
+	}
+
 	Str *RootObject::toS() const {
 		StrBuf *b = new (this) StrBuf();
 		toS(b);

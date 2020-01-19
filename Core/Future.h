@@ -39,6 +39,9 @@ namespace storm {
 		// Wait for the result. 'to' is empty memory where the value will be copied into.
 		void CODECALL resultRaw(void *to);
 
+		// Detach the future, ie. tell it we don't care about the result.
+		void STORM_FN detach();
+
 		// Get the underlying future object. Note: when you call this function,
 		// you are required to call either postRaw or error on the future object, otherwise
 		// we will leak resources!

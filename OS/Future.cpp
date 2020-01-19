@@ -1,51 +1,86 @@
 #include "stdafx.h"
 #include "Future.h"
+#include "PtrThrowable.h"
 
 namespace os {
 
-	FutureBase::FutureBase() : resultPosted(0), resultRead(0) {}
+	FutureBase::FutureBase() : resultPosted(resultEmpty), resultRead(readNone) {}
 
 	FutureBase::~FutureBase() {
-		if (resultRead == 0) {
-			if (hasError()) {
+		destroy(null);
+	}
+
+	void FutureBase::destroy(void *ptrStorage) {
+		// Warn about uncaught exceptions if we didn't throw it yet.
+		if (resultRead == readNone) {
+			switch (atomicRead(resultPosted)) {
+			case resultError:
 				try {
 					throwError();
 				} catch (const ::Exception &e) {
 					PLN(L"Unhandled exception from abandoned future: " << e);
+				} catch (const PtrThrowable *e) {
+					PLN(L"Unhandled exception from abandoned future: " << e->toCStr());
 				} catch (...) {
 					PLN(L"Unknown unhandled exception from abandoned future.");
 				}
+				break;
+			case resultErrorPtr:
+				if (ptrStorage)
+					PLN(L"Unhandled exception from abandoned future: " << ((PtrThrowable *)ptrStorage)->toCStr());
+				else
+					PLN(L"Unknown unhandled exception from abandoned future.");
+				break;
 			}
+
+			resultRead = readOnce;
 		}
 	}
 
-	void FutureBase::result() {
+	void FutureBase::result(void *ptrStorage) {
 		// Block the first thread, and allow any subsequent threads to enter.
 		wait();
-		atomicWrite(resultRead, 1);
-		if (hasError()) {
+		atomicWrite(resultRead, readOnce);
+		switch (atomicRead(resultPosted)) {
+		case resultError:
 			throwError();
+		case resultErrorPtr:
+			throw (PtrThrowable *)ptrStorage;
 		}
+	}
+
+	void FutureBase::detach() {
+		atomicWrite(resultRead, readDetached);
 	}
 
 	bool FutureBase::anyPosted() {
-		return atomicRead(resultPosted) == 1;
+		return atomicRead(resultPosted) != resultEmpty;
 	}
 
 	bool FutureBase::dataPosted() {
-		return anyPosted() && !hasError();
+		return atomicRead(resultPosted) == resultValue;
 	}
 
 	void FutureBase::posted() {
-		nat p = atomicCAS(resultPosted, 0, 1);
+		nat p = atomicCAS(resultPosted, resultEmpty, resultError);
 		assert(p == 0, L"A future may not be used more than once! this=" + ::toHex(this));
 		notify();
 	}
 
-	void FutureBase::error() {
-		nat p = atomicCAS(resultPosted, 0, 1);
-		assert(p == 0, L"A future may not be used more than once! this=" + ::toHex(this));
-		saveError();
+	void FutureBase::error(void **ptrStorage) {
+		try {
+			throw;
+		} catch (const PtrThrowable *exception) {
+			// Save the exception pointer directly. It may be GC:d.
+			nat p = atomicCAS(resultPosted, resultEmpty, resultErrorPtr);
+			assert(p == resultError, L"A future may not be used more than once! this=" + ::toHex(this));
+			*ptrStorage = (void *)exception;
+		} catch (...) {
+			// Fall back on exception_ptr or similar.
+			nat p = atomicCAS(resultPosted, resultEmpty, resultError);
+			assert(p == resultError, L"A future may not be used more than once! this=" + ::toHex(this));
+			saveError();
+		}
 		notify();
 	}
 
