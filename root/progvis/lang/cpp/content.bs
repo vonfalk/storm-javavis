@@ -1,0 +1,9 @@
+class Content on Compiler {
+	// Functions found.
+	CppFnDecl[] functions;
+
+	// Add functions.
+	void add(CppFnDecl fn) {
+		functions << fn;
+	}
+}

@@ -1,0 +1,20 @@
+use core:lang;
+use lang:bs:macro;
+
+/**
+ * Type management helper functions used by the grammar.
+ */
+
+// Find a type.
+Value findType(Scope scope, SStr first, SStr[] rest) {
+	print("TODO: Implement type lookup!");
+	Value();
+}
+
+Value intType() {
+	Value(named{Int});
+}
+
+Value boolType() {
+	Value(named{Bool});
+}

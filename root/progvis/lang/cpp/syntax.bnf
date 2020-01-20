@@ -1,0 +1,93 @@
+use core.lang;
+
+delimiter = SDelimiter;
+
+// Delimiter. May contain comments.
+void SDelimiter();
+SDelimiter : "[ \n\r\t]*" - (SCommentStart #comment - SDelimiter)?;
+
+// Start of comments
+void SCommentStart();
+SCommentStart : "//[^\n\r]*[\n\r]";
+SCommentStart : "/" - "\*" - [SInComment]@;
+
+// Inside multi-line comments.
+void SInComment();
+// End.
+SInComment : "\*+/";
+// Start of nested comment.
+SInComment : "/\*+" - SInComment - SInComment;
+// Everything except * and / are fine.
+SInComment : "[^\*/]*" - SInComment;
+// Match any number of * followed by anything other than a /
+SInComment : "\*+[^\*/]" - SInComment;
+// Match any number of /
+SInComment : "/+" - SInComment;
+
+
+// Root production.
+Content SRoot();
+SRoot => Content() : (SDef(me),)*;
+
+// Definitions inside the file.
+void SDef(Content content);
+
+// Preprocessor directives (we just ignore them at the moment).
+SDef : "# *[a-zA-Z]+[^\n]*\n" #comment;
+
+// Function declarations
+SDef => content : SFnDecl -> add;
+
+CppFnDecl SFnDecl();
+SFnDecl => CppFnDecl(res, name, formals, body) : STypeName@ res, SIdentifier name #fnName, "(", SFormals formals, ")", SFnTail body;
+
+Maybe<SBlock> SFnTail();
+SFnTail => Maybe<SBlock>() : ";";
+SFnTail => Maybe<SBlock>(block) : SBlock@ block;
+
+// Formal parameters.
+Array<Formal> SFormals();
+SFormals => Array<Formal>() : ;
+SFormals => Array<Formal>() : SFormal -> push - (, ",", SFormal -> push)*;
+
+Formal SFormal();
+SFormals => Formal(type, name) : STypeName @type, SIdentifier name;
+
+// Identifiers
+SStr SIdentifier();
+SIdentifier => v : "[A-Za-z_][A-Za-z0-9_]*" @v;
+
+// Type declarations. Transforms into a Value.
+Value STypeName(Scope scope);
+STypeName => original : ("const" #keyword,)? STypeNameI(scope) original;
+STypeName => asRef(original) : ("const" #keyword,)? STypeNameI(scope) original, "&";
+
+Value STypeNameI(Scope scope);
+STypeNameI[-1] => findType(scope, first, rest) : SIdentifier first - ("::", SIdentifier rest)*;
+// TODO: Templates...
+
+STypeNameI => original : STypeNameI original, "\*";
+STypeNameI => original : STypeNameI original, "const" #keyword;
+
+// Built-in types.
+STypeNameI => intType() : "int" #keyword;
+STypeNameI => boolType() : "bool" #keyword;
+STypeNameI => Value() : "void" #keyword;
+// ...
+
+
+// Statements and expressions:
+void SStmt();
+SStmt : SBlock;
+SStmt : SExpr, ";";
+SStmt : "return[ \t]" #keyword, SExpr expr, ";";
+SStmt : "return" #keyword, ";";
+
+void SBlock();
+SBlock : "{", (SStmt,)* "}";
+
+void SExpr();
+SExpr : SAtom();
+
+void SAtom();
+SAtom : "[0-9]+" #constant;

@@ -134,6 +134,18 @@ namespace storm {
 		parts->push(new (this) SimplePart(name, params));
 	}
 
+	void SimpleName::add(Nat pos, SimplePart *v) {
+		parts->insert(pos, v);
+	}
+
+	void SimpleName::add(Nat pos, Str *name) {
+		parts->insert(pos, new (this) SimplePart(name));
+	}
+
+	void SimpleName::add(Nat pos, Str *name, Array<Value> *params) {
+		parts->insert(pos, new (this) SimplePart(name, params));
+	}
+
 	SimpleName *SimpleName::parent() const {
 		SimpleName *n = new (this) SimpleName();
 		for (nat i = 0; i + 1 < parts->count(); i++)

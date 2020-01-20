@@ -108,6 +108,11 @@ namespace storm {
 		void STORM_FN add(Str *name);
 		void STORM_FN add(Str *name, Array<Value> *params);
 
+		// Add at a particular index.
+		void STORM_FN add(Nat pos, SimplePart *v);
+		void STORM_FN add(Nat pos, Str *name);
+		void STORM_FN add(Nat pos, Str *name, Array<Value> *params);
+
 		// Get the parent name.
 		SimpleName *STORM_FN parent() const;
 

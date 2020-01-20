@@ -171,3 +171,13 @@ void main() on Compiler {
 		win.waitForClose();
 	}
 }
+
+void testCpp() on Compiler {
+	if (url = named{progvis_demo}.url) {
+		if (p = Program:load(url / "cpp.cpp")) {
+			p.run(p.main);
+		} else {
+			print("Failed to run the program!");
+		}
+	}
+}

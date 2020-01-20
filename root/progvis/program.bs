@@ -131,6 +131,21 @@ class Program on Render {
 	}
 }
 
+private PkgReader? progvisReader(Str ext, Url[] files, Package pkg) {
+	unless (name = readerName(ext))
+		return null;
+
+	name.add(0, "progvis");
+	return createReader(name, files, pkg);
+}
+
+// Find a standard Storm reader.
+private PkgReader? stdReader(Str ext, Url[] files, Package pkg) {
+	if (name = readerName(ext))
+		return createReader(name, files, pkg);
+	null;
+}
+
 // Helper to load a program on a different thread.
 private Program? loadProgram(Url[] files) on Compiler {
 	Package pkg("<sandbox>");
@@ -144,9 +159,15 @@ private Program? loadProgram(Url[] files) on Compiler {
 
 	PkgReader[] readers;
 	for (ext, files in exts) {
-		if (name = readerName(ext))
-			if (r = createReader(name, files, pkg))
-				readers << r;
+		// Try to find a reader ourselves first.
+		if (r = progvisReader(ext, files, pkg)) {
+			readers << r;
+		} else if (r = stdReader(ext, files, pkg)) {
+			readers << r;
+		} else {
+			print("No reader for the file type ${ext}!");
+			return null;
+		}
 	}
 
 	if (readers.empty()) {

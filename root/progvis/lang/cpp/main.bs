@@ -1,0 +1,62 @@
+use core:io;
+use core:lang;
+use lang;
+use lang:bnf;
+use lang:bs:macro;
+
+// Entry-point for the C++ implementation.
+PkgReader reader(Url[] files, Package pkg) {
+	FilePkgReader(files, pkg, &readFile);
+}
+
+// Create files.
+private FileReader readFile(FileInfo info) {
+	Reader(info);
+}
+
+class Reader extends FileReader {
+	init(FileInfo info) {
+		init(info) {}
+	}
+
+	// For syntax highlighting.
+	Rule rootRule() : override {
+		named{SRoot};
+	}
+
+	// Types.
+	void readTypes() : override {}
+
+	void resolveTypes() : override {}
+
+	// Functions.
+	void readFunctions() : override {
+		Content c = content();
+		for (fn in c.functions) {
+			fn.create(info.pkg);
+		}
+	}
+
+	void resolveFunctions() : override {}
+
+private:
+
+	// Content. Null if not parsed yet.
+	Content? cont;
+
+	// Get the parsed content.
+	Content content() {
+		if (cont)
+			return cont;
+
+		// TODO: Don't generate if we already have it!
+		Parser<SRoot> parser;
+		parser.parse(info.contents, info.url, info.start);
+		if (parser.hasError)
+			parser.throwError();
+
+		Content c = parser.tree().transform();
+		cont = c;
+		return c;
+	}
+}

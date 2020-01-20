@@ -1,0 +1,59 @@
+use core:lang;
+
+class CppFnDecl on Compiler {
+	STypeName result;
+	SStr name;
+	Formal[] formals;
+
+	// If 'null', then this is just a declaration.
+	SBlock? body;
+
+	init(STypeName result, SStr name, Formal[] formals, SBlock? body) {
+		init() {
+			result = result;
+			name = name;
+			formals = formals;
+			body = body;
+		}
+	}
+
+	// Create this function.
+	void create(Package inside) {
+		// Don't try to create declarations.
+		unless (body)
+			return;
+
+		print("TODO: Make sure to create a proper scope!");
+		CppFunction fn(cppScope(inside), this, body);
+		inside.add(fn);
+	}
+}
+
+// A formal parameter.
+value Formal {
+	STypeName type;
+	SStr name;
+
+	init(STypeName type, SStr name) {
+		init { type = type; name = name; }
+	}
+}
+
+// A C++ function.
+class CppFunction extends Function {
+	// Names of all formal parameters.
+	private Str[] formals;
+
+	init(Scope scope, CppFnDecl decl, SBlock body) {
+		Value[] fTypes;
+		Str[] fNames;
+		for (f in decl.formals) {
+			fTypes << f.type.transform(scope);
+			fNames << f.name.v;
+		}
+
+		init(decl.result.transform(scope), decl.name.v, fTypes) {
+			formals = fNames;
+		}
+	}
+}

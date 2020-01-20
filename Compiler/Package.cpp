@@ -165,6 +165,20 @@ namespace storm {
 		}
 	}
 
+	static Str *noReaderWarning(SimpleName *name, Array<Url *> *files) {
+		StrBuf *msg = new (name) StrBuf();
+		*msg << L"No reader for [";
+		Url *rootUrl = name->engine().package()->url();
+		for (nat i = 0; i < files->count(); i++) {
+			if (i > 0)
+				*msg << L", ";
+			*msg << files->at(i)->relative(rootUrl);
+		}
+		*msg << L"] (should be " << name << L")";
+
+		return msg->toS();
+	}
+
 	Array<PkgReader *> *Package::createReaders(Map<SimpleName *, PkgFiles *> *readers) {
 		typedef Map<SimpleName *, PkgFiles *> ReaderMap;
 		Array<PkgReader *> *r = new (this) Array<PkgReader *>();
@@ -184,8 +198,11 @@ namespace storm {
 			}
 
 			PkgReader *reader = createReader(i.k(), i.v()->files, this);
-			if (reader)
+			if (reader) {
 				r->push(reader);
+			} else {
+				WARNING(noReaderWarning(i.k(), i.v()->files)->c_str());
+			}
 		}
 
 		if (delayName && delayFiles) {
