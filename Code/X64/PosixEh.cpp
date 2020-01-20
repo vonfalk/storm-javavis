@@ -148,6 +148,45 @@ namespace code {
 			return found->part;
 		}
 
+		// Storage from phase 1 to phase 2. Binary compatible with parts of __cxa_exception in GCC.
+		// Names from the GCC implementation for simplicity.
+
+		/**
+		 * GCC private exception struct. We need to be able to access various members in here during
+		 * the exception handling. More specifically:
+		 *
+		 * - 'exceptionType' in 'isStormException' to be able to check the type of exception that was thrown.
+		 * - 'adjustedPtr' in the personality function to store the resulting exception object in
+		 *   phase 1. Otherwise __cxa_begin_catch() does not return the proper value in phase 2 of the
+		 *   exception handling.
+		 * - 'handlerSwitchValue' in the personality function to store the current part, so we don't
+		 *   have to re-compute it in phase 2. This is not important for the implementation to function,
+		 *   but GCC does something similar, so why not do the same and gain the small performance boost?
+		 * - 'catcTemp' in the personality function to store the location we shall resume from so we
+		 *   don't have to re-compute it in phase 2. Not important for the implementation to function,
+		 *   but GCC does something similar. It is potentially dangerous to store a GC pointer in this
+		 *   structure, as it is not scanned (it is allocated separately using malloc). However, during
+		 *   the time the pointer is stored in here, a pointer into the same code block is pinned by
+		 *   being on the execution stack anyway, so it is fine in this case.
+		 */
+		struct ExStore {
+			std::type_info *exceptionType;
+			void *exceptionDestructor;
+
+			std::unexpected_handler unexpectedHandler;
+			std::terminate_handler terminateHandler;
+
+			void *nextException;
+			int handlerCount;
+			int handlerSwitchValue;
+			const byte *actionRecord;
+			const byte *languageSpecificData;
+			void *catchTemp;
+			void *adjustedPtr;
+
+			struct _Unwind_Exception exception;
+		};
+
 		static RootObject *isStormException(_Unwind_Exception_Class type, struct _Unwind_Exception *data) {
 			// Find the type info, and a pointer to the exception we're catching.
 			const std::type_info *info = null;
@@ -156,9 +195,9 @@ namespace code {
 			// For GCC:
 			// This is 'GNUCC++\0' in hex.
 			if (type == 0x474e5543432b2b00LL) {
-				byte *dataPtr = (byte *)data;
-				info = *(const std::type_info **)(dataPtr - 10*sizeof(void *));
-				object = dataPtr + sizeof(_Unwind_Exception);
+				ExStore *store = BASE_PTR(ExStore, data, exception);
+				info = store->exceptionType;
+				object = store + 1;
 			}
 
 			// TODO: Handle LLVM exceptions as well. They have another type signature, but I believe
@@ -231,20 +270,6 @@ namespace code {
 			// 'data' is compiler specific information about the exception. See 'unwind.h' for details.
 			// 'context' is the unwinder state.
 
-			// Storage from phase 1 to phase 2. Binary compatible with parts of __cxa_exception in GCC.
-			// Names from the GCC implementation for simplicity.
-			struct ExStore {
-				void *nextException;
-				int handlerCount;
-				int handlerSwitchValue;
-				const byte *actionRecord;
-				const byte *languageSpecificData;
-				void *catchTemp;
-				void *adjustedPtr;
-
-				struct _Unwind_Exception exception;
-			};
-
 			// Note: using _Unwind_GetCFA seems to return the CFA of the previous frame.
 			size_t fn = _Unwind_GetRegionStart(context);
 			size_t pc = _Unwind_GetIP(context);
@@ -307,8 +332,7 @@ namespace code {
 
 				// Set up the context as desired. It should be unwound for us, so we just need to
 				// modify RAX and IP, then we're good to go!
-				// Note: It seems we can only set "RAX" and "RDX" here. Probably, we may only set
-				// registers that are preserved between function calls.
+				// Note: It seems we can only set "RAX" and "RDX" here.
 				_Unwind_SetGR(context, DW_REG_RAX, (_Unwind_Word)exception);
 				_Unwind_SetIP(context, pc);
 
