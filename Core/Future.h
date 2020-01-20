@@ -63,17 +63,18 @@ namespace storm {
 			virtual void notify();
 		};
 
-		// Data shared between futures. Since we allow copies, we need to share one
-		// FutureBase object. This struct is not allocated on the GC:d heap.
+		// Data shared between futures. Since we allow copies, we need to share one FutureBase
+		// object. This struct is allocated on the non-moving GC heap since it contains potentially
+		// sensitive constructs.
 		struct Data {
 			Data();
 			~Data();
 
-			// Number of references to this object.
-			nat refs;
-
 			// The Future object we are playing with.
 			FutureSema future;
+
+			// Number of references to this object.
+			nat refs;
 
 			// Do a release whenever the result has been posted?
 			nat releaseOnResult;
@@ -84,6 +85,9 @@ namespace storm {
 
 			// Called when a result has been posted.
 			static void resultPosted(FutureSema *from);
+
+			// GC description for this type.
+			static const GcType gcType;
 		};
 
 		// Our data (non-gc).

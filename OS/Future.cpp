@@ -4,13 +4,9 @@
 
 namespace os {
 
-	FutureBase::FutureBase() : resultPosted(resultEmpty), resultRead(readNone) {}
+	FutureBase::FutureBase() : ptrException(null), resultPosted(resultEmpty), resultRead(readNone) {}
 
 	FutureBase::~FutureBase() {
-		destroy(null);
-	}
-
-	void FutureBase::destroy(void *ptrStorage) {
 		// Warn about uncaught exceptions if we didn't throw it yet.
 		if (resultRead == readNone) {
 			switch (atomicRead(resultPosted)) {
@@ -26,26 +22,35 @@ namespace os {
 				}
 				break;
 			case resultErrorPtr:
-				if (ptrStorage)
-					PLN(L"Unhandled exception from abandoned future: " << ((PtrThrowable *)ptrStorage)->toCStr());
-				else
-					PLN(L"Unknown unhandled exception from abandoned future.");
+				if (ptrException) {
+					PLN(L"Unhandled exception from abandoned future: " << ptrException->toCStr());
+				} else {
+					PLN(L"Unhandled exception from abandoned future.");
+				}
 				break;
 			}
 
 			resultRead = readOnce;
 		}
+
+		// OS specific cleanup.
+		cleanError();
 	}
 
-	void FutureBase::result(void *ptrStorage) {
+	void FutureBase::result() {
+		result(null, null);
+	}
+
+	void FutureBase::result(InterceptFn fn, void *env) {
 		// Block the first thread, and allow any subsequent threads to enter.
 		wait();
 		atomicWrite(resultRead, readOnce);
+
 		switch (atomicRead(resultPosted)) {
 		case resultError:
 			throwError();
 		case resultErrorPtr:
-			throw (PtrThrowable *)ptrStorage;
+			throwPtrError(fn, env);
 		}
 	}
 
@@ -67,18 +72,18 @@ namespace os {
 		notify();
 	}
 
-	void FutureBase::error(void **ptrStorage) {
+	void FutureBase::error() {
 		try {
 			throw;
-		} catch (const PtrThrowable *exception) {
+		} catch (const PtrThrowable *) {
 			// Save the exception pointer directly. It may be GC:d.
 			nat p = atomicCAS(resultPosted, resultEmpty, resultErrorPtr);
-			assert(p == resultError, L"A future may not be used more than once! this=" + ::toHex(this));
-			*ptrStorage = (void *)exception;
+			assert(p == resultEmpty, L"A future may not be used more than once! this=" + ::toHex(this));
+			savePtrError();
 		} catch (...) {
 			// Fall back on exception_ptr or similar.
 			nat p = atomicCAS(resultPosted, resultEmpty, resultError);
-			assert(p == resultError, L"A future may not be used more than once! this=" + ::toHex(this));
+			assert(p == resultEmpty, L"A future may not be used more than once! this=" + ::toHex(this));
 			saveError();
 		}
 		notify();
@@ -163,13 +168,13 @@ namespace os {
 		}
 	}
 
-	FutureBase::Cloned::Cloned() : data(null), type(null) {}
+	FutureBase::ExceptionPtr::ExceptionPtr() : data(null), type(null) {}
 
-	FutureBase::Cloned::~Cloned() {
+	FutureBase::ExceptionPtr::~ExceptionPtr() {
 		clear();
 	}
 
-	void FutureBase::Cloned::clear() {
+	void FutureBase::ExceptionPtr::clear() {
 		if (data) {
 			if (type->dtor) {
 				DummyException *p = (DummyException *)data;
@@ -181,7 +186,7 @@ namespace os {
 		type = null;
 	}
 
-	void FutureBase::Cloned::rethrow() {
+	void FutureBase::ExceptionPtr::rethrow() {
 		// It is safe to keep stuff at the stack here. catch-blocks are executed
 		// on top of this stack, ie this stack frame will not be reclaimed until
 		// the catch-blocks have been executed.
@@ -195,7 +200,17 @@ namespace os {
 		RaiseException(cppExceptionCode, EXCEPTION_NONCONTINUABLE, cppExceptionParams, args);
 	}
 
-	void FutureBase::Cloned::set(void *src, const CppExceptionType *type) {
+	void FutureBase::ExceptionPtr::rethrowPtr(PtrThrowable *&store) {
+		// Make a copy on the stack so that we don't accidentally point somewhere unsafe.
+		PtrThrowable *copy = store;
+		ULONG_PTR args[cppExceptionParams];
+		args[0] = cppExceptionMagic;
+		args[1] = (ULONG_PTR)&copy;
+		args[2] = (ULONG_PTR)type;
+		RaiseException(cppExceptionCode, EXCEPTION_NONCONTINUABLE, cppExceptionParams, args);
+	}
+
+	void FutureBase::ExceptionPtr::set(void *src, const CppExceptionType *type) {
 		clear();
 
 		this->type = type;
@@ -209,6 +224,15 @@ namespace os {
 		}
 	}
 
+	void FutureBase::ExceptionPtr::setPtr(void *src, const CppExceptionType *type, PtrThrowable *&store) {
+		clear();
+
+		// Indicate that we need an external pointer for this!
+		data = null;
+		this->type = type;
+		store = *(PtrThrowable **)src;
+	}
+
 	static bool isCppException(EXCEPTION_RECORD *record) {
 		return record
 			&& record->ExceptionCode == cppExceptionCode
@@ -217,7 +241,7 @@ namespace os {
 	}
 
 
-	int FutureBase::filter(EXCEPTION_POINTERS *info) {
+	int FutureBase::filter(EXCEPTION_POINTERS *info, bool pointer) {
 		EXCEPTION_RECORD *record = info->ExceptionRecord;
 
 		if (!isCppException(record)) {
@@ -237,9 +261,13 @@ namespace os {
 		}
 		assert(record->ExceptionInformation[2]);
 
-		errorData.set(
-			(void *)record->ExceptionInformation[1],
-			(const CppExceptionType *)record->ExceptionInformation[2]);
+		if (pointer)
+			exceptionData.setPtr((void *)record->ExceptionInformation[1],
+								(const CppExceptionType *)record->ExceptionInformation[2],
+								ptrException);
+		else
+			exceptionData.set((void *)record->ExceptionInformation[1],
+							(const CppExceptionType *)record->ExceptionInformation[2]);
 
 		return EXCEPTION_EXECUTE_HANDLER;
 	}
@@ -247,24 +275,112 @@ namespace os {
 	void FutureBase::saveError() {
 		__try {
 			throw;
-		} __except (filter(GetExceptionInformation())) {
+		} __except (filter(GetExceptionInformation(), false)) {
+		}
+	}
+
+	void FutureBase::savePtrError() {
+		__try {
+			throw;
+		} __except (filter(GetExceptionInformation(), true)) {
 		}
 	}
 
 
 	void FutureBase::throwError() {
-		errorData.rethrow();
+		exceptionData.rethrow();
+	}
+
+	void FutureBase::throwPtrError(InterceptFn fn, void *env) {
+		if (fn) {
+			PtrThrowable *modified = (*fn)(ptrException, env);
+			exceptionData.rethrowPtr(modified);
+		} else {
+			exceptionData.rethrowPtr(ptrException);
+		}
+	}
+
+	void FutureBase::cleanError() {}
+
+#elif defined(POSIX)
+
+	void FutureBase::throwError() {
+		std::rethrow_exception(*(std::exception_ptr *)exceptionData);
+	}
+
+	extern "C" void *__cxa_allocate_exception(size_t size);
+	extern "C" void __cxa_throw(void *exception, std::type_info *type, void (*dtor)(void *));
+
+	void FutureBase::throwPtrError(InterceptFn fn, void *env) {
+		void *mem = __cxa_allocate_exception(sizeof(void *));
+		if (fn) {
+			*(void **)mem = (*fn)(ptrException, env);
+		} else {
+			*(void **)mem = ptrException;
+		}
+		__cxa_throw(mem, (std::type_info *)exceptionData[0], null);
+	}
+
+	void FutureBase::saveError() {
+		new (exceptionData) std::exception_ptr(std::current_exception());
+	}
+
+	void FutureBase::savePtrError() {
+		std::exception_ptr ptr = std::current_exception();
+
+		// Store the exception type.
+		exceptionData[0] = (size_t)ptr.__cxa_exception_type();
+
+		// Store the exception itself.
+		// Note: std::exception_ptr is just a pointer to the thrown object, which is a pointer in this case.
+		void *internal = *(void **)&ptr;
+		ptrException = *(PtrThrowable **)internal;
+	}
+
+	void FutureBase::cleanError() {
+		if (resultPosted == resultError) {
+			// Destroy it properly.
+			((std::exception_ptr *)exceptionData)->~std::exception_ptr();
+		}
 	}
 
 #else
 
+#error "Check this implementation, it is currently untested!"
+
 	void FutureBase::throwError() {
-		std::rethrow_exception(errorData);
+		std::rethrow_exception(exceptionData);
+	}
+
+	int FutureBase::filter(EXCEPTION_POINTERS *ptrs, InterceptFn fn, void *env) {
+		// Modify the thrown object in-flight. This should be fine as we are the first one to see
+		// the object, and since the object is generally copied to the stack before being thrown (if
+		// not, we don't care about the old value anyway, but could be problematic if multiple
+		// threads re-throw simultaneously).
+		if (fn) {
+			*(PtrThrowable **)ptrs[1] = (*fn)(ptrException, env);
+		} else {
+			*(PtrThrowable **)ptrs[1] = ptrException;
+		}
+	}
+
+	void FutureBase::throwPtrError(InterceptFn fn, void *env) {
+		__try {
+			throwError();
+		} __catch (filter(GetExceptionInformation(), fn, env)) {
+		}
 	}
 
 	void FutureBase::saveError() {
-		errorData = std::current_exception();
+		exceptionData = std::current_exception();
 	}
+
+	void FutureBase::savePtrError() {
+		exceptionData = std::current_exception();
+	}
+
+	void FutureBase::cleanError() {}
+
 
 #endif
 

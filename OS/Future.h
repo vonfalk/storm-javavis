@@ -1,6 +1,7 @@
 #pragma once
 #include "Utils/TypeInfo.h"
 #include "Utils/Semaphore.h"
+#include "PtrThrowable.h"
 
 // In Visual Studio 2008, we do not have exception_ptr, so we implement our own
 // solution in that case!
@@ -33,12 +34,14 @@ namespace os {
 		// Detect unhandled exceptions and print them.
 		~FutureBase();
 
-		// Cleanup with better diagnostics in case pointer errors were thrown.
-		void destroy(void *ptrStorage);
-
 		// Wait for the result. This function will either return normally, indicating the result is
 		// written to 'target', or throw an exception posted.
-		void result(void *ptrStorage);
+		void result();
+
+		// Same as above, but provides an opportunity to modify any pointer-based exception before
+		// it is thrown.
+		typedef PtrThrowable *(*InterceptFn)(PtrThrowable *original, void *env);
+		void result(InterceptFn fn, void *env);
 
 		// Detach this exception, ie. don't complain about uncaught errors.
 		void detach();
@@ -49,13 +52,16 @@ namespace os {
 		// Post an error. This function must be called from within a throw-catch block. Otherwise
 		// the runtime crashes. The 'ptrStorage' pointer shall refer to memory where it is safe to
 		// store pointers to garbage collected objects.
-		void error(void **ptrStorage);
+		void error();
 
 		// Has any result been posted?
 		bool dataPosted();
 
 		// Any result (either data or error) posted?
 		bool anyPosted();
+
+		// Pointer-based exceptions are stored here so that they can be garbage collected properly.
+		PtrThrowable *ptrException;
 
 	protected:
 		// Manage the notification between threads (whichever implementation is used).
@@ -67,37 +73,59 @@ namespace os {
 		// Throw the error captured earlier.
 		void throwError();
 
+		// Throw the error captured earlier, knowing it is a pointer.
+		void throwPtrError(InterceptFn fn, void *env);
+
 		// Save the current exception.
 		void saveError();
 
+		// Save the current exception, knowing it is a pointer.
+		void savePtrError();
+
+		// Perform any cleanup needed.
+		void cleanError();
+
 #ifdef CUSTOM_EXCEPTION_PTR
-		class Cloned : NoCopy {
+		class ExceptionPtr {
 		public:
-			Cloned();
-			~Cloned();
+			ExceptionPtr();
+			~ExceptionPtr();
 
 			void *data;
 			const CppExceptionType *type;
 
 			// Rethrow this exception.
 			void rethrow();
+			void rethrowPtr(PtrThrowable *&ptr);
 
 			// Clear the data here.
 			void clear();
 
 			// Copy from an exception.
 			void set(void *from, const CppExceptionType *type);
+
+			// Copy a pointer from an exception.
+			void setPtr(void *from, const CppExceptionType *type, PtrThrowable *&store);
 		};
 
-		// The exception that should be passed to the other thread.
-		Cloned errorData;
+		// The exception.
+		ExceptionPtr exceptionData;
 
 		// Filter expression function.
-		int filter(EXCEPTION_POINTERS *ptrs);
+		int filter(EXCEPTION_POINTERS *ptrs, bool pointer);
+
+#elif defined(POSIX)
+
+		// Exception data. Either an std::exception ptr (if it was a C++ exception), or a
+		// std::type_info * if it was a pointer exception.
+		size_t exceptionData[sizeof(std::exception_ptr) / sizeof(size_t)];
 
 #else
-		// Exception.
-		std::exception_ptr errorData;
+		int filter(EXCEPTION_POINTERS *ptrs, InterceptFn fn, void *env);
+
+		// Regular implementation, we use filter functions to modify the data.
+		std::exception_ptr exceptionData;
+
 #endif
 
 		// Any error?

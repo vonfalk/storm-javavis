@@ -13,7 +13,7 @@ namespace os {
 		virtual ~PtrThrowable() {}
 
 		// Get a string representation.
-		virtual wchar *toCStr() const = 0;
+		virtual const wchar *toCStr() const = 0;
 	};
 
 }

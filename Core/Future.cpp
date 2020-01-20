@@ -6,7 +6,7 @@
 namespace storm {
 
 	FutureBase::FutureBase(const Handle &type) : handle(type) {
-		data = new Data();
+		data = (Data *)runtime::allocStaticRaw(engine(), &Data::gcType);
 		result = (GcArray<byte> *)runtime::allocArray(engine(), type.gcArrayType, 1);
 	}
 
@@ -50,13 +50,17 @@ namespace storm {
 		}
 	}
 
-	void FutureBase::resultRaw(void *to) {
-		try {
-			data->future.result();
-		} catch (const Object *o) {
-			// Make sure to copy it!
-			throw clone(o);
+	static os::PtrThrowable *cloneEx(os::PtrThrowable *src, void *) {
+		if (Object *o = dynamic_cast<Object *>(src)) {
+			return clone(o);
+		} else {
+			return src;
 		}
+	}
+
+	void FutureBase::resultRaw(void *to) {
+		data->future.result(&cloneEx, null);
+
 		handle.safeCopy(to, result->v);
 		if (handle.deepCopyFn) {
 			CloneEnv *e = new (this) CloneEnv();
@@ -81,6 +85,15 @@ namespace storm {
 		Data::resultPosted(this);
 	}
 
+	const GcType FutureBase::Data::gcType = {
+		GcType::tFixed,
+		null,
+		null,
+		sizeof(FutureBase::Data),
+		1,
+		{ OFFSET_OF(FutureBase::Data, future.ptrException) }
+	};
+
 	FutureBase::Data::Data() : refs(1), releaseOnResult(0) {}
 
 	FutureBase::Data::~Data() {}
@@ -91,7 +104,7 @@ namespace storm {
 
 	bool FutureBase::Data::release() {
 		if (atomicDecrement(refs) == 0) {
-			delete this;
+			this->~Data();
 			return true;
 		} else {
 			return false;

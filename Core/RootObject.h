@@ -13,7 +13,7 @@ namespace storm {
 	/**
 	 * The shared parts between Object and TObject. Not exposed to Storm.
 	 */
-	class RootObject : public PtrThrowable {
+	class RootObject : public os::PtrThrowable {
 		STORM_ROOT_CLASS;
 	public:
 		// Default constructor.
@@ -41,7 +41,7 @@ namespace storm {
 		}
 
 		// Exception magic. More or less only used to produce nice error messages in some cases.
-		virtual wchar *toCStr() const;
+		virtual const wchar *toCStr() const;
 
 		// To string.
 		virtual Str *STORM_FN toS() const;

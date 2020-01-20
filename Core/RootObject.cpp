@@ -11,7 +11,7 @@ namespace storm {
 
 	RootObject::~RootObject() {}
 
-	wchar *RootObject::toCStr() const {
+	const wchar *RootObject::toCStr() const {
 		return toS()->c_str();
 	}
 

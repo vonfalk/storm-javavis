@@ -7,6 +7,16 @@ static void error() {
 	throw UserError(L"ERROR");
 }
 
+class PtrError : public os::PtrThrowable {
+public:
+	virtual const wchar *toCStr() const { return S("ERROR"); }
+};
+
+static void errorPtr() {
+	PtrError *e = new PtrError();
+	throw e;
+}
+
 struct ExThread {
 
 	os::FutureSema<Semaphore> result;
@@ -21,9 +31,17 @@ struct ExThread {
 		}
 	}
 
+	void runPtr() {
+		try {
+			errorPtr();
+		} catch (...) {
+			result.error();
+		}
+	}
+
 };
 
-BEGIN_TEST(ExceptionTest, OS) {
+BEGIN_TEST_(ExceptionTest, OS) {
 	ExThread z;
 	os::ThreadGroup g;
 
@@ -34,6 +52,26 @@ BEGIN_TEST(ExceptionTest, OS) {
 		CHECK(false);
 	} catch (const UserError &) {
 		CHECK(true);
+	} catch (...) {
+		CHECK(false);
+	}
+
+	g.join();
+
+} END_TEST
+
+BEGIN_TEST_(ExceptionPtrTest, OS) {
+	ExThread z;
+	os::ThreadGroup g;
+
+	os::Thread::spawn(util::memberVoidFn(&z, &ExThread::runPtr), g);
+
+	try {
+		z.result.result();
+		CHECK(false);
+	} catch (const PtrError *ex) {
+		CHECK(true);
+		delete ex;
 	} catch (...) {
 		CHECK(false);
 	}
