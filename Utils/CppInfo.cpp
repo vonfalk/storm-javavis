@@ -324,7 +324,7 @@ static void formatOk(void *data, uintptr_t pc, const char *symname, uintptr_t sy
 	}
 }
 
-bool CppInfo::format(GenericOutput &to, void *base, int offset) const {
+void CppInfo::format(GenericOutput &to, void *base, int offset) const {
 	static LookupState state;
 
 	FormatData data = { to, false };
@@ -332,7 +332,7 @@ bool CppInfo::format(GenericOutput &to, void *base, int offset) const {
 
 	if (!data.any) {
 		to.put("Unknown function @");
-		to.putHex((size_t)ptr);
+		to.putHex((size_t)base + offset);
 	}
 }
 

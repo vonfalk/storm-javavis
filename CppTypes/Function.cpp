@@ -9,7 +9,7 @@ Function::Function(const CppName &name, const String &pkg, Access access, const 
 				const Auto<Doc> &doc, Auto<TypeRef> result) :
 	name(name), pkg(pkg), stormName(name.last()), access(access), pos(pos), doc(doc), result(result),
 	isMember(false), isStatic(false), isVirtual(false), isAbstract(false), isConst(false), isAssign(false),
-	wrapAssign(false), castMember(false), threadType(null) {}
+	wrapAssign(false), castMember(false), exported(true), threadType(null) {}
 
 void Function::resolveTypes(World &w, const CppName &ctx) {
 	result = result->resolve(w, ctx);

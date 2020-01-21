@@ -489,9 +489,10 @@ static const wchar_t *accessName(Access access) {
 static void genFunctions(wostream &to, World &w) {
 	for (nat i = 0; i < w.functions.size(); i++) {
 		Function &f = w.functions[i];
+		if (!f.exported)
+			continue;
 
 		bool engineFn = f.params.size() >= 1 && as<EnginePtrType>(f.params[0].borrow()) != null;
-
 
 		to << L"{ ";
 

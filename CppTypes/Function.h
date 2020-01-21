@@ -68,6 +68,11 @@ public:
 	// Usable for casting?
 	bool castMember;
 
+	// Exported?
+	// Most non-exported functions are not present in the World object. Some non-exported
+	// functions (such as abstract functions) do, however, need to appear there.
+	bool exported;
+
 	// Run on a specific thread?
 	CppName thread;
 

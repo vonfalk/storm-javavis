@@ -49,6 +49,7 @@ namespace os {
 		switch (atomicRead(resultPosted)) {
 		case resultError:
 			throwError();
+			break;
 		case resultErrorPtr:
 			throwPtrError(fn, env);
 		}
@@ -340,7 +341,7 @@ namespace os {
 	void FutureBase::cleanError() {
 		if (resultPosted == resultError) {
 			// Destroy it properly.
-			((std::exception_ptr *)exceptionData)->~std::exception_ptr();
+			((std::exception_ptr *)exceptionData)->~exception_ptr();
 		}
 	}
 

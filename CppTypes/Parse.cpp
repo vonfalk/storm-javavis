@@ -315,10 +315,12 @@ static void parseMember(Tokenizer &tok, ParseEnv &env, Namespace &addTo, Access 
 		}
 
 		f.isStatic = isStatic;
+		f.exported = env.exportAll;
 
 		// Save if 'exportFn' is there.
 		if (exportFn || f.name == Function::dtor)
-			if (env.exportAll)
+			// We need to export abstract functions so that we can generate stubs for them!
+			if (env.exportAll || f.isAbstract)
 				addTo.add(f);
 
 	} else if (tok.skipIf(L"[")) {

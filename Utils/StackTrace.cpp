@@ -261,8 +261,6 @@ void createStackTrace(TraceGen &gen, nat skip) {
 
 		gen.put(frame);
 	}
-
-	return result;
 }
 
 #endif
