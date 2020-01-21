@@ -25,7 +25,7 @@ namespace storm {
 				PARSER_BACKEND(0, glr);
 				PARSER_BACKEND(1, earley);
 			default:
-				throw InternalError(L"No parser backend with id " + ::toS(id) + L" is known.");
+				throw new (e.v) InternalError(TO_S(e.v, S("No parser backend with id ") << id << S(" is known.")));
 			}
 		}
 
@@ -124,8 +124,8 @@ namespace storm {
 			return use->errorMsg();
 		}
 
-		SyntaxError ParserBase::error() const {
-			return SyntaxError(use->errorPos(), ::toS(errorMsg()));
+		SyntaxError *ParserBase::error() const {
+			return new (this) SyntaxError(use->errorPos(), errorMsg());
 		}
 
 		void ParserBase::throwError() const {
@@ -162,7 +162,8 @@ namespace storm {
 			if (Rule *r = as<Rule>(pkg->find(name, root))) {
 				return new (pkg) InfoParser(r, backend);
 			} else {
-				throw InternalError(L"Can not find the rule " + ::toS(name) + L" in " + ::toS(pkg->identifier()));
+				Str *msg = TO_S(engine(), S("Can not find the rule ") << name << S(" in ") << pkg->identifier());
+				throw new (this) InternalError(msg);
 			}
 		}
 
@@ -256,7 +257,8 @@ namespace storm {
 			if (Rule *r = as<Rule>(pkg->find(name, root))) {
 				return create(r, backend);
 			} else {
-				throw InternalError(L"Can not find the rule " + ::toS(name) + L" in " + ::toS(pkg->identifier()));
+				Str *msg = TO_S(pkg->engine(), S("Can not find the rule ") << name << S(" in ") << pkg->identifier());
+				throw new (pkg) InternalError(msg);
 			}
 		}
 

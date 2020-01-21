@@ -37,10 +37,12 @@ namespace storm {
 
 		Expr *OpInfo::meaning(Block *block, Expr *lhs, Expr *rhs) {
 			Expr *fn = find(block, name, lhs, rhs);
-			if (!fn)
-				throw SyntaxError(pos, L"Can not find an implementation of the operator " +
-								::toS(name) + L" for " + ::toS(lhs->result().type()) + L", " +
-								::toS(rhs->result().type()) + L".");
+			if (!fn) {
+				Str *msg = TO_S(engine(), S("Can not find an implementation of the operator ")
+								<< name << S(" for ") << lhs->result().type() << S(", ")
+								<< rhs->result().type() << S("."));
+				throw new (this) SyntaxError(pos, msg);
+			}
 
 			return fn;
 		}

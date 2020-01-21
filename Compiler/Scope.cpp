@@ -101,7 +101,7 @@ namespace storm {
 
 		Type *t = as<Type>(find(in, name));
 		if (!t) {
-			throw SyntaxError(pos, ::toS(name) + L" can not be resolved to a type.");
+			throw new (this) SyntaxError(pos, TO_S(engine(), name << S(" can not be resolved to a type.")));
 		}
 
 		return Value(t);
@@ -153,7 +153,7 @@ namespace storm {
 				return lookup->value(*this, simple, pos);
 		}
 
-		throw SyntaxError(pos, ::toS(name) + L" can not be resolved to a type.");
+		throw new (name) SyntaxError(pos, TO_S(name, name << S(" can not be resolved to a type."));
 	}
 
 	Value Scope::value(SrcName *name) const {

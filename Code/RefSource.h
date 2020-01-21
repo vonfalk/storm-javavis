@@ -26,7 +26,7 @@ namespace code {
 	 * TODO: Make the class abstract!
 	 */
 	class RefSource : public ObjectOn<Compiler> {
-		STORM_CLASS;
+		STORM_ABSTRACT_CLASS;
 		friend class Reference;
 	public:
 		STORM_CTOR RefSource();
@@ -47,7 +47,7 @@ namespace code {
 		inline Content *STORM_FN content() const { return cont; }
 
 		// Get our title.
-		virtual Str *STORM_FN title() const;
+		virtual Str *STORM_FN title() const ABSTRACT;
 
 		// Output.
 		virtual void STORM_FN toS(StrBuf *to) const;

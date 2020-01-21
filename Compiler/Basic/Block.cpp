@@ -54,8 +54,11 @@ namespace storm {
 		void Block::add(LocalVar *var) {
 			if (variables->has(var->name)) {
 				// Old position: variables->get(var->name)->pos
-				throw TypeError(var->pos, L"The variable " + ::toS(var->name) + L" is already defined in this block:\n@" +
-								::toS(variables->get(var->name)->pos) + L": Syntax error: Previously defined here.");
+				Str *msg = TO_S(engine(), S("The variable ") << var->name
+								<< S(" is already defined in this block:\n@")
+								<< variables->get(var->name)->pos
+								<< S(": Syntax error: Previously defined here."));
+				throw new (this) TypeError(var->pos, msg);
 			}
 			variables->put(var->name, var);
 		}

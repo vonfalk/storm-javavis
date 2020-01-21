@@ -124,25 +124,33 @@ namespace storm {
 	 * loading the parameter names and any notes essentially.
 	 */
 	class NamedDoc : public ObjectOn<Compiler> {
-		STORM_CLASS;
+		STORM_ABSTRACT_CLASS;
 	public:
 		// Create.
 		STORM_CTOR NamedDoc();
 
 		// Get documentation for this named entity.
-		virtual Doc *STORM_FN get();
+		virtual Doc *STORM_FN get() ABSTRACT;
 	};
 
 
 	/**
 	 * Exception for documentation errors.
 	 */
-	class EXCEPTION_EXPORT DocError : public Exception {
+	class EXCEPTION_EXPORT DocError : public NException {
+		STORM_CLASS;
 	public:
-		inline DocError(const String &w) : w(w) {}
-		inline virtual String what() const { return w; }
+		DocError(const wchar *msg) {
+			w = new (this) Str(msg);
+		}
+		STORM_CTOR DocError(Str *msg) {
+			w = msg;
+		}
+		virtual void message(StrBuf *to) const {
+			*to << w;
+		}
 	private:
-		String w;
+		Str *w;
 	};
 
 

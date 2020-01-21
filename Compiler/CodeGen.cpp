@@ -294,8 +294,10 @@ namespace storm {
 
 	code::Var allocObject(CodeGen *s, Type *type) {
 		Function *ctor = type->defaultCtor();
-		if (!ctor)
-			throw InternalError(L"Can not allocate " + ::toS(type->identifier()) + L" using the default constructor.");
+		if (!ctor) {
+			Str *msg = TO_S(s, S("Can not allocate ") << type->identifier() << S(" using the default constructor."));
+			throw new (s) InternalError(msg);
+		}
 		return allocObject(s, ctor, new (type->engine) Array<code::Operand>());
 	}
 
@@ -408,7 +410,8 @@ namespace storm {
 		if (result)
 			return result;
 
-		throw InternalError(L"The function " + ::toS(part) + L" is not inside " + ::toS(inside->identifier()) + L".");
+		Str *msg = TO_S(inside, S("The function ") << part << S(" is not inside ") << inside->identifier() << S("."))
+		throw InternalError(msg);
 	}
 
 	Function *findStormFn(Value inside, const wchar *name, Array<Value> *params) {

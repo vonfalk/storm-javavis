@@ -52,20 +52,23 @@ namespace storm {
 		}
 
 		void Content::add(TObject *o) {
-			if (Type *t = as<Type>(o))
+			if (Type *t = as<Type>(o)) {
 				add(t);
-			else if (NamedDecl *fn = as<NamedDecl>(o))
+			} else if (NamedDecl *fn = as<NamedDecl>(o)) {
 				add(fn);
-			else if (NamedThread *nt = as<NamedThread>(o))
+			} else if (NamedThread *nt = as<NamedThread>(o)) {
 				add(nt);
-			else if (Template *t = as<Template>(o))
+			} else if (Template *t = as<Template>(o)) {
 				add(t);
-			else if (Visibility *v = as<Visibility>(o))
+			} else if (Visibility *v = as<Visibility>(o)) {
 				add(v);
-			else if (UseThreadDecl *u = as<UseThreadDecl>(o))
+			} else if (UseThreadDecl *u = as<UseThreadDecl>(o)) {
 				add(u);
-			else
-				throw InternalError(L"add for Content does not expect " + ::toS(runtime::typeOf(o)->identifier()));
+			} else {
+				Str *msg = TO_S(engine(), S("add for Content does not expect ")
+								<< runtime::typeOf(o)->identifier());
+				throw new (this) InternalError(msg);
+			}
 		}
 
 		void Content::update(Named *n) {

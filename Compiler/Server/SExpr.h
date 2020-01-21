@@ -146,12 +146,16 @@ namespace storm {
 		/**
 		 * Exception.
 		 */
-		class MsgError : public Exception {
+		class MsgError : public NException {
+			STORM_CLASS;
 		public:
-			MsgError(const ::String &what, SExpr *expr) : msg(what + L" " + ::toS(expr)) {}
-			::String what() const { return msg; }
+			MsgError(const wchar *what, SExpr *expr);
+			STORM_CTOR MsgError(Str *what, SExpr *expr);
+
+			virtual void message(StrBuf *to) const;
 		private:
-			::String msg;
+			Str *msg;
+			SExpr *expr;
 		};
 
 	}

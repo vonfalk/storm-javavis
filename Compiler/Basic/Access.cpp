@@ -82,20 +82,22 @@ namespace storm {
 
 
 		Named *apply(SrcPos pos, Named *to, Visibility *v) {
-			if (to->visibility)
-				throw SyntaxError(pos, ::toS(to->name) +
-								L" already has a visibility specified. Can not add " +
-								::toS(v) + L" as well.");
+			if (to->visibility) {
+				Str *msg = TO_S(to, to->name << S(" already has a visibility specified. Can not add ")
+								<< v << S(" as well."));
+				throw new (to) SyntaxError(pos, msg);
+			}
 
 			to->visibility = v;
 			return to;
 		}
 
 		NamedDecl *apply(SrcPos pos, NamedDecl *to, Visibility *v) {
-			if (to->visibility)
-				throw SyntaxError(pos, L"The declaration " + ::toS(to) +
-								L" already has a visibility specified. Can not add " +
-								::toS(v) + L" as well.");
+			if (to->visibility) {
+				Str *msg = TO_S(to, S("The declaration ") << to
+								<< S(" already has a visibility specified. Can not add ")
+								<< v << S(" as well."));
+				throw new (to) SyntaxError(pos, msg);
 
 			to->visibility = v;
 			return to;
@@ -103,7 +105,7 @@ namespace storm {
 
 		MemberWrap *apply(SrcPos pos, MemberWrap *to, Visibility *v) {
 			if (to->visibility)
-				throw SyntaxError(pos, L"This member already has a visibility specified. Can not ad another.");
+				throw new (to) SyntaxError(pos, S("This member already has a visibility specified. Can not add another."));
 
 			to->visibility = v;
 			return to;
@@ -117,7 +119,7 @@ namespace storm {
 			else if (MemberWrap *wrap = as<MemberWrap>(to))
 				return apply(pos, wrap, v);
 			else
-				throw InternalError(L"I can not apply visibility to " + ::toS(to));
+				throw new (to) InternalError(TO_S(to, S("I can not apply visibility to ") << to));
 		}
 
 	}

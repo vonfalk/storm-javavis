@@ -42,7 +42,8 @@ namespace storm {
 	void NameOverloads::add(Named *item) {
 		for (Nat i = 0; i < items->count(); i++)
 			if (storm::equals(item->params, items->at(i)->params)) {
-				throw TypedefError(::toS(item) + L" is already defined as " + ::toS(items->at(i)->identifier()));
+				throw new (this) TypedefError(
+					TO_S(engine(), item << S(" is already defined as ") << items->at(i)->identifier()));
 			}
 
 		items->push(item);
@@ -80,7 +81,7 @@ namespace storm {
 		for (Nat i = 0; i < templates->count(); i++) {
 			Named *n = templates->at(i)->generate(part);
 			if (found != null && n != null) {
-				throw TypedefError(L"Multiple template matches for: " + ::toS(part));
+				throw new (this) TypedefError(TO_S(engine(), S("Multiple template matches for: ") << part));
 			} else if (n) {
 				found = n;
 			}

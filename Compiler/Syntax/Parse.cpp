@@ -55,8 +55,8 @@ namespace storm {
 				return null;
 
 			if (tok.skipIf(S(",")))
-				throw SyntaxError(tok.position(), L"Actual parameters to a token may not start with a comma."
-					L" If you meant to start a capture, use - to disambiguate.");
+				throw new (e) SyntaxError(tok.position(), S("Actual parameters to a token may not start with a comma.")
+										S(" If you meant to start a capture, use - to disambiguate."));
 
 			Array<Str *> *r = new (e) Array<Str *>();
 			while (tok.peek() != S(")")) {
@@ -69,10 +69,10 @@ namespace storm {
 		}
 
 		// Parse a token color.
-		static TokenColor parseTokenColor(Tokenizer &tok) {
+		static TokenColor parseTokenColor(Engine &e, Tokenizer &tok) {
 			TokenColor c = tokenColor(tok.next().toS());
 			if (c == tNone)
-				throw SyntaxError(tok.position(), L"Expected a color name.");
+				throw new (e) SyntaxError(tok.position(), S("Expected a color name."));
 			return c;
 		}
 
@@ -109,21 +109,21 @@ namespace storm {
 
 			if (tok.skipIf(S("->"))) {
 				if (isTokenSep(tok.peek()))
-					throw SyntaxError(tok.position(), L"Expected identifier.");
+					throw new (e) SyntaxError(tok.position(), S("Expected identifier."));
 				result->invoke = tok.next().toS();
 
 				// Maybe a color name as well.
 				if (tok.skipIf(S("#")))
-					result->color = parseTokenColor(tok);
+					result->color = parseTokenColor(e, tok);
 			} else if (tok.skipIf(S("#"))) {
-				result->color = parseTokenColor(tok);
+				result->color = parseTokenColor(e, tok);
 			} else {
 				// Simple identifier.
 				result->store = tok.next().toS();
 
 				// Maybe a color name as well.
 				if (tok.skipIf(S("#")))
-					result->color = parseTokenColor(tok);
+					result->color = parseTokenColor(e, tok);
 			}
 
 			return result;
@@ -136,7 +136,7 @@ namespace storm {
 				decl->invoke = tok.next().toS();
 				return decl;
 			} else if (isTokenSep(rep)) {
-				throw SyntaxError(rep.pos, L"Expected -> or identifier.");
+				throw new (e) SyntaxError(rep.pos, S("Expected -> or identifier."));
 			} else {
 				TokenDecl *decl = new (e) TokenDecl();
 				decl->store = rep.toS();
@@ -169,7 +169,7 @@ namespace storm {
 						result->repCapture = parseCapture(e, tok, rep);
 						result->repCapture->raw = true;
 					} else if (isTokenSep(rep)) {
-						throw SyntaxError(rep.pos, L"Expected ?, *, +, ->, @ or identifier.");
+						throw new (e) SyntaxError(rep.pos, S("Expected ?, *, +, ->, @ or identifier."));
 					} else {
 						result->repCapture = parseCapture(e, tok, rep);
 					}
@@ -192,7 +192,7 @@ namespace storm {
 					} else if (kind == S("$")) {
 						result->indentType = indentAlignEnd;
 					} else {
-						throw SyntaxError(kind.pos, L"Unexpected indentation kind: " + ::toS(kind));
+						throw new (e) SyntaxError(kind.pos, S("Unexpected indentation kind: " + ::toS(kind)));
 					}
 				} else {
 					TokenDecl *token = parseToken(e, tok);
@@ -233,8 +233,8 @@ namespace storm {
 				} else {
 					prio = tok.next().toS()->toInt();
 				}
-			} catch (const StrError &e) {
-				throw SyntaxError(tok.position(), e.what());
+			} catch (const StrError *e) {
+				throw new (e) SyntaxError(tok.position(), e.message());
 			}
 			tok.expect(S("]"));
 
@@ -245,7 +245,7 @@ namespace storm {
 			} else if (sep == S("=>")) {
 				result = parseProductionResult(e, tok, rule);
 			} else {
-				throw SyntaxError(sep.pos, L"Unexpected token: " + ::toS(sep));
+				throw new (e) SyntaxError(sep.pos, TO_S(e, S("Unexpected token: ") << sep.toS());
 			}
 
 			result->priority = prio;
@@ -269,7 +269,7 @@ namespace storm {
 			tok.expect(S(")"));
 
 			if (tok.skipIf(S("#")))
-				r->color = parseTokenColor(tok);
+				r->color = parseTokenColor(e, tok);
 
 			return r;
 		}

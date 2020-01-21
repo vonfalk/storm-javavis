@@ -38,8 +38,10 @@ namespace storm {
 						break;
 
 					NamedThread *t = as<NamedThread>(scope.find(otherName));
-					if (!t)
-						throw SyntaxError(otherName->pos, L"Can not find the named thread " + ::toS(otherName) + L".");
+					if (!t) {
+						Str *msg = TO_S(engine(), S("Can not find the named thread ") << otherName << S("."));
+						throw (this) SyntaxError(otherName->pos, msg);
+					}
 
 					setThread(t);
 					break;
@@ -47,8 +49,10 @@ namespace storm {
 				case otherSuper:
 				{
 					Type *t = as<Type>(scope.find(otherName));
-					if (!t)
-						throw SyntaxError(otherName->pos, L"Can not find the super class " + ::toS(otherName) + L".");
+					if (!t) {
+						Str *msg = TO_S(engine(), S("Can not find the super class " << otherName << S(".")));
+						throw (this) SyntaxError(otherName->pos, msg);
+					}
 
 					setSuper(t);
 					break;
@@ -65,11 +69,11 @@ namespace storm {
 
 		void Class::super(SrcName *super) {
 			if (otherMeaning == otherThread)
-				throw SyntaxError(super->pos, L"The 'extends' keyword may not be used together with 'on'.");
+				throw new (this) SyntaxError(super->pos, S("The 'extends' keyword may not be used together with 'on'."));
 
 			if (otherMeaning == otherSuper)
-				throw SyntaxError(super->pos, L"Only one instance of 'extends' may be used for a single type. "
-								L"Multiple inheritance is not supported.");
+				throw new (this) SyntaxError(super->pos, S("Only one instance of 'extends' may be used for a single type. ")
+											S("Multiple inheritance is not supported."));
 
 			otherName = super;
 			otherMeaning = otherSuper;
@@ -77,10 +81,10 @@ namespace storm {
 
 		void Class::thread(SrcName *thread) {
 			if (otherMeaning == otherThread)
-				throw SyntaxError(thread->pos, L"The 'on' keyword may only be used once.");
+				throw new (this) SyntaxError(thread->pos, S("The 'on' keyword may only be used once."));
 
 			if (otherMeaning == otherSuper)
-				throw SyntaxError(thread->pos, L"The 'on' keyword may not be used together with 'extends'.");
+				throw new (this) SyntaxError(thread->pos, S("The 'on' keyword may not be used together with 'extends'."));
 
 			otherName = thread;
 			otherMeaning = otherThread;
@@ -88,10 +92,10 @@ namespace storm {
 
 		void Class::unknownThread(SrcPos pos) {
 			if (otherMeaning == otherThread)
-				throw SyntaxError(pos, L"The 'on' keyword may only be used once.");
+				throw new (this) SyntaxError(pos, S("The 'on' keyword may only be used once."));
 
 			if (otherMeaning == otherSuper)
-				throw SyntaxError(pos, L"The 'on' keyword may not be used together with 'extends'.");
+				throw new (this) SyntaxError(pos, S("The 'on' keyword may not be used together with 'extends'."));
 
 			otherName = null;
 			otherMeaning = otherThread;
@@ -174,11 +178,14 @@ namespace storm {
 					params->add(new (this) SimplePart(name->last()->name, Value(Class::stormType(engine))));
 
 					Function *found = as<Function>(scope.find(params));
-					if (!found)
-						throw SyntaxError(name->pos, L"Could not find a decorator named " + ::toS(name) + L" in the current scope.");
+					if (!found) {
+						Str *msg = TO_S(engine(), S("Could not find a decorator named ")
+										<< name << S(" in the current scope."));
+						throw new (this) SyntaxError(name->pos, msg);
+					}
 
 					if (found->result != Value())
-						throw SyntaxError(name->pos, L"Decorators may not return a value.");
+						throw new (this) SyntaxError(name->pos, S("Decorators may not return a value."));
 
 					// Call the function...
 					typedef void (*Fn)(Class *);
@@ -261,16 +268,19 @@ namespace storm {
 		}
 
 		void ClassBody::add(TObject *o) {
-			if (Named *n = as<Named>(o))
+			if (Named *n = as<Named>(o)) {
 				add(n);
-			else if (MemberWrap *w = as<MemberWrap>(o))
+			} else if (MemberWrap *w = as<MemberWrap>(o)) {
 				add(w);
-			else if (Template *t = as<Template>(o))
+			} else if (Template *t = as<Template>(o)) {
 				add(t);
-			else if (Visibility *v = as<Visibility>(o))
+			} else if (Visibility *v = as<Visibility>(o)) {
 				add(v);
-			else
-				throw InternalError(L"Not a suitable type to ClassBody.add(): " + ::toS(runtime::typeOf(o)->identifier()));
+			} else {
+				Str *msg = TO_S(this, S("Not a suitable type to ClassBody.add(): ")
+								<< runtime::typeOf(o)->identifier());
+				throw new (this) InternalError(msg);
+			}
 		}
 
 		void ClassBody::prepareItems() {}
@@ -317,7 +327,7 @@ namespace storm {
 			if (f->fnFlags() & fnAbstract)
 				return f;
 
-			throw SyntaxError(pos, L"A function without implementation must be marked using ': abstract'.");
+			throw new (owner) SyntaxError(pos, S("A function without implementation must be marked using ': abstract'."));
 		}
 
 		BSFunction *classAssign(Class *owner,

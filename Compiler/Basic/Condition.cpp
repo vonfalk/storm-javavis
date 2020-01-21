@@ -28,7 +28,7 @@ namespace storm {
 
 		BoolCondition::BoolCondition(Expr *expr) : expr(expr) {
 			if (expr->result().type().asRef(false) != Value(StormInfo<Bool>::type(engine())))
-				throw TypeError(expr->pos, L"The expression must evaluate to Bool.");
+				throw new (this) TypeError(expr->pos, S("The expression must evaluate to Bool."));
 		}
 
 		SrcPos BoolCondition::pos() {
@@ -58,7 +58,9 @@ namespace storm {
 			} else if (isMaybe(result)) {
 				return new (expr) WeakMaybeCast(expr);
 			} else {
-				throw SyntaxError(expr->pos, L"You can not use the type " + ::toS(result) + L" as a condition.");
+				Str *msg = TO_S(expr->engine(), S("You can not use the type ")
+								<< result << S(" as a condition."));
+				throw new (expr) SyntaxError(expr->pos, msg);
 			}
 		}
 
@@ -74,7 +76,7 @@ namespace storm {
 
 		void CondSuccess::set(Expr *e) {
 			if (expr)
-				throw RuntimeError(L"Cannot call CondSuccess::set multiple times!");
+				throw new (e) RuntimeError(S("Cannot call CondSuccess::set multiple times!"));
 			expr = e;
 		}
 

@@ -36,10 +36,10 @@ namespace storm {
 		void NumLiteral::setType(Str *suffix) {
 			Str::Iter b = suffix->begin();
 			if (b == suffix->end())
-				throw InternalError(L"Suffixes passed to NumLiteral may not be empty.");
+				throw new (this) InternalError(S("Suffixes passed to NumLiteral may not be empty."));
 			Char ch = *b;
 			if (++b != suffix->end())
-				throw InternalError(L"Suffixes passed to NumLiteral must be exactly one character long!");
+				throw new (this) InternalError(S("Suffixes passed to NumLiteral must be exactly one character long!"));
 
 			if (isInt) {
 				switch (ch.codepoint()) {
@@ -88,7 +88,7 @@ namespace storm {
 				}
 			}
 
-			throw SyntaxError(pos, L"Invalid suffix: " + ::toS(suffix));
+			throw new (this) SyntaxError(pos, TO_S(engine(), S("Invalid suffix: ") << suffix));
 		}
 
 		void NumLiteral::toS(StrBuf *to) const {
@@ -296,7 +296,7 @@ namespace storm {
 		}
 
 		void DummyExpr::code(CodeGen *s, CodeResult *r) {
-			throw InternalError(L"Tried to generate code from a DummyExpr!");
+			throw new (this) InternalError(S("Tried to generate code from a DummyExpr!"));
 		}
 
 

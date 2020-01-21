@@ -99,7 +99,7 @@ namespace storm {
 
 		Token Tokenizer::peek() const {
 			if (!more())
-				throw SyntaxError(position(), L"Unexpected end of file.");
+				throw new (src) SyntaxError(position(), S("Unexpected end of file."));
 			return lookahead;
 		}
 
@@ -109,7 +109,7 @@ namespace storm {
 
 		bool Tokenizer::skipIf(const wchar *token) {
 			if (!more())
-				throw SyntaxError(position(), L"Unexpected end of file.");
+				throw new (src) SyntaxError(position(), S("Unexpected end of file."));
 
 			if (lookahead == token) {
 				skip();
@@ -121,10 +121,11 @@ namespace storm {
 
 		void Tokenizer::expect(const wchar *token) {
 			if (!more())
-				throw SyntaxError(position(), L"Unexpected end of file.");
+				throw new (src) SyntaxError(position(), S("Unexpected end of file."));
 
 			if (lookahead != token)
-				throw SyntaxError(lookahead.pos, L"Expected " + ::toS(token) + L" but got " + ::toS(lookahead.toS()));
+				throw new (src) SyntaxError(lookahead.pos,
+											TO_S(src, S("Expected ") << token << S(" but got ")  << lookahead.toS()));
 
 			skip();
 		}

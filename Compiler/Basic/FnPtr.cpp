@@ -11,7 +11,8 @@ namespace storm {
 		static void checkDot(Expr *dotExpr) {
 			Value dotResult = dotExpr->result().type();
 			if (dotResult.isValue())
-				throw SyntaxError(dotExpr->pos, L"Only classes and actors can be bound to a function pointer. Not values.");
+				throw new (dotExpr) SyntaxError(dotExpr->pos,
+												S("Only classes and actors can be bound to a function pointer. Not values."));
 		}
 
 		FnPtr::FnPtr(Block *block, SrcName *name, Array<SrcName *> *formal) : Expr(name->pos) {
@@ -29,13 +30,14 @@ namespace storm {
 		}
 
 		FnPtr::FnPtr(Block *block, SrcName *name) : Expr(name->pos), parent(block), name(name->simplify(block->scope)) {
-			if (!this->name)
-				throw SyntaxError(name->pos, L"The parameters of the name " + ::toS(name) +
-								L" can not be resolved to proper types.");
+			if (!this->name) {
+				Str *msg = TO_S(engine(), S("The parameters of the name ") << name <<
+								S(" can not be resolved to proper types."));
+				throw new (this) SyntaxError(name->pos, msg);
+			}
 		}
 
 		FnPtr::FnPtr(Block *block, Expr *dot, syntax::SStr *name) : Expr(name->pos), dotExpr(dot), parent(block) {
-
 			checkDot(dotExpr);
 
 			SimpleName *tn = new (this) SimpleName();
@@ -53,7 +55,7 @@ namespace storm {
 			checkDot(dotExpr);
 
 			if (target->params->empty() || !target->params->at(0).canStore(dot->result().type()))
-				throw SyntaxError(dotExpr->pos, L"The first parameter of the specified function does not match the type of the provided expression.");
+				throw new (this) SyntaxError(dotExpr->pos, S("The first parameter of the specified function does not match the type of the provided expression."));
 
 			Array<Value> *formals = clone(target->params);
 			formals->at(0) = target->result;
@@ -63,9 +65,11 @@ namespace storm {
 		// Note: We don't support implicit this pointer.
 		void FnPtr::findTarget(const Scope &scope, SrcName *name, Array<SrcName *> *formal, MAYBE(Expr *) dot) {
 			SimpleName *resolved = name->simplify(scope);
-			if (!resolved)
-				throw SyntaxError(name->pos, L"The parameters of the name " + ::toS(name) +
-								L" can not be resolved to proper types.");
+			if (!resolved) {
+				Str *msg = TO_S(engine(), S("The parameters of the name ") << name
+								<< S(" can not be resolved to proper types."));
+				throw new (this) SyntaxError(name->pos, msg);
+			}
 
 			Array<Value> *params = new (this) Array<Value>();
 			Array<Value> *formals = new (this) Array<Value>();
@@ -82,11 +86,13 @@ namespace storm {
 
 			Named *found = scope.find(resolved);
 			if (!found)
-				throw SyntaxError(name->pos, L"Could not find " + ::toS(resolved));
+				throw new (this) SyntaxError(name->pos, TO_S(engine(), S("Could not find ") << resolved));
 			target = as<Function>(found);
-			if (!target)
-				throw SyntaxError(name->pos, L"Can not take the pointer of anything other than a function. This is a " +
-								::toS(*found) + L"!");
+			if (!target) {
+				Str *msg = TO_S(engine(), S("Can not take the pointer of anything other than a function. This is a ")
+								<< found + S("!"));
+				throw new (this) SyntaxError(name->pos, msg);
+			}
 
 			formals->insert(0, target->result);
 			ptrType = thisPtr(fnType(formals));
@@ -140,14 +146,16 @@ namespace storm {
 			if (!type.type) {
 				// Types were deduced automatically, we need to check some more...
 				type = r->type();
-				if (!type.type)
-					throw SyntaxError(pos, L"Unable to deduce parameter types for a function pointer in this context. "
-						L"Please specify parameter types explicitly.");
+				if (!type.type) {
+					throw new (this) SyntaxError(pos, S("Unable to deduce parameter types for a function pointer ")
+												S("in this context. Please specify parameter types explicitly."));
 
 				Function *target = acceptableFn(type);
-				if (!target)
-					throw SyntaxError(pos, L"Failed to find a suitable function for the function pointer type " +
-									::toS(type) + L". Please specify explicit parameters.");
+				if (!target) {
+					Str *msg = TO_S(engine(), S("Failed to find a suitable function for the function pointer type ")
+									<< type << S(". Please specify explicit parameters."));
+					throw SyntaxError(pos, msg);
+				}
 
 				code(to, r, type, target);
 			} else {

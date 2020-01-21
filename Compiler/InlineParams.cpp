@@ -100,8 +100,8 @@ namespace storm {
 		}
 
 		if (chosen == noReg) {
-			// Should not happen as we only allow assigning 3 parameters to register.
-			throw InternalError(L"Unable to find a free register.");
+			// Should not happen as we only allow assigning 3 parameters to registers.
+			throw new (state) InternalError(L"Unable to find a free register.");
 		}
 
 		// Move the old value out of the way so that we can reuse the register.

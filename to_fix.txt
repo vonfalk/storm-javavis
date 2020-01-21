@@ -1,0 +1,241 @@
+Code/Operand.cpp:			throw InvalidValue(L"noReg is not a proper register!");
+Code/Operand.cpp:			throw InvalidValue(L"Can not create an operand of an empty part.");
+Code/Operand.cpp:			throw InvalidValue(L"Can not create an operand of an empty variable.");
+Code/Operand.cpp:			throw InvalidValue(L"Can not create an operand of an empty label.");
+Code/Operand.cpp:			throw InvalidValue(L"Can not create an operand of an empty variable.");
+Code/Operand.cpp:			throw InvalidValue(L"Can not create an operand of an empty label.");
+Code/Operand.cpp:			throw InvalidValue(L"For instruction " + String(name(op)) + L": " + ::toS(*this) + L" is not readable.");
+Code/Operand.cpp:			throw InvalidValue(L"For instruction " + String(name(op)) + L": " + ::toS(*this) + L" is not writable.");
+Code/Operand.cpp:			throw InvalidValue(L"Not a constant!");
+Code/Operand.cpp:			throw InvalidValue(L"Not a register!");
+Code/Operand.cpp:			throw InvalidValue(L"Not a CondFlag!");
+Code/Operand.cpp:			throw InvalidValue(L"Not a part!");
+Code/Operand.cpp:			throw InvalidValue(L"Not a variable!");
+Code/Operand.cpp:			throw InvalidValue(L"Not a reference!");
+Code/Operand.cpp:			throw InvalidValue(L"Not a reference!");
+Code/Operand.cpp:			throw InvalidValue(L"Not an object reference!");
+Code/Operand.cpp:			throw InvalidValue(L"Not a label!");
+Code/Operand.cpp:			throw InvalidValue(L"Not a SrcPos!");
+Compiler/Type.cpp:			throw InternalError(L"Can not use the Type constructor taking a Size to create class types.");
+Compiler/Type.cpp:		throw InstantiationError(pos, msg.str());
+Compiler/Type.cpp:				throw TypedefError(L"The type " + ::toS(identifier()) +
+Compiler/Type.cpp:			throw TypedefError(::toS(identifier()) + L": Trying to generate a type description for an empty object "
+Compiler/Type.cpp:				throw TypedefError(L"Can not produce a SimpleDesc when the parent type is not a simple type!");
+Compiler/Type.cpp:				throw TypedefError(L"Can not produce a SimpleDesc from a type containing a complex type!");
+Compiler/Type.cpp:				throw TypedefError(L"Unknown type description: " + ::toS(original));
+Compiler/Type.cpp:			throw InternalError(L"Unsupported type description of a value.");
+Compiler/Type.cpp:			throw InternalError(L"Can not create " + ::toS(t->identifier()) + L", no default constructor.");
+Compiler/Type.cpp:			throw TypedefError(L"The function " + ::toS(fn->identifier()) + L" is marked 'override' but does not override.");
+Compiler/Type.cpp:			throw TypedefError(L"The function " + ::toS(child->identifier()) + L" attempts to "
+Compiler/Type.cpp:			throw TypedefError(L"The function " + ::toS(child->identifier()) + L" overrides " +
+Compiler/Type.h:		// Find some nice-to-have functions. TODO: Make these throw on error?
+Compiler/TypeCtor.cpp:				throw InternalError(L"Can not use TypeDefaultCtor with TObjects without specifying a thread. "
+Compiler/TypeCtor.cpp:				throw InternalError(L"Can not find the default constructor for TObject!");
+Compiler/TypeCtor.cpp:				throw InternalError(L"Can not use TypeDefaultCtor if no default constructor "
+Compiler/TypeCtor.cpp:					throw InternalError(L"Can not use TypeDefaultCtor if a member does not have a default "
+Compiler/TypeCtor.cpp:					throw InternalError(L"Can not use TypeDefaultCtor if a member does not have a default "
+Compiler/TypeCtor.cpp:				throw InternalError(L"No copy constructor for " + ::toS(super->identifier())
+Compiler/TypeCtor.cpp:					throw InternalError(L"No copy constructor for " + ::toS(v->type.type->identifier())
+Compiler/TypeCtor.cpp:				throw InternalError(L"No assignment operator for " + ::toS(super->identifier())
+Compiler/TypeCtor.cpp:					throw InternalError(L"No assignment operator for " + ::toS(v->type.type->identifier())
+Compiler/TypeCtor.cpp:					throw InternalError(L"Can not find 'core.clone' for " + ::toS(type));
+Compiler/ValueArray.h:				throw ArrayError(L"Index " + ::toS(id) + L" out of bounds.");
+Compiler/Variable.cpp:			throw TypedefError(L"Unable to create a variable of type 'void'.");
+Compiler/Variable.cpp:			throw RuntimeError(L"Invalid type of the initializer passed to GlobalVar. Must be a function pointer.");
+Compiler/Variable.cpp:			throw RuntimeError(L"An initializer provided to GlobalVar may not take parameters.");
+Compiler/Variable.cpp:			throw RuntimeError(L"Can not find 'call()' in the provided function pointer. Is the signature correct?");
+Compiler/Variable.cpp:			throw RuntimeError(L"The global variable " + ::toS(name) +
+Compiler/Version.cpp:			throw SyntaxError(SrcPos(file, 0, ver->peekLength()), L"Invalid version syntax.");
+Compiler/Wrap.cpp:		throw SyntaxError(pos, msg->c_str());
+Core/Array.cpp:			throw ArrayError(L"Index " + ::toS(id) + L" out of bounds (of " + ::toS(count()) + L").");
+Core/Array.cpp:			throw ArrayError(L"Can not pop an empty array.");
+Core/Array.cpp:			throw ArrayError(L"Index " + ::toS(to) + L" out of bounds for insertion (of " + ::toS(count()) + L").");
+Core/Array.cpp:			throw ArrayError(L"Can not acquire an element from an empty array.");
+Core/Array.cpp:		throw ArrayError(L"Index " + ::toS(n) + L" out of bounds (of " + ::toS(count()) + L").");
+Core/Array.cpp:			throw ArrayError(L"Iterator pointing to the end of an array being dereferenced.");
+Core/Array.h:			// We're calling a function to throw the exception to make it more likely that the
+Core/Io/HandleStream.cpp:		throw NotSupported(L"Copying HandleIStream");
+Core/Io/HandleStream.cpp:		throw NotSupported(L"Copying HandleIStream");
+Core/Io/HandleStream.cpp:		throw NotSupported(L"Copying HandleIStream");
+Core/Io/Protocol.cpp:		throw ProtocolNotSupported(L"children", ::toS(*this));
+Core/Io/Protocol.cpp:		throw ProtocolNotSupported(L"read", ::toS(*this));
+Core/Io/Protocol.cpp:		throw ProtocolNotSupported(L"write", ::toS(*this));
+Core/Io/Protocol.cpp:		throw ProtocolNotSupported(L"exists", ::toS(*this));
+Core/Io/Protocol.cpp:		throw ProtocolNotSupported(L"format", ::toS(*this));
+Core/Io/Serialization.cpp:			throw SerializationError(L"Unknown type: " + ::toS(demangleName(name)));
+Core/Io/Serialization.cpp:			throw SerializationError(L"The type " + ::toS(demangleName(name)) + L" is not serializable.");
+Core/Io/Serialization.cpp:			throw SerializationError(L"Expected a value type, but got a class type.");
+Core/Io/Serialization.cpp:			throw SerializationError(L"Type mismatch. Expected " + ::toS(runtime::typeName(expected->info->type)) +
+Core/Io/Serialization.cpp:			throw SerializationError(L"Expected a value type, but got a class type.");
+Core/Io/Serialization.cpp:			throw SerializationError(L"Mismatch of built-in types!");
+Core/Io/Serialization.cpp:			throw SerializationError(L"Expected a class type, but got a value type.");
+Core/Io/Serialization.cpp:			throw SerializationError(L"Mismatch of built-in types!");
+Core/Io/Serialization.cpp:				throw SerializationError(L"Wrong type found during deserialization.");
+Core/Io/Serialization.cpp:			throw SerializationError(L"Wrong type found during deserialization.");
+Core/Io/Serialization.cpp:			throw SerializationError(L"Can not use 'start' when serializing custom types.");
+Core/Io/Serialization.cpp:				throw SerializationError(L"Trying to deserialize too many members.");
+Core/Io/Serialization.cpp:			throw SerializationError(L"Mismatched calls to startX during dedeserialization!");
+Core/Io/Serialization.cpp:			throw SerializationError(L"Missing fields during deserialization!");
+Core/Io/Serialization.cpp:			throw SerializationError(L"Trying to deserialize a standard type into a non-compatible type!");
+Core/Io/Serialization.cpp:				throw SerializationError(L"The member " + ::toS(ourMember.name) + L", required for type " +
+Core/Io/Serialization.cpp:			throw SerializationError(L"Trying to deserialize a type type into a non-compatible type!");
+Core/Io/Serialization.cpp:			throw SerializationError(L"Tuple size mismatch. Stream: " + ::toS(tupleCount) +
+Core/Io/Serialization.cpp:			throw SerializationError(L"Trying to deserialize a type into a non-compatible type!");
+Core/Io/Serialization.cpp:			throw SerializationError(L"Unexpected value type during serialization.");
+Core/Io/Serialization.cpp:			throw SerializationError(L"Expected a class type, but a value type was provided!");
+Core/Io/Serialization.cpp:				throw SerializationError(L"The provided type description does not match the serialized object.");
+Core/Io/Serialization.cpp:			throw SerializationError(L"Expected a value type, but a class type was provided.");
+Core/Io/Serialization.cpp:				throw SerializationError(L"Trying to serialize too many fields.");
+Core/Io/Serialization.cpp:			throw SerializationError(L"Mismatched calls to startX during serialization!");
+Core/Io/Serialization.cpp:			throw SerializationError(L"Missing fields during serialization!");
+Core/Io/Stream.cpp:			throw IoError(L"Not enough data to read primitive.");
+Core/Io/Url.cpp:			throw InvalidName();
+Core/Io/Url.cpp:				throw InvalidName(str->c_str());
+Core/Io/Url.cpp:			throw InvalidName(::toS(url));
+Core/Io/Url.cpp:			throw InvalidName(L"Both paths to 'relative' must be absolute.");
+Core/Io/Url.cpp:			throw ProtocolNotSupported(L"children", L"<none>");
+Core/Io/Url.cpp:			throw ProtocolNotSupported(L"read", L"<none>");
+Core/Io/Url.cpp:			throw ProtocolNotSupported(L"write", L"<none>");
+Core/Io/Url.cpp:			throw ProtocolNotSupported(L"exists", L"<none>");
+Core/Io/Url.cpp:			throw ProtocolNotSupported(L"format", L"<none>");
+Core/Io/Url.cpp:			throw InternalError(L"Failed to get the current working directory.");
+Core/Io/Url.cpp:			throw InternalError(L"Failed to get the path of the executable.");
+Core/Map.cpp:			throw MapError(::toS(buf));
+Core/Net/Address.cpp:		throw NetError(L"Unsupported address family!");
+Core/Net/Address.cpp:		throw NetError(L"Invalid address: " + ::toS(src));
+Core/Net/Net.cpp:				throw NetError(L"Unable to initialize sockets.");
+Core/Net/Net.cpp:			throw NetError(L"Unable to acquire AcceptEx.");
+Core/Net/Net.cpp:			throw NetError(L"Unable to acquire GetAcceptExSockaddrs");
+Core/Net/Net.cpp:			throw NetError(L"Unable to acquire ConnectEx.");
+Core/Net/Socket.cpp:		throw NotSupported(L"Copying a socket");
+Core/PQueue.cpp:		throw PQueueError(L"Trying to access elements in an empty priority queue.");
+Core/Set.cpp:			throw SetError(::toS(buf));
+Core/Str.cpp:			throw StrError(L"Not a number");
+Core/Str.cpp:			throw StrError(L"Not a number");
+Core/Str.cpp:			throw StrError(L"Not a number");
+Core/Str.cpp:			throw StrError(L"Not a number");
+Core/Str.cpp:			throw StrError(L"Not a floating-point number");
+Core/Str.cpp:			throw StrError(L"Not a floating-point number");
+Core/Str.cpp:			throw StrError(L"Not a floating-point number");
+Core/Str.cpp:			throw StrError(L"Not a floating-point number");
+Core/Str.cpp:				throw StrError(L"Not a hexadecimal number");
+Core/Str.cpp:			throw SerializationError(L"Not enough data.");
+Core/Variant.h:				throw InternalError(L"Attempting to get an incorrect type from a variant.");
+Gc/MPS/Impl.cpp:			throw GcError(msg);
+Gc/MPS/Impl.cpp:				throw GcError(L"Trying to allocate memory from a thread not registered with the GC.");
+Gc/MPS/Impl.cpp:						throw GcError(L"Attempting to finalize on a thread not registered with the GC!");
+Gc/MPS/Impl.cpp:		throw GcError(L"Failed to create a root.");
+Gc/SMM/Impl.cpp:				throw GcError(L"Trying to allocate memory from a thread not registered with the GC.");
+Gc/SMM/Impl.cpp:				throw GcError(L"Out of memory (alloc).");
+Gc/SMM/Impl.cpp:			throw GcError(L"Out of memory (allocStatic).");
+Gc/SMM/Impl.cpp:				throw GcError(L"Out of memory (allocArray).");
+Gc/SMM/Impl.cpp:				throw GcError(L"Out of memory (allocWeakArray).");
+Gc/SMM/Impl.cpp:				throw GcError(L"Out of memory (allocType).");
+Gc/SMM/Impl.cpp:				throw GcError(L"Out of memory (allocCode).");
+Gc/SMM/VMAlloc.cpp:					throw GcError(L"Unable to allocate memory for the initial arena!");
+Graphics/Gen/CppTypes.cpp:	throw storm::AbstractFnCalled(L"storm::NException::message");
+Graphics/Image.cpp:			throw ImageLoadError(L"The file " + ::toS(file) + L" does not exist.");
+Graphics/Image.cpp:			throw ImageLoadError(error);
+Graphics/ImageLoad.cpp:		throw ImageLoadError(String(buffer));
+Graphics/ImageLoad.cpp:				throw ImageLoadError(L"No JPEG header was found.");
+Graphics/PPMLoad.cpp:					throw ImageLoadError(L"Unexpected end of stream!");
+Graphics/PPMLoad.cpp:				throw ImageLoadError(L"Not a number!");
+Gui/Bitmap.cpp:			throw GuiError(L"Invalid format from Cairo. Expected ARGB32.");
+Gui/Container.cpp:			throw GuiError(L"Can not attach a child multiple times or to multiple parents.");
+Gui/Container.cpp:			throw GuiError(L"The id " + ::toS(id) + L" is already in use.");
+Gui/DxDevice.cpp:		throw GuiError(msg + ::toS(r));
+Gui/Gen/CppTypes.cpp:	throw storm::AbstractFnCalled(L"gui::Graphics::draw");
+Gui/Gen/CppTypes.cpp:	throw storm::AbstractFnCalled(L"gui::Graphics::draw");
+Gui/Gen/CppTypes.cpp:	throw storm::AbstractFnCalled(L"gui::Graphics::draw");
+Gui/Gen/CppTypes.cpp:	throw storm::AbstractFnCalled(L"gui::Graphics::draw");
+Gui/Gen/CppTypes.cpp:	throw storm::AbstractFnCalled(L"gui::Graphics::draw");
+Gui/Gen/CppTypes.cpp:	throw storm::AbstractFnCalled(L"gui::Graphics::draw");
+Gui/Gen/CppTypes.cpp:	throw storm::AbstractFnCalled(L"gui::Graphics::fill");
+Gui/Gen/CppTypes.cpp:	throw storm::AbstractFnCalled(L"gui::Graphics::fill");
+Gui/Gen/CppTypes.cpp:	throw storm::AbstractFnCalled(L"gui::Graphics::fill");
+Gui/Gen/CppTypes.cpp:	throw storm::AbstractFnCalled(L"gui::Graphics::fill");
+Gui/Gen/CppTypes.cpp:	throw storm::AbstractFnCalled(L"gui::Graphics::fillOval");
+Gui/Gen/CppTypes.cpp:	throw storm::AbstractFnCalled(L"gui::Graphics::line");
+Gui/Gen/CppTypes.cpp:	throw storm::AbstractFnCalled(L"gui::Graphics::lineWidth");
+Gui/Gen/CppTypes.cpp:	throw storm::AbstractFnCalled(L"gui::Graphics::oval");
+Gui/Gen/CppTypes.cpp:	throw storm::AbstractFnCalled(L"gui::Graphics::pop");
+Gui/Gen/CppTypes.cpp:	throw storm::AbstractFnCalled(L"gui::Graphics::push");
+Gui/Gen/CppTypes.cpp:	throw storm::AbstractFnCalled(L"gui::Graphics::push");
+Gui/Gen/CppTypes.cpp:	throw storm::AbstractFnCalled(L"gui::Graphics::push");
+Gui/Gen/CppTypes.cpp:	throw storm::AbstractFnCalled(L"gui::Graphics::push");
+Gui/Gen/CppTypes.cpp:	throw storm::AbstractFnCalled(L"gui::Graphics::text");
+Gui/Gen/CppTypes.cpp:	throw storm::AbstractFnCalled(L"gui::Graphics::transform");
+Gui/Gen/CppTypes.cpp:	throw storm::AbstractFnCalled(L"storm::NException::message");
+Gui/GlDevice.cpp:			throw GuiError(L"You are using an unsupported windowing system. X11 and Wayland are supported.");
+Gui/GlDevice.cpp:			throw GuiError(L"Failed to initialize OpenGL.");
+Gui/GlDevice.cpp:				throw GuiError(L"Failed to initialize Cario. Cairo requires at least OpenGL 2.0 or OpenGL ES 2.0.");
+Gui/GlDevice.cpp:			throw GuiError(L"Failed to create an EGL surface for a window.");
+Gui/GlDevice.cpp:			throw GuiError(L"Failed to create a cairo surface for a window.");
+Gui/GlDevice.cpp:			throw GuiError(L"Failed to create a cairo surface for a window.");
+Gui/GtkSignal.h:				// Note: We need to catch exceptions since we can not throw them through Gtk+ code.
+Gui/Path.cpp:			throw GuiError(L"Failed to create path geometry: " + ::toS(r));
+Main/Main.cpp:			throw InternalError(L"Unknown mode.");
+OS/Future.cpp:		// Warn about uncaught exceptions if we didn't throw it yet.
+OS/Future.cpp:		// threads re-throw simultaneously).
+OS/Future.h:		// written to 'target', or throw an exception posted.
+OS/Future.h:			// Rethrow this exception.
+OS/Future.h:		// Get the result or throw the error, when the thread is ready.
+OS/Future.h:		// Get the result or throw the error, when the thread is ready.
+OS/UThread.cpp:		// 'allocStack' may throw an exception, so make sure it succeeds before proceeding any further.
+OS/UThread.cpp:			throw ThreadError(L"Out of memory when spawning a thread.");
+OS/UThread.cpp:			throw ThreadError(L"Out of memory when spawning a thread.");
+Plugin/emacs-bench.el:	 (throw 'bench-fail msg)))
+Plugin/emacs-test.el:    (throw 'storm-test-failed nil)))
+root/lang/bs/macro/main.bs:		Expr(SrcPos()); // We need this until we can throw exceptions!
+root/util/serialize/text.bs:			// if (parent == type), we should throw an exception or similar. Otherwise, we will
+Sound/Audio.cpp:			throw SoundInitError();
+Sound/Audio.cpp:			throw SoundInitError();
+Sound/Audio.cpp:			throw SoundInitError();
+Sound/FlacSound.cpp:			throw SoundOpenError(L"Failed initializing FLAC decoder: " + ::toS(FLAC__StreamDecoderInitStatusString[r]));
+Sound/FlacSound.cpp:			throw SoundOpenError(L"Failed to decode FLAC metadata: "
+Sound/Gen/CppTypes.cpp:	throw storm::AbstractFnCalled(L"storm::NException::message");
+Sound/Mp3Sound.cpp:				throw SoundOpenError(L"Expected float output from mpg123.");
+Sound/Mp3Sound.cpp:			throw SoundOpenError(msg);
+Sound/OggSound.cpp:			throw SoundOpenError(L"Looks like an OGG file, but it is something else.");
+Sound/OggSound.cpp:			throw SoundOpenError(L"Ogg version mismatch.");
+Sound/OggSound.cpp:			throw SoundOpenError(L"Ogg header corrupt.");
+Sound/OggSound.cpp:			throw SoundOpenError(L"Unknown error when opening OGG file.");
+Sound/Player.cpp:			throw SoundInitError();
+Sound/Player.cpp:			throw SoundInitError();
+Sound/Player.cpp:				throw SoundInitError();
+Sound/Read.cpp:			throw SoundOpenError(L"Unknown file format.");
+Sound/Read.cpp:			throw SoundOpenError(L"Failed to open file.");
+Sound/Read.cpp:			throw SoundOpenError(L"Unknown file format.");
+Sound/Read.cpp:			throw SoundOpenError(L"Failed to open file.");
+Sound/WavSound.cpp:			throw SoundOpenError(L"Not enough data.");
+Sound/WavSound.cpp:			throw SoundOpenError(L"Invalid header.");
+Sound/WavSound.cpp:			throw SoundOpenError(L"Unsupported wave format.");
+Sound/WavSound.cpp:			throw SoundOpenError(L"Invalid subchunk.");
+Sound/WavSound.cpp:			throw SoundOpenError(L"Invalid chunk size.");
+Sound/WavSound.cpp:			throw SoundOpenError(L"Compression in wave files is not supported.");
+Sound/WavSound.cpp:			throw SoundOpenError(L"Unsupported bit depth.");
+Sound/WavSound.cpp:			throw SoundOpenError(L"Invalid data chunk.");
+SQL/SQL.cpp:		throw NotSupported (L"Empty Database");
+SQL/SQL.cpp:		throw NotSupported (L"Empty Database");
+SQL/SQL.cpp:		throw NotSupported (L"Empty Database");
+SQL/SQL.cpp:		throw NotSupported (L"Empty Database");
+SQL/SQL.cpp:		throw NotSupported (L"Empty Database");
+SQL/SQLite.cpp:			throw InternalError(L"Can't open database");
+SQL/SQLite.cpp:			throw InternalError(L"Can't open database");
+Test/Code/Exception.cpp:		throw Error();
+Test/Code/Exception.cpp:		throw obj;
+Test/Code/Exception.cpp:		throw buf;
+Test/Code/Redirect.cpp:		throw Error();
+Test/Code/Redirect.cpp:		throw Error();
+Test/OS/Call.cpp:	throw UserError(L"ERROR");
+Test/OS/ExceptionTest.cpp:	throw UserError(L"ERROR");
+Test/OS/ExceptionTest.cpp:	throw e;
+Test/OS/UThreadTest.cpp:		throw UserError(L"ERROR");
+Test/OS/UThreadTest.cpp:		throw UserError(L"ERROR");
+Test/OS/UThreadTest.cpp:		throw UserError(L"ERROR");
+Test/OS/UThreadTest.cpp:		throw UserError(L"Testing!");
+Test/Storm/EvalBS.cpp:		throw TestError(L"Tests returning booleans must end with either T or F!");
+Test/Storm/EvalBS.cpp:			throw TestError(L"Unknown return type for function " + ::toS(fn->identifier()));
+TestLib/Gen/CppTypes.cpp:	throw storm::AbstractFnCalled(L"storm::NException::message");
+Utils/CppInfo.cpp:			throw UserError(L"Failed to read the path of the current executable.");
+Utils/Path.cpp:			throw UserError(L"Failed to read the path of the current executable.");

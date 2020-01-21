@@ -39,7 +39,7 @@ namespace storm {
 		assert(to, L"Too early to use 'wrapFuture'.");
 		Type *found = as<Type>(to->find(S("Future"), v, Scope()));
 		if (!found)
-			throw InternalError(L"Can not find the future type!");
+			throw new (e.v) InternalError(S("Can not find the future type!"));
 		return Value(found);
 	}
 

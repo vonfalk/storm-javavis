@@ -30,7 +30,7 @@ namespace storm {
 	void FileReader::resolveFunctions() {}
 
 	syntax::Rule *FileReader::rootRule() {
-		throw LangDefError(L"This language does not support syntax highlighting.");
+		throw new (this) LangDefError(S("This language does not support syntax highlighting."));
 	}
 
 	syntax::InfoParser *FileReader::createParser() {

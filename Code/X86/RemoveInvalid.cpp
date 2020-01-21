@@ -419,8 +419,7 @@ namespace code {
 		void RemoveInvalid::fnParamTfm(Listing *dest, Instr *instr, Nat line) {
 			TypeInstr *ti = as<TypeInstr>(instr);
 			if (!ti) {
-				TODO(L"REMOVE ME"); return;
-				throw InvalidValue(L"Expected a TypeInstr for 'fnParam'.");
+				throw new (this) InvalidValue(S("Expected a TypeInstr for 'fnParam'."));
 			}
 
 			params->push(Param(ti->src(), ti->type, false));
@@ -429,8 +428,7 @@ namespace code {
 		void RemoveInvalid::fnParamRefTfm(Listing *dest, Instr *instr, Nat line) {
 			TypeInstr *ti = as<TypeInstr>(instr);
 			if (!ti) {
-				TODO(L"REMOVE ME"); return;
-				throw InvalidValue(L"Expected a TypeInstr for 'fnParamRef'.");
+				throw new (this) InvalidValue(S("Expected a TypeInstr for 'fnParamRef'."));
 			}
 
 			params->push(Param(ti->src(), ti->type, true));
@@ -656,8 +654,7 @@ namespace code {
 
 			TypeInstr *t = as<TypeInstr>(instr);
 			if (!t) {
-				TODO(L"REMOVE ME"); return;
-				throw InvalidValue(L"Expected a TypeInstr for 'fnCall'.");
+				throw new (this) InvalidValue(S("Expected a TypeInstr for 'fnCall'."));
 			}
 
 			fnCall(dest, t, params);
@@ -672,8 +669,7 @@ namespace code {
 
 			TypeInstr *t = as<TypeInstr>(instr);
 			if (!t) {
-				TODO(L"REMOVE ME"); return;
-				throw InvalidValue(L"Expected a TypeInstr for 'fnCallRef'.");
+				throw new (this) InvalidValue(S("Expected a TypeInstr for 'fnCallRef'."));
 			}
 
 			fnCall(dest, t, params);

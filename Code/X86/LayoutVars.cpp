@@ -113,7 +113,7 @@ namespace code {
 
 			Var v = src.var();
 			if (!listing->accessible(v, part))
-				throw VariableUseError(v, part);
+				throw new (this) VariableUseError(v, part);
 			return xRel(src.size(), ptrFrame, layout->at(v.key()) + src.offset());
 		}
 
@@ -144,8 +144,9 @@ namespace code {
 
 		void LayoutVars::initPart(Listing *dest, Part init) {
 			if (part != dest->prev(init)) {
-				throw BlockBeginError(L"Can not begin " + ::toS(init) + L" unless the current is "
-									+ ::toS(dest->prev(init)) + L". Current is " + ::toS(part));
+				Str *msg = TO_S(engine(), S("Can not begin ") << init << S(" unless the current is ")
+								<< dest->prev(init) << S(". Current is ") << part);
+				throw new (this) BlockBeginError(msg);
 			}
 
 			part = init;
@@ -216,7 +217,7 @@ namespace code {
 
 		void LayoutVars::destroyPart(Listing *dest, Part destroy, bool preserveEax) {
 			if (destroy != part)
-				throw BlockEndError();
+				throw new (this) BlockEndError();
 
 			bool pushedEax = false;
 
@@ -348,8 +349,10 @@ namespace code {
 			Part start = part;
 
 			for (Part now = part; now != target; now = src->prev(now)) {
-				if (now == Part())
-					throw BlockEndError(L"Block " + ::toS(target) + L" is not a parent of " + ::toS(start));
+				if (now == Part()) {
+					Str *msg = TO_S(engine(), S("Block " << target << S(" is not a parent of ") << start));
+					throw new (this) BlockEndError(msg);
+				}
 
 				destroyPart(dest, now, false);
 			}

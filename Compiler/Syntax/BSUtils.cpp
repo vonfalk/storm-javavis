@@ -15,7 +15,7 @@ namespace storm {
 		Expr *callMember(Scope scope, Str *name, Expr *me, Expr *param) {
 			Value type = me->result().type();
 			if (type == Value())
-				throw InternalError(L"Can not call members of 'void'.");
+				throw new (name) InternalError(S("Can not call members of 'void'."));
 
 			Actuals *actual = new (me) Actuals();
 			Array<Value> *params = new (me) Array<Value>();
@@ -30,7 +30,7 @@ namespace storm {
 			Named *found = type.type->find(part, scope);
 			Function *toCall = as<Function>(found);
 			if (!toCall)
-				throw InternalError(::toS(part) + L" was not found!");
+				throw new (name) InternalError(TO_S(name, part << S(" was not found!"));
 
 			return new (me) FnCall(me->pos, scope, toCall, actual);
 		}
@@ -42,8 +42,8 @@ namespace storm {
 		Expr *callMember(const SrcPos &pos, Scope scope, Str *name, Expr *me, Expr *param) {
 			try {
 				return callMember(scope, name, me, param);
-			} catch (const InternalError &e) {
-				throw SyntaxError(pos, e.what());
+			} catch (const InternalError *e) {
+				throw new (e) SyntaxError(pos, e.message());
 			}
 		}
 

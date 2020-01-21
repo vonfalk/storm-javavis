@@ -22,13 +22,17 @@ namespace storm {
 			if (needsThread) {
 				Value expected = thisPtr(Thread::stormType(engine()));
 
-				if (params->count() < 2)
-					throw SyntaxError(pos, L"This constructor needs to take a " + ::toS(expected)
-									+ L" as the first parameter since we are threaded.");
+				if (params->count() < 2) {
+					Str *msg = TO_S(engine(), S("This constructor needs to take a ")
+									<< expected << S(" as the first parameter since we are threaded."));
+					throw new (this) SyntaxError(pos, msg);
+				}
 
-				if (!expected.canStore(params->at(1).type))
-					throw SyntaxError(pos, L"This constructor needs to take a " + ::toS(expected) + L" as the first"
-									L" parameter, not " + ::toS(params->at(1)));
+				if (!expected.canStore(params->at(1).type)) {
+					Str *msg = TO_S(engine(), S("This constructor needs to take a ")
+									<< expected << S(" as the first parameter, not " << params->at(1)));
+					throw new (this) SyntaxError(pos, msg);
+				}
 			}
 
 			// Rename until it is initialized!
@@ -114,10 +118,6 @@ namespace storm {
 			return thread;
 		}
 
-		CtorBody *BSRawCtor::createBody() {
-			throw InternalError(L"A BSRawCtor can not be used without overriding 'createBody'!");
-		}
-
 
 		/**
 		 * Regular ctor.
@@ -158,8 +158,10 @@ namespace storm {
 		}
 
 		CtorBody *BSTreeCtor::createBody() {
-			if (!root)
-				throw RuntimeError(L"The body of " + ::toS(identifier()) + L"was not set before trying to use it.");
+			if (!root) {
+				Str *msg = TO_S(engine(), S("The body of ") << identifier() << S("was not set before trying to use it."));
+				throw new (this) RuntimeError(msg);
+			}
 
 			CtorBody *result = root;
 			root = null;
@@ -196,9 +198,12 @@ namespace storm {
 				// constructor as well if it is necessary.
 				try {
 					add(new (this) InitBlock(pos, this, null));
-				} catch (const SyntaxError &e) {
-					throw SyntaxError(e.where, L"Failed to initialize the object implicitly: " + e.msg +
-									L"\nInitialize the object manually with an 'init' block instead.");
+				} catch (const SyntaxError *e) {
+					StrBuf *msg = new (this) StrBuf();
+					*msg << S("Failed to initialize the object implicitly: ");
+					e->message(msg);
+					*msg << S("\nInitialize the object manually with an 'init' block instead.");
+					throw new (this) SyntaxError(e->where, msg->toS());
 				}
 			}
 		}
@@ -218,9 +223,9 @@ namespace storm {
 		 */
 
 		SuperCall::SuperCall(SrcPos pos, CtorBody *block, Actuals *params) : Expr(pos), block(block) {
-			if (block->superCalled)
-				throw SyntaxError(pos, L"Only one call to the super class constructor is allowed inside a constructor,"
-					L" and the call has to be done before the 'init' block.");
+			if (block->superCalled) {
+				throw new (this) SyntaxError(pos, S("Only one call to the super class constructor is allowed inside ")
+											S("a constructor, and the call has to be done before the 'init' block."));
 			block->superCalled = true;
 
 			// Add the regular 'this' parameter.
@@ -229,7 +234,8 @@ namespace storm {
 
 			Type *super = thisPtr.type->super();
 			if (!super)
-				throw SyntaxError(pos, L"Can not call the super class constructor unless a parent class is present.");
+				throw new (this) SyntaxError(pos, S("Can not call the super class constructor unless a parent ")
+											S("class is present."));
 
 			Value superPtr = thisPtr;
 			superPtr.type = super;
@@ -269,8 +275,11 @@ namespace storm {
 				values->insert(storm::thisPtr(Thread::stormType(engine())), 1);
 
 			Function *ctor = as<Function>(parent->find(values, block->scope));
-			if (!ctor)
-				throw SyntaxError(pos, L"No constructor (" + ::toS(values) + L") found in " + ::toS(parent->identifier()));
+			if (!ctor) {
+				Str *msg = TO_S(engine(), S("No constructor (") << values
+								<< S(") found in ") << parent->identifier() << S("."));
+				throw new (this) SyntaxError(pos, msg);
+			}
 
 			Array<code::Operand> *actuals = new (this) Array<code::Operand>();
 			actuals->reserve(values->params->count());
@@ -291,7 +300,7 @@ namespace storm {
 
 		void SuperCall::callTObject(CodeGen *s, NamedThread *t) {
 			if (params->expressions->count() != 1)
-				throw SyntaxError(pos, L"Can not initialize a threaded object with parameters.");
+				throw new (this) SyntaxError(pos, S("Can not initialize a threaded object with parameters."));
 
 			// Find the constructor of TObject.
 			Type *parent = TObject::stormType(engine());
@@ -299,7 +308,7 @@ namespace storm {
 			values->at(1) = Value(Thread::stormType(engine()));
 			Function *ctor = as<Function>(parent->find(Type::CTOR, values, block->scope));
 			if (!ctor)
-				throw InternalError(L"The constructor of TObject: __ctor(TObject, Thread) was not found!");
+				throw new (this) InternalError(S("The constructor of TObject: __ctor(TObject, Thread) was not found!"));
 
 			// Call the constructor.
 			Array<code::Operand> *actuals = new (this) Array<code::Operand>();
@@ -347,12 +356,12 @@ namespace storm {
 
 		void InitBlock::init(CtorBody *block, MAYBE(Actuals *) params) {
 			if (block->superCalled && params)
-				throw SyntaxError(pos, L"It is not possible to call super twice by first calling 'super' and "
-								L"then 'init' with parameters. Either remove the call to 'super' or remove the "
-								L"parameters from the init block.");
+				throw new (this) SyntaxError(pos, S("It is not possible to call super twice by first calling 'super' ")
+											S("and then 'init' with parameters. Either remove the call to 'super' or ")
+											S("remove the parameters from the init block."));
 
 			if (block->initDone)
-				throw SyntaxError(pos, L"Only one init block is allowed in each constructor.");
+				throw new (this) SyntaxError(pos, S("Only one init block is allowed in each constructor."));
 			block->initDone = true;
 
 			initializers = new (this) Array<Initializer *>();
@@ -390,12 +399,15 @@ namespace storm {
 		void InitBlock::init(Initializer *init) {
 			Str *name = init->name->v;
 			MemberVar *v = as<MemberVar>(thisPtr.type->find(name, new (this) Array<Value>(1, thisPtr), scope));
-			if (v == null || v->params->at(0).type != thisPtr.type)
-				throw SyntaxError(init->name->pos, L"The member variable " + ::toS(name) + L" was not found in "
-								+ ::toS(thisPtr));
+			if (v == null || v->params->at(0).type != thisPtr.type) {
+				Str *msg = TO_S(engine(), S("The member variable ") << name << S(" was not found in ") << thisPtr);
+				throw new (this) SyntaxError(init->name->pos, msg);
+			}
 
-			if (initialized->has(name))
-				throw SyntaxError(init->name->pos, L"The member " + ::toS(name) + L" has already been initialized.");
+			if (initialized->has(name)) {
+				Str *msg = TO_S(engine(), S("The member variable ") << name << S(" has already been initialized."));
+				throw new (this) SyntaxError(init->name->pos, msg);
+			}
 
 			initializers->push(init);
 			initialized->put(name);
@@ -493,8 +505,10 @@ namespace storm {
 			Value t = v->type;
 			code::Var dest = thisVar->var.v;
 
-			if (t.ref)
-				throw SyntaxError(pos, L"Can not initialize reference " + ::toS(v->name) + L", not implemented yet!");
+			if (t.ref) {
+				Str *msg = TO_S(engine(), S("Can not initialize reference ") << v->name << S(", not implemented yet!"));
+				throw new (this) SyntaxError(pos, msg);
+			}
 
 			if (t.isPrimitive()) {
 				// Default value is already there.
@@ -507,9 +521,11 @@ namespace storm {
 				*s->l << fnCall(c->ref(), false);
 			} else {
 				Function *ctor = t.type->defaultCtor();
-				if (!ctor)
-					throw SyntaxError(pos, L"Can not initialize " + ::toS(v->name) + L" by default-constructing it. "
-									L"Please initialize this member explicitly in " + ::toS(thisPtr) + L".");
+				if (!ctor) {
+					Str *msg = TO_S(engine(), S("Can not initialize ") << v->name << S(" by default-constructing it. ")
+									S("Please initialize this member explicitly in ") << thisPtr << S("."));
+					throw new (this) SyntaxError(pos, msg);
+				}
 				Actuals *params = new (this) Actuals();
 				CtorCall *ctorCall = new (this) CtorCall(pos, scope, ctor, params);
 				CodeResult *created = new (this) CodeResult(t, s->block);
@@ -526,8 +542,10 @@ namespace storm {
 
 			Value t = v->type;
 
-			if (t.ref)
-				throw SyntaxError(pos, L"Can not initialize reference " + ::toS(v->name) + L", not implemented yet!");
+			if (t.ref) {
+				Str *msg = TO_S(engine(), S("Can not initialize reference ") << v->name << S(", not implemented yet!"));
+				throw new (this) SyntaxError(pos, msg);
+			}
 
 			assert(to->expr || to->params);
 
@@ -557,8 +575,9 @@ namespace storm {
 			values->insert(storm::thisPtr(toCreate));
 
 			Function *ctor = as<Function>(toCreate->find(values, scope));
-			if (!ctor)
-				throw SyntaxError(pos, L"No constructor for " + ::toS(t) + L"(" + ::toS(values) + L").");
+			if (!ctor) {
+				Str *msg = TO_S(engine(), S("No constructor for ") << t << S("(") << values << S(")."));
+				throw new (this) SyntaxError(pos, msg);
 
 			if (t.isObject()) {
 				// Easy way, call the constructor as normal.

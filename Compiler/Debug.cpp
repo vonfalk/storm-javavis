@@ -107,8 +107,8 @@ namespace storm {
 			e.v.threadSummary();
 		}
 
-		void throwError() {
-			throw DebugError();
+		void throwError(EnginePtr e) {
+			throw new (e.v) DebugError();
 		}
 
 		/**

@@ -158,4 +158,17 @@ namespace storm {
 		}
 	};
 
+	/**
+	 * Exception thrown during boot, before the "real" exception support is active.
+	 */
+	class CppLoadError : public ::Exception {
+	public:
+		CppLoadError(const String &msg) : msg(msg) {}
+		virtual String what() const {
+			return msg;
+		}
+	private:
+		String msg;
+	};
+
 }

@@ -9,12 +9,20 @@ namespace storm {
 	/**
 	 * Custom exception.
 	 */
-	class EXCEPTION_EXPORT StrError : public Exception {
+	class EXCEPTION_EXPORT StrError : public NException {
+		STORM_CLASS;
 	public:
-		StrError(const String &msg) : msg(L"String error: " + msg) {}
-		virtual String what() const { return msg; }
+		StrError(const wchar *msg) {
+			this->msg = new (this) Str(msg);
+		}
+		STORM_CTOR StrError(Str *msg) {
+			this->msg = msg;
+		}
+		virtual void STORM_FN message(StrBuf *to) const {
+			*to << msg;
+		}
 	private:
-		String msg;
+		Str *msg;
 	};
 
 

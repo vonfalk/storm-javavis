@@ -109,7 +109,7 @@ namespace storm {
 		Package *p = e.package(S("core"));
 		Function *r = as<Function>(p->find(S("clone"), Value(t), e.scope()));
 		if (!r)
-			throw InternalError(L"Can not finde core.clone for " + ::toS(t->identifier()));
+			throw new (t) InternalError(TO_S(t->engine, S("Can not finde core.clone for ") << t->identifier()));
 		return r;
 	}
 
@@ -121,7 +121,7 @@ namespace storm {
 
 		Function *r = as<Function>(p->find(S("clone"), params, e.scope()));
 		if (!r)
-			throw InternalError(L"Can not finde core.clone for " + ::toS(t->identifier()));
+			throw (t) InternalError(TO_S(t->engine, S("Can not finde core.clone for ") << t->identifier()));
 		return r;
 	}
 

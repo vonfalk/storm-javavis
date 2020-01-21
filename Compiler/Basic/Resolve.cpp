@@ -28,7 +28,6 @@ namespace storm {
 			Function *ctor = as<Function>(t->find(part, scope));
 			if (!ctor)
 				return null;
-			// throw SyntaxError(pos, L"No constructor " + ::toS(t->identifier()) + L"." + ::toS(part) + L")");
 
 			return new (t) CtorCall(pos, scope, ctor, actual);
 		}
@@ -41,9 +40,9 @@ namespace storm {
 				return null;
 
 			if (*n->name == Type::CTOR)
-				throw SyntaxError(pos, L"Can not call a constructor by using __ctor. Use Type() instead.");
+				throw new (n) SyntaxError(pos, S("Can not call a constructor by using __ctor. Use Type() instead."));
 			if (*n->name == Type::DTOR)
-				throw SyntaxError(pos, L"Manual invocations of destructors are forbidden.");
+				throw new (n) SyntaxError(pos, S("Manual invocations of destructors are forbidden."));
 
 			if (Function *f = as<Function>(n)) {
 				if (first)
@@ -105,8 +104,11 @@ namespace storm {
 				SimpleName *part = name->from(1);
 				// It is something in the super type!
 				Type *super = thisVar->result.type->super();
-				if (!super)
-					throw SyntaxError(pos, L"No super type for " + ::toS(thisVar->result) + L", can not use 'super' here.");
+				if (!super) {
+					Str *msg = TO_S(block->engine(), S("No super type for ") << thisVar->result
+									<< S(", can not use 'super' here."));
+					throw new (block) SyntaxError(pos, msg);
+				}
 
 				part->last() = lastPart;
 				candidate = storm::find(block->scope, super, part);
@@ -163,8 +165,9 @@ namespace storm {
 			if (!n)
 				n = candidate;
 
-			throw TypeError(pos, ::toS(n) + L" is a " + ::toS(runtime::typeOf(n)->identifier()) +
-							L". Only functions, variables and constructors are supported.");
+			Str *msg = TO_S(block, n << S(" is a ") << runtime::typeOf(n)->identifier()
+							<< S(". Only functions, variables and constructors are supported."));
+			throw new (block) TypeError(pos, msg);
 		}
 
 		Expr *namedExpr(Block *block, syntax::SStr *name, Actuals *params) {
@@ -183,7 +186,7 @@ namespace storm {
 		Expr *namedExpr(Block *block, SrcPos pos, Name *name, Actuals *params) {
 			SimpleName *simple = name->simplify(block->scope);
 			if (!simple)
-				throw SyntaxError(pos, L"Could not resolve parameters in " + ::toS(name));
+				throw new (block) SyntaxError(pos, TO_S(block, S("Could not resolve parameters in ") << name));
 
 			return findTarget(block, simple, pos, params, true);
 		}
@@ -235,7 +238,7 @@ namespace storm {
 		}
 
 		void UnresolvedName::error() const {
-			throw SyntaxError(pos, L"Can not find " + ::toS(name) + L".");
+			throw new (this) SyntaxError(pos, TO_S(engine(), S("Can not find ") << name << S(".")));
 		}
 
 	}

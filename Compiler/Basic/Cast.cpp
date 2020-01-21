@@ -48,7 +48,7 @@ namespace storm {
 
 		void expectCastable(Expr *from, Value to, Scope scope) {
 			if (!castable(from, to, scope))
-				throw TypeError(from->pos, to, from->result());
+				throw new (from) TypeError(from->pos, to, from->result());
 		}
 
 		Bool castable(Expr *from, Value to, Scope scope) {
@@ -152,7 +152,7 @@ namespace storm {
 		Expr *expectCastTo(Expr *from, Value to, Scope scope) {
 			if (Expr *r = castTo(from, to, scope))
 				return r;
-			throw TypeError(from->pos, to, from->result());
+			throw new (from) TypeError(from->pos, to, from->result());
 		}
 
 		ExprResult common(Expr *a, Expr *b, Scope scope) {

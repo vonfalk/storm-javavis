@@ -280,7 +280,7 @@ namespace code {
 		Reg unusedReg(RegSet *in) {
 			Reg r = unusedRegUnsafe(in);
 			if (r == noReg)
-				throw InvalidValue(L"We should never run out of registers on X86-64!");
+				throw new (in) InvalidValue(S("We should never run out of registers on X86-64!"));
 			return r;
 		}
 

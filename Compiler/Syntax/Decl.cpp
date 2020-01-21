@@ -87,7 +87,7 @@ namespace storm {
 		void RuleDecl::pushColor(SStr *color) {
 			TokenColor c = tokenColor(color->v);
 			if (c == tNone)
-				throw SyntaxError(color->pos, L"Expected a color name.");
+				throw new (this) SyntaxError(color->pos, S("Expected a color name."));
 			this->color = c;
 		}
 
@@ -129,7 +129,7 @@ namespace storm {
 		void TokenDecl::pushColor(SStr *color) {
 			TokenColor c = tokenColor(color->v);
 			if (c == tNone)
-				throw SyntaxError(color->pos, L"Expected a color name.");
+				throw new (this) SyntaxError(color->pos, S("Expected a color name."));
 			this->color = c;
 		}
 

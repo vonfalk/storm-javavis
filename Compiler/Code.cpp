@@ -202,8 +202,10 @@ namespace storm {
 		}
 
 		if ((me->state & sMask) != sLoaded) {
-			if ((me->state & sMask) == sLoading)
-				throw InternalError(L"Trying to update " + ::toS(me->owner->identifier()) + L" recursively.");
+			if ((me->state & sMask) == sLoading) {
+				Str *msg = TO_S(me, S("Trying to update ") << me->owner->identifier() << S(" recursively."));
+				throw new (me) InternalError(msg);
+			}
 
 			me->state = (me->state & ~sMask) | sLoading;
 

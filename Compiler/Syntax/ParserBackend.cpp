@@ -46,11 +46,11 @@ namespace storm {
 		}
 
 		Node *ParserBackend::tree() const {
-			throw InternalError(L"No tree.");
+			throw new (this) InternalError(S("No tree."));
 		}
 
 		InfoNode *ParserBackend::infoTree() const {
-			throw InternalError(L"No tree.");
+			throw new (this) InternalError(S("No tree."));
 		}
 
 		Nat ParserBackend::stateCount() const {

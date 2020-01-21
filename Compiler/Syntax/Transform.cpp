@@ -81,10 +81,10 @@ namespace storm {
 			for (Nat i = 0; i < valParams->count(); i++) {
 				if (wcscmp(valParams->at(i).name->c_str(), S("me")) == 0) {
 					if (result)
-						throw SyntaxError(pos, L"Can not use 'me' as a parameter name and specify a result.");
+						throw new (this) SyntaxError(pos, S("Can not use 'me' as a parameter name and specify a result."));
 					LocalVar *r = in->variable(new (this) SimplePart(S("me")));
 					if (!r)
-						throw InternalError(L"Can not find the parameter named 'me'.");
+						throw new (this) InternalError(S("Can not find the parameter named 'me'."));
 					return new (this) LocalVarAccess(pos, r);
 				}
 			}
@@ -94,9 +94,11 @@ namespace storm {
 
 			if (!resultParams) {
 				// This is not a function call, just a variable declaration!
-				if (result->count() > 1)
-					throw SyntaxError(pos, L"The variable " + ::toS(result) + L" is not declared. "
-									L"Use " + ::toS(result) + L"() to call it as a function or constructor.");
+				if (result->count() > 1) {
+					Str *msg = TO_S(this, S("The variable ") << result << S(" is not declared. ")
+									S("Use ") << result << S("() to call it as a function or constructor."));
+					throw new (this) SyntaxError(pos, msg);
+				}
 
 				return findVar(in, result->at(0)->name);
 			}
@@ -154,13 +156,13 @@ namespace storm {
 				return recurse(in, name, new (this) LocalVarAccess(pos, r));
 
 			if (*name == S("me"))
-				throw SyntaxError(pos, L"Can not use 'me' this early!");
+				throw new (this) SyntaxError(pos, S("Can not use 'me' this early!"));
 			if (*name == S("pos"))
 				return posVar(in);
 			if (Expr *e = createLiteral(name))
 				return e;
 
-			throw InternalError(L"The variable " + ::toS(first) + L" was not created before being read.");
+			throw new (this) InternalError(TO_S(this, S("The variable ") << first << S(" was not created before being read.")));
 		}
 
 		Expr *TransformFn::findVar(ExprBlock *in, Str *name) {
@@ -169,7 +171,7 @@ namespace storm {
 				return recurse(in, name, new (this) LocalVarAccess(pos, r));
 
 			if (*name == S("me"))
-				throw SyntaxError(pos, L"Can not use 'me' this early!");
+				throw new (this) SyntaxError(pos, S("Can not use 'me' this early!"));
 			if (*name == S("pos"))
 				return posVar(in);
 			if (Expr *e = createLiteral(name))
@@ -177,13 +179,13 @@ namespace storm {
 
 			// We need to create it...
 			if (lookingFor->has(first))
-				throw SyntaxError(pos, L"The variable " + ::toS(first) + L" depends on itself.");
+				throw new (this) SyntaxError(pos, TO_S(this, S("The variable ") << first << S(" depends on itself.")));
 			lookingFor->put(first);
 
 			try {
 				Nat pos = findToken(first);
 				if (pos >= tokenCount())
-					throw SyntaxError(this->pos, L"The variable " + ::toS(first) + L" is not declared!");
+					throw new (this) SyntaxError(this->pos, TO_S(this, S("The variable ") << first << S(" is not declared!")));
 
 				LocalVar *var = createVar(in, first, pos);
 				lookingFor->remove(first);
@@ -215,7 +217,7 @@ namespace storm {
 			Token *token = getToken(pos);
 
 			if (!token->bound) {
-				throw SyntaxError(this->pos, L"The variable " + ::toS(name) + L" is not bound!");
+				throw new (this) SyntaxError(this->pos, TO_S(this, S("The variable ") << name << S(" is not bound!")));
 			} else if (token->raw) {
 				return createPlainVar(in, name, token);
 			} else {
@@ -406,7 +408,7 @@ namespace storm {
 			if (token->invoke) {
 				// Call the member function indicated in 'invoke'.
 				if (!me)
-					throw SyntaxError(this->pos, L"Can not invoke functions on 'me' when 'me' is undefined.");
+					throw new (this) SyntaxError(this->pos, S("Can not invoke functions on 'me' when 'me' is undefined."));
 				return callMember(this->pos, scope, token->invoke, me, toStore);
 			} else {
 				// We just called 'transform' for the side effects.
@@ -605,7 +607,7 @@ namespace storm {
 				StrBuf *to = new (this) StrBuf();
 				*to << S("Can not transform a ") << type->identifier()
 					<< S(" with parameters: (") << join(actuals->values(), S(", ")) << S(").");
-				throw SyntaxError(pos, to->toS()->c_str());
+				throw new (this) SyntaxError(pos, to->toS());
 			}
 			return tfmFn;
 		}

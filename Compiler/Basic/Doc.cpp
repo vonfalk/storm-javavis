@@ -231,7 +231,8 @@ namespace storm {
 
 			if (pos != docPos.start) {
 				s->close();
-				throw DocError(L"Unable to find a comment in " + ::toS(docPos) + L". Is the file changed?");
+				Str *msg = TO_S(engine(), S("Unable to find a comment in ") << docPos << S(". Is the file changed?"));
+				throw new (this) DocError(msg);
 			}
 
 			try {

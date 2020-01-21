@@ -188,8 +188,4 @@ namespace storm {
 
 	NamedDoc::NamedDoc() {}
 
-	Doc *NamedDoc::get() {
-		throw InternalError(L"NamedDoc::get not overridden.");
-	}
-
 }

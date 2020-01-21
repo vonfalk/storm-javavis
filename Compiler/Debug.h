@@ -123,7 +123,7 @@ namespace storm {
 		void STORM_FN threadSummary(EnginePtr e) ON(Compiler);
 
 		// Throw an exception.
-		void STORM_FN throwError();
+		void STORM_FN throwError(EnginePtr e);
 
 		// Check so that 'a' and 'b' are completely disjoint.
 		Bool STORM_FN disjoint(Object *a, Object *b);

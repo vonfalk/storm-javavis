@@ -69,14 +69,14 @@ namespace storm {
 			: Expr(pos), toExecute(toExecute), params(params), scope(scope), lookup(lookup), sameObject(sameObject), async(false) {
 
 			if (params->expressions->count() != toExecute->params->count())
-				throw SyntaxError(pos, L"The parameter count does not match!");
+				throw new (this) SyntaxError(pos, S("The parameter count does not match!"));
 		}
 
 		FnCall::FnCall(SrcPos pos, Scope scope, Function *toExecute, Actuals *params)
 			: Expr(pos), toExecute(toExecute), params(params), scope(scope), lookup(true), sameObject(false), async(false) {
 
 			if (params->expressions->count() != toExecute->params->count())
-				throw SyntaxError(pos, L"The parameter count does not match!");
+				throw new (this) SyntaxError(pos, S("The parameter count does not match!"));
 		}
 
 		UnresolvedName *FnCall::name() {
@@ -86,7 +86,7 @@ namespace storm {
 
 			BlockLookup *lookup = as<BlockLookup>(scope.top);
 			if (!lookup)
-				throw InternalError(L"Can not use FnCall::name() without having a scope referring to a block.");
+				throw new (this) InternalError(S("Can not use FnCall::name() without having a scope referring to a block."));
 			return new (this) UnresolvedName(lookup->block, toExecute->path(), pos, params, false);
 		}
 
@@ -215,7 +215,7 @@ namespace storm {
 		CtorCall *defaultCtor(const SrcPos &pos, Scope scope, Type *t) {
 			Function *f = t->defaultCtor();
 			if (!f)
-				throw SyntaxError(pos, L"No default constructor for " + ::toS(t->identifier()));
+				throw new (this) SyntaxError(pos, TO_S(engine(), S("No default constructor for ") << t->identifier()));
 
 			Actuals *actual = new (t) Actuals();
 			return new (t) CtorCall(pos, scope, f, actual);
@@ -224,7 +224,7 @@ namespace storm {
 		CtorCall *copyCtor(const SrcPos &pos, Scope scope, Type *t, Expr *src) {
 			Function *f = t->copyCtor();
 			if (!f)
-				throw SyntaxError(pos, L"No copy-constructor for " + ::toS(t->identifier()));
+				throw new (this) SyntaxError(pos, TO_S(engine(), S("No copy-constructor for ") << t->identifier()));
 
 			Actuals *actual = new (t) Actuals();
 			actual->add(src);
@@ -384,9 +384,9 @@ namespace storm {
 
 			// We need to copy. See if we shall warn the user...
 			if (assignTo)
-				throw SyntaxError(pos, L"Unable to assign to member variables in objects running "
-								L"on a different thread than the caller. Use assignment functions "
-								L"for this task instead.");
+				throw new (this) SyntaxError(pos, S("Unable to assign to member variables in objects running ")
+											S("on a different thread than the caller. Use assignment functions ")
+											S("for this task instead."));
 
 			extractCopyCode(s, to);
 		}
@@ -438,7 +438,7 @@ namespace storm {
 				*s->l << mov(thread, runOn.thread->ref());
 				break;
 			default:
-				throw InternalError(L"Can not issue a threaded read on a non-threaded object.");
+				throw new (this) InternalError(S("Can not issue a threaded read on a non-threaded object."));
 			}
 
 			// Offset the pointer and continue. Note: We do not want to modify 'obj' since that
@@ -475,9 +475,11 @@ namespace storm {
 			using namespace code;
 
 			// Check so that we're using the proper thread!
-			if (!var->accessibleFrom(s->runOn))
-				throw SyntaxError(pos, L"Can not access the global variable " + ::toS(var) +
-								L" from a thread other than " + ::toS(var->owner));
+			if (!var->accessibleFrom(s->runOn)) {
+				Str *msg = TO_S(engine(), S("Can not access the global variable ") << var
+								<< S(" from a thread other than ") << var->owner);
+				throw new (this) SyntaxError(pos, msg);
+			}
 
 			if (!to->needed())
 				return;
@@ -537,14 +539,16 @@ namespace storm {
 		ClassAssign::ClassAssign(Expr *to, Expr *value, Scope scope) : Expr(to->pos), to(to) {
 			Value r = to->result().type();
 			if ((r.type->typeFlags & typeClass) != typeClass)
-				throw TypeError(to->pos, L"The default assignment can not be used with other types than classes"
-								L" at the moment. Please implement an assignment operator for your type.");
+				throw new (this) TypeError(to->pos, S("The default assignment can not be used with other types than")
+										S(" classes at the moment. Please implement an assignment operator for your type."));
 			if (!r.ref)
-				throw TypeError(to->pos, L"Can not assign to a non-reference.");
+				throw new (this) TypeError(to->pos, S("Can not assign to a non-reference."));
 
 			this->value = castTo(value, r.asRef(false), scope);
-			if (!this->value)
-				throw TypeError(to->pos, L"Can not store a " + ::toS(value->result()) + L" in " + ::toS(r));
+			if (!this->value) {
+				Str *msg = TO_S(engine(), S("Can not store a ") << alue->result() << S(" in ") << r);
+				throw new (this) TypeError(to->pos, msg);
+			}
 		}
 
 		ExprResult ClassAssign::result() {
@@ -612,12 +616,14 @@ namespace storm {
 			else if (!r.isObject())
 				errorPos = rhs->pos;
 
-			if (errorPos.any())
-				throw TypeError(errorPos, L"The default comparison operator can only be used with classes and actors. "
-								L"Found: " + ::toS(l) + L" and " + ::toS(r));
+			if (errorPos.any()) {
+				Str *msg = TO_S(engine(), S("The default comparison operator can only be used with classes and actors.")
+								S(" Found: ") << l << S(" and ") << r);
+				throw new (this) TypeError(errorPos, msg);
+			}
 
 			if (!r.type->isA(l.type) && !l.type->isA(r.type))
-				throw TypeError(lhs->pos, L"The left- and right-hand types are unrelated.");
+				throw new (this) TypeError(lhs->pos, S("The left- and right-hand types are unrelated."));
 		}
 
 		ExprResult ClassCompare::result() {
@@ -664,9 +670,11 @@ namespace storm {
 				expr->result();
 
 			FnCall *fnCall = as<FnCall>(expr);
-			if (!fnCall)
-				throw SyntaxError(expr->pos, L"The spawn-syntax is not applicable to anything but functions"
-								L" at the moment. This is a " + ::toS(runtime::typeOf(expr)->identifier()));
+			if (!fnCall) {
+				Str *msg = TO_S(engine(), S("The spawn-syntax is not applicable to anything but functions")
+								S(" at the moment. This is a ") << runtime::typeOf(expr)->identifier());
+				throw new (expr) SyntaxError(expr->pos, msg);
+			}
 
 			fnCall->makeAsync();
 

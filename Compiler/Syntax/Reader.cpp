@@ -37,7 +37,7 @@ namespace storm {
 		syntax::InfoParser *UseReader::createParser() {
 			syntax::Rule *r = as<syntax::Rule>(syntaxPkg(this)->find(S("SUse"), Scope()));
 			if (!r)
-				throw LangDefError(L"Can not find the 'SUse' rule.");
+				throw new (this) LangDefError(S("Can not find the 'SUse' rule."));
 			return new (this) syntax::InfoParser(r);
 		}
 
@@ -86,8 +86,8 @@ namespace storm {
 			if (c->delimiter) {
 				delimiter = as<Rule>(scope.find(c->delimiter));
 				if (!delimiter)
-					throw SyntaxError(c->delimiter->pos, L"The delimiter " + ::toS(c->delimiter)
-									+ L" does not exist.");
+					throw new (this) SyntaxError(c->delimiter->pos,
+												TO_S(this, S("The delimiter ") << c->delimiter << S(" does not exist.")));
 			}
 
 			for (Nat i = 0; i < c->productions->count(); i++) {
@@ -109,7 +109,7 @@ namespace storm {
 		syntax::InfoParser *DeclReader::createParser() {
 			syntax::Rule *r = as<syntax::Rule>(syntaxPkg(this)->find(S("SRoot"), Scope() /* god mode! */));
 			if (!r)
-				throw LangDefError(L"Can not find the 'SRoot' rule.");
+				throw new (this) LangDefError(S("Can not find the 'SRoot' rule."));
 
 			// Add additional syntax!
 			syntax::InfoParser *p = new (this) syntax::InfoParser(r);
@@ -152,7 +152,8 @@ namespace storm {
 				SrcName *name = use->at(i);
 				Named *found = root.find(name);
 				if (!found)
-					throw SyntaxError(name->pos, L"The package " + ::toS(name) + L" does not exist!");
+					throw new (this) SyntaxError(name->pos,
+												TO_S(this, S("The package ") << name << S(" does not exist!")));
 				to->extra->push(found);
 			}
 		}
@@ -163,7 +164,8 @@ namespace storm {
 				SrcName *name = use->at(i);
 				Package *found = as<Package>(root.find(name));
 				if (!found)
-					throw SyntaxError(name->pos, L"The package " + ::toS(name) + L" does not exist!");
+					throw new (this) SyntaxError(name->pos,
+												TO_S(this, S("The package ") << name << S(" does not exist!")));
 
 				to->addSyntax(found);
 			}

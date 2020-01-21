@@ -13,7 +13,7 @@ namespace storm {
 
 		void Unless::fail(Expr *expr) {
 			if (expr->result() != noReturn())
-				throw SyntaxError(pos, L"The block in 'until' must always do a 'return' or 'throw'!");
+				throw new (this) SyntaxError(pos, S("The block in 'until' must always do a 'return' or 'throw'!"));
 			failStmt = expr;
 		}
 

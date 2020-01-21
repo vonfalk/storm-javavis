@@ -59,7 +59,7 @@ namespace storm {
 				ParamDecl p = decl->params->at(i);
 				Value v = scope.value(p.type, decl->pos);
 				if (v == Value())
-					throw SyntaxError(decl->pos, L"Rules can not take void as a parameter.");
+					throw new (this) SyntaxError(decl->pos, S("Rules can not take void as a parameter."));
 				tfmParams->push(bs::ValParam(v, p.name));
 			}
 

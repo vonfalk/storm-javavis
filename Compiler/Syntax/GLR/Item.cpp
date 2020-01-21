@@ -407,8 +407,7 @@ namespace storm {
 			ItemSet::ItemSet() : data(null) {}
 
 			Item ItemSet::operator [](Nat id) const {
-				if (id >= count())
-					throw InternalError(L"Index out of bounds!");
+				assert(id < count(), L"Index out of bounds!");
 				return at(id);
 			}
 

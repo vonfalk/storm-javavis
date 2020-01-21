@@ -89,10 +89,18 @@ namespace storm {
 		TypeFlags flags = type.flags;
 		// Validate the C++ flags in here.
 		if ((flags & typeCppPOD) && (flags & typeValue)) {
-			throw BuiltInError(L"The class " + ::toS(type.pkg) + L"." + ::toS(type.name) +
-							L" is a POD type, which is not supported by Storm. "
-							L"Add a constructor to the class (it does not have to be exposed to Storm) "
-							L"and compile again.");
+			if (e->has(bootDone)) {
+				Str *msg = TO_S(*e, S("The class ") << type.pkg << S(".") << type.name
+								<< S(" is a POD type, which is not supported by Storm. ")
+								S("Add a constructor to use the class (it does not have to be exposed to Storm) ")
+								S("and compile again."));
+				throw new (*e) BuiltInError(msg);
+			} else {
+				throw CppLoadError(L"The class " + ::toS(type.pkg) + L"." + ::toS(type.name) +
+								L" is a POD type, which is not supported by Storm. "
+								L"Add a constructor to the class (it does not have to be exposed to Storm) "
+								L"and compile again.");
+			}
 		}
 
 		GcType *gcType = createGcType(id);
@@ -109,8 +117,13 @@ namespace storm {
 		SimpleName *name = parseSimpleName(*e, type.pkg);
 		name->add(new (*e) Str(type.name));
 		Type *t = as<Type>(e->scope().find(name));
-		if (!t)
-			throw BuiltInError(L"Failed to locate " + ::toS(name));
+		if (!t) {
+			if (e->has(bootDone)) {
+				throw new (*e) BuiltInError(TO_S(*e, S("Failed to locate ") << name));
+			} else {
+				throw CppLoadError(L"Failed to locate " + ::toS(name));
+			}
+		}
 		return t;
 	}
 
@@ -191,8 +204,13 @@ namespace storm {
 				SimpleName *name = parseSimpleName(*e, thread.pkg);
 				name->add(new (*e) Str(thread.name));
 				NamedThread *found = as<NamedThread>(e->scope().find(name));
-				if (!found)
-					throw BuiltInError(L"Failed to locate " + ::toS(name));
+				if (!found) {
+					if (e->has(bootDone)) {
+						throw new (*e) BuiltInError(TO_S(*e, S("Failed to locate") << name));
+					} else {
+						throw CppLoadError(L"Failed to locate " + ::toS(name));
+					}
+				}
 
 				into->namedThreads[i] = found;
 				into->threads[i] = found->thread();
@@ -327,8 +345,13 @@ namespace storm {
 		if (external(t)) {
 			// Attach the template to the correct package right now, otherwise it can not be used.
 			NameSet *pkg = findAbsPkg(t.pkg);
-			if (!pkg)
-				throw InternalError(L"Could not find the package " + ::toS(t.pkg) + L"!");
+			if (!pkg) {
+				if (e->has(bootDone)) {
+					throw new (*e) InternalError(TO_S(*e, S("Could not find the package ") << t.pkg << S("!")));
+				} else {
+					throw CppLoadError(L"Could not find the package " + ::toS(t.pkg) + L"!");
+				}
+			}
 			result->addTo(pkg);
 		}
 
@@ -611,8 +634,13 @@ namespace storm {
 		for (Nat i = 0; i < count; i++) {
 			const CppVersion &v = world->versions[i];
 			Version *ver = parseVersion(new (*e) Str(v.version));
-			if (!ver)
-				throw InternalError(L"Failed to parse the version string " + ::toS(v.version));
+			if (!ver) {
+				if (e->has(bootDone)) {
+					throw new (*e) InternalError(TO_S(*e, S("Failed to parse the version string ") << v.version));
+				} else {
+					throw CppLoadError(L"Failed to parse the version string " + ::toS(v.version));
+				}
+			}
 
 			NameSet *into = findPkg(v.pkg);
 			into->add(new (*e) VersionTag(new (*e) Str(v.name), ver));

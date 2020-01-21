@@ -70,7 +70,7 @@ namespace storm {
 		 * Raw function that will not read syntax trees by parsing a string.
 		 */
 		class BSRawFn : public Function {
-			STORM_CLASS;
+			STORM_ABSTRACT_CLASS;
 		public:
 			// Create.
 			STORM_CTOR BSRawFn(Value result, syntax::SStr *name, Array<ValParam> *params, MAYBE(NamedThread *) thread);
@@ -84,7 +84,7 @@ namespace storm {
 
 			// Override this to create the syntax tree to compile.
 			// TODO: Mark as abstract.
-			virtual FnBody *STORM_FN createBody();
+			virtual FnBody *STORM_FN createBody() ABSTRACT;
 
 			// Make this function static by removing the 'this' parameter. Only do this before the
 			// function is added to the name tree!

@@ -436,14 +436,14 @@ namespace code {
 		// See if it is possible...
 		Part from = parent(v);
 		if (first(from) != first(to))
-			throw InvalidValue(L"Can only delay within the same block.");
+			throw new (this) InvalidValue(S("Can only delay within the same block."));
 
 		IPart &fromI = parts->at(from.id);
 		IPart &toI = parts->at(to.id);
 		IVar &varI = vars->at(v.id);
 
 		if (varI.param)
-			throw InvalidValue(L"Can not delay parameters!");
+			throw new (this) InvalidValue(S("Can not delay parameters!"));
 
 		Nat index = findId(fromI.vars, v.id);
 		assert(index < fromI.vars->count());
@@ -562,10 +562,10 @@ namespace code {
 		vars->at(v.id).freeOpt = opt;
 	}
 
-	static bool checkFree(const Operand &free, FreeOpt &when) {
+	static bool checkFree(Engine &e, const Operand &free, FreeOpt &when) {
 		if (when & freePtr)
 			if (max(free.size(), Size::sLong) != Size::sLong)
-				throw InvalidValue(L"Can not destroy values larger than 8 bytes by value.");
+				throw new (e) InvalidValue(S("Can not destroy values larger than 8 bytes by value."));
 
 		if (!free.empty())
 			if (when & freeOnException)
@@ -578,7 +578,7 @@ namespace code {
 	Var Listing::createVar(Part in, Size size, Operand free, FreeOpt when) {
 		assert(in.id != invalid, L"No such part!");
 
-		if (checkFree(free, when))
+		if (checkFree(engine(), free, when))
 			ehClean = true;
 
 		Nat id = vars->count();
@@ -619,7 +619,7 @@ namespace code {
 	}
 
 	Var Listing::createParam(TypeDesc *type, Operand free, FreeOpt when) {
-		if (checkFree(free, when))
+		if (checkFree(engine(), free, when))
 			ehClean = true;
 
 		Nat id = vars->count();

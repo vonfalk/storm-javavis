@@ -117,8 +117,8 @@ namespace code {
 				}
 				// All integer registers full?
 				if (last == noReg)
-					throw InvalidValue(L"Can not create an engine redirect for this function. "
-									L"It has too many (integer) parameters.");
+					throw new (this) InvalidValue(S("Can not create an engine redirect for this function. ")
+												S("It has too many (integer) parameters."));
 
 				// Move the registers one step 'up'.
 				*l << mov(last, r);

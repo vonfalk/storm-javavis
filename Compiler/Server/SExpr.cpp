@@ -36,28 +36,28 @@ namespace storm {
 			if (Cons *v = as<Cons>(this))
 				return v;
 			else
-				throw MsgError(L"Not a cons-cell:", this);
+				throw new (this) MsgError(S("Not a cons-cell:"), this);
 		}
 
 		Number *SExpr::asNum() {
 			if (Number *v = as<Number>(this))
 				return v;
 			else
-				throw MsgError(L"Not a number:", this);
+				throw new (this) MsgError(S("Not a number:"), this);
 		}
 
 		String *SExpr::asStr() {
 			if (String *v = as<String>(this))
 				return v;
 			else
-				throw MsgError(L"Not a string:", this);
+				throw new (this) MsgError(S("Not a string:"), this);
 		}
 
 		Symbol *SExpr::asSym() {
 			if (Symbol *v = as<Symbol>(this))
 				return v;
 			else
-				throw MsgError(L"Not a symbol:", this);
+				throw new (this) MsgError(S("Not a symbol:"), this);
 		}
 
 
@@ -257,6 +257,14 @@ namespace storm {
 				// Just send our ID.
 				writeInt(to, oldSymbol, id);
 			}
+		}
+
+		MsgError::MsgError(const wchar *what, SExpr *expr) : msg(new (engine()) Str(what)), expr(expr) {}
+
+		MsgError::MsgError(Str *what, SExpr *expr) : msg(what), expr(expr) {}
+
+		void MsgError::message(StrBuf *to) const {
+			*to << msg << S(" ") << expr;
 		}
 	}
 }

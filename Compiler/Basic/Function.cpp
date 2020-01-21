@@ -114,24 +114,20 @@ namespace storm {
 				runOn(thread);
 
 			if (result.ref)
-				throw SyntaxError(pos, L"Returning references is not a good idea!");
+				throw new (this) SyntaxError(pos, S("Returning references is not a good idea!"));
 
 			setCode(new (this) LazyCode(fnPtr(engine(), &BSRawFn::generateCode, this)));
 		}
 
 		void BSRawFn::thread(Scope scope, SrcName *name) {
 			if (parentLookup)
-				throw InternalError(L"Can not call BSRawFn:thread after the function is attached somewhere.");
+				throw new (this) InternalError(S("Can not call BSRawFn:thread after the function is attached somewhere."));
 
 			Scope fScope = fileScope(scope, name->pos);
 			NamedThread *t = as<NamedThread>(fScope.find(name));
 			if (!t)
-				throw SyntaxError(name->pos, ::toS(name) + L" is not a named thread.");
+				throw new (this) SyntaxError(name->pos, TO_S(engine(), name << S(" is not a named thread.")));
 			runOn(t);
-		}
-
-		FnBody *BSRawFn::createBody() {
-			throw InternalError(L"A BSRawFn can not be used without overriding 'createBody'!");
 		}
 
 		CodeGen *BSRawFn::createRawBody() {
@@ -189,7 +185,7 @@ namespace storm {
 
 		void BSRawFn::makeStatic() {
 			if (parentLookup)
-				throw InternalError(L"Don't call 'makeStatic' after adding the function to the name tree.");
+				throw new (this) InternalError(S("Don't call 'makeStatic' after adding the function to the name tree."));
 
 			// Already static?
 			if (fnFlags() & fnStatic)
@@ -197,7 +193,7 @@ namespace storm {
 
 			FnFlags outlawed = fnAbstract | fnFinal | fnOverride;
 			if (fnFlags() & outlawed)
-				throw SyntaxError(pos, L"Can not make functions marked abstract, final or override into static functions.");
+				throw new (this) SyntaxError(pos, S("Can not make functions marked abstract, final or override into static functions."));
 
 			if (valParams->empty())
 				return;
@@ -253,7 +249,7 @@ namespace storm {
 
 		bs::FnBody *BSFunction::createBody() {
 			if (!body)
-				throw InternalError(L"Multiple compilation of a function!");
+				throw new (this) InternalError(S("Multiple compilation of a function!"));
 
 			FnBody *result = syntax::transformNode<FnBody, BSFunction *>(body, this);
 			// We don't need to keep it around anymore.
@@ -308,8 +304,10 @@ namespace storm {
 		}
 
 		bs::FnBody *BSTreeFn::createBody() {
-			if (!root)
-				throw RuntimeError(L"The body of " + ::toS(identifier()) + L"was not set before trying to use it.");
+			if (!root) {
+				Str *msg = TO_S(engine(), S("The body of ") << identifier() << S(" was not set before trying to use it."));
+				throw new (this) RuntimeError(msg);
+			}
 
 			FnBody *result = root;
 			root = null;

@@ -24,4 +24,9 @@ namespace storm {
 		}
 	}
 
+
+	AbstractFnCalled::AbstractFnCalled(const wchar *name) : RuntimeError(name) {}
+
+	AbstractFnCalled::AbstractFnCalled(Str *name) : RuntimeError(name) {}
+
 }

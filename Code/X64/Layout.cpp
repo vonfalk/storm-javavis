@@ -125,7 +125,7 @@ namespace code {
 
 			Var v = op.var();
 			if (!src->accessible(v, part))
-				throw VariableUseError(v, part);
+				throw new (this) VariableUseError(v, part);
 			return xRel(size, ptrFrame, layout->at(v.key()) + op.offset());
 		}
 
@@ -215,8 +215,10 @@ namespace code {
 			Part start = part;
 
 			for (Part now = part; now != target; now = src->prev(now)) {
-				if (now == Part())
-					throw BlockEndError(L"Block " + ::toS(target) + L" is not a parent of " + ::toS(start));
+				if (now == Part()) {
+					Str *msg = TO_S(engine(), S("Block " << target << S(" is not a parent of ") << start));
+					throw new (this) BlockEndError(msg);
+				}
 
 				destroyPart(dest, now, false, true);
 			}
@@ -260,8 +262,9 @@ namespace code {
 
 		void Layout::initPart(Listing *dest, Part init) {
 			if (part != dest->prev(init)) {
-				throw BlockBeginError(L"Can not begin " + ::toS(init) + L" unless the current is "
-									+ ::toS(dest->prev(init)) + L". Current is " + ::toS(part));
+				Str *msg = TO_S(engine(), S("Can not begin ") << init << S(" unless the current is ")
+								<< dest->prev(init) << S(". Current is ") << part);
+				throw new (this) BlockBeginError(msg);
 			}
 
 			part = init;
@@ -289,7 +292,7 @@ namespace code {
 
 		void Layout::destroyPart(Listing *dest, Part destroy, Bool preserveRax, Bool table) {
 			if (destroy != part)
-				throw BlockEndError();
+				throw new (this) BlockEndError();
 
 			Bool pushedRax = false;
 			Array<Var> *vars = dest->partVars(destroy);

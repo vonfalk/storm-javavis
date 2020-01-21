@@ -20,7 +20,7 @@ namespace storm {
 		assert(to, L"Too early to use 'fnType'.");
 		Type *found = as<Type>(to->find(S("Fn"), params, Scope()));
 		if (!found)
-			throw InternalError(L"Can not find the function type!");
+			throw new (params) InternalError(L"Can not find the function type!");
 		return found;
 	}
 
@@ -273,11 +273,15 @@ namespace storm {
 		} else if (p->count() > 0 && p->at(0).canStore(Value(runtime::typeOf(thisPtr)))) {
 			p->at(0) = target->result;
 		} else {
+			Str *msg;
 			if (p->count() == 0)
-				throw RuntimeError(L"Attempted to bind a non-existend first parameter of a function pointer when calling 'pointer'.");
+				msg = TO_S(target, S("Attempted to bind a non-existent first parameter of a function pointer ")
+						S("when calling 'pointer'."));
 			else
-				throw RuntimeError(L"Type mismatch for object passed to 'pointer'. Expected "
-								+ ::toS(p->at(0)) + L", but got " + ::toS(Value(runtime::typeOf(thisPtr))));
+				msg = TO_S(target, S("Type mismatch for object passed to 'pointer'. Expected ")
+						<< p->at(0) << S(", but got ") << Value(runtime::typeOf(thisPtr)));
+
+			throw new (target) RuntimeError(msg);
 		}
 		Type *t = fnType(p);
 

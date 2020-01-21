@@ -127,8 +127,9 @@ namespace code {
 				} else if (v.size() == Size::sLong) {
 					flags |= Variable::sLong;
 				} else {
-					throw InvalidValue(L"Can only use bytes, integers, longs and pointers for variable cleanup. "
-						L"Specify 'freePtr' to get a pointer to the value instead!");
+					throw new (this) InvalidValue(S("Can only use bytes, integers, longs and pointers for ")
+												S("variable cleanup. Specify 'freePtr' to get a pointer to ")
+												S("the value instead!"));
 				}
 
 				p->vars[at].id = v.key();

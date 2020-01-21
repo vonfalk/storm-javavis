@@ -11,35 +11,52 @@ namespace storm {
 	/**
 	 * Defines exceptions used by the compiler.
 	 */
-	class EXCEPTION_EXPORT CodeError : public Exception {
+	class EXCEPTION_EXPORT CodeError : public NException {
+		STORM_CLASS;
 	public:
-		CodeError(const SrcPos &where) : where(where) {}
+		STORM_CTOR CodeError(SrcPos where) {
+			this->where = where;
+		}
 
 		// Where is the error located?
 		SrcPos where;
 
-	protected:
-		// We generally do not need a full stack trace here, so we skip that.
-		virtual void output(wostream &to) const;
+		// Message.
+		virtual void STORM_FN message(StrBuf *to) const {
+			*to << S("@") << where << S(": ");
+		}
 	};
 
 
 	/**
 	 * Language definition error.
 	 */
-	class EXCEPTION_EXPORT LangDefError : public Exception {
+	class EXCEPTION_EXPORT LangDefError : public NException {
+		STORM_CLASS;
 	public:
-		LangDefError(const String &w) : w(w) {}
-		virtual String what() const { return w; }
+		LangDefError(const wchar *msg) {
+			w = new (this) Str(msg);
+		}
+		STORM_CTOR LangDefError(Str *msg) {
+			w = msg;
+		}
+
+		virtual void STORM_FN message(StrBuf *to) const {
+			*to << w;
+		}
 	private:
-		String w;
+		Str *w;
 	};
 
 	/**
 	 * Specific subclass when calling core:debug:throwError.
 	 */
-	class EXCEPTION_EXPORT DebugError : public Exception {
-		virtual String what() const { return L"Debug error"; }
+	class EXCEPTION_EXPORT DebugError : public NException {
+		STORM_CLASS;
+	public:
+		virtual void STORM_FN message(StrBuf *to) const {
+			*to << S("Debug error");
+		}
 	};
 
 
@@ -47,8 +64,10 @@ namespace storm {
 	 * Internal type error (something in C++ went wrong).
 	 */
 	class EXCEPTION_EXPORT InternalTypeError : public InternalError {
+		STORM_CLASS;
 	public:
-		InternalTypeError(const String &context, const Type *expected, const Type *got);
+		InternalTypeError(const wchar *context, Type *expected, Type *got);
+		STORM_CTOR InternalTypeError(Str *context, Type *expected, Type *got);
 	};
 
 
@@ -56,14 +75,18 @@ namespace storm {
 	 * Some syntax error.
 	 */
 	class EXCEPTION_EXPORT SyntaxError : public CodeError {
+		STORM_CLASS;
 	public:
-		SyntaxError(const SrcPos &where, const String &msg) : CodeError(where), msg(msg) {}
+		SyntaxError(SrcPos where, const wchar *msg);
+		STORM_CTOR SyntaxError(SrcPos where, Str *msg);
 
-		virtual String what() const {
-			return L"@" + ::toS(where) + L": Syntax error: " + msg;
+		virtual void STORM_FN message(StrBuf *to) const {
+			CodeError::message(to);
+			*to << S("Syntax error: ") << msg;
 		}
 
-		String msg;
+	private:
+		Str *msg;
 	};
 
 
@@ -71,19 +94,20 @@ namespace storm {
 	 * Type checking error.
 	 */
 	class EXCEPTION_EXPORT TypeError : public CodeError {
+		STORM_CLASS;
 	public:
-		TypeError(const SrcPos &where, const String &msg) : CodeError(where), msg(msg) {}
-		TypeError(const SrcPos &where, const Value &expected, const ExprResult &got)
-			: CodeError(where), msg(L"Expected " + ::toS(expected) + L" but got " + ::toS(got)) {}
-		TypeError(const SrcPos &where, const Value &expected, const Value &got)
-			: CodeError(where), msg(L"Expected " + ::toS(expected) + L" but got " + ::toS(got)) {}
+		TypeError(SrcPos where, const wchar *msg);
+		STORM_CTOR TypeError(SrcPos where, Str *msg);
+		STORM_CTOR TypeError(SrcPos where, Value expected, ExprResult got);
+		STORM_CTOR TypeError(SrcPos where, Value expected, Value got);
 
-		virtual String what() const {
-			return L"@" + ::toS(where) + L": Type error: " + msg;
+		virtual void STORM_FN message(StrBuf *to) const {
+			CodeError::message(to);
+			*to << S("Type error: ") << msg;
 		}
 
 	private:
-		String msg;
+		Str *msg;
 	};
 
 	/**
@@ -91,17 +115,23 @@ namespace storm {
 	 * TODO: Require a SrcPos!
 	 */
 	class EXCEPTION_EXPORT TypedefError : public CodeError {
+		STORM_CLASS;
 	public:
+		TypedefError(const wchar *msg);
+		STORM_CTOR TypedefError(Str *msg);
+
 		TypedefError(const String &msg) : CodeError(SrcPos()), msg(msg) {
 #ifdef DEBUG
 			TODO("Require a SrcPos!");
 #endif
 		}
-		virtual String what() const {
-			return L"@" + ::toS(where) + L": Type definition error: " + msg;
+		virtual void STORM_FN message(StrBuf *to) const {
+			CodeError::message(to);
+			*to << S("Type definition error: ") << msg;
 		}
+
 	private:
-		String msg;
+		Str *msg;
 	};
 
 
@@ -109,11 +139,19 @@ namespace storm {
 	 * Error while handling built-in functions.
 	 */
 	class EXCEPTION_EXPORT BuiltInError : public Exception {
+		STORM_CLASS;
 	public:
-		BuiltInError(const String &msg) : msg(msg) {}
-		virtual String what() const { return L"Error while loading built in functions: " + msg; }
+		BuiltInError(const wchar *msg) {
+			this->msg = new (this) Str(msg);
+		}
+		STORM_CTOR BuiltInError(Str *msg) {
+			this->msg = msg;
+		}
+		virtual void STORM_FN message(StrBuf *to) const {
+			*to << S("Error while loading built in functions: ") + msg;
+		}
 	private:
-		String msg;
+		Str *msg;
 	};
 
 
@@ -121,13 +159,16 @@ namespace storm {
 	 * Trying to instantiate an abstract class.
 	 */
 	class EXCEPTION_EXPORT InstantiationError : public CodeError {
+		STORM_CLASS;
 	public:
-		InstantiationError(const SrcPos &pos, const String &msg) : CodeError(pos), msg(msg) {}
-		virtual String what() const {
-			return L"@" + ::toS(where) + L": Instantiation error: " + msg;
+		InstantiationError(SrcPos pos, const wchar *msg) : CodeError(pos), msg(msg) {}
+		InstantiationError(SrcPos pos, Str *msg) : CodeError(pos), msg(msg) {}
+		virtual void STORM_FN message(StrBuf *to) const {
+			CodeError::message(to);
+			*to << S("Instantiation error: ") << msg;
 		}
 	private:
-		String msg;
+		Str *msg;
 	};
 
 }

@@ -41,10 +41,6 @@ namespace code {
 		set(new (this) StaticContent(to));
 	}
 
-	Str *RefSource::title() const {
-		throw InvalidValue(L"A RefSource does not override 'title'.");
-	}
-
 	void RefSource::toS(StrBuf *to) const {
 		*to << title();
 	}

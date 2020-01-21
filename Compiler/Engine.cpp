@@ -363,7 +363,7 @@ namespace storm {
 	}
 
 	static void throwAbstractError(Str *identifier) {
-		throw AbstractFnCalled(::toS(identifier));
+		throw new (identifier) AbstractFnCalled(identifier);
 	}
 
 	static void CODECALL createValVariant(void *obj, const void *src, Type *type) {

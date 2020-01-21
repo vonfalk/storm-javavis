@@ -81,7 +81,7 @@ namespace storm {
 			*msg << L"Multiple possible matches for " << this << L", all with badness " << best << L"\n";
 			for (nat i = 0; i < candidates->count(); i++)
 				*msg << L" Could be: " << candidates->at(i)->identifier() << L"\n";
-			throw TypeError(SrcPos(), msg->c_str());
+			throw new (this) TypeError(SrcPos(), msg);
 		}
 	}
 

@@ -38,4 +38,81 @@ namespace storm {
 	};
 
 
+	/**
+	 * Generic exceptions.
+	 */
+	class EXCEPTION_EXPORT NotSupported : public NException {
+		STORM_CLASS;
+	public:
+		NotSupported(const wchar *msg) {
+			this->msg = new (this) Str(msg);
+		}
+		STORM_CTOR NotSupported(Str *msg) {
+			this->msg = msg;
+		}
+
+		virtual void STORM_FN message(StrBuf *to) const {
+			*to << S("Operation not supported: ") << msg;
+		}
+
+	private:
+		Str *msg;
+	};
+
+
+	/**
+	 * Internal error.
+	 */
+	class EXCEPTION_EXPORT InternalError : public Exception {
+		STORM_CLASS;
+	public:
+		InternalError(const wchar *msg) {
+			this->msg = new (this) Str(msg);
+		}
+		STORM_CTOR InternalError(Str *msg) {
+			this->msg = msg;
+		}
+
+		virtual void STORM_FN message(StrBuf *to) const {
+			*to << msg;
+		}
+	private:
+		Str *msg;
+	};
+
+
+	/**
+	 * Runtime errors.
+	 */
+	class EXCEPTION_EXPORT RuntimeError : public Exception {
+		STORM_CLASS;
+	public:
+		RuntimeError(const wchar *msg) {
+			this->msg = new (this) Str(msg);
+		}
+		STORM_CTOR RuntimeError(Str *msg) {
+			this->msg = msg;
+		}
+
+		virtual void STORM_FN message(StrBuf *to) const {
+			*to << msg;
+		}
+	private:
+		Str *msg;
+	};
+
+
+	/**
+	 * Calling an abstract function.
+	 */
+	class EXCEPTION_EXPORT AbstractFnCalled : public RuntimeError {
+	public:
+		RuntimeError(const wchar *name);
+		STORM_CTOR RuntimeError(Str *msg);
+		virtual void STORM_FN message(StrBuf *to) const {
+			*to << S("Abstract function called: ");
+			RuntimeError::message(to);
+		}
+	};
+
 }

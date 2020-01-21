@@ -35,7 +35,7 @@ namespace storm {
 		syntax::InfoParser *UseReader::createParser() {
 			syntax::Rule *r = as<syntax::Rule>(syntaxPkg(this)->find(S("SIncludes"), Scope()));
 			if (!r)
-				throw LangDefError(L"Can not find the 'SIncludes' rule.");
+				throw new (this) LangDefError(S("Can not find the 'SIncludes' rule."));
 			return new (this) syntax::InfoParser(r);
 		}
 
@@ -69,14 +69,14 @@ namespace storm {
 					addInclude(scope, p);
 				else if ((query & qParser) == 0)
 					// Only complain if we're not parsing interactively.
-					throw SyntaxError(v->pos, L"Unknown package " + ::toS(v));
+					throw new (this) SyntaxError(v->pos, TO_S(engine(), S("Unknown package ") << v));
 			}
 		}
 
 		syntax::InfoParser *CodeReader::createParser() {
 			syntax::Rule *r = as<syntax::Rule>(syntaxPkg(this)->find(S("SFile"), Scope()));
 			if (!r)
-				throw LangDefError(L"Can not find the 'SFile' rule.");
+				throw new (this) LangDefError(S("Can not find the 'SFile' rule."));
 			syntax::InfoParser *p = new (this) syntax::InfoParser(r);
 			addSyntax(scope, p);
 			return p;

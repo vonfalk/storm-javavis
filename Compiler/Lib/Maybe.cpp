@@ -54,7 +54,7 @@ namespace storm {
 		assert(to, L"Too early to use 'wrapMaybe'.");
 		Type *found = as<Type>(to->find(S("Maybe"), v, Scope()));
 		if (!found)
-			throw InternalError(L"Can not find the maybe type!");
+			throw new (e) InternalError(S("Can not find the maybe type!"));
 		return Value(found);
 	}
 
@@ -436,7 +436,7 @@ namespace storm {
 
 			return new (this) ComplexDesc(size(), ctor, dtor);
 		} else {
-			throw InternalError(L"Unknown type description found for " + ::toS(contained->identifier()));
+			throw new (this) InternalError(TO_S(engine, S("Unknown type description found for ") << contained->identifier()));
 		}
 	}
 
@@ -545,8 +545,11 @@ namespace storm {
 			*p.state->l << mov(xRel(sz, dest, Offset()), xRel(sz, src, Offset()));
 		} else {
 			Function *copyCtor = contained->copyCtor();
-			if (!copyCtor)
-				throw TypedefError(L"The type " + ::toS(contained->identifier()) + L" does not provide a copy constructor!");
+			if (!copyCtor) {
+				Str *msg = TO_S(engine, S("The type ") << contained->identifier()
+								<< S(" does not provide a copy constructor!"));
+				throw new (this) TypedefError(msg);
+			}
 
 			// Call the regular constructor! (TODO? Inline it?)
 			*p.state->l << fnParam(engine.ptrDesc(), dest);
@@ -581,7 +584,8 @@ namespace storm {
 			if (!copyCtor) {
 				// TODO: We could fall back to a memcpy implementation... We can't inline it,
 				// however, as we don't know the exact size of the type (could be either 32- or 64-bit).
-				throw TypedefError(L"The type " + ::toS(contained->identifier()) + L" does not provide a copy constructor!");
+				Str *msg = TO_S(engine, S("The type ") << contained->identifier() << S(" does not provide a copy constructor!"));
+				throw new (this) TypedefError(msg);
 			}
 
 			// Call the regular constructor! (TODO? Inline it?)
@@ -656,8 +660,10 @@ namespace storm {
 		using namespace code;
 
 		Function *call = contained->deepCopyFn();
-		if (!call)
-			throw InternalError(L"The deep copy function was removed from " + ::toS(contained->identifier()));
+		if (!call) {
+			Str *msg = TO_S(engine, S("The deep copy function was removed from ") << contained->identifier());
+			throw new (this) InternalError(msg);
+		}
 
 		Label end = p.state->l->label();
 

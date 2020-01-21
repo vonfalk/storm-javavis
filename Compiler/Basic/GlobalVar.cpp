@@ -28,9 +28,10 @@ namespace storm {
 
 			Value type = fScope.value(this->type);
 			NamedThread *thread = as<NamedThread>(fScope.find(this->thread));
-			if (!thread)
-				throw SyntaxError(this->thread->pos, L"The name " + ::toS(this->thread) +
-								L" does not refer to a named thread.");
+			if (!thread) {
+				Str *msg = TO_S(engine(), S("The name ") << this->thread << S(" does not refer to a named thread."));
+				throw new (this) SyntaxError(this->thread->pos, msg);
+			}
 
 			Function *init = createInitializer(type, scope, thread);
 			return new (this) GlobalVar(name->v, type, thread, pointer(init));

@@ -70,10 +70,12 @@ namespace storm {
 			BSNamePart *name = new (this) BSNamePart(Type::CTOR, pos, actuals);
 			name->insert(thisPtr(t));
 			Function *ctor = as<Function>(t->find(name, scope));
-			if (!ctor)
-				throw SyntaxError(var->pos, L"No appropriate constructor for " + ::toS(var->result)
-								+ L" found. Can not initialize " + ::toS(var->name) +
-								L". Expected signature: " + ::toS(name));
+			if (!ctor) {
+				Str *msg = TO_S(engine(), S("No appropriate constructor for ") << var->result
+								<< S(" found. Can not initialize ") << var->name
+								<< S(". Expected signature: ") << name);
+				throw new (this) SyntaxError(var->pos, msg);
+			}
 
 			initCtor = new (this) CtorCall(pos, scope, ctor, actuals);
 		}

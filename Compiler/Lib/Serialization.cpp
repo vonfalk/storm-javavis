@@ -89,7 +89,7 @@ namespace storm {
 			code::Var tmp = l->createVar(l->root(), result.size());
 			Type *unkType = as<Type>(e.scope().find(parseSimpleName(e, S("core.lang.unknown.PTR_GC"))));
 			if (!unkType)
-				throw InternalError(L"The type core.lang.unknown.PTR_GC does not exist!");
+				throw new (type) InternalError(S("The type core.lang.unknown.PTR_GC does not exist!"));
 			Function *fn = findStormMemberFn(streamType, S("readValue"), typeType, Value(unkType));
 
 			*l << lea(ptrA, tmp);

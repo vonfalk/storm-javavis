@@ -12,12 +12,20 @@ namespace storm {
 	/**
 	 * Custom error type.
 	 */
-	class EXCEPTION_EXPORT ArrayError : public Exception {
+	class EXCEPTION_EXPORT ArrayError : public NException {
+		STORM_CLASS;
 	public:
-		ArrayError(const String &msg) : msg(msg) {}
-		virtual String what() const { return L"Array error: " + msg; }
+		ArrayError(const wchar *msg) {
+			this->msg = new (this) Str(msg);
+		}
+		STORM_CTOR ArrayError(Str *msg) {
+			this->msg = msg;
+		}
+		virtual void message(StrBuf *to) const {
+			*to << S("Array error: ") << msg;
+		}
 	private:
-		String msg;
+		Str *msg;
 	};
 
 	/**

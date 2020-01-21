@@ -332,7 +332,7 @@ namespace storm {
 	}
 
 	static void mangleError(Str *name) {
-		throw InternalError(L"Invalid name mangling encountered: " + ::toS(name->escape()));
+		throw new (name) InternalError(TO_S(name, S("Invalid name mangling encountered: ") << name->escape()));
 	}
 
 	// We need to differentiate between 'void' and 'not found'.

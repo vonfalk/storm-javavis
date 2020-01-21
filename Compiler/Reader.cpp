@@ -108,7 +108,7 @@ namespace storm {
 		if (!pkgReader.canStore(createFn->result)) {
 			StrBuf *msg = new (name) StrBuf();
 			*msg << L"Invalid return type for " << createFn << L": expected " << pkgReader;
-			throw LangDefError(msg->toS()->c_str());
+			throw new (msg) LangDefError(msg->toS());
 		}
 
 		// TODO: Make sure to use the proper thread when calling 'createFn'!
@@ -149,7 +149,7 @@ namespace storm {
 		for (nat i = 0; i < files->count(); i++) {
 			FileReader *r = create->call(new (this) FileInfo(files->at(i), pkg));
 			if (!r)
-				throw InternalError(L"Can not use a null FileReader in a FilePkgReader!");
+				throw new (this) InternalError(S("Can not use a null FileReader in a FilePkgReader!"));
 			readers->push(r);
 		}
 	}

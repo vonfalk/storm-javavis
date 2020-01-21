@@ -152,7 +152,7 @@ namespace storm {
 		}
 
 		void InfoInternal::outOfBounds(Nat v) {
-			throw ArrayError(L"Index " + ::toS(v) + L" out of bounds (of " + ::toS(count()) + L").");
+			throw new (this) ArrayError(TO_S(engine(), S("Index ") << v << S(" out of bounds (of ") << count() << S(").")));
 		}
 
 		void InfoInternal::set(Nat id, InfoNode *node) {

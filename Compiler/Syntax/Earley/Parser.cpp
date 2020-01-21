@@ -41,9 +41,9 @@ namespace storm {
 			void Parser::add(ProductionType *t) {
 				Rule *owner = as<Rule>(t->super());
 				if (!owner)
-					throw InternalError(::toS(t->identifier()) + L" is not defined correctly.");
+					throw new (this) InternalError(TO_S(engine(), t->identifier() << S(" is not defined correctly.")));
 				if (t->production->parent)
-					throw SyntaxError(t->pos, L"Using parent productions is not supported by the Earley parser.");
+					throw new (this) SyntaxError(t->pos, S("Using parent productions is not supported by the Earley parser."));
 				rules->at(owner).push(t->production);
 			}
 

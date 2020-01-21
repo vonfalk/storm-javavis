@@ -50,15 +50,17 @@ namespace storm {
 
 	static Str *readBody(Url *src, Nat entry) {
 		if (!src->exists())
-			throw DocError(L"The file " + ::toS(src) + L" does not exist.");
+			throw new (src) DocError(TO_S(src, S("The file ") << src << S(" does not exist.")));
 
 		IStream *in = src->read();
 		Str *body = readDoc(in->randomAccess(), entry);
 		in->close();
 
-		if (!body)
-			throw DocError(L"Unable to extract documentation entry " + ::toS(entry) +
-						L" from " + ::toS(src) + L". Is the file corrupted?");
+		if (!body) {
+			Str *msg = TO_S(src, S("Unable to extract documentation entry ") << entry
+							<< S(" from ") << src << S(". Is the file corrupted?"));
+			throw new (src) DocError(msg);
+		}
 
 		return body;
 	}
@@ -70,8 +72,11 @@ namespace storm {
 
 		if (params) {
 			for (Nat i = 0; i < src->count(); i++, params++) {
-				if (!params->name)
-					throw DocError(L"Number of parameters for " + ::toS(entity->identifier()) + L" does not match.");
+				if (!params->name) {
+					Str *msg = TO_S(entity, S("Number of parameters for ") << entity->identifier()
+									<< S(" does not match."));
+					throw (entity) DocError(msg);
+				}
 
 				result->push(DocParam(new (src) Str(params->name), src->at(i)));
 			}

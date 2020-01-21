@@ -42,7 +42,7 @@ namespace storm {
 		assert(to, L"Too early to use 'wrapArray'.");
 		Type *found = as<Type>(to->find(S("Array"), v, Scope()));
 		if (!found)
-			throw InternalError(L"Can not find the array type!");
+			throw new (v.type) InternalError(S("Can not find the array type!"));
 		return Value(found);
 	}
 

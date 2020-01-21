@@ -32,9 +32,10 @@ namespace storm {
 				if (Expr *setter = findSetter(block, lhs, rhs))
 					return setter;
 
-				throw SyntaxError(pos, L"Unable to assign to the value " + ::toS(l) + L". "
-								L"It is only possible to assign to references (such as variables), "
-								L"and if an assignment function is available.");
+				Str *msg = TO_S(engine(), S("Unable to assign to the value ") << l << S(". ")
+								S("It is only possible to assign to references (such as variables), ")
+								S("and if an assignment function is available."));
+				throw new (this) SyntaxError(pos, msg);
 			}
 
 			if (l.isObject() && l.ref && castable(rhs, l.asRef(false), block->scope)) {
@@ -43,10 +44,12 @@ namespace storm {
 				// Make sure we do not allow automatic conversion of the 'this' parameter during
 				// assignment. That would produce weird results.
 				Expr *fn = find(block, name, lhs, rhs, true);
-				if (!fn)
-					throw SyntaxError(pos, L"Can not find an implementation of the operator " +
-									::toS(name) + L" for " + ::toS(lhs->result().type()) + L", " +
-									::toS(rhs->result().type()) + L".");
+				if (!fn) {
+					Str *msg = TO_S(engine(), S("Can not find an implementation of the operator ")
+									<< name << S(" for ") << lhs->result().type() << S(", ")
+									<< rhs->result().type() + S("."));
+					throw new (this) SyntaxError(pos, msg);
+				}
 				return fn;
 			}
 		}
@@ -162,9 +165,10 @@ namespace storm {
 				if (Expr *r = tryFallback(i, block, lhs, rhs))
 					return r;
 
-			throw SyntaxError(pos, L"Can not find an implementation of the operator " +
-							::toS(name) + L" for " + ::toS(lhs->result().type()) + L", " +
-							::toS(rhs->result().type()) + L".");
+			Str *msg = TO_S(engine(), S("Can not find an implementation of the operator ")
+							<< name << S(" for ") << lhs->result().type() << S(", ")
+							<< rhs->result().type() << S("."));
+			throw new (this) SyntaxError(pos, msg);
 		}
 
 		Expr *FallbackOperator::tryFallback(Nat &id, Block *block, Expr *lhs, Expr *rhs) {

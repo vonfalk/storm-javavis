@@ -144,7 +144,7 @@ namespace code {
 
 		Primitive &STORM_FN at(Nat id) {
 			if (id >= v->count)
-				throw storm::ArrayError(L"Out of bounds.");
+				throw new (e) storm::ArrayError(S("Out of bounds."));
 			return v->v[id];
 		}
 		Nat STORM_FN count() const {

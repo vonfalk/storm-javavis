@@ -76,7 +76,7 @@ namespace storm {
 			Str::Iter STORM_FN matchEnd() const;
 
 			// Get the error (present if 'hasError' is true).
-			SyntaxError error() const;
+			SyntaxError *STORM_FN error() const;
 
 			// Throw error if it is present.
 			void STORM_FN throwError() const;

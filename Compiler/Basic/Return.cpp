@@ -9,7 +9,7 @@ namespace storm {
 
 		Return::Return(SrcPos pos, Block *block) : Expr(pos), returnType(findParentType(pos, block)) {
 			if (returnType != Value()) {
-				throw SyntaxError(pos, L"Trying to return a value from a void function.");
+				throw new (this) SyntaxError(pos, S("Trying to return a value from a void function."));
 			}
 		}
 
@@ -55,7 +55,7 @@ namespace storm {
 				lookup = as<BlockLookup>(lookup->parent());
 			}
 
-			throw SyntaxError(pos, L"A return statement is not located inside a function.");
+			throw new (this) SyntaxError(pos, S("A return statement is not located inside a function."));
 		}
 
 		void Return::toS(StrBuf *to) const {

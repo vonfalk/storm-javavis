@@ -243,7 +243,7 @@ namespace code {
 		void RemoveInvalid::fnParamTfm(Listing *dest, Instr *instr, Nat line) {
 			TypeInstr *i = as<TypeInstr>(instr);
 			if (!i) {
-				throw InvalidValue(L"Expected a TypeInstr for 'fnParam'.");
+				throw new (this) InvalidValue(S("Expected a TypeInstr for 'fnParam'."));
 			}
 
 			params->push(ParamInfo(i->type, i->src(), false));
@@ -252,7 +252,7 @@ namespace code {
 		void RemoveInvalid::fnParamRefTfm(Listing *dest, Instr *instr, Nat line) {
 			TypeInstr *i = as<TypeInstr>(instr);
 			if (!i) {
-				throw InvalidValue(L"Expected a TypeInstr for 'fnParamRef'.");
+				throw new (this) InvalidValue(S("Expected a TypeInstr for 'fnParamRef'."));
 			}
 
 			params->push(ParamInfo(i->type, i->src(), true));
@@ -261,7 +261,7 @@ namespace code {
 		void RemoveInvalid::fnCallTfm(Listing *dest, Instr *instr, Nat line) {
 			TypeInstr *t = as<TypeInstr>(instr);
 			if (!t) {
-				throw InvalidValue(L"Using a fnCall that was not created properly.");
+				throw new (this) InvalidValue(S("Using a fnCall that was not created properly."));
 			}
 
 			emitFnCall(dest, t->src(), t->dest(), t->type, false, currentPart, used->at(line), params);
@@ -271,7 +271,7 @@ namespace code {
 		void RemoveInvalid::fnCallRefTfm(Listing *dest, Instr *instr, Nat line) {
 			TypeInstr *t = as<TypeInstr>(instr);
 			if (!t) {
-				throw InvalidValue(L"Using a fnCall that was not created properly.");
+				throw new (this) InvalidValue(S("Using a fnCall that was not created properly."));
 			}
 
 			emitFnCall(dest, t->src(), t->dest(), t->type, true, currentPart, used->at(line), params);

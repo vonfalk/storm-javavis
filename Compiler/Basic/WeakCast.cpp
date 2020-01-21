@@ -87,10 +87,12 @@ namespace storm {
 				from = unwrapMaybe(from);
 
 			if (!from.isObject())
-				throw SyntaxError(expr->pos, L"The 'as' operator is only applicable to class or actor types.");
-			if (!to.type->isA(from.type))
-				throw SyntaxError(expr->pos, L"Condition is always false. " + ::toS(to) +
-								L" does not inherit from " + ::toS(from) + L".");
+				throw new (this) SyntaxError(expr->pos, S("The 'as' operator is only applicable to class or actor types."));
+			if (!to.type->isA(from.type)) {
+				Str *msg = TO_S(engine(), S("Condition is always false. ") << to
+								<< S(" does not inherit from ") << from << S("."));
+				throw SyntaxError(expr->pos, msg);
+			}
 		}
 
 		SrcPos WeakDowncast::pos() {

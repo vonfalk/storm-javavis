@@ -38,12 +38,18 @@ namespace storm {
 
 			if (decl->parent) {
 				Named *p = scope.find(decl->parent);
-				if (!p)
-					throw SyntaxError(decl->pos, L"The element " + ::toS(decl->parent) + L" was not found. It must refer to a rule.");
+				if (!p) {
+					Str *msg = TO_S(this, S("The element ") << decl->parent << S(" was not found.")
+									S(" It must refer to a rule."));
+					throw (this) SyntaxError(decl->pos, msg);
+				}
+
 				parent = as<Rule>(p);
-				if (!parent)
-					throw SyntaxError(decl->pos, L"Parent elements must refer to a rule. "
-									+ ::toS(decl->parent) + L" is a " + ::toS(parent) + L".");
+				if (!parent) {
+					Str *msg = TO_S(this, S("Parent elements must refer to a rule. ")
+									<< decl->parent << S(" is a ") << parent << S("."));
+					throw new (this) SyntaxError(decl->pos, msg);
+				}
 			}
 
 			Nat counter = 0;
@@ -68,17 +74,17 @@ namespace storm {
 				if (Rule *rule = as<Rule>(scope.find(u->rule))) {
 					token = new (this) RuleToken(rule);
 				} else {
-					throw SyntaxError(pos, L"The rule " + ::toS(u->rule) + L" does not exist.");
+					throw new (this) SyntaxError(pos, TO_S(this, S("The rule ") << u->rule << S(" does not exist.")));
 				}
 			} else if (DelimTokenDecl *d = as<DelimTokenDecl>(decl)) {
 				UNUSED(d);
 				if (delim) {
 					token = new (this) DelimToken(delim);
 				} else {
-					throw SyntaxError(pos, L"No delimiter was declared in this file.");
+					throw new (this) SyntaxError(pos, S("No delimiter was declared in this file."));
 				}
 			} else {
-				throw InternalError(L"Unknown subtype of TokenDecl found: " + ::toS(decl));
+				throw new (this) InternalError(TO_S(this, S("Unknown subtype of TokenDecl found: ") << decl));
 			}
 
 			MemberVar *r = createTarget(decl, token, tokens->count(), counter);
@@ -102,7 +108,7 @@ namespace storm {
 			} else if (RuleToken *rule = as<RuleToken>(token)) {
 				type = Value(rule->rule);
 			} else {
-				throw InternalError(L"Unknown subtype of Token found: " + ::toS(token));
+				throw new (this) InternalError(TO_S(this, S("Unknown subtype of Token found: ") << token));
 			}
 
 			if (inRepeat(pos)) {
@@ -352,7 +358,7 @@ namespace storm {
 
 			Rule *r = as<Rule>(scope.find(decl->rule));
 			if (!r)
-				throw SyntaxError(pos, L"The rule " + ::toS(decl->rule) + L" was not found.");
+				throw new (this) SyntaxError(pos, TO_S(this, S("The rule ") << decl->rule << S(" was not found.")));
 			setSuper(r);
 
 			arrayMembers = new (this) Array<MemberVar *>();
@@ -386,7 +392,7 @@ namespace storm {
 		Rule *ProductionType::rule() const {
 			Rule *r = as<Rule>(super());
 			if (!r)
-				throw InternalError(L"An option does not inherit from Rule!");
+				throw new (this) InternalError(S("An option does not inherit from Rule!"));
 			return r;
 		}
 

@@ -7,10 +7,10 @@
 namespace storm {
 	namespace syntax {
 
-		static void check(Char ch) {
-			if (ch.leading() != 0)
-				throw InternalError(L"Surrogate characters not supported in regular expressions.");
-		}
+		// static void check(Char ch) {
+		// 	if (ch.leading() != 0)
+		// 		throw InternalError(L"Surrogate characters not supported in regular expressions.");
+		// }
 
 		/**
 		 * Regex.
