@@ -275,14 +275,14 @@ EXCEPTION_DISPOSITION __cdecl x86SEH(_EXCEPTION_RECORD *er, void *frame, _CONTEX
 
 	code::Binary::Resume resume;
 	if (f->hasCatch(*object, resume)) {
-		// No, we can continue from the exception... Clear the noncontinuable flag.
-		er->ExceptionFlags &= ~DWORD(EXCEPTION_NONCONTINUABLE);
-
 		// It seems we need to initiate stack unwinding for cleanup ourselves.
 		er->ExceptionFlags |= EXCEPTION_UNWINDING;
 		// This seems to fail on newer MSC.
 		x86Unwind(er, frame);
 		er->ExceptionFlags &= ~DWORD(EXCEPTION_UNWINDING);
+
+		// No, we can continue from the exception... Clear the noncontinuable flag.
+		er->ExceptionFlags &= ~DWORD(EXCEPTION_NONCONTINUABLE);
 
 		// Build a stack "frame" that executes 'x86EhEntry' and returns to the resume point with Eax
 		// set as intended. This approach places all data in registers, so that data on the stack is
