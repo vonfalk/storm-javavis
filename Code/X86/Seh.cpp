@@ -175,7 +175,7 @@ static const nat exceptionInfoOffset = 0x74;
 #elif (_MSC_VER == 1400 || _MSC_VER == 1500)
 static const nat exceptionInfoOffset = 0x80;
 #else
-#error "Unknown MSC version."
+#error "Unknown MSC version (it seems we don't need this hack for newer MSC)"
 #endif
 
 static bool isCppException(_EXCEPTION_RECORD *record) {
@@ -280,6 +280,7 @@ EXCEPTION_DISPOSITION __cdecl x86SEH(_EXCEPTION_RECORD *er, void *frame, _CONTEX
 
 		// It seems we need to initiate stack unwinding for cleanup ourselves.
 		er->ExceptionFlags |= EXCEPTION_UNWINDING;
+		// This seems to fail on newer MSC.
 		x86Unwind(er, frame);
 		er->ExceptionFlags &= ~DWORD(EXCEPTION_UNWINDING);
 

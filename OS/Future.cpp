@@ -347,8 +347,6 @@ namespace os {
 
 #else
 
-#error "Check this implementation, it is currently untested!"
-
 	void FutureBase::throwError() {
 		std::rethrow_exception(exceptionData);
 	}
@@ -358,17 +356,20 @@ namespace os {
 		// the object, and since the object is generally copied to the stack before being thrown (if
 		// not, we don't care about the old value anyway, but could be problematic if multiple
 		// threads re-throw simultaneously).
+		// It seems like the exception is copied to the stack, but this needs more investigation.
+		PtrThrowable **ePtr = (PtrThrowable **)ptrs->ExceptionRecord->ExceptionInformation[1];
 		if (fn) {
-			*(PtrThrowable **)ptrs[1] = (*fn)(ptrException, env);
+			*ePtr = (*fn)(ptrException, env);
 		} else {
-			*(PtrThrowable **)ptrs[1] = ptrException;
+			*ePtr = ptrException;
 		}
+		return EXCEPTION_CONTINUE_SEARCH;
 	}
 
 	void FutureBase::throwPtrError(InterceptFn fn, void *env) {
 		__try {
 			throwError();
-		} __catch (filter(GetExceptionInformation(), fn, env)) {
+		} __except (filter(GetExceptionInformation(), fn, env)) {
 		}
 	}
 
