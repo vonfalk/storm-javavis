@@ -1,0 +1,141 @@
+use core:lang;
+use core:asm;
+use lang:bs:macro;
+
+/**
+ * Class representing an expression in C++.
+ */
+class Expr extends Stmt {
+	init(SrcPos pos) {
+		init(pos) {}
+	}
+
+	// Adapter from the statement.
+	Bool code(CodeGen gen) : final {
+		var r = result();
+		code(gen, CodeResult());
+		!r.nothing();
+	}
+
+	// Compute the result.
+	ExprResult result() : abstract;
+
+	// Generate code. 'desired' is the desired return type.
+	void code(CodeGen gen, CodeResult res) : abstract;
+}
+
+/**
+ * Integer literals.
+ */
+class IntLiteral extends Expr {
+	init(SrcPos pos, Long val) {
+		init(pos) { val = val; }
+	}
+
+	init(SStr str) {
+		init(str.pos) { val = str.v.toLong(); }
+	}
+
+	private Long val;
+
+	ExprResult result() : override {
+		Value(named{Int});
+	}
+
+	void code(CodeGen gen, CodeResult res) : override {
+		if (!res.needed())
+			return;
+
+		var to = res.location(gen);
+		print("Integer literal: ${to}");
+		if (t = res.type.type) {
+			if (t is named{Int}) {
+				gen.l << mov(to, intConst(val.int));
+			} else if (t is named{Long}) {
+				gen.l << mov(to, longConst(val));
+			} else {
+				throw SyntaxError(pos, "Unknown type!");
+			}
+		}
+		res.created(gen);
+	}
+}
+
+/**
+ * Function calls.
+ */
+class FnCall extends Expr {
+	private Function fn;
+	private Expr[] actuals;
+
+	init(SrcPos pos, Function fn, Expr[] actuals) {
+		init(pos) {
+			fn = fn;
+			actuals = actuals;
+		}
+	}
+
+	ExprResult result() : override {
+		fn.result;
+	}
+
+	void code(CodeGen gen, CodeResult res) : override {
+		Operand[] params;
+		for (i, x in actuals) {
+			params << paramCode(gen, x, fn.params[i]);
+		}
+
+		// TODO: We might need to handle some level of type conversions.
+		fn.autoCall(gen, params, res);
+	}
+}
+
+// Generate code for acquiring one parameter.
+private Operand paramCode(CodeGen gen, Expr actual, Value formal) on Compiler {
+	// TODO: Auto-casting?
+	Value result = actual.result.type;
+	if (!formal.canStore(result))
+		throw SyntaxError(actual.pos, "Cannot convert to ${formal}.");
+
+	if (formal.ref & !result.ref) {
+		// Create a temporary variable and make a reference to it.
+		result = formal.asRef(false);
+		VarInfo tmpV = gen.createVar(result);
+		CodeResult gr(result, tmpV);
+		actual.code(gen, gr);
+
+		VarInfo tmpRef = gen.createVar(formal);
+		gen.l << lea(tmpRef.v, ptrRel(tmpV.v, Offset()));
+		tmpRef.created(gen);
+		tmpRef.v;
+	} else {
+		CodeResult gr(formal, gen.block);
+		actual.code(gen, gr);
+		gr.location(gen);
+	}
+}
+
+// Create an operator.
+Expr operator(Block block, Expr lhs, SStr op, Expr rhs) on Compiler {
+	var lType = lhs.result.type;
+	var rType = rhs.result.type;
+
+	SimplePart opName(op.v, [lType, rType]);
+	if (t = lType.type) {
+		if (fn = t.find(opName, block.scope) as Function)
+			return FnCall(op.pos, fn, [lhs, rhs]);
+	}
+
+	if (fn = block.scope.find(SimpleName(opName)) as Function) {
+		return FnCall(op.pos, fn, [lhs, rhs]);
+	}
+
+	throw SyntaxError(op.pos, "Failed to find operator ${op.v} for ${lType} and ${rType}.");
+}
+
+Expr operator(Block block, SStr op, Expr rhs) on Compiler { IntLiteral(op.pos, 0); }
+Expr operator(Block block, Expr lhs, SStr op) on Compiler { IntLiteral(op.pos, 0); }
+
+// Short-circuting operators.
+Expr scAnd(Block block, Expr lhs, SStr op, Expr rhs) on Compiler { IntLiteral(op.pos, 0); }
+Expr scOr(Block block, Expr lhs, SStr op, Expr rhs) on Compiler { IntLiteral(op.pos, 0); }

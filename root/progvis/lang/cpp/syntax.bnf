@@ -41,9 +41,10 @@ SDef => content : SFnDecl -> add;
 CppFnDecl SFnDecl();
 SFnDecl => CppFnDecl(res, name, formals, body) : STypeName@ res, SIdentifier name #fnName, "(", SFormals formals, ")", SFnTail body;
 
-Maybe<SBlock> SFnTail();
-SFnTail => Maybe<SBlock>() : ";";
-SFnTail => Maybe<SBlock>(block) : SBlock@ block;
+Maybe<SStmtList> SFnTail();
+SFnTail => Maybe<SStmtList>() : ";";
+SFnTail => Maybe<SStmtList>(block) : "{", SStmtList@ block, "}";
+
 
 // Formal parameters.
 Array<Formal> SFormals();
@@ -51,7 +52,7 @@ SFormals => Array<Formal>() : ;
 SFormals => Array<Formal>() : SFormal -> push - (, ",", SFormal -> push)*;
 
 Formal SFormal();
-SFormals => Formal(type, name) : STypeName @type, SIdentifier name;
+SFormal => Formal(type, name) : STypeName @type, SIdentifier name;
 
 // Identifiers
 SStr SIdentifier();
@@ -75,19 +76,98 @@ STypeNameI => boolType() : "bool" #keyword;
 STypeNameI => Value() : "void" #keyword;
 // ...
 
-
 // Statements and expressions:
-void SStmt();
-SStmt : SBlock;
-SStmt : SExpr, ";";
-SStmt : "return[ \t]" #keyword, SExpr expr, ";";
-SStmt : "return" #keyword, ";";
+Stmt SStmt(Block block);
+SStmt => ExprBlock(block) : "{", (SStmt(me) -> add,)* "}";
+SStmt => e : SExpr e, ";";
+SStmt => Return(pos, block, expr) : "return[ \t]" #keyword, SExpr(block) expr, ";";
+SStmt => Return(pos, block) : "return" #keyword, ";";
 
-void SBlock();
-SBlock : "{", (SStmt,)* "}";
+// Add a list of statements to a block.
+void SStmtList(StmtBlock block);
+SStmtList => block : (SStmt(block) -> add,)*;
 
-void SExpr();
-SExpr : SAtom();
+// TODO: The comma-operator is at level 17, and is not currently included.
+Expr SExpr(Block block);
+SExpr => n : SOp16(block) n;
 
-void SAtom();
-SAtom : "[0-9]+" #constant;
+// Operators, level 16 according to https://en.cppreference.com/w/cpp/language/operator_precedence
+Expr SOp16(Block block);
+SOp16 => n : SOp15(block) n;
+SOp16 => operator(block, l, op, r) : SOp15(block) l, "[+-*/%&^|]?=" @op, SOp16(block) r;
+SOp16 => operator(block, l, op, r) : SOp15(block) l, "<<=" @op, SOp16(block) r;
+SOp16 => operator(block, l, op, r) : SOp15(block) l, ">>=" @op, SOp16(block) r;
+
+Expr SOp15(Block block);
+SOp15 => n : SOp14(block) n;
+SOp15 => scOr(block, l, op, r) : SOp15(block) l, "||" @op, SOp14(block) r;
+
+Expr SOp14(Block block);
+SOp14 => n : SOp13(block) n;
+SOp14 => scAnd(block, l, op, r) : SOp14(block) l, "&&" @op, SOp13(block) r;
+
+Expr SOp13(Block block);
+SOp13 => n : SOp12(block) n;
+SOp13 => operator(block, l, op, r) : SOp13(block) l, "|" @op, SOp12(block) r;
+
+Expr SOp12(Block block);
+SOp12 => n : SOp11(block) n;
+SOp12 => operator(block, l, op, r) : SOp12(block) l, "^" @op, SOp11(block) r;
+
+Expr SOp11(Block block);
+SOp11 => n : SOp10(block) n;
+SOp11 => operator(block, l, op, r) : SOp11(block) l, "&" @op, SOp10(block) r;
+
+Expr SOp10(Block block);
+SOp10 => n : SOp9(block) n;
+SOp10 => operator(block, l, op, r) : SOp10(block) l, "[!=]=" @op, SOp9(block) r;
+
+Expr SOp9(Block block);
+SOp9 => n : SOp7(block) n;
+SOp9 => operator(block, l, op, r) : SOp9(block) l, "[<>]=?" @op, SOp7(block) r;
+
+// Level 8 is not implemented. It is the <=> operator from C++20.
+
+Expr SOp7(Block block);
+SOp7 => n : SOp6(block) n;
+SOp7 => operator(block, l, op, r) : SOp7(block) l, "<<" @op, SOp6(block) r;
+SOp7 => operator(block, l, op, r) : SOp7(block) l, ">>" @op, SOp6(block) r;
+
+Expr SOp6(Block block);
+SOp6 => n : SOp5(block) n;
+SOp6 => operator(block, l, op, r) : SOp6(block) l, "[+\-]" @op, SOp5(block) r;
+
+Expr SOp5(Block block);
+SOp5 => n : SOp4(block) n;
+SOp5 => operator(block, l, op, r) : SOp5(block) l, "[*/%]" @op, SOp4(block) r;
+
+Expr SOp4(Block block);
+SOp4 => n : SOp3(block) n;
+SOp4 => operator(block, l, op, r) : SOp4(block) l, "\.\*" @op, SOp3(block) r;
+SOp4 => operator(block, l, op, r) : SOp4(block) l, "->\*" @op, SOp3(block) r;
+
+Expr SOp3(Block block);
+SOp3 => n : SOp2(block) n;
+SOp3 : "\*", SOp3(block) n;
+SOp3 : "&", SOp3(block) n;
+SOp3 => operator(block, op, n) : "[!~]" @op, SOp3(block) n;
+SOp3 => operator(block, op, n) : "++?" @op, SOp2(block) n;
+SOp3 => operator(block, op, n) : "--?" @op, SOp2(block) n;
+SOp3 : "new[ \t]" #keyword, SOp2(block) n;
+SOp3 : "delete[ \t]" #keyword, SOp2(block) n;
+SOp3 : "sizeof[ \t]" #keyword, SOp2(block) n;
+SOp3 : "(", STypeName, ")", SOp3; // C-style cast.
+
+Expr SOp2(Block block);
+SOp2 => a : SAtom(block) a;
+SOp2 => operator(block, n, op) : SAtom(block) n, "++" @op;
+SOp2 => operator(block, n, op) : SAtom(block) n, "--" @op;
+SOp2 : SOp2(block), "\.", SAtom(block);
+SOp2 : SOp2(block), "->", SAtom(block);
+SOp2 : SOp2(block), "[", SExpr(block), "]";
+SOp2 : SOp2(block), "(", SExpr(block), ")";
+
+Expr SAtom(Block block);
+SAtom => v : "(", SExpr(block) v, ")";
+SAtom => IntLiteral(v) : "[0-9]+" @v #constant;
+SAtom : SIdentifier;

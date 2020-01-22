@@ -6,7 +6,7 @@ SrcName mapType(SrcName k, SrcName v) on Compiler {
 	map.add(k);
 	map.add(v);
 
-	SrcName name;
+	SrcName name(k.pos.extend(v.pos));
 	name.add("core");
 	name.add(map);
 	name;

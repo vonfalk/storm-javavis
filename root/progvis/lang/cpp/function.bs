@@ -1,4 +1,5 @@
 use core:lang;
+use core:asm;
 
 class CppFnDecl on Compiler {
 	STypeName result;
@@ -6,9 +7,9 @@ class CppFnDecl on Compiler {
 	Formal[] formals;
 
 	// If 'null', then this is just a declaration.
-	SBlock? body;
+	SStmtList? body;
 
-	init(STypeName result, SStr name, Formal[] formals, SBlock? body) {
+	init(STypeName result, SStr name, Formal[] formals, SStmtList? body) {
 		init() {
 			result = result;
 			name = name;
@@ -23,7 +24,6 @@ class CppFnDecl on Compiler {
 		unless (body)
 			return;
 
-		print("TODO: Make sure to create a proper scope!");
 		CppFunction fn(cppScope(inside), this, body);
 		inside.add(fn);
 	}
@@ -42,18 +42,80 @@ value Formal {
 // A C++ function.
 class CppFunction extends Function {
 	// Names of all formal parameters.
-	private Str[] formals;
+	private SStr[] formals;
+	private SStmtList body;
+	SrcPos pos;
+	Scope scope;
 
-	init(Scope scope, CppFnDecl decl, SBlock body) {
+	init(Scope scope, CppFnDecl decl, SStmtList body) {
 		Value[] fTypes;
-		Str[] fNames;
+		SStr[] fNames;
 		for (f in decl.formals) {
 			fTypes << f.type.transform(scope);
-			fNames << f.name.v;
+			fNames << f.name;
 		}
 
 		init(decl.result.transform(scope), decl.name.v, fTypes) {
 			formals = fNames;
+			body = body;
+			pos = decl.name.pos;
+			scope = scope;
 		}
+
+		setCode(LazyCode(&this.code));
+	}
+
+	// Generate code on demand.
+	private CodeGen code() {
+		FnRoot root(body.pos, this);
+		// Add parameters.
+		for (id, v in formals) {
+			root.add(lang:bs:LocalVar(v.v, params[id], v.pos, true));
+		}
+
+		body.transform(root);
+
+		CodeGen gen(runOn, isMember, result);
+		gen.l << prolog();
+
+		if (root.code(gen)) {
+			// Nothing returned. Perhaps we need to warn about that!
+			if (result != Value())
+				throw SyntaxError(pos, "Function returns a value, but return statements are missing.");
+
+			// Generate a regular return.
+			gen.l << fnRet();
+		}
+
+		print("Generated code:\n${gen.l}");
+
+		gen;
+	}
+}
+
+/**
+ * Root block in a function. Knows a bit about the function to make "return" etc. work properly.
+ */
+class FnRoot extends StmtBlock {
+	// Return value of the function.
+	Value result;
+
+	init(SrcPos pos, CppFunction fn) {
+		init(pos, fn.scope) {
+			result = fn.result;
+		}
+	}
+
+	// Custom code generation.
+	Bool code(CodeGen gen) : override {
+		// We don't need to create a child block. We use the root block right away!
+
+		for (k, v in vars) {
+			if (v.param)
+				v.createParam(gen);
+		}
+
+		initVariables(gen);
+		blockCode(gen);
 	}
 }

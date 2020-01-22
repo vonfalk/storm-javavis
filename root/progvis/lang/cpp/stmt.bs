@@ -1,0 +1,212 @@
+use core:lang;
+use core:asm;
+
+/**
+ * Class representing a statement in C++.
+ */
+class Stmt on Compiler {
+	// Position of this statement.
+	SrcPos pos;
+
+	// Create.
+	init(SrcPos pos) {
+		init { pos = pos; }
+	}
+
+	// Generate code. Returns 'false' if control will never continue from this statement to the next
+	// one.
+	Bool code(CodeGen gen) : abstract;
+}
+
+
+/**
+ * A block that may define new variables.
+ *
+ * Used as a foundation for other constructs that may create a new scope, but contains custom
+ * codegen logic.
+ */
+class Block extends Stmt {
+	// Create from a scope.
+	init(SrcPos pos, Scope parent) {
+		init(pos) {}
+		scope = blockScope(this, parent);
+	}
+
+	// Create from another block.
+	init(Block parent) {
+		init() {}
+		scope = blockScope(this, parent.scope);
+	}
+
+	// Scope for this block.
+	Scope scope;
+
+	// Generate code.
+	Bool code(CodeGen gen) : override {
+		CodeGen child = gen.child();
+		gen.l << begin(child.block);
+
+		initVariables(child);
+
+		if (!blockCode(child))
+			return false;
+
+		gen.l << end(child.block);
+		true;
+	}
+
+	Bool blockCode(CodeGen gen) : abstract;
+
+	// Variables declared in this block.
+	protected Str->lang:bs:LocalVar vars;
+
+	void initVariables(CodeGen gen) {
+		for (k, v in vars) {
+			if (!v.param)
+				v.create(gen);
+		}
+	}
+
+	// Add a variable.
+	void add(lang:bs:LocalVar var) {
+		if (vars.has(var.name))
+			throw SyntaxError(var.pos, "There is already a variable named ${var.name} in the current block!");
+		vars.put(var.name, var);
+	}
+
+	// Get a variable.
+	Named? variable(Str name) {
+		if (vars.has(name))
+			return vars.get(name);
+		else
+			return null;
+	}
+}
+
+// Create BlockLookup objects.
+private Scope blockScope(Block block, Scope parent) {
+	if (t = parent.top) {
+		parent.child(BlockLookup(block, t));
+	} else {
+		// This should generally not happen...
+		parent.child(BlockLookup(block));
+	}
+}
+
+/**
+ * Lookup logic for blocks.
+ */
+class BlockLookup extends NameLookup {
+	init(Block block) {
+		init() { block = block; }
+	}
+
+	init(Block block, NameLookup prev) {
+		init(prev) {
+			block = block;
+		}
+	}
+
+	Block block;
+
+	Named? find(SimplePart part, Scope source) {
+		if (part.params.empty)
+			return block.variable(part.name);
+
+		null;
+	}
+}
+
+/**
+ * A block that contains expressions.
+ */
+class StmtBlock extends Block {
+	// Create from a scope.
+	init(SrcPos pos, Scope parent) {
+		init(pos, parent) {}
+	}
+
+	// Create from another block.
+	init(SrcPos pos, Block parent) {
+		init(pos, parent) {}
+	}
+
+	// Contents.
+	private Stmt[] content;
+
+	// Add statements.
+	void add(Stmt stmt) {
+		content << stmt;
+	}
+
+	// Generate code for statements inside the block.
+	Bool blockCode(CodeGen gen) {
+		for (s in content) {
+			if (!s.code(gen))
+				return false;
+		}
+		true;
+	}
+}
+
+/**
+ * Return statement.
+ */
+class Return extends Stmt {
+	init(SrcPos pos, Block inside) {
+		init(pos) {
+			expected = findType(inside);
+		}
+
+		checkType(Value());
+	}
+
+	init(SrcPos pos, Block inside, Expr value) {
+		init(pos) {
+			value = value;
+			expected = findType(inside);
+		}
+
+		var r = value.result();
+		if (!r.nothing())
+			checkType(r.type());
+	}
+
+	Expr? value;
+	Value expected;
+
+	Bool code(CodeGen gen) : override {
+		if (value) {
+			CodeResult r(value.result.type, gen.block);
+			value.code(gen, r);
+
+			if (expected == Value())
+				gen.l << fnRet();
+			else
+				gen.l << fnRet(r.location(gen));
+		} else {
+			gen.l << fnRet();
+		}
+
+		// We never return.
+		false;
+	}
+
+	private Value findType(Block inside) : static {
+		NameLookup? at = inside.scope.top;
+		while (curr = at as BlockLookup) {
+			if (fn = curr.block as FnRoot) {
+				return fn.result;
+			}
+
+			at = curr.parent;
+		}
+
+		throw SyntaxError(SrcPos(), "Invalid use of Return!");
+	}
+
+	private void checkType(Value type) {
+		if (!expected.canStore(type))
+			throw SyntaxError(pos, "Incompatible return type. Got ${type}, expected ${expected}.");
+	}
+}
