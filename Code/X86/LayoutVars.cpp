@@ -37,22 +37,36 @@ namespace code {
 		}
 
 		void LayoutVars::before(Listing *dest, Listing *src) {
-			usingEH = src->exceptionHandler();
+			usingEH = src->exceptionAware();
 			resultParam = code::x86::resultParam(src->result);
 			memberFn = src->member;
 
-			RegSet *used = allUsedRegs(src);
-			add64(used);
+			RegSet *used;
+
+			// At least on Windows, registers are not preserved if an exception is caught
+			// here. Therefore, if we contain any exception handlers, we just assume that all
+			// registers are dirty.
+			if (src->exceptionCaught()) {
+				// TODO: If we ever support 32-bit Linux, this is probably not needed.
+				used = allRegs(engine());
+			} else {
+				used = allUsedRegs(src);
+				add64(used);
+			}
 
 			preserved = new (this) RegSet();
 			RegSet *notPreserved = fnDirtyRegs(engine());
 
 			// Any registers in 'all' which are not in 'notPreserved' needs to be properly stored
 			// through this function call.
+
 			for (RegSet::Iter i = used->begin(); i != used->end(); ++i) {
 				if (!notPreserved->has(i.v()))
 					preserved->put(i.v());
 			}
+
+			preserved->put(ebx);
+			preserved->put(edi);
 
 			layout = code::x86::layout(src, preserved->count(), usingEH, resultParam, memberFn);
 

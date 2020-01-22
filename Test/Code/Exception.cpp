@@ -412,6 +412,10 @@ BEGIN_TEST_(ExceptionCatch, Code) {
 
 	using debug::DbgVal;
 
+	// Make sure registers are preserved correctly when exceptions are thrown. This asserts if they
+	// are not preserved properly, which might cause the remainder of this test to fail.
+	callFn(b->address(), 1);
+
 	DbgVal::clear();
 	destroyed = 0;
 	// Easy: No exception thrown.

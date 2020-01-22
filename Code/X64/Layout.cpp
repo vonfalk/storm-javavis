@@ -27,7 +27,7 @@ namespace code {
 		void Layout::before(Listing *dest, Listing *src) {
 			// Initialize some state.
 			part = Part();
-			usingEH = src->exceptionHandler();
+			usingEH = src->exceptionAware();
 
 			// Compute where the result is to be stored.
 			result = code::x64::result(src->result);

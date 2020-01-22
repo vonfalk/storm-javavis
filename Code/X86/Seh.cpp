@@ -175,7 +175,8 @@ static const nat exceptionInfoOffset = 0x74;
 #elif (_MSC_VER == 1400 || _MSC_VER == 1500)
 static const nat exceptionInfoOffset = 0x80;
 #else
-#error "Unknown MSC version (it seems we don't need this hack for newer MSC)"
+// No special treatment of the re-throw mechanism.
+#define MSC_NO_SPECIAL_RETHROW
 #endif
 
 static bool isCppException(_EXCEPTION_RECORD *record) {
@@ -247,6 +248,14 @@ EXCEPTION_DISPOSITION __cdecl x86SEH(_EXCEPTION_RECORD *er, void *frame, _CONTEX
 	if (!isCppException(er))
 		return ExceptionContinueSearch;
 
+#ifdef MSC_NO_SPECIAL_RETHROW
+	// It seems we don't have to handle re-throws as a special case on newer MSC versions.
+	// Include a check so that we get to know if this assumption is wrong.
+	if (!er->ExceptionInformation[2]) {
+		WARNING(L"It seems like we need to handle re-throws like in older MSC versions!");
+		return ExceptionContinueSearch;
+	}
+#else
 	if (!er->ExceptionInformation[2]) {
 		// Re-throw, we need to get the info from TLS.
 		byte *t = (byte *)_errno();
@@ -255,6 +264,7 @@ EXCEPTION_DISPOSITION __cdecl x86SEH(_EXCEPTION_RECORD *er, void *frame, _CONTEX
 		if (!isCppException(er))
 			return ExceptionContinueSearch;
 	}
+#endif
 
 	const CppExceptionType *type = (const CppExceptionType *)er->ExceptionInformation[2];
 

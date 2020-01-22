@@ -117,7 +117,7 @@ BEGIN_TEST(CodeTest, CodeBasic) {
 
 	Label l1 = l->label();
 
-	CHECK_EQ(l->exceptionHandler(), false);
+	CHECK_EQ(l->exceptionAware(), false);
 
 	*l << prolog();
 	*l << mov(v, p);

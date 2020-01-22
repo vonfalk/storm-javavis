@@ -277,8 +277,14 @@ namespace code {
 		// Get all catch clauses for a block.
 		MAYBE(Array<CatchInfo> *) STORM_FN catchInfo(Block block) const;
 
-		// Do this block need an exception handler?
-		inline Bool STORM_FN exceptionHandler() const { return needEH; }
+		// Does this block need cleanup during exception handling?
+		inline Bool STORM_FN exceptionCleanup() const { return ehClean; }
+
+		// Does this block catch exceptions?
+		inline Bool STORM_FN exceptionCaught() const { return ehCatch; }
+
+		// Does this block deal with exceptions at all? I.e. is either 'exceptionCleanup' or 'exceptionCatched' true?
+		inline Bool STORM_FN exceptionAware() const { return ehCatch | ehClean; }
 
 		/**
 		 * Create variables.
@@ -435,8 +441,11 @@ namespace code {
 		Array<IBlock> *blocks;
 		Array<IPart> *parts;
 
-		// Do we need an exception handler.
-		Bool needEH;
+		// Do we need exception cleanup?
+		Bool ehClean;
+
+		// Do we catch exceptions?
+		Bool ehCatch;
 
 		// Initialize everything.
 		void init(Bool member, TypeDesc *result);

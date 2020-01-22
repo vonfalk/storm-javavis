@@ -170,7 +170,8 @@ namespace code {
 		this->vars = new (this) Array<IVar>();
 		this->blocks = new (this) Array<IBlock>();
 		this->parts = new (this) Array<IPart>();
-		this->needEH = false;
+		this->ehClean = false;
+		this->ehCatch = false;
 		this->member = member;
 		this->result = result;
 
@@ -191,7 +192,8 @@ namespace code {
 		vars(o.vars),
 		blocks(o.blocks),
 		parts(o.parts),
-		needEH(o.needEH) {
+		ehClean(o.ehClean),
+		ehCatch(o.ehCatch) {
 
 		deepCopy(new (this) CloneEnv());
 	}
@@ -230,7 +232,8 @@ namespace code {
 		shell->vars = new (this) Array<IVar>(*vars);
 		shell->blocks = new (this) Array<IBlock>(*blocks);
 		shell->parts = new (this) Array<IPart>(*parts);
-		shell->needEH = needEH;
+		shell->ehClean = ehClean;
+		shell->ehCatch = ehCatch;
 
 		// Note: we're doing this the hard way since deepCopy did not work properly at the time this
 		// was written.
@@ -576,7 +579,7 @@ namespace code {
 		assert(in.id != invalid, L"No such part!");
 
 		if (checkFree(free, when))
-			needEH = true;
+			ehClean = true;
 
 		Nat id = vars->count();
 		vars->push(IVar(in.id, size, null, free, when));
@@ -617,7 +620,7 @@ namespace code {
 
 	Var Listing::createParam(TypeDesc *type, Operand free, FreeOpt when) {
 		if (checkFree(free, when))
-			needEH = true;
+			ehClean = true;
 
 		Nat id = vars->count();
 		vars->push(IVar(invalid, type->size(), type, free, when));
@@ -706,7 +709,7 @@ namespace code {
 			info = new (this) Array<CatchInfo>();
 		info->push(add);
 
-		needEH = true;
+		ehCatch = true;
 	}
 
 	void Listing::addCatch(Block block, Type *type, Label resume) {
