@@ -12,6 +12,20 @@
 
 namespace storm {
 
+	ProtocolNotSupported::ProtocolNotSupported(const wchar *operation, const wchar *protocol)
+		: operation(new (engine()) Str(operation)), protocol(new (engine()) Str(protocol)) {}
+
+	ProtocolNotSupported::ProtocolNotSupported(const wchar *operation, Str *protocol)
+		: operation(new (engine()) Str(operation)), protocol(protocol) {}
+
+	ProtocolNotSupported::ProtocolNotSupported(Str *operation, Str *protocol)
+		: operation(operation), protocol(protocol) {}
+
+	void ProtocolNotSupported::message(StrBuf *to) const {
+		*to << operation << S(" is not supported by the protocol ") << protocol;
+	}
+
+
 	Protocol::Protocol() {}
 
 	Bool Protocol::partEq(Str *a, Str *b) {
@@ -23,27 +37,27 @@ namespace storm {
 	}
 
 	Array<Url *> *Protocol::children(Url *url) {
-		throw ProtocolNotSupported(L"children", ::toS(*this));
+		throw new (this) ProtocolNotSupported(S("children"), toS());
 	}
 
 	IStream *Protocol::read(Url *url) {
-		throw ProtocolNotSupported(L"read", ::toS(*this));
+		throw new (this) ProtocolNotSupported(S("read"), toS());
 	}
 
 	OStream *Protocol::write(Url *url) {
-		throw ProtocolNotSupported(L"write", ::toS(*this));
+		throw new (this) ProtocolNotSupported(S("write"), toS());
 	}
 
 	Bool Protocol::exists(Url *url) {
-		throw ProtocolNotSupported(L"exists", ::toS(*this));
+		throw new (this) ProtocolNotSupported(S("exists"), toS());
 	}
 
 	Str *Protocol::format(Url *url) {
-		throw ProtocolNotSupported(L"format", ::toS(*this));
+		throw new (this) ProtocolNotSupported(S("format"), toS());
 	}
 
 	void Protocol::toS(StrBuf *to) const {
-		*to << L"<unknown protocol>";
+		*to << S("<unknown protocol>");
 	}
 
 	Bool Protocol::operator ==(const Protocol &o) const {

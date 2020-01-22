@@ -778,7 +778,7 @@ namespace storm {
 				parts = newParts;
 
 				return result;
-			} catch (const Exception &) {
+			} catch (const NException *) {
 				// TODO: More narrow catch?
 				return Range();
 			}

@@ -33,13 +33,13 @@ namespace sound {
 			// All is well!
 			break;
 		case OV_ENOTVORBIS:
-			throw SoundOpenError(L"Looks like an OGG file, but it is something else.");
+			throw new (this) SoundOpenError(S("Looks like an OGG file, but it is something else."));
 		case OV_EVERSION:
-			throw SoundOpenError(L"Ogg version mismatch.");
+			throw new (this) SoundOpenError(S("Ogg version mismatch."));
 		case OV_EBADHEADER:
-			throw SoundOpenError(L"Ogg header corrupt.");
+			throw new (this) SoundOpenError(S("Ogg header corrupt."));
 		default:
-			throw SoundOpenError(L"Unknown error when opening OGG file.");
+			throw new (this) SoundOpenError(S("Unknown error when opening OGG file."));
 		}
 
 		/**

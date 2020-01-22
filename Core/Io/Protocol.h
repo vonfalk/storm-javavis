@@ -13,11 +13,17 @@ namespace storm {
 	/**
 	 * Error thrown when an operation is not supported by a protocol.
 	 */
-	class EXCEPTION_EXPORT ProtocolNotSupported : public Exception {
+	class EXCEPTION_EXPORT ProtocolNotSupported : public NException {
+		STORM_CLASS;
 	public:
-		ProtocolNotSupported(const String &operation, const String &protocol) : operation(operation), protocol(protocol) {}
-		String operation, protocol;
-		virtual String what() const { return operation + L" is not supported by the protocol " + protocol; }
+		ProtocolNotSupported(const wchar *operation, const wchar *protocol);
+		ProtocolNotSupported(const wchar *operation, Str *protocol);
+		STORM_CTOR ProtocolNotSupported(Str *operation, Str *protocol);
+
+		virtual void STORM_FN message(StrBuf *to) const;
+	private:
+		Str *operation;
+		Str *protocol;
 	};
 
 	/**

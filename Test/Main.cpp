@@ -55,7 +55,9 @@ int _tmain(int argc, const wchar_t *argv[]) {
 		engineObj = null;
 		delete usedGc;
 		usedGc = null;
-	} catch (const Exception &e) {
+	} catch (const NException *e) {
+		PLN(L"Unknown error: " << e);
+	} catch (const ::Exception &e) {
 		PLN(L"Unknown error: " << e.what());
 	}
 

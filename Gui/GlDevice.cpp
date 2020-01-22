@@ -151,7 +151,7 @@ namespace gui {
 	 * GL backends.
 	 */
 
-	GlContext::GlContext() : device(null) {}
+	GlContext::GlContext(Engine &e) : device(null), e(e) {}
 
 	GlContext::~GlContext() {
 		destroyDevice();
@@ -162,26 +162,26 @@ namespace gui {
 		App *app = gui::app(e);
 
 #if GTK_RENDER_IS_SW(GTK_MODE)
-		return new GlSoftwareContext();
+		return new GlSoftwareContext(e);
 #endif
 
 		GlContext *result = null;
 		GdkDisplay *gdkDisplay = app->defaultDisplay();
 		if (GDK_IS_WAYLAND_DISPLAY(gdkDisplay)) {
-			result = createWaylandContext(gdkDisplay);
+			result = createWaylandContext(e, gdkDisplay);
 		} else if (GDK_IS_X11_DISPLAY(gdkDisplay)) {
-			result = createX11Context(gdkDisplay);
+			result = createX11Context(e, gdkDisplay);
 		} else {
-			throw GuiError(L"You are using an unsupported windowing system. X11 and Wayland are supported.");
+			throw new (e) GuiError(S("You are using an unsupported windowing system. X11 and Wayland are supported."));
 		}
 
 		if (!result)
-			throw GuiError(L"Failed to initialize OpenGL.");
+			throw new (e) GuiError(S("Failed to initialize OpenGL."));
 
 		result->device = result->createDevice();
 		if (result->device) {
 			if (cairo_device_status(result->device) != CAIRO_STATUS_SUCCESS)
-				throw GuiError(L"Failed to initialize Cario. Cairo requires at least OpenGL 2.0 or OpenGL ES 2.0.");
+				throw new (e) GuiError(S("Failed to initialize Cario. Cairo requires at least OpenGL 2.0 or OpenGL ES 2.0."));
 
 			cairo_gl_device_set_thread_aware(result->device, TRUE);
 		}
@@ -189,22 +189,22 @@ namespace gui {
 		return result;
 	}
 
-	GlContext *GlContext::createX11Context(GdkDisplay *gdkDisplay) {
+	GlContext *GlContext::createX11Context(Engine &e, GdkDisplay *gdkDisplay) {
 		Display *display = GDK_DISPLAY_XDISPLAY(gdkDisplay);
 
 		// It seems GLX is faster in practice. It is also more stable using X11 forwarding. Might be
 		// required for Wayland support, though. EGL works fine when running locally, so it is a
 		// good fallback.
-		GlContext *result = GlxContext::create(display);
+		GlContext *result = GlxContext::create(e, display);
 		if (!result)
-			result = EglContext::create(display);
+			result = EglContext::create(e, display);
 		return result;
 	}
 
-	GlContext *GlContext::createWaylandContext(GdkDisplay *gdkDisplay) {
+	GlContext *GlContext::createWaylandContext(Engine &e, GdkDisplay *gdkDisplay) {
 		// EGL is the only option for Wayland.
 		GdkWaylandDisplay *display = GDK_WAYLAND_DISPLAY(gdkDisplay);
-		return EglContext::create(gdk_wayland_display_get_wl_display(display));
+		return EglContext::create(e, gdk_wayland_display_get_wl_display(display));
 	}
 
 	void GlContext::destroyDevice() {
@@ -226,7 +226,7 @@ namespace gui {
 	 * Software.
 	 */
 
-	GlSoftwareContext::GlSoftwareContext() {}
+	GlSoftwareContext::GlSoftwareContext(Engine &e) : GlContext(e) {}
 
 	GlSurface *GlSoftwareContext::createSurface(Size size) {
 		return new SwSurface(size);
@@ -261,12 +261,12 @@ namespace gui {
 	 * EGL
 	 */
 
-	EglContext *EglContext::create(Display *xDisplay) {
+	EglContext *EglContext::create(Engine &e, Display *xDisplay) {
 		EGLDisplay display = eglGetDisplay(xDisplay);
 		if (!eglInitialize(display, NULL, NULL))
 			return null;
 
-		EglContext *me = new EglContext(display);
+		EglContext *me = new EglContext(e, display);
 		if (!me->initialize()) {
 			delete me;
 			return null;
@@ -275,13 +275,13 @@ namespace gui {
 		}
 	}
 
-	EglContext *EglContext::create(struct wl_display *wlDisplay) {
+	EglContext *EglContext::create(Engine &e, struct wl_display *wlDisplay) {
 		EGLDisplay display = eglGetDisplay((NativeDisplayType)wlDisplay);
 		// Initialization has most likely been done already, but initializing it again is not bad.
 		if (!eglInitialize(display, NULL, NULL))
 			return null;
 
-		EglContext *me = new EglContext(display);
+		EglContext *me = new EglContext(e, display);
 		if (!me->initialize()) {
 			delete me;
 			return null;
@@ -290,7 +290,7 @@ namespace gui {
 		}
 	}
 
-	EglContext::EglContext(EGLDisplay display) : display(display), context(null), config(null) {}
+	EglContext::EglContext(Engine &e, EGLDisplay display) : GlContext(e), display(display), context(null), config(null) {}
 
 	EglContext::~EglContext() {
 		destroyDevice();
@@ -346,11 +346,11 @@ namespace gui {
 		};
 		EGLSurface surface = eglCreateWindowSurface(display, config, window, attrs);
 		if (!surface)
-			throw GuiError(L"Failed to create an EGL surface for a window.");
+			throw new (e) GuiError(S("Failed to create an EGL surface for a window."));
 
 		cairo_surface_t *cairo = cairo_gl_surface_create_for_egl(device, surface, size.w, size.h);
 		if (cairo_surface_status(cairo) != CAIRO_STATUS_SUCCESS)
-			throw GuiError(L"Failed to create a cairo surface for a window.");
+			throw new (e) GuiError(S("Failed to create a cairo surface for a window."));
 
 		return new Surface(cairo, surface);
 	}
@@ -368,8 +368,8 @@ namespace gui {
 	 * GLX
 	 */
 
-	GlxContext *GlxContext::create(Display *display) {
-		GlxContext *result = new GlxContext(display);
+	GlxContext *GlxContext::create(Engine &e, Display *display) {
+		GlxContext *result = new GlxContext(e, display);
 		if (!result->initialize()) {
 			delete result;
 			return null;
@@ -378,7 +378,7 @@ namespace gui {
 		}
 	}
 
-	GlxContext::GlxContext(Display *display) : display(display), context(null) {}
+	GlxContext::GlxContext(Engine &e, Display *display) : GlContext(e), display(display), context(null) {}
 
 	GlxContext::~GlxContext() {
 		destroyDevice();
@@ -457,7 +457,7 @@ namespace gui {
 		::Window window = GDK_WINDOW_XID(gWindow);
 		cairo_surface_t *cairo = cairo_gl_surface_create_for_window(device, window, size.w, size.h);
 		if (cairo_surface_status(cairo) != CAIRO_STATUS_SUCCESS)
-			throw GuiError(L"Failed to create a cairo surface for a window.");
+			throw new (e) GuiError(S("Failed to create a cairo surface for a window."));
 
 		return new Surface(cairo, window);
 	}

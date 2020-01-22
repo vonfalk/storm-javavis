@@ -61,16 +61,18 @@ namespace storm {
 		if (super == TObject::stormType(engine())) {
 			// Run the TObject constructor if possible.
 			NamedThread *thread = runOn().thread;
-			if (!thread)
-				throw InternalError(L"Can not use TypeDefaultCtor with TObjects without specifying a thread. "
-									L"Set a thread for " + ::toS(owner->identifier()) + L" and try again.");
+			if (!thread) {
+				Str *msg = TO_S(this, S("Can not use TypeDefaultCtor with TObjects without specifying a thread. ")
+								S("Set a thread for ") << owner->identifier() << S(" and try again."));
+				throw new (this) InternalError(msg);
+			}
 
 			Array<Value> *params = new (this) Array<Value>();
 			params->push(thisPtr(super));
 			params->push(thisPtr(Thread::stormType(engine())));
 			Function *ctor = as<Function>(super->find(Type::CTOR, params, Scope()));
 			if (!ctor)
-				throw InternalError(L"Can not find the default constructor for TObject!");
+				throw new (this) InternalError(S("Can not find the default constructor for TObject!"));
 
 			*l << fnParam(ptr, me);
 			*l << fnParam(ptr, thread->ref());
@@ -78,10 +80,12 @@ namespace storm {
 		} else if (super) {
 			// Find and run the parent constructor.
 			Function *ctor = super->defaultCtor();
-			if (!ctor)
-				throw InternalError(L"Can not use TypeDefaultCtor if no default constructor "
-									L"for the parent type is present. See parent class for "
-									+ ::toS(owner->identifier()));
+			if (!ctor) {
+				Str *msg = TO_S(this, S("Can not use TypeDefaultCtor if no default constructor ")
+								S("for the parent type is present. See parent class for ")
+								<< owner->identifier());
+				throw new (this) InternalError(msg);
+			}
 
 			*l << fnParam(ptr, me);
 			*l << fnCall(ctor->directRef(), true);
@@ -97,18 +101,22 @@ namespace storm {
 				// No need for initialization.
 			} else if (v->type.isValue()) {
 				Function *ctor = v->type.type->defaultCtor();
-				if (!ctor)
-					throw InternalError(L"Can not use TypeDefaultCtor if a member does not have a default "
-										L"constructor. See " + ::toS(owner->identifier()));
+				if (!ctor) {
+					Str *msg = TO_S(this, S("Can not use TypeDefaultCtor if a member does not have a default ")
+									S("constructor. See ") << owner->identifier());
+					throw new (this) InternalError(msg);
+				}
 				*l << mov(ptrA, me);
 				*l << add(ptrA, ptrConst(v->offset()));
 				*l << fnParam(ptr, ptrA);
 				*l << fnCall(ctor->ref(), true);
 			} else {
 				Function *ctor = v->type.type->defaultCtor();
-				if (!ctor)
-					throw InternalError(L"Can not use TypeDefaultCtor if a member does not have a default "
-										L"constructor. See " + ::toS(owner->identifier()));
+				if (!ctor) {
+					Str *msg = TO_S(this, S("Can not use TypeDefaultCtor if a member does not have a default ")
+									S("constructor. See ") << owner->identifier());
+					throw new (this) InternalError(msg);
+				}
 
 				Var created = allocObject(t, ctor, new (this) Array<Operand>());
 				*l << mov(ptrA, me);
@@ -174,9 +182,11 @@ namespace storm {
 
 		if (Type *super = owner->super()) {
 			Function *ctor = super->copyCtor();
-			if (!ctor)
-				throw InternalError(L"No copy constructor for " + ::toS(super->identifier())
-									+ L", required from " + ::toS(owner->identifier()));
+			if (!ctor) {
+				Str *msg = TO_S(this, S("No copy constructor for ") << super->identifier()
+								<< S(", required from ") << owner->identifier());
+				throw new (this) InternalError(msg);
+			}
 
 			*l << fnParam(ptr, me);
 			*l << fnParam(ptr, src);
@@ -192,9 +202,11 @@ namespace storm {
 			*l << mov(ptrC, src);
 			if (!v->type.isAsmType()) {
 				Function *ctor = v->type.type->copyCtor();
-				if (!ctor)
-					throw InternalError(L"No copy constructor for " + ::toS(v->type.type->identifier())
-										+ L", required from " + ::toS(owner->identifier()));
+				if (!ctor) {
+					Str *msg = TO_S(this, S("No copy constructor for ") << v->type.type->identifier()
+									<< S(", required from ") << owner->identifier());
+					throw new (this) InternalError(msg);
+				}
 
 				*l << add(ptrA, ptrConst(v->offset()));
 				*l << add(ptrC, ptrConst(v->offset()));
@@ -265,9 +277,11 @@ namespace storm {
 
 		if (Type *super = owner->super()) {
 			Function *ctor = super->copyCtor();
-			if (!ctor)
-				throw InternalError(L"No assignment operator for " + ::toS(super->identifier())
-									+ L", required from " + ::toS(owner->identifier()));
+			if (!ctor) {
+				Str *msg = TO_S(this, S("No assignment operator for ") << super->identifier()
+								<< S(", required from ") << owner->identifier());
+				throw new (this) InternalError(msg);
+			}
 
 			*l << fnParam(ptr, me);
 			*l << fnParam(ptr, src);
@@ -283,9 +297,11 @@ namespace storm {
 			*l << mov(ptrC, src);
 			if (!v->type.isAsmType()) {
 				Function *ctor = v->type.type->assignFn();
-				if (!ctor)
-					throw InternalError(L"No assignment operator for " + ::toS(v->type.type->identifier())
-										+ L", required from " + ::toS(owner->identifier()));
+				if (!ctor) {
+					Str *msg = TO_S(this, S("No assignment operator for ") << v->type.type->identifier()
+									<< S(", required from ") << owner->identifier());
+					throw new (this) InternalError(msg);
+				}
 
 				*l << add(ptrA, ptrConst(v->offset()));
 				*l << add(ptrC, ptrConst(v->offset()));
@@ -362,7 +378,7 @@ namespace storm {
 				// Call the system-wide copy function for this type.
 				Function *toCall = as<Function>(core->find(S("clone"), paramArray(type.type), Scope()));
 				if (!toCall)
-					throw InternalError(L"Can not find 'core.clone' for " + ::toS(type));
+					throw new (this) InternalError(TO_S(this, S("Can not find 'core.clone' for ") << type));
 
 				*l << mov(ptrA, me);
 				*l << fnParam(ptr, ptrRel(ptrA, var->offset()));

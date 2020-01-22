@@ -60,7 +60,7 @@ namespace gui {
 		Nat destStride = cairo_image_surface_get_stride(image);
 		cairo_format_t fmt = cairo_image_surface_get_format(image);
 		if (fmt != CAIRO_FORMAT_ARGB32)
-			throw GuiError(L"Invalid format from Cairo. Expected ARGB32.");
+			throw new (this) GuiError(S("Invalid format from Cairo. Expected ARGB32."));
 
 		for (Nat y = 0; y < h; y++) {
 			for (Nat x = 0; x < w; x++) {

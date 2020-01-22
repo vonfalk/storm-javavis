@@ -26,12 +26,20 @@ namespace storm {
 	/**
 	 * Exception thrown from the set.
 	 */
-	class EXCEPTION_EXPORT SetError : public Exception {
+	class EXCEPTION_EXPORT SetError : public NException {
+		STORM_CLASS;
 	public:
-		SetError(const String &msg) : msg(msg) {}
-		virtual String what() const { return L"Set error: " + msg; }
+		SetError(const wchar *msg) {
+			this->msg = new (this) Str(msg);
+		}
+		STORM_CTOR SetError(Str *msg) {
+			this->msg = msg;
+		}
+		virtual void STORM_FN message(StrBuf *to) const {
+			*to << S("Set error: ") << msg;
+		}
 	private:
-		String msg;
+		Str *msg;
 	};
 
 

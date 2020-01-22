@@ -12,8 +12,9 @@ namespace gui {
 #endif
 	static UINT deviceFlags = D3D10_CREATE_DEVICE_BGRA_SUPPORT;
 
-	String throwError(const String &msg, HRESULT r) {
-		throw GuiError(msg + ::toS(r));
+	void throwError(Engine &e, const wchar *msg, HRESULT r) {
+		Str *m = TO_S(e, msg << ::toS(r).c_str());
+		throw new (e) GuiError(m);
 	}
 
 	static HRESULT createDevice(ID3D10Device1 **device) {
@@ -78,22 +79,22 @@ namespace gui {
 		HRESULT h;
 		h = D2D1CreateFactory(D2D1_FACTORY_TYPE_SINGLE_THREADED, __uuidof(ID2D1Factory), &options, (void **)&factory);
 		if (FAILED(h))
-			throwError(L"Failed to create a D2D factory: ", h);
+			throwError(e, S("Failed to create a D2D factory: "), h);
 
 		if (FAILED(h = createDevice(&device)))
-			throwError(L"Failed to create a D3D device: ", h);
+			throwError(e, S("Failed to create a D3D device: "), h);
 		if (FAILED(h = device->QueryInterface(__uuidof(IDXGIDevice), (void **)&giDevice)))
-			throwError(L"Failed to get the DXGI device: ", h);
+			throwError(e, S("Failed to get the DXGI device: "), h);
 		IDXGIAdapter *adapter = null;
 		if (FAILED(h = giDevice->GetParent(__uuidof(IDXGIAdapter), (void **)&adapter)))
-			throwError(L"Failed to get the DXGIAdapter: ", h);
+			throwError(e, S("Failed to get the DXGIAdapter: "), h);
 		if (FAILED(h = adapter->GetParent(__uuidof(IDXGIFactory), (void **)&giFactory)))
-			throwError(L"Failed to get the GI factory: ", h);
+			throwError(e, S("Failed to get the GI factory: "), h);
 		::release(adapter);
 
 		DWRITE_FACTORY_TYPE type = DWRITE_FACTORY_TYPE_SHARED;
 		if (FAILED(h = DWriteCreateFactory(type, __uuidof(IDWriteFactory), (IUnknown **)&writeFactory)))
-			throwError(L"Failed to initialize Direct Write: ", h);
+			throwError(e, S("Failed to initialize Direct Write: "), h);
 	}
 
 	Device::~Device() {
@@ -118,7 +119,7 @@ namespace gui {
 		IDXGISwapChain *swapChain = null;
 		if (FAILED(h = giFactory->CreateSwapChain(device, &desc, &swapChain))) {
 			r.release();
-			throwError(L"Failed to create a swap chain: ", h);
+			throwError(engine(), S("Failed to create a swap chain: "), h);
 		}
 
 		r.swapChain(swapChain);
@@ -141,7 +142,7 @@ namespace gui {
 
 		HRESULT r;
 		if (FAILED(r = info.swapChain()->ResizeBuffers(1, (UINT)sz.w, (UINT)sz.h, DXGI_FORMAT_UNKNOWN, 0))) {
-			throwError(L"Failed to resize buffers: " , r);
+			throwError(engine(), S("Failed to resize buffers: ") , r);
 		}
 
 		info.size = sz;
@@ -154,7 +155,7 @@ namespace gui {
 		ComPtr<IDXGISurface> surface;
 
 		if (FAILED(h = swapChain->GetBuffer(0, __uuidof(IDXGISurface), (void **)&surface))) {
-			throwError(L"Failed to get the surface: ", h);
+			throwError(engine(), S("Failed to get the surface: "), h);
 		}
 
 		D2D1_RENDER_TARGET_PROPERTIES props = {
@@ -165,7 +166,7 @@ namespace gui {
 			D2D1_FEATURE_LEVEL_10, // Use _DEFAULT?
 		};
 		if (FAILED(h = factory->CreateDxgiSurfaceRenderTarget(surface.v, &props, &target))) {
-			throwError(L"Failed to create a render target: ", h);
+			throwError(engine(), S("Failed to create a render target: "), h);
 		}
 
 		return target;

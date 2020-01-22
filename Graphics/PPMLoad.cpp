@@ -65,7 +65,7 @@ namespace graphics {
 				buffer = src->read(buffer);
 
 				if (buffer.empty())
-					throw ImageLoadError(L"Unexpected end of stream!");
+					throw new (src) ImageLoadError(S("Unexpected end of stream!"));
 			}
 
 			return buffer[pos++];
@@ -91,7 +91,7 @@ namespace graphics {
 
 			// Read the number.
 			if (!numeric(ch))
-				throw ImageLoadError(L"Not a number!");
+				throw new (src) ImageLoadError(S("Not a number!"));
 
 			Nat result = 0;
 			while (numeric(ch)) {

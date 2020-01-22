@@ -41,9 +41,9 @@ namespace storm {
 		try {
 			if (at->done)
 				to->add(at->done);
-		} catch (const TypedefError &e) {
+		} catch (const TypedefError *e) {
 			// Sometimes we have a different notion of what is acceptable.
-			WARNING(e);
+			WARNING(e->toS());
 		}
 
 		for (nat i = 0; i < at->count; i++)
@@ -164,9 +164,9 @@ namespace storm {
 		if (addedTo) {
 			try {
 				addedTo->add(r);
-			} catch (const TypedefError &e) {
+			} catch (const TypedefError *e) {
 				// Sometimes, we have a different notion of what is acceptable together.
-				WARNING(e);
+				WARNING(e->toS());
 			}
 		}
 		return r;

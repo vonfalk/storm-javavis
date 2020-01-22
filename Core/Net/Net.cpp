@@ -11,7 +11,7 @@ namespace storm {
 		WS() {
 			WSADATA data;
 			if (WSAStartup(MAKEWORD(2, 2), &data)) {
-				throw NetError(L"Unable to initialize sockets.");
+				assert(false, L"Unable to initialize sockets.");
 			}
 		}
 
@@ -50,7 +50,7 @@ namespace storm {
 		return listen((SOCKET)socket.v(), backlog) == 0;
 	}
 
-	static BOOL AcceptEx(os::Handle listen, os::Handle accept,
+	static BOOL AcceptEx(Engine &e, os::Handle listen, os::Handle accept,
 						void *output, DWORD receiveLen,
 						DWORD localLen, DWORD remoteLen,
 						DWORD *received, OVERLAPPED *overlapped) {
@@ -61,13 +61,12 @@ namespace storm {
 		DWORD bytes = 0;
 		int ok = WSAIoctl(s, SIO_GET_EXTENSION_FUNCTION_POINTER, &guid, sizeof(guid), &ptr, sizeof(ptr), &bytes, NULL, NULL);
 
-		if (ok)
-			throw NetError(L"Unable to acquire AcceptEx.");
+		assert(ok, L"Unable to acquire AcceptEx.");
 
 		return (*ptr)(s, (SOCKET)accept.v(), output, receiveLen, localLen, remoteLen, received, overlapped);
 	}
 
-	static void GetAcceptExSockaddrs(os::Handle socket, void *buffer, DWORD receiveLen,
+	static void GetAcceptExSockaddrs(Engine &e, os::Handle socket, void *buffer, DWORD receiveLen,
 									DWORD localLen, DWORD remoteLen,
 									LPSOCKADDR *localAddr, int *localSize,
 									LPSOCKADDR *remoteAddr, int *remoteSize) {
@@ -78,8 +77,7 @@ namespace storm {
 		DWORD bytes = 0;
 		int ok = WSAIoctl(s, SIO_GET_EXTENSION_FUNCTION_POINTER, &guid, sizeof(guid), &ptr, sizeof(ptr), &bytes, NULL, NULL);
 
-		if (ok)
-			throw NetError(L"Unable to acquire GetAcceptExSockaddrs");
+		assert(ok, L"Unable to acquire GetAcceptExSockaddrs.");
 
 		return (*ptr)(buffer, receiveLen, localLen, remoteLen, localAddr, localSize, remoteAddr, remoteSize);
 	}
@@ -124,15 +122,14 @@ namespace storm {
 		return os::Handle();
 	}
 
-	static BOOL ConnectEx(os::Handle socket, const sockaddr *name, int namelen, OVERLAPPED *overlapped) {
+	static BOOL ConnectEx(Engine &e, os::Handle socket, const sockaddr *name, int namelen, OVERLAPPED *overlapped) {
 		SOCKET s = (SOCKET)socket.v();
 		LPFN_CONNECTEX ptr = null;
 		GUID guid = WSAID_CONNECTEX;
 		DWORD bytes = 0;
 		int ok = WSAIoctl(s, SIO_GET_EXTENSION_FUNCTION_POINTER, &guid, sizeof(guid), &ptr, sizeof(ptr), &bytes, NULL, NULL);
 
-		if (ok)
-			throw NetError(L"Unable to acquire ConnectEx.");
+		assert(ok, L"Unable to acquire ConnectEx.");
 
 		return (*ptr)(s, name, namelen, NULL, 0, NULL, overlapped);
 	}

@@ -48,7 +48,7 @@ namespace storm {
 		// Access.
 		Value &STORM_FN operator [](Nat id) {
 			if (id > count())
-				throw ArrayError(L"Index " + ::toS(id) + L" out of bounds.");
+				throw new (this) ArrayError(TO_S(this, S("Index ") << id << S(" out of bounds.")));
 			return data->v[id];
 		}
 

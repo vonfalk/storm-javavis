@@ -269,12 +269,21 @@ namespace storm {
 	/**
 	 * Error during serialization.
 	 */
-	class EXCEPTION_EXPORT SerializationError : public Exception {
+	class EXCEPTION_EXPORT SerializationError : public NException {
+		STORM_CLASS;
 	public:
-		SerializationError(const String &w) : w(w) {}
-		virtual String what() const { return w; }
+		SerializationError(const wchar *msg) {
+			w = new (this) Str(msg);
+		}
+		STORM_CTOR SerializationError(Str *msg) {
+			w = msg;
+		}
+
+		virtual void STORM_FN message(StrBuf *to) const {
+			*to << w;
+		}
 	private:
-		String w;
+		Str *w;
 	};
 
 

@@ -1,16 +1,26 @@
 #pragma once
+#include "Core/Exception.h"
 
 namespace sound {
 
 	/**
 	 * Error.
 	 */
-	class EXCEPTION_EXPORT SoundOpenError : public Exception {
+	class EXCEPTION_EXPORT SoundOpenError : public NException {
+		STORM_CLASS;
 	public:
-		SoundOpenError(const String &msg) : msg(msg) {}
-		virtual String what() const { return L"Error while loading sound: " + msg; }
+		SoundOpenError(const wchar *msg) {
+			this->msg = new (e) Str(msg);
+		}
+		STORM_FN SoundOpenError(Str *msg) {
+			this->msg = msg;
+		}
+
+		virtual void STORM_FN message(StrBuf *to) const {
+			*to << msg;
+		}
 	private:
-		String msg;
+		Str *msg;
 	};
 
 	/**
@@ -18,8 +28,10 @@ namespace sound {
 	 */
 	class EXCEPTION_EXPORT SoundInitError : public Exception {
 	public:
-		SoundInitError() {}
-		virtual String what() const { return L"Failed to initialize sound output."; }
+		STORM_CTOR SoundInitError() {}
+		virtual void STORM_FN message(StrBuf *to) const {
+			*to << S("Failed to initialize sound output.");
+		}
 	};
 
 }

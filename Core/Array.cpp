@@ -7,6 +7,17 @@
 
 namespace storm {
 
+	ArrayError::ArrayError(Nat id, Nat count) : id(id), count(count), msg(null) {}
+
+	ArrayError::ArrayError(Nat id, Nat count, Str *msg) : id(id), count(count), msg(msg) {}
+
+	void ArrayError::message(StrBuf *to) const {
+		*to << S("Array error: Index ") << id << S(" out of bounds (of ") << count << S(").");
+		if (msg)
+			*to << S(" During ") << msg << S(".");
+	}
+
+
 	ArrayBase::ArrayBase(const Handle &type) : handle(type), data(null) {}
 
 	ArrayBase::ArrayBase(const Handle &type, Nat n, const void *src) : handle(type), data(null) {
@@ -80,7 +91,7 @@ namespace storm {
 
 	void ArrayBase::remove(Nat id) {
 		if (id >= count())
-			throw ArrayError(L"Index " + ::toS(id) + L" out of bounds (of " + ::toS(count()) + L").");
+			throw new (this) ArrayError(id, count());
 
 		handle.safeDestroy(ptr(id));
 		memmove(ptr(id), ptr(id + 1), (count() - id - 1)*handle.size);
@@ -89,7 +100,7 @@ namespace storm {
 
 	void ArrayBase::pop() {
 		if (empty())
-			throw ArrayError(L"Can not pop an empty array.");
+			throw new (this) ArrayError(0, 0, new (this) Str(S("pop")));
 
 		Nat id = count() - 1;
 		handle.safeDestroy(ptr(id));
@@ -98,7 +109,7 @@ namespace storm {
 
 	void ArrayBase::insertRaw(Nat to, const void *item) {
 		if (to > count())
-			throw ArrayError(L"Index " + ::toS(to) + L" out of bounds for insertion (of " + ::toS(count()) + L").");
+			throw new (this) ArrayError(to, count(), new (this) Str(S("insert")));
 
 		ensure(count() + 1);
 
@@ -173,7 +184,7 @@ namespace storm {
 
 	void *ArrayBase::randomRaw() const {
 		if (empty())
-			throw ArrayError(L"Can not acquire an element from an empty array.");
+			throw new (this) ArrayError(0, 0, new (this) Str(S("random")));
 
 		Nat id = rand(Nat(0), count());
 		return getRaw(id);
@@ -228,7 +239,7 @@ namespace storm {
 	}
 
 	void ArrayBase::outOfBounds(Nat n) const {
-		throw ArrayError(L"Index " + ::toS(n) + L" out of bounds (of " + ::toS(count()) + L").");
+		throw new (this) ArrayError(n, count());
 	}
 
 	ArrayBase::Iter ArrayBase::beginRaw() {
@@ -274,8 +285,14 @@ namespace storm {
 	}
 
 	void *ArrayBase::Iter::getRaw() const {
-		if (atEnd())
-			throw ArrayError(L"Iterator pointing to the end of an array being dereferenced.");
+		if (atEnd()) {
+			if (owner) {
+				throw new (owner) ArrayError(index, owner->count(), new (this) Str(S("iterator")));
+			} else {
+				// We need a fallback!
+				fail;
+			}
+		}
 		return owner->getRaw(index);
 	}
 

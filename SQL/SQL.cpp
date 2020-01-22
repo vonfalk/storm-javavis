@@ -34,23 +34,23 @@ namespace sql {
 	EmptyDB::EmptyDB() {}
 
 	Statement * EmptyDB::prepare(Str *str) {
-		throw NotSupported (L"Empty Database");
+		throw new (this) NotSupported(S("Empty Database"));
 	}
 
 	Long EmptyDB::lastRowId() const {
-		throw NotSupported (L"Empty Database");
+		throw new (this) NotSupported(S("Empty Database"));
 	}
 
 	void EmptyDB::close() {
-		throw NotSupported (L"Empty Database");
+		throw new (this) NotSupported(S("Empty Database"));
 	}
 
 	Array<Str*>* EmptyDB::tables() {
-		throw NotSupported (L"Empty Database");
+		throw new (this) NotSupported(S("Empty Database"));
 	}
 
 	Schema * STORM_FN EmptyDB::schema(Str * str) {
-		throw NotSupported (L"Empty Database");
+		throw new (this) NotSupported(S("Empty Database"));
 	}
 
 	/////////////////////////////////////

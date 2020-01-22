@@ -87,9 +87,9 @@ namespace storm {
 	 * Read/write primitive types.
 	 */
 
-	static void checkBuffer(const Buffer &b) {
+	static void checkBuffer(Engine &e, const Buffer &b) {
 		if (!b.full())
-			throw IoError(L"Not enough data to read primitive.");
+			throw new (e) IoError(S("Not enough data to read primitive."));
 	}
 
 	Bool IStream::readBool() {
@@ -99,14 +99,14 @@ namespace storm {
 	Byte IStream::readByte() {
 		GcPreArray<Byte, 1> d;
 		Buffer b = read(emptyBuffer(d));
-		checkBuffer(b);
+		checkBuffer(engine(), b);
 		return d.v[0];
 	}
 
 	Int IStream::readInt() {
 		GcPreArray<Byte, 4> d;
 		Buffer b = read(emptyBuffer(d));
-		checkBuffer(b);
+		checkBuffer(engine(), b);
 		Int r = Int(b[0]) << 24;
 		r |= Int(b[1]) << 16;
 		r |= Int(b[2]) << 8;
@@ -117,7 +117,7 @@ namespace storm {
 	Nat IStream::readNat() {
 		GcPreArray<Byte, 4> d;
 		Buffer b = read(emptyBuffer(d));
-		checkBuffer(b);
+		checkBuffer(engine(), b);
 		Nat r = Nat(b[0]) << 24;
 		r |= Nat(b[1]) << 16;
 		r |= Nat(b[2]) << 8;
@@ -128,7 +128,7 @@ namespace storm {
 	Long IStream::readLong() {
 		GcPreArray<Byte, 8> d;
 		Buffer b = read(emptyBuffer(d));
-		checkBuffer(b);
+		checkBuffer(engine(), b);
 		Long r = Long(b[0]) << 56;
 		r |= Long(b[1]) << 48;
 		r |= Long(b[2]) << 40;
@@ -143,7 +143,7 @@ namespace storm {
 	Word IStream::readWord() {
 		GcPreArray<Byte, 8> d;
 		Buffer b = read(emptyBuffer(d));
-		checkBuffer(b);
+		checkBuffer(engine(), b);
 		Long r = Long(b[0]) << 56;
 		r |= Long(b[1]) << 48;
 		r |= Long(b[2]) << 40;

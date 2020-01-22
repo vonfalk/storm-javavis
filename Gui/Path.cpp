@@ -153,7 +153,7 @@ namespace gui {
 
 		if (FAILED(r)) {
 			::release(g);
-			throw GuiError(L"Failed to create path geometry: " + ::toS(r));
+			throw new (this) GuiError(TO_S(this, S("Failed to create path geometry: ") << ::toS(r).c_str()));
 		}
 	}
 

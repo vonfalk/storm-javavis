@@ -157,17 +157,20 @@ namespace storm {
 	Url *STORM_FN cwdUrl(EnginePtr e);
 
 	// Some exceptions.
-	class EXCEPTION_EXPORT InvalidName : public Exception {
+	class EXCEPTION_EXPORT InvalidName : public NException {
+		STORM_CLASS;
 	public:
-		InvalidName() {}
-		InvalidName(const String &name) : name(name) {}
-		String name;
-		String what() const {
-			if (name.empty())
-				return L"Empty name segments are not allowed.";
+		STORM_CTOR InvalidName() { name = null; }
+		STORM_CTOR InvalidName(Str *name) { this->name = name; }
+
+		virtual void STORM_FN message(StrBuf *to) const {
+			if (!name)
+				*to << S("Empty name segments are not allowed.");
 			else
-				return L"The url part " + name + L" is not acceptable.";
+				*to << S("The url part ") << name << S(" is not acceptable.");
 		}
+	private:
+		MAYBE(Str *) name;
 	};
 
 }

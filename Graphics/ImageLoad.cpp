@@ -99,13 +99,17 @@ namespace graphics {
 		return output;
 	}
 
+	struct ErrorMgr : struct jpeg_error_mgr {
+		Engine *e;
+	};
+
 	void onJpegError(j_common_ptr info) {
-		struct jpeg_error_mgr *me = (struct jpeg_error_mgr *)info;
+		struct ErrorMgr *me = (struct ErrorMgr *)info;
 
 		char buffer[JMSG_LENGTH_MAX];
 		(*me->format_message)(info, buffer);
 
-		throw ImageLoadError(String(buffer));
+		throw new (*me->e) ImageLoadError(new (*me->e) Str(buffer));
 	}
 
 	class JpegInput : public jpeg_source_mgr {
@@ -169,7 +173,8 @@ namespace graphics {
 
 	Image *loadJpeg(IStream *from, const wchar *&error) {
 		struct jpeg_decompress_struct decode;
-		struct jpeg_error_mgr errorMgr;
+		ErrorMgr errorMgr;
+		errorMgr->e = &from->engine();
 		decode.err = jpeg_std_error(&errorMgr);
 		decode.err->error_exit = &onJpegError;
 
@@ -179,7 +184,7 @@ namespace graphics {
 			decode.src = &input;
 
 			if (jpeg_read_header(&decode, TRUE) != JPEG_HEADER_OK)
-				throw ImageLoadError(L"No JPEG header was found.");
+				throw new (from) ImageLoadError(S("No JPEG header was found."));
 
 			// Set up output format and start decompression.
 			decode.out_color_space = JCS_EXT_RGBA;

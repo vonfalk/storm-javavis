@@ -152,7 +152,7 @@ namespace storm {
 			MsgError(const wchar *what, SExpr *expr);
 			STORM_CTOR MsgError(Str *what, SExpr *expr);
 
-			virtual void message(StrBuf *to) const;
+			virtual void STORM_FN message(StrBuf *to) const;
 		private:
 			Str *msg;
 			SExpr *expr;

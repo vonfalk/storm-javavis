@@ -141,7 +141,10 @@ namespace gui {
 
 	protected:
 		// Create.
-		GlContext();
+		GlContext(Engine &e);
+
+		// Engine.
+		Engine &e;
 
 		// Create a cairo device for this context.
 		virtual cairo_device_t *createDevice() = 0;
@@ -151,10 +154,10 @@ namespace gui {
 		void destroyDevice();
 
 		// Create a device usable with X11.
-		static GlContext *createX11Context(GdkDisplay *display);
+		static GlContext *createX11Context(Engine &e, GdkDisplay *display);
 
 		// Create a device usable with Wayland.
-		static GlContext *createWaylandContext(GdkDisplay *display);
+		static GlContext *createWaylandContext(Engine &e, GdkDisplay *display);
 	};
 
 	/**
@@ -163,7 +166,7 @@ namespace gui {
 	class GlSoftwareContext : public GlContext {
 	public:
 		// Create.
-		GlSoftwareContext();
+		GlSoftwareContext(Engine &e);
 
 		// Create an off-screen surface.
 		virtual GlSurface *createSurface(Size size);
@@ -201,10 +204,10 @@ namespace gui {
 		~EglContext();
 
 		// Create an EGL device for X, returns null on failure.
-		static EglContext *create(Display *display);
+		static EglContext *create(Engine &e, Display *display);
 
 		// Create an EGL device for Wayland. Returns null on failure.
-		static EglContext *create(struct wl_display *display);
+		static EglContext *create(Engine &e, struct wl_display *display);
 
 		// Create a surface.
 		virtual GlSurface *createSurface(GdkWindow *window, Size size);
@@ -215,7 +218,7 @@ namespace gui {
 
 	private:
 		// Create.
-		EglContext(EGLDisplay display);
+		EglContext(Engine &e, EGLDisplay display);
 
 		// Initialize.
 		bool initialize();
@@ -249,7 +252,7 @@ namespace gui {
 		~GlxContext();
 
 		// Create a GLX device, returns null on failure.
-		static GlxContext *create(Display *display);
+		static GlxContext *create(Engine &e, Display *display);
 
 		// Create a surface.
 		virtual GlSurface *createSurface(GdkWindow *window, Size size);
@@ -260,7 +263,7 @@ namespace gui {
 
 	private:
 		// Create.
-		GlxContext(Display *display);
+		GlxContext(Engine &e, Display *display);
 
 		// Initialize.
 		bool initialize();

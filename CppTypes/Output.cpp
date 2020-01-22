@@ -155,7 +155,7 @@ static void genAbstractImpls(wostream &to, World &w) {
 			to << L"const ";
 		to << L"{\n";
 
-		to << L"\tthrow storm::AbstractFnCalled(L\"" << fn.name << L"\");\n";
+		to << L"\tthrow new (this) storm::AbstractFnCalled(S(\"" << fn.name << L"\"));\n";
 
 		to << L"}\n";
 	}

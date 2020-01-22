@@ -36,7 +36,7 @@ namespace storm {
 		if (Address *r = toStormUnsafe(e, addr))
 			return r;
 
-		throw NetError(L"Unsupported address family!");
+		throw new (e) NetError(S("Unsupported address family!"));
 	}
 
 	Address *toStormUnsafe(Engine &e, sockaddr *addr) {
@@ -51,7 +51,7 @@ namespace storm {
 	}
 
 	static void error(Str *src) {
-		throw NetError(L"Invalid address: " + ::toS(src));
+		throw new (src) NetError(TO_S(src, S("Invalid address: ") <<src));
 	}
 
 	static Address *to4Address(Str *str) {

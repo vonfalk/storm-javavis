@@ -5,12 +5,21 @@
 namespace storm {
 	STORM_PKG(core.io);
 
-	class EXCEPTION_EXPORT IoError : public Exception {
+	class EXCEPTION_EXPORT IoError : public NException {
+		STORM_CLASS;
 	public:
-		IoError(const String &w) : w(w) {}
-		virtual String what() const { return w; }
+		IoError(const wchar *msg) {
+			w = new (this) Str(msg);
+		}
+		STORM_CTOR IoError(Str *msg) {
+			w = msg;
+		}
+
+		virtual void STORM_FN message(StrBuf *to) const {
+			*to << w;
+		}
 	private:
-		String w;
+		Str *w;
 	};
 
 	/**

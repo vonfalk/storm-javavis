@@ -146,7 +146,7 @@ namespace storm {
 		STORM_CTOR DocError(Str *msg) {
 			w = msg;
 		}
-		virtual void message(StrBuf *to) const {
+		virtual void STORM_FN message(StrBuf *to) const {
 			*to << w;
 		}
 	private:

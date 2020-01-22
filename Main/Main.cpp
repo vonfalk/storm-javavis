@@ -40,8 +40,10 @@ void runRepl(Engine &e, const wchar_t *lang, Repl *repl) {
 		try {
 			if (repl->eval(line))
 				line = null;
-		} catch (const Exception &err) {
-			// TODO: Fix this whenever we have proper exceptions in Storm!
+		} catch (const NException *err) {
+			output->writeLine(err->toS());
+			line = null;
+		} catch (const ::Exception &err) {
 			std::wostringstream t;
 			t << err << endl;
 			output->writeLine(new (e) Str(t.str().c_str()));
@@ -257,9 +259,12 @@ int stormMain(int argc, const wchar_t *argv[]) {
 			result = 0;
 			break;
 		default:
-			throw InternalError(L"Unknown mode.");
+			throw new (e) InternalError(S("Unknown mode."));
 		}
-	} catch (const Exception &e) {
+	} catch (const NException *e) {
+		wcerr << e << endl;
+		return 1;
+	} catch (const ::Exception &e) {
 		// Sometimes, we need to print the exception before the engine is destroyed.
 		wcerr << e << endl;
 		return 1;
@@ -277,7 +282,7 @@ int stormMain(int argc, const wchar_t *argv[]) {
 int _tmain(int argc, const wchar *argv[]) {
 	try {
 		return stormMain(argc, argv);
-	} catch (const Exception &e) {
+	} catch (const ::Exception &e) {
 		wcerr << L"Unhandled exception: " << e << endl;
 		return 1;
 	}
@@ -293,7 +298,7 @@ int main(int argc, const char *argv[]) {
 			c_args[i] = args[i].c_str();
 
 		return stormMain(argc, &c_args[0]);
-	} catch (const Exception &e) {
+	} catch (const ::Exception &e) {
 		wcerr << "Unhandled exception: " << e << endl;
 		return 1;
 	}

@@ -247,7 +247,9 @@ void verifyGte(TestResult &r, const T &lhs, const U &rhs, const String &expr) {
 				__result__.failed++;							\
 				std::wcout << "Failed: " << title << std::endl; \
 			}													\
-		} catch (const Exception &e) {							\
+		} catch (const NException *e) {							\
+			OUTPUT_ERROR(title, e);								\
+		} catch (const ::Exception &e) {						\
 			OUTPUT_ERROR(title, e);								\
 		} catch (...) {											\
 			OUTPUT_ERROR(title, "unknown crash");				\
@@ -261,7 +263,9 @@ void verifyGte(TestResult &r, const T &lhs, const U &rhs, const String &expr) {
 			std::wostringstream __stream__;					\
 			__stream__ << title;							\
 			pred(__result__, expr, eq, __stream__.str());	\
-		} catch (const Exception &e) {						\
+		} catch (const NException *e) {						\
+			OUTPUT_ERROR(title, e);							\
+		} catch (const ::Exception &e) {					\
 			OUTPUT_ERROR(title, e);							\
 		} catch (...) {										\
 			OUTPUT_ERROR(title, "unknown crash");			\
@@ -308,7 +312,12 @@ void verifyGte(TestResult &r, const T &lhs, const U &rhs, const String &expr) {
 			__result__.failed++;										\
 			std::wcout << L"Failed: " << #expr << L", did not fail as expected" << std::endl; \
 		} catch (const type &) {										\
-		} catch (const Exception &e) {									\
+		} catch (const type *) {										\
+		} catch (const NException *e) {									\
+			std::wcout << L"Failed: " << #expr << L", did not throw " << #type << L" as expected." << std::endl; \
+			std::wcout << e << std::endl;								\
+			__result__.failed++;										\
+		} catch (const ::Exception &e) {								\
 			std::wcout << L"Failed: " << #expr << L", did not throw " << #type << L" as expected." << std::endl; \
 			std::wcout << e << std::endl;								\
 			__result__.failed++;										\
@@ -322,7 +331,9 @@ void verifyGte(TestResult &r, const T &lhs, const U &rhs, const String &expr) {
 		try {										\
 			__result__.total++;						\
 			expr;									\
-		} catch (const Exception &e) {				\
+		} catch (const NException *e) {				\
+			OUTPUT_ERROR(#expr, e);					\
+		} catch (const ::Exception &e) {			\
 			OUTPUT_ERROR(#expr, e);					\
 		} catch (...) {								\
 			OUTPUT_ERROR(#expr, "unknown crash");	\

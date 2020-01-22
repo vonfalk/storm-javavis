@@ -44,11 +44,11 @@ namespace sound {
 		} else if (checkHeader(src, "\xFF\xFB", false)) {
 			result = openMp3(src->randomAccess());
 		} else {
-			throw SoundOpenError(L"Unknown file format.");
+			throw new (src) SoundOpenError(S("Unknown file format."));
 		}
 
 		if (!result)
-			throw SoundOpenError(L"Failed to open file.");
+			throw new (src) SoundOpenError(S("Failed to open file."));
 
 		return result;
 	}
@@ -72,11 +72,11 @@ namespace sound {
 		} else if (checkHeader(src, "\xFF\xFB", false)) {
 			result = openMp3Stream(src);
 		} else {
-			throw SoundOpenError(L"Unknown file format.");
+			throw new (src) SoundOpenError(S("Unknown file format."));
 		}
 
 		if (!result)
-			throw SoundOpenError(L"Failed to open file.");
+			throw new (src) SoundOpenError(S("Failed to open file."));
 
 		return result;
 	}

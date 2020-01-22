@@ -28,8 +28,10 @@ namespace graphics {
 	}
 
 	Image *loadImage(Url *file) {
-		if (!file->exists())
-			throw ImageLoadError(L"The file " + ::toS(file) + L" does not exist.");
+		if (!file->exists()) {
+			Str *msg = TO_S(file, S("The file ") << file << S(" does not exist."));
+			throw new (file) ImageLoadError(msg);
+		}
 		return loadImage(file->read());
 	}
 
@@ -58,7 +60,7 @@ namespace graphics {
 		}
 
 		if (!loaded)
-			throw ImageLoadError(error);
+			throw new (from) ImageLoadError(error);
 
 		return loaded;
 	}

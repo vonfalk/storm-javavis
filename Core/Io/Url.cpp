@@ -24,12 +24,12 @@ namespace storm {
 	// Make sure 'str' do not contain any forbidden characters, and is not empty.
 	static void validate(Str *str) {
 		if (str->empty())
-			throw InvalidName();
+			throw new (str) InvalidName();
 
 		for (const wchar *s = str->c_str(); *s; s++) {
 			// Now, we only disallow separators in parts.
 			if (separator(*s))
-				throw InvalidName(str->c_str());
+				throw new (str) InvalidName(str);
 		}
 	}
 
@@ -195,7 +195,7 @@ namespace storm {
 
 	Url *Url::push(Url *url) {
 		if (url->absolute())
-			throw InvalidName(::toS(url));
+			throw new (this) InvalidName(url->toS());
 
 		Url *c = copy();
 		for (nat i = 0; i < url->parts->count(); i++)
@@ -264,7 +264,7 @@ namespace storm {
 
 	Url *Url::relative(Url *to) {
 		if (!absolute() || !to->absolute())
-			throw InvalidName(L"Both paths to 'relative' must be absolute.");
+			throw new (this) InvalidName(S("Both paths to 'relative' must be absolute."));
 
 		// Different protocols, not possible...
 		if (*protocol != *to->protocol)
@@ -299,35 +299,35 @@ namespace storm {
 	// Find all children URL:s.
 	Array<Url *> *Url::children() {
 		if (!protocol)
-			throw ProtocolNotSupported(L"children", L"<none>");
+			throw new (this) ProtocolNotSupported(S("children"), S("<none>"));
 		return protocol->children(this);
 	}
 
 	// Open this Url for reading.
 	IStream *Url::read() {
 		if (!protocol)
-			throw ProtocolNotSupported(L"read", L"<none>");
+			throw new (this) ProtocolNotSupported(S("read"), S("<none>"));
 		return protocol->read(this);
 	}
 
 	// Open this Url for writing.
 	OStream *Url::write() {
 		if (!protocol)
-			throw ProtocolNotSupported(L"write", L"<none>");
+			throw new (this) ProtocolNotSupported(S("write"), S("<none>"));
 		return protocol->write(this);
 	}
 
 	// Does this Url exist?
 	Bool Url::exists() {
 		if (!protocol)
-			throw ProtocolNotSupported(L"exists", L"<none>");
+			throw new (this) ProtocolNotSupported(S("exists"), S("<none>"));
 		return protocol->exists(this);
 	}
 
 	// Format.
 	Str *Url::format() {
 		if (!protocol)
-			throw ProtocolNotSupported(L"format", L"<none>");
+			throw new (this) ProtocolNotSupported(S("format"), S("<none>"));
 		return protocol->format(this);
 	}
 
@@ -407,7 +407,7 @@ namespace storm {
 	Url *cwdUrl(EnginePtr e) {
 		char path[PATH_MAX + 1] = { 0 };
 		if (!getcwd(path, PATH_MAX))
-			throw InternalError(L"Failed to get the current working directory.");
+			throw (e.v) InternalError(S("Failed to get the current working directory."));
 		return parsePath(e.v, toWChar(e.v, path)->v);
 	}
 
@@ -415,7 +415,7 @@ namespace storm {
 		char path[PATH_MAX + 1] = { 0 };
 		ssize_t r = readlink("/proc/self/exe", path, PATH_MAX);
 		if (r >= PATH_MAX || r < 0)
-			throw InternalError(L"Failed to get the path of the executable.");
+			throw (e.v) InternalError(S("Failed to get the path of the executable."));
 		return parsePath(e, toWChar(e, path)->v);
 	}
 #else

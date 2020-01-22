@@ -68,7 +68,7 @@ namespace storm {
 		mySize(size) {
 
 		if ((flags & typeValue) == 0)
-			throw InternalError(L"Can not use the Type constructor taking a Size to create class types.");
+			throw new (this) InternalError(S("Can not use the Type constructor taking a Size to create class types."));
 		init(null);
 	}
 
@@ -375,18 +375,18 @@ namespace storm {
 			return;
 
 		// Generate a nice error message...
-		std::wostringstream msg;
-		msg << L"The class " << identifier() << L" is abstract due to the following members:\n";
+		StrBuf *msg = new (this) StrBuf();
+		*msg << S("The class ") << identifier() << S(" is abstract due to the following members:\n");
 
 		VTable *vt = vtable();
 		if (vt) {
 			Array<Function *> *fns = vt->allSlots();
 			for (Nat i = 0; i < fns->count(); i++)
 				if (fns->at(i)->fnFlags() & fnAbstract)
-					msg << L" " << fns->at(i)->shortIdentifier() << L"\n";
+					*msg << S(" ") << fns->at(i)->shortIdentifier() << S("\n");
 		}
 
-		throw InstantiationError(pos, msg.str());
+		throw new (this) InstantiationError(pos, msg->toS());
 	}
 
 	void Type::add(Named *item) {
@@ -494,9 +494,11 @@ namespace storm {
 
 		// Complex types are actually fairly simple to handle.
 		if (!simple) {
-			if (ctor == null)
-				throw TypedefError(L"The type " + ::toS(identifier()) +
-								L" has a nontrivial destructor, but no constructor.");
+			if (ctor == null) {
+				Str *msg = TO_S(this, S("The type ") << identifier()
+								<< S(" has a nontrivial destructor, but no constructor."));
+				throw new (this) TypedefError(msg);
+			}
 
 			code::Ref d = dtor ? dtor->ref() : engine.ref(Engine::rFnNull);
 			return new (this) code::ComplexDesc(size(), ctor->ref(), d);
@@ -511,12 +513,16 @@ namespace storm {
 		Size mySize = size(); // Performs a layout of all variables if neccessary.
 		Nat elems = populateSimpleDesc(null);
 
-		if (elems == 0 && mySize != Size())
-			throw TypedefError(::toS(identifier()) + L": Trying to generate a type description for an empty object "
-							L"with a nonzero size. This is most likely not what you want. There are two possible "
-							L"reasons for why this might happen: Either, you try to access the type description of "
-							L"the type too early, or you are attempting to construct a non-standard type, "
-							L"in which case you should override 'createSimpleDesc' as well.");
+		if (elems == 0 && mySize != Size()) {
+			StrBuf *msg = new (this) StrBuf();
+			*msg << identifier();
+			*msg << S(": Trying to generate a type description for an empty object ")
+				S("with a nonzero size. This is most likely not what you want. There are two possible ")
+				S("reasons for why this might happen: Either, you try to access the type description of ")
+				S("the type too early, or you are attempting to construct a non-standard type, ")
+				S("in which case you should override 'createSimpleDesc' as well.");
+			throw new (this) TypedefError(msg->toS());
+		}
 
 		code::SimpleDesc *desc = new (this) code::SimpleDesc(mySize, elems);
 		populateSimpleDesc(desc);
@@ -545,7 +551,7 @@ namespace storm {
 			if (SimpleDesc *s = as<SimpleDesc>(desc))
 				merge(Offset(), pos, into, s);
 			else
-				throw TypedefError(L"Can not produce a SimpleDesc when the parent type is not a simple type!");
+				throw new (this) TypedefError(S("Can not produce a SimpleDesc when the parent type is not a simple type!"));
 		}
 
 		Array<MemberVar *> *vars = variables();
@@ -571,9 +577,9 @@ namespace storm {
 				merge(offset, pos, into, s);
 			} else if (ComplexDesc *c = as<ComplexDesc>(original)) {
 				UNUSED(c);
-				throw TypedefError(L"Can not produce a SimpleDesc from a type containing a complex type!");
+				throw new (this) TypedefError(S("Can not produce a SimpleDesc from a type containing a complex type!"));
 			} else {
-				throw TypedefError(L"Unknown type description: " + ::toS(original));
+				throw new (this) TypedefError(TO_S(this, S("Unknown type description: ") << original));
 			}
 		}
 
@@ -861,7 +867,7 @@ namespace storm {
 			(void)complex;
 			result = e.gc.allocType(GcType::tArray, type, size, 0);
 		} else {
-			throw InternalError(L"Unsupported type description of a value.");
+			throw new (type) InternalError(S("Unsupported type description of a value."));
 		}
 
 		assert(result);
@@ -1272,8 +1278,10 @@ namespace storm {
 
 	RootObject *alloc(Type *t) {
 		Function *ctor = t->defaultCtor();
-		if (!ctor)
-			throw InternalError(L"Can not create " + ::toS(t->identifier()) + L", no default constructor.");
+		if (!ctor) {
+			Str *msg = TO_S(t, S("Can not create ") << t->identifier() << S(", no default constructor."));
+			throw new (t) InternalError(msg);
+		}
 		void *data = runtime::allocObject(t->size().current(), t);
 		typedef void *(*Fn)(void *);
 		Fn fn = (Fn)ctor->ref().address();
@@ -1312,7 +1320,8 @@ namespace storm {
 		if (vtableInsertSuper(part, fn)) {
 			insert = true;
 		} else if (fn->fnFlags() & fnOverride) {
-			throw TypedefError(L"The function " + ::toS(fn->identifier()) + L" is marked 'override' but does not override.");
+			Str *msg = TO_S(this, S("The function ") << fn->identifier() << S(" is marked 'override' but does not override."));
+			throw new (this) TypedefError(msg);
 		}
 
 		// Always check subclasses in the case of a function marked 'final'.
@@ -1352,15 +1361,17 @@ namespace storm {
 	// See if the function 'child' is allowed to override 'parent'.
 	static void checkOverride(Function *parent, Function *child) {
 		if (parent->fnFlags() & fnFinal) {
-			throw TypedefError(L"The function " + ::toS(child->identifier()) + L" attempts to "
-							L"override the final function " + ::toS(parent->identifier()));
+			Str *msg = TO_S(parent, S("The function ") << child->identifier() << S(" attempts to ")
+							S("override the final function ") << parent->identifier() << S("."));
+			throw new (parent) TypedefError(msg);
 		}
 
 		if (!checkResult(parent, child)) {
-			throw TypedefError(L"The function " + ::toS(child->identifier()) + L" overrides " +
-							::toS(parent->identifier()) + L", but the return types are not compatible. "
-							L"Got " + ::toS(child->result) + L", but expected a type compatible with " +
-							::toS(parent->result) + L".");
+			Str *msg = TO_S(parent, S("The function ") << child->identifier() << S(" overrides ")
+							<< parent->identifier() << S(", but the return types are not compatible. ")
+							<< S("Got ") << child->result << S(", but expected a type compatible with ")
+							<< parent->result << S("."));
+			throw new (parent) TypedefError(msg);
 		}
 	}
 

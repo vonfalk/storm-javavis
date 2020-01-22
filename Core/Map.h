@@ -26,12 +26,20 @@ namespace storm {
 	/**
 	 * Exception thrown from the map.
 	 */
-	class EXCEPTION_EXPORT MapError : public Exception {
+	class EXCEPTION_EXPORT MapError : public NException {
+		STORM_CLASS;
 	public:
-		MapError(const String &msg) : msg(msg) {}
-		virtual String what() const { return L"Map error: " + msg; }
+		MapError(const wchar *msg) {
+			this->msg = new (this) Str(msg);
+		}
+		STORM_CTOR MapError(Str *msg) {
+			this->msg = msg;
+		}
+		virtual void STORM_FN message(StrBuf *to) const {
+			*to << S("Map error: ") << msg;
+		}
 	private:
-		String msg;
+		Str *msg;
 	};
 
 

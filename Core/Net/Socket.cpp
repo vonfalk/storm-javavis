@@ -10,7 +10,7 @@ namespace storm {
 	}
 
 	Socket::Socket(const Socket &o) : Object(o), attachedTo(os::Thread::invalid) {
-		throw NotSupported(L"Copying a socket");
+		throw new (this) NotSupported(S("Copying a socket"));
 	}
 
 	Socket::~Socket() {

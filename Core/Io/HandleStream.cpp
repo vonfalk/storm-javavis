@@ -257,7 +257,7 @@ namespace storm {
 	// 	  attachedTo(os::Thread::invalid) {}
 
 	HandleIStream::HandleIStream(const HandleIStream &o) : PeekIStream(o), attachedTo(os::Thread::invalid) {
-		throw NotSupported(L"Copying HandleIStream");
+		throw new (this) NotSupported(S("Copying HandleIStream"));
 	}
 
 	HandleIStream::~HandleIStream() {
@@ -303,7 +303,7 @@ namespace storm {
 	// 	  attachedTo(os::Thread::invalid) {}
 
 	HandleRIStream::HandleRIStream(const HandleRIStream &o) : attachedTo(os::Thread::invalid) {
-		throw NotSupported(L"Copying HandleIStream");
+		throw new (this) NotSupported(S("Copying HandleIStream"));
 	}
 
 	HandleRIStream::~HandleRIStream() {
@@ -388,7 +388,7 @@ namespace storm {
 	// 	  attachedTo(os::Thread::invalid) {}
 
 	HandleOStream::HandleOStream(const HandleOStream &o) : attachedTo(os::Thread::invalid) {
-		throw NotSupported(L"Copying HandleIStream");
+		throw new (this) NotSupported(S("Copying HandleIStream"));
 	}
 
 	HandleOStream::~HandleOStream() {

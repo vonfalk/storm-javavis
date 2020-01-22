@@ -126,7 +126,9 @@ namespace os {
 	static void onUncaughtException() {
 		try {
 			throw;
-		} catch (const Exception &e) {
+		} catch (const PtrThrowable *e) {
+			PLN("Uncaught exception from UThread: " << e->toCStr());
+		} catch (const ::Exception &e) {
 			PLN("Uncaught exception from UThread: " << e);
 		} catch (...) {
 			PLN("Uncaught exception from UThread: <unknown>");

@@ -15,17 +15,13 @@ namespace storm {
 	class EXCEPTION_EXPORT ArrayError : public NException {
 		STORM_CLASS;
 	public:
-		ArrayError(const wchar *msg) {
-			this->msg = new (this) Str(msg);
-		}
-		STORM_CTOR ArrayError(Str *msg) {
-			this->msg = msg;
-		}
-		virtual void message(StrBuf *to) const {
-			*to << S("Array error: ") << msg;
-		}
+		STORM_CTOR ArrayError(Nat id, Nat count);
+		STORM_CTOR ArrayError(Nat id, Nat count, Str *msg);
+		virtual void STORM_FN message(StrBuf *to) const;
 	private:
-		Str *msg;
+		Nat id;
+		Nat count;
+		MAYBE(Str *) msg;
 	};
 
 	/**

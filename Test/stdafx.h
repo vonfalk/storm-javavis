@@ -77,7 +77,9 @@ void verifyObjEq(TestResult &r, T *lhs, U *rhs, const String &expr) {
 		std::wostringstream __stream__;							\
 		__stream__ << title;									\
 		verifyObjEq(__result__, expr, eq, __stream__.str());	\
-	} catch (const Exception &e) {								\
+	} catch (const NException *e) {								\
+		OUTPUT_ERROR(title, e);									\
+	} catch (const ::Exception &e) {							\
 		OUTPUT_ERROR(title, e);									\
 	} catch (...) {												\
 		OUTPUT_ERROR(title, "unknown crash");					\
@@ -92,7 +94,7 @@ int callFn(const void *ptr, int v);
 int64 callFn(const void *ptr, int64 v);
 
 
-class Error : public Exception {
+class Error : public ::Exception {
 public:
 	String what() const { return L"Test error"; }
 };

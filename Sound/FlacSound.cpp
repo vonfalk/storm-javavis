@@ -32,11 +32,10 @@ namespace sound {
 											data);
 
 		if (r != FLAC__STREAM_DECODER_INIT_STATUS_OK)
-			throw SoundOpenError(L"Failed initializing FLAC decoder: " + ::toS(FLAC__StreamDecoderInitStatusString[r]));
+			throw new (this) SoundOpenError(TO_S(this, S("Failed initializing FLAC decoder: ") << FLAC__StreamDecoderInitStatusString[r]));
 
 		if (!FLAC__stream_decoder_process_until_end_of_metadata(data->flac))
-			throw SoundOpenError(L"Failed to decode FLAC metadata: "
-								+ ::toS(FLAC__StreamDecoderStateString[FLAC__stream_decoder_get_state(data->flac)]));
+			throw new (this) SoundOpenError(TO_S(this, S("Failed to decode FLAC metadata: ") << FLAC__StreamDecoderStateString[FLAC__stream_decoder_get_state(data->flac)]));
 	}
 
 	void FlacSound::close() {

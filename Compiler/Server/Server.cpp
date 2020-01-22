@@ -40,13 +40,13 @@ namespace storm {
 				try {
 					if (!process(msg))
 						break;
-				} catch (const MsgError &e) {
+				} catch (const MsgError *e) {
 					print(TO_S(this, S("While processing ") << msg << S(":")));
-					print(::toS(e));
-				} catch (const Exception &e) {
+					print(e->toS());
+				} catch (const NException *e) {
 					// TODO: Better error ouput for errors containing SrcPos.
 					print(TO_S(this, S("While processing ") << msg << S(":")));
-					print(::toS(e));
+					print(e->toS());
 				}
 			}
 
@@ -64,9 +64,9 @@ namespace storm {
 				Lock::L z(lock);
 				Range r = item->run(work);
 				updateLater(f, r);
-			} catch (const Exception &e) {
+			} catch (const NException *e) {
 				print(TO_S(this, S("While doing background work:")));
-				print(::toS(e));
+				print(e->toS());
 			}
 		}
 
@@ -206,8 +206,8 @@ namespace storm {
 			try {
 				f->findError();
 				print(S("No errors.\n"));
-			} catch (const SyntaxError &error) {
-				print(::toS(error));
+			} catch (const SyntaxError *error) {
+				print(error->toS());
 			}
 		}
 

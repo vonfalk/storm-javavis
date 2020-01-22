@@ -276,7 +276,7 @@ namespace storm {
 		wchar *end;
 		Int r = wcstol(data->v, &end, 10);
 		if (end != data->v + data->count - 1)
-			throw StrError(L"Not a number");
+			throw new (this) StrError(S("Not a number"));
 		return r;
 	}
 
@@ -284,7 +284,7 @@ namespace storm {
 		wchar *end;
 		Nat r = wcstoul(data->v, &end, 10);
 		if (end != data->v + data->count - 1)
-			throw StrError(L"Not a number");
+			throw new (this) StrError(S("Not a number"));
 		return r;
 	}
 
@@ -292,7 +292,7 @@ namespace storm {
 		wchar *end;
 		Long r = wcstoll(data->v, &end, 10);
 		if (end != data->v + data->count - 1)
-			throw StrError(L"Not a number");
+			throw new (this) StrError(S("Not a number"));
 		return r;
 	}
 
@@ -300,7 +300,7 @@ namespace storm {
 		wchar *end;
 		Word r = wcstoull(data->v, &end, 10);
 		if (end != data->v + data->count - 1)
-			throw StrError(L"Not a number");
+			throw new (this) StrError(S("Not a number"));
 		return r;
 	}
 
@@ -310,11 +310,11 @@ namespace storm {
 		std::wistream input(&buf);
 		input.imbue(std::locale::classic());
 		if (!(input >> r))
-			throw StrError(L"Not a floating-point number");
+			throw new (this) StrError(S("Not a floating-point number"));
 
 		wchar_t probe;
 		if (input >> probe)
-			throw StrError(L"Not a floating-point number");
+			throw new (this) StrError(S("Not a floating-point number"));
 
 		return r;
 	}
@@ -325,11 +325,11 @@ namespace storm {
 		std::wistream input(&buf);
 		input.imbue(std::locale::classic());
 		if (!(input >> r))
-			throw StrError(L"Not a floating-point number");
+			throw new (this) StrError(S("Not a floating-point number"));
 
 		wchar_t probe;
 		if (input >> probe)
-			throw StrError(L"Not a floating-point number");
+			throw new (this) StrError(S("Not a floating-point number"));
 
 		return r;
 	}
@@ -354,7 +354,7 @@ namespace storm {
 			wchar ch = data->v[i];
 			int digit = hexDigit(ch);
 			if (digit < 0)
-				throw StrError(L"Not a hexadecimal number");
+				throw new (this) StrError(S("Not a hexadecimal number"));
 			r = (r << 4) | Nat(digit);
 		}
 		return r;
@@ -693,7 +693,7 @@ namespace storm {
 		Nat count = from->readNat();
 		Buffer b = from->read(count);
 		if (!b.full())
-			throw SerializationError(L"Not enough data.");
+			throw new (this) SerializationError(S("Not enough data."));
 
 		size_t sz = convert((char *)b.dataPtr(), count, NULL, 0);
 		data = runtime::allocArray<wchar>(from->engine(), &wcharArrayType, sz);

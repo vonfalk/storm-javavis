@@ -75,7 +75,7 @@ namespace storm {
 	}
 
 	void PQueueBase::throwError() const {
-		throw PQueueError(L"Trying to access elements in an empty priority queue.");
+		throw new (this) PQueueError(S("Trying to access elements in an empty priority queue."));
 	}
 
 	void PQueueBase::ensure(Nat n) {

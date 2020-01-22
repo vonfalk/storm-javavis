@@ -12,7 +12,10 @@ namespace sound {
 
 		try {
 			init();
-		} catch (const Exception &e) {
+		} catch (const NException *e) {
+			std::wcout << e->toS() << endl;
+			soundDevice = SoundDevice();
+		} catch (const ::Exception &e) {
 			std::wcout << e.what() << endl;
 			soundDevice = SoundDevice();
 		}
@@ -97,7 +100,7 @@ namespace sound {
 	void AudioMgr::init() {
 		IDirectSound8 *dsound = null;
 		if (FAILED(DirectSoundCreate8(NULL, &dsound, NULL))) {
-			throw SoundInitError();
+			throw new (this) SoundInitError();
 		} else {
 			// This is fine since we do not do anything that depends on focus:
 			// https://groups.google.com/forum/#!msg/microsoft.public.win32.programmer.directx.audio/a7QhlgNFBpg/w8lTd8_NRSEJ
@@ -201,11 +204,11 @@ namespace sound {
 	void AudioMgr::init() {
 		soundDevice = alcOpenDevice(NULL);
 		if (!soundDevice)
-			throw SoundInitError();
+			throw new (this) SoundInitError();
 
 		soundContext = alcCreateContext(soundDevice, NULL);
 		if (!soundContext)
-			throw SoundInitError();
+			throw new (this) SoundInitError();
 
 		alcMakeContextCurrent(soundContext);
 

@@ -63,14 +63,14 @@ namespace sound {
 				mpg123_delete(h);
 				h = null;
 
-				throw SoundOpenError(L"Expected float output from mpg123.");
+				throw new (this) SoundOpenError(L"Expected float output from mpg123.");
 			}
 		} else {
-			String msg(mpg123_strerror(h));
+			Str *msg = new (this) Str(mpg123_strerror(h));
 			mpg123_delete(h);
 			h = null;
 
-			throw SoundOpenError(msg);
+			throw new (this) SoundOpenError(msg);
 		}
 	}
 

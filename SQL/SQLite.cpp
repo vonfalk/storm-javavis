@@ -109,15 +109,15 @@ namespace sql {
 	SQLite::SQLite(Url * str) {
 		int rc = sqlite3_open16(str -> format() -> c_str(), &db);
 
-		if(rc)
-			throw InternalError(L"Can't open database");
+		if (rc)
+			throw new (this) InternalError(TO_S(this, S("Can't open database: ") << rc));
 	}
 
 	SQLite::SQLite() {
 		int rc = sqlite3_open(":memory:", &db);
 
-		if(rc)
-			throw InternalError(L"Can't open database");
+		if (rc)
+			throw new (this) InternalError(TO_S(this, S("Can't open database: ") << rc));
 	}
 
 	Statement * SQLite::prepare(Str *str) {

@@ -20,7 +20,7 @@ namespace gui {
 
 	void Container::add(Window *child) {
 		if (child->parent())
-			throw GuiError(L"Can not attach a child multiple times or to multiple parents.");
+			throw new (this) GuiError(S("Can not attach a child multiple times or to multiple parents."));
 
 		nat id = allocate(child);
 		child->attachParent(this);
@@ -92,7 +92,7 @@ namespace gui {
 			return;
 
 		if (ids->has(id))
-			throw GuiError(L"The id " + ::toS(id) + L" is already in use.");
+			throw new (this) GuiError(TO_S(this, S("The id ") << id << S(" is already in use.")));
 
 		ids->put(id, window);
 		windows->put(window, id);

@@ -337,6 +337,9 @@ namespace storm {
 
 	/**
 	 * Errors thrown when interacting with the GC.
+	 *
+	 * We don't try to use the Storm interface here, since the GC often throws when it is out of memory.
+	 * We might want to fix that some day.
 	 */
 	class GcError : public Exception {
 	public:

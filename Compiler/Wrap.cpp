@@ -5,7 +5,8 @@
 namespace storm {
 
 	void throwSyntaxError(SrcPos pos, Str *msg) {
-		throw SyntaxError(pos, msg->c_str());
+		TODO(L"REMOVE ME!");
+		throw new (msg) SyntaxError(pos, msg);
 	}
 
 }

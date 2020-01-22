@@ -9,21 +9,21 @@
 
 namespace storm {
 
-	static void checkType(Value type) {
+	static void checkType(Engine &e, Value type) {
 		if (!type.type)
-			throw TypedefError(L"Unable to create a variable of type 'void'.");
+			throw new (e) TypedefError(S("Unable to create a variable of type 'void'."));
 	}
 
 	Variable::Variable(Str *name, Value type) :
 		Named(name), type(type.asRef(false)) {
 
-		checkType(type);
+		checkType(engine(), type);
 	}
 
 	Variable::Variable(Str *name, Value type, Type *member) :
 		Named(name, new (name) Array<Value>(1, Value(member))), type(type) {
 
-		checkType(type);
+		checkType(engine(), type);
 	}
 
 
@@ -68,9 +68,9 @@ namespace storm {
 
 		FnType *fnType = as<FnType>(runtime::typeOf(initializer));
 		if (!fnType)
-			throw RuntimeError(L"Invalid type of the initializer passed to GlobalVar. Must be a function pointer.");
+			throw new (this) RuntimeError(S("Invalid type of the initializer passed to GlobalVar. Must be a function pointer."));
 		if (fnType->params->count() != 1)
-			throw RuntimeError(L"An initializer provided to GlobalVar may not take parameters.");
+			throw new (this) RuntimeError(S("An initializer provided to GlobalVar may not take parameters."));
 
 		hasArray = type.isValue();
 	}
@@ -89,13 +89,15 @@ namespace storm {
 		// Find the 'call' function so that we may call that.
 		Function *callFn = as<Function>(fnType->find(S("call"), thisPtr(fnType), engine().scope()));
 		if (!callFn)
-			throw RuntimeError(L"Can not find 'call()' in the provided function pointer. Is the signature correct?");
+			throw new (this) RuntimeError(S("Can not find 'call()' in the provided function pointer. Is the signature correct?"));
 
 		// Check the return type.
-		if (!type.canStore(callFn->result))
-			throw RuntimeError(L"The global variable " + ::toS(name) +
-							L" can not store the type returned from the initializer. Expected " +
-							::toS(type) + L", got " + ::toS(callFn->result) + L".");
+		if (!type.canStore(callFn->result)) {
+			Str *msg = TO_S(this, S("The global variable ") << name
+							<< S(" can not store the type returned from the initializer. Expected ")
+							<< type << S(", got ") << callFn->result << S("."));
+			throw new (this) RuntimeError(msg);
+		}
 
 		void *outPtr = &data;
 		if (hasArray) {

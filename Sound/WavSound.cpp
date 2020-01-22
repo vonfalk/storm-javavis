@@ -31,7 +31,7 @@ namespace sound {
 		GcPreArray<byte, sizeof(T)> data;
 		storm::Buffer b = from->read(storm::emptyBuffer(data));
 		if (!b.full())
-			throw SoundOpenError(L"Not enough data.");
+			throw new (from) SoundOpenError(S("Not enough data."));
 
 		memcpy(&out, b.dataPtr(), sizeof(T));
 	}
@@ -41,19 +41,19 @@ namespace sound {
 		fill(src, riff);
 
 		if (strncmp(riff.header, "RIFF", 4) != 0)
-			throw SoundOpenError(L"Invalid header.");
+			throw new (this) SoundOpenError(S("Invalid header."));
 		if (strncmp(riff.format, "WAVE", 4) != 0)
-			throw SoundOpenError(L"Unsupported wave format.");
+			throw new (this) SoundOpenError(S("Unsupported wave format."));
 
 		FmtChunk fmt;
 		fill(src, fmt);
 
 		if (strncmp(fmt.chunkId, "fmt ", 4) != 0)
-			throw SoundOpenError(L"Invalid subchunk.");
+			throw new (this) SoundOpenError(S("Invalid subchunk."));
 		if (fmt.size != 16)
-			throw SoundOpenError(L"Invalid chunk size.");
+			throw new (this) SoundOpenError(S("Invalid chunk size."));
 		if (fmt.audioFmt != 1)
-			throw SoundOpenError(L"Compression in wave files is not supported.");
+			throw new (this) SoundOpenError(S("Compression in wave files is not supported."));
 
 		rate = fmt.rate;
 		ch = fmt.numCh;
@@ -61,13 +61,13 @@ namespace sound {
 		sampleSize = fmt.blockAlign;
 
 		if (sampleDepth != 8 && sampleDepth != 16)
-			throw SoundOpenError(L"Unsupported bit depth.");
+			throw new (this) SoundOpenError(S("Unsupported bit depth."));
 
 		DataChunk data;
 		fill(src, data);
 
 		if (strncmp(data.chunkId, "data", 4) != 0)
-			throw SoundOpenError(L"Invalid data chunk.");
+			throw new (this) SoundOpenError(S("Invalid data chunk."));
 		if (seekable)
 			dataStart = ((RIStream *)src)->tell();
 		dataLength = data.size / sampleSize;

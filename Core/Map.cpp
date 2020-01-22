@@ -144,7 +144,7 @@ namespace storm {
 			*buf << L"The key ";
 			(*keyT.toSFn)(key, buf);
 			*buf << L" is not in the map.";
-			throw MapError(::toS(buf));
+			throw new (this) MapError(buf->toS());
 		}
 		return valPtr(slot);
 	}

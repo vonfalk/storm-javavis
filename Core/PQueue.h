@@ -9,12 +9,19 @@ namespace storm {
 	/**
 	 * Custom error type.
 	 */
-	class EXCEPTION_EXPORT PQueueError : public Exception {
+	class EXCEPTION_EXPORT PQueueError : public NException {
 	public:
-		PQueueError(const String &msg) : msg(msg) {}
-		virtual String what() const { return L"PQueue error: " + msg; }
+		PQueueError(const wchar *msg) {
+			this->msg = new (this) Str(msg);
+		}
+		STORM_CTOR PQueueError(Str *msg) {
+			this->msg = msg;
+		}
+		virtual void STORM_FN message(StrBuf *to) const {
+			*to << msg;
+		}
 	private:
-		String msg;
+		Str *msg;
 	};
 
 	/**

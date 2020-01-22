@@ -216,7 +216,7 @@ namespace sound {
 		}
 
 		if (FAILED(r))
-			throw SoundInitError();
+			throw new (this) SoundInitError();
 
 		::release(notify);
 		::release(b);
@@ -329,7 +329,7 @@ namespace sound {
 		buffer = source;
 
 		if (!buffer)
-			throw SoundInitError();
+			throw new (this) SoundInitError();
 
 		alSourcef(source, AL_PITCH, 1);
 		alSourcef(source, AL_GAIN, 1);
@@ -342,7 +342,7 @@ namespace sound {
 			ALuint buf = 0;
 			alGenBuffers(1, &buf);
 			if (!buf)
-				throw SoundInitError();
+				throw new (this) SoundInitError();
 
 			partInfo->v[i].alBuffer = buf;
 		}

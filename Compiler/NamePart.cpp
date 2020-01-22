@@ -170,7 +170,7 @@ namespace storm {
 					v->push(scope.value(n, SrcPos()));
 				}
 			}
-		} catch (const Exception &) {
+		} catch (const NException *) {
 			// Return null as per specification.
 			return null;
 		}

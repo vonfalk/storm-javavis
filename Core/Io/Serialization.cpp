@@ -147,10 +147,10 @@ namespace storm {
 
 		Type *t = runtime::fromIdentifier(name);
 		if (!t)
-			throw SerializationError(L"Unknown type: " + ::toS(demangleName(name)));
+			throw new (this) SerializationError(TO_S(this, S("Unknown type: ") << demangleName(name)));
 		const Handle &h = runtime::typeHandle(t);
 		if (!h.serializedTypeFn)
-			throw SerializationError(L"The type " + ::toS(demangleName(name)) + L" is not serializable.");
+			throw new (this) SerializationError(TO_S(this, S("The type ") << demangleName(name) << S(" is not serializable."));
 
 		info = (*h.serializedTypeFn)();
 	}
@@ -250,10 +250,12 @@ namespace storm {
 
 		Desc *expected = findInfo(info.expectedType);
 		if (!expected->isValue())
-			throw SerializationError(L"Expected a value type, but got a class type.");
-		if (expected->info->type != type)
-			throw SerializationError(L"Type mismatch. Expected " + ::toS(runtime::typeName(expected->info->type)) +
-									L" but got " + ::toS(runtime::typeName(type)) + L".");
+			throw new (this) SerializationError(S("Expected a value type, but got a class type."));
+		if (expected->info->type != type) {
+			Str *msg = TO_S(this, S("Type mismatch. Expected ") << runtime::typeName(expected->info->type)
+							<< S(" but got ") << runtime::typeName(type) << S("."));
+			throw new (this) SerializationError(msg);
+		}
 
 		readValueI(expected, out);
 	}
@@ -286,9 +288,9 @@ namespace storm {
 		Info info = start();
 		Desc *expected = findInfo(info.expectedType);
 		if (!expected->isValue())
-			throw SerializationError(L"Expected a value type, but got a class type.");
+			throw new (this) SerializationError(S("Expected a value type, but got a class type."));
 		if (id != info.expectedType)
-			throw SerializationError(L"Mismatch of built-in types!");
+			throw new (this) SerializationError(S("Mismatch of built-in types!"));
 
 		if (info.result.any()) {
 			// TODO: Check type!
@@ -303,9 +305,9 @@ namespace storm {
 		Info info = start();
 		Desc *expected = findInfo(info.expectedType);
 		if (expected->isValue())
-			throw SerializationError(L"Expected a class type, but got a value type.");
+			throw new (this) SerializationError(S("Expected a class type, but got a value type."));
 		if (id != info.expectedType)
-			throw SerializationError(L"Mismatch of built-in types!");
+			throw new (this) SerializationError(S("Mismatch of built-in types!"));
 
 		if (info.result.any()) {
 			// TODO: Check type?
@@ -360,7 +362,7 @@ namespace storm {
 		Nat objId = from->readNat();
 		if (Object *old = objIds->get(objId, null)) {
 			if (!runtime::isA(old, t))
-				throw SerializationError(L"Wrong type found during deserialization.");
+				throw new (this) SerializationError(S("Wrong type found during deserialization."));
 			return old;
 		}
 
@@ -370,7 +372,7 @@ namespace storm {
 
 		// Make sure the type we're about to create is appropriate.
 		if (!runtime::isA(actual->info->type, t))
-			throw SerializationError(L"Wrong type found during deserialization.");
+			throw new (this) SerializationError(S("Wrong type found during deserialization."));
 
 		// Allocate the object and deserialize by calling the constructor, just like we do with value types.
 		Object *created = (Object *)runtime::allocObject(0, actual->info->type);
@@ -393,12 +395,12 @@ namespace storm {
 		// Some other type. Examine what we expect to read.
 		Cursor &at = depth->last();
 		if (at.customDesc())
-			throw SerializationError(L"Can not use 'start' when serializing custom types.");
+			throw new (this) SerializationError(S("Can not use 'start' when serializing custom types."));
 
 		// Process objects until we find something we can return!
 		while (true) {
 			if (!at.any())
-				throw SerializationError(L"Trying to deserialize too many members.");
+				throw new (this) SerializationError(S("Trying to deserialize too many members."));
 
 			const Member &expected = at.current();
 			at.next();
@@ -420,11 +422,11 @@ namespace storm {
 
 	void ObjIStream::end() {
 		if (depth->empty())
-			throw SerializationError(L"Mismatched calls to startX during dedeserialization!");
+			throw new (this) SerializationError(S("Mismatched calls to startX during dedeserialization!"));
 
 		Cursor end = depth->last();
 		if (!end.atEnd())
-			throw SerializationError(L"Missing fields during deserialization!");
+			throw new (this) SerializationError(S("Missing fields during deserialization!"));
 
 		depth->pop();
 
@@ -481,7 +483,7 @@ namespace storm {
 	void ObjIStream::validateMembers(Desc *stream) {
 		SerializedStdType *our = as<SerializedStdType>(stream->info);
 		if (!our)
-			throw SerializationError(L"Trying to deserialize a standard type into a non-compatible type!");
+			throw new (this) SerializationError(S("Trying to deserialize a standard type into a non-compatible type!"));
 
 		// Note: We check the parent type when reading objects. Otherwise, we need quite a bit of
 		// bookkeeping to know when to validate parents of all types unless we want to check all
@@ -524,8 +526,9 @@ namespace storm {
 				// Otherwise, an error.
 
 				// TODO: When we have support for default initialization, take that into consideration here!
-				throw SerializationError(L"The member " + ::toS(ourMember.name) + L", required for type " +
-										::toS(runtime::typeName(our->type)) + L", is not present in the stream.");
+				Str *msg = TO_S(this, S("The member ") << ourMember.name << S(", required for type ")
+								<< runtime::typeName(our->type) << S(", is not present in the stream."));
+				throw new (this) SerializationError(msg);
 			}
 		}
 
@@ -544,20 +547,22 @@ namespace storm {
 	void ObjIStream::validateTuple(Desc *stream) {
 		SerializedTuples *our = as<SerializedTuples>(stream->info);
 		if (!our)
-			throw SerializationError(L"Trying to deserialize a type type into a non-compatible type!");
+			throw new (this) SerializationError(S("Trying to deserialize a type type into a non-compatible type!"));
 
 		// We don't try to do anything intelligent here. We just check so that the number of
 		// elements in each tuple match.
 		Nat tupleCount = stream->members->count() - 1;
-		if (our->count() != tupleCount)
-			throw SerializationError(L"Tuple size mismatch. Stream: " + ::toS(tupleCount) +
-									L", here: " + ::toS(our->count()) + L".");
+		if (our->count() != tupleCount) {
+			Str *msg = TO_S(this, S("Tuple size mismatch. Stream: ") << tupleCount
+							<< S(", here: ") << our->count() << S("."));
+			throw new (msg) SerializationError(msg);
+		}
 	}
 
 	void ObjIStream::validateMaybe(Desc *stream) {
 		SerializedMaybe *our = as<SerializedMaybe>(stream->info);
 		if (!our)
-			throw SerializationError(L"Trying to deserialize a type into a non-compatible type!");
+			throw new (this) SerializationError(S("Trying to deserialize a type into a non-compatible type!"));
 
 		// Nothing more to verify.
 	}
@@ -617,11 +622,12 @@ namespace storm {
 			// are sliced. Therefore, we don't need to search for the proper type as we need to do
 			// for classes.
 			PVAR(runtime::typeName(expected));
-			throw SerializationError(L"Unexpected value type during serialization.");
+			Str *msg = TO_S(this, S("Unexpected value type during serialization. Expected: ") << runtime::typeName(expected));
+			throw new (this) SerializationError(msg);
 		}
 
 		if (type->info() & typeInfo::classType)
-			throw SerializationError(L"Expected a class type, but a value type was provided!");
+			throw new (this) SerializationError(S("Expected a class type, but a value type was provided!"));
 
 		writeInfo(type);
 		return true;
@@ -637,7 +643,7 @@ namespace storm {
 			while (expectedDesc && expectedDesc->type != expected)
 				expectedDesc = expectedDesc->super();
 			if (!expectedDesc)
-				throw SerializationError(L"The provided type description does not match the serialized object.");
+				throw new (this) SerializationError(S("The provided type description does not match the serialized object."));
 
 			writeInfo(expectedDesc);
 
@@ -662,7 +668,7 @@ namespace storm {
 		}
 
 		if ((type->info() & typeInfo::classType) != typeInfo::classType)
-			throw SerializationError(L"Expected a value type, but a class type was provided.");
+			throw new (this) SerializationError(S("Expected a value type, but a class type was provided."));
 
 		writeInfo(type);
 		return true;
@@ -686,7 +692,7 @@ namespace storm {
 		} else {
 			SerializedType::Cursor &at = depth->last();
 			if (!at.any())
-				throw SerializationError(L"Trying to serialize too many fields.");
+				throw new (this) SerializationError(S("Trying to serialize too many fields."));
 
 			if (at.isParent())
 				r = null;
@@ -702,11 +708,11 @@ namespace storm {
 
 	void ObjOStream::end() {
 		if (depth->empty())
-			throw SerializationError(L"Mismatched calls to startX during serialization!");
+			throw new (this) SerializationError(S("Mismatched calls to startX during serialization!"));
 
 		SerializedType::Cursor end = depth->last();
 		if (!end.atEnd())
-			throw SerializationError(L"Missing fields during serialization!");
+			throw new (this) SerializationError(S("Missing fields during serialization!"));
 
 		depth->pop();
 

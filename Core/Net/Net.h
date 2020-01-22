@@ -36,12 +36,21 @@ namespace storm {
 	/**
 	 * Custom error type.
 	 */
-	class EXCEPTION_EXPORT NetError : public Exception {
+	class EXCEPTION_EXPORT NetError : public NException {
+		STORM_CLASS;
 	public:
-		NetError(const String &msg) : msg(msg) {}
-		virtual String what() const { return L"Net error: " + msg; }
+		NetError(const wchar *msg) {
+			this->msg = new (this) Str(msg);
+		}
+		STORM_CTOR NetError(Str *msg) {
+			this->msg = msg;
+		}
+
+		virtual void STORM_FN message(StrBuf *to) const {
+			*to << S("Net error: ") << msg;
+		}
 	private:
-		String msg;
+		Str *msg;
 	};
 
 	// Initialize sockets (if needed).
