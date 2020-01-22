@@ -162,8 +162,8 @@ namespace storm {
 			if (Rule *r = as<Rule>(pkg->find(name, root))) {
 				return new (pkg) InfoParser(r, backend);
 			} else {
-				Str *msg = TO_S(engine(), S("Can not find the rule ") << name << S(" in ") << pkg->identifier());
-				throw new (this) InternalError(msg);
+				Str *msg = TO_S(pkg, S("Can not find the rule ") << name << S(" in ") << pkg->identifier());
+				throw new (pkg) InternalError(msg);
 			}
 		}
 

@@ -84,7 +84,7 @@ namespace storm {
 		// Call 'toS' on the StrBuf to get the string.
 		Function *toS = as<Function>(strBufT->find(S("toS"), thisPtr(strBufT), engine().scope()));
 		if (!toS)
-			throw (this) InternalError(S("Can not find 'toS' for the StrBuf type!"));
+			throw new (this) InternalError(S("Can not find 'toS' for the StrBuf type!"));
 
 		CodeResult *str = new (this) CodeResult(result, to->l->root());
 		p = new (this) Array<Operand>();

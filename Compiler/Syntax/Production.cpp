@@ -41,7 +41,7 @@ namespace storm {
 				if (!p) {
 					Str *msg = TO_S(this, S("The element ") << decl->parent << S(" was not found.")
 									S(" It must refer to a rule."));
-					throw (this) SyntaxError(decl->pos, msg);
+					throw new (this) SyntaxError(decl->pos, msg);
 				}
 
 				parent = as<Rule>(p);

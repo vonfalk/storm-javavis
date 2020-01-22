@@ -23,7 +23,7 @@ BEGIN_TESTX(StackTraceTest, OS) {
 		vector<os::Thread> threads = g.threads();
 		threads.push_back(a);
 
-		vector<vector<StackTrace>> traces = os::stackTraces(threads);
+		vector<vector<::StackTrace>> traces = os::stackTraces(threads);
 
 		for (int i = 0; i < 4; i++)
 			waitSema.up();

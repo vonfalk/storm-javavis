@@ -4,6 +4,7 @@
 #include "StrBuf.h"
 #include "GcType.h"
 #include "GcWatch.h"
+#include "Exception.h"
 #include "Utils/Bitwise.h"
 #include <iomanip>
 

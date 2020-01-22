@@ -150,7 +150,7 @@ namespace storm {
 			throw new (this) SerializationError(TO_S(this, S("Unknown type: ") << demangleName(name)));
 		const Handle &h = runtime::typeHandle(t);
 		if (!h.serializedTypeFn)
-			throw new (this) SerializationError(TO_S(this, S("The type ") << demangleName(name) << S(" is not serializable."));
+			throw new (this) SerializationError(TO_S(this, S("The type ") << demangleName(name) << S(" is not serializable.")));
 
 		info = (*h.serializedTypeFn)();
 	}

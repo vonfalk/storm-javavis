@@ -1,5 +1,5 @@
 #pragma once
-#include "Utils/Exception.h"
+#include "Core/Exception.h"
 #include "OS/Handle.h"
 #include "Core/Timing.h"
 
@@ -32,6 +32,7 @@
 
 
 namespace storm {
+	STORM_PKG(core.net);
 
 	/**
 	 * Custom error type.

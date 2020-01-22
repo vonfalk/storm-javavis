@@ -215,7 +215,7 @@ namespace storm {
 		CtorCall *defaultCtor(const SrcPos &pos, Scope scope, Type *t) {
 			Function *f = t->defaultCtor();
 			if (!f)
-				throw new (this) SyntaxError(pos, TO_S(engine(), S("No default constructor for ") << t->identifier()));
+				throw new (t) SyntaxError(pos, TO_S(t, S("No default constructor for ") << t->identifier()));
 
 			Actuals *actual = new (t) Actuals();
 			return new (t) CtorCall(pos, scope, f, actual);
@@ -224,7 +224,7 @@ namespace storm {
 		CtorCall *copyCtor(const SrcPos &pos, Scope scope, Type *t, Expr *src) {
 			Function *f = t->copyCtor();
 			if (!f)
-				throw new (this) SyntaxError(pos, TO_S(engine(), S("No copy-constructor for ") << t->identifier()));
+				throw new (t) SyntaxError(pos, TO_S(t, S("No copy-constructor for ") << t->identifier()));
 
 			Actuals *actual = new (t) Actuals();
 			actual->add(src);
@@ -546,7 +546,7 @@ namespace storm {
 
 			this->value = castTo(value, r.asRef(false), scope);
 			if (!this->value) {
-				Str *msg = TO_S(engine(), S("Can not store a ") << alue->result() << S(" in ") << r);
+				Str *msg = TO_S(engine(), S("Can not store a ") << value->result() << S(" in ") << r);
 				throw new (this) TypeError(to->pos, msg);
 			}
 		}
@@ -671,7 +671,7 @@ namespace storm {
 
 			FnCall *fnCall = as<FnCall>(expr);
 			if (!fnCall) {
-				Str *msg = TO_S(engine(), S("The spawn-syntax is not applicable to anything but functions")
+				Str *msg = TO_S(expr, S("The spawn-syntax is not applicable to anything but functions")
 								S(" at the moment. This is a ") << runtime::typeOf(expr)->identifier());
 				throw new (expr) SyntaxError(expr->pos, msg);
 			}

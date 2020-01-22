@@ -34,7 +34,7 @@ namespace storm {
 		assert(to, L"Too early to use 'parserType'");
 		ParserType *found = as<ParserType>(to->find(S("Parser"), Value(rule), Scope()));
 		if (!found)
-			throw InternalError(L"Can not find the parser type!");
+			throw new (rule) InternalError(S("Can not find the parser type!"));
 		return found;
 	}
 

@@ -410,8 +410,8 @@ namespace storm {
 		if (result)
 			return result;
 
-		Str *msg = TO_S(inside, S("The function ") << part << S(" is not inside ") << inside->identifier() << S("."))
-		throw InternalError(msg);
+		Str *msg = TO_S(inside, S("The function ") << part << S(" is not inside ") << inside->identifier() << S("."));
+		throw new (inside) InternalError(msg);
 	}
 
 	Function *findStormFn(Value inside, const wchar *name, Array<Value> *params) {

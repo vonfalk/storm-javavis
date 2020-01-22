@@ -1,7 +1,7 @@
 #pragma once
 #include "Core/Object.h"
 #include "Core/GcArray.h"
-#include "Core/Array.h" // For ArrayError.
+#include "Core/Exception.h"
 #include "Value.h"
 
 namespace storm {
@@ -48,7 +48,7 @@ namespace storm {
 		// Access.
 		Value &STORM_FN operator [](Nat id) {
 			if (id > count())
-				throw new (this) ArrayError(TO_S(this, S("Index ") << id << S(" out of bounds.")));
+				throw new (this) ArrayError(id, count());
 			return data->v[id];
 		}
 

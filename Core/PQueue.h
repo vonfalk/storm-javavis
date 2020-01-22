@@ -2,6 +2,7 @@
 #include "Fn.h"
 #include "Array.h"
 #include "GcArray.h"
+#include "Exception.h"
 
 namespace storm {
 	STORM_PKG(core);

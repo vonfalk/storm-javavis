@@ -30,7 +30,7 @@ namespace storm {
 			Named *found = type.type->find(part, scope);
 			Function *toCall = as<Function>(found);
 			if (!toCall)
-				throw new (name) InternalError(TO_S(name, part << S(" was not found!"));
+				throw new (name) InternalError(TO_S(name, part << S(" was not found!")));
 
 			return new (me) FnCall(me->pos, scope, toCall, actual);
 		}
@@ -43,7 +43,8 @@ namespace storm {
 			try {
 				return callMember(scope, name, me, param);
 			} catch (const InternalError *e) {
-				throw new (e) SyntaxError(pos, e.message());
+				const NException *z = e;
+				throw new (e) SyntaxError(pos, z->message());
 			}
 		}
 

@@ -121,7 +121,7 @@ namespace storm {
 
 		Function *r = as<Function>(p->find(S("clone"), params, e.scope()));
 		if (!r)
-			throw (t) InternalError(TO_S(t->engine, S("Can not finde core.clone for ") << t->identifier()));
+			throw new (t) InternalError(TO_S(t->engine, S("Can not finde core.clone for ") << t->identifier()));
 		return r;
 	}
 

@@ -23,25 +23,6 @@ namespace storm {
 	 * accordingly.
 	 */
 
-	/**
-	 * Exception thrown from the map.
-	 */
-	class EXCEPTION_EXPORT MapError : public NException {
-		STORM_CLASS;
-	public:
-		MapError(const wchar *msg) {
-			this->msg = new (this) Str(msg);
-		}
-		STORM_CTOR MapError(Str *msg) {
-			this->msg = msg;
-		}
-		virtual void STORM_FN message(StrBuf *to) const {
-			*to << S("Map error: ") << msg;
-		}
-	private:
-		Str *msg;
-	};
-
 
 	/**
 	 * The base class used in Storm. Use derived Map<> in C++.

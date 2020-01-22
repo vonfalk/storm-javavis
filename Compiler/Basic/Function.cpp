@@ -130,6 +130,10 @@ namespace storm {
 			runOn(t);
 		}
 
+		FnBody *BSRawFn::createBody() {
+			throw new (this) InternalError(S("A BSRawFn can not be used without overriding 'createBody' or 'createRawBody'!"));
+		}
+
 		CodeGen *BSRawFn::createRawBody() {
 			FnBody *body = createBody();
 

@@ -39,8 +39,8 @@ namespace storm {
 
 					NamedThread *t = as<NamedThread>(scope.find(otherName));
 					if (!t) {
-						Str *msg = TO_S(engine(), S("Can not find the named thread ") << otherName << S("."));
-						throw (this) SyntaxError(otherName->pos, msg);
+						Str *msg = TO_S(engine, S("Can not find the named thread ") << otherName << S("."));
+						throw new (this) SyntaxError(otherName->pos, msg);
 					}
 
 					setThread(t);
@@ -50,8 +50,8 @@ namespace storm {
 				{
 					Type *t = as<Type>(scope.find(otherName));
 					if (!t) {
-						Str *msg = TO_S(engine(), S("Can not find the super class " << otherName << S(".")));
-						throw (this) SyntaxError(otherName->pos, msg);
+						Str *msg = TO_S(engine, S("Can not find the super class " << otherName << S(".")));
+						throw new (this) SyntaxError(otherName->pos, msg);
 					}
 
 					setSuper(t);
@@ -179,7 +179,7 @@ namespace storm {
 
 					Function *found = as<Function>(scope.find(params));
 					if (!found) {
-						Str *msg = TO_S(engine(), S("Could not find a decorator named ")
+						Str *msg = TO_S(engine, S("Could not find a decorator named ")
 										<< name << S(" in the current scope."));
 						throw new (this) SyntaxError(name->pos, msg);
 					}

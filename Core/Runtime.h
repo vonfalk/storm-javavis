@@ -141,5 +141,11 @@ namespace storm {
 		// in shared libraries.
 		void checkObject(Engine &e, const void *obj);
 
+		// Get some engine. If a thread was created from a particular engine, that engine is
+		// returned. This is intended to be used in cases where exceptions (rarely) need to be
+		// thrown, not for general use.
+		Engine &someEngine();
+
+
 	}
 }

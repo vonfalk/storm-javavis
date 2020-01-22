@@ -4,25 +4,9 @@
 #include "GcArray.h"
 #include "StrBuf.h"
 #include "Fn.h"
-#include "Utils/Exception.h"
 
 namespace storm {
 	STORM_PKG(core);
-
-	/**
-	 * Custom error type.
-	 */
-	class EXCEPTION_EXPORT ArrayError : public NException {
-		STORM_CLASS;
-	public:
-		STORM_CTOR ArrayError(Nat id, Nat count);
-		STORM_CTOR ArrayError(Nat id, Nat count, Str *msg);
-		virtual void STORM_FN message(StrBuf *to) const;
-	private:
-		Nat id;
-		Nat count;
-		MAYBE(Str *) msg;
-	};
 
 	/**
 	 * Base class for arrays. Implements a slightly inconvenient interface that is reusable

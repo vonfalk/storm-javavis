@@ -50,7 +50,7 @@ namespace storm {
 		return listen((SOCKET)socket.v(), backlog) == 0;
 	}
 
-	static BOOL AcceptEx(Engine &e, os::Handle listen, os::Handle accept,
+	static BOOL AcceptEx(os::Handle listen, os::Handle accept,
 						void *output, DWORD receiveLen,
 						DWORD localLen, DWORD remoteLen,
 						DWORD *received, OVERLAPPED *overlapped) {
@@ -66,7 +66,7 @@ namespace storm {
 		return (*ptr)(s, (SOCKET)accept.v(), output, receiveLen, localLen, remoteLen, received, overlapped);
 	}
 
-	static void GetAcceptExSockaddrs(Engine &e, os::Handle socket, void *buffer, DWORD receiveLen,
+	static void GetAcceptExSockaddrs(os::Handle socket, void *buffer, DWORD receiveLen,
 									DWORD localLen, DWORD remoteLen,
 									LPSOCKADDR *localAddr, int *localSize,
 									LPSOCKADDR *remoteAddr, int *remoteSize) {
@@ -122,7 +122,7 @@ namespace storm {
 		return os::Handle();
 	}
 
-	static BOOL ConnectEx(Engine &e, os::Handle socket, const sockaddr *name, int namelen, OVERLAPPED *overlapped) {
+	static BOOL ConnectEx(os::Handle socket, const sockaddr *name, int namelen, OVERLAPPED *overlapped) {
 		SOCKET s = (SOCKET)socket.v();
 		LPFN_CONNECTEX ptr = null;
 		GUID guid = WSAID_CONNECTEX;

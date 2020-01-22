@@ -1,7 +1,7 @@
 #pragma once
 #include "Str.h"
+#include "StrBuf.h"
 #include "StackTrace.h"
-#include "OldException.h"
 
 namespace storm {
 	STORM_PKG(core);
@@ -44,16 +44,10 @@ namespace storm {
 	class EXCEPTION_EXPORT NotSupported : public NException {
 		STORM_CLASS;
 	public:
-		NotSupported(const wchar *msg) {
-			this->msg = new (this) Str(msg);
-		}
-		STORM_CTOR NotSupported(Str *msg) {
-			this->msg = msg;
-		}
+		NotSupported(const wchar *msg);
+		STORM_CTOR NotSupported(Str *msg);
 
-		virtual void STORM_FN message(StrBuf *to) const {
-			*to << S("Operation not supported: ") << msg;
-		}
+		virtual void STORM_FN message(StrBuf *to) const;
 
 	private:
 		Str *msg;
@@ -63,19 +57,13 @@ namespace storm {
 	/**
 	 * Internal error.
 	 */
-	class EXCEPTION_EXPORT InternalError : public Exception {
+	class EXCEPTION_EXPORT InternalError : public NException {
 		STORM_CLASS;
 	public:
-		InternalError(const wchar *msg) {
-			this->msg = new (this) Str(msg);
-		}
-		STORM_CTOR InternalError(Str *msg) {
-			this->msg = msg;
-		}
+		InternalError(const wchar *msg);
+		STORM_CTOR InternalError(Str *msg);
 
-		virtual void STORM_FN message(StrBuf *to) const {
-			*to << msg;
-		}
+		virtual void STORM_FN message(StrBuf *to) const;
 	private:
 		Str *msg;
 	};
@@ -84,19 +72,13 @@ namespace storm {
 	/**
 	 * Runtime errors.
 	 */
-	class EXCEPTION_EXPORT RuntimeError : public Exception {
+	class EXCEPTION_EXPORT RuntimeError : public NException {
 		STORM_CLASS;
 	public:
-		RuntimeError(const wchar *msg) {
-			this->msg = new (this) Str(msg);
-		}
-		STORM_CTOR RuntimeError(Str *msg) {
-			this->msg = msg;
-		}
+		RuntimeError(const wchar *msg);
+		STORM_CTOR RuntimeError(Str *msg);
 
-		virtual void STORM_FN message(StrBuf *to) const {
-			*to << msg;
-		}
+		virtual void STORM_FN message(StrBuf *to) const;
 	private:
 		Str *msg;
 	};
@@ -107,12 +89,68 @@ namespace storm {
 	 */
 	class EXCEPTION_EXPORT AbstractFnCalled : public RuntimeError {
 	public:
-		RuntimeError(const wchar *name);
-		STORM_CTOR RuntimeError(Str *msg);
-		virtual void STORM_FN message(StrBuf *to) const {
-			*to << S("Abstract function called: ");
-			RuntimeError::message(to);
-		}
+		AbstractFnCalled(const wchar *name);
+		STORM_CTOR AbstractFnCalled(Str *msg);
+		virtual void STORM_FN message(StrBuf *to) const;
 	};
+
+
+	/**
+	 * Custom exception for strings. Cannot be in Str.h due to include cycles.
+	 */
+	class EXCEPTION_EXPORT StrError : public NException {
+		STORM_CLASS;
+	public:
+		StrError(const wchar *msg);
+		STORM_CTOR StrError(Str *msg);
+		virtual void STORM_FN message(StrBuf *to) const;
+	private:
+		Str *msg;
+	};
+
+
+	/**
+	 * Exception thrown from the map.
+	 */
+	class EXCEPTION_EXPORT MapError : public NException {
+		STORM_CLASS;
+	public:
+		MapError(const wchar *msg);
+		STORM_CTOR MapError(Str *msg);
+		virtual void STORM_FN message(StrBuf *to) const;
+	private:
+		Str *msg;
+	};
+
+
+	/**
+	 * Exception thrown from the set.
+	 */
+	class EXCEPTION_EXPORT SetError : public NException {
+		STORM_CLASS;
+	public:
+		SetError(const wchar *msg);
+		STORM_CTOR SetError(Str *msg);
+		virtual void STORM_FN message(StrBuf *to) const;
+	private:
+		Str *msg;
+	};
+
+
+	/**
+	 * Custom error type for arrays.
+	 */
+	class EXCEPTION_EXPORT ArrayError : public NException {
+		STORM_CLASS;
+	public:
+		STORM_CTOR ArrayError(Nat id, Nat count);
+		STORM_CTOR ArrayError(Nat id, Nat count, Str *msg);
+		virtual void STORM_FN message(StrBuf *to) const;
+	private:
+		Nat id;
+		Nat count;
+		MAYBE(Str *) msg;
+	};
+
 
 }

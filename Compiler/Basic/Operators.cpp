@@ -47,7 +47,7 @@ namespace storm {
 				if (!fn) {
 					Str *msg = TO_S(engine(), S("Can not find an implementation of the operator ")
 									<< name << S(" for ") << lhs->result().type() << S(", ")
-									<< rhs->result().type() + S("."));
+									<< rhs->result().type() << S("."));
 					throw new (this) SyntaxError(pos, msg);
 				}
 				return fn;

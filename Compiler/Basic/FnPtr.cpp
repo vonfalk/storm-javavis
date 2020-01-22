@@ -90,7 +90,7 @@ namespace storm {
 			target = as<Function>(found);
 			if (!target) {
 				Str *msg = TO_S(engine(), S("Can not take the pointer of anything other than a function. This is a ")
-								<< found + S("!"));
+								<< found << S("!"));
 				throw new (this) SyntaxError(name->pos, msg);
 			}
 
@@ -149,12 +149,13 @@ namespace storm {
 				if (!type.type) {
 					throw new (this) SyntaxError(pos, S("Unable to deduce parameter types for a function pointer ")
 												S("in this context. Please specify parameter types explicitly."));
+				}
 
 				Function *target = acceptableFn(type);
 				if (!target) {
 					Str *msg = TO_S(engine(), S("Failed to find a suitable function for the function pointer type ")
 									<< type << S(". Please specify explicit parameters."));
-					throw SyntaxError(pos, msg);
+					throw new (this) SyntaxError(pos, msg);
 				}
 
 				code(to, r, type, target);

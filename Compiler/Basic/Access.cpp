@@ -98,6 +98,7 @@ namespace storm {
 								<< S(" already has a visibility specified. Can not add ")
 								<< v << S(" as well."));
 				throw new (to) SyntaxError(pos, msg);
+			}
 
 			to->visibility = v;
 			return to;

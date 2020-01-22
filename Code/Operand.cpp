@@ -19,28 +19,30 @@ namespace code {
 		return Nat(d & 0xFFFFFFFF);
 	}
 
+	using runtime::someEngine;
+
 	Operand::Operand() : opType(opNone), opPtr(null), opNum(0) {}
 
 	Operand::Operand(Reg r) : opType(opRegister), opPtr(null), opNum(r), opSize(code::size(r)) {
 		if (r == noReg)
-			throw InvalidValue(L"noReg is not a proper register!");
+			throw new (someEngine()) InvalidValue(S("noReg is not a proper register!"));
 	}
 
 	Operand::Operand(CondFlag c) : opType(opCondFlag), opPtr(null), opNum(c), opSize() {}
 
 	Operand::Operand(Part p) : opType(opPart), opPtr(null), opNum(p.id), opSize() {
 		if (p == Part())
-			throw InvalidValue(L"Can not create an operand of an empty part.");
+			throw new (someEngine()) InvalidValue(S("Can not create an operand of an empty part."));
 	}
 
 	Operand::Operand(Var v) : opType(opVariable), opPtr(null), opNum(v.id), opSize(v.size()) {
 		if (v == Var())
-			throw InvalidValue(L"Can not create an operand of an empty variable.");
+			throw new (someEngine()) InvalidValue(S("Can not create an operand of an empty variable."));
 	}
 
 	Operand::Operand(Label l) : opType(opLabel), opPtr(null), opNum(l.id), opSize(Size::sPtr) {
 		if (l == Label())
-			throw InvalidValue(L"Can not create an operand of an empty label.");
+			throw new (someEngine()) InvalidValue(S("Can not create an operand of an empty label."));
 	}
 
 	Operand::Operand(Ref ref) : opType(opReference), opPtr(ref.to), opNum(0), opSize(Size::sPtr) {}
@@ -65,12 +67,12 @@ namespace code {
 
 	Operand::Operand(Var v, Offset offset, Size size) : opType(opVariable), opPtr(null), opNum(v.id), opOffset(offset), opSize(size) {
 		if (v == Var())
-			throw InvalidValue(L"Can not create an operand of an empty variable.");
+			throw new (someEngine()) InvalidValue(S("Can not create an operand of an empty variable."));
 	}
 
 	Operand::Operand(Label l, Offset offset, Size size) : opType(opRelativeLbl), opPtr(null), opNum(l.id), opOffset(offset), opSize(size) {
 		if (l == Label())
-			throw InvalidValue(L"Can not create an operand of an empty label.");
+			throw new (someEngine()) InvalidValue(S("Can not create an operand of an empty label."));
 	}
 
 	Bool Operand::operator ==(const Operand &o) const {
@@ -157,13 +159,19 @@ namespace code {
 	}
 
 	void Operand::ensureReadable(op::OpCode op) const {
-		if (!readable())
-			throw InvalidValue(L"For instruction " + String(name(op)) + L": " + ::toS(*this) + L" is not readable.");
+		if (!readable()) {
+			Engine &e = someEngine();
+			Str *msg = TO_S(e, S("For instruction ") << name(op) << S(": ") << *this << S(" is not readable."));
+			throw new (e) InvalidValue(msg);
+		}
 	}
 
 	void Operand::ensureWritable(op::OpCode op) const {
-		if (!writable())
-			throw InvalidValue(L"For instruction " + String(name(op)) + L": " + ::toS(*this) + L" is not writable.");
+		if (!writable()) {
+			Engine &e = someEngine();
+			Str *msg = TO_S(e, S("For instruction ") << name(op) << S(": ") << *this << S(" is not writable."));
+			throw new (e) InvalidValue(msg);
+		}
 	}
 
 	Bool Operand::hasRegister() const {
@@ -178,7 +186,7 @@ namespace code {
 
 	Word Operand::constant() const {
 		if (type() != opConstant)
-			throw InvalidValue(L"Not a constant!");
+			throw new (someEngine()) InvalidValue(S("Not a constant!"));
 		if (opType == opConstant) {
 			return opNum;
 		} else {
@@ -188,7 +196,7 @@ namespace code {
 
 	Reg Operand::reg() const {
 		if (!hasRegister())
-			throw InvalidValue(L"Not a register!");
+			throw new (someEngine()) InvalidValue(S("Not a register!"));
 		return Reg(opNum);
 	}
 
@@ -202,50 +210,50 @@ namespace code {
 
 	CondFlag Operand::condFlag() const {
 		if (type() != opCondFlag)
-			throw InvalidValue(L"Not a CondFlag!");
+			throw new (someEngine()) InvalidValue(S("Not a CondFlag!"));
 		return CondFlag(opNum);
 	}
 
 	Part Operand::part() const {
 		if (type() != opPart)
-			throw InvalidValue(L"Not a part!");
+			throw new (someEngine()) InvalidValue(S("Not a part!"));
 		return Part(Nat(opNum));
 	}
 
 	Var Operand::var() const {
 		if (type() != opVariable)
-			throw InvalidValue(L"Not a variable!");
+			throw new (someEngine()) InvalidValue(S("Not a variable!"));
 		return Var(Nat(opNum), size());
 	}
 
 	Ref Operand::ref() const {
 		if (type() != opReference)
-			throw InvalidValue(L"Not a reference!");
+			throw new (someEngine()) InvalidValue(S("Not a reference!"));
 		RefSource *s = (RefSource *)opPtr;
 		return Ref(s);
 	}
 
 	RefSource *Operand::refSource() const {
 		if (type() != opReference)
-			throw InvalidValue(L"Not a reference!");
+			throw new (someEngine()) InvalidValue(S("Not a reference!"));
 		return (RefSource *)opPtr;
 	}
 
 	RootObject *Operand::object() const {
 		if (type() != opObjReference)
-			throw InvalidValue(L"Not an object reference!");
+			throw new (someEngine()) InvalidValue(S("Not an object reference!"));
 		return (RootObject *)opPtr;
 	}
 
 	Label Operand::label() const {
 		if (type() != opLabel && type() != opRelativeLbl)
-			throw InvalidValue(L"Not a label!");
+			throw new (someEngine()) InvalidValue(S("Not a label!"));
 		return Label(Nat(opNum));
 	}
 
 	SrcPos Operand::srcPos() const {
 		if (type() != opSrcPos)
-			throw InvalidValue(L"Not a SrcPos!");
+			throw new (someEngine()) InvalidValue(S("Not a SrcPos!"));
 		Nat start = opNum & 0xFFFFFFFF;
 		Nat end = opNum >> 32;
 		return SrcPos((Url *)opPtr, start, end);

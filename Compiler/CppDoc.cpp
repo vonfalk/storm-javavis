@@ -75,7 +75,7 @@ namespace storm {
 				if (!params->name) {
 					Str *msg = TO_S(entity, S("Number of parameters for ") << entity->identifier()
 									<< S(" does not match."));
-					throw (entity) DocError(msg);
+					throw new (entity) DocError(msg);
 				}
 
 				result->push(DocParam(new (src) Str(params->name), src->at(i)));

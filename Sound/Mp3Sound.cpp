@@ -1,6 +1,7 @@
 #include "stdafx.h"
 #include "Mp3Sound.h"
 #include "Exception.h"
+#include "Core/Convert.h"
 #include "Utils/Memory.h"
 
 namespace sound {
@@ -66,7 +67,7 @@ namespace sound {
 				throw new (this) SoundOpenError(L"Expected float output from mpg123.");
 			}
 		} else {
-			Str *msg = new (this) Str(mpg123_strerror(h));
+			Str *msg = new (this) Str(toWChar(engine(), mpg123_strerror(h)));
 			mpg123_delete(h);
 			h = null;
 

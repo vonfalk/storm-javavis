@@ -6,7 +6,7 @@
 #include "ExprResult.h"
 
 namespace storm {
-
+	STORM_PKG(core.lang);
 
 	/**
 	 * Defines exceptions used by the compiler.
@@ -120,11 +120,6 @@ namespace storm {
 		TypedefError(const wchar *msg);
 		STORM_CTOR TypedefError(Str *msg);
 
-		TypedefError(const String &msg) : CodeError(SrcPos()), msg(msg) {
-#ifdef DEBUG
-			TODO("Require a SrcPos!");
-#endif
-		}
 		virtual void STORM_FN message(StrBuf *to) const {
 			CodeError::message(to);
 			*to << S("Type definition error: ") << msg;
@@ -138,7 +133,7 @@ namespace storm {
 	/**
 	 * Error while handling built-in functions.
 	 */
-	class EXCEPTION_EXPORT BuiltInError : public Exception {
+	class EXCEPTION_EXPORT BuiltInError : public NException {
 		STORM_CLASS;
 	public:
 		BuiltInError(const wchar *msg) {
@@ -148,7 +143,7 @@ namespace storm {
 			this->msg = msg;
 		}
 		virtual void STORM_FN message(StrBuf *to) const {
-			*to << S("Error while loading built in functions: ") + msg;
+			*to << S("Error while loading built in functions: ") << msg;
 		}
 	private:
 		Str *msg;
@@ -161,8 +156,8 @@ namespace storm {
 	class EXCEPTION_EXPORT InstantiationError : public CodeError {
 		STORM_CLASS;
 	public:
-		InstantiationError(SrcPos pos, const wchar *msg) : CodeError(pos), msg(msg) {}
-		InstantiationError(SrcPos pos, Str *msg) : CodeError(pos), msg(msg) {}
+		InstantiationError(SrcPos pos, const wchar *msg);
+		InstantiationError(SrcPos pos, Str *msg);
 		virtual void STORM_FN message(StrBuf *to) const {
 			CodeError::message(to);
 			*to << S("Instantiation error: ") << msg;

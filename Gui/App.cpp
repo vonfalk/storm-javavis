@@ -4,6 +4,7 @@
 #include "Window.h"
 #include "Frame.h"
 #include "Defaults.h"
+#include "Core/Exception.h"
 
 #ifdef POSIX
 // NOTE: This does not exist on all POSIX systems (eg. MacOS)

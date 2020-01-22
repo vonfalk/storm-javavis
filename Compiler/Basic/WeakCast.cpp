@@ -91,7 +91,7 @@ namespace storm {
 			if (!to.type->isA(from.type)) {
 				Str *msg = TO_S(engine(), S("Condition is always false. ") << to
 								<< S(" does not inherit from ") << from << S("."));
-				throw SyntaxError(expr->pos, msg);
+				throw new (this) SyntaxError(expr->pos, msg);
 			}
 		}
 

@@ -5,6 +5,7 @@
 #include "GcType.h"
 #include "GcWatch.h"
 #include "Utils/Bitwise.h"
+#include "Exception.h"
 #include <iomanip>
 
 namespace storm {
@@ -141,7 +142,7 @@ namespace storm {
 			*buf << L"The key ";
 			(*keyT.toSFn)(key, buf);
 			*buf << L" is not in the map.";
-			throw new (e) SetError(buf->toS());
+			throw new (this) SetError(buf->toS());
 		}
 		return keyPtr(slot);
 	}

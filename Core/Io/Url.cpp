@@ -264,7 +264,7 @@ namespace storm {
 
 	Url *Url::relative(Url *to) {
 		if (!absolute() || !to->absolute())
-			throw new (this) InvalidName(S("Both paths to 'relative' must be absolute."));
+			throw new (this) InvalidName(new (this) Str(S("Both paths to 'relative' must be absolute.")));
 
 		// Different protocols, not possible...
 		if (*protocol != *to->protocol)
@@ -407,7 +407,7 @@ namespace storm {
 	Url *cwdUrl(EnginePtr e) {
 		char path[PATH_MAX + 1] = { 0 };
 		if (!getcwd(path, PATH_MAX))
-			throw (e.v) InternalError(S("Failed to get the current working directory."));
+			throw new (e.v) InternalError(S("Failed to get the current working directory."));
 		return parsePath(e.v, toWChar(e.v, path)->v);
 	}
 
@@ -415,7 +415,7 @@ namespace storm {
 		char path[PATH_MAX + 1] = { 0 };
 		ssize_t r = readlink("/proc/self/exe", path, PATH_MAX);
 		if (r >= PATH_MAX || r < 0)
-			throw (e.v) InternalError(S("Failed to get the path of the executable."));
+			throw new (e.v) InternalError(S("Failed to get the path of the executable."));
 		return parsePath(e, toWChar(e, path)->v);
 	}
 #else

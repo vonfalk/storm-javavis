@@ -26,7 +26,7 @@ namespace storm {
 		: CodeError(where),
 		  msg(TO_S(engine(), S("Expected ") << expected << S(" but got ") << got)) {}
 	TypeError::TypeError(SrcPos where, Value expected, Value got)
-		: CodeError(where)
+		: CodeError(where),
 		  msg(TO_S(engine(), S("Expected ") << expected << S(" but got ") << got)) {}
 
 	TypedefError::TypedefError(const wchar *msg) : CodeError(SrcPos()), msg(new (engine()) Str(msg)) {

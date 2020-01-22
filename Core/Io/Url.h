@@ -2,7 +2,7 @@
 #include "Core/Object.h"
 #include "Core/Array.h"
 #include "Core/EnginePtr.h"
-#include "Utils/Exception.h"
+#include "Core/Exception.h"
 #include "Utils/Bitmask.h"
 
 namespace storm {

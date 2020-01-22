@@ -36,6 +36,7 @@ namespace storm {
 			&runtime::postStdRequest,
 			&runtime::cloneObject,
 			&runtime::cloneObjectEnv,
+			&runtime::someEngine,
 
 			// Others.
 			&os::currentThreadData,

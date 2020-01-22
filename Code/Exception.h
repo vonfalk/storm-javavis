@@ -4,6 +4,7 @@
 #include "Core/Exception.h"
 
 namespace code {
+	STORM_PKG(core.asm);
 
 	// Thrown when an instruction contains invalid data for some reason.
 	class EXCEPTION_EXPORT InvalidValue : public storm::NException {
@@ -26,7 +27,7 @@ namespace code {
 	class EXCEPTION_EXPORT BlockBeginError : public storm::NException {
 		STORM_CLASS;
 	public:
-		STORM_CTOR BlockBeginErrror() {
+		STORM_CTOR BlockBeginError() {
 			msg = new (engine()) Str(S("The parent scope must be entered before a child scope."));
 		}
 		STORM_CTOR BlockBeginError(Str *msg) {
@@ -45,7 +46,7 @@ namespace code {
 		STORM_CTOR BlockEndError() {
 			msg = new (engine()) Str(S("The scope is not the topmost active scope."));
 		}
-		BlockEndError(const String &msg) {
+		BlockEndError(Str *msg) {
 			this->msg = msg;
 		}
 		virtual void STORM_FN message(StrBuf *to) const {

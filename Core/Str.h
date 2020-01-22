@@ -7,26 +7,6 @@ namespace storm {
 	STORM_PKG(core);
 
 	/**
-	 * Custom exception.
-	 */
-	class EXCEPTION_EXPORT StrError : public NException {
-		STORM_CLASS;
-	public:
-		StrError(const wchar *msg) {
-			this->msg = new (this) Str(msg);
-		}
-		STORM_CTOR StrError(Str *msg) {
-			this->msg = msg;
-		}
-		virtual void STORM_FN message(StrBuf *to) const {
-			*to << msg;
-		}
-	private:
-		Str *msg;
-	};
-
-
-	/**
 	 * The string type used in Storm.
 	 *
 	 * Strings are immutable sequences of unicode codepoints. The implementation stores string in

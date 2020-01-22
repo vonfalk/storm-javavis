@@ -20,7 +20,7 @@ namespace storm {
 		 * Raw constructor call, much like BSRawFn.
 		 */
 		class BSRawCtor : public Function {
-			STORM_ABSTRACT_CLASS;
+			STORM_CLASS;
 		public:
 			// Create.
 			STORM_CTOR BSRawCtor(Array<ValParam> *params, SrcPos pos);
@@ -35,7 +35,7 @@ namespace storm {
 			LocalVar *addParams(Block *to);
 
 			// Create the body.
-			virtual CtorBody *STORM_FN createBody() ABSTRACT;
+			virtual CtorBody *STORM_FN createBody();
 
 		protected:
 			// Re-compile at next execution.

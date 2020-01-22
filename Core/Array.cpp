@@ -4,18 +4,9 @@
 #include "GcType.h"
 #include "Random.h"
 #include "Sort.h"
+#include "Exception.h"
 
 namespace storm {
-
-	ArrayError::ArrayError(Nat id, Nat count) : id(id), count(count), msg(null) {}
-
-	ArrayError::ArrayError(Nat id, Nat count, Str *msg) : id(id), count(count), msg(msg) {}
-
-	void ArrayError::message(StrBuf *to) const {
-		*to << S("Array error: Index ") << id << S(" out of bounds (of ") << count << S(").");
-		if (msg)
-			*to << S(" During ") << msg << S(".");
-	}
 
 
 	ArrayBase::ArrayBase(const Handle &type) : handle(type), data(null) {}
@@ -286,12 +277,8 @@ namespace storm {
 
 	void *ArrayBase::Iter::getRaw() const {
 		if (atEnd()) {
-			if (owner) {
-				throw new (owner) ArrayError(index, owner->count(), new (this) Str(S("iterator")));
-			} else {
-				// We need a fallback!
-				fail;
-			}
+			Engine &e = runtime::someEngine();
+			throw new (e) ArrayError(index, owner->count(), new (e) Str(S("iterator")));
 		}
 		return owner->getRaw(index);
 	}

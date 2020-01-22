@@ -103,6 +103,10 @@ namespace storm {
 			return state;
 		}
 
+		CtorBody *BSRawCtor::createBody() {
+			throw new (this) InternalError(S("A BSRawCtor can not be used without overriding 'createBody'!"));
+		}
+
 		LocalVar *BSRawCtor::addParams(Block *to) {
 			LocalVar *thread = 0;
 
@@ -226,6 +230,7 @@ namespace storm {
 			if (block->superCalled) {
 				throw new (this) SyntaxError(pos, S("Only one call to the super class constructor is allowed inside ")
 											S("a constructor, and the call has to be done before the 'init' block."));
+			}
 			block->superCalled = true;
 
 			// Add the regular 'this' parameter.
@@ -578,6 +583,7 @@ namespace storm {
 			if (!ctor) {
 				Str *msg = TO_S(engine(), S("No constructor for ") << t << S("(") << values << S(")."));
 				throw new (this) SyntaxError(pos, msg);
+			}
 
 			if (t.isObject()) {
 				// Easy way, call the constructor as normal.

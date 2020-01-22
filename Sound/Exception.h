@@ -10,9 +10,9 @@ namespace sound {
 		STORM_CLASS;
 	public:
 		SoundOpenError(const wchar *msg) {
-			this->msg = new (e) Str(msg);
+			this->msg = new (this) Str(msg);
 		}
-		STORM_FN SoundOpenError(Str *msg) {
+		STORM_CTOR SoundOpenError(Str *msg) {
 			this->msg = msg;
 		}
 
@@ -26,7 +26,8 @@ namespace sound {
 	/**
 	 * Error.
 	 */
-	class EXCEPTION_EXPORT SoundInitError : public Exception {
+	class EXCEPTION_EXPORT SoundInitError : public NException {
+		STORM_CLASS;
 	public:
 		STORM_CTOR SoundInitError() {}
 		virtual void STORM_FN message(StrBuf *to) const {

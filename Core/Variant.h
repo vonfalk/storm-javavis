@@ -3,7 +3,7 @@
 #include "Utils/Templates.h"
 #include "Core/Object.h"
 #include "Core/TObject.h"
-#include "Exception.h"
+#include "Core/Exception.h"
 
 namespace storm {
 	STORM_PKG(core);
@@ -96,8 +96,8 @@ namespace storm {
 		// for the template mess...
 		template <class T>
 		typename EnableIf<!IsPointer<T>::value, T>::t get() const {
-			if (!data) {
-				throw new (use_prev) InternalError(S("Attempting to get a value from an empty variant."));
+			if (!data)
+				throw new (runtime::someEngine()) InternalError(S("Attempting to get a value from an empty variant."));
 			if (!has(StormInfo<T>::type(engine())))
 				throw new (engine()) InternalError(S("Attempting to get an incorrect type from a variant."));
 
@@ -140,5 +140,4 @@ namespace storm {
 	// Output.
 	StrBuf &STORM_FN operator <<(StrBuf &to, const Variant &v);
 	wostream &operator <<(wostream &to, const Variant &v);
-
 }

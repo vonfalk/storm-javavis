@@ -192,7 +192,7 @@ namespace storm {
 					} else if (kind == S("$")) {
 						result->indentType = indentAlignEnd;
 					} else {
-						throw new (e) SyntaxError(kind.pos, S("Unexpected indentation kind: " + ::toS(kind)));
+						throw new (e) SyntaxError(kind.pos, TO_S(e, S("Unexpected indentation kind: ") << kind.toS()));
 					}
 				} else {
 					TokenDecl *token = parseToken(e, tok);
@@ -234,7 +234,8 @@ namespace storm {
 					prio = tok.next().toS()->toInt();
 				}
 			} catch (const StrError *e) {
-				throw new (e) SyntaxError(tok.position(), e.message());
+				const NException *z = e;
+				throw new (e) SyntaxError(tok.position(), z->message());
 			}
 			tok.expect(S("]"));
 
@@ -245,7 +246,7 @@ namespace storm {
 			} else if (sep == S("=>")) {
 				result = parseProductionResult(e, tok, rule);
 			} else {
-				throw new (e) SyntaxError(sep.pos, TO_S(e, S("Unexpected token: ") << sep.toS());
+				throw new (e) SyntaxError(sep.pos, TO_S(e, S("Unexpected token: ") << sep.toS()));
 			}
 
 			result->priority = prio;

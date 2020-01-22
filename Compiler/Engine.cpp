@@ -30,6 +30,15 @@
 
 namespace storm {
 
+	static THREAD Engine *currentEngine;
+	namespace runtime {
+		Engine &someEngine() {
+			Engine *e = currentEngine;
+			assert(e);
+			return *e;
+		}
+	}
+
 	// Default arena size. 256 MB should be enough for a while at least.
 	static const size_t defaultArena = 256 * 1024 * 1024;
 
@@ -44,6 +53,7 @@ namespace storm {
 		case Engine::reuseMain:
 			os::Thread::initThread(); // TODO: Call cleanThread as well..
 			e.attachThread();
+			currentEngine = &e;
 			return os::Thread::current();
 		default:
 			assert(false, L"Unknown thread mode.");
@@ -54,10 +64,12 @@ namespace storm {
 
 	void Engine::attachThread() {
 		gc.attachThread();
+		currentEngine = this;
 	}
 
 	void Engine::detachThread() {
 		gc.detachThread(os::Thread::current());
+		currentEngine = null;
 	}
 
 	static void findThreads(Array<NamedThread *> *result, Named *root) {

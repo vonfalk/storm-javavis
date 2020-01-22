@@ -95,7 +95,7 @@ namespace code {
 		if (dest.size() != src.size()) {
 			Str *msg = TO_S(e.v, S("For ") << name(op)
 							<< S(": Size of operands must match! ")
-							<< dest << S(" vs ") << src)
+							<< dest << S(" vs ") << src);
 			throw new (e.v) InvalidValue(msg);
 		}
 		return new (e.v) Instr(op, dest, src);
@@ -176,6 +176,7 @@ namespace code {
 							S(" (Got " << from << S(")")));
 			throw new (e.v) InvalidValue(msg);
 		}
+		}
 		return instrLoose(e, op::lea, to, from);
 	}
 
@@ -230,6 +231,7 @@ namespace code {
 		if (src.size() != type->size()) {
 			Str *msg = TO_S(e.v, S("Size mismatch for 'fnParam'. Got ") << src.size() << S(", expected ") << type->size());
 			throw new (e.v) InvalidValue(msg);
+		}
 		return new (e.v) TypeInstr(op::fnParam, Operand(), src, type, false);
 	}
 
@@ -347,7 +349,7 @@ namespace code {
 
 	Instr *shr(EnginePtr e, Operand dest, Operand src) {
 		if (src.size() != Size::sByte)
-			throw new (e.v) InvalidValue(S(L"Size for shr must be 1"));
+			throw new (e.v) InvalidValue(S("Size for shr must be 1"));
 		return instrLoose(e, op::shr, dest, src);
 	}
 

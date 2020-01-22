@@ -4,6 +4,7 @@
 #include "Core/Array.h"
 #include "Core/GcArray.h"
 #include "Core/Object.h"
+#include "Core/Exception.h"
 
 namespace code {
 	STORM_PKG(core.asm);
@@ -144,7 +145,7 @@ namespace code {
 
 		Primitive &STORM_FN at(Nat id) {
 			if (id >= v->count)
-				throw new (e) storm::ArrayError(S("Out of bounds."));
+				throw new (this) storm::ArrayError(id, v->count);
 			return v->v[id];
 		}
 		Nat STORM_FN count() const {

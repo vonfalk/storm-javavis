@@ -201,6 +201,10 @@ namespace storm {
 			return (*fwd.cloneObjectEnv)(obj, env);
 		}
 
+		Engine &someEngine() {
+			return (*fwd.someEngine)();
+		}
+
 	}
 
 	Thread *DeclThread::thread(Engine &e) const {

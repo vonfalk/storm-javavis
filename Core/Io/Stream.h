@@ -1,6 +1,7 @@
 #pragma once
 #include "Core/Object.h"
 #include "Buffer.h"
+#include "Core/Exception.h"
 
 namespace storm {
 	STORM_PKG(core.io);

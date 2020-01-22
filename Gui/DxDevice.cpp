@@ -119,7 +119,7 @@ namespace gui {
 		IDXGISwapChain *swapChain = null;
 		if (FAILED(h = giFactory->CreateSwapChain(device, &desc, &swapChain))) {
 			r.release();
-			throwError(engine(), S("Failed to create a swap chain: "), h);
+			throwError(runtime::someEngine(), S("Failed to create a swap chain: "), h);
 		}
 
 		r.swapChain(swapChain);
@@ -142,7 +142,7 @@ namespace gui {
 
 		HRESULT r;
 		if (FAILED(r = info.swapChain()->ResizeBuffers(1, (UINT)sz.w, (UINT)sz.h, DXGI_FORMAT_UNKNOWN, 0))) {
-			throwError(engine(), S("Failed to resize buffers: ") , r);
+			throwError(runtime::someEngine(), S("Failed to resize buffers: ") , r);
 		}
 
 		info.size = sz;
@@ -155,7 +155,7 @@ namespace gui {
 		ComPtr<IDXGISurface> surface;
 
 		if (FAILED(h = swapChain->GetBuffer(0, __uuidof(IDXGISurface), (void **)&surface))) {
-			throwError(engine(), S("Failed to get the surface: "), h);
+			throwError(runtime::someEngine(), S("Failed to get the surface: "), h);
 		}
 
 		D2D1_RENDER_TARGET_PROPERTIES props = {
@@ -166,7 +166,7 @@ namespace gui {
 			D2D1_FEATURE_LEVEL_10, // Use _DEFAULT?
 		};
 		if (FAILED(h = factory->CreateDxgiSurfaceRenderTarget(surface.v, &props, &target))) {
-			throwError(engine(), S("Failed to create a render target: "), h);
+			throwError(runtime::someEngine(), S("Failed to create a render target: "), h);
 		}
 
 		return target;

@@ -23,25 +23,6 @@ namespace storm {
 	 * accordingly.
 	 */
 
-	/**
-	 * Exception thrown from the set.
-	 */
-	class EXCEPTION_EXPORT SetError : public NException {
-		STORM_CLASS;
-	public:
-		SetError(const wchar *msg) {
-			this->msg = new (this) Str(msg);
-		}
-		STORM_CTOR SetError(Str *msg) {
-			this->msg = msg;
-		}
-		virtual void STORM_FN message(StrBuf *to) const {
-			*to << S("Set error: ") << msg;
-		}
-	private:
-		Str *msg;
-	};
-
 
 	/**
 	 * The base class used in Storm. Use derived Set<> in C++.
