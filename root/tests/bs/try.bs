@@ -1,0 +1,17 @@
+use core:lang;
+use debug;
+use lang:bs:macro;
+
+Str catchTest(Int throwOn) {
+	try {
+		if (throwOn == 1)
+			throwError;
+		if (throwOn == 2)
+			throwSyntaxError(SrcPos(), "Test");
+		"None";
+	} catch (DebugError e) {
+		"D" # e.message;
+	} catch (SyntaxError e) {
+		"S" # e.message;
+	}
+}

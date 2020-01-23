@@ -102,7 +102,6 @@ namespace storm {
 			// To string.
 			virtual void STORM_FN toS(StrBuf *to) const;
 
-		private:
 			// Expressions here.
 			Array<Expr *>*exprs;
 		};

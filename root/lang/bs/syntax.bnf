@@ -307,6 +307,19 @@ SLoop => RangeFor(pos, block, k, v, in) : "for" #keyword, "(", SName k #varName,
 Unless SUnless(Block block);
 SUnless => Unless(block, cond) : "unless" #keyword, "(", SCondition(block) cond, ")" [, SStmt(me) -> fail ]? (, SStmt(me.successBlock) -> success)*;
 
+// Try-catch block.
+TryBlock STryCatch(Block block);
+STryCatch => TryBlock(pos, block) : "try" #keyword, SKwStmt(me) - (, SCatchBlock(block) -> addCatch)+;
+
+CatchBlock SCatchBlock(Block block);
+SCatchBlock => CatchBlock(pos, block, type, name) : "catch" #keyword, "(", SType type, (SName name,)? ")", SExpr(me) -> expr;
+
+// A block or a statement. Adding statements to 'to' rather than creating a new block. If it is a statement,
+// requires a space first, as to fit after keywords (such as 'try').
+void SKwStmt(ExprBlock me);
+SKwStmt[0] : "[ \t\n\r]", SStmt(me) -> add;
+SKwStmt[1] : "{", [, (SBlockItem(me), )* ]+ "}";
+
 // Initializer list for arrays.
 Array<Expr> SArrayInitList(Block block);
 SArrayInitList => Array<Expr>() : ",?";
@@ -400,6 +413,7 @@ SAtom => ParenExpr(e) : "(", SExpr(block) e, ")";
 SAtom => e : SBlock(block) e;
 SAtom => e : SIf(block) e;
 SAtom => e : SLoop(block) e;
+SAtom => e : STryCatch(block) e;
 SAtom => accessExpr(block, lhs, par) : SAtom(block) lhs, "\[", SExpr(block) par, "\]";
 SAtom => arrayInit(block, t, list) : SType t, ":", "\[" [, SArrayInitList(block) list, ]$ "\]";
 SAtom => ArrayInit(pos, block, list) : "\[" [, SArrayInitList(block) list, ]$ "\]";
@@ -502,6 +516,7 @@ SStmt => e : SBlock(block) e;
 SStmt[10] => e : SIf(block) e;
 SStmt[10] => e : SLoop(block) e;
 SStmt[10] => e : SReturn(block) e, ";";
+SStmt[10] => e : STryCatch(block) e;
 SStmt[20] => e : SUnless(block) e;
 
 

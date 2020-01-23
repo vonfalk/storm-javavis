@@ -771,6 +771,14 @@ namespace code {
 
 			Nat blockId = findBlock(block);
 			IBlock &b = blocks->at(blockId);
+
+			if (b.catchInfo) {
+				for (nat i = 0; i < b.catchInfo->count(); i++) {
+					CatchInfo info = b.catchInfo->at(i);
+					to << L"Goto " << info.resume << L" on " << runtime::typeName(info.type) << L"\n";
+				}
+			}
+
 			for (nat i = 0; i < b.parts->count(); i++) {
 				putPart(to, b.parts->at(i), i != 0);
 			}
