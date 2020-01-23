@@ -32,7 +32,7 @@ namespace storm {
 			virtual void STORM_FN code(CodeGen *state, CodeResult *to);
 
 			// Override to initialize the block yourself.
-			virtual void blockCode(CodeGen *state, CodeResult *to, const code::Block &newBlock);
+			virtual void STORM_FN blockCode(CodeGen *state, CodeResult *to, code::Block newBlock);
 
 			// Override to generate contents of the block.
 			virtual void STORM_FN blockCode(CodeGen *state, CodeResult *to);
@@ -46,6 +46,9 @@ namespace storm {
 			// Lift all variables present inside 'o' into this block. Can only be used one step at a
 			// time to not cause strange scoping issues.
 			virtual void STORM_FN liftVars(Block *from);
+
+			// Get our parent block, if any.
+			MAYBE(Block *) STORM_FN parent();
 
 		protected:
 			// Initialize variables in a scope, if you're overriding "code" directly.

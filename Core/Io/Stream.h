@@ -6,7 +6,7 @@
 namespace storm {
 	STORM_PKG(core.io);
 
-	class EXCEPTION_EXPORT IoError : public NException {
+	class EXCEPTION_EXPORT IoError : public Exception {
 		STORM_CLASS;
 	public:
 		IoError(const wchar *msg) {

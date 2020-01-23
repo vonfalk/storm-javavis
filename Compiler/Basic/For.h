@@ -30,7 +30,7 @@ namespace storm {
 			virtual ExprResult STORM_FN result();
 
 			// Code.
-			virtual void blockCode(CodeGen *s, CodeResult *to, const code::Block &block);
+			virtual void STORM_FN blockCode(CodeGen *s, CodeResult *to, code::Block block);
 
 		protected:
 			// ToS.

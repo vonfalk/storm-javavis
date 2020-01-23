@@ -100,7 +100,7 @@ TestResult Tests::run(int argc, const wchar_t *const *argv) {
 		PLN(L"Assert while testing.");
 		PLN(L"ABORTED");
 		r.aborted = true;
-	} catch (const NException *e) {
+	} catch (const storm::Exception *e) {
 		PLN(L"Error while testing:\n" << e);
 		PLN(L"ABORTED");
 		r.aborted = true;

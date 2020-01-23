@@ -12,7 +12,7 @@ namespace sound {
 
 		try {
 			init();
-		} catch (const NException *e) {
+		} catch (const storm::Exception *e) {
 			std::wcout << e->toS() << endl;
 			soundDevice = SoundDevice();
 		} catch (const ::Exception &e) {

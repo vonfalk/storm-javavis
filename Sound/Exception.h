@@ -6,7 +6,7 @@ namespace sound {
 	/**
 	 * Error.
 	 */
-	class EXCEPTION_EXPORT SoundOpenError : public NException {
+	class EXCEPTION_EXPORT SoundOpenError : public storm::Exception {
 		STORM_CLASS;
 	public:
 		SoundOpenError(const wchar *msg) {
@@ -28,7 +28,7 @@ namespace sound {
 	/**
 	 * Error.
 	 */
-	class EXCEPTION_EXPORT SoundInitError : public NException {
+	class EXCEPTION_EXPORT SoundInitError : public storm::Exception {
 		STORM_CLASS;
 	public:
 		STORM_CTOR SoundInitError() {

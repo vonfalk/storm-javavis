@@ -596,7 +596,7 @@ BEGIN_TEST(Globals, BS) {
 } END_TEST
 
 /**
- * Using a variant from within Storm.
+ * Using a Variant from within Storm.
  */
 BEGIN_TEST(VariantStormTest, BS) {
 	CHECK_EQ(::toS(runFn<Variant>(S("test.bs.createStrVariant")).get<Str *>()), L"test");

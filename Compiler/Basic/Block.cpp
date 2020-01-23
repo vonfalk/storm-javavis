@@ -40,7 +40,7 @@ namespace storm {
 				to->location(state).created(state);
 		}
 
-		void Block::blockCode(CodeGen *state, CodeResult *to, const code::Block &block) {
+		void Block::blockCode(CodeGen *state, CodeResult *to, code::Block block) {
 			*state->l << begin(block);
 			CodeGen *subState = state->child(block);
 			blockCode(subState, to);
@@ -48,7 +48,7 @@ namespace storm {
 		}
 
 		void Block::blockCode(CodeGen *state, CodeResult *to) {
-			assert(false, "Implement me in a subclass!");
+			throw new (this) AbstractFnCalled(S("storm::Block::blockCode"));
 		}
 
 		void Block::add(LocalVar *var) {
@@ -71,6 +71,10 @@ namespace storm {
 			}
 
 			from->variables->clear();
+		}
+
+		MAYBE(Block *) Block::parent() {
+			return as<Block>(lookup->parentLookup);
 		}
 
 		bool Block::isParentTo(Block *x) {

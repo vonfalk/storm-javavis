@@ -40,7 +40,7 @@ void runRepl(Engine &e, const wchar_t *lang, Repl *repl) {
 		try {
 			if (repl->eval(line))
 				line = null;
-		} catch (const NException *err) {
+		} catch (const storm::Exception *err) {
 			output->writeLine(err->toS());
 			line = null;
 		} catch (const ::Exception &err) {
@@ -261,7 +261,7 @@ int stormMain(int argc, const wchar_t *argv[]) {
 		default:
 			throw new (e) InternalError(S("Unknown mode."));
 		}
-	} catch (const NException *e) {
+	} catch (const storm::Exception *e) {
 		wcerr << e << endl;
 		return 1;
 	} catch (const ::Exception &e) {

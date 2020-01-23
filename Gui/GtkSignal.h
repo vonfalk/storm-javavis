@@ -44,7 +44,7 @@ namespace gui {
 				// Note: We need to catch exceptions since we can not throw them through Gtk+ code.
 				try {
 					return (c->*fn)(args...);
-				} catch (const NException *e) {
+				} catch (const storm::Exception *e) {
 					PLN(L"Unhandled exception in window thread:\n" << e->message());
 				} catch (const ::Exception &e) {
 					PLN(L"Unhandled exception in window thread:\n" << e);

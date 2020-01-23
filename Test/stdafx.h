@@ -77,7 +77,7 @@ void verifyObjEq(TestResult &r, T *lhs, U *rhs, const String &expr) {
 		std::wostringstream __stream__;							\
 		__stream__ << title;									\
 		verifyObjEq(__result__, expr, eq, __stream__.str());	\
-	} catch (const NException *e) {								\
+	} catch (const storm::Exception *e) {						\
 		OUTPUT_ERROR(title, e);									\
 	} catch (const ::Exception &e) {							\
 		OUTPUT_ERROR(title, e);									\

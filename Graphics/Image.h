@@ -2,7 +2,7 @@
 #include "Core/Io/Stream.h"
 #include "Core/Io/Url.h"
 #include "Core/Graphics/Image.h"
-#include "Utils/Exception.h"
+#include "Core/Exception.h"
 
 namespace graphics {
 
@@ -20,7 +20,7 @@ namespace graphics {
 	/**
 	 * Error.
 	 */
-	class ImageLoadError : public NException {
+	class EXCEPTION_EXPORT ImageLoadError : public storm::Exception {
 		STORM_CLASS;
 	public:
 		ImageLoadError(const wchar *msg) {

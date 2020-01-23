@@ -253,7 +253,7 @@ namespace gui {
 
 		try {
 			r = w->onMessage(msg);
-		} catch (const NException *e) {
+		} catch (const storm::Exception *e) {
 			PLN(L"Unhandled exception in window thread:\n" << e);
 		} catch (const ::Exception &e) {
 			PLN(L"Unhandled exception in window thread:\n" << e);
@@ -376,7 +376,7 @@ namespace gui {
 				// this point in the code anyway.
 				atomicWrite(signalSent, 0);
 			}
-		} catch (const NException *e) {
+		} catch (const storm::Exception *e) {
 			PLN(L"Unhandled exception in window thread:\n" << e);
 		} catch (const ::Exception &e) {
 			PLN(L"Unhandled exception in window thread:\n" << e);
@@ -465,7 +465,7 @@ namespace gui {
 				// Do not pass to Gtk+ if the window tells us not to.
 				if (window && window->preExpose(widget))
 					return;
-			} catch (const NException *e) {
+			} catch (const storm::Exception *e) {
 				PLN(L"Unhandled exception in window thread:\n" << e);
 			} catch (const ::Exception &e) {
 				PLN(L"Unhandled exception in window thread:\n" << e);

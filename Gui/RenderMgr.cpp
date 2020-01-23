@@ -16,7 +16,7 @@ namespace gui {
 
 		try {
 			device = new Device(engine());
-		} catch (const NException *e) {
+		} catch (const storm::Exception *e) {
 			PLN("Error while initializing rendering: " << e);
 			throw;
 		} catch (const ::Exception &e) {
@@ -99,7 +99,7 @@ namespace gui {
 				// swap but does not block until the next call to 'Present'. If so, we do not have to worry.
 				try {
 					toRedraw->at(i)->doRepaint(true, false);
-				} catch (const NException *e) {
+				} catch (const storm::Exception *e) {
 					PLN(L"Error while rendering:\n" << e);
 				} catch (const ::Exception &e) {
 					PLN(L"Error while rendering:\n" << e);

@@ -131,13 +131,13 @@ protected:
 };
 
 // Error thrown when we shall abort.
-class AbortError : public Exception {
+class AbortError : public ::Exception {
 public:
 	String what() const { return L"Aborted"; }
 };
 
 // Generic test error.
-class TestError : public Exception {
+class TestError : public ::Exception {
 public:
 	TestError(const String &msg) : msg(msg) {}
 	virtual String what() const { return msg; }
@@ -247,7 +247,7 @@ void verifyGte(TestResult &r, const T &lhs, const U &rhs, const String &expr) {
 				__result__.failed++;							\
 				std::wcout << "Failed: " << title << std::endl; \
 			}													\
-		} catch (const NException *e) {							\
+		} catch (const storm::Exception *e) {					\
 			OUTPUT_ERROR(title, e);								\
 		} catch (const ::Exception &e) {						\
 			OUTPUT_ERROR(title, e);								\
@@ -263,7 +263,7 @@ void verifyGte(TestResult &r, const T &lhs, const U &rhs, const String &expr) {
 			std::wostringstream __stream__;					\
 			__stream__ << title;							\
 			pred(__result__, expr, eq, __stream__.str());	\
-		} catch (const NException *e) {						\
+		} catch (const storm::Exception *e) {				\
 			OUTPUT_ERROR(title, e);							\
 		} catch (const ::Exception &e) {					\
 			OUTPUT_ERROR(title, e);							\
@@ -313,7 +313,7 @@ void verifyGte(TestResult &r, const T &lhs, const U &rhs, const String &expr) {
 			std::wcout << L"Failed: " << #expr << L", did not fail as expected" << std::endl; \
 		} catch (const type &) {										\
 		} catch (const type *) {										\
-		} catch (const NException *e) {									\
+		} catch (const storm::Exception *e) {							\
 			std::wcout << L"Failed: " << #expr << L", did not throw " << #type << L" as expected." << std::endl; \
 			std::wcout << e << std::endl;								\
 			__result__.failed++;										\
@@ -331,7 +331,7 @@ void verifyGte(TestResult &r, const T &lhs, const U &rhs, const String &expr) {
 		try {										\
 			__result__.total++;						\
 			expr;									\
-		} catch (const NException *e) {				\
+		} catch (const storm::Exception *e) {		\
 			OUTPUT_ERROR(#expr, e);					\
 		} catch (const ::Exception &e) {			\
 			OUTPUT_ERROR(#expr, e);					\

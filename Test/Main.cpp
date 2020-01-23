@@ -55,7 +55,7 @@ int _tmain(int argc, const wchar_t *argv[]) {
 		engineObj = null;
 		delete usedGc;
 		usedGc = null;
-	} catch (const NException *e) {
+	} catch (const storm::Exception *e) {
 		PLN(L"Unknown error: " << e);
 	} catch (const ::Exception &e) {
 		PLN(L"Unknown error: " << e.what());

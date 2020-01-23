@@ -137,7 +137,7 @@ namespace storm {
 	/**
 	 * Exception for documentation errors.
 	 */
-	class EXCEPTION_EXPORT DocError : public NException {
+	class EXCEPTION_EXPORT DocError : public Exception {
 		STORM_CLASS;
 	public:
 		DocError(const wchar *msg) {

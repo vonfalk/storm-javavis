@@ -8,17 +8,15 @@ namespace storm {
 
 	/**
 	 * Base class for all exceptions in Storm.
-	 *
-	 * TODO: Rename to 'Exception' when the new system works properly and the old exceptions are removed.
 	 */
-	class EXCEPTION_EXPORT NException : public Object {
+	class EXCEPTION_EXPORT Exception : public Object {
 		STORM_ABSTRACT_CLASS;
 	public:
 		// Create.
-		STORM_CTOR NException();
+		STORM_CTOR Exception();
 
 		// Copy.
-		NException(const NException &o);
+		Exception(const Exception &o);
 
 		// Deep copy.
 		void STORM_FN deepCopy(CloneEnv *env);
@@ -47,7 +45,7 @@ namespace storm {
 	/**
 	 * Generic exceptions.
 	 */
-	class EXCEPTION_EXPORT NotSupported : public NException {
+	class EXCEPTION_EXPORT NotSupported : public Exception {
 		STORM_CLASS;
 	public:
 		NotSupported(const wchar *msg);
@@ -63,7 +61,7 @@ namespace storm {
 	/**
 	 * Internal error.
 	 */
-	class EXCEPTION_EXPORT InternalError : public NException {
+	class EXCEPTION_EXPORT InternalError : public Exception {
 		STORM_CLASS;
 	public:
 		InternalError(const wchar *msg);
@@ -78,7 +76,7 @@ namespace storm {
 	/**
 	 * Runtime errors.
 	 */
-	class EXCEPTION_EXPORT RuntimeError : public NException {
+	class EXCEPTION_EXPORT RuntimeError : public Exception {
 		STORM_CLASS;
 	public:
 		RuntimeError(const wchar *msg);
@@ -104,7 +102,7 @@ namespace storm {
 	/**
 	 * Custom exception for strings. Cannot be in Str.h due to include cycles.
 	 */
-	class EXCEPTION_EXPORT StrError : public NException {
+	class EXCEPTION_EXPORT StrError : public Exception {
 		STORM_CLASS;
 	public:
 		StrError(const wchar *msg);
@@ -118,7 +116,7 @@ namespace storm {
 	/**
 	 * Exception thrown from the map.
 	 */
-	class EXCEPTION_EXPORT MapError : public NException {
+	class EXCEPTION_EXPORT MapError : public Exception {
 		STORM_CLASS;
 	public:
 		MapError(const wchar *msg);
@@ -132,7 +130,7 @@ namespace storm {
 	/**
 	 * Exception thrown from the set.
 	 */
-	class EXCEPTION_EXPORT SetError : public NException {
+	class EXCEPTION_EXPORT SetError : public Exception {
 		STORM_CLASS;
 	public:
 		SetError(const wchar *msg);
@@ -146,7 +144,7 @@ namespace storm {
 	/**
 	 * Custom error type for arrays.
 	 */
-	class EXCEPTION_EXPORT ArrayError : public NException {
+	class EXCEPTION_EXPORT ArrayError : public Exception {
 		STORM_CLASS;
 	public:
 		STORM_CTOR ArrayError(Nat id, Nat count);

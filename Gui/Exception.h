@@ -3,7 +3,7 @@
 
 namespace gui {
 
-	class EXCEPTION_EXPORT GuiError : public NException {
+	class EXCEPTION_EXPORT GuiError : public storm::Exception {
 		STORM_CLASS;
 	public:
 		GuiError(const wchar *what) {

@@ -23,7 +23,7 @@ namespace storm {
 			return ExprResult();
 		}
 
-		void For::blockCode(CodeGen *s, CodeResult *to, const code::Block &block) {
+		void For::blockCode(CodeGen *s, CodeResult *to, code::Block block) {
 			using namespace code;
 
 			Label begin = s->l->label();

@@ -37,7 +37,7 @@ namespace storm {
 	/**
 	 * Custom error type.
 	 */
-	class EXCEPTION_EXPORT NetError : public NException {
+	class EXCEPTION_EXPORT NetError : public Exception {
 		STORM_CLASS;
 	public:
 		NetError(const wchar *msg) {

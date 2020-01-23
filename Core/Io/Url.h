@@ -157,7 +157,7 @@ namespace storm {
 	Url *STORM_FN cwdUrl(EnginePtr e);
 
 	// Some exceptions.
-	class EXCEPTION_EXPORT InvalidName : public NException {
+	class EXCEPTION_EXPORT InvalidName : public Exception {
 		STORM_CLASS;
 	public:
 		STORM_CTOR InvalidName() { name = null; }

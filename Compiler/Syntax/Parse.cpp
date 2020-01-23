@@ -234,7 +234,7 @@ namespace storm {
 					prio = tok.next().toS()->toInt();
 				}
 			} catch (const StrError *e) {
-				const NException *z = e;
+				const Exception *z = e;
 				throw new (e) SyntaxError(tok.position(), z->message());
 			}
 			tok.expect(S("]"));

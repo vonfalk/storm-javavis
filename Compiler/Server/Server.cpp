@@ -43,7 +43,7 @@ namespace storm {
 				} catch (const MsgError *e) {
 					print(TO_S(this, S("While processing ") << msg << S(":")));
 					print(e->toS());
-				} catch (const NException *e) {
+				} catch (const Exception *e) {
 					// TODO: Better error ouput for errors containing SrcPos.
 					print(TO_S(this, S("While processing ") << msg << S(":")));
 					print(e->toS());
@@ -64,7 +64,7 @@ namespace storm {
 				Lock::L z(lock);
 				Range r = item->run(work);
 				updateLater(f, r);
-			} catch (const NException *e) {
+			} catch (const Exception *e) {
 				print(TO_S(this, S("While doing background work:")));
 				print(e->toS());
 			}

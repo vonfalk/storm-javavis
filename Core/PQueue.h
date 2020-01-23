@@ -10,7 +10,7 @@ namespace storm {
 	/**
 	 * Custom error type.
 	 */
-	class EXCEPTION_EXPORT PQueueError : public NException {
+	class EXCEPTION_EXPORT PQueueError : public Exception {
 	public:
 		PQueueError(const wchar *msg) {
 			this->msg = new (this) Str(msg);

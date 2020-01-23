@@ -126,7 +126,7 @@ namespace storm {
 			void STORM_FN checkInit();
 
 			// Code generation.
-			virtual void blockCode(CodeGen *state, CodeResult *to, const code::Block &block);
+			virtual void STORM_FN blockCode(CodeGen *state, CodeResult *to, code::Block block);
 		};
 
 		/**

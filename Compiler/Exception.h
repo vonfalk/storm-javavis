@@ -11,7 +11,7 @@ namespace storm {
 	/**
 	 * Defines exceptions used by the compiler.
 	 */
-	class EXCEPTION_EXPORT CodeError : public NException {
+	class EXCEPTION_EXPORT CodeError : public Exception {
 		STORM_CLASS;
 	public:
 		STORM_CTOR CodeError(SrcPos where) {
@@ -31,7 +31,7 @@ namespace storm {
 	/**
 	 * Language definition error.
 	 */
-	class EXCEPTION_EXPORT LangDefError : public NException {
+	class EXCEPTION_EXPORT LangDefError : public Exception {
 		STORM_CLASS;
 	public:
 		LangDefError(const wchar *msg) {
@@ -51,7 +51,7 @@ namespace storm {
 	/**
 	 * Specific subclass when calling core:debug:throwError.
 	 */
-	class EXCEPTION_EXPORT DebugError : public NException {
+	class EXCEPTION_EXPORT DebugError : public Exception {
 		STORM_CLASS;
 	public:
 		STORM_CTOR DebugError() {
@@ -137,7 +137,7 @@ namespace storm {
 	/**
 	 * Error while handling built-in functions.
 	 */
-	class EXCEPTION_EXPORT BuiltInError : public NException {
+	class EXCEPTION_EXPORT BuiltInError : public Exception {
 		STORM_CLASS;
 	public:
 		BuiltInError(const wchar *msg) {

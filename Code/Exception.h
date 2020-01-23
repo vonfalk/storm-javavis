@@ -7,7 +7,7 @@ namespace code {
 	STORM_PKG(core.asm);
 
 	// Base for all exceptions in the Code backend.
-	class EXCEPTION_EXPORT CodeError : public storm::NException {
+	class EXCEPTION_EXPORT CodeError : public storm::Exception {
 		STORM_CLASS;
 	public:
 		STORM_CTOR CodeError() {

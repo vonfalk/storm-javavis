@@ -13,7 +13,7 @@ namespace storm {
 	/**
 	 * Error thrown when an operation is not supported by a protocol.
 	 */
-	class EXCEPTION_EXPORT ProtocolNotSupported : public NException {
+	class EXCEPTION_EXPORT ProtocolNotSupported : public Exception {
 		STORM_CLASS;
 	public:
 		ProtocolNotSupported(const wchar *operation, const wchar *protocol);

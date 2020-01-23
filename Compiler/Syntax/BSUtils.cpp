@@ -43,7 +43,7 @@ namespace storm {
 			try {
 				return callMember(scope, name, me, param);
 			} catch (const InternalError *e) {
-				const NException *z = e;
+				const Exception *z = e;
 				throw new (e) SyntaxError(pos, z->message());
 			}
 		}

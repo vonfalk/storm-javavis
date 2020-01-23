@@ -269,7 +269,7 @@ namespace storm {
 	/**
 	 * Error during serialization.
 	 */
-	class EXCEPTION_EXPORT SerializationError : public NException {
+	class EXCEPTION_EXPORT SerializationError : public Exception {
 		STORM_CLASS;
 	public:
 		SerializationError(const wchar *msg) {
