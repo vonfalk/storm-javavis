@@ -36,14 +36,14 @@ namespace storm {
 			*l << mov(ptrA, ptrRel(ptrA, Offset()));
 			*l << fnParam(e.ptrDesc(), pMe);
 			*l << fnParam(e.ptrDesc(), ptrA);
-			*l << fnCall(e.ref(Engine::rCreateClassVariant), false);
+			*l << fnCall(e.ref(builtin::createClassVariant), false);
 			*l << fnRet();
 		} else {
 			*l << prolog();
 			*l << fnParam(e.ptrDesc(), pMe);
 			*l << fnParam(e.ptrDesc(), pVal);
 			*l << fnParam(e.ptrDesc(), value.type->typeRef());
-			*l << fnCall(e.ref(Engine::rCreateValVariant), false);
+			*l << fnCall(e.ref(builtin::createValVariant), false);
 			*l << fnRet();
 		}
 

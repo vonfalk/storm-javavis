@@ -31,7 +31,7 @@ namespace storm {
 				*state->l << fnParamRef(engine().ptrDesc(), val.v);
 			else
 				*state->l << fnParam(engine().ptrDesc(), val.v);
-			*state->l << fnCall(engine().ref(Engine::rThrowException), false);
+			*state->l << fnCall(engine().ref(builtin::throwException), false);
 
 			// This function never returns.
 		}

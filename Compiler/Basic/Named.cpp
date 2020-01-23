@@ -431,7 +431,7 @@ namespace storm {
 			switch (runOn.state) {
 			case RunOn::runtime:
 				*s->l << mov(ptrC, ptrA);
-				*s->l << add(ptrC, engine().ref(Engine::rTObjectOffset));
+				*s->l << add(ptrC, engine().ref(builtin::TObjectOffset));
 				*s->l << mov(thread, ptrRel(ptrC, Offset()));
 				break;
 			case RunOn::named:
@@ -486,7 +486,7 @@ namespace storm {
 
 
 			*s->l << fnParam(engine().ptrDesc(), objPtr(var));
-			*s->l << fnCall(engine().ref(Engine::rGlobalAddr), true, engine().ptrDesc(), ptrA);
+			*s->l << fnCall(engine().ref(builtin::globalAddr), true, engine().ptrDesc(), ptrA);
 
 			if (to->type().ref) {
 				*s->l << mov(to->location(s).v, ptrA);

@@ -176,9 +176,6 @@ namespace storm {
 	// Allocate and fill a FnCall object, copying arguments depending on 'copy'.
 	code::Var STORM_FN createFnCall(CodeGen *to, Array<Value> *formals, Array<code::Operand> *actuals, Bool copy);
 
-	// Low-level access to the object allocation function.
-	code::Ref STORM_FN allocObjectRef(EnginePtr e);
-
 	// Allocate an object on the heap. Store it in variable 'to'.
 	void STORM_FN allocObject(CodeGen *s, Function *ctor, Array<code::Operand> *params, code::Var to);
 	code::Var STORM_FN allocObject(CodeGen *s, Function *ctor, Array<code::Operand> *params);

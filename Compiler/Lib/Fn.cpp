@@ -95,7 +95,7 @@ namespace storm {
 		Var needClone = s->l->createVar(s->l->root(), Size::sByte);
 		*s->l << fnParam(ptr, me);
 		*s->l << fnParam(ptr, firstTObj);
-		*s->l << fnCall(e.ref(Engine::rFnNeedsCopy), true, byteDesc(e), needClone);
+		*s->l << fnCall(e.ref(builtin::fnNeedsCopy), true, byteDesc(e), needClone);
 
 		// Handle parameters.
 		Label doCopy = s->l->label();
@@ -122,7 +122,7 @@ namespace storm {
 			*s->l << fnParam(ptr, Ref(thunk)); // thunk
 			*s->l << fnParam(ptr, ptrC); // params
 			*s->l << fnParam(ptr, firstTObj); // first
-			*s->l << fnCall(e.ref(Engine::rFnCall), false);
+			*s->l << fnCall(e.ref(builtin::fnCall), false);
 
 			// Call 'deepCopy'
 			if (Function *call = result.type->deepCopyFn()) {
@@ -148,7 +148,7 @@ namespace storm {
 			*s->l << fnParam(ptr, Ref(thunk)); // thunk
 			*s->l << fnParam(ptr, ptrC); // params
 			*s->l << fnParam(ptr, firstTObj); // first
-			*s->l << fnCall(e.ref(Engine::rFnCall), false);
+			*s->l << fnCall(e.ref(builtin::fnCall), false);
 
 			if (result != Value())
 				*s->l << fnRet(r);
@@ -163,7 +163,7 @@ namespace storm {
 			*s->l << fnParam(ptr, Ref(thunk)); // thunk
 			*s->l << fnParam(ptr, ptrC); // params
 			*s->l << fnParam(ptr, firstTObj); // first
-			*s->l << fnCall(e.ref(Engine::rFnCall), false);
+			*s->l << fnCall(e.ref(builtin::fnCall), false);
 
 			if (Function *call = cloneFn(result.type)) {
 				*s->l << fnParam(ptr, r);

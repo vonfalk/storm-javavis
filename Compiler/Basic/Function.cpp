@@ -342,7 +342,7 @@ namespace storm {
 
 			*g->l << prolog();
 			*g->l << fnParam(engine().ptrDesc(), objPtr(identifier()));
-			*g->l << fnCall(engine().ref(Engine::rThrowAbstractError), false);
+			*g->l << fnCall(engine().ref(builtin::throwAbstractError), false);
 
 			// 'throwAbstractError' does not return, so just to be sure.
 			*g->l << epilog();

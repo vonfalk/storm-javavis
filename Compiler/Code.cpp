@@ -85,7 +85,7 @@ namespace storm {
 			p->push(params->at(i).desc(e));
 		Value result = owner->result;
 
-		return e.arena()->engineRedirect(result.desc(e), p, ref, e.ref(Engine::rEngine));
+		return e.arena()->engineRedirect(result.desc(e), p, ref, e.ref(builtin::engine));
 	}
 
 	/**
@@ -168,7 +168,7 @@ namespace storm {
 
 		Bool member = owner->isMember();
 		TypeDesc *result = owner->result.desc(e);
-		code::Ref fn = e.ref(Engine::rLazyCodeUpdate);
+		code::Ref fn = e.ref(builtin::lazyCodeUpdate);
 		setCode(e.arena()->redirect(member, result, params, fn, code::objPtr(this)));
 	}
 
@@ -283,7 +283,7 @@ namespace storm {
 
 		*g->l << prolog();
 		*g->l << fnParam(e.ptrDesc(), objPtr(name));
-		*g->l << fnCall(e.ref(Engine::rThrowAbstractError), false);
+		*g->l << fnCall(e.ref(builtin::throwAbstractError), false);
 
 		// 'throwAbstractError' does not return, but to be sure.
 		*g->l << epilog();

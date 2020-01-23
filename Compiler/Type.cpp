@@ -500,7 +500,7 @@ namespace storm {
 				throw new (this) TypedefError(msg);
 			}
 
-			code::Ref d = dtor ? dtor->ref() : engine.ref(Engine::rFnNull);
+			code::Ref d = dtor ? dtor->ref() : engine.ref(builtin::fnNull);
 			return new (this) code::ComplexDesc(size(), ctor->ref(), d);
 		}
 

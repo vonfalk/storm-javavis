@@ -310,7 +310,7 @@ private Var saveVariables(PatchParams to, Part investigate, Block current) on Co
 	Var stackVar = l.createVar(current, named{StackVar}.size);
 	Type arrayType = named{StackVar[]};
 	l << fnParam(ptrDesc, named{StackVar[]}.typeRef);
-	l << fnCall(allocObjectRef, false, ptrDesc, array);
+	l << fnCall(ref(BuiltIn:alloc), false, ptrDesc, array);
 
 	if (ctor = arrayType.defaultCtor) {
 		l << fnParam(ptrDesc, array);

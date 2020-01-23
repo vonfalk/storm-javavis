@@ -186,7 +186,7 @@ namespace storm {
 			assert(*name != Type::CTOR,
 				L"Please overload 'findThread' for your constructor '" + ::toS(identifier()) + L"'!");
 			*s->l << mov(ptrA, params->at(0));
-			*s->l << add(ptrA, engine().ref(Engine::rTObjectOffset));
+			*s->l << add(ptrA, engine().ref(builtin::TObjectOffset));
 			*s->l << mov(r, ptrRel(ptrA, Offset()));
 			break;
 		case RunOn::named:
@@ -306,7 +306,7 @@ namespace storm {
 		*to->l << fnParam(ptr, ptrA); // params
 		*to->l << fnParam(ptr, ptrB); // result
 		*to->l << fnParam(ptr, thread); // on
-		*to->l << fnCall(e.ref(Engine::rSpawnResult), false);
+		*to->l << fnCall(e.ref(builtin::spawnResult), false);
 
 		*to->l << end(sub->block);
 
@@ -369,7 +369,7 @@ namespace storm {
 		*to->l << fnParam(ptr, ptrA); // params
 		*to->l << fnParam(ptr, resultPos.v); // result
 		*to->l << fnParam(ptr, thread); // on
-		*to->l << fnCall(e.ref(Engine::rSpawnFuture), false);
+		*to->l << fnCall(e.ref(builtin::spawnFuture), false);
 
 		// Now, we're done!
 		*to->l << end(sub->block);

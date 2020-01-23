@@ -82,6 +82,7 @@ namespace storm {
 		Package *unsafe = e.package(S("core.unsafe"));
 		unsafe->add(new (e) RawPtrType(e));
 
+		// Add dynamic parts of the Variant interface.
 		addVariant(e.nameSet(parseSimpleName(e, S("core.Variant"))));
 	}
 

@@ -4,6 +4,7 @@
 #include "BootStatus.h"
 #include "World.h"
 #include "Scope.h"
+#include "BuiltIn.h"
 #include "VTableCall.h"
 #include "SharedLibs.h"
 #include "Code/Arena.h"
@@ -151,56 +152,8 @@ namespace storm {
 		// Get the one and only Handle object for void.
 		const Handle &voidHandle();
 
-		// Well-known references:
-		enum RefType {
-			rEngine,
-			rLazyCodeUpdate,
-			rRuleThrow,
-			// Allocate an object of the type given.
-			rAlloc,
-			// Allocate an array of the given type.
-			rAllocArray,
-			// Execute as<T>.
-			rAs,
-			// # of bytes inside a vtable the object's vtable ptr is pointing.
-			rVTableAllocOffset,
-			// # of bytes inside TObject the thread is stored
-			rTObjectOffset,
-			// Access the 'atRaw' member of Map.
-			rMapAtValue,
-			rMapAtClass,
-			// Acces the generic 'EnumType::toString'.
-			rEnumToS,
-			// Access to 'postRaw' and 'resultRaw' in Future.
-			rFuturePost,
-			rFutureResult,
-			// Low-level helpers for spawning threads.
-			rSpawnResult,
-			rSpawnFuture,
-			// Access to things inside FnBase.
-			rFnNeedsCopy,
-			rFnCall,
-			rFnCreate,
-			// A null function (does nothing).
-			rFnNull,
-			// ToS helper for Maybe<T>.
-			rMaybeToS,
-			// Get the address of a global variable.
-			rGlobalAddr,
-			// Throw an "Abstract function called"-exception.
-			rThrowAbstractError,
-			// Throw a generic exception.
-			rThrowException,
-			// Create a Variant instance from a value (a constructor).
-			rCreateValVariant,
-			// Create a Variant instance from a class (a constructor).
-			rCreateClassVariant,
-			// Should be the last one.
-			refCount,
-		};
-
 		// Get a reference to a function in the runtime.
-		code::Ref ref(RefType ref);
+		code::Ref ref(builtin::BuiltIn ref);
 
 		// Default visibility objects.
 		enum VisType {
@@ -280,7 +233,7 @@ namespace storm {
 			code::VTableCalls *vtableCalls;
 
 			// References.
-			code::RefSource *refs[refCount];
+			code::RefSource *refs[builtin::count];
 
 			// TypeDesc objects that are used a lot throughout the system.
 			code::TypeDesc *ptrDesc;
@@ -314,7 +267,7 @@ namespace storm {
 		util::Lock createLock;
 
 		// Create references.
-		code::RefSource *createRef(RefType ref);
+		code::RefSource *createRef(builtin::BuiltIn which);
 
 		// Create visibility objects.
 		Visibility *createVisibility(VisType t);

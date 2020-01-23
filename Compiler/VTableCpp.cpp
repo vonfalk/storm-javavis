@@ -199,7 +199,7 @@ namespace storm {
 		// Mark as used by setting 'filled' to 1.
 		*to << mov(ptrRel(ptrA, Offset::sPtr), ptrConst(1));
 		// The pointer is offset a bit.
-		*to << add(ptrA, to->engine().ref(Engine::rVTableAllocOffset));
+		*to << add(ptrA, to->engine().ref(builtin::VTableAllocOffset));
 
 		*to << lbl;
 		*to << mov(ptrC, obj);

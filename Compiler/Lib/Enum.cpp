@@ -228,7 +228,7 @@ namespace storm {
 		*l << fnParam(ptr, type->typeRef());
 		*l << fnParam(ptr, out);
 		*l << fnParam(intDesc(engine()), in);
-		*l << fnCall(engine().ref(Engine::rEnumToS), true);
+		*l << fnCall(engine().ref(builtin::enumToS), true);
 
 		*l << fnRet(out);
 

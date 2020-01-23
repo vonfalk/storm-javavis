@@ -265,10 +265,6 @@ namespace storm {
 		return call;
 	}
 
-	code::Ref allocObjectRef(EnginePtr e) {
-		return e.v.ref(Engine::rAlloc);
-	}
-
 	void allocObject(CodeGen *s, Function *ctor, Array<code::Operand> *params, code::Var to) {
 		using namespace code;
 
@@ -278,7 +274,7 @@ namespace storm {
 		Engine &e = ctor->engine();
 
 		*s->l << fnParam(e.ptrDesc(), type->typeRef());
-		*s->l << fnCall(e.ref(Engine::rAlloc), false, e.ptrDesc(), to);
+		*s->l << fnCall(e.ref(builtin::alloc), false, e.ptrDesc(), to);
 
 		CodeResult *r = new (s) CodeResult();
 		params = new (s) Array<code::Operand>(*params);

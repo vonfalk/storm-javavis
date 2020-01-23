@@ -19,7 +19,7 @@ BEGIN_TEST(EngineRedirectTest, Code) {
 	Array<TypeDesc *> *params = new (e) Array<TypeDesc *>();
 	params->push(intDesc(e));
 	params->push(intDesc(e));
-	Listing *l = arena->engineRedirect(ptrDesc(e), params, toCall, e.ref(Engine::rEngine));
+	Listing *l = arena->engineRedirect(ptrDesc(e), params, toCall, e.ref(builtin::engine));
 
 	Binary *b = new (e) Binary(arena, l);
 	typedef Str *(*Fn)(Int, Int);

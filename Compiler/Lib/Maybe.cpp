@@ -428,7 +428,7 @@ namespace storm {
 			return result;
 		} else if (as<ComplexDesc>(original)) {
 			// Complex description is the easiest actually... We just sort everything out in our copy-ctor.
-			Ref ctor = engine.ref(Engine::rFnNull), dtor = engine.ref(Engine::rFnNull);
+			Ref ctor = engine.ref(builtin::fnNull), dtor = engine.ref(builtin::fnNull);
 			if (Function *f = copyCtor())
 				ctor = f->ref();
 			if (Function *f = destructor())
@@ -622,7 +622,7 @@ namespace storm {
 		*p.state->l << fnParam(engine.ptrDesc(), typeRef());
 		*p.state->l << fnParam(engine.ptrDesc(), p.param(0));
 		*p.state->l << fnParam(engine.ptrDesc(), ptrConst(0));
-		*p.state->l << fnCall(engine.ref(Engine::rMaybeToS), false, engine.ptrDesc(), p.result->location(p.state).v);
+		*p.state->l << fnCall(engine.ref(builtin::maybeToS), false, engine.ptrDesc(), p.result->location(p.state).v);
 	}
 
 	void MaybeValueType::toSMaybeBuf(InlineParams p) {
@@ -633,7 +633,7 @@ namespace storm {
 		*p.state->l << fnParam(engine.ptrDesc(), typeRef());
 		*p.state->l << fnParam(engine.ptrDesc(), p.param(0));
 		*p.state->l << fnParam(engine.ptrDesc(), p.param(1));
-		*p.state->l << fnCall(engine.ref(Engine::rMaybeToS), false);
+		*p.state->l << fnCall(engine.ref(builtin::maybeToS), false);
 	}
 
 	void *MaybeValueType::toSHelper(MaybeValueType *me, void *value, StrBuf *out) {

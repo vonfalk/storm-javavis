@@ -123,13 +123,13 @@ namespace storm {
 			*l << fnParam(ptr, me);
 			*l << fnParam(ptr, key);
 			*l << fnParam(ptr, ctor->ref());
-			*l << fnCall(engine.ref(Engine::rMapAtValue), true, ptr, ptrA);
+			*l << fnCall(engine.ref(builtin::mapAtValue), true, ptr, ptrA);
 		} else {
 			*l << fnParam(ptr, me);
 			*l << fnParam(ptr, key);
 			*l << fnParam(ptr, v->typeRef());
 			*l << fnParam(ptr, ctor->ref());
-			*l << fnCall(engine.ref(Engine::rMapAtClass), true, ptr, ptrA);
+			*l << fnCall(engine.ref(builtin::mapAtClass), true, ptr, ptrA);
 		}
 
 		*l << fnRet(ptrA);

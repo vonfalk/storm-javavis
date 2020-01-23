@@ -64,7 +64,7 @@ namespace sound {
 				mpg123_delete(h);
 				h = null;
 
-				throw new (this) SoundOpenError(L"Expected float output from mpg123.");
+				throw new (this) SoundOpenError(S("Expected float output from mpg123."));
 			}
 		} else {
 			Str *msg = new (this) Str(toWChar(engine(), mpg123_strerror(h)));

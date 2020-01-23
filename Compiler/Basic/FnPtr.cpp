@@ -200,7 +200,7 @@ namespace storm {
 					*to->l << fnParam(ptr, ptrConst(Offset()));
 				*to->l << fnParam(ptr, thisPtr.v);
 				*to->l << fnParam(byteDesc(engine()), byteConst(memberFn ? 1 : 0));
-				*to->l << fnCall(engine().ref(Engine::rFnCreate), false, ptr, ptrA);
+				*to->l << fnCall(engine().ref(builtin::fnCreate), false, ptr, ptrA);
 				*to->l << mov(z.v, ptrA);
 			}
 			z.created(to);

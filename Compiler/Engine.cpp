@@ -346,7 +346,7 @@ namespace storm {
 		return *o.voidHandle;
 	}
 
-	code::Ref Engine::ref(RefType ref) {
+	code::Ref Engine::ref(builtin::BuiltIn ref) {
 		code::RefSource **r = &o.refs[ref];
 		if (!*r)
 			*r = createRef(ref);
@@ -390,60 +390,60 @@ namespace storm {
 		new (Place(obj)) Variant(src);
 	}
 
-	code::RefSource *Engine::createRef(RefType ref) {
+	code::RefSource *Engine::createRef(builtin::BuiltIn ref) {
 #define W(x) S(x)
 #define FNREF(x) arena()->externalSource(S("C++:") W(#x), address(&x))
 
 		switch (ref) {
-		case rEngine:
+		case builtin::engine:
 			return arena()->externalSource(S("engine"), this);
-		case rLazyCodeUpdate:
+		case builtin::lazyCodeUpdate:
 			return FNREF(LazyCode::updateCode);
-		case rRuleThrow:
+		case builtin::ruleThrow:
 			return FNREF(syntax::Node::throwError);
-		case rAlloc:
+		case builtin::alloc:
 			return FNREF(allocType);
-		case rAllocArray:
+		case builtin::allocArray:
 			return FNREF(allocArray);
-		case rAs:
+		case builtin::as:
 			return FNREF(stormAs);
-		case rVTableAllocOffset:
+		case builtin::VTableAllocOffset:
 			return arena()->externalSource(S("vtableAllocOffset"), (const void *)VTableCpp::vtableAllocOffset());
-		case rTObjectOffset:
+		case builtin::TObjectOffset:
 			return arena()->externalSource(S("threadOffset"), (const void *)OFFSET_OF(TObject, thread));
-		case rMapAtValue:
+		case builtin::mapAtValue:
 			return FNREF(MapBase::atRawValue);
-		case rMapAtClass:
+		case builtin::mapAtClass:
 			return FNREF(MapBase::atRawClass);
-		case rEnumToS:
+		case builtin::enumToS:
 			return FNREF(Enum::toString);
-		case rFuturePost:
+		case builtin::futurePost:
 			return FNREF(FutureBase::postRaw);
-		case rFutureResult:
+		case builtin::futureResult:
 			return FNREF(FutureBase::resultRaw);
-		case rSpawnResult:
+		case builtin::spawnResult:
 			return FNREF(spawnThreadResult);
-		case rSpawnFuture:
+		case builtin::spawnFuture:
 			return FNREF(spawnThreadFuture);
-		case rFnNeedsCopy:
+		case builtin::fnNeedsCopy:
 			return FNREF(FnBase::needsCopy);
-		case rFnCall:
+		case builtin::fnCall:
 			return FNREF(fnCallRaw);
-		case rFnCreate:
+		case builtin::fnCreate:
 			return FNREF(fnCreateRaw);
-		case rFnNull:
+		case builtin::fnNull:
 			return FNREF(fnNull);
-		case rMaybeToS:
+		case builtin::maybeToS:
 			return FNREF(MaybeValueType::toSHelper);
-		case rGlobalAddr:
+		case builtin::globalAddr:
 			return FNREF(GlobalVar::dataPtr);
-		case rThrowAbstractError:
+		case builtin::throwAbstractError:
 			return FNREF(throwAbstractError);
-		case rThrowException:
+		case builtin::throwException:
 			return FNREF(throwException);
-		case rCreateValVariant:
+		case builtin::createValVariant:
 			return FNREF(createValVariant);
-		case rCreateClassVariant:
+		case builtin::createClassVariant:
 			return FNREF(createClassVariant);
 		default:
 			assert(false, L"Unknown reference: " + ::toS(ref));

@@ -154,7 +154,7 @@ namespace storm {
 		*l << lea(ptrA, data);
 		*l << fnParam(ptr, me);
 		*l << fnParam(ptr, ptrA);
-		*l << fnCall(engine.ref(Engine::rFutureResult), false);
+		*l << fnCall(engine.ref(builtin::futureResult), false);
 		*l << fnRet(data);
 
 		return l;

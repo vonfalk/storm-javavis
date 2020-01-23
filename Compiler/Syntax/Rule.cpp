@@ -91,7 +91,7 @@ namespace storm {
 
 			// Call the exception-throwing function.
 			*l << code::fnParam(engine.ptrDesc(), me);
-			*l << code::fnCall(engine.ref(Engine::rRuleThrow), true);
+			*l << code::fnCall(engine.ref(builtin::ruleThrow), true);
 
 			// Not needed, but for good measure.
 			*l << code::epilog();
