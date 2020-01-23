@@ -274,9 +274,11 @@ namespace storm {
 	public:
 		SerializationError(const wchar *msg) {
 			w = new (this) Str(msg);
+			saveTrace();
 		}
 		STORM_CTOR SerializationError(Str *msg) {
 			w = msg;
+			saveTrace();
 		}
 
 		virtual void STORM_FN message(StrBuf *to) const {

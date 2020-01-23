@@ -42,9 +42,11 @@ namespace storm {
 	public:
 		NetError(const wchar *msg) {
 			this->msg = new (this) Str(msg);
+			saveTrace();
 		}
 		STORM_CTOR NetError(Str *msg) {
 			this->msg = msg;
+			saveTrace();
 		}
 
 		virtual void STORM_FN message(StrBuf *to) const {

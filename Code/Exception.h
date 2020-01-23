@@ -6,8 +6,17 @@
 namespace code {
 	STORM_PKG(core.asm);
 
+	// Base for all exceptions in the Code backend.
+	class EXCEPTION_EXPORT CodeError : public storm::NException {
+		STORM_CLASS;
+	public:
+		STORM_CTOR CodeError() {
+			saveTrace();
+		}
+	};
+
 	// Thrown when an instruction contains invalid data for some reason.
-	class EXCEPTION_EXPORT InvalidValue : public storm::NException {
+	class EXCEPTION_EXPORT InvalidValue : public CodeError {
 		STORM_CLASS;
 	public:
 		InvalidValue(const wchar *what) {
@@ -24,7 +33,7 @@ namespace code {
 		Str *error;
 	};
 
-	class EXCEPTION_EXPORT BlockBeginError : public storm::NException {
+	class EXCEPTION_EXPORT BlockBeginError : public CodeError {
 		STORM_CLASS;
 	public:
 		STORM_CTOR BlockBeginError() {
@@ -40,7 +49,7 @@ namespace code {
 		Str *msg;
 	};
 
-	class EXCEPTION_EXPORT BlockEndError : public storm::NException {
+	class EXCEPTION_EXPORT BlockEndError : public CodeError {
 		STORM_CLASS;
 	public:
 		STORM_CTOR BlockEndError() {
@@ -56,7 +65,7 @@ namespace code {
 		Str *msg;
 	};
 
-	class EXCEPTION_EXPORT FrameError : public storm::NException {
+	class EXCEPTION_EXPORT FrameError : public CodeError {
 		STORM_CLASS;
 	public:
 		STORM_CTOR FrameError() {}
@@ -65,7 +74,7 @@ namespace code {
 		}
 	};
 
-	class EXCEPTION_EXPORT DuplicateLabelError : public storm::NException {
+	class EXCEPTION_EXPORT DuplicateLabelError : public CodeError {
 		STORM_CLASS;
 	public:
 		STORM_CTOR DuplicateLabelError(Nat id) {
@@ -79,7 +88,7 @@ namespace code {
 		}
 	};
 
-	class EXCEPTION_EXPORT UnusedLabelError : public storm::NException {
+	class EXCEPTION_EXPORT UnusedLabelError : public CodeError {
 		STORM_CLASS;
 	public:
 		STORM_CTOR UnusedLabelError(Nat id) {
@@ -93,7 +102,7 @@ namespace code {
 		}
 	};
 
-	class EXCEPTION_EXPORT VariableUseError : public storm::NException {
+	class EXCEPTION_EXPORT VariableUseError : public CodeError {
 		STORM_CLASS;
 	public:
 		STORM_CTOR VariableUseError(Var v, Part p) {

@@ -32,6 +32,12 @@ namespace storm {
 		// Collected stack trace, if any.
 		StackTrace stackTrace;
 
+		// Convenience function to call to collect a stack trace. Intended to be called from the
+		// constructor of derived exceptions who wish to store a stack trace. This is not done by
+		// default, as it is fairly expensive, and not beneficial for all exceptions (e.g. syntax
+		// errors).
+		void STORM_FN saveTrace();
+
 	protected:
 		// Regular to string implementation.
 		virtual void STORM_FN toS(StrBuf *to) const;

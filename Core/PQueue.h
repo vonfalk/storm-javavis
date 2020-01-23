@@ -14,9 +14,11 @@ namespace storm {
 	public:
 		PQueueError(const wchar *msg) {
 			this->msg = new (this) Str(msg);
+			saveTrace();
 		}
 		STORM_CTOR PQueueError(Str *msg) {
 			this->msg = msg;
+			saveTrace();
 		}
 		virtual void STORM_FN message(StrBuf *to) const {
 			*to << msg;

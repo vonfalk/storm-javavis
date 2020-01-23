@@ -13,13 +13,19 @@
 namespace storm {
 
 	ProtocolNotSupported::ProtocolNotSupported(const wchar *operation, const wchar *protocol)
-		: operation(new (engine()) Str(operation)), protocol(new (engine()) Str(protocol)) {}
+		: operation(new (engine()) Str(operation)), protocol(new (engine()) Str(protocol)) {
+		saveTrace();
+	}
 
 	ProtocolNotSupported::ProtocolNotSupported(const wchar *operation, Str *protocol)
-		: operation(new (engine()) Str(operation)), protocol(protocol) {}
+		: operation(new (engine()) Str(operation)), protocol(protocol) {
+		saveTrace();
+	}
 
 	ProtocolNotSupported::ProtocolNotSupported(Str *operation, Str *protocol)
-		: operation(operation), protocol(protocol) {}
+		: operation(operation), protocol(protocol) {
+		saveTrace();
+	}
 
 	void ProtocolNotSupported::message(StrBuf *to) const {
 		*to << operation << S(" is not supported by the protocol ") << protocol;

@@ -8,9 +8,11 @@ namespace gui {
 	public:
 		GuiError(const wchar *what) {
 			data = new (this) Str(what);
+			saveTrace();
 		}
 		STORM_CTOR GuiError(Str *what) {
 			data = what;
+			saveTrace();
 		}
 
 		virtual void STORM_FN message(StrBuf *to) const {

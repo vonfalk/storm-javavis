@@ -54,6 +54,10 @@ namespace storm {
 	class EXCEPTION_EXPORT DebugError : public NException {
 		STORM_CLASS;
 	public:
+		STORM_CTOR DebugError() {
+			saveTrace();
+		}
+
 		virtual void STORM_FN message(StrBuf *to) const {
 			*to << S("Debug error");
 		}
@@ -138,9 +142,11 @@ namespace storm {
 	public:
 		BuiltInError(const wchar *msg) {
 			this->msg = new (this) Str(msg);
+			saveTrace();
 		}
 		STORM_CTOR BuiltInError(Str *msg) {
 			this->msg = msg;
+			saveTrace();
 		}
 		virtual void STORM_FN message(StrBuf *to) const {
 			*to << S("Error while loading built in functions: ") << msg;

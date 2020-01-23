@@ -24,12 +24,19 @@ namespace storm {
 		}
 	}
 
+	void NException::saveTrace() {
+		if (stackTrace.empty())
+			stackTrace = collectStackTrace(engine());
+	}
+
 	NotSupported::NotSupported(const wchar *msg) {
 		this->msg = new (this) Str(msg);
+		saveTrace();
 	}
 
 	NotSupported::NotSupported(Str *msg) {
 		this->msg = msg;
+		saveTrace();
 	}
 
 	void NotSupported::message(StrBuf *to) const {
@@ -38,10 +45,12 @@ namespace storm {
 
 	InternalError::InternalError(const wchar *msg) {
 		this->msg = new (this) Str(msg);
+		saveTrace();
 	}
 
 	InternalError::InternalError(Str *msg) {
 		this->msg = msg;
+		saveTrace();
 	}
 
 	void InternalError::message(StrBuf *to) const {
@@ -50,10 +59,12 @@ namespace storm {
 
 	RuntimeError::RuntimeError(const wchar *msg) {
 		this->msg = new (this) Str(msg);
+		saveTrace();
 	}
 
 	RuntimeError::RuntimeError(Str *msg) {
 		this->msg = msg;
+		saveTrace();
 	}
 
 	void RuntimeError::message(StrBuf *to) const {
@@ -71,10 +82,12 @@ namespace storm {
 
 	StrError::StrError(const wchar *msg) {
 		this->msg = new (this) Str(msg);
+		saveTrace();
 	}
 
 	StrError::StrError(Str *msg) {
 		this->msg = msg;
+		saveTrace();
 	}
 
 	void StrError::message(StrBuf *to) const {
@@ -83,10 +96,12 @@ namespace storm {
 
 	MapError::MapError(const wchar *msg) {
 		this->msg = new (this) Str(msg);
+		saveTrace();
 	}
 
 	MapError::MapError(Str *msg) {
 		this->msg = msg;
+		saveTrace();
 	}
 
 	void MapError::message(StrBuf *to) const {
@@ -95,19 +110,25 @@ namespace storm {
 
 	SetError::SetError(const wchar *msg) {
 		this->msg = new (this) Str(msg);
+		saveTrace();
 	}
 
 	SetError::SetError(Str *msg) {
 		this->msg = msg;
+		saveTrace();
 	}
 
 	void SetError::message(StrBuf *to) const {
 		*to << S("Set error: ") << msg;
 	}
 
-	ArrayError::ArrayError(Nat id, Nat count) : id(id), count(count), msg(null) {}
+	ArrayError::ArrayError(Nat id, Nat count) : id(id), count(count), msg(null) {
+		saveTrace();
+	}
 
-	ArrayError::ArrayError(Nat id, Nat count, Str *msg) : id(id), count(count), msg(msg) {}
+	ArrayError::ArrayError(Nat id, Nat count, Str *msg) : id(id), count(count), msg(msg) {
+		saveTrace();
+	}
 
 	void ArrayError::message(StrBuf *to) const {
 		*to << S("Array error: Index ") << id << S(" out of bounds (of ") << count << S(").");
