@@ -107,6 +107,13 @@ namespace storm {
 			return r;
 		}
 
+		void TryBlock::toS(StrBuf *to) const {
+			*to << S("try ");
+			ExprBlock::toS(to);
+			for (Nat i = 0; i < toCatch->count(); i++)
+				*to << S(" ") << toCatch->at(i)->toS();
+		}
+
 		/**
 		 * Catch
 		 */
@@ -146,6 +153,17 @@ namespace storm {
 				return run->result();
 			else
 				return ExprResult();
+		}
+
+		void CatchBlock::toS(StrBuf *to) const {
+			*to << S("catch (") << type->identifier();
+			if (var)
+				*to << S(" ") << var->name;
+			*to << S(") ");
+			if (run)
+				run->toS(to);
+			else
+				*to << S(";\n");
 		}
 
 	}

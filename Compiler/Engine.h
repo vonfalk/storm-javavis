@@ -189,6 +189,8 @@ namespace storm {
 			rGlobalAddr,
 			// Throw an "Abstract function called"-exception.
 			rThrowAbstractError,
+			// Throw a generic exception.
+			rThrowException,
 			// Create a Variant instance from a value (a constructor).
 			rCreateValVariant,
 			// Create a Variant instance from a class (a constructor).

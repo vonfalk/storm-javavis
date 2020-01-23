@@ -374,7 +374,11 @@ namespace storm {
 		// The null function in Storm!
 	}
 
-	static void throwAbstractError(Str *identifier) {
+	static void CODECALL throwException(Exception *ex) {
+		ex->throwMe();
+	}
+
+	static void CODECALL throwAbstractError(Str *identifier) {
 		throw new (identifier) AbstractFnCalled(identifier);
 	}
 
@@ -435,6 +439,8 @@ namespace storm {
 			return FNREF(GlobalVar::dataPtr);
 		case rThrowAbstractError:
 			return FNREF(throwAbstractError);
+		case rThrowException:
+			return FNREF(throwException);
 		case rCreateValVariant:
 			return FNREF(createValVariant);
 		case rCreateClassVariant:

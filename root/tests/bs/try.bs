@@ -7,11 +7,16 @@ Str catchTest(Int throwOn) {
 		if (throwOn == 1)
 			throwError;
 		if (throwOn == 2)
-			throwSyntaxError(SrcPos(), "Test");
+			throw SyntaxError(SrcPos(), "Test");
 		"None";
 	} catch (DebugError e) {
 		"D" # e.message;
 	} catch (SyntaxError e) {
 		"S" # e.message;
 	}
+}
+
+
+Int throwTest() {
+	throw SyntaxError(SrcPos(), "Test");
 }

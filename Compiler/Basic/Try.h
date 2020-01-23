@@ -38,6 +38,10 @@ namespace storm {
 			// Compute the result.
 			virtual ExprResult STORM_FN result();
 
+		protected:
+			// Output.
+			virtual void STORM_FN toS(StrBuf *to) const;
+
 		private:
 			// All catch blocks.
 			Array<CatchBlock *> *toCatch;
@@ -70,6 +74,10 @@ namespace storm {
 
 			// Tell the catch block where the exception is stored.
 			code::Var exceptionVar;
+
+		protected:
+			// Output.
+			virtual void STORM_FN toS(StrBuf *to) const;
 
 		private:
 			// Contained expression.

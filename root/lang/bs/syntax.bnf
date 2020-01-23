@@ -286,7 +286,11 @@ SIf => If(block, cond) :
 // Return.
 Return SReturn(Block block);
 SReturn => Return(pos, block) : "return" #keyword;
-SReturn => Return(pos, block, expr) : "return" #keyword, SExpr(block) expr;
+SReturn => Return(pos, block, expr) : "return[ \t]" #keyword, SExpr(block) expr;
+
+// Throw.
+Throw SThrow(Block block);
+SThrow => Throw(pos, expr) : "throw[ \t]" #keyword, SExpr(block) expr;
 
 // The loop.
 Expr SLoop(Block block);
@@ -516,6 +520,7 @@ SStmt => e : SBlock(block) e;
 SStmt[10] => e : SIf(block) e;
 SStmt[10] => e : SLoop(block) e;
 SStmt[10] => e : SReturn(block) e, ";";
+SStmt[10] => e : SThrow(block) e, ";";
 SStmt[10] => e : STryCatch(block) e;
 SStmt[20] => e : SUnless(block) e;
 
