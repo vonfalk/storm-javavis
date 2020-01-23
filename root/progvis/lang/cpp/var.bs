@@ -62,3 +62,10 @@ class LocalVarAccess extends Expr {
 		var.var.adjust(gen, result.location(gen));
 	}
 }
+
+class VarDecl extends Expr {
+	init(SrcPos pos, Value type, SStr name) {
+		init(pos) {
+		}
+	}
+}

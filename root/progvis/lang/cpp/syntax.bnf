@@ -61,7 +61,7 @@ SIdentifier => v : "[A-Za-z_][A-Za-z0-9_]*" @v;
 // Type declarations. Transforms into a Value.
 Value STypeName(Scope scope);
 STypeName => original : ("const" #keyword,)? STypeNameI(scope) original;
-STypeName => asRef(original) : ("const" #keyword,)? STypeNameI(scope) original, "&";
+STypeName => original : ("const" #keyword,)? STypeNameI(scope) original, "&";
 
 Value STypeNameI(Scope scope);
 STypeNameI[-1] => findType(pos, scope, first, rest) : SNamePart first - ("::", SNamePart rest)*;
@@ -93,6 +93,7 @@ SStmt => ExprBlock(block) : "{", (SStmt(me) -> add,)* "}";
 SStmt => e : SExpr e, ";";
 SStmt => Return(pos, block, expr) : "return[ \t]" #keyword, SExpr(block) expr, ";";
 SStmt => Return(pos, block) : "return" #keyword, ";";
+SStmt => VarDecl(pos, type, name) : STypeName type, SIdentifier name;
 
 // Add a list of statements to a block.
 void SStmtList(StmtBlock block);
