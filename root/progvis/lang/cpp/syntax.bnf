@@ -64,17 +64,28 @@ STypeName => original : ("const" #keyword,)? STypeNameI(scope) original;
 STypeName => asRef(original) : ("const" #keyword,)? STypeNameI(scope) original, "&";
 
 Value STypeNameI(Scope scope);
-STypeNameI[-1] => findType(scope, first, rest) : SIdentifier first - ("::", SIdentifier rest)*;
-// TODO: Templates...
+STypeNameI[-1] => findType(pos, scope, first, rest) : SNamePart first - ("::", SNamePart rest)*;
 
 STypeNameI => original : STypeNameI original, "\*";
 STypeNameI => original : STypeNameI original, "const" #keyword;
 
 // Built-in types.
 STypeNameI => intType() : "int" #keyword;
+STypeNameI => uIntType() : "unsigned" #keyword, "int" #keyword;
+STypeNameI => longType() : "long" #keyword;
+STypeNameI => uLongType() : "unsigned" #keyword, "long" #keyword;
 STypeNameI => boolType() : "bool" #keyword;
 STypeNameI => Value() : "void" #keyword;
 // ...
+
+// Parts of a name.
+SimplePart SNamePart(Scope scope);
+SNamePart => SimplePart(name) : SIdentifier name;
+SNamePart => SimplePart(name, params) : SIdentifier name, "<", SNameParams(scope) params, ">";
+
+Array<Value> SNameParams(Scope scope);
+SNameParams => Array<Value>() :;
+SNameParams => Array<Value>() : STypeName(scope) -> push, (",", STypeName(scope) -> push)*;
 
 // Statements and expressions:
 Stmt SStmt(Block block);
@@ -151,7 +162,7 @@ SOp3 => n : SOp2(block) n;
 SOp3 : "\*", SOp3(block) n;
 SOp3 : "&", SOp3(block) n;
 SOp3 => operator(block, op, n) : "[!~]" @op, SOp3(block) n;
-SOp3 => operator(block, op, n) : "++?" @op, SOp2(block) n;
+SOp3 => operator(block, op, n) : "\+\+?" @op, SOp2(block) n;
 SOp3 => operator(block, op, n) : "--?" @op, SOp2(block) n;
 SOp3 : "new[ \t]" #keyword, SOp2(block) n;
 SOp3 : "delete[ \t]" #keyword, SOp2(block) n;
@@ -162,12 +173,19 @@ Expr SOp2(Block block);
 SOp2 => a : SAtom(block) a;
 SOp2 => operator(block, n, op) : SAtom(block) n, "++" @op;
 SOp2 => operator(block, n, op) : SAtom(block) n, "--" @op;
-SOp2 : SOp2(block), "\.", SAtom(block);
-SOp2 : SOp2(block), "->", SAtom(block);
-SOp2 : SOp2(block), "[", SExpr(block), "]";
-SOp2 : SOp2(block), "(", SExpr(block), ")";
+SOp2 => dotOperator(block, lhs, rhs, false) : SOp2(block) lhs, "\.", SIdentifier(block) rhs;
+SOp2 => dotOperator(block, lhs, rhs, true) : SOp2(block) lhs, "->", SIdentifier(block) rhs;
+SOp2 : SOp2(block), "\[", SExpr(block), "\]";
+SOp2 => fnCall(lhs, params) : SOp2(block) lhs, "(", SActuals(block) params, ")";
 
 Expr SAtom(Block block);
 SAtom => v : "(", SExpr(block) v, ")";
 SAtom => IntLiteral(v) : "[0-9]+" @v #constant;
-SAtom : SIdentifier;
+SAtom => NameExpr(pos, block.scope, name) : SCompoundName(block.scope) name;
+
+SimpleName SCompoundName(Scope scope);
+SCompoundName => SimpleName() : SNamePart(scope) -> add, ("::", SNamePart(scope) -> add)*;
+
+Array<Expr> SActuals(Block block);
+SActuals => Array<Expr>() : ;
+SActuals => Array<Expr>() : SExpr(block) -> push, (",", SExpr(block) -> push)*;

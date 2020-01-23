@@ -187,7 +187,7 @@ private Program? loadProgram(Url[] files) on Compiler {
 		return null;
 	}
 
-	unless(mainPtr = pointer(main) as Fn<void>) {
+	unless (mainPtr = wrapMain(pointer(main))) {
 		print("Wrong signature of the main function.");
 		return null;
 	}
@@ -196,6 +196,20 @@ private Program? loadProgram(Url[] files) on Compiler {
 	patchFunctions(program, pkg, pkg);
 	program.loadSource(files);
 	return program;
+}
+
+// Wrap the pointer to main as is appropriate based on the return type.
+private Fn<void>? wrapMain(FnBase base) on Compiler {
+	if (base as Fn<void>) {
+		return base;
+	}
+
+	if (base as Fn<Int>) {
+		// This is mostly temporary. We should show the result in a better way later on.
+		return () => print("Result: " # base.call());
+	}
+
+	null;
 }
 
 // Patch all functions in the specified NameSet recursively.

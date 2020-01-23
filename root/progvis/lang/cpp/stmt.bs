@@ -176,13 +176,17 @@ class Return extends Stmt {
 
 	Bool code(CodeGen gen) : override {
 		if (value) {
+			var res = value.result.type;
 			CodeResult r(value.result.type, gen.block);
 			value.code(gen, r);
 
-			if (expected == Value())
+			if (expected == Value()) {
 				gen.l << fnRet();
-			else
+			} else if (res.ref) {
+				gen.l << fnRetRef(r.location(gen));
+			} else {
 				gen.l << fnRet(r.location(gen));
+			}
 		} else {
 			gen.l << fnRet();
 		}

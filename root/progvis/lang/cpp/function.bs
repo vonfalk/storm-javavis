@@ -51,7 +51,8 @@ class CppFunction extends Function {
 		Value[] fTypes;
 		SStr[] fNames;
 		for (f in decl.formals) {
-			fTypes << f.type.transform(scope);
+			// Everything is a reference in this C++ implementation.
+			fTypes << f.type.transform(scope).asRef();
 			fNames << f.name;
 		}
 
@@ -68,10 +69,10 @@ class CppFunction extends Function {
 	// Generate code on demand.
 	private CodeGen code() {
 		FnRoot root(body.pos, this);
+
 		// Add parameters.
 		for (id, v in formals) {
-			print("TODO: Handle formal parameters properly! We need to copy the values!");
-			// root.add(LocalVar(v.v, params[id], v.pos, true));
+			root.addParam(v.v, params[id], v.pos);
 		}
 
 		body.transform(root);
@@ -101,9 +102,21 @@ class FnRoot extends StmtBlock {
 	// Return value of the function.
 	Value result;
 
+	// Parameters. Also added as usual to the block.
+	private LocalVar[] params;
+
 	init(SrcPos pos, CppFunction fn) {
 		init(pos, fn.scope) {
 			result = fn.result;
+		}
+	}
+
+	// Add a parameter.
+	void addParam(Str name, Value type, SrcPos pos) {
+		if (t = type.type) {
+			LocalVar var(name, t, pos);
+			add(var);
+			params << var;
 		}
 	}
 
@@ -111,7 +124,24 @@ class FnRoot extends StmtBlock {
 	Bool code(CodeGen gen) : override {
 		// We don't need to create a child block. We use the root block right away!
 
-		// TODO: Handle parameters?
+		for (param in params) {
+			Var formal = gen.l.createParam(ptrDesc);
+			CppVar var = allocType(gen, param.type);
+			var.adjust(gen, ptrA);
+
+			if (copy = param.type.copyCtor) {
+				gen.l << fnParam(ptrDesc, ptrA);
+				gen.l << fnParam(ptrDesc, formal);
+				gen.l << fnCall(copy.ref, true);
+			} else {
+				Size sz = param.type.size;
+				gen.l << mov(ptrB, formal);
+				gen.l << mov(xRel(sz, ptrA, Offset()), xRel(sz, ptrB, Offset()));
+			}
+
+			var.created(gen);
+			param.var = var;
+		}
 
 		initVariables(gen);
 		blockCode(gen);

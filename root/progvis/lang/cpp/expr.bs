@@ -2,6 +2,8 @@ use core:lang;
 use core:asm;
 use lang:bs:macro;
 
+on Compiler:
+
 /**
  * Class representing an expression in C++.
  */
@@ -62,11 +64,82 @@ class IntLiteral extends Expr {
 			} else {
 				throw SyntaxError(pos, "Unknown type!");
 			}
-			var.created(gen);
 			gen.l << mov(to, ptrA);
+			var.created(gen);
 		}
 		res.created(gen);
 	}
+}
+
+/**
+ * Node representing a yet unresolved identifier.
+ *
+ * If used on its own, it will try to act as a variable access.
+ */
+class NameExpr extends Expr {
+	Scope scope;
+	SimpleName name;
+	private Expr? resolved;
+
+	init(SrcPos pos, Scope scope, SimpleName name) {
+		init(pos) { scope = scope; name = name; }
+	}
+
+	void code(CodeGen gen, CodeResult result) : override {
+		resolve.code(gen, result);
+	}
+
+	ExprResult result() : override {
+		resolve.result();
+	}
+
+	Bool temporary() : override {
+		resolve.temporary();
+	}
+
+	private Expr resolve() {
+		if (resolved)
+			return resolved;
+
+		Expr r = doResolve();
+		resolved = r;
+		r;
+	}
+
+	private Expr doResolve() {
+		Named? found = scope.find(name);
+		if (found as LocalVar) {
+			LocalVarAccess r(pos, found);
+			resolved = r;
+			return r;
+		}
+
+		throw SyntaxError(pos, "Unable to resolve the name ${name} in this context!");
+	}
+}
+
+// Try to "convert" a name expression into a function call.
+Expr fnCall(Expr lhs, Expr[] actuals) {
+	unless (lhs as NameExpr) {
+		// TODO: We should try to call the function call operator on the object.
+		throw SyntaxError(lhs.pos, "This is not something we can call.");
+	}
+
+	SimpleName name = lhs.name.clone;
+	name.last.params = fnValues(actuals);
+	Named? found = lhs.scope.find(name);
+	if (found as Function)
+		return FnCall(lhs.pos, found, actuals);
+
+	throw SyntaxError(lhs.pos, "Found ${found}, which is not a function.");
+}
+
+// Compute the types of an array of values.
+Value[] fnValues(Expr[] actuals) {
+	Value[] r;
+	for (x in actuals)
+		r << x.result.type;
+	r;
 }
 
 /**
@@ -169,8 +242,40 @@ Expr operator(Block block, Expr lhs, SStr op, Expr rhs) on Compiler {
 	throw SyntaxError(op.pos, "Failed to find operator ${op.v} for ${lType} and ${rType}.");
 }
 
-Expr operator(Block block, SStr op, Expr rhs) on Compiler { IntLiteral(op.pos, 0); }
-Expr operator(Block block, Expr lhs, SStr op) on Compiler { IntLiteral(op.pos, 0); }
+Expr operator(Block block, SStr op, Expr rhs) on Compiler {
+	var rType = rhs.result.type;
+
+	SimplePart opName(op.v + "*", [rType]);
+	if (t = rType.type) {
+		if (fn = t.find(opName, block.scope) as Function)
+			return FnCall(op.pos, fn, [rhs]);
+	}
+
+	if (fn = block.scope.find(SimpleName(opName)) as Function) {
+		return FnCall(op.pos, fn, [rhs]);
+	}
+
+	throw SyntaxError(op.pos, "Failed to find prefix operator ${op.v} for ${rType}.");
+}
+Expr operator(Block block, Expr lhs, SStr op) on Compiler {
+	var lType = lhs.result.type;
+
+	SimplePart opName("*" + op.v, [lType]);
+	if (t = lType.type) {
+		if (fn = t.find(opName, block.scope) as Function)
+			return FnCall(op.pos, fn, [lhs]);
+	}
+
+	if (fn = block.scope.find(SimpleName(opName)) as Function) {
+		return FnCall(op.pos, fn, [lhs]);
+	}
+
+	throw SyntaxError(op.pos, "Failed to find postfix operator ${op.v} for ${lType}.");
+}
+
+Expr dotOperator(Block block, Expr lhs, SStr rhs, Bool ptrLhs) {
+	IntLiteral(rhs.pos, 0);
+}
 
 // Short-circuting operators.
 Expr scAnd(Block block, Expr lhs, SStr op, Expr rhs) on Compiler { IntLiteral(op.pos, 0); }

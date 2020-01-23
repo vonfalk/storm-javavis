@@ -6,13 +6,27 @@ use lang:bs:macro;
  */
 
 // Find a type.
-Value findType(Scope scope, SStr first, SStr[] rest) {
-	print("TODO: Implement type lookup!");
-	Value();
+Value findType(SrcPos pos, Scope scope, SimplePart first, SimplePart[] rest) {
+	SimpleName name(first);
+	for (n in rest)
+		name.add(n);
+	scope.value(name, pos);
+}
+
+Value longType() {
+	Value(named{Long});
+}
+
+Value uLongType() {
+	Value(named{Word});
 }
 
 Value intType() {
 	Value(named{Int});
+}
+
+Value uIntType() {
+	Value(named{Nat});
 }
 
 Value boolType() {

@@ -38,3 +38,27 @@ class LocalVar extends Named {
 		}
 	}
 }
+
+
+class LocalVarAccess extends Expr {
+	LocalVar var;
+
+	init(SrcPos pos, LocalVar var) {
+		init(pos) { var = var; }
+	}
+
+	Bool temporary() : override {
+		false;
+	}
+
+	ExprResult result() : override {
+		Value(var.type, true);
+	}
+
+	void code(CodeGen gen, CodeResult result) : override {
+		if (!result.needed())
+			return;
+
+		var.var.adjust(gen, result.location(gen));
+	}
+}
