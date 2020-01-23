@@ -118,7 +118,11 @@ namespace storm {
 
 	private:
 		// Find closest named parent.
-		Named *closestNamed() const;
+		MAYBE(Named *) closestNamed() const;
+
+		// Get a path, ignoring any parents that were not found.
+		SimpleName *safePath() const;
+		MAYBE(Named *) safeClosestNamed() const;
 	};
 
 }

@@ -91,11 +91,31 @@ namespace storm {
 		}
 	}
 
+	Named *Named::safeClosestNamed() const {
+		for (NameLookup *p = parentLookup; p; p = p->parentLookup) {
+			if (Named *n = as<Named>(p))
+				return n;
+		}
+		return null;
+	}
+
+	SimpleName *Named::safePath() const {
+		if (Named *parent = safeClosestNamed()) {
+			SimpleName *p = parent->safePath();
+			p->add(new (this) SimplePart(name, params));
+			return p;
+		} else {
+			return new (this) SimpleName();
+		}
+	}
+
 	Str *Named::identifier() const {
+		// We want to be quite robust here, as 'identifier' is commonly used in error reporting. If
+		// we throw an exception here, we will most likely just give a bad error message to the user.
 		if (parentLookup == null)
 			return shortIdentifier();
 
-		return path()->toS();
+		return safePath()->toS();
 	}
 
 	Str *Named::shortIdentifier() const {
