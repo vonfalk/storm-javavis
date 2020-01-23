@@ -68,7 +68,7 @@ namespace os {
 	}
 
 	void FutureBase::posted() {
-		nat p = atomicCAS(resultPosted, resultEmpty, resultError);
+		nat p = atomicCAS(resultPosted, resultEmpty, resultValue);
 		assert(p == 0, L"A future may not be used more than once! this=" + ::toHex(this));
 		notify();
 	}

@@ -355,7 +355,7 @@ static StrBuf *CODECALL addBuf(StrBuf *to) {
 	return to;
 }
 
-BEGIN_TEST_(ExceptionCatch, Code) {
+BEGIN_TEST(ExceptionCatch, Code) {
 	Engine &e = gEngine();
 	Arena *arena = code::arena(e);
 

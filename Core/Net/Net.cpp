@@ -61,7 +61,7 @@ namespace storm {
 		DWORD bytes = 0;
 		int ok = WSAIoctl(s, SIO_GET_EXTENSION_FUNCTION_POINTER, &guid, sizeof(guid), &ptr, sizeof(ptr), &bytes, NULL, NULL);
 
-		assert(ok, L"Unable to acquire AcceptEx.");
+		assert(ok == 0, L"Unable to acquire AcceptEx.");
 
 		return (*ptr)(s, (SOCKET)accept.v(), output, receiveLen, localLen, remoteLen, received, overlapped);
 	}
@@ -77,7 +77,7 @@ namespace storm {
 		DWORD bytes = 0;
 		int ok = WSAIoctl(s, SIO_GET_EXTENSION_FUNCTION_POINTER, &guid, sizeof(guid), &ptr, sizeof(ptr), &bytes, NULL, NULL);
 
-		assert(ok, L"Unable to acquire GetAcceptExSockaddrs.");
+		assert(ok == 0, L"Unable to acquire GetAcceptExSockaddrs.");
 
 		return (*ptr)(buffer, receiveLen, localLen, remoteLen, localAddr, localSize, remoteAddr, remoteSize);
 	}
@@ -129,7 +129,7 @@ namespace storm {
 		DWORD bytes = 0;
 		int ok = WSAIoctl(s, SIO_GET_EXTENSION_FUNCTION_POINTER, &guid, sizeof(guid), &ptr, sizeof(ptr), &bytes, NULL, NULL);
 
-		assert(ok, L"Unable to acquire ConnectEx.");
+		assert(ok == 0, L"Unable to acquire ConnectEx.");
 
 		return (*ptr)(s, name, namelen, NULL, 0, NULL, overlapped);
 	}

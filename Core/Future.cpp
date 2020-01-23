@@ -6,7 +6,7 @@
 namespace storm {
 
 	FutureBase::FutureBase(const Handle &type) : handle(type) {
-		data = (Data *)runtime::allocStaticRaw(engine(), &Data::gcType);
+		data = new (runtime::allocStaticRaw(engine(), &Data::gcType)) Data();
 		result = (GcArray<byte> *)runtime::allocArray(engine(), type.gcArrayType, 1);
 	}
 

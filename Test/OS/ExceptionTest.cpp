@@ -41,7 +41,7 @@ struct ExThread {
 
 };
 
-BEGIN_TEST_(ExceptionTest, OS) {
+BEGIN_TEST(ExceptionTest, OS) {
 	ExThread z;
 	os::ThreadGroup g;
 
@@ -60,7 +60,7 @@ BEGIN_TEST_(ExceptionTest, OS) {
 
 } END_TEST
 
-BEGIN_TEST_(ExceptionPtrTest, OS) {
+BEGIN_TEST(ExceptionPtrTest, OS) {
 	ExThread z;
 	os::ThreadGroup g;
 
