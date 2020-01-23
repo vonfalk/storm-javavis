@@ -1,5 +1,6 @@
 #pragma once
 #include "App.h"
+#include "Core/Exception.h"
 
 #ifdef GUI_GTK
 

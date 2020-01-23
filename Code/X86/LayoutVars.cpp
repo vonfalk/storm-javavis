@@ -350,7 +350,7 @@ namespace code {
 
 			for (Part now = part; now != target; now = src->prev(now)) {
 				if (now == Part()) {
-					Str *msg = TO_S(engine(), S("Block " << target << S(" is not a parent of ") << start));
+					Str *msg = TO_S(engine(), S("Block ") << target << S(" is not a parent of ") << start);
 					throw new (this) BlockEndError(msg);
 				}
 

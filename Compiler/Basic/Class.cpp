@@ -50,7 +50,7 @@ namespace storm {
 				{
 					Type *t = as<Type>(scope.find(otherName));
 					if (!t) {
-						Str *msg = TO_S(engine, S("Can not find the super class " << otherName << S(".")));
+						Str *msg = TO_S(engine, S("Can not find the super class ") << otherName << S("."));
 						throw new (this) SyntaxError(otherName->pos, msg);
 					}
 

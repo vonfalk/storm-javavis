@@ -20,7 +20,7 @@ namespace storm {
 		assert(to, L"Too early to use 'fnType'.");
 		Type *found = as<Type>(to->find(S("Fn"), params, Scope()));
 		if (!found)
-			throw new (params) InternalError(L"Can not find the function type!");
+			throw new (params) InternalError(S("Can not find the function type!"));
 		return found;
 	}
 

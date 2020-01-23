@@ -173,7 +173,7 @@ namespace code {
 			break;
 		default: {
 			Str *msg = TO_S(e.v, S("lea must be used with a complex addressing mode or a reference.")
-							S(" (Got " << from << S(")")));
+							S(" (Got ") << from << S(")"));
 			throw new (e.v) InvalidValue(msg);
 		}
 		}

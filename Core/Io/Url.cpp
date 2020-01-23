@@ -415,7 +415,7 @@ namespace storm {
 		char path[PATH_MAX + 1] = { 0 };
 		ssize_t r = readlink("/proc/self/exe", path, PATH_MAX);
 		if (r >= PATH_MAX || r < 0)
-			throw new (e.v) InternalError(S("Failed to get the path of the executable."));
+			throw new (e) InternalError(S("Failed to get the path of the executable."));
 		return parsePath(e, toWChar(e, path)->v);
 	}
 #else

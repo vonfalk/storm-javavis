@@ -1,5 +1,6 @@
 #include "stdafx.h"
 #include "ImageLoad.h"
+#include "Core/Convert.h"
 
 #ifndef WINDOWS
 
@@ -99,17 +100,18 @@ namespace graphics {
 		return output;
 	}
 
-	struct ErrorMgr : struct jpeg_error_mgr {
+	struct JpegError : jpeg_error_mgr {
 		Engine *e;
 	};
 
 	void onJpegError(j_common_ptr info) {
-		struct ErrorMgr *me = (struct ErrorMgr *)info;
+		struct JpegError *me = (struct JpegError *)info;
 
 		char buffer[JMSG_LENGTH_MAX];
 		(*me->format_message)(info, buffer);
 
-		throw new (*me->e) ImageLoadError(new (*me->e) Str(buffer));
+		Str *msg = new (*me->e) Str(toWChar(*me->e, buffer));
+		throw new (*me->e) ImageLoadError(msg);
 	}
 
 	class JpegInput : public jpeg_source_mgr {
@@ -173,8 +175,8 @@ namespace graphics {
 
 	Image *loadJpeg(IStream *from, const wchar *&error) {
 		struct jpeg_decompress_struct decode;
-		ErrorMgr errorMgr;
-		errorMgr->e = &from->engine();
+		JpegError errorMgr;
+		errorMgr.e = &from->engine();
 		decode.err = jpeg_std_error(&errorMgr);
 		decode.err->error_exit = &onJpegError;
 
