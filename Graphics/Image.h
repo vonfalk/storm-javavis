@@ -21,7 +21,7 @@ namespace graphics {
 	 * Error.
 	 */
 	class EXCEPTION_EXPORT ImageLoadError : public storm::Exception {
-		STORM_CLASS;
+		STORM_EXCEPTION;
 	public:
 		ImageLoadError(const wchar *msg) {
 			this->msg = new (this) Str(msg);

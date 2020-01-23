@@ -52,6 +52,7 @@
 #define STORM_KEY_FUNCTION_IMPL(x)
 #endif
 
+
 /**
  * Common parts of STORM_CLASS and STORM_VALUE
  */
@@ -135,6 +136,31 @@
 	STORM_COMMON								\
 	private:
 
+
+// Note that we use the 'throwMe' function in exceptions as a key method. Therefore, we don't need
+// to do anything special for abstract exception classes.
+#define STORM_EXCEPTION_FN_DECL virtual void CODECALL throwMe() const;
+#define STORM_EXCEPTION_FN_IMPL(x) void x::throwMe() const { throw this; }
+
+// Mark a class that inherits from Exception and that can be thrown.
+// Exceptions are allowed to be abstract, so no extra modifier is needed for that.
+#define STORM_EXCEPTION							\
+	public:										\
+	STORM_EXCEPTION_FN_DECL						\
+	STORM_TYPE_DECL								\
+	STORM_OBJ_COMMON							\
+	using storm::RootObject::toS;				\
+	using storm::Exception::message;			\
+	private:
+
+// Mark the root exception class.
+#define STORM_EXCEPTION_BASE					\
+	public:										\
+	STORM_EXCEPTION_FN_DECL						\
+	STORM_TYPE_DECL								\
+	STORM_OBJ_COMMON							\
+	using storm::RootObject::toS;				\
+	private:
 
 /**
  * Make a template type id. This will only make Storm aware of the template, you still have to

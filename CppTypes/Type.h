@@ -75,21 +75,42 @@ public:
 	// Create a type with name X, where X is the fully qualified name of the type (eg. Foo::Bar::Baz).
 	Class(const CppName &name, const String &pkg, const SrcPos &pos, const Auto<Doc> &doc);
 
-	// Is this a value-type?
-	bool valueType;
+	/**
+	 * Flags for this class.
+	 */
+	enum Flags {
+		// Is this a value-type?
+		value = 0x01,
 
-	// Is this an abstract type? If it is abstract, we allow it to contain abstract
-	// functions. Otherwise we don't.
-	bool abstractType;
+		// Is this an abstract type? If it is abstract, we allow it to contain abstract
+		// functions. Otherwise we don't.
+		abstract = 0x02,
+
+		// Is this an exception type? If so, we will generate a 'throwMe' member. We also expect it
+		// to inherit from an exception type super class.
+		exception = 0x04,
+
+		// Same as 'exceptionType', except that we don't require the parent class to be an
+		// exception, as this is supposedly the one and only storm::Exception class.
+		rootException = 0x08 | 0x04,
+
+		// Hidden parent?
+		hiddenParent = 0x10,
+
+		// Have we found a destructor?
+		dtorFound = 0x20,
+	};
+
+	// Flags.
+	nat flags;
+
+	// Flags manipulation.
+	inline bool has(Flags flag) const { return (flags & flag) == flag; }
+	inline void set(Flags flag) { flags |= flag; }
+	inline void clear(Flags flag) { flags &= ~nat(flag); }
 
 	// Parent class (if any).
 	CppName parent;
-
-	// Hidden parent?
-	bool hiddenParent;
-
-	// Have we found a destructor?
-	bool dtorFound;
 
 	// Actual type of the parent class.
 	Type *parentType;
@@ -118,6 +139,9 @@ public:
 	// Resolve types in here.
 	virtual void resolveTypes(World &world);
 
+	// Check exceptions. Done after 'resolveTypes'.
+	void checkException();
+
 	// Compute our size.
 	virtual Size rawSize() const;
 
@@ -135,7 +159,7 @@ public:
 	virtual void print(wostream &to) const;
 
 	// Is this type heap-allocated?
-	virtual bool heapAlloc() const { return !valueType; }
+	virtual bool heapAlloc() const { return !has(value); }
 
 };
 

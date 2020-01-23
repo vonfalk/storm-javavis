@@ -14,7 +14,7 @@ namespace storm {
 	 * Error thrown when an operation is not supported by a protocol.
 	 */
 	class EXCEPTION_EXPORT ProtocolNotSupported : public Exception {
-		STORM_CLASS;
+		STORM_EXCEPTION;
 	public:
 		ProtocolNotSupported(const wchar *operation, const wchar *protocol);
 		ProtocolNotSupported(const wchar *operation, Str *protocol);

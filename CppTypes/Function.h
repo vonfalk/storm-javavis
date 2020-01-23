@@ -44,34 +44,51 @@ public:
 	// Return type.
 	Auto<TypeRef> result;
 
-	// Is this a member function?
-	bool isMember;
+	// Flags.
+	enum Flags {
+		// Is this a member function?
+		isMember = 0x0001,
 
-	// Is this a static function?
-	bool isStatic;
+		// Is this a static function?
+		isStatic = 0x0002,
 
-	// Trailing const modifier?
-	bool isConst;
+		// Trailing const modifier?
+		isConst = 0x0004,
 
-	// Leading 'virtual' modifier? Means it is not final.
-	bool isVirtual;
+		// Leading 'virtual' modifier? Means it is not final.
+		isVirtual = 0x0008,
 
-	// Is this function marked 'abstract'?
-	bool isAbstract;
+		// Is this function marked 'abstract'?
+		isAbstract = 0x0010,
 
-	// Assignment function (marked STORM_ASSIGN).
-	bool isAssign;
+		// Assignment function (marked STORM_ASSIGN).
+		isAssign = 0x0020,
 
-	// This is an assignment function that should be wrapped.
-	bool wrapAssign;
+		// This is an assignment function that should be wrapped.
+		wrapAssign = 0x0040,
 
-	// Usable for casting?
-	bool castMember;
+		// Usable for casting?
+		castMember = 0x0080,
 
-	// Exported?
-	// Most non-exported functions are not present in the World object. Some non-exported
-	// functions (such as abstract functions) do, however, need to appear there.
-	bool exported;
+		// Exported?
+		// Most non-exported functions are not present in the World object. Some non-exported
+		// functions (such as abstract functions) do, however, need to appear there.
+		exported = 0x0100,
+	};
+
+	// Flags.
+	nat flags;
+
+	// Flags manipulation.
+	inline bool has(Flags flag) const { return (flags & flag) == flag; }
+	inline void set(Flags flag) { flags |= flag; }
+	inline void clear(Flags flag) { flags &= ~nat(flag); }
+	inline void set(Flags flag, bool value) {
+		if (value)
+			set(flag);
+		else
+			clear(flag);
+	}
 
 	// Run on a specific thread?
 	CppName thread;

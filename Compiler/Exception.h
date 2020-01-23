@@ -12,7 +12,7 @@ namespace storm {
 	 * Defines exceptions used by the compiler.
 	 */
 	class EXCEPTION_EXPORT CodeError : public Exception {
-		STORM_CLASS;
+		STORM_EXCEPTION;
 	public:
 		STORM_CTOR CodeError(SrcPos where) {
 			this->where = where;
@@ -32,7 +32,7 @@ namespace storm {
 	 * Language definition error.
 	 */
 	class EXCEPTION_EXPORT LangDefError : public Exception {
-		STORM_CLASS;
+		STORM_EXCEPTION;
 	public:
 		LangDefError(const wchar *msg) {
 			w = new (this) Str(msg);
@@ -52,7 +52,7 @@ namespace storm {
 	 * Specific subclass when calling core:debug:throwError.
 	 */
 	class EXCEPTION_EXPORT DebugError : public Exception {
-		STORM_CLASS;
+		STORM_EXCEPTION;
 	public:
 		STORM_CTOR DebugError() {
 			saveTrace();
@@ -68,7 +68,7 @@ namespace storm {
 	 * Internal type error (something in C++ went wrong).
 	 */
 	class EXCEPTION_EXPORT InternalTypeError : public InternalError {
-		STORM_CLASS;
+		STORM_EXCEPTION;
 	public:
 		InternalTypeError(const wchar *context, Type *expected, Type *got);
 		STORM_CTOR InternalTypeError(Str *context, Type *expected, Type *got);
@@ -79,7 +79,7 @@ namespace storm {
 	 * Some syntax error.
 	 */
 	class EXCEPTION_EXPORT SyntaxError : public CodeError {
-		STORM_CLASS;
+		STORM_EXCEPTION;
 	public:
 		SyntaxError(SrcPos where, const wchar *msg);
 		STORM_CTOR SyntaxError(SrcPos where, Str *msg);
@@ -98,7 +98,7 @@ namespace storm {
 	 * Type checking error.
 	 */
 	class EXCEPTION_EXPORT TypeError : public CodeError {
-		STORM_CLASS;
+		STORM_EXCEPTION;
 	public:
 		TypeError(SrcPos where, const wchar *msg);
 		STORM_CTOR TypeError(SrcPos where, Str *msg);
@@ -119,7 +119,7 @@ namespace storm {
 	 * TODO: Require a SrcPos!
 	 */
 	class EXCEPTION_EXPORT TypedefError : public CodeError {
-		STORM_CLASS;
+		STORM_EXCEPTION;
 	public:
 		TypedefError(const wchar *msg);
 		STORM_CTOR TypedefError(Str *msg);
@@ -138,7 +138,7 @@ namespace storm {
 	 * Error while handling built-in functions.
 	 */
 	class EXCEPTION_EXPORT BuiltInError : public Exception {
-		STORM_CLASS;
+		STORM_EXCEPTION;
 	public:
 		BuiltInError(const wchar *msg) {
 			this->msg = new (this) Str(msg);
@@ -160,7 +160,7 @@ namespace storm {
 	 * Trying to instantiate an abstract class.
 	 */
 	class EXCEPTION_EXPORT InstantiationError : public CodeError {
-		STORM_CLASS;
+		STORM_EXCEPTION;
 	public:
 		InstantiationError(SrcPos pos, const wchar *msg);
 		InstantiationError(SrcPos pos, Str *msg);

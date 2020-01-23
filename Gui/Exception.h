@@ -4,7 +4,7 @@
 namespace gui {
 
 	class EXCEPTION_EXPORT GuiError : public storm::Exception {
-		STORM_CLASS;
+		STORM_EXCEPTION;
 	public:
 		GuiError(const wchar *what) {
 			data = new (this) Str(what);

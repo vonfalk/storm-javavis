@@ -10,7 +10,7 @@ namespace storm {
 	 * Base class for all exceptions in Storm.
 	 */
 	class EXCEPTION_EXPORT Exception : public Object {
-		STORM_ABSTRACT_CLASS;
+		STORM_EXCEPTION_BASE;
 	public:
 		// Create.
 		STORM_CTOR Exception();
@@ -46,7 +46,7 @@ namespace storm {
 	 * Generic exceptions.
 	 */
 	class EXCEPTION_EXPORT NotSupported : public Exception {
-		STORM_CLASS;
+		STORM_EXCEPTION;
 	public:
 		NotSupported(const wchar *msg);
 		STORM_CTOR NotSupported(Str *msg);
@@ -62,7 +62,7 @@ namespace storm {
 	 * Internal error.
 	 */
 	class EXCEPTION_EXPORT InternalError : public Exception {
-		STORM_CLASS;
+		STORM_EXCEPTION;
 	public:
 		InternalError(const wchar *msg);
 		STORM_CTOR InternalError(Str *msg);
@@ -77,7 +77,7 @@ namespace storm {
 	 * Runtime errors.
 	 */
 	class EXCEPTION_EXPORT RuntimeError : public Exception {
-		STORM_CLASS;
+		STORM_EXCEPTION;
 	public:
 		RuntimeError(const wchar *msg);
 		STORM_CTOR RuntimeError(Str *msg);
@@ -103,7 +103,7 @@ namespace storm {
 	 * Custom exception for strings. Cannot be in Str.h due to include cycles.
 	 */
 	class EXCEPTION_EXPORT StrError : public Exception {
-		STORM_CLASS;
+		STORM_EXCEPTION;
 	public:
 		StrError(const wchar *msg);
 		STORM_CTOR StrError(Str *msg);
@@ -117,7 +117,7 @@ namespace storm {
 	 * Exception thrown from the map.
 	 */
 	class EXCEPTION_EXPORT MapError : public Exception {
-		STORM_CLASS;
+		STORM_EXCEPTION;
 	public:
 		MapError(const wchar *msg);
 		STORM_CTOR MapError(Str *msg);
@@ -131,7 +131,7 @@ namespace storm {
 	 * Exception thrown from the set.
 	 */
 	class EXCEPTION_EXPORT SetError : public Exception {
-		STORM_CLASS;
+		STORM_EXCEPTION;
 	public:
 		SetError(const wchar *msg);
 		STORM_CTOR SetError(Str *msg);
@@ -145,7 +145,7 @@ namespace storm {
 	 * Custom error type for arrays.
 	 */
 	class EXCEPTION_EXPORT ArrayError : public Exception {
-		STORM_CLASS;
+		STORM_EXCEPTION;
 	public:
 		STORM_CTOR ArrayError(Nat id, Nat count);
 		STORM_CTOR ArrayError(Nat id, Nat count, Str *msg);

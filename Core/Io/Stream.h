@@ -7,7 +7,7 @@ namespace storm {
 	STORM_PKG(core.io);
 
 	class EXCEPTION_EXPORT IoError : public Exception {
-		STORM_CLASS;
+		STORM_EXCEPTION;
 	public:
 		IoError(const wchar *msg) {
 			w = new (this) Str(msg);

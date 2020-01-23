@@ -146,8 +146,8 @@ namespace storm {
 		/**
 		 * Exception.
 		 */
-		class MsgError : public Exception {
-			STORM_CLASS;
+		class EXCEPTION_EXPORT MsgError : public Exception {
+			STORM_EXCEPTION;
 		public:
 			MsgError(const wchar *what, SExpr *expr);
 			STORM_CTOR MsgError(Str *what, SExpr *expr);

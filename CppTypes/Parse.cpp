@@ -264,9 +264,9 @@ static void parseMember(Tokenizer &tok, ParseEnv &env, Namespace &addTo, Access 
 		Function f(CppName(name.token), env.pkg, access, name.pos, doc, type);
 		if (!stormName.empty())
 			f.stormName = stormName;
-		f.isVirtual = isVirtual;
-		f.isAssign = assignFn;
-		f.castMember = castFn;
+		f.set(Function::isVirtual, isVirtual);
+		f.set(Function::isAssign, assignFn);
+		f.set(Function::castMember, castFn);
 
 		if (!tok.skipIf(L")")) {
 			f.params.push_back(parseTypeRef(tok));
@@ -290,7 +290,7 @@ static void parseMember(Tokenizer &tok, ParseEnv &env, Namespace &addTo, Access 
 		}
 
 		if (tok.skipIf(L"const"))
-			f.isConst = true;
+			f.set(Function::isConst);
 
 		while (true) {
 			Token next = tok.peek();
@@ -302,25 +302,25 @@ static void parseMember(Tokenizer &tok, ParseEnv &env, Namespace &addTo, Access 
 				f.thread = parseName(tok);
 				tok.expect(L")");
 			} else if (tok.skipIf(L"ABSTRACT")) {
-				f.isAbstract = true;
+				f.set(Function::isAbstract);
 			} else if (tok.skipIf(L"override")) {
 				// We don't really handle this, but why not allow it?
 				// TODO: Perhaps we want to set 'isVirtual'?
 			} else if (tok.skipIf(L"final")) {
 				// This means 'final'.
-				f.isVirtual = false;
+				f.clear(Function::isVirtual);
 			} else {
 				throw Error(L"Unsupported function modifier: " + tok.peek().token, tok.peek().pos);
 			}
 		}
 
-		f.isStatic = isStatic;
-		f.exported = env.exportAll;
+		f.set(Function::isStatic, isStatic);
+		f.set(Function::exported, env.exportAll);
 
 		// Save if 'exportFn' is there.
 		if (exportFn || f.name == Function::dtor)
 			// We need to export abstract functions so that we can generate stubs for them!
-			if (env.exportAll || f.isAbstract)
+			if (env.exportAll || f.has(Function::isAbstract))
 				addTo.add(f);
 
 	} else if (tok.skipIf(L"[")) {
@@ -426,17 +426,17 @@ static Auto<Class> parseParent(Tokenizer &tok, ParseEnv &env, const CppName &ful
 		if (tok.skipIf(L"STORM_HIDDEN")) {
 			tok.expect(L"(");
 			result->parent = parseName(tok);
-			result->hiddenParent = true;
+			result->set(Class::hiddenParent);
 			tok.expect(L")");
 		} else if (tok.skipIf(L"ObjectOn")) {
 			tok.expect(L"<");
 			result->parent = CppName(L"storm::TObject");
-			result->hiddenParent = false;
+			result->clear(Class::hiddenParent);
 			result->thread = parseName(tok);
 			tok.expect(L">");
 		} else {
 			result->parent = parseName(tok);
-			result->hiddenParent = false;
+			result->clear(Class::hiddenParent);
 		}
 	}
 
@@ -450,7 +450,7 @@ static Auto<Class> parseParent(Tokenizer &tok, ParseEnv &env, const CppName &ful
 // Parse a type.
 static void parseType(Tokenizer &tok, ParseEnv &env, const CppName &inside) {
 	// Exported exception?
-	tok.skipIf(L"EXCEPTION_EXPORT");
+	bool exported = tok.skipIf(L"EXCEPTION_EXPORT");
 
 	Token name = tok.next();
 
@@ -465,12 +465,18 @@ static void parseType(Tokenizer &tok, ParseEnv &env, const CppName &inside) {
 
 	// Are we interested in this class at all?
 	if (tok.skipIf(L"STORM_CLASS")) {
-		type->valueType = false;
+		type->clear(Class::value);
 	} else if (tok.skipIf(L"STORM_ABSTRACT_CLASS")) {
-		type->valueType = false;
-		type->abstractType = true;
+		type->clear(Class::value);
+		type->set(Class::abstract);
 	} else if (tok.skipIf(L"STORM_VALUE")) {
-		type->valueType = true;
+		type->set(Class::value);
+	} else if (tok.skipIf(L"STORM_EXCEPTION")) {
+		type->clear(Class::value);
+		type->set(Class::exception);
+	} else if (tok.skipIf(L"STORM_EXCEPTION_BASE")) {
+		type->clear(Class::value);
+		type->set(Class::rootException);
 	} else {
 		// No. Ignore the rest of the block!
 		parseBlock(tok);
@@ -478,6 +484,9 @@ static void parseType(Tokenizer &tok, ParseEnv &env, const CppName &inside) {
 	}
 
 	tok.expect(L";");
+
+	if (type->has(Class::exception) && !exported)
+		throw Error(L"Exceptions must be exported with EXCEPTION_EXPORT after 'class'.", name.pos);
 
 	Access access = aPrivate;
 	bool isStatic = false;

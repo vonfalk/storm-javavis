@@ -150,7 +150,7 @@ void World::resolveTypes() {
 			if (!c->isActor() && !c->external) {
 				Auto<TypeRef> r = new NamedType(c->pos, L"void");
 				Function f(c->name + Function::ctor, c->pkg, aPublic, c->pos, copy, r);
-				f.isMember = true;
+				f.set(Function::isMember);
 				f.params.push_back(new RefType(new ResolvedType(t)));
 				f.paramNames.push_back(L"this");
 				f.params.push_back(new RefType(makeConst(new ResolvedType(t))));
@@ -159,12 +159,12 @@ void World::resolveTypes() {
 			}
 
 			// Add the default assignment operator to the type if it is a value.
-			if (c->valueType && !c->external) {
+			if (c->has(Class::value) && !c->external) {
 				Auto<TypeRef> r = new RefType(new ResolvedType(t));
 				Function f(c->name + String(L"operator ="), c->pkg, aPublic, c->pos, assign, r);
-				f.isMember = true;
-				f.isConst = true;
-				f.wrapAssign = true;
+				f.set(Function::isMember);
+				f.set(Function::isConst);
+				f.set(Function::wrapAssign);
 				f.params.push_back(r);
 				f.paramNames.push_back(L"this");
 				f.params.push_back(new RefType(makeConst(new ResolvedType(t))));
@@ -172,6 +172,12 @@ void World::resolveTypes() {
 				functions.push_back(f);
 			}
 		}
+	}
+
+	// Check exceptions.
+	for (nat i = 0; i < types.size(); i++) {
+		if (Class *c = as<Class>(types[i].borrow()))
+			c->checkException();
 	}
 
 	for (nat i = 0; i < functions.size(); i++) {

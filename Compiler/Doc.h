@@ -138,7 +138,7 @@ namespace storm {
 	 * Exception for documentation errors.
 	 */
 	class EXCEPTION_EXPORT DocError : public Exception {
-		STORM_CLASS;
+		STORM_EXCEPTION;
 	public:
 		DocError(const wchar *msg) {
 			w = new (this) Str(msg);

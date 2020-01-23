@@ -158,7 +158,7 @@ namespace storm {
 
 	// Some exceptions.
 	class EXCEPTION_EXPORT InvalidName : public Exception {
-		STORM_CLASS;
+		STORM_EXCEPTION;
 	public:
 		STORM_CTOR InvalidName() { name = null; }
 		STORM_CTOR InvalidName(Str *name) { this->name = name; }

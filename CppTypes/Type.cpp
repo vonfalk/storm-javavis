@@ -37,13 +37,12 @@ wostream &operator <<(wostream &to, const Type &type) {
  */
 
 Class::Class(const CppName &name, const String &pkg, const SrcPos &pos, const Auto<Doc> &doc) :
-	Type(name, pkg, pos, doc), valueType(false), abstractType(false), parent(L""),
-	hiddenParent(false), dtorFound(false), parentType(null), threadType(null) {}
+	Type(name, pkg, pos, doc), flags(0), parent(L""), parentType(null), threadType(null) {}
 
 void Class::resolveTypes(World &in) {
 	CppName ctx = name;
 
-	if (!parent.empty() && !hiddenParent)
+	if (!parent.empty() && !has(hiddenParent))
 		parentType = in.types.find(parent, ctx, pos);
 
 	if (!thread.empty())
@@ -51,6 +50,32 @@ void Class::resolveTypes(World &in) {
 
 	for (nat i = 0; i < variables.size(); i++)
 		variables[i].resolveTypes(in, ctx);
+}
+
+void Class::checkException() {
+	// If our parent class is an exception, we should also be.
+	if (Class *parentClass = as<Class>(parentType))
+		if (parentClass->has(exception) && !has(exception))
+			throw Error(L"A class not marked with 'STORM_EXCEPTION' inherits from an exception class!", pos);
+
+	// If we're an exception, our parent should also be.
+	// Only warn if none of our parents are, though. Otherwise, the user may receive incorrect error messages.
+	if (has(exception) && !has(rootException)) {
+		bool found = false;
+		Type *curr = parentType;
+		while (curr && !found) {
+			if (Class *c = as<Class>(curr)) {
+				if (c->has(exception))
+					found = true;
+				curr = c->parentType;
+			} else {
+				curr = null;
+			}
+		}
+
+		if (!found)
+			throw Error(L"A class marked with 'STORM_EXCEPTION' does not inherit from an exception class!", pos);
+	}
 }
 
 bool Class::isActor() const {
@@ -104,7 +129,7 @@ Size Class::rawSize() const {
 			// Pass the raw size on so that we can detect any problems there!
 			s = raw;
 		}
-	} else if (!valueType) {
+	} else if (!has(value)) {
 		s = Size::sPtr; // VTable.
 	}
 
@@ -171,7 +196,7 @@ Size Class::baseOffset() const {
 		Size s = parentType->size();
 		s += s.align();
 		return s;
-	} else if (!valueType) {
+	} else if (!has(value)) {
 		return Size::sPtr; // vtable
 	} else {
 		return Size();
@@ -193,14 +218,14 @@ Offset Class::varOffset(nat i, Size &base) const {
 
 bool Class::hasDtor() const {
 	// Always give destructors for value types.
-	if (valueType)
+	if (has(value))
 		return true;
 
 	// Ignore storm::Object.
 	if (name == L"storm::Object")
 		return false;
 
-	if (dtorFound)
+	if (has(dtorFound))
 		return true;
 
 	if (Class *c = as<Class>(parentType))
@@ -240,20 +265,20 @@ void ClassNamespace::add(const Variable &v) {
 
 void ClassNamespace::add(const Function &f) {
 	if (f.name == Function::dtor)
-		owner.dtorFound = true;
+		owner.set(Class::dtorFound);
 
-	if (f.isAbstract && !owner.abstractType)
+	if (f.has(Function::isAbstract) && !owner.has(Class::abstract) && !owner.has(Class::exception))
 		throw Error(L"The member function \"" + f.name + L"\" is marked abstract, "
-					L"but the class is not marked with STORM_ABSTRACT_CLASS.", f.pos);
+					L"but the class is not marked with STORM_ABSTRACT_CLASS (or STORM_EXCEPTION).", f.pos);
 
 	Function g = f;
 	g.name = owner.name + f.name;
-	if (g.isStatic) {
+	if (g.has(Function::isStatic)) {
 		// Static functions are not treated as member functions. They just happen to be located
 		// inside a class.
 		g.pkg += L"." + owner.name.last();
 	} else {
-		g.isMember = true;
+		g.set(Function::isMember);
 		// Add our this-pointer.
 		g.params.insert(g.params.begin(), new RefType(new ResolvedType(&owner)));
 		g.paramNames.insert(g.paramNames.begin(), L"this");

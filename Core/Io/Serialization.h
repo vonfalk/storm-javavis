@@ -270,7 +270,7 @@ namespace storm {
 	 * Error during serialization.
 	 */
 	class EXCEPTION_EXPORT SerializationError : public Exception {
-		STORM_CLASS;
+		STORM_EXCEPTION;
 	public:
 		SerializationError(const wchar *msg) {
 			w = new (this) Str(msg);

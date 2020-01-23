@@ -85,7 +85,9 @@ static void genGlobals(wostream &to, World &w) {
 			to << L"storm::Type *" << c->name << L"::stormType(storm::Engine &e) { return runtime::cppType(e, " << i << L"); }\n";
 			to << L"storm::Type *" << c->name << L"::stormType(const storm::RootObject *o) { return runtime::cppType(o->engine(), " << i << L"); }\n";
 
-			if (c->abstractType)
+			if (c->has(Class::exception))
+				to << L"STORM_EXCEPTION_FN_IMPL(" << c->name << L");\n";
+			else if (c->has(Class::abstract))
 				to << L"STORM_KEY_FUNCTION_IMPL(" << c->name << L");\n";
 		}
 	}
@@ -119,7 +121,7 @@ static bool isType(World &w, Type &t) {
 
 static bool hasVTable(const Type &t) {
 	if (const Class *c = as<const Class>(&t)) {
-		return !c->valueType;
+		return !c->has(Class::value);
 	} else {
 		return false;
 	}
@@ -138,7 +140,7 @@ static void genVTableFns(wostream &to, World &w) {
 static void genAbstractImpls(wostream &to, World &w) {
 	for (nat i = 0; i < w.functions.size(); i++) {
 		const Function &fn = w.functions[i];
-		if (!fn.isMember || !fn.isAbstract)
+		if (!fn.has(Function::isMember) || !fn.has(Function::isAbstract))
 			continue;
 
 		// Output the overload of the abstract function (this will most likely never be called as we
@@ -151,7 +153,7 @@ static void genAbstractImpls(wostream &to, World &w) {
 			to << fn.params[i];
 		}
 		to << L") ";
-		if (fn.isConst)
+		if (fn.has(Function::isConst))
 			to << L"const ";
 		to << L"{\n";
 
@@ -182,7 +184,7 @@ static void genTypes(wostream &to, World &w) {
 			Type *parent = null;
 			Thread *thread = null;
 			if (c) {
-				parent = c->hiddenParent ? null : c->parentType;
+				parent = c->has(Class::hiddenParent) ? null : c->parentType;
 				thread = c->threadType;
 			}
 
@@ -452,9 +454,9 @@ static void genPtr(wostream &to, Function &fn) {
 		to << L">)";
 	} else if (name == Function::dtor) {
 		to << L"address(&destroy<" << *findType(fn.params[0].borrow()) << L">)";
-	} else if (fn.wrapAssign) {
+	} else if (fn.has(Function::wrapAssign)) {
 		to << L"address(&assign<" << *findType(fn.params[0].borrow()) << L">)";
-	} else if (fn.isMember) {
+	} else if (fn.has(Function::isMember)) {
 		to << L"address<" << fn.result << L" (CODECALL " << *findType(fn.params[0].borrow()) << L"::*)(";
 		for (nat i = 1; i < fn.params.size(); i++) {
 			if (i > 1)
@@ -462,7 +464,7 @@ static void genPtr(wostream &to, Function &fn) {
 			to << fn.params[i];
 		}
 		to << L")";
-		if (fn.isConst)
+		if (fn.has(Function::isConst))
 			to << L" const";
 		to << L">(&" << fn.name << L")";
 	} else {
@@ -489,7 +491,7 @@ static const wchar_t *accessName(Access access) {
 static void genFunctions(wostream &to, World &w) {
 	for (nat i = 0; i < w.functions.size(); i++) {
 		Function &f = w.functions[i];
-		if (!f.exported)
+		if (!f.has(Function::exported))
 			continue;
 
 		bool engineFn = f.params.size() >= 1 && as<EnginePtrType>(f.params[0].borrow()) != null;
@@ -501,7 +503,7 @@ static void genFunctions(wostream &to, World &w) {
 		to << L", ";
 
 		// Pkg.
-		if (f.isMember) {
+		if (f.has(Function::isMember)) {
 			to << L"null, ";
 		} else {
 			if (f.pkg.empty() && config.compiler)
@@ -510,24 +512,24 @@ static void genFunctions(wostream &to, World &w) {
 		}
 
 		// Kind.
-		if (f.isStatic)
+		if (f.has(Function::isStatic))
 			to << L"CppFunction::fnStatic";
-		else if (f.isMember && f.castMember)
+		else if (f.has(Function::isMember) && f.has(Function::castMember))
 			to << L"CppFunction::fnCastMember";
-		else if (f.isMember)
+		else if (f.has(Function::isMember))
 			to << L"CppFunction::fnMember";
 		else if (engineFn)
 			to << L"CppFunction::fnFreeEngine";
 		else
 			to << L"CppFunction::fnFree";
 
-		if (f.isAssign)
+		if (f.has(Function::isAssign))
 			to << L" | CppFunction::fnAssign";
 
-		if (!f.isVirtual && f.isMember)
+		if (!f.has(Function::isVirtual) && f.has(Function::isMember))
 			to << L" | CppFunction::fnFinal";
 
-		if (f.isAbstract)
+		if (f.has(Function::isAbstract))
 			to << L" | CppFunction::fnAbstract";
 
 		to << L", ";
@@ -536,7 +538,7 @@ static void genFunctions(wostream &to, World &w) {
 		to << accessName(f.access) << L", ";
 
 		// Thread id.
-		if (f.isMember)
+		if (f.has(Function::isMember))
 			to << L"-1, ";
 		else if (f.threadType)
 			to << f.threadType->id << L", ";
@@ -600,7 +602,7 @@ static void genVariables(wostream &to, World &w) {
 			if (type.empty()) {
 				// If this is a value type, we need to tell Storm about it. Otherwise, function calls
 				// will not work properly on all platforms. If it is a class type, we can just ignore it.
-				if (!c->valueType)
+				if (!c->has(Class::value))
 					continue;
 
 				type = resolveWrap(v.type.borrow(), w);

@@ -7,7 +7,7 @@ namespace sound {
 	 * Error.
 	 */
 	class EXCEPTION_EXPORT SoundOpenError : public storm::Exception {
-		STORM_CLASS;
+		STORM_EXCEPTION;
 	public:
 		SoundOpenError(const wchar *msg) {
 			this->msg = new (this) Str(msg);
@@ -29,7 +29,7 @@ namespace sound {
 	 * Error.
 	 */
 	class EXCEPTION_EXPORT SoundInitError : public storm::Exception {
-		STORM_CLASS;
+		STORM_EXCEPTION;
 	public:
 		STORM_CTOR SoundInitError() {
 			saveTrace();

@@ -8,7 +8,7 @@ namespace code {
 
 	// Base for all exceptions in the Code backend.
 	class EXCEPTION_EXPORT CodeError : public storm::Exception {
-		STORM_CLASS;
+		STORM_EXCEPTION;
 	public:
 		STORM_CTOR CodeError() {
 			saveTrace();
@@ -17,7 +17,7 @@ namespace code {
 
 	// Thrown when an instruction contains invalid data for some reason.
 	class EXCEPTION_EXPORT InvalidValue : public CodeError {
-		STORM_CLASS;
+		STORM_EXCEPTION;
 	public:
 		InvalidValue(const wchar *what) {
 			error = new (engine()) Str(what);
@@ -34,7 +34,7 @@ namespace code {
 	};
 
 	class EXCEPTION_EXPORT BlockBeginError : public CodeError {
-		STORM_CLASS;
+		STORM_EXCEPTION;
 	public:
 		STORM_CTOR BlockBeginError() {
 			msg = new (engine()) Str(S("The parent scope must be entered before a child scope."));
@@ -50,7 +50,7 @@ namespace code {
 	};
 
 	class EXCEPTION_EXPORT BlockEndError : public CodeError {
-		STORM_CLASS;
+		STORM_EXCEPTION;
 	public:
 		STORM_CTOR BlockEndError() {
 			msg = new (engine()) Str(S("The scope is not the topmost active scope."));
@@ -66,7 +66,7 @@ namespace code {
 	};
 
 	class EXCEPTION_EXPORT FrameError : public CodeError {
-		STORM_CLASS;
+		STORM_EXCEPTION;
 	public:
 		STORM_CTOR FrameError() {}
 		virtual void STORM_FN message(StrBuf *to) const {
@@ -75,7 +75,7 @@ namespace code {
 	};
 
 	class EXCEPTION_EXPORT DuplicateLabelError : public CodeError {
-		STORM_CLASS;
+		STORM_EXCEPTION;
 	public:
 		STORM_CTOR DuplicateLabelError(Nat id) {
 			this->id = id;
@@ -89,7 +89,7 @@ namespace code {
 	};
 
 	class EXCEPTION_EXPORT UnusedLabelError : public CodeError {
-		STORM_CLASS;
+		STORM_EXCEPTION;
 	public:
 		STORM_CTOR UnusedLabelError(Nat id) {
 			this->id = id;
@@ -103,7 +103,7 @@ namespace code {
 	};
 
 	class EXCEPTION_EXPORT VariableUseError : public CodeError {
-		STORM_CLASS;
+		STORM_EXCEPTION;
 	public:
 		STORM_CTOR VariableUseError(Var v, Part p) {
 			var = v;
