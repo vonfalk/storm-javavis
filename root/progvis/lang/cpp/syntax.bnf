@@ -90,10 +90,11 @@ SNameParams => Array<Value>() : STypeName(scope) -> push, (",", STypeName(scope)
 // Statements and expressions:
 Stmt SStmt(Block block);
 SStmt => ExprBlock(block) : "{", (SStmt(me) -> add,)* "}";
-SStmt => e : SExpr e, ";";
-SStmt => Return(pos, block, expr) : "return[ \t]" #keyword, SExpr(block) expr, ";";
-SStmt => Return(pos, block) : "return" #keyword, ";";
-SStmt => VarDecl(pos, type, name) : STypeName type, SIdentifier name;
+SStmt => e : SExpr(block) e, ";";
+SStmt[1] => Return(pos, block, expr) : "return[ \t]" #keyword, SExpr(block) expr, ";";
+SStmt[1] => Return(pos, block) : "return" #keyword, ";";
+SStmt => VarDecl(pos, block, type, name) : STypeName(block.scope) type, SIdentifier name, ";";
+SStmt => VarDecl.assign(pos, block, type, name, init) : STypeName(block.scope) type, SIdentifier name, "=", SExpr(block) init, ";";
 
 // Add a list of statements to a block.
 void SStmtList(StmtBlock block);

@@ -1,7 +1,9 @@
 #include <iostream>
 
 int test(int a, int b) {
-	return ++a + b++;
+	int c = a++;
+	int d = ++a;
+	return a + b + c + d;
 }
 
 int main() {

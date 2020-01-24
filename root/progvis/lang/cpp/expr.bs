@@ -185,6 +185,42 @@ class FnCall extends Expr {
 			fn.autoCall(gen, params, res);
 		}
 	}
+
+	// Generate code for when someone else has already created the storage for us.
+	void codeRef(CodeGen gen, CppVar var) {
+		Operand[] params;
+		for (i, x in actuals) {
+			params << paramCode(gen, x, fn.params[i]);
+		}
+
+		if (t = fn.result.type) {
+			if (fn.result.ref) {
+				Var v = gen.l.createVar(gen.block, sPtr);
+				var.adjust(gen, v);
+
+				fn.autoCallRef(gen, params, v);
+				var.created(gen);
+			} else if (copyCtor = t.copyCtor) {
+				// Need to copy!
+				CodeResult r(fn.result, gen.block);
+				fn.autoCall(gen, params, r);
+
+				var.adjust(gen, ptrB);
+
+				gen.l << lea(ptrA, r.location(gen));
+				gen.l << fnParam(ptrDesc, ptrB);
+				gen.l << fnParam(ptrDesc, ptrA);
+				gen.l << fnCall(copyCtor.ref, true);
+				r.created(gen);
+				var.created(gen);
+			} else {
+				throw SyntaxError(pos, "Unable to copy the result.");
+			}
+		} else {
+			// Void result.
+			fn.autoCall(gen, params, CodeResult());
+		}
+	}
 }
 
 // Generate code for acquiring one parameter.

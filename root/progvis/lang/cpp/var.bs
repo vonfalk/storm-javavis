@@ -33,13 +33,23 @@ class LocalVar extends Named {
 	// Create the variable. OK to call twice.
 	void create(CodeGen gen) {
 		if (var.v == Var()) {
-
-			// TODO: Add variable information!
+			var = allocType(gen, type);
+			// TODO: Add variable information! (The backend doesn't currently support refs).
 		}
 	}
 }
 
+// Extract the type part 'safely'.
+Type safeType(Value v, SrcPos pos) on Compiler {
+	if (t = v.type)
+		t;
+	else
+		throw SyntaxError(pos, "Not possible to use 'void' here.");
+}
 
+/**
+ * Access to local variables.
+ */
 class LocalVarAccess extends Expr {
 	LocalVar var;
 
@@ -63,9 +73,60 @@ class LocalVarAccess extends Expr {
 	}
 }
 
-class VarDecl extends Expr {
-	init(SrcPos pos, Value type, SStr name) {
+/**
+ * Variable declaration.
+ */
+class VarDecl extends Stmt {
+	init(SrcPos pos, Block parent, Value type, SStr name) {
 		init(pos) {
+			var(name.v, type.safeType(pos), name.pos);
 		}
+
+		parent.add(var);
+	}
+
+	init(SrcPos pos, Block parent, Value type, SStr name, FnCall init) {
+		if (!type.canStore(init.result.type()))
+			throw SyntaxError(pos, "Can not store ${init.result.type()} in a variable with type ${type}");
+
+		init(pos) {
+			var(name.v, type.safeType(pos), name.pos);
+			initFn = init;
+		}
+
+		parent.add(var);
+	}
+
+	// Create from an = expression.
+	VarDecl assign(SrcPos pos, Block parent, Value type, SStr name, Expr init) : static {
+		if (init as FnCall) {
+			// Just use the function call to construct the object for us.
+			VarDecl(pos, parent, type, name, init);
+		} else {
+			throw SyntaxError(pos, "TODO: We need to implement proper calls to copy-constructors!");
+		}
+	}
+
+	// The variable we created.
+	LocalVar var;
+
+	// Initialization expression. This always ends in a function call that we will use to construct
+	// the new value in-place.
+	FnCall? initFn;
+
+	// Generate code.
+	Bool code(CodeGen gen) : override {
+		var.create(gen);
+		if (initFn) {
+			print(var.var.v.toS);
+			initFn.codeRef(gen, var.var);
+		} else {
+			var.var.created(gen);
+		}
+
+		print("So far:");
+		print(gen.l.toS);
+
+		true;
 	}
 }
