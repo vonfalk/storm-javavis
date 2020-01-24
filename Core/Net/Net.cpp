@@ -252,7 +252,7 @@ namespace storm {
 			}
 		}
 
-		return os::Handle(0);
+		return os::Handle();
 	}
 
 	bool connectSocket(os::Handle socket, const os::Thread &attached, sockaddr *addr, socklen_t addrSize) {
