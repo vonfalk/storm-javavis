@@ -158,6 +158,9 @@ namespace storm {
 		mps_ap_t codeAllocPoint;
 		util::Lock codeAllocLock;
 
+		// Root for exceptions in-flight.
+		mps_root_t exRoot;
+
 		// Finalization interval (our copy).
 		nat finalizationInterval;
 

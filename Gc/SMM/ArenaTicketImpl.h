@@ -5,6 +5,7 @@
 #include "ArenaTicket.h"
 #include "Generation.h"
 #include "Thread.h"
+#include "Gc/Exception.h"
 
 namespace storm {
 	namespace smm {
@@ -30,6 +31,12 @@ namespace storm {
 				if (r != typename Scanner::Result())
 					return r;
 			}
+
+			// We also need to scan the active exceptions.
+			r = scanExceptions<Scanner>(source);
+			if (r != typename Scanner::Result())
+				return r;
+
 			return r;
 		}
 

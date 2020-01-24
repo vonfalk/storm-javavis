@@ -9,6 +9,7 @@
 #include "Gc/VTable.h"
 #include "Gc/Scan.h"
 #include "Gc/Format.h"
+#include "Gc/Exception.h"
 #include "Core/GcCode.h"
 #include "Utils/Memory.h"
 
@@ -92,10 +93,6 @@ namespace storm {
 	};
 
 
-
-
-#ifndef MPS_OLD_SCAN
-
 	/**
 	 * Custom scanning for MPS.
 	 *
@@ -144,6 +141,12 @@ namespace storm {
 
 		inline Result fixHeader2(GcType **) { return MPS_RES_OK; }
 	};
+
+	static mps_res_t mpsScanExceptions(mps_ss_t ss, void *, size_t) {
+		return storm::scanExceptions<MpsScanner>(ss);
+	}
+
+#ifndef MPS_OLD_SCAN
 
 	static mps_res_t mpsScan(mps_ss_t ss, mps_addr_t base, mps_addr_t limit) {
 		return fmt::Scan<MpsScanner>::objects(ss, base, limit);
@@ -630,6 +633,10 @@ namespace storm {
 		// We want to receive finalization messages.
 		mps_message_type_enable(arena, mps_message_type_finalization());
 
+		// Add a root for exceptions in flight.
+		check(mps_root_create(&exRoot, arena, mps_rank_ambig(), (mps_rm_t)0, &mpsScanExceptions, null, 0),
+			L"Failed to create a root for the exceptions.");
+
 		// Initialize.
 		runningFinalizers = 0;
 		ignoreFreeType = false;
@@ -637,6 +644,8 @@ namespace storm {
 
 	void GcImpl::destroy() {
 		// Note: All threads are removed by the Gc class, so we can assume no threads are attached.
+
+		mps_root_destroy(exRoot);
 
 		// Collect the entire arena. We have no roots attached, so all objects with finalizers
 		// should be found. Leaves the arena in a parked state, so no garbage collections will start
