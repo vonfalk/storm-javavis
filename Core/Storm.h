@@ -139,8 +139,8 @@
 
 // Note that we use the 'throwMe' function in exceptions as a key method. Therefore, we don't need
 // to do anything special for abstract exception classes.
-#define STORM_EXCEPTION_FN_DECL virtual void CODECALL throwMe() const;
-#define STORM_EXCEPTION_FN_IMPL(x) void x::throwMe() const { throw this; }
+#define STORM_EXCEPTION_FN_DECL virtual void CODECALL throwMe();
+#define STORM_EXCEPTION_FN_IMPL(x) void x::throwMe() { throw this; }
 
 // Mark a class that inherits from Exception and that can be thrown.
 // Exceptions are allowed to be abstract, so no extra modifier is needed for that.

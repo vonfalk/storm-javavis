@@ -57,7 +57,7 @@
     but the scale of the issue should be assessed first.
   - [ ] Parsing core.lang.syntax.bnf takes about 80 ms, which is a bit on the high end when compiling code...
 
-* Loose ends so far [49/86]
+* Loose ends so far [49/87]
   - [ ] We want to allocate threads in some kind of pool. since the minimum alignment for VirtualAlloc on Windows
     is 64k, we might waste quite a lot of memory when allocating small stacks.
   - [ ] A new thread association for Actors would be useful. In many cases inside libraries, we want to be
@@ -70,6 +70,7 @@
     create on the specified thread. This is potentially also useful for implementing the generated types
     in the syntax language. The base classes can be locked, and the derived classes could be placed
     on threads inside the syntax language.
+  - [ ] An exception thrown as "const Exception" will not be catched by the Code backend currently.
   - [ ] We can not use 'this' captured inside a lambda function since 'this' refers to the one already present
     in the lambda function.
   - [ ] When using "unless (foo)", "foo" uses a local variable in the block as well as outside of the block,
