@@ -58,7 +58,7 @@ class Labels on Compiler {
 
 	void create(SrcPos pos, Str name) {
 		if (labels.has(name)) {
-			throwSyntaxError(pos, "Duplicate label " # name);
+			throw SyntaxError(pos, "Duplicate label " # name);
 		}
 
 		labels.put(name, gen.l.label());

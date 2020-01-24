@@ -13,7 +13,7 @@ class VarRef extends AsmOperand {
 		if (v as LocalVar) {
 			var = v;
 		} else {
-			throwSyntaxError(pos, "Unknown variable: " # name # ". Note: Only local variables are supported.");
+			throw SyntaxError(pos, "Unknown variable: " # name # ". Note: Only local variables are supported.");
 		}
 	}
 

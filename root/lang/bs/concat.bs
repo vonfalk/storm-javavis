@@ -96,7 +96,7 @@ class ConcatExpr extends Expr {
 		} else {
 			StrBuf msg;
 			msg << "Can not convert " << e.result << " to string by calling 'toS'.";
-			throwSyntaxError(pos, msg.toS);
+			throw SyntaxError(pos, msg.toS);
 		}
 	}
 

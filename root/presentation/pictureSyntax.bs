@@ -74,7 +74,7 @@ class PictureElem on Compiler {
 		if (e = findProperty(name, p)) {
 			into.add(e);
 		} else {
-			throwSyntaxError(name.pos, "No suitable property '${name.v}' found for ${me.result} (parameters: ${p})");
+			throw SyntaxError(name.pos, "No suitable property '${name.v}' found for ${me.result} (parameters: ${p})");
 		}
 	}
 

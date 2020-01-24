@@ -51,14 +51,14 @@ class ListProdDecl extends CustomDecl {
 	private void validate() {
 		for (token in repeat.tokens) {
 			if (token.store)
-				throwSyntaxError(pos, "Binding tokens inside a list construct to variables is not supported.");
+				throw SyntaxError(pos, "Binding tokens inside a list construct to variables is not supported.");
 		}
 
 		for (token in delimiter.tokens) {
 			if (token.store)
-				throwSyntaxError(pos, "Can not interact with tokens inside the delimiter part of list constructs.");
+				throw SyntaxError(pos, "Can not interact with tokens inside the delimiter part of list constructs.");
 			if (token.invoke)
-				throwSyntaxError(pos, "Can not interact with tokens inside the delimiter part of list constructs.");
+				throw SyntaxError(pos, "Can not interact with tokens inside the delimiter part of list constructs.");
 		}
 	}
 }

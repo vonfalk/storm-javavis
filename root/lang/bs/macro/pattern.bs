@@ -26,7 +26,7 @@ class TemplateExpr extends ExprBlock {
 				addExpr(block, exprs, node.pattern, "push");
 				node.pattern = PatternExprSrc(id);
 			} else {
-				throwSyntaxError(pos, "Internal error!");
+				throw SyntaxError(pos, "Internal error!");
 			}
 		}
 
@@ -76,7 +76,7 @@ private:
 		} else if (expr = node as PatternExpr) {
 			addExpr(member, exprs, expr.expr.transform(parent));
 		} else {
-			throwSyntaxError(pos, "Unexpected subtype of SPatternExpr found. Can not continue.");
+			throw SyntaxError(pos, "Unexpected subtype of SPatternExpr found. Can not continue.");
 		}
 	}
 
@@ -172,7 +172,7 @@ class PatternExprSrc extends SPatternExpr {
 		if (r = findPattern(block)) {
 			r.exprs[id];
 		} else {
-			throwSyntaxError(block.pos, "Can not use \${} syntax outside of pattern blocks.");
+			throw SyntaxError(block.pos, "Can not use \${} syntax outside of pattern blocks.");
 
 			// Can be removed when we have exceptions.
 			Expr(block.pos);
@@ -184,7 +184,7 @@ class PatternExprSrc extends SPatternExpr {
 		if (r = findPattern(block)) {
 			r.actuals[id];
 		} else {
-			throwSyntaxError(block.pos, "Can not use @{} syntax outside of pattern blocks.");
+			throw SyntaxError(block.pos, "Can not use @{} syntax outside of pattern blocks.");
 
 			// Can be removed when we have exceptions.
 			Array<Expr>();
@@ -222,7 +222,7 @@ Expr insertExpr(SrcPos pos, Block block, SPatternExpr pattern) {
 	if (pattern as PatternExprSrc) {
 		pattern.expr(block);
 	} else {
-		throwSyntaxError(pos, "Can not use \${} syntax outside of pattern blocks.");
+		throw SyntaxError(pos, "Can not use \${} syntax outside of pattern blocks.");
 		// When we have exceptions, we can ignore this.
 		Expr(pos);
 	}
@@ -235,7 +235,7 @@ void insertActuals(SrcPos pos, Actuals actuals, Block block, SPatternExpr patter
 			actuals.add(x);
 		}
 	} else {
-		throwSyntaxError(pos, "Can not use @{} syntax outside of pattern blocks.");
+		throw SyntaxError(pos, "Can not use @{} syntax outside of pattern blocks.");
 	}
 }
 
@@ -246,7 +246,7 @@ void insertExprs(SrcPos pos, Array<Expr> into, Block block, SPatternExpr pattern
 			into.push(x);
 		}
 	} else {
-		throwSyntaxError(pos, "Can not use @{} syntax outside of pattern blocks.");
+		throw SyntaxError(pos, "Can not use @{} syntax outside of pattern blocks.");
 	}
 }
 
@@ -256,7 +256,7 @@ void insertExprs(SrcPos pos, ExprBlock block, SPatternExpr pattern) {
 			block.add(x);
 		}
 	} else {
-		throwSyntaxError(pos, "Can not use @{} syntax outside of pattern blocks.");
+		throw SyntaxError(pos, "Can not use @{} syntax outside of pattern blocks.");
 	}
 }
 

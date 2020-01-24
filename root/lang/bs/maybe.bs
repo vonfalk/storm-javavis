@@ -73,10 +73,10 @@ class NullExpr extends Expr {
 				ctor.localCall(g, vals, CodeResult(Value(), g.block), false);
 				info.created(g);
 			} else {
-				throwSyntaxError(pos, "Failed to locate the default constructor of " + r.type.toS);
+				throw SyntaxError(pos, "Failed to locate the default constructor of " + r.type.toS);
 			}
 		} else {
-			throwSyntaxError(pos, "Can not be used when 'void' types are expected!");
+			throw SyntaxError(pos, "Can not be used when 'void' types are expected!");
 		}
 	}
 

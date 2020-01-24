@@ -44,7 +44,7 @@ class WindowBody extends ClassBody {
 	void add(TObject obj) {
 		if (obj as SLayoutRoot) {
 			if (layout) {
-				throwSyntaxError(obj.pos, "Multiple layout definitions are not allowed.");
+				throw SyntaxError(obj.pos, "Multiple layout definitions are not allowed.");
 			}
 
 			layout = obj;

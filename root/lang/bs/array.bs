@@ -72,7 +72,7 @@ class ArrayInit extends Expr {
 			Expr e = arrayInit(block, SrcName(type.path(), SrcPos()), values);
 			e.code(g, r);
 		} else {
-			throwSyntaxError(pos, "Can not figure out the type of the array. Please use the syntax T:[...] instead.");
+			throw SyntaxError(pos, "Can not figure out the type of the array. Please use the syntax T:[...] instead.");
 		}
 	}
 

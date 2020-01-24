@@ -76,7 +76,7 @@ Expr referNamed(SrcPos pos, Block block, SrcName type) on Compiler {
 	if (referTo) {
 		ReferNamed(pos, referTo);
 	} else {
-		throwSyntaxError(type.pos, "Could not resolve the name " + type.toS);
+		throw SyntaxError(type.pos, "Could not resolve the name " + type.toS);
 		Expr(SrcPos()); // We need this until we can throw exceptions!
 	}
 }

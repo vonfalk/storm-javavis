@@ -178,7 +178,7 @@ class LayoutBlock extends LayoutRoot {
 			if (expr = applyProperty(child, access, x.name, x.params)) {
 				child.add(expr);
 			} else {
-				throwSyntaxError(x.name.pos, "Unable to find a suitable property: ${x.name.v}");
+				throw SyntaxError(x.name.pos, "Unable to find a suitable property: ${x.name.v}");
 			}
 		}
 	}

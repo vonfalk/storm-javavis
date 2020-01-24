@@ -19,7 +19,7 @@ namespace storm {
 		Exception(const Exception &o);
 
 		// Deep copy.
-		void STORM_FN deepCopy(CloneEnv *env);
+		virtual void STORM_FN deepCopy(CloneEnv *env);
 
 		// Get the message.
 		Str *STORM_FN message() const;

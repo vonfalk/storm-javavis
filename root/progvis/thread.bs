@@ -3,6 +3,15 @@ use core:sync;
 use core:lang;
 
 /**
+ * Exception thrown to exit.
+ */
+class ExitError extends Exception {
+	void message(StrBuf to) : override {
+		to << "Time to terminate!";
+	}
+}
+
+/**
  * Represents a running thread inside the program.
  */
 class ProgThread on Render {
@@ -126,8 +135,7 @@ class ProgThread on Render {
 		running = true;
 
 		if (doTerminate) {
-			// TODO: Other exception...
-			throwSyntaxError(SrcPos(), "Time to terminate");
+			throw ExitError();
 		}
 	}
 }

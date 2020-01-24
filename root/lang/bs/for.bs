@@ -72,7 +72,7 @@ private:
 			return;
 
 		// Note: May not use fancy strings, their implementation depend on us!
-		throwSyntaxError(pos, container.toS + " is not iterable.");
+		throw SyntaxError(pos, container.toS + " is not iterable.");
 	}
 
 	Bool createIterCode(LocalVarAccess container) {
@@ -128,7 +128,7 @@ private:
 		add(loop);
 
 		if (keyName)
-			throwSyntaxError(pos, "Keys are not supported for range-based iterators.");
+			throw SyntaxError(pos, "Keys are not supported for range-based iterators.");
 
 		WeakMaybeCast cond(nextExpr);
 		cond.name(SStr(valName, pos));

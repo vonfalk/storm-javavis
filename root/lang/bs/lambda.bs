@@ -75,12 +75,12 @@ class LambdaExpr extends Expr {
 
 	void code(CodeGen to, CodeResult r) {
 		unless (fnType = r.type.type) {
-			throwSyntaxError(pos, "Unable to deduce parameter types for the lambda function.");
+			throw SyntaxError(pos, "Unable to deduce parameter types for the lambda function.");
 			return;
 		}
 
 		if (!acceptable(r.type))
-			throwSyntaxError(pos, "Unable to deduce parameter types for the lambda function.");
+			throw SyntaxError(pos, "Unable to deduce parameter types for the lambda function.");
 
 		if (!r.needed())
 			return;

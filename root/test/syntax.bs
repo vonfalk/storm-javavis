@@ -106,7 +106,7 @@ package LocalVar findResult(Block block) {
 		if (p = lookup.parent as BlockLookup) {
 			lookup = p;
 		} else {
-			throwSyntaxError(block.pos, "Must be used inside a test-suite!");
+			throw SyntaxError(block.pos, "Must be used inside a test-suite!");
 		}
 	}
 }

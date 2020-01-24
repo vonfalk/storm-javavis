@@ -80,7 +80,7 @@ void error(Type type, Str msg) {
 	SrcPos pos;
 	if (type as Class)
 		pos = type.declared;
-	throwSyntaxError(pos, msg);
+	throw SyntaxError(pos, msg);
 }
 
 // Find a function inside 'type', and make sure it has the proper return type.
@@ -136,7 +136,7 @@ LocalVar safeVariable(Block block, Str name) {
 	if (x = block.variable(SimplePart(name))) {
 		x;
 	} else {
-		throwSyntaxError(SrcPos(), "Internal error: the variable was not found!");
+		throw SyntaxError(SrcPos(), "Internal error: the variable was not found!");
 		// Should be removed when we have exceptions!
 		LocalVar(name, Value(), SrcPos(), false);
 	}
@@ -151,7 +151,7 @@ Function findReadFunction(SrcPos pos, Value type, Type from) {
 		}
 	}
 
-	throwSyntaxError(pos, "The type ${type} is not serializable.");
+	throw SyntaxError(pos, "The type ${type} is not serializable.");
 	return Function(Value(), "", []);
 }
 
@@ -213,7 +213,7 @@ SerializedType findSerializedType(Type type, Type from) {
 		}
 	}
 
-	throwSyntaxError(SrcPos(), "The type ${type} is not serializable.");
+	throw SyntaxError(SrcPos(), "The type ${type} is not serializable.");
 	// TODO: Remove once we have exceptions.
 	SerializedType(type, &findSerializedType(Type, Type));
 }
@@ -314,7 +314,7 @@ Function addWrite(Type type, Member[] members, Function typeFun) {
 			a.add(to);
 			writeCalls.add(FnCall(pos, body.scope, fn, a, false, true));
 		} else {
-			throwSyntaxError(pos, "The type ${s} does not have a write function!");
+			throw SyntaxError(pos, "The type ${s} does not have a write function!");
 		}
 	}
 
