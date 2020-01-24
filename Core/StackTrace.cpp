@@ -1,6 +1,7 @@
 #include "stdafx.h"
 #include "StackTrace.h"
 #include "StrBuf.h"
+#include "Convert.h"
 #include "Utils/StackInfoSet.h"
 
 namespace storm {
@@ -19,7 +20,7 @@ namespace storm {
 		StrBufOut(StrBuf *to) : to(to) {}
 
 		virtual void put(const wchar *str) { *to << str; }
-		virtual void put(const char *str) { *to << str; }
+		virtual void put(const char *str) { *to << toWChar(to->engine(), str)->v; }
 		virtual void put(size_t i) { *to << i; }
 		virtual void putHex(size_t i) { *to << hex(i); }
 
