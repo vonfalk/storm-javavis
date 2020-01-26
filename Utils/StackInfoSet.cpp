@@ -1,6 +1,6 @@
 #include "stdafx.h"
 #include "StackInfoSet.h"
-
+#include <typeinfo>
 
 
 StackInfoSet &stackInfo() {
