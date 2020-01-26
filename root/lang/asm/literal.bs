@@ -21,6 +21,42 @@ AsmOperand number(Str size, Str value) {
 	}
 }
 
+// Assumes pointer-sized.
+AsmOperand number(Str value) {
+	ptrConst(Offset(value.toInt));
+}
+
+AsmOperand ptrNumber(Str? times) {
+	Offset off(sPtr);
+	if (times)
+		off = off * times.toInt;
+	ptrConst(off);
+}
+
+AsmOperand pointer(Str size, AsmOperand base, AsmOperand? offset) {
+	Reg reg = base.value.reg;
+	Offset off;
+	if (offset)
+		off = offset.value.offset;
+
+	if (size == "b") {
+		byteRel(reg, off);
+	} else if (size == "i") {
+		intRel(reg, off);
+	} else if (size == "n") {
+		intRel(reg, off);
+	} else if (size == "l") {
+		longRel(reg, off);
+	} else if (size == "w") {
+		longRel(reg, off);
+	} else if (size == "p") {
+		ptrRel(reg, off);
+	} else {
+		// Fallback.
+		intRel(reg, off);
+	}
+}
+
 
 /**
  * Various registers.

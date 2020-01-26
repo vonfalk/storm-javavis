@@ -25,6 +25,7 @@ SAsmOperand => v : SAsmWritable(block) v;
 // All possible writable asm values.
 AsmOperand SAsmWritable(lang.bs.Block block);
 SAsmWritable => v : SAsmReg v;
+SAsmWritable => v : SAsmPtr v;
 SAsmWritable[-10] => v : SAsmVariableRef(block) v;
 
 // Separate rule for each, so that they can be chosen individually as well.
@@ -44,9 +45,18 @@ SAsmReg => rPtrA() : "ptrA";
 SAsmReg => rPtrB() : "ptrB";
 SAsmReg => rPtrC() : "ptrC";
 
+// Indirect references.
+AsmOperand SAsmPtr() #keyword;
+SAsmPtr => pointer(size, base, offset) : "[binlwp]" size #constant, "\[", SAsmReg base, ("\+", SPtrOffset offset,)? "\]";
+
+AsmOperand SPtrOffset();
+SPtrOffset => number(value) : "-?[0-9]+" value #constant;
+SPtrOffset => ptrNumber(times) : "sPtr" #keyword - (, "\*", "-?[0-9]*" times #constant)?;
+
 // Literals.
 AsmOperand SAsmLiteral();
 SAsmLiteral => number(size, value) : "[binlwp]" size #constant - "-?[0-9]+" value #constant; // Numeric literal with size before it.
+SAsmLiteral => ptrNumber(times) : "sPtr" #keyword - (, "\*", "-?[0-9]*" times #constant)?;
 
 // Reference to a variable in another language.
 VarRef SAsmVariableRef(Block block);
@@ -79,6 +89,7 @@ AsmAtom SAsmInstruction(lang.bs.Block block);
 SAsmInstruction => AddInstr(dest, src) : "add" #typeName, SAsmWritable(block) dest, ",", SAsmOperand(block) src;
 SAsmInstruction => SubInstr(dest, src) : "sub" #typeName, SAsmWritable(block) dest, ",", SAsmOperand(block) src;
 SAsmInstruction => MovInstr(dest, src) : "mov" #typeName, SAsmWritable(block) dest, ",", SAsmOperand(block) src;
+SAsmInstruction => LeaInstr(dest, src) : "lea" #typeName, SAsmWritable(block) dest, ",", SAsmOperand(block) src;
 SAsmInstruction => CmpInstr(a, b) : "cmp" #typeName, SAsmOperand(block) a, ",", SAsmOperand(block) b;
 SAsmInstruction => JmpInstr(to) : "jmp" #typeName, SAsmLabelRef to;
 SAsmInstruction => JmpInstr(to, c) : "jmp" #typeName, SAsmCond c, ",", SAsmLabelRef to;

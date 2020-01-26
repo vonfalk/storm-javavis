@@ -52,6 +52,23 @@ class MovInstr extends AsmAtom {
 	}
 }
 
+class LeaInstr extends AsmAtom {
+	AsmOperand dest;
+	AsmOperand src;
+
+	init(AsmOperand dest, AsmOperand src) {
+		init() { dest = dest; src = src; }
+	}
+
+	void output(CodeGen to, Labels l) {
+		to.l << lea(dest.v(l), src.v(l));
+	}
+
+	Str toS() {
+		"lea " # dest # ", " # src;
+	}
+}
+
 class CmpInstr extends AsmAtom {
 	AsmOperand a;
 	AsmOperand b;

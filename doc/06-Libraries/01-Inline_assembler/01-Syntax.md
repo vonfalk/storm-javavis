@@ -27,12 +27,35 @@ Literals are numeric constants with a prefix telling their type. Size prefixes a
 for `Byte`, `i` for `Int`, `n` for `Nat`, `l` for `Long` , `w` for `Word` or `p` for
 pointer-size.
 
+The literal 'sPtr', optionally followed by an asterisk and an integer, can be used as a
+pointer-sized literal representing multiples of the pointer-size of the current plaform (4 or 8
+bytes).
+
+
 Variables
 ----------
 
 To refer to variables in Basic Storm, simply refer to them by name. A variable will return its
 representation in Basic Storm. A variable holding an `Int` can be accessed as an `Int` in assembler
 and modified. Variables of object-types are pointers.
+
+
+Memory access
+-------------
+
+Memory is accessed using square braces preceeded by a size specifier. The braces may contain a
+pointer-sized register, optionally followed by a `+` sign and an integer literal to indicate an
+offset. The size specifier for the memory access is the same as for numeric literals described
+above.
+
+Example: `i[ptrA]` reads an integer (`i`) from the address in `ptrA`.
+
+Example: `l[ptrA + 8]` reads a long (`l`) from the address 8 bytes after `ptrA`.
+
+Example: `p[ptrA + sPtr]` reads a pointer (`p`) from `ptrA` plus the size of one pointer (4 or 8 bytes depending on the platform).
+
+Example: `p[ptrA + sPtr*2]` reads a pointer (`p`) from `ptrA` plus the size of two pointers (4 or 8 bytes eac depending on the platform).
+
 
 Labels
 --------
