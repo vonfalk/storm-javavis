@@ -33,9 +33,10 @@ Functions have their marker like this:
 void STORM_FN foo();
 ```
 
-Note that no functions or variables are exposed unless marked. In many aspects, the storm runtime
-handles objects and values like C++, so they can interact quite well as long as all types involved
-are properly exposed to the compiler's type system.
+Note that no functions are exposed unless marked. In many aspects, the storm runtime handles objects
+and values like C++, so they can interact quite well as long as all types involved are properly
+exposed to the compiler's type system. Do note, however, that Storm expects class- and actor types
+to be passed and returned by pointer, and values by reference.
 
 There is also an additional marker, `STORM_ASSIGN`, that marks a function as an assignment function
 in Storm. For details on the available markers, see the file `Core/Storm.h`.
@@ -69,6 +70,26 @@ Also note that classes containing any abstract functions need to be marked with
 abstract functions in a class marked `STORM_CLASS`, but currently not the other way around. Having
 `STORM_ABSTRACT_CLASS` without abstract functions do not hurt, but it incurs a small overhead (more
 work to do by the preprocessor, and sometimes slightly larger virtual function tables).
+
+
+Exceptions
+----------
+
+All Exceptions in Storm inherit from the class `storm::Exception` and are therefore always
+class-types. Aside from the abstract member function `message` that provides the exception message,
+these classes work much like other class types in Storm. The notable exception is that all classes
+inheriting from `storm::Exception` need to be declared as `STORM_EXCEPTION` instead of
+`STORM_CLASS`. The preprocessor will inform you of this requirement. Furthermore, exception classes
+may always be abstract, meaning that no special declaration is needed, as is the case with classes.
+
+Exceptions are thrown and caught by pointer, and as they are class types they are allocated on the
+GC heap. As long as this convention is followed, exceptions thrown in C++ can be caught in Storm,
+and vice versa. If value types are used in Storm, you can also expect destructors to be called
+when exceptions are thrown through Storm code, just as in C++.
+
+Exceptions do not collect a stack trace by default, but provides a member `saveTrace` that
+records a stack trace inside the exception that is shown later. This is done by many of the
+exceptions used in Storm that are of fatal nature to aid debugging.
 
 
 Garbage Collection

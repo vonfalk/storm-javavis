@@ -784,3 +784,64 @@ When the container's iterator associates a key to each element, write `for (key,
 access the key in each step as well. `key` is extracted using the `k` member of the iterator, while
 `value` is extracted using the `v` member. See [iterators](md://Storm/Iterators.md) for more
 information.
+
+
+Exceptions
+-----------
+
+Exceptions are thrown using the `throw` keyword:
+
+```
+throw RuntimeError("Something went wrong!");
+```
+
+The right-hand side can be any valid Storm expression, but thrown exceptions must inherit from
+`core.Exception`, either directly or indirectly. New exceptions can be declared in Basic Storm just
+like any class:
+
+```
+class MyException extends Exception {
+    void message(StrBuf to) : override {
+        to << "My error";
+    }
+}
+```
+
+This exception overrides the abstract function `message` to print a custom error message. If we want
+to include a stack trace, we need to instruct the system to collect a stack trace when the exception
+is created by calling the `saveTrace` function in the constructor:
+
+```
+class MyException extends Exception {
+    init() {
+        init();
+        saveTrace();
+    }
+    void message(StrBuf to) : override {
+        to << "My error";
+    }
+}
+```
+
+Note that we don't need to print the stack trace anywhere. That is handled by the default `toS`
+implementation in `Exception`.
+
+Exceptions are caught using a `try` block:
+
+```
+try {
+   throw MyException();
+} catch (MyException e) {
+    print("My exception: ${e}");
+} catch (Exception e) {
+    print("Generic exception: ${e}");
+}
+```
+
+The code inside the `try` part of the block is executed as normal. However, if an exception is
+thrown inside the block, execution immediately proceeds in one of the `catch` blocks. The system
+searches the `catch` blocks in the order they appear in the source code, and executes the first one
+where the declared type matches the actual type of the thrown value. In the example above, the first
+case would be selected, as we throw an instance of `MyException`. Any other exceptions would be
+caught by the second `catch` block. It is possible to omit the variable name (`e` in this case) if
+the caught exception is not needed in the `catch` block.
