@@ -1,0 +1,90 @@
+use core:lang;
+use core:asm;
+use lang:asm;
+use lang:bs:macro;
+
+/**
+ * Memory management helpers.
+ */
+
+on Compiler:
+
+/**
+ * Variable allocated in C++.
+ */
+class CppVar on Compiler {
+	// Dummy value.
+	init() {
+		init {}
+	}
+
+	// No initialization required.
+	init(Var var) {
+		init {
+			v = var;
+			needsPart = false;
+		}
+	}
+
+	init(Var var, Bool needsPart) {
+		init {
+			v = var;
+			needsPart = needsPart;
+		}
+	}
+
+	// The variable itself.
+	Var v;
+
+	// Do we need to put it in a new part?
+	Bool needsPart;
+
+	// Call when the variable has been initialized properly.
+	void created(CodeGen g) {
+		if (!needsPart)
+			return;
+
+		Listing l = g.l;
+
+		// Mark the variable as 'created' by setting 'filled' to 1.
+		l << mov(ptrA, v);
+		l << mov(ptrRel(ptrA, Offset(sPtr)), ptrConst(1));
+
+		// Activate exception handling.
+		l << activate(v);
+
+		needsPart = false;
+	}
+
+	// Place the adjusted value of this variable in 'dst'.
+	void adjust(CodeGen gen, Operand dst) {
+		gen.l << mov(dst, v);
+		// Skip over the array header.
+		gen.l << add(dst, ptrConst(sPtr * 2));
+	}
+}
+
+// Allocate memory for a C++ type. Return the variable where it was created.
+CppVar allocType(CodeGen gen, Type type) {
+	// We attach a destructor to all objects so that we can keep track of which are alive.
+	var dtor = named{cppDtor<unsafe:RawPtr>}.ref;
+
+	Listing l = gen.l;
+	Var v = l.createVar(gen.block, sPtr, dtor, FreeOpt:default + FreeOpt:inactive);
+
+	// Allocate memory.
+	l << fnParam(ptrDesc, type.typeRef);
+	l << fnParam(ptrDesc, ptrConst(1));
+	l << fnCall(ref(BuiltIn:allocArray), false, ptrDesc, v);
+
+	CppVar(v, true);
+}
+
+// Destructor for C++ types.
+void cppDtor(unsafe:RawPtr obj) {
+	print("Destroying an object ${obj}");
+	asm {
+		mov ptrA, obj;
+		mov p[ptrA + sPtr], p0;
+	}
+}

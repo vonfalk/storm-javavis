@@ -156,12 +156,21 @@ namespace storm {
 		// type, the parameter is the actual value.
 		void STORM_FN autoCall(CodeGen *to, Array<code::Operand> *params, CodeResult *result);
 
+		// Same as 'autoCall', but assumes 'result' is a pointer to where the result is to be stored.
+		void STORM_FN autoCallRef(CodeGen *to, Array<code::Operand> *params, code::Operand result);
+
 		// Generate code for this function call, assuming we are performing the call the same thread as the
 		// currently running thread. If 'useLookup' is false, we will not use the lookup function (ie VTables).
 		void STORM_FN localCall(CodeGen *to, Array<code::Operand> *params, CodeResult *result, Bool useLookup);
 
+		// Same as 'localCall', but assumes 'result' is a pointer to where the result is to be stored.
+		void STORM_FN localCallRef(CodeGen *to, Array<code::Operand> *params, code::Operand result, Bool useLookup);
+
 		// Generate code for this function call, assuming we want to run on a different thread.
 		void STORM_FN threadCall(CodeGen *to, Array<code::Operand> *params, CodeResult *result, code::Operand thread);
+
+		// Same as 'threadCall', but assumes 'result' is a pointer to where the result is to be stored.
+		void STORM_FN threadCallRef(CodeGen *to, Array<code::Operand> *params, code::Operand result, code::Operand thread);
 
 		// Generate code for this function call, assuming we want to run on a different thread,
 		// returning a Future object. If 'thread' is left out, the current thread is used.
@@ -197,6 +206,7 @@ namespace storm {
 
 		// Generate code for a direct function call.
 		void localCall(CodeGen *to, Array<code::Operand> *params, CodeResult *result, code::Ref ref);
+		void localCallRef(CodeGen *to, Array<code::Operand> *params, code::Operand result, code::Ref ref);
 
 		// Add parameters for the function call.
 		void addParams(CodeGen *to, Array<code::Operand> *params);

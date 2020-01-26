@@ -1,0 +1,40 @@
+use core:lang;
+use core:asm;
+
+/**
+ * Local variable in C++.
+ *
+ * Variables are always a pointer to an array allocation the size of one element, just like value
+ * types are stored in a Variant.
+ *
+ * If the referred type is a class-type in Storm (i.e. it is foreign, we don't use them in the C++
+ * world), it is just a pointer to the object.
+ *
+ * Parameters are explicitly copied at the start of the function, so that all variables follow the
+ * above convention.
+ */
+class LocalVar extends Named {
+	init(Str name, Type val, SrcPos pos) {
+		init(name) {
+			type = val;
+			pos = pos;
+		}
+	}
+
+	// Value stored.
+	Type type;
+
+	// Declared at.
+	SrcPos pos;
+
+	// The variable. Created during code generation.
+	CppVar var;
+
+	// Create the variable. OK to call twice.
+	void create(CodeGen gen) {
+		if (var.v == Var()) {
+
+			// TODO: Add variable information!
+		}
+	}
+}

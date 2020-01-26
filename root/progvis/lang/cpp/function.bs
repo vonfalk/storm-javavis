@@ -70,7 +70,8 @@ class CppFunction extends Function {
 		FnRoot root(body.pos, this);
 		// Add parameters.
 		for (id, v in formals) {
-			root.add(lang:bs:LocalVar(v.v, params[id], v.pos, true));
+			print("TODO: Handle formal parameters properly! We need to copy the values!");
+			// root.add(LocalVar(v.v, params[id], v.pos, true));
 		}
 
 		body.transform(root);
@@ -110,10 +111,7 @@ class FnRoot extends StmtBlock {
 	Bool code(CodeGen gen) : override {
 		// We don't need to create a child block. We use the root block right away!
 
-		for (k, v in vars) {
-			if (v.param)
-				v.createParam(gen);
-		}
+		// TODO: Handle parameters?
 
 		initVariables(gen);
 		blockCode(gen);

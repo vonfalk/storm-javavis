@@ -210,6 +210,16 @@ namespace storm {
 		}
 	}
 
+	void Function::autoCallRef(CodeGen *to, Array<code::Operand> *params, code::Operand result) {
+		RunOn r = runOn();
+		if (to->runOn.canRun(r)) {
+			localCallRef(to, params, result, true);
+		} else {
+			code::Var v = findThread(to, params);
+			threadCallRef(to, params, result, v);
+		}
+	}
+
 	void Function::localCall(CodeGen *to, Array<code::Operand> *params, CodeResult *result, Bool useLookup) {
 		initRefs();
 		if (params->count() != this->params->count()) {
@@ -231,6 +241,39 @@ namespace storm {
 		}
 	}
 
+	void Function::localCallRef(CodeGen *to, Array<code::Operand> *params, code::Operand result, Bool useLookup) {
+		initRefs();
+		if (params->count() != this->params->count()) {
+			Str *msg = TO_S(engine(), S("Parameter count mismatch when calling ") << identifier()
+							<< S(". Got ") << params->count() << S(" parameter(s)."));
+			throw new (this) InternalError(msg);
+		}
+
+		InlineCode *inlined = as<InlineCode>(code);
+		// If we're not going to use the lookup, we may choose to inline sooner.
+		if (useLookup && as<DelegatedCode>(lookup) == null)
+			inlined = null;
+
+		if (inlined) {
+			if (this->result.isAsmType()) {
+				using namespace code;
+
+				// TODO: We might want to create a new block here.
+				CodeResult *r = new (this) CodeResult(this->result, to->block);
+				inlined->code(to, params, r);
+				*to->l << mov(ptrA, result);
+
+				code::Var rVar = r->location(to);
+				*to->l << mov(xRel(rVar.size(), ptrA, Offset()), rVar);
+			} else {
+				// Fall back on non-inlined version if we can't copy the result in-place.
+				localCallRef(to, params, result, useLookup ? this->ref() : directRef());
+			}
+		} else {
+			localCallRef(to, params, result, useLookup ? this->ref() : directRef());
+		}
+	}
+
 	void Function::localCall(CodeGen *to, Array<code::Operand> *params, CodeResult *res, code::Ref ref) {
 		using namespace code;
 
@@ -242,6 +285,18 @@ namespace storm {
 			code::Var rVar = res->safeLocation(to, result);
 			*to->l << fnCall(ref, isMember(), result.desc(engine()), rVar);
 			res->created(to);
+		}
+	}
+
+	void Function::localCallRef(CodeGen *to, Array<code::Operand> *params, code::Operand res, code::Ref ref) {
+		using namespace code;
+
+		addParams(to, params);
+
+		if (result == Value()) {
+			*to->l << fnCall(ref, isMember());
+		} else {
+			*to->l << fnCallRef(ref, isMember(), result.desc(engine()), res);
 		}
 	}
 
@@ -330,6 +385,56 @@ namespace storm {
 		} else if (result.isClass()) {
 			*to->l << fnParam(ptr, resultPos);
 			*to->l << fnCall(cloneFn(result.type)->ref(), false, ptr, resultPos);
+		}
+
+	}
+
+	void Function::threadCallRef(CodeGen *to, Array<code::Operand> *params, code::Operand res, code::Operand thread) {
+		using namespace code;
+
+		Engine &e = engine();
+		CodeGen *sub = to->child();
+		*to->l << begin(sub->block);
+
+		// Spill any registers to memory if necessary...
+		params = spillRegisters(sub, params);
+
+		// Create the parameters.
+		Var par = createFnCall(sub, this->params, params, true);
+
+		Ref thunk = Ref(threadThunk());
+
+		TypeDesc *ptr = e.ptrDesc();
+
+		// Spawn the thread!
+		*to->l << lea(ptrA, par);
+		*to->l << fnParam(ptr, ref()); // fn
+		*to->l << fnParam(byteDesc(e), toOp(isMember())); // member
+		*to->l << fnParam(ptr, thunk); // thunk
+		*to->l << fnParam(ptr, ptrA); // params
+		*to->l << fnParam(ptr, res); // result
+		*to->l << fnParam(ptr, thread); // on
+		*to->l << fnCall(e.ref(builtin::spawnResult), false);
+
+		*to->l << end(sub->block);
+
+		// Clone the result.
+		if (result.isValue() && !result.isPrimitive()) {
+			if (Function *f = result.type->deepCopyFn()) {
+				CodeGen *child = to->child();
+				*to->l << begin(child->block);
+
+				Var env = allocObject(child, CloneEnv::stormType(e));
+				*to->l << fnParam(ptr, res);
+				*to->l << fnParam(ptr, env);
+				*to->l << fnCall(f->ref(), true);
+
+				*to->l << end(child->block);
+			}
+		} else if (result.isClass()) {
+			*to->l << mov(ptrA, res);
+			*to->l << fnParam(ptr, ptrRel(ptrA, Offset()));
+			*to->l << fnCallRef(cloneFn(result.type)->ref(), false, ptr, res);
 		}
 
 	}

@@ -20,6 +20,11 @@ class Expr extends Stmt {
 	// Compute the result.
 	ExprResult result() : abstract;
 
+	// Does this expression represent a temporary value? I.e. is this an r-value?
+	Bool temporary() {
+		true;
+	}
+
 	// Generate code. 'desired' is the desired return type.
 	void code(CodeGen gen, CodeResult res) : abstract;
 }
@@ -39,7 +44,7 @@ class IntLiteral extends Expr {
 	private Long val;
 
 	ExprResult result() : override {
-		Value(named{Int});
+		Value(named{Int}, true);
 	}
 
 	void code(CodeGen gen, CodeResult res) : override {
@@ -47,15 +52,18 @@ class IntLiteral extends Expr {
 			return;
 
 		var to = res.location(gen);
-		print("Integer literal: ${to}");
 		if (t = res.type.type) {
+			CppVar var = allocType(gen, t);
+			var.adjust(gen, ptrA);
 			if (t is named{Int}) {
-				gen.l << mov(to, intConst(val.int));
+				gen.l << mov(intRel(ptrA, Offset()), intConst(val.int));
 			} else if (t is named{Long}) {
-				gen.l << mov(to, longConst(val));
+				gen.l << mov(longRel(ptrA, Offset()), longConst(val));
 			} else {
 				throw SyntaxError(pos, "Unknown type!");
 			}
+			var.created(gen);
+			gen.l << mov(to, ptrA);
 		}
 		res.created(gen);
 	}
@@ -76,7 +84,8 @@ class FnCall extends Expr {
 	}
 
 	ExprResult result() : override {
-		fn.result;
+		// We make sure to return references.
+		fn.result.asRef();
 	}
 
 	void code(CodeGen gen, CodeResult res) : override {
@@ -85,8 +94,23 @@ class FnCall extends Expr {
 			params << paramCode(gen, x, fn.params[i]);
 		}
 
-		// TODO: We might need to handle some level of type conversions.
-		fn.autoCall(gen, params, res);
+		if (t = fn.result.type) {
+			if (res.type.ref & !fn.result.ref) {
+				// Create a variable to store the result in.
+				CppVar var = allocType(gen, t);
+				var ref = res.safeLocation(gen, res.type);
+				var.adjust(gen, ref);
+
+				fn.autoCallRef(gen, params, ref);
+				var.created(gen);
+				res.created(gen);
+			} else {
+				fn.autoCall(gen, params, res);
+			}
+		} else {
+			// Void result.
+			fn.autoCall(gen, params, res);
+		}
 	}
 }
 
@@ -108,6 +132,18 @@ private Operand paramCode(CodeGen gen, Expr actual, Value formal) on Compiler {
 		gen.l << lea(tmpRef.v, ptrRel(tmpV.v, Offset()));
 		tmpRef.created(gen);
 		tmpRef.v;
+	} else if (!formal.ref & result.ref) {
+		// We need to make a copy.
+		if (!formal.isAsmType())
+			throw SyntaxError(actual.pos, "Unable to manipulate this parameter!");
+
+		CodeResult gr(formal.asRef(), gen.block);
+		actual.code(gen, gr);
+
+		Var v = gen.l.createVar(gen.block, formal.size());
+		gen.l << mov(ptrA, gr.location(gen));
+		gen.l << mov(v, xRel(v.size(), ptrA, Offset()));
+		v;
 	} else {
 		CodeResult gr(formal, gen.block);
 		actual.code(gen, gr);
