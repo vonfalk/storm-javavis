@@ -11,6 +11,12 @@ static void intCleanup(Int v) {
 	destroyed += v;
 }
 
+static void intCleanupGc(Int v) {
+	// Run a GC cycle to make interesting things happen during unwinding.
+	gEngine().gc.collect();
+	destroyed += v;
+}
+
 static void intPtrCleanup(Int *v) {
 	destroyed += *v;
 }
@@ -347,6 +353,10 @@ static void CODECALL throwPtr(Nat i) {
 		*buf << S("Buffer");
 		// PLN(L"Throwing " << (void *)buf << L", " << buf);
 		throw buf;
+	} else if (i == 20) {
+		// Constant object.
+		const Str *obj = new (gEngine()) Str(S("Throw const!"));
+		throw obj;
 	}
 }
 
@@ -361,7 +371,7 @@ BEGIN_TEST(ExceptionCatch, Code) {
 
 	Ref errorFn = arena->external(S("errorFn"), address(&::throwPtr));
 	Ref appendFn = arena->external(S("appendFn"), address(&::addBuf));
-	Ref freeInt = arena->external(S("freeInt"), address(&::intCleanup));
+	Ref freeInt = arena->external(S("freeInt"), address(&::intCleanupGc));
 
 	Listing *l = new (e) Listing(false, ptrDesc(e));
 
@@ -440,6 +450,12 @@ BEGIN_TEST(ExceptionCatch, Code) {
 	CHECK_ERROR(::toS((*fn)(2)), Str *);
 	CHECK(DbgVal::clear());
 	CHECK_EQ(destroyed, 4 + 18);
+
+	// Throws a const Str and tries to catch it.
+	destroyed = 0;
+	CHECK_EQ(::toS((*fn)(20)), L"Throw const!");
+	CHECK(DbgVal::clear());
+	CHECK_EQ(destroyed, 4 + 7);
 
 
 	// // DebugBreak();

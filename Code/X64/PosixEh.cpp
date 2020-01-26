@@ -253,7 +253,7 @@ namespace code {
 			// on vtables instead. This is not ABI-compliant, as __do_catch is not mandated by the ABI.
 
 			// Try to catch a storm::RootObject *.
-			if (!typeid(RootObject * const).__do_catch(info, &object, abi::__pbase_type_info::__const_mask))
+			if (!typeid(RootObject const * const).__do_catch(info, &object, abi::__pbase_type_info::__const_mask))
 				return null;
 
 			return *(RootObject **)object;

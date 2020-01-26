@@ -270,9 +270,8 @@ EXCEPTION_DISPOSITION __cdecl x86SEH(_EXCEPTION_RECORD *er, void *frame, _CONTEX
 
 	// Apparently, the 'simple type' flag is set when we're working with pointers to const objects.
 	// If it's not a simple type, don't bother looking for a void *.
-	if ((type->flags & simpleType) != 0)
-		return ExceptionContinueSearch;
-
+	// if ((type->flags & simpleType) != 0)
+	// 	return ExceptionContinueSearch;
 
 	// The table seems to be a table of possible types that can catch the exception. We look for
 	// 'RootObject *' in that, then we know if it's a pointer or not!
