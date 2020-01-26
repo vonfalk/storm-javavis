@@ -207,7 +207,7 @@ namespace storm {
 					*msg << S("Failed to initialize the object implicitly: ");
 					e->message(msg);
 					*msg << S("\nInitialize the object manually with an 'init' block instead.");
-					throw new (this) SyntaxError(e->where, msg->toS());
+					throw new (this) SyntaxError(e->pos, msg->toS());
 				}
 			}
 		}

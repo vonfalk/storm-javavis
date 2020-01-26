@@ -15,10 +15,10 @@ namespace storm {
 
 
 	SyntaxError::SyntaxError(SrcPos where, const wchar *msg) :
-		CodeError(where), msg(new (engine()) Str(msg)) {}
+		CodeError(where), text(new (engine()) Str(msg)) {}
 
 	SyntaxError::SyntaxError(SrcPos where, Str *msg) :
-		CodeError(where), msg(msg) {}
+		CodeError(where), text(msg) {}
 
 	TypeError::TypeError(SrcPos where, const wchar *msg) : CodeError(where), msg(new (engine()) Str(msg)) {}
 	TypeError::TypeError(SrcPos where, Str *msg) : CodeError(where), msg(msg) {}

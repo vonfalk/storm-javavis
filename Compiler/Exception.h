@@ -15,15 +15,15 @@ namespace storm {
 		STORM_EXCEPTION;
 	public:
 		STORM_CTOR CodeError(SrcPos where) {
-			this->where = where;
+			pos = where;
 		}
 
 		// Where is the error located?
-		SrcPos where;
+		SrcPos pos;
 
 		// Message.
 		virtual void STORM_FN message(StrBuf *to) const {
-			*to << S("@") << where << S(": ");
+			*to << S("@") << pos << S(": ");
 		}
 	};
 
@@ -86,11 +86,10 @@ namespace storm {
 
 		virtual void STORM_FN message(StrBuf *to) const {
 			CodeError::message(to);
-			*to << S("Syntax error: ") << msg;
+			*to << S("Syntax error: ") << text;
 		}
 
-	private:
-		Str *msg;
+		Str *text;
 	};
 
 

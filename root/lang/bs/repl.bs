@@ -53,7 +53,8 @@ class BsRepl extends Repl {
 		scope.addSyntax(root);
 		root.parse(line, Url());
 		if (root.hasError) {
-			print(root.errorMsg);
+			var error = root.error;
+			print("At character " + error.pos.start.toS + ", syntax error: " + error.text);
 			return true;
 		}
 
