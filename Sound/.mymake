@@ -12,7 +12,8 @@ include+=../SoundLib/
 #flags+=/d1reportSingleClassLayoutGradientStop
 
 [unix]
-library+=openal
+# Specify the name, so that it works if the "openal.so"-link is missing...
+library+=:libopenal.so.1
 
 flags+=-I../SoundLib/include/
 flags+=-I../SoundLib/mpg123/src/libmpg123/
