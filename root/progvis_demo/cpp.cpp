@@ -21,5 +21,5 @@ int main() {
 	d.x = 8;
 	d.y = 10;
 
-	return 1 + test(2 + 3, 4) + d.x;
+	return 1 + test(2 + 3, 4) + d.x; // d.result();
 }

@@ -113,21 +113,30 @@ class NameExpr extends Expr {
 		r;
 	}
 
-	private Named? findNamed() {
+
+	Named? findNamed(Value[] actuals) {
 		if (context) {
 			Value ctx = context.result.type;
 			SimplePart last = name.last.clone();
 			last.params << ctx;
-			print("Looking for ${last} in ${ctx}");
+			last.params.append(actuals);
 
 			if (t = ctx.type) {
 				return t.find(last, scope);
 			} else {
 				return null;
 			}
+		} else if (actuals.empty) {
+			return scope.find(name);
 		} else {
+			SimpleName n = name.clone;
+			name.last.params = actuals;
 			return scope.find(name);
 		}
+	}
+
+	Named? findNamed() {
+		findNamed([]);
 	}
 
 	private Expr doResolve() {
@@ -153,11 +162,13 @@ Expr fnCall(Expr lhs, Expr[] actuals) {
 		throw SyntaxError(lhs.pos, "This is not something we can call.");
 	}
 
-	SimpleName name = lhs.name.clone;
-	name.last.params = fnValues(actuals);
-	Named? found = lhs.scope.find(name);
-	if (found as Function)
+	Named? found = lhs.findNamed(fnValues(actuals));
+	if (found as Function) {
+		// Add the 'this' ptr if required.
+		if (c = lhs.context)
+			actuals.insert(0, c);
 		return FnCall(lhs.pos, found, actuals);
+	}
 
 	throw SyntaxError(lhs.pos, "Found ${found}, which is not a function.");
 }
