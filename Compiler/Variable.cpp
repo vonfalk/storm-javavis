@@ -21,7 +21,7 @@ namespace storm {
 	}
 
 	Variable::Variable(Str *name, Value type, Type *member) :
-		Named(name, new (name) Array<Value>(1, Value(member))), type(type) {
+		Named(name, new (name) Array<Value>(1, thisPtr(member))), type(type) {
 
 		checkType(engine(), type);
 	}

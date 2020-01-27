@@ -38,6 +38,8 @@ namespace storm {
 
 	/**
 	 * Public visibility. Accessible to everyone.
+	 *
+	 * Access instances through the 'public()' function below.
 	 */
 	class Public : public Visibility {
 		STORM_CLASS;
@@ -56,6 +58,8 @@ namespace storm {
 
 	/**
 	 * Private visibility within a type. Accessible only to members of the same type.
+	 *
+	 * Access instances through the 'typePrivate()' function below.
 	 */
 	class TypePrivate : public Visibility {
 		STORM_CLASS;
@@ -74,6 +78,8 @@ namespace storm {
 
 	/**
 	 * Protected within a type. Accessible to members of the same type, and to members of a derived type.
+	 *
+	 * Access instances through the 'typeProtected()' function below.
 	 */
 	class TypeProtected : public Visibility {
 		STORM_CLASS;
@@ -92,6 +98,8 @@ namespace storm {
 
 	/**
 	 * Private within a package. Only the current package, or sub-packages, are able to access the type.
+	 *
+	 * Access instances through the 'packagePrivate()' function below.
 	 */
 	class PackagePrivate : public Visibility {
 		STORM_CLASS;
