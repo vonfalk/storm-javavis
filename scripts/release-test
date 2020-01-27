@@ -4,22 +4,29 @@ IN="$1"
 if [[ "$IN" == *.zip ]]
 then
     extract="7z x $IN"
+    dir=$(basename "$IN" .zip)
 else
     extract="tar xzf $IN"
+    dir=$(basename "$IN" .tar.gz)
 fi
 
-echo "Making sure the release $(basename "$IN") works..."
-mkdir -p $STORM_ROOT/release/storm
-cd $STORM_ROOT/release/storm
 
+echo "Making sure the release $(basename "$IN") works..."
+mkdir -p $STORM_ROOT/release/$dir
+cd $STORM_ROOT/release/$dir
+
+echo "Extracting..."
 $extract > /dev/null
+
+echo "Launching REPL..."
 echo "exit" | ./Storm > /dev/null
 if [[ $? -ne 0 ]]
 then
-    echo "Failed to launch the repl. Something is bad! Test in release/storm"
+    echo "Failed to launch the REPL. Something is bad! Test in release/storm"
     exit 1
 fi
 
+echo "Running basic tests..."
 ./Storm -c 'tests:bf:inlineBf' > output.txt
 if [[ $? -ne 0 ]]
 then
@@ -34,5 +41,7 @@ then
     exit 1
 fi
 
+echo "Cleaning up..."
 cd $STORM_ROOT
-rm -r $STORM_ROOT/release/storm
+rm -r $STORM_ROOT/release/$dir
+echo "Done!"
