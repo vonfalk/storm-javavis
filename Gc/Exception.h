@@ -88,9 +88,10 @@ namespace storm {
 
 			// Scan it, word by word.
 			for (size_t offset = 0; offset < ex.size; offset += sizeof(void *)) {
-				void *ptr = (byte *)ex.ptr + offset;
-				if (s.fix1(ptr)) {
-					r = s.fix2(&ptr);
+				void *ptrLoc = (byte *)ex.ptr + offset;
+				void **ptr = (void **)ptrLoc;
+				if (s.fix1(*ptr)) {
+					r = s.fix2(ptr);
 					if (r != typename Scanner::Result())
 						return r;
 				}
