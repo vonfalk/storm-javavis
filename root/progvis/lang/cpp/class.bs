@@ -1,0 +1,129 @@
+use core:lang;
+use core:asm;
+
+/**
+ * State used when expanding declarations inside a type.
+ */
+class TypeState on Compiler {
+	init(CppType to, Visibility start) {
+		init() { to = to; visibility = start; }
+	}
+
+	// Add to.
+	CppType to;
+
+	// Current visibility.
+	Visibility visibility;
+
+	// Set access.
+	void set(Visibility v) {
+		visibility = v;
+	}
+
+	// Add a member.
+	void add(Named named) {
+		named.visibility = visibility;
+		to.add(named);
+	}
+
+	// Add a function decl.
+	void add(CppFnDecl decl) {
+		decl.visibility = visibility;
+		decl.create(to);
+	}
+}
+
+
+/**
+ * Type declaration (both structs and classes, we don't support unions).
+ */
+class CppType extends Type {
+	// If 'isClass' is 'false', then we're a struct, i.e. access defaults to public rather than private.
+	init(SStr name, Bool isClass, SClassInherit? inherit, SClassBody body) {
+		init(name.v, TypeFlags:typeValue) {
+			pos = name.pos;
+			inherit = inherit;
+			body = body;
+			defAccess = if (isClass) { typePrivate; } else { public; };
+		}
+	}
+
+	// Declared at.
+	SrcPos pos;
+
+	// Body.
+	SClassBody body;
+
+	// Inheritance, expanded when we're told to.
+	SClassInherit? inherit;
+
+	// Default access.
+	Visibility defAccess;
+
+	// Resolve types etc. Called when all types in this package are loaded.
+	void resolve() {
+		if (inherit)
+			inherit.transform(this);
+	}
+
+	// Get a scope.
+	Scope scope() {
+		cppScope(this);
+	}
+
+	// Called by the grammar to set up inheritance.
+	void setSuper(Visibility? vis, Value type) {
+		// Currently, we don't really care about the visibility, as it is not supported in the backend.
+		setSuper(type.type);
+	}
+
+	// Called to load all content.
+	Bool loadAll() : override {
+		TypeState state(this, defAccess);
+		body.transform(state);
+
+		// TODO: Add default members if needed.
+
+		for (v in this) {
+			print("Member: ${v}");
+		}
+
+		super:loadAll();
+	}
+}
+
+/**
+ * Member variable access.
+ */
+class MemberVarAccess extends Expr {
+	MemberVar var;
+	Expr in;
+
+	init(SrcPos pos, Expr in, MemberVar var) {
+		init(pos) { in = in; var = var; }
+	}
+
+	Bool temporary() : override {
+		false;
+	}
+
+	ExprResult result() : override {
+		var.type.asRef();
+	}
+
+	void code(CodeGen gen, CodeResult result) : override {
+		if (!result.needed())
+			return;
+
+		if (!result.type.ref)
+			throw InternalError("Expected to be asked for a reference!");
+
+		CodeResult lhs(in.result.type.asRef(), gen.block);
+		in.code(gen, lhs);
+
+		Var r = result.location(gen);
+		gen.l << mov(r, lhs.location(gen));
+		gen.l << add(r, ptrConst(var.offset));
+		result.created(gen);
+	}
+}

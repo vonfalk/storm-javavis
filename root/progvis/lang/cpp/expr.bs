@@ -79,10 +79,17 @@ class IntLiteral extends Expr {
 class NameExpr extends Expr {
 	Scope scope;
 	SimpleName name;
+	Expr? context;
 	private Expr? resolved;
 
+	// Regular name without any context.
 	init(SrcPos pos, Scope scope, SimpleName name) {
 		init(pos) { scope = scope; name = name; }
+	}
+
+	// Name give some context using the . operator.
+	init(SrcPos pos, Scope scope, SimpleName name, Expr context) {
+		init(pos) { scope = scope; name = name; context = context; }
 	}
 
 	void code(CodeGen gen, CodeResult result) : override {
@@ -106,12 +113,33 @@ class NameExpr extends Expr {
 		r;
 	}
 
+	private Named? findNamed() {
+		if (context) {
+			Value ctx = context.result.type;
+			SimplePart last = name.last.clone();
+			last.params << ctx;
+			print("Looking for ${last} in ${ctx}");
+
+			if (t = ctx.type) {
+				return t.find(last, scope);
+			} else {
+				return null;
+			}
+		} else {
+			return scope.find(name);
+		}
+	}
+
 	private Expr doResolve() {
-		Named? found = scope.find(name);
+		Named? found = findNamed();
 		if (found as LocalVar) {
-			LocalVarAccess r(pos, found);
-			resolved = r;
-			return r;
+			return LocalVarAccess(pos, found);
+		} else if (found as MemberVar) {
+			if (context) {
+				return MemberVarAccess(pos, context, found);
+			}
+		} else if (found) {
+			throw SyntaxError(pos, "${name} refers to ${typeOf(found).name}, which I don't know how to handle here.");
 		}
 
 		throw SyntaxError(pos, "Unable to resolve the name ${name} in this context!");
@@ -310,7 +338,9 @@ Expr operator(Block block, Expr lhs, SStr op) on Compiler {
 }
 
 Expr dotOperator(Block block, Expr lhs, SStr rhs, Bool ptrLhs) {
-	IntLiteral(rhs.pos, 0);
+	if (ptrLhs)
+		throw SyntaxError(rhs.pos, "Pointer dereferencing is not implemented yet!");
+	NameExpr(rhs.pos, block.scope, SimpleName(rhs.v), lhs);
 }
 
 // Short-circuting operators.

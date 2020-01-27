@@ -1,7 +1,7 @@
 use core:lang;
 
 // Create a suitable C++ scope.
-Scope cppScope(Package pkg) on Compiler {
+Scope cppScope(NameSet pkg) on Compiler {
 	Scope(pkg, CppLookup());
 }
 

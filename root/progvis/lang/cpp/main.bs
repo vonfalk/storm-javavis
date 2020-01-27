@@ -25,9 +25,19 @@ class Reader extends FileReader {
 	}
 
 	// Types.
-	void readTypes() : override {}
+	void readTypes() : override {
+		Content c = content();
+		for (t in c.types) {
+			info.pkg.add(t);
+		}
+	}
 
-	void resolveTypes() : override {}
+	void resolveTypes() : override {
+		Content c = content();
+		for (t in c.types) {
+			t.resolve();
+		}
+	}
 
 	// Functions.
 	void readFunctions() : override {

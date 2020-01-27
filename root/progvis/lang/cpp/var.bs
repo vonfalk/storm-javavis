@@ -82,6 +82,8 @@ class VarDecl extends Stmt {
 			var(name.v, type.safeType(pos), name.pos);
 		}
 
+		print("TODO: Require the default constructor to be called!");
+
 		parent.add(var);
 	}
 
@@ -118,14 +120,10 @@ class VarDecl extends Stmt {
 	Bool code(CodeGen gen) : override {
 		var.create(gen);
 		if (initFn) {
-			print(var.var.v.toS);
 			initFn.codeRef(gen, var.var);
 		} else {
 			var.var.created(gen);
 		}
-
-		print("So far:");
-		print(gen.l.toS);
 
 		true;
 	}

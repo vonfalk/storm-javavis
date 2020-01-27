@@ -35,6 +35,43 @@ void SDef(Content content);
 // Preprocessor directives (we just ignore them at the moment).
 SDef : "# *[a-zA-Z]+[^\n]*\n" #comment;
 
+// Class declarations
+
+// Forward declaration:
+SDef : "class[ \t]" #keyword, SIdentifier name #typeName, ";";
+SDef : "struct[ \t]" #keyword, SIdentifier name #typeName, ";";
+
+// Definition:
+SDef => content : SClassDecl -> add, ";";
+
+CppType SClassDecl();
+SClassDecl => CppType(name, true, inherit, body) : "class[ \t]" #keyword, SIdentifier name #typeName, (SClassInherit @inherit,)? "{", SClassBody @body, "}";
+SClassDecl => CppType(name, false, inherit, body) : "struct[ \t]" #keyword, SIdentifier name #typeName, (SClassInherit @inherit,)? "{", SClassBody @body, "}";
+
+void SClassInherit(CppType me);
+SClassInherit : ":", (SClassAccess access,)? STypeName(me.scope) type;
+
+Visibility SClassAccess() #keyword;
+SClassAccess => public() : "public";
+SClassAccess => typePrivate() : "private";
+SClassAccess => typeProtected() : "protected";
+
+void SClassBody(TypeState state);
+SClassBody : (SClassItem(state),)*;
+
+void SClassItem(TypeState state);
+// Access modifiers:
+SClassItem => state : SClassAccess -> set, ":";
+// Nested type declarations:
+SClassItem => state : SClassDecl -> add;
+// Function declarations:
+SClassItem => state : SFnDecl -> add;
+// Variable declarations:
+SClassItem => state : SVarDecl(state.to) -> add, ";";
+
+MemberVar SVarDecl(CppType type);
+SVarDecl => MemberVar(name.v, t, type) : STypeName(type.scope) t, SIdentifier name; 
+
 // Function declarations
 SDef => content : SFnDecl -> add;
 
@@ -64,10 +101,10 @@ STypeName => original : ("const" #keyword,)? STypeNameI(scope) original;
 STypeName => original : ("const" #keyword,)? STypeNameI(scope) original, "&";
 
 Value STypeNameI(Scope scope);
-STypeNameI[-1] => findType(pos, scope, first, rest) : SNamePart first - ("::", SNamePart rest)*;
+STypeNameI[-1] => findType(pos, scope, first, rest) : SNamePart(scope) first - ("::", SNamePart(scope) rest)*;
 
-STypeNameI => original : STypeNameI original, "\*";
-STypeNameI => original : STypeNameI original, "const" #keyword;
+STypeNameI => original : STypeNameI(scope) original, "\*";
+STypeNameI => original : STypeNameI(scope) original, "const" #keyword;
 
 // Built-in types.
 STypeNameI => intType() : "int" #keyword;
@@ -175,8 +212,8 @@ Expr SOp2(Block block);
 SOp2 => a : SAtom(block) a;
 SOp2 => operator(block, n, op) : SAtom(block) n, "++" @op;
 SOp2 => operator(block, n, op) : SAtom(block) n, "--" @op;
-SOp2 => dotOperator(block, lhs, rhs, false) : SOp2(block) lhs, "\.", SIdentifier(block) rhs;
-SOp2 => dotOperator(block, lhs, rhs, true) : SOp2(block) lhs, "->", SIdentifier(block) rhs;
+SOp2 => dotOperator(block, lhs, rhs, false) : SOp2(block) lhs, "\.", SIdentifier rhs;
+SOp2 => dotOperator(block, lhs, rhs, true) : SOp2(block) lhs, "->", SIdentifier rhs;
 SOp2 : SOp2(block), "\[", SExpr(block), "\]";
 SOp2 => fnCall(lhs, params) : SOp2(block) lhs, "(", SActuals(block) params, ")";
 

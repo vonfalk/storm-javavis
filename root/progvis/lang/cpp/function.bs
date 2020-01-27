@@ -5,6 +5,7 @@ class CppFnDecl on Compiler {
 	STypeName result;
 	SStr name;
 	Formal[] formals;
+	Visibility? visibility;
 
 	// If 'null', then this is just a declaration.
 	SStmtList? body;
@@ -19,12 +20,14 @@ class CppFnDecl on Compiler {
 	}
 
 	// Create this function.
-	void create(Package inside) {
+	void create(NameSet inside) {
 		// Don't try to create declarations.
 		unless (body)
 			return;
 
-		CppFunction fn(cppScope(inside), this, body);
+		CppFunction fn(cppScope(inside), this, inside, body);
+		if (visibility)
+			fn.visibility = visibility;
 		inside.add(fn);
 	}
 }
@@ -47,9 +50,15 @@ class CppFunction extends Function {
 	SrcPos pos;
 	Scope scope;
 
-	init(Scope scope, CppFnDecl decl, SStmtList body) {
+	init(Scope scope, CppFnDecl decl, NameSet inside, SStmtList body) {
 		Value[] fTypes;
 		SStr[] fNames;
+
+		if (inside as Type) {
+			fTypes << Value(thisPtr(inside));
+			fNames << SStr("this", decl.name.pos);
+		}
+
 		for (f in decl.formals) {
 			// Everything is a reference in this C++ implementation.
 			fTypes << f.type.transform(scope).asRef();
@@ -89,7 +98,7 @@ class CppFunction extends Function {
 			gen.l << fnRet();
 		}
 
-		print("Generated code:\n${gen.l}");
+		print("Generated code for ${name}:\n${gen.l}");
 
 		gen;
 	}
@@ -99,6 +108,9 @@ class CppFunction extends Function {
  * Root block in a function. Knows a bit about the function to make "return" etc. work properly.
  */
 class FnRoot extends StmtBlock {
+	// Owner.
+	CppFunction owner;
+
 	// Return value of the function.
 	Value result;
 
@@ -108,6 +120,7 @@ class FnRoot extends StmtBlock {
 	init(SrcPos pos, CppFunction fn) {
 		init(pos, fn.scope) {
 			result = fn.result;
+			owner = fn;
 		}
 	}
 
@@ -124,23 +137,31 @@ class FnRoot extends StmtBlock {
 	Bool code(CodeGen gen) : override {
 		// We don't need to create a child block. We use the root block right away!
 
-		for (param in params) {
-			Var formal = gen.l.createParam(ptrDesc);
-			CppVar var = allocType(gen, param.type);
-			var.adjust(gen, ptrA);
-
-			if (copy = param.type.copyCtor) {
-				gen.l << fnParam(ptrDesc, ptrA);
-				gen.l << fnParam(ptrDesc, formal);
-				gen.l << fnCall(copy.ref, true);
+		for (id, param in params) {
+			if (id == 0 & owner.isMember()) {
+				// The 'this' parameter is a bit special. It is a pointer, even if it does not look like that to us.
+				print("TODO: Handle the 'this' parameter!");
+				param.var = CppVar(gen.l.createParam(ptrDesc));
 			} else {
-				Size sz = param.type.size;
-				gen.l << mov(ptrB, formal);
-				gen.l << mov(xRel(sz, ptrA, Offset()), xRel(sz, ptrB, Offset()));
-			}
+				Var formal = gen.l.createParam(ptrDesc);
+				CppVar var = allocType(gen, param.type);
+				var.adjust(gen, ptrA);
 
-			var.created(gen);
-			param.var = var;
+				if (copy = param.type.copyCtor) {
+					gen.l << fnParam(ptrDesc, ptrA);
+					gen.l << fnParam(ptrDesc, formal);
+					gen.l << fnCall(copy.ref, true);
+				} else {
+					Size sz = param.type.size;
+					if (sz != Size()) {
+						gen.l << mov(ptrB, formal);
+						gen.l << mov(xRel(sz, ptrA, Offset()), xRel(sz, ptrB, Offset()));
+					}
+				}
+
+				var.created(gen);
+				param.var = var;
+			}
 		}
 
 		initVariables(gen);
