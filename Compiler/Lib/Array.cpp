@@ -75,7 +75,7 @@ namespace storm {
 	}
 
 	static void CODECALL insertClass(ArrayBase *to, Nat pos, const void *src) {
-		to->insertRaw(pos, src);
+		to->insertRaw(pos, &src);
 	}
 
 	static ArrayBase *CODECALL pushValue(ArrayBase *to, const void *src) {
