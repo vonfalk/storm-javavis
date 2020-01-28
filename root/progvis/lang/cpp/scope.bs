@@ -1,4 +1,5 @@
 use core:lang;
+use lang:bs:macro;
 
 // Create a suitable C++ scope.
 Scope cppScope(NameSet pkg) on Compiler {
@@ -14,6 +15,8 @@ class CppLookup extends ScopeLookup {
 	}
 
 	Named? find(Scope in, SimpleName name) : override {
+		// TODO: Modify the name to use C++ type conversion rules?
+
 		NameLookup? at = in.top;
 		while (now = at) {
 			if (found = find(in, now, name))
@@ -22,7 +25,10 @@ class CppLookup extends ScopeLookup {
 			at = nextCandidate(now);
 		}
 
-		// TODO: Look in the C++ standard path.
+		// Look in the C++ runtime path.
+		if (found = find(in, named{runtime}, name))
+			return found;
+
 		null;
 	}
 }

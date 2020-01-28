@@ -82,7 +82,7 @@ CppVar allocType(CodeGen gen, Type type) {
 
 // Destructor for C++ types.
 void cppDtor(unsafe:RawPtr obj) {
-	print("Destroying an object ${obj}");
+	// print("Destroying an object ${obj}");
 	asm {
 		mov ptrA, obj;
 		mov p[ptrA + sPtr], p0;

@@ -1,0 +1,9 @@
+/**
+ * Basic runtime helpers.
+ *
+ * This file is mainly used for debugging. We want to implement something more similar to "cout" later.
+ */
+
+void print(Int v) {
+	print("Integer from C++: " + v.toS);
+}

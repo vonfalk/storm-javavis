@@ -47,11 +47,27 @@ class PtrType extends Type {
 	// Load members.
 	Bool loadAll() : override {
 		// Note: We make assumptions regarding the type in generated code. Don't alter the order of these!
-		add(MemberVar("base", Value(named{core:lang:unknown:PTR_GC}), this));
-		add(MemberVar("offset", Value(named{core:lang:unknown:PTR_NOGC}), this));
+		add(MemberVar("base", Value(named{core:unsafe:RawPtr}), this));
+		add(MemberVar("offset", Value(named{core:Nat}), this));
+
+		// Default ctor.
+		add(TypeDefaultCtor(this));
 
 		// TODO: Add suitable members!
 
 		super:loadAll();
 	}
+}
+
+// Wrap things inside a pointer or a reference.
+Value wrapPtr(Value val) {
+	unless (t = (named{}).find(SimplePart("Ptr", [val]), Scope()) as Type)
+		throw InternalError("Could not find the pointer type for ${val}");
+	Value(t);
+}
+
+Value wrapRef(Value val) {
+	unless (t = (named{}).find(SimplePart("Ref", [val]), Scope()) as Type)
+		throw InternalError("Could not find the pointer type for ${val}");
+	Value(t);
 }

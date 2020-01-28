@@ -262,6 +262,70 @@ class FnCall extends Expr {
 	}
 }
 
+/**
+ * Constructor calls.
+ */
+class CtorCall extends Expr {
+	private Function fn;
+	private Expr[] actuals;
+
+	init(SrcPos pos, Function fn, Expr[] actuals) {
+		init(pos) {
+			fn = fn;
+			actuals = actuals;
+		}
+	}
+
+	ExprResult result() : override {
+		// We make sure to return references.
+		fn.params[0].asRef();
+	}
+
+	void code(CodeGen gen, CodeResult res) : override {
+		unless (type = fn.params[0].type) {
+			throw SyntaxError(pos, "This copy-constructor seems to create 'void' types...");
+		}
+
+		Operand[] params;
+		for (i, x in actuals) {
+			params << paramCode(gen, x, fn.params[i]);
+		}
+
+		if (res.type.ref) {
+			CppVar var = allocType(gen, t);
+			VarInfo ref = res.safeLocation(gen, res.type);
+			var.adjust(gen, ref.v);
+
+			params.insert(0, ref.v);
+			fn.autoCall(gen, params, CodeResult());
+			var.created(gen);
+		} else {
+			VarInfo val = res.safeLocation(gen, result.type);
+			gen.l << lea(ptrA, val);
+			params.insert(0, ptrA);
+			fn.autoCall(gen, params, CodeResult());
+			val.created(gen);
+		}
+	}
+
+	// Generate code for when someone else has already created the storage for us.
+	void codeRef(CodeGen gen, CppVar var) {
+		unless (type = fn.params[0].type) {
+			throw SyntaxError(pos, "This copy-constructor seems to create 'void' types...");
+		}
+
+		Operand[] params;
+		for (i, x in actuals) {
+			params << paramCode(gen, x, fn.params[i]);
+		}
+
+		var.adjust(gen, ptrA);
+		params.insert(0, ptrA);
+		fn.autoCall(gen, params, CodeResult());
+		var.created(gen);
+	}
+}
+
 // Generate code for acquiring one parameter.
 private Operand paramCode(CodeGen gen, Expr actual, Value formal) on Compiler {
 	// TODO: Auto-casting?

@@ -82,7 +82,15 @@ class VarDecl extends Stmt {
 			var(name.v, type.safeType(pos), name.pos);
 		}
 
-		print("TODO: Require the default constructor to be called!");
+		if (t = type.type) {
+			if (ctor = t.defaultCtor) {
+				initCtor = CtorCall(pos, ctor, []);
+			}
+		}
+
+		if (initCtor.empty) {
+			print("TODO: Require the default constructor to be called!");
+		}
 
 		parent.add(var);
 	}
@@ -99,14 +107,37 @@ class VarDecl extends Stmt {
 		parent.add(var);
 	}
 
+	init(SrcPos pos, Block parent, Value type, SStr name, CtorCall initCtor) {
+		init(pos) {
+			var(name.v, type.safeType(pos), name.pos);
+			initCtor = initCtor;
+		}
+
+		parent.add(var);
+	}
+
 	// Create from an = expression.
 	VarDecl assign(SrcPos pos, Block parent, Value type, SStr name, Expr init) : static {
 		if (init as FnCall) {
 			// Just use the function call to construct the object for us.
-			VarDecl(pos, parent, type, name, init);
-		} else {
-			throw SyntaxError(pos, "TODO: We need to implement proper calls to copy-constructors!");
+			return VarDecl(pos, parent, type, name, init);
 		}
+
+		if (init as CtorCall) {
+			// Just use it directly!
+			return VarDecl(pos, parent, type, name, init);
+		}
+
+		// We need to call the copy-ctor...
+		if (t = type.type) {
+			if (copy = t.copyCtor) {
+				return VarDecl(pos, parent, type, name, CtorCall(pos, copy, [init]));
+			}
+		}
+
+		// TODO: Handle C++ copy ctors as well. They have a Ref<> as their other parameter.
+
+		throw SyntaxError(pos, "The type ${type} does not have a copy constructor!");
 	}
 
 	// The variable we created.
@@ -116,11 +147,16 @@ class VarDecl extends Stmt {
 	// the new value in-place.
 	FnCall? initFn;
 
+	// Copy constructor to use.
+	CtorCall? initCtor;
+
 	// Generate code.
 	Bool code(CodeGen gen) : override {
 		var.create(gen);
 		if (initFn) {
 			initFn.codeRef(gen, var.var);
+		} else if (initCtor) {
+			initCtor.codeRef(gen, var.var);
 		} else {
 			var.var.created(gen);
 		}

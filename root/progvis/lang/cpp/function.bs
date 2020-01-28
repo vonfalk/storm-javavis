@@ -99,7 +99,7 @@ class CppFunction extends Function {
 			gen.l << fnRet();
 		}
 
-		print("Generated code for ${name}:\n${gen.l}");
+		// print("Generated code for ${name}:\n${gen.l}");
 
 		gen;
 	}

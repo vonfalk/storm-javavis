@@ -16,10 +16,21 @@ int test(int a, int b) {
 	return a + b + c + d;
 }
 
+int ptrs() {
+	int a = 8;
+	int *b = &a;
+	*b = 9;
+	return a;
+}
+
 int main() {
 	demo d;
 	d.x = 8;
 	d.y = 10;
 
-	return 1 + test(2 + 3, 4) + d.x + d.result();
+	print(test(2 + 3, 4));
+	print(d.result());
+	print(ptrs());
+
+	return 1 + d.x;
 }
