@@ -2,6 +2,7 @@
 #include "Core/Array.h"
 #include "Core/StrBuf.h"
 #include "Core/Str.h"
+#include "Core/Exception.h"
 
 namespace storm {
 	namespace syntax {
@@ -156,6 +157,20 @@ namespace storm {
 		// Output.
 		StrBuf &STORM_FN operator <<(StrBuf &to, Regex r);
 		wostream &operator <<(wostream &to, Regex r);
+
+		/**
+		 * Regex exception.
+		 */
+		class EXCEPTION_EXPORT RegexError : public Exception {
+			STORM_EXCEPTION;
+		public:
+			RegexError(const wchar *regex, const wchar *message);
+			STORM_CTOR RegexError(Str *regex, Str *message);
+			virtual void STORM_FN message(StrBuf *to) const;
+		private:
+			Str *regex;
+			Str *msg;
+		};
 
 	}
 }

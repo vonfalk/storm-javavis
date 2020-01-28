@@ -220,7 +220,7 @@ namespace storm {
 				if (str[pos])
 					return single(str[pos++]);
 				else
-					return single('\\');
+					throw new (e) RegexError(str, S("Missing character after escape character (\\)"));
 			case '[':
 				pos++;
 				return parseGroup(e, str, pos);
@@ -238,7 +238,7 @@ namespace storm {
 			pos++;
 		}
 
-		static nat parseGroup(const wchar *str, nat &pos, GcArray<wchar> *out) {
+		static nat parseGroup(Engine &e, const wchar *str, nat &pos, GcArray<wchar> *out) {
 			nat c = 0;
 			wchar lastCh = 0;
 			while (str[pos] != 0 && str[pos] != ']') {
@@ -254,12 +254,20 @@ namespace storm {
 					}
 					break;
 				case '-':
-					if (str[++pos]) {
-						for (wchar i = lastCh + 1; i <= str[pos]; i++) {
-							put(out, c, i);
-						}
-						lastCh = str[pos++];
+					if (lastCh == 0) {
+						const wchar *msg = S("A dash (-) must not appear as the first character in a group.");
+						throw new (e) RegexError(str, msg);
 					}
+					++pos;
+					if (str[pos] == '\0' || str[pos] == ']') {
+						const wchar *msg = S("A dash must not appear as the last character in a group.");
+						throw new (e) RegexError(str, msg);
+					}
+
+					for (wchar i = lastCh + 1; i <= str[pos]; i++) {
+						put(out, c, i);
+					}
+					lastCh = str[pos++];
 					break;
 				default:
 					lastCh = str[pos];
@@ -289,10 +297,10 @@ namespace storm {
 			}
 
 			nat tmp = pos;
-			nat count = storm::syntax::parseGroup(str, tmp, null);
+			nat count = storm::syntax::parseGroup(e, str, tmp, null);
 
 			r.chars = runtime::allocArray<wchar>(e, &gcType, count);
-			storm::syntax::parseGroup(str, pos, r.chars);
+			storm::syntax::parseGroup(e, str, pos, r.chars);
 
 			return r;
 		}
@@ -481,6 +489,15 @@ namespace storm {
 			Nat z = skippable;
 			z |= Nat(repeatable) << 1;
 			return match.hash() ^ z;
+		}
+
+		RegexError::RegexError(const wchar *regex, const wchar *msg)
+			: regex(new (engine()) Str(regex)), msg(new (engine()) Str(msg)) {}
+
+		RegexError::RegexError(Str *regex, Str *msg) : regex(regex), msg(msg) {}
+
+		void RegexError::message(StrBuf *to) const {
+			*to << S("In the regex \"") << regex->escape(Char('"')) << S("\": ") << msg;
 		}
 
 	}

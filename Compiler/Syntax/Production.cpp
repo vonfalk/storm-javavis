@@ -69,7 +69,11 @@ namespace storm {
 		void Production::addToken(TokenDecl *decl, MAYBE(Rule *) delim, SrcPos pos, Scope scope, Nat &counter) {
 			Token *token = null;
 			if (RegexTokenDecl *r = as<RegexTokenDecl>(decl)) {
-				token = new (this) RegexToken(r->regex);
+				try {
+					token = new (this) RegexToken(r->regex);
+				} catch (RegexError *e) {
+					throw new (this) SyntaxError(pos, e->message());
+				}
 			} else if (RuleTokenDecl *u = as<RuleTokenDecl>(decl)) {
 				if (Rule *rule = as<Rule>(scope.find(u->rule))) {
 					token = new (this) RuleToken(rule);
