@@ -1,0 +1,57 @@
+use core:lang;
+use core:asm;
+use lang:bs:macro;
+
+// Pointers.
+Ptr : generate(params) {
+	// Only one parameter.
+	if (params.count != 1)
+		return null;
+
+	// It must be a value-type (this includes other Ptr classes).
+	var par = params[0];
+	if (!par.isValue)
+		return null;
+
+	PtrType(par.asRef(false), false);
+}
+
+// References.
+Ref : generate(params) {
+	// Only one parameter.
+	if (params.count != 1)
+		return null;
+
+	// It must be a value-type (this includes other Ptr classes).
+	var par = params[0];
+	if (!par.isValue)
+		return null;
+
+	PtrType(par.asRef(false), true);
+}
+
+/**
+ * A pointer- or reference type in the C++ implementation.
+ *
+ * Represented as a pointer to the start of the object followed by a an integer offset. This lets us
+ * check if a pointer dereference would be in range, and makes the GC happy.
+ *
+ * Can also act as a reference.
+ */
+class PtrType extends Type {
+	init(Value inside, Bool isRef) {
+		Str name = if (isRef) { "Ref"; } else { "Ptr"; };
+		init(name, [inside], TypeFlags:typeValue) {}
+	}
+
+	// Load members.
+	Bool loadAll() : override {
+		// Note: We make assumptions regarding the type in generated code. Don't alter the order of these!
+		add(MemberVar("base", Value(named{core:lang:unknown:PTR_GC}), this));
+		add(MemberVar("offset", Value(named{core:lang:unknown:PTR_NOGC}), this));
+
+		// TODO: Add suitable members!
+
+		super:loadAll();
+	}
+}
