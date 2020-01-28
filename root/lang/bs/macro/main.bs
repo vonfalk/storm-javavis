@@ -77,8 +77,12 @@ Expr referNamed(SrcPos pos, Block block, SrcName type) on Compiler {
 		ReferNamed(pos, referTo);
 	} else {
 		throw SyntaxError(type.pos, "Could not resolve the name " + type.toS);
-		Expr(SrcPos()); // We need this until we can throw exceptions!
 	}
+}
+
+// Special case for the current package.
+Expr referNamed(SrcPos pos, Block block) on Compiler {
+	ReferNamed(pos, ScopeLookup:firstPkg(block.lookup));
 }
 
 // Refer to a named object somewhere.

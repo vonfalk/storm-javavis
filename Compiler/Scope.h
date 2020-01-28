@@ -45,16 +45,16 @@ namespace storm {
 		 */
 
 		// Find the first package when traversing parent() pointers.
-		static Package *firstPkg(NameLookup *l);
+		static Package *STORM_FN firstPkg(NameLookup *l);
 
 		// Find the root package.
-		static Package *rootPkg(Package *p);
+		static Package *STORM_FN rootPkg(Package *p);
 
 		// Find the package 'core' from any source.
-		static Package *corePkg(NameLookup *l);
+		static Package *STORM_FN corePkg(NameLookup *l);
 
 		// Find the next candidate for the standard algorithm. (not counting 'core').
-		static NameLookup *nextCandidate(NameLookup *prev);
+		static MAYBE(NameLookup *) STORM_FN nextCandidate(NameLookup *prev);
 
 	private:
 		// What is 'void' called in this language (if any)?

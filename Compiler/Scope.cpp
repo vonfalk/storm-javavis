@@ -36,9 +36,13 @@ namespace storm {
 	}
 
 	Package *ScopeLookup::firstPkg(NameLookup *l) {
-		while (!as<Package>(l))
-			l = l->parent();
-		return as<Package>(l);
+		NameLookup *now = l;
+		while (!as<Package>(now)) {
+			now = now->parent();
+			if (!now)
+				throw new (l) InternalError(TO_S(l, S("Unable to find a package when traversing parents of ") << l));
+		}
+		return as<Package>(now);
 	}
 
 	Package *ScopeLookup::rootPkg(Package *p) {

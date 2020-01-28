@@ -10,6 +10,9 @@ SAtom => createType(pos, block, type) : "name" #keyword, "{", SType type, "}";
 // in the compiler.
 SAtom => referNamed(pos, block, name) : "named" #keyword, "{", SType name, "}";
 
+// Special case for the current package.
+SAtom => referNamed(pos, block) : "named" #keyword, "{", "}";
+
 // Output a type.
 SExpr => exploreType(pos, block, type) : "explore" #keyword, "{", SType type, "}";
 
