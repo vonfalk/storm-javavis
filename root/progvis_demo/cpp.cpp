@@ -19,8 +19,16 @@ int test(int a, int b) {
 int ptrs() {
 	int a = 8;
 	int *b = &a;
-	// *b = 9;
+	int *c = &*b; // Don't know if this is valid C++...
+	*c = 9;
 	return a;
+}
+
+int ptrs2() {
+	demo d;
+	int *x = &d.x;
+	d.x = 8;
+	return *x;
 }
 
 int main() {
@@ -31,6 +39,7 @@ int main() {
 	print(test(2 + 3, 4));
 	print(d.result());
 	print(ptrs());
+	print(ptrs2());
 
 	return 1 + d.x;
 }

@@ -41,8 +41,10 @@ Ref : generate(params) {
 class PtrType extends Type {
 	init(Value inside, Bool isRef) {
 		Str name = if (isRef) { "Ref"; } else { "Ptr"; };
-		init(name, [inside], TypeFlags:typeValue) {}
+		init(name, [inside], TypeFlags:typeValue) { isRef = isRef; }
 	}
+
+	Bool isRef;
 
 	// Load members.
 	Bool loadAll() : override {
@@ -72,4 +74,36 @@ Value wrapRef(Value val) {
 	unless (t = (named{}).find(SimplePart("Ref", [val]), Scope()) as Type)
 		throw InternalError("Could not find the pointer type for ${val}");
 	Value(t);
+}
+
+// Unwrap pointers and references.
+Value unwrapPtr(Value val) {
+	if (t = val.type as PtrType) {
+		if (!t.isRef)
+			return t.params[0];
+	}
+	val;
+}
+
+Value unwrapRef(Value val) {
+	if (t = val.type as PtrType) {
+		if (t.isRef)
+			return t.params[0];
+	}
+	val;
+}
+
+// Is it a ptr or ref?
+Bool isCppPtr(Value val) {
+	if (t = val.type as PtrType) {
+		return !t.isRef;
+	}
+	false;
+}
+
+Bool isCppRef(Value val) {
+	if (t = val.type as PtrType) {
+		return t.isRef;
+	}
+	false;
 }

@@ -434,8 +434,9 @@ Expr operator(Block block, Expr lhs, SStr op) on Compiler {
 }
 
 Expr dotOperator(Block block, Expr lhs, SStr rhs, Bool ptrLhs) {
+	// If lhs is a pointer, just dereference it first. That's what the dot operator means anyway.
 	if (ptrLhs)
-		throw SyntaxError(rhs.pos, "Pointer dereferencing is not implemented yet!");
+		lhs = DerefPtr(lhs);
 	NameExpr(rhs.pos, block.scope, SimpleName(rhs.v), lhs);
 }
 
@@ -488,5 +489,70 @@ class AddressOf extends ExprRef {
 		gen.l << mov(ptrRel(ptrA, Offset()), ptrB);
 		gen.l << mov(intRel(ptrA, Offset(sPtr)), ecx);
 		var.created(gen);
+	}
+}
+
+/**
+ * De-reference a pointer.
+ */
+class DerefPtr extends Expr {
+	init(Expr of) {
+		init(of.pos) { of = of; }
+
+		unless (of.result.type.isCppPtr)
+			throw SyntaxError(pos, "Unable to dereference a value of type ${of.result.type}.");
+	}
+
+	Expr of;
+
+	ExprResult result() : override {
+		unwrapPtr(of.result.type).asRef();
+	}
+
+	void code(CodeGen gen, CodeResult res) : override {
+		if (!res.needed())
+			return;
+
+		CodeResult p(of.result.type.asRef(), gen.block);
+		of.code(gen, p);
+
+		gen.l << mov(ptrA, p.location(gen));
+
+		// Load the base.
+		gen.l << mov(ptrB, ptrRel(ptrA, Offset()));
+
+		// Add the offset.
+		gen.l << mov(ecx, intRel(ptrA, Offset(sPtr)));
+		gen.l << add(ptrB, ptrC);
+
+		if (res.type.ref) {
+			// Store it!
+			gen.l << mov(res.location(gen), ptrB);
+		} else if (res.type.isAsmType()) {
+			// Copy the value.
+			Var dst = res.location(gen);
+			gen.l << mov(dst, xRel(dst.size, ptrB, Offset()));
+		} else {
+			// Copy ctor.
+			gen.l << fnParam(ptrDesc, ptrA);
+			gen.l << fnParam(ptrDesc, ptrB);
+			gen.l << fnCall(res.type.copyCtor, true);
+		}
+		res.created(gen);
+	}
+
+	Bool temporary() {
+		false;
+	}
+
+	void codePtr(CodeGen gen) : override {
+		CodeResult p(of.result.type.asRef(), gen.block);
+		of.code(gen, p);
+
+		gen.l << mov(ptrA, p.location(gen));
+
+		// Load the base and offset.
+		gen.l << mov(ptrB, ptrRel(ptrA, Offset()));
+		gen.l << mov(ecx, intRel(ptrA, Offset(sPtr)));
 	}
 }
