@@ -52,6 +52,8 @@ class PtrType extends Type {
 
 		// Default ctor.
 		add(TypeDefaultCtor(this));
+		add(TypeCopyCtor(this));
+		add(TypeAssign(this));
 
 		// TODO: Add suitable members!
 

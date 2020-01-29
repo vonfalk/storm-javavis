@@ -62,6 +62,12 @@ class CppVar on Compiler {
 		// Skip over the array header.
 		gen.l << add(dst, ptrConst(sPtr * 2));
 	}
+
+	// Put pointer data in ptrB (base) and ptrC (offset).
+	void ptr(CodeGen gen) {
+		gen.l << mov(ptrB, v);
+		gen.l << mov(ptrC, ptrConst(sPtr * 2));
+	}
 }
 
 // Allocate memory for a C++ type. Return the variable where it was created.

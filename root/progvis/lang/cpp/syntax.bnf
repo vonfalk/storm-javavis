@@ -199,7 +199,7 @@ SOp4 => operator(block, l, op, r) : SOp4(block) l, "->\*" @op, SOp3(block) r;
 Expr SOp3(Block block);
 SOp3 => n : SOp2(block) n;
 SOp3 : "\*", SOp3(block) n;
-SOp3 : "&", SOp3(block) n;
+SOp3 => AddressOf(n) : "&", SOp3(block) n;
 SOp3 => operator(block, op, n) : "[!~]" @op, SOp3(block) n;
 SOp3 => operator(block, op, n) : "\+\+?" @op, SOp2(block) n;
 SOp3 => operator(block, op, n) : "--?" @op, SOp2(block) n;

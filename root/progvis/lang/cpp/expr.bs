@@ -27,8 +27,25 @@ class Expr extends Stmt {
 		true;
 	}
 
+	// Overloaded if 'temporary' is 'false'. Stores a base ptr in 'ptrB' and an offset in 'ecx'.
+	void codePtr(CodeGen gen) {
+		throw SyntaxError(pos, "Unable to compute the address of a temporary.");
+	}
+
 	// Generate code. 'desired' is the desired return type.
 	void code(CodeGen gen, CodeResult res) : abstract;
+}
+
+/**
+ * An expression that supports creating a value inside a pre-allocated variable.
+ */
+class ExprRef extends Expr {
+	init(SrcPos pos) {
+		init(pos) {}
+	}
+
+	// Additional member.
+	void codeRef(CodeGen gen, CppVar var) : abstract;
 }
 
 /**
@@ -102,6 +119,10 @@ class NameExpr extends Expr {
 
 	Bool temporary() : override {
 		resolve.temporary();
+	}
+
+	void codePtr(CodeGen gen) : override {
+		resolve.codePtr(gen);
 	}
 
 	private Expr resolve() {
@@ -184,7 +205,7 @@ Value[] fnValues(Expr[] actuals) {
 /**
  * Function calls.
  */
-class FnCall extends Expr {
+class FnCall extends ExprRef {
 	private Function fn;
 	private Expr[] actuals;
 
@@ -226,7 +247,7 @@ class FnCall extends Expr {
 	}
 
 	// Generate code for when someone else has already created the storage for us.
-	void codeRef(CodeGen gen, CppVar var) {
+	void codeRef(CodeGen gen, CppVar var) : override {
 		Operand[] params;
 		for (i, x in actuals) {
 			params << paramCode(gen, x, fn.params[i]);
@@ -265,7 +286,7 @@ class FnCall extends Expr {
 /**
  * Constructor calls.
  */
-class CtorCall extends Expr {
+class CtorCall extends ExprRef {
 	private Function fn;
 	private Expr[] actuals;
 
@@ -309,7 +330,7 @@ class CtorCall extends Expr {
 	}
 
 	// Generate code for when someone else has already created the storage for us.
-	void codeRef(CodeGen gen, CppVar var) {
+	void codeRef(CodeGen gen, CppVar var) : override {
 		unless (type = fn.params[0].type) {
 			throw SyntaxError(pos, "This copy-constructor seems to create 'void' types...");
 		}
@@ -421,3 +442,51 @@ Expr dotOperator(Block block, Expr lhs, SStr rhs, Bool ptrLhs) {
 // Short-circuting operators.
 Expr scAnd(Block block, Expr lhs, SStr op, Expr rhs) on Compiler { IntLiteral(op.pos, 0); }
 Expr scOr(Block block, Expr lhs, SStr op, Expr rhs) on Compiler { IntLiteral(op.pos, 0); }
+
+
+/**
+ * Make a pointer from an l-value. The & operator.
+ */
+class AddressOf extends ExprRef {
+	init(Expr of) {
+		init(of.pos) { of = of; }
+	}
+
+	Expr of;
+
+	ExprResult result() : override {
+		wrapPtr(of.result.type);
+	}
+
+	void code(CodeGen gen, CodeResult res) : override {
+		Value res = result;
+		unless (type = res.type)
+			throw InternalError("Failed to find an appropriate pointer type!");
+
+		if (!res.needed())
+			return;
+
+		if (res.type.ref) {
+			CppVar var = allocType(gen, type);
+			codeRef(gen, res);
+
+			// the adjusted value is in ptrA from 'codeRef'.
+			gen.l << mov(res.location(gen), ptrA);
+		} else {
+			of.codePtr(gen);
+			gen.l << lea(ptrA, res.location(gen).v);
+			gen.l << mov(ptrRel(ptrA, Offset()), ptrB);
+			gen.l << mov(ptrRel(ptrA, Offset(sPtr)), ecx);
+		}
+		res.created(gen);
+	}
+
+	void codeRef(CodeGen gen, CppVar var) : override {
+		of.codePtr(gen);
+
+		var.adjust(gen, ptrA);
+		gen.l << mov(ptrRel(ptrA, Offset()), ptrB);
+		gen.l << mov(intRel(ptrA, Offset(sPtr)), ecx);
+		var.created(gen);
+	}
+}

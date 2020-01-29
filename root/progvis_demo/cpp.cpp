@@ -19,7 +19,7 @@ int test(int a, int b) {
 int ptrs() {
 	int a = 8;
 	int *b = &a;
-	*b = 9;
+	// *b = 9;
 	return a;
 }
 

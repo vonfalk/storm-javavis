@@ -126,4 +126,9 @@ class MemberVarAccess extends Expr {
 		gen.l << add(r, ptrConst(var.offset));
 		result.created(gen);
 	}
+
+	void codePtr(CodeGen gen) : override {
+		lhs.codePtr(gen);
+		gen.l << add(ptrC, ptrConst(var.offset));
+	}
 }

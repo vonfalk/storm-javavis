@@ -71,6 +71,10 @@ class LocalVarAccess extends Expr {
 
 		var.var.adjust(gen, result.location(gen));
 	}
+
+	void codePtr(CodeGen gen) : override {
+		var.var.ptr(gen);
+	}
 }
 
 /**
@@ -84,33 +88,24 @@ class VarDecl extends Stmt {
 
 		if (t = type.type) {
 			if (ctor = t.defaultCtor) {
-				initCtor = CtorCall(pos, ctor, []);
+				initExpr = CtorCall(pos, ctor, []);
 			}
 		}
 
-		if (initCtor.empty) {
+		if (initExpr.empty) {
 			print("TODO: Require the default constructor to be called!");
 		}
 
 		parent.add(var);
 	}
 
-	init(SrcPos pos, Block parent, Value type, SStr name, FnCall init) {
+	init(SrcPos pos, Block parent, Value type, SStr name, ExprRef init) {
 		if (!type.canStore(init.result.type()))
 			throw SyntaxError(pos, "Can not store ${init.result.type()} in a variable with type ${type}");
 
 		init(pos) {
 			var(name.v, type.safeType(pos), name.pos);
-			initFn = init;
-		}
-
-		parent.add(var);
-	}
-
-	init(SrcPos pos, Block parent, Value type, SStr name, CtorCall initCtor) {
-		init(pos) {
-			var(name.v, type.safeType(pos), name.pos);
-			initCtor = initCtor;
+			initExpr = init;
 		}
 
 		parent.add(var);
@@ -118,13 +113,8 @@ class VarDecl extends Stmt {
 
 	// Create from an = expression.
 	VarDecl assign(SrcPos pos, Block parent, Value type, SStr name, Expr init) : static {
-		if (init as FnCall) {
-			// Just use the function call to construct the object for us.
-			return VarDecl(pos, parent, type, name, init);
-		}
-
-		if (init as CtorCall) {
-			// Just use it directly!
+		if (init as ExprRef) {
+			// Just use the expression to construct the object for us.
 			return VarDecl(pos, parent, type, name, init);
 		}
 
@@ -143,20 +133,14 @@ class VarDecl extends Stmt {
 	// The variable we created.
 	LocalVar var;
 
-	// Initialization expression. This always ends in a function call that we will use to construct
-	// the new value in-place.
-	FnCall? initFn;
-
-	// Copy constructor to use.
-	CtorCall? initCtor;
+	// Initialization expression. This always supports allocating the type in-place.
+	ExprRef? initExpr;
 
 	// Generate code.
 	Bool code(CodeGen gen) : override {
 		var.create(gen);
-		if (initFn) {
-			initFn.codeRef(gen, var.var);
-		} else if (initCtor) {
-			initCtor.codeRef(gen, var.var);
+		if (initExpr) {
+			initExpr.codeRef(gen, var.var);
 		} else {
 			var.var.created(gen);
 		}

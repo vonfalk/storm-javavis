@@ -84,7 +84,6 @@ class CppFunction extends Function {
 			root.addParam(v.v, params[id], v.pos);
 		}
 
-		// print("Tree for ${name}:\n${body}");
 		body.transform(root);
 
 		CodeGen gen(runOn, isMember, result);
