@@ -64,8 +64,13 @@ namespace storm {
 			executeMe(root, me);
 
 			// Return 'me' if it was declared, unless we return void.
-			if (me && Function::result != Value())
+			if (Function::result != Value()) {
+				if (!me) {
+					throw new (this) SyntaxError(pos, S("No return value specified for a production that does not return 'void'."));
+				}
+
 				root->add(me);
+			}
 
 			// if (wcsncmp(identifier()->c_str(), S("lang.bnf."), 9) == 0)
 			// 	PLN(source << S(": ") << root);
@@ -79,7 +84,7 @@ namespace storm {
 		Expr *TransformFn::createMe(ExprBlock *in) {
 			// See if there is a parameter named 'me'. If so: use that!
 			for (Nat i = 0; i < valParams->count(); i++) {
-				if (wcscmp(valParams->at(i).name->c_str(), S("me")) == 0) {
+				if (*valParams->at(i).name == S("me")) {
 					if (result)
 						throw new (this) SyntaxError(pos, S("Can not use 'me' as a parameter name and specify a result."));
 					LocalVar *r = in->variable(new (this) SimplePart(S("me")));

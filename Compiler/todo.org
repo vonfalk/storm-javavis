@@ -57,7 +57,7 @@
     but the scale of the issue should be assessed first.
   - [ ] Parsing core.lang.syntax.bnf takes about 80 ms, which is a bit on the high end when compiling code...
 
-* Loose ends so far [50/89]
+* Loose ends so far [51/90]
   - [ ] We want to allocate threads in some kind of pool. since the minimum alignment for VirtualAlloc on Windows
     is 64k, we might waste quite a lot of memory when allocating small stacks.
   - [ ] Implement 'clearBody' in all classes that implement 'createBody'.
@@ -131,6 +131,7 @@
   - [ ] Move the 'assign' declaration to being purely a decorator (ie. Foo field(Foo v) : assign)?
   - [ ] If a type has a '==' or '<' outside the type itself, the corresponding operator will not be present in
     a Handle, like '<<' at the moment.
+  - [X] A production like this: "SOp3 : "&", SOp3(block) n;" works for "Expr SOp3(Block block);". It should give an error!
   - [X] An exception thrown as "const Exception" will not be catched by the Code backend currently.
   - [X] Executing "Var v = to.to.createVar(to.to.root, sPtr, exitFn.ref);" on an improper thread cases
     a crash (where "to.to" is a "Listing" and "exitFn" is a "Function").
