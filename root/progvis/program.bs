@@ -97,16 +97,16 @@ class Program on Render {
 
 	// This function will be called by the executed code to notify us of their current state in
 	// their execution. This also lets us execute them at any location.
-	package void newLocation(Url file, Nat from, Nat to, StackVar[] vars) {
+	package void newLocation(SrcPosWrap pos, StackVar[] vars) {
 		Word id = currentUThread();
 		ProgThread t = threads.get(id);
 
-		t.onNewLocation(SrcPos(file, from, to), vars);
+		t.onNewLocation(pos.v, vars);
 	}
 
 	// This function will be called by the executed code to notify that a new (traced) function was
 	// called, and that we shall open a new scope.
-	package void functionEntered(Str name, ViewHints hints, StackVar[] vars) {
+	package void functionEntered(Str name, SrcPosWrap pos, ViewHints hints, StackVar[] vars) {
 		Word id = currentUThread();
 		ProgThread t = if (threads.has(id)) {
 			threads.get(id);
@@ -116,7 +116,7 @@ class Program on Render {
 			t;
 		};
 
-		t.onFunctionEntered(name, hints, vars);
+		t.onFunctionEntered(name, pos.v, hints, vars);
 	}
 
 	// This function will be called by the executed code to notify that a (traced) function is about
@@ -130,10 +130,23 @@ class Program on Render {
 		t.onFunctionExited();
 		if (t.callDepth == 0) {
 			threads.remove(id);
-			// notifyChange();
+			print("Removed thread!");
+			notifyChange();
 		}
 	}
 }
+
+/**
+ * Wrapper to make a pointer of an SrcPos for easier management from ASM.
+ */
+class SrcPosWrap {
+	SrcPos v;
+
+	init(SrcPos pos) {
+		init() { v = pos; }
+	}
+}
+
 
 private PkgReader? progvisReader(Str ext, Url[] files, Package pkg) {
 	unless (name = readerName(ext))
@@ -150,7 +163,7 @@ private PkgReader? stdReader(Str ext, Url[] files, Package pkg) {
 	null;
 }
 
-private void addProgvisHints(Str ext, Hints[] hints) {
+private void addProgvisHints(Str ext, Hints[] to) {
 	unless (name = readerName(ext))
 		return;
 
@@ -365,7 +378,7 @@ private void generateCall(Program program, PatchParams to, SrcPos pos, Block blo
 	unless (file = pos.file)
 		return;
 
-	var fn = named{Program:newLocation<Program, Url, Nat, Nat, StackVar[]>};
+	var fn = named{Program:newLocation<Program, SrcPosWrap, StackVar[]>};
 
 	to.saveRegs();
 	Listing l = to.to;
@@ -377,9 +390,7 @@ private void generateCall(Program program, PatchParams to, SrcPos pos, Block blo
 	Var array = saveVariables(to, block, subBlock);
 
 	l << fnParam(ptrDesc, objPtr(program));
-	l << fnParam(ptrDesc, objPtr(file));
-	l << fnParam(intDesc, natConst(pos.start));
-	l << fnParam(intDesc, natConst(pos.end));
+	l << fnParam(ptrDesc, objPtr(SrcPosWrap(pos)));
 	l << fnParam(ptrDesc, array);
 	l << fnCall(fn.ref, true);
 
@@ -440,13 +451,14 @@ private void saveVariables(PatchParams to, Var[] vars, Var array, Var stackVar) 
 
 // Generate the call to 'functionEntered' and make sure 'functionExited' is called on function exit (last).
 private void generateCallTracking(Program program, PatchParams to, Function fn) on Compiler {
-	var enterFn = named{Program:functionEntered<Program, Str, ViewHints, StackVar[]>};
+	var enterFn = named{Program:functionEntered<Program, Str, SrcPosWrap, ViewHints, StackVar[]>};
 	// TODO: It is not always safe to do this... The destructor is expected to be a free function,
 	// but in almost all cases, it does not matter.
 	var exitFn = named{Program:functionExited<Program>};
 
 	// Find a clean function name.
 	var fnName = to.codeHints.cleanName(fn, to.pkg);
+	var fnPos = to.codeHints.location(fn);
 
 	Listing l = to.to;
 
@@ -460,6 +472,7 @@ private void generateCallTracking(Program program, PatchParams to, Function fn) 
 
 	l << fnParam(ptrDesc, objPtr(program));
 	l << fnParam(ptrDesc, objPtr(fnName));
+	l << fnParam(ptrDesc, objPtr(SrcPosWrap(fnPos)));
 	l << fnParam(ptrDesc, objPtr(to.viewHints));
 	l << fnParam(ptrDesc, array);
 	l << fnCall(enterFn.ref, true);

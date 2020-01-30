@@ -109,6 +109,8 @@ class ThreadData extends Drawable {
 		if (pos = thread.pos)
 			source.display(pos);
 
+		source.faint = thread.callDepth == 0;
+
 		invalidateSize();
 	}
 

@@ -145,13 +145,23 @@ class Workspace on Render {
 		}
 	}
 
+	// Traverse an element. Check if it is a thread or a regular object first.
+	void traverse(Element elem) {
+		if (elem.thread) {
+			if (t = elem.object.asTObject() as ProgThread)
+				traverse(t);
+		} else {
+			traverse(elem.object);
+		}
+	}
+
 	// Notify the workspace that traversal is over, and that any remaning objects may be removed.
 	void endTraversal() {
 		// Traverse all objects where 'autoRemove' is false, so that they keep any objects they refer alive.
 		for (elem in elements) {
-			if (!elem.visited & elem.autoRemove) {
+			if (!elem.visited & !elem.autoRemove) {
 				// Traverse it now.
-				traverse(elem.object);
+				traverse(elem);
 			}
 		}
 

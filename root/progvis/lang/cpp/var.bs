@@ -34,8 +34,10 @@ class LocalVar extends Named {
 	void create(CodeGen gen) {
 		if (var.v == Var()) {
 			var = allocType(gen, type);
-			// TODO: Add variable information! (The backend doesn't currently support refs).
 		}
+
+		Listing:VarInfo info(name, type, true, pos);
+		gen.l.varInfo(var.v, info);
 	}
 }
 

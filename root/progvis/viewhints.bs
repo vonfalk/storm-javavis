@@ -3,7 +3,10 @@ use ui;
 /**
  * View hints, as described in the comment for Hints.
  */
-class ViewHints on Render {}
+class ViewHints on Render {
+	// Should we pause on function entry?
+	Bool pauseOnEntry() { true; }
+}
 
 
 /**

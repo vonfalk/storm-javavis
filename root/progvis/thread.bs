@@ -63,14 +63,15 @@ class ProgThread on Render {
 	}
 
 	// Called when a new function was entered.
-	void onFunctionEntered(Str name, ViewHints hints, StackVar[] vars) {
-		// TODO: Set the position as well!
+	void onFunctionEntered(Str name, SrcPos pos, ViewHints hints, StackVar[] vars) {
 		popFrames();
 
 		callDepth++;
 		frames.push(StackFrame(name, hints, vars));
+		this.pos = pos;
 
-		wait();
+		if (hints.pauseOnEntry())
+			wait();
 	}
 
 	// Called when a function is about to return.

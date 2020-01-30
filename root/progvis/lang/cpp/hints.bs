@@ -1,0 +1,74 @@
+use core:asm;
+use core:lang;
+
+// Hints for the C++ module.
+progvis:Hints hints() {
+	progvis:Hints(CppCodeHints(), CppViewHints());
+}
+
+/**
+ * Code hints.
+ *
+ * We can take all local variables and just put them inside a Variant directly, since they are
+ * already allocated that way.
+ */
+class CppCodeHints extends progvis:CodeHints {
+	Fn<void>? findMain(Package pkg) : override {
+		if (fn = pkg.find(SimplePart("main"), Scope(pkg)) as Function) {
+			var ptr = fn.pointer;
+			if (ptr as Fn<void>)
+				return ptr;
+
+			// TODO: Wrap output in a better way.
+			if (ptr as Fn<Int>)
+				return () => print("Result: " # ptr.call());
+		}
+
+		// TODO: Perhaps support "argc, argv" parameters as well!
+		null;
+	}
+
+	Bool handlesFunction(Function fn) : override {
+		if (fn as CppFunction)
+			true;
+		else
+			false;
+	}
+
+	SrcPos location(Function fn) : override {
+		if (fn as CppFunction)
+			fn.pos;
+		else
+			SrcPos();
+	}
+
+	Str cleanName(Function fn, Package pkg) : override {
+		// TODO!
+		fn.name + "(...)";
+	}
+
+	Bool saveVariable(Listing to, Var var, Listing:VarInfo info, Operand dest) {
+		if (!info.ref)
+			return false;
+
+		// The 'this' ptr is special. We need to handle that specially.
+		if (info.name == "this")
+			return false;
+
+		to << lea(ptrA, dest);
+		to << mov(ptrRel(ptrA), var);
+		true;
+	}
+}
+
+
+/**
+ * View hints.
+ *
+ * Provides visualizations that are aware of pointers and references as C++ does them, and also show
+ * which objects are no longer reachable in the implementation.
+ */
+class CppViewHints extends progvis:ViewHints {
+	// Don't pause on function entry. We won't have set up our formal parameters by then...
+	Bool pauseOnEntry() : override { false; }
+}

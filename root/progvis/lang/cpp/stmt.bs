@@ -141,9 +141,16 @@ class StmtBlock extends Block {
 	// Generate code for statements inside the block.
 	Bool blockCode(CodeGen gen) {
 		for (s in content) {
+			if (s as StmtBlock) {
+			} else {
+				gen.l << location(s.pos);
+			}
+
 			if (!s.code(gen))
 				return false;
 		}
+
+		gen.l << location(pos.lastCh);
 		true;
 	}
 }
