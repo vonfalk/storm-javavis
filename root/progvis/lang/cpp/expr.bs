@@ -89,6 +89,32 @@ class IntLiteral extends Expr {
 }
 
 /**
+ * Access the this ptr.
+ */
+class ThisPtr extends Expr {
+	FnRoot fn;
+
+	init(SrcPos pos, Scope scope) {
+		init(pos) { fn = findFnRoot(scope); }
+	}
+
+	ExprResult result() : override {
+		wrapPtr(fn.owner.params[0]).asRef();
+	}
+
+	void code(CodeGen gen, CodeResult res) : override {
+		// We assume we're treated as a special case in the *-operator.
+		throw SyntaxError(pos, "This implementation only allows dereferencing the this-pointer.");
+	}
+
+	// Get the 'this' ptr variable.
+	Var ptr() {
+		fn.thisPtr;
+	}
+
+}
+
+/**
  * Node representing a yet unresolved identifier.
  *
  * If used on its own, it will try to act as a variable access.
@@ -134,45 +160,79 @@ class NameExpr extends Expr {
 		r;
 	}
 
+	// Result from 'findNamed'.
+	class Found on Compiler {
+		// What we found.
+		Named named;
 
-	Named? findNamed(Value[] actuals) {
-		if (context) {
-			Value ctx = context.result.type;
-			SimplePart last = name.last.clone();
-			last.params << ctx;
-			last.params.append(actuals);
+		// Any context used.
+		Expr? context;
 
-			if (t = ctx.type) {
-				return t.find(last, scope);
-			} else {
-				return null;
+		// Create.
+		init(Named named) { init() { named = named; } }
+		init(Named named, Expr? context) { init() { named = named; context = context; } }
+	}
+
+	// Find a name with a given context.
+	private Found? findCtx(Expr context, Value[] actuals) {
+		Value ctx = context.result.type;
+		SimplePart last = name.last.clone();
+		last.params << ctx;
+		last.params.append(actuals);
+
+		if (t = ctx.type) {
+			if (found = t.find(last, scope)) {
+				return Found(found, context);
 			}
-		} else if (actuals.empty) {
-			return scope.find(name);
+		}
+		return null;
+	}
+
+	// Will try to add '*this' as a context if suitable.
+	Found? findNamed(Value[] actuals) {
+		if (context) {
+			return findCtx(context, actuals);
+		}
+
+		// Try to use 'this' if suitable.
+		if (member = findFnRoot(scope).memberOf) {
+			if (found = findCtx(DerefPtr(ThisPtr(pos, scope)), actuals))
+				return found;
+		}
+
+		// Try the global scope.
+		if (actuals.empty) {
+			if (found = scope.find(name))
+				return Found(found);
 		} else {
 			SimpleName n = name.clone;
 			name.last.params = actuals;
-			return scope.find(name);
+			if (found = scope.find(name))
+				return Found(found);
 		}
+
+		return null;
 	}
 
-	Named? findNamed() {
+	Found? findNamed() {
 		findNamed([]);
 	}
 
 	private Expr doResolve() {
-		Named? found = findNamed();
-		if (found as LocalVar) {
-			return LocalVarAccess(pos, found);
-		} else if (found as MemberVar) {
-			if (context) {
-				return MemberVarAccess(pos, context, found);
-			}
-		} else if (found) {
-			throw SyntaxError(pos, "${name} refers to ${typeOf(found).name}, which I don't know how to handle here.");
+		Found? found = findNamed();
+		unless (found) {
+			throw SyntaxError(pos, "Unable to resolve the name ${name} in this context!");
 		}
 
-		throw SyntaxError(pos, "Unable to resolve the name ${name} in this context!");
+		if (n = found.named as LocalVar) {
+			return LocalVarAccess(pos, n);
+		} else if (n = found.named as MemberVar) {
+			if (c = found.context) {
+				return MemberVarAccess(pos, c, n);
+			}
+		}
+
+		throw SyntaxError(pos, "${name} refers to ${typeOf(found).name}, which I don't know how to handle here.");
 	}
 }
 
@@ -183,12 +243,16 @@ Expr fnCall(Expr lhs, Expr[] actuals) {
 		throw SyntaxError(lhs.pos, "This is not something we can call.");
 	}
 
-	Named? found = lhs.findNamed(fnValues(actuals));
-	if (found as Function) {
+	NameExpr:Found? found = lhs.findNamed(fnValues(actuals));
+	unless (found) {
+		throw SyntaxError(lhs.pos, "Could not find anything named ${lhs.name} to call.");
+	}
+
+	if (fn = found.named as Function) {
 		// Add the 'this' ptr if required.
-		if (c = lhs.context)
+		if (c = found.context)
 			actuals.insert(0, c);
-		return FnCall(lhs.pos, found, actuals);
+		return FnCall(lhs.pos, fn, actuals);
 	}
 
 	throw SyntaxError(lhs.pos, "Found ${found}, which is not a function.");
@@ -513,17 +577,24 @@ class DerefPtr extends Expr {
 		if (!res.needed())
 			return;
 
-		CodeResult p(of.result.type.asRef(), gen.block);
-		of.code(gen, p);
+		if (of as ThisPtr) {
+			// If it is the this-ptr, we can just read it.
+			gen.l << mov(ptrB, of.ptr);
+		} else {
+			CodeResult p(of.result.type.asRef(), gen.block);
+			of.code(gen, p);
 
-		gen.l << mov(ptrA, p.location(gen));
+			check(gen, p.location(gen), result.type.asRef(false).size());
 
-		// Load the base.
-		gen.l << mov(ptrB, ptrRel(ptrA, Offset()));
+			gen.l << mov(ptrA, p.location(gen));
 
-		// Add the offset.
-		gen.l << mov(ecx, intRel(ptrA, Offset(sPtr)));
-		gen.l << add(ptrB, ptrC);
+			// Load the base.
+			gen.l << mov(ptrB, ptrRel(ptrA, Offset()));
+
+			// Add the offset.
+			gen.l << ucast(ptrC, intRel(ptrA, Offset(sPtr)));
+			gen.l << add(ptrB, ptrC);
+		}
 
 		if (res.type.ref) {
 			// Store it!
@@ -546,13 +617,29 @@ class DerefPtr extends Expr {
 	}
 
 	void codePtr(CodeGen gen) : override {
+		if (of as ThisPtr)
+			throw SyntaxError(pos, "Cannot get a pointer from 'this'.");
+
 		CodeResult p(of.result.type.asRef(), gen.block);
 		of.code(gen, p);
+
+		check(gen, p.location(gen), result.type.asRef(false).size());
 
 		gen.l << mov(ptrA, p.location(gen));
 
 		// Load the base and offset.
 		gen.l << mov(ptrB, ptrRel(ptrA, Offset()));
 		gen.l << mov(ecx, intRel(ptrA, Offset(sPtr)));
+	}
+
+	// Generate a check for pointer validity.
+	void check(CodeGen gen, Var src, Size size) {
+		var checkFn = named{checkPtr<unsafe:RawPtr, Nat, Nat>};
+
+		gen.l << mov(ptrA, src);
+		gen.l << fnParam(ptrDesc, ptrRel(ptrA, Offset()));
+		gen.l << fnParam(intDesc, intRel(ptrA, Offset(sPtr)));
+		gen.l << fnParam(intDesc, natConst(size));
+		gen.l << fnCall(checkFn.ref, false);
 	}
 }

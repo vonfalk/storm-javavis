@@ -154,7 +154,7 @@ class StmtBlock extends Block {
 class Return extends Stmt {
 	init(SrcPos pos, Block inside) {
 		init(pos) {
-			expected = findType(inside);
+			expected = findFnRoot(inside).result;
 		}
 
 		checkType(Value());
@@ -163,7 +163,7 @@ class Return extends Stmt {
 	init(SrcPos pos, Block inside, Expr value) {
 		init(pos) {
 			value = value;
-			expected = findType(inside);
+			expected = findFnRoot(inside).result;
 		}
 
 		var r = value.result();
@@ -195,21 +195,25 @@ class Return extends Stmt {
 		false;
 	}
 
-	private Value findType(Block inside) : static {
-		NameLookup? at = inside.scope.top;
-		while (curr = at as BlockLookup) {
-			if (fn = curr.block as FnRoot) {
-				return fn.result;
-			}
-
-			at = curr.parent;
-		}
-
-		throw SyntaxError(SrcPos(), "Invalid use of Return!");
-	}
-
 	private void checkType(Value type) {
 		if (!expected.canStore(type))
 			throw SyntaxError(pos, "Incompatible return type. Got ${type}, expected ${expected}.");
 	}
+}
+
+FnRoot findFnRoot(Block inside) on Compiler {
+	findFnRoot(inside.scope);
+}
+
+FnRoot findFnRoot(Scope scope) on Compiler {
+	NameLookup? at = scope.top;
+	while (curr = at as BlockLookup) {
+		if (fn = curr.block as FnRoot) {
+			return fn;
+		}
+
+		at = curr.parent;
+	}
+
+	throw InternalError("Unable to find the contained function from a block!");
 }

@@ -128,10 +128,10 @@ SNameParams => Array<Value>() : STypeName(scope) -> push, (",", STypeName(scope)
 Stmt SStmt(Block block);
 SStmt => ExprBlock(block) : "{", (SStmt(me) -> add,)* "}";
 SStmt => e : SExpr(block) e, ";";
-SStmt[1] => Return(pos, block, expr) : "return[ \t]" #keyword, SExpr(block) expr, ";";
-SStmt[1] => Return(pos, block) : "return" #keyword, ";";
-SStmt => VarDecl(pos, block, type, name) : STypeName(block.scope) type, SIdentifier name, ";";
-SStmt => VarDecl.assign(pos, block, type, name, init) : STypeName(block.scope) type, SIdentifier name, "=", SExpr(block) init, ";";
+SStmt[50] => Return(pos, block, expr) : "return[ \t]" #keyword, SExpr(block) expr, ";";
+SStmt[50] => Return(pos, block) : "return" #keyword, ";";
+SStmt[10] => VarDecl(pos, block, type, name) : STypeName(block.scope) type, SIdentifier name, ";";
+SStmt[10] => VarDecl.assign(pos, block, type, name, init) : STypeName(block.scope) type, SIdentifier name, "=", SExpr(block) init, ";";
 
 // Add a list of statements to a block.
 void SStmtList(StmtBlock block);
@@ -221,6 +221,7 @@ Expr SAtom(Block block);
 SAtom => v : "(", SExpr(block) v, ")";
 SAtom => IntLiteral(v) : "[0-9]+" @v #constant;
 SAtom => NameExpr(pos, block.scope, name) : SCompoundName(block.scope) name;
+SAtom[10] => ThisPtr(pos, block.scope) : "this" #keyword;
 
 SimpleName SCompoundName(Scope scope);
 SCompoundName => SimpleName() : SNamePart(scope) -> add, ("::", SNamePart(scope) -> add)*;

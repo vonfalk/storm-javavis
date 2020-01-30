@@ -5,8 +5,12 @@ public:
 	int x;
 	int y;
 
-	int result() {
-		return 3;
+	int result(int param) {
+		return 3 + param;
+	}
+
+	int sum() {
+		return this->x + y;
 	}
 };
 
@@ -31,15 +35,24 @@ int ptrs2() {
 	return *x;
 }
 
+int ptrs3() {
+	demo d;
+	demo *p = &d;
+	d.x = 10;
+	return p->sum();
+}
+
 int main() {
 	demo d;
 	d.x = 8;
 	d.y = 10;
 
 	print(test(2 + 3, 4));
-	print(d.result());
+	print(d.result(1));
+	print(d.sum());
 	print(ptrs());
 	print(ptrs2());
+	print(ptrs3());
 
 	return 1 + d.x;
 }

@@ -63,15 +63,40 @@ class PtrType extends Type {
 	}
 }
 
+class PtrError extends Exception {
+	init(Str msg) {
+		init() { msg = msg; }
+		saveTrace();
+	}
+
+	Str msg;
+
+	void message(StrBuf to) {
+		to << msg;
+	}
+}
+
+// Check the validity of a pointer. Assumes we want to read a maximum of 'size' bytes at wherever
+// 'ptr' and 'offset' refers to.
+void checkPtr(unsafe:RawPtr base, Nat offset, Nat size) {
+	Nat total = base.readSize() * base.readCount();
+	// Array header.
+	if (base.isValue)
+		offset -= sPtr.current * 2;
+	if (offset + size > total)
+		throw PtrError("Trying to read at offset ${offset + size} in an allocation of size ${total}.");
+}
+
+
 // Wrap things inside a pointer or a reference.
 Value wrapPtr(Value val) {
-	unless (t = (named{}).find(SimplePart("Ptr", [val]), Scope()) as Type)
+	unless (t = (named{}).find(SimplePart("Ptr", [val.asRef(false)]), Scope()) as Type)
 		throw InternalError("Could not find the pointer type for ${val}");
 	Value(t);
 }
 
 Value wrapRef(Value val) {
-	unless (t = (named{}).find(SimplePart("Ref", [val]), Scope()) as Type)
+	unless (t = (named{}).find(SimplePart("Ref", [val.asRef(false)]), Scope()) as Type)
 		throw InternalError("Could not find the pointer type for ${val}");
 	Value(t);
 }

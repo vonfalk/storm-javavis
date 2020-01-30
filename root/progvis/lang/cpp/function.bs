@@ -81,7 +81,9 @@ class CppFunction extends Function {
 
 		// Add parameters.
 		for (id, v in formals) {
-			root.addParam(v.v, params[id], v.pos);
+			// Don't add the 'this' parameter. It is handled specially.
+			if (id > 0 | !isMember())
+				root.addParam(v.v, params[id], v.pos);
 		}
 
 		body.transform(root);
@@ -114,6 +116,11 @@ class FnRoot extends StmtBlock {
 	// Return value of the function.
 	Value result;
 
+	// The 'this' parameter, if we're a member function. This is stored as a regular pointer and
+	// handled as a special case to be compatible with the calling convention of the rest of
+	// Storm. This is actually not too bad, since &this is not accepted by e.g. GCC on X86-64.
+	Var thisPtr;
+
 	// Parameters. Also added as usual to the block.
 	private LocalVar[] params;
 
@@ -137,34 +144,39 @@ class FnRoot extends StmtBlock {
 	Bool code(CodeGen gen) : override {
 		// We don't need to create a child block. We use the root block right away!
 
-		for (id, param in params) {
-			if (id == 0 & owner.isMember()) {
-				// The 'this' parameter is a bit special. It is a pointer, even if it does not look like that to us.
-				print("TODO: Handle the 'this' parameter!");
-				param.var = CppVar(gen.l.createParam(ptrDesc));
+		if (owner.isMember()) {
+			thisPtr = gen.l.createParam(ptrDesc);
+		}
+
+		for (param in params) {
+			Var formal = gen.l.createParam(ptrDesc);
+			CppVar var = allocType(gen, param.type);
+			var.adjust(gen, ptrA);
+
+			if (copy = param.type.copyCtor) {
+				gen.l << fnParam(ptrDesc, ptrA);
+				gen.l << fnParam(ptrDesc, formal);
+				gen.l << fnCall(copy.ref, true);
 			} else {
-				Var formal = gen.l.createParam(ptrDesc);
-				CppVar var = allocType(gen, param.type);
-				var.adjust(gen, ptrA);
-
-				if (copy = param.type.copyCtor) {
-					gen.l << fnParam(ptrDesc, ptrA);
-					gen.l << fnParam(ptrDesc, formal);
-					gen.l << fnCall(copy.ref, true);
-				} else {
-					Size sz = param.type.size;
-					if (sz != Size()) {
-						gen.l << mov(ptrB, formal);
-						gen.l << mov(xRel(sz, ptrA, Offset()), xRel(sz, ptrB, Offset()));
-					}
+				Size sz = param.type.size;
+				if (sz != Size()) {
+					gen.l << mov(ptrB, formal);
+					gen.l << mov(xRel(sz, ptrA, Offset()), xRel(sz, ptrB, Offset()));
 				}
-
-				var.created(gen);
-				param.var = var;
 			}
+
+			var.created(gen);
+			param.var = var;
 		}
 
 		initVariables(gen);
 		blockCode(gen);
+	}
+
+	// Check if we're a member function.
+	Type? memberOf() {
+		if (owner.isMember)
+			return owner.params[0].type;
+		null;
 	}
 }
