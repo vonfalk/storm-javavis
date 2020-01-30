@@ -488,4 +488,89 @@ namespace code {
 		return Operand(l, offset, size);
 	}
 
+
+	Operand byteRel(Reg reg) {
+		return xRel(Size::sByte, reg, Offset());
+	}
+
+	Operand intRel(Reg reg) {
+		return xRel(Size::sInt, reg, Offset());
+	}
+
+	Operand longRel(Reg reg) {
+		return xRel(Size::sLong, reg, Offset());
+	}
+
+	Operand floatRel(Reg reg) {
+		return xRel(Size::sFloat, reg, Offset());
+	}
+
+	Operand doubleRel(Reg reg) {
+		return xRel(Size::sDouble, reg, Offset());
+	}
+
+	Operand ptrRel(Reg reg) {
+		return xRel(Size::sPtr, reg, Offset());
+	}
+
+	Operand xRel(Size size, Reg reg) {
+		return xRel(size, reg, Offset());
+	}
+
+	Operand byteRel(Var v) {
+		return xRel(Size::sByte, v, Offset());
+	}
+
+	Operand intRel(Var v) {
+		return xRel(Size::sInt, v, Offset());
+	}
+
+	Operand longRel(Var v) {
+		return xRel(Size::sLong, v, Offset());
+	}
+
+	Operand floatRel(Var v) {
+		return xRel(Size::sFloat, v, Offset());
+	}
+
+	Operand doubleRel(Var v) {
+		return xRel(Size::sDouble, v, Offset());
+	}
+
+	Operand ptrRel(Var v) {
+		return xRel(Size::sPtr, v, Offset());
+	}
+
+	Operand xRel(Size size, Var v) {
+		return xRel(size, v, Offset());
+	}
+
+	Operand byteRel(Label l) {
+		return xRel(Size::sByte, l, Offset());
+	}
+
+	Operand intRel(Label l) {
+		return xRel(Size::sInt, l, Offset());
+	}
+
+	Operand longRel(Label l) {
+		return xRel(Size::sLong, l, Offset());
+	}
+
+	Operand floatRel(Label l) {
+		return xRel(Size::sFloat, l, Offset());
+	}
+
+	Operand doubleRel(Label l) {
+		return xRel(Size::sDouble, l, Offset());
+	}
+
+	Operand ptrRel(Label l) {
+		return xRel(Size::sPtr, l, Offset());
+	}
+
+	Operand xRel(Size size, Label l) {
+		return xRel(size, l, Offset());
+	}
+
 }

@@ -233,6 +233,14 @@ namespace code {
 	Operand STORM_FN ptrRel(Reg reg, Offset offset);
 	Operand STORM_FN xRel(Size size, Reg reg, Offset offset);
 
+	Operand STORM_FN byteRel(Reg reg);
+	Operand STORM_FN intRel(Reg reg);
+	Operand STORM_FN longRel(Reg reg);
+	Operand STORM_FN floatRel(Reg reg);
+	Operand STORM_FN doubleRel(Reg reg);
+	Operand STORM_FN ptrRel(Reg reg);
+	Operand STORM_FN xRel(Size size, Reg reg);
+
 	// Access offsets inside variables.
 	Operand STORM_FN byteRel(Var v, Offset offset);
 	Operand STORM_FN intRel(Var v, Offset offset);
@@ -242,7 +250,15 @@ namespace code {
 	Operand STORM_FN ptrRel(Var v, Offset offset);
 	Operand STORM_FN xRel(Size size, Var v, Offset offset);
 
-	// Access offsets inside variables.
+	Operand STORM_FN byteRel(Var v);
+	Operand STORM_FN intRel(Var v);
+	Operand STORM_FN longRel(Var v);
+	Operand STORM_FN floatRel(Var v);
+	Operand STORM_FN doubleRel(Var v);
+	Operand STORM_FN ptrRel(Var v);
+	Operand STORM_FN xRel(Size size, Var v);
+
+	// Access offsets inside labels.
 	Operand STORM_FN byteRel(Label l, Offset offset);
 	Operand STORM_FN intRel(Label l, Offset offset);
 	Operand STORM_FN longRel(Label l, Offset offset);
@@ -250,4 +266,12 @@ namespace code {
 	Operand STORM_FN doubleRel(Label l, Offset offset);
 	Operand STORM_FN ptrRel(Label l, Offset offset);
 	Operand STORM_FN xRel(Size size, Label l, Offset offset);
+
+	Operand STORM_FN byteRel(Label l);
+	Operand STORM_FN intRel(Label l);
+	Operand STORM_FN longRel(Label l);
+	Operand STORM_FN floatRel(Label l);
+	Operand STORM_FN doubleRel(Label l);
+	Operand STORM_FN ptrRel(Label l);
+	Operand STORM_FN xRel(Size size, Label l);
 }
