@@ -8,8 +8,13 @@ use core:geometry;
  */
 class Workspace on Render {
 	init() {
-		init();
+		init() {}
+
+		hints << DefaultViewHints();
 	}
+
+	// Hints on how to draw things.
+	ViewHints[] hints;
 
 	// Draw the workspace. Assumes we can clip anything not inside 'viewport'.
 	void render(Rect viewport, Graphics g) {

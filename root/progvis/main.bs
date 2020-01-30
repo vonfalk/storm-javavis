@@ -86,6 +86,7 @@ class MainPainter extends Painter {
 	void open(Url file) {
 		program = Program:load(file);
 		if (program) {
+			workspace.hints = program.hints;
 			program.onChange = &this.update();
 			update();
 			program.spawn(program.main);
