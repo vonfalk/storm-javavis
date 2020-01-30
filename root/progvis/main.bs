@@ -6,6 +6,19 @@ use core:io;
 use lang:bs:macro;
 
 /**
+ * Generic exception shown to the user.
+ */
+class ProgvisError extends Exception {
+	init(Str msg) { init() { msg = msg; } }
+
+	Str msg;
+
+	void message(StrBuf to) {
+		to << msg;
+	}
+}
+
+/**
  * Main window.
  */
 class MainWin extends Frame {
@@ -162,7 +175,7 @@ class MainPainter extends Painter {
 }
 
 void main() on Compiler {
-	named{progvis}.compile();
+	// named{progvis}.compile();
 
 	if (url = named{progvis_demo}.url) {
 		MainWin win;

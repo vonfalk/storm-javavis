@@ -63,12 +63,12 @@ class ProgThread on Render {
 	}
 
 	// Called when a new function was entered.
-	void onFunctionEntered(Str name, StackVar[] vars) {
+	void onFunctionEntered(Str name, ViewHints hints, StackVar[] vars) {
 		// TODO: Set the position as well!
 		popFrames();
 
 		callDepth++;
-		frames.push(StackFrame(name, vars));
+		frames.push(StackFrame(name, hints, vars));
 
 		wait();
 	}
@@ -162,13 +162,17 @@ class StackFrame on Render {
 	// Name of the function. (TODO: Add a SrcPos?)
 	Str function;
 
+	// View hints for this function. Used to scrape variables of the stack.
+	ViewHints hints;
+
 	// The current state of all variables. Ordered roughly as they appear in the source.
 	StackVar[] variables;
 
 	// Create.
-	init(Str name, StackVar[] vars) {
+	init(Str name, ViewHints hints, StackVar[] vars) {
 		init {
 			function = name;
+			hints = hints;
 			variables = vars;
 		}
 	}

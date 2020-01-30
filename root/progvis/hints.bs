@@ -1,0 +1,40 @@
+/**
+ * Visualization hints for a language.
+ *
+ * A language may modify the behavior of the visualization by providing an implementation of the
+ * function 'hints' in the same package as the 'reader' function used for the language. If no
+ * special implementation is provided, the system uses DefaultHints instead.
+ *
+ * This object is in charge of two parts, represented as two different objects that are members of
+ * different threads.
+ *
+ * First and foremost, the Hints class is responsible for injecting code in the generated code from
+ * the language. These calls will notify the Program class of the status of the current execution,
+ * and the values of local variables.
+ *
+ * Secondly, the ViewHints class is responsible for interpreting the collected data. It has a chance
+ * to intercept what is shown for objects on the stack, and gets the opportunity to provide custom
+ * visualizations for types that are built into the language itself. When multiple languages are
+ * used simultaneously, the ViewHints gets exclusive access to the appearance of objects on the
+ * stack and joint responsibility for objects on the heap.
+ */
+value Hints {
+	// Code hints.
+	CodeHints code;
+
+	// View hints.
+	ViewHints? view;
+
+	init(CodeHints code) {
+		init() { code = code; }
+	}
+
+	init(CodeHints code, ViewHints view) {
+		init() { code = code; view = view; }
+	}
+}
+
+// Create standard hints.
+Hints defHints() {
+	Hints(DefaultCodeHints(), DefaultViewHints());
+}

@@ -1,0 +1,112 @@
+use core:lang;
+use core:asm;
+use lang:bs:macro;
+
+/**
+ * Code hints, see description of Hints.
+ *
+ * This class gets the chance to intercept how local variables are stored and saved by the Program
+ * class, so that a backend may hide that it, for example, stores everything by reference instead of
+ * by value for whatever reason.
+ */
+class CodeHints on Compiler {
+	// Attempt to find the 'main' function. This is called on all hints objects until one responds.
+	Fn<void>? findMain(Package pkg) : abstract;
+
+	// Called to find a Hints object that feels responsible for a particular function.
+	// Only the first hint object that returns true here will get the remaining functions called for that function.
+	Bool handlesFunction(Function fn) : abstract;
+
+	// Provide a user-friendly name of the function.
+	Str cleanName(Function fn, Package pkg) : abstract;
+
+	// Create a Variant containing a copy of the variable at the indicated location. Return 'false'
+	// if it is not possible.
+	Bool saveVariable(Listing to, Var var, Listing:VarInfo info, Operand dest) : abstract;
+}
+
+
+/**
+ * Default implementation of the code hints.
+ *
+ * Suitable for Basic Storm for example.
+ */
+class DefaultCodeHints extends CodeHints {
+	// We handle all functions!
+	Bool handlesFunction(Function f) {
+		true;
+	}
+
+	// Generate the name of a function, ignoring everything above "remove".
+	Str cleanName(Function f, Package remove) : override {
+		Name name;
+		addParts(name, f, remove, true);
+		Str n = name.toS;
+		if (n.endsWith(")"))
+			n;
+		else
+			n + "()";
+	}
+
+	// Helper for 'cleanName'.
+	private void addParts(Name to, Named at, Package remove, Bool skipFirst) {
+		if (at is remove)
+			return;
+		if (at is named{core})
+			return;
+
+		// Don't include the root package either.
+		unless (parent = at.parent as Named)
+			return;
+
+		addParts(to, parent, remove, false);
+
+		Name[] params;
+		for (p in at.params) {
+			if (skipFirst) {
+				skipFirst = false;
+			} else {
+				if (t = p.type) {
+					Name n;
+					addParts(n, t, remove, false);
+					params << n;
+				}
+			}
+		}
+
+		RecPart p(at.name, params);
+		to.add(p);
+	}
+
+	// Save a variable.
+	Bool saveVariable(Listing to, Var var, Listing:VarInfo info, Operand dest) : override {
+		Type variant = named{Variant};
+		Value param(info.type);
+		SimplePart ctorName("__init", [Value(variant, true), param]);
+		unless (ctor = variant.find(ctorName, Scope()) as Function) {
+			print("Warning: No Variant constructor for ${param}");
+			return false;
+		}
+
+		to << lea(ptrA, dest);
+		if (param.isValue())
+			to << lea(ptrB, var);
+		else
+			to << mov(ptrB, var);
+		to << fnParam(ptrDesc, ptrA);
+		to << fnParam(ptrDesc, ptrB);
+		to << fnCall(ctor.ref(), true);
+		true;
+	}
+
+	// Find 'main'.
+	Fn<void>? findMain(Package pkg) {
+		unless (main = pkg.find(SimplePart("main"), Scope(pkg)) as Function)
+			return null;
+
+		unless (mainPtr = main.pointer as Fn<void>)
+			return null;
+
+		return mainPtr;
+	}
+}

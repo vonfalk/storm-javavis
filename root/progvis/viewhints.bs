@@ -1,0 +1,12 @@
+use ui;
+
+/**
+ * View hints, as described in the comment for Hints.
+ */
+class ViewHints on Render {}
+
+
+/**
+ * Default view hints.
+ */
+class DefaultViewHints extends ViewHints {}

@@ -18,8 +18,8 @@
 #Main -a -f tests.ui.testAbout
 #Main -a -f presentation.tests.test
 #Main -a -f presentation.tests.simple
-#Main -a -f progvis.main
-Main -a -f progvis.testCpp
+Main -a -f progvis.main
+#Main -a -f progvis.testCpp
 
 #UI while running intensive memory allocations in the background.
 #Main -a -r ../root/ -f tests.ui.simpleMem

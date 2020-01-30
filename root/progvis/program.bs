@@ -13,6 +13,9 @@ class Program on Render {
 	// Package created by us as a temporary workspace.
 	private Package pkg;
 
+	// All view hints that are active.
+	public ViewHints[] hints;
+
 	// Pointer to the 'main' function.
 	public Fn<void> main;
 
@@ -34,10 +37,11 @@ class Program on Render {
 			changeNotification.call();
 	}
 
-	package init(Package pkg, Fn<void> main) {
+	package init(Package pkg, Fn<void> main, ViewHints[] hints) {
 		init() {
 			pkg = pkg;
 			main = main;
+			hints = hints;
 		}
 	}
 
@@ -102,7 +106,7 @@ class Program on Render {
 
 	// This function will be called by the executed code to notify that a new (traced) function was
 	// called, and that we shall open a new scope.
-	package void functionEntered(Str name, StackVar[] vars) {
+	package void functionEntered(Str name, ViewHints hints, StackVar[] vars) {
 		Word id = currentUThread();
 		ProgThread t = if (threads.has(id)) {
 			threads.get(id);
@@ -112,7 +116,7 @@ class Program on Render {
 			t;
 		};
 
-		t.onFunctionEntered(name, vars);
+		t.onFunctionEntered(name, hints, vars);
 	}
 
 	// This function will be called by the executed code to notify that a (traced) function is about
@@ -146,6 +150,37 @@ private PkgReader? stdReader(Str ext, Url[] files, Package pkg) {
 	null;
 }
 
+private void addProgvisHints(Str ext, Hints[] hints) {
+	unless (name = readerName(ext))
+		return;
+
+	name.add(0, "progvis");
+	name.last.name = "hints";
+	name.last.params.clear();
+	unless (fn = rootScope.find(name) as Function)
+		return;
+
+	unless (ptr = fn.pointer as Fn<Hints>)
+		return;
+
+	to << ptr.call();
+}
+
+private void addStdHints(Str ext, Hints[] to) {
+	unless (name = readerName(ext))
+		return;
+
+	name.last.name = "hints";
+	name.last.params.clear();
+	unless (fn = rootScope.find(name) as Function)
+		return;
+
+	unless (ptr = fn.pointer as Fn<Hints>)
+		return;
+
+	to << ptr.call();
+}
+
 // Helper to load a program on a different thread.
 private Program? loadProgram(Url[] files) on Compiler {
 	Package pkg("<sandbox>");
@@ -157,13 +192,16 @@ private Program? loadProgram(Url[] files) on Compiler {
 		exts[f.ext] << f;
 	}
 
+	Hints[] hints;
 	PkgReader[] readers;
 	for (ext, files in exts) {
 		// Try to find a reader ourselves first.
 		if (r = progvisReader(ext, files, pkg)) {
 			readers << r;
+			addProgvisHints(ext, hints);
 		} else if (r = stdReader(ext, files, pkg)) {
 			readers << r;
+			addStdHints(ext, hints);
 		} else {
 			print("No reader for the file type ${ext}!");
 			return null;
@@ -175,54 +213,49 @@ private Program? loadProgram(Url[] files) on Compiler {
 		return null;
 	}
 
+	// Add the standard hints last, so that they have a chance to do things.
+	hints << defHints();
+
 	// Load all code.
 	read(readers);
 
 	// Produce errors now rather than later.
 	pkg.compile();
 
-	// Find the function 'main'.
-	unless (main = pkg.find(SimplePart("main"), Scope(pkg)) as Function) {
-		print("No main function found!");
-		return null;
-	}
+	// Extract the view hints for later use.
+	ViewHints[] viewHints;
+	for (h in hints)
+		if (view = h.view)
+			viewHints << view;
 
-	unless (mainPtr = wrapMain(pointer(main))) {
-		print("Wrong signature of the main function.");
-		return null;
-	}
-
-	Program program(pkg, mainPtr);
-	patchFunctions(program, pkg, pkg);
+	// Create the program instance and patch all code.
+	Program program(pkg, findMain(hints, pkg), viewHints);
+	patchFunctions(program, hints, pkg, pkg);
 	program.loadSource(files);
 	return program;
 }
 
-// Wrap the pointer to main as is appropriate based on the return type.
-private Fn<void>? wrapMain(FnBase base) on Compiler {
-	if (base as Fn<void>) {
-		return base;
+// Find the main function.
+private Fn<void> findMain(Hints[] hints, Package pkg) {
+	for (h in hints) {
+		if (r = h.code.findMain(pkg))
+			return r;
 	}
 
-	if (base as Fn<Int>) {
-		// This is mostly temporary. We should show the result in a better way later on.
-		return () => print("Result: " # base.call());
-	}
-
-	null;
+	throw ProgvisError("Unable to find a 'main' function!");
 }
 
 // Patch all functions in the specified NameSet recursively.
 // TODO: We don't really support threads at the moment, perhaps we should
 // explicitly disallow that somehow?
-private void patchFunctions(Program program, Package pkg, NameSet inside) on Compiler {
+private void patchFunctions(Program program, Hints[] hints, Package pkg, NameSet inside) on Compiler {
 	inside.forceLoad();
 
 	for (named in inside) {
 		if (named as Function) {
-			patchFunction(program, pkg, named);
+			patchFunction(program, hints, pkg, named);
 		} else if (named as NameSet) {
-			patchFunctions(program, pkg, named);
+			patchFunctions(program, hints, pkg, named);
 		}
 	}
 }
@@ -230,7 +263,7 @@ private void patchFunctions(Program program, Package pkg, NameSet inside) on Com
 // Patch a single function, adding code for instrumentation at each "location" statement in the
 // listing. This makes it possible for us to "single step" the program, since we get called
 // at each relevant location.
-private void patchFunction(Program program, Package pkg, Function fn) on Compiler {
+private void patchFunction(Program program, Hints[] hints, Package pkg, Function fn) on Compiler {
 	unless (code = fn.getCode() as GeneratedCode)
 		return;
 
@@ -245,21 +278,38 @@ private void patchFunction(Program program, Package pkg, Function fn) on Compile
 		return;
 	}
 
-	Listing patched = patchListing(program, pkg, source, fn);
+	// Find the hint object responsible for this function.
+	var hint = findHints(hints, fn);
+
+	Listing patched = patchListing(program, hint, pkg, source, fn);
 	fn.setCode(DynamicCode(patched));
+}
+
+// Find the hint responsible for this function.
+private Hints findHints(Hints[] hints, Function fn) {
+	for (h in hints)
+		if (h.code.handlesFunction(fn))
+			return h;
+
+	// Default if none is found (will more or less never happen, as the last element in 'hints' is 'defHints()'.
+	return defHints();
 }
 
 // Common parameters to the code generation functions.
 class PatchParams on Compiler {
 	Package pkg;
+	CodeHints codeHints;
+	ViewHints viewHints;
 	Listing to;
 	Var saveA;
 	Var saveB;
 	Var saveC;
 
-	init(Package pkg, Listing to) {
+	init(Package pkg, Hints hints, Listing to) {
 		init() {
 			pkg = pkg;
+			codeHints = hints.code;
+			viewHints = if (v = hints.view) { v; } else { DefaultViewHints(); };
 			to = to;
 			saveA = to.createVar(to.root, sLong);
 			saveB = to.createVar(to.root, sLong);
@@ -283,10 +333,10 @@ class PatchParams on Compiler {
 }
 
 // Patch a source listing.
-private Listing patchListing(Program program, Package pkg, Listing source, Function fn) on Compiler {
+private Listing patchListing(Program program, Hints hints, Package pkg, Listing source, Function fn) on Compiler {
 	Listing dest = source.createShell();
 	Block block;
-	PatchParams params(pkg, dest);
+	PatchParams params(pkg, hints, dest);
 
 	for (Nat i = 0; i < source.count; i++) {
 		dest << source.labels(i);
@@ -310,7 +360,7 @@ private Listing patchListing(Program program, Package pkg, Listing source, Funct
 	dest;
 }
 
-// Generate a call to this cless in order to keep track of the execution.
+// Generate a call to this class in order to keep track of the execution.
 private void generateCall(Program program, PatchParams to, SrcPos pos, Block block) on Compiler {
 	unless (file = pos.file)
 		return;
@@ -372,30 +422,17 @@ private void saveVariables(PatchParams to, Var[] vars, Var array, Var stackVar) 
 
 	for (var in vars) {
 		if (info = to.to.varInfo(var)) {
-			Type variant = named{Variant};
-			Value param(info.type);
-			SimplePart ctorName("__init", [Value(variant, true), param]);
-			if (ctor = variant.find(ctorName, Scope()) as Function) {
+			// Ask if and how to save this variable.
+			if (to.codeHints.saveVariable(l, var, info, ptrRel(stackVar, Offset(sPtr)))) {
 				// Set 'name'.
 				l << mov(ptrRel(stackVar, Offset()), objPtr(info.name));
-				// Create the variant.
-				l << lea(ptrA, ptrRel(stackVar, Offset(sPtr)));
-				if (param.isValue())
-					l << lea(ptrB, var);
-				else
-					l << mov(ptrB, var);
-				l << fnParam(ptrDesc, ptrA);
-				l << fnParam(ptrDesc, ptrB);
-				l << fnCall(ctor.ref(), true);
 
-				// Add the object to the array.
+				// Push it to the array!
 				Function push = named{Array<StackVar>:push<StackVar[], StackVar>};
 				l << lea(ptrA, stackVar);
 				l << fnParam(ptrDesc, array);
 				l << fnParam(ptrDesc, ptrA);
 				l << fnCall(push.ref, true);
-			} else {
-				print("No ctor for ${info.type.identifier}");
 			}
 		}
 	}
@@ -403,15 +440,13 @@ private void saveVariables(PatchParams to, Var[] vars, Var array, Var stackVar) 
 
 // Generate the call to 'functionEntered' and make sure 'functionExited' is called on function exit (last).
 private void generateCallTracking(Program program, PatchParams to, Function fn) on Compiler {
-	var enterFn = named{Program:functionEntered<Program, Str, StackVar[]>};
+	var enterFn = named{Program:functionEntered<Program, Str, ViewHints, StackVar[]>};
 	// TODO: It is not always safe to do this... The destructor is expected to be a free function,
 	// but in almost all cases, it does not matter.
 	var exitFn = named{Program:functionExited<Program>};
 
 	// Find a clean function name.
-	var fnName = cleanName(fn, to.pkg);
-	if (!fnName.endsWith(")"))
-		fnName = fnName + "()";
+	var fnName = to.codeHints.cleanName(fn, to.pkg);
 
 	Listing l = to.to;
 
@@ -425,6 +460,7 @@ private void generateCallTracking(Program program, PatchParams to, Function fn) 
 
 	l << fnParam(ptrDesc, objPtr(program));
 	l << fnParam(ptrDesc, objPtr(fnName));
+	l << fnParam(ptrDesc, objPtr(to.viewHints));
 	l << fnParam(ptrDesc, array);
 	l << fnCall(enterFn.ref, true);
 
@@ -438,40 +474,4 @@ private Bool anyLocation(Listing l) {
 			return true;
 	}
 	return false;
-}
-
-// Generate the name of a function, ignoring everything above "remove".
-private Str cleanName(Function f, Package remove) on Compiler {
-	Name name;
-	addParts(name, f, remove, true);
-	name.toS;
-}
-
-private void addParts(Name to, Named at, Package remove, Bool skipFirst) on Compiler {
-	if (at is remove)
-		return;
-	if (at is named{core})
-		return;
-
-	// Don't include the root package either.
-	unless (parent = at.parent as Named)
-		return;
-
-	addParts(to, parent, remove, false);
-
-	Name[] params;
-	for (p in at.params) {
-		if (skipFirst) {
-			skipFirst = false;
-		} else {
-			if (t = p.type) {
-				Name n;
-				addParts(n, t, remove, false);
-				params << n;
-			}
-		}
-	}
-
-	RecPart p(at.name, params);
-	to.add(p);
 }
