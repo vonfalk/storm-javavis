@@ -174,9 +174,8 @@ namespace storm {
 		}
 
 		void LocalVar::addInfo(code::Listing *l, code::Var var) {
-			// TODO: We should likely support references as well...
-			if (!result.ref)
-				l->varInfo(var, new (this) code::Listing::VarInfo(name, result.type, pos));
+			if (result.type)
+				l->varInfo(var, new (this) code::Listing::VarInfo(name, result.type, result.ref, pos));
 		}
 
 

@@ -147,11 +147,14 @@ namespace code {
 			// Type of the variable.
 			Type *type;
 
+			// Reference?
+			Bool ref;
+
 			// Source location.
 			SrcPos pos;
 
 			// Create.
-			STORM_CTOR VarInfo(Str *name, Type *type, SrcPos pos);
+			STORM_CTOR VarInfo(Str *name, Type *type, Bool ref, SrcPos pos);
 
 			// Deep copy.
 			void STORM_FN deepCopy(CloneEnv *env);

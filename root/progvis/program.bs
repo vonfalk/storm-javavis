@@ -425,7 +425,7 @@ private void saveVariables(PatchParams to, Var[] vars, Var array, Var stackVar) 
 			// Ask if and how to save this variable.
 			if (to.codeHints.saveVariable(l, var, info, ptrRel(stackVar, Offset(sPtr)))) {
 				// Set 'name'.
-				l << mov(ptrRel(stackVar, Offset()), objPtr(info.name));
+				l << mov(ptrRel(stackVar), objPtr(info.name));
 
 				// Push it to the array!
 				Function push = named{Array<StackVar>:push<StackVar[], StackVar>};

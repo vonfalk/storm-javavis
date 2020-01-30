@@ -81,7 +81,8 @@ namespace storm {
 				// Add variable info. In the debug info, we always give the this
 				// variable. Otherwise, we would need additional temporary variables etc, which is
 				// not really worth the trouble.
-				Listing::VarInfo *info = new (this) Listing::VarInfo(normalName->name, params->at(0).type.type, pos);
+				Value thisVal = params->at(0).type;
+				Listing::VarInfo *info = new (this) Listing::VarInfo(normalName->name, thisVal.type, thisVal.ref, pos);
 				state->l->varInfo(thisVar, info);
 			}
 

@@ -75,9 +75,9 @@ class IntLiteral extends Expr {
 			CppVar var = allocType(gen, t);
 			var.adjust(gen, ptrA);
 			if (t is named{Int}) {
-				gen.l << mov(intRel(ptrA, Offset()), intConst(val.int));
+				gen.l << mov(intRel(ptrA), intConst(val.int));
 			} else if (t is named{Long}) {
-				gen.l << mov(longRel(ptrA, Offset()), longConst(val));
+				gen.l << mov(longRel(ptrA), longConst(val));
 			} else {
 				throw SyntaxError(pos, "Unknown type!");
 			}
@@ -426,7 +426,7 @@ private Operand paramCode(CodeGen gen, Expr actual, Value formal) on Compiler {
 		actual.code(gen, gr);
 
 		VarInfo tmpRef = gen.createVar(formal);
-		gen.l << lea(tmpRef.v, ptrRel(tmpV.v, Offset()));
+		gen.l << lea(tmpRef.v, ptrRel(tmpV.v));
 		tmpRef.created(gen);
 		tmpRef.v;
 	} else if (!formal.ref & result.ref) {
@@ -439,7 +439,7 @@ private Operand paramCode(CodeGen gen, Expr actual, Value formal) on Compiler {
 
 		Var v = gen.l.createVar(gen.block, formal.size());
 		gen.l << mov(ptrA, gr.location(gen));
-		gen.l << mov(v, xRel(v.size(), ptrA, Offset()));
+		gen.l << mov(v, xRel(v.size(), ptrA));
 		v;
 	} else {
 		CodeResult gr(formal, gen.block);
@@ -589,7 +589,7 @@ class DerefPtr extends Expr {
 			gen.l << mov(ptrA, p.location(gen));
 
 			// Load the base.
-			gen.l << mov(ptrB, ptrRel(ptrA, Offset()));
+			gen.l << mov(ptrB, ptrRel(ptrA));
 
 			// Add the offset.
 			gen.l << ucast(ptrC, intRel(ptrA, Offset(sPtr)));
@@ -602,7 +602,7 @@ class DerefPtr extends Expr {
 		} else if (res.type.isAsmType()) {
 			// Copy the value.
 			Var dst = res.location(gen);
-			gen.l << mov(dst, xRel(dst.size, ptrB, Offset()));
+			gen.l << mov(dst, xRel(dst.size, ptrB));
 		} else {
 			// Copy ctor.
 			gen.l << fnParam(ptrDesc, ptrA);

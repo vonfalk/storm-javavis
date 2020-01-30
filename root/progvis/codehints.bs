@@ -80,6 +80,10 @@ class DefaultCodeHints extends CodeHints {
 
 	// Save a variable.
 	Bool saveVariable(Listing to, Var var, Listing:VarInfo info, Operand dest) : override {
+		// We don't do references at the moment.
+		if (info.ref)
+			return false;
+
 		Type variant = named{Variant};
 		Value param(info.type);
 		SimplePart ctorName("__init", [Value(variant, true), param]);

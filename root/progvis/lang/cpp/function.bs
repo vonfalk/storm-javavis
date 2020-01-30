@@ -161,7 +161,7 @@ class FnRoot extends StmtBlock {
 				Size sz = param.type.size;
 				if (sz != Size()) {
 					gen.l << mov(ptrB, formal);
-					gen.l << mov(xRel(sz, ptrA, Offset()), xRel(sz, ptrB, Offset()));
+					gen.l << mov(xRel(sz, ptrA), xRel(sz, ptrB));
 				}
 			}
 

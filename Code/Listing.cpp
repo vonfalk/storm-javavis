@@ -112,8 +112,8 @@ namespace code {
 	 * Variable information.
 	 */
 
-	Listing::VarInfo::VarInfo(Str *name, Type *type, SrcPos pos)
-		: name(name), type(type), pos(pos) {}
+	Listing::VarInfo::VarInfo(Str *name, Type *type, Bool ref, SrcPos pos)
+		: name(name), type(type), ref(ref), pos(pos) {}
 
 	void Listing::VarInfo::deepCopy(CloneEnv *env) {
 		// No need.
