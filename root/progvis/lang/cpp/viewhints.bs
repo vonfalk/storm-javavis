@@ -1,0 +1,68 @@
+use core:lang;
+use core:asm;
+use progvis;
+
+/**
+ * View hints.
+ *
+ * Provides visualizations that are aware of pointers and references as C++ does them, and also show
+ * which objects are no longer reachable in the implementation.
+ */
+class CppViewHints extends progvis:ViewHints {
+	// Don't pause on function entry. We won't have set up our formal parameters by then...
+	Bool pauseOnEntry() : override { false; }
+
+	// Create element for visualization.
+	Data? createData(Workspace ws, TypeInfo info, unsafe:RawPtr base, Nat offset) {
+		if (info.isRef)
+			return null;
+		if (!info.isValue)
+			return null;
+
+		if (ptr = info.type as PtrType) {
+			return CppPointer();
+		}
+
+		null;
+	}
+
+	// Get a title for the type.
+	Str? typeTitle(Workspace ws, TypeInfo info) {
+		if (type = info.type as PtrType) {
+			if (t = type.params[0].type) {
+				TypeInfo info(t, true, false);
+
+				if (type.isRef)
+					return ws.typeTitle(info) + " &";
+				else
+					return ws.typeTitle(info) + " *";
+			}
+		}
+
+		null;
+	}
+}
+
+
+/**
+ * C++ pointers/references.
+ */
+class CppPointer extends Pointer {
+	void update(Workspace ws, unsafe:RawPtr object, Nat offset) : override {
+		if (!object.any) {
+			to = null;
+			return;
+		}
+
+		var base = object.readPtr(0);
+		if (!base.any) {
+			to = null;
+			return;
+		}
+
+		Nat ptrOffset = object.readNat(sPtr.current);
+		// We can't do anything with the offset at the moment.
+
+		to = ws.traverse(base);
+	}
+}

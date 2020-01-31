@@ -61,14 +61,3 @@ class CppCodeHints extends progvis:CodeHints {
 	}
 }
 
-
-/**
- * View hints.
- *
- * Provides visualizations that are aware of pointers and references as C++ does them, and also show
- * which objects are no longer reachable in the implementation.
- */
-class CppViewHints extends progvis:ViewHints {
-	// Don't pause on function entry. We won't have set up our formal parameters by then...
-	Bool pauseOnEntry() : override { false; }
-}
