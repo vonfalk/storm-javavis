@@ -42,11 +42,19 @@ int ptrs3() {
 	return p->sum();
 }
 
+int useNew() {
+	demo *d = new demo;
+	int *y = &d->y;
+	*y = 2;
+	return d->sum();
+}
+
 int main() {
 	demo d;
 	d.x = 8;
 	d.y = 10;
 
+	print(useNew());
 	print(test(2 + 3, 4));
 	print(d.result(1));
 	print(d.sum());

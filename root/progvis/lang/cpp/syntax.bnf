@@ -203,7 +203,7 @@ SOp3 => AddressOf(n) : "&", SOp3(block) n;
 SOp3 => operator(block, op, n) : "[!~]" @op, SOp3(block) n;
 SOp3 => operator(block, op, n) : "\+\+?" @op, SOp2(block) n;
 SOp3 => operator(block, op, n) : "--?" @op, SOp2(block) n;
-SOp3 : "new[ \t]" #keyword, SOp2(block) n;
+SOp3 => NewExpr(pos, type) : "new[ \t]" #keyword, STypeName(block.scope) type; // TODO: initializer syntax
 SOp3 : "delete[ \t]" #keyword, SOp2(block) n;
 SOp3 : "sizeof[ \t]" #keyword, SOp2(block) n;
 SOp3 : "(", STypeName, ")", SOp3; // C-style cast.

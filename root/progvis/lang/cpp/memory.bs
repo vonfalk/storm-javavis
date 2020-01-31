@@ -63,10 +63,10 @@ class CppVar on Compiler {
 		gen.l << add(dst, ptrConst(sPtr * 2));
 	}
 
-	// Put pointer data in ptrB (base) and ptrC (offset).
+	// Put pointer data in ptrB (base) and ecx (offset).
 	void ptr(CodeGen gen) {
 		gen.l << mov(ptrB, v);
-		gen.l << mov(ptrC, ptrConst(sPtr * 2));
+		gen.l << mov(ecx, natConst(sPtr * 2));
 	}
 }
 

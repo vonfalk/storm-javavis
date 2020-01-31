@@ -19,7 +19,7 @@ class Expr extends Stmt {
 		!r.nothing();
 	}
 
-	// Compute the result.
+	// Compute the type of the result.
 	ExprResult result() : abstract;
 
 	// Does this expression represent a temporary value? I.e. is this an r-value?
@@ -641,5 +641,64 @@ class DerefPtr extends Expr {
 		gen.l << fnParam(intDesc, intRel(ptrA, Offset(sPtr)));
 		gen.l << fnParam(intDesc, natConst(size));
 		gen.l << fnCall(checkFn.ref, false);
+	}
+}
+
+/**
+ * New operator.
+ */
+class NewExpr extends ExprRef {
+	init(SrcPos pos, Value type) {
+		init(pos) {
+			type = safeType(type, pos);
+		}
+	}
+
+	// Type to create.
+	Type type;
+
+	// Result type.
+	ExprResult result() : override {
+		wrapPtr(Value(type)).asRef();
+	}
+
+	// Generate code.
+	void code(CodeGen gen, CodeResult res) : override {
+		Type resultType = safeType(result.type, pos);
+
+		if (res.type.ref) {
+			CppVar var = allocType(gen, safeType(result.type, pos));
+			codeRef(gen, var);
+
+			var.adjust(gen, ptrA);
+			gen.l << mov(res.safeLocation(gen, Value(resultType, true)).v, ptrA);
+		} else {
+			var mem = doAlloc(gen);
+
+			gen.l << lea(ptrB, res.safeLocation(gen, Value(resultType)).v);
+			gen.l << mov(ptrRel(ptrB, Offset()), mem);
+			gen.l << mov(intRel(ptrB, Offset(sPtr)), natConst(sPtr * 2));
+		}
+	}
+
+	// Initialize another variable.
+	void codeRef(CodeGen gen, CppVar var) : override {
+		var mem = doAlloc(gen);
+		var.adjust(gen, ptrB);
+		gen.l << mov(ptrRel(ptrB, Offset()), mem);
+		gen.l << mov(intRel(ptrB, Offset(sPtr)), natConst(sPtr * 2));
+		var.created(gen);
+	}
+
+	// Create the allocation and initialize it.
+	private Operand doAlloc(CodeGen gen) {
+		// Allocate memory.
+		gen.l << fnParam(ptrDesc, type.typeRef);
+		gen.l << fnParam(ptrDesc, ptrConst(1));
+		gen.l << fnCall(ref(BuiltIn:allocArray), false, ptrDesc, ptrA);
+
+		// TODO: Run the constructor!
+
+		ptrA;
 	}
 }

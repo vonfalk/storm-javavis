@@ -64,7 +64,14 @@ class Program on Render {
 
 	// Run the function.
 	void run(Fn<void> fn) {
-		fn.call();
+		try {
+			fn.call();
+		} catch (ExitError e) {
+			// Just ignore it.
+		} catch (Exception e) {
+			// TODO: An output console would be nice!
+			print("Caught exception from the program: ${e}");
+		}
 	}
 
 	// Load source code.
