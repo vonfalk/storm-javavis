@@ -77,7 +77,7 @@ namespace storm {
 	}
 
 	void MapBase::toS(StrBuf *to) const {
-		*to << L"{";
+		*to << S("{");
 		bool first = true;
 
 		for (nat i = 0; i < capacity(); i++) {
@@ -85,15 +85,15 @@ namespace storm {
 				continue;
 
 			if (!first)
-				*to << L", ";
+				*to << S(", ");
 			first = false;
 
 			(*keyT.toSFn)(keyPtr(i), to);
-			*to << L" -> ";
+			*to << S(" -> ");
 			(*valT.toSFn)(valPtr(i), to);
 		}
 
-		*to << L"}";
+		*to << S("}");
 	}
 
 	nat MapBase::newHash(const void *key) {

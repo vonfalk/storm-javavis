@@ -206,15 +206,15 @@ namespace storm {
 	}
 
 	void ArrayBase::toS(StrBuf *to) const {
-		*to << L"[";
+		*to << S("[");
 		if (count() > 0)
 			(*handle.toSFn)(ptr(0), to);
 
 		for (nat i = 1; i < count(); i++) {
-			*to << L", ";
+			*to << S(", ");
 			(*handle.toSFn)(ptr(i), to);
 		}
-		*to << L"]";
+		*to << S("]");
 	}
 
 	void ArrayBase::pushRaw(const void *element) {

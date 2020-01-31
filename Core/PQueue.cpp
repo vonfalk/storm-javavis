@@ -108,15 +108,15 @@ namespace storm {
 	}
 
 	void PQueueBase::toS(StrBuf *to) const {
-		*to << L"PQ:{";
+		*to << S("PQ:{");
 		if (count() > 0)
 			(*handle.toSFn)(data->v, to);
 
 		for (nat i = 1; i < count(); i++) {
-			*to << L", ";
+			*to << S(", ");
 			(*handle.toSFn)(data->v + i*handle.size, to);
 		}
-		*to << L"}";
+		*to << S("}");
 	}
 
 }

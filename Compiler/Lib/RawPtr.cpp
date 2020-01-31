@@ -230,7 +230,7 @@ namespace storm {
 
 	void RawPtrType::modifyHandle(Handle *handle) {
 		// We're basically a pointer, so use location based hashes!
-		handle->locationHash = false;
+		handle->locationHash = true;
 	}
 
 }
