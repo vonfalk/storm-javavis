@@ -134,6 +134,8 @@ namespace storm {
 			throw new (this) InternalError(S("A BSRawFn can not be used without overriding 'createBody' or 'createRawBody'!"));
 		}
 
+		void BSRawFn::clearBody() {}
+
 		CodeGen *BSRawFn::createRawBody() {
 			FnBody *body = createBody();
 
@@ -184,6 +186,10 @@ namespace storm {
 
 			// PLN(bodyExpr);
 			// PLN(identifier() << L": " << l);
+
+			// Only dispose it now, when we know we're done (in theory, the backend could fail, but
+			// this is generally good enough).
+			clearBody();
 			return state;
 		}
 
@@ -253,12 +259,14 @@ namespace storm {
 
 		bs::FnBody *BSFunction::createBody() {
 			if (!body)
-				throw new (this) InternalError(S("Multiple compilation of a function!"));
+				throw new (this) InternalError(TO_S(this, S("Multiple compilation of ") << identifier()));
 
 			FnBody *result = syntax::transformNode<FnBody, BSFunction *>(body, this);
-			// We don't need to keep it around anymore.
-			body = null;
 			return result;
+		}
+
+		void BSFunction::clearBody() {
+			body = null;
 		}
 
 		Bool BSFunction::update(Array<ValParam> *params, syntax::Node *node, SrcPos pos) {
@@ -313,9 +321,11 @@ namespace storm {
 				throw new (this) RuntimeError(msg);
 			}
 
-			FnBody *result = root;
+			return root;
+		}
+
+		void BSTreeFn::clearBody() {
 			root = null;
-			return result;
 		}
 
 

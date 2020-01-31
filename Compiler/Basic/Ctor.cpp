@@ -100,12 +100,15 @@ namespace storm {
 
 			// PLN(identifier() << L": " << l);
 			// PLN(engine().arena()->transform(l, null));
+			clearBody();
 			return state;
 		}
 
 		CtorBody *BSRawCtor::createBody() {
 			throw new (this) InternalError(S("A BSRawCtor can not be used without overriding 'createBody'!"));
 		}
+
+		void BSRawCtor::clearBody() {}
 
 		LocalVar *BSRawCtor::addParams(Block *to) {
 			LocalVar *thread = 0;
@@ -134,9 +137,11 @@ namespace storm {
 			if (!body)
 				return defaultParse();
 
-			CtorBody *result = syntax::transformNode<CtorBody, BSCtor *>(body, this);
+			return syntax::transformNode<CtorBody, BSCtor *>(body, this);
+		}
+
+		void BSCtor::clearBody() {
 			body = null;
-			return result;
 		}
 
 		CtorBody *BSCtor::defaultParse() {
@@ -167,9 +172,11 @@ namespace storm {
 				throw new (this) RuntimeError(msg);
 			}
 
-			CtorBody *result = root;
+			return root;
+		}
+
+		void BSTreeCtor::clearBody() {
 			root = null;
-			return result;
 		}
 
 

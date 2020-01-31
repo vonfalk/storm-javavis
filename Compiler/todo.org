@@ -57,9 +57,12 @@
     but the scale of the issue should be assessed first.
   - [ ] Parsing core.lang.syntax.bnf takes about 80 ms, which is a bit on the high end when compiling code...
 
-* Loose ends so far [50/87]
+* Loose ends so far [50/89]
   - [ ] We want to allocate threads in some kind of pool. since the minimum alignment for VirtualAlloc on Windows
     is 64k, we might waste quite a lot of memory when allocating small stacks.
+  - [ ] Implement 'clearBody' in all classes that implement 'createBody'.
+  - [ ] It is currently possible to crash the system by attempting to call (e.g. using the pointer() function)
+    a function that has not been given any Code(). This should perhaps raise an exception or something similar.
   - [ ] A new thread association for Actors would be useful. In many cases inside libraries, we want to be
     able to provide some object that is able to execute on any thread, yet have the semantics of an actor,
     since copying does not really make sense (e.g. ui.Painter, util.FileStream). Here, we would like to say:

@@ -34,8 +34,12 @@ namespace storm {
 			// Add parameters. Returns the local variable that represents the 'threadParam' above if needed.
 			LocalVar *addParams(Block *to);
 
-			// Create the body.
+			// Create the body. Expected to work until 'clearBody' is called.
 			virtual CtorBody *STORM_FN createBody();
+
+			// Called when we know we don't need the body anymore, i.e. 'createBody' may stop
+			// returning sensible results.
+			virtual void STORM_FN clearBody();
 
 		protected:
 			// Re-compile at next execution.
@@ -70,6 +74,7 @@ namespace storm {
 
 			// Create the body.
 			virtual CtorBody *STORM_FN createBody();
+			virtual void STORM_FN clearBody();
 
 		private:
 			// Default ctor body.
@@ -91,6 +96,7 @@ namespace storm {
 
 			// Create the body.
 			virtual CtorBody *STORM_FN createBody();
+			virtual void STORM_FN clearBody();
 
 		private:
 			// Body.

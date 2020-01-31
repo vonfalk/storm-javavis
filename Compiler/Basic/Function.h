@@ -82,9 +82,13 @@ namespace storm {
 			// first time, and before someone else start depending on this function.
 			void STORM_FN thread(Scope scope, SrcName *name);
 
-			// Override this to create the syntax tree to compile.
+			// Override this to create the syntax tree to compile. Expected to work until 'clearBody' is called.
 			// TODO: Mark as abstract.
 			virtual FnBody *STORM_FN createBody();
+
+			// Called when we know we don't need the body anymore, i.e. 'createBody' may stop
+			// returning sensible results.
+			virtual void STORM_FN clearBody();
 
 			// Make this function static by removing the 'this' parameter. Only do this before the
 			// function is added to the name tree!
@@ -133,6 +137,7 @@ namespace storm {
 
 			// Create the body from our string.
 			virtual FnBody *STORM_FN createBody();
+			virtual void STORM_FN clearBody();
 
 			// Temporary solution for updating a function.
 			Bool STORM_FN update(Array<ValParam> *params, syntax::Node *body, SrcPos pos);
@@ -156,6 +161,7 @@ namespace storm {
 
 			// Override to use the body.
 			virtual FnBody *STORM_FN createBody();
+			virtual void STORM_FN clearBody();
 
 		private:
 			// Body.
