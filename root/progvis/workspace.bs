@@ -253,9 +253,13 @@ private:
 	// Create a new node for an object. Called by 'traverse'.
 	public Data createData(unsafe:RawPtr object) {
 		if (t = object.type) {
-			createComposite(t, object, 0);
+			TypeInfo info(t, true, false);
+			Data d = createData(info, object, 0);
+			if (d as DataWithCaption)
+				return d;
+			addTitle(d, info);
 		} else {
-			UnknownData();
+			DataWithCaption(UnknownData(), "?");
 		}
 	}
 
@@ -276,49 +280,30 @@ private:
 
 	// Create a new node for some object that is a part of another object.
 	public Data createData(TypeInfo info, unsafe:RawPtr object, Nat offset) {
-		if (info.isRef | !info.isValue) {
-			return Pointer();
-		} else if (c = convertPrimitive(info.type, object, offset)) {
-			return Primitive(info.type, c);
-		} else {
-			return createComposite(info.type, object, offset);
-		}
-	}
-
-	// Create a new node for a composite object.
-	Data createComposite(core:lang:Type type, unsafe:RawPtr object, Nat offset) {
-		if (type as core:lang:ArrayType) {
-			return createArray(type, object, offset);
+		for (h in hints) {
+			if (d = h.createData(this, info, object, offset)) {
+				if (d as Composite) {
+					return addTitle(d, info);
+				} else {
+					return d;
+				}
+			}
 		}
 
-		var members = findMembers(type);
-		if (members.empty)
-			return UnknownData();
+		return UnknownData();
+	}
 
-		Composite result;
-		members.sort((x, y) => x.offset < y.offset);
-		for (m in members) {
-			result.add(m.name, m.offset, createData(m.type, object, offset + m.offset), m.first);
+	Data addTitle(Data d, TypeInfo info) {
+		DataWithCaption(d, typeTitle(info));
+	}
+
+	// Compute a title for a Type.
+	public Str typeTitle(TypeInfo type) {
+		for (h in hints) {
+			if (r = h.typeTitle(this, type))
+				return r;
 		}
 
-		DataWithCaption(result, typeTitle(type));
+		"?";
 	}
-
-	// Create a new node for an array.
-	Data createArray(core:lang:ArrayType type, unsafe:RawPtr object, Nat offset) {
-		if (t = type.param.type) {
-			DataWithCaption(ArrayData(t), typeTitle(type));
-		} else {
-			UnknownData();
-		}
-	}
-}
-
-private Str typeTitle(core:lang:Type type) on Compiler {
-	if (type as core:lang:ArrayType) {
-		if (t = type.param.type)
-			return typeTitle(t) + "[]";
-	}
-
-	type.name;
 }

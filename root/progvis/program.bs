@@ -70,7 +70,7 @@ class Program on Render {
 			// Just ignore it.
 		} catch (Exception e) {
 			// TODO: An output console would be nice!
-			print("Caught exception from the program: ${e}");
+			print("Caught exception from the program:\n${e}");
 		}
 	}
 
