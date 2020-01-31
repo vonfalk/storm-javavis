@@ -19,6 +19,9 @@ class Data extends Drawable {
 
 	// Update the contents of the visualization from the actual data.
 	void update(Workspace work, unsafe:RawPtr object, Nat offset) : abstract;
+
+	// Find a particular offset inside this data.
+	Data findOffset(Nat offset) { this; }
 }
 
 /**
@@ -62,6 +65,10 @@ class DataWithCaption extends Data {
 
 	void update(Workspace work, unsafe:RawPtr object, Nat offset) : override {
 		wrap.update(work, object, offset);
+	}
+
+	Data findOffset(Nat offset) : override {
+		wrap.findOffset(offset);
 	}
 
 	// Return the sub-drawable if the click is there.
@@ -166,6 +173,7 @@ class Primitive extends Data {
  * A pointer type, referring to some other data.
  */
 class Pointer extends Data {
+	// Object we're pointing to.
 	protected Data? to;
 
 	init() {
@@ -195,7 +203,7 @@ class Pointer extends Data {
 	void update(Workspace work, unsafe:RawPtr object, Nat offset) : override {
 		var ptr = object.readPtr(offset);
 		if (ptr.any) {
-			to = work.traverse(ptr);
+			to = work.traverse(ptr).findOffset(0);
 		} else {
 			to = null;
 		}
@@ -209,7 +217,7 @@ class Pointer extends Data {
 class StackPointer extends Pointer {
 	void update(Workspace work, unsafe:RawPtr object, Nat offset) : override {
 		if (object.any) {
-			to = work.traverse(object);
+			to = work.traverse(object).findOffset(0);
 		} else {
 			to = null;
 		}
@@ -268,6 +276,23 @@ class Composite extends Data {
 		}
 
 		invalidateSize();
+	}
+
+	Data findOffset(Nat offset) : override {
+		if (offset == 0)
+			return this;
+		if (content.empty)
+			return this;
+
+		for (Nat i = 1; i < content.count; i++) {
+			if (content[i].offset > offset) {
+				var found = content[i - 1];
+				return found.value.findOffset(offset - found.offset);
+			}
+		}
+
+		var found = content.last;
+		return found.value.findOffset(offset - found.offset);
 	}
 
 private:

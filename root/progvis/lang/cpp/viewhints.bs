@@ -54,15 +54,15 @@ class CppPointer extends Pointer {
 			return;
 		}
 
-		var base = object.readPtr(0);
+		var base = object.readPtr(offset);
 		if (!base.any) {
 			to = null;
 			return;
 		}
 
-		Nat ptrOffset = object.readNat(sPtr.current);
-		// We can't do anything with the offset at the moment.
+		Nat ptrOffset = object.readNat(offset + sPtr.current) - 2*sPtr.current;
 
-		to = ws.traverse(base);
+		Data baseData = ws.traverse(base);
+		to = baseData.findOffset(ptrOffset);
 	}
 }
