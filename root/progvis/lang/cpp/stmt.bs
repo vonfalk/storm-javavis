@@ -142,12 +142,19 @@ class StmtBlock extends Block {
 	Bool blockCode(CodeGen gen) {
 		for (s in content) {
 			if (s as StmtBlock) {
+				if (!s.code(gen))
+					return false;
 			} else {
 				gen.l << location(s.pos);
-			}
 
-			if (!s.code(gen))
-				return false;
+				CodeGen child = gen.child();
+				gen.l << begin(child.block);
+
+				if (!s.code(child))
+					return false;
+
+				gen.l << end(child.block);
+			}
 		}
 
 		gen.l << location(pos.lastCh);

@@ -30,6 +30,9 @@ class LocalVar extends Named {
 	// The variable. Created during code generation.
 	CppVar var;
 
+	// Block to notify. Updated during code generation.
+	Block? notify;
+
 	// Create the variable. OK to call twice.
 	void create(CodeGen gen) {
 		if (var.v == Var()) {
@@ -140,7 +143,6 @@ class VarDecl extends Stmt {
 
 	// Generate code.
 	Bool code(CodeGen gen) : override {
-		var.create(gen);
 		if (initExpr) {
 			initExpr.codeRef(gen, var.var);
 		} else {
