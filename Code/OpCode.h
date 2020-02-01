@@ -81,6 +81,9 @@ namespace code {
 			beginBlock,
 			endBlock,
 
+			// Variable activation.
+			activate,
+
 			// Make the next memory operation work on the thread local storage.
 			threadLocal,
 

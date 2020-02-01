@@ -425,8 +425,8 @@ namespace code {
 			}
 		}
 
-		static Block copyComplex(Listing *dest, RegSet *used, Array<ParamInfo> *params, Part currentPart) {
-			Block block = dest->createBlock(currentPart);
+		static Block copyComplex(Listing *dest, RegSet *used, Array<ParamInfo> *params, Block currentBlock) {
+			Block block = dest->createBlock(currentBlock);
 			Array<Var> *copies = new (dest->engine()) Array<Var>(params->count(), Var());
 
 			if (used->has(ptrA)) {
@@ -441,13 +441,11 @@ namespace code {
 			// Find registers we need to preserve while calling constructors.
 			preserveComplex(dest, used, block, params);
 
-			Part part = block;
 			for (Nat i = 0; i < params->count(); i++) {
 				ParamInfo &param = params->at(i);
 
 				if (ComplexDesc *c = as<ComplexDesc>(param.type)) {
-					part = dest->createPart(part);
-					Var v = dest->createVar(part, c);
+					Var v = dest->createVar(block, c, freeInactive);
 					copies->at(i) = v;
 
 					// Call the copy constructor.
@@ -460,7 +458,7 @@ namespace code {
 						assert(false, L"Can not use the 'lea'-mode for complex parameters.");
 					}
 					*dest << call(c->ctor, Size());
-					*dest << begin(part);
+					*dest << activate(v);
 
 					// Modify the parameter so that we use the newly created parameter.
 					param.src = v;
@@ -497,7 +495,7 @@ namespace code {
 		 */
 
 		void emitFnCall(Listing *dest, Operand toCall, Operand resultPos, TypeDesc *resultType,
-						Bool resultRef, Part currentPart, RegSet *used, Array<ParamInfo> *params) {
+						Bool resultRef, Block currentBlock, RegSet *used, Array<ParamInfo> *params) {
 
 			Engine &e = dest->engine();
 			Block block;
@@ -523,7 +521,7 @@ namespace code {
 
 			// Create copies of complex parameters (inside a block) if needed.
 			if (complex)
-				block = copyComplex(dest, used, params, currentPart);
+				block = copyComplex(dest, used, params, currentBlock);
 
 			// Do we need a hidden parameter?
 			if (resultLayout->memory) {

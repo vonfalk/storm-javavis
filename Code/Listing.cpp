@@ -28,25 +28,31 @@ namespace code {
 		else
 			to << L", by value";
 
+		if (o & freeInactive)
+			to << L", needs activation";
+
 		return to;
 	}
 
 	StrBuf &operator <<(StrBuf &to, FreeOpt o) {
 		if ((o & freeOnBoth) == freeOnBoth) {
-			to << L"always";
+			to << S("always");
 		} else if (o & freeOnBlockExit) {
-			to << L"on block exit";
+			to << S("on block exit");
 		} else if (o & freeOnException) {
-			to << L"on exception";
+			to << S("on exception");
 		} else {
-			to << L"never";
+			to << S("never");
 			return to;
 		}
 
 		if (o & freePtr)
-			to << L", by ptr";
+			to << S(", by ptr");
 		else
-			to << L", by value";
+			to << S(", by value");
+
+		if (o & freeInactive)
+			to << S(", needs activation");
 
 		return to;
 	}
@@ -123,24 +129,19 @@ namespace code {
 	}
 
 	Listing::IBlock::IBlock(Engine &e)
-		: parent(Block().id), parts(new (e) Array<Nat>()), catchInfo(null) {}
+		: parent(Block().id), vars(new (e) Array<Nat>()), catchInfo(null) {}
 
 	Listing::IBlock::IBlock(Engine &e, Nat parent)
-		: parent(parent), parts(new (e) Array<Nat>()), catchInfo(null) {}
+		: parent(parent), vars(new (e) Array<Nat>()), catchInfo(null) {}
 
 	void Listing::IBlock::deepCopy(CloneEnv *env) {
-		parts = new (parts) Array<Nat>(*parts);
+		vars = new (vars) Array<Nat>(*vars);
 		if (catchInfo) {
 			// No need for recursive deep copies.
 			catchInfo = new (catchInfo) Array<CatchInfo>(*catchInfo);
 		}
 	}
 
-	Listing::IPart::IPart(Engine &e, Nat block, Nat id) : vars(new (e) Array<Nat>()), block(block), index(id) {}
-
-	void Listing::IPart::deepCopy(CloneEnv *env) {
-		vars = new (vars) Array<Nat>(*vars);
-	}
 
 	/**
 	 * Listing.
@@ -169,17 +170,13 @@ namespace code {
 		this->params = new (this) Array<Nat>();
 		this->vars = new (this) Array<IVar>();
 		this->blocks = new (this) Array<IBlock>();
-		this->parts = new (this) Array<IPart>();
 		this->ehClean = false;
 		this->ehCatch = false;
 		this->member = member;
 		this->result = result;
 
 		// Create the root block.
-		IBlock root(engine());
-		root.parts->push(0);
-		blocks->push(root);
-		parts->push(IPart(engine(), 0, 0));
+		blocks->push(IBlock(engine()));
 	}
 
 	Listing::Listing(const Listing &o) :
@@ -191,7 +188,6 @@ namespace code {
 		params(o.params),
 		vars(o.vars),
 		blocks(o.blocks),
-		parts(o.parts),
 		ehClean(o.ehClean),
 		ehCatch(o.ehCatch) {
 
@@ -212,8 +208,6 @@ namespace code {
 		vars->deepCopy(env);
 		blocks = new (this) Array<IBlock>(*blocks);
 		blocks->deepCopy(env);
-		parts = new (this) Array<IPart>(*parts);
-		parts->deepCopy(env);
 	}
 
 	Listing *Listing::createShell() const {
@@ -231,21 +225,11 @@ namespace code {
 		shell->params = new (this) Array<Nat>(*params);
 		shell->vars = new (this) Array<IVar>(*vars);
 		shell->blocks = new (this) Array<IBlock>(*blocks);
-		shell->parts = new (this) Array<IPart>(*parts);
 		shell->ehClean = ehClean;
 		shell->ehCatch = ehCatch;
 
-		// Note: we're doing this the hard way since deepCopy did not work properly at the time this
-		// was written.
-		CloneEnv *env = new (this) CloneEnv();
-		for (nat i = 0; i < shell->vars->count(); i++)
-			shell->vars->at(i).deepCopy(env);
-
-		for (nat i = 0; i < shell->blocks->count(); i++)
-			shell->blocks->at(i).deepCopy(env);
-
-		for (nat i = 0; i < shell->parts->count(); i++)
-			shell->parts->at(i).deepCopy(env);
+		// Make sure we make recursive copies.
+		shell->deepCopy(new (this) CloneEnv());
 
 		return shell;
 	}
@@ -290,32 +274,13 @@ namespace code {
 		return Block(0);
 	}
 
-	Block Listing::createBlock(Part parent) {
-		if (parent.id >= parts->count())
+	Block Listing::createBlock(Block parent) {
+		if (parent.id >= blocks->count())
 			return Block();
 
 		Nat blockId = blocks->count();
-
-		IBlock b(engine(), parent.id);
-		b.parts->push(parts->count());
-		blocks->push(b);
-
-		Nat partId = parts->count();
-		parts->push(IPart(engine(), blockId, 0));
-
-		return Block(partId);
-	}
-
-	Part Listing::createPart(Part in) {
-		if (in.id >= parts->count())
-			return Part(invalid);
-
-		Nat blockId = findBlock(in.id);
-		IBlock &block = blocks->at(blockId);
-		Nat id = parts->count();
-		parts->push(IPart(engine(), blockId, block.parts->count()));
-		block.parts->push(id);
-		return Part(id);
+		blocks->push(IBlock(engine(), parent.id));
+		return Block(blockId);
 	}
 
 	Nat Listing::findId(Array<Nat> *in, Nat val) {
@@ -329,17 +294,6 @@ namespace code {
 		return Var(index, vars->at(index).size);
 	}
 
-	Part Listing::next(Part p) const {
-		if (p.id >= parts->count())
-			return Part(invalid);
-
-		IPart &part = parts->at(p.id);
-		IBlock &block = blocks->at(part.block);
-		if (part.index + 1 >= block.parts->count())
-			return Part(invalid);
-		return Part(block.parts->at(part.index + 1));
-	}
-
 	Var Listing::prev(Var v) const {
 		if (v.id >= vars->count())
 			return Var();
@@ -351,106 +305,32 @@ namespace code {
 				return createVar(params->at(id - 1));
 			else
 				return Var();
-		} else {
-			// Must be a variable somewhere.
-			IVar &var = vars->at(v.id);
-			IPart &part = parts->at(var.parent);
-
-			Nat id = findId(part.vars, v.id);
-			if (id > 0) {
-				// Previous variable in here!
-				assert(id < part.vars->count());
-				return createVar(part.vars->at(id - 1));
-			} else {
-				// We need to find a part with variables in it!
-				for (Part at = prevStored(Part(var.parent)); at != Part(); at = prevStored(at)) {
-					IPart &now = parts->at(at.id);
-					if (now.vars->any())
-						return createVar(now.vars->last());
-				}
-
-				// None found. Try parameters:
-				if (params->any())
-					return createVar(params->last());
-
-				// Nope. No more candidates then!
-				return Var();
-			}
 		}
-	}
 
-	Part Listing::prev(Part p) const {
-		if (p.id >= parts->count())
-			return Part(invalid);
+		// Must be a variable somewhere.
+		IVar &var = vars->at(v.id);
+		IBlock &block = blocks->at(var.parent);
 
-		IPart &part = parts->at(p.id);
-		IBlock &block = blocks->at(part.block);
-		if (part.index < 1) {
-			// Find the last one in our parent block (if any).
-			if (block.parent >= parts->count())
-				return Part(invalid);
-
-			return Part(block.parent);
+		Nat id = findId(block.vars, v.id);
+		if (id > 0) {
+			// Previous variable in here!
+			assert(id < block.vars->count());
+			return createVar(block.vars->at(id - 1));
 		}
-		return Part(block.parts->at(part.index - 1));
-	}
 
-	Part Listing::prevStored(Part p) const {
-		if (p.id >= parts->count())
-			return Part(invalid);
-
-		IPart &part = parts->at(p.id);
-		IBlock &block = blocks->at(part.block);
-		if (part.index < 1) {
-			// Find the last one in our parent block (if any).
-			if (block.parent >= parts->count())
-				return Part(invalid);
-
-			return last(Part(block.parent));
+		// We need to find a block with variables in it!
+		for (Block at = Block(block.parent); at != Block(); at = parent(at)) {
+			IBlock &now = blocks->at(at.id);
+			if (now.vars->any())
+				return createVar(now.vars->last());
 		}
-		return Part(block.parts->at(part.index - 1));
-	}
 
-	Part Listing::last(Part p) const {
-		if (p.id >= parts->count())
-			return Part(invalid);
+		// None found. Try parameters:
+		if (params->any())
+			return createVar(params->last());
 
-		IBlock &block = blocks->at(findBlock(p.id));
-		return Part(block.parts->last());
-	}
-
-	Block Listing::first(Part p) const {
-		if (p.id >= parts->count())
-			return Block(invalid);
-
-		IBlock &block = blocks->at(findBlock(p.id));
-		return Block(block.parts->first());
-	}
-
-	void Listing::delay(Var v, Part to) {
-		if (v.id >= vars->count())
-			return;
-		if (to.id >= parts->count())
-			return;
-
-		// See if it is possible...
-		Part from = parent(v);
-		if (first(from) != first(to))
-			throw new (this) InvalidValue(S("Can only delay within the same block."));
-
-		IPart &fromI = parts->at(from.id);
-		IPart &toI = parts->at(to.id);
-		IVar &varI = vars->at(v.id);
-
-		if (varI.param)
-			throw new (this) InvalidValue(S("Can not delay parameters!"));
-
-		Nat index = findId(fromI.vars, v.id);
-		assert(index < fromI.vars->count());
-		fromI.vars->remove(index);
-
-		varI.parent = to.id;
-		toI.vars->push(v.id);
+		// Nope. No more candidates then!
+		return Var();
 	}
 
 	void Listing::moveParam(Var v, Nat to) {
@@ -469,26 +349,25 @@ namespace code {
 		params->insert(to, v.id);
 	}
 
-	Part Listing::parent(Part p) const {
-		if (p.id >= parts->count())
-			return Part(invalid);
+	Block Listing::parent(Block b) const {
+		if (b.id >= blocks->count())
+			return Block();
 
-		IPart &part = parts->at(p.id);
-		IBlock &block = blocks->at(part.block);
-		return Part(block.parent);
+		IBlock &block = blocks->at(b.id);
+		return Block(block.parent);
 	}
 
-	Part Listing::parent(Var v) const {
+	Block Listing::parent(Var v) const {
 		if (v.id >= vars->count())
-			return Part(invalid);
+			return Block();
 
-		return Part(vars->at(v.id).parent);
+		return Block(vars->at(v.id).parent);
 	}
 
-	Bool Listing::accessible(Var v, Part p) const {
+	Bool Listing::accessible(Var v, Block b) const {
 		if (v.id >= vars->count())
 			return false;
-		if (p.id >= parts->count())
+		if (b.id >= blocks->count())
 			return false;
 
 		// Parameters are always visible.
@@ -496,19 +375,17 @@ namespace code {
 			return true;
 
 		IVar &var = vars->at(v.id);
-		return isParent(first(Part(var.parent)), p);
+		return isParent(Block(var.parent), b);
 	}
 
-	Bool Listing::isParent(Block parent, Part q) const {
-		if (parent.id >= parts->count())
+	Bool Listing::isParent(Block parent, Block q) const {
+		if (parent.id >= blocks->count())
 			return false;
-		if (q.id >= parts->count())
+		if (q.id >= blocks->count())
 			return false;
 
-		Nat target = findBlock(parent.id);
-
-		for (Nat current = findBlock(q.id); current != invalid; current = findBlock(blocks->at(current).parent)) {
-			if (current == target)
+		for (Block at = q; at != Block(); at = this->parent(at)) {
+			if (at == parent)
 				return true;
 		}
 
@@ -575,8 +452,9 @@ namespace code {
 		return false;
 	}
 
-	Var Listing::createVar(Part in, Size size, Operand free, FreeOpt when) {
-		assert(in.id != invalid, L"No such part!");
+	Var Listing::createVar(Block in, Size size, Operand free, FreeOpt when) {
+		if (in.id >= blocks->count())
+			return Var();
 
 		if (checkFree(engine(), free, when))
 			ehClean = true;
@@ -584,17 +462,17 @@ namespace code {
 		Nat id = vars->count();
 		vars->push(IVar(in.id, size, null, free, when));
 
-		IPart &part = parts->at(in.id);
-		part.vars->push(id);
+		IBlock &block = blocks->at(in.id);
+		block.vars->push(id);
 
 		return Var(id, size);
 	}
 
-	Var Listing::createVar(Part in, TypeDesc *type) {
+	Var Listing::createVar(Block in, TypeDesc *type) {
 		return createVar(in, type, freeDef);
 	}
 
-	Var Listing::createVar(Part in, TypeDesc *type, FreeOpt when) {
+	Var Listing::createVar(Block in, TypeDesc *type, FreeOpt when) {
 		if (ComplexDesc *c = as<ComplexDesc>(type)) {
 			return createVar(in, type->size(), c->dtor, when | freePtr);
 		} else {
@@ -629,32 +507,18 @@ namespace code {
 		return Var(id, type->size());
 	}
 
-	Nat Listing::findBlock(Nat partId) const {
-		if (partId == invalid)
-			return invalid;
-
-		IPart &p = parts->at(partId);
-		return p.block;
-	}
-
 	Array<Block> *Listing::allBlocks() const {
 		Array<Block> *r = new (this) Array<Block>();
-		for (nat i = 0; i < blocks->count(); i++) {
-			IBlock &b = blocks->at(i);
-			r->push(Block(b.parts->first()));
+		r->reserve(blocks->count());
+		for (Nat i = 0; i < blocks->count(); i++) {
+			r->push(Block(i));
 		}
-		return r;
-	}
-
-	Array<Part> *Listing::allParts() const {
-		Array<Part> *r = new (this) Array<Part>();
-		for (nat i = 0; i < parts->count(); i++)
-			r->push(Part(i));
 		return r;
 	}
 
 	Array<Var> *Listing::allVars() const {
 		Array<Var> *r = new (this) Array<Var>();
+		r->reserve(vars->count());
 		for (nat i = 0; i < vars->count(); i++)
 			r->push(createVar(i));
 		return r;
@@ -662,30 +526,13 @@ namespace code {
 
 	Array<Var> *Listing::allVars(Block b) const {
 		Array<Var> *r = new (this) Array<Var>();
-		if (b.id >= parts->count())
+		if (b.id >= blocks->count())
 			return r;
 
-		for (Part p = b; p != Part(); p = next(p)) {
-			IPart &part = parts->at(p.id);
-			for (nat i = 0; i < part.vars->count(); i++)
-				r->push(createVar(part.vars->at(i)));
-		}
-		return r;
-	}
-
-	Array<Var> *Listing::partVars(Part p) const {
-		Array<Var> *r = new (this) Array<Var>();
-		if (p.id >= parts->count())
-			return r;
-
-		IPart &part = parts->at(p.id);
-		for (nat i = 0; i < part.vars->count(); i++)
-			r->push(createVar(part.vars->at(i)));
-
-		if (p == root()) {
-			for (nat i = 0; i < params->count(); i++)
-				r->push(createVar(params->at(i)));
-		}
+		IBlock &block = blocks->at(b.id);
+		r->reserve(block.vars->count());
+		for (Nat i = 0; i < block.vars->count(); i++)
+			r->push(createVar(block.vars->at(i)));
 
 		return r;
 	}
@@ -700,11 +547,10 @@ namespace code {
 	Listing::CatchInfo::CatchInfo(Type *type, Label resume) : type(type), resume(resume) {}
 
 	void Listing::addCatch(Block block, CatchInfo add) {
-		Nat bId = findBlock(block.id);
-		if (bId == invalid)
+		if (block.id >= blocks->count())
 			return;
 
-		Array<CatchInfo> *&info = blocks->at(bId).catchInfo;
+		Array<CatchInfo> *&info = blocks->at(block.id).catchInfo;
 		if (!info)
 			info = new (this) Array<CatchInfo>();
 		info->push(add);
@@ -717,11 +563,10 @@ namespace code {
 	}
 
 	MAYBE(Array<Listing::CatchInfo> *) Listing::catchInfo(Block block) const {
-		Nat bId = findBlock(block.id);
-		if (bId == invalid)
+		if (block.id >= blocks->count())
 			return null;
 
-		return blocks->at(bId).catchInfo;
+		return blocks->at(block.id).catchInfo;
 	}
 
 	static Str *toS(Engine &e, Array<Label> *l) {
@@ -769,8 +614,7 @@ namespace code {
 		{
 			storm::Indent z(&to);
 
-			Nat blockId = findBlock(block);
-			IBlock &b = blocks->at(blockId);
+			IBlock &b = blocks->at(block);
 
 			if (b.catchInfo) {
 				for (nat i = 0; i < b.catchInfo->count(); i++) {
@@ -779,29 +623,18 @@ namespace code {
 				}
 			}
 
-			for (nat i = 0; i < b.parts->count(); i++) {
-				putPart(to, b.parts->at(i), i != 0);
+			for (Nat i = 0; i < b.vars->count(); i++) {
+				putVar(to, b.vars->at(i));
 			}
+
+			// Find and print all children.
+			for (Nat i = 0; i < blocks->count(); i++) {
+				if (blocks->at(i).parent == block)
+					putBlock(to, i);
+			}
+
 		}
 		to << L"}\n";
-	}
-
-	void Listing::putPart(StrBuf &to, Nat part, Bool header) const {
-		if (header) {
-			to << L"Part " << part << L":\n";
-		}
-
-		IPart &p = parts->at(part);
-		for (nat i = 0; i < p.vars->count(); i++) {
-			putVar(to, p.vars->at(i));
-		}
-
-		// Output all blocks in here as well.
-		for (nat i = 0; i < blocks->count(); i++) {
-			IBlock &block = blocks->at(i);
-			if (block.parent == part)
-				putBlock(to, block.parts->at(0));
-		}
 	}
 
 	void Listing::putVar(StrBuf &to, Nat var) const {

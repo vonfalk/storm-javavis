@@ -112,8 +112,8 @@ namespace code {
 				return src;
 
 			Var v = src.var();
-			if (!listing->accessible(v, part))
-				throw new (this) VariableUseError(v, part);
+			if (!listing->accessible(v, block))
+				throw new (this) VariableUseError(v, block);
 			return xRel(src.size(), ptrFrame, layout->at(v.key()) + src.offset());
 		}
 
@@ -142,31 +142,28 @@ namespace code {
 			}
 		}
 
-		void LayoutVars::initPart(Listing *dest, Part init) {
-			if (part != dest->prev(init)) {
+		void LayoutVars::initBlock(Listing *dest, Block init) {
+			if (block != dest->parent(init)) {
 				Str *msg = TO_S(engine(), S("Can not begin ") << init << S(" unless the current is ")
-								<< dest->prev(init) << S(". Current is ") << part);
+								<< dest->parent(init) << S(". Current is ") << block);
 				throw new (this) BlockBeginError(msg);
 			}
 
-			part = init;
+			block = init;
 
-			Block b = dest->first(part);
-			if (Part(b) == part) {
-				bool initEax = true;
+			bool initEax = true;
 
-				Array<Var> *vars = dest->allVars(b);
-				// Go in reverse to make linear accesses in memory when we're using big variables.
-				for (nat i = vars->count(); i > 0; i--) {
-					Var v = vars->at(i - 1);
+			Array<Var> *vars = dest->allVars(init);
+			// Go in reverse to make linear accesses in memory when we're using big variables.
+			for (nat i = vars->count(); i > 0; i--) {
+				Var v = vars->at(i - 1);
 
-					if (!dest->isParam(v))
-						zeroVar(dest, layout->at(v.key()), v.size(), initEax);
-				}
+				if (!dest->isParam(v))
+					zeroVar(dest, layout->at(v.key()), v.size(), initEax);
 			}
 
 			if (usingEH)
-				*dest << mov(intRel(ptrFrame, partId), natConst(part.key()));
+				*dest << mov(intRel(ptrFrame, blockId), natConst(block.key()));
 		}
 
 		static void saveResult(Listing *dest) {
@@ -215,13 +212,14 @@ namespace code {
 			}
 		}
 
-		void LayoutVars::destroyPart(Listing *dest, Part destroy, bool preserveEax) {
-			if (destroy != part)
+		void LayoutVars::destroyBlock(Listing *dest, Block destroy, bool preserveEax) {
+			if (destroy != block)
 				throw new (this) BlockEndError();
 
 			bool pushedEax = false;
 
-			Array<Var> *vars = dest->partVars(destroy);
+			Array<Var> *vars = dest->allVars(destroy);
+			TODO(L"Determine reachability!");
 			for (nat i = 0; i < vars->count(); i++) {
 				Var v = vars->at(i);
 
@@ -257,9 +255,9 @@ namespace code {
 			if (pushedEax)
 				restoreResult(dest);
 
-			part = dest->prev(part);
+			block = dest->parent(block);
 			if (usingEH)
-				*dest << mov(intRel(ptrFrame, partId), natConst(part.key()));
+				*dest << mov(intRel(ptrFrame, blockId), natConst(block.key()));
 		}
 
 		void LayoutVars::prologTfm(Listing *dest, Listing *src, Nat line) {
@@ -275,9 +273,9 @@ namespace code {
 
 			// Extra data needed for exception handling.
 			if (usingEH) {
-				// Current part id.
+				// Current block id.
 				*dest << mov(intRel(ptrFrame, offset), natConst(0));
-				partId = offset;
+				blockId = offset;
 				offset -= Offset::sInt;
 
 				// Self pointer.
@@ -306,17 +304,17 @@ namespace code {
 			}
 
 			// Initialize the root block.
-			initPart(dest, dest->root());
+			initBlock(dest, dest->root());
 		}
 
 		void LayoutVars::epilogTfm(Listing *dest, Listing *src, Nat line) {
-			// Destroy blocks. Note: we shall not modify 'part' as this may be an early return from
+			// Destroy blocks. Note: we shall not modify 'block' as this may be an early return from
 			// the function.
-			Part oldPart = part;
-			for (Part now = part; now != Part(); now = src->prev(now)) {
-				destroyPart(dest, now, true);
+			Block oldBlock = block;
+			for (Block now = block; now != Block(); now = src->parent(now)) {
+				destroyBlock(dest, now, true);
 			}
-			part = oldPart;
+			block = oldBlock;
 
 			// Restore preserved registers.
 			{
@@ -341,24 +339,25 @@ namespace code {
 		}
 
 		void LayoutVars::beginBlockTfm(Listing *dest, Listing *src, Nat line) {
-			initPart(dest, src->at(line)->src().part());
+			initBlock(dest, src->at(line)->src().block());
 		}
 
 		void LayoutVars::endBlockTfm(Listing *dest, Listing *src, Nat line) {
-			Part target = src->at(line)->src().part();
-			Part start = part;
+			TODO(L"We don't need a loop here anymore!");
+			Block target = src->at(line)->src().block();
+			Block start = block;
 
-			for (Part now = part; now != target; now = src->prev(now)) {
-				if (now == Part()) {
+			for (Block now = block; now != target; now = src->parent(now)) {
+				if (now == Block()) {
 					Str *msg = TO_S(engine(), S("Block ") << target << S(" is not a parent of ") << start);
 					throw new (this) BlockEndError(msg);
 				}
 
-				destroyPart(dest, now, false);
+				destroyBlock(dest, now, false);
 			}
 
 			// Destroy the last one as well.
-			destroyPart(dest, target, false);
+			destroyBlock(dest, target, false);
 		}
 
 		// Memcpy using mov instructions.

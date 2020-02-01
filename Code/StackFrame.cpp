@@ -3,6 +3,6 @@
 
 namespace code {
 
-	StackFrame::StackFrame(Nat part) : part(part) {}
+	StackFrame::StackFrame(Nat block) : block(block) {}
 
 }

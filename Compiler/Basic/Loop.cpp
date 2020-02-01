@@ -51,11 +51,11 @@ namespace storm {
 			using namespace code;
 
 			// Outer state where we store our control variable!
-			CodeGen *outer = s->child(s->l->createBlock(s->l->last(s->block)));
+			CodeGen *outer = s->child();
 			*s->l << begin(outer->block);
 
 			// Inner state, which represents the actual block we're in.
-			CodeGen *inner = outer->child(outer->l->createBlock(outer->l->last(outer->block)));
+			CodeGen *inner = outer->child();
 
 			// Initialize variables in the scope.
 			initVariables(inner);

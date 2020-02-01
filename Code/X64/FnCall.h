@@ -33,7 +33,7 @@ namespace code {
 		 * Emit code required to perform a function call. Used from 'removeInvalid'.
 		 */
 		void emitFnCall(Listing *dest, Operand call, Operand resultPos, TypeDesc *resultType,
-						Bool resultRef, Part currentPart, RegSet *used, Array<ParamInfo> *params);
+						Bool resultRef, Block currentBlock, RegSet *used, Array<ParamInfo> *params);
 
 	}
 }

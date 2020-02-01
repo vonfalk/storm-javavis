@@ -40,18 +40,11 @@ namespace storm {
 			*s->l << cmp(r, byteConst(0));
 			*s->l << jmp(end, ifEqual);
 
-			Part before = s->l->last(block);
-
 			CodeResult *bodyResult = CREATE(CodeResult, this);
 			bodyExpr->code(subState, bodyResult);
 
 			CodeResult *updateResult = CREATE(CodeResult, this);
 			updateExpr->code(subState, updateResult);
-
-			// Make sure to end all parts that may have been created so far.
-			Part after = s->l->next(before);
-			if (after != Part())
-				*s->l << code::end(after);
 
 			// We may not skip the 'end'.
 			*s->l << end;

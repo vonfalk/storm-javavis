@@ -225,18 +225,18 @@ namespace code {
 		}
 
 		void RemoveInvalid::prologTfm(Listing *dest, Instr *instr, Nat line) {
-			currentPart = dest->root();
+			currentBlock = dest->root();
 			*dest << instr;
 		}
 
 		void RemoveInvalid::beginBlockTfm(Listing *dest, Instr *instr, Nat line) {
-			currentPart = instr->src().part();
+			currentBlock = instr->src().block();
 			*dest << instr;
 		}
 
 		void RemoveInvalid::endBlockTfm(Listing *dest, Instr *instr, Nat line) {
-			Part ended = instr->src().part();
-			currentPart = dest->parent(ended);
+			Block ended = instr->src().block();
+			currentBlock = dest->parent(ended);
 			*dest << instr;
 		}
 
@@ -264,7 +264,7 @@ namespace code {
 				throw new (this) InvalidValue(S("Using a fnCall that was not created properly."));
 			}
 
-			emitFnCall(dest, t->src(), t->dest(), t->type, false, currentPart, used->at(line), params);
+			emitFnCall(dest, t->src(), t->dest(), t->type, false, currentBlock, used->at(line), params);
 			params->clear();
 		}
 
@@ -274,7 +274,7 @@ namespace code {
 				throw new (this) InvalidValue(S("Using a fnCall that was not created properly."));
 			}
 
-			emitFnCall(dest, t->src(), t->dest(), t->type, true, currentPart, used->at(line), params);
+			emitFnCall(dest, t->src(), t->dest(), t->type, true, currentBlock, used->at(line), params);
 			params->clear();
 		}
 

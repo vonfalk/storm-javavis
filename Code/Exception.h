@@ -70,7 +70,7 @@ namespace code {
 	public:
 		STORM_CTOR FrameError() {}
 		virtual void STORM_FN message(StrBuf *to) const {
-			*to << S("Trying to use an invalid frame, part or variable.");
+			*to << S("Trying to use an invalid block or variable.");
 		}
 	};
 
@@ -105,16 +105,16 @@ namespace code {
 	class EXCEPTION_EXPORT VariableUseError : public CodeError {
 		STORM_EXCEPTION;
 	public:
-		STORM_CTOR VariableUseError(Var v, Part p) {
+		STORM_CTOR VariableUseError(Var v, Block b) {
 			var = v;
-			part = p;
+			block = b;
 		}
 
 		Var var;
-		Part part;
+		Block block;
 
 		virtual void STORM_FN message(StrBuf *to) const {
-			*to << S("Trying to use ") << var << S(" in ") << part << S(", where it is not accessible.");
+			*to << S("Trying to use ") << var << S(" in ") << block << S(", where it is not accessible.");
 		}
 	};
 }

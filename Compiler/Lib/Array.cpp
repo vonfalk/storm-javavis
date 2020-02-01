@@ -404,8 +404,7 @@ namespace storm {
 			*l << fnCall(pushFn->ref(), true, ptrDesc, ptrA); // It returns a ptr to itself, but we don't need that.
 		} else {
 			code::Block sub = l->createBlock(l->root());
-			code::Part subPart = l->createPart(sub);
-			code::Var tmp = l->createVar(subPart, param.size(), param.destructor());
+			code::Var tmp = l->createVar(sub, param.size(), param.destructor());
 
 			*l << code::begin(sub);
 
@@ -414,7 +413,7 @@ namespace storm {
 			*l << fnCall(info->read->ref(), false, param.desc(engine), tmp);
 
 			// Make sure it is properly destroyed if we get an exception.
-			*l << code::begin(subPart);
+			*l << code::activate(tmp);
 
 			// Write it to the array by calling 'push'.
 			*l << lea(ptrA, tmp);

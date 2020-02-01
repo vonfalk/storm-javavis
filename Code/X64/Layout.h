@@ -50,29 +50,26 @@ namespace code {
 			// Registers that need to be preserved in the function prolog.
 			RegSet *toPreserve;
 
-			// Currently active part.
-			Part part;
+			// Currently active block.
+			Block block;
 
-			// Temporary storage of the active part table.
+			// Temporary storage of the active block table.
 			class Active {
 				STORM_VALUE;
 			public:
-				Active(Part part, Label pos);
+				Active(Block block, Label pos);
 
-				// Which part?
-				Part part;
+				// Which block?
+				Block block;
 
-				// Where does the part start?
+				// Where does the block start?
 				Label pos;
 			};
 
-			Array<Active> *activeParts;
+			Array<Active> *activeBlocks;
 
 			// Using exception handling here?
 			Bool usingEH;
-
-			// Compute the offset of the part id (when using exceptions).
-			Offset partId();
 
 			// Offset of the result parameter (if any).
 			Offset resultParam();
@@ -97,9 +94,9 @@ namespace code {
 			Operand resolve(Listing *src, const Operand &op);
 			Operand resolve(Listing *src, const Operand &op, const Size &size);
 
-			// Create and destroy parts.
-			void initPart(Listing *dest, Part init);
-			void destroyPart(Listing *dest, Part destroy, Bool preserveRax, Bool notifyTable);
+			// Create and destroy blocks.
+			void initBlock(Listing *dest, Block init);
+			void destroyBlock(Listing *dest, Block destroy, Bool preserveRax, Bool notifyTable);
 
 			// Spill parameters to the stack.
 			void spillParams(Listing *dest);

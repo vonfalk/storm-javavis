@@ -23,7 +23,7 @@ namespace storm {
 	}
 
 	CodeGen *CodeGen::child() {
-		code::Block b = l->createBlock(l->last(block));
+		code::Block b = l->createBlock(block);
 		return child(b);
 	}
 
@@ -87,15 +87,10 @@ namespace storm {
 		if (!needsPart)
 			return;
 
-		Listing *to = gen->l;
-		Part root = to->parent(v);
-		assert(to->first(root) == gen->block,
-			L"The variable " + ::toS(v) + L" was already created, or in the wrong block: "
-			+ ::toS(gen->block) + L".");
+		*gen->l << activate(v);
 
-		Part created = to->createPart(root);
-		to->delay(v, created);
-		*to << begin(created);
+		// Prevent duplicate activation.
+		needsPart = false;
 	}
 
 
@@ -123,11 +118,7 @@ namespace storm {
 		}
 
 		code::Listing *l = s->l;
-		if (variable.needsPart && l->first(l->parent(variable.v)) != s->block)
-			// We need to delay the part transition until we have exited the current block!
-			return VarInfo(variable.v, false);
-		else
-			return variable;
+		return variable;
 	}
 
 	VarInfo CodeResult::safeLocation(CodeGen *s, Value type) {
@@ -150,7 +141,7 @@ namespace storm {
 		// TODO: Cases that hit here could maybe be optimized somehow. This is common with the
 		// return value, which will almost always have to get its lifetime extended a bit. Maybe
 		// implement the possibility to move variables to a more outer scope?
-		if (block != code::Block() && !l->accessible(v, l->first(block)))
+		if (block != code::Block() && !l->accessible(v, block))
 			return false;
 
 		variable = VarInfo(v);

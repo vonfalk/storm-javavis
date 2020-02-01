@@ -52,11 +52,11 @@ namespace code {
 			// Layout of variables.
 			Array<Offset> *layout;
 
-			// Current part.
-			Part part;
+			// Current block.
+			Block block;
 
-			// Offset at which the part id is stored if we're using exceptions.
-			Offset partId;
+			// Offset at which the block id is stored if we're using exceptions.
+			Offset blockId;
 
 			// Label to the beginning of the code, so that we can store a pointer to ourselves in the EH frame.
 			Label selfLbl;
@@ -81,11 +81,11 @@ namespace code {
 			// Lookup variables to their corresponding offsets.
 			Operand resolve(Listing *src, const Operand &op);
 
-			// Initialize a block or a part.
-			void initPart(Listing *dest, Part p);
+			// Initialize a block or a block.
+			void initBlock(Listing *dest, Block p);
 
-			// Destroy a part.
-			void destroyPart(Listing *dest, Part p, bool preserveEax);
+			// Destroy a block.
+			void destroyBlock(Listing *dest, Block p, bool preserveEax);
 		};
 
 

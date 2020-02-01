@@ -470,12 +470,16 @@ namespace code {
 		return instrLoose(e, op::location, Operand(), pos);
 	}
 
-	Instr *begin(EnginePtr e, Part part) {
-		return instrLoose(e, op::beginBlock, Operand(), part);
+	Instr *begin(EnginePtr e, Block block) {
+		return instrLoose(e, op::beginBlock, Operand(), block);
 	}
 
-	Instr *end(EnginePtr e, Part part) {
-		return instrLoose(e, op::endBlock, Operand(), part);
+	Instr *end(EnginePtr e, Block block) {
+		return instrLoose(e, op::endBlock, Operand(), block);
+	}
+
+	Instr *activate(EnginePtr e, Var var) {
+		return instrLoose(e, op::activate, Operand(), var);
 	}
 
 	Instr *threadLocal(EnginePtr e) {

@@ -441,12 +441,10 @@ namespace storm {
 		static void protect(CodeGen *s, code::Var object, code::Block varBlock, MemberVar *var) {
 			Value type = var->type;
 			if (type.isValue() && type.destructor() != code::Operand()) {
-				code::Part part = s->l->createPart(varBlock);
-				*s->l << begin(part);
-
-				code::Var v = s->l->createVar(part, Size::sPtr, type.destructor(), code::freeOnException);
+				code::Var v = s->l->createVar(s->block, Size::sPtr, type.destructor(), code::freeOnException | code::freeInactive);
 				*s->l << mov(v, object);
 				*s->l << add(v, ptrConst(var->offset()));
+				*s->l << activate(v);
 			}
 		}
 
@@ -457,7 +455,7 @@ namespace storm {
 			Type *type = thisPtr.type;
 
 			// Block for member variable cleanups.
-			code::Block varBlock = s->l->createBlock(s->l->last(s->block));
+			code::Block varBlock = s->l->createBlock(s->block);
 			*s->l << begin(varBlock);
 
 			// From here on, we should set up the destructor to clear 'this' by calling its destructor
@@ -504,10 +502,9 @@ namespace storm {
 
 			// From here on, we need to make sure that we're freeing our 'this' pointer properly.
 			if (Function *fn = type->destructor()) {
-				Part p = s->l->createPart(s->block);
-				*s->l << begin(p);
-				code::Var thisCleanup = s->l->createVar(p, Size::sPtr, fn->directRef(), freeOnException);
+				code::Var thisCleanup = s->l->createVar(s->block, Size::sPtr, fn->directRef(), freeOnException | freeInactive);
 				*s->l << mov(thisCleanup, dest);
+				*s->l << activate(thisCleanup);
 			}
 		}
 

@@ -167,7 +167,8 @@ namespace code {
 	PROXY0(epilog);
 	PROXY2(preserve, Operand, Reg);
 	PROXY1(location, SrcPos);
-	PROXY1(begin, Part);
-	PROXY1(end, Part);
+	PROXY1(begin, Block);
+	PROXY1(end, Block);
+	PROXY1(activate, Var);
 	PROXY0(threadLocal);
 }

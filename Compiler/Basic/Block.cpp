@@ -28,7 +28,7 @@ namespace storm {
 		void Block::code(CodeGen *state, CodeResult *to) {
 			using namespace code;
 
-			code::Block block = state->l->createBlock(state->l->last(state->block));
+			code::Block block = state->l->createBlock(state->block);
 			CodeGen *child = state->child(block);
 
 			initVariables(child);

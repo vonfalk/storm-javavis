@@ -50,8 +50,8 @@ namespace code {
 			// Parameters for an upcoming 'fnCall' instruction.
 			Array<ParamInfo> *params;
 
-			// Current active part. We need that for introducing blocks inside the 'fnCall' transform.
-			Part currentPart;
+			// Current active block. We need that for introducing blocks inside the 'fnCall' transform.
+			Block currentBlock;
 
 			// Signature for the table of transform functions.
 			typedef void (RemoveInvalid::*TransformFn)(Listing *dest, Instr *instr, Nat line);

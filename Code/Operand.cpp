@@ -30,9 +30,9 @@ namespace code {
 
 	Operand::Operand(CondFlag c) : opType(opCondFlag), opPtr(null), opNum(c), opSize() {}
 
-	Operand::Operand(Part p) : opType(opPart), opPtr(null), opNum(p.id), opSize() {
-		if (p == Part())
-			throw new (someEngine()) InvalidValue(S("Can not create an operand of an empty part."));
+	Operand::Operand(Block b) : opType(opBlock), opPtr(null), opNum(b.id), opSize() {
+		if (b == Block())
+			throw new (someEngine()) InvalidValue(S("Can not create an operand of an empty block."));
 	}
 
 	Operand::Operand(Var v) : opType(opVariable), opPtr(null), opNum(v.id), opSize(v.size()) {
@@ -85,7 +85,7 @@ namespace code {
 		case opConstant:
 		case opRegister:
 		case opCondFlag:
-		case opPart:
+		case opBlock:
 		case opLabel:
 			return opNum == o.opNum;
 		case opDualConstant:
@@ -138,7 +138,7 @@ namespace code {
 		switch (type()) {
 		case opNone:
 		case opCondFlag:
-		case opPart:
+		case opBlock:
 		case opSrcPos:
 			// TODO: Add more returning false here.
 			return false;
@@ -214,10 +214,10 @@ namespace code {
 		return CondFlag(opNum);
 	}
 
-	Part Operand::part() const {
-		if (type() != opPart)
-			throw new (someEngine()) InvalidValue(S("Not a part!"));
-		return Part(Nat(opNum));
+	Block Operand::block() const {
+		if (type() != opBlock)
+			throw new (someEngine()) InvalidValue(S("Not a block!"));
+		return Block(Nat(opNum));
 	}
 
 	Var Operand::var() const {
@@ -263,7 +263,7 @@ namespace code {
 		if (o.type() != opRegister
 			&& o.type() != opCondFlag
 			&& o.type() != opNone
-			&& o.type() != opPart
+			&& o.type() != opBlock
 			&& o.type() != opSrcPos) {
 
 			Size s = o.size();
@@ -305,8 +305,8 @@ namespace code {
 			}
 		case opLabel:
 			return to << L"Label" << o.opNum;
-		case opPart:
-			return to << L"Part" << o.opNum;
+		case opBlock:
+			return to << L"Block" << o.opNum;
 		case opReference:
 			return to << L"@" << o.ref().title();
 		case opObjReference:
@@ -327,7 +327,69 @@ namespace code {
 	}
 
 	StrBuf &operator <<(StrBuf &to, Operand o) {
-		return to << ::toS(o).c_str();
+		if (o.type() != opRegister
+			&& o.type() != opCondFlag
+			&& o.type() != opNone
+			&& o.type() != opBlock
+			&& o.type() != opSrcPos) {
+
+			Size s = o.size();
+			if (s == Size::sPtr)
+				to << S("p");
+			else if (s == Size::sByte)
+				to << S("b");
+			else if (s == Size::sInt)
+				to << S("i");
+			else if (s == Size::sLong)
+				to << S("l");
+			else
+				to << S("(") << s << S(")");
+		}
+
+		switch (o.type()) {
+		case opNone:
+			return to << S("<none>");
+		case opConstant:
+			if (o.size() == Size::sPtr) {
+				if (o.opType == opDualConstant)
+					return to << o.opOffset;
+				else
+					return to << S("0x") << hex(o.constant());
+			} else {
+				return to << o.constant();
+			}
+		case opRegister:
+			return to << code::name(o.reg());
+		case opRelative:
+			return to << S("[") << code::name(o.reg()) << o.offset() << S("]");
+		case opRelativeLbl:
+			return to << S("[") << L"Label" << o.opNum << o.offset() << S("]");
+		case opVariable:
+			if (o.offset() != Offset()) {
+				return to << S("[Var") << o.opNum << o.offset() << S("]");
+			} else {
+				return to << S("[Var") << o.opNum << S("]");
+			}
+		case opLabel:
+			return to << S("Label") << o.opNum;
+		case opBlock:
+			return to << S("Block") << o.opNum;
+		case opReference:
+			return to << S("@") << o.ref().title();
+		case opObjReference:
+			TODO(L"Make sure to call on the correct OS thread!");
+			if (o.object()) {
+				return to << S("&") << o.object()->toS();
+			} else {
+				return to << S("&null");
+			}
+		case opCondFlag:
+			return to << code::name(o.condFlag());
+		case opSrcPos:
+			return to << o.srcPos();
+		default:
+			return to << S("<invalid>");
+		}
 	}
 
 	void Operand::dbg_dump() const {

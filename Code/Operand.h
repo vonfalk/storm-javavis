@@ -55,8 +55,8 @@ namespace code {
 		// Label.
 		opLabel,
 
-		// Block or part.
-		opPart,
+		// Block.
+		opBlock,
 
 		// Reference to another object.
 		opReference,
@@ -90,7 +90,7 @@ namespace code {
 		STORM_CAST_CTOR Operand(Var var);
 
 		// Block or part.
-		STORM_CAST_CTOR Operand(Part part);
+		STORM_CAST_CTOR Operand(Block part);
 
 		// Label.
 		STORM_CAST_CTOR Operand(Label label);
@@ -142,7 +142,7 @@ namespace code {
 		Reg STORM_FN reg() const; // "register" is a reserved word.
 		Offset STORM_FN offset() const;
 		CondFlag STORM_FN condFlag() const;
-		Part STORM_FN part() const;
+		Block STORM_FN block() const;
 		Label STORM_FN label() const;
 		Ref STORM_FN ref() const;
 		RefSource *refSource() const;
@@ -200,6 +200,7 @@ namespace code {
 		friend Operand xRel(Size size, Var v, Offset offset);
 		friend Operand xRel(Size size, Label l, Offset offset);
 		friend wostream &operator <<(wostream &to, const Operand &o);
+		friend StrBuf &operator <<(StrBuf &to, Operand o);
 	};
 
 	// Output.

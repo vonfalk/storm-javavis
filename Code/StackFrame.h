@@ -11,10 +11,10 @@ namespace code {
 	 */
 	class StackFrame : NoCopy {
 	public:
-		StackFrame(Nat part);
+		StackFrame(Nat block);
 
-		// Currently active part.
-		Nat part;
+		// Currently active block.
+		Nat block;
 
 		// Compute the offset of the variable, given the offset found in the metadata table.
 		virtual void *toPtr(size_t offset) = 0;

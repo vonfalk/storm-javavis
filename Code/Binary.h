@@ -36,7 +36,7 @@ namespace code {
 		Nat cleanup(StackFrame &frame, Nat until);
 
 		// Check if we have any catch-clauses at all (used for pre-screening in exception handlers).
-		inline bool hasCatch() const { return tryParts != 0; }
+		inline bool hasCatch() const { return tryBlocks != null; }
 
 		// Information on how to resume from a try-clause.
 		struct Resume {
@@ -73,13 +73,13 @@ namespace code {
 			};
 		};
 
-		// Remember the part hierarchy. These are allocated as GcArray:s to reduce the number of allocations.
-		struct Part {
+		// Remember the block hierarchy. These are allocated as GcArray:s to reduce the number of allocations.
+		struct Block {
 			// Number of elements.
 			const size_t count;
 
-			// Previous part.
-			size_t prev;
+			// Parent block.
+			size_t parent;
 
 			// Variables in here.
 			Variable vars[1];
@@ -87,8 +87,8 @@ namespace code {
 
 		// Information for try-blocks.
 		struct TryInfo {
-			// Current part id.
-			Nat partId;
+			// Current block id.
+			Nat blockId;
 
 			// Offset to continue execution from.
 			Nat resumeOffset;
@@ -101,28 +101,28 @@ namespace code {
 		Nat metaOffset;
 
 		// All parts.
-		GcArray<Part *> *parts;
+		GcArray<Block *> *blocks;
 
 		// Try-block information. 'null' if no exceptions are caught. Indices do not correspond to
 		// parts here since the array is sparse. It is necessary to perform search the array
 		// (perhaps using a binary search).
-		GcArray<TryInfo> *tryParts;
+		GcArray<TryInfo> *tryBlocks;
 
 		// Compile the Listing object.
 		void compile(Arena *arena, Listing *src, Bool debug);
 
-		// Fill the 'parts' array.
-		void fillParts(Listing *src);
+		// Fill the 'blocks' array.
+		void fillBlocks(Listing *src);
 
-		// Fill the 'tryParts' array if necessary.
-		void fillTryParts(Listing *src, LabelOutput *labels);
+		// Fill the 'tryBlocks' array if necessary.
+		void fillTryBlocks(Listing *src, LabelOutput *labels);
 
 		// Clean a single variable.
 		void cleanup(StackFrame &frame, Variable &v);
 
 		// Type declarations for the GC.
-		static const GcType partArrayType;
-		static const GcType partType;
+		static const GcType blockArrayType;
+		static const GcType blockType;
 		static const GcType tryInfoArrayType;
 	};
 

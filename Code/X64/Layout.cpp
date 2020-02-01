@@ -20,13 +20,13 @@ namespace code {
 			TRANSFORM(fnRetRef),
 		};
 
-		Layout::Active::Active(Part part, Label pos) : part(part), pos(pos) {}
+		Layout::Active::Active(Block block, Label pos) : block(block), pos(pos) {}
 
 		Layout::Layout(Binary *owner) : owner(owner) {}
 
 		void Layout::before(Listing *dest, Listing *src) {
 			// Initialize some state.
-			part = Part();
+			block = Block();
 			usingEH = src->exceptionAware();
 
 			// Compute where the result is to be stored.
@@ -65,7 +65,7 @@ namespace code {
 			layout = code::x64::layout(src, params, spilled);
 
 			// The EH table.
-			activeParts = new (this) Array<Active>();
+			activeBlocks = new (this) Array<Active>();
 		}
 
 		void Layout::during(Listing *dest, Listing *src, Nat line) {
@@ -100,17 +100,17 @@ namespace code {
 				*dest << dat(ptrConst(layout->at(v.key())));
 			}
 
-			// Output the table containing active parts. Used by the exception handling mechanism.
+			// Output the table containing active blocks. Used by the exception handling mechanism.
 			*dest << alignAs(Size::sPtr);
 			// Table contents. Each 'row' is 8 bytes.
-			for (Nat i = 0; i < activeParts->count(); i++) {
-				const Active &a = activeParts->at(i);
+			for (Nat i = 0; i < activeBlocks->count(); i++) {
+				const Active &a = activeBlocks->at(i);
 				*dest << lblOffset(a.pos);
-				*dest << dat(natConst(a.part.key()));
+				*dest << dat(natConst(a.block.key()));
 			}
 
 			// Table size.
-			*dest << dat(ptrConst(activeParts->count()));
+			*dest << dat(ptrConst(activeBlocks->count()));
 			// Owner.
 			*dest << dat(objPtr(owner));
 		}
@@ -124,8 +124,8 @@ namespace code {
 				return op;
 
 			Var v = op.var();
-			if (!src->accessible(v, part))
-				throw new (this) VariableUseError(v, part);
+			if (!src->accessible(v, block))
+				throw new (this) VariableUseError(v, block);
 			return xRel(size, ptrFrame, layout->at(v.key()) + op.offset());
 		}
 
@@ -180,17 +180,17 @@ namespace code {
 			spillParams(dest);
 
 			// Initialize the root block.
-			initPart(dest, dest->root());
+			initBlock(dest, dest->root());
 		}
 
 		void Layout::epilogTfm(Listing *dest, Listing *src, Nat line) {
-			// Destroy blocks. Note: we shall not modify 'part' nor alter the exception table as
+			// Destroy blocks. Note: we shall not modify 'block' nor alter the exception table as
 			// this may be an early return from the function.
-			Part oldPart = part;
-			for (Part now = part; now != Part(); now = src->prev(now)) {
-				destroyPart(dest, now, true, false);
+			Block oldBlock = block;
+			for (Block now = block; now != Block(); now = src->parent(now)) {
+				destroyBlock(dest, now, true, false);
 			}
-			part = oldPart;
+			block = oldBlock;
 
 			// Restore preserved registers.
 			Offset offset = -Offset::sPtr;
@@ -207,28 +207,25 @@ namespace code {
 		}
 
 		void Layout::beginBlockTfm(Listing *dest, Listing *src, Nat line) {
-			initPart(dest, src->at(line)->src().part());
+			initBlock(dest, src->at(line)->src().block());
 		}
 
 		void Layout::endBlockTfm(Listing *dest, Listing *src, Nat line) {
-			Part target = src->at(line)->src().part();
-			Part start = part;
+			TODO(L"We don't need a loop here anymore!");
+			Block target = src->at(line)->src().block();
+			Block start = block;
 
-			for (Part now = part; now != target; now = src->prev(now)) {
-				if (now == Part()) {
+			for (Block now = block; now != target; now = src->parent(now)) {
+				if (now == Block()) {
 					Str *msg = TO_S(engine(), S("Block ") << target << S(" is not a parent of ") << start);
 					throw new (this) BlockEndError(msg);
 				}
 
-				destroyPart(dest, now, false, true);
+				destroyBlock(dest, now, false, true);
 			}
 
 			// Destroy the last one as well.
-			destroyPart(dest, target, false, true);
-		}
-
-		Offset Layout::partId() {
-			return -Offset::sPtr;
+			destroyBlock(dest, target, false, true);
 		}
 
 		Offset Layout::resultParam() {
@@ -260,42 +257,40 @@ namespace code {
 			}
 		}
 
-		void Layout::initPart(Listing *dest, Part init) {
-			if (part != dest->prev(init)) {
+		void Layout::initBlock(Listing *dest, Block init) {
+			if (block != dest->parent(init)) {
 				Str *msg = TO_S(engine(), S("Can not begin ") << init << S(" unless the current is ")
-								<< dest->prev(init) << S(". Current is ") << part);
+								<< dest->parent(init) << S(". Current is ") << block);
 				throw new (this) BlockBeginError(msg);
 			}
 
-			part = init;
+			block = init;
 
-			Block b = dest->first(part);
-			if (Part(b) == part) {
-				Bool initEax = true;
-				Array<Var> *vars = dest->allVars(b);
-				// Go in reverse to make linear accesses in memory when we're using big variables.
-				for (Nat i = vars->count(); i > 0; i--) {
-					Var v = vars->at(i - 1);
+			Bool initEax = true;
+			Array<Var> *vars = dest->allVars(init);
+			// Go in reverse to make linear accesses in memory when we're using big variables.
+			for (Nat i = vars->count(); i > 0; i--) {
+				Var v = vars->at(i - 1);
 
-					if (!dest->isParam(v))
-						zeroVar(dest, layout->at(v.key()), v.size(), initEax);
-				}
+				if (!dest->isParam(v))
+					zeroVar(dest, layout->at(v.key()), v.size(), initEax);
 			}
 
 			if (usingEH) {
-				// Remember where the part started.
+				// Remember where the block started.
 				Label lbl = dest->label();
 				*dest << lbl;
-				activeParts->push(Active(part, lbl));
+				activeBlocks->push(Active(block, lbl));
 			}
 		}
 
-		void Layout::destroyPart(Listing *dest, Part destroy, Bool preserveRax, Bool table) {
-			if (destroy != part)
+		void Layout::destroyBlock(Listing *dest, Block destroy, Bool preserveRax, Bool table) {
+			if (destroy != block)
 				throw new (this) BlockEndError();
 
 			Bool pushedRax = false;
-			Array<Var> *vars = dest->partVars(destroy);
+			Array<Var> *vars = dest->allVars(destroy);
+			TODO(L"Determine reachability here!");
 			for (Nat i = 0; i < vars->count(); i++) {
 				Var v = vars->at(i);
 
@@ -334,11 +329,11 @@ namespace code {
 				restoreResult(dest, dest->result);
 			}
 
-			part = dest->prev(part);
+			block = dest->parent(block);
 			if (usingEH && table) {
 				Label lbl = dest->label();
 				*dest << lbl;
-				activeParts->push(Active(part, lbl));
+				activeBlocks->push(Active(block, lbl));
 			}
 		}
 

@@ -18,12 +18,12 @@ namespace code {
 		if (debug)
 			PVAR(tfm);
 
-		fillParts(tfm);
+		fillBlocks(tfm);
 
 		LabelOutput *labels = arena->labelOutput();
 		arena->output(tfm, labels);
 
-		fillTryParts(tfm, labels);
+		fillTryBlocks(tfm, labels);
 
 		if (tfm->meta().id < labels->offsets->count()) {
 			metaOffset = labels->offsets->at(tfm->meta().id);
@@ -60,7 +60,7 @@ namespace code {
 		}
 	}
 
-	const GcType Binary::partArrayType = {
+	const GcType Binary::blockArrayType = {
 		GcType::tArray,
 		null,
 		null,
@@ -69,7 +69,7 @@ namespace code {
 		{ 0 },
 	};
 
-	const GcType Binary::partType = {
+	const GcType Binary::blockType = {
 		GcType::tArray,
 		null,
 		null,
@@ -87,14 +87,14 @@ namespace code {
 		{ OFFSET_OF(TryInfo, type) },
 	};
 
-	void Binary::fillParts(Listing *src) {
-		Array<code::Part> *srcParts = src->allParts();
+	void Binary::fillBlocks(Listing *src) {
+		Array<code::Block> *srcBlocks = src->allBlocks();
 
-		parts = runtime::allocArray<Part *>(engine(), &partArrayType, srcParts->count());
+		blocks = runtime::allocArray<Block *>(engine(), &blockArrayType, srcBlocks->count());
 
-		for (Nat i = 0; i < srcParts->count(); i++) {
-			code::Part part = srcParts->at(i);
-			Array<Var> *vars = src->partVars(part);
+		for (Nat i = 0; i < srcBlocks->count(); i++) {
+			code::Block block = srcBlocks->at(i);
+			Array<Var> *vars = src->allVars(block);
 
 			// Count variables that need finalization. Those are the only ones we need.
 			size_t count = 0;
@@ -102,9 +102,9 @@ namespace code {
 				if (src->freeOpt(vars->at(j)) & freeOnException)
 					count++;
 
-			Part *p = (Part *)runtime::allocArray(engine(), &partType, count);
-			parts->v[i] = p;
-			p->prev = src->prev(part).key();
+			Block *b = (Block *)runtime::allocArray(engine(), &blockType, count);
+			blocks->v[i] = b;
+			b->parent = src->parent(block).key();
 
 			size_t at = 0;
 			for (Nat j = 0; j < vars->count(); j++) {
@@ -132,14 +132,14 @@ namespace code {
 												S("the value instead!"));
 				}
 
-				p->vars[at].id = v.key();
-				p->vars[at].flags = flags;
+				b->vars[at].id = v.key();
+				b->vars[at].flags = flags;
 				at++;
 			}
 		}
 	}
 
-	void Binary::fillTryParts(Listing *src, LabelOutput *labels) {
+	void Binary::fillTryBlocks(Listing *src, LabelOutput *labels) {
 		Nat count = 0;
 
 		Array<code::Block> *blocks = src->allBlocks();
@@ -149,19 +149,19 @@ namespace code {
 		}
 
 		if (count == 0) {
-			tryParts = 0;
+			tryBlocks = null;
 			return;
 		}
 
-		tryParts = runtime::allocArray<TryInfo>(engine(), &tryInfoArrayType, count);
+		tryBlocks = runtime::allocArray<TryInfo>(engine(), &tryInfoArrayType, count);
 		Nat at = 0;
 		for (Nat i = 0; i < blocks->count(); i++) {
-			Block b = blocks->at(i);
+			code::Block b = blocks->at(i);
 			if (Array<Listing::CatchInfo> *info = src->catchInfo(b)) {
 				for (Nat j = 0; j < info->count(); j++) {
-					tryParts->v[at].partId = code::Part(b).key();
-					tryParts->v[at].resumeOffset = labels->offsets->at(info->at(j).resume.id);
-					tryParts->v[at].type = info->at(j).type;
+					tryBlocks->v[at].blockId = code::Block(b).key();
+					tryBlocks->v[at].resumeOffset = labels->offsets->at(info->at(j).resume.id);
+					tryBlocks->v[at].type = info->at(j).type;
 					at++;
 				}
 			}
@@ -169,32 +169,32 @@ namespace code {
 	}
 
 	void Binary::cleanup(StackFrame &frame) {
-		for (Nat i = frame.part; i != code::Part().key(); i = parts->v[i]->prev) {
-			Part *p = parts->v[i];
+		for (Nat i = frame.block; i != code::Block().key(); i = blocks->v[i]->parent) {
+			Block *b = blocks->v[i];
 
 			// Reverse order is common.
-			for (Nat j = p->count; j > 0; j--) {
-				cleanup(frame, p->vars[j - 1]);
+			for (Nat j = b->count; j > 0; j--) {
+				cleanup(frame, b->vars[j - 1]);
 			}
 		}
 	}
 
 	Nat Binary::cleanup(StackFrame &frame, Nat until) {
-		for (Nat i = frame.part; i != code::Part().key(); i = parts->v[i]->prev) {
-			Part *p = parts->v[i];
+		for (Nat i = frame.block; i != code::Block().key(); i = blocks->v[i]->parent) {
+			Block *b = blocks->v[i];
 
 			// Reverse order is common.
-			for (Nat j = p->count; j > 0; j--) {
-				cleanup(frame, p->vars[j - 1]);
+			for (Nat j = b->count; j > 0; j--) {
+				cleanup(frame, b->vars[j - 1]);
 			}
 
 			// Done?
 			if (i == until)
-				return parts->v[i]->prev;
+				return blocks->v[i]->parent;
 		}
 
 		// Outside of all blocks.
-		return code::Part().key();
+		return code::Block().key();
 	}
 
 	void Binary::cleanup(StackFrame &frame, Variable &v) {
@@ -249,19 +249,19 @@ namespace code {
 	bool Binary::hasCatch(Nat active, RootObject *exception, Resume &resume) {
 		struct Compare {
 			inline bool operator() (const TryInfo &l, Nat r) const {
-				return l.partId < r;
+				return l.blockId < r;
 			}
 		};
 
-		if (!tryParts)
+		if (!tryBlocks)
 			return false;
 
-		for (Nat part = active; part != code::Part().key(); part = parts->v[part]->prev) {
-			TryInfo *end = tryParts->v + tryParts->count;
-			TryInfo *found = std::lower_bound(tryParts->v, end, part, Compare());
+		for (Nat block = active; block != code::Block().key(); block = blocks->v[block]->parent) {
+			TryInfo *end = tryBlocks->v + tryBlocks->count;
+			TryInfo *found = std::lower_bound(tryBlocks->v, end, block, Compare());
 
 			// Check all possible matches.
-			for (; found != end && found->partId == part; found++) {
+			for (; found != end && found->blockId == block; found++) {
 				if (runtime::isA(exception, found->type)) {
 					// Find where to resume.
 					byte *data = (byte *)address();
@@ -272,7 +272,7 @@ namespace code {
 					resume.stackDepth = table[0];
 
 					// Remember how far to clean.
-					resume.cleanUntil = part;
+					resume.cleanUntil = block;
 
 					return true;
 				}

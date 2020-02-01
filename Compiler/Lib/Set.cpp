@@ -248,11 +248,10 @@ namespace storm {
 		*l << code::begin(sub);
 
 		// Read key.
-		code::Part keyPart = l->createPart(sub);
-		code::Var keyVar = l->createVar(keyPart, kType.size(), kType.destructor());
+		code::Var keyVar = l->createVar(sub, kType.size(), kType.destructor());
 		*l << fnParam(objStream.desc(engine), streamVar);
 		*l << fnCall(info->read->ref(), false, kType.desc(engine), keyVar);
-		*l << code::begin(keyPart);
+		*l << code::activate(keyVar);
 
 		// Call 'put'.
 		*l << lea(ptrA, keyVar);
