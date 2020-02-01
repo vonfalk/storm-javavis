@@ -3,6 +3,6 @@
 
 namespace code {
 
-	StackFrame::StackFrame(Nat block) : block(block) {}
+	StackFrame::StackFrame(Nat block, Nat activation) : block(block), activation(activation) {}
 
 }

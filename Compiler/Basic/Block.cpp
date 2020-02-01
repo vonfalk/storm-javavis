@@ -34,10 +34,6 @@ namespace storm {
 			initVariables(child);
 
 			blockCode(state, to, block);
-
-			// May be delayed...
-			if (to->needed())
-				to->location(state).created(state);
 		}
 
 		void Block::blockCode(CodeGen *state, CodeResult *to, code::Block block) {

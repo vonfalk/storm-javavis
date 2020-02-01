@@ -64,10 +64,6 @@ namespace storm {
 			code(outer, inner, r);
 
 			*s->l << end(outer->block);
-
-			// May be delayed...
-			if (r->needed())
-				r->location(s).created(s);
 		}
 
 		void Loop::code(CodeGen *outerState, CodeGen *innerState, CodeResult *r) {
@@ -93,7 +89,7 @@ namespace storm {
 				Label after = innerState->l->label();
 
 				if (condResult) {
-					code::Var c = condResult->location(innerState).v;
+					code::Var c = condResult->location(innerState);
 					*innerState->l << cmp(c, byteConst(0));
 					*innerState->l << jmp(after, ifEqual);
 				}
@@ -107,7 +103,7 @@ namespace storm {
 			*innerState->l << end(innerState->block);
 
 			if (condResult) {
-				code::Var c = condResult->location(outerState).v;
+				code::Var c = condResult->location(outerState);
 				*innerState->l << cmp(c, byteConst(0));
 				*innerState->l << jmp(before, ifNotEqual);
 			} else {

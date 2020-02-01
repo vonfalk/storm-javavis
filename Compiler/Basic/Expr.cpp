@@ -170,44 +170,44 @@ namespace storm {
 		void NumLiteral::intCode(CodeGen *s, CodeResult *r) {
 			using namespace code;
 
-			VarInfo to = r->location(s);
+			code::Var to = r->location(s);
 
 			Type *t = r->type().type;
 			Engine &e = engine();
 			if (t == StormInfo<Int>::type(e))
-				*s->l << mov(to.v, intConst(int(intValue)));
+				*s->l << mov(to, intConst(int(intValue)));
 			else if (t == StormInfo<Nat>::type(e))
-				*s->l << mov(to.v, natConst(nat(intValue)));
+				*s->l << mov(to, natConst(nat(intValue)));
 			else if (t == StormInfo<Byte>::type(e))
-				*s->l << mov(to.v, byteConst(byte(intValue)));
+				*s->l << mov(to, byteConst(byte(intValue)));
 			else if (t == StormInfo<Float>::type(e))
-				*s->l << mov(to.v, floatConst(float(intValue)));
+				*s->l << mov(to, floatConst(float(intValue)));
 			else if (t == StormInfo<Double>::type(e))
-				*s->l << mov(to.v, doubleConst(double(intValue)));
+				*s->l << mov(to, doubleConst(double(intValue)));
 			else if (t == StormInfo<Long>::type(e))
-				*s->l << mov(to.v, longConst(Long(intValue)));
+				*s->l << mov(to, longConst(Long(intValue)));
 			else if (t == StormInfo<Word>::type(e))
-				*s->l << mov(to.v, wordConst(Word(intValue)));
+				*s->l << mov(to, wordConst(Word(intValue)));
 			else
 				assert(false, L"Unknown type for an integer constant.");
 
-			to.created(s);
+			r->created(s);
 		}
 
 		void NumLiteral::floatCode(CodeGen *s, CodeResult *r) {
 			using namespace code;
 
-			VarInfo to = r->location(s);
+			code::Var to = r->location(s);
 			Type *t = r->type().type;
 			Engine &e = engine();
 			if (t == StormInfo<Float>::type(e))
-				*s->l << mov(to.v, floatConst(float(floatValue)));
+				*s->l << mov(to, floatConst(float(floatValue)));
 			else if (t == StormInfo<Double>::type(e))
-				*s->l << mov(to.v, doubleConst(floatValue));
+				*s->l << mov(to, doubleConst(floatValue));
 			else
 				assert(false, L"Unknown type for a float constant.");
 
-			to.created(s);
+			r->created(s);
 		}
 
 
@@ -238,9 +238,9 @@ namespace storm {
 				return;
 
 			// We can store the string as an object inside the code.
-			VarInfo to = r->location(s);
-			*s->l << code::mov(to.v, code::objPtr(value));
-			to.created(s);
+			code::Var to = r->location(s);
+			*s->l << code::mov(to, code::objPtr(value));
+			r->created(s);
 		}
 
 		void StrLiteral::toS(StrBuf *to) const {
@@ -275,9 +275,9 @@ namespace storm {
 			if (!r->needed())
 				return;
 
-			VarInfo to = r->location(s);
-			*s->l << code::mov(to.v, code::byteConst(value ? 1 : 0));
-			to.created(s);
+			code::Var to = r->location(s);
+			*s->l << code::mov(to, code::byteConst(value ? 1 : 0));
+			r->created(s);
 		}
 
 		void BoolLiteral::toS(StrBuf *to) const {

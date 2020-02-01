@@ -21,7 +21,7 @@ namespace storm {
 			*p.state->l << fld(p.param(0));
 			*p.state->l << fld(p.param(1));
 			*p.state->l << faddp();
-			*p.state->l << fstp(p.result->location(p.state).v);
+			*p.state->l << fstp(p.result->location(p.state));
 			*p.state->l << fwait();
 		}
 	}
@@ -31,7 +31,7 @@ namespace storm {
 			*p.state->l << fld(p.param(0));
 			*p.state->l << fld(p.param(1));
 			*p.state->l << fsubp();
-			*p.state->l << fstp(p.result->location(p.state).v);
+			*p.state->l << fstp(p.result->location(p.state));
 			*p.state->l << fwait();
 		}
 	}
@@ -41,7 +41,7 @@ namespace storm {
 			*p.state->l << fldz();
 			*p.state->l << fld(p.param(0));
 			*p.state->l << fsubp();
-			*p.state->l << fstp(p.result->location(p.state).v);
+			*p.state->l << fstp(p.result->location(p.state));
 			*p.state->l << fwait();
 		}
 	}
@@ -51,7 +51,7 @@ namespace storm {
 			*p.state->l << fld(p.param(0));
 			*p.state->l << fld(p.param(1));
 			*p.state->l << fmulp();
-			*p.state->l << fstp(p.result->location(p.state).v);
+			*p.state->l << fstp(p.result->location(p.state));
 			*p.state->l << fwait();
 		}
 	}
@@ -61,7 +61,7 @@ namespace storm {
 			*p.state->l << fld(p.param(0));
 			*p.state->l << fld(p.param(1));
 			*p.state->l << fdivp();
-			*p.state->l << fstp(p.result->location(p.state).v);
+			*p.state->l << fstp(p.result->location(p.state));
 			*p.state->l << fwait();
 		}
 	}
@@ -73,7 +73,7 @@ namespace storm {
 		*p.state->l << mov(floatRel(dest, Offset()), p.param(1));
 		if (p.result->needed())
 			if (!p.result->suggest(p.state, p.originalParam(0)))
-				*p.state->l << mov(p.result->location(p.state).v, dest);
+				*p.state->l << mov(p.result->location(p.state), dest);
 	}
 
 	// Note: Can be used for 'double' or 'float' -> 'int' or 'long'.
@@ -81,7 +81,7 @@ namespace storm {
 		if (!p.result->needed())
 			return;
 		*p.state->l << fld(p.param(0));
-		*p.state->l << fistp(p.result->location(p.state).v);
+		*p.state->l << fistp(p.result->location(p.state));
 	}
 
 	// Note: Can be used for both 'double' and 'float'.
@@ -89,13 +89,13 @@ namespace storm {
 		if (!p.result->needed())
 			return;
 		*p.state->l << fld(p.param(0));
-		*p.state->l << fstp(p.result->location(p.state).v);
+		*p.state->l << fstp(p.result->location(p.state));
 	}
 
 	template <CondFlag f>
 	static void floatCmp(InlineParams p) {
 		if (p.result->needed()) {
-			Operand result = p.result->location(p.state).v;
+			Operand result = p.result->location(p.state);
 			*p.state->l << fld(p.param(1));
 			*p.state->l << fld(p.param(0));
 			*p.state->l << fcompp();
@@ -200,7 +200,7 @@ namespace storm {
 			*p.state->l << fld(p.param(0));
 			*p.state->l << fld(p.param(1));
 			*p.state->l << faddp();
-			*p.state->l << fstp(p.result->location(p.state).v);
+			*p.state->l << fstp(p.result->location(p.state));
 			*p.state->l << fwait();
 		}
 	}
@@ -210,7 +210,7 @@ namespace storm {
 			*p.state->l << fld(p.param(0));
 			*p.state->l << fld(p.param(1));
 			*p.state->l << fsubp();
-			*p.state->l << fstp(p.result->location(p.state).v);
+			*p.state->l << fstp(p.result->location(p.state));
 			*p.state->l << fwait();
 		}
 	}
@@ -220,7 +220,7 @@ namespace storm {
 			*p.state->l << fldz();
 			*p.state->l << fld(p.param(0));
 			*p.state->l << fsubp();
-			*p.state->l << fstp(p.result->location(p.state).v);
+			*p.state->l << fstp(p.result->location(p.state));
 			*p.state->l << fwait();
 		}
 	}
@@ -230,7 +230,7 @@ namespace storm {
 			*p.state->l << fld(p.param(0));
 			*p.state->l << fld(p.param(1));
 			*p.state->l << fmulp();
-			*p.state->l << fstp(p.result->location(p.state).v);
+			*p.state->l << fstp(p.result->location(p.state));
 			*p.state->l << fwait();
 		}
 	}
@@ -240,7 +240,7 @@ namespace storm {
 			*p.state->l << fld(p.param(0));
 			*p.state->l << fld(p.param(1));
 			*p.state->l << fdivp();
-			*p.state->l << fstp(p.result->location(p.state).v);
+			*p.state->l << fstp(p.result->location(p.state));
 			*p.state->l << fwait();
 		}
 	}
@@ -252,14 +252,14 @@ namespace storm {
 		*p.state->l << mov(doubleRel(dest, Offset()), p.param(1));
 		if (p.result->needed())
 			if (!p.result->suggest(p.state, p.originalParam(0))) {
-				*p.state->l << mov(p.result->location(p.state).v, dest);
+				*p.state->l << mov(p.result->location(p.state), dest);
 			}
 	}
 
 	template <CondFlag f>
 	static void doubleCmp(InlineParams p) {
 		if (p.result->needed()) {
-			Operand result = p.result->location(p.state).v;
+			Operand result = p.result->location(p.state);
 			*p.state->l << fld(p.param(1));
 			*p.state->l << fld(p.param(0));
 			*p.state->l << fcompp();

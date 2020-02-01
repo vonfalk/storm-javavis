@@ -42,22 +42,22 @@ namespace storm {
 			if (!to->needed())
 				return;
 
-			VarInfo r = to->location(s);
+			code::Var r = to->location(s);
 			if (to->type().ref) {
 				// Dangerous...
-				*s->l << lea(r.v, ptrRel(t->location(s).v, Offset()));
+				*s->l << lea(r, ptrRel(t->location(s), Offset()));
 			} else if (!to->type().isAsmType()) {
 				// Need to copy...
-				*s->l << lea(ptrA, ptrRel(r.v, Offset()));
+				*s->l << lea(ptrA, ptrRel(r, Offset()));
 				*s->l << fnParam(e.ptrDesc(), ptrA);
-				*s->l << fnParam(e.ptrDesc(), t->location(s).v);
+				*s->l << fnParam(e.ptrDesc(), t->location(s));
 				*s->l << fnCall(to->type().copyCtor(), true);
 			} else {
 				// Regular machine operations suffice!
-				*s->l << mov(ptrA, t->location(s).v);
-				*s->l << mov(r.v, xRel(to->type().size(), ptrA, Offset()));
+				*s->l << mov(ptrA, t->location(s));
+				*s->l << mov(r, xRel(to->type().size(), ptrA, Offset()));
 			}
-			r.created(s);
+			to->created(s);
 		}
 
 
@@ -181,20 +181,20 @@ namespace storm {
 				vars->at(i) = params->code(i - 1, s, values->at(i), scope);
 
 			// This needs to be last, otherwise other generated code may overwrite it!
-			VarInfo thisVar;
+			code::Var thisVar;
 			if (to->type().ref) {
 				thisVar = to->location(s);
-				vars->at(0) = thisVar.v;
+				vars->at(0) = thisVar;
 			} else {
 				thisVar = to->safeLocation(s, toCreate.asRef(false));
 				vars->at(0) = code::Operand(ptrA);
-				*s->l << lea(vars->at(0), thisVar.v);
+				*s->l << lea(vars->at(0), thisVar);
 			}
 
 			// Call it!
 			CodeResult *voidTo = new (this) CodeResult(Value(), s->block);
 			ctor->localCall(s, vars, voidTo, false);
-			thisVar.created(s);
+			to->created(s);
 		}
 
 		void CtorCall::createClass(CodeGen *s, CodeResult *to) {
@@ -207,9 +207,9 @@ namespace storm {
 			for (nat i = 0; i < values->count() - 1; i++)
 				vars->at(i) = params->code(i, s, values->at(i + 1), scope);
 
-			VarInfo created = to->safeLocation(s, toCreate);
-			allocObject(s, ctor, vars, created.v);
-			created.created(s);
+			code::Var created = to->safeLocation(s, toCreate);
+			allocObject(s, ctor, vars, created);
+			to->created(s);
 		}
 
 		CtorCall *defaultCtor(const SrcPos &pos, Scope scope, Type *t) {
@@ -251,22 +251,22 @@ namespace storm {
 				return;
 
 			if (to->type().ref && !var->result.ref) {
-				VarInfo v = to->location(s);
-				*s->l << lea(v.v, var->var.v);
-				v.created(s);
+				code::Var v = to->location(s);
+				*s->l << lea(v, var->var.v);
+				to->created(s);
 			} else if (!to->suggest(s, var->var.v)) {
 
-				VarInfo v = to->location(s);
+				code::Var v = to->location(s);
 				if (!var->result.isAsmType()) {
 					*s->l << lea(ptrA, var->var.v);
-					*s->l << lea(ptrC, v.v);
+					*s->l << lea(ptrC, v);
 					*s->l << fnParam(engine().ptrDesc(), ptrC);
 					*s->l << fnParam(engine().ptrDesc(), ptrA);
 					*s->l << fnCall(var->result.copyCtor(), true);
 				} else {
-					*s->l << mov(v.v, var->var.v);
+					*s->l << mov(v, var->var.v);
 				}
-				v.created(s);
+				to->created(s);
 			}
 		}
 
@@ -290,21 +290,21 @@ namespace storm {
 				return;
 
 			if (to->type().ref && !type.ref) {
-				VarInfo v = to->location(s);
-				*s->l << lea(v.v, var);
-				v.created(s);
+				code::Var v = to->location(s);
+				*s->l << lea(v, var);
+				to->created(s);
 			} else if (!to->suggest(s, var)) {
-				VarInfo v = to->location(s);
+				code::Var v = to->location(s);
 				if (!type.isAsmType()) {
 					*s->l << lea(ptrA, var);
-					*s->l << lea(ptrC, v.v);
+					*s->l << lea(ptrC, v);
 					*s->l << fnParam(engine().ptrDesc(), ptrC);
 					*s->l << fnParam(engine().ptrDesc(), ptrA);
 					*s->l << fnCall(type.copyCtor(), true);
 				} else {
-					*s->l << mov(v.v, var);
+					*s->l << mov(v, var);
 				}
-				v.created(s);
+				to->created(s);
 			}
 		}
 
@@ -352,7 +352,7 @@ namespace storm {
 			{
 				CodeResult *mResult = new (this) CodeResult(mType, s->block);
 				member->code(s, mResult);
-				memberPtr = mResult->location(s).v;
+				memberPtr = mResult->location(s);
 			}
 
 			// If it was a reference, we can use it right away!
@@ -370,7 +370,7 @@ namespace storm {
 
 			CodeResult *mResult = new (this) CodeResult(member->result().type().asRef(false), s->block);
 			member->code(s, mResult);
-			*s->l << mov(ptrA, mResult->location(s).v);
+			*s->l << mov(ptrA, mResult->location(s));
 
 			extractCode(s, to);
 		}
@@ -394,29 +394,29 @@ namespace storm {
 		void MemberVarAccess::extractPlainCode(CodeGen *s, CodeResult *to) {
 			using namespace code;
 
-			VarInfo result = to->location(s);
+			code::Var result = to->location(s);
 			if (to->type().ref) {
 				*s->l << add(ptrA, ptrConst(var->offset()));
-				*s->l << mov(result.v, ptrA);
+				*s->l << mov(result, ptrA);
 			} else if (!to->type().isAsmType()) {
 				*s->l << add(ptrA, ptrConst(var->offset()));
-				*s->l << lea(ptrC, result.v);
+				*s->l << lea(ptrC, result);
 				*s->l << fnParam(engine().ptrDesc(), ptrC);
 				*s->l << fnParam(engine().ptrDesc(), ptrA);
 				*s->l << fnCall(var->type.copyCtor(), true);
 			} else {
-				*s->l << mov(result.v, xRel(result.v.size(), ptrA, var->offset()));
+				*s->l << mov(result, xRel(result.size(), ptrA, var->offset()));
 			}
 
-			result.created(s);
+			to->created(s);
 		}
 
 		void MemberVarAccess::extractCopyCode(CodeGen *s, CodeResult *to) {
 			using namespace code;
 
 			Value type = to->type();
-			VarInfo result = to->location(s);
-			VarInfo local = result;
+			code::Var result = to->location(s);
+			VarInfo local(result, false);
 			if (type.ref) {
 				// We need to create a value here that we can use later.
 				local = s->createVar(type.asRef(false));
@@ -452,8 +452,9 @@ namespace storm {
 			fn->threadCall(s, params, new (this) CodeResult(type.asRef(false), local), thread);
 
 			if (type.ref) {
-				*s->l << lea(result.v, local.v);
+				*s->l << lea(result, local.v);
 			}
+			to->created(s);
 		}
 
 		void MemberVarAccess::toS(StrBuf *to) const {
@@ -489,18 +490,19 @@ namespace storm {
 			*s->l << fnCall(engine().ref(builtin::globalAddr), true, engine().ptrDesc(), ptrA);
 
 			if (to->type().ref) {
-				*s->l << mov(to->location(s).v, ptrA);
+				*s->l << mov(to->location(s), ptrA);
 			} else {
 				// We need to make a copy...
-				VarInfo d = to->location(s);
+				code::Var d = to->location(s);
 				if (!var->type.isAsmType()) {
-					*s->l << lea(ptrC, d.v);
+					*s->l << lea(ptrC, d);
 					*s->l << fnParam(engine().ptrDesc(), ptrC);
 					*s->l << fnParam(engine().ptrDesc(), ptrA);
 					*s->l << fnCall(var->type.copyCtor(), true);
 				} else {
-					*s->l << mov(d.v, xRel(d.v.size(), ptrA, Offset()));
+					*s->l << mov(d, xRel(d.size(), ptrA, Offset()));
 				}
+				to->created(s);
 			}
 		}
 
@@ -521,9 +523,9 @@ namespace storm {
 
 		void NamedThreadAccess::code(CodeGen *s, CodeResult *to) {
 			if (to->needed()) {
-				VarInfo z = to->location(s);
-				*s->l << code::mov(z.v, thread->ref());
-				z.created(s);
+				code::Var z = to->location(s);
+				*s->l << code::mov(z, thread->ref());
+				to->created(s);
 			}
 		}
 
@@ -564,7 +566,7 @@ namespace storm {
 			// Target variable.
 			CodeResult *lhs = new (this) CodeResult(t.asRef(true), s->block);
 			this->to->code(s, lhs);
-			code::Operand targetAddr = lhs->location(s).v;
+			code::Operand targetAddr = lhs->location(s);
 
 			// Compute RHS...
 			CodeResult *rhs = new (this) CodeResult(t, s->block);
@@ -572,7 +574,7 @@ namespace storm {
 
 			// Copy.
 			*s->l << code::mov(ptrA, targetAddr);
-			*s->l << code::mov(ptrRel(ptrA, Offset()), rhs->location(s).v);
+			*s->l << code::mov(ptrRel(ptrA, Offset()), rhs->location(s));
 
 			// Do we need to return some value?
 			if (!to->needed())
@@ -580,15 +582,15 @@ namespace storm {
 
 			if (to->type().ref) {
 				if (!to->suggest(s, targetAddr)) {
-					VarInfo z = to->location(s);
-					*s->l << mov(z.v, targetAddr);
-					z.created(s);
+					code::Var z = to->location(s);
+					*s->l << mov(z, targetAddr);
+					to->created(s);
 				}
 			} else {
-				VarInfo z = to->location(s);
+				code::Var z = to->location(s);
 				*s->l << mov(ptrA, targetAddr);
-				*s->l << mov(z.v, ptrRel(ptrA, Offset()));
-				z.created(s);
+				*s->l << mov(z, ptrRel(ptrA, Offset()));
+				to->created(s);
 			}
 		}
 
@@ -649,13 +651,13 @@ namespace storm {
 			if (!to->needed())
 				return;
 
-			VarInfo lVar = l->location(s);
-			VarInfo rVar = r->location(s);
-			VarInfo res = to->location(s);
+			code::Var lVar = l->location(s);
+			code::Var rVar = r->location(s);
+			code::Var res = to->location(s);
 
-			*s->l << cmp(lVar.v, rVar.v);
-			*s->l << setCond(res.v, negate ? ifNotEqual : ifEqual);
-			res.created(s);
+			*s->l << cmp(lVar, rVar);
+			*s->l << setCond(res, negate ? ifNotEqual : ifEqual);
+			to->created(s);
 		}
 
 		void ClassCompare::toS(StrBuf *to) const {

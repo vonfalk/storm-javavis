@@ -111,19 +111,15 @@ namespace storm {
 				initCtor->code(s, gr);
 			}
 
-			var->var.created(s);
-
 			if (to->needed()) {
 				// Part of another expression.
+				code::Var v = to->location(s);
 				if (to->type().ref) {
-					VarInfo v = to->location(s);
-					*s->l << lea(v.v, var->var.v);
-					v.created(s);
+					*s->l << lea(v, var->var.v);
 				} else if (!to->suggest(s, var->var.v)) {
-					VarInfo v = to->location(s);
-					*s->l << mov(v.v, var->var.v);
-					v.created(s);
+					*s->l << mov(v, var->var.v);
 				}
+				to->created(s);
 			}
 		}
 

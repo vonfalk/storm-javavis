@@ -11,6 +11,9 @@
 namespace code {
 	namespace x86 {
 
+		// Number used for inactive variables.
+		static const Nat INACTIVE = 0xFFFFFFFF;
+
 		// Number of words used for an EH frame.
 		static const Nat EH_WORDS = 4;
 
@@ -21,6 +24,7 @@ namespace code {
 			TRANSFORM(epilog),
 			TRANSFORM(beginBlock),
 			TRANSFORM(endBlock),
+			TRANSFORM(activate),
 
 			TRANSFORM(fnRet),
 			TRANSFORM(fnRetRef),
@@ -65,10 +69,17 @@ namespace code {
 					preserved->put(i.v());
 			}
 
-			preserved->put(ebx);
-			preserved->put(edi);
-
 			layout = code::x86::layout(src, preserved->count(), usingEH, resultParam, memberFn);
+
+			Array<Var> *vars = src->allVars();
+			activated = new (this) Array<Nat>(vars->count(), 0);
+			activationId = 0;
+
+			for (Nat i = 0; i < vars->count(); i++) {
+				Var var = vars->at(i);
+				if (src->freeOpt(var) & freeInactive)
+					activated->at(var.key()) = INACTIVE;
+			}
 
 			selfLbl = dest->label();
 			*dest << selfLbl;
@@ -93,7 +104,7 @@ namespace code {
 			// Total stack size.
 			*dest << dat(ptrConst(layout->last()));
 
-			// All variables.
+			// All variables. Create VarCleanup instances.
 			Array<Var> *vars = src->allVars();
 
 			for (nat i = 0; i < vars->count(); i++) {
@@ -103,7 +114,11 @@ namespace code {
 					*dest << dat(ptrConst(Offset(0)));
 				else
 					*dest << dat(src->freeFn(v));
-				*dest << dat(ptrConst(layout->at(v.key())));
+				*dest << dat(intConst(layout->at(v.key())));
+				*dest << dat(intConst(activated->at(v.key())));
+
+				if (activated->at(v.key()) == INACTIVE)
+					throw new (this) VariableActivationError(v, S("Never activated."));
 			}
 		}
 
@@ -162,8 +177,7 @@ namespace code {
 					zeroVar(dest, layout->at(v.key()), v.size(), initEax);
 			}
 
-			if (usingEH)
-				*dest << mov(intRel(ptrFrame, blockId), natConst(block.key()));
+			updateBlockId(dest);
 		}
 
 		static void saveResult(Listing *dest) {
@@ -219,7 +233,6 @@ namespace code {
 			bool pushedEax = false;
 
 			Array<Var> *vars = dest->allVars(destroy);
-			TODO(L"Determine reachability!");
 			for (nat i = 0; i < vars->count(); i++) {
 				Var v = vars->at(i);
 
@@ -227,6 +240,11 @@ namespace code {
 				FreeOpt when = dest->freeOpt(v);
 
 				if (!dtor.empty() && (when & freeOnBlockExit) == freeOnBlockExit) {
+
+					// Should we destroy it right now?
+					if (activated->at(v.key()) > activationId)
+						continue;
+
 					if (preserveEax && !pushedEax) {
 						saveResult(dest);
 						pushedEax = true;
@@ -256,8 +274,7 @@ namespace code {
 				restoreResult(dest);
 
 			block = dest->parent(block);
-			if (usingEH)
-				*dest << mov(intRel(ptrFrame, blockId), natConst(block.key()));
+			updateBlockId(dest);
 		}
 
 		void LayoutVars::prologTfm(Listing *dest, Listing *src, Nat line) {
@@ -343,21 +360,23 @@ namespace code {
 		}
 
 		void LayoutVars::endBlockTfm(Listing *dest, Listing *src, Nat line) {
-			TODO(L"We don't need a loop here anymore!");
-			Block target = src->at(line)->src().block();
-			Block start = block;
+			destroyBlock(dest, src->at(line)->src().block(), false);
+		}
 
-			for (Block now = block; now != target; now = src->parent(now)) {
-				if (now == Block()) {
-					Str *msg = TO_S(engine(), S("Block ") << target << S(" is not a parent of ") << start);
-					throw new (this) BlockEndError(msg);
-				}
+		void LayoutVars::activateTfm(Listing *dest, Listing *src, Nat line) {
+			Var var = src->at(line)->src().var();
+			Nat &id = activated->at(var.key());
 
-				destroyBlock(dest, now, false);
-			}
+			if (id == 0)
+				throw new (this) VariableActivationError(var, S("must be marked with 'freeInactive'."));
+			if (id != INACTIVE)
+				throw new (this) VariableActivationError(var, S("already activated."));
 
-			// Destroy the last one as well.
-			destroyBlock(dest, target, false);
+			id = ++activationId;
+
+			// We only need to update the block id if this impacts exception handling.
+			if (src->freeOpt(var) & freeOnException)
+				updateBlockId(dest);
 		}
 
 		// Memcpy using mov instructions.
@@ -476,6 +495,12 @@ namespace code {
 			*dest << ret(Size()); // We will not analyze registers anymore, Size() is fine.
 		}
 
+		void LayoutVars::updateBlockId(Listing *dest) {
+			if (usingEH) {
+				Nat id = encodeFnState(block.key(), activationId);
+				*dest << mov(intRel(ptrFrame, blockId), natConst(id));
+			}
+		}
 
 		static void layoutParams(Array<Offset> *result, Listing *src, Bool resultParam, Bool member) {
 			Offset offset = Offset::sPtr * 2; // old ebp and return address

@@ -137,7 +137,7 @@ namespace storm {
 			void classCode(MaybeClassType *c, CodeGen *state, CodeResult *boolResult, MAYBE(LocalVar *) var);
 
 			// Genereate code for value types.
-			void valueCode(MaybeValueType *c, CodeGen *state, CodeResult *boolResult, MAYBE(LocalVar *) var);
+			void valueCode(MaybeValueType *c, Bool ref, CodeGen *state, CodeResult *boolResult, MAYBE(LocalVar *) var);
 		};
 
 

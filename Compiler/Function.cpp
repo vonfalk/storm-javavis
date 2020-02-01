@@ -239,9 +239,9 @@ namespace storm {
 		if (result == Value()) {
 			*to->l << fnCall(ref, isMember());
 		} else {
-			VarInfo rVar = res->safeLocation(to, result);
-			*to->l << fnCall(ref, isMember(), result.desc(engine()), rVar.v);
-			rVar.created(to);
+			code::Var rVar = res->safeLocation(to, result);
+			*to->l << fnCall(ref, isMember(), result.desc(engine()), rVar);
+			res->created(to);
 		}
 	}
 
@@ -283,7 +283,7 @@ namespace storm {
 		Var par = createFnCall(sub, this->params, params, true);
 
 		// Where shall we store the result (store the pointer to it in ptrB)?
-		VarInfo resultPos;
+		code::Var resultPos;
 		if (this->result == Value()) {
 			// null-pointer.
 			*to->l << mov(ptrB, ptrConst(Offset(0)));
@@ -291,7 +291,7 @@ namespace storm {
 			// Note: We always create the result in the parent scope if we need to, otherwise we
 			// will fail to clone it later on.
 			resultPos = res->safeLocation(to, this->result);
-			*to->l << lea(ptrB, resultPos.v);
+			*to->l << lea(ptrB, resultPos);
 		}
 
 		Ref thunk = Ref(threadThunk());
@@ -310,7 +310,8 @@ namespace storm {
 
 		*to->l << end(sub->block);
 
-		resultPos.created(to);
+		if (resultPos != code::Var())
+			res->created(to);
 
 		// Clone the result.
 		if (result.isValue() && !result.isPrimitive()) {
@@ -319,7 +320,7 @@ namespace storm {
 				*to->l << begin(child->block);
 
 				Var env = allocObject(child, CloneEnv::stormType(e));
-				*to->l << lea(ptrA, resultPos.v);
+				*to->l << lea(ptrA, resultPos);
 				*to->l << fnParam(ptr, ptrA);
 				*to->l << fnParam(ptr, env);
 				*to->l << fnCall(f->ref(), true);
@@ -327,8 +328,8 @@ namespace storm {
 				*to->l << end(child->block);
 			}
 		} else if (result.isClass()) {
-			*to->l << fnParam(ptr, resultPos.v);
-			*to->l << fnCall(cloneFn(result.type)->ref(), false, ptr, resultPos.v);
+			*to->l << fnParam(ptr, resultPos);
+			*to->l << fnCall(cloneFn(result.type)->ref(), false, ptr, resultPos);
 		}
 
 	}
@@ -352,9 +353,9 @@ namespace storm {
 
 		// Create the result object.
 		Type *futureT = wrapFuture(e, this->result).type;
-		VarInfo resultPos = result->safeLocation(sub, thisPtr(futureT));
-		allocObject(sub, futureT->defaultCtor(), new (this) Array<Operand>(), resultPos.v);
-		resultPos.created(sub);
+		code::Var resultPos = result->safeLocation(sub, thisPtr(futureT));
+		allocObject(sub, futureT->defaultCtor(), new (this) Array<Operand>(), resultPos);
+		result->created(sub);
 
 		// Get the thunk.
 		Ref thunk = Ref(threadThunk());
@@ -367,16 +368,12 @@ namespace storm {
 		*to->l << fnParam(byteDesc(e), toOp(isMember())); // member
 		*to->l << fnParam(ptr, thunk); // thunk
 		*to->l << fnParam(ptr, ptrA); // params
-		*to->l << fnParam(ptr, resultPos.v); // result
+		*to->l << fnParam(ptr, resultPos); // result
 		*to->l << fnParam(ptr, thread); // on
 		*to->l << fnCall(e.ref(builtin::spawnFuture), false);
 
 		// Now, we're done!
 		*to->l << end(sub->block);
-
-		// May be delayed...
-		if (result->needed())
-			result->location(to).created(to);
 	}
 
 	code::RefSource *Function::threadThunk() {

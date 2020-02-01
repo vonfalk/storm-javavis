@@ -179,12 +179,12 @@ namespace storm {
 			if (!r->needed())
 				return;
 
-			VarInfo z = r->location(to);
+			code::Var z = r->location(to);
 			if (!dotExpr) {
 				// Create the object once and store it.
 				FnBase *obj = pointer(target);
 
-				*to->l << mov(z.v, objPtr(obj));
+				*to->l << mov(z, objPtr(obj));
 			} else {
 				// We need to create a new object each time since the 'dotExpr' might change.
 				RunOn runOn = target->runOn();
@@ -201,9 +201,9 @@ namespace storm {
 				*to->l << fnParam(ptr, thisPtr.v);
 				*to->l << fnParam(byteDesc(engine()), byteConst(memberFn ? 1 : 0));
 				*to->l << fnCall(engine().ref(builtin::fnCreate), false, ptr, ptrA);
-				*to->l << mov(z.v, ptrA);
+				*to->l << mov(z, ptrA);
 			}
-			z.created(to);
+			r->created(to);
 		}
 
 		void FnPtr::toS(StrBuf *to) const {

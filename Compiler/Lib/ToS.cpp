@@ -91,7 +91,7 @@ namespace storm {
 		p->push(strBuf);
 		toS->localCall(to, p, str, false);
 
-		to->returnValue(str->location(to).v);
+		to->returnValue(str->location(to));
 		return to;
 	}
 

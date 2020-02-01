@@ -7,18 +7,18 @@ namespace storm {
 	void ucast(InlineParams p) {
 		if (!p.result->needed())
 			return;
-		*p.state->l << ucast(p.result->location(p.state).v, p.param(0));
+		*p.state->l << ucast(p.result->location(p.state), p.param(0));
 	}
 
 	void icast(InlineParams p) {
 		if (!p.result->needed())
 			return;
-		*p.state->l << icast(p.result->location(p.state).v, p.param(0));
+		*p.state->l << icast(p.result->location(p.state), p.param(0));
 	}
 
 	void numAdd(InlineParams p) {
 		if (p.result->needed()) {
-			Operand result = p.result->location(p.state).v;
+			Operand result = p.result->location(p.state);
 			*p.state->l << mov(result, p.param(0));
 			*p.state->l << add(result, p.param(1));
 		}
@@ -26,7 +26,7 @@ namespace storm {
 
 	void numSub(InlineParams p) {
 		if (p.result->needed()) {
-			Operand result = p.result->location(p.state).v;
+			Operand result = p.result->location(p.state);
 			*p.state->l << mov(result, p.param(0));
 			*p.state->l << sub(result, p.param(1));
 		}
@@ -34,7 +34,7 @@ namespace storm {
 
 	void numMul(InlineParams p) {
 		if (p.result->needed()) {
-			Operand result = p.result->location(p.state).v;
+			Operand result = p.result->location(p.state);
 			*p.state->l << mov(result, p.param(0));
 			*p.state->l << mul(result, p.param(1));
 		}
@@ -42,7 +42,7 @@ namespace storm {
 
 	void numIDiv(InlineParams p) {
 		if (p.result->needed()) {
-			Operand result = p.result->location(p.state).v;
+			Operand result = p.result->location(p.state);
 			*p.state->l << mov(result, p.param(0));
 			*p.state->l << idiv(result, p.param(1));
 		}
@@ -50,7 +50,7 @@ namespace storm {
 
 	void numUDiv(InlineParams p) {
 		if (p.result->needed()) {
-			Operand result = p.result->location(p.state).v;
+			Operand result = p.result->location(p.state);
 			*p.state->l << mov(result, p.param(0));
 			*p.state->l << udiv(result, p.param(1));
 		}
@@ -58,7 +58,7 @@ namespace storm {
 
 	void numIMod(InlineParams p) {
 		if (p.result->needed()) {
-			Operand result = p.result->location(p.state).v;
+			Operand result = p.result->location(p.state);
 			*p.state->l << mov(result, p.param(0));
 			*p.state->l << imod(result, p.param(1));
 		}
@@ -66,7 +66,7 @@ namespace storm {
 
 	void numUMod(InlineParams p) {
 		if (p.result->needed()) {
-			Operand result = p.result->location(p.state).v;
+			Operand result = p.result->location(p.state);
 			*p.state->l << mov(result, p.param(0));
 			*p.state->l << umod(result, p.param(1));
 		}
@@ -74,7 +74,7 @@ namespace storm {
 
 	void numINeg(InlineParams p) {
 		if (p.result->needed()) {
-			Operand result = p.result->location(p.state).v;
+			Operand result = p.result->location(p.state);
 			// Note: it would be nice to use the 'neg' instruction for this.
 			*p.state->l << mov(result, xConst(result.size(), 0));
 			*p.state->l << sub(result, p.param(0));
@@ -83,7 +83,7 @@ namespace storm {
 
 	void numAnd(InlineParams p) {
 		if (p.result->needed()) {
-			Operand result = p.result->location(p.state).v;
+			Operand result = p.result->location(p.state);
 			*p.state->l << mov(result, p.param(0));
 			*p.state->l << band(result, p.param(1));
 		}
@@ -91,7 +91,7 @@ namespace storm {
 
 	void numOr(InlineParams p) {
 		if (p.result->needed()) {
-			Operand result = p.result->location(p.state).v;
+			Operand result = p.result->location(p.state);
 			*p.state->l << mov(result, p.param(0));
 			*p.state->l << bor(result, p.param(1));
 		}
@@ -99,7 +99,7 @@ namespace storm {
 
 	void numXor(InlineParams p) {
 		if (p.result->needed()) {
-			Operand result = p.result->location(p.state).v;
+			Operand result = p.result->location(p.state);
 			*p.state->l << mov(result, p.param(0));
 			*p.state->l << bxor(result, p.param(1));
 		}
@@ -107,7 +107,7 @@ namespace storm {
 
 	void numNot(InlineParams p) {
 		if (p.result->needed()) {
-			Operand result = p.result->location(p.state).v;
+			Operand result = p.result->location(p.state);
 			*p.state->l << mov(result, p.param(0));
 			*p.state->l << bnot(result);
 		}

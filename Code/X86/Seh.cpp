@@ -47,10 +47,8 @@ namespace code {
 			// the Binary object during unwinding.
 			void *self;
 
-			// The topmost active part.
-			// TODO: We could use an approach similar to Posix here, i.e. generating a part-table.
-			// Then we don't need to store it on the stack.
-			size_t activePart;
+			// The topmost active block and active variables.
+			size_t activePartVars;
 
 			// Current EBP points to this.
 			void *lastEbp;
@@ -88,7 +86,8 @@ namespace code {
 				Binary *owner = codeBinary(self);
 				if (owner) {
 					Frame f(this);
-					activePart = owner->cleanup(f, until);
+					Nat part = owner->cleanup(f, until);
+					activePartVars = encodeFnState(part, f.activation);
 				} else {
 					WARNING(L"Using SEH, but no link to the metadata provided!");
 				}
@@ -107,13 +106,17 @@ namespace code {
 				Binary *owner = codeBinary(self);
 				if (!owner)
 					return false;
-				return owner->hasCatch(activePart, exception, resume);
+				Nat part, activation;
+				decodeFnState(activePartVars, part, activation);
+				return owner->hasCatch(part, exception, resume);
 			}
 
 		};
 
 
-		Frame::Frame(SEHFrame *f) : StackFrame(f->activePart), frame(f) {}
+		Frame::Frame(SEHFrame *f) : StackFrame(0, 0), frame(f) {
+			decodeFnState(f->activePartVars, block, activation);
+		}
 
 		void *Frame::toPtr(size_t offset) {
 			int o = offset;

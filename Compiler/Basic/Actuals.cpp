@@ -74,7 +74,7 @@ namespace storm {
 				// 'expr' will handle the type we are giving it.
 				CodeResult *gr = new (this) CodeResult(param, s->block);
 				expr->code(s, gr);
-				return gr->location(s).v;
+				return gr->location(s);
 			}
 		}
 

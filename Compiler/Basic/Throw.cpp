@@ -26,11 +26,11 @@ namespace storm {
 			CodeResult *res = new (this) CodeResult(expr->result().type().asRef(false), state->block);
 			expr->code(state, res);
 
-			VarInfo val = res->location(state);
+			code::Var val = res->location(state);
 			if (res->type().ref)
-				*state->l << fnParamRef(engine().ptrDesc(), val.v);
+				*state->l << fnParamRef(engine().ptrDesc(), val);
 			else
-				*state->l << fnParam(engine().ptrDesc(), val.v);
+				*state->l << fnParam(engine().ptrDesc(), val);
 			*state->l << fnCall(engine().ref(builtin::throwException), false);
 
 			// This function never returns.

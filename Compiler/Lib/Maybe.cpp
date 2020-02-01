@@ -102,7 +102,7 @@ namespace storm {
 		// See if we should return something (necessary since we can be used as an assignment).
 		if (p.result->needed()) {
 			if (!p.result->suggest(p.state, p.originalParam(0))) {
-				*p.state->l << mov(p.result->location(p.state).v, dest);
+				*p.state->l << mov(p.result->location(p.state), dest);
 			}
 		}
 	}
@@ -113,7 +113,7 @@ namespace storm {
 			return;
 
 		*p.state->l << cmp(p.param(0), ptrConst(Offset()));
-		*p.state->l << setCond(p.result->location(p.state).v, ifEqual);
+		*p.state->l << setCond(p.result->location(p.state), ifEqual);
 	}
 
 	static void anyMaybeClass(InlineParams p) {
@@ -122,7 +122,7 @@ namespace storm {
 			return;
 
 		*p.state->l << cmp(p.param(0), ptrConst(Offset()));
-		*p.state->l << setCond(p.result->location(p.state).v, ifNotEqual);
+		*p.state->l << setCond(p.result->location(p.state), ifNotEqual);
 	}
 
 	static Str *maybeToSClass(EnginePtr e, RootObject *o) {
@@ -528,7 +528,7 @@ namespace storm {
 
 		// Store the result before we trash it.
 		if (p.result->needed()) {
-			*p.state->l << mov(p.result->location(p.state).v, dest);
+			*p.state->l << mov(p.result->location(p.state), dest);
 		}
 
 		Label empty = p.state->l->label();
@@ -569,7 +569,7 @@ namespace storm {
 
 		// Store the result before we trash it.
 		if (p.result->needed()) {
-			*p.state->l << mov(p.result->location(p.state).v, dest);
+			*p.state->l << mov(p.result->location(p.state), dest);
 		}
 
 		*p.state->l << mov(byteRel(dest, boolOffset()), byteConst(1));
@@ -602,7 +602,7 @@ namespace storm {
 
 		p.allocRegs(0);
 		*p.state->l << cmp(byteRel(p.regParam(0), boolOffset()), byteConst(0));
-		*p.state->l << setCond(p.result->location(p.state).v, ifEqual);
+		*p.state->l << setCond(p.result->location(p.state), ifEqual);
 	}
 
 	void MaybeValueType::anyMaybe(InlineParams p) {
@@ -611,7 +611,7 @@ namespace storm {
 			return;
 
 		p.allocRegs(0);
-		*p.state->l << mov(p.result->location(p.state).v, byteRel(p.regParam(0), boolOffset()));
+		*p.state->l << mov(p.result->location(p.state), byteRel(p.regParam(0), boolOffset()));
 	}
 
 	void MaybeValueType::toSMaybe(InlineParams p) {
@@ -622,7 +622,7 @@ namespace storm {
 		*p.state->l << fnParam(engine.ptrDesc(), typeRef());
 		*p.state->l << fnParam(engine.ptrDesc(), p.param(0));
 		*p.state->l << fnParam(engine.ptrDesc(), ptrConst(0));
-		*p.state->l << fnCall(engine.ref(builtin::maybeToS), false, engine.ptrDesc(), p.result->location(p.state).v);
+		*p.state->l << fnCall(engine.ref(builtin::maybeToS), false, engine.ptrDesc(), p.result->location(p.state));
 	}
 
 	void MaybeValueType::toSMaybeBuf(InlineParams p) {

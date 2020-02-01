@@ -46,7 +46,7 @@ namespace storm {
 
 		if (needsPart) {
 			dtor = type.destructor();
-			opt = opt | code::freePtr;
+			opt = opt | code::freePtr | code::freeInactive;
 		}
 
 		return VarInfo(l->createVar(in, type.size(), dtor, opt), needsPart);
@@ -88,9 +88,6 @@ namespace storm {
 			return;
 
 		*gen->l << activate(v);
-
-		// Prevent duplicate activation.
-		needsPart = false;
 	}
 
 
@@ -106,7 +103,7 @@ namespace storm {
 
 	CodeResult::CodeResult(Value type, VarInfo var) : variable(var), t(type) {}
 
-	VarInfo CodeResult::location(CodeGen *s) {
+	code::Var CodeResult::location(CodeGen *s) {
 		assert(needed(), L"Trying to get the location of an unneeded result. Use 'safeLocation' instead.");
 
 		if (variable.v == code::Var()) {
@@ -117,19 +114,23 @@ namespace storm {
 			}
 		}
 
-		code::Listing *l = s->l;
-		return variable;
+		return variable.v;
 	}
 
-	VarInfo CodeResult::safeLocation(CodeGen *s, Value type) {
-		if (needed())
+	code::Var CodeResult::safeLocation(CodeGen *s, Value type) {
+		if (needed()) {
 			return location(s);
-		else if (variable.v == code::Var())
-			// Generate a temporary variable. Do not save it, it will mess up cases like 'if', where
-			// two different branches may end up in different blocks!
-			return s->createVar(type);
-		else
-			return variable;
+		} else if (variable.v == code::Var()) {
+			variable = s->createVar(type);
+			return variable.v;
+		} else {
+			return variable.v;
+		}
+	}
+
+	void CodeResult::created(CodeGen *s) {
+		if (variable.v != code::Var())
+			variable.created(s);
 	}
 
 	Bool CodeResult::suggest(CodeGen *s, code::Var v) {
@@ -160,6 +161,20 @@ namespace storm {
 
 	Bool CodeResult::needed() const {
 		return t != Value();
+	}
+
+	CodeResult *CodeResult::split(CodeGen *s) {
+		if (!needed()) {
+			return new (this) CodeResult();
+		}
+
+		if (variable.v == code::Var()) {
+			// Create the variable now.
+			location(s);
+		}
+
+		// Give it a variable that does not need to be created.
+		return new (this) CodeResult(t, VarInfo(variable.v, false));
 	}
 
 

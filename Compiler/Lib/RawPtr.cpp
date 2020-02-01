@@ -29,11 +29,11 @@ namespace storm {
 			if (p.result->type().ref) {
 				// Suggest params[0].
 				if (!p.result->suggest(p.state, p.originalParam(0)))
-					*p.state->l << mov(p.result->location(p.state).v, dest);
+					*p.state->l << mov(p.result->location(p.state), dest);
 			} else {
 				// Suggest params[1].
 				if (!p.result->suggest(p.state, p.param(1)))
-					*p.state->l << mov(p.result->location(p.state).v, dest);
+					*p.state->l << mov(p.result->location(p.state), dest);
 			}
 		}
 	}
@@ -43,7 +43,7 @@ namespace storm {
 
 		if (p.result->needed()) {
 			*p.state->l << cmp(p.param(0), ptrConst(0));
-			*p.state->l << setCond(p.result->location(p.state).v, ifEqual);
+			*p.state->l << setCond(p.result->location(p.state), ifEqual);
 		}
 	}
 
@@ -52,7 +52,7 @@ namespace storm {
 
 		if (p.result->needed()) {
 			*p.state->l << cmp(p.param(0), ptrConst(0));
-			*p.state->l << setCond(p.result->location(p.state).v, ifNotEqual);
+			*p.state->l << setCond(p.result->location(p.state), ifNotEqual);
 		}
 	}
 
@@ -61,9 +61,9 @@ namespace storm {
 
 		if (p.result->needed()) {
 			if (p.result->type().ref) {
-				*p.state->l << lea(p.result->location(p.state).v, p.param(0));
+				*p.state->l << lea(p.result->location(p.state), p.param(0));
 			} else if (!p.result->suggest(p.state, p.param(0))) {
-				*p.state->l << mov(p.result->location(p.state).v, p.param(0));
+				*p.state->l << mov(p.result->location(p.state), p.param(0));
 			}
 		}
 	}
@@ -157,7 +157,7 @@ namespace storm {
 		*p.state->l << ucast(ptrA, p.param(1));
 		*p.state->l << add(ptrA, p.param(0));
 
-		*p.state->l << mov(p.result->location(p.state).v, xRel(T(), ptrA, Offset()));
+		*p.state->l << mov(p.result->location(p.state), xRel(T(), ptrA, Offset()));
 	}
 
 	RawPtrType::RawPtrType(Engine &e) :

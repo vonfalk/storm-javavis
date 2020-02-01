@@ -199,12 +199,18 @@ namespace code {
 
 	void Binary::cleanup(StackFrame &frame, Variable &v) {
 		if (v.flags & freeOnException) {
-			byte *data = (byte *)address();
-			size_t *table = (size_t *)(data + metaOffset);
+			// Element #0 is the total size, then VarCleanup-instances start.
+			byte *data = (byte *)address() + metaOffset + sizeof(void *);
+			VarCleanup *vars = (VarCleanup *)data;
 
-			// Element #0 is the total size. Table starts at one pointer offset.
-			void *freeFn = (void *)table[v.id*2 + 1];
-			size_t offset = table[v.id*2 + 2];
+			VarCleanup &now = vars[v.id];
+			void *freeFn = now.function;
+			size_t offset = now.offset;
+			size_t activeAfter = now.activeAfter;
+
+			// If not active, we don't destroy it.
+			if (frame.activation < activeAfter)
+				return;
 
 			void *ptr = frame.toPtr(offset);
 

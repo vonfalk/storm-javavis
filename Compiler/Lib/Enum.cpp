@@ -23,7 +23,7 @@ namespace storm {
 
 	static void enumAdd(InlineParams p) {
 		if (p.result->needed()) {
-			Operand result = p.result->location(p.state).v;
+			Operand result = p.result->location(p.state);
 			*p.state->l << mov(result, p.param(0));
 			*p.state->l << bor(result, p.param(1));
 		}
@@ -31,7 +31,7 @@ namespace storm {
 
 	static void enumSub(InlineParams p) {
 		if (p.result->needed()) {
-			Operand result = p.result->location(p.state).v;
+			Operand result = p.result->location(p.state);
 			*p.state->l << mov(result, p.param(1));
 			*p.state->l << bnot(result);
 			*p.state->l << band(result, p.param(0));
@@ -40,7 +40,7 @@ namespace storm {
 
 	static void enumOverlaps(InlineParams p) {
 		if (p.result->needed()) {
-			Operand result = p.result->location(p.state).v;
+			Operand result = p.result->location(p.state);
 			// TODO: Use 'test' op-code when it is implemented.
 			Var t = p.state->l->createVar(p.state->block, Size::sInt);
 			*p.state->l << mov(t, p.param(0));
@@ -52,7 +52,7 @@ namespace storm {
 	static void enumGet(InlineParams p) {
 		if (p.result->needed()) {
 			if (!p.result->suggest(p.state, p.param(0)))
-				*p.state->l << mov(p.result->location(p.state).v, p.param(0));
+				*p.state->l << mov(p.result->location(p.state), p.param(0));
 		}
 	}
 
@@ -198,7 +198,7 @@ namespace storm {
 		if (!p.result->needed())
 			return;
 
-		Operand result = p.result->location(p.state).v;
+		Operand result = p.result->location(p.state);
 		*p.state->l << mov(result, natConst(value));
 	}
 

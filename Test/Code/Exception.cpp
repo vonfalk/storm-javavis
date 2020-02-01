@@ -98,10 +98,12 @@ BEGIN_TEST(CodeCleanupTest, Code) {
 	Block block = l->createBlock(l->root());
 	Var v = l->createVar(l->root(), Size::sInt, intCleanup);
 	Var w = l->createVar(block, Size::sInt, intCleanup);
+	Var y = l->createVar(l->root(), Size::sInt, intCleanup, code::freeDef | code::freeInactive);
 
 	*l << prolog();
 
 	*l << mov(v, intConst(10));
+	*l << mov(y, intConst(30));
 	*l << fnParam(intDesc(e), intConst(1));
 	*l << fnCall(errorFn, false);
 
@@ -109,11 +111,18 @@ BEGIN_TEST(CodeCleanupTest, Code) {
 	*l << mov(w, intConst(20));
 	*l << fnParam(intDesc(e), intConst(2));
 	*l << fnCall(errorFn, false);
-	*l << end(block);
 
+	*l << activate(y);
 	*l << fnParam(intDesc(e), intConst(3));
 	*l << fnCall(errorFn, false);
 
+	*l << mov(w, intConst(10));
+	*l << end(block);
+
+	*l << fnParam(intDesc(e), intConst(4));
+	*l << fnCall(errorFn, false);
+
+	*l << mov(y, intConst(20));
 	l->result = intDesc(e);
 	*l << fnRet(eax);
 
@@ -134,12 +143,17 @@ BEGIN_TEST(CodeCleanupTest, Code) {
 	throwAt = 3;
 	destroyed = 0;
 	CHECK_ERROR((*fn)(), Error);
-	CHECK_EQ(destroyed, 30);
+	CHECK_EQ(destroyed, 60);
 
 	throwAt = 4;
 	destroyed = 0;
+	CHECK_ERROR((*fn)(), Error);
+	CHECK_EQ(destroyed, 50);
+
+	throwAt = 5;
+	destroyed = 0;
 	CHECK_RUNS((*fn)());
-	CHECK_EQ(destroyed, 30);
+	CHECK_EQ(destroyed, 40);
 
 } END_TEST
 

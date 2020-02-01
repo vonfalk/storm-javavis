@@ -168,10 +168,10 @@ namespace storm {
 				CodeResult *r = new (this) CodeResult(result, l->root());
 				bodyExpr->code(state, r);
 
-				// TODO: If the body indicates that it never returns, we could skip the following
-				// two operations to avoid generating some dead code.
-				VarInfo rval = r->location(state);
-				state->returnValue(rval.v);
+				if (!bodyExpr->result().nothing()) {
+					// If we get 'nothing', that means the result will not be produced at all.
+					state->returnValue(r->location(state));
+				}
 			}
 
 			// if (!identifier()->startsWith(S("lang.bs"))) {

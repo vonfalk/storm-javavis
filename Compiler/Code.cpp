@@ -264,10 +264,7 @@ namespace storm {
 		} else {
 			CodeResult *result = new (this) CodeResult(owner->result, l->root());
 			code(state, params, result);
-
-			VarInfo v = result->location(state);
-			v.created(state);
-			state->returnValue(v.v);
+			state->returnValue(result->location(state));
 		}
 
 		return state;

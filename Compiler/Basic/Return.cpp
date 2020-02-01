@@ -40,8 +40,7 @@ namespace storm {
 			CodeResult *r = new (this) CodeResult(returnType, state->block);
 			expr->code(state, r);
 
-			VarInfo rval = r->location(state);
-			state->returnValue(rval.v);
+			state->returnValue(r->location(state));
 		}
 
 		Value Return::findParentType(SrcPos pos, Block *block) {

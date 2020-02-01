@@ -44,8 +44,8 @@ namespace storm {
 			Label lblElse = state->l->label();
 			Label lblDone = state->l->label();
 
-			VarInfo c = condResult->location(state);
-			*state->l << cmp(c.v, byteConst(0));
+			code::Var c = condResult->location(state);
+			*state->l << cmp(c, byteConst(0));
 			*state->l << jmp(lblElse, ifEqual);
 
 			Value rType = result().type();
@@ -53,7 +53,7 @@ namespace storm {
 			// True branch:
 			{
 				Expr *t = expectCastTo(trueCode, rType, scope);
-				t->code(state, r);
+				t->code(state, r->split(state));
 			}
 
 			if (falseCode) {
@@ -65,10 +65,13 @@ namespace storm {
 			if (falseCode) {
 				// False branch:
 				Expr *f = expectCastTo(falseCode, rType, scope);
-				f->code(state, r);
+				f->code(state, r->split(state));
 
 				*state->l << lblDone;
 			}
+
+			// Notify that all branches have created the value.
+			r->created(state);
 		}
 
 		void If::toS(StrBuf *to) const {

@@ -404,7 +404,7 @@ namespace storm {
 			*l << fnCall(pushFn->ref(), true, ptrDesc, ptrA); // It returns a ptr to itself, but we don't need that.
 		} else {
 			code::Block sub = l->createBlock(l->root());
-			code::Var tmp = l->createVar(sub, param.size(), param.destructor());
+			code::Var tmp = l->createVar(sub, param.size(), param.destructor(), code::freeDef | code::freeInactive);
 
 			*l << code::begin(sub);
 

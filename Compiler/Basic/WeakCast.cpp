@@ -47,7 +47,7 @@ namespace storm {
 			using namespace code;
 
 			// Always indicate cast faile.d
-			*state->l << mov(ok->location(state).v, byteConst(0));
+			*state->l << mov(ok->location(state), byteConst(0));
 		}
 
 		void WeakCast::name(syntax::SStr *name) {
@@ -117,10 +117,10 @@ namespace storm {
 
 			// Load into eax...
 			if (fromType.ref) {
-				*state->l << mov(ptrA, from->location(state).v);
+				*state->l << mov(ptrA, from->location(state));
 				*state->l << mov(ptrA, ptrRel(ptrA, Offset()));
 			} else {
-				*state->l << mov(ptrA, from->location(state).v);
+				*state->l << mov(ptrA, from->location(state));
 			}
 
 			// Store the object into 'var' regardless if the test succeeded. It does not matter.
@@ -135,7 +135,7 @@ namespace storm {
 			*state->l << fnCall(engine().ref(builtin::as), false, engine().ptrDesc(), ptrA);
 			*state->l << cmp(ptrA, ptrConst(Offset()));
 			*state->l << setCond(al, ifNotEqual);
-			*state->l << mov(boolResult->location(state).v, al);
+			*state->l << mov(boolResult->location(state), al);
 		}
 
 		void WeakDowncast::toS(StrBuf *to) const {
@@ -168,7 +168,7 @@ namespace storm {
 			if (MaybeClassType *c = as<MaybeClassType>(srcType.type)) {
 				classCode(c, state, boolResult, var);
 			} else if (MaybeValueType *v = as<MaybeValueType>(srcType.type)) {
-				valueCode(v, state, boolResult, var);
+				valueCode(v, srcType.ref, state, boolResult, var);
 			}
 		}
 
@@ -183,23 +183,26 @@ namespace storm {
 			expr->code(state, from);
 
 			// Check if it is null.
-			*state->l << cmp(from->location(state).v, ptrConst(Offset()));
-			*state->l << setCond(boolResult->location(state).v, ifNotEqual);
+			*state->l << cmp(from->location(state), ptrConst(Offset()));
+			*state->l << setCond(boolResult->location(state), ifNotEqual);
 		}
 
-		void WeakMaybeCast::valueCode(MaybeValueType *c, CodeGen *state, CodeResult *boolResult, MAYBE(LocalVar *) var) {
+		void WeakMaybeCast::valueCode(MaybeValueType *c, Bool ref, CodeGen *state, CodeResult *boolResult, MAYBE(LocalVar *) var) {
 			using namespace code;
 
-			CodeResult *from = new (this) CodeResult(Value(c), state->block);
+			// We're asking for a reference if possible so we don't have to copy.
+			CodeResult *from = new (this) CodeResult(Value(c, ref), state->block);
 			expr->code(state, from);
-			from->location(state).created(state);
 
 			Label end = state->l->label();
 
 			// Check if it is null.
-			*state->l << lea(ptrC, from->location(state).v);
+			if (ref)
+				*state->l << mov(ptrC, from->location(state));
+			else
+				*state->l << lea(ptrC, from->location(state));
 			*state->l << cmp(byteRel(ptrC, c->boolOffset()), byteConst(0));
-			*state->l << setCond(boolResult->location(state).v, ifNotEqual);
+			*state->l << setCond(boolResult->location(state), ifNotEqual);
 			*state->l << jmp(end, ifEqual);
 
 			// Copy it if we want a result, and if we weren't null.
@@ -213,6 +216,7 @@ namespace storm {
 					*state->l << fnParam(engine().ptrDesc(), ptrC);
 					*state->l << fnCall(c->param().copyCtor(), true);
 				}
+				var->var.created(state);
 			}
 
 			*state->l << end;

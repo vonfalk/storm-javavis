@@ -36,7 +36,7 @@ namespace storm {
 			// Put this outside the current block, so we can use it later.
 			CodeResult *testResult = new (this) CodeResult(Value(StormInfo<Bool>::type(engine())), s->block);
 			testExpr->code(subState, testResult);
-			code::Var r = testResult->location(subState).v;
+			code::Var r = testResult->location(subState);
 			*s->l << cmp(r, byteConst(0));
 			*s->l << jmp(end, ifEqual);
 

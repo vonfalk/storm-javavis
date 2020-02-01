@@ -441,7 +441,7 @@ namespace storm {
 		static void protect(CodeGen *s, code::Var object, code::Block varBlock, MemberVar *var) {
 			Value type = var->type;
 			if (type.isValue() && type.destructor() != code::Operand()) {
-				code::Var v = s->l->createVar(s->block, Size::sPtr, type.destructor(), code::freeOnException | code::freeInactive);
+				code::Var v = s->l->createVar(varBlock, Size::sPtr, type.destructor(), code::freeOnException | code::freeInactive);
 				*s->l << mov(v, object);
 				*s->l << add(v, ptrConst(var->offset()));
 				*s->l << activate(v);
@@ -540,7 +540,7 @@ namespace storm {
 				CodeResult *created = new (this) CodeResult(t, s->block);
 				ctorCall->code(s, created);
 
-				code::Var cVar = created->location(s).v;
+				code::Var cVar = created->location(s);
 				*s->l << mov(ptrA, dest);
 				*s->l << mov(ptrRel(ptrA, v->offset()), cVar);
 			}
@@ -594,10 +594,10 @@ namespace storm {
 				CtorCall *call = new (this) CtorCall(pos, scope, ctor, to);
 				CodeResult *created = new (this) CodeResult(t, s->block);
 				call->code(s, created);
-				VarInfo loc = created->location(s);
+				code::Var loc = created->location(s);
 				*s->l << mov(ptrA, dest);
-				*s->l << mov(ptrRel(ptrA, v->offset()), loc.v);
-				loc.created(s);
+				*s->l << mov(ptrRel(ptrA, v->offset()), loc);
+				created->created(s);
 			} else {
 				// Now we're left with the values!
 
@@ -625,9 +625,9 @@ namespace storm {
 
 			CodeResult *result = new (this) CodeResult(t, s->block);
 			to->code(s, result);
-			VarInfo loc = result->location(s);
+			code::Var loc = result->location(s);
 			*s->l << mov(ptrA, dest);
-			*s->l << mov(ptrRel(ptrA, v->offset()), loc.v);
+			*s->l << mov(ptrRel(ptrA, v->offset()), loc);
 		}
 
 	}

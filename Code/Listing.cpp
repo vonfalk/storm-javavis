@@ -20,6 +20,9 @@ namespace code {
 			to << L"on exception";
 		} else {
 			to << L"never";
+
+			if (o & freeInactive)
+				to << L", needs activation";
 			return to;
 		}
 
@@ -43,6 +46,9 @@ namespace code {
 			to << S("on exception");
 		} else {
 			to << S("never");
+
+			if (o & freeInactive)
+				to << S(", needs activation");
 			return to;
 		}
 
@@ -448,7 +454,10 @@ namespace code {
 			if (when & freeOnException)
 				return true;
 
-		when = freeOnNone;
+		if (when & freeInactive)
+			when = freeInactive;
+		else
+			when = freeOnNone;
 		return false;
 	}
 
@@ -533,6 +542,13 @@ namespace code {
 		r->reserve(block.vars->count());
 		for (Nat i = 0; i < block.vars->count(); i++)
 			r->push(createVar(block.vars->at(i)));
+
+		// The parameters are technically in the root block.
+		if (b == root()) {
+			r->reserve(block.vars->count() + params->count());
+			for (Nat i = 0; i < params->count(); i++)
+				r->push(createVar(params->at(i)));
+		}
 
 		return r;
 	}

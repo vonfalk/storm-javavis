@@ -20,7 +20,7 @@ namespace storm {
 			return;
 
 		*p.state->l << fild(p.param(0));
-		*p.state->l << fstp(p.result->location(p.state).v);
+		*p.state->l << fstp(p.result->location(p.state));
 	}
 
 	static Int intRead(IStream *from) {

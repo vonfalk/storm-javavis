@@ -117,5 +117,26 @@ namespace code {
 			*to << S("Trying to use ") << var << S(" in ") << block << S(", where it is not accessible.");
 		}
 	};
+
+	class EXCEPTION_EXPORT VariableActivationError : public CodeError {
+		STORM_EXCEPTION;
+	public:
+		VariableActivationError(Var v, const wchar *msg) {
+			this->var = v;
+			this->msg = new (this) Str(msg);
+		}
+
+		STORM_CTOR VariableActivationError(Var v, Str *msg) {
+			this->var = v;
+			this->msg = msg;
+		}
+
+		Var var;
+		Str *msg;
+
+		virtual void STORM_FN message(StrBuf *to) const {
+			*to << S("Error activating the variable ") << var << S(": ") << msg;
+		}
+	};
 }
 

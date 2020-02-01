@@ -33,7 +33,7 @@ namespace storm {
 
 			Label skipLbl = state->l->label();
 
-			*state->l << cmp(ok->location(state).v, byteConst(0));
+			*state->l << cmp(ok->location(state), byteConst(0));
 			*state->l << jmp(skipLbl, ifNotEqual);
 
 			CodeResult *failResult = CREATE(CodeResult, this);

@@ -34,7 +34,7 @@ namespace storm {
 	template <code::CondFlag f>
 	void numCmp(InlineParams p) {
 		if (p.result->needed()) {
-			code::Operand result = p.result->location(p.state).v;
+			code::Operand result = p.result->location(p.state);
 			*p.state->l << code::cmp(p.param(0), p.param(1));
 			*p.state->l << code::setCond(result, f);
 		}
@@ -70,7 +70,7 @@ namespace storm {
 
 		*p.state->l << add(tRel(T(), dest), p.param(1));
 		if (p.result->needed())
-			*p.state->l << mov(p.result->location(p.state).v, tRel(T(), dest));
+			*p.state->l << mov(p.result->location(p.state), tRel(T(), dest));
 	}
 
 	template <class T>
@@ -80,7 +80,7 @@ namespace storm {
 
 		*p.state->l << sub(tRel(T(), dest), p.param(1));
 		if (p.result->needed())
-			*p.state->l << mov(p.result->location(p.state).v, tRel(T(), dest));
+			*p.state->l << mov(p.result->location(p.state), tRel(T(), dest));
 	}
 
 	template <class T>
@@ -90,7 +90,7 @@ namespace storm {
 
 		*p.state->l << mul(tRel(T(), dest), p.param(1));
 		if (p.result->needed())
-			*p.state->l << mov(p.result->location(p.state).v, tRel(T(), dest));
+			*p.state->l << mov(p.result->location(p.state), tRel(T(), dest));
 	}
 
 	template <class T>
@@ -100,7 +100,7 @@ namespace storm {
 
 		*p.state->l << idiv(tRel(T(), dest), p.param(1));
 		if (p.result->needed())
-			*p.state->l << mov(p.result->location(p.state).v, tRel(T(), dest));
+			*p.state->l << mov(p.result->location(p.state), tRel(T(), dest));
 	}
 
 	template <class T>
@@ -110,7 +110,7 @@ namespace storm {
 
 		*p.state->l << udiv(tRel(T(), dest), p.param(1));
 		if (p.result->needed())
-			*p.state->l << mov(p.result->location(p.state).v, tRel(T(), dest));
+			*p.state->l << mov(p.result->location(p.state), tRel(T(), dest));
 	}
 
 	template <class T>
@@ -120,7 +120,7 @@ namespace storm {
 
 		*p.state->l << imod(tRel(T(), dest), p.param(1));
 		if (p.result->needed())
-			*p.state->l << mov(p.result->location(p.state).v, tRel(T(), dest));
+			*p.state->l << mov(p.result->location(p.state), tRel(T(), dest));
 	}
 
 	template <class T>
@@ -130,7 +130,7 @@ namespace storm {
 
 		*p.state->l << umod(tRel(T(), dest), p.param(1));
 		if (p.result->needed())
-			*p.state->l << mov(p.result->location(p.state).v, tRel(T(), dest));
+			*p.state->l << mov(p.result->location(p.state), tRel(T(), dest));
 	}
 
 	template <class T>
@@ -140,7 +140,7 @@ namespace storm {
 
 		*p.state->l << add(tRel(T(), dest), tConst(T(1)));
 		if (p.result->needed())
-			*p.state->l << mov(p.result->location(p.state).v, tRel(T(), dest));
+			*p.state->l << mov(p.result->location(p.state), tRel(T(), dest));
 	}
 
 	template <class T>
@@ -149,7 +149,7 @@ namespace storm {
 		code::Reg dest = p.regParam(0);
 
 		if (p.result->needed())
-			*p.state->l << mov(p.result->location(p.state).v, tRel(T(), dest));
+			*p.state->l << mov(p.result->location(p.state), tRel(T(), dest));
 		*p.state->l << add(tRel(T(), dest), tConst(T(1)));
 	}
 
@@ -160,7 +160,7 @@ namespace storm {
 
 		*p.state->l << sub(tRel(T(), dest), tConst(T(1)));
 		if (p.result->needed())
-			*p.state->l << mov(p.result->location(p.state).v, tRel(T(), dest));
+			*p.state->l << mov(p.result->location(p.state), tRel(T(), dest));
 	}
 
 	template <class T>
@@ -169,7 +169,7 @@ namespace storm {
 		code::Reg dest = p.regParam(0);
 
 		if (p.result->needed())
-			*p.state->l << mov(p.result->location(p.state).v, tRel(T(), dest));
+			*p.state->l << mov(p.result->location(p.state), tRel(T(), dest));
 		*p.state->l << sub(tRel(T(), dest), tConst(T(1)));
 	}
 
@@ -183,11 +183,11 @@ namespace storm {
 			if (p.result->type().ref) {
 				// Try to suggest params[0], since we already have a ref to the value there.
 				if (!p.result->suggest(p.state, p.originalParam(0)))
-					*p.state->l << mov(p.result->location(p.state).v, dest);
+					*p.state->l << mov(p.result->location(p.state), dest);
 			} else {
 				// Try to suggest params[1], since we already have the value there.
 				if (!p.result->suggest(p.state, p.param(1)))
-					*p.state->l << mov(p.result->location(p.state).v, dest);
+					*p.state->l << mov(p.result->location(p.state), dest);
 			}
 		}
 	}
@@ -199,7 +199,7 @@ namespace storm {
 
 		*p.state->l << band(tRel(T(), dest), p.param(1));
 		if (p.result->needed())
-			*p.state->l << mov(p.result->location(p.state).v, tRel(T(), dest));
+			*p.state->l << mov(p.result->location(p.state), tRel(T(), dest));
 	}
 
 	template <class T>
@@ -209,7 +209,7 @@ namespace storm {
 
 		*p.state->l << bor(tRel(T(), dest), p.param(1));
 		if (p.result->needed())
-			*p.state->l << mov(p.result->location(p.state).v, tRel(T(), dest));
+			*p.state->l << mov(p.result->location(p.state), tRel(T(), dest));
 	}
 
 	template <class T>
@@ -219,7 +219,7 @@ namespace storm {
 
 		*p.state->l << bxor(tRel(T(), dest), p.param(1));
 		if (p.result->needed())
-			*p.state->l << mov(p.result->location(p.state).v, tRel(T(), dest));
+			*p.state->l << mov(p.result->location(p.state), tRel(T(), dest));
 	}
 
 	template <class T>
@@ -249,7 +249,7 @@ namespace storm {
 		Reg tmp1 = p.regParam(0);
 		Reg tmp2 = p.regParam(1);
 
-		Operand result = p.result->location(p.state).v;
+		Operand result = p.result->location(p.state);
 		*p.state->l << cmp(tmp1, tmp2);
 		*p.state->l << jmp(lbl, tLess(T()));
 		*p.state->l << mov(result, tmp2);
@@ -272,7 +272,7 @@ namespace storm {
 		Reg tmp1 = p.regParam(0);
 		Reg tmp2 = p.regParam(1);
 
-		Operand result = p.result->location(p.state).v;
+		Operand result = p.result->location(p.state);
 		*p.state->l << cmp(tmp1, tmp2);
 		*p.state->l << jmp(lbl, tLess(T()));
 		*p.state->l << mov(result, tmp1);
@@ -295,7 +295,7 @@ namespace storm {
 		Reg tmp1 = p.regParam(0);
 		Reg tmp2 = p.regParam(1);
 
-		Operand result = p.result->location(p.state).v;
+		Operand result = p.result->location(p.state);
 		*p.state->l << cmp(tmp1, tmp2);
 		*p.state->l << jmp(lbl, tLess(T()));
 		*p.state->l << sub(tmp1, tmp2);

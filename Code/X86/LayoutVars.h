@@ -52,6 +52,12 @@ namespace code {
 			// Layout of variables.
 			Array<Offset> *layout;
 
+			// Index where each variable was activated.
+			Array<Nat> *activated;
+
+			// Current activation ID.
+			Nat activationId;
+
 			// Current block.
 			Block block;
 
@@ -75,6 +81,7 @@ namespace code {
 			void epilogTfm(Listing *dest, Listing *src, Nat line);
 			void beginBlockTfm(Listing *dest, Listing *src, Nat line);
 			void endBlockTfm(Listing *dest, Listing *src, Nat line);
+			void activateTfm(Listing *dest, Listing *src, Nat line);
 			void fnRetTfm(Listing *dest, Listing *src, Nat line);
 			void fnRetRefTfm(Listing *dest, Listing *src, Nat line);
 
@@ -86,6 +93,9 @@ namespace code {
 
 			// Destroy a block.
 			void destroyBlock(Listing *dest, Block p, bool preserveEax);
+
+			// Update the block-id variable if needed.
+			void updateBlockId(Listing *dest);
 		};
 
 

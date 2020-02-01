@@ -140,13 +140,19 @@ namespace storm {
 		STORM_CTOR CodeResult(Value type, VarInfo var);
 
 		// Get a location to store the variable in. Asserts if the result is not needed.
-		VarInfo STORM_FN location(CodeGen *s);
+		code::Var STORM_FN location(CodeGen *s);
 
 		// Get the location of the result even if the result is not needed.
-		VarInfo STORM_FN safeLocation(CodeGen *s, Value type);
+		code::Var STORM_FN safeLocation(CodeGen *s, Value type);
+
+		// Call when the variable was initialized to set up any cleanup required. If you are
+		// entirely sure that no cleanup is required for the contained variable, the call to
+		// 'created' may be omitted.
+		void STORM_FN created(CodeGen *s);
 
 		// Suggest a location for the result. Returns true if the suggestion is acceptable,
-		// otherwise use whatever 'location' returns.
+		// otherwise use whatever 'location' returns. If the suggestion was used, we assume
+		// it is already created.
 		Bool STORM_FN suggest(CodeGen *s, code::Var v);
 		Bool STORM_FN suggest(CodeGen *s, code::Operand v);
 
@@ -155,6 +161,15 @@ namespace storm {
 
 		// Result needed?
 		Bool STORM_FN needed() const;
+
+		// Create a copy of this result that is usable when multiple pieces of code may produce the
+		// result represented by this object. Essentially, this means that cleanup will not be set
+		// up until 'created' is called on *this* object. Thus, make sure to call 'created' here!
+		//
+		// Call 'split' once for each branch that is expected to create a new value, so that each
+		// producer gets its own object. Otherwise, issues will arise when they call 'created'
+		// multiple times.
+		CodeResult *STORM_FN split(CodeGen *s);
 
 	private:
 		// Variable (invalid if not created yet).

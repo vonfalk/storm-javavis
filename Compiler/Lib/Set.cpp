@@ -248,7 +248,7 @@ namespace storm {
 		*l << code::begin(sub);
 
 		// Read key.
-		code::Var keyVar = l->createVar(sub, kType.size(), kType.destructor());
+		code::Var keyVar = l->createVar(sub, kType.size(), kType.destructor(), code::freeDef | code::freeInactive);
 		*l << fnParam(objStream.desc(engine), streamVar);
 		*l << fnCall(info->read->ref(), false, kType.desc(engine), keyVar);
 		*l << code::activate(keyVar);
