@@ -283,13 +283,14 @@ namespace code {
 		case opNone:
 			return to << L"<none>";
 		case opConstant:
-			if (o.size() == Size::sPtr) {
-				if (o.opType == opDualConstant)
-					return to << o.opOffset;
-				else
-					return to << L"0x" << toHex(o.constant());
+			if (o.opType == opDualConstant) {
+				return to << o.opOffset;
 			} else {
-				return to << o.constant();
+				if (o.size() == Size::sPtr) {
+					return to << L"0x" << toHex(o.constant());
+				} else {
+					return to << o.constant();
+				}
 			}
 		case opRegister:
 			return to << code::name(o.reg());
@@ -350,13 +351,14 @@ namespace code {
 		case opNone:
 			return to << S("<none>");
 		case opConstant:
-			if (o.size() == Size::sPtr) {
-				if (o.opType == opDualConstant)
-					return to << o.opOffset;
-				else
-					return to << S("0x") << hex(o.constant());
+			if (o.opType == opDualConstant) {
+				return to << o.opOffset;
 			} else {
-				return to << o.constant();
+				if (o.size() == Size::sPtr) {
+					return to << S("0x") << hex(o.constant());
+				} else {
+					return to << o.constant();
+				}
 			}
 		case opRegister:
 			return to << code::name(o.reg());
@@ -412,8 +414,16 @@ namespace code {
 		return xConst(Size::sInt, Long(v));
 	}
 
+	Operand intConst(Offset v) {
+		return Operand(v, Size::sInt);
+	}
+
 	Operand natConst(Nat v) {
 		return xConst(Size::sNat, Word(v));
+	}
+
+	Operand natConst(Size v) {
+		return Operand(v, Size::sNat);
 	}
 
 	Operand longConst(Long v) {

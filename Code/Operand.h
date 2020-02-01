@@ -191,6 +191,8 @@ namespace code {
 		Size opSize;
 
 		// Friends.
+		friend Operand intConst(Offset v);
+		friend Operand natConst(Size v);
 		friend Operand ptrConst(Size v);
 		friend Operand ptrConst(Offset v);
 		friend Operand xConst(Size s, Word w);
@@ -211,7 +213,9 @@ namespace code {
 	// will fail miserably, as the pointer will not be updated whenever the Gc moves the object.
 	Operand STORM_FN byteConst(Byte v);
 	Operand STORM_FN intConst(Int v);
+	Operand STORM_FN intConst(Offset v);
 	Operand STORM_FN natConst(Nat v);
+	Operand STORM_FN natConst(Size v);
 	Operand STORM_FN longConst(Long v);
 	Operand STORM_FN wordConst(Word v);
 	Operand STORM_FN floatConst(Float v);
