@@ -55,7 +55,7 @@ namespace storm {
 			STORM_CTOR Var(Block *block, SrcName *type, syntax::SStr *name, Actuals *actual);
 			STORM_CTOR Var(Block *block, Value type, syntax::SStr *name, Actuals *actual);
 
-			// Initialize to an expression.
+			// Initialize to an expression. We don't allow calls to non-cast-ctors in this case!
 			STORM_CTOR Var(Block *block, SrcName *type, syntax::SStr *name, Expr *init);
 			STORM_CTOR Var(Block *block, Value type, syntax::SStr *name, Expr *init);
 
@@ -81,8 +81,9 @@ namespace storm {
 			// Set return value.
 			void initTo(Expr *expr);
 
-			// Initialize ctor call.
-			void initTo(Actuals *actual);
+			// Initialize ctor call. If 'castOnly' is true, then we only allow copy-ctors and
+			// cast-ctors to be called.
+			void initTo(Actuals *actual, Bool castOnly);
 
 			// Initialize to.
 			Expr *initExpr;

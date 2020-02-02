@@ -140,3 +140,11 @@ Str testMaybeValueToS(Int v) {
 	Int? result = createMaybe(v);
 	maybeToS(result);
 }
+
+Int testMaybeNullInit() {
+	Int? val = null;
+	if (val)
+		val;
+	else
+		-1;
+}

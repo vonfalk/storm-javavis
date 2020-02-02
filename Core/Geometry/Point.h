@@ -20,7 +20,7 @@ namespace storm {
 			STORM_CTOR Point(Float x, Float y);
 
 			// Convert.
-			STORM_CTOR Point(Size s);
+			STORM_CAST_CTOR Point(Size s);
 
 			// Coordinates.
 			Float x;

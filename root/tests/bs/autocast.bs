@@ -68,7 +68,7 @@ Int autoCast(Int v) {
 
 value ACPromote {
 	Float v;
-	init(Float v) {
+	cast(Float v) {
 		init() { v = v; }
 	}
 

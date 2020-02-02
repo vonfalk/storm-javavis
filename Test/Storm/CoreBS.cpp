@@ -282,6 +282,8 @@ BEGIN_TEST(MaybeTest, BS) {
 
 	CHECK_EQ(::toS(runFn<Str *>(S("tests.bs.testMaybeValueToS"), 0)), L"null");
 	CHECK_EQ(::toS(runFn<Str *>(S("tests.bs.testMaybeValueToS"), 5)), L"5");
+
+	CHECK_EQ(runFn<Int>(S("tests.bs.testMaybeNullInit")), -1);
 } END_TEST
 
 

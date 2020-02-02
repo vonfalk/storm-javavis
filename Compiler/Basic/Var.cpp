@@ -11,12 +11,12 @@ namespace storm {
 
 		Var::Var(Block *block, SrcName *type, syntax::SStr *name, Actuals *params) : Expr(name->pos) {
 			init(block, block->scope.value(type), name);
-			initTo(params);
+			initTo(params, false);
 		}
 
 		Var::Var(Block *block, Value type, syntax::SStr *name, Actuals *params) : Expr(name->pos) {
 			init(block, type.asRef(false), name);
-			initTo(params);
+			initTo(params, false);
 		}
 
 		Var::Var(Block *block, SrcName *type, syntax::SStr *name, Expr *init) : Expr(name->pos) {
@@ -46,10 +46,30 @@ namespace storm {
 				initExpr = z;
 			else
 				// Use a ctor...
-				initTo(new (this) Actuals(e));
+				initTo(new (this) Actuals(e), true);
 		}
 
-		void Var::initTo(Actuals *actuals) {
+		// Check if 'ctor' is implicitly callable.
+		static bool implicitlyCallableCtor(Function *ctor) {
+			if (ctor->params->count() != 2)
+				return false;
+
+			Value first = ctor->params->at(0);
+			Value second = ctor->params->at(1);
+
+			// This is the copy-ctor (at least, close enough).
+			if (first.type == second.type)
+				return true;
+
+			// If it was explicitly declared as a cast-ctor, then it is also fine.
+			if (ctor->fnFlags() & fnAutoCast)
+				return true;
+
+			// Else, we don't allow it.
+			return false;
+		}
+
+		void Var::initTo(Actuals *actuals, Bool castOnly) {
 			if (var->result.isPrimitive()) {
 				// Assignment is the same as initialization here...
 				nat size = actuals->expressions->count();
@@ -74,6 +94,15 @@ namespace storm {
 				Str *msg = TO_S(engine(), S("No appropriate constructor for ") << var->result
 								<< S(" found. Can not initialize ") << var->name
 								<< S(". Expected signature: ") << name);
+				throw new (this) SyntaxError(var->pos, msg);
+			}
+
+			if (castOnly && !implicitlyCallableCtor(ctor)) {
+				Str *msg = TO_S(engine(), S("The constructor ") << ctor->shortIdentifier()
+								<< S(" is not a copy constructor or marked with 'cast', and")
+								<< S(" therefore needs to be called explicitly. If this was")
+								<< S(" your intention, use \"") << t->name << S(" ")
+								<< var->name << S("(...);\" instead."));
 				throw new (this) SyntaxError(var->pos, msg);
 			}
 

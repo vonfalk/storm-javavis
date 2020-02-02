@@ -19,7 +19,7 @@ namespace storm {
 		STORM_CTOR Value();
 
 		// Create from a specific type. Never a reference.
-		STORM_CTOR Value(Type *type);
+		STORM_CAST_CTOR Value(Type *type);
 
 		// Create from a type and if it is to be a reference.
 		STORM_CTOR Value(Type *type, Bool ref);
