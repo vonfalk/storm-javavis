@@ -214,7 +214,7 @@ namespace storm {
 					*to << dotExpr << S(".") << target->name;
 				} else {
 					SimpleName *p = target->path();
-					p->last()->params->clear();
+					p->last()->params = new (this) Array<Value>();
 					*to << p;
 				}
 

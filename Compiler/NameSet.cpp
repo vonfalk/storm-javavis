@@ -234,7 +234,7 @@ namespace storm {
 
 		if (loading) {
 			// This happens quite a lot...
-			// WARNING(L"Recursive loading attempted for " << identifier());
+			// WARNING(L"Recursive loading attempted for " << name);
 			return;
 		}
 
