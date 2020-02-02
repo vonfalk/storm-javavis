@@ -31,7 +31,7 @@ namespace code {
 		public:
 			Frame(SEHFrame *frame);
 
-			virtual void *toPtr(size_t offset);
+			virtual void *toPtr(int offset);
 
 		private:
 			SEHFrame *frame;
@@ -118,10 +118,9 @@ namespace code {
 			decodeFnState(f->activePartVars, block, activation);
 		}
 
-		void *Frame::toPtr(size_t offset) {
-			int o = offset;
+		void *Frame::toPtr(int offset) {
 			byte *ebp = (byte *)frame->ebp();
-			return ebp + o;
+			return ebp + offset;
 		}
 
 

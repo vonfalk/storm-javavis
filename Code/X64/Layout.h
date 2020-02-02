@@ -1,5 +1,6 @@
 #pragma once
 #include "Params.h"
+#include "Asm.h"
 #include "../Transform.h"
 #include "../OpTable.h"
 #include "../UsedRegs.h"
@@ -44,11 +45,17 @@ namespace code {
 			// Layout of the result of this function.
 			Result *result;
 
+			// Registers that need to be preserved in the function prolog.
+			RegSet *toPreserve;
+
 			// Layout of the stack. The stack offset of all variables in the listings.
 			Array<Offset> *layout;
 
-			// Registers that need to be preserved in the function prolog.
-			RegSet *toPreserve;
+			// Index where each variable was activated.
+			Array<Nat> *activated;
+
+			// Current activation ID.
+			Nat activationId;
 
 			// Currently active block.
 			Block block;
@@ -57,13 +64,21 @@ namespace code {
 			class Active {
 				STORM_VALUE;
 			public:
-				Active(Block block, Label pos);
+				Active(Block block, Nat activated, Label pos);
 
 				// Which block?
 				Block block;
 
+				// Which activation ID?
+				Nat activated;
+
 				// Where does the block start?
 				Label pos;
+
+				// Encode the stored value.
+				inline Nat encode() const {
+					return encodeFnState(block.key(), activated);
+				}
 			};
 
 			Array<Active> *activeBlocks;
@@ -85,6 +100,7 @@ namespace code {
 			void epilogTfm(Listing *dest, Listing *src, Nat line);
 			void beginBlockTfm(Listing *dest, Listing *src, Nat line);
 			void endBlockTfm(Listing *dest, Listing *src, Nat line);
+			void activateTfm(Listing *dest, Listing *src, Nat line);
 
 			// Function returns.
 			void fnRetTfm(Listing *dest, Listing *src, Nat line);

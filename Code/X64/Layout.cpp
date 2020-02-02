@@ -8,6 +8,9 @@
 namespace code {
 	namespace x64 {
 
+		// Number used for inactive variables.
+		static const Nat INACTIVE = 0xFFFFFFFF;
+
 #define TRANSFORM(x) { op::x, &Layout::x ## Tfm }
 
 		const OpEntry<Layout::TransformFn> Layout::transformMap[] = {
@@ -15,12 +18,13 @@ namespace code {
 			TRANSFORM(epilog),
 			TRANSFORM(beginBlock),
 			TRANSFORM(endBlock),
+			TRANSFORM(activate),
 
 			TRANSFORM(fnRet),
 			TRANSFORM(fnRetRef),
 		};
 
-		Layout::Active::Active(Block block, Label pos) : block(block), pos(pos) {}
+		Layout::Active::Active(Block block, Nat activated, Label pos) : block(block), activated(activated), pos(pos) {}
 
 		Layout::Layout(Binary *owner) : owner(owner) {}
 
@@ -64,6 +68,17 @@ namespace code {
 
 			layout = code::x64::layout(src, params, spilled);
 
+			// Initialize the 'activated' array.
+			Array<Var> *vars = src->allVars();
+			activated = new (this) Array<Nat>(vars->count(), 0);
+			activationId = 0;
+
+			for (Nat i = 0; i < vars->count(); i++) {
+				Var var = vars->at(i);
+				if (src->freeOpt(var) & freeInactive)
+					activated->at(var.key()) = INACTIVE;
+			}
+
 			// The EH table.
 			activeBlocks = new (this) Array<Active>();
 		}
@@ -97,7 +112,13 @@ namespace code {
 					*dest << dat(ptrConst(Offset(0)));
 				else
 					*dest << dat(src->freeFn(v));
-				*dest << dat(ptrConst(layout->at(v.key())));
+				*dest << dat(intConst(layout->at(v.key())));
+				*dest << dat(natConst(activated->at(v.key())));
+
+				if (activated->at(v.key()) == INACTIVE)
+					// Dont be too worried about zero-sized variables.
+					if (v.size() != Size())
+						throw new (this) VariableActivationError(v, S("Never activated."));
 			}
 
 			// Output the table containing active blocks. Used by the exception handling mechanism.
@@ -106,7 +127,7 @@ namespace code {
 			for (Nat i = 0; i < activeBlocks->count(); i++) {
 				const Active &a = activeBlocks->at(i);
 				*dest << lblOffset(a.pos);
-				*dest << dat(natConst(a.block.key()));
+				*dest << dat(natConst(a.encode()));
 			}
 
 			// Table size.
@@ -211,21 +232,26 @@ namespace code {
 		}
 
 		void Layout::endBlockTfm(Listing *dest, Listing *src, Nat line) {
-			TODO(L"We don't need a loop here anymore!");
-			Block target = src->at(line)->src().block();
-			Block start = block;
+			destroyBlock(dest, src->at(line)->src().block(), false, true);
+		}
 
-			for (Block now = block; now != target; now = src->parent(now)) {
-				if (now == Block()) {
-					Str *msg = TO_S(engine(), S("Block ") << target << S(" is not a parent of ") << start);
-					throw new (this) BlockEndError(msg);
-				}
+		void Layout::activateTfm(Listing *dest, Listing *src, Nat line) {
+			Var var = src->at(line)->src().var();
+			Nat &id = activated->at(var.key());
 
-				destroyBlock(dest, now, false, true);
+			if (id == 0)
+				throw new (this) VariableActivationError(var, S("must be marked with 'freeInactive'."));
+			if (id != INACTIVE)
+				throw new (this) VariableActivationError(var, S("already activated."));
+
+			id = ++activationId;
+
+			// We only need to update the block id if this impacts exception handling.
+			if (src->freeOpt(var) & freeOnException) {
+				Label lbl = dest->label();
+				*dest << lbl;
+				activeBlocks->push(Active(block, activationId, lbl));
 			}
-
-			// Destroy the last one as well.
-			destroyBlock(dest, target, false, true);
 		}
 
 		Offset Layout::resultParam() {
@@ -280,7 +306,7 @@ namespace code {
 				// Remember where the block started.
 				Label lbl = dest->label();
 				*dest << lbl;
-				activeBlocks->push(Active(block, lbl));
+				activeBlocks->push(Active(block, activationId, lbl));
 			}
 		}
 
@@ -290,7 +316,6 @@ namespace code {
 
 			Bool pushedRax = false;
 			Array<Var> *vars = dest->allVars(destroy);
-			TODO(L"Determine reachability here!");
 			for (Nat i = 0; i < vars->count(); i++) {
 				Var v = vars->at(i);
 
@@ -298,6 +323,10 @@ namespace code {
 				FreeOpt when = dest->freeOpt(v);
 
 				if (!dtor.empty() && (when & freeOnBlockExit) == freeOnBlockExit) {
+					// Should we destroy it right now?
+					if (activated->at(v.key()) > activationId)
+						continue;
+
 					if (preserveRax && !pushedRax) {
 						saveResult(dest, dest->result);
 						pushedRax = true;
@@ -333,7 +362,7 @@ namespace code {
 			if (usingEH && table) {
 				Label lbl = dest->label();
 				*dest << lbl;
-				activeBlocks->push(Active(block, lbl));
+				activeBlocks->push(Active(block, activationId, lbl));
 			}
 		}
 

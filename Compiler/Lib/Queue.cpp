@@ -93,7 +93,6 @@ namespace storm {
 		Engine &e = engine;
 		Value t = thisPtr(this);
 		Value ref = param().asRef();
-		Value natType = Value(StormInfo<Nat>::type(e));
 
 		add(nativeFunction(e, Value(), Type::CTOR, valList(e, 1, t), address(&createQueueRaw))->makePure());
 		add(nativeFunction(e, Value(), Type::CTOR, valList(e, 2, t, t), address(&copyQueue))->makePure());

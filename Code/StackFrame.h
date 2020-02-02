@@ -18,7 +18,7 @@ namespace code {
 		Nat activation;
 
 		// Compute the offset of the variable, given the offset found in the metadata table.
-		virtual void *toPtr(size_t offset) = 0;
+		virtual void *toPtr(int offset) = 0;
 	};
 
 
@@ -30,7 +30,7 @@ namespace code {
 		void *function;
 
 		// Stack offset.
-		nat offset;
+		int offset;
 
 		// Valid after the n:th activate op (counting the start of the listing as the first).
 		nat activeAfter;

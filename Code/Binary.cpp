@@ -205,8 +205,8 @@ namespace code {
 
 			VarCleanup &now = vars[v.id];
 			void *freeFn = now.function;
-			size_t offset = now.offset;
-			size_t activeAfter = now.activeAfter;
+			int offset = now.offset;
+			nat activeAfter = now.activeAfter;
 
 			// If not active, we don't destroy it.
 			if (frame.activation < activeAfter)

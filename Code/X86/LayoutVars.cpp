@@ -71,6 +71,7 @@ namespace code {
 
 			layout = code::x86::layout(src, preserved->count(), usingEH, resultParam, memberFn);
 
+			// Initialize the 'activated' array.
 			Array<Var> *vars = src->allVars();
 			activated = new (this) Array<Nat>(vars->count(), 0);
 			activationId = 0;
@@ -115,7 +116,7 @@ namespace code {
 				else
 					*dest << dat(src->freeFn(v));
 				*dest << dat(intConst(layout->at(v.key())));
-				*dest << dat(intConst(activated->at(v.key())));
+				*dest << dat(natConst(activated->at(v.key())));
 
 				if (activated->at(v.key()) == INACTIVE)
 					// Dont be too worried about zero-sized variables.
@@ -244,7 +245,6 @@ namespace code {
 				FreeOpt when = dest->freeOpt(v);
 
 				if (!dtor.empty() && (when & freeOnBlockExit) == freeOnBlockExit) {
-
 					// Should we destroy it right now?
 					if (activated->at(v.key()) > activationId)
 						continue;

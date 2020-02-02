@@ -5,6 +5,7 @@
 #include "Utils/StackInfoSet.h"
 #include "Core/Str.h"
 #include "DwarfRegs.h"
+#include "Asm.h"
 
 #ifdef POSIX
 #include <cxxabi.h>
@@ -73,8 +74,8 @@ namespace code {
 		 * Description of the data at the end of each function.
 		 */
 		struct FnData {
-			// Number of entries in the part table.
-			size_t partCount;
+			// Number of entries in the block table.
+			size_t blockCount;
 
 			// The binary that contains the rest of the unwinding information for this Binary object.
 			Binary *owner;
@@ -84,14 +85,14 @@ namespace code {
 		};
 
 		/**
-		 * Description of a single entry in the part table.
+		 * Description of a single entry in the block table.
 		 */
-		struct FnPart {
+		struct FnBlock {
 			// At which offset do we start?
 			Nat offset;
 
-			// Which part?
-			Nat part;
+			// Which block?
+			Nat block;
 		};
 
 		// Get the FnData from a function.
@@ -101,15 +102,15 @@ namespace code {
 			return (const FnData *)(end - sizeof(FnData));
 		}
 
-		// Get the part data from a function.
-		static const FnPart *getParts(const FnData *data) {
-			const FnPart *end = (const FnPart *)data;
-			return end - data->partCount;
+		// Get the block data from a function.
+		static const FnBlock *getBlocks(const FnData *data) {
+			const FnBlock *end = (const FnBlock *)data;
+			return end - data->blockCount;
 		}
 
 		// Compare object.
-		struct PartCompare {
-			bool operator()(const FnPart &a, Nat offset) const {
+		struct BlockCompare {
+			bool operator()(const FnBlock &a, Nat offset) const {
 				return a.offset < offset;
 			}
 		};
@@ -117,38 +118,37 @@ namespace code {
 		// Our representation of a stack frame.
 		class StackFrame : public code::StackFrame {
 		public:
-			StackFrame(Nat part, void *rbp) : code::StackFrame(part), rbp((byte *)rbp) {}
+			StackFrame(Nat block, Nat activation, void *rbp) : code::StackFrame(block, activation), rbp((byte *)rbp) {}
 
-			virtual void *toPtr(size_t offset) {
-				ssize_t delta = offset;
-				return rbp + delta;
+			virtual void *toPtr(int offset) {
+				return rbp + offset;
 			}
 
 		private:
 			byte *rbp;
 		};
 
-		// Find the currently active part.
-		static Nat stormFindPart(const FnData *data, size_t fn, size_t pc) {
-			const FnPart *parts = getParts(data);
+		// Find the currently active block and active ID.
+		static Nat stormFindBlockActive(const FnData *data, size_t fn, size_t pc) {
+			const FnBlock *blocks = getBlocks(data);
 
 			Nat offset = pc - fn;
-			Nat invalid = Part().key();
+			Nat invalid = Block().key();
 
 			// The entries are sorted by their 'offset' member. We can perform a binary search!
-			// Note: if there is an entry where 'offset == parts[i].offset', we shall not select
+			// Note: if there is an entry where 'offset == blocks[i].offset', we shall not select
 			// that one since 'pc' points to the first instruction that was not executed.
-			const FnPart *found = std::lower_bound(parts, parts + data->partCount, offset, PartCompare());
-			if (found == parts) {
-				// Before any part, nothing to do!
+			const FnBlock *found = std::lower_bound(blocks, blocks + data->blockCount, offset, BlockCompare());
+			if (found == blocks) {
+				// Before any block, nothing to do!
 				return invalid;
 			}
 			found--;
 
-			return found->part;
+			return found->block;
 		}
 
-		// Storage from phase 1 to phase 2. Binary compatible with parts of __cxa_exception in GCC.
+		// Storage from phase 1 to phase 2. Binary compatible with blocks of __cxa_exception in GCC.
 		// Names from the GCC implementation for simplicity.
 
 		/**
@@ -159,7 +159,7 @@ namespace code {
 		 * - 'adjustedPtr' in the personality function to store the resulting exception object in
 		 *   phase 1. Otherwise __cxa_begin_catch() does not return the proper value in phase 2 of the
 		 *   exception handling.
-		 * - 'handlerSwitchValue' in the personality function to store the current part, so we don't
+		 * - 'handlerSwitchValue' in the personality function to store the current block, so we don't
 		 *   have to re-compute it in phase 2. This is not important for the implementation to function,
 		 *   but GCC does something similar, so why not do the same and gain the small performance boost?
 		 * - 'catcTemp' in the personality function to store the location we shall resume from so we
@@ -290,12 +290,15 @@ namespace code {
 					return _URC_CONTINUE_UNWIND;
 
 				// Find if it is desirable to actually catch it.
-				Nat part = stormFindPart(fnData, fn, pc);
-				if (part == Part().key())
+				Nat encoded = stormFindBlockActive(fnData, fn, pc);
+				Nat block, active;
+				decodeFnState(encoded, block, active);
+
+				if (block == Block().key())
 					return _URC_CONTINUE_UNWIND;
 
 				Binary::Resume resume;
-				if (!fnData->owner->hasCatch(part, object, resume))
+				if (!fnData->owner->hasCatch(block, object, resume))
 					return _URC_CONTINUE_UNWIND;
 
 				// Store things to phase 2, right above the _Unwind_Exception, just like GCC does:
@@ -307,7 +310,7 @@ namespace code {
 				// The following two are not too important, but we keep them at reasonable places as
 				// to not confuse the GCC implementation:
 				store->catchTemp = resume.ip;
-				store->handlerSwitchValue = part;
+				store->handlerSwitchValue = encoded;
 
 				// Tell the system we have a handler! It will call us with _UA_HANDLER_FRAME later.
 				return _URC_HANDLER_FOUND;
@@ -315,13 +318,14 @@ namespace code {
 				// Phase 2: Cleanup, but resume here!
 
 				// Read data from the exception object, like GCC does. We saved this data earlier.
+				Nat block, active;
 				ExStore *store = BASE_PTR(ExStore, data, exception);
-				Nat part = store->handlerSwitchValue;
+				decodeFnState(Nat(store->handlerSwitchValue), block, active);
 				pc = (size_t)store->catchTemp;
 
 				// Cleanup our frame.
-				StackFrame frame(part, (void *)rbp);
-				fnData->owner->cleanup(frame, part);
+				StackFrame frame(block, active, (void *)rbp);
+				fnData->owner->cleanup(frame, block);
 
 				// Get the exception. Since it is a pointer, we can deallocate directly.
 				// Note that we store the dereferenced pointer inside the EH table, so we don't need
@@ -341,9 +345,11 @@ namespace code {
 				// Phase 2: Cleanup!
 
 				// Clean up what we can!
-				Nat part = stormFindPart(fnData, fn, pc);
-				if (part != Part().key()) {
-					StackFrame frame(part, (void *)rbp);
+				Nat block, active;
+				Nat encoded = stormFindBlockActive(fnData, fn, pc);
+				decodeFnState(encoded, block, active);
+				if (block != Block().key()) {
+					StackFrame frame(block, active, (void *)rbp);
 					fnData->owner->cleanup(frame);
 				}
 				return _URC_CONTINUE_UNWIND;

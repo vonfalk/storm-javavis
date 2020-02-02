@@ -445,7 +445,7 @@ namespace code {
 				ParamInfo &param = params->at(i);
 
 				if (ComplexDesc *c = as<ComplexDesc>(param.type)) {
-					Var v = dest->createVar(block, c, freeInactive);
+					Var v = dest->createVar(block, c, freeDef | freeInactive);
 					copies->at(i) = v;
 
 					// Call the copy constructor.
