@@ -30,6 +30,11 @@ BEGIN_TEST(CodeScopeTest, CodeBasic) {
 	CHECK_EQ(l->parent(b1), l->root());
 	CHECK_EQ(l->parent(b2), b1);
 
+	// Make sure that the parameter is in the root block.
+	CHECK_EQ(l->allVars(l->root())->count(), 2);
+	CHECK_EQ(l->allVars(b1)->count(), 2);
+	CHECK_EQ(l->allVars(b2)->count(), 1);
+
 } END_TEST
 
 BEGIN_TEST(CodeScopeTest2, CodeBasic) {
