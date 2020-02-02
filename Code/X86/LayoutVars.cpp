@@ -177,7 +177,9 @@ namespace code {
 					zeroVar(dest, layout->at(v.key()), v.size(), initEax);
 			}
 
-			updateBlockId(dest);
+			// If the block was empty, we don't need to update the info.
+			if (vars->any())
+				updateBlockId(dest);
 		}
 
 		static void saveResult(Listing *dest) {
@@ -274,7 +276,9 @@ namespace code {
 				restoreResult(dest);
 
 			block = dest->parent(block);
-			updateBlockId(dest);
+			// If empty, we don't need to update.
+			if (vars->any())
+				updateBlockId(dest);
 		}
 
 		void LayoutVars::prologTfm(Listing *dest, Listing *src, Nat line) {
