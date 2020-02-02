@@ -250,7 +250,7 @@ class PatchParams on Compiler {
 // Patch a source listing.
 private Listing patchListing(Program program, Package pkg, Listing source, Function fn) on Compiler {
 	Listing dest = source.createShell();
-	Part part;
+	Block block;
 	PatchParams params(pkg, dest);
 
 	for (Nat i = 0; i < source.count; i++) {
@@ -259,14 +259,14 @@ private Listing patchListing(Program program, Package pkg, Listing source, Funct
 		dest << source[i];
 
 		if (instr.op == OpCode:location) {
-			generateCall(program, params, instr.src.srcPos, part);
+			generateCall(program, params, instr.src.srcPos, block);
 		} else if (instr.op == OpCode:prolog) {
-			part = source.root;
+			block = source.root;
 			generateCallTracking(program, params, fn);
 		} else if (instr.op == OpCode:beginBlock) {
-			part = instr.src.part;
+			block = instr.src.block;
 		} else if (instr.op == OpCode:endBlock) {
-			part = source.prev(instr.src.part);
+			block = source.parent(instr.src.block);
 		}
 	}
 
@@ -276,7 +276,7 @@ private Listing patchListing(Program program, Package pkg, Listing source, Funct
 }
 
 // Generate a call to this cless in order to keep track of the execution.
-private void generateCall(Program program, PatchParams to, SrcPos pos, Part part) on Compiler {
+private void generateCall(Program program, PatchParams to, SrcPos pos, Block block) on Compiler {
 	unless (file = pos.file)
 		return;
 
@@ -285,11 +285,11 @@ private void generateCall(Program program, PatchParams to, SrcPos pos, Part part
 	to.saveRegs();
 	Listing l = to.to;
 
-	Block subBlock = l.createBlock(part);
+	Block subBlock = l.createBlock(block);
 
 	l << begin(subBlock);
 
-	Var array = saveVariables(to, part, subBlock);
+	Var array = saveVariables(to, block, subBlock);
 
 	l << fnParam(ptrDesc, objPtr(program));
 	l << fnParam(ptrDesc, objPtr(file));
@@ -303,7 +303,7 @@ private void generateCall(Program program, PatchParams to, SrcPos pos, Part part
 }
 
 // Save all variables to a data structure in the current block.
-private Var saveVariables(PatchParams to, Part investigate, Block current) on Compiler {
+private Var saveVariables(PatchParams to, Block investigate, Block current) on Compiler {
 	Listing l = to.to;
 
 	Var array = l.createVar(current, sPtr);
@@ -323,13 +323,13 @@ private Var saveVariables(PatchParams to, Part investigate, Block current) on Co
 }
 
 // Save all variables to a data structure.
-private void saveVariables(PatchParams to, Part part, Var array, Var stackVar) on Compiler {
-	Part parent = to.to.prev(part);
-	if (parent != Part()) {
+private void saveVariables(PatchParams to, Block block, Var array, Var stackVar) on Compiler {
+	Block parent = to.to.parent(block);
+	if (parent != Block()) {
 		saveVariables(to, parent, array, stackVar);
 	}
 
-	saveVariables(to, to.to.partVars(part), array, stackVar);
+	saveVariables(to, to.to.allVars(block), array, stackVar);
 }
 
 private void saveVariables(PatchParams to, Var[] vars, Var array, Var stackVar) on Compiler {

@@ -64,14 +64,14 @@ class NullExpr extends Expr {
 		if (t = r.type.type) {
 			Function? ctor = t.defaultCtor;
 			if (ctor) {
-				VarInfo info = r.location(g);
+				core:asm:Var var = r.location(g);
 
 				// Call the constructor.
-				g.l << lea(ptrA, info.v);
+				g.l << lea(ptrA, var);
 				Array<Operand> vals;
 				vals << ptrA;
 				ctor.localCall(g, vals, CodeResult(Value(), g.block), false);
-				info.created(g);
+				r.created(g);
 			} else {
 				throw SyntaxError(pos, "Failed to locate the default constructor of " + r.type.toS);
 			}

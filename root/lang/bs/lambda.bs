@@ -105,9 +105,9 @@ class LambdaExpr extends Expr {
 			b;
 		};
 
-		VarInfo v = r.location(to);
-		to.l << mov(v.v, objPtr(pointer(fn)));
-		v.created(to);
+		var v = r.location(to);
+		to.l << mov(v, objPtr(pointer(fn)));
+		r.created(to);
 	}
 
 	private void captureCode(CodeGen to, CodeResult r, Str[] capture, Value result, ValParam[] params) {

@@ -108,9 +108,9 @@ class ReferNamed extends Expr {
 
 		// This solution is also bad when we want to serialize the code and load it later.
 		// We should use a reference to the named item instead.
-		VarInfo v = result.location(state);
-		state.l << mov(v.v, objPtr(referTo));
-		v.created(state);
+		var v = result.location(state);
+		state.l << mov(v, objPtr(referTo));
+		result.created(state);
 	}
 
 	Str toS() {

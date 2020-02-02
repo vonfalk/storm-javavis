@@ -77,8 +77,7 @@ class BfFunction extends Function {
 
 		o.code(r, result);
 
-		var resultVar = result.location(r);
-		l << fnRet(resultVar);
+		l << fnRet(result.location(r));
 
 		r;
 	}

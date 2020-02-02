@@ -278,9 +278,9 @@ class ReferSExpr extends Expr {
 
 	void code(CodeGen state, CodeResult result) {
 		if (result.needed) {
-			VarInfo v = result.location(state);
-			state.l << mov(v.v, objPtr(expr));
-			v.created(state);
+			var v = result.location(state);
+			state.l << mov(v, objPtr(expr));
+			result.created(state);
 		}
 	}
 
