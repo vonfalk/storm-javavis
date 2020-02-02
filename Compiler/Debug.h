@@ -250,7 +250,6 @@ namespace storm {
 			Int dummy;
 		};
 
-
 		// Enum.
 		enum DbgEnum {
 			foo,

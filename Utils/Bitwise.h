@@ -82,7 +82,7 @@ inline bool isPowerOfTwo(T number) {
 	return (number & (number - 1)) == 0;
 }
 
-// Get the next larger power of two.
+// Get the next larger power of two, or 'number' if it is already a power of two.
 template <class T>
 inline T nextPowerOfTwo(T number) {
 	--number;

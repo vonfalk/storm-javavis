@@ -58,7 +58,7 @@ namespace storm {
 
 	Enum::Enum(Str *name, Bool bitmask)
 		: Type(name, typeValue, Size::sInt, createGcType(name->engine()), null),
-		  bitmask(bitmask) {
+		  mask(bitmask) {
 
 		if (engine.has(bootTemplates))
 			lateInit();
@@ -67,7 +67,7 @@ namespace storm {
 
 	Enum::Enum(Str *name, GcType *type, Bool bitmask)
 		: Type(name, typeValue, Size::sInt, type, null),
-		  bitmask(bitmask) {
+		  mask(bitmask) {
 
 		assert(type->stride == Size::sInt.current(), L"Check the size of your enums!");
 		if (engine.has(bootTemplates))
@@ -100,7 +100,7 @@ namespace storm {
 		add(inlinedFunction(engine, b, S("=="), vv, fnPtr(engine, &numCmp<ifEqual>))->makePure());
 		add(inlinedFunction(engine, b, S("!="), vv, fnPtr(engine, &numCmp<ifNotEqual>))->makePure());
 
-		if (bitmask) {
+		if (mask) {
 			add(inlinedFunction(engine, Value(this), S("+"), vv, fnPtr(engine, &enumAdd))->makePure());
 			add(inlinedFunction(engine, Value(this), S("-"), vv, fnPtr(engine, &enumSub))->makePure());
 			add(inlinedFunction(engine, b, S("&"), vv, fnPtr(engine, &enumOverlaps))->makePure());
@@ -140,7 +140,7 @@ namespace storm {
 		for (Nat i = 0; i < values->count(); i++) {
 			EnumValue *val = values->at(i);
 
-			if (bitmask) {
+			if (mask) {
 				// Note: special case for 'empty' if present.
 				if ((val->value & v) || (val->value == original && original == 0)) {
 					put(to, val->name, first);
@@ -160,7 +160,7 @@ namespace storm {
 				*to << S(" + ");
 			first = false;
 			*to << S("<unknown: ") << v << S(">");
-		} else if (bitmask && first) {
+		} else if (mask && first) {
 			put(to, S("<none>"), first);
 		}
 	}
@@ -173,7 +173,7 @@ namespace storm {
 			Indent z(to);
 			for (Nat i = 0; i < values->count(); i++) {
 				EnumValue *v = values->at(i);
-				if (bitmask) {
+				if (mask) {
 					*to << v->name << S(" = ") << hex(v->value) << S("\n");
 				} else {
 					*to << v->name << S(" = ") << v->value << S("\n");

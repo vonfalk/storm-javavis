@@ -190,6 +190,7 @@ SPlainFileItem => f : SFunction(env) f;
 SPlainFileItem => c : SClass(env) c;
 SPlainFileItem => t : SNamedThread t;
 SPlainFileItem => v : SGlobalVar(env) v;
+SPlainFileItem => e : SEnum e;
 
 TObject SDocFileItem(Scope env);
 SDocFileItem[0] => item : SDelimiter - SFileItem(env) item;
@@ -640,3 +641,27 @@ SDocClassItem[5] => applyDoc(c, item) : SFindDoc c - SClassAccessItem(owner) ite
 // Root rule for parsing classes and values.
 ClassBody SClassBody(Class owner);
 SClassBody => ClassBody(owner) : (SDocClassItem(owner) -> add)* - SDelimiter;
+
+////////////////////////////////////////////////////////////////////
+// Enums and bitmasks.
+////////////////////////////////////////////////////////////////////
+
+Enum SEnum();
+SEnum => createEnum(name, mask) : "enum[ \t]" #keyword, SName name #typeName, (":", "bitmask" mask #keyword,)? "{" [- SEnumBody(me.context) - ]+ "}";
+
+void SEnumBody(EnumContext ctx);
+SEnumBody : SDelimiter;
+SEnumBody : SDocEnumItem(ctx) - SDelimiter;
+SEnumBody : SDocEnumItem(ctx), "," - SEnumBody(ctx);
+
+void SDocEnumItem(EnumContext ctx);
+SDocEnumItem[0] : SDelimiter - SEnumItem(ctx);
+SDocEnumItem[5] => applyDoc(c, item) : SFindDoc c - SEnumItem(ctx) item;
+
+EnumValue SEnumItem(EnumContext ctx);
+SEnumItem => create(ctx, name) : SName name #varName;
+SEnumItem => create(ctx, name, val) : SName name #varName, "=", SEnumLiteral val;
+
+Nat SEnumLiteral() #constant;
+SEnumLiteral => hexToNat(nr) : "0x" - "[A-Fa-f0-9]+" nr;
+SEnumLiteral => toNat(nr) : "[0-9]+" nr;

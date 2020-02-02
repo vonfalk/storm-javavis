@@ -1,4 +1,4 @@
-use core:debug;
+use debug;
 
 Str enum1() {
 	DbgEnum v = DbgEnum:foo;
@@ -8,5 +8,33 @@ Str enum1() {
 Str enumBit1() {
 	DbgBit v = DbgBit:bitFoo;
 	v = v + DbgBit:bitBar;
+	v.toS;
+}
+
+// Enum for testing.
+enum StormEnum {
+	// First value.
+	foo,
+
+	// Second value.
+	bar
+}
+
+// Enum with bitwise operators.
+enum StormBit : bitmask {
+	// First
+	bitFoo,
+	// Second
+	bitBar
+}
+
+Str enum2() {
+	StormEnum v = StormEnum:foo;
+	v.toS;
+}
+
+Str enumBit2() {
+	StormBit v = StormBit:bitFoo;
+	v = v + StormBit:bitBar;
 	v.toS;
 }

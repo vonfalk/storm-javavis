@@ -491,6 +491,8 @@ BEGIN_TEST(BSWeakSetTest, BS) {
 BEGIN_TEST(BSEnumTest, BS) {
 	CHECK_EQ(::toS(runFn<Str *>(S("tests.bs.enum1"))), L"foo");
 	CHECK_EQ(::toS(runFn<Str *>(S("tests.bs.enumBit1"))), L"bitFoo + bitBar");
+	CHECK_EQ(::toS(runFn<Str *>(S("tests.bs.enum2"))), L"foo");
+	CHECK_EQ(::toS(runFn<Str *>(S("tests.bs.enumBit2"))), L"bitFoo + bitBar");
 } END_TEST
 
 

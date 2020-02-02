@@ -26,6 +26,9 @@ namespace storm {
 		// Add new entries.
 		virtual void STORM_FN add(Named *n);
 
+		// Do we support bitwise operators?
+		inline Bool STORM_FN bitmask() const { return mask; }
+
 		// Late init.
 		virtual void lateInit();
 
@@ -44,7 +47,7 @@ namespace storm {
 
 	private:
 		// Shall we support bitmask operators?
-		Bool bitmask;
+		Bool mask;
 
 		// All values contained in here.
 		Array<EnumValue *> *values;

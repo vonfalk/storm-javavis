@@ -208,3 +208,53 @@ possible to declare a type like this:
 
 `class Wrong extends T, persist {}`
 
+
+Enums
+-----
+
+Enums in Basic Storm are declared much like in C++, except that no trailing semicolon is needed:
+
+```
+enum MyEnum {
+    a,
+    b
+}
+```
+
+This creates an enum named `MyEnum` that has two values, `a` and `b`. By default, values are
+numbered from zero and onwards, but this can be changed by adding an element as `a = 5` for
+example. Note that only decimal and hexadecimal literals are allowed as initializers. Expressions
+are not supported. Any values following the explicitly numbered value will continue from the
+explicit number as follows:
+
+```
+enum MyEnum {
+    a, // will be 0
+    b = 5, // will be 5
+    c  // will be 6
+}
+```
+
+Enums are represented as a 32-bit integer, which can be inspected using the member `v` of the
+type. The enum also contains a constructor to explicitly cast to the enum type from a `Nat`.
+
+Basic Storm also supports "bitmask enums", i.e. a set of named booleans stored in a single 32-bit
+integer. These are declared by adding the `bitmask` keyword as such:
+
+```
+enum MyBitmask : bitmask {
+    a, // will be 0x01
+    b, // will be 0x02
+    c = 0x10, // will be 0x10
+    d  // will be 0x20
+}
+```
+
+When declared as a bitmask, the values automatically assigned to values start at 1 and double each
+time. Furthermore, the set of bits can be queried using the following operators:
+
+- `a + b` Combine two enums, creating the union.
+- `a - b` Remove any set bits from the `b` side from the `a` side.
+- `a & b` Check which bits are set in both `a` and `b`.
+- `a.has(b)` Same as `&`.
+

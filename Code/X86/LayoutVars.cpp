@@ -118,7 +118,9 @@ namespace code {
 				*dest << dat(intConst(activated->at(v.key())));
 
 				if (activated->at(v.key()) == INACTIVE)
-					throw new (this) VariableActivationError(v, S("Never activated."));
+					// Dont be too worried about zero-sized variables.
+					if (v.size() != Size())
+						throw new (this) VariableActivationError(v, S("Never activated."));
 			}
 		}
 
