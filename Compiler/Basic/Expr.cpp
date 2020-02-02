@@ -21,6 +21,10 @@ namespace storm {
 			return -1;
 		}
 
+		Bool Expr::isolate() {
+			return true;
+		}
+
 		/**
 		 * Numeric literals.
 		 */

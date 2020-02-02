@@ -376,5 +376,11 @@ namespace storm {
 			owner->addParams(this);
 		}
 
+		void bs::FnBody::code(CodeGen *state, CodeResult *to) {
+			initVariables(state);
+			// We don't need to call the three-parameter version of 'blockCode'.
+			blockCode(state, to);
+		}
+
 	}
 }

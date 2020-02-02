@@ -131,8 +131,8 @@ namespace storm {
 			// Make sure we're properly initialized.
 			void STORM_FN checkInit();
 
-			// Code generation.
-			virtual void STORM_FN blockCode(CodeGen *state, CodeResult *to, code::Block block);
+			// We don't need to create a separate block, we can just use the root block instead.
+			virtual void STORM_FN code(CodeGen *state, CodeResult *to);
 		};
 
 		/**
@@ -222,6 +222,9 @@ namespace storm {
 
 			// To string.
 			virtual void STORM_FN toS(StrBuf *to) const;
+
+			// Don't isolate the initializer, that will break things.
+			virtual Bool STORM_FN isolate();
 
 		private:
 			// Member of.

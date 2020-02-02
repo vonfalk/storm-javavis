@@ -29,6 +29,11 @@ namespace storm {
 
 			// Is it possible to cast this one expression to 'to'? < 0, no cast possible.
 			virtual Int STORM_FN castPenalty(Value to);
+
+			// Is it possible (and desirable) to isolate this expression in its own block? The
+			// default implementation returns 'true' as we wish to isolate most expressions when we
+			// put them inside an ExprBlock.
+			virtual Bool STORM_FN isolate();
 		};
 
 

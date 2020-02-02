@@ -185,7 +185,6 @@ namespace storm {
 
 		/**
 		 * Body of a function.
-		 * TODO: FIX INHERITANCE
 		 */
 		class FnBody : public ExprBlock {
 			STORM_CLASS;
@@ -195,6 +194,10 @@ namespace storm {
 
 			// Store the result type (needed for 'return' among others).
 			Value type;
+
+			// We don't need to create a separate block for the function body itself, we can just
+			// use the root block.
+			virtual void STORM_FN code(CodeGen *state, CodeResult *to);
 		};
 
 	}

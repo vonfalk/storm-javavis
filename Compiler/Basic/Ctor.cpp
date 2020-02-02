@@ -219,13 +219,16 @@ namespace storm {
 			}
 		}
 
-		void CtorBody::blockCode(CodeGen *state, CodeResult *to, code::Block block) {
+		void CtorBody::code(CodeGen *state, CodeResult *to) {
+			initVariables(state);
+
 			if (threadParam) {
 				thread = state->l->createVar(state->block, Size::sPtr);
 				*state->l << mov(thread, threadParam->var.v);
 			}
 
-			Block::blockCode(state, to, block);
+			// We don't need to call the three-parameter version.
+			blockCode(state, to);
 		}
 
 
@@ -435,6 +438,10 @@ namespace storm {
 
 			to->dedent();
 			*to << S("}");
+		}
+
+		Bool InitBlock::isolate() {
+			return false;
 		}
 
 		// Protect (=make sure it is destroyed) the newly created value in the indicated variable if required.

@@ -94,6 +94,10 @@ namespace storm {
 			return null;
 		}
 
+		Bool Block::isolate() {
+			return false;
+		}
+
 
 		ExprBlock::ExprBlock(SrcPos pos, Scope scope) :
 			Block(pos, scope), exprs(new (this) Array<Expr *>()) {}
@@ -126,14 +130,29 @@ namespace storm {
 				Block::code(state, to);
 		}
 
+		// Execute 'expr' in a sub-block as necessary.
+		static void executeExpr(Expr *expr, CodeGen *state, CodeResult *to) {
+			if (expr->isolate()) {
+				CodeGen *child = state->child();
+				*state->l << begin(child->block);
+				expr->code(child, to);
+				*state->l << end(child->block);
+			} else {
+				expr->code(state, to);
+			}
+		}
+
 		void ExprBlock::blockCode(CodeGen *state, CodeResult *to) {
+			if (!exprs->any())
+				return;
+
 			// Generate code for the entire block. Stop whenever we find a block that does not return.
 			for (Nat i = 0; i < exprs->count() - 1; i++) {
 				Expr *e = exprs->at(i);
 				*state->l << code::location(e->pos);
 
 				CodeResult *s = new (this) CodeResult();
-				e->code(state, s);
+				executeExpr(e, state, s);
 
 				// Stop if this statement never returns.
 				if (e->result().nothing())
@@ -141,7 +160,7 @@ namespace storm {
 			}
 
 			*state->l << code::location(exprs->last()->pos);
-			exprs->last()->code(state, to);
+			executeExpr(exprs->last(), state, to);
 
 			// Generate a last location.
 			*state->l << code::location(pos.lastCh());

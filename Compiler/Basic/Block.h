@@ -50,6 +50,9 @@ namespace storm {
 			// Get our parent block, if any.
 			MAYBE(Block *) STORM_FN parent();
 
+			// Don't need to isolate blocks, we do that ourselves.
+			virtual Bool STORM_FN isolate();
+
 		protected:
 			// Initialize variables in a scope, if you're overriding "code" directly.
 			void STORM_FN initVariables(CodeGen *child);
