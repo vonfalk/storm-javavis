@@ -20,7 +20,7 @@ namespace storm {
 		}
 	}
 
-	ArrayBase::ArrayBase(const ArrayBase &other) : handle(other.handle) {
+	ArrayBase::ArrayBase(const ArrayBase &other) : handle(other.handle), data(null) {
 		nat count = other.count();
 		if (handle.copyFn) {
 			ensure(count);

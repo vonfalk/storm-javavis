@@ -1,0 +1,14 @@
+
+Int queueInt() {
+	Queue<Int> q;
+	q << 8 << 10 << 4 << 5;
+	q.pop();
+	q.top();
+}
+
+Str queueString() {
+	Queue<Str> q;
+	q << "Hello" << "World" << "Basic" << "Storm";
+	q.pop();
+	q.top();
+}

@@ -392,6 +392,11 @@ BEGIN_TEST(BSPQTest, BS) {
 	CHECK_EQ(toS(runFn<Str *>(S("tests.bs.pqStr"))), L"World");
 } END_TEST
 
+BEGIN_TEST(BSQueueTest, BS) {
+	CHECK_EQ(runFn<Int>(S("tests.bs.queueInt")), 10);
+	CHECK_EQ(toS(runFn<Str *>(S("tests.bs.queueString"))), L"World");
+} END_TEST
+
 /**
  * Map.
  */

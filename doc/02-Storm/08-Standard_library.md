@@ -44,15 +44,16 @@ Storm provides the following container types:
 * Map<K, V> - hash map.
 * Set<K> - hash set.
 * WeakSet<K> - weak hash set. Stores weak references to heap-allocated objects.
+* Queue<T> - queue.
 * PQueue<T> - priority queue implemented as a max-heap.
 
-All containers except `PQueue<T>` provide iterators that allow accessing individual elements. These
-iterators work similarly to iterators in C++, except that they provide the members `k` and `v` to
-access the key and value of the current element rather than using pointer dereferencing. `k` is
-optional, and `Set<K>` does not provide that member. Due to its volatile nature, `WeakSet<K>` uses
-another type of iterator, more similar to Java. This iterator is a one-shot iterator that can be
-queried for the next element rather than an iterator to the begin and the end. Both iterators are
-supported in the range-based for loop in Basic Storm.
+All containers except `PQueue<T>` and `Queue<T>` provide iterators that allow accessing individual
+elements. These iterators work similarly to iterators in C++, except that they provide the members
+`k` and `v` to access the key and value of the current element rather than using pointer
+dereferencing. `k` is optional, and `Set<K>` does not provide that member. Due to its volatile
+nature, `WeakSet<K>` uses another type of iterator, more similar to Java. This iterator is a
+one-shot iterator that can be queried for the next element rather than an iterator to the begin and
+the end. Both iterators are supported in the range-based for loop in Basic Storm.
 
 The `Str` class stores characters in UTF-16 internally, but does not provide an API to access this
 representation. Instead, iterators can be used to iterate through the string one UTF-32 codepoint at
@@ -62,8 +63,9 @@ character by character from the string.
 Iterators
 ----------
 
-All containers except `PQueue<T>` provide some way of iterating through the individual elements in
-the container. Storm provides two interfaces for this: C++-style iterators and ranges.
+All containers except `PQueue<T>` and `Queue<T>` provide some way of iterating through the
+individual elements in the container. Storm provides two interfaces for this: C++-style iterators
+and ranges.
 
 An iterator is, just like in C++, a pointer to a position in a container. Iterators can be advanced
 to the next position using the `++`-operator and compared to other iterators using `==` and
