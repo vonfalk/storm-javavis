@@ -81,6 +81,7 @@ class Workspace on Render {
 	// Notify the workspace that we will start traversing objects now.
 	void beginTraversal() {
 		objMap.clear();
+		stackObjMap.clear();
 		work.clear();
 		maxX = 0;
 		for (i, d in elements) {
@@ -94,6 +95,11 @@ class Workspace on Render {
 
 	// Recursively add an object to the workspace.
 	Data traverse(unsafe:RawPtr object) {
+		// Handle stack allocations.
+		if (stackObjMap.has(object))
+			return stackObjMap.get(object);
+
+		// Heap allocations.
 		Nat id = objMap.get(object, elements.count);
 		if (id < elements.count) {
 			// Update the old instance if it is not yet traversed.
@@ -126,6 +132,7 @@ class Workspace on Render {
 	void traverse(ProgThread thread) {
 		unsafe:RawPtr key(thread);
 		Nat id = objMap.get(key, elements.count);
+		WorkList list(work, stackObjMap);
 		if (id < elements.count) {
 			// Update the old one if possible.
 			var elem = elements[id];
@@ -137,11 +144,11 @@ class Workspace on Render {
 			}
 
 			if (data as ThreadData) {
-				data.traverse(this, work);
+				data.traverse(this, list);
 			}
 		} else {
 			ThreadData t(thread);
-			t.traverse(this, work);
+			t.traverse(this, list);
 
 			elements << Element(thread, WithCaption(t, "Thread"));
 			objMap.put(key, id);
@@ -251,6 +258,9 @@ private:
 
 	// Map of object pointers to the corresponding data elements. Only valid during an object traversal.
 	unsafe:RawPtr->Nat objMap;
+
+	// Map of object pointers to objects on the stack of a thread.
+	unsafe:RawPtr->Data stackObjMap;
 
 	// Queue for BFS traversals when we traverse the object graph.
 	Queue<WorkItem> work;

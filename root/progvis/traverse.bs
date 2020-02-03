@@ -12,3 +12,24 @@ value WorkItem {
 	Data data;
 	unsafe:RawPtr object;
 }
+
+
+/**
+ * Class passed to threads during traversals. This is to give the Workspace class a chance to add
+ * all members of the threads to suitable internal data structures, which in turn allows pointers to
+ * other "stack" objects.
+ */
+class WorkList {
+	private Queue<WorkItem> work;
+	private unsafe:RawPtr->Data refs;
+
+	init(Queue<WorkItem> work, unsafe:RawPtr->Data refs) {
+		init { work = work; refs = refs; }
+	}
+
+	// Add an element to the queue.
+	void push(Data data, unsafe:RawPtr object) {
+		work.push(WorkItem(data, object));
+		refs.put(object, data);
+	}
+}
