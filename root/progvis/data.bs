@@ -169,12 +169,25 @@ class Primitive extends Data {
 	}
 }
 
+// Arrow for all pointers.
+package Path ptrArrow on Render = {
+	Path p;
+	p.start(Point(0, 0));
+	p.line(Point(-6, -4));
+	p.line(Point(-6, 4));
+	p.close();
+	p;
+};
+
 /**
  * A pointer type, referring to some other data.
  */
 class Pointer extends Data {
 	// Object we're pointing to.
 	protected Data? to;
+
+	// Our path, re-used for efficiency.
+	private Path line;
 
 	init() {
 		init() {}
@@ -196,7 +209,18 @@ class Pointer extends Data {
 		if (to) {
 			Brush color = if (active) { activeLink; } else { inactiveLink; };
 			Rect r = rect;
-			g.line(r.center, to.pos, color);
+			// g.line(r.center, to.pos, color);
+			Float dy = abs(r.center.y - to.pos.y);
+			Float shift = max(0.2*dy, 40);
+			line.clear();
+			line.start(r.center);
+			line.bezier(to.pos - Point(shift, 0), to.pos);
+			g.draw(line, color);
+
+			g.push();
+			g.transform(translate(to.pos));
+			g.fill(ptrArrow, color);
+			g.pop();
 		}
 	}
 
