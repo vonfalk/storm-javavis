@@ -47,7 +47,7 @@ class CppCodeHints extends progvis:CodeHints {
 		fn.name + "(...)";
 	}
 
-	Bool saveVariable(Listing to, Var var, Listing:VarInfo info, Operand dest) {
+	Bool saveVariable(Listing to, Var var, Listing:VarInfo info, Operand dest) : override {
 		if (!info.ref)
 			return false;
 
@@ -57,6 +57,10 @@ class CppCodeHints extends progvis:CodeHints {
 
 		to << mov(dest, var);
 		true;
+	}
+
+	void destroyVariable(Listing to, Operand dest) : override {
+		// Not necessary.
 	}
 }
 

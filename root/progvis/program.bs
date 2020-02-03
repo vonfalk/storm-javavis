@@ -452,7 +452,8 @@ private void saveVariables(PatchParams to, Var[] vars, Var array, Var stackVar, 
 		if (!inactive.has(var.key)) {
 			if (info = to.to.varInfo(var)) {
 				// Ask if and how to save this variable.
-				if (to.codeHints.saveVariable(l, var, info, ptrRel(stackVar, Offset(sPtr)))) {
+				Operand variant = ptrRel(stackVar, Offset(sPtr));
+				if (to.codeHints.saveVariable(l, var, info, variant)) {
 					// Set 'name'.
 					l << mov(ptrRel(stackVar), objPtr(info.name));
 
@@ -462,6 +463,8 @@ private void saveVariables(PatchParams to, Var[] vars, Var array, Var stackVar, 
 					l << fnParam(ptrDesc, array);
 					l << fnParam(ptrDesc, ptrA);
 					l << fnCall(push.ref, true);
+
+					to.codeHints.destroyVariable(l, variant);
 				}
 			}
 		}

@@ -26,6 +26,9 @@ class CodeHints on Compiler {
 	// Create a Variant containing a copy of the variable at the indicated location. Return 'false'
 	// if it is not possible.
 	Bool saveVariable(Listing to, Var var, Listing:VarInfo info, Operand dest) : abstract;
+
+	// Generate code to destroy the previously created variant.
+	void destroyVariable(Listing to, Operand dest) : abstract;
 }
 
 
@@ -114,6 +117,15 @@ class DefaultCodeHints extends CodeHints {
 		to << fnParam(ptrDesc, ptrB);
 		to << fnCall(ctor.ref(), true);
 		true;
+	}
+
+	// Destroy the variant.
+	void destroyVariable(Listing to, Operand dest) : override {
+		Function dtor = named{Variant:__destroy<Variant>};
+
+		to << lea(ptrA, dest);
+		to << fnParam(ptrDesc, ptrA);
+		to << fnCall(dtor.ref, true);
 	}
 
 	// Find 'main'.
