@@ -59,8 +59,5 @@ class CppCodeHints extends progvis:CodeHints {
 		true;
 	}
 
-	void destroyVariable(Listing to, Operand dest) : override {
-		// Not necessary.
-	}
 }
 

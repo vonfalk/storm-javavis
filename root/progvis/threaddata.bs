@@ -92,14 +92,14 @@ class ThreadData extends Drawable {
 	}
 
 	// Update our contents.
-	void traverse(Workspace ws) {
+	void traverse(Workspace ws, Queue<WorkItem> work) {
 		for (k, v in thread.frames) {
 			if (k >= frames.count)
 				frames.push(FrameVal(v));
 			// Different frame?
 			if (frames[k].source !is v)
 				frames[k] = FrameVal(v);
-			frames[k].traverse(ws);
+			frames[k].traverse(ws, work);
 		}
 
 		while (frames.count > thread.frames.count)
@@ -188,12 +188,12 @@ class FrameVal on Render {
 	}
 
 	// Update our contents.
-	void traverse(Workspace ws) {
+	void traverse(Workspace ws, Queue<WorkItem> work) {
 		for (k, v in source.variables) {
 			if (k >= vars.count) {
-				vars.push(Var(ws, v));
+				vars.push(Var(ws, v, work));
 			} else {
-				vars[k].update(ws, v);
+				vars[k].update(ws, v, work);
 			}
 		}
 
@@ -255,7 +255,7 @@ private:
 		Data value;
 		Type? originalType;
 
-		init(Workspace ws, StackVar var) {
+		init(Workspace ws, StackVar var, Queue<WorkItem> work) {
 			unsafe:RawPtr ptr(var.value);
 
 			init() {
@@ -265,10 +265,10 @@ private:
 				originalType = ptr.type;
 			}
 
-			update(ws, var);
+			work.push(WorkItem(value, ptr));
 		}
 
-		void update(Workspace ws, StackVar var) {
+		void update(Workspace ws, StackVar var, Queue<WorkItem> work) {
 			unsafe:RawPtr ptr(var.value);
 
 			if (name != var.name) {
@@ -281,7 +281,7 @@ private:
 				value = ws.createStackData(ptr);
 			}
 
-			value.update(ws, ptr, 0);
+			work.push(WorkItem(value, ptr));
 		}
 	}
 

@@ -81,6 +81,7 @@ class Workspace on Render {
 	// Notify the workspace that we will start traversing objects now.
 	void beginTraversal() {
 		objMap.clear();
+		work.clear();
 		maxX = 0;
 		for (i, d in elements) {
 			d.visited = false;
@@ -100,7 +101,7 @@ class Workspace on Render {
 			if (data = elem.visual as Data) {
 				if (!elem.visited) {
 					elem.visited = true;
-					data.update(this, object, 0);
+					work.push(WorkItem(data, object));
 				}
 				return data;
 			}
@@ -116,10 +117,7 @@ class Workspace on Render {
 		maxX += visual.size.w + 20;
 
 		// Follow pointers.
-		// TODO: We could actually let the creation of pointer-nodes handle
-		// this using a queue in a BFS fashion, so that we can lay out nodes
-		// in nice layers as a decent heuristic.
-		visual.update(this, object, 0);
+		work.push(WorkItem(visual, object));
 
 		return visual;
 	}
@@ -139,11 +137,11 @@ class Workspace on Render {
 			}
 
 			if (data as ThreadData) {
-				data.traverse(this);
+				data.traverse(this, work);
 			}
 		} else {
 			ThreadData t(thread);
-			t.traverse(this);
+			t.traverse(this, work);
 
 			elements << Element(thread, WithCaption(t, "Thread"));
 			objMap.put(key, id);
@@ -162,6 +160,13 @@ class Workspace on Render {
 
 	// Notify the workspace that traversal is over, and that any remaning objects may be removed.
 	void endTraversal() {
+		// Pop the queue until it is empty.
+		while (work.any) {
+			WorkItem top = work.top;
+			top.data.update(this, top.object, 0);
+			work.pop();
+		}
+
 		// Traverse all objects where 'autoRemove' is false, so that they keep any objects they refer alive.
 		for (elem in elements) {
 			if (!elem.visited & !elem.autoRemove) {
@@ -246,6 +251,9 @@ private:
 
 	// Map of object pointers to the corresponding data elements. Only valid during an object traversal.
 	unsafe:RawPtr->Nat objMap;
+
+	// Queue for BFS traversals when we traverse the object graph.
+	Queue<WorkItem> work;
 
 	// Basic layout: Keep track of the next x-position in during the update.
 	Float maxX;

@@ -1,0 +1,14 @@
+
+/**
+ * Work-items for object traversal.
+ *
+ * Used by the Workspace class to coordinate object traversals.
+ */
+value WorkItem {
+	init(Data data, unsafe:RawPtr object) {
+		init() { data = data; object = object; }
+	}
+
+	Data data;
+	unsafe:RawPtr object;
+}

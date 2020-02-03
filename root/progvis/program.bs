@@ -419,7 +419,7 @@ private Var saveVariables(PatchParams to, Block investigate, Block current, Set<
 	Listing l = to.to;
 
 	Var array = l.createVar(current, sPtr);
-	Var stackVar = l.createVar(current, named{StackVar}.size);
+	Var variant = l.createVar(current, named{Variant}.size);
 	Type arrayType = named{StackVar[]};
 	l << fnParam(ptrDesc, named{StackVar[]}.typeRef);
 	l << fnCall(ref(BuiltIn:alloc), false, ptrDesc, array);
@@ -429,46 +429,54 @@ private Var saveVariables(PatchParams to, Block investigate, Block current, Set<
 		l << fnCall(ctor.ref, true);
 	}
 
-	saveVariables(to, investigate, array, stackVar, inactive);
+	saveVariables(to, investigate, array, variant, inactive);
 
 	array;
 }
 
 // Save all variables to a data structure.
-private void saveVariables(PatchParams to, Block block, Var array, Var stackVar, Set<Nat> inactive) on Compiler {
+private void saveVariables(PatchParams to, Block block, Var array, Var variant, Set<Nat> inactive) on Compiler {
 	Block parent = to.to.parent(block);
 	if (parent != Block()) {
-		saveVariables(to, parent, array, stackVar, inactive);
+		saveVariables(to, parent, array, variant, inactive);
 	}
 
-	saveVariables(to, to.to.allVars(block), array, stackVar, inactive);
+	saveVariables(to, to.to.allVars(block), array, variant, inactive);
 }
 
-private void saveVariables(PatchParams to, Var[] vars, Var array, Var stackVar, Set<Nat> inactive) on Compiler {
+private void saveVariables(PatchParams to, Var[] vars, Var array, Var variant, Set<Nat> inactive) on Compiler {
 	Listing l = to.to;
 
 	for (var in vars) {
-		// Don't output variables that are not yet activated.
-		if (!inactive.has(var.key)) {
-			if (info = to.to.varInfo(var)) {
+		if (info = to.to.varInfo(var)) {
+			// Don't output variables that are not yet activated.
+			if (!inactive.has(var.key)) {
 				// Ask if and how to save this variable.
-				Operand variant = ptrRel(stackVar, Offset(sPtr));
 				if (to.codeHints.saveVariable(l, var, info, variant)) {
-					// Set 'name'.
-					l << mov(ptrRel(stackVar), objPtr(info.name));
+					// Create a StackVar element.
+					l << fnParam(ptrDesc, objPtr(info.name));
+					l << fnCall(named{createStackVar<Str>}.ref, false, ptrDesc, ptrA);
+
+					// Set the variant. We know that it is currently empty, so we don't have to
+					// bother with the destructor. The one previously created is moved to its new
+					// location, so we don't have to destroy that either.
+					var offset = named{StackVar:value<StackVar>}.offset;
+					l << mov(ptrRel(ptrA, offset), variant);
 
 					// Push it to the array!
 					Function push = named{Array<StackVar>:push<StackVar[], StackVar>};
-					l << lea(ptrA, stackVar);
 					l << fnParam(ptrDesc, array);
 					l << fnParam(ptrDesc, ptrA);
 					l << fnCall(push.ref, true);
-
-					to.codeHints.destroyVariable(l, variant);
 				}
 			}
 		}
 	}
+}
+
+// Create a StackVar instance. Called from ASM.
+private StackVar createStackVar(Str name) {
+	StackVar(name);
 }
 
 // Generate the call to 'functionEntered' and make sure 'functionExited' is called on function exit (last).

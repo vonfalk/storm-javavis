@@ -146,9 +146,13 @@ class ProgThread on Render {
  *
  * Note: We fill in this type directly from machine code, don't alter the layout!
  */
-value StackVar {
+class StackVar {
 	Str name;
 	Variant value;
+
+	init(Str name) {
+		init { name = name; }
+	}
 
 	init(Str name, Variant value) {
 		init { name = name; value = value; }
