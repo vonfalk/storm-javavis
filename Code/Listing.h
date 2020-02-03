@@ -16,22 +16,22 @@ namespace code {
 	 * Control when and how variables are freed.
 	 */
 	enum FreeOpt {
-		freeOnNone = 0x0,
-		freeOnException = 0x1,
-		freeOnBlockExit = 0x2,
-		freeOnBoth = 0x3,
+		STORM_NAME(freeOnNone, none) = 0x0,
+		STORM_NAME(freeOnException, exception) = 0x1,
+		STORM_NAME(freeOnBlockExit, blockExit) = 0x2,
+		STORM_NAME(freeOnBoth, both) = 0x3,
 
 		// Pass a pointer to the free-function?
-		freePtr = 0x10,
+		STORM_NAME(freePtr, ptr) = 0x10,
 
 		// Used by the backends: What is stored in the variable is actually a pointer to the value.
-		freeIndirection = 0x20,
+		STORM_NAME(freeIndirection, indirection) = 0x20,
 
 		// Default options.
-		freeDef = freeOnBoth,
+		STORM_NAME(freeDef, default) = freeOnBoth,
 
 		// This variable needs to be activated before it will be freed.
-		freeInactive = 0x40,
+		STORM_NAME(freeInactive, inactive) = 0x40,
 	};
 
 	BITMASK_OPERATORS(FreeOpt);
