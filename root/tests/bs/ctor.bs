@@ -8,7 +8,7 @@ class CtorClass {
 	init() {
 		init() {
 			a = 20;
-			b = 30;
+			b(30);
 		}
 	}
 
@@ -22,7 +22,7 @@ class CtorClass {
 	init(Int a) {
 		init() {
 			a = a;
-			b = a * 2;
+			b(a * 2);
 		}
 	}
 

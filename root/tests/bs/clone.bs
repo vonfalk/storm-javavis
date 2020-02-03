@@ -8,7 +8,7 @@ value CloneVal {
 
 	init() {
 		init() {
-			z = 8;
+			z(8);
 		}
 	}
 }
@@ -22,7 +22,7 @@ class CloneBase {
 	init() {
 		init() {
 			a = 2;
-			b = 3;
+			b(3);
 		}
 	}
 

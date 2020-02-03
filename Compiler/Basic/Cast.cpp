@@ -185,6 +185,24 @@ namespace storm {
 			return ExprResult();
 		}
 
+		Bool implicitlyCallableCtor(Function *ctor) {
+			if (ctor->params->count() != 2)
+				return false;
+
+			Value first = ctor->params->at(0);
+			Value second = ctor->params->at(1);
+
+			// This is the copy-ctor (at least, close enough).
+			if (first.type == second.type)
+				return true;
+
+			// If it was explicitly declared as a cast-ctor, then it is also fine.
+			if (ctor->fnFlags() & fnAutoCast)
+				return true;
+
+			// Else, we don't allow it.
+			return false;
+		}
 
 	}
 }

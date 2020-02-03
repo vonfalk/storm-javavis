@@ -39,5 +39,8 @@ namespace storm {
 		// Get the lowest common type that can store both expressions.
 		ExprResult STORM_FN common(Expr *a, Expr *b, Scope scope);
 
+		// Check if 'ctor' is implicitly callable.
+		Bool STORM_FN implicitlyCallableCtor(Function *ctor);
+
 	}
 }

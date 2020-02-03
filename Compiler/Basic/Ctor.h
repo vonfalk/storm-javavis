@@ -248,7 +248,7 @@ namespace storm {
 
 			// Initialize a variable.
 			void initVar(CodeGen *s, MemberVar *var, Initializer *to);
-			void initVarCtor(CodeGen *s, MemberVar *var, Actuals *to);
+			void initVarCtor(CodeGen *s, MemberVar *var, Actuals *to, Bool explicitCast);
 			void initVarAssign(CodeGen *s, MemberVar *var, Expr *to);
 
 			// Initialize a variable with its default constructor.

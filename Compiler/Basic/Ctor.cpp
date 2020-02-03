@@ -572,15 +572,15 @@ namespace storm {
 				} else {
 					Actuals *p = new (this) Actuals();
 					p->add(to->expr);
-					initVarCtor(s, v, p);
+					initVarCtor(s, v, p, false);
 				}
 			} else {
-				initVarCtor(s, v, to->params);
+				initVarCtor(s, v, to->params, true);
 			}
 
 		}
 
-		void InitBlock::initVarCtor(CodeGen *s, MemberVar *v, Actuals *to) {
+		void InitBlock::initVarCtor(CodeGen *s, MemberVar *v, Actuals *to, Bool explicitCast) {
 			using namespace code;
 
 			Value t = v->type;
@@ -593,6 +593,14 @@ namespace storm {
 			Function *ctor = as<Function>(toCreate->find(values, scope));
 			if (!ctor) {
 				Str *msg = TO_S(engine(), S("No constructor for ") << t << S("(") << values << S(")."));
+				throw new (this) SyntaxError(pos, msg);
+			}
+
+			if (!explicitCast && !implicitlyCallableCtor(ctor)) {
+				Str *msg = TO_S(engine(), S("The constructor ") << ctor->shortIdentifier()
+								<< S(" is not a copy constructor or marked with 'cast', and")
+								<< S(" therefore needs to be called explicitly. If this was")
+								<< S(" your intention, use \"") << v->name << S("(...);\" instead."));
 				throw new (this) SyntaxError(pos, msg);
 			}
 

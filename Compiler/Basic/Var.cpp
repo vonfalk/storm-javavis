@@ -49,26 +49,6 @@ namespace storm {
 				initTo(new (this) Actuals(e), true);
 		}
 
-		// Check if 'ctor' is implicitly callable.
-		static bool implicitlyCallableCtor(Function *ctor) {
-			if (ctor->params->count() != 2)
-				return false;
-
-			Value first = ctor->params->at(0);
-			Value second = ctor->params->at(1);
-
-			// This is the copy-ctor (at least, close enough).
-			if (first.type == second.type)
-				return true;
-
-			// If it was explicitly declared as a cast-ctor, then it is also fine.
-			if (ctor->fnFlags() & fnAutoCast)
-				return true;
-
-			// Else, we don't allow it.
-			return false;
-		}
-
 		void Var::initTo(Actuals *actuals, Bool castOnly) {
 			if (var->result.isPrimitive()) {
 				// Assignment is the same as initialization here...
