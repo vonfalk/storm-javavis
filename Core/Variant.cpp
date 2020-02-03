@@ -62,6 +62,7 @@ namespace storm {
 
 		const Handle &h = runtime::typeHandle(t->type);
 		h.safeDestroy(alloc->v);
+		alloc->filled = 0;
 	}
 
 	void Variant::deepCopy(CloneEnv *env) {

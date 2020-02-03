@@ -10,12 +10,12 @@ namespace storm {
 
 	void rawPtrCopy(InlineParams p) {
 		p.allocRegs(0, 1);
-		*p.state->l << mov(ptrRel(p.regParam(0), Offset()), ptrRel(p.regParam(1), Offset()));
+		*p.state->l << mov(ptrRel(p.regParam(0)), ptrRel(p.regParam(1)));
 	}
 
 	void rawPtrInit(InlineParams p) {
 		p.allocRegs(0);
-		*p.state->l << mov(ptrRel(p.regParam(0), Offset()), p.param(1));
+		*p.state->l << mov(ptrRel(p.regParam(0)), p.param(1));
 	}
 
 	void rawPtrAssign(InlineParams p) {
@@ -211,8 +211,8 @@ namespace storm {
 		Array<Value> *tobjPar = valList(e, 2, me.asRef(), tobj);
 		add(inlinedFunction(e, Value(), Type::CTOR, tobjPar, fnPtr(e, &rawPtrInit)));
 		Value variant(StormInfo<Variant>::type(e));
-		Array<Value> *variantPar = valList(e, 2, me.asRef(), variant);
-		add(inlinedFunction(e, Value(), Type::CTOR, variantPar, fnPtr(e, &rawPtrInit)));
+		Array<Value> *variantPar = valList(e, 2, me.asRef(), variant.asRef());
+		add(inlinedFunction(e, Value(), Type::CTOR, variantPar, fnPtr(e, &rawPtrCopy))); // Same as a copy of a RawPtr.
 
 		// Inspect the data.
 		Value type(StormInfo<Type *>::type(e));
