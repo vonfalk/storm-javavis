@@ -55,8 +55,7 @@ class CppCodeHints extends progvis:CodeHints {
 		if (info.name == "this")
 			return false;
 
-		to << lea(ptrA, dest);
-		to << mov(ptrRel(ptrA), var);
+		to << mov(dest, var);
 		true;
 	}
 }

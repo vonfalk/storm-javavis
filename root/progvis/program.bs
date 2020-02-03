@@ -356,7 +356,13 @@ class PatchParams on Compiler {
 private Listing patchListing(Program program, Hints hints, Package pkg, Listing source, Function fn) on Compiler {
 	Listing dest = source.createShell();
 	Block block;
+	Set<Nat> inactive;
 	PatchParams params(pkg, hints, dest);
+
+	for (var in source.allVars()) {
+		if (source.freeOpt(var).has(FreeOpt:inactive))
+			inactive.put(var.key());
+	}
 
 	for (Nat i = 0; i < source.count; i++) {
 		dest << source.labels(i);
@@ -364,24 +370,27 @@ private Listing patchListing(Program program, Hints hints, Package pkg, Listing 
 		dest << source[i];
 
 		if (instr.op == OpCode:location) {
-			generateCall(program, params, instr.src.srcPos, block);
+			generateCall(program, params, instr.src.srcPos, block, inactive);
 		} else if (instr.op == OpCode:prolog) {
 			block = source.root;
-			generateCallTracking(program, params, fn);
+			generateCallTracking(program, params, fn, inactive);
 		} else if (instr.op == OpCode:beginBlock) {
 			block = instr.src.block;
 		} else if (instr.op == OpCode:endBlock) {
 			block = source.parent(instr.src.block);
+		} else if (instr.op == OpCode:activate) {
+			inactive.remove(instr.src.var.key);
 		}
 	}
 
 	dest << source.labels(source.count);
 
+	// print("Patched ${fn.name}: ${dest}");
 	dest;
 }
 
 // Generate a call to this class in order to keep track of the execution.
-private void generateCall(Program program, PatchParams to, SrcPos pos, Block block) on Compiler {
+private void generateCall(Program program, PatchParams to, SrcPos pos, Block block, Set<Nat> inactive) on Compiler {
 	unless (file = pos.file)
 		return;
 
@@ -394,7 +403,7 @@ private void generateCall(Program program, PatchParams to, SrcPos pos, Block blo
 
 	l << begin(subBlock);
 
-	Var array = saveVariables(to, block, subBlock);
+	Var array = saveVariables(to, block, subBlock, inactive);
 
 	l << fnParam(ptrDesc, objPtr(program));
 	l << fnParam(ptrDesc, objPtr(SrcPosWrap(pos)));
@@ -406,7 +415,7 @@ private void generateCall(Program program, PatchParams to, SrcPos pos, Block blo
 }
 
 // Save all variables to a data structure in the current block.
-private Var saveVariables(PatchParams to, Block investigate, Block current) on Compiler {
+private Var saveVariables(PatchParams to, Block investigate, Block current, Set<Nat> inactive) on Compiler {
 	Listing l = to.to;
 
 	Var array = l.createVar(current, sPtr);
@@ -420,44 +429,47 @@ private Var saveVariables(PatchParams to, Block investigate, Block current) on C
 		l << fnCall(ctor.ref, true);
 	}
 
-	saveVariables(to, investigate, array, stackVar);
+	saveVariables(to, investigate, array, stackVar, inactive);
 
 	array;
 }
 
 // Save all variables to a data structure.
-private void saveVariables(PatchParams to, Block block, Var array, Var stackVar) on Compiler {
+private void saveVariables(PatchParams to, Block block, Var array, Var stackVar, Set<Nat> inactive) on Compiler {
 	Block parent = to.to.parent(block);
 	if (parent != Block()) {
-		saveVariables(to, parent, array, stackVar);
+		saveVariables(to, parent, array, stackVar, inactive);
 	}
 
-	saveVariables(to, to.to.allVars(block), array, stackVar);
+	saveVariables(to, to.to.allVars(block), array, stackVar, inactive);
 }
 
-private void saveVariables(PatchParams to, Var[] vars, Var array, Var stackVar) on Compiler {
+private void saveVariables(PatchParams to, Var[] vars, Var array, Var stackVar, Set<Nat> inactive) on Compiler {
 	Listing l = to.to;
 
 	for (var in vars) {
-		if (info = to.to.varInfo(var)) {
-			// Ask if and how to save this variable.
-			if (to.codeHints.saveVariable(l, var, info, ptrRel(stackVar, Offset(sPtr)))) {
-				// Set 'name'.
-				l << mov(ptrRel(stackVar), objPtr(info.name));
+		// Don't output variables that are not yet activated.
+		if (!inactive.has(var.key)) {
+			if (info = to.to.varInfo(var)) {
+				// Ask if and how to save this variable.
+				if (to.codeHints.saveVariable(l, var, info, ptrRel(stackVar, Offset(sPtr)))) {
+					// Set 'name'.
+					l << mov(ptrRel(stackVar), objPtr(info.name));
 
-				// Push it to the array!
-				Function push = named{Array<StackVar>:push<StackVar[], StackVar>};
-				l << lea(ptrA, stackVar);
-				l << fnParam(ptrDesc, array);
-				l << fnParam(ptrDesc, ptrA);
-				l << fnCall(push.ref, true);
+					// Push it to the array!
+					Function push = named{Array<StackVar>:push<StackVar[], StackVar>};
+					l << lea(ptrA, stackVar);
+					l << fnParam(ptrDesc, array);
+					l << fnParam(ptrDesc, ptrA);
+					l << fnCall(push.ref, true);
+				}
 			}
 		}
 	}
 }
 
 // Generate the call to 'functionEntered' and make sure 'functionExited' is called on function exit (last).
-private void generateCallTracking(Program program, PatchParams to, Function fn) on Compiler {
+private void generateCallTracking(Program program, PatchParams to, Function fn, Set<Nat> inactive) on Compiler {
 	var enterFn = named{Program:functionEntered<Program, Str, SrcPosWrap, ViewHints, StackVar[]>};
 	// TODO: It is not always safe to do this... The destructor is expected to be a free function,
 	// but in almost all cases, it does not matter.
@@ -475,7 +487,7 @@ private void generateCallTracking(Program program, PatchParams to, Function fn) 
 
 	Block subBlock = l.createBlock(l.root);
 	l << begin(subBlock);
-	Var array = saveVariables(to, l.root, subBlock);
+	Var array = saveVariables(to, l.root, subBlock, inactive);
 
 	l << fnParam(ptrDesc, objPtr(program));
 	l << fnParam(ptrDesc, objPtr(fnName));
