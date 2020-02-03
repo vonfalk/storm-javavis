@@ -60,9 +60,12 @@ class Block extends Stmt {
 	// Variables declared in this block.
 	protected Str->LocalVar vars;
 
+	// Order the variables were created, so that we can preserve that for the visualization.
+	protected Str[] varOrder;
+
 	void initVariables(CodeGen gen) {
-		for (k, v in vars) {
-			v.create(gen);
+		for (k in varOrder) {
+			vars.get(k).create(gen);
 		}
 	}
 
@@ -71,6 +74,7 @@ class Block extends Stmt {
 		if (vars.has(var.name))
 			throw SyntaxError(var.pos, "There is already a variable named ${var.name} in the current block!");
 		vars.put(var.name, var);
+		varOrder << var.name;
 	}
 
 	// Get a variable.
