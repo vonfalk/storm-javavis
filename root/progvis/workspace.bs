@@ -167,19 +167,19 @@ class Workspace on Render {
 
 	// Notify the workspace that traversal is over, and that any remaning objects may be removed.
 	void endTraversal() {
-		// Pop the queue until it is empty.
-		while (work.any) {
-			WorkItem top = work.top;
-			top.data.update(this, top.object, 0);
-			work.pop();
-		}
-
 		// Traverse all objects where 'autoRemove' is false, so that they keep any objects they refer alive.
 		for (elem in elements) {
 			if (!elem.visited & !elem.autoRemove) {
 				// Traverse it now.
 				traverse(elem);
 			}
+		}
+
+		// Pop the queue until it is empty.
+		while (work.any) {
+			WorkItem top = work.top;
+			top.data.update(this, top.object, 0);
+			work.pop();
 		}
 
 		// Clean up any remaining objects.
