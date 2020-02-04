@@ -44,6 +44,9 @@ int ptrs3() {
 
 int useNew() {
 	demo *d = new demo;
+	demo *e = new demo;
+	e->x = 2;
+	delete e;
 	int *y = &d->y;
 	*y = 2;
 	return d->sum();

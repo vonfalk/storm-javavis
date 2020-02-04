@@ -1,5 +1,6 @@
 use core:lang;
 use core:asm;
+use lang:bs:macro;
 
 /**
  * Class representing a statement in C++.
@@ -234,4 +235,43 @@ FnRoot findFnRoot(Scope scope) on Compiler {
 	}
 
 	throw InternalError("Unable to find the contained function from a block!");
+}
+
+/**
+ * Delete statement.
+ */
+class DeleteStmt extends Stmt {
+	init(SrcPos pos, Expr ptr) {
+		init(pos) {
+			ptr = ptr;
+		}
+
+		if (!isCppPtr(ptr.result.type))
+			throw SyntaxError(pos, "The expression passed to delete must be a pointer.");
+	}
+
+	Expr ptr;
+
+	Bool code(CodeGen gen) {
+		CodeResult result(ptr.result.type.asRef(), gen.block);
+		ptr.code(gen, result);
+
+		Var r = result.location(gen);
+		// Check if this is the start of an allocation.
+
+		// Note: This does not seem to work very well...
+		// gen.l << mov(ptrA, r);
+		// gen.l << fnParam(ptrDesc, ptrRel(ptrA));
+		// gen.l << fnParam(intDesc, intRel(ptrA, Offset(sPtr)));
+		// gen.l << fnCall(named{checkDelete<unsafe:RawPtr, Nat>}.ref, false);
+
+		// TODO: Run destructor!
+
+		// Clear 'filled'.
+		gen.l << mov(ptrA, r);
+		gen.l << mov(ptrA, ptrRel(ptrA));
+		gen.l << mov(ptrRel(ptrA, Offset(sPtr)), ptrConst(0));
+
+		true;
+	}
 }

@@ -79,7 +79,7 @@ class PtrError extends Exception {
 // Check the validity of a pointer. Assumes we want to read a maximum of 'size' bytes at wherever
 // 'ptr' and 'offset' refers to.
 void checkPtr(unsafe:RawPtr base, Nat offset, Nat size) {
-	Nat total = base.readSize() * base.readFilled();
+	Nat total = base.readSize() * (base.readFilled() & 0x7FFFFFFF);
 	// Array header.
 	if (base.isValue)
 		offset -= sPtr.current * 2;
@@ -87,6 +87,16 @@ void checkPtr(unsafe:RawPtr base, Nat offset, Nat size) {
 		throw PtrError("Trying to read at offset ${offset} in an allocation of size ${total - size}.");
 }
 
+// Check that the pointer provided as 'base' and 'offset' refers to the start of an allocation, and
+// that it was actually allocated on the heap.
+void checkDelete(unsafe:RawPtr base, Nat offset) {
+	if (offset != sPtr.current * 2)
+		throw PtrError("Trying to delete memory not allocated by 'new'!");
+
+	// Malloc'd memory is marked with the MSB set.
+	if ((base.readFilled & 0x80000000) == 0)
+		throw PtrError("Trying to delete memory allocated on the stack!");
+}
 
 // Wrap things inside a pointer or a reference.
 Value wrapPtr(Value val) {
