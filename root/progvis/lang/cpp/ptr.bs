@@ -79,12 +79,12 @@ class PtrError extends Exception {
 // Check the validity of a pointer. Assumes we want to read a maximum of 'size' bytes at wherever
 // 'ptr' and 'offset' refers to.
 void checkPtr(unsafe:RawPtr base, Nat offset, Nat size) {
-	Nat total = base.readSize() * base.readCount();
+	Nat total = base.readSize() * base.readFilled();
 	// Array header.
 	if (base.isValue)
 		offset -= sPtr.current * 2;
 	if (offset + size > total)
-		throw PtrError("Trying to read at offset ${offset + size} in an allocation of size ${total}.");
+		throw PtrError("Trying to read at offset ${offset} in an allocation of size ${total - size}.");
 }
 
 

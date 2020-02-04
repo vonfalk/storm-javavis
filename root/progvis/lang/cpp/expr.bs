@@ -699,6 +699,9 @@ class NewExpr extends ExprRef {
 
 		// TODO: Run the constructor!
 
+		// Set 'filled' to 1.
+		gen.l << mov(ptrRel(ptrA, Offset(sPtr)), ptrConst(1));
+
 		ptrA;
 	}
 }

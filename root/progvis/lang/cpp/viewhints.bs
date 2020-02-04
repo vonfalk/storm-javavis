@@ -123,6 +123,13 @@ class CppHeapObj extends Data {
 	void draw(ui:Graphics g, Bool active) : override {
 		wrap.pos = pos;
 		wrap.draw(g, active);
+
+		if (dead) {
+			// Draw a big cross.
+			Size s = size;
+			g.line(pos, pos + s, errorFg);
+			g.line(pos + Size(0, s.h), pos + Size(s.w, 0), errorFg);
+		}
 	}
 
 	void drawLinks(ui:Graphics g, Bool active) : override {
