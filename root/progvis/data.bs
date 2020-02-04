@@ -71,6 +71,10 @@ class DataWithCaption extends Data {
 		wrap.findOffset(offset);
 	}
 
+	Bool remove() : override {
+		wrap.remove();
+	}
+
 	// Return the sub-drawable if the click is there.
 	Drawable findAt(Point pt) : override {
 		if (wrap.rect.contains(pt))
@@ -100,7 +104,7 @@ class DataWithCaption extends Data {
 	}
 
 	// The drawable we're wrapping.
-	private Data wrap;
+	Data wrap;
 
 	// Caption text.
 	private Text caption;

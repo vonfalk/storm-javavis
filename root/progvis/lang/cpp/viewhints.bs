@@ -1,5 +1,5 @@
 use core:lang;
-use core:asm;
+use core:geometry;
 use progvis;
 
 /**
@@ -8,7 +8,10 @@ use progvis;
  * Provides visualizations that are aware of pointers and references as C++ does them, and also show
  * which objects are no longer reachable in the implementation.
  */
-class CppViewHints extends progvis:ViewHints {
+class CppViewHints extends ViewHints {
+	// Single 'create hints' instance.
+	CppCreateHints hints;
+
 	// Don't pause on function entry. We won't have set up our formal parameters by then...
 	Bool pauseOnEntry() : override { false; }
 
@@ -20,7 +23,7 @@ class CppViewHints extends progvis:ViewHints {
 			return null;
 
 		if (ptr = info.type as PtrType) {
-			return CppPointer();
+			return CppPointer(hints);
 		}
 
 		null;
@@ -43,11 +46,34 @@ class CppViewHints extends progvis:ViewHints {
 	}
 }
 
+/**
+ * C++ creation hints.
+ *
+ * Tells the system that all C++ pointers are not GC:d.
+ */
+class CppCreateHints extends CreateHints {
+	Data decorate(Data data) : override {
+		if (data as DataWithCaption) {
+			data.wrap = CppHeapObj(data.wrap);
+		} else {
+			data = CppHeapObj(data);
+		}
+		data;
+	}
+}
+
 
 /**
  * C++ pointers/references.
  */
 class CppPointer extends Pointer {
+	init(CreateHints hints) {
+		init { hints = hints; }
+	}
+
+	// Hints we should use.
+	CreateHints hints;
+
 	void update(Workspace ws, unsafe:RawPtr object, Nat offset) : override {
 		if (!object.any) {
 			to = null;
@@ -60,9 +86,66 @@ class CppPointer extends Pointer {
 			return;
 		}
 
-		Nat ptrOffset = object.readNat(offset + sPtr.current) - 2*sPtr.current;
+		Nat ptrOffset = object.readNat(offset + core:asm:sPtr.current) - 2*core:asm:sPtr.current;
 
-		Data baseData = ws.traverse(base);
+		Data baseData = ws.traverse(base, hints);
 		to = baseData.findOffset(ptrOffset);
+	}
+}
+
+
+/**
+ * Wrap heap allocations.
+ *
+ * Manages the lifetime of the object and indicates when it has been deleted.
+ *
+ * Assumes we don't have to deal with mouse movement etc. I.e. assumes we're not the topmost object.
+ */
+class CppHeapObj extends Data {
+	init(Data wrap) {
+		init { wrap = wrap; dead = false; }
+	}
+
+	// Wrapped object.
+	Data wrap;
+
+	// Have this object been deleted?
+	Bool dead;
+
+	Size size() : override {
+		wrap.size();
+	}
+
+	assign size(Size sz) : override {
+		wrap.size(sz);
+	}
+
+	void draw(ui:Graphics g, Bool active) : override {
+		wrap.pos = pos;
+		wrap.draw(g, active);
+	}
+
+	void drawLinks(ui:Graphics g, Bool active) : override {
+		wrap.drawLinks(g, active);
+	}
+
+	void update(Workspace work, unsafe:RawPtr object, Nat offset) : override {
+		wrap.update(work, object, offset);
+
+		if (offset == 0) {
+			dead = object.readFilled() == 0;
+		}
+	}
+
+	Data findOffset(Nat offset) : override {
+		wrap.findOffset(offset);
+	}
+
+	Bool remove() : override {
+		dead;
+	}
+
+	Drawable findAt(Point pt) : override {
+		wrap.findAt(pt);
 	}
 }

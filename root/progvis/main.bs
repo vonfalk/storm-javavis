@@ -94,7 +94,7 @@ class MainPainter extends Painter {
 			program.onChange = &this.update();
 			update();
 			program.spawn(program.main);
-			program.spawn(program.main);
+			// program.spawn(program.main);
 		} else {
 			print("Failed to load ${file}!");
 		}

@@ -38,6 +38,9 @@ class Drawable on Render {
 	// Draw links.
 	void drawLinks(Graphics g, Bool active) : abstract;
 
+	// Called when this object is no longer reachable to determine if it is ready to be removed.
+	Bool remove() { true; }
+
 	// Cached size.
 	private Size? cachedSize;
 

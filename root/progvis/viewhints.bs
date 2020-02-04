@@ -17,6 +17,15 @@ class ViewHints on Render {
 
 
 /**
+ * Hints used when calling "traverse" to inspect and impact object creation.
+ */
+class CreateHints on Render {
+	// Get an opportunity to decorate a newly created object.
+	Data decorate(Data data) : abstract;
+}
+
+
+/**
  * Default view hints.
  */
 class DefaultViewHints extends ViewHints {

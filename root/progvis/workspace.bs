@@ -95,6 +95,11 @@ class Workspace on Render {
 
 	// Recursively add an object to the workspace.
 	Data traverse(unsafe:RawPtr object) {
+		traverse(object, null);
+	}
+
+	// Provide hints when traversing.
+	Data traverse(unsafe:RawPtr object, CreateHints? hints) {
 		// Handle stack allocations.
 		if (stackObjMap.has(object))
 			return stackObjMap.get(object);
@@ -116,6 +121,8 @@ class Workspace on Render {
 		print("Miss: ${object} was not found.");
 		// Create a new instance.
 		var visual = createData(this, object);
+		if (hints)
+			visual = hints.decorate(visual);
 		elements << Element(object, visual);
 		objMap.put(object, id);
 
@@ -175,12 +182,19 @@ class Workspace on Render {
 			}
 		}
 
-		// Pop the queue until it is empty.
-		while (work.any) {
-			WorkItem top = work.top;
-			top.data.update(this, top.object, 0);
-			work.pop();
+		popQueue();
+
+		// Find any dead objects now, and potentially traverse them as well.
+		for (elem in elements) {
+			if (!elem.visited) {
+				// Ask it if it is ready to be removed.
+				if (!elem.visual.remove)
+					// Traverse to keep dependencies alive.
+					traverse(elem);
+			}
 		}
+
+		popQueue();
 
 		// Clean up any remaining objects.
 		Nat to = 0;
@@ -267,6 +281,16 @@ private:
 
 	// Basic layout: Keep track of the next x-position in during the update.
 	Float maxX;
+
+	// Traverse the work queue.
+	void popQueue() {
+		// Pop the queue until it is empty.
+		while (work.any) {
+			WorkItem top = work.top;
+			top.data.update(this, top.object, 0);
+			work.pop();
+		}
+	}
 
 	// Create a new node for an object. Called by 'traverse'.
 	public Data createData(unsafe:RawPtr object) {
