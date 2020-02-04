@@ -42,12 +42,26 @@ namespace storm {
 		}
 	}
 
-	Lock::L::L(Lock *l) : lock(l) {
+	Lock::Guard::Guard(Lock *l) : lock(l) {
 		lock->lock();
 	}
 
-	Lock::L::~L() {
+	Lock::Guard::~Guard() {
 		lock->unlock();
+	}
+
+	Lock::Guard::Guard(const Guard &o) : lock(o.lock) {
+		lock->lock();
+	}
+
+	Lock::Guard &Lock::Guard::operator =(const Guard &o) {
+		if (&o == this)
+			return *this;
+
+		lock->unlock();
+		lock = o.lock;
+		lock->lock();
+		return *this;
 	}
 
 	Lock::Data::Data() : refs(1), owner(0), recursion(0), sema(1) {}

@@ -30,16 +30,18 @@ namespace storm {
 		// Deep copy.
 		void STORM_FN deepCopy(CloneEnv *e);
 
-		// Lock guard for C++.
-		class L {
+		// Lock guard for C++ and Storm.
+		class Guard {
+			STORM_VALUE;
 		public:
-			L(Lock *o);
-			~L();
+			STORM_CTOR Guard(Lock *o);
+			~Guard();
 		private:
 			Lock *lock;
 
-			L(const L &o);
-			L &operator =(const L &o);
+			// Actually implemented, as they might be called from Storm.
+			Guard(const Guard &o);
+			Guard &operator =(const Guard &o);
 		};
 
 	private:

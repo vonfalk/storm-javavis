@@ -61,7 +61,7 @@ namespace storm {
 					// This is some remaining work from a closed file...
 					return;
 
-				Lock::L z(lock);
+				Lock::Guard z(lock);
 				Range r = item->run(work);
 				updateLater(f, r);
 			} catch (const Exception *e) {
@@ -71,7 +71,7 @@ namespace storm {
 		}
 
 		Bool Server::process(SExpr *msg) {
-			Lock::L z(lock);
+			Lock::Guard z(lock);
 
 			Cons *cell = msg->asCons();
 			Symbol *kind = cell->first->asSym();

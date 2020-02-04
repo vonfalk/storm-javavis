@@ -45,7 +45,7 @@ namespace gui {
 	void Painter::resize(Size sz) {
 		if (target.any()) {
 			// Do not attempt to resize the drawing surface if we're currently drawing to it.
-			Lock::L z(lock);
+			Lock::Guard z(lock);
 
 			// This seems to not be neccessary. Probably because the resources are actually
 			// associated to the underlying D3D device, and not the RenderTarget.
@@ -66,7 +66,7 @@ namespace gui {
 
 	void Painter::destroy() {
 		// Wait until we're not rendering anymore.
-		Lock::L z(lock);
+		Lock::Guard z(lock);
 
 		// Go ahead and destroy all resources associated with this painter.
 		destroyResources();
@@ -112,7 +112,7 @@ namespace gui {
 
 		bool more = false;
 		try {
-			Lock::L z(lock);
+			Lock::Guard z(lock);
 			more = doRepaintI(waitForVSync, fromDraw);
 		} catch (...) {
 			repaintCounter++;
@@ -284,7 +284,7 @@ namespace gui {
 
 	void Painter::waitForFrame() {
 		// Just wait until we're not drawing at the moment.
-		Lock::L z(lock);
+		Lock::Guard z(lock);
 	}
 
 	bool Painter::ready() {
@@ -297,7 +297,7 @@ namespace gui {
 			return continuous;
 
 		bool more = false;
-		Lock::L z(lock);
+		Lock::Guard z(lock);
 
 		GlSurface *surface = target.surface();
 		cairo_surface_mark_dirty(surface->cairo);
@@ -362,7 +362,7 @@ namespace gui {
 		// Nothing needs to be done in case we're running with GTK_RENDER_SWAP.
 #if !GTK_RENDER_IS_SWAP(GTK_MODE)
 
-		Lock::L z(lock);
+		Lock::Guard z(lock);
 		currentRepaint = repaintCounter;
 
 		if (GlSurface *surface = target.surface()) {

@@ -77,6 +77,10 @@ class MainPainter extends Painter {
 	// Offset for the workspace.
 	private Point offset;
 
+	// Lock for traversal. The traversal may perform thread switches, so we need to make sure that
+	// multiple traversals are not in flight at the same time.
+	private sync:Lock traversalLock;
+
 	init() {
 		init();
 		bgColor = Color(0.8, 0.8, 0.8);
@@ -89,6 +93,7 @@ class MainPainter extends Painter {
 			workspace.hints = program.hints;
 			program.onChange = &this.update();
 			update();
+			program.spawn(program.main);
 			program.spawn(program.main);
 		} else {
 			print("Failed to load ${file}!");
@@ -109,6 +114,7 @@ class MainPainter extends Painter {
 
 	// Update the visualization of the data.
 	void update() {
+		sync:Lock:Guard guard(traversalLock);
 		workspace.beginTraversal();
 
 		if (program) {

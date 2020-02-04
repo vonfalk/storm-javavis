@@ -51,7 +51,7 @@ namespace storm {
 	}
 
 	Type *TemplateList::find(Nat *elems, Nat count) {
-		Lock::L z(lock);
+		Lock::Guard z(lock);
 
 		Type *found = findAt(elems, count, root, 0);
 		if (!found) {
