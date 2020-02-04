@@ -30,6 +30,8 @@ class WorkList {
 	// Add an element to the queue.
 	void push(Data data, unsafe:RawPtr object) {
 		work.push(WorkItem(data, object));
-		refs.put(object, data);
+		// Don't push objects, then all pointers will refer to themselves.
+		if (object.isValue)
+			refs.put(object, data);
 	}
 }
