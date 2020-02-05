@@ -452,16 +452,23 @@ private void saveVariables(PatchParams to, Var[] vars, Var array, Var variant, S
 			// Don't output variables that are not yet activated.
 			if (!inactive.has(var.key)) {
 				// Ask if and how to save this variable.
-				if (to.codeHints.saveVariable(l, var, info, variant)) {
+				var save = to.codeHints.saveVariable(l, var, info, variant);
+				if (save != CodeHints:Save:none) {
 					// Create a StackVar element.
 					l << fnParam(ptrDesc, objPtr(info.name));
 					l << fnCall(named{createStackVar<Str>}.ref, false, ptrDesc, ptrA);
 
-					// Set the variant. We know that it is currently empty, so we don't have to
-					// bother with the destructor. The one previously created is moved to its new
-					// location, so we don't have to destroy that either.
+					// Set the pointer.
 					var offset = named{StackVar:value<StackVar>}.offset;
 					l << mov(ptrRel(ptrA, offset), variant);
+
+					if (save == CodeHints:Save:copy) {
+						// If we need destruction, set the variant as well. We know that it is currently
+						// empty, so we don't have to bother destroying it. The one saved in 'variant'
+						// is moved, so we don't have to bother with that either.
+						offset = named{StackVar:destroy<StackVar>}.offset;
+						l << mov(ptrRel(ptrA, offset), variant);
+					}
 
 					// Push it to the array!
 					Function push = named{Array<StackVar>:push<StackVar[], StackVar>};

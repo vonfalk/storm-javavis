@@ -47,16 +47,16 @@ class CppCodeHints extends progvis:CodeHints {
 		fn.name + "(...)";
 	}
 
-	Bool saveVariable(Listing to, Var var, Listing:VarInfo info, Operand dest) : override {
+	Save saveVariable(Listing to, Var var, Listing:VarInfo info, Operand dest) : override {
 		if (!info.ref)
-			return false;
+			return Save:none;
 
 		// The 'this' ptr is special. We need to handle that specially.
 		if (info.name == "this")
-			return false;
+			return Save:none;
 
 		to << mov(dest, var);
-		true;
+		Save:ref;
 	}
 
 }

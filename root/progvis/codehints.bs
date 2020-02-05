@@ -23,9 +23,23 @@ class CodeHints on Compiler {
 	// Provide a user-friendly name of the function.
 	Str cleanName(Function fn, Package pkg) : abstract;
 
+	/**
+	 * How to handle the saved variable.
+	 */
+	enum Save {
+		// Don't save it.
+		none,
+
+		// Save it, it is a copy of something that needs to be destroyed later.
+		copy,
+
+		// Save it, it is a reference to something, so we don't need to destroy it.
+		ref,
+	}
+
 	// Create a Variant containing a copy of the variable at the indicated location. Return 'false'
 	// if it is not possible.
-	Bool saveVariable(Listing to, Var var, Listing:VarInfo info, Operand dest) : abstract;
+	Save saveVariable(Listing to, Var var, Listing:VarInfo info, Operand dest) : abstract;
 }
 
 
@@ -92,17 +106,17 @@ class DefaultCodeHints extends CodeHints {
 	}
 
 	// Save a variable.
-	Bool saveVariable(Listing to, Var var, Listing:VarInfo info, Operand dest) : override {
+	Save saveVariable(Listing to, Var var, Listing:VarInfo info, Operand dest) : override {
 		// We don't do references at the moment.
 		if (info.ref)
-			return false;
+			return Save:none;
 
 		Type variant = named{Variant};
 		Value param(info.type);
 		SimplePart ctorName("__init", [Value(variant, true), param]);
 		unless (ctor = variant.find(ctorName, Scope()) as Function) {
 			print("Warning: No Variant constructor for ${param}");
-			return false;
+			return Save:none;
 		}
 
 		to << lea(ptrA, dest);
@@ -113,7 +127,7 @@ class DefaultCodeHints extends CodeHints {
 		to << fnParam(ptrDesc, ptrA);
 		to << fnParam(ptrDesc, ptrB);
 		to << fnCall(ctor.ref(), true);
-		true;
+		Save:copy;
 	}
 
 	// Find 'main'.

@@ -148,14 +148,14 @@ class ProgThread on Render {
  */
 class StackVar {
 	Str name;
-	Variant value;
+	unsafe:RawPtr value;
+
+	// If we need to properly destroy 'value' when we're done with it, this Variant will contain the
+	// same value as 'value'. Otherwise, this variant is empty.
+	Variant destroy;
 
 	init(Str name) {
 		init { name = name; }
-	}
-
-	init(Str name, Variant value) {
-		init { name = name; value = value; }
 	}
 }
 
