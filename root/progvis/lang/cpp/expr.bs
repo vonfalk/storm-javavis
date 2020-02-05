@@ -519,7 +519,7 @@ class AddressOf extends ExprRef {
 	Expr of;
 
 	ExprResult result() : override {
-		wrapPtr(of.result.type);
+		wrapPtr(of.result.type).asRef();
 	}
 
 	void code(CodeGen gen, CodeResult res) : override {
@@ -534,8 +534,7 @@ class AddressOf extends ExprRef {
 			CppVar var = allocType(gen, type);
 			codeRef(gen, var);
 
-			// the adjusted value is in ptrA from 'codeRef'.
-			gen.l << mov(res.location(gen), ptrA);
+			var.adjust(gen, res.location(gen));
 		} else {
 			of.codePtr(gen);
 			gen.l << lea(ptrA, res.location(gen));
