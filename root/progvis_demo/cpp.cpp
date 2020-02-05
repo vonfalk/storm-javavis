@@ -52,18 +52,28 @@ int useNew() {
 	return d->sum();
 }
 
+int *givePtr() {
+	demo d;
+	return &d.y;
+}
+
+void returnPtr() {
+	int *x = givePtr();
+}
+
 int main() {
 	demo d;
 	d.x = 8;
 	d.y = 10;
 
 	print(useNew());
-	print(test(2 + 3, 4));
-	print(d.result(1));
-	print(d.sum());
+	returnPtr();
 	print(ptrs());
 	print(ptrs2());
 	print(ptrs3());
+	print(test(2 + 3, 4));
+	print(d.result(1));
+	print(d.sum());
 
 	return 1 + d.x;
 }

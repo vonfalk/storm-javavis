@@ -84,7 +84,7 @@ void checkPtr(unsafe:RawPtr base, Nat offset, Nat size) {
 	if (base.isValue)
 		offset -= sPtr.current * 2;
 	if (offset + size > total)
-		throw PtrError("Trying to read at offset ${offset} in an allocation of size ${total - size}.");
+		throw PtrError("Trying to read at offset ${offset} in an allocation of size ${total}.");
 }
 
 // Check that the pointer provided as 'base' and 'offset' refers to the start of an allocation, and

@@ -318,7 +318,7 @@ class FnCall extends ExprRef {
 		}
 
 		if (t = fn.result.type) {
-			if (fn.result.ref) {
+			if (!fn.result.ref) {
 				Var v = gen.l.createVar(gen.block, sPtr);
 				var.adjust(gen, v);
 
@@ -335,7 +335,6 @@ class FnCall extends ExprRef {
 				gen.l << fnParam(ptrDesc, ptrB);
 				gen.l << fnParam(ptrDesc, ptrA);
 				gen.l << fnCall(copyCtor.ref, true);
-				r.created(gen);
 				var.created(gen);
 			} else {
 				throw SyntaxError(pos, "Unable to copy the result.");
@@ -524,8 +523,8 @@ class AddressOf extends ExprRef {
 	}
 
 	void code(CodeGen gen, CodeResult res) : override {
-		Value res = result;
-		unless (type = res.type)
+		Value resType = result.type;
+		unless (type = resType.type)
 			throw InternalError("Failed to find an appropriate pointer type!");
 
 		if (!res.needed())
@@ -533,15 +532,15 @@ class AddressOf extends ExprRef {
 
 		if (res.type.ref) {
 			CppVar var = allocType(gen, type);
-			codeRef(gen, res);
+			codeRef(gen, var);
 
 			// the adjusted value is in ptrA from 'codeRef'.
 			gen.l << mov(res.location(gen), ptrA);
 		} else {
 			of.codePtr(gen);
-			gen.l << lea(ptrA, res.location(gen).v);
+			gen.l << lea(ptrA, res.location(gen));
 			gen.l << mov(ptrRel(ptrA, Offset()), ptrB);
-			gen.l << mov(ptrRel(ptrA, Offset(sPtr)), ecx);
+			gen.l << mov(intRel(ptrA, Offset(sPtr)), ecx);
 		}
 		res.created(gen);
 	}

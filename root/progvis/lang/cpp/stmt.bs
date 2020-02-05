@@ -258,12 +258,10 @@ class DeleteStmt extends Stmt {
 
 		Var r = result.location(gen);
 		// Check if this is the start of an allocation.
-
-		// Note: This does not seem to work very well...
-		// gen.l << mov(ptrA, r);
-		// gen.l << fnParam(ptrDesc, ptrRel(ptrA));
-		// gen.l << fnParam(intDesc, intRel(ptrA, Offset(sPtr)));
-		// gen.l << fnCall(named{checkDelete<unsafe:RawPtr, Nat>}.ref, false);
+		gen.l << mov(ptrA, r);
+		gen.l << fnParam(ptrDesc, ptrRel(ptrA));
+		gen.l << fnParam(intDesc, intRel(ptrA, Offset(sPtr)));
+		gen.l << fnCall(named{checkDelete<unsafe:RawPtr, Nat>}.ref, false);
 
 		// TODO: Run destructor!
 
