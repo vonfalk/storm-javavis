@@ -199,6 +199,15 @@ class Return extends Stmt {
 			CodeResult r(value.result.type, gen.block);
 			value.code(gen, r);
 
+			// Position for only the 'return' part.
+			SrcPos start = pos;
+			start.end = start.start + 6;
+
+			// TODO: Show which value we will return.
+
+			// Pause execution right before we leave the function.
+			gen.l << location(start);
+
 			if (expected == Value()) {
 				gen.l << fnRet();
 			} else if (res.ref) {
