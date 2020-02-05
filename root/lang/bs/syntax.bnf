@@ -610,6 +610,7 @@ SMemberOptions : ":", SMemberOption(owner, item) - (, ",", SMemberOption(owner, 
 // to make sure nested types work as expected.
 TObject SClassItem(Class owner);
 SClassItem => c : SClass(owner.scope) c;
+SClassItem => e : SEnum e;
 SClassItem => MemberWrap(item) : SClassWrapItem@ item;
 
 // Class items possible to put access modifiers (and other decorators) in front of.
