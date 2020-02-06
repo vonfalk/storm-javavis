@@ -16,17 +16,25 @@ Expr castCond(Block parent, Expr cond) {
 /**
  * A while-loop.
  */
-class WhileStmt extends StmtBlock {
-	init(SrcPos pos, Block parent, Expr cond) {
-		init(pos, parent) {
-			cond = castCond(parent, cond);
-		}
+class WhileStmt extends Block {
+	init(SrcPos pos, Block parent) {
+		init(pos, parent) {}
 	}
 
 	// Condition.
-	Expr cond;
+	private Expr? cond;
+
+	// Body.
+	private Stmt? body;
+
+	// Setters from the grammar.
+	void cond(Expr expr) { cond = castCond(this, expr); }
+	void body(Stmt stmt) { body = stmt; }
 
 	Bool blockCode(CodeGen gen) : override {
+		unless (cond)
+			throw SyntaxError(pos, "No condition set for this loop.");
+
 		var restart = gen.l.label();
 		var exit = gen.l.label();
 
@@ -42,7 +50,9 @@ class WhileStmt extends StmtBlock {
 		gen.l << cmp(condResult.location(gen), byteConst(0));
 		gen.l << jmp(exit, CondFlag:ifEqual);
 
-		Bool r = super:blockCode(gen);
+		Bool r = true;
+		if (body)
+			r = executeStmt(gen, body);
 
 		gen.l << jmp(restart);
 		gen.l << exit;
@@ -52,17 +62,120 @@ class WhileStmt extends StmtBlock {
 }
 
 /**
- * An if-statement.
+ * A do-while-loop.
  */
-class IfStmt extends Block {
-	init(SrcPos pos, Block parent, Expr cond) {
-		init(pos, parent) {
-			cond = castCond(parent, cond);
-		}
+class DoWhileStmt extends Block {
+	init(SrcPos pos, Block parent) {
+		init(pos, parent) {}
 	}
 
 	// Condition.
-	Expr cond;
+	private Expr? cond;
+
+	// Body.
+	private Stmt? body;
+
+	// Setters from the grammar.
+	void cond(Expr expr) { cond = castCond(this, expr); }
+	void body(Stmt stmt) { body = stmt; }
+
+	Bool blockCode(CodeGen gen) : override {
+		unless (cond)
+			throw SyntaxError(pos, "No condition set for this loop.");
+
+		var restart = gen.l.label();
+
+		gen.l << restart;
+
+		Bool r = true;
+		if (body)
+			r = executeStmt(gen, body);
+
+		CodeResult condResult(Value(named{Bool}), gen.block);
+		CodeGen sub = gen.child();
+		gen.l << location(cond.pos);
+		gen.l << begin(sub.block);
+		cond.code(sub, condResult);
+		gen.l << end(sub.block);
+
+		gen.l << cmp(condResult.location(gen), byteConst(0));
+		gen.l << jmp(restart, CondFlag:ifNotEqual);
+
+		r;
+	}
+}
+
+/**
+ * A for-statement.
+ */
+class ForStmt extends Block {
+	init(SrcPos pos, Block parent) {
+		init(pos, parent) {}
+	}
+
+	// Init expression.
+	Stmt? init;
+
+	// Condition.
+	Expr? cond;
+
+	// Update.
+	Stmt? update;
+
+	// Body.
+	Stmt? body;
+
+	// Setters.
+	void init(Stmt s) { init = s; }
+	void cond(Expr e) { cond = castCond(this, e); }
+	void update(Stmt s) { update = s; }
+	void body(Stmt s) { body = s; }
+
+	Bool blockCode(CodeGen gen) : override {
+		var restart = gen.l.label();
+		var exit = gen.l.label();
+
+		if (init)
+			executeStmt(gen, init);
+
+		gen.l << restart;
+
+		if (cond) {
+			CodeResult condResult(Value(named{Bool}), gen.block);
+			CodeGen sub = gen.child();
+			gen.l << location(cond.pos);
+			gen.l << begin(sub.block);
+			cond.code(sub, condResult);
+			gen.l << end(sub.block);
+
+			gen.l << cmp(condResult.location(gen), byteConst(0));
+			gen.l << jmp(exit, CondFlag:ifEqual);
+		}
+
+		Bool returns = true;
+		if (body)
+			returns = executeStmt(gen, body);
+
+		if (update)
+			executeStmt(gen, update);
+
+		gen.l << jmp(restart);
+		gen.l << exit;
+
+		returns;
+	}
+}
+
+/**
+ * An if-statement.
+ */
+class IfStmt extends Block {
+	init(SrcPos pos, Block parent) {
+		init(pos, parent) {}
+	}
+
+	// Condition.
+	Expr? cond;
 
 	// True branch.
 	Stmt? ifBranch;
@@ -71,10 +184,14 @@ class IfStmt extends Block {
 	Stmt? elseBranch;
 
 	// Setters for the grammar.
+	void cond(Expr e) { cond = castCond(this, e); }
 	void ifTrue(Stmt s) { ifBranch = s; }
 	void ifFalse(Stmt s) { elseBranch = s; }
 
 	Bool blockCode(CodeGen gen) : override {
+		unless (cond)
+			throw SyntaxError(pos, "This if-statement has no condition set.");
+
 		var onFalse = gen.l.label();
 		var exit = gen.l.label();
 

@@ -22,6 +22,17 @@ elem *createList(int count) {
 }
 
 int main() {
+	if (3 < 4)
+		if (3 > 4)
+			print(1);
+		else
+			print(2);
+
+	int x = 0;
+	do {
+		x++;
+	} while (x < 5);
+
 	elem *list = createList(4);
 
 	return 0;

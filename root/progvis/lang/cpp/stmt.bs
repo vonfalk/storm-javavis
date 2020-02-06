@@ -19,6 +19,16 @@ class Stmt on Compiler {
 	Bool code(CodeGen gen) : abstract;
 }
 
+/**
+ * Null-statement. Does nothing.
+ */
+class NullStmt extends Stmt {
+	init(SrcPos pos) {
+		init(pos) {}
+	}
+
+	Bool code(CodeGen gen) { true; }
+}
 
 /**
  * A block that may define new variables.
@@ -130,7 +140,7 @@ package Bool executeStmt(CodeGen gen, Stmt s) {
 		CodeGen child = gen.child();
 		gen.l << begin(child.block);
 
-		Bool returns = s.code(gen);
+		Bool returns = s.code(child);
 
 		gen.l << end(child.block);
 		returns;
