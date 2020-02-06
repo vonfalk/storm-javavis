@@ -109,7 +109,13 @@ class ThreadData extends Drawable {
 		if (pos = thread.pos)
 			source.display(pos);
 
-		source.faint = thread.callDepth == 0;
+		if (thread.callDepth == 0) {
+			source.highlight = sourceTerminatedHighlight;
+		} else if (frames.last.returned) {
+			source.highlight = sourceReturnedHighlight;
+		} else {
+			source.highlight = sourceHighlight;
+		}
 
 		invalidateSize();
 	}
@@ -201,6 +207,11 @@ class FrameVal on Render {
 			vars.pop();
 
 		updateSize();
+	}
+
+	// Did we return from this frame?
+	Bool returned() {
+		source.returned;
 	}
 
 	// Get the height of the caption.

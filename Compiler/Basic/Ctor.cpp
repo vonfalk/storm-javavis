@@ -131,7 +131,7 @@ namespace storm {
 		 * Regular ctor.
 		 */
 
-		BSCtor::BSCtor(Array<ValParam> *params, Scope scope, syntax::Node *body, SrcPos pos)
+		BSCtor::BSCtor(Array<ValParam> *params, Scope scope, MAYBE(syntax::Node *) body, SrcPos pos)
 			: BSRawCtor(params, pos), scope(scope), body(body) {}
 
 		CtorBody *BSCtor::createBody() {

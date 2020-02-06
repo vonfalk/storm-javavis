@@ -52,7 +52,8 @@ Size sourceSize on Render = Size(300, 200);
 
 // Highlight color for source code.
 Brush sourceHighlight on Render = SolidBrush(yellow);
-Brush sourceFaintHighlight on Render = SolidBrush(Color(1, 0.8, 0.8));
+Brush sourceTerminatedHighlight on Render = SolidBrush(Color(1, 0.8, 0.8));
+Brush sourceReturnedHighlight on Render = SolidBrush(Color(0.8, 1, 0.8));
 
 // Button size in the thread controls.
 Size buttonSize on Render = Size(30, 30);

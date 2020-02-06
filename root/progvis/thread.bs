@@ -21,9 +21,6 @@ class ProgThread on Render {
 	// Duration for automatic stepping. If zero, we will wait for user input instead.
 	private Duration autoStep;
 
-	// Current location, if known.
-	SrcPos? pos;
-
 	// Current call depth. There may be additional entries in 'frames', as we might have exited a
 	// function but not yet received any new information. In this case, we will still show the old
 	// state since it might contain references to values that are still known by the code, but not
@@ -53,12 +50,30 @@ class ProgThread on Render {
 		}
 	}
 
+	// Get the current location.
+	SrcPos? pos() {
+		if (frames.empty())
+			return null;
+		frames.last.pos;
+	}
+
 	// Called by a monitored thread to possible pause execution.
 	void onNewLocation(SrcPos pos, StackVar[] vars) {
 		popFrames();
 
-		this.frames.last.variables = vars;
-		this.pos = pos;
+		var last = frames.last;
+		last.variables = vars;
+		last.pos = pos;
+		wait();
+	}
+
+	// Called when a monitored thread is about to return.
+	void onFunctionReturn(StackVar[] vars) {
+		popFrames();
+
+		var last = frames.last;
+		last.variables = vars;
+		last.returned = true;
 		wait();
 	}
 
@@ -67,8 +82,7 @@ class ProgThread on Render {
 		popFrames();
 
 		callDepth++;
-		frames.push(StackFrame(name, hints, vars));
-		this.pos = pos;
+		frames.push(StackFrame(name, hints, vars, pos));
 
 		if (hints.pauseOnEntry())
 			wait();
@@ -173,12 +187,20 @@ class StackFrame on Render {
 	// The current state of all variables. Ordered roughly as they appear in the source.
 	StackVar[] variables;
 
+	// Location in this frame.
+	SrcPos pos;
+
+	// Did we return from this frame?
+	Bool returned;
+
 	// Create.
-	init(Str name, ViewHints hints, StackVar[] vars) {
+	init(Str name, ViewHints hints, StackVar[] vars, SrcPos pos) {
 		init {
 			function = name;
 			hints = hints;
 			variables = vars;
+			pos = pos;
+			returned = false;
 		}
 	}
 }

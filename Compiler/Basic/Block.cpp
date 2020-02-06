@@ -161,9 +161,6 @@ namespace storm {
 
 			*state->l << code::location(exprs->last()->pos);
 			executeExpr(exprs->last(), state, to);
-
-			// Generate a last location.
-			*state->l << code::location(pos.lastCh());
 		}
 
 		Int ExprBlock::castPenalty(Value to) {

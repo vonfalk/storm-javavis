@@ -64,7 +64,7 @@ namespace storm {
 			STORM_CLASS;
 		public:
 			// Create. If body is null, we will generate the default ctor.
-			BSCtor(Array<ValParam> *params, Scope scope, syntax::Node *body, SrcPos pos);
+			BSCtor(Array<ValParam> *params, Scope scope, MAYBE(syntax::Node *) body, SrcPos pos);
 
 			// Scope.
 			Scope scope;

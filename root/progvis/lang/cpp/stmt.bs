@@ -162,7 +162,6 @@ class StmtBlock extends Block {
 			}
 		}
 
-		gen.l << location(pos.lastCh);
 		true;
 	}
 }
@@ -199,16 +198,6 @@ class Return extends Stmt {
 			CodeResult r(res, gen.block);
 			value.code(gen, r);
 
-			// Position for only the 'return' part.
-			SrcPos start = pos;
-			start.end = start.start + 6;
-
-			// Show which value we will return.
-			createReturnVal(start, gen, r);
-
-			// Pause execution right before we leave the function.
-			gen.l << location(start);
-
 			if (expected == Value()) {
 				gen.l << fnRet();
 			} else if (res.ref) {
@@ -222,42 +211,6 @@ class Return extends Stmt {
 
 		// We never return.
 		false;
-	}
-
-	// Create a temporary variable that shows the return value.
-	// We won't call any copy-constructors here, as it is usually safe enough to just copy the value,
-	// and we don't want to affect the semantics of the program.
-	private void createReturnVal(SrcPos pos, CodeGen gen, CodeResult r) {
-		var res = r.type;
-		unless (type = res.type)
-			return;
-
-		Listing l = gen.l;
-
-		// We don't bother destroying this one properly.
-		var stackRef = l.createVar(gen.block, sPtr);
-		l.varInfo(stackRef, Listing:VarInfo("⤶", type, true, pos));
-
-		// Allocate memory.
-		l << fnParam(ptrDesc, type.typeRef);
-		l << fnParam(ptrDesc, ptrConst(1));
-		l << fnCall(ref(BuiltIn:allocArray), false, ptrDesc, stackRef);
-
-		// Copy the data.
-		Label start = l.label();
-		l << mov(ptrA, stackRef);
-		l << add(ptrA, ptrConst(Offset(sPtr * 2)));
-		l << mov(ptrB, r.location(gen));
-		l << mov(ptrC, ptrConst(0));
-		l << start;
-		// Copying whole pointers is OK, heap allocation sizes are always word-aligned anyway, and
-		// we just created the allocation we're copying to.
-		l << mov(ptrRel(ptrA), ptrRel(ptrB));
-		l << add(ptrA, ptrConst(Offset(sPtr)));
-		l << add(ptrB, ptrConst(Offset(sPtr)));
-		l << add(ptrC, ptrConst(Offset(sPtr)));
-		l << cmp(ptrC, ptrConst(type.size));
-		l << jmp(start, CondFlag:ifBelow);
 	}
 
 	private void checkType(Value type) {

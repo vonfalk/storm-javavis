@@ -20,14 +20,14 @@ class SourceView on Render {
 	// Bounds of the fill area. We try to center this in the source view.
 	Rect fillBounds;
 
-	// Draw a faint view meaning the thread is dead.
-	Bool faint;
+	// Brush used to highlight.
+	Brush highlight;
 
 	// Create.
 	init(Program program) {
 		init {
 			program = program;
-			faint = false;
+			highlight = sourceHighlight;
 		}
 	}
 
@@ -72,9 +72,6 @@ class SourceView on Render {
 			Float yOffset = pos.p0.y - fillBounds.p0.y + (pos.size.h - fillBounds.size.h) / 2;
 			Point offset(pos.p0.x, yOffset);
 
-			Brush highlight = sourceHighlight;
-			if (faint)
-				highlight = sourceFaintHighlight;
 			for (f in fill) {
 				g.fill(f + offset, highlight);
 			}
