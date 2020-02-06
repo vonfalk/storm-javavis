@@ -1,0 +1,110 @@
+use core:lang;
+use core:asm;
+use lang:bs:macro;
+
+// Do type checking and -casting for a conditional.
+Expr castCond(Block parent, Expr cond) {
+	Value type = cond.result.type;
+
+	// TODO: We don't need to be this restrictive.
+	if (type.type !is named{Bool})
+		throw SyntaxError(cond.pos, "A condition must evaluate to a boolean, not ${type}.");
+
+	cond;
+}
+
+/**
+ * A while-loop.
+ */
+class WhileStmt extends StmtBlock {
+	init(SrcPos pos, Block parent, Expr cond) {
+		init(pos, parent) {
+			cond = castCond(parent, cond);
+		}
+	}
+
+	// Condition.
+	Expr cond;
+
+	Bool blockCode(CodeGen gen) : override {
+		var restart = gen.l.label();
+		var exit = gen.l.label();
+
+		gen.l << restart;
+
+		CodeResult condResult(Value(named{Bool}), gen.block);
+		CodeGen sub = gen.child();
+		gen.l << location(cond.pos);
+		gen.l << begin(sub.block);
+		cond.code(sub, condResult);
+		gen.l << end(sub.block);
+
+		gen.l << cmp(condResult.location(gen), byteConst(0));
+		gen.l << jmp(exit, CondFlag:ifEqual);
+
+		Bool r = super:blockCode(gen);
+
+		gen.l << jmp(restart);
+		gen.l << exit;
+
+		r;
+	}
+}
+
+/**
+ * An if-statement.
+ */
+class IfStmt extends Block {
+	init(SrcPos pos, Block parent, Expr cond) {
+		init(pos, parent) {
+			cond = castCond(parent, cond);
+		}
+	}
+
+	// Condition.
+	Expr cond;
+
+	// True branch.
+	Stmt? ifBranch;
+
+	// False branch.
+	Stmt? elseBranch;
+
+	// Setters for the grammar.
+	void ifTrue(Stmt s) { ifBranch = s; }
+	void ifFalse(Stmt s) { elseBranch = s; }
+
+	Bool blockCode(CodeGen gen) : override {
+		var onFalse = gen.l.label();
+		var exit = gen.l.label();
+
+		CodeResult condResult(Value(named{Bool}), gen.block);
+		CodeGen sub = gen.child();
+		gen.l << location(cond.pos);
+		gen.l << begin(sub.block);
+		cond.code(sub, condResult);
+		gen.l << end(sub.block);
+
+		gen.l << cmp(condResult.location(gen), byteConst(0));
+		gen.l << jmp(onFalse, CondFlag:ifEqual);
+
+		Bool returns = false;
+		if (ifBranch)
+			returns |= executeStmt(gen, ifBranch);
+		else
+			returns |= true;
+
+		gen.l << jmp(exit);
+		gen.l << onFalse;
+
+		if (elseBranch)
+			returns |= executeStmt(gen, elseBranch);
+		else
+			returns |= true;
+
+
+		gen.l << exit;
+
+		returns;
+	}
+}

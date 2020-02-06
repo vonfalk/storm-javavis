@@ -34,8 +34,8 @@ class Block extends Stmt {
 	}
 
 	// Create from another block.
-	init(Block parent) {
-		init() {}
+	init(SrcPos pos, Block parent) {
+		init(pos) {}
 		scope = blockScope(this, parent.scope);
 	}
 
@@ -49,11 +49,10 @@ class Block extends Stmt {
 
 		initVariables(child);
 
-		if (!blockCode(child))
-			return false;
+		Bool returns = blockCode(child);
 
 		gen.l << end(child.block);
-		true;
+		returns;
 	}
 
 	Bool blockCode(CodeGen gen) : abstract;
@@ -121,6 +120,23 @@ class BlockLookup extends NameLookup {
 	}
 }
 
+// Execute a sub-block in its own codegen block if required.
+package Bool executeStmt(CodeGen gen, Stmt s) {
+	if (s as Block) {
+		s.code(gen);
+	} else {
+		gen.l << location(s.pos);
+
+		CodeGen child = gen.child();
+		gen.l << begin(child.block);
+
+		Bool returns = s.code(gen);
+
+		gen.l << end(child.block);
+		returns;
+	}
+}
+
 /**
  * A block that contains expressions.
  */
@@ -146,20 +162,8 @@ class StmtBlock extends Block {
 	// Generate code for statements inside the block.
 	Bool blockCode(CodeGen gen) {
 		for (s in content) {
-			if (s as StmtBlock) {
-				if (!s.code(gen))
-					return false;
-			} else {
-				gen.l << location(s.pos);
-
-				CodeGen child = gen.child();
-				gen.l << begin(child.block);
-
-				if (!s.code(child))
-					return false;
-
-				gen.l << end(child.block);
-			}
+			if (!executeStmt(gen, s))
+				return false;
 		}
 
 		true;

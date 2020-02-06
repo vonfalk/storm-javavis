@@ -126,7 +126,7 @@ SNameParams => Array<Value>() : STypeName(scope) -> push, (",", STypeName(scope)
 
 // Statements and expressions:
 Stmt SStmt(Block block);
-SStmt => ExprBlock(block) : "{", (SStmt(me) -> add,)* "}";
+SStmt => StmtBlock(pos, block) : "{", (SStmt(me) -> add,)* "}";
 SStmt => e : SExpr(block) e, ";";
 SStmt[50] => Return(pos, block, expr) : "return[ \t]" #keyword, SExpr(block) expr, ";";
 SStmt[50] => Return(pos, block) : "return" #keyword, ";";
@@ -134,6 +134,8 @@ SStmt[10] => VarDecl(pos, block, type, name) : STypeName(block.scope) type, SIde
 SStmt[10] => VarDecl.assign(pos, block, type, name, init) : STypeName(block.scope) type, SIdentifier name, "=", SExpr(block) init, ";";
 // "delete" is technically an expression, but we don't do that...
 SStmt[50] => DeleteStmt(pos, expr) : "delete[ \t]" #keyword, SOp2(block) expr, ";";
+SStmt[50] => WhileStmt(pos, block, cond) : "while[ \t]" #keyword, "(", SExpr(block) cond, ")", "{", (SStmt(me) -> add,)* "}";
+SStmt[50] => IfStmt(pos, block, cond) : "if[ \t]" #keyword, "(", SExpr(block) cond, ")", SStmt(me) -> ifTrue - (, "else[ \t]" #keyword, SStmt(me) -> ifFalse)?;
 
 // Add a list of statements to a block.
 void SStmtList(StmtBlock block);
@@ -223,6 +225,8 @@ SAtom => v : "(", SExpr(block) v, ")";
 SAtom => IntLiteral(v) : "[0-9]+" @v #constant;
 SAtom => NameExpr(pos, block.scope, name) : SCompoundName(block.scope) name;
 SAtom[10] => ThisPtr(pos, block.scope) : "this" #keyword;
+// SAtom[10] => Nullptr(pos) : "nullptr" #keyword;
+// SAtom[10] => Nullptr(pos) : "NULL" #keyword;
 
 SimpleName SCompoundName(Scope scope);
 SCompoundName => SimpleName() : SNamePart(scope) -> add, ("::", SNamePart(scope) -> add)*;
