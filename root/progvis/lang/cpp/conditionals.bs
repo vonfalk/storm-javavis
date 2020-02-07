@@ -6,6 +6,16 @@ use lang:bs:macro;
 Expr castCond(Block parent, Expr cond) {
 	Value type = cond.result.type;
 
+	// TODO: References!
+
+	if (isCppPtr(type)) {
+		return CheckPtr(cond);
+	}
+
+	if (type.isAsmType) {
+		return CheckIntegral(cond);
+	}
+
 	// TODO: We don't need to be this restrictive.
 	if (type.type !is named{Bool})
 		throw SyntaxError(cond.pos, "A condition must evaluate to a boolean, not ${type}.");
@@ -223,5 +233,53 @@ class IfStmt extends Block {
 		gen.l << exit;
 
 		returns;
+	}
+}
+
+/**
+ * Check if a pointer is null.
+ */
+class CheckPtr extends Expr {
+	init(Expr e) {
+		init(e.pos) { e = e; }
+	}
+
+	Expr e;
+
+	ExprResult result() : override {
+		Value(named{Bool});
+	}
+
+	void code(CodeGen gen, CodeResult res) : override {
+		CodeResult inner(e.result.type.asRef(false), gen.block);
+		e.code(gen, inner);
+
+		Var ptr = inner.location(gen);
+		gen.l << cmp(ptrRel(ptr), ptrConst(0));
+		gen.l << setCond(res.location(gen), CondFlag:ifNotEqual);
+	}
+}
+
+/**
+ * Check if an integer value is nonzero.
+ */
+class CheckIntegral extends Expr {
+	init(Expr e) {
+		init(e.pos) { e = e; }
+	}
+
+	Expr e;
+
+	ExprResult result() : override {
+		Value(named{Bool});
+	}
+
+	void code(CodeGen gen, CodeResult res) : override {
+		CodeResult inner(e.result.type.asRef(false), gen.block);
+		e.code(gen, inner);
+
+		Var val = inner.location(gen);
+		gen.l << cmp(val, xConst(val.size, 0));
+		gen.l << setCond(res.location(gen), CondFlag:ifNotEqual);
 	}
 }

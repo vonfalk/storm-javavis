@@ -176,6 +176,8 @@ class StmtBlock extends Block {
 				return false;
 		}
 
+		gen.l << location(pos.lastCh);
+
 		true;
 	}
 }

@@ -21,6 +21,12 @@ elem *createList(int count) {
 	return head;
 }
 
+void printList(elem *list) {
+	for (elem *at = list; at; at = at->next) {
+		print(list->value);
+	}
+}
+
 int main() {
 	bool b = true;
 	if (b)
@@ -35,6 +41,9 @@ int main() {
 	} while (x < 5);
 
 	elem *list = createList(4);
+	if (list) {
+		printList(list);
+	}
 
 	return 0;
 }
