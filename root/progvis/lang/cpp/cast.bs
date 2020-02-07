@@ -1,0 +1,38 @@
+use core:lang;
+use core:asm;
+use lang:bs:macro;
+
+on Compiler:
+
+// Assume we can cast whatever expression is available to the specified type. Throws an exception otherwise.
+Expr expectCast(Expr of, Type to) {
+	ExprResult r = of.result;
+	if (r.nothing)
+		return of;
+
+	if (r.type.type is to)
+		return of;
+
+	if (of.suggestResult(to))
+		return of;
+
+	throw SyntaxError(of.pos, "Expected type ${to.identifier()}, but got ${r.type}");
+}
+
+// Check if we can perform a type conversion.
+Bool castable(Expr e, Type to) {
+	ExprResult r = e.result;
+	if (r.nothing)
+		return true;
+
+	// No work to be done here!
+	if (r.type.type is to)
+		return true;
+
+	// Is 'e' able to produce the type directly?
+	if (e.suggestResult(to))
+		return true;
+
+	false;
+}
+

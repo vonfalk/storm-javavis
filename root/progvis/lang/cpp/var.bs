@@ -118,9 +118,6 @@ class VarDecl extends Stmt {
 	}
 
 	init(SrcPos pos, Block parent, Value type, SStr name, ExprRef init) {
-		if (!type.canStore(init.result.type()))
-			throw SyntaxError(pos, "Can not store ${init.result.type()} in a variable with type ${type}");
-
 		init(pos) {
 			var(name.v, type.safeType(pos), name.pos);
 			initExpr = init;
@@ -131,19 +128,21 @@ class VarDecl extends Stmt {
 
 	// Create from an = expression.
 	VarDecl assign(SrcPos pos, Block parent, Value type, SStr name, Expr init) : static {
-		if (init as ExprRef) {
-			// Just use the expression to construct the object for us.
-			return VarDecl(pos, parent, type, name, init);
-		}
-
-		// We need to call the copy-ctor...
 		if (t = type.type) {
+			init = expectCast(init, t);
+			print(init.toS);
+
+			if (init as ExprRef) {
+				// Just use the expression to construct the object for us.
+				return VarDecl(pos, parent, type, name, init);
+			}
+
+			// We need to call the copy-ctor...
+			// TODO: Handle C++ copy ctors as well. They have a Ref<> as their other parameter.
 			if (copy = t.copyCtor) {
 				return VarDecl(pos, parent, type, name, CtorCall(pos, copy, [init]));
 			}
 		}
-
-		// TODO: Handle C++ copy ctors as well. They have a Ref<> as their other parameter.
 
 		throw SyntaxError(pos, "The type ${type} does not have a copy constructor!");
 	}

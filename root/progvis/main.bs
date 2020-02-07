@@ -189,7 +189,8 @@ void main() on Compiler {
 		// win.open(url / "demo2.bs");
 		// win.open(url / "array.bs");
 		// win.open(url / "cpp.cpp");
-		win.open(url / "cpp2.cpp");
+		// win.open(url / "cpp2.cpp");
+		win.open(url / "cpp3.cpp");
 		win.waitForClose();
 	}
 }

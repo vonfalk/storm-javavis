@@ -22,6 +22,10 @@ class Expr extends Stmt {
 	// Compute the type of the result.
 	ExprResult result() : abstract;
 
+	// Suggest that the expression return a particular type. Assumes that 'type' differs from
+	// whatever is returned from 'result'.
+	Bool suggestResult(Type type) { false; }
+
 	// Does this expression represent a temporary value? I.e. is this an r-value?
 	Bool temporary() {
 		true;
@@ -66,6 +70,10 @@ class IntLiteral extends Expr {
 		Value(named{Int}, true);
 	}
 
+	Bool suggestResult(Type t) : override {
+		return t is named{Byte} | t is named{Int} | t is named{Long} | t is named{Nat} | t is named{Word};
+	}
+
 	void code(CodeGen gen, CodeResult res) : override {
 		if (!res.needed())
 			return;
@@ -77,9 +85,9 @@ class IntLiteral extends Expr {
 				var.adjust(gen, ptrA);
 				if (t is named{Byte}) {
 					gen.l << mov(byteRel(ptrA), byteConst(val.byte));
-				} else if (t is named{Int}) {
+				} else if (t is named{Int} | t is named{Nat}) {
 					gen.l << mov(intRel(ptrA), intConst(val.int));
-				} else if (t is named{Long}) {
+				} else if (t is named{Long} | t is named{Word}) {
 					gen.l << mov(longRel(ptrA), longConst(val));
 				} else {
 					throw SyntaxError(pos, "Unknown type!");
@@ -89,9 +97,9 @@ class IntLiteral extends Expr {
 			} else {
 				if (t is named{Byte}) {
 					gen.l << mov(to, byteConst(val.byte));
-				} else if (t is named{Int}) {
+				} else if (t is named{Int} | t is named{Nat}) {
 					gen.l << mov(to, intConst(val.int));
-				} else if (t is named{Long}) {
+				} else if (t is named{Long} | t is named{Word}) {
 					gen.l << mov(to, longConst(val));
 				} else {
 					throw SyntaxError(pos, "Unknown type!");
@@ -459,11 +467,9 @@ class CtorCall extends ExprRef {
 
 // Generate code for acquiring one parameter.
 private Operand paramCode(CodeGen gen, Expr actual, Value formal) on Compiler {
-	// TODO: Auto-casting?
-	Value result = actual.result.type;
-	if (!formal.canStore(result))
-		throw SyntaxError(actual.pos, "Cannot convert to ${formal}.");
+	actual = expectCast(actual, safeType(formal, actual.pos));
 
+	Value result = formal.asRef(actual.result.type.ref);
 	if (formal.ref & !result.ref) {
 		// Create a temporary variable and make a reference to it.
 		result = formal.asRef(false);
