@@ -24,9 +24,10 @@ namespace storm {
 		}
 	}
 
-	void Exception::saveTrace() {
+	Exception *Exception::saveTrace() {
 		if (stackTrace.empty())
 			stackTrace = collectStackTrace(engine());
+		return this;
 	}
 
 	NotSupported::NotSupported(const wchar *msg) {
