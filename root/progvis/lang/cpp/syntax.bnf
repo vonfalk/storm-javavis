@@ -97,22 +97,29 @@ SIdentifier => v : "[A-Za-z_][A-Za-z0-9_]*" @v;
 
 // Type declarations. Transforms into a Value.
 Value STypeName(Scope scope);
-STypeName => original : ("const" #keyword,)? STypeNameI(scope) original;
-STypeName => wrapRef(original) : ("const" #keyword,)? STypeNameI(scope) original, "&";
+STypeName => original : STypeNameRec(scope) original - ("const" #keyword)?;
+STypeName => wrapRef(original) : STypeNameRec(scope) original, "&";
+STypeName => wrapConstRef(original) : STypeNameRec(scope) original, "const" #keyword, "&";
 
-Value STypeNameI(Scope scope);
-STypeNameI[-1] => findType(pos, scope, first, rest) : SNamePart(scope) first - ("::", SNamePart(scope) rest)*;
+// Pointers with and without const.
+Value STypeNameRec(Scope scope);
+STypeNameRec => original : ("const" #keyword, )? STypeNameEnd(scope) original;
+STypeNameRec => wrapPtr(original) : STypeNameRec(scope) original, "\*";
+STypeNameRec => wrapConstPtr(original) : STypeNameRec(scope) original, "const" #keyword, "\*";
+STypeNameRec => wrapConstPtr(original) : "const" #keyword, STypeNameEnd(scope) original, "\*";
 
-STypeNameI => wrapPtr(original) : STypeNameI(scope) original, "\*";
-STypeNameI => original : STypeNameI(scope) original, "const" #keyword;
+// Actual type names.
+Value STypeNameEnd(Scope scope);
+STypeNameEnd[-1] => findType(pos, scope, first, rest) : SNamePart(scope) first - ("::", SNamePart(scope) rest)*;
 
 // Built-in types.
-STypeNameI => intType() : "int" #keyword;
-STypeNameI => uIntType() : "unsigned" #keyword, "int" #keyword;
-STypeNameI => longType() : "long" #keyword;
-STypeNameI => uLongType() : "unsigned" #keyword, "long" #keyword;
-STypeNameI => boolType() : "bool" #keyword;
-STypeNameI => Value() : "void" #keyword;
+STypeNameEnd => charType() : "char" #keyword;
+STypeNameEnd => intType() : "int" #keyword;
+STypeNameEnd => uIntType() : "unsigned" #keyword, "int" #keyword;
+STypeNameEnd => longType() : "long" #keyword;
+STypeNameEnd => uLongType() : "unsigned" #keyword, "long" #keyword;
+STypeNameEnd => boolType() : "bool" #keyword;
+STypeNameEnd => Value() : "void" #keyword;
 // ...
 
 // Parts of a name.

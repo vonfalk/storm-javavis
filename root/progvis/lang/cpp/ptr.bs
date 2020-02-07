@@ -116,8 +116,20 @@ Value wrapPtr(Value val) {
 	Value(t);
 }
 
+Value wrapConstPtr(Value val) {
+	unless (t = (named{}).find(SimplePart("ConstPtr", [val.asRef(false)]), Scope()) as Type)
+		throw InternalError("Could not find the pointer type for ${val}");
+	Value(t);
+}
+
 Value wrapRef(Value val) {
 	unless (t = (named{}).find(SimplePart("Ref", [val.asRef(false)]), Scope()) as Type)
+		throw InternalError("Could not find the pointer type for ${val}");
+	Value(t);
+}
+
+Value wrapConstRef(Value val) {
+	unless (t = (named{}).find(SimplePart("ConstRef", [val.asRef(false)]), Scope()) as Type)
 		throw InternalError("Could not find the pointer type for ${val}");
 	Value(t);
 }

@@ -29,6 +29,10 @@ Value uIntType() {
 	Value(named{Nat});
 }
 
+Value charType() {
+	Value(named{Byte});
+}
+
 Value boolType() {
 	Value(named{Bool});
 }
