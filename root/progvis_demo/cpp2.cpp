@@ -22,8 +22,9 @@ elem *createList(int count) {
 }
 
 int main() {
-	if (3 < 4)
-		if (3 > 4)
+	bool b = true;
+	if (b)
+		if (!b)
 			print(1);
 		else
 			print(2);

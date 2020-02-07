@@ -74,7 +74,20 @@ class LocalVarAccess extends Expr {
 		if (!result.needed())
 			return;
 
-		var.var.adjust(gen, result.location(gen));
+		if (result.type.ref) {
+			var.var.adjust(gen, result.location(gen));
+		} else {
+			var r = result.location(gen);
+			var.var.adjust(gen, ptrA);
+			if (result.type.isAsmType) {
+				gen.l << mov(r, xRel(r.size, ptrA));
+			} else {
+				gen.l << lea(ptrB, r);
+				gen.l << fnParam(ptrDesc, ptrB);
+				gen.l << fnParam(ptrDesc, ptrA);
+				gen.l << fnCall(result.type.copyCtor, true);
+			}
+		}
 	}
 
 	void codePtr(CodeGen gen) : override {

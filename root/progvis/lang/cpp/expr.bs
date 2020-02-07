@@ -72,21 +72,68 @@ class IntLiteral extends Expr {
 
 		var to = res.location(gen);
 		if (t = res.type.type) {
-			CppVar var = allocType(gen, t);
-			var.adjust(gen, ptrA);
-			if (t is named{Int}) {
-				gen.l << mov(intRel(ptrA), intConst(val.int));
-			} else if (t is named{Long}) {
-				gen.l << mov(longRel(ptrA), longConst(val));
+			if (res.type.ref) {
+				CppVar var = allocType(gen, t);
+				var.adjust(gen, ptrA);
+				if (t is named{Byte}) {
+					gen.l << mov(byteRel(ptrA), byteConst(val.byte));
+				} else if (t is named{Int}) {
+					gen.l << mov(intRel(ptrA), intConst(val.int));
+				} else if (t is named{Long}) {
+					gen.l << mov(longRel(ptrA), longConst(val));
+				} else {
+					throw SyntaxError(pos, "Unknown type!");
+				}
+				gen.l << mov(to, ptrA);
+				var.created(gen);
 			} else {
-				throw SyntaxError(pos, "Unknown type!");
+				if (t is named{Byte}) {
+					gen.l << mov(to, byteConst(val.byte));
+				} else if (t is named{Int}) {
+					gen.l << mov(to, intConst(val.int));
+				} else if (t is named{Long}) {
+					gen.l << mov(to, longConst(val));
+				} else {
+					throw SyntaxError(pos, "Unknown type!");
+				}
 			}
-			gen.l << mov(to, ptrA);
-			var.created(gen);
 		}
 		res.created(gen);
 	}
 }
+
+/**
+ * Boolean literals.
+ */
+class BoolLiteral extends Expr {
+	init(SrcPos pos, Bool val) {
+		init(pos) { val = val; }
+	}
+
+	private Bool val;
+
+	ExprResult result() : override {
+		Value(named{Bool}, true);
+	}
+
+	void code(CodeGen gen, CodeResult res) : override {
+		if (!res.needed())
+			return;
+
+		Byte val = if (this.val) { 1b; } else { 0b; };
+		var to = res.location(gen);
+		if (res.type.ref) {
+			CppVar var = allocType(gen, named{Bool});
+			var.adjust(gen, ptrA);
+			gen.l << mov(byteRel(ptrA), byteConst(val));
+			gen.l << mov(to, ptrA);
+		} else {
+			gen.l << mov(to, byteConst(val));
+		}
+		res.created(gen);
+	}
+}
+
 
 /**
  * Access the this ptr.
@@ -466,6 +513,24 @@ Expr operator(Block block, Expr lhs, SStr op, Expr rhs) on Compiler {
 	throw SyntaxError(op.pos, "Failed to find operator ${op.v} for ${lType} and ${rType}.");
 }
 
+// Doesn't add a star to the name.
+Expr unaryOperator(Block block, SStr op, Expr rhs) on Compiler {
+	var rType = rhs.result.type;
+	var pos = op.pos.extend(rhs.pos);
+
+	SimplePart opName(op.v, [rType]);
+	if (t = rType.type) {
+		if (fn = t.find(opName, block.scope) as Function)
+			return FnCall(pos, fn, [rhs]);
+	}
+
+	if (fn = block.scope.find(SimpleName(opName)) as Function) {
+		return FnCall(pos, fn, [rhs]);
+	}
+
+	throw SyntaxError(op.pos, "Failed to find prefix operator ${op.v} for ${rType}.");
+}
+
 Expr operator(Block block, SStr op, Expr rhs) on Compiler {
 	var rType = rhs.result.type;
 	var pos = op.pos.extend(rhs.pos);
@@ -482,6 +547,7 @@ Expr operator(Block block, SStr op, Expr rhs) on Compiler {
 
 	throw SyntaxError(op.pos, "Failed to find prefix operator ${op.v} for ${rType}.");
 }
+
 Expr operator(Block block, Expr lhs, SStr op) on Compiler {
 	var lType = lhs.result.type;
 	var pos = lhs.pos.extend(op.pos);

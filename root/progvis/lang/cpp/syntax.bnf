@@ -207,7 +207,7 @@ Expr SOp3(Block block);
 SOp3 => n : SOp2(block) n;
 SOp3 => DerefPtr(n) : "\*", SOp3(block) n;
 SOp3 => AddressOf(n) : "&", SOp3(block) n;
-SOp3 => operator(block, op, n) : "[!~]" @op, SOp3(block) n;
+SOp3 => unaryOperator(block, op, n) : "[!~]" @op, SOp3(block) n;
 SOp3 => operator(block, op, n) : "\+\+?" @op, SOp2(block) n;
 SOp3 => operator(block, op, n) : "--?" @op, SOp2(block) n;
 SOp3 => NewExpr(pos, type) : "new[ \t]" #keyword, STypeName(block.scope) type; // TODO: initializer syntax
@@ -228,6 +228,8 @@ SAtom => v : "(", SExpr(block) v, ")";
 SAtom => IntLiteral(v) : "[0-9]+" @v #constant;
 SAtom => NameExpr(pos, block.scope, name) : SCompoundName(block.scope) name;
 SAtom[10] => ThisPtr(pos, block.scope) : "this" #keyword;
+SAtom[10] => BoolLiteral(pos, true) : "true" #keyword;
+SAtom[10] => BoolLiteral(pos, false) : "false" #keyword;
 // SAtom[10] => Nullptr(pos) : "nullptr" #keyword;
 // SAtom[10] => Nullptr(pos) : "NULL" #keyword;
 
