@@ -55,17 +55,28 @@ class ThreadData extends Drawable {
 		g.draw(rect, dataFg);
 
 		Point offset = rect.p0 + compositeBorder;
-		Size minSize(0, rect.size.h - compositeBorder.h*4 - sourceSize.h - buttonSize.h);
+		Float xOffset = 0;
+		for (Nat i = frames.count; i > 0; i--) {
+			var frame = frames[i - 1];
+
+			Size sz = frame.size;
+			if (i < frames.count)
+				xOffset -= frame.nameWidth;
+			frame.layoutOffset = xOffset;
+			xOffset += sz.w;
+		}
+		Float xLimit = rect.size.w - compositeBorder.w*2;
+		// Right-align everything.
+		if (xOffset < xLimit)
+			offset.x += xLimit - xOffset;
 		for (frame in frames) {
 			Size sz = frame.size;
-			minSize.w = max(minSize.w, sz.w);
-
-			frame.pos = Rect(offset, minSize);
+			Float dx = min(frame.layoutOffset, xLimit - sz.w);
+			frame.pos = Rect(offset + Point(dx, 0), sz);
 
 			Float delta = frame.captionHeight + compositeBorder.h;
-			offset.x += stackOffset;
 			offset.y += delta;
-			minSize.h -= delta + compositeBorder.h;
+			xLimit -= stackOffset;
 		}
 
 		Rect sourcePos(rect.p0, rect.p1 - compositeBorder);
@@ -127,7 +138,7 @@ class ThreadData extends Drawable {
 		for (Nat i = frames.count; i > 0; i--) {
 			var frame = frames[i - 1];
 
-			h += frame.captionHeight + compositeBorder.h * 2;
+			h += frame.captionHeight + compositeBorder.h;
 
 			Size sz = frame.size;
 			h = max(h, sz.h);
@@ -192,6 +203,12 @@ class FrameVal on Render {
 			source = frame;
 		}
 	}
+
+	// Get the width of all names in here.
+	Float nameWidth() { namesWidth; }
+
+	// Float that is used during layout.
+	Float layoutOffset;
 
 	// Update our contents.
 	void traverse(Workspace ws, WorkList work) {
@@ -316,7 +333,7 @@ private:
 			height += max(nameSz.h, dataSz.h) + dataBorder.h;
 		}
 
-		height -= dataBorder.h;
+		height = max(height - dataBorder.h, dataBorder.h);
 	}
 }
 
