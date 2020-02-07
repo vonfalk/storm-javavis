@@ -4,20 +4,24 @@ use lang:bs:macro;
 
 // Pointers.
 Ptr : generate(params) {
-	// Only one parameter.
-	if (params.count != 1)
-		return null;
+	generatePtr(params, false, false);
+}
 
-	// It must be a value-type (this includes other Ptr classes).
-	var par = params[0];
-	if (!par.isValue)
-		return null;
-
-	PtrType(par.asRef(false), false);
+ConstPtr : generate(params) {
+	generatePtr(params, true, false);
 }
 
 // References.
 Ref : generate(params) {
+	generatePtr(params, false, true);
+}
+
+ConstRef : generate(params) {
+	generatePtr(params, true, true);
+}
+
+// Create a type.
+Named? generatePtr(Array<Value> params, Bool isConst, Bool isRef) {
 	// Only one parameter.
 	if (params.count != 1)
 		return null;
@@ -27,7 +31,7 @@ Ref : generate(params) {
 	if (!par.isValue)
 		return null;
 
-	PtrType(par.asRef(false), true);
+	PtrType(par.asRef(false), isConst, isRef);
 }
 
 /**
@@ -39,12 +43,19 @@ Ref : generate(params) {
  * Can also act as a reference.
  */
 class PtrType extends Type {
-	init(Value inside, Bool isRef) {
-		Str name = if (isRef) { "Ref"; } else { "Ptr"; };
-		init(name, [inside], TypeFlags:typeValue) { isRef = isRef; }
+	init(Value inside, Bool isConst, Bool isRef) {
+		Str name = if (isConst) { "Const"; } else { ""; };
+		name = name + if (isRef) { "Ref"; } else { "Ptr"; };
+		init(name, [inside], TypeFlags:typeValue) { isRef = isRef; isConst = isConst; }
 	}
 
 	Bool isRef;
+	Bool isConst;
+
+	// Get the type inside.
+	Type? inside() {
+		params[0].type;
+	}
 
 	// Load members.
 	Bool loadAll() : override {
@@ -128,6 +139,13 @@ Value unwrapRef(Value val) {
 	val;
 }
 
+Value unwrapPtrOrRef(Value val) {
+	if (t = val.type as PtrType) {
+		return t.params[0];
+	}
+	val;
+}
+
 // Is it a ptr or ref?
 Bool isCppPtr(Value val) {
 	if (t = val.type as PtrType) {
@@ -141,4 +159,13 @@ Bool isCppRef(Value val) {
 		return t.isRef;
 	}
 	false;
+}
+
+// Unwrap a reference. Returns 'null' if not a reference.
+Type? isCppRef(Type t) {
+	if (t as PtrType)
+		if (t.isRef)
+			if (i = t.inside())
+				return i;
+	null;
 }

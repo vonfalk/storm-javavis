@@ -118,6 +118,7 @@ namespace storm {
 
 		// Get the last element.
 		SimplePart *STORM_FN last() const { return parts->last(); }
+		SimplePart *STORM_ASSIGN last(SimplePart *p) { parts->last() = p; return p; }
 		SimplePart *&last() { return parts->last(); }
 
 		// Number of elements.

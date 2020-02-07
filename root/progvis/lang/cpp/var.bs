@@ -130,7 +130,6 @@ class VarDecl extends Stmt {
 	VarDecl assign(SrcPos pos, Block parent, Value type, SStr name, Expr init) : static {
 		if (t = type.type) {
 			init = expectCast(init, t);
-			print(init.toS);
 
 			if (init as ExprRef) {
 				// Just use the expression to construct the object for us.

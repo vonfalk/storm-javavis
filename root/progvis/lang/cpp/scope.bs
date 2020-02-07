@@ -32,3 +32,41 @@ class CppLookup extends ScopeLookup {
 		null;
 	}
 }
+
+/**
+ * Lookup for when we have actuals.
+ */
+class CppPart extends SimplePart {
+	init(Str name, Expr[] actuals) {
+		init(name) { actuals = actuals; }
+
+		for (a in actuals) {
+			params << a.result.type;
+		}
+	}
+
+	Expr[] actuals;
+
+	Int matches(Named candidate, Scope source) {
+		if (actuals.count != candidate.params.count)
+			return -1;
+
+		Int penalty = 0;
+		for (Nat i = 0; i < actuals.count; i++) {
+			Expr actual = actuals[i];
+			Value formal = candidate.params[i];
+
+			unless (formalType = formal.type)
+				return -1;
+
+			Int p = castPenalty(actual, formalType);
+			if (p < 0) {
+				return -1;
+			}
+
+			penalty += p;
+		}
+
+		penalty;
+	}
+}

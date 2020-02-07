@@ -4,6 +4,15 @@ use lang:bs:macro;
 
 on Compiler:
 
+// De-reference a reference, if applicable.
+Expr deref(Expr refExpr) {
+	if (refExpr.result.type.isCppRef) {
+		Deref:ref(refExpr);
+	} else {
+		refExpr;
+	}
+}
+
 // Assume we can cast whatever expression is available to the specified type. Throws an exception otherwise.
 Expr expectCast(Expr of, Type to) {
 	ExprResult r = of.result;
@@ -16,23 +25,46 @@ Expr expectCast(Expr of, Type to) {
 	if (of.suggestResult(to))
 		return of;
 
+	of = deref(of);
+	Value type = of.result.type;
+	if (type.type is to)
+		return of;
+
+	// Possible to make it a reference?
+	if (inside = to.isCppRef()) {
+		if (type.type is inside)
+			return MakeRef(of);
+	}
+
 	throw SyntaxError(of.pos, "Expected type ${to.identifier()}, but got ${r.type}");
 }
 
-// Check if we can perform a type conversion.
-Bool castable(Expr e, Type to) {
+// Compute the cast penalty for a value.
+Int castPenalty(Expr e, Type to) {
 	ExprResult r = e.result;
 	if (r.nothing)
-		return true;
+		return 0;
 
 	// No work to be done here!
-	if (r.type.type is to)
-		return true;
+	Value type = r.type;
+	if (type.type is to)
+		return 0;
 
 	// Is 'e' able to produce the type directly?
 	if (e.suggestResult(to))
-		return true;
+		return 1;
 
-	false;
+	// If 'e' is a reference, "dereference" that.
+	type = unwrapRef(type);
+	if (type.type is to)
+		return 0;
+
+	// Is it possible that "to" is a reference?
+	if (inside = to.isCppRef()) {
+		if (inside is type.type)
+			return 0;
+	}
+
+	return -1;
 }
 

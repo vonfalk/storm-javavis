@@ -7,17 +7,22 @@ void fn(long a) {
 }
 
 void fn2(int &a) {
-	// print(a);
+	print(a);
 }
 
 int main() {
-	int a = 10;
+	int a = 20;
 	long b = 10;
 	fn(10);
 	fn(a);
 	fn(b);
 
-	// fn2(a);
+	int &c = a;
+	fn2(c);
+	fn2(a);
+
+	c = 18;
+	fn2(a);
 
 	return 0;
 }

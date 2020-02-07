@@ -33,7 +33,7 @@ class Expr extends Stmt {
 
 	// Overloaded if 'temporary' is 'false'. Stores a base ptr in 'ptrB' and an offset in 'ecx'.
 	void codePtr(CodeGen gen) {
-		throw SyntaxError(pos, "Unable to compute the address of a temporary.");
+		throw SyntaxError(pos, "Unable to compute the address of a temporary.").saveTrace();
 	}
 
 	// Generate code. 'desired' is the desired return type.
@@ -187,7 +187,7 @@ class NameExpr extends Expr {
 
 	// Name give some context using the . operator.
 	init(SrcPos pos, Scope scope, SimpleName name, Expr context) {
-		init(pos) { scope = scope; name = name; context = context; }
+		init(pos) { scope = scope; name = name; context = deref(context); }
 	}
 
 	void code(CodeGen gen, CodeResult result) : override {
@@ -229,11 +229,10 @@ class NameExpr extends Expr {
 	}
 
 	// Find a name with a given context.
-	private Found? findCtx(Expr context, Value[] actuals) {
-		Value ctx = context.result.type;
-		SimplePart last = name.last.clone();
-		last.params << ctx;
-		last.params.append(actuals);
+	private Found? findCtx(Expr context, Expr[] actuals) {
+		Expr[] params = actuals.clone();
+		params.insert(0, context);
+		CppPart last(name.last.name, params);
 
 		if (t = ctx.type) {
 			if (found = t.find(last, scope)) {
@@ -244,14 +243,14 @@ class NameExpr extends Expr {
 	}
 
 	// Will try to add '*this' as a context if suitable.
-	Found? findNamed(Value[] actuals) {
+	Found? findNamed(Expr[] actuals) {
 		if (context) {
 			return findCtx(context, actuals);
 		}
 
 		// Try to use 'this' if suitable.
 		if (member = findFnRoot(scope).memberOf) {
-			if (found = findCtx(DerefPtr(ThisPtr(pos, scope)), actuals))
+			if (found = findCtx(Deref:ptr(ThisPtr(pos, scope)), actuals))
 				return found;
 		}
 
@@ -261,8 +260,8 @@ class NameExpr extends Expr {
 				return Found(found);
 		} else {
 			SimpleName n = name.clone;
-			name.last.params = actuals;
-			if (found = scope.find(name))
+			n.last = CppPart(name.last.name, actuals);
+			if (found = scope.find(n))
 				return Found(found);
 		}
 
@@ -298,7 +297,7 @@ Expr fnCall(Expr lhs, Expr[] actuals) {
 		throw SyntaxError(lhs.pos, "This is not something we can call.");
 	}
 
-	NameExpr:Found? found = lhs.findNamed(fnValues(actuals));
+	NameExpr:Found? found = lhs.findNamed(actuals);
 	unless (found) {
 		throw SyntaxError(lhs.pos, "Could not find anything named ${lhs.name} to call.");
 	}
@@ -313,13 +312,6 @@ Expr fnCall(Expr lhs, Expr[] actuals) {
 	throw SyntaxError(lhs.pos, "Found ${found}, which is not a function.");
 }
 
-// Compute the types of an array of values.
-Value[] fnValues(Expr[] actuals) {
-	Value[] r;
-	for (x in actuals)
-		r << x.result.type;
-	r;
-}
 
 /**
  * Function calls.
@@ -502,11 +494,13 @@ private Operand paramCode(CodeGen gen, Expr actual, Value formal) on Compiler {
 
 // Create an operator.
 Expr operator(Block block, Expr lhs, SStr op, Expr rhs) on Compiler {
+	lhs = deref(lhs);
+	rhs = deref(rhs);
+
 	var lType = lhs.result.type;
-	var rType = rhs.result.type;
 	var pos = lhs.pos.extend(rhs.pos);
 
-	SimplePart opName(op.v, [lType, rType]);
+	CppPart opName(op.v, [lhs, rhs]);
 	if (t = lType.type) {
 		if (fn = t.find(opName, block.scope) as Function)
 			return FnCall(pos, fn, [lhs, rhs]);
@@ -516,15 +510,17 @@ Expr operator(Block block, Expr lhs, SStr op, Expr rhs) on Compiler {
 		return FnCall(pos, fn, [lhs, rhs]);
 	}
 
-	throw SyntaxError(op.pos, "Failed to find operator ${op.v} for ${lType} and ${rType}.");
+	throw SyntaxError(op.pos, "Failed to find operator ${op.v} for ${lType} and ${rhs.result.type}.");
 }
 
 // Doesn't add a star to the name.
 Expr unaryOperator(Block block, SStr op, Expr rhs) on Compiler {
+	lhs = deref(lhs);
+
 	var rType = rhs.result.type;
 	var pos = op.pos.extend(rhs.pos);
 
-	SimplePart opName(op.v, [rType]);
+	CppPart opName(op.v, [rhs]);
 	if (t = rType.type) {
 		if (fn = t.find(opName, block.scope) as Function)
 			return FnCall(pos, fn, [rhs]);
@@ -538,10 +534,12 @@ Expr unaryOperator(Block block, SStr op, Expr rhs) on Compiler {
 }
 
 Expr operator(Block block, SStr op, Expr rhs) on Compiler {
+	rhs = deref(rhs);
+
 	var rType = rhs.result.type;
 	var pos = op.pos.extend(rhs.pos);
 
-	SimplePart opName(op.v + "*", [rType]);
+	CppPart opName(op.v + "*", [rhs]);
 	if (t = rType.type) {
 		if (fn = t.find(opName, block.scope) as Function)
 			return FnCall(pos, fn, [rhs]);
@@ -555,10 +553,12 @@ Expr operator(Block block, SStr op, Expr rhs) on Compiler {
 }
 
 Expr operator(Block block, Expr lhs, SStr op) on Compiler {
+	lhs = deref(lhs);
+
 	var lType = lhs.result.type;
 	var pos = lhs.pos.extend(op.pos);
 
-	SimplePart opName("*" + op.v, [lType]);
+	CppPart opName("*" + op.v, [lhs]);
 	if (t = lType.type) {
 		if (fn = t.find(opName, block.scope) as Function)
 			return FnCall(pos, fn, [lhs]);
@@ -574,7 +574,7 @@ Expr operator(Block block, Expr lhs, SStr op) on Compiler {
 Expr dotOperator(Block block, Expr lhs, SStr rhs, Bool ptrLhs) {
 	// If lhs is a pointer, just dereference it first. That's what the dot operator means anyway.
 	if (ptrLhs)
-		lhs = DerefPtr(lhs);
+		lhs = Deref:ptr(lhs);
 	NameExpr(lhs.pos.extend(rhs.pos), block.scope, SimpleName(rhs.v), lhs);
 }
 
@@ -630,20 +630,45 @@ class AddressOf extends ExprRef {
 }
 
 /**
- * De-reference a pointer.
+ * Make a reference from an l-value or a l-value.
  */
-class DerefPtr extends Expr {
+class MakeRef extends AddressOf {
 	init(Expr of) {
-		init(of.pos) { of = of; }
+		init(of) {}
+	}
 
-		unless (of.result.type.isCppPtr)
-			throw SyntaxError(pos, "Unable to dereference a value of type ${of.result.type}.");
+	// We just need to tell 'AddressOf' to produce a reference instead.
+	ExprResult result() : override {
+		wrapRef(of.result.type).asRef();
+	}
+}
+
+/**
+ * De-reference a pointer or reference.
+ */
+class Deref extends Expr {
+	private init(Expr of) {
+		init(of.pos) { of = of; }
+	}
+
+	Deref ptr(Expr original) : static {
+		unless (original.result.type.isCppPtr)
+			throw SyntaxError(original.pos, "Unable to dereference a value of type ${original.result.type}.");
+
+		Deref(original);
+	}
+
+	Deref ref(Expr original) : static {
+		unless (original.result.type.isCppRef)
+			throw SyntaxError(original.pos, "Unable to dereference a value of type ${original.result.type}. Not a reference.");
+
+		Deref(original);
 	}
 
 	Expr of;
 
 	ExprResult result() : override {
-		unwrapPtr(of.result.type).asRef();
+		unwrapPtrOrRef(of.result.type).asRef();
 	}
 
 	void code(CodeGen gen, CodeResult res) : override {
