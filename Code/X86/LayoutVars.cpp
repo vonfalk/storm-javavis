@@ -118,10 +118,13 @@ namespace code {
 				*dest << dat(intConst(layout->at(v.key())));
 				*dest << dat(natConst(activated->at(v.key())));
 
-				if (activated->at(v.key()) == INACTIVE)
-					// Dont be too worried about zero-sized variables.
-					if (v.size() != Size())
-						throw new (this) VariableActivationError(v, S("Never activated."));
+				// This happens sometimes in code generation, for example when a variable definition is never
+				// reached. As such, we should not complain too much about it. It was useful for debugging
+				// the initial migration, however.
+				// if (activated->at(v.key()) == INACTIVE)
+				// 	// Dont be too worried about zero-sized variables.
+				// 	if (v.size() != Size())
+				// 		throw new (this) VariableActivationError(v, S("Never activated."));
 			}
 		}
 
