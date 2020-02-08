@@ -1,11 +1,30 @@
 #!/bin/bash
 
-tag=`git describe --abbrev=0 master`
-git describe master | sed 's!^release/!!' > release_message.txt
-echo "" >> release_message.txt
-echo "# Commits since previous release:" >> release_message.txt
-git log ${tag}..master | sed -e 's/^/# /' >> release_message.txt
-$EDITOR release_message.txt
+rewrite_msg=true
+old_msg=""
+
+if [[ -f release_message.txt ]]
+then
+    read -p "A previous release message exists. Use that? [y/N] " -n 1 -r
+    echo
+    if [[ $REPLY =~ ^[Yy]$ ]]
+    then
+	rewrite_msg=false
+    else
+	old_msg="$(cat release_message.txt)"
+    fi
+fi
+
+if $rewrite_msg
+then
+    tag=`git describe --abbrev=0 master`
+    git describe master | sed 's!^release/!!' > release_message.txt
+    echo "" >> release_message.txt
+    echo "$old_msg" >> release_message.txt
+    echo "# Commits since previous release:" >> release_message.txt
+    git log ${tag}..master | sed -e 's/^/# /' >> release_message.txt
+    $EDITOR release_message.txt
+fi
 
 version=`head -n 1 release_message.txt`
 tail -n +2 release_message.txt | grep -v "# " | git tag -a -F - release/${version}

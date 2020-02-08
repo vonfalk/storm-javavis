@@ -1,5 +1,20 @@
 #!/bin/bash
 
+completed=false
+
+function remove_tag {
+    if [[ $completed == false ]]
+    then
+	echo "Build failure. Removing the created tag..."
+	echo "$version" > release_message.txt
+	echo "" >> release_message.txt
+	git cat-file -p release/$version | tail -n +6 >> release_message.txt
+	git tag --delete release/$version
+	echo "Release message in file release_message.txt"
+    fi
+}
+
+
 branch=$(git rev-parse --abbrev-ref HEAD)
 if [[ $branch != "master" ]]
 then
@@ -14,6 +29,7 @@ if [[ $REPLY =~ ^[Yy]$ ]] || [[ -z $REPLY ]]
 then
     create_version
     version=$(find_version)
+    trap remove_tag EXIT
 fi
 
 release-compile || exit 1
@@ -28,4 +44,5 @@ function tar_it {
 }
 tar_it | ssh filip-www@fprg.se /home/filip-www/upload-storm.sh $version $hash || { echo "Build failed on the server. Try again!"; exit 1; }
 
+completed=true
 echo "Finished! Remember to push tags!"
