@@ -81,6 +81,9 @@ namespace code {
 			beginBlock,
 			endBlock,
 
+			// End a block and jump somewhere.
+			endJmp,
+
 			// Variable activation.
 			activate,
 

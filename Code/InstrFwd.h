@@ -169,6 +169,7 @@ namespace code {
 	PROXY1(location, SrcPos);
 	PROXY1(begin, Block);
 	PROXY1(end, Block);
+	PROXY2(endJmp, Label, Block);
 	PROXY1(activate, Var);
 	PROXY0(threadLocal);
 }

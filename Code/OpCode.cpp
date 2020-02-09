@@ -75,6 +75,7 @@ namespace code {
 		OP_CODE(location, destNone),
 		OP_ALT_CODE(beginBlock, destNone, begin),
 		OP_ALT_CODE(endBlock, destNone, end),
+		OP_CODE(endJmp, destNone),
 		OP_CODE(activate, destNone),
 		OP_CODE(threadLocal, destNone),
 	};

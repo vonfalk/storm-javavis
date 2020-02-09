@@ -24,7 +24,9 @@ namespace code {
 			TRANSFORM(epilog),
 			TRANSFORM(beginBlock),
 			TRANSFORM(endBlock),
+			TRANSFORM(endJmp),
 			TRANSFORM(activate),
+			TRANSFORM(jmp),
 
 			TRANSFORM(fnRet),
 			TRANSFORM(fnRetRef),
@@ -38,6 +40,47 @@ namespace code {
 			} else {
 				return ptrRel(ptrFrame, Offset::sPtr * 2);
 			}
+		}
+
+		static void updateLabels(Array<Nat> *update, Array<Label> *labels, Nat current) {
+			if (!labels)
+				return;
+
+			for (Nat i = 0; i < labels->count(); i++) {
+				Label l = labels->at(i);
+				while (update->count() <= l.key())
+					update->push(0);
+
+				update->at(l.key()) = current;
+			}
+		}
+
+		static Array<Nat> *computeActivations(Listing *src) {
+			Nat current = 0;
+			Array<Nat> *result = new (src) Array<Nat>();
+			for (Nat i = 0; i < src->count(); i++) {
+				Instr *instr = src->at(i);
+				Array<Label> *labels = src->labels(i);
+				switch (instr->op()) {
+				case op::activate:
+					current++;
+					// Fall through.
+				case op::beginBlock:
+				case op::endBlock:
+				case op::prolog:
+				case op::epilog:
+					updateLabels(result, labels, INACTIVE);
+					break;
+				default:
+					updateLabels(result, labels, current);
+				}
+			}
+
+			// Last labels. Doesn't matter too much, but we want the elements in the array so we
+			// don't crash.
+			updateLabels(result, src->labels(src->count()), current);
+
+			return result;
 		}
 
 		void LayoutVars::before(Listing *dest, Listing *src) {
@@ -84,6 +127,8 @@ namespace code {
 
 			selfLbl = dest->label();
 			*dest << selfLbl;
+
+			lblActivation = computeActivations(src);
 		}
 
 		void LayoutVars::during(Listing *dest, Listing *src, Nat line) {
@@ -372,6 +417,31 @@ namespace code {
 			destroyBlock(dest, src->at(line)->src().block(), false);
 		}
 
+		void LayoutVars::endJmpTfm(Listing *dest, Listing *src, Nat line) {
+			// Destroy blocks until we find 'to'.
+			Block to = src->at(line)->src().block();
+
+			// We shall not modify the block level after we're done, so we must restore it.
+			Block oldBlock = block;
+			for (Block now = block; now != to; now = src->parent(now)) {
+				if (now == Block()) {
+					Str *msg = TO_S(this, S("The block ") << to << S(" is not a parent of ") << oldBlock << S("."));
+					throw new (this) BlockEndError(msg);
+				}
+
+				destroyBlock(dest, now, false);
+			}
+
+			// Update the activation ID if needed.
+			Label jmpTo = src->at(line)->dest().label();
+			Nat activation = lblActivation->at(jmpTo.key());
+			if (activation != INACTIVE && activation != activationId)
+				updateBlockId(dest, activation);
+
+			*dest << jmp(jmpTo);
+			block = oldBlock;
+		}
+
 		void LayoutVars::activateTfm(Listing *dest, Listing *src, Nat line) {
 			Var var = src->at(line)->src().var();
 			Nat &id = activated->at(var.key());
@@ -386,6 +456,22 @@ namespace code {
 			// We only need to update the block id if this impacts exception handling.
 			if (src->freeOpt(var) & freeOnException)
 				updateBlockId(dest);
+		}
+
+		void LayoutVars::jmpTfm(Listing *dest, Listing *src, Nat line) {
+			Instr *i = src->at(line);
+
+			if (i->dest().type() == opLabel) {
+				Label to = i->dest().label();
+
+				// Set the activation ID first, unless we don't need to (since we jump to a location
+				// that does that anyway) or it is the same as currently.
+				Nat activation = lblActivation->at(to.key());
+				if (activation != INACTIVE && activation != activationId)
+					updateBlockId(dest, activation);
+			}
+
+			*dest << i;
 		}
 
 		// Memcpy using mov instructions.
@@ -505,8 +591,12 @@ namespace code {
 		}
 
 		void LayoutVars::updateBlockId(Listing *dest) {
+			updateBlockId(dest, activationId);
+		}
+
+		void LayoutVars::updateBlockId(Listing *dest, Nat activation) {
 			if (usingEH) {
-				Nat id = encodeFnState(block.key(), activationId);
+				Nat id = encodeFnState(block.key(), activation);
 				*dest << mov(intRel(ptrFrame, blockId), natConst(id));
 			}
 		}

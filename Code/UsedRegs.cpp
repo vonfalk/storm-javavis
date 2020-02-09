@@ -30,6 +30,7 @@ namespace code {
 		switch (instr->op()) {
 		case op::jmp:
 		case op::endBlock:
+		case op::endJmp:
 		case op::prolog:
 			// These do not preserve any registers.
 			used->clear();

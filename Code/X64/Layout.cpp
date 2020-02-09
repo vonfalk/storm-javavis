@@ -18,6 +18,7 @@ namespace code {
 			TRANSFORM(epilog),
 			TRANSFORM(beginBlock),
 			TRANSFORM(endBlock),
+			TRANSFORM(endJmp),
 			TRANSFORM(activate),
 
 			TRANSFORM(fnRet),
@@ -236,6 +237,25 @@ namespace code {
 
 		void Layout::endBlockTfm(Listing *dest, Listing *src, Nat line) {
 			destroyBlock(dest, src->at(line)->src().block(), false, true);
+		}
+
+		void Layout::endJmpTfm(Listing *dest, Listing *src, Nat line) {
+			// Destroy blocks until we find 'to'.
+			Block to = src->at(line)->src().block();
+
+			// We shall not modify the block level after we're done, so we must restore it.
+			Block oldBlock = block;
+			for (Block now = block; now != to; now = src->parent(now)) {
+				if (now == Block()) {
+					Str *msg = TO_S(this, S("The block ") << to << S(" is not a parent of ") << oldBlock << S("."));
+					throw new (this) BlockEndError(msg);
+				}
+
+				destroyBlock(dest, now, false, false);
+			}
+
+			*dest << jmp(src->at(line)->dest().label());
+			block = oldBlock;
 		}
 
 		void Layout::activateTfm(Listing *dest, Listing *src, Nat line) {

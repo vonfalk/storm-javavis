@@ -14,6 +14,8 @@ namespace code {
 		inline Bool STORM_FN operator ==(Label o) const { return id == o.id; }
 		inline Bool STORM_FN operator !=(Label o) const { return id != o.id; }
 
+		inline Nat STORM_FN key() const { return id; }
+
 	private:
 		friend class Listing;
 		friend class Output;

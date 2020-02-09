@@ -49,6 +49,12 @@ namespace code {
 			// Is this a member function?
 			Bool memberFn;
 
+			// Array of activation id:s at each label. We use these to update the activation ID
+			// where necessary at each jump. If an element is "INACTIVE", then that instruction is
+			// an "activate" or a "begin" instruction, meaning that we don't need to do anything
+			// special.
+			Array<Nat> *lblActivation;
+
 			// Layout of variables.
 			Array<Offset> *layout;
 
@@ -81,9 +87,11 @@ namespace code {
 			void epilogTfm(Listing *dest, Listing *src, Nat line);
 			void beginBlockTfm(Listing *dest, Listing *src, Nat line);
 			void endBlockTfm(Listing *dest, Listing *src, Nat line);
+			void endJmpTfm(Listing *dest, Listing *src, Nat line);
 			void activateTfm(Listing *dest, Listing *src, Nat line);
 			void fnRetTfm(Listing *dest, Listing *src, Nat line);
 			void fnRetRefTfm(Listing *dest, Listing *src, Nat line);
+			void jmpTfm(Listing *dest, Listing *src, Nat line);
 
 			// Lookup variables to their corresponding offsets.
 			Operand resolve(Listing *src, const Operand &op);
@@ -96,6 +104,7 @@ namespace code {
 
 			// Update the block-id variable if needed.
 			void updateBlockId(Listing *dest);
+			void updateBlockId(Listing *dest, Nat activation);
 		};
 
 

@@ -478,6 +478,10 @@ namespace code {
 		return instrLoose(e, op::endBlock, Operand(), block);
 	}
 
+	Instr *endJmp(EnginePtr e, Label to, Block block) {
+		return instrLoose(e, op::endJmp, to, block);
+	}
+
 	Instr *activate(EnginePtr e, Var var) {
 		return instrLoose(e, op::activate, Operand(), var);
 	}
