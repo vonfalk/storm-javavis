@@ -234,7 +234,7 @@ class NameExpr extends Expr {
 		params.insert(0, context);
 		CppPart last(name.last.name, params);
 
-		if (t = ctx.type) {
+		if (t = context.result.type.type) {
 			if (found = t.find(last, scope)) {
 				return Found(found, context);
 			}

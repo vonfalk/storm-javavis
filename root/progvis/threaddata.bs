@@ -249,7 +249,7 @@ class FrameVal on Render {
 		g.draw(pos, dataFg);
 
 		Rect captionPos(pos.p0, Size(pos.size.w, caption.size.h + compositeBorder.h*2));
-		g.fill(captionPos, captionBg);
+		g.fill(captionPos, if (active) { captionActiveBg; } else { captionBg; });
 		g.draw(captionPos, captionFg);
 		g.draw(caption, captionFg, pos.p0 + compositeBorder);
 

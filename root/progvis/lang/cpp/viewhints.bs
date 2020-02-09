@@ -23,7 +23,7 @@ class CppViewHints extends ViewHints {
 			return null;
 
 		if (ptr = info.type as PtrType) {
-			return CppPointer(hints);
+			return CppPointer(hints, ptr.isStack);
 		}
 
 		null;
@@ -67,12 +67,17 @@ class CppCreateHints extends CreateHints {
  * C++ pointers/references.
  */
 class CppPointer extends Pointer {
-	init(CreateHints hints) {
-		init { hints = hints; }
+	init(CreateHints hints, Bool isStack) {
+		init { hints = hints; isStack = isStack; }
 	}
 
 	// Hints we should use.
 	CreateHints hints;
+
+	// Is this a stack pointer? If so, the 'object' we refer to might be on the stack, and thus
+	// might not be readable. Therefore, we make sure to not create instances of it even if it is
+	// not known.
+	Bool isStack;
 
 	void update(Workspace ws, unsafe:RawPtr object, Nat offset) : override {
 		if (!object.any) {
@@ -88,8 +93,18 @@ class CppPointer extends Pointer {
 
 		Nat ptrOffset = object.readNat(offset + core:asm:sPtr.current) - 2*core:asm:sPtr.current;
 
-		Data baseData = ws.traverse(base, hints);
-		to = baseData.findOffset(ptrOffset);
+		if (isStack) {
+			if (baseData = ws.traverseNoCreate(base)) {
+				to = baseData.findOffset(ptrOffset);
+			} else {
+				// Here, we should display a ? or something, but I don't expect this will ever
+				// happen when using plain C++ code, so it is fine this way.
+				to = null;
+			}
+		} else {
+			Data baseData = ws.traverse(base, hints);
+			to = baseData.findOffset(ptrOffset);
+		}
 	}
 }
 

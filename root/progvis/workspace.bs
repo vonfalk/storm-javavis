@@ -100,26 +100,12 @@ class Workspace on Render {
 
 	// Provide hints when traversing.
 	Data traverse(unsafe:RawPtr object, CreateHints? hints) {
-		// Handle stack allocations.
-		if (stackObjMap.has(object))
-			return stackObjMap.get(object);
+		// See if it exists.
+		if (data = traverseNoCreate(object, hints))
+			return false;
 
-		// Heap allocations.
-		Nat id = objMap.get(object, elements.count);
-		if (id < elements.count) {
-			// Update the old instance if it is not yet traversed.
-			var elem = elements[id];
-			if (data = elem.visual as Data) {
-				if (!elem.visited) {
-					elem.visited = true;
-					work.push(WorkItem(data, object));
-				}
-				return data;
-			}
-		}
-
-		print("Miss: ${object} was not found.");
 		// Create a new instance.
+		print("Miss: ${object} was not found.");
 		var visual = createData(this, object);
 		if (hints)
 			visual = hints.decorate(visual);
@@ -133,6 +119,34 @@ class Workspace on Render {
 		work.push(WorkItem(visual, object));
 
 		return visual;
+	}
+
+	// Traverse, but never attempt to create new nodes from 'object', as it might refer to stack
+	// objects or similar. This means that we will only traverse 'object' if we manage to verify
+	// that it is indeed a valid pointer.
+	Data? traverseNoCreate(unsafe:RawPtr object) {
+		// Handle stack allocations.
+		if (stackObjMap.has(object))
+			return stackObjMap.get(object);
+
+		// Heap allocations.
+		Nat id = objMap.get(object, elements.count);
+		if (id < elements.count) {
+			// Update the old instance if it is not yet traversed.
+			var elem = elements[id];
+			if (data = elem.visual as Data) {
+				// Note: If we get here, we know that 'object' is an acceptable reference to this
+				// instance, and as such it is safe to use it to update the element if we need to do
+				// so.
+				if (!elem.visited) {
+					elem.visited = true;
+					work.push(WorkItem(data, object));
+				}
+				return data;
+			}
+		}
+
+		null;
 	}
 
 	// Traverse the current contents of a thread.

@@ -1,5 +1,6 @@
 use core:asm;
 use core:lang;
+use lang:bs:macro;
 
 // Hints for the C++ module.
 progvis:Hints hints() {
@@ -51,11 +52,29 @@ class CppCodeHints extends progvis:CodeHints {
 		if (!info.ref)
 			return Save:none;
 
-		// The 'this' ptr is special. We need to handle that specially.
-		if (info.name == "this")
-			return Save:none;
+		// If the variable is a reference to a value and a parameter, we assume that it originates
+		// from a pointer allocation somewhere. It could, however, be allocated on the stack, which
+		// in itself is fine as long as we don't try to read the type information from the RawPtr
+		// created in the end.
+		if (to.isParam(var)) {
+			unless (type = (named{}).find(SimplePart("StackPtr", [Value(info.type)]), Scope()) as Type)
+				throw InternalError("Could not find a pointer type for ${info.type}.");
 
-		to << mov(dest, var);
+			to << fnParam(ptrDesc, type.typeRef);
+			to << fnParam(ptrDesc, ptrConst(1));
+			to << fnCall(ref(BuiltIn:allocArray), false, ptrDesc, ptrA);
+
+			to << mov(ptrB, var);
+			to << sub(ptrB, ptrConst(sPtr * 2));
+
+			to << mov(ptrRel(ptrA, Offset(sPtr)), ptrConst(1)); // filled
+			to << mov(ptrRel(ptrA, Offset(sPtr*2)), ptrB); // base
+			to << mov(intRel(ptrA, Offset(sPtr*3)), natConst(sPtr*2)); // offset
+
+			to << mov(dest, ptrA);
+		} else {
+			to << mov(dest, var);
+		}
 		Save:ref;
 	}
 

@@ -146,6 +146,9 @@ class FnRoot extends StmtBlock {
 
 		if (owner.isMember()) {
 			thisPtr = gen.l.createParam(ptrDesc);
+			Value memberOf = owner.params[0];
+			if (type = memberOf.type)
+				gen.l.varInfo(thisPtr, Listing:VarInfo("this", type, true, owner.pos));
 		}
 
 		for (param in params) {
