@@ -41,7 +41,9 @@ namespace gui {
 	}
 
 	void RenderMgr::detach(Painter *painter) {
-		painters->remove(painter);
+		// Painter::destroy calls detach, which will mess up the loop in "terminate" unless we're careful here.
+		if (!exiting)
+			painters->remove(painter);
 	}
 
 	void RenderMgr::terminate() {
