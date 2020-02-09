@@ -209,6 +209,10 @@ namespace storm {
 		advance(bootShutdown);
 		libs.shutdown();
 
+		// Perform a GC now, to execute as many finalizers as possible now. We might actually need
+		// to compile some destructors during shutdown...
+		gc.collect();
+
 		// We need to remove the root this array implies before the Gc is destroyed.
 		world.clear();
 
