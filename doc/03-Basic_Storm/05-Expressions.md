@@ -6,6 +6,17 @@ like in C, separated by a semicolon (`;`). Note that there are currently no real
 Storm. What sets Basic Storm apart from C is that everything can appear as a part of an expression,
 including local variable declarations, blocks and if-statements.
 
+Syntax
+-------
+
+The syntax used to describe expressions have their roots in the `Expr` syntax rule. There is also a
+rule named `Stmt`. The difference between an expression and a statement on the syntax level is that
+a statement ends with a semicolon, while an expression does not. This distinction is done to allow
+blocks to not end in a semicolon, as they do in C. It is, however, possible to include blocks in a
+regular expression as well. After the syntax level, expressions and statements are treated equally,
+as expressions.
+
+
 Literals
 ---------
 
@@ -668,21 +679,12 @@ Note that this has no meaning:
 var v = null;
 ```
 
-Syntax
--------
-
-The syntax used to describe expressions have their roots in the `Expr` syntax rule. There is also a
-rule named `Stmt`. The difference between an expression and a statement on the syntax level is that
-a statement ends with a semicolon, while an expression does not. This distinction is done to allow
-blocks to not end in a semicolon, as they do in C. It is, however, possible to include blocks in a
-regular expression as well. After the syntax level, expressions and statements are treated equally,
-as expressions.
-
 
 Loops
 -------
 
-All kinds of loops that work in C++ work in Basic Storm. However, there are some differences.
+All kinds of loops that work in C++ work in Basic Storm, as well as the keywords `break` and
+`continue`. However, there are some differences.
 
 Firstly, the `do`, and the `while` loop has been combined into one. To illustrate this, consider the
 following two examples:

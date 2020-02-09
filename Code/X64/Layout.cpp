@@ -18,7 +18,7 @@ namespace code {
 			TRANSFORM(epilog),
 			TRANSFORM(beginBlock),
 			TRANSFORM(endBlock),
-			TRANSFORM(endJmp),
+			TRANSFORM(jmpBlock),
 			TRANSFORM(activate),
 
 			TRANSFORM(fnRet),
@@ -239,7 +239,7 @@ namespace code {
 			destroyBlock(dest, src->at(line)->src().block(), false, true);
 		}
 
-		void Layout::endJmpTfm(Listing *dest, Listing *src, Nat line) {
+		void Layout::jmpBlockTfm(Listing *dest, Listing *src, Nat line) {
 			// Destroy blocks until we find 'to'.
 			Block to = src->at(line)->src().block();
 

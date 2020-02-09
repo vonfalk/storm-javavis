@@ -1,0 +1,60 @@
+use lang:bs:macro;
+
+Int breakLoop(Int target) {
+	Int r = 0;
+	do {
+		if (r > target)
+			break;
+		r++;
+	}
+	r;
+}
+
+Int breakWithCond(Int target) {
+	Int r = 0;
+	do {
+		r++;
+		if (r > target)
+			break;
+		r++;
+	} while (r <= target) {
+		r++;
+		if (r > target)
+			break;
+	}
+	r;
+}
+
+Int continueLoop(Int target) {
+	Int r = 0;
+	Int sum = 0;
+	while (r < target) {
+		r++;
+		if (r % 2 == 0)
+			continue;
+
+		sum += r;
+	}
+	sum;
+}
+
+Int breakFor(Int target) {
+	Int sum = 0;
+	for (Int i = 0; i < target; i++) {
+		if (sum > 15)
+			break;
+		sum += i;
+	}
+	sum;
+}
+
+Int continueFor(Int target) {
+	Int sum = 0;
+	for (Int i = 0; i < target; i++) {
+		if (i % 2 == 0)
+			continue;
+
+		sum += i;
+	}
+	sum;
+}

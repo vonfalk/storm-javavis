@@ -221,10 +221,11 @@ namespace code {
 	Instr *STORM_FN begin(EnginePtr e, Block block);
 	Instr *STORM_FN end(EnginePtr e, Block block);
 
-	// End one or more blocks and then jump to 'label'. As is the case with 'epilog', this does not
-	// affect the current block at the location just after the 'endJmp' instruction. As such, this
-	// pseudo-op is useful for early block exits, such as 'continue' and 'break' statements.
-	Instr *STORM_FN endJmp(EnginePtr e, Label to, Block block);
+	// End zero or more blocks and then jump to 'label'. Ends block until the current topmost block
+	// is 'block'. As is the case with 'epilog', this does not affect the current block at the
+	// location just after the 'endJmp' instruction. As such, this pseudo-op is useful for early
+	// block exits, such as 'continue' and 'break' statements.
+	Instr *STORM_FN jmpBlock(EnginePtr e, Label to, Block block);
 
 	// Activate destruction of a particular variable from here on in the listing.
 	Instr *STORM_FN activate(EnginePtr e, Var var);

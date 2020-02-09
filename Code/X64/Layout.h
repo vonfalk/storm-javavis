@@ -100,7 +100,7 @@ namespace code {
 			void epilogTfm(Listing *dest, Listing *src, Nat line);
 			void beginBlockTfm(Listing *dest, Listing *src, Nat line);
 			void endBlockTfm(Listing *dest, Listing *src, Nat line);
-			void endJmpTfm(Listing *dest, Listing *src, Nat line);
+			void jmpBlockTfm(Listing *dest, Listing *src, Nat line);
 			void activateTfm(Listing *dest, Listing *src, Nat line);
 
 			// Function returns.

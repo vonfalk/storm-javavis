@@ -525,6 +525,11 @@ SStmt[10] => e : SThrow(block) e, ";";
 SStmt[10] => e : STryCatch(block) e;
 SStmt[20] => e : SUnless(block) e;
 
+// Loop control statements. We could use SLoop..SStmt, but it makes sense to warn about improper usage
+// rather than give "variable not found".
+SStmt[10] => Continue(pos, block) : "continue" #keyword, ";";
+SStmt[10] => Break(pos, block) : "break" #keyword, ";";
+
 
 ////////////////////////////////////////////////////////////////////
 // Lambda functions!

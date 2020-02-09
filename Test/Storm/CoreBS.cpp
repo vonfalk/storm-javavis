@@ -357,6 +357,23 @@ BEGIN_TEST(ReturnTest, BS) {
 	CHECK_EQ(runFn<Int>(S("tests.bs.prematureReturn"), 20), 30);
 } END_TEST
 
+/**
+ * Break/continue.
+ */
+BEGIN_TEST(BreakTest, BS) {
+	CHECK_EQ(runFn<Int>(S("tests.bs.breakLoop"), 5), 6);
+	CHECK_EQ(runFn<Int>(S("tests.bs.breakWithCond"), 0), 1);
+	CHECK_EQ(runFn<Int>(S("tests.bs.breakWithCond"), 1), 2);
+	CHECK_EQ(runFn<Int>(S("tests.bs.breakWithCond"), 2), 3);
+	CHECK_EQ(runFn<Int>(S("tests.bs.breakFor"), 4), 6);
+	CHECK_EQ(runFn<Int>(S("tests.bs.breakFor"), 10), 21);
+} END_TEST
+
+BEGIN_TEST(ContinueTest, BS) {
+	CHECK_EQ(runFn<Int>(S("tests.bs.continueLoop"), 5), 9);
+	CHECK_EQ(runFn<Int>(S("tests.bs.continueFor"), 5), 4);
+} END_TEST
+
 
 /**
  * Arrays.

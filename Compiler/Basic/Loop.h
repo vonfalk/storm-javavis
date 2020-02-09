@@ -1,5 +1,6 @@
 #pragma once
 #include "Block.h"
+#include "Breakable.h"
 #include "WeakCast.h"
 
 namespace storm {
@@ -13,7 +14,7 @@ namespace storm {
 		 * do { } while (x) { }
 		 * while (x) { }
 		 */
-		class Loop : public Block {
+		class Loop : public Breakable {
 			STORM_CLASS;
 		public:
 			STORM_CTOR Loop(SrcPos pos, Block *parent);
@@ -44,6 +45,13 @@ namespace storm {
 			// Code.
 			virtual void STORM_FN code(CodeGen *state, CodeResult *r);
 
+			// Break- and continue management.
+			virtual void STORM_FN willBreak();
+			virtual void STORM_FN willContinue();
+
+			virtual Breakable::To STORM_FN breakTo();
+			virtual Breakable::To STORM_FN continueTo();
+
 		protected:
 			virtual void STORM_FN toS(StrBuf *to) const;
 
@@ -56,6 +64,15 @@ namespace storm {
 
 			// While content.
 			MAYBE(CondSuccess *) whileExpr;
+
+			// Did we find any break statements.
+			Bool anyBreak;
+
+			// During codegen: where to break and continue to/from.
+			code::Block breakBlock;
+			code::Block continueBlock;
+			code::Label before;
+			code::Label after;
 
 			// Code generation.
 			void code(CodeGen *outer, CodeGen *inner, CodeResult *r);

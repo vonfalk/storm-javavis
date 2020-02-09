@@ -1,15 +1,15 @@
 #pragma once
 #include "Block.h"
+#include "Breakable.h"
 
 namespace storm {
 	namespace bs {
 		STORM_PKG(lang.bs);
 
 		/**
-		 * For loop (basic). The start expression should
-		 * be placed in a block outside the for loop.
+		 * For loop (basic). The start expression should be placed in a block outside the for loop.
 		 */
-		class For : public Block {
+		class For : public Breakable {
 			STORM_CLASS;
 		public:
 			STORM_CTOR For(SrcPos pos, Block *parent);
@@ -32,9 +32,21 @@ namespace storm {
 			// Code.
 			virtual void STORM_FN blockCode(CodeGen *s, CodeResult *to, code::Block block);
 
+			// Break- and continue management.
+			virtual void STORM_FN willBreak();
+			virtual void STORM_FN willContinue();
+
+			virtual Breakable::To STORM_FN breakTo();
+			virtual Breakable::To STORM_FN continueTo();
+
 		protected:
 			// ToS.
 			virtual void STORM_FN toS(StrBuf *to) const;
+
+		private:
+			code::Block block;
+			code::Label brk;
+			code::Label cont;
 		};
 
 	}

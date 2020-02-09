@@ -5,7 +5,7 @@
 namespace storm {
 	namespace bs {
 
-		Loop::Loop(SrcPos pos, Block *parent) : Block(pos, parent) {}
+		Loop::Loop(SrcPos pos, Block *parent) : Breakable(pos, parent), anyBreak(false) {}
 
 		void Loop::cond(Condition *cond) {
 			condition = cond;
@@ -38,7 +38,7 @@ namespace storm {
 		}
 
 		ExprResult Loop::result() {
-			if (condition) {
+			if (condition || anyBreak) {
 				// No reliable value, the last expression in the do part could be used.
 				return ExprResult();
 			} else {
@@ -69,46 +69,60 @@ namespace storm {
 		void Loop::code(CodeGen *outerState, CodeGen *innerState, CodeResult *r) {
 			using namespace code;
 
-			Label before = innerState->l->label();
-			CodeResult *condResult = null;
+			Listing *l = innerState->l;
+			breakBlock = innerState->block;
+			continueBlock = outerState->block;
+			before = l->label();
+			after = l->label();
 
-			*innerState->l << before;
-			*innerState->l << begin(innerState->block);
+			*l << before;
+			*l << begin(innerState->block);
 
+			// Things in the do-part.
 			if (doExpr) {
 				CodeResult *doResult = new (this) CodeResult();
 				doExpr->code(innerState, doResult);
 			}
 
+			// Check the condition.
 			if (condition) {
-				condResult = new (this) CodeResult(Value(StormInfo<Bool>::type(engine())), outerState->block);
+				CodeResult *condResult = new (this) CodeResult(Value(StormInfo<Bool>::type(engine())), innerState->block);
 				condition->code(innerState, condResult);
+
+				code::Var c = condResult->location(innerState);
+				*l << cmp(c, byteConst(0));
+				*l << jmp(after, ifEqual);
 			}
 
+			// Things in the while-part.
 			if (whileExpr) {
 				Label after = innerState->l->label();
-
-				if (condResult) {
-					code::Var c = condResult->location(innerState);
-					*innerState->l << cmp(c, byteConst(0));
-					*innerState->l << jmp(after, ifEqual);
-				}
 
 				CodeResult *whileResult = new (this) CodeResult();
 				whileExpr->code(innerState, whileResult);
 
-				*innerState->l << after;
+				*l << after;
 			}
 
-			*innerState->l << end(innerState->block);
+			// Jump back to the start.
+			*l << jmpBlock(before, outerState->block);
 
-			if (condResult) {
-				code::Var c = condResult->location(outerState);
-				*innerState->l << cmp(c, byteConst(0));
-				*innerState->l << jmp(before, ifNotEqual);
-			} else {
-				*innerState->l << jmp(before);
-			}
+			*l << after;
+			*l << end(innerState->block);
+		}
+
+		void Loop::willBreak() {
+			anyBreak = true;
+		}
+
+		void Loop::willContinue() {}
+
+		Breakable::To Loop::breakTo() {
+			return Breakable::To(after, breakBlock);
+		}
+
+		Breakable::To Loop::continueTo() {
+			return Breakable::To(before, continueBlock);
 		}
 
 		void Loop::toS(StrBuf *to) const {
