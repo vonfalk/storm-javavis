@@ -171,6 +171,9 @@ namespace code {
 		// Move a parameter to a specific location.
 		void STORM_FN moveParam(Var param, Nat to);
 
+		// Move a variable to the beginning of a block. This impacts memory layout and destruction order.
+		void STORM_FN moveFirst(Var var);
+
 		// Get the variable stored just before 'v' in this stack frame. Within a single block, it
 		// just returns the variable added before 'v'. If 'v' is the first variable in that block,
 		// the last variable of the previous block is returned. This will give all variables visible

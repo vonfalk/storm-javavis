@@ -339,8 +339,9 @@ namespace code {
 
 			Bool pushedRax = false;
 			Array<Var> *vars = dest->allVars(destroy);
-			for (Nat i = 0; i < vars->count(); i++) {
-				Var v = vars->at(i);
+			// Destroy in reverse order.
+			for (Nat i = vars->count(); i > 0; i--) {
+				Var v = vars->at(i - 1);
 
 				Operand dtor = dest->freeFn(v);
 				FreeOpt when = dest->freeOpt(v);

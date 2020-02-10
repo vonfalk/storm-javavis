@@ -355,6 +355,24 @@ namespace code {
 		params->insert(to, v.id);
 	}
 
+	void Listing::moveFirst(Var v) {
+		if (isParam(v))
+			return;
+
+		if (v.id >= vars->count())
+			return;
+
+		Nat blockId = vars->at(v.id).parent;
+		IBlock &block = blocks->at(blockId);
+		for (Nat i = block.vars->count() - 1; i > 0; i--) {
+			if (block.vars->at(i) == v.id) {
+				// Move it ahead one step. We'll find it again in the next iteration!
+				block.vars->at(i) = block.vars->at(i - 1);
+				block.vars->at(i - 1) = v.id;
+			}
+		}
+	}
+
 	Block Listing::parent(Block b) const {
 		if (b.id >= blocks->count())
 			return Block();

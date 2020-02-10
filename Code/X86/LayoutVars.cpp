@@ -286,8 +286,9 @@ namespace code {
 			bool pushedEax = false;
 
 			Array<Var> *vars = dest->allVars(destroy);
-			for (nat i = 0; i < vars->count(); i++) {
-				Var v = vars->at(i);
+			// Destroy in reverse order.
+			for (Nat i = vars->count(); i > 0; i--) {
+				Var v = vars->at(i - 1);
 
 				Operand dtor = dest->freeFn(v);
 				FreeOpt when = dest->freeOpt(v);

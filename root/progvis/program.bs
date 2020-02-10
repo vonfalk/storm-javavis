@@ -366,7 +366,7 @@ private void saveVariables(PatchParams to, Var[] vars, Var array, Var stackVar) 
 	}
 }
 
-// Generate the call to 'functionEntered' and make sure 'functionExited' is called on function exit.
+// Generate the call to 'functionEntered' and make sure 'functionExited' is called on function exit (last).
 private void generateCallTracking(Program program, PatchParams to, Function fn) on Compiler {
 	var enterFn = named{Program:functionEntered<Program, Str, StackVar[]>};
 	// TODO: It is not always safe to do this... The destructor is expected to be a free function,
@@ -381,6 +381,7 @@ private void generateCallTracking(Program program, PatchParams to, Function fn) 
 	Listing l = to.to;
 
 	Var v = l.createVar(l.root, sPtr, exitFn.ref);
+	l.moveFirst(v);
 	l << mov(v, objPtr(program));
 
 	Block subBlock = l.createBlock(l.root);
