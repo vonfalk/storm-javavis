@@ -1,12 +1,12 @@
 class Content on Compiler {
 	// Functions found.
-	CppFnDecl[] functions;
+	CppDecl[] functions;
 
 	// Types found.
 	CppType[] types;
 
 	// Add functions.
-	void add(CppFnDecl fn) {
+	void add(CppDecl fn) {
 		functions << fn;
 	}
 

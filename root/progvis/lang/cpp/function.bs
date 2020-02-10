@@ -2,19 +2,28 @@ use core:lang;
 use core:asm;
 use lang:bs:macro;
 
-class CppFnDecl on Compiler {
-	STypeName result;
+class CppDecl on Compiler {
 	SStr name;
-	Formal[] formals;
 	Visibility? visibility;
+
+	init(SStr name) {
+		init { name = name; }
+	}
+
+	// Create this thing.
+	void create(NameSet inside) : abstract;
+}
+
+class CppFnDecl extends CppDecl {
+	STypeName result;
+	Formal[] formals;
 
 	// If 'null', then this is just a declaration.
 	SStmtList? body;
 
 	init(STypeName result, SStr name, Formal[] formals, SStmtList? body) {
-		init() {
+		init(name) {
 			result = result;
-			name = name;
 			formals = formals;
 			body = body;
 		}
@@ -26,7 +35,7 @@ class CppFnDecl on Compiler {
 		unless (body)
 			return;
 
-		CppFunction fn(cppScope(inside), this, inside, body);
+		CppPlainFunction fn(cppScope(inside), this, inside, body);
 		if (visibility)
 			fn.visibility = visibility;
 		inside.add(fn);
@@ -45,11 +54,21 @@ value Formal {
 
 // A C++ function.
 class CppFunction extends Function {
+	SrcPos pos;
+	Scope scope;
+
+	init(Scope scope, SrcPos pos, Value result, Str name, Value[] params) {
+		init(result, name, params) {
+			scope = scope;
+			pos = pos;
+		}
+	}
+}
+
+class CppPlainFunction extends CppFunction {
 	// Names of all formal parameters.
 	private SStr[] formals;
 	private SStmtList body;
-	SrcPos pos;
-	Scope scope;
 
 	init(Scope scope, CppFnDecl decl, NameSet inside, SStmtList body) {
 		Value[] fTypes;
@@ -70,11 +89,9 @@ class CppFunction extends Function {
 			fNames << f.name;
 		}
 
-		init(decl.result.transform(scope), decl.name.v, fTypes) {
+		init(scope, decl.name.pos, decl.result.transform(scope), decl.name.v, fTypes) {
 			formals = fNames;
 			body = body;
-			pos = decl.name.pos;
-			scope = scope;
 		}
 
 		setCode(LazyCode(&this.code));

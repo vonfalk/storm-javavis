@@ -93,6 +93,8 @@ class ProgThread on Render {
 		// print("Function ${frames.last.function} exited.");
 		if (callDepth > 0)
 			callDepth--;
+
+		popFrames();
 	}
 
 	// Set the animation delay. Resumes the thread if it was stopped.
@@ -128,7 +130,7 @@ class ProgThread on Render {
 
 	// Decrease the stack frames until the proper depth is reached.
 	private void popFrames() {
-		while (frames.count > callDepth)
+		while (frames.count > max(1n, callDepth))
 			frames.pop();
 	}
 

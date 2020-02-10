@@ -73,10 +73,10 @@ class CppVar on Compiler {
 // Allocate memory for a C++ type. Return the variable where it was created.
 CppVar allocType(CodeGen gen, Type type) {
 	// We attach a destructor to all objects so that we can keep track of which are alive.
-	var dtor = named{cppDtor<unsafe:RawPtr>}.ref;
+	var dtor = type.cppDtor();
 
 	Listing l = gen.l;
-	Var v = l.createVar(gen.block, sPtr, dtor, FreeOpt:default + FreeOpt:inactive);
+	Var v = l.createVar(gen.block, sPtr, dtor.ref, FreeOpt:default + FreeOpt:inactive);
 
 	// Allocate memory.
 	l << fnParam(ptrDesc, type.typeRef);
@@ -84,13 +84,4 @@ CppVar allocType(CodeGen gen, Type type) {
 	l << fnCall(ref(BuiltIn:allocArray), false, ptrDesc, v);
 
 	CppVar(v, true);
-}
-
-// Destructor for C++ types.
-void cppDtor(unsafe:RawPtr obj) {
-	// print("Destroying an object ${obj}");
-	asm {
-		mov ptrA, obj;
-		mov p[ptrA + sPtr], p0;
-	}
 }

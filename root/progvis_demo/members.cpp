@@ -3,6 +3,11 @@ public:
 	int a;
 	int b;
 
+	// inner() : a(1), b(2) {}
+	~inner() {
+		b = 30;
+	}
+
 	int sum() {
 		return a + b;
 	}
@@ -14,18 +19,24 @@ public:
 	int a;
 	inner b;
 
+	// outer() : a(1) {}
+	~outer() {
+		a = 20;
+	}
+
 	int sum() {
 		return a + b.sum();
 	}
 };
 
 int main() {
-	// inner i;
-	// print(i.sum());
-
 	outer o;
 	print(o.sum());
 	print(o.b.sum());
+
+	outer *a = new outer;
+	a->sum();
+	delete a;
 
 	return 0;
 }

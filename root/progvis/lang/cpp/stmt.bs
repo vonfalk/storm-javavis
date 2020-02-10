@@ -278,12 +278,11 @@ class DeleteStmt extends Stmt {
 		gen.l << fnParam(intDesc, intRel(ptrA, Offset(sPtr)));
 		gen.l << fnCall(named{checkDelete<unsafe:RawPtr, Nat>}.ref, false);
 
-		// TODO: Run destructor!
-
-		// Clear 'filled'.
+		Type type = safeType(unwrapPtr(ptr.result.type), pos);
+		Function dtor = type.cppDtor();
 		gen.l << mov(ptrA, r);
-		gen.l << mov(ptrA, ptrRel(ptrA));
-		gen.l << mov(ptrRel(ptrA, Offset(sPtr)), ptrConst(0));
+		gen.l << fnParam(ptrDesc, ptrRel(ptrA));
+		gen.l << fnCall(dtor.ref, false);
 
 		true;
 	}

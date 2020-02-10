@@ -44,6 +44,17 @@ class CppCodeHints extends progvis:CodeHints {
 	}
 
 	Str cleanName(Function fn, Package pkg) : override {
+		Str name = fn.name;
+		if (fn.isMember()) {
+			if (t = fn.params[0].type) {
+				if (fn.name == "__destroy") {
+					return "~" + t.name + "()";
+				} else if (fn.name == "__init") {
+					name = t.name;
+				}
+			}
+		}
+
 		// TODO!
 		fn.name + "(...)";
 	}

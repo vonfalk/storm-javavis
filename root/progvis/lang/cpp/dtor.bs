@@ -1,0 +1,153 @@
+use core:lang;
+use core:asm;
+use lang:asm;
+use lang:bs:macro;
+
+class CppDtorDecl extends CppDecl {
+	SStmtList? body;
+
+	init(SStr name, SStmtList? body) {
+		init(name) {
+			body = body;
+		}
+	}
+
+	void create(NameSet inside) : override {
+		unless (body)
+			return;
+
+		CppDtor fn(cppScope(inside), name.pos, inside, body);
+		if (visibility)
+			fn.visibility = visibility;
+		inside.add(fn);
+
+		inside.add(wrapCppDtor(fn));
+	}
+}
+
+// Find the C++ dtor for a type.
+Function cppDtor(Type type) on Compiler {
+	if (fn = type.find(SimplePart("__cpp_destroy", [thisPtr(type)]), cppScope(type)) as Function) {
+		fn;
+	} else {
+		named{cppGenericDtor<unsafe:RawPtr>};
+	}
+}
+
+// Generic destructor for C++ types.
+void cppGenericDtor(unsafe:RawPtr obj) {
+	// print("Destroying an object ${obj}");
+	asm {
+		mov ptrA, obj;
+		mov p[ptrA + sPtr], p0;
+	}
+}
+
+// Wrap a previously created C++ destructor to make it suitable to call from our array allocations.
+Function wrapCppDtor(Function dtor) on Compiler {
+	Listing l;
+	Var param = l.createParam(ptrDesc);
+
+	l << prolog();
+
+	// Call the original destructor.
+	l << mov(ptrA, param);
+	l << add(ptrA, ptrConst(Offset(sPtr * 2)));
+	l << fnParam(ptrDesc, ptrA);
+	l << fnParam(intDesc, natConst(sPtr * 2));
+	l << fnCall(dtor.ref, true);
+
+	// Mark it as 'empty'.
+	l << mov(ptrA, param);
+	l << mov(ptrRel(ptrA, Offset(sPtr)), ptrConst(0));
+	l << fnRet();
+
+	Function f(Value(), "__cpp_destroy", [dtor.params[0]]);
+	f.setCode(DynamicCode(l));
+	f;
+}
+
+class CppDtor extends CppFunction {
+	private SStmtList? body;
+
+	init(Scope scope, SrcPos pos, NameSet inside, SStmtList? body) {
+		Value[] fTypes;
+		SStr[] fNames;
+
+		if (inside as Type) {
+			fTypes << Value(thisPtr(inside));
+			fNames << SStr("this", pos);
+
+			// We also need a hidden 'offset' ptr, that allows us to reconstruct a Ptr<> object.
+			fTypes << Value(named{Nat});
+			fNames << SStr("offset", pos);
+		}
+
+		init(scope, pos, Value(), "__destroy", fTypes) {
+			body = body;
+		}
+
+		setCode(LazyCode(&this.code));
+	}
+
+	// Generate code on demand.
+	private CodeGen code() {
+		FnRoot root = if (body) {
+			FnRoot fn(body.pos, this);
+			body.transform(fn);
+			fn;
+		} else {
+			FnRoot(pos, this);
+		};
+
+		CodeGen gen(runOn, isMember, result);
+		gen.l << prolog();
+
+		if (!root.code(gen))
+			throw SyntaxError(pos, "This implementation does not support using 'return' in the destructor!");
+
+		// Destroy all member variables.
+		if (type = params[0].type) {
+			for (var in type.variables) {
+				if (varType = var.type.type) {
+					destroyVar(gen, varType, var.offset, root);
+				}
+			}
+
+			if (s = type.super) {
+				// Destroy any super-classes.
+				destroyVar(gen, s, Offset(), root);
+			}
+		}
+
+		gen.l << fnRet();
+
+		// print("Generated code for ${params[0]}:\n${gen.l}");
+
+		gen;
+	}
+
+	// Destroy a variable.
+	private void destroyVar(CodeGen gen, Type type, Offset offset, FnRoot root) {
+		// C++ dtor.
+		if (dtor = type.find(SimplePart("__destroy", [thisPtr(type), Value(named{Nat})]), scope) as Function) {
+			gen.l << mov(ptrA, root.thisPtr);
+			gen.l << add(ptrA, ptrConst(offset));
+			gen.l << mov(ecx, root.thisOffset);
+			gen.l << add(ecx, intConst(offset));
+			gen.l << fnParam(ptrDesc, ptrA);
+			gen.l << fnParam(intDesc, ecx);
+			gen.l << fnCall(dtor.ref, true);
+			return;
+		}
+
+		// Regular dtor.
+		if (dtor = type.find(SimplePart("__destroy", [thisPtr(type)]), scope) as Function) {
+			gen.l << mov(ptrA, root.thisPtr);
+			gen.l << add(ptrA, ptrConst(offset));
+			gen.l << fnParam(ptrDesc, ptrA);
+			gen.l << fnCall(dtor.ref, true);
+			return;
+		}
+	}
+}

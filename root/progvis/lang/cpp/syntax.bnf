@@ -68,6 +68,10 @@ SClassItem => state : SClassDecl -> add;
 SClassItem => state : SFnDecl -> add;
 // Variable declarations:
 SClassItem => state : SVarDecl(state.to) -> add, ";";
+// Constructors:
+SClassItem => state : SCtorDecl -> add;
+// Destructors:
+SClassItem => state : SDtorDecl -> add;
 
 MemberVar SVarDecl(CppType type);
 SVarDecl => MemberVar(name.v, t, type) : STypeName(type.scope) t, SIdentifier name; 
@@ -90,6 +94,24 @@ SFormals => Array<Formal>() : SFormal -> push - (, ",", SFormal -> push)*;
 
 Formal SFormal();
 SFormal => Formal(type, name) : STypeName @type, SIdentifier name;
+
+// Constructors and destructors.
+void SCtorDecl();
+SCtorDecl : SIdentifier name #fnName, "(", SFormals formals, ")", SCtorTail body;
+
+CppDtorDecl SDtorDecl();
+SDtorDecl => CppDtorDecl(name, body) : "~", SIdentifier name #fnName, "(", ")", SFnTail body;
+
+void SCtorTail();
+SCtorTail : ";";
+SCtorTail : (":", SInitList,)? "{", SStmtList @block, "}";
+
+void SInitList();
+SInitList : SInitItem - (, ",", SInitItem)*;
+
+void SInitItem();
+SInitItem : SIdentifier #varName, "(", SExpr, ")";
+SInitItem : SIdentifier #varName, "{", SExpr, "}";
 
 // Identifiers
 SStr SIdentifier();

@@ -1,5 +1,6 @@
 use core:lang;
 use core:asm;
+use lang:bs:macro;
 
 /**
  * State used when expanding declarations inside a type.
@@ -27,7 +28,7 @@ class TypeState on Compiler {
 	}
 
 	// Add a function decl.
-	void add(CppFnDecl decl) {
+	void add(CppDecl decl) {
 		decl.visibility = visibility;
 		decl.create(to);
 	}
@@ -84,8 +85,11 @@ class CppType extends Type {
 
 		// TODO: Add default members if needed.
 
-		for (v in this) {
-			print("Member: ${v}");
+		// Add a destructor if we don't have one.
+		if (findHere(SimplePart("__destroy", [thisPtr(this), Value(named{Nat})]), Scope()).empty) {
+			CppDtor dtor(cppScope(this), pos, this, null);
+			add(dtor);
+			add(wrapCppDtor(dtor));
 		}
 
 		super:loadAll();

@@ -139,7 +139,7 @@ class VarDecl extends Stmt {
 			// We need to call the copy-ctor...
 			// TODO: Handle C++ copy ctors as well. They have a Ref<> as their other parameter.
 			if (copy = t.copyCtor) {
-				return VarDecl(pos, parent, type, name, CtorCall(pos, copy, [init]));
+				return VarDecl(pos, parent, type, name, CtorCall(pos, copy, [init], false));
 			}
 		}
 
