@@ -40,6 +40,10 @@ class ProgThread on Render {
 	// Terminate the thread at the next opportunity to do so.
 	private Bool doTerminate;
 
+	// Did we throw the termination exception? If so, we will not intercept execution anymore, since
+	// destructors might be intercepted.
+	private Bool terminating;
+
 	// Create.
 	init(Program owner) {
 		init() {
@@ -59,6 +63,9 @@ class ProgThread on Render {
 
 	// Called by a monitored thread to possible pause execution.
 	void onNewLocation(SrcPos pos, StackVar[] vars) {
+		if (terminating)
+			return;
+
 		popFrames();
 
 		var last = frames.last;
@@ -69,6 +76,9 @@ class ProgThread on Render {
 
 	// Called when a monitored thread is about to return.
 	void onFunctionReturn(StackVar[] vars) {
+		if (terminating)
+			return;
+
 		popFrames();
 
 		var last = frames.last;
@@ -83,6 +93,9 @@ class ProgThread on Render {
 
 		callDepth++;
 		frames.push(StackFrame(name, hints, vars, pos));
+
+		if (terminating)
+			return;
 
 		if (hints.pauseOnEntry())
 			wait();
@@ -152,6 +165,7 @@ class ProgThread on Render {
 		running = true;
 
 		if (doTerminate) {
+			terminating = true;
 			throw ExitError();
 		}
 	}

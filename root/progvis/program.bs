@@ -72,6 +72,11 @@ class Program on Render {
 			// TODO: An output console would be nice!
 			print("Caught exception from the program:\n${e}");
 		}
+
+		// If the thread remains by now, remove it.
+		// This is just to be safe. It should not happen.
+		Word id = currentUThread();
+		threads.remove(id);
 	}
 
 	// Load source code.

@@ -22,7 +22,7 @@ class CppCodeHints extends progvis:CodeHints {
 
 			// TODO: Wrap output in a better way.
 			if (ptr as Fn<Int>)
-				return () => print("Result: " # ptr.call());
+				return &ptr.wrapMain();
 		}
 
 		// TODO: Perhaps support "argc, argv" parameters as well!
@@ -112,3 +112,6 @@ class CppCodeHints extends progvis:CodeHints {
 	}
 }
 
+void wrapMain(Fn<Int> fn) {
+	print("Result: " + fn.call.toS);
+}
