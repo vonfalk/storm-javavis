@@ -101,11 +101,13 @@ class Workspace on Render {
 	// Provide hints when traversing.
 	Data traverse(unsafe:RawPtr object, CreateHints? hints) {
 		// See if it exists.
-		if (data = traverseNoCreate(object, hints))
-			return false;
+		if (data = traverseNoCreate(object))
+			return data;
+
+		print("Miss: ${object} was not found.");
 
 		// Create a new instance.
-		print("Miss: ${object} was not found.");
+		Nat id = elements.count;
 		var visual = createData(this, object);
 		if (hints)
 			visual = hints.decorate(visual);

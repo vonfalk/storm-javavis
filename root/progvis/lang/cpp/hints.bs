@@ -57,7 +57,15 @@ class CppCodeHints extends progvis:CodeHints {
 		// in itself is fine as long as we don't try to read the type information from the RawPtr
 		// created in the end.
 		if (to.isParam(var)) {
-			unless (type = (named{}).find(SimplePart("StackPtr", [Value(info.type)]), Scope()) as Type)
+			// Variables like this are followed by an integer variable specifying their original offset.
+			Var next = nextParam(var, to);
+			if (next == Var())
+				return Save:none;
+
+			if (next.size != sNat)
+				return Save:none;
+
+			unless (type = (named{}).find(SimplePart("Ptr", [Value(info.type)]), Scope()) as Type)
 				throw InternalError("Could not find a pointer type for ${info.type}.");
 
 			to << fnParam(ptrDesc, type.typeRef);
@@ -65,11 +73,12 @@ class CppCodeHints extends progvis:CodeHints {
 			to << fnCall(ref(BuiltIn:allocArray), false, ptrDesc, ptrA);
 
 			to << mov(ptrB, var);
-			to << sub(ptrB, ptrConst(sPtr * 2));
+			to << ucast(ptrC, next);
+			to << sub(ptrB, ptrC);
 
 			to << mov(ptrRel(ptrA, Offset(sPtr)), ptrConst(1)); // filled
 			to << mov(ptrRel(ptrA, Offset(sPtr*2)), ptrB); // base
-			to << mov(intRel(ptrA, Offset(sPtr*3)), natConst(sPtr*2)); // offset
+			to << mov(intRel(ptrA, Offset(sPtr*3)), next); // offset
 
 			to << mov(dest, ptrA);
 		} else {
@@ -78,5 +87,17 @@ class CppCodeHints extends progvis:CodeHints {
 		Save:ref;
 	}
 
+	// Find the next parameter.
+	private Var nextParam(Var param, Listing in) : static {
+		Var[] params = in.allParams();
+		for (i, v in params) {
+			if (v == param) {
+				if (i + 1 < params.count)
+					return params[i + 1];
+			}
+		}
+
+		return Var();
+	}
 }
 

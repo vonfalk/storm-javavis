@@ -1,5 +1,6 @@
 use core:lang;
 use core:asm;
+use lang:bs:macro;
 
 class CppFnDecl on Compiler {
 	STypeName result;
@@ -57,6 +58,10 @@ class CppFunction extends Function {
 		if (inside as Type) {
 			fTypes << Value(thisPtr(inside));
 			fNames << SStr("this", decl.name.pos);
+
+			// We also need a hidden 'offset' ptr, that allows us to reconstruct a Ptr<> object.
+			fTypes << Value(named{Nat});
+			fNames << SStr("offset", decl.name.pos);
 		}
 
 		for (f in decl.formals) {
@@ -81,8 +86,8 @@ class CppFunction extends Function {
 
 		// Add parameters.
 		for (id, v in formals) {
-			// Don't add the 'this' parameter. It is handled specially.
-			if (id > 0 | !isMember())
+			// Don't add the 'this' and 'offset' parameters. They are handled specially.
+			if (id > 1 | !isMember())
 				root.addParam(v.v, params[id], v.pos);
 		}
 
@@ -121,6 +126,9 @@ class FnRoot extends StmtBlock {
 	// Storm. This is actually not too bad, since &this is not accepted by e.g. GCC on X86-64.
 	Var thisPtr;
 
+	// The offset of 'thisPtr', so that we can re-construct the this-pointer if we need to.
+	Var thisOffset;
+
 	// Parameters. Also added as usual to the block.
 	private LocalVar[] params;
 
@@ -149,6 +157,9 @@ class FnRoot extends StmtBlock {
 			Value memberOf = owner.params[0];
 			if (type = memberOf.type)
 				gen.l.varInfo(thisPtr, Listing:VarInfo("this", type, true, owner.pos));
+
+			// The offset parameter.
+			thisOffset = gen.l.createParam(intDesc);
 		}
 
 		for (param in params) {

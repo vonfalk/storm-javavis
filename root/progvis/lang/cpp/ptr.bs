@@ -4,29 +4,24 @@ use lang:bs:macro;
 
 // Pointers.
 Ptr : generate(params) {
-	generatePtr(params, "Ptr", false, false, false);
+	generatePtr(params, "Ptr", false, false);
 }
 
 ConstPtr : generate(params) {
-	generatePtr(params, "ConstPtr", true, false, false);
+	generatePtr(params, "ConstPtr", true, false);
 }
 
 // References.
 Ref : generate(params) {
-	generatePtr(params, "Ref", false, true, false);
+	generatePtr(params, "Ref", false, true);
 }
 
 ConstRef : generate(params) {
-	generatePtr(params, "ConstRef", true, true, false);
-}
-
-// Possibly a stack pointer. We trust the static type here in case we need to check it.
-StackPtr : generate(params) {
-	generatePtr(params, "StackPtr", false, false, true);
+	generatePtr(params, "ConstRef", true, true);
 }
 
 // Create a type.
-Named? generatePtr(Array<Value> params, Str name, Bool isConst, Bool isRef, Bool isStack) {
+Named? generatePtr(Array<Value> params, Str name, Bool isConst, Bool isRef) {
 	// Only one parameter.
 	if (params.count != 1)
 		return null;
@@ -36,7 +31,7 @@ Named? generatePtr(Array<Value> params, Str name, Bool isConst, Bool isRef, Bool
 	if (!par.isValue)
 		return null;
 
-	PtrType(par.asRef(false), name, isConst, isRef, isStack);
+	PtrType(par.asRef(false), name, isConst, isRef);
 }
 
 /**
@@ -48,8 +43,8 @@ Named? generatePtr(Array<Value> params, Str name, Bool isConst, Bool isRef, Bool
  * Can also act as a reference.
  */
 class PtrType extends Type {
-	init(Value inside, Str name, Bool isConst, Bool isRef, Bool isStack) {
-		init(name, [inside], TypeFlags:typeValue) { isRef = isRef; isConst = isConst; isStack = isStack; }
+	init(Value inside, Str name, Bool isConst, Bool isRef) {
+		init(name, [inside], TypeFlags:typeValue) { isRef = isRef; isConst = isConst; }
 	}
 
 	// Is this a reference?
@@ -57,9 +52,6 @@ class PtrType extends Type {
 
 	// Is the thing we're pointing to 'const'?
 	Bool isConst;
-
-	// Could this be a pointer to something on the stack? I.e. should we be careful when reading from this?
-	Bool isStack;
 
 	// Get the type inside.
 	Type? inside() {

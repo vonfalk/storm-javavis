@@ -111,6 +111,21 @@ class IntLiteral extends Expr {
 }
 
 /**
+ * Constant used to represent an offset parameter.
+ *
+ * Does not generate any code, just used during lookup.
+ */
+class OffsetExpr extends Expr {
+	init() { init(SrcPos()) {} }
+	ExprResult result() : override {
+		Value(named{Nat}, false);
+	}
+	void code(CodeGen gen, CodeResult res) : override {
+		throw InternalError("Should not use OffsetExpr to generate code!");
+	}
+}
+
+/**
  * Boolean literals.
  */
 class BoolLiteral extends Expr {
@@ -146,7 +161,7 @@ class BoolLiteral extends Expr {
 /**
  * Access the this ptr.
  */
-class ThisPtr extends Expr {
+class ThisPtr extends ExprRef {
 	FnRoot fn;
 
 	init(SrcPos pos, Scope scope) {
@@ -154,12 +169,44 @@ class ThisPtr extends Expr {
 	}
 
 	ExprResult result() : override {
-		wrapPtr(fn.owner.params[0]).asRef();
+		wrapPtr(fn.owner.params[0].asRef(false)).asRef();
 	}
 
 	void code(CodeGen gen, CodeResult res) : override {
-		// We assume we're treated as a special case in the *-operator.
-		throw SyntaxError(pos, "This implementation only allows dereferencing the this-pointer.");
+		if (!res.needed())
+			return;
+
+		if (res.type.ref) {
+			CppVar var = allocType(gen, safeType(res.type, pos));
+			codeRef(gen, var);
+
+			var.adjust(gen, res.location(gen));
+			res.created(gen);
+		} else {
+			codePtr(gen);
+			var location = res.location(gen);
+			gen.l << mov(ptrRel(location, Offset()), ptrB);
+			gen.l << mov(intRel(location, Offset(sPtr)), ecx);
+			res.created(gen);
+		}
+	}
+
+	void codePtr(CodeGen gen) : override {
+		gen.l << mov(ptrB, fn.thisPtr);
+		gen.l << mov(ecx, fn.thisOffset);
+
+		// Compute the base ptr.
+		gen.l << ucast(ptrA, ecx);
+		gen.l << sub(ptrB, ptrA);
+	}
+
+	void codeRef(CodeGen gen, CppVar var) : override {
+		codePtr(gen);
+
+		var.adjust(gen, ptrA);
+		gen.l << mov(ptrRel(ptrA, Offset()), ptrB);
+		gen.l << mov(intRel(ptrA, Offset(sPtr)), ecx);
+		var.created(gen);
 	}
 
 	// Get the 'this' ptr variable.
@@ -223,20 +270,28 @@ class NameExpr extends Expr {
 		// Any context used.
 		Expr? context;
 
+		// Did we use an offset pointer for the context?
+		Bool contextOffset;
+
 		// Create.
 		init(Named named) { init() { named = named; } }
-		init(Named named, Expr? context) { init() { named = named; context = context; } }
+		init(Named named, Expr? context, Bool offset) { init() { named = named; context = context; contextOffset = offset; } }
 	}
 
 	// Find a name with a given context.
 	private Found? findCtx(Expr context, Expr[] actuals) {
 		Expr[] params = actuals.clone();
 		params.insert(0, context);
-		CppPart last(name.last.name, params);
 
 		if (t = context.result.type.type) {
-			if (found = t.find(last, scope)) {
-				return Found(found, context);
+			if (found = t.find(CppPart(name.last.name, params), scope)) {
+				return Found(found, context, false);
+			}
+
+			// Try with an offset:
+			params.insert(1, OffsetExpr());
+			if (found = t.find(CppPart(name.last.name, params), scope)) {
+				return Found(found, context, true);
 			}
 		}
 		return null;
@@ -304,9 +359,12 @@ Expr fnCall(Expr lhs, Expr[] actuals) {
 
 	if (fn = found.named as Function) {
 		// Add the 'this' ptr if required.
-		if (c = found.context)
+		Bool expandFirst = false;
+		if (c = found.context) {
 			actuals.insert(0, c);
-		return FnCall(lhs.pos, fn, actuals);
+			expandFirst = found.contextOffset;
+		}
+		return FnCall(lhs.pos, fn, actuals, expandFirst);
 	}
 
 	throw SyntaxError(lhs.pos, "Found ${found}, which is not a function.");
@@ -320,10 +378,14 @@ class FnCall extends ExprRef {
 	private Function fn;
 	private Expr[] actuals;
 
-	init(SrcPos pos, Function fn, Expr[] actuals) {
+	// Expand the first parameter into a pointer and an offset. Used for 'this' pointers.
+	private Bool addOffset;
+
+	init(SrcPos pos, Function fn, Expr[] actuals, Bool addOffset) {
 		init(pos) {
 			fn = fn;
 			actuals = actuals;
+			addOffset = addOffset;
 		}
 	}
 
@@ -334,8 +396,15 @@ class FnCall extends ExprRef {
 
 	void code(CodeGen gen, CodeResult res) : override {
 		Operand[] params;
+		Nat formalId = 0;
 		for (i, x in actuals) {
-			params << paramCode(gen, x, fn.params[i]);
+			if (i == 0 & addOffset) {
+				paramOffsetCode(params, gen, x, fn.params[0], fn.params[1]);
+				formalId += 2;
+			} else {
+				params << paramCode(gen, x, fn.params[i]);
+				formalId += 1;
+			}
 		}
 
 		if (t = fn.result.type) {
@@ -399,11 +468,15 @@ class FnCall extends ExprRef {
 class CtorCall extends ExprRef {
 	private Function fn;
 	private Expr[] actuals;
+	// Expand the first parameter into a pointer and an offset. Used for 'this' pointers.
+	private Bool addOffset;
 
-	init(SrcPos pos, Function fn, Expr[] actuals) {
+
+	init(SrcPos pos, Function fn, Expr[] actuals, Bool addOffset) {
 		init(pos) {
 			fn = fn;
 			actuals = actuals;
+			addOffset = addOffset;
 		}
 	}
 
@@ -418,8 +491,15 @@ class CtorCall extends ExprRef {
 		}
 
 		Operand[] params;
+		Nat formalId = 0;
 		for (i, x in actuals) {
-			params << paramCode(gen, x, fn.params[i]);
+			if (i == 0 & addOffset) {
+				paramOffsetCode(params, gen, x, fn.params[0], fn.params[1]);
+				formalId += 2;
+			} else {
+				params << paramCode(gen, x, fn.params[i]);
+				formalId += 1;
+			}
 		}
 
 		if (res.type.ref) {
@@ -492,6 +572,31 @@ private Operand paramCode(CodeGen gen, Expr actual, Value formal) on Compiler {
 	}
 }
 
+// Generate code for the first parameter, and a separate parameter for the offset.
+// We assume that 'formal1' is a reference and 'formal2' is an integer.
+private void paramOffsetCode(Operand[] out, CodeGen gen, Expr actual, Value formal1, Value formal2) on Compiler {
+	actual = expectCast(actual, safeType(formal1, actual.pos));
+	if (!formal1.ref | formal2.ref)
+		throw InternalError("Cannot use 'paramOffsetCode' in this context! It is intended for 'this' ptrs.");
+
+	var ptr = gen.createVar(formal1);
+	var offset = gen.createVar(formal2);
+
+	actual.codePtr(gen);
+	// Do the calculation now, so we get a real reference.
+	gen.l << ucast(ptrA, ecx);
+	gen.l << add(ptrB, ptrA);
+	gen.l << mov(ptr.v, ptrB);
+
+	// But store the offset as well.
+	gen.l << mov(offset.v, ecx);
+
+	out << ptr.v;
+	out << offset.v;
+	ptr.created(gen);
+	offset.created(gen);
+}
+
 // Create an operator.
 Expr operator(Block block, Expr lhs, SStr op, Expr rhs) on Compiler {
 	lhs = deref(lhs);
@@ -503,11 +608,14 @@ Expr operator(Block block, Expr lhs, SStr op, Expr rhs) on Compiler {
 	CppPart opName(op.v, [lhs, rhs]);
 	if (t = lType.type) {
 		if (fn = t.find(opName, block.scope) as Function)
-			return FnCall(pos, fn, [lhs, rhs]);
+			return FnCall(pos, fn, [lhs, rhs], false);
+
+		if (fn = t.find(CppPart(op.v, [lhs, OffsetExpr(), rhs]), block.scope) as Function)
+			return FnCall(pos, fn, [lhs, rhs], true);
 	}
 
 	if (fn = block.scope.find(SimpleName(opName)) as Function) {
-		return FnCall(pos, fn, [lhs, rhs]);
+		return FnCall(pos, fn, [lhs, rhs], false);
 	}
 
 	throw SyntaxError(op.pos, "Failed to find operator ${op.v} for ${lType} and ${rhs.result.type}.");
@@ -524,10 +632,13 @@ Expr unaryOperator(Block block, SStr op, Expr rhs) on Compiler {
 	if (t = rType.type) {
 		if (fn = t.find(opName, block.scope) as Function)
 			return FnCall(pos, fn, [rhs]);
+
+		if (fn = t.find(CppPart(op.v, [lhs, OffsetExpr()]), block.scope) as Function)
+			return FnCall(pos, fn, [lhs], true);
 	}
 
 	if (fn = block.scope.find(SimpleName(opName)) as Function) {
-		return FnCall(pos, fn, [rhs]);
+		return FnCall(pos, fn, [rhs], false);
 	}
 
 	throw SyntaxError(op.pos, "Failed to find prefix operator ${op.v} for ${rType}.");
@@ -543,10 +654,13 @@ Expr operator(Block block, SStr op, Expr rhs) on Compiler {
 	if (t = rType.type) {
 		if (fn = t.find(opName, block.scope) as Function)
 			return FnCall(pos, fn, [rhs]);
+
+		if (fn = t.find(CppPart(op.v, [rhs, OffsetExpr()]), block.scope) as Function)
+			return FnCall(pos, fn, [rhs], true);
 	}
 
 	if (fn = block.scope.find(SimpleName(opName)) as Function) {
-		return FnCall(pos, fn, [rhs]);
+		return FnCall(pos, fn, [rhs], false);
 	}
 
 	throw SyntaxError(op.pos, "Failed to find prefix operator ${op.v} for ${rType}.");
@@ -562,10 +676,13 @@ Expr operator(Block block, Expr lhs, SStr op) on Compiler {
 	if (t = lType.type) {
 		if (fn = t.find(opName, block.scope) as Function)
 			return FnCall(pos, fn, [lhs]);
+
+		if (fn = t.find(CppPart(op.v, [lhs, OffsetExpr()]), block.scope) as Function)
+			return FnCall(pos, fn, [lhs], true);
 	}
 
 	if (fn = block.scope.find(SimpleName(opName)) as Function) {
-		return FnCall(pos, fn, [lhs]);
+		return FnCall(pos, fn, [lhs], false);
 	}
 
 	throw SyntaxError(op.pos, "Failed to find postfix operator ${op.v} for ${lType}.");
@@ -715,9 +832,6 @@ class Deref extends Expr {
 	}
 
 	void codePtr(CodeGen gen) : override {
-		if (of as ThisPtr)
-			throw SyntaxError(pos, "Cannot get a pointer from 'this'.");
-
 		CodeResult p(of.result.type.asRef(), gen.block);
 		of.code(gen, p);
 

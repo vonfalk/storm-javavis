@@ -106,7 +106,7 @@ class VarDecl extends Stmt {
 
 		if (t = type.type) {
 			if (ctor = t.defaultCtor) {
-				initExpr = CtorCall(pos, ctor, []);
+				initExpr = CtorCall(pos, ctor, [], false);
 			}
 		}
 
