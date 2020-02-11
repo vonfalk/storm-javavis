@@ -70,8 +70,11 @@ class ProgThread on Render {
 
 		var last = frames.last;
 		last.variables = vars;
-		last.pos = pos;
-		wait();
+
+		if (pos.any) {
+			last.pos = pos;
+			wait();
+		}
 	}
 
 	// Called when a monitored thread is about to return.

@@ -96,22 +96,22 @@ Formal SFormal();
 SFormal => Formal(type, name) : STypeName @type, SIdentifier name;
 
 // Constructors and destructors.
-void SCtorDecl();
-SCtorDecl : SIdentifier name #fnName, "(", SFormals formals, ")", SCtorTail body;
+CppCtorDecl SCtorDecl();
+SCtorDecl => CppCtorDecl(name, formals) : SIdentifier name #fnName, "(", SFormals formals, ")", SCtorTail(me);
 
 CppDtorDecl SDtorDecl();
 SDtorDecl => CppDtorDecl(name, body) : "~", SIdentifier name #fnName, "(", ")", SFnTail body;
 
-void SCtorTail();
+void SCtorTail(CppCtorDecl me);
 SCtorTail : ";";
-SCtorTail : (":", SInitList,)? "{", SStmtList @block, "}";
+SCtorTail : (":", SInitList(me.init) ,)? "{", SStmtList@ -> body, "}";
 
-void SInitList();
-SInitList : SInitItem - (, ",", SInitItem)*;
+void SInitList(Array<Initializer> me);
+SInitList : SInitItem -> push - (, ",", SInitItem -> push)*;
 
-void SInitItem();
-SInitItem : SIdentifier #varName, "(", SExpr, ")";
-SInitItem : SIdentifier #varName, "{", SExpr, "}";
+Initializer SInitItem();
+SInitItem => Initializer(name, expr) : SIdentifier name #varName, "(", SActuals@ expr, ")";
+SInitItem => Initializer(name, expr) : SIdentifier name #varName, "{", SActuals@ expr, "}";
 
 // Identifiers
 SStr SIdentifier();

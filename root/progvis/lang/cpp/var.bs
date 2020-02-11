@@ -105,7 +105,10 @@ class VarDecl extends Stmt {
 		}
 
 		if (t = type.type) {
-			if (ctor = t.defaultCtor) {
+			// C++ constructor.
+			if (ctor = t.cppCtor([], parent.scope)) {
+				initExpr = CtorCall(pos, ctor, [], true);
+			} else if (ctor = t.defaultCtor) {
 				initExpr = CtorCall(pos, ctor, [], false);
 			}
 		}

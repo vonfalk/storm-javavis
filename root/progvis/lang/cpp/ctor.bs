@@ -1,0 +1,214 @@
+use core:lang;
+use core:asm;
+use lang:asm;
+use lang:bs:macro;
+
+class CppCtorDecl extends CppDecl {
+	Formal[] formals;
+	Initializer[] init;
+	SStmtList? body;
+
+	init(SStr name, Formal[] formals) {
+		init(name) {
+			formals = formals;
+		}
+	}
+
+	// Set the body.
+	void body(SStmtList b) {
+		body = b;
+	}
+
+	void create(NameSet inside) : override {
+		unless (body)
+			return;
+
+		CppCtor fn(cppScope(inside), name.pos, inside, this);
+		if (visibility)
+			fn.visibility = visibility;
+		inside.add(fn);
+	}
+}
+
+class Initializer on Compiler {
+	init(SStr name, SActuals expr) {
+		init() {
+			name = name;
+			expr = expr;
+		}
+	}
+
+	SStr name;
+	SActuals expr;
+}
+
+// Find a C++ ctor for a type.
+Function? cppCtor(Type type, Expr[] actuals, Scope scope) on Compiler {
+	actuals = actuals.clone();
+	actuals.insert(0, TypeThisExpr(type));
+	actuals.insert(1, OffsetExpr());
+
+	if (fn = type.find(CppPart("__init", actuals), scope) as Function)
+		return fn;
+	null;
+}
+
+// Find a Storm ctor for a type.
+Function? stormCtor(Type type, Expr[] actuals, Scope scope) on Compiler {
+	actuals = actuals.clone();
+	actuals.insert(0, TypeThisExpr(type));
+
+	if (fn = type.find(CppPart("__init", actuals), scope) as Function)
+		return fn;
+	null;
+}
+
+class CppCtor extends CppFunction {
+	private Initializer[] init;
+	private SStmtList? body;
+
+	init(Scope scope, SrcPos pos, NameSet inside, CppCtorDecl decl) {
+		Value[] fTypes;
+		SStr[] fNames;
+
+		if (inside as Type) {
+			fTypes << Value(thisPtr(inside));
+			fNames << SStr("this", pos);
+
+			// We also need a hidden 'offset' ptr, that allows us to reconstruct a Ptr<> object.
+			fTypes << Value(named{Nat});
+			fNames << SStr("offset", pos);
+		}
+
+		for (f in decl.formals) {
+			fTypes << f.type.transform(scope).asRef();
+			fNames << f.name;
+		}
+
+		init(scope, pos, Value(), "__init", fTypes) {
+			body = decl.body;
+			init = decl.init;
+		}
+
+		setCode(LazyCode(&this.code));
+	}
+
+	// Generate code on demand.
+	private CodeGen code() {
+		FnRoot root = if (body) {
+			FnRoot fn(body.pos, this);
+			body.transform(fn);
+			fn;
+		} else {
+			FnRoot(pos, this);
+		};
+
+		root.prepend(InitStmt(pos, init, root));
+
+		CodeGen gen(runOn, isMember, result);
+		gen.l << prolog();
+
+		root.code(gen);
+
+		gen.l << fnRet();
+
+		print("Generated code for ${params[0]}:\n${gen.l}");
+
+		gen;
+	}
+}
+
+/**
+ * Statement for initializing a class.
+ *
+ * Automatically created by the constructor above.
+ */
+class InitStmt extends Stmt {
+	init(SrcPos pos, Initializer[] init, FnRoot root) {
+		init(pos) {
+			root = root;
+		}
+
+		for (i in init)
+			this.init.put(i.name.v, i);
+	}
+
+	// Function root object.
+	private FnRoot root;
+
+	// Things to initialize.
+	private Str->Initializer init;
+
+	// Generate code.
+	Bool code(CodeGen gen) : override {
+		// Initialize all member variables.
+		if (type = root.owner.params[0].type) {
+			if (s = type.super) {
+				initVar(gen, s.name, s, Offset(), root);
+			}
+
+			for (var in type.variables) {
+				if (varType = var.type.type) {
+					initVar(gen, var.name, varType, var.offset, root);
+				}
+			}
+
+			for (k, v in init) {
+				throw SyntaxError(v.name.pos, "No member named ${k} found!");
+			}
+		}
+
+		true;
+	}
+
+	// Create a variable.
+	private void initVar(CodeGen gen, Str name, Type type, Offset offset, FnRoot root) {
+		if (init.has(name)) {
+			var elem = init.get(name);
+			gen.l << location(elem.name.pos.extend(elem.expr.pos));
+
+			if (!initVar(gen, type, offset, root, elem.expr.transform(root)))
+				throw SyntaxError(pos, "Unable to initialize ${name} with the parameters given.");
+			init.remove(name);
+		} else {
+			if (!initVar(gen, type, offset, root, []))
+				throw SyntaxError(pos, "Unable to initialize ${name} using the default constructor.");
+		}
+	}
+
+	private Bool initVar(CodeGen gen, Type type, Offset offset, FnRoot root, Expr[] actuals) {
+		// C++ ctor?
+		if (fn = cppCtor(type, actuals, root.scope)) {
+			Operand[] params;
+			// TODO: We could use 'ecx', but that won't work at the moment since 'autoCall' assumes
+			// that it is a pointer since we're using a register. We should fix that.
+			Var offsetVar = gen.l.createVar(gen.block, sNat);
+			params << ptrA << offsetVar;
+			print(fn.params.toS);
+			print(actuals.toS);
+			for (i, a in actuals)
+				params << paramCode(gen, a, fn.params[i + 2]);
+
+			gen.l << mov(ptrA, root.thisPtr);
+			gen.l << add(ptrA, ptrConst(offset));
+			gen.l << mov(offsetVar, root.thisOffset);
+			gen.l << add(offsetVar, intConst(offset));
+			fn.autoCall(gen, params, CodeResult());
+			return true;
+		}
+
+		if (fn = stormCtor(type, actuals, root.scope)) {
+			Operand[] params;
+			params << ptrA;
+			for (i, a in actuals)
+				params << paramCode(gen, a, fn.params[i + 1]);
+
+			gen.l << mov(ptrA, root.thisPtr);
+			gen.l << add(ptrA, ptrConst(offset));
+			fn.autoCall(gen, params, CodeResult());
+			return true;
+		}
+
+		false;
+	}
+}

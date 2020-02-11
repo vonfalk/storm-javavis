@@ -169,6 +169,11 @@ class StmtBlock extends Block {
 		content << stmt;
 	}
 
+	// Add statements to the beginning.
+	void prepend(Stmt stmt) {
+		content.insert(0, stmt);
+	}
+
 	// Generate code for statements inside the block.
 	Bool blockCode(CodeGen gen) {
 		for (s in content) {

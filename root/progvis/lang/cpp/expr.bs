@@ -126,6 +126,20 @@ class OffsetExpr extends Expr {
 }
 
 /**
+ * Constant used to represent a 'this' parameter for something.
+ */
+class TypeThisExpr extends Expr {
+	init(Type type) { init(SrcPos()) { type = type; } }
+	Type type;
+	ExprResult result() : override {
+		thisPtr(type);
+	}
+	void code(CodeGen gen, CodeResult res) : override {
+		throw InternalError("Should not use TypeThisExpr to generate code!");
+	}
+}
+
+/**
  * Boolean literals.
  */
 class BoolLiteral extends Expr {
@@ -402,7 +416,7 @@ class FnCall extends ExprRef {
 				paramOffsetCode(params, gen, x, fn.params[0], fn.params[1]);
 				formalId += 2;
 			} else {
-				params << paramCode(gen, x, fn.params[i]);
+				params << paramCode(gen, x, fn.params[formalId]);
 				formalId += 1;
 			}
 		}
@@ -429,8 +443,15 @@ class FnCall extends ExprRef {
 	// Generate code for when someone else has already created the storage for us.
 	void codeRef(CodeGen gen, CppVar var) : override {
 		Operand[] params;
+		Nat formalId = 0;
 		for (i, x in actuals) {
-			params << paramCode(gen, x, fn.params[i]);
+			if (i == 0 & addOffset) {
+				paramOffsetCode(params, gen, x, fn.params[0], fn.params[1]);
+				formalId += 2;
+			} else {
+				params << paramCode(gen, x, fn.params[formalId]);
+				formalId += 1;
+			}
 		}
 
 		if (t = fn.result.type) {
@@ -491,26 +512,30 @@ class CtorCall extends ExprRef {
 		}
 
 		Operand[] params;
-		Nat formalId = 0;
 		for (i, x in actuals) {
-			if (i == 0 & addOffset) {
-				paramOffsetCode(params, gen, x, fn.params[0], fn.params[1]);
-				formalId += 2;
-			} else {
-				params << paramCode(gen, x, fn.params[i]);
-				formalId += 1;
-			}
+			params << paramCode(gen, x, fn.params[i]);
 		}
 
 		if (res.type.ref) {
 			CppVar var = allocType(gen, t);
 			VarInfo ref = res.safeLocation(gen, res.type);
+			var.created(gen); // A bit early, but for the visualization.
+			gen.l << location(SrcPos()); // To make the visualization update its display, but not
+										 // stop. Otherwise this object might be incorrectly shown
+										 // on the heap.
+
 			var.adjust(gen, ref.v);
 
 			params.insert(0, ref.v);
+			if (addOffset) {
+				Var offset = gen.l.createVar(gen.block, sNat);
+				gen.l << mov(offset, natConst(sPtr * 2));
+				params.insert(1, offset);
+			}
 			fn.autoCall(gen, params, CodeResult());
-			var.created(gen);
 		} else {
+			if (addOffset)
+				throw InternalError(pos, "Can not use constructors to generate value types");
 			VarInfo val = res.safeLocation(gen, result.type);
 			gen.l << lea(ptrA, val);
 			params.insert(0, ptrA);
@@ -530,15 +555,25 @@ class CtorCall extends ExprRef {
 			params << paramCode(gen, x, fn.params[i]);
 		}
 
+		var.created(gen); // A bit early, for the visualization to work.
+		gen.l << location(SrcPos()); // To make the visualization update its display, but not
+									 // stop. Otherwise this object might incorrectly be shown on the heap.
+
 		var.adjust(gen, ptrA);
 		params.insert(0, ptrA);
+
+		if (addOffset) {
+			Var offset = gen.l.createVar(gen.block, sNat);
+			gen.l << mov(offset, natConst(sPtr * 2));
+			params.insert(1, offset);
+		}
+
 		fn.autoCall(gen, params, CodeResult());
-		var.created(gen);
 	}
 }
 
 // Generate code for acquiring one parameter.
-private Operand paramCode(CodeGen gen, Expr actual, Value formal) on Compiler {
+package Operand paramCode(CodeGen gen, Expr actual, Value formal) on Compiler {
 	actual = expectCast(actual, safeType(formal, actual.pos));
 
 	Value result = formal.asRef(actual.result.type.ref);
@@ -675,7 +710,7 @@ Expr operator(Block block, Expr lhs, SStr op) on Compiler {
 	CppPart opName("*" + op.v, [lhs]);
 	if (t = lType.type) {
 		if (fn = t.find(opName, block.scope) as Function)
-			return FnCall(pos, fn, [lhs]);
+			return FnCall(pos, fn, [lhs], false);
 
 		if (fn = t.find(CppPart(op.v, [lhs, OffsetExpr()]), block.scope) as Function)
 			return FnCall(pos, fn, [lhs], true);

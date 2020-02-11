@@ -3,7 +3,10 @@ public:
 	int a;
 	int b;
 
-	// inner() : a(1), b(2) {}
+	inner() : a(1), b(2) {
+		a++;
+	}
+
 	~inner() {
 		b = 30;
 	}
@@ -19,7 +22,10 @@ public:
 	int a;
 	inner b;
 
-	// outer() : a(1) {}
+	outer() : a(1) {
+		a++;
+	}
+
 	~outer() {
 		a = 20;
 	}
