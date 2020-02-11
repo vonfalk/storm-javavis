@@ -83,10 +83,26 @@ class CppType extends Type {
 		TypeState state(this, defAccess);
 		body.transform(state);
 
-		// TODO: Add default members if needed.
+		// Check for special member functions.
+		Bool hasCtor = false;
+		Bool hasDtor = false;
+		for (member in this) {
+			if (member.name == "__destroy")
+				hasDtor = true;
+			if (member.name == "__init")
+				hasCtor = true;
+		}
+
+		// Add a default constructor if one was not declared.
+		// TODO: We want to handle copy-ctor and move-ctor specially.
+		if (!hasCtor) {
+			CppCtorDecl decl(SStr(name, pos), []);
+			// 'decl' will not create the constructor without a body.
+			add(CppCtor(cppScope(this), pos, this, decl));
+		}
 
 		// Add a destructor if we don't have one.
-		if (findHere(SimplePart("__destroy", [thisPtr(this), Value(named{Nat})]), Scope()).empty) {
+		if (!hasDtor) {
 			CppDtor dtor(cppScope(this), pos, this, null);
 			add(dtor);
 			add(wrapCppDtor(dtor));

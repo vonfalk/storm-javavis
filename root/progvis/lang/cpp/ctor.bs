@@ -23,6 +23,9 @@ class CppCtorDecl extends CppDecl {
 		unless (body)
 			return;
 
+		if (name.v != inside.name)
+			throw SyntaxError(name.pos, "The constructor should be named ${inside.name}.");
+
 		CppCtor fn(cppScope(inside), name.pos, inside, this);
 		if (visibility)
 			fn.visibility = visibility;

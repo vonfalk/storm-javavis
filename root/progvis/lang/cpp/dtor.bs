@@ -16,6 +16,9 @@ class CppDtorDecl extends CppDecl {
 		unless (body)
 			return;
 
+		if (name.v != inside.name)
+			throw SyntaxError(name.pos, "The destructor should be named ~${inside.name}.");
+
 		CppDtor fn(cppScope(inside), name.pos, inside, body);
 		if (visibility)
 			fn.visibility = visibility;
