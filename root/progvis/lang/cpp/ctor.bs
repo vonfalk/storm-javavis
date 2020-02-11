@@ -31,13 +31,15 @@ class CppCtorDecl extends CppDecl {
 }
 
 class Initializer on Compiler {
-	init(SStr name, SActuals expr) {
+	init(SrcPos pos, SStr name, SActuals expr) {
 		init() {
+			pos = pos;
 			name = name;
 			expr = expr;
 		}
 	}
 
+	SrcPos pos;
 	SStr name;
 	SActuals expr;
 }
@@ -66,6 +68,7 @@ Function? stormCtor(Type type, Expr[] actuals, Scope scope) on Compiler {
 class CppCtor extends CppFunction {
 	private Initializer[] init;
 	private SStmtList? body;
+	private SStr[] formals;
 
 	init(Scope scope, SrcPos pos, NameSet inside, CppCtorDecl decl) {
 		Value[] fTypes;
@@ -88,6 +91,7 @@ class CppCtor extends CppFunction {
 		init(scope, pos, Value(), "__init", fTypes) {
 			body = decl.body;
 			init = decl.init;
+			formals = fNames;
 		}
 
 		setCode(LazyCode(&this.code));
@@ -103,6 +107,12 @@ class CppCtor extends CppFunction {
 			FnRoot(pos, this);
 		};
 
+		// Add parameters. 'this' and 'offset' are handled as a special case.
+		for (id, v in formals) {
+			if (id > 1)
+				root.addParam(v.v, params[id], v.pos);
+		}
+
 		root.prepend(InitStmt(pos, init, root));
 
 		CodeGen gen(runOn, isMember, result);
@@ -112,7 +122,7 @@ class CppCtor extends CppFunction {
 
 		gen.l << fnRet();
 
-		print("Generated code for ${params[0]}:\n${gen.l}");
+		// print("Generated code for ${params[0]}:\n${gen.l}");
 
 		gen;
 	}
@@ -165,14 +175,14 @@ class InitStmt extends Stmt {
 	private void initVar(CodeGen gen, Str name, Type type, Offset offset, FnRoot root) {
 		if (init.has(name)) {
 			var elem = init.get(name);
-			gen.l << location(elem.name.pos.extend(elem.expr.pos));
+			gen.l << location(elem.pos);
 
 			if (!initVar(gen, type, offset, root, elem.expr.transform(root)))
-				throw SyntaxError(pos, "Unable to initialize ${name} with the parameters given.");
+				throw SyntaxError(pos, "Unable to initialize ${name} (${type.name}) with the given parameters.");
 			init.remove(name);
 		} else {
 			if (!initVar(gen, type, offset, root, []))
-				throw SyntaxError(pos, "Unable to initialize ${name} using the default constructor.");
+				throw SyntaxError(pos, "Unable to initialize ${name} (${type.name}) using the default constructor.");
 		}
 	}
 
@@ -184,8 +194,6 @@ class InitStmt extends Stmt {
 			// that it is a pointer since we're using a register. We should fix that.
 			Var offsetVar = gen.l.createVar(gen.block, sNat);
 			params << ptrA << offsetVar;
-			print(fn.params.toS);
-			print(actuals.toS);
 			for (i, a in actuals)
 				params << paramCode(gen, a, fn.params[i + 2]);
 

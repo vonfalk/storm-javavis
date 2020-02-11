@@ -7,6 +7,8 @@ public:
 		a++;
 	}
 
+	inner(int a, int b) : a(a), b(b) {}
+
 	~inner() {
 		b = 30;
 	}
@@ -26,6 +28,8 @@ public:
 		a++;
 	}
 
+	outer(int a, int b, int c) : a(a), b(b, c) {}
+
 	~outer() {
 		a = 20;
 	}
@@ -38,9 +42,8 @@ public:
 int main() {
 	outer o;
 	print(o.sum());
-	print(o.b.sum());
 
-	outer *a = new outer;
+	outer *a = new outer(1, 2, 3);
 	a->sum();
 	delete a;
 

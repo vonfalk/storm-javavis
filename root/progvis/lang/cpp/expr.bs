@@ -317,6 +317,12 @@ class NameExpr extends Expr {
 			return findCtx(context, actuals);
 		}
 
+		// If empty, see if we find a local variable, they have priority over member variables.
+		if (actuals.empty) {
+			if (found = scope.find(name) as LocalVar)
+				return Found(found);
+		}
+
 		// Try to use 'this' if suitable.
 		if (member = findFnRoot(scope).memberOf) {
 			if (found = findCtx(Deref:ptr(ThisPtr(pos, scope)), actuals))
@@ -512,8 +518,11 @@ class CtorCall extends ExprRef {
 		}
 
 		Operand[] params;
+		Nat offset = 1;
+		if (addOffset)
+			offset++;
 		for (i, x in actuals) {
-			params << paramCode(gen, x, fn.params[i]);
+			params << paramCode(gen, x, fn.params[i + offset]);
 		}
 
 		if (res.type.ref) {
@@ -551,8 +560,11 @@ class CtorCall extends ExprRef {
 		}
 
 		Operand[] params;
+		Nat offset = 1;
+		if (addOffset)
+			offset++;
 		for (i, x in actuals) {
-			params << paramCode(gen, x, fn.params[i]);
+			params << paramCode(gen, x, fn.params[i + offset]);
 		}
 
 		var.created(gen); // A bit early, for the visualization to work.
@@ -895,18 +907,42 @@ class Deref extends Expr {
  * New operator.
  */
 class NewExpr extends ExprRef {
-	init(SrcPos pos, Value type) {
+	init(SrcPos pos, Block parent, Value val) {
+		var type = safeType(val, pos);
 		init(pos) {
-			type = safeType(type, pos);
+			type = type;
+			initExpr = findInit(pos, parent.scope, type, []);
+		}
+	}
+
+	init(SrcPos pos, Block parent, Value val, Expr[] actuals) {
+		var type = safeType(val, pos);
+		init(pos) {
+			type = type;
+			initExpr = findInit(pos, parent.scope, type, actuals);
 		}
 	}
 
 	// Type to create.
 	Type type;
 
+	// Init expression.
+	ExprRef initExpr;
+
 	// Result type.
 	ExprResult result() : override {
 		wrapPtr(Value(type)).asRef();
+	}
+
+	// Compute an init expression.
+	private ExprRef findInit(SrcPos pos, Scope scope, Type type, Expr[] actuals) : static {
+		if (ctor = type.cppCtor(actuals, scope))
+			return CtorCall(pos, ctor, actuals, true);
+
+		if (ctor = type.stormCtor(actuals, scope))
+			return CtorCall(pos, ctor, actuals, false);
+
+		throw SyntaxError(pos, "No suitable constructor for ${type.name} found.");
 	}
 
 	// Generate code.
@@ -939,16 +975,20 @@ class NewExpr extends ExprRef {
 
 	// Create the allocation and initialize it.
 	private Operand doAlloc(CodeGen gen) {
+		Var tmp = gen.l.createVar(gen.block, sPtr);
+
 		// Allocate memory.
 		gen.l << fnParam(ptrDesc, type.typeRef);
 		gen.l << fnParam(ptrDesc, ptrConst(1));
 		gen.l << fnCall(ref(BuiltIn:allocArray), false, ptrDesc, ptrA);
-
-		// TODO: Run the constructor!
+		gen.l << mov(tmp, ptrA);
 
 		// Set 'filled' to 1 | 1 << 32
 		gen.l << mov(ptrRel(ptrA, Offset(sPtr)), ptrConst(0x80000001));
 
-		ptrA;
+		// Call the constructor.
+		initExpr.codeRef(gen, CppVar(tmp));
+
+		tmp;
 	}
 }

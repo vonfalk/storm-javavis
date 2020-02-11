@@ -114,7 +114,7 @@ class VarDecl extends Stmt {
 		}
 
 		if (initExpr.empty) {
-			print("TODO: Require the default constructor to be called!");
+			// print("TODO: Require the default constructor to be called!");
 		}
 
 		parent.add(var);
@@ -147,6 +147,21 @@ class VarDecl extends Stmt {
 		}
 
 		throw SyntaxError(pos, "The type ${type} does not have a copy constructor!");
+	}
+
+	// Create from an () expression.
+	VarDecl parens(SrcPos pos, Block parent, Value type, SStr name, Expr[] actuals) : static {
+		if (t = type.type) {
+			if (ctor = t.cppCtor(actuals, parent.scope)) {
+				return VarDecl(pos, parent, type, name, CtorCall(pos, ctor, actuals, true));
+			}
+
+			if (ctor = t.stormCtor(actuals, parent.scope)) {
+				return VarDecl(pos, parent, type, name, CtorCall(pos, ctor, actuals, false));
+			}
+		}
+
+		throw SyntaxError(pos, "No suitable constructor for ${type}.");
 	}
 
 	// The variable we created.
