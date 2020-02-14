@@ -102,18 +102,17 @@ class CppCtor extends CppFunction {
 
 	// Generate code on demand.
 	private CodeGen code() {
-		FnRoot root = if (body) {
-			FnRoot fn(body.pos, this);
-			body.transform(fn);
-			fn;
-		} else {
-			FnRoot(pos, this);
-		};
+		FnRoot root(pos, this);
 
 		// Add parameters. 'this' and 'offset' are handled as a special case.
 		for (id, v in formals) {
 			if (id > 1)
 				root.addParam(v.v, params[id], v.pos);
+		}
+
+		if (body) {
+			root.pos = body.pos;
+			body.transform(root);
 		}
 
 		root.prepend(InitStmt(pos, init, root));

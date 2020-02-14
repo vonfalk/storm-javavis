@@ -42,6 +42,11 @@ class CppFnDecl extends CppDecl {
 	}
 }
 
+// Operator declaration. Performs some checking and transformation of the name and parameter types.
+CppFnDecl operatorDecl(STypeName result, SStr name, Formal[] formals, SStmtList? body) {
+	CppFnDecl(result, name, formals, body);
+}
+
 // A formal parameter.
 value Formal {
 	STypeName type;

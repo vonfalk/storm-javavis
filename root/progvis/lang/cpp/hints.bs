@@ -14,6 +14,16 @@ progvis:Hints hints() {
  * already allocated that way.
  */
 class CppCodeHints extends progvis:CodeHints {
+	init() {
+		init() {
+			// Anything not starting with a letter is an operator.
+			operators("[^a-zA-Z_].*");
+		}
+	}
+
+	// Regex for matching operators.
+	lang:bnf:Regex operators;
+
 	Fn<void>? findMain(Package pkg) : override {
 		if (fn = pkg.find(SimplePart("main"), Scope(pkg)) as Function) {
 			var ptr = fn.pointer;
@@ -51,6 +61,8 @@ class CppCodeHints extends progvis:CodeHints {
 					return "~" + t.name + "()";
 				} else if (fn.name == "__init") {
 					name = t.name;
+				} else if (operators.match(fn.name)) {
+					name = "operator " + fn.name;
 				}
 			}
 		}

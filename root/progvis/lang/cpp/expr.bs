@@ -314,7 +314,7 @@ class NameExpr extends Expr {
 	// Will try to add '*this' as a context if suitable.
 	Found? findNamed(Expr[] actuals) {
 		if (context) {
-			return findCtx(context, actuals);
+			return findCtx(deref(context), actuals);
 		}
 
 		// If empty, see if we find a local variable, they have priority over member variables.

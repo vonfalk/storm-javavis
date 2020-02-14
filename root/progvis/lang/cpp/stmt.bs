@@ -206,9 +206,13 @@ class Return extends Stmt {
 	}
 
 	init(SrcPos pos, Block inside, Expr value) {
+		Value expect = findFnRoot(inside).result;
+		if (t = expect.type)
+			value = expectCast(value, t);
+
 		init(pos) {
 			value = value;
-			expected = findFnRoot(inside).result;
+			expected = expect;
 		}
 
 		var r = value.result();

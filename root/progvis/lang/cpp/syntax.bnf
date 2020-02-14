@@ -81,6 +81,20 @@ SDef => content : SFnDecl -> add;
 
 CppFnDecl SFnDecl();
 SFnDecl => CppFnDecl(res, name, formals, body) : STypeName@ res, SIdentifier name #fnName, "(", SFormals formals, ")", SFnTail body;
+SFnDecl => operatorDecl(res, name, formals, body) : STypeName@ res, "operator" #keyword, (SOpName)@ name, "(", SFormals formals, ")", SFnTail body;
+
+void SOpName();
+SOpName : "==?";
+SOpName : "!=";
+SOpName : "<=?";
+SOpName : ">=?";
+SOpName : "\+\+";
+SOpName : "\-\-";
+SOpName : "\+=?";
+SOpName : "\-=?";
+SOpName : "\*=?";
+SOpName : "/=?";
+SOpName : "\*";
 
 Maybe<SStmtList> SFnTail();
 SFnTail => Maybe<SStmtList>() : ";";
@@ -122,10 +136,14 @@ Value STypeName(Scope scope);
 STypeName => original : STypeNameRec(scope) original - ("const" #keyword)?;
 STypeName => wrapRef(original) : STypeNameRec(scope) original, "&";
 STypeName => wrapConstRef(original) : STypeNameRec(scope) original, "const" #keyword, "&";
+STypeName => wrapConstRef(original) : "const" #keyword, STypeNameEnd(scope) original, "&";
+STypeName => wrapRRef(original) : STypeNameRec(scope) original, "&&";
+STypeName => wrapConstRRef(original) : STypeNameRec(scope) original, "const" #keyword, "&&";
+STypeName => wrapConstRRef(original) : "const" #keyword, STypeNameEnd(scope) original, "&&";
 
 // Pointers with and without const.
 Value STypeNameRec(Scope scope);
-STypeNameRec => original : ("const" #keyword, )? STypeNameEnd(scope) original;
+STypeNameRec => original : STypeNameEnd(scope) original;
 STypeNameRec => wrapPtr(original) : STypeNameRec(scope) original, "\*";
 STypeNameRec => wrapConstPtr(original) : STypeNameRec(scope) original, "const" #keyword, "\*";
 STypeNameRec => wrapConstPtr(original) : "const" #keyword, STypeNameEnd(scope) original, "\*";

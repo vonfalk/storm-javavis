@@ -4,24 +4,33 @@ use lang:bs:macro;
 
 // Pointers.
 Ptr : generate(params) {
-	generatePtr(params, "Ptr", false, false);
+	generatePtr(params, "Ptr", false, false, false);
 }
 
 ConstPtr : generate(params) {
-	generatePtr(params, "ConstPtr", true, false);
+	generatePtr(params, "ConstPtr", true, false, false);
 }
 
 // References.
 Ref : generate(params) {
-	generatePtr(params, "Ref", false, true);
+	generatePtr(params, "Ref", false, true, false);
 }
 
 ConstRef : generate(params) {
-	generatePtr(params, "ConstRef", true, true);
+	generatePtr(params, "ConstRef", true, true, false);
+}
+
+// RValue-ref.
+RRef : generate(params) {
+	generatePtr(params, "RRef", false, true, true);
+}
+
+ConstRRef : generate(params) {
+	generatePtr(params, "ConstRRef", true, true, true);
 }
 
 // Create a type.
-Named? generatePtr(Array<Value> params, Str name, Bool isConst, Bool isRef) {
+Named? generatePtr(Array<Value> params, Str name, Bool isConst, Bool isRef, Bool rvalRef) {
 	// Only one parameter.
 	if (params.count != 1)
 		return null;
@@ -31,7 +40,7 @@ Named? generatePtr(Array<Value> params, Str name, Bool isConst, Bool isRef) {
 	if (!par.isValue)
 		return null;
 
-	PtrType(par.asRef(false), name, isConst, isRef);
+	PtrType(par.asRef(false), name, isConst, isRef, rvalRef);
 }
 
 /**
@@ -43,12 +52,15 @@ Named? generatePtr(Array<Value> params, Str name, Bool isConst, Bool isRef) {
  * Can also act as a reference.
  */
 class PtrType extends Type {
-	init(Value inside, Str name, Bool isConst, Bool isRef) {
-		init(name, [inside], TypeFlags:typeValue) { isRef = isRef; isConst = isConst; }
+	init(Value inside, Str name, Bool isConst, Bool isRef, Bool rvalRef) {
+		init(name, [inside], TypeFlags:typeValue) { isRef = isRef; rvalRef = rvalRef; isConst = isConst; }
 	}
 
 	// Is this a reference?
 	Bool isRef;
+
+	// R-value reference?
+	Bool rvalRef;
 
 	// Is the thing we're pointing to 'const'?
 	Bool isConst;
@@ -131,6 +143,18 @@ Value wrapRef(Value val) {
 
 Value wrapConstRef(Value val) {
 	unless (t = (named{}).find(SimplePart("ConstRef", [val.asRef(false)]), Scope()) as Type)
+		throw InternalError("Could not find the pointer type for ${val}");
+	Value(t);
+}
+
+Value wrapRRef(Value val) {
+	unless (t = (named{}).find(SimplePart("RRef", [val.asRef(false)]), Scope()) as Type)
+		throw InternalError("Could not find the pointer type for ${val}");
+	Value(t);
+}
+
+Value wrapConstRRef(Value val) {
+	unless (t = (named{}).find(SimplePart("ConstRRef", [val.asRef(false)]), Scope()) as Type)
 		throw InternalError("Could not find the pointer type for ${val}");
 	Value(t);
 }
