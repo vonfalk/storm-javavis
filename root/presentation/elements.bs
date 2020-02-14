@@ -105,6 +105,11 @@ class Paragraph extends Element {
 	// Brush used to fill the text.
 	Brush brush;
 
+	// Set color.
+	void fill(Color color) {
+		brush = SolidBrush(color);
+	}
+
 	// Create.
 	init(Str text, Font f, Brush brush) {
 		init() {
