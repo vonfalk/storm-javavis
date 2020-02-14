@@ -162,7 +162,8 @@ SStmt[50] => Return(pos, block, expr) : "return[ \t]" #keyword, SExpr(block) exp
 SStmt[50] => Return(pos, block) : "return" #keyword, ";";
 SStmt[10] => VarDecl(pos, block, type, name) : STypeName(block.scope) type, SIdentifier name, ";";
 SStmt[10] => VarDecl.assign(pos, block, type, name, init) : STypeName(block.scope) type, SIdentifier name #varName, "=", SExpr(block) init, ";";
-SStmt[10] => VarDecl.parens(pos, block, type, name, actuals) : STypeName(block.scope) type, SIdentifier name #varName, "(", SActuals (block) actuals, ")", ";";
+SStmt[10] => VarDecl.parens(pos, block, type, name, actuals) : STypeName(block.scope) type, SIdentifier name #varName, "(", SActuals(block) actuals, ")", ";";
+SStmt[10] => VarDecl.parens(pos, block, type, name, actuals) : STypeName(block.scope) type, SIdentifier name #varName, "{", SActuals(block) actuals, "}", ";";
 // "delete" is technically an expression, but we don't do that...
 SStmt[50] => DeleteStmt(pos, expr) : "delete[ \t]" #keyword, SOp2(block) expr, ";";
 SStmt[50] => WhileStmt(pos, block) : "while" #keyword, "(", SExpr(me) -> cond, ")", SStmt(me) -> body;

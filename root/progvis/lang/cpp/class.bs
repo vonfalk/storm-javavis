@@ -85,31 +85,69 @@ class CppType extends Type {
 
 		// Check for special member functions.
 		Bool hasCtor = false;
+		Bool hasCopyCtor = false;
+		Bool hasAssignFn = false;
 		Bool hasDtor = false;
 		for (member in this) {
 			if (member.name == "__destroy")
 				hasDtor = true;
-			if (member.name == "__init")
-				hasCtor = true;
+			if (member.name == "__init") {
+				if (isCopyFn(this, member))
+					hasCopyCtor = true;
+				else
+					hasCtor = true;
+			}
+			if (member.name == "=") {
+				if (isCopyFn(this, member))
+					hasAssignFn = true;
+			}
 		}
 
 		// Add a default constructor if one was not declared.
-		// TODO: We want to handle copy-ctor and move-ctor specially.
 		if (!hasCtor) {
 			CppCtorDecl decl(SStr(name, pos), []);
 			// 'decl' will not create the constructor without a body.
 			add(CppCtor(cppScope(this), pos, this, decl));
 		}
 
+		if (!hasCopyCtor) {
+			add(TypeCopyCtor(this));
+		}
+
+		if (!hasAssignFn) {
+			add(TypeAssign(this));
+		}
+
 		// Add a destructor if we don't have one.
 		if (!hasDtor) {
-			CppDtor dtor(cppScope(this), pos, this, null);
+			CppDtor dtor(cppScope(this), SrcPos(), this, null);
 			add(dtor);
 			add(wrapCppDtor(dtor));
 		}
 
 		super:loadAll();
 	}
+}
+
+// Is this a copy-ctor or assign fn?
+private Bool isCopyFn(Type type, Named fn) {
+	if (fn.params.count == 2) {
+		// Storm-style.
+		return fn.params[1].type is type;
+	}
+
+	if (fn.params.count == 3) {
+		// C++ style
+		if (fn.params[1].type !is named{Nat})
+			return false;
+
+		if (ref = fn.params[2].type as PtrType) {
+			return ref.isRef & ref.inside is type;
+		}
+		return false;
+	}
+
+	false;
 }
 
 /**

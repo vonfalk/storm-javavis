@@ -135,7 +135,8 @@ package Bool executeStmt(CodeGen gen, Stmt s) {
 	if (s as Block) {
 		s.code(gen);
 	} else {
-		gen.l << location(s.pos);
+		if (s.pos.any)
+			gen.l << location(s.pos);
 
 		CodeGen child = gen.child();
 		gen.l << begin(child.block);
@@ -181,10 +182,12 @@ class StmtBlock extends Block {
 				return false;
 		}
 
-		SrcPos last = pos.lastCh;
-		last.start++;
-		last.end++;
-		gen.l << location(last);
+		if (pos.any) {
+			SrcPos last = pos.lastCh;
+			last.start++;
+			last.end++;
+			gen.l << location(last);
+		}
 
 		true;
 	}
