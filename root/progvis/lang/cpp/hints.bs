@@ -56,7 +56,7 @@ class CppCodeHints extends progvis:CodeHints {
 		}
 
 		// TODO!
-		fn.name + "(...)";
+		name + "(...)";
 	}
 
 	Save saveVariable(Listing to, Var var, Listing:VarInfo info, Operand dest) : override {

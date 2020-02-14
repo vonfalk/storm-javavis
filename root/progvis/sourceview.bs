@@ -69,8 +69,12 @@ class SourceView on Render {
 
 			g.push(pos);
 
-			Float yOffset = pos.p0.y - fillBounds.p0.y + (pos.size.h - fillBounds.size.h) / 2;
-			Point offset(pos.p0.x, yOffset);
+			Size size = pos.size;
+			Size boundsSize = fillBounds.size;
+			Float yOffset = pos.p0.y - fillBounds.p0.y + (size.h - boundsSize.h) / 2;
+			Float xOffset = max(0.0, size.w - boundsSize.w); // Where to keep the left point of the highlight.
+			xOffset = pos.p0.x + min(0.0, xOffset - fillBounds.p0.x);
+			Point offset(xOffset, yOffset);
 
 			for (f in fill) {
 				g.fill(f + offset, highlight);
