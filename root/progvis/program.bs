@@ -413,6 +413,18 @@ private Listing patchListing(Program program, Hints hints, Package pkg, Listing 
 
 // Generate the a call to the class to track execution, adding a copy of the return value.
 private void generateReturnCall(Program program, PatchParams to, Function fn, Bool ref, Operand src) on Compiler {
+	// Don't attempt to handle references.
+	if (fn.result.ref)
+		return;
+
+	// Don't show the result from constructors or destructors.
+	if (fn.name == "__init" | fn.name == "__destroy")
+		return;
+
+	// Don't add 'void'.
+	unless (type = fn.result.type)
+		return;
+
 	to.saveRegs();
 	Listing l = to.to;
 	Block subBlock = l.createBlock(to.block);
@@ -426,35 +438,19 @@ private void generateReturnCall(Program program, PatchParams to, Function fn, Bo
 	l << fnParam(ptrDesc, objPtr("↲"));
 	l << fnCall(named{createStackVar<Str>}.ref, false, ptrDesc, stackVar);
 
-	// Shall we add the return value?
-	Bool addValue = true;
+	Var dest = l.createVar(subBlock, sPtr);
+	if (fn.result.isValue())
+		generateReturnSaveVal(l, type, ref, src, dest);
+	else
+		generateReturnSaveClass(l, type, ref, src, dest);
 
-	// Don't attempt to handle references.
-	if (fn.result.ref)
-		addValue = false;
+	l << mov(ptrB, stackVar);
+	l << mov(ptrRel(ptrB, named{StackVar:value<StackVar>}.offset), dest);
 
-	// Don't show the result from constructors or destructors.
-	if (fn.name == "__init" | fn.name == "__destroy")
-		addValue = false;
-
-	if (addValue) {
-		// Don't add 'void'.
-		if (type = fn.result.type) {
-			Var dest = l.createVar(subBlock, sPtr);
-			if (fn.result.isValue())
-				generateReturnSaveVal(l, type, ref, src, dest);
-			else
-				generateReturnSaveClass(l, type, ref, src, dest);
-
-			l << mov(ptrB, stackVar);
-			l << mov(ptrRel(ptrB, named{StackVar:value<StackVar>}.offset), dest);
-
-			// Add it to the array.
-			l << fnParam(ptrDesc, array);
-			l << fnParam(ptrDesc, stackVar);
-			l << fnCall(named{Array<StackVar>:push<StackVar[], StackVar>}.ref, true);
-		}
-	}
+	// Add it to the array.
+	l << fnParam(ptrDesc, array);
+	l << fnParam(ptrDesc, stackVar);
+	l << fnCall(named{Array<StackVar>:push<StackVar[], StackVar>}.ref, true);
 
 	// Call the tracking.
 	l << fnParam(ptrDesc, objPtr(program));
