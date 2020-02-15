@@ -25,9 +25,22 @@ public:
 	int b;
 };
 
+int crefparam(const int &param) {
+	return param + 10;
+}
+
+void refparam(int &param) {
+	param = crefparam(param) + 10;
+}
+
 int main() {
 	my_class a{1, 2};
 	my_class b{my_class{3, 4}};
+
+	// Should not work.
+	// refparam(10);
+	crefparam(10);
+	refparam(a.b);
 
 	my_class c{a};
 	c = b;

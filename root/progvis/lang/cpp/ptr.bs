@@ -212,3 +212,9 @@ Type? isCppRRef(Type t) {
 			return t.inside();
 	null;
 }
+
+Bool isCppConst(Type t) {
+	if (t as PtrType)
+		return t.isConst;
+	false;
+}

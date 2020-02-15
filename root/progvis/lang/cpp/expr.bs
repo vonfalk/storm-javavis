@@ -123,16 +123,16 @@ class IntLiteral extends Expr {
 		var.adjust(gen, ptrA);
 		if (type is named{Byte}) {
 			gen.l << mov(byteRel(ptrA), byteConst(val.byte));
-		} else if (type is named{Int} | t is named{Nat}) {
+		} else if (type is named{Int} | type is named{Nat}) {
 			gen.l << mov(intRel(ptrA), intConst(val.int));
-		} else if (type is named{Long} | t is named{Word}) {
+		} else if (type is named{Long} | type is named{Word}) {
 			gen.l << mov(longRel(ptrA), longConst(val));
 		} else {
 			throw SyntaxError(pos, "Unknown type!");
 		}
 		var.created(gen);
 		// Make it known to the visualization.
-		gen.to << location(SrcPos());
+		gen.l << location(SrcPos());
 		var.ptr(gen);
 	}
 }
