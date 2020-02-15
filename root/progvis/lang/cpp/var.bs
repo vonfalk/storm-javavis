@@ -90,7 +90,7 @@ class LocalVarAccess extends Expr {
 		}
 	}
 
-	void codePtr(CodeGen gen) : override {
+	void codePtr(CodeGen gen, Type type) : override {
 		var.var.ptr(gen);
 	}
 }

@@ -202,7 +202,13 @@ Bool isCppRef(Value val) {
 Type? isCppRef(Type t) {
 	if (t as PtrType)
 		if (t.isRef)
-			if (i = t.inside())
-				return i;
+			return t.inside();
+	null;
+}
+
+Type? isCppRRef(Type t) {
+	if (t as PtrType)
+		if (t.isRef & t.rvalRef)
+			return t.inside();
 	null;
 }

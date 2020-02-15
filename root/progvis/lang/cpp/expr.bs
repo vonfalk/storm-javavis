@@ -31,8 +31,9 @@ class Expr extends Stmt {
 		true;
 	}
 
-	// Overloaded if 'temporary' is 'false'. Stores a base ptr in 'ptrB' and an offset in 'ecx'.
-	void codePtr(CodeGen gen) {
+	// Compute a pointer/reference to this value. This might involve creating a temporary object.
+	// Stores a base ptr in 'ptrB' and an offset in 'ecx'.
+	void codePtr(CodeGen gen, Type type) : abstract {
 		throw SyntaxError(pos, "Unable to compute the address of a temporary.").saveTrace();
 	}
 
@@ -50,6 +51,14 @@ class ExprRef extends Expr {
 
 	// Additional member.
 	void codeRef(CodeGen gen, CppVar var) : abstract;
+
+	// Generate a pointer to a temporary.
+	void codePtr(CodeGen gen, Type type) : override {
+		CppVar v = allocTemporary(gen, type);
+		codeRef(gen, v);
+		gen.l << location(SrcPos());
+		v.ptr(gen);
+	}
 }
 
 /**
@@ -108,6 +117,24 @@ class IntLiteral extends Expr {
 		}
 		res.created(gen);
 	}
+
+	void codePtr(CodeGen gen, Type type) : override {
+		CppVar var = allocTemporary(gen, type);
+		var.adjust(gen, ptrA);
+		if (type is named{Byte}) {
+			gen.l << mov(byteRel(ptrA), byteConst(val.byte));
+		} else if (type is named{Int} | t is named{Nat}) {
+			gen.l << mov(intRel(ptrA), intConst(val.int));
+		} else if (type is named{Long} | t is named{Word}) {
+			gen.l << mov(longRel(ptrA), longConst(val));
+		} else {
+			throw SyntaxError(pos, "Unknown type!");
+		}
+		var.created(gen);
+		// Make it known to the visualization.
+		gen.to << location(SrcPos());
+		var.ptr(gen);
+	}
 }
 
 /**
@@ -123,6 +150,9 @@ class OffsetExpr extends Expr {
 	void code(CodeGen gen, CodeResult res) : override {
 		throw InternalError("Should not use OffsetExpr to generate code!");
 	}
+	void codePtr(CodeGen gen, Type res) : override {
+		throw InternalError("Should not use OffsetExpr to generate code!");
+	}
 }
 
 /**
@@ -135,6 +165,9 @@ class TypeThisExpr extends Expr {
 		thisPtr(type);
 	}
 	void code(CodeGen gen, CodeResult res) : override {
+		throw InternalError("Should not use TypeThisExpr to generate code!");
+	}
+	void codePtr(CodeGen gen, Type type) : override {
 		throw InternalError("Should not use TypeThisExpr to generate code!");
 	}
 }
@@ -169,6 +202,15 @@ class BoolLiteral extends Expr {
 		}
 		res.created(gen);
 	}
+
+	void codePtr(CodeGen gen, Type type) : override {
+		CppVar var = allocTemporary(gen, named{Bool});
+		var.adjust(gen, ptrA);
+		gen.l << mov(byteRel(ptrA), byteConst(val));
+		var.crated(gen);
+		gen.to << location(SrcPos());
+		var.ptr(gen);
+	}
 }
 
 
@@ -197,7 +239,7 @@ class ThisPtr extends ExprRef {
 			var.adjust(gen, res.location(gen));
 			res.created(gen);
 		} else {
-			codePtr(gen);
+			codePtr(gen, safeType(res.type, pos));
 			var location = res.location(gen);
 			gen.l << mov(ptrRel(location, Offset()), ptrB);
 			gen.l << mov(intRel(location, Offset(sPtr)), ecx);
@@ -205,7 +247,7 @@ class ThisPtr extends ExprRef {
 		}
 	}
 
-	void codePtr(CodeGen gen) : override {
+	void codePtr(CodeGen gen, Type type) : override {
 		gen.l << mov(ptrB, fn.thisPtr);
 		gen.l << mov(ecx, fn.thisOffset);
 
@@ -215,7 +257,7 @@ class ThisPtr extends ExprRef {
 	}
 
 	void codeRef(CodeGen gen, CppVar var) : override {
-		codePtr(gen);
+		codePtr(gen, safeType(result.type, pos));
 
 		var.adjust(gen, ptrA);
 		gen.l << mov(ptrRel(ptrA, Offset()), ptrB);
@@ -263,8 +305,8 @@ class NameExpr extends Expr {
 		resolve.temporary();
 	}
 
-	void codePtr(CodeGen gen) : override {
-		resolve.codePtr(gen);
+	void codePtr(CodeGen gen, Type type) : override {
+		resolve.codePtr(gen, type);
 	}
 
 	private Expr resolve() {
@@ -374,7 +416,11 @@ Expr fnCall(Expr lhs, Expr[] actuals) {
 
 	NameExpr:Found? found = lhs.findNamed(actuals);
 	unless (found) {
-		throw SyntaxError(lhs.pos, "Could not find anything named ${lhs.name} to call.");
+		try {
+			return ctorCall(lhs, actuals);
+		} catch (SyntaxError e) {
+			throw SyntaxError(lhs.pos, "Could not find anything named ${lhs.name} to call.");
+		}
 	}
 
 	if (fn = found.named as Function) {
@@ -388,6 +434,25 @@ Expr fnCall(Expr lhs, Expr[] actuals) {
 	}
 
 	throw SyntaxError(lhs.pos, "Found ${found}, which is not a function.");
+}
+
+// Try to "convert" a name expression into a constructor call.
+Expr ctorCall(Expr lhs, Expr[] actuals) {
+	unless (lhs as NameExpr) {
+		throw SyntaxError(lhs.pos, "This is not the name of a type.");
+	}
+
+	unless (type = lhs.scope.find(lhs.name) as Type) {
+		throw SyntaxError(lhs.pos, "${lhs.name} does not the name of a type.");
+	}
+
+	if (ctor = cppCtor(type, actuals, lhs.scope))
+		return CtorCall(lhs.pos, ctor, actuals, true);
+
+	if (ctor = stormCtor(type, actuals, lhs.scope))
+		return CtorCall(lhs.pos, ctor, actuals, false);
+
+	throw SyntaxError(lhs.pos, "Unable to find a suitable constructor to call.");
 }
 
 
@@ -629,7 +694,7 @@ private void paramOffsetCode(Operand[] out, CodeGen gen, Expr actual, Value form
 	var ptr = gen.createVar(formal1);
 	var offset = gen.createVar(formal2);
 
-	actual.codePtr(gen);
+	actual.codePtr(gen, safeType(actual.result.type, actual.pos));
 	// Do the calculation now, so we get a real reference.
 	gen.l << ucast(ptrA, ecx);
 	gen.l << add(ptrB, ptrA);
@@ -775,7 +840,7 @@ class AddressOf extends ExprRef {
 
 			var.adjust(gen, res.location(gen));
 		} else {
-			of.codePtr(gen);
+			of.codePtr(gen, type);
 			gen.l << lea(ptrA, res.location(gen));
 			gen.l << mov(ptrRel(ptrA, Offset()), ptrB);
 			gen.l << mov(intRel(ptrA, Offset(sPtr)), ecx);
@@ -784,17 +849,24 @@ class AddressOf extends ExprRef {
 	}
 
 	void codeRef(CodeGen gen, CppVar var) : override {
-		of.codePtr(gen);
+		of.codePtr(gen, safeType(of.result.type, pos));
 
 		var.adjust(gen, ptrA);
 		gen.l << mov(ptrRel(ptrA, Offset()), ptrB);
 		gen.l << mov(intRel(ptrA, Offset(sPtr)), ecx);
 		var.created(gen);
 	}
+
+	void codePtr(CodeGen gen, Type type) : override {
+		CppVar var = allocTemporary(gen, type);
+		codeRef(gen, var);
+		gen.l << location(SrcPos());
+		var.ptr(gen);
+	}
 }
 
 /**
- * Make a reference from an l-value or a l-value.
+ * Make a reference from an r-value or a l-value.
  */
 class MakeRef extends AddressOf {
 	init(Expr of) {
@@ -804,6 +876,19 @@ class MakeRef extends AddressOf {
 	// We just need to tell 'AddressOf' to produce a reference instead.
 	ExprResult result() : override {
 		wrapRef(of.result.type).asRef();
+	}
+}
+
+/**
+ * Make an r-value reference.
+ */
+class MakeRRef extends AddressOf {
+	init(Expr of) {
+		init(of) {}
+	}
+
+	ExprResult result() : override {
+		wrapRRef(of.result.type).asRef();
 	}
 }
 
@@ -878,7 +963,7 @@ class Deref extends Expr {
 		false;
 	}
 
-	void codePtr(CodeGen gen) : override {
+	void codePtr(CodeGen gen, Type type) : override {
 		CodeResult p(of.result.type.asRef(), gen.block);
 		of.code(gen, p);
 

@@ -259,8 +259,7 @@ class FrameVal on Render {
 			var nameSz = v.text.size;
 			var dataSz = v.value.size;
 
-			if (active)
-				g.draw(v.text, dataFg, at);
+			g.draw(v.text, dataFg, at);
 			v.value.pos.x = pos.p1.x - dataSz.w - compositeBorder.w;
 			v.value.pos.y = at.y;
 			v.value.draw(g, active);

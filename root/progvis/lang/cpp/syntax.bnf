@@ -273,6 +273,7 @@ SOp2 => dotOperator(block, lhs, rhs, false) : SOp2(block) lhs, "\.", SIdentifier
 SOp2 => dotOperator(block, lhs, rhs, true) : SOp2(block) lhs, "->", SIdentifier rhs;
 SOp2 : SOp2(block), "\[", SExpr(block), "\]";
 SOp2 => fnCall(lhs, params) : SOp2(block) lhs, "(", SActuals(block) params, ")";
+SOp2 => ctorCall(lhs, params) : SOp2(block) lhs, "{", SActuals(block) params, "}";
 
 Expr SAtom(Block block);
 SAtom => v : "(", SExpr(block) v, ")";

@@ -85,3 +85,13 @@ CppVar allocType(CodeGen gen, Type type) {
 
 	CppVar(v, true);
 }
+
+// Allocate memory for a C++ type that will be used as a temporary (making it show up on the stack).
+CppVar allocTemporary(CodeGen gen, Type type) {
+	CppVar v = allocType(gen, type);
+
+	Listing:VarInfo info("-", type, true, SrcPos());
+	gen.l.varInfo(v.v, info);
+	v;
+}
+

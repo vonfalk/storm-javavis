@@ -30,9 +30,13 @@ Expr expectCast(Expr of, Type to) {
 	if (type.type is to)
 		return of;
 
-	// Possible to make it a reference?
-	if (inside = to.isCppRef()) {
-		if (type.type is inside)
+	if (inside = to.isCppRRef()) {
+		// Possible to make it an r-value reference?
+		if (of.temporary & Value(inside).canStore(type.asRef(false)))
+			return MakeRRef(of);
+	} else if (inside = to.isCppRef()) {
+		// Regular reference?
+		if (Value(inside).canStore(type.asRef(false)))
 			return MakeRef(of);
 	}
 
@@ -59,10 +63,15 @@ Int castPenalty(Expr e, Type to) {
 	if (type.type is to)
 		return 0;
 
-	// Is it possible that "to" is a reference?
-	if (inside = to.isCppRef()) {
-		if (inside is type.type)
+	if (inside = to.isCppRRef()) {
+		// If we're a temporary, we can be bound to an rvalue reference.
+		if (e.temporary & Value(inside).canStore(type.asRef(false)))
 			return 0;
+	} else if (inside = to.isCppRef()) {
+		// Is it possible that "to" is a reference? Make this a bit more expensive, to make the
+		// rvalue ref take precedence if we have multiple options.
+		if (Value(inside).canStore(type.asRef(false)))
+			return 1;
 	}
 
 	return -1;

@@ -27,10 +27,11 @@ public:
 
 int main() {
 	my_class a{1, 2};
-	my_class b{3, 4};
+	my_class b{my_class{3, 4}};
 
 	my_class c{a};
 	c = b;
+	c = my_class{9, 1};
 
 	return 0;
 }
