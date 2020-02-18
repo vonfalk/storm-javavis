@@ -33,9 +33,7 @@ class Expr extends Stmt {
 
 	// Compute a pointer/reference to this value. This might involve creating a temporary object.
 	// Stores a base ptr in 'ptrB' and an offset in 'ecx'.
-	void codePtr(CodeGen gen, Type type) : abstract {
-		throw SyntaxError(pos, "Unable to compute the address of a temporary.").saveTrace();
-	}
+	void codePtr(CodeGen gen, Type type) : abstract;
 
 	// Generate code. 'desired' is the desired return type.
 	void code(CodeGen gen, CodeResult res) : abstract;
@@ -207,7 +205,7 @@ class BoolLiteral extends Expr {
 		CppVar var = allocTemporary(gen, named{Bool});
 		var.adjust(gen, ptrA);
 		gen.l << mov(byteRel(ptrA), byteConst(val));
-		var.crated(gen);
+		var.created(gen);
 		gen.to << location(SrcPos());
 		var.ptr(gen);
 	}
@@ -844,7 +842,7 @@ Expr operator(Block block, Expr lhs, SStr op, Expr rhs) on Compiler {
 
 // Doesn't add a star to the name.
 Expr unaryOperator(Block block, SStr op, Expr rhs) on Compiler {
-	lhs = deref(lhs);
+	rhs = deref(rhs);
 
 	var rType = rhs.result.type;
 	var pos = op.pos.extend(rhs.pos);
@@ -852,10 +850,10 @@ Expr unaryOperator(Block block, SStr op, Expr rhs) on Compiler {
 	CppPart opName(op.v, [rhs]);
 	if (t = rType.type) {
 		if (fn = t.find(opName, block.scope) as Function)
-			return FnCall(pos, fn, [rhs]);
+			return FnCall(pos, fn, [rhs], false);
 
-		if (fn = t.find(CppPart(op.v, [lhs, OffsetExpr()]), block.scope) as Function)
-			return FnCall(pos, fn, [lhs], true);
+		if (fn = t.find(CppPart(op.v, [rhs, OffsetExpr()]), block.scope) as Function)
+			return FnCall(pos, fn, [rhs], true);
 	}
 
 	if (fn = block.scope.find(SimpleName(opName)) as Function) {

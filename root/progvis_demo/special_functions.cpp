@@ -33,9 +33,15 @@ void refparam(int &param) {
 	param = crefparam(param) + 10;
 }
 
+my_class ret() {
+	my_class a{1, 2};
+	return a;
+}
+
 int main() {
 	my_class a{1, 2};
 	my_class b{my_class{3, 4}};
+	my_class z{ret()};
 
 	// Should not work.
 	// refparam(10);

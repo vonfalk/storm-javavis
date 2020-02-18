@@ -27,6 +27,11 @@ class CppFnDecl extends CppDecl {
 			formals = formals;
 			body = body;
 		}
+
+		// We match "body" a bit too narrowly in the grammar.
+		if (body) {
+			body.pos.end++;
+		}
 	}
 
 	// Create this function.

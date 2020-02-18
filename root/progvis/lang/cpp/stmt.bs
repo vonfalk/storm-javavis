@@ -183,10 +183,7 @@ class StmtBlock extends Block {
 		}
 
 		if (pos.any) {
-			SrcPos last = pos.lastCh;
-			last.start++;
-			last.end++;
-			gen.l << location(last);
+			gen.l << location(pos.lastCh);
 		}
 
 		true;

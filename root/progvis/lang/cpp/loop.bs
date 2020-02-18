@@ -1,0 +1,296 @@
+use core:lang;
+use core:asm;
+use lang:bs:macro;
+
+/**
+ * Something we can break or continue from.
+ */
+class Breakable extends Block {
+	init(SrcPos pos, Block parent) {
+		init(pos, parent) {}
+	}
+
+	value To {
+		// Block to be the new topmost block after the jump.
+		asm:Block block;
+
+		// Label to jump to.
+		asm:Label label;
+
+		// Init.
+		init(asm:Block block, asm:Label label) {
+			init { block = block; label = label; }
+		}
+	}
+
+	// Where to break to? (Call during codegen).
+	To breakTo() : abstract;
+
+	// Where to continue to? (Call during codegen).
+	To continueTo() : abstract;
+
+	// Find a breakable block from a current block.
+	Breakable find(Block inside, SrcPos pos) : static {
+		find(inside.scope, pos);
+	}
+	Breakable find(Scope scope, SrcPos pos) : static {
+		NameLookup? at = scope.top;
+		while (curr = at as BlockLookup) {
+			if (breakable = curr.block as Breakable) {
+				return breakable;
+			}
+
+			at = curr.parent;
+		}
+
+		throw SyntaxError(pos, "Cannot break- or continue from here.");
+	}
+}
+
+
+/**
+ * A while-loop.
+ */
+class WhileStmt extends Breakable {
+	init(SrcPos pos, Block parent) {
+		init(pos, parent) {}
+	}
+
+	// Condition.
+	private Expr? cond;
+
+	// Body.
+	private Stmt? body;
+
+	// During codegen: where to break/continue to/from?
+	private asm:Label breakLbl;
+	private asm:Label continueLbl;
+	private asm:Block block;
+
+	// Setters from the grammar.
+	void cond(Expr expr) { cond = castCond(this, expr); }
+	void body(Stmt stmt) { body = stmt; }
+
+	Bool blockCode(CodeGen gen) : override {
+		unless (cond)
+			throw SyntaxError(pos, "No condition set for this loop.");
+
+		var restart = gen.l.label();
+		var exit = gen.l.label();
+
+		breakLbl = exit;
+		continueLbl = restart;
+		block = gen.block;
+
+		gen.l << restart;
+
+		CodeResult condResult(Value(named{Bool}), gen.block);
+		CodeGen sub = gen.child();
+		gen.l << location(cond.pos);
+		gen.l << begin(sub.block);
+		cond.code(sub, condResult);
+		gen.l << end(sub.block);
+
+		gen.l << cmp(condResult.location(gen), byteConst(0));
+		gen.l << jmp(exit, CondFlag:ifEqual);
+
+		if (body)
+			executeStmt(gen, body);
+
+		gen.l << jmp(restart);
+		gen.l << exit;
+
+		true;
+	}
+
+	// Break/continue.
+	To breakTo() : override {
+		To(block, breakLbl);
+	}
+	To continueTo() : override {
+		To(block, continueLbl);
+	}
+}
+
+/**
+ * A do-while-loop.
+ */
+class DoWhileStmt extends Breakable {
+	init(SrcPos pos, Block parent) {
+		init(pos, parent) {}
+	}
+
+	// Condition.
+	private Expr? cond;
+
+	// Body.
+	private Stmt? body;
+
+	// During codegen: where to break/continue to/from?
+	private asm:Label breakLbl;
+	private asm:Label continueLbl;
+	private asm:Block block;
+
+	// Setters from the grammar.
+	void cond(Expr expr) { cond = castCond(this, expr); }
+	void body(Stmt stmt) { body = stmt; }
+
+	Bool blockCode(CodeGen gen) : override {
+		unless (cond)
+			throw SyntaxError(pos, "No condition set for this loop.");
+
+		var restart = gen.l.label();
+
+		breakLbl = gen.l.label();
+		continueLbl = gen.l.label();
+		block = gen.block;
+
+		gen.l << restart;
+
+		if (body)
+			executeStmt(gen, body);
+
+		// "continue" will evaluate the condition again!
+		gen.l << continueLbl;
+
+		CodeResult condResult(Value(named{Bool}), gen.block);
+		CodeGen sub = gen.child();
+		gen.l << location(cond.pos);
+		gen.l << begin(sub.block);
+		cond.code(sub, condResult);
+		gen.l << end(sub.block);
+
+		gen.l << cmp(condResult.location(gen), byteConst(0));
+		gen.l << jmp(restart, CondFlag:ifNotEqual);
+		gen.l << breakLbl;
+
+		true;
+	}
+
+	// Break/continue.
+	To breakTo() : override {
+		To(block, breakLbl);
+	}
+	To continueTo() : override {
+		To(block, continueLbl);
+	}
+}
+
+/**
+ * A for-statement.
+ */
+class ForStmt extends Breakable {
+	init(SrcPos pos, Block parent) {
+		init(pos, parent) {}
+	}
+
+	// Init expression.
+	Stmt? init;
+
+	// Condition.
+	Expr? cond;
+
+	// Update.
+	Stmt? update;
+
+	// Body.
+	Stmt? body;
+
+	// During codegen: where to break/continue to/from?
+	private asm:Label breakLbl;
+	private asm:Label continueLbl;
+	private asm:Block block;
+
+	// Setters.
+	void init(Stmt s) { init = s; }
+	void cond(Expr e) { cond = castCond(this, e); }
+	void update(Stmt s) { update = s; }
+	void body(Stmt s) { body = s; }
+
+	Bool blockCode(CodeGen gen) : override {
+		var restart = gen.l.label();
+		var exit = gen.l.label();
+
+		block = gen.block;
+		breakLbl = exit;
+		continueLbl = gen.l.label();
+
+		if (init)
+			executeStmt(gen, init);
+
+		gen.l << restart;
+
+		if (cond) {
+			CodeResult condResult(Value(named{Bool}), gen.block);
+			CodeGen sub = gen.child();
+			gen.l << location(cond.pos);
+			gen.l << begin(sub.block);
+			cond.code(sub, condResult);
+			gen.l << end(sub.block);
+
+			gen.l << cmp(condResult.location(gen), byteConst(0));
+			gen.l << jmp(exit, CondFlag:ifEqual);
+		}
+
+		if (body)
+			executeStmt(gen, body);
+
+		gen.l << continueLbl;
+
+		if (update)
+			executeStmt(gen, update);
+
+		gen.l << jmp(restart);
+		gen.l << exit;
+
+		true;
+	}
+
+	// Break/continue.
+	To breakTo() : override {
+		To(block, breakLbl);
+	}
+	To continueTo() : override {
+		To(block, continueLbl);
+	}
+}
+
+
+/**
+ * Break.
+ */
+class Break extends Stmt {
+	init(SrcPos pos, Block parent) {
+		init(pos) {
+			from = Breakable:find(parent, pos);
+		}
+	}
+
+	Breakable from;
+
+	Bool code(CodeGen gen) : override {
+		var to = from.breakTo();
+		gen.l << jmpBlock(to.label, to.block);
+		false;
+	}
+}
+
+
+/**
+ * Continue.
+ */
+class Continue extends Stmt {
+	init(SrcPos pos, Block parent) {
+		init(pos) {
+			from = Breakable:find(parent, pos);
+		}
+	}
+
+	Breakable from;
+
+	Bool code(CodeGen gen) : override {
+		var to = from.continueTo();
+		gen.l << jmpBlock(to.label, to.block);
+		false;
+	}
+}

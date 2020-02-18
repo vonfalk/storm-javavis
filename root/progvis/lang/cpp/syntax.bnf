@@ -98,7 +98,7 @@ SOpName : "\*";
 
 Maybe<SStmtList> SFnTail();
 SFnTail => Maybe<SStmtList>() : ";";
-SFnTail => Maybe<SStmtList>(block) : "{", SStmtList@ block, "}";
+SFnTail => Maybe<SStmtList>(block) : "{", SStmtList@ block - "}";
 
 
 // Formal parameters.
@@ -188,6 +188,8 @@ SStmt[50] => WhileStmt(pos, block) : "while" #keyword, "(", SExpr(me) -> cond, "
 SStmt[50] => DoWhileStmt(pos, block) : "do[ \t\n]" #keyword, SStmt(me) -> body, "while", "(", SExpr(me) -> cond, ")", ";";
 SStmt[50] => ForStmt(pos, block) : "for[ \t]" #keyword, "(", SStmt(me) -> init, SExpr(me) -> cond, ";", SExpr(me) -> update, ")", SStmt(me) -> body;
 SStmt[40] => IfStmt(pos, block) : "if" #keyword, "(", SExpr(me) -> cond, ")", SStmt(me) -> ifTrue - (,"else[ \t\n]" #keyword, SStmt(me) -> ifFalse)?;
+SStmt[50] => Break(pos, block) : "break" #keyword, ";";
+SStmt[50] => Continue(pos, block) : "continue" #keyword, ";";
 
 // Add a list of statements to a block.
 void SStmtList(StmtBlock block);

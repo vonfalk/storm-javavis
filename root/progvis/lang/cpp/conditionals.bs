@@ -23,158 +23,84 @@ Expr castCond(Block parent, Expr cond) {
 	cond;
 }
 
+
 /**
- * A while-loop.
+ * Check if a pointer is null.
  */
-class WhileStmt extends Block {
-	init(SrcPos pos, Block parent) {
-		init(pos, parent) {}
+class CheckPtr extends Expr {
+	init(Expr e) {
+		init(e.pos) { e = e; }
 	}
 
-	// Condition.
-	private Expr? cond;
+	Expr e;
 
-	// Body.
-	private Stmt? body;
+	ExprResult result() : override {
+		Value(named{Bool});
+	}
 
-	// Setters from the grammar.
-	void cond(Expr expr) { cond = castCond(this, expr); }
-	void body(Stmt stmt) { body = stmt; }
+	void code(CodeGen gen, CodeResult res) : override {
+		CodeResult inner(e.result.type.asRef(false), gen.block);
+		e.code(gen, inner);
 
-	Bool blockCode(CodeGen gen) : override {
-		unless (cond)
-			throw SyntaxError(pos, "No condition set for this loop.");
+		Var ptr = inner.location(gen);
+		gen.l << cmp(ptrRel(ptr), ptrConst(0));
+		gen.l << setCond(res.location(gen), CondFlag:ifNotEqual);
+	}
 
-		var restart = gen.l.label();
-		var exit = gen.l.label();
+	void codePtr(CodeGen gen, Type type) : override {
+		CodeResult inner(e.result.type.asRef(false), gen.block);
+		e.code(gen, inner);
 
-		gen.l << restart;
-
-		CodeResult condResult(Value(named{Bool}), gen.block);
-		CodeGen sub = gen.child();
-		gen.l << location(cond.pos);
-		gen.l << begin(sub.block);
-		cond.code(sub, condResult);
-		gen.l << end(sub.block);
-
-		gen.l << cmp(condResult.location(gen), byteConst(0));
-		gen.l << jmp(exit, CondFlag:ifEqual);
-
-		Bool r = true;
-		if (body)
-			r = executeStmt(gen, body);
-
-		gen.l << jmp(restart);
-		gen.l << exit;
-
-		r;
+		CppVar var = allocTemporary(gen, named{Bool});
+		var.adjust(gen, ptrA);
+		// We only need to check the pointer-part of the pointer.
+		gen.l << cmp(ptrRel(inner.location(gen)), ptrConst(0));
+		gen.l << setCond(byteRel(ptrA), CondFlag:ifNotEqual);
+		var.created(gen);
+		gen.to << location(SrcPos());
+		var.ptr(gen);
 	}
 }
 
+
 /**
- * A do-while-loop.
+ * Check if an integer value is nonzero.
  */
-class DoWhileStmt extends Block {
-	init(SrcPos pos, Block parent) {
-		init(pos, parent) {}
+class CheckIntegral extends Expr {
+	init(Expr e) {
+		init(e.pos) { e = e; }
 	}
 
-	// Condition.
-	private Expr? cond;
+	Expr e;
 
-	// Body.
-	private Stmt? body;
+	ExprResult result() : override {
+		Value(named{Bool});
+	}
 
-	// Setters from the grammar.
-	void cond(Expr expr) { cond = castCond(this, expr); }
-	void body(Stmt stmt) { body = stmt; }
+	void code(CodeGen gen, CodeResult res) : override {
+		CodeResult inner(e.result.type.asRef(false), gen.block);
+		e.code(gen, inner);
 
-	Bool blockCode(CodeGen gen) : override {
-		unless (cond)
-			throw SyntaxError(pos, "No condition set for this loop.");
+		Var val = inner.location(gen);
+		gen.l << cmp(val, xConst(val.size, 0));
+		gen.l << setCond(res.location(gen), CondFlag:ifNotEqual);
+	}
 
-		var restart = gen.l.label();
+	void codePtr(CodeGen gen, Type type) : override {
+		CodeResult inner(e.result.type.asRef(false), gen.block);
+		e.code(gen, inner);
+		Var val = inner.location(gen);
 
-		gen.l << restart;
-
-		Bool r = true;
-		if (body)
-			r = executeStmt(gen, body);
-
-		CodeResult condResult(Value(named{Bool}), gen.block);
-		CodeGen sub = gen.child();
-		gen.l << location(cond.pos);
-		gen.l << begin(sub.block);
-		cond.code(sub, condResult);
-		gen.l << end(sub.block);
-
-		gen.l << cmp(condResult.location(gen), byteConst(0));
-		gen.l << jmp(restart, CondFlag:ifNotEqual);
-
-		r;
+		CppVar var = allocTemporary(gen, named{Bool});
+		var.adjust(gen, ptrA);
+		gen.l << cmp(val, xConst(val.size, 0));
+		gen.l << setCond(byteRel(ptrA), CondFlag:ifNotEqual);
+		var.created(gen);
+		gen.to << location(SrcPos());
+		var.ptr(gen);
 	}
 }
 
-/**
- * A for-statement.
- */
-class ForStmt extends Block {
-	init(SrcPos pos, Block parent) {
-		init(pos, parent) {}
-	}
-
-	// Init expression.
-	Stmt? init;
-
-	// Condition.
-	Expr? cond;
-
-	// Update.
-	Stmt? update;
-
-	// Body.
-	Stmt? body;
-
-	// Setters.
-	void init(Stmt s) { init = s; }
-	void cond(Expr e) { cond = castCond(this, e); }
-	void update(Stmt s) { update = s; }
-	void body(Stmt s) { body = s; }
-
-	Bool blockCode(CodeGen gen) : override {
-		var restart = gen.l.label();
-		var exit = gen.l.label();
-
-		if (init)
-			executeStmt(gen, init);
-
-		gen.l << restart;
-
-		if (cond) {
-			CodeResult condResult(Value(named{Bool}), gen.block);
-			CodeGen sub = gen.child();
-			gen.l << location(cond.pos);
-			gen.l << begin(sub.block);
-			cond.code(sub, condResult);
-			gen.l << end(sub.block);
-
-			gen.l << cmp(condResult.location(gen), byteConst(0));
-			gen.l << jmp(exit, CondFlag:ifEqual);
-		}
-
-		Bool returns = true;
-		if (body)
-			returns = executeStmt(gen, body);
-
-		if (update)
-			executeStmt(gen, update);
-
-		gen.l << jmp(restart);
-		gen.l << exit;
-
-		returns;
-	}
-}
 
 /**
  * An if-statement.
@@ -233,53 +159,5 @@ class IfStmt extends Block {
 		gen.l << exit;
 
 		returns;
-	}
-}
-
-/**
- * Check if a pointer is null.
- */
-class CheckPtr extends Expr {
-	init(Expr e) {
-		init(e.pos) { e = e; }
-	}
-
-	Expr e;
-
-	ExprResult result() : override {
-		Value(named{Bool});
-	}
-
-	void code(CodeGen gen, CodeResult res) : override {
-		CodeResult inner(e.result.type.asRef(false), gen.block);
-		e.code(gen, inner);
-
-		Var ptr = inner.location(gen);
-		gen.l << cmp(ptrRel(ptr), ptrConst(0));
-		gen.l << setCond(res.location(gen), CondFlag:ifNotEqual);
-	}
-}
-
-/**
- * Check if an integer value is nonzero.
- */
-class CheckIntegral extends Expr {
-	init(Expr e) {
-		init(e.pos) { e = e; }
-	}
-
-	Expr e;
-
-	ExprResult result() : override {
-		Value(named{Bool});
-	}
-
-	void code(CodeGen gen, CodeResult res) : override {
-		CodeResult inner(e.result.type.asRef(false), gen.block);
-		e.code(gen, inner);
-
-		Var val = inner.location(gen);
-		gen.l << cmp(val, xConst(val.size, 0));
-		gen.l << setCond(res.location(gen), CondFlag:ifNotEqual);
 	}
 }
