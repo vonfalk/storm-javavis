@@ -557,16 +557,18 @@ namespace code {
 			return r;
 
 		IBlock &block = blocks->at(b.id);
-		r->reserve(block.vars->count());
-		for (Nat i = 0; i < block.vars->count(); i++)
-			r->push(createVar(block.vars->at(i)));
 
-		// The parameters are technically in the root block.
+		// The parameters are technically in the root block. Add them first, it makes more sense.
 		if (b == root()) {
 			r->reserve(block.vars->count() + params->count());
 			for (Nat i = 0; i < params->count(); i++)
 				r->push(createVar(params->at(i)));
 		}
+
+		// Regular variables.
+		r->reserve(block.vars->count());
+		for (Nat i = 0; i < block.vars->count(); i++)
+			r->push(createVar(block.vars->at(i)));
 
 		return r;
 	}

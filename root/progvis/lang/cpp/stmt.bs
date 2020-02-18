@@ -198,21 +198,23 @@ class StmtBlock extends Block {
  */
 class Return extends Stmt {
 	init(SrcPos pos, Block inside) {
+		FnRoot root = findFnRoot(inside);
 		init(pos) {
-			expected = findFnRoot(inside).result;
+			root = root;
 		}
 
 		checkType(Value());
 	}
 
 	init(SrcPos pos, Block inside, Expr value) {
-		Value expect = findFnRoot(inside).result;
+		FnRoot root = findFnRoot(inside);
+		Value expect = root.result;
 		if (t = expect.type)
 			value = expectCast(value, t);
 
 		init(pos) {
 			value = value;
-			expected = expect;
+			root = root;
 		}
 
 		var r = value.result();
@@ -221,20 +223,14 @@ class Return extends Stmt {
 	}
 
 	Expr? value;
-	Value expected;
+	FnRoot root;
 
 	Bool code(CodeGen gen) : override {
 		if (value) {
-			var res = value.result.type;
-			CodeResult r(res, gen.block);
-			value.code(gen, r);
-
-			if (expected == Value()) {
-				gen.l << fnRet();
-			} else if (res.ref) {
-				gen.l << fnRetRef(r.location(gen));
+			if (root.resultPtr != Var()) {
+				codePtr(value, gen);
 			} else {
-				gen.l << fnRet(r.location(gen));
+				codePlain(value, gen);
 			}
 		} else {
 			gen.l << fnRet();
@@ -244,9 +240,79 @@ class Return extends Stmt {
 		false;
 	}
 
+	// Return in the pointer-parameter.
+	private void codePtr(Expr value, CodeGen gen) {
+		unless (type = root.result.type) {
+			gen.l << fnRet();
+			return;
+		}
+
+		// Force name resolution now, so that we can see what is happening.
+		if (l = value as NameExpr) {
+			value = l.resolve();
+		}
+
+		// Allow move-ctors for local variables.
+		if (l = value as LocalVarAccess) {
+			value = LocalVarTmpAccess(l);
+		}
+
+		Var ptr = gen.l.createVar(gen.block, sPtr);
+		Var offset = gen.l.createVar(gen.block, sInt);
+
+		gen.l << mov(ptrA, root.resultPtr);
+		gen.l << mov(ptr, ptrRel(ptrA, Offset(sPtr * 2)));
+		gen.l << mov(offset, intRel(ptrA, Offset(sPtr * 3)));
+		gen.l << ucast(ptrA, offset);
+		gen.l << add(ptr, ptrA);
+
+		if (ctor = cppCtor(type, [value], root.scope)) {
+			value = expectCast(value, safeType(ctor.params[2], value.pos));
+			CodeResult r(ctor.params[2], gen.block);
+			value.code(gen, r);
+
+			gen.l << fnParam(ptrDesc, ptr);
+			gen.l << fnParam(intDesc, offset);
+			gen.l << fnParam(ptrDesc, r.location(gen));
+			gen.l << fnCall(ctor.ref, true);
+
+			gen.l << fnRet();
+			return;
+		}
+
+		if (ctor = stormCtor(type, [value], root.scope)) {
+			value = expectCast(value, safeType(ctor.params[1], value.pos));
+			CodeResult r(ctor.params[1], gen.block);
+			value.code(gen, r);
+
+			gen.l << fnParam(ptrDesc, ptr);
+			gen.l << fnParam(ptrDesc, r.location(gen));
+			gen.l << fnCall(ctor.ref, true);
+
+			gen.l << fnRet();
+			return;
+		}
+
+		throw SyntaxError(pos, "Unable to find a copy- or move constructor for the type ${type}.");
+	}
+
+	private void codePlain(Expr value, CodeGen gen) {
+		var res = value.result.type;
+		CodeResult r(res, gen.block);
+		value.code(gen, r);
+
+		if (root.result == Value()) {
+			gen.l << fnRet();
+		} else if (res.ref) {
+			gen.l << fnRetRef(r.location(gen));
+		} else {
+			gen.l << fnRet(r.location(gen));
+		}
+	}
+
 	private void checkType(Value type) {
-		if (!expected.canStore(type))
-			throw SyntaxError(pos, "Incompatible return type. Got ${type}, expected ${expected}.");
+		if (!root.result.canStore(type))
+			throw SyntaxError(pos, "Incompatible return type. Got ${type}, expected ${root.result}.");
 	}
 }
 

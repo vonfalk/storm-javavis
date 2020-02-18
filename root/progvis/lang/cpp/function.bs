@@ -57,7 +57,9 @@ value Formal {
 	}
 }
 
-// A C++ function.
+/**
+ * A C++ function.
+ */
 class CppFunction extends Function {
 	SrcPos pos;
 	Scope scope;
@@ -68,17 +70,51 @@ class CppFunction extends Function {
 			pos = pos;
 		}
 	}
+
+	Value findResult() {
+		result;
+	}
+
+	Bool hasResultParam() {
+		false;
+	}
 }
 
+// Does this function add a parameter for the return value?
+Bool hasResultParam(Function fn) {
+	if (fn as CppPlainFunction) {
+		return fn.hasResultParam();
+	}
+	false;
+}
+
+// Should this parameter be returned by a hidden parameter?
+Bool returnByParam(Value type) {
+	if (type.isAsmType())
+		return false;
+
+	if (type = type.type as PtrType)
+		return false;
+
+	return type.isValue();
+}
+
+/**
+ * A plain member function (i.e. not a ctor or dtor).
+ *
+ * Note: If we're returning a "complex" type, we will add a hidden parameter right after the "this" parameter.
+ */
 class CppPlainFunction extends CppFunction {
 	// Names of all formal parameters.
 	private SStr[] formals;
 	private SStmtList body;
+	private Bool resultParam;
 
 	init(Scope scope, CppFnDecl decl, NameSet inside, SStmtList body) {
 		Value[] fTypes;
 		SStr[] fNames;
 
+		// Do we need a this-pointer?
 		if (inside as Type) {
 			fTypes << Value(thisPtr(inside));
 			fNames << SStr("this", decl.name.pos);
@@ -88,28 +124,63 @@ class CppPlainFunction extends CppFunction {
 			fNames << SStr("offset", decl.name.pos);
 		}
 
+		// Do we need a result parameter?
+		Value result = decl.result.transform(scope);
+		Bool resultParam = returnByParam(result);
+		if (resultParam) {
+			fTypes << wrapPtr(result).asRef();
+			fNames << SStr("ret", decl.name.pos);
+			result = Value();
+		}
+
 		for (f in decl.formals) {
 			// Everything is a reference in this C++ implementation.
 			fTypes << f.type.transform(scope).asRef();
 			fNames << f.name;
 		}
 
-		init(scope, decl.name.pos, decl.result.transform(scope), decl.name.v, fTypes) {
+		init(scope, decl.name.pos, result, decl.name.v, fTypes) {
 			formals = fNames;
 			body = body;
+			resultParam = resultParam;
 		}
 
 		setCode(LazyCode(&this.code));
+	}
+
+	// Find the result type.
+	Value findResult() {
+		if (hasResultParam) {
+			if (isMember()) {
+				return unwrapPtr(params[2]);
+			} else {
+				return unwrapPtr(params[0]);
+			}
+		} else {
+			return result;
+		}
+	}
+
+	// Did we use a result parameter?
+	Bool hasResultParam() {
+		resultParam;
 	}
 
 	// Generate code on demand.
 	private CodeGen code() {
 		FnRoot root(body.pos, this);
 
+		Nat skip = 0;
+		// Don't add 'this' and 'offset'.
+		if (isMember())
+			skip += 2;
+		// Don't add 'return'.
+		if (hasResultParam)
+			skip += 1;
+
 		// Add parameters.
 		for (id, v in formals) {
-			// Don't add the 'this' and 'offset' parameters. They are handled specially.
-			if (id > 1 | !isMember())
+			if (id >= skip)
 				root.addParam(v.v, params[id], v.pos);
 		}
 
@@ -143,6 +214,9 @@ class FnRoot extends StmtBlock {
 	// Return value of the function.
 	Value result;
 
+	// Result pointer, if applicable.
+	Var resultPtr;
+
 	// The 'this' parameter, if we're a member function. This is stored as a regular pointer and
 	// handled as a special case to be compatible with the calling convention of the rest of
 	// Storm. This is actually not too bad, since &this is not accepted by e.g. GCC on X86-64.
@@ -156,7 +230,7 @@ class FnRoot extends StmtBlock {
 
 	init(SrcPos pos, CppFunction fn) {
 		init(pos, fn.scope) {
-			result = fn.result;
+			result = fn.findResult;
 			owner = fn;
 		}
 	}
@@ -174,6 +248,7 @@ class FnRoot extends StmtBlock {
 	Bool code(CodeGen gen) : override {
 		// We don't need to create a child block. We use the root block right away!
 
+		// this-ptr.
 		if (owner.isMember()) {
 			thisPtr = gen.l.createParam(ptrDesc);
 			Value memberOf = owner.params[0];
@@ -182,6 +257,22 @@ class FnRoot extends StmtBlock {
 
 			// The offset parameter.
 			thisOffset = gen.l.createParam(intDesc);
+		}
+
+		// result ptr.
+		if (owner.hasResultParam) {
+			Var formal = gen.l.createParam(ptrDesc);
+			CppVar var = allocType(gen, safeType(wrapPtr(result), owner.pos));
+			var.adjust(gen, ptrA);
+
+			gen.l << mov(ptrB, formal);
+			gen.l << mov(ptrRel(ptrA, Offset()), ptrRel(ptrB, Offset()));
+			gen.l << mov(intRel(ptrA, Offset(sPtr)), intRel(ptrB, Offset(sPtr)));
+
+			var.created(gen);
+			resultPtr = var.v;
+			if (type = result.type)
+				gen.l.varInfo(resultPtr, Listing:VarInfo("↲", type, true, owner.pos));
 		}
 
 		for (param in params) {

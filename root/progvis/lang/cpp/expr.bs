@@ -309,7 +309,7 @@ class NameExpr extends Expr {
 		resolve.codePtr(gen, type);
 	}
 
-	private Expr resolve() {
+	Expr resolve() {
 		if (resolved)
 			return resolved;
 
@@ -461,14 +461,21 @@ Expr ctorCall(Expr lhs, Expr[] actuals) {
  */
 class FnCall extends ExprRef {
 	private Function fn;
+	private Value fnResult;
 	private Expr[] actuals;
 
 	// Expand the first parameter into a pointer and an offset. Used for 'this' pointers.
 	private Bool addOffset;
 
 	init(SrcPos pos, Function fn, Expr[] actuals, Bool addOffset) {
+		Value result = fn.result;
+		if (fn as CppFunction) {
+			result = fn.findResult();
+		}
+
 		init(pos) {
 			fn = fn;
+			fnResult = result;
 			actuals = actuals;
 			addOffset = addOffset;
 		}
@@ -476,13 +483,39 @@ class FnCall extends ExprRef {
 
 	ExprResult result() : override {
 		// We make sure to return references.
-		fn.result.asRef();
+		fnResult.asRef();
 	}
 
 	void code(CodeGen gen, CodeResult res) : override {
+		Operand[] params = createParams(gen);
+
+		if (fn.hasResultParam) {
+			resParamCode(gen, res, params);
+			return;
+		}
+
+		// The regular case.
+		plainCode(gen, res, params);
+	}
+
+	// Generate code for evaluating parameters.
+	private Operand[] createParams(CodeGen gen) {
 		Operand[] params;
+		Nat skip = actuals.count;
+
+		// Skip adding the result param.
+		if (fn.hasResultParam) {
+			if (fn.isMember)
+				skip = 1;
+			else
+				skip = 0;
+		}
+
 		Nat formalId = 0;
 		for (i, x in actuals) {
+			if (i == skip)
+				formalId++;
+
 			if (i == 0 & addOffset) {
 				paramOffsetCode(params, gen, x, fn.params[0], fn.params[1]);
 				formalId += 2;
@@ -492,7 +525,12 @@ class FnCall extends ExprRef {
 			}
 		}
 
-		if (t = fn.result.type) {
+		params;
+	}
+
+	// Call a regular, Storm function, or a C++ function without param.
+	private void plainCode(CodeGen gen, CodeResult res, Operand[] params) {
+		if (t = fnResult.type) {
 			if (res.type.ref & !fn.result.ref) {
 				// Create a variable to store the result in.
 				CppVar var = allocType(gen, t);
@@ -511,20 +549,60 @@ class FnCall extends ExprRef {
 		}
 	}
 
-	// Generate code for when someone else has already created the storage for us.
-	void codeRef(CodeGen gen, CppVar var) : override {
-		Operand[] params;
-		Nat formalId = 0;
-		for (i, x in actuals) {
-			if (i == 0 & addOffset) {
-				paramOffsetCode(params, gen, x, fn.params[0], fn.params[1]);
-				formalId += 2;
-			} else {
-				params << paramCode(gen, x, fn.params[formalId]);
-				formalId += 1;
-			}
+	// Call a function that returns the value through a pointer.
+	private void resParamCode(CodeGen gen, CodeResult res, Operand[] params) {
+		unless (t = fnResult.type)
+			throw InternalError("Void values should never be returned by pointer.");
+
+		// Create a variable to store the result in.
+		CppVar var = allocTemporary(gen, t);
+		var.created(gen);
+
+		// Create a pointer and initialize it. It is fine to create it on the stack.
+		Var ptr = gen.l.createVar(gen.block, sPtr*2);
+		gen.l << mov(ptrRel(ptr, Offset()), var.v);
+		gen.l << mov(intRel(ptr, Offset(sPtr)), natConst(sPtr*2));
+		gen.l << lea(ptrA, ptr);
+
+		// Then we can just call the function!
+		if (!fn.isMember)
+			gen.l << fnParam(ptrDesc, ptrA);
+		for (i, param in params) {
+			gen.l << fnParam(fn.params[i].desc(), param);
+
+			if (fn.isMember & addOffset & i == 1)
+				gen.l << fnParam(ptrDesc, ptrA);
+			else if (fn.isMember & !addOffset & i == 0)
+				gen.l << fnParam(ptrDesc, ptrA);
 		}
 
+		gen.l << fnCall(fn.ref, fn.isMember);
+
+		// Store the pointer or the value somewhere.
+		if (res.type.ref) {
+			var.adjust(gen, res.safeLocation(gen, result.type));
+		} else {
+			// TODO: We should look at this.
+			throw InternalError("Returning values of complex types is not yet supported.");
+		}
+
+		res.created(gen);
+	}
+
+	// Generate code for when someone else has already created the storage for us.
+	void codeRef(CodeGen gen, CppVar var) : override {
+		Operand[] params = createParams(gen);
+
+		if (fn.hasResultParam()) {
+			resParamCodeRef(gen, var, params);
+			return;
+		}
+
+		plainCodeRef(gen, var, params);
+	}
+
+	// Call a regular, Storm function, or a C++ function without param.
+	private void plainCodeRef(CodeGen gen, CppVar var, Operand[] params) {
 		if (t = fn.result.type) {
 			if (!fn.result.ref) {
 				Var v = gen.l.createVar(gen.block, sPtr);
@@ -551,6 +629,37 @@ class FnCall extends ExprRef {
 			// Void result.
 			fn.autoCall(gen, params, CodeResult());
 		}
+	}
+
+	// Call a function that returns the value through a pointer.
+	private void resParamCodeRef(CodeGen gen, CppVar var, Operand[] params) {
+		unless (t = fnResult.type)
+			throw InternalError("Void values should never be returned by pointer.");
+
+		// So that it shows up properly in the visualization.
+		var.created(gen);
+		gen.l << location(SrcPos());
+
+		// Create a pointer and initialize it. It is fine to create it on the stack.
+		Var ptr = gen.l.createVar(gen.block, sPtr*2);
+		gen.l << mov(ptrRel(ptr, Offset()), var.v);
+		gen.l << mov(intRel(ptr, Offset(sPtr)), natConst(sPtr*2));
+		gen.l << lea(ptrA, ptr);
+
+		// Then we can just call the function!
+		if (!fn.isMember)
+			gen.l << fnParam(ptrDesc, ptrA);
+
+		for (i, param in params) {
+			gen.l << fnParam(fn.params[i].desc(), param);
+
+			if (fn.isMember & addOffset & i == 1)
+				gen.l << fnParam(ptrDesc, ptrA);
+			else if (fn.isMember & !addOffset & i == 0)
+				gen.l << fnParam(ptrDesc, ptrA);
+		}
+
+		gen.l << fnCall(fn.ref, fn.isMember);
 	}
 }
 
@@ -765,7 +874,7 @@ Expr operator(Block block, SStr op, Expr rhs) on Compiler {
 	CppPart opName(op.v + "*", [rhs]);
 	if (t = rType.type) {
 		if (fn = t.find(opName, block.scope) as Function)
-			return FnCall(pos, fn, [rhs]);
+			return FnCall(pos, fn, [rhs], false);
 
 		if (fn = t.find(CppPart(op.v, [rhs, OffsetExpr()]), block.scope) as Function)
 			return FnCall(pos, fn, [rhs], true);

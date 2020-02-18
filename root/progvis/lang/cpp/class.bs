@@ -107,7 +107,7 @@ class CppType extends Type {
 		if (!hasCtor) {
 			CppCtorDecl decl(SStr(name, pos), []);
 			// 'decl' will not create the constructor without a body.
-			add(CppCtor(cppScope(this), pos, this, decl));
+			add(CppCtor(cppScope(this), SrcPos(), this, decl));
 		}
 
 		if (!hasCopyCtor) {

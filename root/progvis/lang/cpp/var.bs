@@ -96,6 +96,19 @@ class LocalVarAccess extends Expr {
 }
 
 /**
+ * A local var access that appears to be a temporary. Used when compiling "return" statements.
+ */
+class LocalVarTmpAccess extends LocalVarAccess {
+	init(LocalVarAccess access) {
+		init(access.pos, access.var) {}
+	}
+
+	Bool temporary() : override {
+		true;
+	}
+}
+
+/**
  * Variable declaration.
  */
 class VarDecl extends Stmt {
@@ -152,6 +165,12 @@ class VarDecl extends Stmt {
 	// Create from an () expression.
 	VarDecl parens(SrcPos pos, Block parent, Value type, SStr name, Expr[] actuals) : static {
 		if (t = type.type) {
+			if (actuals.count == 1 & t is actuals[0].result.type.type) {
+				// If there is only a single expression, we can use it to initialize the variable directly.
+				if (create = actuals[0] as ExprRef)
+					return VarDecl(pos, parent, type, name, create);
+			}
+
 			if (ctor = t.cppCtor(actuals, parent.scope)) {
 				return VarDecl(pos, parent, type, name, CtorCall(pos, ctor, actuals, true));
 			}

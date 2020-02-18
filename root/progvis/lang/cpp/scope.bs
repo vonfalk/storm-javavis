@@ -48,13 +48,27 @@ class CppPart extends SimplePart {
 	Expr[] actuals;
 
 	Int matches(Named candidate, Scope source) {
-		if (actuals.count != candidate.params.count)
+		Value[] formals = candidate.params;
+
+		// If it is a function that has a result parameter, then we can discard that!
+		if (fn = candidate as Function) {
+			if (fn.hasResultParam()) {
+				formals = formals.clone();
+				// It is either the first or the third parameter (this-parameter is two params).
+				if (fn.isMember)
+					formals.remove(2);
+				else
+					formals.remove(0);
+			}
+		}
+
+		if (actuals.count != formals.count)
 			return -1;
 
 		Int penalty = 0;
 		for (Nat i = 0; i < actuals.count; i++) {
 			Expr actual = actuals[i];
-			Value formal = candidate.params[i];
+			Value formal = formals[i];
 
 			unless (formalType = formal.type)
 				return -1;
