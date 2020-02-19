@@ -461,7 +461,9 @@ class WithCaption extends Group {
 			if (i > 0)
 				s = max(s, c.minSize());
 
-		s.h += space + text.minSize.h;
+		Size textSz = text.minSize;
+		s.w = max(s.w, textSz.w);
+		s.h += space + textSz.h;
 		s;
 	}
 
