@@ -227,3 +227,49 @@ class LogicOp extends ExprRef {
 		gen.l << skip;
 	}
 }
+
+/**
+ * Negation operator (!)
+ */
+class NegateOp extends ExprRef {
+	init(SrcPos pos, Block parent, Expr expr) {
+		init(pos) {
+			expr = castCond(parent, expr);
+		}
+	}
+
+	private Expr expr;
+
+	ExprResult result() : override {
+		Value(named{Bool}).asRef(true);
+	}
+
+	void code(CodeGen gen, CodeResult res) : override {
+		if (res.type.ref) {
+			CppVar var = allocType(gen, named{Bool});
+			codeRef(gen, var);
+
+			var.adjust(gen, res.safeLocation(gen, Value(named{Bool}).asRef()));
+		} else {
+			code(gen, res.safeLocation(gen, Value(named{Bool})));
+		}
+		res.created(gen);
+	}
+
+	void codeRef(CodeGen gen, CppVar var) : override {
+		code(gen, al);
+		var.adjust(gen, ptrB);
+		gen.l << mov(byteRel(ptrB), al);
+		var.created(gen);
+	}
+
+	private void code(CodeGen gen, Operand result) {
+		Value bool(named{Bool});
+		CodeResult res(bool, gen.block);
+		expr.code(gen, res);
+
+		gen.l << mov(result, res.location(gen));
+		gen.l << cmp(result, byteConst(0));
+		gen.l << setCond(result, CondFlag:ifEqual);
+	}
+}

@@ -22,6 +22,9 @@ elem *createList(int count) {
 }
 
 void printList(elem *list) {
+	if (!list)
+		return;
+
 	for (elem *at = list; at; at = at->next) {
 		print(at->value);
 	}
