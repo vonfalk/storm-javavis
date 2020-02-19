@@ -161,3 +161,69 @@ class IfStmt extends Block {
 		returns;
 	}
 }
+
+/**
+ * Logical and/or (short circuiting).
+ */
+class LogicOp extends ExprRef {
+	// If "and" is true, we're an and operation, otherwise we're an or operation.
+	init(SrcPos pos, Block parent, Expr lhs, Expr rhs, Bool and) {
+		init(pos) {
+			lhs = castCond(parent, lhs);
+			rhs = castCond(parent, rhs);
+			and = and;
+		}
+	}
+
+	private Expr lhs;
+	private Expr rhs;
+	private Bool and;
+
+	ExprResult result() : override {
+		Value(named{Bool}).asRef(true);
+	}
+
+	void code(CodeGen gen, CodeResult res) : override {
+		if (res.type.ref) {
+			CppVar var = allocType(gen, named{Bool});
+			codeRef(gen, var);
+
+			gen.adjust(gen, res.safeLocation(gen, Value(named{Bool}).asRef()));
+		} else {
+			code(gen, res.safeLocation(gen, Value(named{Bool})));
+		}
+		res.created(gen);
+	}
+
+	void codeRef(CodeGen gen, CppVar var) : override {
+		code(gen, al);
+		var.adjust(gen, ptrB);
+		gen.l << mov(byteRel(ptrB), al);
+		var.created(gen);
+	}
+
+	private void code(CodeGen gen, Operand result) {
+		Value bool(named{Bool});
+		CodeResult lResult(bool, gen.block);
+		gen.l << location(lhs.pos);
+		lhs.code(gen, lResult);
+
+		Label skip = gen.l.label();
+
+		gen.l << mov(result, lResult.location(gen));
+		gen.l << cmp(result, byteConst(0));
+
+		if (and)
+			gen.l << jmp(skip, CondFlag:ifEqual);
+		else
+			gen.l << jmp(skip, CondFlag:ifNotEqual);
+
+		CodeResult rResult(bool, gen.block);
+		gen.l << location(rhs.pos);
+		rhs.code(gen, rResult);
+
+		gen.l << mov(result, rResult.location(gen));
+
+		gen.l << skip;
+	}
+}

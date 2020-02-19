@@ -31,12 +31,12 @@ class Expr extends Stmt {
 		true;
 	}
 
+	// Generate code. 'desired' is the desired return type.
+	void code(CodeGen gen, CodeResult res) : abstract;
+
 	// Compute a pointer/reference to this value. This might involve creating a temporary object.
 	// Stores a base ptr in 'ptrB' and an offset in 'ecx'.
 	void codePtr(CodeGen gen, Type type) : abstract;
-
-	// Generate code. 'desired' is the desired return type.
-	void code(CodeGen gen, CodeResult res) : abstract;
 }
 
 /**
@@ -913,10 +913,6 @@ Expr dotOperator(Block block, Expr lhs, SStr rhs, Bool ptrLhs) {
 		lhs = Deref:ptr(lhs);
 	NameExpr(lhs.pos.extend(rhs.pos), block.scope, SimpleName(rhs.v), lhs);
 }
-
-// Short-circuting operators. TODO!
-Expr scAnd(Block block, Expr lhs, SStr op, Expr rhs) on Compiler { IntLiteral(op.pos, 0); }
-Expr scOr(Block block, Expr lhs, SStr op, Expr rhs) on Compiler { IntLiteral(op.pos, 0); }
 
 
 /**

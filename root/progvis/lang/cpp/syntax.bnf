@@ -208,11 +208,11 @@ SOp16 => operator(block, l, op, r) : SOp15(block) l, ">>=" @op, SOp16(block) r;
 
 Expr SOp15(Block block);
 SOp15 => n : SOp14(block) n;
-SOp15 => scOr(block, l, op, r) : SOp15(block) l, "||" @op, SOp14(block) r;
+SOp15 => LogicOp(pos, block, l, r, false) : SOp15(block) l, "||", SOp14(block) r;
 
 Expr SOp14(Block block);
 SOp14 => n : SOp13(block) n;
-SOp14 => scAnd(block, l, op, r) : SOp14(block) l, "&&" @op, SOp13(block) r;
+SOp14 => LogicOp(pos, block, l, r, true) : SOp14(block) l, "&&", SOp13(block) r;
 
 Expr SOp13(Block block);
 SOp13 => n : SOp12(block) n;

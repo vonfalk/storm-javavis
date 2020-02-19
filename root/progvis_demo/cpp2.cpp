@@ -23,12 +23,13 @@ elem *createList(int count) {
 
 void printList(elem *list) {
 	for (elem *at = list; at; at = at->next) {
-		print(list->value);
+		print(at->value);
 	}
 }
 
 int main() {
-	bool b = true;
+	bool a = false && true;
+	bool b = false || true;
 	if (b)
 		if (!b)
 			print(1);
