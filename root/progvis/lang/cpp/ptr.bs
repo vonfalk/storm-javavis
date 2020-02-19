@@ -1,5 +1,6 @@
 use core:lang;
 use core:asm;
+use lang:asm;
 use lang:bs:macro;
 
 // Pointers.
@@ -81,9 +82,26 @@ class PtrType extends Type {
 		add(TypeCopyCtor(this));
 		add(TypeAssign(this));
 
+		Value ref(this, true);
+
+		// Compare pointers.
+		addFn(named{Bool}, "==", [ref, ref], named{pointerEq<unsafe:RawPtr, unsafe:RawPtr>});
+		addFn(named{Bool}, "!=", [ref, ref], named{pointerNeq<unsafe:RawPtr, unsafe:RawPtr>});
+		addFn(named{Bool}, "<", [ref, ref], named{pointerLt<unsafe:RawPtr, unsafe:RawPtr>});
+		addFn(named{Bool}, ">", [ref, ref], named{pointerGt<unsafe:RawPtr, unsafe:RawPtr>});
+		addFn(named{Bool}, "<=", [ref, ref], named{pointerLte<unsafe:RawPtr, unsafe:RawPtr>});
+		addFn(named{Bool}, ">=", [ref, ref], named{pointerGte<unsafe:RawPtr, unsafe:RawPtr>});
+
 		// TODO: Add suitable members!
 
 		super:loadAll();
+	}
+
+	// Add a function ptr.
+	private void addFn(Value result, Str name, Value[] params, Function fn) {
+		Function f(result, name, params);
+		f.setCode(DelegatedCode(fn.ref));
+		add(f);
 	}
 }
 
@@ -99,6 +117,97 @@ class PtrError extends Exception {
 		to << msg;
 	}
 }
+
+// Compare two pointers. Don't call from Storm.
+private Bool pointerEq(unsafe:RawPtr a, unsafe:RawPtr b) {
+	Bool r = false;
+	asm {
+		mov ptrA, a;
+		mov ptrB, b;
+		cmp p[ptrA], p[ptrB];
+		jmp ifNotEqual, @done;
+
+		cmp i[ptrA + sPtr], i[ptrB + sPtr];
+		setCond r, ifEqual;
+	done:
+	}
+	r;
+}
+private Bool pointerNeq(unsafe:RawPtr a, unsafe:RawPtr b) {
+	Bool r = true;
+	asm {
+		mov ptrA, a;
+		mov ptrB, b;
+		cmp p[ptrA], p[ptrB];
+		jmp ifNotEqual, @done;
+
+		cmp i[ptrA + sPtr], i[ptrB + sPtr];
+		setCond r, ifNotEqual;
+	done:
+	}
+	r;
+}
+private void assumeSameAlloc(unsafe:RawPtr a, unsafe:RawPtr b) {
+	Bool same;
+	asm {
+		mov ptrA, a;
+		mov ptrB, b;
+		cmp p[ptrA], p[ptrB];
+		setCond same, ifEqual;
+	}
+
+	if (!same)
+		throw PtrError("Trying to compare pointers from different allocations with <, >, <= or =>");
+}
+private Bool pointerLt(unsafe:RawPtr a, unsafe:RawPtr b) {
+	assumeSameAlloc(a, b);
+
+	Bool r;
+	asm {
+		mov ptrA, a;
+		mov ptrB, b;
+		cmp p[ptrA], p[ptrB];
+		setCond r, ifBelow;
+	}
+	r;
+}
+private Bool pointerGt(unsafe:RawPtr a, unsafe:RawPtr b) {
+	assumeSameAlloc(a, b);
+
+	Bool r;
+	asm {
+		mov ptrA, a;
+		mov ptrB, b;
+		cmp p[ptrA], p[ptrB];
+		setCond r, ifAbove;
+	}
+	r;
+}
+private Bool pointerLte(unsafe:RawPtr a, unsafe:RawPtr b) {
+	assumeSameAlloc(a, b);
+
+	Bool r;
+	asm {
+		mov ptrA, a;
+		mov ptrB, b;
+		cmp p[ptrA], p[ptrB];
+		setCond r, ifBelowEqual;
+	}
+	r;
+}
+private Bool pointerGte(unsafe:RawPtr a, unsafe:RawPtr b) {
+	assumeSameAlloc(a, b);
+
+	Bool r;
+	asm {
+		mov ptrA, a;
+		mov ptrB, b;
+		cmp p[ptrA], p[ptrB];
+		setCond r, ifAboveEqual;
+	}
+	r;
+}
+
 
 // Check the validity of a pointer. Assumes we want to read a maximum of 'size' bytes at wherever
 // 'ptr' and 'offset' refers to.

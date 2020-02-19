@@ -93,6 +93,7 @@ SAsmInstruction => LeaInstr(dest, src) : "lea" #typeName, SAsmWritable(block) de
 SAsmInstruction => CmpInstr(a, b) : "cmp" #typeName, SAsmOperand(block) a, ",", SAsmOperand(block) b;
 SAsmInstruction => JmpInstr(to) : "jmp" #typeName, SAsmLabelRef to;
 SAsmInstruction => JmpInstr(to, c) : "jmp" #typeName, SAsmCond c, ",", SAsmLabelRef to;
+SAsmInstruction => SetCondInstr(dest, c) : "setCond" #typeName, SAsmWritable(block) dest, ",", SAsmCond c;
 
 // Integration into other languages.
 lang.bs.SStmt => r : "asm" #keyword, "{" [, SAsmListing(block) r,]+ "}";

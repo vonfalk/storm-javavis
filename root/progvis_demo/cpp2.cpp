@@ -25,7 +25,7 @@ void printList(elem *list) {
 	if (!list)
 		return;
 
-	for (elem *at = list; at; at = at->next) {
+	for (elem *at = list; at != nullptr; at = at->next) {
 		print(at->value);
 	}
 }

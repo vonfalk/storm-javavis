@@ -103,6 +103,23 @@ class JmpInstr extends AsmAtom {
 	}
 
 	Str toS() {
-		"jmp " # to # ", " # flag;
+		"jmp " # flag # ", " # to;
+	}
+}
+
+class SetCondInstr extends AsmAtom {
+	AsmOperand to;
+	CondFlag flag;
+
+	init(AsmOperand to, CondFlag c) {
+		init() { to = to; flag = c; }
+	}
+
+	void output(CodeGen g, Labels l) {
+		g.l << setCond(to.v(l), flag);
+	}
+
+	Str toS() {
+		"setCond " # to # ", " # flag;
 	}
 }

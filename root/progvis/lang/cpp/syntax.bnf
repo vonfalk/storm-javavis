@@ -287,8 +287,8 @@ SAtom => NameExpr(pos, block.scope, name) : SCompoundName(block.scope) name;
 SAtom[10] => ThisPtr(pos, block.scope) : "this" #keyword;
 SAtom[10] => BoolLiteral(pos, true) : "true" #keyword;
 SAtom[10] => BoolLiteral(pos, false) : "false" #keyword;
-// SAtom[10] => Nullptr(pos) : "nullptr" #keyword;
-// SAtom[10] => Nullptr(pos) : "NULL" #keyword;
+SAtom[10] => Nullptr(pos) : "nullptr" #keyword;
+SAtom[10] => Nullptr(pos) : "NULL" #keyword;
 
 SimpleName SCompoundName(Scope scope);
 SCompoundName => SimpleName() : SNamePart(scope) -> add, ("::", SNamePart(scope) -> add)*;

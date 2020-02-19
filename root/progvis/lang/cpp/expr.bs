@@ -213,6 +213,55 @@ class BoolLiteral extends Expr {
 	}
 }
 
+/**
+ * Nullptr.
+ */
+class Nullptr extends Expr {
+	init(SrcPos pos) {
+		init(pos) {}
+	}
+
+	ExprResult result() : override {
+		// We don't know yet. Perhaps we should say "void *"?
+		Value();
+	}
+
+	Bool suggestResult(Type type) : override {
+		if (type as PtrType)
+			return !type.isRef;
+		false;
+	}
+
+	void code(CodeGen gen, CodeResult res) : override {
+		if (!res.needed())
+			return;
+
+		var to = res.location(gen);
+		if (res.type.ref) {
+			unless (type = res.type.type)
+				throw InternalError("Unable to create a nullptr for 'void'.");
+
+			// We don't need to initialize it. Zero is exactly what we want!
+			CppVar var = allocType(gen, type);
+			var.created(gen);
+
+			var.adjust(gen, to);
+		} else {
+			gen.l << mov(ptrRel(to), ptrConst(0));
+			gen.l << mov(intRel(to, Offset(sPtr)), natConst(0));
+		}
+		res.created(gen);
+	}
+
+	void codePtr(CodeGen gen, Type type) : override {
+		// No initialization needed. Allocations are zero-initialized by default.
+		CppVar var = allocTemporary(gen, type);
+		var.created(gen);
+		gen.l << location(SrcPos());
+		var.ptr(gen);
+	}
+}
+
 
 /**
  * Access the this ptr.
