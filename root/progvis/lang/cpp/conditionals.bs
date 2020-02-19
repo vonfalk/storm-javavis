@@ -57,7 +57,7 @@ class CheckPtr extends Expr {
 		gen.l << cmp(ptrRel(inner.location(gen)), ptrConst(0));
 		gen.l << setCond(byteRel(ptrA), CondFlag:ifNotEqual);
 		var.created(gen);
-		gen.to << location(SrcPos());
+		gen.l << location(SrcPos());
 		var.ptr(gen);
 	}
 }
@@ -96,7 +96,7 @@ class CheckIntegral extends Expr {
 		gen.l << cmp(val, xConst(val.size, 0));
 		gen.l << setCond(byteRel(ptrA), CondFlag:ifNotEqual);
 		var.created(gen);
-		gen.to << location(SrcPos());
+		gen.l << location(SrcPos());
 		var.ptr(gen);
 	}
 }
@@ -188,7 +188,7 @@ class LogicOp extends ExprRef {
 			CppVar var = allocType(gen, named{Bool});
 			codeRef(gen, var);
 
-			gen.adjust(gen, res.safeLocation(gen, Value(named{Bool}).asRef()));
+			var.adjust(gen, res.safeLocation(gen, Value(named{Bool}).asRef()));
 		} else {
 			code(gen, res.safeLocation(gen, Value(named{Bool})));
 		}

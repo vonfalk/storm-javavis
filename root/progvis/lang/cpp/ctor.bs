@@ -16,10 +16,10 @@ class CppCtorDecl extends CppDecl {
 
 	// Set the body.
 	void body(SStmtList b) {
-		body = b;
-
 		// We match "body" a bit too narrowly in the grammar.
-		body.pos.end++;
+		b.pos.end++;
+
+		body = b;
 	}
 
 	void create(NameSet inside) : override {

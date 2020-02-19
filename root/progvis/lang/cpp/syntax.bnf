@@ -165,7 +165,7 @@ STypeNameEnd => Value() : "void" #keyword;
 // Parts of a name.
 SimplePart SNamePart(Scope scope);
 SNamePart => SimplePart(name) : SIdentifier name;
-SNamePart => SimplePart(name, params) : SIdentifier name, "<", SNameParams(scope) params, ">";
+SNamePart => SimplePart(name.v, params) : SIdentifier name, "<", SNameParams(scope) params, ">";
 
 Array<Value> SNameParams(Scope scope);
 SNameParams => Array<Value>() :;
@@ -266,8 +266,8 @@ SOp3 => operator(block, op, n) : "--?" @op, SOp2(block) n;
 SOp3 => NewExpr(pos, block, type) : "new[ \t]" #keyword, STypeName(block.scope) type;
 SOp3 => NewExpr(pos, block, type, actuals) : "new[ \t]" #keyword, STypeName(block.scope) type, "(", SActuals(block) actuals, ")";
 SOp3 => NewExpr(pos, block, type, actuals) : "new[ \t]" #keyword, STypeName(block.scope) type, "{", SActuals(block) actuals, "}";
-SOp3 : "sizeof[ \t]" #keyword, SOp2(block) n;
-SOp3 : "(", STypeName, ")", SOp3; // C-style cast.
+// SOp3 : "sizeof[ \t]" #keyword, SOp2(block) n;
+// SOp3 : "(", STypeName, ")", SOp3; // C-style cast.
 
 Expr SOp2(Block block);
 SOp2 => a : SAtom(block) a;
@@ -275,7 +275,7 @@ SOp2 => operator(block, n, op) : SAtom(block) n, "++" @op;
 SOp2 => operator(block, n, op) : SAtom(block) n, "--" @op;
 SOp2 => dotOperator(block, lhs, rhs, false) : SOp2(block) lhs, "\.", SIdentifier rhs;
 SOp2 => dotOperator(block, lhs, rhs, true) : SOp2(block) lhs, "->", SIdentifier rhs;
-SOp2 : SOp2(block), "\[", SExpr(block), "\]";
+// SOp2 : SOp2(block), "\[", SExpr(block), "\]";
 SOp2 => fnCall(lhs, params) : SOp2(block) lhs, "(", SActuals(block) params, ")";
 SOp2 => ctorCall(lhs, params) : SOp2(block) lhs, "{", SActuals(block) params, "}";
 

@@ -202,11 +202,13 @@ class BoolLiteral extends Expr {
 	}
 
 	void codePtr(CodeGen gen, Type type) : override {
+		Byte val = if (this.val) { 1b; } else { 0b; };
+
 		CppVar var = allocTemporary(gen, named{Bool});
 		var.adjust(gen, ptrA);
 		gen.l << mov(byteRel(ptrA), byteConst(val));
 		var.created(gen);
-		gen.to << location(SrcPos());
+		gen.l << location(SrcPos());
 		var.ptr(gen);
 	}
 }
@@ -698,16 +700,16 @@ class CtorCall extends ExprRef {
 		}
 
 		if (res.type.ref) {
-			CppVar var = allocType(gen, t);
-			VarInfo ref = res.safeLocation(gen, res.type);
+			CppVar var = allocType(gen, type);
+			Var ref = res.safeLocation(gen, res.type);
 			var.created(gen); // A bit early, but for the visualization.
 			gen.l << location(SrcPos()); // To make the visualization update its display, but not
 										 // stop. Otherwise this object might be incorrectly shown
 										 // on the heap.
 
-			var.adjust(gen, ref.v);
+			var.adjust(gen, ref);
 
-			params.insert(0, ref.v);
+			params.insert(0, ref);
 			if (addOffset) {
 				Var offset = gen.l.createVar(gen.block, sNat);
 				gen.l << mov(offset, natConst(sPtr * 2));
@@ -716,13 +718,13 @@ class CtorCall extends ExprRef {
 			fn.autoCall(gen, params, CodeResult());
 		} else {
 			if (addOffset)
-				throw InternalError(pos, "Can not use constructors to generate value types");
-			VarInfo val = res.safeLocation(gen, result.type);
+				throw InternalError("Can not use constructors to generate value types");
+			Var val = res.safeLocation(gen, result.type);
 			gen.l << lea(ptrA, val);
 			params.insert(0, ptrA);
 			fn.autoCall(gen, params, CodeResult());
-			val.created(gen);
 		}
+		res.created(gen);
 	}
 
 	// Generate code for when someone else has already created the storage for us.
