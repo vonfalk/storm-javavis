@@ -195,16 +195,18 @@ SStmt[50] => Continue(pos, block) : "continue" #keyword, ";";
 void SStmtList(StmtBlock block);
 SStmtList => block : (SStmt(block) -> add,)*;
 
-// TODO: The comma-operator is at level 17, and is not currently included.
 Expr SExpr(Block block);
-SExpr => n : SOp16(block) n;
+SExpr => n : SExprNoComma(block) n;
+
+// The comma-operator.
+SExpr => CommaExpr(pos, lhs, rhs) : SExpr(block) lhs, ",", SExprNoComma(block) rhs;
 
 // Operators, level 16 according to https://en.cppreference.com/w/cpp/language/operator_precedence
-Expr SOp16(Block block);
-SOp16 => n : SOp15(block) n;
-SOp16 => operator(block, l, op, r) : SOp15(block) l, "[+-*/%&^|]?=" @op, SOp16(block) r;
-SOp16 => operator(block, l, op, r) : SOp15(block) l, "<<=" @op, SOp16(block) r;
-SOp16 => operator(block, l, op, r) : SOp15(block) l, ">>=" @op, SOp16(block) r;
+Expr SExprNoComma(Block block);
+SExprNoComma => n : SOp15(block) n;
+SExprNoComma => operator(block, l, op, r) : SOp15(block) l, "[+-*/%&^|]?=" @op, SExprNoComma(block) r;
+SExprNoComma => operator(block, l, op, r) : SOp15(block) l, "<<=" @op, SExprNoComma(block) r;
+SExprNoComma => operator(block, l, op, r) : SOp15(block) l, ">>=" @op, SExprNoComma(block) r;
 
 Expr SOp15(Block block);
 SOp15 => n : SOp14(block) n;
@@ -292,4 +294,4 @@ SCompoundName => SimpleName() : SNamePart(scope) -> add, ("::", SNamePart(scope)
 
 Array<Expr> SActuals(Block block);
 SActuals => Array<Expr>() : ;
-SActuals => Array<Expr>() : SExpr(block) -> push, (",", SExpr(block) -> push)*;
+SActuals => Array<Expr>() : SExprNoComma(block) -> push, (",", SExprNoComma(block) -> push)*;

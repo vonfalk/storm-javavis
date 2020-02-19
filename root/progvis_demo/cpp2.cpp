@@ -28,6 +28,7 @@ void printList(elem *list) {
 }
 
 int main() {
+	int test = 1 + 1, 2 + 2, 3 + 3;
 	bool a = false && true;
 	bool b = false || true;
 	if (b)

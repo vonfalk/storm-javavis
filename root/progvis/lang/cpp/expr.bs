@@ -1180,3 +1180,54 @@ class NewExpr extends ExprRef {
 		tmp;
 	}
 }
+
+/**
+ * The comma operator.
+ */
+class CommaExpr extends Expr {
+	init(SrcPos pos, Expr lhs, Expr rhs) {
+		init(pos) {
+			lhs = lhs;
+			rhs = rhs;
+		}
+	}
+
+	private Expr lhs;
+	private Expr rhs;
+
+	// Result.
+	ExprResult result() : override {
+		if (rhs.result.nothing)
+			return noReturn();
+		rhs.result();
+	}
+
+	// Generate code.
+	void code(CodeGen gen, CodeResult res) : override {
+		if (lhs as CommaExpr) {
+		} else {
+			gen.l << location(lhs.pos);
+		}
+
+		CodeResult first;
+		lhs.code(gen, first);
+
+		gen.l << location(rhs.pos);
+		rhs.code(gen, res);
+	}
+
+	// Ptr code.
+	void codePtr(CodeGen gen, Type type) : override {
+		if (lhs as CommaExpr) {
+		} else {
+			gen.l << location(lhs.pos);
+		}
+
+		CodeResult first;
+		lhs.code(gen, first);
+
+		gen.l << location(rhs.pos);
+		rhs.codePtr(gen, type);
+	}
+
+}
