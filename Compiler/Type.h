@@ -138,7 +138,8 @@ namespace storm {
 		// sometimes in early boot that is not possible.
 		const GcType *CODECALL gcArrayType();
 
-		// Get this class's size. (NOTE: This function is safe to call from any thread).
+		// Get this class's size. (NOTE: This function is safe to call from any thread. Use
+		// Value::size() from Storm if you don't want to switch to the Compiler thread).
 		Size STORM_FN size();
 
 		// Get the VTable for this type.
