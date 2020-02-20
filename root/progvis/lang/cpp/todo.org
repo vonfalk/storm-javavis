@@ -1,12 +1,12 @@
-* Remaining things in the C++ frontend [2/11]
+* Remaining things in the C++ frontend [3/11]
   - [ ] Ability to make const member functions.
   - [ ] Ability to make const member variables.
   - [ ] Check if function resolution works somewhat properly with const parameters etc.
   - [ ] Arrays/strings.
   - [ ] malloc/free
-  - [ ] sizeof()
   - [ ] Threading constructs.
   - [ ] static_cast, c-style-cast, etc.
   - [ ] Some kind of standard library for C++?
+  - [X] sizeof()
   - [X] Pointer arithmetics.
   - [X] nullptr/NULL

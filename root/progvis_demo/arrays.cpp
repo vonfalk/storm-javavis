@@ -14,6 +14,8 @@ int main() {
 	}
 
 	print(&x.c - &x.a);
+	print(sizeof(my_type));
+	print(sizeof(my_type *));
 
 	return 0;
 }

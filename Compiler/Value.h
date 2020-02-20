@@ -86,7 +86,7 @@ namespace storm {
 		BasicTypeInfo typeInfo() const;
 
 		// Get a type description of this type.
-		code::TypeDesc *desc(Engine &e) const;
+		code::TypeDesc *desc(Engine &e) const ON(Compiler);
 
 		/**
 		 * Access to common member functions.
@@ -95,11 +95,11 @@ namespace storm {
 		// Get an Operand pointing to the copy constructor for this type. Only returns something
 		// useful for value types, as other types can and shall be copied using an inline
 		// mov-instruction.
-		code::Operand STORM_FN copyCtor() const;
+		code::Operand STORM_FN copyCtor() const ON(Compiler);
 
 		// Get an Operand pointing to the destructor for this type. May return Operand(), meaning no
 		// destructor is needed.
-		code::Operand STORM_FN destructor() const;
+		code::Operand STORM_FN destructor() const ON(Compiler);
 	};
 
 	// Get a description of this type.

@@ -267,8 +267,14 @@ SOp3 => operator(block, op, n) : "--?" @op, SOp2(block) n;
 SOp3 => NewExpr(pos, block, type) : "new[ \t]" #keyword, STypeName(block.scope) type;
 SOp3 => NewExpr(pos, block, type, actuals) : "new[ \t]" #keyword, STypeName(block.scope) type, "(", SActuals(block) actuals, ")";
 SOp3 => NewExpr(pos, block, type, actuals) : "new[ \t]" #keyword, STypeName(block.scope) type, "{", SActuals(block) actuals, "}";
-// SOp3 : "sizeof[ \t]" #keyword, SOp2(block) n;
+SOp3 => sizeofExpr(pos, n) : "sizeof[ \t]" #keyword, SOp2(block) n;
+SOp3 => sizeofExpr(pos, type) : "sizeof[ \t]" #keyword, SizeofType(block.scope) type;
+SOp3 => sizeofExpr(pos, type) : "sizeof" #keyword, "(", SizeofType(block.scope) type, ")";
 // SOp3 : "(", STypeName, ")", SOp3; // C-style cast.
+
+Value SizeofType(Scope scope);
+SizeofType => v : STypeName(scope) v;
+SizeofType => v : "(", SizeofType(scope) v, ")";
 
 Expr SOp2(Block block);
 SOp2 => a : SAtom(block) a;

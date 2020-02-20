@@ -136,6 +136,17 @@ class IntLiteral extends Expr {
 }
 
 /**
+ * Sizeof expression.
+ */
+IntLiteral sizeofExpr(SrcPos pos, Expr expr) {
+	IntLiteral(pos, expr.result.type.size.current.long);
+}
+
+IntLiteral sizeofExpr(SrcPos pos, Value type) {
+	IntLiteral(pos, type.size.current.long);
+}
+
+/**
  * Constant used to represent an offset parameter.
  *
  * Does not generate any code, just used during lookup.
