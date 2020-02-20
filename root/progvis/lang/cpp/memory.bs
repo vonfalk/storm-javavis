@@ -10,6 +10,22 @@ use lang:bs:macro;
 on Compiler:
 
 /**
+ * Markers we use to mark allocations in C++.
+ *
+ * We put these in the 'filled' member of the arrays we allocate.
+ */
+enum AllocFlags : bitmask {
+	// Mask for the size.
+	sizeMask = 0x3FFFFFFF,
+
+	// This was allocated on the heap.
+	heapAlloc = 0x80000000,
+
+	// This was allocated using new[].
+	arrayAlloc = 0x40000000,
+}
+
+/**
  * Variable allocated in C++.
  */
 class CppVar on Compiler {

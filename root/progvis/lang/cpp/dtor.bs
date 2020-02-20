@@ -10,6 +10,9 @@ class CppDtorDecl extends CppDecl {
 		init(name) {
 			body = body;
 		}
+
+		if (body)
+			body.pos.end++;
 	}
 
 	void create(NameSet inside) : override {
@@ -47,18 +50,50 @@ void cppGenericDtor(unsafe:RawPtr obj) {
 }
 
 // Wrap a previously created C++ destructor to make it suitable to call from our array allocations.
+// Supports arrays as well!
 Function wrapCppDtor(Function dtor) on Compiler {
 	Listing l;
 	Var param = l.createParam(ptrDesc);
+	Var current = l.createVar(l.root, sPtr);
+	Var target = l.createVar(l.root, sPtr);
+
+	Label again = l.label();
+	Label start = l.label();
+
+	// Size of each element.
+	Nat elemSize = dtor.params[0].asRef(false).size.current;
 
 	l << prolog();
 
+	// Initialize the loop.
+	l << mov(ptrA, param);
+	l << mov(current, ptrConst(0));
+	l << mov(target, ptrRel(ptrA, Offset(sPtr)));
+	l << and(target, ptrConst(AllocFlags:sizeMask.v));
+
+	l << jmp(start);
+
+	l << again;
+	// Compute offset.
+	l << mov(ptrB, current);
+	l << mul(ptrB, ptrConst(elemSize));
+	l << add(ptrB, ptrConst(sPtr * 2));
+
 	// Call the original destructor.
 	l << mov(ptrA, param);
-	l << add(ptrA, ptrConst(Offset(sPtr * 2)));
+	l << add(ptrA, ptrB);
+	l << ucast(ecx, ptrB);
 	l << fnParam(ptrDesc, ptrA);
-	l << fnParam(intDesc, natConst(sPtr * 2));
+	l << fnParam(intDesc, ecx);
 	l << fnCall(dtor.ref, true);
+
+	// Next element.
+	l << add(current, ptrConst(1));
+
+	// Try again.
+	l << start;
+	l << cmp(current, target);
+	l << jmp(again, CondFlag:ifBelow);
 
 	// Mark it as 'empty'.
 	l << mov(ptrA, param);

@@ -346,8 +346,23 @@ void checkDelete(unsafe:RawPtr base, Nat offset) {
 		throw PtrError("Trying to delete memory not allocated by 'new'!");
 
 	// Malloc'd memory is marked with the MSB set.
-	if ((base.readFilled & 0x80000000) == 0)
+	if ((base.readFilled & AllocFlags:heapAlloc.v) == 0)
 		throw PtrError("Trying to delete memory allocated on the stack!");
+
+	if ((base.readFilled & AllocFlags:arrayAlloc.v) != 0)
+		throw PtrError("This allocation was allocated using new[], and should be freed using delete[].");
+}
+
+// Check that this pointer was allocated using 'new[]' for arrays. Returns the number of elements.
+void checkDeleteArray(unsafe:RawPtr base, Nat offset) {
+	if (offset != sPtr.current * 2)
+		throw PtrError("Trying to delete memory not allocated by 'new[]'!");
+
+	// Malloc'd memory is marked with the MSB set.
+	if ((base.readFilled & AllocFlags:heapAlloc.v) == 0)
+		throw PtrError("Trying to delete memory allocated on the stack!");
+
+	// To make 'free' feasible, we don't complain that you need to use the plain delete if the plain new was used.
 }
 
 // Wrap things inside a pointer or a reference.

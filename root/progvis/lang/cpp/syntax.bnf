@@ -183,7 +183,8 @@ SStmt[10] => VarDecl.assign(pos, block, type, name, init) : STypeName(block.scop
 SStmt[10] => VarDecl.parens(pos, block, type, name, actuals) : STypeName(block.scope) type, SIdentifier name #varName, "(", SActuals(block) actuals, ")", ";";
 SStmt[10] => VarDecl.parens(pos, block, type, name, actuals) : STypeName(block.scope) type, SIdentifier name #varName, "{", SActuals(block) actuals, "}", ";";
 // "delete" is technically an expression, but we don't do that...
-SStmt[50] => DeleteStmt(pos, expr) : "delete[ \t]" #keyword, SOp2(block) expr, ";";
+SStmt[50] => DeleteStmt(pos, expr, false) : "delete[ \t]" #keyword, SOp2(block) expr, ";";
+SStmt[50] => DeleteStmt(pos, expr, true) : "delete" #keyword, "\[", "\]", SOp2(block) expr, ";";
 SStmt[50] => WhileStmt(pos, block) : "while" #keyword, "(", SExpr(me) -> cond, ")", SStmt(me) -> body;
 SStmt[50] => DoWhileStmt(pos, block) : "do[ \t\n]" #keyword, SStmt(me) -> body, "while", "(", SExpr(me) -> cond, ")", ";";
 SStmt[50] => ForStmt(pos, block) : "for[ \t]" #keyword, "(", SStmt(me) -> init, SExpr(me) -> cond, ";", SExpr(me) -> update, ")", SStmt(me) -> body;
@@ -267,6 +268,7 @@ SOp3 => operator(block, op, n) : "--?" @op, SOp2(block) n;
 SOp3 => NewExpr(pos, block, type) : "new[ \t]" #keyword, STypeName(block.scope) type;
 SOp3 => NewExpr(pos, block, type, actuals) : "new[ \t]" #keyword, STypeName(block.scope) type, "(", SActuals(block) actuals, ")";
 SOp3 => NewExpr(pos, block, type, actuals) : "new[ \t]" #keyword, STypeName(block.scope) type, "{", SActuals(block) actuals, "}";
+SOp3 => NewExpr(pos, block, type, count) : "new[ \t]" #keyword, STypeName(block.scope) type, "\[", SExpr(block) count, "\]";
 SOp3 => sizeofExpr(pos, n) : "sizeof[ \t]" #keyword, SOp2(block) n;
 SOp3 => sizeofExpr(pos, type) : "sizeof[ \t]" #keyword, SizeofType(block.scope) type;
 SOp3 => sizeofExpr(pos, type) : "sizeof" #keyword, "(", SizeofType(block.scope) type, ")";

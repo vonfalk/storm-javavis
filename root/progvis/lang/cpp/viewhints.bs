@@ -22,6 +22,10 @@ class CppViewHints extends ViewHints {
 		if (!info.isValue)
 			return null;
 
+		if ((base.readFilled & AllocFlags:arrayAlloc.v) != 0) {
+			print("TODO: Create an array node!");
+		}
+
 		if (ptr = info.type as PtrType) {
 			return CppPointer(hints);
 		}

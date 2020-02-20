@@ -816,6 +816,42 @@ class CtorCall extends ExprRef {
 
 		fn.autoCall(gen, params, CodeResult());
 	}
+
+	// Initialize a variable at an offset inside a variable. 'offset' is an index into the array
+	// (ptr sized), i.e. not in bytes.
+	void codeRef(CodeGen gen, CppVar var, Var offsetVar) {
+		unless (type = fn.params[0].type) {
+			throw SyntaxError(pos, "This copy-constructor seems to create 'void' types...");
+		}
+
+		Operand[] params;
+		Nat offset = 1;
+		if (addOffset)
+			offset++;
+		for (i, x in actuals) {
+			params << paramCode(gen, x, fn.params[i + offset]);
+		}
+
+		var.created(gen); // A bit early, for the visualization to work.
+		gen.l << location(SrcPos()); // To make the visualization update its display, but not
+									 // stop. Otherwise this object might incorrectly be shown on the heap.
+
+		var.adjust(gen, ptrA);
+		gen.l << mov(ptrB, offsetVar);
+		gen.l << mul(ptrB, ptrConst(Value(type).size));
+		gen.l << add(ptrA, ptrB);
+
+		params.insert(0, ptrA);
+
+		if (addOffset) {
+			Var offset = gen.l.createVar(gen.block, sNat);
+			gen.l << ucast(offset, ptrB);
+			gen.l << add(offset, natConst(sPtr * 2));
+			params.insert(1, offset);
+		}
+
+		fn.autoCall(gen, params, CodeResult());
+	}
 }
 
 // Generate code for acquiring one parameter.
@@ -1157,6 +1193,7 @@ class Deref extends Expr {
  * New operator.
  */
 class NewExpr extends ExprRef {
+	// Allocate uninitialized elements.
 	init(SrcPos pos, Block parent, Value val) {
 		var type = safeType(val, pos);
 		init(pos) {
@@ -1165,6 +1202,7 @@ class NewExpr extends ExprRef {
 		}
 	}
 
+	// Allocate with initializer.
 	init(SrcPos pos, Block parent, Value val, Expr[] actuals) {
 		var type = safeType(val, pos);
 		init(pos) {
@@ -1173,11 +1211,24 @@ class NewExpr extends ExprRef {
 		}
 	}
 
+	// Allocate an array.
+	init(SrcPos pos, Block parent, Value val, Expr count) {
+		var type = safeType(val, pos);
+		init(pos) {
+			type = type;
+			initExpr = findInit(pos, parent.scope, type, []);
+			countExpr = expectCast(count, named{Int});
+		}
+	}
+
 	// Type to create.
 	Type type;
 
 	// Init expression.
-	ExprRef initExpr;
+	CtorCall initExpr;
+
+	// Count expression, if we're allocating an array.
+	Expr? countExpr;
 
 	// Result type.
 	ExprResult result() : override {
@@ -1185,7 +1236,7 @@ class NewExpr extends ExprRef {
 	}
 
 	// Compute an init expression.
-	private ExprRef findInit(SrcPos pos, Scope scope, Type type, Expr[] actuals) : static {
+	private CtorCall findInit(SrcPos pos, Scope scope, Type type, Expr[] actuals) : static {
 		if (ctor = type.cppCtor(actuals, scope))
 			return CtorCall(pos, ctor, actuals, true);
 
@@ -1225,6 +1276,14 @@ class NewExpr extends ExprRef {
 
 	// Create the allocation and initialize it.
 	private Operand doAlloc(CodeGen gen) {
+		if (countExpr) {
+			doAllocArray(gen, countExpr);
+		} else {
+			doAllocSingle(gen);
+		}
+	}
+
+	private Operand doAllocSingle(CodeGen gen) {
 		Var tmp = gen.l.createVar(gen.block, sPtr);
 
 		// Allocate memory.
@@ -1233,13 +1292,69 @@ class NewExpr extends ExprRef {
 		gen.l << fnCall(ref(BuiltIn:allocArray), false, ptrDesc, ptrA);
 		gen.l << mov(tmp, ptrA);
 
-		// Set 'filled' to 1 | 1 << 32
-		gen.l << mov(ptrRel(ptrA, Offset(sPtr)), ptrConst(0x80000001));
+		// Set 'filled' to "count | (1 << 32)"
+		Nat mask = AllocFlags:heapAlloc.v | 1;
+		gen.l << mov(ptrRel(ptrA, Offset(sPtr)), ptrConst(mask));
 
 		// Call the constructor.
 		initExpr.codeRef(gen, CppVar(tmp));
 
 		tmp;
+	}
+
+	private Operand doAllocArray(CodeGen gen, Expr countExpr) {
+		Var tmp = gen.l.createVar(gen.block, sPtr);
+		Var count = gen.l.createVar(gen.block, sPtr);
+
+		CodeResult r(Value(named{Int}), gen.block);
+		countExpr.code(gen, r);
+
+		// Check if the value is way too big.
+		gen.l << fnParam(intDesc, r.location(gen));
+		gen.l << fnCall(named{rangeCheck<Int>}.ref, false);
+
+		// Proceed.
+		gen.l << ucast(count, r.location(gen));
+
+		// Allocate memory.
+		gen.l << fnParam(ptrDesc, type.typeRef);
+		gen.l << fnParam(ptrDesc, count);
+		gen.l << fnCall(ref(BuiltIn:allocArray), false, ptrDesc, ptrA);
+		gen.l << mov(tmp, ptrA);
+
+		// Set 'filled' to "count | (1 << 32)"
+		Nat mask = AllocFlags:heapAlloc.v | AllocFlags:arrayAlloc.v;
+		gen.l << mov(ptrB, count);
+		gen.l << or(ptrB, ptrConst(mask));
+		gen.l << mov(ptrRel(ptrA, Offset(sPtr)), ptrB);
+
+		// Call the constructors.
+		Var current = gen.l.createVar(gen.block, sPtr);
+		Label start = gen.l.label();
+		Label again = gen.l.label();
+
+		gen.l << mov(current, ptrConst(0));
+		gen.l << jmp(start);
+
+		gen.l << again;
+
+		initExpr.codeRef(gen, CppVar(tmp), current);
+
+		gen.l << add(current, ptrConst(1));
+
+		gen.l << start;
+		gen.l << cmp(current, count);
+		gen.l << jmp(again, CondFlag:ifBelow);
+
+		tmp;
+	}
+
+	// Preform a range-check on the allocation.
+	private void rangeCheck(Int val) : static {
+		// Some more or less sensible values. We don't allow more than ~65536 entries in an array to
+		// be at least somewhat safe.
+		if (val < 0 | val > 65535)
+			throw InternalError("Improper size of an array allocation: ${val}");
 	}
 }
 

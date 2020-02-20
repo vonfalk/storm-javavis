@@ -334,34 +334,43 @@ FnRoot findFnRoot(Scope scope) on Compiler {
  * Delete statement.
  */
 class DeleteStmt extends Stmt {
-	init(SrcPos pos, Expr ptr) {
+	// If 'array' is true, we expect to free memory previously allocated using 'new[]'.
+	init(SrcPos pos, Expr ptr, Bool array) {
 		init(pos) {
-			ptr = ptr;
+			ptrExpr = ptr;
+			array = array;
 		}
 
 		if (!isCppPtr(ptr.result.type))
 			throw SyntaxError(pos, "The expression passed to delete must be a pointer.");
 	}
 
-	Expr ptr;
+	Expr ptrExpr;
+	Bool array;
 
 	Bool code(CodeGen gen) {
-		CodeResult result(ptr.result.type.asRef(), gen.block);
-		ptr.code(gen, result);
+		CodeResult result(ptrExpr.result.type.asRef(), gen.block);
+		ptrExpr.code(gen, result);
 
-		Var r = result.location(gen);
+		Var ptr = result.location(gen);
+
 		// Check if this is the start of an allocation.
-		gen.l << mov(ptrA, r);
+		gen.l << mov(ptrA, ptr);
 		gen.l << fnParam(ptrDesc, ptrRel(ptrA));
 		gen.l << fnParam(intDesc, intRel(ptrA, Offset(sPtr)));
-		gen.l << fnCall(named{checkDelete<unsafe:RawPtr, Nat>}.ref, false);
+		if (array) {
+			gen.l << fnCall(named{checkDeleteArray<unsafe:RawPtr, Nat>}.ref, false);
+		} else {
+			gen.l << fnCall(named{checkDelete<unsafe:RawPtr, Nat>}.ref, false);
+		}
 
-		Type type = safeType(unwrapPtr(ptr.result.type), pos);
+		Type type = safeType(unwrapPtr(ptrExpr.result.type), pos);
 		Function dtor = type.cppDtor();
-		gen.l << mov(ptrA, r);
+		gen.l << mov(ptrA, ptr);
 		gen.l << fnParam(ptrDesc, ptrRel(ptrA));
 		gen.l << fnCall(dtor.ref, false);
 
 		true;
 	}
+
 }
