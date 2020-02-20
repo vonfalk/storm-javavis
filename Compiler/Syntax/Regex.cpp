@@ -276,6 +276,9 @@ namespace storm {
 				}
 			}
 
+			if (str[pos] == '\0')
+				throw new (e) RegexError(str, S("Missing ] to end the capture group."));
+
 			pos++;
 			return c;
 		}
