@@ -21,8 +21,28 @@ class Data extends Drawable {
 	void update(Workspace work, unsafe:RawPtr object, Nat offset) : abstract;
 
 	// Find a particular offset inside this data.
-	Data findOffset(Nat offset) { this; }
+	DataOffset findOffset(Nat offset) { DataOffset(this); }
 }
+
+/**
+ * Representation of an offset inside some data visualization.
+ */
+value DataOffset {
+	// Inside this element.
+	Data data;
+
+	// Y-offset in pixels.
+	Float offset;
+
+	// Create.
+	init(Data data) {
+		init { data = data; offset = 0; }
+	}
+	init(Data data, Float offset) {
+		init { data = data; offset = offset; }
+	}
+}
+
 
 /**
  * Data element with a caption.
@@ -67,7 +87,7 @@ class DataWithCaption extends Data {
 		wrap.update(work, object, offset);
 	}
 
-	Data findOffset(Nat offset) : override {
+	DataOffset findOffset(Nat offset) : override {
 		wrap.findOffset(offset);
 	}
 
@@ -149,10 +169,14 @@ class Primitive extends Data {
 	// Type of the data we're displaying.
 	core:lang:Type type;
 
+	// Size of the data.
+	Nat typeSize;
+
 	init(core:lang:Type type, Str initial) {
 		init() {
 			text = Text(initial, dataFont);
 			type = type;
+			typeSize = core:lang:Value(type).size.current;
 		}
 	}
 
@@ -170,6 +194,11 @@ class Primitive extends Data {
 
 	Size computeSize() {
 		text.size + dataBorder*2;
+	}
+
+	DataOffset findOffset(Nat offset) : override {
+		Float o = offset.int.float / typeSize.int.float;
+		DataOffset(this, o * size.h);
 	}
 }
 
@@ -189,6 +218,9 @@ package Path ptrArrow on Render = {
 class Pointer extends Data {
 	// Object we're pointing to.
 	protected Data? to;
+
+	// Y-offset inside 'to', if present.
+	protected Float offset;
 
 	// Our path, re-used for efficiency.
 	private Path line;
@@ -211,18 +243,21 @@ class Pointer extends Data {
 
 	void drawLinks(Graphics g, Bool active) : override {
 		if (to) {
+			Point target = to.pos;
+			target.y += offset;
+
 			Brush color = if (active) { activeLink; } else { inactiveLink; };
 			Rect r = rect;
 			// g.line(r.center, to.pos, color);
-			Float dy = abs(r.center.y - to.pos.y);
+			Float dy = abs(r.center.y - target.y);
 			Float shift = max(0.2*dy, 40);
 			line.clear();
 			line.start(r.center);
-			line.bezier(to.pos - Point(shift, 0), to.pos);
+			line.bezier(target - Point(shift, 0), target);
 			g.draw(line, color);
 
 			g.push();
-			g.transform(translate(to.pos));
+			g.transform(translate(target));
 			g.fill(ptrArrow, color);
 			g.pop();
 		}
@@ -231,10 +266,17 @@ class Pointer extends Data {
 	void update(Workspace work, unsafe:RawPtr object, Nat offset) : override {
 		var ptr = object.readPtr(offset);
 		if (ptr.any) {
-			to = work.traverse(ptr).findOffset(0);
+			var off = work.traverse(ptr).findOffset(0);
+			this.to = off.data;
+			this.offset = off.offset;
 		} else {
 			to = null;
 		}
+	}
+
+	DataOffset findOffset(Nat offset) : override {
+		Float o = offset.int.float / core:asm:sPtr.current.int.float;
+		DataOffset(this, o * size.h);
 	}
 }
 
@@ -245,7 +287,9 @@ class Pointer extends Data {
 class StackPointer extends Pointer {
 	void update(Workspace work, unsafe:RawPtr object, Nat offset) : override {
 		if (object.any) {
-			to = work.traverse(object).findOffset(0);
+			var off = work.traverse(object).findOffset(0);
+			this.to = off.data;
+			this.offset = off.offset;
 		} else {
 			to = null;
 		}
@@ -306,11 +350,11 @@ class Composite extends Data {
 		invalidateSize();
 	}
 
-	Data findOffset(Nat offset) : override {
+	DataOffset findOffset(Nat offset) : override {
 		if (offset == 0)
-			return this;
+			return DataOffset(this);
 		if (content.empty)
-			return this;
+			return DataOffset(this);
 
 		for (Nat i = 1; i < content.count; i++) {
 			if (content[i].offset > offset) {

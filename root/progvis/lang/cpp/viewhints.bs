@@ -74,11 +74,6 @@ class CppPointer extends Pointer {
 	// Hints we should use.
 	CreateHints hints;
 
-	// Is this a stack pointer? If so, the 'object' we refer to might be on the stack, and thus
-	// might not be readable. Therefore, we make sure to not create instances of it even if it is
-	// not known.
-	Bool isStack;
-
 	void update(Workspace ws, unsafe:RawPtr object, Nat offset) : override {
 		if (!object.any) {
 			to = null;
@@ -94,7 +89,9 @@ class CppPointer extends Pointer {
 		Nat ptrOffset = object.readNat(offset + core:asm:sPtr.current) - 2*core:asm:sPtr.current;
 
 		Data baseData = ws.traverse(base, hints);
-		to = baseData.findOffset(ptrOffset);
+		var off = baseData.findOffset(ptrOffset);
+		this.to = off.data;
+		this.offset = off.offset;
 	}
 }
 
@@ -149,7 +146,7 @@ class CppHeapObj extends Data {
 		}
 	}
 
-	Data findOffset(Nat offset) : override {
+	DataOffset findOffset(Nat offset) : override {
 		wrap.findOffset(offset);
 	}
 

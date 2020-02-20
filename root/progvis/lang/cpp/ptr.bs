@@ -82,6 +82,7 @@ class PtrType extends Type {
 		add(TypeCopyCtor(this));
 		add(TypeAssign(this));
 
+		Value val(this, false);
 		Value ref(this, true);
 		Value int(named{Int});
 
@@ -95,8 +96,15 @@ class PtrType extends Type {
 
 		// Pointer arithmetic.
 		if (t = inside) {
+			addFn(val, "+", [ref, int], ptrAdd(Offset(t.size)));
+			addFn(val, "-", [ref, int], ptrAdd(Offset(t.size)));
 			addFn(ref, "+=", [ref, int], ptrInc(Offset(t.size)));
 			addFn(ref, "-=", [ref, int], ptrInc(-Offset(t.size)));
+			addFn(val, "*++", [ref], ptrPrefixInc(Offset(t.size)));
+			addFn(ref, "++*", [ref], ptrPostfixInc(Offset(t.size)));
+			addFn(val, "*--", [ref], ptrPrefixInc(-Offset(t.size)));
+			addFn(ref, "--*", [ref], ptrPostfixInc(-Offset(t.size)));
+			addFn(int, "-", [ref, ref], ptrDiff(Offset(t.size)));
 		}
 
 		// TODO: Add suitable members!
@@ -133,6 +141,87 @@ class PtrType extends Type {
 
 		l;
 	}
+
+	// Generate + and - operator. (Note: We don't currently support 3 + <ptr>)
+	private Listing ptrAdd(Offset offset) {
+		Listing l(true, Value(this).desc);
+
+		Var me = l.createParam(ptrDesc);
+		Var delta = l.createParam(intDesc);
+		Var res = l.createVar(l.root, size);
+
+		l << prolog();
+		l << mov(ptrA, me);
+		l << mov(ptrRel(res), ptrRel(ptrA));
+		l << mov(intRel(res, Offset(sPtr)), intRel(ptrA, Offset(sPtr)));
+
+		l << mov(ebx, delta);
+		l << mul(ebx, intConst(offset));
+		l << add(intRel(res, Offset(sPtr)), ebx);
+		l << fnRet(res);
+
+		l;
+	}
+
+	// Postfix ++ and --.
+	private Listing ptrPostfixInc(Offset offset) {
+		Listing l(true, ptrDesc);
+
+		Var me = l.createParam(ptrDesc);
+
+		l << prolog();
+		l << mov(ptrA, me);
+		l << add(intRel(ptrA, Offset(sPtr)), intConst(offset));
+		l << fnRet(ptrA);
+
+		l;
+	}
+
+	// Prefix ++ and --.
+	private Listing ptrPrefixInc(Offset offset) {
+		Listing l(true, Value(this).desc);
+
+		Var me = l.createParam(ptrDesc);
+		Var res = l.createVar(l.root, size);
+
+		l << prolog();
+		l << mov(ptrA, me);
+
+		// Make a copy.
+		l << mov(ptrRel(res), ptrRel(ptrA));
+		l << mov(intRel(res, Offset(sPtr)), intRel(ptrA, Offset(sPtr)));
+
+		l << add(intRel(ptrA, Offset(sPtr)), intConst(offset));
+		l << fnRet(res);
+
+		l;
+	}
+
+	// Difference between two pointers.
+	private Listing ptrDiff(Offset offset) : static {
+		Listing l(true, intDesc);
+
+		Var me = l.createParam(ptrDesc);
+		Var o = l.createParam(ptrDesc);
+
+		l << prolog();
+
+		// Check if they are from the same allocation.
+		l << fnParam(ptrDesc, me);
+		l << fnParam(ptrDesc, o);
+		l << fnCall(named{assumeSameAlloc<unsafe:RawPtr, unsafe:RawPtr>}.ref, false);
+
+		l << mov(ptrA, me);
+		l << mov(ptrB, o);
+		l << mov(eax, intRel(ptrA, Offset(sPtr)));
+		l << mov(ebx, intRel(ptrB, Offset(sPtr)));
+		l << sub(eax, ebx);
+		l << idiv(eax, intConst(offset));
+		l << fnRet(eax);
+
+		l;
+	}
+
 }
 
 class PtrError extends Exception {
@@ -187,7 +276,7 @@ private void assumeSameAlloc(unsafe:RawPtr a, unsafe:RawPtr b) {
 	}
 
 	if (!same)
-		throw PtrError("Trying to compare pointers from different allocations with <, >, <= or =>");
+		throw PtrError("Trying to compare pointers from different allocations with <, >, <=, =>, or -");
 }
 private Bool pointerLt(unsafe:RawPtr a, unsafe:RawPtr b) {
 	assumeSameAlloc(a, b);

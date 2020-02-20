@@ -9,9 +9,11 @@ struct my_type {
 int main() {
 	my_type x;
 
-	for (int *a = &x.a; a <= &x.c; a += 1) {
+	for (int *a = &x.a; a <= &x.c; ++a) {
 		(*a)++;
 	}
+
+	print(&x.c - &x.a);
 
 	return 0;
 }
