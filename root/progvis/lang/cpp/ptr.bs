@@ -83,6 +83,7 @@ class PtrType extends Type {
 		add(TypeAssign(this));
 
 		Value ref(this, true);
+		Value int(named{Int});
 
 		// Compare pointers.
 		addFn(named{Bool}, "==", [ref, ref], named{pointerEq<unsafe:RawPtr, unsafe:RawPtr>});
@@ -91,6 +92,12 @@ class PtrType extends Type {
 		addFn(named{Bool}, ">", [ref, ref], named{pointerGt<unsafe:RawPtr, unsafe:RawPtr>});
 		addFn(named{Bool}, "<=", [ref, ref], named{pointerLte<unsafe:RawPtr, unsafe:RawPtr>});
 		addFn(named{Bool}, ">=", [ref, ref], named{pointerGte<unsafe:RawPtr, unsafe:RawPtr>});
+
+		// Pointer arithmetic.
+		if (t = inside) {
+			addFn(ref, "+=", [ref, int], ptrInc(Offset(t.size)));
+			addFn(ref, "-=", [ref, int], ptrInc(-Offset(t.size)));
+		}
 
 		// TODO: Add suitable members!
 
@@ -102,6 +109,29 @@ class PtrType extends Type {
 		Function f(result, name, params);
 		f.setCode(DelegatedCode(fn.ref));
 		add(f);
+	}
+
+	private void addFn(Value result, Str name, Value[] params, Listing l) {
+		Function f(result, name, params);
+		f.setCode(DynamicCode(l));
+		add(f);
+	}
+
+	// Generate += / -= operator.
+	private Listing ptrInc(Offset offset) : static {
+		Listing l(true, ptrDesc);
+
+		Var me = l.createParam(ptrDesc);
+		Var delta = l.createParam(intDesc);
+
+		l << prolog();
+		l << mov(ptrA, me);
+		l << mov(ebx, delta);
+		l << mul(ebx, intConst(offset));
+		l << add(intRel(ptrA, Offset(sPtr)), ebx);
+		l << fnRet(ptrA);
+
+		l;
 	}
 }
 

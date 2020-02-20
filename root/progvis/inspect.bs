@@ -63,7 +63,7 @@ void appendMembers(Type t, MemberOffset[] result) on Compiler {
 			appendMembers(super, result);
 	}
 
-	Bool first = true;
+	MemberOffset[] here;
 	for (elem in t) {
 		if (elem as MemberVar) {
 			Value memberType = elem.type;
@@ -77,11 +77,19 @@ void appendMembers(Type t, MemberOffset[] result) on Compiler {
 
 			if (type = memberType.type) {
 				TypeInfo info(type, memberType.isValue, memberType.ref);
-				result << MemberOffset(elem.name, elem.offset.current.nat, info, first);
-				first = false;
+				here << MemberOffset(elem.name, elem.offset.current.nat, info, false);
 			}
 		}
 	}
+
+	here.sort((x, y) => x.offset < y.offset);
+
+	if (here.any)
+		here[0].first = true;
+
+	// Add them to the parameter.
+	for (h in here)
+		result << h;
 }
 
 MemberOffset[] findMembers(Type t) on Compiler {

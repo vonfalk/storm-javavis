@@ -52,7 +52,6 @@ class DefaultViewHints extends ViewHints {
 			return UnknownData();
 
 		Composite result;
-		members.sort((x, y) => x.offset < y.offset);
 		for (m in members) {
 			result.add(m.name, m.offset, ws.createData(m.type, object, offset + m.offset), m.first);
 		}
