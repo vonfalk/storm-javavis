@@ -196,7 +196,7 @@ private Bool pointerLt(unsafe:RawPtr a, unsafe:RawPtr b) {
 	asm {
 		mov ptrA, a;
 		mov ptrB, b;
-		cmp p[ptrA], p[ptrB];
+		cmp p[ptrA + sPtr], p[ptrB + sPtr];
 		setCond r, ifBelow;
 	}
 	r;
@@ -208,7 +208,7 @@ private Bool pointerGt(unsafe:RawPtr a, unsafe:RawPtr b) {
 	asm {
 		mov ptrA, a;
 		mov ptrB, b;
-		cmp p[ptrA], p[ptrB];
+		cmp p[ptrA + sPtr], p[ptrB + sPtr];
 		setCond r, ifAbove;
 	}
 	r;
@@ -220,7 +220,7 @@ private Bool pointerLte(unsafe:RawPtr a, unsafe:RawPtr b) {
 	asm {
 		mov ptrA, a;
 		mov ptrB, b;
-		cmp p[ptrA], p[ptrB];
+		cmp p[ptrA + sPtr], p[ptrB + sPtr];
 		setCond r, ifBelowEqual;
 	}
 	r;
@@ -232,7 +232,7 @@ private Bool pointerGte(unsafe:RawPtr a, unsafe:RawPtr b) {
 	asm {
 		mov ptrA, a;
 		mov ptrB, b;
-		cmp p[ptrA], p[ptrB];
+		cmp p[ptrA + sPtr], p[ptrB + sPtr];
 		setCond r, ifAboveEqual;
 	}
 	r;
