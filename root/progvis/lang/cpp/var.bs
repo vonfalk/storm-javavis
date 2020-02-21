@@ -1,5 +1,6 @@
 use core:lang;
 use core:asm;
+use lang:bs:macro;
 
 /**
  * Local variable in C++.
@@ -198,5 +199,96 @@ class VarDecl extends Stmt {
 		}
 
 		true;
+	}
+}
+
+/**
+ * Array variable declaration.
+ */
+class ArrayDecl extends Stmt {
+	init(SrcPos pos, Block parent, Value type, SStr name, Expr count) {
+		init(pos) {
+			var(name.v, type.safeType(pos), name.pos);
+			countExpr = count;
+		}
+
+		if (t = type.type) {
+			if (ctor = t.cppCtor([], parent.scope)) {
+				initExpr = CtorCall(pos, ctor, [], true);
+			} else if (ctor = t.defaultCtor) {
+				initExpr = CtorCall(pos, ctor, [], false);
+			}
+		}
+
+		parent.add(var);
+	}
+
+	// Created variable.
+	LocalVar var;
+
+	// Count expression.
+	Expr countExpr;
+
+	// Initialization expression.
+	CtorCall? initExpr;
+
+	// Generate code.
+	Bool code(CodeGen gen) : override {
+		Var count = gen.l.createVar(gen.block, sPtr);
+
+		CodeResult r(Value(named{Int}), gen.block);
+		countExpr.code(gen, r);
+
+		// Check if the value is way too big.
+		gen.l << fnParam(intDesc, r.location(gen));
+		gen.l << fnCall(named{rangeCheck<Int>}.ref, false);
+
+		// Proceed.
+		gen.l << ucast(count, r.location(gen));
+
+		// Allocate memory.
+		gen.l << fnParam(ptrDesc, var.type.typeRef);
+		gen.l << fnParam(ptrDesc, count);
+		gen.l << fnCall(ref(BuiltIn:allocArray), false, ptrDesc, ptrA);
+		gen.l << mov(var.var.v, ptrA);
+
+		var.var.created(gen);
+		gen.l << location(SrcPos());
+
+		// Set 'filled'
+		Nat mask = AllocFlags:arrayAlloc.v;
+		gen.l << mov(ptrB, count);
+		gen.l << or(ptrB, ptrConst(mask));
+		gen.l << mov(ptrRel(ptrA, Offset(sPtr)), ptrB);
+
+		if (initExpr) {
+			// Call the constructors.
+			Var current = gen.l.createVar(gen.block, sPtr);
+			Label start = gen.l.label();
+			Label again = gen.l.label();
+
+			gen.l << mov(current, ptrConst(0));
+			gen.l << jmp(start);
+
+			gen.l << again;
+
+			initExpr.codeRef(gen, var.var, current);
+
+			gen.l << add(current, ptrConst(1));
+
+			gen.l << start;
+			gen.l << cmp(current, count);
+			gen.l << jmp(again, CondFlag:ifBelow);
+		}
+
+		true;
+	}
+
+	// Preform a range-check on the allocation.
+	private void rangeCheck(Int val) : static {
+		// Some more or less sensible values. We don't allow more than ~65536 entries in an array to
+		// be at least somewhat safe.
+		if (val < 0 | val > 65535)
+			throw InternalError("Improper size of an array allocation: ${val}");
 	}
 }

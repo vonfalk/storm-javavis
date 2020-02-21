@@ -182,6 +182,7 @@ SStmt[10] => VarDecl(pos, block, type, name) : STypeName(block.scope) type, SIde
 SStmt[10] => VarDecl.assign(pos, block, type, name, init) : STypeName(block.scope) type, SIdentifier name #varName, "=", SExpr(block) init, ";";
 SStmt[10] => VarDecl.parens(pos, block, type, name, actuals) : STypeName(block.scope) type, SIdentifier name #varName, "(", SActuals(block) actuals, ")", ";";
 SStmt[10] => VarDecl.parens(pos, block, type, name, actuals) : STypeName(block.scope) type, SIdentifier name #varName, "{", SActuals(block) actuals, "}", ";";
+SStmt[10] => ArrayDecl(pos, block, type, name, size) : STypeName(block.scope) type, SIdentifier name #varName, "\[", SExpr(block) size, "\]", ";";
 // "delete" is technically an expression, but we don't do that...
 SStmt[50] => DeleteStmt(pos, expr, false) : "delete[ \t]" #keyword, SOp2(block) expr, ";";
 SStmt[50] => DeleteStmt(pos, expr, true) : "delete" #keyword, "\[", "\]", SOp2(block) expr, ";";
@@ -211,11 +212,11 @@ SExprNoComma => operator(block, l, op, r) : SOp15(block) l, ">>=" @op, SExprNoCo
 
 Expr SOp15(Block block);
 SOp15 => n : SOp14(block) n;
-SOp15 => LogicOp(pos, block, l, r, false) : SOp15(block) l, "||", SOp14(block) r;
+SOp15[10] => LogicOp(pos, block, l, r, false) : SOp15(block) l, "||", SOp14(block) r;
 
 Expr SOp14(Block block);
 SOp14 => n : SOp13(block) n;
-SOp14 => LogicOp(pos, block, l, r, true) : SOp14(block) l, "&&", SOp13(block) r;
+SOp14[10] => LogicOp(pos, block, l, r, true) : SOp14(block) l, "&&", SOp13(block) r;
 
 Expr SOp13(Block block);
 SOp13 => n : SOp12(block) n;

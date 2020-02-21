@@ -832,10 +832,6 @@ class CtorCall extends ExprRef {
 			params << paramCode(gen, x, fn.params[i + offset]);
 		}
 
-		var.created(gen); // A bit early, for the visualization to work.
-		gen.l << location(SrcPos()); // To make the visualization update its display, but not
-									 // stop. Otherwise this object might incorrectly be shown on the heap.
-
 		var.adjust(gen, ptrA);
 		gen.l << mov(ptrB, offsetVar);
 		gen.l << mul(ptrB, ptrConst(Value(type).size));
@@ -1322,7 +1318,7 @@ class NewExpr extends ExprRef {
 		gen.l << fnCall(ref(BuiltIn:allocArray), false, ptrDesc, ptrA);
 		gen.l << mov(tmp, ptrA);
 
-		// Set 'filled' to "count | (1 << 32)"
+		// Set 'filled' to "count | (1 << 32) | (1 << 31)"
 		Nat mask = AllocFlags:heapAlloc.v | AllocFlags:arrayAlloc.v;
 		gen.l << mov(ptrB, count);
 		gen.l << or(ptrB, ptrConst(mask));

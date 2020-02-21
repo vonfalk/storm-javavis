@@ -19,6 +19,7 @@ void in_array() {
 }
 
 void in_complex_array() {
+	my_type y[3];
 	my_type *x = new my_type[3];
 
 	delete []x;
