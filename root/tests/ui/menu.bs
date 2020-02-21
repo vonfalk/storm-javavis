@@ -1,0 +1,24 @@
+use ui;
+use core:geometry;
+
+class MenuWindow extends Frame {
+	init() {
+		init("Menu test", Size(300, 100));
+
+		PopupMenu help;
+		help << Menu:Text("Help") << Menu:Separator() << Menu:Text("About...");
+
+		MenuBar root;
+		root << Menu:Text("Test") << Menu:Submenu("Help", help);
+
+		menu = root;
+
+		create();
+	}
+}
+
+void menu() {
+	MenuWindow w;
+	w.waitForClose;
+	print("Done!");
+}

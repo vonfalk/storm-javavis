@@ -14,11 +14,13 @@ namespace gui {
 #ifdef GUI_WIN32
 		Handle(HWND wnd) { value = (size_t)wnd; }
 		Handle(ATOM atom) { value = (size_t)atom; }
+		Handle(HMENU menu) { value = (size_t)menu; }
 		Handle(HINSTANCE instance) { value = (size_t)instance; }
 
 		// Get Win32 types.
 		inline HWND hwnd() const { return (HWND)value; }
 		inline ATOM atom() const { return (ATOM)value; }
+		inline HMENU menu() const { return (HMENU)value; }
 		inline HINSTANCE instance() const { return (HINSTANCE)value; }
 #endif
 

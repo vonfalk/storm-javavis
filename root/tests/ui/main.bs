@@ -31,11 +31,11 @@ class MainPainter extends Painter {
 		font.height(font.height * 3);
 
 		init() {
-			brush = red;
-			brush2 = blue;
+			brush(red);
+			brush2(blue);
 			brush3([GradientStop(0, red), GradientStop(1, green)], Point(0, 0), Point(100, 100));
-			yellow = yellow;
-			bitmap = img;
+			yellow(yellow);
+			bitmap(img);
 			text("Hello World!", font);
 		}
 
@@ -57,7 +57,7 @@ class MainPainter extends Painter {
 		Point from(0, 0);
 		Point to(size.w, size.h);
 		Point center = size / 2;
-		Size border = 10;
+		Size border(10);
 		Moment now;
 		Float time = (now - started) / 30 ms;
 

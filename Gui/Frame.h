@@ -1,6 +1,7 @@
 #pragma once
 #include "Container.h"
 #include "Core/Event.h"
+#include "Menu.h"
 
 namespace gui {
 
@@ -59,6 +60,10 @@ namespace gui {
 		void STORM_ASSIGN cursorVisible(Bool v);
 		Bool STORM_FN cursorVisible();
 
+		// Set the menu for this window.
+		void STORM_ASSIGN menu(MenuBar *menu);
+		MenuBar *STORM_FN menu();
+
 	protected:
 		// Notification on window resizes.
 		virtual void onResize(Size size);
@@ -70,8 +75,14 @@ namespace gui {
 		// Update the minimum size.
 		void updateMinSize();
 
+		// Set the menu properly.
+		void setMenu(MAYBE(MenuBar *) last);
+
 		// Event that fires when we're closed.
 		Event *onClose;
+
+		// Window menu.
+		MAYBE(MenuBar *) myMenu;
 
 		// Cached minimum size. Updated whenever the window is resized.
 		Size lastMinSize;

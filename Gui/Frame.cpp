@@ -9,14 +9,14 @@ namespace gui {
 	static void goBack(Handle wnd, Long &oldStyle, Rect &oldPos);
 
 
-	Frame::Frame(Str *title) : full(false), showCursor(true) {
+	Frame::Frame(Str *title) : myMenu(null), full(false), showCursor(true) {
 		onClose = new (this) Event();
 		attachParent(this);
 		text(title);
 		pos(Rect(-10000, -10000, -10002, -10002));
 	}
 
-	Frame::Frame(Str *title, Size size) : full(false), showCursor(true) {
+	Frame::Frame(Str *title, Size size) : myMenu(null), full(false), showCursor(true) {
 		onClose = new (this) Event();
 		attachParent(this);
 		text(title);
@@ -75,6 +75,19 @@ namespace gui {
 
 	Bool Frame::fullscreen() {
 		return full;
+	}
+
+	void Frame::menu(MenuBar *menu) {
+		MenuBar *old = myMenu;
+		myMenu = menu;
+
+		if (created()) {
+			setMenu(old);
+		}
+	}
+
+	MenuBar *Frame::menu() {
+		return myMenu;
 	}
 
 	void Frame::onResize(Size size) {
@@ -149,6 +162,10 @@ namespace gui {
 			goFull(handle(), windowedStyle, windowedRect);
 		}
 
+		if (myMenu) {
+			setMenu(null);
+		}
+
 		return true;
 	}
 
@@ -209,8 +226,14 @@ namespace gui {
 		gtk_window_set_title((GtkWindow *)frame, text()->utf8_str());
 		gtk_window_set_resizable((GtkWindow *)frame, sizeable);
 
+		// Add a VBox to the frame, so we can place the menu appropriately.
+		GtkWidget *vbox = gtk_box_new(GTK_ORIENTATION_VERTICAL, 0);
+		gtk_container_add(GTK_CONTAINER(frame), vbox);
+		gtk_widget_show(vbox);
+
+		// Place a BASIC container inside, so that we can control layout of child widgets as we want.
 		GtkWidget *container = basic_new();
-		gtk_container_add(GTK_CONTAINER(frame), container);
+		gtk_box_pack_end(GTK_BOX(vbox), container, true, true, 0);
 		gtk_widget_show(container);
 
 		Signal<void, Frame>::Connect<&Frame::close>::to(frame, "destroy", engine());
@@ -239,6 +262,10 @@ namespace gui {
 			goFull(handle(), windowedStyle, windowedRect);
 		}
 
+		if (myMenu) {
+			setMenu(null);
+		}
+
 		return true;
 	}
 
@@ -249,13 +276,24 @@ namespace gui {
 		Window::text(str);
 	}
 
+	static void getLastCB(GtkWidget *widget, gpointer data) {
+		GtkWidget **store = (GtkWidget **)data;
+		*store = widget;
+	}
+
 	Basic *Frame::container() {
-		// There is a BASIC layout inside the frame.
-		return BASIC(gtk_bin_get_child(GTK_BIN(handle().widget())));
+		GtkWidget *found = null;
+		GtkWidget *vbox = gtk_bin_get_child(GTK_BIN(handle().widget()));
+		gtk_container_foreach(GTK_CONTAINER(vbox), &getLastCB, &found);
+		// There is a BASIC layout at the last position.
+		return BASIC(found);
 	}
 
 	GtkWidget *Frame::drawWidget() {
-		return gtk_bin_get_child(GTK_BIN(handle().widget()));
+		GtkWidget *found = null;
+		GtkWidget *vbox = gtk_bin_get_child(GTK_BIN(handle().widget()));
+		gtk_container_foreach(GTK_CONTAINER(vbox), &getLastCB, &found);
+		return found;
 	}
 
 	void Frame::cursorVisible(Bool v) {
@@ -280,6 +318,20 @@ namespace gui {
 		GtkWidget *widget = handle().widget();
 		if (widget)
 			gtk_widget_set_size_request(widget, (gint)lastMinSize.w, (gint)lastMinSize.h);
+	}
+
+	void Frame::setMenu(MenuBar *old) {
+		GtkWidget *vbox = gtk_bin_get_child(GTK_BIN(handle().widget()));
+
+		if (old) {
+			gtk_container_remove(GTK_CONTAINER(vbox), old->handle.widget());
+		}
+
+		// Place the menu first.
+		GtkWidget *m = myMenu->handle.widget();
+		gtk_box_pack_start(GTK_BOX(vbox), m, false, false, 0);
+
+		gtk_widget_show_all(m);
 	}
 
 #endif
