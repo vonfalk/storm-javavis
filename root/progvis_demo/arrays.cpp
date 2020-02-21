@@ -22,6 +22,9 @@ void in_complex_array() {
 	my_type y[3];
 	my_type *x = new my_type[3];
 
+	y[1].a = 8;
+	x[1].a = 7;
+
 	delete []x;
 }
 
@@ -38,6 +41,8 @@ void in_type() {
 }
 
 int main() {
+	int *data = malloc(2*sizeof(int));
+
 	// in_array();
 	in_complex_array();
 

@@ -331,9 +331,9 @@ FnRoot findFnRoot(Scope scope) on Compiler {
 }
 
 /**
- * Delete statement.
+ * Delete statement. Actually an expression to accommodate "free".
  */
-class DeleteStmt extends Stmt {
+class DeleteStmt extends Expr {
 	// If 'array' is true, we expect to free memory previously allocated using 'new[]'.
 	init(SrcPos pos, Expr ptr, Bool array) {
 		init(pos) {
@@ -348,7 +348,20 @@ class DeleteStmt extends Stmt {
 	Expr ptrExpr;
 	Bool array;
 
-	Bool code(CodeGen gen) {
+	ExprResult result() : override {
+		Value();
+	}
+
+	void code(CodeGen gen, CodeResult r) : override {
+		// We don't return anything, so we don't touch 'r'.
+		genCode(gen);
+	}
+
+	void codePtr(CodeGen gen, Type type) : override {
+		genCode(gen);
+	}
+
+	private void genCode(CodeGen gen) {
 		CodeResult result(ptrExpr.result.type.asRef(), gen.block);
 		ptrExpr.code(gen, result);
 
@@ -369,8 +382,6 @@ class DeleteStmt extends Stmt {
 		gen.l << mov(ptrA, ptr);
 		gen.l << fnParam(ptrDesc, ptrRel(ptrA));
 		gen.l << fnCall(dtor.ref, false);
-
-		true;
 	}
 
 }

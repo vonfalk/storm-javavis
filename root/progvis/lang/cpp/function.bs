@@ -243,7 +243,7 @@ class FnRoot extends StmtBlock {
 	// Add a parameter.
 	void addParam(Str name, Value type, SrcPos pos) {
 		if (t = type.type) {
-			LocalVar var(name, t, pos);
+			LocalVar var(name, t, pos, false);
 			add(var);
 			params << var;
 		}

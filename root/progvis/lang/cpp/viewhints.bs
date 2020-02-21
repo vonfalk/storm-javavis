@@ -66,9 +66,15 @@ class CppViewHints extends ViewHints {
 		Composite result;
 		for (Nat i = 0; i < count; i++) {
 			Nat offset = i * elemSz;
-			for (i, m in members) {
-				// We're ignoring 'm.first' to make array elements more clearly divided.
-				result.add(m.name, offset + m.offset, ws.createData(m.type, base, offset + m.offset), i == 0);
+
+			// Primitive?
+			if (c = convertPrimitive(info.type, base, offset)) {
+				result.add("", offset, Primitive(info.type, c), true);
+			} else {
+				for (i, m in members) {
+					// We're ignoring 'm.first' to make array elements more clearly divided.
+					result.add(m.name, offset + m.offset, ws.createData(m.type, base, offset + m.offset), i == 0);
+				}
 			}
 		}
 

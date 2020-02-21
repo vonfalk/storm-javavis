@@ -270,14 +270,13 @@ SOp3 => NewExpr(pos, block, type) : "new[ \t]" #keyword, STypeName(block.scope) 
 SOp3 => NewExpr(pos, block, type, actuals) : "new[ \t]" #keyword, STypeName(block.scope) type, "(", SActuals(block) actuals, ")";
 SOp3 => NewExpr(pos, block, type, actuals) : "new[ \t]" #keyword, STypeName(block.scope) type, "{", SActuals(block) actuals, "}";
 SOp3 => NewExpr(pos, block, type, count) : "new[ \t]" #keyword, STypeName(block.scope) type, "\[", SExpr(block) count, "\]";
-SOp3 => sizeofExpr(pos, n) : "sizeof[ \t]" #keyword, SOp2(block) n;
-SOp3 => sizeofExpr(pos, type) : "sizeof[ \t]" #keyword, SizeofType(block.scope) type;
-SOp3 => sizeofExpr(pos, type) : "sizeof" #keyword, "(", SizeofType(block.scope) type, ")";
+SOp3[10] => sizeofExpr(pos, type) : "sizeof" #keyword - SizeofType(block.scope) type;
 // SOp3 : "(", STypeName, ")", SOp3; // C-style cast.
 
 Value SizeofType(Scope scope);
-SizeofType => v : STypeName(scope) v;
-SizeofType => v : "(", SizeofType(scope) v, ")";
+SizeofType => v : "[ \t]", STypeName(scope) v;
+SizeofType => v : , "(", SizeofType(scope) v, ")";
+SizeofType => v : , "(", STypeName(scope) v, ")";
 
 Expr SOp2(Block block);
 SOp2 => a : SAtom(block) a;
@@ -285,7 +284,7 @@ SOp2 => operator(block, n, op) : SAtom(block) n, "++" @op;
 SOp2 => operator(block, n, op) : SAtom(block) n, "--" @op;
 SOp2 => dotOperator(block, lhs, rhs, false) : SOp2(block) lhs, "\.", SIdentifier rhs;
 SOp2 => dotOperator(block, lhs, rhs, true) : SOp2(block) lhs, "->", SIdentifier rhs;
-// SOp2 : SOp2(block), "\[", SExpr(block), "\]";
+SOp2 => arrayOperator(block, base, index) : SOp2(block) base, "\[", SExpr(block) index, "\]";
 SOp2 => fnCall(lhs, params) : SOp2(block) lhs, "(", SActuals(block) params, ")";
 SOp2 => ctorCall(lhs, params) : SOp2(block) lhs, "{", SActuals(block) params, "}";
 
@@ -298,6 +297,20 @@ SAtom[10] => BoolLiteral(pos, true) : "true" #keyword;
 SAtom[10] => BoolLiteral(pos, false) : "false" #keyword;
 SAtom[10] => Nullptr(pos) : "nullptr" #keyword;
 SAtom[10] => Nullptr(pos) : "NULL" #keyword;
+
+// Malloc and free.
+
+// Free is equivalent to delete[], which works for both arrays and non-arrays.
+SOp2[10] => DeleteStmt(pos, expr, true) : "free" #fnName, "(", SExpr(block) expr, ")";
+
+// We special-case "malloc" for regular variables and for arrays.
+SOp2[10] => NewExpr(pos, block, type) : "malloc" #fnName, "(", "sizeof" #keyword - SizeofType(block.scope) type, ")";
+SOp2[10] => NewExpr(pos, block, type, count) : "malloc" #fnName, "(", SOp5(block) count, "\*", "sizeof" #keyword - SizeofType(block.scope) type, ")";
+SOp2[10] => NewExpr(pos, block, type, count) : "malloc" #fnName, "(", "sizeof" #keyword - SizeofType(block.scope) type, "\*", SOp5(block) count, ")";
+
+// Fallback to give decent error messages.
+SOp2[5] => mallocError(pos) : "malloc" #fnName, "(", SExpr, ")";
+
 
 SimpleName SCompoundName(Scope scope);
 SCompoundName => SimpleName() : SNamePart(scope) -> add, ("::", SNamePart(scope) -> add)*;

@@ -456,14 +456,18 @@ class NameExpr extends Expr {
 		}
 
 		if (n = found.named as LocalVar) {
-			return LocalVarAccess(pos, n);
+			LocalVarAccess access(pos, n);
+			if (n.array)
+				return AddressOf(access);
+			else
+				return access;
 		} else if (n = found.named as MemberVar) {
 			if (c = found.context) {
 				return MemberVarAccess(pos, c, n);
 			}
 		}
 
-		throw SyntaxError(pos, "${name} refers to ${typeOf(found).name}, which I don't know how to handle here.");
+		throw SyntaxError(pos, "${name} refers to ${typeOf(found.named).name}, which I don't know how to handle here.");
 	}
 }
 
@@ -1008,6 +1012,11 @@ Expr dotOperator(Block block, Expr lhs, SStr rhs, Bool ptrLhs) {
 	NameExpr(lhs.pos.extend(rhs.pos), block.scope, SimpleName(rhs.v), lhs);
 }
 
+Expr arrayOperator(Block block, Expr base, Expr offset) {
+	// Basically: *(<base> + <offset>)
+	Deref:ptr(operator(block, base, SStr("+", offset.pos), offset));
+}
+
 
 /**
  * Make a pointer from an l-value. The & operator.
@@ -1352,6 +1361,11 @@ class NewExpr extends ExprRef {
 		if (val < 0 | val > 65535)
 			throw InternalError("Improper size of an array allocation: ${val}");
 	}
+}
+
+// Descriptive error for malloc().
+Expr mallocError(SrcPos pos) {
+	throw SyntaxError(pos, "Calls to malloc in this implementation must have the form: malloc(sizeof(type)), malloc(sizeof(type)*n) or malloc(n*sizeof(type)).");
 }
 
 /**
