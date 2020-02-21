@@ -369,8 +369,10 @@ namespace code {
 					movOut(to, mov(e, edx, high32(instr->src())));
 				}
 			} else if (sFrom == sTo) {
-				if (!srcEax)
-					movOut(to, mov(e, eax, instr->src()));
+				if (!srcEax) {
+					Size sz = instr->src().size();
+					movOut(to, mov(e, asSize(eax, sz) , instr->src()));
+				}
 			} else {
 				assert(false, L"Unsupported icast mode: " + ::toS(instr));
 			}
@@ -408,8 +410,10 @@ namespace code {
 					movOut(to, mov(e, edx, high32(instr->src())));
 				}
 			} else if (sFrom == sTo) {
-				if (!srcEax)
-					movOut(to, mov(e, eax, instr->src()));
+				if (!srcEax) {
+					Size sz = instr->src().size();
+					movOut(to, mov(e, asSize(eax, sz) , instr->src()));
+				}
 			} else {
 				assert(false, L"Unsupported icast mode: " + ::toS(instr));
 			}
