@@ -22,8 +22,12 @@ class CppViewHints extends ViewHints {
 		if (!info.isValue)
 			return null;
 
-		if ((base.readFilled & AllocFlags:arrayAlloc.v) != 0) {
-			print("TODO: Create an array node!");
+		// If this is the "outermost" allocation of something that was allocated as an array, create
+		// a special instance for that.
+		if (offset == 0 & base.type is info.type) {
+			// Is it an array allocation?
+			if ((base.readFilled & AllocFlags:arrayAlloc.v) != 0)
+				return createArray(ws, info, base);
 		}
 
 		if (ptr = info.type as PtrType) {
@@ -47,6 +51,28 @@ class CppViewHints extends ViewHints {
 		}
 
 		null;
+	}
+
+	// Create a data node for an array. We assume that 'offset' is zero (checked earlier).
+	private Data createArray(Workspace ws, TypeInfo info, unsafe:RawPtr base) {
+		var members = findMembers(info.type);
+
+		// We know that the size will not change, so we can just stuff everything into a single
+		// Composite allocation. This could be a bit unclear if we're working with inheritance as
+		// well, but it should be good enough.
+		Nat count = base.readCount & AllocFlags:sizeMask.v;
+		Nat elemSz = Value(info.type).size.current;
+
+		Composite result;
+		for (Nat i = 0; i < count; i++) {
+			Nat offset = i * elemSz;
+			for (i, m in members) {
+				// We're ignoring 'm.first' to make array elements more clearly divided.
+				result.add(m.name, offset + m.offset, ws.createData(m.type, base, offset + m.offset), i == 0);
+			}
+		}
+
+		result;
 	}
 }
 
