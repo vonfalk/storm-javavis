@@ -177,6 +177,9 @@ namespace gui {
 		// Internal 'resized' notification.
 		virtual void onResize(Size size);
 
+		// Destroy a handle.
+		virtual void destroyWindow(Handle handle);
+
 #ifdef GUI_WIN32
 		// Create a window, and handle it. Makes sure that all messages are handled correctly.
 		// Equivalent to handle(CreateWindowEx(...)), but ensures that any messages sent before
@@ -245,9 +248,6 @@ namespace gui {
 		// Prepare for a painter/prepare for no painter. Not called when we swap painter.
 		void attachPainter();
 		void detachPainter();
-
-		// Destroy a handle.
-		void destroyWindow(Handle handle);
 
 #ifdef GUI_WIN32
 		// Handle on paint events.

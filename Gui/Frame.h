@@ -61,12 +61,15 @@ namespace gui {
 		Bool STORM_FN cursorVisible();
 
 		// Set the menu for this window.
-		void STORM_ASSIGN menu(MenuBar *menu);
-		MenuBar *STORM_FN menu();
+		void STORM_ASSIGN menu(MAYBE(MenuBar *) menu);
+		MAYBE(MenuBar *) STORM_FN menu();
 
 	protected:
 		// Notification on window resizes.
 		virtual void onResize(Size size);
+
+		// Called when we're about to destroy the window.
+		virtual void destroyWindow(Handle handle);
 
 	private:
 		// Helper to create the window.
@@ -96,6 +99,11 @@ namespace gui {
 
 		// Cursor visible?
 		Bool showCursor;
+
+#ifdef GUI_WIN32
+		// Find the clicked menu item.
+		void menuClicked(HMENU menu, Nat id);
+#endif
 	};
 
 }

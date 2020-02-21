@@ -1,5 +1,6 @@
 #pragma once
 #include "Core/Array.h"
+#include "Core/Fn.h"
 #include "Handle.h"
 
 namespace gui {
@@ -34,6 +35,12 @@ namespace gui {
 
 			// Called whenever we're attached to a parent. This is when we create ourselves.
 			void STORM_FN attached(Menu *to, Nat id);
+
+			// Called when the item was clicked.
+			virtual void STORM_FN clicked();
+
+			// Find a sub-menu from its handle.
+			virtual MAYBE(Menu *) findMenu(Handle handle) const;
 
 		protected:
 			// Owning menu so that we can propagate updates.
@@ -74,16 +81,22 @@ namespace gui {
 		public:
 			// Create.
 			STORM_CTOR Text(Str *title);
+			STORM_CTOR Text(Str *title, Fn<void> *fn);
 
 			// Get/set the title.
 			Str *STORM_FN title() const { return myTitle; }
 			void STORM_ASSIGN title(Str *title);
 
+			// Callback.
+			MAYBE(Fn<void> *) onClick;
+
+			// Called when the item was clicked.
+			virtual void STORM_FN clicked();
+
 		protected:
 			// Create our element.
 			virtual void STORM_FN create();
 
-		private:
 			// Title.
 			Str *myTitle;
 		};
@@ -96,6 +109,9 @@ namespace gui {
 		public:
 			// Create.
 			STORM_CTOR Submenu(Str *title, PopupMenu *menu);
+
+			// Find a sub-menu from its handle.
+			virtual MAYBE(Menu *) findMenu(Handle handle) const;
 
 		protected:
 			// Create our element.
@@ -119,6 +135,9 @@ namespace gui {
 
 		// Get an item.
 		Item *STORM_FN operator [](Nat id) const { return items->at(id); }
+
+		// Find a sub-menu from its handle.
+		MAYBE(Menu *) findMenu(Handle handle);
 
 	private:
 		// Parent menu, if any.

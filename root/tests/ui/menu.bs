@@ -3,17 +3,34 @@ use core:geometry;
 
 class MenuWindow extends Frame {
 	init() {
-		init("Menu test", Size(300, 100));
-
 		PopupMenu help;
-		help << Menu:Text("Help") << Menu:Separator() << Menu:Text("About...");
+		help << Menu:Text("Help") << Menu:Separator() << Menu:Text("About...", () => print("Clicked"));
 
 		MenuBar root;
 		root << Menu:Text("Test") << Menu:Submenu("Help", help);
 
-		menu = root;
+		init("Menu test", Size(300, 100)) {
+			root = root;
+		}
 
 		create();
+	}
+
+	MenuBar root;
+
+	Bool onClick(Bool pressed, Point at, MouseButton button) : override {
+		if (pressed) {
+			if (button == MouseButton:left) {
+				if (menu)
+					menu = null;
+				else
+					menu = root;
+			} else if (button == MouseButton:right) {
+				fullscreen = !fullscreen;
+			}
+		}
+
+		true;
 	}
 }
 

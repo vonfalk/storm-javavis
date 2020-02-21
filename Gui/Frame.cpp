@@ -95,6 +95,18 @@ namespace gui {
 		Window::onResize(size);
 	}
 
+	void Frame::destroyWindow(Handle handle) {
+		// Remove the menu first, so we don't destroy that as well (only an issue on Windows).
+		MenuBar *old = myMenu;
+		myMenu = null;
+		setMenu(old);
+		// Restore, so we don't alter the visible state.
+		myMenu = old;
+
+		Window::destroyWindow(handle);
+	}
+
+
 #ifdef GUI_WIN32
 
 	// Convert a client size to the actual window size.
@@ -193,6 +205,9 @@ namespace gui {
 		case WM_GETMINMAXINFO:
 			fill((MINMAXINFO *)msg.lParam, handle().hwnd(), lastMinSize);
 			return msgResult(0);
+		case WM_MENUCOMMAND:
+			menuClicked((HMENU)msg.lParam, (Nat)msg.wParam);
+			return msgResult(TRUE);
 		}
 
 		return Container::onMessage(msg);
@@ -206,6 +221,46 @@ namespace gui {
 	void Frame::updateMinSize() {
 		lastMinSize = minSize();
 	}
+
+	void Frame::setMenu(MenuBar *) {
+		// Check the size of the window now.
+		RECT original;
+		GetClientRect(handle().hwnd(), &original);
+
+		// Note: SetMenu does not remove the old menu. That is exactly what we want.
+		if (myMenu) {
+			SetMenu(handle().hwnd(), myMenu->handle.menu());
+		} else {
+			SetMenu(handle().hwnd(), NULL);
+		}
+
+		// Check the new size.
+		RECT changed;
+		GetClientRect(handle().hwnd(), &changed);
+
+		// Alter our height if needed.
+		int delta = original.bottom - changed.bottom;
+		if (delta && !full) {
+			GetWindowRect(handle().hwnd(), &original);
+			original.bottom += delta;
+			int width = original.right - original.left;
+			int height = original.bottom - original.top;
+			SetWindowPos(handle().hwnd(), HWND_TOP, 0, 0, width, height, SWP_NOACTIVATE | SWP_NOMOVE | SWP_NOZORDER);
+		}
+	}
+
+	void Frame::menuClicked(HMENU menu, Nat id) {
+		if (!myMenu)
+			return;
+
+		if (Menu *m = myMenu->findMenu(menu)) {
+			if (id >= m->count())
+				return;
+
+			(*m)[id]->clicked();
+		}
+	}
+
 
 #endif
 #ifdef GUI_GTK
@@ -327,11 +382,13 @@ namespace gui {
 			gtk_container_remove(GTK_CONTAINER(vbox), old->handle.widget());
 		}
 
-		// Place the menu first.
-		GtkWidget *m = myMenu->handle.widget();
-		gtk_box_pack_start(GTK_BOX(vbox), m, false, false, 0);
+		if (myMenu) {
+			// Place the menu first.
+			GtkWidget *m = myMenu->handle.widget();
+			gtk_box_pack_start(GTK_BOX(vbox), m, false, false, 0);
 
-		gtk_widget_show_all(m);
+			gtk_widget_show_all(m);
+		}
 	}
 
 #endif

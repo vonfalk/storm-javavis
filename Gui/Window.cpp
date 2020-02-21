@@ -557,6 +557,8 @@ namespace gui {
 	}
 
 	void Window::destroyWindow(Handle handle) {
+		// TODO: Perhaps we should not call gtk_widget_destroy on all widgets. It seems it is enough
+		// to destroy top-level widgets.
 		gtk_widget_destroy(handle.widget());
 		if (gTimer) {
 			delete gTimer;

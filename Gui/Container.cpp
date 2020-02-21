@@ -120,7 +120,7 @@ namespace gui {
 		nat id = LOWORD(msg.wParam);
 
 		// Menus and accelerators. Not implemented yet.
-		if (msg.lParam == 0)
+		if (msg.lParam == 0 || msg.lParam == 1)
 			return false;
 
 		IdMap::Iter i = ids->find(id);
