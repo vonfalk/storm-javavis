@@ -225,9 +225,11 @@ namespace gui {
 		// Text.
 		const Str *myText;
 
-		// Position.
+	protected:
+		// Position (Frame needs to modify this).
 		Rect myPos;
 
+	private:
 		// Font.
 		Font *myFont;
 

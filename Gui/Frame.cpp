@@ -51,12 +51,6 @@ namespace gui {
 		}
 	}
 
-	void Frame::pos(Rect r) {
-		if (!full) {
-			Window::pos(r);
-		}
-	}
-
 	Bool Frame::cursorVisible() {
 		return showCursor;
 	}
@@ -109,10 +103,17 @@ namespace gui {
 
 #ifdef GUI_WIN32
 
+	void Frame::pos(Rect r) {
+		if (!full) {
+			Window::pos(r);
+		}
+	}
+
 	// Convert a client size to the actual window size.
-	static Size clientToWindow(Size s, DWORD windowStyles, DWORD windowExStyles) {
+	static Size clientToWindow(Size s, DWORD windowStyles, DWORD windowExStyles, bool menu) {
 		RECT r = { 0, 0, (LONG)s.w, (LONG)s.h };
-		AdjustWindowRectEx(&r, windowStyles & ~WS_OVERLAPPED, FALSE, windowExStyles);
+		BOOL m = menu ? TRUE : FALSE;
+		AdjustWindowRectEx(&r, windowStyles & ~WS_OVERLAPPED, menu, windowExStyles);
 		return Size(Float(r.right - r.left), Float(r.bottom - r.top));
 	}
 
@@ -181,11 +182,11 @@ namespace gui {
 		return true;
 	}
 
-	static void fill(MINMAXINFO *info, HWND hWnd, Size size) {
+	static void fill(MINMAXINFO *info, HWND hWnd, Size size, bool menu) {
 		// Need to adjust 'size' since it is measured in client size, while Win32 expects actual window sizes.
 		LONG styles = GetWindowLong(hWnd, GWL_STYLE);
 		LONG exStyles = GetWindowLong(hWnd, GWL_EXSTYLE);
-		size = clientToWindow(size, styles, exStyles);
+		size = clientToWindow(size, styles, exStyles, menu);
 
 		info->ptMinTrackSize.x = (LONG)size.w;
 		info->ptMinTrackSize.y = (LONG)size.h;
@@ -203,7 +204,7 @@ namespace gui {
 			}
 			break;
 		case WM_GETMINMAXINFO:
-			fill((MINMAXINFO *)msg.lParam, handle().hwnd(), lastMinSize);
+			fill((MINMAXINFO *)msg.lParam, handle().hwnd(), lastMinSize, myMenu != null);
 			return msgResult(0);
 		case WM_MENUCOMMAND:
 			menuClicked((HMENU)msg.lParam, (Nat)msg.wParam);
@@ -264,6 +265,13 @@ namespace gui {
 
 #endif
 #ifdef GUI_GTK
+
+	void Frame::pos(Rect r) {
+		myPos = r;
+		if (!full && handle() != Handle()) {
+			gtk_window_resize(GTK_WINDOW(handle().widget()), r.size().w, r.size().h);
+		}
+	}
 
 	static void goFull(Handle wnd, Long &, Rect &) {
 		GdkWindow *window = gtk_widget_get_window(wnd.widget());
@@ -370,16 +378,24 @@ namespace gui {
 	void Frame::updateMinSize() {
 		lastMinSize = minSize();
 
-		GtkWidget *widget = handle().widget();
-		if (widget)
+		if (handle() != Handle()) {
+			GtkWidget *widget = drawWidget();
 			gtk_widget_set_size_request(widget, (gint)lastMinSize.w, (gint)lastMinSize.h);
+		}
 	}
 
 	void Frame::setMenu(MenuBar *old) {
 		GtkWidget *vbox = gtk_bin_get_child(GTK_BIN(handle().widget()));
+		gint heightDiff = 0;
+		gint oldWidth, oldHeight;
+		gtk_window_get_size(GTK_WINDOW(handle().widget()), &oldWidth, &oldHeight);
 
 		if (old) {
+			gint natural;
+			gtk_widget_get_preferred_height(old->handle.widget(), NULL, &natural);
 			gtk_container_remove(GTK_CONTAINER(vbox), old->handle.widget());
+
+			heightDiff -= natural;
 		}
 
 		if (myMenu) {
@@ -388,7 +404,16 @@ namespace gui {
 			gtk_box_pack_start(GTK_BOX(vbox), m, false, false, 0);
 
 			gtk_widget_show_all(m);
+
+			gint natural;
+			gtk_widget_get_preferred_height(m, NULL, &natural);
+
+			heightDiff += natural;
 		}
+
+		if (!full)
+			gtk_window_resize(GTK_WINDOW(handle().widget()), oldWidth, oldHeight + heightDiff);
+
 	}
 
 #endif
