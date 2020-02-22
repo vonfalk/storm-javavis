@@ -71,6 +71,15 @@ namespace gui {
 		return windows->get(h, null);
 	}
 
+	Menu::Item *App::findMenuItem(Handle h) {
+		for (WindowSet::Iter i = liveWindows->begin(), e = liveWindows->end(); i != e; ++i) {
+			if (Frame *frame = as<Frame>(i.v()))
+				if (Menu::Item *item = frame->findMenuItem(h))
+					return item;
+		}
+		return null;
+	}
+
 	bool App::resumeEvent(Window *window, Event *event) {
 		return liveWindows->has(window) == false
 			|| event->isSet();

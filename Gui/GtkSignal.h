@@ -14,6 +14,7 @@ namespace gui {
 	struct Signal {
 		template <Result (Class::*fn)(Params...)>
 		struct Connect {
+			// Connect to a signal associated with a Window.
 			static void to(GtkWidget *to, const gchar *name, Engine &e) {
 				g_signal_connect(to, name, (GCallback)&callback, &e);
 			}
@@ -21,6 +22,7 @@ namespace gui {
 			static void last(GtkWidget *to, const gchar *name, Engine &e) {
 				g_signal_connect_after(to, name, (GCallback)&callback, &e);
 			}
+
 
 			static Result callback(GtkWidget *src, Params... args, gpointer engine) {
 				Engine *e = (Engine *)engine;

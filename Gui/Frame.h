@@ -64,6 +64,10 @@ namespace gui {
 		void STORM_ASSIGN menu(MAYBE(MenuBar *) menu);
 		MAYBE(MenuBar *) STORM_FN menu();
 
+		// Find a menu item from a handle, either in the attached window menu or from any popup
+		// menus associated with this window.
+		MAYBE(Menu::Item *) findMenuItem(Handle handle);
+
 	protected:
 		// Notification on window resizes.
 		virtual void onResize(Size size);

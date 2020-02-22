@@ -6,6 +6,7 @@
 #include "Core/Event.h"
 #include "Handle.h"
 #include "Message.h"
+#include "Menu.h"
 
 namespace gui {
 
@@ -56,6 +57,10 @@ namespace gui {
 
 		// Find a registered window.
 		MAYBE(Window *) findWindow(Handle h);
+
+		// Find a menu item from its handle. This searches all menus attached to all top-level
+		// windows, so don't use it for frequent events.
+		MAYBE(Menu::Item *) findMenuItem(Handle h);
 
 #ifdef GUI_WIN32
 		/**

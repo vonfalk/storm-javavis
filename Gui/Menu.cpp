@@ -1,6 +1,7 @@
 #include "stdafx.h"
 #include "Menu.h"
 #include "Exception.h"
+#include "App.h"
 
 namespace gui {
 
@@ -49,6 +50,14 @@ namespace gui {
 		return null;
 	}
 
+	Menu::Item *Menu::findMenuItem(Handle handle) {
+		for (Nat i = 0; i < items->count(); i++) {
+			if (Item *item = items->at(i)->findMenuItem(handle))
+				return item;
+		}
+		return null;
+	}
+
 
 	Menu::Item::Item() : owner(null) {}
 
@@ -78,6 +87,12 @@ namespace gui {
 		return null;
 	}
 
+	Menu::Item *Menu::Item::findMenuItem(Handle handle) {
+		if (this->handle == handle)
+			return this;
+		return null;
+	}
+
 	Menu::Separator::Separator() {}
 
 
@@ -96,6 +111,14 @@ namespace gui {
 	Menu *Menu::Submenu::findMenu(Handle handle) const {
 		if (myMenu)
 			return myMenu->findMenu(handle);
+		return null;
+	}
+
+	Menu::Item *Menu::Submenu::findMenuItem(Handle handle) {
+		if (Item *i = Text::findMenuItem(handle))
+			return i;
+		if (myMenu)
+			return myMenu->findMenuItem(handle);
 		return null;
 	}
 
@@ -158,6 +181,32 @@ namespace gui {
 #endif
 #ifdef GUI_GTK
 
+	static void menuCallback(GtkWidget *src, gpointer engine) {
+		Engine *e = (Engine *)engine;
+		App *app = gui::app(*e);
+
+		Menu::Item *item = app->findMenuItem(src);
+		if (!item) {
+			WARNING(L"Unknown menu item!");
+			return;
+		}
+
+		try {
+			return item->clicked();
+		} catch (const storm::Exception *e) {
+			PLN(L"Unhandled exception in window thread:\n" << e->message());
+		} catch (const ::Exception &e) {
+			PLN(L"Unhandled exception in window thread:\n" << e);
+		} catch (...) {
+			PLN(L"Unhandled exception in window thread: <unknown>");
+		}
+	}
+
+		// Connect to a signal associated with a Menu.
+	static void connectMenu(GtkWidget *to, Engine &e) {
+		g_signal_connect(to, "activate", (GCallback)&menuCallback, &e);
+	}
+
 	void Menu::Separator::create() {
 		GtkWidget *created = gtk_separator_menu_item_new();
 		g_object_ref_sink(created);
@@ -177,6 +226,7 @@ namespace gui {
 		g_object_ref_sink(created);
 		handle = created;
 		gtk_menu_shell_append(GTK_MENU_SHELL(owner->handle.widget()), created);
+		connectMenu(created, engine());
 	}
 
 	void Menu::Submenu::create() {

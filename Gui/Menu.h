@@ -42,6 +42,9 @@ namespace gui {
 			// Find a sub-menu from its handle.
 			virtual MAYBE(Menu *) findMenu(Handle handle) const;
 
+			// Find a menu item from its handle (only meaningful on Gtk+).
+			virtual MAYBE(Item *) findMenuItem(Handle handle);
+
 		protected:
 			// Owning menu so that we can propagate updates.
 			MAYBE(Menu *) owner;
@@ -113,6 +116,9 @@ namespace gui {
 			// Find a sub-menu from its handle.
 			virtual MAYBE(Menu *) findMenu(Handle handle) const;
 
+			// Find a menu item from its handle (only meaningful on Gtk+).
+			virtual MAYBE(Item *) findMenuItem(Handle handle);
+
 		protected:
 			// Create our element.
 			virtual void STORM_FN create();
@@ -138,6 +144,9 @@ namespace gui {
 
 		// Find a sub-menu from its handle.
 		MAYBE(Menu *) findMenu(Handle handle);
+
+		// Find a menu-item from its handle (only meaningful on Gtk+).
+		MAYBE(Menu::Item *) findMenuItem(Handle handle);
 
 	private:
 		// Parent menu, if any.

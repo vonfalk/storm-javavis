@@ -84,6 +84,16 @@ namespace gui {
 		return myMenu;
 	}
 
+	Menu::Item *Frame::findMenuItem(Handle h) {
+		if (myMenu)
+			if (Menu::Item *found = myMenu->findMenuItem(h))
+				return found;
+
+		TODO(L"Take care of any pop-up menus as well!");
+
+		return null;
+	}
+
 	void Frame::onResize(Size size) {
 		updateMinSize();
 		Window::onResize(size);
