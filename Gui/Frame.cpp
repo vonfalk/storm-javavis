@@ -5,8 +5,8 @@
 
 namespace gui {
 
-	static void goFull(Handle wnd, Long &oldStyle, Rect &oldPos);
-	static void goBack(Handle wnd, Long &oldStyle, Rect &oldPos);
+	static void goFull(Handle wnd, Nat &oldStyle, Rect &oldPos);
+	static void goBack(Handle wnd, Nat &oldStyle, Rect &oldPos);
 
 
 	Frame::Frame(Str *title) : myMenu(null), full(false), showCursor(true) {
@@ -27,7 +27,7 @@ namespace gui {
 		if (handle() != invalid)
 			return;
 
-		createWindow(true);
+		createWindow(true, null);
 	}
 
 	void Frame::close() {
@@ -128,7 +128,7 @@ namespace gui {
 	}
 
 	// Make 'wnd' go fullscreen.
-	static void goFull(Handle wnd, Long &oldStyle, Rect &oldPos) {
+	static void goFull(Handle wnd, Nat &oldStyle, Rect &oldPos) {
 		oldStyle = GetWindowLong(wnd.hwnd(), GWL_STYLE);
 		RECT oldRect;
 		GetWindowRect(wnd.hwnd(), &oldRect);
@@ -147,7 +147,7 @@ namespace gui {
 		SetWindowPos(wnd.hwnd(), NULL, l, t, r - l, b - t, SWP_NOZORDER | SWP_NOACTIVATE | SWP_FRAMECHANGED);
 	}
 
-	static void goBack(Handle wnd, Long &style, Rect &rect) {
+	static void goBack(Handle wnd, Nat &style, Rect &rect) {
 		LONG l = LONG(rect.p0.x);
 		LONG r = LONG(rect.p1.x);
 		LONG t = LONG(rect.p0.y);
@@ -158,7 +158,7 @@ namespace gui {
 	}
 
 	// Helper to create the actual handle.
-	bool Frame::createWindow(bool sizeable) {
+	bool Frame::createWindow(bool sizeable, MAYBE(Frame *) parent) {
 		DWORD exStyles = WS_EX_CONTROLPARENT;
 		DWORD styles = 0;
 		if (sizeable)
@@ -168,7 +168,10 @@ namespace gui {
 
 		styles |= WS_CLIPCHILDREN;
 
-		if (!createEx(NULL, styles, exStyles, NULL, 0, cManualVisibility | cAutoPos))
+		HWND hParent = NULL;
+		if (parent)
+			hParent = parent->handle().hwnd();
+		if (!createEx(NULL, styles, exStyles, hParent, 0, cManualVisibility | cAutoPos))
 			return false;
 
 		// Create child windows (little of a hack, sorry!)

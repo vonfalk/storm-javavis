@@ -119,7 +119,7 @@ Size Class::rawSize() const {
 				std::wostringstream msg;
 				msg << L"The type " << name << L" will be inconsistently aligned on different systems. "
 					<< L"On Windows, it will start at " << s << L" and on UNIX it will start at " << raw
-					<< L". This is because the parent class, " << parentType->name << L" is aligned at "
+					<< L". This is because the parent class, " << parentType->name << L", is aligned at "
 					<< parentType->rawSize() << L". You can fix this by placing a pointer as the first "
 					<< L"member of " << name << L", or by rearranging/padding " << parentType->name
 					<< L" so that its size matches its natural alignment.";

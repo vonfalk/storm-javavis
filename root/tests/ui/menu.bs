@@ -3,15 +3,16 @@ use core:geometry;
 
 class MenuWindow extends Frame {
 	init() {
-		PopupMenu help;
-		help << Menu:Text("Help") << Menu:Separator() << Menu:Text("About...", () => print("Clicked"));
-
 		MenuBar root;
-		root << Menu:Text("Test") << Menu:Submenu("Help", help);
 
 		init("Menu test", Size(300, 100)) {
 			root = root;
 		}
+
+		PopupMenu help;
+		help << Menu:Text("Help") << Menu:Separator() << Menu:Text("About...", &this.showAbout());
+
+		root << Menu:Text("Test") << Menu:Submenu("Help", help);
 
 		create();
 	}
@@ -31,6 +32,27 @@ class MenuWindow extends Frame {
 		}
 
 		true;
+	}
+
+	void showAbout() {
+		AboutWindow win;
+		Int r = win.show(this);
+		print("Result: ${r}");
+	}
+}
+
+class AboutWindow extends ui:Dialog {
+	Button close;
+
+	init() {
+		init("About", Size(100, 100)) {
+			close("Close");
+		}
+
+		close.pos = Rect(10, 10, 80, 80);
+		var me = this;
+		close.onClick = (Button b) => me.close(1);
+		add(close);
 	}
 }
 

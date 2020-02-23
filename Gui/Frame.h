@@ -75,10 +75,10 @@ namespace gui {
 		// Called when we're about to destroy the window.
 		virtual void destroyWindow(Handle handle);
 
-	private:
-		// Helper to create the window.
-		bool createWindow(bool sizeable);
+		// Helper to create the window. Optionally provide a parent window.
+		bool createWindow(bool sizeable, MAYBE(Frame *) parent);
 
+	private:
 		// Update the minimum size.
 		void updateMinSize();
 
@@ -95,7 +95,7 @@ namespace gui {
 		Size lastMinSize;
 
 		// Info. Not valid if we're not in fullscreen mode.
-		Long windowedStyle;
+		Nat windowedStyle;
 		Rect windowedRect;
 
 		// Fullscreen mode?
