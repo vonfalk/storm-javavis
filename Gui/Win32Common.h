@@ -13,6 +13,10 @@
 // Direct Write for text rendering.
 #include <dwrite.h>
 
+// Some shell IDL definitions.
+#include <Shobjidl.h>
+
+
 // HRESULT to string.
 String toS(HRESULT r);
 
