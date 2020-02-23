@@ -57,15 +57,6 @@ class AboutWindow extends ui:Dialog {
 }
 
 void menu() {
-	FileTypes t("Test files");
-	t.add("Text files", ["*.txt"]);
-	t.add("Sound files", ["*.mp3", "*.flac"]);
-
-	if (r = showSaveDialog(t, null, "test"))
-		print("Opened ${r}");
-	return;
-
-
 	MenuWindow w;
 	w.waitForClose;
 	print("Done!");

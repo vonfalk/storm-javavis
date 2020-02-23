@@ -7,6 +7,9 @@ namespace gui {
 	 * A dialog is a Frame that is modal, i.e. it disallows interaction with some parent frame
 	 * window until it is closed. The dialog also implements "show()", which blocks until the dialog
 	 * is closed, and returns some value to the caller, which represents the result of the dialog.
+	 *
+	 * TODO: We want to provide some way of determining what happens when the user presses return
+	 * and/or escape.
 	 */
 	class Dialog : public Frame {
 		STORM_CLASS;

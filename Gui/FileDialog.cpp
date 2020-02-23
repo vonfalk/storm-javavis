@@ -1,6 +1,7 @@
 #include "stdafx.h"
 #include "FileDialog.h"
 #include "Core/Join.h"
+#include "Core/Convert.h"
 
 namespace gui {
 
@@ -187,6 +188,94 @@ namespace gui {
 			dialog->Release();
 
 		return url;
+	}
+
+#endif
+
+#ifdef GUI_GTK
+
+	static void addFileType(GtkFileChooser *chooser, Str *title, Array<Str *> *exts) {
+		GtkFileFilter *filter = gtk_file_filter_new();
+		gtk_file_filter_set_name(filter, title->utf8_str());
+
+		for (Nat i = 0; i < exts->count(); i++)
+			gtk_file_filter_add_pattern(filter, exts->at(i)->utf8_str());
+
+		gtk_file_chooser_add_filter(chooser, filter);
+	}
+
+	static void addFileTypes(GtkFileChooser *chooser, FileTypes *types) {
+		Nat count = types->elements->count() + 1;
+		if (types->allowAny)
+			count++;
+
+		// Fill the "full" listing.
+		Array<Str *> *all = new (types) Array<Str *>();
+		for (Nat i = 0; i < types->elements->count(); i++)
+			all->append(types->elements->at(i).exts);
+
+		addFileType(chooser, types->title, all);
+
+		// Fill the remaining items.
+		for (Nat i = 0; i < types->elements->count(); i++) {
+			FileTypes::Elem &e = types->elements->at(i);
+			addFileType(chooser, e.title, e.exts);
+		}
+
+		// If we want to add "any type", do that now.
+		if (types->allowAny) {
+			GtkFileFilter *filter = gtk_file_filter_new();
+			gtk_file_filter_set_name(filter, "Any type");
+			gtk_file_filter_add_pattern(filter, "*");
+			gtk_file_chooser_add_filter(chooser, filter);
+		}
+	}
+
+	static MAYBE(Url *) showFileDialog(GtkFileChooserAction action,
+									FileTypes *types,
+									MAYBE(Frame *) parent,
+									MAYBE(Str *) suggestedName) {
+
+		GtkWindow *parentWin = null;
+		if (parent)
+			GTK_WINDOW(parent->handle().widget());
+		GtkWidget *dialog = gtk_file_chooser_dialog_new(NULL, parentWin, action,
+														"Cancel", GTK_RESPONSE_CANCEL,
+														"OK", GTK_RESPONSE_ACCEPT,
+														NULL);
+		GtkFileChooser *chooser = GTK_FILE_CHOOSER(dialog);
+
+		addFileTypes(chooser, types);
+
+		if (action == GTK_FILE_CHOOSER_ACTION_SAVE) {
+			gtk_file_chooser_set_do_overwrite_confirmation(chooser, TRUE);
+		}
+
+		if (suggestedName) {
+			gtk_file_chooser_set_current_name(chooser, suggestedName->utf8_str());
+		}
+
+		Url *result = null;
+		if (gtk_dialog_run(GTK_DIALOG(dialog)) == GTK_RESPONSE_ACCEPT) {
+			char *filename = gtk_file_chooser_get_filename(chooser);
+			Engine &e = types->engine();
+			result = parsePath(new (e) Str(toWChar(e, filename)));
+			g_free(filename);
+
+			// TODO: Try to auto-append the proper file extension if we're saving.
+		}
+
+		gtk_widget_destroy(dialog);
+
+		return result;
+	}
+
+	MAYBE(Url *) showOpenDialog(FileTypes *types, MAYBE(Frame *) parent) {
+		return showFileDialog(GTK_FILE_CHOOSER_ACTION_OPEN, types, parent, null);
+	}
+
+	MAYBE(Url *) showSaveDialog(FileTypes *types, MAYBE(Frame *) parent, MAYBE(Str *) suggestedName) {
+		return showFileDialog(GTK_FILE_CHOOSER_ACTION_SAVE, types, parent, suggestedName);
 	}
 
 #endif

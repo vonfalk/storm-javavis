@@ -1,0 +1,10 @@
+use ui;
+
+void fileDialog() {
+	FileTypes t("Test files");
+	t.add("Text files", ["*.txt"]);
+	t.add("Sound files", ["*.mp3", "*.flac"]);
+
+	if (r = showSaveDialog(t, null, "test"))
+		print("Opened ${r}");
+}

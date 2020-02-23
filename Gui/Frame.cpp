@@ -286,20 +286,35 @@ namespace gui {
 		}
 	}
 
-	static void goFull(Handle wnd, Long &, Rect &) {
+	static void goFull(Handle wnd, Nat &, Rect &) {
 		GdkWindow *window = gtk_widget_get_window(wnd.widget());
 		gdk_window_set_fullscreen_mode(window, GDK_FULLSCREEN_ON_CURRENT_MONITOR);
 		gdk_window_fullscreen(window);
 	}
 
-	static void goBack(Handle wnd, Long &, Rect &) {
+	static void goBack(Handle wnd, Nat &, Rect &) {
 		GdkWindow *window = gtk_widget_get_window(wnd.widget());
 		gdk_window_unfullscreen(window);
 	}
 
-	bool Frame::createWindow(bool sizeable) {
-		GtkWidget *frame = gtk_window_new(GTK_WINDOW_TOPLEVEL);
-		gtk_window_set_title((GtkWindow *)frame, text()->utf8_str());
+	bool Frame::createWindow(bool sizeable, MAYBE(Frame *) parent) {
+		GtkWidget *frame = null;
+		// If "parent" is set, we want to create a dialog instead.
+		if (parent) {
+			// We use "with buttons" so that we may specify flags and parent!
+			const char *title = text()->utf8_str();
+			GtkDialogFlags flags = GTK_DIALOG_MODAL;
+			GtkWindow *parentWindow = GTK_WINDOW(parent->handle().widget());
+			// The last NULL is not needed, but GCC complains if we omit it.
+			frame = gtk_dialog_new_with_buttons(title, parentWindow, flags, NULL, NULL);
+
+			// A dialog already contains a Bin container. So we remove that...
+			GtkWidget *contained = gtk_bin_get_child(GTK_BIN(frame));
+			gtk_container_remove(GTK_CONTAINER(frame), contained);
+		} else {
+			frame = gtk_window_new(GTK_WINDOW_TOPLEVEL);
+			gtk_window_set_title((GtkWindow *)frame, text()->utf8_str());
+		}
 		gtk_window_set_resizable((GtkWindow *)frame, sizeable);
 
 		// Add a VBox to the frame, so we can place the menu appropriately.

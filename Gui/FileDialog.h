@@ -51,6 +51,8 @@ namespace gui {
 
 	/**
 	 * Show an "open" dialog box.
+	 *
+	 * TODO: Allow selecting entire directories as well.
 	 */
 	MAYBE(Url *) STORM_FN showOpenDialog(FileTypes *types, MAYBE(Frame *) parent) ON(Ui);
 

@@ -38,4 +38,32 @@ namespace gui {
 
 #endif
 
+#ifdef GUI_GTK
+
+	Int Dialog::show(Frame *parent) {
+		if (handle() != invalid)
+			throw new (this) GuiError(S("Don't call 'create' before calling 'show' on a dialog."));
+
+		this->parent = parent;
+		createWindow(true, parent);
+
+		gint result = gtk_dialog_run(GTK_DIALOG(handle().widget()));
+
+		// This is the default "close" action.
+		if (result == -4)
+			result = -1;
+
+		// Close the window.
+		Frame::close();
+
+		this->parent = null;
+		return result;
+	}
+
+	void Dialog::close(Int result) {
+		gtk_dialog_response(GTK_DIALOG(handle().widget()), result);
+	}
+
+#endif
+
 }
