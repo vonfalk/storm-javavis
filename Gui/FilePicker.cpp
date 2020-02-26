@@ -338,7 +338,7 @@ namespace gui {
 		gtk_file_chooser_add_filter(chooser, filter);
 	}
 
-	static void addFileTypes(GtkFileChooser *chooser, FileTypes *types) {
+	static vector<GtkFileFilter *> addFileTypes(GtkFileChooser *chooser, FileTypes *types) {
 		Nat count = types->elements->count() + 1;
 		if (types->allowAny)
 			count++;
@@ -363,53 +363,85 @@ namespace gui {
 			gtk_file_filter_add_pattern(filter, "*");
 			gtk_file_chooser_add_filter(chooser, filter);
 		}
+
 	}
 
-	static MAYBE(Url *) showFileDialog(GtkFileChooserAction action,
-									FileTypes *types,
-									MAYBE(Frame *) parent,
-									MAYBE(Str *) suggestedName) {
+	Bool FilePicker::show(MAYBE(Frame *) parent) {
+		res = new (this) Array<Url *>();
+
+		GtkFileChooserAction action;
+		switch (mode & ~Nat(mMulti)) {
+		case mOpen:
+			action = GTK_FILE_CHOOSER_ACTION_OPEN;
+			break;
+		case mSave:
+			action = GTK_FILE_CHOOSER_ACTION_SAVE;
+			break;
+		case mFolder:
+			action = GTK_FILE_CHOOSER_ACTION_SELECT_FOLDER;
+			break;
+		}
 
 		GtkWindow *parentWin = null;
 		if (parent)
 			GTK_WINDOW(parent->handle().widget());
-		GtkWidget *dialog = gtk_file_chooser_dialog_new(NULL, parentWin, action,
-														"Cancel", GTK_RESPONSE_CANCEL,
-														"OK", GTK_RESPONSE_ACCEPT,
+
+		const char *okLbl = "OK";
+		const char *cancelLbl = "Cancel";
+		const char *title = NULL;
+
+		if (ok)
+			okLbl = ok->utf8_str();
+		if (cancel)
+			cancelLbl = cancel->utf8_str();
+		if (caption)
+			title = caption->utf8_str();
+
+		GtkWidget *dialog = gtk_file_chooser_dialog_new(title, parentWin, action,
+														cancelLbl, GTK_RESPONSE_CANCEL,
+														okLbl, GTK_RESPONSE_ACCEPT,
 														NULL);
 		GtkFileChooser *chooser = GTK_FILE_CHOOSER(dialog);
 
-		addFileTypes(chooser, types);
+		if (types)
+			addFileTypes(chooser, types);
 
-		if (action == GTK_FILE_CHOOSER_ACTION_SAVE) {
-			gtk_file_chooser_set_do_overwrite_confirmation(chooser, TRUE);
+		if (mode & mMulti)
+			gtk_file_chooser_set_select_multiple(chooser, TRUE);
+
+		if (defName)
+			gtk_file_chooser_set_current_name(chooser, defName->utf8_str());
+
+		if (gtk_dialog_run(GTK_DIALOG(dialog)) == GTK_RESPONSE_CANCEL) {
+			gtk_widget_destroy(dialog);
+			return false;
 		}
 
-		if (suggestedName) {
-			gtk_file_chooser_set_current_name(chooser, suggestedName->utf8_str());
+		int filterIndex = 0;
+		{
+			GtkFileFilter *activeFilter = gtk_file_chooser_get_filter(chooser);
+			GSList *allFilters = gtk_file_chooser_get_filters(chooser);
+			for (GSList *at = allFilters; at; at = at->next, filterIndex++) {
+				if (at->data == activeFilter)
+					break;
+			}
+			g_slist_free(allFilters);
 		}
 
-		Url *result = null;
-		if (gtk_dialog_run(GTK_DIALOG(dialog)) == GTK_RESPONSE_ACCEPT) {
-			char *filename = gtk_file_chooser_get_filename(chooser);
-			Engine &e = types->engine();
-			result = parsePath(new (e) Str(toWChar(e, filename)));
+		GSList *files = gtk_file_chooser_get_filenames(chooser);
+		for (GSList *at = files; at; at = at->next) {
+			char *filename = (char *)at->data;
+			Url *result = parsePath(new (engine()) Str(toWChar(engine(), filename)));
+			if (action == GTK_FILE_CHOOSER_ACTION_SAVE)
+				result = cleanUrl(filterIndex, result);
+			res->push(result);
+
 			g_free(filename);
-
-			// TODO: Try to auto-append the proper file extension if we're saving.
 		}
+		g_slist_free(files);
 
 		gtk_widget_destroy(dialog);
-
 		return result;
-	}
-
-	MAYBE(Url *) showOpenDialog(FileTypes *types, MAYBE(Frame *) parent) {
-		return showFileDialog(GTK_FILE_CHOOSER_ACTION_OPEN, types, parent, null);
-	}
-
-	MAYBE(Url *) showSaveDialog(FileTypes *types, MAYBE(Frame *) parent, MAYBE(Str *) suggestedName) {
-		return showFileDialog(GTK_FILE_CHOOSER_ACTION_SAVE, types, parent, suggestedName);
 	}
 
 #endif
