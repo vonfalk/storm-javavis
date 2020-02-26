@@ -193,6 +193,9 @@ namespace storm {
 			// This is a static member, it is stored as a free function.
 			fnStatic,
 
+			// This is a static member, taking an EnginePtr as its first parameter.
+			fnStaticEngine,
+
 			/**
 			 * Flags part of the enum. Use 'fnMask' to mask out the regular members below.
 			 */

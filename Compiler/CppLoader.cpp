@@ -454,6 +454,7 @@ namespace storm {
 		case CppFunction::fnFree:
 		case CppFunction::fnFreeEngine:
 		case CppFunction::fnStatic:
+		case CppFunction::fnStaticEngine:
 			loadFreeFunction(fn);
 			break;
 		case CppFunction::fnMember:
@@ -475,10 +476,15 @@ namespace storm {
 
 		Function *f = new (*e) Function(result, new (*e) Str(fn.name), loadFnParams(fn.params));
 
-		if (fnKind(fn) == CppFunction::fnFreeEngine)
+		switch (fnKind(fn)) {
+		case CppFunction::fnFreeEngine:
+		case CppFunction::fnStaticEngine:
 			f->setCode(new (*e) StaticEngineCode(fn.ptr));
-		else
+			break;
+		default:
 			f->setCode(new (*e) StaticCode(fn.ptr));
+			break;
+		}
 
 		if (fn.threadId < this->into->namedThreads.count())
 			f->runOn(this->into->namedThreads[fn.threadId]);

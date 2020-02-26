@@ -512,7 +512,9 @@ static void genFunctions(wostream &to, World &w) {
 		}
 
 		// Kind.
-		if (f.has(Function::isStatic))
+		if (f.has(Function::isStatic) && engineFn)
+			to << L"CppFunction::fnStaticEngine";
+		else if (f.has(Function::isStatic))
 			to << L"CppFunction::fnStatic";
 		else if (f.has(Function::isMember) && f.has(Function::castMember))
 			to << L"CppFunction::fnCastMember";
