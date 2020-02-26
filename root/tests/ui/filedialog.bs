@@ -1,10 +1,21 @@
 use ui;
+use core:io;
 
 void fileDialog() {
 	FileTypes t("Test files");
-	t.add("Text files", ["*.txt"]);
-	t.add("Sound files", ["*.mp3", "*.flac"]);
+	t.add("Text files", ["txt"]);
+	t.add("Sound files", ["mp3", "flac"]);
 
-	if (r = showSaveDialog(t, null, "test"))
-		print("Opened ${r}");
+	FilePicker p = FilePicker:open(t).multiselect;
+	if (p.show(null))
+		print("Opened ${p.results}");
+
+	FilePicker q = FilePicker:save(t, "test").defaultFolder(cwdUrl);
+	if (q.show(null))
+		print("Saved ${q.results}");
+
+	FilePicker r = FilePicker:folder();
+	if (r.show(null)) {
+		print("Directory ${r.results}");
+	}
 }

@@ -92,6 +92,9 @@ namespace storm {
 		// Get the file extension.
 		Str *STORM_FN ext() const;
 
+		// Generate an URL with the given extension. Replaces the original one.
+		Url *STORM_FN withExt(Str *ext) const;
+
 		// Generate a relative path.
 		Url *relative(Url *to);
 
@@ -142,7 +145,7 @@ namespace storm {
 		UrlFlags flags;
 
 		// Make a copy we can modify.
-		Url *copy();
+		Url *copy() const;
 	};
 
 	// Parse a path. (assumed to be on the local file system).

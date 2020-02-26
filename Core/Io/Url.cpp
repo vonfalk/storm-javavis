@@ -157,7 +157,7 @@ namespace storm {
 		return new (this) Array<Str *>(*parts);
 	}
 
-	Url *Url::copy() {
+	Url *Url::copy() const {
 		Url *c = new (this) Url(*this);
 		c->parts = new (this) Array<Str *>(*c->parts);
 		return c;
@@ -254,6 +254,16 @@ namespace storm {
 		Str::Iter d = divideName(n);
 		d++;
 		return n->substr(d);
+	}
+
+	Url *Url::withExt(Str *ext) const {
+		Url *c = copy();
+		if (parts->empty())
+			return c;
+
+		// Sorry about the derefs, the + operator is intended for use in Storm...
+		c->parts->last() = *(*this->title() + S(".")) + ext;
+		return c;
 	}
 
 	Str *Url::title() const {
