@@ -385,7 +385,7 @@ namespace gui {
 
 		GtkWindow *parentWin = null;
 		if (parent)
-			GTK_WINDOW(parent->handle().widget());
+			parentWin = GTK_WINDOW(parent->handle().widget());
 
 		const char *okLbl = "OK";
 		const char *cancelLbl = "Cancel";
@@ -413,7 +413,7 @@ namespace gui {
 		if (defName)
 			gtk_file_chooser_set_current_name(chooser, defName->utf8_str());
 
-		if (gtk_dialog_run(GTK_DIALOG(dialog)) == GTK_RESPONSE_CANCEL) {
+		if (gtk_dialog_run(GTK_DIALOG(dialog)) != GTK_RESPONSE_ACCEPT) {
 			gtk_widget_destroy(dialog);
 			return false;
 		}
