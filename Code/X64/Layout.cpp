@@ -295,13 +295,20 @@ namespace code {
 				initRax = false;
 			}
 
-			for (nat i = 0; i < s64; i += 8) {
-				if (s64 - i > 4) {
-					*dest << mov(longRel(ptrFrame, start + Offset(i)), rax);
-				} else if (s64 - i > 1) {
-					*dest << mov(intRel(ptrFrame, start + Offset(i)), eax);
+			// Note: We need to be careful not to overshoot too much. We might have a stack of
+			// booleans that fill up 2 or 3 bytes. Using a 4 byte fill then would potentially
+			// overwrite some data.
+			nat pos = 0;
+			while (pos < s64) {
+				if (s64 - pos >= 8) {
+					*dest << mov(longRel(ptrFrame, start + Offset(pos)), rax);
+					pos += 8;
+				} else if (s64 - pos >= 4) {
+					*dest << mov(intRel(ptrFrame, start + Offset(pos)), eax);
+					pos += 4;
 				} else {
-					*dest << mov(byteRel(ptrFrame, start + Offset(i)), al);
+					*dest << mov(byteRel(ptrFrame, start + Offset(pos)), al);
+					pos += 1;
 				}
 			}
 		}
