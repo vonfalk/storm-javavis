@@ -332,13 +332,15 @@ namespace gui {
 		GtkFileFilter *filter = gtk_file_filter_new();
 		gtk_file_filter_set_name(filter, title->utf8_str());
 
-		for (Nat i = 0; i < exts->count(); i++)
-			gtk_file_filter_add_pattern(filter, exts->at(i)->utf8_str());
+		for (Nat i = 0; i < exts->count(); i++) {
+			Str *f = *new (title) Str(S("*.")) + exts->at(i);
+			gtk_file_filter_add_pattern(filter, f->utf8_str());
+		}
 
 		gtk_file_chooser_add_filter(chooser, filter);
 	}
 
-	static vector<GtkFileFilter *> addFileTypes(GtkFileChooser *chooser, FileTypes *types) {
+	static void addFileTypes(GtkFileChooser *chooser, FileTypes *types) {
 		Nat count = types->elements->count() + 1;
 		if (types->allowAny)
 			count++;
@@ -353,7 +355,7 @@ namespace gui {
 		// Fill the remaining items.
 		for (Nat i = 0; i < types->elements->count(); i++) {
 			FileTypes::Elem &e = types->elements->at(i);
-			addFileType(chooser, e.title, e.exts);
+			addFileType(chooser, e.extTitle(), e.exts);
 		}
 
 		// If we want to add "any type", do that now.
@@ -363,13 +365,12 @@ namespace gui {
 			gtk_file_filter_add_pattern(filter, "*");
 			gtk_file_chooser_add_filter(chooser, filter);
 		}
-
 	}
 
 	Bool FilePicker::show(MAYBE(Frame *) parent) {
 		res = new (this) Array<Url *>();
 
-		GtkFileChooserAction action;
+		GtkFileChooserAction action = GTK_FILE_CHOOSER_ACTION_OPEN;
 		switch (mode & ~Nat(mMulti)) {
 		case mOpen:
 			action = GTK_FILE_CHOOSER_ACTION_OPEN;
@@ -420,7 +421,7 @@ namespace gui {
 		int filterIndex = 0;
 		{
 			GtkFileFilter *activeFilter = gtk_file_chooser_get_filter(chooser);
-			GSList *allFilters = gtk_file_chooser_get_filters(chooser);
+			GSList *allFilters = gtk_file_chooser_list_filters(chooser);
 			for (GSList *at = allFilters; at; at = at->next, filterIndex++) {
 				if (at->data == activeFilter)
 					break;
@@ -441,7 +442,7 @@ namespace gui {
 		g_slist_free(files);
 
 		gtk_widget_destroy(dialog);
-		return result;
+		return true;
 	}
 
 #endif
