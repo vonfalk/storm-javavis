@@ -454,10 +454,46 @@ class BigArrow extends Element {
 	}
 
 	// Draw.
-	void draw(Graphics g) {
+	void draw(Graphics g) : override {
 		g.push();
 		g.transform = scale(size/2) * rotate(angle) * translate(pos.center);
 		g.fill(arrow, brush);
+		g.pop();
+	}
+}
+
+/**
+ * Line, good for using together with Grid to make tables.
+ */
+class HLine extends Element {
+	init(Brush draw) {
+		init() { draw = draw; width = 1.0; }
+	}
+
+	init(Color draw) {
+		init() { draw = SolidBrush(draw); width = 1.0; }
+	}
+
+	// Color.
+	SolidBrush draw;
+
+	// Line width.
+	Float width;
+
+	// Minimum length of the line.
+	Float minLength;
+
+	// Minimum size.
+	Size minSize() : override {
+		Size(minLength, width);
+	}
+
+	// Draw.
+	void draw(Graphics g) : override {
+		Rect p = pos;
+		g.push();
+		g.lineWidth = width;
+		g.line(p.p0, p.p0 + Size(p.size.w, 0), draw);
 		g.pop();
 	}
 }
