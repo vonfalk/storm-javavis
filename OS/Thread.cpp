@@ -113,6 +113,11 @@ namespace os {
 		static ThreadData firstData(mainStackBase);
 		// Keep the first thread from firing 'signal' all the time.
 		static Thread first(&firstData);
+
+		// Store it in the thread local variable. Otherwise "current" will not work when called from
+		// other shared objects, since 'mainStackBase' is static to this file.
+		currentThreadData(&firstData);
+
 		return first;
 	}
 
