@@ -334,7 +334,7 @@ namespace gui {
 			gtk_window_set_default_size((GtkWindow *)frame, sz.w, sz.h);
 
 		handle(frame);
-		initSignals(frame);
+		initSignals(frame, container);
 
 		// Create child windows (if any).
 		parentCreated(0);

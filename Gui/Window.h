@@ -195,7 +195,7 @@ namespace gui {
 		void initWidget(Container *parent, GtkWidget *widget);
 
 		// Initialize any signals required by the Window class.
-		void initSignals(GtkWidget *widget);
+		void initSignals(GtkWidget *widget, GtkWidget *draw);
 
 		// Get the widget we shall set the font on.
 		virtual GtkWidget *fontWidget();

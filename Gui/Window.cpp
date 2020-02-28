@@ -535,10 +535,10 @@ namespace gui {
 		if (myFont != app(engine())->defaultFont)
 			gtk_widget_override_font(fontWidget(), myFont->desc());
 
-		initSignals(widget);
+		initSignals(widget, drawWidget());
 	}
 
-	void Window::initSignals(GtkWidget *widget) {
+	void Window::initSignals(GtkWidget *widget, GtkWidget *draw) {
 		Signal<gboolean, Window, GdkEvent *>::Connect<&Window::onKeyDown>::to(widget, "key-press-event", engine());
 		Signal<gboolean, Window, GdkEvent *>::Connect<&Window::onKeyUp>::to(widget, "key-release-event", engine());
 		Signal<gboolean, Window, GdkEvent *>::Connect<&Window::onButton>::to(widget, "button-press-event", engine());
@@ -548,9 +548,9 @@ namespace gui {
 		Signal<gboolean, Window, GdkEvent *>::Connect<&Window::onLeave>::to(widget, "leave-notify-event", engine());
 		Signal<gboolean, Window, GdkEvent *>::Connect<&Window::onScroll>::to(widget, "scroll-event", engine());
 		Signal<void, Window, GdkRectangle *>::Connect<&Window::onSize>::to(widget, "size-allocate", engine());
-		Signal<void, Window>::Connect<&Window::onRealize>::to(drawWidget(), "realize", engine());
-		Signal<void, Window>::Connect<&Window::onUnrealize>::to(drawWidget(), "unrealize", engine());
-		Signal<gboolean, Window, cairo_t *>::Connect<&Window::onDraw>::to(drawWidget(), "draw", engine());
+		Signal<void, Window>::Connect<&Window::onRealize>::to(draw, "realize", engine());
+		Signal<void, Window>::Connect<&Window::onUnrealize>::to(draw, "unrealize", engine());
+		Signal<gboolean, Window, cairo_t *>::Connect<&Window::onDraw>::to(draw, "draw", engine());
 
 		if (timerInterval != Duration())
 			setTimer(timerInterval);
@@ -579,12 +579,36 @@ namespace gui {
 		return ok ? TRUE : FALSE;
 	}
 
+	// Translate widget coordinates to window coordinates.
+	static void translateToWindow(GtkWidget *widget, gdouble &x, gdouble &y) {
+		if (!widget)
+			return;
+
+		for (GtkWidget *at = widget; !gtk_widget_get_has_window(at); at = gtk_widget_get_parent(at)) {
+			GtkAllocation delta;
+			gtk_widget_get_allocation(at, &delta);
+
+			x += delta.x;
+			y += delta.y;
+		}
+	}
+
+	// Translate window coordinates to widget coordinates.
 	static bool translatePoint(GtkWidget *widget, gdouble x, gdouble y, Point &out) {
 		GtkAllocation alloc;
 		gtk_widget_get_allocation(widget, &alloc);
 
-		out.x = x - alloc.x;
-		out.y = y - alloc.y;
+		// Traverse upwards until we find a widget with a window. That's where the event originated from!
+		for (GtkWidget *at = widget; !gtk_widget_get_has_window(at); at = gtk_widget_get_parent(at)) {
+			GtkAllocation delta;
+			gtk_widget_get_allocation(at, &delta);
+
+			x -= delta.x;
+			y -= delta.y;
+		}
+
+		out.x = x;
+		out.y = y;
 
 		return out.x >= 0.0f && out.y >= 0.0f
 			&& out.x < alloc.width && out.y < alloc.height;
@@ -668,15 +692,21 @@ namespace gui {
 	}
 
 	void Window::onSize(GdkRectangle *alloc) {
-		// If we have our own window, resize that as well.
-		if (gdkWindow) {
-			gdk_window_move_resize(gdkWindow, alloc->x, alloc->y, alloc->width, alloc->height);
-		}
-
 		// Note: We're interested in forwarding the size of the drawing widget (if it differs from
 		// the root-widget of the window).
+		GtkWidget *draw = drawWidget();
 		GtkAllocation drawAlloc;
-		gtk_widget_get_allocation(drawWidget(), &drawAlloc);
+		gtk_widget_get_allocation(draw, &drawAlloc);
+
+		// If we have our own window, resize that as well.
+		if (gdkWindow) {
+			// Modify the x and y coords if we're several layers down.
+			gdouble x = drawAlloc.x, y = drawAlloc.y;
+			translateToWindow(gtk_widget_get_parent(draw), x, y);
+
+			// gdk_window_move_resize(gdkWindow, alloc->x, alloc->y, alloc->width, alloc->height);
+			gdk_window_move_resize(gdkWindow, x, y, drawAlloc.width, drawAlloc.height);
+		}
 
 		Size s(drawAlloc.width, drawAlloc.height);
 		myPos.size(s);
@@ -858,8 +888,10 @@ namespace gui {
 
 		GtkAllocation alloc;
 		gtk_widget_get_allocation(drawTo, &alloc);
-		attrs.x = alloc.x;
-		attrs.y = alloc.y;
+		gdouble x = 0, y = 0;
+		translateToWindow(drawTo, x, y);
+		attrs.x = x;
+		attrs.y = y;
 		attrs.width = alloc.width;
 		attrs.height = alloc.height;
 		attrs.event_mask = gtk_widget_get_events(drawTo) | GDK_EXPOSURE_MASK | GDK_ENTER_NOTIFY_MASK | GDK_LEAVE_NOTIFY_MASK;
