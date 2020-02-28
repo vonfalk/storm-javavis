@@ -227,6 +227,11 @@ class Workspace on Render {
 		}
 	}
 
+	// Remove everything in the workspace.
+	void clear() {
+		elements.clear();
+	}
+
 private:
 	// A single element on the screen, with some additional metadata.
 	class Element on Render {

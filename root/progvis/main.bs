@@ -27,12 +27,30 @@ class MainWin extends Frame {
 	init() {
 		init("Progvis", Size(800, 800)) {}
 
+		PopupMenu fileMenu;
+		fileMenu << Menu:Text("Open file...", &this.onOpen());
+		fileMenu << Menu:Text("Open task...", &this.onOpenTask());
+
+		PopupMenu runMenu;
+		runMenu << Menu:Text("Restart", &this.onRestart());
+
+		PopupMenu helpMenu;
+		helpMenu << Menu:Text("About...", &this.onAbout());
+
+		MenuBar m;
+		m << Menu:Submenu("File", fileMenu)
+			<< Menu:Submenu("Run", runMenu)
+			<< Menu:Submenu("Help", helpMenu);
+
+		menu = m;
+
 		painter(painter);
 		create();
 	}
 
+	// Mostly for testing.
 	void open(Url file) {
-		painter.open(file);
+		painter.open([file]);
 	}
 
 	// Called when the frame is closed.
@@ -55,6 +73,27 @@ class MainWin extends Frame {
 	Bool onClick(Bool down, Point pt, MouseButton button) {
 		painter.mouseClicked(pt, down, button);
 		true;
+	}
+
+	private void onOpen() {
+		FileTypes ft("Source code");
+		for (k in Program:supportedFiles)
+			ft.add("${k}-source", [k]);
+
+		FilePicker picker = FilePicker:open(ft).okLabel("Open").multiselect();
+		if (!picker.show(this))
+			return;
+
+		painter.cleanup();
+		painter.open(picker.results);
+	}
+
+	private void onOpenTask() {}
+
+	private void onRestart() {}
+
+	private void onAbout() {
+		print("TODO: Show about menu!");
 	}
 }
 
@@ -87,8 +126,8 @@ class MainPainter extends Painter {
 	}
 
 	// Open a program.
-	void open(Url file) {
-		program = Program:load(file);
+	void open(Url[] files) {
+		program = Program:load(files);
 		if (program) {
 			workspace.hints = program.hints;
 			program.onChange = &this.update();
@@ -96,7 +135,7 @@ class MainPainter extends Painter {
 			program.spawn(program.main);
 			// program.spawn(program.main);
 		} else {
-			print("Failed to load ${file}!");
+			print("Failed to load ${files}!");
 		}
 	}
 
@@ -104,6 +143,8 @@ class MainPainter extends Painter {
 	void cleanup() {
 		if (program)
 			program.terminate();
+
+		workspace.clear();
 	}
 
 	Bool render(Size me, Graphics g) {

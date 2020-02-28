@@ -45,6 +45,11 @@ class Program on Render {
 		}
 	}
 
+	// Find supported file types.
+	public Set<Str> supportedFiles() : static {
+		findSupportedFiles();
+	}
+
 	public Program? load(Url file) : static {
 		load([file]);
 	}
@@ -631,4 +636,21 @@ private Bool anyLocation(Listing l) {
 			return true;
 	}
 	return false;
+}
+
+// Find supported file types. On compiler thread.
+private Set<Str> findSupportedFiles() on Compiler {
+	Package pkg = named{lang};
+	Set<Str> to;
+	findSupportedFiles(to, named{:lang});
+	findSupportedFiles(to, named{:progvis:lang});
+	to;
+}
+
+private void findSupportedFiles(Set<Str> out, Package pkg) on Compiler {
+	print("Looking in ${pkg.identifier}");
+	for (elem in pkg) {
+		if (elem as Package)
+			out.put(elem.name);
+	}
 }
