@@ -13,6 +13,9 @@ SAtom => referNamed(pos, block, name) : "named" #keyword, "{", SType name, "}";
 // Special case for the current package.
 SAtom => referNamed(pos, block) : "named" #keyword, "{", "}";
 
+// Special case for absolute "paths".
+SAtom => referNamedAbs(pos, block, name) : "named" #keyword, "{", ":", SType name, "}";
+
 // Output a type.
 SExpr => exploreType(pos, block, type) : "explore" #keyword, "{", SType type, "}";
 

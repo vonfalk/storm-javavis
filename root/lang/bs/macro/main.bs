@@ -80,6 +80,15 @@ Expr referNamed(SrcPos pos, Block block, SrcName type) on Compiler {
 	}
 }
 
+Expr referNamedAbs(SrcPos pos, Block block, SrcName type) on Compiler {
+	Named? referTo = rootScope().find(type);
+	if (referTo) {
+		ReferNamed(pos, referTo);
+	} else {
+		throw SyntaxError(type.pos, "Could not resolve the absolute name " + type.toS);
+	}
+}
+
 // Special case for the current package.
 Expr referNamed(SrcPos pos, Block block) on Compiler {
 	ReferNamed(pos, ScopeLookup:firstPkg(block.lookup));
