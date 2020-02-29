@@ -51,11 +51,14 @@ namespace gui {
 		// Remember the control that is the default one.
 		MAYBE(Button *) defaultButton;
 
-		// Platform-specific handling.
-		void setDefault(Button *button);
-
 		// Default OK handler.
 		void CODECALL onOk(Button *b);
+
+#ifdef GUI_GTK
+		// Gtk+ signals
+		gboolean onKey(GdkEvent *event);
+		virtual void initSignals(GtkWidget *widget, GtkWidget *draw);
+#endif
 	};
 
 }

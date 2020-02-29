@@ -48,6 +48,7 @@ dialog AboutWindow {
 		expandCol: 0;
 		expandRow: 0;
 
+		Edit e() { row: 0; col: 0; colspan: 3; }
 		Button close("Close") { row: 1; col: 1; }
 		Button ok("OK") { row:1; col: 2; }
 	}
@@ -57,9 +58,8 @@ dialog AboutWindow {
 
 		var me = this;
 		close.onClick = (Button b) => me.close(1);
-		ok.onClick = (Button b) => me.close(0);
-
 		defaultChoice = ok;
+		ok.onClick = (Button b) => me.close(100);
 	}
 }
 

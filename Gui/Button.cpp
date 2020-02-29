@@ -90,6 +90,7 @@ namespace gui {
 
 	void Button::setDefault(Bool def) {
 		isDefault = def;
+		// We don't need anything more here for Gtk+.
 	}
 
 #endif

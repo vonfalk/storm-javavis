@@ -1,6 +1,7 @@
 #include "stdafx.h"
 #include "Dialog.h"
 #include "Exception.h"
+#include "GtkSignal.h"
 
 namespace gui {
 
@@ -17,8 +18,6 @@ namespace gui {
 			defaultButton->setDefault(false);
 		button->setDefault(true);
 		button->onClick = fnPtr(engine(), &Dialog::onOk, this);
-
-		setDefault(button);
 		defaultButton = button;
 	}
 
@@ -72,10 +71,6 @@ namespace gui {
 		return Frame::onMessage(msg);
 	}
 
-	void Dialog::setDefault(Button *) {
-		// No need on Win32.
-	}
-
 #endif
 
 #ifdef GUI_GTK
@@ -86,6 +81,10 @@ namespace gui {
 
 		this->parent = parent;
 		createWindow(true, parent);
+
+		if (defaultButton) {
+			defaultButton->setDefault(true);
+		}
 
 		gint result = gtk_dialog_run(GTK_DIALOG(handle().widget()));
 
@@ -100,12 +99,28 @@ namespace gui {
 		return result;
 	}
 
-	void Dialog::close(Int result) {
-		gtk_dialog_response(GTK_DIALOG(handle().widget()), result);
+	void Dialog::initSignals(GtkWidget *widget, GtkWidget *draw) {
+		Frame::initSignals(widget, draw);
+		Signal<gboolean, Dialog, GdkEvent *>::Connect<&Dialog::onKey>::to(widget, "key-press-event", engine());
 	}
 
-	void Dialog::setDefault(Button *def) {
-		gtk_dialog_set_default_response(GTK_DIALOG(handle().widget()), 1);
+	gboolean Dialog::onKey(GdkEvent *event) {
+		GdkEventKey &k = event->key;
+		Nat key = keycode(k);
+		Modifiers mod = modifiers(k);
+
+		if (key == key::ret && mod == mod::none) {
+			if (defaultButton) {
+				defaultButton->clicked();
+				return TRUE;
+			}
+		}
+
+		return FALSE;
+	}
+
+	void Dialog::close(Int result) {
+		gtk_dialog_response(GTK_DIALOG(handle().widget()), result);
 	}
 
 #endif
