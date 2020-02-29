@@ -1,5 +1,6 @@
 #pragma once
 #include "Frame.h"
+#include "Button.h"
 
 namespace gui {
 
@@ -18,7 +19,9 @@ namespace gui {
 		STORM_CTOR Dialog(Str *title);
 		STORM_CTOR Dialog(Str *title, Size size);
 
-		// Show the dialog as a modal window. Don't call "create" before calling "show", that is handled internally.
+		// Show the dialog as a modal window. Don't call "create" before calling "show", that is
+		// handled internally. Returns whatever is passed to "close" by the implementation, or "-1"
+		// if the dialog was closed (or cancelled by a default button).
 		Int STORM_FN show(Frame *parent);
 
 		// Call when the window is shown to close the dialog with a particular code.
@@ -27,12 +30,32 @@ namespace gui {
 		// Override the default behavior to return -1.
 		virtual void STORM_FN close();
 
+		// Set the button that acts as the default choice in this dialog. This button will be
+		// activated whenever "enter" is pressed. The button's handler will also be set by the
+		// implementation to return 1, but this may be overridden by the user at a later point if
+		// desired.
+		void STORM_ASSIGN defaultChoice(Button *button);
+
+#ifdef GUI_WIN32
+		// Handle ENTER and ESC.
+		virtual MsgResult beforeMessage(const Message &msg);
+#endif
+
 	private:
 		// Our parent. Only valid while we're being shown.
 		MAYBE(Frame *) parent;
 
 		// Remember the result.
 		Int result;
+
+		// Remember the control that is the default one.
+		MAYBE(Button *) defaultButton;
+
+		// Platform-specific handling.
+		void setDefault(Button *button);
+
+		// Default OK handler.
+		void CODECALL onOk(Button *b);
 	};
 
 }

@@ -12,6 +12,20 @@ namespace gui {
 		close(-1);
 	}
 
+	void Dialog::defaultChoice(Button *button) {
+		if (defaultButton)
+			defaultButton->setDefault(false);
+		button->setDefault(true);
+		button->onClick = fnPtr(engine(), &Dialog::onOk, this);
+
+		setDefault(button);
+		defaultButton = button;
+	}
+
+	void Dialog::onOk(Button *) {
+		close(1);
+	}
+
 #ifdef GUI_WIN32
 
 	Int Dialog::show(Frame *parent) {
@@ -34,6 +48,32 @@ namespace gui {
 		if (parent)
 			EnableWindow(parent->handle().hwnd(), TRUE);
 		Frame::close();
+	}
+
+	MsgResult Dialog::beforeMessage(const Message &msg) {
+		switch (msg.msg) {
+		case WM_KEYDOWN:
+		{
+			Nat key = keycode(msg.wParam);
+			Modifiers mod = modifiers();
+			if (mod == mod::none && key == key::esc) {
+				close();
+				return msgResult(TRUE);
+			} else if (mod == mod::none && key == key::ret) {
+				if (defaultButton) {
+					// Simulate a click.
+					defaultButton->onCommand(BN_CLICKED);
+					return msgResult(TRUE);
+				}
+			}
+		}
+		}
+
+		return Frame::onMessage(msg);
+	}
+
+	void Dialog::setDefault(Button *) {
+		// No need on Win32.
 	}
 
 #endif
@@ -62,6 +102,10 @@ namespace gui {
 
 	void Dialog::close(Int result) {
 		gtk_dialog_response(GTK_DIALOG(handle().widget()), result);
+	}
+
+	void Dialog::setDefault(Button *def) {
+		gtk_dialog_set_default_response(GTK_DIALOG(handle().widget()), 1);
 	}
 
 #endif

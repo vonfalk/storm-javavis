@@ -5,12 +5,12 @@
 
 namespace gui {
 
-	Button::Button(Str *title) {
+	Button::Button(Str *title) : isDefault(false) {
 		text(title);
 		onClick = null;
 	}
 
-	Button::Button(Str *title, Fn<void, Button *> *click) {
+	Button::Button(Str *title, Fn<void, Button *> *click) : isDefault(false) {
 		text(title);
 		onClick = click;
 	}
@@ -23,7 +23,10 @@ namespace gui {
 #ifdef GUI_WIN32
 
 	bool Button::create(Container *parent, nat id) {
-		return Window::createEx(WC_BUTTON, buttonFlags, 0, parent->handle().hwnd(), id);
+		DWORD flags = buttonFlags;
+		if (isDefault)
+			flags |= BS_DEFPUSHBUTTON;
+		return Window::createEx(WC_BUTTON, flags, 0, parent->handle().hwnd(), id);
 	}
 
 	bool Button::onCommand(nat id) {
@@ -40,6 +43,18 @@ namespace gui {
 		sz.w += sz.h;
 		sz.h *= 1.6f;
 		return sz;
+	}
+
+	void Button::setDefault(Bool def) {
+		isDefault = def;
+		if (created()) {
+			LONG flags = GetWindowLong(handle().hwnd(), GWL_STYLE);
+			if (def)
+				flags |= BS_DEFPUSHBUTTON;
+			else
+				flags &= ~(BS_DEFPUSHBUTTON);
+			SetWindowLong(handle().hwnd(), GWL_STYLE, flags);
+		}
 	}
 
 #endif
@@ -71,6 +86,10 @@ namespace gui {
 		gtk_widget_get_preferred_height(handle().widget(), &h, NULL);
 
 		return Size(Float(w), Float(h));
+	}
+
+	void Button::setDefault(Bool def) {
+		isDefault = def;
 	}
 
 #endif

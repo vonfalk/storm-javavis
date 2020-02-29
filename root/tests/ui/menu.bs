@@ -1,4 +1,5 @@
 use ui;
+use layout;
 use core:geometry;
 
 class MenuWindow extends Frame {
@@ -13,6 +14,7 @@ class MenuWindow extends Frame {
 		help << Menu:Text("Help") << Menu:Separator() << Menu:Text("About...", &this.showAbout());
 
 		root << Menu:Text("Test") << Menu:Submenu("Help", help);
+		menu = root;
 
 		create();
 	}
@@ -41,18 +43,23 @@ class MenuWindow extends Frame {
 	}
 }
 
-class AboutWindow extends ui:Dialog {
-	Button close;
+dialog AboutWindow {
+	layout Grid {
+		expandCol: 0;
+		expandRow: 0;
+
+		Button close("Close") { row: 1; col: 1; }
+		Button ok("OK") { row:1; col: 2; }
+	}
 
 	init() {
-		init("About", Size(100, 100)) {
-			close("Close");
-		}
+		init("About", Size(200, 100)) {}
 
-		close.pos = Rect(10, 10, 80, 80);
 		var me = this;
 		close.onClick = (Button b) => me.close(1);
-		add(close);
+		ok.onClick = (Button b) => me.close(0);
+
+		defaultChoice = ok;
 	}
 }
 

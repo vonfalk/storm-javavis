@@ -36,6 +36,14 @@ namespace gui {
 	private:
 		// Click notification.
 		void clicked();
+
+		// Set this button as the default choice in a dialog. Called by "Dialog".
+		void setDefault(Bool def);
+
+		// Is this the default button in the dialog?
+		Bool isDefault;
+
+		friend class Dialog;
 	};
 
 }
