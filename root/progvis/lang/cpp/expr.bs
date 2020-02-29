@@ -432,15 +432,10 @@ class NameExpr extends Expr {
 		}
 
 		// Try the global scope.
-		if (actuals.empty) {
-			if (found = scope.find(name))
-				return Found(found);
-		} else {
-			SimpleName n = name.clone;
-			n.last = CppPart(name.last.name, actuals);
-			if (found = scope.find(n))
-				return Found(found);
-		}
+		SimpleName n = name.clone;
+		n.last = CppPart(name.last.name, actuals);
+		if (found = scope.find(n))
+			return Found(found);
 
 		return null;
 	}
