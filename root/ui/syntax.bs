@@ -3,14 +3,20 @@ use core:lang;
 use lang:bs;
 use lang:bs:macro;
 
-// Create "classes" for the keyword "window". TODO: Allow custom subclasses.
-Class createWindow(SrcPos pos, Scope env, SStr name, SWindowBody body) {
+// Create "classes" for the keyword "window".
+Class createWindow(SrcPos pos, Scope env, SStr name, SWindowBody body) on Compiler {
 	Class c = createClass(pos, env, name, body);
 	c.super(name{ui:Frame});
 	c;
 }
 
-Class createWindow(SrcPos pos, Scope env, SStr name, SrcName parent, SWindowBody body) {
+Class createDialog(SrcPos pos, Scope env, SStr name, SWindowBody body) on Compiler {
+	Class c = createClass(pos, env, name, body);
+	c.super(name{ui:Dialog});
+	c;
+}
+
+Class createWindow(SrcPos pos, Scope env, SStr name, SrcName parent, SWindowBody body) on Compiler {
 	// TODO: Check so that we inherit from a window. We can not necessarily do that right now, since
 	// that particular class might not be loaded yet.
 	Class c = createClass(pos, env, name, body);
@@ -19,7 +25,7 @@ Class createWindow(SrcPos pos, Scope env, SStr name, SrcName parent, SWindowBody
 }
 
 // Get all SLayoutMemberDecls inside a syntax node.
-private SLayoutMemberDecl[] allDecls(SLayoutRoot root) {
+private SLayoutMemberDecl[] allDecls(SLayoutRoot root) on Compiler {
 	SLayoutMemberDecl[] result;
 	for (child in root.allChildren(named{SLayoutMemberDecl})) {
 		if (child as SLayoutMemberDecl) {
@@ -200,8 +206,8 @@ class CtorBodyWrap extends SCtorBody {
 			s.init(Initializer(member.name.transform, var));
 		}
 
-		// Initialize the layout itself as well.
-		s.init(Initializer(SStr("layout", layout.pos), layout.transform(block).block));
+		// Initialize the layout itself as well. We need an explicit cast here.
+		s.init(Initializer(SStr("layout", layout.pos), Actuals(layout.transform(block).block)));
 
 
 		// Call 'add' for each of the components after the constructor call itself.

@@ -475,7 +475,7 @@ class HLine extends Element {
 	}
 
 	// Color.
-	SolidBrush draw;
+	Brush draw;
 
 	// Line width.
 	Float width;
