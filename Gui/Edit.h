@@ -41,7 +41,7 @@ namespace gui {
 
 #ifdef GUI_GTK
 		// Get/set text.
-		virtual const Str *STORM_FN text();
+		virtual Str *STORM_FN text();
 		virtual void STORM_FN text(Str *text);
 #endif
 

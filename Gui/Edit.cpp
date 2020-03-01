@@ -137,26 +137,53 @@ namespace gui {
 
 #ifdef GUI_GTK
 	bool Edit::create(Container *parent, nat id) {
-		if (myMultiline)
-			TODO(L"Implement multiline edit control.");
-		GtkWidget *edit = gtk_entry_new();
-		gtk_entry_set_placeholder_text(GTK_ENTRY(edit), myCue->utf8_str());
-		gtk_editable_select_region(GTK_EDITABLE(edit), sel.start, sel.end);
+		GtkWidget *edit;
+		if (myMultiline) {
+			edit = gtk_text_view_new();
+			// placeholder text is not supported...
+			TODO(L"Apply selection!");
+			// GtkTextBuffer *buffer = gtk_text_view_get_buffer(GTK_TEXT_VIEW(edit));
+		} else {
+			edit = gtk_entry_new();
+			gtk_entry_set_placeholder_text(GTK_ENTRY(edit), myCue->utf8_str());
+			gtk_editable_select_region(GTK_EDITABLE(edit), sel.start, sel.end);
+		}
 		initWidget(parent, edit);
+
+		// Set the initial text.
+		text(Window::text());
+
 		return true;
 	}
 
-	const Str *Edit::text() {
+	Str *Edit::text() {
 		if (created()) {
-			const gchar *buf = gtk_entry_get_text(GTK_ENTRY(handle().widget()));
-			Window::text(new (this) Str(toWChar(engine(), buf)));
+			GtkWidget *edit = handle().widget();
+			if (GTK_IS_ENTRY(edit)) {
+				const gchar *buf = gtk_entry_get_text(GTK_ENTRY(edit));
+				Window::text(new (this) Str(toWChar(engine(), buf)));
+			} else if (GTK_IS_TEXT_VIEW(edit)) {
+				GtkTextBuffer *buffer = gtk_text_view_get_buffer(GTK_TEXT_VIEW(edit));
+				GtkTextIter begin, end;
+				gtk_text_buffer_get_start_iter(buffer, &begin);
+				gtk_text_buffer_get_end_iter(buffer, &end);
+				char *buf = gtk_text_buffer_get_text(buffer, &begin, &end, TRUE);
+				Window::text(new (this) Str(toWChar(engine(), buf)));
+				g_free(buf);
+			}
 		}
 		return Window::text();
 	}
 
 	void Edit::text(Str *str) {
 		if (created()) {
-			gtk_entry_set_text(GTK_ENTRY(handle().widget()), str->utf8_str());
+			GtkWidget *edit = handle().widget();
+			if (GTK_IS_ENTRY(edit)) {
+				gtk_entry_set_text(GTK_ENTRY(edit), str->utf8_str());
+			} else {
+				GtkTextBuffer *buffer = gtk_text_view_get_buffer(GTK_TEXT_VIEW(edit));
+				gtk_text_buffer_set_text(buffer, str->utf8_str(), -1);
+			}
 		}
 		Window::text(str);
 	}

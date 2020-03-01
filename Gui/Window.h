@@ -107,7 +107,7 @@ namespace gui {
 		void STORM_ASSIGN visible(Bool show);
 
 		// Window text.
-		virtual const Str *STORM_FN text();
+		virtual Str *STORM_FN text();
 		virtual void STORM_ASSIGN text(Str *str);
 
 		// Window position. Always relative to the client area (even in Frames).
@@ -223,7 +223,7 @@ namespace gui {
 		Bool mouseInside;
 
 		// Text.
-		const Str *myText;
+		Str *myText;
 
 	protected:
 		// Position (Frame needs to modify this).

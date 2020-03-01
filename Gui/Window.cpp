@@ -295,7 +295,7 @@ namespace gui {
 			ShowWindow(handle().hwnd(), show ? TRUE : FALSE);
 	}
 
-	const Str *Window::text() {
+	Str *Window::text() {
 		if (created()) {
 			Nat len = GetWindowTextLength(handle().hwnd());
 			GcArray<wchar> *src = runtime::allocArray<wchar>(engine(), &wcharArrayType, len + 1);
@@ -972,7 +972,7 @@ namespace gui {
 		recreate_widget(drawWidget());
 	}
 
-	const Str *Window::text() {
+	Str *Window::text() {
 		return myText;
 	}
 
