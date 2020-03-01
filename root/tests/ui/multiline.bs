@@ -19,6 +19,7 @@ class MultilineWin extends Frame {
 		edit.pos(Rect(10, 50, 190, 100));
 		edit.multiline(true);
 		edit.text("New\nLine");
+		edit.selected = Selection(5, 7);
 		bn.pos(Rect(10, 110, 190, 190));
 
 		bn.onClick = &this.onOk(Button);

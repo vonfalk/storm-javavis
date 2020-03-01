@@ -2,6 +2,7 @@
 #include "Edit.h"
 #include "Container.h"
 #include "Core/Convert.h"
+#include "Core/Utf.h"
 
 namespace gui {
 
@@ -141,17 +142,17 @@ namespace gui {
 		if (myMultiline) {
 			edit = gtk_text_view_new();
 			// placeholder text is not supported...
-			TODO(L"Apply selection!");
-			// GtkTextBuffer *buffer = gtk_text_view_get_buffer(GTK_TEXT_VIEW(edit));
 		} else {
 			edit = gtk_entry_new();
 			gtk_entry_set_placeholder_text(GTK_ENTRY(edit), myCue->utf8_str());
-			gtk_editable_select_region(GTK_EDITABLE(edit), sel.start, sel.end);
 		}
 		initWidget(parent, edit);
 
 		// Set the initial text.
 		text(Window::text());
+
+		// Apply selection.
+		selected(sel);
 
 		return true;
 	}
@@ -190,16 +191,46 @@ namespace gui {
 
 	Selection Edit::selected() {
 		if (created()) {
-			gint start, end;
-			gtk_editable_get_selection_bounds(GTK_EDITABLE(handle().widget()), &start, &end);
-			sel = Selection(Nat(start), Nat(end));
+			GtkWidget *edit = handle().widget();
+			if (GTK_IS_ENTRY(edit)) {
+				gint start, end;
+				gtk_editable_get_selection_bounds(GTK_EDITABLE(edit), &start, &end);
+				sel = Selection(Nat(start), Nat(end));
+			} else {
+				GtkTextBuffer *buffer = gtk_text_view_get_buffer(GTK_TEXT_VIEW(edit));
+				GtkTextMark *insert = gtk_text_buffer_get_insert(buffer);
+				GtkTextMark *bound = gtk_text_buffer_get_selection_bound(buffer);
+
+				GtkTextIter begin, end;
+				gtk_text_buffer_get_iter_at_mark(buffer, &end, insert);
+				gtk_text_buffer_get_iter_at_mark(buffer, &begin, bound);
+
+				sel = Selection(gtk_text_iter_get_offset(&begin),
+								gtk_text_iter_get_offset(&end));
+			}
 		}
 		return sel;
 	}
 
 	void Edit::selected(Selection sel) {
 		if (created()) {
-			gtk_editable_select_region(GTK_EDITABLE(handle().widget()), sel.start, sel.end);
+			GtkWidget *edit = handle().widget();
+			// Note: This could be a bit wrong... We're working with character offsets, not
+			// codepoints. They are usually the same in UTF-16, but as we haven't really specified
+			// what the integers represent inside Selection (characters is easier to find out than
+			// offsets), this is fine for now.
+			if (GTK_IS_ENTRY(edit)) {
+				gtk_editable_select_region(GTK_EDITABLE(edit), sel.start, sel.end);
+			} else {
+				GtkTextBuffer *buffer = gtk_text_view_get_buffer(GTK_TEXT_VIEW(edit));
+
+				GtkTextIter begin, end;
+				gtk_text_buffer_get_iter_at_offset(buffer, &begin, sel.start);
+				gtk_text_buffer_get_iter_at_offset(buffer, &end, sel.end);
+
+				// 'begin' is the fixed portion of the range.
+				gtk_text_buffer_select_range(buffer, &end, &begin);
+			}
 		}
 		this->sel = sel;
 	}

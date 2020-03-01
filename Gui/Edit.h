@@ -16,7 +16,11 @@ namespace gui {
 		STORM_CTOR Selection(Nat pos);
 		STORM_CTOR Selection(Nat start, Nat end);
 
+		// The start point is the fixed portion of the selection, ie. the one that does not move
+		// when the user uses SHIFT to modify the selection.
 		Nat start;
+
+		// The end point is the point that moves when the user uses SHIFT to alter the selection.
 		Nat end;
 	};
 
