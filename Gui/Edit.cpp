@@ -247,10 +247,12 @@ namespace gui {
 	}
 
 	Size Edit::minSize() {
-		gint w, h;
+		gint w = 0, h = 0;
 
-		gtk_widget_get_preferred_width(handle().widget(), &w, NULL);
-		gtk_widget_get_preferred_height(handle().widget(), &h, NULL);
+		if (created()) {
+			gtk_widget_get_preferred_width(handle().widget(), &w, NULL);
+			gtk_widget_get_preferred_height(handle().widget(), &h, NULL);
+		}
 
 		return Size(Float(w), Float(h));
 	}

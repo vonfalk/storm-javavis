@@ -1,0 +1,111 @@
+use core:geometry;
+
+/**
+ * Basic message dialog.
+ *
+ * Similar to MsgBox in Win32.
+ */
+class MessageDialog extends Dialog {
+	init(Str title, Str message) {
+		init(title) {
+			label(message);
+			padding = 8;
+		}
+
+		add(label);
+	}
+
+	// The message.
+	private Label label;
+
+	// Buttons.
+	private Button[] buttons;
+
+	// Padding in the dialog.
+	private Float padding;
+
+	// Compute minimum size.
+	Size minSize() : override {
+		Size msg = label.minSize;
+
+		Size buttonSz;
+		for (b in buttons) {
+			Size s = b.minSize();
+			buttonSz.h = max(buttonSz.h, s.h);
+			buttonSz.w += s.w + padding;
+		}
+
+		Size(max(msg.w, buttonSz.w) + 2*padding, msg.h + buttonSz.h + 3*padding);
+	}
+
+	// Update the contents on resize.
+	void resized(Size size) : override {
+		Size buttonSz;
+		Point pos(size.w, size.h - padding);
+		for (b in buttons) {
+			Size s = b.minSize();
+			buttonSz.h = max(buttonSz.h, s.h);
+			buttonSz.w += s.w + padding;
+
+			b.pos = Rect(Point(pos.x - s.w - padding, pos.y - s.h), s);
+			pos.x -= s.w + padding;
+		}
+
+		label.pos = Rect(padding, padding, size.w - padding, size.h - buttonSz.h - 2*padding);
+	}
+
+	// Add a button.
+	void addButton(Str text, Int result) {
+		var me = this;
+		Button b(text, (Button b) => me.close(result));
+		buttons << b;
+		add(b);
+	}
+
+	// Add the default button.
+	void addDefButton(Str text, Int result) {
+		var me = this;
+		Button b(text);
+		defaultChoice(b);
+		b.onClick = (Button b) => me.close(result);
+		buttons << b;
+		add(b);
+	}
+}
+
+/**
+ * Response from a message.
+ */
+enum MessageResponse {
+	ok, cancel, yes, no,
+}
+
+// Show a notification. I.e. a box with only OK.
+void showMessage(Frame parent, Str title, Str message) on Ui {
+	MessageDialog d(title, message);
+	d.addDefButton("OK", 0);
+	d.show(parent);
+}
+
+// Show a yes-no question.
+MessageResponse showYesNoQuestion(Frame parent, Str title, Str message, Str yes, Str no) on Ui {
+	MessageDialog d(title, message);
+	d.addButton(no, MessageResponse:no.v.int);
+	d.addDefButton(yes, MessageResponse:yes.v.int);
+	Int r = d.show(parent);
+	if (r < 0)
+		return MessageResponse:cancel;
+	MessageResponse(r.nat);
+}
+
+// Show a yes-no-cancel question.
+MessageResponse showYesNoCancelQuestion(Frame parent, Str title, Str message, Str yes, Str no, Str cancel) on Ui {
+	MessageDialog d(title, message);
+	d.addButton(cancel, MessageResponse:cancel.v.int);
+	d.addButton(no, MessageResponse:no.v.int);
+	d.addDefButton(yes, MessageResponse:yes.v.int);
+	Int r = d.show(parent);
+	if (r < 0)
+		return MessageResponse:cancel;
+	MessageResponse(r.nat);
+}
