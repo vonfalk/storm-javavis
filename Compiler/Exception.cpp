@@ -5,6 +5,12 @@
 
 namespace storm {
 
+	Str *CodeError::messageText() const {
+		StrBuf *buf = new (this) StrBuf();
+		messageText(buf);
+		return buf->toS();
+	}
+
 	InternalTypeError::InternalTypeError(const wchar *context, Type *expected, Type *got) :
 		InternalError(TO_S(engine(), context << S(": expected ") << expected->identifier()
 									<< S(", got ") << (got ? got->identifier() : new (engine()) Str(S("null"))))) {}

@@ -24,7 +24,14 @@ namespace storm {
 		// Message.
 		virtual void STORM_FN message(StrBuf *to) const {
 			*to << S("@") << pos << S(": ");
+			messageText(to);
 		}
+
+		// Get only the text of the error, no position information.
+		virtual void STORM_FN messageText(StrBuf *to) const ABSTRACT;
+
+		// Get the error as a string.
+		Str *STORM_FN messageText() const;
 	};
 
 
@@ -84,8 +91,7 @@ namespace storm {
 		SyntaxError(SrcPos where, const wchar *msg);
 		STORM_CTOR SyntaxError(SrcPos where, Str *msg);
 
-		virtual void STORM_FN message(StrBuf *to) const {
-			CodeError::message(to);
+		virtual void STORM_FN messageText(StrBuf *to) const {
 			*to << S("Syntax error: ") << text;
 		}
 
@@ -104,8 +110,7 @@ namespace storm {
 		STORM_CTOR TypeError(SrcPos where, Value expected, ExprResult got);
 		STORM_CTOR TypeError(SrcPos where, Value expected, Value got);
 
-		virtual void STORM_FN message(StrBuf *to) const {
-			CodeError::message(to);
+		virtual void STORM_FN messageText(StrBuf *to) const {
 			*to << S("Type error: ") << msg;
 		}
 
@@ -123,8 +128,7 @@ namespace storm {
 		TypedefError(const wchar *msg);
 		STORM_CTOR TypedefError(Str *msg);
 
-		virtual void STORM_FN message(StrBuf *to) const {
-			CodeError::message(to);
+		virtual void STORM_FN messageText(StrBuf *to) const {
 			*to << S("Type definition error: ") << msg;
 		}
 
@@ -163,8 +167,7 @@ namespace storm {
 	public:
 		InstantiationError(SrcPos pos, const wchar *msg);
 		InstantiationError(SrcPos pos, Str *msg);
-		virtual void STORM_FN message(StrBuf *to) const {
-			CodeError::message(to);
+		virtual void STORM_FN messageText(StrBuf *to) const {
 			*to << S("Instantiation error: ") << msg;
 		}
 	private:
