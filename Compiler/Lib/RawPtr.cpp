@@ -137,28 +137,33 @@ namespace storm {
 		return t->stride;
 	}
 
+	void *CODECALL rawPtrAllocArray(Type *type, Nat count) {
+		const GcType *t = type->handle().gcArrayType;
+		return runtime::allocArray(type->engine, t, count);
+	}
 
-	template <Size T()>
-	void rawPtrRead(InlineParams p) {
-		using namespace code;
-
-		if (!p.result->needed())
+	void CODECALL rawPtrWriteFilled(const void *ptr, Nat value) {
+		if (!ptr)
 			return;
 
-		p.spillParams();
-
-		// Check if it is an array...
-		*p.state->l << mov(ptrA, p.param(0));
-		*p.state->l << mov(ptrA, ptrRel(ptrA, -Offset::sPtr)); // read type info
-		*p.state->l << mov(ptrA, ptrRel(ptrA, Offset())); // read 'kind'.
-		*p.state->l << cmp(ptrA, ptrConst(GcType::tArray));
-		*p.state->l << cmp(ptrA, ptrConst(GcType::tWeakArray));
-
-		*p.state->l << ucast(ptrA, p.param(1));
-		*p.state->l << add(ptrA, p.param(0));
-
-		*p.state->l << mov(p.result->location(p.state), xRel(T(), ptrA, Offset()));
+		const GcType *t = runtime::gcTypeOf(ptr);
+		if (t->kind == GcType::tArray) {
+			((GcArray<byte> *)ptr)->filled = value;
+		} else if (t->kind == GcType::tWeakArray) {
+			((GcWeakArray<void *> *)ptr)->splatted(value);
+		}
 	}
+
+	template <class T>
+	void CODECALL rawPtrWrite(const void *ptr, Nat offset, T value) {
+		const GcType *t = runtime::gcTypeOf(ptr);
+		if (t->kind == GcType::tArray || t->kind == GcType::tWeakArray) {
+			offset += OFFSET_OF(GcArray<Byte>, v);
+		}
+
+		*(T *)((byte *)ptr + offset) = value;
+	}
+
 
 	RawPtrType::RawPtrType(Engine &e) :
 		Type(new (e) Str(S("RawPtr")), new (e) Array<Value>(), typeValue | typeFinal, Size::sPtr) {}
@@ -203,6 +208,24 @@ namespace storm {
 		add(nativeFunction(e, Value(StormInfo<Nat>::type(e)), S("readFilled"), v, address(&rawPtrFilled)));
 		add(nativeFunction(e, Value(StormInfo<Nat>::type(e)), S("readSize"), v, address(&rawPtrSize)));
 
+		Array<Value> *write = valList(e, 3, me, n, Value(StormInfo<Bool>::type(e)));
+		add(nativeFunction(e, Value(), S("writeBool"), write, address(&rawPtrWrite<Bool>)));
+		write = valList(e, 3, me, n, Value(StormInfo<Byte>::type(e)));
+		add(nativeFunction(e, Value(), S("writeByte"), write, address(&rawPtrWrite<Byte>)));
+		write = valList(e, 3, me, n, Value(StormInfo<Int>::type(e)));
+		add(nativeFunction(e, Value(), S("writeInt"), write, address(&rawPtrWrite<Int>)));
+		write = valList(e, 3, me, n, Value(StormInfo<Nat>::type(e)));
+		add(nativeFunction(e, Value(), S("writeNat"), write, address(&rawPtrWrite<Nat>)));
+		write = valList(e, 3, me, n, Value(StormInfo<Long>::type(e)));
+		add(nativeFunction(e, Value(), S("writeLong"), write, address(&rawPtrWrite<Long>)));
+		write = valList(e, 3, me, n, Value(StormInfo<Word>::type(e)));
+		add(nativeFunction(e, Value(), S("writeWord"), write, address(&rawPtrWrite<Word>)));
+		write = valList(e, 3, me, n, Value(StormInfo<Float>::type(e)));
+		add(nativeFunction(e, Value(), S("writeFloat"), write, address(&rawPtrWrite<Float>)));
+		write = valList(e, 3, me, n, Value(StormInfo<Double>::type(e)));
+		add(nativeFunction(e, Value(), S("writeDouble"), write, address(&rawPtrWrite<Double>)));
+		add(nativeFunction(e, Value(), S("writeFilled"), valList(e, 2, me, n), address(&rawPtrWriteFilled)));
+
 		// Create from pointers:
 		Value obj(StormInfo<Object>::type(e));
 		Array<Value> *objPar = valList(e, 2, me.asRef(), obj);
@@ -220,6 +243,11 @@ namespace storm {
 		add(nativeFunction(e, Value(StormInfo<Bool>::type(e)), S("isValue"), v, address(&rawPtrIsValue)));
 		add(inlinedFunction(e, obj, S("asObject"), v, fnPtr(e, &rawPtrGet))->makePure());
 		add(inlinedFunction(e, tobj, S("asTObject"), v, fnPtr(e, &rawPtrGet))->makePure());
+
+		// Allocate an array containing some type.
+		Array<Value> *typeNat = new (this) Array<Value>(2, StormInfo<Type *>::type(e));
+		typeNat->at(1) = n;
+		add(nativeFunction(e, me, S("allocArray"), typeNat, address(&rawPtrAllocArray))->make(fnStatic));
 
 		return Type::loadAll();
 	}

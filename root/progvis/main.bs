@@ -101,13 +101,18 @@ class MainWin extends Frame {
 	private void open(Url[] files) {
 		try {
 			painter.cleanup();
-			painter.open(files);
+			painter.open(files, &this.onError);
 		} catch (core:lang:CodeError error) {
 			CompileErrorDialog dlg(error.messageText, error.pos);
 			dlg.show(this);
 		} catch (Exception error) {
 			showMessage(this, "Error opening code.", "Unable to open the selected files:\n${error.message}");
 		}
+	}
+
+	// Called when an error is triggered from a program.
+	private void onError(Word threadId, Exception e) {
+		showMessage(this, "A thread crashed", "The thread crashed with the following message:\n${e.message}");
 	}
 }
 
@@ -140,11 +145,12 @@ class MainPainter extends Painter {
 	}
 
 	// Open a program.
-	void open(Url[] files) {
+	void open(Url[] files, fn(Word, Exception)->void errorCb) {
 		var loaded = Program:load(files);
 		program = loaded;
 		workspace.hints = loaded.hints;
 		loaded.onChange = &this.update();
+		loaded.onError = errorCb;
 		update();
 		loaded.spawn(loaded.main);
 	}
@@ -257,7 +263,8 @@ void main() on Compiler {
 		// win.open(url / "special_functions.cpp");
 		// win.open(url / "return_complex.cpp");
 		// win.open(url / "arrays.cpp");
-		win.open(url / "cpp_error.cpp");
+		// win.open(url / "cpp_error.cpp");
+		win.open(url / "str.cpp");
 		win.waitForClose();
 	}
 }

@@ -25,9 +25,18 @@ class Program on Render {
 	// Event called whenever the state of a thread changed.
 	private Fn<void>? changeNotification;
 
+	// Event called whenever an error is encountered from one of the threads.
+	private Fn<void, Word, Exception>? errorNotification;
+
 	// Set the change notification.
 	public assign onChange(Fn<void> fn) {
 		changeNotification = fn;
+		fn;
+	}
+
+	// Set the error notification.
+	public assign onError(Fn<void, Word, Exception> fn) {
+		errorNotification = fn;
 		fn;
 	}
 
@@ -74,8 +83,11 @@ class Program on Render {
 		} catch (ExitError e) {
 			// Just ignore it.
 		} catch (Exception e) {
-			// TODO: An output console would be nice!
-			print("Caught exception from the program:\n${e}");
+			if (errorNotification) {
+				errorNotification.call(currentUThread(), e);
+			} else {
+				print("The program encountered an error:\n${e}");
+			}
 		}
 
 		// If the thread remains by now, remove it.

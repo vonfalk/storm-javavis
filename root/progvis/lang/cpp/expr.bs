@@ -147,6 +147,83 @@ IntLiteral sizeofExpr(SrcPos pos, Value type) {
 }
 
 /**
+ * String literal.
+ */
+class StrLiteral extends ExprRef {
+	init(SrcPos pos, Str val) {
+		init(pos) {
+			val = val.escape();
+		}
+	}
+
+	private Str val;
+
+	ExprResult result() : override {
+		Value(named{ConstPtr<Byte>}, true);
+	}
+
+	void code(CodeGen gen, CodeResult res) : override {
+		if (!res.needed())
+			return;
+
+		if (res.type.ref) {
+			CppVar var = allocType(gen, named{ConstPtr<Byte>});
+			codeRef(gen, var);
+			var.adjust(gen, res.location(gen));
+			res.created(gen);
+		} else {
+			gen.l << lea(ptrA, res.location(gen));
+			loadStr(gen, ptrB);
+			gen.l << mov(ptrRel(ptrA, Offset()), ptrB);
+			gen.l << mov(intRel(ptrA, Offset(sPtr)), natConst(sPtr*2));
+			res.created(gen);
+		}
+	}
+
+	void codeRef(CodeGen gen, CppVar var) : override {
+		var.adjust(gen, ptrA);
+		loadStr(gen, ptrB);
+		gen.l << mov(ptrRel(ptrA, Offset()), ptrB);
+		gen.l << mov(intRel(ptrA, Offset(sPtr)), natConst(sPtr*2));
+		var.created(gen);
+	}
+
+	private void loadStr(CodeGen gen, Reg to) {
+		var member = named{ByteStr:ptr<ByteStr>};
+
+		gen.l << mov(to, objPtr(ByteStr(pos, val)));
+		gen.l << mov(to, ptrRel(to, member.offset));
+	}
+
+	// Wrapper so that we may store a raw pointer to the array somewhere!
+	class ByteStr {
+		unsafe:RawPtr ptr;
+
+		init(SrcPos pos, Str str) {
+			Nat count = 1;
+			for (c in str) {
+				count++;
+				if (c.codepoint > 127)
+					throw SyntaxError(pos, "This implementation only supports strings containing ASCII characters.");
+			}
+
+			unsafe:RawPtr array = unsafe:RawPtr:allocArray(named{Byte}, count);
+			count = 0;
+			for (c in str) {
+				array.writeByte(count, c.codepoint.byte);
+				count++;
+			}
+			array.writeByte(count, 0);
+			array.writeFilled((count + 1) | AllocFlags:arrayAlloc.v | AllocFlags:staticAlloc.v);
+
+			init {
+				ptr = array;
+			}
+		}
+	}
+}
+
+/**
  * Constant used to represent an offset parameter.
  *
  * Does not generate any code, just used during lookup.
@@ -1007,9 +1084,11 @@ Expr dotOperator(Block block, Expr lhs, SStr rhs, Bool ptrLhs) {
 	NameExpr(lhs.pos.extend(rhs.pos), block.scope, SimpleName(rhs.v), lhs);
 }
 
-Expr arrayOperator(Block block, Expr base, Expr offset) {
+Expr arrayOperator(SrcPos pos, Block block, Expr base, Expr offset) {
 	// Basically: *(<base> + <offset>)
-	Deref:ptr(operator(block, base, SStr("+", offset.pos), offset));
+	var result = Deref:ptr(operator(block, base, SStr("+", pos), offset));
+	result.pos = pos;
+	result;
 }
 
 

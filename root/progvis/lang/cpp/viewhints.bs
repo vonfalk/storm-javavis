@@ -1,6 +1,8 @@
 use core:lang;
 use core:geometry;
+use ui;
 use progvis;
+use lang:bs:macro;
 
 /**
  * View hints.
@@ -32,6 +34,10 @@ class CppViewHints extends ViewHints {
 
 		if (ptr = info.type as PtrType) {
 			return CppPointer(hints);
+		}
+
+		if (info.type is named{Byte}) {
+			return CppChar();
 		}
 
 		null;
@@ -68,7 +74,9 @@ class CppViewHints extends ViewHints {
 			Nat offset = i * elemSz;
 
 			// Primitive?
-			if (c = convertPrimitive(info.type, base, offset)) {
+			if (info.type is named{Byte}) {
+				result.add("", offset, CppChar(), true);
+			} else if (c = convertPrimitive(info.type, base, offset)) {
 				result.add("", offset, Primitive(info.type, c), true);
 			} else {
 				for (i, m in members) {
@@ -150,6 +158,9 @@ class CppHeapObj extends Data {
 	// Have this object been deleted?
 	Bool dead;
 
+	// Is this a static allocation that does not need to be removed?
+	Bool staticAlloc;
+
 	Size size() : override {
 		wrap.size();
 	}
@@ -178,6 +189,7 @@ class CppHeapObj extends Data {
 		wrap.update(work, object, offset);
 
 		if (offset == 0) {
+			staticAlloc = (object.readFilled() & AllocFlags:staticAlloc.v) != 0;
 			dead = object.readFilled() == 0;
 		}
 	}
@@ -187,10 +199,51 @@ class CppHeapObj extends Data {
 	}
 
 	Bool remove() : override {
-		dead;
+		dead | staticAlloc;
 	}
 
 	Drawable findAt(Point pt) : override {
 		wrap.findAt(pt);
+	}
+}
+
+/**
+ * A single C++ character.
+ */
+class CppChar extends Data {
+	// Character value.
+	private Text ch;
+
+	// Numeric value.
+	private Text num;
+
+	init() {
+		init() {
+			ch = Text("", codeFont);
+			num = Text("", dataFont);
+		}
+	}
+
+	void draw(Graphics g, Bool active) : override {
+		super:draw(g, active);
+
+		Rect p = rect;
+		Size chSize = ch.size;
+		g.draw(ch, dataFg, p.p1 - chSize - dataBorder);
+		g.draw(num, dataFg, p.p0 + dataBorder);
+	}
+
+	void update(Workspace ws, unsafe:RawPtr object, Nat offset) : override {
+		Byte data = object.readByte(offset);
+		ch = Text(Char(data.nat).toS, codeFont);
+		num = Text("(${data})", dataFont);
+		invalidateSize();
+	}
+
+	Size computeSize() : override {
+		Size a = ch.size;
+		Size b = num.size;
+
+		Size(a.w + b.w + dataBorder.w*3, max(a.h, b.h) + dataBorder.h*2);
 	}
 }

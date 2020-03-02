@@ -10,7 +10,7 @@ dialog CompileErrorDialog {
 		expandRow: 1;
 
 		Label message("") { row: 0; col: 0; colspan: 2; }
-		Window code { row: 1; col: 0; colspan: 2; }
+		CodeView code { row: 1; col: 0; colspan: 2; }
 		Label disclaimer("") { row: 2; col: 0; colspan: 2; }
 		ui:Button ok("OK") { row: 3; col: 1; }
 	}
@@ -41,6 +41,12 @@ dialog CompileErrorDialog {
 			msg << "if you think this is the case.";
 			disclaimer.text = msg.toS;
 		}
+	}
+}
+
+class CodeView extends Window {
+	Size minSize() : override {
+		Size(200, 200);
 	}
 }
 

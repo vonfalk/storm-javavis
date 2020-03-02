@@ -331,7 +331,7 @@ private Bool pointerGte(unsafe:RawPtr a, unsafe:RawPtr b) {
 // Check the validity of a pointer. Assumes we want to read a maximum of 'size' bytes at wherever
 // 'ptr' and 'offset' refers to.
 void checkPtr(unsafe:RawPtr base, Nat offset, Nat size) {
-	Nat total = base.readSize() * (base.readFilled() & 0x7FFFFFFF);
+	Nat total = base.readSize() * (base.readFilled() & AllocFlags:sizeMask.v);
 	// Array header.
 	if (base.isValue)
 		offset -= sPtr.current * 2;

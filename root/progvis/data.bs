@@ -192,7 +192,7 @@ class Primitive extends Data {
 		}
 	}
 
-	Size computeSize() {
+	Size computeSize() : override {
 		text.size + dataBorder*2;
 	}
 

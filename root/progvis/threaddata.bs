@@ -104,6 +104,14 @@ class ThreadData extends Drawable {
 
 	// Update our contents.
 	void traverse(Workspace ws, WorkList work) {
+		if (thread.callDepth == 0) {
+			// Don't remove frames if the thread terminated. That makes us show where it crashed.
+			source.highlight = sourceTerminatedHighlight;
+			for (v in frames)
+				v.traverse(ws, work);
+			return;
+		}
+
 		for (k, v in thread.frames) {
 			if (k >= frames.count)
 				frames.push(FrameVal(v));
@@ -120,9 +128,7 @@ class ThreadData extends Drawable {
 		if (pos = thread.pos)
 			source.display(pos);
 
-		if (thread.callDepth == 0) {
-			source.highlight = sourceTerminatedHighlight;
-		} else if (frames.last.returned) {
+		if (frames.last.returned) {
 			source.highlight = sourceReturnedHighlight;
 		} else {
 			source.highlight = sourceHighlight;

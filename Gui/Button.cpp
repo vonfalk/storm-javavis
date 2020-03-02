@@ -40,7 +40,7 @@ namespace gui {
 
 	Size Button::minSize() {
 		Size sz = font()->stringSize(text());
-		sz.w += sz.h;
+		sz.w += sz.h * 2;
 		sz.h *= 1.6f;
 		return sz;
 	}

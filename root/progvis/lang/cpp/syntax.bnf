@@ -284,19 +284,24 @@ SOp2 => operator(block, n, op) : SAtom(block) n, "++" @op;
 SOp2 => operator(block, n, op) : SAtom(block) n, "--" @op;
 SOp2 => dotOperator(block, lhs, rhs, false) : SOp2(block) lhs, "\.", SIdentifier rhs;
 SOp2 => dotOperator(block, lhs, rhs, true) : SOp2(block) lhs, "->", SIdentifier rhs;
-SOp2 => arrayOperator(block, base, index) : SOp2(block) base, "\[", SExpr(block) index, "\]";
+SOp2 => arrayOperator(pos, block, base, index) : SOp2(block) base, "\[", SExpr(block) index, "\]";
 SOp2 => fnCall(lhs, params) : SOp2(block) lhs, "(", SActuals(block) params, ")";
 SOp2 => ctorCall(lhs, params) : SOp2(block) lhs, "{", SActuals(block) params, "}";
 
 Expr SAtom(Block block);
 SAtom => v : "(", SExpr(block) v, ")";
 SAtom => IntLiteral(v) : "[0-9]+" @v #constant;
+SAtom => StrLiteral(pos, v) : "\"" #string - (SStrContent) v - "\"" #string;
 SAtom => NameExpr(pos, block.scope, name) : SCompoundName(block.scope) name;
 SAtom[10] => ThisPtr(pos, block.scope) : "this" #keyword;
 SAtom[10] => BoolLiteral(pos, true) : "true" #keyword;
 SAtom[10] => BoolLiteral(pos, false) : "false" #keyword;
 SAtom[10] => Nullptr(pos) : "nullptr" #keyword;
 SAtom[10] => Nullptr(pos) : "NULL" #keyword;
+
+void SStrContent();
+SStrContent : "[^\"\\\n]*"; // All except end of string and backslash.
+SStrContent : SStrContent - "\\." - SStrContent; // Gobble escape sequences (we could translate them here...)
 
 // Malloc and free.
 

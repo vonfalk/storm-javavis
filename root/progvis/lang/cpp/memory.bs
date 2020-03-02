@@ -16,13 +16,16 @@ on Compiler:
  */
 enum AllocFlags : bitmask {
 	// Mask for the size.
-	sizeMask = 0x3FFFFFFF,
+	sizeMask = 0x1FFFFFFF,
 
 	// This was allocated on the heap.
 	heapAlloc = 0x80000000,
 
 	// This was allocated using new[].
 	arrayAlloc = 0x40000000,
+
+	// Static allocation (e.g. a string).
+	staticAlloc = 0x20000000,
 }
 
 /**
