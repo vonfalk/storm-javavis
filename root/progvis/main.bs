@@ -89,7 +89,9 @@ class MainWin extends Frame {
 
 	private void onOpenTask() {}
 
-	private void onRestart() {}
+	private void onRestart() {
+		painter.restart();
+	}
 
 	private void onAbout() {
 		print("TODO: Show about menu!");
@@ -153,8 +155,19 @@ class MainPainter extends Painter {
 			program.terminate();
 
 		workspace.clear();
+		repaint();
 	}
 
+	// Restart the program.
+	void restart() {
+		if (program) {
+			program.terminate();
+			workspace.clear();
+			program.spawn(program.main);
+		}
+	}
+
+	// Render everything.
 	Bool render(Size me, Graphics g) : override {
 		g.transform(translate(-offset));
 		workspace.render(Rect(offset, me), g);

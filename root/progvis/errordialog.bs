@@ -11,7 +11,8 @@ dialog CompileErrorDialog {
 
 		Label message("") { row: 0; col: 0; colspan: 2; }
 		Window code { row: 1; col: 0; colspan: 2; }
-		ui:Button ok("OK") { row: 2; col: 1; }
+		Label disclaimer("") { row: 2; col: 0; colspan: 2; }
+		ui:Button ok("OK") { row: 3; col: 1; }
 	}
 
 	init(Str message, SrcPos pos) {
@@ -23,6 +24,23 @@ dialog CompileErrorDialog {
 		var me = this;
 		ok.onClick = (ui:Button b) => me.close(0);
 		code.painter = ErrorPainter(pos);
+
+		Bool useDisclaimer = false;
+		if (file = pos.file) {
+			if (file.ext == "cpp") {
+				useDisclaimer = true;
+			}
+		}
+
+		if (useDisclaimer) {
+			StrBuf msg;
+			msg << "Note: This C/C++ implementation is not entirely complete.\n";
+			msg << "If this works in a regular C/C++ compiler, it is possible that you\n";
+			msg << "are using features that are not implemented, or that you have found a\n";
+			msg << "bug in the implementation. Please contact filip.stromback@liu.se\n";
+			msg << "if you think this is the case.";
+			disclaimer.text = msg.toS;
+		}
 	}
 }
 
