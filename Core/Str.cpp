@@ -543,10 +543,10 @@ namespace storm {
 		return pos;
 	}
 
-	const Str *Str::toCrLf() const {
+	Str *Str::toCrLf() const {
 		Nat len = toCrLfHelp(data, null);
 		if (len == charCount())
-			return this;
+			return (Str *)this;
 
 		GcArray<wchar> *to = runtime::allocArray<wchar>(engine(), &wcharArrayType, len + 1);
 		toCrLfHelp(data, to);
@@ -577,10 +577,10 @@ namespace storm {
 		return pos;
 	}
 
-	const Str *Str::fromCrLf() const {
+	Str *Str::fromCrLf() const {
 		Nat len = fromCrLfHelp(data, null);
 		if (len == charCount())
-			return this;
+			return (Str *)this;
 
 		GcArray<wchar> *to = runtime::allocArray<wchar>(engine(), &wcharArrayType, len + 1);
 		fromCrLfHelp(data, to);

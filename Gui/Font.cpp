@@ -257,19 +257,45 @@ namespace gui {
 		return shared->textFmt;
 	}
 
+	static void addLine(HDC dc, const wchar *start, size_t length, SIZE &update) {
+		SIZE size = {0, 0};
+		if (length == 0) {
+			GetTextExtentPoint32(dc, L"A", 1, &size);
+		} else {
+			GetTextExtentPoint32(dc, start, length, &size);
+		}
+
+		update.cx = max(update.cx, size.cx);
+		update.cy += size.cy;
+	}
+
 	Size Font::stringSize(const Str *str) {
 		HFONT font = handle();
 
 		HDC dc = GetDC(NULL);
 		HGDIOBJ oldFont = SelectObject(dc, font);
 
-		SIZE size = {0, 0};
-		GetTextExtentPoint32(dc, str->c_str(), str->peekLength(), &size);
+
+		// We need to consider each line separately.
+		SIZE total = {0, 0};
+		const wchar *start = str->c_str();
+		const wchar *at;
+		for (at = start; *at; at++) {
+			if (*at != '\n')
+				continue;
+
+			addLine(dc, start, at - start, total);
+			start = at + 1;
+		}
+
+		if (start < at) {
+			addLine(dc, start, at - start, total);
+		}
 
 		SelectObject(dc, oldFont);
 		ReleaseDC(NULL, dc);
 
-		return Size(Float(size.cx), Float(size.cy));
+		return Size(Float(total.cx), Float(total.cy));
 	}
 
 #endif

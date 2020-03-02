@@ -114,8 +114,19 @@ namespace gui {
 #ifdef GUI_WIN32
 
 	void Frame::pos(Rect r) {
-		if (!full) {
-			Window::pos(r);
+		if (full)
+			return;
+
+		// We need to do this to take the menu into account.
+		myPos = r;
+		if (created()) {
+			RECT z = convert(r);
+			HWND h = handle().hwnd();
+			DWORD style = GetWindowLong(h, GWL_STYLE);
+			DWORD exStyle = GetWindowLong(h, GWL_EXSTYLE);
+			AdjustWindowRectEx(&z, style, myMenu ? TRUE : FALSE, exStyle);
+			// Todo: keep track if we need to repaint.
+			MoveWindow(h, z.left, z.top, z.right - z.left, z.bottom - z.top, TRUE);
 		}
 	}
 
@@ -178,6 +189,13 @@ namespace gui {
 		parentCreated(0);
 
 		updateMinSize();
+
+		Size sz = myPos.size();
+		if (sz.w < lastMinSize.w || sz.h < lastMinSize.h) {
+			sz.w = max(sz.w, lastMinSize.w);
+			sz.h = max(sz.h, lastMinSize.h);
+			size(sz);
+		}
 
 		if (visible()) {
 			ShowWindow(handle().hwnd(), TRUE);

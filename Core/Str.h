@@ -103,8 +103,8 @@ namespace storm {
 		const char *utf8_str() const;
 
 		// Convert to/from cr-lf line endings. Returns the same string if possible.
-		const Str *STORM_FN toCrLf() const;
-		const Str *STORM_FN fromCrLf() const;
+		Str *STORM_FN toCrLf() const;
+		Str *STORM_FN fromCrLf() const;
 
 		// Compare to c-string.
 		Bool operator ==(const wchar *s) const;
