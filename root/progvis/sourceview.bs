@@ -6,7 +6,7 @@ use core:geometry;
 
 class SourceView on Render {
 	// Program context.
-	Program program;
+	Program? program;
 
 	// Current file.
 	Url file;
@@ -22,6 +22,13 @@ class SourceView on Render {
 
 	// Brush used to highlight.
 	Brush highlight;
+
+	// Create, will try to load source code by itself.
+	init() {
+		init {
+			highlight = sourceHighlight;
+		}
+	}
 
 	// Create.
 	init(Program program) {
@@ -41,7 +48,11 @@ class SourceView on Render {
 	// Switch to a new view.
 	void display(Url file, Nat from, Nat to) {
 		if (file != this.file) {
-			text = program.source(file);
+			if (program) {
+				text = program.source(file);
+			} else {
+				text = Text(file.readAllText(), codeFont);
+			}
 			this.file = file;
 		}
 

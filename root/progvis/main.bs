@@ -50,7 +50,7 @@ class MainWin extends Frame {
 
 	// Mostly for testing.
 	void open(Url file) {
-		painter.open([file]);
+		open([file]);
 	}
 
 	// Called when the frame is closed.
@@ -84,8 +84,7 @@ class MainWin extends Frame {
 		if (!picker.show(this))
 			return;
 
-		painter.cleanup();
-		painter.open(picker.results);
+		open(picker.results);
 	}
 
 	private void onOpenTask() {}
@@ -94,6 +93,19 @@ class MainWin extends Frame {
 
 	private void onAbout() {
 		print("TODO: Show about menu!");
+	}
+
+	// Open one or more files, shows nice messages on error.
+	private void open(Url[] files) {
+		try {
+			painter.cleanup();
+			painter.open(files);
+		} catch (core:lang:CodeError error) {
+			CompileErrorDialog dlg(error.messageText, error.pos);
+			dlg.show(this);
+		} catch (Exception error) {
+			showMessage(this, "Error opening code.", "Unable to open the selected files:\n${error.message}");
+		}
 	}
 }
 
@@ -127,16 +139,12 @@ class MainPainter extends Painter {
 
 	// Open a program.
 	void open(Url[] files) {
-		program = Program:load(files);
-		if (program) {
-			workspace.hints = program.hints;
-			program.onChange = &this.update();
-			update();
-			program.spawn(program.main);
-			// program.spawn(program.main);
-		} else {
-			print("Failed to load ${files}!");
-		}
+		var loaded = Program:load(files);
+		program = loaded;
+		workspace.hints = loaded.hints;
+		loaded.onChange = &this.update();
+		update();
+		loaded.spawn(loaded.main);
 	}
 
 	// Clean up the running program (i.e. make sure all threads are terminated).
@@ -147,7 +155,7 @@ class MainPainter extends Painter {
 		workspace.clear();
 	}
 
-	Bool render(Size me, Graphics g) {
+	Bool render(Size me, Graphics g) : override {
 		g.transform(translate(-offset));
 		workspace.render(Rect(offset, me), g);
 		false;
@@ -235,7 +243,8 @@ void main() on Compiler {
 		// win.open(url / "members.cpp");
 		// win.open(url / "special_functions.cpp");
 		// win.open(url / "return_complex.cpp");
-		win.open(url / "arrays.cpp");
+		// win.open(url / "arrays.cpp");
+		win.open(url / "cpp_error.cpp");
 		win.waitForClose();
 	}
 }

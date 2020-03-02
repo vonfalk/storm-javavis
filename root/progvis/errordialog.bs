@@ -1,0 +1,43 @@
+use ui;
+use layout;
+use graphics;
+use core:geometry;
+use core:lang;
+
+dialog CompileErrorDialog {
+	layout Grid {
+		expandCol: 0;
+		expandRow: 1;
+
+		Label message("") { row: 0; col: 0; colspan: 2; }
+		Window code { row: 1; col: 0; colspan: 2; }
+		ui:Button ok("OK") { row: 2; col: 1; }
+	}
+
+	init(Str message, SrcPos pos) {
+		// Note: It would be nice to be able to initialize things in the layout in the initializer
+		// list as well! Then we would not have to change the message of 'message'.
+		init("Compilation error", Size(300, 400)) {}
+
+		this.message.text = message;
+		var me = this;
+		ok.onClick = (ui:Button b) => me.close(0);
+		code.painter = ErrorPainter(pos);
+	}
+}
+
+class ErrorPainter extends Painter {
+	init(SrcPos pos) {
+		init() {}
+
+		view.display(pos);
+		view.highlight = SolidBrush(Color(1, 0.8, 0.8));
+	}
+
+	SourceView view;
+
+	Bool render(Size me, Graphics g) : override {
+		view.draw(g, Rect(Point(0, 0), me));
+		false;
+	}
+}

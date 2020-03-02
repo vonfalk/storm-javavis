@@ -45,10 +45,10 @@ Size compositeBorder on Render = Size(4, 4);
 Float stackOffset on Render = 4;
 
 // Minimum width for a thread.
-Float threadMinWidth on Render = 200;
+Float threadMinWidth on Render = 300;
 
 // Default code view size.
-Size sourceSize on Render = Size(300, 200);
+Size sourceSize on Render = Size(350, 200);
 
 // Highlight color for source code.
 Brush sourceHighlight on Render = SolidBrush(yellow);

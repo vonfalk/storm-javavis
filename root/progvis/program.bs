@@ -50,11 +50,11 @@ class Program on Render {
 		findSupportedFiles();
 	}
 
-	public Program? load(Url file) : static {
+	public Program load(Url file) : static {
 		load([file]);
 	}
 
-	public Program? load(Url[] files) : static {
+	public Program load(Url[] files) : static {
 		loadProgram(files);
 	}
 
@@ -222,7 +222,7 @@ private void addStdHints(Str ext, Hints[] to) {
 }
 
 // Helper to load a program on a different thread.
-private Program? loadProgram(Url[] files) on Compiler {
+private Program loadProgram(Url[] files) on Compiler {
 	Package pkg("<sandbox>");
 	pkg.parentLookup = rootPkg;
 	pkg.noDiscard();
@@ -243,14 +243,12 @@ private Program? loadProgram(Url[] files) on Compiler {
 			readers << r;
 			addStdHints(ext, hints);
 		} else {
-			print("No reader for the file type ${ext}!");
-			return null;
+			throw LoadError("The file type ${ext} is not supported.");
 		}
 	}
 
 	if (readers.empty()) {
-		print("No reader for the desired file type!");
-		return null;
+		throw LoadError("The desired file type(s) are not supported.");
 	}
 
 	// Add the standard hints last, so that they have a chance to do things.
@@ -652,5 +650,16 @@ private void findSupportedFiles(Set<Str> out, Package pkg) on Compiler {
 	for (elem in pkg) {
 		if (elem as Package)
 			out.put(elem.name);
+	}
+}
+
+/**
+ * Exception thrown during load.
+ */
+class LoadError extends Exception {
+	init(Str msg) { init { msg = msg; } }
+	Str msg;
+	void message(StrBuf to) : override {
+		to << msg;
 	}
 }
