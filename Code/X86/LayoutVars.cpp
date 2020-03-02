@@ -220,6 +220,7 @@ namespace code {
 			bool initEax = true;
 
 			Array<Var> *vars = dest->allVars(init);
+			Array<Listing::CatchInfo> *catchInfo = dest->catchInfo(init);
 			// Go in reverse to make linear accesses in memory when we're using big variables.
 			for (nat i = vars->count(); i > 0; i--) {
 				Var v = vars->at(i - 1);
@@ -230,6 +231,8 @@ namespace code {
 
 			// If the block was empty, we don't need to update the info.
 			if (vars->any())
+				updateBlockId(dest);
+			else if (catchInfo && catchInfo->any())
 				updateBlockId(dest);
 		}
 
@@ -286,6 +289,7 @@ namespace code {
 			bool pushedEax = false;
 
 			Array<Var> *vars = dest->allVars(destroy);
+			Array<Listing::CatchInfo> *catchInfo = dest->catchInfo(destroy);
 			// Destroy in reverse order.
 			for (Nat i = vars->count(); i > 0; i--) {
 				Var v = vars->at(i - 1);
@@ -329,6 +333,8 @@ namespace code {
 			block = dest->parent(block);
 			// If empty, we don't need to update.
 			if (vars->any())
+				updateBlockId(dest);
+			else if (catchInfo && catchInfo->any())
 				updateBlockId(dest);
 		}
 

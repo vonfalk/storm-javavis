@@ -20,3 +20,12 @@ Str catchTest(Int throwOn) {
 Int throwTest() {
 	throw SyntaxError(SrcPos(), "Test");
 }
+
+Str smallCatchTest() {
+	try {
+		throwError;
+		"None";
+	} catch (DebugError e) {
+		"D" # e.message;
+	}
+}
