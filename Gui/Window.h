@@ -9,7 +9,7 @@
 #include "Utils/Bitmask.h"
 
 namespace gui {
-	class Container;
+	class ContainerBase;
 	class Frame;
 	class Painter;
 	class Timer;
@@ -62,13 +62,13 @@ namespace gui {
 		bool created() const { return handle() != invalid; }
 
 		// Parent/owner. Null for frames.
-		MAYBE(Container *) STORM_FN parent();
+		MAYBE(ContainerBase *) STORM_FN parent();
 
 		// Root frame. Returns ourself for frames, returns null before attached.
 		MAYBE(Frame *) STORM_FN rootFrame();
 
 		// Attach to a parent container and creation. To be called from 'container'.
-		void attachParent(Container *parent);
+		void attachParent(ContainerBase *parent);
 
 		// Detach from our parent. This destroys the window.
 		void detachParent();
@@ -172,7 +172,7 @@ namespace gui {
 		// Override this to do any special window creation. The default implementation creates a
 		// plain child window with no window class. Called as soon as we know our parent (not on
 		// Frames). Returns 'false' on failure.
-		virtual bool create(Container *parent, nat id);
+		virtual bool create(ContainerBase *parent, nat id);
 
 		// Internal 'resized' notification.
 		virtual void onResize(Size size);
@@ -192,7 +192,7 @@ namespace gui {
 #ifdef GUI_GTK
 		// Called to perform initialization of the recently created widget. Performs things such as
 		// setting visibility, text and position. Also calls 'handle()' on the widget.
-		void initWidget(Container *parent, GtkWidget *widget);
+		void initWidget(ContainerBase *parent, GtkWidget *widget);
 
 		// Initialize any signals required by the Window class.
 		virtual void initSignals(GtkWidget *widget, GtkWidget *draw);
@@ -208,7 +208,7 @@ namespace gui {
 		Handle myHandle;
 
 		// Parent.
-		Container *myParent;
+		ContainerBase *myParent;
 
 		// Root.
 		Frame *myRoot;

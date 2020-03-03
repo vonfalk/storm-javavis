@@ -6,7 +6,7 @@
 #Main -a -r ../root/ -f tests.ui.simple
 #Main -a -r ../root/ -f tests.ui.main
 #Main -a -r ../root/ -f tests.ui.simpleUi
-Main -a -r ../root/ -f tests.ui.multiline
+#Main -a -r ../root/ -f tests.ui.multiline
 #Main -a -r ../root/ -f tests.ui.dialog
 #Main -a -r ../root/ -f tests.ui.overlay
 #Main -a -r ../root/ -f tests.ui.enterLeave
@@ -15,6 +15,7 @@ Main -a -r ../root/ -f tests.ui.multiline
 #Main -a -r ../root/ -f tests.ui.images
 #Main -a -f tests.ui.menu
 #Main -a -f tests.ui.fileDialog
+Main -a -f tests.ui.testAbout
 #Main -a -f presentation.tests.test
 #Main -a -f presentation.tests.simple
 #Main -a -f progvis.main

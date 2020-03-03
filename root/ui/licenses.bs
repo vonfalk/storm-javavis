@@ -1,0 +1,8 @@
+use layout;
+use core:info;
+
+// Show an about dialog, containing all software licenses currently active.
+void showLicenseDialog(Frame owner, Str programName, Version? version) on Ui {
+	licenses:LicenseDialog d(programName, version);
+	d.show(owner);
+}

@@ -5,6 +5,18 @@
 
 namespace gui {
 
+	ContainerBase::ContainerBase() {}
+
+#ifdef GUI_GTK
+	void ContainerBase::addChild(GtkWidget *child, Rect pos) {
+		throw new (this) InternalError(S("Need to implement 'addChild' for custom containers!"));
+	}
+
+	void ContainerBase::moveChild(GtkWidget *child, Rect pos) {
+		throw new (this) InternalError(S("Need to implement 'moveChild' for custom containers!"));
+	}
+#endif
+
 #ifdef GUI_WIN32
 	// Reserved ids.
 	static const Nat reservedTo = IDCANCEL;
@@ -100,7 +112,7 @@ namespace gui {
 
 #ifdef GUI_WIN32
 
-	bool Container::create(Container *parent, nat id) {
+	bool Container::create(ContainerBase *parent, nat id) {
 		return Window::create(parent, id);
 	}
 
@@ -133,7 +145,7 @@ namespace gui {
 #endif
 #ifdef GUI_GTK
 
-	bool Container::create(Container *parent, nat id) {
+	bool Container::create(ContainerBase *parent, nat id) {
 		// We need an event box to catch events.
 		GtkWidget *box = gtk_event_box_new();
 
@@ -145,9 +157,18 @@ namespace gui {
 		return true;
 	}
 
-	Basic *Container::container() {
+	void ContainerBase::addChild(GtkWidget *child, Rect pos) {
 		// There is a BASIC layout inside the frame.
-		return BASIC(gtk_bin_get_child(GTK_BIN(handle().widget())));
+		Basic *basic = BASIC(gtk_bin_get_child(GTK_BIN(handle().widget())));
+		Size s = pos.size();
+		basic_put(basic, child, pos.p0.x, pos.p0.y, s.w, s.h);
+	}
+
+	void ContainerBase::moveChild(GtkWidget *child, Rect pos) {
+		// There is a BASIC layout inside the frame.
+		Basic *basic = BASIC(gtk_bin_get_child(GTK_BIN(handle().widget())));
+		Size s = pos.size();
+		basic_move(basic, child, pos.p0.x, pos.p0.y, s.w, s.h);
 	}
 
 #endif

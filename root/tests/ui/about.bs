@@ -1,0 +1,8 @@
+use ui:licenses;
+
+void testAbout() {
+	LicenseDialog d("Test", null);
+	d.create();
+	print("Min size: ${d.minSize}");
+	d.waitForClose();
+}

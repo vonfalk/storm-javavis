@@ -72,7 +72,7 @@ namespace gui {
 	}
 
 #ifdef GUI_WIN32
-	bool Edit::create(Container *parent, nat id) {
+	bool Edit::create(ContainerBase *parent, nat id) {
 		DWORD flags = editFlags;
 		if (myMultiline)
 			flags |= ES_MULTILINE | ES_AUTOVSCROLL | ES_WANTRETURN;
@@ -137,7 +137,7 @@ namespace gui {
 #endif
 
 #ifdef GUI_GTK
-	bool Edit::create(Container *parent, nat id) {
+	bool Edit::create(ContainerBase *parent, nat id) {
 		GtkWidget *edit;
 		if (myMultiline) {
 			edit = gtk_text_view_new();

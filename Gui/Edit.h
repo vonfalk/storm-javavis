@@ -69,7 +69,7 @@ namespace gui {
 
 	protected:
 		// Create.
-		virtual bool create(Container *parent, nat id);
+		virtual bool create(ContainerBase *parent, nat id);
 
 	private:
 		// Our selection.

@@ -22,7 +22,7 @@ namespace gui {
 
 #ifdef GUI_WIN32
 
-	bool Button::create(Container *parent, nat id) {
+	bool Button::create(ContainerBase *parent, nat id) {
 		DWORD flags = buttonFlags;
 		if (isDefault)
 			flags |= BS_DEFPUSHBUTTON;
@@ -60,7 +60,7 @@ namespace gui {
 #endif
 #ifdef GUI_GTK
 
-	bool Button::create(Container *parent, nat id) {
+	bool Button::create(ContainerBase *parent, nat id) {
 		GtkWidget *button = gtk_button_new_with_label(text()->utf8_str());
 		initWidget(parent, button);
 		Signal<void, Button>::Connect<&Button::clicked>::to(button, "clicked", engine());

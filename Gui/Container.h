@@ -6,12 +6,34 @@
 namespace gui {
 
 	/**
+	 * Container interface.
+	 *
+	 * Classes may implement this interface to indicate that they are able to store child
+	 * windows. This is the minimal interface required by the windowing system. It does not allow
+	 * adding/removing child windows, that is the responsibility of child classes.
+	 */
+	class ContainerBase : public Window {
+		STORM_CLASS;
+	public:
+		// Create.
+		STORM_CTOR ContainerBase();
+
+#ifdef GUI_GTK
+		// Add a child widget to the layout here.
+		virtual void addChild(GtkWidget *child, Rect pos);
+
+		// Move a child widget.
+		virtual void moveChild(GtkWidget *child, Rect pos);
+#endif
+	};
+
+	/**
 	 * A container is a window that can contain child windows.
 	 *
 	 * Manages IDs of child windows and forwards messages from child windows to their corresponding
 	 * classes here.
 	 */
-	class Container : public Window {
+	class Container : public ContainerBase {
 		STORM_CLASS;
 	public:
 		// Create a container.
@@ -41,13 +63,15 @@ namespace gui {
 		bool onCommand(const Message &msg);
 #endif
 #ifdef GUI_GTK
-		// Get the container to use for this window. Might be different from what is returned by
-		// 'handle()'.
-		virtual Basic *container();
+		// Add a child widget to the layout here.
+		virtual void addChild(GtkWidget *child, Rect pos);
+
+		// Move a child widget.
+		virtual void moveChild(GtkWidget *child, Rect pos);
 #endif
 	protected:
 		// Create.
-		virtual bool create(Container *parent, nat id);
+		virtual bool create(ContainerBase *parent, nat id);
 
 	private:
 		// Currently used ids.

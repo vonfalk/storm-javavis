@@ -31,7 +31,7 @@ namespace gui {
 		virtual Size STORM_FN minSize();
 
 	protected:
-		virtual bool create(Container *parent, nat id);
+		virtual bool create(ContainerBase *parent, nat id);
 
 	private:
 		// Click notification.

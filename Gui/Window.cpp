@@ -32,7 +32,7 @@ namespace gui {
 		}
 	}
 
-	Container *Window::parent() {
+	ContainerBase *Window::parent() {
 		return myParent;
 	}
 
@@ -48,7 +48,7 @@ namespace gui {
 		return Size();
 	}
 
-	void Window::attachParent(Container *parent) {
+	void Window::attachParent(ContainerBase *parent) {
 		myParent = parent;
 		if (parent == this)
 			myRoot = as<Frame>(this);
@@ -320,6 +320,12 @@ namespace gui {
 			ClientToScreen(h, &a);
 			POINT b = { r.right, r. bottom };
 			ClientToScreen(h, &b);
+
+			if (myParent != this) {
+				ScreenToClient(myParent->handle().hwnd(), &a);
+				ScreenToClient(myParent->handle().hwnd(), &b);
+			}
+
 			myPos = convert(a, b);
 		}
 		return myPos;
@@ -378,7 +384,7 @@ namespace gui {
 		return false;
 	}
 
-	bool Window::create(Container *parent, nat id) {
+	bool Window::create(ContainerBase *parent, nat id) {
 		return createEx(NULL, childFlags, 0, parent->handle().hwnd(), id);
 	}
 
@@ -516,16 +522,15 @@ namespace gui {
 	}
 
 
-	bool Window::create(Container *parent, nat id) {
+	bool Window::create(ContainerBase *parent, nat id) {
 		initWidget(parent, empty_new());
 		return true;
 	}
 
-	void Window::initWidget(Container *parent, GtkWidget *widget) {
+	void Window::initWidget(ContainerBase *parent, GtkWidget *widget) {
 		handle(widget);
 
-		Size s = myPos.size();
-		basic_put(parent->container(), widget, myPos.p0.x, myPos.p0.y, s.w, s.h);
+		parent->addChild(widget, myPos);
 
 		if (myVisible)
 			gtk_widget_show(widget);
@@ -986,9 +991,8 @@ namespace gui {
 
 	void Window::pos(Rect r) {
 		myPos = r;
-		if (created()) {
-			Size s = myPos.size();
-			basic_move(parent()->container(), handle().widget(), myPos.p0.x, myPos.p0.y, s.w, s.h);
+		if (created() && parent()) {
+			parent()->moveChild(handle().widget, myPos);
 		}
 	}
 

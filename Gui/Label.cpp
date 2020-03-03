@@ -10,7 +10,7 @@ namespace gui {
 
 #ifdef GUI_WIN32
 
-	bool Label::create(Container *parent, nat id) {
+	bool Label::create(ContainerBase *parent, nat id) {
 		return createEx(WC_STATIC, childFlags, 0, parent->handle().hwnd(), id);
 	}
 
@@ -21,7 +21,7 @@ namespace gui {
 #endif
 #ifdef GUI_GTK
 
-	bool Label::create(Container *parent, nat id) {
+	bool Label::create(ContainerBase *parent, nat id) {
 		GtkWidget *label = gtk_label_new(text()->utf8_str());
 		gtk_widget_set_halign(label, (GtkAlign)GTK_ALIGN_START);
 
