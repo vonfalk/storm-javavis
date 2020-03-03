@@ -75,7 +75,7 @@ namespace gui {
 	bool Edit::create(Container *parent, nat id) {
 		DWORD flags = editFlags;
 		if (myMultiline)
-			flags |= ES_MULTILINE | WS_VSCROLL | ES_WANTRETURN;
+			flags |= ES_MULTILINE | ES_AUTOVSCROLL | ES_WANTRETURN;
 
 		if (!Window::createEx(WC_EDIT, flags, WS_EX_CLIENTEDGE, parent->handle().hwnd(), id))
 			return false;
