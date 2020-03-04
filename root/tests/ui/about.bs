@@ -1,8 +1,11 @@
+use ui;
 use ui:licenses;
+use core:info;
+use lang:bs:macro;
 
 void testAbout() {
-	LicenseDialog d("Test", null);
+	ProgramInfo info("Test", "Filip", Version(1, 0, 0), named{core:STORM});
+	OverviewDialog d(info);
 	d.create();
-	print("Min size: ${d.minSize}");
 	d.waitForClose();
 }

@@ -26,6 +26,12 @@ namespace gui {
 	Size ScrollWindow::minSize() {
 		Size ch = child->minSize();
 
+		// Compensate for the size of the actual scrollbars.
+		if (hScroll)
+			ch.h += GetSystemMetrics(SM_CYHSCROLL);
+		if (vScroll)
+			ch.w += GetSystemMetrics(SM_CXVSCROLL);
+
 		if (hScroll) {
 			ch.w = min(ch.w, minSz.w);
 		} else {

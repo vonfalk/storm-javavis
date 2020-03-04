@@ -291,6 +291,7 @@ namespace gui {
 	}
 
 	void Window::visible(Bool show) {
+		myVisible = show;
 		if (created())
 			ShowWindow(handle().hwnd(), show ? TRUE : FALSE);
 	}
@@ -404,9 +405,13 @@ namespace gui {
 		if (className == null)
 			className = (LPCTSTR)app->windowClass();
 
-		if (cManualVisibility & ~flags)
-			if (myVisible)
+		if (cManualVisibility & ~flags) {
+			if (myVisible) {
 				style |= WS_VISIBLE;
+			} else {
+				style &= ~WS_VISIBLE;
+			}
+		}
 
 		Point p = myPos.p0;
 		Size s = myPos.size();
@@ -997,6 +1002,7 @@ namespace gui {
 	}
 
 	void Window::visible(Bool v) {
+		myVisible = v;
 		if (v)
 			gtk_widget_show(handle().widget());
 		else

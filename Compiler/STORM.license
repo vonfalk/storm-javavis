@@ -130,15 +130,17 @@ above, provided that you also meet all of these conditions:
 
     a) The modified work must itself be a software library.
 
-    b) You must cause the files modified to carry prominent notices stating that you changed the files and the date of any change.
+    b) You must cause the files modified to carry prominent notices stating that you changed the
+    files and the date of any change.
 
-    c) You must cause the whole of the work to be licensed at no charge to all third parties under the terms of this License.
+    c) You must cause the whole of the work to be licensed at no charge to all third parties under
+    the terms of this License.
 
     d) If a facility in the modified Library refers to a function or a table of data to be supplied
-       by an application program that uses the facility, other than as an argument passed when the
-       facility is invoked, then you must make a good faith effort to ensure that, in the event an
-       application does not supply such function or table, the facility still operates, and performs
-       whatever part of its purpose remains meaningful.
+    by an application program that uses the facility, other than as an argument passed when the
+    facility is invoked, then you must make a good faith effort to ensure that, in the event an
+    application does not supply such function or table, the facility still operates, and performs
+    whatever part of its purpose remains meaningful.
 
     (For example, a function in a library to compute square roots has a purpose that is entirely
     well-defined independent of the application. Therefore, Subsection 2d requires that any
@@ -242,7 +244,8 @@ must do one of these things:
     d) If distribution of the work is made by offering access to copy from a designated place, offer
     equivalent access to copy the above specified materials from the same place.
 
-    e) Verify that the user has already received a copy of these materials or that you have already sent this user a copy.
+    e) Verify that the user has already received a copy of these materials or that you have already
+    sent this user a copy.
 
 For an executable, the required form of the "work that uses the Library" must include any data and
 utility programs needed for reproducing the executable from it. However, as a special exception, the
@@ -307,7 +310,8 @@ through that system in reliance on consistent application of that system; it is 
 author/donor to decide if he or she is willing to distribute software through any other system and a
 licensee cannot impose that choice.
 
-This section is intended to make thoroughly clear what is believed to be a consequence of the rest of this License.
+This section is intended to make thoroughly clear what is believed to be a consequence of the rest
+of this License.
 
 12. If the distribution and/or use of the Library is restricted in certain countries either by
 patents or by copyrighted interfaces, the original copyright holder who places the Library under

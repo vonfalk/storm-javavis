@@ -1,8 +1,41 @@
 use layout;
 use core:info;
 
+/**
+ * Information passed to the license/about dialog.
+ */
+class ProgramInfo {
+	// Name of the program.
+	Str name;
+
+	// Version, if available.
+	Version? version;
+
+	// Author(s).
+	Str author;
+
+	// Main license of this program.
+	License? license;
+
+	// Initialize with just a name and an author.
+	init(Str name, Str author) {
+		init { name = name; author = author; }
+	}
+
+	// Initialize with name, author and version.
+	init(Str name, Str author, Version version) {
+		init { name = name; author = author; version = version; }
+	}
+
+	// Initialize with name, author, version and license.
+	init(Str name, Str author, Version version, License license) {
+		init { name = name; author = author; version = version; license = license; }
+	}
+}
+
+
 // Show an about dialog, containing all software licenses currently active.
-void showLicenseDialog(Frame owner, Str programName, Version? version) on Ui {
-	licenses:LicenseDialog d(programName, version);
+void showLicenseDialog(Frame owner, ProgramInfo info) on Ui {
+	licenses:OverviewDialog d(info);
 	d.show(owner);
 }

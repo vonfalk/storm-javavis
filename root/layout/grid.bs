@@ -104,6 +104,16 @@ class Grid extends Layout {
 		rowWeights[row] = weight;
 	}
 
+	// Expand the current row.
+	void expandRow() {
+		expandRow(insertRow, 1);
+	}
+
+	// Expand the current column.
+	void expandCol() {
+		expandCol(insertCol, 1);
+	}
+
 	// Compute the minimum size.
 	Size minSize() {
 		update();
