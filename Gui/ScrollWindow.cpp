@@ -59,7 +59,6 @@ namespace gui {
 		Window::resized(size);
 
 		Size sz = child->minSize();
-		Rect original = child->pos();
 		if (!hScroll) {
 			sz.w = size.w;
 		}
@@ -68,7 +67,8 @@ namespace gui {
 			sz.h = size.h;
 		}
 
-		child->pos(Rect(original.p0, sz));
+		setChildSize(sz);
+		updateBars(sz);
 	}
 
 
@@ -97,6 +97,154 @@ namespace gui {
 		if (created()) {
 			ShowScrollBar(handle().hwnd(), SB_VERT, vScroll ? TRUE : FALSE);
 		}
+	}
+
+	MsgResult ScrollWindow::onMessage(const Message &msg) {
+		switch (msg.msg) {
+		case WM_HSCROLL:
+			return msgResult(onScroll(msg.wParam, SB_HORZ));
+		case WM_VSCROLL:
+			return msgResult(onScroll(msg.wParam, SB_VERT));
+		case WM_MOUSEWHEEL:
+			return msgResult(onWheel(GET_WHEEL_DELTA_WPARAM(msg.wParam), SB_VERT));
+		case WM_MOUSEHWHEEL:
+			return msgResult(onWheel(GET_WHEEL_DELTA_WPARAM(msg.wParam), SB_HORZ));
+		}
+
+		return Window::onMessage(msg);
+	}
+
+	LRESULT ScrollWindow::onScroll(WPARAM param, int which) {
+		SCROLLINFO info;
+		info.cbSize = sizeof(info);
+		info.fMask = SIF_PAGE | SIF_POS | SIF_TRACKPOS | SIF_RANGE;
+		GetScrollInfo(handle().hwnd(), which, &info);
+
+		const int lineSize = int(font()->pxHeight());
+
+		switch (LOWORD(param)) {
+		case SB_TOP:
+			info.nPos = info.nMin;
+			break;
+		case SB_BOTTOM:
+			info.nPos = info.nMax;
+			break;
+		case SB_LINEUP:
+			info.nPos = max(info.nPos - lineSize, info.nMin);
+			break;
+		case SB_LINEDOWN:
+			info.nPos = min(info.nPos + lineSize, info.nMax - int(info.nPage));
+			break;
+		case SB_PAGEDOWN:
+			info.nPos = max(info.nPos - int(info.nPage), info.nMin);
+			break;
+		case SB_PAGEUP:
+			info.nPos = min(info.nPos + int(info.nPage), info.nMax - int(info.nPage));
+			break;
+		case SB_THUMBTRACK:
+			info.nPos = info.nTrackPos;
+			break;
+		default:
+			return 0;
+		}
+
+		info.fMask = SIF_PAGE | SIF_POS | SIF_RANGE | SIF_DISABLENOSCROLL;
+		SetScrollInfo(handle().hwnd(), which, &info, TRUE);
+
+		int x = info.nPos, y = info.nPos;
+		if (which == SB_HORZ) {
+			SCROLLINFO info;
+			info.cbSize = sizeof(info);
+			info.fMask = SIF_POS;
+			GetScrollInfo(handle().hwnd(), SB_VERT, &info);
+			y = info.nPos;
+		} else {
+			SCROLLINFO info;
+			info.cbSize = sizeof(info);
+			info.fMask = SIF_POS;
+			GetScrollInfo(handle().hwnd(), SB_HORZ, &info);
+			x = info.nPos;
+		}
+		SetWindowPos(child->handle().hwnd(), NULL, -x, -y, 0, 0, SWP_NOACTIVATE | SWP_NOZORDER | SWP_NOSIZE);
+
+		return 0;
+	}
+
+	LRESULT ScrollWindow::onWheel(int delta, int which) {
+		SCROLLINFO info;
+		info.cbSize = sizeof(info);
+		info.fMask = SIF_PAGE | SIF_POS | SIF_TRACKPOS | SIF_RANGE;
+		GetScrollInfo(handle().hwnd(), which, &info);
+
+		const int lineSize = int(font()->pxHeight());
+
+		info.nPos = info.nPos - delta / 2;
+		if (info.nPos < info.nMin)
+			info.nPos = info.nMin;
+		if (info.nPos > info.nMax - int(info.nPage))
+			info.nPos = info.nMax - int(info.nPage);
+
+		info.fMask = SIF_PAGE | SIF_POS | SIF_RANGE | SIF_DISABLENOSCROLL;
+		SetScrollInfo(handle().hwnd(), which, &info, TRUE);
+
+		int x = info.nPos, y = info.nPos;
+		if (which == SB_HORZ) {
+			SCROLLINFO info;
+			info.cbSize = sizeof(info);
+			info.fMask = SIF_POS;
+			GetScrollInfo(handle().hwnd(), SB_VERT, &info);
+			y = info.nPos;
+		} else {
+			SCROLLINFO info;
+			info.cbSize = sizeof(info);
+			info.fMask = SIF_POS;
+			GetScrollInfo(handle().hwnd(), SB_HORZ, &info);
+			x = info.nPos;
+		}
+		SetWindowPos(child->handle().hwnd(), NULL, -x, -y, 0, 0, SWP_NOACTIVATE | SWP_NOZORDER | SWP_NOSIZE);
+
+		return 0;
+	}
+
+	void ScrollWindow::setScrollInfo(int which, Float childSz, Float ourSz) {
+		SCROLLINFO info;
+		info.cbSize = sizeof(info);
+		info.fMask = SIF_POS;
+		GetScrollInfo(handle().hwnd(), which, &info);
+
+		info.fMask = SIF_DISABLENOSCROLL | SIF_PAGE | SIF_POS | SIF_RANGE;
+		info.nMin = 0;
+		info.nMax = int(childSz) - 1;
+		info.nPage = int(ourSz);
+		info.nPos = min(info.nPos, info.nMax - int(info.nPage));
+		SetScrollInfo(handle().hwnd(), which, &info, TRUE);
+	}
+
+	void ScrollWindow::updateBars(Size sz) {
+		RECT ourSize;
+		GetClientRect(handle().hwnd(), &ourSize);
+
+		if (hScroll)
+			setScrollInfo(SB_HORZ, sz.w, Float(ourSize.right));
+		if (vScroll)
+			setScrollInfo(SB_VERT, sz.h, Float(ourSize.bottom));
+
+		// Update the position of the child, since we might need less scrolling.
+		SCROLLINFO info;
+		info.cbSize = sizeof(info);
+		info.fMask = SIF_POS;
+		GetScrollInfo(handle().hwnd(), SB_VERT, &info);
+		int y = info.nPos;
+		GetScrollInfo(handle().hwnd(), SB_HORZ, &info);
+		int x = info.nPos;
+		SetWindowPos(child->handle().hwnd(), NULL, -x, -y, 0, 0, SWP_NOACTIVATE | SWP_NOZORDER | SWP_NOSIZE);
+	}
+
+	void ScrollWindow::setChildSize(Size sz) {
+		if (!child->created())
+			return;
+
+		SetWindowPos(child->handle().hwnd(), NULL, 0, 0, (int)sz.w, (int)sz.h, SWP_NOACTIVATE | SWP_NOMOVE | SWP_NOZORDER);
 	}
 
 #endif

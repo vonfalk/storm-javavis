@@ -49,6 +49,10 @@ namespace gui {
 		// Move a child widget.
 		virtual void moveChild(GtkWidget *child, Rect pos);
 #endif
+#ifdef GUI_WIN32
+		// Handle messages.
+		virtual MsgResult onMessage(const Message &msg);
+#endif
 	protected:
 		// Create.
 		virtual bool create(ContainerBase *parent, nat id);
@@ -63,6 +67,23 @@ namespace gui {
 		// Horizontal/vertical scroll.
 		Bool hScroll;
 		Bool vScroll;
+
+		// Set the size of the child window.
+		void setChildSize(Size size);
+
+#ifdef GUI_WIN32
+		// Handle a scroll message.
+		LRESULT onScroll(WPARAM wparam, int which);
+
+		// Handle a mouse wheel scroll message.
+		LRESULT onWheel(int delta, int which);
+
+		// Set scroll info for a scroll bar.
+		void setScrollInfo(int which, Float childSz, Float ourSz);
+
+		// Update scrollbars.
+		void updateBars(Size childSz);
+#endif
 	};
 
 }

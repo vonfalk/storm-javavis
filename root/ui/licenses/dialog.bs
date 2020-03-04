@@ -11,7 +11,7 @@ dialog LicenseDialog {
 		nextLine;
 		Label l("Licenses:") {}
 		nextLine;
-		ScrollWindow scroll(Licenses(), Size(100, 200)) {}
+		ScrollWindow scroll(Licenses(), Size(100, 100)) {}
 	}
 
 	init(Str name, Version? version) {
@@ -23,6 +23,15 @@ dialog LicenseDialog {
 			info.text = name;
 
 		if (buttons = scroll.content as Licenses) {
+			for (l in core:info:licenses()) {
+				buttons.add(l);
+			}
+			for (l in core:info:licenses()) {
+				buttons.add(l);
+			}
+			for (l in core:info:licenses()) {
+				buttons.add(l);
+			}
 			for (l in core:info:licenses()) {
 				buttons.add(l);
 			}
