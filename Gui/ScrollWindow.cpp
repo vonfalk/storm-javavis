@@ -23,30 +23,6 @@ namespace gui {
 		minSz = sz;
 	}
 
-	Size ScrollWindow::minSize() {
-		Size ch = child->minSize();
-
-		// Compensate for the size of the actual scrollbars.
-		if (hScroll)
-			ch.h += GetSystemMetrics(SM_CYHSCROLL);
-		if (vScroll)
-			ch.w += GetSystemMetrics(SM_CXVSCROLL);
-
-		if (hScroll) {
-			ch.w = min(ch.w, minSz.w);
-		} else {
-			ch.w = max(ch.w, minSz.w);
-		}
-
-		if (vScroll) {
-			ch.h = min(ch.h, minSz.h);
-		} else {
-			ch.h = max(ch.h, minSz.h);
-		}
-
-		return ch;
-	}
-
 	void ScrollWindow::parentCreated(nat id) {
 		Window::parentCreated(id);
 
@@ -74,11 +50,34 @@ namespace gui {
 		}
 
 		setChildSize(sz);
-		updateBars(sz);
 	}
 
 
 #ifdef GUI_WIN32
+
+	Size ScrollWindow::minSize() {
+		Size ch = child->minSize();
+
+		// Compensate for the size of the actual scrollbars.
+		if (hScroll)
+			ch.h += GetSystemMetrics(SM_CYHSCROLL);
+		if (vScroll)
+			ch.w += GetSystemMetrics(SM_CXVSCROLL);
+
+		if (hScroll) {
+			ch.w = min(ch.w, minSz.w);
+		} else {
+			ch.w = max(ch.w, minSz.w);
+		}
+
+		if (vScroll) {
+			ch.h = min(ch.h, minSz.h);
+		} else {
+			ch.h = max(ch.h, minSz.h);
+		}
+
+		return ch;
+	}
 
 	bool ScrollWindow::create(ContainerBase *parent, nat id) {
 		DWORD myFlags = 0;
@@ -251,7 +250,64 @@ namespace gui {
 			return;
 
 		SetWindowPos(child->handle().hwnd(), NULL, 0, 0, (int)sz.w, (int)sz.h, SWP_NOACTIVATE | SWP_NOMOVE | SWP_NOZORDER);
+
+		updateBars(sz);
 	}
+
+#endif
+#ifdef GUI_GTK
+
+	Size ScrollWindow::minSize() {
+		gint w = 0, h = 0;
+
+		if (created()) {
+			gtk_widget_get_preferred_width(handle().widget(), &w, NULL);
+			gtk_widget_get_preferred_height(handle().widget(), &h, NULL);
+		}
+
+		return Size(Float(w), Float(h));
+	}
+
+	bool ScrollWindow::create(ContainerBase *parent, nat id) {
+		GtkWidget *widget = gtk_scrolled_window_new(NULL, NULL);
+		initWidget(parent, widget);
+
+		GtkScrolledWindow *scroll = GTK_SCROLLED_WINDOW(widget);
+
+		GtkPolicyType hPolicy = hScroll ? GTK_POLICY_ALWAYS : GTK_POLICY_NEVER;
+		GtkPolicyType vPolicy = vScroll ? GTK_POLICY_ALWAYS : GTK_POLICY_NEVER;
+		gtk_scrolled_window_set_policy(scroll, hPolicy, vPolicy);
+
+		return true;
+	}
+
+	void ScrollWindow::horizontal(Bool v) {
+		hScroll = v;
+
+		if (created()) {
+			GtkPolicyType hPolicy = hScroll ? GTK_POLICY_ALWAYS : GTK_POLICY_NEVER;
+			GtkPolicyType vPolicy = vScroll ? GTK_POLICY_ALWAYS : GTK_POLICY_NEVER;
+			gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(handle().widget()), hPolicy, vPolicy);
+		}
+	}
+
+	void ScrollWindow::vertical(Bool v) {
+		vScroll = v;
+
+		if (created()) {
+			GtkPolicyType hPolicy = hScroll ? GTK_POLICY_ALWAYS : GTK_POLICY_NEVER;
+			GtkPolicyType vPolicy = vScroll ? GTK_POLICY_ALWAYS : GTK_POLICY_NEVER;
+			gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(handle().widget()), hPolicy, vPolicy);
+		}
+	}
+
+	void ScrollWindow::addChild(GtkWidget *child, Rect pos) {
+		gtk_container_add(GTK_CONTAINER(handle().widget()), child);
+	}
+
+	void ScrollWindow::moveChild(GtkWidget *child, Rect pos) {}
+
+	void ScrollWindow::setChildSize(Size sz) {}
 
 #endif
 

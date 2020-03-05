@@ -157,14 +157,14 @@ namespace gui {
 		return true;
 	}
 
-	void ContainerBase::addChild(GtkWidget *child, Rect pos) {
+	void Container::addChild(GtkWidget *child, Rect pos) {
 		// There is a BASIC layout inside the frame.
 		Basic *basic = BASIC(gtk_bin_get_child(GTK_BIN(handle().widget())));
 		Size s = pos.size();
 		basic_put(basic, child, pos.p0.x, pos.p0.y, s.w, s.h);
 	}
 
-	void ContainerBase::moveChild(GtkWidget *child, Rect pos) {
+	void Container::moveChild(GtkWidget *child, Rect pos) {
 		// There is a BASIC layout inside the frame.
 		Basic *basic = BASIC(gtk_bin_get_child(GTK_BIN(handle().widget())));
 		Size s = pos.size();

@@ -38,8 +38,11 @@ namespace gui {
 		using Window::text;
 		virtual void STORM_ASSIGN text(Str *str);
 
-		// Container.
-		virtual Basic *container();
+		// Add a child widget to the layout here.
+		virtual void addChild(GtkWidget *child, Rect pos);
+
+		// Move a child widget.
+		virtual void moveChild(GtkWidget *child, Rect pos);
 
 		// Get the container widget inside here.
 		virtual GtkWidget *drawWidget();

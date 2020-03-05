@@ -120,7 +120,12 @@ namespace gui {
 	}
 
 	void Dialog::close(Int result) {
-		gtk_dialog_response(GTK_DIALOG(handle().widget()), result);
+		// If opened as a regular window, it might not be a dialog.
+		if (GTK_IS_DIALOG(handle().widget())) {
+			gtk_dialog_response(GTK_DIALOG(handle().widget()), result);
+		} else {
+			Frame::close();
+		}
 	}
 
 #endif

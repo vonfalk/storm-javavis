@@ -390,12 +390,24 @@ namespace gui {
 		*store = widget;
 	}
 
-	Basic *Frame::container() {
+	static Basic *getContainer(GtkWidget *root) {
 		GtkWidget *found = null;
-		GtkWidget *vbox = gtk_bin_get_child(GTK_BIN(handle().widget()));
+		GtkWidget *vbox = gtk_bin_get_child(GTK_BIN(root));
 		gtk_container_foreach(GTK_CONTAINER(vbox), &getLastCB, &found);
 		// There is a BASIC layout at the last position.
 		return BASIC(found);
+	}
+
+	void Frame::addChild(GtkWidget *child, Rect pos) {
+		Basic *basic = getContainer(handle().widget());
+		Size s = pos.size();
+		basic_put(basic, child, pos.p0.x, pos.p0.y, s.w, s.h);
+	}
+
+	void Frame::moveChild(GtkWidget *child, Rect pos) {
+		Basic *basic = getContainer(handle().widget());
+		Size s = pos.size();
+		basic_move(basic, child, pos.p0.x, pos.p0.y, s.w, s.h);
 	}
 
 	GtkWidget *Frame::drawWidget() {

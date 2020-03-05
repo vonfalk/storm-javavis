@@ -997,7 +997,7 @@ namespace gui {
 	void Window::pos(Rect r) {
 		myPos = r;
 		if (created() && parent()) {
-			parent()->moveChild(handle().widget, myPos);
+			parent()->moveChild(handle().widget(), myPos);
 		}
 	}
 
