@@ -249,6 +249,11 @@ namespace gui {
 		if (!child->created())
 			return;
 
+		if (hScroll)
+			sz.h -= GetSystemMetrics(SM_CYHSCROLL);
+		if (vScroll)
+			sz.w -= GetSystemMetrics(SM_CXVSCROLL);
+
 		SetWindowPos(child->handle().hwnd(), NULL, 0, 0, (int)sz.w, (int)sz.h, SWP_NOACTIVATE | SWP_NOMOVE | SWP_NOZORDER);
 
 		updateBars(sz);
@@ -302,12 +307,18 @@ namespace gui {
 	}
 
 	void ScrollWindow::addChild(GtkWidget *child, Rect pos) {
+		Size sz = this->child->minSize();
+		gtk_widget_set_size_request(child, (gint)sz.w, (gint)sz.h);
+
 		gtk_container_add(GTK_CONTAINER(handle().widget()), child);
 	}
 
 	void ScrollWindow::moveChild(GtkWidget *child, Rect pos) {}
 
-	void ScrollWindow::setChildSize(Size sz) {}
+	void ScrollWindow::setChildSize(Size sz) {
+		sz = child->minSize();
+		gtk_widget_set_size_request(child->handle().widget(), (gint)sz.w, (gint)sz.h);
+	}
 
 #endif
 
