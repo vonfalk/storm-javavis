@@ -65,6 +65,14 @@ void basic_move(Basic *layout, GtkWidget *widget, gint x, gint y, gint w, gint h
 	BasicChild *child = get_child(layout, widget);
 	assert(child, L"No child info!");
 	move(layout, child, x, y, w, h);
+
+	// Update the allocation of the widget as well.
+	GtkAllocation alloc;
+	alloc.x = x;
+	alloc.y = y;
+	alloc.width = w;
+	alloc.height = h;
+	gtk_widget_size_allocate(widget, &alloc);
 }
 
 static void basic_set_property(GtkContainer *here, GtkWidget *child, guint id, const GValue *value, GParamSpec *spec) {
