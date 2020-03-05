@@ -19,9 +19,14 @@ namespace gui {
 		child->attachParent(this);
 	}
 
-	void ScrollWindow::minSize(Size sz) {
-		minSz = sz;
+	void ScrollWindow::windowDestroyed() {
+		Window::windowDestroyed();
+
+		if (child->created())
+			child->handle(invalid);
 	}
+
+#ifdef GUI_WIN32
 
 	void ScrollWindow::parentCreated(nat id) {
 		Window::parentCreated(id);
@@ -30,30 +35,9 @@ namespace gui {
 		child->parentCreated(1);
 	}
 
-	void ScrollWindow::windowDestroyed() {
-		Window::windowDestroyed();
-
-		if (child->created())
-			child->handle(invalid);
+	void ScrollWindow::minSize(Size sz) {
+		minSz = sz;
 	}
-
-	void ScrollWindow::resized(Size size) {
-		Window::resized(size);
-
-		Size sz = child->minSize();
-		if (!hScroll) {
-			sz.w = size.w;
-		}
-
-		if (!vScroll) {
-			sz.h = size.h;
-		}
-
-		setChildSize(sz);
-	}
-
-
-#ifdef GUI_WIN32
 
 	Size ScrollWindow::minSize() {
 		Size ch = child->minSize();
@@ -77,6 +61,22 @@ namespace gui {
 		}
 
 		return ch;
+	}
+
+	void ScrollWindow::resized(Size size) {
+		Window::resized(size);
+
+		Size sz = child->minSize();
+		if (!hScroll) {
+			sz.w = size.w;
+		}
+
+		if (!vScroll) {
+			sz.h = size.h;
+		}
+
+		setChildSize(sz);
+		updateBars(sz);
 	}
 
 	bool ScrollWindow::create(ContainerBase *parent, nat id) {
@@ -255,12 +255,20 @@ namespace gui {
 			sz.w -= GetSystemMetrics(SM_CXVSCROLL);
 
 		SetWindowPos(child->handle().hwnd(), NULL, 0, 0, (int)sz.w, (int)sz.h, SWP_NOACTIVATE | SWP_NOMOVE | SWP_NOZORDER);
-
-		updateBars(sz);
 	}
 
 #endif
 #ifdef GUI_GTK
+
+	void ScrollWindow::minSize(Size sz) {
+		minSz = sz;
+
+		if (created()) {
+			GtkScrolledWindow *scroll = GTK_SCROLLED_WINDOW(handle().widget());
+			gtk_scrolled_window_set_min_content_height(scroll, (gint)sz.h);
+			gtk_scrolled_window_set_min_content_width(scroll, (gint)sz.w);
+		}
+	}
 
 	Size ScrollWindow::minSize() {
 		gint w = 0, h = 0;
@@ -270,18 +278,21 @@ namespace gui {
 			gtk_widget_get_preferred_height(handle().widget(), &h, NULL);
 		}
 
-		return Size(Float(w), Float(h));
+		return Size(max(minSz.w, Float(w)), max(minSz.h, Float(h)));
 	}
+
+	void ScrollWindow::resized(Size sz) {}
 
 	bool ScrollWindow::create(ContainerBase *parent, nat id) {
 		GtkWidget *widget = gtk_scrolled_window_new(NULL, NULL);
-		initWidget(parent, widget);
-
-		GtkScrolledWindow *scroll = GTK_SCROLLED_WINDOW(widget);
 
 		GtkPolicyType hPolicy = hScroll ? GTK_POLICY_ALWAYS : GTK_POLICY_NEVER;
 		GtkPolicyType vPolicy = vScroll ? GTK_POLICY_ALWAYS : GTK_POLICY_NEVER;
-		gtk_scrolled_window_set_policy(scroll, hPolicy, vPolicy);
+		gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(widget), hPolicy, vPolicy);
+
+		minSize(minSz);
+
+		initWidget(parent, widget);
 
 		return true;
 	}
@@ -306,19 +317,24 @@ namespace gui {
 		}
 	}
 
-	void ScrollWindow::addChild(GtkWidget *child, Rect pos) {
-		Size sz = this->child->minSize();
-		gtk_widget_set_size_request(child, (gint)sz.w, (gint)sz.h);
+	void ScrollWindow::parentCreated(nat id) {
+		Window::parentCreated(id);
 
+		// Create the child with id 1.
+		child->parentCreated(1);
+
+		// Child widgets need to be realized for 'minSize' to work reasonably well.
+		Size sz = this->child->minSize();
+		gtk_widget_set_size_request(child->handle().widget(), (gint)sz.w, (gint)sz.h);
+	}
+
+	void ScrollWindow::addChild(GtkWidget *child, Rect pos) {
 		gtk_container_add(GTK_CONTAINER(handle().widget()), child);
 	}
 
 	void ScrollWindow::moveChild(GtkWidget *child, Rect pos) {}
 
-	void ScrollWindow::setChildSize(Size sz) {
-		sz = child->minSize();
-		gtk_widget_set_size_request(child->handle().widget(), (gint)sz.w, (gint)sz.h);
-	}
+	void ScrollWindow::setChildSize(Size sz) {}
 
 #endif
 
