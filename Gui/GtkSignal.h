@@ -28,11 +28,12 @@ namespace gui {
 				Engine *e = (Engine *)engine;
 				App *app = gui::app(*e);
 
+				GtkWidget *at = src;
 				Window *win = null;
-				while ((win = app->findWindow(Handle(src))) == null) {
-					src = gtk_widget_get_parent(src);
-					if (!src) {
-						WARNING(L"Unknown window!");
+				while ((win = app->findWindow(Handle(at))) == null) {
+					at = gtk_widget_get_parent(at);
+					if (!at) {
+						WARNING(L"Unknown window: " << src);
 						return Result();
 					}
 				}

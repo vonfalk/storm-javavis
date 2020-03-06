@@ -45,8 +45,9 @@ static void move(Basic *me, BasicChild *child, gint x, gint y, gint w, gint h) {
 	child->h = h;
 
 	gtk_widget_thaw_child_notify(child->widget);
-	if (gtk_widget_get_visible(child->widget) && gtk_widget_get_visible(GTK_WIDGET(me)))
-		gtk_widget_queue_resize(GTK_WIDGET(me));
+	// This breaks scrollbars in GtkScrolledWindow...
+	// if (gtk_widget_get_visible(child->widget) && gtk_widget_get_visible(GTK_WIDGET(me)))
+	// 	gtk_widget_queue_resize(GTK_WIDGET(me));
 }
 
 void basic_put(Basic *layout, GtkWidget *widget, gint x, gint y, gint w, gint h) {
