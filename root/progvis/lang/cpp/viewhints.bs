@@ -74,7 +74,9 @@ class CppViewHints extends ViewHints {
 			Nat offset = i * elemSz;
 
 			// Primitive?
-			if (info.type is named{Byte}) {
+			if (ptr = info.type as PtrType) {
+				result.add("", offset, CppPointer(hints), true);
+			} else if (info.type is named{Byte}) {
 				result.add("", offset, CppChar(), true);
 			} else if (c = convertPrimitive(info.type, base, offset)) {
 				result.add("", offset, Primitive(info.type, c), true);
@@ -136,6 +138,11 @@ class CppPointer extends Pointer {
 		var off = baseData.findOffset(ptrOffset);
 		this.to = off.data;
 		this.offset = off.offset;
+	}
+
+	DataOffset findOffset(Nat offset) : override {
+		Float o = min(offset.int.float / (2*core:asm:sPtr.current.int.float), 1.0);
+		DataOffset(this, o * size.h);
 	}
 }
 

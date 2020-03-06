@@ -96,15 +96,16 @@ class PtrType extends Type {
 
 		// Pointer arithmetic.
 		if (t = inside) {
-			addFn(val, "+", [ref, int], ptrAdd(Offset(t.size)));
-			addFn(val, "-", [ref, int], ptrAdd(Offset(t.size)));
-			addFn(ref, "+=", [ref, int], ptrInc(Offset(t.size)));
-			addFn(ref, "-=", [ref, int], ptrInc(-Offset(t.size)));
-			addFn(val, "*++", [ref], ptrPrefixInc(Offset(t.size)));
-			addFn(ref, "++*", [ref], ptrPostfixInc(Offset(t.size)));
-			addFn(val, "*--", [ref], ptrPrefixInc(-Offset(t.size)));
-			addFn(ref, "--*", [ref], ptrPostfixInc(-Offset(t.size)));
-			addFn(int, "-", [ref, ref], ptrDiff(Offset(t.size)));
+			Size sz = t.size.aligned;
+			addFn(val, "+", [ref, int], ptrAdd(Offset(sz)));
+			addFn(val, "-", [ref, int], ptrAdd(Offset(sz)));
+			addFn(ref, "+=", [ref, int], ptrInc(Offset(sz)));
+			addFn(ref, "-=", [ref, int], ptrInc(-Offset(sz)));
+			addFn(val, "++*", [ref], ptrPrefixInc(Offset(sz)));
+			addFn(ref, "*++", [ref], ptrPostfixInc(Offset(sz)));
+			addFn(val, "--*", [ref], ptrPrefixInc(-Offset(sz)));
+			addFn(ref, "*--", [ref], ptrPostfixInc(-Offset(sz)));
+			addFn(int, "-", [ref, ref], ptrDiff(Offset(sz)));
 		}
 
 		// TODO: Add suitable members!
@@ -163,8 +164,8 @@ class PtrType extends Type {
 		l;
 	}
 
-	// Postfix ++ and --.
-	private Listing ptrPostfixInc(Offset offset) {
+	// Prefix ++ and --.
+	private Listing ptrPrefixInc(Offset offset) {
 		Listing l(true, ptrDesc);
 
 		Var me = l.createParam(ptrDesc);
@@ -177,8 +178,8 @@ class PtrType extends Type {
 		l;
 	}
 
-	// Prefix ++ and --.
-	private Listing ptrPrefixInc(Offset offset) {
+	// Postfix ++ and --.
+	private Listing ptrPostfixInc(Offset offset) {
 		Listing l(true, Value(this).desc);
 
 		Var me = l.createParam(ptrDesc);

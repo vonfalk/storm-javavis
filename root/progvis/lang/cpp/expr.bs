@@ -139,11 +139,11 @@ class IntLiteral extends Expr {
  * Sizeof expression.
  */
 IntLiteral sizeofExpr(SrcPos pos, Expr expr) {
-	IntLiteral(pos, expr.result.type.size.current.long);
+	IntLiteral(pos, expr.result.type.size.aligned.current.long);
 }
 
 IntLiteral sizeofExpr(SrcPos pos, Value type) {
-	IntLiteral(pos, type.size.current.long);
+	IntLiteral(pos, type.size.aligned.current.long);
 }
 
 /**
@@ -1100,6 +1100,10 @@ class AddressOf extends ExprRef {
 		init(of.pos) { of = of; }
 	}
 
+	init(SrcPos pos, Expr of) {
+		init(pos) { of = of; }
+	}
+
 	Expr of;
 
 	ExprResult result() : override {
@@ -1120,7 +1124,7 @@ class AddressOf extends ExprRef {
 
 			var.adjust(gen, res.location(gen));
 		} else {
-			of.codePtr(gen, type);
+			ptrNoCheck(of, gen, type);
 			gen.l << lea(ptrA, res.location(gen));
 			gen.l << mov(ptrRel(ptrA, Offset()), ptrB);
 			gen.l << mov(intRel(ptrA, Offset(sPtr)), ecx);
@@ -1129,7 +1133,7 @@ class AddressOf extends ExprRef {
 	}
 
 	void codeRef(CodeGen gen, CppVar var) : override {
-		of.codePtr(gen, safeType(of.result.type, pos));
+		ptrNoCheck(of, gen, safeType(of.result.type, pos));
 
 		var.adjust(gen, ptrA);
 		gen.l << mov(ptrRel(ptrA, Offset()), ptrB);
@@ -1142,6 +1146,15 @@ class AddressOf extends ExprRef {
 		codeRef(gen, var);
 		gen.l << location(SrcPos());
 		var.ptr(gen);
+	}
+
+	// Call 'codePtr' without checking for buffer overruns.
+	private void ptrNoCheck(Expr of, CodeGen gen, Type type) {
+		if (of as Deref) {
+			of.codePtrNoCheck(gen, type);
+		} else {
+			of.codePtr(gen, type);
+		}
 	}
 }
 
@@ -1185,6 +1198,12 @@ class Deref extends Expr {
 			throw SyntaxError(original.pos, "Unable to dereference a value of type ${original.result.type}.");
 
 		Deref(original);
+	}
+
+	Deref ptr(SrcPos pos, Expr original) : static {
+		Deref r = ptr(original);
+		r.pos = pos;
+		r;
 	}
 
 	Deref ref(Expr original) : static {
@@ -1248,6 +1267,18 @@ class Deref extends Expr {
 		of.code(gen, p);
 
 		check(gen, p.location(gen), result.type.asRef(false).size());
+
+		gen.l << mov(ptrA, p.location(gen));
+
+		// Load the base and offset.
+		gen.l << mov(ptrB, ptrRel(ptrA, Offset()));
+		gen.l << mov(ecx, intRel(ptrA, Offset(sPtr)));
+	}
+
+	// Like 'codePtr' but does not check for buffer overruns.
+	void codePtrNoCheck(CodeGen gen, Type type) {
+		CodeResult p(of.result.type.asRef(), gen.block);
+		of.code(gen, p);
 
 		gen.l << mov(ptrA, p.location(gen));
 

@@ -275,7 +275,7 @@ class Pointer extends Data {
 	}
 
 	DataOffset findOffset(Nat offset) : override {
-		Float o = offset.int.float / core:asm:sPtr.current.int.float;
+		Float o = min(offset.int.float / core:asm:sPtr.current.int.float, 1.0);
 		DataOffset(this, o * size.h);
 	}
 }

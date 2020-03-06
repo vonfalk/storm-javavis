@@ -206,7 +206,7 @@ SExpr => CommaExpr(pos, lhs, rhs) : SExpr(block) lhs, ",", SExprNoComma(block) r
 // Operators, level 16 according to https://en.cppreference.com/w/cpp/language/operator_precedence
 Expr SExprNoComma(Block block);
 SExprNoComma => n : SOp15(block) n;
-SExprNoComma => operator(block, l, op, r) : SOp15(block) l, "[+-*/%&^|]?=" @op, SExprNoComma(block) r;
+SExprNoComma => operator(block, l, op, r) : SOp15(block) l, "[+\-*/%&^|]?=" @op, SExprNoComma(block) r;
 SExprNoComma => operator(block, l, op, r) : SOp15(block) l, "<<=" @op, SExprNoComma(block) r;
 SExprNoComma => operator(block, l, op, r) : SOp15(block) l, ">>=" @op, SExprNoComma(block) r;
 
@@ -260,8 +260,8 @@ SOp4 => operator(block, l, op, r) : SOp4(block) l, "->\*" @op, SOp3(block) r;
 
 Expr SOp3(Block block);
 SOp3 => n : SOp2(block) n;
-SOp3 => Deref.ptr(n) : "\*", SOp3(block) n;
-SOp3 => AddressOf(n) : "&", SOp3(block) n;
+SOp3 => Deref.ptr(pos, n) : "\*", SOp3(block) n;
+SOp3 => AddressOf(pos, n) : "&", SOp3(block) n;
 SOp3 => unaryOperator(block, op, n) : "~" @op, SOp3(block) n;
 SOp3 => NegateOp(pos, block, n) : "!", SOp3(block) n;
 SOp3 => operator(block, op, n) : "\+\+?" @op, SOp2(block) n;
