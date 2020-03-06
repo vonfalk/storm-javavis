@@ -259,7 +259,7 @@ namespace gui {
 				return msgResult(0);
 			break;
 		case WM_MOUSEHWHEEL:
-			if (onMouseVScroll(mouseAbsPos(handle(), msg), GET_WHEEL_DELTA_WPARAM(msg.wParam)))
+			if (onMouseHScroll(mouseAbsPos(handle(), msg), GET_WHEEL_DELTA_WPARAM(msg.wParam)))
 				return msgResult(0);
 			break;
 		case WM_MOUSELEAVE:
@@ -686,16 +686,16 @@ namespace gui {
 		bool ok = false;
 		switch (s.direction) {
 		case GDK_SCROLL_UP:
-			onMouseVScroll(pt, Int(dx));
+			ok = onMouseVScroll(pt, Int(dx));
 			break;
 		case GDK_SCROLL_DOWN:
-			onMouseVScroll(pt, -Int(dx));
+			ok = onMouseVScroll(pt, -Int(dx));
 			break;
 		case GDK_SCROLL_LEFT:
-			onMouseHScroll(pt, -Int(dy));
+			ok = onMouseHScroll(pt, -Int(dy));
 			break;
 		case GDK_SCROLL_RIGHT:
-			onMouseHScroll(pt, Int(dy));
+			ok = onMouseHScroll(pt, Int(dy));
 			break;
 		}
 		return ok ? TRUE : FALSE;
