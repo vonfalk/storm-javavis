@@ -2,6 +2,7 @@
 #include "Menu.h"
 #include "Exception.h"
 #include "App.h"
+#include "Frame.h"
 
 namespace gui {
 
@@ -31,11 +32,17 @@ namespace gui {
 		items->push(item);
 
 		item->attached(this, id);
+
+		repaint();
 	}
 
 	Menu &Menu::operator <<(Item *item) {
 		push(item);
 		return *this;
+	}
+
+	void Menu::repaint() {
+		// Don't need to do anything here.
 	}
 
 	Menu *Menu::findMenu(Handle handle) {
@@ -59,7 +66,7 @@ namespace gui {
 	}
 
 
-	Menu::Item::Item() : owner(null) {}
+	Menu::Item::Item() : owner(null), enable(true) {}
 
 	void Menu::Item::attached(Menu *to, Nat id) {
 		if (owner)
@@ -95,16 +102,20 @@ namespace gui {
 
 	Menu::Separator::Separator() {}
 
+	Menu::WithTitle::WithTitle(Str *title) : myTitle(title) {}
 
-	Menu::Text::Text(Str *title) : myTitle(title) {}
+	Menu::Text::Text(Str *title) : WithTitle(title) {}
 
-	Menu::Text::Text(Str *title, Fn<void> *callback) : myTitle(title), onClick(callback) {}
+	Menu::Text::Text(Str *title, Fn<void> *callback) : WithTitle(title), onClick(callback) {}
 
 	void Menu::Text::clicked() {
 		if (onClick)
 			onClick->call();
 	}
 
+	Menu::Check::Check(Str *title) : WithTitle(title) {}
+
+	Menu::Check::Check(Str *title, Fn<void, Bool> *callback) : WithTitle(title), onClick(callback) {}
 
 	Menu::Submenu::Submenu(Str *title, PopupMenu *menu) : Text(title), myMenu(menu) {}
 
@@ -124,22 +135,95 @@ namespace gui {
 
 #ifdef GUI_WIN32
 
+	void Menu::Item::enabled(Bool v) {
+		enable = v;
+
+		if (owner) {
+			MENUITEMINFO info;
+			info.cbSize = sizeof(info);
+			info.fMask = MIIM_STATE;
+			GetMenuItemInfo(owner->handle.menu(), id, TRUE, &info);
+			if (enable)
+				info.fState &= ~MF_DISABLED;
+			else
+				info.fState |= MF_DISABLED;
+			SetMenuItemInfo(owner->handle.menu(), id, TRUE, &info);
+
+			owner->repaint();
+		}
+	}
+
 	void Menu::Separator::create() {
 		AppendMenu(owner->handle.menu(), MF_SEPARATOR, 1, L"");
 	}
 
-	void Menu::Text::title(Str *title) {
+	void Menu::WithTitle::title(Str *title) {
 		myTitle = title;
 
-		MENUITEMINFO info;
-		info.cbSize = sizeof(info);
-		info.fMask = MIIM_STRING;
-		info.dwTypeData = (LPWSTR)myTitle->c_str();
-		SetMenuItemInfo(owner->handle.menu(), id, FALSE, &info);
+		if (owner) {
+			MENUITEMINFO info;
+			info.cbSize = sizeof(info);
+			info.fMask = MIIM_STRING;
+			info.dwTypeData = (LPWSTR)myTitle->c_str();
+			SetMenuItemInfo(owner->handle.menu(), id, TRUE, &info);
+
+			owner->repaint();
+		}
 	}
 
 	void Menu::Text::create() {
-		AppendMenu(owner->handle.menu(), MF_STRING, 1, myTitle->c_str());
+		UINT flags = MF_STRING;
+		if (!enable)
+			flags |= MF_DISABLED;
+		AppendMenu(owner->handle.menu(), flags, 1, myTitle->c_str());
+	}
+
+	Bool Menu::Check::checked() {
+		if (owner) {
+			MENUITEMINFO info;
+			info.cbSize = sizeof(info);
+			info.fMask = MIIM_STATE;
+			GetMenuItemInfo(owner->handle.menu(), id, TRUE, &info);
+
+			myChecked = (info.fState & MF_CHECKED) != 0;
+		}
+
+		return myChecked;
+	}
+
+	void Menu::Check::checked(Bool v) {
+		myChecked = v;
+
+		if (owner) {
+			MENUITEMINFO info;
+			info.cbSize = sizeof(info);
+			info.fMask = MIIM_STATE;
+			GetMenuItemInfo(owner->handle.menu(), id, TRUE, &info);
+			if (v)
+				info.fState |= MF_CHECKED;
+			else
+				info.fState &= ~MF_CHECKED;
+			SetMenuItemInfo(owner->handle.menu(), id, TRUE, &info);
+
+			owner->repaint();
+		}
+	}
+
+	void Menu::Check::clicked() {
+		Bool check = !checked();
+		checked(check);
+
+		if (onClick)
+			onClick->call(check);
+	}
+
+	void Menu::Check::create() {
+		UINT flags = MF_STRING;
+		if (!enable)
+			flags |= MF_DISABLED;
+		if (myChecked)
+			flags |= MF_CHECKED;
+		AppendMenu(owner->handle.menu(), flags, 1, myTitle->c_str());
 	}
 
 	void Menu::Submenu::create() {
@@ -147,7 +231,10 @@ namespace gui {
 			throw new (this) GuiError(S("This sub-menu is already used somewhere else!"));
 		myMenu->parent = owner;
 
-		AppendMenu(owner->handle.menu(), MF_STRING | MF_POPUP, (UINT_PTR)myMenu->handle.menu(), myTitle->c_str());
+		UINT flags = MF_STRING | MF_POPUP;
+		if (!enable)
+			flags |= MF_DISABLED;
+		AppendMenu(owner->handle.menu(), flags, (UINT_PTR)myMenu->handle.menu(), myTitle->c_str());
 	}
 
 	void Menu::Submenu::destroy() {
@@ -176,6 +263,14 @@ namespace gui {
 	MenuBar::MenuBar() {
 		handle = CreateMenu();
 		setupMenu(handle.menu());
+	}
+
+	void MenuBar::repaint() {
+		if (attachedTo) {
+			if (attachedTo->created()) {
+				DrawMenuBar(attachedTo->handle().hwnd());
+			}
+		}
 	}
 
 #endif
@@ -254,6 +349,8 @@ namespace gui {
 		g_object_ref_sink(created);
 		handle = created;
 	}
+
+	void MenuBar::repaint() {}
 
 #endif
 

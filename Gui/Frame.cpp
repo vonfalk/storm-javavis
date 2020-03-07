@@ -2,6 +2,7 @@
 #include "Frame.h"
 #include "App.h"
 #include "GtkSignal.h"
+#include "Exception.h"
 
 namespace gui {
 
@@ -72,8 +73,16 @@ namespace gui {
 	}
 
 	void Frame::menu(MenuBar *menu) {
+		if (menu->attachedTo && menu != myMenu)
+			throw new (this) GuiError(S("A menu can only be attached to one frame at a time."));
+
 		MenuBar *old = myMenu;
+		if (old)
+			old->attachedTo = null;
+
 		myMenu = menu;
+		if (menu)
+			menu->attachedTo = this;
 
 		if (created()) {
 			setMenu(old);
@@ -291,6 +300,27 @@ namespace gui {
 
 			(*m)[id]->clicked();
 		}
+	}
+
+	void Frame::popupMenu(PopupMenu *menu) {
+		if (!created())
+			throw new (this) GuiError(S("Can not show a popup menu from a window that is not created."));
+
+		POINT pt;
+		GetCursorPos(&pt);
+		RECT limits;
+		GetWindowRect(handle().hwnd(), &limits);
+
+		if (pt.x < limits.left)
+			pt.x = limits.left;
+		if (pt.x > limits.right - 1)
+			pt.x = limits.right - 1;
+		if (pt.y < limits.top)
+			pt.y = limits.top;
+		if (pt.y > limits.bottom - 1)
+			pt.y = limits.bottom - 1;
+
+		TrackPopupMenuEx(menu->handle.menu(), TPM_LEFTALIGN | TPM_TOPALIGN, pt.x, pt.y, handle().hwnd(), NULL);
 	}
 
 

@@ -5,13 +5,16 @@ use core:geometry;
 class MenuWindow extends Frame {
 	init() {
 		MenuBar root;
+		PopupMenu help;
 
 		init("Menu test", Size(300, 100)) {
 			root = root;
+			help = help;
 		}
 
-		PopupMenu help;
-		help << Menu:Text("Help") << Menu:Separator() << Menu:Text("About...", &this.showAbout());
+		help << Menu:Check("Enable help", &this.enableHelp);
+		help << Menu:Text("Help", &this.showHelp) << Menu:Separator() << Menu:Text("About...", &this.showAbout());
+		help[1].enabled = false;
 
 		root << Menu:Text("Test") << Menu:Submenu("Help", help);
 		menu = root;
@@ -20,6 +23,7 @@ class MenuWindow extends Frame {
 	}
 
 	MenuBar root;
+	PopupMenu help;
 
 	Bool onClick(Bool pressed, Point at, MouseButton button) : override {
 		if (pressed) {
@@ -28,8 +32,10 @@ class MenuWindow extends Frame {
 					menu = null;
 				else
 					menu = root;
-			} else if (button == MouseButton:right) {
+			} else if (button == MouseButton:middle) {
 				fullscreen = !fullscreen;
+			} else if (button == MouseButton:right) {
+				popupMenu(help);
 			}
 		}
 
@@ -40,6 +46,14 @@ class MenuWindow extends Frame {
 		AboutWindow win;
 		Int r = win.show(this);
 		print("Result: ${r}");
+	}
+
+	void enableHelp(Bool enabled) {
+		help[1].enabled = enabled;
+	}
+
+	void showHelp() {
+		root << Menu:Text("Bonus");
 	}
 }
 

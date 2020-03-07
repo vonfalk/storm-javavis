@@ -39,6 +39,10 @@ namespace gui {
 			// Called when the item was clicked.
 			virtual void STORM_FN clicked();
 
+			// Set the enabled flag.
+			virtual void STORM_ASSIGN enabled(Bool value);
+			inline Bool STORM_FN enabled() { return enable; }
+
 			// Find a sub-menu from its handle.
 			virtual MAYBE(Menu *) findMenu(Handle handle) const;
 
@@ -51,6 +55,9 @@ namespace gui {
 
 			// Our ID inside 'owner'.
 			Nat id;
+
+			// Enabled?
+			Bool enable;
 
 			// Handle to the item we contain.
 			Handle handle;
@@ -77,18 +84,32 @@ namespace gui {
 		};
 
 		/**
+		 * Base class for items with text.
+		 */
+		class WithTitle : public Item {
+			STORM_ABSTRACT_CLASS;
+		public:
+			// Create.
+			STORM_CTOR WithTitle(Str *title);
+
+			// Get/set the title.
+			Str *STORM_FN title() const { return myTitle; }
+			void STORM_ASSIGN title(Str *title);
+
+		protected:
+			// Title.
+			Str *myTitle;
+		};
+
+		/**
 		 * A single menu item containing text.
 		 */
-		class Text : public Item {
+		class Text : public WithTitle {
 			STORM_CLASS;
 		public:
 			// Create.
 			STORM_CTOR Text(Str *title);
 			STORM_CTOR Text(Str *title, Fn<void> *fn);
-
-			// Get/set the title.
-			Str *STORM_FN title() const { return myTitle; }
-			void STORM_ASSIGN title(Str *title);
 
 			// Callback.
 			MAYBE(Fn<void> *) onClick;
@@ -99,9 +120,34 @@ namespace gui {
 		protected:
 			// Create our element.
 			virtual void STORM_FN create();
+		};
 
-			// Title.
-			Str *myTitle;
+		/**
+		 * A menu with a check mark.
+		 */
+		class Check : public WithTitle {
+			STORM_CLASS;
+		public:
+			// Create.
+			STORM_CTOR Check(Str *title);
+			STORM_CTOR Check(Str *title, Fn<void, Bool> *fn);
+
+			// Callback.
+			MAYBE(Fn<void, Bool> *) onClick;
+
+			// Get/set checked.
+			Bool STORM_FN checked();
+			void STORM_ASSIGN checked(Bool v);
+
+			// Called when the item was clicked.
+			virtual void STORM_FN clicked();
+
+		protected:
+			// Create the element.
+			virtual void STORM_FN create();
+
+			// Checked?
+			Bool myChecked;
 		};
 
 		/**
@@ -112,6 +158,9 @@ namespace gui {
 		public:
 			// Create.
 			STORM_CTOR Submenu(Str *title, PopupMenu *menu);
+
+			// Get the submenu.
+			PopupMenu *STORM_FN menu() const { return myMenu; }
 
 			// Find a sub-menu from its handle.
 			virtual MAYBE(Menu *) findMenu(Handle handle) const;
@@ -141,6 +190,9 @@ namespace gui {
 
 		// Get an item.
 		Item *STORM_FN operator [](Nat id) const { return items->at(id); }
+
+		// Called to repaint this menu if needed.
+		virtual void repaint();
 
 		// Find a sub-menu from its handle.
 		MAYBE(Menu *) findMenu(Handle handle);
@@ -181,6 +233,12 @@ namespace gui {
 	public:
 		// Create.
 		STORM_CTOR MenuBar();
+
+		// Currently attached to this Frame.
+		MAYBE(Frame *) attachedTo;
+
+		// Repaint.
+		virtual void repaint();
 	};
 
 }
