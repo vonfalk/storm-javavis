@@ -116,6 +116,9 @@ namespace gui {
 		// Cursor visible?
 		Bool showCursor;
 
+		// Was our position altered?
+		Bool posSet;
+
 #ifdef GUI_WIN32
 		// Find the clicked menu item.
 		void menuClicked(HMENU menu, Nat id);

@@ -425,10 +425,11 @@ namespace gui {
 		}
 
 		if (flags & cAutoPos) {
-			// Outside the screen? TODO: Check for something other than 0, screen coords may be negative!
-			if (myPos.p1.x < 0 && myPos.p1.y < 0) {
-				p.x = CW_USEDEFAULT;
-				p.y = 0;
+			p.x = CW_USEDEFAULT;
+			p.y = 0;
+
+			if (parent != NULL) {
+				TODO(L"Position at the center of the parent!");
 			}
 
 			// Invalid size?

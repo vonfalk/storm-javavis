@@ -15,6 +15,7 @@ namespace gui {
 		attachParent(this);
 		text(title);
 		pos(Rect(-10000, -10000, -10002, -10002));
+		posSet = false;
 	}
 
 	Frame::Frame(Str *title, Size size) : myMenu(null), full(false), showCursor(true) {
@@ -22,6 +23,7 @@ namespace gui {
 		attachParent(this);
 		text(title);
 		pos(Rect(Point(-10000, -10000), size));
+		posSet = false;
 	}
 
 	void Frame::create() {
@@ -46,9 +48,11 @@ namespace gui {
 
 	void Frame::size(Size s) {
 		if (!full) {
+			Bool oldSet = posSet;
 			Rect p = pos();
 			p.size(s);
 			pos(p);
+			posSet = oldSet;
 		}
 	}
 
@@ -135,6 +139,8 @@ namespace gui {
 		if (full)
 			return;
 
+		posSet = true;
+
 		// We need to do this to take the menu into account.
 		myPos = r;
 		if (created()) {
@@ -200,7 +206,11 @@ namespace gui {
 		HWND hParent = NULL;
 		if (parent)
 			hParent = parent->handle().hwnd();
-		if (!createEx(NULL, styles, exStyles, hParent, 0, cManualVisibility | cAutoPos))
+		CreateFlags cFlags = cManualVisibility;
+		PVAR(posSet);
+		if (!posSet)
+			cFlags |= cAutoPos;
+		if (!createEx(NULL, styles, exStyles, hParent, 0, cFlags))
 			return false;
 
 		// Create child windows (little of a hack, sorry!)
@@ -338,6 +348,7 @@ namespace gui {
 
 	void Frame::pos(Rect r) {
 		myPos = r;
+		posSet = true;
 		if (!full && handle() != Handle()) {
 			gtk_window_resize(GTK_WINDOW(handle().widget()), r.size().w, r.size().h);
 		}
