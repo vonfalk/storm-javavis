@@ -73,7 +73,7 @@ namespace gui {
 	}
 
 	void Frame::menu(MenuBar *menu) {
-		if (menu->attachedTo && menu != myMenu)
+		if (menu && menu->attachedTo && menu != myMenu)
 			throw new (this) GuiError(S("A menu can only be attached to one frame at a time."));
 
 		MenuBar *old = myMenu;
@@ -94,11 +94,20 @@ namespace gui {
 	}
 
 	Menu::Item *Frame::findMenuItem(Handle h) {
-		if (myMenu)
-			if (Menu::Item *found = myMenu->findMenuItem(h))
+		if (myMenu) {
+			if (Menu::Item *found = myMenu->findMenuItem(h)) {
 				return found;
+			}
+		}
 
-		TODO(L"Take care of any pop-up menus as well!");
+		if (myPopup) {
+			if (Menu::Item *found = myPopup->findMenuItem(h)) {
+				// This will not cover the case when a menu is closed without any selection, but it
+				// seems it is the best we can do.
+				myPopup = null;
+				return found;
+			}
+		}
 
 		return null;
 	}
@@ -502,6 +511,16 @@ namespace gui {
 		if (!full)
 			gtk_window_resize(GTK_WINDOW(handle().widget()), oldWidth, oldHeight + heightDiff);
 
+	}
+
+	void Frame::popupMenu(PopupMenu *menu) {
+		if (!created())
+			throw new (this) GuiError(S("Can not show a popup menu from a window that is not created."));
+
+		// Note: We will keep the popup alive a bit too long here, as it is difficult to get a
+		// definitive answer as to when the popup menu is closed.
+		myPopup = menu;
+		gtk_menu_popup_at_pointer(GTK_MENU(menu->handle.widget()), NULL);
 	}
 
 #endif

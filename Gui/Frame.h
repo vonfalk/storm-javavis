@@ -97,6 +97,12 @@ namespace gui {
 		// Window menu.
 		MAYBE(MenuBar *) myMenu;
 
+		// Popup menu we're tracking.
+		MAYBE(PopupMenu *) myPopup;
+
+		// Needed for alignment at the moment.
+		void *dummy;
+
 		// Cached minimum size. Updated whenever the window is resized.
 		Size lastMinSize;
 

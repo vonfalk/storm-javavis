@@ -117,7 +117,7 @@ namespace gui {
 
 	Menu::Check::Check(Str *title, Fn<void, Bool> *callback) : WithTitle(title), onClick(callback) {}
 
-	Menu::Submenu::Submenu(Str *title, PopupMenu *menu) : Text(title), myMenu(menu) {}
+	Menu::Submenu::Submenu(Str *title, PopupMenu *menu) : WithTitle(title), myMenu(menu) {}
 
 	Menu *Menu::Submenu::findMenu(Handle handle) const {
 		if (myMenu)
@@ -126,7 +126,7 @@ namespace gui {
 	}
 
 	Menu::Item *Menu::Submenu::findMenuItem(Handle handle) {
-		if (Item *i = Text::findMenuItem(handle))
+		if (Item *i = WithTitle::findMenuItem(handle))
 			return i;
 		if (myMenu)
 			return myMenu->findMenuItem(handle);
@@ -302,6 +302,14 @@ namespace gui {
 		g_signal_connect(to, "activate", (GCallback)&menuCallback, &e);
 	}
 
+	void Menu::Item::enabled(Bool v) {
+		enable = v;
+
+		if (handle != Handle()) {
+			gtk_widget_set_sensitive(handle.widget(), v ? TRUE : FALSE);
+		}
+	}
+
 	void Menu::Separator::create() {
 		GtkWidget *created = gtk_separator_menu_item_new();
 		g_object_ref_sink(created);
@@ -309,7 +317,7 @@ namespace gui {
 		gtk_menu_shell_append(GTK_MENU_SHELL(owner->handle.widget()), created);
 	}
 
-	void Menu::Text::title(Str *title) {
+	void Menu::WithTitle::title(Str *title) {
 		myTitle = title;
 
 		if (handle != Handle())
@@ -319,13 +327,52 @@ namespace gui {
 	void Menu::Text::create() {
 		GtkWidget *created = gtk_menu_item_new_with_label(myTitle->utf8_str());
 		g_object_ref_sink(created);
+		gtk_widget_set_sensitive(created, enable ? TRUE : FALSE);
+		handle = created;
+		gtk_menu_shell_append(GTK_MENU_SHELL(owner->handle.widget()), created);
+		connectMenu(created, engine());
+	}
+
+	Bool Menu::Check::checked() {
+		if (handle != Handle()) {
+			myChecked = gtk_check_menu_item_get_active(GTK_CHECK_MENU_ITEM(handle.widget()));
+		}
+
+		return myChecked;
+	}
+
+	void Menu::Check::checked(Bool v) {
+		myChecked = v;
+
+		if (handle != Handle()) {
+			gtk_check_menu_item_set_active(GTK_CHECK_MENU_ITEM(handle.widget()), v ? TRUE : FALSE);
+		}
+	}
+
+	void Menu::Check::clicked() {
+		Bool check = checked();
+		// checked(check);
+
+		if (onClick)
+			onClick->call(check);
+	}
+
+	void Menu::Check::create() {
+		GtkWidget *created = gtk_check_menu_item_new_with_label(myTitle->utf8_str());
+		g_object_ref_sink(created);
+		gtk_widget_set_sensitive(created, enable ? TRUE : FALSE);
 		handle = created;
 		gtk_menu_shell_append(GTK_MENU_SHELL(owner->handle.widget()), created);
 		connectMenu(created, engine());
 	}
 
 	void Menu::Submenu::create() {
-		Text::create();
+		GtkWidget *created = gtk_menu_item_new_with_label(myTitle->utf8_str());
+		g_object_ref_sink(created);
+		gtk_widget_set_sensitive(created, enable ? TRUE : FALSE);
+		handle = created;
+		gtk_menu_shell_append(GTK_MENU_SHELL(owner->handle.widget()), created);
+		connectMenu(created, engine());
 
 		if (myMenu->parent)
 			throw new (this) GuiError(S("This sub-menu is already used somewhere else!"));
@@ -334,7 +381,7 @@ namespace gui {
 	}
 
 	void Menu::Submenu::destroy() {
-		Text::destroy();
+		WithTitle::destroy();
 	}
 
 
@@ -350,7 +397,11 @@ namespace gui {
 		handle = created;
 	}
 
-	void MenuBar::repaint() {}
+	void MenuBar::repaint() {
+		if (attachedTo) {
+			gtk_widget_show_all(handle.widget());
+		}
+	}
 
 #endif
 

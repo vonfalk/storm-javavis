@@ -6,6 +6,7 @@
 namespace gui {
 
 	class PopupMenu;
+	class Frame;
 
 	/**
 	 * A generic drop-down menu that is either shown as a sub-menu to the main window menu, or as a
@@ -153,7 +154,7 @@ namespace gui {
 		/**
 		 * A submenu.
 		 */
-		class Submenu : public Text {
+		class Submenu : public WithTitle {
 			STORM_CLASS;
 		public:
 			// Create.
