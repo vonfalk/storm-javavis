@@ -241,7 +241,7 @@ namespace gui {
 		// Remove the submenu before we're destroyed to avoid us recursively destroying the menu.
 		RemoveMenu(owner->handle.menu(), id, MF_BYPOSITION);
 
-		Text::destroy();
+		WithTitle::destroy();
 	}
 
 	static void setupMenu(HMENU menu) {
