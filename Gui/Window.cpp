@@ -1004,10 +1004,12 @@ namespace gui {
 
 	void Window::visible(Bool v) {
 		myVisible = v;
-		if (v)
-			gtk_widget_show(handle().widget());
-		else
-			gtk_widget_hide(handle().widget());
+		if (created()) {
+			if (v)
+				gtk_widget_show(handle().widget());
+			else
+				gtk_widget_hide(handle().widget());
+		}
 	}
 
 	void Window::focus() {
