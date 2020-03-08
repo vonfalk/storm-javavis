@@ -203,11 +203,16 @@ namespace gui {
 
 		styles |= WS_CLIPCHILDREN;
 
+		// Respect the minimum size.
+		updateMinSize();
+		Size sz = myPos.size();
+		sz.w = max(sz.w, lastMinSize.w);
+		sz.h = max(sz.h, lastMinSize.h);
+
 		HWND hParent = NULL;
 		if (parent)
 			hParent = parent->handle().hwnd();
 		CreateFlags cFlags = cManualVisibility;
-		PVAR(posSet);
 		if (!posSet)
 			cFlags |= cAutoPos;
 		if (!createEx(NULL, styles, exStyles, hParent, 0, cFlags))
@@ -216,14 +221,6 @@ namespace gui {
 		// Create child windows (little of a hack, sorry!)
 		parentCreated(0);
 
-		updateMinSize();
-
-		Size sz = myPos.size();
-		if (sz.w < lastMinSize.w || sz.h < lastMinSize.h) {
-			sz.w = max(sz.w, lastMinSize.w);
-			sz.h = max(sz.h, lastMinSize.h);
-			size(sz);
-		}
 
 		if (visible()) {
 			ShowWindow(handle().hwnd(), TRUE);

@@ -429,7 +429,12 @@ namespace gui {
 			p.y = 0;
 
 			if (parent != NULL) {
-				TODO(L"Position at the center of the parent!");
+				// Center the dialog over the parent.
+				RECT parentRect;
+				GetWindowRect(parent, &parentRect);
+
+				p.x = parentRect.left + (parentRect.right - parentRect.left) / 2 - s.w / 2;
+				p.y = parentRect.top + (parentRect.bottom - parentRect.top) / 2 - s.h / 2;
 			}
 
 			// Invalid size?
