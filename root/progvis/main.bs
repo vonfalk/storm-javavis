@@ -94,7 +94,9 @@ class MainWin extends Frame {
 	}
 
 	private void onAbout() {
-		print("TODO: Show about menu!");
+		var license = named{PROGVIS};
+		var version = named{PROGVIS_VERSION};
+		showLicenseDialog(this, ProgramInfo("Progvis", "Filip Strömbäck", version.version, license));
 	}
 
 	// Open one or more files, shows nice messages on error.
