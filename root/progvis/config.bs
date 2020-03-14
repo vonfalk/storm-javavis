@@ -35,6 +35,9 @@ Brush captionActiveBg on Render = SolidBrush(white * 0.6 + blue);
 // Text color when drawing captions.
 Brush captionFg on Render = SolidBrush(black);
 
+// Inner margin for data elements.
+Size dataMargin on Render = Size(4, 2);
+
 // Border for data elements.
 Size dataBorder on Render = Size(4, 4);
 

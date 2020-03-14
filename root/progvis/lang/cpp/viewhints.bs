@@ -240,8 +240,8 @@ class CppChar extends Data {
 
 		Rect p = rect;
 		Size chSize = ch.size;
-		g.draw(ch, dataFg, p.p1 - chSize - dataBorder);
-		g.draw(num, dataFg, p.p0 + dataBorder);
+		g.draw(ch, dataFg, p.p1 - chSize - dataMargin);
+		g.draw(num, dataFg, p.p0 + dataMargin);
 	}
 
 	void update(Workspace ws, unsafe:RawPtr object, Nat offset) : override {
@@ -255,6 +255,6 @@ class CppChar extends Data {
 		Size a = ch.size;
 		Size b = num.size;
 
-		Size(a.w + b.w + dataBorder.w*3, max(a.h, b.h) + dataBorder.h*2);
+		Size(a.w + b.w + dataMargin.w*3, max(a.h, b.h) + dataMargin.h*2);
 	}
 }

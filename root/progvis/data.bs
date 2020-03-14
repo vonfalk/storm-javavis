@@ -182,7 +182,7 @@ class Primitive extends Data {
 
 	void draw(Graphics g, Bool active) : override {
 		super:draw(g, active);
-		g.draw(text, dataFg, pos + dataBorder);
+		g.draw(text, dataFg, pos + dataMargin);
 	}
 
 	void update(Workspace work, unsafe:RawPtr object, Nat offset) : override {
@@ -193,7 +193,7 @@ class Primitive extends Data {
 	}
 
 	Size computeSize() : override {
-		text.size + dataBorder*2;
+		text.size + dataMargin*2;
 	}
 
 	DataOffset findOffset(Nat offset) : override {
@@ -228,7 +228,7 @@ class Pointer extends Data {
 	init() {
 		init() {}
 
-		size = Text("????", dataFont).size + dataBorder*2;
+		size = Text("????", dataFont).size + dataMargin*2;
 	}
 
 	void draw(Graphics g, Bool active) : override {
