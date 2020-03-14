@@ -1,3 +1,6 @@
+use core:io;
+
 void putchar(Byte ch) {
-	print(Char(ch.nat).toS);
+	stdOut.write(Char(ch.nat));
+	stdOut.flush();
 }

@@ -71,6 +71,33 @@ Function? stormCtor(Type type, Expr[] actuals, Scope scope) on Compiler {
 	null;
 }
 
+// Call a copy constructor.
+CtorCall copyCtorCall(Type type, Expr source, Scope scope) on Compiler {
+	Expr[] actuals = [ source ];
+
+	if (ctor = cppCtor(type, actuals, scope))
+		return CtorCall(source.pos, ctor, actuals, true);
+
+	if (ctor = stormCtor(type, actuals, scope))
+		return CtorCall(source.pos, ctor, actuals, false);
+
+	throw SyntaxError(source.pos, "Unable to find a copy constructor to call for ${type}.");
+}
+
+// Call a default constructor.
+CtorCall defCtorCall(SrcPos pos, Type type, Scope scope) on Compiler {
+	Expr[] actuals;
+
+	if (ctor = cppCtor(type, actuals, scope))
+		return CtorCall(pos, ctor, actuals, true);
+
+	if (ctor = stormCtor(type, actuals, scope))
+		return CtorCall(pos, ctor, actuals, false);
+
+	throw SyntaxError(pos, "Unable to find a copy constructor to call for ${type}.");
+}
+
+
 class CppCtor extends CppFunction {
 	private Initializer[] init;
 	private SStmtList? body;

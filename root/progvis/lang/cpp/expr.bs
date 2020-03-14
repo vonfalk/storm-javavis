@@ -153,6 +153,23 @@ IntLiteral sizeofExpr(SrcPos pos, Value type) {
 }
 
 /**
+ * Char literal.
+ */
+IntLiteral charLiteral(SStr content) {
+	Str c = content.v.unescape();
+	var iter = c.begin();
+	if (iter == c.end())
+		throw SyntaxError(content.pos, "Can not have an empty character literal.");
+
+	Char ch = iter.v;
+	++iter;
+	if (iter != c.end())
+		throw SyntaxError(content.pos, "This character literal contains more than one character!");
+
+	IntLiteral(content.pos, ch.codepoint.int);
+}
+
+/**
  * String literal.
  */
 class StrLiteral extends ExprRef {
@@ -905,7 +922,7 @@ class CtorCall extends ExprRef {
 
 	// Initialize a variable at an offset inside a variable. 'offset' is an index into the array
 	// (ptr sized), i.e. not in bytes.
-	void codeRef(CodeGen gen, CppVar var, Var offsetVar) {
+	void codeRef(CodeGen gen, CppVar var, Operand offsetVar) {
 		unless (type = fn.params[0].type) {
 			throw SyntaxError(pos, "This copy-constructor seems to create 'void' types...");
 		}
@@ -920,7 +937,7 @@ class CtorCall extends ExprRef {
 
 		var.adjust(gen, ptrA);
 		gen.l << mov(ptrB, offsetVar);
-		gen.l << mul(ptrB, ptrConst(Value(type).size));
+		gen.l << mul(ptrB, ptrConst(Value(type).size.aligned));
 		gen.l << add(ptrA, ptrB);
 
 		params.insert(0, ptrA);

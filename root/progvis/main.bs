@@ -108,7 +108,9 @@ class MainWin extends Frame {
 			CompileErrorDialog dlg(error.messageText, error.pos);
 			dlg.show(this);
 		} catch (Exception error) {
-			showMessage(this, "Error opening code.", "Unable to open the selected files:\n${error.message}");
+			// Print the stack trace in the terminal to make it easier to debug.
+			print("Error:\n${error}");
+			showMessage(this, "Error opening code", "Unable to open the selected files:\n${error.message}");
 		}
 	}
 
@@ -267,7 +269,8 @@ void main() on Compiler {
 		// win.open(url / "arrays.cpp");
 		// win.open(url / "cpp_error.cpp");
 		// win.open(url / "str.cpp");
-		win.open(url / "const_example.cpp");
+		// win.open(url / "const_example.cpp");
+		win.open(url / "pintos_debug.cpp");
 		win.waitForClose();
 	}
 }

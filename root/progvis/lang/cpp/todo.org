@@ -1,4 +1,4 @@
-* Remaining things in the C++ frontend [6/13]
+* Remaining things in the C++ frontend [6/14]
   - [ ] Ability to make const member functions.
   - [ ] Ability to make const member variables.
   - [ ] Check if function resolution works somewhat properly with const parameters etc.
@@ -6,6 +6,7 @@
   - [ ] static_cast, c-style-cast, etc.
   - [ ] Some kind of standard library for C++?
   - [ ] Check so that we don't overwrite pointers with something weird.
+  - [ ] sizeof() for an array probably don't work correctly.
   - [X] Strings.
   - [X] malloc/free
   - [X] Arrays

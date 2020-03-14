@@ -1,5 +1,5 @@
 int main() {
-	const char *str = "sihtgubed";
+	char str[] = "sihtgubed";
 	char *stri = &str[8];
 	char *buf[9];
 	char **bufi;
@@ -22,6 +22,8 @@ int main() {
 		putchar(**bufi);
 		bufi++;
 	}
+
+	putchar('\n');
 
 	return 0;
 }

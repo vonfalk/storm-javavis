@@ -131,7 +131,7 @@ class BlockLookup extends NameLookup {
 }
 
 // Execute a sub-block in its own codegen block if required.
-package Bool executeStmt(CodeGen gen, Stmt s) {
+package Bool executeStmt(CodeGen gen, Stmt s) on Compiler {
 	if (s as Block) {
 		s.code(gen);
 	} else {

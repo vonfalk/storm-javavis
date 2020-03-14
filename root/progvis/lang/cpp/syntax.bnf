@@ -183,7 +183,9 @@ SStmt[10] => VarDecl.assign(pos, block, type, name, init) : STypeName(block.scop
 SStmt[10] => VarDecl.parens(pos, block, type, name, actuals) : STypeName(block.scope) type, SIdentifier name #varName, "(", SActuals(block) actuals, ")", ";";
 SStmt[10] => VarDecl.parens(pos, block, type, name, actuals) : STypeName(block.scope) type, SIdentifier name #varName, "{", SActuals(block) actuals, "}", ";";
 SStmt[10] => ArrayDecl(pos, block, type, name, size) : STypeName(block.scope) type, SIdentifier name #varName, "\[", SExpr(block) size, "\]", ";";
-// "delete" is technically an expression, but we don't do that...
+SStmt[10] => arrayDecl(pos, block, type, name, size, init) : STypeName(block.scope) type, SIdentifier name #varName, "\[", "[0-9]+" size, "\]", "=", SArrayInit(block) init, ";";
+SStmt[10] => arrayDecl(pos, block, type, name, init) : STypeName(block.scope) type, SIdentifier name #varName, "\[", "\]", "=", SArrayInit(block) init, ";";
+// "delete" is technically an expression, but we don't do that. That's crazy!
 SStmt[50] => DeleteStmt(pos, expr, false) : "delete[ \t]" #keyword, SOp2(block) expr, ";";
 SStmt[50] => DeleteStmt(pos, expr, true) : "delete" #keyword, "\[", "\]", SOp2(block) expr, ";";
 SStmt[50] => WhileStmt(pos, block) : "while" #keyword, "(", SExpr(me) -> cond, ")", SStmt(me) -> body;
@@ -192,6 +194,12 @@ SStmt[50] => ForStmt(pos, block) : "for[ \t]" #keyword, "(", SStmt(me) -> init, 
 SStmt[40] => IfStmt(pos, block) : "if" #keyword, "(", SExpr(me) -> cond, ")", SStmt(me) -> ifTrue - (,"else[ \t\n]" #keyword, SStmt(me) -> ifFalse)?;
 SStmt[50] => Break(pos, block) : "break" #keyword, ";";
 SStmt[50] => Continue(pos, block) : "continue" #keyword, ";";
+
+// An array initializer. It is either a comma-separated list of expressions or a string.
+Array<Expr> SArrayInit(Block block);
+SArrayInit => Array<Expr>() : "{", SExpr(block) -> push - (, ",", SExpr(block) -> push)*, "}";
+SArrayInit => Array<Expr>() : "{", (SExpr(block) -> push, )?;
+SArrayInit => createExprs(str) : "\"" #string - (SStrContent) @str - "\"" #string;
 
 // Add a list of statements to a block.
 void SStmtList(StmtBlock block);
@@ -293,6 +301,7 @@ SOp2 => ctorCall(lhs, params) : SOp2(block) lhs, "{", SActuals(block) params, "}
 Expr SAtom(Block block);
 SAtom => v : "(", SExpr(block) v, ")";
 SAtom => IntLiteral(v) : "[0-9]+" @v #constant;
+SAtom => charLiteral(v) : "'" #string - (SCharContent) @v - "'" #string;
 SAtom => StrLiteral(pos, v) : "\"" #string - (SStrContent) v - "\"" #string;
 SAtom => NameExpr(pos, block.scope, name) : SCompoundName(block.scope) name;
 SAtom[10] => ThisPtr(pos, block.scope) : "this" #keyword;
@@ -304,6 +313,10 @@ SAtom[10] => Nullptr(pos) : "NULL" #keyword;
 void SStrContent();
 SStrContent : "[^\"\\\n]*"; // All except end of string and backslash.
 SStrContent : SStrContent - "\\." - SStrContent; // Gobble escape sequences (we could translate them here...)
+
+void SCharContent();
+SCharContent : "[^'\\\n]*"; // All except end of string and backslash.
+SCharContent : SCharContent - "\\." - SCharContent; // Gobble escape sequences (we could translate them here...)
 
 // Malloc and free.
 
