@@ -31,6 +31,12 @@ class Expr extends Stmt {
 		true;
 	}
 
+	// Does this expression represent a constant value? Close to 'temporary', but relevant when
+	// dereferencing pointers.
+	Bool constant() {
+		temporary();
+	}
+
 	// Generate code. 'desired' is the desired return type.
 	void code(CodeGen gen, CodeResult res) : abstract;
 
@@ -440,6 +446,10 @@ class NameExpr extends Expr {
 
 	Bool temporary() : override {
 		resolve.temporary();
+	}
+
+	Bool constant() : override {
+		resolve.constant();
 	}
 
 	void codePtr(CodeGen gen, Type type) : override {
@@ -1010,6 +1020,35 @@ Expr operator(Block block, Expr lhs, SStr op, Expr rhs) on Compiler {
 	throw SyntaxError(op.pos, "Failed to find operator ${op.v} for ${lType} and ${rhs.result.type}.");
 }
 
+// Operator, that don't accept LHS to be constant.
+Expr operatorNoConst(Block block, Expr lhs, SStr op, Expr rhs) on Compiler {
+	lhs = deref(lhs);
+	rhs = deref(rhs);
+
+	// This is mostly to be able to re-use Storm operators. This does disallow some possible (but
+	// nonsensical) implementations of assignment operators in C++.
+	if (lhs.constant)
+		throw SyntaxError(op.pos, "Can not call operator ${op.v} with a constant left hand side.");
+
+	var lType = lhs.result.type;
+	var pos = lhs.pos.extend(rhs.pos);
+
+	CppPart opName(op.v, [lhs, rhs]);
+	if (t = lType.type) {
+		if (fn = t.find(opName, block.scope) as Function)
+			return FnCall(pos, fn, [lhs, rhs], false);
+
+		if (fn = t.find(CppPart(op.v, [lhs, OffsetExpr(), rhs]), block.scope) as Function)
+			return FnCall(pos, fn, [lhs, rhs], true);
+	}
+
+	if (fn = block.scope.find(SimpleName(opName)) as Function) {
+		return FnCall(pos, fn, [lhs, rhs], false);
+	}
+
+	throw SyntaxError(op.pos, "Failed to find operator ${op.v} for ${lType} and ${rhs.result.type}.");
+}
+
 // Doesn't add a star to the name.
 Expr unaryOperator(Block block, SStr op, Expr rhs) on Compiler {
 	rhs = deref(rhs);
@@ -1033,8 +1072,13 @@ Expr unaryOperator(Block block, SStr op, Expr rhs) on Compiler {
 	throw SyntaxError(op.pos, "Failed to find prefix operator ${op.v} for ${rType}.");
 }
 
-Expr operator(Block block, SStr op, Expr rhs) on Compiler {
+Expr operatorNoConst(Block block, SStr op, Expr rhs) on Compiler {
 	rhs = deref(rhs);
+
+	// This is mostly to be able to re-use Storm operators. This does disallow some possible (but
+	// nonsensical) implementations of pre- and post increment operators in C++.
+	if (rhs.constant)
+		throw SyntaxError(op.pos, "Can not call a prefix operator ${op.v} on a constant value.");
 
 	var rType = rhs.result.type;
 	var pos = op.pos.extend(rhs.pos);
@@ -1055,8 +1099,13 @@ Expr operator(Block block, SStr op, Expr rhs) on Compiler {
 	throw SyntaxError(op.pos, "Failed to find prefix operator ${op.v} for ${rType}.");
 }
 
-Expr operator(Block block, Expr lhs, SStr op) on Compiler {
+Expr operatorNoConst(Block block, Expr lhs, SStr op) on Compiler {
 	lhs = deref(lhs);
+
+	// This is mostly to be able to re-use Storm operators. This does disallow some possible (but
+	// nonsensical) implementations of pre- and post increment operators in C++.
+	if (lhs.constant)
+		throw SyntaxError(op.pos, "Can not call a postfix operator ${op.v} with a constant value.");
 
 	var lType = lhs.result.type;
 	var pos = lhs.pos.extend(op.pos);
@@ -1098,16 +1147,25 @@ Expr arrayOperator(SrcPos pos, Block block, Expr base, Expr offset) {
 class AddressOf extends ExprRef {
 	init(Expr of) {
 		init(of.pos) { of = of; }
+
+		if (of.temporary)
+			throw SyntaxError(pos, "Can not create a pointer to a temporary value.");
 	}
 
 	init(SrcPos pos, Expr of) {
 		init(pos) { of = of; }
+
+		if (of.temporary)
+			throw SyntaxError(pos, "Can not create a pointer to a temporary value.");
 	}
 
 	Expr of;
 
 	ExprResult result() : override {
-		wrapPtr(of.result.type).asRef();
+		if (of.constant)
+			wrapConstPtr(of.result.type).asRef();
+		else
+			wrapPtr(of.result.type).asRef();
 	}
 
 	void code(CodeGen gen, CodeResult res) : override {
@@ -1260,6 +1318,14 @@ class Deref extends Expr {
 
 	Bool temporary() {
 		false;
+	}
+
+	Bool constant() {
+		if (t = of.result.type.type as PtrType) {
+			t.isConst;
+		} else {
+			false;
+		}
 	}
 
 	void codePtr(CodeGen gen, Type type) : override {

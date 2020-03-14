@@ -66,6 +66,11 @@ class PtrType extends Type {
 	// Is the thing we're pointing to 'const'?
 	Bool isConst;
 
+	// Is this a pointer?
+	Bool isPtr() {
+		!isRef & !rvalRef;
+	}
+
 	// Get the type inside.
 	Type? inside() {
 		params[0].type;
@@ -223,6 +228,23 @@ class PtrType extends Type {
 		l;
 	}
 
+	// Nicer to string in error messages etc.
+	void toS(StrBuf to) : override {
+		if (isConst)
+			to << "const ";
+		to << params[0];
+		if (isRef)
+			to << "&";
+		else if (rvalRef)
+			to << "&&";
+		else
+			to << "*";
+	}
+
+	// Also for the identifier.
+	Str identifier() : override {
+		toS();
+	}
 }
 
 class PtrError extends Exception {

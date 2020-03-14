@@ -90,10 +90,10 @@ namespace storm {
 		SimpleName *STORM_FN path() const;
 
 		// Get an unique human-readable identifier for this named object.
-		Str *STORM_FN identifier() const;
+		virtual Str *STORM_FN identifier() const;
 
 		// Get a short version of the identifier. Only the name at this level with parameters.
-		Str *STORM_FN shortIdentifier() const;
+		virtual Str *STORM_FN shortIdentifier() const;
 
 		// Better asserts for 'parent'.
 		virtual MAYBE(NameLookup *) STORM_FN parent() const;

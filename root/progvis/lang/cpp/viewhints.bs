@@ -49,10 +49,14 @@ class CppViewHints extends ViewHints {
 			if (t = type.params[0].type) {
 				TypeInfo info(t, true, false);
 
+				Str result = ws.typeTitle(info);
+				if (type.isConst)
+					result = "const " + result;
+
 				if (type.isRef)
-					return ws.typeTitle(info) + " &";
+					return result + " &";
 				else
-					return ws.typeTitle(info) + " *";
+					return result + " *";
 			}
 		}
 

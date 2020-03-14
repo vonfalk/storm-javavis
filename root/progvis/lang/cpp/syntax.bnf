@@ -206,9 +206,9 @@ SExpr => CommaExpr(pos, lhs, rhs) : SExpr(block) lhs, ",", SExprNoComma(block) r
 // Operators, level 16 according to https://en.cppreference.com/w/cpp/language/operator_precedence
 Expr SExprNoComma(Block block);
 SExprNoComma => n : SOp15(block) n;
-SExprNoComma => operator(block, l, op, r) : SOp15(block) l, "[+\-*/%&^|]?=" @op, SExprNoComma(block) r;
-SExprNoComma => operator(block, l, op, r) : SOp15(block) l, "<<=" @op, SExprNoComma(block) r;
-SExprNoComma => operator(block, l, op, r) : SOp15(block) l, ">>=" @op, SExprNoComma(block) r;
+SExprNoComma => operatorNoConst(block, l, op, r) : SOp15(block) l, "[+\-*/%&^|]?=" @op, SExprNoComma(block) r;
+SExprNoComma => operatorNoConst(block, l, op, r) : SOp15(block) l, "<<=" @op, SExprNoComma(block) r;
+SExprNoComma => operatorNoConst(block, l, op, r) : SOp15(block) l, ">>=" @op, SExprNoComma(block) r;
 
 Expr SOp15(Block block);
 SOp15 => n : SOp14(block) n;
@@ -264,8 +264,10 @@ SOp3 => Deref.ptr(pos, n) : "\*", SOp3(block) n;
 SOp3 => AddressOf(pos, n) : "&", SOp3(block) n;
 SOp3 => unaryOperator(block, op, n) : "~" @op, SOp3(block) n;
 SOp3 => NegateOp(pos, block, n) : "!", SOp3(block) n;
-SOp3 => operator(block, op, n) : "\+\+?" @op, SOp2(block) n;
-SOp3 => operator(block, op, n) : "--?" @op, SOp2(block) n;
+SOp3 => unaryOperator(block, op, n) : "\+" @op, SOp2(block) n;
+SOp3 => unaryOperator(block, op, n) : "-" @op, SOp2(block) n;
+SOp3 => operatorNoConst(block, op, n) : "\+\+" @op, SOp2(block) n;
+SOp3 => operatorNoConst(block, op, n) : "--" @op, SOp2(block) n;
 SOp3 => NewExpr(pos, block, type) : "new[ \t]" #keyword, STypeName(block.scope) type;
 SOp3 => NewExpr(pos, block, type, actuals) : "new[ \t]" #keyword, STypeName(block.scope) type, "(", SActuals(block) actuals, ")";
 SOp3 => NewExpr(pos, block, type, actuals) : "new[ \t]" #keyword, STypeName(block.scope) type, "{", SActuals(block) actuals, "}";
@@ -280,8 +282,8 @@ SizeofType => v : , "(", STypeName(scope) v, ")";
 
 Expr SOp2(Block block);
 SOp2 => a : SAtom(block) a;
-SOp2 => operator(block, n, op) : SAtom(block) n, "++" @op;
-SOp2 => operator(block, n, op) : SAtom(block) n, "--" @op;
+SOp2 => operatorNoConst(block, n, op) : SAtom(block) n, "\+\+" @op;
+SOp2 => operatorNoConst(block, n, op) : SAtom(block) n, "--" @op;
 SOp2 => dotOperator(block, lhs, rhs, false) : SOp2(block) lhs, "\.", SIdentifier rhs;
 SOp2 => dotOperator(block, lhs, rhs, true) : SOp2(block) lhs, "->", SIdentifier rhs;
 SOp2 => arrayOperator(pos, block, base, index) : SOp2(block) base, "\[", SExpr(block) index, "\]";

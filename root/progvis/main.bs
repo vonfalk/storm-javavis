@@ -266,7 +266,8 @@ void main() on Compiler {
 		// win.open(url / "return_complex.cpp");
 		// win.open(url / "arrays.cpp");
 		// win.open(url / "cpp_error.cpp");
-		win.open(url / "str.cpp");
+		// win.open(url / "str.cpp");
+		win.open(url / "const_example.cpp");
 		win.waitForClose();
 	}
 }
