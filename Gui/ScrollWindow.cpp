@@ -33,6 +33,9 @@ namespace gui {
 
 		// Create the child with id 1.
 		child->parentCreated(1);
+
+		// Update the UI.
+		resized(Size());
 	}
 
 	void ScrollWindow::minSize(Size sz) {
@@ -64,6 +67,14 @@ namespace gui {
 	}
 
 	void ScrollWindow::resized(Size size) {
+		// Windows don't count the scrollbars as a part of the client area.
+		if (created()) {
+			RECT rect;
+			GetWindowRect(handle().hwnd(), &rect);
+			size.w = Float(rect.right - rect.left);
+			size.h = Float(rect.bottom - rect.top);
+		}
+
 		Window::resized(size);
 
 		Size sz = child->minSize();
@@ -246,15 +257,16 @@ namespace gui {
 	}
 
 	void ScrollWindow::setChildSize(Size sz) {
-		if (!child->created())
-			return;
-
 		if (hScroll)
 			sz.h -= GetSystemMetrics(SM_CYHSCROLL);
 		if (vScroll)
 			sz.w -= GetSystemMetrics(SM_CXVSCROLL);
 
-		SetWindowPos(child->handle().hwnd(), NULL, 0, 0, (int)sz.w, (int)sz.h, SWP_NOACTIVATE | SWP_NOMOVE | SWP_NOZORDER);
+		if (child->created()) {
+			SetWindowPos(child->handle().hwnd(), NULL, 0, 0, (int)sz.w, (int)sz.h, SWP_NOACTIVATE | SWP_NOMOVE | SWP_NOZORDER);
+		} else {
+			child->pos(Rect(Point(), sz));
+		}
 	}
 
 #endif
