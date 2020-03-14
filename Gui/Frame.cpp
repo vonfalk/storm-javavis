@@ -208,6 +208,7 @@ namespace gui {
 		Size sz = myPos.size();
 		sz.w = max(sz.w, lastMinSize.w);
 		sz.h = max(sz.h, lastMinSize.h);
+		myPos.size(sz);
 
 		HWND hParent = NULL;
 		if (parent)

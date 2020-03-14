@@ -424,23 +424,30 @@ namespace gui {
 			s = c.size();
 		}
 
+		// Put everything in ints now, so that we can properly set CW_USEDEFAULT without potential
+		// rounding errors.
+		int x = (int)p.x;
+		int y = (int)p.y;
+		int width = (int)s.w;
+		int height = (int)s.h;
+
 		if (flags & cAutoPos) {
-			p.x = CW_USEDEFAULT;
-			p.y = 0;
+			x = CW_USEDEFAULT;
+			y = 0;
 
 			if (parent != NULL) {
 				// Center the dialog over the parent.
 				RECT parentRect;
 				GetWindowRect(parent, &parentRect);
 
-				p.x = parentRect.left + (parentRect.right - parentRect.left) / 2 - s.w / 2;
-				p.y = parentRect.top + (parentRect.bottom - parentRect.top) / 2 - s.h / 2;
+				x = int(parentRect.left + (parentRect.right - parentRect.left) / 2 - s.w / 2);
+				y = int(parentRect.top + (parentRect.bottom - parentRect.top) / 2 - s.h / 2);
 			}
 
 			// Invalid size?
 			if (!myPos.size().valid()) {
-				s.w = CW_USEDEFAULT;
-				s.h = 0;
+				width = CW_USEDEFAULT;
+				height = 0;
 			}
 		}
 
@@ -453,7 +460,7 @@ namespace gui {
 
 		app->preCreate(this);
 		HWND z = CreateWindowEx(exStyle, className, windowName, style,
-								(int)p.x, (int)p.y, (int)s.w, (int)s.h,
+								x, y, width, height,
 								parent, (HMENU)id, instance, NULL);
 
 		if (z == NULL) {
