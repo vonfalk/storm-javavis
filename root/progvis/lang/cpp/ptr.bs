@@ -106,12 +106,21 @@ class PtrType extends Type {
 			addFn(val, "-", [ref, int], ptrAdd(Offset(sz)));
 			addFn(ref, "+=", [ref, int], ptrInc(Offset(sz)));
 			addFn(ref, "-=", [ref, int], ptrInc(-Offset(sz)));
-			addFn(val, "++*", [ref], ptrPrefixInc(Offset(sz)));
-			addFn(ref, "*++", [ref], ptrPostfixInc(Offset(sz)));
-			addFn(val, "--*", [ref], ptrPrefixInc(-Offset(sz)));
-			addFn(ref, "*--", [ref], ptrPostfixInc(-Offset(sz)));
+			addFn(ref, "++*", [ref], ptrPrefixInc(Offset(sz)));
+			addFn(val, "*++", [ref], ptrPostfixInc(Offset(sz)));
+			addFn(ref, "--*", [ref], ptrPrefixInc(-Offset(sz)));
+			addFn(val, "*--", [ref], ptrPostfixInc(-Offset(sz)));
 			addFn(int, "-", [ref, ref], ptrDiff(Offset(sz)));
 		}
+
+		// Allocate arrays from Storm. Useful when implementing the standard library.
+		if (type = inside()) {
+			Function f(val, "allocArray", [Value(named{Nat})]);
+			f.setCode(DynamicCode(allocArrayFn(type)));
+			f.make(FnFlags:static);
+			add(f);
+		}
+
 
 		// TODO: Add suitable members!
 
@@ -224,6 +233,30 @@ class PtrType extends Type {
 		l << sub(eax, ebx);
 		l << idiv(eax, intConst(offset));
 		l << fnRet(eax);
+
+		l;
+	}
+
+	private Listing allocArrayFn(Type inside) {
+		Listing l(false, this.typeDesc);
+
+		Var res = l.createVar(l.root, this.size);
+		Var param = l.createParam(intDesc);
+
+		l << prolog();
+
+		l << ucast(ptrA, param);
+		l << fnParam(ptrDesc, inside.typeRef);
+		l << fnParam(ptrDesc, ptrA);
+		l << fnCall(ref(BuiltIn:allocArray), false, ptrDesc, ptrA);
+		l << mov(ptrRel(res, Offset()), ptrA);
+		l << mov(intRel(res, Offset(sPtr)), natConst(sPtr * 2));
+
+		Nat mask = AllocFlags:arrayAlloc.v;
+		l << or(param, natConst(mask));
+		l << mov(intRel(ptrA, Offset(sPtr)), param);
+
+		l << fnRet(res);
 
 		l;
 	}

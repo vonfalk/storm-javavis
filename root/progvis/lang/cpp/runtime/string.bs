@@ -1,0 +1,29 @@
+use progvis:lang:cpp;
+use core:asm;
+
+Int strlen(ConstPtr<Byte> src) {
+	Nat total = 0;
+	Nat offset = src.offset - sPtr.current * 2;
+	Nat size = src.base.readSize * src.base.readCount;
+	while (offset <= size) {
+		if (src.base.readByte(offset) == 0)
+			break;
+
+		offset++;
+		total++;
+	}
+
+	total.int;
+}
+
+Ptr<Byte> strcpy(ConstPtr<Byte> src) {
+	Int len = strlen(src);
+
+	Ptr<Byte> result = Ptr<Byte>:allocArray(len.nat + 1);
+	Nat offset = src.offset - sPtr.current * 2;
+	for (Int i = 0; i < len; i++) {
+		result.base.writeByte(i.nat, src.base.readByte(offset + i.nat));
+	}
+
+	result;
+}

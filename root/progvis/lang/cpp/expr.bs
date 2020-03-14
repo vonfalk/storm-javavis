@@ -970,17 +970,10 @@ package Operand paramCode(CodeGen gen, Expr actual, Value formal) on Compiler {
 		tmpRef.created(gen);
 		tmpRef.v;
 	} else if (!formal.ref & result.ref) {
-		// We need to make a copy.
-		if (!formal.isAsmType())
-			throw SyntaxError(actual.pos, "Unable to manipulate this parameter!");
-
-		CodeResult gr(formal.asRef(), gen.block);
-		actual.code(gen, gr);
-
-		Var v = gen.l.createVar(gen.block, formal.size());
-		gen.l << mov(ptrA, gr.location(gen));
-		gen.l << mov(v, xRel(v.size(), ptrA));
-		v;
+		// Tell the implementation to create a copy for us.
+		CodeResult r(formal.asRef(false), gen.block);
+		actual.code(gen, r);
+		return r.location(gen);
 	} else {
 		CodeResult gr(formal, gen.block);
 		actual.code(gen, gr);
