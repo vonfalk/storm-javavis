@@ -128,7 +128,9 @@ class ThreadData extends Drawable {
 		if (pos = thread.pos)
 			source.display(pos);
 
-		if (frames.last.returned) {
+		if (thread.sleeping) {
+			source.highlight = sourceSleepingHighlight;
+		} else if (frames.last.returned) {
 			source.highlight = sourceReturnedHighlight;
 		} else {
 			source.highlight = sourceHighlight;

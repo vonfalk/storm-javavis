@@ -3,6 +3,7 @@
 
 struct parameters_to_start {
 	const char *start;
+	struct semaphore sema;
 };
 
 void process_start(struct parameters_to_start *test) {
@@ -10,13 +11,25 @@ void process_start(struct parameters_to_start *test) {
 		putchar(*at);
 	}
 	putchar('\n');
+
+	sema_up(&test->sema);
 }
 
 int start_process(const char *name) {
 	struct parameters_to_start params;
 	params.start = name;
+	sema_init(&params.sema, 0);
+
+	struct lock lck;
+	lock_init(&lck);
+
+	lock_acquire(&lck);
 
 	int tid = thread_new(process_start, &params);
+
+	lock_release(&lck);
+
+	sema_down(&params.sema);
 
 	return tid;
 }

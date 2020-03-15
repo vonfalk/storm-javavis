@@ -587,7 +587,7 @@ Expr fnCall(Expr lhs, Expr[] actuals) {
 		try {
 			return ctorCall(lhs, actuals);
 		} catch (SyntaxError e) {
-			throw SyntaxError(lhs.pos, "Could not find anything named ${lhs.name} to call.");
+			throw SyntaxError(lhs.pos, "Could not find anything named ${lhs.name} with the supplied paramers to call.");
 		}
 	}
 

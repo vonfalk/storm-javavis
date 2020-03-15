@@ -40,8 +40,11 @@ class ProgThread on Render {
 	// Owning Program object, so we can access the callback.
 	Program owner;
 
+	// Waiting for some external event?
+	Bool sleeping;
+
 	// Currently running? This is 'true' even if the thread is currently waiting in an animation.
-	Bool running;
+	private Bool running;
 
 	// Terminate the thread at the next opportunity to do so.
 	private Bool doTerminate;
@@ -120,17 +123,39 @@ class ProgThread on Render {
 		popFrames();
 	}
 
+	// Make the thread sleep until something else wakes it. Used to implement synchronization primitives.
+	void lockSleep(Variant value) {
+		sleeping = true;
+		if (frames.any) {
+			var last = frames.last;
+			StackVar var("For", value);
+			frames.push(StackFrame("Waiting...", last.hints, [var], last.pos));
+		}
+
+		wait();
+
+		// Remove any "waiting for" frame if needed.
+		popFrames();
+	}
+
+	// Wake the thread again. Assumes that 'lockSleep' was called earlier.
+	void lockWake() {
+		sleeping = false;
+		if (!running)
+			sema.up();
+	}
+
 	// Set the animation delay. Resumes the thread if it was stopped.
 	void resume(Duration duration) {
 		autoStep = duration;
 
-		if (!running)
+		if (!running & !sleeping)
 			sema.up();
 	}
 
 	// Resume execution, stopping at the next location.
 	void resume() {
-		if (running)
+		if (running | sleeping)
 			return;
 
 		autoStep = Duration();
@@ -160,7 +185,7 @@ class ProgThread on Render {
 	// Determine whether or not we shall wait.
 	private void wait() {
 		owner.notifyChange();
-		if (autoStep == Duration()) {
+		if (sleeping | autoStep == Duration()) {
 			running = false;
 			sema.down();
 		} else {
@@ -196,6 +221,16 @@ class StackVar {
 
 	init(Str name) {
 		init { name = name; }
+	}
+
+	init(Str name, Variant val) {
+		init {
+			name = name;
+			destroy = val;
+		}
+
+		// Make sure to use the correct value.
+		value = unsafe:RawPtr(destroy);
 	}
 }
 

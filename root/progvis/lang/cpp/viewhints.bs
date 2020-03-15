@@ -32,15 +32,7 @@ class CppViewHints extends ViewHints {
 				return createArray(ws, info, base);
 		}
 
-		if (ptr = info.type as PtrType) {
-			return CppPointer(hints);
-		}
-
-		if (info.type is named{Byte}) {
-			return CppChar();
-		}
-
-		null;
+		createSpecial(ws, info, base, offset);
 	}
 
 	// Get a title for the type.
@@ -63,6 +55,40 @@ class CppViewHints extends ViewHints {
 		null;
 	}
 
+	// Check if this is a special type in some way.
+	private Data? createSpecial(Workspace ws, TypeInfo info, unsafe:RawPtr object, Nat offset) {
+		if (ptr = info.type as PtrType) {
+			return CppPointer(hints);
+		}
+
+		if (info.type is named{runtime:semaphore}) {
+			return hideImpl(ws, info, object, offset);
+		}
+
+		if (info.type is named{runtime:lock}) {
+			return hideImpl(ws, info, object, offset);
+		}
+
+		if (info.type is named{Byte}) {
+			return CppChar();
+		}
+
+		null;
+	}
+
+	// Hide the variable "impl" from a composite type.
+	private Data hideImpl(Workspace ws, TypeInfo info, unsafe:RawPtr object, Nat offset) {
+		var members = findMembers(info.type);
+
+		Composite result;
+		for (m in members) {
+			if (m.name != "impl")
+				result.add(m.name, m.offset, ws.createData(m.type, object, offset + m.offset), m.first);
+		}
+
+		result;
+	}
+
 	// Create a data node for an array. We assume that 'offset' is zero (checked earlier).
 	private Data createArray(Workspace ws, TypeInfo info, unsafe:RawPtr base) {
 		var members = findMembers(info.type);
@@ -77,11 +103,9 @@ class CppViewHints extends ViewHints {
 		for (Nat i = 0; i < count; i++) {
 			Nat offset = i * elemSz;
 
-			// Primitive?
-			if (ptr = info.type as PtrType) {
-				result.add("", offset, CppPointer(hints), true);
-			} else if (info.type is named{Byte}) {
-				result.add("", offset, CppChar(), true);
+			// Primitive or special?
+			if (spec = createSpecial(ws, info, base, offset)) {
+				result.add("", offset, spec, true);
 			} else if (c = convertPrimitive(info.type, base, offset)) {
 				result.add("", offset, Primitive(info.type, c), true);
 			} else {

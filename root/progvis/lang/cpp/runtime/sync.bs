@@ -1,0 +1,189 @@
+use lang:asm;
+use core:asm;
+use core:sync;
+use progvis:lang:cpp;
+
+/**
+ * Internals of a semaphore that is friendly to the visualization system. If regular semaphores were
+ * used, we won't be able to abort the system when a thread is waiting for a semaphore.
+ *
+ * Note: We know that multiple HW threads won't use the same instance, so we can actually get by without locks!
+ */
+class SemaImpl {
+	Nat count;
+
+	// All threads waiting for this sema.
+	Queue<progvis:ProgThread> waiting;
+
+	init(Nat count) {
+		init { count = count; }
+	}
+
+	void down(Variant waitFor) {
+		unless (thread = progvis:findThread(currentUThread())) {
+			throw SyncError("This primitive is only intended to be used within the program visualization!");
+		}
+
+		if (count > 0) {
+			--count;
+			return;
+		}
+
+		// We need to wait!
+		waiting.push(thread);
+
+		// Tell the thread to sleep last, otherwise we may have thread switches in the critical region.
+		thread.lockSleep(waitFor);
+	}
+
+	void up() {
+		if (waiting.any()) {
+			var wake = waiting.top();
+			waiting.pop();
+
+			wake.lockWake();
+		} else {
+			count++;
+		}
+	}
+}
+
+/**
+ * Exception.
+ */
+class SyncError extends Exception {
+	init(Str msg) {
+		init() { msg = msg; }
+	}
+
+	Str msg;
+
+	void message(StrBuf to) : override {
+		to << msg;
+	}
+}
+
+
+/**
+ * Pintos-like semaphore.
+ */
+value semaphore {
+	// Note: Layout here is important!
+	SemaImpl? impl;
+	Int count;
+
+	init() {
+		init {
+			count = -1;
+		}
+	}
+}
+
+void sema_init(Ptr<semaphore> sema, Int value) {
+	SemaImpl s(value.nat);
+
+	Nat offset = sema.offset - sPtr.current * 2;
+	sema.base.writePtr(offset, unsafe:RawPtr(s));
+	sema.base.writeInt(offset + sPtr.current, value);
+}
+
+void sema_destroy(Ptr<semaphore> sema) {
+	Nat offset = sema.offset - sPtr.current * 2;
+	sema.base.writePtr(offset, unsafe:RawPtr());
+	sema.base.writeInt(offset + sPtr.current, -1);
+}
+
+void sema_up(Ptr<semaphore> sema) {
+	Nat offset = sema.offset - sPtr.current * 2;
+	var sem = sema.base.readPtr(offset);
+	if (sem.empty)
+		throw SyncError("Can not operate on an uninitialized semaphore!");
+
+	if (s = sem.asObject() as SemaImpl) {
+		offset += sPtr.current;
+		sema.base.writeInt(offset, sema.base.readInt(offset) + 1);
+		s.up();
+	}
+}
+
+void sema_down(Ptr<semaphore> sema) {
+	Nat offset = sema.offset - sPtr.current * 2;
+
+	var sem = sema.base.readPtr(offset);
+	if (sem.empty)
+		throw SyncError("Can not operate on an uninitialized semaphore!");
+
+	if (s = sem.asObject() as SemaImpl) {
+		offset += sPtr.current;
+		s.down(Variant(sema));
+		sema.base.writeInt(offset, sema.base.readInt(offset) - 1);
+	}
+}
+
+/**
+ * Pintos-like lock.
+ */
+value lock {
+	// Note: Layout here is important!
+	SemaImpl? impl;
+	Int taken_by;
+
+	init() {
+		init { taken_by = -1; }
+	}
+}
+
+void lock_init(Ptr<lock> lock) {
+	SemaImpl s(1);
+
+	Nat offset = lock.offset - sPtr.current * 2;
+	lock.base.writePtr(offset, unsafe:RawPtr(s));
+	lock.base.writeInt(offset + sPtr.current, 0);
+}
+
+void lock_destroy(Ptr<lock> lock) {
+	Nat offset = lock.offset - sPtr.current * 2;
+	lock.base.writePtr(offset, unsafe:RawPtr());
+	lock.base.writeInt(offset + sPtr.current, -1);
+}
+
+void lock_acquire(Ptr<lock> lock) {
+	Nat offset = lock.offset - sPtr.current * 2;
+
+	var implRaw = lock.base.readPtr(offset);
+	if (implRaw.empty)
+		throw SyncError("Can not operate on an uninitialized lock!");
+
+	if (l = implRaw.asObject() as SemaImpl) {
+		offset += sPtr.current;
+
+		Nat myId = progvis:findThisThreadId();
+		if (lock.base.readNat(offset) == myId)
+			throw SyncError("Trying to acquire a lock we're already holding!");
+
+		l.down(Variant(lock));
+
+		lock.base.writeNat(offset, myId);
+	}
+}
+
+void lock_release(Ptr<lock> lock) {
+	Nat offset = lock.offset - sPtr.current * 2;
+
+	var implRaw = lock.base.readPtr(offset);
+	if (implRaw.empty)
+		throw SyncError("Can not operate on an uninitialized lock!");
+
+	if (l = implRaw.asObject() as SemaImpl) {
+		offset += sPtr.current;
+
+		Nat myId = progvis:findThisThreadId();
+		if (lock.base.readNat(offset) != myId)
+			throw SyncError("Trying to release a lock we're not holding!");
+
+		lock.base.writeInt(offset, 0);
+
+		l.up();
+	}
+}
+

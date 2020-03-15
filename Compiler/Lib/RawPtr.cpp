@@ -18,6 +18,11 @@ namespace storm {
 		*p.state->l << mov(ptrRel(p.regParam(0)), p.param(1));
 	}
 
+	void rawPtrInitEmpty(InlineParams p) {
+		p.allocRegs(0);
+		*p.state->l << mov(ptrRel(p.regParam(0)), ptrConst(Size()));
+	}
+
 	void rawPtrAssign(InlineParams p) {
 		using namespace code;
 
@@ -224,10 +229,14 @@ namespace storm {
 		add(nativeFunction(e, Value(), S("writeFloat"), write, address(&rawPtrWrite<Float>)));
 		write = valList(e, 3, me, n, Value(StormInfo<Double>::type(e)));
 		add(nativeFunction(e, Value(), S("writeDouble"), write, address(&rawPtrWrite<Double>)));
+		write = valList(e, 3, me, n, me);
+		add(nativeFunction(e, Value(), S("writePtr"), write, address(&rawPtrWrite<void *>)));
 		add(nativeFunction(e, Value(), S("writeFilled"), valList(e, 2, me, n), address(&rawPtrWriteFilled)));
 
 		// Create from pointers:
 		Value obj(StormInfo<Object>::type(e));
+		Array<Value> *noPar = valList(e, 1, me.asRef());
+		add(inlinedFunction(e, Value(), Type::CTOR, noPar, fnPtr(e, &rawPtrInitEmpty)));
 		Array<Value> *objPar = valList(e, 2, me.asRef(), obj);
 		add(inlinedFunction(e, Value(), Type::CTOR, objPar, fnPtr(e, &rawPtrInit)));
 		Value tobj(StormInfo<TObject>::type(e));

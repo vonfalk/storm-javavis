@@ -729,12 +729,25 @@ private Program? findProgram(Word threadId) on Render {
 }
 
 // Find a particular thread.
-private ProgThread? findThread(Word threadId) on Render {
+public ProgThread? findThread(Word threadId) on Render {
 	for (i in programInstances) {
 		if (i.threads.has(threadId))
 			return i.threads.get(threadId);
 	}
 	return null;
+}
+
+private Nat findThisThreadId(Word id) on Render {
+	if (t = findThread(id)) {
+		return t.threadId;
+	}
+
+	0;
+}
+
+// Find a thread id of this (existing) thread.
+public Nat findThisThreadId() {
+	findThisThreadId(currentUThread());
 }
 
 // Find the "simple" thread ID for a thread. This might create the thread ID in the appropriate
@@ -769,3 +782,4 @@ private void watchErrorsI(Word threadId, FutureBase future) on Render {
 public void watchErrors(Word threadId, FutureBase future) {
 	watchErrorsI(threadId, future);
 }
+
