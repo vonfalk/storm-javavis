@@ -133,13 +133,18 @@ SIdentifier => v : "[A-Za-z_][A-Za-z0-9_]*" @v;
 
 // Type declarations. Transforms into a Value.
 Value STypeName(Scope scope);
-STypeName => original : STypeNameRec(scope) original - ("const" #keyword)?;
-STypeName => wrapRef(original) : STypeNameRec(scope) original, "&";
-STypeName => wrapConstRef(original) : STypeNameRec(scope) original, "const" #keyword, "&";
-STypeName => wrapConstRef(original) : "const" #keyword, STypeNameEnd(scope) original, "&";
-STypeName => wrapRRef(original) : STypeNameRec(scope) original, "&&";
-STypeName => wrapConstRRef(original) : STypeNameRec(scope) original, "const" #keyword, "&&";
-STypeName => wrapConstRRef(original) : "const" #keyword, STypeNameEnd(scope) original, "&&";
+STypeName => t : STypeNameStart(scope) t;
+// In C it is necessary to write "struct foo" instead of just "foo".
+STypeName => t : "struct" #keyword, STypeNameStart(scope) t;
+
+Value STypeNameStart(Scope scope);
+STypeNameStart => original : STypeNameRec(scope) original - ("const" #keyword)?;
+STypeNameStart => wrapRef(original) : STypeNameRec(scope) original, "&";
+STypeNameStart => wrapConstRef(original) : STypeNameRec(scope) original, "const" #keyword, "&";
+STypeNameStart => wrapConstRef(original) : "const" #keyword, STypeNameEnd(scope) original, "&";
+STypeNameStart => wrapRRef(original) : STypeNameRec(scope) original, "&&";
+STypeNameStart => wrapConstRRef(original) : STypeNameRec(scope) original, "const" #keyword, "&&";
+STypeNameStart => wrapConstRRef(original) : "const" #keyword, STypeNameEnd(scope) original, "&&";
 
 // Pointers with and without const.
 Value STypeNameRec(Scope scope);
@@ -297,6 +302,10 @@ SOp2 => dotOperator(block, lhs, rhs, true) : SOp2(block) lhs, "->", SIdentifier 
 SOp2 => arrayOperator(pos, block, base, index) : SOp2(block) base, "\[", SExpr(block) index, "\]";
 SOp2 => fnCall(lhs, params) : SOp2(block) lhs, "(", SActuals(block) params, ")";
 SOp2 => ctorCall(lhs, params) : SOp2(block) lhs, "{", SActuals(block) params, "}";
+
+// Special syntax for spawning threads (since we don't have proper support for void * and function pointers).
+SOp2[10] => SpawnCall(pos, block, fn, param) : "thread_new", "(", "&?", SCompoundName(block.scope) fn, ",", SExprNoComma(block) param, ")";
+
 
 Expr SAtom(Block block);
 SAtom => v : "(", SExpr(block) v, ")";

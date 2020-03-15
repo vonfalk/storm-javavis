@@ -26,7 +26,7 @@ class Program on Render {
 	private Fn<void>? changeNotification;
 
 	// Event called whenever an error is encountered from one of the threads.
-	private Fn<void, Word, Exception>? errorNotification;
+	private Fn<void, Nat, Exception>? errorNotification;
 
 	// Set the change notification.
 	public assign onChange(Fn<void> fn) {
@@ -35,7 +35,7 @@ class Program on Render {
 	}
 
 	// Set the error notification.
-	public assign onError(Fn<void, Word, Exception> fn) {
+	public assign onError(Fn<void, Nat, Exception> fn) {
 		errorNotification = fn;
 		fn;
 	}
@@ -52,6 +52,9 @@ class Program on Render {
 			main = main;
 			hints = hints;
 		}
+
+		// Add us into the global map.
+		programInstances.put(this);
 	}
 
 	// Find supported file types.
@@ -66,6 +69,13 @@ class Program on Render {
 	public Program load(Url[] files) : static {
 		loadProgram(files);
 	}
+
+	// Thread ID:s. We maintain our own thread ID:s that have lower numbers. They are only unique for each program.
+	private Nat usedThreadId;
+
+	// Last thread that terminated. We use this to tell the user which thread crashed. If multiple
+	// threads crash at the same time, this might be inaccurate, but it is good enough for now.
+	private Nat lastTerminatedId;
 
 	// All threads in the program. The key is the ID of the UThread that executes the code.
 	Word->ProgThread threads;
@@ -84,7 +94,7 @@ class Program on Render {
 			// Just ignore it.
 		} catch (Exception e) {
 			if (errorNotification) {
-				errorNotification.call(currentUThread(), e);
+				errorNotification.call(lastTerminatedId, e);
 			} else {
 				print("The program encountered an error:\n${e}");
 			}
@@ -150,7 +160,7 @@ class Program on Render {
 		ProgThread t = if (threads.has(id)) {
 			threads.get(id);
 		} else {
-			ProgThread t(this);
+			ProgThread t(this, ++usedThreadId);
 			threads.put(id, t);
 			t;
 		};
@@ -169,8 +179,37 @@ class Program on Render {
 		t.onFunctionExited();
 		if (t.callDepth == 0) {
 			threads.remove(id);
-			print("Removed thread!");
+
+			if (f = t.watch)
+				spawn checkErrors(t.threadId, f);
+
+			lastTerminatedId = t.threadId;
 			notifyChange();
+		}
+	}
+
+	// Allocate a new thread ID for a thread that will eventually start.
+	Nat allocFutureId(Word threadId) {
+		// We can just preemptively add the thread.
+		Nat id = ++usedThreadId;
+		ProgThread t(this, id);
+		threads.put(threadId, t);
+
+		id;
+	}
+
+	// Check for errors from a future. Will block until anything is posted.
+	private void checkErrors(Nat threadId, FutureBase from) {
+		try {
+			from.errorResult();
+		} catch (ExitError e) {
+			// Just ignore it.
+		} catch (Exception e) {
+			if (errorNotification) {
+				errorNotification.call(lastTerminatedId, e);
+			} else {
+				print("The program encountered an error:\n${e}");
+			}
 		}
 	}
 }
@@ -673,4 +712,60 @@ class LoadError extends Exception {
 	void message(StrBuf to) : override {
 		to << msg;
 	}
+}
+
+// Global variable that keeps track of all Program instances, so that we can find the owner to a
+// particular thread by its thread id.
+// TODO: This can't be private...
+package WeakSet<Program> programInstances on Render = WeakSet<Program>();
+
+// Find the Program instance containing a particular thread ID.
+private Program? findProgram(Word threadId) on Render {
+	for (i in programInstances) {
+		if (i.threads.has(threadId))
+			return i;
+	}
+	return null;
+}
+
+// Find a particular thread.
+private ProgThread? findThread(Word threadId) on Render {
+	for (i in programInstances) {
+		if (i.threads.has(threadId))
+			return i.threads.get(threadId);
+	}
+	return null;
+}
+
+// Find the "simple" thread ID for a thread. This might create the thread ID in the appropriate
+// location, which is why the current thread ID is needed as well.
+private Nat findNewThreadId(Word currentThread, Word query) on Render {
+	if (thread = findThread(query)) {
+		return thread.threadId;
+	}
+
+	// We need to create it.
+	if (p = findProgram(currentThread)) {
+		return p.allocFutureId(query);
+	}
+
+	0;
+}
+
+// Wrapper not bound to a particular thread, making it easier to call from ASM.
+public Nat findNewThreadId(Word query) {
+	findNewThreadId(currentUThread(), query);
+}
+
+private void watchErrorsI(Word threadId, FutureBase future) on Render {
+	if (thread = findThread(threadId)) {
+		thread.watch = future;
+	} else {
+		future.detach();
+	}
+}
+
+// Tell the system to watch for errors for the specified thread ID using the supplied future.
+public void watchErrors(Word threadId, FutureBase future) {
+	watchErrorsI(threadId, future);
 }

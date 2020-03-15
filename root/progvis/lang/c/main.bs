@@ -1,0 +1,12 @@
+use core:io;
+use core:lang;
+
+// Redirect to the C++ frontend.
+lang:PkgReader reader(Url[] files, Package pkg) on Compiler {
+	progvis:lang:cpp:reader(files, pkg);
+}
+
+// Hints as well.
+progvis:Hints hints() {
+	progvis:lang:cpp:hints();
+}

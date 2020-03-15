@@ -1,0 +1,88 @@
+use core:lang;
+use core:asm;
+use lang:bs:macro;
+
+on Compiler:
+
+/**
+ * Spawn syntax.
+ *
+ * Returns some kind of "thread id" for the new thread.
+ */
+class SpawnCall extends Expr {
+	init(SrcPos pos, Block parent, SimpleName fn, Expr param) {
+		Function toCall = findFn(pos, parent.scope, fn, param);
+
+		if (toCall.result != Value())
+			throw SyntaxError(pos, "It is not possible to spawn functions that return a value.");
+
+		init(pos) {
+			toCall = toCall;
+			param = param;
+		}
+	}
+
+	private Function toCall;
+	private Expr param;
+
+	ExprResult result() : override {
+		Value(named{Int});
+	}
+
+	void code(CodeGen gen, CodeResult res) : override {
+		Value paramType = toCall.params[0];
+		Operand[] params;
+
+		if (paramType.ref) {
+			// Ask for a pointer, since that needs to be heap-allocated!
+			param.codePtr(gen, safeType(paramType, pos));
+
+			Var v = gen.l.createVar(gen.block, sPtr);
+			gen.l << ucast(v, ecx);
+			gen.l << add(v, ptrB);
+			params << v;
+		} else {
+			CodeResult paramRes(paramType, gen.block);
+			param.code(gen, paramRes);
+			params << paramRes.location(gen);
+		}
+
+		CodeResult future(Value(named{FutureBase}), gen.block);
+		CodeResult id(Value(named{Word}), gen.block);
+		toCall.asyncThreadCall(gen, params, future, id);
+
+		// Tell the program management to handle the future for us.
+		gen.l << fnParam(longDesc, id.location(gen));
+		gen.l << fnParam(ptrDesc, future.location(gen));
+		gen.l << fnCall(named{progvis:watchErrors<Word, FutureBase>}.ref, false);
+
+		// Create a thread id for the new thread. At the moment we always return 1.
+		if (res.needed()) {
+			gen.l << fnParam(longDesc, id.location(gen));
+			gen.l << fnCall(named{progvis:findNewThreadId<Word>}.ref, false, intDesc, res.location(gen));
+		}
+	}
+
+	void codePtr(CodeGen gen, Type type) : override {
+		CppVar v = allocTemporary(gen, type);
+		CodeResult r(Value(named{Int}), gen.block);
+		code(gen, r);
+
+		v.adjust(gen, ptrA);
+		gen.l << mov(ptrRel(ptrA), r.location(gen));
+
+		gen.l << location(SrcPos());
+		v.ptr(gen);
+	}
+
+	// Find a function to call.
+	private Function findFn(SrcPos pos, Scope scope, SimpleName name, Expr param) : static {
+		name = name.clone();
+		name.last = CppPart(name.last.name, [param]);
+
+		unless (fn = scope.find(name) as Function)
+			throw SyntaxError(pos, "Unable to find a function to spawn: ${name}");
+
+		fn;
+	}
+}

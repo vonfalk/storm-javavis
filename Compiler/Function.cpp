@@ -481,6 +481,52 @@ namespace storm {
 		*to->l << end(sub->block);
 	}
 
+	void Function::asyncThreadCall(CodeGen *to, Array<code::Operand> *params, CodeResult *future, CodeResult *id) {
+		asyncThreadCall(to, params, future, id, ptrConst(Offset()));
+	}
+
+	void Function::asyncThreadCall(CodeGen *to, Array<code::Operand> *params, CodeResult *future, CodeResult *id, code::Operand thread) {
+		using namespace code;
+
+		Engine &e = engine();
+		CodeGen *sub = to->child();
+		*to->l << begin(sub->block);
+
+		// Spill any registers to memory if necessary...
+		params = spillRegisters(sub, params);
+
+		// Create the parameters.
+		Var par = createFnCall(sub, this->params, params, true);
+
+		// Create the result object.
+		Type *futureT = wrapFuture(e, this->result).type;
+		code::Var resultPos = future->safeLocation(sub, thisPtr(futureT));
+		allocObject(sub, futureT->defaultCtor(), new (this) Array<Operand>(), resultPos);
+		future->created(sub);
+
+		// Get the thunk.
+		Ref thunk = Ref(threadThunk());
+
+		TypeDesc *ptr = e.ptrDesc();
+
+		// Spawn the thread!
+		*to->l << lea(ptrA, par);
+		*to->l << fnParam(ptr, ref()); // fn
+		*to->l << fnParam(byteDesc(e), toOp(isMember())); // member
+		*to->l << fnParam(ptr, thunk); // thunk
+		*to->l << fnParam(ptr, ptrA); // params
+		*to->l << fnParam(ptr, resultPos); // result
+		*to->l << fnParam(ptr, thread); // on
+		*to->l << fnCall(e.ref(builtin::spawnId), false, longDesc(e), rax);
+
+		// Save the thread ID.
+		if (id->needed())
+			*to->l << mov(id->location(to), rax);
+
+		// Now, we're done!
+		*to->l << end(sub->block);
+	}
+
 	code::RefSource *Function::threadThunk() {
 		using namespace code;
 
@@ -515,6 +561,13 @@ namespace storm {
 		os::FnCallRaw call(params, thunk);
 		const os::Thread *thread = on ? &on->thread() : null;
 		os::UThread::spawnRaw(fn, member, null, call, *result->rawFuture(), result->rawResult(), thread);
+	}
+
+	// As 'spawnThreadFuture', but returns a thread ID (same as currentUThread() returns in Storm) and detaches the future.
+	Word spawnThreadId(const void *fn, bool member, os::CallThunk thunk, void **params, FutureBase *result, Thread *on) {
+		os::FnCallRaw call(params, thunk);
+		const os::Thread *thread = on ? &on->thread() : null;
+		return os::UThread::spawnRaw(fn, member, null, call, *result->rawFuture(), result->rawResult(), thread).id();
 	}
 
 	/**

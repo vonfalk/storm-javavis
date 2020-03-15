@@ -68,6 +68,10 @@ namespace storm {
 		}
 	}
 
+	void FutureBase::errorResult() {
+		data->future.result(&cloneEx, null);
+	}
+
 	void FutureBase::detach() {
 		data->future.detach();
 	}

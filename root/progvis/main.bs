@@ -115,8 +115,8 @@ class MainWin extends Frame {
 	}
 
 	// Called when an error is triggered from a program.
-	private void onError(Word threadId, Exception e) {
-		showMessage(this, "A thread crashed", "The thread crashed with the following message:\n${e.message}");
+	private void onError(Nat threadId, Exception e) {
+		showMessage(this, "Thread ${threadId} crashed", "Thread ${threadId} crashed with the following message:\n${e.message}");
 	}
 }
 
@@ -149,7 +149,7 @@ class MainPainter extends Painter {
 	}
 
 	// Open a program.
-	void open(Url[] files, fn(Word, Exception)->void errorCb) {
+	void open(Url[] files, fn(Nat, Exception)->void errorCb) {
 		var loaded = Program:load(files);
 		program = loaded;
 		workspace.hints = loaded.hints;
@@ -270,7 +270,8 @@ void main() on Compiler {
 		// win.open(url / "cpp_error.cpp");
 		// win.open(url / "str.cpp");
 		// win.open(url / "const_example.cpp");
-		win.open(url / "pintos_debug.cpp");
+		// win.open(url / "pintos_debug.cpp");
+		win.open(url / "thread_example.c");
 		win.waitForClose();
 	}
 }

@@ -5,7 +5,7 @@ use lang:bnf;
 use lang:bs:macro;
 
 // Entry-point for the C++ implementation.
-PkgReader reader(Url[] files, Package pkg) {
+PkgReader reader(Url[] files, Package pkg) on Compiler {
 	FilePkgReader(files, pkg, &readFile);
 }
 
@@ -59,7 +59,6 @@ private:
 		if (cont)
 			return cont;
 
-		// TODO: Don't generate if we already have it!
 		Parser<SRoot> parser;
 		parser.parse(info.contents, info.url, info.start);
 		if (parser.hasError)

@@ -42,6 +42,7 @@ namespace storm {
 			// Low-level helpers for spawning threads.
 			spawnResult,
 			spawnFuture,
+			spawnId,
 			// Access to things inside FnBase.
 			fnNeedsCopy,
 			fnCall,

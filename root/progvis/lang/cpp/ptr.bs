@@ -391,8 +391,12 @@ void checkPtr(unsafe:RawPtr base, Nat offset, Nat size) {
 	// Array header.
 	if (base.isValue)
 		offset -= sPtr.current * 2;
-	if (offset + size > total)
-		throw PtrError("Trying to read at offset ${offset} in an allocation of size ${total}.");
+	if (offset + size > total) {
+		if (total == 0)
+			throw PtrError("Trying to read from memory that was freed.");
+		else
+			throw PtrError("Trying to read at offset ${offset} in an allocation of size ${total}.");
+	}
 }
 
 // Check that the pointer provided as 'base' and 'offset' refers to the start of an allocation, and
@@ -485,7 +489,7 @@ Value unwrapPtrOrRef(Value val) {
 // Is it a ptr or ref?
 Bool isCppPtr(Value val) {
 	if (t = val.type as PtrType) {
-		return !t.isRef;
+		return t.isPtr;
 	}
 	false;
 }

@@ -177,6 +177,11 @@ namespace storm {
 		void STORM_FN asyncThreadCall(CodeGen *to, Array<code::Operand> *params, CodeResult *result, code::Operand thread);
 		void STORM_FN asyncThreadCall(CodeGen *to, Array<code::Operand> *params, CodeResult *result);
 
+		// Generate code for this function call, assuming we want to run on a different
+		// thread. Returning a Word with the newly created thread ID as well as the future.
+		void STORM_FN asyncThreadCall(CodeGen *to, Array<code::Operand> *params, CodeResult *future, CodeResult *id, code::Operand thread);
+		void STORM_FN asyncThreadCall(CodeGen *to, Array<code::Operand> *params, CodeResult *future, CodeResult *id);
+
 	private:
 		// Two references. One is for the lookup function, and one is for the actual code to be
 		// executed. Initialized when needed due to lack of information in the ctor.
@@ -243,5 +248,6 @@ namespace storm {
 	// Helpers used by the generated code.
 	void spawnThreadResult(const void *fn, bool member, os::CallThunk thunk, void **params, void *result, Thread *on);
 	void spawnThreadFuture(const void *fn, bool member, os::CallThunk thunk, void **params, FutureBase *result, Thread *on);
+	Word spawnThreadId(const void *fn, bool member, os::CallThunk thunk, void **params, FutureBase *result, Thread *on);
 
 }

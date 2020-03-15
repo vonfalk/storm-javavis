@@ -429,6 +429,8 @@ namespace storm {
 			return FNREF(spawnThreadResult);
 		case builtin::spawnFuture:
 			return FNREF(spawnThreadFuture);
+		case builtin::spawnId:
+			return FNREF(spawnThreadId);
 		case builtin::fnNeedsCopy:
 			return FNREF(FnBase::needsCopy);
 		case builtin::fnCall:

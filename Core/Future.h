@@ -39,6 +39,9 @@ namespace storm {
 		// Wait for the result. 'to' is empty memory where the value will be copied into.
 		void CODECALL resultRaw(void *to);
 
+		// Get the result as an exception if it was an exception, otherwise just return whenever we have a result.
+		void STORM_FN errorResult();
+
 		// Detach the future, ie. tell it we don't care about the result.
 		void STORM_FN detach();
 

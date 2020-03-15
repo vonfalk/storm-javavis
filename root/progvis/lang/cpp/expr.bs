@@ -551,7 +551,12 @@ class NameExpr extends Expr {
 	private Expr doResolve() {
 		Found? found = findNamed();
 		unless (found) {
-			throw SyntaxError(pos, "Unable to resolve the name ${name} in this context!");
+			if (context) {
+				if (context.result.type.isCppPtr)
+					throw SyntaxError(pos, "Unable to resolve '${name}' in this context. Did you mean to use '->'?");
+			}
+
+			throw SyntaxError(pos, "Unable to resolve the name '${name}' in this context!");
 		}
 
 		if (n = found.named as LocalVar) {
@@ -566,7 +571,7 @@ class NameExpr extends Expr {
 			}
 		}
 
-		throw SyntaxError(pos, "${name} refers to ${typeOf(found.named).name}, which I don't know how to handle here.");
+		throw SyntaxError(pos, "'${name}' refers to ${typeOf(found.named).name}, which I don't know how to handle here.");
 	}
 }
 

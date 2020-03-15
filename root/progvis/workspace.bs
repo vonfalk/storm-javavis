@@ -114,8 +114,9 @@ class Workspace on Render {
 		elements << Element(object, visual);
 		objMap.put(object, id);
 
-		visual.pos = Point(maxX + 10, 10);
-		maxX += visual.size.w + 20;
+		Float space = 20;
+		visual.pos = Point(maxX + space, 10);
+		maxX += visual.size.w + space * 2;
 
 		// Follow pointers.
 		work.push(WorkItem(visual, object));
@@ -173,7 +174,7 @@ class Workspace on Render {
 			ThreadData t(thread);
 			t.traverse(this, list);
 
-			elements << Element(thread, WithCaption(t, "Thread"));
+			elements << Element(thread, WithCaption(t, "Thread ${thread.threadId}"));
 			objMap.put(key, id);
 		}
 	}
