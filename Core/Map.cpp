@@ -572,12 +572,18 @@ namespace storm {
 	}
 
 	GcArray<MapBase::Info> *MapBase::copyArray(const GcArray<Info> *src) {
+		if (!src)
+			return null;
+
 		GcArray<Info> *dest = runtime::allocArray<Info>(engine(), &infoType, src->count);
 		memcpy(dest->v, src->v, src->count*sizeof(Info));
 		return dest;
 	}
 
 	GcArray<byte> *MapBase::copyArray(const GcArray<byte> *src, const GcArray<Info> *info, const Handle &type) {
+		if (!src)
+			return null;
+
 		GcArray<byte> *dest = runtime::allocArray<byte>(engine(), type.gcArrayType, src->count);
 
 		if (type.copyFn) {

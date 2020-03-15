@@ -448,12 +448,18 @@ namespace storm {
 	}
 
 	GcArray<WeakSetBase::Info> *WeakSetBase::copyArray(const GcArray<Info> *src) {
+		if (!src)
+			return null;
+
 		GcArray<Info> *dest = runtime::allocArray<Info>(engine(), &infoType, src->count);
 		memcpy(dest->v, src->v, src->count*sizeof(Info));
 		return dest;
 	}
 
 	GcWeakArray<TObject> *WeakSetBase::copyArray(const GcWeakArray<TObject> *src) {
+		if (!src)
+			return null;
+
 		GcWeakArray<TObject> *dest = runtime::allocWeakArray<TObject>(engine(), src->count());
 		memcpy(dest->v, src->v, src->count()*sizeof(TObject *));
 		return dest;
