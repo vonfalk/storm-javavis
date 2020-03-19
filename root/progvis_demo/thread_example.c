@@ -20,14 +20,7 @@ int start_process(const char *name) {
 	params.start = name;
 	sema_init(&params.sema, 0);
 
-	struct lock lck;
-	lock_init(&lck);
-
-	lock_acquire(&lck);
-
 	int tid = thread_new(process_start, &params);
-
-	lock_release(&lck);
 
 	sema_down(&params.sema);
 

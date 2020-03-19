@@ -24,12 +24,16 @@ class ProgvisError extends Exception {
 class MainWin extends Frame {
 	private MainPainter painter;
 
+	// Currently open file(s).
+	private Url[] currentFiles;
+
 	init() {
 		init("Progvis", Size(800, 800)) {}
 
 		PopupMenu fileMenu;
 		fileMenu << Menu:Text("Open file...", &this.onOpen());
-		fileMenu << Menu:Text("Open task...", &this.onOpenTask());
+		// fileMenu << Menu:Text("Open task...", &this.onOpenTask());
+		fileMenu << Menu:Text("Reload program", &this.onReload());
 
 		PopupMenu runMenu;
 		runMenu << Menu:Text("Restart", &this.onRestart());
@@ -84,10 +88,16 @@ class MainWin extends Frame {
 		if (!picker.show(this))
 			return;
 
-		open(picker.results);
+		currentFiles = picker.results;
+		open(currentFiles);
 	}
 
-	private void onOpenTask() {}
+	private void onReload() {
+		if (currentFiles.empty)
+			showMessage(this, "Error", "You need to open a file before you can reload it.");
+		else
+			open(currentFiles);
+	}
 
 	private void onRestart() {
 		painter.restart();
