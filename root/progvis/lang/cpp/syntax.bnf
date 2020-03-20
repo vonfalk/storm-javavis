@@ -300,11 +300,8 @@ SOp2 => operatorNoConst(block, n, op) : SAtom(block) n, "--" @op;
 SOp2 => dotOperator(block, lhs, rhs, false) : SOp2(block) lhs, "\.", SIdentifier rhs;
 SOp2 => dotOperator(block, lhs, rhs, true) : SOp2(block) lhs, "->", SIdentifier rhs;
 SOp2 => arrayOperator(pos, block, base, index) : SOp2(block) base, "\[", SExpr(block) index, "\]";
-SOp2 => fnCall(lhs, params) : SOp2(block) lhs, "(", SActuals(block) params, ")";
-SOp2 => ctorCall(lhs, params) : SOp2(block) lhs, "{", SActuals(block) params, "}";
-
-// Special syntax for spawning threads (since we don't have proper support for void * and function pointers).
-SOp2[10] => SpawnCall(pos, block, fn, param) : "thread_new", "(", "&?", SCompoundName(block.scope) fn, ",", SExprNoComma(block) param, ")";
+SOp2 => fnCall(pos, lhs, params) : SOp2(block) lhs, "(", SActuals(block) params, ")";
+SOp2 => ctorCall(pos, lhs, params) : SOp2(block) lhs, "{", SActuals(block) params, "}";
 
 
 Expr SAtom(Block block);
@@ -326,6 +323,26 @@ SStrContent : SStrContent - "\\." - SStrContent; // Gobble escape sequences (we 
 void SCharContent();
 SCharContent : "[^'\\\n]*"; // All except end of string and backslash.
 SCharContent : SCharContent - "\\." - SCharContent; // Gobble escape sequences (we could translate them here...)
+
+// Special syntax for spawning threads (since we don't have proper support for void * and function pointers).
+SOp2[10] => SpawnCall(pos, block, fn, param) : "thread_new", "(", "&?", SCompoundName(block.scope) fn, ",", SExprNoComma(block) param, ")";
+
+// Special syntax for printf. We don't support varargs.
+SOp2[10] => Printf(pos, block, fmt, params) : "printf", "(", "\"" #string - SPrintfStr fmt #string - "\"" #string, ",", SActuals(block) params, ")";
+
+// The format string for printf.
+Array<SStr> SPrintfStr();
+SPrintfStr => x : SPrintfStr x - SPrintfFmt -> push - (SPrintfPart -> push)?;
+SPrintfStr => Array<SStr>() : ;
+SPrintfStr => Array<SStr>() : SPrintfPart -> push;
+
+SStr SPrintfPart();
+SPrintfPart => v : "[^\"\\\n%]*" @v;
+SPrintfPart => v : (SPrintfPart - "\\." - SPrintfPart) @v;
+
+SStr SPrintfFmt();
+SPrintfFmt => v : "%-?[0-9]*\.?[0-9]*[a-z]" @v;
+SPrintfFmt => v : "%%" @v;
 
 // Malloc and free.
 

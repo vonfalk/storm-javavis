@@ -1,0 +1,111 @@
+use core:lang;
+use core:asm;
+use lang:bs:macro;
+
+on Compiler:
+
+
+class Printf extends Expr {
+	init(SrcPos pos, Block block, SStr[] format, Expr[] params) {
+		init(pos) {}
+
+		Nat param = 0;
+		for (f in format) {
+			if (f.v.startsWith("%")) {
+				if (param >= params.count)
+					throw SyntaxError(f.pos, "Not enough parameters to printf to print this format placeholder.");
+				addParam(f, params[param]);
+				param++;
+			} else {
+				// Regular thing.
+				addStr(f.v);
+			}
+		}
+	}
+
+	// The functions we will call. We build these in the constructor.
+	Expr[] fnCalls;
+
+	ExprResult result() : override {
+		// No return value.
+		Value();
+	}
+
+	void code(CodeGen gen, CodeResult res) : override {
+		// We never return anything, so this is fine to do!
+		for (x in fnCalls)
+			x.code(gen, CodeResult());
+	}
+
+	void codePtr(CodeGen gen, Type type) : override {
+		throw SyntaxError(pos, "Internal error, printf does not return anything.");
+	}
+
+	// Add a call for printing a parameter.
+	private void addParam(SStr str, Expr param) {
+		// Escape for %
+		if (str.v == "%%") {
+			addStr("%");
+			return;
+		}
+
+		StrBuf middleBuf;
+		Char lastCh;
+		Nat i = 0;
+		for (ch in str.v) {
+			// Skip the %
+			if (i++ > 1)
+				middleBuf << lastCh;
+			lastCh = ch;
+		}
+
+		// Note: "%08d" should pad with zeros, we don't support that at the moment.
+		Str middle = middleBuf.toS;
+		Str last = lastCh.toS;
+		if (last == "s") {
+			if (middle.empty)
+				middle = "0";
+			var fn = named{putStr<Int, ConstPtr<Byte>>};
+			fnCalls << FnCall(pos, fn, [IntLiteral(pos, middle.toInt), param], false);
+		} else if (last == "d") {
+			if (middle.empty)
+				middle = "0";
+			var fn = named{putInt<Int, Int>};
+			fnCalls << FnCall(pos, fn, [IntLiteral(pos, middle.toInt), param], false);
+		} else {
+			throw SyntaxError(str.pos, "Unsupported format specifier ${last}");
+		}
+	}
+
+	private void addStr(Str str) {
+		var fn = named{runtime:putstr<ConstPtr<Byte>>};
+		fnCalls << FnCall(pos, fn, [StrLiteral(pos, str)], false);
+	}
+
+	// Output functions used by the implementation.
+	private void putInt(Int width, Int value) : static {
+		StrBuf buf;
+		if (width < 0)
+			buf << left;
+		else
+			buf << right;
+
+		buf << core:width(abs(width).nat);
+		buf << value;
+		runtime:printStr(buf.toS);
+	}
+
+	private void putStr(Int width, ConstPtr<Byte> str) : static {
+		Int len = runtime:strlen(str);
+		Int pad = max(abs(width) - len, 0);
+		Str padStr = " " * pad.nat;
+
+		if (width > 0)
+			runtime:printStr(padStr);
+
+		runtime:putstr(str);
+		if (width < 0)
+			runtime:printStr(padStr);
+	}
+}
+

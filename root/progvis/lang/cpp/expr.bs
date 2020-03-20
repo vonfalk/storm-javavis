@@ -175,7 +175,7 @@ IntLiteral charLiteral(SStr content) {
 class StrLiteral extends ExprRef {
 	init(SrcPos pos, Str val) {
 		init(pos) {
-			val = val.escape();
+			val = val.unescape();
 		}
 	}
 
@@ -576,7 +576,7 @@ class NameExpr extends Expr {
 }
 
 // Try to "convert" a name expression into a function call.
-Expr fnCall(Expr lhs, Expr[] actuals) {
+Expr fnCall(SrcPos pos, Expr lhs, Expr[] actuals) {
 	unless (lhs as NameExpr) {
 		// TODO: We should try to call the function call operator on the object.
 		throw SyntaxError(lhs.pos, "This is not something we can call.");
@@ -585,7 +585,7 @@ Expr fnCall(Expr lhs, Expr[] actuals) {
 	NameExpr:Found? found = lhs.findNamed(actuals);
 	unless (found) {
 		try {
-			return ctorCall(lhs, actuals);
+			return ctorCall(pos, lhs, actuals);
 		} catch (SyntaxError e) {
 			throw SyntaxError(lhs.pos, "Could not find anything named ${lhs.name} with the supplied paramers to call.");
 		}
@@ -598,29 +598,29 @@ Expr fnCall(Expr lhs, Expr[] actuals) {
 			actuals.insert(0, c);
 			expandFirst = found.contextOffset;
 		}
-		return FnCall(lhs.pos, fn, actuals, expandFirst);
+		return FnCall(pos, fn, actuals, expandFirst);
 	}
 
 	throw SyntaxError(lhs.pos, "Found ${found}, which is not a function.");
 }
 
 // Try to "convert" a name expression into a constructor call.
-Expr ctorCall(Expr lhs, Expr[] actuals) {
+Expr ctorCall(SrcPos pos, Expr lhs, Expr[] actuals) {
 	unless (lhs as NameExpr) {
-		throw SyntaxError(lhs.pos, "This is not the name of a type.");
+		throw SyntaxError(pos, "This is not the name of a type.");
 	}
 
 	unless (type = lhs.scope.find(lhs.name) as Type) {
-		throw SyntaxError(lhs.pos, "${lhs.name} does not the name of a type.");
+		throw SyntaxError(pos, "${lhs.name} does not the name of a type.");
 	}
 
 	if (ctor = cppCtor(type, actuals, lhs.scope))
-		return CtorCall(lhs.pos, ctor, actuals, true);
+		return CtorCall(pos, ctor, actuals, true);
 
 	if (ctor = stormCtor(type, actuals, lhs.scope))
-		return CtorCall(lhs.pos, ctor, actuals, false);
+		return CtorCall(pos, ctor, actuals, false);
 
-	throw SyntaxError(lhs.pos, "Unable to find a suitable constructor to call.");
+	throw SyntaxError(pos, "Unable to find a suitable constructor to call.");
 }
 
 

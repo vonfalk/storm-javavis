@@ -88,8 +88,7 @@ class MainWin extends Frame {
 		if (!picker.show(this))
 			return;
 
-		currentFiles = picker.results;
-		open(currentFiles);
+		open(picker.results);
 	}
 
 	private void onReload() {
@@ -111,6 +110,7 @@ class MainWin extends Frame {
 
 	// Open one or more files, shows nice messages on error.
 	private void open(Url[] files) {
+		currentFiles = files;
 		try {
 			painter.cleanup();
 			painter.open(files, &this.onError);
@@ -281,7 +281,8 @@ void main() on Compiler {
 		// win.open(url / "str.cpp");
 		// win.open(url / "const_example.cpp");
 		// win.open(url / "pintos_debug.cpp");
-		win.open(url / "thread_example.c");
+		// win.open(url / "thread_example.c");
+		win.open(url / "printf.c");
 		win.waitForClose();
 	}
 }

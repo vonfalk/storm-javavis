@@ -1,6 +1,36 @@
 use core:io;
+use core:asm;
+use progvis:lang:cpp;
+
+// Print a string to the GUI.
+void printStr(Str str) {
+	stdOut.write(str);
+	stdOut.flush();
+}
 
 void putchar(Byte ch) {
-	stdOut.write(Char(ch.nat));
-	stdOut.flush();
+	printStr(Char(ch.nat).toS);
+}
+
+// Not really a part of the C standard. We have this for convenience. It does not output a newline.
+void putstr(ConstPtr<Byte> chars) {
+	Nat offset = chars.offset - sPtr.current * 2;
+	Nat size = chars.base.readSize * chars.base.readCount;
+	StrBuf buf;
+	while (offset <= size) {
+		Byte b = chars.base.readByte(offset);
+		if (b == 0)
+			break;
+
+		buf << Char(b.nat);
+
+		offset++;
+	}
+
+	printStr(buf.toS);
+}
+
+void puts(ConstPtr<Byte> chars) {
+	putstr(chars);
+	putchar(10);
 }
