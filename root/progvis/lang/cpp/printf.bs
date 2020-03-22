@@ -2,9 +2,6 @@ use core:lang;
 use core:asm;
 use lang:bs:macro;
 
-on Compiler:
-
-
 class Printf extends Expr {
 	init(SrcPos pos, Block block, SStr[] format, Expr[] params) {
 		init(pos) {}
@@ -65,12 +62,12 @@ class Printf extends Expr {
 		if (last == "s") {
 			if (middle.empty)
 				middle = "0";
-			var fn = named{putStr<Int, ConstPtr<Byte>>};
+			var fn = named{PrintfHelpers:putStr<Int, ConstPtr<Byte>>};
 			fnCalls << FnCall(pos, fn, [IntLiteral(pos, middle.toInt), param], false);
 		} else if (last == "d") {
 			if (middle.empty)
 				middle = "0";
-			var fn = named{putInt<Int, Int>};
+			var fn = named{PrintfHelpers:putInt<Int, Int>};
 			fnCalls << FnCall(pos, fn, [IntLiteral(pos, middle.toInt), param], false);
 		} else {
 			throw SyntaxError(str.pos, "Unsupported format specifier ${last}");
@@ -81,9 +78,12 @@ class Printf extends Expr {
 		var fn = named{runtime:putstr<ConstPtr<Byte>>};
 		fnCalls << FnCall(pos, fn, [StrLiteral(pos, str)], false);
 	}
+}
 
-	// Output functions used by the implementation.
-	private void putInt(Int width, Int value) : static {
+// Output functions used by the implementation.
+// Due to a bug in loading the ConstPtr type, these need to be in a separate class to delay loading of the functions.
+package class PrintfHelpers {
+	void putInt(Int width, Int value) : static {
 		StrBuf buf;
 		if (width < 0)
 			buf << left;
@@ -95,7 +95,7 @@ class Printf extends Expr {
 		runtime:printStr(buf.toS);
 	}
 
-	private void putStr(Int width, ConstPtr<Byte> str) : static {
+	void putStr(Int width, ConstPtr<Byte> str) : static {
 		Int len = runtime:strlen(str);
 		Int pad = max(abs(width) - len, 0);
 		Str padStr = " " * pad.nat;

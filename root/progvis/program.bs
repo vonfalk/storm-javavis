@@ -22,6 +22,10 @@ class Program on Render {
 	// Source code, pre formatted.
 	private Url->Text code;
 
+	// Output from the program since the last check. This is not wired to stdout in any way at the
+	// moment, but we could do that. Use 'addOutput' to access it, with convenience functions below.
+	private StrBuf output;
+
 	// Event called whenever the state of a thread changed.
 	private Fn<void>? changeNotification;
 
@@ -68,6 +72,22 @@ class Program on Render {
 
 	public Program load(Url[] files) : static {
 		loadProgram(files);
+	}
+
+	// Add output to the buffer. Note: We don't call 'onChange' for this, since the program will
+	// soon be halted at the next step anyway, which causes a full repaint anyway.
+	public void addOutput(Str data) {
+		output << data;
+	}
+
+	// Get all output in the buffer. Returns null if no new output.
+	public Str? getOutput() {
+		if (output.empty)
+			return null;
+
+		Str result = output.toS;
+		output.clear();
+		result;
 	}
 
 	// Thread ID:s. We maintain our own thread ID:s that have lower numbers. They are only unique for each program.
@@ -783,3 +803,13 @@ public void watchErrors(Word threadId, FutureBase future) {
 	watchErrorsI(threadId, future);
 }
 
+// Add output to the program associated with the current thread, or output to stdout if no thread
+// currently available. No newlines are added automatically.
+public void output(Str text) {
+	if (program = findProgram(currentUThread())) {
+		program.addOutput(text);
+	} else {
+		stdOut.write(text);
+		stdOut.flush();
+	}
+}

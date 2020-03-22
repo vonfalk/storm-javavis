@@ -4,8 +4,9 @@ use progvis:lang:cpp;
 
 // Print a string to the GUI.
 void printStr(Str str) {
-	stdOut.write(str);
-	stdOut.flush();
+	progvis:output(str);
+	// stdOut.write(str);
+	// stdOut.flush();
 }
 
 void putchar(Byte ch) {

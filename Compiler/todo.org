@@ -57,9 +57,11 @@
     but the scale of the issue should be assessed first.
   - [ ] Parsing core.lang.syntax.bnf takes about 80 ms, which is a bit on the high end when compiling code...
 
-* Loose ends so far [52/93]
+* Loose ends so far [52/94]
   - [ ] We want to allocate threads in some kind of pool. since the minimum alignment for VirtualAlloc on Windows
     is 64k, we might waste quite a lot of memory when allocating small stacks.
+  - [ ] Having a generator in Basic Storm generate types, makes it impossible to use those types in other files
+    in the same package (depending on load order).
   - [ ] If CppAbstractHints is empty, it is still possible to instantiate it, even if the base class is abstract.
   - [ ] Implement 'clearBody' in all classes that implement 'createBody'.
   - [ ] A production like this: "SOp3 : "&", SOp3(block) n;" works for "Expr SOp3(Block block);". It should give an error!
