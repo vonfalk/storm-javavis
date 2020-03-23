@@ -641,7 +641,14 @@ namespace storm {
 	}
 
 	Str *Str::substr(Iter start, Iter end) const {
-		return new (this) Str(toPtr(start), toPtr(end));
+		const wchar *s = toPtr(start);
+		const wchar *e = toPtr(end);
+
+		// Make sure the iterators are in the right order.
+		if (s > e)
+			return new (this) Str(S(""));
+
+		return new (this) Str(s, e);
 	}
 
 	Str *Str::remove(Iter start, Iter end) const {
