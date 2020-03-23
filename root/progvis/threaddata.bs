@@ -17,12 +17,16 @@ class ThreadData extends Drawable {
 	// Source code view.
 	SourceView source;
 
+	// Shall we be removed (when the user clicks "remove").
+	Bool removeMe;
+
 	// Buttons.
 	Button step;
 	Button pause;
 	Button runSlow;
 	Button runFast;
 	Button runVeryFast;
+	Button removeDead;
 
 	// Buttons. Duplicates of the variables for easier layout.
 	Button[] buttons;
@@ -37,6 +41,7 @@ class ThreadData extends Drawable {
 			runSlow(runDecoration, SolidBrush(green), buttonSize);
 			runFast(runFastDecoration, SolidBrush(green), buttonSize);
 			runVeryFast(runVeryFastDecoration, SolidBrush(green), buttonSize);
+			removeDead(removeDecoration, SolidBrush(red), buttonSize);
 		}
 
 		step.onClick = &this.onStep;
@@ -44,6 +49,7 @@ class ThreadData extends Drawable {
 		runSlow.onClick = &this.onRunSlow;
 		runFast.onClick = &this.onRunFast;
 		runVeryFast.onClick = &this.onRunVeryFast;
+		removeDead.onClick = &this.onRemove;
 
 		buttons = [step, pause, runSlow, runFast, runVeryFast];
 	}
@@ -107,6 +113,9 @@ class ThreadData extends Drawable {
 		if (thread.callDepth == 0) {
 			// Don't remove frames if the thread terminated. That makes us show where it crashed.
 			source.highlight = sourceTerminatedHighlight;
+			if (buttons.last !is removeDead)
+				buttons << removeDead;
+
 			for (v in frames)
 				v.traverse(ws, work);
 			return;
@@ -137,6 +146,11 @@ class ThreadData extends Drawable {
 		}
 
 		invalidateSize();
+	}
+
+	// Don't remove the thread until it has terminated and the user explicitly removes it.
+	Bool remove() : override {
+		removeMe;
 	}
 
 	protected Size computeSize() : override {
@@ -188,6 +202,12 @@ class ThreadData extends Drawable {
 
 	private void onRunVeryFast() {
 		thread.resume(100 ms);
+	}
+
+	private void onRemove() {
+		removeMe = true;
+		// Make it happen now, and not later.
+		thread.owner.notifyChange();
 	}
 }
 

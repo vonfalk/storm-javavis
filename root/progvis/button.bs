@@ -125,3 +125,32 @@ Path pauseDecoration() {
 
 	p;
 }
+
+// Remove decoration (a cross)
+Path removeDecoration() {
+	Path p;
+
+	p.start(Point(0, 2));
+	p.line(Point(2, 0));
+
+	p.line(Point(10, 8));
+
+	p.line(Point(18, 0));
+	p.line(Point(20, 2));
+
+	p.line(Point(12, 10));
+
+	p.line(Point(20, 18));
+	p.line(Point(18, 20));
+
+	p.line(Point(10, 12));
+
+	p.line(Point(2, 20));
+	p.line(Point(0, 18));
+
+	p.line(Point(8, 10));
+
+	p.close();
+
+	p;
+}

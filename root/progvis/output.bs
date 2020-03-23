@@ -1,0 +1,98 @@
+use ui;
+use graphics;
+use core:geometry;
+use core:lang;
+
+/**
+ * A panel containing output from a running program.
+ */
+class OutputText extends Drawable {
+	init() {
+		init() {
+			width = 200;
+			history = 10;
+			lineHeight = codeFont.height;
+		}
+
+		// We need at least one line to function properly.
+		nextLine();
+	}
+
+	// Width of the output.
+	private Float width;
+
+	// How many lines of history are kept.
+	private Nat history;
+
+	// Line height.
+	private Float lineHeight;
+
+	// Lines of text to draw. We only keep 'history' number of lines.
+	private Text[] lines;
+
+	// Add text.
+	void add(Str text) {
+		// Process each line separately.
+		var start = text.begin();
+		do {
+			var newline = text.find(Char(10), start);
+		} while (newline != text.end()) {
+			addLine(text.substr(start, newline));
+			nextLine();
+			start = ++newline;
+		}
+
+		addLine(text.substr(start, text.end));
+	}
+
+	private void addLine(Str line) {
+		if (line.empty)
+			return;
+
+		line = lines.last.text + line;
+		lines.last = Text(line, codeFont);
+		lines.last.layoutBorder = Size(width, 1000);
+	}
+
+	private void nextLine() {
+		lines << Text("", codeFont);
+
+		// Make sure history is not too long.
+		while (lines.count > history) {
+			lines.remove(0);
+		}
+	}
+
+	// Don't remove.
+	Bool remove() : override { false; }
+
+	// Draw.
+	void draw(Graphics g, Bool active) : override {
+		Rect r = rect;
+		g.fill(r, dataBg);
+
+		Rect text = r.shrink(compositeBorder);
+		g.push(text);
+
+		Point offset(text.p0.x, text.p1.y);
+		for (Nat i = lines.count; i > 0; i--) {
+			// Don't draw what is not visible.
+			if (offset.y < text.p0.y)
+				break;
+
+			Text line = lines[i - 1];
+			offset.y -= max(lineHeight, line.size.h);
+			g.draw(line, dataFg, offset);
+		}
+
+		g.pop();
+		g.draw(r, captionFg);
+	}
+
+	// Draw links (nothing here).
+	void drawLinks(Graphics g, Bool active) : override {}
+
+	Size computeSize() : override {
+		Size(width, lineHeight * history.int.float) + compositeBorder * 2;
+	}
+}

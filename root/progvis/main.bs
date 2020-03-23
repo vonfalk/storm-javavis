@@ -37,6 +37,7 @@ class MainWin extends Frame {
 
 		PopupMenu runMenu;
 		runMenu << Menu:Text("Restart", &this.onRestart());
+		runMenu << Menu:Text("Spawn thread", &this.onSpawnThread());
 
 		PopupMenu helpMenu;
 		helpMenu << Menu:Text("About...", &this.onAbout());
@@ -100,6 +101,10 @@ class MainWin extends Frame {
 
 	private void onRestart() {
 		painter.restart();
+	}
+
+	private void onSpawnThread() {
+		painter.spawnThread();
 	}
 
 	private void onAbout() {
@@ -187,6 +192,13 @@ class MainPainter extends Painter {
 		}
 	}
 
+	// Spawn another thread.
+	void spawnThread() {
+		if (program) {
+			program.spawn(program.main);
+		}
+	}
+
 	// Render everything.
 	Bool render(Size me, Graphics g) : override {
 		g.transform(translate(-offset));
@@ -202,6 +214,10 @@ class MainPainter extends Painter {
 		if (program) {
 			for (id, thread in program.threads) {
 				workspace.traverse(thread);
+			}
+
+			if (output = program.getOutput()) {
+				workspace.outputText(output);
 			}
 		}
 

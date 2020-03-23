@@ -30,6 +30,11 @@ class Workspace on Render {
 
 				x += sz.w + space;
 			}
+			if (e.output) {
+				Size sz = e.visual.size;
+				e.visual.pos.x = viewport.p1.x - sz.w - space;
+				e.visual.pos.y = viewport.p1.y - sz.h - space;
+			}
 
 			// TODO: Clipping?
 			if (!e.topmost) {
@@ -75,6 +80,33 @@ class Workspace on Render {
 	void deactivate() { active = null; }
 
 	/**
+	 * Output.
+	 */
+
+	// Our output object, if we created it.
+	private OutputText? output;
+
+	// Get the output, create it if it does not exist already.
+	private OutputText getOutput() {
+		if (output)
+			return output;
+
+		OutputText created;
+		Element elem(WithCaption(created, "Output"));
+		elem.output = true;
+		elem.topmost = true;
+		elements << elem;
+		output = created;
+		created;
+	}
+
+	void outputText(Str text) {
+		var out = getOutput();
+		out.add(text);
+	}
+
+
+	/**
 	 * Object traversal.
 	 */
 
@@ -88,7 +120,7 @@ class Workspace on Render {
 			d.visited = false;
 			if (d.object.any)
 				objMap.put(d.object, i);
-			if (!d.thread)
+			if (!d.thread & !d.output)
 				maxX = max(maxX, d.visual.rect.p1.x);
 		}
 	}
@@ -181,7 +213,9 @@ class Workspace on Render {
 
 	// Traverse an element. Check if it is a thread or a regular object first.
 	void traverse(Element elem) {
-		if (elem.thread) {
+		if (elem.object.empty) {
+			elem.visited = true;
+		} else if (elem.thread) {
 			if (t = elem.object.asTObject() as ProgThread)
 				traverse(t);
 		} else {
@@ -191,14 +225,6 @@ class Workspace on Render {
 
 	// Notify the workspace that traversal is over, and that any remaning objects may be removed.
 	void endTraversal() {
-		// Traverse all objects where 'autoRemove' is false, so that they keep any objects they refer alive.
-		for (elem in elements) {
-			if (!elem.visited & !elem.autoRemove) {
-				// Traverse it now.
-				traverse(elem);
-			}
-		}
-
 		popQueue();
 
 		// Find any dead objects now, and potentially traverse them as well.
@@ -219,11 +245,10 @@ class Workspace on Render {
 			Element here = elements[i];
 			if (to < i)
 				elements[to] = here;
-			if (here.visited | !here.autoRemove)
+			if (here.visited)
 				to++;
 		}
 		while (to < elements.count) {
-			print("Removing ${elements.last.object}");
 			elements.pop();
 		}
 	}
@@ -231,6 +256,7 @@ class Workspace on Render {
 	// Remove everything in the workspace.
 	void clear() {
 		elements.clear();
+		output = null;
 	}
 
 private:
@@ -245,11 +271,11 @@ private:
 		// Was this visited during a traversal?
 		Bool visited;
 
-		// Should this object be removed when it is no longer reachable?
-		Bool autoRemove;
-
 		// Is this a thread? (impacts layout etc.)
 		Bool thread;
+
+		// Is this an output panel? (Put on the top right).
+		Bool output;
 
 		// Always on top?
 		Bool topmost;
@@ -260,7 +286,6 @@ private:
 				object = object;
 				visual = visual;
 				visited = true;
-				autoRemove = true;
 				topmost = false;
 			}
 		}
@@ -271,7 +296,6 @@ private:
 				object = unsafe:RawPtr(thread);
 				visual = visual;
 				visited = true;
-				autoRemove = false;
 				thread = true;
 				topmost = true;
 			}
@@ -281,7 +305,6 @@ private:
 		init(Drawable visual) {
 			init {
 				visual = visual;
-				autoRemove = false;
 			}
 		}
 	}
