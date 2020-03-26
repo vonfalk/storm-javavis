@@ -109,3 +109,8 @@ package class PrintfHelpers {
 	}
 }
 
+// Create if we don't have any parameters.
+Printf printf(SrcPos pos, Block block, SStr[] format) on Compiler {
+	Printf(pos, block, format, Expr[]);
+}
+

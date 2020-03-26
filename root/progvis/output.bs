@@ -9,7 +9,7 @@ use core:lang;
 class OutputText extends Drawable {
 	init() {
 		init() {
-			width = 200;
+			width = 300;
 			history = 10;
 			lineHeight = codeFont.height;
 		}

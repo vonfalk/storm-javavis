@@ -133,18 +133,13 @@ SIdentifier => v : "[A-Za-z_][A-Za-z0-9_]*" @v;
 
 // Type declarations. Transforms into a Value.
 Value STypeName(Scope scope);
-STypeName => t : STypeNameStart(scope) t;
-// In C it is necessary to write "struct foo" instead of just "foo".
-STypeName => t : "struct" #keyword, STypeNameStart(scope) t;
-
-Value STypeNameStart(Scope scope);
-STypeNameStart => original : STypeNameRec(scope) original - ("const" #keyword)?;
-STypeNameStart => wrapRef(original) : STypeNameRec(scope) original, "&";
-STypeNameStart => wrapConstRef(original) : STypeNameRec(scope) original, "const" #keyword, "&";
-STypeNameStart => wrapConstRef(original) : "const" #keyword, STypeNameEnd(scope) original, "&";
-STypeNameStart => wrapRRef(original) : STypeNameRec(scope) original, "&&";
-STypeNameStart => wrapConstRRef(original) : STypeNameRec(scope) original, "const" #keyword, "&&";
-STypeNameStart => wrapConstRRef(original) : "const" #keyword, STypeNameEnd(scope) original, "&&";
+STypeName => original : STypeNameRec(scope) original - ("const" #keyword)?;
+STypeName => wrapRef(original) : STypeNameRec(scope) original, "&";
+STypeName => wrapConstRef(original) : STypeNameRec(scope) original, "const" #keyword, "&";
+STypeName => wrapConstRef(original) : "const" #keyword, STypeNameEnd(scope) original, "&";
+STypeName => wrapRRef(original) : STypeNameRec(scope) original, "&&";
+STypeName => wrapConstRRef(original) : STypeNameRec(scope) original, "const" #keyword, "&&";
+STypeName => wrapConstRRef(original) : "const" #keyword, STypeNameEnd(scope) original, "&&";
 
 // Pointers with and without const.
 Value STypeNameRec(Scope scope);
@@ -156,6 +151,8 @@ STypeNameRec => wrapConstPtr(original) : "const" #keyword, STypeNameEnd(scope) o
 // Actual type names.
 Value STypeNameEnd(Scope scope);
 STypeNameEnd[-1] => findType(pos, scope, first, rest) : SNamePart(scope) first - ("::", SNamePart(scope) rest)*;
+// "struct foo" is needed in C.
+STypeNameEnd[-1] => findType(pos, scope, first, rest) : "struct[ \t]" #keyword, SNamePart(scope) first - ("::", SNamePart(scope) rest)*;
 
 // Built-in types.
 STypeNameEnd => charType() : "char" #keyword;
@@ -279,8 +276,8 @@ SOp3 => unaryOperator(block, op, n) : "~" @op, SOp3(block) n;
 SOp3 => NegateOp(pos, block, n) : "!", SOp3(block) n;
 SOp3 => unaryOperator(block, op, n) : "\+" @op, SOp2(block) n;
 SOp3 => unaryOperator(block, op, n) : "-" @op, SOp2(block) n;
-SOp3 => operatorNoConst(block, op, n) : "\+\+" @op, SOp2(block) n;
-SOp3 => operatorNoConst(block, op, n) : "--" @op, SOp2(block) n;
+SOp3 => operatorNoConst(block, op, n) : "\+\+" @op, SOp3(block) n;
+SOp3 => operatorNoConst(block, op, n) : "--" @op, SOp3(block) n;
 SOp3 => NewExpr(pos, block, type) : "new[ \t]" #keyword, STypeName(block.scope) type;
 SOp3 => NewExpr(pos, block, type, actuals) : "new[ \t]" #keyword, STypeName(block.scope) type, "(", SActuals(block) actuals, ")";
 SOp3 => NewExpr(pos, block, type, actuals) : "new[ \t]" #keyword, STypeName(block.scope) type, "{", SActuals(block) actuals, "}";
@@ -295,8 +292,8 @@ SizeofType => v : , "(", STypeName(scope) v, ")";
 
 Expr SOp2(Block block);
 SOp2 => a : SAtom(block) a;
-SOp2 => operatorNoConst(block, n, op) : SAtom(block) n, "\+\+" @op;
-SOp2 => operatorNoConst(block, n, op) : SAtom(block) n, "--" @op;
+SOp2 => operatorNoConst(block, n, op) : SOp2(block) n, "\+\+" @op;
+SOp2 => operatorNoConst(block, n, op) : SOp2(block) n, "--" @op;
 SOp2 => dotOperator(block, lhs, rhs, false) : SOp2(block) lhs, "\.", SIdentifier rhs;
 SOp2 => dotOperator(block, lhs, rhs, true) : SOp2(block) lhs, "->", SIdentifier rhs;
 SOp2 => arrayOperator(pos, block, base, index) : SOp2(block) base, "\[", SExpr(block) index, "\]";
@@ -328,6 +325,7 @@ SCharContent : SCharContent - "\\." - SCharContent; // Gobble escape sequences (
 SOp2[10] => SpawnCall(pos, block, fn, param) : "thread_new", "(", "&?", SCompoundName(block.scope) fn, ",", SExprNoComma(block) param, ")";
 
 // Special syntax for printf. We don't support varargs.
+SOp2[10] => printf(pos, block, fmt) : "printf", "(", "\"" #string - SPrintfStr fmt #string - "\"" #string, ")";
 SOp2[10] => Printf(pos, block, fmt, params) : "printf", "(", "\"" #string - SPrintfStr fmt #string - "\"" #string, ",", SActuals(block) params, ")";
 
 // The format string for printf.

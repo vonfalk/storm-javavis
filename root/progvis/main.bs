@@ -297,8 +297,9 @@ void main() on Compiler {
 		// win.open(url / "str.cpp");
 		// win.open(url / "const_example.cpp");
 		// win.open(url / "pintos_debug.cpp");
+		win.open(url / "pintos_live.c");
 		// win.open(url / "thread_example.c");
-		win.open(url / "printf.c");
+		// win.open(url / "printf.c");
 		win.waitForClose();
 	}
 }

@@ -173,16 +173,27 @@ class MemberVarAccess extends Expr {
 		if (!result.needed())
 			return;
 
-		if (!result.type.ref)
-			throw InternalError("Expected to be asked for a reference!");
-
 		CodeResult lhs(in.result.type.asRef(), gen.block);
 		in.code(gen, lhs);
 
-		Var r = result.location(gen);
-		gen.l << mov(r, lhs.location(gen));
-		gen.l << add(r, ptrConst(var.offset));
-		result.created(gen);
+		if (result.type.ref) {
+			Var r = result.location(gen);
+			gen.l << mov(r, lhs.location(gen));
+			gen.l << add(r, ptrConst(var.offset));
+			result.created(gen);
+		} else {
+			var r = result.location(gen);
+			gen.l << mov(ptrA, lhs.location(gen));
+			gen.l << add(ptrA, ptrConst(var.offset));
+			if (result.type.isAsmType) {
+				gen.l << mov(r, xRel(r.size, ptrA));
+			} else {
+				gen.l << lea(ptrB, r);
+				gen.l << fnParam(ptrDesc, ptrB);
+				gen.l << fnParam(ptrDesc, ptrA);
+				gen.l << fnCall(result.type.copyCtor, true);
+			}
+		}
 	}
 
 	void codePtr(CodeGen gen, Type type) : override {
