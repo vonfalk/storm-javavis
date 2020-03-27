@@ -152,6 +152,9 @@ class Program on Render {
 		while (threads.count > 0) {
 			yield();
 		}
+
+		// Reset the threa ID:s
+		usedThreadId = 0;
 	}
 
 	// This function will be called by the executed code to notify us of their current state in

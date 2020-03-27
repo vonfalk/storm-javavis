@@ -282,6 +282,13 @@ class MainPainter extends Painter {
 void main() on Compiler {
 	named{progvis}.compile();
 
+	MainWin win;
+	win.waitForClose();
+}
+
+void debug() on Compiler {
+	named{progvis}.compile();
+
 	if (url = named{progvis_demo}.url) {
 		MainWin win;
 		// win.open(url / "demo2.bs");

@@ -371,5 +371,6 @@ Expr[] createExprs(SStr str) on Compiler {
 	for (ch in str.v.unescape()) {
 		result << IntLiteral(str.pos, ch.codepoint.int);
 	}
+	result << IntLiteral(str.pos, 0);
 	result;
 }
