@@ -368,6 +368,9 @@ namespace gui {
 	}
 
 	Bool FilePicker::show(MAYBE(Frame *) parent) {
+		// Remember the last folder. This is a bit of a hack, but it behaves much like the Windows implementation does.
+		static gchar *current_folder = null;
+
 		res = new (this) Array<Url *>();
 
 		GtkFileChooserAction action = GTK_FILE_CHOOSER_ACTION_OPEN;
@@ -404,6 +407,9 @@ namespace gui {
 														NULL);
 		GtkFileChooser *chooser = GTK_FILE_CHOOSER(dialog);
 
+		if (current_folder)
+			gtk_file_chooser_set_current_folder(chooser, current_folder);
+
 		if (types)
 			addFileTypes(chooser, types);
 
@@ -417,6 +423,11 @@ namespace gui {
 			gtk_widget_destroy(dialog);
 			return false;
 		}
+
+		// Save the current folder.
+		if (current_folder)
+			g_free(current_folder);
+		current_folder = gtk_file_chooser_get_current_folder(chooser);
 
 		int filterIndex = 0;
 		{
