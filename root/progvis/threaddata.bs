@@ -229,6 +229,7 @@ class FrameVal on Render {
 		init {
 			caption = Text(frame.function, captionFont);
 			source = frame;
+			computeSize = true;
 		}
 	}
 
@@ -251,7 +252,7 @@ class FrameVal on Render {
 		while (vars.count > source.variables.count)
 			vars.pop();
 
-		updateSize();
+		computeSize = true;
 	}
 
 	// Did we return from this frame?
@@ -266,6 +267,11 @@ class FrameVal on Render {
 
 	// Get the size.
 	Size size() {
+		if (computeSize) {
+			computeSize = false;
+			updateSize();
+		}
+
 		Float w = max(namesWidth + dataWidth + compositeBorder.w, caption.size.w);
 		Float h = height + captionHeight;
 		Size(w, h) + compositeBorder*2;
@@ -346,6 +352,8 @@ private:
 	Float namesWidth;
 	Float dataWidth;
 	Float height;
+
+	Bool computeSize;
 
 	void updateSize() {
 		namesWidth = 0;

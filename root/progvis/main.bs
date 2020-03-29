@@ -119,6 +119,16 @@ class MainWin extends Frame {
 		try {
 			painter.cleanup();
 			painter.open(files, &this.onError);
+
+			StrBuf title;
+			title << "Progvis (";
+			for (i, f in files) {
+				if (i > 0)
+					title << ", ";
+				title << f.name;
+			}
+			title << ")";
+			text = title.toS;
 		} catch (core:lang:CodeError error) {
 			CompileErrorDialog dlg(error.messageText, error.pos);
 			dlg.show(this);

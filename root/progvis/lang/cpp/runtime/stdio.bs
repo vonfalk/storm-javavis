@@ -9,6 +9,12 @@ void printStr(Str str) {
 	// stdOut.flush();
 }
 
+// Simple print function used in some examples:
+void print(Int v) {
+	printStr(v.toS);
+}
+
+// Standard putchar function.
 void putchar(Byte ch) {
 	printStr(Char(ch.nat).toS);
 }

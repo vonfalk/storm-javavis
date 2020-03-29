@@ -20,7 +20,7 @@ void list_destroy(struct sorted_list *me) {
 bool list_done(const struct sorted_list *me, int *pos, int value) {
 	if (pos == me->data)
 		return true;
-	return value >= *pos;
+	return value >= *(--pos);
 }
 
 bool list_add(struct sorted_list *me, int value) {

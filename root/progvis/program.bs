@@ -109,6 +109,9 @@ class Program on Render {
 	// Run the function.
 	void run(Fn<void> fn) {
 		try {
+			// Add the thread now so that it may be used to capture the result of 'main'.
+			threads.put(currentUThread(), ProgThread(this, ++usedThreadId));
+
 			fn.call();
 		} catch (ExitError e) {
 			// Just ignore it.
@@ -749,6 +752,10 @@ private Program? findProgram(Word threadId) on Render {
 			return i;
 	}
 	return null;
+}
+
+public Program? findProgram() {
+	findProgram(currentUThread());
 }
 
 // Find a particular thread.

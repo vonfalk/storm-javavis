@@ -125,5 +125,10 @@ class CppCodeHints extends progvis:CodeHints {
 }
 
 void wrapMain(Fn<Int> fn) {
-	print("Result: " + fn.call.toS);
+	var program = progvis:findProgram();
+	var result = fn.call.toS();
+	if (program) {
+		program.addOutput("\nMain returned ${result}\n");
+		program.notifyChange();
+	}
 }
