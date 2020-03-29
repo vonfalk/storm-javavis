@@ -134,6 +134,7 @@ SIdentifier => v : "[A-Za-z_][A-Za-z0-9_]*" @v;
 // Type declarations. Transforms into a Value.
 Value STypeName(Scope scope);
 STypeName => original : STypeNameRec(scope) original - ("const" #keyword)?;
+STypeName => original : "const" #keyword, STypeNameEnd(scope) original;
 STypeName => wrapRef(original) : STypeNameRec(scope) original, "&";
 STypeName => wrapConstRef(original) : STypeNameRec(scope) original, "const" #keyword, "&";
 STypeName => wrapConstRef(original) : "const" #keyword, STypeNameEnd(scope) original, "&";
