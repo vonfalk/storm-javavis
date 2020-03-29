@@ -26,7 +26,7 @@ Brush errorFg on Render = SolidBrush(red);
 
 // Regular link.
 Brush activeLink on Render = SolidBrush(black);
-Brush inactiveLink on Render = SolidBrush(Color(0, 0, 0, 0.5));
+Brush inactiveLink on Render = SolidBrush(Color(0, 0, 0, 0.4));
 
 // Background color when drawing captions.
 Brush captionBg on Render = SolidBrush(white * 0.8);

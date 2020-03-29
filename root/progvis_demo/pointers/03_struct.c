@@ -5,19 +5,21 @@ struct data {
 };
 
 int main() {
-	struct data *p;
 	struct data d;
 	d.a = 5;
 
-	p = &d;
-	(*p).b = 6;
-	p->c = 7;
+	{
+		struct data *p = &d;
+		(*p).b = 6;
+		p->c = 7;
+	}
+	{
+		int *q = &d.a;
+		*q = 6;
 
-	int *q = &d.a;
-	*q = 6;
-
-	q = &d.b;
-	*q = 7;
+		q = &d.b;
+		*q = 7;
+	}
 
 	return 0;
 }
