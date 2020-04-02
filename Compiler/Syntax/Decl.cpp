@@ -186,10 +186,16 @@ namespace storm {
 		 * Delimiter tokens.
 		 */
 
-		DelimTokenDecl::DelimTokenDecl() {}
+		OptionalTokenDecl::OptionalTokenDecl() {}
 
-		void DelimTokenDecl::toS(StrBuf *to) const {
+		void OptionalTokenDecl::toS(StrBuf *to) const {
 			*to << S(", ");
+		}
+
+		RequiredTokenDecl::RequiredTokenDecl() {}
+
+		void RequiredTokenDecl::toS(StrBuf *to) const {
+			*to << S(" ~ ");
 		}
 
 		SepTokenDecl::SepTokenDecl() {}
@@ -255,7 +261,7 @@ namespace storm {
 			bool prevDelim = false;
 			for (Nat i = 0; i < tokens->count(); i++) {
 				TokenDecl *token = tokens->at(i);
-				bool currentDelim = as<DelimTokenDecl>(token) != null;
+				bool currentDelim = token->delimiter();
 
 				if (usingRep && repEnd == i)
 					outputRepEnd(to);

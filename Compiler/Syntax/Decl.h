@@ -117,6 +117,9 @@ namespace storm {
 
 			// Output.
 			virtual void STORM_FN toS(StrBuf *to) const;
+
+			// Is this a delimiter?
+			virtual Bool STORM_FN delimiter() const { return false; }
 		};
 
 
@@ -172,16 +175,35 @@ namespace storm {
 
 
 		/**
-		 * Token matching a delimiter.
+		 * Token matching an optional delimiter (i.e. ',').
 		 */
-		class DelimTokenDecl : public TokenDecl {
+		class OptionalTokenDecl : public TokenDecl {
 			STORM_CLASS;
 		public:
 			// Create.
-			STORM_CTOR DelimTokenDecl();
+			STORM_CTOR OptionalTokenDecl();
 
 			// Output.
 			virtual void STORM_FN toS(StrBuf *to) const;
+
+			// Is this a delimiter?
+			virtual Bool STORM_FN delimiter() const { return true; }
+		};
+
+		/**
+		 * Token matching a required delimiter (i.e. '~').
+		 */
+		class RequiredTokenDecl : public TokenDecl {
+			STORM_CLASS;
+		public:
+			// Create.
+			STORM_CTOR RequiredTokenDecl();
+
+			// Output.
+			virtual void STORM_FN toS(StrBuf *to) const;
+
+			// Is this a delimiter?
+			virtual Bool STORM_FN delimiter() const { return true; }
 		};
 
 		/**
@@ -195,6 +217,9 @@ namespace storm {
 
 			// Output.
 			virtual void STORM_FN toS(StrBuf *to) const;
+
+			// Is this a delimiter?
+			virtual Bool STORM_FN delimiter() const { return true; }
 		};
 
 

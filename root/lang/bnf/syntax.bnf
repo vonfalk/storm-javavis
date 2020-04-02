@@ -105,7 +105,8 @@ SToken => sep : SSep sep;
 
 TokenDecl SSep();
 SSep => SepTokenDecl() : "-";
-SSep => DelimTokenDecl() : ",";
+SSep => OptionalTokenDecl() : ",";
+SSep => RequiredTokenDecl() : "~";
 
 RepType SRep();
 SRep => RepType.repZeroPlus() : "\*";

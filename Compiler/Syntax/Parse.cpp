@@ -83,8 +83,11 @@ namespace storm {
 			if (tok.skipIf(S("-"))) {
 				return null;
 			} else if (tok.skipIf(S(","))) {
-				// The delimiter token. Might not be bound to anything.
-				return new (e) DelimTokenDecl();
+				// The optional delimiter token. Might not be bound to anything.
+				return new (e) OptionalTokenDecl();
+			} else if (tok.skipIf(S("~"))) {
+				// The required delimiter token. Might not be bound to anything.
+				return new (e) RequiredTokenDecl();
 			} else if (tok.peek().isStrLiteral()) {
 				// Regex.
 				Token regex = tok.next();
