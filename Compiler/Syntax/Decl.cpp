@@ -4,6 +4,9 @@
 #include "Core/Join.h"
 #include "Core/CloneEnv.h"
 #include "Exception.h"
+#include "Compiler/Scope.h"
+#include "Token.h"
+#include "Rule.h"
 
 namespace storm {
 	namespace syntax {
@@ -133,6 +136,10 @@ namespace storm {
 			this->color = c;
 		}
 
+		Token *TokenDecl::create(SrcPos pos, Scope, Delimiters *) {
+			throw new (this) SyntaxError(pos, S("Invalid token used!"));
+		}
+
 		Str *unescapeStr(Str *s) {
 			return s->unescape(Char('"'));
 		}
@@ -154,6 +161,13 @@ namespace storm {
 			TokenDecl::toS(to);
 		}
 
+		Token *RegexTokenDecl::create(SrcPos pos, Scope, Delimiters *) {
+			try {
+				return new (this) RegexToken(regex);
+			} catch (const RegexError *e) {
+				throw new (this) SyntaxError(pos, e->message());
+			}
+		}
 
 		/**
 		 * Rule tokens.
@@ -181,6 +195,13 @@ namespace storm {
 			TokenDecl::toS(to);
 		}
 
+		Token *RuleTokenDecl::create(SrcPos pos, Scope scope, Delimiters *) {
+			if (Rule *rule = as<Rule>(scope.find(this->rule))) {
+				return new (this) RuleToken(rule);
+			} else {
+				throw new (this) SyntaxError(pos, TO_S(this, S("The rule ") << this->rule << S(" does not exist.")));
+			}
+		}
 
 		/**
 		 * Delimiter tokens.
@@ -192,16 +213,36 @@ namespace storm {
 			*to << S(", ");
 		}
 
+		Token *OptionalTokenDecl::create(SrcPos pos, Scope, Delimiters *delim) {
+			if (delim->optional) {
+				return new (this) DelimToken(delim->optional);
+			} else {
+				throw new (this) SyntaxError(pos, S("No optional delimiter was declared in this file."));
+			}
+		}
+
 		RequiredTokenDecl::RequiredTokenDecl() {}
 
 		void RequiredTokenDecl::toS(StrBuf *to) const {
 			*to << S(" ~ ");
 		}
 
+		Token *RequiredTokenDecl::create(SrcPos pos, Scope, Delimiters *delim) {
+			if (delim->required) {
+				return new (this) DelimToken(delim->required);
+			} else {
+				throw new (this) SyntaxError(pos, S("No required delimiter was declared in this file."));
+			}
+		}
+
 		SepTokenDecl::SepTokenDecl() {}
 
 		void SepTokenDecl::toS(StrBuf *to) const {
 			*to << S(" - ");
+		}
+
+		Token *SepTokenDecl::create(SrcPos pos, Scope, Delimiters *delim) {
+			throw new (this) SyntaxError(pos, S("The SepTokenDecl should never be added to a production."));
 		}
 
 

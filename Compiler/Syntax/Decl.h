@@ -4,12 +4,14 @@
 #include "RepType.h"
 #include "InfoIndent.h"
 #include "TokenColor.h"
+#include "Delimiters.h"
 
 namespace storm {
 	namespace syntax {
 		STORM_PKG(lang.bnf);
 
 		class FileContents;
+		class Token;
 
 		/**
 		 * Logic for storing a parsed version of a syntax file before it is transformed into the
@@ -120,6 +122,9 @@ namespace storm {
 
 			// Is this a delimiter?
 			virtual Bool STORM_FN delimiter() const { return false; }
+
+			// Create this token.
+			virtual Token *create(SrcPos pos, Scope scope, Delimiters *delimiters);
 		};
 
 
@@ -144,6 +149,9 @@ namespace storm {
 
 			// Output.
 			virtual void STORM_FN toS(StrBuf *to) const;
+
+			// Create this token.
+			virtual Token *create(SrcPos pos, Scope scope, Delimiters *delimiters);
 		};
 
 
@@ -171,6 +179,9 @@ namespace storm {
 
 			// Output.
 			virtual void STORM_FN toS(StrBuf *to) const;
+
+			// Create this token.
+			virtual Token *create(SrcPos pos, Scope scope, Delimiters *delimiters);
 		};
 
 
@@ -188,6 +199,9 @@ namespace storm {
 
 			// Is this a delimiter?
 			virtual Bool STORM_FN delimiter() const { return true; }
+
+			// Create this token.
+			virtual Token *create(SrcPos pos, Scope scope, Delimiters *delimiters);
 		};
 
 		/**
@@ -204,6 +218,9 @@ namespace storm {
 
 			// Is this a delimiter?
 			virtual Bool STORM_FN delimiter() const { return true; }
+
+			// Create this token.
+			virtual Token *create(SrcPos pos, Scope scope, Delimiters *delimiters);
 		};
 
 		/**
@@ -220,6 +237,9 @@ namespace storm {
 
 			// Is this a delimiter?
 			virtual Bool STORM_FN delimiter() const { return true; }
+
+			// Create this token.
+			virtual Token *create(SrcPos pos, Scope scope, Delimiters *delimiters);
 		};
 
 

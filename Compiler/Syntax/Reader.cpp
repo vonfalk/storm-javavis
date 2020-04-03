@@ -82,10 +82,10 @@ namespace storm {
 			ensureLoaded();
 			Package *pkg = info->pkg;
 
-			Rule *delimiter = null;
+			Delimiters *delimiters = new (this) Delimiters();
 			if (c->delimiter) {
-				delimiter = as<Rule>(scope.find(c->delimiter));
-				if (!delimiter)
+				delimiters->optional = as<Rule>(scope.find(c->delimiter));
+				if (!delimiters->optional)
 					throw new (this) SyntaxError(c->delimiter->pos,
 												TO_S(this, S("The delimiter ") << c->delimiter << S(" does not exist.")));
 			}
@@ -96,7 +96,7 @@ namespace storm {
 				if (!name)
 					name = pkg->anonName();
 
-				pkg->add(new (this) ProductionType(name, decl, delimiter, scope));
+				pkg->add(new (this) ProductionType(name, decl, delimiters, scope));
 			}
 		}
 

@@ -24,7 +24,7 @@ namespace storm {
 			tokens = new (this) Array<Token *>();
 		}
 
-		Production::Production(ProductionType *owner, ProductionDecl *decl, MAYBE(Rule *) delim, Scope scope) {
+		Production::Production(ProductionType *owner, ProductionDecl *decl, Delimiters *delim, Scope scope) {
 			this->owner = owner;
 			parent = null;
 			tokens = new (this) Array<Token *>();
@@ -66,30 +66,8 @@ namespace storm {
 			}
 		}
 
-		void Production::addToken(TokenDecl *decl, MAYBE(Rule *) delim, SrcPos pos, Scope scope, Nat &counter) {
-			Token *token = null;
-			if (RegexTokenDecl *r = as<RegexTokenDecl>(decl)) {
-				try {
-					token = new (this) RegexToken(r->regex);
-				} catch (RegexError *e) {
-					throw new (this) SyntaxError(pos, e->message());
-				}
-			} else if (RuleTokenDecl *u = as<RuleTokenDecl>(decl)) {
-				if (Rule *rule = as<Rule>(scope.find(u->rule))) {
-					token = new (this) RuleToken(rule);
-				} else {
-					throw new (this) SyntaxError(pos, TO_S(this, S("The rule ") << u->rule << S(" does not exist.")));
-				}
-			} else if (DelimTokenDecl *d = as<DelimTokenDecl>(decl)) {
-				UNUSED(d);
-				if (delim) {
-					token = new (this) DelimToken(delim);
-				} else {
-					throw new (this) SyntaxError(pos, S("No delimiter was declared in this file."));
-				}
-			} else {
-				throw new (this) InternalError(TO_S(this, S("Unknown subtype of TokenDecl found: ") << decl));
-			}
+		void Production::addToken(TokenDecl *decl, Delimiters *delim, SrcPos pos, Scope scope, Nat &counter) {
+			Token *token = decl->create(pos, scope, delim);
 
 			MemberVar *r = createTarget(decl, token, tokens->count(), counter);
 			if (r) {
@@ -354,7 +332,7 @@ namespace storm {
 		 * Type
 		 */
 
-		ProductionType::ProductionType(Str *name, ProductionDecl *decl, MAYBE(Rule *) delim, Scope scope)
+		ProductionType::ProductionType(Str *name, ProductionDecl *decl, Delimiters *delim, Scope scope)
 			: Type(name, typeClass),
 			  pos(decl->pos),
 			  decl(decl),

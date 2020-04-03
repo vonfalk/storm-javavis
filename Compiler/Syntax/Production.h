@@ -1,6 +1,7 @@
 #pragma once
 #include "Decl.h"
 #include "Token.h"
+#include "Delimiters.h"
 #include "Compiler/Type.h"
 #include "Compiler/Scope.h"
 
@@ -89,7 +90,7 @@ namespace storm {
 			STORM_CTOR Production(ProductionType *owner);
 
 			// Create.
-			STORM_CTOR Production(ProductionType *owner, ProductionDecl *decl, MAYBE(Rule *) delim, Scope scope);
+			STORM_CTOR Production(ProductionType *owner, ProductionDecl *decl, Delimiters *delim, Scope scope);
 
 			// Owning rule.
 			MAYBE(Rule *) STORM_FN rule() const;
@@ -143,7 +144,7 @@ namespace storm {
 			void outputRepEnd(StrBuf *to, Bool bindings) const;
 
 			// Add a single token here.
-			void addToken(TokenDecl *decl, MAYBE(Rule *) delim, SrcPos pos, Scope scope, Nat &counter);
+			void addToken(TokenDecl *decl, Delimiters *delim, SrcPos pos, Scope scope, Nat &counter);
 
 			// Create a target for a token (if needed).
 			MAYBE(MemberVar *) createTarget(Value type, TokenDecl *token, Nat &counter);
@@ -170,7 +171,7 @@ namespace storm {
 			STORM_CLASS;
 		public:
 			// Create.
-			STORM_CTOR ProductionType(Str *name, ProductionDecl *decl, MAYBE(Rule *) delim, Scope scope);
+			STORM_CTOR ProductionType(Str *name, ProductionDecl *decl, Delimiters *delim, Scope scope);
 
 			// Create, populate manually later.
 			STORM_CTOR ProductionType(SrcPos pos, Str *name, Rule *rule);
