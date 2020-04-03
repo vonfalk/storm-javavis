@@ -82,13 +82,7 @@ namespace storm {
 			ensureLoaded();
 			Package *pkg = info->pkg;
 
-			Delimiters *delimiters = new (this) Delimiters();
-			if (c->delimiter) {
-				delimiters->optional = as<Rule>(scope.find(c->delimiter));
-				if (!delimiters->optional)
-					throw new (this) SyntaxError(c->delimiter->pos,
-												TO_S(this, S("The delimiter ") << c->delimiter << S(" does not exist.")));
-			}
+			Delimiters *delimiters = c->delimiters(scope);
 
 			for (Nat i = 0; i < c->productions->count(); i++) {
 				ProductionDecl *decl = c->productions->at(i);

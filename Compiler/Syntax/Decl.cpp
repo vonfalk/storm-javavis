@@ -37,14 +37,35 @@ namespace storm {
 		 * Delimiters.
 		 */
 
-		DelimDecl::DelimDecl(SrcName *token) : token(token) {}
+		DelimDecl::DelimDecl(SrcName *token, delim::Delimiter type) : token(token), type(type) {}
 
 		void DelimDecl::deepCopy(CloneEnv *env) {
 			cloned(token, env);
 		}
 
 		void DelimDecl::toS(StrBuf *to) const {
-			*to << S("delimiter = ") << token << S(";");
+			switch (type) {
+			case delim::optional:
+				*to << S("optional = ");
+				break;
+			case delim::required:
+				*to << S("required = ");
+				break;
+			}
+
+			*to << token << S(";");
+		}
+
+		DelimDecl *optionalDecl(SrcName *token) {
+			return new (token) DelimDecl(token, delim::optional);
+		}
+
+		DelimDecl *requiredDecl(SrcName *token) {
+			return new (token) DelimDecl(token, delim::required);
+		}
+
+		DelimDecl *allDecl(SrcName *token) {
+			return new (token) DelimDecl(token, delim::all);
 		}
 
 
@@ -207,33 +228,49 @@ namespace storm {
 		 * Delimiter tokens.
 		 */
 
-		OptionalTokenDecl::OptionalTokenDecl() {}
+		DelimTokenDecl::DelimTokenDecl(delim::Delimiter type) : type(type) {}
 
-		void OptionalTokenDecl::toS(StrBuf *to) const {
-			*to << S(", ");
-		}
-
-		Token *OptionalTokenDecl::create(SrcPos pos, Scope, Delimiters *delim) {
-			if (delim->optional) {
-				return new (this) DelimToken(delim->optional);
-			} else {
-				throw new (this) SyntaxError(pos, S("No optional delimiter was declared in this file."));
+		void DelimTokenDecl::toS(StrBuf *to) const {
+			switch (type) {
+			case delim::optional:
+				*to << S(", ");
+				break;
+			case delim::required:
+				*to << S(" ~ ");
+				break;
 			}
 		}
 
-		RequiredTokenDecl::RequiredTokenDecl() {}
+		Token *DelimTokenDecl::create(SrcPos pos, Scope, Delimiters *delim) {
+			Rule *src = null;
+			const wchar *name = S("");
+			switch (type) {
+			case delim::optional:
+				src = delim->optional;
+				name = S("optional");
+				break;
+			case delim::required:
+				src = delim->required;
+				name = S("required");
+				break;
+			}
 
-		void RequiredTokenDecl::toS(StrBuf *to) const {
-			*to << S(" ~ ");
-		}
 
-		Token *RequiredTokenDecl::create(SrcPos pos, Scope, Delimiters *delim) {
-			if (delim->required) {
-				return new (this) DelimToken(delim->required);
+			if (src) {
+				return new (this) DelimToken(type, src);
 			} else {
-				throw new (this) SyntaxError(pos, S("No required delimiter was declared in this file."));
+				throw new (this) SyntaxError(pos, TO_S(this, S("No ") << name << (" delimiter was declared in this file.")));
 			}
 		}
+
+		DelimTokenDecl *optionalTokenDecl(EnginePtr e) {
+			return new (e.v) DelimTokenDecl(delim::optional);
+		}
+
+		DelimTokenDecl *requiredTokenDecl(EnginePtr e) {
+			return new (e.v) DelimTokenDecl(delim::required);
+		}
+
 
 		SepTokenDecl::SepTokenDecl() {}
 
@@ -435,16 +472,54 @@ namespace storm {
 			else if (UseDecl *u = as<UseDecl>(item))
 				use->push(u->pkg);
 			else if (DelimDecl *d = as<DelimDecl>(item))
-				delimiter = d->token;
+				pushDelimiter(d);
 			else if (CustomDecl *c = as<CustomDecl>(item))
 				c->expand(this);
 			else
 				WARNING(L"Unknown FileItem!");
 		}
 
+		void FileContents::pushDelimiter(DelimDecl *decl) {
+			switch (decl->type) {
+			case delim::all:
+				optionalDelimiter = decl->token;
+				requiredDelimiter = decl->token;
+				break;
+			case delim::optional:
+				optionalDelimiter = decl->token;
+				break;
+			case delim::required:
+				requiredDelimiter = decl->token;
+				break;
+			}
+		}
+
+		Delimiters *FileContents::delimiters(Scope scope) {
+			Delimiters *r = new (this) Delimiters();
+			if (optionalDelimiter)
+				r->optional = resolveDelimiter(scope, optionalDelimiter);
+			if (requiredDelimiter)
+				r->required = resolveDelimiter(scope, requiredDelimiter);
+			return r;
+		}
+
+		Rule *FileContents::resolveDelimiter(Scope scope, SrcName *name) {
+			Named *found = scope.find(name);
+			if (!found)
+				throw new (this) SyntaxError(name->pos,
+											TO_S(this, S("The name \"") << name << S("\" does not exist.")));
+
+			if (Rule *r = as<Rule>(found))
+				return r;
+
+			throw new (this) SyntaxError(name->pos,
+										TO_S(this, S("The name \"") << name << S("\" does not refer to a rule.")));
+		}
+
 		void FileContents::deepCopy(CloneEnv *env) {
 			cloned(use, env);
-			cloned(delimiter, env);
+			cloned(optionalDelimiter, env);
+			cloned(requiredDelimiter, env);
 			cloned(rules, env);
 			cloned(productions, env);
 		}
@@ -453,8 +528,10 @@ namespace storm {
 			for (nat i = 0; i < use->count(); i++)
 				*to << S("\nuse ") << use->at(i);
 
-			if (delimiter)
-				*to << S("\ndelimiter = ") << delimiter;
+			if (optionalDelimiter)
+				*to << S("\noptional delimiter = ") << optionalDelimiter;
+			if (requiredDelimiter)
+				*to << S("\nrequired delimiter = ") << requiredDelimiter;
 
 			if (rules->any())
 				*to << S("\n");

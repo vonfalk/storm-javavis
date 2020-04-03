@@ -2,11 +2,17 @@
 
 use core.lang;
 
-delimiter = SDelimiter;
+optional delimiter = SDelimiter;
+required delimiter = SRequiredDelimiter;
 
 // Delimiter, may contain comments.
 void SDelimiter();
 SDelimiter : "[ \n\r\t]*" - (SCommentStart #comment - SDelimiter)?;
+
+// Delimiter, must include some kind of comment or whitespace.
+void SRequiredDelimiter();
+SRequiredDelimiter : "[ \n\r\t]+";
+SRequiredDelimiter : "[ \n\r\t]*" - SCommentStart #comment - SDelimiter;
 
 // Start of comments.
 void SCommentStart();
@@ -125,7 +131,7 @@ FunctionDecl SFunction(Scope env);
 SFunction[0] => FunctionDecl(env, result, name, params, options, body) :
     SType result, SFnDeclName name #fnName, "(", SFormals params, ")", SFreeOptions@ options, "{" [, SFunctionBody@ body, ]+ "}";
 SFunction[5] => assignDecl(env, name, params, options, body) :
-    "assign[ \t]+" #keyword, SFnDeclName name #fnName, "(", SFormals params, ")", SFreeOptions@ options, "{" [, SFunctionBody@ body, ]+ "}";
+    "assign" #keyword ~ SFnDeclName name #fnName, "(", SFormals params, ")", SFreeOptions@ options, "{" [, SFunctionBody@ body, ]+ "}";
 
 // Function names. Slightly wider than a regular Name, since we allow operators here as well.
 SStr SFnDeclName();
@@ -287,15 +293,15 @@ SIf => If(block, cond) :
 // Return.
 Return SReturn(Block block);
 SReturn => Return(pos, block) : "return" #keyword;
-SReturn => Return(pos, block, expr) : "return[ \t]" #keyword, SExpr(block) expr;
+SReturn => Return(pos, block, expr) : "return" #keyword ~ SExpr(block) expr;
 
 // Throw.
 Throw SThrow(Block block);
-SThrow => Throw(pos, expr) : "throw[ \t]" #keyword, SExpr(block) expr;
+SThrow => Throw(pos, expr) : "throw" #keyword ~ SExpr(block) expr;
 
 // The loop.
 Expr SLoop(Block block);
-SLoop => Loop(pos, block) : "do[ \n\r\t]" #keyword, SStmt(me) -> doBody - (, "while" #keyword, "(", SCondition(me) -> cond, ")" - SCondSuccess(me, me.cond) -> whileBody)?;
+SLoop => Loop(pos, block) : "do" #keyword ~ SStmt(me) -> doBody - (, "while" #keyword, "(", SCondition(me) -> cond, ")" - SCondSuccess(me, me.cond) -> whileBody)?;
 SLoop => Loop(pos, block) : "while" #keyword, "(", SCondition(block) -> cond, ")" - SCondSuccess(me, me.cond) -> whileBody;
 
 // The for loop. Divided into two to get correct scoping.
@@ -412,7 +418,7 @@ Expr SAtom(Block block);
 SAtom => v : SConst(block) v;
 SAtom => namedExpr(block, name, params) : SType name #varName, SFnActuals(block) params;
 SAtom[10] => namedExpr(block, name, dotExpr, params) : SAtom(block) dotExpr, "\.", SName name #varName, SFnActuals(block) params;
-SAtom[20] => spawnExpr(expr) : "spawn[ \t\n]" #keyword, SExpr(block) expr;
+SAtom[20] => spawnExpr(expr) : "spawn" #keyword ~ SExpr(block) expr;
 SAtom[20] => NullExpr(pos) : "null" #constant;
 SAtom => ParenExpr(e) : "(", SExpr(block) e, ")";
 SAtom => e : SBlock(block) e;
@@ -653,7 +659,7 @@ SClassBody => ClassBody(owner) : (SDocClassItem(owner) -> add)* - SDelimiter;
 ////////////////////////////////////////////////////////////////////
 
 Enum SEnum();
-SEnum => createEnum(name, mask) : "enum[ \t]" #keyword, SName name #typeName, (":", "bitmask" mask #keyword,)? "{" [- SEnumBody(me.context) - ]+ "}";
+SEnum => createEnum(name, mask) : "enum" #keyword ~ SName name #typeName, (":", "bitmask" mask #keyword,)? "{" [- SEnumBody(me.context) - ]+ "}";
 
 void SEnumBody(EnumContext ctx);
 SEnumBody : SDelimiter;

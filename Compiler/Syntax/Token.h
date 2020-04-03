@@ -3,6 +3,7 @@
 #include "Compiler/Variable.h"
 #include "Regex.h"
 #include "TokenColor.h"
+#include "Delimiters.h"
 
 namespace storm {
 	namespace syntax {
@@ -92,7 +93,10 @@ namespace storm {
 			STORM_CLASS;
 		public:
 			// Create.
-			STORM_CTOR DelimToken(Rule *rule);
+			STORM_CTOR DelimToken(delim::Delimiter type, Rule *rule);
+
+			// Type of delimiter.
+			delim::Delimiter type;
 		};
 
 	}

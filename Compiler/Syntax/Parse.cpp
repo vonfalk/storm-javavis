@@ -84,10 +84,10 @@ namespace storm {
 				return null;
 			} else if (tok.skipIf(S(","))) {
 				// The optional delimiter token. Might not be bound to anything.
-				return new (e) OptionalTokenDecl();
+				return new (e) DelimTokenDecl(delim::optional);
 			} else if (tok.skipIf(S("~"))) {
 				// The required delimiter token. Might not be bound to anything.
-				return new (e) RequiredTokenDecl();
+				return new (e) DelimTokenDecl(delim::required);
 			} else if (tok.peek().isStrLiteral()) {
 				// Regex.
 				Token regex = tok.next();
@@ -283,9 +283,17 @@ namespace storm {
 			while (tok.more()) {
 				if (tok.skipIf(S("use"))) {
 					r->use->push(parseName(e, tok));
+				} else if (tok.skipIf(S("optional"))) {
+					tok.expect(S("delimiter"));
+					tok.expect(S("="));
+					r->optionalDelimiter = parseName(e, tok);
+				} else if (tok.skipIf(S("required"))) {
+					tok.expect(S("delimiter"));
+					tok.expect(S("="));
+					r->requiredDelimiter = parseName(e, tok);
 				} else if (tok.skipIf(S("delimiter"))) {
 					tok.expect(S("="));
-					r->delimiter = parseName(e, tok);
+					r->requiredDelimiter = r->optionalDelimiter = parseName(e, tok);
 				} else {
 					SrcName *name = parseName(e, tok);
 					Token sep = tok.peek();

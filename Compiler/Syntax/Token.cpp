@@ -62,7 +62,7 @@ namespace storm {
 		}
 
 
-		DelimToken::DelimToken(Rule *rule) : RuleToken(rule) {}
+		DelimToken::DelimToken(delim::Delimiter type, Rule *rule) : RuleToken(rule), type(type) {}
 
 	}
 }

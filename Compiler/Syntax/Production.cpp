@@ -165,10 +165,10 @@ namespace storm {
 
 			bool usingRep = repStart < repEnd && repType != repNone;
 			bool usingIndent = indentStart < indentEnd && indentType != indentNone;
-			bool prevDelim = false;
+			DelimToken *prevDelim = null;
 			for (nat i = 0; i < tokens->count(); i++) {
 				Token *token = tokens->at(i);
-				bool currentDelim = as<DelimToken>(token) != null;
+				DelimToken *currentDelim = as<DelimToken>(token);
 
 				if (usingRep && repEnd == i)
 					outputRepEnd(to, bindings);
@@ -188,10 +188,18 @@ namespace storm {
 				if (i == mark)
 					*to << S("<>");
 
-				if (currentDelim)
-					*to << S(", ");
-				else
+				if (currentDelim) {
+					switch (currentDelim->type) {
+					case delim::optional:
+						*to << S(", ");
+						break;
+					case delim::required:
+						*to << S(" ~ ");
+						break;
+					}
+				} else {
 					token->toS(to, bindings);
+				}
 
 				prevDelim = currentDelim;
 			}

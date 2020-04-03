@@ -55,10 +55,13 @@ namespace storm {
 			STORM_CLASS;
 		public:
 			// Create.
-			STORM_CTOR DelimDecl(SrcName *token);
+			STORM_CTOR DelimDecl(SrcName *token, delim::Delimiter type);
 
 			// Delimiter to use.
 			SrcName *token;
+
+			// Type of delimiter.
+			delim::Delimiter type;
 
 			// Deep copy.
 			virtual void STORM_FN deepCopy(CloneEnv *env);
@@ -66,6 +69,11 @@ namespace storm {
 			// Output.
 			virtual void STORM_FN toS(StrBuf *to) const;
 		};
+
+		// Convenience creation from the grammar.
+		DelimDecl *STORM_FN optionalDecl(SrcName *token);
+		DelimDecl *STORM_FN requiredDecl(SrcName *token);
+		DelimDecl *STORM_FN allDecl(SrcName *token);
 
 
 		/**
@@ -186,13 +194,16 @@ namespace storm {
 
 
 		/**
-		 * Token matching an optional delimiter (i.e. ',').
+		 * Token matching a delimiter (i.e. ',' or '~').
 		 */
-		class OptionalTokenDecl : public TokenDecl {
+		class DelimTokenDecl : public TokenDecl {
 			STORM_CLASS;
 		public:
 			// Create.
-			STORM_CTOR OptionalTokenDecl();
+			STORM_CTOR DelimTokenDecl(delim::Delimiter type);
+
+			// Type of delimiter.
+			delim::Delimiter type;
 
 			// Output.
 			virtual void STORM_FN toS(StrBuf *to) const;
@@ -204,24 +215,9 @@ namespace storm {
 			virtual Token *create(SrcPos pos, Scope scope, Delimiters *delimiters);
 		};
 
-		/**
-		 * Token matching a required delimiter (i.e. '~').
-		 */
-		class RequiredTokenDecl : public TokenDecl {
-			STORM_CLASS;
-		public:
-			// Create.
-			STORM_CTOR RequiredTokenDecl();
-
-			// Output.
-			virtual void STORM_FN toS(StrBuf *to) const;
-
-			// Is this a delimiter?
-			virtual Bool STORM_FN delimiter() const { return true; }
-
-			// Create this token.
-			virtual Token *create(SrcPos pos, Scope scope, Delimiters *delimiters);
-		};
+		// Create from the grammar.
+		DelimTokenDecl *STORM_FN optionalTokenDecl(EnginePtr e);
+		DelimTokenDecl *STORM_FN requiredTokenDecl(EnginePtr e);
 
 		/**
 		 * Dummy token representing a - separator.
@@ -398,8 +394,11 @@ namespace storm {
 			// Used packages.
 			Array<SrcName *> *use;
 
-			// Name of the delimiter rule (if any).
-			MAYBE(SrcName *) delimiter;
+			// Name of the optional delimiter (if any).
+			MAYBE(SrcName *) optionalDelimiter;
+
+			// Name of the required delimiter (if any).
+			MAYBE(SrcName *) requiredDelimiter;
 
 			// Rule declarations.
 			Array<RuleDecl *> *rules;
@@ -410,11 +409,21 @@ namespace storm {
 			// Add an item to the correct array.
 			void STORM_FN push(FileItem *item);
 
+			// Get delimiter object.
+			Delimiters *STORM_FN delimiters(Scope scope);
+
 			// Deep copy.
 			virtual void STORM_FN deepCopy(CloneEnv *env);
 
 			// Output.
 			virtual void STORM_FN toS(StrBuf *to) const;
+
+		private:
+			// Push a delimiter.
+			void pushDelimiter(DelimDecl *decl);
+
+			// Resolve a single delimiter.
+			Rule *resolveDelimiter(Scope scope, SrcName *name);
 		};
 
 		// Join a set of strings into a dot-separated name. Used in the grammar.
