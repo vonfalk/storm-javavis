@@ -53,9 +53,9 @@ if it is good practice to put them right after any `extend` statements.
 Function calls
 ---------------
 
-The syntax language is very limited in terms of combining functions. Each syntax option has a
-function call that generates the syntax tree for that option. This function call may also be a
-variable in the option. Function calls take the form `<identifier>(<parameters>)`, where
+The syntax language is very limited in terms of combining functions. Each production has a
+function call that generates the syntax tree for that production. This function call may also be a
+variable in the production. Function calls take the form `<identifier>(<parameters>)`, where
 `<parameters>` is a list of parameters separated by comma. Each parameter is either a variable, a
 traversal or a literal. Function calls taking parameters are not allowed as parameters. Traversals
 have the form 'x.y.z' and allow accessing members (such as member variables and member functions) in
@@ -65,13 +65,13 @@ and booleans, which are expanded to `core.Int` and `core.Bool` respectively.
 Comments
 ---------
 
-Comments can be included anywhere. Comments start with `//` like in C, and continues to the end of
-the line.
+Comments can be included anywhere. Comments start with `//` like in C++, and continues to the end of
+the line. C-style comments are not supported in the syntax language.
 
 Visibility
 -----------
 
-All options that can be resolved from the `use`d packages (in Basic Storm, any use statements in the
+All productions that can be resolved from the `use`d packages (in Basic Storm, any use statements in the
 `.bs`-file are included) are visible and considered during the parsing process. Currently everything
 declared in the syntax language is considered `public`.
 
@@ -85,10 +85,14 @@ Rules need to be declared. Declaring a rule takes the form:
 Where `<params>` is a parameter list as it would be expressed in C. `<result>` is the return type of
 the rule. The rule always lives in the package where the syntax file is located.
 
-Options
---------
+The result and the parameters are important for the [Syntax Transforms](md://BNF_Syntax/Syntax_Transforms)
+later on.
 
-Options are declared using the following syntax:
+
+Productions
+------------
+
+Productions (possible matches for a rule) are declared using the following syntax:
 
 `<name> => <result> : <tokens>;`
 
@@ -105,15 +109,16 @@ __or__
 `<name>[<priority>] : <tokens>;`
 
 
-Where `<name>` is the name of the rule this option should be a part of (fully qualified if
+Where `<name>` is the name of the rule this production is a part of (fully qualified if
 required), `<result>` is a function call or a variable name that contains the value that should be
-returned from this option when matched. It can be omitted if the rule is declared to return
-`void`. `<tokens>` is the sequence of tokens the option contains. The optional `<priority>` is a
-number indicating the priority of this option. If it is left out, the option is given priority 0.
+returned from this production when matched. It can be omitted if the rule is declared to return
+`void`. `<tokens>` is the sequence of tokens the production contains. The optional `<priority>` is a
+number indicating the priority of this production. If it is left out, the production is given priority 0.
 Higher priority is executed before rules with a lower priority, so rules with higher priority are
 more greedy than ones with lower priority.
 
-The tokens for the rule is a comma or dash separated list of tokens. Each token is either:
+The tokens for the rule is a list of tokens separated with one out of three supported delimiters
+(`-`, `,` or `~`, see *Delimiters* below). Each token is either:
 
 * `<name>` - the name of another rule.
 * `<name>(<params>)` - the name of another rule, giving parameters to the rule.
@@ -129,40 +134,87 @@ member function. If this is not desired (e.g. you want to capture parts of the s
 transformation), append an `@` sign after the name or the regex like: `Foo@ -> bar`. This just
 passes the raw syntax tree on to the function `bar` instead of transforming it first. Note that
 because of this, it is useless to specify parameters along with `@`. When a `@` is appended to a
-regex, the resulting type is `SStr` instead of `Str`.
+regex, the resulting type is `SStr` instead of `Str`. See [Syntax Transforms](md://BNF_Syntax/Syntax_Transforms)
+for more details on syntax transforms.
 
-Each token is separated by either a comma or a dash (`-`). The comma separator represents the token
-referring to the rule declared as the delimiter for the current file, while the dash only separates
-the rules without acting as a special token. This is a convenience since the input is not
-pre-tokenized, so matching some language-specific whitespace is a common task and has therefore been
-given a convenient syntax.  Which rule is matched by the delimiter is declared on a file-by-file
-basis like this:
 
-`delimiter = <rule name>`
+Delimiters
+----------
 
-The delimiter does not allow any parameters to the rule. The delimiter must be declared before any
-comma may be used, but the rule it refers to does not need to be defined before the `delimiter`
-declaration, it does not even need to be declared in the same file or package.
+Each token is separated by one of three possible delimiters. These delimiters behave differently,
+and are shorthands for different behaviors that are commonly used when writing grammars.
 
-For example, consider this file:
+The dash (`-`) is the simplest of the separator. It is simply used to separate different tokens in
+the grammar, and does not otherwise impact what is matched by the grammar. For example, in the
+example below, the rules `A` and `B` are equivalent, and both match the string `ab`.
 
 ```
-delimiter: Whitespace;
+void A();
+A : "a" - "b";
+
+void B();
+B : "ab";
+```
+
+The other two separators match a pre-defined rule whenever they appear in a production. The comma
+(`,`) is intended for cases where whitespace is allowed, but not required. It is therefore called
+the `optional delimiter`. In order to use it, it is necessary to specify which rule is to be used to
+match whitespace in this particular language. This is done in a file-by-file basis using the
+following syntax:
+
+`optional delimiter = <rule name>;`
+
+For example, the rules `A` and `B` below are equivalent, and both are equivalent to the regex `a[ \t]*b`:
+
+```
+optional delimiter = Whitespace;
+
 void Whitespace();
-Whitespace : "[ \n\r\t]*";
+Whitespace : "[ \t]";
 
 void A();
 A : "a", "b";
 
 void B();
-B : "a" - "b";
+B : "a" - Whitespace - "b";
 ```
 
-The rule `A` matches the same thing as the regular expression `a[ \n\r\t]*b` would do, while `B`
-matches `ab` only. This difference is only because of our delimiter, and the rule we have declared
-to be used as the delimiter.
+Finally, the tilde (`~`) works similar to the comma mentioned previously, but is instead intended
+for cases where some amount of whitespace is required, and is called the `required delimiter`. It is
+used in a similar fashion to the comma separator, as illustrated below. This example also attempts
+to illustrate why it is useful to have the two separators by declaring the grammar for a simple
+class declaration. Here, we want to allow `class A{}`, `class  A { }`, but not `classA{}`.
 
-It is possible to express repetition only using rules and options, but many times it is clearer to
+```
+optional delimiter = Optional;
+required delimiter = Required;
+
+void Optional();
+Optional : " *";
+
+void Required();
+Required : " +";
+
+void ClassDecl();
+ClassDecl : "class" ~ "[A-Za-z]+", "{", "}";
+```
+
+When writing syntax for a language, it is often convenient to include the comment syntax as a part
+of the delimiter rules, which makes it possible to insert comments at any point in the grammar where
+whitespace is allowed.
+
+It is also possible to set both delimiters to the same rule in one go, by writing:
+
+`delimiter = <rule name>;'
+
+This is mostly intended for backwards compatibility with syntax written before the required
+delimiter was introduced.
+
+
+Repitition
+-----------
+
+It is possible to express repetition only using rules and productions, but many times it is clearer to
 write the repetitions explicit. The syntax language has support for the same repetitions present in
 regular expressions: `*`, `?` and `+`. To use them, enclose the tokens that are to be repeated in
 parenthesis and add the desired repetition after the closing parenthesis, like this:
@@ -175,11 +227,11 @@ A : "a", ("b",)* "c";
 Which will match `a`, followed by zero or more `b`:s and finally a `c`. Each character is separated
 by the delimiter rule (not specified for this example). Note that parenthesis can be either before
 or after separators. There may even be separators on both side of the parenthesis. Currently, only
-one repetition per option is supported. Break the option into multiple rules if more repeats are
+one repetition per production is supported. Break the production into multiple rules if more repeats are
 needed. Due to the nature of repetitions, it is not practical to bind any matches inside a repeat to
 a variable. Use the `->` syntax inside repetitions instead. What happens if you try to bind tokens
 inside a repetition to a variable is that the variable will either not have a value, or be assigned
-multiple times. Both of these cases will generate an error when the options are being
+multiple times. Both of these cases will generate an error when the productions are being
 evaluated. This could be solved by adding support for array-variables, but implementing
 array-variables in the syntax would significantly increase the complexity of the rules for
 variables. Usually it is also more readable to generate variables explicitly by creating a new rule

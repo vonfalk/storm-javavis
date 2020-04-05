@@ -8,7 +8,7 @@ namespace storm {
 
 		/**
 		 * Base class for all syntax nodes. This class will be overridden by 'Rule' to add the
-		 * 'transform' function and then by 'Option' to implement the 'transform' function for that
+		 * 'transform' function and then by 'Production' to implement the 'transform' function for that
 		 * specific option.
 		 */
 		class Node : public ObjectOn<Compiler> {
