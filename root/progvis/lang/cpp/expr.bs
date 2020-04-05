@@ -1155,6 +1155,17 @@ Expr arrayOperator(SrcPos pos, Block block, Expr base, Expr offset) {
 	result;
 }
 
+// Called from the syntax, performs basic sanity checking.
+// We don't want to do that in the AddressOf ctor, since we actually do take the
+// address of, or references to, temporary values in normal operations.
+AddressOf addressOf(SrcPos pos, Expr of) on Compiler {
+	if (of.temporary) {
+		throw SyntaxError(pos, "Can not create a pointer to a temporary value.");
+	}
+
+	AddressOf(pos, of);
+}
+
 
 /**
  * Make a pointer from an l-value. The & operator.
@@ -1162,16 +1173,10 @@ Expr arrayOperator(SrcPos pos, Block block, Expr base, Expr offset) {
 class AddressOf extends ExprRef {
 	init(Expr of) {
 		init(of.pos) { of = of; }
-
-		if (of.temporary)
-			throw SyntaxError(pos, "Can not create a pointer to a temporary value.");
 	}
 
 	init(SrcPos pos, Expr of) {
 		init(pos) { of = of; }
-
-		if (of.temporary)
-			throw SyntaxError(pos, "Can not create a pointer to a temporary value.");
 	}
 
 	Expr of;

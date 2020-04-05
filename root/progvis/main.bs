@@ -121,13 +121,12 @@ class MainWin extends Frame {
 			painter.open(files, &this.onError);
 
 			StrBuf title;
-			title << "Progvis (";
+			title << "Progvis - ";
 			for (i, f in files) {
 				if (i > 0)
 					title << ", ";
 				title << f.name;
 			}
-			title << ")";
 			text = title.toS;
 		} catch (core:lang:CodeError error) {
 			CompileErrorDialog dlg(error.messageText, error.pos);
@@ -307,14 +306,14 @@ void debug() on Compiler {
 		// win.open(url / "cpp2.cpp");
 		// win.open(url / "cpp3.cpp");
 		// win.open(url / "members.cpp");
-		// win.open(url / "special_functions.cpp");
+		win.open(url / "special_functions.cpp");
 		// win.open(url / "return_complex.cpp");
 		// win.open(url / "arrays.cpp");
 		// win.open(url / "cpp_error.cpp");
 		// win.open(url / "str.cpp");
 		// win.open(url / "const_example.cpp");
 		// win.open(url / "pintos_debug.cpp");
-		win.open(url / "pintos_live.c");
+		// win.open(url / "pintos_live.c");
 		// win.open(url / "thread_example.c");
 		// win.open(url / "printf.c");
 		win.waitForClose();
