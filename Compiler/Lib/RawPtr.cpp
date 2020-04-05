@@ -1,6 +1,7 @@
 #include "stdafx.h"
 #include "RawPtr.h"
 #include "Compiler/Engine.h"
+#include "Compiler/Variable.h"
 #include "Number.h"
 #include "Maybe.h"
 #include "Core/Hash.h"
@@ -147,6 +148,10 @@ namespace storm {
 		return runtime::allocArray(type->engine, t, count);
 	}
 
+	void *CODECALL rawPtrFromGlobal(GlobalVar *global) {
+		return global->rawDataPtr();
+	}
+
 	void CODECALL rawPtrWriteFilled(const void *ptr, Nat value) {
 		if (!ptr)
 			return;
@@ -257,6 +262,10 @@ namespace storm {
 		Array<Value> *typeNat = new (this) Array<Value>(2, StormInfo<Type *>::type(e));
 		typeNat->at(1) = n;
 		add(nativeFunction(e, me, S("allocArray"), typeNat, address(&rawPtrAllocArray))->make(fnStatic));
+
+		// Read from a global variable.
+		Array<Value> *globalVar = new (this) Array<Value>(1, StormInfo<GlobalVar *>::type(e));
+		add(nativeFunction(e, me, S("fromGlobal"), globalVar, address(&rawPtrFromGlobal))->make(fnStatic));
 
 		return Type::loadAll();
 	}

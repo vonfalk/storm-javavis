@@ -134,6 +134,18 @@ namespace storm {
 	}
 
 	void *GlobalVar::dataPtr() {
+		// Make sure it is created.
+		rawDataPtr();
+
+		if (hasArray) {
+			GcArray<byte> *a = (GcArray<byte> *)data;
+			return a->v;
+		} else {
+			return &data;
+		}
+	}
+
+	void *GlobalVar::rawDataPtr() {
 		if (atomicRead(initializer) != null) {
 			// We might need to initialize! Call 'create' on the proper thread to do that. Note:
 			// 'create' will not initialize us again if initialization was done already, so we will
@@ -151,12 +163,7 @@ namespace storm {
 			}
 		}
 
-		if (hasArray) {
-			GcArray<byte> *a = (GcArray<byte> *)data;
-			return a->v;
-		} else {
-			return &data;
-		}
+		return data;
 	}
 
 	Str *GlobalVar::strValue() const {

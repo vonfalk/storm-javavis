@@ -176,6 +176,7 @@ class MainPainter extends Painter {
 	void open(Url[] files, fn(Nat, Exception)->void errorCb) {
 		var loaded = Program:load(files);
 		program = loaded;
+		workspace.globals = loaded.findGlobals();
 		workspace.hints = loaded.hints;
 		loaded.onChange = &this.update();
 		loaded.onError = errorCb;
@@ -197,6 +198,7 @@ class MainPainter extends Painter {
 		if (program) {
 			program.terminate();
 			workspace.clear();
+			workspace.globals = program.findGlobals();
 			program.spawn(program.main);
 		}
 	}

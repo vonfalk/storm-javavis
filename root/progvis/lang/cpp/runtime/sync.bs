@@ -83,6 +83,9 @@ void sema_init(Ptr<semaphore> sema, Int value) {
 	SemaImpl s(value.nat);
 
 	Nat offset = sema.offset - sPtr.current * 2;
+	if (sema.base.readPtr(offset).any)
+		throw SyncError("Tried to initialize a semaphore multiple times!");
+
 	sema.base.writePtr(offset, unsafe:RawPtr(s));
 	sema.base.writeInt(offset + sPtr.current, value);
 }
@@ -137,6 +140,9 @@ void lock_init(Ptr<lock> lock) {
 	SemaImpl s(1);
 
 	Nat offset = lock.offset - sPtr.current * 2;
+	if (lock.base.readPtr(offset).any)
+		throw SyncError("Tried to initialize a lock multiple times!");
+
 	lock.base.writePtr(offset, unsafe:RawPtr(s));
 	lock.base.writeInt(offset + sPtr.current, 0);
 }

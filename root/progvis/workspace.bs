@@ -107,6 +107,30 @@ class Workspace on Render {
 
 
 	/**
+	 * Globals.
+	 */
+
+	// The globals object, if we created it.
+	private Globals? globals;
+
+	// Set new global variables.
+	assign globals(core:lang:GlobalVar[] vars) {
+		globals = null;
+
+		if (vars.empty)
+			return;
+
+		Globals created(vars);
+		DataWithCaption caption(created, "Globals");
+		Element elem(unsafe:RawPtr(created), caption);
+		elements << elem;
+
+		caption.pos = Point(20, 20);
+		globals = created;
+	}
+
+
+	/**
 	 * Object traversal.
 	 */
 
@@ -118,10 +142,16 @@ class Workspace on Render {
 		maxX = 0;
 		for (i, d in elements) {
 			d.visited = false;
-			if (d.object.any)
+			if (d.object.any) {
 				objMap.put(d.object, i);
+			}
 			if (!d.thread & !d.output)
 				maxX = max(maxX, d.visual.rect.p1.x);
+		}
+
+		// Mark globals as visited, if applicable.
+		if (globals) {
+			traverseNoCreate(unsafe:RawPtr(globals));
 		}
 	}
 
@@ -257,6 +287,7 @@ class Workspace on Render {
 	void clear() {
 		elements.clear();
 		output = null;
+		globals = null;
 	}
 
 private:
