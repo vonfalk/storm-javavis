@@ -117,7 +117,7 @@ SFreeOption : SFreeSpecialOption(scope, item);
 
 // Special option(s) that are allowed without a ":" before.
 void SFreeSpecialOption(Scope scope, BSRawFn item);
-SFreeSpecialOption => thread(item, scope, thread) : "on" #keyword, SType thread;
+SFreeSpecialOption => thread(item, scope, thread) : "on" #keyword ~ SType thread;
 
 
 void SFreeOptions(Scope scope, BSRawFn item);
@@ -162,8 +162,8 @@ void SClassSpecialOption(Class class);
 SClassSpecialOption => super(class, super) : "extends" #keyword, SType super;
 
 // Set a thread for a class (making it into an actor). Note: We could use the .. syntax if we have additional rules for SClass.
-SClassSpecialOption => thread(class, thread) : "on" #keyword, SType thread;
-SClassSpecialOption => unknownThread(class, pos) : "on" #keyword, "\?";
+SClassSpecialOption => thread(class, thread) : "on" #keyword ~ SType thread;
+SClassSpecialOption => unknownThread(class, pos) : "on" #keyword ~ "\?";
 
 // List of decorators. Either nothing, a list of decorators, or one of the special decorators (i.e. "extends" or "on").
 void SClassOptions(Class me);
@@ -173,23 +173,23 @@ SClassOptions : ":", SClassOption(me) - (, ",", SClassOption(me))*;
 
 // Class/value.
 Class SClass(Scope env);
-SClass => createClass(pos, env, name, body) : "class" #keyword, SName name #typeName, SClassOptions(me), "{" - [SClassBody@ body, ]+ "}";
-SClass => createValue(pos, env, name, body) : "value" #keyword, SName name #typeName, SClassOptions(me), "{" - [SClassBody@ body, ]+ "}";
+SClass => createClass(pos, env, name, body) : "class" #keyword ~ SName name #typeName, SClassOptions(me), "{" - [SClassBody@ body, ]+ "}";
+SClass => createValue(pos, env, name, body) : "value" #keyword ~ SName name #typeName, SClassOptions(me), "{" - [SClassBody@ body, ]+ "}";
 
 // Named thread declaration.
 NamedThread SNamedThread();
-SNamedThread => NamedThread(name) : "thread" #keyword, SName name, ";";
+SNamedThread => NamedThread(name) : "thread" #keyword ~ SName name, ";";
 
 // Global variable declaration.
 GlobalVarDecl SGlobalVar(Scope env);
-SGlobalVar => GlobalVarDecl(env, type, name, thread) : SType type, SName name #varName, "on" #keyword, SType thread, ("=", SExpr@ -> init)? ";";
+SGlobalVar => GlobalVarDecl(env, type, name, thread) : SType type, SName name #varName, "on" #keyword ~ SType thread, ("=", SExpr@ -> init)? ";";
 
 // Possible root blocks in a file.
 TObject SFileItem(Scope env);
 SFileItem => item : SPlainFileItem(env) item;
-SFileItem => apply(pos, item, access) : SFreeAccess access - " ", SPlainFileItem(env) item;
+SFileItem => apply(pos, item, access) : SFreeAccess access ~ SPlainFileItem(env) item;
 SFileItem => access : SDelimiter - [SFreeAccess access - ":"]-;
-SFileItem => UseThreadDecl(thread) : SDelimiter - ["on" #keyword, SType thread - ":"]-;
+SFileItem => UseThreadDecl(thread) : SDelimiter - ["on" #keyword ~ SType thread - ":"]-;
 
 TObject SPlainFileItem(Scope env);
 SPlainFileItem => f : SFunction(env) f;
@@ -208,11 +208,11 @@ SFile => Content() : (SDocFileItem(env) -> add)* - SDelimiter;
 
 // Root rule for parsing includes.
 Array<SrcName> SIncludes();
-SIncludes => p : (, "use" #keyword, SPackage p, ";")*;
+SIncludes => p : (, "use" #keyword ~ SPackage p, ";")*;
 
 // Special use-rule in the top loop.
 SrcName SReplUse();
-SReplUse => p : "use", SPackage p, ";?";
+SReplUse => p : "use" ~ SPackage p, ";?";
 
 // Root rule for the top loop.
 Expr SReplExpr(Block block);
@@ -644,7 +644,7 @@ SClassWrapItem[5] => classCastCtor(owner, pos, params, body) :
 TObject SClassAccessItem(Class owner);
 SClassAccessItem => item : SClassItem(owner) item;
 SClassAccessItem => item : [STypeAccess item - ":"]-;
-SClassAccessItem => apply(pos, item, access) : STypeAccess access - " ", SClassItem(owner) item;
+SClassAccessItem => apply(pos, item, access) : STypeAccess access ~ SClassItem(owner) item;
 
 TObject SDocClassItem(Class owner);
 SDocClassItem[0] => item : SDelimiter - SClassAccessItem(owner) item;
