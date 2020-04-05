@@ -306,7 +306,7 @@ void debug() on Compiler {
 		// win.open(url / "cpp2.cpp");
 		// win.open(url / "cpp3.cpp");
 		// win.open(url / "members.cpp");
-		win.open(url / "special_functions.cpp");
+		// win.open(url / "special_functions.cpp");
 		// win.open(url / "return_complex.cpp");
 		// win.open(url / "arrays.cpp");
 		// win.open(url / "cpp_error.cpp");
@@ -316,6 +316,7 @@ void debug() on Compiler {
 		// win.open(url / "pintos_live.c");
 		// win.open(url / "thread_example.c");
 		// win.open(url / "printf.c");
+		win.open(url / "globals.cpp");
 		win.waitForClose();
 	}
 }

@@ -5,6 +5,9 @@ class Content on Compiler {
 	// Types found.
 	CppType[] types;
 
+	// Globals found.
+	CppGlobalDecl[] globals;
+
 	// Add functions.
 	void add(CppDecl fn) {
 		functions << fn;
@@ -13,5 +16,10 @@ class Content on Compiler {
 	// Add types.
 	void add(CppType type) {
 		types << type;
+	}
+
+	// Add globals.
+	void add(CppGlobalDecl global) {
+		globals << global;
 	}
 }

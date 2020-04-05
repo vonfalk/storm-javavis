@@ -1,0 +1,133 @@
+use core:lang;
+use core:asm;
+use lang:bs:macro;
+use lang:bs;
+
+on Compiler:
+
+void globalInitError(SrcPos pos) {
+	throw SyntaxError(pos, "Initializing global variables is currently not supported.");
+}
+
+void addGlobal(Content content, SrcPos pos, STypeName type, SStr name) {
+	content.add(CppGlobalDecl(pos, type, name.v));
+}
+
+/**
+ * Declared global variable.
+ */
+class CppGlobalDecl on Compiler {
+	SrcPos pos;
+	STypeName type;
+	Str name;
+
+	init(SrcPos pos, STypeName type, Str name) {
+		init() {
+			pos = pos;
+			type = type;
+			name = name;
+		}
+	}
+
+	void create(Package pkg) {
+		pkg.add(CppGlobal(this, cppScope(pkg)));
+	}
+}
+
+/**
+ * Actual global variable.
+ */
+class CppGlobal extends GlobalVar {
+	init(CppGlobalDecl decl, Scope scope) {
+		var type = decl.type.transform(scope).asRef(false);
+		if (!type.isValue)
+			throw SyntaxError(decl.pos, "Only value-types are supported. Did you declare this type in C++?");
+
+		var thread = named{ui:Render};
+
+		Function init = initFn(safeType(type, decl.pos), scope);
+		init.parentLookup = scope.top;
+		init.runOn(thread);
+
+		init(decl.name, type, thread, init.pointer()) {}
+	}
+
+	// Create a function that initializes the value.
+	Function initFn(Type type, Scope scope) : static {
+		Listing l(false, type.typeDesc());
+
+		var v = l.createVar(l.root, type.size);
+		l << prolog();
+		l << lea(ptrA, v);
+
+		if (cpp = cppCtor(type, [], scope)) {
+			l << fnParam(ptrDesc, ptrA);
+			l << fnCall(cpp.ref, true);
+		} else if (storm = stormCtor(type, [], scope)) {
+			// TODO: Perhaps we should actually allocate this on the heap in case it is visualized...
+			l << fnParam(ptrDesc, ptrA);
+			l << fnParam(intDesc, intConst(0));
+			l << fnCall(storm.ref, true);
+		}
+
+		l << fnRet(v);
+
+		Function fn(Value(type), "init", []);
+		fn.setCode(DynamicCode(l));
+		fn;
+	}
+}
+
+/**
+ * Access a global variable.
+ */
+class GlobalVarAccess extends Expr {
+	GlobalVar var;
+
+	init(SrcPos pos, GlobalVar var) {
+		init(pos) { var = var; }
+	}
+
+	Bool temporary() : override {
+		false;
+	}
+
+	ExprResult result() : override {
+		var.type.asRef();
+	}
+
+	void code(CodeGen gen, CodeResult result) : override {
+		if (!result.needed())
+			return;
+
+		gen.l << fnParam(ptrDesc, objPtr(var));
+		gen.l << fnCall(ref(BuiltIn:globalAddr), true, ptrDesc, ptrB);
+
+		if (result.type.ref) {
+			gen.l << mov(result.location(gen), ptrB);
+		} else {
+			var r = result.location(gen);
+			if (result.type.isAsmType) {
+				gen.l << mov(r, xRel(r.size, ptrB));
+			} else {
+				gen.l << lea(ptrA, r);
+				gen.l << fnParam(ptrDesc, ptrA);
+				gen.l << fnParam(ptrDesc, ptrB);
+				gen.l << fnCall(result.type.copyCtor, true);
+			}
+		}
+	}
+
+	void codePtr(CodeGen gen, Type type) : override {
+		gen.l << fnParam(ptrDesc, objPtr(var));
+		gen.l << fnCall(ref(BuiltIn:globalAddr), true, ptrDesc, ptrB);
+
+		if (var.type.isValue) {
+			// Globals are stored in an array allocation, exactly how we're doing it.
+			gen.l << sub(ptrB, ptrConst(sPtr * 2));
+			gen.l << mov(ecx, natConst(sPtr * 2));
+		} else {
+			throw SyntaxError(pos, "Reading non-value globals is not yet supported. Did you declare this variable in C++?");
+		}
+	}
+}

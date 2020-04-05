@@ -61,7 +61,7 @@ namespace storm {
 			STORM_CLASS;
 		public:
 			// Create.
-			GlobalInitializer(SrcPos pos, Value type, Scope scope, MAYBE(syntax::Node *) initExpr);
+			STORM_CTOR GlobalInitializer(SrcPos pos, Value type, Scope scope, MAYBE(syntax::Node *) initExpr);
 
 			// Generate the body.
 			virtual FnBody *STORM_FN createBody();

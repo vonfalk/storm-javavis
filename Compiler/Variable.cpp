@@ -103,6 +103,8 @@ namespace storm {
 		if (hasArray) {
 			// Create the storage for the data.
 			GcArray<byte> *d = (GcArray<byte> *)runtime::allocArray(engine(), type.type->gcArrayType(), 1);
+			// Set 'filled' to be nice to other parts of the system.
+			d->filled = 1;
 			data = d;
 			outPtr = d->v;
 		}

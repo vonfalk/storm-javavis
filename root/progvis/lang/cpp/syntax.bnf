@@ -35,6 +35,10 @@ void SDef(Content content);
 // Preprocessor directives (we just ignore them at the moment).
 SDef : "# *[a-zA-Z]+[^\n]*\n" #comment;
 
+// Global variables (We do not support initialization at the moment).
+SDef => addGlobal(content, pos, type, name) : STypeName @type, SIdentifier name, ";";
+SDef => globalInitError(pos) : STypeName, SIdentifier, "=", SExpr, ";";
+
 // Class declarations
 
 // Forward declaration:

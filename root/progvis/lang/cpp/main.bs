@@ -45,6 +45,10 @@ class Reader extends FileReader {
 		for (fn in c.functions) {
 			fn.create(info.pkg);
 		}
+
+		for (global in c.globals) {
+			global.create(info.pkg);
+		}
 	}
 
 	void resolveFunctions() : override {}

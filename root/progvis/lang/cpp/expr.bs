@@ -569,6 +569,8 @@ class NameExpr extends Expr {
 			if (c = found.context) {
 				return MemberVarAccess(pos, c, n);
 			}
+		} else if (n = found.named as GlobalVar) {
+			return GlobalVarAccess(pos, n);
 		}
 
 		throw SyntaxError(pos, "'${name}' refers to ${typeOf(found.named).name}, which I don't know how to handle here.");
