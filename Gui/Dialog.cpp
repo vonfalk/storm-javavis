@@ -44,8 +44,10 @@ namespace gui {
 	void Dialog::close(Int result) {
 		this->result = result;
 		// Make sure to enable the old window before we remove ourselves.
-		if (parent)
+		if (parent) {
 			EnableWindow(parent->handle().hwnd(), TRUE);
+			SetFocus(parent->handle().hwnd());
+		}
 		Frame::close();
 	}
 
