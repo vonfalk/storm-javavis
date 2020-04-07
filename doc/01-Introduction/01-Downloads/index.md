@@ -24,7 +24,7 @@ variants are available depending on which garbage collector is desired.
   from Ravenbrook Ltd.
 
   - [Windows (32-bit), MPS](storm_mps.zip)
-  - [Linux (64-bit), SMM](storm_mps.tar.gz)
+  - [Linux (64-bit), MPS](storm_mps.tar.gz)
 
 - SMM releases
 
