@@ -108,6 +108,7 @@ SFnTail => Maybe<SStmtList>(block) : "{", SStmtList@ block - "}";
 // Formal parameters.
 Array<Formal> SFormals();
 SFormals => Array<Formal>() : ;
+SFormals => Array<Formal>() : "void" #keyword; // Valid in C
 SFormals => Array<Formal>() : SFormal -> push - (, ",", SFormal -> push)*;
 
 Formal SFormal();
