@@ -148,7 +148,14 @@ namespace storm {
 		 */
 
 		LocalVar::LocalVar(Str *name, Value val, SrcPos pos, Bool param)
-			: Named(name), result(val), pos(pos), var(), param(param), constant(false) {}
+			: Named(name), result(val), pos(pos), var(), param(param), constant(false) {
+
+			// Disallow 'void' variables.
+			if (val == Value())
+				throw new (this) SyntaxError(pos,
+											TO_S(this, S("Attempted to create the variable \"")
+												<< name << S("\" with type \"void\", which is not allowed.")));
+		}
 
 		void LocalVar::create(CodeGen *state) {
 			if (param)
