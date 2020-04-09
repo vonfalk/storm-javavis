@@ -1,8 +1,8 @@
-use lang;
 use core:io;
 use core:lang;
-use lang:bs:macro;
+use lang;
 use lang:bnf;
+use lang:bs:macro;
 
 PkgReader reader(Url[] files, Package pkg) on Compiler {
 	FilePkgReader(files, pkg, &createFile(FileInfo));
@@ -19,5 +19,38 @@ class JavaReader extends FileReader {
 
 	Rule rootRule() {
 		named{SRoot};
+	}
+
+	void readTypes() : override {
+		Content c = content();
+		for (t in c.types) {
+			print(t.toS);
+			info.pkg.add(t);
+		}
+	}
+
+	void readFunctions() : override {
+		Content c = content();
+		for (fn in c.functions) {
+			fn.create(info.pkg);
+		}
+	}
+
+private:
+	Content? cont;
+
+	Content content() {	
+		if (cont)
+			return cont;
+
+		Parser<SRoot> parser;
+		parser.parse(info.contents, info.url, info.start);
+		if (parser.hasError)
+			parser.throwError();
+		
+		Content c = parser.tree().transform();
+		print(parser.tree().toS);
+		cont = c;
+		return c;
 	}
 }

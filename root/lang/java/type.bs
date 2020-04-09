@@ -1,0 +1,29 @@
+use core:lang;
+use lang:bs:macro;
+
+Value findType(SrcPos pos, Scope scope, SimplePart first, SimplePart[] rest) {
+    SimpleName name(first);
+    for (n in rest)
+        name.add(n);
+    scope.value(name, pos);
+}
+
+Value longType() {
+    Value(named{Long});
+}
+
+Value intType() {
+	Value(named{Int});
+}
+
+Value charType() {
+	Value(named{Byte});
+}
+
+Value boolType() {
+	Value(named{Bool});
+}
+
+Value nullValue() {
+    Value();
+}

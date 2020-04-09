@@ -1,0 +1,18 @@
+use core:lang;
+use core:asm;
+use lang:bs:macro;
+
+class JavaDecl on Compiler {
+    SStr name;
+
+    init(SStr name) {
+        init { name = name; }
+    }
+
+    void create(NameSet inside) : abstract;
+}
+
+class JavaFnDecl extends JavaDecl {
+    STypeName result;
+    
+}

@@ -1,0 +1,66 @@
+use core:lang;
+
+class TypeState on Compiler {
+    init(JavaType to, Visibility start) {
+        init() { to = to; visibility = start; }
+    }
+
+    JavaType to;
+
+    Visibility visibility;
+
+    void set(Visibility v) {
+        visibility = v;
+    }
+
+    void add(Named named) {
+        named.visibility = visibility;
+        to.add(named);
+    }
+}
+
+
+class JavaType extends Type {
+    init(SStr name, STypeParams params, SImplements implement, SExtends? extend, SClassBody body) {
+        init(name.v, TypeFlags:typeClass) {
+            pos = name.pos;
+            params = params;
+            implement = implement;
+            extend = extend;
+            body = body;
+            defAccess = public;
+        }
+    }
+
+    SrcPos pos;
+
+    STypeParams params;
+
+    SClassBody body;
+
+    SExtends? extend;
+
+    SImplements implement;
+
+    Visibility defAccess;
+
+    void resolve() {
+        if (extend)
+            extend.transform(this);
+    }
+
+    Scope scope() {
+        javaScope(this);
+    }
+
+    void setSuper(Visibility? vis, Value type) {
+        setSuper(type.type);
+    }
+
+    Bool loadAll() : override {
+        TypeState state(this, defAccess);
+        body.transform(state);
+
+        super:loadAll();
+    }
+}

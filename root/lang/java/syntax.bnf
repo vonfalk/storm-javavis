@@ -1,10 +1,14 @@
 // Implementation of the grammar for Java, complete with highlighting annotations.
 // Source: https://docs.oracle.com/javase/specs/jls/se7/html/jls-18.html
 
-delimiter = SDelimiter;
+optional delimiter = SDelimiter;
+required delimiter = RSDelimiter;
 
 void SDelimiter();
 SDelimiter : "[ \n\r\t]*" - (SCommentStart #comment - SDelimiter)?;
+
+void RSDelimiter();
+RSDelimiter : "[ \n\r\t]+" - (SCommentStart #comment - SDelimiter)?;
 
 void SCommentStart();
 SCommentStart : "//[^\n\r]*[\n\r]+";
@@ -20,11 +24,11 @@ SInComment : "/+" - SInComment;
 
 
 // Identifiers.
-void SIdent();
-SIdent : "[A-Za-z_$][A-Za-z0-9_$]*";
+SStr SIdent();
+SIdent => v : "[A-Za-z_$][A-Za-z0-9_$]*" @v;
 
 // Qualified identifier.
-void SQIdent();
+SStr SQIdent();
 SQIdent : SIdent #typeName - (, "\.", SIdent #typeName)*;
 
 void SQIdentList();
@@ -32,27 +36,31 @@ SQIdentList : SQIdent - (, ",", SQIdent)*;
 
 
 // Start of the grammar.
-void SRoot();
-SRoot : SDelimiter - SPkgName, SImportDecl, STypeDecl - SDelimiter;
+Content SRoot();
+//SRoot : SDelimiter - SPkgName, SImportDecl, STypeDecl - SDelimiter;
+SRoot => Content() : SDelimiter - (SPkgName,)? SImportDecl, STypeDecl(me) - SDelimiter;
 
 void SPkgName();
 SPkgName : (SAnnotation, )* "package" #keyword, SQIdent #typeName, ";";
 
 void SImportDecl();
 SImportDecl[-1] :;
-SImportDecl : "import" #keyword, ("static" #keyword,)? SQIdent, SImportEnd, ";", SImportDecl;
+SImportDecl : "import" #keyword ~ ("static" #keyword,)? SQIdent, SImportEnd, ";", SImportDecl;
 
 void SImportEnd();
 SImportEnd : ("\.\*")?;
 
-void STypeDecl();
-STypeDecl : SModifiers, SClassDecl;
+//void STypeDecl();
+void STypeDecl(Content content);
+//STypeDecl : SModifiers, SClassDecl;
+STypeDecl => content : SModifiers, SClassDecl -> add;
 STypeDecl : SModifiers, SEnumDecl;
 STypeDecl : SModifiers, SInterfaceDecl;
 STypeDecl : SModifiers, SAnnotationDecl;
 
-void SClassDecl();
-SClassDecl : "class" #keyword, SIdent #typeName, STypeParams, SExtends, SImplements, SClassBody;
+JavaType SClassDecl();
+//SClassDecl => JavaType(name, params, implements, extends, body) : "class" #keyword ~ SIdent name #typeName, STypeParams params, (SExtends extends,)? SImplements implement, SClassBody body;
+SClassDecl => JavaType(name, params, implement, extends, body) : "class" #keyword ~ SIdent name #typeName, STypeParams @params, (SExtends @extends,)? SImplements @implement, SClassBody @body;
 
 void SEnumDecl();
 SEnumDecl : "enum" #keyword, SIdent #typeName, SImplements, SEnumBody;
@@ -81,15 +89,15 @@ void SType();
 SType : SBasicType - (, "\[\]")*;
 SType : SRefType;
 
-void SBasicType();
-SBasicType : "byte" #typeName;
-SBasicType : "short" #typeName;
-SBasicType : "char" #typeName;
-SBasicType : "int" #typeName;
-SBasicType : "long" #typeName;
-SBasicType : "float" #typeName;
-SBasicType : "double" #typeName;
-SBasicType : "boolean" #typeName;
+Value SBasicType();
+SBasicType : "byte" #typeName; //Byte
+SBasicType : "short" #typeName; //Byte också?
+SBasicType => charType() : "char" #typeName;
+SBasicType => intType() : "int" #typeName;
+SBasicType => longType() : "long" #typeName;
+SBasicType : "float" #typeName; //Float
+SBasicType : "double" #typeName; //finns ej än
+SBasicType => boolType() : "boolean" #typeName;
 
 void STypeVoid();
 STypeVoid : "void" #keyword;
@@ -393,19 +401,21 @@ void SBlock();
 SBlock : "{" [, (SBlockStmt,)* ]+ "}";
 
 // Class body.
-void SClassBody();
-SClassBody : "{" [, (SClassEntry,)*]+ "}";
+void SClassBody(TypeState state);
+SClassBody : "{" [, (SClassEntry(state),)*]+ "}";
 
-void SClassEntry();
-SClassEntry : ";";
-SClassEntry : SModifiers, SMemberDecl;
-SClassEntry : ("static" #keyword,)? SBlock;
+void SClassEntry(TypeState state);
+SClassEntry => state : ";";
+SClassEntry => state : SModifiers, SMemberDecl -> add;
+SClassEntry => state : ("static" #keyword,)? SBlock -> add;
 
 void SMemberDecl();
 SMemberDecl : STypeDecl;
 SMemberDecl : SType, SIdent #varName, SVarSuffix, (",", SIdent #varName, SVarSuffix,)* ";";
+//function:
 SMemberDecl : STypeVoid, SIdent #fnName, SFormals, ("throws" #keyword, SQIdentList,)? SMethodEnd;
 SMemberDecl : SIdent #typeName, SFormals, ("throws" #keyword, SQIdentList,)? SBlock;
+//function:
 SMemberDecl : STypeParams, STypeVoid, SIdent #fnName, SFormals, ("throws" #keyword, SQIdentList,)? SMethodEnd;
 SMemberDecl : STypeParams, SIdent #typeName, SFormals, ("throws" #keyword, SQIdentList,)? SBlock;
 

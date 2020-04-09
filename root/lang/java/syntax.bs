@@ -1,0 +1,28 @@
+use core:lang;
+use core:io;
+ 
+void eval(Str v) {
+    tree(v).transform();
+}
+ 
+SRoot tree(Str v) {
+    Parser<SRoot> p;
+    p.parse(v, Url());
+    if (p.hasError)
+        p.throwError;
+    p.tree;
+}
+
+void fileEval() {
+	fileTree(cwdUrl / "test.java").transform();
+}
+
+SRoot fileTree(Url file) {
+	Parser<SRoot> p;
+	p.parse(file.readAllText(), file);
+	if (p.hasError)
+		p.throwError;
+	p.tree;
+}
+
+

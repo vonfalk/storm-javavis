@@ -1,0 +1,27 @@
+use core:lang;
+use lang:bs:macro;
+
+Scope javaScope(NameSet pkg) on Compiler {
+    Scope(pkg, JavaLookup());
+}
+
+class JavaLookup extends ScopeExtra {
+    init() {
+        init("void") {}
+    }
+
+    Named? find(Scope in, SimpleName name) : override {
+        NameLookup at = in.top;
+        while (now = at) {
+            if (found = find(in, now, name))
+                return found;
+            
+            at = nextCandidate(now);
+        }
+
+        if (found = find(in, named{runtime}, name))
+            return found;
+        
+        null;
+    }
+}
