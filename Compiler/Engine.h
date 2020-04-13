@@ -161,6 +161,7 @@ namespace storm {
 			vTypePrivate,
 			vTypeProtected,
 			vPackagePrivate,
+			vFilePrivate,
 
 			// Should be last.
 			visCount,

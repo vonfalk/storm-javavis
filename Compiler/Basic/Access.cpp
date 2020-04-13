@@ -9,45 +9,6 @@
 namespace storm {
 	namespace bs {
 
-		static SrcPos findPos(NameLookup *src) {
-			while (src) {
-				if (BSRawFn *fn = as<BSRawFn>(src))
-					return fn->pos;
-				else if (Class *c = as<Class>(src))
-					return c->declared;
-				else if (BlockLookup *b = as<BlockLookup>(src))
-					return b->block->pos;
-				else if (FileScope *f = as<FileScope>(src))
-					return f->pos;
-
-				src = src->parent();
-			}
-
-			// TODO: Implement more types here. It would be nice if all Named had a 'pos' member,
-			// since that is usable for all named entities.
-			return SrcPos();
-		}
-
-		FilePrivate::FilePrivate() {}
-
-		Bool FilePrivate::visible(Named *check, NameLookup *source) {
-			SrcPos c = findPos(check);
-			SrcPos s = findPos(source);
-
-			// If both come from unknown files, they are probably not from the same file.
-			if (!c.file || !s.file)
-				return false;
-
-			if (c.file == s.file)
-				return true;
-			return *c.file == *s.file;
-		}
-
-		void FilePrivate::toS(StrBuf *to) const {
-			*to << S("private");
-		}
-
-
 		/**
 		 * Convenience functions.
 		 */
@@ -77,7 +38,7 @@ namespace storm {
 		}
 
 		Visibility *freePrivate(EnginePtr e) {
-			return new (e.v) FilePrivate();
+			return e.v.visibility(Engine::vFilePrivate);
 		}
 
 

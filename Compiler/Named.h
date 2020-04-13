@@ -48,9 +48,27 @@ namespace storm {
 
 
 	/**
+	 * An extension of NameLookup with a position.
+	 *
+	 * This is useful to build linked structures for a Scope in order to indicate that we're at a
+	 * particular location, which is useful for name lookups etc.
+	 */
+	class LookupPos : public NameLookup {
+		STORM_CLASS;
+	public:
+		// Create.
+		STORM_CTOR LookupPos();
+		STORM_CTOR LookupPos(SrcPos pos);
+
+		// Our position.
+		SrcPos pos;
+	};
+
+
+	/**
 	 * Denotes a named object in the compiler. Named objects are for example functions, types.
 	 */
-	class Named : public NameLookup {
+	class Named : public LookupPos {
 		STORM_CLASS;
 	public:
 		// Create without parameters.

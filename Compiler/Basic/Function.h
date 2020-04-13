@@ -75,9 +75,6 @@ namespace storm {
 			// Create.
 			STORM_CTOR BSRawFn(Value result, syntax::SStr *name, Array<ValParam> *params, MAYBE(NamedThread *) thread);
 
-			// Declared at.
-			SrcPos pos;
-
 			// Set the thread for this function. Should be done before code is generated for the
 			// first time, and before someone else start depending on this function.
 			void STORM_FN thread(Scope scope, SrcName *name);

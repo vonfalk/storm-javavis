@@ -25,9 +25,6 @@ namespace storm {
 			// Create.
 			STORM_CTOR BSRawCtor(Array<ValParam> *params, SrcPos pos);
 
-			// Position.
-			SrcPos pos;
-
 			// We may need to run on a specific thread based on the current actual parameters.
 			virtual code::Var STORM_FN findThread(CodeGen *s, Array<code::Operand> *params);
 

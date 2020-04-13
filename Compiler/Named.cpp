@@ -52,6 +52,15 @@ namespace storm {
 
 
 	/**
+	 * LookupPos.
+	 */
+
+	LookupPos::LookupPos() {}
+
+	LookupPos::LookupPos(SrcPos pos) : pos(pos) {}
+
+
+	/**
 	 * Named.
 	 */
 

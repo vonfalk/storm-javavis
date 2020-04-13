@@ -474,6 +474,8 @@ namespace storm {
 			return new (*this) TypeProtected();
 		case vPackagePrivate:
 			return new (*this) PackagePrivate();
+		case vFilePrivate:
+			return new (*this) FilePrivate();
 		default:
 			assert(false, L"Unknown visibility: " + ::toS(t));
 			return null;

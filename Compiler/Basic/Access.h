@@ -19,24 +19,6 @@ namespace storm {
 		 */
 
 
-		/**
-		 * Private access for free functions etc.
-		 */
-		class FilePrivate : public Visibility {
-			STORM_CLASS;
-		public:
-			// Create.
-			FilePrivate();
-
-			// Check.
-			virtual Bool STORM_FN visible(Named *check, NameLookup *source);
-
-		protected:
-			// To string.
-			virtual void STORM_FN toS(StrBuf *to) const;
-		};
-
-
 
 		/**
 		 * Create the access modifiers from the grammar.

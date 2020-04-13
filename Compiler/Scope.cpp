@@ -164,6 +164,15 @@ namespace storm {
 		return value(name, name->pos);
 	}
 
+	Scope Scope::withPos(SrcPos pos) const {
+		if (!top)
+			return *this;
+
+		LookupPos *sub = new (top) LookupPos(pos);
+		sub->parentLookup = top;
+		return child(sub);
+	}
+
 	Scope rootScope(EnginePtr e) {
 		return e.v.scope();
 	}
@@ -184,6 +193,8 @@ namespace storm {
 
 				if (Named *n = as<Named>(at)) {
 					to << n->identifier();
+				} else if (LookupPos *p = as<LookupPos>(at)) {
+					to << p->pos;
 				} else {
 					to << at->type()->identifier();
 				}

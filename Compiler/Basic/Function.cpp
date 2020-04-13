@@ -50,7 +50,7 @@ namespace storm {
 			// 	PVAR(body);
 
 			Array<ValParam> *par = bs::resolve(params, fScope);
-			BSFunction *f = new (this) BSFunction(result, name, par, scope, null, body);
+			BSFunction *f = new (this) BSFunction(result, name, par, fScope, null, body);
 
 			// Default thread?
 			if (thread)
@@ -104,8 +104,9 @@ namespace storm {
 		 */
 
 		BSRawFn::BSRawFn(Value result, SStr *name, Array<ValParam> *params, MAYBE(NamedThread *) thread)
-			: Function(result, name->v, values(params)), pos(name->pos), valParams(params) {
+			: Function(result, name->v, values(params)), valParams(params) {
 
+			this->pos = name->pos;
 			init(thread);
 		}
 

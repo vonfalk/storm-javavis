@@ -22,8 +22,11 @@ namespace storm {
 
 
 		Class::Class(TypeFlags flags, SrcPos pos, Scope scope, Str *name, syntax::Node *body)
-			: Type(name, flags), scope(scope, this), declared(pos), body(body),
-			  otherName(null), otherMeaning(otherNone), allowLazyLoad(true) {}
+			: Type(name, flags), scope(scope, this), body(body),
+			  otherName(null), otherMeaning(otherNone), allowLazyLoad(true) {
+
+			this->pos = pos;
+		}
 
 
 		void Class::lookupTypes() {
@@ -371,7 +374,7 @@ namespace storm {
 		BSCtor *classDefaultCtor(Class *owner) {
 			Array<NameParam> *params = CREATE(Array<NameParam>, owner);
 
-			return classCtor(owner, owner->declared, params, null);
+			return classCtor(owner, owner->pos, params, null);
 		}
 
 	}

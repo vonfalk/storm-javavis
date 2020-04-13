@@ -31,7 +31,7 @@ ConstRRef : generate(params) {
 }
 
 // Create a type.
-Named? generatePtr(Array<Value> params, Str name, Bool isConst, Bool isRef, Bool rvalRef) {
+private Named? generatePtr(Array<Value> params, Str name, Bool isConst, Bool isRef, Bool rvalRef) {
 	// Only one parameter.
 	if (params.count != 1)
 		return null;
