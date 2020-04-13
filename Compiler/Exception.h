@@ -120,13 +120,12 @@ namespace storm {
 
 	/**
 	 * Error in type definitions.
-	 * TODO: Require a SrcPos!
 	 */
 	class EXCEPTION_EXPORT TypedefError : public CodeError {
 		STORM_EXCEPTION;
 	public:
-		TypedefError(const wchar *msg);
-		STORM_CTOR TypedefError(Str *msg);
+		TypedefError(SrcPos pos, const wchar *msg);
+		STORM_CTOR TypedefError(SrcPos pos, Str *msg);
 
 		virtual void STORM_FN messageText(StrBuf *to) const {
 			*to << S("Type definition error: ") << msg;

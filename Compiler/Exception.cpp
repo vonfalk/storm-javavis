@@ -35,16 +35,8 @@ namespace storm {
 		: CodeError(where),
 		  msg(TO_S(engine(), S("Expected ") << expected << S(" but got ") << got)) {}
 
-	TypedefError::TypedefError(const wchar *msg) : CodeError(SrcPos()), msg(new (engine()) Str(msg)) {
-#ifdef DEBUG
-		TODO(L"Require a SrcPos!");
-#endif
-	}
-	TypedefError::TypedefError(Str *msg) : CodeError(SrcPos()), msg(msg) {
-#ifdef DEBUG
-		TODO(L"Require a SrcPos!");
-#endif
-	}
+	TypedefError::TypedefError(SrcPos pos, const wchar *msg) : CodeError(pos), msg(new (engine()) Str(msg)) {}
+	TypedefError::TypedefError(SrcPos pos, Str *msg) : CodeError(pos), msg(msg) {}
 
 	InstantiationError::InstantiationError(SrcPos pos, const wchar *msg) : CodeError(pos), msg(new (engine()) Str(msg)) {}
 	InstantiationError::InstantiationError(SrcPos pos, Str *msg) : CodeError(pos), msg(msg) {}

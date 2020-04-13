@@ -497,7 +497,7 @@ namespace storm {
 			if (ctor == null) {
 				Str *msg = TO_S(this, S("The type ") << identifier()
 								<< S(" has a nontrivial destructor, but no constructor."));
-				throw new (this) TypedefError(msg);
+				throw new (this) TypedefError(pos, msg);
 			}
 
 			code::Ref d = dtor ? dtor->ref() : engine.ref(builtin::fnNull);
@@ -521,7 +521,7 @@ namespace storm {
 				S("reasons for why this might happen: Either, you try to access the type description of ")
 				S("the type too early, or you are attempting to construct a non-standard type, ")
 				S("in which case you should override 'createSimpleDesc' as well.");
-			throw new (this) TypedefError(msg->toS());
+			throw new (this) TypedefError(pos, msg->toS());
 		}
 
 		code::SimpleDesc *desc = new (this) code::SimpleDesc(mySize, elems);
@@ -551,7 +551,8 @@ namespace storm {
 			if (SimpleDesc *s = as<SimpleDesc>(desc))
 				merge(Offset(), pos, into, s);
 			else
-				throw new (this) TypedefError(S("Can not produce a SimpleDesc when the parent type is not a simple type!"));
+				throw new (this) TypedefError(this->pos,
+											S("Can not produce a SimpleDesc when the parent type is not a simple type!"));
 		}
 
 		Array<MemberVar *> *vars = variables();
@@ -577,9 +578,11 @@ namespace storm {
 				merge(offset, pos, into, s);
 			} else if (ComplexDesc *c = as<ComplexDesc>(original)) {
 				UNUSED(c);
-				throw new (this) TypedefError(S("Can not produce a SimpleDesc from a type containing a complex type!"));
+				throw new (this) TypedefError(this->pos,
+											S("Can not produce a SimpleDesc from a type containing a complex type!"));
 			} else {
-				throw new (this) TypedefError(TO_S(this, S("Unknown type description: ") << original));
+				throw new (this) TypedefError(this->pos,
+											TO_S(this, S("Unknown type description: ") << original));
 			}
 		}
 
@@ -1321,7 +1324,7 @@ namespace storm {
 			insert = true;
 		} else if (fn->fnFlags() & fnOverride) {
 			Str *msg = TO_S(this, S("The function ") << fn->identifier() << S(" is marked 'override' but does not override."));
-			throw new (this) TypedefError(msg);
+			throw new (this) TypedefError(fn->pos, msg);
 		}
 
 		// Always check subclasses in the case of a function marked 'final'.
@@ -1363,7 +1366,7 @@ namespace storm {
 		if (parent->fnFlags() & fnFinal) {
 			Str *msg = TO_S(parent, S("The function ") << child->identifier() << S(" attempts to ")
 							S("override the final function ") << parent->identifier() << S("."));
-			throw new (parent) TypedefError(msg);
+			throw new (parent) TypedefError(child->pos, msg);
 		}
 
 		if (!checkResult(parent, child)) {
@@ -1371,7 +1374,7 @@ namespace storm {
 							<< parent->identifier() << S(", but the return types are not compatible. ")
 							<< S("Got ") << child->result << S(", but expected a type compatible with ")
 							<< parent->result << S("."));
-			throw new (parent) TypedefError(msg);
+			throw new (parent) TypedefError(child->pos, msg);
 		}
 	}
 

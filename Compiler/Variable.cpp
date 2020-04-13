@@ -11,7 +11,7 @@ namespace storm {
 
 	static void checkType(Engine &e, Value type) {
 		if (!type.type)
-			throw new (e) TypedefError(S("Unable to create a variable of type 'void'."));
+			throw new (e) TypedefError(SrcPos(), S("Unable to create a variable of type 'void'."));
 	}
 
 	Variable::Variable(Str *name, Value type) :
