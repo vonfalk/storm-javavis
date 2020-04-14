@@ -13,6 +13,39 @@ class JavaDecl on Compiler {
 }
 
 class JavaFnDecl extends JavaDecl {
-    STypeName result;
-    
+
+    init(SType result, SStr name, SFormals formals, SQIdentList? qlist, SMethodEnd end) {
+        init(name) {
+            result = result;
+            formals = formals;
+            qlist = qlist;
+            end = end;
+        }
+    }
+
+    SType result;
+
+    SFormals formals;
+
+    SQIdentList? qlist;
+
+    SMethodEnd end;
+}
+
+class JavaFunction extends Function {
+    SrcPos pos;
+    Scope scope;
+    JavaFnDecl decl;
+
+    init (Scope scope, SrcPos pos, Value result, Str name, Value[] params, JavaFnDecl decl) {
+        init(result, name, params) {
+            scope = scope;
+            pos = pos;
+            decl = decl;
+        }
+    }
+
+    void create(NameSet inside) {
+        inside.add(this);
+    }
 }

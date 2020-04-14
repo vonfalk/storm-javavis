@@ -31,8 +31,10 @@ class JavaReader extends FileReader {
 
 	void readFunctions() : override {
 		Content c = content();
-		for (fn in c.functions) {
-			fn.create(info.pkg);
+		for (t in c.types) {
+			for (fn in t.functions) {
+				fn.create(t); //argument?
+			}
 		}
 	}
 
@@ -49,7 +51,7 @@ private:
 			parser.throwError();
 		
 		Content c = parser.tree().transform();
-		print(parser.tree().toS);
+		//print(parser.tree().toS);
 		cont = c;
 		return c;
 	}

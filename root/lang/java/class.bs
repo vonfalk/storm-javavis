@@ -30,13 +30,14 @@ class JavaType extends Type {
             body = body;
             defAccess = public;
         }
+        body.transform(this); // bör transform göras här? behövs ske innan ReadFunctions
     }
 
     SrcPos pos;
 
     STypeParams params;
 
-    SClassBody body;
+    SClassBody body; //content för vad som finns i typen
 
     SExtends? extend;
 
@@ -44,23 +45,18 @@ class JavaType extends Type {
 
     Visibility defAccess;
 
-    void resolve() {
-        if (extend)
-            extend.transform(this);
-    }
+    JavaFunction[] functions;
 
     Scope scope() {
         javaScope(this);
     }
 
-    void setSuper(Visibility? vis, Value type) {
-        setSuper(type.type);
+    void add(JavaFnDecl decl) {
+        JavaFunction fn(scope(), pos, Value(), decl.name.v, [], decl);
+        functions << fn;
     }
 
     Bool loadAll() : override {
-        TypeState state(this, defAccess);
-        body.transform(state);
-
         super:loadAll();
     }
 }

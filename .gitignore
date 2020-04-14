@@ -11,6 +11,7 @@
 # Temporary files #
 ###################
 *~
+*.swp
 
 # Packages #
 ############
@@ -57,6 +58,7 @@ build
 build_*
 log/
 
+tags
 ReadMe.txt
 *.aps
 

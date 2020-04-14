@@ -60,7 +60,7 @@ STypeDecl : SModifiers, SAnnotationDecl;
 
 JavaType SClassDecl();
 //SClassDecl => JavaType(name, params, implements, extends, body) : "class" #keyword ~ SIdent name #typeName, STypeParams params, (SExtends extends,)? SImplements implement, SClassBody body;
-SClassDecl => JavaType(name, params, implement, extends, body) : "class" #keyword ~ SIdent name #typeName, STypeParams @params, (SExtends @extends,)? SImplements @implement, SClassBody @body;
+SClassDecl => JavaType(name, params, implement, extends, body) : "class" #keyword ~ SIdent name #typeName, STypeParams @params, (SExtends @extends,)? SImplements @implement, SClassBody(me) @body;
 
 void SEnumDecl();
 SEnumDecl : "enum" #keyword, SIdent #typeName, SImplements, SEnumBody;
@@ -98,10 +98,6 @@ SBasicType => longType() : "long" #typeName;
 SBasicType : "float" #typeName; //Float
 SBasicType : "double" #typeName; //finns ej än
 SBasicType => boolType() : "boolean" #typeName;
-
-void STypeVoid();
-STypeVoid : "void" #keyword;
-STypeVoid : SType;
 
 void SRefType();
 // Note: The official documentation does not allow SArrayTokens here. We do, since the official
@@ -342,7 +338,7 @@ void SGenericSuffix();
 SGenericSuffix : "super" #keyword, SSelector;
 SGenericSuffix : SIdent #fnName, SArgs;
 
-void SStmt();
+Stmt SStmt();
 SStmt : ";";
 SStmt : SBlock;
 SStmt : SIdent, ":", SStmt;
@@ -401,27 +397,26 @@ void SBlock();
 SBlock : "{" [, (SBlockStmt,)* ]+ "}";
 
 // Class body.
-void SClassBody(TypeState state);
-SClassBody : "{" [, (SClassEntry(state),)*]+ "}";
+void SClassBody(JavaType type); //JavaType type som parameter, ser till att lägga till alla funktioner sen
+SClassBody : "{" [, (SClassEntry(type),)*]+ "}";
 
-void SClassEntry(TypeState state);
-SClassEntry => state : ";";
-SClassEntry => state : SModifiers, SMemberDecl -> add;
-SClassEntry => state : ("static" #keyword,)? SBlock -> add;
+void SClassEntry(JavaType type);
+SClassEntry => type : ";";
+SClassEntry => type : SModifiers, SMemberDecl -> add;
+SClassEntry => type : ("static" #keyword,)? SBlock;
 
-void SMemberDecl();
+JavaFnDecl SMemberDecl();
 SMemberDecl : STypeDecl;
 SMemberDecl : SType, SIdent #varName, SVarSuffix, (",", SIdent #varName, SVarSuffix,)* ";";
-//function:
-SMemberDecl : STypeVoid, SIdent #fnName, SFormals, ("throws" #keyword, SQIdentList,)? SMethodEnd;
+SMemberDecl => JavaFnDecl(type, name, formals, qlist, end): SType @type, SIdent name #fnName, SFormals @formals, ("throws" #keyword, SQIdentList @qlist,)? SMethodEnd @end;
 SMemberDecl : SIdent #typeName, SFormals, ("throws" #keyword, SQIdentList,)? SBlock;
-//function:
-SMemberDecl : STypeParams, STypeVoid, SIdent #fnName, SFormals, ("throws" #keyword, SQIdentList,)? SMethodEnd;
-SMemberDecl : STypeParams, SIdent #typeName, SFormals, ("throws" #keyword, SQIdentList,)? SBlock;
+// generics?:
+//SMemberDecl : STypeParams, SType, SIdent #fnName, SFormals, ("throws" #keyword, SQIdentList,)? SMethodEnd;
+//SMemberDecl : STypeParams, SIdent #typeName, SFormals, ("throws" #keyword, SQIdentList,)? SBlock;
 
 void SMethodEnd();
 SMethodEnd : ";";
-SMethodEnd : SBlock;
+SMethodEnd : SBlock -> add;
 
 void SFormals();
 SFormals : "(", (SFormalList)?, ")";

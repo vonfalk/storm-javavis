@@ -1,13 +1,7 @@
 class Content on Compiler {
     JavaType[] types;
 
-    JavaDecl[] functions;
-
     void add(JavaType type) {
         types << type;
-    }
-
-    void add(JavaDecl fn) {
-        funtions << fn;
     }
 }

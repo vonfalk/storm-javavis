@@ -1,0 +1,115 @@
+use core:lang;
+use core:asm;
+use lang:bs:macro;
+
+class Stmt on Compiler {
+    SrcPos pos;
+    
+    init(SrcPos pos) {
+        init { pos = pos; }
+    }
+
+    bool code(CodeGen gen) : abstract;
+}
+
+class Block extends Stmt {
+    init(SrcPos pos, Scope parent) {
+        init(pos) {}
+        scope = blockScope (this, parent);
+    }
+
+    init(SrcPos pos, Block parent) {
+        init(pos) {}
+        scope = blockScope(this, parent.scope);
+    }
+
+    Scope scope;
+
+    Bool code(CodeGen gen) : override {
+        CodeGen child = gen.child();
+        gen.l << begin(child.block);
+
+        initVariables(child);
+
+        bool returns = blockCode(child);
+
+        gen.l << end(child.block);
+        returns;
+    }
+
+    Bool blockCode(CodeGen gen) : abstract;
+
+    protected Str->LocalVar vars;
+
+    protected Str[] varOrder;
+
+    void initVariables(CodeGen gen) {
+        for (k in varOrder) {
+            vars.get(k).create(gen);
+        }
+    }
+
+    void add(LocalVar var) {
+        if (vars.has(var.name))
+            throw SyntaxError(var.pos, "There is already a variable named ${var.name} in the current block!");
+            vars.put(var.name, var);
+            varOrder << var.name;
+    }
+
+    Named? variable(Str name) {
+        if (vars.has(name))
+            return vars.get(name);
+        else
+            return null;
+    }
+}
+
+private Scope blockScope(Block block, Scope parent) {
+    if (t = parent.top) {
+        parent.child(BlockLookup(block, t));
+    }
+    else {
+        parent.child(BlockLookup(block));
+    }
+}
+
+class BlockLookup extends NameLookup {
+    init(Block block) {
+        init() { block = block; }
+    }
+
+    init(Block block, NameLookup prev) {
+        init(prev) {
+            block = block;
+        }
+    }
+
+    Block block;
+
+    Named? find(SimplePart part, Scope source) {
+        if (part.params.empty)
+            return block.variable(part.name);
+        
+        null;
+    }
+}
+
+class StmtBlock extends Block {
+    init(SrcPos pos, Scope parent) {
+        init(pos, parent) {}
+    }
+
+    init(SrcPos, Block parent) {
+        init(pos, parent) {}
+    }
+
+    private Stmt[] content;
+
+    void add(Stmt stmt) {
+        content << stmt;
+    }
+
+    void prepend(Stmt stmt) {
+        content.insert(0, stmt);
+    }
+}
