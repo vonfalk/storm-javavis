@@ -58,6 +58,10 @@ namespace storm {
 		throw new (this) ProtocolNotSupported(S("exists"), toS());
 	}
 
+	Bool Protocol::createDir(Url *url) {
+		throw new (this) ProtocolNotSupported(S("createDir"), toS());
+	}
+
 	Str *Protocol::format(Url *url) {
 		throw new (this) ProtocolNotSupported(S("format"), toS());
 	}
@@ -159,6 +163,10 @@ namespace storm {
 		return PathFileExists(format(url)->c_str()) == TRUE;
 	}
 
+	Bool FileProtocol::createDir(Url *url) {
+		return CreateDirectory(format(url)->c_str(), NULL) == TRUE;
+	}
+
 #elif defined(POSIX)
 
 	Bool FileProtocol::partEq(Str *a, Str *b) {
@@ -223,6 +231,10 @@ namespace storm {
 	Bool FileProtocol::exists(Url *url) {
 		struct stat s;
 		return stat(format(url)->utf8_str(), &s) == 0;
+	}
+
+	Bool FileProtocol::createDir(Url *url) {
+		return mkdir(format(url)->utf8_str(), 0777) == 0;
 	}
 
 #else
