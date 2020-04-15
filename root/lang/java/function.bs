@@ -8,8 +8,6 @@ class JavaDecl on Compiler {
     init(SStr name) {
         init { name = name; }
     }
-
-    void create(NameSet inside) : abstract;
 }
 
 class JavaFnDecl extends JavaDecl {
