@@ -33,7 +33,8 @@ class Workspace on Render {
 			if (e.output) {
 				Size sz = e.visual.size;
 				e.visual.pos.x = viewport.p1.x - sz.w - space;
-				e.visual.pos.y = viewport.p1.y - sz.h - space;
+				// e.visual.pos.y = viewport.p1.y - sz.h - space;
+				e.visual.pos.y = space;
 			}
 
 			// TODO: Clipping?
