@@ -5,27 +5,33 @@ struct account {
 int num_accounts;
 struct account *accounts;
 
-bool transfer(int amount, int from, int to) {
-	bool ok = accounts[from].balance >= amount;
+bool transfer(int amount, struct account *from, struct account *to) {
+	bool ok = from->balance >= amount;
 	if (ok) {
-		accounts[from].balance -= amount;
-		accounts[to].balance += amount;
+		from->balance -= amount;
+		to->balance += amount;
 	}
 
 	return ok;
 }
 
+void worker(int amount, int from, int to) {
+	if (!transfer(amount, &accounts[from], &accounts[to]))
+		printf("Transfer %d from %d to %d failed!\n", amount, from, to);
+}
+
 int main(void) {
 	NO_STEP {
-		num_accounts = 4;
+		num_accounts = 10;
 		accounts = malloc(sizeof(struct account) * num_accounts);
 		for (int i = 0; i < num_accounts; i++) {
 			accounts[i].balance = 10;
 		}
 	}
 
-	transfer(5, 1, 2);
-
+	thread_new(&worker, 10, 3, 4);
+	thread_new(&worker, 10, 1, 2);
+	worker(10, 1, 2);
 
 	return 0;
 }

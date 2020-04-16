@@ -10,41 +10,44 @@ on Compiler:
  * Returns some kind of "thread id" for the new thread.
  */
 class SpawnCall extends Expr {
-	init(SrcPos pos, Block parent, SimpleName fn, Expr param) {
-		Function toCall = findFn(pos, parent.scope, fn, param);
+	init(SrcPos pos, Block parent, SimpleName fn, Expr[] params) {
+		Function toCall = findFn(pos, parent.scope, fn, params);
 
 		if (toCall.result != Value())
 			throw SyntaxError(pos, "It is not possible to spawn functions that return a value.");
 
 		init(pos) {
 			toCall = toCall;
-			param = param;
+			params = params;
 		}
 	}
 
 	private Function toCall;
-	private Expr param;
+	private Expr[] params;
 
 	ExprResult result() : override {
 		Value(named{Int});
 	}
 
 	void code(CodeGen gen, CodeResult res) : override {
-		Value paramType = toCall.params[0];
 		Operand[] params;
 
-		if (paramType.ref) {
-			// Ask for a pointer, since that needs to be heap-allocated!
-			param.codePtr(gen, safeType(paramType, pos));
+		for (i, param in this.params) {
+			Value paramType = toCall.params[i];
 
-			Var v = gen.l.createVar(gen.block, sPtr);
-			gen.l << ucast(v, ecx);
-			gen.l << add(v, ptrB);
-			params << v;
-		} else {
-			CodeResult paramRes(paramType, gen.block);
-			param.code(gen, paramRes);
-			params << paramRes.location(gen);
+			if (paramType.ref) {
+				// Ask for a pointer, since that needs to be heap-allocated!
+				param.codePtr(gen, safeType(paramType, pos));
+
+				Var v = gen.l.createVar(gen.block, sPtr);
+				gen.l << ucast(v, ecx);
+				gen.l << add(v, ptrB);
+				params << v;
+			} else {
+				CodeResult paramRes(paramType, gen.block);
+				param.code(gen, paramRes);
+				params << paramRes.location(gen);
+			}
 		}
 
 		CodeResult future(Value(named{FutureBase}), gen.block);
@@ -76,9 +79,9 @@ class SpawnCall extends Expr {
 	}
 
 	// Find a function to call.
-	private Function findFn(SrcPos pos, Scope scope, SimpleName name, Expr param) : static {
+	private Function findFn(SrcPos pos, Scope scope, SimpleName name, Expr[] params) : static {
 		name = name.clone();
-		name.last = CppPart(name.last.name, [param]);
+		name.last = CppPart(name.last.name, params);
 
 		unless (fn = scope.find(name) as Function)
 			throw SyntaxError(pos, "Unable to find a function to spawn: ${name}");
