@@ -69,6 +69,10 @@ class CppViewHints extends ViewHints {
 			return hideImpl(ws, info, object, offset);
 		}
 
+		if (info.type is named{runtime:condition}) {
+			return hideImpl(ws, info, object, offset);
+		}
+
 		if (info.type is named{Byte}) {
 			return CppChar();
 		}
