@@ -203,6 +203,9 @@ SStmt[40] => IfStmt(pos, block) : "if" #keyword, "(", SExpr(me) -> cond, ")", SS
 SStmt[50] => Break(pos, block) : "break" #keyword, ";";
 SStmt[50] => Continue(pos, block) : "continue" #keyword, ";";
 
+// Disable stepping in a block.
+SStmt[50] => NoStep(pos, block) : "NO_STEP" #keyword, "{", (SStmt(me) -> add,)* "}";
+
 // An array initializer. It is either a comma-separated list of expressions or a string.
 Array<Expr> SArrayInit(Block block);
 SArrayInit => Array<Expr>() : "{", SExpr(block) -> push - (, ",", SExpr(block) -> push)*, "}";
