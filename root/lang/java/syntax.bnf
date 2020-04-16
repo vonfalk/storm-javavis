@@ -1,6 +1,8 @@
 // Implementation of the grammar for Java, complete with highlighting annotations.
 // Source: https://docs.oracle.com/javase/specs/jls/se7/html/jls-18.html
 
+use core.lang;
+
 optional delimiter = SDelimiter;
 required delimiter = RSDelimiter;
 
@@ -85,9 +87,11 @@ SImplements :;
 
 
 // Types.
-void SType();
-SType : SBasicType - (, "\[\]")*;
+Value SType();
+SType => type : SBasicType type - (, "\[\]")*;
 SType : SRefType;
+
+//TODO: double
 
 Value SBasicType();
 SBasicType : "byte" #typeName; //Byte
@@ -95,9 +99,10 @@ SBasicType : "short" #typeName; //Byte också?
 SBasicType => charType() : "char" #typeName;
 SBasicType => intType() : "int" #typeName;
 SBasicType => longType() : "long" #typeName;
-SBasicType : "float" #typeName; //Float
-SBasicType : "double" #typeName; //finns ej än
+SBasicType => floatType() : "float" #typeName; //Float
+SBasicType => doubleType() : "double" #typeName;
 SBasicType => boolType() : "boolean" #typeName;
+SBasicType => nullValue() : "void" #typeName;
 
 void SRefType();
 // Note: The official documentation does not allow SArrayTokens here. We do, since the official
@@ -137,6 +142,8 @@ SBound : SRefType - (, "&", SRefType)*;
 void SModifiers();
 SModifiers : (SModifier, )*;
 
+// public, protected, private bör vara Visibility.
+// alternativt, skicka in som sträng och resolve:a alla modifiers i implementationen
 void SModifier();
 SModifier : SAnnotation;
 SModifier : "public" #keyword;
@@ -408,7 +415,7 @@ SClassEntry => type : ("static" #keyword,)? SBlock;
 JavaFnDecl SMemberDecl();
 SMemberDecl : STypeDecl;
 SMemberDecl : SType, SIdent #varName, SVarSuffix, (",", SIdent #varName, SVarSuffix,)* ";";
-SMemberDecl => JavaFnDecl(type, name, formals, qlist, end): SType @type, SIdent name #fnName, SFormals @formals, ("throws" #keyword, SQIdentList @qlist,)? SMethodEnd @end;
+SMemberDecl => JavaFnDecl(result, name, formals, qlist, end): SType result, SIdent name #fnName, SFormals @formals, ("throws" #keyword, SQIdentList @qlist,)? SMethodEnd @end;
 SMemberDecl : SIdent #typeName, SFormals, ("throws" #keyword, SQIdentList,)? SBlock;
 // generics?:
 //SMemberDecl : STypeParams, SType, SIdent #fnName, SFormals, ("throws" #keyword, SQIdentList,)? SMethodEnd;
@@ -416,7 +423,7 @@ SMemberDecl : SIdent #typeName, SFormals, ("throws" #keyword, SQIdentList,)? SBl
 
 void SMethodEnd();
 SMethodEnd : ";";
-SMethodEnd : SBlock -> add;
+SMethodEnd : SBlock;
 
 void SFormals();
 SFormals : "(", (SFormalList)?, ")";

@@ -27,3 +27,11 @@ Value boolType() {
 Value nullValue() {
     Value();
 }
+
+Value floatType() {
+    Value(named{Float});
+}
+
+Value doubleType() {
+    Value(named{Double});
+}

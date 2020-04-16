@@ -30,7 +30,6 @@ class JavaType extends Type {
             body = body;
             defAccess = public;
         }
-        body.transform(this); // bör transform göras här? behövs ske innan ReadFunctions
     }
 
     SrcPos pos;
@@ -45,18 +44,17 @@ class JavaType extends Type {
 
     Visibility defAccess;
 
-    JavaFunction[] functions;
-
     Scope scope() {
         javaScope(this);
     }
 
     void add(JavaFnDecl decl) {
-        JavaFunction fn(scope(), pos, Value(), decl.name.v, [], decl);
-        functions << fn;
+        JavaFunction fn(scope(), pos, decl.result, decl.name.v, [], decl);
+        fn.create(this);
     }
 
     Bool loadAll() : override {
+        body.transform(this);
         super:loadAll();
     }
 }

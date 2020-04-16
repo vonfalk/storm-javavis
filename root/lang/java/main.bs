@@ -24,19 +24,11 @@ class JavaReader extends FileReader {
 	void readTypes() : override {
 		Content c = content();
 		for (t in c.types) {
-			print(t.toS);
 			info.pkg.add(t);
 		}
 	}
 
-	void readFunctions() : override {
-		Content c = content();
-		for (t in c.types) {
-			for (fn in t.functions) {
-				fn.create(t); //argument?
-			}
-		}
-	}
+	void readFunctions() : override {}
 
 private:
 	Content? cont;

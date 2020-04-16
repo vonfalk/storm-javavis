@@ -12,7 +12,7 @@ class JavaDecl on Compiler {
 
 class JavaFnDecl extends JavaDecl {
 
-    init(SType result, SStr name, SFormals formals, SQIdentList? qlist, SMethodEnd end) {
+    init(Value result, SStr name, SFormals formals, SQIdentList? qlist, SMethodEnd end) {
         init(name) {
             result = result;
             formals = formals;
@@ -21,7 +21,7 @@ class JavaFnDecl extends JavaDecl {
         }
     }
 
-    SType result;
+    Value result;
 
     SFormals formals;
 
