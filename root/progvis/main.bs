@@ -329,7 +329,8 @@ void debug() on Compiler {
 		// win.open(url / "printf.c");
 		// win.open(url / "globals.cpp");
 		// win.open(url / "bank" / "bank.c");
-		win.open(url / "cond.c");
+		win.open(url / "bank" / "bank_good.c");
+		// win.open(url / "cond.c");
 		win.waitForClose();
 	}
 }

@@ -20,8 +20,9 @@ class Data extends Drawable {
 	// Update the contents of the visualization from the actual data.
 	void update(Workspace work, unsafe:RawPtr object, Nat offset) : abstract;
 
-	// Find a particular offset inside this data.
-	DataOffset findOffset(Nat offset) { DataOffset(this); }
+	// Find a particular offset inside this data. Attempts to stop at a data element that represents
+	// "type" if possible, in order to better visualize pointers to different kinds of elements.
+	DataOffset findOffset(core:lang:Type? type, Nat offset) { DataOffset(this); }
 }
 
 /**
@@ -87,8 +88,8 @@ class DataWithCaption extends Data {
 		wrap.update(work, object, offset);
 	}
 
-	DataOffset findOffset(Nat offset) : override {
-		wrap.findOffset(offset);
+	DataOffset findOffset(core:lang:Type? type, Nat offset) : override {
+		wrap.findOffset(type, offset);
 	}
 
 	Bool remove() : override {
@@ -196,7 +197,7 @@ class Primitive extends Data {
 		text.size + dataMargin*2;
 	}
 
-	DataOffset findOffset(Nat offset) : override {
+	DataOffset findOffset(core:lang:Type? type, Nat offset) : override {
 		Float o = offset.int.float / typeSize.int.float;
 		DataOffset(this, o * size.h);
 	}
@@ -266,7 +267,7 @@ class Pointer extends Data {
 	void update(Workspace work, unsafe:RawPtr object, Nat offset) : override {
 		var ptr = object.readPtr(offset);
 		if (ptr.any) {
-			var off = work.traverse(ptr).findOffset(0);
+			var off = work.traverse(ptr).findOffset(null, 0);
 			this.to = off.data;
 			this.offset = off.offset;
 		} else {
@@ -274,7 +275,7 @@ class Pointer extends Data {
 		}
 	}
 
-	DataOffset findOffset(Nat offset) : override {
+	DataOffset findOffset(core:lang:Type? type, Nat offset) : override {
 		Float o = min(offset.int.float / core:asm:sPtr.current.int.float, 1.0);
 		DataOffset(this, o * size.h);
 	}
@@ -287,7 +288,7 @@ class Pointer extends Data {
 class StackPointer extends Pointer {
 	void update(Workspace work, unsafe:RawPtr object, Nat offset) : override {
 		if (object.any) {
-			var off = work.traverse(object).findOffset(0);
+			var off = work.traverse(object).findOffset(null, 0);
 			this.to = off.data;
 			this.offset = off.offset;
 		} else {
@@ -300,8 +301,9 @@ class StackPointer extends Pointer {
  * A composite type, consisting of one or more variables of other types.
  */
 class Composite extends Data {
-	init() {
-		init() {}
+	// Initialize to a particular type, so that we can visualize pointers better.
+	init(core:lang:Type type) {
+		init() { type = type; }
 	}
 
 	void add(Str name, Nat offset, Data data, Bool divider) {
@@ -315,24 +317,21 @@ class Composite extends Data {
 	void draw(Graphics g, Bool active) : override {
 		super:draw(g, active);
 		Float width = rect.size.w;
-		Point at = pos + compositeBorder;
+		Float xBase = pos.x + dataBorder.w;
 
 		for (v in content) {
-			var nameSz = v.text.size;
-			var dataSz = v.value.size;
+			Float y = pos.y + v.yPos;
 
 			if (v.line) {
-				g.line(Point(pos.x, at.y), Point(pos.x + width, at.y), dataFg);
-				at.y += dataBorder.h;
+				g.line(Point(pos.x, y), Point(pos.x + width, y), dataFg);
 			}
 
+			y += dataBorder.h;
+
 			// Align the text a bit nicer on the y-axis, to line up the baselines...
-			g.draw(v.text, dataFg, at + Point(0, dataBorder.h));
-
-			v.value.pos = at + Point(namesWidth + dataWidth - dataSz.w, 0);
+			g.draw(v.text, dataFg, Point(xBase, y + dataBorder.h));
+			v.value.pos = Point(xBase + namesWidth + dataWidth - v.value.size.w, y);
 			v.value.draw(g, false);
-
-			at.y += max(nameSz.h, dataSz.h) + dataBorder.h;
 		}
 	}
 
@@ -350,21 +349,29 @@ class Composite extends Data {
 		invalidateSize();
 	}
 
-	DataOffset findOffset(Nat offset) : override {
-		if (offset == 0)
-			return DataOffset(this);
+	DataOffset findOffset(core:lang:Type? type, Nat offset) : override {
 		if (content.empty)
 			return DataOffset(this);
 
+		Nat found = content.count - 1;
 		for (Nat i = 1; i < content.count; i++) {
 			if (content[i].offset > offset) {
-				var found = content[i - 1];
-				return found.value.findOffset(offset - found.offset);
+				found = i - 1;
+				break;
 			}
 		}
 
-		var found = content.last;
-		return found.value.findOffset(offset - found.offset);
+		var elem = content[found];
+
+		// Stop here?
+		if (type) {
+			if (core:lang:isA(this.type, type)) {
+				size(); // Make sure that our size is re-computed, otherwise 'yPos' is not correct.
+				return DataOffset(this, elem.yPos);
+			}
+		}
+
+		return elem.value.findOffset(type, offset - elem.offset);
 	}
 
 private:
@@ -373,6 +380,8 @@ private:
 		Text text;
 		Data value;
 		Nat offset;
+		// Y-position of this variable. Updated whenever 'computeSize' is called.
+		Float yPos;
 		// Line before?
 		Bool line;
 
@@ -387,6 +396,7 @@ private:
 		}
 	}
 
+	core:lang:Type type;
 	Var[] content;
 	Float namesWidth;
 	Float dataWidth;
@@ -403,12 +413,14 @@ private:
 			var nameSz = v.text.size;
 			var dataSz = v.value.size;
 
+			if (v.line)
+				height += dataBorder.h;
+
+			v.yPos = height;
+
 			namesWidth = max(namesWidth, nameSz.w + dataBorder.w);
 			dataWidth = max(dataWidth, dataSz.w);
 			height += max(nameSz.h, dataSz.h) + dataBorder.h;
-
-			if (v.line)
-				height += dataBorder.h;
 		}
 
 		height -= dataBorder.h;

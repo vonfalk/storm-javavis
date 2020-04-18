@@ -6,7 +6,7 @@ SrcName maybeType(SrcName t) on Compiler {
 	RecPart maybe("Maybe");
 	maybe.add(t);
 
-	SrcName name;
+	SrcName name(t.pos);
 	name.add("core");
 	name.add(maybe);
 	name;
