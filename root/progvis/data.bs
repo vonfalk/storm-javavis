@@ -369,6 +369,9 @@ class Composite extends Data {
 				size(); // Make sure that our size is re-computed, otherwise 'yPos' is not correct.
 				return DataOffset(this, elem.yPos);
 			}
+		} else if (offset == 0) {
+			// If no type, and at zero offset we stop early as well.
+			return DataOffset(this);
 		}
 
 		return elem.value.findOffset(type, offset - elem.offset);
