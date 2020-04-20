@@ -29,7 +29,7 @@ int main(void) {
 		}
 	}
 
-	thread_new(&worker, 10, 2, 3);
+	thread_new(&worker, 10, 1, 3);
 	thread_new(&worker, 10, 0, 2);
 	worker(10, 0, 2);
 
