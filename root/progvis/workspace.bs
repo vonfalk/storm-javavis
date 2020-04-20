@@ -141,13 +141,12 @@ class Workspace on Render {
 		stackObjMap.clear();
 		work.clear();
 		maxX = 0;
+		maxY = 0;
 		for (i, d in elements) {
 			d.visited = false;
 			if (d.object.any) {
 				objMap.put(d.object, i);
 			}
-			if (!d.thread & !d.output)
-				maxX = max(maxX, d.visual.rect.p1.x);
 		}
 
 		// Mark globals as visited, if applicable.
@@ -177,9 +176,7 @@ class Workspace on Render {
 		elements << Element(object, visual);
 		objMap.put(object, id);
 
-		Float space = 20;
-		visual.pos = Point(maxX + space, 10);
-		maxX += visual.size.w + space * 2;
+		layout(visual);
 
 		// Follow pointers.
 		work.push(WorkItem(visual, object));
@@ -356,8 +353,10 @@ private:
 	// Queue for BFS traversals when we traverse the object graph.
 	Queue<WorkItem> work;
 
-	// Basic layout: Keep track of the next x-position in during the update.
+	// Basic layout during traversal: Try to put things into a "tree", where the direct children of
+	// an object are placed to the right of the object, and otherwise below other objects.
 	Float maxX;
+	Float maxY;
 
 	// Traverse the work queue.
 	void popQueue() {
@@ -367,6 +366,27 @@ private:
 			top.data.update(this, top.object, 0);
 			work.pop();
 		}
+	}
+
+	// Perform layout of a newly created object based on the state of the traversal.
+	private void layout(Data visual) {
+		Float space = 20;
+
+		// Look at the current topmost element in the queue (if any), and update maxX and maxY
+		// accordingly.
+		if (work.any) {
+			var top = work.top.data.rect;
+
+			// New column?
+			if (top.p1.x > maxX) {
+				maxX = top.p1.x;
+				maxY = 0;
+			}
+		}
+
+		// Put it at an appropriate location.
+		visual.pos = Point(maxX + space, maxY + space);
+		maxY += visual.size.h + space;
 	}
 
 	// Create a new node for an object. Called by 'traverse'.

@@ -10,11 +10,7 @@ use core:lang;
  * var i = c.iter();
  * while (name = i.next) { ... }
  */
-class RangeFor extends ExprBlock {
-	ExprBlock? loopBlock;
-	Str? keyName;
-	Str valName;
-
+class RangeFor extends Breakable {
 	init(SrcPos pos, Block parent, SStr name, Expr container) {
 		init(pos, parent) {
 			valName = name.v;
@@ -58,12 +54,64 @@ class RangeFor extends ExprBlock {
 		super:variable(part);
 	}
 
+	// Generate code.
+	void blockCode(CodeGen state, CodeResult to) {
+		// We put all initialization logic in its own child block, rather than one for each expression.
+		CodeGen child = state.child();
+		state.l << core:asm:begin(child.block);
+		for (Nat i = 0; i < initExprs.count; i++) {
+			initExprs[i].code(child, CodeResult());
+		}
+		state.l << core:asm:end(child.block);
+
+		if (loop) {
+			loop.code(state, to);
+		}
+	}
+
+	// Support for break and continue.
+	void willBreak() {
+		if (loop)
+			loop.willBreak();
+	}
+	void willContinue() {
+		if (loop)
+			loop.willContinue();
+	}
+
+	To breakTo() {
+		if (loop)
+			loop.breakTo();
+		else
+			throw InternalError("The loop was not initialized properly");
+	}
+	To continueTo() {
+		if (loop)
+			loop.continueTo();
+		else
+			throw InternalError("The loop was not initialized properly");
+	}
+
 private:
+
+	// Names of the key and value variables.
+	Str? keyName;
+	Str valName;
+
+	// Block containing the loop body.
+	ExprBlock? loopBlock;
+
+	// Expressions to execute in this block (we're basically an ExprBlock).
+	Expr[] initExprs;
+
+	// The loop itself. This is always the last expression in this block.
+	Breakable? loop;
+
 
 	void createCode(Expr container) {
 		Var cont(this, SStr(" c", pos), container);
 		LocalVarAccess getCont(pos, cont.var);
-		add(cont);
+		initExprs.push(cont);
 
 		if (createIterCode(getCont))
 			return;
@@ -86,14 +134,14 @@ private:
 
 		Var atDecl(this, SStr(" at", pos), beginExpr);
 		LocalVarAccess getAt(pos, atDecl.var);
-		add(atDecl);
+		initExprs.push(atDecl);
 
 		Var endDecl(this, SStr(" end", pos), endExpr);
 		LocalVarAccess getEnd(pos, endDecl.var);
-		add(endDecl);
+		initExprs.push(endDecl);
 
 		For loop(pos, this);
-		add(loop);
+		this.loop = loop;
 
 		ExprBlock body(pos, loop);
 		loop.test(namedExpr(loop, SStr("!=", pos), getAt, Actuals(getEnd)));
@@ -122,10 +170,10 @@ private:
 		if (nextExpr as UnresolvedName)
 			return false;
 
-		add(iterDecl);
+		initExprs.push(iterDecl);
 
 		Loop loop(pos, this);
-		add(loop);
+		this.loop = loop;
 
 		if (keyName)
 			throw SyntaxError(pos, "Keys are not supported for range-based iterators.");

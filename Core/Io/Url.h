@@ -117,19 +117,22 @@ namespace storm {
 		 */
 
 		// Find all children URL:s.
-		virtual Array<Url *> *STORM_FN children();
+		Array<Url *> *STORM_FN children();
 
 		// Open this Url for reading.
-		virtual IStream *STORM_FN read();
+		IStream *STORM_FN read();
 
 		// Open this Url for writing.
-		virtual OStream *STORM_FN write();
+		OStream *STORM_FN write();
 
 		// Does this Url exist?
-		virtual Bool STORM_FN exists();
+		Bool STORM_FN exists();
+
+		// Create this path as a directory.
+		Bool STORM_FN createDir();
 
 		// Format for other C-api:s. May not work for all kind of URL:s.
-		virtual Str *STORM_FN format();
+		Str *STORM_FN format();
 
 		// Output.
 		virtual void STORM_FN toS(StrBuf *to) const;

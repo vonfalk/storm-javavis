@@ -51,7 +51,7 @@ class DefaultViewHints extends ViewHints {
 		if (members.empty)
 			return UnknownData();
 
-		Composite result;
+		Composite result(type);
 		for (m in members) {
 			result.add(m.name, m.offset, ws.createData(m.type, object, offset + m.offset), m.first);
 		}

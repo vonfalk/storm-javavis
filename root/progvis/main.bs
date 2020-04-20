@@ -297,6 +297,15 @@ void main() on Compiler {
 	win.waitForClose();
 }
 
+// Used for research, notes whenever the program is started.
+void researchMain() on Compiler {
+	named{progvis}.compile();
+	postUsage();
+
+	MainWin win;
+	win.waitForClose();
+}
+
 void debug() on Compiler {
 	named{progvis}.compile();
 
@@ -318,7 +327,10 @@ void debug() on Compiler {
 		// win.open(url / "pintos_live.c");
 		// win.open(url / "thread_example.c");
 		// win.open(url / "printf.c");
-		win.open(url / "globals.cpp");
+		// win.open(url / "globals.cpp");
+		// win.open(url / "bank" / "bank.c");
+		win.open(url / "bank" / "bank_good.c");
+		// win.open(url / "cond.c");
 		win.waitForClose();
 	}
 }

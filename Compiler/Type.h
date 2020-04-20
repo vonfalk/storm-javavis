@@ -173,9 +173,9 @@ namespace storm {
 		// in the compilation process.
 		MAYBE(Named *) STORM_FN tryFindHere(SimplePart *part, Scope source);
 
-		// Helpers for the chain.
-		inline Bool STORM_FN isA(const Type *o) const { return chain->isA(o); }
-		inline Int STORM_FN distanceFrom(const Type *from) const { return chain->distance(from); }
+		// Helpers for the chain. Storm uses the free functions for this, as they are threadsafe.
+		inline Bool isA(const Type *o) const { return chain->isA(o); }
+		inline Int distanceFrom(const Type *from) const { return chain->distance(from); }
 
 		// To string.
 		virtual void STORM_FN toS(StrBuf *to) const;
@@ -379,5 +379,11 @@ namespace storm {
 
 	// Get the raw VTable (should only be used inside VTable).
 	inline MAYBE(VTable *) rawVTable(Type *t) { return t->myVTable; }
+
+	// Check type relations without switching to the compiler thread.
+	inline Bool STORM_FN isA(const Type *derived, MAYBE(const Type *) base) { return derived->chain->isA(base); }
+
+	// Check how many levels of indirection separates the two types.
+	inline Int STORM_FN distanceFrom(const Type *derived, const Type *base) { return derived->chain->distance(base); }
 
 }

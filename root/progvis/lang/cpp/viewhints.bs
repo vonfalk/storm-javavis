@@ -58,7 +58,7 @@ class CppViewHints extends ViewHints {
 	// Check if this is a special type in some way.
 	private Data? createSpecial(Workspace ws, TypeInfo info, unsafe:RawPtr object, Nat offset) {
 		if (ptr = info.type as PtrType) {
-			return CppPointer(hints);
+			return CppPointer(ptr.inside, hints);
 		}
 
 		if (info.type is named{runtime:semaphore}) {
@@ -66,6 +66,10 @@ class CppViewHints extends ViewHints {
 		}
 
 		if (info.type is named{runtime:lock}) {
+			return hideImpl(ws, info, object, offset);
+		}
+
+		if (info.type is named{runtime:condition}) {
 			return hideImpl(ws, info, object, offset);
 		}
 
@@ -80,7 +84,7 @@ class CppViewHints extends ViewHints {
 	private Data hideImpl(Workspace ws, TypeInfo info, unsafe:RawPtr object, Nat offset) {
 		var members = findMembers(info.type);
 
-		Composite result;
+		Composite result(info.type);
 		for (m in members) {
 			if (m.name != "impl")
 				result.add(m.name, m.offset, ws.createData(m.type, object, offset + m.offset), m.first);
@@ -99,7 +103,7 @@ class CppViewHints extends ViewHints {
 		Nat count = base.readCount & AllocFlags:sizeMask.v;
 		Nat elemSz = Value(info.type).size.current;
 
-		Composite result;
+		Composite result(info.type);
 		for (Nat i = 0; i < count; i++) {
 			Nat offset = i * elemSz;
 
@@ -141,9 +145,12 @@ class CppCreateHints extends CreateHints {
  * C++ pointers/references.
  */
 class CppPointer extends Pointer {
-	init(CreateHints hints) {
-		init { hints = hints; }
+	init(core:lang:Type? to, CreateHints hints) {
+		init { type = to; hints = hints; }
 	}
+
+	// Type of the thing we're pointing to.
+	core:lang:Type? type;
 
 	// Hints we should use.
 	CreateHints hints;
@@ -163,12 +170,12 @@ class CppPointer extends Pointer {
 		Nat ptrOffset = object.readNat(offset + core:asm:sPtr.current) - 2*core:asm:sPtr.current;
 
 		Data baseData = ws.traverse(base, hints);
-		var off = baseData.findOffset(ptrOffset);
+		var off = baseData.findOffset(type, ptrOffset);
 		this.to = off.data;
 		this.offset = off.offset;
 	}
 
-	DataOffset findOffset(Nat offset) : override {
+	DataOffset findOffset(core:lang:Type? type, Nat offset) : override {
 		Float o = min(offset.int.float / (2*core:asm:sPtr.current.int.float), 1.0);
 		DataOffset(this, o * size.h);
 	}
@@ -229,8 +236,8 @@ class CppHeapObj extends Data {
 		}
 	}
 
-	DataOffset findOffset(Nat offset) : override {
-		wrap.findOffset(offset);
+	DataOffset findOffset(core:lang:Type? type, Nat offset) : override {
+		wrap.findOffset(type, offset);
 	}
 
 	Bool remove() : override {

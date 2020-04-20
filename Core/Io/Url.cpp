@@ -334,6 +334,13 @@ namespace storm {
 		return protocol->exists(this);
 	}
 
+	// Create a directory.
+	Bool Url::createDir() {
+		if (!protocol)
+			throw new (this) ProtocolNotSupported(S("createDir"), S("<none>"));
+		return protocol->createDir(this);
+	}
+
 	// Format.
 	Str *Url::format() {
 		if (!protocol)

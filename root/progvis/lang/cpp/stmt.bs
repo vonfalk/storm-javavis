@@ -39,18 +39,21 @@ class NullStmt extends Stmt {
 class Block extends Stmt {
 	// Create from a scope.
 	init(SrcPos pos, Scope parent) {
-		init(pos) {}
+		init(pos) { step = true; }
 		scope = blockScope(this, parent);
 	}
 
 	// Create from another block.
 	init(SrcPos pos, Block parent) {
-		init(pos) {}
+		init(pos) { step = parent.step; }
 		scope = blockScope(this, parent.scope);
 	}
 
 	// Scope for this block.
 	Scope scope;
+
+	// Emit source references for this block?
+	Bool step;
 
 	// Generate code.
 	Bool code(CodeGen gen) : override {
@@ -131,11 +134,11 @@ class BlockLookup extends NameLookup {
 }
 
 // Execute a sub-block in its own codegen block if required.
-package Bool executeStmt(CodeGen gen, Stmt s) on Compiler {
+package Bool executeStmt(Block inside, CodeGen gen, Stmt s) on Compiler {
 	if (s as Block) {
 		s.code(gen);
 	} else {
-		if (s.pos.any)
+		if (inside.step & s.pos.any)
 			gen.l << location(s.pos);
 
 		CodeGen child = gen.child();
@@ -182,7 +185,7 @@ class StmtBlock extends Block {
 				return false;
 		}
 
-		if (pos.any) {
+		if (step & pos.any) {
 			gen.l << location(pos.lastCh);
 		}
 
@@ -384,4 +387,14 @@ class DeleteStmt extends Expr {
 		gen.l << fnCall(dtor.ref, false);
 	}
 
+}
+
+/**
+ * Block that does not emit location instructions to disable stepping.
+ */
+class NoStep extends StmtBlock {
+	init(SrcPos pos, Block block) {
+		init(pos, block) {}
+		step = false;
+	}
 }

@@ -82,14 +82,16 @@ namespace storm {
 			throw new (this) QueueError(S("Cannot pop an empty queue."));
 
 		head++;
+		if (head >= data->count)
+			head -= data->count;
 		data->filled--;
 	}
 
 	void QueueBase::pushRaw(const void *elem) {
 		ensure(count() + 1);
 
-		Nat to = head + count();
-		if (to > data->count)
+		Nat to = head + data->filled;
+		if (to >= data->count)
 			to -= data->count;
 		handle.safeCopy(ptr(to), elem);
 		data->filled++;

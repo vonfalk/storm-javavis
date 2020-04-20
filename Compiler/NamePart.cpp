@@ -54,35 +54,55 @@ namespace storm {
 	}
 
 	Named *SimplePart::choose(NameOverloads *from, Scope source) const {
-		Array<Named *> *candidates = new (this) Array<Named *>();
-		int best = std::numeric_limits<int>::max();
+		// Note: We do this in two steps. First, we find the best match, and keep track of whether
+		// or not there are multiple instances of that or not. If there are multiple instances of
+		// the best match, we need to produce an error. To do that, we loop through the candidates a
+		// second time (since the error path is generally not critical).
+		Named *bestCandidate = null;
+		Bool multipleBest = false;
+		Int best = std::numeric_limits<Int>::max();
 
-		for (nat i = 0; i < from->count(); i++) {
+		for (Nat i = 0; i < from->count(); i++) {
 			Named *candidate = from->at(i);
 			// Do not consider 'candidate' if we're not allowed to access it! Note: no 'visibility' means 'public'.
 			if (!candidate->visibleFrom(source))
 				continue;
 
-			int badness = matches(candidate, source);
-			if (badness >= 0 && badness <= best) {
-				if (badness != best)
-					candidates->clear();
+			Int badness = matches(candidate, source);
+			if (badness < 0 || badness > best)
+				continue;
+
+			if (badness == best) {
+				// Multiple best matches so far. We can't keep track of them without allocating memory.
+				multipleBest = true;
+			} else {
+				multipleBest = false;
 				best = badness;
-				candidates->push(candidate);
+				bestCandidate = candidate;
 			}
 		}
 
-		if (candidates->count() == 0) {
-			return null;
-		} else if (candidates->count() == 1) {
-			return candidates->at(0);
-		} else {
-			StrBuf *msg = new (this) StrBuf();
-			*msg << L"Multiple possible matches for " << this << L", all with badness " << best << L"\n";
-			for (nat i = 0; i < candidates->count(); i++)
-				*msg << L" Could be: " << candidates->at(i)->identifier() << L"\n";
-			throw new (this) TypeError(SrcPos(), msg->toS());
+		if (!multipleBest) {
+			// We have an answer!
+			return bestCandidate;
 		}
+
+		// Error case, we need to find all candidates.
+		StrBuf *msg = new (this) StrBuf();
+		*msg << S("Multiple possible matches for ") << this << S(", all with badness ") << best << S("\n");
+
+		for (Nat i = 0; i < from->count(); i++) {
+			Named *candidate = from->at(i);
+			// Do not consider 'candidate' if we're not allowed to access it! Note: no 'visibility' means 'public'.
+			if (!candidate->visibleFrom(source))
+				continue;
+
+			Int badness = matches(candidate, source);
+			if (badness == best)
+				*msg << S("  Could be: ") << candidate->identifier() << S("\n");
+		}
+
+		throw new (this) TypeError(SrcPos(), msg->toS());
 	}
 
 	Int SimplePart::matches(Named *candidate, Scope source) const {
@@ -172,6 +192,9 @@ namespace storm {
 			}
 		} catch (const Exception *) {
 			// Return null as per specification.
+
+			// TODO: If the exception is something other than a simple "not found", we actually want
+			// to propagate that, otherwise we produce very confusing error messages from time to time.
 			return null;
 		}
 

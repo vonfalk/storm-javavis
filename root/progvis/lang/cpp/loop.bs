@@ -86,7 +86,8 @@ class WhileStmt extends Breakable {
 
 		CodeResult condResult(Value(named{Bool}), gen.block);
 		CodeGen sub = gen.child();
-		gen.l << location(cond.pos);
+		if (step)
+			gen.l << location(cond.pos);
 		gen.l << begin(sub.block);
 		cond.code(sub, condResult);
 		gen.l << end(sub.block);
@@ -155,7 +156,8 @@ class DoWhileStmt extends Breakable {
 
 		CodeResult condResult(Value(named{Bool}), gen.block);
 		CodeGen sub = gen.child();
-		gen.l << location(cond.pos);
+		if (step)
+			gen.l << location(cond.pos);
 		gen.l << begin(sub.block);
 		cond.code(sub, condResult);
 		gen.l << end(sub.block);
@@ -223,7 +225,8 @@ class ForStmt extends Breakable {
 		if (cond) {
 			CodeResult condResult(Value(named{Bool}), gen.block);
 			CodeGen sub = gen.child();
-			gen.l << location(cond.pos);
+			if (step)
+				gen.l << location(cond.pos);
 			gen.l << begin(sub.block);
 			cond.code(sub, condResult);
 			gen.l << end(sub.block);

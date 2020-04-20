@@ -58,3 +58,26 @@ Int continueFor(Int target) {
 	}
 	sum;
 }
+
+Int breakForeach(Int[] data) {
+	Int sum = 0;
+	for (x in data) {
+		if (x > 5)
+			break;
+
+		sum += x;
+	}
+	sum;
+}
+
+
+Int continueForeach(Int[] data) {
+	Int sum = 0;
+	for (x in data) {
+		if (x > 5)
+			continue;
+
+		sum += x;
+	}
+	sum;
+}

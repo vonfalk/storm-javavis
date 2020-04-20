@@ -367,11 +367,19 @@ BEGIN_TEST(BreakTest, BS) {
 	CHECK_EQ(runFn<Int>(S("tests.bs.breakWithCond"), 2), 3);
 	CHECK_EQ(runFn<Int>(S("tests.bs.breakFor"), 4), 6);
 	CHECK_EQ(runFn<Int>(S("tests.bs.breakFor"), 10), 21);
+
+	Array<Int> *data = new (gEngine()) Array<Int>();
+	*data << 1 << 10 << 2 << 10;
+	CHECK_EQ(runFn<Int>(S("tests.bs.breakForeach"), data), 1);
 } END_TEST
 
 BEGIN_TEST(ContinueTest, BS) {
 	CHECK_EQ(runFn<Int>(S("tests.bs.continueLoop"), 5), 9);
 	CHECK_EQ(runFn<Int>(S("tests.bs.continueFor"), 5), 4);
+
+	Array<Int> *data = new (gEngine()) Array<Int>();
+	*data << 1 << 10 << 2 << 10;
+	CHECK_EQ(runFn<Int>(S("tests.bs.continueForeach"), data), 3);
 } END_TEST
 
 

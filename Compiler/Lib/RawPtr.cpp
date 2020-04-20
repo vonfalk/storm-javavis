@@ -255,8 +255,8 @@ namespace storm {
 		Value type(StormInfo<Type *>::type(e));
 		add(nativeFunction(e, wrapMaybe(type), S("type"), v, address(&rawPtrType)));
 		add(nativeFunction(e, Value(StormInfo<Bool>::type(e)), S("isValue"), v, address(&rawPtrIsValue)));
-		add(inlinedFunction(e, obj, S("asObject"), v, fnPtr(e, &rawPtrGet))->makePure());
-		add(inlinedFunction(e, tobj, S("asTObject"), v, fnPtr(e, &rawPtrGet))->makePure());
+		add(inlinedFunction(e, wrapMaybe(obj), S("asObject"), v, fnPtr(e, &rawPtrGet))->makePure());
+		add(inlinedFunction(e, wrapMaybe(tobj), S("asTObject"), v, fnPtr(e, &rawPtrGet))->makePure());
 
 		// Allocate an array containing some type.
 		Array<Value> *typeNat = new (this) Array<Value>(2, StormInfo<Type *>::type(e));

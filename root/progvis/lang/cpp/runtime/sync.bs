@@ -99,28 +99,28 @@ void sema_destroy(Ptr<semaphore> sema) {
 void sema_up(Ptr<semaphore> sema) {
 	Nat offset = sema.offset - sPtr.current * 2;
 	var sem = sema.base.readPtr(offset);
-	if (sem.empty)
-		throw SyncError("Can not operate on an uninitialized semaphore!");
-
 	if (s = sem.asObject() as SemaImpl) {
 		offset += sPtr.current;
 		sema.base.writeInt(offset, sema.base.readInt(offset) + 1);
 		s.up();
+		return;
 	}
+
+	throw SyncError("Can not operate on an uninitialized semaphore!");
 }
 
 void sema_down(Ptr<semaphore> sema) {
 	Nat offset = sema.offset - sPtr.current * 2;
 
 	var sem = sema.base.readPtr(offset);
-	if (sem.empty)
-		throw SyncError("Can not operate on an uninitialized semaphore!");
-
 	if (s = sem.asObject() as SemaImpl) {
 		offset += sPtr.current;
 		s.down(Variant(sema));
 		sema.base.writeInt(offset, sema.base.readInt(offset) - 1);
+		return;
 	}
+
+	throw SyncError("Can not operate on an uninitialized semaphore!");
 }
 
 /**
@@ -157,9 +157,6 @@ void lock_acquire(Ptr<lock> lock) {
 	Nat offset = lock.offset - sPtr.current * 2;
 
 	var implRaw = lock.base.readPtr(offset);
-	if (implRaw.empty)
-		throw SyncError("Can not operate on an uninitialized lock!");
-
 	if (l = implRaw.asObject() as SemaImpl) {
 		offset += sPtr.current;
 
@@ -170,16 +167,16 @@ void lock_acquire(Ptr<lock> lock) {
 		l.down(Variant(lock));
 
 		lock.base.writeNat(offset, myId);
+		return;
 	}
+
+	throw SyncError("Can not operate on an uninitialized lock!");
 }
 
 void lock_release(Ptr<lock> lock) {
 	Nat offset = lock.offset - sPtr.current * 2;
 
 	var implRaw = lock.base.readPtr(offset);
-	if (implRaw.empty)
-		throw SyncError("Can not operate on an uninitialized lock!");
-
 	if (l = implRaw.asObject() as SemaImpl) {
 		offset += sPtr.current;
 
@@ -190,6 +187,146 @@ void lock_release(Ptr<lock> lock) {
 		lock.base.writeInt(offset, 0);
 
 		l.up();
+		return;
+	}
+
+	throw SyncError("Can not operate on an uninitialized lock!");
+}
+
+/**
+ * Condition implementation.
+ */
+class CondImpl {
+	// All threads waiting.
+	Queue<progvis:ProgThread> waiting;
+
+	// Get number of waiting threads.
+	Int waitingThreads() {
+		waiting.count.int;
+	}
+
+	// Wait for signal. Assuming the lock is held by us.
+	void wait(Variant condVal, Variant lockVal, SemaImpl lock) {
+		unless (thread = progvis:findThread(currentUThread())) {
+			throw SyncError("This primitive is only intended to be used within the program visualization!");
+		}
+
+		// This is actually safe, due to the threading model in Storm.
+		lock.up();
+
+		waiting.push(thread);
+		thread.lockSleep(condVal);
+
+		// Grab the lock again.
+		lock.down(lockVal);
+	}
+
+	// Signal one.
+	void signal(SemaImpl lock) {
+		if (waiting.any) {
+			var wake = waiting.top();
+			waiting.pop();
+
+			wake.lockWake();
+		}
+	}
+
+	// Signal all.
+	void broadcast(SemaImpl lock) {
+		while (waiting.any) {
+			var wake = waiting.top();
+			waiting.pop();
+
+			wake.lockWake();
+		}
 	}
 }
 
+/**
+ * Pintos-like condition variable.
+ */
+value condition {
+	CondImpl? impl;
+	Int waiting;
+
+	init() {
+		init {
+			waiting = -1;
+		}
+	}
+}
+
+void cond_init(Ptr<condition> cond) {
+	CondImpl c;
+
+	Nat offset = cond.offset - sPtr.current * 2;
+	if (cond.base.readPtr(offset).any)
+		throw SyncError("Tried to initialize a condition variable multiple times!");
+
+	cond.base.writePtr(offset, unsafe:RawPtr(c));
+	cond.base.writeInt(offset + sPtr.current, 0);
+}
+
+void cond_destroy(Ptr<condition> cond) {
+	Nat offset = cond.offset - sPtr.current * 2;
+	cond.base.writePtr(offset, unsafe:RawPtr());
+	cond.base.writeInt(offset + sPtr.current, -1);
+}
+
+void cond_wait(Ptr<condition> cond, Ptr<lock> lock) {
+	Nat cOffset = cond.offset - sPtr.current * 2;
+	Nat lOffset = lock.offset - sPtr.current * 2;
+
+	Nat ourId = progvis:findThisThreadId();
+	if (lock.base.readNat(lOffset + sPtr.current) != ourId)
+		throw SyncError("The lock passed to 'cond_wait' must be held by the current thread!");
+
+	if (cImpl = cond.base.readPtr(cOffset).asObject() as CondImpl) {
+		if (lImpl = lock.base.readPtr(lOffset).asObject() as SemaImpl) {
+			cond.base.writeInt(cOffset + sPtr.current, cImpl.waitingThreads + 1);
+			cImpl.wait(Variant(cond), Variant(lock), lImpl);
+
+			// We're holding the lock now!
+			lock.base.writeNat(lOffset + sPtr.current, ourId);
+			return;
+		}
+	}
+
+	throw SyncError("Can not operate on an uninitialized condition and/or lock!");
+}
+
+void cond_signal(Ptr<condition> cond, Ptr<lock> lock) {
+	Nat cOffset = cond.offset - sPtr.current * 2;
+	Nat lOffset = lock.offset - sPtr.current * 2;
+
+	if (lock.base.readNat(lOffset + sPtr.current) != progvis:findThisThreadId())
+		throw SyncError("The lock passed to 'cond_signal' must be held by the current thread!");
+
+	if (cImpl = cond.base.readPtr(cOffset).asObject() as CondImpl) {
+		if (lImpl = lock.base.readPtr(lOffset).asObject() as SemaImpl) {
+			cImpl.signal(lImpl);
+			cond.base.writeInt(cOffset + sPtr.current, cImpl.waitingThreads);
+			return;
+		}
+	}
+
+	throw SyncError("Can not operate on an uninitialized condition and/or lock!");
+}
+
+void cond_broadcast(Ptr<condition> cond, Ptr<lock> lock) {
+	Nat cOffset = cond.offset - sPtr.current * 2;
+	Nat lOffset = lock.offset - sPtr.current * 2;
+
+	if (lock.base.readNat(lOffset + sPtr.current) != progvis:findThisThreadId())
+		throw SyncError("The lock passed to 'cond_broadcast' must be held by the current thread!");
+
+	if (cImpl = cond.base.readPtr(cOffset).asObject() as CondImpl) {
+		if (lImpl = lock.base.readPtr(lOffset).asObject() as SemaImpl) {
+			cImpl.broadcast(lImpl);
+			cond.base.writeInt(cOffset + sPtr.current, cImpl.waitingThreads);
+			return;
+		}
+	}
+
+	throw SyncError("Can not operate on an uninitialized condition and/or lock!");
+}
