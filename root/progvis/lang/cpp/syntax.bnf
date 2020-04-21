@@ -27,7 +27,7 @@ SInComment : "/+" - SInComment;
 
 // Root production.
 Content SRoot();
-SRoot => Content() : (SDef(me),)*;
+SRoot => Content() : SDelimiter - (SDef(me),)*;
 
 // Definitions inside the file.
 void SDef(Content content);
@@ -100,9 +100,10 @@ SOpName : "\*=?";
 SOpName : "/=?";
 SOpName : "\*";
 
-Maybe<SStmtList> SFnTail();
-SFnTail => Maybe<SStmtList>() : ";";
-SFnTail => Maybe<SStmtList>(block) : "{", SStmtList@ block - "}";
+Maybe<FnBody> SFnTail();
+SFnTail => Maybe<FnBody>() : ";";
+SFnTail => FnBody(block) : "{", SStmtList@ block - "}";
+SFnTail => FnBody(block, false) : "NO_STEP" #keyword, "{", SStmtList@ block - "}";
 
 
 // Formal parameters.

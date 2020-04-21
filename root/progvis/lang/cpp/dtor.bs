@@ -4,15 +4,15 @@ use lang:asm;
 use lang:bs:macro;
 
 class CppDtorDecl extends CppDecl {
-	SStmtList? body;
+	FnBody? body;
 
-	init(SStr name, SStmtList? body) {
+	init(SStr name, FnBody? body) {
 		init(name) {
 			body = body;
 		}
 
 		if (body)
-			body.pos.end++;
+			body.stmt.pos.end++;
 	}
 
 	void create(NameSet inside) : override {
@@ -106,9 +106,9 @@ Function wrapCppDtor(Function dtor) on Compiler {
 }
 
 class CppDtor extends CppFunction {
-	private SStmtList? body;
+	private FnBody? body;
 
-	init(Scope scope, SrcPos pos, NameSet inside, SStmtList? body) {
+	init(Scope scope, SrcPos pos, NameSet inside, FnBody? body) {
 		Value[] fTypes;
 		SStr[] fNames;
 
@@ -131,8 +131,8 @@ class CppDtor extends CppFunction {
 	// Generate code on demand.
 	private CodeGen code() {
 		FnRoot root = if (body) {
-			FnRoot fn(body.pos, this);
-			body.transform(fn);
+			FnRoot fn(body.stmt.pos, this);
+			body.stmt.transform(fn);
 			fn;
 		} else {
 			FnRoot(pos, this);

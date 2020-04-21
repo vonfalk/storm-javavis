@@ -713,7 +713,8 @@ private void generateCallTracking(Program program, PatchParams to, Function fn) 
 private Bool anyLocation(Listing l) {
 	for (Nat i = 0; i < l.count; i++) {
 		if (l[i].op == OpCode:location)
-			return true;
+			if (l[i].src.srcPos != SrcPos())
+				return true;
 	}
 	return false;
 }

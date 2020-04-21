@@ -19,9 +19,9 @@ class CppFnDecl extends CppDecl {
 	Formal[] formals;
 
 	// If 'null', then this is just a declaration.
-	SStmtList? body;
+	FnBody? body;
 
-	init(STypeName result, SStr name, Formal[] formals, SStmtList? body) {
+	init(STypeName result, SStr name, Formal[] formals, FnBody? body) {
 		init(name) {
 			result = result;
 			formals = formals;
@@ -30,7 +30,7 @@ class CppFnDecl extends CppDecl {
 
 		// We match "body" a bit too narrowly in the grammar.
 		if (body) {
-			body.pos.end++;
+			body.stmt.pos.end++;
 		}
 	}
 
@@ -48,8 +48,23 @@ class CppFnDecl extends CppDecl {
 }
 
 // Operator declaration. Performs some checking and transformation of the name and parameter types.
-CppFnDecl operatorDecl(STypeName result, SStr name, Formal[] formals, SStmtList? body) {
+CppFnDecl operatorDecl(STypeName result, SStr name, Formal[] formals, FnBody? body) {
 	CppFnDecl(result, name, formals, body);
+}
+
+// Function body, contains a SStmtList and a "step" variable that indicates the presence of
+// "NO_STEP" in the function declaration.
+class FnBody {
+	SStmtList stmt;
+	Bool step;
+
+	init(SStmtList stmt) {
+		init { stmt = stmt; step = true; }
+	}
+
+	init(SStmtList stmt, Bool step) {
+		init { stmt = stmt; step = step; }
+	}
 }
 
 // A formal parameter.
@@ -112,10 +127,10 @@ Bool returnByParam(Value type) {
 class CppPlainFunction extends CppFunction {
 	// Names of all formal parameters.
 	private SStr[] formals;
-	private SStmtList body;
+	private FnBody body;
 	private Bool resultParam;
 
-	init(Scope scope, CppFnDecl decl, NameSet inside, SStmtList body) {
+	init(Scope scope, CppFnDecl decl, NameSet inside, FnBody body) {
 		Value[] fTypes;
 		SStr[] fNames;
 
@@ -173,7 +188,8 @@ class CppPlainFunction extends CppFunction {
 
 	// Generate code on demand.
 	private CodeGen code() {
-		FnRoot root(body.pos, this);
+		FnRoot root(body.stmt.pos, this);
+		root.step = body.step;
 
 		Nat skip = 0;
 		// Don't add 'this' and 'offset'.
@@ -189,7 +205,7 @@ class CppPlainFunction extends CppFunction {
 				root.addParam(v.v, params[id], v.pos);
 		}
 
-		body.transform(root);
+		body.stmt.transform(root);
 
 		CodeGen gen(runOn, isMember, result);
 		gen.l << prolog();
