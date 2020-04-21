@@ -363,6 +363,10 @@ class Composite extends Data {
 
 		var elem = content[found];
 
+		// Some data member is missing.
+		if (offset < elem.offset)
+			return DataOffset(this);
+
 		// Stop here?
 		if (type) {
 			if (core:lang:isA(this.type, type)) {

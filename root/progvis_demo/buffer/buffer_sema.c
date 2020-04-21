@@ -1,5 +1,7 @@
 /**
- * Original, un-synchronized version of a bounded buffer.
+ * Version synchronized with a pair of semaphores.
+ *
+ * Note, this only works for one thread calling "put" while another is calling "get".
  */
 
 
@@ -17,7 +19,10 @@ struct buffer {
 	int *wpos;
 
 	// Number of free elements.
-	int free;
+	struct semaphore free;
+
+	// Number of filled elements.
+	struct semaphore filled;
 };
 
 struct buffer *buffer_create(int count) NO_STEP {
@@ -26,34 +31,36 @@ struct buffer *buffer_create(int count) NO_STEP {
 	b->data_end = b->data_begin + count;
 	b->rpos = b->data_begin;
 	b->wpos = b->data_begin;
-	b->free = count;
+	sema_init(&b->free, count);
+	sema_init(&b->filled, 0);
 	return b;
 }
 
 void buffer_destroy(struct buffer *b) NO_STEP {
 	free(b->data_begin);
+	sema_destroy(&b->free);
+	sema_destroy(&b->filled);
 	free(b);
 }
 
 void buffer_put(struct buffer *b, int value) {
-	while (b->free == 0)
-		;
+	sema_down(&b->free);
 
 	*b->wpos = value;
 	if (++b->wpos == b->data_end)
 		b->wpos = b->data_begin;
-	--b->free;
+
+	sema_up(&b->filled);
 }
 
 int buffer_get(struct buffer *b) {
-	int count = b->data_end - b->data_begin;
-	while (b->free == count)
-		;
+	sema_down(&b->filled);
 
 	int r = *b->rpos;
 	if (++b->rpos == b->data_end)
 		b->rpos = b->data_begin;
-	++b->free;
+
+	sema_up(&b->free);
 	return r;
 }
 
