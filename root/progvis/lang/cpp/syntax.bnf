@@ -82,6 +82,7 @@ SVarDecl => MemberVar(name.v, t, type) : STypeName(type.scope) t, SIdentifier na
 
 // Function declarations
 SDef => content : SFnDecl -> add;
+SDef => content : "static" #keyword, SFnDecl -> add;
 
 CppFnDecl SFnDecl();
 SFnDecl => CppFnDecl(res, name, formals, body) : STypeName@ res, SIdentifier name #fnName, "(", SFormals formals, ")", SFnTail body;

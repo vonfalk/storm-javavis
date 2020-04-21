@@ -146,6 +146,9 @@ class Workspace on Render {
 			if (d.object.any) {
 				objMap.put(d.object, i);
 			}
+			if (!d.thread & !d.output) {
+				maxPos.y = max(maxPos.y, d.visual.rect.p1.y);
+			}
 		}
 
 		// Mark globals as visited, if applicable.
