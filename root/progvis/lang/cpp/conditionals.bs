@@ -133,7 +133,8 @@ class IfStmt extends Block {
 
 		CodeResult condResult(Value(named{Bool}), gen.block);
 		CodeGen sub = gen.child();
-		gen.l << location(cond.pos);
+		if (step)
+			gen.l << location(cond.pos);
 		gen.l << begin(sub.block);
 		cond.code(sub, condResult);
 		gen.l << end(sub.block);
@@ -172,12 +173,14 @@ class LogicOp extends ExprRef {
 			lhs = castCond(parent, lhs);
 			rhs = castCond(parent, rhs);
 			and = and;
+			step = parent.step;
 		}
 	}
 
 	private Expr lhs;
 	private Expr rhs;
 	private Bool and;
+	private Bool step;
 
 	ExprResult result() : override {
 		Value(named{Bool}).asRef(true);
@@ -205,7 +208,8 @@ class LogicOp extends ExprRef {
 	private void code(CodeGen gen, Operand result) {
 		Value bool(named{Bool});
 		CodeResult lResult(bool, gen.block);
-		gen.l << location(lhs.pos);
+		if (step)
+			gen.l << location(lhs.pos);
 		lhs.code(gen, lResult);
 
 		Label skip = gen.l.label();
@@ -219,7 +223,8 @@ class LogicOp extends ExprRef {
 			gen.l << jmp(skip, CondFlag:ifNotEqual);
 
 		CodeResult rResult(bool, gen.block);
-		gen.l << location(rhs.pos);
+		if (step)
+			gen.l << location(rhs.pos);
 		rhs.code(gen, rResult);
 
 		gen.l << mov(result, rResult.location(gen));
