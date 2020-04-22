@@ -71,6 +71,11 @@ namespace storm {
 		*p.state->l << mov(byteRel(p.regParam(0), Offset()), byteRel(p.regParam(1), Offset()));
 	}
 
+	static void boolInit(InlineParams p) {
+		p.allocRegs(0);
+		*p.state->l << mov(byteRel(p.regParam(0), Offset()), byteConst(0));
+	}
+
 	static Bool boolRead(IStream *from) {
 		return from->readBool();
 	}
@@ -95,7 +100,7 @@ namespace storm {
 	BoolType::BoolType(Str *name, GcType *type) : Type(name, typeValue | typeFinal, Size::sByte, type, null) {}
 
 	Bool BoolType::loadAll() {
-		// Array<Value> *r = new (this) Array<Value>(1, Value(this, true));
+		Array<Value> *r = new (this) Array<Value>(1, Value(this, true));
 		Array<Value> *v = new (this) Array<Value>(1, Value(this, false));
 		Array<Value> *rr = new (this) Array<Value>(2, Value(this, true));
 		Array<Value> *vv = new (this) Array<Value>(2, Value(this, false));
@@ -109,6 +114,7 @@ namespace storm {
 		add(inlinedFunction(engine, Value(this), S("!"), v, fnPtr(engine, &boolNot))->makePure());
 
 		add(inlinedFunction(engine, Value(), Type::CTOR, rr, fnPtr(engine, &boolCopyCtor))->makePure());
+		add(inlinedFunction(engine, Value(), Type::CTOR, r, fnPtr(engine, &boolInit))->makePure());
 		add(inlinedFunction(engine, Value(this, true), S("="), rv, fnPtr(engine, &boolAssign))->makePure());
 
 		Array<Value> *is = new (this) Array<Value>(1, Value(StormInfo<IStream>::type(engine)));
