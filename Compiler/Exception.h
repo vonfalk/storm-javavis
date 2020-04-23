@@ -81,6 +81,24 @@ namespace storm {
 		STORM_CTOR InternalTypeError(Str *context, Type *expected, Type *got);
 	};
 
+	/**
+	 * Name lookup error.
+	 */
+	class EXCEPTION_EXPORT LookupError : public Exception {
+		STORM_EXCEPTION;
+	public:
+		STORM_CTOR LookupError(Str *msg) {
+			this->msg = msg;
+		}
+
+		virtual void STORM_FN message(StrBuf *to) const {
+			*to << S("Name lookup error: ") << msg;
+		}
+
+	private:
+		Str *msg;
+	};
+
 
 	/**
 	 * Some syntax error.

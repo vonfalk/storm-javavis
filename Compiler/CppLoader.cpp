@@ -603,7 +603,7 @@ namespace storm {
 		Value type = findValue(var.type);
 		assert(type != Value(), L"Type of the variable is void!");
 
-		MemberVar *v = new (*e) MemberVar(new (*e) Str(var.name), type, memberOf);
+		MemberVar *v = new (*e) MemberVar(SrcPos(), new (*e) Str(var.name), type, memberOf);
 		v->setOffset(Offset(var.offset));
 		v->visibility = visibility(var.access);
 		setDoc(v, var.doc, null);

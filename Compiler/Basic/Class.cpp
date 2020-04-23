@@ -295,7 +295,7 @@ namespace storm {
 		 */
 
 		MemberVar *classVar(Class *owner, SrcName *type, syntax::SStr *name) {
-			return new (owner) MemberVar(name->v, owner->scope.value(type), owner);
+			return new (owner) MemberVar(name->pos, name->v, owner->scope.value(type), owner);
 		}
 
 

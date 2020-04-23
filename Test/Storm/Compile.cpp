@@ -39,3 +39,8 @@ BEGIN_TEST(Ui, Compile) {
 	Engine &e = gEngine();
 	CHECK_RUNS(e.package(S("ui"))->compile());
 } END_TEST
+
+BEGIN_TEST(Progvis, Compile) {
+	Engine &e = gEngine();
+	CHECK_RUNS(e.package(S("progvis"))->compile());
+} END_TEST

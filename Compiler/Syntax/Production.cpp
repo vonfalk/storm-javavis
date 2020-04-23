@@ -54,7 +54,7 @@ namespace storm {
 
 			Nat counter = 0;
 			if (decl->repCapture) {
-				MemberVar *r = createTarget(Value(SStr::stormType(engine())), decl->repCapture, counter);
+				MemberVar *r = createTarget(decl->pos, Value(SStr::stormType(engine())), decl->repCapture, counter);
 				if (r) {
 					owner->add(r);
 					repCapture = new (this) Token(decl->repCapture, r);
@@ -69,7 +69,7 @@ namespace storm {
 		void Production::addToken(TokenDecl *decl, Delimiters *delim, SrcPos pos, Scope scope, Nat &counter) {
 			Token *token = decl->create(pos, scope, delim);
 
-			MemberVar *r = createTarget(decl, token, tokens->count(), counter);
+			MemberVar *r = createTarget(pos, decl, token, tokens->count(), counter);
 			if (r) {
 				owner->add(r);
 				token->update(decl, r);
@@ -83,7 +83,7 @@ namespace storm {
 			tokens->push(token);
 		}
 
-		MAYBE(MemberVar *) Production::createTarget(TokenDecl *decl, Token *token, Nat pos, Nat &counter) {
+		MAYBE(MemberVar *) Production::createTarget(SrcPos p, TokenDecl *decl, Token *token, Nat pos, Nat &counter) {
 			Value type;
 			if (as<RegexToken>(token)) {
 				type = Value(SStr::stormType(engine()));
@@ -101,23 +101,23 @@ namespace storm {
 				}
 			}
 
-			return createTarget(type, decl, counter);
+			return createTarget(p, type, decl, counter);
 		}
 
-		MAYBE(MemberVar *) Production::createTarget(Value type, TokenDecl *decl, Nat &counter) {
+		MAYBE(MemberVar *) Production::createTarget(SrcPos pos, Value type, TokenDecl *decl, Nat &counter) {
 			if (decl->store) {
-				return new (this) MemberVar(decl->store, type, owner);
+				return new (this) MemberVar(pos, decl->store, type, owner);
 			} else if (decl->invoke) {
 				StrBuf *name = new (this) StrBuf();
 				*name << decl->invoke << (counter++);
-				return new (this) MemberVar(name->toS(), type, owner);
+				return new (this) MemberVar(pos, name->toS(), type, owner);
 			} else {
 				if (RuleTokenDecl *rule = as<RuleTokenDecl>(decl)) {
 					if (rule->params && !rule->params->empty()) {
 						// Also evaluate rule tokens which are given parameters (they may have desirable side effects).
 						StrBuf *name = new (this) StrBuf();
 						*name << L"<anon" << (counter++) << L">";
-						return new (this) MemberVar(name->toS(), type, owner);
+						return new (this) MemberVar(pos, name->toS(), type, owner);
 					}
 				}
 				return null;

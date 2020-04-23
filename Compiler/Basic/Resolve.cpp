@@ -238,7 +238,6 @@ namespace storm {
 		}
 
 		void UnresolvedName::error() const {
-			PVAR(block->scope);
 			throw new (this) SyntaxError(pos, TO_S(engine(), S("Can not find ") << name << S(".")));
 		}
 

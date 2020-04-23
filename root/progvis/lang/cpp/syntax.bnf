@@ -78,7 +78,7 @@ SClassItem => state : SCtorDecl -> add;
 SClassItem => state : SDtorDecl -> add;
 
 MemberVar SVarDecl(CppType type);
-SVarDecl => MemberVar(name.v, t, type) : STypeName(type.scope) t, SIdentifier name; 
+SVarDecl => MemberVar(name.pos, name.v, t, type) : STypeName(type.scope) t, SIdentifier name; 
 
 // Function declarations
 SDef => content : SFnDecl -> add;

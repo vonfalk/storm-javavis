@@ -39,7 +39,7 @@ void serializable(Type type) {
 			msg << " read constructor";
 		msg << ".";
 
-		error(type, msg.toS);
+		throw SyntaxError(type.pos, msg.toS);
 	} else {
 		// Ok! None of the members are present!
 		members = serializedMembers(type);
@@ -74,14 +74,6 @@ void serializable(Type type) {
 }
 
 private:
-
-// Throw a suitable error.
-void error(Type type, Str msg) {
-	SrcPos pos;
-	if (type as Class)
-		pos = type.declared;
-	throw SyntaxError(pos, msg);
-}
 
 // Find a function inside 'type', and make sure it has the proper return type.
 Function? findFn(Type type, Str name, Value[] params, Value result) {

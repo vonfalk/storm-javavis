@@ -147,8 +147,8 @@ namespace storm {
 			void addToken(TokenDecl *decl, Delimiters *delim, SrcPos pos, Scope scope, Nat &counter);
 
 			// Create a target for a token (if needed).
-			MAYBE(MemberVar *) createTarget(Value type, TokenDecl *token, Nat &counter);
-			MAYBE(MemberVar *) createTarget(TokenDecl *decl, Token *token, Nat pos, Nat &counter);
+			MAYBE(MemberVar *) createTarget(SrcPos pos, Value type, TokenDecl *token, Nat &counter);
+			MAYBE(MemberVar *) createTarget(SrcPos p, TokenDecl *decl, Token *token, Nat pos, Nat &counter);
 		};
 
 		/**

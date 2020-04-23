@@ -34,7 +34,7 @@ namespace storm {
 			}
 
 			Function *init = createInitializer(type, scope, thread);
-			GlobalVar *var = new (this) GlobalVar(name->v, type, thread, pointer(init));
+			GlobalVar *var = new (this) GlobalVar(name->pos, name->v, type, thread, pointer(init));
 			var->pos = name->pos;
 			return var;
 		}
