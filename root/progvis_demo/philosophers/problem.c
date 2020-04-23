@@ -1,0 +1,36 @@
+struct fork {
+	int id;
+	struct semaphore sema;
+};
+
+struct fork **make_forks(int num) NO_STEP {
+	struct fork **r = malloc(sizeof(struct fork *) * num);
+	for (int i = 0; i < num; i++) {
+		struct fork *f = malloc(sizeof(struct fork));
+		f->id = i;
+		sema_init(&f->sema, 1);
+		r[i] = f;
+	}
+	return r;
+}
+
+void philosopher(struct fork *left, struct fork *right) {
+	sema_down(&left->sema);
+	sema_down(&right->sema);
+
+	// Eat...
+
+	sema_up(&left->sema);
+	sema_up(&right->sema);
+}
+
+
+int main(void) {
+	struct fork **forks = make_forks(3);
+
+	thread_new(&philosopher, forks[0], forks[1]);
+	thread_new(&philosopher, forks[1], forks[2]);
+	philosopher(forks[2], forks[0]);
+
+	return 0;
+}
