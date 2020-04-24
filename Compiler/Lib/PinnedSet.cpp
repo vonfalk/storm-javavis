@@ -19,6 +19,8 @@ namespace storm {
 		clear();
 	}
 
+	void PinnedSet::deepCopy(CloneEnv *) {}
+
 	void PinnedSet::clear() {
 		if (root) {
 			engine().gc.destroyRoot(root);
@@ -31,12 +33,111 @@ namespace storm {
 		}
 	}
 
+	struct PtrCompare {
+		bool operator() (const void *a, const void *b) const {
+			return size_t(a) < size_t(b);
+		}
+	};
+
+	void PinnedSet::add(void *ptr) {
+		if (!ptr)
+			return;
+
+		if (!data)
+			reserve(16);
+
+		// If we're full, try sorting the array first. There might be duplicates we can remove.
+		if (data->filled >= data->count && !data->sorted)
+			sort();
+
+		// Final fallback, resize.
+		if (data->filled >= data->count)
+			reserve(data->count * 2);
+
+		// If the array is sorted, we can check if the address is already present.
+		if (data->sorted) {
+			void **begin = data->v;
+			void **end = data->v + data->count;
+			void **found = std::lower_bound(begin, end, ptr, PtrCompare());
+
+			// Found it, we can return now!
+			if (found != end && *found == ptr)
+				return;
+		}
+
+
+		// Note: We place non-null pointers at the end. Since 0 is the lowest number we have in the
+		// array, it is natural that it appears in the beginning of the array as it is sorted.
+		data->filled++;
+		data->v[data->count - data->filled] = ptr;
+		data->sorted = false;
+	}
+
+	static size_t objSize(const void *object) {
+		const GcType *type = Gc::typeOf(object);
+		size_t size = type->stride;
+		if (type->kind == GcType::tArray) {
+			size *= ((const GcArray<Byte> *)object)->count;
+			size += OFFSET_OF(GcArray<Byte>, v);
+		} else if (type->kind == GcType::tWeakArray) {
+			size *= ((const GcWeakArray<void *> *)object)->count();
+			size += OFFSET_OF(GcArray<Byte>, v);
+		}
+		return size;
+	}
+
+	Bool PinnedSet::has(const void *query) {
+		if (!query)
+			return false;
+
+		sort();
+
+		void **begin = data->v;
+		void **end = data->v + data->count;
+
+		size_t size = objSize(query);
+		void **found = std::lower_bound(begin, end, query, PtrCompare());
+
+		if (found == end)
+			return false;
+
+		// Out of range?
+		if (size_t(*found) >= size_t(query) + size)
+			return false;
+
+		return true;
+	}
+
+	Array<Nat> *PinnedSet::offsets(const void *query) {
+		if (!query)
+			return new (this) Array<Nat>();
+
+		sort();
+
+		void **begin = data->v;
+		void **end = data->v + data->count;
+
+		size_t size = objSize(query);
+		Array<Nat> *result = new (this) Array<Nat>();
+
+		// Loop until we're out of range and add all offsets.
+		for (void **found = std::lower_bound(begin, end, query, PtrCompare());
+			 found != end && size_t(*found) < size_t(query) + size;
+			 found++) {
+
+			size_t offset = size_t(*found) - size_t(query);
+			*result << offset;
+		}
+
+		return result;
+	}
+
 	void PinnedSet::reserve(size_t n) {
 		Data *newData = (Data *)malloc(dataSize(n));
 		Gc::Root *newRoot = engine().gc.createRoot(newData, dataSize(n) / sizeof(void *), true);
 
-		newData->count = n;
 		memset(newData, 0, dataSize(n));
+		newData->count = n;
 
 		if (data) {
 			newData->filled = data->filled;
@@ -54,39 +155,35 @@ namespace storm {
 			free(newData);
 	}
 
-	void PinnedSet::add(void *ptr) {
-		if (!ptr)
+	void PinnedSet::sort() {
+		if (data->sorted)
 			return;
 
-		if (!data)
-			reserve(16);
-		if (data->filled >= data->count)
-			reserve(data->count * 2);
+		void **begin = data->v;
+		void **end = data->v + data->count;
 
-		// Note: We place non-null pointers at the end. Since 0 is the lowest number we have in the
-		// array, it is natural that it appears in the beginning of the array as it is sorted.
-		data->filled++;
-		data->v[data->count - data->filled] = ptr;
-		data->sorted = false;
-	}
+		std::sort(begin, end, PtrCompare());
 
-	struct PtrCompare {
-		bool operator() (void *a, void *b) const {
-			return size_t(a) < size_t(b);
-		}
-	};
-
-	Bool PinnedSet::has(void *query) {
-		if (!data->sorted) {
-			std::sort(data->v, data->v + data->count, PtrCompare());
+		// Move duplicates to the beginning of the array, then we can zero them. We stop when we see a null.
+		void **to = end - 1;
+		for (void **at = end - 1; at != begin && *(at - 1) != null; at--) {
+			if (*at != *(at - 1)) {
+				*--to = *(at - 1);
+			}
 		}
 
-		// TODO!
+		// Remember new (possibly smaller) size.
+		data->filled = end - to;
 
-		return false;
+		// Zero remaining
+		while (to != begin)
+			*--to = null;
+
+		data->sorted = true;
 	}
 
 	size_t PinnedSet::dataSize(size_t n) {
 		return sizeof(Data) + sizeof(void *) * (max(n, size_t(1)) - 1);
 	}
+
 }
