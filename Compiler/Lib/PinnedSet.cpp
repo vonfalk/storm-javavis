@@ -186,4 +186,25 @@ namespace storm {
 		return sizeof(Data) + sizeof(void *) * (max(n, size_t(1)) - 1);
 	}
 
+	void addPinned(Type *rawPtr) {
+		Engine &e = rawPtr->engine;
+		Type *to = StormInfo<PinnedSet>::type(e);
+
+		Array<Value> *raw = new (e) Array<Value>(2, Value(to));
+		raw->at(1) = Value(rawPtr);
+		to->add(nativeFunction(e, Value(StormInfo<Bool>::type(e)), S("has"), raw, address(&PinnedSet::has)));
+		to->add(nativeFunction(e, Value(StormInfo<Array<Nat>>::type(e)), S("offsets"), raw, address(&PinnedSet::offsets)));
+
+		Type *unknown = as<Type>(e.nameSet(parseSimpleName(e, S("core.lang.unknown.PTR_NOGC"))));
+		if (!unknown)
+			throw new (e) InternalError(S("Unable to find the type PTR_NOGC"));
+
+		Array<Value> *un = new (e) Array<Value>(2, Value(to));
+		un->at(1) = Value(unknown);
+		to->add(nativeFunction(e, Value(), S("add"), un, address(&PinnedSet::add)));
+
+		// This version is more restricted, but easier to use from Storm.
+		to->add(nativeFunction(e, Value(), S("add"), raw, address(&PinnedSet::add)));
+	}
+
 }
