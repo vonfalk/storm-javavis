@@ -11,6 +11,7 @@
 #include "Lib/Enum.h"
 #include "Lib/ToS.h"
 #include "Lib/RawPtr.h"
+#include "Lib/PinnedSet.h"
 #include "Lib/Variant.h"
 #include "NameSet.h"
 #include "Package.h"
@@ -80,7 +81,9 @@ namespace storm {
 
 		// Load other types.
 		Package *unsafe = e.package(S("core.unsafe"));
-		unsafe->add(new (e) RawPtrType(e));
+		RawPtrType *rawPtr = new (e) RawPtrType(e);
+		unsafe->add(rawPtr);
+		addPinned(rawPtr);
 
 		// Add dynamic parts of the Variant interface.
 		addVariant(e.nameSet(parseSimpleName(e, S("core.Variant"))));
