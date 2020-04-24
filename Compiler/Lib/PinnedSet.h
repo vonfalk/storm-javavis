@@ -82,4 +82,8 @@ namespace storm {
 		static size_t dataSize(size_t n);
 	};
 
+	// Add the functions 'add', 'has' and 'offset' to PinnedSet, since they have parameter types
+	// that are not present in C++.
+	void addPinned(Type *rawPtr);
+
 }
