@@ -182,8 +182,9 @@ void SElementArray();
 SElementArray : SElementValue - (, ",", SElementValue)*;
 
 // Expressions and blocks.
-void SExpr();
-SExpr : SExpr1 - (, SAssignOp, SExpr1)?;
+Expr SExpr(Block block);
+SExpr => e : SExpr1(block) e;
+SExpr : SExpr1(block), SAssignOp, SExpr1;
 
 void SAssignOp();
 SAssignOp : "=";
@@ -198,12 +199,13 @@ SAssignOp : "<<=";
 SAssignOp : ">>=";
 SAssignOp : ">>>=";
 
-void SExpr1();
+Expr SExpr1(Block block);
 // Note: The original documentation allows an assignment between ? and :, which seems strange.
-SExpr1 : SExpr2 - (, "?", SExpr1, ":", SExpr1)?;
+SExpr1 => e : SExpr2(block) e;
+SExpr1 : SExpr2(block), "?", SExpr1, ":", SExpr1;
 
-void SExpr2();
-SExpr2 : SExpr3 - (, SExpr2Rest)*;
+Expr SExpr2(Block block);
+SExpr2 => e : SExpr3(block) e - (, SExpr2Rest)*;
 
 void SExpr2Rest();
 // Note: The Java grammar actually disallows 'x instanceof Foo && y'. We allow it here, since
@@ -232,9 +234,9 @@ SInfixOp : "\*";
 SInfixOp : "/";
 SInfixOp : "%";
 
-void SExpr3();
+Expr SExpr3(Block block);
 SExpr3 : SPrefixOp, SExpr3;
-SExpr3 : SPrimary, SExpr3Tail;
+SExpr3 => p : SPrimary(block) p, SExpr3Tail;
 // This also seems wrong in the documentation, the documentation allows (1)3 as an expression...
 SExpr3 : "(", SType, ")", SExpr3;
 
@@ -256,7 +258,7 @@ void SPostfixOp();
 SPostfixOp : "\+\+";
 SPostfixOp : "--";
 
-void SPrimary();
+Expr SPrimary(Block block);
 SPrimary : "(", SExpr, ")";
 SPrimary : "[0-9]+[Ll]?" #constant;
 SPrimary : "0[Xx][0-9A-Fa-f]+[Ll]?" #constant;
@@ -264,12 +266,13 @@ SPrimary : SFloat #constant - ("[fFdD]" #constant)?;
 SPrimary : "true" #constant;
 SPrimary : "false" #constant;
 SPrimary : "null" #constant;
-SPrimary : "\"" #string - SStrContent #string - "\"" #string;
+SPrimary => StrLiteral(pos, str) : "\"" #string - SStrContent str #string - "\"" #string;
 SPrimary : "'" #string - SCharContent #string - "'" #string;
 SPrimary : "this" #keyword - (, SArgs)?;
 SPrimary : "super" #keyword - (, SArgs)?;
 SPrimary : "super" #keyword, "\.", SIdent #fnName - (, SArgs)?;
-SPrimary[-1] : SIdent #varName - (, SIdentSuffix)*;
+SPrimary[-1] => FnCall(pos, block, id, args) : SIdent id, SArgs(block) args;
+// SPrimary[-1] : SIdent #varName - (, SIdentSuffix)*;
 SPrimary : SBasicType #typeName, ("\[\]",)* "\.", "class" #keyword;
 SPrimary : "void" #typeName, "\.", "class" #keyword;
 SPrimary : "new[ \t]" #keyword, SCreator;
@@ -308,8 +311,8 @@ SFloatBase : "\.[0-9]+";
 void SFloatExp();
 SFloatExp : "e[+\-]?[0-9]+";
 
-void SStrContent();
-SStrContent : "[^\"\\\n]*";
+SStr SStrContent();
+SStrContent => str : "[^\"\\\n]*" @str;
 SStrContent : SStrContent - "\\." - SStrContent;
 
 void SCharContent();
@@ -321,16 +324,16 @@ SIdentSuffix : ;
 SIdentSuffix[-1] : "\.", SIdent #varName;
 SIdentSuffix : ("\[\]", )* "\.", "class" #keyword;
 SIdentSuffix : "\[", SExpr, "\]"; // Strange to have an expression in this context...
-SIdentSuffix : SArgs;
+SIdentSuffix : SArgs(block);
 SIdentSuffix : "\.", "this" #keyword;
 SIdentSuffix : "\.", "super" #keyword, SArgs;
 SIdentSuffix : "\.", "new" #keyword, STypeActuals, SIdent #typeName, STypeActuals, SArgs - (,SClassBody)?;
 SIdentSuffix : "\.", STypeActuals, "super" #keyword, SSelector;
 SIdentSuffix : "\.", STypeActuals, SIdent #fnName, SArgs;
 
-void SArgs();
+Array<Expr> SArgs(Block block);
 SArgs : "(", ")";
-SArgs : "(", SExpr, (",", SExpr, )*, ")";
+SArgs => Array<Expr>() : "(", SExpr(block) -> push, (",", SExpr(block) -> push, )*, ")";
 
 void SSelector();
 SSelector : SIdent #fnName - (, SArgs)?;
@@ -345,11 +348,11 @@ void SGenericSuffix();
 SGenericSuffix : "super" #keyword, SSelector;
 SGenericSuffix : SIdent #fnName, SArgs;
 
-Stmt SStmt();
+Stmt SStmt(Block block);
 SStmt : ";";
 SStmt : SBlock;
 SStmt : SIdent, ":", SStmt;
-SStmt : SExpr, ";";
+SStmt => e : SExpr(block) e, ";";
 SStmt[10] : "assert[ \t]" #keyword, SExpr, (":", SExpr,)? ";";
 SStmt[10] : "if" #keyword, "(", SExpr, ")" [, SStmt]? - (, SStmtElse)?;
 SStmt[10] : "while" #keyword, "(", SExpr, ")" [, SStmt]?;
@@ -395,13 +398,13 @@ void SForStmt();
 SForStmt : ;
 SForStmt : SExpr, (",", SExpr)*;
 
-void SBlockStmt();
-SBlockStmt[10] : SStmt;
+Block SBlockStmt(Block block);
+SBlockStmt[10] => block : SStmt(block) -> add;
 SBlockStmt : STypeDecl;
 SBlockStmt : SVarModifier, SType, SIdent #varName, SVarSuffix, (",", SIdent #varName, SVarSuffix,)* ";";
 
-void SBlock();
-SBlock : "{" [, (SBlockStmt,)* ]+ "}";
+Block SBlock(Block parent);
+SBlock => Block(pos, parent) : "{" [, (SBlockStmt(me) -> add,)* ]+ "}";
 
 // Class body.
 void SClassBody(JavaType type); //JavaType type som parameter, ser till att lägga till alla funktioner sen
@@ -421,9 +424,9 @@ SMemberDecl : SIdent #typeName, SFormals, ("throws" #keyword, SQIdentList,)? SBl
 //SMemberDecl : STypeParams, SType, SIdent #fnName, SFormals, ("throws" #keyword, SQIdentList,)? SMethodEnd;
 //SMemberDecl : STypeParams, SIdent #typeName, SFormals, ("throws" #keyword, SQIdentList,)? SBlock;
 
-void SMethodEnd();
+Block SMethodEnd(Block parent);
 SMethodEnd : ";";
-SMethodEnd : SBlock;
+SMethodEnd => block : SBlock(parent) block;
 
 void SFormals();
 SFormals : "(", (SFormalList)?, ")";

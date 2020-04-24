@@ -9,10 +9,13 @@ class Stmt on Compiler {
         init { pos = pos; }
     }
 
-    bool code(CodeGen gen) : abstract;
+    Bool code(CodeGen gen) : abstract;
 }
 
 class Block extends Stmt {
+    Scope scope;
+    Stmt[] stmts;
+
     init(SrcPos pos, Scope parent) {
         init(pos) {}
         scope = blockScope (this, parent);
@@ -23,44 +26,15 @@ class Block extends Stmt {
         scope = blockScope(this, parent.scope);
     }
 
-    Scope scope;
+    void add(Stmt stmt) {
+        stmts << stmt;
+    }
 
     Bool code(CodeGen gen) : override {
-        CodeGen child = gen.child();
-        gen.l << begin(child.block);
-
-        initVariables(child);
-
-        bool returns = blockCode(child);
-
-        gen.l << end(child.block);
-        returns;
-    }
-
-    Bool blockCode(CodeGen gen) : abstract;
-
-    protected Str->LocalVar vars;
-
-    protected Str[] varOrder;
-
-    void initVariables(CodeGen gen) {
-        for (k in varOrder) {
-            vars.get(k).create(gen);
+        for (st in stmts) {
+            st.code(gen);
         }
-    }
-
-    void add(LocalVar var) {
-        if (vars.has(var.name))
-            throw SyntaxError(var.pos, "There is already a variable named ${var.name} in the current block!");
-            vars.put(var.name, var);
-            varOrder << var.name;
-    }
-
-    Named? variable(Str name) {
-        if (vars.has(name))
-            return vars.get(name);
-        else
-            return null;
+        true;
     }
 }
 
@@ -87,8 +61,8 @@ class BlockLookup extends NameLookup {
     Block block;
 
     Named? find(SimplePart part, Scope source) {
-        if (part.params.empty)
-            return block.variable(part.name);
+        //if (part.params.empty)
+            //return block.variable(part.name);
         
         null;
     }

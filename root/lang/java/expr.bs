@@ -1,0 +1,78 @@
+use core:lang;
+use core:asm;
+use lang:bs:macro;
+
+class Expr extends Stmt {
+    init(SrcPos pos) {
+        init(pos) {}
+    }
+
+    Bool code(CodeGen gen) : abstract;
+
+    Value result() : abstract;
+}
+
+class StrLiteral extends Expr {
+    init(SrcPos pos, SStr val) {
+        init(pos) {
+            val = val.v.toS;
+        }
+    }
+
+    private Str val;
+
+    Value result() { return Value(named{Str}); }
+
+    Bool code(CodeGen gen) : override {
+        gen.l << mov(ptrA, objConst(str));
+        true;
+    }
+}
+
+class FnCall extends Expr {
+    private Function fn;
+    private Expr[] args;
+
+    init(SrcPos pos, Block block, SStr id, Expr[] args) {
+        init(pos) {
+            fn = findFn(pos, block, id, args);
+            args = args;
+        }
+    }
+
+    Value result() : override {
+        fn.result;
+    }
+
+    Bool code(CodeGen gen) : override {
+        Operand[] ops;
+        for (e in args) {
+            e.code(gen);
+            var v = gen.l.createVar(gen.block, e.result.size);
+            ops << v;
+            gen.l << mov(v, asSize(ptrA, v.size));
+        }
+        if (fn.result == Value()) {
+            fn.autoCall(gen, ops, CodeResult());
+        }
+        else {
+            CodeResult codeRes(fn.result, gen.block);
+            fn.autoCall(gen, ops, codeRes);
+            gen.l << mov(asSize(ptrA, fn.result.size), codeRes.result(gen));
+        }
+    }
+
+    private Function findFn(SrcPos pos, Block block, SStr id, Expr[] args):static {
+        Value[] types;
+        for (e in args) {
+            types << e.result();
+        }
+        SimpleName sName(id.v, types);
+        
+        if (fn = block.scope.find(sName) as Function) {
+            return fn;
+        }
+
+        throw SyntaxError(pos, "Could not find function.");
+    }
+}

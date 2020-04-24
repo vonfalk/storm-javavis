@@ -41,6 +41,20 @@ class JavaFunction extends Function {
             pos = pos;
             decl = decl;
         }
+        setCode(LazyCode(&this.code));
+    }
+
+    CodeGen code() {
+        Block block(pos, scope);
+        block.add(decl.end.transform(block));
+
+        CodeGen gen(runOn, isMember, result);
+        gen.l << prolog();
+        block.code(gen);
+        gen.l << fnRet();
+
+        print(gen.toS);
+        gen;
     }
 
     void create(NameSet inside) {
