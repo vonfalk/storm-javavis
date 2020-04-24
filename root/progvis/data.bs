@@ -363,11 +363,27 @@ class Composite extends Data {
 
 		var elem = content[found];
 
+		// Some data member is missing.
+		if (offset < elem.offset)
+			return DataOffset(this);
+
 		// Stop here?
 		if (type) {
 			if (core:lang:isA(this.type, type)) {
-				size(); // Make sure that our size is re-computed, otherwise 'yPos' is not correct.
-				return DataOffset(this, elem.yPos);
+				Size sz = size(); // Make sure that our size is re-computed, otherwise 'yPos' is not correct.
+
+				// Fast-path.
+				if (elem.offset == offset)
+					return DataOffset(this, elem.yPos);
+
+				// Ask the element for its offset, and scale that to fit our view of the situation.
+				Float start = elem.yPos;
+				Float height = sz.h - start;
+				if (found + 1 < content.count)
+					height = content[found + 1].yPos - start;
+
+				var offset = elem.value.findOffset(null, offset - elem.offset);
+				return DataOffset(this, start + height * offset.offset / elem.value.size.h);
 			}
 		} else if (offset == 0) {
 			// If no type, and at zero offset we stop early as well.

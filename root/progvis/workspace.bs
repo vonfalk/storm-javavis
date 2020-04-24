@@ -140,12 +140,14 @@ class Workspace on Render {
 		objMap.clear();
 		stackObjMap.clear();
 		work.clear();
-		maxX = 0;
-		maxY = 0;
+		maxPos = Point();
 		for (i, d in elements) {
 			d.visited = false;
 			if (d.object.any) {
 				objMap.put(d.object, i);
+			}
+			if (!d.thread & !d.output) {
+				maxPos.y = max(maxPos.y, d.visual.rect.p1.y);
 			}
 		}
 
@@ -355,8 +357,7 @@ private:
 
 	// Basic layout during traversal: Try to put things into a "tree", where the direct children of
 	// an object are placed to the right of the object, and otherwise below other objects.
-	Float maxX;
-	Float maxY;
+	Point maxPos;
 
 	// Traverse the work queue.
 	void popQueue() {
@@ -370,23 +371,25 @@ private:
 
 	// Perform layout of a newly created object based on the state of the traversal.
 	private void layout(Data visual) {
-		Float space = 20;
-
 		// Look at the current topmost element in the queue (if any), and update maxX and maxY
 		// accordingly.
 		if (work.any) {
-			var top = work.top.data.rect;
+			// Don't examine objects that are not on the heap.
+			if (objMap.has(work.top.object)) {
+				var top = work.top.data.rect;
 
-			// New column?
-			if (top.p1.x > maxX) {
-				maxX = top.p1.x;
-				maxY = 0;
+				// New column?
+				if (top.p1.x > maxPos.x) {
+					maxPos.x = top.p1.x;
+					maxPos.y = 0;
+				}
 			}
 		}
 
 		// Put it at an appropriate location.
-		visual.pos = Point(maxX + space, maxY + space);
-		maxY += visual.size.h + space;
+		Point pos = maxPos + layoutSpace;
+		visual.pos = pos;
+		maxPos.y = pos.y + visual.size.h;
 	}
 
 	// Create a new node for an object. Called by 'traverse'.

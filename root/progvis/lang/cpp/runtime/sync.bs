@@ -283,6 +283,9 @@ void cond_wait(Ptr<condition> cond, Ptr<lock> lock) {
 
 	if (cImpl = cond.base.readPtr(cOffset).asObject() as CondImpl) {
 		if (lImpl = lock.base.readPtr(lOffset).asObject() as SemaImpl) {
+			// We're not holding the lock anymore.
+			lock.base.writeNat(lOffset + sPtr.current, 0);
+
 			cond.base.writeInt(cOffset + sPtr.current, cImpl.waitingThreads + 1);
 			cImpl.wait(Variant(cond), Variant(lock), lImpl);
 

@@ -65,3 +65,6 @@ Size buttonSize on Render = Size(30, 30);
 // Marked color of a button.
 Brush buttonBg on Render = SolidBrush(white);
 Brush buttonMarked on Render = SolidBrush(white * 0.8 + blue);
+
+// Layout spacing of objects.
+Size layoutSpace on Render = Size(35, 20);

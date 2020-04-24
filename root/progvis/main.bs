@@ -116,10 +116,7 @@ class MainWin extends Frame {
 	// Open one or more files, shows nice messages on error.
 	private void open(Url[] files) {
 		currentFiles = files;
-		try {
-			painter.cleanup();
-			painter.open(files, &this.onError);
-
+		{
 			StrBuf title;
 			title << "Progvis - ";
 			for (i, f in files) {
@@ -128,6 +125,11 @@ class MainWin extends Frame {
 				title << f.name;
 			}
 			text = title.toS;
+		}
+
+		try {
+			painter.cleanup();
+			painter.open(files, &this.onError);
 		} catch (core:lang:CodeError error) {
 			CompileErrorDialog dlg(error.messageText, error.pos);
 			dlg.show(this);
@@ -329,7 +331,8 @@ void debug() on Compiler {
 		// win.open(url / "printf.c");
 		// win.open(url / "globals.cpp");
 		// win.open(url / "bank" / "bank.c");
-		win.open(url / "bank" / "bank_good.c");
+		// win.open(url / "bank" / "bank_good.c");
+		win.open(url / "buffer" / "buffer.c");
 		// win.open(url / "cond.c");
 		win.waitForClose();
 	}

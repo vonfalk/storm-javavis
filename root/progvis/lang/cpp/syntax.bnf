@@ -27,7 +27,7 @@ SInComment : "/+" - SInComment;
 
 // Root production.
 Content SRoot();
-SRoot => Content() : (SDef(me),)*;
+SRoot => Content() : SDelimiter - (SDef(me),)*;
 
 // Definitions inside the file.
 void SDef(Content content);
@@ -82,6 +82,7 @@ SVarDecl => MemberVar(name.v, t, type) : STypeName(type.scope) t, SIdentifier na
 
 // Function declarations
 SDef => content : SFnDecl -> add;
+SDef => content : "static" #keyword, SFnDecl -> add;
 
 CppFnDecl SFnDecl();
 SFnDecl => CppFnDecl(res, name, formals, body) : STypeName@ res, SIdentifier name #fnName, "(", SFormals formals, ")", SFnTail body;
@@ -100,9 +101,10 @@ SOpName : "\*=?";
 SOpName : "/=?";
 SOpName : "\*";
 
-Maybe<SStmtList> SFnTail();
-SFnTail => Maybe<SStmtList>() : ";";
-SFnTail => Maybe<SStmtList>(block) : "{", SStmtList@ block - "}";
+Maybe<FnBody> SFnTail();
+SFnTail => Maybe<FnBody>() : ";";
+SFnTail => FnBody(block) : "{", SStmtList@ block - "}";
+SFnTail => FnBody(block, false) : "NO_STEP" #keyword, "{", SStmtList@ block - "}";
 
 
 // Formal parameters.
