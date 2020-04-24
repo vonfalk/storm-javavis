@@ -42,10 +42,10 @@ namespace storm {
 		// Check if an object is present in here. This pointer must be to the start of an
 		// allocation. Returns true if this object contains a pointer to somewhere inside the
 		// provided object.
-		Bool CODECALL has(void *query);
+		Bool CODECALL has(const void *query);
 
 		// Same as 'has', but generates all offsets as an array.
-		Array<Nat> *CODECALL offsets(void *query);
+		Array<Nat> *CODECALL offsets(const void *query);
 
 		// Clear the set.
 		void STORM_FN clear();
@@ -74,6 +74,9 @@ namespace storm {
 
 		// Reserve size for at least 'n' elements.
 		void reserve(size_t n);
+
+		// Sort the array, and remove any duplicates.
+		void sort();
 
 		// Size of data struct for 'n' elements.
 		static size_t dataSize(size_t n);
