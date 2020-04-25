@@ -27,7 +27,8 @@ class Block extends Stmt {
     }
 
     void add(Stmt stmt) {
-        stmts << stmt;
+        if (stmt.toS != this.toS)
+            stmts << stmt;
     }
 
     Bool code(CodeGen gen) : override {

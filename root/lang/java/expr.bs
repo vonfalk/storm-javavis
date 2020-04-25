@@ -15,7 +15,7 @@ class Expr extends Stmt {
 class StrLiteral extends Expr {
     init(SrcPos pos, SStr val) {
         init(pos) {
-            val = val.v.toS;
+            val = val.v.toS.unescape();
         }
     }
 
@@ -24,7 +24,7 @@ class StrLiteral extends Expr {
     Value result() { return Value(named{Str}); }
 
     Bool code(CodeGen gen) : override {
-        gen.l << mov(ptrA, objConst(str));
+        gen.l << mov(ptrA, objPtr(val));
         true;
     }
 }
@@ -58,8 +58,9 @@ class FnCall extends Expr {
         else {
             CodeResult codeRes(fn.result, gen.block);
             fn.autoCall(gen, ops, codeRes);
-            gen.l << mov(asSize(ptrA, fn.result.size), codeRes.result(gen));
+            gen.l << mov(asSize(ptrA, fn.result.size), codeRes.location(gen));
         }
+        true;
     }
 
     private Function findFn(SrcPos pos, Block block, SStr id, Expr[] args):static {
