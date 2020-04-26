@@ -9,6 +9,15 @@
 
 namespace storm {
 
+	// Function callable by GC implementations to produce a stack trace to standard out. Useful to
+	// call when a segmentation fault happened, to aid in debugging.
+	// This function might crash while generating a stack trace, but that is fine, as we assume
+	// that the system would crash anyway.
+	extern "C" void gc_panic_stacktrace() {
+		std::wcerr << L"Crash backtrace:" << std::endl;
+		std::wcerr << format(stackTrace()) << std::endl;
+	}
+
 	struct ImplWrap : public GcImpl {
 		ImplWrap(Gc &owner, size_t initialArena, nat finalizationInterval)
 			: GcImpl(initialArena, finalizationInterval), owner(owner) {}

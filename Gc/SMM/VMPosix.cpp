@@ -17,6 +17,8 @@
 namespace storm {
 	namespace smm {
 
+		extern "C" void gc_panic_stacktrace();
+
 		static const int protection = PROT_EXEC | PROT_READ | PROT_WRITE;
 		static const int protectionWp = PROT_EXEC | PROT_READ;
 		static const int flags = MAP_ANONYMOUS | MAP_PRIVATE;
@@ -32,6 +34,9 @@ namespace storm {
 				return;
 
 			// We don't know this memory. Trigger another signal to terminate us.
+#ifdef DEBUG
+			gc_panic_stacktrace();
+#endif
 			raise(SIGINT);
 		}
 
