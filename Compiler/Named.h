@@ -60,7 +60,7 @@ namespace storm {
 		STORM_CTOR LookupPos();
 		STORM_CTOR LookupPos(SrcPos pos);
 
-		// Our position.
+		// Our location in source code.
 		SrcPos pos;
 	};
 
