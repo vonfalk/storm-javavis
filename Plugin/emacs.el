@@ -1106,7 +1106,8 @@
 	  (notes  (nth 2 doc))
 	  (vis    (nth 3 doc))
 	  (body   (nth 4 doc))
-	  (refs   (nth 5 doc)))
+	  (pos    (nth 5 doc))
+	  (refs   (nth 6 doc)))
       (when vis
 	(storm-insert-link (cdr vis) (car vis) nil)
 	(insert " "))
@@ -1121,6 +1122,10 @@
 	(storm-insert-note (first notes))
 	(mapc (lambda (x) (insert ", ") (storm-insert-note x)) (rest notes)))
       (insert ":\n\n")
+      (when pos
+	(insert "At: ")
+	(storm-insert-pos-link (format "%s(%d-%d)" (nth 0 pos) (nth 1 pos) (nth 2 pos)) pos t)
+	(insert "\n\n"))
       (insert body "\n")
       (dolist (ref refs)
 	(storm-insert-face (format "\n%s (mouse-1 or RET to visit):\n" (car ref)) 'bold)
@@ -1149,6 +1154,24 @@
     (cond ((eq target 'forward) (storm-doc-fwd))
 	  ((eq target 'back) (storm-doc-back))
 	  (t (storm-doc target)))))
+
+(defun storm-insert-pos-link (text target mark)
+  (let* ((from (point))
+	 (to (progn (insert text) (point))))
+    (make-button from to
+		 'target target
+		 'follow-link t
+		 'face (if mark 'button nil)
+		 'help-echo (format "Visit the file '%s'." (nth 0 target))
+		 'action #'storm-pos-link-pressed)))
+
+(defun storm-pos-link-pressed (button)
+  (let* ((target (button-get button 'target))
+	 (file   (nth 0 target))
+	 (start  (nth 1 target))
+	 (end    (nth 1 target)))
+    (find-file file)
+    (goto-char (1+ start))))
 
 (defun storm-doc-fwd ()
   (interactive)

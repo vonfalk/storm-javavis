@@ -460,6 +460,17 @@ namespace storm {
 				data = cons(e, refs, data);
 			}
 
+			// Source position.
+			if (entity->pos.any()) {
+				SExpr *cell = cons(e, new (e) String(entity->pos.file->toS()),
+								cons(e, new (e) Number(entity->pos.start),
+									cons(e, new (e) Number(entity->pos.end),
+										null)));
+				data = cons(e, cell, data);
+			} else {
+				data = cons(e, null, data);
+			}
+
 			// Body. TODO: Maybe a richer representation that includes references etc.?
 			data = cons(e, new (e) String(d->body), data);
 
