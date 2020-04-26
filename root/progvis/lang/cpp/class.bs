@@ -41,16 +41,12 @@ class TypeState on Compiler {
 class CppType extends Type {
 	// If 'isClass' is 'false', then we're a struct, i.e. access defaults to public rather than private.
 	init(SStr name, Bool isClass, SClassInherit? inherit, SClassBody body) {
-		init(name.v, TypeFlags:typeValue) {
-			pos = name.pos;
+		init(name.pos, name.v, TypeFlags:typeValue) {
 			inherit = inherit;
 			body = body;
 			defAccess = if (isClass) { typePrivate; } else { public; };
 		}
 	}
-
-	// Declared at.
-	SrcPos pos;
 
 	// Body.
 	SClassBody body;

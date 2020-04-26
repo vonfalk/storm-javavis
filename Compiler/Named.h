@@ -73,9 +73,11 @@ namespace storm {
 	public:
 		// Create without parameters.
 		STORM_CTOR Named(Str *name);
+		STORM_CTOR Named(SrcPos pos, Str *name);
 
 		// Create with parameters.
 		STORM_CTOR Named(Str *name, Array<Value> *params);
+		STORM_CTOR Named(SrcPos pos, Str *name, Array<Value> *params);
 
 		// Our name. Note: may be null for a while during compiler startup.
 		Str *name;

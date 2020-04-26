@@ -148,7 +148,9 @@ namespace storm {
 		 */
 
 		LocalVar::LocalVar(Str *name, Value val, SrcPos pos, Bool param)
-			: Named(name), result(val), pos(pos), var(), param(param), constant(false) {
+			: Named(name), result(val), var(), param(param), constant(false) {
+
+			this->pos = pos;
 
 			// Disallow 'void' variables.
 			if (val == Value())

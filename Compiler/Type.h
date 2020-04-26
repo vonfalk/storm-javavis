@@ -58,6 +58,9 @@ namespace storm {
 		STORM_CTOR Type(Str *name, TypeFlags flags);
 		STORM_CTOR Type(Str *name, Array<Value> *params, TypeFlags flags);
 
+		STORM_CTOR Type(SrcPos pos, Str *name, TypeFlags flags);
+		STORM_CTOR Type(SrcPos pos, Str *name, Array<Value> *params, TypeFlags flags);
+
 	protected:
 		// Create a type of a particular size, its contents defined by whatever is returned from
 		// 'createDesc' and the supplied size rather than the members defined here. Only usable for

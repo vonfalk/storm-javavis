@@ -81,13 +81,11 @@ value Formal {
  * A C++ function.
  */
 class CppFunction extends Function {
-	SrcPos pos;
 	Scope scope;
 
 	init(Scope scope, SrcPos pos, Value result, Str name, Value[] params) {
-		init(result, name, params) {
+		init(pos, result, name, params) {
 			scope = scope;
-			pos = pos;
 		}
 	}
 

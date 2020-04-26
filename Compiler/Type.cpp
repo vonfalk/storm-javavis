@@ -59,6 +59,28 @@ namespace storm {
 		init(null);
 	}
 
+	Type::Type(SrcPos pos, Str *name, TypeFlags flags) :
+		NameSet(name),
+		engine(RootObject::engine()),
+		myGcType(null),
+		tHandle(null),
+		typeFlags(flags & ~typeCpp) {
+
+		this->pos = pos;
+		init(null);
+	}
+
+	Type::Type(SrcPos pos, Str *name, Array<Value> *params, TypeFlags flags) :
+		NameSet(name, params),
+		engine(RootObject::engine()),
+		myGcType(null),
+		tHandle(null),
+		typeFlags(flags & ~typeCpp) {
+
+		this->pos = pos;
+		init(null);
+	}
+
 	Type::Type(Str *name, Array<Value> *params, TypeFlags flags, Size size) :
 		NameSet(name, params),
 		engine(RootObject::engine()),

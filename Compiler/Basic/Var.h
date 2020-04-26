@@ -20,9 +20,6 @@ namespace storm {
 			// Type.
 			Value result;
 
-			// Declared at
-			SrcPos pos;
-
 			// Location (not initialized until code generation).
 			VarInfo var;
 

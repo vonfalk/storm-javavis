@@ -15,10 +15,11 @@ namespace storm {
 
 		Rule::Rule(RuleDecl *decl, Scope scope)
 			: Type(decl->name, typeClass),
-			  pos(decl->pos),
 			  scope(scope),
 			  decl(decl),
 			  color(decl->color) {
+
+			pos = decl->pos;
 
 			setSuper(Node::stormType(engine));
 
