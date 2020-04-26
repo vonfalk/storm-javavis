@@ -8,6 +8,7 @@
 #include "Version.h"
 #include "Code.h"
 #include "VTableCpp.h"
+#include "CompilerProtocol.h"
 #include "Exception.h"
 #include "Lib/Maybe.h"
 #include "Lib/Enum.h"
@@ -74,6 +75,13 @@ namespace storm {
 	Nat CppLoader::versionCount() const {
 		Nat n = 0;
 		while (world->versions[n].name)
+			n++;
+		return n;
+	}
+
+	Nat CppLoader::sourceCount() const {
+		Nat n = 0;
+		while (world->sources[n])
 			n++;
 		return n;
 	}
@@ -416,8 +424,10 @@ namespace storm {
 		Nat c = typeCount();
 		for (Nat i = 0; i < c; i++) {
 			const CppType &t = world->types[i];
-			if (!external(t))
+			if (!external(t)) {
 				findPkg(t.pkg)->add(into->types[i]);
+				setPos(into->types[i], t.pos);
+			}
 		}
 
 		c = templateCount();
@@ -432,8 +442,10 @@ namespace storm {
 		c = threadCount();
 		for (Nat i = 0; i < c; i++) {
 			const CppThread &t = world->threads[i];
-			if (!external(t))
+			if (!external(t)) {
 				findPkg(t.pkg)->add(into->namedThreads[i]);
+				setPos(into->namedThreads[i], t.pos);
+			}
 		}
 	}
 
@@ -500,6 +512,7 @@ namespace storm {
 
 		f->visibility = visibility(fn.access);
 		setDoc(f, fn.doc, fn.params);
+		setPos(f, fn.pos);
 
 		into->add(f);
 	}
@@ -542,6 +555,7 @@ namespace storm {
 
 		f->visibility = visibility(fn.access);
 		setDoc(f, fn.doc, fn.params);
+		setPos(f, fn.pos);
 
 		params->at(0).type->add(f);
 
@@ -679,6 +693,49 @@ namespace storm {
 
 	void CppLoader::setDoc(Named *entity, Nat id, const CppParam *params) {
 		entity->documentation = createDoc(entity, id, params);
+	}
+
+	void CppLoader::setPos(Named *entity, CppSrcPos pos) {
+		if (pos.id < 0)
+			return;
+
+		if (into->sources.count() == 0)
+			createSources();
+
+		entity->pos = SrcPos(into->sources[pos.id], pos.pos, pos.pos + 1);
+	}
+
+	static Array<Str *> *splitPath(Engine &e, const wchar *path) {
+		Array<Str *> *r = new (e) Array<Str *>();
+		const wchar *start = path;
+		const wchar *at;
+		for (at = start; *at; at++) {
+			if (*at == '/') {
+				if (start != at)
+					*r << new (e) Str(start, at);
+				start = at + 1;
+			}
+		}
+
+		if (start != at)
+			*r << new (e) Str(start, at);
+
+		return r;
+	}
+
+	void CppLoader::createSources() {
+		Nat n = sourceCount();
+		into->sources.resize(n);
+
+		CompilerProtocol *proto;
+		if (world->libName)
+			proto = new (*e) CompilerProtocol(new (*e) Str(world->libName));
+		else
+			proto = new (*e) CompilerProtocol();
+
+		for (Nat i = 0; i < n; i++) {
+			into->sources[i] = new (*e) Url(proto, splitPath(*e, world->sources[i]));
+		}
 	}
 
 }

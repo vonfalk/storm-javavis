@@ -185,7 +185,7 @@ namespace storm {
 			return to->toS();
 
 		for (Nat i = 0; i < parts->count(); i++) {
-			*to << L"/" << parts->at(i);
+			*to << S("/") << parts->at(i);
 		}
 
 		// if (url->dir)

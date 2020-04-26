@@ -4,6 +4,48 @@
 #include "World.h"
 #include "Config.h"
 
+/**
+ * Keep track of the used source files and their ID:s so that we may output relevant source files in
+ * a predictable order later on.
+ */
+class SrcFiles {
+public:
+	SrcFiles() {}
+
+	// Get an ID to emit for a particular source position.
+	nat srcId(const SrcPos &pos) {
+		if (idMap.size() <= pos.fileId)
+			idMap.resize(pos.fileId + 1, -1);
+
+		if (idMap[pos.fileId] < 0) {
+			idMap[pos.fileId] = int(posMap.size());
+			posMap.push_back(pos.fileId);
+		}
+
+		return idMap[pos.fileId];
+	}
+
+	// Base path. The "least deep" path of the directories we were asked to scan.
+	Path base;
+
+	// ID:s inside SrcPos -> ID:s we will emit.
+	vector<int> idMap;
+
+	// ID:s in SrcPos in the order we will emit them. Essentially the reverse of idMap.
+	vector<int> posMap;
+};
+
+SrcFiles srcFiles;
+
+// Output a SrcPos for something.
+void putPos(wostream &to, const SrcPos &pos) {
+	if (pos.fileId == SrcPos::invalid)
+		to << L"{ -1, 0 }";
+	else
+		to << L"{ " << srcFiles.srcId(pos) << L", " << pos.pos << " }";
+}
+
+
 // From Storm headers. Assumed to be 64-bits.
 typedef long long int Long;
 
@@ -238,19 +280,18 @@ static void genTypes(wostream &to, World &w) {
 			to << L"ValFlags<" << t.name << L">::v, ";
 		}
 
-		// Destructor (if any).
-		// if (c != null && c->hasDtor()) {
-		// 	to << L"address(&destroy<" << c->name << L">), ";
-		// } else {
-		// 	to << L"null, ";
-		// }
-
 		// VTable (if any).
 		if (hasVTable(t)) {
-			to << L"&" << stormVTableName(c->name);
+			to << L"&" << stormVTableName(c->name) << L", ";
 		} else {
 			to << L"null, ";
 		}
+
+		// Source position.
+		if (t.external)
+			putPos(to, SrcPos());
+		else
+			putPos(to, t.pos);
 
 		to << L"},\n";
 	}
@@ -345,7 +386,7 @@ static bool genTypeRef(wostream &to, TypeRef *r, bool safe = false, bool skipExt
 		throw Error(L"Type " + ::toS(*r) + L" not exported to Storm.", r->pos);
 	}
 	to << L", " << (ref   ? L"true" : L"false");
-	to << L", " << (maybe ? L"true" : L"false") << L" }, ";
+	to << L", " << (maybe ? L"true" : L"false") << L" }";
 	return true;
 }
 
@@ -564,6 +605,10 @@ static void genFunctions(wostream &to, World &w) {
 
 		// Result.
 		genTypeRef(to, f.result.borrow());
+		to << L", ";
+
+		// Position.
+		putPos(to, f.pos);
 
 		to << L" },\n";
 	}
@@ -575,7 +620,7 @@ static String resolveWrap(TypeRef *type, World &w) {
 		result = genTypeRef(u->wrapper(w).borrow(), false);
 	} else if (as<PtrType>(type)) {
 		nat id = w.unknown(L"PTR_GC", type->pos)->id;
-		result = L"{ " + ::toS(id) + L", null, false, false }, ";
+		result = L"{ " + ::toS(id) + L", null, false, false }";
 	}
 
 	if (result.empty()) {
@@ -626,10 +671,13 @@ static void genVariables(wostream &to, World &w) {
 			to << accessName(v.access) << L", ";
 
 			// Type.
-			to << type;
+			to << type << L", ";
 
 			// Offset.
-			to << format(offset);
+			to << format(offset) << L", ";
+
+			// Position.
+			putPos(to, v.pos);
 
 			to << L" },\n";
 		}
@@ -734,6 +782,13 @@ static void genThreads(wostream &to, World &w) {
 
 		// Documentation.
 		to << docId(w, t) << L", ";
+
+		// Source location.
+		if (t.external)
+			putPos(to, SrcPos());
+		else
+			putPos(to, t.pos);
+		to << L", ";
 
 		// External?
 		to << (t.external ? L"true" : L"false");
@@ -877,6 +932,26 @@ static void genVersions(wostream &to, World &w) {
 	}
 }
 
+static void genSources(wostream &to, World &w) {
+	// Find a common "base" path.
+	Path base = config.dirs[0];
+	for (nat i = 1; i < config.dirs.size(); i++)
+		base.common(config.dirs[i]);
+
+	for (nat i = 0; i < srcFiles.posMap.size(); i++) {
+		const Path &p = SrcPos::files[srcFiles.posMap[i]];
+
+		to << L"S(\"";
+		p.makeRelative(base).outputUnix(to);
+		to << L"\"),\n";
+	}
+}
+
+static void genLibName(wostream &to, World &w) {
+	if (!config.compiler)
+		to << L"S(\"" << config.dirs[0].title() << "\"),\n";
+}
+
 static void genDocName(wostream &to, World &w) {
 	to << L"S(\"";
 
@@ -913,6 +988,8 @@ GenerateMap genMap() {
 		{ L"REF_TYPES", &genRefTypes },
 		{ L"LICENSES", &genLicenses },
 		{ L"VERSIONS", &genVersions },
+		{ L"SOURCES", &genSources },
+		{ L"LIB_NAME", &genLibName },
 		{ L"DOC_NAME", &genDocName },
 	};
 

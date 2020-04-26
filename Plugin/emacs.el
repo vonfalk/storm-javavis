@@ -49,9 +49,6 @@
 ;; Mark errors in compilation-mode properly.
 (require 'compile)
 (require 'cl)
-(pushnew '(storm-pp "^ *\\([0-9]+>\\)?\\([^(\n\t]+\\)(\\([0-9]+\\),\\([0-9]+\\)):" 2 3 4 nil)
-	 compilation-error-regexp-alist-alist)
-(add-to-list 'compilation-error-regexp-alist 'storm-pp)
 (pushnew '(storm "^ *\\([0-9]+>\\)?@\\([^(\n\t]+\\)(\\([0-9]+\\)\\(-[0-9]+\\)?): [A-Za-z ]+ error:" 2 storm-compute-line 3 nil)
 	 compilation-error-regexp-alist-alist)
 (add-to-list 'compilation-error-regexp-alist 'storm)

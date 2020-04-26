@@ -77,6 +77,8 @@ namespace storm {
 		static const CppThread *cppThreads();
 		static const CppLicense *cppLicenses();
 		static const CppVersion *cppVersions();
+		static const wchar *const *cppSources();
+		static const wchar *cppLibName();
 		static const wchar *cppDocName();
 		static const CppRefType *cppRefTypes();
 
@@ -216,6 +218,22 @@ namespace storm {
 		return versions;
 	}
 
+	const wchar *const *CppMeta::cppSources() {
+		static const wchar *sources[] = {
+			// SOURCES
+			null,
+		};
+		return sources;
+	}
+
+	const wchar *CppMeta::cppLibName() {
+		static const wchar *name[] = {
+			// LIB_NAME
+			null,
+		};
+		return name[0];
+	}
+
 	const wchar *CppMeta::cppDocName() {
 		static const wchar *name[] = {
 			// DOC_NAME
@@ -247,6 +265,8 @@ namespace storm {
 			CppMeta::cppThreads(),
 			CppMeta::cppLicenses(),
 			CppMeta::cppVersions(),
+			CppMeta::cppSources(),
+			CppMeta::cppLibName(),
 			CppMeta::cppDocName(),
 			CppMeta::cppRefTypes(),
 		};

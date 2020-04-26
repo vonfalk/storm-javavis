@@ -87,6 +87,9 @@ namespace storm {
 		// Get the number of versions.
 		Nat versionCount() const;
 
+		// Get the number of source files.
+		Nat sourceCount() const;
+
 		// Create all licenses in their appropriate places.
 		void loadLicenses();
 
@@ -144,6 +147,12 @@ namespace storm {
 		// Create documentation. Returns null if not present for the current function.
 		CppDoc *createDoc(Named *entity, Nat id, MAYBE(const CppParam *) params);
 		void setDoc(Named *entity, Nat id, MAYBE(const CppParam *) params);
+
+		// Set position information on a named entity.
+		void setPos(Named *entity, CppSrcPos pos);
+
+		// Create all sources.
+		void createSources();
 
 		// See if various types are external.
 		inline bool external(const CppType &t) const { return t.kind == CppType::superExternal; }

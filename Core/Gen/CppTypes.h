@@ -66,6 +66,17 @@ namespace storm {
 	};
 
 	/**
+	 * A source position.
+	 */
+	struct CppSrcPos {
+		// File id. If negative, then no position is available.
+		int id;
+
+		// File position (only start, no end).
+		nat pos;
+	};
+
+	/**
 	 * List of C++ types.
 	 */
 	struct CppType {
@@ -129,6 +140,9 @@ namespace storm {
 		// C++ generated VTable for this type (if any).
 		typedef const void *(*VTableFn)();
 		VTableFn vtable;
+
+		// Source location.
+		CppSrcPos pos;
 	};
 
 	/**
@@ -231,6 +245,9 @@ namespace storm {
 
 		// Result.
 		CppTypeRef result;
+
+		// Source position.
+		CppSrcPos pos;
 	};
 
 	// Extract the regular part of the 'kind' enum.
@@ -270,6 +287,9 @@ namespace storm {
 
 		// Offset into the type.
 		CppOffset offset;
+
+		// Source position.
+		CppSrcPos pos;
 	};
 
 	/**
@@ -322,6 +342,9 @@ namespace storm {
 
 		// Documentation id.
 		nat doc;
+
+		// Position.
+		CppSrcPos pos;
 
 		// Located externally?
 		bool external;
@@ -406,6 +429,13 @@ namespace storm {
 
 		// List of versions.
 		const CppVersion *versions;
+
+		// List of source files that are referred to by types, functions, etc.
+		const wchar *const *sources;
+
+		// Name of the current library (or NULL for the compiler). Used to locate source code
+		// relative to the compiler root directory.
+		const wchar *libName;
 
 		// Name of the file containing documentation for this world.
 		const wchar *docFile;
