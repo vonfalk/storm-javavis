@@ -6,7 +6,7 @@
 #include "World.h"
 
 Type::Type(const CppName &name, const String &pkg, const SrcPos &pos, const Auto<Doc> &doc) :
-	id(0), name(name), pkg(pkg), pos(pos), doc(doc), external(false) {}
+	id(0), name(name), pkg(pkg), pos(pos), doc(doc), external(false), isPrivate(false) {}
 
 vector<Offset> Type::ptrOffsets() const {
 	vector<Offset> r;

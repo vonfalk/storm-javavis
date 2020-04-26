@@ -448,7 +448,7 @@ static Auto<Class> parseParent(Tokenizer &tok, ParseEnv &env, const CppName &ful
 }
 
 // Parse a type.
-static void parseType(Tokenizer &tok, ParseEnv &env, const CppName &inside) {
+static void parseType(Tokenizer &tok, ParseEnv &env, const CppName &inside, bool isPrivate) {
 	// Exported exception?
 	bool exported = tok.skipIf(L"EXCEPTION_EXPORT");
 
@@ -509,7 +509,7 @@ static void parseType(Tokenizer &tok, ParseEnv &env, const CppName &inside) {
 				sub.pkg = name.token;
 			else
 				sub.pkg += L"." + name.token;
-			parseType(tok, sub, fullName);
+			parseType(tok, sub, fullName, access == aPrivate);
 		} else if (t.token == L"extern") {
 			tok.skip();
 		} else if (t.token == L"enum") {
@@ -550,6 +550,7 @@ static void parseType(Tokenizer &tok, ParseEnv &env, const CppName &inside) {
 	}
 
 	type->external = !env.exportAll;
+	type->isPrivate = isPrivate;
 	env.world.add(type);
 
 	tok.clearComment();
@@ -564,7 +565,7 @@ static void parseNamespace(Tokenizer &tok, ParseEnv &env, const CppName &name) {
 		if (t.token == L"class" || t.token == L"struct") {
 			tok.skip();
 			skipAlignAs(tok);
-			parseType(tok, env, name);
+			parseType(tok, env, name, false);
 		} else if (t.token == L"enum") {
 			tok.skip();
 			parseEnum(tok, env, name);

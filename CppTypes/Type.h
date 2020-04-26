@@ -41,6 +41,9 @@ public:
 	// Is this type external to this unit?
 	bool external;
 
+	// Is this type private? (used with nested types)
+	bool isPrivate;
+
 	// Print.
 	virtual void print(wostream &to) const = 0;
 

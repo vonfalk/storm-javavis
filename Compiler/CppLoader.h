@@ -155,15 +155,16 @@ namespace storm {
 		void createSources();
 
 		// See if various types are external.
-		inline bool external(const CppType &t) const { return t.kind == CppType::superExternal; }
+		inline bool external(const CppType &t) const { return typeKind(t) == CppType::tExternal; }
 		inline bool external(const CppTemplate &t) const { return t.generate == null; }
 		inline bool external(const CppThread &t) const { return t.external; }
 
 		// See if a type shall be delayed.
 		inline bool delayed(const CppType &t) const {
-			return t.kind == CppType::superCustom
-				|| t.kind == CppType::superEnum
-				|| t.kind == CppType::superBitmaskEnum;
+			CppType::Kind k = typeKind(t);
+			return k == CppType::tCustom
+				|| k == CppType::tEnum
+				|| k == CppType::tBitmaskEnum;
 		}
 	};
 

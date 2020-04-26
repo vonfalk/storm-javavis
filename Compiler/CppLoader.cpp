@@ -114,17 +114,31 @@ namespace storm {
 		GcType *gcType = createGcType(id);
 
 		// If this type inherits from 'Type', it needs special care in its Gc-description.
-		if (type.kind == CppType::superClassType) {
+		if (typeKind(type) == CppType::tSuperClassType) {
 			Type::makeType(*e, gcType);
 		}
 
 		return new (*e) Type(null, flags, Size(type.size), gcType, typeVTable(type));
 	}
 
+	// Equivalent to a trimmed-down version of scope().find, but is allowed to access private members in types.
+	static Named *findPrivateType(Engine &e, SimpleName *name) {
+		Scope scope = e.scope();
+		Named *at = e.package();
+		for (Nat i = 0; i < name->count(); i++) {
+			if (NameSet *s = as<NameSet>(at))
+				at = s->find(name->at(i), scope.child(at));
+			else
+				return null;
+		}
+		return at;
+	}
+
 	Type *CppLoader::findType(const CppType &type) {
 		SimpleName *name = parseSimpleName(*e, type.pkg);
 		name->add(new (*e) Str(type.name));
-		Type *t = as<Type>(e->scope().find(name));
+		// Type *t = as<Type>(e->scope().find(name));
+		Type *t = as<Type>(findPrivateType(*e, name));
 		if (!t) {
 			if (e->has(bootDone)) {
 				throw new (*e) BuiltInError(TO_S(*e, S("Failed to locate ") << name));
@@ -163,9 +177,9 @@ namespace storm {
 				continue;
 
 			CppType::CreateFn fn = (CppType::CreateFn)type.super;
-			if (type.kind == CppType::superEnum)
+			if (typeKind(type) == CppType::tEnum)
 				fn = &createEnum;
-			else if (type.kind == CppType::superBitmaskEnum)
+			else if (typeKind(type) == CppType::tBitmaskEnum)
 				fn = &createBitmaskEnum;
 			into->types[i] = (*fn)(new (*e) Str(type.name), Size(type.size), createGcType(i));
 		}
@@ -192,8 +206,11 @@ namespace storm {
 			// Name.
 			into->types[i]->name = new (*e) Str(type.name);
 
-			// Visibility. All types from C++ are public. There is no mechanism to make them anything else.
-			into->types[i]->visibility = e->visibility(Engine::vPublic);
+			// Visibility.
+			if (typeHasFlag(type, CppType::tPrivate))
+				into->types[i]->visibility = e->visibility(Engine::vTypePrivate);
+			else
+				into->types[i]->visibility = e->visibility(Engine::vPublic);
 
 			// Documentation.
 			setDoc(into->types[i], type.doc, null);
@@ -249,30 +266,30 @@ namespace storm {
 				if (updated[i])
 					continue;
 
-				switch (type.kind) {
-				case CppType::superNone:
+				switch (typeKind(type)) {
+				case CppType::tNone:
 					// Nothing to do.
 					break;
-				case CppType::superClass:
-				case CppType::superClassType:
+				case CppType::tSuperClass:
+				case CppType::tSuperClassType:
 					// Delay update?
 					if (!updated[type.super])
 						continue;
 
 					into->types[i]->setSuper(into->types[type.super]);
 					break;
-				case CppType::superThread:
+				case CppType::tSuperThread:
 					if (TObject::stormType(*e) == null)
 						continue;
 
 					into->types[i]->setThread(into->namedThreads[type.super]);
 					break;
-				case CppType::superCustom:
-				case CppType::superEnum:
-				case CppType::superBitmaskEnum:
+				case CppType::tCustom:
+				case CppType::tEnum:
+				case CppType::tBitmaskEnum:
 					// Already done.
 					break;
-				case CppType::superExternal:
+				case CppType::tExternal:
 					// Nothing to do!
 					break;
 				default:

@@ -150,7 +150,7 @@ namespace storm {
 
 		static const CppType types[] = {
 			// CPP_TYPES
-			{ null, null, CppType::superNone, 0, 0, CppSize::invalid, null, typeNone, null },
+			{ null, null, CppType::tNone, 0, 0, CppSize::invalid, null, typeNone, null, { -1, 0 } },
 		};
 		return types;
 	}
@@ -162,7 +162,7 @@ namespace storm {
 
 		static const CppFunction functions[] = {
 			// CPP_FUNCTIONS
-			{ null, null, CppFunction::fnFree, cppPublic, 0, 0, null, null, { CppTypeRef::tVoid, null, false, false } },
+			{ null, null, CppFunction::fnFree, cppPublic, 0, 0, null, null, { CppTypeRef::tVoid, null, false, false }, { -1, 0 } },
 		};
 
 		return functions;
@@ -171,7 +171,7 @@ namespace storm {
 	const CppVariable *CppMeta::cppVariables() {
 		static const CppVariable variables[] = {
 			// CPP_VARIABLES
-			{ null, 0, 0, cppPublic, { CppTypeRef::invalid }, CppOffset::invalid },
+			{ null, 0, 0, cppPublic, { CppTypeRef::invalid }, CppOffset::invalid, { -1, 0 } },
 		};
 
 		return variables;
@@ -197,7 +197,7 @@ namespace storm {
 	const CppThread *CppMeta::cppThreads() {
 		static const CppThread threads[] = {
 			// CPP_THREADS
-			{ null, null, null, 0, false },
+			{ null, null, null, 0, { -1, 0 }, false },
 		};
 		return threads;
 	}

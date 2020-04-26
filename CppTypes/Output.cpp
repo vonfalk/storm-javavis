@@ -218,8 +218,12 @@ static void genTypes(wostream &to, World &w) {
 
 		// Package.
 		if (t.pkg.empty() && config.compiler)
-			PLN(t.pos << L": warning: placing types in the root package.");
+			PLN(L"@" << t.pos << L": error: placing types in the root package.");
 		to << L"S(\"" << t.pkg << L"\"), ";
+
+		// Is this type private?
+		if (t.isPrivate)
+			to << L"CppType::tPrivate | ";
 
 		// Parent class (if any).
 		{
@@ -231,26 +235,26 @@ static void genTypes(wostream &to, World &w) {
 			}
 
 			if (t.external) {
-				to << L"CppType::superExternal, 0, ";
+				to << L"CppType::tExternal, 0, ";
 			} else if (Enum *e = as<Enum>(&t)) {
 				if (e->bitmask)
-					to << L"CppType::superBitmaskEnum, 0, ";
+					to << L"CppType::tBitmaskEnum, 0, ";
 				else
-					to << L"CppType::superEnum, 0, ";
+					to << L"CppType::tEnum, 0, ";
 			} else if (p) {
-				to << L"CppType::superCustom, size_t(&" << p->generate << L"), ";
+				to << L"CppType::tCustom, size_t(&" << p->generate << L"), ";
 			} else if (up) {
-				to << L"CppType::superCustom, size_t(&" << up->generate << L"), ";
+				to << L"CppType::tCustom, size_t(&" << up->generate << L"), ";
 			} else if (thread) {
-				to << L"CppType::superThread, " << thread->id << L" /* " << thread->name << L" */, ";
+				to << L"CppType::tSuperThread, " << thread->id << L" /* " << thread->name << L" */, ";
 			} else if (parent) {
 				if (isType(w, *parent))
-					to << L"CppType::superClassType, ";
+					to << L"CppType::tSuperClassType, ";
 				else
-					to << L"CppType::superClass, ";
+					to << L"CppType::tSuperClass, ";
 				to << parent->id << L" /* " << parent->name << L" */, ";
 			} else {
-				to << L"CppType::superNone, 0, ";
+				to << L"CppType::tNone, 0, ";
 			}
 		}
 
