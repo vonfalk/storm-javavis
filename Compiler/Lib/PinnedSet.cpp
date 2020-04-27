@@ -33,13 +33,31 @@ namespace storm {
 		}
 	}
 
+	void PinnedSet::toS(StrBuf *to) const {
+		sort();
+
+		*to << S("{");
+		bool first = true;
+		for (size_t i = 0; i < data->count; i++) {
+			if (!data->v[i])
+				continue;
+
+			if (!first)
+				*to << S(", ");
+			first = false;
+
+			*to << S("0x") << hex(data->v[i]);
+		}
+		*to << S("}");
+	}
+
 	struct PtrCompare {
 		bool operator() (const void *a, const void *b) const {
 			return size_t(a) < size_t(b);
 		}
 	};
 
-	void PinnedSet::add(void *ptr) {
+	void PinnedSet::put(void *ptr) {
 		if (!ptr)
 			return;
 
@@ -155,7 +173,7 @@ namespace storm {
 			free(newData);
 	}
 
-	void PinnedSet::sort() {
+	void PinnedSet::sort() const {
 		if (data->sorted)
 			return;
 
@@ -201,10 +219,10 @@ namespace storm {
 
 		Array<Value> *un = new (e) Array<Value>(2, Value(to));
 		un->at(1) = Value(unknown);
-		to->add(nativeFunction(e, Value(), S("add"), un, address(&PinnedSet::add)));
+		to->add(nativeFunction(e, Value(), S("put"), un, address(&PinnedSet::put)));
 
 		// This version is more restricted, but easier to use from Storm.
-		to->add(nativeFunction(e, Value(), S("add"), raw, address(&PinnedSet::add)));
+		to->add(nativeFunction(e, Value(), S("put"), raw, address(&PinnedSet::put)));
 	}
 
 }
