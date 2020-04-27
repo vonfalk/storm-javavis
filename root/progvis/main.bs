@@ -328,11 +328,11 @@ void debug() on Compiler {
 		// win.open(url / "pintos_debug.cpp");
 		// win.open(url / "pintos_live.c");
 		// win.open(url / "thread_example.c");
-		// win.open(url / "printf.c");
+		win.open(url / "printf.c");
 		// win.open(url / "globals.cpp");
 		// win.open(url / "bank" / "bank.c");
 		// win.open(url / "bank" / "bank_good.c");
-		win.open(url / "buffer" / "buffer.c");
+		// win.open(url / "buffer" / "buffer.c");
 		// win.open(url / "cond.c");
 		win.waitForClose();
 	}
