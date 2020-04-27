@@ -99,9 +99,9 @@ namespace code {
 	 * What is done to the 'dest' of the instructions?
 	 */
 	enum DestMode {
-		destNone = 0x0,
-		destRead = 0x1,
-		destWrite = 0x2,
+		STORM_NAME(destNone, none) = 0x0,
+		STORM_NAME(destRead, read) = 0x1,
+		STORM_NAME(destWrite, write) = 0x2,
 	};
 
 	BITMASK_OPERATORS(DestMode);
