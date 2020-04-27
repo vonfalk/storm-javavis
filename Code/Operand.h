@@ -32,43 +32,43 @@ namespace code {
 	 */
 	enum OpType {
 		// No data.
-		opNone,
+		STORM_NAME(opNone, none),
 
 		// Constant.
-		opConstant,
+		STORM_NAME(opConstant, constant),
 
 		// Dual-constant (one value for 32-bit and one for 64-bit). Appears as 'opConstant', but is stored in 'opOffset'.
-		opDualConstant,
+		STORM_NAME(opDualConstant, dualConstant),
 
 		// Register
-		opRegister,
+		STORM_NAME(opRegister, register),
 
 		// Relative to a register, ie. [reg + offset]
-		opRelative,
+		STORM_NAME(opRelative, relative),
 
 		// Relative to a label. TODO: Implement for X86!
-		opRelativeLbl,
+		STORM_NAME(opRelativeLbl, relativeLabel),
 
 		// Variable (+ offset).
-		opVariable,
+		STORM_NAME(opVariable, variable),
 
 		// Label.
-		opLabel,
+		STORM_NAME(opLabel, label),
 
 		// Block.
-		opBlock,
+		STORM_NAME(opBlock, block),
 
 		// Reference to another object.
-		opReference,
+		STORM_NAME(opReference, reference),
 
 		// Reference to an object.
-		opObjReference,
+		STORM_NAME(opObjReference, objReference),
 
 		// Condition flag.
-		opCondFlag,
+		STORM_NAME(opCondFlag, condFlag),
 
 		// Source code reference (SrcPos).
-		opSrcPos,
+		STORM_NAME(opSrcPos, srcPos),
 	};
 
 	/**

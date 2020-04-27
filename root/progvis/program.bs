@@ -186,7 +186,7 @@ class Program on Render {
 
 	// This function will be called by the executed code to notify that a new (traced) function was
 	// called, and that we shall open a new scope.
-	package void functionEntered(Str name, SrcPosWrap pos, ViewHints hints, StackVar[] vars) {
+	package MemTracker functionEntered(Str name, SrcPosWrap pos, ViewHints hints, StackVar[] vars) {
 		Word id = currentUThread();
 		ProgThread t = if (threads.has(id)) {
 			threads.get(id);
@@ -398,6 +398,8 @@ private void patchFunction(Program program, Hints[] hints, Package pkg, Function
 		return;
 	}
 
+	// print("Source: ${source}");
+
 	// Find the hint object responsible for this function.
 	var hint = findHints(hints, fn);
 
@@ -423,9 +425,15 @@ class PatchParams on Compiler {
 	Listing to;
 	Block block;
 	Set<Nat> inactive;
+
+	// Saved registers.
 	Var saveA;
 	Var saveB;
 	Var saveC;
+
+	// Contains the memory tracker instance returned by 'onFunctionEntered'.
+	Var memTracker;
+	Var tmpAddr;
 
 	init(Package pkg, Hints hints, Listing to) {
 		init() {
@@ -436,6 +444,9 @@ class PatchParams on Compiler {
 			saveA = to.createVar(to.root, sLong);
 			saveB = to.createVar(to.root, sLong);
 			saveC = to.createVar(to.root, sLong);
+
+			memTracker = to.createVar(to.root, sPtr);
+			tmpAddr = to.createVar(to.root, sPtr);
 		}
 	}
 
@@ -452,6 +463,34 @@ class PatchParams on Compiler {
 		to << mov(rbx, saveB);
 		to << mov(rcx, saveC);
 	}
+
+	// Record that we read from memory. 'op' should be something we can use with 'lea'.
+	void recordRead(Operand op) {
+		to << lea(tmpAddr, op);
+		to << fnParam(ptrDesc, memTracker);
+		to << fnParam(ptrDesc, tmpAddr);
+		to << fnCall(named{MemTracker:addRead<MemTracker, lang:unknown:PTR_NOGC>}.ref, true);
+	}
+	void recordReadRef(Operand op) {
+		to << mov(tmpAddr, op);
+		to << fnParam(ptrDesc, memTracker);
+		to << fnParam(ptrDesc, tmpAddr);
+		to << fnCall(named{MemTracker:addRead<MemTracker, lang:unknown:PTR_NOGC>}.ref, true);
+	}
+
+	// Record that we wrote to a register. 'op' should be something we can use with 'lea'.
+	void recordWrite(Operand op) {
+		to << lea(tmpAddr, op);
+		to << fnParam(ptrDesc, memTracker);
+		to << fnParam(ptrDesc, tmpAddr);
+		to << fnCall(named{MemTracker:addWrite<MemTracker, lang:unknown:PTR_NOGC>}.ref, true);
+	}
+	void recordWriteRef(Operand op) {
+		to << mov(tmpAddr, op);
+		to << fnParam(ptrDesc, memTracker);
+		to << fnParam(ptrDesc, tmpAddr);
+		to << fnCall(named{MemTracker:addWrite<MemTracker, lang:unknown:PTR_NOGC>}.ref, true);
+	}
 }
 
 // Patch a source listing.
@@ -464,6 +503,7 @@ private Listing patchListing(Program program, Hints hints, Package pkg, Listing 
 			params.inactive.put(var.key());
 	}
 
+	Bool lastFnParam = false;
 	for (Nat i = 0; i < source.count; i++) {
 		dest << source.labels(i);
 		Instr instr = source[i];
@@ -472,6 +512,15 @@ private Listing patchListing(Program program, Hints hints, Package pkg, Listing 
 			generateReturnCall(program, params, fn, false, instr.src);
 		} else if (instr.op == OpCode:fnRetRef) {
 			generateReturnCall(program, params, fn, true, instr.src);
+		} else if (instr.op == OpCode:fnParam | instr.op == OpCode:fnParamRef) {
+			// For paramerers, we must make sure that we handle all of them at once, so that we
+			// don't insert a call between fnParam instructions. That is very bad.
+			if (!lastFnParam)
+				checkParamAccess(params, source, i);
+			lastFnParam = true;
+		} else if (instr.op != OpCode:fnCall & instr.op != OpCode:fnCallRef) {
+			lastFnParam = false;
+			checkMemAccess(params, instr);
 		}
 
 		dest << instr;
@@ -487,13 +536,87 @@ private Listing patchListing(Program program, Hints hints, Package pkg, Listing 
 			params.block = source.parent(instr.src.block);
 		} else if (instr.op == OpCode:activate) {
 			params.inactive.remove(instr.src.var.key);
+		} else if (instr.op == OpCode:fnCall) {
+			// In case of function calls, the access operations must be after the call is finished.
+			checkMemAccess(params, instr);
+		} else if (instr.op == OpCode:fnCallRef) {
+			params.saveRegs();
+			params.recordWriteRef(instr.dest);
+			params.restoreRegs();
 		}
+
 	}
 
 	dest << source.labels(source.count);
 
 	// print("Patched ${fn.name}: ${dest}");
 	dest;
+}
+
+// Generate code that tracks reads that happen during fnCall instructions.
+private void checkParamAccess(PatchParams params, Listing source, Nat i) on Compiler {
+	Bool saved = false;
+	while (i < source.count) {
+		Instr instr = source[i];
+		if (instr.op == OpCode:fnParam) {
+			if (checkMemAccess(instr.src)) {
+				if (!saved)
+					params.saveRegs();
+				saved = true;
+
+				params.recordRead(instr.src);
+				params.restoreRegs();
+			}
+		} else if (instr.op == OpCode:fnParamRef) {
+			if (!saved)
+				params.saveRegs();
+			saved = true;
+
+			params.recordReadRef(instr.src);
+			params.restoreRegs();
+		} else {
+			break;
+		}
+
+		i++;
+	}
+}
+
+// Generate code that tracks any memory accesses made by the instruction.
+private void checkMemAccess(PatchParams params, Instr instr) on Compiler {
+	Bool saved = false;
+	if (checkMemAccess(instr.src)) {
+		if (!saved)
+			params.saveRegs();
+		saved = true;
+
+		params.recordRead(instr.src);
+		params.restoreRegs();
+	}
+
+	if (checkMemAccess(instr.dest)) {
+		if (instr.mode.has(DestMode:read)) {
+			if (!saved)
+				params.saveRegs();
+			saved = true;
+
+			params.recordRead(instr.dest);
+			params.restoreRegs();
+		}
+		if (instr.mode.has(DestMode:write)) {
+			if (!saved)
+				params.saveRegs();
+			saved = true;
+
+			params.recordWrite(instr.dest);
+			params.restoreRegs();
+		}
+	}
+}
+
+// Check if this operand is a memory reference through a register.
+private Bool checkMemAccess(Operand op) on Compiler {
+	return op.type == OpType:relative;
 }
 
 // Generate the a call to the class to track execution, adding a copy of the return value.
@@ -704,7 +827,7 @@ private void generateCallTracking(Program program, PatchParams to, Function fn) 
 	l << fnParam(ptrDesc, objPtr(SrcPosWrap(fnPos)));
 	l << fnParam(ptrDesc, objPtr(to.viewHints));
 	l << fnParam(ptrDesc, array);
-	l << fnCall(enterFn.ref, true);
+	l << fnCall(enterFn.ref, true, ptrDesc, to.memTracker);
 
 	l << end(subBlock);
 }

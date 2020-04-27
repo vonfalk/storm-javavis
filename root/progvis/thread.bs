@@ -12,6 +12,28 @@ class ExitError extends Exception {
 }
 
 /**
+ * Object tracking reads and writes to memory.
+ */
+class MemTracker {
+	// Memory that was read from recently.
+	unsafe:PinnedSet reads;
+
+	// Memory written to recently.
+	unsafe:PinnedSet writes;
+
+	// Convenience functions from ASM.
+	void addRead(lang:unknown:PTR_NOGC ptr) {
+		reads.put(ptr);
+		print("Reads: ${reads}");
+	}
+	void addWrite(lang:unknown:PTR_NOGC ptr) {
+		writes.put(ptr);
+		print("Writes: ${writes}");
+	}
+}
+
+
+/**
  * Represents a running thread inside the program.
  */
 class ProgThread on Render {
@@ -101,17 +123,20 @@ class ProgThread on Render {
 	}
 
 	// Called when a new function was entered.
-	void onFunctionEntered(Str name, SrcPos pos, ViewHints hints, StackVar[] vars) {
+	MemTracker onFunctionEntered(Str name, SrcPos pos, ViewHints hints, StackVar[] vars) {
 		popFrames();
 
 		callDepth++;
 		frames.push(StackFrame(name, hints, vars, pos));
 
 		if (terminating)
-			return;
+			return MemTracker();
 
 		if (hints.pauseOnEntry())
 			wait();
+
+		// TODO: Save this somewhere.
+		MemTracker();
 	}
 
 	// Called when a function is about to return.
