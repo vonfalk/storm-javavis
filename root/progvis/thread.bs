@@ -21,14 +21,18 @@ class MemTracker {
 	// Memory written to recently.
 	unsafe:PinnedSet writes;
 
+	// Clear content.
+	void clear() {
+		reads.clear();
+		writes.clear();
+	}
+
 	// Convenience functions from ASM.
 	void addRead(lang:unknown:PTR_NOGC ptr) {
 		reads.put(ptr);
-		print("Reads: ${reads}");
 	}
 	void addWrite(lang:unknown:PTR_NOGC ptr) {
 		writes.put(ptr);
-		print("Writes: ${writes}");
 	}
 }
 
@@ -61,6 +65,13 @@ class ProgThread on Render {
 
 	// Owning Program object, so we can access the callback.
 	Program owner;
+
+	// Memory reads and writes by this thread since the last statement.
+	// Not stored inside a particular frame in order to properly track reading function
+	// parameters, etc.
+	// TODO: We could copy/move these around to solve the issue as well, we need
+	// to examine what works best in practice.
+	MemTracker memory;
 
 	// Waiting for some external event?
 	Bool sleeping;
@@ -107,6 +118,8 @@ class ProgThread on Render {
 			last.pos = pos;
 			wait();
 		}
+
+		memory.clear();
 	}
 
 	// Called when a monitored thread is about to return.
@@ -120,6 +133,8 @@ class ProgThread on Render {
 		last.variables = vars;
 		last.returned = true;
 		wait();
+
+		memory.clear();
 	}
 
 	// Called when a new function was entered.
@@ -130,13 +145,12 @@ class ProgThread on Render {
 		frames.push(StackFrame(name, hints, vars, pos));
 
 		if (terminating)
-			return MemTracker();
+			return memory;
 
 		if (hints.pauseOnEntry())
 			wait();
 
-		// TODO: Save this somewhere.
-		MemTracker();
+		memory;
 	}
 
 	// Called when a function is about to return.
