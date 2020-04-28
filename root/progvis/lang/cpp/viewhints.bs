@@ -247,6 +247,8 @@ class CppHeapObj extends Data {
 	Drawable findAt(Point pt) : override {
 		wrap.findAt(pt);
 	}
+
+	Data contained() : override { wrap.contained; }
 }
 
 /**
