@@ -108,6 +108,9 @@ namespace storm {
 		if (!query)
 			return false;
 
+		if (!data)
+			return false;
+
 		sort();
 
 		void **begin = data->v;
@@ -127,7 +130,7 @@ namespace storm {
 	}
 
 	Array<Nat> *PinnedSet::offsets(const void *query) {
-		if (!query)
+		if (!query || !data)
 			return new (this) Array<Nat>();
 
 		sort();
