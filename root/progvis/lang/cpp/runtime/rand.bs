@@ -1,0 +1,4 @@
+// Random from C.
+Int rand() {
+	core:rand(0, 65535);
+}

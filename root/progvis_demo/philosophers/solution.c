@@ -35,7 +35,9 @@ int main(void) {
 
 	thread_new(&philosopher, forks[0], forks[1]);
 	thread_new(&philosopher, forks[1], forks[2]);
-	philosopher(forks[2], forks[0]);
+	thread_new(&philosopher, forks[2], forks[0]);
+
+	free(forks);
 
 	return 0;
 }
