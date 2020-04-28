@@ -23,6 +23,23 @@ class Data extends Drawable {
 	// Find a particular offset inside this data. Attempts to stop at a data element that represents
 	// "type" if possible, in order to better visualize pointers to different kinds of elements.
 	DataOffset findOffset(core:lang:Type? type, Nat offset) { DataOffset(this); }
+
+	// Refine "contained" with a more convenient return type.
+	Data contained() : override { this; }
+
+	// Update the read/write state of this data element based on what threads have observed.
+	void updateMemAccess(unsafe:RawPtr object, Nat offset, Nat->MemTracker trackers) {
+		for (k, v in trackers) {
+			if (v.reads.has(object)) {
+				// TODO: Do something with this information!
+				print("Thread ${k} read offsets ${v.reads.offsets(object)}");
+			}
+			if (v.writes.has(object)) {
+				// TODO: Do something with this information!
+				print("Thread ${k} wrote offsets ${v.writes.offsets(object)}");
+			}
+		}
+	}
 }
 
 /**
@@ -126,6 +143,8 @@ class DataWithCaption extends Data {
 
 	// The drawable we're wrapping.
 	Data wrap;
+
+	Data contained() : override { wrap.contained; }
 
 	// Caption text.
 	private Text caption;
