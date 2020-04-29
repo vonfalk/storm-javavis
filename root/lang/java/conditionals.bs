@@ -1,0 +1,56 @@
+use core:lang;
+use core:asm;
+use lang:bs:macro;
+
+class IfStmt extends Block {
+    init(SrcPos pos, Block parent) {
+        init(pos, parent) {}
+    }
+
+    Expr? cond;
+
+    Stmt? ifBranch;
+
+    Stmt? elseBranch;
+
+    void cond(Expr e) { cond = e; }
+    void ifTrue(Stmt s) { ifBranch = s; }
+    void ifFalse(Stmt s) { elseBranch = s; }
+
+    Bool code(CodeGen gen) : override {
+        unless(cond)
+            throw SyntaxError(pos, "This if-statement has no condition set.");
+        
+        var onFalse = gen.l.label();
+        var exit = gen.l.label();
+
+        CodeResult condResult(Value(named{Bool}), gen.block);
+        CodeGen sub = gen.child();
+        if (step)
+            gen.l << location(cond.pos);
+        gen.l << begin(sub.block);
+        cond.code(sub, condResult);
+        gen.l << end(sub.block);
+
+        gen.l << cmp(condResult.location(gen), byteConst(0));
+        gen.l << jmp(onFalse, CondFlag:ifEqual);
+
+        Bool returns = false;
+        if (ifBranch)
+            returns |= executeStmt(gen, ifBranch);
+        else
+            returns |= true;
+        
+        gen.l << jmp(exit);
+        gen.l << onFalse;
+
+        if (elseBranch)
+            returns |= executeStmt(gen, elseBranch);
+        else
+            returns |= true;
+        
+        gen.l << exit;
+
+        returns;
+    }
+}

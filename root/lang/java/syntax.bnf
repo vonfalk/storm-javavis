@@ -260,11 +260,11 @@ SPostfixOp : "--";
 
 Expr SPrimary(Block block);
 SPrimary : "(", SExpr, ")";
-SPrimary : "[0-9]+[Ll]?" #constant;
+SPrimary => IntLiteral(pos, val) : "[0-9]+[Ll]?" val #constant;
 SPrimary : "0[Xx][0-9A-Fa-f]+[Ll]?" #constant;
 SPrimary : SFloat #constant - ("[fFdD]" #constant)?;
-SPrimary : "true" #constant;
-SPrimary : "false" #constant;
+SPrimary => BoolLiteral(pos, true) : "true" #constant;
+SPrimary => BoolLiteral(pos, false) : "false" #constant;
 SPrimary : "null" #constant;
 SPrimary => StrLiteral(pos, str) : "\"" #string - SStrContent str #string - "\"" #string;
 SPrimary : "'" #string - SCharContent #string - "'" #string;
@@ -354,7 +354,7 @@ SStmt : SBlock;
 SStmt : SIdent, ":", SStmt;
 SStmt => e : SExpr(block) e, ";";
 SStmt[10] : "assert[ \t]" #keyword, SExpr, (":", SExpr,)? ";";
-SStmt[10] : "if" #keyword, "(", SExpr, ")" [, SStmt]? - (, SStmtElse)?;
+SStmt[10] => IfStmt(pos, block) : "if" #keyword, "(", SExpr(me) -> cond, ")" [, SStmt(me) -> ifTrue]? - (, SStmtElse(me) -> ifFalse)?;
 SStmt[10] : "while" #keyword, "(", SExpr, ")" [, SStmt]?;
 SStmt[10] : "do[ \t]" #keyword [, SStmt, ]? "while" #keyword, "(", SExpr, ")", ";";
 SStmt[10] : "for" #keyword, "(", SForControl, ")" [, SStmt]?;
@@ -372,8 +372,8 @@ SSwitchStmt : SStmt;
 SSwitchStmt : "case[ \t]" #keyword, SExpr, ":";
 SSwitchStmt : "default" #keyword, ":";
 
-void SStmtElse();
-SStmtElse : "else" #keyword [, SStmt]?;
+Stmt SStmtElse(Block block);
+SStmtElse => stmt : "else" #keyword [, SStmt(block) stmt]?;
 
 void STryTail();
 STryTail : (SCatchClause, )* "finally" #keyword, SBlock;
@@ -401,7 +401,11 @@ SForStmt : SExpr, (",", SExpr)*;
 Block SBlockStmt(Block block);
 SBlockStmt[10] => block : SStmt(block) -> add;
 SBlockStmt : STypeDecl;
-SBlockStmt : SVarModifier, SType, SIdent #varName, SVarSuffix, (",", SIdent #varName, SVarSuffix,)* ";";
+SBlockStmt => block : SVarDecl -> add;
+
+VarDecl SVarDecl();
+SVarDecl => VarDecl(type, name, pos) : SVarModifier, SType type, SIdent name #varName, ";";
+//SVarDecl => VarDecl() : SVarModifier, SType type, SIdent name #varName, SVarSuffix suffix, (",", SIdent #varName, SVarSuffix,)* ";";
 
 Block SBlock(Block parent);
 SBlock => Block(pos, parent) : "{" [, (SBlockStmt(me) -> add,)* ]+ "}";

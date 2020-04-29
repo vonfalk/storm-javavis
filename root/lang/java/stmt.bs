@@ -12,23 +12,61 @@ class Stmt on Compiler {
     Bool code(CodeGen gen) : abstract;
 }
 
+package Bool executeStmt(Block inside, CodeGen gen, Stmt s) on Compiler {
+    if (s as Block)
+        s.code(gen);
+    else {
+        if (inside.step & s.pos.any)
+            gen.l << location(s.pos);
+        
+        CodeGen child = gen.child();
+        gen.l << begin(child.block);
+
+        Bool returns = s.code(child);
+
+        gen.l << end(child.block);
+        returns;
+    }
+}
+
 class Block extends Stmt {
     Scope scope;
     Stmt[] stmts;
+    protected Str->VarDecl vars;
+    Bool step;
 
     init(SrcPos pos, Scope parent) {
-        init(pos) {}
+        init(pos) { step = true; }
         scope = blockScope (this, parent);
     }
 
     init(SrcPos pos, Block parent) {
-        init(pos) {}
+        init(pos) { step = parent.step; }
         scope = blockScope(this, parent.scope);
     }
 
     void add(Stmt stmt) {
-        if (stmt.toS != this.toS)
-            stmts << stmt;
+        if (stmt is this)
+            return;
+        stmts << stmt;
+    }
+
+    void add(VarDecl var) {
+        print("adding...");
+        vars.put(var.name, var);
+    }
+
+    void initVariables(CodeGen gen) {
+        for (k in vars) {
+            print(k.name);
+        }
+    }
+
+    Named? variable(Str name) {
+        if (vars.has(name))
+            return vars.ge(name);
+        else
+            return null;
     }
 
     Bool code(CodeGen gen) : override {

@@ -1,0 +1,21 @@
+use core:lang;
+use core:asm;
+use lang:bs:macro;
+
+class JavaVar extends Named {
+    
+}
+
+class VarDecl extends Stmt {
+    init(Value type, SStr name, SrcPos pos) {
+        init(pos) {
+            name = name.v.toS;
+        }
+    }
+
+    private Str name;
+
+    Bool code(CodeGen gen) : override {
+        true;
+    }
+}

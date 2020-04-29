@@ -1,6 +1,8 @@
 public class HelloWorld {
     public static void main(String[] args) {
-      print("Hello, world!");
-      print("Hwllo!");
+      if (false)
+        print("Statement is true!");
+      else
+        print("Statement is false!");
     }
 }

@@ -9,6 +9,8 @@ class Expr extends Stmt {
 
     Bool code(CodeGen gen) : abstract;
 
+    void code(CodeGen gen, CodeResult res) : abstract;
+
     Value result() : abstract;
 }
 
@@ -21,10 +23,66 @@ class StrLiteral extends Expr {
 
     private Str val;
 
-    Value result() { return Value(named{Str}); }
+    Value result() : override {
+        Value(named{Str});
+    }
 
     Bool code(CodeGen gen) : override {
         gen.l << mov(ptrA, objPtr(val));
+        true;
+    }
+
+    void code(CodeGen gen, CodeResult res) : override {}
+}
+
+class IntLiteral extends Expr {
+    init(SrcPos pos, Long val) {
+        init(pos) { val = val; }
+    }
+
+    init(SrcPos pos, Str str) {
+        init(pos) { val = str.toLong(); }
+    }
+
+    private Long val;
+
+    Value result() : override {
+        Value(named{Int}, true);
+    }
+
+    Bool code(CodeGen gen) : override {
+        gen.l << mov(ptrA, longConst(val));
+        true;
+    }
+
+    void code(CodeGen gen, CodeResult res) : override {}
+}
+
+class BoolLiteral extends Expr {
+    init(SrcPos pos, Bool val) {
+        init(pos) { val = val; }
+    }
+
+    private Bool val;
+
+    Value result() : override {
+        Value(named{Bool});
+    }
+
+    void code(CodeGen gen, CodeResult res) : override {
+        if (!res.needed())
+            return;
+        
+        Byte val = if (this.val) { 1b; } else {0b; };
+        var to = res.location(gen);
+        gen.l << mov(to, byteConst(val));
+
+        res.created(gen);
+    }
+
+    Bool code(CodeGen gen) : override {
+        Byte _val = if (this.val) { 1b; } else { 0b; };
+        gen.l << mov(byteRel(ptrA), byteConst(_val));
         true;
     }
 }
@@ -43,6 +101,8 @@ class FnCall extends Expr {
     Value result() : override {
         fn.result;
     }
+
+    void code(CodeGen gen, CodeResult res) : override {}
 
     Bool code(CodeGen gen) : override {
         Operand[] ops;
@@ -74,6 +134,6 @@ class FnCall extends Expr {
             return fn;
         }
 
-        throw SyntaxError(pos, "Could not find function.");
+        throw SyntaxError(pos, "Could not find function ${sName}.");
     }
 }
