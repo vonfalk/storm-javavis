@@ -11,6 +11,10 @@ class ThreadData extends Drawable {
 	// Thread that contains the source data.
 	ProgThread thread;
 
+	// Copy of the memory accesses from the thread at the last update.
+	// Otherwise, we might see threads work when it is partly done.
+	MemTracker memory;
+
 	// Stack frames.
 	FrameVal[] frames;
 
@@ -110,6 +114,9 @@ class ThreadData extends Drawable {
 
 	// Update our contents.
 	void traverse(Workspace ws, WorkList work) {
+		memory.clear();
+		memory = MemTracker(thread.memory);
+
 		if (thread.callDepth == 0) {
 			// Don't remove frames if the thread terminated. That makes us show where it crashed.
 			source.highlight = sourceTerminatedHighlight;

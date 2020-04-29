@@ -11,7 +11,13 @@ class Data extends Drawable {
 	// Draw this data item at its current location.
 	void draw(Graphics g, Bool active) : abstract {
 		Rect r = rect;
-		g.fill(r, dataBg);
+
+		if (reads.any)
+			g.fill(r, dataReadBg);
+		else if (writes.any)
+			g.fill(r, dataWriteBg);
+		else
+			g.fill(r, dataBg);
 		g.draw(r, dataFg);
 	}
 
@@ -28,18 +34,31 @@ class Data extends Drawable {
 	Data contained() : override { this; }
 
 	// Update the read/write state of this data element based on what threads have observed.
-	void updateMemAccess(unsafe:RawPtr object, Nat offset, Nat->MemTracker trackers) {
-		for (k, v in trackers) {
-			if (v.reads.has(object)) {
-				// TODO: Do something with this information!
-				print("Thread ${k} read offsets ${v.reads.offsets(object)}");
-			}
-			if (v.writes.has(object)) {
-				// TODO: Do something with this information!
-				print("Thread ${k} wrote offsets ${v.writes.offsets(object)}");
-			}
+	// Called for the root of a data object, thus we assume that 'offset' is zero.
+	void updateMemAccess(unsafe:RawPtr object, Trackers trackers) {
+		if (trackers.accessed(object)) {
+			checkAccess(object, 0, trackers);
+		} else {
+			clearAccess();
 		}
 	}
+
+	// Called to clear any access markers for this object.
+	void clearAccess() {
+		reads.clear();
+		writes.clear();
+	}
+
+	// Called when this object has been accessed by at least one thread. Recurses through the object
+	// hierarchy to find individual elements.
+	void checkAccess(unsafe:RawPtr object, Nat offset, Trackers trackers) {
+		reads = trackers.readBy(object, offset);
+		writes = trackers.writtenBy(object, offset);
+	}
+
+	// Temporary solution for tracking reads and writes. Should perhaps be inside Primitive instead.
+	ThreadData[] reads;
+	ThreadData[] writes;
 }
 
 /**
@@ -140,6 +159,15 @@ class DataWithCaption extends Data {
 
 		false;
 	}
+
+	void clearAccess() : override {
+		wrap.clearAccess();
+	}
+
+	void checkAccess(unsafe:RawPtr object, Nat offset, Trackers trackers) : override {
+		wrap.checkAccess(object, offset, trackers);
+	}
+
 
 	// The drawable we're wrapping.
 	Data wrap;
@@ -412,6 +440,21 @@ class Composite extends Data {
 		return elem.value.findOffset(type, offset - elem.offset);
 	}
 
+	// Called to clear any access markers for this object.
+	void clearAccess() {
+		for (v in content) {
+			v.value.clearAccess();
+		}
+	}
+
+	// Called when this object has been accessed by at least one thread. Recurses through the object
+	// hierarchy to find individual elements.
+	void checkAccess(unsafe:RawPtr object, Nat offset, Trackers trackers) {
+		for (v in content) {
+			v.value.checkAccess(object, offset + v.offset, trackers);
+		}
+	}
+
 private:
 	class Var on Render {
 		Str name;
@@ -531,6 +574,23 @@ class ArrayData extends Data {
 		}
 
 		invalidateSize();
+	}
+
+	// Called to clear any access markers for this object.
+	void clearAccess() {
+		for (v in content) {
+			v.value.clearAccess();
+		}
+	}
+
+	// Called when this object has been accessed by at least one thread. Recurses through the object
+	// hierarchy to find individual elements.
+	void checkAccess(unsafe:RawPtr object, Nat offset, Trackers trackers) {
+		Nat stride = object.readSize;
+
+		for (i, v in content) {
+			v.value.checkAccess(object, offset + i*stride, trackers);
+		}
 	}
 
 private:
