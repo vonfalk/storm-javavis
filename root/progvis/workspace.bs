@@ -394,20 +394,20 @@ private:
 	// Update memory accesses in all objects.
 	private void updateMemAccess() {
 		// First, collect all MemTracker objects.
-		Nat->MemTracker trackers;
+		Trackers trackers;
 		for (e in elements) {
 			if (t = e.visual.contained as ThreadData) {
-				trackers.put(t.thread.threadId, t.thread.memory);
+				trackers.put(t);
 			}
 		}
 
 		for (e in elements) {
 			if (data = e.visual.contained as Data)
-				data.updateMemAccess(e.object, 0, trackers);
+				data.updateMemAccess(e.object, trackers);
 		}
 
 		for (obj, data in stackObjMap) {
-			data.updateMemAccess(obj, 0, trackers);
+			data.updateMemAccess(obj, trackers);
 		}
 	}
 

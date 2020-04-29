@@ -41,8 +41,17 @@ namespace storm {
 
 		// Check if an object is present in here. This pointer must be to the start of an
 		// allocation. Returns true if this object contains a pointer to somewhere inside the
-		// provided object.
+		// provided object. Note that the header of arrays are not counted as 'inside' the object
+		// for consistency with offsets in RawPtr.
 		Bool CODECALL has(const void *query);
+
+		// Check if an offset into an object is present. 'query' should point to the start of an
+		// allocation.
+		Bool CODECALL has(const void *query, Nat offset);
+
+		// Check if a range of addresses is present. 'query' should point to the start of an
+		// allocation.
+		Bool CODECALL has(const void *query, Nat offset, Nat size);
 
 		// Same as 'has', but generates all offsets as an array.
 		Array<Nat> *CODECALL offsets(const void *query);
