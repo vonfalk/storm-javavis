@@ -18,6 +18,18 @@ namespace storm {
 		runOnThread(null),
 		myFlags(fnNone) {}
 
+	Function::Function(SrcPos pos, Value result, Str *name, Array<Value> *params) :
+		Named(name, params),
+		result(result),
+		lookupRef(null),
+		codeRef(null),
+		runOnThread(null),
+		myFlags(fnNone) {
+
+		this->pos = pos;
+	}
+
+
 	const void *Function::pointer() {
 		return ref().address();
 	}

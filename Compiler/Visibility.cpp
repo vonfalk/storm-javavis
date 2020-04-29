@@ -121,6 +121,41 @@ namespace storm {
 
 
 	/**
+	 * Private within a file.
+	 */
+
+	FilePrivate::FilePrivate() {}
+
+	static SrcPos findPos(NameLookup *source) {
+		while (source) {
+			if (LookupPos *n = as<LookupPos>(source))
+				return n->pos;
+
+			source = source->parent();
+		}
+
+		return SrcPos();
+	}
+
+	Bool FilePrivate::visible(Named *check, NameLookup *source) {
+		SrcPos src = findPos(source);
+
+		// If both come from unknown files, they are probably not from the same file.
+		if (!check->pos.file || !src.file)
+			return false;
+
+		// If they are the same object, we don't need the expensive equal-check.
+		if (check->pos.file == src.file)
+			return true;
+		return *check->pos.file == *src.file;
+	}
+
+	void FilePrivate::toS(StrBuf *to) const {
+		*to << S("file private");
+	}
+
+
+	/**
 	 * Object access.
 	 */
 
@@ -138,6 +173,10 @@ namespace storm {
 
 	Visibility *packagePrivate(EnginePtr e) {
 		return e.v.visibility(Engine::vPackagePrivate);
+	}
+
+	Visibility *filePrivate(EnginePtr e) {
+		return e.v.visibility(Engine::vFilePrivate);
 	}
 
 }

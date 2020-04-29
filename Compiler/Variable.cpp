@@ -9,21 +9,23 @@
 
 namespace storm {
 
-	static void checkType(Engine &e, Value type) {
+	static void checkType(Engine &e, Value type, const SrcPos &pos) {
 		if (!type.type)
-			throw new (e) TypedefError(S("Unable to create a variable of type 'void'."));
+			throw new (e) TypedefError(pos, S("Unable to create a variable of type 'void'."));
 	}
 
-	Variable::Variable(Str *name, Value type) :
+	Variable::Variable(SrcPos pos, Str *name, Value type) :
 		Named(name), type(type.asRef(false)) {
+		this->pos = pos;
 
-		checkType(engine(), type);
+		checkType(engine(), type, pos);
 	}
 
-	Variable::Variable(Str *name, Value type, Type *member) :
+	Variable::Variable(SrcPos pos, Str *name, Value type, Type *member) :
 		Named(name, new (name) Array<Value>(1, thisPtr(member))), type(type) {
+		this->pos = pos;
 
-		checkType(engine(), type);
+		checkType(engine(), type, pos);
 	}
 
 
@@ -37,7 +39,11 @@ namespace storm {
 	 * Member variable.
 	 */
 
-	MemberVar::MemberVar(Str *name, Value type, Type *member) : Variable(name, type, member) {
+	MemberVar::MemberVar(Str *name, Value type, Type *member) : Variable(SrcPos(), name, type, member) {
+		hasLayout = false;
+	}
+
+	MemberVar::MemberVar(SrcPos pos, Str *name, Value type, Type *member) : Variable(pos, name, type, member) {
 		hasLayout = false;
 	}
 
@@ -64,7 +70,19 @@ namespace storm {
 	 */
 
 	GlobalVar::GlobalVar(Str *name, Value type, NamedThread *thread, FnBase *initializer) :
-		Variable(name, type), owner(thread), initializer(initializer), hasArray(false) {
+		Variable(SrcPos(), name, type), owner(thread), initializer(initializer), hasArray(false) {
+
+		FnType *fnType = as<FnType>(runtime::typeOf(initializer));
+		if (!fnType)
+			throw new (this) RuntimeError(S("Invalid type of the initializer passed to GlobalVar. Must be a function pointer."));
+		if (fnType->params->count() != 1)
+			throw new (this) RuntimeError(S("An initializer provided to GlobalVar may not take parameters."));
+
+		hasArray = type.isValue();
+	}
+
+	GlobalVar::GlobalVar(SrcPos pos, Str *name, Value type, NamedThread *thread, FnBase *initializer) :
+		Variable(pos, name, type), owner(thread), initializer(initializer), hasArray(false) {
 
 		FnType *fnType = as<FnType>(runtime::typeOf(initializer));
 		if (!fnType)

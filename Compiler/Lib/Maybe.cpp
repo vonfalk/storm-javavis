@@ -548,7 +548,7 @@ namespace storm {
 			if (!copyCtor) {
 				Str *msg = TO_S(engine, S("The type ") << contained->identifier()
 								<< S(" does not provide a copy constructor!"));
-				throw new (this) TypedefError(msg);
+				throw new (this) TypedefError(contained->pos, msg);
 			}
 
 			// Call the regular constructor! (TODO? Inline it?)
@@ -585,7 +585,7 @@ namespace storm {
 				// TODO: We could fall back to a memcpy implementation... We can't inline it,
 				// however, as we don't know the exact size of the type (could be either 32- or 64-bit).
 				Str *msg = TO_S(engine, S("The type ") << contained->identifier() << S(" does not provide a copy constructor!"));
-				throw new (this) TypedefError(msg);
+				throw new (this) TypedefError(contained->pos, msg);
 			}
 
 			// Call the regular constructor! (TODO? Inline it?)

@@ -56,6 +56,7 @@ namespace storm {
 	public:
 		// Create a function.
 		STORM_CTOR Function(Value result, Str *name, Array<Value> *params);
+		STORM_CTOR Function(SrcPos pos, Value result, Str *name, Array<Value> *params);
 
 		// Function result.
 		const Value result;

@@ -9,9 +9,18 @@ namespace storm {
 	STORM_PKG(core.lang);
 
 	/**
-	 * Defines exceptions used by the compiler.
+	 * An error originating from the compiler itself.
 	 */
-	class EXCEPTION_EXPORT CodeError : public Exception {
+	class EXCEPTION_EXPORT CompilerError : public Exception {
+		STORM_EXCEPTION;
+	public:
+		STORM_CTOR CompilerError() {}
+	};
+
+	/**
+	 * Defines exceptions used by the compiler that originate from some location.
+	 */
+	class EXCEPTION_EXPORT CodeError : public CompilerError {
 		STORM_EXCEPTION;
 	public:
 		STORM_CTOR CodeError(SrcPos where) {
@@ -38,7 +47,7 @@ namespace storm {
 	/**
 	 * Language definition error.
 	 */
-	class EXCEPTION_EXPORT LangDefError : public Exception {
+	class EXCEPTION_EXPORT LangDefError : public CompilerError {
 		STORM_EXCEPTION;
 	public:
 		LangDefError(const wchar *msg) {
@@ -54,6 +63,7 @@ namespace storm {
 	private:
 		Str *w;
 	};
+
 
 	/**
 	 * Specific subclass when calling core:debug:throwError.
@@ -79,6 +89,25 @@ namespace storm {
 	public:
 		InternalTypeError(const wchar *context, Type *expected, Type *got);
 		STORM_CTOR InternalTypeError(Str *context, Type *expected, Type *got);
+	};
+
+
+	/**
+	 * Name lookup error.
+	 */
+	class EXCEPTION_EXPORT LookupError : public CompilerError {
+		STORM_EXCEPTION;
+	public:
+		STORM_CTOR LookupError(Str *msg) {
+			this->msg = msg;
+		}
+
+		virtual void STORM_FN message(StrBuf *to) const {
+			*to << S("Name lookup error: ") << msg;
+		}
+
+	private:
+		Str *msg;
 	};
 
 
@@ -118,15 +147,15 @@ namespace storm {
 		Str *msg;
 	};
 
+
 	/**
 	 * Error in type definitions.
-	 * TODO: Require a SrcPos!
 	 */
 	class EXCEPTION_EXPORT TypedefError : public CodeError {
 		STORM_EXCEPTION;
 	public:
-		TypedefError(const wchar *msg);
-		STORM_CTOR TypedefError(Str *msg);
+		TypedefError(SrcPos pos, const wchar *msg);
+		STORM_CTOR TypedefError(SrcPos pos, Str *msg);
 
 		virtual void STORM_FN messageText(StrBuf *to) const {
 			*to << S("Type definition error: ") << msg;
@@ -140,7 +169,7 @@ namespace storm {
 	/**
 	 * Error while handling built-in functions.
 	 */
-	class EXCEPTION_EXPORT BuiltInError : public Exception {
+	class EXCEPTION_EXPORT BuiltInError : public CompilerError {
 		STORM_EXCEPTION;
 	public:
 		BuiltInError(const wchar *msg) {

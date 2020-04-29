@@ -12,8 +12,9 @@ namespace storm {
 
 		BSRawCtor::BSRawCtor(Array<ValParam> *params, SrcPos pos)
 			: Function(Value(), new (params) Str(Type::CTOR), values(params)),
-			  params(params),
-			  pos(pos) {
+			  params(params) {
+
+			this->pos = pos;
 
 			// If we inherit from a class that does not know which thread to run on, we need a Thread as the
 			// first parameter (#1, it is after the this ptr).

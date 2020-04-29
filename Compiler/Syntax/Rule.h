@@ -21,9 +21,6 @@ namespace storm {
 			// Create the rule.
 			STORM_CTOR Rule(RuleDecl *rule, Scope scope);
 
-			// Declared at.
-			SrcPos pos;
-
 			// Scope.
 			Scope scope;
 

@@ -102,7 +102,7 @@ namespace storm {
 				*msg << S("  Could be: ") << candidate->identifier() << S("\n");
 		}
 
-		throw new (this) TypeError(SrcPos(), msg->toS());
+		throw new (this) LookupError(msg->toS());
 	}
 
 	Int SimplePart::matches(Named *candidate, Scope source) const {
@@ -190,11 +190,13 @@ namespace storm {
 					v->push(scope.value(n, SrcPos()));
 				}
 			}
+		} catch (const CodeError *) {
+			// It seems like a compilation error, propagate it further now. Otherwise, we get really
+			// strange error messages in some cases (e.g. type X not found due to a compilation
+			// error inside that type).
+			throw;
 		} catch (const Exception *) {
 			// Return null as per specification.
-
-			// TODO: If the exception is something other than a simple "not found", we actually want
-			// to propagate that, otherwise we produce very confusing error messages from time to time.
 			return null;
 		}
 

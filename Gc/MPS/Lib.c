@@ -28,6 +28,8 @@ void mps_increase_scanned(mps_ss_t mps_ss, size_t increase) {
 	ss->scannedSize += increase;
 }
 
+void gc_panic_stacktrace(void);
+
 // Custom assertion failure handler. Calls 'DebugBreak' to aid when debugging.
 void mps_assert_fail(const char *file, unsigned line, const char *condition) {
 	fflush(stdout);
@@ -50,8 +52,21 @@ void mps_assert_fail(const char *file, unsigned line, const char *condition) {
 #ifdef POSIX
 void mps_on_sigsegv(int signal) {
 	(void)signal;
+	gc_panic_stacktrace();
 	// Raise SIGINT instead. See the comment below for details.
 	raise(SIGINT);
+}
+#endif
+
+#ifdef WINDOWS
+LONG WINAPI fallbackHandler(LPEXCEPTION_POINTERS info) {
+	LPEXCEPTION_RECORD er = info->ExceptionRecord;
+	if (er->ExceptionCode != EXCEPTION_ACCESS_VIOLATION)
+		return EXCEPTION_CONTINUE_SEARCH;
+
+	// Try to print a stack trace before continuing.
+	gc_panic_stacktrace();
+	return EXCEPTION_CONTINUE_SEARCH;
 }
 #endif
 
@@ -71,6 +86,10 @@ void mps_init() {
 	sa.sa_flags = SA_RESTART;
 
 	sigaction(SIGSEGV, &sa, NULL);
+#endif
+
+#ifdef WINDOWS
+	AddVectoredExceptionHandler(0, &fallbackHandler);
 #endif
 
 #endif

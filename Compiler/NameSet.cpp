@@ -43,6 +43,7 @@ namespace storm {
 		for (Nat i = 0; i < items->count(); i++)
 			if (storm::equals(item->params, items->at(i)->params)) {
 				throw new (this) TypedefError(
+					item->pos,
 					TO_S(engine(), item << S(" is already defined as ") << items->at(i)->identifier()));
 			}
 
@@ -81,7 +82,7 @@ namespace storm {
 		for (Nat i = 0; i < templates->count(); i++) {
 			Named *n = templates->at(i)->generate(part);
 			if (found != null && n != null) {
-				throw new (this) TypedefError(TO_S(engine(), S("Multiple template matches for: ") << part));
+				throw new (this) TypedefError(owner->pos, TO_S(engine(), S("Multiple template matches for: ") << part));
 			} else if (n) {
 				found = n;
 			}

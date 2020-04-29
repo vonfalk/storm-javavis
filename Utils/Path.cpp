@@ -198,6 +198,39 @@ Path Path::makeAbsolute(const Path &to) const {
 		return to + *this;
 }
 
+bool Path::isSubPath(const Path &other) const {
+	if (parts.size() < other.parts.size())
+		return false;
+
+	for (nat i = 0; i < other.parts.size(); i++) {
+		if (parts[i] != other.parts[i])
+			return false;
+	}
+
+	return true;
+}
+
+void Path::common(const Path &path) {
+	nat to = min(parts.size(), path.parts.size());
+	for (nat i = 0; i < to; i++) {
+		if (parts[i] != path.parts[i]) {
+			to = i;
+			break;
+		}
+	}
+
+	if (to != parts.size())
+		parts.resize(to);
+}
+
+void Path::outputUnix(std::wostream &to) const {
+	join(to, parts, L"/");
+
+	if (parts.size() == 0)
+		to << L".";
+	if (isDir())
+		to << '/';
+}
 
 #ifdef WINDOWS
 

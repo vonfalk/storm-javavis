@@ -38,14 +38,17 @@ static bool isWhitespace(wchar_t c) {
 }
 
 static void advance(SrcPos &pos, const String &src, nat from, nat to) {
-	for (nat i = from; i < to; i++) {
-		if (src[i] == '\n') {
-			pos.line++;
-			pos.col = 0;
-		} else {
-			pos.col++;
-		}
-	}
+	// for (nat i = from; i < to; i++) {
+	// 	if (src[i] == '\n') {
+	// 		pos.line++;
+	// 		pos.col = 0;
+	// 	} else {
+	// 		pos.col++;
+	// 	}
+	// }
+	for (nat i = from; i < to; i++)
+		if (src[i] != '\r')
+			pos.pos++;
 }
 
 
@@ -84,7 +87,7 @@ String Comment::str() const {
 
 	for (nat i = begin; i < end; i++) {
 		if (const wchar_t *msg = parse(r, state, par, (*src)[i])) {
-			SrcPos pos(fileId, 0, 0);
+			SrcPos pos(fileId, 0);
 			advance(pos, *src, 0, i);
 			throw Error(L"Malformed comment: " + ::toS(msg), pos);
 		}
@@ -259,7 +262,7 @@ const wchar_t *Comment::parse(std::wostringstream &r, State &state, Params &par,
 
 Tokenizer::Tokenizer(nat fileId) :
 	src(readTextFile(SrcPos::files[fileId])),
-	pathId(fileId), pos(0), srcPos(fileId, 0, 0),
+	pathId(fileId), pos(0), srcPos(fileId, 0),
 	commentBegin(0), commentEnd(0),
 	nextToken(L"", SrcPos()) {
 

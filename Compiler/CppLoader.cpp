@@ -8,6 +8,7 @@
 #include "Version.h"
 #include "Code.h"
 #include "VTableCpp.h"
+#include "CompilerProtocol.h"
 #include "Exception.h"
 #include "Lib/Maybe.h"
 #include "Lib/Enum.h"
@@ -78,6 +79,13 @@ namespace storm {
 		return n;
 	}
 
+	Nat CppLoader::sourceCount() const {
+		Nat n = 0;
+		while (world->sources[n])
+			n++;
+		return n;
+	}
+
 	static const void *typeVTable(const CppType &t) {
 		if (t.vtable)
 			return (*t.vtable)();
@@ -106,17 +114,31 @@ namespace storm {
 		GcType *gcType = createGcType(id);
 
 		// If this type inherits from 'Type', it needs special care in its Gc-description.
-		if (type.kind == CppType::superClassType) {
+		if (typeKind(type) == CppType::tSuperClassType) {
 			Type::makeType(*e, gcType);
 		}
 
 		return new (*e) Type(null, flags, Size(type.size), gcType, typeVTable(type));
 	}
 
+	// Equivalent to a trimmed-down version of scope().find, but is allowed to access private members in types.
+	static Named *findPrivateType(Engine &e, SimpleName *name) {
+		Scope scope = e.scope();
+		Named *at = e.package();
+		for (Nat i = 0; i < name->count(); i++) {
+			if (NameSet *s = as<NameSet>(at))
+				at = s->find(name->at(i), scope.child(at));
+			else
+				return null;
+		}
+		return at;
+	}
+
 	Type *CppLoader::findType(const CppType &type) {
 		SimpleName *name = parseSimpleName(*e, type.pkg);
 		name->add(new (*e) Str(type.name));
-		Type *t = as<Type>(e->scope().find(name));
+		// Type *t = as<Type>(e->scope().find(name));
+		Type *t = as<Type>(findPrivateType(*e, name));
 		if (!t) {
 			if (e->has(bootDone)) {
 				throw new (*e) BuiltInError(TO_S(*e, S("Failed to locate ") << name));
@@ -155,9 +177,9 @@ namespace storm {
 				continue;
 
 			CppType::CreateFn fn = (CppType::CreateFn)type.super;
-			if (type.kind == CppType::superEnum)
+			if (typeKind(type) == CppType::tEnum)
 				fn = &createEnum;
-			else if (type.kind == CppType::superBitmaskEnum)
+			else if (typeKind(type) == CppType::tBitmaskEnum)
 				fn = &createBitmaskEnum;
 			into->types[i] = (*fn)(new (*e) Str(type.name), Size(type.size), createGcType(i));
 		}
@@ -184,8 +206,11 @@ namespace storm {
 			// Name.
 			into->types[i]->name = new (*e) Str(type.name);
 
-			// Visibility. All types from C++ are public. There is no mechanism to make them anything else.
-			into->types[i]->visibility = e->visibility(Engine::vPublic);
+			// Visibility.
+			if (typeHasFlag(type, CppType::tPrivate))
+				into->types[i]->visibility = e->visibility(Engine::vTypePrivate);
+			else
+				into->types[i]->visibility = e->visibility(Engine::vPublic);
 
 			// Documentation.
 			setDoc(into->types[i], type.doc, null);
@@ -241,30 +266,30 @@ namespace storm {
 				if (updated[i])
 					continue;
 
-				switch (type.kind) {
-				case CppType::superNone:
+				switch (typeKind(type)) {
+				case CppType::tNone:
 					// Nothing to do.
 					break;
-				case CppType::superClass:
-				case CppType::superClassType:
+				case CppType::tSuperClass:
+				case CppType::tSuperClassType:
 					// Delay update?
 					if (!updated[type.super])
 						continue;
 
 					into->types[i]->setSuper(into->types[type.super]);
 					break;
-				case CppType::superThread:
+				case CppType::tSuperThread:
 					if (TObject::stormType(*e) == null)
 						continue;
 
 					into->types[i]->setThread(into->namedThreads[type.super]);
 					break;
-				case CppType::superCustom:
-				case CppType::superEnum:
-				case CppType::superBitmaskEnum:
+				case CppType::tCustom:
+				case CppType::tEnum:
+				case CppType::tBitmaskEnum:
 					// Already done.
 					break;
-				case CppType::superExternal:
+				case CppType::tExternal:
 					// Nothing to do!
 					break;
 				default:
@@ -416,8 +441,10 @@ namespace storm {
 		Nat c = typeCount();
 		for (Nat i = 0; i < c; i++) {
 			const CppType &t = world->types[i];
-			if (!external(t))
+			if (!external(t)) {
 				findPkg(t.pkg)->add(into->types[i]);
+				setPos(into->types[i], t.pos);
+			}
 		}
 
 		c = templateCount();
@@ -432,8 +459,10 @@ namespace storm {
 		c = threadCount();
 		for (Nat i = 0; i < c; i++) {
 			const CppThread &t = world->threads[i];
-			if (!external(t))
+			if (!external(t)) {
 				findPkg(t.pkg)->add(into->namedThreads[i]);
+				setPos(into->namedThreads[i], t.pos);
+			}
 		}
 	}
 
@@ -500,6 +529,7 @@ namespace storm {
 
 		f->visibility = visibility(fn.access);
 		setDoc(f, fn.doc, fn.params);
+		setPos(f, fn.pos);
 
 		into->add(f);
 	}
@@ -542,6 +572,7 @@ namespace storm {
 
 		f->visibility = visibility(fn.access);
 		setDoc(f, fn.doc, fn.params);
+		setPos(f, fn.pos);
 
 		params->at(0).type->add(f);
 
@@ -603,7 +634,7 @@ namespace storm {
 		Value type = findValue(var.type);
 		assert(type != Value(), L"Type of the variable is void!");
 
-		MemberVar *v = new (*e) MemberVar(new (*e) Str(var.name), type, memberOf);
+		MemberVar *v = new (*e) MemberVar(SrcPos(), new (*e) Str(var.name), type, memberOf);
 		v->setOffset(Offset(var.offset));
 		v->visibility = visibility(var.access);
 		setDoc(v, var.doc, null);
@@ -679,6 +710,49 @@ namespace storm {
 
 	void CppLoader::setDoc(Named *entity, Nat id, const CppParam *params) {
 		entity->documentation = createDoc(entity, id, params);
+	}
+
+	void CppLoader::setPos(Named *entity, CppSrcPos pos) {
+		if (pos.id < 0)
+			return;
+
+		if (into->sources.count() == 0)
+			createSources();
+
+		entity->pos = SrcPos(into->sources[pos.id], pos.pos, pos.pos + 1);
+	}
+
+	static Array<Str *> *splitPath(Engine &e, const wchar *path) {
+		Array<Str *> *r = new (e) Array<Str *>();
+		const wchar *start = path;
+		const wchar *at;
+		for (at = start; *at; at++) {
+			if (*at == '/') {
+				if (start != at)
+					*r << new (e) Str(start, at);
+				start = at + 1;
+			}
+		}
+
+		if (start != at)
+			*r << new (e) Str(start, at);
+
+		return r;
+	}
+
+	void CppLoader::createSources() {
+		Nat n = sourceCount();
+		into->sources.resize(n);
+
+		CompilerProtocol *proto;
+		if (world->libName)
+			proto = new (*e) CompilerProtocol(new (*e) Str(world->libName));
+		else
+			proto = new (*e) CompilerProtocol();
+
+		for (Nat i = 0; i < n; i++) {
+			into->sources[i] = new (*e) Url(proto, splitPath(*e, world->sources[i]));
+		}
 	}
 
 }

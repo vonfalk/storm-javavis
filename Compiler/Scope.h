@@ -88,7 +88,7 @@ namespace storm {
 		STORM_CTOR Scope(Scope parent, NameLookup *top);
 
 		// Create a child scope.
-		inline Scope STORM_FN child(NameLookup *top) { return Scope(*this, top); }
+		inline Scope STORM_FN child(NameLookup *top) const { return Scope(*this, top); }
 
 		// Topmost object.
 		MAYBE(NameLookup *) top;
@@ -105,6 +105,9 @@ namespace storm {
 		// Look up a value. Throws on error. Allows proper handling of void and type aliases.
 		Value STORM_FN value(Name *name, SrcPos pos) const ON(Compiler);
 		Value STORM_FN value(SrcName *name) const ON(Compiler);
+
+		// Amend the scope with a node indicating that we're at a particular position.
+		Scope STORM_FN withPos(SrcPos pos) const;
 
 		// Deep copy.
 		void STORM_FN deepCopy(CloneEnv *env);

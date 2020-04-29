@@ -37,18 +37,30 @@ namespace storm {
 		virtual void STORM_FN deepCopy(CloneEnv *env);
 
 		// Add a pointer to an object. The pointer may not necessarily point to the start of the object.
-		void CODECALL add(void *ptr);
+		void CODECALL put(void *ptr);
 
 		// Check if an object is present in here. This pointer must be to the start of an
 		// allocation. Returns true if this object contains a pointer to somewhere inside the
-		// provided object.
+		// provided object. Note that the header of arrays are not counted as 'inside' the object
+		// for consistency with offsets in RawPtr.
 		Bool CODECALL has(const void *query);
+
+		// Check if an offset into an object is present. 'query' should point to the start of an
+		// allocation.
+		Bool CODECALL has(const void *query, Nat offset);
+
+		// Check if a range of addresses is present. 'query' should point to the start of an
+		// allocation.
+		Bool CODECALL has(const void *query, Nat offset, Nat size);
 
 		// Same as 'has', but generates all offsets as an array.
 		Array<Nat> *CODECALL offsets(const void *query);
 
 		// Clear the set.
 		void STORM_FN clear();
+
+		// To string.
+		virtual void STORM_FN toS(StrBuf *to) const;
 
 	private:
 		// Data.
@@ -75,8 +87,8 @@ namespace storm {
 		// Reserve size for at least 'n' elements.
 		void reserve(size_t n);
 
-		// Sort the array, and remove any duplicates.
-		void sort();
+		// Sort the array, and remove any duplicates (const, as it does not change the contained set).
+		void sort() const;
 
 		// Size of data struct for 'n' elements.
 		static size_t dataSize(size_t n);

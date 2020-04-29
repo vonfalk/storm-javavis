@@ -49,6 +49,7 @@ bool parse(int argc, const wchar_t *argv[]) {
 				config.asmSrc = Path(argv[i+1]).makeAbsolute(cwd);
 				config.asmOut = Path(argv[i+2]).makeAbsolute(cwd);
 				config.genAsm = true;
+				i++;
 			} else if (wcscmp(argv[i], L"--using") == 0) {
 				config.usingDecl.push_back(argv[i+1]);
 			} else if (wcscmp(argv[i], L"--doc") == 0) {

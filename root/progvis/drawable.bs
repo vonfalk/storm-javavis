@@ -69,6 +69,9 @@ class Drawable on Render {
 	// Called when the mouse is moved inside this drawable. "origin" is the location (in world space) where it was pressed.
 	Bool mouseMoved(Point pt, Point origin) { false; }
 
+	// Get the contained drawable, if we're a wrapper around an object.
+	Drawable contained() { this; }
+
 }
 
 
@@ -131,4 +134,6 @@ class WithCaption extends Drawable {
 	Bool remove() : override {
 		wrap.remove();
 	}
+
+	Drawable contained() : override { wrap.contained; }
 }

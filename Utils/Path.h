@@ -81,6 +81,12 @@ public:
 	// Make this path absolute (if it is not already).
 	Path makeAbsolute(const Path &to) const;
 
+	// Is this path a sub-path of "other"?
+	bool isSubPath(const Path &other) const;
+
+	// Modify this path to include the common path with 'other'.
+	void common(const Path &with);
+
 	// Find the children of this path.
 	vector<Path> children() const;
 
@@ -92,6 +98,9 @@ public:
 
 	// Create this path as directory if it does not already exist.
 	void createDir() const;
+
+	// Output with unix-style separators.
+	void outputUnix(std::wostream &to) const;
 
 private:
 

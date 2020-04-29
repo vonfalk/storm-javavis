@@ -66,6 +66,17 @@ namespace storm {
 	};
 
 	/**
+	 * A source position.
+	 */
+	struct CppSrcPos {
+		// File id. If negative, then no position is available.
+		int id;
+
+		// File position (only start, no end).
+		nat pos;
+	};
+
+	/**
 	 * List of C++ types.
 	 */
 	struct CppType {
@@ -76,35 +87,41 @@ namespace storm {
 		const wchar *pkg;
 
 		// What kind of parent do we have?
-		enum SuperKind {
+		enum Kind {
 			// No parent.
-			superNone,
+			tNone,
 
 			// 'super' is a class in this table.
-			superClass,
+			tSuperClass,
 
 			// 'super' is a class in this table, direct or indirect descendant of Type (id 0).
-			superClassType,
+			tSuperClassType,
 
 			// 'super' is a thread id (we inherit from TObject).
-			superThread,
+			tSuperThread,
 
 			// 'super' is a pointer to a function CreateFn that generates the type to use.
-			superCustom,
+			tCustom,
 
 			// This is an enum.
-			superEnum,
+			tEnum,
 
 			// This is a bitmask enum.
-			superBitmaskEnum,
+			tBitmaskEnum,
 
 			// This type is external to this library. Storm should try to find it using regular type
 			// lookup with 'name' as an absolute package name.
-			superExternal,
+			tExternal,
+
+			// Mask for additional flags.
+			tMask = 0xFF,
+
+			// Is this type private to the enclosing type?
+			tPrivate = 0x100
 		};
 
-		// Parent kind.
-		SuperKind kind;
+		// Kind of type, super type
+		Kind kind;
 
 #ifdef STORM_COMPILER
 		// The create function that 'super' is if 'kind == superCustom'.
@@ -129,7 +146,25 @@ namespace storm {
 		// C++ generated VTable for this type (if any).
 		typedef const void *(*VTableFn)();
 		VTableFn vtable;
+
+		// Source location.
+		CppSrcPos pos;
 	};
+
+	// Extract the regular part of the 'kind' enum.
+	inline CppType::Kind typeKind(const CppType &t) {
+		return CppType::Kind(nat(t.kind) & nat(CppType::tMask));
+	}
+
+	// See if a function has one or more specific flags.
+	inline bool typeHasFlag(const CppType &t, CppType::Kind flag) {
+		return (nat(t.kind) & nat(flag)) == nat(flag);
+	}
+
+	// Combine flags properly. Required by the generated code.
+	inline CppType::Kind operator |(CppType::Kind a, CppType::Kind b) {
+		return CppType::Kind(nat(a) | nat(b));
+	}
 
 	/**
 	 * Reference to a type from C++.
@@ -231,6 +266,9 @@ namespace storm {
 
 		// Result.
 		CppTypeRef result;
+
+		// Source position.
+		CppSrcPos pos;
 	};
 
 	// Extract the regular part of the 'kind' enum.
@@ -270,6 +308,9 @@ namespace storm {
 
 		// Offset into the type.
 		CppOffset offset;
+
+		// Source position.
+		CppSrcPos pos;
 	};
 
 	/**
@@ -322,6 +363,9 @@ namespace storm {
 
 		// Documentation id.
 		nat doc;
+
+		// Position.
+		CppSrcPos pos;
 
 		// Located externally?
 		bool external;
@@ -406,6 +450,13 @@ namespace storm {
 
 		// List of versions.
 		const CppVersion *versions;
+
+		// List of source files that are referred to by types, functions, etc.
+		const wchar *const *sources;
+
+		// Name of the current library (or NULL for the compiler). Used to locate source code
+		// relative to the compiler root directory.
+		const wchar *libName;
 
 		// Name of the file containing documentation for this world.
 		const wchar *docFile;

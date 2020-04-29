@@ -57,7 +57,7 @@
     but the scale of the issue should be assessed first.
   - [ ] Parsing core.lang.syntax.bnf takes about 80 ms, which is a bit on the high end when compiling code...
 
-* Loose ends so far [52/94]
+* Loose ends so far [54/94]
   - [ ] We want to allocate threads in some kind of pool. since the minimum alignment for VirtualAlloc on Windows
     is 64k, we might waste quite a lot of memory when allocating small stacks.
   - [ ] Having a generator in Basic Storm generate types, makes it impossible to use those types in other files
@@ -84,7 +84,6 @@
     We should at least warn about this.
   - [ ] Perhaps most containers shall provide a range-iterator as well? It is probably easier to provide
     some generic facility to convert from a pair of iterators to a range and use that.
-  - [ ] Nested classes declared in C++ are not private in Storm, even if they are declared as such in C++.
   - [ ] The expression Int[]:foo does not parse properly. I don't know if we want it to or not, but it is
     nice when calling static functions (which is rare for these).
   - [ ] Finish the implementation of core:Variant. It is currently lacking a typesafe Storm interface (usable with "as").
@@ -127,14 +126,15 @@
     to array headers, and let the user provide a custom destructor in there if neccessary.
   - [ ] Make sure Array<>, Map<> and Set<> clear the memory when an element is removed (and call destructors).
   - [ ] Function pointers should maybe allow casting to less specific types of parameters.
-  - [ ] Add a 'pos' member to Named. Then we can implement a generic 'file private' and use that in Basic Storm.
-    If this is done, we should remove or replace storm::bs::FileScope in Basic/Scope.h, as it is most likely not
-    needed anymore.
   - [ ] if (x = foo.bar) does not produce an error if 'foo.bar' is not Maybe<T>.
   - [ ] Support marking functions as 'pure' in C++.
   - [ ] Move the 'assign' declaration to being purely a decorator (ie. Foo field(Foo v) : assign)?
   - [ ] If a type has a '==' or '<' outside the type itself, the corresponding operator will not be present in
     a Handle, like '<<' at the moment.
+  - [X] Add a 'pos' member to Named. Then we can implement a generic 'file private' and use that in Basic Storm.
+    If this is done, we should remove or replace storm::bs::FileScope in Basic/Scope.h, as it is most likely not
+    needed anymore.
+  - [X] Nested classes declared in C++ are not private in Storm, even if they are declared as such in C++.
   - [X] This expression "VarInfo v = r.location(to);" should not compile, since we should not be able to auto cast here.
   - [X] A production like this: "SOp3 : "&", SOp3(block) n;" works for "Expr SOp3(Block block);". It should give an error!
   - [X] An exception thrown as "const Exception" will not be catched by the Code backend currently.

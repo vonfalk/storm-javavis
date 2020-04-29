@@ -33,13 +33,31 @@ namespace storm {
 		}
 	}
 
+	void PinnedSet::toS(StrBuf *to) const {
+		sort();
+
+		*to << S("{");
+		bool first = true;
+		for (size_t i = 0; i < data->count; i++) {
+			if (!data->v[i])
+				continue;
+
+			if (!first)
+				*to << S(", ");
+			first = false;
+
+			*to << S("0x") << hex(data->v[i]);
+		}
+		*to << S("}");
+	}
+
 	struct PtrCompare {
 		bool operator() (const void *a, const void *b) const {
 			return size_t(a) < size_t(b);
 		}
 	};
 
-	void PinnedSet::add(void *ptr) {
+	void PinnedSet::put(void *ptr) {
 		if (!ptr)
 			return;
 
@@ -78,24 +96,46 @@ namespace storm {
 		size_t size = type->stride;
 		if (type->kind == GcType::tArray) {
 			size *= ((const GcArray<Byte> *)object)->count;
-			size += OFFSET_OF(GcArray<Byte>, v);
+			// size += OFFSET_OF(GcArray<Byte>, v);
 		} else if (type->kind == GcType::tWeakArray) {
 			size *= ((const GcWeakArray<void *> *)object)->count();
-			size += OFFSET_OF(GcArray<Byte>, v);
+			// size += OFFSET_OF(GcArray<Byte>, v);
 		}
 		return size;
 	}
 
+	static size_t arrayHeader(const void *object) {
+		const GcType *type = Gc::typeOf(object);
+		if (type->kind == GcType::tArray) {
+			return OFFSET_OF(GcArray<Byte>, v);
+		} else if (type->kind == GcType::tWeakArray) {
+			return OFFSET_OF(GcArray<Byte>, v);
+		} else {
+			return 0;
+		}
+	}
+
 	Bool PinnedSet::has(const void *query) {
+		return has(query, 0, objSize(query));
+	}
+
+	Bool PinnedSet::has(const void *query, Nat start) {
+		return has(query, start, 1);
+	}
+
+	Bool PinnedSet::has(const void *query, Nat start, Nat size) {
 		if (!query)
+			return false;
+		if (!data)
 			return false;
 
 		sort();
 
+		query = (const char *)query + start + arrayHeader(query);
+
 		void **begin = data->v;
 		void **end = data->v + data->count;
 
-		size_t size = objSize(query);
 		void **found = std::lower_bound(begin, end, query, PtrCompare());
 
 		if (found == end)
@@ -109,7 +149,7 @@ namespace storm {
 	}
 
 	Array<Nat> *PinnedSet::offsets(const void *query) {
-		if (!query)
+		if (!query || !data)
 			return new (this) Array<Nat>();
 
 		sort();
@@ -155,7 +195,7 @@ namespace storm {
 			free(newData);
 	}
 
-	void PinnedSet::sort() {
+	void PinnedSet::sort() const {
 		if (data->sorted)
 			return;
 
@@ -190,10 +230,24 @@ namespace storm {
 		Engine &e = rawPtr->engine;
 		Type *to = StormInfo<PinnedSet>::type(e);
 
+		Value b(StormInfo<Bool>::type(e));
+
 		Array<Value> *raw = new (e) Array<Value>(2, Value(to));
 		raw->at(1) = Value(rawPtr);
-		to->add(nativeFunction(e, Value(StormInfo<Bool>::type(e)), S("has"), raw, address(&PinnedSet::has)));
+		to->add(nativeFunction(e, b, S("has"), raw, address<Bool (CODECALL PinnedSet::*)(const void *)>(&PinnedSet::has)));
 		to->add(nativeFunction(e, Value(StormInfo<Array<Nat>>::type(e)), S("offsets"), raw, address(&PinnedSet::offsets)));
+
+		Array<Value> *rawNat = new (e) Array<Value>(3, Value(to));
+		rawNat->at(1) = Value(rawPtr);
+		rawNat->at(2) = Value(StormInfo<Nat>::type(e));
+		to->add(nativeFunction(e, b, S("has"), rawNat, address<Bool (CODECALL PinnedSet::*)(const void *, Nat)>(&PinnedSet::has)));
+
+		rawNat = new (e) Array<Value>(4, Value(to));
+		rawNat->at(1) = Value(rawPtr);
+		rawNat->at(2) = Value(StormInfo<Nat>::type(e));
+		rawNat->at(3) = Value(StormInfo<Nat>::type(e));
+		to->add(nativeFunction(e, b, S("has"), rawNat, address<Bool (CODECALL PinnedSet::*)(const void *, Nat, Nat)>(&PinnedSet::has)));
+
 
 		Type *unknown = as<Type>(e.nameSet(parseSimpleName(e, S("core.lang.unknown.PTR_NOGC"))));
 		if (!unknown)
@@ -201,10 +255,10 @@ namespace storm {
 
 		Array<Value> *un = new (e) Array<Value>(2, Value(to));
 		un->at(1) = Value(unknown);
-		to->add(nativeFunction(e, Value(), S("add"), un, address(&PinnedSet::add)));
+		to->add(nativeFunction(e, Value(), S("put"), un, address(&PinnedSet::put)));
 
 		// This version is more restricted, but easier to use from Storm.
-		to->add(nativeFunction(e, Value(), S("add"), raw, address(&PinnedSet::add)));
+		to->add(nativeFunction(e, Value(), S("put"), raw, address(&PinnedSet::put)));
 	}
 
 }

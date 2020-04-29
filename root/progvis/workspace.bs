@@ -34,7 +34,7 @@ class Workspace on Render {
 				Size sz = e.visual.size;
 				e.visual.pos.x = viewport.p1.x - sz.w - space;
 				// e.visual.pos.y = viewport.p1.y - sz.h - space;
-				e.visual.pos.y = space;
+				e.visual.pos.y = viewport.p0.y + space;
 			}
 
 			// TODO: Clipping?
@@ -224,11 +224,7 @@ class Workspace on Render {
 			var elem = elements[id];
 			elem.visited = true;
 
-			Drawable data = elem.visual;
-			if (caption = data as WithCaption) {
-				data = caption.wrap;
-			}
-
+			Drawable data = elem.visual.contained;
 			if (data as ThreadData) {
 				data.traverse(this, list);
 			}
@@ -281,6 +277,9 @@ class Workspace on Render {
 		while (to < elements.count) {
 			elements.pop();
 		}
+
+		// Mark reads/writes.
+		updateMemAccess();
 	}
 
 	// Remove everything in the workspace.
@@ -390,6 +389,26 @@ private:
 		Point pos = maxPos + layoutSpace;
 		visual.pos = pos;
 		maxPos.y = pos.y + visual.size.h;
+	}
+
+	// Update memory accesses in all objects.
+	private void updateMemAccess() {
+		// First, collect all MemTracker objects.
+		Trackers trackers;
+		for (e in elements) {
+			if (t = e.visual.contained as ThreadData) {
+				trackers.put(t);
+			}
+		}
+
+		for (e in elements) {
+			if (data = e.visual.contained as Data)
+				data.updateMemAccess(e.object, trackers);
+		}
+
+		for (obj, data in stackObjMap) {
+			data.updateMemAccess(obj, trackers);
+		}
 	}
 
 	// Create a new node for an object. Called by 'traverse'.

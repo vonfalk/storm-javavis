@@ -77,6 +77,8 @@ namespace storm {
 		static const CppThread *cppThreads();
 		static const CppLicense *cppLicenses();
 		static const CppVersion *cppVersions();
+		static const wchar *const *cppSources();
+		static const wchar *cppLibName();
 		static const wchar *cppDocName();
 		static const CppRefType *cppRefTypes();
 
@@ -148,7 +150,7 @@ namespace storm {
 
 		static const CppType types[] = {
 			// CPP_TYPES
-			{ null, null, CppType::superNone, 0, 0, CppSize::invalid, null, typeNone, null },
+			{ null, null, CppType::tNone, 0, 0, CppSize::invalid, null, typeNone, null, { -1, 0 } },
 		};
 		return types;
 	}
@@ -160,7 +162,7 @@ namespace storm {
 
 		static const CppFunction functions[] = {
 			// CPP_FUNCTIONS
-			{ null, null, CppFunction::fnFree, cppPublic, 0, 0, null, null, { CppTypeRef::tVoid, null, false, false } },
+			{ null, null, CppFunction::fnFree, cppPublic, 0, 0, null, null, { CppTypeRef::tVoid, null, false, false }, { -1, 0 } },
 		};
 
 		return functions;
@@ -169,7 +171,7 @@ namespace storm {
 	const CppVariable *CppMeta::cppVariables() {
 		static const CppVariable variables[] = {
 			// CPP_VARIABLES
-			{ null, 0, 0, cppPublic, { CppTypeRef::invalid }, CppOffset::invalid },
+			{ null, 0, 0, cppPublic, { CppTypeRef::invalid }, CppOffset::invalid, { -1, 0 } },
 		};
 
 		return variables;
@@ -195,7 +197,7 @@ namespace storm {
 	const CppThread *CppMeta::cppThreads() {
 		static const CppThread threads[] = {
 			// CPP_THREADS
-			{ null, null, null, 0, false },
+			{ null, null, null, 0, { -1, 0 }, false },
 		};
 		return threads;
 	}
@@ -214,6 +216,22 @@ namespace storm {
 			{ null, null, null },
 		};
 		return versions;
+	}
+
+	const wchar *const *CppMeta::cppSources() {
+		static const wchar *sources[] = {
+			// SOURCES
+			null,
+		};
+		return sources;
+	}
+
+	const wchar *CppMeta::cppLibName() {
+		static const wchar *name[] = {
+			// LIB_NAME
+			null,
+		};
+		return name[0];
 	}
 
 	const wchar *CppMeta::cppDocName() {
@@ -247,6 +265,8 @@ namespace storm {
 			CppMeta::cppThreads(),
 			CppMeta::cppLicenses(),
 			CppMeta::cppVersions(),
+			CppMeta::cppSources(),
+			CppMeta::cppLibName(),
 			CppMeta::cppDocName(),
 			CppMeta::cppRefTypes(),
 		};

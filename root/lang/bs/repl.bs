@@ -15,7 +15,7 @@ class BsRepl extends Repl {
 	package Bool done;
 
 	// Scope.
-	private Scope scope;
+	package Scope scope;
 
 	// Pre-processing.
 	init() {
@@ -115,13 +115,24 @@ private:
 			// at this point.
 		}
 
-		Function replaceFn = named{ReplSandbox:evalFn<ReplSandbox>};
+		// Create a new function that we execute, so that we can run multiple REPL:s at the same time.
+		Function evalFn(Value(named{Str}), "<interactive>", [named{ReplSandbox}]);
+		evalFn.parentLookup = named{ReplSandbox};
 		ReplCode code(block, thisPtr);
-		replaceFn.setCode(LazyCode(&code.load()));
+		evalFn.setCode(LazyCode(&code.load()));
 
-		// Now, run the replaced function!
-		ReplSandbox sandbox(this);
-		print("=> " # sandbox.evalFn());
+		if (ptr = evalFn.pointer as Fn<Str, ReplSandbox>) {
+			ReplSandbox sandbox(this);
+			print("=> " # ptr.call(sandbox));
+		}
+
+		// Function replaceFn = named{ReplSandbox:evalFn<ReplSandbox>};
+		// ReplCode code(block, thisPtr);
+		// replaceFn.setCode(LazyCode(&code.load()));
+		//
+		// // Now, run the replaced function!
+		// ReplSandbox sandbox(this);
+		// print("=> " # sandbox.evalFn());
 	}
 }
 
@@ -140,7 +151,7 @@ private void outputLicense(core:info:License l, Bool full) on Compiler {
  * Sandbox class for the Repl to execute in.
  */
 class ReplSandbox on Compiler {
-	private BsRepl owner;
+	package BsRepl owner;
 
 	init(BsRepl owner) {
 		init() {
@@ -218,11 +229,8 @@ class ReplSandbox on Compiler {
 		owner.done = true;
 	}
 
-	// This function will be replaced runtime, beware >)
-	// TODO: Replace with some kind of anonymous function. Everything crashes if it is called recursively.
-	Str evalFn() {
-		"";
-	}
+	// The REPL machinery will inject a function here, so that everything typed by the user will be
+	// executed in this context.
 }
 
 class ReplBlock extends ExprBlock {
@@ -350,17 +358,22 @@ void replDel(Str name) on Compiler {
 
 // Implementation of the 'help' statement in the Repl.
 Expr helpStmt(Block block, SrcName name) on Compiler {
+	Expr thisVar = namedExpr(block, name.pos, "this", Actuals());
     Expr type = macro:createType(name.pos, block, name);
 	SrcName fnName(name.pos);
 	fnName.add("lang");
 	fnName.add("bs");
 	fnName.add("replHelp");
-	namedExpr(block, fnName, Actuals(type));
+
+	Actuals params;
+	params.add(thisVar);
+	params.add(type);
+	namedExpr(block, fnName, params);
 }
 
 // Execute the help statement in the repl.
-void replHelp(SrcName name) on Compiler {
-	Scope root = rootScope;
+void replHelp(ReplSandbox me, SrcName name) on Compiler {
+	Scope root = me.owner.scope;
 
 	if (entity = root.find(name)) {
 		printHelp(entity);
@@ -374,6 +387,7 @@ void replHelp(SrcName name) on Compiler {
 
 void printHelp(Named entity) on Compiler {
 	print(entity.findDoc.toS);
+	print("\nAt: " # entity.pos);
 
 	if (entity as NameSet) {
 		entity.forceLoad();

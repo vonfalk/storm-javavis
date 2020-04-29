@@ -22,8 +22,8 @@ namespace storm {
 
 	protected:
 		// Create a variable, either as a member or as a non-member.
-		STORM_CTOR Variable(Str *name, Value type);
-		STORM_CTOR Variable(Str *name, Value type, Type *member);
+		STORM_CTOR Variable(SrcPos pos, Str *name, Value type);
+		STORM_CTOR Variable(SrcPos pos, Str *name, Value type, Type *member);
 	};
 
 
@@ -36,6 +36,7 @@ namespace storm {
 	public:
 		// Create.
 		STORM_CTOR MemberVar(Str *name, Value type, Type *memberOf);
+		STORM_CTOR MemberVar(SrcPos pos, Str *name, Value type, Type *memberOf);
 
 		// Get the offset of this member.
 		Offset STORM_FN offset() const;
@@ -75,6 +76,7 @@ namespace storm {
 		// Create. Initialize the variable to whatever is returned by 'initializer'. 'initializer'
 		// is evaluated on the thread specified by 'thread'.
 		STORM_CTOR GlobalVar(Str *name, Value type, NamedThread *thread, FnBase *initializer);
+		STORM_CTOR GlobalVar(SrcPos pos, Str *name, Value type, NamedThread *thread, FnBase *initializer);
 
 		// Owning thread.
 		NamedThread *owner;

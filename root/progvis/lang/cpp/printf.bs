@@ -15,13 +15,13 @@ class Printf extends Expr {
 				param++;
 			} else {
 				// Regular thing.
-				addStr(f.v);
+				items << StringConst(f.v.unescape);
 			}
 		}
 	}
 
-	// The functions we will call. We build these in the constructor.
-	Expr[] fnCalls;
+	// Items we should print.
+	Item[] items;
 
 	ExprResult result() : override {
 		// No return value.
@@ -29,20 +29,97 @@ class Printf extends Expr {
 	}
 
 	void code(CodeGen gen, CodeResult res) : override {
-		// We never return anything, so this is fine to do!
-		for (x in fnCalls)
-			x.code(gen, CodeResult());
+		for (i in items) {
+			i.computeExpr(gen);
+		}
+		for (i in items) {
+			i.run(gen);
+		}
 	}
 
 	void codePtr(CodeGen gen, Type type) : override {
 		throw SyntaxError(pos, "Internal error, printf does not return anything.");
 	}
 
+	// Thing to print from printf.
+	private class Item on Compiler {
+		void computeExpr(CodeGen gen) : abstract;
+		void run(CodeGen gen) : abstract;
+	}
+
+	// A regular string.
+	private class StringConst extends Item {
+		init(Str str) {
+			init { value = str; }
+		}
+
+		Str value;
+
+		void computeExpr(CodeGen gen) : override {}
+
+		void run(CodeGen gen) : override {
+			var fn = named{runtime:printStr<Str>};
+			gen.l << fnParam(ptrDesc(), objPtr(value));
+			gen.l << fnCall(fn.ref, false);
+		}
+	}
+
+	// A formatted string from a pointer.
+	private class StringPtr extends Item {
+		init(Int width, Expr value) {
+			init { width = width; value = value; }
+		}
+
+		Int width;
+		Expr value;
+
+		asm:Var var;
+
+		void computeExpr(CodeGen gen) : override {
+			CodeResult r(named{ConstPtr<Byte>}, gen.block);
+			value.code(gen, r);
+			var = r.location(gen);
+		}
+
+		void run(CodeGen gen) : override {
+			Value p(named{ConstPtr<Byte>});
+			var fn = named{PrintfHelpers:putStr<Int, ConstPtr<Byte>>};
+			gen.l << fnParam(intDesc(), intConst(width));
+			gen.l << fnParam(p.desc(), var);
+			gen.l << fnCall(fn.ref, false);
+		}
+	}
+
+	// An integer.
+	private class Integer extends Item {
+		init(Int width, Expr value) {
+			init { width = width; value = value; }
+		}
+
+		Int width;
+		Expr value;
+
+		asm:Var var;
+
+		void computeExpr(CodeGen gen) : override {
+			CodeResult r(named{Int}, gen.block);
+			value.code(gen, r);
+			var = r.location(gen);
+		}
+
+		void run(CodeGen gen) : override {
+			var fn = named{PrintfHelpers:putInt<Int, Int>};
+			gen.l << fnParam(intDesc(), intConst(width));
+			gen.l << fnParam(intDesc(), var);
+			gen.l << fnCall(fn.ref, false);
+		}
+	}
+
 	// Add a call for printing a parameter.
 	private void addParam(SStr str, Expr param) {
 		// Escape for %
 		if (str.v == "%%") {
-			addStr("%");
+			items << StringConst("%");
 			return;
 		}
 
@@ -62,23 +139,17 @@ class Printf extends Expr {
 		if (last == "s") {
 			if (middle.empty)
 				middle = "0";
-			var fn = named{PrintfHelpers:putStr<Int, ConstPtr<Byte>>};
-			fnCalls << FnCall(pos, fn, [IntLiteral(pos, middle.toInt), param], false);
+			items << StringPtr(middle.toInt, param);
 		} else if (last == "d") {
 			if (middle.empty)
 				middle = "0";
-			var fn = named{PrintfHelpers:putInt<Int, Int>};
-			fnCalls << FnCall(pos, fn, [IntLiteral(pos, middle.toInt), param], false);
+			items << Integer(middle.toInt, param);
 		} else {
 			throw SyntaxError(str.pos, "Unsupported format specifier ${last}");
 		}
 	}
-
-	private void addStr(Str str) {
-		var fn = named{runtime:putstr<ConstPtr<Byte>>};
-		fnCalls << FnCall(pos, fn, [StrLiteral(pos, str)], false);
-	}
 }
+
 
 // Output functions used by the implementation.
 // Due to a bug in loading the ConstPtr type, these need to be in a separate class to delay loading of the functions.

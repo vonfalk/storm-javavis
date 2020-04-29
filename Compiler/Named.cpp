@@ -52,6 +52,15 @@ namespace storm {
 
 
 	/**
+	 * LookupPos.
+	 */
+
+	LookupPos::LookupPos() {}
+
+	LookupPos::LookupPos(SrcPos pos) : pos(pos) {}
+
+
+	/**
 	 * Named.
 	 */
 
@@ -62,6 +71,14 @@ namespace storm {
 	}
 
 	Named::Named(Str *name, Array<Value> *params) : name(name), params(params), flags(namedDefault), visibility(null) {}
+
+	Named::Named(SrcPos pos, Str *name) : LookupPos(pos), name(name), flags(namedDefault), visibility(null) {
+		if (engine().has(bootTemplates)) {
+			params = new (this) Array<Value>();
+		}
+	}
+
+	Named::Named(SrcPos pos, Str *name, Array<Value> *params) : LookupPos(pos), name(name), params(params), flags(namedDefault), visibility(null) {}
 
 	void Named::lateInit() {
 		if (!params)

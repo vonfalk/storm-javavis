@@ -87,6 +87,9 @@ namespace storm {
 		// Get the number of versions.
 		Nat versionCount() const;
 
+		// Get the number of source files.
+		Nat sourceCount() const;
+
 		// Create all licenses in their appropriate places.
 		void loadLicenses();
 
@@ -145,16 +148,23 @@ namespace storm {
 		CppDoc *createDoc(Named *entity, Nat id, MAYBE(const CppParam *) params);
 		void setDoc(Named *entity, Nat id, MAYBE(const CppParam *) params);
 
+		// Set position information on a named entity.
+		void setPos(Named *entity, CppSrcPos pos);
+
+		// Create all sources.
+		void createSources();
+
 		// See if various types are external.
-		inline bool external(const CppType &t) const { return t.kind == CppType::superExternal; }
+		inline bool external(const CppType &t) const { return typeKind(t) == CppType::tExternal; }
 		inline bool external(const CppTemplate &t) const { return t.generate == null; }
 		inline bool external(const CppThread &t) const { return t.external; }
 
 		// See if a type shall be delayed.
 		inline bool delayed(const CppType &t) const {
-			return t.kind == CppType::superCustom
-				|| t.kind == CppType::superEnum
-				|| t.kind == CppType::superBitmaskEnum;
+			CppType::Kind k = typeKind(t);
+			return k == CppType::tCustom
+				|| k == CppType::tEnum
+				|| k == CppType::tBitmaskEnum;
 		}
 	};
 

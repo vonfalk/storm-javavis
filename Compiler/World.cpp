@@ -3,13 +3,14 @@
 
 namespace storm {
 
-	World::World(Gc &gc) : types(gc), templates(gc), threads(gc), namedThreads(gc) {}
+	World::World(Gc &gc) : types(gc), templates(gc), threads(gc), namedThreads(gc), sources(gc) {}
 
 	void World::clear() {
 		types.clear();
 		templates.clear();
 		threads.clear();
 		namedThreads.clear();
+		sources.clear();
 	}
 
 	void World::forNamed(NamedFn fn) {

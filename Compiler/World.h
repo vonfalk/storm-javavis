@@ -6,6 +6,8 @@
 
 namespace storm {
 
+	class Url;
+
 	/**
 	 * Holds data about a set of types accessible from C++. Each of the types and templates have
 	 * their own unique id:s.
@@ -25,6 +27,9 @@ namespace storm {
 
 		// Instantiated 'NamedThread' objects.
 		RootArray<NamedThread> namedThreads;
+
+		// Instantiated Path-objects for the paths in the Source array.
+		RootArray<Url> sources;
 
 		// Clear all allocations.
 		void clear();

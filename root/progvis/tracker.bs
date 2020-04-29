@@ -1,0 +1,78 @@
+/**
+ * Object tracking reads and writes to memory.
+ */
+class MemTracker {
+	// Memory that was read from recently.
+	unsafe:PinnedSet reads;
+
+	// Memory written to recently.
+	unsafe:PinnedSet writes;
+
+	// Initialize.
+	init() { init{} }
+
+	// Copy.
+	init(MemTracker original) {
+		init {
+			reads = unsafe:PinnedSet(original.reads);
+			writes = unsafe:PinnedSet(original.writes);
+		}
+	}
+
+	// Clear content.
+	void clear() {
+		reads.clear();
+		writes.clear();
+	}
+
+	// Convenience functions from ASM.
+	void addRead(lang:unknown:PTR_NOGC ptr) {
+		reads.put(ptr);
+	}
+	void addWrite(lang:unknown:PTR_NOGC ptr) {
+		writes.put(ptr);
+	}
+}
+
+/**
+ * A collection of trackers for different threads.
+ */
+class Trackers {
+	ThreadData[] threads;
+
+	void put(ThreadData thread) {
+		threads << thread;
+	}
+
+	// Check if any part of the object was accessed by a thread.
+	Bool accessed(unsafe:RawPtr object) {
+		for (t in threads) {
+			var mem = t.memory;
+			if (mem.reads.has(object))
+				return true;
+			if (mem.writes.has(object))
+				return true;
+		}
+		false;
+	}
+
+	// Check which threads read a particular offset inside the given object.
+	ThreadData[] readBy(unsafe:RawPtr object, Nat offset) {
+		ThreadData[] r;
+		for (t in threads) {
+			if (t.memory.reads.has(object, offset))
+				r << t;
+		}
+		r;
+	}
+
+	// Check which threads wrote a particular offset inside the given object.
+	ThreadData[] writtenBy(unsafe:RawPtr object, Nat offset) {
+		ThreadData[] r;
+		for (t in threads) {
+			if (t.memory.writes.has(object, offset))
+				r << t;
+		}
+		r;
+	}
+}

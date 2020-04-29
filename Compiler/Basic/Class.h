@@ -28,9 +28,6 @@ namespace storm {
 			// Lookup any additional types needed.
 			void lookupTypes();
 
-			// Declared at.
-			SrcPos declared;
-
 			// Set the super class from a decorator.
 			void STORM_FN super(SrcName *super);
 			using Type::super;

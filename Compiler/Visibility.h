@@ -115,6 +115,26 @@ namespace storm {
 		virtual void STORM_FN toS(StrBuf *to) const;
 	};
 
+	/**
+	 * Private access for free functions etc. Only allows access from entities that are located in
+	 * the same file as this declaration.
+	 *
+	 * Access instances through the 'filePrivate()' function below.
+	 */
+	class FilePrivate : public Visibility {
+		STORM_CLASS;
+	public:
+		// Create.
+		FilePrivate();
+
+		// Check.
+		virtual Bool STORM_FN visible(Named *check, NameLookup *source);
+
+	protected:
+		// To string.
+		virtual void STORM_FN toS(StrBuf *to) const;
+	};
+
 
 	/**
 	 * Access the shared instances of the above objects.
@@ -124,5 +144,6 @@ namespace storm {
 	Visibility *STORM_FN typePrivate(EnginePtr e) ON(Compiler);
 	Visibility *STORM_FN typeProtected(EnginePtr e) ON(Compiler);
 	Visibility *STORM_FN packagePrivate(EnginePtr e) ON(Compiler);
+	Visibility *STORM_FN filePrivate(EnginePtr e) ON(Compiler);
 
 }

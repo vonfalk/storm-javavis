@@ -8,6 +8,8 @@
 namespace storm {
 	namespace smm {
 
+		extern "C" void gc_panic_stacktrace();
+
 		// Flags that applies to all allocations.
 		static const DWORD reserveFlags = 0;
 		static const DWORD commitFlags = 0;
@@ -44,6 +46,11 @@ namespace storm {
 						return EXCEPTION_CONTINUE_EXECUTION;
 					}
 				}
+
+#ifdef DEBUG
+				// We're probably going to crash, so print a stack trace before that happens.
+				gc_panic_stacktrace();
+#endif
 			}
 
 			// Fall through to continue searching for all unknown exceptions.
