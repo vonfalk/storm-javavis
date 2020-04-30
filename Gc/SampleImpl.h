@@ -4,6 +4,7 @@
 
 #include "MemorySummary.h"
 #include "License.h"
+#include "Root.h"
 
 namespace storm {
 
@@ -90,7 +91,7 @@ namespace storm {
 		typedef void (*WalkCb)(RootObject *inspect, void *param);
 		void walkObjects(WalkCb fn, void *param);
 
-		struct Root;
+		typedef GcRoot Root;
 
 		// Create a root object.
 		Root *createRoot(void *data, size_t count, bool ambiguous);

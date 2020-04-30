@@ -24,6 +24,7 @@
 #include "License.h"
 #include "Format.h" // for fmt::wordAlign
 #include "SampleImpl.h"
+#include "Root.h"
 
 #ifdef STORM_GC
 
@@ -258,7 +259,7 @@ namespace storm {
 		 * Roots.
 		 */
 
-		typedef GcImpl::Root Root;
+		typedef GcRoot Root;
 
 		// Allocate a root that scans an array of pointers. 'count' is the number of pointers
 		// contained in the array, not the size of the allocation.
@@ -267,13 +268,29 @@ namespace storm {
 		}
 
 		inline Root *createRoot(void *data, size_t count, bool ambiguous) {
-			return impl->createRoot(data, count, ambiguous);
+			Root *r = impl->createRoot(data, count, ambiguous);
+			if (r) {
+				util::Lock::L z(rootLock);
+				roots.insert(r);
+				r->owner = this;
+			}
+			return r;
 		}
 
 		// Destroy a root.
 		static inline void destroyRoot(Root *root) {
-			if (root)
+			if (!root)
+				return;
+
+			if (root->owner) {
 				GcImpl::destroyRoot(root);
+
+				util::Lock::L z(root->owner->rootLock);
+				root->owner->roots.erase(root);
+				root->owner = null;
+			}
+
+			delete root;
 		}
 
 
@@ -329,6 +346,12 @@ namespace storm {
 
 		// Lock for manipulating the attached threads.
 		util::Lock threadLock;
+
+		// Set of all roots, so that we can destroy them when the GC is shut down.
+		os::InlineSet<Root> roots;
+
+		// Lock for the root set.
+		util::Lock rootLock;
 
 		// Destroyed already?
 		Bool destroyed;

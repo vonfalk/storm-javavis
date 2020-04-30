@@ -10,6 +10,7 @@
 #include "Gc/Scan.h"
 #include "Gc/Format.h"
 #include "Gc/Exception.h"
+#include "OS/InlineSet.h"
 #include "Core/GcCode.h"
 #include "Utils/Memory.h"
 
@@ -1175,12 +1176,13 @@ namespace storm {
 		mps_arena_release(arena);
 	}
 
-	struct GcImpl::Root {
+	class MpsRoot : public GcRoot {
+	public:
 		mps_root_t root;
 	};
 
 	GcImpl::Root *GcImpl::createRoot(void *data, size_t count, bool ambig) {
-		Root *r = new Root;
+		MpsRoot *r = new MpsRoot();
 		mps_res_t res = mps_root_create(&r->root,
 										arena,
 										ambig ? mps_rank_ambig() : mps_rank_exact(),
@@ -1196,9 +1198,9 @@ namespace storm {
 		throw GcError(L"Failed to create a root.");
 	}
 
-	void GcImpl::destroyRoot(Root *r) {
+	void GcImpl::destroyRoot(Root *root) {
+		MpsRoot *r = (MpsRoot *)root;
 		mps_root_destroy(r->root);
-		delete r;
 	}
 
 #if MPS_CHECK_MEMORY
