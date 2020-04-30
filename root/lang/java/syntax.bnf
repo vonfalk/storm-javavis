@@ -349,17 +349,19 @@ SGenericSuffix : "super" #keyword, SSelector;
 SGenericSuffix : SIdent #fnName, SArgs;
 
 Stmt SStmt(Block block);
-SStmt : ";";
-SStmt : SBlock;
+//TODO: inte returnera "block"
+SStmt => block : ";";
+SStmt => s : SBlock(block) s;
 SStmt : SIdent, ":", SStmt;
 SStmt => e : SExpr(block) e, ";";
 SStmt[10] : "assert[ \t]" #keyword, SExpr, (":", SExpr,)? ";";
 SStmt[10] => IfStmt(pos, block) : "if" #keyword, "(", SExpr(me) -> cond, ")" [, SStmt(me) -> ifTrue]? - (, SStmtElse(me) -> ifFalse)?;
-SStmt[10] : "while" #keyword, "(", SExpr, ")" [, SStmt]?;
+SStmt[10] => WhileStmt(pos, block) : "while" #keyword, "(", SExpr(me) -> cond, ")" [, SStmt(me) -> body]?;
 SStmt[10] : "do[ \t]" #keyword [, SStmt, ]? "while" #keyword, "(", SExpr, ")", ";";
 SStmt[10] : "for" #keyword, "(", SForControl, ")" [, SStmt]?;
-SStmt[10] : "break" #keyword - (, SIdent)?;
-SStmt[10] : "continue" #keyword - (, SIdent)?;
+//TODO: lägg till stöd för label-specifika break/continue statements
+SStmt[10] => Break(pos, block) : "break" #keyword - (, SIdent)?;
+SStmt[10] => Continue(pos, block) : "continue" #keyword - (, SIdent)?;
 SStmt[10] : "return[ \t]" #keyword, SExpr;
 SStmt[10] : "throw[ \t]" #keyword, SExpr;
 SStmt[10] : "synchronized", "(", SExpr, ")", SBlock;

@@ -16,8 +16,8 @@ package Bool executeStmt(Block inside, CodeGen gen, Stmt s) on Compiler {
     if (s as Block)
         s.code(gen);
     else {
-        if (inside.step & s.pos.any)
-            gen.l << location(s.pos);
+        //if (inside.step & s.pos.any)
+        //    gen.l << location(s.pos);
         
         CodeGen child = gen.child();
         gen.l << begin(child.block);

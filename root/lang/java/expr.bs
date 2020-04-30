@@ -32,7 +32,7 @@ class StrLiteral extends Expr {
         true;
     }
 
-    void code(CodeGen gen, CodeResult res) : override {}
+    void code(CodeGen gen, CodeResult res) : override { throw SyntaxError(pos, "StrLiteral:code(CodeGen, CodeRes) is not yet implemented."); }
 }
 
 class IntLiteral extends Expr {
@@ -55,7 +55,7 @@ class IntLiteral extends Expr {
         true;
     }
 
-    void code(CodeGen gen, CodeResult res) : override {}
+    void code(CodeGen gen, CodeResult res) : override { throw SyntaxError(pos, "IntLiteral:code(CodeGen, CodeRes) is not yet implemented."); }
 }
 
 class BoolLiteral extends Expr {
@@ -81,8 +81,8 @@ class BoolLiteral extends Expr {
     }
 
     Bool code(CodeGen gen) : override {
-        Byte _val = if (this.val) { 1b; } else { 0b; };
-        gen.l << mov(byteRel(ptrA), byteConst(_val));
+        Byte val = if (this.val) { 1b; } else { 0b; };
+        gen.l << mov(byteRel(ptrA), byteConst(val));
         true;
     }
 }
@@ -102,7 +102,7 @@ class FnCall extends Expr {
         fn.result;
     }
 
-    void code(CodeGen gen, CodeResult res) : override {}
+    void code(CodeGen gen, CodeResult res) : override { throw SyntaxError(pos, "FnCall:code(CodeGen, CodeRes) is not yet implemented."); }
 
     Bool code(CodeGen gen) : override {
         Operand[] ops;

@@ -26,8 +26,8 @@ class IfStmt extends Block {
 
         CodeResult condResult(Value(named{Bool}), gen.block);
         CodeGen sub = gen.child();
-        if (step)
-            gen.l << location(cond.pos);
+        //if (step)
+        //    gen.l << location(cond.pos);
         gen.l << begin(sub.block);
         cond.code(sub, condResult);
         gen.l << end(sub.block);
