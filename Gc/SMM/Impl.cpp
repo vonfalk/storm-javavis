@@ -231,7 +231,8 @@ namespace storm {
 		assert(false, L"Walking objects is not yet supported!");
 	}
 
-	struct GcImpl::Root {
+	class SmmRoot : public GcRoot {
+	public:
 		smm::Root root;
 
 		// Inexact root?
@@ -245,7 +246,7 @@ namespace storm {
 	};
 
 	GcImpl::Root *GcImpl::createRoot(void *data, size_t count, bool inexact) {
-		Root *r = new Root((void **)data, count, inexact, arena);
+		SmmRoot *r = new SmmRoot((void **)data, count, inexact, arena);
 
 		if (inexact) {
 			arena.addInexact(r->root);
@@ -256,14 +257,13 @@ namespace storm {
 		return r;
 	}
 
-	void GcImpl::destroyRoot(Root *root) {
+	void GcImpl::destroyRoot(Root *r) {
+		SmmRoot *root = (SmmRoot *)r;
 		if (root->inexact) {
 			root->arena.removeInexact(root->root);
 		} else {
 			root->arena.removeExact(root->root);
 		}
-
-		delete root;
 	}
 
 	class SMMWatch : public GcWatch {
