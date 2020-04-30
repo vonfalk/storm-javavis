@@ -46,6 +46,25 @@ namespace storm {
 			threads.clear();
 		}
 
+		{
+			// If there are any roots registered now, we destroy them before shutdown as
+			// implementations are a bit picky about having all roots unregistered before
+			// shutdown.
+			// We don't free the memory here, as any remaining roots are probably owned
+			// by some GC allocation, which will be freed when finalizers are executed
+			// as a part of shutdown.
+			util::Lock::L z(rootLock);
+			for (os::InlineSet<Root>::iterator i = roots.begin(), end = roots.end(); i != end; ++i) {
+				Root *r = *i;
+				GcImpl::destroyRoot(r);
+				r->owner = null;
+			}
+
+			// We won't remove the elements, so make sure to clear them properly. Otherwise, the
+			// implementation will assert whenever they are freed later.
+			roots.clear();
+		}
+
 		impl->destroy();
 	}
 
