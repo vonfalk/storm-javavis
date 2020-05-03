@@ -70,6 +70,9 @@ namespace code {
 		// Get current address.
 		inline const void *address() const { return to->address(); }
 
+		// Get the source.
+		inline RefSource *STORM_FN source() const { return to; }
+
 		// ToS.
 		virtual void STORM_FN toS(StrBuf *to) const;
 	private:

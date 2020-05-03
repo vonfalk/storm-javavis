@@ -56,11 +56,8 @@ private class PatchState on Compiler {
 			return n;
 		}
 
-		print("Should replace ${n}");
-
 		SimpleName relative = n.path.from(temp.path.count);
-		if (found = findPrivate(temporary.get(temp), n.path())) {
-			print("Replaced ${n}");
+		if (found = findPrivate(temporary.get(temp), relative)) {
 			return found;
 		}
 
@@ -88,7 +85,7 @@ private class PatchState on Compiler {
 
 			var into = patched.get(fn);
 			if (source = findSource(fn)) {
-				print("Patching ${fn}...");
+				// print("Patching ${fn}...");
 				Listing l = patchListing(this, findHints(hints, fn), source, fn, true);
 				into.set(Binary(arena, l));
 			} else {
@@ -108,6 +105,8 @@ private class PatchState on Compiler {
 
 	// Attempts to find the code of a function. This might involve loading the contained package again.
 	private Listing? findSource(Function fn) {
+		fn = traverseDelegated(fn);
+
 		unless (code = fn.getCode() as GeneratedCode)
 			return null;
 
@@ -132,6 +131,7 @@ private class PatchState on Compiler {
 		};
 
 		SimpleName relative = fn.path.from(pkgName.count);
+
 		if (fn = findPrivate(pkg, relative) as Function) {
 			unless (code = fn.getCode() as GeneratedCode)
 				return null;
@@ -140,6 +140,18 @@ private class PatchState on Compiler {
 		}
 
 		return null;
+	}
+
+	// Traverse layers of 'generatedCode' if needed.
+	private Function traverseDelegated(Function fn) : static {
+		if (delegated = fn.getCode() as DelegatedCode) {
+			if (target = delegated.to.source as NamedSource) {
+				if (f = target.named as Function) {
+					return traverseDelegated(f);
+				}
+			}
+		}
+		fn;
 	}
 
 	// Find a temporary package.
@@ -187,6 +199,16 @@ private class PatchState on Compiler {
 	private class Part extends SimplePart {
 		init(SimplePart s) {
 			init(s) {}
+		}
+
+		Named? choose(NameOverloads from, Scope source) : override {
+			// Just ignore the visibility. Furthermore, we know that we only will get one match.
+			for (Nat i = 0; i < from.count; i++) {
+				if (matches(from[i], source) >= 0)
+					return from[i];
+			}
+
+			null;
 		}
 
 		Int matches(Named candidate, Scope source) : override {

@@ -26,6 +26,7 @@ int main() {
 	}
 
 	putchar('\n');
+	putstr("Done!");
 
 	return 0;
 }
