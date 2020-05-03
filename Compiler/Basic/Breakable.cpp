@@ -32,6 +32,10 @@ namespace storm {
 			breakFrom->willBreak();
 		}
 
+		ExprResult Break::result() {
+			return noReturn();
+		}
+
 		void Break::code(CodeGen *state, CodeResult *r) {
 			Breakable::To to = breakFrom->breakTo();
 			*state->l << jmpBlock(to.label, to.block);
@@ -47,6 +51,10 @@ namespace storm {
 				throw new (this) SyntaxError(pos, S("Nothing to continue from here. Use continue inside loops."));
 
 			continueIn->willContinue();
+		}
+
+		ExprResult Continue::result() {
+			return noReturn();
 		}
 
 		void Continue::code(CodeGen *state, CodeResult *r) {

@@ -46,6 +46,9 @@ namespace storm {
 		public:
 			STORM_CTOR Break(SrcPos pos, Block *parent);
 
+			// Result.
+			virtual ExprResult STORM_FN result();
+
 			// Generate code.
 			virtual void STORM_FN code(CodeGen *state, CodeResult *r);
 
@@ -65,6 +68,9 @@ namespace storm {
 			STORM_CLASS;
 		public:
 			STORM_CTOR Continue(SrcPos pos, Block *parent);
+
+			// Result.
+			virtual ExprResult STORM_FN result();
 
 			// Generate code.
 			virtual void STORM_FN code(CodeGen *state, CodeResult *r);
