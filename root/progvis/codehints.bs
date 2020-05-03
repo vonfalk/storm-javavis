@@ -20,6 +20,11 @@ class CodeHints on Compiler {
 	// Provide a user-friendly name of the function.
 	Str cleanName(Function fn, Package pkg) : abstract;
 
+	// Should we patch an external function? The main purpose of this is to keep track of memory
+	// accesses. 'fn' is known to not reside inside the package that contains the code to be
+	// visualized.
+	Bool patchExternal(Function fn) : abstract;
+
 	/**
 	 * How to handle the saved variable.
 	 */
@@ -91,6 +96,9 @@ class DefaultCodeHints extends CodeHints {
 		RecPart p(at.name, params);
 		to.add(p);
 	}
+
+	// Don't patch external functions.
+	Bool patchExternal(Function fn) : override { false; }
 
 	// Save a variable.
 	Save saveVariable(Listing to, Var var, Listing:VarInfo info, Operand dest) : override {

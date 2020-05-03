@@ -37,6 +37,10 @@ namespace storm {
 		MAYBE(Named *) find(const wchar *name, Value param, Scope source);
 		MAYBE(Named *) find(const wchar *name, Scope source);
 
+		// Check if this entity has a particular parent, either directly or indirectly. If 'parent'
+		// is null, then false is always returned.
+		Bool STORM_FN hasParent(MAYBE(NameLookup *) parent) const;
+
 		// Get the parent object to this lookup, or null if none.
 		virtual MAYBE(NameLookup *) STORM_FN parent() const;
 
