@@ -1,0 +1,88 @@
+use progvis:lang:cpp;
+use lang:asm;
+
+/**
+ * Various helper functions for the pointer class.
+ *
+ * These were originally in the ../ptr.bs file, but since Progvis needs to patch these, it needs to
+ * re-load the package they are inside. This took a lot of time if all of the C++ frontend needed to
+ * be reloaded, so they are moved here to make loading quicker.
+ */
+
+// Compare two pointers. Don't call from Storm.
+Bool pointerEq(unsafe:RawPtr a, unsafe:RawPtr b) {
+	Bool r = false;
+	asm {
+		mov ptrA, a;
+		mov ptrB, b;
+		cmp p[ptrA], p[ptrB];
+		jmp ifNotEqual, @done;
+
+		cmp i[ptrA + sPtr], i[ptrB + sPtr];
+		setCond r, ifEqual;
+	done:
+	}
+	r;
+}
+Bool pointerNeq(unsafe:RawPtr a, unsafe:RawPtr b) {
+	Bool r = true;
+	asm {
+		mov ptrA, a;
+		mov ptrB, b;
+		cmp p[ptrA], p[ptrB];
+		jmp ifNotEqual, @done;
+
+		cmp i[ptrA + sPtr], i[ptrB + sPtr];
+		setCond r, ifNotEqual;
+	done:
+	}
+	r;
+}
+Bool pointerLt(unsafe:RawPtr a, unsafe:RawPtr b) {
+	assumeSameAlloc(a, b);
+
+	Bool r;
+	asm {
+		mov ptrA, a;
+		mov ptrB, b;
+		cmp p[ptrA + sPtr], p[ptrB + sPtr];
+		setCond r, ifBelow;
+	}
+	r;
+}
+Bool pointerGt(unsafe:RawPtr a, unsafe:RawPtr b) {
+	assumeSameAlloc(a, b);
+
+	Bool r;
+	asm {
+		mov ptrA, a;
+		mov ptrB, b;
+		cmp p[ptrA + sPtr], p[ptrB + sPtr];
+		setCond r, ifAbove;
+	}
+	r;
+}
+Bool pointerLte(unsafe:RawPtr a, unsafe:RawPtr b) {
+	assumeSameAlloc(a, b);
+
+	Bool r;
+	asm {
+		mov ptrA, a;
+		mov ptrB, b;
+		cmp p[ptrA + sPtr], p[ptrB + sPtr];
+		setCond r, ifBelowEqual;
+	}
+	r;
+}
+Bool pointerGte(unsafe:RawPtr a, unsafe:RawPtr b) {
+	assumeSameAlloc(a, b);
+
+	Bool r;
+	asm {
+		mov ptrA, a;
+		mov ptrB, b;
+		cmp p[ptrA + sPtr], p[ptrB + sPtr];
+		setCond r, ifAboveEqual;
+	}
+	r;
+}

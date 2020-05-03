@@ -92,12 +92,12 @@ class PtrType extends Type {
 		Value int(named{Int});
 
 		// Compare pointers.
-		addFn(named{Bool}, "==", [ref, ref], named{pointerEq<unsafe:RawPtr, unsafe:RawPtr>});
-		addFn(named{Bool}, "!=", [ref, ref], named{pointerNeq<unsafe:RawPtr, unsafe:RawPtr>});
-		addFn(named{Bool}, "<", [ref, ref], named{pointerLt<unsafe:RawPtr, unsafe:RawPtr>});
-		addFn(named{Bool}, ">", [ref, ref], named{pointerGt<unsafe:RawPtr, unsafe:RawPtr>});
-		addFn(named{Bool}, "<=", [ref, ref], named{pointerLte<unsafe:RawPtr, unsafe:RawPtr>});
-		addFn(named{Bool}, ">=", [ref, ref], named{pointerGte<unsafe:RawPtr, unsafe:RawPtr>});
+		addFn(named{Bool}, "==", [ref, ref], named{helpers:pointerEq<unsafe:RawPtr, unsafe:RawPtr>});
+		addFn(named{Bool}, "!=", [ref, ref], named{helpers:pointerNeq<unsafe:RawPtr, unsafe:RawPtr>});
+		addFn(named{Bool}, "<", [ref, ref], named{helpers:pointerLt<unsafe:RawPtr, unsafe:RawPtr>});
+		addFn(named{Bool}, ">", [ref, ref], named{helpers:pointerGt<unsafe:RawPtr, unsafe:RawPtr>});
+		addFn(named{Bool}, "<=", [ref, ref], named{helpers:pointerLte<unsafe:RawPtr, unsafe:RawPtr>});
+		addFn(named{Bool}, ">=", [ref, ref], named{helpers:pointerGte<unsafe:RawPtr, unsafe:RawPtr>});
 
 		// Pointer arithmetic.
 		if (t = inside) {
@@ -293,36 +293,8 @@ class PtrError extends Exception {
 	}
 }
 
-// Compare two pointers. Don't call from Storm.
-private Bool pointerEq(unsafe:RawPtr a, unsafe:RawPtr b) {
-	Bool r = false;
-	asm {
-		mov ptrA, a;
-		mov ptrB, b;
-		cmp p[ptrA], p[ptrB];
-		jmp ifNotEqual, @done;
 
-		cmp i[ptrA + sPtr], i[ptrB + sPtr];
-		setCond r, ifEqual;
-	done:
-	}
-	r;
-}
-private Bool pointerNeq(unsafe:RawPtr a, unsafe:RawPtr b) {
-	Bool r = true;
-	asm {
-		mov ptrA, a;
-		mov ptrB, b;
-		cmp p[ptrA], p[ptrB];
-		jmp ifNotEqual, @done;
-
-		cmp i[ptrA + sPtr], i[ptrB + sPtr];
-		setCond r, ifNotEqual;
-	done:
-	}
-	r;
-}
-private void assumeSameAlloc(unsafe:RawPtr a, unsafe:RawPtr b) {
+void assumeSameAlloc(unsafe:RawPtr a, unsafe:RawPtr b) {
 	Bool same;
 	asm {
 		mov ptrA, a;
@@ -334,55 +306,6 @@ private void assumeSameAlloc(unsafe:RawPtr a, unsafe:RawPtr b) {
 	if (!same)
 		throw PtrError("Trying to compare pointers from different allocations with <, >, <=, =>, or -");
 }
-private Bool pointerLt(unsafe:RawPtr a, unsafe:RawPtr b) {
-	assumeSameAlloc(a, b);
-
-	Bool r;
-	asm {
-		mov ptrA, a;
-		mov ptrB, b;
-		cmp p[ptrA + sPtr], p[ptrB + sPtr];
-		setCond r, ifBelow;
-	}
-	r;
-}
-private Bool pointerGt(unsafe:RawPtr a, unsafe:RawPtr b) {
-	assumeSameAlloc(a, b);
-
-	Bool r;
-	asm {
-		mov ptrA, a;
-		mov ptrB, b;
-		cmp p[ptrA + sPtr], p[ptrB + sPtr];
-		setCond r, ifAbove;
-	}
-	r;
-}
-private Bool pointerLte(unsafe:RawPtr a, unsafe:RawPtr b) {
-	assumeSameAlloc(a, b);
-
-	Bool r;
-	asm {
-		mov ptrA, a;
-		mov ptrB, b;
-		cmp p[ptrA + sPtr], p[ptrB + sPtr];
-		setCond r, ifBelowEqual;
-	}
-	r;
-}
-private Bool pointerGte(unsafe:RawPtr a, unsafe:RawPtr b) {
-	assumeSameAlloc(a, b);
-
-	Bool r;
-	asm {
-		mov ptrA, a;
-		mov ptrB, b;
-		cmp p[ptrA + sPtr], p[ptrB + sPtr];
-		setCond r, ifAboveEqual;
-	}
-	r;
-}
-
 
 // Check the validity of a pointer. Assumes we want to read a maximum of 'size' bytes at wherever
 // 'ptr' and 'offset' refers to.
