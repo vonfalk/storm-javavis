@@ -687,7 +687,6 @@ private void generateCallTracking(Program program, PatchParams to, Function fn) 
 
 	// Find a clean function name.
 	var fnName = to.codeHints.cleanName(fn, to.pkg);
-	var fnPos = to.codeHints.location(fn);
 
 	Listing l = to.to;
 
@@ -701,7 +700,7 @@ private void generateCallTracking(Program program, PatchParams to, Function fn) 
 
 	l << fnParam(ptrDesc, objPtr(program));
 	l << fnParam(ptrDesc, objPtr(fnName));
-	l << fnParam(ptrDesc, objPtr(SrcPosWrap(fnPos)));
+	l << fnParam(ptrDesc, objPtr(SrcPosWrap(fn.pos)));
 	l << fnParam(ptrDesc, objPtr(to.viewHints));
 	l << fnParam(ptrDesc, array);
 	l << fnCall(enterFn.ref, true);
