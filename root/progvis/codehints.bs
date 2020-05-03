@@ -17,9 +17,6 @@ class CodeHints on Compiler {
 	// Only the first hint object that returns true here will get the remaining functions called for that function.
 	Bool handlesFunction(Function fn) : abstract;
 
-	// Get an SrcPos describing the location of the function itself.
-	SrcPos location(Function fn) : abstract;
-
 	// Provide a user-friendly name of the function.
 	Str cleanName(Function fn, Package pkg) : abstract;
 
@@ -52,16 +49,6 @@ class DefaultCodeHints extends CodeHints {
 	// We handle all functions!
 	Bool handlesFunction(Function f) {
 		true;
-	}
-
-	SrcPos location(Function fn) : override {
-		if (fn as lang:bs:BSRawFn)
-			fn.pos;
-		else if (fn as lang:bs:BSRawCtor)
-			fn.pos;
-		else
-			// TODO: It would be useful to have this in all function, or even all Named.
-			SrcPos();
 	}
 
 	// Generate the name of a function, ignoring everything above "remove".
