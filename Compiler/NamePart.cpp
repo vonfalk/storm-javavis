@@ -156,7 +156,11 @@ namespace storm {
 	Nat SimplePart::hash() const {
 		Nat r = 5381;
 		r = ((r << 5) + r) + name->hash();
-		// Note: we only care about the number of parameters so far.
+		// Note: we only care about the number of parameters so far. This is probably a decent
+		// trade-off between a good-enough hash with few collisions, and the cost of actually
+		// traversing all parameters recursively (with the possibility of infinite recursion). Note
+		// that we can not hash the pointers, even if we can compare them in the '==' operator since
+		// objects move.
 		r = ((r << 5) + r) + params->count();
 		return r;
 	}

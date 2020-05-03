@@ -22,8 +22,6 @@ namespace code {
 	 * The identifier is not provided by the RefSource class itself. Instead, implementations should
 	 * create a subclass that implements 'title' for the identifier presented to the user and 'name'
 	 * for the identifier used during serialization (not implemented yet).
-	 *
-	 * TODO: Make the class abstract!
 	 */
 	class RefSource : public ObjectOn<Compiler> {
 		STORM_ABSTRACT_CLASS;
