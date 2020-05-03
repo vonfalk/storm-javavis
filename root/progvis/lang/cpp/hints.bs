@@ -46,13 +46,6 @@ class CppCodeHints extends progvis:CodeHints {
 			false;
 	}
 
-	SrcPos location(Function fn) : override {
-		if (fn as CppFunction)
-			fn.pos;
-		else
-			SrcPos();
-	}
-
 	Str cleanName(Function fn, Package pkg) : override {
 		Str name = fn.name;
 		if (fn.isMember()) {
