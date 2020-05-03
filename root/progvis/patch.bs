@@ -33,6 +33,40 @@ private class PatchState on Compiler {
 		}
 	}
 
+	// Replace a reference to an instance in a temporary package with the corresponding one in the
+	// real package.
+	Ref replaceRef(Ref r) {
+		unless (namedSrc = r.source as NamedSource)
+			return r;
+
+		Named res = replaceNamed(namedSrc.named);
+		if (res as Function) {
+			// Note: This is not always correct to do.
+			return res.ref;
+		} else if (res as Type) {
+			return res.typeRef;
+		} else {
+			return r;
+		}
+	}
+
+	// Replace a named object.
+	Named replaceNamed(Named n) {
+		unless (temp = findTemp(n)) {
+			return n;
+		}
+
+		print("Should replace ${n}");
+
+		SimpleName relative = n.path.from(temp.path.count);
+		if (found = findPrivate(temporary.get(temp), n.path())) {
+			print("Replaced ${n}");
+			return found;
+		}
+
+		n;
+	}
+
 	// Get a new reference for a function that needs patching. Make sure the function is patched
 	// eventually if that has not been done already.
 	Ref patchFn(Function fn) {
@@ -52,30 +86,130 @@ private class PatchState on Compiler {
 			var fn = toPatch.top;
 			toPatch.pop();
 
-			print("Patching ${fn}...");
 			var into = patched.get(fn);
-			if (binary = patchI(fn)) {
-				into.set(binary);
+			if (source = findSource(fn)) {
+				print("Patching ${fn}...");
+				Listing l = patchListing(this, findHints(hints, fn), source, fn, true);
+				into.set(Binary(arena, l));
 			} else {
 				// Fallback, to avoid crashes.
+				print("Failed to patch ${fn}.");
 				into.set(DelegatedContent(fn.ref));
 			}
 		}
 	}
 
-	// Patch a single function, indicating failure so that we can fall back to something
-	// sensible. Otherwise, we will crash when running any code that calls this function.
-	Binary? patchI(Function fn) {
+	// Loaded packages.
+	private SimpleName->Package loaded;
+
+	// Keep track of loaded packages so that we may quickly see if a reference is inside it.
+	// Maps 'temporary'->'original'
+	private Package->Package temporary;
+
+	// Attempts to find the code of a function. This might involve loading the contained package again.
+	private Listing? findSource(Function fn) {
 		unless (code = fn.getCode() as GeneratedCode)
 			return null;
-		unless (source = code.source) {
-			print("Warning: No code for ${fn}!");
+
+		if (source = code.source)
+			return source;
+
+		// Try to re-load the package if possible.
+		Package contained = findPkg(fn);
+		unless (url = contained.url)
 			return null;
+
+		SimpleName pkgName = contained.path;
+		Package pkg = if (loaded.has(pkgName)) {
+			loaded.get(pkgName);
+		} else {
+			Package p(url);
+			p.noDiscard();
+			p.parentLookup = contained.parent;
+			loaded.put(pkgName, p);
+			temporary.put(p, contained);
+			p;
+		};
+
+		SimpleName relative = fn.path.from(pkgName.count);
+		if (fn = findPrivate(pkg, relative) as Function) {
+			unless (code = fn.getCode() as GeneratedCode)
+				return null;
+			if (source = code.source)
+				return source;
 		}
 
-		Listing l = patchListing(this, findHints(hints, fn), source, fn, true);
-		return Binary(arena, l);
+		return null;
 	}
+
+	// Find a temporary package.
+	private Package? findTemp(Named named) {
+		NameLookup? at = named;
+		while (here = at) {
+			if (here as Package) {
+				if (temporary.has(here))
+					return here;
+			}
+
+			at = here.parent;
+		}
+		null;
+	}
+
+	// Find the closest package to a function.
+	private Package findPkg(Named named) : static {
+		NameLookup? at = named;
+		while (here = at) {
+			if (here as Package)
+				return here;
+
+			at = here.parent;
+		}
+		throw InternalError("No package found for ${named}");
+	}
+
+	// Find a named entity, but allowed to access private members.
+	private Named? findPrivate(NameSet root, SimpleName name) : static {
+		Scope scope = rootScope;
+		Named? at = root;
+		for (Nat i = 0; i < name.count; i++) {
+			if (ns = at as NameSet)
+				// Compare with a looser equality in the parameters.
+				at = ns.find(Part(name[i]), scope.child(ns));
+			else
+				return null;
+		}
+		at;
+	}
+
+	// Custom name part that compares the path rather than objects for object identity since we have
+	// multiple versions of the same thing.
+	private class Part extends SimplePart {
+		init(SimplePart s) {
+			init(s) {}
+		}
+
+		Int matches(Named candidate, Scope source) : override {
+			if (candidate.params.count != params.count)
+				return -1;
+
+			Int distance = 0;
+
+			for (Nat i = 0; i < params.count; i++) {
+				Value a = params[i];
+				Value b = params[i];
+
+				if (a.ref != b.ref)
+					return -1;
+				if (a != b)
+					if (a.toS != b.toS)
+						return -1;
+			}
+
+			distance;
+		}
+	}
+
 }
 
 // Patch all functions in the specified NameSet recursively.
@@ -226,7 +360,7 @@ private Listing patchListing(PatchState state, Hints hints, Listing source, Func
 	Bool lastFnParam = false;
 	for (Nat i = 0; i < source.count; i++) {
 		dest << source.labels(i);
-		Instr instr = source[i];
+		Instr instr = replaceRefs(state, source[i]);
 
 		if (instr.op == OpCode:fnRet) {
 			if (!onlyMemory)
@@ -281,6 +415,27 @@ private Listing patchListing(PatchState state, Hints hints, Listing source, Func
 
 	// print("Patched ${fn.name}: ${dest}");
 	dest;
+}
+
+// Replace references in an instruction. Since we re-load packages, we might have references into
+// the temporary instances of a function for example. This function replaces these with their
+// original corresponding reference.
+private Instr replaceRefs(PatchState s, Instr i) {
+	Operand src = replaceRef(s, i.src);
+	Operand dst = replaceRef(s, i.dest);
+	i.alter(dst, src);
+}
+
+// Alter a single operand, as above.
+private Operand replaceRef(PatchState s, Operand op) {
+	if (op.type == OpType:reference) {
+		return Operand(s.replaceRef(op.ref));
+	} else if (op.type == OpType:objReference) {
+		if (n = op.tObj as Named)
+			return objPtr(s.replaceNamed(n));
+	}
+
+	op;
 }
 
 // Patch a call operation if needed.

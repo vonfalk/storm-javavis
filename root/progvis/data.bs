@@ -12,12 +12,18 @@ class Data extends Drawable {
 	void draw(Graphics g, Bool active) : abstract {
 		Rect r = rect;
 
-		if (reads.any)
+		if (reads.any & writes.any) {
+			Size s = r.size;
+			s.w /= 2;
+			g.fill(Rect(r.p0, s), dataReadBg);
+			g.fill(Rect(r.p0 + Point(s.w, 0), s), dataWriteBg);
+		} else if (reads.any) {
 			g.fill(r, dataReadBg);
-		else if (writes.any)
+		} else if (writes.any) {
 			g.fill(r, dataWriteBg);
-		else
+		} else {
 			g.fill(r, dataBg);
+		}
 		g.draw(r, dataFg);
 	}
 
