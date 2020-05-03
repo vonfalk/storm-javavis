@@ -53,6 +53,10 @@ namespace storm {
 		toUpdate->set(content);
 	}
 
+	code::Ref DelegatedCode::to() const {
+		return content->to();
+	}
+
 
 	/**
 	 * Static engine code.
