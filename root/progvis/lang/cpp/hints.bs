@@ -64,6 +64,18 @@ class CppCodeHints extends progvis:CodeHints {
 		name + "(...)";
 	}
 
+	Bool patchExternal(Function fn) : override {
+		// Patch functions in our runtime. Otherwise memory accesses are not tracked very
+		// well. Additionally, we need to patch things inside the Ptr<> classes.
+		if (fn.hasParent(named{runtime}))
+			return true;
+
+		if (ptr = fn.parent as PtrType)
+			return true;
+
+		false;
+	}
+
 	Save saveVariable(Listing to, Var var, Listing:VarInfo info, Operand dest) : override {
 		if (!info.ref)
 			return Save:none;

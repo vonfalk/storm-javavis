@@ -8,7 +8,7 @@ namespace storm {
 	class Named;
 
 	/**
-	 * A RefSource that refers to a named entity inside the compiler. Support disambiguating
+	 * A RefSource that refers to a named entity inside the compiler. Supports disambiguating
 	 * mutliple sources within a single entity by optionally appending a single character to the
 	 * end of the string.
 	 */
@@ -20,6 +20,9 @@ namespace storm {
 
 		// Get the title.
 		virtual Str *STORM_FN title() const;
+
+		// Get the named entity referred to.
+		Named *STORM_FN named() const { return entity; }
 
 	private:
 		// Entity we're referring to.
