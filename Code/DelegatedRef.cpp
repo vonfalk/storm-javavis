@@ -12,6 +12,10 @@ namespace code {
 		set(ref->address(), 0);
 	}
 
+	Ref DelegatedContent::to() const {
+		return Ref(ref);
+	}
+
 
 	DelegatedRef::DelegatedRef(DelegatedContent *owner, Ref to) :
 		Reference(to, owner), owner(owner) {}

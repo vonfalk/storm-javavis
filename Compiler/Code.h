@@ -75,8 +75,8 @@ namespace storm {
 	public:
 		STORM_CTOR DelegatedCode(code::Ref ref);
 
-		// Called when the code has been moved.
-		void moved(const void *to);
+		// Get what we refer to.
+		code::Ref STORM_FN to() const;
 
 	protected:
 		virtual void STORM_FN newRef();
