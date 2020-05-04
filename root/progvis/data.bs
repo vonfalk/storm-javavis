@@ -42,8 +42,10 @@ class Data extends Drawable {
 	// Update the read/write state of this data element based on what threads have observed.
 	// Called for the root of a data object, thus we assume that 'offset' is zero.
 	void updateMemAccess(unsafe:RawPtr object, Trackers trackers) {
+		Nat size = object.readSize * object.readCount;
+
 		if (trackers.accessed(object)) {
-			checkAccess(object, 0, trackers);
+			checkAccess(object, 0, size, trackers);
 		} else {
 			clearAccess();
 		}
@@ -57,9 +59,9 @@ class Data extends Drawable {
 
 	// Called when this object has been accessed by at least one thread. Recurses through the object
 	// hierarchy to find individual elements.
-	void checkAccess(unsafe:RawPtr object, Nat offset, Trackers trackers) {
-		reads = trackers.readBy(object, offset);
-		writes = trackers.writtenBy(object, offset);
+	void checkAccess(unsafe:RawPtr object, Nat offset, Nat size, Trackers trackers) {
+		reads = trackers.readBy(object, offset, size);
+		writes = trackers.writtenBy(object, offset, size);
 	}
 
 	// Temporary solution for tracking reads and writes. Should perhaps be inside Primitive instead.
@@ -170,8 +172,8 @@ class DataWithCaption extends Data {
 		wrap.clearAccess();
 	}
 
-	void checkAccess(unsafe:RawPtr object, Nat offset, Trackers trackers) : override {
-		wrap.checkAccess(object, offset, trackers);
+	void checkAccess(unsafe:RawPtr object, Nat offset, Nat size, Trackers trackers) : override {
+		wrap.checkAccess(object, offset, size, trackers);
 	}
 
 
@@ -455,9 +457,13 @@ class Composite extends Data {
 
 	// Called when this object has been accessed by at least one thread. Recurses through the object
 	// hierarchy to find individual elements.
-	void checkAccess(unsafe:RawPtr object, Nat offset, Trackers trackers) {
-		for (v in content) {
-			v.value.checkAccess(object, offset + v.offset, trackers);
+	void checkAccess(unsafe:RawPtr object, Nat offset, Nat size, Trackers trackers) {
+		for (i, v in content) {
+			Nat end = size;
+			if (i + 1 < content.count)
+				end = content[i + 1].offset;
+
+			v.value.checkAccess(object, offset + v.offset, end - v.offset, trackers);
 		}
 	}
 
@@ -591,11 +597,11 @@ class ArrayData extends Data {
 
 	// Called when this object has been accessed by at least one thread. Recurses through the object
 	// hierarchy to find individual elements.
-	void checkAccess(unsafe:RawPtr object, Nat offset, Trackers trackers) {
+	void checkAccess(unsafe:RawPtr object, Nat offset, Nat size, Trackers trackers) {
 		Nat stride = object.readSize;
 
 		for (i, v in content) {
-			v.value.checkAccess(object, offset + i*stride, trackers);
+			v.value.checkAccess(object, offset + i*stride, stride, trackers);
 		}
 	}
 
