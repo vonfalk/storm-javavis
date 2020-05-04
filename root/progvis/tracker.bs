@@ -57,20 +57,20 @@ class Trackers {
 	}
 
 	// Check which threads read a particular offset inside the given object.
-	ThreadData[] readBy(unsafe:RawPtr object, Nat offset) {
+	ThreadData[] readBy(unsafe:RawPtr object, Nat offset, Nat size) {
 		ThreadData[] r;
 		for (t in threads) {
-			if (t.memory.reads.has(object, offset))
+			if (t.memory.reads.has(object, offset, size))
 				r << t;
 		}
 		r;
 	}
 
 	// Check which threads wrote a particular offset inside the given object.
-	ThreadData[] writtenBy(unsafe:RawPtr object, Nat offset) {
+	ThreadData[] writtenBy(unsafe:RawPtr object, Nat offset, Nat size) {
 		ThreadData[] r;
 		for (t in threads) {
-			if (t.memory.writes.has(object, offset))
+			if (t.memory.writes.has(object, offset, size))
 				r << t;
 		}
 		r;
