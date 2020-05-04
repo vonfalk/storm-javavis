@@ -46,13 +46,6 @@ class CppCodeHints extends progvis:CodeHints {
 			false;
 	}
 
-	SrcPos location(Function fn) : override {
-		if (fn as CppFunction)
-			fn.pos;
-		else
-			SrcPos();
-	}
-
 	Str cleanName(Function fn, Package pkg) : override {
 		Str name = fn.name;
 		if (fn.isMember()) {
@@ -69,6 +62,18 @@ class CppCodeHints extends progvis:CodeHints {
 
 		// TODO!
 		name + "(...)";
+	}
+
+	Bool patchExternal(Function fn) : override {
+		// Patch functions in our runtime. Otherwise memory accesses are not tracked very
+		// well. Additionally, we need to patch things inside the Ptr<> classes.
+		if (fn.hasParent(named{runtime}))
+			return true;
+
+		if (ptr = fn.parent as PtrType)
+			return true;
+
+		false;
 	}
 
 	Save saveVariable(Listing to, Var var, Listing:VarInfo info, Operand dest) : override {

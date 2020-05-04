@@ -36,7 +36,10 @@ namespace code {
 		inline const void *address() const { return to->address(); }
 
 		// Get the name of our target.
-		inline Str *title() const { return to->title(); }
+		inline Str *STORM_FN title() const { return to->title(); }
+
+		// Get the source.
+		inline RefSource *STORM_FN source() const { return to; }
 
 	private:
 		// Referring to:
@@ -66,6 +69,9 @@ namespace code {
 
 		// Get current address.
 		inline const void *address() const { return to->address(); }
+
+		// Get the source.
+		inline RefSource *STORM_FN source() const { return to; }
 
 		// ToS.
 		virtual void STORM_FN toS(StrBuf *to) const;

@@ -15,8 +15,8 @@ struct fork **make_forks(int num) NO_STEP {
 }
 
 void philosopher(struct fork *left, struct fork *right) {
-	sema_down(&left->sema);
 	sema_down(&right->sema);
+	sema_down(&left->sema);
 
 	// Eat...
 
@@ -30,7 +30,9 @@ int main(void) {
 
 	thread_new(&philosopher, forks[0], forks[1]);
 	thread_new(&philosopher, forks[1], forks[2]);
-	philosopher(forks[2], forks[0]);
+	thread_new(&philosopher, forks[2], forks[0]);
+
+	free(forks);
 
 	return 0;
 }

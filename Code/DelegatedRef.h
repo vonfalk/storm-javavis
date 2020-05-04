@@ -25,6 +25,9 @@ namespace code {
 		// Set to a new reference.
 		void STORM_FN set(Ref ref);
 		using Content::set;
+
+		// Get the reference we're referring to.
+		Ref STORM_FN to() const;
 	private:
 		// The reference in charge of updating us.
 		DelegatedRef *ref;

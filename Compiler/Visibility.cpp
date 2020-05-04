@@ -31,14 +31,6 @@ namespace storm {
 			return null;
 	}
 
-	// See if 'check' is a child of 'parent'. Always returns 'null' if 'parent' is 'null'.
-	static Bool hasParent(NameLookup *check, MAYBE(NameLookup *) parent) {
-		for (NameLookup *at = check; at; at = at->parent())
-			if (at == parent)
-				return true;
-		return false;
-	}
-
 
 	/**
 	 * Base class.
@@ -75,7 +67,7 @@ namespace storm {
 
 	Bool TypePrivate::visible(Named *check, NameLookup *source) {
 		Type *type = firstParent<Type>(check);
-		return hasParent(source, type);
+		return source->hasParent(type);
 	}
 
 	void TypePrivate::toS(StrBuf *to) const {
@@ -112,7 +104,7 @@ namespace storm {
 
 	Bool PackagePrivate::visible(Named *check, NameLookup *source) {
 		Package *package = firstParent<Package>(check);
-		return hasParent(source, package);
+		return source->hasParent(package);
 	}
 
 	void PackagePrivate::toS(StrBuf *to) const {

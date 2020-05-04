@@ -27,3 +27,30 @@ Ptr<Byte> strcpy(ConstPtr<Byte> src) {
 
 	result;
 }
+
+Int strcmp(ConstPtr<Byte> a, ConstPtr<Byte> b) {
+	Nat aOffset = a.offset - sPtr.current * 2;
+	Nat bOffset = b.offset - sPtr.current * 2;
+	Nat aSize = a.base.readSize * a.base.readCount;
+	Nat bSize = b.base.readSize * b.base.readCount;
+
+	while (aOffset < aSize & bOffset < bSize) {
+		Byte aCh = a.base.readByte(aOffset);
+		Byte bCh = b.base.readByte(bOffset);
+
+		if (aCh != bCh) {
+			if (aCh < bCh)
+				return -1;
+			else
+				return 1;
+		}
+
+		if (aCh == 0)
+			return 0;
+
+		aOffset++;
+		bOffset++;
+	}
+
+	0;
+}

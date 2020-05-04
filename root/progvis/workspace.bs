@@ -147,7 +147,8 @@ class Workspace on Render {
 				objMap.put(d.object, i);
 			}
 			if (!d.thread & !d.output) {
-				maxPos.y = max(maxPos.y, d.visual.rect.p1.y);
+				maxPos.x = max(maxPos.x, d.visual.rect.p1.x);
+				// maxPos.y = max(maxPos.y, d.visual.rect.p1.y);
 			}
 		}
 

@@ -245,6 +245,18 @@ namespace code {
 		return (RootObject *)opPtr;
 	}
 
+	MAYBE(Object *) Operand::obj() const {
+		if (type() != opObjReference)
+			return null;
+		return as<Object>((RootObject *)opPtr);
+	}
+
+	MAYBE(TObject *) Operand::tObj() const {
+		if (type() != opObjReference)
+			return null;
+		return as<TObject>((RootObject *)opPtr);
+	}
+
 	Label Operand::label() const {
 		if (type() != opLabel && type() != opRelativeLbl)
 			throw new (someEngine()) InvalidValue(S("Not a label!"));

@@ -17,11 +17,13 @@ class CodeHints on Compiler {
 	// Only the first hint object that returns true here will get the remaining functions called for that function.
 	Bool handlesFunction(Function fn) : abstract;
 
-	// Get an SrcPos describing the location of the function itself.
-	SrcPos location(Function fn) : abstract;
-
 	// Provide a user-friendly name of the function.
 	Str cleanName(Function fn, Package pkg) : abstract;
+
+	// Should we patch an external function? The main purpose of this is to keep track of memory
+	// accesses. 'fn' is known to not reside inside the package that contains the code to be
+	// visualized.
+	Bool patchExternal(Function fn) : abstract;
 
 	/**
 	 * How to handle the saved variable.
@@ -52,16 +54,6 @@ class DefaultCodeHints extends CodeHints {
 	// We handle all functions!
 	Bool handlesFunction(Function f) {
 		true;
-	}
-
-	SrcPos location(Function fn) : override {
-		if (fn as lang:bs:BSRawFn)
-			fn.pos;
-		else if (fn as lang:bs:BSRawCtor)
-			fn.pos;
-		else
-			// TODO: It would be useful to have this in all function, or even all Named.
-			SrcPos();
 	}
 
 	// Generate the name of a function, ignoring everything above "remove".
@@ -104,6 +96,9 @@ class DefaultCodeHints extends CodeHints {
 		RecPart p(at.name, params);
 		to.add(p);
 	}
+
+	// Don't patch external functions.
+	Bool patchExternal(Function fn) : override { false; }
 
 	// Save a variable.
 	Save saveVariable(Listing to, Var var, Listing:VarInfo info, Operand dest) : override {

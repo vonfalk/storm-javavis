@@ -153,6 +153,9 @@ namespace code {
 
 		SrcPos STORM_FN srcPos() const;
 
+		MAYBE(Object *) STORM_FN obj() const;
+		MAYBE(TObject *) STORM_FN tObj() const;
+
 		/**
 		 * Debug.
 		 */
