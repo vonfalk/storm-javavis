@@ -248,13 +248,21 @@ class CppHeapObj extends Data {
 		wrap.findAt(pt);
 	}
 
+	void clearAccess() : override {
+		wrap.clearAccess();
+	}
+
+	void checkAccess(unsafe:RawPtr object, Nat offset, Nat size, Trackers trackers) : override {
+		wrap.checkAccess(object, offset, size, trackers);
+	}
+
 	Data contained() : override { wrap.contained; }
 }
 
 /**
  * A single C++ character.
  */
-class CppChar extends Data {
+class CppChar extends RWData {
 	// Character value.
 	private Text ch;
 
