@@ -57,6 +57,10 @@ class Globals extends Data {
 		invalidateSize();
 	}
 
+	// We don't need to deal with writes to any of our content, we only contain "pointers" to the actual memory.
+	void clearAccess() : override {}
+	void checkAccess(unsafe:RawPtr object, Nat offset, Nat size, Trackers trackers) : override {}
+
 private:
 	class Var on Render {
 		Str name;

@@ -11,19 +11,7 @@ class Data extends Drawable {
 	// Draw this data item at its current location.
 	void draw(Graphics g, Bool active) : abstract {
 		Rect r = rect;
-
-		if (reads.any & writes.any) {
-			Size s = r.size;
-			s.w /= 2;
-			g.fill(Rect(r.p0, s), dataReadBg);
-			g.fill(Rect(r.p0 + Point(s.w, 0), s), dataWriteBg);
-		} else if (reads.any) {
-			g.fill(r, dataReadBg);
-		} else if (writes.any) {
-			g.fill(r, dataWriteBg);
-		} else {
-			g.fill(r, dataBg);
-		}
+		g.fill(r, dataBg);
 		g.draw(r, dataFg);
 	}
 
@@ -52,21 +40,68 @@ class Data extends Drawable {
 	}
 
 	// Called to clear any access markers for this object.
-	void clearAccess() {
-		reads.clear();
-		writes.clear();
-	}
+	void clearAccess() : abstract;
 
 	// Called when this object has been accessed by at least one thread. Recurses through the object
 	// hierarchy to find individual elements.
-	void checkAccess(unsafe:RawPtr object, Nat offset, Nat size, Trackers trackers) {
-		reads = trackers.readBy(object, offset, size);
-		writes = trackers.writtenBy(object, offset, size);
+	void checkAccess(unsafe:RawPtr object, Nat offset, Nat size, Trackers trackers) : abstract;
+}
+
+/**
+ * Data that tracks reads and writes.
+ *
+ * TODO: There might be better ways of visualizing this.
+ */
+class RWData extends Data {
+	// Read from?
+	private Bool read;
+
+	// Written to?
+	private Bool write;
+
+	// Custom drawing of the background.
+	void draw(Graphics g, Bool active) : override {
+		Rect r = rect;
+
+		if (read & write) {
+			Size s = r.size;
+			s.w /= 2;
+			g.fill(Rect(r.p0, s), dataReadBg);
+			g.fill(Rect(r.p0 + Point(s.w, 0), s), dataWriteBg);
+		} else if (read) {
+			g.fill(r, dataReadBg);
+		} else if (write) {
+			g.fill(r, dataWriteBg);
+		} else {
+			g.fill(r, dataBg);
+		}
+		g.draw(r, dataFg);
 	}
 
-	// Temporary solution for tracking reads and writes. Should perhaps be inside Primitive instead.
-	ThreadData[] reads;
-	ThreadData[] writes;
+	// Clear access.
+	void clearAccess() : override {
+		read = false;
+		write = false;
+	}
+
+	// Update access.
+	void checkAccess(unsafe:RawPtr object, Nat offset, Nat size, Trackers trackers) : override {
+		var r = trackers.readBy(object, offset, size);
+		var w = trackers.writtenBy(object, offset, size);
+
+		read = r.any;
+		write = w.any;
+
+		// Writes from multiple threads is not OK.
+		if (w.count > 1) {
+			print("Concurrency error ${r} ${w}");
+		} else if (w.any) {
+			for (t in r) {
+				if (t !is w[0])
+					print("Concurrency error ${r} ${w}");
+			}
+		}
+	}
 }
 
 /**
@@ -195,7 +230,7 @@ class DataWithCaption extends Data {
 /**
  * Unknown data element.
  */
-class UnknownData extends Data {
+class UnknownData extends RWData {
 	private Text text;
 
 	init() {
@@ -218,7 +253,7 @@ class UnknownData extends Data {
 /**
  * A primitive datatype, such as an integer. Represented as text.
  */
-class Primitive extends Data {
+class Primitive extends RWData {
 	// The text to draw.
 	private Text text;
 
@@ -271,7 +306,7 @@ package Path ptrArrow on Render = {
 /**
  * A pointer type, referring to some other data.
  */
-class Pointer extends Data {
+class Pointer extends RWData {
 	// Object we're pointing to.
 	protected Data? to;
 

@@ -262,7 +262,7 @@ class CppHeapObj extends Data {
 /**
  * A single C++ character.
  */
-class CppChar extends Data {
+class CppChar extends RWData {
 	// Character value.
 	private Text ch;
 
