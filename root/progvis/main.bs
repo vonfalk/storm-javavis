@@ -192,6 +192,7 @@ class MainPainter extends Painter {
 			program.terminate();
 
 		workspace.clear();
+		offset = Point();
 		repaint();
 	}
 
