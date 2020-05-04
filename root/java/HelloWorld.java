@@ -1,6 +1,8 @@
 public class HelloWorld {
     public static void main(String[] args) {
-      if (false) {
+      int i;
+      long u;
+      /*if (true) {
         print("Statement");
         print("is");
         print("true!");
@@ -15,6 +17,6 @@ public class HelloWorld {
         print("Printing, again!");
         break;
         print("You should not see this!");
-      }
+      }*/
     }
 }

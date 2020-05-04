@@ -403,11 +403,12 @@ SForStmt : SExpr, (",", SExpr)*;
 Block SBlockStmt(Block block);
 SBlockStmt[10] => block : SStmt(block) -> add;
 SBlockStmt : STypeDecl;
-SBlockStmt => block : SVarDecl -> add;
+SBlockStmt => block : SVarDecl(block);
 
-VarDecl SVarDecl();
-SVarDecl => VarDecl(type, name, pos) : SVarModifier, SType type, SIdent name #varName, ";";
-//SVarDecl => VarDecl() : SVarModifier, SType type, SIdent name #varName, SVarSuffix suffix, (",", SIdent #varName, SVarSuffix,)* ";";
+VarDecl SVarDecl(Block block);
+SVarDecl => VarDecl(pos, block, type, name) : SVarModifier, SType type, SIdent name #varName, ";";
+//SVarDecl => VarDecl(pos, block, type, name) : SVarModifier, SType type, SIdent name #varName, SVarSuffix(block) -> assign, ";";
+//SVarDecl => VarDecl(pos, block, type, name) : SVarModifier, SType type, SIdent name #varName, SVarSuffix suffix, (",", SIdent #varName, SVarSuffix,)* ";";
 
 Block SBlock(Block parent);
 SBlock => Block(pos, parent) : "{" [, (SBlockStmt(me) -> add,)* ]+ "}";
@@ -447,12 +448,12 @@ SVarModifier : ;
 SVarModifier : "final" #keyword, SVarModifier;
 SVarModifier : SAnnotation, SVarModifier;
 
-void SVarSuffix();
+Expr SVarSuffix(Block block);
 SVarSuffix : ("\[\]",)*;
-SVarSuffix : ("\[\]",)* "=", SVarInit;
+SVarSuffix => e : ("\[\]",)* "=", SVarInit(block) e;
 
-void SVarInit();
-SVarInit : SExpr;
+Expr SVarInit(Block block);
+SVarInit => e : SExpr(block) e;
 SVarInit : SArrayInit;
 
 void SArrayInit();

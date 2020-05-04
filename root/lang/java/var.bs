@@ -3,19 +3,41 @@ use core:asm;
 use lang:bs:macro;
 
 class JavaVar extends Named {
-    
-}
-
-class VarDecl extends Stmt {
-    init(Value type, SStr name, SrcPos pos) {
-        init(pos) {
-            name = name.v.toS;
+    init(Str name, Type val, SrcPos pos) {
+        init(pos, name) {
+            type = val;
         }
     }
 
-    private Str name;
+    Var var;
+
+    Type type;
+
+    void create(CodeGen gen) {
+        var = gen.l.createVar(gen.block, type.size);
+        //gen.l << mov(var, intConst(1024));
+    }
+}
+
+Type getType(Value val, SrcPos pos) on Compiler {
+    if (t = val.type)
+        return t;
+    throw SyntaxError(pos, "Couldn't find type.");
+}
+
+class VarDecl extends Stmt {
+    init(SrcPos pos, Block parent, Value type, SStr name) {
+        init(pos) {
+            var(name.v.toS, type.getType(pos), name.pos);
+        }
+        parent.add(var);
+    }
+
+    JavaVar var;
 
     Bool code(CodeGen gen) : override {
         true;
     }
 }
+
+// class LocalVarAccess evaluerar variabler.

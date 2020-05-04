@@ -32,7 +32,7 @@ package Bool executeStmt(Block inside, CodeGen gen, Stmt s) on Compiler {
 class Block extends Stmt {
     Scope scope;
     Stmt[] stmts;
-    protected Str->VarDecl vars;
+    protected Str->JavaVar vars;
     Bool step;
 
     init(SrcPos pos, Scope parent) {
@@ -51,20 +51,20 @@ class Block extends Stmt {
         stmts << stmt;
     }
 
-    void add(VarDecl var) {
-        print("adding...");
+    void add(JavaVar var) {
+        print("Block:add(JavaVar)");
         vars.put(var.name, var);
     }
 
     void initVariables(CodeGen gen) {
         for (k in vars) {
-            print(k.name);
+            vars.get(k.name).create(gen);
         }
     }
 
     Named? variable(Str name) {
         if (vars.has(name))
-            return vars.ge(name);
+            return vars.get(name);
         else
             return null;
     }
@@ -73,6 +73,7 @@ class Block extends Stmt {
         for (st in stmts) {
             st.code(gen);
         }
+        initVariables(gen);
         true;
     }
 }
