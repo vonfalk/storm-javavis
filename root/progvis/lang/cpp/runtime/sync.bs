@@ -80,6 +80,9 @@ value semaphore {
 }
 
 void sema_init(Ptr<semaphore> sema, Int value) {
+	if (value < 0)
+		throw SyncError("Cannot initialize a semaphore with a negative value!");
+
 	SemaImpl s(value.nat);
 
 	Nat offset = sema.offset - sPtr.current * 2;
