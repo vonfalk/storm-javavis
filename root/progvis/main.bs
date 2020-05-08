@@ -38,6 +38,7 @@ class MainWin extends Frame {
 		PopupMenu runMenu;
 		runMenu << Menu:Text("Restart", &this.onRestart());
 		runMenu << Menu:Text("Spawn thread", &this.onSpawnThread());
+		runMenu << Menu:Check("Track reads/writes", &this.onTrackMemory(Bool));
 
 		PopupMenu helpMenu;
 		helpMenu << Menu:Text("About...", &this.onAbout());
@@ -105,6 +106,11 @@ class MainWin extends Frame {
 
 	private void onSpawnThread() {
 		painter.spawnThread();
+	}
+
+	private void onTrackMemory(Bool b) {
+		painter.trackMemory(b);
+		painter.repaint();
 	}
 
 	private void onAbout() {
@@ -181,6 +187,11 @@ class MainPainter extends Painter {
 	init() {
 		init();
 		bgColor = Color(0.8, 0.8, 0.8);
+	}
+
+	// Set whether or not to track reads/writes.
+	void trackMemory(Bool track) {
+		workspace.trackMemory = track;
 	}
 
 	// Open a program.
