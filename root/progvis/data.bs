@@ -59,6 +59,9 @@ class RWData extends Data {
 	// Written to?
 	private Bool write;
 
+	// Concurrency error?
+	private Bool error;
+
 	// Custom drawing of the background.
 	void draw(Graphics g, Bool active) : override {
 		Rect r = rect;
@@ -76,12 +79,18 @@ class RWData extends Data {
 			g.fill(r, dataBg);
 		}
 		g.draw(r, dataFg);
+
+		if (error) {
+			g.line(r.p0, r.p1, dataError);
+			g.line(Point(r.p0.x, r.p1.y), Point(r.p1.x, r.p0.y), dataError);
+		}
 	}
 
 	// Clear access.
 	void clearAccess() : override {
 		read = false;
 		write = false;
+		error = false;
 	}
 
 	// Update access.
@@ -91,14 +100,18 @@ class RWData extends Data {
 
 		read = r.any;
 		write = w.any;
+		error = false;
 
 		// Writes from multiple threads is not OK.
 		if (w.count > 1) {
-			print("Concurrency error ${r} ${w}");
+			trackers.multiWriteError(w);
+			error = true;
 		} else if (w.any) {
 			for (t in r) {
-				if (t !is w[0])
-					print("Concurrency error ${r} ${w}");
+				if (t !is w[0]) {
+					trackers.readWriteError(w[0], r);
+					error = true;
+				}
 			}
 		}
 	}
