@@ -24,6 +24,9 @@ namespace storm {
 		// Get the named entity referred to.
 		Named *STORM_FN named() const { return entity; }
 
+		// Get the subtype.
+		Char STORM_FN type() const { return subtype; }
+
 	private:
 		// Entity we're referring to.
 		Named *entity;

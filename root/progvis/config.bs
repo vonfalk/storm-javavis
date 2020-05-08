@@ -18,8 +18,9 @@ Font codeFont on Render = Font("Liberation Mono", 12, 20);
 // Background color when drawing data.
 Brush dataBg on Render = SolidBrush(white);
 
-Brush dataReadBg on Render = SolidBrush(green);
-Brush dataWriteBg on Render = SolidBrush(red);
+Brush dataReadBg on Render = SolidBrush(Color(0.7, 1, 0.7));
+Brush dataWriteBg on Render = SolidBrush(Color(1, 0.7, 0.7));
+Brush dataError on Render = SolidBrush(red);
 
 // Text color when drawing text.
 Brush dataFg on Render = SolidBrush(black);

@@ -129,7 +129,7 @@ class MainWin extends Frame {
 
 		try {
 			painter.cleanup();
-			painter.open(files, &this.onError);
+			painter.open(files, &this.onError, &this.onConcurrencyError);
 		} catch (core:lang:CodeError error) {
 			CompileErrorDialog dlg(error.messageText, error.pos);
 			dlg.show(this);
@@ -143,6 +143,15 @@ class MainWin extends Frame {
 	// Called when an error is triggered from a program.
 	private void onError(Nat threadId, Exception e) {
 		showMessage(this, "Thread ${threadId} crashed", "Thread ${threadId} crashed with the following message:\n${e.message}");
+	}
+
+	// Called when a concurrency error is encountered.
+	private void onConcurrencyError(Str[] messages) {
+		StrBuf msg;
+		msg << "Concurrency issues were encountered:\n";
+		for (m in messages)
+			msg << m << "\n";
+		showMessage(this, "Concurrency issues", msg.toS);
 	}
 }
 
@@ -175,11 +184,12 @@ class MainPainter extends Painter {
 	}
 
 	// Open a program.
-	void open(Url[] files, fn(Nat, Exception)->void errorCb) {
+	void open(Url[] files, fn(Nat, Exception)->void errorCb, fn(Str[])->void concurrencyCb) {
 		var loaded = Program:load(files);
 		program = loaded;
 		workspace.globals = loaded.findGlobals();
 		workspace.hints = loaded.hints;
+		workspace.onError = concurrencyCb;
 		loaded.onChange = &this.update();
 		loaded.onError = errorCb;
 		update();
@@ -326,14 +336,14 @@ void debug() on Compiler {
 		// win.open(url / "cpp_error.cpp");
 		// win.open(url / "str.cpp");
 		// win.open(url / "const_example.cpp");
-		win.open(url / "pintos_debug.cpp");
+		// win.open(url / "pintos_debug.cpp");
 		// win.open(url / "pintos_live.c");
 		// win.open(url / "thread_example.c");
 		// win.open(url / "printf.c");
 		// win.open(url / "globals.cpp");
 		// win.open(url / "bank" / "bank.c");
 		// win.open(url / "bank" / "bank_good.c");
-		// win.open(url / "buffer" / "buffer.c");
+		win.open(url / "buffer" / "buffer.c");
 		// win.open(url / "cond.c");
 		win.waitForClose();
 	}

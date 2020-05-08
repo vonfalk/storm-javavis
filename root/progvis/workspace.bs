@@ -16,6 +16,16 @@ class Workspace on Render {
 	// Hints on how to draw things.
 	ViewHints[] hints;
 
+	// Error notification.
+	private Fn<void, Str[]>? errorNotification;
+
+	// Error callback (concurrency errors).
+	public assign onError(Fn<void, Str[]> fn) {
+		errorNotification = fn;
+		fn;
+	}
+
+
 	// Draw the workspace. Assumes we can clip anything not inside 'viewport'.
 	void render(Rect viewport, Graphics g) {
 		// Do some basic layout for the active threads. We probably don't want to do this at some point.
@@ -409,6 +419,11 @@ private:
 
 		for (obj, data in stackObjMap) {
 			data.updateMemAccess(obj, trackers);
+		}
+
+		if (trackers.errors.any) {
+			if (errorNotification)
+				errorNotification.call(trackers.errors);
 		}
 	}
 
