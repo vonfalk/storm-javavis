@@ -16,6 +16,24 @@ class Workspace on Render {
 	// Hints on how to draw things.
 	ViewHints[] hints;
 
+	// Should we track memory accesses?
+	private Bool trackMemAccess;
+
+	// Track memory?
+	public assign trackMemory(Bool v) {
+		trackMemAccess = v;
+		if (!v) {
+			for (e in elements) {
+				if (data = e.visual.contained as Data)
+					data.clearAccess();
+			}
+
+			for (obj, data in stackObjMap) {
+				data.clearAccess();
+			}
+		}
+	}
+
 	// Error notification.
 	private Fn<void, Str[]>? errorNotification;
 
@@ -290,7 +308,8 @@ class Workspace on Render {
 		}
 
 		// Mark reads/writes.
-		updateMemAccess();
+		if (trackMemAccess)
+			updateMemAccess();
 	}
 
 	// Remove everything in the workspace.
