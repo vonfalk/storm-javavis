@@ -16,6 +16,34 @@ class Workspace on Render {
 	// Hints on how to draw things.
 	ViewHints[] hints;
 
+	// Should we track memory accesses?
+	private Bool trackMemAccess;
+
+	// Track memory?
+	public assign trackMemory(Bool v) {
+		trackMemAccess = v;
+		if (!v) {
+			for (e in elements) {
+				if (data = e.visual.contained as Data)
+					data.clearAccess();
+			}
+
+			for (obj, data in stackObjMap) {
+				data.clearAccess();
+			}
+		}
+	}
+
+	// Error notification.
+	private Fn<void, Str[]>? errorNotification;
+
+	// Error callback (concurrency errors).
+	public assign onError(Fn<void, Str[]> fn) {
+		errorNotification = fn;
+		fn;
+	}
+
+
 	// Draw the workspace. Assumes we can clip anything not inside 'viewport'.
 	void render(Rect viewport, Graphics g) {
 		// Do some basic layout for the active threads. We probably don't want to do this at some point.
@@ -280,7 +308,8 @@ class Workspace on Render {
 		}
 
 		// Mark reads/writes.
-		updateMemAccess();
+		if (trackMemAccess)
+			updateMemAccess();
 	}
 
 	// Remove everything in the workspace.
@@ -409,6 +438,11 @@ private:
 
 		for (obj, data in stackObjMap) {
 			data.updateMemAccess(obj, trackers);
+		}
+
+		if (trackers.errors.any) {
+			if (errorNotification)
+				errorNotification.call(trackers.errors);
 		}
 	}
 

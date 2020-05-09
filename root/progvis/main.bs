@@ -38,6 +38,7 @@ class MainWin extends Frame {
 		PopupMenu runMenu;
 		runMenu << Menu:Text("Restart", &this.onRestart());
 		runMenu << Menu:Text("Spawn thread", &this.onSpawnThread());
+		runMenu << Menu:Check("Track reads/writes", &this.onTrackMemory(Bool));
 
 		PopupMenu helpMenu;
 		helpMenu << Menu:Text("About...", &this.onAbout());
@@ -107,6 +108,11 @@ class MainWin extends Frame {
 		painter.spawnThread();
 	}
 
+	private void onTrackMemory(Bool b) {
+		painter.trackMemory(b);
+		painter.repaint();
+	}
+
 	private void onAbout() {
 		var license = named{PROGVIS};
 		var version = named{PROGVIS_VERSION};
@@ -129,7 +135,7 @@ class MainWin extends Frame {
 
 		try {
 			painter.cleanup();
-			painter.open(files, &this.onError);
+			painter.open(files, &this.onError, &this.onConcurrencyError);
 		} catch (core:lang:CodeError error) {
 			CompileErrorDialog dlg(error.messageText, error.pos);
 			dlg.show(this);
@@ -143,6 +149,15 @@ class MainWin extends Frame {
 	// Called when an error is triggered from a program.
 	private void onError(Nat threadId, Exception e) {
 		showMessage(this, "Thread ${threadId} crashed", "Thread ${threadId} crashed with the following message:\n${e.message}");
+	}
+
+	// Called when a concurrency error is encountered.
+	private void onConcurrencyError(Str[] messages) {
+		StrBuf msg;
+		msg << "Concurrency issues were encountered:\n";
+		for (m in messages)
+			msg << m << "\n";
+		showMessage(this, "Concurrency issues", msg.toS);
 	}
 }
 
@@ -174,12 +189,18 @@ class MainPainter extends Painter {
 		bgColor = Color(0.8, 0.8, 0.8);
 	}
 
+	// Set whether or not to track reads/writes.
+	void trackMemory(Bool track) {
+		workspace.trackMemory = track;
+	}
+
 	// Open a program.
-	void open(Url[] files, fn(Nat, Exception)->void errorCb) {
+	void open(Url[] files, fn(Nat, Exception)->void errorCb, fn(Str[])->void concurrencyCb) {
 		var loaded = Program:load(files);
 		program = loaded;
 		workspace.globals = loaded.findGlobals();
 		workspace.hints = loaded.hints;
+		workspace.onError = concurrencyCb;
 		loaded.onChange = &this.update();
 		loaded.onError = errorCb;
 		update();
@@ -333,7 +354,7 @@ void debug() on Compiler {
 		// win.open(url / "globals.cpp");
 		// win.open(url / "bank" / "bank.c");
 		// win.open(url / "bank" / "bank_good.c");
-		// win.open(url / "buffer" / "buffer.c");
+		win.open(url / "buffer" / "buffer.c");
 		// win.open(url / "cond.c");
 		win.waitForClose();
 	}
