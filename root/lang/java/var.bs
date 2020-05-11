@@ -14,8 +14,10 @@ class JavaVar extends Named {
     Type type;
 
     void create(CodeGen gen) {
-        var = gen.l.createVar(gen.block, type.size);
-        //gen.l << mov(var, intConst(1024));
+        print("creating...");
+        if (var == Var()) {
+            var = gen.l.createVar(gen.block, type.size);
+        }
     }
 }
 
@@ -40,4 +42,21 @@ class VarDecl extends Stmt {
     }
 }
 
-// class LocalVarAccess evaluerar variabler.
+class LocalVarAccess extends Expr {
+    JavaVar var;
+
+    init(SrcPos pos, JavaVar var) {
+        init(pos) { var = var; }
+    }
+
+    Value result() : override {
+        Value(var.type);
+    }
+
+    Bool code(CodeGen gen) : override {
+        gen.l << mov(asSize(rax, var.var.size), var.var);
+        true;
+    }
+
+    Bool suggestResult(Type t) : override { false; }
+}

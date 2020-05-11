@@ -67,15 +67,13 @@ class WhileStmt extends Breakable {
 
         gen.l << restart;
 
-        CodeResult condResult(Value(named{Bool}), gen.block);
-        CodeGen sub = gen.child();
+        //CodeResult condResult(Value(named{Bool}), gen.block);
+        //CodeGen sub = gen.child();
         //if (step)
         //    gen.l << location(cond.pos);
-        gen.l << begin(sub.block);
-        cond.code(sub, condResult);
-        gen.l << end(sub.block);
+        cond.code(gen);
 
-        gen.l << cmp(condResult.location(gen), byteConst(0));
+        gen.l << cmp(al, byteConst(0));
         gen.l << jmp(exit, CondFlag:ifEqual);
 
         if (body)

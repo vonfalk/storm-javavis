@@ -184,7 +184,8 @@ SElementArray : SElementValue - (, ",", SElementValue)*;
 // Expressions and blocks.
 Expr SExpr(Block block);
 SExpr => e : SExpr1(block) e;
-SExpr : SExpr1(block), SAssignOp, SExpr1;
+SExpr => assign(pos, block, var, e) : SIdent var, "=", SExpr1(block) e;
+//SExpr : SExpr1(block), SAssignOp, SExpr1;
 
 void SAssignOp();
 SAssignOp : "=";
@@ -273,6 +274,7 @@ SPrimary : "super" #keyword - (, SArgs)?;
 SPrimary : "super" #keyword, "\.", SIdent #fnName - (, SArgs)?;
 SPrimary[-1] => FnCall(pos, block, id, args) : SIdent id, SArgs(block) args;
 // SPrimary[-1] : SIdent #varName - (, SIdentSuffix)*;
+SPrimary[-1] => readVar(pos, block, name) : SIdent name #varName;
 SPrimary : SBasicType #typeName, ("\[\]",)* "\.", "class" #keyword;
 SPrimary : "void" #typeName, "\.", "class" #keyword;
 SPrimary : "new[ \t]" #keyword, SCreator;

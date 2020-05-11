@@ -9,9 +9,9 @@ class Expr extends Stmt {
 
     Bool code(CodeGen gen) : abstract;
 
-    void code(CodeGen gen, CodeResult res) : abstract;
-
     Value result() : abstract;
+
+    Bool suggestResult(Type t) : abstract;
 }
 
 class StrLiteral extends Expr {
@@ -32,7 +32,7 @@ class StrLiteral extends Expr {
         true;
     }
 
-    void code(CodeGen gen, CodeResult res) : override { throw SyntaxError(pos, "StrLiteral:code(CodeGen, CodeRes) is not yet implemented."); }
+    Bool suggestResult(Type t) : override { false; }
 }
 
 class IntLiteral extends Expr {
@@ -47,15 +47,17 @@ class IntLiteral extends Expr {
     private Long val;
 
     Value result() : override {
-        Value(named{Int}, true);
+        Value(named{Int});
     }
 
     Bool code(CodeGen gen) : override {
-        gen.l << mov(ptrA, longConst(val));
+        gen.l << mov(rax, longConst(val));
         true;
     }
 
-    void code(CodeGen gen, CodeResult res) : override { throw SyntaxError(pos, "IntLiteral:code(CodeGen, CodeRes) is not yet implemented."); }
+    Bool suggestResult(Type t) : override {
+		return t is named{Byte} | t is named{Int} | t is named{Long} | t is named{Nat} | t is named{Word};
+    }
 }
 
 class BoolLiteral extends Expr {
@@ -69,20 +71,11 @@ class BoolLiteral extends Expr {
         Value(named{Bool});
     }
 
-    void code(CodeGen gen, CodeResult res) : override {
-        if (!res.needed())
-            return;
-        
-        Byte val = if (this.val) { 1b; } else {0b; };
-        var to = res.location(gen);
-        gen.l << mov(to, byteConst(val));
-
-        res.created(gen);
-    }
+    Bool suggestResult(Type t) : override { false; }
 
     Bool code(CodeGen gen) : override {
         Byte val = if (this.val) { 1b; } else { 0b; };
-        gen.l << mov(byteRel(ptrA), byteConst(val));
+        gen.l << mov(al, byteConst(val));
         true;
     }
 }
@@ -102,7 +95,7 @@ class FnCall extends Expr {
         fn.result;
     }
 
-    void code(CodeGen gen, CodeResult res) : override { throw SyntaxError(pos, "FnCall:code(CodeGen, CodeRes) is not yet implemented."); }
+    Bool suggestResult(Type t) : override { false; }
 
     Bool code(CodeGen gen) : override {
         Operand[] ops;
@@ -136,4 +129,54 @@ class FnCall extends Expr {
 
         throw SyntaxError(pos, "Could not find function ${sName}.");
     }
+}
+
+class AssignOp extends Expr {
+    LocalVarAccess to;
+    Expr rhs;
+
+    init(SrcPos pos, LocalVarAccess to, Expr rhs) {
+        init(pos) {
+            to = to;
+            rhs = rhs;
+        }
+        if (!Value(to.var.type).canStore(rhs.result))
+            if (!rhs.suggestResult(to.var.type))
+                throw SyntaxError(pos, "Variable assignment not valid.");
+    }
+
+    Bool code(CodeGen gen) : override {
+        rhs.code(gen);
+        gen.l << mov(to.var.var, asSize(rax, to.var.var.size));
+        true;
+    }
+
+    Bool suggestResult(Type t) : override { false; }
+
+    Value result() : override {
+        Value();
+    }
+}
+
+Expr assign(SrcPos pos, Block block, SStr var, Expr rhs) {
+    var v = block.variable(var.v);
+
+    if (v as JavaVar) {
+        LocalVarAccess to(pos, v);
+        AssignOp op(pos, to, rhs);
+        return op;
+    }
+    throw SyntaxError(pos, "assign(SrcPos, Block, SStr, Expr): Variable ${var.v} was not found.");
+}
+// byt ut LocalVarAccess, inkludera .var direkt.
+
+Expr readVar(SrcPos pos, Block block, SStr name) {
+    var v = block.variable(name.v);
+
+    if (v as JavaVar) {
+        LocalVarAccess r(pos, v);
+        return r;
+    }
+    
+    throw SyntaxError(pos, "readVar(SrcPos, Block, SStr): Variable ${name.v} not found.");
 }

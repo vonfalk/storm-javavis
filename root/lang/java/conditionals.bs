@@ -23,16 +23,9 @@ class IfStmt extends Block {
         
         var onFalse = gen.l.label();
         var exit = gen.l.label();
+        cond.code(gen);
 
-        CodeResult condResult(Value(named{Bool}), gen.block);
-        CodeGen sub = gen.child();
-        //if (step)
-        //    gen.l << location(cond.pos);
-        gen.l << begin(sub.block);
-        cond.code(sub, condResult);
-        gen.l << end(sub.block);
-
-        gen.l << cmp(condResult.location(gen), byteConst(0));
+        gen.l << cmp(al, byteConst(0));
         gen.l << jmp(onFalse, CondFlag:ifEqual);
 
         Bool returns = false;

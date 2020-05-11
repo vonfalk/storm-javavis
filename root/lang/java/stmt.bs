@@ -52,7 +52,6 @@ class Block extends Stmt {
     }
 
     void add(JavaVar var) {
-        print("Block:add(JavaVar)");
         vars.put(var.name, var);
     }
 
@@ -70,10 +69,10 @@ class Block extends Stmt {
     }
 
     Bool code(CodeGen gen) : override {
+        initVariables(gen);
         for (st in stmts) {
             st.code(gen);
         }
-        initVariables(gen);
         true;
     }
 }
