@@ -4,9 +4,13 @@ public class HelloWorld {
       b = true;
       int i;
       i = 20;
-      while (b) {
-        print("Hello, world!");
+      if (b) {
+        print("True!");
         b = false;
+      }
+
+      while (b) {
+        print("You should not see this.");
       }
     }
 }

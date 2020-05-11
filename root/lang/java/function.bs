@@ -53,7 +53,7 @@ class JavaFunction extends Function {
         block.code(gen);
         gen.l << fnRet();
 
-        print(gen.toS);
+        //print(gen.toS);
         gen;
     }
 

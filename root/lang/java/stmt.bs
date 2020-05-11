@@ -100,8 +100,8 @@ class BlockLookup extends NameLookup {
     Block block;
 
     Named? find(SimplePart part, Scope source) {
-        //if (part.params.empty)
-            //return block.variable(part.name);
+        if (part.params.empty)
+            return block.variable(part.name);
         
         null;
     }

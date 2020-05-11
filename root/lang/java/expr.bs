@@ -132,22 +132,22 @@ class FnCall extends Expr {
 }
 
 class AssignOp extends Expr {
-    LocalVarAccess to;
+    JavaVar to;
     Expr rhs;
 
-    init(SrcPos pos, LocalVarAccess to, Expr rhs) {
+    init(SrcPos pos, JavaVar to, Expr rhs) {
         init(pos) {
             to = to;
             rhs = rhs;
         }
-        if (!Value(to.var.type).canStore(rhs.result))
-            if (!rhs.suggestResult(to.var.type))
+        if (!Value(to.type).canStore(rhs.result))
+            if (!rhs.suggestResult(to.type))
                 throw SyntaxError(pos, "Variable assignment not valid.");
     }
 
     Bool code(CodeGen gen) : override {
         rhs.code(gen);
-        gen.l << mov(to.var.var, asSize(rax, to.var.var.size));
+        gen.l << mov(to.var, asSize(rax, to.var.size));
         true;
     }
 
@@ -158,22 +158,17 @@ class AssignOp extends Expr {
     }
 }
 
-Expr assign(SrcPos pos, Block block, SStr var, Expr rhs) {
-    var v = block.variable(var.v);
-
-    if (v as JavaVar) {
-        LocalVarAccess to(pos, v);
-        AssignOp op(pos, to, rhs);
+Expr assign(SrcPos pos, Block block, SStr name, Expr rhs) {
+    if (v = block.scope.find(SimpleName(name.v)) as JavaVar) {
+        AssignOp op(pos, v, rhs);
         return op;
     }
-    throw SyntaxError(pos, "assign(SrcPos, Block, SStr, Expr): Variable ${var.v} was not found.");
+    throw SyntaxError(pos, "assign(SrcPos, Block, SStr, Expr): Variable ${name.v} was not found.");
 }
 // byt ut LocalVarAccess, inkludera .var direkt.
 
 Expr readVar(SrcPos pos, Block block, SStr name) {
-    var v = block.variable(name.v);
-
-    if (v as JavaVar) {
+    if (v = block.scope.find(SimpleName(name.v)) as JavaVar) {
         LocalVarAccess r(pos, v);
         return r;
     }
