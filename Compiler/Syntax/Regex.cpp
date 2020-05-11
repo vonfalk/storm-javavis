@@ -100,6 +100,19 @@ namespace storm {
 			return s;
 		}
 
+		MAYBE(Str *) Regex::simpleStr() const {
+			StrBuf *r = new (states) StrBuf();
+			for (Nat i = 0; i < states->count(); i++) {
+				State &state = states->at(i);
+				if (!state.simple())
+					return null;
+
+				*r << Char(wchar(state.match.first));
+			}
+
+			return r->toS();
+		}
+
 		Nat Regex::matchRaw(Str *str) const {
 			return matchRaw(str, 0);
 		}
@@ -475,7 +488,7 @@ namespace storm {
 		}
 
 		Bool Regex::State::simple() const {
-			return !skippable && !repeatable && match.count() == 1;
+			return !skippable && !repeatable && !match.inverted && match.count() == 1;
 		}
 
 		Bool Regex::State::operator ==(const State &o) const {

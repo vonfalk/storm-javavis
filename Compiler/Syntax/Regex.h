@@ -42,6 +42,9 @@ namespace storm {
 			// Is this a 'simple' regex? Ie. a regex that is basically a string literal?
 			Bool STORM_FN simple() const;
 
+			// Get the contents of the simple literal.
+			MAYBE(Str *) STORM_FN simpleStr() const;
+
 			/**
 			 * C++ api used by the parser.
 			 */
