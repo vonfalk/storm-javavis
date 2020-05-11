@@ -40,8 +40,7 @@ BEGIN_TEST(Ui, Compile) {
 	CHECK_RUNS(e.package(S("ui"))->compile());
 } END_TEST
 
-// Requires an X-session to compile on Linux at the moment.
-// BEGIN_TEST(Progvis, Compile) {
-// 	Engine &e = gEngine();
-// 	CHECK_RUNS(e.package(S("progvis"))->compile());
-// } END_TEST
+BEGIN_TEST(Progvis, Compile) {
+	Engine &e = gEngine();
+	CHECK_RUNS(e.package(S("progvis"))->compile());
+} END_TEST
