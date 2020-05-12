@@ -14,6 +14,21 @@ namespace storm {
 			STORM_PKG(lang.bnf.glr);
 
 			/**
+			 * Action plan for optimizing this:
+			 *
+			 * - Skip using a Set<> for the stack. In practice there are few (<25-30) items in each set, so
+			 *   we're probably fine with a plain array (perhaps we should store "state" separately for quick iteration)
+			 * - Think about the ratio of used vs discarded StackItems, if many are retained, we should make it a flat
+			 *   structure. Otherwise, we might benefit from keeping the objects GC:d.
+			 * - Make StackItem a chunked and indexed structure, very much like the tree.
+			 * - Perhaps we should do something about the ParentReq member. Currently it contains a pointer, which
+			 *   could be an issue, since the GC would then have to scan entire arrays. We could probably do something
+			 *   similar to the dynamic structure used in TreeStore, since we could then reduce the entire structure
+			 *   to a set of integers.
+			 */
+
+
+			/**
 			 * Stack items in the GLR parser.
 			 *
 			 * These closely resemble what the paper describes as 'links'. One node consists of one
