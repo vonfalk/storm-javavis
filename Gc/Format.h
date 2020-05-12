@@ -902,8 +902,10 @@ namespace storm {
 			// Helper for interpreting and scanning a block of data described by a GcType.
 #define FMT_FIX_GCTYPE(header, start, base)								\
 			do {														\
-				for (size_t _i = (start); _i < (header)->obj.count; _i++) { \
-					size_t offset = (header)->obj.offset[_i];			\
+				size_t count = (header)->obj.count;						\
+				size_t *offsets = (header)->obj.offset;					\
+				for (size_t _i = (start); _i < count; _i++) {			\
+					size_t offset = offsets[_i];						\
 					void **data = (void **)((byte *)(base) + offset);	\
 					r = fix12(s, data);									\
 					if (r != Result())									\
