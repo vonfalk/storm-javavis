@@ -93,7 +93,7 @@ namespace storm {
 				initParse(root, str, file, start);
 
 				// Start as usual.
-				Set<StackItem *> *lastSet = null;
+				Set<StackItemZ *> *lastSet = null;
 				Nat lastPos = 0;
 				doParse(startPos, lastSet, lastPos);
 
@@ -144,7 +144,7 @@ namespace storm {
 				parseRoot = syntax->lookup(root);
 
 				store = new (this) TreeStore(syntax);
-				stacks = new (this) FutureStacks();
+				stacks = new (this) FutureStacksZ();
 				acceptingStack = null;
 				lastSet = null;
 				lastPos = 0;
@@ -156,7 +156,7 @@ namespace storm {
 			void Parser::doParse(Nat from) {
 				Nat length = source->peekLength();
 				for (Nat i = from; i <= length; i++) {
-					Set<StackItem *> *top = stacks->top();
+					Set<StackItemZ *> *top = stacks->top();
 
 					// Process all states in 'top'.
 					if (top)
@@ -168,14 +168,14 @@ namespace storm {
 			}
 
 #ifdef GLR_BACKTRACK
-			void Parser::doParse(Nat from, Set<StackItem *> *&states, Nat &pos) {
+			void Parser::doParse(Nat from, Set<StackItemZ *> *&states, Nat &pos) {
 				states = null;
 				Nat badness = 0;
 
 				Nat newLine = from;
 				Nat length = source->peekLength();
 				for (Nat i = from; i <= length; i++) {
-					Set<StackItem *> *top = stacks->top();
+					Set<StackItemZ *> *top = stacks->top();
 
 					// Process all states in 'top'.
 					if (top && top->any()) {
@@ -210,7 +210,7 @@ namespace storm {
 			}
 #else
 			// Non-backtracking version.
-			void Parser::doParse(Nat from, Set<StackItem *> *&states, Nat &pos) {
+			void Parser::doParse(Nat from, Set<StackItemZ *> *&states, Nat &pos) {
 				doParse(from);
 
 				states = lastSet;
@@ -237,15 +237,15 @@ namespace storm {
 				// them first!
 				// TODO: If no such stack exists, we want to pick the one with the least dependency errors.
 				// This only affects the quality of highlighting in error cases, so it is fairly minor.
-				StackItem **prev = &acceptingStack;
-				StackItem **insert = &acceptingStack;
+				StackItemZ **prev = &acceptingStack;
+				StackItemZ **insert = &acceptingStack;
 				while (*prev) {
 					if (ctx.any())
 						(*prev)->required = (*prev)->required.remove(e, ctx);
 
 					if ((*prev)->required.empty() && prev != insert) {
 						// Unlink it!
-						StackItem *chosen = *prev;
+						StackItemZ *chosen = *prev;
 						*prev = chosen->morePrev;
 
 						// Put it back in the beginning.
@@ -269,13 +269,13 @@ namespace storm {
 			void Parser::reduceAll() {
 				// NOTE: we need to use 'visited' as that one is also used in 'limitedReduce' for optimizations.
 				visited->clear();
-				Set<StackItem *> *src = stacks->top();
+				Set<StackItemZ *> *src = stacks->top();
 
 				bool any;
 				do {
 					any = false;
-					for (Set<StackItem *>::Iter i = src->begin(), e = src->end(); i != e; ++i) {
-						StackItem *now = i.v();
+					for (Set<StackItemZ *>::Iter i = src->begin(), e = src->end(); i != e; ++i) {
+						StackItemZ *now = i.v();
 						if (visited->get(now->state))
 							continue;
 						visited->set(now->state, true);
@@ -294,14 +294,14 @@ namespace storm {
 
 			void Parser::shiftAll() {
 				visited->clear();
-				Set<StackItem *> *src = stacks->top();
+				Set<StackItemZ *> *src = stacks->top();
 
 				bool match = false;
 				bool any = false;
 				do {
 					any = false;
-					for (Set<StackItem *>::Iter i = src->begin(), e = src->end(); i != e; ++i) {
-						StackItem *now = i.v();
+					for (Set<StackItemZ *>::Iter i = src->begin(), e = src->end(); i != e; ++i) {
+						StackItemZ *now = i.v();
 						if (visited->get(now->state))
 							continue;
 						visited->set(now->state, true);
@@ -313,7 +313,7 @@ namespace storm {
 				} while (any && !match);
 			}
 
-			bool Parser::shiftAll(StackItem *now) {
+			bool Parser::shiftAll(StackItemZ *now) {
 				bool found = false;
 				State *s = table->state(now->state);
 				if (s->actions)
@@ -324,7 +324,7 @@ namespace storm {
 				return found;
 			}
 
-			bool Parser::shiftAll(StackItem *now, Array<Action> *actions) {
+			bool Parser::shiftAll(StackItemZ *now, Array<Action> *actions) {
 				bool found = false;
 
 				// Check regular shifts.
@@ -346,8 +346,8 @@ namespace storm {
 					if (!action.regex.matchesEmpty())
 						errors += infoShifts(1);
 					Nat tree = store->push(now->pos, errors).id();
-					StackItem *item = new (this) StackItem(action.action, currentPos, now, tree);
-					StackItem *topItem = stacks->top()->at(item);
+					StackItemZ *item = new (this) StackItemZ(action.action, currentPos, now, tree);
+					StackItemZ *topItem = stacks->top()->at(item);
 					if (topItem == item) {
 						// Inserted!
 					} else {
@@ -358,7 +358,7 @@ namespace storm {
 				return found;
 			}
 
-			void Parser::shiftAll(StackItem *now, Map<Nat, Nat> *actions) {
+			void Parser::shiftAll(StackItemZ *now, Map<Nat, Nat> *actions) {
 				// See if we can 'shift' through a nonterminal at this position.
 				typedef Map<Nat, Nat>::Iter Iter;
 				for (Iter i = actions->begin(), e = actions->end(); i != e; ++i) {
@@ -372,8 +372,8 @@ namespace storm {
 					InfoErrors errors = infoSuccess();
 					errors += infoShifts(Item(syntax, prod).length(syntax));
 					Nat tree = store->push(now->pos, prod, errors, 0).id();
-					StackItem *item = new (this) StackItem(to, currentPos, now, tree);
-					StackItem *topItem = stacks->top()->at(item);
+					StackItemZ *item = new (this) StackItemZ(to, currentPos, now, tree);
+					StackItemZ *topItem = stacks->top()->at(item);
 					if (topItem == item) {
 						// Inserted!
 					} else {
@@ -384,10 +384,10 @@ namespace storm {
 
 			bool Parser::actorShift() {
 				bool any = false;
-				Set<StackItem *> *src = stacks->top();
+				Set<StackItemZ *> *src = stacks->top();
 
-				for (Set<StackItem *>::Iter i = src->begin(), e = src->end(); i != e; ++i) {
-					StackItem *now = i.v();
+				for (Set<StackItemZ *>::Iter i = src->begin(), e = src->end(); i != e; ++i) {
+					StackItemZ *now = i.v();
 
 					ActorEnv env = {
 						table->state(now->state),
@@ -409,7 +409,7 @@ namespace storm {
 				return any;
 			}
 
-			void Parser::actor(Nat pos, Set<StackItem *> *states) {
+			void Parser::actor(Nat pos, Set<StackItemZ *> *states) {
 #ifdef GLR_DEBUG
 				PVAR(pos);
 #endif
@@ -422,12 +422,12 @@ namespace storm {
 				visited->clear();
 				currentPos = pos;
 
-				typedef Set<StackItem *>::Iter Iter;
+				typedef Set<StackItemZ *>::Iter Iter;
 				Bool done;
 				do {
 					done = true;
 					for (Iter i = states->begin(), e = states->end(); i != e; ++i) {
-						StackItem *now = i.v();
+						StackItemZ *now = i.v();
 						if (visited->get(now->state))
 							continue;
 						visited->set(now->state, true);
@@ -471,7 +471,7 @@ namespace storm {
 					// smaller, which means that some characters in the input were skipped. These
 					// should be included somewhere so that the InfoTrees will have the correct length.
 					Nat tree = store->push(env.stack->pos, errors).id();
-					StackItem *item = new (this) StackItem(action.action, matched, env.stack, tree);
+					StackItemZ *item = new (this) StackItemZ(action.action, matched, env.stack, tree);
 					stacks->put(offset, store, item);
 					any = true;
 #ifdef GLR_DEBUG
@@ -482,7 +482,7 @@ namespace storm {
 				return any;
 			}
 
-			void Parser::actorReduce(const ActorEnv &env, StackItem *through) {
+			void Parser::actorReduce(const ActorEnv &env, StackItemZ *through) {
 				if (env.reduceAll) {
 					actorReduceAll(env, through);
 					return;
@@ -506,7 +506,7 @@ namespace storm {
 				}
 			}
 
-			void Parser::actorReduceAll(const ActorEnv &env, StackItem *through) {
+			void Parser::actorReduceAll(const ActorEnv &env, StackItemZ *through) {
 				// See if we can reduce this one normally.
 				Array<Nat> *toReduce = env.state->reduce;
 				Nat count = toReduce->count();
@@ -551,7 +551,7 @@ namespace storm {
 				}
 			}
 
-			void Parser::doReduce(const ActorEnv &env, Nat production, StackItem *through) {
+			void Parser::doReduce(const ActorEnv &env, Nat production, StackItemZ *through) {
 				Item item(syntax, production);
 				Nat rule = item.rule(syntax);
 				Nat length = item.length(syntax);
@@ -571,7 +571,7 @@ namespace storm {
 				reduce(re, env.stack, null, through, length);
 			}
 
-			void Parser::reduce(const ReduceEnv &env, StackItem *stack, const Path *path, StackItem *through, Nat len) {
+			void Parser::reduce(const ReduceEnv &env, StackItemZ *stack, const Path *path, StackItemZ *through, Nat len) {
 #ifdef GLR_DEBUG
 				PLN(L"Reduce " << (void *)stack << L" " << stack->state << L" " << (void *)through << L" len " << len);
 				::Indent z(util::debugStream());
@@ -586,7 +586,7 @@ namespace storm {
 					};
 
 					// Keep on traversing...
-					for (StackItem *i = stack; i; i = i->morePrev) {
+					for (StackItemZ *i = stack; i; i = i->morePrev) {
 						if (i->prev) {
 							next.item = i;
 							reduce(env, i->prev, &next, i == through ? null : through, len);
@@ -597,7 +597,7 @@ namespace storm {
 				}
 			}
 
-			void Parser::finishReduce(const ReduceEnv &env, StackItem *stack, const Path *path) {
+			void Parser::finishReduce(const ReduceEnv &env, StackItemZ *stack, const Path *path) {
 				Engine &e = engine();
 				State *state = table->state(stack->state);
 				Map<Nat, Nat>::Iter to = state->rules->find(env.rule);
@@ -666,7 +666,7 @@ namespace storm {
 
 				// Accept?
 				if (accept) {
-					StackItem *add = new (e) StackItem(-1, currentPos, stack, node, required);
+					StackItemZ *add = new (e) StackItemZ(-1, currentPos, stack, node, required);
 
 					if (acceptingStack && acceptingStack->pos == currentPos) {
 						usedNode |= acceptingStack->insert(store, add, usedNode);
@@ -678,14 +678,14 @@ namespace storm {
 
 				// Figure out which state to go to.
 				if (reduce) {
-					StackItem *add = new (e) StackItem(to.v(), currentPos, stack, node, required);
+					StackItemZ *add = new (e) StackItemZ(to.v(), currentPos, stack, node, required);
 #ifdef GLR_DEBUG
 					PLN(L"Added " << to.v() << L" with prev " << stack->state << L"(" << (void *)stack << L")");
 #endif
 
 					// Add the newly created state.
-					Set<StackItem *> *top = stacks->top();
-					StackItem *old = top->at(add);
+					Set<StackItemZ *> *top = stacks->top();
+					StackItemZ *old = top->at(add);
 					if (old == add) {
 						// 'add' was successfully inserted. Nothing more to do!
 						usedNode = true;
@@ -707,12 +707,12 @@ namespace storm {
 				}
 			}
 
-			void Parser::limitedReduce(const ReduceEnv &env, Set<StackItem *> *top, StackItem *through) {
+			void Parser::limitedReduce(const ReduceEnv &env, Set<StackItemZ *> *top, StackItemZ *through) {
 #ifdef GLR_DEBUG
 				PLN(L"--LIMITED--");
 #endif
-				for (Set<StackItem *>::Iter i = top->begin(), e = top->end(); i != e; ++i) {
-					StackItem *item = i.v();
+				for (Set<StackItemZ *>::Iter i = top->begin(), e = top->end(); i != e; ++i) {
+					StackItemZ *item = i.v();
 
 					// Will this state be visited soon anyway?
 					if (visited->get(item->state) == false)
@@ -738,8 +738,8 @@ namespace storm {
 				return r.expand(syntax);
 			}
 
-			StackItem *Parser::startState(Nat pos, Rule *root) {
-				return new (this) StackItem(table->state(startSet(root)), pos);
+			StackItemZ *Parser::startState(Nat pos, Rule *root) {
+				return new (this) StackItemZ(table->state(startSet(root)), pos);
 			}
 
 			void Parser::clear() {
@@ -783,10 +783,10 @@ namespace storm {
 				return out->toS();
 			}
 
-			void Parser::errorMsg(StrBuf *out, Nat pos, Set<StackItem *> *states) const {
+			void Parser::errorMsg(StrBuf *out, Nat pos, Set<StackItemZ *> *states) const {
 				Set<Str *> *errors = new (this) Set<Str *>();
 
-				for (Set<StackItem *>::Iter i = states->begin(); i != states->end(); ++i) {
+				for (Set<StackItemZ *>::Iter i = states->begin(); i != states->end(); ++i) {
 					errorMsg(errors, i.v()->state);
 				}
 
@@ -817,8 +817,8 @@ namespace storm {
 				}
 			}
 
-			void Parser::reqErrorMsg(StrBuf *out, StackItem *state) const {
-				for (StackItem *item = state; item; item = item->morePrev) {
+			void Parser::reqErrorMsg(StrBuf *out, StackItemZ *state) const {
+				for (StackItemZ *item = state; item; item = item->morePrev) {
 					// For each of these, we want to find a production with an unfullfilled requirement.
 					Nat found = findMissingReq(item->tree, item->required);
 					if (!found)
@@ -871,7 +871,7 @@ namespace storm {
 				// See if we need to examine stacks and such. This condition and the contained loop
 				// should match what's in 'reqErrorMsg'.
 				if (acceptingStack && acceptingStack->required.any()) {
-					for (StackItem *item = acceptingStack; item; item = item->morePrev) {
+					for (StackItemZ *item = acceptingStack; item; item = item->morePrev) {
 						Nat found = findMissingReq(item->tree, item->required);
 						if (found) {
 							// Just pick the first one!
@@ -1234,10 +1234,10 @@ namespace storm {
 			void Parser::completePrefix() {
 				// This is a variant of the 'actor' function above, except that we only attempt to
 				// perform reductions.
-				typedef Set<StackItem *>::Iter Iter;
+				typedef Set<StackItemZ *>::Iter Iter;
 
 				visited->clear();
-				Set<StackItem *> *top = stacks->top();
+				Set<StackItemZ *> *top = stacks->top();
 
 #ifdef GLR_DEBUG
 				PLN(L"--- Starting error recovery at " << currentPos << "---");
@@ -1247,7 +1247,7 @@ namespace storm {
 				do {
 					done = true;
 					for (Iter i = top->begin(), e = top->end(); i != e; ++i) {
-						StackItem *now = i.v();
+						StackItemZ *now = i.v();
 						if (visited->get(now->state))
 							continue;
 						visited->set(now->state, true);

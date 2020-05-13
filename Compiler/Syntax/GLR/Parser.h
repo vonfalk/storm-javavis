@@ -100,7 +100,7 @@ namespace storm {
 				TreeStore *store;
 
 				// Stacks for future steps.
-				FutureStacks *stacks;
+				FutureStacksZ *stacks;
 
 				// Root rule for this parse.
 				Nat parseRoot;
@@ -116,10 +116,10 @@ namespace storm {
 
 				// Last found stack which accepted the string. Starts with a dummy stack item for
 				// the topmost production.
-				StackItem *acceptingStack;
+				StackItemZ *acceptingStack;
 
 				// The last non-empty state set. Used for error reporting.
-				Set<StackItem *> *lastSet;
+				Set<StackItemZ *> *lastSet;
 
 				// The position of 'lastSet'.
 				Nat lastPos;
@@ -142,7 +142,7 @@ namespace storm {
 				ItemSet startSet(Rule *rule);
 
 				// Find the start state for for a rule.
-				StackItem *startState(Nat pos, Rule *rule);
+				StackItemZ *startState(Nat pos, Rule *rule);
 
 				// Add 'production' and all other productions which may complete this production to
 				// 'alwaysReduce'.
@@ -166,7 +166,7 @@ namespace storm {
 
 				// Parse as 'doParse' does. Keep track of the last states before the last line
 				// ending as well as the error information in 'doParse'. Used for better error recovery.
-				void doParse(Nat from, Set<StackItem *> *&states, Nat &pos);
+				void doParse(Nat from, Set<StackItemZ *> *&states, Nat &pos);
 
 				/**
 				 * Error recovery specials.
@@ -183,9 +183,9 @@ namespace storm {
 
 				// Perform all possible shifts in the current stack top. Returns 'true' if one or
 				// more shifts were performed. Returns 'true' if a matching shift was found.
-				bool shiftAll(StackItem *now);
-				bool shiftAll(StackItem *now, Array<Action> *actions);
-				void shiftAll(StackItem *now, Map<Nat, Nat> *actions);
+				bool shiftAll(StackItemZ *now);
+				bool shiftAll(StackItemZ *now, Array<Action> *actions);
+				void shiftAll(StackItemZ *now, Map<Nat, Nat> *actions);
 
 				/**
 				 * Parsing functions. Based on the paper "Parser Generation for Interactive
@@ -193,7 +193,7 @@ namespace storm {
 				 */
 
 				// Act on all states until we're done.
-				void actor(Nat pos, Set<StackItem *> *states);
+				void actor(Nat pos, Set<StackItemZ *> *states);
 
 				// Data passed to the reduction actor.
 				struct ActorEnv {
@@ -201,7 +201,7 @@ namespace storm {
 					State *state;
 
 					// Top of stack before reductions started.
-					StackItem *stack;
+					StackItemZ *stack;
 
 					// Reduce all states, even states that have not reached completion. Used when
 					// performing error correction. Contains information on which states have
@@ -211,11 +211,11 @@ namespace storm {
 
 				// Perform actions required for a state.
 				bool actorShift(const ActorEnv &env);
-				void actorReduce(const ActorEnv &env, StackItem *through);
-				void doReduce(const ActorEnv &env, Nat production, StackItem *through);
+				void actorReduce(const ActorEnv &env, StackItemZ *through);
+				void doReduce(const ActorEnv &env, Nat production, StackItemZ *through);
 
 				// Perform reductions on all states, even if a reduction action is not present.'
-				void actorReduceAll(const ActorEnv &env, StackItem *through);
+				void actorReduceAll(const ActorEnv &env, StackItemZ *through);
 
 				// Static state to the 'reduce' function.
 				struct ReduceEnv {
@@ -236,23 +236,23 @@ namespace storm {
 				// Linked list of entries, keeping track of the path currently being reduced.
 				struct Path {
 					const Path *prev;
-					StackItem *item;
+					StackItemZ *item;
 				};
 
 				// Reduce a production of length 'len' from the current stack item. If 'through' is
 				// set, only nodes where the edge 'link' is passed are considered.
-				void reduce(const ReduceEnv &env, StackItem *stack, const Path *path, StackItem *through, Nat len);
-				void finishReduce(const ReduceEnv &env, StackItem *stack, const Path *path);
+				void reduce(const ReduceEnv &env, StackItemZ *stack, const Path *path, StackItemZ *through, Nat len);
+				void finishReduce(const ReduceEnv &env, StackItemZ *stack, const Path *path);
 
 				// Limited reduction of a rule. Only paths passing through the edge 'link' are considered.
-				void limitedReduce(const ReduceEnv &env, Set<StackItem *> *top, StackItem *through);
+				void limitedReduce(const ReduceEnv &env, Set<StackItemZ *> *top, StackItemZ *through);
 
 				// Produce error messages from the state set 'states'.
-				void errorMsg(StrBuf *out, Nat pos, Set<StackItem *> *states) const;
+				void errorMsg(StrBuf *out, Nat pos, Set<StackItemZ *> *states) const;
 				void errorMsg(Set<Str *> *errors, Nat state) const;
 
 				// Produce error messages related to an unfullfilled requirement in the stack items provided.
-				void reqErrorMsg(StrBuf *out, StackItem *states) const;
+				void reqErrorMsg(StrBuf *out, StackItemZ *states) const;
 				Nat findMissingReq(Nat tree, ParentReq required) const;
 
 				/**
