@@ -139,6 +139,9 @@ namespace storm {
 			class StackItem {
 				STORM_VALUE;
 			public:
+				// Create a 'null' item.
+				StackItem() { ptr = 0; store = null; }
+
 				// Is this a "null" item?
 				inline Bool any() const { return ptr > 0; }
 
@@ -302,9 +305,27 @@ namespace storm {
 				// Pop the topmost set, shifting all other indices one step.
 				void STORM_FN pop();
 
+				// Insert an item at location 'pos', without attempting to merge nodes if the state
+				// is already present there. Returns either 'item' on success, or the item that is
+				// already present the set at the inicated position.
+				StackItem STORM_FN putRaw(Nat pos, StackItem item);
+
 				// Insert an item at location 'pos'. The top is at location 0. Returns 'false' if
 				// rejected due to a duplicate node.
 				Bool STORM_FN put(Nat pos, TreeStore *store, StackItem item);
+
+				// Like 'put', but frees 'item' if it was not inserted.
+				inline Bool STORM_FN putFree(Nat pos, TreeStore *store, StackItem item) {
+					if (put(pos, store, item)) {
+						return true;
+					} else {
+						this->store->free(item.id());
+						return false;
+					}
+				}
+
+				// Set a particular entry.
+				void STORM_FN set(Nat pos, Array<Nat> *value);
 
 			private:
 				// Stack storage.

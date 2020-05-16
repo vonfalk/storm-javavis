@@ -61,10 +61,10 @@ namespace storm {
 				doParse(startPos);
 				finishParse(null);
 
-				if (!acceptingStack)
+				if (!acceptingStack.any())
 					return false;
 
-				return acceptingStack->required.empty();
+				return acceptingStack.required().empty();
 			}
 
 			/**
@@ -93,12 +93,12 @@ namespace storm {
 				initParse(root, str, file, start);
 
 				// Start as usual.
-				Set<StackItemZ *> *lastSet = null;
+				Array<Nat> *lastSet = null;
 				Nat lastPos = 0;
 				doParse(startPos, lastSet, lastPos);
 
 				Nat length = source->peekLength();
-				while (lastPos <= length && (acceptingStack == null || acceptingStack->pos < length)) {
+				while (lastPos <= length && (!acceptingStack.any() || acceptingStack.pos() < length)) {
 					// Advance productions to accommodate for missing characters.
 					stacks->set(0, lastSet);
 					currentPos = lastPos;
@@ -129,9 +129,9 @@ namespace storm {
 
 				finishParse(ctx);
 				if (hasTree()) {
-					TreeNode node = store->at(acceptingStack->tree);
+					TreeNode node = treeStore->at(acceptingStack.tree());
 					// Count any unfullfilled requirements as additional shifts.
-					return node.errors() + infoShifts(acceptingStack->required.count());
+					return node.errors() + infoShifts(acceptingStack.required().count());
 				} else {
 					return infoFailure();
 				}
@@ -143,20 +143,21 @@ namespace storm {
 				sourceUrl = file;
 				parseRoot = syntax->lookup(root);
 
-				store = new (this) TreeStore(syntax);
-				stacks = new (this) FutureStacksZ();
-				acceptingStack = null;
+				treeStore = new (this) TreeStore(syntax);
+				stackStore = new (this) StackStore();
+				stacks = new (this) FutureStacks(stackStore);
+				acceptingStack = StackItem();
 				lastSet = null;
 				lastPos = 0;
 				visited = new (this) BoolSet();
 
-				stacks->put(0, store, startState(startPos, root));
+				stacks->put(0, treeStore, startState(startPos, root));
 			}
 
 			void Parser::doParse(Nat from) {
 				Nat length = source->peekLength();
 				for (Nat i = from; i <= length; i++) {
-					Set<StackItemZ *> *top = stacks->top();
+					Array<Nat> *top = stacks->top();
 
 					// Process all states in 'top'.
 					if (top)
@@ -168,14 +169,14 @@ namespace storm {
 			}
 
 #ifdef GLR_BACKTRACK
-			void Parser::doParse(Nat from, Set<StackItemZ *> *&states, Nat &pos) {
+			void Parser::doParse(Nat from, Array<Nat> *&states, Nat &pos) {
 				states = null;
 				Nat badness = 0;
 
 				Nat newLine = from;
 				Nat length = source->peekLength();
 				for (Nat i = from; i <= length; i++) {
-					Set<StackItemZ *> *top = stacks->top();
+					Array<Nat> *top = stacks->top();
 
 					// Process all states in 'top'.
 					if (top && top->any()) {
@@ -210,7 +211,7 @@ namespace storm {
 			}
 #else
 			// Non-backtracking version.
-			void Parser::doParse(Nat from, Set<StackItemZ *> *&states, Nat &pos) {
+			void Parser::doParse(Nat from, Array<Nat> *&states, Nat &pos) {
 				doParse(from);
 
 				states = lastSet;
@@ -233,29 +234,31 @@ namespace storm {
 					ctx = ctx.concat(e, syntax->parentId(syntax->lookup(at->production()->rule())));
 				}
 
+				TODO(L"Fix this!");
+
 				// If we have multiple accepting stacks, find the ones without requirements and put
 				// them first!
 				// TODO: If no such stack exists, we want to pick the one with the least dependency errors.
 				// This only affects the quality of highlighting in error cases, so it is fairly minor.
-				StackItemZ **prev = &acceptingStack;
-				StackItemZ **insert = &acceptingStack;
-				while (*prev) {
-					if (ctx.any())
-						(*prev)->required = (*prev)->required.remove(e, ctx);
+				// StackItemZ **prev = &acceptingStack;
+				// StackItemZ **insert = &acceptingStack;
+				// while (*prev) {
+				// 	if (ctx.any())
+				// 		(*prev)->required = (*prev)->required.remove(e, ctx);
 
-					if ((*prev)->required.empty() && prev != insert) {
-						// Unlink it!
-						StackItemZ *chosen = *prev;
-						*prev = chosen->morePrev;
+				// 	if ((*prev)->required.empty() && prev != insert) {
+				// 		// Unlink it!
+				// 		StackItemZ *chosen = *prev;
+				// 		*prev = chosen->morePrev;
 
-						// Put it back in the beginning.
-						chosen->morePrev = *insert;
-						*insert = chosen;
-						insert = &chosen->morePrev;
-					} else {
-						prev = &(*prev)->morePrev;
-					}
-				}
+				// 		// Put it back in the beginning.
+				// 		chosen->morePrev = *insert;
+				// 		*insert = chosen;
+				// 		insert = &chosen->morePrev;
+				// 	} else {
+				// 		prev = &(*prev)->morePrev;
+				// 	}
+				// }
 			}
 
 			void Parser::advanceAll() {
@@ -269,42 +272,44 @@ namespace storm {
 			void Parser::reduceAll() {
 				// NOTE: we need to use 'visited' as that one is also used in 'limitedReduce' for optimizations.
 				visited->clear();
-				Set<StackItemZ *> *src = stacks->top();
+				Array<Nat> *src = stacks->top();
 
 				bool any;
 				do {
 					any = false;
-					for (Set<StackItemZ *>::Iter i = src->begin(), e = src->end(); i != e; ++i) {
-						StackItemZ *now = i.v();
-						if (visited->get(now->state))
+					for (Nat i = 0, count = src->count(); i < count; i++) {
+						StackItem now = stackStore->readItem(src->at(i));
+						Nat state = now.state();
+						if (visited->get(state))
 							continue;
-						visited->set(now->state, true);
+						visited->set(state, true);
 						any = true;
 
 						// Shift and reduce this state.
 						ActorEnv env = {
-							table->state(now->state),
+							table->state(state),
 							now,
 							true,
 						};
-						actorReduceAll(env, null);
+						actorReduceAll(env, StackItem());
 					}
 				} while (any);
 			}
 
 			void Parser::shiftAll() {
 				visited->clear();
-				Set<StackItemZ *> *src = stacks->top();
+				Array<Nat> *src = stacks->top();
 
 				bool match = false;
 				bool any = false;
 				do {
 					any = false;
-					for (Set<StackItemZ *>::Iter i = src->begin(), e = src->end(); i != e; ++i) {
-						StackItemZ *now = i.v();
-						if (visited->get(now->state))
+					for (Nat i = 0, count = src->count(); i < count; i++) {
+						StackItem now = stackStore->readItem(src->at(i));
+						Nat state = now.state();
+						if (visited->get(state))
 							continue;
-						visited->set(now->state, true);
+						visited->set(state, true);
 						any = true;
 
 						match |= shiftAll(now);
@@ -313,9 +318,9 @@ namespace storm {
 				} while (any && !match);
 			}
 
-			bool Parser::shiftAll(StackItemZ *now) {
+			bool Parser::shiftAll(const StackItem &now) {
 				bool found = false;
-				State *s = table->state(now->state);
+				State *s = table->state(now.state());
 				if (s->actions)
 					found |= shiftAll(now, s->actions);
 				if (s->rules)
@@ -324,7 +329,7 @@ namespace storm {
 				return found;
 			}
 
-			bool Parser::shiftAll(StackItemZ *now, Array<Action> *actions) {
+			bool Parser::shiftAll(const StackItem &now, Array<Action> *actions) {
 				bool found = false;
 
 				// Check regular shifts.
@@ -345,20 +350,15 @@ namespace storm {
 					// when they are possibly not.
 					if (!action.regex.matchesEmpty())
 						errors += infoShifts(1);
-					Nat tree = store->push(now->pos, errors).id();
-					StackItemZ *item = new (this) StackItemZ(action.action, currentPos, now, tree);
-					StackItemZ *topItem = stacks->top()->at(item);
-					if (topItem == item) {
-						// Inserted!
-					} else {
-						topItem->insert(store, item);
-					}
+					Nat tree = treeStore->push(now.pos(), errors).id();
+					StackItem item = stackStore->createItem(action.action, currentPos, now, tree);
+					stacks->putFree(0, treeStore, item);
 				}
 
 				return found;
 			}
 
-			void Parser::shiftAll(StackItemZ *now, Map<Nat, Nat> *actions) {
+			void Parser::shiftAll(const StackItem &now, Map<Nat, Nat> *actions) {
 				// See if we can 'shift' through a nonterminal at this position.
 				typedef Map<Nat, Nat>::Iter Iter;
 				for (Iter i = actions->begin(), e = actions->end(); i != e; ++i) {
@@ -371,26 +371,20 @@ namespace storm {
 
 					InfoErrors errors = infoSuccess();
 					errors += infoShifts(Item(syntax, prod).length(syntax));
-					Nat tree = store->push(now->pos, prod, errors, 0).id();
-					StackItemZ *item = new (this) StackItemZ(to, currentPos, now, tree);
-					StackItemZ *topItem = stacks->top()->at(item);
-					if (topItem == item) {
-						// Inserted!
-					} else {
-						topItem->insert(store, item);
-					}
+					Nat tree = treeStore->push(now.pos(), prod, errors, 0).id();
+					StackItem item = stackStore->createItem(to, currentPos, now, tree);
+					stacks->putFree(0, treeStore, item);
 				}
 			}
 
 			bool Parser::actorShift() {
 				bool any = false;
-				Set<StackItemZ *> *src = stacks->top();
+				Array<Nat> *src = stacks->top();
 
-				for (Set<StackItemZ *>::Iter i = src->begin(), e = src->end(); i != e; ++i) {
-					StackItemZ *now = i.v();
-
+				for (Nat i = 0, count = src->count(); i < count; i++) {
+					StackItem now = stackStore->readItem(src->at(i));
 					ActorEnv env = {
-						table->state(now->state),
+						table->state(now.state()),
 						now,
 						false,
 					};
@@ -409,7 +403,8 @@ namespace storm {
 				return any;
 			}
 
-			void Parser::actor(Nat pos, Set<StackItemZ *> *states) {
+			void Parser::actor(Nat pos, Array<Nat> *states) {
+				// PLN(L"At " << pos << L", stacks: " << states);
 #ifdef GLR_DEBUG
 				PVAR(pos);
 #endif
@@ -422,18 +417,18 @@ namespace storm {
 				visited->clear();
 				currentPos = pos;
 
-				typedef Set<StackItemZ *>::Iter Iter;
 				Bool done;
 				do {
 					done = true;
-					for (Iter i = states->begin(), e = states->end(); i != e; ++i) {
-						StackItemZ *now = i.v();
-						if (visited->get(now->state))
+					for (Nat i = 0, count = states->count(); i < count; i++) {
+						StackItem now = stackStore->readItem(states->at(i));
+						Nat state = now.state();
+						if (visited->get(state))
 							continue;
-						visited->set(now->state, true);
+						visited->set(state, true);
 						done = false;
 
-						State *s = table->state(now->state);
+						State *s = table->state(state);
 
 						ActorEnv env = {
 							s,
@@ -441,7 +436,7 @@ namespace storm {
 							false,
 						};
 
-						actorReduce(env, null);
+						actorReduce(env, StackItem());
 						actorShift(env);
 					}
 				} while (!done);
@@ -470,19 +465,19 @@ namespace storm {
 					// are the same, but when error recovery kicks in 'env.stack->pos' may be
 					// smaller, which means that some characters in the input were skipped. These
 					// should be included somewhere so that the InfoTrees will have the correct length.
-					Nat tree = store->push(env.stack->pos, errors).id();
-					StackItemZ *item = new (this) StackItemZ(action.action, matched, env.stack, tree);
-					stacks->put(offset, store, item);
+					Nat tree = treeStore->push(env.stack.pos(), errors).id();
+					StackItem item = stackStore->createItem(action.action, matched, env.stack, tree);
+					stacks->putFree(offset, treeStore, item);
 					any = true;
 #ifdef GLR_DEBUG
-					PLN(L"Added " << item->state << L" with prev " << env.stack->state);
+					PLN(L"Added " << item.state() << L" with prev " << env.stack.state());
 #endif
 				}
 
 				return any;
 			}
 
-			void Parser::actorReduce(const ActorEnv &env, StackItemZ *through) {
+			void Parser::actorReduce(const ActorEnv &env, const StackItem &through) {
 				if (env.reduceAll) {
 					actorReduceAll(env, through);
 					return;
@@ -506,7 +501,7 @@ namespace storm {
 				}
 			}
 
-			void Parser::actorReduceAll(const ActorEnv &env, StackItemZ *through) {
+			void Parser::actorReduceAll(const ActorEnv &env, const StackItem &through) {
 				// See if we can reduce this one normally.
 				Array<Nat> *toReduce = env.state->reduce;
 				Nat count = toReduce->count();
@@ -551,7 +546,7 @@ namespace storm {
 				}
 			}
 
-			void Parser::doReduce(const ActorEnv &env, Nat production, StackItemZ *through) {
+			void Parser::doReduce(const ActorEnv &env, Nat production, const StackItem &through) {
 				Item item(syntax, production);
 				Nat rule = item.rule(syntax);
 				Nat length = item.length(syntax);
@@ -571,9 +566,10 @@ namespace storm {
 				reduce(re, env.stack, null, through, length);
 			}
 
-			void Parser::reduce(const ReduceEnv &env, StackItemZ *stack, const Path *path, StackItemZ *through, Nat len) {
+			void Parser::reduce(const ReduceEnv &env, const StackItem &stack,
+								const Path *path, const StackItem &through, Nat len) {
 #ifdef GLR_DEBUG
-				PLN(L"Reduce " << (void *)stack << L" " << stack->state << L" " << (void *)through << L" len " << len);
+				PLN(L"Reduce " << stack.id() << L" " << stack.state() << L" " << through.id() << L" len " << len);
 				::Indent z(util::debugStream());
 #endif
 
@@ -582,27 +578,28 @@ namespace storm {
 
 					Path next = {
 						path,
-						null,
+						StackItem(),
 					};
 
 					// Keep on traversing...
-					for (StackItemZ *i = stack; i; i = i->morePrev) {
-						if (i->prev) {
+					for (StackItem i = stack; i.any(); i = i.morePrev()) {
+						StackItem prev = i.prev();
+						if (prev.any()) {
 							next.item = i;
-							reduce(env, i->prev, &next, i == through ? null : through, len);
+							reduce(env, prev, &next, i.id() == through.id() ? StackItem() : through, len);
 						}
 					}
-				} else if (through == null) {
+				} else if (!through.any()) {
 					finishReduce(env, stack, path);
 				}
 			}
 
-			void Parser::finishReduce(const ReduceEnv &env, StackItemZ *stack, const Path *path) {
+			void Parser::finishReduce(const ReduceEnv &env, const StackItem &stack, const Path *path) {
 				Engine &e = engine();
-				State *state = table->state(stack->state);
+				State *state = table->state(stack.state());
 				Map<Nat, Nat>::Iter to = state->rules->find(env.rule);
 
-				bool accept = stack->prev == null && env.rule == parseRoot;
+				bool accept = !stack.prev().any() && env.rule == parseRoot;
 				bool reduce = to != state->rules->end();
 
 				if (!accept && !reduce)
@@ -616,35 +613,35 @@ namespace storm {
 				Nat node = 0;
 				InfoErrors errors = infoSuccess();
 				for (const Path *p = path; p; p = p->prev) {
-					TreeNode now = store->at(p->item->tree);
+					TreeNode now = treeStore->at(p->item.tree());
 					InfoErrors err = now.errors();
 					errors += err;
 					nontermErrors = now.leaf() & err.any();
 					// TODO: Calling 'concat' in this manner is somewhat inefficient. It is better
 					// to pre-compute the length once and for all and then do the concatenation
 					// afterwards.
-					required = required.concat(e, p->item->required);
+					required = required.concat(e, p->item.required());
 				}
 				errors += infoShifts(env.errors);
 				if (env.errors || nontermErrors) {
 					// Penalize characters in here appropriatly. Make sure to not count 'skipped'
 					// multiple times while recursing.
-					errors.chars(currentPos - stack->pos);
+					errors.chars(currentPos - stack.pos());
 				}
 
 				if (Syntax::specialProd(env.production) == Syntax::prodESkip) {
 					// These are really just shifts.
-					node = store->push(stack->pos, errors).id();
+					node = treeStore->push(stack.pos(), errors).id();
 				} else {
-					TreeNode fill = store->push(stack->pos, env.production, errors, env.length);
+					TreeNode fill = treeStore->push(stack.pos(), env.production, errors, env.length);
 					TreeArray children = fill.children();
 					const Path *top = path;
 					for (Nat i = 0; i < env.length; i++) {
-						children.set(i, top->item->tree);
+						children.set(i, top->item.tree());
 						top = top->prev;
 					}
 					if (env.length > 0)
-						fill.pos(store->at(children[0]).pos());
+						fill.pos(treeStore->at(children[0]).pos());
 
 					node = fill.id();
 				}
@@ -666,10 +663,10 @@ namespace storm {
 
 				// Accept?
 				if (accept) {
-					StackItemZ *add = new (e) StackItemZ(-1, currentPos, stack, node, required);
+					StackItem add = stackStore->createItem(-1, currentPos, stack, node, required);
 
-					if (acceptingStack && acceptingStack->pos == currentPos) {
-						usedNode |= acceptingStack->insert(store, add, usedNode);
+					if (acceptingStack.any() && acceptingStack.pos() == currentPos) {
+						usedNode |= acceptingStack.insert(treeStore, add, usedNode);
 					} else {
 						acceptingStack = add;
 						usedNode = true;
@@ -678,51 +675,52 @@ namespace storm {
 
 				// Figure out which state to go to.
 				if (reduce) {
-					StackItemZ *add = new (e) StackItemZ(to.v(), currentPos, stack, node, required);
+					StackItem add = stackStore->createItem(to.v(), currentPos, stack, node, required);
 #ifdef GLR_DEBUG
-					PLN(L"Added " << to.v() << L" with prev " << stack->state << L"(" << (void *)stack << L")");
+					PLN(L"Added " << to.v() << L" with prev " << stack.state() << L"(" << stack.id() << L")");
 #endif
 
 					// Add the newly created state.
-					Set<StackItemZ *> *top = stacks->top();
-					StackItemZ *old = top->at(add);
-					if (old == add) {
+					StackItem old = stacks->putRaw(0, add);
+					if (old.id() == add.id()) {
 						// 'add' was successfully inserted. Nothing more to do!
 						usedNode = true;
 					} else {
 						// We need to merge it with the old one.
-						if (old->insert(store, add, usedNode)) {
+						if (old.insert(treeStore, add, usedNode)) {
 							usedNode = true;
 #ifdef GLR_DEBUG
-							PLN(L"Inserted into " << old->state << L"(" << (void *)old << L")");
+							PLN(L"Inserted into " << old.state() << L"(" << old.id() << L")");
 #endif
 							// Note: 'add' is the actual link.
-							limitedReduce(env, top, add);
+							limitedReduce(env, stacks->top(), add);
 						}
 					}
 				}
 
 				if (!usedNode) {
-					store->free(node);
+					treeStore->free(node);
 				}
 			}
 
-			void Parser::limitedReduce(const ReduceEnv &env, Set<StackItemZ *> *top, StackItemZ *through) {
+			void Parser::limitedReduce(const ReduceEnv &env, Array<Nat> *top, const StackItem &through) {
 #ifdef GLR_DEBUG
 				PLN(L"--LIMITED--");
 #endif
-				for (Set<StackItemZ *>::Iter i = top->begin(), e = top->end(); i != e; ++i) {
-					StackItemZ *item = i.v();
+				for (Nat i = 0, count = top->count(); i < count; i++) {
+					StackItem item = stackStore->readItem(top->at(i));
 
 					// Will this state be visited soon anyway?
-					if (visited->get(item->state) == false)
+					if (visited->get(item.state()) == false)
 						continue;
 
-					State *state = table->state(item->state);
+					State *state = table->state(item.state());
 
-					ActorEnv aEnv = env.old;
-					aEnv.state = state;
-					aEnv.stack = item;
+					ActorEnv aEnv = {
+						state,
+						item,
+						env.old.reduceAll,
+					};
 					actorReduce(aEnv, through);
 				}
 			}
@@ -738,40 +736,42 @@ namespace storm {
 				return r.expand(syntax);
 			}
 
-			StackItemZ *Parser::startState(Nat pos, Rule *root) {
-				return new (this) StackItemZ(table->state(startSet(root)), pos);
+			StackItem Parser::startState(Nat pos, Rule *root) {
+				return stackStore->createItem(table->state(startSet(root)), pos);
 			}
 
 			void Parser::clear() {
-				store = null;
+				treeStore = null;
+				stackStore = null;
 				stacks = null;
+				lastSet = null;
 				source = null;
 				sourceUrl = null;
 				parseRoot = 0;
 			}
 
 			Bool Parser::hasTree() const {
-				return acceptingStack != null && acceptingStack->tree != 0;
+				return acceptingStack.any() && acceptingStack.tree() != 0;
 			}
 
 			Str::Iter Parser::matchEnd() const {
-				if (source && acceptingStack)
-					return source->posIter(acceptingStack->pos);
+				if (source && acceptingStack.any())
+					return source->posIter(acceptingStack.pos());
 				else
 					return Str::Iter();
 			}
 
 			Bool Parser::hasError() const {
-				if (!acceptingStack)
+				if (!acceptingStack.any())
 					return true;
-				if (acceptingStack->required.any())
+				if (acceptingStack.required().any())
 					return true;
-				return acceptingStack->pos < source->peekLength();
+				return acceptingStack.pos() < source->peekLength();
 			}
 
 			Str *Parser::errorMsg() const {
 				StrBuf *out = new (this) StrBuf();
-				if (acceptingStack && acceptingStack->required.any())
+				if (acceptingStack.any() && acceptingStack.required().any())
 					reqErrorMsg(out, acceptingStack);
 				else if (lastPos == source->peekLength())
 					*out << S("Unexpected end of file.");
@@ -783,11 +783,12 @@ namespace storm {
 				return out->toS();
 			}
 
-			void Parser::errorMsg(StrBuf *out, Nat pos, Set<StackItemZ *> *states) const {
+			void Parser::errorMsg(StrBuf *out, Nat pos, Array<Nat> *states) const {
 				Set<Str *> *errors = new (this) Set<Str *>();
 
-				for (Set<StackItemZ *>::Iter i = states->begin(); i != states->end(); ++i) {
-					errorMsg(errors, i.v()->state);
+				for (Nat i = 0; i < states->count(); i++) {
+					// TODO: We could get by with only the state ID:s!
+					errorMsg(errors, stackStore->readItem(states->at(i)).state());
 				}
 
 				Str *ch = new (this) Str(source->posIter(pos).v());
@@ -817,14 +818,14 @@ namespace storm {
 				}
 			}
 
-			void Parser::reqErrorMsg(StrBuf *out, StackItemZ *state) const {
-				for (StackItemZ *item = state; item; item = item->morePrev) {
+			void Parser::reqErrorMsg(StrBuf *out, const StackItem &state) const {
+				for (StackItem item = state; item.any(); item = item.morePrev()) {
 					// For each of these, we want to find a production with an unfullfilled requirement.
-					Nat found = findMissingReq(item->tree, item->required);
+					Nat found = findMissingReq(item.tree(), item.required());
 					if (!found)
 						continue;
 
-					TreeNode node = store->at(found);
+					TreeNode node = treeStore->at(found);
 					Production *p = syntax->production(node.production());
 					// Should hold, since we found the production...
 					if (!p->parent)
@@ -837,7 +838,7 @@ namespace storm {
 			}
 
 			Nat Parser::findMissingReq(Nat tree, ParentReq required) const {
-				TreeNode node = store->at(tree);
+				TreeNode node = treeStore->at(tree);
 
 				// Leaf nodes are not interesting. They're just shifts.
 				if (node.leaf())
@@ -870,12 +871,12 @@ namespace storm {
 			SrcPos Parser::errorPos() const {
 				// See if we need to examine stacks and such. This condition and the contained loop
 				// should match what's in 'reqErrorMsg'.
-				if (acceptingStack && acceptingStack->required.any()) {
-					for (StackItemZ *item = acceptingStack; item; item = item->morePrev) {
-						Nat found = findMissingReq(item->tree, item->required);
+				if (acceptingStack.any() && acceptingStack.required().any()) {
+					for (StackItem item = acceptingStack; item.any(); item = item.morePrev()) {
+						Nat found = findMissingReq(item.tree(), item.required());
 						if (found) {
 							// Just pick the first one!
-							Nat pos = store->at(found).pos();
+							Nat pos = treeStore->at(found).pos();
 							return SrcPos(sourceUrl, pos, pos + 1);
 						}
 					}
@@ -886,12 +887,10 @@ namespace storm {
 			}
 
 			Node *Parser::tree() const {
-				if (acceptingStack == null)
-					return null;
-				if (acceptingStack->tree == 0)
+				if (!hasTree())
 					return null;
 
-				return tree(store->at(acceptingStack->tree), acceptingStack->pos);
+				return tree(treeStore->at(acceptingStack.tree()), acceptingStack.pos());
 			}
 
 			static void reverseNode(Node *node) {
@@ -950,7 +949,7 @@ namespace storm {
 						// Something is fishy...
 						break;
 
-					TreeNode child = store->at(childId);
+					TreeNode child = treeStore->at(childId);
 
 					// Remember the capture!
 					if (item.pos == p->repStart)
@@ -996,7 +995,7 @@ namespace storm {
 						// Something is fishy...
 						break;
 
-					TreeNode child = store->at(childId);
+					TreeNode child = treeStore->at(childId);
 
 					// Store any tokens in here.
 					if (item.pos == Item::specialPos) {
@@ -1050,7 +1049,7 @@ namespace storm {
 				if (!hasTree())
 					return null;
 
-				return infoTree(store->at(acceptingStack->tree), acceptingStack->pos);
+				return infoTree(treeStore->at(acceptingStack.tree()), acceptingStack.pos());
 			}
 
 			InfoNode *Parser::infoTree(const TreeNode &node, Nat endPos) const {
@@ -1078,7 +1077,7 @@ namespace storm {
 					if (!item.prev(p))
 						break;
 
-					TreeNode child = store->at(childId);
+					TreeNode child = treeStore->at(childId);
 
 					if (item.pos == Item::specialPos) {
 						errors += infoSubtree(result, nodePos, child, pos);
@@ -1125,7 +1124,7 @@ namespace storm {
 					if (!item.prev(syntax))
 						break;
 
-					TreeNode child = store->at(childId);
+					TreeNode child = treeStore->at(childId);
 					if (item.pos == Item::specialPos) {
 						Nat reduced = child.production();
 						if (Syntax::specialProd(reduced) == Syntax::prodRepeat) {
@@ -1210,7 +1209,7 @@ namespace storm {
 					if (!item.prev(syntax))
 						break;
 
-					TreeNode child = store->at(childId);
+					TreeNode child = treeStore->at(childId);
 					if (item.pos == Item::specialPos) {
 						// Ignore this non-terminal.
 						length--;
@@ -1218,7 +1217,7 @@ namespace storm {
 						// Traverse until we reach an epsilon production!
 						for (TreeNode at = child;
 							 at.children() && Syntax::specialProd(at.production()) == Syntax::prodRepeat;
-							 at = store->at(at.children()[0])) {
+							 at = treeStore->at(at.children()[0])) {
 
 							Item i(syntax, at.production());
 							length += at.children().count();
@@ -1234,10 +1233,9 @@ namespace storm {
 			void Parser::completePrefix() {
 				// This is a variant of the 'actor' function above, except that we only attempt to
 				// perform reductions.
-				typedef Set<StackItemZ *>::Iter Iter;
 
 				visited->clear();
-				Set<StackItemZ *> *top = stacks->top();
+				Array<Nat> *top = stacks->top();
 
 #ifdef GLR_DEBUG
 				PLN(L"--- Starting error recovery at " << currentPos << "---");
@@ -1246,14 +1244,15 @@ namespace storm {
 				Bool done;
 				do {
 					done = true;
-					for (Iter i = top->begin(), e = top->end(); i != e; ++i) {
-						StackItemZ *now = i.v();
-						if (visited->get(now->state))
+					for (Nat i = 0, count = top->count(); i < count; i++) {
+						StackItem now = stackStore->readItem(top->at(i));
+						Nat state = now.state();
+						if (visited->get(state))
 							continue;
-						visited->set(now->state, true);
+						visited->set(state, true);
 						done = false;
 
-						State *s = table->state(now->state);
+						State *s = table->state(state);
 
 						ActorEnv env = {
 							s,
@@ -1261,23 +1260,28 @@ namespace storm {
 							true,
 						};
 
-						actorReduce(env, null);
+						actorReduce(env, StackItem());
 					}
 				} while (!done);
 			}
 
 			Nat Parser::stateCount() const {
-				if (store)
-					return store->count();
+				if (treeStore)
+					return treeStore->count();
 				else
 					return 0;
 			}
 
 			Nat Parser::byteCount() const {
-				if (store)
-					return store->byteCount();
-				else
-					return 0;
+				Nat count = 0;
+
+				if (treeStore)
+					count += treeStore->byteCount();
+
+				if (stackStore)
+					count += stackStore->byteCount();
+
+				return count;
 			}
 
 			void Parser::clearSyntax() {

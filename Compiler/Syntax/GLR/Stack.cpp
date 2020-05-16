@@ -202,7 +202,7 @@ namespace storm {
 					}
 				}
 
-				write(this->store, ptr + 4, insert.id()); // Set 'morePrev'.
+				write(last.store, last.ptr + 4, insert.id()); // Set 'morePrev' of 'last'.
 				usedTree = true;
 				return true;
 			}
@@ -254,12 +254,13 @@ namespace storm {
 			}
 
 			StackItem StackStore::createItem(Nat state, Nat pos, StackItem prev, Nat tree) {
-				Nat mem = alloc(4);
+				Nat mem = alloc(5);
 				write(mem + 0, state);
 				write(mem + 1, pos);
 				write(mem + 2, tree);
 				write(mem + 3, prev.id());
 				write(mem + 4, 0);
+				// PLN(L"Created item " << state << L" at " << mem);
 				return StackItem(this, mem);
 			}
 
@@ -315,6 +316,24 @@ namespace storm {
 				first = wrap(first + 1);
 			}
 
+			StackItem FutureStacks::putRaw(Nat pos, StackItem insert) {
+				if (pos >= count())
+					grow(pos + 1);
+
+				Array<Nat> *&to = data->v[wrap(first + pos)];
+				if (!to)
+					to = new (this) Array<Nat>();
+
+				for (Nat i = 0; i < to->count(); i++) {
+					StackItem item = store->readItem(to->at(i));
+					if (item == insert)
+						return item;
+				}
+
+				to->push(insert.id());
+				return insert;
+			}
+
 			Bool FutureStacks::put(Nat pos, TreeStore *tStore, StackItem insert) {
 				if (pos >= count())
 					grow(pos + 1);
@@ -336,6 +355,13 @@ namespace storm {
 				// Nothing found. Add a new node.
 				to->push(insert.id());
 				return true;
+			}
+
+			void FutureStacks::set(Nat pos, Array<Nat> *v) {
+				if (pos >= count())
+					grow(pos + 1);
+
+				data->v[wrap(first + pos)] = v;
 			}
 
 			void FutureStacks::grow(Nat cap) {
