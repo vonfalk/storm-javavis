@@ -491,13 +491,13 @@ namespace storm {
 	 */
 	static mps_gen_param_s generationParams[] = {
 		// Nursery generation. Should be fairly small.
-		{ 2 MB, 0.9 },
+		{ 8 MB, 0.9 },
 
 		// Intermediate generation.
-		{ 8 MB, 0.5 },
+		{ 32 MB, 0.5 },
 
 		// Long-lived generation (for types, code and other things).
-		{ 16 MB, 0.1 },
+		{ 128 MB, 0.1 },
 	};
 
 	// Remember if we have set up MPS, and synchronize initialization.
