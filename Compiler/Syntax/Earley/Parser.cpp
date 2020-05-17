@@ -287,9 +287,9 @@ namespace storm {
 			}
 
 			bool Parser::matchesEmpty(Token *t) {
-				if (RegexToken *r = as<RegexToken>(t)) {
+				if (RegexToken *r = t->asRegex()) {
 					return r->regex.matchRaw(new (this) Str(L"")) != Regex::NO_MATCH;
-				} else if (RuleToken *u = as<RuleToken>(t)) {
+				} else if (RuleToken *u = t->asRule()) {
 					return matchesEmpty(u->rule);
 				} else {
 					assert(false, L"Unknown syntax token type.");
@@ -441,13 +441,13 @@ namespace storm {
 						repEnd = atPtr.step;
 
 					if (token->target) {
-						if (as<RegexToken>(token)) {
+						if (token->asRegex()) {
 							Str::Iter from = src->posIter(at->prev.step + srcOffset);
 							Str::Iter to = src->posIter(atPtr.step + srcOffset);
 
 							SrcPos pos(srcFile, srcOffset + repStart, srcOffset + repEnd);
 							setValue(result, token->target, new (this) SStr(src->substr(from, to), pos));
-						} else if (as<RuleToken>(token)) {
+						} else if (token->asRule()) {
 							assert(at->completed != StatePtr(), L"Rule token not completed!");
 							setValue(result, token->target, tree(at->completed));
 						} else {
@@ -558,7 +558,7 @@ namespace storm {
 					InfoNode *child = null;
 					if (at->completed != StatePtr()) {
 						child = infoTree(at->completed);
-						if (as<DelimToken>(token))
+						if (token->asDelim())
 							child->delimiter(true);
 					} else {
 						Str::Iter from = src->posIter(at->prev.step + srcOffset);
@@ -566,7 +566,7 @@ namespace storm {
 						Str *s = emptyString;
 						if (from != to)
 							s = src->substr(from, to);
-						child = new (this) InfoLeaf(as<RegexToken>(token), s);
+						child = new (this) InfoLeaf(token->asRegex(), s);
 					}
 
 					child->color = token->color;

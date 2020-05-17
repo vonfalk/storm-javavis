@@ -123,19 +123,19 @@ namespace storm {
 				Nat STORM_FN lookup(Production *p);
 
 				// Get all productions for a rule.
-				RuleInfo *ruleInfo(Nat rule);
+				RuleInfo *STORM_FN ruleInfo(Nat rule);
 
 				// Get the name of a rule.
-				Str *ruleName(Nat rule) const;
+				Str *STORM_FN ruleName(Nat rule) const;
 
 				// Find a production from its id.
-				Production *production(Nat id) const;
+				Production *STORM_FN production(Nat id) const;
 
 				// Get the parent id for a rule, expressed as a ParentReq structure.
-				ParentReq parentId(Nat rule) const;
+				ParentReq STORM_FN parentId(Nat rule) const;
 
 				// Get the parent requirement of a production.
-				ParentReq productionReq(Nat id) const;
+				ParentReq STORM_FN productionReq(Nat id) const;
 
 				// Same syntax as another object?
 				Bool STORM_FN sameSyntax(Syntax *o) const;

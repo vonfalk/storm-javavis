@@ -82,6 +82,9 @@ namespace storm {
 				// Get the actual state from an index.
 				State *STORM_FN state(Nat id);
 
+				// Eagerly compute all states in the table.
+				void STORM_FN populate();
+
 				// To string.
 				virtual void STORM_FN toS(StrBuf *to) const;
 
@@ -98,7 +101,11 @@ namespace storm {
 				// Compute the contents of a state.
 				void fill(State *state);
 
-				// Create the actions for a state.
+				// Bucketing approach for large and small states.
+				void fillLarge(State *state);
+				void fillSmall(State *state);
+
+				// Create the actions for a state. Used in 'findSmall'.
 				Action createShift(Nat start, ItemSet items, Array<Bool> *used, Regex regex);
 				Nat createGoto(Nat start, ItemSet items, Array<Bool> *used, Nat rule);
 			};

@@ -92,18 +92,72 @@ namespace storm {
 				return s;
 			}
 
+			void Table::populate() {
+				for (Nat i = 0; i < states->count(); i++) {
+					state(i);
+				}
+			}
+
 			void Table::fill(State *state) {
 				state->actions = new (this) Array<Action>();
 				state->rules = new (this) Map<Nat, Nat>();
 				state->reduce = new (this) Array<Nat>();
 				state->reduceOnEmpty = new (this) Array<Action>();
 
+				if (state->items.count() > 10)
+					fillLarge(state);
+				else
+					fillSmall(state);
+			}
+
+			void Table::fillLarge(State *state) {
 				// De-duplicate reduction items.
 				Set<Nat> *reduce = new (this) Set<Nat>();
 
-				// TODO: We might want to optimize this in the future. Currently we are using O(n^2)
-				// time, but this can be done in O(n) time using a hash map, but that is probably
-				// overkill for < 40 elements or so.
+				// Keep track of distinct shift- and reduce actions.
+				Map<Nat, ItemSet> *rule = new (this) Map<Nat, ItemSet>();
+				Map<Regex, ItemSet> *shift = new (this) Map<Regex, ItemSet>();
+
+				ItemSet items = state->items;
+				for (Nat i = 0; i < items.count(); i++) {
+					Item item = items[i];
+					if (item.end()) {
+						// Insert a reduce action.
+						if (!reduce->has(item.id)) {
+							reduce->put(item.id);
+							state->reduce->push(item.id);
+						}
+					} else if (item.isRule(syntax)) {
+						// Prepare adding a reduce action.
+						rule->at(item.nextRule(syntax)).push(engine(), item.next(syntax));
+					} else {
+						// Prepare adding a shift action.
+						shift->at(item.nextRegex(syntax)).push(engine(), item.next(syntax));
+					}
+				}
+
+				for (Map<Nat, ItemSet>::Iter i = rule->begin(), end = rule->end(); i != end; ++i) {
+					state->rules->put(i.k(), this->state(i.v().expand(syntax)));
+				}
+
+				for (Map<Regex, ItemSet>::Iter i = shift->begin(), end = shift->end(); i != end; ++i) {
+					Action shift(i.k(), this->state(i.v().expand(syntax)));
+					state->actions->push(shift);
+
+					if (shift.regex.matchesEmpty()) {
+						// We need to pretend a production can be reduced here!
+						Nat rule = Syntax::prodESkip | shift.action;
+						state->rules->put(rule, shift.action);
+
+						// We need to add the reduction as well.
+						state->reduceOnEmpty->push(Action(shift.regex, rule));
+					}
+				}
+			}
+
+			void Table::fillSmall(State *state) {
+				// De-duplicate reduction items.
+				Set<Nat> *reduce = new (this) Set<Nat>();
 
 				ItemSet items = state->items;
 				Array<Bool> *used = new (this) Array<Bool>(items.count(), false);

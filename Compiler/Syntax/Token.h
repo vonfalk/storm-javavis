@@ -10,6 +10,9 @@ namespace storm {
 		STORM_PKG(lang.bnf);
 
 		class Rule;
+		class RuleToken;
+		class DelimToken;
+		class RegexToken;
 		class TokenDecl;
 
 		/**
@@ -32,14 +35,14 @@ namespace storm {
 			// If this token is to be sent to a member, which member?
 			MAYBE(Str *) invoke;
 
+			// Color of this token.
+			TokenColor color;
+
 			// Capture the raw syntax tree?
 			Bool raw;
 
 			// Was this token bound to a variable?
 			Bool bound;
-
-			// Color of this token.
-			TokenColor color;
 
 			// Update the data in here from a TokenDecl.
 			void STORM_FN update(TokenDecl *decl, MAYBE(MemberVar *) target);
@@ -49,6 +52,34 @@ namespace storm {
 
 			// Regular output.
 			virtual void STORM_FN toS(StrBuf *to) const;
+
+			// Get this token as a rule.
+			inline MAYBE(RuleToken *) STORM_FN asRule() {
+				return (this && (type & tRule)) ? reinterpret_cast<RuleToken *>(this) : null;
+			}
+			inline MAYBE(DelimToken *) STORM_FN asDelim() {
+				return (this && (type & tDelim) == tDelim) ? reinterpret_cast<DelimToken *>(this) : null;
+			}
+			// Get this token as a regex.
+			inline MAYBE(RegexToken *) STORM_FN asRegex() {
+				return (this && (type & tRegex)) ? reinterpret_cast<RegexToken *>(this) : null;
+			}
+
+		protected:
+			/**
+			 * What kind of token is this?
+			 *
+			 * We have an enum here since it is a lot faster than as<> (even though that is pretty
+			 * fast), and since parsing needs to know the type of tokens _very_ often.
+			 */
+			enum {
+				tRule = 0x01,
+				tDelim = 0x03,
+				tRegex = 0x04,
+			};
+
+			// Type?
+			Byte type;
 		};
 
 

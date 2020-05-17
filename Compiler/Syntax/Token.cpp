@@ -7,7 +7,8 @@
 namespace storm {
 	namespace syntax {
 
-		Token::Token() : target(null), invoke(null), raw(false), bound(false), color(tNone) {}
+		Token::Token() : target(null), invoke(null), color(tNone),
+						 raw(false), bound(false), type(0) {}
 
 		Token::Token(TokenDecl *decl, MAYBE(MemberVar *) target) {
 			update(decl, target);
@@ -44,7 +45,9 @@ namespace storm {
 		}
 
 
-		RegexToken::RegexToken(Str *regex) : regex(regex) {}
+		RegexToken::RegexToken(Str *regex) : regex(regex) {
+			type = tRegex;
+		}
 
 		void RegexToken::toS(StrBuf *to, Bool bindings) const {
 			*to << L"\"" << regex << L"\"";
@@ -54,6 +57,7 @@ namespace storm {
 
 		RuleToken::RuleToken(Rule *rule) : rule(rule) {
 			color = rule->color;
+			type = tRule;
 		}
 
 		void RuleToken::toS(StrBuf *to, Bool bindings) const {
@@ -62,7 +66,9 @@ namespace storm {
 		}
 
 
-		DelimToken::DelimToken(delim::Delimiter type, Rule *rule) : RuleToken(rule), type(type) {}
+		DelimToken::DelimToken(delim::Delimiter type, Rule *rule) : RuleToken(rule), type(type) {
+			Token::type = tDelim;
+		}
 
 	}
 }

@@ -283,7 +283,7 @@ namespace storm {
 					return true;
 
 				Production *p = syntax->production(id);
-				return as<RuleToken>(p->tokens->at(pos)) != null;
+				return p->tokens->at(pos)->asRule() != null;
 			}
 
 			Nat Item::nextRule(Syntax *syntax) const {
@@ -294,7 +294,7 @@ namespace storm {
 					return Syntax::baseProd(id) | Syntax::ruleRepeat;
 
 				Production *p = syntax->production(id);
-				RuleToken *r = as<RuleToken>(p->tokens->at(pos));
+				RuleToken *r = p->tokens->at(pos)->asRule();
 				return syntax->lookup(r->rule);
 			}
 
@@ -303,7 +303,7 @@ namespace storm {
 				assert(!isRule(syntax));
 
 				Production *p = syntax->production(id);
-				return as<RegexToken>(p->tokens->at(pos))->regex;
+				return p->tokens->at(pos)->asRegex()->regex;
 			}
 
 			Bool Item::regexBefore(Syntax *syntax) const {
@@ -319,7 +319,7 @@ namespace storm {
 			}
 
 			Nat Item::hash() const {
-				return (pos << 8) ^ id;
+				return id + pos + (id << 8);
 			}
 
 			void Item::outputToken(StrBuf *to, Production *p, Nat pos) const {
@@ -336,7 +336,7 @@ namespace storm {
 				for (Nat i = firstId; i != endPos; i = (*next)(p, i)) {
 					bool currentDelim = false;
 					if (i < p->tokens->count())
-						currentDelim = as<DelimToken>(p->tokens->at(i)) != null;
+						currentDelim = p->tokens->at(i)->asDelim() != null;
 
 					if (i != firstId && !currentDelim && !prevDelim)
 						*to << L" - ";

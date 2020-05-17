@@ -84,12 +84,12 @@ namespace storm {
 
 				// See if this state is a Rule token.
 				inline RuleToken *getRule() const {
-					return as<RuleToken>(pos.token());
+					return pos.token()->asRule();
 				}
 
 				// See if this state is a Regex token.
 				inline RegexToken *getRegex() const {
-					return as<RegexToken>(pos.token());
+					return pos.token()->asRegex();
 				}
 
 				// See if this state finishes a production.

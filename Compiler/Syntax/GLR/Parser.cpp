@@ -918,12 +918,12 @@ namespace storm {
 
 			void Parser::setToken(Node *result, TreeNode &node, Nat endPos, Token *token) const {
 				if (token->target) {
-					if (as<RegexToken>(token)) {
+					if (token->asRegex()) {
 						Str::Iter from = source->posIter(node.pos());
 						Str::Iter to = source->posIter(endPos);
 						SrcPos pos(sourceUrl, node.pos(), endPos);
 						setValue(result, token->target, new (this) SStr(source->substr(from, to), pos));
-					} else if (as<RuleToken>(token)) {
+					} else if (token->asRule()) {
 						setValue(result, token->target, tree(node, endPos));
 					} else {
 						assert(false, L"Unknown token type used for match.");
@@ -1167,13 +1167,13 @@ namespace storm {
 					if (Syntax::specialProd(node.production()) == Syntax::prodESkip) {
 						// This is always an empty string! Even though it is a production, it should
 						// look like a plain string.
-						created = new (this) InfoLeaf(as<RegexToken>(token), emptyStr);
+						created = new (this) InfoLeaf(token->asRegex(), emptyStr);
 						// Move errors up to the parent.
 						errors = infoSuccess();
 					} else {
 						created = infoTree(node, endPos);
 						errors = node.errors();
-						if (as<DelimToken>(token))
+						if (token->asDelim())
 							created->delimiter(true);
 					}
 				} else {
@@ -1183,7 +1183,7 @@ namespace storm {
 						Str::Iter to = source->posIter(endPos);
 						str = source->substr(from, to);
 					}
-					created = new (this) InfoLeaf(as<RegexToken>(token), str);
+					created = new (this) InfoLeaf(token->asRegex(), str);
 					// Move errors up to the parent.
 					errors = infoSuccess();
 				}
