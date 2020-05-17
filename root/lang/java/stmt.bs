@@ -37,7 +37,7 @@ class Block extends Stmt {
 
     init(SrcPos pos, Scope parent) {
         init(pos) { step = true; }
-        scope = blockScope (this, parent);
+        scope = blockScope(this, parent);
     }
 
     init(SrcPos pos, Block parent) {
@@ -46,12 +46,13 @@ class Block extends Stmt {
     }
 
     void add(Stmt stmt) {
-        if (stmt is this)
-            return;
-        stmts << stmt;
+        if (stmt !is this)
+            stmts << stmt;
     }
 
     void add(JavaVar var) {
+        if (vars.has(var.name))
+            throw SyntaxError(pos, "Current block already has a variable named ${var.name}.");
         vars.put(var.name, var);
     }
 
@@ -107,22 +108,55 @@ class BlockLookup extends NameLookup {
     }
 }
 
-class StmtBlock extends Block {
-    init(SrcPos pos, Scope parent) {
-        init(pos, parent) {}
+class Return extends Expr {
+    Block block;
+    Expr? ret;
+    
+    init(SrcPos pos, Block block, Expr? ret) {
+        init(pos) {
+            block = block;
+            ret = ret;
+        }
     }
 
-    init(SrcPos, Block parent) {
-        init(pos, parent) {}
+    init(SrcPos pos, Block block) {
+        init(pos) {
+            block = block;
+        }
     }
 
-    private Stmt[] content;
-
-    void add(Stmt stmt) {
-        content << stmt;
+    Bool code(CodeGen gen) : override {
+        var fn = findFnRoot(block);
+        if (ret) {
+            if (fn.result == Value())
+                throw SyntaxError(pos, "${fn} should not return a value, instead it returns ${ret.result}.");
+            ret.code(gen);
+            gen.l << fnRet(eax);
+        } else if (fn.result != Value())
+            throw SyntaxError(pos, "${fn} must return a value!");
+        else {
+            gen.l << fnRet();
+        }
+        true;
     }
 
-    void prepend(Stmt stmt) {
-        content.insert(0, stmt);
+    Value result() : override { expr.result; }
+
+    Bool suggestResult(Type t) : override { false; }
+}
+
+Function findFnRoot(Block inside) on Compiler {
+    findFnRoot(inside.scope);
+}
+
+Function findFnRoot(Scope in) on Compiler {
+    NameLookup? at = in.top;
+    while (curr = at) {
+        if (curr as JavaFunction) {
+            return curr;
+        }
+        at = curr.parent;
     }
+    
+    throw InternalError("Could not find function root.");
 }

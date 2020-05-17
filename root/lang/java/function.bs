@@ -12,18 +12,21 @@ class JavaDecl on Compiler {
 
 class JavaFnDecl extends JavaDecl {
 
-    init(Value result, SStr name, SFormals formals, SQIdentList? qlist, SMethodEnd end) {
+    init(SrcPos pos, Value result, SStr name, Formal[] formals, SQIdentList? qlist, SMethodEnd end) {
         init(name) {
             result = result;
             formals = formals;
             qlist = qlist;
             end = end;
+            pos = pos;
         }
     }
 
+    SrcPos pos;
+
     Value result;
 
-    SFormals formals;
+    Formal[] formals;
 
     SQIdentList? qlist;
 
@@ -45,19 +48,37 @@ class JavaFunction extends Function {
     }
 
     CodeGen code() {
-        Block block(pos, scope);
+        Block block(pos, Scope(scope, this));
+        CodeGen gen(runOn, isMember, result);
+        for (v in decl.formals) {
+            JavaVar var(v.name.v, v.type.getType(pos), pos);
+            block.add(var);
+        }
         block.add(decl.end.transform(block));
 
-        CodeGen gen(runOn, isMember, result);
         gen.l << prolog();
         block.code(gen);
-        gen.l << fnRet();
+        if (decl.result == Value())
+            gen.l << fnRet();
 
-        //print(gen.toS);
+        //print(gen.l.toS);
+        
         gen;
     }
 
     void create(NameSet inside) {
         inside.add(this);
+    }
+}
+
+value Formal {
+    Value type;
+    SStr name;
+
+    init(Value type, SStr name) {
+        init {
+            type = type;
+            name = name;
+        }
     }
 }

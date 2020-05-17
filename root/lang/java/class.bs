@@ -49,7 +49,10 @@ class JavaType extends Type {
     }
 
     void add(JavaFnDecl decl) {
-        JavaFunction fn(scope(), pos, decl.result, decl.name.v, [], decl);
+        Value[] fs;
+        for (s in decl.formals)
+            fs << s.type;
+        JavaFunction fn(scope(), decl.pos, decl.result, decl.name.v, fs, decl);
         fn.create(this);
     }
 

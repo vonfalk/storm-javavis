@@ -89,7 +89,7 @@ SImplements :;
 // Types.
 Value SType();
 SType => type : SBasicType type - (, "\[\]")*;
-SType : SRefType;
+//SType : SRefType;
 
 //TODO: double
 
@@ -102,6 +102,7 @@ SBasicType => longType() : "long" #typeName;
 SBasicType => floatType() : "float" #typeName; //Float
 SBasicType => doubleType() : "double" #typeName;
 SBasicType => boolType() : "boolean" #typeName;
+SBasicType => strType() : "String" #typeName;
 SBasicType => nullValue() : "void" #typeName;
 
 void SRefType();
@@ -184,21 +185,21 @@ SElementArray : SElementValue - (, ",", SElementValue)*;
 // Expressions and blocks.
 Expr SExpr(Block block);
 SExpr => e : SExpr1(block) e;
-SExpr => assign(pos, block, var, e) : SIdent var, "=", SExpr1(block) e;
-//SExpr : SExpr1(block), SAssignOp, SExpr1;
+//SExpr => assign(pos, block, op, var, e) : SIdent var, "=" op, SExpr1(block) e;
+SExpr => assign(pos, block, op, var, rhs) : SIdent var, SAssignOp op, SExpr1(block) rhs;
 
-void SAssignOp();
-SAssignOp : "=";
-SAssignOp : "\+=";
-SAssignOp : "-=";
-SAssignOp : "*=";
-SAssignOp : "/=";
-SAssignOp : "&=";
-SAssignOp : "|=";
-SAssignOp : "%=";
-SAssignOp : "<<=";
-SAssignOp : ">>=";
-SAssignOp : ">>>=";
+SStr SAssignOp();
+SAssignOp => op : "=" @op;
+SAssignOp => op : "\+=" @op;
+SAssignOp => op : "-=" @op;
+SAssignOp => op : "*=" @op;
+SAssignOp => op : "/=" @op;
+SAssignOp => op : "&=" @op;
+SAssignOp => op : "|=" @op;
+SAssignOp => op : "%=" @op;
+SAssignOp => op : "<<=" @op;
+SAssignOp => op : ">>=" @op;
+SAssignOp => op : ">>>=" @op;
 
 Expr SExpr1(Block block);
 // Note: The original documentation allows an assignment between ? and :, which seems strange.
@@ -206,34 +207,35 @@ SExpr1 => e : SExpr2(block) e;
 SExpr1 : SExpr2(block), "?", SExpr1, ":", SExpr1;
 
 Expr SExpr2(Block block);
-SExpr2 => e : SExpr3(block) e - (, SExpr2Rest)*;
+SExpr2 => e : SExpr3(block) e;
+SExpr2 => runMultiple(block, e, r): SExpr3(block) e - (, SExpr2Rest(block) r)*;
 
-void SExpr2Rest();
+Expr SExpr2Rest(Block block);
 // Note: The Java grammar actually disallows 'x instanceof Foo && y'. We allow it here, since
 // it seems to be allowed by the Java compiler.
 SExpr2Rest : "instanceof" #keyword, SType;
-SExpr2Rest : SInfixOp, SExpr3;
+SExpr2Rest => infxOp(pos, block, op, e) : SInfixOp op, SExpr3(block) e;
 
-void SInfixOp();
-SInfixOp : "||";
-SInfixOp : "&&";
-SInfixOp : "|";
-SInfixOp : "^";
-SInfixOp : "&";
-SInfixOp : "==";
-SInfixOp : "!=";
-SInfixOp : ">";
-SInfixOp : "<";
-SInfixOp : "<=";
-SInfixOp : ">=";
-SInfixOp : "<<";
-SInfixOp : ">>";
-SInfixOp : ">>>";
-SInfixOp : "\+";
-SInfixOp : "-";
-SInfixOp : "\*";
-SInfixOp : "/";
-SInfixOp : "%";
+SStr SInfixOp();
+SInfixOp => op : "||" @op;
+SInfixOp => op : "&&" @op;
+SInfixOp => op : "|" @op;
+SInfixOp => op : "^" @op;
+SInfixOp => op : "&" @op;
+SInfixOp => op : "==" @op;
+SInfixOp => op : "!=" @op;
+SInfixOp => op : ">" @op;
+SInfixOp => op : "<" @op;
+SInfixOp => op : "<=" @op;
+SInfixOp => op : ">=" @op;
+SInfixOp => op : "<<" @op;
+SInfixOp => op : ">>" @op;
+SInfixOp => op : ">>>" @op;
+SInfixOp => op : "\+" @op;
+SInfixOp => op : "-" @op;
+SInfixOp => op : "\*" @op;
+SInfixOp => op : "/" @op;
+SInfixOp => op : "%" @op;
 
 Expr SExpr3(Block block);
 SExpr3 : SPrefixOp, SExpr3;
@@ -252,8 +254,8 @@ SPrefixOp : "\+\+";
 SPrefixOp : "--";
 SPrefixOp : "!";
 SPrefixOp : "~";
-SPrefixOp : "\+";
-SPrefixOp : "-";
+//SPrefixOp : "\+";
+//SPrefixOp : "-";
 
 void SPostfixOp();
 SPostfixOp : "\+\+";
@@ -334,7 +336,7 @@ SIdentSuffix : "\.", STypeActuals, "super" #keyword, SSelector;
 SIdentSuffix : "\.", STypeActuals, SIdent #fnName, SArgs;
 
 Array<Expr> SArgs(Block block);
-SArgs : "(", ")";
+SArgs => Array<Expr>() : "(", ")";
 SArgs => Array<Expr>() : "(", SExpr(block) -> push, (",", SExpr(block) -> push, )*, ")";
 
 void SSelector();
@@ -364,7 +366,8 @@ SStmt[10] : "for" #keyword, "(", SForControl, ")" [, SStmt]?;
 //TODO: lägg till stöd för label-specifika break/continue statements
 SStmt[10] => Break(pos, block) : "break" #keyword - (, SIdent)?;
 SStmt[10] => Continue(pos, block) : "continue" #keyword - (, SIdent)?;
-SStmt[10] : "return[ \t]" #keyword, SExpr;
+SStmt[10] => Return(pos, block, e) : "return" #keyword, (SExpr(block) e)?;
+//SStmt[10] : "return[ \t]" #keyword, SExpr;
 SStmt[10] : "throw[ \t]" #keyword, SExpr;
 SStmt[10] : "synchronized", "(", SExpr, ")", SBlock;
 SStmt[10] : "try" #keyword, SBlock, STryTail;
@@ -413,7 +416,7 @@ SVarDecl => VarDecl(pos, block, type, name) : SVarModifier, SType type, SIdent n
 //SVarDecl => VarDecl(pos, block, type, name) : SVarModifier, SType type, SIdent name #varName, SVarSuffix suffix, (",", SIdent #varName, SVarSuffix,)* ";";
 
 Block SBlock(Block parent);
-SBlock => Block(pos, parent) : "{" [, (SBlockStmt(me) -> add,)* ]+ "}";
+SBlock => parent : "{" [, (SBlockStmt(parent) -> add,)* ]+ "}";
 
 // Class body.
 void SClassBody(JavaType type); //JavaType type som parameter, ser till att lägga till alla funktioner sen
@@ -427,7 +430,7 @@ SClassEntry => type : ("static" #keyword,)? SBlock;
 JavaFnDecl SMemberDecl();
 SMemberDecl : STypeDecl;
 SMemberDecl : SType, SIdent #varName, SVarSuffix, (",", SIdent #varName, SVarSuffix,)* ";";
-SMemberDecl => JavaFnDecl(result, name, formals, qlist, end): SType result, SIdent name #fnName, SFormals @formals, ("throws" #keyword, SQIdentList @qlist,)? SMethodEnd @end;
+SMemberDecl => JavaFnDecl(pos, result, name, formals, qlist, end): SType result, SIdent name #fnName, SFormals formals, ("throws" #keyword, SQIdentList @qlist,)? SMethodEnd @end;
 SMemberDecl : SIdent #typeName, SFormals, ("throws" #keyword, SQIdentList,)? SBlock;
 // generics?:
 //SMemberDecl : STypeParams, SType, SIdent #fnName, SFormals, ("throws" #keyword, SQIdentList,)? SMethodEnd;
@@ -437,8 +440,12 @@ Block SMethodEnd(Block parent);
 SMethodEnd : ";";
 SMethodEnd => block : SBlock(parent) block;
 
-void SFormals();
-SFormals : "(", (SFormalList)?, ")";
+Array<Formal> SFormals();
+//SFormals : "(", (SFormalList)?, ")";
+SFormals => Array<Formal>() : "(", (SFormal -> push)* ")";
+
+Formal SFormal();
+SFormal => Formal(type, name) : SType type, SIdent name;
 
 void SFormalList();
 SFormalList : SVarModifier, SType, SIdent #varName, (",", SFormalList)?;

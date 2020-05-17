@@ -142,7 +142,7 @@ class AssignOp extends Expr {
         }
         if (!Value(to.type).canStore(rhs.result))
             if (!rhs.suggestResult(to.type))
-                throw SyntaxError(pos, "Variable assignment not valid.");
+                throw SyntaxError(pos, "Variable assignment not valid: ${to.type.toS} vs ${rhs.result.type.toS}");
     }
 
     Bool code(CodeGen gen) : override {
@@ -158,14 +158,100 @@ class AssignOp extends Expr {
     }
 }
 
-Expr assign(SrcPos pos, Block block, SStr name, Expr rhs) {
+class PlusAssignOp extends Expr {
+    JavaVar to;
+    Expr rhs;
+
+    init(SrcPos pos, JavaVar to, Expr rhs) {
+        init(pos) {
+            to = to;
+            rhs = rhs;
+        }
+        if (!Value(to.type).canStore(rhs.result))
+            if (!rhs.suggestResult(to.type))
+                throw SyntaxError(pos, "Variable assignment not valid.");
+    }
+
+    Bool code(CodeGen gen) : override {
+        rhs.code(gen);
+        gen.l << add(to.var, asSize(rax, to.var.size));
+        true;
+    }
+
+    Bool suggestResult(Type t) : override { false; }
+
+    Value result() : override { Value(to.type); }
+}
+
+class SubAssignOp extends Expr {
+    JavaVar to;
+    Expr rhs;
+
+    init(SrcPos pos, JavaVar to, Expr rhs) {
+        init(pos) {
+            to = to;
+            rhs = rhs;
+        }
+        if (!Value(to.type).canStore(rhs.result))
+            if (!rhs.suggestResult(to.type))
+                throw SyntaxError(pos, "Variable assignment not valid.");
+    }
+
+    Bool code(CodeGen gen) : override {
+        rhs.code(gen);
+        gen.l << sub(to.var, asSize(rax, to.var.size));
+        true;
+    }
+
+    Bool suggestResult(Type t) : override { false; }
+
+    Value result() : override { Value(to.type); }
+}
+
+class MulAssignOp extends Expr {
+    JavaVar to;
+    Expr rhs;
+
+    init(SrcPos pos, JavaVar to, Expr rhs) {
+        init(pos) {
+            to = to;
+            rhs = rhs;
+        }
+        if (!Value(to.type).canStore(rhs.result))
+            if (!rhs.suggestResult(to.type))
+                throw SyntaxError(pos, "Variable assignment not valid.");
+    }
+
+    Bool code(CodeGen gen) : override {
+        rhs.code(gen);
+        gen.l << mul(to.var, asSize(rax, to.var.size));
+        true;
+    }
+
+    Bool suggestResult(Type t) : override { false; }
+
+    Value result() : override { Value(to.type); }
+}
+
+Expr assign(SrcPos pos, Block block, SStr opName, SStr name, Expr rhs) {
     if (v = block.scope.find(SimpleName(name.v)) as JavaVar) {
-        AssignOp op(pos, v, rhs);
-        return op;
+        if (opName.v == "=") {
+            AssignOp op(pos, v, rhs);
+            return op;
+        } else if (opName.v == "+=") {
+            PlusAssignOp op(pos, v, rhs);
+            return op;
+        } else if (opName.v == "-=") {
+            SubAssignOp op(pos, v, rhs);
+            return op;
+        } else if (opName.v == "*=") {
+            MulAssignOp op(pos, v, rhs);
+            return op;
+        }
+        throw SyntaxError(pos, "assign(SrcPos, Block, SStr, SStr, Expr) : Operator  ${opName.v} not yet implemented.");
     }
     throw SyntaxError(pos, "assign(SrcPos, Block, SStr, Expr): Variable ${name.v} was not found.");
 }
-// byt ut LocalVarAccess, inkludera .var direkt.
 
 Expr readVar(SrcPos pos, Block block, SStr name) {
     if (v = block.scope.find(SimpleName(name.v)) as JavaVar) {
@@ -174,4 +260,66 @@ Expr readVar(SrcPos pos, Block block, SStr name) {
     }
     
     throw SyntaxError(pos, "readVar(SrcPos, Block, SStr): Variable ${name.v} not found.");
+}
+
+class PlusOp extends Expr {
+    Expr e;
+    init(SrcPos pos, Expr e) {
+        init(pos) {
+            e = e;
+        }
+    }
+
+    Bool code(CodeGen gen) : override {
+        gen.l << mov(rbx, rax);
+        e.code(gen);
+        gen.l << add(rax, rbx);
+        true;
+    }
+
+    Bool suggestResult(Type t) : override { return e.suggestResult(t); }
+
+    Value result() : override { e.result; }
+}
+
+class SubOp extends Expr {
+    Expr e;
+    init(SrcPos pos, Expr e) {
+        init(pos) {
+            e = e;
+        }
+    }
+
+    Bool code(CodeGen gen) : override {
+        gen.l << mov(rbx, rax);
+        e.code(gen);
+        gen.l << sub(rbx, rax);
+        gen.l << mov(rax, rbx);
+        true;
+    }
+
+    Bool suggestResult(Type t) : override { return e.suggestResult(t); }
+
+    Value result() : override { e.result; }
+}
+
+Expr infxOp(SrcPos pos, Block block, SStr opName, Expr e) {
+    if (opName.v == "+") {
+        PlusOp op(pos, e);
+        return op;
+    } else if (opName.v == "-") {
+        SubOp op(pos, e);
+        return op;
+    }
+    throw SyntaxError(pos, "infxOp(SrcPos, Block, SStr, Expr): could not find operator ${opName.v}.");
+}
+
+Expr runMultiple(Block block, Expr e, Expr[] r) {
+    block.add(e);
+    Nat n = 0;
+    while (n < r.count - 1) {
+        block.add(r[n]);
+        n = n + 1;
+    }
+    r[n];
 }
