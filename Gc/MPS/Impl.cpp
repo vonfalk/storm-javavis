@@ -265,7 +265,7 @@ namespace storm {
 					}
 
 					// Update the pointers in the code blob as well.
-					code::updatePtrs(at, c);
+					gccode::updatePtrs(at, c);
 				} else {
 					// Scan regular objects.
 					const Header *h = objHeader(o);
