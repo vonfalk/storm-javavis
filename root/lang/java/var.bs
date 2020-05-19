@@ -15,8 +15,11 @@ class JavaVar extends Named {
 
     void create(CodeGen gen) {
         if (var == Var()) {
-            var = gen.l.createVar(gen.block, type.size);
+            var = gen.l.createVar(gen.block, type.size, Operand(), FreeOpt:inactive);
         }
+
+        Listing:VarInfo info(name, type, false, pos);
+        gen.l.varInfo(var, info);
     }
 }
 
@@ -37,6 +40,7 @@ class VarDecl extends Stmt {
     JavaVar var;
 
     Bool code(CodeGen gen) : override {
+        gen.l << activate(var.var);
         true;
     }
 }

@@ -408,7 +408,7 @@ SForStmt : SExpr, (",", SExpr)*;
 Block SBlockStmt(Block block);
 SBlockStmt[10] => block : SStmt(block) -> add;
 SBlockStmt : STypeDecl;
-SBlockStmt => block : SVarDecl(block);
+SBlockStmt => block : SVarDecl(block) -> add;
 
 VarDecl SVarDecl(Block block);
 SVarDecl => VarDecl(pos, block, type, name) : SVarModifier, SType type, SIdent name #varName, ";";

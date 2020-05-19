@@ -1,0 +1,43 @@
+use core:asm;
+use core:lang;
+use lang:bs:macro;
+
+progvis:Hints hints() {
+    progvis:Hints(JavaCodeHints());
+}
+
+class JavaCodeHints extends progvis:CodeHints {
+    init() {
+        init() {
+        }
+    }
+
+    Fn<void>? findMain(Package pkg) : override {
+        NameLookup? l = Scope(pkg).top;
+        if (l as NameSet) {
+            for (c in l.content)
+                if (c as JavaType)
+                    if (f = c.scope.find(SimpleName("main")) as Function) {
+                        var ptr = f.pointer;
+                        if (ptr as Fn<void>)
+                            return ptr;
+                    }
+        }
+        null;
+    }
+
+    Str cleanName(Function f, Package remove) : override {
+        f.name;
+    }
+
+    Bool handlesFunction(Function f) : override {
+        true;
+    }
+
+    Bool patchExternal(Function fn) : override { false; }
+
+    Save saveVariable(Listing to, Var var, Listing:VarInfo info, Operand dest) : override {
+        
+        return Save:copy;
+    }
+}

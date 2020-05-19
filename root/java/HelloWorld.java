@@ -1,30 +1,18 @@
 public class HelloWorld {
 
-  void test() {
+  void test(int i) {
     print("This you should see.");
+    int x;
     return;
     print("You should not see this.");
   }
 
-  int test2(int x) {
-    return x + 20;
-  }
-
-  int test3() {
-    return;
-  }
-
-  void test4() {
-    return 20;
-  }
-
     public static void main() {
-      test();
-
       int i;
-      i = test2(20);
-
-      //test3();
-      //i = test4();
+      i = 20;
+      int x;
+      x = i + 30;
+      test(30);
+      print("test");
     }
 }

@@ -34,24 +34,26 @@ class JavaFnDecl extends JavaDecl {
 }
 
 class JavaFunction extends Function {
-    SrcPos pos;
     Scope scope;
     JavaFnDecl decl;
 
     init (Scope scope, SrcPos pos, Value result, Str name, Value[] params, JavaFnDecl decl) {
         init(result, name, params) {
             scope = scope;
-            pos = pos;
             decl = decl;
         }
+        this.pos = pos;
         setCode(LazyCode(&this.code));
     }
 
     CodeGen code() {
         Block block(pos, Scope(scope, this));
         CodeGen gen(runOn, isMember, result);
+
+        // 
         for (v in decl.formals) {
             JavaVar var(v.name.v, v.type.getType(pos), pos);
+            var.var = gen.l.createParam(v.type.desc);
             block.add(var);
         }
         block.add(decl.end.transform(block));
@@ -61,7 +63,7 @@ class JavaFunction extends Function {
         if (decl.result == Value())
             gen.l << fnRet();
 
-        //print(gen.l.toS);
+        print(gen.l.toS);
         
         gen;
     }

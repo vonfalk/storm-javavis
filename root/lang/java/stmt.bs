@@ -72,6 +72,7 @@ class Block extends Stmt {
     Bool code(CodeGen gen) : override {
         initVariables(gen);
         for (st in stmts) {
+            gen.l << location(st.pos);
             st.code(gen);
         }
         true;
