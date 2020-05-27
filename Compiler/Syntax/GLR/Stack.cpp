@@ -241,8 +241,11 @@ namespace storm {
 			 * Stack storage.
 			 */
 
-			StackStore::StackStore() : size(1) {
+			StackStore::StackStore(Nat maxParentId) : size(1), freeHead(0) {
 				chunks = runtime::allocArray<Chunk *>(engine(), &pointerArrayType, 16);
+
+				const Nat bits = sizeof(Nat) * CHAR_BIT;
+				reqSize = (maxParentId + bits - 1) / bits;
 			}
 
 			StackItem StackStore::createItem() {
@@ -254,41 +257,73 @@ namespace storm {
 			}
 
 			StackItem StackStore::createItem(Nat state, Nat pos, StackItem prev, Nat tree) {
-				Nat mem = alloc(5);
+				Nat mem = alloc(5 + reqSize);
 				write(mem + 0, state);
 				write(mem + 1, pos);
 				write(mem + 2, tree);
 				write(mem + 3, prev.id());
 				write(mem + 4, 0);
+
+				// Zero the parent set.
+				for (Nat i = 0; i < reqSize; i++)
+					write(mem + i + 5, 0);
+
 				// PLN(L"Created item " << state << L" at " << mem);
 				return StackItem(this, mem);
 			}
 
-			StackItem StackStore::createItem(Nat state, Nat pos, StackItem prev, Nat tree, ParentReq req) {
-				// TODO: Fixme!
-				return createItem(state, pos, prev, tree);
+			StackItem StackStore::createItem(Nat state, Nat pos, StackItem prev, Nat tree, ItemReq req) {
+				Nat mem = alloc(5 + reqSize);
+				write(mem + 0, state);
+				write(mem + 1, pos);
+				write(mem + 2, tree);
+				write(mem + 3, prev.id());
+				write(mem + 4, 0);
+
+				// Copy the parent set.
+				for (Nat i = 0; i < reqSize; i++)
+					write(mem + i + 5, read(req.id() + i));
+
+				return StackItem(this, mem);
+			}
+
+			StackItem StackStore::createItem(StackItem src) {
+				return createItem(src.state(), src.pos(), src.prev(), src.tree(), src.required());
 			}
 
 
 			Nat StackStore::alloc(Nat n) {
-				Nat first = chunkId(size);
-				Nat last = chunkId(size + n - 1);
-				while (last >= chunks->count)
-					grow();
+				// Something to re-use from the free list?
+				if (freeHead) {
+					Nat result = freeHead;
+					PVAR(result);
+					freeHead = read(freeHead);
+					return result;
+				} else {
+					// Allocate new space at the end of the array.
+					Nat first = chunkId(size);
+					Nat last = chunkId(size + n - 1);
+					while (last >= chunks->count)
+						grow();
 
-				for (Nat i = first; i <= last; i++)
-					if (!chunks->v[i])
-						chunks->v[i] = runtime::allocArray<Nat>(engine(), &natArrayType, chunkSize);
+					for (Nat i = first; i <= last; i++)
+						if (!chunks->v[i])
+							chunks->v[i] = runtime::allocArray<Nat>(engine(), &natArrayType, chunkSize);
 
-				lastAlloc = size;
-				size += n;
-				return lastAlloc;
+					Nat result = size;
+					size += n;
+					return result;
+				}
 			}
 
 			void StackStore::free(Nat alloc) {
-				if (lastAlloc == alloc) {
-					size = lastAlloc;
-				}
+				// Link it in the free list.
+				write(alloc, freeHead);
+				freeHead = alloc;
+			}
+
+			void StackStore::free(StackItem item) {
+				free(item.id());
 			}
 
 			void StackStore::grow() {
@@ -311,8 +346,13 @@ namespace storm {
 			}
 
 			void FutureStacks::pop() {
-				if (data)
-					data->v[first] = null;
+				if (data) {
+					Array<Nat> *v = data->v[first];
+					if (v)
+						// Try to re-use the contents of the array if possible.
+						while (v->any())
+							v->pop();
+				}
 				first = wrap(first + 1);
 			}
 

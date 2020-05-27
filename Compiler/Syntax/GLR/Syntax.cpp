@@ -100,8 +100,8 @@ namespace storm {
 				ruleProds = new (this) Array<RuleInfo *>();
 				repRuleProds = new (this) Array<RuleInfo *>();
 				productions = new (this) Array<Production *>();
-				parentIds = new (this) Map<Nat, ParentReq>();
-				prodParents = new (this) Array<ParentReq>();
+				parentIds = new (this) Map<Nat, ReqId>();
+				prodParents = new (this) Array<ReqId>();
 			}
 
 			Nat Syntax::add(Rule *rule) {
@@ -130,13 +130,13 @@ namespace storm {
 				ruleProds->at(ruleId)->push(id);
 
 				// Check the parent id for this production.
-				ParentReq req;
+				ReqId req;
 				if (p->parent) {
 					Nat pId = lookup(p->parent);
 					if (parentIds->has(pId)) {
 						req = parentIds->get(pId);
 					} else {
-						req = ParentReq(engine(), parentIds->count());
+						req = ReqId(parentIds->count());
 						parentIds->put(pId, req);
 					}
 				}
@@ -246,16 +246,20 @@ namespace storm {
 				return productions->at(baseProd(pid));
 			}
 
-			ParentReq Syntax::parentId(Nat rule) const {
+			ReqId Syntax::parentId(Nat rule) const {
 				if (specialRule(rule) != 0)
-					return ParentReq();
+					return ReqId();
 				else
-					return parentIds->at(rule);
+					return parentIds->get(rule, ReqId());
 			}
 
-			ParentReq Syntax::productionReq(Nat pid) const {
+			Nat Syntax::parentCount() const {
+				return parentIds->count();
+			}
+
+			ReqId Syntax::productionReq(Nat pid) const {
 				if (specialProd(pid) != 0)
-					return ParentReq();
+					return ReqId();
 				else
 					return prodParents->at(baseProd(pid));
 			}

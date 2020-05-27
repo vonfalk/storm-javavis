@@ -58,6 +58,7 @@ namespace storm {
 
 			Bool Parser::parse(Rule *root, Str *str, Url *file, Str::Iter start) {
 				initParse(root, str, file, start);
+				// table->populate();
 				doParse(startPos);
 				finishParse(null);
 
@@ -144,7 +145,7 @@ namespace storm {
 				parseRoot = syntax->lookup(root);
 
 				treeStore = new (this) TreeStore(syntax);
-				stackStore = new (this) StackStore();
+				stackStore = new (this) StackStore(syntax->parentCount());
 				stacks = new (this) FutureStacks(stackStore);
 				acceptingStack = StackItem();
 				lastSet = null;
@@ -227,14 +228,14 @@ namespace storm {
 				visited = null;
 				stacks = null;
 
-				// See which productions are acceptable to us...
-				Engine &e = engine();
-				ParentReq ctx;
-				for (InfoInternal *at = context; at; at = at->parent()) {
-					ctx = ctx.concat(e, syntax->parentId(syntax->lookup(at->production()->rule())));
-				}
-
 				TODO(L"Fix this!");
+
+				// See which productions are acceptable to us...
+				// Engine &e = engine();
+				// ParentReq ctx;
+				// for (InfoInternal *at = context; at; at = at->parent()) {
+				// 	ctx = ctx.concat(e, syntax->parentId(syntax->lookup(at->production()->rule())));
+				// }
 
 				// If we have multiple accepting stacks, find the ones without requirements and put
 				// them first!
@@ -437,9 +438,22 @@ namespace storm {
 						};
 
 						actorReduce(env, StackItem());
-						actorShift(env);
+						if (actorShift(env)) {
+							// We need to keep this state.
+							now.keepThis();
+						}
 					}
 				} while (!done);
+
+				// Free any states we don't need to keep.
+				for (Nat i = 0, count = states->count(); i < count; i++) {
+					StackItem now = stackStore->readItem(states->at(i));
+					if (now.id() && now.keep()) {
+						StackItem next = now.morePrev();
+						stackStore->free(now);
+						now = next;
+					}
+				}
 			}
 
 			bool Parser::actorShift(const ActorEnv &env) {
@@ -605,22 +619,22 @@ namespace storm {
 				if (!accept && !reduce)
 					return;
 
-				// Create the syntax tree node for this reduction and compute required parent productions.
-				ParentReq required;
+				// Note: We will update 'node' during the loop below.
+				// We need to allocate this node here in order to have a ItemReq to update.
+				StackItem add = stackStore->createItem(-1, currentPos, stack, 0);
+
+				// Make sure we keep the "prev" stack.
+				stack.keepThis();
 
 				Bool usedNode = false;
 				Bool nontermErrors = false;
-				Nat node = 0;
 				InfoErrors errors = infoSuccess();
 				for (const Path *p = path; p; p = p->prev) {
 					TreeNode now = treeStore->at(p->item.tree());
 					InfoErrors err = now.errors();
 					errors += err;
 					nontermErrors = now.leaf() & err.any();
-					// TODO: Calling 'concat' in this manner is somewhat inefficient. It is better
-					// to pre-compute the length once and for all and then do the concatenation
-					// afterwards.
-					required = required.concat(e, p->item.required());
+					add.required().concat(p->item.required());
 				}
 				errors += infoShifts(env.errors);
 				if (env.errors || nontermErrors) {
@@ -631,7 +645,7 @@ namespace storm {
 
 				if (Syntax::specialProd(env.production) == Syntax::prodESkip) {
 					// These are really just shifts.
-					node = treeStore->push(stack.pos(), errors).id();
+					add.tree(treeStore->push(stack.pos(), errors).id());
 				} else {
 					TreeNode fill = treeStore->push(stack.pos(), env.production, errors, env.length);
 					TreeArray children = fill.children();
@@ -643,39 +657,41 @@ namespace storm {
 					if (env.length > 0)
 						fill.pos(treeStore->at(children[0]).pos());
 
-					node = fill.id();
+					add.tree(fill.id());
 				}
 
 #ifdef GLR_DEBUG
 				PVAR(accept);
 				PVAR(reduce);
-				PVAR(node);
+				PVAR(add.tree());
 #endif
 
 				// Remove the currently reduced requirement.
-				required = required.remove(e, syntax->parentId(env.rule));
+				add.required().remove(syntax->parentId(env.rule));
 
 				// Do we require any parent production being present? If a production requires
 				// itself, that means it has to be nested. Ie. it does not immediately satisfy its
 				// own requirement.
-				required = required.concat(e, syntax->productionReq(env.production));
+				add.required().add(syntax->productionReq(env.production));
 
 
 				// Accept?
 				if (accept) {
-					StackItem add = stackStore->createItem(-1, currentPos, stack, node, required);
+					StackItem acceptAdd = add;
+					if (reduce)
+						acceptAdd = stackStore->createItem(-1, currentPos, stack, add.tree(), add.required());
 
 					if (acceptingStack.any() && acceptingStack.pos() == currentPos) {
-						usedNode |= acceptingStack.insert(treeStore, add, usedNode);
+						usedNode |= acceptingStack.insert(treeStore, acceptAdd, usedNode);
 					} else {
-						acceptingStack = add;
+						acceptingStack = acceptAdd;
 						usedNode = true;
 					}
 				}
 
 				// Figure out which state to go to.
 				if (reduce) {
-					StackItem add = stackStore->createItem(to.v(), currentPos, stack, node, required);
+					add.state(to.v());
 #ifdef GLR_DEBUG
 					PLN(L"Added " << to.v() << L" with prev " << stack.state() << L"(" << stack.id() << L")");
 #endif
@@ -699,7 +715,7 @@ namespace storm {
 				}
 
 				if (!usedNode) {
-					treeStore->free(node);
+					treeStore->free(add.tree());
 				}
 			}
 
@@ -820,8 +836,12 @@ namespace storm {
 
 			void Parser::reqErrorMsg(StrBuf *out, const StackItem &state) const {
 				for (StackItem item = state; item.any(); item = item.morePrev()) {
+					// Create a copy of the item, so that we may modify the required set.
+					StackItem copy = stackStore->createItem(item);
+
 					// For each of these, we want to find a production with an unfullfilled requirement.
-					Nat found = findMissingReq(item.tree(), item.required());
+					Nat found = findMissingReq(item.tree(), copy.required());
+					stackStore->free(copy);
 					if (!found)
 						continue;
 
@@ -837,7 +857,7 @@ namespace storm {
 				}
 			}
 
-			Nat Parser::findMissingReq(Nat tree, ParentReq required) const {
+			Nat Parser::findMissingReq(Nat tree, ItemReq required) const {
 				TreeNode node = treeStore->at(tree);
 
 				// Leaf nodes are not interesting. They're just shifts.
@@ -850,14 +870,14 @@ namespace storm {
 				Nat rule = Item(syntax, production).rule(syntax);
 
 				// Is this the node we're looking for?
-				ParentReq here = syntax->productionReq(production);
+				ReqId here = syntax->productionReq(production);
 				if (here.any() && required.has(here)) {
 					return tree;
 				}
 
 				// If this rule was used as a dependency, remove it from the set now since it will
 				// fulfill that requirement of its children.
-				required = required.remove(engine(), syntax->parentId(rule));
+				required.remove(syntax->parentId(rule));
 
 				// Search our children. Pick the first match.
 				for (Nat i = 0; i < children.count(); i++) {

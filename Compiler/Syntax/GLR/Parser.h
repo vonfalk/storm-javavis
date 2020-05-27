@@ -256,7 +256,7 @@ namespace storm {
 
 				// Produce error messages related to an unfullfilled requirement in the stack items provided.
 				void reqErrorMsg(StrBuf *out, const StackItem &states) const;
-				Nat findMissingReq(Nat tree, ParentReq required) const;
+				Nat findMissingReq(Nat tree, ItemReq required) const;
 
 				/**
 				 * Tree computation.

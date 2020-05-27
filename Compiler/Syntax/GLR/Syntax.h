@@ -97,6 +97,41 @@ namespace storm {
 
 
 			/**
+			 * An ID assigned to a rule to efficiently store parent requirements of productions.
+			 *
+			 * This class is able to represent either an ID, or the absence of an ID.
+			 */
+			class ReqId {
+				STORM_VALUE;
+			public:
+				// Create an ID indicating that no ID is yet assigned.
+				STORM_CTOR ReqId() {
+					id = -1;
+				}
+
+				// Create a particular ID.
+				STORM_CTOR ReqId(Nat id) {
+					this->id = id;
+				}
+
+				// Get the ID.
+				inline Nat v() const { return id; }
+
+				// Do we have any ID?
+				inline Bool any() const {
+					return id != Nat(-1);
+				}
+				inline Bool empty() const {
+					return id == Nat(-1);
+				}
+
+			private:
+				// The ID itself. Stores Nat(-1) if no ID is allocated.
+				Nat id;
+			};
+
+
+			/**
 			 * All syntax in a parser.
 			 *
 			 * Assigns an identifier to each rule production to make things easier down the line.
@@ -131,11 +166,14 @@ namespace storm {
 				// Find a production from its id.
 				Production *STORM_FN production(Nat id) const;
 
-				// Get the parent id for a rule, expressed as a ParentReq structure.
-				ParentReq STORM_FN parentId(Nat rule) const;
+				// Get the ID allocated for a particular rule, if any.
+				ReqId STORM_FN parentId(Nat rule) const;
 
-				// Get the parent requirement of a production.
-				ParentReq STORM_FN productionReq(Nat id) const;
+				// Get the total number of parent ID:s allocated at the moment.
+				Nat STORM_FN parentCount() const;
+
+				// Get the parent requirement of a production, if any.
+				ReqId STORM_FN productionReq(Nat id) const;
 
 				// Same syntax as another object?
 				Bool STORM_FN sameSyntax(Syntax *o) const;
@@ -160,10 +198,10 @@ namespace storm {
 				Array<Production *> *productions;
 
 				// Parent id:s for all productions.
-				Map<Nat, ParentReq> *parentIds;
+				Map<Nat, ReqId> *parentIds;
 
 				// The parent id of a production. Stores 'noParent' if none.
-				Array<ParentReq> *prodParents;
+				Array<ReqId> *prodParents;
 
 				// Add the follow-set of a production.
 				void addFollows(Production *p);

@@ -30,6 +30,7 @@ namespace storm {
 			class StackStore;
 			inline Nat read(StackStore *src, Nat pos);
 			inline void write(StackStore *src, Nat pos, Nat val);
+			inline Nat reqCount(StackStore *src);
 
 			/**
 			 * Stack items in the GLR parser.
@@ -126,6 +127,134 @@ namespace storm {
 				inline Nat wrap(Nat n) const { return data ? (n & (data->count - 1)) : 0; }
 			};
 
+			/**
+			 * Parent rule requirements for a stack item.
+			 *
+			 * Stores a set of parent ID:s that need to be present at some future point during
+			 * parsing (i.e. as a parent). Basically, a bit-array that is sized to fit the maximum
+			 * required ID currently visible in the grammar.
+			 *
+			 * This array is stored inside the StackStore, right after a StackItem entry.
+			 */
+			class ItemReq {
+				STORM_VALUE;
+			public:
+				// Create a 'null' item.
+				ItemReq() { ptr = 0; store = null; }
+
+				// Get our ID.
+				inline Nat id() const { return ptr; }
+
+				// Append elements from another ItemReq.
+				void concat(ItemReq other) {
+					Nat count = reqCount(store);
+					for (Nat i = 0; i < count; i++) {
+						write(store, ptr + i, read(store, ptr + i) | read(other.store, other.ptr + i));
+					}
+				}
+
+				// Add an element from a ReqId.
+				void add(ReqId id) {
+					if (id.any()) {
+						const Nat sz = sizeof(Nat) * CHAR_BIT;
+						Nat offset = id.v() / sz;
+						Nat bit = id.v() % sz;
+						write(store, ptr + offset,
+							read(store, ptr + offset) | (Nat(1) << bit));
+					}
+				}
+
+				// Remove elements from another ItemReq.
+				void remove(ItemReq other) {
+					Nat count = reqCount(store);
+					for (Nat i = 0; i < count; i++) {
+						write(store, ptr + i, read(store, ptr + i) & ~read(other.store, other.ptr + i));
+					}
+				}
+
+				// Remove an element from a ReqId.
+				void remove(ReqId id) {
+					if (id.any()) {
+						const Nat sz = sizeof(Nat) * CHAR_BIT;
+						Nat offset = id.v() / sz;
+						Nat bit = id.v() % sz;
+						write(store, ptr + offset,
+							read(store, ptr + offset) & ~(Nat(1) << bit));
+					}
+				}
+
+				// Is this entirely empty?
+				Bool empty() const {
+					if (ptr == 0)
+						return true;
+
+					Nat count = reqCount(store);
+					for (Nat i = 0; i < count; i++) {
+						if (read(store, ptr + i) != 0)
+							return false;
+					}
+
+					return true;
+				}
+				Bool any() const {
+					return !empty();
+				}
+
+				// Do we contain a particular ReqId?
+				Bool has(ReqId id) {
+					if (id.any()) {
+						const Nat sz = sizeof(Nat) * CHAR_BIT;
+						Nat offset = id.v() / sz;
+						Nat bit = id.v() % sz;
+						return (read(store, ptr + offset) & (Nat(1) << bit)) != 0;
+					} else {
+						return false;
+					}
+				}
+
+				// Count number of bits set.
+				Nat count() const {
+					Nat result = 0;
+					Nat count = reqCount(store);
+					for (Nat i = 0; i < count; i++) {
+						result += setBitCount(read(store, ptr + i));
+					}
+					return result;
+				}
+
+				// Are the two item sets equal?
+				Bool operator ==(const ItemReq &other) const {
+					if ((ptr == 0) != (other.ptr == 0))
+						return false;
+
+					if (ptr == 0)
+						return true;
+
+					Nat count = reqCount(store);
+					for (Nat i = 0; i < count; i++) {
+						if (read(store, ptr + i) != read(other.store, other.ptr + i))
+							return false;
+					}
+
+					return true;
+				}
+
+			private:
+				friend class StackItem;
+
+				// Create. Done by StackItem.
+				ItemReq(StackStore *store, Nat ptr) {
+					this->store = store;
+					this->ptr = ptr;
+				}
+
+				// Backing storage.
+				StackStore *store;
+
+				// Location.
+				Nat ptr;
+			};
+
 
 			/**
 			 * Stack items in the GLR parser.
@@ -135,6 +264,9 @@ namespace storm {
 			 * can be chained together to represent all links.
 			 *
 			 * This is a "handle" to a location inside a StackStore instance.
+			 *
+			 * TODO: Re-use the arrays inside here as much as possible. We don't need to discard the
+			 * array as soon as we shift the data, we just need to clear it.
 			 */
 			class StackItem {
 				STORM_VALUE;
@@ -149,13 +281,19 @@ namespace storm {
 				inline Nat id() const { return ptr; }
 
 				// State at this point in the stack.
-				inline Nat state() const { return read(store, ptr); }
+				inline Nat state() const { return read(store, ptr) & 0x7FFFFFFF; }
+				inline void state(Nat v) { write(store, ptr, v); }
+
+				// Do we need to keep this state?
+				inline Bool keep() const { return (read(store, ptr) & 0x80000000) != 0; }
+				inline void keepThis() const { write(store, ptr, 0x80000000 | read(store, ptr)); }
 
 				// Position in the input.
 				inline Nat pos() const { return read(store, ptr + 1); }
 
 				// Our tree.
 				inline Nat tree() const { return read(store, ptr + 2); }
+				inline void tree(Nat v) { write(store, ptr + 2, v); }
 
 				// Previous item in the stack.
 				inline StackItem prev() const {
@@ -169,9 +307,8 @@ namespace storm {
 				}
 
 				// Required parent productions for this state.
-				inline ParentReq required() const {
-					// TODO: Fixme!
-					return ParentReq();
+				inline ItemReq required() const {
+					return ItemReq(store, ptr + 5);
 				}
 
 				// Insert a node in the 'morePrev' chain if it is not already there. Returns 'true' if inserted.
@@ -220,14 +357,16 @@ namespace storm {
 			class StackStore : public Object {
 				STORM_CLASS;
 			public:
-				// Create.
-				STORM_CTOR StackStore();
+				// Create, give the maximum size required by the parent ID:s at each location. This
+				// defines the size required for each item.
+				STORM_CTOR StackStore(Nat maxParentId);
 
 				// Create StackItem nodes.
 				StackItem createItem();
 				StackItem createItem(Nat state, Nat pos);
 				StackItem createItem(Nat state, Nat pos, StackItem prev, Nat tree);
-				StackItem createItem(Nat state, Nat pos, StackItem prev, Nat tree, ParentReq req);
+				StackItem createItem(Nat state, Nat pos, StackItem prev, Nat tree, ItemReq req);
+				StackItem createItem(StackItem original);
 
 				// "Read" an item from a pointer.
 				inline StackItem readItem(Nat pos) { return StackItem(this, pos); }
@@ -239,6 +378,7 @@ namespace storm {
 
 				// Free a previous allocation.
 				void free(Nat alloc);
+				void free(StackItem item);
 
 				/**
 				 * Interface used by StackItem and ParentReq.
@@ -249,6 +389,11 @@ namespace storm {
 				}
 				inline void write(Nat i, Nat v) const {
 					chunks->v[chunkId(i)]->v[chunkOffset(i)] = v;
+				}
+
+				// Get the requirement array size.
+				inline Nat requirementCount() const {
+					return reqSize;
 				}
 
 			private:
@@ -270,8 +415,12 @@ namespace storm {
 				// Current number of elements;
 				Nat size;
 
-				// Last allocated element (to see if we can free it).
-				Nat lastAlloc;
+				// Head of the free list (all elements are the same size). The list is linked using
+				// the first element in each allocation.
+				Nat freeHead;
+
+				// Size of the requirement array for each item in this store, in words.
+				Nat reqSize;
 
 				// Allocate room for 'n' more items.
 				Nat alloc(Nat n);
@@ -286,6 +435,10 @@ namespace storm {
 
 			inline void write(StackStore *src, Nat pos, Nat val) {
 				src->write(pos, val);
+			}
+
+			inline Nat reqCount(StackStore *src) {
+				return src->requirementCount();
 			}
 
 
