@@ -296,7 +296,6 @@ namespace storm {
 				// Something to re-use from the free list?
 				if (freeHead) {
 					Nat result = freeHead;
-					PVAR(result);
 					freeHead = read(freeHead);
 					return result;
 				} else {

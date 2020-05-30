@@ -448,7 +448,7 @@ namespace storm {
 				// Free any states we don't need to keep.
 				for (Nat i = 0, count = states->count(); i < count; i++) {
 					StackItem now = stackStore->readItem(states->at(i));
-					if (now.id() && now.keep()) {
+					while (now.id() && !now.keep()) {
 						StackItem next = now.morePrev();
 						stackStore->free(now);
 						now = next;
