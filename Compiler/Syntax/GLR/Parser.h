@@ -119,7 +119,7 @@ namespace storm {
 				StackItem *acceptingStack;
 
 				// The last non-empty state set. Used for error reporting.
-				Set<StackItem *> *lastSet;
+				Array<StackItem *> *lastSet;
 
 				// The position of 'lastSet'.
 				Nat lastPos;
@@ -131,8 +131,8 @@ namespace storm {
 				// Current position in the input.
 				Nat currentPos;
 
-				// All states which have been processed in this position so far.
-				BoolSet *visited;
+				// The current state being processed in the topmost stack.
+				Nat topVisiting;
 
 				/**
 				 * Member functions.
@@ -166,7 +166,7 @@ namespace storm {
 
 				// Parse as 'doParse' does. Keep track of the last states before the last line
 				// ending as well as the error information in 'doParse'. Used for better error recovery.
-				void doParse(Nat from, Set<StackItem *> *&states, Nat &pos);
+				void doParse(Nat from, Array<StackItem *> *&states, Nat &pos);
 
 				/**
 				 * Error recovery specials.
@@ -193,7 +193,7 @@ namespace storm {
 				 */
 
 				// Act on all states until we're done.
-				void actor(Nat pos, Set<StackItem *> *states);
+				void actor(Nat pos, Array<StackItem *> *states);
 
 				// Data passed to the reduction actor.
 				struct ActorEnv {
@@ -245,10 +245,10 @@ namespace storm {
 				void finishReduce(const ReduceEnv &env, StackItem *stack, const Path *path);
 
 				// Limited reduction of a rule. Only paths passing through the edge 'link' are considered.
-				void limitedReduce(const ReduceEnv &env, Set<StackItem *> *top, StackItem *through);
+				void limitedReduce(const ReduceEnv &env, StackItem *through);
 
 				// Produce error messages from the state set 'states'.
-				void errorMsg(StrBuf *out, Nat pos, Set<StackItem *> *states) const;
+				void errorMsg(StrBuf *out, Nat pos, Array<StackItem *> *states) const;
 				void errorMsg(Set<Str *> *errors, Nat state) const;
 
 				// Produce error messages related to an unfullfilled requirement in the stack items provided.

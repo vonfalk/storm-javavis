@@ -120,7 +120,7 @@ namespace storm {
 				data = null;
 			}
 
-			MAYBE(Set<StackItem *> *) FutureStacks::top() {
+			MAYBE(Array<StackItem *> *) FutureStacks::top() {
 				if (data)
 					return data->v[first];
 				else
@@ -128,32 +128,50 @@ namespace storm {
 			}
 
 			void FutureStacks::pop() {
-				if (data)
+				if (data) {
 					data->v[first] = null;
+
+					// // Try to re-use the array if possible.
+					// Array<StackItem *> *v = data->v[first];
+					// if (v)
+					// 	while (v->any())
+					// 		v->pop();
+				}
 				first = wrap(first + 1);
 			}
 
-			Bool FutureStacks::put(Nat pos, TreeStore *store, StackItem *insert) {
+			StackItem *FutureStacks::putRaw(Nat pos, StackItem *insert) {
 				if (pos >= count())
 					grow(pos + 1);
 
 				Nat i = wrap(first + pos);
-				Set<StackItem *> *&to = data->v[i];
+				Array<StackItem *> *&to = data->v[i];
 				if (!to)
-					to = new (this) Set<StackItem *>();
+					to = new (this) Array<StackItem *>();
 
-
-				StackItem *old = to->at(insert);
-				if (old == insert) {
-					// Insertion was performed. Nothing more to do.
-					return true;
-				} else {
-					// Append the current node as an alternative.
-					return old->insert(store, insert);
+				// Note: There are often few enough states for this to be faster than a set.
+				for (Nat i = 0, count = to->count(); i < count; i++) {
+					StackItem *at = to->at(i);
+					if (*at == *insert) {
+						return at;
+					}
 				}
+
+				// Insert it.
+				to->push(insert);
+				return insert;
 			}
 
-			void FutureStacks::set(Nat pos, Set<StackItem *> *v) {
+			Bool FutureStacks::put(Nat pos, TreeStore *store, StackItem *insert) {
+				StackItem *inserted = putRaw(pos, insert);
+				// Merge existing nodes?
+				if (inserted != insert)
+					return inserted->insert(store, insert);
+				else
+					return true;
+			}
+
+			void FutureStacks::set(Nat pos, Array<StackItem *> *v) {
 				if (pos >= count())
 					grow(pos + 1);
 
@@ -164,7 +182,7 @@ namespace storm {
 			void FutureStacks::grow(Nat cap) {
 				cap = max(Nat(32), nextPowerOfTwo(cap));
 
-				GcArray<Set<StackItem *> *> *n = runtime::allocArray<Set<StackItem *> *>(engine(), &pointerArrayType, cap);
+				GcArray<Array<StackItem *> *> *n = runtime::allocArray<Array<StackItem *> *>(engine(), &pointerArrayType, cap);
 				Nat c = count();
 				for (Nat i = 0; i < c; i++) {
 					n->v[i] = data->v[wrap(first + i)];

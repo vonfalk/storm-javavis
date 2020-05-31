@@ -1,7 +1,7 @@
 #pragma once
 #include "Core/Object.h"
 #include "Core/GcArray.h"
-#include "Core/Set.h"
+#include "Core/Array.h"
 #include "Compiler/Thread.h"
 #include "Compiler/Syntax/InfoErrors.h"
 #include "Syntax.h"
@@ -79,21 +79,26 @@ namespace storm {
 				STORM_CTOR FutureStacks();
 
 				// Get the topmost set.
-				MAYBE(Set<StackItem *> *) STORM_FN top();
+				MAYBE(Array<StackItem *> *) STORM_FN top();
 
 				// Pop the topmost set, shifting all other indices one step.
 				void STORM_FN pop();
+
+				// Insert an item at location 'pos', without attempting to merge nodes if the state
+				// is already present. Returns eithere 'item' on success, or the item that is
+				// already present in the set at the indicated position.
+				StackItem *STORM_FN putRaw(Nat pos, StackItem *item);
 
 				// Insert an item at location 'pos'. The top is at location 0. Returns false if
 				// rejected due to a duplicate node.
 				Bool STORM_FN put(Nat pos, TreeStore *store, StackItem *item);
 
 				// Set the top item to some value.
-				void STORM_FN set(Nat pos, Set<StackItem *> *v);
+				void STORM_FN set(Nat pos, Array<StackItem *> *v);
 
 			private:
 				// Storage. Used as a circular queue. Size is always a power of two.
-				GcArray<Set<StackItem *> *> *data;
+				GcArray<Array<StackItem *> *> *data;
 
 				// First element position.
 				Nat first;
