@@ -4,6 +4,10 @@
 #if STORM_GC == STORM_GC_ZERO
 #include "Gc.h"
 
+#ifdef POSIX
+#include <sys/mman.h>
+#endif
+
 namespace storm {
 
 	// Word-align something.

@@ -55,14 +55,14 @@ namespace storm {
 
 			// Get this token as a rule.
 			inline MAYBE(RuleToken *) STORM_FN asRule() {
-				return (this && (type & tRule)) ? reinterpret_cast<RuleToken *>(this) : null;
+				return (type & tRule) ? reinterpret_cast<RuleToken *>(this) : null;
 			}
 			inline MAYBE(DelimToken *) STORM_FN asDelim() {
-				return (this && (type & tDelim) == tDelim) ? reinterpret_cast<DelimToken *>(this) : null;
+				return ((type & tDelim) == tDelim) ? reinterpret_cast<DelimToken *>(this) : null;
 			}
 			// Get this token as a regex.
 			inline MAYBE(RegexToken *) STORM_FN asRegex() {
-				return (this && (type & tRegex)) ? reinterpret_cast<RegexToken *>(this) : null;
+				return (type & tRegex) ? reinterpret_cast<RegexToken *>(this) : null;
 			}
 
 		protected:
