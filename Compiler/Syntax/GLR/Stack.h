@@ -241,6 +241,7 @@ namespace storm {
 
 			private:
 				friend class StackItem;
+				friend class StackStore;
 
 				// Create. Done by StackItem.
 				ItemReq(StackStore *store, Nat ptr) {
@@ -304,6 +305,9 @@ namespace storm {
 				// level (we ignore 'state' there) of more previous items.
 				inline StackItem morePrev() const {
 					return StackItem(store, read(store, ptr + 4));
+				}
+				inline void morePrev(StackItem v) {
+					write(store, ptr + 4, v.id());
 				}
 
 				// Required parent productions for this state.

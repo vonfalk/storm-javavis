@@ -150,7 +150,6 @@ namespace storm {
 				acceptingStack = StackItem();
 				lastSet = null;
 				lastPos = 0;
-				visited = new (this) BoolSet();
 
 				stacks->put(0, treeStore, startState(startPos, root));
 			}
@@ -225,41 +224,61 @@ namespace storm {
 				PVAR(table);
 #endif
 
-				visited = null;
 				stacks = null;
 
 				TODO(L"Fix this!");
 
 				// See which productions are acceptable to us...
-				// Engine &e = engine();
-				// ParentReq ctx;
-				// for (InfoInternal *at = context; at; at = at->parent()) {
-				// 	ctx = ctx.concat(e, syntax->parentId(syntax->lookup(at->production()->rule())));
-				// }
+				StackItem ctxItem = stackStore->createItem();
+				ItemReq ctx = ctxItem.required();
+				for (InfoInternal *at = context; at; at = at->parent()) {
+					ctx.add(syntax->parentId(syntax->lookup(at->production()->rule())));
+				}
+
+				// Copy the accepting stacks to a new StackStore to keep the memory footprint low.
+				StackStore *nStore = new (this) StackStore(syntax->parentCount());
 
 				// If we have multiple accepting stacks, find the ones without requirements and put
 				// them first!
 				// TODO: If no such stack exists, we want to pick the one with the least dependency errors.
 				// This only affects the quality of highlighting in error cases, so it is fairly minor.
-				// StackItemZ **prev = &acceptingStack;
-				// StackItemZ **insert = &acceptingStack;
-				// while (*prev) {
-				// 	if (ctx.any())
-				// 		(*prev)->required = (*prev)->required.remove(e, ctx);
+				StackItem first;
+				StackItem insert;
+				for (StackItem i = acceptingStack; i.any(); i = i.morePrev()) {
+					if (ctx.any())
+						i.required().remove(ctx);
 
-				// 	if ((*prev)->required.empty() && prev != insert) {
-				// 		// Unlink it!
-				// 		StackItemZ *chosen = *prev;
-				// 		*prev = chosen->morePrev;
+					// Keep this first?
+					if (i.required().empty()) {
+						if (insert.any()) {
+							StackItem next = nStore->createItem(i);
+							next.morePrev(StackItem());
+							insert.morePrev(next);
+							insert = next;
+						} else {
+							first = insert = nStore->createItem(i);
+							insert.morePrev(StackItem());
+						}
+					}
+				}
 
-				// 		// Put it back in the beginning.
-				// 		chosen->morePrev = *insert;
-				// 		*insert = chosen;
-				// 		insert = &chosen->morePrev;
-				// 	} else {
-				// 		prev = &(*prev)->morePrev;
-				// 	}
-				// }
+				// Keep all others.
+				for (StackItem i = acceptingStack; i.any(); i = i.morePrev()) {
+					if (i.required().any()) {
+						if (insert.any()) {
+							StackItem next = nStore->createItem(i);
+							next.morePrev(StackItem());
+							insert.morePrev(next);
+							insert = next;
+						} else {
+							first = insert = nStore->createItem(i);
+							insert.morePrev(StackItem());
+						}
+					}
+				}
+
+				stackStore = nStore;
+				acceptingStack = first;
 			}
 
 			void Parser::advanceAll() {
@@ -271,52 +290,39 @@ namespace storm {
 			}
 
 			void Parser::reduceAll() {
-				// NOTE: we need to use 'visited' as that one is also used in 'limitedReduce' for optimizations.
-				visited->clear();
 				Array<Nat> *src = stacks->top();
 
-				bool any;
-				do {
-					any = false;
-					for (Nat i = 0, count = src->count(); i < count; i++) {
-						StackItem now = stackStore->readItem(src->at(i));
-						Nat state = now.state();
-						if (visited->get(state))
-							continue;
-						visited->set(state, true);
-						any = true;
+				for (Nat i = 0; i < src->count(); i++) {
+					StackItem now = stackStore->readItem(src->at(i));
+					Nat state = now.state();
+					topVisiting = i;
 
-						// Shift and reduce this state.
-						ActorEnv env = {
-							table->state(state),
-							now,
-							true,
-						};
-						actorReduceAll(env, StackItem());
-					}
-				} while (any);
+					// Shift and reduce this state.
+					ActorEnv env = {
+						table->state(state),
+						now,
+						true,
+					};
+					actorReduceAll(env, StackItem());
+				}
 			}
 
 			void Parser::shiftAll() {
-				visited->clear();
 				Array<Nat> *src = stacks->top();
 
 				bool match = false;
-				bool any = false;
+				Nat lastEnd = 0;
 				do {
-					any = false;
-					for (Nat i = 0, count = src->count(); i < count; i++) {
+					Nat i = lastEnd;
+					lastEnd = src->count();
+					for (; i < lastEnd; i++) {
 						StackItem now = stackStore->readItem(src->at(i));
-						Nat state = now.state();
-						if (visited->get(state))
-							continue;
-						visited->set(state, true);
-						any = true;
+						topVisiting = i;
 
 						match |= shiftAll(now);
 					}
 					// Stop as soon as we found a regex matching!
-				} while (any && !match);
+				} while (lastEnd < src->count() && !match);
 			}
 
 			bool Parser::shiftAll(const StackItem &now) {
@@ -415,35 +421,28 @@ namespace storm {
 					lastPos = pos;
 				}
 
-				visited->clear();
 				currentPos = pos;
 
-				Bool done;
-				do {
-					done = true;
-					for (Nat i = 0, count = states->count(); i < count; i++) {
-						StackItem now = stackStore->readItem(states->at(i));
-						Nat state = now.state();
-						if (visited->get(state))
-							continue;
-						visited->set(state, true);
-						done = false;
+				// Note: The 'states' array may grow while executing states!
+				for (Nat i = 0; i < states->count(); i++) {
+					StackItem now = stackStore->readItem(states->at(i));
+					Nat state = now.state();
+					topVisiting = i;
 
-						State *s = table->state(state);
+					State *s = table->state(state);
 
-						ActorEnv env = {
-							s,
-							now,
-							false,
-						};
+					ActorEnv env = {
+						s,
+						now,
+						false,
+					};
 
-						actorReduce(env, StackItem());
-						if (actorShift(env)) {
-							// We need to keep this state.
-							now.keepThis();
-						}
+					actorReduce(env, StackItem());
+					if (actorShift(env)) {
+						// We need to keep this state.
+						now.keepThis();
 					}
-				} while (!done);
+				}
 
 				// Free any states we don't need to keep.
 				for (Nat i = 0, count = states->count(); i < count; i++) {
@@ -609,7 +608,6 @@ namespace storm {
 			}
 
 			void Parser::finishReduce(const ReduceEnv &env, const StackItem &stack, const Path *path) {
-				Engine &e = engine();
 				State *state = table->state(stack.state());
 				Map<Nat, Nat>::Iter to = state->rules->find(env.rule);
 
@@ -709,7 +707,7 @@ namespace storm {
 							PLN(L"Inserted into " << old.state() << L"(" << old.id() << L")");
 #endif
 							// Note: 'add' is the actual link.
-							limitedReduce(env, stacks->top(), add);
+							limitedReduce(env, add);
 						}
 					}
 				}
@@ -719,17 +717,15 @@ namespace storm {
 				}
 			}
 
-			void Parser::limitedReduce(const ReduceEnv &env, Array<Nat> *top, const StackItem &through) {
+			void Parser::limitedReduce(const ReduceEnv &env, const StackItem &through) {
 #ifdef GLR_DEBUG
 				PLN(L"--LIMITED--");
 #endif
-				for (Nat i = 0, count = top->count(); i < count; i++) {
+				Array<Nat> *top = stacks->top();
+				// We don't need to consider states after 'topVisiting', since they will be visited
+				// by the actor soon anyway.
+				for (Nat i = 0; i <= topVisiting; i++) {
 					StackItem item = stackStore->readItem(top->at(i));
-
-					// Will this state be visited soon anyway?
-					if (visited->get(item.state()) == false)
-						continue;
-
 					State *state = table->state(item.state());
 
 					ActorEnv aEnv = {
@@ -1254,35 +1250,27 @@ namespace storm {
 				// This is a variant of the 'actor' function above, except that we only attempt to
 				// perform reductions.
 
-				visited->clear();
 				Array<Nat> *top = stacks->top();
 
 #ifdef GLR_DEBUG
 				PLN(L"--- Starting error recovery at " << currentPos << "---");
 #endif
 
-				Bool done;
-				do {
-					done = true;
-					for (Nat i = 0, count = top->count(); i < count; i++) {
-						StackItem now = stackStore->readItem(top->at(i));
-						Nat state = now.state();
-						if (visited->get(state))
-							continue;
-						visited->set(state, true);
-						done = false;
+				for (Nat i = 0; i < top->count(); i++) {
+					StackItem now = stackStore->readItem(top->at(i));
+					Nat state = now.state();
+					topVisiting = i;
 
-						State *s = table->state(state);
+					State *s = table->state(state);
 
-						ActorEnv env = {
-							s,
-							now,
-							true,
-						};
+					ActorEnv env = {
+						s,
+						now,
+						true,
+					};
 
-						actorReduce(env, StackItem());
-					}
-				} while (!done);
+					actorReduce(env, StackItem());
+				}
 			}
 
 			Nat Parser::stateCount() const {

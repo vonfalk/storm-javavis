@@ -202,7 +202,7 @@ namespace storm {
 					}
 				}
 
-				write(last.store, last.ptr + 4, insert.id()); // Set 'morePrev' of 'last'.
+				last.morePrev(insert);
 				usedTree = true;
 				return true;
 			}
@@ -282,7 +282,7 @@ namespace storm {
 
 				// Copy the parent set.
 				for (Nat i = 0; i < reqSize; i++)
-					write(mem + i + 5, read(req.id() + i));
+					write(mem + i + 5, req.store->read(req.id() + i));
 
 				return StackItem(this, mem);
 			}

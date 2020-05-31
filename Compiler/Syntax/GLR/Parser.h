@@ -134,8 +134,8 @@ namespace storm {
 				// Current position in the input.
 				Nat currentPos;
 
-				// All states which have been processed in this position so far.
-				BoolSet *visited;
+				// Current element being processed in the top of the stack sets.
+				Nat topVisiting;
 
 				/**
 				 * Member functions.
@@ -248,7 +248,7 @@ namespace storm {
 				void finishReduce(const ReduceEnv &env, const StackItem &stack, const Path *path);
 
 				// Limited reduction of a rule. Only paths passing through the edge 'link' are considered.
-				void limitedReduce(const ReduceEnv &env, Array<Nat> *top, const StackItem &through);
+				void limitedReduce(const ReduceEnv &env, const StackItem &through);
 
 				// Produce error messages from the state set 'states'.
 				void errorMsg(StrBuf *out, Nat pos, Array<Nat> *states) const;

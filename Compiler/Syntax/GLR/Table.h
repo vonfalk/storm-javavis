@@ -46,7 +46,7 @@ namespace storm {
 				// The goto table. If 'null' it needs to be created. (Note: can not be named goto...)
 				MAYBE(Map<Nat, Nat> *) rules;
 
-				// If we're LR(0), reduce these states. This is required in more powerful formalsism
+				// If we're LR(0), reduce these states. This is required in more powerful formalsisms
 				// as well since we want to be able to reduce the start production even if the
 				// lookahead is wrong.
 				MAYBE(Array<Nat> *) reduce;
