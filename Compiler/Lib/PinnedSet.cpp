@@ -162,7 +162,8 @@ namespace storm {
 		void **begin = data->v;
 		void **end = data->v + data->count;
 
-		size_t size = objSize(query);
+		size_t header = arrayHeader(query);
+		size_t size = objSize(query) + header;
 		Array<Nat> *result = new (this) Array<Nat>();
 
 		// Loop until we're out of range and add all offsets.
@@ -171,7 +172,8 @@ namespace storm {
 			 found++) {
 
 			size_t offset = size_t(*found) - size_t(query);
-			*result << offset;
+			if (offset >= header)
+				*result << (offset - header);
 		}
 
 		return result;
