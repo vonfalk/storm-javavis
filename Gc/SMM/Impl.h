@@ -6,6 +6,7 @@
 #include "Arena.h"
 #include "Allocator.h"
 #include "Gc/License.h"
+#include "Gc/Root.h"
 
 namespace storm {
 

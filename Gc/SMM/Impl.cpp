@@ -241,7 +241,7 @@ namespace storm {
 		// The arena.
 		smm::Arena &arena;
 
-		Root(void **data, size_t count, bool inexact, smm::Arena &arena)
+		SmmRoot(void **data, size_t count, bool inexact, smm::Arena &arena)
 			: root(data, count), inexact(inexact), arena(arena) {}
 	};
 
