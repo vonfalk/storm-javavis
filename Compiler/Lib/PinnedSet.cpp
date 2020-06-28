@@ -61,6 +61,11 @@ namespace storm {
 		if (!ptr)
 			return;
 
+		// Don't allow adding a pointer to the pinned set itself! That would create a cycle that is
+		// never collected.
+		if (size_t(ptr) >= size_t(this) && size_t(ptr) < size_t(this) + sizeof(*this))
+			return;
+
 		if (!data)
 			reserve(16);
 

@@ -441,8 +441,19 @@ private:
 		}
 
 		if (trackers.errors.any) {
+			pauseThreads();
+
 			if (errorNotification)
 				errorNotification.call(trackers.errors);
+		}
+	}
+
+	// Pause all threads due to some error.
+	private void pauseThreads() {
+		for (e in elements) {
+			if (t = e.visual.contained as ThreadData) {
+				t.thread.pause();
+			}
 		}
 	}
 
