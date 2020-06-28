@@ -239,6 +239,10 @@ namespace storm {
 	// enough). TODO: We should optimize them in the future.
 
 	Byte toANSI(Char ch) {
+		// Control characters are the same.
+		if (ch.codepoint() < 0x20)
+			return Byte(ch.codepoint());
+
 		for (Nat i = 0; i < ARRAY_COUNT(ansiTable); i++)
 			if (ansiTable[i].utf == ch.codepoint())
 				return ansiTable[i].ansi;
@@ -246,6 +250,10 @@ namespace storm {
 	}
 
 	Char fromANSI(Byte ch) {
+		// Control characters are the same.
+		if (ch < 0x20)
+			return Char(wchar(ch));
+
 		for (Nat i = 0; i < ARRAY_COUNT(ansiTable); i++)
 			if (ansiTable[i].ansi == ch)
 				return Char(ansiTable[i].utf);

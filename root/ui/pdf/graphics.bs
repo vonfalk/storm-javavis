@@ -138,7 +138,11 @@ class PdfGraphics extends Graphics {
 		output << "Q q\n";
 		put(tfm, "cm\n");
 
-		stack.last.tfm = tfm * stack[stack.count - 2].tfm;
+		// If nothing is saved, use the identity transform.
+		if (stack.count > 1)
+			stack.last.tfm = tfm * stack[stack.count - 2].tfm;
+		else
+			stack.last.tfm = tfm;
 	}
 
 	// Set the line width (in relation to the previous state).
