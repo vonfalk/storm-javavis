@@ -1197,8 +1197,6 @@ namespace storm {
 			void Parser::completePrefix() {
 				// This is a variant of the 'actor' function above, except that we only attempt to
 				// perform reductions.
-				typedef Array<StackItem *>::Iter Iter;
-
 				Array<StackItem *> *top = stacks->top();
 
 #ifdef GLR_DEBUG
