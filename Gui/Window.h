@@ -94,6 +94,12 @@ namespace gui {
 		// Called when a WM_COMMAND has been sent to (by) us. Return 'true' if it is handled. Type
 		// is the notification code specified by the message (eg BN_CLICK).
 		virtual bool onCommand(nat type);
+
+		// Get the current DPI for this window. Only makes sense on Windows.
+		virtual Nat currentDpi();
+
+		// Update this window to new DPI settings (i.e., "currentDpi()" has changed).
+		virtual void updateDpi(Bool move);
 #endif
 #ifdef GUI_GTK
 		// Called when we received an EXPOSE event, but before Gtk+ is informed about the

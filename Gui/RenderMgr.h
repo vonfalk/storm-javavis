@@ -33,7 +33,7 @@ namespace gui {
 		void detach(Painter *painter);
 
 		// Resize the RenderInfo to a new size. 'target' will be re-created.
-		void resize(RenderInfo &info, Size size);
+		void resize(RenderInfo &info, Size size, Float scale);
 
 		// Main thread entry point.
 		void main();

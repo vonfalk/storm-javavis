@@ -1,6 +1,7 @@
 #include "stdafx.h"
 #include "DxDevice.h"
 #include "Exception.h"
+#include "Win32Dpi.h"
 
 #ifdef GUI_WIN32
 namespace gui {
@@ -132,6 +133,7 @@ namespace gui {
 		}
 
 		r.size = Size(Float(desc.BufferDesc.Width), Float(desc.BufferDesc.Height));
+		r.scale = dpiScale(windowDpi(window.hwnd()));
 		return r;
 	}
 

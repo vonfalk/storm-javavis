@@ -42,7 +42,7 @@ namespace gui {
 		}
 	}
 
-	void Painter::resize(Size sz) {
+	void Painter::resize(Size sz, Float scale) {
 		if (target.any()) {
 			// Do not attempt to resize the drawing surface if we're currently drawing to it.
 			Lock::Guard z(lock);
@@ -53,7 +53,7 @@ namespace gui {
 
 			// destroyResources();
 
-			mgr->resize(target, sz);
+			mgr->resize(target, sz, scale);
 			if (graphics)
 				graphics->updateTarget(target);
 		}
@@ -149,8 +149,8 @@ namespace gui {
 		detach();
 	}
 
-	void Painter::uiResize(Size size) {
-		resize(size);
+	void Painter::uiResize(Size size, Float scale) {
+		resize(size, scale);
 	}
 
 	void Painter::uiRepaint(RepaintParams *par) {
@@ -191,10 +191,10 @@ namespace gui {
 		result.result();
 	}
 
-	void Painter::uiResize(Size size) {
+	void Painter::uiResize(Size size, Float scale) {
 		os::Future<void> result;
 		Painter *me = this;
-		os::FnCall<void, 2> params = os::fnCall().add(me).add(size);
+		os::FnCall<void, 3> params = os::fnCall().add(me).add(size).add(scale);
 		os::UThread::spawn(address(&Painter::resize), true, params, result, &thread->thread());
 		result.result();
 	}

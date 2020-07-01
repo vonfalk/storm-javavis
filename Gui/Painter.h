@@ -68,8 +68,9 @@ namespace gui {
 		// Detach from the currently attached window.
 		void uiDetach();
 
-		// Called when the attached window has been resized.
-		void uiResize(Size size);
+		// Called when the attached window has been resized. "scale" is used to scale the initial
+		// layer of the canvas in case we're running in a non-default DPI mode.
+		void uiResize(Size size, Float scale);
 
 		// Called when the attached window wants to be repainted. The parameter passed contains
 		// OS-specific data.
@@ -135,7 +136,7 @@ namespace gui {
 		void CODECALL detach();
 
 		// Called when the attached window has been resized.
-		void CODECALL resize(Size to);
+		void CODECALL resize(Size to, Float scale);
 
 		// Called when the attached window wants to be repainted. The parameter passed is
 		// OS-specific data.

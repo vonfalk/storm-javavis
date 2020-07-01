@@ -1,0 +1,47 @@
+#pragma once
+
+#ifdef GUI_WIN32
+
+namespace gui {
+
+	/**
+	 * Functions for DPI-aware GUI:s.
+	 *
+	 * These are dynamically loaded from user32.dll so that we are somewhat backwards compatible with
+	 * earlier versions of Windows (for example, Windows 7 did not fully support everything here).
+	 *
+	 * We support global DPI awareness on Windows Vista and onwards, and per-monitor DPI awareness
+	 * on Windows 10 (1607) and onwards.
+	 */
+
+#ifndef WM_DPICHANGED
+#define WM_DPICHANGED 0x02E0
+#endif
+
+	extern const Nat defaultDpi;
+
+	// Initialize DPI awareness. Other functions here might not work unless this is called first.
+	void setDpiAware();
+
+	// Call to enable non-client scaling for a newly created window.
+	void enableNcScaling(HWND hWnd);
+
+	// Get the current DPI for a window.
+	Nat windowDpi(HWND hWnd);
+
+	// Compute a scaling factor for the DPI.
+	Float dpiScale(Nat dpi);
+	Float dpiScaleInv(Nat dpi);
+
+	// Scale various types according to DPI.
+	Point dpiToPx(Nat dpi, Point pt);
+	Size dpiToPx(Nat dpi, Size size);
+	Rect dpiToPx(Nat dpi, Rect rect);
+
+	Point dpiFromPx(Nat dpi, Point pt);
+	Size dpiFromPx(Nat dpi, Size size);
+	Rect dpiFromPx(Nat dpi, Rect rect);
+
+}
+
+#endif

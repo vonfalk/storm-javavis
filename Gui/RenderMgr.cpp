@@ -35,9 +35,10 @@ namespace gui {
 		return r;
 	}
 
-	void RenderMgr::resize(RenderInfo &info, Size size) {
+	void RenderMgr::resize(RenderInfo &info, Size size, Float scale) {
 		if (size != info.size)
 			device->resize(info, size);
+		info.scale = scale;
 	}
 
 	void RenderMgr::detach(Painter *painter) {

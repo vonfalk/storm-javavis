@@ -1,7 +1,6 @@
 #pragma once
 #include "Core/TObject.h"
 #include "Core/Array.h"
-#include "RenderInfo.h"
 #include "Font.h"
 
 namespace gui {

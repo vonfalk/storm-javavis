@@ -61,6 +61,9 @@ namespace gui {
 
 		// Forward WM_COMMAND messages to the right window.
 		bool onCommand(const Message &msg);
+
+		// Update DPI.
+		virtual void updateDpi(Bool move);
 #endif
 #ifdef GUI_GTK
 		// Add a child widget to the layout here.

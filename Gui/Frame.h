@@ -31,6 +31,9 @@ namespace gui {
 #ifdef GUI_WIN32
 		// Message!
 		virtual MsgResult onMessage(const Message &msg);
+
+		// Current DPI.
+		virtual Nat currentDpi();
 #endif
 
 #ifdef GUI_GTK
@@ -100,11 +103,11 @@ namespace gui {
 		// Popup menu we're tracking.
 		MAYBE(PopupMenu *) myPopup;
 
-		// Needed for alignment at the moment.
-		void *dummy;
-
 		// Cached minimum size. Updated whenever the window is resized.
 		Size lastMinSize;
+
+		// Current DPI for this window. Only used on Win32 at the moment (GTK+ seems to do this internally).
+		Nat dpi;
 
 		// Info. Not valid if we're not in fullscreen mode.
 		Nat windowedStyle;

@@ -35,7 +35,7 @@ namespace gui {
 	}
 
 	Size WindowGraphics::size() {
-		return info.size;
+		return info.size / info.scale;
 	}
 
 	void WindowGraphics::destroyed() {
@@ -56,9 +56,11 @@ namespace gui {
 		// Keep track of free layers so we can remove them if we have too many.
 		minFreeLayers = layers->count();
 
-		// Update the clip region of the root state.
+		// Update the clip region and scale of the root state.
+		state = State();
+		state.scale(info.scale);
 		state.clip = Rect(Point(), info.size);
-		oldStates->last().clip = state.clip;
+		oldStates->last() = state;
 
 		// Set up the backend.
 		prepare();

@@ -1,5 +1,6 @@
 #pragma once
 #include "Graphics.h"
+#include "RenderInfo.h"
 
 namespace gui {
 
@@ -205,8 +206,17 @@ namespace gui {
 				};
 				return r;
 			}
-
 #endif
+
+			// Scale the transform.
+			void scale(Float v) {
+				tfm0 *= v;
+				tfm1 *= v;
+				tfm2 *= v;
+				tfm3 *= v;
+				tfm4 *= v;
+				tfm5 *= v;
+			}
 
 			// Transform storage. Do not touch!
 			Float tfm0;

@@ -13,8 +13,11 @@ namespace gui {
 		STORM_VALUE;
 	public:
 		// Size of the surface we're rendering to.
-		// TODO: Remove?
 		Size size;
+
+		// Scale of the surface (e.g. if we want to emulate a lower resolution when dealing with
+		// nonstandard DPI settings).
+		Float scale;
 
 #ifdef GUI_WIN32
 		inline ID2D1RenderTarget *target() const {
@@ -63,6 +66,7 @@ namespace gui {
 		inline RenderInfo() {
 			first = null;
 			second = null;
+			scale = 1;
 		}
 
 	private:

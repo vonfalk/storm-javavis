@@ -5,6 +5,7 @@
 #include "Frame.h"
 #include "Defaults.h"
 #include "Core/Exception.h"
+#include "Win32Dpi.h"
 
 #ifdef POSIX
 // NOTE: This does not exist on all POSIX systems (eg. MacOS)
@@ -177,6 +178,7 @@ namespace gui {
 
 	void App::init() {
 		hInstance = GetModuleHandle(NULL);
+		setDpiAware();
 		initCommonControls();
 		hWindowClass = registerWindowClass();
 	}
@@ -244,6 +246,14 @@ namespace gui {
 	MsgResult App::handleMessage(HWND hwnd, const Message &msg) {
 		if (!currentEngine) {
 			WARNING(L"No current engine. Ignoring " << msg << L".");
+			return noResult();
+		}
+
+		if (msg.msg == WM_NCCREATE) {
+			// To properly scale menu bars etc. on systems that support it (not needed on later
+			// versions of Windows 10, but earlier ones). We can't do this in the Frame itself
+			// since it does not yet know the hwnd it has been assigned.
+			enableNcScaling(hwnd);
 			return noResult();
 		}
 

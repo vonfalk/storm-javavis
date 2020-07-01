@@ -4,6 +4,7 @@
 #include "Frame.h"
 #include "App.h"
 #include "Painter.h"
+#include "Win32Dpi.h"
 #include "GtkSignal.h"
 #include "GtkEmpty.h"
 
@@ -188,8 +189,11 @@ namespace gui {
 		switch (msg.msg) {
 		case WM_SIZE: {
 			Size s = pos().size();
-			if (myPainter)
-				myPainter->uiResize(s);
+			if (myPainter) {
+				RECT r;
+				GetClientRect(handle().hwnd(), &r);
+				myPainter->uiResize(Size(Float(r.right), Float(r.bottom)), dpiScale(currentDpi()));
+			}
 			onResize(s);
 			return msgResult(0);
 		}
@@ -203,39 +207,39 @@ namespace gui {
 		}
 			// TODO: Propagate mouse messages to parent windows?
 		case WM_LBUTTONDOWN:
-			if (onClick(true, mousePos(msg), mouse::left))
+			if (onClick(true, dpiFromPx(currentDpi(), mousePos(msg)), mouse::left))
 				return msgResult(0);
 			break;
 		case WM_LBUTTONUP:
-			if (onClick(false, mousePos(msg), mouse::left))
+			if (onClick(false, dpiFromPx(currentDpi(), mousePos(msg)), mouse::left))
 				return msgResult(0);
 			break;
 		case WM_LBUTTONDBLCLK:
-			if (onDblClick(mousePos(msg), mouse::left))
+			if (onDblClick(dpiFromPx(currentDpi(), mousePos(msg)), mouse::left))
 				return msgResult(0);
 			break;
 		case WM_MBUTTONDOWN:
-			if (onClick(true, mousePos(msg), mouse::middle))
+			if (onClick(true, dpiFromPx(currentDpi(), mousePos(msg)), mouse::middle))
 				return msgResult(0);
 			break;
 		case WM_MBUTTONUP:
-			if (onClick(false, mousePos(msg), mouse::middle))
+			if (onClick(false, dpiFromPx(currentDpi(), mousePos(msg)), mouse::middle))
 				return msgResult(0);
 			break;
 		case WM_MBUTTONDBLCLK:
-			if (onDblClick(mousePos(msg), mouse::middle))
+			if (onDblClick(dpiFromPx(currentDpi(), mousePos(msg)), mouse::middle))
 				return msgResult(0);
 			break;
 		case WM_RBUTTONDOWN:
-			if (onClick(true, mousePos(msg), mouse::right))
+			if (onClick(true, dpiFromPx(currentDpi(), mousePos(msg)), mouse::right))
 				return msgResult(0);
 			break;
 		case WM_RBUTTONUP:
-			if (onClick(false, mousePos(msg), mouse::right))
+			if (onClick(false, dpiFromPx(currentDpi(), mousePos(msg)), mouse::right))
 				return msgResult(0);
 			break;
 		case WM_RBUTTONDBLCLK:
-			if (onDblClick(mousePos(msg), mouse::right))
+			if (onDblClick(dpiFromPx(currentDpi(), mousePos(msg)), mouse::right))
 				return msgResult(0);
 			break;
 		case WM_MOUSEMOVE:
@@ -251,15 +255,15 @@ namespace gui {
 				onMouseEnter();
 			}
 
-			if (onMouseMove(mousePos(msg)))
+			if (onMouseMove(dpiFromPx(currentDpi(), mousePos(msg))))
 				return msgResult(0);
 			break;
 		case WM_MOUSEWHEEL:
-			if (onMouseVScroll(mouseAbsPos(handle(), msg), GET_WHEEL_DELTA_WPARAM(msg.wParam)))
+			if (onMouseVScroll(dpiFromPx(currentDpi(), mouseAbsPos(handle(), msg)), GET_WHEEL_DELTA_WPARAM(msg.wParam)))
 				return msgResult(0);
 			break;
 		case WM_MOUSEHWHEEL:
-			if (onMouseHScroll(mouseAbsPos(handle(), msg), GET_WHEEL_DELTA_WPARAM(msg.wParam)))
+			if (onMouseHScroll(dpiFromPx(currentDpi(), mouseAbsPos(handle(), msg)), GET_WHEEL_DELTA_WPARAM(msg.wParam)))
 				return msgResult(0);
 			break;
 		case WM_MOUSELEAVE:
@@ -327,7 +331,7 @@ namespace gui {
 				ScreenToClient(myParent->handle().hwnd(), &b);
 			}
 
-			myPos = convert(a, b);
+			myPos = dpiFromPx(currentDpi(), convert(a, b));
 		}
 		return myPos;
 	}
@@ -335,7 +339,7 @@ namespace gui {
 	void Window::pos(Rect r) {
 		myPos = r;
 		if (created()) {
-			RECT z = convert(r);
+			RECT z = convert(dpiToPx(currentDpi(), r));
 			HWND h = handle().hwnd();
 			DWORD style = GetWindowLong(h, GWL_STYLE);
 			DWORD exStyle = GetWindowLong(h, GWL_EXSTYLE);
@@ -385,6 +389,19 @@ namespace gui {
 		return false;
 	}
 
+	Nat Window::currentDpi() {
+		if (myRoot)
+			return myRoot->currentDpi();
+		else
+			return defaultDpi;
+	}
+
+	void Window::updateDpi(Bool move) {
+		// Update our position.
+		if (move)
+			pos(myPos);
+	}
+
 	bool Window::create(ContainerBase *parent, nat id) {
 		return createEx(NULL, childFlags, 0, parent->handle().hwnd(), id);
 	}
@@ -422,6 +439,10 @@ namespace gui {
 			Rect c = convert(r);
 			p = c.p0;
 			s = c.size();
+		} else if (parent) {
+			Nat dpi = windowDpi(parent);
+			p = p * dpiScale(dpi);
+			s = s * dpiScale(dpi);
 		}
 
 		// Put everything in ints now, so that we can properly set CW_USEDEFAULT without potential
@@ -466,14 +487,23 @@ namespace gui {
 		if (z == NULL) {
 			app->createAborted(this);
 			return false;
-		} else {
-			handle(z);
-			if (timerInterval != Duration()) {
-				setTimer(timerInterval);
-			}
-			SendMessage(handle().hwnd(), WM_SETFONT, (WPARAM)myFont->handle(), TRUE);
-			return true;
 		}
+
+		if (WS_CHILD & ~style) {
+			// Take DPI into account.
+			Nat dpi = windowDpi(z);
+			if (dpi != defaultDpi) {
+				s = s * dpiScale(dpi);
+				SetWindowPos(z, NULL, 0, 0, int(s.w), int(s.h), SWP_NOMOVE | SWP_NOZORDER | SWP_NOACTIVATE);
+			}
+		}
+
+		handle(z);
+		if (timerInterval != Duration()) {
+			setTimer(timerInterval);
+		}
+		SendMessage(handle().hwnd(), WM_SETFONT, (WPARAM)myFont->handle(), TRUE);
+		return true;
 	}
 
 	MsgResult Window::onPaint() {
@@ -735,7 +765,7 @@ namespace gui {
 		myPos.size(s);
 
 		if (myPainter)
-			myPainter->uiResize(s);
+			myPainter->uiResize(s, 1);
 		onResize(s);
 	}
 

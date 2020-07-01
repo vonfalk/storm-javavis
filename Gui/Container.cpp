@@ -142,6 +142,15 @@ namespace gui {
 		return i.v()->onCommand(type);
 	}
 
+	void Container::updateDpi(Bool move) {
+		Window::updateDpi(move);
+
+		for (IdMap::Iter i = ids->begin(), end = ids->end(); i != end; ++i) {
+			Window *w = i.v();
+			w->updateDpi(true);
+		}
+	}
+
 #endif
 #ifdef GUI_GTK
 

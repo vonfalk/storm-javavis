@@ -1,5 +1,6 @@
 #include "stdafx.h"
 #include "MsgName.h"
+#include "Win32Dpi.h"
 
 #ifdef GUI_WIN32
 
@@ -289,6 +290,7 @@ namespace gui {
 			// ENTRY(WM_CTLINIT);
 			// ENTRY(WM_PENEVENT);
 			ENTRY(WM_PENWINLAST);
+			ENTRY(WM_DPICHANGED);
 
 			// Our messages.
 			ENTRY(WM_THREAD_SIGNAL);

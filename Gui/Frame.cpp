@@ -1,6 +1,7 @@
 #include "stdafx.h"
 #include "Frame.h"
 #include "App.h"
+#include "Win32Dpi.h"
 #include "GtkSignal.h"
 #include "Exception.h"
 
@@ -219,7 +220,9 @@ namespace gui {
 		if (!createEx(NULL, styles, exStyles, hParent, 0, cFlags))
 			return false;
 
-		// Create child windows (little of a hack, sorry!)
+		dpi = windowDpi(handle().hwnd());
+
+		// Create child windows (a bit of a hack, sorry!)
 		parentCreated(0);
 
 
@@ -254,6 +257,17 @@ namespace gui {
 		case WM_CLOSE:
 			close();
 			return msgResult(0);
+		case WM_DPICHANGED: {
+			dpi = HIWORD(msg.wParam);
+			// Don't move us automatically, we want to respect the rectangle Windows suggest.
+			updateDpi(false);
+			RECT *newPos = (RECT *)msg.lParam;
+			SetWindowPos(handle().hwnd(), NULL,
+						newPos->left, newPos->top,
+						newPos->right - newPos->left, newPos->bottom - newPos->top,
+						SWP_NOACTIVATE | SWP_NOZORDER);
+			return msgResult(0);
+		}
 		case WM_SETCURSOR:
 			if (LOWORD(msg.lParam) == HTCLIENT && !showCursor) {
 				SetCursor(NULL);
@@ -269,6 +283,10 @@ namespace gui {
 		}
 
 		return Container::onMessage(msg);
+	}
+
+	Nat Frame::currentDpi() {
+		return dpi;
 	}
 
 	void Frame::cursorVisible(Bool v) {
