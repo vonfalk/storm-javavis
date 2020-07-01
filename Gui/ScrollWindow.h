@@ -52,6 +52,9 @@ namespace gui {
 #ifdef GUI_WIN32
 		// Handle messages.
 		virtual MsgResult onMessage(const Message &msg);
+
+		// Update DPI.
+		virtual void updateDpi(Bool move);
 #endif
 	protected:
 		// Create.

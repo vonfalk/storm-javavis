@@ -73,13 +73,16 @@ namespace gui {
 
 #ifdef GUI_WIN32
 		// Get a Win32 handle. Will be alive at least as long as this object.
-		HFONT handle();
+		HFONT handle(Nat dpi);
 
 		// Get TextFormat for D2D. This class retains ownership over the returned object.
 		IDWriteTextFormat *textFormat();
 
 		// Get the size of a string in a given font as reported by GDI.
 		Size stringSize(const Str *str);
+
+		// Get the size of a string at a given DPI.
+		Size stringSize(const Str *str, Nat dpi);
 #endif
 #ifdef GUI_GTK
 		// Get a Pango font description.

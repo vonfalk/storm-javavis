@@ -12,6 +12,7 @@ namespace gui {
 
 
 	Frame::Frame(Str *title) : myMenu(null), full(false), showCursor(true) {
+		dpi = defaultDpi;
 		onClose = new (this) Event();
 		attachParent(this);
 		text(title);
@@ -20,6 +21,7 @@ namespace gui {
 	}
 
 	Frame::Frame(Str *title, Size size) : myMenu(null), full(false), showCursor(true) {
+		dpi = defaultDpi;
 		onClose = new (this) Event();
 		attachParent(this);
 		text(title);
@@ -275,7 +277,7 @@ namespace gui {
 			}
 			break;
 		case WM_GETMINMAXINFO:
-			fill((MINMAXINFO *)msg.lParam, handle().hwnd(), lastMinSize, myMenu != null);
+			fill((MINMAXINFO *)msg.lParam, handle().hwnd(), dpiToPx(currentDpi(), lastMinSize), myMenu != null);
 			return msgResult(0);
 		case WM_MENUCOMMAND:
 			menuClicked((HMENU)msg.lParam, (Nat)msg.wParam);

@@ -355,9 +355,10 @@ namespace gui {
 	}
 
 	void Window::font(Font *font) {
-		myFont = new (this) Font(*font);
+		if (font != myFont)
+			myFont = new (this) Font(*font);
 		if (created())
-			SendMessage(handle().hwnd(), WM_SETFONT, (WPARAM)font->handle(), TRUE);
+			SendMessage(handle().hwnd(), WM_SETFONT, (WPARAM)font->handle(currentDpi()), TRUE);
 	}
 
 	void Window::update() {
@@ -400,6 +401,10 @@ namespace gui {
 		// Update our position.
 		if (move)
 			pos(myPos);
+
+		// Update the font.
+		if (myFont)
+			font(myFont);
 	}
 
 	bool Window::create(ContainerBase *parent, nat id) {
@@ -502,7 +507,7 @@ namespace gui {
 		if (timerInterval != Duration()) {
 			setTimer(timerInterval);
 		}
-		SendMessage(handle().hwnd(), WM_SETFONT, (WPARAM)myFont->handle(), TRUE);
+		SendMessage(handle().hwnd(), WM_SETFONT, (WPARAM)myFont->handle(currentDpi()), TRUE);
 		return true;
 	}
 

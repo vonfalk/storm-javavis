@@ -2,6 +2,7 @@
 #include "Font.h"
 #include "RenderMgr.h"
 #include "Core/Convert.h"
+#include "Win32Dpi.h"
 
 #ifndef FW_NORMAL
 // Same as in the Win32 API.
@@ -69,22 +70,22 @@ namespace gui {
 		}
 
 #ifdef GUI_WIN32
-		// WIN32 font.
-		HFONT hFont;
+		// WIN32 fonts. DPI->font.
+		typedef std::map<Nat, HFONT> FontMap;
+		FontMap hFonts;
 
 		// TextFormat.
 		IDWriteTextFormat *textFmt;
 
 		void init() {
-			hFont = (HFONT)INVALID_HANDLE_VALUE;
 			textFmt = null;
 		}
 
 		// Clear data. _not_ thread safe, only to be used inside 'invalidate'.
 		void clear() {
-			if (hFont != INVALID_HANDLE_VALUE)
-				DeleteObject(hFont);
-			hFont = (HFONT)INVALID_HANDLE_VALUE;
+			for (FontMap::iterator i = hFonts.begin(), end = hFonts.end(); i != end; ++i)
+				DeleteObject(i->second);
+			hFonts.clear();
 			::release(textFmt);
 		}
 #endif
@@ -209,12 +210,13 @@ namespace gui {
 		shared = new FontData();
 	}
 
-	HFONT Font::handle() {
+	HFONT Font::handle(Nat dpi) {
 		os::Lock::L z(shared->lock);
-		if (shared->hFont == INVALID_HANDLE_VALUE) {
+		FontData::FontMap::iterator found = shared->hFonts.find(dpi);
+		if (found == shared->hFonts.end()) {
 			LOGFONT lf;
 			zeroMem(lf);
-			lf.lfHeight = (LONG)-fHeight;
+			lf.lfHeight = LONG(-fHeight * Float(dpi) / Float(defaultDpi));
 			lf.lfWidth = 0;
 			lf.lfEscapement = 0;
 			lf.lfOrientation = 0;
@@ -228,9 +230,12 @@ namespace gui {
 			lf.lfQuality = DEFAULT_QUALITY;
 			lf.lfPitchAndFamily = DEFAULT_PITCH | FF_DONTCARE;
 			memcpy(lf.lfFaceName, fName->c_str(), max(sizeof(lf.lfFaceName), wcslen(fName->c_str()) * sizeof(wchar)));
-			shared->hFont = CreateFontIndirect(&lf);
+			HFONT hFont = CreateFontIndirect(&lf);
+			shared->hFonts.insert(std::make_pair(dpi, hFont));
+			return hFont;
+		} else {
+			return found->second;
 		}
-		return shared->hFont;
 	}
 
 	IDWriteTextFormat *Font::textFormat() {
@@ -270,7 +275,11 @@ namespace gui {
 	}
 
 	Size Font::stringSize(const Str *str) {
-		HFONT font = handle();
+		return stringSize(str, defaultDpi);
+	}
+
+	Size Font::stringSize(const Str *str, Nat dpi) {
+		HFONT font = handle(dpi);
 
 		HDC dc = GetDC(NULL);
 		HGDIOBJ oldFont = SelectObject(dc, font);

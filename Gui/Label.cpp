@@ -1,6 +1,7 @@
 #include "stdafx.h"
 #include "Label.h"
 #include "Container.h"
+#include "Win32Dpi.h"
 
 namespace gui {
 
@@ -15,7 +16,23 @@ namespace gui {
 	}
 
 	Size Label::minSize() {
-		return font()->stringSize(text());
+		Str *s = text();
+		Bool hasNewline = false;
+		for (Str::Iter i = s->begin(), e = s->end(); i != e; ++i) {
+			if (i.v() == Char('\n')) {
+				hasNewline = true;
+				break;
+			}
+		}
+
+		if (hasNewline) {
+			Nat dpi = currentDpi();
+			// Text layout does not always scale linearly.
+			return dpiFromPx(dpi, font()->stringSize(text(), dpi));
+		} else {
+			// If no newlines, the difference is small enough to ignore. It causes issues in the layout.
+			return font()->stringSize(text());
+		}
 	}
 
 #endif

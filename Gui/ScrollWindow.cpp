@@ -2,6 +2,7 @@
 #include "ScrollWindow.h"
 #include "Container.h"
 #include "Exception.h"
+#include "Win32Dpi.h"
 
 namespace gui {
 
@@ -38,6 +39,12 @@ namespace gui {
 		resized(Size());
 	}
 
+	void ScrollWindow::updateDpi(Bool move) {
+		Window::updateDpi(move);
+		if (child)
+			child->updateDpi(true);
+	}
+
 	void ScrollWindow::minSize(Size sz) {
 		minSz = sz;
 	}
@@ -47,9 +54,9 @@ namespace gui {
 
 		// Compensate for the size of the actual scrollbars.
 		if (hScroll)
-			ch.h += GetSystemMetrics(SM_CYHSCROLL);
+			ch.h += dpiSystemMetrics(SM_CYHSCROLL, defaultDpi);
 		if (vScroll)
-			ch.w += GetSystemMetrics(SM_CXVSCROLL);
+			ch.w += dpiSystemMetrics(SM_CXVSCROLL, defaultDpi);
 
 		if (hScroll) {
 			ch.w = min(ch.w, minSz.w);
@@ -67,12 +74,13 @@ namespace gui {
 	}
 
 	void ScrollWindow::resized(Size size) {
-		// Windows don't count the scrollbars as a part of the client area.
+		// Windows does not count the scrollbars as a part of the client area.
 		if (created()) {
 			RECT rect;
 			GetWindowRect(handle().hwnd(), &rect);
-			size.w = Float(rect.right - rect.left);
-			size.h = Float(rect.bottom - rect.top);
+			Float scale = dpiScaleInv(currentDpi());
+			size.w = Float(rect.right - rect.left) * scale;
+			size.h = Float(rect.bottom - rect.top) * scale;
 		}
 
 		Window::resized(size);
@@ -136,7 +144,9 @@ namespace gui {
 		info.fMask = SIF_PAGE | SIF_POS | SIF_TRACKPOS | SIF_RANGE;
 		GetScrollInfo(handle().hwnd(), which, &info);
 
-		const int lineSize = int(font()->pxHeight());
+		Float scale = dpiScale(currentDpi());
+
+		const int lineSize = int(font()->pxHeight() * scale);
 
 		switch (LOWORD(param)) {
 		case SB_TOP:
@@ -230,13 +240,16 @@ namespace gui {
 
 		info.fMask = SIF_DISABLENOSCROLL | SIF_PAGE | SIF_POS | SIF_RANGE;
 		info.nMin = 0;
-		info.nMax = int(childSz) - 1;
+		info.nMax = int(childSz);
 		info.nPage = int(ourSz);
 		info.nPos = min(info.nPos, info.nMax - int(info.nPage));
 		SetScrollInfo(handle().hwnd(), which, &info, TRUE);
 	}
 
 	void ScrollWindow::updateBars(Size sz) {
+		Nat dpi = currentDpi();
+		sz = dpiToPx(dpi, sz);
+
 		RECT ourSize;
 		GetClientRect(handle().hwnd(), &ourSize);
 
@@ -257,10 +270,12 @@ namespace gui {
 	}
 
 	void ScrollWindow::setChildSize(Size sz) {
+		Nat dpi = currentDpi();
+		sz = dpiToPx(dpi, sz);
 		if (hScroll)
-			sz.h -= GetSystemMetrics(SM_CYHSCROLL);
+			sz.h -= dpiSystemMetrics(SM_CYHSCROLL, dpi);
 		if (vScroll)
-			sz.w -= GetSystemMetrics(SM_CXVSCROLL);
+			sz.w -= dpiSystemMetrics(SM_CXVSCROLL, dpi);
 
 		if (child->created()) {
 			SetWindowPos(child->handle().hwnd(), NULL, 0, 0, (int)sz.w, (int)sz.h, SWP_NOACTIVATE | SWP_NOMOVE | SWP_NOZORDER);

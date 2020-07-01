@@ -18,8 +18,6 @@ namespace gui {
 #define WM_DPICHANGED 0x02E0
 #endif
 
-	extern const Nat defaultDpi;
-
 	// Initialize DPI awareness. Other functions here might not work unless this is called first.
 	void setDpiAware();
 
@@ -28,6 +26,9 @@ namespace gui {
 
 	// Get the current DPI for a window.
 	Nat windowDpi(HWND hWnd);
+
+	// Get system metrics for DPI.
+	int dpiSystemMetrics(int index, Nat dpi);
 
 	// Compute a scaling factor for the DPI.
 	Float dpiScale(Nat dpi);
@@ -45,3 +46,7 @@ namespace gui {
 }
 
 #endif
+
+namespace gui {
+	extern const Nat defaultDpi;
+}

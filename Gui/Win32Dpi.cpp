@@ -1,6 +1,11 @@
 #include "stdafx.h"
 #include "Win32Dpi.h"
 
+namespace gui {
+	// Default DPI (i.e. 100%, no scaling).
+	const Nat defaultDpi = 96;
+}
+
 #ifdef GUI_WIN32
 
 namespace gui {
@@ -36,9 +41,6 @@ namespace gui {
 	// Do we want to call "EnableNonClientScaling" (using the non-v2 mode of per monitor in Windows 8.1)?
 	static bool callNonClientScaling;
 
-	// Default DPI (i.e. 100%, no scaling).
-	const Nat defaultDpi = 96;
-
 	// Misc. Win32 functions we load. These might be null.
 	typedef BOOL (WINAPI *EnableNonClientDpiScaling)(HWND);
 	EnableNonClientDpiScaling enableNonClientDpiScaling;
@@ -46,6 +48,8 @@ namespace gui {
 	GetDpiForSystem getDpiForSystem;
 	typedef UINT (WINAPI *GetDpiForWindow)(HWND);
 	GetDpiForWindow getDpiForWindow;
+	typedef int (WINAPI *GetSystemMetricsForDpi)(int, UINT);
+	GetSystemMetricsForDpi getSystemMetricsForDpi;
 
 	void setDpiAware() {
 		HMODULE user32 = GetModuleHandle(L"user32.dll");
@@ -55,6 +59,7 @@ namespace gui {
 		enableNonClientDpiScaling = (EnableNonClientDpiScaling)GetProcAddress(user32, "EnableNonClientDpiScaling");
 		getDpiForSystem = (GetDpiForSystem)GetProcAddress(user32, "GetDpiForSystem");
 		getDpiForWindow = (GetDpiForWindow)GetProcAddress(user32, "GetDpiForWindow");
+		getSystemMetricsForDpi = (GetSystemMetricsForDpi)GetProcAddress(user32, "GetSystemMetricsForDpi");
 
 		// Windows 10 and onwards (per monitor v2)
 		typedef BOOL (WINAPI *SetDpiContext)(DWORD);
@@ -107,6 +112,13 @@ namespace gui {
 		} else {
 			return defaultDpi;
 		}
+	}
+
+	int dpiSystemMetrics(int index, Nat dpi) {
+		if (getSystemMetricsForDpi)
+			return getSystemMetricsForDpi(index, dpi);
+		else
+			return GetSystemMetrics(index);
 	}
 
 	Float dpiScale(Nat dpi) {
