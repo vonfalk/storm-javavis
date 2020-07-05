@@ -40,9 +40,9 @@ namespace gui {
 	}
 
 	void ScrollWindow::updateDpi(Bool move) {
-		Window::updateDpi(move);
 		if (child)
 			child->updateDpi(true);
+		Window::updateDpi(move);
 	}
 
 	void ScrollWindow::minSize(Size sz) {
@@ -50,7 +50,7 @@ namespace gui {
 	}
 
 	Size ScrollWindow::minSize() {
-		Size ch = child->minSize();
+		Size ch = child->minSize() + Size(0.5); // Round up for a bit of extra margins when dealing with text.
 
 		// Compensate for the size of the actual scrollbars.
 		if (hScroll)
@@ -145,8 +145,7 @@ namespace gui {
 		GetScrollInfo(handle().hwnd(), which, &info);
 
 		Float scale = dpiScale(currentDpi());
-
-		const int lineSize = int(font()->pxHeight() * scale);
+		const int lineSize = int(font()->pxHeight());
 
 		switch (LOWORD(param)) {
 		case SB_TOP:
@@ -191,6 +190,9 @@ namespace gui {
 			GetScrollInfo(handle().hwnd(), SB_HORZ, &info);
 			x = info.nPos;
 		}
+
+		x = int(x * scale);
+		y = int(y * scale);
 		SetWindowPos(child->handle().hwnd(), NULL, -x, -y, 0, 0, SWP_NOACTIVATE | SWP_NOZORDER | SWP_NOSIZE);
 
 		return 0;
@@ -202,7 +204,7 @@ namespace gui {
 		info.fMask = SIF_PAGE | SIF_POS | SIF_TRACKPOS | SIF_RANGE;
 		GetScrollInfo(handle().hwnd(), which, &info);
 
-		const int lineSize = int(font()->pxHeight());
+		Float scale = dpiScale(currentDpi());
 
 		info.nPos = info.nPos - delta / 2;
 		if (info.nPos < info.nMin)
@@ -227,6 +229,9 @@ namespace gui {
 			GetScrollInfo(handle().hwnd(), SB_HORZ, &info);
 			x = info.nPos;
 		}
+
+		x = int(x * scale);
+		y = int(y * scale);
 		SetWindowPos(child->handle().hwnd(), NULL, -x, -y, 0, 0, SWP_NOACTIVATE | SWP_NOZORDER | SWP_NOSIZE);
 
 		return 0;
@@ -248,24 +253,24 @@ namespace gui {
 
 	void ScrollWindow::updateBars(Size sz) {
 		Nat dpi = currentDpi();
-		sz = dpiToPx(dpi, sz);
+		Float scale = dpiScale(dpi);
 
 		RECT ourSize;
 		GetClientRect(handle().hwnd(), &ourSize);
 
 		if (hScroll)
-			setScrollInfo(SB_HORZ, sz.w, Float(ourSize.right));
+			setScrollInfo(SB_HORZ, sz.w, Float(ourSize.right) / scale);
 		if (vScroll)
-			setScrollInfo(SB_VERT, sz.h, Float(ourSize.bottom));
+			setScrollInfo(SB_VERT, sz.h, Float(ourSize.bottom) / scale);
 
 		// Update the position of the child, since we might need less scrolling.
 		SCROLLINFO info;
 		info.cbSize = sizeof(info);
 		info.fMask = SIF_POS;
 		GetScrollInfo(handle().hwnd(), SB_VERT, &info);
-		int y = info.nPos;
+		int y = int(info.nPos * scale);
 		GetScrollInfo(handle().hwnd(), SB_HORZ, &info);
-		int x = info.nPos;
+		int x = int(info.nPos * scale);
 		SetWindowPos(child->handle().hwnd(), NULL, -x, -y, 0, 0, SWP_NOACTIVATE | SWP_NOZORDER | SWP_NOSIZE);
 	}
 

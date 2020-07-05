@@ -5,6 +5,8 @@
 #include "GtkSignal.h"
 #include "Exception.h"
 
+#define WIN32_TESTDPI
+
 namespace gui {
 
 	static void goFull(Handle wnd, Nat &oldStyle, Rect &oldPos);
@@ -259,7 +261,9 @@ namespace gui {
 		case WM_CLOSE:
 			close();
 			return msgResult(0);
+#ifdef WIN32_TESTDPI
 		case WM_LBUTTONDBLCLK: {
+			// FOR TESTING:
 			RECT rect;
 			GetClientRect(handle().hwnd(), &rect);
 			PVAR(rect.right); PVAR(rect.bottom);
@@ -282,6 +286,7 @@ namespace gui {
 			SetWindowPos(handle().hwnd(), NULL, 0, 0, rect.right, rect.bottom, SWP_NOACTIVATE | SWP_NOZORDER | SWP_NOMOVE);
 			break;
 		}
+#endif
 		case WM_DPICHANGED: {
 			dpi = HIWORD(msg.wParam);
 			// Don't move us automatically, we want to respect the rectangle Windows suggest.
