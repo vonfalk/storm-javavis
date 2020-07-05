@@ -12,7 +12,25 @@ so that the user can move and close the window easier.
 Repaints are handled by a different thread, named `Render`. This thread is in charge of re-painting
 all windows when they need to. Repaints are done either when the operating system requests a
 repaint, when you call `Window.repaint()`, or if you want your window to be redrawn at each frame
-rendered to the display.
+rendered to the display. Actual drawing is handled by a `Painter` class, which is attached to a
+window using `painter = MyPainter`. The `draw` member of the painter class will then be called
+whenever the window needs to be redrawn.
+
+DPI awareness (on Windows)
+-------------
+
+The GUI library is DPI aware on Windows. This means that the contents of windows might be rendered
+at a different resolution than what was requested by the program according to the user's
+preferences. This is handled transparently by the GUI library by transforming any coordinates
+supplied accordingly. This means that programs using the Gui library may assume that coordinates and
+sizes are always relative to a 96 DPI resolution (the standard size in Windows), and leave the rest
+to the GUI library. This does, however, have some implications. Programs can not assume that one
+"coordinate step" represents one pixel, neither when drawing nor when positioning components in a
+window. Furthermore, as the physical size of fonts do not always scale linearly with the font size,
+long chunks of text may sometimes appear to take more space, and sometimes less. When using
+automatic layout, this is generally handled gracefully anyway.
+
+On Linux, Storm relies on the support in Gtk+.
 
 Layout
 -------
