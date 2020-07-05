@@ -498,7 +498,9 @@ namespace gui {
 			// Take DPI into account.
 			Nat dpi = windowDpi(z);
 			if (dpi != defaultDpi) {
-				s = s * dpiScale(dpi);
+				RECT r = convert(Rect(Point(), myPos.size() * dpiScale(dpi)));
+				dpiAdjustWindowRectEx(&r, style & ~WS_OVERLAPPED, FALSE, exStyle, dpi);
+				s = convert(r).size();
 				SetWindowPos(z, NULL, 0, 0, int(s.w), int(s.h), SWP_NOMOVE | SWP_NOZORDER | SWP_NOACTIVATE);
 			}
 		}

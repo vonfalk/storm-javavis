@@ -50,6 +50,8 @@ namespace gui {
 	GetDpiForWindow getDpiForWindow;
 	typedef int (WINAPI *GetSystemMetricsForDpi)(int, UINT);
 	GetSystemMetricsForDpi getSystemMetricsForDpi;
+	typedef BOOL (WINAPI *AdjustWindowRectExForDpi)(LPRECT, DWORD, BOOL, DWORD, UINT);
+	AdjustWindowRectExForDpi adjustWindowRectExForDpi;
 
 	void setDpiAware() {
 		HMODULE user32 = GetModuleHandle(L"user32.dll");
@@ -60,6 +62,7 @@ namespace gui {
 		getDpiForSystem = (GetDpiForSystem)GetProcAddress(user32, "GetDpiForSystem");
 		getDpiForWindow = (GetDpiForWindow)GetProcAddress(user32, "GetDpiForWindow");
 		getSystemMetricsForDpi = (GetSystemMetricsForDpi)GetProcAddress(user32, "GetSystemMetricsForDpi");
+		adjustWindowRectExForDpi = (AdjustWindowRectExForDpi)GetProcAddress(user32, "AdjustWindowRectExForDpi");
 
 		// Windows 10 and onwards (per monitor v2)
 		typedef BOOL (WINAPI *SetDpiContext)(DWORD);
@@ -119,6 +122,13 @@ namespace gui {
 			return getSystemMetricsForDpi(index, dpi);
 		else
 			return GetSystemMetrics(index);
+	}
+
+	BOOL dpiAdjustWindowRectEx(RECT *rect, DWORD style, bool menu, DWORD exStyle, Nat dpi) {
+		if (adjustWindowRectExForDpi)
+			return adjustWindowRectExForDpi(rect, style, menu, exStyle, dpi);
+		else
+			return AdjustWindowRectEx(rect, style, menu, exStyle);
 	}
 
 	Float dpiScale(Nat dpi) {

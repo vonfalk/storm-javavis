@@ -151,17 +151,17 @@ namespace gui {
 			HWND h = handle().hwnd();
 			DWORD style = GetWindowLong(h, GWL_STYLE);
 			DWORD exStyle = GetWindowLong(h, GWL_EXSTYLE);
-			AdjustWindowRectEx(&z, style, myMenu ? TRUE : FALSE, exStyle);
+			dpiAdjustWindowRectEx(&z, style, myMenu ? TRUE : FALSE, exStyle, dpi);
 			// Todo: keep track if we need to repaint.
 			MoveWindow(h, z.left, z.top, z.right - z.left, z.bottom - z.top, TRUE);
 		}
 	}
 
 	// Convert a client size to the actual window size.
-	static Size clientToWindow(Size s, DWORD windowStyles, DWORD windowExStyles, bool menu) {
+	static Size clientToWindow(Size s, DWORD windowStyles, DWORD windowExStyles, bool menu, Nat dpi) {
 		RECT r = { 0, 0, (LONG)s.w, (LONG)s.h };
 		BOOL m = menu ? TRUE : FALSE;
-		AdjustWindowRectEx(&r, windowStyles & ~WS_OVERLAPPED, menu, windowExStyles);
+		dpiAdjustWindowRectEx(&r, windowStyles & ~WS_OVERLAPPED, menu, windowExStyles, dpi);
 		return Size(Float(r.right - r.left), Float(r.bottom - r.top));
 	}
 
@@ -244,11 +244,11 @@ namespace gui {
 		return true;
 	}
 
-	static void fill(MINMAXINFO *info, HWND hWnd, Size size, bool menu) {
+	static void fill(MINMAXINFO *info, HWND hWnd, Size size, bool menu, Nat dpi) {
 		// Need to adjust 'size' since it is measured in client size, while Win32 expects actual window sizes.
 		LONG styles = GetWindowLong(hWnd, GWL_STYLE);
 		LONG exStyles = GetWindowLong(hWnd, GWL_EXSTYLE);
-		size = clientToWindow(size, styles, exStyles, menu);
+		size = clientToWindow(size, styles, exStyles, menu, dpi);
 
 		info->ptMinTrackSize.x = (LONG)size.w;
 		info->ptMinTrackSize.y = (LONG)size.h;
@@ -259,6 +259,29 @@ namespace gui {
 		case WM_CLOSE:
 			close();
 			return msgResult(0);
+		case WM_LBUTTONDBLCLK: {
+			RECT rect;
+			GetClientRect(handle().hwnd(), &rect);
+			PVAR(rect.right); PVAR(rect.bottom);
+			if (dpi == 96) {
+				dpi += dpi / 2;
+				rect.right += rect.right / 2;
+				rect.bottom += rect.bottom / 2;
+			} else {
+				dpi = 96;
+				rect.right -= rect.right / 3;
+				rect.bottom -= rect.bottom / 3;
+			}
+			PVAR(rect.right); PVAR(rect.bottom);
+			LONG styles = GetWindowLong(handle().hwnd(), GWL_STYLE);
+			LONG exStyles = GetWindowLong(handle().hwnd(), GWL_EXSTYLE);
+			dpiAdjustWindowRectEx(&rect, styles, myMenu != null, exStyles, 96);
+			rect.right -= rect.left;
+			rect.bottom -= rect.top;
+			updateDpi(false);
+			SetWindowPos(handle().hwnd(), NULL, 0, 0, rect.right, rect.bottom, SWP_NOACTIVATE | SWP_NOZORDER | SWP_NOMOVE);
+			break;
+		}
 		case WM_DPICHANGED: {
 			dpi = HIWORD(msg.wParam);
 			// Don't move us automatically, we want to respect the rectangle Windows suggest.
@@ -277,7 +300,7 @@ namespace gui {
 			}
 			break;
 		case WM_GETMINMAXINFO:
-			fill((MINMAXINFO *)msg.lParam, handle().hwnd(), dpiToPx(currentDpi(), lastMinSize), myMenu != null);
+			fill((MINMAXINFO *)msg.lParam, handle().hwnd(), dpiToPx(currentDpi(), lastMinSize), myMenu != null, dpi);
 			return msgResult(0);
 		case WM_MENUCOMMAND:
 			menuClicked((HMENU)msg.lParam, (Nat)msg.wParam);
