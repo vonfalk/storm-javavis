@@ -27,7 +27,10 @@ namespace storm {
 			t = c->symbol(S("t"));
 			completeName = c->symbol(S("complete-name"));
 			documentation = c->symbol(S("documentation"));
+			replAvailable = c->symbol(S("repl-available"));
+			replEval = c->symbol(S("repl-eval"));
 			work = new (this) WorkQueue(this);
+			repls = new (this) Map<Str *, Repl *>();
 			chunkChars = defaultChunkChars;
 		}
 
@@ -116,6 +119,10 @@ namespace storm {
 				onComplete(cell->rest);
 			} else if (*documentation == *kind) {
 				onDocumentation(cell->rest);
+			} else if (*replAvailable == *kind) {
+				onReplAvailable(cell->rest);
+			} else if (*replEval == *kind) {
+				onReplEval(cell->rest);
 			} else {
 				print(TO_S(this, S("Unknown message: ") << msg));
 			}
@@ -538,6 +545,86 @@ namespace storm {
 			findDoc(name, scope, result);
 
 			conn->send(list(engine(), 2, documentation, list(result)));
+		}
+
+		static bool hasRepl(Package *pkg) {
+			SimplePart *part = new (pkg) SimplePart(S("repl"));
+			Function *fn = as<Function>(pkg->find(part, Scope()));
+			if (!fn)
+				return false;
+
+			// Check the return value.
+			return Value(StormInfo<Repl>::type(pkg->engine())).canStore(fn->result);
+		}
+
+		void Server::onReplAvailable(SExpr *expr) {
+			SExpr *result = null;
+			bool hasBs = false;
+
+			Package *lang = engine().package(S("lang"));
+			for (NameSet::Iter i = lang->begin(), e = lang->end(); i != e; ++i) {
+				if (Package *p = ::as<Package>(i.v())) {
+					if (hasRepl(p)) {
+						if (*p->name == S("bs"))
+							hasBs = true;
+						else
+							result = cons(engine(), new (this) String(p->name), result);
+					}
+				}
+			}
+
+			if (hasBs)
+				result = cons(engine(), new (this) String(S("bs")), result);
+
+			result = cons(engine(), replAvailable, result);
+			conn->send(result);
+		}
+
+		void Server::onReplEval(SExpr *expr) {
+			String *name = next(expr)->asStr();
+			String *eval = next(expr)->asStr();
+			String *context = next(expr)->asStr();
+
+			Repl *repl = repls->get(name->v, null);
+			if (!repl) {
+				SimpleName *replName = new (this) SimpleName();
+				replName->add(new (this) Str(S("lang")));
+				replName->add(name->v);
+				replName->add(new (this) Str(S("repl")));
+				Function *fn = ::as<Function>(engine().scope().find(replName));
+				if (fn) {
+					if (!Value(StormInfo<Repl>::type(engine())).canStore(fn->result))
+						fn = null;
+				}
+
+				if (!fn) {
+					print(TO_S(this, S("Failed to create REPL for language " << name->v << S("."))));
+					return;
+				}
+
+				typedef Repl *(CODECALL *CreateRepl)();
+				CreateRepl create = (CreateRepl)fn->ref().address();
+				repl = (*create)();
+
+				repls->put(name->v, repl);
+			}
+
+			Package *ctx = null; // TODO!
+
+			Server *me = this;
+			os::FnCall<void, 4> call = os::fnCall().add(me).add(repl).add(eval->v).add(ctx);
+			os::UThread::spawn(address(&Server::evalThread), true, call);
+		}
+
+		void Server::evalThread(Repl *repl, Str *expr, Package *context) {
+			SExpr *result = null;
+
+			if (repl->eval(expr)) {
+				result = new (this) String(S("TODO"));
+			}
+
+			Lock::Guard z(lock);
+			conn->send(list(engine(), 2, replEval, result));
 		}
 
 		/**

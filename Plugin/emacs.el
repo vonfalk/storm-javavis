@@ -240,6 +240,44 @@
   (when storm-buffer-id
     (storm-send (list 'error storm-buffer-id))))
 
+(defvar storm-available-repl nil "Available REPLs in the running Storm instance.")
+(defvar storm-eval-history nil "History for evals.")
+
+(defun storm-repl-list ()
+  "List all available REPLs for the currently running Storm process."
+  (interactive)
+  (when (eq storm-available-repl nil)
+    (let ((answer (storm-query '(repl-available))))
+      (when (and (listp answer)
+		 (stringp (first answer)))
+	(setq storm-available-repl answer))))
+  (when (called-interactively-p)
+    (message "Available REPLs: %s" (reduce (lambda (x y) (message "%S %S" x y) (concat x ", " y)) storm-available-repl)))
+  storm-available-repl)
+
+(defun storm-repl-eval (str)
+  "Evaluate the supplied string in the default Storm repl."
+  (interactive
+   (let ((repl (storm-repl-list)))
+     (when (endp repl)
+       (error "No repl supported by the current Storm process!"))
+     (list (read-string (concat (first repl) "> ") "" 'storm-eval-history))))
+
+  (let ((repl (storm-repl-list)))
+    (when (endp repl)
+      (error "No repl supported by the current Storm process!"))
+
+    (storm-send (list 'repl-eval (first repl) str (buffer-file-name)))))
+
+(defun storm-on-eval (params)
+  "Called when we received the result from an earlier eval command."
+  (let ((msg (if (first params)
+		 (format "=> %s" (first params))
+	       (format "=> Invalid input"))))
+    (message msg)
+    (storm-output-string (concat msg "\n") (if (first params) nil 'storm-msg-error)))
+  nil)
+
 ;; Convenience for highlighting.
 
 (defun storm-set-color (from to face)
@@ -449,7 +487,8 @@
 (defvar storm-process-wait nil "If symbol: waiting for a message with the given header.")
 (defvar storm-messages
   (let ((map (make-hash-table)))
-    (puthash 'color 'storm-on-color map)
+    (puthash 'color #'storm-on-color map)
+    (puthash 'repl-eval #'storm-on-eval map)
     map)
   "Messages handled by this plugin.")
 
@@ -629,6 +668,7 @@
   (setq storm-process-id-to-sym (make-hash-table))
   (setq storm-process-next-id 0)
   (setq storm-mode-types (make-hash-table :test 'equal))
+  (setq storm-available-repl nil)
   (with-current-buffer storm-process-output
     (buffer-disable-undo)
     (setq buffer-read-only nil)

@@ -73,7 +73,7 @@ int runRepl(Engine &e, const wchar_t *lang, const wchar_t *input) {
 		return 1;
 	}
 
-	typedef Repl *(*CreateRepl)();
+	typedef Repl *(CODECALL *CreateRepl)();
 	CreateRepl createRepl = (CreateRepl)replFn->ref().address();
 	Repl *repl = (*createRepl)();
 

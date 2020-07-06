@@ -7,6 +7,9 @@ desires. To allow regular use of standard input and standard output for debuggin
 in the protocol starts with the null-byte. Everything else is considered UTF-8-encoded text which is
 to be shown to the user.
 
+Low-level encoding
+------------------
+
 The protocol used in the language server is based on s-expressions in LISP. Therefore, it can
 represent four basic data types: integers, strings, symbols and cons-cells. A cons-cell is an object
 containing two members, usually referred to as `car` and `cdr` or `first` and `rest`. These members
@@ -94,54 +97,19 @@ number is initially set to zero, and is changed every time the client sends an `
 cursor location is maintained so that the language server is able to prioritize sending syntax
 coloring information for text visible to the user (i.e. close to the cursor).
 
-The following messages can be sent from the text editor to the language server:
+### Generic
+
+Messages sent from the text editor to the language server:
 
 * `(quit)`: Asks the language server to terminate.
-* `(supported type)`: Ask the language server if the file extension *type* is supported. *type* is
-  a string containing the file extension without a dot. The language server sends a `(supported type result)`
-  message containing the result.
-* `(open id path content pos)`: Open a new file, *path* (a string), and give it the identifier *id*
-  (a number). The current contents of the file are sent as a string in *content*. *pos* is
-  optional. If present, it is the current position of the cursor within this file.
-* `(close id)`: Closes the file with identifier *id* (a number).
-* `(edit id edit from to text)`: An edit has been made to the file with identifier *id* (a
-  number). The text between *from* and *to* (numbers, zero based character indexes) has been
-  replaced with *text* (a string). *edit* is the edit number of this edit. Initially opening a file
-  is considered to be edit number zero.
-* `(point id pos)`: The user has moved their cursor in the file with identifier *id* to *pos* (a
-  number, zero based character index). This message does not need to be sent every time the user
-  moves the cursor. As long as the language server's knowledge of the cursor is close enough, no
-  updates need to be sent.
-* `(indent id pos)`: Request indentation information for character *pos* (a number) in the file with
-  identifier *id* (a number). The language server replies to this message with an `(indent file value)` message.
-* `(color id)`: Send all coloring information for file *id* once more.
 * `(complete-name string context)`: Reply with a list of names matching *string*. *string* is parsed using the
   default syntax for names in Storm. Names are resolved using a scope that looks for names inside `core`
   and optionally in the package corresponding *context*, if provided.
 * `(documentation name context)`: Reply with the documentation for *name*. *name* is parsed just like
   in the `complete-name` message.
 
-The following messages can be sent from the language server to the text editor:
+Messages sent from the language server to the text editor:
 
-* `(supported type result)`: Sent as a reply to `(supported type)`. Indicates whether the previously
-  queried file extension *type* is supported or not. *result* is either `t` or `nil`, indicating
-  *supported* and *not supported* respectively.
-* `(color id edit start colors...)`: Color a part of the file with identifier *id* as denoted by
-  colors. The character indexes in this message refers the text as it was after edit number *edit*.
-  If additional edit operations have been performed since, indexes may need to be adjusted by the
-  editor. In the Emacs plugin, this is done by remembering the last 20 or so edit
-  operations. *start* (a number) is the zero based index of the first character to highlight. The
-  remaining elements in the message (labeled *colors...*) describe the colors. The first element in
-  *colors* contain the number of characters to color. They shall be colored in the color indicated
-  by the next element in *colors*. If there are more elements in *colors*, they are interpreted in
-  the same way. For example: `(color 1 1 5 10 comment 5 keyword)` means: start at character number
-  5, color the next 10 characters as a comment. The 5 characters following those of the comment
-  shall be colored as a keyword.
-* `(indent id type value)`: Sent as a reply to `(indent id pos)`. Tells the indentation for the last
-  `indentation` request sent for file *id*. *type* is either `level` or `as`, and describes the
-  meaning of the number *value*. If *type* is `level`, the line shall be indented *value* levels (a
-  level is defined by the client). If *type* is `as`, the line shall be indented as the line
-  containing the character at offset *value* (zero based index).
 * `(complete-name name...)`: Sent as a reply to `(complete-name string context)` to provide a list
   of possible matches. The matches provided are generally only one level deep, meaning that
   the language server will not traverse the entire name tree to provide all possible completions since
@@ -149,16 +117,6 @@ The following messages can be sent from the language server to the text editor:
 * `(documentation name data)`: Sent as a reply to `(documentation name context)`. If *name* did not exist,
   then *data* is `nil`. Otherwise, *data* is a list with elements of the form described below.
 
-The following colors are available to the language server:
-
-* `comment`: Used for comments. Emacs uses `font-lock-comment-face`.
-* `delimiter`: Used for delimiters. Emacs uses `font-lock-delimiter-face`.
-* `string`: Used for string literals. Emacs uses `font-lock-string-face`.
-* `constant`: Used for constants, such as integer literals. Emacs uses `font-lock-constant-face`.
-* `keyword`: Used for keywords in a language. Emacs uses `font-lock-keyword-face`.
-* `fn-name`: Used for names of functions in a language. Emacs uses `font-lock-function-face`.
-* `var-name`: Used for names of variables in a language. Emacs uses `font-lock-variable-face`.
-* `type-name`: Used for names of types in a language. Emacs uses `font-lock-type-face`.
 
 The data inside the `documentation` is a list containing the following data:
 
@@ -181,3 +139,85 @@ The data inside the `documentation` is a list containing the following data:
   there has the form `(name . title)` where *name* is the full name of the member and *title* is a short
   summary that is suitable to show the user.
 
+
+### Syntax highlighting
+
+The following messages can be sent from the text editor to the language server:
+
+* `(supported type)`: Ask the language server if the file extension *type* is supported. *type* is
+  a string containing the file extension without a dot. The language server sends a `(supported type result)`
+  message containing the result.
+* `(open id path content pos)`: Open a new file, *path* (a string), and give it the identifier *id*
+  (a number). The current contents of the file are sent as a string in *content*. *pos* is
+  optional. If present, it is the current position of the cursor within this file.
+* `(close id)`: Closes the file with identifier *id* (a number).
+* `(edit id edit from to text)`: An edit has been made to the file with identifier *id* (a
+  number). The text between *from* and *to* (numbers, zero based character indexes) has been
+  replaced with *text* (a string). *edit* is the edit number of this edit. Initially opening a file
+  is considered to be edit number zero.
+* `(point id pos)`: The user has moved their cursor in the file with identifier *id* to *pos* (a
+  number, zero based character index). This message does not need to be sent every time the user
+  moves the cursor. As long as the language server's knowledge of the cursor is close enough, no
+  updates need to be sent.
+* `(indent id pos)`: Request indentation information for character *pos* (a number) in the file with
+  identifier *id* (a number). The language server replies to this message with an `(indent file value)` message.
+* `(color id)`: Send all coloring information for file *id* once more.
+
+The following messages can be sent from the language server to the text editor:
+
+* `(supported type result)`: Sent as a reply to `(supported type)`. Indicates whether the previously
+  queried file extension *type* is supported or not. *result* is either `t` or `nil`, indicating
+  *supported* and *not supported* respectively.
+* `(color id edit start colors...)`: Color a part of the file with identifier *id* as denoted by
+  colors. The character indexes in this message refers the text as it was after edit number *edit*.
+  If additional edit operations have been performed since, indexes may need to be adjusted by the
+  editor. In the Emacs plugin, this is done by remembering the last 20 or so edit
+  operations. *start* (a number) is the zero based index of the first character to highlight. The
+  remaining elements in the message (labeled *colors...*) describe the colors. The first element in
+  *colors* contain the number of characters to color. They shall be colored in the color indicated
+  by the next element in *colors*. If there are more elements in *colors*, they are interpreted in
+  the same way. For example: `(color 1 1 5 10 comment 5 keyword)` means: start at character number
+  5, color the next 10 characters as a comment. The 5 characters following those of the comment
+  shall be colored as a keyword.
+* `(indent id type value)`: Sent as a reply to `(indent id pos)`. Tells the indentation for the last
+  `indentation` request sent for file *id*. *type* is either `level` or `as`, and describes the
+  meaning of the number *value*. If *type* is `level`, the line shall be indented *value* levels (a
+  level is defined by the client). If *type* is `as`, the line shall be indented as the line
+  containing the character at offset *value* (zero based index).
+
+The following colors are available to the language server:
+
+* `comment`: Used for comments. Emacs uses `font-lock-comment-face`.
+* `delimiter`: Used for delimiters. Emacs uses `font-lock-delimiter-face`.
+* `string`: Used for string literals. Emacs uses `font-lock-string-face`.
+* `constant`: Used for constants, such as integer literals. Emacs uses `font-lock-constant-face`.
+* `keyword`: Used for keywords in a language. Emacs uses `font-lock-keyword-face`.
+* `fn-name`: Used for names of functions in a language. Emacs uses `font-lock-function-face`.
+* `var-name`: Used for names of variables in a language. Emacs uses `font-lock-variable-face`.
+* `type-name`: Used for names of types in a language. Emacs uses `font-lock-type-face`.
+
+
+### Interactive compilation
+
+Messages sent from the text editor to the language server:
+
+* `(repl-available)`: Return a list of available REPL interfaces in the system.
+* `(repl-eval repl expr context)`: Execute an expression (a string) inside the specified REPL.
+  Available REPL interfaces can be queried using the `repl-available` message. `context` is
+  a path to the current file, and may be used to resolve names relative to the current context
+  if appropriate.
+* `(run file)`: Find and execute all public functions that do not require parameters in the current
+  source file. Useful when a file contains some kind of `main` function for testing.
+* `(run file pos)`: Find the function closest to `pos` in the file and attempt to execute it.
+  This is only possible if the function does not require any parameters.
+* `(reload file)`: Re-loads the specified file in the compiler process.
+
+Messages sent from the language server to the text editor:
+
+* `(repl-available repl...)`: Replies with all available REPL interfaces in the system (as strings).
+  The default REPL is reported first in the list.
+* `(repl-eval result)`: Returns the output of an expression evaluated in the REPL as a string. Note:
+  depending on the function executed, the result may arrive much later than what would be expected
+  by an interactive application. Also note that some output might be written to standard output
+  (e.g. print statements) as no automatic redirection is performed by default. `result` might be `nil`
+  if the input was incomplete.

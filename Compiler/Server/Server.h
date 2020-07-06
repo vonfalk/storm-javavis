@@ -4,6 +4,7 @@
 #include "Connection.h"
 #include "File.h"
 #include "Test.h"
+#include "Repl.h"
 #include "WorkQueue.h"
 #include "RangeSet.h"
 
@@ -55,6 +56,8 @@ namespace storm {
 			Symbol *t;
 			Symbol *completeName;
 			Symbol *documentation;
+			Symbol *replAvailable;
+			Symbol *replEval;
 
 			// Any test state required now?
 			Test *testState;
@@ -69,6 +72,9 @@ namespace storm {
 
 			// Keep track of the color symbols used.
 			Array<Symbol *> *colorSyms;
+
+			// Keep track of REPL instances running.
+			Map<Str *, Repl *> *repls;
 
 			// Find the symbol to be used for a specific color.
 			Symbol *colorSym(syntax::TokenColor color);
@@ -90,6 +96,11 @@ namespace storm {
 			void onColor(SExpr *msg);
 			void onComplete(SExpr *msg);
 			void onDocumentation(SExpr *msg);
+			void onReplAvailable(SExpr *msg);
+			void onReplEval(SExpr *msg);
+
+			// Evaluate an expression on a separate UThread.
+			void CODECALL evalThread(Repl *repl, Str *expr, Package *context);
 
 			// Send updates for 'range' in 'file'.
 			void update(File *file, Range range);

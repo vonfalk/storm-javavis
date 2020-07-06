@@ -7,7 +7,7 @@ namespace os {
 	 * Representation of parameters to be passed to a function on another thread.
 	 *
 	 * Usage:
-	 * fnCall<Result>().add(x).add(y)
+	 * fnCall().add(x).add(y)
 	 */
 
 	// Function declaration used for performing the actual call later on.
