@@ -100,7 +100,7 @@ namespace storm {
 			void onReplEval(SExpr *msg);
 
 			// Evaluate an expression on a separate UThread.
-			void CODECALL evalThread(Repl *repl, Str *expr, Package *context);
+			void CODECALL evalThread(Repl *repl, Str *expr, MAYBE(Package *) context);
 
 			// Send updates for 'range' in 'file'.
 			void update(File *file, Range range);

@@ -219,5 +219,5 @@ Messages sent from the language server to the text editor:
 * `(repl-eval result)`: Returns the output of an expression evaluated in the REPL as a string. Note:
   depending on the function executed, the result may arrive much later than what would be expected
   by an interactive application. Also note that some output might be written to standard output
-  (e.g. print statements) as no automatic redirection is performed by default. `result` might be `nil`
-  if the input was incomplete.
+  (e.g. print statements) as no automatic redirection is performed by default.
+* `(repl-eval nil error)`: Variant of above, indicating some kind of error.

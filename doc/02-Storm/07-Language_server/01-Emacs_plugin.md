@@ -41,6 +41,8 @@ While using `storm-mode`, you can use the following keyboard shortcuts to intera
   with the buffer. Usually this rarely happens.
 * `C-c h` or `storm-doc`: show documentation on named objects (such as types and functions) in Storm.
   Works similarly to the built-in documentation in Emacs.
+* `C-c e` or `storm-repl-eval`: Evaluate a Basic Storm expression in the context of the currently
+  open file.
 
 Indentation in Storm-mode respects `tab-width` for indentation levels.
 

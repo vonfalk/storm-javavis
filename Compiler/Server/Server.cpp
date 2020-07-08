@@ -609,7 +609,13 @@ namespace storm {
 				repls->put(name->v, repl);
 			}
 
-			Package *ctx = null; // TODO!
+			Package *ctx = null;
+			if (context) {
+				Url *url = parsePath(context->v);
+				if (!url->dir())
+					url = url->parent();
+				ctx = engine().package(url);
+			}
 
 			Server *me = this;
 			os::FnCall<void, 4> call = os::fnCall().add(me).add(repl).add(eval->v).add(ctx);
@@ -619,12 +625,24 @@ namespace storm {
 		void Server::evalThread(Repl *repl, Str *expr, Package *context) {
 			SExpr *result = null;
 
-			if (repl->eval(expr)) {
-				result = new (this) String(S("TODO"));
+			try {
+				Repl::Result res = repl->eval(expr, context);
+				if (res.isSuccess()) {
+					if (Str *r = res.result())
+						result = list(engine(), 1, new (this) String(r));
+				} else if (Str *e = res.isError()) {
+					result = list(engine(), 2, null, new (this) String(e));
+				} else if (res.isIncomplete()) {
+					result = list(engine(), 2, null, new (this) String(S("Incomplete input")));
+				}
+			} catch (const storm::Exception *error) {
+				result = list(engine(), 2, null, new (this) String(error->toS()));
 			}
 
+			result = cons(engine(), replEval, result);
+
 			Lock::Guard z(lock);
-			conn->send(list(engine(), 2, replEval, result));
+			conn->send(result);
 		}
 
 		/**

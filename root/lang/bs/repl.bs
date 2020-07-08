@@ -9,8 +9,42 @@ BsRepl repl() {
 	BsRepl();
 }
 
-class BsRepl extends Repl {
+private class BSReplLookup extends BSLookup {
+	init(BSLookup original, NameLookup context) {
+		init() {
+			context = context;
+		}
 
+		includes = original.includes.clone;
+	}
+
+	// Current context.
+	NameLookup context;
+
+	Named? findHelper(Scope in, SimpleName name) : override {
+		NameLookup? at = in.top;
+		while (current = at) {
+			if (r = find(in, current, name))
+				return r;
+			at = nextCandidate(current);
+		}
+
+		in.top = context;
+		return super:findHelper(in, name);
+	}
+}
+
+private Scope withContext(Scope scope, NameLookup context) {
+	unless (lookup = scope.lookup as BSLookup)
+		return scope;
+
+	unless (top = scope.top)
+		return scope.child(context);
+
+	Scope(context, BSReplLookup(lookup, top));
+}
+
+class BsRepl extends Repl {
 	// Shall we terminate?
 	package Bool done;
 
@@ -29,58 +63,61 @@ class BsRepl extends Repl {
 		scope.addInclude(named{lang:bs:macro});
 	}
 
-	void greet() {
+	void greet() : override {
 		print("Type 'licenses' to show licenses for all currently used modules.");
 	}
 
-	Bool eval(Str line) {
+	Result eval(Str line, NameLookup? context) : override {
 		Parser<SSkipBlock> skipBlock;
 		skipBlock.parse(line, Url());
 		if (skipBlock.hasError) {
 			// Mismatched something. Let the user complete their input.
-			return false;
+			return Result:incomplete();
 		}
 
 		Parser<SReplUse> useStmt;
 		useStmt.parse(line, Url());
-		if (!useStmt.hasError) {
-			addUse(useStmt.tree.transform);
-			return true;
-		}
+		if (!useStmt.hasError)
+			return Result:success(addUse(useStmt.tree.transform));
 
+		Scope scope = this.scope;
+		if (context)
+			scope = withContext(scope, context);
 
 		Parser<SReplExpr> root;
 		scope.addSyntax(root);
 		root.parse(line, Url());
 		if (root.hasError) {
 			var error = root.error;
-			print("At character " + error.pos.start.toS + ", syntax error: " + error.text);
-			return true;
+			return Result:error("At character " + error.pos.start.toS + ", syntax error: " + error.text);
 		}
 
-		evalExpr(root.tree);
-		true;
-	}
+		try {
+			var result = evalExpr(root.tree, scope);
 
-	Bool exit() {
-		done;
+			if (done)
+				return Result:terminate();
+			return result;
+		} catch (Exception e) {
+			return Result:error(e.toS);
+		}
 	}
 
 private:
-	void addUse(SrcName name) {
+	Str addUse(SrcName name) {
 		Named? pkg = rootScope.find(name);
 		if (pkg as Package) {
 			if (scope.addInclude(pkg)) {
-				print("Using " # name # ".");
+				return "Using " # name # ".";
 			} else {
-				print(name # " already in use.");
+				return name # " already in use.";
 			}
 		} else {
-			print("Package " # name # " not found.");
+			return "Package " # name # " not found.";
 		}
 	}
 
-	void evalExpr(SReplExpr tree) {
+	Result evalExpr(SReplExpr tree, Scope scope) {
 		Type sandboxType = named{lang:bs:ReplSandbox};
 		ReplBlock block(scope);
 		LocalVar thisPtr("this", thisPtr(sandboxType), SrcPos(), true);
@@ -107,7 +144,9 @@ private:
 				if (into = thisPtr.result.type)
 					into.add(var);
 				var.create();
-				return;
+
+				// TODO: Return the string inside "success" rather than printing it?
+				return Result:success();
 			}
 
 			// Otherwise, just try to evaluate the expression normally. Doing so will most likely
@@ -123,16 +162,10 @@ private:
 
 		if (ptr = evalFn.pointer as Fn<Str, ReplSandbox>) {
 			ReplSandbox sandbox(this);
-			print("=> " # ptr.call(sandbox));
+			return Result:success(ptr.call(sandbox));
 		}
 
-		// Function replaceFn = named{ReplSandbox:evalFn<ReplSandbox>};
-		// ReplCode code(block, thisPtr);
-		// replaceFn.setCode(LazyCode(&code.load()));
-		//
-		// // Now, run the replaced function!
-		// ReplSandbox sandbox(this);
-		// print("=> " # sandbox.evalFn());
+		return Result:error("Internal error");
 	}
 }
 

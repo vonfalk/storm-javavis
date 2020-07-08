@@ -191,6 +191,7 @@
     (define-key map "\C-ce" 'storm-debug-find-error)
     (define-key map "}"     'storm-insert-indent)
     (define-key map "\C-ch" 'storm-doc)
+    (define-key map "\C-ce" 'storm-repl-eval)
     map)
   "Keymap for storm-mode")
 
@@ -267,15 +268,22 @@
     (when (endp repl)
       (error "No repl supported by the current Storm process!"))
 
+    (storm-output-string (format "%s> %s\n" (first repl) str))
     (storm-send (list 'repl-eval (first repl) str (buffer-file-name)))))
 
 (defun storm-on-eval (params)
   "Called when we received the result from an earlier eval command."
-  (let ((msg (if (first params)
-		 (format "=> %s" (first params))
-	       (format "=> Invalid input"))))
+  (let* ((ok-msg (first params))
+	 (err-msg (if (rest params)
+		      (second params)
+		    nil))
+	 (msg (if ok-msg
+		  (format "=> %s" ok-msg)
+		(if err-msg
+		    (format "=> %s" err-msg)
+		  (format "=> Invalid input")))))
     (message msg)
-    (storm-output-string (concat msg "\n") (if (first params) nil 'storm-msg-error)))
+    (storm-output-string (concat msg "\n") (if ok-msg nil 'storm-msg-error)))
   nil)
 
 ;; Convenience for highlighting.

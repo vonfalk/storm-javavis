@@ -233,6 +233,10 @@ namespace gui {
 
 
 		if (visible()) {
+			// At some points, it seems we need to hide the window first in order for it to be
+			// visible later. This happens when running Storm as a background process to Emacs for
+			// example.
+			ShowWindow(handle().hwnd(), FALSE);
 			ShowWindow(handle().hwnd(), TRUE);
 			update();
 		}

@@ -16,13 +16,13 @@ void runRepl(Engine &e, const wchar_t *lang, Repl *repl) {
 	TextOutput *output = e.stdOut();
 
 	Str *line = null;
-	while (!repl->exit()) {
+	while (true) {
 		{
 			StrBuf *prompt = new (e) StrBuf();
 			if (line)
-				*prompt << L"? ";
+				*prompt << S("? ");
 			else
-				*prompt << lang << L"> ";
+				*prompt << lang << S("> ");
 
 			output->write(prompt->toS());
 			output->flush();
@@ -33,13 +33,26 @@ void runRepl(Engine &e, const wchar_t *lang, Repl *repl) {
 			line = data;
 		} else {
 			StrBuf *to = new (repl) StrBuf();
-			*to << line << L"\n" << data;
+			*to << line << S("\n") << data;
 			line = to->toS();
 		}
 
 		try {
-			if (repl->eval(line))
+			Repl::Result result = repl->eval(line, null);
+			StrBuf *msg = new (repl) StrBuf();
+			if (result.isSuccess()) {
+				if (Str *r = result.result())
+					*msg << S("=> ") << r;
+			} else if (Str *e = result.isError()) {
+				*msg << S("Error: ") << e;
+			} else if (result.isTerminate()) {
+				break;
+			}
+
+			if (!result.isIncomplete())
 				line = null;
+
+			output->writeLine(msg->toS());
 		} catch (const storm::Exception *err) {
 			output->writeLine(err->toS());
 			line = null;
@@ -78,8 +91,14 @@ int runRepl(Engine &e, const wchar_t *lang, const wchar_t *input) {
 	Repl *repl = (*createRepl)();
 
 	if (input) {
-		if (!repl->eval(new (e) Str(input))) {
-			wcerr << L"The input given to the REPL does not represent a complete input. Try again!" << endl;
+		Repl::Result result = repl->eval(new (e) Str(input), null);
+		if (result.isSuccess()) {
+			if (Str *r = result.result())
+				wcerr << L"=> " << r << endl;
+		} else if (Str *e = result.isError()) {
+			wcerr << L"Error: " << e << endl;
+			return 1;
+		} else if (result.isIncomplete()) {
 			return 1;
 		}
 	} else {

@@ -308,6 +308,7 @@
   (global-storm-mode t))
 
 (global-set-key (kbd "C-c h") 'storm-doc)
+(global-set-key (kbd "C-c e") 'storm-repl-eval)
 
 ;;; For debugging ;;;
 
