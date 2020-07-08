@@ -207,9 +207,11 @@ Messages sent from the text editor to the language server:
   a path to the current file, and may be used to resolve names relative to the current context
   if appropriate.
 * `(run file)`: Find and execute all public functions that do not require parameters in the current
-  source file. Useful when a file contains some kind of `main` function for testing.
+  source file. `file` is either a file name or the ID of a previously opened file. Useful when a
+  file contains some kind of `main` function for testing.
 * `(run file pos)`: Find the function closest to `pos` in the file and attempt to execute it.
-  This is only possible if the function does not require any parameters.
+  This is only possible if the function does not require any parameters.  `file` is either a
+  file name or the ID of a previously opened file.
 * `(reload file)`: Re-loads the specified file in the compiler process.
 
 Messages sent from the language server to the text editor:

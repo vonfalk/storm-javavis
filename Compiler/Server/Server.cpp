@@ -2,6 +2,8 @@
 #include "Server.h"
 #include "Engine.h"
 #include "Core/Timing.h"
+#include "Core/Variant.h"
+#include "Compiler/Lib/Fn.h"
 
 namespace storm {
 	namespace server {
@@ -29,6 +31,7 @@ namespace storm {
 			documentation = c->symbol(S("documentation"));
 			replAvailable = c->symbol(S("repl-available"));
 			replEval = c->symbol(S("repl-eval"));
+			runSym = c->symbol(S("run"));
 			work = new (this) WorkQueue(this);
 			repls = new (this) Map<Str *, Repl *>();
 			chunkChars = defaultChunkChars;
@@ -123,6 +126,8 @@ namespace storm {
 				onReplAvailable(cell->rest);
 			} else if (*replEval == *kind) {
 				onReplEval(cell->rest);
+			} else if (*runSym == *kind) {
+				onRun(cell->rest);
 			} else {
 				print(TO_S(this, S("Unknown message: ") << msg));
 			}
@@ -643,6 +648,158 @@ namespace storm {
 
 			Lock::Guard z(lock);
 			conn->send(result);
+		}
+
+		static void findFunctions(NameSet *inside, Url *file, Array<Function *> *fns) {
+			inside->forceLoad();
+			for (NameSet::Iter i = inside->begin(), e = inside->end(); i != e; ++i) {
+				Named *n = i.v();
+				if (!n->pos.file || *n->pos.file != *file)
+					continue;
+
+				if (NameSet *s = as<NameSet>(n)) {
+					findFunctions(s, file, fns);
+				} else if (Function *f = as<Function>(n)) {
+					*fns << f;
+				}
+			}
+		}
+
+		// Pick the function declared closest above the given position.
+		static Function *pickClosest(Array<Function *> *fns, Nat pos) {
+			Function *candidate = null;
+
+			for (Nat i = 0; i < fns->count(); i++) {
+				Function *f = fns->at(i);
+				if (f->pos.start > pos)
+					continue;
+
+				// Inside this function, that is perfect!
+				if (f->pos.end > pos)
+					return f;
+
+				// Closest one after (if the cursor is right after a function, or if only the first line is covered).
+				if (!candidate || f->pos.end > candidate->pos.end)
+					candidate = f;
+			}
+
+			return candidate;
+		}
+
+		void Server::onRun(SExpr *expr) {
+			Url *file = null;
+			SExpr *srcFile = next(expr);
+			if (Number *num = ::as<Number>(srcFile)) {
+				file = files->get(num->v)->url();
+			} else if (String *name = ::as<String>(srcFile)) {
+				file = parsePath(name->v);
+			} else {
+				return;
+			}
+
+			Package *pkg = engine().package(file->parent());
+			if (!pkg) {
+				Str *msg = TO_S(this, S("Failed to find a package containing ") << file << S("."));
+				conn->send(list(engine(), 3, runSym, null, new (this) String(msg)));
+				return;
+			}
+
+			Array<Function *> *fns = new (this) Array<Function *>();
+			findFunctions(pkg, file, fns);
+
+			Bool send = false;
+			if (expr) {
+				send = true;
+				Nat pos = next(expr)->asNum()->v;
+				Function *f = pickClosest(fns, pos);
+				fns->clear();
+				if (f) {
+					if (f->params->any()) {
+						Str *msg = TO_S(this, S("The function ") << f->identifier() << S(" requires parameters and ")
+										S("may therefore not be executed in this way."));
+						conn->send(list(engine(), 3, runSym, null, new (this) String(msg)));
+						return;
+					}
+					*fns << f;
+				}
+			}
+
+			if (fns->empty()) {
+				Str *msg = TO_S(this, S("Unable to find any functions to execute."));
+				conn->send(list(engine(), 3, runSym, null, new (this) String(msg)));
+				return;
+			}
+
+			for (Nat i = 0; i < fns->count(); i++) {
+				Function *f = fns->at(i);
+				if (f->params->any())
+					continue;
+
+				Server *me = this;
+				os::FnCall<void, 3> call = os::fnCall().add(me).add(f).add(send);
+				os::UThread::spawn(address(&Server::execThread), true, call);
+			}
+		}
+
+		void Server::execThread(Function *fn, Bool send) {
+			FnBase *ptr = pointer(fn);
+			Value type = fn->result;
+			SExpr *expr = null;
+			StrBuf *result = new (this) StrBuf();
+			if (!send)
+				*result << fn->identifier() << S(": ");
+
+			try {
+				if (type.isValue()) {
+					void *mem = alloca(type.size().current());
+					void **params[1] = { null };
+					ptr->rawCall().call(ptr, mem, params);
+
+					if (result) {
+						Variant r(mem, type.type);
+						*result << r;
+					}
+
+					type.type->handle().safeDestroy(mem);
+
+				} else if (type.isObject()) {
+					RootObject *obj;
+					void **params[1] = { null };
+					ptr->rawCall().call(ptr, &obj, params);
+
+					if (Object *o = ::as<Object>(obj))
+						*result << o;
+					else if (TObject *t = ::as<TObject>(obj))
+						*result << t;
+				} else {
+					// Must be 'void'.
+					os::FnCall<void, 1> params = os::fnCall();
+					ptr->callRaw(params, null, null);
+
+					if (result)
+						*result << S("<void>");
+				}
+
+				if (send)
+					expr = list(engine(), 2, runSym, new (this) String(result->toS()));
+				else {
+					Lock::Guard z(lock);
+					print(result->toS());
+				}
+			} catch (Exception *e) {
+				if (send) {
+					expr = list(engine(), 3, runSym, null, new (this) String(e->toS()));
+				} else {
+					Lock::Guard z(lock);
+					*result << fn->identifier() << S(": ") << e;
+					print(result->toS());
+				}
+			}
+
+			if (expr) {
+				Lock::Guard z(lock);
+				conn->send(expr);
+			}
 		}
 
 		/**

@@ -35,7 +35,7 @@ While using `storm-mode`, you can use the following keyboard shortcuts to intera
   some reason, Storm or Emacs missed coloring some characters, or got out of sync. This
   merely transmits the syntax highlighting for the entire file once again, and does not
   attempt to re-parse the file.
-* `C-c r` or `storm-re-open`: similar to `storm-re-color`, but parses the file from scratch first.
+* `C-c o` or `storm-re-open`: similar to `storm-re-color`, but parses the file from scratch first.
   This is useful if Storm fails to see the correct parse of a buffer that previously contained many
   or large errors. It could also be required if some edit operations have been lost while interacting
   with the buffer. Usually this rarely happens.
@@ -43,6 +43,10 @@ While using `storm-mode`, you can use the following keyboard shortcuts to intera
   Works similarly to the built-in documentation in Emacs.
 * `C-c e` or `storm-repl-eval`: Evaluate a Basic Storm expression in the context of the currently
   open file.
+* `C-c r` or `storm-run-at-point`: Attempt to run the function under the cursor in the current file.
+  This requires that the function does not take any parameters.
+* `C-c C-r` or `storm-run-all`: Run all functions without parameters in the current file. This is
+  useful when having a local main() function that is used for testing.
 
 Indentation in Storm-mode respects `tab-width` for indentation levels.
 

@@ -306,12 +306,14 @@ namespace storm {
 							Array<NameParam> *params,
 							syntax::Node *body) {
 
-			return new (owner) BSFunction(owner->scope.value(result, pos),
-										name,
-										resolve(params, owner, owner->scope),
-										owner->scope,
-										null, // thread
-										body);
+			BSFunction *fn = new (owner) BSFunction(owner->scope.value(result, pos),
+													name,
+													resolve(params, owner, owner->scope),
+													owner->scope,
+													null, // thread
+													body);
+			fn->pos = pos;
+			return fn;
 		}
 
 		Function *classAbstractFn(Class *owner,
@@ -324,6 +326,7 @@ namespace storm {
 			BSRawFn *f = new (owner) BSAbstractFn(owner->scope.value(result, pos),
 												name,
 												resolve(params, owner, owner->scope));
+			f->pos = pos;
 
 			syntax::transformNode<void, Class *, BSRawFn *>(options, owner, f);
 
@@ -345,6 +348,7 @@ namespace storm {
 												owner->scope,
 												null, // thread
 												body);
+			f->pos = pos;
 			f->make(fnAssign);
 			return f;
 		}

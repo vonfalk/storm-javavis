@@ -186,12 +186,14 @@
     (define-key map "\C-cd" 'storm-debug-tree)
     (define-key map "\C-cc" 'storm-debug-content)
     (define-key map "\C-cu" 'storm-debug-re-color)
-    (define-key map "\C-cr" 'storm-debug-re-open)
+    (define-key map "\C-co" 'storm-debug-re-open)
     (define-key map "\C-cx" 'storm-debug-un-color)
     (define-key map "\C-ce" 'storm-debug-find-error)
     (define-key map "}"     'storm-insert-indent)
     (define-key map "\C-ch" 'storm-doc)
     (define-key map "\C-ce" 'storm-repl-eval)
+    (define-key map "\C-cr" 'storm-run-at-point)
+    (define-key map "\C-c\C-r" 'storm-run-all)
     map)
   "Keymap for storm-mode")
 
@@ -248,7 +250,7 @@
   "List all available REPLs for the currently running Storm process."
   (interactive)
   (when (eq storm-available-repl nil)
-    (let ((answer (storm-query '(repl-available))))
+    (let ((answer (storm-query '(repl-available) 5)))
       (when (and (listp answer)
 		 (stringp (first answer)))
 	(setq storm-available-repl answer))))
@@ -256,20 +258,22 @@
     (message "Available REPLs: %s" (reduce (lambda (x y) (message "%S %S" x y) (concat x ", " y)) storm-available-repl)))
   storm-available-repl)
 
-(defun storm-repl-eval (str)
-  "Evaluate the supplied string in the default Storm repl."
+(defun storm-repl-eval (str &optional repl)
+  "Evaluate the supplied string in the default Storm repl, or 'repl' if specified."
   (interactive
    (let ((repl (storm-repl-list)))
      (when (endp repl)
        (error "No repl supported by the current Storm process!"))
      (list (read-string (concat (first repl) "> ") "" 'storm-eval-history))))
 
-  (let ((repl (storm-repl-list)))
+  (when (not repl)
+    (setq repl (storm-repl-list))
     (when (endp repl)
       (error "No repl supported by the current Storm process!"))
+    (setq repl (first repl)))
 
-    (storm-output-string (format "%s> %s\n" (first repl) str))
-    (storm-send (list 'repl-eval (first repl) str (buffer-file-name)))))
+  (storm-output-string (format "%s> %s\n" (first repl) str))
+  (storm-send (list 'repl-eval (first repl) str (buffer-file-name))))
 
 (defun storm-on-eval (params)
   "Called when we received the result from an earlier eval command."
@@ -285,6 +289,28 @@
     (message msg)
     (storm-output-string (concat msg "\n") (if ok-msg nil 'storm-msg-error)))
   nil)
+
+(defun storm-run-at-point (point)
+  "Try to execute the function at the current point in the current buffer."
+  (interactive "d")
+  (let ((id (if storm-buffer-id
+		storm-buffer-id
+	      (buffer-file-name))))
+
+    (storm-send (list 'run id (1- point)))))
+
+(defun storm-run-all ()
+  "Execute all functions in the current buffer."
+  (interactive)
+  (let ((id (if storm-buffer-id
+		storm-buffer-id
+	      (buffer-file-name))))
+
+    (storm-send (list 'run id))))
+
+(defun storm-on-run (params)
+  "Called when we received the result from an earlier run command."
+  (storm-on-eval params))
 
 ;; Convenience for highlighting.
 
@@ -497,6 +523,7 @@
   (let ((map (make-hash-table)))
     (puthash 'color #'storm-on-color map)
     (puthash 'repl-eval #'storm-on-eval map)
+    (puthash 'run #'storm-on-run map)
     map)
   "Messages handled by this plugin.")
 

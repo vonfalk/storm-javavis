@@ -27,7 +27,8 @@ namespace storm {
 		class FunctionDecl : public NamedDecl {
 			STORM_CLASS;
 		public:
-			STORM_CTOR FunctionDecl(Scope scope,
+			STORM_CTOR FunctionDecl(SrcPos pos,
+									Scope scope,
 									MAYBE(SrcName *) result,
 									syntax::SStr *name,
 									Array<NameParam> *params,
@@ -35,6 +36,7 @@ namespace storm {
 									syntax::Node *body);
 
 			// Values.
+			SrcPos pos;
 			Scope scope;
 			syntax::SStr *name;
 			MAYBE(SrcName *) result;
@@ -59,7 +61,8 @@ namespace storm {
 		};
 
 		// Declare setter functions.
-		FunctionDecl *STORM_FN assignDecl(Scope scope,
+		FunctionDecl *STORM_FN assignDecl(SrcPos pos,
+										Scope scope,
 										syntax::SStr *name,
 										Array<NameParam> *params,
 										syntax::Node *options,

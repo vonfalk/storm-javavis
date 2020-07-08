@@ -309,6 +309,8 @@
 
 (global-set-key (kbd "C-c h") 'storm-doc)
 (global-set-key (kbd "C-c e") 'storm-repl-eval)
+(global-set-key (kbd "C-c r") 'storm-run-at-point)
+(global-set-key (kbd "C-c C-r") 'storm-run-all)
 
 ;;; For debugging ;;;
 

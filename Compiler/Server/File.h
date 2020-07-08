@@ -206,6 +206,9 @@ namespace storm {
 			// Post a message for invalidating the border between 'part' and the next/previous part.
 			void postInvalidate(Part *part, Border border, Bool force);
 
+			// Get the file's Url.
+			Url *url() const { return path; }
+
 		private:
 			// Path to the underlying file (so we can properly locate packages etc., we never actually read the file).
 			Url *path;

@@ -58,6 +58,7 @@ namespace storm {
 			Symbol *documentation;
 			Symbol *replAvailable;
 			Symbol *replEval;
+			Symbol *runSym;
 
 			// Any test state required now?
 			Test *testState;
@@ -98,9 +99,13 @@ namespace storm {
 			void onDocumentation(SExpr *msg);
 			void onReplAvailable(SExpr *msg);
 			void onReplEval(SExpr *msg);
+			void onRun(SExpr *msg);
 
 			// Evaluate an expression on a separate UThread.
 			void CODECALL evalThread(Repl *repl, Str *expr, MAYBE(Package *) context);
+
+			// Execute a function on a separate UThread.
+			void CODECALL execThread(Function *fn, Bool sendResult);
 
 			// Send updates for 'range' in 'file'.
 			void update(File *file, Range range);

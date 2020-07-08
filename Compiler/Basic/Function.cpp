@@ -13,24 +13,27 @@ namespace storm {
 	namespace bs {
 		using syntax::SStr;
 
-		FunctionDecl *assignDecl(Scope scope,
+		FunctionDecl *assignDecl(SrcPos pos,
+								Scope scope,
 								syntax::SStr *name,
 								Array<NameParam> *params,
 								syntax::Node *options,
 								syntax::Node *body) {
 
-			return new (name) FunctionDecl(scope, null, name, params, options, body);
+			return new (name) FunctionDecl(pos, scope, null, name, params, options, body);
 		}
 
 
 
-		FunctionDecl::FunctionDecl(Scope scope,
+		FunctionDecl::FunctionDecl(SrcPos pos,
+								Scope scope,
 								MAYBE(SrcName *) result,
 								syntax::SStr *name,
 								Array<NameParam> *params,
 								syntax::Node *options,
 								syntax::Node *body)
-			: scope(scope),
+			: pos(pos),
+			  scope(scope),
 			  name(name),
 			  result(result),
 			  params(params),
@@ -51,6 +54,7 @@ namespace storm {
 
 			Array<ValParam> *par = bs::resolve(params, fScope);
 			BSFunction *f = new (this) BSFunction(result, name, par, fScope, null, body);
+			f->pos = pos;
 
 			// Default thread?
 			if (thread)
