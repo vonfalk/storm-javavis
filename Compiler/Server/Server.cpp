@@ -603,7 +603,7 @@ namespace storm {
 				}
 
 				if (!fn) {
-					print(TO_S(this, S("Failed to create REPL for language " << name->v << S("."))));
+					print(TO_S(this, S("Failed to create REPL for language ") << name->v << S(".")));
 					return;
 				}
 
