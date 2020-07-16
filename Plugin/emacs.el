@@ -272,8 +272,8 @@
       (error "No repl supported by the current Storm process!"))
     (setq repl (first repl)))
 
-  (storm-output-string (format "%s> %s\n" (first repl) str))
-  (storm-send (list 'repl-eval (first repl) str (buffer-file-name))))
+  (storm-output-string (format "%s> %s\n" repl str))
+  (storm-send (list 'repl-eval repl str (buffer-file-name))))
 
 (defun storm-on-eval (params)
   "Called when we received the result from an earlier eval command."
