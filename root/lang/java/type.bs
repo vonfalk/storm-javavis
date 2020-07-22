@@ -35,3 +35,7 @@ Value floatType() {
 Value doubleType() {
     Value(named{Double});
 }
+
+Value strType() {
+    Value(named{Str});
+}

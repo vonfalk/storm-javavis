@@ -43,7 +43,7 @@ private:
 			parser.throwError();
 		
 		Content c = parser.tree().transform();
-		//print(parser.tree().toS);
+		print(parser.tree().toS);
 		cont = c;
 		return c;
 	}

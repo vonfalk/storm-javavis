@@ -93,7 +93,7 @@ namespace storm {
 				initParse(root, str, file, start);
 
 				// Start as usual.
-				Set<StackItem *> *lastSet = null;
+				Array<StackItem *> *lastSet = null;
 				Nat lastPos = 0;
 				doParse(startPos, lastSet, lastPos);
 
@@ -148,7 +148,6 @@ namespace storm {
 				acceptingStack = null;
 				lastSet = null;
 				lastPos = 0;
-				visited = new (this) BoolSet();
 
 				stacks->put(0, store, startState(startPos, root));
 			}
@@ -156,7 +155,7 @@ namespace storm {
 			void Parser::doParse(Nat from) {
 				Nat length = source->peekLength();
 				for (Nat i = from; i <= length; i++) {
-					Set<StackItem *> *top = stacks->top();
+					Array<StackItem *> *top = stacks->top();
 
 					// Process all states in 'top'.
 					if (top)
@@ -168,14 +167,14 @@ namespace storm {
 			}
 
 #ifdef GLR_BACKTRACK
-			void Parser::doParse(Nat from, Set<StackItem *> *&states, Nat &pos) {
+			void Parser::doParse(Nat from, Array<StackItem *> *&states, Nat &pos) {
 				states = null;
 				Nat badness = 0;
 
 				Nat newLine = from;
 				Nat length = source->peekLength();
 				for (Nat i = from; i <= length; i++) {
-					Set<StackItem *> *top = stacks->top();
+					Array<StackItem *> *top = stacks->top();
 
 					// Process all states in 'top'.
 					if (top && top->any()) {
@@ -210,7 +209,7 @@ namespace storm {
 			}
 #else
 			// Non-backtracking version.
-			void Parser::doParse(Nat from, Set<StackItem *> *&states, Nat &pos) {
+			void Parser::doParse(Nat from, Array<StackItem *> *&states, Nat &pos) {
 				doParse(from);
 
 				states = lastSet;
@@ -223,7 +222,6 @@ namespace storm {
 				PVAR(table);
 #endif
 
-				visited = null;
 				stacks = null;
 
 				// See which productions are acceptable to us...
@@ -267,50 +265,37 @@ namespace storm {
 			}
 
 			void Parser::reduceAll() {
-				// NOTE: we need to use 'visited' as that one is also used in 'limitedReduce' for optimizations.
-				visited->clear();
-				Set<StackItem *> *src = stacks->top();
+				Array<StackItem *> *src = stacks->top();
 
-				bool any;
-				do {
-					any = false;
-					for (Set<StackItem *>::Iter i = src->begin(), e = src->end(); i != e; ++i) {
-						StackItem *now = i.v();
-						if (visited->get(now->state))
-							continue;
-						visited->set(now->state, true);
-						any = true;
+				for (Nat i = 0; i < src->count(); i++) {
+					StackItem *now = src->at(i);
+					topVisiting = i;
 
-						// Shift and reduce this state.
-						ActorEnv env = {
-							table->state(now->state),
-							now,
-							true,
-						};
-						actorReduceAll(env, null);
-					}
-				} while (any);
+					// Shift and reduce this state.
+					ActorEnv env = {
+						table->state(now->state),
+						now,
+						true,
+					};
+					actorReduceAll(env, null);
+				}
 			}
 
 			void Parser::shiftAll() {
-				visited->clear();
-				Set<StackItem *> *src = stacks->top();
+				Array<StackItem *> *src = stacks->top();
 
-				bool match = false;
-				bool any = false;
+				Nat start = 0;
+				Bool match = false;
 				do {
-					any = false;
-					for (Set<StackItem *>::Iter i = src->begin(), e = src->end(); i != e; ++i) {
-						StackItem *now = i.v();
-						if (visited->get(now->state))
-							continue;
-						visited->set(now->state, true);
-						any = true;
-
+					Nat end = src->count();
+					for (; start < end; start++) {
+						StackItem *now = src->at(start);
+						topVisiting = start;
 						match |= shiftAll(now);
 					}
+					start = end;
 					// Stop as soon as we found a regex matching!
-				} while (any && !match);
+				} while (start < src->count() && !match);
 			}
 
 			bool Parser::shiftAll(StackItem *now) {
@@ -347,12 +332,7 @@ namespace storm {
 						errors += infoShifts(1);
 					Nat tree = store->push(now->pos, errors).id();
 					StackItem *item = new (this) StackItem(action.action, currentPos, now, tree);
-					StackItem *topItem = stacks->top()->at(item);
-					if (topItem == item) {
-						// Inserted!
-					} else {
-						topItem->insert(store, item);
-					}
+					stacks->put(0, store, item);
 				}
 
 				return found;
@@ -373,20 +353,15 @@ namespace storm {
 					errors += infoShifts(Item(syntax, prod).length(syntax));
 					Nat tree = store->push(now->pos, prod, errors, 0).id();
 					StackItem *item = new (this) StackItem(to, currentPos, now, tree);
-					StackItem *topItem = stacks->top()->at(item);
-					if (topItem == item) {
-						// Inserted!
-					} else {
-						topItem->insert(store, item);
-					}
+					stacks->put(0, store, item);
 				}
 			}
 
 			bool Parser::actorShift() {
 				bool any = false;
-				Set<StackItem *> *src = stacks->top();
+				Array<StackItem *> *src = stacks->top();
 
-				for (Set<StackItem *>::Iter i = src->begin(), e = src->end(); i != e; ++i) {
+				for (Array<StackItem *>::Iter i = src->begin(), e = src->end(); i != e; ++i) {
 					StackItem *now = i.v();
 
 					ActorEnv env = {
@@ -409,7 +384,7 @@ namespace storm {
 				return any;
 			}
 
-			void Parser::actor(Nat pos, Set<StackItem *> *states) {
+			void Parser::actor(Nat pos, Array<StackItem *> *states) {
 #ifdef GLR_DEBUG
 				PVAR(pos);
 #endif
@@ -419,32 +394,23 @@ namespace storm {
 					lastPos = pos;
 				}
 
-				visited->clear();
 				currentPos = pos;
 
-				typedef Set<StackItem *>::Iter Iter;
-				Bool done;
-				do {
-					done = true;
-					for (Iter i = states->begin(), e = states->end(); i != e; ++i) {
-						StackItem *now = i.v();
-						if (visited->get(now->state))
-							continue;
-						visited->set(now->state, true);
-						done = false;
+				for (Nat i = 0; i < states->count(); i++) {
+					StackItem *now = states->at(i);
+					topVisiting = i;
 
-						State *s = table->state(now->state);
+					State *s = table->state(now->state);
 
-						ActorEnv env = {
-							s,
-							now,
-							false,
-						};
+					ActorEnv env = {
+						s,
+						now,
+						false,
+					};
 
-						actorReduce(env, null);
-						actorShift(env);
-					}
-				} while (!done);
+					actorReduce(env, null);
+					actorShift(env);
+				}
 			}
 
 			bool Parser::actorShift(const ActorEnv &env) {
@@ -684,8 +650,7 @@ namespace storm {
 #endif
 
 					// Add the newly created state.
-					Set<StackItem *> *top = stacks->top();
-					StackItem *old = top->at(add);
+					StackItem *old = stacks->putRaw(0, add);
 					if (old == add) {
 						// 'add' was successfully inserted. Nothing more to do!
 						usedNode = true;
@@ -697,7 +662,7 @@ namespace storm {
 							PLN(L"Inserted into " << old->state << L"(" << (void *)old << L")");
 #endif
 							// Note: 'add' is the actual link.
-							limitedReduce(env, top, add);
+							limitedReduce(env, add);
 						}
 					}
 				}
@@ -707,16 +672,14 @@ namespace storm {
 				}
 			}
 
-			void Parser::limitedReduce(const ReduceEnv &env, Set<StackItem *> *top, StackItem *through) {
+			void Parser::limitedReduce(const ReduceEnv &env, StackItem *through) {
 #ifdef GLR_DEBUG
 				PLN(L"--LIMITED--");
 #endif
-				for (Set<StackItem *>::Iter i = top->begin(), e = top->end(); i != e; ++i) {
-					StackItem *item = i.v();
-
-					// Will this state be visited soon anyway?
-					if (visited->get(item->state) == false)
-						continue;
+				Array<StackItem *> *top = stacks->top();
+				// Note: We don't need to consider states that are going to be visited soon anyway.
+				for (Nat i = 0; i <= topVisiting; i++) {
+					StackItem *item = top->at(i);
 
 					State *state = table->state(item->state);
 
@@ -783,10 +746,10 @@ namespace storm {
 				return out->toS();
 			}
 
-			void Parser::errorMsg(StrBuf *out, Nat pos, Set<StackItem *> *states) const {
+			void Parser::errorMsg(StrBuf *out, Nat pos, Array<StackItem *> *states) const {
 				Set<Str *> *errors = new (this) Set<Str *>();
 
-				for (Set<StackItem *>::Iter i = states->begin(); i != states->end(); ++i) {
+				for (Array<StackItem *>::Iter i = states->begin(); i != states->end(); ++i) {
 					errorMsg(errors, i.v()->state);
 				}
 
@@ -918,12 +881,12 @@ namespace storm {
 
 			void Parser::setToken(Node *result, TreeNode &node, Nat endPos, Token *token) const {
 				if (token->target) {
-					if (as<RegexToken>(token)) {
+					if (token->asRegex()) {
 						Str::Iter from = source->posIter(node.pos());
 						Str::Iter to = source->posIter(endPos);
 						SrcPos pos(sourceUrl, node.pos(), endPos);
 						setValue(result, token->target, new (this) SStr(source->substr(from, to), pos));
-					} else if (as<RuleToken>(token)) {
+					} else if (token->asRule()) {
 						setValue(result, token->target, tree(node, endPos));
 					} else {
 						assert(false, L"Unknown token type used for match.");
@@ -1167,13 +1130,13 @@ namespace storm {
 					if (Syntax::specialProd(node.production()) == Syntax::prodESkip) {
 						// This is always an empty string! Even though it is a production, it should
 						// look like a plain string.
-						created = new (this) InfoLeaf(as<RegexToken>(token), emptyStr);
+						created = new (this) InfoLeaf(token->asRegex(), emptyStr);
 						// Move errors up to the parent.
 						errors = infoSuccess();
 					} else {
 						created = infoTree(node, endPos);
 						errors = node.errors();
-						if (as<DelimToken>(token))
+						if (token->asDelim())
 							created->delimiter(true);
 					}
 				} else {
@@ -1183,7 +1146,7 @@ namespace storm {
 						Str::Iter to = source->posIter(endPos);
 						str = source->substr(from, to);
 					}
-					created = new (this) InfoLeaf(as<RegexToken>(token), str);
+					created = new (this) InfoLeaf(token->asRegex(), str);
 					// Move errors up to the parent.
 					errors = infoSuccess();
 				}
@@ -1234,36 +1197,28 @@ namespace storm {
 			void Parser::completePrefix() {
 				// This is a variant of the 'actor' function above, except that we only attempt to
 				// perform reductions.
-				typedef Set<StackItem *>::Iter Iter;
+				typedef Array<StackItem *>::Iter Iter;
 
-				visited->clear();
-				Set<StackItem *> *top = stacks->top();
+				Array<StackItem *> *top = stacks->top();
 
 #ifdef GLR_DEBUG
 				PLN(L"--- Starting error recovery at " << currentPos << "---");
 #endif
 
-				Bool done;
-				do {
-					done = true;
-					for (Iter i = top->begin(), e = top->end(); i != e; ++i) {
-						StackItem *now = i.v();
-						if (visited->get(now->state))
-							continue;
-						visited->set(now->state, true);
-						done = false;
+				for (Nat i = 0; i < top->count(); i++) {
+					StackItem *now = top->at(i);
+					topVisiting = i;
 
-						State *s = table->state(now->state);
+					State *s = table->state(now->state);
 
-						ActorEnv env = {
-							s,
-							now,
-							true,
-						};
+					ActorEnv env = {
+						s,
+						now,
+						true,
+					};
 
-						actorReduce(env, null);
-					}
-				} while (!done);
+					actorReduce(env, null);
+				}
 			}
 
 			Nat Parser::stateCount() const {

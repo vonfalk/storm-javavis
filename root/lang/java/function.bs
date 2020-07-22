@@ -49,8 +49,7 @@ class JavaFunction extends Function {
     CodeGen code() {
         Block block(pos, Scope(scope, this));
         CodeGen gen(runOn, isMember, result);
-
-        // 
+        
         for (v in decl.formals) {
             JavaVar var(v.name.v, v.type.getType(pos), pos);
             var.var = gen.l.createParam(v.type.desc);

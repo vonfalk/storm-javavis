@@ -1,18 +1,17 @@
 public class HelloWorld {
 
-  void test(int i) {
-    print("This you should see.");
-    int x;
+  void foo(int i) {
+    i = 50;
     return;
-    print("You should not see this.");
   }
 
-    public static void main() {
-      int i;
-      i = 20;
-      int x;
-      x = i + 30;
-      test(30);
-      print("test");
-    }
+  int square(int i) {
+    i = i*i;
+    return i;
+  }
+
+  public static void main() {
+    int x = 20 + 30 * 30;
+    return;
+  }
 }

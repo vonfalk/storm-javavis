@@ -85,9 +85,9 @@ namespace storm {
 
 		MAYBE(MemberVar *) Production::createTarget(SrcPos p, TokenDecl *decl, Token *token, Nat pos, Nat &counter) {
 			Value type;
-			if (as<RegexToken>(token)) {
+			if (token->asRegex()) {
 				type = Value(SStr::stormType(engine()));
-			} else if (RuleToken *rule = as<RuleToken>(token)) {
+			} else if (RuleToken *rule = token->asRule()) {
 				type = Value(rule->rule);
 			} else {
 				throw new (this) InternalError(TO_S(this, S("Unknown subtype of Token found: ") << token));
@@ -168,7 +168,7 @@ namespace storm {
 			DelimToken *prevDelim = null;
 			for (nat i = 0; i < tokens->count(); i++) {
 				Token *token = tokens->at(i);
-				DelimToken *currentDelim = as<DelimToken>(token);
+				DelimToken *currentDelim = token->asDelim();
 
 				if (usingRep && repEnd == i)
 					outputRepEnd(to, bindings);

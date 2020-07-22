@@ -46,11 +46,13 @@ namespace storm {
 		Bool CODECALL has(const void *query);
 
 		// Check if an offset into an object is present. 'query' should point to the start of an
-		// allocation.
+		// allocation. Note: if 'query' is an array, 'offset' does not take the array header into
+		// consideration, just like RawPtr would.
 		Bool CODECALL has(const void *query, Nat offset);
 
 		// Check if a range of addresses is present. 'query' should point to the start of an
-		// allocation.
+		// allocation. Note: if 'query' is an array, 'offset' does not take the array header into
+		// consideration, just like RawPtr would.
 		Bool CODECALL has(const void *query, Nat offset, Nat size);
 
 		// Same as 'has', but generates all offsets as an array.

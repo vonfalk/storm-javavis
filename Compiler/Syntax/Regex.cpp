@@ -3,6 +3,7 @@
 #include "Core/CloneEnv.h"
 #include "Core/PODArray.h"
 #include "Compiler/Exception.h"
+#include "Compiler/Type.h"
 
 namespace storm {
 	namespace syntax {
@@ -19,7 +20,6 @@ namespace storm {
 		const nat Regex::NO_MATCH = -1;
 
 		Regex::Regex(Str *pattern) {
-			states = new (pattern) Array<State>();
 			parse(pattern);
 		}
 
@@ -29,19 +29,22 @@ namespace storm {
 		}
 
 		Bool Regex::matchesEmpty() const {
-			for (Nat i = 0; i < states->count(); i++)
-				if (!states->at(i).skippable)
+			for (Nat i = 0; i < states->count; i++)
+				if (!states->v[i].skippable)
 					return false;
 			return true;
 		}
 
 		Bool Regex::operator ==(Regex o) const {
-			Nat c = states->count();
-			if (c != o.states->count())
+			if (states == o.states)
+				return true;
+
+			Nat c = states->count;
+			if (c != o.states->count)
 				return false;
 
 			for (Nat i = 0; i < c; i++) {
-				if (states->at(i) != o.states->at(i))
+				if (states->v[i] != o.states->v[i])
 					return false;
 			}
 
@@ -54,16 +57,32 @@ namespace storm {
 
 		Nat Regex::hash() const {
 			Nat r = 5381;
-			for (Nat i = 0; i < states->count(); i++)
-				r = ((r << 5) + r) + states->at(i).hash();
+			for (Nat i = 0; i < states->count; i++)
+				r = ((r << 5) + r) + states->v[i].hash();
 			return r;
 		}
 
 		void Regex::parse(Str *str) {
+			Array<State> *tmp = new (str) Array<State>();
+			Nat flags = fSimple;
+
 			nat pos = 0;
 			const wchar *s = str->c_str();
-			while (s[pos])
-				states->push(State::parse(str->engine(), s, pos));
+			while (s[pos]) {
+				tmp->push(State::parse(str->engine(), s, pos));
+				State &last = tmp->last();
+				if (flags >= fNoRepeat && (last.repeatable || last.skippable))
+					flags = fComplex;
+				if (flags >= fSimple && (last.match.count() > 1 || last.match.inverted))
+					flags = fNoRepeat;
+			}
+
+			const GcType *type = StormInfo<State>::handle(str->engine()).gcArrayType;
+			states = runtime::allocArray<State>(str->engine(), type, tmp->count());
+			for (Nat i = 0; i < tmp->count(); i++) {
+				states->v[i] = tmp->at(i);
+			}
+			states->filled = flags;
 		}
 
 		Bool Regex::match(Str *str) {
@@ -95,9 +114,23 @@ namespace storm {
 
 		Bool Regex::simple() const {
 			Bool s = true;
-			for (Nat i = 0; i < states->count(); i++)
-				s &= states->at(i).simple();
+			for (Nat i = 0; i < states->count; i++)
+				s &= states->v[i].simple();
 			return s;
+		}
+
+		MAYBE(Str *) Regex::simpleStr() const {
+			Engine &e = runtime::gcTypeOf(states)->type->engine;
+			StrBuf *r = new (e) StrBuf();
+			for (Nat i = 0; i < states->count; i++) {
+				State &state = states->v[i];
+				if (!state.simple())
+					return null;
+
+				*r << Char(wchar(state.match.first));
+			}
+
+			return r->toS();
 		}
 
 		Nat Regex::matchRaw(Str *str) const {
@@ -105,6 +138,35 @@ namespace storm {
 		}
 
 		Nat Regex::matchRaw(Str *s, Nat start) const {
+			switch (states->filled) {
+			case fSimple:
+				return matchSimple(s, start);
+			case fNoRepeat:
+				return matchNoRepeat(s, start);
+			default:
+				return matchComplex(s, start);
+			}
+		}
+
+		Nat Regex::matchSimple(Str *s, Nat start) const {
+			const wchar *str = s->c_str();
+			for (Nat i = 0; i < states->count; i++) {
+				if (wchar(states->v[i].match.first) != str[i + start])
+					return NO_MATCH;
+			}
+			return start + states->count;
+		}
+
+		Nat Regex::matchNoRepeat(Str *s, Nat start) const {
+			const wchar *str = s->c_str();
+			for (Nat i = 0; i < states->count; i++) {
+				if (!states->v[i].match.contains(str[i + start]))
+					return NO_MATCH;
+			}
+			return start + states->count;
+		}
+
+		Nat Regex::matchComplex(Str *s, Nat start) const {
 			// Pre-allocate this many entries for 'current' and 'next'.
 			const nat prealloc = 40;
 			const wchar *str = s->c_str();
@@ -122,7 +184,7 @@ namespace storm {
 
 			current->push(0);
 
-			nat stateCount = states->count();
+			nat stateCount = states->count;
 
 			// We can simply move through the source string character by character.
 			// Note: we exit when there are no more states to process. Otherwise the outer
@@ -144,7 +206,7 @@ namespace storm {
 						continue;
 					}
 
-					const State &state = states->at(stateId);
+					const State &state = states->v[stateId];
 
 					// Skip ahead?
 					if (state.skippable)
@@ -181,14 +243,15 @@ namespace storm {
 		}
 
 		wostream &operator <<(wostream &to, Regex r) {
-			StrBuf *s = new (r.states) StrBuf();
+			Engine &e = runtime::gcTypeOf(r.states)->type->engine;
+			StrBuf *s = new (e) StrBuf();
 			*s << r;
 			return to << s->toS()->c_str();
 		}
 
 		StrBuf &operator <<(StrBuf &to, Regex r) {
-			for (nat i = 0; i < r.states->count(); i++) {
-				r.states->at(i).output(&to);
+			for (nat i = 0; i < r.states->count; i++) {
+				r.states->v[i].output(&to);
 			}
 			return to;
 		}
@@ -304,6 +367,11 @@ namespace storm {
 
 			r.chars = runtime::allocArray<wchar>(e, &gcType, count);
 			storm::syntax::parseGroup(e, str, pos, r.chars);
+
+			if (count == 1) {
+				r.first = r.chars->v[0];
+				r.chars = null;
+			}
 
 			return r;
 		}
@@ -475,7 +543,7 @@ namespace storm {
 		}
 
 		Bool Regex::State::simple() const {
-			return !skippable && !repeatable && match.count() == 1;
+			return !skippable && !repeatable && !match.inverted && match.count() == 1;
 		}
 
 		Bool Regex::State::operator ==(const State &o) const {

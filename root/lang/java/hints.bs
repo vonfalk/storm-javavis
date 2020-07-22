@@ -6,7 +6,7 @@ progvis:Hints hints() {
     progvis:Hints(JavaCodeHints());
 }
 
-class JavaCodeHints extends progvis:CodeHints {
+class JavaCodeHints extends progvis:DefaultCodeHints {
     init() {
         init() {
         }
@@ -31,13 +31,10 @@ class JavaCodeHints extends progvis:CodeHints {
     }
 
     Bool handlesFunction(Function f) : override {
-        true;
+        if (f as JavaFunction)
+            return true;
+        false;
     }
 
     Bool patchExternal(Function fn) : override { false; }
-
-    Save saveVariable(Listing to, Var var, Listing:VarInfo info, Operand dest) : override {
-        
-        return Save:copy;
-    }
 }

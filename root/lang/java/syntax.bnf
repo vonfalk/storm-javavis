@@ -185,6 +185,7 @@ SElementArray : SElementValue - (, ",", SElementValue)*;
 // Expressions and blocks.
 Expr SExpr(Block block);
 SExpr => e : SExpr1(block) e;
+SExpr => DotOperator(pos, block, e, name) : SExpr1(block) e, "\.", SIdent name;
 //SExpr => assign(pos, block, op, var, e) : SIdent var, "=" op, SExpr1(block) e;
 SExpr => assign(pos, block, op, var, rhs) : SIdent var, SAssignOp op, SExpr1(block) rhs;
 
@@ -411,7 +412,8 @@ SBlockStmt : STypeDecl;
 SBlockStmt => block : SVarDecl(block) -> add;
 
 VarDecl SVarDecl(Block block);
-SVarDecl => VarDecl(pos, block, type, name) : SVarModifier, SType type, SIdent name #varName, ";";
+//SVarDecl => VarDecl(pos, block, type, name) : SVarModifier, SType type, SIdent name #varName, ";";
+SVarDecl => VarDecl(pos, block, type, name, in) : SVarModifier, SType type, SIdent name #varName, ("=", SExpr(block) in,)? ";";
 //SVarDecl => VarDecl(pos, block, type, name) : SVarModifier, SType type, SIdent name #varName, SVarSuffix(block) -> assign, ";";
 //SVarDecl => VarDecl(pos, block, type, name) : SVarModifier, SType type, SIdent name #varName, SVarSuffix suffix, (",", SIdent #varName, SVarSuffix,)* ";";
 

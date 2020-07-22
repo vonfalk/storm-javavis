@@ -131,8 +131,10 @@ class Return extends Expr {
         if (ret) {
             if (fn.result == Value())
                 throw SyntaxError(pos, "${fn} should not return a value, instead it returns ${ret.result}.");
+            var r = gen.l.createVar(gen.block, ret.result.size);
             ret.code(gen);
-            gen.l << fnRet(eax);
+            gen.l << mov(r, asSize(ptrA, r.size));
+            gen.l << fnRet(r);
         } else if (fn.result != Value())
             throw SyntaxError(pos, "${fn} must return a value!");
         else {

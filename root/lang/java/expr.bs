@@ -271,9 +271,11 @@ class PlusOp extends Expr {
     }
 
     Bool code(CodeGen gen) : override {
-        gen.l << mov(rbx, rax);
+        var tmp = gen.l.createVar(gen.block, sLong);
+        gen.l << mov(tmp, rax);
         e.code(gen);
-        gen.l << add(rax, rbx);
+        gen.l << add(tmp, rax);
+        gen.l << mov(rax, tmp);
         true;
     }
 
@@ -291,10 +293,33 @@ class SubOp extends Expr {
     }
 
     Bool code(CodeGen gen) : override {
-        gen.l << mov(rbx, rax);
+        var tmp = gen.l.createVar(gen.block, sLong);
+        gen.l << mov(tmp, rax);
         e.code(gen);
-        gen.l << sub(rbx, rax);
-        gen.l << mov(rax, rbx);
+        gen.l << sub(tmp, rax);
+        gen.l << mov(rax, tmp);
+        true;
+    }
+
+    Bool suggestResult(Type t) : override { return e.suggestResult(t); }
+
+    Value result() : override { e.result; }
+}
+
+class MulOp extends Expr {
+    Expr e;
+    init(SrcPos pos, Expr e) {
+        init(pos) {
+            e = e;
+        }
+    }
+
+    Bool code(CodeGen gen) : override {
+        var tmp = gen.l.createVar(gen.block, sLong);
+        gen.l << mov(tmp, rax);
+        e.code(gen);
+        gen.l << mul(tmp, rax);
+        gen.l << mov(rax, tmp);
         true;
     }
 
@@ -310,6 +335,9 @@ Expr infxOp(SrcPos pos, Block block, SStr opName, Expr e) {
     } else if (opName.v == "-") {
         SubOp op(pos, e);
         return op;
+    } else if (opName.v == "*") {
+        MulOp op(pos, e);
+        return op;
     }
     throw SyntaxError(pos, "infxOp(SrcPos, Block, SStr, Expr): could not find operator ${opName.v}.");
 }
@@ -322,4 +350,34 @@ Expr runMultiple(Block block, Expr e, Expr[] r) {
         n = n + 1;
     }
     r[n];
+}
+
+class DotOperator extends Expr {
+    Expr l;
+    Expr? r;
+    SStr name;
+    Block block;
+    
+    init(SrcPos pos, Block block, Expr l, SStr name) {
+        init(pos) {
+            block = block;
+            l = l;
+            name = name;
+        }
+        var x = rootScope;
+        SimpleName n(name.v);
+        var y = rootScope.find(n);
+        print(y.toS);
+        
+        // int.toS => toS(int)
+    }
+
+    Bool code(CodeGen gen) : override {
+
+        true;
+    }
+
+    Bool suggestResult(Type t) : override { return e.suggestResult(t); }
+
+    Value result() : override { l.result; }
 }

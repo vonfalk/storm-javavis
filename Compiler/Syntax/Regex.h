@@ -42,6 +42,9 @@ namespace storm {
 			// Is this a 'simple' regex? Ie. a regex that is basically a string literal?
 			Bool STORM_FN simple() const;
 
+			// Get the contents of the simple literal.
+			MAYBE(Str *) STORM_FN simpleStr() const;
+
 			/**
 			 * C++ api used by the parser.
 			 */
@@ -140,14 +143,36 @@ namespace storm {
 				Nat hash() const;
 			};
 
+			// Flags.
+			enum {
+				// Nothing special, use the generic matcher.
+				fComplex,
+
+				// No repeating structures.
+				fNoRepeat,
+
+				// No sets, no repeating structures, basically a simple string.
+				fSimple,
+			};
+
 			// All states.
-			Array<State> *states;
+			// We use 'filled' in here to store flags regarding the complexity of the regex.
+			GcArray<State> *states;
 
 			// Last match.
 			Str::Iter lastMatch;
 
 			// Parse a string.
 			void parse(Str *parse);
+
+			// Match a simple string.
+			Nat matchSimple(Str *str, Nat start) const;
+
+			// Match a string without repeats.
+			Nat matchNoRepeat(Str *str, Nat start) const;
+
+			// Match a complex string.
+			Nat matchComplex(Str *str, Nat start) const;
 
 			// Output friends.
 			friend StrBuf &operator <<(StrBuf &to, Regex r);

@@ -80,9 +80,10 @@ class ProgThread on Render {
 	}
 
 	// Called by a monitored thread to possible pause execution.
-	void onNewLocation(SrcPos pos, StackVar[] vars) {
+	// Returns 'false' if this event is not interesting to propagate.
+	Bool onNewLocation(SrcPos pos, StackVar[] vars) {
 		if (terminating)
-			return;
+			return false;
 
 		popFrames();
 
@@ -95,12 +96,14 @@ class ProgThread on Render {
 		}
 
 		memory.clear();
+		true;
 	}
 
 	// Called when a monitored thread is about to return.
+	// Returns 'false' if this event is not interesting to propagate.
 	void onFunctionReturn(StackVar[] vars) {
 		if (terminating)
-			return;
+			return false;
 
 		popFrames();
 
@@ -110,6 +113,7 @@ class ProgThread on Render {
 		wait();
 
 		memory.clear();
+		true;
 	}
 
 	// Called when a new function was entered.
@@ -129,12 +133,15 @@ class ProgThread on Render {
 	}
 
 	// Called when a function is about to return.
-	void onFunctionExited() {
+	// Returns 'false' if this event is not interesting to propagate.
+	Bool onFunctionExited() {
 		// print("Function ${frames.last.function} exited.");
 		if (callDepth > 0)
 			callDepth--;
 
 		popFrames();
+
+		return !terminating;
 	}
 
 	// Make the thread sleep until something else wakes it. Used to implement synchronization primitives.

@@ -15,7 +15,7 @@ class JavaVar extends Named {
 
     void create(CodeGen gen) {
         if (var == Var()) {
-            var = gen.l.createVar(gen.block, type.size, Operand(), FreeOpt:inactive);
+            var = gen.l.createVar(gen.block, Value(type).size, Operand(), FreeOpt:inactive);
         }
 
         Listing:VarInfo info(name, type, false, pos);
@@ -30,17 +30,22 @@ Type getType(Value val, SrcPos pos) on Compiler {
 }
 
 class VarDecl extends Stmt {
-    init(SrcPos pos, Block parent, Value type, SStr name) {
+    init(SrcPos pos, Block parent, Value type, SStr name, Expr? in) {
         init(pos) {
             var(name.v.toS, type.getType(pos), name.pos);
         }
+        if (in)
+            asgn = AssignOp(pos, var, in);
         parent.add(var);
     }
 
     JavaVar var;
+    AssignOp? asgn;
 
     Bool code(CodeGen gen) : override {
         gen.l << activate(var.var);
+        if (asgn)
+            asgn.code(gen);
         true;
     }
 }
