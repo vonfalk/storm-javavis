@@ -603,8 +603,10 @@
 		(cons message storm-process-message-queue))
 	(process-send-string storm-process (storm-encode message)))
     (progn
-      (setq storm-process-message-queue
-	    (cons message storm-process-message-queue))
+      ;; Don't cache "open" messages. We keep track of them anyway by re-opening all buffers later.
+      (unless (eq (first message) 'open)
+	(setq storm-process-message-queue
+	      (cons message storm-process-message-queue)))
       (storm-start))))
 
 (defun storm-query (message &optional timeout)
