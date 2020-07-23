@@ -5,7 +5,9 @@
 #include "GtkSignal.h"
 #include "Exception.h"
 
-#define WIN32_TESTDPI
+#ifdef DEBUG
+// #define WIN32_TESTDPI
+#endif
 
 namespace gui {
 

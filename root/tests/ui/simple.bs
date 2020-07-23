@@ -33,11 +33,11 @@ class SimpleDraw extends Painter {
 		init() {
 			bgBrush(red, green, Point(0, 0), Point(200, 200));
 			// bgBrush([GradientStop(0, red), GradientStop(0.5, green), GradientStop(1, blue)], 45 deg);
-			starColor = yellow;
-			solid = green;
-			textColor = blue;
+			starColor(yellow);
+			solid(green);
+			textColor(blue);
 			text = Text("Hello!", defaultFont);
-			image = graphics:loadImage(resUrl / "ui_alpha.png");
+			image(graphics:loadImage(resUrl / "ui_alpha.png"));
 		}
 		bgColor = red;
 
