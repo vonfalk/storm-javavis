@@ -296,6 +296,7 @@
 (setq storm-mode-include '(
 			   ("~/Projects/storm/External/final" . "final")
 			   ("~/Projects/storm/External/thesis" . "thesis")
+			   ("~/Projects/storm/External/present" . "present")
 			   ))
 (setq storm-mode-compile-compiler t)
 

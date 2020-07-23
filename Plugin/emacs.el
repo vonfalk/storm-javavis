@@ -531,6 +531,9 @@
   "Make sure that the background Storm process is up and running. Start it if neccessary."
   (interactive)
   (unless (storm-running-p)
+    ;; Make sure to terminate Storm gracefully along with Emacs.
+    (add-hook 'kill-emacs-hook #'storm-kill-emacs-hook)
+
     ;; TODO: Ask for missing parameters!
     (if storm-mode-compile-compiler
 	(storm-start-compile)
@@ -579,6 +582,17 @@
   "Restart the current Storm process."
   (interactive)
   (storm-stop 'storm-start))
+
+(defun storm-kill-emacs-hook ()
+  "Hook called when emacs is terminating. Attempts to terminate Storm gracefully if it is running."
+  (when storm-process
+    (storm-send '(quit))
+    ;; Wait for the process to terminate, a maximum of about 1 second.
+    (let ((start-time (current-time))
+	  (timeout 1))
+      (while (and (process-live-p storm-process)
+		  (< (float-time (time-since start-time)) 1))
+	(sleep-for 0 10)))))
 
 (defun storm-send (message &rest force)
   "Send a message to the Storm process (launching it if it is not running)."
