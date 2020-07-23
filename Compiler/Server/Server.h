@@ -59,6 +59,7 @@ namespace storm {
 			Symbol *replAvailable;
 			Symbol *replEval;
 			Symbol *runSym;
+			Symbol *reload;
 
 			// Any test state required now?
 			Test *testState;
@@ -100,6 +101,7 @@ namespace storm {
 			void onReplAvailable(SExpr *msg);
 			void onReplEval(SExpr *msg);
 			void onRun(SExpr *msg);
+			void onReload(SExpr *msg);
 
 			// Evaluate an expression on a separate UThread.
 			void CODECALL evalThread(Repl *repl, Str *expr, MAYBE(Package *) context);

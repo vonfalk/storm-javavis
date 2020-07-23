@@ -32,6 +32,7 @@ namespace storm {
 			replAvailable = c->symbol(S("repl-available"));
 			replEval = c->symbol(S("repl-eval"));
 			runSym = c->symbol(S("run"));
+			reload = c->symbol(S("reload"));
 			work = new (this) WorkQueue(this);
 			repls = new (this) Map<Str *, Repl *>();
 			chunkChars = defaultChunkChars;
@@ -128,6 +129,8 @@ namespace storm {
 				onReplEval(cell->rest);
 			} else if (*runSym == *kind) {
 				onRun(cell->rest);
+			} else if (*reload == *kind) {
+				onReload(cell->rest);
 			} else {
 				print(TO_S(this, S("Unknown message: ") << msg));
 			}
@@ -799,6 +802,62 @@ namespace storm {
 			if (expr) {
 				Lock::Guard z(lock);
 				conn->send(expr);
+			}
+		}
+
+		void Server::onReload(SExpr *expr) {
+			typedef Map<Url *, PkgFiles *> PkgMap;
+			PkgMap *toReload = new (this) Map<Url *, PkgFiles *>();
+
+			while (expr) {
+				SExpr *form = next(expr);
+				Url *file = null;
+				if (Number *num = ::as<Number>(form)) {
+					// TODO: In this case we want to extract the contents from the actual buffer!
+					// This can be done quite conveniently using a custom protocol for the URL.
+					TODO(L"Use the contents of the buffer rather than the file!");
+					file = files->get(num->v)->url();
+				} else if (String *str = ::as<String>(form)) {
+					file = parsePath(str->v);
+				} else {
+					continue;
+				}
+
+				Url *path = file;
+				if (!file->dir())
+					path = file->parent();
+
+				if (PkgFiles *f = toReload->get(path, null)) {
+					f->files->push(file);
+				} else {
+					f = new (this) PkgFiles();
+					f->files->push(file);
+					toReload->put(path, f);
+				}
+			}
+
+			for (PkgMap::Iter i = toReload->begin(), end = toReload->end(); i != end; ++i) {
+				Package *pkg = engine().package(i.k());
+				Array<Url *> *files = i.v()->files;
+				if (!pkg) {
+					StrBuf *msg = new (this) StrBuf();
+					*msg << S("Warning: No package found for the directory ") << i.k()
+						 << S(". Cannot reload the following files:");
+					for (Nat j = 0; j < files->count(); j++)
+						*msg << S("\n  ") << files->at(j);
+					print(msg->toS());
+					continue;
+				}
+
+				Bool dir = false;
+				for (Nat i = 0; i < files->count(); i++)
+					if (files->at(i)->dir())
+						dir = true;
+
+				if (dir)
+					pkg->reload();
+				else
+					pkg->reload(i.v()->files);
 			}
 		}
 

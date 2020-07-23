@@ -47,9 +47,15 @@ namespace storm {
 		// Output.
 		virtual void STORM_FN toS(StrBuf *to) const;
 
+		// Reload all files in the current package.
+		void STORM_FN reload();
+
+		// Reload source code from files. All files are assumed to be located in the current package.
+		void STORM_FN reload(Array<Url *> *files);
+
 	private:
 		// Our path. Points tu null if we're a virtual package.
-		Url *pkgPath;
+		MAYBE(Url *) pkgPath;
 
 		// Shall we emit 'discardSource' messages on load?
 		Bool discardOnLoad;

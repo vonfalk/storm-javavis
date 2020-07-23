@@ -312,6 +312,19 @@
   "Called when we received the result from an earlier run command."
   (storm-on-eval params))
 
+(defun storm-reload ()
+  "Reload the current buffer. If it is in storm-mode, reload with the current contents, otherwise ask to save first."
+  (interactive)
+  (let ((id storm-buffer-id))
+    (unless id
+      (when (and (buffer-modified-p)
+		 (not (y-or-n-p "Buffer is not saved. Save? ")))
+	(error "Cannot reload file without saving it first."))
+      (save-buffer)
+      (setq id (buffer-file-name)))
+
+    (storm-send (list 'reload id))))
+
 ;; Convenience for highlighting.
 
 (defun storm-set-color (from to face)

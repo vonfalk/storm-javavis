@@ -214,6 +214,23 @@ namespace storm {
 		return r;
 	}
 
+	void Package::reload() {
+		if (!pkgPath)
+			return;
+
+		Array<Url *> *files = new (this) Array<Url *>();
+		Array<Url *> *all = pkgPath->children();
+		for (Nat i = 0; i < all->count(); i++)
+			if (!all->at(i)->dir())
+				files->push(all->at(i));
+
+		reload(files);
+	}
+
+	void Package::reload(Array<Url *> *files) {
+		TODO(L"Reload " << files);
+	}
+
 	/**
 	 * Documentation
 	 */

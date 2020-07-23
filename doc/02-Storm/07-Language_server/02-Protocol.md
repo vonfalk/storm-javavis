@@ -212,7 +212,8 @@ Messages sent from the text editor to the language server:
 * `(run file pos)`: Find the function closest to `pos` in the file and attempt to execute it.
   This is only possible if the function does not require any parameters.  `file` is either a
   file name or the ID of a previously opened file.
-* `(reload file)`: Re-loads the specified file in the compiler process.
+* `(reload file...)`: Re-loads the specified file(s) in the compiler process. If 'file' is a directory
+  then all files in that directory are reloaded.
 
 Messages sent from the language server to the text editor:
 
