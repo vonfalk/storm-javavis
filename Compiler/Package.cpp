@@ -224,11 +224,15 @@ namespace storm {
 			if (!all->at(i)->dir())
 				files->push(all->at(i));
 
-		reload(files);
+		reload(files, true);
 	}
 
 	void Package::reload(Array<Url *> *files) {
-		TODO(L"Reload " << files);
+		reload(files, false);
+	}
+
+	void Package::reload(Array<Url *> *files, Bool complete) {
+		TODO(L"Reload " << files << L", " << complete);
 	}
 
 	/**

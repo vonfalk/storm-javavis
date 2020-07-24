@@ -850,14 +850,14 @@ namespace storm {
 				}
 
 				Bool dir = false;
-				for (Nat i = 0; i < files->count(); i++)
-					if (files->at(i)->dir())
+				for (Nat j = 0; j < files->count(); j++)
+					if (files->at(j)->dir())
 						dir = true;
 
 				if (dir)
 					pkg->reload();
 				else
-					pkg->reload(i.v()->files);
+					pkg->reload(i.v()->files, false);
 			}
 		}
 

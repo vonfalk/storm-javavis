@@ -50,8 +50,19 @@ namespace storm {
 		// Reload all files in the current package.
 		void STORM_FN reload();
 
-		// Reload source code from files. All files are assumed to be located in the current package.
+		// Reload source code from a subset of source files. 'files' is a list of the files that
+		// shall be examined, and all of them are assumed to be located in the current package. Any
+		// files not in 'files' are assumed to be unchanged, and their contents will remain
+		// untouched. Does not handle removals of source code, use 'reload(Array<Url>, Bool)' for that.
 		void STORM_FN reload(Array<Url *> *files);
+
+		// Reload source code from a subset of source files. 'files' is a list of the files that
+		// shall be examined, and all of them are assumed to be located in the current package. Any
+		// files not in 'files' are assumed to be unchanged, and their contents will remain
+		// untouched. If 'complete' is true, then 'files' are assumed to contain all files (not
+		// directories) in the current package. Thus, any files not in 'files' are assumed to have
+		// been removed.
+		void STORM_FN reload(Array<Url *> *files, Bool complete);
 
 	private:
 		// Our path. Points tu null if we're a virtual package.

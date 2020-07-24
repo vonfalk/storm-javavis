@@ -312,18 +312,49 @@
   "Called when we received the result from an earlier run command."
   (storm-on-eval params))
 
-(defun storm-reload ()
+(defun storm-reload-current ()
   "Reload the current buffer. If it is in storm-mode, reload with the current contents, otherwise ask to save first."
   (interactive)
-  (let ((id storm-buffer-id))
-    (unless id
-      (when (and (buffer-modified-p)
-		 (not (y-or-n-p "Buffer is not saved. Save? ")))
-	(error "Cannot reload file without saving it first."))
-      (save-buffer)
-      (setq id (buffer-file-name)))
+  (storm-reload-buffer (current-buffer)))
 
-    (storm-send (list 'reload id))))
+(defun storm-reload-package ()
+  "Reload all files in the current package. This does not use the cached values in storm-mode buffers, so it will save all buffers."
+  (interactive)
+  (let ((path (file-name-directory (buffer-file-name)))
+	(buffers '()))
+
+    ;; Save relevant buffers.
+    (save-some-buffers nil
+		       (lambda ()
+			 (if (buffer-file-name)
+			   (let ((p (file-name-directory (buffer-file-name))))
+			     ;; Note: file-name-case-insensitive-p is not available until emacs 26.3. Basic string
+			     ;; compare is good enough in most cases, we will just miss some "save" prompts.
+			     (if (and (fboundp 'file-name-case-insensitive-p) (file-name-case-insensitive-p p))
+				 (string= (downcase p) (downcase path))
+			       (string= p path)))
+			   nil)))
+
+    ;; Send a message.
+    (storm-send (list 'reload path))))
+
+
+(defun storm-reload-buffer (&rest buffers)
+  "Reload all buffers given as parameters. If a buffer is in storm-mode, reload it with the current contents, otherwise ask to save it first."
+  ;; Ask if any of the buffers in 'buffers' should be saved (only if they are not in storm-mode).
+  (save-some-buffers nil
+		     (lambda ()
+		       (if storm-buffer-id
+			   nil ;; Never needs to be saved if it is in storm-mode!
+			 (seq-contains buffers (current-buffer) #'eq)))) ;; Otherwise, only save if in 'buffers'
+
+  (let ((cmd (mapcar (lambda (buffer)
+		       (with-current-buffer buffer
+			   (if storm-buffer-id
+			       storm-buffer-id
+			     (buffer-file-name))))
+		     buffers)))
+    (storm-send (cons 'reload cmd))))
 
 ;; Convenience for highlighting.
 
