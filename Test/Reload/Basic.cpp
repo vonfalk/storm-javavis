@@ -1,6 +1,7 @@
 #include "stdafx.h"
 #include "../Storm/Fn.h"
 #include "Compiler/Package.h"
+#include "Compiler/UrlWithContents.h"
 
 BEGIN_TEST_(Basic, Reload) {
 	Engine &e = gEngine();
@@ -8,12 +9,11 @@ BEGIN_TEST_(Basic, Reload) {
 	CHECK_EQ(runFn<Int>(S("tests.reload.testRoot"), 1), 2);
 
 	Package *reload = e.package(S("tests.reload"));
-	Url *url = reload->url();
-	reload->reload((*url / new (e) Str(S("later")))->children());
+	Url *url = (*reload->url() / new (e) Str(S("a.bs")));
 
-	CHECK_EQ(runFn<Int>(S("tests.reload.testRoot"), 1), 2);
-	CHECK_EQ(runFn<Int>(S("tests.reload.testB"), 1), 3);
+	const wchar *replace = S("Int testA(Int x) { x + 2; }");
+	reload->reload(new (e) UrlWithContents(url, new (e) Str(replace)));
 
-	TODO(L"Use a fake file (similar to the one needed by the language server) to test changing files as well!");
+	CHECK_EQ(runFn<Int>(S("tests.reload.testRoot"), 1), 3);
 
 } END_TEST

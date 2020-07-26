@@ -304,6 +304,10 @@ namespace storm {
 		reload(files, true);
 	}
 
+	void Package::reload(Url *file) {
+		reload(new (this) Array<Url *>(file));
+	}
+
 	void Package::reload(Array<Url *> *files) {
 		reload(files, false);
 	}

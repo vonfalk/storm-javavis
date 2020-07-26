@@ -1,0 +1,3 @@
+Int testA(Int x) {
+	x + 1;
+}

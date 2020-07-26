@@ -111,8 +111,9 @@ namespace storm {
 	}
 
 	Bool Url::operator ==(const Url &o) const {
-		if (!sameType(this, &o))
-			return false;
+		// Note: We don't do this since we want to be able to make extensions to URL:s at times.
+		// if (!sameType(this, &o))
+		// 	return false;
 
 		if (protocol && o.protocol) {
 			if (*protocol != *o.protocol)

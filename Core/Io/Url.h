@@ -120,10 +120,10 @@ namespace storm {
 		Array<Url *> *STORM_FN children();
 
 		// Open this Url for reading.
-		IStream *STORM_FN read();
+		virtual IStream *STORM_FN read();
 
 		// Open this Url for writing.
-		OStream *STORM_FN write();
+		virtual OStream *STORM_FN write();
 
 		// Does this Url exist?
 		Bool STORM_FN exists();

@@ -69,6 +69,9 @@ namespace storm {
 		// Reload all files in the current package.
 		void STORM_FN reload();
 
+		// Reload a single file. Convenient wrapper over the array version.
+		void STORM_FN reload(Url *file);
+
 		// Reload source code from a subset of source files. 'files' is a list of the files that
 		// shall be examined, and all of them are assumed to be located in the current package. Any
 		// files not in 'files' are assumed to be unchanged, and their contents will remain

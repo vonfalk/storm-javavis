@@ -1,3 +1,0 @@
-Int testB(Int x) {
-	x + 2;
-}
