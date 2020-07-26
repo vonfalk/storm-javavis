@@ -571,7 +571,7 @@ namespace storm {
 		if (Type *parent = super()) {
 			TypeDesc *desc = parent->typeDesc();
 			if (SimpleDesc *s = as<SimpleDesc>(desc))
-				merge(Offset(), pos, into, s);
+				storm::merge(Offset(), pos, into, s);
 			else
 				throw new (this) TypedefError(this->pos,
 											S("Can not produce a SimpleDesc when the parent type is not a simple type!"));
@@ -597,7 +597,7 @@ namespace storm {
 					into->at(pos) = p->v.move(offset);
 				pos++;
 			} else if (SimpleDesc *s = as<SimpleDesc>(original)) {
-				merge(offset, pos, into, s);
+				storm::merge(offset, pos, into, s);
 			} else if (ComplexDesc *c = as<ComplexDesc>(original)) {
 				UNUSED(c);
 				throw new (this) TypedefError(this->pos,

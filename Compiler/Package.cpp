@@ -9,9 +9,9 @@
 
 namespace storm {
 
-	Package::Package(Str *name) : NameSet(name), discardOnLoad(true) {}
+	Package::Package(Str *name) : NameSet(name), pkgPath(null), loading(null), discardOnLoad(true) {}
 
-	Package::Package(Url *path) : NameSet(path->name()), pkgPath(path), discardOnLoad(true) {
+	Package::Package(Url *path) : NameSet(path->name()), pkgPath(path), loading(null), discardOnLoad(true) {
 		engine().pkgMap()->put(pkgPath, this);
 
 		documentation = new (this) PackageDoc(this);
@@ -53,6 +53,77 @@ namespace storm {
 
 		if (!documentation)
 			documentation = new (this) PackageDoc(this);
+	}
+
+	Bool Package::has(Named *item) {
+		if (loading && loading->has(item))
+			return true;
+
+		return NameSet::has(item);
+	}
+
+	void Package::add(Named *item) {
+		if (loading) {
+			// If we should not allow duplicates, check for duplicates with ourself first. If this
+			// would be a duplicate, try to add it to ourself to generate a suitable error message
+			// (we know that 'add' will throw in this case).
+			if (!loadingAllowDuplicates && NameSet::has(item))
+				NameSet::add(item);
+
+			loading->add(item);
+			item->parentLookup = this;
+		} else {
+			NameSet::add(item);
+		}
+	}
+
+	void Package::add(Template *item) {
+		if (loading) {
+			// We cannot really check for duplicates for templates.
+			loading->add(item);
+		} else {
+			NameSet::add(item);
+		}
+	}
+
+	Bool Package::remove(Named *item) {
+		if (loading) {
+			if (loading->remove(item))
+				return true;
+		}
+
+		return NameSet::remove(item);
+	}
+
+	Bool Package::remove(Template *item) {
+		if (loading) {
+			if (loading->remove(item))
+				return true;
+		}
+
+		return NameSet::remove(item);
+	}
+
+	MAYBE(Named *) Package::find(SimplePart *part, Scope source) {
+		if (loading)
+			if (Named *found = loading->find(part, source))
+				return found;
+
+		return NameSet::find(part, source);
+	}
+
+	NameSet::Iter Package::begin() const {
+		if (loading)
+			return NameSet::begin(loading);
+		else
+			return NameSet::begin();
+	}
+
+	NameSet::Iter Package::end() const {
+		if (loading)
+			return loading->end();
+		else
+			return NameSet::end();
 	}
 
 	Bool Package::loadName(SimplePart *part) {
@@ -143,10 +214,9 @@ namespace storm {
 	}
 
 	void Package::loadFiles(Array<Url *> *files) {
-		// TODO: Remember previous contents if things go wrong...
-		// Array<Named *> *prev = new (this) Array<Named *>();
-		// for (Iter i = begin(), to = end(); i != to; ++i)
-		// 	prev->push(i.v());
+		// Load everything into a separate NameSet so that we can easily roll back in case of problems.
+		loading = new (this) NameSet(name, params);
+		loadingAllowDuplicates = false;
 
 		try {
 			Map<SimpleName *, PkgFiles *> *readers = readerName(files);
@@ -155,12 +225,17 @@ namespace storm {
 			// Load everything!
 			read(load);
 
+			// All is well, merge with ourselves...
+			NameSet::merge(loading);
+			loading = null;
+
 			// Ask functions to discard their sources.
 			if (discardOnLoad)
 				NameSet::discardSource();
 
 		} catch (...) {
-			TODO(L"Try to restore!");
+			// Discard the partially loaded results.
+			loading = null;
 			throw;
 		}
 	}

@@ -28,6 +28,9 @@ namespace storm {
 		Named *STORM_FN operator [](Nat id) const;
 		Named *at(Nat id) const;
 
+		// Check if an element is in here.
+		Bool STORM_FN has(Named *item);
+
 		// Add an element.
 		void STORM_FN add(Named *item);
 
@@ -39,6 +42,9 @@ namespace storm {
 
 		// Remove a template. Returns true on success.
 		Bool STORM_FN remove(Template *item);
+
+		// Merge from another NameOverloads.
+		void STORM_FN merge(NameOverloads *from);
 
 		// Generate from a template and adds it to this overloads object.
 		// TODO: More care should be taking when dealing with templates and overload resolution!
@@ -84,6 +90,10 @@ namespace storm {
 		STORM_CTOR NameSet(Str *name);
 		STORM_CTOR NameSet(Str *name, Array<Value> *params);
 
+		// Check if this name set has a Named with the exact parameters as the provided
+		// entity. I.e., would it be possible to store 'item' here without issues?
+		virtual Bool STORM_FN has(Named *item) const;
+
 		// Add a named object.
 		virtual void STORM_FN add(Named *item);
 
@@ -91,10 +101,10 @@ namespace storm {
 		virtual void STORM_FN add(Template *item);
 
 		// Remove a named object from here.
-		virtual void STORM_FN remove(Named *item);
+		virtual Bool STORM_FN remove(Named *item);
 
 		// Remove a template from here.
-		virtual void STORM_FN remove(Template *item);
+		virtual Bool STORM_FN remove(Template *item);
 
 		// Get an anonymous name for this NameSet.
 		virtual Str *STORM_FN anonName();
@@ -148,11 +158,14 @@ namespace storm {
 
 		private:
 			// Create an iterator to the start.
-			Iter(Map<Str *, NameOverloads *> *c);
+			Iter(Map<Str *, NameOverloads *> *c, NameSet *next);
 
 			// Current position in the map.
 			typedef Map<Str *, NameOverloads *>::Iter MapIter;
 			UNKNOWN(MapBase::Iter) MapIter name;
+
+			// Next NameSet to visit (if any).
+			MAYBE(NameSet *) nextSet;
 
 			// Current position in NameOverloads at 'pos'.
 			Nat pos;
@@ -162,8 +175,8 @@ namespace storm {
 		};
 
 		// Get iterators to the begin and end of the contents.
-		Iter STORM_FN begin() const;
-		Iter STORM_FN end() const;
+		virtual Iter STORM_FN begin() const;
+		virtual Iter STORM_FN end() const;
 
 		// Get all overloads for a specific name.
 		Array<Named *> *STORM_FN findName(Str *name) const;
@@ -192,6 +205,12 @@ namespace storm {
 
 		// Find a named here without bothering with lazy-loading.
 		MAYBE(Named *) STORM_FN tryFind(SimplePart *part, Scope source);
+
+		// Import entities from another NameSet.
+		void STORM_FN merge(NameSet *from);
+
+		// Get an iterator that visits another name set after the current one.
+		Iter STORM_FN begin(NameSet *after) const;
 
 	private:
 		// Overloads.

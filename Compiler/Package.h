@@ -34,6 +34,25 @@ namespace storm {
 		// Set url. Only done by Engine during startup and is therefore not exposed to storm.
 		void setUrl(Url *to);
 
+		// Check for exact matches.
+		virtual Bool STORM_FN has(Named *item);
+
+		// Add elements and templates.
+		virtual void STORM_FN add(Named *item);
+		virtual void STORM_FN add(Template *item);
+
+		// Remove items and templates.
+		virtual Bool STORM_FN remove(Named *item);
+		virtual Bool STORM_FN remove(Template *item);
+
+		// Find an element.
+		virtual MAYBE(Named *) STORM_FN find(SimplePart *part, Scope source);
+		using NameSet::find;
+
+		// Get iterators to the begin and end of the contents.
+		virtual NameSet::Iter STORM_FN begin() const;
+		virtual NameSet::Iter STORM_FN end() const;
+
 		// Lazy-loading.
 		virtual Bool STORM_FN loadName(SimplePart *part);
 		virtual Bool STORM_FN loadAll();
@@ -67,6 +86,16 @@ namespace storm {
 	private:
 		// Our path. Points tu null if we're a virtual package.
 		MAYBE(Url *) pkgPath;
+
+		// NameSet we're using as a temporary storage for currently loading entities during a load
+		// or a reload operation. Whenever non-null, new entities are added to this name set instead
+		// of the package itself, and name queries are resolved against 'loading' if able and then
+		// against the package. If 'loadingAllowDuplicates' is false, we check for duplicates before
+		// adding to 'loading'.
+		MAYBE(NameSet *) loading;
+
+		// Allow duplicates when adding entities to 'loading'?
+		Bool loadingAllowDuplicates;
 
 		// Shall we emit 'discardSource' messages on load?
 		Bool discardOnLoad;
