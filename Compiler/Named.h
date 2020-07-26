@@ -131,6 +131,15 @@ namespace storm {
 		// Force compilation of this named (and any sub-objects contained in here).
 		virtual void STORM_FN compile();
 
+		// Check to see if this entity is able to replace 'replace'. Throws an appropriate error
+		// message on failure. Whenever this function succeeds, it shall be safe to call 'replace'
+		// and assume that everything will go smoothly.
+		virtual void STORM_FN checkReplace(Named *replace);
+
+		// Make this entity replace 'replace'. If 'checkReplace' did not throw any errors, this
+		// shall succeed without issues.
+		virtual void STORM_FN replace(Named *replace);
+
 		// Discard any source code for functions in here.
 		virtual void STORM_FN discardSource();
 

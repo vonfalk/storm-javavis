@@ -4,6 +4,7 @@
 #include "Core/Str.h"
 #include "Core/StrBuf.h"
 #include "Name.h"
+#include "Exception.h"
 
 namespace storm {
 
@@ -159,6 +160,17 @@ namespace storm {
 	void Named::notifyRemoved(NameSet *to, Named *added) {}
 
 	void Named::compile() {}
+
+	void Named::checkReplace(Named *) {
+		StrBuf *msg = new (this) StrBuf();
+		*msg << S("Reloading not implemented for entities of type ")
+			 << runtime::typeOf(this)->identifier();
+		throw new (this) ReloadError(pos, msg->toS());
+	}
+
+	void Named::replace(Named *replace) {
+		checkReplace(replace);
+	}
 
 	void Named::discardSource() {}
 

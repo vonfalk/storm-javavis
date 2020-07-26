@@ -2,7 +2,9 @@
 #include "Package.h"
 #include "Core/StrBuf.h"
 #include "Core/Str.h"
+#include "Core/Set.h"
 #include "Core/Io/Text.h"
+#include "Gc/ObjMap.h"
 #include "Engine.h"
 #include "Reader.h"
 #include "Exception.h"
@@ -306,8 +308,117 @@ namespace storm {
 		reload(files, false);
 	}
 
+	// Context for diffing entities during a reload.
+	class ReloadContext : public NameDiff {
+	public:
+		ReloadContext(Array<Url *> *files, Bool complete) : update(files->engine().gc) {
+			removeItems = new (files) Array<Named *>();
+			removeTemplates = new (files) Array<Template *>();
+			this->files = new (files) Set<Url *>();
+
+			for (Nat i = 0; i < files->count(); i++)
+				this->files->put(files->at(i));
+		}
+
+		// We don't need to worry about new things.
+		virtual void added(Named *item) { PLN(L"New item: " << item); }
+		virtual void added(Template *) {}
+
+		// Old things, we just need to keep track of, so that we can remove them later.
+		virtual void removed(Named *item) {
+			if (handled(item->pos))
+				removeItems->push(item);
+		}
+		virtual void removed(Template *item) {
+			TODO(L"Handle templates(generators)! (they don't have a position)");
+			removeTemplates->push(item);
+		}
+
+		virtual void changed(Named *old, Named *changed) {
+			if (!handled(old->pos)) {
+				// We have a duplicate definition!
+				throw new (old) TypedefError(
+					changed->pos,
+					TO_S(old, changed << S(" is already defined at:\n@") << old->pos << S(": here")));
+			}
+
+			// Sanity-check the replacement now.
+			changed->checkReplace(old);
+
+			// We need to remove the old definition.
+			removeItems->push(old);
+			update.put(old, changed);
+		}
+
+		// Things we need to remove from the package before merging.
+		Array<Named *> *removeItems;
+		Array<Template *> *removeTemplates;
+
+		// Things to update. "old" -> "new".
+		ObjMap<Named> update;
+
+		// Files we're examining. If null, we examine all files.
+		Set<Url *> *files;
+
+		// Is a particular entity handled by us? I.e., shall we treat it as if it exists?
+		Bool handled(SrcPos pos) {
+			if (!pos.file)
+				return false;
+
+			return !files || files->has(pos.file);
+		}
+	};
+
 	void Package::reload(Array<Url *> *files, Bool complete) {
-		TODO(L"Reload " << files << L", " << complete);
+		loading = new (this) NameSet(name, params);
+		loadingAllowDuplicates = true;
+
+		ReloadContext context(files, complete);
+
+		try {
+			// This part is very similar to 'loadFiles'.
+			Map<SimpleName *, PkgFiles *> *readers = readerName(files);
+			Array<PkgReader *> *load = createReaders(readers);
+
+			read(load);
+
+			// Now, try to merge all entities inside 'loading', populating the 'context' variable
+			// with what to do after performing some sanity checks of the update operations.
+			NameSet::diff(loading, context);
+		} catch (...) {
+			// Discard the partially loaded results.
+			loading = null;
+			throw;
+		}
+
+		try {
+			// Once this process is started, we can't roll it back anymore, so keep going as far as
+			// possible, regardless of whether certain steps fail or not.
+			for (Nat i = 0; i < context.update.count(); i++)
+				context.update[i].to->replace(context.update[i].from);
+
+			// Remove items to make the merge go smootly.
+			for (Nat i = 0; i < context.removeItems->count(); i++)
+				NameSet::remove(context.removeItems->at(i));
+			for (Nat i = 0; i < context.removeTemplates->count(); i++)
+				NameSet::remove(context.removeTemplates->at(i));
+
+			// Now, we're done. We have resolved all conflicts, so now it is safe to merge the two
+			// NameSets.
+			NameSet::merge(loading);
+			loading = null;
+
+			TODO(L"Here we need to stop all threads, and update our heap.");
+			// In particular, we need to:
+			// - replace all occurrences of the old entities with the new ones (at least for types).
+			// - modify the layout of any types requiring that.
+		} catch (...) {
+			// This indicates an internal error while merging. We will most likely not be able to
+			// recover from this gracefully.
+			TODO(L"How can we recover here?");
+			loading = null;
+			throw;
+		}
 	}
 
 	/**

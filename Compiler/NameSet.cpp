@@ -52,7 +52,7 @@ namespace storm {
 			if (storm::equals(item->params, items->at(i)->params)) {
 				throw new (this) TypedefError(
 					item->pos,
-					TO_S(engine(), item << S(" is already defined as ") << items->at(i)->identifier()));
+					TO_S(engine(), item << S(" is already defined at:\n@") << items->at(i)->pos << S(": here")));
 			}
 		}
 
@@ -96,7 +96,7 @@ namespace storm {
 				if (storm::equals(add->params, items->at(j)->params)) {
 					throw new (this) TypedefError(
 						add->pos,
-						TO_S(engine(), add << S(" is already defined as ") << items->at(j)->identifier()));
+						TO_S(engine(), add << S(" is already defined at:\n@") << items->at(j)->pos << S(": here")));
 				}
 			}
 		}
@@ -106,6 +106,54 @@ namespace storm {
 
 		for (Nat i = 0; i < from->items->count(); i++)
 			items->push(from->items->at(i));
+	}
+
+	void NameOverloads::diff(NameOverloads *with, NameDiff &callback) {
+		Array<Bool> *used = new (this) Array<Bool>(with->items->count(), false);
+		for (Nat i = 0; i < items->count(); i++) {
+			Bool found = false;
+			Named *here = items->at(i);
+			for (Nat j = 0; j < with->items->count(); j++) {
+				if (used->at(j))
+					continue;
+
+				Named *other = with->items->at(j);
+				if (storm::equals(here->params, other->params)) {
+					found = true;
+					used->at(j) = true;
+					callback.changed(here, other);
+					break;
+				}
+			}
+
+			if (!found)
+				callback.removed(here);
+		}
+
+		for (Nat j = 0; j < with->items->count(); j++) {
+			if (!used->at(j))
+				callback.added(with->items->at(j));
+		}
+	}
+
+	void NameOverloads::diffAdded(NameDiff &callback) {
+		for (Nat i = 0; i < items->count(); i++)
+			callback.added(items->at(i));
+	}
+
+	void NameOverloads::diffRemoved(NameDiff &callback) {
+		for (Nat i = 0; i < items->count(); i++)
+			callback.removed(items->at(i));
+	}
+
+	void NameOverloads::diffTemplatesAdded(NameDiff &callback) {
+		for (Nat i = 0; i < templates->count(); i++)
+			callback.added(templates->at(i));
+	}
+
+	void NameOverloads::diffTemplatesRemoved(NameDiff &callback) {
+		for (Nat i = 0; i < templates->count(); i++)
+			callback.removed(templates->at(i));
 	}
 
 	Named *NameOverloads::createTemplate(NameSet *owner, SimplePart *part) {
@@ -349,6 +397,40 @@ namespace storm {
 
 		for (Overloads::Iter i = from->overloads->begin(), end = from->overloads->end(); i != end; ++i) {
 			overloads->at(i.k())->merge(i.v());
+		}
+	}
+
+	void NameSet::diff(NameSet *with, NameDiff &callback) {
+		if (!overloads && !with->overloads) {
+			// Nothing to do.
+		} else if (!overloads) {
+			// All entities were added.
+			for (Overloads::Iter i = with->overloads->begin(), end = with->overloads->end(); i != end; ++i) {
+				i.v()->diffAdded(callback);
+				i.v()->diffTemplatesAdded(callback);
+			}
+		} else if (!with->overloads) {
+			// All entities were removed.
+			for (Overloads::Iter i = overloads->begin(), end = overloads->end(); i != end; ++i) {
+				i.v()->diffRemoved(callback);
+				i.v()->diffTemplatesRemoved(callback);
+			}
+		} else {
+			Overloads::Iter end; // The 'end' iterator is always the same.
+
+			for (Overloads::Iter i = overloads->begin(); i != end; ++i) {
+				if (NameOverloads *o = with->overloads->get(i.k(), null))
+					i.v()->diff(o, callback);
+				else
+					i.v()->diffRemoved(callback);
+				i.v()->diffTemplatesRemoved(callback);
+			}
+
+			for (Overloads::Iter i = with->overloads->begin(); i != end; ++i) {
+				if (!overloads->has(i.k()))
+					i.v()->diffAdded(callback);
+				i.v()->diffTemplatesAdded(callback);
+			}
 		}
 	}
 

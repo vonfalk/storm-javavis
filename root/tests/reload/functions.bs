@@ -1,0 +1,7 @@
+Int testRoot(Int x) {
+	testA(x);
+}
+
+Int testA(Int x) {
+	x + 1;
+}

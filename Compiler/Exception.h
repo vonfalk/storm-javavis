@@ -167,6 +167,24 @@ namespace storm {
 
 
 	/**
+	 * Error reloading/replacing an entity.
+	 */
+	class EXCEPTION_EXPORT ReloadError : public CodeError {
+		STORM_EXCEPTION;
+	public:
+		ReloadError(SrcPos pos, const wchar *msg);
+		STORM_CTOR ReloadError(SrcPos pos, Str *msg);
+
+		virtual void STORM_FN messageText(StrBuf *to) const {
+			*to << S("Reload error: ") << msg;
+		}
+
+	private:
+		Str *msg;
+	};
+
+
+	/**
 	 * Error while handling built-in functions.
 	 */
 	class EXCEPTION_EXPORT BuiltInError : public CompilerError {

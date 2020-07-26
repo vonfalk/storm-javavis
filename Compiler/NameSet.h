@@ -10,6 +10,26 @@ namespace storm {
 	class NameSet;
 
 	/**
+	 * Interface receiving differences between two NameSets.
+	 *
+	 * Not intended to be used from Storm; only intended for reload internals.
+	 */
+	class NameDiff {
+	public:
+		// Called for each entity that was added.
+		virtual void added(Named *item) = 0;
+		virtual void added(Template *item) = 0;
+
+		// Called for each entity that was removed.
+		virtual void removed(Named *item) = 0;
+		virtual void removed(Template *item) = 0;
+
+		// Called for each entity that exists in both versions. Note: We can't diff templates, so
+		// they are never treated as being 'equal'.
+		virtual void changed(Named *old, Named *changed) = 0;
+	};
+
+	/**
 	 * A set of named objects, all with the same name but with different parameters.
 	 */
 	class NameOverloads : public ObjectOn<Compiler> {
@@ -45,6 +65,13 @@ namespace storm {
 
 		// Merge from another NameOverloads.
 		void STORM_FN merge(NameOverloads *from);
+
+		// Diff in various situations.
+		void diff(NameOverloads *with, NameDiff &callback);
+		void diffAdded(NameDiff &callback);
+		void diffRemoved(NameDiff &callback);
+		void diffTemplatesAdded(NameDiff &callback);
+		void diffTemplatesRemoved(NameDiff &callback);
 
 		// Generate from a template and adds it to this overloads object.
 		// TODO: More care should be taking when dealing with templates and overload resolution!
@@ -206,11 +233,14 @@ namespace storm {
 		// Find a named here without bothering with lazy-loading.
 		MAYBE(Named *) STORM_FN tryFind(SimplePart *part, Scope source);
 
+		// Get an iterator that visits another name set after the current one.
+		Iter STORM_FN begin(NameSet *after) const;
+
 		// Import entities from another NameSet.
 		void STORM_FN merge(NameSet *from);
 
-		// Get an iterator that visits another name set after the current one.
-		Iter STORM_FN begin(NameSet *after) const;
+		// Find differences between two NameSets. For terminology, assumes that 'with' is the "new" version.
+		void diff(NameSet *with, NameDiff &callback);
 
 	private:
 		// Overloads.
