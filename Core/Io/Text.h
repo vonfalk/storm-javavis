@@ -47,7 +47,7 @@ namespace storm {
 	 * sometimes.
 	 */
 	class TextInput : public Object {
-		STORM_CLASS;
+		STORM_ABSTRACT_CLASS;
 	public:
 		// Create.
 		STORM_CTOR TextInput();
@@ -78,7 +78,7 @@ namespace storm {
 
 	protected:
 		// Override in derived readers, read one character.
-		virtual Char STORM_FN readChar();
+		virtual Char STORM_FN readChar() ABSTRACT;
 
 	private:
 		// Cached code point. 0 if at end of stream.
@@ -114,7 +114,7 @@ namespace storm {
 	 * override 'writeChar' and 'flush' to write a code point in UTF32.
 	 */
 	class TextOutput : public Object {
-		STORM_CLASS;
+		STORM_ABSTRACT_CLASS;
 	public:
 		// Create. Output regular unix line endings (TODO: Should this be OS-dependent?)
 		STORM_CTOR TextOutput();
@@ -143,7 +143,7 @@ namespace storm {
 
 	protected:
 		// Override in derived writers. Write one character.
-		virtual void STORM_FN writeChar(Char ch);
+		virtual void STORM_FN writeChar(Char ch) ABSTRACT;
 
 	private:
 		// Text config.

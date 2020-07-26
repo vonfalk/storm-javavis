@@ -117,10 +117,6 @@ namespace storm {
 
 	void TextInput::close() {}
 
-	Char TextInput::readChar() {
-		return Char(nat(0));
-	}
-
 
 	TextInput *STORM_FN readText(IStream *stream) {
 		nat16 bom = 0;
@@ -202,8 +198,6 @@ namespace storm {
 			config.useBom = false;
 		}
 	}
-
-	void TextOutput::writeChar(Char ch) {}
 
 	void TextOutput::flush() {}
 
