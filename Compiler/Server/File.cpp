@@ -822,6 +822,10 @@ namespace storm {
 			}
 		}
 
+		Str *File::contentStr() {
+			return content(parts);
+		}
+
 
 		/**
 		 * Work items posted.

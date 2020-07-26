@@ -209,6 +209,9 @@ namespace storm {
 			// Get the file's Url.
 			Url *url() const { return path; }
 
+			// Get the content as a string.
+			Str *contentStr();
+
 		private:
 			// Path to the underlying file (so we can properly locate packages etc., we never actually read the file).
 			Url *path;

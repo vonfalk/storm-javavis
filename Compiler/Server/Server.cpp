@@ -1,6 +1,7 @@
 #include "stdafx.h"
 #include "Server.h"
 #include "Engine.h"
+#include "UrlWithContents.h"
 #include "Core/Timing.h"
 #include "Core/Variant.h"
 #include "Compiler/Lib/Fn.h"
@@ -813,10 +814,10 @@ namespace storm {
 				SExpr *form = next(expr);
 				Url *file = null;
 				if (Number *num = ::as<Number>(form)) {
-					// TODO: In this case we want to extract the contents from the actual buffer!
-					// This can be done quite conveniently using a custom protocol for the URL.
+					// Use the contents of the actual buffer.
 					TODO(L"Use the contents of the buffer rather than the file!");
-					file = files->get(num->v)->url();
+					File *f = files->get(num->v);
+					file = new (this) UrlWithContents(f->url(), f->contentStr());
 				} else if (String *str = ::as<String>(form)) {
 					file = parsePath(str->v);
 				} else {
