@@ -107,9 +107,14 @@ namespace storm {
 		// Output.
 		virtual void STORM_FN toS(StrBuf *to) const;
 
-		// Replacement.
-		virtual void STORM_FN checkReplace(Named *old);
-		virtual void STORM_FN replace(Named *old, ReplaceTasks *tasks);
+		// Check for replacement.
+		virtual MAYBE(Str *) STORM_FN canReplace(Named *old);
+
+	protected:
+		// Do replacement.
+		virtual void STORM_FN doReplace(Named *old, ReplaceTasks *tasks);
+
+	public:
 
 		/**
 		 * Code.

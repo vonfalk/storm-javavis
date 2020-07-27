@@ -169,14 +169,14 @@ namespace storm {
 	/**
 	 * Error reloading/replacing an entity.
 	 */
-	class EXCEPTION_EXPORT ReloadError : public CodeError {
+	class EXCEPTION_EXPORT ReplaceError : public CodeError {
 		STORM_EXCEPTION;
 	public:
-		ReloadError(SrcPos pos, const wchar *msg);
-		STORM_CTOR ReloadError(SrcPos pos, Str *msg);
+		ReplaceError(SrcPos pos, const wchar *msg);
+		STORM_CTOR ReplaceError(SrcPos pos, Str *msg);
 
 		virtual void STORM_FN messageText(StrBuf *to) const {
-			*to << S("Reload error: ") << msg;
+			*to << S("Replace error: ") << msg;
 		}
 
 	private:

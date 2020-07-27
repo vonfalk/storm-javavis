@@ -64,8 +64,7 @@ namespace storm {
 		Version *version;
 
 		// Replace.
-		virtual void STORM_FN checkReplace(Named *old);
-		virtual void STORM_FN replace(Named *old, ReplaceTasks *tasks);
+		virtual MAYBE(Str *) STORM_FN canReplace(Named *old);
 
 	protected:
 		virtual void STORM_FN toS(StrBuf *to) const;

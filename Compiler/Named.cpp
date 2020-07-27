@@ -161,15 +161,22 @@ namespace storm {
 
 	void Named::compile() {}
 
-	void Named::checkReplace(Named *) {
+	MAYBE(Str *) Named::canReplace(Named *) {
 		StrBuf *msg = new (this) StrBuf();
 		*msg << S("Reloading not implemented for entities of type ")
 			 << runtime::typeOf(this)->identifier();
-		throw new (this) ReloadError(pos, msg->toS());
+		return msg->toS();
 	}
 
 	void Named::replace(Named *old, ReplaceTasks *tasks) {
-		checkReplace(old);
+		if (Str *error = canReplace(old))
+			throw new (this) ReplaceError(pos, error);
+
+		doReplace(old, tasks);
+	}
+
+	void Named::doReplace(Named *, ReplaceTasks *) {
+		// Nothing.
 	}
 
 	void Named::discardSource() {}

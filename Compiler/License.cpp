@@ -18,13 +18,11 @@ namespace storm {
 		*to << title << S(" (") << author << S(")\n") << line << S("\n") << body << S("\n") << line;
 	}
 
-	void License::checkReplace(Named *old) {
+	MAYBE(Str *) License::canReplace(Named *old) {
 		if (!as<License>(old))
-			throw new (this) ReloadError(pos, S("Unable to replace a non-license with a license."));
-	}
-
-	void License::replace(Named *, ReplaceTasks *) {
-		// Nothing to do.
+			return new (this) Str(S("Unable to replace a non-license with a license."));
+		else
+			return null;
 	}
 
 	static void licenses(Array<License *> *r, Named *root) {

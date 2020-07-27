@@ -235,13 +235,11 @@ namespace storm {
 		*to << identifier() << S(": ") << version;
 	}
 
-	void VersionTag::checkReplace(Named *old) {
+	MAYBE(Str *) VersionTag::canReplace(Named *old) {
 		if (!as<VersionTag>(old))
-			throw new (this) ReloadError(pos, S("Unable to replace a non-version entity with a version entity."));
-	}
-
-	void VersionTag::replace(Named *, ReplaceTasks *) {
-		// Nothing to do.
+			return new (this) Str(S("Unable to replace a non-version entity with a version entity."));
+		else
+			return null;
 	}
 
 	static void versions(Array<VersionTag *> *r, Named *root) {

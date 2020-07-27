@@ -38,8 +38,8 @@ namespace storm {
 	TypedefError::TypedefError(SrcPos pos, const wchar *msg) : CodeError(pos), msg(new (engine()) Str(msg)) {}
 	TypedefError::TypedefError(SrcPos pos, Str *msg) : CodeError(pos), msg(msg) {}
 
-	ReloadError::ReloadError(SrcPos pos, const wchar *msg) : CodeError(pos), msg(new (engine()) Str(msg)) {}
-	ReloadError::ReloadError(SrcPos pos, Str *msg) : CodeError(pos), msg(msg) {}
+	ReplaceError::ReplaceError(SrcPos pos, const wchar *msg) : CodeError(pos), msg(new (engine()) Str(msg)) {}
+	ReplaceError::ReplaceError(SrcPos pos, Str *msg) : CodeError(pos), msg(msg) {}
 
 	InstantiationError::InstantiationError(SrcPos pos, const wchar *msg) : CodeError(pos), msg(new (engine()) Str(msg)) {}
 	InstantiationError::InstantiationError(SrcPos pos, Str *msg) : CodeError(pos), msg(msg) {}

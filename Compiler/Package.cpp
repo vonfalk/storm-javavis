@@ -347,13 +347,17 @@ namespace storm {
 			}
 
 			// Sanity-check the replacement now.
-			// TODO: We might want to allow 'checkReplace' to return 'false' to indicate that replacement
-			// is possible by simply discarding the old one (assuming it is unused) and inserting the new one.
-			// This would make us able to handle e.g. replacing a type with a function.
-			changed->checkReplace(old);
-
-			// Make the change happen.
-			update->push(NamedPair(old, changed));
+			if (Str *msg = changed->canReplace(old)) {
+				// TODO: check if it makes sense to replace the entity completely. We should at
+				// least try to invalidate some usages of the entity if we remove it!
+				PLN(L"WARNING: " << changed->pos << L": " << msg << L" Replacing the entity.");
+				// There was an issue with replacing the entity. See if we can remove the old one
+				// and insert the new one instead!
+				removeItems->push(old);
+			} else {
+				// Make the change happen.
+				update->push(NamedPair(old, changed));
+			}
 		}
 
 		// Things we need to remove from the package before merging.

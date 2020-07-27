@@ -132,14 +132,14 @@ namespace storm {
 		// Force compilation of this named (and any sub-objects contained in here).
 		virtual void STORM_FN compile();
 
-		// Check to see if this entity is able to replace 'old'. Throws an appropriate error
-		// message on failure. Whenever this function succeeds, it shall be safe to call 'replace'
-		// and assume that everything will go smoothly.
-		virtual void STORM_FN checkReplace(Named *old);
+		// See if this named entity is able to replace 'old'. If possible, null is returned. If not,
+		// a string containing an appropriate error message is returned. If this function does not
+		// return an error, it shall be safe to call 'replace' without errors.
+		virtual MAYBE(Str *) STORM_FN canReplace(Named *old);
 
-		// Make this entity replace 'old'. If 'checkReplace' did not throw any errors, this
-		// shall succeed without issues.
-		virtual void STORM_FN replace(Named *old, ReplaceTasks *tasks);
+		// Make this entity replace 'old'. If 'canReplace' did not return an error, this shall
+		// succeed without issues. Override 'doReplace' to customize the behavior of this function.
+		void STORM_FN replace(Named *old, ReplaceTasks *tasks);
 
 		// Discard any source code for functions in here.
 		virtual void STORM_FN discardSource();
@@ -149,6 +149,10 @@ namespace storm {
 
 		// Output the visibility to a string buffer.
 		void STORM_FN putVisibility(StrBuf *to) const;
+
+	protected:
+		// Called by 'replace' after verifying that 'canReplace' did not return an error.
+		virtual void STORM_FN doReplace(Named *old, ReplaceTasks *tasks);
 
 	private:
 		// Find closest named parent.
