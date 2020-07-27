@@ -6,6 +6,7 @@
 #include "Visibility.h"
 #include "Scope.h"
 #include "Doc.h"
+#include "ReplaceTasks.h"
 
 namespace storm {
 	STORM_PKG(core.lang);
@@ -131,14 +132,14 @@ namespace storm {
 		// Force compilation of this named (and any sub-objects contained in here).
 		virtual void STORM_FN compile();
 
-		// Check to see if this entity is able to replace 'replace'. Throws an appropriate error
+		// Check to see if this entity is able to replace 'old'. Throws an appropriate error
 		// message on failure. Whenever this function succeeds, it shall be safe to call 'replace'
 		// and assume that everything will go smoothly.
-		virtual void STORM_FN checkReplace(Named *replace);
+		virtual void STORM_FN checkReplace(Named *old);
 
-		// Make this entity replace 'replace'. If 'checkReplace' did not throw any errors, this
+		// Make this entity replace 'old'. If 'checkReplace' did not throw any errors, this
 		// shall succeed without issues.
-		virtual void STORM_FN replace(Named *replace);
+		virtual void STORM_FN replace(Named *old, ReplaceTasks *tasks);
 
 		// Discard any source code for functions in here.
 		virtual void STORM_FN discardSource();
@@ -156,6 +157,21 @@ namespace storm {
 		// Get a path, ignoring any parents that were not found.
 		SimpleName *safePath() const;
 		MAYBE(Named *) safeClosestNamed() const;
+	};
+
+	/**
+	 * A pair of named items. Used to remember what to update during a reload.
+	 */
+	class NamedPair {
+		STORM_VALUE;
+	public:
+		STORM_CTOR NamedPair(Named *from, Named *to) {
+			this->from = from;
+			this->to = to;
+		}
+
+		Named *from;
+		Named *to;
 	};
 
 }

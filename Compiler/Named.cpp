@@ -168,8 +168,8 @@ namespace storm {
 		throw new (this) ReloadError(pos, msg->toS());
 	}
 
-	void Named::replace(Named *replace) {
-		checkReplace(replace);
+	void Named::replace(Named *old, ReplaceTasks *tasks) {
+		checkReplace(old);
 	}
 
 	void Named::discardSource() {}

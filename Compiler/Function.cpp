@@ -112,6 +112,41 @@ namespace storm {
 		}
 	}
 
+	void Function::checkReplace(Named *old) {
+		Function *oldFn = as<Function>(old);
+		if (!oldFn)
+			throw new (this) ReloadError(pos, S("Unable to replace something that is not a function with a function."));
+
+		if (params->count() != oldFn->params->count())
+			throw new (this) ReloadError(pos, S("Cannot modify the number of formal parameters to a function."));
+		for (Nat i = 0; i < params->count(); i++)
+			if (!params->at(i).canStore(oldFn->params->at(i)))
+				throw new (this) ReloadError(pos, S("Cannot modify the types of formal parameters to incompatible types."));
+		if (!oldFn->result.canStore(result))
+			throw new (this) ReloadError(pos, S("Cannot modify the return type of a function to an incompatible type."));
+	}
+
+	void Function::replace(Named *old, ReplaceTasks *tasks) {
+		checkReplace(old);
+		Function *f = (Function *)old;
+
+		// Steal the references.
+		codeRef = f->codeRef;
+		lookupRef = f->lookupRef;
+		f->codeRef = null;
+		f->lookupRef = null;
+
+		if (f->code)
+			f->code->detach();
+		if (f->lookup)
+			f->lookup->detach();
+
+		if (code && codeRef)
+			code->update(codeRef);
+		if (lookup && lookupRef)
+			lookup->update(lookupRef);
+	}
+
 	void Function::setCode(Code *code) {
 		if (this->code)
 			this->code->detach();

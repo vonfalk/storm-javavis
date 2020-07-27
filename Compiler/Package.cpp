@@ -4,7 +4,6 @@
 #include "Core/Str.h"
 #include "Core/Set.h"
 #include "Core/Io/Text.h"
-#include "Gc/ObjMap.h"
 #include "Engine.h"
 #include "Reader.h"
 #include "Exception.h"
@@ -313,11 +312,12 @@ namespace storm {
 	}
 
 	// Context for diffing entities during a reload.
-	class ReloadContext : public NameDiff {
+	class ReloadDiff : public NameDiff {
 	public:
-		ReloadContext(Array<Url *> *files, Bool complete) : update(files->engine().gc) {
+		ReloadDiff(Array<Url *> *files, Bool complete) {
 			removeItems = new (files) Array<Named *>();
 			removeTemplates = new (files) Array<Template *>();
+			update = new (files) Array<NamedPair>();
 			this->files = new (files) Set<Url *>();
 
 			for (Nat i = 0; i < files->count(); i++)
@@ -347,11 +347,13 @@ namespace storm {
 			}
 
 			// Sanity-check the replacement now.
+			// TODO: We might want to allow 'checkReplace' to return 'false' to indicate that replacement
+			// is possible by simply discarding the old one (assuming it is unused) and inserting the new one.
+			// This would make us able to handle e.g. replacing a type with a function.
 			changed->checkReplace(old);
 
-			// We need to remove the old definition.
-			removeItems->push(old);
-			update.put(old, changed);
+			// Make the change happen.
+			update->push(NamedPair(old, changed));
 		}
 
 		// Things we need to remove from the package before merging.
@@ -359,7 +361,7 @@ namespace storm {
 		Array<Template *> *removeTemplates;
 
 		// Things to update. "old" -> "new".
-		ObjMap<Named> update;
+		Array<NamedPair> *update;
 
 		// Files we're examining. If null, we examine all files.
 		Set<Url *> *files;
@@ -377,7 +379,7 @@ namespace storm {
 		loading = new (this) NameSet(name, params);
 		loadingAllowDuplicates = true;
 
-		ReloadContext context(files, complete);
+		ReloadDiff diff(files, complete);
 
 		try {
 			// This part is very similar to 'loadFiles'.
@@ -386,9 +388,9 @@ namespace storm {
 
 			read(load);
 
-			// Now, try to merge all entities inside 'loading', populating the 'context' variable
+			// Now, try to merge all entities inside 'loading', populating the 'diff' variable
 			// with what to do after performing some sanity checks of the update operations.
-			NameSet::diff(loading, context);
+			NameSet::diff(loading, diff);
 		} catch (...) {
 			// Discard the partially loaded results.
 			loading = null;
@@ -398,21 +400,28 @@ namespace storm {
 		try {
 			// Once this process is started, we can't roll it back anymore, so keep going as far as
 			// possible, regardless of whether certain steps fail or not.
-			for (Nat i = 0; i < context.update.count(); i++)
-				context.update[i].to->replace(context.update[i].from);
+			ReplaceTasks *tasks = new (this) ReplaceTasks();
+			for (Nat i = 0; i < diff.update->count(); i++) {
+				NamedPair p = diff.update->at(i);
+				p.to->replace(p.from, tasks);
 
-			// Remove items to make the merge go smootly.
-			for (Nat i = 0; i < context.removeItems->count(); i++)
-				NameSet::remove(context.removeItems->at(i));
-			for (Nat i = 0; i < context.removeTemplates->count(); i++)
-				NameSet::remove(context.removeTemplates->at(i));
+				// Remove the old one.
+				NameSet::remove(p.from);
+			}
+
+			// Remove items to make the merge go smootly. TODO: We should check so that removed items
+			// are not used at some point, perhaps earlier than this.
+			for (Nat i = 0; i < diff.removeItems->count(); i++)
+				NameSet::remove(diff.removeItems->at(i));
+			for (Nat i = 0; i < diff.removeTemplates->count(); i++)
+				NameSet::remove(diff.removeTemplates->at(i));
 
 			// Now, we're done. We have resolved all conflicts, so now it is safe to merge the two
 			// NameSets.
 			NameSet::merge(loading);
 			loading = null;
 
-			TODO(L"Here we need to stop all threads, and update our heap.");
+			TODO(L"Here we need to stop all threads, and update our heap using 'tasks'.");
 			// In particular, we need to:
 			// - replace all occurrences of the old entities with the new ones (at least for types).
 			// - modify the layout of any types requiring that.

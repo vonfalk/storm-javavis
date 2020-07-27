@@ -16,6 +16,7 @@ namespace storm {
 
 	void Code::detach() {
 		owner = null;
+		toUpdate = null;
 	}
 
 	void Code::update(code::RefSource *update) {
