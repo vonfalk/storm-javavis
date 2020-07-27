@@ -25,6 +25,10 @@ namespace storm {
 
 		// To string.
 		void STORM_FN toS(StrBuf *to) const;
+
+		// Replace.
+		virtual void STORM_FN checkReplace(Named *old);
+		virtual void STORM_FN replace(Named *old, ReplaceTasks *tasks);
 	};
 
 

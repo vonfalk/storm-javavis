@@ -18,6 +18,15 @@ namespace storm {
 		*to << title << S(" (") << author << S(")\n") << line << S("\n") << body << S("\n") << line;
 	}
 
+	void License::checkReplace(Named *old) {
+		if (!as<License>(old))
+			throw new (this) ReloadError(pos, S("Unable to replace a non-license with a license."));
+	}
+
+	void License::replace(Named *, ReplaceTasks *) {
+		// Nothing to do.
+	}
+
 	static void licenses(Array<License *> *r, Named *root) {
 		if (License *l = as<License>(root)) {
 			r->push(l);
@@ -65,6 +74,8 @@ namespace storm {
 		Str *body = text->readAll();
 		text->close();
 
-		return new (this) License(file->title(), title, author, body);
+		License *l = new (this) License(file->title(), title, author, body);
+		l->pos = SrcPos(file, 0, 0);
+		return l;
 	}
 }

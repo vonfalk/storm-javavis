@@ -58,10 +58,14 @@ namespace storm {
 		STORM_CLASS;
 	public:
 		// Create.
-		STORM_CTOR VersionTag(Str *name, Version *version);
+		STORM_CTOR VersionTag(Str *name, Version *version, SrcPos pos);
 
 		// The version.
 		Version *version;
+
+		// Replace.
+		virtual void STORM_FN checkReplace(Named *old);
+		virtual void STORM_FN replace(Named *old, ReplaceTasks *tasks);
 
 	protected:
 		virtual void STORM_FN toS(StrBuf *to) const;

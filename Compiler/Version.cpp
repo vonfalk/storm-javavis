@@ -227,10 +227,21 @@ namespace storm {
 	 * Version tag.
 	 */
 
-	VersionTag::VersionTag(Str *name, Version *version) : Named(name), version(version) {}
+	VersionTag::VersionTag(Str *name, Version *version, SrcPos pos) : Named(name), version(version) {
+		this->pos = pos;
+	}
 
 	void VersionTag::toS(StrBuf *to) const {
 		*to << identifier() << S(": ") << version;
+	}
+
+	void VersionTag::checkReplace(Named *old) {
+		if (!as<VersionTag>(old))
+			throw new (this) ReloadError(pos, S("Unable to replace a non-version entity with a version entity."));
+	}
+
+	void VersionTag::replace(Named *, ReplaceTasks *) {
+		// Nothing to do.
 	}
 
 	static void versions(Array<VersionTag *> *r, Named *root) {
@@ -283,10 +294,11 @@ namespace storm {
 		text->close();
 
 		Version *version = parseVersion(ver);
+		SrcPos pos(file, 0, ver->peekLength());
 		if (!version)
-			throw new (this) SyntaxError(SrcPos(file, 0, ver->peekLength()), S("Invalid version syntax."));
+			throw new (this) SyntaxError(pos, S("Invalid version syntax."));
 
-		return new (this) VersionTag(file->title(), version);
+		return new (this) VersionTag(file->title(), version, pos);
 	}
 
 }

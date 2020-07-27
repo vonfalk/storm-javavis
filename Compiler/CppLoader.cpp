@@ -680,7 +680,7 @@ namespace storm {
 			}
 
 			NameSet *into = findPkg(v.pkg);
-			into->add(new (*e) VersionTag(new (*e) Str(v.name), ver));
+			into->add(new (*e) VersionTag(new (*e) Str(v.name), ver, SrcPos()));
 		}
 	}
 
