@@ -6,7 +6,7 @@
 #include "Visibility.h"
 #include "Scope.h"
 #include "Doc.h"
-#include "ReplaceTasks.h"
+#include "ReplaceContext.h"
 
 namespace storm {
 	STORM_PKG(core.lang);
@@ -134,11 +134,14 @@ namespace storm {
 
 		// See if this named entity is able to replace 'old'. If possible, null is returned. If not,
 		// a string containing an appropriate error message is returned. If this function does not
-		// return an error, it shall be safe to call 'replace' without errors.
-		virtual MAYBE(Str *) STORM_FN canReplace(Named *old);
+		// return an error, it shall be safe to call 'replace' without errors. May also throw an
+		// exception to inhibit the system to try other approaches that would be tried if this
+		// function were to return an error message.
+		virtual MAYBE(Str *) STORM_FN canReplace(Named *old, ReplaceContext *ctx);
 
 		// Make this entity replace 'old'. If 'canReplace' did not return an error, this shall
 		// succeed without issues. Override 'doReplace' to customize the behavior of this function.
+		// Do not expect 'old' to be in a functional state after having been replaced.
 		void STORM_FN replace(Named *old, ReplaceTasks *tasks);
 
 		// Discard any source code for functions in here.

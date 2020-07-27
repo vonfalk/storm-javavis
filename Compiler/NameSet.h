@@ -49,7 +49,7 @@ namespace storm {
 		Named *at(Nat id) const;
 
 		// Check if an element is in here.
-		Bool STORM_FN has(Named *item);
+		MAYBE(Named *) STORM_FN has(Named *item);
 
 		// Add an element.
 		void STORM_FN add(Named *item);
@@ -67,7 +67,7 @@ namespace storm {
 		void STORM_FN merge(NameOverloads *from);
 
 		// Diff in various situations.
-		void diff(NameOverloads *with, NameDiff &callback);
+		void diff(NameOverloads *with, NameDiff &callback, ReplaceContext *ctx);
 		void diffAdded(NameDiff &callback);
 		void diffRemoved(NameDiff &callback);
 		void diffTemplatesAdded(NameDiff &callback);
@@ -119,7 +119,7 @@ namespace storm {
 
 		// Check if this name set has a Named with the exact parameters as the provided
 		// entity. I.e., would it be possible to store 'item' here without issues?
-		virtual Bool STORM_FN has(Named *item) const;
+		virtual MAYBE(Named *) STORM_FN has(Named *item) const;
 
 		// Add a named object.
 		virtual void STORM_FN add(Named *item);
@@ -240,7 +240,8 @@ namespace storm {
 		void STORM_FN merge(NameSet *from);
 
 		// Find differences between two NameSets. For terminology, assumes that 'with' is the "new" version.
-		void diff(NameSet *with, NameDiff &callback);
+		// If 'ctx' is not null, it is used to resolve equivalences between new and old trees.
+		void diff(NameSet *with, NameDiff &callback, ReplaceContext *ctx);
 
 	private:
 		// Overloads.

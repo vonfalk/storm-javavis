@@ -235,7 +235,7 @@ namespace storm {
 		*to << identifier() << S(": ") << version;
 	}
 
-	MAYBE(Str *) VersionTag::canReplace(Named *old) {
+	MAYBE(Str *) VersionTag::canReplace(Named *old, ReplaceContext *) {
 		if (!as<VersionTag>(old))
 			return new (this) Str(S("Unable to replace a non-version entity with a version entity."));
 		else

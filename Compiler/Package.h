@@ -35,7 +35,7 @@ namespace storm {
 		void setUrl(Url *to);
 
 		// Check for exact matches.
-		virtual Bool STORM_FN has(Named *item);
+		virtual MAYBE(Named *) STORM_FN has(Named *item);
 
 		// Add elements and templates.
 		virtual void STORM_FN add(Named *item);

@@ -28,4 +28,22 @@ namespace storm {
 		*to << L"thread " << identifier();
 	}
 
+	MAYBE(Str *) NamedThread::canReplace(Named *old, ReplaceContext *) {
+		if (!as<NamedThread>(old))
+			return new (this) Str(S("Cannot replace anything other than a thread with a thread."));
+		else
+			return null;
+	}
+
+	void NamedThread::doReplace(Named *old, ReplaceTasks *tasks) {
+		NamedThread *t = (NamedThread *)old;
+
+		// Steal the references.
+		myThread = t->myThread;
+		reference = t->reference;
+
+		// Make sure the new thread object is used everywhere.
+		tasks->replace(old, this);
+	}
+
 }

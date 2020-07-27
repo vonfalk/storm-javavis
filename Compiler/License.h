@@ -27,7 +27,7 @@ namespace storm {
 		void STORM_FN toS(StrBuf *to) const;
 
 		// Can replace another entity?
-		virtual MAYBE(Str *) STORM_FN canReplace(Named *old);
+		virtual MAYBE(Str *) STORM_FN canReplace(Named *old, ReplaceContext *ctx);
 	};
 
 

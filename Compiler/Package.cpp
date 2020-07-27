@@ -56,9 +56,10 @@ namespace storm {
 			documentation = new (this) PackageDoc(this);
 	}
 
-	Bool Package::has(Named *item) {
-		if (loading && loading->has(item))
-			return true;
+	MAYBE(Named *) Package::has(Named *item) {
+		if (loading)
+			if (Named *found = loading->has(item))
+				return found;
 
 		return NameSet::has(item);
 	}
@@ -314,7 +315,7 @@ namespace storm {
 	// Context for diffing entities during a reload.
 	class ReloadDiff : public NameDiff {
 	public:
-		ReloadDiff(Array<Url *> *files, Bool complete) {
+		ReloadDiff(ReplaceContext *ctx, Array<Url *> *files, Bool complete) : ctx(ctx) {
 			removeItems = new (files) Array<Named *>();
 			removeTemplates = new (files) Array<Template *>();
 			update = new (files) Array<NamedPair>();
@@ -347,7 +348,7 @@ namespace storm {
 			}
 
 			// Sanity-check the replacement now.
-			if (Str *msg = changed->canReplace(old)) {
+			if (Str *msg = changed->canReplace(old, ctx)) {
 				// TODO: check if it makes sense to replace the entity completely. We should at
 				// least try to invalidate some usages of the entity if we remove it!
 				PLN(L"WARNING: " << changed->pos << L": " << msg << L" Replacing the entity.");
@@ -359,6 +360,9 @@ namespace storm {
 				update->push(NamedPair(old, changed));
 			}
 		}
+
+		// Context.
+		ReplaceContext *ctx;
 
 		// Things we need to remove from the package before merging.
 		Array<Named *> *removeItems;
@@ -380,10 +384,12 @@ namespace storm {
 	};
 
 	void Package::reload(Array<Url *> *files, Bool complete) {
-		loading = new (this) NameSet(name, params);
+		NameSet *temporary = new (this) NameSet(name, params);
+		loading = temporary;
 		loadingAllowDuplicates = true;
 
-		ReloadDiff diff(files, complete);
+		ReplaceTasks *tasks = new (this) ReplaceTasks();
+		ReloadDiff diff(tasks, files, complete);
 
 		try {
 			// This part is very similar to 'loadFiles'.
@@ -392,9 +398,16 @@ namespace storm {
 
 			read(load);
 
+			// Figure out which types in the old tree are equivalent to ones in the newly loaded
+			// subtree. We need to disable lookups from 'temporary' while doing this as it would
+			// otherwise find the new types instead of the old ones.
+			loading = null;
+			tasks->buildTypeEquivalence(this, temporary);
+			loading = temporary;
+
 			// Now, try to merge all entities inside 'loading', populating the 'diff' variable
 			// with what to do after performing some sanity checks of the update operations.
-			NameSet::diff(loading, diff);
+			NameSet::diff(loading, diff, tasks);
 		} catch (...) {
 			// Discard the partially loaded results.
 			loading = null;
@@ -404,7 +417,6 @@ namespace storm {
 		try {
 			// Once this process is started, we can't roll it back anymore, so keep going as far as
 			// possible, regardless of whether certain steps fail or not.
-			ReplaceTasks *tasks = new (this) ReplaceTasks();
 			for (Nat i = 0; i < diff.update->count(); i++) {
 				NamedPair p = diff.update->at(i);
 				p.to->replace(p.from, tasks);

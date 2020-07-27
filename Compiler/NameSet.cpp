@@ -39,12 +39,26 @@ namespace storm {
 		return true;
 	}
 
-	Bool NameOverloads::has(Named *item) {
+	static bool equals(Array<Value> *a, Array<Value> *b, ReplaceContext *ctx) {
+		if (!ctx)
+			return equals(a, b);
+
+		if (a->count() != b->count())
+			return false;
+
+		for (Nat i = 0; i < a->count(); i++)
+			if (ctx->normalize(a->at(i)) != ctx->normalize(b->at(i)))
+				return false;
+
+		return true;
+	}
+
+	MAYBE(Named *) NameOverloads::has(Named *item) {
 		for (Nat i = 0; i < items->count(); i++) {
 			if (storm::equals(item->params, items->at(i)->params))
-				return true;
+				return items->at(i);
 		}
-		return false;
+		return null;
 	}
 
 	void NameOverloads::add(Named *item) {
@@ -92,7 +106,6 @@ namespace storm {
 			Named *add = from->items->at(i);
 
 			for (Nat j = 0; j < items->count(); j++) {
-				PLN(L"Checking " << (void *)add << L", " << (void *)items->at(j));
 				if (storm::equals(add->params, items->at(j)->params)) {
 					throw new (this) TypedefError(
 						add->pos,
@@ -108,7 +121,7 @@ namespace storm {
 			items->push(from->items->at(i));
 	}
 
-	void NameOverloads::diff(NameOverloads *with, NameDiff &callback) {
+	void NameOverloads::diff(NameOverloads *with, NameDiff &callback, ReplaceContext *ctx) {
 		Array<Bool> *used = new (this) Array<Bool>(with->items->count(), false);
 		for (Nat i = 0; i < items->count(); i++) {
 			Bool found = false;
@@ -118,7 +131,7 @@ namespace storm {
 					continue;
 
 				Named *other = with->items->at(j);
-				if (storm::equals(here->params, other->params)) {
+				if (storm::equals(here->params, other->params, ctx)) {
 					found = true;
 					used->at(j) = true;
 					callback.changed(here, other);
@@ -255,11 +268,14 @@ namespace storm {
 		}
 	}
 
-	Bool NameSet::has(Named *item) const {
+	MAYBE(Named *) NameSet::has(Named *item) const {
 		if (!overloads)
-			return false;
+			return null;
 
-		return overloads->at(item->name)->has(item);
+		if (NameOverloads *o = overloads->get(item->name, null))
+			return o->has(item);
+		else
+			return null;
 	}
 
 	void NameSet::add(Named *item) {
@@ -400,7 +416,7 @@ namespace storm {
 		}
 	}
 
-	void NameSet::diff(NameSet *with, NameDiff &callback) {
+	void NameSet::diff(NameSet *with, NameDiff &callback, ReplaceContext *ctx) {
 		if (!overloads && !with->overloads) {
 			// Nothing to do.
 		} else if (!overloads) {
@@ -420,7 +436,7 @@ namespace storm {
 
 			for (Overloads::Iter i = overloads->begin(); i != end; ++i) {
 				if (NameOverloads *o = with->overloads->get(i.k(), null))
-					i.v()->diff(o, callback);
+					i.v()->diff(o, callback, ctx);
 				else
 					i.v()->diffRemoved(callback);
 				i.v()->diffTemplatesRemoved(callback);

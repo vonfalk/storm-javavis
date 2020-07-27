@@ -29,6 +29,13 @@ namespace storm {
 		// Output.
 		virtual void STORM_FN toS(StrBuf *b) const;
 
+		// Replace.
+		virtual MAYBE(Str *) STORM_FN canReplace(Named *old, ReplaceContext *ctx);
+
+	protected:
+		// Replace.
+		virtual void STORM_FN doReplace(Named *old, ReplaceTasks *tasks);
+
 	private:
 		// The thread we're referring to.
 		Thread *myThread;

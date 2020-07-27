@@ -847,6 +847,84 @@ namespace storm {
 		return rawCtor;
 	}
 
+	class TypeCheckDiff : public NameDiff {
+	public:
+		TypeCheckDiff(ReplaceContext *ctx) : ctx(ctx) {}
+
+		ReplaceContext *ctx;
+
+		virtual void added(Named *item) {
+			// TODO: This is way too strict!
+			if (as<MemberVar>(item))
+				throw new (item) ReplaceError(item->pos, S("Unable to add member variables to a type."));
+		}
+		virtual void added(Template *) { /* We don't care */ }
+
+		virtual void removed(Named *item) {
+			// TODO: This is way too strict!
+			if (as<MemberVar>(item))
+				throw new (item) ReplaceError(item->pos, S("Unable to remove member variables from a type."));
+		}
+		virtual void removed(Template *) { /* We don't care */ }
+
+		virtual void changed(Named *old, Named *changed) {
+			if (Str *msg = changed->canReplace(old, ctx))
+				throw new (changed) ReplaceError(changed->pos, msg);
+		}
+	};
+
+	MAYBE(Str *) Type::canReplace(Named *old, ReplaceContext *ctx) {
+		Type *o = as<Type>(old);
+		if (!o)
+			return new (this) Str(S("Unable to replace a non-type with a type."));
+
+		// Note: Due to type equivalences, the remainder of the system more or less assumes that all
+		// types can be replaced without issues. Therefore, we throw errors if we fail for some
+		// reason so that the system does not attempt to simply remove and then add the type.
+
+		// We only need to check for conflicts if the old entity has actually been loaded. If it is
+		// not loaded, we can replace it without any issues whatsoever.
+		if (!o->allLoaded())
+			return null;
+
+		forceLoad();
+
+		if (value() != o->value())
+			throw new (this) ReplaceError(pos, S("Can not change classes into values or vice versa."));
+		if (super() && !o->super())
+			throw new (this) ReplaceError(pos, S("Can not introduce a super class."));
+		else if (!super() && o->super())
+			throw new (this) ReplaceError(pos, S("Can not remove a super class."));
+		else if (super() && *super()->identifier() != *o->super()->identifier())
+			// Note: The above compares strings, as the super class might be in the process of being replaced as well!
+			// This is perhaps not ideal, but works for now.
+			throw new (this) ReplaceError(pos, S("Can not change the super class."));
+
+		TypeCheckDiff diff(ctx);
+		o->diff(this, diff, ctx);
+
+		return null;
+	}
+
+	class TypeReplaceDiff : public NameDiff {
+	public:
+		virtual void added(Named *item) {}
+		virtual void added(Template *) { /* We don't care */ }
+
+		virtual void removed(Named *item) {}
+		virtual void removed(Template *) { /* We don't care */ }
+
+		virtual void changed(Named *old, Named *changed) {}
+	};
+
+	void Type::doReplace(Named *old, ReplaceTasks *tasks) {
+		Type *o = (Type *)old;
+
+		// TODO: We might be able to move some of this into NameSet.
+		TypeReplaceDiff diff;
+		o->diff(this, diff, tasks);
+	}
+
 	void Type::useSuperGcType() {
 		if (myGcType)
 			return;

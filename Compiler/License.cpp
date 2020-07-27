@@ -18,7 +18,7 @@ namespace storm {
 		*to << title << S(" (") << author << S(")\n") << line << S("\n") << body << S("\n") << line;
 	}
 
-	MAYBE(Str *) License::canReplace(Named *old) {
+	MAYBE(Str *) License::canReplace(Named *old, ReplaceContext *ctx) {
 		if (!as<License>(old))
 			return new (this) Str(S("Unable to replace a non-license with a license."));
 		else

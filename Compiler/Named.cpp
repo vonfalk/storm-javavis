@@ -161,7 +161,7 @@ namespace storm {
 
 	void Named::compile() {}
 
-	MAYBE(Str *) Named::canReplace(Named *) {
+	MAYBE(Str *) Named::canReplace(Named *, ReplaceContext *) {
 		StrBuf *msg = new (this) StrBuf();
 		*msg << S("Reloading not implemented for entities of type ")
 			 << runtime::typeOf(this)->identifier();
@@ -169,7 +169,7 @@ namespace storm {
 	}
 
 	void Named::replace(Named *old, ReplaceTasks *tasks) {
-		if (Str *error = canReplace(old))
+		if (Str *error = canReplace(old, tasks))
 			throw new (this) ReplaceError(pos, error);
 
 		doReplace(old, tasks);

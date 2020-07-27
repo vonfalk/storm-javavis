@@ -112,7 +112,7 @@ namespace storm {
 		}
 	}
 
-	MAYBE(Str *) Function::canReplace(Named *old) {
+	MAYBE(Str *) Function::canReplace(Named *old, ReplaceContext *ctx) {
 		Function *oldFn = as<Function>(old);
 		if (!oldFn)
 			return new (this) Str(S("Unable to replace something that is not a function with a function."));
@@ -120,9 +120,9 @@ namespace storm {
 		if (params->count() != oldFn->params->count())
 			return new (this) Str(S("Cannot modify the number of formal parameters to a function."));
 		for (Nat i = 0; i < params->count(); i++)
-			if (!params->at(i).canStore(oldFn->params->at(i)))
+			if (!ctx->normalize(params->at(i)).canStore(ctx->normalize(oldFn->params->at(i))))
 				return new (this) Str(S("Cannot modify the types of formal parameters to incompatible types."));
-		if (!oldFn->result.canStore(result))
+		if (!ctx->normalize(oldFn->result).canStore(ctx->normalize(result)))
 			return new (this) Str(S("Cannot modify the return type of a function to an incompatible type."));
 
 		return null;

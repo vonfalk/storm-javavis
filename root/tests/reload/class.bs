@@ -1,0 +1,11 @@
+class Replaced {
+	Int x;
+
+	init(Int x) {
+		init { x = x; }
+	}
+
+	Int compute() {
+		x * 10;
+	}
+}

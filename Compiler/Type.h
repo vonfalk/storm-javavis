@@ -216,7 +216,13 @@ namespace storm {
 		typedef void (*CopyCtorFn)(void *, const void *);
 		CopyCtorFn CODECALL rawCopyConstructor();
 
+		// Can we replace something else?
+		virtual MAYBE(Str *) STORM_FN canReplace(Named *old, ReplaceContext *ctx);
+
 	protected:
+		// Replace another type.
+		virtual void STORM_FN doReplace(Named *old, ReplaceTasks *tasks);
+
 		// Use the 'gcType' of the super class. Use only if no additional fields are introduced into
 		// this class.
 		void useSuperGcType();

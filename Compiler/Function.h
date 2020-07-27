@@ -108,7 +108,7 @@ namespace storm {
 		virtual void STORM_FN toS(StrBuf *to) const;
 
 		// Check for replacement.
-		virtual MAYBE(Str *) STORM_FN canReplace(Named *old);
+		virtual MAYBE(Str *) STORM_FN canReplace(Named *old, ReplaceContext *ctx);
 
 	protected:
 		// Do replacement.

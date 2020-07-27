@@ -1,0 +1,8 @@
+Int testRoot(Int x) {
+	testA(x);
+}
+
+Int testClass(Int w) {
+	Replaced x(w);
+	x.compute();
+}
