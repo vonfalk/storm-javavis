@@ -933,6 +933,13 @@ namespace storm {
 		TypeReplaceDiff diff(tasks);
 		o->diff(this, diff, tasks);
 
+		// Update the reference.
+		if (o->selfRef) {
+			typeRef(); // Make sure it is created in here.
+			selfRef->steal(o->selfRef);
+			o->selfRef = null;
+		}
+
 		// We need to replace references to the old one with references to us.
 		tasks->replace(old, this);
 	}

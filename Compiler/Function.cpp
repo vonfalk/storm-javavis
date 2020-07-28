@@ -131,26 +131,24 @@ namespace storm {
 	void Function::doReplace(Named *old, ReplaceTasks *tasks) {
 		Function *f = (Function *)old;
 
-		// Steal the references.
-		codeRef = f->codeRef;
-		lookupRef = f->lookupRef;
-		f->codeRef = null;
-		f->lookupRef = null;
-
+		// Detach the code refs.
 		if (f->code)
 			f->code->detach();
 		if (f->lookup)
 			f->lookup->detach();
 
-		if (codeRef && code)
-			code->update(codeRef);
-		if (lookupRef) {
-			if (!lookup && codeRef) {
-				lookup = new (this) DelegatedCode(code::Ref(codeRef));
-				lookup->attach(this);
-			}
-			lookup->update(lookupRef);
-		}
+		// Create our references if needed.
+		if (f->codeRef || f->lookupRef)
+			initRefs();
+
+		// Steal the references.
+		if (f->codeRef)
+			codeRef->steal(f->codeRef);
+		if (f->lookupRef)
+			lookupRef->steal(f->lookupRef);
+
+		f->codeRef = null;
+		f->lookupRef = null;
 	}
 
 	void Function::setCode(Code *code) {

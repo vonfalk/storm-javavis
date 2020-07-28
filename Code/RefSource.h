@@ -39,6 +39,11 @@ namespace code {
 		// Set to a static pointer (uses StaticContent).
 		void setPtr(const void *to);
 
+		// Make it so that all references in 'from' refers to this instance instead. Keeps 'from'
+		// updated until there are no more 'Ref's referring to it (Reference instances are updated
+		// immediately).
+		void steal(RefSource *from);
+
 		// Get the current address.
 		inline const void *address() const {
 			return cont ? cont->address() : null;

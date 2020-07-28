@@ -2,6 +2,7 @@
 #include "RefSource.h"
 #include "Reference.h"
 #include "Exception.h"
+#include "DelegatedRef.h"
 #include "Core/Array.h"
 #include "Core/StrBuf.h"
 #include "Core/Str.h"
@@ -46,6 +47,21 @@ namespace code {
 
 	void RefSource::setPtr(const void *to) {
 		set(new (this) StaticContent(to));
+	}
+
+	void RefSource::steal(RefSource *from) {
+		const void *addr = address();
+		WeakSet<Reference>::Iter i = from->refs->iter();
+		while (Reference *ref = i.next()) {
+			refs->put(ref);
+			ref->to = this;
+			ref->moved(addr);
+		}
+
+		from->refs->clear();
+
+		// Keep 'from' updated while it is alive. Otherwise any 'Ref' instances will not be updated.
+		from->set(new (this) DelegatedContent(Ref(this)));
 	}
 
 	void RefSource::toS(StrBuf *to) const {

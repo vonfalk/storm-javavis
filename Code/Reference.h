@@ -55,6 +55,7 @@ namespace code {
 	class Reference : public ObjectOn<Compiler> {
 		STORM_CLASS;
 		friend class Ref;
+		friend class RefSource;
 		friend class Operand;
 	public:
 		// First parameter is what the reference should refer to, second is who is referring.
