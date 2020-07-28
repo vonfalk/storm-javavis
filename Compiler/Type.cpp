@@ -908,21 +908,33 @@ namespace storm {
 
 	class TypeReplaceDiff : public NameDiff {
 	public:
+		TypeReplaceDiff(ReplaceTasks *tasks) : tasks(tasks) {}
+
+		ReplaceTasks *tasks;
+
 		virtual void added(Named *item) {}
 		virtual void added(Template *) { /* We don't care */ }
 
 		virtual void removed(Named *item) {}
 		virtual void removed(Template *) { /* We don't care */ }
 
-		virtual void changed(Named *old, Named *changed) {}
+		virtual void changed(Named *old, Named *changed) {
+			// Do the replacement.
+			changed->replace(old, tasks);
+		}
 	};
 
 	void Type::doReplace(Named *old, ReplaceTasks *tasks) {
 		Type *o = (Type *)old;
 
+		TODO(L"We need to update vtables and related metadata, and copy the layout of the other one.");
+
 		// TODO: We might be able to move some of this into NameSet.
-		TypeReplaceDiff diff;
+		TypeReplaceDiff diff(tasks);
 		o->diff(this, diff, tasks);
+
+		// We need to replace references to the old one with references to us.
+		tasks->replace(old, this);
 	}
 
 	void Type::useSuperGcType() {

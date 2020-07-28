@@ -810,6 +810,10 @@ namespace storm {
 			typedef Map<Url *, PkgFiles *> PkgMap;
 			PkgMap *toReload = new (this) Map<Url *, PkgFiles *>();
 
+			Moment start;
+			Nat fileCount = 0;
+			Nat pkgCount = 0;
+
 			while (expr) {
 				SExpr *form = next(expr);
 				Url *file = null;
@@ -855,11 +859,19 @@ namespace storm {
 					if (files->at(j)->dir())
 						dir = true;
 
-				if (dir)
+				if (dir) {
+					pkgCount++;
 					pkg->reload();
-				else
+				} else {
+					fileCount++;
 					pkg->reload(i.v()->files, false);
+				}
 			}
+
+			StrBuf *msg = new (this) StrBuf();
+			*msg << S("Reloaded ") << fileCount << S(" files and ") << pkgCount
+				 << S(" packages in ") << (Moment() - start) << S(".");
+			print(msg->toS());
 		}
 
 		/**

@@ -142,10 +142,15 @@ namespace storm {
 		if (f->lookup)
 			f->lookup->detach();
 
-		if (code && codeRef)
+		if (codeRef && code)
 			code->update(codeRef);
-		if (lookup && lookupRef)
+		if (lookupRef) {
+			if (!lookup && codeRef) {
+				lookup = new (this) DelegatedCode(code::Ref(codeRef));
+				lookup->attach(this);
+			}
 			lookup->update(lookupRef);
+		}
 	}
 
 	void Function::setCode(Code *code) {

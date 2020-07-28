@@ -16,12 +16,16 @@ namespace storm {
 
 	void Code::detach() {
 		owner = null;
+		if (toUpdate)
+			toUpdate->clear();
 		toUpdate = null;
 	}
 
 	void Code::update(code::RefSource *update) {
 		if (toUpdate == update)
 			return;
+		if (toUpdate)
+			toUpdate->clear();
 		toUpdate = update;
 		newRef();
 	}

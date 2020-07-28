@@ -64,6 +64,23 @@ namespace storm {
 		return params->at(0).type;
 	}
 
+	MAYBE(Str *) MemberVar::canReplace(Named *old, ReplaceContext *ctx) {
+		MemberVar *o = as<MemberVar>(old);
+		if (!o)
+			return new (this) Str(S("Cannot replace a non-member variable with something else."));
+
+		if (!ctx->normalize(type).canStore(ctx->normalize(type)))
+			return new (this) Str(S("Can not change the type of a member variable to something non-compatible."));
+
+		return null;
+	}
+
+	void MemberVar::doReplace(Named *old, ReplaceTasks *tasks) {
+		MemberVar *o = (MemberVar *)old;
+		hasLayout = o->hasLayout;
+		off = o->off;
+	}
+
 
 	/**
 	 * Global variable.

@@ -30,6 +30,8 @@ namespace storm {
 	/**
 	 * Represents a member-variable to some kind of type. The variable is uniquely identified by its
 	 * offset relative to the start of the object.
+	 *
+	 * TODO: We might want to offer references for using the offset, so we can easily update it.
 	 */
 	class MemberVar : public Variable {
 		STORM_CLASS;
@@ -42,12 +44,18 @@ namespace storm {
 		Offset STORM_FN offset() const;
 
 		// Get our parent type.
-		Type *owner() const;
+		Type *STORM_FN owner() const;
 
 		// Set our offset.
 		void setOffset(Offset off);
 
-		// TODO: We might want to offer references for using the offset, so we can easily update it.
+		// Check if it is possible to update.
+		virtual MAYBE(Str *) STORM_FN canReplace(Named *old, ReplaceContext *ctx);
+
+	protected:
+		// Replace with another variable.
+		virtual void STORM_FN doReplace(Named *old, ReplaceTasks *tasks);
+
 	private:
 		// The actual offset. Updated by 'layout'.
 		Offset off;

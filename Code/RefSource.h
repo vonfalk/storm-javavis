@@ -33,6 +33,9 @@ namespace code {
 		// Set the content of this source. This updates all references referring to this source.
 		void STORM_FN set(Content *to);
 
+		// Clear any content in here.
+		void STORM_FN clear();
+
 		// Set to a static pointer (uses StaticContent).
 		void setPtr(const void *to);
 

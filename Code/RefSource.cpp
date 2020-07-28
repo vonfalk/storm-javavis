@@ -30,6 +30,13 @@ namespace code {
 		update();
 	}
 
+	void RefSource::clear() {
+		if (cont)
+			cont->owner = null;
+		cont = null;
+		update();
+	}
+
 	void RefSource::update() {
 		const void *addr = address();
 		WeakSet<Reference>::Iter i = refs->iter();
