@@ -7,6 +7,7 @@
 #include "Gc/MemorySummary.h"
 #include "Gc/License.h"
 #include "Gc/Root.h"
+#include "Gc/Walker.h"
 
 namespace storm {
 
@@ -97,8 +98,7 @@ namespace storm {
 		void endRamp();
 
 		// Walk the heap.
-		typedef void (*WalkCb)(RootObject *inspect, void *param);
-		void walkObjects(WalkCb fn, void *param);
+		void walk(Walker &context, const os::InlineSet<GcRoot> &roots);
 
 		typedef GcRoot Root;
 

@@ -201,6 +201,26 @@ namespace storm {
 		// Print a summary of all threads in the system. Accessible from Storm as debug.threadSummary().
 		void threadSummary();
 
+		// Pause all threads except the currently running thread during the lifetime of this object.
+		class PauseThreads : NoCopy {
+		public:
+			PauseThreads(Engine &e);
+			~PauseThreads();
+
+		private:
+			// Semaphore used by all threads to signal that they are waiting.
+			os::Sema signal;
+
+			// Used by this class to wake other threads.
+			Semaphore wait;
+
+			// Number of threads.
+			size_t count;
+
+			// Thread function.
+			void threadFn();
+		};
+
 	private:
 		// The compiler C++ world.
 		World world;

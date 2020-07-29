@@ -25,6 +25,7 @@
 #include "Format.h" // for fmt::wordAlign
 #include "SampleImpl.h"
 #include "Root.h"
+#include "Walker.h"
 
 #ifdef STORM_GC
 
@@ -248,11 +249,9 @@ namespace storm {
 		 * a thread switch inside the callback.
 		 */
 
-		// Callback function for a heap walk.
-		typedef void (*WalkCb)(RootObject *inspect, void *param);
-
-		// Walk the heap. This usually incurs a full Gc, so it is not a cheap operation.
-		void walkObjects(WalkCb fn, void *param);
+		// Walk all objects and references on the heap. This may incur a full GC, so it is not a
+		// cheap operation.
+		void walk(Walker &context);
 
 
 		/**

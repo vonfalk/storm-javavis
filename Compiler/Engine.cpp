@@ -131,6 +131,46 @@ namespace storm {
 		stdOut()->writeLine(output->toS());
 	}
 
+	Engine::PauseThreads::PauseThreads(Engine &e) : signal(0), wait(0) {
+		vector<os::Thread> threads = e.threadGroup.threads();
+		count = threads.size();
+
+		for (size_t i = 0; i < threads.size(); i++) {
+			if (threads[i] == os::Thread::current()) {
+				count--;
+			} else {
+				os::UThread::spawn(util::memberVoidFn(this, &PauseThreads::threadFn), &threads[i]);
+			}
+		}
+
+		// Wait for the threads to go to sleep.
+		for (size_t i = 0; i < count; i++)
+			signal.down();
+	}
+
+	Engine::PauseThreads::~PauseThreads() {
+		// Signal the threads to wake up.
+		for (size_t i = 0; i < count; i++)
+			wait.up();
+
+		// And wait for them to wake, otherwise we might destroy 'wait' too early.
+		for (size_t i = 0; i < count; i++)
+			signal.down();
+	}
+
+	void Engine::PauseThreads::threadFn() {
+		// Tell the main thread that we're waiting.
+		signal.up();
+
+		// Start waiting. Note: we're using a Semaphore here, meaning that the entire thread will be
+		// stalled even if it has other UThreads marked as ready.
+		wait.down();
+
+		// Tell the main thread that we're done.
+		// (otherwise, some thread might call 'down' too late and crash)
+		signal.up();
+	}
+
 	// Starts at -1 so that the first Engine will get id=0.
 	static Nat engineId = -1;
 

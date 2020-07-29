@@ -2,6 +2,7 @@
 #include "ReplaceContext.h"
 #include "ExactPart.h"
 #include "Engine.h"
+#include "VTable.h"
 
 namespace storm {
 
@@ -93,15 +94,86 @@ namespace storm {
 
 
 	ReplaceTasks::ReplaceTasks() {
-		replaceMap = new ObjMap<Named>(engine().gc);
+		replaceMap = new RawObjMap(engine().gc);
+		vtableMap = new RawObjMap(engine().gc);
 	}
 
 	ReplaceTasks::~ReplaceTasks() {
 		delete replaceMap;
+		delete vtableMap;
 	}
 
 	void ReplaceTasks::replace(Named *old, Named *with) {
 		replaceMap->put(old, with);
+	}
+
+	void ReplaceTasks::replace(const Handle *old, const Handle *with) {
+		replaceMap->put((void *)old, (void *)with);
+	}
+
+	void ReplaceTasks::replace(const GcType *old, const GcType *with) {
+		replaceMap->put((void *)old, (void *)with);
+	}
+
+	void ReplaceTasks::replace(VTable *old, VTable *with) {
+		void *o = (void *)old->pointer();
+		void *n = (void *)with->pointer();
+		size_t offset = vtable::allocOffset();
+		replaceMap->put((byte *)o - offset, (byte *)n - offset);
+	}
+
+	class ReplaceWalker : public PtrWalker {
+	public:
+		ReplaceWalker(RawObjMap *replace, RawObjMap *vtables) : replace(replace), vtables(vtables) {
+			flags = fObjects | fExactRoots | fClearWatch;
+			// TODO: If we are rewriting other objects, we need to add fAmbiguousRoots as well.
+		}
+
+		RawObjMap *replace;
+		RawObjMap *vtables;
+
+		virtual void prepare() {
+			// Now, objects don't move anymore and we can sort the array for good lookup performance!
+			replace->sort();
+		}
+
+		virtual bool checkRoot(GcRoot *root) {
+			// Don't modify the maps we're working with now!
+			return !replace->hasRoot(root)
+				&& !vtables->hasRoot(root);
+		}
+
+		virtual void object(RootObject *obj) {
+			// Check the vtable.
+			void *vt = (void *)vtable::from(obj);
+			size_t offset = vtable::allocOffset();
+			if (void *r = vtables->find((byte *)vt - offset))
+				vtable::set((byte *)r + offset, obj);
+
+			// Check all pointers.
+			PtrWalker::object(obj);
+		}
+
+		virtual void header(GcType **ptr) {
+			if (void *r = replace->find(*ptr)) {
+				*ptr = (GcType *)r;
+			}
+		}
+
+		virtual void exactPointer(void **ptr) {
+			if (void *r = replace->find(*ptr)) {
+				*ptr = r;
+			}
+		}
+
+		virtual void ambiguousPointer(void **ptr) {
+			// TODO. We need more information on the objects to replace in this case.
+		}
+	};
+
+	void ReplaceTasks::apply() {
+		ReplaceWalker walker(replaceMap, vtableMap);
+		engine().gc.walk(walker);
 	}
 
 }

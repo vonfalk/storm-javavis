@@ -79,6 +79,9 @@ namespace storm {
 		// Generate code for setting the vtable.
 		void insert(code::Listing *to, code::Var obj);
 
+		// Get the vtable pointer. Marks it as used.
+		const void **pointer();
+
 		// Get the "topmost" functions for each entry in the vtable. Unused slots are left out
 		// (since they would be null).
 		Array<Function *> *allSlots();

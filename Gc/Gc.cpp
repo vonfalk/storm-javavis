@@ -167,8 +167,8 @@ namespace storm {
 		owner.impl->endRamp();
 	}
 
-	void Gc::walkObjects(WalkCb fn, void *param) {
-		impl->walkObjects(fn, param);
+	void Gc::walk(Walker &walker) {
+		impl->walk(walker, roots);
 	}
 
 	void Gc::checkMemory() {

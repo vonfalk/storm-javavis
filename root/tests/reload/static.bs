@@ -6,3 +6,9 @@ Int testClass(Int w) {
 	Replaced x(w);
 	x.compute();
 }
+
+Object createClass(Int x) {
+	TestClass t(x);
+	t.update();
+	t;
+}

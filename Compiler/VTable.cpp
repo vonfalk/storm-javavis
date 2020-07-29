@@ -66,6 +66,10 @@ namespace storm {
 		cpp->insert(to, obj, code::Ref(source));
 	}
 
+	const void **VTable::pointer() {
+		return cpp->pointer();
+	}
+
 	Array<Function *> *VTable::allSlots() {
 		Array<Function *> *cppFns = new (this) Array<Function *>(cpp->count(), null);
 		Array<Function *> *stormFns = null;

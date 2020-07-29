@@ -41,6 +41,11 @@ namespace storm {
 		// intended for internal use by the GC.
 		void *find(void *ptr);
 
+		// Is this objmap using a particular root?
+		bool hasRoot(Gc::Root *root) const {
+			return this->root == root;
+		}
+
 	private:
 		RawObjMap(const RawObjMap &);
 		RawObjMap &operator =(const RawObjMap &);

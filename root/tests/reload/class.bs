@@ -1,11 +1,15 @@
-class Replaced {
-	Int x;
-
+class TestClass {
 	init(Int x) {
 		init { x = x; }
 	}
 
-	Int compute() {
-		x * 10;
+	Int x;
+
+	void update() {
+		x += 1;
+	}
+
+	void toS(StrBuf to) {
+		to << "A" << x;
 	}
 }

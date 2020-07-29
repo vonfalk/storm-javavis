@@ -67,35 +67,37 @@ namespace storm {
 		replace(src->table(), src->count());
 	}
 
-	struct VTableSwitch {
+	class VTableSwitch : public Walker {
+	public:
+		VTableSwitch(const void **from, const void **to) : from(from), to(to) {
+			flags = fObjects;
+		}
+
 		const void **from;
 		const void **to;
+
+		virtual void object(RootObject *inspect) {
+			if (vtable::from(inspect) == from)
+				vtable::set(to, inspect);
+		}
 	};
-
-	static void vtableSwitch(RootObject *o, void *data) {
-		VTableSwitch *s = (VTableSwitch *)data;
-
-		if (vtable::from(o) == s->from)
-			vtable::set(s->to, o);
-	}
 
 	void VTableCpp::replace(const void *vtable, nat count) {
 		if (!data || count > this->count()) {
 			// We need to replace the vtables on all live objects using the vtable.
 			bool needWalk = used();
-			VTableSwitch data;
-			data.from = table();
+			const void **from = table();
 
 			// Create the new vtable.
 			init(vtable, count, true);
 
-			data.to = table();
+			VTableSwitch data(from, table());
 
 			// Don't walk the heap if we don't need to. That can be *very* expensive. In most cases
 			// this happens right after we've created an object but before we have set the vtable to
 			// an object, which means it is safe not to do the expensive heap walk.
 			if (needWalk)
-				engine().gc.walkObjects(&vtableSwitch, &data);
+				engine().gc.walk(data);
 		} else {
 			// We can copy, we know we can modify 'data'.
 			const void *const* src = (const void *const*)vtable - vtable::extraOffset;
@@ -175,6 +177,12 @@ namespace storm {
 			return data->filled != 0;
 		else
 			return true;
+	}
+
+	const void **VTableCpp::pointer() {
+		if (data)
+			data->filled = 1;
+		return table();
 	}
 
 	void VTableCpp::insert(RootObject *obj) {

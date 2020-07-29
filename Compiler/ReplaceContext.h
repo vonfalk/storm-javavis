@@ -8,6 +8,7 @@ namespace storm {
 
 	class Named;
 	class NameSet;
+	class VTable;
 
 	/**
 	 * An object encapsulating various state that is required while reloading code.
@@ -68,10 +69,23 @@ namespace storm {
 
 		// Schedule a reference to be replaced.
 		void STORM_FN replace(Named *old, Named *with);
+		void STORM_FN replace(const Handle *old, const Handle *with);
+		void replace(const GcType *old, const GcType *with);
+
+		// VTable replacement. This refers to the content of the vtable rather than the vtable itself.
+		// VTables are not replaced globally, only the 'vtable' field of the type is actually modified.
+		void STORM_FN replace(VTable *old, VTable *with);
+
+		// Apply changes requested. We don't allow doing this from Storm. It is not necessarily
+		// good to do while other threads are running.
+		void apply();
 
 	private:
 		// References to replace.
-		ObjMap<Named> *replaceMap;
+		RawObjMap *replaceMap;
+
+		// VTables to replace.
+		RawObjMap *vtableMap;
 	};
 
 }

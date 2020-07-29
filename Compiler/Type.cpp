@@ -927,7 +927,19 @@ namespace storm {
 	void Type::doReplace(Named *old, ReplaceTasks *tasks) {
 		Type *o = (Type *)old;
 
-		TODO(L"We need to update vtables and related metadata, and copy the layout of the other one.");
+		// Copy the layout object. All member variables will be updated by 'replace' later.
+		// Note: This more or less assumes that no instances of this class has been created so far,
+		// which is usually the case (but not always).
+		if (o->layout) {
+			Array<MemberVar *> *vars = o->layout->variables();
+			layout = new (this) Layout();
+			for (Nat i = 0; i < vars->count(); i++)
+				layout->add(vars->at(i));
+
+			// TODO: If we have derived classes, we need to force them to update their layout now.
+		}
+
+		TODO(L"Check derived and parent classes.");
 
 		// TODO: We might be able to move some of this into NameSet.
 		TypeReplaceDiff diff(tasks);
@@ -942,6 +954,21 @@ namespace storm {
 
 		// We need to replace references to the old one with references to us.
 		tasks->replace(old, this);
+
+		// Also switch types for all objects.
+		if (o->myGcType)
+			tasks->replace(o->myGcType, gcType());
+
+		// ...and handles...
+		if (o->tHandle) {
+			// For many reference types, the handles are the same.
+			if (o->tHandle != &handle())
+				tasks->replace(o->tHandle, tHandle);
+		}
+
+		// If we have a vtable, switch that as well.
+		if (o->myVTable)
+			tasks->replace(o->myVTable, vtable());
 	}
 
 	void Type::useSuperGcType() {

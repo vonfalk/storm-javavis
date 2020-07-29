@@ -415,6 +415,12 @@ namespace storm {
 		}
 
 		try {
+			// Pause threads - we're going to do some weird things!
+			// TODO: It might be a bit dangerous to pause threads this early, the reload process
+			// might execute user code. It should be executing on the compiler thread, but might
+			// involve other threads as well.
+			Engine::PauseThreads pause(engine());
+
 			// Once this process is started, we can't roll it back anymore, so keep going as far as
 			// possible, regardless of whether certain steps fail or not.
 			for (Nat i = 0; i < diff.update->count(); i++) {
@@ -437,10 +443,11 @@ namespace storm {
 			NameSet::merge(loading);
 			loading = null;
 
-			TODO(L"Here we need to stop all threads, and update our heap using 'tasks'.");
+			// Rewrite memory according to the updates.
 			// In particular, we need to:
 			// - replace all occurrences of the old entities with the new ones (at least for types).
 			// - modify the layout of any types requiring that.
+			tasks->apply();
 		} catch (...) {
 			// This indicates an internal error while merging. We will most likely not be able to
 			// recover from this gracefully.

@@ -1139,46 +1139,12 @@ namespace storm {
 		check(mps_ap_alloc_pattern_end(currentAllocPoint(), mps_alloc_pattern_ramp()), L"RAMP");
 	}
 
-	struct WalkData {
-		mps_fmt_t fmt;
-		GcImpl::WalkCb fn;
-		void *data;
-	};
-
-	static void walkFn(mps_addr_t addr, mps_fmt_t fmt, mps_pool_t pool, void *p, size_t s) {
-		WalkData *d = (WalkData *)p;
-		if (fmt != d->fmt)
-			return;
-
-		const GcType *type = GcImpl::typeOf(addr);
-		if (!type)
-			return;
-
-		switch (type->kind) {
-		case GcType::tFixed:
-		case GcType::tFixedObj:
-		case GcType::tType:
-			// Objects, let them through!
-			(*d->fn)((RootObject *)addr, d->data);
-			break;
-		}
-	}
-
-	void GcImpl::walkObjects(WalkCb fn, void *data) {
-		mps_arena_park(arena);
-
-		WalkData d = {
-			format,
-			fn,
-			data
-		};
-		mps_arena_formatted_objects_walk(arena, &walkFn, &d, 0);
-		mps_arena_release(arena);
-	}
-
 	class MpsRoot : public GcRoot {
 	public:
 		mps_root_t root;
+		void *data;
+		size_t count;
+		bool ambig;
 	};
 
 	GcImpl::Root *GcImpl::createRoot(void *data, size_t count, bool ambig) {
@@ -1190,6 +1156,9 @@ namespace storm {
 										&mpsScanArray,
 										data,
 										count);
+		r->data = data;
+		r->count = count;
+		r->ambig = ambig;
 
 		if (res == MPS_RES_OK)
 			return r;
@@ -1430,6 +1399,17 @@ namespace storm {
 			return new (gc.alloc(&type)) MpsGcWatch(gc, ld);
 		}
 
+		// Make sure that the watch is set, i.e. that 'moved' will always return true.
+		void set() {
+			// Set the epoch to zero, so that it always smaller than the current epoch.
+			ld._epoch = 0;
+
+			// Set the refset to all ones, meaning that it will have an intersection with the
+			// pre-history (which I assume is never completely empty, perhaps except for very early
+			// during execution).
+			ld._rs = std::numeric_limits<mps_word_t>::max();
+		}
+
 		static const GcType type;
 
 	private:
@@ -1448,6 +1428,91 @@ namespace storm {
 
 	GcWatch *GcImpl::createWatch() {
 		return new (alloc(&MpsGcWatch::type)) MpsGcWatch(*this);
+	}
+
+	struct WalkData {
+		mps_fmt_t fmt;
+		Walker *context;
+	};
+
+	static void walkFn(mps_addr_t addr, mps_fmt_t fmt, mps_pool_t pool, void *p, size_t s) {
+		WalkData *data = (WalkData *)p;
+		if (fmt != data->fmt)
+			return;
+
+		const GcType *type = GcImpl::typeOf(addr);
+		if (!type)
+			return;
+
+		if (type == &MpsGcWatch::type) {
+			if (data->context->flags & Walker::fClearWatch) {
+				MpsGcWatch *watch = (MpsGcWatch *)addr;
+				watch->set();
+			}
+
+			return;
+		}
+
+		switch (type->kind) {
+		case GcType::tFixed:
+			data->context->fixed(addr);
+			break;
+		case GcType::tFixedObj:
+		case GcType::tType:
+			data->context->object((RootObject *)addr);
+			break;
+		case GcType::tArray:
+		case GcType::tWeakArray:
+			data->context->array(addr);
+			break;
+		}
+	}
+
+	void GcImpl::walk(Walker &context, const os::InlineSet<GcRoot> &roots) {
+		mps_arena_park(arena);
+		context.prepare();
+
+		if (context.flags & Walker::fObjects) {
+			WalkData d = {
+				format,
+				&context
+			};
+			mps_arena_formatted_objects_walk(arena, &walkFn, &d, 0);
+		}
+
+		if (context.flags & Walker::fExactRoots) {
+			for (os::InlineSet<GcRoot>::iterator i = roots.begin(), end = roots.end(); i != end; ++i) {
+				MpsRoot *root = (MpsRoot *)*i;
+				if (root->ambig)
+					continue;
+
+				if (!context.checkRoot(root))
+					continue;
+
+				void **base = (void **)root->data;
+				for (size_t i = 0; i < root->count; i++)
+					context.exactPointer(base + i);
+			}
+		}
+
+		if (context.flags & Walker::fAmbiguousRoots) {
+			for (os::InlineSet<GcRoot>::iterator i = roots.begin(), end = roots.end(); i != end; ++i) {
+				MpsRoot *root = (MpsRoot *)*i;
+				if (root->ambig)
+					continue;
+
+				if (!context.checkRoot(root))
+					continue;
+
+				void **base = (void **)root->data;
+				for (size_t i = 0; i < root->count; i++)
+					context.exactPointer(base + i);
+			}
+
+			TODO(L"Scan all stacks as well!");
+		}
+
+		mps_arena_release(arena);
 	}
 
 	static const GcLicense mpsLicense = {

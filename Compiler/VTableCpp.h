@@ -34,6 +34,9 @@ namespace storm {
 		// Get number of elements. Note: 'size' returns number of bytes.
 		nat count() const;
 
+		// Get a pointer to the vtable. Marks it as used.
+		const void **pointer();
+
 		// Set this VTable for a class.
 		void insert(RootObject *obj);
 
