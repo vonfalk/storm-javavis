@@ -7,6 +7,7 @@
 #include "Allocator.h"
 #include "Gc/License.h"
 #include "Gc/Root.h"
+#include "Gc/Walker.h"
 
 namespace storm {
 
@@ -89,8 +90,7 @@ namespace storm {
 		void endRamp();
 
 		// Walk the heap.
-		typedef void (*WalkCb)(RootObject *inspect, void *param);
-		void walkObjects(WalkCb fn, void *param);
+		void walk(Walker &context);
 
 		typedef GcRoot Root;
 
@@ -125,6 +125,9 @@ namespace storm {
 
 		// Get the current Allocator.
 		smm::Allocator &currentAlloc();
+
+		// Walk the arena.
+		void walkI(smm::ArenaTicket &ticket, Walker &context);
 	};
 
 }

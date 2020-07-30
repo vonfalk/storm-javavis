@@ -93,7 +93,7 @@ namespace storm {
 										typename Scanner::Source &source);
 
 			// Scan all blocks that may contain references to anything in the provided GenSet,
-			// possibly raising write barriers since a garbage collection sycle is almost over.
+			// possibly raising write barriers since a garbage collection cycle is almost over.
 			template <class Scanner>
 			typename Scanner::Result scanFinal(ArenaTicket &ticket,
 											GenSet refsTo,

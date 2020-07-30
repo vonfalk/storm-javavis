@@ -214,6 +214,9 @@ namespace storm {
 			// Remove all addresses, essentially re-creating the object.
 			void clear();
 
+			// Make sure any future calls to 'check' returns 'true' until cleared.
+			void set();
+
 			// Check if any of the addresses have changed. Possibly gives false positives.
 			bool check() const;
 
@@ -237,6 +240,9 @@ namespace storm {
 
 			// Is this instance empty?
 			bool empty() const;
+
+			// Is this instance full? I.e. shall always trigger?
+			bool full() const;
 		};
 
 	}

@@ -111,6 +111,9 @@ namespace storm {
 		// "default" if the thread is not registered with the GC.
 		static GcImpl::ThreadData threadData(GcImpl *from, const os::Thread &thread, const GcImpl::ThreadData &def);
 
+		// Get all threads. The current thread is always first.
+		static vector<GcImpl::ThreadData> allThreads(GcImpl *from, const os::Thread &current);
+
 
 		/**
 		 * Memory allocation.
@@ -241,16 +244,20 @@ namespace storm {
 
 
 		/**
-		 * Iterate through all objects on the heap.
+		 * Iterate through all objects on the heap, and optionally also all roots.
+		 *
+		 * When iterating through weak roots, note that references on the currently running UThread
+		 * for all threads but the thread that calls 'walk' are not scanned. As such, make sure that
+		 * they do not execute anything important while rewriting the stack, for example by making
+		 * them wait on a Semaphore object (not os::Sema).
+		 *
+		 * Note: This is not a cheap operation as it could cause a partial GC.
 		 *
 		 * Note: inside the callback it is only possible to access the object which is passed to the
 		 * function and any memory on the stack (this means, for example, it is not possible to use
 		 * as<> or call any virtual members in the object). Do not take locks nor attempt to perform
 		 * a thread switch inside the callback.
 		 */
-
-		// Walk all objects and references on the heap. This may incur a full GC, so it is not a
-		// cheap operation.
 		void walk(Walker &context);
 
 
@@ -291,6 +298,9 @@ namespace storm {
 
 			delete root;
 		}
+
+		// Get all roots.
+		static const os::InlineSet<GcRoot> &allRoots(GcImpl *impl);
 
 
 		/**

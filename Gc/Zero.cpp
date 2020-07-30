@@ -184,8 +184,9 @@ namespace storm {
 
 	void GcImpl::endRamp() {}
 
-	void GcImpl::walkObjects(WalkCb fn, void *param) {
+	void GcImpl::walk(Walker &) {
 		// Nothing to do...
+		WARNING(L"Heap walking not supported for the Zero GC.");
 	}
 
 	GcImpl::Root *GcImpl::createRoot(void *data, size_t count, bool ambiguous) {

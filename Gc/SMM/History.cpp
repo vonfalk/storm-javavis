@@ -158,6 +158,9 @@ namespace storm {
 		}
 
 		void AddrWatch::add(const void *addr) {
+			if (full())
+				return;
+
 			// First time: copy the current epoch to us. Having a too low epoch will only give false
 			// positives, so that is fine.
 			if (empty()) {
@@ -186,14 +189,22 @@ namespace storm {
 			epochHigh = 0;
 		}
 
+		void AddrWatch::set() {
+			epochLow = epochHigh = 0xFFFFFFFF;
+		}
+
 		bool AddrWatch::check() const {
 			if (empty())
 				return false;
+			if (full())
+				return true;
 
 			return history.from.query(watching, history, epochLow, epochHigh);
 		}
 
 		bool AddrWatch::check(const void *addr) const {
+			if (full())
+				return true;
 			if (!check())
 				return false;
 
@@ -203,6 +214,10 @@ namespace storm {
 
 		bool AddrWatch::empty() const {
 			return (epochLow == 0) & (epochHigh == 0);
+		}
+
+		bool AddrWatch::full() const {
+			return (epochLow == 0xFFFFFFFF) & (epochHigh == 0xFFFFFFFF);
 		}
 
 	}

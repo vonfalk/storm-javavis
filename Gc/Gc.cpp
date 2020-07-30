@@ -134,6 +134,29 @@ namespace storm {
 			return i->second.data;
 	}
 
+	vector<GcImpl::ThreadData> Gc::allThreads(GcImpl *from, const os::Thread &current) {
+		Gc &me = ((ImplWrap *)from)->owner;
+
+		util::Lock::L z(me.threadLock);
+		vector<GcImpl::ThreadData> result;
+
+		ThreadMap::iterator c = me.threads.find(current.id());
+		if (c != me.threads.end())
+			result.push_back(c->second.data);
+
+		for (ThreadMap::iterator i = me.threads.begin(), end = me.threads.end(); i != end; i++) {
+			if (i->first != current.id())
+				result.push_back(i->second.data);
+		}
+
+		return result;
+	}
+
+	const os::InlineSet<GcRoot> &Gc::allRoots(GcImpl *from) {
+		Gc &me = ((ImplWrap *)from)->owner;
+		return me.roots;
+	}
+
 
 	GcType *Gc::allocType(GcType::Kind kind, Type *type, size_t stride, size_t entries) {
 		return impl->allocType(kind, type, stride, entries);
@@ -168,7 +191,7 @@ namespace storm {
 	}
 
 	void Gc::walk(Walker &walker) {
-		impl->walk(walker, roots);
+		impl->walk(walker);
 	}
 
 	void Gc::checkMemory() {

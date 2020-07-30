@@ -88,6 +88,7 @@ namespace storm {
 		// currently. The extent of this thread is specified by 'current' (the lower end, on X86).
 		// Additionally, returns the number of bytes scanned, which may be interesting for some GC
 		// implementations.
+		// If 'current' is null, the currently running thread is not scanned.
 		static Result stacks(Source &source, const StackSet &stacks, void *current, size_t *scanned) {
 			size_t bytesScanned = 0;
 
@@ -161,7 +162,7 @@ namespace storm {
 				// thread to see this.
 				PLN(L"------------ We found an UThread in the process of switching! ------------");
 #endif
-			} else {
+			} else if (current) {
 				bytesScanned += (char *)to - (char *)current;
 				for (void **at = (void **)current; at < to; at++) {
 					Result r = fix12(s, at);

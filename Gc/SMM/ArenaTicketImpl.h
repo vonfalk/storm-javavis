@@ -16,7 +16,7 @@ namespace storm {
 		 */
 
 		template <class Scanner>
-		typename Scanner::Result ArenaTicket::scanInexactRoots(typename Scanner::Source &source) {
+		typename Scanner::Result ArenaTicket::scanStacks(typename Scanner::Source &source) {
 			typename Scanner::Result r = typename Scanner::Result();
 			InlineSet<Thread> &threads = owner.threads;
 			for (InlineSet<Thread>::iterator i = threads.begin(); i != threads.end(); ++i) {
@@ -24,6 +24,13 @@ namespace storm {
 				if (r != typename Scanner::Result())
 					return r;
 			}
+
+			return r;
+		}
+
+		template <class Scanner>
+		typename Scanner::Result ArenaTicket::scanInexactRoots(typename Scanner::Source &source) {
+			typename Scanner::Result r = scanStacks<Scanner>(source);
 
 			InlineSet<Root> &roots = owner.inexactRoots;
 			for (InlineSet<Root>::iterator i = roots.begin(); i != roots.end(); ++i) {

@@ -98,7 +98,7 @@ namespace storm {
 		void endRamp();
 
 		// Walk the heap.
-		void walk(Walker &context, const os::InlineSet<GcRoot> &roots);
+		void walk(Walker &context);
 
 		typedef GcRoot Root;
 

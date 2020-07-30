@@ -149,6 +149,10 @@ namespace storm {
 				return owner.alloc.safeIdentifier(address);
 			}
 
+			// Scan only stacks using the given scanner.
+			template <class Scanner>
+			typename Scanner::Result scanStacks(typename Scanner::Source &source);
+
 			// Scan inexact roots (e.g. stacks) using the given scanner.
 			template <class Scanner>
 			typename Scanner::Result scanInexactRoots(typename Scanner::Source &source);

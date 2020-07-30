@@ -3,7 +3,9 @@
 #if STORM_GC == STORM_GC_DEBUG
 #define STORM_HAS_GC
 
-#include "Gc/License.h"
+#include "License.h"
+#include "Root.h"
+#include "Walker.h"
 #include "MemorySummary.h"
 
 namespace storm {
@@ -88,10 +90,9 @@ namespace storm {
 		void endRamp();
 
 		// Walk the heap.
-		typedef void (*WalkCb)(RootObject *inspect, void *param);
-		void walkObjects(WalkCb fn, void *param);
+		void walk(Walker &context);
 
-		struct Root;
+		typedef GcRoot Root;
 
 		// Create a root object.
 		Root *createRoot(void *data, size_t count, bool ambiguous);

@@ -6,6 +6,7 @@
 #include "MemorySummary.h"
 #include "License.h"
 #include "Root.h"
+#include "Walker.h"
 
 namespace storm {
 
@@ -84,8 +85,7 @@ namespace storm {
 		void endRamp();
 
 		// Walk the heap.
-		typedef void (*WalkCb)(RootObject *inspect, void *param);
-		void walkObjects(WalkCb fn, void *param);
+		void walk(Walker &context);
 
 		typedef GcRoot Root;
 

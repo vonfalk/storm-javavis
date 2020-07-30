@@ -10,6 +10,7 @@
 #include "Root.h"
 #include "Nonmoving.h"
 #include "ArenaTicket.h"
+#include "ArenaTicketImpl.h"
 #include "History.h"
 
 namespace storm {
@@ -227,10 +228,6 @@ namespace storm {
 		// arena.endRamp();
 	}
 
-	void GcImpl::walkObjects(WalkCb fn, void *param) {
-		assert(false, L"Walking objects is not yet supported!");
-	}
-
 	class SmmRoot : public GcRoot {
 	public:
 		smm::Root root;
@@ -295,6 +292,10 @@ namespace storm {
 			return new (impl.alloc(&type)) SMMWatch(impl, watch);
 		}
 
+		void set() {
+			watch.set();
+		}
+
 		static const GcType type;
 
 	private:
@@ -313,6 +314,144 @@ namespace storm {
 
 	GcWatch *GcImpl::createWatch() {
 		return new (alloc(&SMMWatch::type)) SMMWatch(*this);
+	}
+
+	void GcImpl::walk(Walker &context) {
+		arena.enter<void, GcImpl, Walker &>(*this, &GcImpl::walkI, context);
+	}
+
+	class WalkObjScanner {
+	public:
+		typedef int Result;
+		typedef Walker Source;
+
+		WalkObjScanner(Walker &src) : context(src) {}
+
+		Walker &context;
+
+		ScanOption object(void *start, void *end) {
+			const GcType *type = GcImpl::typeOf(start);
+			if (!type)
+				return scanNone;
+
+			// Don't show watch allocations to the outside world!
+			if (type == &SMMWatch::type) {
+				if (context.flags & Walker::fClearWatch) {
+					// But make sure they always return 'true' if desired.
+					SMMWatch *watch = (SMMWatch *)start;
+					watch->set();
+				}
+				return scanNone;
+			}
+
+			switch (type->kind) {
+			case GcType::tFixed:
+				context.fixed(start);
+				break;
+			case GcType::tFixedObj:
+			case GcType::tType:
+				context.object((RootObject *)start);
+				break;
+			case GcType::tArray:
+			case GcType::tWeakArray:
+				context.array(start);
+				break;
+			}
+
+			// We don't need pointer scanning. We're happy with getting to know all objects!
+			return scanNone;
+		}
+
+		bool fix1(void *ptr) { return true; }
+		int fix2(void **ptr) { return 0; }
+
+		bool fixHeader1(GcType *header) { return true; }
+		int fixHeader2(GcType **header) { return 0; }
+	};
+
+	class WalkExactScanner {
+	public:
+		typedef int Result;
+		typedef Walker Source;
+
+		WalkExactScanner(Walker &src) : context(src) {}
+
+		Walker &context;
+
+		ScanOption object(void *start, void *end) { return scanAll; }
+
+		bool fix1(void *ptr) { return true; }
+		int fix2(void **ptr) {
+			context.exactPointer(ptr);
+			return 0;
+		}
+
+		bool fixHeader1(GcType *header) { return true; }
+		int fixHeader2(GcType **header) {
+			context.exactPointer((void **)header);
+			return 0;
+		}
+	};
+
+	class WalkInexactScanner {
+	public:
+		typedef int Result;
+		typedef Walker Source;
+
+		WalkInexactScanner(Walker &src) : context(src) {}
+
+		Walker &context;
+
+		ScanOption object(void *start, void *end) { return scanAll; }
+
+		bool fix1(void *ptr) { return true; }
+		int fix2(void **ptr) {
+			context.ambiguousPointer(ptr);
+			return 0;
+		}
+
+		bool fixHeader1(GcType *header) { return true; }
+		int fixHeader2(GcType **header) {
+			context.ambiguousPointer((void **)header);
+			return 0;
+		}
+	};
+
+	void GcImpl::walkI(smm::ArenaTicket &ticket, Walker &context) {
+		context.prepare();
+
+		if (context.flags & Walker::fObjects) {
+			ticket.scanGenerations<WalkObjScanner>(context, smm::GenSet());
+		}
+
+		const os::InlineSet<GcRoot> &roots = Gc::allRoots(this);
+		if (context.flags & Walker::fExactRoots) {
+			for (os::InlineSet<GcRoot>::iterator i = roots.begin(), end = roots.end(); i != end; ++i) {
+				SmmRoot *root = (SmmRoot *)*i;
+				if (root->inexact)
+					continue;
+
+				if (!context.checkRoot(root))
+					continue;
+
+				root->root.scan<WalkExactScanner>(context);
+			}
+		}
+
+		if (context.flags & Walker::fAmbiguousRoots) {
+			for (os::InlineSet<GcRoot>::iterator i = roots.begin(), end = roots.end(); i != end; ++i) {
+				SmmRoot *root = (SmmRoot *)*i;
+				if (!root->inexact)
+					continue;
+
+				if (!context.checkRoot(root))
+					continue;
+
+				root->root.scan<WalkInexactScanner>(context);
+			}
+
+			ticket.scanStacks<WalkInexactScanner>(context);
+		}
 	}
 
 	void GcImpl::checkMemory() {

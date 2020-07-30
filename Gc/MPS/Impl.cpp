@@ -1468,7 +1468,22 @@ namespace storm {
 		}
 	}
 
-	void GcImpl::walk(Walker &context, const os::InlineSet<GcRoot> &roots) {
+	struct AmbScanner {
+		typedef int Result;
+		typedef Walker Source;
+
+		AmbScanner(Walker &src) : walker(src) {}
+
+		Walker &walker;
+
+		bool fix1(void *ptr) { return true; }
+		int fix2(void **ptr) {
+			walker.ambiguousPointer(ptr);
+			return 0;
+		}
+	};
+
+	void GcImpl::walk(Walker &context) {
 		mps_arena_park(arena);
 		context.prepare();
 
@@ -1480,6 +1495,7 @@ namespace storm {
 			mps_arena_formatted_objects_walk(arena, &walkFn, &d, 0);
 		}
 
+		const os::InlineSet<GcRoot> &roots = Gc::allRoots(this);
 		if (context.flags & Walker::fExactRoots) {
 			for (os::InlineSet<GcRoot>::iterator i = roots.begin(), end = roots.end(); i != end; ++i) {
 				MpsRoot *root = (MpsRoot *)*i;
@@ -1498,7 +1514,7 @@ namespace storm {
 		if (context.flags & Walker::fAmbiguousRoots) {
 			for (os::InlineSet<GcRoot>::iterator i = roots.begin(), end = roots.end(); i != end; ++i) {
 				MpsRoot *root = (MpsRoot *)*i;
-				if (root->ambig)
+				if (!root->ambig)
 					continue;
 
 				if (!context.checkRoot(root))
@@ -1506,10 +1522,17 @@ namespace storm {
 
 				void **base = (void **)root->data;
 				for (size_t i = 0; i < root->count; i++)
-					context.exactPointer(base + i);
+					context.ambiguousPointer(base + i);
 			}
 
-			TODO(L"Scan all stacks as well!");
+			vector<ThreadData> threads = Gc::allThreads(this, os::Thread::current());
+			if (!threads.empty()) {
+				// Note: Threads is always allocated on the previous stack frame.
+				storm::Scan<AmbScanner>::stacks(context, *threads[0]->stacks, (void *)&threads, null);
+			}
+			for (size_t i = 1; i < threads.size(); i++) {
+				storm::Scan<AmbScanner>::stacks(context, *threads[i]->stacks, null, null);
+			}
 		}
 
 		mps_arena_release(arena);
