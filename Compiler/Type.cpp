@@ -910,14 +910,15 @@ namespace storm {
 
 		if (value() != o->value())
 			throw new (this) ReplaceError(pos, S("Can not change classes into values or vice versa."));
-		if (super() && !o->super())
+
+		if (super() && !o->super()) {
 			throw new (this) ReplaceError(pos, S("Can not introduce a super class."));
-		else if (!super() && o->super())
+		} else if (!super() && o->super()) {
 			throw new (this) ReplaceError(pos, S("Can not remove a super class."));
-		else if (super() && *super()->identifier() != *o->super()->identifier())
-			// Note: The above compares strings, as the super class might be in the process of being replaced as well!
-			// This is perhaps not ideal, but works for now.
-			throw new (this) ReplaceError(pos, S("Can not change the super class."));
+		} else if (super()) {
+			if (!ctx->same(super(), o->super()))
+				throw new (this) ReplaceError(pos, S("Can not change the super class."));
+		}
 
 		TypeCheckDiff diff(ctx);
 		o->diff(this, diff, ctx);

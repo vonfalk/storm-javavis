@@ -1,0 +1,14 @@
+class Base {
+	Int x;
+
+	void toS(StrBuf to) {
+		to << "B" << x;
+	}
+}
+
+class Derived1 extends Base {
+	void toS(StrBuf to) {
+		super:toS(to);
+		to << "D" << x;
+	}
+}

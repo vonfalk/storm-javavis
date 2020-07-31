@@ -12,3 +12,45 @@ Object createClass(Int x) {
 	t.update();
 	t;
 }
+
+class Derived2 extends Base {
+	void toS(StrBuf to) {
+		super:toS(to);
+		to << "E" << x;
+	}
+}
+
+Object inhBase(Int x) {
+	Base r;
+	r.x = x;
+	r;
+}
+Object inhDerived1(Int x) {
+	Derived1 r;
+	r.x = x;
+	r;
+}
+Object inhDerived2(Int x) {
+	Derived2 r;
+	r.x = x;
+	r;
+}
+
+Bool isBase(Object x) {
+	if (x as Base)
+		true;
+	else
+		false;
+}
+Bool isDerived1(Object x) {
+	if (x as Derived1)
+		true;
+	else
+		false;
+}
+Bool isDerived2(Object x) {
+	if (x as Derived2)
+		true;
+	else
+		false;
+}
