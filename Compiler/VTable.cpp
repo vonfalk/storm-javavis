@@ -157,6 +157,36 @@ namespace storm {
 			useLookup(fn, slot);
 	}
 
+	void VTable::remove(Function *fn) {
+		// Do we know this function?
+		VTableUpdater *u = updaters->get(fn, null);
+		if (!u)
+			return;
+
+		VTableSlot slot = u->slot();
+		clear(slot);
+
+		if (Type *s = owner->super())
+			rawVTable(s)->remove(slot);
+	}
+
+	void VTable::remove(VTableSlot slot) {
+		if (Function *fn = get(slot)) {
+			if (!hasOverride(slot)) {
+				// Disable vtable lookup for this function.
+				if (fn->ref().address() != fn->directRef().address()) {
+					fn->setLookup(null);
+				}
+
+				// No need to continue traversal.
+				return;
+			}
+		}
+
+		if (Type *s = owner->super())
+			rawVTable(s)->remove(slot);
+	}
+
 	void VTable::removeChild(Type *child) {
 		// For all slots: find a match to that function in a pre-existing child class.
 

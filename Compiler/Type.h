@@ -116,6 +116,10 @@ namespace storm {
 		using NameSet::add;
 		virtual void STORM_FN add(Named *item);
 
+		// ...and removed.
+		using NameSet::remove;
+		virtual Bool STORM_FN remove(Named *item);
+
 		// Modify the 'find' behaviour slightly so it also considers superclasses.
 		virtual MAYBE(Named *) STORM_FN find(SimplePart *part, Scope source);
 		using NameSet::find;
@@ -362,6 +366,9 @@ namespace storm {
 		// Called when a function has been added here. Decides if 'f' should be virtual or not and
 		// acts accordingly.
 		void vtableFnAdded(Function *added);
+
+		// Called when a function has been removed here.
+		void vtableFnRemoved(Function *removed);
 
 		// Search towards the super class for a function overridden by 'fn'. Returns 'true' if an
 		// overridden function was found.

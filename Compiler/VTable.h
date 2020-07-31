@@ -66,6 +66,10 @@ namespace storm {
 		// and will be set to use a lookup if needed.
 		void STORM_FN insert(Function *fn);
 
+		// Remove a function from this VTable. Will ensure that any parent functions that no longer
+		// require vtable lookup.
+		void STORM_FN remove(Function *fn);
+
 		// Notify that a child class has been removed. We assume it is not possible to reach 'type'
 		// by traversing the inheritance hierarchy.
 		void STORM_FN removeChild(Type *type);
@@ -109,6 +113,9 @@ namespace storm {
 
 		// RefSource referring to the VTable.
 		code::RefSource *source;
+
+		// Called on super-classes whenever a parent slot has been vacated.
+		void remove(VTableSlot slot);
 
 		// Called when one of our parent classes have grown their vtable and we need to follow.
 		void parentGrown(Nat pos, Nat count);

@@ -417,11 +417,10 @@ namespace storm {
 		if (Function *f = as<Function>(item)) {
 			if (*f->name == CTOR)
 				updateCtor(f);
-			else if (*f->name != DTOR)
-				vtableFnAdded(f);
-
-			if (*f->name == DTOR)
+			else if (*f->name == DTOR)
 				updateDtor(f);
+			else
+				vtableFnAdded(f);
 
 			if (tHandle)
 				updateHandle(f);
@@ -433,6 +432,26 @@ namespace storm {
 				layout = new (engine) Layout();
 			layout->add(item);
 		}
+	}
+
+	Bool Type::remove(Named *item) {
+		if (!NameSet::remove(item))
+			return false;
+
+		if (Function *f = as<Function>(item)) {
+			if (*f->name == CTOR)
+				updateCtor(f);
+			else if (*f->name == DTOR)
+				updateDtor(null);
+			else
+				vtableFnRemoved(f);
+		}
+
+		if ((typeFlags & typeCpp) != typeCpp) {
+			// TODO: Update layout?
+		}
+
+		return true;
 	}
 
 	Named *Type::find(SimplePart *part, Scope source) {
@@ -939,7 +958,22 @@ namespace storm {
 			// TODO: If we have derived classes, we need to force them to update their layout now.
 		}
 
-		TODO(L"Check derived and parent classes.");
+		// Update super class if needed.
+		if (Type *s = super()) {
+			Type *n = tasks->normalize(s);
+			if (n != s)
+				setSuper(n);
+		}
+
+		// Update derived classes.
+		if (o->chain) {
+			TypeChain::Iter iter = o->chain->children();
+			while (Type *child = iter.next()) {
+				Type *super = tasks->normalize(child->super());
+				if (super != this)
+					child->setSuper(this);
+			}
+		}
 
 		// TODO: We might be able to move some of this into NameSet.
 		TypeReplaceDiff diff(tasks);
@@ -1484,6 +1518,22 @@ namespace storm {
 
 		if (insert)
 			myVTable->insert(fn);
+	}
+
+	void Type::vtableFnRemoved(Function *fn) {
+		// If we are a value, we do not have a vtable.
+		if (value())
+			return;
+
+		// Don't care if it is a static function.
+		if (!fn->isMember())
+			return;
+
+		// See if we can remove the function from the vtable.
+		if (myVTable)
+			myVTable->remove(fn);
+
+		// TODO: Check if any 'abstract' and 'override' constraints were broken.
 	}
 
 	// See if the return type of a function matches the super function.

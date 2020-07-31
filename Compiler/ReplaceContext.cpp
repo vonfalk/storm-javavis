@@ -15,7 +15,10 @@ namespace storm {
 	}
 
 	Type *ReplaceContext::normalize(Type *t) {
-		return typeEq->get(t, t);
+		if (t)
+			return typeEq->get(t, t);
+		else
+			return null;
 	}
 
 	Value ReplaceContext::normalize(Value v) {
