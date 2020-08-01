@@ -138,6 +138,7 @@ namespace storm {
 		virtual void prepare() {
 			// Now, objects don't move anymore and we can sort the array for good lookup performance!
 			replace->sort();
+			vtables->sort();
 		}
 
 		virtual bool checkRoot(GcRoot *root) {

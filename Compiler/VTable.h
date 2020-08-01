@@ -86,6 +86,9 @@ namespace storm {
 		// Get the vtable pointer. Marks it as used.
 		const void **pointer();
 
+		// Make this vtable replace the other one (i.e. update refs).
+		void replace(VTable *old, ReplaceTasks *tasks);
+
 		// Get the "topmost" functions for each entry in the vtable. Unused slots are left out
 		// (since they would be null).
 		Array<Function *> *allSlots();

@@ -70,6 +70,11 @@ namespace storm {
 		return cpp->pointer();
 	}
 
+	void VTable::replace(VTable *old, ReplaceTasks *tasks) {
+		source->steal(old->source);
+		tasks->replace(old, this);
+	}
+
 	Array<Function *> *VTable::allSlots() {
 		Array<Function *> *cppFns = new (this) Array<Function *>(cpp->count(), null);
 		Array<Function *> *stormFns = null;

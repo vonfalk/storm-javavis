@@ -6,6 +6,8 @@ namespace storm {
 	/**
 	 * Mapping between objects. Can be used to ask the GC to replace all references to one object
 	 * with another.
+	 *
+	 * When mappings 'a->b' and 'b->c' are added, this essentially means 'a->c' and 'b->c'.
 	 */
 	class RawObjMap {
 	public:

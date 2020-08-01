@@ -262,6 +262,10 @@ namespace storm {
 	}
 
 	void Type::setSuper(Type *to) {
+		setSuper(to, null);
+	}
+
+	void Type::setSuper(Type *to, ReplaceTasks *tasks) {
 		// If 'to' is null: figure out what to inherit from.
 		if (!to)
 			to = defaultSuper();
@@ -289,10 +293,10 @@ namespace storm {
 		vtableDetachedSuper(prev);
 
 		// Propagate chainges to all children.
-		updateSuper();
+		updateSuper(tasks);
 	}
 
-	void Type::updateSuper() {
+	void Type::updateSuper(ReplaceTasks *tasks) {
 		Type *to = super();
 
 		// Which thread to use?
@@ -315,6 +319,10 @@ namespace storm {
 			GcType *old = myGcType;
 			myGcType = null;
 			engine.gc.freeType(old);
+
+			// Create a new one if we are to generate 'replace' instructions.
+			if (tasks)
+				tasks->replace(old, gcType());
 		}
 
 		// TODO: Invalidate the Layout as well.
@@ -331,7 +339,7 @@ namespace storm {
 		// Recurse into children.
 		TypeChain::Iter i = chain->children();
 		while (Type *c = i.next())
-			c->updateSuper();
+			c->updateSuper(tasks);
 	}
 
 	MAYBE(Type *) Type::declaredSuper() const {
@@ -959,20 +967,12 @@ namespace storm {
 			// TODO: If we have derived classes, we need to force them to update their layout now.
 		}
 
-		// Update super class if needed.
-		if (Type *s = super()) {
-			Type *n = tasks->normalize(s);
-			if (n != s)
-				setSuper(n);
-		}
-
-		// Update derived classes.
+		// Update derived classes (Note: We don't need to update our super class).
 		if (o->chain) {
 			TypeChain::Iter iter = o->chain->children();
 			while (Type *child = iter.next()) {
-				Type *super = tasks->normalize(child->super());
-				if (super != this)
-					child->setSuper(this);
+				if (child->super() != this)
+					child->setSuper(this, tasks);
 			}
 		}
 
@@ -1003,7 +1003,7 @@ namespace storm {
 
 		// If we have a vtable, switch that as well.
 		if (o->myVTable)
-			tasks->replace(o->myVTable, vtable());
+			vtable()->replace(o->myVTable, tasks);
 	}
 
 	void Type::useSuperGcType() {

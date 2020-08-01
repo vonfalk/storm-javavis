@@ -58,8 +58,19 @@ namespace storm {
 	};
 
 	void RawObjMap::sort() {
-		if (data)
+		if (data) {
 			std::sort(data, data + filled, Predicate());
+
+			// Handle transitive dependencies. O(n log n) assuming we don't have very long chains
+			// (which are not very common).
+			for (nat i = 0; i < filled; i++) {
+				void *p = data[i].to;
+				while (void *next = find(p))
+					p = next;
+
+				data[i].to = p;
+			}
+		}
 	}
 
 	void *RawObjMap::find(void *obj) {

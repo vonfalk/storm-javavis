@@ -90,7 +90,7 @@ BEGIN_TEST_(ClassInherit, Reload) {
 		"class Derived1 extends Base {"
 		"  void toS(StrBuf to) {"
 		"    super:toS(to);"
-		"    to << \"D'\";" // Why can't I print 'x' at the end?
+		"    to << \"D'\" << x;"
 		"  }"
 		"}";
 

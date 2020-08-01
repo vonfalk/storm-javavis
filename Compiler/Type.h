@@ -296,9 +296,13 @@ namespace storm {
 		// Get the default super type for us.
 		Type *defaultSuper() const;
 
+		// Version of 'setSuper' that allows specifying a 'tasks' instance.
+		void setSuper(MAYBE(Type *) to, MAYBE(ReplaceTasks *) tasks);
+
 		// Internal helper for setSuper. Does the work associated with switching super classes, but
-		// does not change 'super'.
-		void updateSuper();
+		// does not change 'super'. If 'taks' is non-null, then makes sure that the GcType object
+		// will be re-created as needed and recorded inside 'tasks'.
+		void updateSuper(MAYBE(ReplaceTasks *) tasks);
 
 		// Special case for the first Type.
 		static void *operator new(size_t size, Engine &e, GcType *type);
