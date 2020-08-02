@@ -46,6 +46,7 @@ namespace storm {
 		// properly instantiated before we report that templates are fully functional.
 		Array<Value>::stormType(e);
 		Map<Str *, NameOverloads *>::stormType(e);
+		Array<Template *>::stormType(e);
 		Map<Function *, VTableUpdater *>::stormType(e);
 		WeakSet<TypeChain>::stormType(e);
 		WeakSet<code::Reference>::stormType(e);

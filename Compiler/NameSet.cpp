@@ -9,11 +9,11 @@ namespace storm {
 
 	NameOverloads::NameOverloads() :
 		items(new (this) Array<Named *>()),
-		templates(new (this) Array<Template *>()) {}
+		templates(null) {}
 
 	Bool NameOverloads::empty() const {
 		return items->empty()
-			&& templates->empty();
+			&& (!templates || templates->empty());
 	}
 
 	Nat NameOverloads::count() const {
@@ -75,6 +75,8 @@ namespace storm {
 
 	void NameOverloads::add(Template *item) {
 		// There is no way to validate templates at this stage.
+		if (!templates)
+			templates = new (this) Array<Template *>();
 		templates->push(item);
 	}
 
@@ -90,6 +92,9 @@ namespace storm {
 	}
 
 	Bool NameOverloads::remove(Template *item) {
+		if (!templates)
+			return false;
+
 		for (Nat i = 0; i < templates->count(); i++) {
 			if (templates->at(i) == item) {
 				templates->remove(i);
@@ -114,8 +119,13 @@ namespace storm {
 			}
 		}
 
-		for (Nat i = 0; i < from->templates->count(); i++)
-			templates->push(from->templates->at(i));
+		if (from->templates && from->templates->any()) {
+			if (!templates)
+				templates = new (this) Array<Template *>();
+
+			for (Nat i = 0; i < from->templates->count(); i++)
+				templates->push(from->templates->at(i));
+		}
 
 		for (Nat i = 0; i < from->items->count(); i++)
 			items->push(from->items->at(i));
@@ -160,16 +170,29 @@ namespace storm {
 	}
 
 	void NameOverloads::diffTemplatesAdded(NameDiff &callback) {
+		if (!templates)
+			return;
+
 		for (Nat i = 0; i < templates->count(); i++)
 			callback.added(templates->at(i));
 	}
 
 	void NameOverloads::diffTemplatesRemoved(NameDiff &callback) {
+		if (!templates)
+			return;
+
 		for (Nat i = 0; i < templates->count(); i++)
 			callback.removed(templates->at(i));
 	}
 
+	Bool NameOverloads::anyTemplates() const {
+		return templates && templates->any();
+	}
+
 	Named *NameOverloads::createTemplate(NameSet *owner, SimplePart *part) {
+		if (!templates)
+			return null;
+
 		Named *found = null;
 		for (Nat i = 0; i < templates->count(); i++) {
 			Named *n = templates->at(i)->generate(part);
@@ -191,7 +214,7 @@ namespace storm {
 	void NameOverloads::toS(StrBuf *to) const {
 		for (Nat i = 0; i < items->count(); i++)
 			*to << items->at(i) << L"\n";
-		if (templates->any())
+		if (templates && templates->any())
 			*to << L"<" << templates->count() << L" templates>\n";
 	}
 
@@ -332,6 +355,29 @@ namespace storm {
 				r->push(o[i]);
 		}
 		return r;
+	}
+
+	Array<NameOverloads *> *NameSet::templateOverloads() {
+		Array<NameOverloads *> *result = new (this) Array<NameOverloads *>();
+		templateOverloads(result);
+		return result;
+	}
+
+	void NameSet::templateOverloads(Array<NameOverloads *> *result) {
+		if (!overloads)
+			return;
+
+		for (Overloads::Iter i = overloads->begin(), end = overloads->end(); i != end; ++i) {
+			NameOverloads *here = i.v();
+			if (here->anyTemplates())
+				result->push(here);
+
+			for (Nat i = 0; i < here->count(); i++) {
+				NameSet *r = as<NameSet>(here->at(i));
+				if (r)
+					r->templateOverloads(result);
+			}
+		}
 	}
 
 	void NameSet::forceLoad() {

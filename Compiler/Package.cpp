@@ -7,6 +7,7 @@
 #include "Engine.h"
 #include "Reader.h"
 #include "Exception.h"
+#include "TemplateUpdate.h"
 
 namespace storm {
 
@@ -236,6 +237,8 @@ namespace storm {
 				NameSet::discardSource();
 
 		} catch (...) {
+			// Find and discard any generated types that were produced during the load and discard them.
+			removeTemplatesFrom(loading);
 			// Discard the partially loaded results.
 			loading = null;
 			throw;
@@ -411,10 +414,15 @@ namespace storm {
 			tasks->buildTypeEquivalence(this, temporary);
 			loading = temporary;
 
+			TODO(L"Find templates that were generated while loading and replace them as well.");
+			PVAR(engine().package()->templateOverloads()->count());
+
 			// Now, try to merge all entities inside 'loading', populating the 'diff' variable
 			// with what to do after performing some sanity checks of the update operations.
 			NameSet::diff(loading, diff, tasks);
 		} catch (...) {
+			// Remove any generated templates.
+			removeTemplatesFrom(loading);
 			// Discard the partially loaded results.
 			loading = null;
 			throw;
