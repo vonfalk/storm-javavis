@@ -181,7 +181,8 @@ private:
 private void doReload(lang:NameLookup entity) on Compiler {
 	// Find containing package.
 	if (entity as lang:Package) {
-		lang:bs:macro:reloadPkg(entity);
+		// TODO? We can attempt to only reload one file.
+		entity.reload();
 	} else if (parent = entity.parent) {
 		// Try to find a parent package...
 		doReload(parent);

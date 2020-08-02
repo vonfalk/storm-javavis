@@ -342,9 +342,10 @@ namespace storm {
 
 		ProductionType::ProductionType(Str *name, ProductionDecl *decl, Delimiters *delim, Scope scope)
 			: Type(name, typeClass),
-			  pos(decl->pos),
 			  decl(decl),
 			  scope(scope) {
+
+			this->pos = decl->pos;
 
 			Rule *r = as<Rule>(scope.find(decl->rule));
 			if (!r)
@@ -361,9 +362,10 @@ namespace storm {
 
 		ProductionType::ProductionType(SrcPos pos, Str *name, Rule *parent)
 			: Type(name, typeClass),
-			  pos(pos),
 			  decl(null),
 			  scope() {
+
+			this->pos = pos;
 
 			setSuper(parent);
 			production = new (this) Production(this);

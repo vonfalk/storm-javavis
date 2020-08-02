@@ -14,7 +14,7 @@ namespace storm {
 		STORM_CLASS;
 	public:
 		// Create.
-		STORM_CTOR NamedThread(Str *name);
+		STORM_CTOR NamedThread(SrcPos pos, Str *name);
 		STORM_CTOR NamedThread(syntax::SStr *name);
 
 		// Create, and assign to a specific thread.

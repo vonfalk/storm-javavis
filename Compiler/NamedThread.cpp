@@ -6,11 +6,11 @@
 
 namespace storm {
 
-	NamedThread::NamedThread(Str *name) : Named(name) {
+	NamedThread::NamedThread(SrcPos pos, Str *name) : Named(pos, name) {
 		myThread = new (this) Thread();
 	}
 
-	NamedThread::NamedThread(syntax::SStr *name) : Named(name->v) {
+	NamedThread::NamedThread(syntax::SStr *name) : Named(name->pos, name->v) {
 		myThread = new (this) Thread();
 	}
 

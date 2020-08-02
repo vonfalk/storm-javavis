@@ -176,9 +176,6 @@ namespace storm {
 			// Create, populate manually later.
 			STORM_CTOR ProductionType(SrcPos pos, Str *name, Rule *rule);
 
-			// Declared at.
-			SrcPos pos;
-
 			// Production.
 			Production *production;
 

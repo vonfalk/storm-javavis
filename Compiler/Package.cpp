@@ -326,7 +326,7 @@ namespace storm {
 		}
 
 		// We don't need to worry about new things.
-		virtual void added(Named *item) { PLN(L"New item: " << item); }
+		virtual void added(Named *item) {}
 		virtual void added(Template *) {}
 
 		// Old things, we just need to keep track of, so that we can remove them later.
@@ -384,6 +384,12 @@ namespace storm {
 	};
 
 	void Package::reload(Array<Url *> *files, Bool complete) {
+		// If we're not loaded yet, just load the package instead.
+		if (!allLoaded()) {
+			forceLoad();
+			return;
+		}
+
 		NameSet *temporary = new (this) NameSet(name, params);
 		loading = temporary;
 		loadingAllowDuplicates = true;

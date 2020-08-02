@@ -161,10 +161,13 @@ Str explore(Named named) on Compiler {
 	}
 }
 
-Expr reloadName(Block block, SrcName typeName) on Compiler {
-	Expr type = createType(typeName.pos, block, typeName);
-	Expr callIt = namedExpr(block, name{lang:bs:macro:reload}, Actuals(type));
-	callIt;
+Expr reloadName(Block block, SrcName name) on Compiler {
+	if (found = rootScope().find(name) as Package) {
+		ReferNamed ref(name.pos, found);
+		namedExpr(block, SStr("reload", name.pos), ref);
+	} else {
+		throw SyntaxError(name.pos, "The name " + name.toS + " does not refer to a package.");
+	}
 }
 
 
