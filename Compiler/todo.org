@@ -57,14 +57,13 @@
     but the scale of the issue should be assessed first.
   - [ ] Parsing core.lang.syntax.bnf takes about 80 ms, which is a bit on the high end when compiling code...
 
-* Loose ends so far [54/97]
+* Loose ends so far [55/98]
   - [ ] It would be very nice to have an operation on the Map<> type return a maybe, eliminating the typical "has"+"get"
   - [ ] When reloading types, it is possible (and even likely) that WeakSets among others contain a duplicate
     key (we're modifying memory). This will currently be retained during rehashes, meaning that the slot is 
     essentially leaked. The rehash code should be modified to handle this.
-  - [ ] When reloading types, templated types like Maybe<T> may end up having multiple instances created for what
-    becomes the 'same' type. We need to find and fix such cases globally in the name tree (this happens when reloading
-    lang.bs.macro for example).
+  - [ ] When reloading types, it seems like the SMM implementation of the Walker fails to find some references,
+    as replacing "lang.bs.macro" works the first few times, but fails afterwards. Probably due to underscanning.
   - [ ] We want to allocate threads in some kind of pool. since the minimum alignment for VirtualAlloc on Windows
     is 64k, we might waste quite a lot of memory when allocating small stacks.
   - [ ] Having a generator in Basic Storm generate types, makes it impossible to use those types in other files
@@ -138,6 +137,9 @@
   - [ ] Move the 'assign' declaration to being purely a decorator (ie. Foo field(Foo v) : assign)?
   - [ ] If a type has a '==' or '<' outside the type itself, the corresponding operator will not be present in
     a Handle, like '<<' at the moment.
+  - [X] When reloading types, templated types like Maybe<T> may end up having multiple instances created for what
+    becomes the 'same' type. We need to find and fix such cases globally in the name tree (this happens when reloading
+    lang.bs.macro for example).
   - [X] Add a 'pos' member to Named. Then we can implement a generic 'file private' and use that in Basic Storm.
     If this is done, we should remove or replace storm::bs::FileScope in Basic/Scope.h, as it is most likely not
     needed anymore.

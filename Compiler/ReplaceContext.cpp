@@ -30,7 +30,12 @@ namespace storm {
 		buildTypeEq(oldRoot, oldRoot, newRoot);
 	}
 
+	void ReplaceContext::addEq(Type *oldType, Type *newType) {
+		typeEq->put(newType, oldType);
+	}
+
 	void ReplaceContext::buildTypeEq(NameSet *oldRoot, NameSet *currOld, NameSet *currNew) {
+		currNew->forceLoad();
 		for (NameSet::Iter i = currNew->begin(), end = currNew->end(); i != end; ++i) {
 			Type *n = as<Type>(i.v());
 			if (!n)
@@ -134,6 +139,7 @@ namespace storm {
 
 		RawObjMap *replace;
 		RawObjMap *vtables;
+		bool foundHeader;
 
 		virtual void prepare() {
 			// Now, objects don't move anymore and we can sort the array for good lookup performance!
@@ -154,20 +160,35 @@ namespace storm {
 			if (void *r = vtables->find((byte *)vt - offset))
 				vtable::set((byte *)r + offset, obj);
 
+			foundHeader = false;
+
 			// Check all pointers.
 			PtrWalker::object(obj);
 		}
 
+		virtual void fixed(void *obj) {
+			foundHeader = false;
+			PtrWalker::fixed(obj);
+		}
+
+		virtual void array(void *obj) {
+			foundHeader = false;
+			PtrWalker::fixed(obj);
+		}
+
 		virtual void header(GcType **ptr) {
-			if (void *r = replace->find(*ptr)) {
+			// Only scan the first header of each object (i.e. don't scan the 'myGcType' inside Type objects).
+			if (foundHeader)
+				return;
+			foundHeader = true;
+
+			if (void *r = replace->find(*ptr))
 				*ptr = (GcType *)r;
-			}
 		}
 
 		virtual void exactPointer(void **ptr) {
-			if (void *r = replace->find(*ptr)) {
+			if (void *r = replace->find(*ptr))
 				*ptr = r;
-			}
 		}
 
 		virtual void ambiguousPointer(void **ptr) {

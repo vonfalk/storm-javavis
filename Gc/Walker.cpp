@@ -42,4 +42,9 @@ namespace storm {
 		fmt::Scan<PtrScanner>::objects(me, inspect, fmt::skip(inspect));
 	}
 
+	void PtrWalker::code(void *inspect) {
+		PtrWalker *me = this;
+		fmt::Scan<PtrScanner>::objects(me, inspect, fmt::skip(inspect));
+	}
+
 }

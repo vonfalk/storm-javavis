@@ -1440,6 +1440,11 @@ namespace storm {
 		if (fmt != data->fmt)
 			return;
 
+		if (fmt::objIsCode(fmt::fromClient(addr))) {
+			data->context->code(addr);
+			return;
+		}
+
 		const GcType *type = GcImpl::typeOf(addr);
 		if (!type)
 			return;

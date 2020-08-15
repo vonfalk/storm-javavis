@@ -330,6 +330,11 @@ namespace storm {
 		Walker &context;
 
 		ScanOption object(void *start, void *end) {
+			if (fmt::objIsCode(fmt::fromClient(start))) {
+				context.code(start);
+				return scanNone;
+			}
+
 			const GcType *type = GcImpl::typeOf(start);
 			if (!type)
 				return scanNone;

@@ -1,0 +1,11 @@
+class MaybeOf {
+	Int x;
+}
+
+MaybeOf? maybeFn(MaybeOf? x) {
+	x;
+}
+
+void runMaybe() {
+	maybeFn(null);
+}

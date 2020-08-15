@@ -414,8 +414,20 @@ namespace storm {
 			tasks->buildTypeEquivalence(this, temporary);
 			loading = temporary;
 
-			TODO(L"Find templates that were generated while loading and replace them as well.");
-			PVAR(engine().package()->templateOverloads()->count());
+			// Find templates that were generated while loading and replace them as well.
+			Array<NamedPair> *templates = replaceTemplatesFrom(loading, tasks);
+			// Put them inside 'diff' so that we perform the replacements down the line. We're
+			// making sanity checks here as well.
+			for (Nat i = 0; i < templates->count(); i++) {
+				NamedPair p = templates->at(i);
+				if (Str *msg = p.to->canReplace(p.from, tasks)) {
+					StrBuf *m = new (this) StrBuf();
+					*m << S("Unable to replace ") << p.from << S(": ") << msg;
+					throw new (this) ReplaceError(p.to->pos, m->toS());
+				}
+			}
+			// Do all replacements. Note: 'diff' is not yet touched, so we can replace its array.
+			diff.update = templates;
 
 			// Now, try to merge all entities inside 'loading', populating the 'diff' variable
 			// with what to do after performing some sanity checks of the update operations.
@@ -442,7 +454,12 @@ namespace storm {
 				p.to->replace(p.from, tasks);
 
 				// Remove the old one.
-				NameSet::remove(p.from);
+				NameSet *in = as<NameSet>(p.from->parent());
+				if (in) {
+					in->NameSet::remove(p.from);
+				}
+				// Note: If 'in' is not a NameSet, then 'p.from' is likely something anonymous, like
+				// a lambda function, which is fine to not remove.
 			}
 
 			// Remove items to make the merge go smootly. TODO: We should check so that removed items

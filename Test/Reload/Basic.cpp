@@ -1,7 +1,7 @@
 #include "stdafx.h"
 #include "Util.h"
 
-BEGIN_TEST_(Basic, Reload) {
+BEGIN_TEST(Basic, Reload) {
 	Engine &e = gEngine();
 
 	Package *reload = e.package(S("tests.reload"));
@@ -12,7 +12,7 @@ BEGIN_TEST_(Basic, Reload) {
 
 } END_TEST
 
-BEGIN_TEST_(MemberFn, Reload) {
+BEGIN_TEST(MemberFn, Reload) {
 	Engine &e = gEngine();
 
 	Package *reload = e.package(S("tests.reload"));
@@ -34,7 +34,7 @@ BEGIN_TEST_(MemberFn, Reload) {
 
 } END_TEST
 
-BEGIN_TEST_(ClassType, Reload) {
+BEGIN_TEST(ClassType, Reload) {
 	Engine &e = gEngine();
 
 	Package *reload = e.package(S("tests.reload"));
@@ -75,7 +75,7 @@ BEGIN_TEST_(ClassType, Reload) {
 
 } END_TEST
 
-BEGIN_TEST_(ClassInherit, Reload) {
+BEGIN_TEST(ClassInherit, Reload) {
 	Engine &e = gEngine();
 
 	Package *reload = e.package(S("tests.reload"));
@@ -156,5 +156,57 @@ BEGIN_TEST_(ClassInherit, Reload) {
 	CHECK_EQ(vtable::from(first2), vtable::from(second2));
 	CHECK_EQ(vtable::from(first3), vtable::from(second3));
 
+
+} END_TEST
+
+static Nat countMaybe(Package *core) {
+	Nat result = 0;
+	for (NameSet::Iter i = core->begin(); i != core->end(); ++i) {
+		if (*i.v()->identifier() == S("core.Maybe(tests.reload.MaybeOf)"))
+			result++;
+	}
+	return result;
+}
+
+BEGIN_TEST(Templates, Reload) {
+	Engine &e = gEngine();
+
+	Package *reload = e.package(S("tests.reload"));
+	Package *core = e.package(S("core"));
+
+	const char *contents =
+		"class MaybeOf {"
+		"  Int x;"
+		"}"
+		"MaybeOf? maybeFn(MaybeOf? x) {"
+		"  x;"
+		"}"
+		"void runMaybe() {"
+		"  maybeFn(null);"
+		"}";
+
+
+	// Make sure the file is compiled.
+	runFn<void>(S("tests.reload.runMaybe"));
+	CHECK_EQ(countMaybe(core), 1);
+
+	// This should work...
+	reloadFile(reload, S("templates.bs"), contents);
+
+	// And we shall not find two Maybe<tests.reload.MaybeOf> in core!
+	CHECK_EQ(countMaybe(core), 1);
+
+} END_TEST
+
+BEGIN_TEST(TemplatesMacro, Reload) {
+	Engine &e = gEngine();
+
+	// Seems to be needed before compiling 'macro'. Probably due to circular dependency during compilation.
+	e.package(S("lang.bs"))->forceLoad();
+
+	// There are some interesting cases inside the 'macro' package regarding duplication of templates.
+	Package *reload = e.package(S("lang.bs.macro"));
+	reload->compile();
+	reload->reload();
 
 } END_TEST

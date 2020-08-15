@@ -43,16 +43,20 @@ namespace storm {
 		virtual bool checkRoot(GcRoot *root) { return true; }
 
 		// Called once for each formatted object on the heap. It is safe to inspect 'inspect' from
-		// the GC heap, but nothing else from the GC heap.
+		// the GC heap, but nothing else.
 		virtual void fixed(void *inspect) {}
 
 		// Called once for each formatted object on the heap known to contain a vtable. It is safe
-		// to inspect 'inspect' from the GC heap, but nothing else from the GC heap.
+		// to inspect 'inspect' from the GC heap, but nothing else.
 		virtual void object(RootObject *inspect) {}
 
 		// Called once for each array or weak array. It is safe to inspect 'inspect' from the GC
-		// heap, but nothing else from the GC heap.
+		// heap, but nothing else.
 		virtual void array(void *inspect) {}
+
+		// Called once for each code allocation. It is safe to inspect 'inspect' from the GC heap,
+		// but nothing else.
+		virtual void code(void *inspect) {}
 
 		// Called once for each exact pointer in a root.
 		virtual void exactPointer(void **ptr) {}
@@ -72,6 +76,7 @@ namespace storm {
 		virtual void fixed(void *inspect);
 		virtual void object(RootObject *inspect);
 		virtual void array(void *inspect);
+		virtual void code(void *inspect);
 
 		// Called for each type-info pointer.
 		virtual void header(GcType **header) {}

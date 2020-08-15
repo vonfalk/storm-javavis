@@ -29,6 +29,9 @@ namespace storm {
 		Type *STORM_FN normalize(Type *t);
 		Value STORM_FN normalize(Value v);
 
+		// Add a type that is equivalent to another.
+		void STORM_FN addEq(Type *oldType, Type *newType);
+
 		// Build the type equivalence from two NameSets.
 		void STORM_FN buildTypeEquivalence(NameSet *oldRoot, NameSet *newRoot);
 
@@ -70,6 +73,8 @@ namespace storm {
 		// Schedule a reference to be replaced.
 		void STORM_FN replace(Named *old, Named *with);
 		void STORM_FN replace(const Handle *old, const Handle *with);
+
+		// Schedule a GcType reference to be replaced. Note: We don't touch 'myGcType' inside Type objects.
 		void replace(const GcType *old, const GcType *with);
 
 		// VTable replacement. This refers to the content of the vtable rather than the vtable itself.
