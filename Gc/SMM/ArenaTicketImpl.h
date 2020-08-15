@@ -5,6 +5,7 @@
 #include "ArenaTicket.h"
 #include "Generation.h"
 #include "Thread.h"
+#include "FinalizerPool.h"
 #include "Gc/Exception.h"
 
 namespace storm {
@@ -95,6 +96,30 @@ namespace storm {
 				if (r != typename Scanner::Result())
 					return r;
 			}
+
+			return r;
+		}
+
+		template <class Scanner>
+		typename Scanner::Result ArenaTicket::scanObjects(typename Scanner::Source &source) {
+			typename Scanner::Result r = typename Scanner::Result();
+
+			for (size_t i = 0; i < owner.generations.size(); i++) {
+				Generation *gen = owner.generations[i];
+
+				// Scan it, instructing the generation to only scan references to the current generation.
+				r = gen->scan<Scanner>(source);
+				if (r != typename Scanner::Result())
+					return r;
+			}
+
+			r = owner.nonmoving().scan<Scanner>(source);
+			if (r != typename Scanner::Result())
+				return r;
+
+			r = owner.finalizers->scan<Scanner>(*this, source);
+			if (r != typename Scanner::Result())
+				return r;
 
 			return r;
 		}

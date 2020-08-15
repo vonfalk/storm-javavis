@@ -429,7 +429,7 @@ namespace storm {
 
 		template <class Scanner>
 		typename Scanner::Result Generation::scan(GenChunk &chunk, typename Scanner::Source &source) {
-			Block *end = chunk.memory.end();
+			Block *end = (Block *)chunk.memory.end();
 
 			typename Scanner::Result r = typename Scanner::Result();
 			for (Block *at = (Block *)chunk.memory.at; at != end; at = (Block *)at->mem(at->size)) {

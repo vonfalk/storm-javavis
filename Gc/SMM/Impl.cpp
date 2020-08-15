@@ -426,7 +426,7 @@ namespace storm {
 		context.prepare();
 
 		if (context.flags & Walker::fObjects) {
-			ticket.scanGenerations<WalkObjScanner>(context, smm::GenSet());
+			ticket.scanObjects<WalkObjScanner>(context);
 		}
 
 		const os::InlineSet<GcRoot> &roots = Gc::allRoots(this);

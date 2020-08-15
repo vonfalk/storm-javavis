@@ -163,7 +163,8 @@ namespace storm {
 
 			// Scan all blocks in all generations that may refer to a block in any generation
 			// indicated by 'current'. We don't scan the generations indicated in 'current', as
-			// those usually need to be handled with more care.
+			// those usually need to be handled with more care, and we will try to only scan blocks
+			// referring to 'current'.
 			template <class Scanner>
 			typename Scanner::Result scanGenerations(typename Scanner::Source &source, GenSet current);
 
@@ -172,6 +173,10 @@ namespace storm {
 			// barriers now to avoid scanning in the future.
 			template <class Scanner>
 			typename Scanner::Result scanGenerationsFinal(typename Scanner::Source &source, GenSet current);
+
+			// Scan all formatted objects. Includes 'generations' but also other pools not involved in generations.
+			template <class Scanner>
+			typename Scanner::Result scanObjects(typename Scanner::Source &source);
 
 		private:
 			// Did any generation trigger a garbage collection?
