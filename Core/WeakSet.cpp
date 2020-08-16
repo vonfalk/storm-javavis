@@ -106,6 +106,13 @@ namespace storm {
 
 		clean();
 
+		// If tagged, we need to re-hash to find potential duplicates.
+		// Note: even though 'tagged' is a vtable call, it should be fine in this context, as
+		// 'remove' is rarely on the hot path.
+		if (watch->tagged()) {
+			return rehashRemove(capacity(), key);
+		}
+
 		if (remove(key)) {
 			return true;
 		} else if (watch != null && watch->moved(key)) {
@@ -123,6 +130,7 @@ namespace storm {
 		if (info->v[slot].status == Info::free)
 			return false;
 
+		bool found = false;
 		nat prev = Info::free;
 		do {
 			if (info->v[slot].hash == hash && key == data->v[slot]) {
@@ -232,6 +240,9 @@ namespace storm {
 
 				watch->add(k);
 				nat hash = ptrHash(k);
+				// Messing with pointers might cause duplicates to appear.
+				if (findSlotI(k, hash) != Info::free)
+					continue;
 				insert(k, hash, w);
 			}
 
@@ -274,6 +285,9 @@ namespace storm {
 				// We need to re-hash here, as some objects have moved.
 				watch->add(k);
 				nat hash = ptrHash(k);
+				// Messing with pointers might cause duplicates to appear.
+				if (findSlotI(k, hash) != Info::free)
+					continue;
 				nat into = insert(k, hash, found);
 
 				// Is this the key we're looking for?
@@ -314,11 +328,10 @@ namespace storm {
 
 			// Insert all elements once again.
 			for (nat i = 0; i < oldInfo->count; i++) {
-				TObject *k = data->v[i];
+				TObject *k = oldData->v[i];
 				// Skip free slots and splatted slots.
 				if (oldInfo->v[i].status == Info::free || k == null)
 					continue;
-
 
 				// Is this the key we're looking for?
 				if (k == remove) {
@@ -329,6 +342,9 @@ namespace storm {
 				// We need to re-hash here, as some objects have moved.
 				watch->add(k);
 				nat hash = ptrHash(k);
+				// Messing with pointers might cause duplicates to appear.
+				if (findSlotI(k, hash) != Info::free)
+					continue;
 				insert(k, hash, w);
 			}
 
@@ -399,9 +415,10 @@ namespace storm {
 
 		nat r = findSlotI(key, hash);
 		if (r == Info::free && watch != null) {
-			if (watch->moved(key))
+			if (watch->moved(key)) {
 				// The object has moved. We need to rebuild the hash map.
 				r = rehashFind(capacity(), key);
+			}
 		}
 
 		return r;

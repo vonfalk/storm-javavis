@@ -288,6 +288,10 @@ namespace storm {
 			return watch.check(ptr);
 		}
 
+		virtual bool tagged() {
+			return watch.full();
+		}
+
 		virtual GcWatch *clone() const {
 			return new (impl.alloc(&type)) SMMWatch(impl, watch);
 		}

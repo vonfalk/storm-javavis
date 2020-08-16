@@ -277,6 +277,7 @@ namespace storm {
 		virtual void clear() {}
 		virtual bool moved() { return false; }
 		virtual bool moved(const void *addr) { return false; }
+		virtual bool tagged() { return false; }
 		virtual GcWatch *clone() const {
 			return new MallocWatch();
 		}

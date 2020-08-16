@@ -25,7 +25,7 @@ namespace storm {
 
 
 	/**
-	 * The base class used in Storm. Use derived Map<> in C++.
+	 * The base class used in Storm. Use derived Map<> in C++ and Storm.
 	 */
 	class MapBase : public Object {
 		STORM_CLASS;

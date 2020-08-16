@@ -167,6 +167,13 @@ namespace storm {
 		if (capacity() == 0)
 			return false;
 
+		// Are there any duplicates we need to consider?
+		// Note: even though 'tagged' is a virtual function, this should be fine as 'remove' is
+		// rarely on the hot path.
+		if (watch && watch->tagged()) {
+			return rehashRemove(capacity(), key);
+		}
+
 		if (remove(key)) {
 			return true;
 		} else if (changedHash(key)) {
@@ -348,6 +355,9 @@ namespace storm {
 				// We need to re-hash here, as some objects have moved.
 				const void *k = keyPtr(oldKey, i);
 				nat hash = newHash(k);
+				// If the object was moved during reloads, we might end up with duplicates.
+				if (findSlotI(k, hash) != Info::free)
+					continue;
 				nat into = insert(k, hash, found);
 
 				// Is this the key we're looking for?
@@ -402,6 +412,9 @@ namespace storm {
 
 				// We need to re-hash here, as some objects have moved.
 				nat hash = newHash(k);
+				// If the object was moved during reloads, we might end up with duplicates.
+				if (findSlotI(k, hash) != Info::free)
+					continue;
 				insert(k, hash, w);
 			}
 

@@ -223,6 +223,9 @@ namespace storm {
 			// Check if a particular address have changed. Possibly gives false positives.
 			bool check(const void *addr) const;
 
+			// Is this instance full? I.e. shall always trigger?
+			bool full() const;
+
 		private:
 			// Reference to the history instance we're associated with.
 			const History &history;
@@ -240,9 +243,6 @@ namespace storm {
 
 			// Is this instance empty?
 			bool empty() const;
-
-			// Is this instance full? I.e. shall always trigger?
-			bool full() const;
 		};
 
 	}

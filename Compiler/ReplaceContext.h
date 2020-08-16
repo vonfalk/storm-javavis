@@ -60,6 +60,11 @@ namespace storm {
 	 * This encompasses:
 	 * - Replacing all references of one object with another.
 	 * - Modifying the layout of objects in memory.
+	 *
+	 * Note: If replacing object A with B, and both A and B are keys in a Map<>, future lookups and
+	 * modifications of B might return inconsistent results until a full rehash is made (due to
+	 * moved objects, not due to capacity). This does not seem to happen very often in the system
+	 * currently, as we only allow replacing Named and Handle.
 	 */
 	class ReplaceTasks : public ReplaceContext {
 		STORM_CLASS;

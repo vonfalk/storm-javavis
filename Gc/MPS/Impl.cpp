@@ -1396,6 +1396,10 @@ namespace storm {
 			return triggered() | (mps_ld_isstale(&ld, gc().arena, (mps_addr_t)addr) ? true : false);
 		}
 
+		virtual bool tagged() {
+			return triggered();
+		}
+
 		virtual GcWatch *clone() const {
 			return new (gc().alloc(&type)) MpsGcWatch(data, ld);
 		}

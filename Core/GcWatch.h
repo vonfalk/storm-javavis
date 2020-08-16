@@ -30,6 +30,9 @@ namespace storm {
 		// See if the object has moved. May return false positives.
 		virtual bool moved(const void *addr) = 0;
 
+		// See if this object is tagged, i.e. making 'moved' always return true.
+		virtual bool tagged() = 0;
+
 		// Clone this GcWatch (and its current state).
 		virtual GcWatch *clone() const = 0;
 	};
