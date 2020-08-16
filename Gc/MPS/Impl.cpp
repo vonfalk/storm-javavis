@@ -1368,14 +1368,14 @@ namespace storm {
 
 	class MpsGcWatch : public GcWatch {
 	public:
-		MpsGcWatch(GcImpl &gc) : gc(gc) {
-			mps_ld_reset(&ld, gc.arena);
+		MpsGcWatch(GcImpl &gc) : data(size_t(&gc)) {
+			clear();
 		}
 
-		MpsGcWatch(GcImpl &gc, const mps_ld_s &ld) : gc(gc), ld(ld) {}
+		MpsGcWatch(size_t data, const mps_ld_s &ld) : data(data), ld(ld) {}
 
 		virtual void add(const void *addr) {
-			mps_ld_add(&ld, gc.arena, (mps_addr_t)addr);
+			mps_ld_add(&ld, gc().arena, (mps_addr_t)addr);
 		}
 
 		virtual void remove(const void *addr) {
@@ -1384,37 +1384,53 @@ namespace storm {
 		}
 
 		virtual void clear() {
-			mps_ld_reset(&ld, gc.arena);
+			mps_ld_reset(&ld, gc().arena);
+			data &= ~size_t(0x1);
 		}
 
 		virtual bool moved() {
-			return mps_ld_isstale_any(&ld, gc.arena) ? true : false;
+			return triggered() | (mps_ld_isstale_any(&ld, gc().arena) ? true : false);
 		}
 
 		virtual bool moved(const void *addr) {
-			return mps_ld_isstale(&ld, gc.arena, (mps_addr_t)addr) ? true : false;
+			return triggered() | (mps_ld_isstale(&ld, gc().arena, (mps_addr_t)addr) ? true : false);
 		}
 
 		virtual GcWatch *clone() const {
-			return new (gc.alloc(&type)) MpsGcWatch(gc, ld);
+			return new (gc().alloc(&type)) MpsGcWatch(data, ld);
 		}
 
 		// Make sure that the watch is set, i.e. that 'moved' will always return true.
 		void set() {
-			// Set the epoch to zero, so that it always smaller than the current epoch.
-			ld._epoch = 0;
+			data |= 0x1;
 
-			// Set the refset to all ones, meaning that it will have an intersection with the
-			// pre-history (which I assume is never completely empty, perhaps except for very early
-			// during execution).
-			ld._rs = std::numeric_limits<mps_word_t>::max();
+			// Note: The code below won't work for a fair amount of time (Storm is able to boot and
+			// create a few more objects at least).
+
+			// // Set the epoch to zero, so that it always smaller than the current epoch.
+			// ld._epoch = 0;
+
+			// // Set the refset to all ones, meaning that it will have an intersection with the
+			// // pre-history (which I assume is never completely empty, perhaps except for very early
+			// // during execution).
+			// ld._rs = std::numeric_limits<mps_word_t>::max();
 		}
 
 		static const GcType type;
 
 	private:
-		GcImpl &gc;
+		// All but LSB: pointer to GcImpl.
+		// LSB: 'trigger' bit, i.e. if we want 'moved' to always return 'true'.
+		size_t data;
 		mps_ld_s ld;
+
+		GcImpl &gc() const {
+			return *(GcImpl *)(data & ~size_t(0x1));
+		}
+
+		inline bool triggered() {
+			return data & 0x1;
+		}
 	};
 
 	const GcType MpsGcWatch::type = {

@@ -1041,11 +1041,12 @@ namespace storm {
 									size_t offset = h->obj.offset[j];
 									void **data = (void **)((byte *)tmp + offset);
 									if (s.fix1(*data)) {
+										bool wasNull = *data == null;
 										r = s.fix2(data);
 										if (r != Result())
 											return r;
 										// Splatted?
-										if (*data == null)
+										if (!wasNull && *data == null)
 											weakSplat(&o->weak);
 									}
 								}
