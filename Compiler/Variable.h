@@ -30,8 +30,6 @@ namespace storm {
 	/**
 	 * Represents a member-variable to some kind of type. The variable is uniquely identified by its
 	 * offset relative to the start of the object.
-	 *
-	 * TODO: We might want to offer references for using the offset, so we can easily update it.
 	 */
 	class MemberVar : public Variable {
 		STORM_CLASS;
@@ -40,11 +38,15 @@ namespace storm {
 		STORM_CTOR MemberVar(Str *name, Value type, Type *memberOf);
 		STORM_CTOR MemberVar(SrcPos pos, Str *name, Value type, Type *memberOf);
 
-		// Get the offset of this member.
-		Offset STORM_FN offset() const;
+		// Get a reference to this variable. Use the reference whenever storing the offset for more
+		// than a couple of function calls, as it might change during reloads.
+		code::Ref STORM_FN offset() const;
 
 		// Get our parent type.
 		Type *STORM_FN owner() const;
+
+		// Get the raw offset. Prefer to use the reference whenever possible.
+		Offset STORM_FN rawOffset() const;
 
 		// Set our offset.
 		void setOffset(Offset off);
@@ -59,6 +61,9 @@ namespace storm {
 	private:
 		// The actual offset. Updated by 'layout'.
 		Offset off;
+
+		// Reference for the offset.
+		code::RefSource *ref;
 
 		// Has the layout been produced?
 		Bool hasLayout;

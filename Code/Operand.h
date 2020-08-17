@@ -43,14 +43,20 @@ namespace code {
 		// Register
 		STORM_NAME(opRegister, register),
 
-		// Relative to a register, ie. [reg + offset]
+		// Relative to a register. ie. [reg + offset]
 		STORM_NAME(opRelative, relative),
+
+		// Relative to a register, the offset represented by a reference.
+		STORM_NAME(opRelativeRef, relativeRef),
 
 		// Relative to a label. TODO: Implement for X86!
 		STORM_NAME(opRelativeLbl, relativeLabel),
 
 		// Variable (+ offset).
 		STORM_NAME(opVariable, variable),
+
+		// Variable (+ offset, originating from a reference).
+		STORM_NAME(opVariableRef, variableRef),
 
 		// Label.
 		STORM_NAME(opLabel, label),
@@ -169,10 +175,14 @@ namespace code {
 		Operand(Offset o, Size size);
 		Operand(RootObject *obj);
 
-		// [Register,variable,label] + offset.
+		// [register,variable,label] + offset.
 		Operand(Reg r, Offset offset, Size size);
 		Operand(Var v, Offset offset, Size size);
 		Operand(Label l, Offset offset, Size size);
+
+		// [register,variable] + offset + ref
+		Operand(Reg r, Offset offset, Ref ref, Size size);
+		Operand(Var r, Offset offset, Ref ref, Size size);
 
 		// Our type. Note: may contain other flags as well!
 		OpType opType;
@@ -203,6 +213,8 @@ namespace code {
 		friend Operand objPtr(TObject *ptr);
 		friend Operand xRel(Size size, Reg reg, Offset offset);
 		friend Operand xRel(Size size, Var v, Offset offset);
+		friend Operand xRel(Size size, Reg reg, Ref ref, Offset offset);
+		friend Operand xRel(Size size, Var v, Ref ref, Offset offset);
 		friend Operand xRel(Size size, Label l, Offset offset);
 		friend wostream &operator <<(wostream &to, const Operand &o);
 		friend StrBuf &operator <<(StrBuf &to, Operand o);
@@ -233,53 +245,85 @@ namespace code {
 	Operand STORM_FN objPtr(TObject *ptr);
 
 	// Relative values (dereference pointers).
-	Operand STORM_FN byteRel(Reg reg, Offset offset);
-	Operand STORM_FN intRel(Reg reg, Offset offset);
-	Operand STORM_FN longRel(Reg reg, Offset offset);
-	Operand STORM_FN floatRel(Reg reg, Offset offset);
-	Operand STORM_FN doubleRel(Reg reg, Offset offset);
-	Operand STORM_FN ptrRel(Reg reg, Offset offset);
-	Operand STORM_FN xRel(Size size, Reg reg, Offset offset);
+	inline Operand STORM_FN xRel(Size size, Reg reg, Offset offset) { return Operand(reg, offset, size); }
+	inline Operand STORM_FN byteRel(Reg reg, Offset offset) { return xRel(Size::sByte, reg, offset); }
+	inline Operand STORM_FN intRel(Reg reg, Offset offset) { return xRel(Size::sInt, reg, offset); }
+	inline Operand STORM_FN longRel(Reg reg, Offset offset) { return xRel(Size::sLong, reg, offset); }
+	inline Operand STORM_FN floatRel(Reg reg, Offset offset) { return xRel(Size::sFloat, reg, offset); }
+	inline Operand STORM_FN doubleRel(Reg reg, Offset offset) { return xRel(Size::sDouble, reg, offset); }
+	inline Operand STORM_FN ptrRel(Reg reg, Offset offset) { return xRel(Size::sPtr, reg, offset); }
 
-	Operand STORM_FN byteRel(Reg reg);
-	Operand STORM_FN intRel(Reg reg);
-	Operand STORM_FN longRel(Reg reg);
-	Operand STORM_FN floatRel(Reg reg);
-	Operand STORM_FN doubleRel(Reg reg);
-	Operand STORM_FN ptrRel(Reg reg);
-	Operand STORM_FN xRel(Size size, Reg reg);
+	inline Operand STORM_FN xRel(Size size, Reg reg) { return xRel(size, reg, Offset()); }
+	inline Operand STORM_FN byteRel(Reg reg) { return xRel(Size::sByte, reg, Offset()); }
+	inline Operand STORM_FN intRel(Reg reg) { return xRel(Size::sInt, reg, Offset()); }
+	inline Operand STORM_FN longRel(Reg reg) { return xRel(Size::sLong, reg, Offset()); }
+	inline Operand STORM_FN floatRel(Reg reg) { return xRel(Size::sFloat, reg, Offset()); }
+	inline Operand STORM_FN doubleRel(Reg reg) { return xRel(Size::sDouble, reg, Offset()); }
+	inline Operand STORM_FN ptrRel(Reg reg) { return xRel(Size::sPtr, reg, Offset()); }
+
+	inline Operand STORM_FN xRel(Size size, Reg reg, Ref ref, Offset offset) { return Operand(reg, offset, ref, size); }
+	inline Operand STORM_FN byteRel(Reg reg, Ref ref, Offset offset) { return xRel(Size::sByte, reg, ref, offset); }
+	inline Operand STORM_FN intRel(Reg reg, Ref ref, Offset offset) { return xRel(Size::sInt, reg, ref, offset); }
+	inline Operand STORM_FN longRel(Reg reg, Ref ref, Offset offset) { return xRel(Size::sLong, reg, ref, offset); }
+	inline Operand STORM_FN floatRel(Reg reg, Ref ref, Offset offset) { return xRel(Size::sFloat, reg, ref, offset); }
+	inline Operand STORM_FN doubleRel(Reg reg, Ref ref, Offset offset) { return xRel(Size::sDouble, reg, ref, offset); }
+	inline Operand STORM_FN ptrRel(Reg reg, Ref ref, Offset offset) { return xRel(Size::sPtr, reg, ref, offset); }
+
+	inline Operand STORM_FN xRel(Size size, Reg reg, Ref ref) { return xRel(size, reg, ref, Offset()); }
+	inline Operand STORM_FN byteRel(Reg reg, Ref ref) { return byteRel(reg, ref, Offset()); }
+	inline Operand STORM_FN intRel(Reg reg, Ref ref) { return intRel(reg, ref, Offset()); }
+	inline Operand STORM_FN longRel(Reg reg, Ref ref) { return longRel(reg, ref, Offset()); }
+	inline Operand STORM_FN floatRel(Reg reg, Ref ref) { return floatRel(reg, ref, Offset()); }
+	inline Operand STORM_FN doubleRel(Reg reg, Ref ref) { return doubleRel(reg, ref, Offset()); }
+	inline Operand STORM_FN ptrRel(Reg reg, Ref ref) { return ptrRel(reg, ref, Offset()); }
 
 	// Access offsets inside variables.
-	Operand STORM_FN byteRel(Var v, Offset offset);
-	Operand STORM_FN intRel(Var v, Offset offset);
-	Operand STORM_FN longRel(Var v, Offset offset);
-	Operand STORM_FN floatRel(Var v, Offset offset);
-	Operand STORM_FN doubleRel(Var v, Offset offset);
-	Operand STORM_FN ptrRel(Var v, Offset offset);
-	Operand STORM_FN xRel(Size size, Var v, Offset offset);
+	inline Operand STORM_FN xRel(Size size, Var v, Offset offset) { return Operand(v, offset, size); }
+	inline Operand STORM_FN byteRel(Var v, Offset offset) { return xRel(Size::sByte, v, offset); }
+	inline Operand STORM_FN intRel(Var v, Offset offset) { return xRel(Size::sInt, v, offset); }
+	inline Operand STORM_FN longRel(Var v, Offset offset) { return xRel(Size::sLong, v, offset); }
+	inline Operand STORM_FN floatRel(Var v, Offset offset) { return xRel(Size::sFloat, v, offset); }
+	inline Operand STORM_FN doubleRel(Var v, Offset offset) { return xRel(Size::sDouble, v, offset); }
+	inline Operand STORM_FN ptrRel(Var v, Offset offset) { return xRel(Size::sPtr, v, offset); }
 
-	Operand STORM_FN byteRel(Var v);
-	Operand STORM_FN intRel(Var v);
-	Operand STORM_FN longRel(Var v);
-	Operand STORM_FN floatRel(Var v);
-	Operand STORM_FN doubleRel(Var v);
-	Operand STORM_FN ptrRel(Var v);
-	Operand STORM_FN xRel(Size size, Var v);
+	inline Operand STORM_FN xRel(Size size, Var v) { return xRel(size, v, Offset()); }
+	inline Operand STORM_FN byteRel(Var v) { return xRel(Size::sByte, v, Offset()); }
+	inline Operand STORM_FN intRel(Var v) { return xRel(Size::sInt, v, Offset()); }
+	inline Operand STORM_FN longRel(Var v) { return xRel(Size::sLong, v, Offset()); }
+	inline Operand STORM_FN floatRel(Var v) { return xRel(Size::sFloat, v, Offset()); }
+	inline Operand STORM_FN doubleRel(Var v) { return xRel(Size::sDouble, v, Offset()); }
+	inline Operand STORM_FN ptrRel(Var v) { return xRel(Size::sPtr, v, Offset()); }
+
+	inline Operand STORM_FN xRel(Size size, Var v, Ref ref, Offset offset) { return Operand(v, offset, ref, size); }
+	inline Operand STORM_FN byteRel(Var v, Ref ref, Offset offset) { return xRel(Size::sByte, v, ref, offset); }
+	inline Operand STORM_FN intRel(Var v, Ref ref, Offset offset) { return xRel(Size::sInt, v, ref, offset); }
+	inline Operand STORM_FN longRel(Var v, Ref ref, Offset offset) { return xRel(Size::sLong, v, ref, offset); }
+	inline Operand STORM_FN floatRel(Var v, Ref ref, Offset offset) { return xRel(Size::sFloat, v, ref, offset); }
+	inline Operand STORM_FN doubleRel(Var v, Ref ref, Offset offset) { return xRel(Size::sDouble, v, ref, offset); }
+	inline Operand STORM_FN ptrRel(Var v, Ref ref, Offset offset) { return xRel(Size::sPtr, v, ref, offset); }
+
+	inline Operand STORM_FN xRel(Size size, Var v, Ref ref) { return xRel(size, v, ref, Offset()); }
+	inline Operand STORM_FN byteRel(Var v, Ref ref) { return byteRel(v, ref, Offset()); }
+	inline Operand STORM_FN intRel(Var v, Ref ref) { return intRel(v, ref, Offset()); }
+	inline Operand STORM_FN longRel(Var v, Ref ref) { return longRel(v, ref, Offset()); }
+	inline Operand STORM_FN floatRel(Var v, Ref ref) { return floatRel(v, ref, Offset()); }
+	inline Operand STORM_FN doubleRel(Var v, Ref ref) { return doubleRel(v, ref, Offset()); }
+	inline Operand STORM_FN ptrRel(Var v, Ref ref) { return ptrRel(v, ref, Offset()); }
 
 	// Access offsets inside labels.
-	Operand STORM_FN byteRel(Label l, Offset offset);
-	Operand STORM_FN intRel(Label l, Offset offset);
-	Operand STORM_FN longRel(Label l, Offset offset);
-	Operand STORM_FN floatRel(Label l, Offset offset);
-	Operand STORM_FN doubleRel(Label l, Offset offset);
-	Operand STORM_FN ptrRel(Label l, Offset offset);
-	Operand STORM_FN xRel(Size size, Label l, Offset offset);
+	inline Operand STORM_FN xRel(Size size, Label l, Offset offset) { return Operand(l, offset, size); }
+	inline Operand STORM_FN byteRel(Label l, Offset offset) { return xRel(Size::sByte, l, offset); }
+	inline Operand STORM_FN intRel(Label l, Offset offset) { return xRel(Size::sInt, l, offset); }
+	inline Operand STORM_FN longRel(Label l, Offset offset) { return xRel(Size::sLong, l, offset); }
+	inline Operand STORM_FN floatRel(Label l, Offset offset) { return xRel(Size::sFloat, l, offset); }
+	inline Operand STORM_FN doubleRel(Label l, Offset offset) { return xRel(Size::sDouble, l, offset); }
+	inline Operand STORM_FN ptrRel(Label l, Offset offset) { return xRel(Size::sPtr, l, offset); }
 
-	Operand STORM_FN byteRel(Label l);
-	Operand STORM_FN intRel(Label l);
-	Operand STORM_FN longRel(Label l);
-	Operand STORM_FN floatRel(Label l);
-	Operand STORM_FN doubleRel(Label l);
-	Operand STORM_FN ptrRel(Label l);
-	Operand STORM_FN xRel(Size size, Label l);
+	inline Operand STORM_FN xRel(Size size, Label l) { return xRel(size, l, Offset()); }
+	inline Operand STORM_FN byteRel(Label l) { return xRel(Size::sByte, l, Offset()); }
+	inline Operand STORM_FN intRel(Label l) { return xRel(Size::sInt, l, Offset()); }
+	inline Operand STORM_FN longRel(Label l) { return xRel(Size::sLong, l, Offset()); }
+	inline Operand STORM_FN floatRel(Label l) { return xRel(Size::sFloat, l, Offset()); }
+	inline Operand STORM_FN doubleRel(Label l) { return xRel(Size::sDouble, l, Offset()); }
+	inline Operand STORM_FN ptrRel(Label l) { return xRel(Size::sPtr, l, Offset()); }
 }

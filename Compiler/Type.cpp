@@ -607,7 +607,7 @@ namespace storm {
 		Array<MemberVar *> *vars = variables();
 		for (Nat i = 0; i < vars->count(); i++) {
 			MemberVar *v = vars->at(i);
-			Offset offset = v->offset();
+			Offset offset = v->rawOffset();
 			Value type = v->type;
 
 			if (type.isObject() || type.ref) {

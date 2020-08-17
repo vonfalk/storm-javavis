@@ -862,7 +862,7 @@ namespace storm {
 
 				for (Nat i = 0; i < t->arrayMembers->count(); i++) {
 					MemberVar *v = t->arrayMembers->at(i);
-					int offset = v->offset().current();
+					int offset = v->rawOffset().current();
 					Array<Object *> *array = OFFSET_IN(node, offset, Array<Object *> *);
 					array->reverse();
 				}
@@ -870,7 +870,7 @@ namespace storm {
 
 			template <class T>
 			static void setValue(Node *node, MemberVar *target, T *elem) {
-				int offset = target->offset().current();
+				int offset = target->rawOffset().current();
 				if (isArray(target->type)) {
 					// Arrays are initialized earlier.
 					OFFSET_IN(node, offset, Array<T *> *)->push(elem);
@@ -998,7 +998,7 @@ namespace storm {
 				// Create any arrays needed.
 				for (nat i = 0; i < type->arrayMembers->count(); i++) {
 					MemberVar *v = type->arrayMembers->at(i);
-					int offset = v->offset().current();
+					int offset = v->rawOffset().current();
 
 					// This will actually create the correct subtype as long as we're creating
 					// something inherited from Object or TObject (which we are).

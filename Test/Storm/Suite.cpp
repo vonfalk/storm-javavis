@@ -30,13 +30,13 @@ BEGIN_TEST(StormSuites, BS) {
 			continue;
 
 		if (*var->name == S("total")) {
-			our.total = OFFSET_IN(resultVal, var->offset().current(), Nat);
+			our.total = OFFSET_IN(resultVal, var->rawOffset().current(), Nat);
 		} else if (*var->name == S("failed")) {
-			our.failed = OFFSET_IN(resultVal, var->offset().current(), Nat);
+			our.failed = OFFSET_IN(resultVal, var->rawOffset().current(), Nat);
 		} else if (*var->name == S("crashed")) {
-			our.crashed = OFFSET_IN(resultVal, var->offset().current(), Nat);
+			our.crashed = OFFSET_IN(resultVal, var->rawOffset().current(), Nat);
 		} else if (*var->name == S("aborted")) {
-			our.aborted = OFFSET_IN(resultVal, var->offset().current(), Bool);
+			our.aborted = OFFSET_IN(resultVal, var->rawOffset().current(), Bool);
 		}
 	}
 

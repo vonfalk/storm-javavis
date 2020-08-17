@@ -61,7 +61,7 @@ namespace storm {
 				continue;
 
 			*l << mov(ptrA, me);
-			*l << add(ptrA, ptrConst(v->offset()));
+			*l << add(ptrA, v->offset());
 			*l << fnParam(engine().ptrDesc(), ptrA);
 			*l << fnCall(dtor->ref(), true);
 		}

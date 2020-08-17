@@ -163,7 +163,7 @@ namespace storm {
 			for (nat i = 0; i < vars->count(); i++) {
 				MemberVar *v = vars->at(i);
 				const storm::Value &t = v->type;
-				Offset offset = v->offset();
+				Offset offset = v->rawOffset();
 
 				if (t.ref) {
 					WARNING(L"References are not yet supported and therefore ignored!");

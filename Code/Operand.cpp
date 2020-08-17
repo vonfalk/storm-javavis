@@ -65,7 +65,16 @@ namespace code {
 		// Note: it is OK if 'r == noReg'. That means absolute addressing.
 	}
 
+	Operand::Operand(Reg r, Offset offset, Ref ref, Size size) : opType(opRelativeRef), opPtr(ref.to), opNum(r), opOffset(offset), opSize(size) {
+		// Note: it is OK if 'r == noReg'. That means absolute addressing.
+	}
+
 	Operand::Operand(Var v, Offset offset, Size size) : opType(opVariable), opPtr(null), opNum(v.id), opOffset(offset), opSize(size) {
+		if (v == Var())
+			throw new (someEngine()) InvalidValue(S("Can not create an operand of an empty variable."));
+	}
+
+	Operand::Operand(Var v, Offset offset, Ref ref, Size size) : opType(opVariableRef), opPtr(ref.to), opNum(v.id), opOffset(offset), opSize(size) {
 		if (v == Var())
 			throw new (someEngine()) InvalidValue(S("Can not create an operand of an empty variable."));
 	}
@@ -94,6 +103,9 @@ namespace code {
 		case opRelative:
 		case opRelativeLbl:
 			return opNum == o.opNum && opOffset == o.opOffset;
+		case opVariableRef:
+		case opRelativeRef:
+			return opNum == o.opNum && opOffset == o.opOffset && opPtr == o.opPtr;
 		case opReference:
 		case opObjReference:
 			return opPtr == o.opPtr;
@@ -178,6 +190,7 @@ namespace code {
 		switch (opType) {
 		case opRegister:
 		case opRelative:
+		case opRelativeRef:
 			return true;
 		default:
 			return false;
@@ -227,10 +240,14 @@ namespace code {
 	}
 
 	Ref Operand::ref() const {
-		if (type() != opReference)
+		switch (type()) {
+		case opReference:
+		case opRelativeRef:
+		case opVariableRef:
+			return Ref((RefSource *)opPtr);
+		default:
 			throw new (someEngine()) InvalidValue(S("Not a reference!"));
-		RefSource *s = (RefSource *)opPtr;
-		return Ref(s);
+		}
 	}
 
 	RefSource *Operand::refSource() const {
@@ -310,12 +327,16 @@ namespace code {
 			return to << L"[" << code::name(o.reg()) << o.offset() << L"]";
 		case opRelativeLbl:
 			return to << L"[" << L"Label" << o.opNum << o.offset() << L"]";
+		case opRelativeRef:
+			return to << L"[" << code::name(o.reg()) << o.offset() << L"+" << o.ref().address() << L"]";
 		case opVariable:
 			if (o.offset() != Offset()) {
 				return to << L"[Var" << o.opNum << o.offset() << L"]";
 			} else {
 				return to << L"[Var" << o.opNum << L"]";
 			}
+		case opVariableRef:
+			return to << L"[Var" << o.opNum << o.offset() << L"+" << o.ref().address() << L"]";
 		case opLabel:
 			return to << L"Label" << o.opNum;
 		case opBlock:
@@ -378,12 +399,16 @@ namespace code {
 			return to << S("[") << code::name(o.reg()) << o.offset() << S("]");
 		case opRelativeLbl:
 			return to << S("[") << L"Label" << o.opNum << o.offset() << S("]");
+		case opRelativeRef:
+			return to << S("[") << code::name(o.reg()) << o.offset() << S("+") << o.ref().address() << S("]");
 		case opVariable:
 			if (o.offset() != Offset()) {
 				return to << S("[Var") << o.opNum << o.offset() << S("]");
 			} else {
 				return to << S("[Var") << o.opNum << S("]");
 			}
+		case opVariableRef:
+			return to << S("[Var") << o.opNum << o.offset() << S("+") << o.ref().address() << S("]");
 		case opLabel:
 			return to << S("Label") << o.opNum;
 		case opBlock:
@@ -486,175 +511,6 @@ namespace code {
 
 	Operand objPtr(TObject *o) {
 		return Operand(o);
-	}
-
-	Operand byteRel(Reg reg, Offset offset) {
-		return xRel(Size::sByte, reg, offset);
-	}
-
-	Operand intRel(Reg reg, Offset offset) {
-		return xRel(Size::sInt, reg, offset);
-	}
-
-	Operand longRel(Reg reg, Offset offset) {
-		return xRel(Size::sLong, reg, offset);
-	}
-
-	Operand floatRel(Reg reg, Offset offset) {
-		return xRel(Size::sFloat, reg, offset);
-	}
-
-	Operand doubleRel(Reg reg, Offset offset) {
-		return xRel(Size::sDouble, reg, offset);
-	}
-
-	Operand ptrRel(Reg reg, Offset offset) {
-		return xRel(Size::sPtr, reg, offset);
-	}
-
-	Operand xRel(Size size, Reg reg, Offset offset) {
-		return Operand(reg, offset, size);
-	}
-
-	Operand byteRel(Var v, Offset offset) {
-		return xRel(Size::sByte, v, offset);
-	}
-
-	Operand intRel(Var v, Offset offset) {
-		return xRel(Size::sInt, v, offset);
-	}
-
-	Operand longRel(Var v, Offset offset) {
-		return xRel(Size::sLong, v, offset);
-	}
-
-	Operand floatRel(Var v, Offset offset) {
-		return xRel(Size::sFloat, v, offset);
-	}
-
-	Operand doubleRel(Var v, Offset offset) {
-		return xRel(Size::sDouble, v, offset);
-	}
-
-	Operand ptrRel(Var v, Offset offset) {
-		return xRel(Size::sPtr, v, offset);
-	}
-
-	Operand xRel(Size size, Var v, Offset offset) {
-		return Operand(v, offset, size);
-	}
-
-	Operand byteRel(Label l, Offset offset) {
-		return xRel(Size::sByte, l, offset);
-	}
-
-	Operand intRel(Label l, Offset offset) {
-		return xRel(Size::sInt, l, offset);
-	}
-
-	Operand longRel(Label l, Offset offset) {
-		return xRel(Size::sLong, l, offset);
-	}
-
-	Operand floatRel(Label l, Offset offset) {
-		return xRel(Size::sFloat, l, offset);
-	}
-
-	Operand doubleRel(Label l, Offset offset) {
-		return xRel(Size::sDouble, l, offset);
-	}
-
-	Operand ptrRel(Label l, Offset offset) {
-		return xRel(Size::sPtr, l, offset);
-	}
-
-	Operand xRel(Size size, Label l, Offset offset) {
-		return Operand(l, offset, size);
-	}
-
-
-	Operand byteRel(Reg reg) {
-		return xRel(Size::sByte, reg, Offset());
-	}
-
-	Operand intRel(Reg reg) {
-		return xRel(Size::sInt, reg, Offset());
-	}
-
-	Operand longRel(Reg reg) {
-		return xRel(Size::sLong, reg, Offset());
-	}
-
-	Operand floatRel(Reg reg) {
-		return xRel(Size::sFloat, reg, Offset());
-	}
-
-	Operand doubleRel(Reg reg) {
-		return xRel(Size::sDouble, reg, Offset());
-	}
-
-	Operand ptrRel(Reg reg) {
-		return xRel(Size::sPtr, reg, Offset());
-	}
-
-	Operand xRel(Size size, Reg reg) {
-		return xRel(size, reg, Offset());
-	}
-
-	Operand byteRel(Var v) {
-		return xRel(Size::sByte, v, Offset());
-	}
-
-	Operand intRel(Var v) {
-		return xRel(Size::sInt, v, Offset());
-	}
-
-	Operand longRel(Var v) {
-		return xRel(Size::sLong, v, Offset());
-	}
-
-	Operand floatRel(Var v) {
-		return xRel(Size::sFloat, v, Offset());
-	}
-
-	Operand doubleRel(Var v) {
-		return xRel(Size::sDouble, v, Offset());
-	}
-
-	Operand ptrRel(Var v) {
-		return xRel(Size::sPtr, v, Offset());
-	}
-
-	Operand xRel(Size size, Var v) {
-		return xRel(size, v, Offset());
-	}
-
-	Operand byteRel(Label l) {
-		return xRel(Size::sByte, l, Offset());
-	}
-
-	Operand intRel(Label l) {
-		return xRel(Size::sInt, l, Offset());
-	}
-
-	Operand longRel(Label l) {
-		return xRel(Size::sLong, l, Offset());
-	}
-
-	Operand floatRel(Label l) {
-		return xRel(Size::sFloat, l, Offset());
-	}
-
-	Operand doubleRel(Label l) {
-		return xRel(Size::sDouble, l, Offset());
-	}
-
-	Operand ptrRel(Label l) {
-		return xRel(Size::sPtr, l, Offset());
-	}
-
-	Operand xRel(Size size, Label l) {
-		return xRel(size, l, Offset());
 	}
 
 }

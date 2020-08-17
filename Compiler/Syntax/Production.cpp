@@ -398,7 +398,7 @@ namespace storm {
 				return;
 
 			*to << var->name << L" : ";
-			int offset = var->offset().current();
+			int offset = var->rawOffset().current();
 			if (isArray(var->type)) {
 				Array<Object *> *v = OFFSET_IN(me, offset, Array<Object *> *);
 				if (v)
