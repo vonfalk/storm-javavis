@@ -130,7 +130,6 @@ namespace storm {
 		if (info->v[slot].status == Info::free)
 			return false;
 
-		bool found = false;
 		nat prev = Info::free;
 		do {
 			if (info->v[slot].hash == hash && key == data->v[slot]) {

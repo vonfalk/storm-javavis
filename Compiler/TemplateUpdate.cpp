@@ -90,7 +90,7 @@ namespace storm {
 				return candidate;
 		}
 
-		return false;
+		return null;
 	}
 
 	static Set<Type *> *replace(Set<Type *> *toReplace, Array<NameOverloads *> *in,
