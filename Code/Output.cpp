@@ -111,6 +111,11 @@ namespace code {
 		markGcRef(ref);
 	}
 
+	void Output::putOffset(Ref ref, Nat offset) {
+		putInt(0);
+		markRef(ref, offset);
+	}
+
 	void Output::putObject(RootObject *obj) {
 		putGcPtr(Word(obj));
 	}
@@ -129,6 +134,8 @@ namespace code {
 	}
 
 	void Output::markGcRef(Ref ref) {}
+
+	void Output::markRef(Ref ref, Nat offset) {}
 
 	void *Output::codePtr() const {
 		assert(false);
@@ -243,8 +250,8 @@ namespace code {
 	 * Updater.
 	 */
 
-	CodeUpdater::CodeUpdater(Ref src, Content *inside, void *code, Nat slot) :
-		Reference(src, inside), code(code), slot(slot) {
+	CodeUpdater::CodeUpdater(Ref src, Content *inside, void *code, Nat slot)
+		: Reference(src, inside), code(code), slot(slot) {
 
 		moved(address());
 	}
@@ -255,6 +262,17 @@ namespace code {
 
 		atomicWrite(ref.pointer, (void *)newAddr);
 		storm::gccode::writePtr(code, slot);
+	}
+
+	CodeOffsetUpdater::CodeOffsetUpdater(Ref src, Nat refOffset, Content *inside, void *code, Nat codeOffset)
+		: Reference(src, inside), code(code), codeOffset(codeOffset), refOffset(refOffset) {
+		moved(address());
+	}
+
+	void CodeOffsetUpdater::moved(const void *newAddr) {
+		Nat base = Nat(size_t(newAddr));
+		void *ptr = (byte *)code + codeOffset;
+		atomicWrite(*(Nat *)ptr, base + refOffset);
 	}
 
 }

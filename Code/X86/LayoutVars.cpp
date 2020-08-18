@@ -174,13 +174,19 @@ namespace code {
 		}
 
 		Operand LayoutVars::resolve(Listing *listing, const Operand &src) {
-			if (src.type() != opVariable)
+			OpType type = src.type();
+			if (type != opVariable && type != opVariableRef)
 				return src;
 
 			Var v = src.var();
 			if (!listing->accessible(v, block))
 				throw new (this) VariableUseError(v, block);
-			return xRel(src.size(), ptrFrame, layout->at(v.key()) + src.offset());
+
+			if (type == opVariable) {
+				return xRel(src.size(), ptrFrame, layout->at(v.key()) + src.offset());
+			} else {
+				return xRel(src.size(), ptrFrame, src.ref(), layout->at(v.key()) + src.offset());
+			}
 		}
 
 		// Zero the memory of a variable. 'initEax' should be true if we need to set eax to 0 before

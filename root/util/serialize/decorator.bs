@@ -119,7 +119,7 @@ Member[] serializedMembers(Type t) {
 	}
 
 	// Stabilize the order by sorting by offset.
-	result.sort((a, b) => a.member.offset.current() < b.member.offset.current());
+	result.sort((a, b) => a.member.rawOffset.current() < b.member.rawOffset.current());
 	result;
 }
 

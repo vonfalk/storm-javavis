@@ -111,8 +111,12 @@ namespace code {
 				return Operand(low32(o.reg()));
 			case opRelative:
 				return intRel(o.reg(), o.offset());
+			case opRelativeRef:
+				return intRel(o.reg(), o.ref(), o.offset());
 			case opVariable:
 				return intRel(o.var(), o.offset());
+			case opVariableRef:
+				return intRel(o.var(), o.ref(), o.offset());
 			}
 			assert(false);
 			return Operand();
@@ -127,8 +131,12 @@ namespace code {
 				return Operand(high32(o.reg()));
 			case opRelative:
 				return intRel(o.reg(), o.offset() + Offset(4));
+			case opRelativeRef:
+				return intRel(o.reg(), o.ref(), o.offset() + Offset(4));
 			case opVariable:
 				return intRel(o.var(), o.offset() + Offset(4));
+			case opVariableRef:
+				return intRel(o.var(), o.ref(), o.offset() + Offset(4));
 			}
 			assert(false);
 			return Operand();
@@ -332,6 +340,21 @@ namespace code {
 					} else if (mode == 2) {
 						to->putInt(Nat(dest.offset().v32()));
 					}
+				}
+				break;
+			case opRelativeRef:
+				if (dest.reg() == noReg) {
+					to->putByte(modRmValue(0, subOp, 5));
+					to->putOffset(dest.ref(), dest.offset().v32());
+				} else {
+					nat reg = registerId(dest.reg());
+					to->putByte(modRmValue(2, subOp, reg));
+					if (reg == 4) {
+						// SIB-byte for reg=ESP!
+						to->putByte(sibValue(reg));
+					}
+
+					to->putOffset(dest.ref(), dest.offset().v32());
 				}
 				break;
 			default:

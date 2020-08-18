@@ -7,16 +7,29 @@ namespace code {
 	Content::Content() {}
 
 	const void *Content::address() const {
-		return lastAddress;
+		if (lastAddress)
+			return lastAddress;
+		else
+			return (const void *)lastOffset;
 	}
 
 	nat Content::size() const {
 		return lastSize;
 	}
 
-	void Content::set(const void *addr, nat size) {
+	void Content::set(const void *addr, Nat size) {
 		lastAddress = addr;
+		lastOffset = 0;
 		lastSize = size;
+
+		if (owner)
+			owner->update();
+	}
+
+	void Content::setOffset(Nat offset) {
+		lastAddress = null;
+		lastOffset = offset;
+		lastSize = 0;
 
 		if (owner)
 			owner->update();
@@ -32,6 +45,10 @@ namespace code {
 
 	StaticContent::StaticContent(const void *addr) {
 		set(addr, 0);
+	}
+
+	StaticContent::StaticContent(Nat offset) {
+		setOffset(offset);
 	}
 
 

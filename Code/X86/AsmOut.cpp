@@ -185,6 +185,7 @@ namespace code {
 				to->putByte(0x50 + registerId(src.reg()));
 				break;
 			case opRelative:
+			case opRelativeRef:
 				to->putByte(0xFF);
 				modRm(to, 6, src);
 				break;
@@ -215,6 +216,7 @@ namespace code {
 				to->putByte(0x58 + registerId(dest.reg()));
 				break;
 			case opRelative:
+			case opRelativeRef:
 				to->putByte(0x8F);
 				modRm(to, 0, dest);
 				break;
@@ -273,6 +275,7 @@ namespace code {
 				break;
 			case opRegister:
 			case opRelative:
+			case opRelativeRef:
 				to->putByte(0xFF);
 				modRm(to, call ? 2 : 4, src);
 				break;

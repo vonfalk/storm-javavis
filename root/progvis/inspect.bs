@@ -77,7 +77,7 @@ void appendMembers(Type t, MemberOffset[] result) on Compiler {
 
 			if (type = memberType.type) {
 				TypeInfo info(type, memberType.isValue, memberType.ref);
-				here << MemberOffset(elem.name, elem.offset.current.nat, info, false);
+				here << MemberOffset(elem.name, elem.rawOffset.current.nat, info, false);
 			}
 		}
 	}

@@ -163,7 +163,9 @@ namespace code {
 		switch (type()) {
 		case opRegister:
 		case opRelative:
+		case opRelativeRef:
 		case opVariable:
+		case opVariableRef:
 			return true;
 		default:
 			return false;

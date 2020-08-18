@@ -67,6 +67,7 @@ namespace code {
 		// References.
 		void STORM_FN putRelative(Ref ref); // Writes 4 or 8 bytes.
 		void STORM_FN putAddress(Ref ref); // Writes 4 or 8 bytes.
+		void STORM_FN putOffset(Ref ref, Nat offset); // Writes 4 bytes, 'ref' + 'offset'. Assumes 'ref' does not need to be scanned.
 		void putObject(RootObject *obj); // Writes 4 or 8 bytes.
 
 		// Store a (4-byte) reference to a reference or to an object.
@@ -90,6 +91,9 @@ namespace code {
 
 		// Mark the last added gc-pointer as a reference to something.
 		virtual void STORM_FN markGcRef(Ref ref);
+
+		// Mark the last added int as a reference 'ref' that needs to be kept up to date.
+		virtual void STORM_FN markRef(Ref ref, Nat offset);
 
 		// Get a pointer to the start of the code.
 		virtual void *codePtr() const;
@@ -170,6 +174,28 @@ namespace code {
 
 		// Which slot to update.
 		Nat slot;
+	};
+
+	/**
+	 * Reference which will update an offset-reference in a code segment.
+	 */
+	class CodeOffsetUpdater : public Reference {
+		STORM_CLASS;
+	public:
+		CodeOffsetUpdater(Ref src, Nat refOffset, Content *inside, void *code, Nat codeOffset);
+
+		// Notification of a new location.
+		virtual void moved(const void *newAddr);
+
+	private:
+		// The code segment to update.
+		UNKNOWN(PTR_GC) void *code;
+
+		// Offset inside 'code' to update.
+		Nat codeOffset;
+
+		// Offset to add to the 'address' from the reference.
+		Nat refOffset;
 	};
 
 }

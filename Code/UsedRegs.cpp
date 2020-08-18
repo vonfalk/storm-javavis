@@ -19,6 +19,8 @@ namespace code {
 	static void addIndirect(RegSet *to, const Operand &op) {
 		if (op.type() == opRelative)
 			to->put(op.reg());
+		else if (op.type() == opRelativeRef)
+			to->put(op.reg());
 	}
 
 	static void addIndirect(RegSet *to, Instr *instr) {

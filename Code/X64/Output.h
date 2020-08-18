@@ -33,6 +33,7 @@ namespace code {
 		protected:
 			virtual void STORM_FN markLabel(Nat id);
 			virtual void STORM_FN markGcRef(Ref ref);
+			virtual void STORM_FN markRef(Ref ref, Nat offset);
 			virtual Nat STORM_FN labelOffset(Nat id);
 			virtual Nat STORM_FN toRelative(Nat id);
 

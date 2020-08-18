@@ -65,7 +65,7 @@ namespace code {
 		}
 
 		static bool isComplexParam(Listing *l, Operand op) {
-			if (op.type() != opVariable)
+			if (op.type() != opVariable && op.type() == opVariableRef)
 				return false;
 
 			return isComplexParam(l, op.var());

@@ -32,7 +32,7 @@ namespace code {
 			}
 
 			// We need to perform a memcpy-like operation (only for variables).
-			if (p.src.type() != opVariable)
+			if (p.src.type() != opVariable || p.src.type() != opVariableRef)
 				throw new (dest) InvalidValue(S("Can not pass non-variables larger than 8 bytes to functions."));
 
 			Var src = p.src.var();
@@ -193,6 +193,9 @@ namespace code {
 			} else if (src.type() == opVariable) {
 				Size s(param.size());
 				*env.dest << mov(asSize(target, s), xRel(s, src.var(), Offset(param.offset())));
+			} else if (src.type() == opVariableRef) {
+				Size s(param.size());
+				*env.dest << mov(asSize(target, s), xRel(s, src.var(), src.ref(), Offset(param.offset())));
 			} else {
 				throw new (env.dest) InvalidValue(S("Can not pass non-variables larger than 8 bytes to functions."));
 			}

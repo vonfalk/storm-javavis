@@ -7,6 +7,11 @@
 namespace code {
 	namespace x64 {
 
+#ifndef DEBUG
+#undef assert
+#define assert(...)
+#endif
+
 		CodeOut::CodeOut(Binary *owner, Array<Nat> *lbls, Nat size, Nat numRefs) {
 			// Properly align 'size'.
 			this->size = size = roundUp(size, Nat(sizeof(void *)));
@@ -137,6 +142,11 @@ namespace code {
 				return;
 
 			codeRefs->push(new (this) CodeUpdater(r, owner, code, ref - 1));
+		}
+
+		void CodeOut::markRef(Ref r, Nat offset) {
+			assert(pos > 3);
+			codeRefs->push(new (this) CodeOffsetUpdater(r, offset, owner, code, pos - 4));
 		}
 
 		Nat CodeOut::labelOffset(Nat id) {

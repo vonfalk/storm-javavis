@@ -39,6 +39,9 @@ namespace code {
 		// Set to a static pointer (uses StaticContent).
 		void setPtr(const void *to);
 
+		// Set to a static offset.
+		void setOffset(Nat to);
+
 		// Make it so that all references in 'from' refers to this instance instead. Keeps 'from'
 		// updated until there are no more 'Ref's referring to it (Reference instances are updated
 		// immediately).

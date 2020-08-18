@@ -49,6 +49,10 @@ namespace code {
 		set(new (this) StaticContent(to));
 	}
 
+	void RefSource::setOffset(Nat to) {
+		set(new (this) StaticContent(to));
+	}
+
 	void RefSource::steal(RefSource *from) {
 		const void *addr = address();
 		WeakSet<Reference>::Iter i = from->refs->iter();

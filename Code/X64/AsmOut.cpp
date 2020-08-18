@@ -50,6 +50,7 @@ namespace code {
 				break;
 			}
 			case opRelative:
+			case opRelativeRef:
 			case opReference:
 			case opObjReference:
 				modRm(to, opCode(0xFF), rmNone, 6, src);
@@ -74,6 +75,7 @@ namespace code {
 				break;
 			}
 			case opRelative:
+			case opRelativeRef:
 				modRm(to, opCode(0x8F), rmNone, 0, dest);
 				break;
 			default:
@@ -446,6 +448,7 @@ namespace code {
 				break;
 			case opRegister:
 			case opRelative:
+			case opRelativeRef:
 				modRm(to, opCode(0xFF), rmNone, call ? 2 : 4, src);
 				break;
 			default:

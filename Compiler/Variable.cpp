@@ -63,7 +63,7 @@ namespace storm {
 	void MemberVar::setOffset(Offset to) {
 		hasLayout = true;
 		off = to;
-		ref->setPtr((const void *)to.current());
+		ref->setOffset(to.current());
 	}
 
 	Type *MemberVar::owner() const {
@@ -86,6 +86,8 @@ namespace storm {
 		MemberVar *o = (MemberVar *)old;
 		hasLayout = o->hasLayout;
 		off = o->off;
+		ref->setOffset(off.current());
+		ref->steal(o->ref);
 	}
 
 

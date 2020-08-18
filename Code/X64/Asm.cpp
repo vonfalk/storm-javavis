@@ -501,6 +501,21 @@ namespace code {
 					}
 				}
 				break;
+			case opRelativeRef:
+				if (dest.reg() == noReg) {
+					// TODO: Remove this in one of the transforms!
+					assert(false, L"Absolute addresses are not supported on X86-64!");
+				} else {
+					nat reg = registerId(dest.reg());
+					modRm(to, op, flags, mode, 2, reg);
+					if ((reg & 0x7) == 4) {
+						// We need to emit a SIB byte as well.
+						sib(to, reg);
+					}
+
+					to->putOffset(dest.ref(), dest.offset().v64());
+				}
+				break;
 			default:
 				// There are more modes we could support...
 				assert(false, L"This modRm mode is not implemented yet.");

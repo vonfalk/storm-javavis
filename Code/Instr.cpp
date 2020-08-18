@@ -167,7 +167,9 @@ namespace code {
 
 		switch (from.type()) {
 		case opRelative:
+		case opRelativeRef:
 		case opVariable:
+		case opVariableRef:
 		case opReference:
 			// These are ok.
 			break;
