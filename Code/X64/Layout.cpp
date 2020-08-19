@@ -145,17 +145,13 @@ namespace code {
 		}
 
 		Operand Layout::resolve(Listing *src, const Operand &op, const Size &size) {
-			OpType type = op.type();
-			if (type != opVariable && type != opVariableRef)
+			if (op.type() != opVariable)
 				return op;
 
 			Var v = op.var();
 			if (!src->accessible(v, block))
 				throw new (this) VariableUseError(v, block);
-			if (type == opVariable)
-				return xRel(size, ptrFrame, layout->at(v.key()) + op.offset());
-			else
-				return xRel(size, ptrFrame, op.ref(), layout->at(v.key()) + op.offset());
+			return xRel(size, ptrFrame, op.offsetRef() + layout->at(v.key()));
 		}
 
 		void Layout::spillParams(Listing *dest) {

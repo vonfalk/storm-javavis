@@ -185,7 +185,6 @@ namespace code {
 				to->putByte(0x50 + registerId(src.reg()));
 				break;
 			case opRelative:
-			case opRelativeRef:
 				to->putByte(0xFF);
 				modRm(to, 6, src);
 				break;
@@ -196,6 +195,10 @@ namespace code {
 			case opObjReference:
 				to->putByte(0x68);
 				to->putObject(src.object());
+				break;
+			case opOffReference:
+				to->putByte(0x68);
+				to->putPtr(src.offsetRef());
 				break;
 			case opLabel:
 				to->putByte(0x68);
@@ -216,7 +219,6 @@ namespace code {
 				to->putByte(0x58 + registerId(dest.reg()));
 				break;
 			case opRelative:
-			case opRelativeRef:
 				to->putByte(0x8F);
 				modRm(to, 0, dest);
 				break;
@@ -275,7 +277,6 @@ namespace code {
 				break;
 			case opRegister:
 			case opRelative:
-			case opRelativeRef:
 				to->putByte(0xFF);
 				modRm(to, call ? 2 : 4, src);
 				break;
@@ -439,6 +440,11 @@ namespace code {
 					to->putInt(Nat(src.constant()));
 				}
 				break;
+			case opOffReference:
+				to->putByte(0x69);
+				modRm(to, registerId(reg), instr->dest());
+				to->putInt(src.offsetRef());
+				break;
 			case opLabel:
 			case opReference:
 			case opObjReference:
@@ -489,6 +495,10 @@ namespace code {
 				// Special meaning, load the RefSource instead.
 				to->putByte(0xB8 + regId);
 				to->putObject(src.refSource());
+			} else if (src.type() == opOffReference) {
+				// Special meaning, load the RefSource instead.
+				to->putByte(0xB8 + regId);
+				to->putObject(src.offsetRef().source());
 			} else {
 				to->putByte(0x8D);
 				modRm(to, regId, src);
@@ -622,6 +632,14 @@ namespace code {
 				break;
 			case opObjReference:
 				to->putObject(src.object());
+				break;
+			case opOffReference:
+				if (src.size() == Size::sInt)
+					to->putInt(src.offsetRef());
+				else if (src.size() == Size::sPtr)
+					to->putPtr(src.offsetRef());
+				else
+					assert(false, L"Unable to output offsets as anything but pointers or ints.");
 				break;
 			case opConstant:
 				to->putSize(src.constant(), src.size());

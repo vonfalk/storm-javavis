@@ -107,7 +107,7 @@ namespace storm {
 					throw new (this) InternalError(msg);
 				}
 				*l << mov(ptrA, me);
-				*l << add(ptrA, v->offset());
+				*l << add(ptrA, ptrConst(v->offset()));
 				*l << fnParam(ptr, ptrA);
 				*l << fnCall(ctor->ref(), true);
 			} else {
@@ -208,8 +208,8 @@ namespace storm {
 					throw new (this) InternalError(msg);
 				}
 
-				*l << add(ptrA, v->offset());
-				*l << add(ptrC, v->offset());
+				*l << add(ptrA, ptrConst(v->offset()));
+				*l << add(ptrC, ptrConst(v->offset()));
 				*l << fnParam(ptr, ptrA);
 				*l << fnParam(ptr, ptrC);
 				*l << fnCall(ctor->ref(), true);
@@ -303,8 +303,8 @@ namespace storm {
 					throw new (this) InternalError(msg);
 				}
 
-				*l << add(ptrA, v->offset());
-				*l << add(ptrC, v->offset());
+				*l << add(ptrA, ptrConst(v->offset()));
+				*l << add(ptrC, ptrConst(v->offset()));
 				*l << fnParam(ptr, ptrA);
 				*l << fnParam(ptr, ptrC);
 				*l << fnCall(ctor->ref(), true);
@@ -370,7 +370,7 @@ namespace storm {
 				}
 
 				*l << mov(ptrA, me);
-				*l << add(ptrA, var->offset());
+				*l << add(ptrA, ptrConst(var->offset()));
 				*l << fnParam(ptr, ptrA);
 				*l << fnParam(ptr, env);
 				*l << fnCall(toCall->ref(), true);

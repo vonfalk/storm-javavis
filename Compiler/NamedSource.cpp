@@ -18,4 +18,18 @@ namespace storm {
 		return result;
 	}
 
+	NamedOffsetSource::NamedOffsetSource(Named *entity) : OffsetSource(), entity(entity), subtype(Nat(0)) {}
+
+	NamedOffsetSource::NamedOffsetSource(Named *entity, Char subtype) : OffsetSource(), entity(entity), subtype(subtype) {}
+
+	Str *NamedOffsetSource::title() const {
+		Str *result = entity->identifier();
+		if (subtype != Char(Nat(0))) {
+			StrBuf *buf = new (this) StrBuf();
+			*buf << result << S("<") << subtype << S(">");
+			result = buf->toS();
+		}
+		return result;
+	}
+
 }

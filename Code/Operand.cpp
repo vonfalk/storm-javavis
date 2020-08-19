@@ -61,11 +61,13 @@ namespace code {
 
 	Operand::Operand(RootObject *obj) : opType(opObjReference), opPtr(obj), opOffset(), opSize(Size::sPtr) {}
 
+	Operand::Operand(OffsetRef r, Size size) : opType(opOffReference), opPtr(r.to), opOffset(r.delta), opSize(size) {}
+
 	Operand::Operand(Reg r, Offset offset, Size size) : opType(opRelative), opPtr(null), opNum(r), opOffset(offset), opSize(size) {
 		// Note: it is OK if 'r == noReg'. That means absolute addressing.
 	}
 
-	Operand::Operand(Reg r, Offset offset, Ref ref, Size size) : opType(opRelativeRef), opPtr(ref.to), opNum(r), opOffset(offset), opSize(size) {
+	Operand::Operand(Reg r, OffsetRef ref, Size size) : opType(opRelative), opPtr(ref.to), opNum(r), opOffset(ref.delta), opSize(size) {
 		// Note: it is OK if 'r == noReg'. That means absolute addressing.
 	}
 
@@ -74,7 +76,7 @@ namespace code {
 			throw new (someEngine()) InvalidValue(S("Can not create an operand of an empty variable."));
 	}
 
-	Operand::Operand(Var v, Offset offset, Ref ref, Size size) : opType(opVariableRef), opPtr(ref.to), opNum(v.id), opOffset(offset), opSize(size) {
+	Operand::Operand(Var v, OffsetRef ref, Size size) : opType(opVariable), opPtr(ref.to), opNum(v.id), opOffset(ref.delta), opSize(size) {
 		if (v == Var())
 			throw new (someEngine()) InvalidValue(S("Can not create an operand of an empty variable."));
 	}
@@ -99,16 +101,16 @@ namespace code {
 			return opNum == o.opNum;
 		case opDualConstant:
 			return opOffset == o.opOffset;
-		case opVariable:
-		case opRelative:
 		case opRelativeLbl:
 			return opNum == o.opNum && opOffset == o.opOffset;
-		case opVariableRef:
-		case opRelativeRef:
+		case opVariable:
+		case opRelative:
 			return opNum == o.opNum && opOffset == o.opOffset && opPtr == o.opPtr;
 		case opReference:
 		case opObjReference:
 			return opPtr == o.opPtr;
+		case opOffReference:
+			return opPtr == o.opPtr && opOffset == o.opOffset;
 		case opSrcPos:
 			if (opNum != o.opNum)
 				return false;
@@ -163,9 +165,7 @@ namespace code {
 		switch (type()) {
 		case opRegister:
 		case opRelative:
-		case opRelativeRef:
 		case opVariable:
-		case opVariableRef:
 			return true;
 		default:
 			return false;
@@ -192,7 +192,6 @@ namespace code {
 		switch (opType) {
 		case opRegister:
 		case opRelative:
-		case opRelativeRef:
 			return true;
 		default:
 			return false;
@@ -244,8 +243,6 @@ namespace code {
 	Ref Operand::ref() const {
 		switch (type()) {
 		case opReference:
-		case opRelativeRef:
-		case opVariableRef:
 			return Ref((RefSource *)opPtr);
 		default:
 			throw new (someEngine()) InvalidValue(S("Not a reference!"));
@@ -256,6 +253,17 @@ namespace code {
 		if (type() != opReference)
 			throw new (someEngine()) InvalidValue(S("Not a reference!"));
 		return (RefSource *)opPtr;
+	}
+
+	OffsetRef Operand::offsetRef() const {
+		switch (type()) {
+		case opOffReference:
+		case opRelative:
+		case opVariable:
+			return OffsetRef((OffsetSource *)opPtr, opOffset);
+		default:
+			throw new (someEngine()) InvalidValue(S("Not a reference!"));
+		}
 	}
 
 	RootObject *Operand::object() const {
@@ -326,19 +334,20 @@ namespace code {
 		case opRegister:
 			return to << code::name(o.reg());
 		case opRelative:
-			return to << L"[" << code::name(o.reg()) << o.offset() << L"]";
+			if (o.opPtr)
+				return to << L"[" << code::name(o.reg()) << o.offsetRef() << L"]";
+			else
+				return to << L"[" << code::name(o.reg()) << o.offset() << L"]";
 		case opRelativeLbl:
 			return to << L"[" << L"Label" << o.opNum << o.offset() << L"]";
-		case opRelativeRef:
-			return to << L"[" << code::name(o.reg()) << o.offset() << L"+" << o.ref().address() << L"]";
 		case opVariable:
-			if (o.offset() != Offset()) {
+			if (o.opPtr) {
+				return to << L"[Var" << o.opNum << o.offsetRef() << L"]";
+			} if (o.offset() != Offset()) {
 				return to << L"[Var" << o.opNum << o.offset() << L"]";
 			} else {
 				return to << L"[Var" << o.opNum << L"]";
 			}
-		case opVariableRef:
-			return to << L"[Var" << o.opNum << o.offset() << L"+" << o.ref().address() << L"]";
 		case opLabel:
 			return to << L"Label" << o.opNum;
 		case opBlock:
@@ -352,6 +361,8 @@ namespace code {
 			} else {
 				return to << L"&null";
 			}
+		case opOffReference:
+			return to << o.offsetRef();
 		case opCondFlag:
 			return to << code::name(o.condFlag());
 		case opSrcPos:
@@ -398,19 +409,20 @@ namespace code {
 		case opRegister:
 			return to << code::name(o.reg());
 		case opRelative:
-			return to << S("[") << code::name(o.reg()) << o.offset() << S("]");
+			if (o.opPtr)
+				return to << L"[" << code::name(o.reg()) << o.offsetRef() << L"]";
+			else
+				return to << L"[" << code::name(o.reg()) << o.offset() << L"]";
 		case opRelativeLbl:
 			return to << S("[") << L"Label" << o.opNum << o.offset() << S("]");
-		case opRelativeRef:
-			return to << S("[") << code::name(o.reg()) << o.offset() << S("+") << o.ref().address() << S("]");
 		case opVariable:
-			if (o.offset() != Offset()) {
-				return to << S("[Var") << o.opNum << o.offset() << S("]");
+			if (o.opPtr) {
+				return to << L"[Var" << o.opNum << o.offsetRef() << L"]";
+			} if (o.offset() != Offset()) {
+				return to << L"[Var" << o.opNum << o.offset() << L"]";
 			} else {
-				return to << S("[Var") << o.opNum << S("]");
+				return to << L"[Var" << o.opNum << L"]";
 			}
-		case opVariableRef:
-			return to << S("[Var") << o.opNum << o.offset() << S("+") << o.ref().address() << S("]");
 		case opLabel:
 			return to << S("Label") << o.opNum;
 		case opBlock:
@@ -424,6 +436,8 @@ namespace code {
 			} else {
 				return to << S("&null");
 			}
+		case opOffReference:
+			return to << o.offsetRef();
 		case opCondFlag:
 			return to << code::name(o.condFlag());
 		case opSrcPos:
@@ -454,6 +468,10 @@ namespace code {
 	}
 
 	Operand intConst(Offset v) {
+		return Operand(v, Size::sInt);
+	}
+
+	Operand intConst(OffsetRef v) {
 		return Operand(v, Size::sInt);
 	}
 
@@ -496,6 +514,10 @@ namespace code {
 	}
 
 	Operand ptrConst(Offset v) {
+		return Operand(v, Size::sPtr);
+	}
+
+	Operand ptrConst(OffsetRef v) {
 		return Operand(v, Size::sPtr);
 	}
 

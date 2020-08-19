@@ -7,10 +7,7 @@ namespace code {
 	Content::Content() {}
 
 	const void *Content::address() const {
-		if (lastAddress)
-			return lastAddress;
-		else
-			return (const void *)lastOffset;
+		return lastAddress;
 	}
 
 	nat Content::size() const {
@@ -19,17 +16,7 @@ namespace code {
 
 	void Content::set(const void *addr, Nat size) {
 		lastAddress = addr;
-		lastOffset = 0;
 		lastSize = size;
-
-		if (owner)
-			owner->update();
-	}
-
-	void Content::setOffset(Nat offset) {
-		lastAddress = null;
-		lastOffset = offset;
-		lastSize = 0;
 
 		if (owner)
 			owner->update();
@@ -43,12 +30,12 @@ namespace code {
 			return null;
 	}
 
-	StaticContent::StaticContent(const void *addr) {
-		set(addr, 0);
+	RefSource *Content::stolenBy() const {
+		return null;
 	}
 
-	StaticContent::StaticContent(Nat offset) {
-		setOffset(offset);
+	StaticContent::StaticContent(const void *addr) {
+		set(addr, 0);
 	}
 
 

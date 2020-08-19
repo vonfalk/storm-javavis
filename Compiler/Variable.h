@@ -2,6 +2,7 @@
 #include "Named.h"
 #include "NamedThread.h"
 #include "RunOn.h"
+#include "Code/OffsetReference.h"
 #include "Core/Fn.h"
 
 namespace storm {
@@ -40,7 +41,7 @@ namespace storm {
 
 		// Get a reference to this variable. Use the reference whenever storing the offset for more
 		// than a couple of function calls, as it might change during reloads.
-		code::Ref STORM_FN offset() const;
+		code::OffsetRef STORM_FN offset() const;
 
 		// Get our parent type.
 		Type *STORM_FN owner() const;
@@ -63,7 +64,7 @@ namespace storm {
 		Offset off;
 
 		// Reference for the offset.
-		code::RefSource *ref;
+		code::OffsetSource *ref;
 
 		// Has the layout been produced?
 		Bool hasLayout;

@@ -6,6 +6,7 @@
 #include "Block.h"
 #include "Label.h"
 #include "Reference.h"
+#include "OffsetReference.h"
 #include "Core/SrcPos.h"
 
 namespace code {
@@ -43,20 +44,14 @@ namespace code {
 		// Register
 		STORM_NAME(opRegister, register),
 
-		// Relative to a register. ie. [reg + offset]
+		// Relative to a register. ie. [reg + offset/offset-ref]
 		STORM_NAME(opRelative, relative),
-
-		// Relative to a register, the offset represented by a reference.
-		STORM_NAME(opRelativeRef, relativeRef),
 
 		// Relative to a label. TODO: Implement for X86!
 		STORM_NAME(opRelativeLbl, relativeLabel),
 
-		// Variable (+ offset).
+		// Variable (+ offset/offset-ref).
 		STORM_NAME(opVariable, variable),
-
-		// Variable (+ offset, originating from a reference).
-		STORM_NAME(opVariableRef, variableRef),
 
 		// Label.
 		STORM_NAME(opLabel, label),
@@ -69,6 +64,9 @@ namespace code {
 
 		// Reference to an object.
 		STORM_NAME(opObjReference, objReference),
+
+		// Reference to an offset.
+		STORM_NAME(opOffReference, offsetReference),
 
 		// Condition flag.
 		STORM_NAME(opCondFlag, condFlag),
@@ -146,12 +144,13 @@ namespace code {
 		// Constant (depends on the backend).
 		Word STORM_FN constant() const;
 		Reg STORM_FN reg() const; // "register" is a reserved word.
-		Offset STORM_FN offset() const;
+		Offset STORM_FN offset() const; // Note: There might be another offset stored as a ref!
 		CondFlag STORM_FN condFlag() const;
 		Block STORM_FN block() const;
 		Label STORM_FN label() const;
 		Ref STORM_FN ref() const;
 		RefSource *refSource() const;
+		OffsetRef STORM_FN offsetRef() const;
 		RootObject *object() const;
 		Var STORM_FN var() const; // NOTE: The size of this variable is equal to the size
 		                          // we want to read, which is not always the size of the
@@ -175,14 +174,17 @@ namespace code {
 		Operand(Offset o, Size size);
 		Operand(RootObject *obj);
 
+		// Offset reference with specified size.
+		Operand(OffsetRef ref, Size size);
+
 		// [register,variable,label] + offset.
 		Operand(Reg r, Offset offset, Size size);
 		Operand(Var v, Offset offset, Size size);
 		Operand(Label l, Offset offset, Size size);
 
-		// [register,variable] + offset + ref
-		Operand(Reg r, Offset offset, Ref ref, Size size);
-		Operand(Var r, Offset offset, Ref ref, Size size);
+		// [register,variable] + offset-ref
+		Operand(Reg r, OffsetRef ref, Size size);
+		Operand(Var r, OffsetRef ref, Size size);
 
 		// Our type. Note: may contain other flags as well!
 		OpType opType;
@@ -205,16 +207,18 @@ namespace code {
 
 		// Friends.
 		friend Operand intConst(Offset v);
+		friend Operand intConst(OffsetRef v);
 		friend Operand natConst(Size v);
 		friend Operand ptrConst(Size v);
 		friend Operand ptrConst(Offset v);
+		friend Operand ptrConst(OffsetRef v);
 		friend Operand xConst(Size s, Word w);
 		friend Operand objPtr(Object *ptr);
 		friend Operand objPtr(TObject *ptr);
 		friend Operand xRel(Size size, Reg reg, Offset offset);
+		friend Operand xRel(Size size, Reg reg, OffsetRef ref);
 		friend Operand xRel(Size size, Var v, Offset offset);
-		friend Operand xRel(Size size, Reg reg, Ref ref, Offset offset);
-		friend Operand xRel(Size size, Var v, Ref ref, Offset offset);
+		friend Operand xRel(Size size, Var v, OffsetRef ref);
 		friend Operand xRel(Size size, Label l, Offset offset);
 		friend wostream &operator <<(wostream &to, const Operand &o);
 		friend StrBuf &operator <<(StrBuf &to, Operand o);
@@ -229,6 +233,7 @@ namespace code {
 	Operand STORM_FN byteConst(Byte v);
 	Operand STORM_FN intConst(Int v);
 	Operand STORM_FN intConst(Offset v);
+	Operand STORM_FN intConst(OffsetRef v);
 	Operand STORM_FN natConst(Nat v);
 	Operand STORM_FN natConst(Size v);
 	Operand STORM_FN longConst(Long v);
@@ -237,6 +242,7 @@ namespace code {
 	Operand STORM_FN doubleConst(Double v);
 	Operand STORM_FN ptrConst(Size v);
 	Operand STORM_FN ptrConst(Offset v);
+	Operand STORM_FN ptrConst(OffsetRef v);
 	Operand STORM_FN ptrConst(Nat v);
 	Operand STORM_FN xConst(Size s, Word v);
 
@@ -261,21 +267,13 @@ namespace code {
 	inline Operand STORM_FN doubleRel(Reg reg) { return xRel(Size::sDouble, reg, Offset()); }
 	inline Operand STORM_FN ptrRel(Reg reg) { return xRel(Size::sPtr, reg, Offset()); }
 
-	inline Operand STORM_FN xRel(Size size, Reg reg, Ref ref, Offset offset) { return Operand(reg, offset, ref, size); }
-	inline Operand STORM_FN byteRel(Reg reg, Ref ref, Offset offset) { return xRel(Size::sByte, reg, ref, offset); }
-	inline Operand STORM_FN intRel(Reg reg, Ref ref, Offset offset) { return xRel(Size::sInt, reg, ref, offset); }
-	inline Operand STORM_FN longRel(Reg reg, Ref ref, Offset offset) { return xRel(Size::sLong, reg, ref, offset); }
-	inline Operand STORM_FN floatRel(Reg reg, Ref ref, Offset offset) { return xRel(Size::sFloat, reg, ref, offset); }
-	inline Operand STORM_FN doubleRel(Reg reg, Ref ref, Offset offset) { return xRel(Size::sDouble, reg, ref, offset); }
-	inline Operand STORM_FN ptrRel(Reg reg, Ref ref, Offset offset) { return xRel(Size::sPtr, reg, ref, offset); }
-
-	inline Operand STORM_FN xRel(Size size, Reg reg, Ref ref) { return xRel(size, reg, ref, Offset()); }
-	inline Operand STORM_FN byteRel(Reg reg, Ref ref) { return byteRel(reg, ref, Offset()); }
-	inline Operand STORM_FN intRel(Reg reg, Ref ref) { return intRel(reg, ref, Offset()); }
-	inline Operand STORM_FN longRel(Reg reg, Ref ref) { return longRel(reg, ref, Offset()); }
-	inline Operand STORM_FN floatRel(Reg reg, Ref ref) { return floatRel(reg, ref, Offset()); }
-	inline Operand STORM_FN doubleRel(Reg reg, Ref ref) { return doubleRel(reg, ref, Offset()); }
-	inline Operand STORM_FN ptrRel(Reg reg, Ref ref) { return ptrRel(reg, ref, Offset()); }
+	inline Operand STORM_FN xRel(Size size, Reg reg, OffsetRef ref) { return Operand(reg, ref, size); }
+	inline Operand STORM_FN byteRel(Reg reg, OffsetRef ref) { return xRel(Size::sByte, reg, ref); }
+	inline Operand STORM_FN intRel(Reg reg, OffsetRef ref) { return xRel(Size::sInt, reg, ref); }
+	inline Operand STORM_FN longRel(Reg reg, OffsetRef ref) { return xRel(Size::sLong, reg, ref); }
+	inline Operand STORM_FN floatRel(Reg reg, OffsetRef ref) { return xRel(Size::sFloat, reg, ref); }
+	inline Operand STORM_FN doubleRel(Reg reg, OffsetRef ref) { return xRel(Size::sDouble, reg, ref); }
+	inline Operand STORM_FN ptrRel(Reg reg, OffsetRef ref) { return xRel(Size::sPtr, reg, ref); }
 
 	// Access offsets inside variables.
 	inline Operand STORM_FN xRel(Size size, Var v, Offset offset) { return Operand(v, offset, size); }
@@ -294,21 +292,13 @@ namespace code {
 	inline Operand STORM_FN doubleRel(Var v) { return xRel(Size::sDouble, v, Offset()); }
 	inline Operand STORM_FN ptrRel(Var v) { return xRel(Size::sPtr, v, Offset()); }
 
-	inline Operand STORM_FN xRel(Size size, Var v, Ref ref, Offset offset) { return Operand(v, offset, ref, size); }
-	inline Operand STORM_FN byteRel(Var v, Ref ref, Offset offset) { return xRel(Size::sByte, v, ref, offset); }
-	inline Operand STORM_FN intRel(Var v, Ref ref, Offset offset) { return xRel(Size::sInt, v, ref, offset); }
-	inline Operand STORM_FN longRel(Var v, Ref ref, Offset offset) { return xRel(Size::sLong, v, ref, offset); }
-	inline Operand STORM_FN floatRel(Var v, Ref ref, Offset offset) { return xRel(Size::sFloat, v, ref, offset); }
-	inline Operand STORM_FN doubleRel(Var v, Ref ref, Offset offset) { return xRel(Size::sDouble, v, ref, offset); }
-	inline Operand STORM_FN ptrRel(Var v, Ref ref, Offset offset) { return xRel(Size::sPtr, v, ref, offset); }
-
-	inline Operand STORM_FN xRel(Size size, Var v, Ref ref) { return xRel(size, v, ref, Offset()); }
-	inline Operand STORM_FN byteRel(Var v, Ref ref) { return byteRel(v, ref, Offset()); }
-	inline Operand STORM_FN intRel(Var v, Ref ref) { return intRel(v, ref, Offset()); }
-	inline Operand STORM_FN longRel(Var v, Ref ref) { return longRel(v, ref, Offset()); }
-	inline Operand STORM_FN floatRel(Var v, Ref ref) { return floatRel(v, ref, Offset()); }
-	inline Operand STORM_FN doubleRel(Var v, Ref ref) { return doubleRel(v, ref, Offset()); }
-	inline Operand STORM_FN ptrRel(Var v, Ref ref) { return ptrRel(v, ref, Offset()); }
+	inline Operand STORM_FN xRel(Size size, Var v, OffsetRef ref) { return Operand(v, ref, size); }
+	inline Operand STORM_FN byteRel(Var v, OffsetRef ref) { return xRel(Size::sByte, v, ref); }
+	inline Operand STORM_FN intRel(Var v, OffsetRef ref) { return xRel(Size::sInt, v, ref); }
+	inline Operand STORM_FN longRel(Var v, OffsetRef ref) { return xRel(Size::sLong, v, ref); }
+	inline Operand STORM_FN floatRel(Var v, OffsetRef ref) { return xRel(Size::sFloat, v, ref); }
+	inline Operand STORM_FN doubleRel(Var v, OffsetRef ref) { return xRel(Size::sDouble, v, ref); }
+	inline Operand STORM_FN ptrRel(Var v, OffsetRef ref) { return xRel(Size::sPtr, v, ref); }
 
 	// Access offsets inside labels.
 	inline Operand STORM_FN xRel(Size size, Label l, Offset offset) { return Operand(l, offset, size); }

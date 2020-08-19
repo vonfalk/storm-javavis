@@ -154,7 +154,7 @@ class CppDtor extends CppFunction {
 
 			if (s = type.super) {
 				// Destroy any super-classes.
-				destroyVar(gen, s, null, root);
+				destroyVar(gen, s, OffsetRef(), root);
 			}
 		}
 
@@ -166,15 +166,13 @@ class CppDtor extends CppFunction {
 	}
 
 	// Destroy a variable.
-	private void destroyVar(CodeGen gen, Type type, Ref? offset, FnRoot root) {
+	private void destroyVar(CodeGen gen, Type type, OffsetRef offset, FnRoot root) {
 		// C++ dtor.
 		if (dtor = type.find(SimplePart("__destroy", [thisPtr(type), Value(named{Nat})]), scope) as Function) {
 			gen.l << mov(ptrA, root.thisPtr);
-			if (offset)
-				gen.l << add(ptrA, offset);
+			gen.l << add(ptrA, ptrConst(offset));
 			gen.l << mov(ecx, root.thisOffset);
-			if (offset)
-				gen.l << add(ecx, offset);
+			gen.l << add(ecx, intConst(offset));
 			gen.l << fnParam(ptrDesc, ptrA);
 			gen.l << fnParam(intDesc, ecx);
 			gen.l << fnCall(dtor.ref, true);
@@ -184,8 +182,7 @@ class CppDtor extends CppFunction {
 		// Regular dtor.
 		if (dtor = type.find(SimplePart("__destroy", [thisPtr(type)]), scope) as Function) {
 			gen.l << mov(ptrA, root.thisPtr);
-			if (offset)
-				gen.l << add(ptrA, offset);
+			gen.l << add(ptrA, ptrConst(offset));
 			gen.l << fnParam(ptrDesc, ptrA);
 			gen.l << fnCall(dtor.ref, true);
 			return;

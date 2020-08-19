@@ -5,11 +5,11 @@
 
 namespace code {
 
-	Reference::Reference(RefSource *to, Content *inside) : owner(inside), to(to) {
-		to->refs->put(this);
+	Reference::Reference(RefSource *to, Content *inside) : owner(inside), to(to->findActual()) {
+		this->to->refs->put(this);
 	}
 
-	Reference::Reference(Ref to, Content *inside) : owner(inside), to(to.to) {
+	Reference::Reference(Ref to, Content *inside) : owner(inside), to(to.to->findActual()) {
 		this->to->refs->put(this);
 	}
 

@@ -110,13 +110,9 @@ namespace code {
 			case opRegister:
 				return Operand(low32(o.reg()));
 			case opRelative:
-				return intRel(o.reg(), o.offset());
-			case opRelativeRef:
-				return intRel(o.reg(), o.ref(), o.offset());
+				return intRel(o.reg(), o.offsetRef());
 			case opVariable:
-				return intRel(o.var(), o.offset());
-			case opVariableRef:
-				return intRel(o.var(), o.ref(), o.offset());
+				return intRel(o.var(), o.offsetRef());
 			}
 			assert(false);
 			return Operand();
@@ -130,13 +126,9 @@ namespace code {
 			case opRegister:
 				return Operand(high32(o.reg()));
 			case opRelative:
-				return intRel(o.reg(), o.offset() + Offset(4));
-			case opRelativeRef:
-				return intRel(o.reg(), o.ref(), o.offset() + Offset(4));
+				return intRel(o.reg(), o.offsetRef() + Offset(4));
 			case opVariable:
-				return intRel(o.var(), o.offset() + Offset(4));
-			case opVariableRef:
-				return intRel(o.var(), o.ref(), o.offset() + Offset(4));
+				return intRel(o.var(), o.offsetRef() + Offset(4));
 			}
 			assert(false);
 			return Operand();
@@ -313,7 +305,19 @@ namespace code {
 			case opRelative:
 				if (dest.reg() == noReg) {
 					to->putByte(modRmValue(0, subOp, 5));
-					to->putInt(dest.offset().v32());
+					if (dest.offsetRef().source())
+						to->putInt(dest.offset().v32());
+					else
+						to->putInt(dest.offsetRef());
+				} else if (dest.offsetRef().source()) {
+					nat reg = registerId(dest.reg());
+					to->putByte(modRmValue(2, subOp, reg));
+					if (reg == 4) {
+						// SIB-byte for reg=ESP!
+						to->putByte(sibValue(reg));
+					}
+
+					to->putInt(dest.offsetRef());
 				} else {
 					byte mode = 2;
 					nat reg = registerId(dest.reg());
@@ -342,21 +346,6 @@ namespace code {
 					}
 				}
 				break;
-			case opRelativeRef:
-				if (dest.reg() == noReg) {
-					to->putByte(modRmValue(0, subOp, 5));
-					to->putOffset(dest.ref(), dest.offset().v32());
-				} else {
-					nat reg = registerId(dest.reg());
-					to->putByte(modRmValue(2, subOp, reg));
-					if (reg == 4) {
-						// SIB-byte for reg=ESP!
-						to->putByte(sibValue(reg));
-					}
-
-					to->putOffset(dest.ref(), dest.offset().v32());
-				}
-				break;
 			default:
 				// Not implemented yet, there are many more!
 				assert(false, L"This modRm mode is not implemented yet.");
@@ -380,6 +369,11 @@ namespace code {
 				to->putByte(op.opImm32);
 				modRm(to, op.modeImm32, dest);
 				to->putObject(src.object());
+				break;
+			case opOffReference:
+				to->putByte(op.opImm32);
+				modRm(to, op.modeImm32, dest);
+				to->putPtr(src.offsetRef());
 				break;
 			case opConstant:
 				if (op.modeImm8 != 0xFF && singleByte(src.constant())) {

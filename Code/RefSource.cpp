@@ -45,11 +45,14 @@ namespace code {
 			ref->moved(addr);
 	}
 
-	void RefSource::setPtr(const void *to) {
-		set(new (this) StaticContent(to));
+	RefSource *RefSource::findActual() {
+		if (cont)
+			if (RefSource *r = cont->stolenBy())
+				return r->findActual();
+		return this;
 	}
 
-	void RefSource::setOffset(Nat to) {
+	void RefSource::setPtr(const void *to) {
 		set(new (this) StaticContent(to));
 	}
 
@@ -65,7 +68,7 @@ namespace code {
 		from->refs->clear();
 
 		// Keep 'from' updated while it is alive. Otherwise any 'Ref' instances will not be updated.
-		from->set(new (this) DelegatedContent(Ref(this)));
+		from->set(new (this) StolenContent(this));
 	}
 
 	void RefSource::toS(StrBuf *to) const {

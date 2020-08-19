@@ -175,12 +175,12 @@ class MemberVarAccess extends Expr {
 		if (result.type.ref) {
 			Var r = result.location(gen);
 			gen.l << mov(r, lhs.location(gen));
-			gen.l << add(r, var.offset);
+			gen.l << add(r, ptrConst(var.offset));
 			result.created(gen);
 		} else {
 			var r = result.location(gen);
 			gen.l << mov(ptrA, lhs.location(gen));
-			gen.l << add(ptrA, var.offset);
+			gen.l << add(ptrA, ptrConst(var.offset));
 			if (result.type.isAsmType) {
 				gen.l << mov(r, xRel(r.size, ptrA));
 			} else {
@@ -194,6 +194,6 @@ class MemberVarAccess extends Expr {
 
 	void codePtr(CodeGen gen, Type type) : override {
 		in.codePtr(gen, type);
-		gen.l << add(ptrC, var.offset);
+		gen.l << add(ptrC, ptrConst(var.offset));
 	}
 }

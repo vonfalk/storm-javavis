@@ -28,9 +28,21 @@ namespace code {
 
 		// Get the reference we're referring to.
 		Ref STORM_FN to() const;
-	private:
+	protected:
 		// The reference in charge of updating us.
 		DelegatedRef *ref;
+	};
+
+	/**
+	 * Create a source for when content has been stolen and should refer to something else.
+	 */
+	class StolenContent : public DelegatedContent {
+		STORM_CLASS;
+	public:
+		STORM_CTOR StolenContent(RefSource *by);
+
+		// Indicate that we're stolen by someone.
+		MAYBE(RefSource *) stolenBy() const;
 	};
 
 	/**

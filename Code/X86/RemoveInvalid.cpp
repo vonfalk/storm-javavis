@@ -78,6 +78,7 @@ namespace code {
 			case opReference:
 			case opConstant:
 			case opObjReference:
+			case opOffReference:
 			case opRegister:
 				return true;
 			default:
@@ -360,7 +361,7 @@ namespace code {
 			}
 
 			bool toEax = to.type() == opRegister && same(to.reg(), eax);
-			bool toEaxRel = (to.type() == opRelative || to.type() == opRelativeRef) && same(to.reg(), eax);
+			bool toEaxRel = to.type() == opRelative && same(to.reg(), eax);
 
 			RegSet *used = this->used->at(line);
 			bool saveEax = used->has(eax);
@@ -437,13 +438,9 @@ namespace code {
 		static Operand offset(const Operand &src, Offset offset) {
 			switch (src.type()) {
 			case opVariable:
-				return xRel(Size::sInt, src.var(), offset);
-			case opVariableRef:
-				return xRel(Size::sInt, src.var(), src.ref(), offset);
+				return xRel(Size::sInt, src.var(), src.offsetRef() + offset);
 			case opRelative:
-				return xRel(Size::sInt, src.reg(), offset);
-			case opRelativeRef:
-				return xRel(Size::sInt, src.reg(), src.ref(), offset);
+				return xRel(Size::sInt, src.reg(), src.offsetRef() + offset);
 			default:
 				assert(false, L"Can not generate offsets into this type!");
 				return Operand();

@@ -465,6 +465,11 @@ namespace code {
 				modRm(to, op, flags, mode, 0, 5); // RIP relative addressing.
 				to->putObjRelative(dest.object());
 				break;
+			case opOffReference:
+				TODO(L"We could use RIP relative addressing, but we can probably assume that offsets are "
+					L"never more than 32-bit wide, so we should probably inline it here.");
+				assert(false, L"TODO!");
+				break;
 			case opRelativeLbl:
 				modRm(to, op, flags, mode, 0, 5); // RIP relative addressing.
 				to->putRelative(dest.label(), dest.offset().v64());
@@ -473,6 +478,16 @@ namespace code {
 				if (dest.reg() == noReg) {
 					// TODO: Remove this in one of the transforms!
 					assert(false, L"Absolute addresses are not supported on X86-64!");
+				} else if (dest.offsetRef().source()) {
+					// We need to allocate 4 bytes for the offset if it is dynamic.
+					nat reg = registerId(dest.reg());
+					modRm(to, op, flags, mode, 2, reg);
+					if ((reg & 0x7) == 4) {
+						// We need to emit a SIB byte as well.
+						sib(to, reg);
+					}
+
+					to->putInt(dest.offsetRef());
 				} else {
 					byte mod = 2;
 					nat reg = registerId(dest.reg());
@@ -501,21 +516,6 @@ namespace code {
 					}
 				}
 				break;
-			case opRelativeRef:
-				if (dest.reg() == noReg) {
-					// TODO: Remove this in one of the transforms!
-					assert(false, L"Absolute addresses are not supported on X86-64!");
-				} else {
-					nat reg = registerId(dest.reg());
-					modRm(to, op, flags, mode, 2, reg);
-					if ((reg & 0x7) == 4) {
-						// We need to emit a SIB byte as well.
-						sib(to, reg);
-					}
-
-					to->putOffset(dest.ref(), dest.offset().v64());
-				}
-				break;
 			default:
 				// There are more modes we could support...
 				assert(false, L"This modRm mode is not implemented yet.");
@@ -540,6 +540,11 @@ namespace code {
 					modRm(to, op.opImm32, flags, op.modeImm32, dest);
 					to->putInt(Nat(src.constant()));
 				}
+				break;
+			case opOffReference:
+				// We assume that offsets are no more than 32 bits. If we're in 64-bit mode, it will sign extend anyway.
+				modRm(to, op.opImm32, flags, op.modeImm32, dest);
+				to->putInt(src.offsetRef());
 				break;
 			case opRegister:
 				modRm(to, op.opSrcReg, flags, registerId(src.reg()), dest);

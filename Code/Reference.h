@@ -77,7 +77,7 @@ namespace code {
 		// ToS.
 		virtual void STORM_FN toS(StrBuf *to) const;
 	private:
-		// Owner = referrer
+		// Owner = where is the referent located, i.e. who is referring to 'to'?
 		Content *owner;
 
 		// Who are we referring to?

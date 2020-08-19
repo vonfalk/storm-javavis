@@ -111,9 +111,14 @@ namespace code {
 		markGcRef(ref);
 	}
 
-	void Output::putOffset(Ref ref, Nat offset) {
+	void Output::putInt(OffsetRef ref) {
 		putInt(0);
-		markRef(ref, offset);
+		markRef(ref, false);
+	}
+
+	void Output::putPtr(OffsetRef ref) {
+		putPtr(0);
+		markRef(ref, true);
 	}
 
 	void Output::putObject(RootObject *obj) {
@@ -135,7 +140,7 @@ namespace code {
 
 	void Output::markGcRef(Ref ref) {}
 
-	void Output::markRef(Ref ref, Nat offset) {}
+	void Output::markRef(OffsetRef ref, Bool ptr) {}
 
 	void *Output::codePtr() const {
 		assert(false);
@@ -264,15 +269,17 @@ namespace code {
 		storm::gccode::writePtr(code, slot);
 	}
 
-	CodeOffsetUpdater::CodeOffsetUpdater(Ref src, Nat refOffset, Content *inside, void *code, Nat codeOffset)
-		: Reference(src, inside), code(code), codeOffset(codeOffset), refOffset(refOffset) {
-		moved(address());
+	CodeOffsetUpdater::CodeOffsetUpdater(OffsetRef src, Content *inside, void *code, Nat codeOffset, Bool ptr)
+		: OffsetReference(src, inside), code(code), codeOffset(codeOffset), ptr(ptr) {
+		moved(offset());
 	}
 
-	void CodeOffsetUpdater::moved(const void *newAddr) {
-		Nat base = Nat(size_t(newAddr));
+	void CodeOffsetUpdater::moved(Offset offset) {
 		void *ptr = (byte *)code + codeOffset;
-		atomicWrite(*(Nat *)ptr, base + refOffset);
+		if (ptr)
+			atomicWrite(*(size_t *)ptr, size_t(Long(offset.current())));
+		else
+			atomicWrite(*(Nat *)ptr, Nat(offset.current()));
 	}
 
 }

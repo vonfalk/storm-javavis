@@ -452,7 +452,7 @@ namespace storm {
 			if (type.isValue() && type.destructor() != code::Operand()) {
 				code::Var v = s->l->createVar(varBlock, Size::sPtr, type.destructor(), code::freeOnException | code::freeInactive);
 				*s->l << mov(v, object);
-				*s->l << add(v, var->offset());
+				*s->l << add(v, ptrConst(var->offset()));
 				*s->l << activate(v);
 			}
 		}
@@ -532,7 +532,7 @@ namespace storm {
 				// Default value is already there.
 			} else if (t.isValue()) {
 				*s->l << mov(ptrA, dest);
-				*s->l << add(ptrA, v->offset());
+				*s->l << add(ptrA, ptrConst(v->offset()));
 				*s->l << fnParam(engine().ptrDesc(), ptrA);
 				Function *c = t.type->defaultCtor();
 				assert(c, L"No default constructor!");
@@ -626,7 +626,7 @@ namespace storm {
 					actuals->push(to->code(i - 1, s, ctor->params->at(i), scope));
 
 				*s->l << mov(ptrA, dest);
-				*s->l << add(ptrA, v->offset());
+				*s->l << add(ptrA, ptrConst(v->offset()));
 
 				CodeResult *nothing = new (this) CodeResult();
 				ctor->localCall(s, actuals, nothing, true);

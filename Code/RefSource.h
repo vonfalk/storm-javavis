@@ -39,13 +39,10 @@ namespace code {
 		// Set to a static pointer (uses StaticContent).
 		void setPtr(const void *to);
 
-		// Set to a static offset.
-		void setOffset(Nat to);
-
 		// Make it so that all references in 'from' refers to this instance instead. Keeps 'from'
 		// updated until there are no more 'Ref's referring to it (Reference instances are updated
 		// immediately).
-		void steal(RefSource *from);
+		void STORM_FN steal(RefSource *from);
 
 		// Get the current address.
 		inline const void *address() const {
@@ -58,11 +55,16 @@ namespace code {
 		// Get our title.
 		virtual Str *STORM_FN title() const ABSTRACT;
 
-		// Output.
-		virtual void STORM_FN toS(StrBuf *to) const;
-
 		// Force update.
 		void update();
+
+		// Compute the RefSource to use. Usually returns this object, but if references from here
+		// have been stolen, returns the new owner. Used to update any lingering weak references.
+		RefSource *findActual();
+
+	protected:
+		// Output.
+		virtual void STORM_FN toS(StrBuf *to) const;
 
 	private:
 		// Content.

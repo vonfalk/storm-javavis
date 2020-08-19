@@ -50,9 +50,9 @@ namespace code {
 				break;
 			}
 			case opRelative:
-			case opRelativeRef:
 			case opReference:
 			case opObjReference:
+			case opOffReference:
 				modRm(to, opCode(0xFF), rmNone, 6, src);
 				break;
 			default:
@@ -75,7 +75,6 @@ namespace code {
 				break;
 			}
 			case opRelative:
-			case opRelativeRef:
 				modRm(to, opCode(0x8F), rmNone, 0, dest);
 				break;
 			default:
@@ -339,6 +338,9 @@ namespace code {
 				// Special meaning, load the RefSource instead.
 				// Issues a 'mov' operation to simply load the address of the refsource.
 				modRm(to, opCode(0x8B), rmWide, regId, objPtr(src.refSource()));
+			} else if (src.type() == opOffReference) {
+				// Same as above.
+				modRm(to, opCode(0x8B), rmWide, regId, objPtr(src.offsetRef().source()));
 			} else {
 				modRm(to, opCode(0x8D), rmWide, regId, src);
 			}
@@ -364,6 +366,10 @@ namespace code {
 					modRm(to, opCode(0x69), wide(src), registerId(dest), instr->dest());
 					to->putInt(Nat(src.constant()));
 				}
+				break;
+			case opOffReference:
+				modRm(to, opCode(0x69), wide(src), registerId(dest), instr->dest());
+				to->putInt(src.offsetRef());
 				break;
 			case opLabel:
 			case opReference:
@@ -448,7 +454,6 @@ namespace code {
 				break;
 			case opRegister:
 			case opRelative:
-			case opRelativeRef:
 				modRm(to, opCode(0xFF), rmNone, call ? 2 : 4, src);
 				break;
 			default:
@@ -651,6 +656,14 @@ namespace code {
 				break;
 			case opObjReference:
 				to->putObject(src.object());
+				break;
+			case opOffReference:
+				if (src.size() == Size::sInt)
+					to->putInt(src.offsetRef());
+				else if (src.size() == Size::sPtr)
+					to->putPtr(src.offsetRef());
+				else
+					assert(false, L"Unable to output offsets as anything but pointers or ints.");
 				break;
 			case opConstant:
 				to->putSize(src.constant(), src.size());

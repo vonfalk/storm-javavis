@@ -16,6 +16,12 @@ namespace code {
 		return Ref(ref);
 	}
 
+	StolenContent::StolenContent(RefSource *by) : DelegatedContent(Ref(by)) {}
+
+	RefSource *StolenContent::stolenBy() const {
+		return ref->source();
+	}
+
 
 	DelegatedRef::DelegatedRef(DelegatedContent *owner, Ref to) :
 		Reference(to, owner), owner(owner) {}

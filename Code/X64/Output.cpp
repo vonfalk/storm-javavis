@@ -18,7 +18,7 @@ namespace code {
 
 			// Initialize our members.
 			this->owner = owner;
-			codeRefs = new (this) Array<Reference *>();
+			codeRefs = new (this) Array<TObject *>();
 			code = (byte *)runtime::allocCode(engine(), size + sizeof(void *), numRefs + 2);
 			labels = lbls;
 			pos = 0;
@@ -144,9 +144,13 @@ namespace code {
 			codeRefs->push(new (this) CodeUpdater(r, owner, code, ref - 1));
 		}
 
-		void CodeOut::markRef(Ref r, Nat offset) {
-			assert(pos > 3);
-			codeRefs->push(new (this) CodeOffsetUpdater(r, offset, owner, code, pos - 4));
+		void CodeOut::markRef(OffsetRef r, Bool ptr) {
+			Nat p = pos;
+			if (ptr)
+				p -= sizeof(size_t);
+			else
+				p -= sizeof(Nat);
+			codeRefs->push(new (this) CodeOffsetUpdater(r, owner, code, p, ptr));
 		}
 
 		Nat CodeOut::labelOffset(Nat id) {

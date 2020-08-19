@@ -29,7 +29,7 @@ namespace code {
 		protected:
 			virtual void STORM_FN markLabel(Nat id);
 			virtual void STORM_FN markGcRef(Ref ref);
-			virtual void STORM_FN markRef(Ref ref, Nat offset);
+			virtual void STORM_FN markRef(OffsetRef ref, Bool ptr);
 			virtual Nat STORM_FN labelOffset(Nat id);
 			virtual Nat STORM_FN toRelative(Nat id);
 
@@ -38,7 +38,7 @@ namespace code {
 			Binary *owner;
 
 			// Updaters in the code.
-			Array<Reference *> *codeRefs;
+			Array<TObject *> *codeRefs;
 
 			// Code we're writing to.
 			UNKNOWN(PTR_GC) byte *code;

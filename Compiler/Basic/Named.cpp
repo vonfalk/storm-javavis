@@ -396,10 +396,10 @@ namespace storm {
 
 			code::Var result = to->location(s);
 			if (to->type().ref) {
-				*s->l << add(ptrA, var->offset());
+				*s->l << add(ptrA, ptrConst(var->offset()));
 				*s->l << mov(result, ptrA);
 			} else if (!to->type().isAsmType()) {
-				*s->l << add(ptrA, var->offset());
+				*s->l << add(ptrA, ptrConst(var->offset()));
 				*s->l << lea(ptrC, result);
 				*s->l << fnParam(engine().ptrDesc(), ptrC);
 				*s->l << fnParam(engine().ptrDesc(), ptrA);
@@ -444,7 +444,7 @@ namespace storm {
 			// Offset the pointer and continue. Note: We do not want to modify 'obj' since that
 			// could be used as eg. a local variable.
 			code::Var data = s->l->createVar(s->block, Size::sPtr);
-			*s->l << add(ptrA, var->offset());
+			*s->l << add(ptrA, ptrConst(var->offset()));
 			*s->l << mov(data, ptrA);
 
 			// Call the function on the proper thread.

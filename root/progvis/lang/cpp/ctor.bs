@@ -186,7 +186,7 @@ class InitStmt extends Stmt {
 		// Initialize all member variables.
 		if (type = root.owner.params[0].type) {
 			if (s = type.super) {
-				initVar(gen, s.name, s, null, root);
+				initVar(gen, s.name, s, OffsetRef(), root);
 			}
 
 			for (var in type.variables) {
@@ -204,7 +204,7 @@ class InitStmt extends Stmt {
 	}
 
 	// Create a variable.
-	private void initVar(CodeGen gen, Str name, Type type, Ref? offset, FnRoot root) {
+	private void initVar(CodeGen gen, Str name, Type type, OffsetRef offset, FnRoot root) {
 		if (init.has(name)) {
 			var elem = init.get(name);
 			gen.l << location(elem.pos);
@@ -218,7 +218,7 @@ class InitStmt extends Stmt {
 		}
 	}
 
-	private Bool initVar(CodeGen gen, Type type, Ref? offset, FnRoot root, Expr[] actuals) {
+	private Bool initVar(CodeGen gen, Type type, OffsetRef offset, FnRoot root, Expr[] actuals) {
 		// C++ ctor?
 		if (fn = cppCtor(type, actuals, root.scope)) {
 			Operand[] params;
@@ -230,11 +230,9 @@ class InitStmt extends Stmt {
 				params << paramCode(gen, a, fn.params[i + 2]);
 
 			gen.l << mov(ptrA, root.thisPtr);
-			if (offset)
-				gen.l << add(ptrA, offset);
+			gen.l << add(ptrA, ptrConst(offset));
 			gen.l << mov(offsetVar, root.thisOffset);
-			if (offset)
-				gen.l << add(offsetVar, offset);
+			gen.l << add(offsetVar, intConst(offset));
 			fn.autoCall(gen, params, CodeResult());
 			return true;
 		}
@@ -246,8 +244,7 @@ class InitStmt extends Stmt {
 				params << paramCode(gen, a, fn.params[i + 1]);
 
 			gen.l << mov(ptrA, root.thisPtr);
-			if (offset)
-				gen.l << add(ptrA, offset);
+			gen.l << add(ptrA, ptrConst(offset));
 			fn.autoCall(gen, params, CodeResult());
 			return true;
 		}

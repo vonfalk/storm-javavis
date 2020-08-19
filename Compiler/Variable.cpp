@@ -40,17 +40,17 @@ namespace storm {
 	 */
 
 	MemberVar::MemberVar(Str *name, Value type, Type *member) : Variable(SrcPos(), name, type, member) {
-		ref = new (this) NamedSource(this, Char('o'));
+		ref = new (this) NamedOffsetSource(this, Char('o'));
 		hasLayout = false;
 	}
 
 	MemberVar::MemberVar(SrcPos pos, Str *name, Value type, Type *member) : Variable(pos, name, type, member) {
-		ref = new (this) NamedSource(this, Char('o'));
+		ref = new (this) NamedOffsetSource(this, Char('o'));
 		hasLayout = false;
 	}
 
-	code::Ref MemberVar::offset() const {
-		return code::Ref(ref);
+	code::OffsetRef MemberVar::offset() const {
+		return code::OffsetRef(ref);
 	}
 
 	Offset MemberVar::rawOffset() const {
@@ -63,7 +63,7 @@ namespace storm {
 	void MemberVar::setOffset(Offset to) {
 		hasLayout = true;
 		off = to;
-		ref->setOffset(to.current());
+		ref->set(to);
 	}
 
 	Type *MemberVar::owner() const {
@@ -86,7 +86,7 @@ namespace storm {
 		MemberVar *o = (MemberVar *)old;
 		hasLayout = o->hasLayout;
 		off = o->off;
-		ref->setOffset(off.current());
+		ref->set(off);
 		ref->steal(o->ref);
 	}
 
