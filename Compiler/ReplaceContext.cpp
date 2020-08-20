@@ -127,7 +127,7 @@ namespace storm {
 		void *o = (void *)old->pointer();
 		void *n = (void *)with->pointer();
 		size_t offset = vtable::allocOffset();
-		replaceMap->put((byte *)o - offset, (byte *)n - offset);
+		vtableMap->put((byte *)o - offset, (byte *)n - offset);
 	}
 
 	class ReplaceWalker : public PtrWalker {
