@@ -338,7 +338,7 @@ namespace storm {
 		Bool ok = o->remove(item);
 		if (o->empty())
 			overloads->remove(item->name);
-		return false;
+		return ok;
 	}
 
 	Str *NameSet::anonName() {
