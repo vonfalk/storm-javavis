@@ -49,10 +49,13 @@ namespace code {
 				to->putByte(0x50 + reg);
 				break;
 			}
+			case opOffReference:
+				to->putByte(0x68);
+				to->putInt(src.offsetRef());
+				break;
 			case opRelative:
 			case opReference:
 			case opObjReference:
-			case opOffReference:
 				modRm(to, opCode(0xFF), rmNone, 6, src);
 				break;
 			default:
