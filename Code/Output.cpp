@@ -275,11 +275,11 @@ namespace code {
 	}
 
 	void CodeOffsetUpdater::moved(Offset offset) {
-		void *ptr = (byte *)code + codeOffset;
+		void *at = (byte *)code + codeOffset;
 		if (ptr)
-			atomicWrite(*(size_t *)ptr, size_t(Long(offset.current())));
+			atomicWrite(*(size_t *)at, size_t(Long(offset.current())));
 		else
-			atomicWrite(*(Nat *)ptr, Nat(offset.current()));
+			atomicWrite(*(Nat *)at, Nat(offset.current()));
 	}
 
 }
