@@ -4,6 +4,7 @@
 #if STORM_GC == STORM_GC_SMM && defined(POSIX)
 
 #include <signal.h>
+#include <errno.h>
 
 namespace storm {
 	namespace smm {
@@ -24,12 +25,16 @@ namespace storm {
 		static void onSigStop(int signal, siginfo_t *info, void *context) {
 			(void)signal;
 			(void)info;
+			// We need to preserve errno.
+			int oldErrno = errno;
 
 			if (tlInfo) {
 				tlInfo->context = (ucontext_t *)context;
 				tlInfo->onStop.up();
 				tlInfo->onResume.down();
 			}
+
+			errno = oldErrno;
 		}
 
 

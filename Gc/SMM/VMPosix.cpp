@@ -7,6 +7,7 @@
 #include "Block.h"
 #include <sys/mman.h>
 #include <signal.h>
+#include <errno.h>
 
 /**
  * The generic implementation for all Posix systems.
@@ -28,10 +29,14 @@ namespace storm {
 		void VMPosix::sigsegv(int signal, siginfo_t *info, void *context) {
 			(void)signal;
 			(void)context;
+			// We need to preserve errno.
+			int oldErrno = errno;
 
 			// If we can do something about the error, we don't need to panic.
-			if (VM::notifyWrite(info->si_addr))
+			if (VM::notifyWrite(info->si_addr)) {
+				errno = oldErrno;
 				return;
+			}
 
 			// We don't know this memory. Trigger another signal to terminate us.
 #ifdef DEBUG
