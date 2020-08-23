@@ -1517,7 +1517,9 @@ namespace storm {
 				format,
 				&context
 			};
-			mps_arena_formatted_objects_walk(arena, &walkFn, &d, 0);
+			// TODO: Allow specifying if we want to take the extra performance hit of modifying objects?
+			// mps_arena_formatted_objects_walk(arena, &walkFn, &d, 0);
+			mps_arena_formatted_objects_walk_rw(arena, &walkFn, &d, 0);
 		}
 
 		const os::InlineSet<GcRoot> &roots = Gc::allRoots(this);
