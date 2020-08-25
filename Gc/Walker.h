@@ -10,11 +10,14 @@ namespace storm {
 	 *
 	 * Note: in general, it is not safe to access any memory managed by the GC inside of
 	 * any of these callbacks.
+	 *
+	 * Note: Any writes that modify pointers in the walked object must be done through the write()
+	 * function.
 	 */
 	class Walker {
 	public:
 		// Default constructor.
-		Walker() : flags(fObjects) {}
+		Walker() : flags(fObjects), writeFn(null), writeCtx(null) {}
 
 		// Flags for the walker.
 		enum Flags {
@@ -33,6 +36,24 @@ namespace storm {
 
 		// What this walker wishes to do.
 		Flags flags;
+
+		// Function to call in the GC for each write.
+		typedef void (*WriteFn)(void *ctx, void **to, void *ref);
+
+		// Initialize the write function. Called by GC implementations before starting the walk.
+		inline void initWrite(WriteFn fn, void *ctx) {
+			writeFn = fn;
+			writeCtx = ctx;
+		}
+
+		// Call when updating any references in the walked object.
+		inline void write(void **to, void *ref) {
+			if (writeFn) {
+				(*writeFn)(writeCtx, to, ref);
+			} else {
+				*to = ref;
+			}
+		}
 
 		// Called before traversal is started at a point where objects are known to not move
 		// anymore. Thus, this allows storing GC pointers off the GC heap.
@@ -63,6 +84,13 @@ namespace storm {
 
 		// Called once for each inexact pointer in a root, if requested.
 		virtual void ambiguousPointer(void **ptr) {}
+
+	private:
+		// Function in the GC to call for writing pointers.
+		WriteFn writeFn;
+
+		// Context to the write function.
+		void *writeCtx;
 	};
 
 	BITMASK_OPERATORS(Walker::Flags);

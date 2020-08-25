@@ -1455,10 +1455,13 @@ namespace storm {
 		Walker *context;
 	};
 
-	static void walkFn(mps_addr_t addr, mps_fmt_t fmt, mps_pool_t pool, void *p, size_t s) {
+	static void walkFn(mps_addr_t addr, mps_fmt_t fmt, mps_pool_t pool,
+					mps_stepper_write_t fn, void *ctx, void *p, size_t s) {
 		WalkData *data = (WalkData *)p;
 		if (fmt != data->fmt)
 			return;
+
+		data->context->initWrite((Walker::WriteFn)fn, ctx);
 
 		if (fmt::objIsCode(fmt::fromClient(addr))) {
 			data->context->code(addr);
@@ -1521,6 +1524,8 @@ namespace storm {
 			// mps_arena_formatted_objects_walk(arena, &walkFn, &d, 0);
 			mps_arena_formatted_objects_walk_rw(arena, &walkFn, &d, 0);
 		}
+
+		context.initWrite(null, null);
 
 		const os::InlineSet<GcRoot> &roots = Gc::allRoots(this);
 		if (context.flags & Walker::fExactRoots) {

@@ -427,6 +427,7 @@ namespace storm {
 	};
 
 	void GcImpl::walkI(smm::ArenaTicket &ticket, Walker &context) {
+		context.initWrite(null, null);
 		context.prepare();
 
 		if (context.flags & Walker::fObjects) {
