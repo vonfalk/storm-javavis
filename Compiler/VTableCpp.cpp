@@ -77,11 +77,8 @@ namespace storm {
 		const void **to;
 
 		virtual void object(RootObject *inspect) {
-			if (vtable::from(inspect) == from) {
-				// We need to use the 'write' interface to let the GC know what we're doing.
-				// vtable::set(to, inspect);
-				write((void **)inspect, to);
-			}
+			if (vtable::from(inspect) == from)
+				vtable::set(to, inspect);
 		}
 	};
 

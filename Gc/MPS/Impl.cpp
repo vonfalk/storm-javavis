@@ -1455,13 +1455,10 @@ namespace storm {
 		Walker *context;
 	};
 
-	static void walkFn(mps_addr_t addr, mps_fmt_t fmt, mps_pool_t pool,
-					mps_stepper_write_t fn, void *ctx, void *p, size_t s) {
+	static void walkFn(mps_addr_t addr, mps_fmt_t fmt, mps_pool_t pool, void *p, size_t s) {
 		WalkData *data = (WalkData *)p;
 		if (fmt != data->fmt)
 			return;
-
-		data->context->initWrite((Walker::WriteFn)fn, ctx);
 
 		if (fmt::objIsCode(fmt::fromClient(addr))) {
 			data->context->code(addr);
@@ -1521,11 +1518,8 @@ namespace storm {
 				&context
 			};
 			// TODO: Allow specifying if we want to take the extra performance hit of modifying objects?
-			// mps_arena_formatted_objects_walk(arena, &walkFn, &d, 0);
-			mps_arena_formatted_objects_walk_rw(arena, &walkFn, &d, 0);
+			mps_arena_formatted_objects_walk(arena, &walkFn, &d, 0);
 		}
-
-		context.initWrite(null, null);
 
 		const os::InlineSet<GcRoot> &roots = Gc::allRoots(this);
 		if (context.flags & Walker::fExactRoots) {
@@ -1586,16 +1580,16 @@ namespace storm {
 		S("this list of conditions and the following disclaimer in the documentation and/or\n")
 		S("other materials provided with the distribution.\n")
 		S("\n")
-		S("THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS\n"),
-		S("\"AS IS\" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT\n"),
-		S("LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR\n"),
-		S("A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT\n"),
-		S("HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,\n"),
-		S("SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT\n"),
-		S("LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,\n"),
-		S("DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY\n"),
-		S("THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT\n"),
-		S("(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE\n"),
+		S("THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS\n")
+		S("\"AS IS\" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT\n")
+		S("LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR\n")
+		S("A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT\n")
+		S("HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,\n")
+		S("SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT\n")
+		S("LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,\n")
+		S("DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY\n")
+		S("THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT\n")
+		S("(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE\n")
 		S("OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.\n")
 	};
 

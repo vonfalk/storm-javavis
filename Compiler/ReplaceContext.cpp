@@ -157,11 +157,8 @@ namespace storm {
 			// Check the vtable.
 			void *vt = (void *)vtable::from(obj);
 			size_t offset = vtable::allocOffset();
-			if (void *r = vtables->find((byte *)vt - offset)) {
-				// Need to go through the write() interface.
-				// vtable::set((byte *)r + offset, obj);
-				write((void **)obj, (byte *)r + offset);
-			}
+			if (void *r = vtables->find((byte *)vt - offset))
+				vtable::set((byte *)r + offset, obj);
 
 			foundHeader = false;
 
@@ -185,17 +182,13 @@ namespace storm {
 				return;
 			foundHeader = true;
 
-			if (void *r = replace->find(*ptr)) {
-				// *ptr = (GcType *)r;
-				write((void **)ptr, r);
-			}
+			if (void *r = replace->find(*ptr))
+				*ptr = (GcType *)r;
 		}
 
 		virtual void exactPointer(void **ptr) {
-			if (void *r = replace->find(*ptr)) {
-				// *ptr = r;
-				write(ptr, r);
-			}
+			if (void *r = replace->find(*ptr))
+				*ptr = r;
 		}
 
 		virtual void ambiguousPointer(void **ptr) {
