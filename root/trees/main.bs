@@ -1,0 +1,251 @@
+use ui;
+use layout;
+use core:geometry;
+
+class TreeWindow extends Frame {
+	private TreePainter painter;
+	private Map<Key, fn()->void> keymap;
+	private Bool mouseDown;
+
+	init() {
+		init("Treez", Size(300, 300)) {
+			painter();
+		}
+
+		painter(painter);
+		create();
+
+		keymap.put(Key:i, &this.insert());
+		keymap.put(Key:d, &this.delete());
+		keymap.put(Key:c, &this.clear());
+		keymap.put(Key:l, &this.setLeft());
+		keymap.put(Key:r, &this.setRight());
+		keymap.put(Key:j, &this.setLeft());
+		keymap.put(Key:k, &this.setRight());
+		keymap.put(Key:esc, &this.abort());
+
+		var me = this;
+		keymap.put(Key:num0, () => me.numKey(0));
+		keymap.put(Key:num1, () => me.numKey(1));
+		keymap.put(Key:num2, () => me.numKey(2));
+		keymap.put(Key:num3, () => me.numKey(3));
+		keymap.put(Key:num4, () => me.numKey(4));
+		keymap.put(Key:num5, () => me.numKey(5));
+		keymap.put(Key:num6, () => me.numKey(6));
+		keymap.put(Key:num7, () => me.numKey(7));
+		keymap.put(Key:num8, () => me.numKey(8));
+		keymap.put(Key:num9, () => me.numKey(9));
+	}
+
+	Bool onClick(Bool down, Point pt, MouseButton button) : override {
+		mouseDown = down;
+		painter.mouseClicked(down, pt, button);
+		repaint();
+		true;
+	}
+
+	Bool onMouseMove(Point pt) : override {
+		lastMouse = pt;
+		if (painter.mouseMoved(pt, mouseDown)) {
+			repaint();
+		}
+		true;
+	}
+
+	void onMouseLeave() : override {
+		mouseDown = false;
+	}
+
+	Bool onKey(Bool pressed, Key key, Modifiers modifiers) : override {
+		if (!pressed)
+			return false;
+
+		if (modifiers == Modifiers:none) {
+			if (keymap.has(key)) {
+				keymap.get(key).call();
+			}
+		}
+
+		true;
+	}
+
+	private Point lastMouse;
+
+	private Nat number;
+
+	private void insert() {
+		painter.insert(number, lastMouse);
+		number = 0;
+		repaint();
+	}
+
+	private void delete() {
+		painter.delete(lastMouse);
+		repaint();
+	}
+
+	private void clear() {
+		painter.clear(lastMouse);
+		repaint();
+	}
+
+	private void abort() {
+		number = 0;
+		painter.abort();
+		repaint();
+	}
+
+	private void setLeft() {
+		painter.startDrag(lastMouse, DragFrom:left);
+	}
+
+	private void setRight() {
+		painter.startDrag(lastMouse, DragFrom:right);
+	}
+
+	private void numKey(Nat num) {
+		number = number * 10 + num;
+	}
+}
+
+enum DragFrom {
+	left, right
+}
+
+class TreePainter extends Painter {
+	init() {
+		init {}
+	}
+
+	Point offset;
+
+	Node[] nodes;
+
+	// Last clicked.
+	Node? clicked;
+
+	// Mouse origin when dragging.
+	Point mouseOrigin;
+
+	// Dragging "from".
+	DragFrom edgeFrom;
+	Node? from;
+
+	Bool render(Size me, Graphics g) {
+		g.transform(translate(-offset));
+
+		for (node in nodes) {
+			node.draw(g);
+		}
+
+		if (from) {
+			if (edgeFrom == DragFrom:left) {
+				g.line(from.bottomLeft, mouseOrigin, nodeBrush);
+			} else {
+				g.line(from.bottomRight, mouseOrigin, nodeBrush);
+			}
+		}
+
+		false;
+	}
+
+	void mouseClicked(Bool down, Point pt, MouseButton button) {
+		pt += offset;
+
+		if (down) {
+			clicked = nodeAt(pt);
+			if (clicked) {
+				if (from) {
+					if (edgeFrom == DragFrom:left) {
+						from.left = clicked;
+					} else {
+						from.right = clicked;
+					}
+				}
+				mouseOrigin = pt - clicked.at;
+			} else {
+				mouseOrigin = pt;
+			}
+			from = null;
+		}
+	}
+
+	Bool mouseMoved(Point pt, Bool mouseDown) {
+		pt += offset;
+
+		if (from) {
+			mouseOrigin = pt;
+			return true;
+		}
+
+		if (mouseDown) {
+			if (clicked) {
+				clicked.at = pt - mouseOrigin;
+				return true;
+			} else {
+				offset -= pt - mouseOrigin;
+				return true;
+			}
+		}
+		false;
+	}
+
+	void insert(Nat number, Point at) {
+		at += offset;
+		nodes << Node(at, number.toS);
+	}
+
+	void delete(Point at) {
+		at += offset;
+
+		for (i, n in nodes) {
+			if (n.contains(at)) {
+				for (k in nodes) {
+					if (k.left is n)
+						k.left = null;
+					if (k.right is n)
+						k.right = null;
+				}
+
+				nodes.remove(i);
+				break;
+			}
+		}
+	}
+
+	void clear(Point at) {
+		at += offset;
+
+		if (n = nodeAt(at)) {
+			n.left = null;
+			n.right = null;
+		}
+	}
+
+	void startDrag(Point pt, DragFrom edge) {
+		pt += offset;
+
+		if (n = nodeAt(pt)) {
+			from = n;
+			edgeFrom = edge;
+		}
+	}
+
+	void abort() {
+		from = null;
+	}
+
+	Node? nodeAt(Point at) {
+		for (n in nodes) {
+			if (n.contains(at))
+				return n;
+		}
+		null;
+	}
+}
+
+
+void main() {
+	TreeWindow win;
+	win.waitForClose();
+}

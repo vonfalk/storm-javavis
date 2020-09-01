@@ -1,0 +1,50 @@
+use ui;
+use core:geometry;
+use graphics;
+
+Font nodeFont on Render = defaultFont();
+Brush nodeBrush on Render = SolidBrush(black);
+
+class Node on Render {
+	Point at;
+	Text text;
+	Node? left;
+	Node? right;
+
+	init(Point at, Str label) {
+		init {
+			at = at;
+			text = Text(label, nodeFont);
+		}
+
+		this.at -= text.size / 2;
+	}
+
+	Point top() {
+		at + Point(text.size.w / 2, 0);
+	}
+
+	Point bottomLeft() {
+		at + Point(0, text.size.h);
+	}
+
+	Point bottomRight() {
+		at + text.size;
+	}
+
+	void draw(Graphics g) {
+		// g.fill(Rect(at, text.size), nodeBg);
+		g.draw(text, nodeBrush, at);
+
+		if (left) {
+			g.line(bottomLeft, left.top, nodeBrush);
+		}
+		if (right) {
+			g.line(bottomRight, right.top, nodeBrush);
+		}
+	}
+
+	Bool contains(Point pt) {
+		Rect(at, text.size).contains(pt);
+	}
+}
