@@ -34,6 +34,13 @@ class Node on Render {
 		at + text.size;
 	}
 
+	void replace(Node from, Node? to) {
+		if (left is from)
+			left = to;
+		if (right is from)
+			right = to;
+	}
+
 	void draw(Graphics g) {
 		// g.fill(Rect(at, text.size), nodeBg);
 		g.draw(text, nodeBrush, at);

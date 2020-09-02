@@ -15,5 +15,8 @@ The following commands are recognized:
   For example: 1e loads the file "1.tree", 2e loads the file "2.tree" and so on.
   Examples are numbered as in the student handout (exercise 1 is 1e and so on),
   the ones in the teacher's handouts are numbered (11 and 12, i.e. 11e and 12e).
+- Shift+"l" or Shift+"j": Rotate the node at the location of the mouse cursor with its left child.
+- Shift+"r" or Shift+"k": Rotate the node at the location of the mouse cursor with its right child.
+- Shift+"c": Clone the tree starting at the location of the mouse cursor and place it below.
 - Click and drag a node: Move the node.
 - Click and drag the background: Move all contents of the window.

@@ -69,6 +69,17 @@ class TreeWindow extends Frame {
 				keymap.get(key).call();
 			}
 			true;
+		} else if (modifiers == Modifiers:shift) {
+			if (key == Key:l | key == Key:j) {
+				painter.rotateLeft(lastMouse);
+				repaint();
+			} else if (key == Key:r | key == Key:k) {
+				painter.rotateRight(lastMouse);
+				repaint();
+			} else if (key == Key:c) {
+				painter.cloneTree(lastMouse);
+				repaint();
+			}
 		}
 
 		false;
@@ -274,6 +285,38 @@ class TreePainter extends Painter {
 		loadI(node, 20, 20);
 	}
 
+	void rotateLeft(Point pt) {
+		pt += offset;
+
+		if (n = nodeAt(pt)) {
+			if (child = n.left) {
+				n.left = child.right;
+
+				for (node in nodes) {
+					node.replace(n, child);
+				}
+
+				child.right = n;
+			}
+		}
+	}
+
+	void rotateRight(Point pt) {
+		pt += offset;
+
+		if (n = nodeAt(pt)) {
+			if (child = n.right) {
+				n.right = child.left;
+
+				for (node in nodes) {
+					node.replace(n, child);
+				}
+
+				child.left = n;
+			}
+		}
+	}
+
 	private value PosInfo {
 		Node node;
 		Float width;
@@ -307,6 +350,33 @@ class TreePainter extends Painter {
 		}
 
 		info;
+	}
+
+	void cloneTree(Point pt) {
+		pt += offset;
+		unless (n = nodeAt(pt))
+			return;
+
+		Float maxY = 0;
+		for (n in nodes) {
+			maxY = max(maxY, n.bottomRight.y);
+		}
+
+		Float delta = maxY + 30 - n.at.y;
+
+		cloneTree(n, delta);
+	}
+
+	private Node cloneTree(Node n, Float dy) {
+		Node c(n.at + Point(0, dy), n.text.text);
+		nodes << c;
+
+		if (left = n.left)
+			c.left = cloneTree(left, dy);
+		if (right = n.right)
+			c.right = cloneTree(right, dy);
+
+		c;
 	}
 
 	Node? nodeAt(Point at) {
