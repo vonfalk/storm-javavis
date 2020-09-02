@@ -1,6 +1,8 @@
 use ui;
 use layout;
 use core:geometry;
+use core:lang;
+use lang:bs:macro;
 
 class TreeWindow extends Frame {
 	private TreePainter painter;
@@ -23,6 +25,8 @@ class TreeWindow extends Frame {
 		keymap.put(Key:j, &this.setLeft());
 		keymap.put(Key:k, &this.setRight());
 		keymap.put(Key:esc, &this.abort());
+		keymap.put(Key:e, &this.loadExample());
+		keymap.put(Key:q, &this.clearAll());
 
 		var me = this;
 		keymap.put(Key:num0, () => me.numKey(0));
@@ -64,9 +68,10 @@ class TreeWindow extends Frame {
 			if (keymap.has(key)) {
 				keymap.get(key).call();
 			}
+			true;
 		}
 
-		true;
+		false;
 	}
 
 	private Point lastMouse;
@@ -89,6 +94,11 @@ class TreeWindow extends Frame {
 		repaint();
 	}
 
+	private void clearAll() {
+		painter.clear();
+		repaint();
+	}
+
 	private void abort() {
 		number = 0;
 		painter.abort();
@@ -105,6 +115,24 @@ class TreeWindow extends Frame {
 
 	private void numKey(Nat num) {
 		number = number * 10 + num;
+	}
+
+	private void loadExample() {
+		Package here = named{};
+		if (url = here.url) {
+			url = url / "${number}.tree";
+			try {
+				if (!url.exists()) {
+					showMessage(this, "File not found", "The file ${url} does not exist.");
+				} else if (node = parseFile(url)) {
+					painter.load(node);
+					repaint();
+				}
+			} catch (Exception e) {
+				showMessage(this, "File format error", "Failed to parse the file: ${e}");
+			}
+		}
+		number = 0;
 	}
 }
 
@@ -213,6 +241,10 @@ class TreePainter extends Painter {
 		}
 	}
 
+	void clear() {
+		nodes = Node[];
+	}
+
 	void clear(Point at) {
 		at += offset;
 
@@ -233,6 +265,48 @@ class TreePainter extends Painter {
 
 	void abort() {
 		from = null;
+	}
+
+	void load(SimpleNode node) {
+		clear();
+		offset = Point();
+
+		loadI(node, 20, 20);
+	}
+
+	private value PosInfo {
+		Node node;
+		Float width;
+
+		init(Node node) {
+			init {
+				node = node;
+				width = node.text.size.w * 2;
+			}
+		}
+	}
+
+	private PosInfo loadI(SimpleNode node, Float x, Float y) {
+		Node n(Point(x, y), node.text);
+		nodes << n;
+		y += n.text.size.h * 2;
+
+		PosInfo info(n);
+
+		if (left = node.left) {
+			var l = loadI(left, x, y);
+			info.width += l.width;
+			n.at.x += l.width;
+			n.left = l.node;
+		}
+
+		if (right = node.right) {
+			var r = loadI(right, x + info.width, y);
+			info.width += r.width;
+			n.right = r.node;
+		}
+
+		info;
 	}
 
 	Node? nodeAt(Point at) {

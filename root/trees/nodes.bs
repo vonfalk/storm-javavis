@@ -1,6 +1,8 @@
 use ui;
 use core:geometry;
 use graphics;
+use core:io;
+use core:lang;
 
 Font nodeFont on Render = defaultFont();
 Brush nodeBrush on Render = SolidBrush(black);
@@ -47,4 +49,31 @@ class Node on Render {
 	Bool contains(Point pt) {
 		Rect(at, text.size).contains(pt);
 	}
+}
+
+
+class SimpleNode {
+	Str text;
+	SimpleNode? left;
+	SimpleNode? right;
+
+	init(Str text) {
+		init { text = text; }
+	}
+
+	void left(SimpleNode? l) {
+		left = l;
+	}
+
+	void right(SimpleNode? r) {
+		right = r;
+	}
+}
+
+SimpleNode? parseFile(Url file) on Compiler {
+	Parser<SRoot> parser;
+	parser.parse(file.readAllText(), file);
+	if (parser.hasError)
+		parser.throwError();
+	parser.tree.transform();
 }

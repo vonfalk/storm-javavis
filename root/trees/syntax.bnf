@@ -1,0 +1,12 @@
+delimiter = WS;
+
+void WS();
+WS : "[ \t\n\r]*";
+
+Maybe<SimpleNode> SRoot();
+SRoot => r : WS - SNode r - WS;
+
+Maybe<SimpleNode> SNode();
+SNode => Maybe<SimpleNode>() : "\-";
+SNode => SimpleNode(text) : "[0-9]+" text;
+SNode => SimpleNode(text) : "[0-9]+" text, "{", SNode -> left, (SNode -> right,)? "}";
