@@ -12,7 +12,7 @@
 
 // Use software rendering?
 #define GTK_RENDER_SW 0x2
-#define GTK_RENDER_IS_SW(x) ((x) & 0x8)
+#define GTK_RENDER_IS_SW(x) ((x) & 0x2)
 
 
 // These three flags are mutually exclusive. Do not pick more than one!
