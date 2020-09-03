@@ -48,7 +48,7 @@ SUITE(SimpleBS, 9);
 // More heavy tests of Basic Storm
 SUITE(BS, 10);
 // Test dynamic reloading
-SUITE_(Reload, 11);
+SUITE(Reload, 11);
 // Some compilation tests that make sure the provided code compiles. Nice to have these last.
 SUITE(Compile, 12);
 // Language server logic.

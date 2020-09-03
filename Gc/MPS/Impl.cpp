@@ -1493,6 +1493,64 @@ namespace storm {
 		}
 	}
 
+	class MpsWalkScanner : public MpsScanner {
+	public:
+		struct Source {
+			Walker *walker;
+			mps_ss_t ss;
+		};
+
+		Walker *walker;
+
+		MpsWalkScanner(Source &src) : MpsScanner(src.ss), walker(src.walker) {}
+
+		ScanOption object(void *start, void *end) {
+			if (fmt::objIsCode(fmt::fromClient(start))) {
+				walker->code(start);
+				return MpsScanner::object(start, end);
+			}
+
+			const GcType *type = GcImpl::typeOf(start);
+			if (!type)
+				return MpsScanner::object(start, end);
+
+			if (type == &MpsGcWatch::type) {
+				if (walker->flags & Walker::fClearWatch) {
+					MpsGcWatch *watch = (MpsGcWatch *)start;
+					watch->set();
+				}
+
+				return MpsScanner::object(start, end);
+			}
+
+			switch (type->kind) {
+			case GcType::tFixed:
+				walker->fixed(start);
+				break;
+			case GcType::tFixedObj:
+			case GcType::tType:
+				walker->object((RootObject *)start);
+				break;
+			case GcType::tArray:
+			case GcType::tWeakArray:
+				walker->array(start);
+				break;
+			}
+
+			return MpsScanner::object(start, end);
+		}
+	};
+
+	static mps_res_t areaScan(mps_ss_t ss, void *base, void *limit, void *context) {
+		MpsWalkScanner::Source src = {
+			(Walker *)context, ss
+		};
+
+		// Scan all references.
+		mps_res_t z = fmt::Scan<MpsWalkScanner>::objects(src, base, limit);
+		return z;
+	}
+
 	struct AmbScanner {
 		typedef int Result;
 		typedef Walker Source;
@@ -1513,12 +1571,13 @@ namespace storm {
 		context.prepare();
 
 		if (context.flags & Walker::fObjects) {
-			WalkData d = {
-				format,
-				&context
-			};
-			// TODO: Allow specifying if we want to take the extra performance hit of modifying objects?
-			mps_arena_formatted_objects_walk(arena, &walkFn, &d, 0);
+			mps_pool_walk(pool, &areaScan, &context);
+			mps_pool_walk(typePool, &areaScan, &context);
+			mps_pool_walk(weakPool, &areaScan, &context);
+			mps_pool_walk(codePool, &areaScan, &context);
+#ifdef MPS_USE_IO_POOL
+			mps_pool_walk(ioPool, &areaScan, &context);
+#endif
 		}
 
 		const os::InlineSet<GcRoot> &roots = Gc::allRoots(this);
