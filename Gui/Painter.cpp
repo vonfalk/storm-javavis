@@ -299,8 +299,13 @@ namespace gui {
 		bool more = false;
 		Lock::Guard z(lock);
 
-		GlSurface *surface = target.surface();
-		cairo_surface_mark_dirty(surface->cairo);
+		CairoSurface *surface = target.surface();
+		// If it wasn't created by now, something is *really* bad.
+		if (!surface) {
+			WARNING("Surface was not properly created!");
+			return false;
+		}
+		cairo_surface_mark_dirty(surface->surface);
 
 		// Clear the surface with the background color.
 		cairo_set_source_rgba(target.target(), bgColor.r, bgColor.g, bgColor.b, bgColor.a);
@@ -320,7 +325,7 @@ namespace gui {
 			throw;
 		}
 
-		cairo_surface_flush(surface->cairo);
+		cairo_surface_flush(surface->surface);
 
 #if GTK_RENDER_IS_SWAP(GTK_MODE)
 		// No synchronization, just swap buffers when we're ready!
@@ -365,11 +370,9 @@ namespace gui {
 		Lock::Guard z(lock);
 		currentRepaint = repaintCounter;
 
-		if (GlSurface *surface = target.surface()) {
-			surface->attach(params->target);
-
+		if (CairoSurface *surface = target.surface()) {
 #if GTK_RENDER_IS_CAIRO(GTK_MODE)
-			cairo_set_source_surface(params->ctx, surface->cairo, 0, 0);
+			cairo_set_source_surface(params->ctx, surface->surface, 0, 0);
 			cairo_paint(params->ctx);
 
 			// Make sure Cairo does not use our surface outside the lock!

@@ -4,7 +4,7 @@
 #include "App.h"
 #include "Painter.h"
 
-#ifdef GUI_GTK
+#ifdef GUI_GTK_
 namespace gui {
 
 	Device::Device(Engine &e) {

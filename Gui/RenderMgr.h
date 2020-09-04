@@ -8,7 +8,7 @@
 #include "Handle.h"
 #include "RenderInfo.h"
 #include "DxDevice.h"
-#include "GlDevice.h"
+#include "CairoDevice.h"
 
 namespace gui {
 	class Painter;

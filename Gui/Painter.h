@@ -52,7 +52,7 @@ namespace gui {
 		inline ID2D1RenderTarget *renderTarget() { return target.target(); }
 #endif
 #ifdef GUI_GTK
-		inline GlSurface *surface() { return target.surface(); }
+		inline CairoSurface *surface() { return target.surface(); }
 #endif
 
 		/**

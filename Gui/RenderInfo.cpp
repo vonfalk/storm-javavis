@@ -1,6 +1,6 @@
 #include "stdafx.h"
 #include "RenderInfo.h"
-#include "GlDevice.h"
+#include "CairoDevice.h"
 
 namespace gui {
 
@@ -23,7 +23,8 @@ namespace gui {
 
 	void RenderInfo::release() {
 		if (target()) {
-			cairo_destroy(target());
+			// 'target' is owned by the surface nowadays.
+			// cairo_destroy(target());
 			target(null);
 		}
 

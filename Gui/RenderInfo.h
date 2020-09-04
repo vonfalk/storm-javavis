@@ -3,7 +3,7 @@
 namespace gui {
 
 #ifdef GUI_GTK
-	class GlSurface;
+	class CairoSurface;
 #endif
 
 	/**
@@ -48,10 +48,10 @@ namespace gui {
 			first = cairo;
 		}
 
-		inline GlSurface *surface() const {
-			return (GlSurface *)second;
+		inline CairoSurface *surface() const {
+			return (CairoSurface *)second;
 		}
-		inline void surface(GlSurface *s) {
+		inline void surface(CairoSurface *s) {
 			second = s;
 		}
 		inline bool any() {

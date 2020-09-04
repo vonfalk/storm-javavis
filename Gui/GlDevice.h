@@ -2,7 +2,7 @@
 #include "RenderInfo.h"
 #include "Handle.h"
 
-#ifdef GUI_GTK
+#ifdef GUI_GTK_
 namespace gui {
 
 	class GlContext;
