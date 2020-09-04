@@ -604,6 +604,10 @@ namespace os {
 
 		// Switch threads.
 		prev->switchTo(running);
+
+		// When we're back, we're in a different thread. Thus, call "reap" to clean up lingering threads.
+		// Note that we cannot re-use UThreadState::current here, as we're possibly in a different thread now!
+		UThreadState::current()->reap();
 	}
 
 	/**
