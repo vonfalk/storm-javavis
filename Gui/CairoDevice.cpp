@@ -56,6 +56,11 @@ namespace gui {
 	}
 
 	static CairoDevice *create(Engine &e) {
+#if GTK_RENDER_IS_SW(GTK_MODE)
+		// Failsafe if requested.
+		return new SoftwareDevice();
+#endif
+
 		const char *preference = getenv("STORM_RENDER_BACKEND");
 		if (preference)
 			return create(e, preference);
