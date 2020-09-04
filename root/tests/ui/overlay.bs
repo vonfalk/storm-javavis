@@ -42,9 +42,9 @@ class OverlayDraw extends Painter {
 	init() {
 		init() {
 			bgBrush(red, green, Point(0, 0), Point(200, 200));
-			starColor = yellow;
-			solid = green;
-			textColor = blue;
+			starColor(yellow);
+			solid(green);
+			textColor(blue);
 			text = Text("Hello!", defaultFont);
 		}
 		bgColor = red;
