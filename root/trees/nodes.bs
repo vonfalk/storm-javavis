@@ -4,7 +4,14 @@ use graphics;
 use core:io;
 use core:lang;
 
-Font nodeFont on Render = defaultFont();
+Font nFont() {
+	Font f = defaultFont();
+	f.height = f.height * 1.3;
+	f;
+}
+
+// Font nodeFont on Render = defaultFont();
+Font nodeFont on Render = nFont();
 Brush nodeBrush on Render = SolidBrush(black);
 
 class Node on Render {

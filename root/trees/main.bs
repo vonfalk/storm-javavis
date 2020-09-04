@@ -172,6 +172,7 @@ class TreePainter extends Painter {
 
 	Bool render(Size me, Graphics g) {
 		g.transform(translate(-offset));
+		g.lineWidth = 1.5;
 
 		for (node in nodes) {
 			node.draw(g);
