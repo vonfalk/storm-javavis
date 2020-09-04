@@ -32,6 +32,29 @@ automatic layout, this is generally handled gracefully anyway.
 
 On Linux, Storm relies on the support in Gtk+.
 
+Rendering backends (on Linux)
+-------
+
+The GUI library supports multiple rendering backends on Linux (all supported through Cairo) for
+content rendered in Storm (i.e. not the widgets rendered by Gtk+ itself). By default, the GUI
+library utilizes the backend used by Gtk+, which should be sufficient in most cases. It is, however,
+possible to fall back to software rendering entirely, or to use the OpenGL rendered in Cairo. This
+is selected by setting the environment variable `STORM_RENDER_BACKEND` to one of the following values:
+
+- `gtk` (the default): Use the same backend Gtk+ uses. On X11, this usually involves using XRender
+  extensions to accelerate the graphics (at least according to the Cairo manual), and has the
+  benefit that copying the back-buffer to the window is fast as all content resides in the same
+  location. On Wayland, the situation should be similar, but a different (usually hardware
+  accelerated somehow) backend is used.
+- `sw` or `software`: Use the software rendering backend in Cairo. This is useful as a failsafe
+  default if the standard modes cause the video driver to crash, or cause other issues.
+- `gl`: Use the OpenGL backend of Cairo. This potentially increases rendering performance a bit, but
+  usually requiures copying the rendered image to the window through the CPU, which can be slow. It
+  is possible that the default backend is faster as well, as the OpenGL backend is currently marked
+  experimental in Cairo. Furthermore, the OpenGL backend has been observed to cause some video
+  drivers to crash (e.g. the iris driver for Intel cards).
+
+
 Layout
 -------
 
