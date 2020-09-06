@@ -80,6 +80,11 @@ class TreeWindow extends Frame {
 				painter.cloneTree(lastMouse);
 				repaint();
 			}
+		} else if (modifiers == Modifiers:ctrl) {
+			if (key == Key:z) {
+				painter.undo();
+				repaint();
+			}
 		}
 
 		false;
@@ -170,6 +175,9 @@ class TreePainter extends Painter {
 	DragFrom edgeFrom;
 	Node? from;
 
+	// Undo stack. We cap this at ~10-15 operations.
+	Node[][] undoStack;
+
 	Bool render(Size me, Graphics g) {
 		g.transform(translate(-offset));
 		g.lineWidth = 1.5;
@@ -196,6 +204,7 @@ class TreePainter extends Painter {
 			clicked = nodeAt(pt);
 			if (clicked) {
 				if (from) {
+					saveUndo();
 					if (edgeFrom == DragFrom:left) {
 						from.left = clicked;
 					} else {
@@ -232,11 +241,14 @@ class TreePainter extends Painter {
 
 	void insert(Nat number, Point at) {
 		at += offset;
+		saveUndo();
 		nodes << Node(at, number.toS);
 	}
 
 	void delete(Point at) {
 		at += offset;
+
+		saveUndo();
 
 		for (i, n in nodes) {
 			if (n.contains(at)) {
@@ -282,6 +294,7 @@ class TreePainter extends Painter {
 	void load(SimpleNode node) {
 		clear();
 		offset = Point();
+		undoStack.clear();
 
 		loadI(node, 20, 20);
 	}
@@ -291,6 +304,8 @@ class TreePainter extends Painter {
 
 		if (n = nodeAt(pt)) {
 			if (child = n.left) {
+				saveUndo();
+
 				n.left = child.right;
 
 				for (node in nodes) {
@@ -307,6 +322,8 @@ class TreePainter extends Painter {
 
 		if (n = nodeAt(pt)) {
 			if (child = n.right) {
+				saveUndo();
+
 				n.right = child.left;
 
 				for (node in nodes) {
@@ -358,6 +375,8 @@ class TreePainter extends Painter {
 		unless (n = nodeAt(pt))
 			return;
 
+		saveUndo();
+
 		Float maxY = 0;
 		for (n in nodes) {
 			maxY = max(maxY, n.bottomRight.y);
@@ -386,6 +405,42 @@ class TreePainter extends Painter {
 				return n;
 		}
 		null;
+	}
+
+	void undo() {
+		if (undoStack.empty)
+			return;
+
+		nodes = undoStack.last;
+		undoStack.pop();
+	}
+
+	void saveUndo() {
+		// Keep from growing too much.
+		if (undoStack.count > 20)
+			undoStack.remove(0);
+
+		Node->Node idMap;
+		Node[] copy;
+		for (i, n in nodes) {
+			Node c = Node(n);
+			idMap.put(n, c);
+			copy << c;
+		}
+
+		for (c in copy) {
+			c.left = update(c.left, idMap);
+			c.right = update(c.right, idMap);
+		}
+
+		undoStack << copy;
+	}
+
+	private Node? update(Node? n, Node->Node idMap) : static {
+		unless (n)
+			return null;
+
+		idMap.get(n, n);
 	}
 }
 

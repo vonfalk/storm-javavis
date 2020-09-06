@@ -18,5 +18,7 @@ The following commands are recognized:
 - Shift+"l" or Shift+"j": Rotate the node at the location of the mouse cursor with its left child.
 - Shift+"r" or Shift+"k": Rotate the node at the location of the mouse cursor with its right child.
 - Shift+"c": Clone the tree starting at the location of the mouse cursor and place it below.
+- Ctrl+"z": Undo (node movements are not tracked). Keep in mind that loading a new graph
+  clears the undo stack.
 - Click and drag a node: Move the node.
 - Click and drag the background: Move all contents of the window.

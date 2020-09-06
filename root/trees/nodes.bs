@@ -29,6 +29,15 @@ class Node on Render {
 		this.at -= text.size / 2;
 	}
 
+	init(Node original) {
+		init {
+			at = original.at;
+			text = original.text;
+			left = original.left;
+			right = original.right;
+		}
+	}
+
 	Point top() {
 		at + Point(text.size.w / 2, 0);
 	}
