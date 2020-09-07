@@ -159,6 +159,7 @@ enum DragFrom {
 class TreePainter extends Painter {
 	init() {
 		init {}
+		bgColor = graphics:white;
 	}
 
 	Point offset;
