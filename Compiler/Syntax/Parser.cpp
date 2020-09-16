@@ -5,6 +5,7 @@
 #include "Core/StrBuf.h"
 #include "Earley/Parser.h"
 #include "GLR/Parser.h"
+#include "LL/Parser.h"
 #include "Lib/Parser.h"
 
 namespace storm {
@@ -15,7 +16,7 @@ namespace storm {
 #endif
 
 		Nat backendCount() {
-			return 2;
+			return 3;
 		}
 
 #define PARSER_BACKEND(id, name) case id: return new (e.v) name::Parser();
@@ -24,6 +25,7 @@ namespace storm {
 			switch (id) {
 				PARSER_BACKEND(0, glr);
 				PARSER_BACKEND(1, earley);
+				PARSER_BACKEND(2, ll);
 			default:
 				throw new (e.v) InternalError(TO_S(e.v, S("No parser backend with id ") << id << S(" is known.")));
 			}
