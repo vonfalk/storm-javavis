@@ -1,5 +1,8 @@
 #pragma once
 #include "Core/Array.h"
+#include "Core/Map.h"
+#include "RuleInfo.h"
+#include "Stack.h"
 #include "Compiler/Syntax/ParserBackend.h"
 
 namespace storm {
@@ -72,6 +75,35 @@ namespace storm {
 				// Get the number of bytes used.
 				virtual Nat byteCount() const;
 
+			private:
+
+				/**
+				 * Grammar
+				 */
+
+				// Remember the rules. Each one is given an index.
+				Array<RuleInfo *> *rules;
+
+				// Remember which rules belong where.
+				Map<Rule *, Nat> *ruleId;
+
+				// Syntax prepared for parsing?
+				Bool syntaxPrepared;
+
+				// Prepare the syntax for parsing if needed.
+				void prepare();
+
+				// Find a rule.
+				MAYBE(RuleInfo *) findRule(Rule *r);
+
+				// Internal parse function.
+				Bool parse(ProductionIter iter, Str *str, Nat pos);
+
+				// Parse a token known to refer to a regex.
+				void parseRegex(RegexToken *regex, StackItem *&top, Str *str);
+
+				// Parse a token known to refer to a rule.
+				void parseRule(RuleToken *rule, StackItem *&top, Str *str);
 			};
 
 		}

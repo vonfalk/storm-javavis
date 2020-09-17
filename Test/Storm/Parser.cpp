@@ -75,7 +75,7 @@ static String parseStr(const wchar_t *root, const wchar_t *parse, Nat backend) {
 	return parseStr(L"tests.syntax", root, parse, backend);
 }
 
-BEGIN_TEST(ParserTest, Storm) {
+BEGIN_TEST_(ParserTest, Storm) {
 	Engine &e = gEngine();
 
 	Package *pkg = as<Package>(e.scope().find(parseSimpleName(e, S("tests.grammar"))));
