@@ -13,16 +13,31 @@ namespace storm {
 				STORM_CLASS;
 			public:
 				// Create.
-				StackItem(MAYBE(StackItem *) prev, ProductionIter iter, Nat inputPos) {
+				StackItem(MAYBE(StackItem *) prev, MAYBE(StackItem *) createdBy, ProductionIter iter, Nat inputPos) {
 					this->prev = prev;
+					this->createdBy = createdBy;
 					this->iter = iter;
 					this->inputPos = inputPos;
 					this->state = 0;
 					this->data = 0;
 				}
 
+				// Create an item that follows 'top' by reading a terminal symbol.
+				static StackItem *follow(Engine &e, StackItem *follow, ProductionIter iter, Nat pos) {
+					return new (e) StackItem(follow, follow->createdBy, iter, pos);
+				}
+
+				// Create an item that branches out from 'top' by reading a nonterminal symbol.
+				static StackItem *branch(Engine &e, MAYBE(StackItem *) top, ProductionIter iter, Nat pos) {
+					return new (e) StackItem(top, top, iter, pos);
+				}
+
 				// Previous item on the stack.
 				MAYBE(StackItem *) prev;
+
+				// Pointer to the state that started this sub-production to match (i.e. the 'prev'
+				// of the first item in this production).
+				MAYBE(StackItem *) createdBy;
 
 				// Current position in the grammar.
 				ProductionIter iter;
@@ -33,7 +48,7 @@ namespace storm {
 				// Current state of matching this input. Depends on what 'iter' refers to.
 				Nat state;
 
-				// Data used by the matching. Depends on what 'iter' refers to.
+				// Additional data. Depends on what 'iter' refers to.
 				Nat data;
 			};
 

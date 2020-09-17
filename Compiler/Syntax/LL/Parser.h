@@ -104,6 +104,11 @@ namespace storm {
 
 				// Parse a token known to refer to a rule.
 				void parseRule(RuleToken *rule, StackItem *&top, Str *str);
+
+				// "reduce" the current stack (this is not LL terminology, but it is similar enough
+				// to reduce in LR parsers).
+				// Returns 'true' if parsing is complete.
+				Bool parseReduce(StackItem *&top, Str *str);
 			};
 
 		}
