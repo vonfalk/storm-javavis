@@ -184,6 +184,7 @@ BEGIN_TEST_(ParseOrderTest, BS) {
 	for (Nat i = 0; i < backendCount(); i++) {
 		// This is tricky if the LL parser is too greedy.
 		CHECK_EQ(parseStr(L"LL", L"{aa}", i), L"aa");
+		CHECK_EQ(parseStr(L"LL", L"aa", i), L"aa");
 
 		CHECK_EQ(parseStr(L"Prio", L"a b", i), L"ab");
 		CHECK_EQ(parseStr(L"Prio", L"var b", i), L"b");
