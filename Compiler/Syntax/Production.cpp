@@ -246,6 +246,41 @@ namespace storm {
 				return ProductionIter();
 		}
 
+		ProductionIter Production::firstLong() {
+			return ProductionIter(this, 0);
+		}
+
+		ProductionIter Production::firstShort() {
+			if (repStart == 0 && skippable(repType))
+				return ProductionIter(this, repEnd);
+			else
+				return ProductionIter();
+		}
+
+		ProductionIter Production::firstFixed(Nat &n) {
+			Nat pos = 0;
+			if (repType != repNone) {
+				if (repStart == 0) {
+					if (n == 0)
+						pos = repEnd;
+					else
+						n--;
+				}
+			}
+			return ProductionIter(this, pos);
+		}
+
+		Nat Production::repetitionsFor(Nat n) {
+			if (repType == repNone)
+				return 0;
+
+			Nat repLen = repEnd - repStart;
+			if (repLen <= 0)
+				return 0;
+
+			return (n - (tokens->count() - repLen)) / repLen;
+		}
+
 		ProductionIter Production::posIter(Nat pos) {
 			return ProductionIter(this, pos);
 		}
@@ -268,6 +303,42 @@ namespace storm {
 
 			// Nothing possible, just return something invalid.
 			return ProductionIter();
+		}
+
+		ProductionIter ProductionIter::nextLong() const {
+			Nat next = pos + 1;
+			if (next == p->repEnd) {
+				if (repeatable(p->repType))
+					return ProductionIter(p, p->repStart);
+			}
+
+			return ProductionIter(p, next);
+		}
+
+		ProductionIter ProductionIter::nextShort() const {
+			Nat next = pos + 1;
+			if (next == p->repStart) {
+				if (skippable(p->repType))
+					return ProductionIter(p, p->repEnd);
+			} else if (next == p->repEnd) {
+				// The long version does not return the "regular" next in this case, so we do that.
+				if (repeatable(p->repType))
+					return ProductionIter(p, next);
+			}
+
+			return ProductionIter();
+		}
+
+		ProductionIter ProductionIter::nextFixed(Nat &n) const {
+			Nat next = pos + 1;
+			if (p->repType == repNone) {
+			} else if (next == p->repStart && n == 0) {
+				next = p->repEnd;
+			} else if (next == p->repEnd && n > 0) {
+				next = p->repStart;
+				n--;
+			}
+			return ProductionIter(p, next);
 		}
 
 		ProductionIter::ProductionIter() : p(null), pos(0) {}

@@ -1,5 +1,6 @@
 #pragma once
 #include "Compiler/Syntax/Production.h"
+#include "Tree.h"
 
 namespace storm {
 	namespace syntax {
@@ -16,6 +17,7 @@ namespace storm {
 				StackItem(MAYBE(StackItem *) prev, MAYBE(StackItem *) createdBy, ProductionIter iter, Nat inputPos) {
 					this->prev = prev;
 					this->createdBy = createdBy;
+					this->match = null;
 					this->iter = iter;
 					this->inputPos = inputPos;
 					this->state = 0;
@@ -38,6 +40,9 @@ namespace storm {
 				// Pointer to the state that started this sub-production to match (i.e. the 'prev'
 				// of the first item in this production).
 				MAYBE(StackItem *) createdBy;
+
+				// Syntax tree matched by this item, if any. Only used for nonterminals.
+				GcArray<TreePart> *match;
 
 				// Current position in the grammar.
 				ProductionIter iter;

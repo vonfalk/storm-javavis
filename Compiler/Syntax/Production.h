@@ -15,11 +15,24 @@ namespace storm {
 		/**
 		 * Iterator for a production.
 		 *
-		 * This iterator does not follow the convention in Storm, since productions are not
-		 * deterministic. This nondeterminism is due to the ?, + and * operators. However, it is
-		 * only ever possible to enter two new states from an existing state, which is why nextA and
-		 * nextB suffice. firstA and nextA are just advancing through the linear stream of tokens
-		 * while firstB and nextB account for any jumps that may occur in the sequence.
+		 * This iterator does not follow the convention in Storm since productions are not
+		 * deterministic. This is due to the ?, + and * operators. However, it is only ever possible
+		 * to enter two new states from an existing state, so it is sufficient to inspect two
+		 * possible 'next' functions. There are a number of pairs with different properties, as follows:
+		 *
+		 * - first{A,B}, next{A,B}:
+		 *   These are the simplest form. {first,next}A always traverses the linear stream of tokens
+		 *   and {first,next}B accounts for any jumps that may occur.
+		 * - first{Long,Short}, next{Long,Short}:
+		 *   The {first,next}Long always gives an iterator with the longest potential match (i.e. jumps
+		 *   backwards if possible), while {first,next}Short gives the shortest potential match
+		 *   (i.e. jumps forwards if possible).
+		 * - firstFixed, nextFixed:
+		 *   These functions traverse the iterator so that a fixed number of repetitions are done
+		 *   in total, regardless of whether or not this is allowed by the repetition mode. This is
+		 *   convenient while a parser traverses a previous match and attempts to map that back to
+		 *   the grammar. This pair of functions stores some state in an external variable to keep
+		 *   track of the number of iterations.
 		 */
 		class ProductionIter {
 			STORM_VALUE;
@@ -38,6 +51,13 @@ namespace storm {
 			// if the operation is not feasible.
 			ProductionIter STORM_FN nextA() const;
 			ProductionIter STORM_FN nextB() const;
+
+			// Long/short matches.
+			ProductionIter STORM_FN nextLong() const;
+			ProductionIter STORM_FN nextShort() const;
+
+			// A particular number of iterations.
+			ProductionIter STORM_FN nextFixed(Nat &n) const;
 
 			// Compare for equality.
 			Bool STORM_FN operator ==(const ProductionIter &o) const;
@@ -127,6 +147,16 @@ namespace storm {
 			// Create iterators.
 			ProductionIter STORM_FN firstA();
 			ProductionIter STORM_FN firstB();
+
+			// Long/short versions.
+			ProductionIter STORM_FN firstLong();
+			ProductionIter STORM_FN firstShort();
+
+			// Fixed iterations.
+			ProductionIter STORM_FN firstFixed(Nat &n);
+
+			// Compute iterations required to traverse 'n' tokens in total.
+			Nat STORM_FN repetitionsFor(Nat n);
 
 			// Create an iterator at a specific position.
 			ProductionIter posIter(Nat pos);

@@ -3,6 +3,7 @@
 #include "Core/Map.h"
 #include "RuleInfo.h"
 #include "Stack.h"
+#include "Tree.h"
 #include "Compiler/Syntax/ParserBackend.h"
 
 namespace storm {
@@ -78,6 +79,14 @@ namespace storm {
 			private:
 
 				/**
+				 * Cache.
+				 */
+
+				// GcType of an array of TreeItem, so we don't need to look it up all the time.
+				const GcType *treeArrayType;
+
+
+				/**
 				 * Grammar
 				 */
 
@@ -87,28 +96,74 @@ namespace storm {
 				// Remember which rules belong where.
 				Map<Rule *, Nat> *ruleId;
 
+				// ID of each production in a rule. Updated when productions are sorted.
+				Map<Production *, Nat> *prodId;
+
 				// Syntax prepared for parsing?
 				Bool syntaxPrepared;
 
-				// Prepare the syntax for parsing if needed.
-				void prepare();
+				// Prepare the syntax for parsing if needed, and setup other state.
+				void prepare(Str *str, Url *file);
 
 				// Find a rule.
-				MAYBE(RuleInfo *) findRule(Rule *r);
+				MAYBE(RuleInfo *) findRule(Rule *r) const;
 
 				// Internal parse function.
-				Bool parse(ProductionIter iter, Str *str, Nat pos);
+				Bool parse(ProductionIter iter, Nat pos);
 
 				// Parse a token known to refer to a regex.
-				void parseRegex(RegexToken *regex, StackItem *&top, Str *str);
+				void parseRegex(RegexToken *regex, StackItem *&top);
 
 				// Parse a token known to refer to a rule.
-				void parseRule(RuleToken *rule, StackItem *&top, Str *str);
+				void parseRule(RuleToken *rule, StackItem *&top);
 
 				// "reduce" the current stack (this is not LL terminology, but it is similar enough
 				// to reduce in LR parsers).
 				// Returns 'true' if parsing is complete.
-				Bool parseReduce(StackItem *&top, Str *str);
+				Bool parseReduce(StackItem *&top);
+
+				/**
+				 * Parser state.
+				 */
+
+				// URL of the string currently being matched.
+				Url *url;
+
+				// String currently being matched.
+				Str *src;
+
+
+				/**
+				 * Parser results.
+				 */
+
+				// The entire syntax tree, if successful match.
+				Tree *matchTree;
+
+				// First and last position of the match.
+				Nat matchFirst;
+				Nat matchLast;
+
+				// Rule and production ID matched.
+				Nat matchRule;
+				Nat matchProd;
+
+
+				/**
+				 * Extract a parse tree.
+				 */
+
+				// Create a node for a nonterminal.
+				Node *tree(RuleInfo *rule, Nat prod, Tree *root, Nat firstPos, Nat lastPos) const;
+
+				// Create a node for a terminal or a non-terminal, and save it inside a node.
+				void setNode(Node *into, Token *token, TreePart part, Nat lastPos) const;
+
+				// Allocate a node.
+				Node *allocNode(Production *from, Nat start, Nat end) const;
+
+				// Create a node for an info-tree.
+				InfoNode *infoTree(RuleInfo *rule, Nat prod, Tree *root, Nat lastPos) const;
 			};
 
 		}
