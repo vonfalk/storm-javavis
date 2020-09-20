@@ -132,7 +132,7 @@ namespace storm {
 
 				// Create a Tree-array for this branch.
 				GcArray<TreePart> *match = runtime::allocArray<TreePart>(engine(), treeArrayType, count);
-				match->filled = encodeRuleProd(ruleId->get(top->iter.rule()), prodId->get(top->iter.production()));
+				match->filled = prodId->get(top->iter.production());
 
 				for (StackItem *at = top->prev; at != newTop; at = at->prev) {
 					count--;
@@ -324,12 +324,6 @@ namespace storm {
 				}
 
 				syntaxPrepared = true;
-
-				// Check limits to avoid unpleasant surprises.
-				size_t combined = encodeRuleProd(rules->count(), maxProdId);
-				if (decodeRule(combined) != rules->count() ||
-					decodeProd(combined) != maxProdId)
-					throw new (this) InternalError(L"The number of rules or productions to the parser exceed internal limitations of the LL parser.");
 			}
 
 			MAYBE(RuleInfo *) Parser::findRule(Rule *rule) const {
