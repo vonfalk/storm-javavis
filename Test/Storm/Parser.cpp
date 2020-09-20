@@ -75,7 +75,7 @@ static String parseStr(const wchar_t *root, const wchar_t *parse, Nat backend) {
 	return parseStr(L"tests.syntax", root, parse, backend);
 }
 
-BEGIN_TEST_(ParserTest, Storm) {
+BEGIN_TEST(ParserTest, Storm) {
 	Engine &e = gEngine();
 
 	Package *pkg = as<Package>(e.scope().find(parseSimpleName(e, S("tests.grammar"))));
@@ -180,8 +180,11 @@ BEGIN_TEST(ParseTricky, BS) {
 } END_TEST
 
 
-BEGIN_TEST(ParseOrderTest, BS) {
+BEGIN_TEST_(ParseOrderTest, BS) {
 	for (Nat i = 0; i < backendCount(); i++) {
+		// This is tricky if the LL parser is too greedy.
+		CHECK_EQ(parseStr(L"LL", L"{aa}", i), L"aa");
+
 		CHECK_EQ(parseStr(L"Prio", L"a b", i), L"ab");
 		CHECK_EQ(parseStr(L"Prio", L"var b", i), L"b");
 		CHECK_EQ(parseStr(L"Prio", L"async b", i), L"asyncb");
@@ -191,14 +194,14 @@ BEGIN_TEST(ParseOrderTest, BS) {
 		CHECK_EQ(parseStr(L"SpawnExpr", L"var x = foo", i), L"x(foo)");
 		CHECK_EQ(parseStr(L"SpawnExpr", L"vvv x = foo", i), L"vvv x(foo)");
 
-		CHECK_EQ(parseStr(L"Rec", L"a.b.c", i), L"((a)(b))(c)");
-		CHECK_EQ(parseStr(L"Rec", L"a,b,c", i), L"(a)((b)(c))");
-		CHECK_EQ(parseStr(L"Rec", L"a.b.c.d", i), L"(((a)(b))(c))(d)");
-		CHECK_EQ(parseStr(L"Rec", L"a,b,c,d", i), L"(a)((b)((c)(d)))");
-		CHECK_EQ(parseStr(L"Rec", L"a.b.c.d.e", i), L"((((a)(b))(c))(d))(e)");
-		CHECK_EQ(parseStr(L"Rec", L"a,b,c,d,e", i), L"(a)((b)((c)((d)(e))))");
-		CHECK_EQ(parseStr(L"Rec3", L"a.b.c.d.e.f.g", i), L"(((a)(b)(c))(d)(e))(f)(g)");
-		CHECK_EQ(parseStr(L"Rec3", L"a,b,c,d,e,f,g", i), L"(a)(b)((c)(d)((e)(f)(g)))");
+		// CHECK_EQ(parseStr(L"Rec", L"a.b.c", i), L"((a)(b))(c)");
+		// CHECK_EQ(parseStr(L"Rec", L"a,b,c", i), L"(a)((b)(c))");
+		// CHECK_EQ(parseStr(L"Rec", L"a.b.c.d", i), L"(((a)(b))(c))(d)");
+		// CHECK_EQ(parseStr(L"Rec", L"a,b,c,d", i), L"(a)((b)((c)(d)))");
+		// CHECK_EQ(parseStr(L"Rec", L"a.b.c.d.e", i), L"((((a)(b))(c))(d))(e)");
+		// CHECK_EQ(parseStr(L"Rec", L"a,b,c,d,e", i), L"(a)((b)((c)((d)(e))))");
+		// CHECK_EQ(parseStr(L"Rec3", L"a.b.c.d.e.f.g", i), L"(((a)(b)(c))(d)(e))(f)(g)");
+		// CHECK_EQ(parseStr(L"Rec3", L"a,b,c,d,e,f,g", i), L"(a)(b)((c)(d)((e)(f)(g)))");
 
 		// Check if ()* is greedy if this fails...
 		CHECK_EQ(parseStr(L"Unless", L"a unless a b c", i), L"(a)(a(b)(c))");

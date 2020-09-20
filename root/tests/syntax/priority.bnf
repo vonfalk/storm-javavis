@@ -47,3 +47,11 @@ SpawnExpr[10] => e : SpawnAtom e;
 Buffer SpawnAtom();
 SpawnAtom[10] => Buffer() : "spawn" -> add, Name -> add;
 SpawnAtom[00] => Buffer() : Name -> add;
+
+// Check if the LL parser is too greedy.
+Buffer LL();
+LL => r : "{", LLContent r, "}";
+
+Buffer LLContent();
+LLContent[10] => Buffer() : "a" -> add;
+LLContent[00] => Buffer() : "a" -> add, "a" -> add;

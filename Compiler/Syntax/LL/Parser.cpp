@@ -71,19 +71,26 @@ namespace storm {
 
 				matchRule = ruleId->get(root);
 				matchFirst = start.offset();
+				matchLast = 0;
 
 				PLN(L"Parsing...");
 
-				// Try all possible starts, in order.
+				// Try all possible starts, in order. Try until we have consumed the entire string, or tried all of them.
 				for (Nat i = 0; i < rule->productions->count(); i++) {
 					Production *p = rule->productions->at(i);
 					matchProd = i;
 					PLN(L"Trying " << p);
 					if (parse(p->firstLong(), start.offset()))
-						return true;
+						if (matchLast >= str->peekLength())
+							return true;
 					if (parse(p->firstShort(), start.offset()))
-						return true;
+						if (matchLast >= str->peekLength())
+							return true;
 				}
+
+				// We found something!
+				if (matchTree)
+					return true;
 
 				PLN(L"Failed.");
 				return false;
@@ -142,8 +149,11 @@ namespace storm {
 				top = newTop;
 				if (!top) {
 					// We're done!
-					matchTree = match;
-					matchLast = inputPos;
+					PLN(L"Done at " << inputPos);
+					if (inputPos > matchLast) {
+						matchTree = match;
+						matchLast = inputPos;
+					}
 					return true;
 				}
 
