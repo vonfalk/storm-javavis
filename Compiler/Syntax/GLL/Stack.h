@@ -4,8 +4,8 @@
 
 namespace storm {
 	namespace syntax {
-		namespace ll {
-			STORM_PKG(lang.bnf.ll);
+		namespace gll {
+			STORM_PKG(lang.bnf.gll);
 
 			/**
 			 * An item on the LL stack.

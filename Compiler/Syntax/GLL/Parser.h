@@ -8,11 +8,11 @@
 
 namespace storm {
 	namespace syntax {
-		namespace ll {
-			STORM_PKG(lang.bnf.ll);
+		namespace gll {
+			STORM_PKG(lang.bnf.gll);
 
 			/**
-			 * The LL parser backend. This is an LL(n) parser (i.e. recursive descent) that rewrites
+			 * The GLL parser backend. This is an LL(n) parser (i.e. recursive descent) that rewrites
 			 * left recursion on-the-fly as needed.
 			 */
 			class Parser : public ParserBackend {

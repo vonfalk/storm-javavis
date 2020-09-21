@@ -3,7 +3,7 @@
 
 namespace storm {
 	namespace syntax {
-		namespace ll {
+		namespace gll {
 
 			RuleInfo::RuleInfo(Rule *rule) : rule(rule) {
 				productions = new (this) Array<Production *>();

@@ -5,7 +5,7 @@
 #include "Core/StrBuf.h"
 #include "Earley/Parser.h"
 #include "GLR/Parser.h"
-#include "LL/Parser.h"
+#include "GLL/Parser.h"
 #include "Lib/Parser.h"
 
 namespace storm {
@@ -25,7 +25,7 @@ namespace storm {
 			switch (id) {
 				PARSER_BACKEND(0, glr);
 				PARSER_BACKEND(1, earley);
-				PARSER_BACKEND(2, ll);
+				PARSER_BACKEND(2, gll);
 			default:
 				throw new (e.v) InternalError(TO_S(e.v, S("No parser backend with id ") << id << S(" is known.")));
 			}

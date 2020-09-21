@@ -4,7 +4,7 @@
 
 namespace storm {
 	namespace syntax {
-		namespace ll {
+		namespace gll {
 
 			Parser::Parser() {
 				treeArrayType = StormInfo<TreePart>::handle(engine()).gcArrayType;
