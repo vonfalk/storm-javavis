@@ -14,6 +14,8 @@ namespace storm {
 			/**
 			 * The GLL parser backend. This is an LL(n) parser (i.e. recursive descent) that rewrites
 			 * left recursion on-the-fly as needed.
+			 *
+			 * Based on http://www.cs.rhul.ac.uk/research/languages/csle/GLLparsers.html
 			 */
 			class Parser : public ParserBackend {
 				STORM_CLASS;
@@ -109,13 +111,10 @@ namespace storm {
 				MAYBE(RuleInfo *) findRule(Rule *r) const;
 
 				// Internal parse function.
-				Bool parse(ProductionIter iter, Nat pos);
+				void parse(RuleInfo *rule, Nat offset);
 
-				// Parse a token known to refer to a regex.
-				void parseRegex(RegexToken *regex, StackItem *&top);
-
-				// Parse a token known to refer to a rule.
-				void parseRule(RuleToken *rule, StackItem *&top);
+				// Parse a stack item as far as we can. Produce new stacks in the PQ as needed.
+				void parseStack(ProductionIter iter, StackItem *top);
 
 				// "reduce" the current stack (this is not LL terminology, but it is similar enough
 				// to reduce in LR parsers).
@@ -132,6 +131,27 @@ namespace storm {
 				// String currently being matched.
 				Str *src;
 
+				// Priority queue of current stack-tops. Roughly corresponds to the R set in the
+				// paper. We manage the priority queue ourselves to be able to inline calls to
+				// operator < and manage the size slightly different compared to PQueue (we allocate
+				// more frivolously for example).
+				GcArray<StackItem *> *pq;
+
+				// Production sequence number. Used to ensure that the match with the highest
+				// priority is processed first in the priority queue.
+				Nat stackId;
+
+				// Initialize the priority queue for a parse.
+				void pqInit();
+
+				// Push an element on the priority queue.
+				void pqPush(StackItem *item);
+
+				// Push a new item, creating the item as well.
+				void pqPush(StackItem *prev, ProductionIter iter, Nat inputPos);
+
+				// Pop the top element of the priority queue. Returns null if empty.
+				StackItem *pqPop();
 
 				/**
 				 * Parser results.

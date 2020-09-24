@@ -74,23 +74,9 @@ namespace storm {
 				matchLast = 0;
 
 				PLN(L"Parsing...");
+				parse(rule, start.offset());
 
-				// Try all possible starts, in order. Try until we have consumed the entire string, or tried all of them.
-				for (Nat i = 0; i < rule->productions->count(); i++) {
-					Production *p = rule->productions->at(i);
-					matchProd = i;
-					PLN(L"Trying " << p);
-					if (parse(p->firstLong(), start.offset()))
-						if (matchLast >= str->peekLength())
-							return true;
-					if (parse(p->firstShort(), start.offset()))
-						if (matchLast >= str->peekLength())
-							return true;
-				}
-
-				// We found something!
-				if (matchTree)
-					return true;
+				// TODO: Check for success.
 
 				PLN(L"Failed.");
 				return false;
@@ -101,157 +87,156 @@ namespace storm {
 				return InfoErrors();
 			}
 
-			Bool Parser::parse(ProductionIter iter, Nat pos) {
-				if (!iter.valid())
-					return false;
-
-				StackItem *top = StackItem::branch(engine(), null, iter, pos);
-
-				while (top) {
-					Token *token = top->iter.token();
-					if (!token) {
-						// "reduce" the currently matched portion.
-						if (parseReduce(top))
-							return true;
-					} else if (RuleToken *rule = token->asRule()) {
-						parseRule(rule, top);
-					} else if (RegexToken *regex = token->asRegex()) {
-						parseRegex(regex, top);
-					}
+			void Parser::parse(RuleInfo *rule, Nat pos) {
+				// Add all possible starting points as if we found this nonterminal in a production.
+				for (Nat i = 0; i < rule->productions->count(); i++) {
+					Production *p = rule->productions->at(i);
+					pqPush(null, p->firstLong(), pos);
+					pqPush(null, p->firstShort(), pos);
 				}
 
-				return false;
+				// Execute things on the stack until we're done.
+				Nat lastPos = 0;
+				while (StackItem *top = pqPop()) {
+					if (lastPos != top->inputPos) {
+						lastPos = top->inputPos;
+						// We arrived at a new point in the input, clear the table of what we have parsed so far!
+					}
+
+					// TODO: If we have already seen this StackItem, don't parse it again!
+
+					parseStack(top->iter, top);
+				}
+			}
+
+			void Parser::parseStack(ProductionIter iter, StackItem *top) {
+				while (true) {
+					Token *token = iter.token();
+					if (!token) {
+						// At the end.
+						// TODO: "pop" the stack, i.e. perform a "reduction".
+						assert(false, "NOT DONE YET");
+					} else if (RuleToken *rule = token->asRule()) {
+						// Rule. Create new stack tops on the PQ.
+						RuleInfo *info = findRule(rule->rule);
+						for (Nat i = 0; i < info->productions->count(); i++) {
+							Production *p = info->productions->at(i);
+							pqPush(top, p->firstLong(), top->inputPos);
+							pqPush(top, p->firstShort(), top->inputPos);
+						}
+						// Nothing more to do here!
+						return;
+					} else if (RegexToken *regex = token->asRegex()) {
+						// Regex. Match it and advance immediately if we are able to (to reduce load on the priority queue).
+						Nat matched = regex->regex.matchRaw(src, top->inputPos);
+						if (matched == Regex::NO_MATCH) {
+							// Nothing to do! Kill of this branch entirely.
+							return;
+						}
+
+						ProductionIter next = iter.nextShort();
+						if (next.valid()) {
+							// Use recursion if we branch. This happens at most once per production, so it is fine.
+							parseStack(next.nextLong(), top);
+						} else {
+							next = iter.nextLong();
+						}
+						iter = next;
+					}
+				}
 			}
 
 			Bool Parser::parseReduce(StackItem *&top) {
-				// Find the length of this "branch".
-				StackItem *newTop = top->createdBy;
-				Nat count = 0;
-				for (StackItem *at = top->prev; at != newTop; at = at->prev)
-					count++;
+				// // Find the length of this "branch".
+				// StackItem *newTop = top->createdBy;
+				// Nat count = 0;
+				// for (StackItem *at = top->prev; at != newTop; at = at->prev)
+				// 	count++;
 
-				// Create a Tree-array for this branch.
-				GcArray<TreePart> *match = runtime::allocArray<TreePart>(engine(), treeArrayType, count);
-				match->filled = prodId->get(top->iter.production());
+				// // Create a Tree-array for this branch.
+				// GcArray<TreePart> *match = runtime::allocArray<TreePart>(engine(), treeArrayType, count);
+				// match->filled = prodId->get(top->iter.production());
 
-				for (StackItem *at = top->prev; at != newTop; at = at->prev) {
-					count--;
+				// for (StackItem *at = top->prev; at != newTop; at = at->prev) {
+				// 	count--;
 
-					if (at->match) {
-						match->v[count] = TreePart(at->match, at->inputPos);
-					} else {
-						match->v[count] = TreePart(at->inputPos);
-					}
-				}
+				// 	if (at->match) {
+				// 		match->v[count] = TreePart(at->match, at->inputPos);
+				// 	} else {
+				// 		match->v[count] = TreePart(at->inputPos);
+				// 	}
+				// }
 
-				// Remove the entire branch. Eventually we want to store the parse tree somewhere.
-				Nat inputPos = top->inputPos;
-				top = newTop;
-				if (!top) {
-					// We're done!
-					PLN(L"Done at " << inputPos);
-					if (inputPos > matchLast) {
-						matchTree = match;
-						matchLast = inputPos;
-					}
-					return true;
-				}
+				// // Remove the entire branch. Eventually we want to store the parse tree somewhere.
+				// Nat inputPos = top->inputPos;
+				// top = newTop;
+				// if (!top) {
+				// 	// We're done!
+				// 	PLN(L"Done at " << inputPos);
+				// 	if (inputPos > matchLast) {
+				// 		matchTree = match;
+				// 		matchLast = inputPos;
+				// 	}
+				// 	return true;
+				// }
 
-				// Save the match.
-				top->match = match;
+				// // Save the match.
+				// top->match = match;
 
-				// Check if 'nextShort' is valid. If so, we need to tell the top to try again with that at a later point.
-				if (top->iter.nextShort().valid()) {
-					top->data = inputPos + 1;
-				}
+				// // Check if 'nextShort' is valid. If so, we need to tell the top to try again with that at a later point.
+				// if (top->iter.nextShort().valid()) {
+				// 	top->data = inputPos + 1;
+				// }
 
-				ProductionIter a = top->iter.nextLong();
-				top = StackItem::follow(engine(), top, top->iter.nextLong(), inputPos);
+				// ProductionIter a = top->iter.nextLong();
+				// top = StackItem::follow(engine(), top, top->iter.nextLong(), inputPos);
 				return false;
 			}
 
-			void Parser::parseRule(RuleToken *rule, StackItem *&top) {
-				// We were completed previously, and we should try to advance using nextShort.
-				if (top->data > 0) {
-					Nat pos = top->data - 1;
-					top->data = 0;
-					top = StackItem::follow(engine(), top, top->iter.nextShort(), pos);
-					return;
+			struct PQCompare {
+				bool operator()(const StackItem *a, const StackItem *b) const {
+					// Smallest first!
+					return *b < *a;
 				}
+			};
 
-				RuleInfo *info = findRule(rule->rule);
-				if (!info) {
-					top = top->prev;
-					return;
-				}
-
-				if (top->state >= info->productions->count() * 2) {
-					return;
-				}
-
-				Nat prods = info->productions->count();
-				while (top->state < prods * 2) {
-					Production *p = info->productions->at(top->state / 2);
-					ProductionIter iter;
-					if ((top->state & 0x1) == 0x0) {
-						iter = p->firstLong();
-					} else {
-						iter = p->firstShort();
-					}
-
-					// Remember to advance next time we get here.
-					top->state++;
-
-					// If it is valid, go there.
-					if (iter.valid()) {
-						top = StackItem::branch(engine(), top, iter, top->inputPos);
-						return;
-					}
-				}
-
-				// At the end, backtrack.
-				top = top->prev;
+			void Parser::pqInit() {
+				const size_t initialSize = 512;
+				pq = runtime::allocArray<StackItem *>(engine(), &pointerArrayType, initialSize);
+				pq->filled = 0;
 			}
 
-			void Parser::parseRegex(RegexToken *regex, StackItem *&top) {
-				if (top->state == 0) {
-					// Match the regex
-					Nat matched = regex->regex.matchRaw(src, top->inputPos);
-					if (matched == Regex::NO_MATCH) {
-						// Backtrack.
-						top = top->prev;
-						return;
-					}
-
-					// Store how much we shall advance.
-					top->state = 1;
-					top->data = matched;
-
-					// Try the next state.
-					top = StackItem::follow(engine(), top, top->iter.nextLong(), matched);
-				} else if (top->state == 1) {
-					// We already matched the regex, try to match nextShort() instead.
-					ProductionIter next = top->iter.nextShort();
-					if (!next.valid()) {
-						// Backtrack.
-						top = top->prev;
-						return;
-					}
-
-					Nat matched = top->data;
-					top->state = 2;
-
-					// Try the next state.
-					top = StackItem::follow(engine(), top, next, matched);
-				} else {
-					// If we get here, we don't have anything else to do. Just backtrack.
-					top = top->prev;
+			void Parser::pqPush(StackItem *item) {
+				if (pq->filled >= pq->count) {
+					GcArray<StackItem *> *n = runtime::allocArray<StackItem *>(engine(), &pointerArrayType, pq->count * 2);
+					memcpy(n->v, pq->v, pq->filled * sizeof(StackItem *));
+					n->filled = pq->filled;
+					pq = n;
 				}
+
+				pq->v[pq->filled++] = item;
+				std::push_heap(pq->v, pq->v + pq->filled, PQCompare());
+			}
+
+			void Parser::pqPush(StackItem *prev, ProductionIter iter, Nat inputPos) {
+				if (iter.valid())
+					pqPush(new (this) StackItem(stackId++, prev, iter, inputPos));
+			}
+
+			StackItem *Parser::pqPop() {
+				if (pq->filled == 0)
+					return null;
+
+				std::pop_heap(pq->v, pq->v + pq->filled, PQCompare());
+				StackItem *r = pq->v[--pq->filled];
+				pq->v[pq->filled] = null;
+				return r;
 			}
 
 			void Parser::clear() {
 				url = null;
 				src = null;
+				pq = null;
 				matchTree = null;
 				matchFirst = matchLast = 0;
 			}
@@ -303,8 +288,11 @@ namespace storm {
 			void Parser::prepare(Str *str, Url *file) {
 				src = str;
 				url = file;
+				stackId = 0;
 				matchTree = null;
 				matchLast = 0;
+
+				pqInit();
 
 				// Need to pre-process the grammar?
 				if (syntaxPrepared)
