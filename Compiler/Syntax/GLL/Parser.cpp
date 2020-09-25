@@ -76,10 +76,7 @@ namespace storm {
 				PLN(L"Parsing...");
 				parse(rule, start.offset());
 
-				// TODO: Check for success.
-
-				PLN(L"Failed.");
-				return false;
+				return matchTree != null;
 			}
 
 			InfoErrors Parser::parseApprox(Rule *root, Str *str, Url *file, Str::Iter start, MAYBE(InfoInternal *) ctx) {
@@ -91,8 +88,8 @@ namespace storm {
 				// Add all possible starting points as if we found this nonterminal in a production.
 				for (Nat i = 0; i < rule->productions->count(); i++) {
 					Production *p = rule->productions->at(i);
-					pqPush(null, p->firstLong(), pos);
-					pqPush(null, p->firstShort(), pos);
+					pqPush(null, p->firstLong(), pos, true);
+					pqPush(null, p->firstShort(), pos, true);
 				}
 
 				// Execute things on the stack until we're done.
@@ -105,92 +102,92 @@ namespace storm {
 
 					// TODO: If we have already seen this StackItem, don't parse it again!
 
-					parseStack(top->iter, top);
+					parseStack(top);
 				}
 			}
 
-			void Parser::parseStack(ProductionIter iter, StackItem *top) {
-				while (true) {
-					Token *token = iter.token();
-					if (!token) {
-						// At the end.
-						// TODO: "pop" the stack, i.e. perform a "reduction".
-						assert(false, "NOT DONE YET");
-					} else if (RuleToken *rule = token->asRule()) {
-						// Rule. Create new stack tops on the PQ.
-						RuleInfo *info = findRule(rule->rule);
-						for (Nat i = 0; i < info->productions->count(); i++) {
-							Production *p = info->productions->at(i);
-							pqPush(top, p->firstLong(), top->inputPos);
-							pqPush(top, p->firstShort(), top->inputPos);
-						}
-						// Nothing more to do here!
-						return;
-					} else if (RegexToken *regex = token->asRegex()) {
-						// Regex. Match it and advance immediately if we are able to (to reduce load on the priority queue).
-						Nat matched = regex->regex.matchRaw(src, top->inputPos);
-						if (matched == Regex::NO_MATCH) {
-							// Nothing to do! Kill of this branch entirely.
-							return;
-						}
+			void Parser::parseStack(StackItem *top) {
+				PLN(L"Parse " << top->inputPos << L": " << top->iter);
 
-						ProductionIter next = iter.nextShort();
-						if (next.valid()) {
-							// Use recursion if we branch. This happens at most once per production, so it is fine.
-							parseStack(next.nextLong(), top);
-						} else {
-							next = iter.nextLong();
-						}
-						iter = next;
+				// Step as many regexes as possible to not load the PQ too much.
+				Token *token = top->iter.token();
+				while (token && token->asRegex()) {
+					RegexToken *regex = token->asRegex();
+					Nat matched = regex->regex.matchRaw(src, top->inputPos);
+					if (matched == Regex::NO_MATCH) {
+						// Nothing to do! Kill of this branch entirely.
+						return;
+					}
+
+					ProductionIter next = top->iter.nextShort();
+					if (next.valid()) {
+						// Use recursion if we branch. This happens at most once per production, so it is fine.
+						parseStack(create(top, top->iter.nextLong(), matched, false));
+					} else {
+						next = top->iter.nextLong();
+					}
+					top = create(top, next, matched, false);
+
+					token = top->iter.token();
+				}
+
+				// Now, we know that "token" is not a regex.
+				if (!token) {
+					// At the end.
+					// TODO: Remember that we popped this one!
+					parseReduce(top);
+				} else if (RuleToken *rule = token->asRule()) {
+					// Rule. Create new stack tops on the PQ.
+					RuleInfo *info = findRule(rule->rule);
+					for (Nat i = 0; i < info->productions->count(); i++) {
+						Production *p = info->productions->at(i);
+						pqPush(top, p->firstLong(), top->inputPos, true);
+						pqPush(top, p->firstShort(), top->inputPos, true);
 					}
 				}
 			}
 
-			Bool Parser::parseReduce(StackItem *&top) {
-				// // Find the length of this "branch".
-				// StackItem *newTop = top->createdBy;
-				// Nat count = 0;
-				// for (StackItem *at = top->prev; at != newTop; at = at->prev)
-				// 	count++;
+			void Parser::parseReduce(StackItem *top) {
+				Nat inputPos = top->inputPos;
+				PLN(L"Reducing at " << inputPos << L": " << top->iter);
 
-				// // Create a Tree-array for this branch.
-				// GcArray<TreePart> *match = runtime::allocArray<TreePart>(engine(), treeArrayType, count);
-				// match->filled = prodId->get(top->iter.production());
+				// Find the length of this branch.
+				Nat count = 0;
+				for (StackItem *at = top; !at->first(); at = at->prev)
+					count++;
 
-				// for (StackItem *at = top->prev; at != newTop; at = at->prev) {
-				// 	count--;
+				// Create a Tree-array for this branch.
+				GcArray<TreePart> *match = runtime::allocArray<TreePart>(engine(), treeArrayType, count);
+				match->filled = prodId->get(top->iter.production());
 
-				// 	if (at->match) {
-				// 		match->v[count] = TreePart(at->match, at->inputPos);
-				// 	} else {
-				// 		match->v[count] = TreePart(at->inputPos);
-				// 	}
-				// }
+				for (Nat i = count; i > 0; i--) {
+					top = top->prev;
+					if (top->match) {
+						match->v[i - 1] = TreePart(top->match, top->inputPos);
+					} else {
+						match->v[i - 1] = TreePart(top->inputPos);
+					}
+				}
 
-				// // Remove the entire branch. Eventually we want to store the parse tree somewhere.
-				// Nat inputPos = top->inputPos;
-				// top = newTop;
-				// if (!top) {
-				// 	// We're done!
-				// 	PLN(L"Done at " << inputPos);
-				// 	if (inputPos > matchLast) {
-				// 		matchTree = match;
-				// 		matchLast = inputPos;
-				// 	}
-				// 	return true;
-				// }
+				// Skip the first one as well.
+				top = top->prev;
 
-				// // Save the match.
-				// top->match = match;
+				if (!top) {
+					// Done!
+					PLN(L"Done at " << inputPos);
+					if (inputPos > matchLast) {
+						matchTree = match;
+						matchLast = inputPos;
+					}
+					return;
+				}
 
-				// // Check if 'nextShort' is valid. If so, we need to tell the top to try again with that at a later point.
-				// if (top->iter.nextShort().valid()) {
-				// 	top->data = inputPos + 1;
-				// }
+				// Save the match.
+				top->match = match;
 
-				// ProductionIter a = top->iter.nextLong();
-				// top = StackItem::follow(engine(), top, top->iter.nextLong(), inputPos);
-				return false;
+				// Add new states.
+				pqPush(top, top->iter.nextLong(), inputPos, false);
+				pqPush(top, top->iter.nextShort(), inputPos, false);
 			}
 
 			struct PQCompare {
@@ -218,9 +215,10 @@ namespace storm {
 				std::push_heap(pq->v, pq->v + pq->filled, PQCompare());
 			}
 
-			void Parser::pqPush(StackItem *prev, ProductionIter iter, Nat inputPos) {
+			void Parser::pqPush(StackItem *prev, ProductionIter iter, Nat inputPos, Bool first) {
+				// TODO: There is some additional logic here to de-duplicate states and handle left recursion.
 				if (iter.valid())
-					pqPush(new (this) StackItem(stackId++, prev, iter, inputPos));
+					pqPush(create(prev, iter, inputPos, first));
 			}
 
 			StackItem *Parser::pqPop() {
@@ -231,6 +229,10 @@ namespace storm {
 				StackItem *r = pq->v[--pq->filled];
 				pq->v[pq->filled] = null;
 				return r;
+			}
+
+			StackItem *Parser::create(StackItem *prev, ProductionIter iter, Nat inputPos, Bool first) {
+				return new (this) StackItem(stackId++, first, prev, iter, inputPos);
 			}
 
 			void Parser::clear() {
@@ -265,7 +267,7 @@ namespace storm {
 			}
 
 			Node *Parser::tree() const {
-				Node *n = tree(rules->at(matchRule), matchProd, matchTree, matchFirst, matchLast);
+				Node *n = tree(rules->at(matchRule), matchTree, matchFirst, matchLast);
 				PVAR(n);
 				return n;
 			}
@@ -274,7 +276,7 @@ namespace storm {
 				if (!hasTree())
 					return null;
 
-				return infoTree(rules->at(matchRule), matchProd, matchTree, matchLast);
+				return infoTree(rules->at(matchRule), matchTree, matchLast);
 			}
 
 			Nat Parser::stateCount() const {
@@ -337,13 +339,15 @@ namespace storm {
 				if (!token->target)
 					return;
 
+				PVAR(token);
+				PVAR(part.isRule());
 				if (part.isRule()) {
 					// Nonterminal.
 					RuleToken *rToken = token->asRule();
 					dbg_assert(rToken, L"Must be a rule!");
 					RuleInfo *info = findRule(rToken->rule);
 					dbg_assert(info, L"Must be present!");
-					Node *t = tree(info, part.productionId(), part.match, part.startPos, last);
+					Node *t = tree(info, part.match, part.startPos, last);
 					setValue(into, token->target, t);
 				} else {
 					// It is a terminal symbol. Extract the string.
@@ -355,14 +359,15 @@ namespace storm {
 				}
 			}
 
-			Node *Parser::tree(RuleInfo *rule, Nat prodId, Tree *root, Nat firstPos, Nat lastPos) const {
-				Production *p = rule->productions->at(prodId);
+			Node *Parser::tree(RuleInfo *rule, Tree *root, Nat firstPos, Nat lastPos) const {
+				Production *p = rule->productions->at(root->filled);
 				Nat repCount = p->repetitionsFor(root->count);
 				Node *result = allocNode(p, firstPos, lastPos);
 
 				Nat repStart = firstPos;
 				Nat repEnd = lastPos;
 				ProductionIter at = p->firstFixed(repCount);
+				PVAR(at);
 				for (Nat i = 0; i < root->count; i++) {
 					// Remember the captured part (if any). Note: This does not need to work with
 					// repeating stuff, as that combination is not currently supported.
@@ -416,8 +421,8 @@ namespace storm {
 				return r;
 			}
 
-			InfoNode *Parser::infoTree(RuleInfo *rule, Nat prodId, Tree *root, Nat lastPos) const {
-				Production *p = rule->productions->at(prodId);
+			InfoNode *Parser::infoTree(RuleInfo *rule, Tree *root, Nat lastPos) const {
+				Production *p = rule->productions->at(root->filled);
 				Nat repCount = p->repetitionsFor(root->count);
 				InfoInternal *result = new (this) InfoInternal(p, root->count);
 
@@ -435,7 +440,7 @@ namespace storm {
 						if (part.isRule()) {
 							RuleToken *token = t->asRule();
 							dbg_assert(token, L"Should be a rule!");
-							created = infoTree(findRule(token->rule), part.productionId(), part.match, next);
+							created = infoTree(findRule(token->rule), part.match, next);
 						} else {
 							Str::Iter start = src->posIter(part.startPos);
 							Str::Iter end = src->posIter(next);

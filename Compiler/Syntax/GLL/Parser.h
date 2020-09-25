@@ -114,12 +114,11 @@ namespace storm {
 				void parse(RuleInfo *rule, Nat offset);
 
 				// Parse a stack item as far as we can. Produce new stacks in the PQ as needed.
-				void parseStack(ProductionIter iter, StackItem *top);
+				void parseStack(StackItem *top);
 
 				// "reduce" the current stack (this is not LL terminology, but it is similar enough
 				// to reduce in LR parsers).
-				// Returns 'true' if parsing is complete.
-				Bool parseReduce(StackItem *&top);
+				void parseReduce(StackItem *top);
 
 				/**
 				 * Parser state.
@@ -147,11 +146,15 @@ namespace storm {
 				// Push an element on the priority queue.
 				void pqPush(StackItem *item);
 
-				// Push a new item, creating the item as well.
-				void pqPush(StackItem *prev, ProductionIter iter, Nat inputPos);
+				// Push a new item, creating the item as well. 'first' indicates if this is the
+				// first state in a production or not.
+				void pqPush(StackItem *prev, ProductionIter iter, Nat inputPos, Bool first);
 
 				// Pop the top element of the priority queue. Returns null if empty.
 				StackItem *pqPop();
+
+				// Create a stack item.
+				StackItem *create(StackItem *prev, ProductionIter iter, Nat inputPos, Bool first);
 
 				/**
 				 * Parser results.
@@ -174,7 +177,7 @@ namespace storm {
 				 */
 
 				// Create a node for a nonterminal.
-				Node *tree(RuleInfo *rule, Nat prod, Tree *root, Nat firstPos, Nat lastPos) const;
+				Node *tree(RuleInfo *rule, Tree *root, Nat firstPos, Nat lastPos) const;
 
 				// Create a node for a terminal or a non-terminal, and save it inside a node.
 				void setNode(Node *into, Token *token, TreePart part, Nat lastPos) const;
@@ -183,7 +186,7 @@ namespace storm {
 				Node *allocNode(Production *from, Nat start, Nat end) const;
 
 				// Create a node for an info-tree.
-				InfoNode *infoTree(RuleInfo *rule, Nat prod, Tree *root, Nat lastPos) const;
+				InfoNode *infoTree(RuleInfo *rule, Tree *root, Nat lastPos) const;
 			};
 
 		}

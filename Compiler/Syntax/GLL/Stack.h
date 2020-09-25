@@ -14,21 +14,34 @@ namespace storm {
 				STORM_CLASS;
 			public:
 				// Create.
-				StackItem(Nat itemId, MAYBE(StackItem *) prev, ProductionIter iter, Nat inputPos) {
+				StackItem(Nat itemId, Bool first, MAYBE(StackItem *) prev, ProductionIter iter, Nat inputPos) {
 					this->prev = prev;
 					this->iter = iter;
-					this->itemId = itemId;
+					this->data = (itemId << 1) | (first ? 1 : 0);
 					this->inputPos = inputPos;
 				}
 
 				// Previous item on this stack.
 				MAYBE(StackItem *) prev;
 
+				// What did this production match? Used only for nonterminals.
+				GcArray<TreePart> *match;
+
 				// Current position in the grammar.
 				ProductionIter iter;
 
-				// Production id, for disambiguating productions on the same position.
-				Nat itemId;
+				// Data. Contains 'itemId' and 'first'.
+				Nat data;
+
+				// State id, for disambiguating productions on the same position.
+				Nat itemId() const {
+					return data >> 1;
+				}
+
+				// Is this the first state in a production?
+				Nat first() const {
+					return (data & 0x1) != 0;
+				}
 
 				// Current position in the input.
 				Nat inputPos;
@@ -38,7 +51,7 @@ namespace storm {
 					if (inputPos != other.inputPos)
 						return inputPos < other.inputPos;
 					else
-						return itemId < other.itemId;
+						return itemId() < other.itemId();
 				}
 			};
 
