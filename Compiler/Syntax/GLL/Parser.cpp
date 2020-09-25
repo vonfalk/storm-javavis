@@ -95,8 +95,8 @@ namespace storm {
 				// Execute things on the stack until we're done.
 				Nat lastPos = 0;
 				while (StackItem *top = pqPop()) {
-					if (lastPos != top->inputPos) {
-						lastPos = top->inputPos;
+					if (lastPos != top->inputPos()) {
+						lastPos = top->inputPos();
 						// We arrived at a new point in the input, clear the table of what we have parsed so far!
 					}
 
@@ -107,29 +107,9 @@ namespace storm {
 			}
 
 			void Parser::parseStack(StackItem *top) {
-				PLN(L"Parse " << top->inputPos << L": " << top->iter);
+				PLN(L"Parse " << top->inputPos() << L": " << top->iter);
 
-				// Step as many regexes as possible to not load the PQ too much.
 				Token *token = top->iter.token();
-				while (token && token->asRegex()) {
-					RegexToken *regex = token->asRegex();
-					Nat matched = regex->regex.matchRaw(src, top->inputPos);
-					if (matched == Regex::NO_MATCH) {
-						// Nothing to do! Kill of this branch entirely.
-						return;
-					}
-
-					ProductionIter next = top->iter.nextShort();
-					if (next.valid()) {
-						// Use recursion if we branch. This happens at most once per production, so it is fine.
-						parseStack(create(top, top->iter.nextLong(), matched, false));
-					} else {
-						next = top->iter.nextLong();
-					}
-					top = create(top, next, matched, false);
-
-					token = top->iter.token();
-				}
 
 				// Now, we know that "token" is not a regex.
 				if (!token) {
@@ -141,14 +121,26 @@ namespace storm {
 					RuleInfo *info = findRule(rule->rule);
 					for (Nat i = 0; i < info->productions->count(); i++) {
 						Production *p = info->productions->at(i);
-						pqPush(top, p->firstLong(), top->inputPos, true);
-						pqPush(top, p->firstShort(), top->inputPos, true);
+						pqPush(top, p->firstLong(), top->inputPos(), true);
+						pqPush(top, p->firstShort(), top->inputPos(), true);
 					}
+				} else if (RegexToken *regex = token->asRegex()) {
+					// Regex.
+					// TODO: Try to step multiple regex steps without going through the PQ?
+					// This could, however, mess up the priorities.
+					Nat matched = regex->regex.matchRaw(src, top->inputPos());
+					if (matched == Regex::NO_MATCH) {
+						// Nothing to do! Kill of this branch entirely.
+						return;
+					}
+
+					pqPush(top, top->iter.nextLong(), matched, false);
+					pqPush(top, top->iter.nextShort(), matched, false);
 				}
 			}
 
 			void Parser::parseReduce(StackItem *top) {
-				Nat inputPos = top->inputPos;
+				Nat inputPos = top->inputPos();
 				PLN(L"Reducing at " << inputPos << L": " << top->iter);
 
 				// Find the length of this branch.
@@ -163,9 +155,9 @@ namespace storm {
 				for (Nat i = count; i > 0; i--) {
 					top = top->prev;
 					if (top->match) {
-						match->v[i - 1] = TreePart(top->match, top->inputPos);
+						match->v[i - 1] = TreePart(top->match, top->inputPos());
 					} else {
-						match->v[i - 1] = TreePart(top->inputPos);
+						match->v[i - 1] = TreePart(top->inputPos());
 					}
 				}
 
@@ -176,11 +168,14 @@ namespace storm {
 					// Done!
 					PLN(L"Done at " << inputPos);
 					if (inputPos > matchLast) {
+						PLN(L"Picking this one!");
 						matchTree = match;
 						matchLast = inputPos;
 					}
 					return;
 				}
+
+				PLN(L" => into " << top->iter);
 
 				// Save the match.
 				top->match = match;
@@ -232,7 +227,10 @@ namespace storm {
 			}
 
 			StackItem *Parser::create(StackItem *prev, ProductionIter iter, Nat inputPos, Bool first) {
-				return new (this) StackItem(stackId++, first, prev, iter, inputPos);
+				PLN(L"New state " << inputPos << L", " << iter);
+				// TODO: Don't use a hashtable lookup here, we can probably work around it if needed.
+				return new (this) StackItem(prodId->get(iter.production()), first, prev, iter, inputPos);
+				// return new (this) StackItem(stackId++, first, prev, iter, inputPos);
 			}
 
 			void Parser::clear() {
