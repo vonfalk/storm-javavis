@@ -24,8 +24,8 @@ namespace storm {
 				// Productions. Will eventually be ordered by priority.
 				Array<Production *> *productions;
 
-				// Add a production if it is not already present.
-				void add(ProductionType *production);
+				// Add a production. Assumed to be unique.
+				void add(Production *production);
 
 				// Make sure 'productions' is sorted.
 				void sort();

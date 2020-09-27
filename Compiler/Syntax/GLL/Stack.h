@@ -14,11 +14,16 @@ namespace storm {
 				STORM_CLASS;
 			public:
 				// Create.
-				StackItem(Nat itemId, Bool first, MAYBE(StackItem *) prev, ProductionIter iter, Nat inputPos) {
+				StackItem(Bool first, MAYBE(StackItem *) prev, ProductionIter iter, Nat inputPos) {
 					this->prev = prev;
 					this->iter = iter;
-					this->data1 = itemId;
+					this->data1 = 0;
 					this->data2 = (inputPos << 1) | Nat(first);
+
+					if (prev)
+						this->data1 = prev->depth();
+					if (first)
+						this->data1++;
 				}
 
 				// Previous item on this stack.
@@ -36,8 +41,9 @@ namespace storm {
 				// Data. Contains 'inputPos' and 'first'.
 				Nat data2;
 
-				// State id, for disambiguating productions on the same position.
-				Nat itemId() const {
+				// How "deep" in the grammar this production is. Used to ensure that we finish all
+				// possible states that may complete a particular state before proceeding.
+				Nat depth() const {
 					return data1;
 				}
 
@@ -56,7 +62,11 @@ namespace storm {
 					if (inputPos() != other.inputPos())
 						return inputPos() < other.inputPos();
 					else
-						return itemId() < other.itemId();
+						// When de-duplicating states, this should maybe be the other way, so that
+						// we exhaust all possibilities towards the root of the tree first, for
+						// maximum deduplication possibilities, so that our priority comparison can
+						// be used for maximum benefit.
+						return depth() > other.depth();
 				}
 			};
 

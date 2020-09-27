@@ -11,7 +11,8 @@ namespace storm {
 
 				rules = new (this) Array<RuleInfo *>();
 				ruleId = new (this) Map<Rule *, Nat>();
-				prodId = new (this) Map<Production *, Nat>();
+				productions = new (this) Array<Production *>();
+				productionId = new (this) Map<Production *, Nat>();
 				syntaxPrepared = false;
 
 				clear();
@@ -26,6 +27,16 @@ namespace storm {
 			}
 
 			void Parser::add(ProductionType *prod) {
+				Production *p = prod->production;
+
+				// No duplicates.
+				if (productionId->has(p))
+					return;
+
+				productionId->put(p, productions->count());
+				productions->push(p);
+
+				// Add it to the rules for sorting and lookup.
 				Rule *rule = prod->rule();
 				Nat id = ruleId->get(rule, rules->count());
 				if (id >= rules->count()) {
@@ -34,8 +45,9 @@ namespace storm {
 				}
 
 				RuleInfo *info = rules->at(id);
-				info->add(prod);
+				info->add(p);
 
+				// Remember that we need to sort the data before parsing.
 				syntaxPrepared = false;
 			}
 
@@ -62,6 +74,7 @@ namespace storm {
 			}
 
 			Bool Parser::parse(Rule *root, Str *str, Url *file, Str::Iter start) {
+				// var x = spawn foo
 				prepare(str, file);
 				PVAR(str);
 
@@ -69,7 +82,6 @@ namespace storm {
 				if (!rule)
 					return false;
 
-				matchRule = ruleId->get(root);
 				matchFirst = start.offset();
 				matchLast = 0;
 
@@ -98,6 +110,7 @@ namespace storm {
 					if (lastPos != top->inputPos()) {
 						lastPos = top->inputPos();
 						// We arrived at a new point in the input, clear the table of what we have parsed so far!
+						PLN(L"New position: " << lastPos);
 					}
 
 					// TODO: If we have already seen this StackItem, don't parse it again!
@@ -107,9 +120,27 @@ namespace storm {
 			}
 
 			void Parser::parseStack(StackItem *top) {
-				PLN(L"Parse " << top->inputPos() << L": " << top->iter);
+				PLN(L"Parse " << top->inputPos() << L", " << top->depth() << L": " << top->iter);
 
-				Token *token = top->iter.token();
+				Token *token;
+				RegexToken *regex;
+				while ((token = top->iter.token()) && (regex = token->asRegex())) {
+					// Try to step multiple regex steps without going through the PQ, so that we
+					// don't have to use the PQ for these states, reducing the required time.
+					Nat matched = regex->regex.matchRaw(src, top->inputPos());
+					if (matched == Regex::NO_MATCH) {
+						// Nothing to do! Kill of this branch entirely.
+						return;
+					}
+
+					StackItem *next = create(top, top->iter.nextLong(), matched, false);
+
+					// Save the short for later, if it is present.
+					pqPush(top, top->iter.nextShort(), matched, false);
+
+					// Advance.
+					top = next;
+				}
 
 				// Now, we know that "token" is not a regex.
 				if (!token) {
@@ -124,18 +155,6 @@ namespace storm {
 						pqPush(top, p->firstLong(), top->inputPos(), true);
 						pqPush(top, p->firstShort(), top->inputPos(), true);
 					}
-				} else if (RegexToken *regex = token->asRegex()) {
-					// Regex.
-					// TODO: Try to step multiple regex steps without going through the PQ?
-					// This could, however, mess up the priorities.
-					Nat matched = regex->regex.matchRaw(src, top->inputPos());
-					if (matched == Regex::NO_MATCH) {
-						// Nothing to do! Kill of this branch entirely.
-						return;
-					}
-
-					pqPush(top, top->iter.nextLong(), matched, false);
-					pqPush(top, top->iter.nextShort(), matched, false);
 				}
 			}
 
@@ -143,35 +162,47 @@ namespace storm {
 				Nat inputPos = top->inputPos();
 				PLN(L"Reducing at " << inputPos << L": " << top->iter);
 
-				// Find the length of this branch.
+				// Find the length of this branch, and the new top.
+				StackItem *newTop;
 				Nat count = 0;
-				for (StackItem *at = top; !at->first(); at = at->prev)
+				for (newTop = top; !newTop->first(); newTop = newTop->prev)
 					count++;
+
+				// Skip this one as well.
+				newTop = newTop->prev;
+
+				// Is a rule with higher priority than us already there?
+				if (newTop) {
+					if (!updateMatch(newTop->match, newTop->inputPos(), top->iter.production(), inputPos))
+						return;
+				} else {
+					if (!updateMatch(matchTree, matchLast, top->iter.production(), inputPos))
+						return;
+				}
 
 				// Create a Tree-array for this branch.
 				GcArray<TreePart> *match = runtime::allocArray<TreePart>(engine(), treeArrayType, count);
-				match->filled = prodId->get(top->iter.production());
+				match->filled = productionId->get(top->iter.production());
 
+				StackItem *at = top;
 				for (Nat i = count; i > 0; i--) {
-					top = top->prev;
-					if (top->match) {
-						match->v[i - 1] = TreePart(top->match, top->inputPos());
+					at = at->prev;
+					if (at->match) {
+						match->v[i - 1] = TreePart(at->match, at->inputPos());
 					} else {
-						match->v[i - 1] = TreePart(top->inputPos());
+						match->v[i - 1] = TreePart(at->inputPos());
 					}
 				}
 
-				// Skip the first one as well.
-				top = top->prev;
+				// Advance to the previously computed new state.
+				top = newTop;
 
+				// Are we done?
 				if (!top) {
 					// Done!
 					PLN(L"Done at " << inputPos);
-					if (inputPos > matchLast) {
-						PLN(L"Picking this one!");
-						matchTree = match;
-						matchLast = inputPos;
-					}
+					matchTree = match;
+					matchLast = inputPos;
 					return;
 				}
 
@@ -183,6 +214,16 @@ namespace storm {
 				// Add new states.
 				pqPush(top, top->iter.nextLong(), inputPos, false);
 				pqPush(top, top->iter.nextShort(), inputPos, false);
+			}
+
+			bool Parser::updateMatch(Tree *prev, Nat prevPos, Production *current, Nat currentPos) {
+				// If no previous match, or if the previous match was shorter (we're always greedy), update!
+				if (!prev || prevPos < currentPos)
+					return true;
+
+				// If we're at the same position, then we need to worry about priorities.
+				Production *p = productions->at(prev->filled);
+				return p->priority < current->priority;
 			}
 
 			struct PQCompare {
@@ -228,9 +269,7 @@ namespace storm {
 
 			StackItem *Parser::create(StackItem *prev, ProductionIter iter, Nat inputPos, Bool first) {
 				PLN(L"New state " << inputPos << L", " << iter);
-				// TODO: Don't use a hashtable lookup here, we can probably work around it if needed.
-				return new (this) StackItem(prodId->get(iter.production()), first, prev, iter, inputPos);
-				// return new (this) StackItem(stackId++, first, prev, iter, inputPos);
+				return new (this) StackItem(first, prev, iter, inputPos);
 			}
 
 			void Parser::clear() {
@@ -265,7 +304,7 @@ namespace storm {
 			}
 
 			Node *Parser::tree() const {
-				Node *n = tree(rules->at(matchRule), matchTree, matchFirst, matchLast);
+				Node *n = tree(matchTree, matchFirst, matchLast);
 				PVAR(n);
 				return n;
 			}
@@ -274,7 +313,7 @@ namespace storm {
 				if (!hasTree())
 					return null;
 
-				return infoTree(rules->at(matchRule), matchTree, matchLast);
+				return infoTree(matchTree, matchLast);
 			}
 
 			Nat Parser::stateCount() const {
@@ -298,17 +337,9 @@ namespace storm {
 				if (syntaxPrepared)
 					return;
 
-				prodId = new (this) Map<Production *, Nat>();
-				Nat maxProdId = 0;
 				for (Nat i = 0; i < rules->count(); i++) {
 					RuleInfo *info = rules->at(i);
 					info->sort();
-
-					for (Nat j = 0; j < info->productions->count(); j++) {
-						prodId->put(info->productions->at(j), j);
-					}
-
-					maxProdId = max(maxProdId, info->productions->count());
 				}
 
 				syntaxPrepared = true;
@@ -337,15 +368,9 @@ namespace storm {
 				if (!token->target)
 					return;
 
-				PVAR(token);
-				PVAR(part.isRule());
 				if (part.isRule()) {
 					// Nonterminal.
-					RuleToken *rToken = token->asRule();
-					dbg_assert(rToken, L"Must be a rule!");
-					RuleInfo *info = findRule(rToken->rule);
-					dbg_assert(info, L"Must be present!");
-					Node *t = tree(info, part.match, part.startPos, last);
+					Node *t = tree(part.match, part.startPos, last);
 					setValue(into, token->target, t);
 				} else {
 					// It is a terminal symbol. Extract the string.
@@ -357,15 +382,14 @@ namespace storm {
 				}
 			}
 
-			Node *Parser::tree(RuleInfo *rule, Tree *root, Nat firstPos, Nat lastPos) const {
-				Production *p = rule->productions->at(root->filled);
+			Node *Parser::tree(Tree *root, Nat firstPos, Nat lastPos) const {
+				Production *p = productions->at(root->filled);
 				Nat repCount = p->repetitionsFor(root->count);
 				Node *result = allocNode(p, firstPos, lastPos);
 
 				Nat repStart = firstPos;
 				Nat repEnd = lastPos;
 				ProductionIter at = p->firstFixed(repCount);
-				PVAR(at);
 				for (Nat i = 0; i < root->count; i++) {
 					// Remember the captured part (if any). Note: This does not need to work with
 					// repeating stuff, as that combination is not currently supported.
@@ -419,8 +443,8 @@ namespace storm {
 				return r;
 			}
 
-			InfoNode *Parser::infoTree(RuleInfo *rule, Tree *root, Nat lastPos) const {
-				Production *p = rule->productions->at(root->filled);
+			InfoNode *Parser::infoTree(Tree *root, Nat lastPos) const {
+				Production *p = productions->at(root->filled);
 				Nat repCount = p->repetitionsFor(root->count);
 				InfoInternal *result = new (this) InfoInternal(p, root->count);
 
@@ -436,9 +460,7 @@ namespace storm {
 						TreePart &part = root->v[i];
 						InfoNode *created = null;
 						if (part.isRule()) {
-							RuleToken *token = t->asRule();
-							dbg_assert(token, L"Should be a rule!");
-							created = infoTree(findRule(token->rule), part.match, next);
+							created = infoTree(part.match, next);
 						} else {
 							Str::Iter start = src->posIter(part.startPos);
 							Str::Iter end = src->posIter(next);

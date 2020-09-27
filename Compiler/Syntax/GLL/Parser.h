@@ -98,8 +98,11 @@ namespace storm {
 				// Remember which rules belong where.
 				Map<Rule *, Nat> *ruleId;
 
-				// ID of each production in a rule. Updated when productions are sorted.
-				Map<Production *, Nat> *prodId;
+				// Array of all productions.
+				Array<Production *> *productions;
+
+				// ID of each production.
+				Map<Production *, Nat> *productionId;
 
 				// Syntax prepared for parsing?
 				Bool syntaxPrepared;
@@ -119,6 +122,10 @@ namespace storm {
 				// "reduce" the current stack (this is not LL terminology, but it is similar enough
 				// to reduce in LR parsers).
 				void parseReduce(StackItem *top);
+
+				// Decide if the new match produced by the given production at the given location
+				// has precedence over the old one.
+				bool updateMatch(Tree *prev, Nat prevPos, Production *current, Nat currentPos);
 
 				/**
 				 * Parser state.
@@ -167,17 +174,13 @@ namespace storm {
 				Nat matchFirst;
 				Nat matchLast;
 
-				// Rule and production ID matched.
-				Nat matchRule;
-				Nat matchProd;
-
 
 				/**
 				 * Extract a parse tree.
 				 */
 
 				// Create a node for a nonterminal.
-				Node *tree(RuleInfo *rule, Tree *root, Nat firstPos, Nat lastPos) const;
+				Node *tree(Tree *root, Nat firstPos, Nat lastPos) const;
 
 				// Create a node for a terminal or a non-terminal, and save it inside a node.
 				void setNode(Node *into, Token *token, TreePart part, Nat lastPos) const;
@@ -186,7 +189,7 @@ namespace storm {
 				Node *allocNode(Production *from, Nat start, Nat end) const;
 
 				// Create a node for an info-tree.
-				InfoNode *infoTree(RuleInfo *rule, Tree *root, Nat lastPos) const;
+				InfoNode *infoTree(Tree *root, Nat lastPos) const;
 			};
 
 		}

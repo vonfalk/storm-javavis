@@ -9,14 +9,8 @@ namespace storm {
 				productions = new (this) Array<Production *>();
 			}
 
-			void RuleInfo::add(ProductionType *production) {
-				// A linear search is probably good enough for now. We can easily optimize it if it
-				// turns out to be a bottleneck.
-				Production *p = production->production;
-				for (Nat i = 0; i < productions->count(); i++)
-					if (productions->at(i) == p)
-						return;
-
+			void RuleInfo::add(Production *p) {
+				// The parser checks for uniqueness.
 				productions->push(p);
 			}
 
