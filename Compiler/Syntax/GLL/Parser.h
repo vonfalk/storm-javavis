@@ -147,21 +147,33 @@ namespace storm {
 				// priority is processed first in the priority queue.
 				Nat stackId;
 
+				// Current offset in the input. I.e. "seen" is valid for this location.
+				Nat currentPos;
+
+				// Location where each of the terminals were instansiated at "currentPos". Size is
+				// 2*number of productions to accommodate for the two possible starting points.
+				Array<StackItem *> *currentStacks;
+
 				// Initialize the priority queue for a parse.
 				void pqInit();
 
 				// Push an element on the priority queue.
 				void pqPush(StackItem *item);
 
-				// Push a new item, creating the item as well. 'first' indicates if this is the
-				// first state in a production or not.
-				void pqPush(StackItem *prev, ProductionIter iter, Nat inputPos, Bool first);
+				// Push a new item, creating the item as well.
+				void pqPush(StackItem *prev, ProductionIter iter, Nat inputPos);
+
+				// Push an item that is to be used as the first item in a new production. This item
+				// is subject to de-duplication. Note: 'inputPos' must be equal to the current
+				// position. Otherwise, we will fail de-duplication. If 'second' is true, this is
+				// the B alternative (firstShort) of the production.
+				void pqPushFirst(StackItem *prev, ProductionIter iter, Bool second);
 
 				// Pop the top element of the priority queue. Returns null if empty.
 				StackItem *pqPop();
 
-				// Create a stack item.
-				StackItem *create(StackItem *prev, ProductionIter iter, Nat inputPos, Bool first);
+				// Create a stack item for use immediately. We assume 'iter' is valid.
+				StackItem *create(StackItem *prev, ProductionIter iter, Nat inputPos);
 
 				/**
 				 * Parser results.

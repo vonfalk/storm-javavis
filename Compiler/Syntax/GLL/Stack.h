@@ -15,10 +15,10 @@ namespace storm {
 			public:
 				// Create.
 				StackItem(Bool first, MAYBE(StackItem *) prev, ProductionIter iter, Nat inputPos) {
-					this->prev = prev;
+					this->prevData = prev;
 					this->iter = iter;
 					this->data1 = 0;
-					this->data2 = (inputPos << 1) | Nat(first);
+					this->data2 = (inputPos << 2) | (Nat(first) << 1);
 
 					if (prev)
 						this->data1 = prev->depth();
@@ -26,20 +26,53 @@ namespace storm {
 						this->data1++;
 				}
 
-				// Previous item on this stack.
-				MAYBE(StackItem *) prev;
-
 				// What did this production match? Used only for nonterminals.
 				GcArray<TreePart> *match;
 
 				// Current position in the grammar.
 				ProductionIter iter;
 
-				// Data. Contains 'itemId'.
-				Nat data1;
+				// Get number of previous nodes.
+				Nat prevCount() const {
+					if (!multi())
+						return prevData ? 1 : 0;
+					else
+						return ((GcArray<StackItem *> *)prevData)->filled;
+				}
 
-				// Data. Contains 'inputPos' and 'first'.
-				Nat data2;
+				// Get the previous node at id.
+				StackItem *prev(Nat id) const {
+					if (!multi())
+						return (StackItem *)prevData;
+					else
+						return ((GcArray<StackItem *> *)prevData)->v[id];
+				}
+
+				// Add another previous node.
+				void prevPush(StackItem *item) {
+					if (!prevData) {
+						prevData = item;
+					} else if (!multi()) {
+						Engine &e = item->engine();
+						GcArray<StackItem *> *array = runtime::allocArray<StackItem *>(e, &pointerArrayType, 10);
+						array->filled = 2;
+						array->v[0] = (StackItem *)prevData;
+						array->v[1] = item;
+						prevData = array;
+						data2 |= 0x1;
+					} else {
+						GcArray<StackItem *> *array = (GcArray<StackItem *> *)prevData;
+						if (array->filled >= array->count) {
+							Engine &e = item->engine();
+							GcArray<StackItem *> *n = runtime::allocArray<StackItem *>(e, &pointerArrayType, array->count * 2);
+							memcpy(n->v, array->v, array->filled*sizeof(StackItem *));
+							array = n;
+							prevData = n;
+						}
+
+						array->v[array->filled++] = item;
+					}
+				}
 
 				// How "deep" in the grammar this production is. Used to ensure that we finish all
 				// possible states that may complete a particular state before proceeding.
@@ -48,13 +81,13 @@ namespace storm {
 				}
 
 				// Is this the first state in a production?
-				Nat first() const {
-					return (data2 & 0x1) != 0;
+				Bool first() const {
+					return (data2 & 0x2) != 0;
 				}
 
 				// Current position in the input.
 				Nat inputPos() const {
-					return data2 >> 1;
+					return data2 >> 2;
 				}
 
 				// Comparison in the priority queue.
@@ -67,6 +100,23 @@ namespace storm {
 						// maximum deduplication possibilities, so that our priority comparison can
 						// be used for maximum benefit.
 						return depth() > other.depth();
+				}
+
+			private:
+				// Either a stack item, or a pointer to an array of stack items, depending on if
+				// "multi" is true or false.
+				UNKNOWN(PTR_GC) void *prevData;
+
+				// Data. Contains 'itemId'.
+				Nat data1;
+
+				// Data. Contains 'inputPos' (high 30 bits), 'first' (bit 1), and 'multi' (bit 0).
+				Nat data2;
+
+
+				// Containing multiple "prev"?
+				Bool multi() const {
+					return (data2 & 0x1) != 0;
 				}
 			};
 
