@@ -289,7 +289,7 @@ Token Tokenizer::peek() {
 void Tokenizer::expect(const String &t) {
 	Token tok = next();
 	if (tok.token != t)
-		throw Error(L"Expected " + t + L" but got " + tok.token, tok.pos);
+		throw Error(L"Expected " + t + L" but got " + tok.token + L".", tok.pos);
 }
 
 bool Tokenizer::skipIf(const String &t) {

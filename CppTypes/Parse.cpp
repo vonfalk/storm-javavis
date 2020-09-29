@@ -174,6 +174,52 @@ static void skipAlignAs(Tokenizer &tok) {
 	}
 }
 
+// Skip an initializer list for a constructor. Assumes we have just consumed the ":".
+static void skipInitList(Tokenizer &tok) {
+	do {
+		tok.skip(); // variable name to initialize.
+
+		nat parens = 0;
+		nat braces = 0;
+		Token t = tok.next();
+		if (t.token == L"(") {
+			parens++;
+		} else if (t.token == L"{") {
+			braces++;
+		} else {
+			throw Error(L"Expected ( or {, but got " + t.token + L".", t.pos);
+		}
+
+		// This is the tricky part. We don't really want to attempt to parse arbitrary C++
+		// expressions. Thus, we fall back to counting the number of () and {} and end when we find a
+		// corresponding closing tag for the start token. We don't bother to make sure they are matched:
+		// the C++ compiler will do that anyway. As long as we manage to skip correct initializer lists
+		// that are not too complicated, we're happy.
+		while (parens > 0 && parens > 0) {
+			Token t = tok.next();
+			if (t.token == L"(") {
+				parens++;
+			} else if (t.token == L"{") {
+				braces++;
+			} else if (t.token == L"}") {
+				if (braces > 0)
+					braces--;
+				else
+					throw Error(L"Unexpected }.", t.pos);
+			} else if (t.token == L")") {
+				if (parens > 0)
+					parens--;
+				else
+					throw Error(L"Unexpected ).", t.pos);
+			}
+		}
+
+		// When we get here, we will either get a comma, meaning another initializer in the list, or a
+		// {, meaning we're done. We need to make sure not to consume the {, so we don't really check
+		// for it and leave that to the caller.
+	} while (tok.skipIf(L","));
+}
+
 // Parse a variable or function.
 static void parseMember(Tokenizer &tok, ParseEnv &env, Namespace &addTo, Access access, bool isStatic) {
 	if (!tok.more() || tok.skipIf(L";"))
@@ -218,6 +264,8 @@ static void parseMember(Tokenizer &tok, ParseEnv &env, Namespace &addTo, Access 
 	// Other markers...
 	tok.skipIf(L"CODECALL");
 
+	bool isCtor = false;
+
 	name.pos = type->pos;
 	String stormName;
 	if (tok.peek().token != L"(") {
@@ -255,6 +303,7 @@ static void parseMember(Tokenizer &tok, ParseEnv &env, Namespace &addTo, Access 
 		}
 	} else if (name.token != Function::dtor) {
 		// Constructor
+		isCtor = true;
 		type = new NamedType(name.pos, L"void");
 		name.token = Function::ctor;
 	}
@@ -309,6 +358,8 @@ static void parseMember(Tokenizer &tok, ParseEnv &env, Namespace &addTo, Access 
 			} else if (tok.skipIf(L"final")) {
 				// This means 'final'.
 				f.clear(Function::isVirtual);
+			} else if (isCtor && tok.skipIf(L":")) {
+				skipInitList(tok);
 			} else {
 				throw Error(L"Unsupported function modifier: " + tok.peek().token, tok.peek().pos);
 			}
