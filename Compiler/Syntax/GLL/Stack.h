@@ -7,118 +7,191 @@ namespace storm {
 		namespace gll {
 			STORM_PKG(lang.bnf.gll);
 
+			class StackFirst;
+			class StackRule;
+
 			/**
 			 * An item on the LL stack.
+			 *
+			 * This is used for states that are not the first one in a production. For those, we use
+			 * the subclass StackFirst instead.
+			 *
+			 * The main difference is that StackFirst need to keep track of a bit more state (if
+			 * this production was finished yet, and possibly multiple previous nodes).
 			 */
 			class StackItem : public Object {
 				STORM_CLASS;
 			public:
 				// Create.
-				StackItem(Bool first, MAYBE(StackItem *) prev, ProductionIter iter, Nat inputPos) {
-					this->prevData = prev;
-					this->iter = iter;
-					this->data1 = 0;
-					this->data2 = (inputPos << 2) | (Nat(first) << 1);
-
+				StackItem(MAYBE(StackItem *) prev, ProductionIter iter, Nat inputPos)
+					: prev(prev), iter(iter), data1(inputPos << 2) {
 					if (prev)
-						this->data1 = prev->depth();
-					if (first)
-						this->data1++;
+						myDepth = prev->depth();
 				}
 
-				// What did this production match? Used only for nonterminals.
-				GcArray<TreePart> *match;
+				// Previous item, if any. Note: If this is a StackFirst, then there may be more of
+				// these accessible through the interface in StackMore.
+				MAYBE(StackItem *) prev;
 
 				// Current position in the grammar.
 				ProductionIter iter;
 
-				// Get number of previous nodes.
-				Nat prevCount() const {
-					if (!multi())
-						return prevData ? 1 : 0;
-					else
-						return ((GcArray<StackItem *> *)prevData)->filled;
+				// Input position.
+				Nat inputPos() const {
+					return data1 >> 2;
 				}
 
-				// Get the previous node at id.
-				StackItem *prev(Nat id) const {
-					if (!multi())
-						return (StackItem *)prevData;
+				// Cast to a StackFirst.
+				StackFirst *asFirst() {
+					if (data1 & 0x1)
+						// Sorry, StackFirst is not defined yet.
+						return reinterpret_cast<StackFirst *>(this);
 					else
-						return ((GcArray<StackItem *> *)prevData)->v[id];
+						return null;
+				}
+
+				// Cast to a StackRule.
+				StackRule *asRule() {
+					if (data1 & 0x2)
+						// Sorry, StackRule is not defined yet.
+						return reinterpret_cast<StackRule *>(this);
+					else
+						return null;
+				}
+
+				// Get the tree here, if any.
+				GcArray<TreePart> *match() const;
+
+				// Get our depth.
+				Nat depth() const {
+					return myDepth;
+				}
+
+				// Compare items for the priority queue.
+				Bool operator <(const StackItem &o) const {
+					if (inputPos() != o.inputPos())
+						return inputPos() < o.inputPos();
+					else
+						return myDepth < o.myDepth;
+				}
+
+			protected:
+				// Set this class as a StackFirst.
+				void setFirst() {
+					data1 |= 0x1;
+				}
+
+				// Set this class as a StackRule.
+				void setRule() {
+					data1 |= 0x2;
+				}
+
+				// Depth of this node. Approximately, how deep the tree is. Used for ordering the priority queue.
+				// TODO: When the deduplication is working properly, we might not need this anymore.
+				Nat myDepth;
+
+			private:
+				// Data. Stores "inputPos" in topmost 30 bits, then if we're a StackRule, then if we're a StackFirst.
+				Nat data1;
+			};
+
+
+			/**
+			 * An item that represents a nonterminal match.
+			 *
+			 * The nonterminal "prev->iter.token()" was matched, and the result is contained in "match".
+			 */
+			class StackRule : public StackItem {
+				STORM_CLASS;
+			public:
+				// Create.
+				StackRule(MAYBE(StackItem *) prev, ProductionIter iter, Nat inputPos, GcArray<TreePart> *match)
+					: StackItem(prev, iter, inputPos), match(match) {
+					setRule();
+				}
+
+				// The match.
+				GcArray<TreePart> *match;
+			};
+
+
+			/**
+			 * An item that is the first item in a sequence.
+			 *
+			 * This one stores some additional information. Among others, what this entire
+			 * production expanded to (for a given ending position), and possibly multiple previous
+			 * states.
+			 */
+			class StackFirst : public StackItem {
+				STORM_CLASS;
+			public:
+				// Create.
+				StackFirst(MAYBE(StackItem *) prev, ProductionIter iter, Nat inputPos)
+					: StackItem(prev, iter, inputPos) {
+					setFirst();
+					if (prev)
+						myDepth = prev->depth() + 1;
+				}
+
+				// The current longest location this sequence matched.
+				Nat matchEnd;
+
+				// The current match, if any.
+				GcArray<TreePart> *match;
+
+				// Number of nodes here.
+				Nat prevCount() const {
+					if (morePrev)
+						return morePrev->filled + 1;
+					else if (prev)
+						return 1;
+					else
+						return 0;
+				}
+
+				// Get node with index.
+				StackItem *prevAt(Nat id) const {
+					if (id == 0)
+						return prev;
+					else
+						return morePrev->v[id];
 				}
 
 				// Add another previous node.
 				void prevPush(StackItem *item) {
-					if (!prevData) {
-						prevData = item;
-					} else if (!multi()) {
-						Engine &e = item->engine();
-						GcArray<StackItem *> *array = runtime::allocArray<StackItem *>(e, &pointerArrayType, 10);
-						array->filled = 2;
-						array->v[0] = (StackItem *)prevData;
-						array->v[1] = item;
-						prevData = array;
-						data2 |= 0x1;
-					} else {
-						GcArray<StackItem *> *array = (GcArray<StackItem *> *)prevData;
-						if (array->filled >= array->count) {
-							Engine &e = item->engine();
-							GcArray<StackItem *> *n = runtime::allocArray<StackItem *>(e, &pointerArrayType, array->count * 2);
-							memcpy(n->v, array->v, array->filled*sizeof(StackItem *));
-							array = n;
-							prevData = n;
-						}
-
-						array->v[array->filled++] = item;
+					if (!prev) {
+						prev = item;
+						return;
 					}
-				}
 
-				// How "deep" in the grammar this production is. Used to ensure that we finish all
-				// possible states that may complete a particular state before proceeding.
-				Nat depth() const {
-					return data1;
-				}
+					if (morePrev == null) {
+						morePrev = runtime::allocArray<StackItem *>(engine(), &pointerArrayType, 10);
+					} else if (morePrev->filled >= morePrev->count) {
+						GcArray<StackItem *> *n =
+							runtime::allocArray<StackItem *>(engine(), &pointerArrayType, morePrev->count * 2);
+						memcpy(n->v, morePrev->v, sizeof(StackItem *) * morePrev->count);
+						n->filled = morePrev->filled;
+						morePrev = n;
+					}
 
-				// Is this the first state in a production?
-				Bool first() const {
-					return (data2 & 0x2) != 0;
-				}
-
-				// Current position in the input.
-				Nat inputPos() const {
-					return data2 >> 2;
-				}
-
-				// Comparison in the priority queue.
-				Bool operator <(const StackItem &other) const {
-					if (inputPos() != other.inputPos())
-						return inputPos() < other.inputPos();
-					else
-						// When de-duplicating states, this should maybe be the other way, so that
-						// we exhaust all possibilities towards the root of the tree first, for
-						// maximum deduplication possibilities, so that our priority comparison can
-						// be used for maximum benefit.
-						return depth() > other.depth();
+					morePrev->v[morePrev->filled++] = item;
 				}
 
 			private:
-				// Either a stack item, or a pointer to an array of stack items, depending on if
-				// "multi" is true or false.
-				UNKNOWN(PTR_GC) void *prevData;
-
-				// Data. Contains 'itemId'.
-				Nat data1;
-
-				// Data. Contains 'inputPos' (high 30 bits), 'first' (bit 1), and 'multi' (bit 0).
-				Nat data2;
-
-
-				// Containing multiple "prev"?
-				Bool multi() const {
-					return (data2 & 0x1) != 0;
-				}
+				// More previous nodes. This is in addition to 'prev' in the base class. This might
+				// be null if it is not needed.
+				GcArray<StackItem *> *morePrev;
 			};
+
+
+			inline GcArray<TreePart> *StackItem::match() const {
+				if (data1 & 0x2)
+					// Sorry, StackRule is not defined yet.
+					return reinterpret_cast<const StackRule *>(this)->match;
+				else
+					return null;
+			}
+
 
 		}
 	}
