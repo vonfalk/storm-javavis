@@ -152,7 +152,7 @@ namespace storm {
 
 				// Location where each of the terminals were instansiated at "currentPos". Size is
 				// 2*number of productions to accommodate for the two possible starting points.
-				Array<StackItem *> *currentStacks;
+				Array<StackFirst *> *currentStacks;
 
 				// Initialize the priority queue for a parse.
 				void pqInit();
@@ -160,20 +160,22 @@ namespace storm {
 				// Push an element on the priority queue.
 				void pqPush(StackItem *item);
 
-				// Push a new item, creating the item as well.
-				void pqPush(StackItem *prev, ProductionIter iter, Nat inputPos);
+				// Push a nonterminal stack item to the PQ.
+				void pqPushRegex(StackItem *prev, ProductionIter iter, Nat inputPos);
+
+				// Push a terminal stack item to the PQ.
+				void pqPushTerminal(StackItem *prev, ProductionIter iter, Nat inputPos, GcArray<TreePart> *match);
 
 				// Push an item that is to be used as the first item in a new production. This item
 				// is subject to de-duplication. Note: 'inputPos' must be equal to the current
 				// position. Otherwise, we will fail de-duplication. If 'second' is true, this is
 				// the B alternative (firstShort) of the production.
+				// TODO: Figure out how to get rid of 'second', it hinders our deduplication of states a bit.
 				void pqPushFirst(StackItem *prev, ProductionIter iter, Bool second);
 
 				// Pop the top element of the priority queue. Returns null if empty.
 				StackItem *pqPop();
 
-				// Create a stack item for use immediately. We assume 'iter' is valid.
-				StackItem *create(StackItem *prev, ProductionIter iter, Nat inputPos);
 
 				/**
 				 * Parser results.

@@ -143,13 +143,12 @@ namespace storm {
 				Nat prevCount() const {
 					if (morePrev)
 						return morePrev->filled + 1;
-					else if (prev)
-						return 1;
 					else
-						return 0;
+						return 1;
 				}
 
 				// Get node with index.
+				// Note that we might return 'null' for index 0 to indicate the start production.
 				StackItem *prevAt(Nat id) const {
 					if (id == 0)
 						return prev;
@@ -159,10 +158,7 @@ namespace storm {
 
 				// Add another previous node.
 				void prevPush(StackItem *item) {
-					if (!prev) {
-						prev = item;
-						return;
-					}
+					// If 'prev' was null, then this is the start production. We need to remember that.
 
 					if (morePrev == null) {
 						morePrev = runtime::allocArray<StackItem *>(engine(), &pointerArrayType, 10);
