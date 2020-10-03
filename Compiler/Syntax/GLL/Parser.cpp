@@ -77,7 +77,7 @@ namespace storm {
 			Bool Parser::parse(Rule *root, Str *str, Url *file, Str::Iter start) {
 				// var x = spawn foo
 				prepare(str, file);
-				PVAR(str);
+				// PVAR(str);
 
 				RuleInfo *rule = findRule(root);
 				if (!rule)
@@ -86,7 +86,7 @@ namespace storm {
 				matchFirst = start.offset();
 				matchLast = 0;
 
-				PLN(L"Parsing...");
+				// PLN(L"Parsing...");
 				parse(rule, start.offset());
 
 				return matchTree != null;
@@ -118,7 +118,7 @@ namespace storm {
 						for (Nat i = 0; i < currentStacks->count(); i++)
 							currentStacks->at(i) = null;
 
-						PLN(L"New position: " << currentPos);
+						// PLN(L"New position: " << currentPos);
 					}
 
 					parseStack(top);
@@ -129,7 +129,7 @@ namespace storm {
 				if (!top)
 					return;
 
-				PLN(L"Parse " << top);
+				// PLN(L"Parse " << top);
 
 				// This is a nice optimization, but it makes it a lot harder to reason about when
 				// things happen. Currently, we require that new rules are instantiated at the
@@ -199,7 +199,7 @@ namespace storm {
 				for (StackItem *at = top->prev; !(first = at->asFirst()); at = at->prev)
 					count++;
 
-				PLN(L"At " << matchEnd << L", (" << (void *)first <<  L") reducing " << top->production);
+				// PLN(L"At " << matchEnd << L", (" << (void *)first <<  L") reducing " << top->production);
 
 				// What shall we do with this match? There are three major cases:
 				// 1: This is the first match, then we shall simply accept it.
@@ -235,7 +235,6 @@ namespace storm {
 				Bool done = false;
 				if (!first->match) {
 					// Case #1 - no prior match.
-					PLN(L"Case 1");
 					for (Nat i = 0; i < count; i++) {
 						StackRule *prev = first->prevAt(i);
 						if (prev) {
@@ -255,7 +254,6 @@ namespace storm {
 						if (compare(first->match, match) >= 0)
 							return;
 
-					PLN(L"Case 2");
 					for (Nat i = 0; i < count; i++) {
 						StackRule *prev = first->prevAt(i);
 						if (prev) {
@@ -292,7 +290,7 @@ namespace storm {
 
 				if (done) {
 					// Done!
-					PLN(L"Done at " << matchEnd);
+					// PLN(L"Done at " << matchEnd);
 					matchTree = match;
 					matchLast = matchEnd;
 				}
@@ -318,7 +316,6 @@ namespace storm {
 				// would mean that the GC will be unable to reclaim a large number of states that
 				// represent the "current best match", which will probably impact performance.
 				TreePart &part = first->match->v[index];
-				PLN(L"Checking to update index " << index << L" in " << (void *)first << L", " << first->match << L": " << part.match << L" <=> " << update->match);
 				if (part.match == update->match)
 					part.match = newMatch;
 			}
@@ -388,7 +385,7 @@ namespace storm {
 
 			void Parser::pqPush(MAYBE(StackItem *) prev, ProductionIter iter, Nat inputPos) {
 				if (StackItem *created = create(prev, iter, inputPos)) {
-					PLN(L"Push " << created);
+					// PLN(L"Push " << created);
 					pqPush(created);
 				}
 			}
@@ -398,7 +395,7 @@ namespace storm {
 				Nat id = ruleId->get(rule);
 				StackFirst *&duplicate = currentStacks->at(id);
 				if (duplicate) {
-					PLN(L"Duplicate of " << rule);
+					// PLN(L"Duplicate of " << rule);
 					duplicate->prevPush(prev);
 					if (prev && duplicate->match) {
 						// If there is already a match, then we can "reduce" this one immediately.
@@ -410,7 +407,7 @@ namespace storm {
 						pqPush(prev, prev->iter.nextShort(), duplicate->matchEnd);
 					}
 				} else {
-					PLN(L"Push first " << rule);
+					// PLN(L"Push first " << rule);
 					duplicate = new (this) StackFirst(prev, rules->at(id), prev->inputPos());
 					pqPush(duplicate);
 				}
@@ -475,7 +472,7 @@ namespace storm {
 
 			Node *Parser::tree() const {
 				Node *n = tree(matchTree, matchFirst, matchLast);
-				PVAR(n);
+				// PVAR(n);
 				return n;
 			}
 

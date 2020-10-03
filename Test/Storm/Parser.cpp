@@ -195,14 +195,14 @@ BEGIN_TEST_(ParseOrderTest, BS) {
 		CHECK_EQ(parseStr(L"SpawnExpr", L"var x = foo", i), L"x(foo)");
 		CHECK_EQ(parseStr(L"SpawnExpr", L"vvv x = foo", i), L"vvv x(foo)");
 
-		// CHECK_EQ(parseStr(L"Rec", L"a.b.c", i), L"((a)(b))(c)");
-		// CHECK_EQ(parseStr(L"Rec", L"a,b,c", i), L"(a)((b)(c))");
-		// CHECK_EQ(parseStr(L"Rec", L"a.b.c.d", i), L"(((a)(b))(c))(d)");
-		// CHECK_EQ(parseStr(L"Rec", L"a,b,c,d", i), L"(a)((b)((c)(d)))");
-		// CHECK_EQ(parseStr(L"Rec", L"a.b.c.d.e", i), L"((((a)(b))(c))(d))(e)");
-		// CHECK_EQ(parseStr(L"Rec", L"a,b,c,d,e", i), L"(a)((b)((c)((d)(e))))");
-		// CHECK_EQ(parseStr(L"Rec3", L"a.b.c.d.e.f.g", i), L"(((a)(b)(c))(d)(e))(f)(g)");
-		// CHECK_EQ(parseStr(L"Rec3", L"a,b,c,d,e,f,g", i), L"(a)(b)((c)(d)((e)(f)(g)))");
+		CHECK_EQ(parseStr(L"Rec", L"a.b.c", i), L"((a)(b))(c)");
+		CHECK_EQ(parseStr(L"Rec", L"a,b,c", i), L"(a)((b)(c))");
+		CHECK_EQ(parseStr(L"Rec", L"a.b.c.d", i), L"(((a)(b))(c))(d)");
+		CHECK_EQ(parseStr(L"Rec", L"a,b,c,d", i), L"(a)((b)((c)(d)))");
+		CHECK_EQ(parseStr(L"Rec", L"a.b.c.d.e", i), L"((((a)(b))(c))(d))(e)");
+		CHECK_EQ(parseStr(L"Rec", L"a,b,c,d,e", i), L"(a)((b)((c)((d)(e))))");
+		CHECK_EQ(parseStr(L"Rec3", L"a.b.c.d.e.f.g", i), L"(((a)(b)(c))(d)(e))(f)(g)");
+		CHECK_EQ(parseStr(L"Rec3", L"a,b,c,d,e,f,g", i), L"(a)(b)((c)(d)((e)(f)(g)))");
 
 		// Check if ()* is greedy if this fails...
 		CHECK_EQ(parseStr(L"Unless", L"a unless a b c", i), L"(a)(a(b)(c))");
