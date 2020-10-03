@@ -123,18 +123,11 @@ namespace storm {
 				// to reduce in LR parsers).
 				void parseReduce(StackEnd *top);
 
-				// Advance a Rule match as needed. Returns the rule that should replace 'advance'
-				// (or 'advance' if nothing needs to be done).
-				StackRule *advanceRule(StackRule *advance, StackFirst *match);
-
 				// Traverse the states back until we find a 'first' (similarly to reduce), and see
 				// if we need to update the match in the provided node. This happens when
 				// productions are reduced in an unfortunate order, and we need to patch the
 				// generated tree arrays in order to account for priorities correctly.
 				void updateTreeMatch(StackRule *update, Tree *newMatch);
-
-				// Update the state of the root production, i.e. remember that we have found a goal.
-				void updateGoal(Tree *match, Nat matchEnd);
 
 				/**
 				 * Parser state.

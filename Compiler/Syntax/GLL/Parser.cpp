@@ -202,7 +202,20 @@ namespace storm {
 
 				PLN(L"At " << matchEnd << L", (" << (void *)first <<  L") reducing " << top->production);
 
-				// TODO: Add early-out here to avoid creating a tree that we will throw away?
+				// What shall we do with this match? There are three major cases:
+				// 1: This is the first match, then we shall simply accept it.
+				// 2: This is not the first match, and we're at the same input position. Check priorities.
+				// 3: This is not the first match, and the input position differs. Duplicate the previous states.
+
+				if (first->match && first->matchEnd == matchEnd) {
+					// Check priority for case 2, so that we can do an early out and avoid
+					// allocations if we don't need the tree.
+					Production *oldP = productions->at(first->match->filled);
+					Production *newP = top->production;
+					PLN(L"Checking priority: " << oldP->priority << L" - " << newP->priority);
+					if (oldP->priority >= newP->priority)
+						return;
+				}
 
 				// Create a Tree-array for this branch.
 				Tree *match = runtime::allocArray<TreePart>(engine(), treeArrayType, count);
@@ -213,69 +226,65 @@ namespace storm {
 					match->v[count - 1] = TreePart(at->match(), at->inputPos());
 				}
 
-				// Store the match for future occurrences.
-				first->match = match;
-				first->matchEnd = matchEnd;
-				PLN(L"Match for " << (void *)first << L" = " << match);
-
-				// Update all previous nodes with the new, potentially better, match.
+				// Store and/or update the match.
 				count = first->prevCount();
-				for (Nat i = 0; i < count; i++) {
-					StackRule *prev = first->prevAt(i);
-					if (!prev) {
-						// We're done!
-						PLN(L"Done at " << matchEnd);
-						updateGoal(match, matchEnd);
-					} else {
-						// Update this node if we have a better match.
-						prev = advanceRule(prev, first);
-						first->prevAt(i, prev);
+				Bool done = false;
+				if (!first->match) {
+					// Case #1 - no prior match.
+					PLN(L"Case 1");
+					for (Nat i = 0; i < count; i++) {
+						StackRule *prev = first->prevAt(i);
+						if (prev) {
+							prev->match = match;
+
+							pqPush(prev, prev->iter.nextLong(), matchEnd);
+							pqPush(prev, prev->iter.nextShort(), matchEnd);
+						} else {
+							done = true;
+						}
+					}
+				} else if (first->matchEnd == matchEnd) {
+					// Case #2 - update previous match (we checked priorities earlier).
+					PLN(L"Case 2");
+					for (Nat i = 0; i < count; i++) {
+						StackRule *prev = first->prevAt(i);
+						if (prev) {
+							// Update in the previously generated Tree-array.
+							updateTreeMatch(prev, match);
+							prev->match = match;
+						} else {
+							done = true;
+						}
+					}
+				} else {
+					// Case #3 - duplicate the 'prev' state and go on, this is a new match at another position.
+					for (Nat i = 0; i < count; i++) {
+						StackRule *prev = first->prevAt(i);
+						if (prev) {
+							// Duplicate the state, and continue that chain.
+							StackRule *r = new (this) StackRule(*prev);
+							r->match = match;
+
+							pqPush(r, r->iter.nextLong(), matchEnd);
+							pqPush(r, r->iter.nextShort(), matchEnd);
+
+							// Update the list of previous states.
+							first->prevAt(i, r);
+						} else {
+							done = true;
+						}
 					}
 				}
-			}
 
-			StackRule *Parser::advanceRule(StackRule *advance, StackFirst *match) {
-				PLN(L"Advancing " << (void *)advance << L": " << advance->match << L", " << advance->matchEnd);
+				// Remember what we stored for future potentiall reductions.
+				first->match = match;
+				first->matchEnd = matchEnd;
 
-				Nat matchEnd = match->matchEnd;
-				if (!advance->match) {
-					// First time matched, no problems.
-					advance->match = match->match;
-					advance->matchEnd = matchEnd;
-
-					pqPush(advance, advance->iter.nextLong(), matchEnd);
-					pqPush(advance, advance->iter.nextShort(), matchEnd);
-
-					return advance;
-
-				} else if (advance->matchEnd == matchEnd) {
-					// Multiple matches with the same length. Pick the one with the highest priority.
-					Production *advanceP = productions->at(advance->match->filled);
-					Production *matchP = productions->at(match->match->filled);
-					PLN(L"Checking priority: " << advanceP->priority << L" - " << matchP->priority);
-					if (advanceP->priority < matchP->priority) {
-						// If we did not create new states, this production might have been
-						// completed already, and thus the 'match' at the start might contain stale
-						// information. Go back and update it!
-						updateTreeMatch(advance, match->match);
-						advance->match = match->match;
-					}
-
-					return advance;
-
-				} else {
-					// The location changed, i.e. we found a longer match. In this case we cannot
-					// reuse the state, and have to create a new one. We shall make sure to update
-					// the state inside 'match' as well.
-					StackRule *r = new (this) StackRule(*advance);
-					r->match = match->match;
-					r->matchEnd = matchEnd;
-
-					pqPush(r, r->iter.nextLong(), matchEnd);
-					pqPush(r, r->iter.nextShort(), matchEnd);
-
-					// Ask the caller to update the rule.
-					return r;
+				if (done) {
+					// Done!
+					PLN(L"Done at " << matchEnd);
+					matchTree = match;
+					matchLast = matchEnd;
 				}
 			}
 
@@ -302,26 +311,6 @@ namespace storm {
 				PLN(L"Checking to update index " << index << L" in " << (void *)first << L", " << first->match << L": " << part.match << L" <=> " << update->match);
 				if (part.match == update->match)
 					part.match = newMatch;
-			}
-
-			void Parser::updateGoal(Tree *match, Nat matchEnd) {
-				if (matchTree) {
-					// We always prefer longer matches.
-					if (matchLast >= matchEnd) {
-						Production *currP = productions->at(matchTree->filled);
-						Production *newP = productions->at(match->filled);
-
-						// Keep the one with the highest priority.
-						if (currP->priority >= newP->priority) {
-							return;
-						}
-					}
-				}
-
-				// Remember this match.
-				matchTree = match;
-				matchLast = matchEnd;
-				PLN(L"Picking this one!");
 			}
 
 			struct PQCompare {
@@ -362,13 +351,16 @@ namespace storm {
 				StackFirst *&duplicate = currentStacks->at(id);
 				if (duplicate) {
 					PLN(L"Duplicate of " << rule);
+					duplicate->prevPush(prev);
 					if (prev && duplicate->match) {
 						// If there is already a match, then we can "reduce" this one immediately.
 						// Note: We don't have to worry about getting the start state "late", as those
 						// are always pushed as the first thing in the parse.
-						prev = advanceRule(prev, duplicate);
+						prev->match = duplicate->match;
+
+						pqPush(prev, prev->iter.nextLong(), duplicate->matchEnd);
+						pqPush(prev, prev->iter.nextShort(), duplicate->matchEnd);
 					}
-					duplicate->prevPush(prev);
 				} else {
 					PLN(L"Push first " << rule);
 					duplicate = new (this) StackFirst(prev, rules->at(id), prev->inputPos());

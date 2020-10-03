@@ -176,9 +176,6 @@ namespace storm {
 
 				// Current match, if any yet.
 				GcArray<TreePart> *match;
-
-				// End of the match, if any.
-				Nat matchEnd;
 			};
 
 
