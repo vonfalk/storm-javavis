@@ -121,20 +121,20 @@ namespace storm {
 
 				// "reduce" the current stack (this is not LL terminology, but it is similar enough
 				// to reduce in LR parsers).
-				void parseReduce(StackItem *top);
+				void parseReduce(StackEnd *top);
 
-				// Advance a Rule match as needed.
-				void advanceRule(StackRule *advance, StackFirst *match);
-
-				// Decide if the new match produced by the given production at the given location
-				// has precedence over the old one.
-				bool updateMatch(Tree *prev, Nat prevPos, Production *current, Nat currentPos);
+				// Advance a Rule match as needed. Returns the rule that should replace 'advance'
+				// (or 'advance' if nothing needs to be done).
+				StackRule *advanceRule(StackRule *advance, StackFirst *match);
 
 				// Traverse the states back until we find a 'first' (similarly to reduce), and see
 				// if we need to update the match in the provided node. This happens when
 				// productions are reduced in an unfortunate order, and we need to patch the
 				// generated tree arrays in order to account for priorities correctly.
-				void updateTreeMatch(StackRule *update, GcArray<TreePart> *newMatch);
+				void updateTreeMatch(StackRule *update, Tree *newMatch);
+
+				// Update the state of the root production, i.e. remember that we have found a goal.
+				void updateGoal(Tree *match, Nat matchEnd);
 
 				/**
 				 * Parser state.
@@ -175,7 +175,7 @@ namespace storm {
 				// is subject to de-duplication. Note: 'inputPos' must be equal to the current
 				// position. Otherwise, we will fail de-duplication.
 				// TODO: Figure out how to get rid of 'second', it hinders our deduplication of states a bit.
-				void pqPushFirst(StackRule *prev, Production *production);
+				void pqPushFirst(StackRule *prev, Rule *rule);
 
 				// Pop the top element of the priority queue. Returns null if empty.
 				StackItem *pqPop();
@@ -189,7 +189,7 @@ namespace storm {
 				 */
 
 				// The entire syntax tree, if successful match.
-				Tree *matchTree;
+				UNKNOWN(PTR_GC) Tree *matchTree;
 
 				// First and last position of the match.
 				Nat matchFirst;

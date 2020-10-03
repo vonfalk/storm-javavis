@@ -1,5 +1,6 @@
 #pragma once
 #include "Compiler/Syntax/Production.h"
+#include "RuleInfo.h"
 #include "Tree.h"
 
 namespace storm {
@@ -9,6 +10,7 @@ namespace storm {
 
 			class StackMatch;
 			class StackRule;
+			class StackEnd;
 			class StackFirst;
 
 			/**
@@ -56,6 +58,14 @@ namespace storm {
 						return null;
 				}
 
+				// Cast to a StackEnd if possible.
+				StackEnd *asEnd() {
+					if ((data & tagMask) == tagEnd)
+						return (StackEnd *)this;
+					else
+						return null;
+				}
+
 				// Cast to a StackFirst if possible.
 				StackFirst *asFirst() {
 					if ((data & tagMask) == tagFirst)
@@ -66,10 +76,6 @@ namespace storm {
 
 				// Get the match from here.
 				GcArray<TreePart> *match() const;
-
-				// Get the next position.
-				ProductionIter nextLong() const;
-				ProductionIter nextShort() const;
 
 				// Compare items for the priority queue.
 				Bool operator <(const StackItem &o) const {
@@ -97,6 +103,11 @@ namespace storm {
 					data |= tagFirst;
 				}
 
+				// Set that we're a StackEnd.
+				void setEnd() {
+					data |= tagEnd;
+				}
+
 				// Add one to the depth. Called from 'stackFirst'.
 				void addDepth() {
 					myDepth++;
@@ -110,7 +121,7 @@ namespace storm {
 			private:
 				// Type tags. Note: It is important that 'tagRule' is an extension of 'tagMatch'.
 				enum {
-					tagItem = 0x00,
+					tagEnd = 0x00,
 					tagMatch = 0x01,
 					tagRule = 0x03,
 					tagFirst = 0x02,
@@ -172,11 +183,30 @@ namespace storm {
 
 
 			/**
+			 * An item that represents reaching the end of a production.
+			 */
+			class StackEnd : public StackItem {
+				STORM_CLASS;
+			public:
+				// Create
+				StackEnd(MAYBE(StackItem *) prev, Production *p, Nat inputPos)
+					: StackItem(prev, inputPos), production(p) {
+					setEnd();
+				}
+
+				// Which production was completed.
+				Production *production;
+
+			protected:
+				virtual void STORM_FN toS(StrBuf *to) const {
+					StackItem::toS(to);
+					*to << S(" - end of ") << production;
+				}
+			};
+
+
+			/**
 			 * An item that represents the start of a new rule.
-			 *
-			 * This does not have an iterator per-se, but rather keeps track of the match(es)
-			 * produced eventually, and as a placeholder to conveniently represent the two possible
-			 * start states of the iteration.
 			 *
 			 * This particular node may have multiple previous states, as the same rule could be
 			 * matched from multiple locations in the grammar at the same offset. In such cases, we
@@ -187,14 +217,14 @@ namespace storm {
 				STORM_CLASS;
 			public:
 				// Create.
-				StackFirst(MAYBE(StackRule *) prev, Production *production, Nat inputPos)
-					: StackItem(prev, inputPos), production(production) {
+				StackFirst(MAYBE(StackRule *) prev, RuleInfo *rule, Nat inputPos)
+					: StackItem(prev, inputPos), rule(rule) {
 					setFirst();
 					addDepth();
 				}
 
-				// The production we are to match.
-				Production *production;
+				// The rule we are to match.
+				RuleInfo *rule;
 
 				// The current match, if any.
 				GcArray<TreePart> *match;
@@ -212,11 +242,19 @@ namespace storm {
 
 				// Get node with index.
 				// Note that we might return 'null' for index 0 to indicate the start production.
-				StackRule *prevAt(Nat id) const {
+				StackRule *prevAt(Nat id) {
 					if (id == 0)
 						return (StackRule *)prev;
 					else
 						return morePrev->v[id - 1];
+				}
+
+				// Set a node with a particular index.
+				void prevAt(Nat id, StackRule *update) {
+					if (id == 0)
+						prev = update;
+					else
+						morePrev->v[id - 1] = update;
 				}
 
 				// Add another previous node.
@@ -240,7 +278,7 @@ namespace storm {
 				// It is fine to use virtual functions here, it is only for debugging.
 				virtual void STORM_FN toS(StrBuf *to) const {
 					StackItem::toS(to);
-					*to << S(" - ") << production;
+					*to << S(" - ") << rule;
 				}
 
 			private:
@@ -255,30 +293,6 @@ namespace storm {
 					return ((const StackRule *)this)->match;
 				else
 					return null;
-			}
-
-			inline ProductionIter StackItem::nextLong() const {
-				switch (data & tagMask) {
-				case tagMatch:
-				case tagRule:
-					return ((const StackMatch *)this)->iter.nextLong();
-				case tagFirst:
-					return ((const StackFirst *)this)->production->firstLong();
-				default:
-					return ProductionIter();
-				}
-			}
-
-			inline ProductionIter StackItem::nextShort() const {
-				switch (data & tagMask) {
-				case tagMatch:
-				case tagRule:
-					return ((const StackMatch *)this)->iter.nextShort();
-				case tagFirst:
-					return ((const StackFirst *)this)->production->firstShort();
-				default:
-					return ProductionIter();
-				}
 			}
 
 

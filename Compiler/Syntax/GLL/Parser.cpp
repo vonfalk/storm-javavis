@@ -1,6 +1,7 @@
 #include "stdafx.h"
 #include "Parser.h"
 #include "Compiler/Lib/Array.h"
+#include "Utils/Indent.h"
 
 namespace storm {
 	namespace syntax {
@@ -99,15 +100,14 @@ namespace storm {
 
 			void Parser::parse(RuleInfo *rule, Nat pos) {
 				// Make sure "currentStacks" is large enough.
-				currentStacks = new (this) Array<StackFirst *>(productions->count(), null);
+				currentStacks = new (this) Array<StackFirst *>(rules->count(), null);
 
-				// Add all possible starting points as if we found this nonterminal in a production.
+				// Add a starting state.
 				// Note: We cannot use 'pqPushFirst' here, as it assumes 'prev' is non-null.
-				for (Nat i = 0; i < rule->productions->count(); i++) {
-					Production *p = rule->productions->at(i);
-					StackFirst *created = new (this) StackFirst(null, p, pos);
+				{
+					StackFirst *created = new (this) StackFirst(null, rule, pos);
 					pqPush(created);
-					currentStacks->at(productionId->get(p)) = created;
+					currentStacks->at(ruleId->get(rule->rule)) = created;
 				}
 
 				// Execute things on the stack until we're done.
@@ -161,17 +161,18 @@ namespace storm {
 				// // Now, we know that "token" is not a regex.
 
 				if (StackFirst *first = top->asFirst()) {
-					// Simply emit two new states. We don't even have to put them in the queue.
-					parseStack(create(first, first->nextLong(), first->inputPos()));
-					parseStack(create(first, first->nextShort(), first->inputPos()));
-
-				} else if (StackRule *rule = top->asRule()) {
-					// It is a rule match. Create a new stack top for each production.
-					RuleInfo *info = findRule(rule->iter.token()->asRule()->rule);
+					// Emit states for each of the productions in this rule.
+					RuleInfo *info = first->rule;
 					for (Nat i = 0; i < info->productions->count(); i++) {
 						Production *p = info->productions->at(i);
-						pqPushFirst(rule, p);
+						parseStack(create(first, p->firstLong(), first->inputPos()));
+						parseStack(create(first, p->firstShort(), first->inputPos()));
 					}
+
+				} else if (StackRule *rule = top->asRule()) {
+					// It is a rule match. Create a new stack top for the rule. This might be
+					// de-duplicated, so we can't recurse immediately here.
+					pqPushFirst(rule, rule->iter.token()->asRule()->rule);
 
 				} else if (StackMatch *match = top->asMatch()) {
 					// It is a regex match (since Rule was before). Try to match it.
@@ -183,13 +184,13 @@ namespace storm {
 					pqPush(top, match->iter.nextLong(), matched);
 					pqPush(top, match->iter.nextShort(), matched);
 
-				} else {
-					// None of the above, it must be the end of the production.
-					parseReduce(top);
+				} else if (StackEnd *end = top->asEnd()) {
+					// End of a production.
+					parseReduce(end);
 				}
 			}
 
-			void Parser::parseReduce(StackItem *top) {
+			void Parser::parseReduce(StackEnd *top) {
 				Nat matchEnd = top->inputPos();
 
 				// Find the first element and the length of this branch. Note: We skip 'top', as we
@@ -199,17 +200,13 @@ namespace storm {
 				for (StackItem *at = top->prev; !(first = at->asFirst()); at = at->prev)
 					count++;
 
-				PLN(L"At " << matchEnd << L", reducing " << first->production);
+				PLN(L"At " << matchEnd << L", (" << (void *)first <<  L") reducing " << top->production);
 
-				// If we already have a match at this location, we consider them to be equal.
-				// Note: this is only representing a single production, so we don't have to
-				// worry about priorities at all.
-				if (first->matchEnd == matchEnd && first->match)
-					return;
+				// TODO: Add early-out here to avoid creating a tree that we will throw away?
 
 				// Create a Tree-array for this branch.
-				GcArray<TreePart> *match = runtime::allocArray<TreePart>(engine(), treeArrayType, count);
-				match->filled = productionId->get(first->production);
+				Tree *match = runtime::allocArray<TreePart>(engine(), treeArrayType, count);
+				match->filled = productionId->get(top->production);
 
 				// Extract the elements.
 				for (StackItem *at = top->prev; count > 0; at = at->prev, count--) {
@@ -219,6 +216,7 @@ namespace storm {
 				// Store the match for future occurrences.
 				first->match = match;
 				first->matchEnd = matchEnd;
+				PLN(L"Match for " << (void *)first << L" = " << match);
 
 				// Update all previous nodes with the new, potentially better, match.
 				count = first->prevCount();
@@ -227,42 +225,61 @@ namespace storm {
 					if (!prev) {
 						// We're done!
 						PLN(L"Done at " << matchEnd);
-						if (updateMatch(matchTree, matchLast, first->production, matchEnd)) {
-							matchTree = match;
-							matchLast = matchEnd;
-						}
+						updateGoal(match, matchEnd);
 					} else {
 						// Update this node if we have a better match.
-						advanceRule(prev, first);
+						prev = advanceRule(prev, first);
+						first->prevAt(i, prev);
 					}
 				}
 			}
 
-			void Parser::advanceRule(StackRule *advance, StackFirst *match) {
-				// TODO: We might need to recurse a bit if this node is "completed"?
-				// This would only be an issue where we have a lot of epsilon productions,
-				// however, so maybe we don't care?
+			StackRule *Parser::advanceRule(StackRule *advance, StackFirst *match) {
+				PLN(L"Advancing " << (void *)advance << L": " << advance->match << L", " << advance->matchEnd);
 
 				Nat matchEnd = match->matchEnd;
-				if (updateMatch(advance->match, advance->matchEnd, match->production, matchEnd)) {
-					// Make sure not to create duplicate "future" states. We only create one set of
-					// state for each unique "end" position we find.
-					if (!advance->match || advance->matchEnd != matchEnd) {
-						pqPush(advance, advance->iter.nextLong(), match->matchEnd);
-						pqPush(advance, advance->iter.nextShort(), match->matchEnd);
-					} else {
+				if (!advance->match) {
+					// First time matched, no problems.
+					advance->match = match->match;
+					advance->matchEnd = matchEnd;
+
+					pqPush(advance, advance->iter.nextLong(), matchEnd);
+					pqPush(advance, advance->iter.nextShort(), matchEnd);
+
+					return advance;
+
+				} else if (advance->matchEnd == matchEnd) {
+					// Multiple matches with the same length. Pick the one with the highest priority.
+					Production *advanceP = productions->at(advance->match->filled);
+					Production *matchP = productions->at(match->match->filled);
+					PLN(L"Checking priority: " << advanceP->priority << L" - " << matchP->priority);
+					if (advanceP->priority < matchP->priority) {
 						// If we did not create new states, this production might have been
 						// completed already, and thus the 'match' at the start might contain stale
 						// information. Go back and update it!
 						updateTreeMatch(advance, match->match);
+						advance->match = match->match;
 					}
 
-					advance->match = match->match;
-					advance->matchEnd = matchEnd;
+					return advance;
+
+				} else {
+					// The location changed, i.e. we found a longer match. In this case we cannot
+					// reuse the state, and have to create a new one. We shall make sure to update
+					// the state inside 'match' as well.
+					StackRule *r = new (this) StackRule(*advance);
+					r->match = match->match;
+					r->matchEnd = matchEnd;
+
+					pqPush(r, r->iter.nextLong(), matchEnd);
+					pqPush(r, r->iter.nextShort(), matchEnd);
+
+					// Ask the caller to update the rule.
+					return r;
 				}
 			}
 
-			void Parser::updateTreeMatch(StackRule *update, GcArray<TreePart> *newMatch) {
+			void Parser::updateTreeMatch(StackRule *update, Tree *newMatch) {
 				StackFirst *first = null;
 				Nat index = 0;
 				for (StackItem *at = update->prev; !(first = at->asFirst()); at = at->prev)
@@ -282,18 +299,29 @@ namespace storm {
 				// would mean that the GC will be unable to reclaim a large number of states that
 				// represent the "current best match", which will probably impact performance.
 				TreePart &part = first->match->v[index];
+				PLN(L"Checking to update index " << index << L" in " << (void *)first << L", " << first->match << L": " << part.match << L" <=> " << update->match);
 				if (part.match == update->match)
 					part.match = newMatch;
 			}
 
-			bool Parser::updateMatch(Tree *prev, Nat prevPos, Production *current, Nat currentPos) {
-				// If no previous match, or if the previous match was shorter (we're always greedy), update!
-				if (!prev || prevPos < currentPos)
-					return true;
+			void Parser::updateGoal(Tree *match, Nat matchEnd) {
+				if (matchTree) {
+					// We always prefer longer matches.
+					if (matchLast >= matchEnd) {
+						Production *currP = productions->at(matchTree->filled);
+						Production *newP = productions->at(match->filled);
 
-				// If we're at the same position, then we need to worry about priorities.
-				Production *p = productions->at(prev->filled);
-				return p->priority < current->priority;
+						// Keep the one with the highest priority.
+						if (currP->priority >= newP->priority) {
+							return;
+						}
+					}
+				}
+
+				// Remember this match.
+				matchTree = match;
+				matchLast = matchEnd;
+				PLN(L"Picking this one!");
 			}
 
 			struct PQCompare {
@@ -328,21 +356,22 @@ namespace storm {
 				}
 			}
 
-			void Parser::pqPushFirst(StackRule *prev, Production *production) {
+			void Parser::pqPushFirst(StackRule *prev, Rule *rule) {
 				// Check if this is already present, if so: merge it with the previous one at this location.
-				StackFirst *&duplicate = currentStacks->at(productionId->get(production));
+				Nat id = ruleId->get(rule);
+				StackFirst *&duplicate = currentStacks->at(id);
 				if (duplicate) {
-					PLN(L"Duplicate of " << production);
-					duplicate->prevPush(prev);
+					PLN(L"Duplicate of " << rule);
 					if (prev && duplicate->match) {
 						// If there is already a match, then we can "reduce" this one immediately.
 						// Note: We don't have to worry about getting the start state "late", as those
 						// are always pushed as the first thing in the parse.
-						advanceRule(prev, duplicate);
+						prev = advanceRule(prev, duplicate);
 					}
+					duplicate->prevPush(prev);
 				} else {
-					PLN(L"Push first " << production);
-					duplicate = new (this) StackFirst(prev, production, prev->inputPos());
+					PLN(L"Push first " << rule);
+					duplicate = new (this) StackFirst(prev, rules->at(id), prev->inputPos());
 					pqPush(duplicate);
 				}
 			}
@@ -363,7 +392,7 @@ namespace storm {
 
 				Token *token = iter.token();
 				if (!token)
-					return new (this) StackItem(prev, inputPos);
+					return new (this) StackEnd(prev, iter.production(), inputPos);
 				else if (token->asRegex())
 					return new (this) StackMatch(prev, iter, inputPos);
 				else if (token->asRule())
@@ -484,6 +513,9 @@ namespace storm {
 			}
 
 			Node *Parser::tree(Tree *root, Nat firstPos, Nat lastPos) const {
+				::Indent z(util::debugStream());
+				PVAR(root);
+
 				Production *p = productions->at(root->filled);
 				Nat repCount = p->repetitionsFor(root->count);
 				Node *result = allocNode(p, firstPos, lastPos);
