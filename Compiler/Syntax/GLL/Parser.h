@@ -130,6 +130,12 @@ namespace storm {
 				// has precedence over the old one.
 				bool updateMatch(Tree *prev, Nat prevPos, Production *current, Nat currentPos);
 
+				// Traverse the states back until we find a 'first' (similarly to reduce), and see
+				// if we need to update the match in the provided node. This happens when
+				// productions are reduced in an unfortunate order, and we need to patch the
+				// generated tree arrays in order to account for priorities correctly.
+				void updateTreeMatch(StackRule *update, GcArray<TreePart> *newMatch);
+
 				/**
 				 * Parser state.
 				 */

@@ -76,6 +76,7 @@ namespace storm {
 					if (inputPos() != o.inputPos())
 						return inputPos() < o.inputPos();
 					else
+						// TODO: We can probably skip this.
 						return myDepth < o.myDepth;
 				}
 

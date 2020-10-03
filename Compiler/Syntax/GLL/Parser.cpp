@@ -250,11 +250,40 @@ namespace storm {
 					if (!advance->match || advance->matchEnd != matchEnd) {
 						pqPush(advance, advance->iter.nextLong(), match->matchEnd);
 						pqPush(advance, advance->iter.nextShort(), match->matchEnd);
+					} else {
+						// If we did not create new states, this production might have been
+						// completed already, and thus the 'match' at the start might contain stale
+						// information. Go back and update it!
+						updateTreeMatch(advance, match->match);
 					}
 
 					advance->match = match->match;
 					advance->matchEnd = matchEnd;
 				}
+			}
+
+			void Parser::updateTreeMatch(StackRule *update, GcArray<TreePart> *newMatch) {
+				StackFirst *first = null;
+				Nat index = 0;
+				for (StackItem *at = update->prev; !(first = at->asFirst()); at = at->prev)
+					index++;
+
+				// Bail out if there is nothing to modify.
+				if (!first->match || first->match->count <= index)
+					return;
+
+				// Only update it if the correct element is where we expect it to be. Otherwise,
+				// the current match might correspond to another match that 'update' is not
+				// involved in.
+				//
+				// Checking for match equivalence should be enough here - I cannot imagine any cases
+				// where a different match happens to use the same part of a match. We could add
+				// pointers to the end of matched productions to validate this properly, but this
+				// would mean that the GC will be unable to reclaim a large number of states that
+				// represent the "current best match", which will probably impact performance.
+				TreePart &part = first->match->v[index];
+				if (part.match == update->match)
+					part.match = newMatch;
 			}
 
 			bool Parser::updateMatch(Tree *prev, Nat prevPos, Production *current, Nat currentPos) {
