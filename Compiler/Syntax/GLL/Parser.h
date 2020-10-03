@@ -129,6 +129,9 @@ namespace storm {
 				// generated tree arrays in order to account for priorities correctly.
 				void updateTreeMatch(StackRule *update, Tree *newMatch);
 
+				// Compare two sub-trees to find the one with the highest priority. Returns <0, =0 or >0.
+				Int compare(Tree *lhs, Tree *rhs);
+
 				/**
 				 * Parser state.
 				 */

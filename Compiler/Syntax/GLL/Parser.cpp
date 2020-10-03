@@ -1,7 +1,6 @@
 #include "stdafx.h"
 #include "Parser.h"
 #include "Compiler/Lib/Array.h"
-#include "Utils/Indent.h"
 
 namespace storm {
 	namespace syntax {
@@ -207,13 +206,18 @@ namespace storm {
 				// 2: This is not the first match, and we're at the same input position. Check priorities.
 				// 3: This is not the first match, and the input position differs. Duplicate the previous states.
 
+				Nat oldPrio = 0;
+				Nat newPrio = 0;
 				if (first->match && first->matchEnd == matchEnd) {
 					// Check priority for case 2, so that we can do an early out and avoid
 					// allocations if we don't need the tree.
-					Production *oldP = productions->at(first->match->filled);
-					Production *newP = top->production;
-					PLN(L"Checking priority: " << oldP->priority << L" - " << newP->priority);
-					if (oldP->priority >= newP->priority)
+					oldPrio = productions->at(first->match->filled)->priority;
+					newPrio = top->production->priority;
+
+					// If they are equal, we need to recursively compare the trees. It is easier to
+					// do that when we have generated the array - otherwise we would need a special
+					// case for the first recursion level.
+					if (oldPrio > newPrio)
 						return;
 				}
 
@@ -245,6 +249,12 @@ namespace storm {
 					}
 				} else if (first->matchEnd == matchEnd) {
 					// Case #2 - update previous match (we checked priorities earlier).
+
+					// If they were the same, we need to compare deeper.
+					if (oldPrio == newPrio)
+						if (compare(first->match, match) >= 0)
+							return;
+
 					PLN(L"Case 2");
 					for (Nat i = 0; i < count; i++) {
 						StackRule *prev = first->prevAt(i);
@@ -311,6 +321,44 @@ namespace storm {
 				PLN(L"Checking to update index " << index << L" in " << (void *)first << L", " << first->match << L": " << part.match << L" <=> " << update->match);
 				if (part.match == update->match)
 					part.match = newMatch;
+			}
+
+			Int Parser::compare(Tree *lhs, Tree *rhs) {
+				// If one of them is null, then we prefer the non-null one.
+				if (!lhs && !rhs)
+					return 0;
+				if (!lhs)
+					return 1;
+				if (!rhs)
+					return -1;
+
+				// Comparing different productions will compare their priorities.
+				if (lhs->filled != rhs->filled) {
+					Production *l = productions->at(lhs->filled);
+					Production *r = productions->at(rhs->filled);
+					if (l->priority < r->priority)
+						return -1;
+					else if (l->priority > r->priority)
+						return 1;
+					else
+						return 0;
+				}
+
+				// Same production. Do a lexiographic comparison.
+				Nat count = min(lhs->count, rhs->count);
+				for (Nat i = 0; i < count; i++) {
+					Int r = compare(lhs->v[i].match, rhs->v[i].match);
+					if (r != 0)
+						return r;
+				}
+
+				// If we get here, we just pick the longest one. This makes * and + greedy.
+				if (lhs->count < rhs->count)
+					return -1;
+				else if (lhs->count > rhs->count)
+					return 1;
+				else
+					return 0;
 			}
 
 			struct PQCompare {
@@ -505,9 +553,6 @@ namespace storm {
 			}
 
 			Node *Parser::tree(Tree *root, Nat firstPos, Nat lastPos) const {
-				::Indent z(util::debugStream());
-				PVAR(root);
-
 				Production *p = productions->at(root->filled);
 				Nat repCount = p->repetitionsFor(root->count);
 				Node *result = allocNode(p, firstPos, lastPos);
