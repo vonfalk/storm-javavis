@@ -123,6 +123,9 @@ namespace storm {
 				// to reduce in LR parsers).
 				void parseReduce(StackItem *top);
 
+				// Advance a Rule match as needed.
+				void advanceRule(StackRule *advance, StackFirst *match);
+
 				// Decide if the new match produced by the given production at the given location
 				// has precedence over the old one.
 				bool updateMatch(Tree *prev, Nat prevPos, Production *current, Nat currentPos);
@@ -150,8 +153,7 @@ namespace storm {
 				// Current offset in the input. I.e. "seen" is valid for this location.
 				Nat currentPos;
 
-				// Location where each of the terminals were instansiated at "currentPos". Size is
-				// 2*number of productions to accommodate for the two possible starting points.
+				// Location where each of the terminals were instansiated at "currentPos".
 				Array<StackFirst *> *currentStacks;
 
 				// Initialize the priority queue for a parse.
@@ -160,21 +162,20 @@ namespace storm {
 				// Push an element on the priority queue.
 				void pqPush(StackItem *item);
 
-				// Push a nonterminal stack item to the PQ.
-				void pqPushRegex(StackItem *prev, ProductionIter iter, Nat inputPos);
-
-				// Push a terminal stack item to the PQ.
-				void pqPushTerminal(StackItem *prev, ProductionIter iter, Nat inputPos, GcArray<TreePart> *match);
+				// Create and push an element to the priority queue.
+				void pqPush(MAYBE(StackItem *) prev, ProductionIter iter, Nat inputPos);
 
 				// Push an item that is to be used as the first item in a new production. This item
 				// is subject to de-duplication. Note: 'inputPos' must be equal to the current
-				// position. Otherwise, we will fail de-duplication. If 'second' is true, this is
-				// the B alternative (firstShort) of the production.
+				// position. Otherwise, we will fail de-duplication.
 				// TODO: Figure out how to get rid of 'second', it hinders our deduplication of states a bit.
-				void pqPushFirst(StackItem *prev, ProductionIter iter, Bool second);
+				void pqPushFirst(StackRule *prev, Production *production);
 
 				// Pop the top element of the priority queue. Returns null if empty.
 				StackItem *pqPop();
+
+				// Create a suitable element for the priority queue. Returns 'null' if 'iter' is not valid.
+				StackItem *create(MAYBE(StackItem *) prev, ProductionIter iter, Nat inputPos);
 
 
 				/**

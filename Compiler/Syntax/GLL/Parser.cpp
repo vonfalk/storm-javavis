@@ -98,17 +98,17 @@ namespace storm {
 			}
 
 			void Parser::parse(RuleInfo *rule, Nat pos) {
+				// Make sure "currentStacks" is large enough.
+				currentStacks = new (this) Array<StackFirst *>(productions->count(), null);
+
 				// Add all possible starting points as if we found this nonterminal in a production.
 				// Note: We cannot use 'pqPushFirst' here, as it assumes 'prev' is non-null.
 				for (Nat i = 0; i < rule->productions->count(); i++) {
 					Production *p = rule->productions->at(i);
-					pqPush(new (this) StackFirst(null, p->firstLong(), pos));
-					if (p->firstShort().valid())
-						pqPush(new (this) StackFirst(null, p->firstShort(), pos));
+					StackFirst *created = new (this) StackFirst(null, p, pos);
+					pqPush(created);
+					currentStacks->at(productionId->get(p)) = created;
 				}
-
-				// Make sure "currentStacks" is large enough.
-				currentStacks = new (this) Array<StackFirst *>(productions->count() * 2, null);
 
 				// Execute things on the stack until we're done.
 				currentPos = pos;
@@ -127,7 +127,10 @@ namespace storm {
 			}
 
 			void Parser::parseStack(StackItem *top) {
-				PLN(L"Parse " << top->inputPos() << L", " << top->depth() << L": " << top->iter);
+				if (!top)
+					return;
+
+				PLN(L"Parse " << top);
 
 				// This is a nice optimization, but it makes it a lot harder to reason about when
 				// things happen. Currently, we require that new rules are instantiated at the
@@ -157,83 +160,100 @@ namespace storm {
 				// }
 				// // Now, we know that "token" is not a regex.
 
-				Token *token = top->iter.token();
-				if (!token) {
-					// At the end.
-					// TODO: Remember that we popped this one!
-					parseReduce(top);
-				} else if (RuleToken *rule = token->asRule()) {
-					// Rule. Create new stack tops on the PQ.
-					RuleInfo *info = findRule(rule->rule);
+				if (StackFirst *first = top->asFirst()) {
+					// Simply emit two new states. We don't even have to put them in the queue.
+					parseStack(create(first, first->nextLong(), first->inputPos()));
+					parseStack(create(first, first->nextShort(), first->inputPos()));
+
+				} else if (StackRule *rule = top->asRule()) {
+					// It is a rule match. Create a new stack top for each production.
+					RuleInfo *info = findRule(rule->iter.token()->asRule()->rule);
 					for (Nat i = 0; i < info->productions->count(); i++) {
 						Production *p = info->productions->at(i);
-						pqPushFirst(top, p->firstLong(), false);
-						pqPushFirst(top, p->firstShort(), true);
+						pqPushFirst(rule, p);
 					}
-				} else if (RegexToken *regex = token->asRegex()) {
-					Nat matched = regex->regex.matchRaw(src, top->inputPos());
+
+				} else if (StackMatch *match = top->asMatch()) {
+					// It is a regex match (since Rule was before). Try to match it.
+					Nat matched = match->iter.token()->asRegex()->regex.matchRaw(src, top->inputPos());
 					if (matched == Regex::NO_MATCH) {
-						// Nothing to do.
 						return;
 					}
 
-					pqPushRegex(top, top->iter.nextLong(), matched);
-					pqPushRegex(top, top->iter.nextShort(), matched);
+					pqPush(top, match->iter.nextLong(), matched);
+					pqPush(top, match->iter.nextShort(), matched);
+
+				} else {
+					// None of the above, it must be the end of the production.
+					parseReduce(top);
 				}
 			}
 
 			void Parser::parseReduce(StackItem *top) {
-				Nat inputPos = top->inputPos();
-				PLN(L"Reducing at " << inputPos << L": " << top->iter);
+				Nat matchEnd = top->inputPos();
 
-				// Find the length of this branch, and the first element.
+				// Find the first element and the length of this branch. Note: We skip 'top', as we
+				// know that it is the "end" placeholder.
 				StackFirst *first = null;
 				Nat count = 0;
-				for (StackItem *at = top; !(first = at->asFirst()); at = at->prev)
+				for (StackItem *at = top->prev; !(first = at->asFirst()); at = at->prev)
 					count++;
+
+				PLN(L"At " << matchEnd << L", reducing " << first->production);
 
 				// If we already have a match at this location, we consider them to be equal.
 				// Note: this is only representing a single production, so we don't have to
 				// worry about priorities at all.
-				if (top->inputPos() == first->matchEnd && first->match)
+				if (first->matchEnd == matchEnd && first->match)
 					return;
 
 				// Create a Tree-array for this branch.
 				GcArray<TreePart> *match = runtime::allocArray<TreePart>(engine(), treeArrayType, count);
-				match->filled = productionId->get(top->iter.production());
+				match->filled = productionId->get(first->production);
 
 				// Extract the elements.
-				for (StackItem *at = top; count > 0; at = at->prev, count--) {
-					// Note: The matches are one step "too late" in the states, so this is correct.
+				for (StackItem *at = top->prev; count > 0; at = at->prev, count--) {
 					match->v[count - 1] = TreePart(at->match(), at->inputPos());
 				}
 
 				// Store the match for future occurrences.
 				first->match = match;
+				first->matchEnd = matchEnd;
 
 				// Update all previous nodes with the new, potentially better, match.
 				count = first->prevCount();
 				for (Nat i = 0; i < count; i++) {
-					StackItem *prev = first->prevAt(i);
+					StackRule *prev = first->prevAt(i);
 					if (!prev) {
 						// We're done!
-						PLN(L"Done at " << inputPos);
-						if (updateMatch(matchTree, matchLast, top->iter.production(), inputPos)) {
+						PLN(L"Done at " << matchEnd);
+						if (updateMatch(matchTree, matchLast, first->production, matchEnd)) {
 							matchTree = match;
-							matchLast = inputPos;
+							matchLast = matchEnd;
 						}
 					} else {
 						// Update this node if we have a better match.
-						// TODO: We might need to recurse a bit if this node is "completed"?
-						// This would only be an issue where we have a lot of epsilon productions,
-						// however, so maybe we don't care?
-						// TODO: This will not work, as we are not able to pick the best match at a given
-						// offset, we simply pick all of them currently.
-						if (updateMatch(prev->match, top->inputPos(), top->iter.production(), inputPos)) {
-							pqPushTerminal(prev, prev->iter.nextLong(), inputPos, match);
-							pqPushTerminal(prev, prev->iter.nextShort(), inputPos, match);
-						}
+						advanceRule(prev, first);
 					}
+				}
+			}
+
+			void Parser::advanceRule(StackRule *advance, StackFirst *match) {
+				// TODO: We might need to recurse a bit if this node is "completed"?
+				// This would only be an issue where we have a lot of epsilon productions,
+				// however, so maybe we don't care?
+
+				Nat matchEnd = match->matchEnd;
+				if (updateMatch(advance->match, advance->matchEnd, match->production, matchEnd)) {
+					// Make sure not to create duplicate "future" states. We only create one set of
+					// state for each unique "end" position we find.
+					if (!advance->match || advance->matchEnd != matchEnd) {
+						pqPush(advance, advance->iter.nextLong(), match->matchEnd);
+						pqPush(advance, advance->iter.nextShort(), match->matchEnd);
+					}
+
+					advance->match = match->match;
+					advance->matchEnd = matchEnd;
 				}
 			}
 
@@ -272,33 +292,28 @@ namespace storm {
 				std::push_heap(pq->v, pq->v + pq->filled, PQCompare());
 			}
 
-			void Parser::pqPushRegex(StackItem *prev, ProductionIter iter, Nat inputPos) {
-				if (iter.valid())
-					pqPush(new (this) StackItem(prev, iter, inputPos));
+			void Parser::pqPush(MAYBE(StackItem *) prev, ProductionIter iter, Nat inputPos) {
+				if (StackItem *created = create(prev, iter, inputPos)) {
+					PLN(L"Push " << created);
+					pqPush(created);
+				}
 			}
 
-			void Parser::pqPushTerminal(StackItem *prev, ProductionIter iter, Nat inputPos, GcArray<TreePart> *match) {
-				if (iter.valid())
-					pqPush(new (this) StackRule(prev, iter, inputPos, match));
-			}
-
-			void Parser::pqPushFirst(StackItem *prev, ProductionIter iter, Bool second) {
-				if (!iter.valid())
-					return;
-
+			void Parser::pqPushFirst(StackRule *prev, Production *production) {
 				// Check if this is already present, if so: merge it with the previous one at this location.
-				Nat id = productionId->get(iter.production())*2 + Nat(second);
-				StackFirst *&duplicate = currentStacks->at(id);
+				StackFirst *&duplicate = currentStacks->at(productionId->get(production));
 				if (duplicate) {
-					PLN(L"Duplicate of " << iter);
+					PLN(L"Duplicate of " << production);
 					duplicate->prevPush(prev);
-					if (duplicate->match) {
-						// TODO: If this was matched at the current location already, then we need
-						// to "reduce" it in-place immediately.
+					if (prev && duplicate->match) {
+						// If there is already a match, then we can "reduce" this one immediately.
+						// Note: We don't have to worry about getting the start state "late", as those
+						// are always pushed as the first thing in the parse.
+						advanceRule(prev, duplicate);
 					}
 				} else {
-					PLN(L"Push first " << iter);
-					duplicate = new (this) StackFirst(prev, iter, prev->inputPos());
+					PLN(L"Push first " << production);
+					duplicate = new (this) StackFirst(prev, production, prev->inputPos());
 					pqPush(duplicate);
 				}
 			}
@@ -311,6 +326,22 @@ namespace storm {
 				StackItem *r = pq->v[--pq->filled];
 				pq->v[pq->filled] = null;
 				return r;
+			}
+
+			StackItem *Parser::create(MAYBE(StackItem *) prev, ProductionIter iter, Nat inputPos) {
+				if (!iter.valid())
+					return null;
+
+				Token *token = iter.token();
+				if (!token)
+					return new (this) StackItem(prev, inputPos);
+				else if (token->asRegex())
+					return new (this) StackMatch(prev, iter, inputPos);
+				else if (token->asRule())
+					return new (this) StackRule(prev, iter, inputPos);
+
+				assert(false, L"Unknown token type!");
+				return null;
 			}
 
 			void Parser::clear() {

@@ -7,65 +7,69 @@ namespace storm {
 		namespace gll {
 			STORM_PKG(lang.bnf.gll);
 
-			class StackFirst;
+			class StackMatch;
 			class StackRule;
+			class StackFirst;
 
 			/**
 			 * An item on the LL stack.
 			 *
-			 * This is used for states that are not the first one in a production. For those, we use
-			 * the subclass StackFirst instead.
-			 *
-			 * The main difference is that StackFirst need to keep track of a bit more state (if
-			 * this production was finished yet, and possibly multiple previous nodes).
+			 * This is the shared base class for all states. The class StackFirst represents the
+			 * start of a production match, and keeps track of matches. There are also versions for
+			 * states that will match a terminal and states that will match a rule, since they need
+			 * slightly different state.
 			 */
 			class StackItem : public Object {
 				STORM_CLASS;
 			public:
 				// Create.
-				StackItem(MAYBE(StackItem *) prev, ProductionIter iter, Nat inputPos)
-					: prev(prev), iter(iter), data1(inputPos << 2) {
-					if (prev)
-						myDepth = prev->depth();
-				}
+				StackItem(MAYBE(StackItem *) prev, Nat inputPos)
+					: prev(prev), data(inputPos << 2), myDepth(prev ? prev->depth() : 0) {}
 
-				// Previous item, if any. Note: If this is a StackFirst, then there may be more of
-				// these accessible through the interface in StackMore.
+				// Previous item, if any. Note: If this is a StackFirst, there may be more of these
+				// accessible through the interface in StackFirst.
 				MAYBE(StackItem *) prev;
 
-				// Current position in the grammar.
-				ProductionIter iter;
-
-				// Input position.
+				// Position in the input.
 				Nat inputPos() const {
-					return data1 >> 2;
+					return data >> 2;
 				}
 
-				// Cast to a StackFirst.
-				StackFirst *asFirst() {
-					if (data1 & 0x1)
-						// Sorry, StackFirst is not defined yet.
-						return reinterpret_cast<StackFirst *>(this);
-					else
-						return null;
-				}
-
-				// Cast to a StackRule.
-				StackRule *asRule() {
-					if (data1 & 0x2)
-						// Sorry, StackRule is not defined yet.
-						return reinterpret_cast<StackRule *>(this);
-					else
-						return null;
-				}
-
-				// Get the tree here, if any.
-				GcArray<TreePart> *match() const;
-
-				// Get our depth.
+				// Current depth.
 				Nat depth() const {
 					return myDepth;
 				}
+
+				// Cast to a StackMatch if possible.
+				StackMatch *asMatch() {
+					if (data & tagMatch)
+						return (StackMatch *)this;
+					else
+						return null;
+				}
+
+				// Cast to a StackRule if possible.
+				StackRule *asRule() {
+					if ((data & tagMask) == tagRule)
+						return (StackRule *)this;
+					else
+						return null;
+				}
+
+				// Cast to a StackFirst if possible.
+				StackFirst *asFirst() {
+					if ((data & tagMask) == tagFirst)
+						return (StackFirst *)this;
+					else
+						return null;
+				}
+
+				// Get the match from here.
+				GcArray<TreePart> *match() const;
+
+				// Get the next position.
+				ProductionIter nextLong() const;
+				ProductionIter nextShort() const;
 
 				// Compare items for the priority queue.
 				Bool operator <(const StackItem &o) const {
@@ -76,68 +80,126 @@ namespace storm {
 				}
 
 			protected:
-				// Set this class as a StackFirst.
-				void setFirst() {
-					data1 |= 0x1;
+				// Indicate that we're a StackMatch.
+				void setMatch() {
+					data |= tagMatch;
 				}
 
-				// Set this class as a StackRule.
+				// Indicate that we're a StackRule. This may be called after 'setMatch' in contrast
+				// to the other corresponding 'setXxx' functions.
 				void setRule() {
-					data1 |= 0x2;
+					data |= tagRule;
 				}
 
-				// Depth of this node. Approximately, how deep the tree is. Used for ordering the priority queue.
-				// TODO: When the deduplication is working properly, we might not need this anymore.
-				Nat myDepth;
+				// Indicate that we're a StackFirst.
+				void setFirst() {
+					data |= tagFirst;
+				}
+
+				// Add one to the depth. Called from 'stackFirst'.
+				void addDepth() {
+					myDepth++;
+				}
+
+				// It is fine to use virtual functions here, it is only for debugging.
+				virtual void STORM_FN toS(StrBuf *to) const {
+					*to << (void *)this << S(", at ") << inputPos() << S(", prev ") << (void *)prev;
+				}
 
 			private:
-				// Data. Stores "inputPos" in topmost 30 bits, then if we're a StackRule, then if we're a StackFirst.
-				Nat data1;
+				// Type tags. Note: It is important that 'tagRule' is an extension of 'tagMatch'.
+				enum {
+					tagItem = 0x00,
+					tagMatch = 0x01,
+					tagRule = 0x03,
+					tagFirst = 0x02,
+
+					tagMask = 0x03,
+				};
+
+				// Data. Stores "inputPos" in the topmost 30 bits, then a type tag for quick downcasting.
+				Nat data;
+
+				// Our depth.
+				Nat myDepth;
 			};
 
 
 			/**
-			 * An item that represents a nonterminal match.
-			 *
-			 * The nonterminal "prev->iter.token()" was matched, and the result is contained in "match".
+			 * Item on the stack matching something. In the basic form, a regex is matched, in case
+			 * of the derived class 'StackRule', then it is a rule.
 			 */
-			class StackRule : public StackItem {
+			class StackMatch : public StackItem {
 				STORM_CLASS;
 			public:
 				// Create.
-				StackRule(MAYBE(StackItem *) prev, ProductionIter iter, Nat inputPos, GcArray<TreePart> *match)
-					: StackItem(prev, iter, inputPos), match(match) {
-					setRule();
+				StackMatch(MAYBE(StackItem *) prev, ProductionIter iter, Nat inputPos)
+					: StackItem(prev, inputPos), iter(iter) {
+					setMatch();
 				}
 
-				// The match.
-				GcArray<TreePart> *match;
+				// Current position.
+				ProductionIter iter;
+
+			protected:
+				// It is fine to use virtual functions here, it is only for debugging.
+				virtual void STORM_FN toS(StrBuf *to) const {
+					StackItem::toS(to);
+					*to << S(" - ") << iter;
+				}
 			};
 
 
 			/**
-			 * An item that is the first item in a sequence.
+			 * An item that represents a rule match. This means that 'iter' points to a rule currently.
+			 */
+			class StackRule : public StackMatch {
+				STORM_CLASS;
+			public:
+				// Create.
+				StackRule(MAYBE(StackItem *) prev, ProductionIter iter, Nat inputPos)
+					: StackMatch(prev, iter, inputPos), match(null) {
+					setRule();
+				}
+
+				// Current match, if any yet.
+				GcArray<TreePart> *match;
+
+				// End of the match, if any.
+				Nat matchEnd;
+			};
+
+
+			/**
+			 * An item that represents the start of a new rule.
 			 *
-			 * This one stores some additional information. Among others, what this entire
-			 * production expanded to (for a given ending position), and possibly multiple previous
-			 * states.
+			 * This does not have an iterator per-se, but rather keeps track of the match(es)
+			 * produced eventually, and as a placeholder to conveniently represent the two possible
+			 * start states of the iteration.
+			 *
+			 * This particular node may have multiple previous states, as the same rule could be
+			 * matched from multiple locations in the grammar at the same offset. In such cases, we
+			 * merge the matches so we don't have to waste computational resources on doing the same
+			 * match multiple times, and therefore we need multiple previous states here.
 			 */
 			class StackFirst : public StackItem {
 				STORM_CLASS;
 			public:
 				// Create.
-				StackFirst(MAYBE(StackItem *) prev, ProductionIter iter, Nat inputPos)
-					: StackItem(prev, iter, inputPos) {
+				StackFirst(MAYBE(StackRule *) prev, Production *production, Nat inputPos)
+					: StackItem(prev, inputPos), production(production) {
 					setFirst();
-					if (prev)
-						myDepth = prev->depth() + 1;
+					addDepth();
 				}
 
-				// The current longest location this sequence matched.
-				Nat matchEnd;
+				// The production we are to match.
+				Production *production;
 
 				// The current match, if any.
 				GcArray<TreePart> *match;
+
+				// End of the match, if any.
+				Nat matchEnd;
 
 				// Number of nodes here.
 				Nat prevCount() const {
@@ -149,23 +211,23 @@ namespace storm {
 
 				// Get node with index.
 				// Note that we might return 'null' for index 0 to indicate the start production.
-				StackItem *prevAt(Nat id) const {
+				StackRule *prevAt(Nat id) const {
 					if (id == 0)
-						return prev;
+						return (StackRule *)prev;
 					else
-						return morePrev->v[id];
+						return morePrev->v[id - 1];
 				}
 
 				// Add another previous node.
-				void prevPush(StackItem *item) {
+				void prevPush(StackRule *item) {
 					// If 'prev' was null, then this is the start production. We need to remember that.
 
 					if (morePrev == null) {
-						morePrev = runtime::allocArray<StackItem *>(engine(), &pointerArrayType, 10);
+						morePrev = runtime::allocArray<StackRule *>(engine(), &pointerArrayType, 10);
 					} else if (morePrev->filled >= morePrev->count) {
-						GcArray<StackItem *> *n =
-							runtime::allocArray<StackItem *>(engine(), &pointerArrayType, morePrev->count * 2);
-						memcpy(n->v, morePrev->v, sizeof(StackItem *) * morePrev->count);
+						GcArray<StackRule *> *n =
+							runtime::allocArray<StackRule *>(engine(), &pointerArrayType, morePrev->count * 2);
+						memcpy(n->v, morePrev->v, sizeof(StackRule *) * morePrev->count);
 						n->filled = morePrev->filled;
 						morePrev = n;
 					}
@@ -173,19 +235,49 @@ namespace storm {
 					morePrev->v[morePrev->filled++] = item;
 				}
 
+			protected:
+				// It is fine to use virtual functions here, it is only for debugging.
+				virtual void STORM_FN toS(StrBuf *to) const {
+					StackItem::toS(to);
+					*to << S(" - ") << production;
+				}
+
 			private:
 				// More previous nodes. This is in addition to 'prev' in the base class. This might
 				// be null if it is not needed.
-				GcArray<StackItem *> *morePrev;
+				GcArray<StackRule *> *morePrev;
 			};
 
 
 			inline GcArray<TreePart> *StackItem::match() const {
-				if (data1 & 0x2)
-					// Sorry, StackRule is not defined yet.
-					return reinterpret_cast<const StackRule *>(this)->match;
+				if ((data & tagMask) == tagRule)
+					return ((const StackRule *)this)->match;
 				else
 					return null;
+			}
+
+			inline ProductionIter StackItem::nextLong() const {
+				switch (data & tagMask) {
+				case tagMatch:
+				case tagRule:
+					return ((const StackMatch *)this)->iter.nextLong();
+				case tagFirst:
+					return ((const StackFirst *)this)->production->firstLong();
+				default:
+					return ProductionIter();
+				}
+			}
+
+			inline ProductionIter StackItem::nextShort() const {
+				switch (data & tagMask) {
+				case tagMatch:
+				case tagRule:
+					return ((const StackMatch *)this)->iter.nextShort();
+				case tagFirst:
+					return ((const StackFirst *)this)->production->firstShort();
+				default:
+					return ProductionIter();
+				}
 			}
 
 
