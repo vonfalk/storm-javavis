@@ -42,8 +42,11 @@ Class::Class(const CppName &name, const String &pkg, const SrcPos &pos, const Au
 void Class::resolveTypes(World &in) {
 	CppName ctx = name;
 
-	if (!parent.empty() && !has(hiddenParent))
+	if (!parent.empty() && !has(hiddenParent)) {
 		parentType = in.types.find(parent, ctx, pos);
+		if (parentType == this)
+			throw Error(L"The class " + parent + L" inherits from itself.", pos);
+	}
 
 	if (!thread.empty())
 		threadType = in.threads.find(thread, ctx, pos);
