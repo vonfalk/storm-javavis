@@ -16,7 +16,7 @@ namespace storm {
 		extern bool parserDebug;
 #endif
 
-		// Default parser to use in the system. earley, glr or ll
+		// Default parser to use in the system. earley, glr or gll
 #define DEFAULT_PARSER glr
 
 		/**

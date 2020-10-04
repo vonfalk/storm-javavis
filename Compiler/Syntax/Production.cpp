@@ -332,8 +332,13 @@ namespace storm {
 		ProductionIter ProductionIter::nextFixed(Nat &n) const {
 			Nat next = pos + 1;
 			if (p->repType == repNone) {
-			} else if (next == p->repStart && n == 0) {
-				next = p->repEnd;
+				// Nothing special.
+			} else if (next == p->repStart) {
+				if (n == 0) {
+					next = p->repEnd;
+				} else {
+					n--;
+				}
 			} else if (next == p->repEnd && n > 0) {
 				next = p->repStart;
 				n--;
