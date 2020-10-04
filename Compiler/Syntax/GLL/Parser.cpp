@@ -83,13 +83,9 @@ namespace storm {
 				if (!rule)
 					return false;
 
-				matchFirst = start.offset();
-				matchLast = 0;
-
-				// PLN(L"Parsing...");
 				parse(rule, start.offset());
 
-				return matchTree != null;
+				return result != null && result->match != null;
 			}
 
 			InfoErrors Parser::parseApprox(Rule *root, Str *str, Url *file, Str::Iter start, MAYBE(InfoInternal *) ctx) {
@@ -103,14 +99,12 @@ namespace storm {
 
 				// Add a starting state.
 				// Note: We cannot use 'pqPushFirst' here, as it assumes 'prev' is non-null.
-				{
-					StackFirst *created = new (this) StackFirst(null, rule, pos);
-					pqPush(created);
-					currentStacks->at(ruleId->get(rule->rule)) = created;
-				}
+				result = new (this) StackFirst(null, rule, pos);
+				pqPush(result);
+				currentStacks->at(ruleId->get(rule->rule)) = result;
 
 				// Execute things on the stack until we're done.
-				currentPos = pos;
+				Nat currentPos = pos;
 				while (StackItem *top = pqPop()) {
 					if (currentPos != top->inputPos()) {
 						currentPos = top->inputPos();
@@ -232,19 +226,15 @@ namespace storm {
 
 				// Store and/or update the match.
 				count = first->prevCount();
-				Bool done = false;
 				if (!first->match) {
 					// Case #1 - no prior match.
 					for (Nat i = 0; i < count; i++) {
 						StackRule *prev = first->prevAt(i);
-						if (prev) {
-							prev->match = match;
 
-							pqPush(prev, prev->iter.nextLong(), matchEnd);
-							pqPush(prev, prev->iter.nextShort(), matchEnd);
-						} else {
-							done = true;
-						}
+						prev->match = match;
+
+						pqPush(prev, prev->iter.nextLong(), matchEnd);
+						pqPush(prev, prev->iter.nextShort(), matchEnd);
 					}
 				} else if (first->matchEnd == matchEnd) {
 					// Case #2 - update previous match (we checked priorities earlier).
@@ -256,44 +246,31 @@ namespace storm {
 
 					for (Nat i = 0; i < count; i++) {
 						StackRule *prev = first->prevAt(i);
-						if (prev) {
-							// Update in the previously generated Tree-array.
-							updateTreeMatch(prev, match);
-							prev->match = match;
-						} else {
-							done = true;
-						}
+
+						// Update in the previously generated Tree-array.
+						updateTreeMatch(prev, match);
+						prev->match = match;
 					}
 				} else {
 					// Case #3 - duplicate the 'prev' state and go on, this is a new match at another position.
 					for (Nat i = 0; i < count; i++) {
 						StackRule *prev = first->prevAt(i);
-						if (prev) {
-							// Duplicate the state, and continue that chain.
-							StackRule *r = new (this) StackRule(*prev);
-							r->match = match;
 
-							pqPush(r, r->iter.nextLong(), matchEnd);
-							pqPush(r, r->iter.nextShort(), matchEnd);
+						// Duplicate the state, and continue that chain.
+						StackRule *r = new (this) StackRule(*prev);
+						r->match = match;
 
-							// Update the list of previous states.
-							first->prevAt(i, r);
-						} else {
-							done = true;
-						}
+						pqPush(r, r->iter.nextLong(), matchEnd);
+						pqPush(r, r->iter.nextShort(), matchEnd);
+
+						// Update the list of previous states.
+						first->prevAt(i, r);
 					}
 				}
 
 				// Remember what we stored for future potentiall reductions.
 				first->match = match;
 				first->matchEnd = matchEnd;
-
-				if (done) {
-					// Done!
-					// PLN(L"Done at " << matchEnd);
-					matchTree = match;
-					matchLast = matchEnd;
-				}
 			}
 
 			void Parser::updateTreeMatch(StackRule *update, Tree *newMatch) {
@@ -443,21 +420,22 @@ namespace storm {
 				url = null;
 				src = null;
 				pq = null;
-				matchTree = null;
-				matchFirst = matchLast = 0;
+				result = null;
 			}
 
 			Bool Parser::hasError() const {
-				return matchTree == null || matchLast != src->peekLength();
+				return result == null
+					|| result->matchEnd != src->peekLength();
 			}
 
 			Bool Parser::hasTree() const {
-				return matchTree != null;
+				return result != null
+					&& result->match != null;
 			}
 
 			Str::Iter Parser::matchEnd() const {
-				if (src)
-					return src->posIter(matchLast);
+				if (src && result)
+					return src->posIter(result->matchEnd);
 				else
 					return Str::Iter();
 			}
@@ -471,7 +449,7 @@ namespace storm {
 			}
 
 			Node *Parser::tree() const {
-				Node *n = tree(matchTree, matchFirst, matchLast);
+				Node *n = tree(result->match, result->inputPos(), result->matchEnd);
 				// PVAR(n);
 				return n;
 			}
@@ -480,7 +458,7 @@ namespace storm {
 				if (!hasTree())
 					return null;
 
-				return infoTree(matchTree, matchLast);
+				return infoTree(result->match, result->matchEnd);
 			}
 
 			Nat Parser::stateCount() const {
@@ -494,9 +472,7 @@ namespace storm {
 			void Parser::prepare(Str *str, Url *file) {
 				src = str;
 				url = file;
-				stackId = 0;
-				matchTree = null;
-				matchLast = 0;
+				result = null;
 
 				pqInit();
 

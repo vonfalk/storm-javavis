@@ -26,7 +26,7 @@ namespace storm {
 			public:
 				// Create.
 				StackItem(MAYBE(StackItem *) prev, Nat inputPos)
-					: prev(prev), data(inputPos << 2), myDepth(prev ? prev->depth() : 0) {}
+					: prev(prev), data(inputPos << 2) {}
 
 				// Previous item, if any. Note: If this is a StackFirst, there may be more of these
 				// accessible through the interface in StackFirst.
@@ -35,11 +35,6 @@ namespace storm {
 				// Position in the input.
 				Nat inputPos() const {
 					return data >> 2;
-				}
-
-				// Current depth.
-				Nat depth() const {
-					return myDepth;
 				}
 
 				// Cast to a StackMatch if possible.
@@ -79,11 +74,7 @@ namespace storm {
 
 				// Compare items for the priority queue.
 				Bool operator <(const StackItem &o) const {
-					if (inputPos() != o.inputPos())
-						return inputPos() < o.inputPos();
-					else
-						// TODO: We can probably skip this.
-						return myDepth < o.myDepth;
+					return inputPos() < o.inputPos();
 				}
 
 			protected:
@@ -108,11 +99,6 @@ namespace storm {
 					data |= tagEnd;
 				}
 
-				// Add one to the depth. Called from 'stackFirst'.
-				void addDepth() {
-					myDepth++;
-				}
-
 				// It is fine to use virtual functions here, it is only for debugging.
 				virtual void STORM_FN toS(StrBuf *to) const {
 					*to << (void *)this << S(", at ") << inputPos() << S(", prev ") << (void *)prev;
@@ -131,9 +117,6 @@ namespace storm {
 
 				// Data. Stores "inputPos" in the topmost 30 bits, then a type tag for quick downcasting.
 				Nat data;
-
-				// Our depth.
-				Nat myDepth;
 			};
 
 
@@ -217,7 +200,6 @@ namespace storm {
 				StackFirst(MAYBE(StackRule *) prev, RuleInfo *rule, Nat inputPos)
 					: StackItem(prev, inputPos), rule(rule) {
 					setFirst();
-					addDepth();
 				}
 
 				// The rule we are to match.
@@ -233,12 +215,13 @@ namespace storm {
 				Nat prevCount() const {
 					if (morePrev)
 						return morePrev->filled + 1;
-					else
+					else if (prev)
 						return 1;
+					else
+						return 0;
 				}
 
 				// Get node with index.
-				// Note that we might return 'null' for index 0 to indicate the start production.
 				StackRule *prevAt(Nat id) {
 					if (id == 0)
 						return (StackRule *)prev;
@@ -256,7 +239,10 @@ namespace storm {
 
 				// Add another previous node.
 				void prevPush(StackRule *item) {
-					// If 'prev' was null, then this is the start production. We need to remember that.
+					if (!prev) {
+						prev = item;
+						return;
+					}
 
 					if (morePrev == null) {
 						morePrev = runtime::allocArray<StackRule *>(engine(), &pointerArrayType, 10);

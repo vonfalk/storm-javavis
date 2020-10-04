@@ -75,7 +75,7 @@ static String parseStr(const wchar_t *root, const wchar_t *parse, Nat backend) {
 	return parseStr(L"tests.syntax", root, parse, backend);
 }
 
-BEGIN_TEST(ParserTest, Storm) {
+BEGIN_TEST_(ParserTest, Storm) {
 	Engine &e = gEngine();
 
 	Package *pkg = as<Package>(e.scope().find(parseSimpleName(e, S("tests.grammar"))));
@@ -171,7 +171,7 @@ BEGIN_TEST(ParserExt, BS) {
 	CHECK_EQ(::toS(r), L"[]");
 } END_TEST
 
-BEGIN_TEST(ParseTricky, BS) {
+BEGIN_TEST_(ParseTricky, BS) {
 	// Tricky cases.
 	for (Nat id = 0; id < backendCount(); id++) {
 		CHECK_RUNS(parse(L"MultiWS", L"ab", id));
@@ -235,7 +235,7 @@ BEGIN_TEST(SyntaxTest, BS) {
 } END_TEST
 
 // Previous odd crashes in the syntax.
-BEGIN_TEST(SyntaxCrashes, BS) {
+BEGIN_TEST_(SyntaxCrashes, BS) {
 	CHECK_EQ(::toS(runFn<Name *>(S("tests.syntax.complexName"))), L"a.b(c, d(e), f)");
 } END_TEST
 
@@ -243,57 +243,61 @@ BEGIN_TEST(SyntaxCrashes, BS) {
  * Test behavior regarding non-context-free grammar.
  */
 BEGIN_TEST(SyntaxContext, BS) {
-	Nat parser = 0; // GLR
+	Nat parsers[] = { 0 /* GLR */, 2 /* GLL */ };
 
-	// Should be accepted.
-	CHECK(parseC(L"Block", L"{ a b }", parser));
+	for (Nat i = 0; i < ARRAY_COUNT(parsers); i++) {
+		Nat parser = parsers[i];
 
-	// We're using 'c' inside a regular block. Should fail!
-	CHECK(!parseC(L"Block", L"{ a c }", parser));
+		// Should be accepted.
+		CHECK(parseC(L"Block", L"{ a b }", parser));
 
-	// So should using 'd'.
-	CHECK(!parseC(L"Block", L"{ a d }", parser));
+		// We're using 'c' inside a regular block. Should fail!
+		CHECK(!parseC(L"Block", L"{ a c }", parser));
 
-	// But using them inside their respective blocks should be fine!
-	CHECK(parseC(L"Block", L"{ a extra c { a c } b }", parser));
-	CHECK(parseC(L"Block", L"{ a extra d { a d } b }", parser));
+		// So should using 'd'.
+		CHECK(!parseC(L"Block", L"{ a d }", parser));
 
-	// They should not overlap...
-	CHECK(!parseC(L"Block", L"{ extra c { d } }", parser));
-	CHECK(!parseC(L"Block", L"{ extra d { c } }", parser));
+		// But using them inside their respective blocks should be fine!
+		CHECK(parseC(L"Block", L"{ a extra c { a c } b }", parser));
+		CHECK(parseC(L"Block", L"{ a extra d { a d } b }", parser));
 
-	// But this should be allowed...
-	CHECK(parseC(L"Block", L"{ extra c { extra d { c d } } }", parser));
-	CHECK(parseC(L"Block", L"{ extra d { extra c { c d } } }", parser));
+		// They should not overlap...
+		CHECK(!parseC(L"Block", L"{ extra c { d } }", parser));
+		CHECK(!parseC(L"Block", L"{ extra d { c } }", parser));
 
-	// Check so that the position of the error is proper as well. Should return the first error.
-	{
-		Package *pkg = gEngine().package(S("tests.syntax.context"));
-		Parser *p = Parser::create(pkg, S("Block"), createBackend(gEngine(), parser));
-		Url *empty = new (p) Url();
-		Str *s = new (p) Str(S("{ extra c { c d d } }"));
-		p->parse(s, empty);
+		// But this should be allowed...
+		CHECK(parseC(L"Block", L"{ extra c { extra d { c d } } }", parser));
+		CHECK(parseC(L"Block", L"{ extra d { extra c { c d } } }", parser));
 
-		CHECK(p->hasError());
-		CHECK_EQ(p->error()->pos.start, 14);
-	}
+		// Check so that the position of the error is proper as well. Should return the first error.
+		{
+			Package *pkg = gEngine().package(S("tests.syntax.context"));
+			Parser *p = Parser::create(pkg, S("Block"), createBackend(gEngine(), parser));
+			Url *empty = new (p) Url();
+			Str *s = new (p) Str(S("{ extra c { c d d } }"));
+			p->parse(s, empty);
 
-	// Make sure the context parameter to 'parseApprox' works properly.
-	{
-		Package *pkg = gEngine().package(S("tests.syntax.context"));
-		InfoParser *p = InfoParser::create(pkg, S("Block"), createBackend(gEngine(), parser));
-		ProductionType *dep = as<ProductionType>(gEngine().scope().find(parseSimpleName(gEngine(), S("tests.syntax.context.ExtraCProd"))));
-		VERIFY(dep);
+			CHECK(p->hasError());
+			CHECK_EQ(p->error()->pos.start, 14);
+		}
 
-		Url *empty = new (p) Url();
-		Str *s = new (p) Str(S("{ c a }"));
+		// Make sure the context parameter to 'parseApprox' works properly.
+		{
+			Package *pkg = gEngine().package(S("tests.syntax.context"));
+			InfoParser *p = InfoParser::create(pkg, S("Block"), createBackend(gEngine(), parser));
+			ProductionType *dep = as<ProductionType>(gEngine().scope().find(parseSimpleName(gEngine(), S("tests.syntax.context.ExtraCProd"))));
+			VERIFY(dep);
 
-		// Should be considered erroneous. We don't have any context yet!
-		CHECK(p->parseApprox(s, empty).any());
+			Url *empty = new (p) Url();
+			Str *s = new (p) Str(S("{ c a }"));
 
-		// But, if we add the context, it should be fine!
-		InfoInternal *ctx = new (p) InfoInternal(dep->production, 0);
-		CHECK(!p->parseApprox(s, empty, ctx).any());
+			// Should be considered erroneous. We don't have any context yet!
+			CHECK(p->parseApprox(s, empty).any());
+
+			// But, if we add the context, it should be fine!
+			InfoInternal *ctx = new (p) InfoInternal(dep->production, 0);
+			CHECK(!p->parseApprox(s, empty, ctx).any());
+		}
 	}
 } END_TEST
 

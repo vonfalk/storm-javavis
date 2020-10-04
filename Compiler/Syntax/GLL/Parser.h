@@ -148,13 +148,6 @@ namespace storm {
 				// more frivolously for example).
 				GcArray<StackItem *> *pq;
 
-				// Production sequence number. Used to ensure that the match with the highest
-				// priority is processed first in the priority queue.
-				Nat stackId;
-
-				// Current offset in the input. I.e. "seen" is valid for this location.
-				Nat currentPos;
-
 				// Location where each of the terminals were instansiated at "currentPos".
 				Array<StackFirst *> *currentStacks;
 
@@ -184,12 +177,8 @@ namespace storm {
 				 * Parser results.
 				 */
 
-				// The entire syntax tree, if successful match.
-				UNKNOWN(PTR_GC) Tree *matchTree;
-
-				// First and last position of the match.
-				Nat matchFirst;
-				Nat matchLast;
+				// Current match.
+				StackFirst *result;
 
 
 				/**
