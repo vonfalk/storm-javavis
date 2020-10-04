@@ -345,8 +345,6 @@ Expr SConst(Block block);
 SConst => hexConstant(pos, nr) : "0x" #constant - "[A-Fa-f0-9]+" nr #constant - ("_" #constant - "[bnw]" -> setType #constant)?;
 SConst => intConstant(pos, nr) : "-?[0-9]+" nr #constant - ("[binlwfd]" -> setType #constant)?;
 SConst => floatConstant(pos, nr) : "-?[0-9]+\.[0-9]+" nr #constant - ("[fd]" -> setType #constant)?;
-SConst[20] => BoolLiteral(pos, true) : "true" #constant;
-SConst[20] => BoolLiteral(pos, false) : "false" #constant;
 
 ////////////////////////////////////////////////////////////////////
 // Interpolated strings.
@@ -429,6 +427,10 @@ SAtom => accessExpr(block, lhs, par) : SAtom(block) lhs, "\[", SExpr(block) par,
 SAtom => arrayInit(block, t, list) : SType t, ":", "\[" [, SArrayInitList(block) list, ]$ "\]";
 SAtom => ArrayInit(pos, block, list) : "\[" [, SArrayInitList(block) list, ]$ "\]";
 SAtom => unit(block, value, unit) : SConst(block) value, SUnit unit #typeName;
+
+// Boolean constants. Using these with units does not make sense, so they are not in SConst.
+SAtom[20] => BoolLiteral(pos, true) : "true" #constant;
+SAtom[20] => BoolLiteral(pos, false) : "false" #constant;
 
 // Function pointers with explicit parameters.
 SAtom[20] => FnPtr(block, name, params) : "&", SFnName name, "(", STypes params, ")";
