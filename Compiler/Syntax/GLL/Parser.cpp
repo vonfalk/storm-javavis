@@ -13,17 +13,34 @@ namespace storm {
 				ruleId = new (this) Map<Rule *, Nat>();
 				productions = new (this) Array<Production *>();
 				productionId = new (this) Map<Production *, Nat>();
-				currentStacks = new (this) Array<StackFirst *>();
+				currentStacks = null;
+				parentReqCount = 0;
 
 				clear();
 			}
 
-			void Parser::add(Rule *rule) {
+			MAYBE(RuleInfo *) Parser::findRule(Rule *rule) const {
+				Nat id = ruleId->get(rule, rules->count());
+				if (id < rules->count())
+					return rules->at(id);
+				else
+					return null;
+			}
+
+			RuleInfo *Parser::findAddRule(Rule *rule) {
 				Nat id = ruleId->get(rule, rules->count());
 				if (id >= rules->count()) {
+					RuleInfo *result = new (this) RuleInfo(rule);
 					ruleId->put(rule, rules->count());
-					rules->push(new (this) RuleInfo(rule));
+					rules->push(result);
+					return result;
+				} else {
+					return rules->at(id);
 				}
+			}
+
+			void Parser::add(Rule *rule) {
+				findAddRule(rule);
 			}
 
 			void Parser::add(ProductionType *prod) {
@@ -36,16 +53,17 @@ namespace storm {
 				productionId->put(p, productions->count());
 				productions->push(p);
 
-				// Add it to the rules for sorting and lookup.
-				Rule *rule = prod->rule();
-				Nat id = ruleId->get(rule, rules->count());
-				if (id >= rules->count()) {
-					ruleId->put(rule, rules->count());
-					rules->push(new (this) RuleInfo(rule));
-				}
+				// Add it to the rules for lookup.
+				RuleInfo *ruleInfo = findAddRule(prod->rule());
+				ruleInfo->add(p);
 
-				RuleInfo *info = rules->at(id);
-				info->add(p);
+				// Check its parent, if any, and ensure that the parent is allocated a parent ID.
+				if (p->parent) {
+					RuleInfo *parent = findAddRule(p->parent);
+					if (parent->requirement.empty()) {
+						parent->requirement = ParentReq(engine(), parentReqCount++);
+					}
+				}
 			}
 
 			Bool Parser::sameSyntax(ParserBackend *other) {
@@ -79,7 +97,7 @@ namespace storm {
 				if (!rule)
 					return false;
 
-				parse(rule, start.offset());
+				parse(rule, ParentReq(), start.offset());
 
 				return result != null && result->match != null;
 			}
@@ -91,7 +109,16 @@ namespace storm {
 				if (!rule)
 					return infoFailure();
 
-				parse(rule, start.offset());
+				// Create a suitable context.
+				ParentReq context;
+				for (InfoInternal *at = ctx; at; at = at->parent()) {
+					RuleInfo *r = findRule(at->production()->rule());
+					if (r) {
+						context = context.concat(engine(), r->requirement);
+					}
+				}
+
+				parse(rule, context, start.offset());
 
 				if (result != null && result->match != null) {
 					return infoSuccess();
@@ -100,24 +127,23 @@ namespace storm {
 				}
 			}
 
-			void Parser::parse(RuleInfo *rule, Nat pos) {
+			void Parser::parse(RuleInfo *rule, ParentReq context, Nat pos) {
 				// Make sure "currentStacks" is large enough.
-				currentStacks = new (this) Array<StackFirst *>(rules->count(), null);
+				currentStacks = runtime::allocArray<StackFirst *>(engine(), &pointerArrayType, rules->count());
 
 				// Add a starting state.
 				// Note: We cannot use 'pqPushFirst' here, as it assumes 'prev' is non-null.
-				result = new (this) StackFirst(null, rule, pos);
+				result = new (this) StackFirst(null, context, rule, pos);
 				pqPush(result);
-				currentStacks->at(ruleId->get(rule->rule)) = result;
+				currentStacks->v[ruleId->get(rule->rule)] = result;
 
 				// Execute things on the stack until we're done.
-				Nat currentPos = pos;
+				currentPos = pos;
 				while (StackItem *top = pqPop()) {
 					if (currentPos != top->inputPos()) {
 						currentPos = top->inputPos();
 						// We arrived at a new point in the input, clear the table of what we have parsed so far!
-						for (Nat i = 0; i < currentStacks->count(); i++)
-							currentStacks->at(i) = null;
+						memset(currentStacks->v, 0, sizeof(StackFirst *) * currentStacks->count);
 
 						// PLN(L"New position: " << currentPos);
 					}
@@ -161,12 +187,32 @@ namespace storm {
 				// // Now, we know that "token" is not a regex.
 
 				if (StackFirst *first = top->asFirst()) {
+					Engine &e = engine();
+
 					// Emit states for each of the productions in this rule.
 					RuleInfo *info = first->rule;
+
+					// Note 'concat' is basically no-op if either of the ParentReq objects are empty.
+					ParentReq requirements = first->requirements.concat(e, info->requirement);
+
 					for (Nat i = 0; i < info->productions->count(); i++) {
 						Production *p = info->productions->at(i);
-						parseStack(create(first, p->firstLong(), first->inputPos()));
-						parseStack(create(first, p->firstShort(), first->inputPos()));
+						ParentReq req = requirements;
+
+						if (p->parent) {
+							RuleInfo *info = findRule(p->parent);
+							// Note: We're comparing to the unmodified requirements, thus a
+							// production can not fullfill its own requirement.
+							if (!first->requirements.has(info->requirement))
+								continue;
+
+							// Note: We might need to add ourselves back, as we might depend on ourself.
+							req = req.remove(e, findRule(p->parent)->requirement);
+							req = req.concat(e, info->requirement);
+						}
+
+						parseStack(create(first, p->firstLong(), first->inputPos(), req));
+						parseStack(create(first, p->firstShort(), first->inputPos(), req));
 					}
 
 				} else if (StackRule *rule = top->asRule()) {
@@ -367,8 +413,8 @@ namespace storm {
 				std::push_heap(pq->v, pq->v + pq->filled, PQCompare());
 			}
 
-			void Parser::pqPush(MAYBE(StackItem *) prev, ProductionIter iter, Nat inputPos) {
-				if (StackItem *created = create(prev, iter, inputPos)) {
+			void Parser::pqPush(StackItem *prev, ProductionIter iter, Nat inputPos) {
+				if (StackItem *created = create(prev, iter, inputPos, prev->requirements)) {
 					// PLN(L"Push " << created);
 					pqPush(created);
 				}
@@ -377,7 +423,13 @@ namespace storm {
 			void Parser::pqPushFirst(StackRule *prev, Rule *rule) {
 				// Check if this is already present, if so: merge it with the previous one at this location.
 				Nat id = ruleId->get(rule);
-				StackFirst *&duplicate = currentStacks->at(id);
+				StackFirst *duplicate = currentStacks->v[id];
+
+				// Find the one with the same set of requirements as we have.
+				while (duplicate && duplicate->requirements != prev->requirements) {
+					duplicate = duplicate->nextDuplicate;
+				}
+
 				if (duplicate) {
 					// PLN(L"Duplicate of " << rule);
 					duplicate->prevPush(prev);
@@ -392,8 +444,12 @@ namespace storm {
 					}
 				} else {
 					// PLN(L"Push first " << rule);
-					duplicate = new (this) StackFirst(prev, rules->at(id), prev->inputPos());
-					pqPush(duplicate);
+					StackFirst *created = new (this) StackFirst(prev, prev->requirements, rules->at(id), prev->inputPos());
+					pqPush(created);
+
+					// Put it into the linked list.
+					created->nextDuplicate = currentStacks->v[id];
+					currentStacks->v[id] = created;
 				}
 			}
 
@@ -407,17 +463,17 @@ namespace storm {
 				return r;
 			}
 
-			StackItem *Parser::create(MAYBE(StackItem *) prev, ProductionIter iter, Nat inputPos) {
+			StackItem *Parser::create(StackItem *prev, ProductionIter iter, Nat inputPos, const ParentReq &req) {
 				if (!iter.valid())
 					return null;
 
 				Token *token = iter.token();
 				if (!token)
-					return new (this) StackEnd(prev, iter.production(), inputPos);
+					return new (this) StackEnd(prev, req, iter.production(), inputPos);
 				else if (token->asRegex())
-					return new (this) StackMatch(prev, iter, inputPos);
+					return new (this) StackMatch(prev, req, iter, inputPos);
 				else if (token->asRule())
-					return new (this) StackRule(prev, iter, inputPos);
+					return new (this) StackRule(prev, req, iter, inputPos);
 
 				assert(false, L"Unknown token type!");
 				return null;
@@ -448,11 +504,14 @@ namespace storm {
 			}
 
 			Str *Parser::errorMsg() const {
+				// The easiest thing to do here might actually be to do the parse again until it
+				// fails. That way, we don't have to record things during the parse, which may slow
+				// the parser down.
 				return new (this) Str(S("TODO!"));
 			}
 
 			SrcPos Parser::errorPos() const {
-				return SrcPos();
+				return SrcPos(url, currentPos, currentPos + 1);
 			}
 
 			Node *Parser::tree() const {
@@ -482,14 +541,6 @@ namespace storm {
 				result = null;
 
 				pqInit();
-			}
-
-			MAYBE(RuleInfo *) Parser::findRule(Rule *rule) const {
-				Nat id = ruleId->get(rule, rules->count());
-				if (id < rules->count())
-					return rules->at(id);
-				else
-					return null;
 			}
 
 			template <class T>

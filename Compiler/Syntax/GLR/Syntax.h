@@ -5,7 +5,7 @@
 #include "Core/EnginePtr.h"
 #include "Compiler/Syntax/Rule.h"
 #include "Compiler/Syntax/Production.h"
-#include "ParentReq.h"
+#include "Compiler/Syntax/ParentReq.h"
 
 namespace storm {
 	namespace syntax {

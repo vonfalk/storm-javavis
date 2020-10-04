@@ -104,14 +104,20 @@ namespace storm {
 				// ID of each production.
 				Map<Production *, Nat> *productionId;
 
+				// Number of distinct rules used as parent requirements.
+				Nat parentReqCount;
+
 				// Prepare the syntax for parsing if needed, and setup other state.
 				void prepare(Str *str, Url *file);
 
 				// Find a rule.
 				MAYBE(RuleInfo *) findRule(Rule *r) const;
 
+				// Find a rule, adding it if it does not yet exist.
+				RuleInfo *findAddRule(Rule *r);
+
 				// Internal parse function.
-				void parse(RuleInfo *rule, Nat offset);
+				void parse(RuleInfo *rule, ParentReq context, Nat offset);
 
 				// Parse a stack item as far as we can. Produce new stacks in the PQ as needed.
 				void parseStack(StackItem *top);
@@ -146,7 +152,11 @@ namespace storm {
 				GcArray<StackItem *> *pq;
 
 				// Location where each of the terminals were instansiated at "currentPos".
-				Array<StackFirst *> *currentStacks;
+				GcArray<StackFirst *> *currentStacks;
+
+				// Current position. I.e. the last observed position from the priority queue. Mainly
+				// used for error reporting.
+				Nat currentPos;
 
 				// Initialize the priority queue for a parse.
 				void pqInit();
@@ -155,7 +165,7 @@ namespace storm {
 				void pqPush(StackItem *item);
 
 				// Create and push an element to the priority queue.
-				void pqPush(MAYBE(StackItem *) prev, ProductionIter iter, Nat inputPos);
+				void pqPush(StackItem *prev, ProductionIter iter, Nat inputPos);
 
 				// Push an item that is to be used as the first item in a new production. This item
 				// is subject to de-duplication. Note: 'inputPos' must be equal to the current
@@ -167,7 +177,7 @@ namespace storm {
 				StackItem *pqPop();
 
 				// Create a suitable element for the priority queue. Returns 'null' if 'iter' is not valid.
-				StackItem *create(MAYBE(StackItem *) prev, ProductionIter iter, Nat inputPos);
+				StackItem *create(StackItem *prev, ProductionIter iter, Nat inputPos, const ParentReq &req);
 
 
 				/**

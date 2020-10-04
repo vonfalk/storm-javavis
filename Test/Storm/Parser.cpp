@@ -242,7 +242,7 @@ BEGIN_TEST_(SyntaxCrashes, BS) {
 /**
  * Test behavior regarding non-context-free grammar.
  */
-BEGIN_TEST(SyntaxContext, BS) {
+BEGIN_TEST_(SyntaxContext, BS) {
 	Nat parsers[] = { 0 /* GLR */, 2 /* GLL */ };
 
 	for (Nat i = 0; i < ARRAY_COUNT(parsers); i++) {

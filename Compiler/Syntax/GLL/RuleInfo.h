@@ -3,6 +3,7 @@
 #include "Core/Map.h"
 #include "Compiler/Syntax/Rule.h"
 #include "Compiler/Syntax/Production.h"
+#include "Compiler/Syntax/ParentReq.h"
 
 namespace storm {
 	namespace syntax {
@@ -23,6 +24,9 @@ namespace storm {
 
 				// Productions. Will eventually be ordered by priority.
 				Array<Production *> *productions;
+
+				// Allocated parent requirement ID. Empty if no ID allocated.
+				ParentReq requirement;
 
 				// Add a production. Assumed to be unique.
 				void add(Production *production);

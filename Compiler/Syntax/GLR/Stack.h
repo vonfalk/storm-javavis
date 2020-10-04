@@ -4,9 +4,9 @@
 #include "Core/Array.h"
 #include "Compiler/Thread.h"
 #include "Compiler/Syntax/InfoErrors.h"
+#include "Compiler/Syntax/ParentReq.h"
 #include "Syntax.h"
 #include "Tree.h"
-#include "ParentReq.h"
 
 namespace storm {
 	namespace syntax {

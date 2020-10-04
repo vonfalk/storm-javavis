@@ -1,5 +1,6 @@
 #pragma once
 #include "Compiler/Syntax/Production.h"
+#include "Compiler/Syntax/ParentReq.h"
 #include "RuleInfo.h"
 #include "Tree.h"
 
@@ -25,12 +26,15 @@ namespace storm {
 				STORM_CLASS;
 			public:
 				// Create.
-				StackItem(MAYBE(StackItem *) prev, Nat inputPos)
-					: prev(prev), data(inputPos << 2) {}
+				StackItem(MAYBE(StackItem *) prev, const ParentReq &req, Nat inputPos)
+					: prev(prev), requirements(req), data(inputPos << 2) {}
 
 				// Previous item, if any. Note: If this is a StackFirst, there may be more of these
 				// accessible through the interface in StackFirst.
 				MAYBE(StackItem *) prev;
+
+				// Requirements that are fullfilled at this point.
+				ParentReq requirements;
 
 				// Position in the input.
 				Nat inputPos() const {
@@ -128,8 +132,8 @@ namespace storm {
 				STORM_CLASS;
 			public:
 				// Create.
-				StackMatch(MAYBE(StackItem *) prev, ProductionIter iter, Nat inputPos)
-					: StackItem(prev, inputPos), iter(iter) {
+				StackMatch(MAYBE(StackItem *) prev, ParentReq req, ProductionIter iter, Nat inputPos)
+					: StackItem(prev, req, inputPos), iter(iter) {
 					setMatch();
 				}
 
@@ -152,8 +156,8 @@ namespace storm {
 				STORM_CLASS;
 			public:
 				// Create.
-				StackRule(MAYBE(StackItem *) prev, ProductionIter iter, Nat inputPos)
-					: StackMatch(prev, iter, inputPos), match(null) {
+				StackRule(MAYBE(StackItem *) prev, const ParentReq &req, ProductionIter iter, Nat inputPos)
+					: StackMatch(prev, req, iter, inputPos), match(null) {
 					setRule();
 				}
 
@@ -169,8 +173,8 @@ namespace storm {
 				STORM_CLASS;
 			public:
 				// Create
-				StackEnd(MAYBE(StackItem *) prev, Production *p, Nat inputPos)
-					: StackItem(prev, inputPos), production(p) {
+				StackEnd(MAYBE(StackItem *) prev, const ParentReq &req, Production *p, Nat inputPos)
+					: StackItem(prev, req, inputPos), production(p) {
 					setEnd();
 				}
 
@@ -197,13 +201,17 @@ namespace storm {
 				STORM_CLASS;
 			public:
 				// Create.
-				StackFirst(MAYBE(StackRule *) prev, RuleInfo *rule, Nat inputPos)
-					: StackItem(prev, inputPos), rule(rule) {
+				StackFirst(MAYBE(StackRule *) prev, const ParentReq &req, RuleInfo *rule, Nat inputPos)
+					: StackItem(prev, req, inputPos), rule(rule) {
 					setFirst();
 				}
 
 				// The rule we are to match.
 				RuleInfo *rule;
+
+				// Duplicate of this state in the 'currentStacks' list in the parser. Duplicates are
+				// the same, except that they have a different set of requirements.
+				MAYBE(StackFirst *) nextDuplicate;
 
 				// The current match, if any.
 				GcArray<TreePart> *match;
