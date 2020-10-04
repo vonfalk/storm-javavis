@@ -167,6 +167,7 @@ namespace storm {
 			bool usingIndent = indentStart < indentEnd && indentType != indentNone;
 			DelimToken *prevDelim = null;
 			for (nat i = 0; i < tokens->count(); i++) {
+				bool dash = false;
 				Token *token = tokens->at(i);
 				DelimToken *currentDelim = token->asDelim();
 
@@ -176,14 +177,19 @@ namespace storm {
 				if (usingIndent && indentEnd == i)
 					*to << S(" ]") << indentType;
 
-				if (i > 0 && !currentDelim && !prevDelim)
+				if (i > 0 && !currentDelim && !prevDelim) {
+					dash = true;
 					*to << S(" - ");
+				}
 
 				if (usingIndent && indentStart == i)
 					*to << S("[");
 
-				if (usingRep && repStart == i)
+				if (usingRep && repStart == i) {
+					if (!prevDelim && !dash)
+						*to << S(" - ");
 					*to << S("(");
+				}
 
 				if (i == mark)
 					*to << S("<>");

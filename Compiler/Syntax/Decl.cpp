@@ -340,6 +340,7 @@ namespace storm {
 			for (Nat i = 0; i < tokens->count(); i++) {
 				TokenDecl *token = tokens->at(i);
 				bool currentDelim = token->delimiter();
+				bool dash = false;
 
 				if (usingRep && repEnd == i)
 					outputRepEnd(to);
@@ -347,14 +348,19 @@ namespace storm {
 				if (usingIndent && indentEnd == i)
 					*to << S(" ]") << indentType;
 
-				if (i > 0 && !currentDelim && !prevDelim)
+				if (i > 0 && !currentDelim && !prevDelim) {
 					*to << S(" - ");
+					dash = true;
+				}
 
 				if (usingIndent && indentStart == i)
 					*to << S("[");
 
-				if (usingRep && repStart == i)
+				if (usingRep && repStart == i) {
+					if (!prevDelim && !dash)
+						*to << S(" - ");
 					*to << S("(");
+				}
 
 				*to << token;
 
