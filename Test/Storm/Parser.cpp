@@ -206,6 +206,12 @@ BEGIN_TEST_(ParseOrderTest, BS) {
 
 		// Check if ()* is greedy if this fails...
 		CHECK_EQ(parseStr(L"Unless", L"a unless a b c", i), L"(a)(a(b)(c))");
+
+		// Check recursive priorities if this fails (the GLL parser had issues with this).
+		// Seems to be negative priorities that caused the problems.
+		CHECK_EQ(parseStr(L"AsmOperand", L"ptrA", i), L"");
+		CHECK_EQ(parseStr(L"AsmOperands", L"ptrA abc", i), L"()(abc)");
+		CHECK_EQ(parseStr(L"AsmOperands", L"abc ptrA", i), L"(abc)()");
 	}
 } END_TEST
 

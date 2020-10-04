@@ -48,6 +48,20 @@ Buffer SpawnAtom();
 SpawnAtom[10] => Buffer() : "spawn" -> add, Name -> add;
 SpawnAtom[00] => Buffer() : Name -> add;
 
+// Try parsing operands similarly to what the ASM block does in Basic Storm.
+Buffer AsmOperand();
+AsmOperand => v : AsmReg v;
+AsmOperand[-10] => v : AsmVarRef v;
+
+Buffer AsmOperands();
+AsmOperands => Buffer() : AsmOperand -> add - (, AsmOperand -> add)*;
+
+Buffer AsmReg();
+AsmReg => Buffer() : "ptrA";
+
+Buffer AsmVarRef();
+AsmVarRef => Buffer() : "[A-Za-z]+" -> add;
+
 // Check if the LL parser is too greedy.
 Buffer LL();
 LL => r : "{", LL2 r, "}";
@@ -59,3 +73,4 @@ LL2 => r : LLContent r;
 Buffer LLContent();
 LLContent[10] => Buffer() : "a" -> add;
 LLContent[00] => Buffer() : "a" -> add, "a" -> add;
+

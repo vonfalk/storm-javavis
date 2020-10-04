@@ -253,8 +253,8 @@ namespace storm {
 				// 2: This is not the first match, and we're at the same input position. Check priorities.
 				// 3: This is not the first match, and the input position differs. Duplicate the previous states.
 
-				Nat oldPrio = 0;
-				Nat newPrio = 0;
+				Int oldPrio = 0;
+				Int newPrio = 0;
 				if (first->match && first->matchEnd == matchEnd) {
 					// Check priority for case 2, so that we can do an early out and avoid
 					// allocations if we don't need the tree.
