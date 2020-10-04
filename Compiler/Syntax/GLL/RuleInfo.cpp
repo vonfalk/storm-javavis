@@ -14,15 +14,6 @@ namespace storm {
 				productions->push(p);
 			}
 
-			static Bool sortProductions(Production *a, Production *b) {
-				// Largest one first.
-				return a->priority > b->priority;
-			}
-
-			void RuleInfo::sort() {
-				productions->sort(fnPtr(engine(), &sortProductions));
-			}
-
 			Bool RuleInfo::sameSyntax(RuleInfo *other) {
 				if (productions->count() != other->productions->count())
 					return false;

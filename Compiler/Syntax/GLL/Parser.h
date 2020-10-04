@@ -104,9 +104,6 @@ namespace storm {
 				// ID of each production.
 				Map<Production *, Nat> *productionId;
 
-				// Syntax prepared for parsing?
-				Bool syntaxPrepared;
-
 				// Prepare the syntax for parsing if needed, and setup other state.
 				void prepare(Str *str, Url *file);
 

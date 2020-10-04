@@ -14,7 +14,6 @@ namespace storm {
 				productions = new (this) Array<Production *>();
 				productionId = new (this) Map<Production *, Nat>();
 				currentStacks = new (this) Array<StackFirst *>();
-				syntaxPrepared = false;
 
 				clear();
 			}
@@ -47,9 +46,6 @@ namespace storm {
 
 				RuleInfo *info = rules->at(id);
 				info->add(p);
-
-				// Remember that we need to sort the data before parsing.
-				syntaxPrepared = false;
 			}
 
 			Bool Parser::sameSyntax(ParserBackend *other) {
@@ -90,7 +86,18 @@ namespace storm {
 
 			InfoErrors Parser::parseApprox(Rule *root, Str *str, Url *file, Str::Iter start, MAYBE(InfoInternal *) ctx) {
 				prepare(str, file);
-				return InfoErrors();
+
+				RuleInfo *rule = findRule(root);
+				if (!rule)
+					return infoFailure();
+
+				parse(rule, start.offset());
+
+				if (result != null && result->match != null) {
+					return infoSuccess();
+				} else {
+					return infoFailure();
+				}
 			}
 
 			void Parser::parse(RuleInfo *rule, Nat pos) {
@@ -475,17 +482,6 @@ namespace storm {
 				result = null;
 
 				pqInit();
-
-				// Need to pre-process the grammar?
-				if (syntaxPrepared)
-					return;
-
-				for (Nat i = 0; i < rules->count(); i++) {
-					RuleInfo *info = rules->at(i);
-					info->sort();
-				}
-
-				syntaxPrepared = true;
 			}
 
 			MAYBE(RuleInfo *) Parser::findRule(Rule *rule) const {

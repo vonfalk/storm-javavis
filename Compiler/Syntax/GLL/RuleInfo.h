@@ -27,9 +27,6 @@ namespace storm {
 				// Add a production. Assumed to be unique.
 				void add(Production *production);
 
-				// Make sure 'productions' is sorted.
-				void sort();
-
 				// Same syntax?
 				Bool sameSyntax(RuleInfo *other);
 			};
