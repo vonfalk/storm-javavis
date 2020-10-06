@@ -11,6 +11,7 @@ The following commands are recognized:
 - "r" or "k": Add or replace the right child of the node at the location of the mouse cursor.
   Then click the node where the edge shall end.
 - "esc": Cancel the current operation (mainly creating new edges).
+- "<" (on Swedish keyboards) or "z": Insert a | node.
 - <number> + "e": Load an example tree. This removes any nodes currently present.
   For example: 1e loads the file "1.tree", 2e loads the file "2.tree" and so on.
   Examples are numbered as in the student handout (exercise 1 is 1e and so on),
