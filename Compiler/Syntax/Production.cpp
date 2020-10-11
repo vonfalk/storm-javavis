@@ -356,15 +356,6 @@ namespace storm {
 
 		ProductionIter::ProductionIter(Production *p, Nat pos) : p(p), pos(pos) {}
 
-		Bool ProductionIter::end() const {
-			return p != null
-				&& pos >= p->tokens->count();
-		}
-
-		Bool ProductionIter::valid() const {
-			return p != null;
-		}
-
 		Bool ProductionIter::operator ==(const ProductionIter &o) const {
 			return p == o.p
 				&& pos == o.pos;
@@ -392,13 +383,6 @@ namespace storm {
 
 		MAYBE(Production *) ProductionIter::production() const {
 			return p;
-		}
-
-		MAYBE(Token *) ProductionIter::token() const {
-			if (!end())
-				return p->tokens->at(pos);
-			else
-				return null;
 		}
 
 		wostream &operator <<(wostream &to, const ProductionIter &i) {

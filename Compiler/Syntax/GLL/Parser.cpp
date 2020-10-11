@@ -1,10 +1,25 @@
 #include "stdafx.h"
 #include "Parser.h"
 #include "Compiler/Lib/Array.h"
+#include "Compiler/Engine.h"
 
 namespace storm {
 	namespace syntax {
 		namespace gll {
+
+			/**
+			 * Some knobs to tweak the parser's performance:
+			 */
+
+			// Initial size of the priority queue. This is quite a lot of headroom. In normal code,
+			// about 40 elements are required.
+			static const size_t pqCount = 256;
+
+			// Initial size of the "last stacks" list. Should be large enough to store all stack
+			// tops generated at a particular location. This is a lot of headroom. In normal code
+			// about 30-40 elements are required.
+			static const size_t historyCount = 128;
+
 
 			Parser::Parser() {
 				treeArrayType = StormInfo<TreePart>::handle(engine()).gcArrayType;
@@ -89,7 +104,6 @@ namespace storm {
 			}
 
 			Bool Parser::parse(Rule *root, Str *str, Url *file, Str::Iter start) {
-				// var x = spawn foo
 				prepare(str, file);
 				// PVAR(str);
 
@@ -98,6 +112,9 @@ namespace storm {
 					return false;
 
 				parse(rule, ParentReq(), start.offset());
+
+				// Clear the priority queue to save memory.
+				pq = null;
 
 				return result != null && result->match != null;
 			}
@@ -120,6 +137,9 @@ namespace storm {
 
 				parse(rule, context, start.offset());
 
+				// Clear the priority queue to save memory.
+				pq = null;
+
 				if (result != null && result->match != null) {
 					return infoSuccess();
 				} else {
@@ -127,10 +147,21 @@ namespace storm {
 				}
 			}
 
-			void Parser::parse(RuleInfo *rule, ParentReq context, Nat pos) {
+			void Parser::prepare(Str *str, Url *file) {
+				src = str;
+				url = file;
+				result = null;
+
+				pqInit();
+
 				// Make sure "currentStacks" is large enough.
 				currentStacks = runtime::allocArray<StackFirst *>(engine(), &pointerArrayType, rules->count());
 
+				// Create some room for storing stack tops.
+				lastStacks = runtime::allocArray<StackMatch *>(engine(), &pointerArrayType, historyCount);
+			}
+
+			void Parser::parse(RuleInfo *rule, ParentReq context, Nat pos) {
 				// Add a starting state.
 				// Note: We cannot use 'pqPushFirst' here, as it assumes 'prev' is non-null.
 				result = new (this) StackFirst(null, context, rule, pos);
@@ -144,12 +175,33 @@ namespace storm {
 						currentPos = top->inputPos();
 						// We arrived at a new point in the input, clear the table of what we have parsed so far!
 						memset(currentStacks->v, 0, sizeof(StackFirst *) * currentStacks->count);
+						lastClear();
 
 						// PLN(L"New position: " << currentPos);
 					}
 
 					parseStack(top);
 				}
+			}
+
+			void Parser::lastPush(StackMatch *item) {
+				if (lastStacks->filled >= lastStacks->count) {
+					// Grow it. This should be unlikely.
+					GcArray<StackMatch *> *n;
+					n = runtime::allocArray<StackMatch *>(engine(), &pointerArrayType, lastStacks->count * 2);
+					memcpy(n->v, lastStacks->v, sizeof(StackItem *) * lastStacks->count);
+					n->filled = lastStacks->filled;
+					lastStacks = n;
+				}
+
+				lastStacks->v[lastStacks->filled++] = item;
+			}
+
+			void Parser::lastClear() {
+				// Don't memset more than needed. We could skip doing it, but that will cause us to
+				// retain objects that we might not need, which makes the GC's job more difficult.
+				memset(lastStacks->v, 0, lastStacks->filled * sizeof(StackItem *));
+				lastStacks->filled = 0;
 			}
 
 			void Parser::parseStack(StackItem *top) {
@@ -216,11 +268,13 @@ namespace storm {
 					}
 
 				} else if (StackRule *rule = top->asRule()) {
+					lastPush(rule);
 					// It is a rule match. Create a new stack top for the rule. This might be
 					// de-duplicated, so we can't recurse immediately here.
 					pqPushFirst(rule, rule->iter.token()->asRule()->rule);
 
 				} else if (StackMatch *match = top->asMatch()) {
+					lastPush(match);
 					// It is a regex match (since Rule was before). Try to match it.
 					Nat matched = match->iter.token()->asRegex()->regex.matchRaw(src, top->inputPos());
 					if (matched == Regex::NO_MATCH) {
@@ -396,8 +450,7 @@ namespace storm {
 			};
 
 			void Parser::pqInit() {
-				const size_t initialSize = 512;
-				pq = runtime::allocArray<StackItem *>(engine(), &pointerArrayType, initialSize);
+				pq = runtime::allocArray<StackItem *>(engine(), &pointerArrayType, pqCount);
 				pq->filled = 0;
 			}
 
@@ -484,9 +537,13 @@ namespace storm {
 				src = null;
 				pq = null;
 				result = null;
+				lastStacks = null;
 			}
 
 			Bool Parser::hasError() const {
+				if (!lastStacks || lastStacks->filled == 0)
+					return false;
+
 				return result == null
 					|| result->matchEnd != src->peekLength();
 			}
@@ -504,10 +561,88 @@ namespace storm {
 			}
 
 			Str *Parser::errorMsg() const {
-				// The easiest thing to do here might actually be to do the parse again until it
-				// fails. That way, we don't have to record things during the parse, which may slow
-				// the parser down.
-				return new (this) Str(S("TODO!"));
+				StrBuf *msg = new (this) StrBuf();
+				if (currentPos == src->peekLength()) {
+					*msg << S("Unexpected end of file.");
+				} else {
+					Str *ch = new (this) Str(src->posIter(currentPos).v());
+					*msg << S("Unexpected '") << ch->escape() << S("'.");
+				}
+
+				Map<Str *, Str *> *errors = new (this) Map<Str *, Str *>();
+				for (Nat i = 0; i < lastStacks->filled; i++) {
+					StackMatch *match = lastStacks->v[i];
+					if (!match->asRule()) {
+						// Produce a message.
+						errorMsg(errors, match, match->iter);
+					}
+				}
+
+				if (errors->any()) {
+					*msg << S(" Expected:");
+					msg->indent();
+					for (Map<Str *, Str *>::Iter i = errors->begin(); i != errors->end(); ++i) {
+						*msg << S("\n") << i.k();
+						msg->indent();
+						*msg << i.v();
+						msg->dedent();
+					}
+				}
+
+				return msg->toS();
+			}
+
+			static Bool isBoring(ProductionIter iter) {
+				Production *p = iter.production();
+				if (!p)
+					return true;
+
+				if (iter == p->firstLong() || iter == p->firstShort())
+					return p->tokens->count() < 5;
+				else
+					return p->tokens->count() < 2;
+			}
+
+			static void addContext(Str *&to, StackItem *item, Nat depth = 0) {
+				if (StackMatch *match = item->asMatch()) {
+					if (!isBoring(match->iter) || depth >= 5) {
+						Str *line = TO_S(item, S("\nin: ") << match->iter);
+						TODO(L"De-duplicate! Perhaps using a map.");
+						//if (!strstr(to->c_str(), line->c_str()))
+						to = *to + line;
+						return;
+					}
+				}
+
+				// Traverse until we find a StackFirst, and check all possible previous branches.
+				while (item) {
+					if (StackFirst *first = item->asFirst()) {
+						for (Nat i = 0; i < first->prevCount(); i++) {
+							addContext(to, first->prevAt(i), depth + 1);
+						}
+						return;
+					}
+
+					item = item->prev;
+				}
+			}
+
+			void Parser::errorMsg(Map<Str *, Str *> *msg, StackItem *item, ProductionIter iter) const {
+				if (!iter.valid())
+					return;
+
+				RegexToken *t = iter.token()->asRegex();
+				if (!t)
+					return;
+
+				Str *key = TO_S(this, S("\"") << t->regex << S("\""));
+				Str *val = new (this) Str();
+				if (msg->has(key))
+					val = msg->get(key);
+
+				addContext(val, item);
+
+				msg->put(key, val);
 			}
 
 			SrcPos Parser::errorPos() const {
@@ -515,6 +650,7 @@ namespace storm {
 			}
 
 			Node *Parser::tree() const {
+				Gc::RampAlloc z(engine().gc);
 				Node *n = tree(result->match, result->inputPos(), result->matchEnd);
 				// PVAR(n);
 				return n;
@@ -524,6 +660,7 @@ namespace storm {
 				if (!hasTree())
 					return null;
 
+				Gc::RampAlloc z(engine().gc);
 				return infoTree(result->match, result->matchEnd);
 			}
 
@@ -533,14 +670,6 @@ namespace storm {
 
 			Nat Parser::byteCount() const {
 				return 0;
-			}
-
-			void Parser::prepare(Str *str, Url *file) {
-				src = str;
-				url = file;
-				result = null;
-
-				pqInit();
 			}
 
 			template <class T>

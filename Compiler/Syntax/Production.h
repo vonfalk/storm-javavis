@@ -236,5 +236,26 @@ namespace storm {
 			Scope scope;
 		};
 
+
+		// For inlining:
+		inline Bool ProductionIter::end() const {
+			return p != null
+				&& pos >= p->tokens->count();
+		}
+
+		// For inlining:
+		inline Bool ProductionIter::valid() const {
+			return p != null;
+		}
+
+		// For inlining:
+		inline MAYBE(Token *) ProductionIter::token() const {
+			if (!end())
+				return p->tokens->at(pos);
+			else
+				return null;
+		}
+
+
 	}
 }

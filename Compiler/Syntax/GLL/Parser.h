@@ -151,8 +151,12 @@ namespace storm {
 				// more frivolously for example).
 				GcArray<StackItem *> *pq;
 
-				// Location where each of the terminals were instansiated at "currentPos".
+				// Location where each of the terminals were instansiated at "currentPos". The index
+				// corresponds to the rule ID assigned when it was added.
 				GcArray<StackFirst *> *currentStacks;
+
+				// All stack-tops processed at 'currentPos'. Used to produce error messages.
+				GcArray<StackMatch *> *lastStacks;
 
 				// Current position. I.e. the last observed position from the priority queue. Mainly
 				// used for error reporting.
@@ -179,6 +183,12 @@ namespace storm {
 				// Create a suitable element for the priority queue. Returns 'null' if 'iter' is not valid.
 				StackItem *create(StackItem *prev, ProductionIter iter, Nat inputPos, const ParentReq &req);
 
+				// Push an element to the "history".
+				void lastPush(StackMatch *item);
+
+				// Clear the "history" (only elements in the history).
+				void lastClear();
+
 
 				/**
 				 * Parser results.
@@ -203,6 +213,13 @@ namespace storm {
 
 				// Create a node for an info-tree.
 				InfoNode *infoTree(Tree *root, Nat lastPos) const;
+
+				/**
+				 * Helpers for producing error messages.
+				 */
+
+				void errorMsg(Map<Str *, Str *> *msg, StackItem *item, ProductionIter iter) const;
+
 			};
 
 		}

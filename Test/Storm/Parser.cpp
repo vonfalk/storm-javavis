@@ -342,3 +342,42 @@ BEGIN_TESTX(ParserPerformance, BS) {
 
 	PLN(L"Parsed " << file << L" in " << (end - start));
 } END_TEST
+
+/**
+ * Test performance of the parsers by parsing all code inside lang.bs multiple times.
+ */
+BEGIN_TEST_(ParserPerformance2, BS) {
+	Engine &e = gEngine();
+	Package *pkg = e.package(S("lang.bs"));
+
+	Array<Url *> *bsFiles = new (e) Array<Url *>();
+	Array<Str *> *sources = new (e) Array<Str *>();
+	Array<Url *> *allFiles = pkg->url()->children();
+	for (Nat i = 0; i < allFiles->count(); i++) {
+		Url *file = allFiles->at(i);
+		if (*file->ext() == S("bs")) {
+			bsFiles->push(file);
+			sources->push(readAllText(file));
+		}
+	}
+
+	PkgReader *reader = createReader(bsFiles, pkg);
+	VERIFY(reader);
+
+	Moment allStart;
+	for (Nat c = 0; c < 1000; c++) {
+		Moment start;
+		for (Nat i = 0; i < bsFiles->count(); i++) {
+			FileReader *part = reader->readFile(bsFiles->at(i), sources->at(i));
+			part = part->next(qParser);
+
+			InfoParser *parser = part->createParser();
+			parser->parse(sources->at(i), bsFiles->at(i));
+		}
+		Moment end;
+		PLN(L"Parsed " << bsFiles->count() << L" files in " << (end - start));
+	}
+	Moment allEnd;
+	PLN(L"Total: " << (allEnd - allStart));
+
+} END_TEST
