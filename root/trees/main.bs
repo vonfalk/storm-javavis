@@ -66,8 +66,6 @@ class TreeWindow extends Frame {
 		if (!pressed)
 			return false;
 
-		print("Key ${key}");
-
 		if (modifiers == Modifiers:none) {
 			if (keymap.has(key)) {
 				keymap.get(key).call();
