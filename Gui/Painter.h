@@ -24,8 +24,10 @@ namespace gui {
 	/**
 	 * Object responsible for painting window contents. Create a subclass and override
 	 * 'render'. Then attach it to a Window.
+	 *
+	 * Note: The painter always has some kind of internal double-buffering going on.
 	 */
-	class Painter : public ObjectOn<Render> {
+	class Painter : public ObjectOn<Ui> {
 		STORM_CLASS;
 	public:
 		STORM_CTOR Painter();
@@ -56,25 +58,22 @@ namespace gui {
 #endif
 
 		/**
-		 * The following functions (the ones starting with 'uiXxx') are intended to be called
-		 * directly from Window on the Ui thread (not the Render thread). This is for two
-		 * reasons. Firstly, convenience inside the Window class. But more importantly, it is since
-		 * some backends require to do some work on the Ui thread to synchronize drawing.
+		 * The following functions are called from the Window attached to this painter.
 		 */
 
-		// Attach to a window.
-		void uiAttach(Window *to);
+		// Called when we're attached to a new window.
+		void onAttach(Window *to);
 
-		// Detach from the currently attached window.
-		void uiDetach();
+		// Called when we're detached from a window.
+		void onDetach();
 
 		// Called when the attached window has been resized. "scale" is used to scale the initial
 		// layer of the canvas in case we're running in a non-default DPI mode.
-		void uiResize(Size size, Float scale);
+		void onResize(Size size, Float scale);
 
-		// Called when the attached window wants to be repainted. The parameter passed contains
-		// OS-specific data.
-		void uiRepaint(RepaintParams *params);
+		// Called when the attached window wants to be repainted. The parameter contains OS-specific
+		// data.
+		void onRepaint(RepaintParams *params);
 
 	private:
 		friend class RenderMgr;
@@ -94,11 +93,15 @@ namespace gui {
 		// Render manager.
 		RenderMgr *mgr;
 
-		// Lock for the target surface.
+		// Lock for the target surface. Used to make sure that we don't re-enter the render function
+		// in case of thread switches.
 		Lock *lock;
 
 		// Resources.
 		WeakSet<RenderResource> *resources;
+
+		// Device type, so we don't have to ask all the time.
+		DeviceType deviceType;
 
 		// Registered for continuous repaints in RenderMgr?  If true, then calls to 'repaint' will
 		// not do anything, instead we rely on RenderMgr to repaint us every frame.
@@ -123,40 +126,26 @@ namespace gui {
 		// Destroy loaded resources.
 		void destroyResources();
 
-		// Repaint number (to keep track of when 'redraw' should return and avoid flicker).
-		volatile Nat repaintCounter;
+		// Image version in the buffer.
+		volatile Nat repaintBuffer;
 
-		// Last repaint shown on the screen. Used to determine if we are ready to draw the next frame.
-		volatile Nat currentRepaint;
-
-		// Attach to a specific window.
-		void CODECALL attach(Window *to);
-
-		// Detach from the previous window.
-		void CODECALL detach();
-
-		// Called when the attached window has been resized.
-		void CODECALL resize(Size to, Float scale);
-
-		// Called when the attached window wants to be repainted. The parameter passed is
-		// OS-specific data.
-		void CODECALL repaintI(RepaintParams *params);
-
-		// Called before and after the actual work inside 'repaint' is done. Used for platform specific calls.
-		void beforeRepaint(RepaintParams *handle);
-		void afterRepaint();
-
-		// Called from the UI thread.
-		void uiAfterRepaint(RepaintParams *handle);
+		// Image version shown on the screen.
+		volatile Nat repaintScreen;
 
 		// Wait for a new frame to be rendered (used during continuous updates).
 		void waitForFrame();
 
-		// Do repaints (always).
-		void doRepaint(bool waitForVSync, bool fromDraw);
+		// Paint a new image into the buffer. Handles registering repaints etc.
+		void doRepaint();
 
 		// Do the platform specific of the repaint cycle.
-		bool doRepaintI(bool waitForVSync, bool fromDraw);
+		bool doRepaintI();
+
+		// Present the current frame.
+		void present(bool waitForVSync);
+
+		// Helper to invalidate the associated window through 'attachedTo'.
+		void invalidateWindow();
 	};
 
 }

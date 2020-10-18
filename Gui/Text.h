@@ -28,7 +28,7 @@ namespace gui {
 	/**
 	 * Pre-formatted text prepared for rendering.
 	 */
-	class Text : public ObjectOn<Render> {
+	class Text : public ObjectOn<Ui> {
 		STORM_CLASS;
 	public:
 		// Create a single line of text.

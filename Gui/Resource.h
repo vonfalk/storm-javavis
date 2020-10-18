@@ -6,7 +6,7 @@ namespace gui {
 	/**
 	 * Resource used in DX somewhere.
 	 */
-	class Resource : public ObjectOn<Render> {
+	class Resource : public ObjectOn<Ui> {
 		STORM_CLASS;
 	public:
 		// Create.

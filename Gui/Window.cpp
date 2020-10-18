@@ -78,7 +78,7 @@ namespace gui {
 		App *a = app(engine());
 		if (myHandle != invalid) {
 			if (myPainter)
-				myPainter->uiDetach();
+				myPainter->onDetach();
 
 			if (myParent == null) {
 				// We're a frame (or orphaned).
@@ -102,7 +102,7 @@ namespace gui {
 		if (myHandle != invalid) {
 			a->addWindow(this);
 			if (myPainter)
-				myPainter->uiAttach(this);
+				myPainter->onAttach(this);
 		}
 	}
 
@@ -155,13 +155,11 @@ namespace gui {
 	}
 
 	void Window::painter(MAYBE(Painter *) p) {
-		if (myPainter)
-			myPainter->uiDetach();
-
 		Painter *old = myPainter;
 		myPainter = p;
 
 		if (old) {
+			old->onDetach();
 			if (!p)
 				detachPainter();
 		} else {
@@ -170,7 +168,7 @@ namespace gui {
 		}
 
 		if (created() && myPainter)
-			myPainter->uiAttach(this);
+			myPainter->onAttach(this);
 	}
 
 	MAYBE(Painter *) Window::painter() {
@@ -192,7 +190,7 @@ namespace gui {
 			if (myPainter) {
 				RECT r;
 				GetClientRect(handle().hwnd(), &r);
-				myPainter->uiResize(Size(Float(r.right), Float(r.bottom)), dpiScale(currentDpi()));
+				myPainter->onResize(Size(Float(r.right), Float(r.bottom)), dpiScale(currentDpi()));
 			}
 			onResize(s);
 			return msgResult(0);
@@ -344,7 +342,7 @@ namespace gui {
 			DWORD style = GetWindowLong(h, GWL_STYLE);
 			DWORD exStyle = GetWindowLong(h, GWL_EXSTYLE);
 			AdjustWindowRectEx(&z, style, FALSE, exStyle);
-			// Todo: keep track if we need to repaint.
+			// TODO: keep track if we need to repaint.
 			MoveWindow(h, z.left, z.top, z.right - z.left, z.bottom - z.top, TRUE);
 		}
 	}
@@ -516,7 +514,7 @@ namespace gui {
 	MsgResult Window::onPaint() {
 		if (myPainter) {
 			RepaintParams p;
-			myPainter->uiRepaint(&p);
+			myPainter->onRepaint(&p);
 			ValidateRect(handle().hwnd(), NULL);
 
 			return msgResult(0);
@@ -773,7 +771,7 @@ namespace gui {
 		myPos.size(s);
 
 		if (myPainter)
-			myPainter->uiResize(s, 1);
+			myPainter->onResize(s, 1);
 		onResize(s);
 	}
 
@@ -784,7 +782,7 @@ namespace gui {
 			// events before Gtk+ gets hold of them!
 
 			// RepaintParams params = { gdkWindow, drawWidget(), NULL };
-			// myPainter->uiRepaint(&params);
+			// myPainter->onRepaint(&params);
 			// return true;
 		}
 
@@ -812,7 +810,7 @@ namespace gui {
 		// Do we have a painter?
 		if (myPainter) {
 			RepaintParams params = { window, drawWidget(), ctx };
-			myPainter->uiRepaint(&params);
+			myPainter->onRepaint(&params);
 
 			if (GDK_IS_WAYLAND_WINDOW(window)) {
 				// This is a variant of what we're doing below.
@@ -987,7 +985,7 @@ namespace gui {
 		gtk_widget_set_has_window(drawTo, FALSE);
 
 		if (myPainter)
-			myPainter->uiDetach();
+			myPainter->detach();
 		gdkWindow = null;
 	}
 

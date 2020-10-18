@@ -378,6 +378,17 @@ namespace gui {
 	}
 
 	void AppWait::work() {
+		// TODO: We want to ensure that the modal window loop entered when dragging the window (can
+		// be detected by WM_ENTERSIZEMOVE or WM_EXITSIZEMOVE). The most common idea seems to be to
+		// start a timer, and use that to see if we have other threads that wish to run.
+		// See: http://www.tech-archive.net/Archive/Development/microsoft.public.win32.programmer.ui/2006-02/msg00153.html
+
+		// Another idea is to hook GetMessage() in the WinAPI, and implement that in terms of
+		// PeekMessage and MsgWaitForMultipleObjects. This will work as long as DefWindowProc calls
+		// the implementation of GetMessage() we can see, and not something else.
+		// This seems like it will not work, at least not on WOW64, as DefWindowProc does not call
+		// the same GetMessage() as we are calling.
+
 		try {
 			// Do not handle messages if they are disabled.
 			if (msgDisabled == 0) {

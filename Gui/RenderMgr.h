@@ -7,6 +7,7 @@
 #include "Core/Sema.h"
 #include "Handle.h"
 #include "RenderInfo.h"
+#include "Device.h"
 #include "DxDevice.h"
 #include "CairoDevice.h"
 
@@ -15,9 +16,9 @@ namespace gui {
 	class Resource;
 
 	/**
-	 * Singleton class in charge of managing window repaints.
+	 * Singleton class in charge of managing continuous window repaints, and associated resources.
 	 */
-	class RenderMgr : public ObjectOn<Render> {
+	class RenderMgr : public ObjectOn<Ui> {
 		STORM_CLASS;
 	public:
 		// Shutdown the rendering thread.
@@ -35,11 +36,11 @@ namespace gui {
 		// Resize the RenderInfo to a new size. 'target' will be re-created.
 		void resize(RenderInfo &info, Size size, Float scale);
 
-		// Main thread entry point.
-		void main();
-
 		// Notify that a new painter is ready to repaint.
 		void painterReady();
+
+		// Get the device type.
+		inline DeviceType deviceType() { return device->type(); }
 
 #ifdef GUI_WIN32
 		// Get the DWrite factory object.
@@ -79,6 +80,9 @@ namespace gui {
 		// Exiting?
 		Bool exiting;
 
+		// Main thread entry point for the monitoring thread.
+		void CODECALL main();
+
 #ifdef GUI_GTK
 		// Create the global context if neccessary.
 		cairo_device_t *createDevice(GtkWidget *widget);
@@ -87,7 +91,5 @@ namespace gui {
 
 	// Create/get the singleton render manager.
 	RenderMgr *STORM_FN renderMgr(EnginePtr e);
-
-	os::Thread spawnRenderThread(Engine &e);
 
 }

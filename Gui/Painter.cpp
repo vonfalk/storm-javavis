@@ -5,11 +5,12 @@
 
 namespace gui {
 
-	Painter::Painter() : continuous(false), repaintCounter(0), currentRepaint(0) {
+	Painter::Painter() : continuous(false), repaintBuffer(0), repaintScreen(-1) {
 		attachedTo = Window::invalid;
 		app = gui::app(engine());
 		bgColor = app->defaultBgColor;
 		mgr = gui::renderMgr(engine());
+		deviceType = mgr->deviceType();
 		resources = new (this) WeakSet<RenderResource>();
 		lock = new (this) Lock();
 	}
@@ -19,30 +20,30 @@ namespace gui {
 		while (RenderResource *r = i.next())
 			r->forgetOwner();
 
-		detach();
+		onDetach();
 	}
 
 	Bool Painter::render(Size size, Graphics *graphics) {
 		return false;
 	}
 
-	void Painter::attach(Window *to) {
+	void Painter::onAttach(Window *to) {
 		Handle handle = to->handle();
 		if (handle != attachedTo) {
-			detach();
+			onDetach();
 			attachedTo = handle;
 			create();
 		}
 	}
 
-	void Painter::detach() {
+	void Painter::onDetach() {
 		if (attachedTo != Window::invalid) {
 			attachedTo = Window::invalid;
 			destroy();
 		}
 	}
 
-	void Painter::resize(Size sz, Float scale) {
+	void Painter::onResize(Size sz, Float scale) {
 		if (target.any()) {
 			// Do not attempt to resize the drawing surface if we're currently drawing to it.
 			Lock::Guard z(lock);
@@ -99,137 +100,78 @@ namespace gui {
 
 		if (continuous) {
 			waitForFrame();
-		} else {
-			doRepaint(false, false);
+			return;
 		}
 
-		afterRepaint();
+		switch (deviceType) {
+		case dtRaw:
+			// Just repaint. Don't wait for vsync.
+			doRepaint();
+			present(false);
+			break;
+		case dtBuffered:
+			// Ask the windowing system for a repaint instead.
+			invalidateWindow();
+			break;
+		}
 	}
 
-	void Painter::doRepaint(bool waitForVSync, bool fromDraw) {
+	void Painter::onRepaint(RepaintParams *params) {
+		// Do we need to render the frame now, or did we already render something before?
+		if (ready())
+			doRepaint();
+
+		// Present the image to the screen.
+		present(true);
+	}
+
+	void Painter::doRepaint() {
 		if (!target.any())
 			return;
 
 		bool more = false;
 		try {
 			Lock::Guard z(lock);
-			more = doRepaintI(waitForVSync, fromDraw);
+			more = doRepaintI();
 		} catch (...) {
-			repaintCounter++;
+			atomicIncrement(repaintBuffer);
 			throw;
 		}
 
-		repaintCounter++;
+		atomicIncrement(repaintBuffer);
 		if (more != continuous) {
 			continuous = more;
 			if (more) {
-				// Register!
-				mgr->painterReady();
+				switch (deviceType) {
+				case dtRaw:
+					// Register!
+					mgr->painterReady();
+					break;
+				case dtBuffered:
+					// Let the windowing system handle it.
+					invalidateWindow();
+					break;
+				}
 			}
 		}
 	}
 
-#ifdef UI_SINGLETHREAD
-
-	void Painter::repaintI(RepaintParams *params) {
-		beforeRepaint(params);
-
-		// Do we need to render the frame now, or did we already render something before?
-		if (ready())
-			doRepaint(false, true);
-
-		afterRepaint();
-	}
-
-	void Painter::uiAttach(Window *to) {
-		attach(to);
-	}
-
-	void Painter::uiDetach() {
-		detach();
-	}
-
-	void Painter::uiResize(Size size, Float scale) {
-		resize(size, scale);
-	}
-
-	void Painter::uiRepaint(RepaintParams *par) {
-		repaintI(par);
-		uiAfterRepaint(par);
-	}
-
-#endif
-#ifdef UI_MULTITHREAD
-
-	void Painter::repaintI(RepaintParams *params) {
-		beforeRepaint(params);
-
-		if (!ready()) {
-			// There is a frame ready right now! No need to wait even if we're not in continuous mode!
-		} else if (continuous) {
-			waitForFrame();
-		} else {
-			doRepaint(false, true);
-		}
-
-		afterRepaint();
-	}
-
-	void Painter::uiAttach(Window *to) {
-		os::Future<void> result;
-		Painter *me = this;
-		os::FnCall<void, 2> params = os::fnCall().add(me).add(to);
-		os::UThread::spawn(address(&Painter::attach), true, params, result, &thread->thread());
-		result.result();
-	}
-
-	void Painter::uiDetach() {
-		os::Future<void> result;
-		Painter *me = this;
-		os::FnCall<void, 2> params = os::fnCall().add(me);
-		os::UThread::spawn(address(&Painter::detach), true, params, result, &thread->thread());
-		result.result();
-	}
-
-	void Painter::uiResize(Size size, Float scale) {
-		os::Future<void> result;
-		Painter *me = this;
-		os::FnCall<void, 3> params = os::fnCall().add(me).add(size).add(scale);
-		os::UThread::spawn(address(&Painter::resize), true, params, result, &thread->thread());
-		result.result();
-	}
-
-	void Painter::uiRepaint(RepaintParams *par) {
-		os::Future<void> result;
-		Painter *me = this;
-		os::FnCall<void, 2> params = os::fnCall().add(me).add(par);
-		os::UThread::spawn(address(&Painter::repaintI), true, params, result, &thread->thread());
-		result.result();
-
-		uiAfterRepaint(par);
-	}
-
-#endif
-#ifdef GUI_WIN32
-
-#ifdef SINGLE_THREADED_UI
-#error "Single threaded UI is not supported on Win32! Please disable SINGLE_THREADED_UI in stdafx.h."
-#endif
-
 	bool Painter::ready() {
-		// Always ready to draw!
-		return true;
+		// Wait until the current frame is shown on the screen.
+		return atomicRead(repaintBuffer) != atomicRead(repaintScreen);
 	}
+
+#ifdef GUI_WIN32
 
 	void Painter::waitForFrame() {
 		// Wait until we have rendered a frame, so that Windows think we did it to satisfy the paint
 		// request.
-		Nat old = repaintCounter;
-		while (old == repaintCounter)
+		Nat old = atomicRead(repaintScreen);
+		while (old == atomicRead(repaintScreen))
 			os::UThread::leave();
 	}
 
-	bool Painter::doRepaintI(bool waitForVSync, bool fromDraw) {
+	bool Painter::doRepaintI() {
 		if (!target.target())
 			return false;
 		if (!target.swapChain())
@@ -253,14 +195,6 @@ namespace gui {
 
 		HRESULT r = target.target()->EndDraw();
 
-		if (SUCCEEDED(r)) {
-			if (waitForVSync) {
-				r = target.swapChain()->Present(1, 0);
-			} else {
-				r = target.swapChain()->Present(0, 0);
-			}
-		}
-
 		if (r == D2DERR_RECREATE_TARGET || r == DXGI_ERROR_DEVICE_RESET) {
 			// Re-create our render target.
 			destroy();
@@ -271,13 +205,20 @@ namespace gui {
 		return more;
 	}
 
-	void Painter::beforeRepaint(RepaintParams *handle) {}
+	void Painter::present(Bool waitForVSync) {
+		if (waitForVSync)
+			target.swapChain()->Present(1, 0);
+		else
+			target.swapChain()->Present(0, 0);
 
-	void Painter::afterRepaint() {
-		currentRepaint = repaintCounter;
+		atomicWrite(repaintScreen, atomicRead(repaintScreen));
 	}
 
-	void Painter::uiAfterRepaint(RepaintParams *handle) {}
+	void Painter::invalidateWindow() {
+		// We will probably never call this on Windows, but for completeness:
+		InvalidateRect(attachedTo.hwnd(), NULL, FALSE);
+	}
+
 
 #endif
 #ifdef GUI_GTK
@@ -356,7 +297,7 @@ namespace gui {
 
 	void Painter::uiAfterRepaint(RepaintParams *params) {
 		Lock::Guard z(lock);
-		currentRepaint = repaintCounter;
+		atomicWrite(repaintScreen, atomicRead(repaintScreen));
 
 		if (CairoSurface *surface = target.surface()) {
 			cairo_set_source_surface(params->ctx, surface->surface, 0, 0);
@@ -369,11 +310,15 @@ namespace gui {
 			if (continuous) {
 				mgr->painterReady();
 #ifdef UI_SINGLETHREAD
-				if (GdkWindow *window = gtk_widget_get_window(attachedTo.widget()))
-					gdk_window_invalidate_rect(window, NULL, true);
+				invalidateWindow();
 #endif
 			}
 		}
+	}
+
+	void Painter::invalidateWindow() {
+		if (GdkWindow *window = gtk_widget_get_window(attachedTo.widget()))
+			gdk_window_invalidate_rect(window, NULL, true);
 	}
 
 #endif

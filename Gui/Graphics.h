@@ -16,7 +16,7 @@ namespace gui {
 	 * Created automatically if used with a painter. See the WindowGraphics class for the
 	 * implementation.
 	 */
-	class Graphics : public ObjectOn<Render> {
+	class Graphics : public ObjectOn<Ui> {
 		STORM_ABSTRACT_CLASS;
 	public:
 		// Create.

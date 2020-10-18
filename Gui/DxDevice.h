@@ -1,6 +1,7 @@
 #pragma once
 #include "RenderInfo.h"
 #include "Handle.h"
+#include "Device.h"
 
 #ifdef GUI_WIN32
 namespace gui {
@@ -15,6 +16,12 @@ namespace gui {
 
 		// Destroy.
 		~Device();
+
+		// Get the device type.
+		DeviceType type() {
+			// Easy for DX. We can update the screen anytime we like.
+			return dtRaw;
+		}
 
 		// Attach a painter.
 		RenderInfo attach(Handle window);

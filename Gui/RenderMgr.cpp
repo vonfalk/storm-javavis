@@ -23,6 +23,16 @@ namespace gui {
 			PLN("Error while initializing rendering: " << e);
 			throw;
 		}
+
+		// Start the thread if we need to.
+		if (deviceType() == dtRaw) {
+			RenderMgr *me = this;
+			os::FnCall<void, 1> params = os::fnCall().add(me);
+			os::UThread::spawn(address(&RenderMgr::main), true, params);
+		} else {
+			// To ensure we don't stall when terminating.
+			exitSema->up();
+		}
 	}
 
 	void RenderMgr::attach(Resource *resource) {
@@ -50,10 +60,8 @@ namespace gui {
 	void RenderMgr::terminate() {
 		exiting = true;
 
-#ifdef UI_MULTITHREAD
 		waitEvent->set();
 		exitSema->down();
-#endif
 
 		// Destroy all resources.
 		for (Set<Painter *>::Iter i = painters->begin(), e = painters->end(); i != e; ++i) {
@@ -70,7 +78,7 @@ namespace gui {
 	}
 
 	void RenderMgr::main() {
-		// Note: Not called if SINGLE_THREADED_UI is defined.
+		// Note: Not always called. See the constructor.
 		Array<Painter *> *toRedraw = new (this) Array<Painter *>();
 
 		while (!exiting) {
@@ -83,6 +91,7 @@ namespace gui {
 			Nat pos = 0;
 			for (Set<Painter *>::Iter i = painters->begin(), e = painters->end(); i != e; ++i) {
 				Painter *p = i.v();
+				// TODO: Why 'p->ready()' here? That means threads will have to poke at the event whenever they are ready!
 				if (p->continuous && p->ready()) {
 					if (pos >= toRedraw->count())
 						toRedraw->push(p);
@@ -101,7 +110,9 @@ namespace gui {
 				// Note: It seems from the documentation for 'IDXGISwapChain::Present' that it schedules a buffer
 				// swap but does not block until the next call to 'Present'. If so, we do not have to worry.
 				try {
-					toRedraw->at(i)->doRepaint(true, false);
+					Painter *p = toRedraw->at(i);
+					p->doRepaint();
+					p->present(true);
 				} catch (const storm::Exception *e) {
 					PLN(L"Error while rendering:\n" << e);
 				} catch (const ::Exception &e) {
@@ -135,32 +146,6 @@ namespace gui {
 
 	RenderInfo RenderMgr::create(RepaintParams *p) {
 		return device->create(p);
-	}
-
-#endif
-
-#ifdef UI_SINGLETHREAD
-
-	os::Thread spawnRenderThread(Engine &e) {
-		// We use the Ui thread here, since we do not want true multithreaded rendering for some reason.
-		return Ui::thread(e)->thread();
-	}
-
-#endif
-#ifdef UI_MULTITHREAD
-
-	os::Thread spawnRenderThread(Engine &e) {
-		// Ugly hack...
-		struct Wrap {
-			void attach() {
-				Engine &e = (Engine &)*this;
-				RenderMgr *m = gui::renderMgr(e);
-				m->main();
-			}
-		};
-
-		util::Fn<void, void> fn((Wrap *)&e, &Wrap::attach);
-		return os::Thread::spawn(fn, runtime::threadGroup(e));
 	}
 
 #endif

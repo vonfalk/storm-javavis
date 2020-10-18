@@ -1,6 +1,7 @@
 #pragma once
 #include "RenderInfo.h"
 #include "Handle.h"
+#include "Device.h"
 
 #ifdef GUI_GTK
 namespace gui {
@@ -19,6 +20,12 @@ namespace gui {
 
 		// Destroy.
 		~Device();
+
+		// Get the device type.
+		DeviceType type() {
+			// This depends on what backend we selected, and what window manager is used.
+			assert(false);
+		}
 
 		// Attach a painter. If it returns a RenderInfo where 'any()' returns false, call 'create' later.
 		RenderInfo attach(Handle window);

@@ -159,10 +159,10 @@ namespace gui {
 		virtual void STORM_FN onMouseEnter();
 		virtual void STORM_FN onMouseLeave();
 
-		// Set window contents (custom drawing).
+		// Attach a painter to this window. This allows custom drawing using the hardware accelerated API.
 		void STORM_ASSIGN painter(MAYBE(Painter *) to);
 
-		// Get the current painter.
+		// Get the current painter, if any.
 		MAYBE(Painter *) STORM_FN painter();
 
 		// Window timer.

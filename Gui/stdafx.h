@@ -10,53 +10,14 @@
  * Supported:
  * GUI_WIN32 - Win32 (native)
  * GUI_GTK   - Gtk+3.0
- *
- * Depending on the platform, one of the following flags will also be set:
- * UI_MULTITHREAD
- * UI_SINGLETHREAD
  */
 
 #ifdef WINDOWS
 #define GUI_WIN32
-#define UI_MULTITHREAD
 #else
 #define GUI_GTK
 #endif
 
-#ifdef GUI_GTK
-#include "GtkMode.h"
-
-/**
- * For Gtk+, there are a few possible implementations of the rendering. They differ both in how
- * OpenGL interacts with the drawing in Gtk+.
- *
- * GTK_MT - multi-threaded
- * GTK_ST - single-threaded
- * GTK_MT_SW - multi-threaded, force software rendering
- * GTK_ST_SW - single-threaded, force software rendering
- *
- * Note: Client applications will notice when we are not multi threading rendering.
- */
-#define GTK_MT (GTK_RENDER_MT)
-#define GTK_ST (0)
-#define GTK_MT_SW (GTK_RENDER_MT | GTK_RENDER_SW)
-#define GTK_ST_SW (GTK_RENDER_SW)
-
-// The selected mode. Pick one of the above.
-#define GTK_MODE GTK_MT
-
-#if GTK_RENDER_IS_MT(GTK_MODE)
-#define UI_MULTITHREAD
-#else
-#define UI_SINGLETHREAD
-#endif
-
-#endif
-
-
-#if defined(UI_MULTITHREAD) == defined(UI_SINGLETHREAD)
-#error "Pick either single- or multithreaded Ui!"
-#endif
 
 // Allow inclusion from C as well.
 #ifdef __cplusplus
@@ -78,17 +39,19 @@ namespace gui {
 	using namespace storm::geometry;
 
 	/**
-	 * Thread used for interaction with the Ui library. All events regarding windows are handled by
-	 * this thread.
+	 * Thread used for interaction with the Ui library.
+	 *
+	 * All event handling and rendering is done on this thread.
+	 *
+	 * Note: We previously had a separate Render thread. It turns out that this is a bit overkill in
+	 * most situations, as input is inherently tied to rendering, and separating the two causes
+	 * unnecessary overhead (which is fine by itself). It also hinders hooking into the regular
+	 * "drawing pipeline" in a nice way (e.g. no customization of the look of widgets). Finally, it
+	 * turns out that windowing systems on Linux is really not designed for background rendering
+	 * (e.g. threading support in Pango seems dubious, even if it is supposedly safe now), which
+	 * causes many headaches on Linux.
 	 */
 	STORM_THREAD(Ui);
-
-	/**
-	 * Thread used for rendering. This thread is dedicated to drawing custom contents inside the
-	 * windows so that events from the operating system can be handled within reasonable time even
-	 * when heavy rendering work is being done.
-	 */
-	STORM_THREAD(Render);
 
 }
 
