@@ -5,6 +5,8 @@
 
 namespace gui {
 
+	static util::Lock gLock;
+
 	Painter::Painter() : continuous(false), repaintCounter(0), currentRepaint(0) {
 		attachedTo = Window::invalid;
 		app = gui::app(engine());
@@ -297,6 +299,7 @@ namespace gui {
 			return continuous;
 
 		bool more = false;
+		util::Lock::L q(gLock);
 		Lock::Guard z(lock);
 
 		CairoSurface *surface = target.surface();
@@ -327,6 +330,8 @@ namespace gui {
 
 		cairo_surface_flush(surface->surface);
 
+		// return more;
+
 		// Tell Gtk+ we're ready to draw, unless a call to 'draw' is already queued.
 		if (!fromDraw) {
 #ifdef UI_MULTITHREAD
@@ -355,15 +360,20 @@ namespace gui {
 	void Painter::afterRepaint() {}
 
 	void Painter::uiAfterRepaint(RepaintParams *params) {
+		util::Lock::L q(gLock);
 		Lock::Guard z(lock);
 		currentRepaint = repaintCounter;
 
 		if (CairoSurface *surface = target.surface()) {
 			cairo_set_source_surface(params->ctx, surface->surface, 0, 0);
+			// cairo_set_source_rgba(params->ctx, 1, 1, 1, 1);
 			cairo_paint(params->ctx);
 
 			// Make sure Cairo does not use our surface outside the lock!
 			cairo_surface_flush(cairo_get_group_target(params->ctx));
+
+			// Make it forget the surface.
+			cairo_set_source_rgba(params->ctx, 0, 0, 0, 1);
 
 			// We're ready for the next frame now!
 			if (continuous) {

@@ -38,6 +38,7 @@ namespace gui {
 	}
 
 	void SolidBrush::prepare(cairo_t *cairo) {
+		PLN(L"cairo_set_source_rgba(dev, " << col.r << L", " << col.g << L", " << col.b << L", " << (col.a * opacity) << L");");
 		cairo_set_source_rgba(cairo, col.r, col.g, col.b, col.a * opacity);
 	}
 
@@ -72,6 +73,7 @@ namespace gui {
 #ifdef GUI_GTK
 
 	OsResource *BitmapBrush::create(Painter *owner) {
+		printf("cairo_pattern_create_for_surface(...);\n");
 		cairo_pattern_t *p = cairo_pattern_create_for_surface(myBitmap->get<cairo_surface_t>(owner));
 		cairo_pattern_set_extend(p, CAIRO_EXTEND_REPEAT);
 
@@ -198,6 +200,7 @@ namespace gui {
 
 	OsResource *LinearGradient::create(Painter *owner) {
 		// We're using the points (0, 0) - (0, -1) so that we can easily transform them later (= 0 deg).
+		printf("cairo_pattern_create_linear(...);\n");
 		cairo_pattern_t *r = cairo_pattern_create_linear(0, 0, 0, -1);
 		applyStops(r);
 		updatePoints(r);
@@ -275,6 +278,7 @@ namespace gui {
 
 	OsResource *RadialGradient::create(Painter *owner) {
 		// We're using the point (0, 0) and a radius of 1 so that we can easily transform it later.
+		printf("cairo_pattren_create_radial(...)\n");
 		cairo_pattern_t *r = cairo_pattern_create_radial(0, 0, 0, 0, 0, 1);
 		applyStops(r);
 		update(r);

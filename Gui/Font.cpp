@@ -328,7 +328,9 @@ namespace gui {
 		os::Lock::L z(shared->lock);
 		if (!shared->desc) {
 			shared->desc = pango_font_description_new();
+			PLN(L"pango_font_description_set_family(?, " << fName << L");");
 			pango_font_description_set_family(shared->desc, fName->utf8_str());
+			PLN(L"pango_font_description_set_size(?, " << toPango(fHeight) << L");");
 			pango_font_description_set_size(shared->desc, toPango(fHeight));
 			pango_font_description_set_style(shared->desc, fItalic ? PANGO_STYLE_ITALIC : PANGO_STYLE_NORMAL);
 			// TODO: Set underline and strikethrough as well.

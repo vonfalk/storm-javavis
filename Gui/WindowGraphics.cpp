@@ -64,6 +64,8 @@ namespace gui {
 
 		// Set up the backend.
 		prepare();
+
+		PLN(L"start_frame(dev);");
 	}
 
 	void WindowGraphics::afterRender() {
@@ -86,6 +88,8 @@ namespace gui {
 			layers->last().release();
 			layers->pop();
 		}
+
+		PLN("end_frame(dev);\n");
 	}
 
 
@@ -310,16 +314,19 @@ namespace gui {
 		oldStates->push(state);
 		state.layer = LayerKind::group;
 		state.opacity = opacity;
+		printf("cairo_push_group(...);\n");
 		cairo_push_group(info.target());
 	}
 
 	void WindowGraphics::push(Rect clip) {
 		oldStates->push(state);
 		state.layer = LayerKind::save;
+		printf("cairo_save(...);\n");
 		cairo_save(info.target());
 
 		Size sz = clip.size();
 		cairo_rectangle(info.target(), clip.p0.x, clip.p0.y, sz.w, sz.h);
+		printf("cairo_clip(...);\n");
 		cairo_clip(info.target());
 	}
 
@@ -327,9 +334,11 @@ namespace gui {
 		oldStates->push(state);
 		state.layer = LayerKind::group;
 		state.opacity = opacity;
+		printf("cairo_push_group(...);\n");
 		cairo_push_group(info.target());
 
 		Size sz = clip.size();
+		printf("cairo_clip(...);\n");
 		cairo_rectangle(info.target(), clip.p0.x, clip.p0.y, sz.w, sz.h);
 		cairo_clip(info.target());
 	}
@@ -339,10 +348,12 @@ namespace gui {
 		case LayerKind::none:
 			break;
 		case LayerKind::group:
+			PLN("cairo_pop_to_source(...);\ncairo_paint_with_alpha(..., %f);");
 			cairo_pop_group_to_source(info.target());
 			cairo_paint_with_alpha(info.target(), state.opacity);
 			break;
 		case LayerKind::save:
+			PLN("cairo_restore(...);");
 			cairo_restore(info.target());
 			break;
 		}
@@ -361,19 +372,22 @@ namespace gui {
 	void WindowGraphics::transform(Transform *tfm) {
 		cairo_matrix_t m = cairoMultiply(cairo(tfm), oldStates->last().transform());
 		state.transform(m);
-		cairo_set_matrix(info.target(), &m);
+		printf("cairo_set_matrix(...);\n");
+		// cairo_set_matrix(info.target(), &m);
 	}
 
 	void WindowGraphics::lineWidth(Float w) {
 		// TODO: How is the width of lines affected by scaling etc.? How do we want it to behave?
-		state.lineWidth = oldStates->last().lineWidth *w;
-		cairo_set_line_width(info.target(), state.lineWidth);
+		state.lineWidth = oldStates->last().lineWidth * w;
+		printf("cairo_set_line_width(..., %f);\n", state.lineWidth);
+		// cairo_set_line_width(info.target(), state.lineWidth);
 	}
 
 	void WindowGraphics::prepare() {
 		cairo_matrix_t tfm = state.transform();
-		cairo_set_matrix(info.target(), &tfm);
-		cairo_set_line_width(info.target(), state.lineWidth);
+		// cairo_set_matrix(info.target(), &tfm);
+		printf("cairo_set_line_width(..., %f); // in prepare\n", state.lineWidth);
+		// cairo_set_line_width(info.target(), state.lineWidth);
 	}
 
 	void WindowGraphics::Layer::release() {
@@ -385,12 +399,16 @@ namespace gui {
 	 */
 
 	void WindowGraphics::line(Point from, Point to, Brush *style) {
+		PLN(L"cairo_new_path(dev);");
 		cairo_new_path(info.target());
+		PLN(L"cairo_move_to(dev, " << from.x << ", " << from.y << L");");
 		cairo_move_to(info.target(), from.x, from.y);
+		PLN(L"cairo_line_to(dev, " << to.x << ", " << to.y << L");");
 		cairo_line_to(info.target(), to.x, to.y);
 
 		style->setSource(owner, info.target());
 
+		PLN("cairo_stroke(dev);");
 		cairo_stroke(info.target());
 	}
 
@@ -398,6 +416,7 @@ namespace gui {
 		Size sz = rect.size();
 		cairo_rectangle(info.target(), rect.p0.x, rect.p0.y, sz.w, sz.h);
 		style->setSource(owner, info.target());
+		printf("cairo_stroke(...);\n");
 		cairo_stroke(info.target());
 	}
 
@@ -429,6 +448,7 @@ namespace gui {
 		rounded_rect(info, rect, edges);
 
 		style->setSource(owner, info.target());
+		printf("cairo_stroke(...);\n");
 		cairo_stroke(info.target());
 	}
 
@@ -450,18 +470,21 @@ namespace gui {
 		cairo_oval(info, rect);
 
 		style->setSource(owner, info.target());
+		printf("cairo_stroke(...);\n");
 		cairo_stroke(info.target());
 	}
 
 	void WindowGraphics::draw(Path *path, Brush *style) {
 		path->draw(info.target());
 		style->setSource(owner, info.target());
+		printf("cairo_stroke(...);\n");
 		cairo_stroke(info.target());
 	}
 
 	void WindowGraphics::fill(Rect rect, Brush *style) {
 		rectangle(info, rect);
 		style->setSource(owner, info.target());
+		printf("cairo_fill(...);\n");
 		cairo_fill(info.target());
 	}
 
@@ -469,42 +492,48 @@ namespace gui {
 		rounded_rect(info, rect, edges);
 
 		style->setSource(owner, info.target());
+		printf("cairo_fill(...);\n");
 		cairo_fill(info.target());
 	}
 
 	void WindowGraphics::fill(Brush *style) {
 		cairo_matrix_t tfm;
 		cairo_matrix_init_identity(&tfm);
-		cairo_set_matrix(info.target(), &tfm);
+		// cairo_set_matrix(info.target(), &tfm);
 
 		style->setSource(owner, info.target());
+		printf("cairo_paint(...);\n");
 		cairo_paint(info.target());
 
 		tfm = state.transform();
-		cairo_set_matrix(info.target(), &tfm);
+		// cairo_set_matrix(info.target(), &tfm);
 	}
 
 	void WindowGraphics::fillOval(Rect rect, Brush *style) {
 		cairo_oval(info, rect);
 
 		style->setSource(owner, info.target());
+		printf("cairo_fill(...);\n");
 		cairo_fill(info.target());
 	}
 
 	void WindowGraphics::fill(Path *path, Brush *style) {
 		path->draw(info.target());
 		style->setSource(owner, info.target());
+		printf("cairo_fill(...);\n");
 		cairo_fill(info.target());
 	}
 
 	void WindowGraphics::draw(Bitmap *bitmap, Rect rect, Float opacity) {
+		printf("cairo_draw_bitmap(..., %f); // #1\n", opacity);
+
 		cairo_pattern_t *pattern = cairo_pattern_create_for_surface(bitmap->get<cairo_surface_t>(owner));
 		cairo_matrix_t tfm;
 		Size original = bitmap->size();
 		Size target = rect.size();
 		cairo_matrix_init_scale(&tfm, original.w / target.w, original.h / target.h);
 		cairo_matrix_translate(&tfm, -rect.p0.x, -rect.p0.y);
-		cairo_pattern_set_matrix(pattern, &tfm);
+		// cairo_pattern_set_matrix(pattern, &tfm);
 		cairo_set_source(info.target(), pattern);
 		if (opacity < 1.0f)
 			cairo_paint_with_alpha(info.target(), opacity);
@@ -514,6 +543,8 @@ namespace gui {
 	}
 
 	void WindowGraphics::draw(Bitmap *bitmap, Rect src, Rect dest, Float opacity) {
+		printf("cairo_draw_bitmap(...); // #2\n");
+
 		cairo_save(info.target());
 
 		rectangle(info, dest);
@@ -526,7 +557,7 @@ namespace gui {
 		cairo_matrix_init_translate(&tfm, src.p0.x, src.p0.y);
 		cairo_matrix_scale(&tfm, original.w / target.w, original.h / target.h);
 		cairo_matrix_translate(&tfm, -dest.p0.x, -dest.p0.y);
-		cairo_pattern_set_matrix(pattern, &tfm);
+		// cairo_pattern_set_matrix(pattern, &tfm);
 		cairo_set_source(info.target(), pattern);
 		if (opacity < 1.0f)
 			cairo_paint_with_alpha(info.target(), opacity);
@@ -538,6 +569,8 @@ namespace gui {
 	}
 
 	void WindowGraphics::text(Str *text, Font *font, Brush *style, Rect rect) {
+		printf("pango_cairo_show_layout(...); // on-the-fly\n");
+
 		// Note: It would be good to not have to create the layout all the time.
 		PangoLayout *layout = pango_cairo_create_layout(info.target());
 
@@ -557,10 +590,20 @@ namespace gui {
 	}
 
 	void WindowGraphics::draw(Text *text, Brush *style, Point origin) {
+		this->text(text->text(), text->font(), style, Rect(origin, Size(100, 100)));
+		return;
+
+
+
 		style->setSource(owner, info.target());
+
+		PLN(L"cairo_move_to(dev, " << origin.x << L", " << origin.y << L");");
+		PLN(L"pango_cairo_show_layout(dev, " << (void *)text->layout(owner) << L");");
 
 		cairo_move_to(info.target(), origin.x, origin.y);
 		pango_cairo_show_layout(info.target(), text->layout(owner));
+
+		cairo_surface_flush(cairo_get_group_target(info.target()));
 	}
 
 #endif

@@ -180,14 +180,19 @@ namespace gui {
 	void Text::init(Str *text, Font *font, Size size) {
 		RenderMgr *mgr = renderMgr(engine());
 		l = pango_layout_new(mgr->pango());
+		PLN(L"pango_layout_new(pango); => " << (void *)l);
 
+		PLN(L"pango_layout_set_wrap(" << (void *)l << ", PANGO_WRAP_WORD_CHAR);");
 		pango_layout_set_wrap(l, PANGO_WRAP_WORD_CHAR);
+		PLN(L"pango_layout_set_font_description(" << l << L", ?);");
 		pango_layout_set_font_description(l, font->desc());
 		layoutBorder(size);
+		PLN(L"pango_layout_set_text(" << l << L", \"" << text << L"\", -1);");
 		pango_layout_set_text(l, text->utf8_str(), -1);
 
 		Float tabWidth = font->tabWidth();
 		if (tabWidth > 0) {
+			PLN(L"Setting tabs...");
 			PangoTabArray *array = pango_tab_array_new(1, false);
 			pango_tab_array_set_tab(array, 0, PANGO_TAB_LEFT, toPango(font->tabWidth()));
 			pango_layout_set_tabs(l, array);
@@ -225,7 +230,9 @@ namespace gui {
 			w = toPango(s.w);
 		if (s.h < std::numeric_limits<float>::max())
 			h = toPango(s.h);
+		PLN(L"pango_layout_set_width(" << l << L", " << w << L");");
 		pango_layout_set_width(l, w);
+		PLN(L"pango_layout_set_height(" << l << L", " << w << L");");
 		pango_layout_set_height(l, h);
 	}
 

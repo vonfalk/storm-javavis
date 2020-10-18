@@ -50,35 +50,37 @@ namespace gui {
 		Nat w = src->width();
 		Nat h = src->height();
 
+		printf("Created bitmap: %d, %d\n", w, h);
+
 		CairoSurface *surface = owner->surface();
 		cairo_surface_t *texture = cairo_surface_create_similar(surface->surface, CAIRO_CONTENT_COLOR_ALPHA, w, h);
-		cairo_surface_t *image = cairo_surface_map_to_image(texture, NULL);
+		// cairo_surface_t *image = cairo_surface_map_to_image(texture, NULL);
 
-		byte *src = this->src->buffer();
-		Nat srcStride = this->src->stride();
-		byte *dest = cairo_image_surface_get_data(image);
-		Nat destStride = cairo_image_surface_get_stride(image);
-		cairo_format_t fmt = cairo_image_surface_get_format(image);
-		if (fmt != CAIRO_FORMAT_ARGB32)
-			throw new (this) GuiError(S("Invalid format from Cairo. Expected ARGB32."));
+		// byte *src = this->src->buffer();
+		// Nat srcStride = this->src->stride();
+		// byte *dest = cairo_image_surface_get_data(image);
+		// Nat destStride = cairo_image_surface_get_stride(image);
+		// cairo_format_t fmt = cairo_image_surface_get_format(image);
+		// if (fmt != CAIRO_FORMAT_ARGB32)
+		// 	throw new (this) GuiError(S("Invalid format from Cairo. Expected ARGB32."));
 
-		for (Nat y = 0; y < h; y++) {
-			for (Nat x = 0; x < w; x++) {
-				nat *d = (nat *)(dest + destStride*y + x*4);
-				byte *s = src + srcStride*y + x*4;
+		// for (Nat y = 0; y < h; y++) {
+		// 	for (Nat x = 0; x < w; x++) {
+		// 		nat *d = (nat *)(dest + destStride*y + x*4);
+		// 		byte *s = src + srcStride*y + x*4;
 
-				// Convert to premultiplied alpha.
-				float a = float(s[3]) / 255.0f;
-				nat pixel = 0;
-				pixel |= (nat(s[3] * 1) & 0xFF) << 24; // A
-				pixel |= (nat(s[0] * a) & 0xFF) << 16; // R
-				pixel |= (nat(s[1] * a) & 0xFF) << 8; // G
-				pixel |= (nat(s[2] * a) & 0xFF) << 0; // B
-				*d = pixel;
-			}
-		}
-		cairo_surface_mark_dirty(image);
-		cairo_surface_unmap_image(texture, image);
+		// 		// Convert to premultiplied alpha.
+		// 		float a = float(s[3]) / 255.0f;
+		// 		nat pixel = 0;
+		// 		pixel |= (nat(s[3] * 1) & 0xFF) << 24; // A
+		// 		pixel |= (nat(s[0] * a) & 0xFF) << 16; // R
+		// 		pixel |= (nat(s[1] * a) & 0xFF) << 8; // G
+		// 		pixel |= (nat(s[2] * a) & 0xFF) << 0; // B
+		// 		*d = pixel;
+		// 	}
+		// }
+		// cairo_surface_mark_dirty(image);
+		// cairo_surface_unmap_image(texture, image);
 		cairo_surface_mark_dirty(texture);
 		return texture;
 	}

@@ -14,8 +14,15 @@ namespace storm {
 	// This function might crash while generating a stack trace, but that is fine, as we assume
 	// that the system would crash anyway.
 	extern "C" void gc_panic_stacktrace() {
+		static size_t printing = 0;
+		// Try basic synchronization in case multiple threads almost at the same time.
+		while (atomicCAS(printing, 0, 1) == 1)
+			;
+
 		std::wcerr << L"Crash backtrace:" << std::endl;
 		std::wcerr << format(stackTrace()) << std::endl;
+
+		atomicWrite(printing, 0);
 	}
 
 	struct ImplWrap : public GcImpl {
