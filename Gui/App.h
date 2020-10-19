@@ -185,6 +185,16 @@ namespace gui {
 		// The UThread that runs the message pump.
 		os::UThread uThread;
 
+#ifdef GUI_WIN32
+		// Monitor messages to figure out when (and if) we need to enable a timer to keep the
+		// threading system responsive. Some operations enter a recursive window loop, which
+		// bypasses our efforts to keep other UThreads alive etc.
+		// We can't do this ourselves, as we will only see messages directly from PeekMessage.
+		// But the required timer messages are posted directly to the desired window by the
+		// recursive window loop, making it impossible for us to get hold of it otherwise.
+		// 'false' means that this message should not be processed any further.
+		bool checkBlockMsg(HWND hWnd, const Message &msg);
+#endif
 #ifdef GUI_GTK
 		// Post a repaint request to the Gtk+ window. Safe to call from any thread.
 		void repaint(Handle handle);
@@ -216,6 +226,28 @@ namespace gui {
 
 		// Our thread id (win32 thread id).
 		DWORD threadId;
+
+		// Keep track of what each window is doing regarding potentially blocking the main message loop.
+		enum BlockStatus {
+			// When the user has clicked the title bar, but before dragging the window (there is a 500 ms delay here).
+			blockPreMove,
+
+			// When the user has actually started moving the window.
+			blockMoving,
+
+			// When a menu is showing.
+			blockMenu,
+		};
+
+		// Each window we want to keep track of. Windows that are not affecting the block status
+		// should not be present in the map, thus it is easy to determine if we need to enable the
+		// timer. Just check if there is anything in here.
+		typedef map<HWND, BlockStatus> BlockMap;
+		BlockMap blockStatus;
+
+		// Is the blocking timer active? If so, what window is it attached to?
+		HWND blockTimer;
+
 #endif
 
 #ifdef GUI_GTK

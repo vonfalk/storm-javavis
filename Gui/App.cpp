@@ -258,6 +258,12 @@ namespace gui {
 		}
 
 		App *app = gui::app(*currentEngine);
+
+		// Check for messages related to keeping the system interactive.
+		if (!app->appWait->checkBlockMsg(hwnd, msg))
+			return noResult();
+
+		// Try to post it to a window.
 		Window *w = app->windows->get(Handle(hwnd), app->creating);
 		if (!w) {
 			WARNING(L"Unknown window: " << hwnd << L", ignoring " << msg << L".");
@@ -334,6 +340,7 @@ namespace gui {
 		threadId = GetCurrentThreadId();
 		signalSent = 0;
 		currentEngine = &e;
+		blockTimer = NULL;
 
 		// Make sure we get a message queue.
 		if (!IsGUIThread(TRUE)) {
@@ -421,6 +428,91 @@ namespace gui {
 			notify.up();
 
 		PostThreadMessage(threadId, WM_QUIT, 0, 0);
+	}
+
+	bool AppWait::checkBlockMsg(HWND hWnd, const Message &msg) {
+		static bool output = false;
+
+		if (output)
+			PVAR(msg);
+
+		switch (msg.msg) {
+		case WM_ENTERMENULOOP:
+			// Called when a pop-up menu is started.
+			blockStatus[hWnd] = blockMenu;
+			break;
+		case WM_EXITMENULOOP:
+			// Called when we're out of the menu loop.
+			blockStatus.erase(hWnd);
+			break;
+		case WM_SYSCOMMAND:
+			if ((msg.wParam & 0xFFF0) == SC_MOVE) {
+				// This message is sent when a user clicks the title bar. In around 500 ms we will
+				// get a WM_ENTERSIZEMOVE message. This won't happen if the user releases the mouse
+				// fairly quickly, however.
+				blockStatus[hWnd] = blockPreMove;
+			}
+			break;
+		case WM_WINDOWPOSCHANGING: {
+			// It seems like whenever the user clicks quickly on the title bar, the end of that is
+			// indicated by a WM_WINDOWPOSCHANGING message. We will get these messages during the
+			// move as well, so if we receive one after WM_ENTERSIZEMOVE, we just ignore it.
+			BlockMap::iterator found = blockStatus.find(hWnd);
+			if (found != blockStatus.end() && found->second == blockPreMove) {
+				blockStatus.erase(found);
+			}
+			break;
+		}
+		case WM_ENTERSIZEMOVE:
+			output = false;
+			blockStatus[hWnd] = blockMoving;
+			break;
+		case WM_EXITSIZEMOVE:
+			// We're always done when we get here!
+			blockStatus.erase(hWnd);
+			break;
+		case WM_CAPTURECHANGED:
+			// Seems to be a good "fallback" if the regular "done" notifications are not sent properly.
+			blockStatus.erase(hWnd);
+			PLN(L"DESTROY");
+			break;
+		case WM_DESTROY:
+			// We don't need this information anymore.
+			blockStatus.erase(hWnd);
+
+			// If this is the window driving the timer, allocate a new timer.
+			// Note: As long as we remove the timer, the code below will re-create it.
+			if (blockTimer == hWnd) {
+				KillTimer(hWnd, 0);
+				blockTimer = NULL;
+			}
+			break;
+		case WM_TIMER:
+			if (msg.wParam == 0) {
+				PLN(L"TIMER");
+				// This is our timer. It means we should check for UThreads that need to execute
+				// now. This will, among other things, drive animations.
+				os::UThread::leave();
+				return false;
+			}
+		}
+
+		if (blockStatus.empty()) {
+			if (blockTimer != NULL) {
+				KillTimer(blockTimer, 0);
+				blockTimer = NULL;
+			}
+		} else {
+			if (blockTimer == NULL) {
+				blockTimer = hWnd;
+				// This will generate a timeout of USER_TIMER_MINIMUM, which is ~10ms.
+				// We use timer id 0 as that is not occupied by the window timer in the Window class.
+				SetTimer(hWnd, 0, 1, NULL);
+			}
+		}
+
+		// By default, we let messages through.
+		return true;
 	}
 
 
@@ -747,7 +839,9 @@ namespace gui {
 	}
 
 	AppWait::RepaintRequest::RepaintRequest(Handle handle) :
-		handle(handle), wait(0), next(null) {}
+		handle(handle), wait(0), next(null) {
+		TODO(L"Remove this now?");
+	}
 
 	void AppWait::repaint(Handle window) {
 		RepaintRequest r(window);
