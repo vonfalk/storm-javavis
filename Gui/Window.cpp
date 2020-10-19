@@ -528,12 +528,13 @@ namespace gui {
 	void Window::setTimer(Duration interval) {
 		timerInterval = interval;
 		if (created()) {
-			SetTimer(handle().hwnd(), 1, (UINT)interval.inMs(), NULL);
+			// The HWND is used as a timer ID. That makes it unique. We can still use timer #0 for internal stuff.
+			SetTimer(handle().hwnd(), (UINT_PTR)handle().hwnd(), (UINT)interval.inMs(), NULL);
 		}
 	}
 
 	void Window::clearTimer() {
-		KillTimer(handle().hwnd(), 1);
+		KillTimer(handle().hwnd(), (UINT_PTR)handle().hwnd());
 	}
 
 #endif
