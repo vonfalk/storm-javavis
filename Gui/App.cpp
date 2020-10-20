@@ -390,11 +390,8 @@ namespace gui {
 		// start a timer, and use that to see if we have other threads that wish to run.
 		// See: http://www.tech-archive.net/Archive/Development/microsoft.public.win32.programmer.ui/2006-02/msg00153.html
 
-		// Another idea is to hook GetMessage() in the WinAPI, and implement that in terms of
-		// PeekMessage and MsgWaitForMultipleObjects. This will work as long as DefWindowProc calls
-		// the implementation of GetMessage() we can see, and not something else.
-		// This seems like it will not work, at least not on WOW64, as DefWindowProc does not call
-		// the same GetMessage() as we are calling.
+		// We might need to complement this with hooks:
+		// https://docs.microsoft.com/en-us/previous-versions/windows/desktop/legacy/ms644987(v=vs.85)
 
 		try {
 			// Do not handle messages if they are disabled.
