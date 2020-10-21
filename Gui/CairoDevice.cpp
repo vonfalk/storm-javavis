@@ -61,6 +61,8 @@ namespace gui {
 		return new SoftwareDevice();
 #endif
 
+		return create(e, "gl");
+
 		const char *preference = getenv("STORM_RENDER_BACKEND");
 		if (preference)
 			return create(e, preference);
@@ -238,6 +240,7 @@ namespace gui {
 			return null;
 		} else {
 			result->device = cairo_glx_device_create(result->display, result->context);
+			cairo_gl_device_set_thread_aware(result->device, true);
 			return result;
 		}
 	}
@@ -379,6 +382,7 @@ namespace gui {
 			return false;
 
 		device = cairo_egl_device_create(display, context);
+		cairo_gl_device_set_thread_aware(device, true);
 		return true;
 	}
 

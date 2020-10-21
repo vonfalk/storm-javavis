@@ -21,7 +21,7 @@
 #Main -a -f presentation.tests.simple
 #Main -a -f progvis.debug
 #Main -a -f progvis.testCpp
-Main -a -f trees.main
+#Main -a -f trees.main
 
 #UI while running intensive memory allocations in the background.
 #Main -a -r ../root/ -f tests.ui.simpleMem
@@ -42,4 +42,4 @@ Main -a -f trees.main
 #Main -a -i sle ../External/sle -f sle.main
 #Main -a -i sle ../External/sle -f sle.debug
 #Main -a -i icer2019 ../External/icer2019 -f icer2019.main
-#Main -a -i sigcse2020 ../External/sigcse2020 -f sigcse2020.debug
+Main -a -i sigcse2020 ../External/sigcse2020 -f sigcse2020.debug
