@@ -1,5 +1,9 @@
 	.text
 
+	# Address of the logical return location inside 'doSwitch'. Used to get decend stack traces, not much more.
+	# Used in the C++ code.
+	.globl doSwitchReturnLoc
+
 	# os::doSwitch(...) is _ZN2os8doSwitchEPPNS_12UThreadStack4DescES3_
 	.globl doSwitch
 	.type doSwitch, @function
@@ -60,7 +64,7 @@ doSwitch:
 
 	# This is the 'logical' location where threads are paused. We will use this as the "return address"
 	# when using detours to get good stack traces.
-.Lret_location:
+doSwitchReturnLoc:
 
 	# Skip the ThreadDesc struct.
 	addq $32, %rsp
@@ -98,12 +102,8 @@ doSwitch:
 	.cfi_restore rbp
 	.cfi_def_cfa rsp, 8
 	retq
-
 	.cfi_endproc
-
-	.globl doSwitchReturn
-doSwitchReturn:
-	.quad .Lret_location
+	
 
 	.text
 	.align 8
@@ -111,6 +111,7 @@ doEndDetour2Ptr:
 	# Store a pointer to the 'doEndDetour2' function so we can call it using RIP relative addressing.
 	.quad doEndDetour2
 
+	.text
 	# doEndDetour()
 	.globl doEndDetour
 	.type doEndDetour, @function

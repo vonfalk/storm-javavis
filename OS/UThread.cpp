@@ -1003,7 +1003,8 @@ namespace os {
 	}
 
 	// Logical location where thread switches are made. Used to get good backtraces.
-	extern "C" void *doSwitchReturn;
+	// Note: This is a label in asm, so the interesting thing about this is its address.
+	extern "C" char doSwitchReturnLoc;
 
 	StackDesc *UThreadData::pushSubContext(const void *fn, void *param) {
 		StackDesc *old = stack.desc;
@@ -1027,7 +1028,7 @@ namespace os {
 
 		// Return address for the new function. Needed for stack traces, but we don't expect we will
 		// ever return there.
-		newStack[12] = size_t(doSwitchReturn);
+		newStack[12] = size_t(&doSwitchReturnLoc);
 
 		newStack[11] = size_t(fn);
 		newStack[10] = size_t(rbp);
