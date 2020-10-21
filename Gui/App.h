@@ -74,9 +74,6 @@ namespace gui {
 		HINSTANCE instance();
 #endif
 #ifdef GUI_GTK
-		// Post a repaint request from any thread.
-		void repaint(Handle window);
-
 		// Get the default display.
 		inline GdkDisplay *defaultDisplay() const { return display; }
 #endif
@@ -251,22 +248,6 @@ namespace gui {
 #endif
 
 #ifdef GUI_GTK
-		// Repaint requests that can be posted to the Ui thread cheaply.
-		class RepaintRequest {
-		public:
-			RepaintRequest(Handle handle);
-
-			Handle handle;
-			os::Sema wait;
-			RepaintRequest *next;
-		};
-
-		// First repaint request.
-		RepaintRequest *repaintList;
-
-		// Lock for the repaint requests.
-		util::Lock repaintLock;
-
 		// The global main context.
 		GMainContext *context;
 
@@ -281,9 +262,6 @@ namespace gui {
 
 		// Poll descriptors used by the system calls.
 		vector<struct pollfd> pollFd;
-
-		// Handle all repaint requests.
-		void handleRepaints();
 
 		// Wait for a callback of some sort.
 		void doWait(os::IOHandle &io, int timeout);

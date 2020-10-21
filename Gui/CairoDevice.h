@@ -22,10 +22,7 @@ namespace gui {
 		~Device();
 
 		// Get the device type.
-		DeviceType type() {
-			// This depends on what backend we selected, and what window manager is used.
-			assert(false);
-		}
+		DeviceType type();
 
 		// Attach a painter. If it returns a RenderInfo where 'any()' returns false, call 'create' later.
 		RenderInfo attach(Handle window);
@@ -85,6 +82,10 @@ namespace gui {
 		// Create a surface for Pango font rendering. Like 'createSurface', but may not fail.
 		// Default implementation calls 'createSurface', which may not always be suitable.
 		virtual CairoSurface *createPangoSurface(Size size);
+
+		// Get the device type for this device. I.e. if we are able to support "present" calls, or
+		// if we need to blit through Gtk+.
+		virtual DeviceType type() const = 0;
 	};
 
 	/**
@@ -97,6 +98,9 @@ namespace gui {
 
 		// Basically a call to 'createSurface', as it should never be called.
 		virtual CairoSurface *createSurface(Size size, RepaintParams *params);
+
+		// We're a blitting device.
+		virtual DeviceType type() const { return dtBlit; }
 	};
 
 	/**
@@ -113,6 +117,9 @@ namespace gui {
 
 		// As such, we will also need to override the creation of Pango surfaces.
 		virtual CairoSurface *createPangoSurface(Size size);
+
+		// We're a blitting device.
+		virtual DeviceType type() const { return dtBlit; }
 	};
 
 
@@ -134,6 +141,9 @@ namespace gui {
 
 		// Basically a call to 'createSurface', as it should never be called.
 		virtual CairoSurface *createSurface(Size size, RepaintParams *params);
+
+		// We're a blitting device.
+		virtual DeviceType type() const { return dtBlit; }
 
 	protected:
 		// Create.

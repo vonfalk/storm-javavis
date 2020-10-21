@@ -522,14 +522,9 @@ namespace gui {
 		display = gdk_display_get_default();
 	}
 
-	void App::repaint(Handle window) {
-		appWait->repaint(window);
-	}
-
 	void AppWait::platformInit() {
 		done = false;
 		dispatchReady = false;
-		repaintList = null;
 
 		// We'll be using threads with X from time to time. Mainly while painting in the background through Cairo.
 		XInitThreads();
@@ -554,15 +549,6 @@ namespace gui {
 	}
 
 	void AppWait::platformDestroy() {
-		// Dismiss any repaint requests.
-		{
-			util::Lock::L z(repaintLock);
-			while (repaintList) {
-				repaintList->wait.up();
-				repaintList = repaintList->next;
-			}
-		}
-
 		// Release ownership of the main context.
 		g_main_context_release(context);
 
@@ -767,9 +753,6 @@ namespace gui {
 		// Notify that we woke up. This needs to be done after reading from the eventfd, otherwise
 		// the 'signalSent' might be set again before we manage to clear the eventfd.
 		atomicWrite(signalSent, 0);
-
-		// Handle any repaint requests.
-		handleRepaints();
 	}
 
 	bool AppWait::wait(os::IOHandle &io) {
@@ -806,8 +789,6 @@ namespace gui {
 	}
 
 	void AppWait::work() {
-		handleRepaints();
-
 		// Don't try to dispatch anything unless we called wait earlier.
 		if (!dispatchReady)
 			return;
@@ -834,38 +815,6 @@ namespace gui {
 		done = true;
 		signal();
 	}
-
-	AppWait::RepaintRequest::RepaintRequest(Handle handle) :
-		handle(handle), wait(0), next(null) {
-		TODO(L"Remove this now?");
-	}
-
-	void AppWait::repaint(Handle window) {
-		RepaintRequest r(window);
-		{
-			util::Lock::L z(repaintLock);
-			r.next = repaintList;
-			repaintList = &r;
-		}
-
-		signal();
-		r.wait.down();
-	}
-
-	void AppWait::handleRepaints() {
-		util::Lock::L z(repaintLock);
-		while (repaintList) {
-			RepaintRequest *now = repaintList;
-			repaintList = repaintList->next;
-
-			GdkWindow *window = gtk_widget_get_window(now->handle.widget());
-			if (window)
-				gdk_window_invalidate_rect(window, NULL, true);
-			now->wait.up();
-		}
-	}
-
-
 
 #endif
 

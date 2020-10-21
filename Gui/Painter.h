@@ -135,14 +135,20 @@ namespace gui {
 		// Wait for a new frame to be rendered (used during continuous updates).
 		void waitForFrame();
 
+		// Called before painting. This is so that the backend may prepare for rendering to a specific window.
+		void prepare(RepaintParams *p);
+
 		// Paint a new image into the buffer. Handles registering repaints etc.
 		void doRepaint();
 
 		// Do the platform specific of the repaint cycle.
 		bool doRepaintI();
 
-		// Present the current frame.
+		// Present the current frame (assuming raw device mode).
 		void present(bool waitForVSync);
+
+		// Present the current frame by blitting it to the window (assuming buffered mode).
+		void blit(RepaintParams *params);
 
 		// Helper to invalidate the associated window through 'attachedTo'.
 		void invalidateWindow();

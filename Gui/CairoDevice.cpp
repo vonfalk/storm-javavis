@@ -56,11 +56,6 @@ namespace gui {
 	}
 
 	static CairoDevice *create(Engine &e) {
-#if GTK_RENDER_IS_SW(GTK_MODE)
-		// Failsafe if requested.
-		return new SoftwareDevice();
-#endif
-
 		const char *preference = getenv("STORM_RENDER_BACKEND");
 		if (preference)
 			return create(e, preference);
@@ -79,6 +74,10 @@ namespace gui {
 		g_object_unref(pangoContext);
 		delete pangoSurface;
 		delete device;
+	}
+
+	DeviceType Device::type() {
+		return device->type();
 	}
 
 	RenderInfo Device::attach(Handle window) {

@@ -985,7 +985,7 @@ namespace gui {
 		gtk_widget_set_has_window(drawTo, FALSE);
 
 		if (myPainter)
-			myPainter->detach();
+			myPainter->onDetach();
 		gdkWindow = null;
 	}
 

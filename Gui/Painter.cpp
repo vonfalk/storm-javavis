@@ -109,7 +109,7 @@ namespace gui {
 			doRepaint();
 			present(false);
 			break;
-		case dtBuffered:
+		case dtBlit:
 			// Ask the windowing system for a repaint instead.
 			invalidateWindow();
 			break;
@@ -117,12 +117,26 @@ namespace gui {
 	}
 
 	void Painter::onRepaint(RepaintParams *params) {
+		prepare(params);
+
 		// Do we need to render the frame now, or did we already render something before?
 		if (ready())
 			doRepaint();
 
 		// Present the image to the screen.
-		present(true);
+		switch (deviceType) {
+		case dtRaw:
+			present(true);
+			break;
+		case dtBlit:
+			blit(params);
+			if (continuous) {
+				// If in continuous mode, we let the windowing system handle frame times. So just
+				// invalidating the window again will keep the animation going.
+				invalidateWindow();
+			}
+			break;
+		}
 	}
 
 	void Painter::doRepaint() {
@@ -141,18 +155,15 @@ namespace gui {
 		atomicIncrement(repaintBuffer);
 		if (more != continuous) {
 			continuous = more;
-			if (more) {
-				switch (deviceType) {
-				case dtRaw:
-					// Register!
-					mgr->painterReady();
-					break;
-				case dtBuffered:
-					// Let the windowing system handle it.
-					invalidateWindow();
-					break;
-				}
+			if (more && deviceType == dtRaw) {
+				// Register!
+				mgr->painterReady();
 			}
+		}
+
+		if (deviceType == dtBlit) {
+			// Ask for a redraw now. Note: In buffered mode, the RenderMgr will not call 'doRepaint' at all.
+			invalidateWindow();
 		}
 	}
 
@@ -205,6 +216,10 @@ namespace gui {
 		return more;
 	}
 
+	void Painter::prepare(RepaintParams *) {
+		// Not needed on Windows.
+	}
+
 	void Painter::present(Bool waitForVSync) {
 		if (waitForVSync)
 			target.swapChain()->Present(1, 0);
@@ -212,6 +227,10 @@ namespace gui {
 			target.swapChain()->Present(0, 0);
 
 		atomicWrite(repaintScreen, atomicRead(repaintScreen));
+	}
+
+	void Painter::blit(RepaintParams *) {
+		// Not needed on Windows.
 	}
 
 	void Painter::invalidateWindow() {
@@ -228,12 +247,7 @@ namespace gui {
 		Lock::Guard z(lock);
 	}
 
-	bool Painter::ready() {
-		// Wait until the previous frame is actually shown.
-		return atomicRead(currentRepaint) == atomicRead(repaintCounter);
-	}
-
-	bool Painter::doRepaintI(bool waitForVSync, bool fromDraw) {
+	bool Painter::doRepaintI() {
 		if (!target.any())
 			return continuous;
 
@@ -268,21 +282,10 @@ namespace gui {
 
 		cairo_surface_flush(surface->surface);
 
-		// Tell Gtk+ we're ready to draw, unless a call to 'draw' is already queued.
-		if (!fromDraw) {
-#ifdef UI_MULTITHREAD
-			app->repaint(attachedTo.widget());
-#else
-			if (GdkWindow *window = gtk_widget_get_window(attachedTo.widget()))
-				gdk_window_invalidate_rect(window, NULL, true);
-#endif
-		}
-
-		// TODO: Handle VSync?
 		return more;
 	}
 
-	void Painter::beforeRepaint(RepaintParams *p) {
+	void Painter::prepare(RepaintParams *p) {
 		// Required when we're rendering directly to a window surface.
 		if (!target.any()) {
 			if (attached()) {
@@ -293,26 +296,19 @@ namespace gui {
 		}
 	}
 
-	void Painter::afterRepaint() {}
+	void Painter::present(Bool waitForVSync) {
+		PLN(L"TODO!");
 
-	void Painter::uiAfterRepaint(RepaintParams *params) {
+		atomicWrite(repaintScreen, atomicRead(repaintScreen));
+	}
+
+	void Painter::blit(RepaintParams *p) {
 		Lock::Guard z(lock);
 		atomicWrite(repaintScreen, atomicRead(repaintScreen));
 
 		if (CairoSurface *surface = target.surface()) {
-			cairo_set_source_surface(params->ctx, surface->surface, 0, 0);
-			cairo_paint(params->ctx);
-
-			// Make sure Cairo does not use our surface outside the lock!
-			cairo_surface_flush(cairo_get_group_target(params->ctx));
-
-			// We're ready for the next frame now!
-			if (continuous) {
-				mgr->painterReady();
-#ifdef UI_SINGLETHREAD
-				invalidateWindow();
-#endif
-			}
+			cairo_set_source_surface(p->ctx, surface->surface, 0, 0);
+			cairo_paint(p->ctx);
 		}
 	}
 
