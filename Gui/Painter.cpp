@@ -297,7 +297,9 @@ namespace gui {
 	}
 
 	void Painter::present(Bool waitForVSync) {
-		PLN(L"TODO!");
+		if (CairoSurface *surface = target.surface()) {
+			surface->present();
+		}
 
 		atomicWrite(repaintScreen, atomicRead(repaintScreen));
 	}

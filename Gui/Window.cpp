@@ -776,14 +776,15 @@ namespace gui {
 	}
 
 	bool Window::preExpose(GtkWidget *widget) {
-		// Do we have a painter?
-		if (myPainter && gdkWindow && widget == drawWidget()) {
-			// Does not seem to be needed right now, but this is where one can hook into paint
-			// events before Gtk+ gets hold of them!
+		// This is where we can hook into paint events before Gtk+ gets hold of them!
 
-			// RepaintParams params = { gdkWindow, drawWidget(), NULL };
-			// myPainter->onRepaint(&params);
-			// return true;
+		// Do we have a painter that is using the raw mode?
+		if (myPainter && myPainter->getDeviceType() == dtRaw) {
+			if (gdkWindow && widget == drawWidget()) {
+				RepaintParams params = { gdkWindow, drawWidget(), NULL };
+				myPainter->onRepaint(&params);
+				return true;
+			}
 		}
 
 		// Process normally.
@@ -901,6 +902,7 @@ namespace gui {
 	bool Window::useNativeWindow() {
 		// On Wayland, we don't need a separate window for things we're rendering into. That only
 		// confuses the window manager!
+		// TODO: Can we do this on X as well when we're using a blitting graphics backend?
 		if (GDK_IS_WAYLAND_WINDOW(gtk_widget_get_window(drawWidget()))) {
 			return false;
 		}

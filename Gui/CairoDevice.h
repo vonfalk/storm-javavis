@@ -64,6 +64,9 @@ namespace gui {
 
 		// Resize the surface. Might re-create 'surface' and/or 'target'.
 		virtual void resize(Size s);
+
+		// Present. If this is a surface for a raw device, swap buffers.
+		virtual void present();
 	};
 
 
@@ -171,6 +174,8 @@ namespace gui {
 
 	/**
 	 * GLX device.
+	 *
+	 * Supports both Raw and Blit modes.
 	 */
 	class GlxDevice : public GlDevice {
 	public:
@@ -178,6 +183,18 @@ namespace gui {
 
 		// Create a device. Might fail.
 		static GlxDevice *create(Engine &e, Display *display);
+
+		// Mode.
+		virtual DeviceType type() const;
+
+		// First level attempt. Might fail if we're a raw device.
+		virtual CairoSurface *createSurface(Size size);
+
+		// Custom surface creation if raw mode is enables.
+		virtual CairoSurface *createSurface(Size size, RepaintParams *params);
+
+		// Create a surface for Pango.
+		virtual CairoSurface *createPangoSurface(Size size);
 
 	private:
 		// Create.
@@ -189,8 +206,26 @@ namespace gui {
 		// The context.
 		GLXContext context;
 
+		// Allow raw mode?
+		bool allowRaw;
+
 		// Init.
 		bool init();
+	};
+
+	/**
+	 * GLX raw surface. Is attached directly to a window.
+	 */
+	class GlxWindowSurface : public CairoSurface {
+	public:
+		// Create.
+		GlxWindowSurface(GlxDevice *device, Size size, ::Window window);
+
+		// Custom resize.
+		virtual void resize(Size s);
+
+		// Support 'present'.
+		virtual void present();
 	};
 
 

@@ -75,6 +75,9 @@ namespace gui {
 		// data.
 		void onRepaint(RepaintParams *params);
 
+		// Check the device type.
+		DeviceType getDeviceType() const { return deviceType; }
+
 	private:
 		friend class RenderMgr;
 

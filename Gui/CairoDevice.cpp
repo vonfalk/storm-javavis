@@ -56,11 +56,12 @@ namespace gui {
 	}
 
 	static CairoDevice *create(Engine &e) {
+		TODO(L"Think about a good standard for STORM_RENDER_BACKEND");
 		const char *preference = getenv("STORM_RENDER_BACKEND");
 		if (preference)
 			return create(e, preference);
 		else
-			return create(e, "gtk");
+			return create(e, "gl");
 	}
 
 	Device::Device(Engine &e) {
@@ -137,6 +138,7 @@ namespace gui {
 		target = cairo_create(surface);
 	}
 
+	void CairoSurface::present() {}
 
 	/**
 	 * Generic device.
@@ -219,7 +221,11 @@ namespace gui {
 	 */
 
 	GlxDevice::GlxDevice(Engine &e, Display *display)
-		: GlDevice(null), display(display), context(null) {}
+		: GlDevice(null), display(display), context(null), allowRaw(false) {
+
+		TODO(L"Allow customization of 'allowRaw'!");
+		allowRaw = true;
+	}
 
 	GlxDevice::~GlxDevice() {
 		if (device)
@@ -300,6 +306,51 @@ namespace gui {
 				return true;
 		}
 		return false;
+	}
+
+	DeviceType GlxDevice::type() const {
+		if (allowRaw)
+			return dtRaw;
+		else
+			return dtBlit;
+	}
+
+	CairoSurface *GlxDevice::createSurface(Size size) {
+		// If we're supporting raw surfaces, we must fail here.
+		if (allowRaw)
+			return null;
+
+		return GlDevice::createSurface(size);
+	}
+
+	CairoSurface *GlxDevice::createSurface(Size size, RepaintParams *params) {
+		if (!allowRaw)
+			return GlDevice::createSurface(size);
+
+		return new GlxWindowSurface(this, size, GDK_WINDOW_XID(params->target));
+	}
+
+	CairoSurface *GlxDevice::createPangoSurface(Size size) {
+		// This always works.
+		return GlDevice::createSurface(size);
+	}
+
+	/**
+	 * GLX surface.
+	 */
+
+	GlxWindowSurface::GlxWindowSurface(GlxDevice *device, Size size, ::Window window)
+		: CairoSurface(cairo_gl_surface_create_for_window(device->device, window, int(size.w), int(size.h))) {}
+
+	void GlxWindowSurface::resize(Size size) {
+		// TODO: We can maybe get away without re-creating the target.
+		cairo_destroy(target);
+		cairo_gl_surface_set_size(surface, int(size.w), int(size.h));
+		target = cairo_create(surface);
+	}
+
+	void GlxWindowSurface::present() {
+		cairo_gl_surface_swapbuffers(surface);
 	}
 
 
