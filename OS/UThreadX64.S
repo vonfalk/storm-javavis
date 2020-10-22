@@ -104,13 +104,6 @@ doSwitchReturnLoc:
 	retq
 	.cfi_endproc
 	
-
-	.text
-	.align 8
-doEndDetour2Ptr:
-	# Store a pointer to the 'doEndDetour2' function so we can call it using RIP relative addressing.
-	.quad doEndDetour2
-
 	.text
 	# doEndDetour()
 	.globl doEndDetour
@@ -153,7 +146,7 @@ doEndDetour:
 
 	# Now, we have saved everything. Call the 'doEndDetour2' function in C to perform thread switches properly.
 	movq %rax, %rdi
-	call *doEndDetour2Ptr(%rip)
+	call *doEndDetour2@GOTPCREL(%rip)
 
 	# Restore the state we saved on the stack!
 	movaps (%rsp), %xmm7
@@ -225,7 +218,7 @@ doEndDetourMember:
 
 	# Now, we have saved everything. Call the 'doEndDetour2' function in C to perform thread switches properly.
 	movq %rax, %rdi
-	call *doEndDetour2Ptr(%rip)
+	call *doEndDetour2@GOTPCREL(%rip)
 
 	# Restore the state we saved on the stack!
 	movaps (%rsp), %xmm7

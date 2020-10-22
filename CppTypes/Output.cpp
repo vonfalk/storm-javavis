@@ -1081,7 +1081,9 @@ static void genGccX64(wostream &to, World &w) {
 		to << L"\t.hidden " << sName << L"\n";
 		to << sName << L":\n";
 		// There are two words of additional information in GCC.
-		to << L"\tmovabsq $" << gccVTableName(t.name) << L"+16, %rax\n";
+		// to << L"\tmovabsq $" << gccVTableName(t.name) << L"+16, %rax\n";
+		to << L"\tmovq " << gccVTableName(t.name) << L"@GOTPCREL(%rip), %rax\n";
+		to << L"\tleaq 16(%rax), %rax\n";
 		to << L"\tret\n\n";
 	}
 }
