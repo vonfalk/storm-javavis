@@ -77,14 +77,14 @@ namespace gui {
 	public:
 		// Create a surface for when the window is first attached. Might return null if the surface
 		// shall be created later.
-		virtual CairoSurface *createSurface(Size size) = 0;
+		virtual CairoSurface *createSurface(Size size, Handle window) = 0;
 
 		// Create a surface for when the window is repainted. May not return null.
 		virtual CairoSurface *createSurface(Size size, RepaintParams *params) = 0;
 
 		// Create a surface for Pango font rendering. Like 'createSurface', but may not fail.
 		// Default implementation calls 'createSurface', which may not always be suitable.
-		virtual CairoSurface *createPangoSurface(Size size);
+		virtual CairoSurface *createPangoSurface(Size size) = 0;
 
 		// Get the device type for this device. I.e. if we are able to support "present" calls, or
 		// if we need to blit through Gtk+.
@@ -97,10 +97,13 @@ namespace gui {
 	class SoftwareDevice : public CairoDevice {
 	public:
 		// This never fails in this implementation, as we can simply create the device at any time.
-		virtual CairoSurface *createSurface(Size size);
+		virtual CairoSurface *createSurface(Size size, Handle window);
 
 		// Basically a call to 'createSurface', as it should never be called.
 		virtual CairoSurface *createSurface(Size size, RepaintParams *params);
+
+		// Create a Pango device.
+		virtual CairoSurface *createPangoSurface(Size size);
 
 		// We're a blitting device.
 		virtual DeviceType type() const { return dtBlit; }
@@ -113,7 +116,7 @@ namespace gui {
 	class GtkDevice : public CairoDevice {
 	public:
 		// This will always fail, as we wait for the first draw call in order to be able to duplicate that device.
-		virtual CairoSurface *createSurface(Size size);
+		virtual CairoSurface *createSurface(Size size, Handle window);
 
 		// Create the surface here!
 		virtual CairoSurface *createSurface(Size size, RepaintParams *params);
@@ -140,10 +143,13 @@ namespace gui {
 		cairo_device_t *device;
 
 		// Create surfaces. Will never fail.
-		virtual CairoSurface *createSurface(Size size);
+		virtual CairoSurface *createSurface(Size size, Handle window);
 
 		// Basically a call to 'createSurface', as it should never be called.
 		virtual CairoSurface *createSurface(Size size, RepaintParams *params);
+
+		// Create a Pango surface.
+		virtual CairoSurface *createPangoSurface(Size size);
 
 		// We're a blitting device.
 		virtual DeviceType type() const { return dtBlit; }
@@ -188,13 +194,13 @@ namespace gui {
 		virtual DeviceType type() const;
 
 		// First level attempt. Might fail if we're a raw device.
-		virtual CairoSurface *createSurface(Size size);
+		// virtual CairoSurface *createSurface(Size size);
 
 		// Custom surface creation if raw mode is enables.
-		virtual CairoSurface *createSurface(Size size, RepaintParams *params);
+		// virtual CairoSurface *createSurface(Size size, RepaintParams *params);
 
 		// Create a surface for Pango.
-		virtual CairoSurface *createPangoSurface(Size size);
+		// virtual CairoSurface *createPangoSurface(Size size);
 
 	private:
 		// Create.

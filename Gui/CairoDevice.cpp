@@ -61,7 +61,7 @@ namespace gui {
 		if (preference)
 			return create(e, preference);
 		else
-			return create(e, "gl");
+			return create(e, "gtk");
 	}
 
 	Device::Device(Engine &e) {
@@ -88,7 +88,7 @@ namespace gui {
 						gtk_widget_get_allocated_height(window.widget()));
 
 		// Create surface as appropriate.
-		info.surface(device->createSurface(info.size));
+		info.surface(device->createSurface(info.size, window));
 		if (info.surface())
 			info.target(info.surface()->target);
 
@@ -140,25 +140,21 @@ namespace gui {
 
 	void CairoSurface::present() {}
 
-	/**
-	 * Generic device.
-	 */
-
-	CairoSurface *CairoDevice::createPangoSurface(Size size) {
-		return createSurface(size);
-	}
-
 
 	/**
 	 * Software device.
 	 */
 
-	CairoSurface *SoftwareDevice::createSurface(Size size) {
-		return new CairoSurface(cairo_image_surface_create(CAIRO_FORMAT_RGB24, size.w, size.h));
+	CairoSurface *SoftwareDevice::createSurface(Size size, Handle) {
+		return createPangoSurface(size);
 	}
 
 	CairoSurface *SoftwareDevice::createSurface(Size size, RepaintParams *) {
-		return createSurface(size);
+		return createPangoSurface(size);
+	}
+
+	CairoSurface *SoftwareDevice::createPangoSurface(Size size) {
+		return new CairoSurface(cairo_image_surface_create(CAIRO_FORMAT_RGB24, size.w, size.h));
 	}
 
 
@@ -166,13 +162,23 @@ namespace gui {
 	 * Gtk device.
 	 */
 
-	CairoSurface *GtkDevice::createSurface(Size size) {
-		return null;
+	CairoSurface *GtkDevice::createSurface(Size size, Handle window) {
+		// PLN(L"Yeah boy!");
+		GdkWindow *gWin = gtk_widget_get_window(window.widget());
+		if (gWin) {
+			return new CairoSurface(gdk_window_create_similar_surface(gWin, CAIRO_CONTENT_COLOR, size.w, size.h));
+		} else {
+			PLN(L"TODO: Make sure to only attach whenever the window is realized!");
+			return null;
+		}
 	}
 
 	CairoSurface *GtkDevice::createSurface(Size size, RepaintParams *params) {
-		cairo_surface_t *target = cairo_get_target(params->ctx);
-		return new CairoSurface(cairo_surface_create_similar(target, CAIRO_CONTENT_COLOR, int(size.w), int(size.h)));
+		PLN(L"Using gdk!");
+		GdkWindow *gWin = gtk_widget_get_window(params->widget);
+		return new CairoSurface(gdk_window_create_similar_surface(gWin, CAIRO_CONTENT_COLOR, size.w, size.h));
+		// cairo_surface_t *target = cairo_get_target(params->ctx);
+		// return new CairoSurface(cairo_surface_create_similar(target, CAIRO_CONTENT_COLOR, int(size.w), int(size.h)));
 	}
 
 	CairoSurface *GtkDevice::createPangoSurface(Size size) {
@@ -191,14 +197,20 @@ namespace gui {
 			cairo_device_destroy(device);
 	}
 
-	CairoSurface *GlDevice::createSurface(Size size) {
+	CairoSurface *GlDevice::createSurface(Size size, Handle) {
+		// TODO: Utilize GtkGlSurface.
 		return new GlSurface(this, size);
 	}
 
 	CairoSurface *GlDevice::createSurface(Size size, RepaintParams *) {
-		return createSurface(size);
+		// TODO: Utilize GtkGlSurface.
+		return new GlSurface(this, size);
 	}
 
+	CairoSurface *GlDevice::createPangoSurface(Size size) {
+		// TODO: We will need some kind of fallback here.
+		return new GlSurface(this, size);
+	}
 
 	/**
 	 * GL surface.
@@ -315,25 +327,25 @@ namespace gui {
 			return dtBlit;
 	}
 
-	CairoSurface *GlxDevice::createSurface(Size size) {
-		// If we're supporting raw surfaces, we must fail here.
-		if (allowRaw)
-			return null;
+	// CairoSurface *GlxDevice::createSurface(Size size) {
+	// 	// If we're supporting raw surfaces, we must fail here.
+	// 	if (allowRaw)
+	// 		return null;
 
-		return GlDevice::createSurface(size);
-	}
+	// 	return GlDevice::createSurface(size);
+	// }
 
-	CairoSurface *GlxDevice::createSurface(Size size, RepaintParams *params) {
-		if (!allowRaw)
-			return GlDevice::createSurface(size);
+	// CairoSurface *GlxDevice::createSurface(Size size, RepaintParams *params) {
+	// 	if (!allowRaw)
+	// 		return GlDevice::createSurface(size);
 
-		return new GlxWindowSurface(this, size, GDK_WINDOW_XID(params->target));
-	}
+	// 	return new GlxWindowSurface(this, size, GDK_WINDOW_XID(params->target));
+	// }
 
-	CairoSurface *GlxDevice::createPangoSurface(Size size) {
-		// This always works.
-		return GlDevice::createSurface(size);
-	}
+	// CairoSurface *GlxDevice::createPangoSurface(Size size) {
+	// 	// This always works.
+	// 	return GlDevice::createSurface(size);
+	// }
 
 	/**
 	 * GLX surface.
