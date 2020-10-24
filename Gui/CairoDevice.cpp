@@ -78,13 +78,14 @@ namespace gui {
 	 */
 
 	CairoSurface::CairoSurface(cairo_surface_t *surface) : surface(surface) {
-		PVAR(cairo_surface_get_type(surface)); // TODO: Remove.
 		target = cairo_create(surface);
 	}
 
 	CairoSurface::~CairoSurface() {
-		cairo_destroy(target);
-		cairo_surface_destroy(surface);
+		if (target)
+			cairo_destroy(target);
+		if (surface)
+			cairo_surface_destroy(surface);
 	}
 
 	void CairoSurface::resize(Size sz) {
@@ -154,16 +155,20 @@ namespace gui {
 	GlSurface::GlSurface(GdkWindow *window, Size size) : CairoSurface(), device(null), width(size.w), height(size.h) {
 		GError *error = NULL;
 		context = gdk_window_create_gl_context(window, &error);
-		if (error)
+		if (error) {
+			g_object_unref(&context);
 			reportError(error);
+		}
 
 		// Use OpenGL ES, v2.0 or later.
 		gdk_gl_context_set_use_es(context, true);
 		gdk_gl_context_set_required_version(context, 2, 0);
 
 		gdk_gl_context_realize(context, &error);
-		if (error)
+		if (error) {
+			g_object_unref(&context);
 			reportError(error);
+		}
 
 		gdk_gl_context_make_current(context);
 
@@ -176,7 +181,8 @@ namespace gui {
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 
 		// If we don't use ES, we need GL_BGRA instead of GL_RGBA
-		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
+		// glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
+		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB8, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, NULL);
 
 		// Try to get the current context and create a Cairo device for it.
 		GdkDisplay *gdkDisplay = gdk_window_get_display(window);
@@ -197,20 +203,28 @@ namespace gui {
 			}
 		}
 
-		if (!device)
+		if (!device) {
+			g_object_unref(&context);
 			reportError("Failed to find the created GL context.");
+		}
 
 		surface = cairo_gl_surface_create_for_texture(device, CAIRO_CONTENT_COLOR, texture, width, height);
 		target = cairo_create(surface);
 	}
 
 	GlSurface::~GlSurface() {
+		cairo_destroy(target);
+		target = null;
+		cairo_surface_destroy(surface);
+		surface = null;
+
 		gdk_gl_context_make_current(context);
 		glDeleteTextures(1, &texture);
 
 		cairo_device_destroy(device);
 
-		g_clear_object(&context);
+		gdk_gl_context_clear_current();
+		g_object_unref(context);
 	}
 
 	void GlSurface::resize(Size size) {
@@ -223,7 +237,8 @@ namespace gui {
 		glBindTexture(GL_TEXTURE_2D, texture);
 		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
 
-		cairo_gl_surface_set_size(surface, width, height);
+		cairo_surface_destroy(surface);
+		surface = cairo_gl_surface_create_for_texture(device, CAIRO_CONTENT_COLOR, texture, width, height);
 		target = cairo_create(surface);
 	}
 
