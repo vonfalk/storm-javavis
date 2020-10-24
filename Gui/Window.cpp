@@ -942,6 +942,10 @@ namespace gui {
 			gdkWindow = oldWindow;
 			if (myPainter)
 				gtk_widget_set_double_buffered(drawTo, FALSE);
+
+			// Re-attach the window now that we have a GtkWindow!
+			if (myPainter)
+				myPainter->onAttach(this);
 			return;
 		}
 		if (!oldWindow)
@@ -976,6 +980,10 @@ namespace gui {
 			gtk_widget_set_double_buffered(drawTo, FALSE);
 		}
 		setWindowMask(gdkWindow);
+
+		// Re-attach the window now that we have a GtkWindow!
+		if (myPainter)
+			myPainter->onAttach(this);
 	}
 
 	void Window::onUnrealize() {

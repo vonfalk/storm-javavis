@@ -110,6 +110,10 @@ namespace gui {
 		// not do anything, instead we rely on RenderMgr to repaint us every frame.
 		Bool continuous;
 
+		// Check if the Window is ready to be attached to. In Gtk+, widgets don't have a backing
+		// window until they are realized.
+		bool isReady(Handle window);
+
 		// Are we attached to anything? If we get detached while waiting to render the screen, we
 		// need to be able to detect that.
 		inline bool attached() const { return graphics != null; }
@@ -137,9 +141,6 @@ namespace gui {
 
 		// Wait for a new frame to be rendered (used during continuous updates).
 		void waitForFrame();
-
-		// Called before painting. This is so that the backend may prepare for rendering to a specific window.
-		void prepare(RepaintParams *p);
 
 		// Paint a new image into the buffer. Handles registering repaints etc.
 		void doRepaint();

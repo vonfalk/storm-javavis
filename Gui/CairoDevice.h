@@ -21,17 +21,14 @@ namespace gui {
 		// Destroy.
 		~Device();
 
-		// Get the device type.
-		DeviceType type();
+		// Get the device type (always some kind of blitting, as Gtk+ likes to keep track of the window data).
+		DeviceType type() { return dtBlit; }
 
 		// Attach a painter. If it returns a RenderInfo where 'any()' returns false, call 'create' later.
 		RenderInfo attach(Handle window);
 
 		// Resize the target of a painter.
 		void resize(RenderInfo &info, Size size);
-
-		// Create a painter the first time it is drawn.
-		RenderInfo create(RepaintParams *params);
 
 		// Get a Pango context for text rendering.
 		inline PangoContext *pango() const { return pangoContext; }
@@ -65,8 +62,16 @@ namespace gui {
 		// Resize the surface. Might re-create 'surface' and/or 'target'.
 		virtual void resize(Size s);
 
-		// Present. If this is a surface for a raw device, swap buffers.
-		virtual void present();
+		// Draw this surface to the supplied cairo_t in a suitable way. Will do a "paint" operation,
+		// so assumes that "to" is properly set up.
+		virtual void blit(cairo_t *to);
+
+		// Do we need to flip the Y axis on this surface?
+		virtual bool flipY() const { return false; }
+
+	protected:
+		// Create when initializing 'surface' at a later point.
+		CairoSurface() {}
 	};
 
 
@@ -75,20 +80,12 @@ namespace gui {
 	 */
 	class CairoDevice : NoCopy {
 	public:
-		// Create a surface for when the window is first attached. Might return null if the surface
-		// shall be created later.
+		// Create a surface for a window.
 		virtual CairoSurface *createSurface(Size size, Handle window) = 0;
 
-		// Create a surface for when the window is repainted. May not return null.
-		virtual CairoSurface *createSurface(Size size, RepaintParams *params) = 0;
-
-		// Create a surface for Pango font rendering. Like 'createSurface', but may not fail.
-		// Default implementation calls 'createSurface', which may not always be suitable.
-		virtual CairoSurface *createPangoSurface(Size size) = 0;
-
-		// Get the device type for this device. I.e. if we are able to support "present" calls, or
-		// if we need to blit through Gtk+.
-		virtual DeviceType type() const = 0;
+		// Create a surface for Pango font rendering. Like 'createSurface', but does not create
+		// require a window.
+		virtual CairoSurface *createPangoSurface(Size size);
 	};
 
 	/**
@@ -98,15 +95,6 @@ namespace gui {
 	public:
 		// This never fails in this implementation, as we can simply create the device at any time.
 		virtual CairoSurface *createSurface(Size size, Handle window);
-
-		// Basically a call to 'createSurface', as it should never be called.
-		virtual CairoSurface *createSurface(Size size, RepaintParams *params);
-
-		// Create a Pango device.
-		virtual CairoSurface *createPangoSurface(Size size);
-
-		// We're a blitting device.
-		virtual DeviceType type() const { return dtBlit; }
 	};
 
 	/**
@@ -115,152 +103,61 @@ namespace gui {
 	 */
 	class GtkDevice : public CairoDevice {
 	public:
-		// This will always fail, as we wait for the first draw call in order to be able to duplicate that device.
+		// Create for a window.
 		virtual CairoSurface *createSurface(Size size, Handle window);
-
-		// Create the surface here!
-		virtual CairoSurface *createSurface(Size size, RepaintParams *params);
-
-		// As such, we will also need to override the creation of Pango surfaces.
-		virtual CairoSurface *createPangoSurface(Size size);
-
-		// We're a blitting device.
-		virtual DeviceType type() const { return dtBlit; }
 	};
-
-
-	/**
-	 * A backend that uses OpenGL with Cairo-assisted flipping.
-	 *
-	 * This might not work smoothly with some graphic drivers (e.g. the new iris driver on mesa).
-	 */
-	class GlDevice : public CairoDevice {
-	public:
-		// Destroy.
-		~GlDevice();
-
-		// The OpenGL device.
-		cairo_device_t *device;
-
-		// Create surfaces. Will never fail.
-		virtual CairoSurface *createSurface(Size size, Handle window);
-
-		// Basically a call to 'createSurface', as it should never be called.
-		virtual CairoSurface *createSurface(Size size, RepaintParams *params);
-
-		// Create a Pango surface.
-		virtual CairoSurface *createPangoSurface(Size size);
-
-		// We're a blitting device.
-		virtual DeviceType type() const { return dtBlit; }
-
-	protected:
-		// Create.
-		GlDevice(cairo_device_t *device);
-	};
-
 
 	/**
 	 * GL surface.
+	 *
+	 * Handles an OpenGL instance associated with the window, and a created texture to which Cairo
+	 * can draw. We then use the appropriate Cairo+GL integration to copy the texture into the
+	 * surface efficiently.
 	 */
-
 	class GlSurface : public CairoSurface {
 	public:
-		// Create with a specified size.
-		GlSurface(GlDevice *device, Size size);
+		// Create.
+		GlSurface(GdkWindow *window, Size size);
 
-		// Custom resize.
-		virtual void resize(Size s);
+		// Destroy.
+		virtual ~GlSurface();
+
+		// Resize the surface.
+		virtual void resize(Size size);
+
+		// Draw the surface. Uses gdk_cairo_draw_from_gl, which is supposed to be efficient for this.
+		virtual void blit(cairo_t *to);
+
+		// We need to flip the Y axis...
+		virtual bool flipY() const { return true; }
 
 	private:
-		// Owning device.
-		GlDevice *device;
+		// GL context.
+		GdkGLContext *context;
+
+		// Cairo GL device.
+		cairo_device_t *device;
+
+		// Current size of the texture.
+		Nat width;
+		Nat height;
+
+		// GL texture id.
+		GLuint texture;
 	};
 
-
 	/**
-	 * GLX device.
+	 * GL device.
 	 *
-	 * Supports both Raw and Blit modes.
+	 * Uses Cairo in OpenGL mode for hardware assisted drawing. This is noticeably faster in cases
+	 * with many large-ish bitmaps. Otherwise the GtkDevice backend is often good enough, as it
+	 * (supposedly) is able to accelerate some operations through the X server, and whatever backend
+	 * is the default.
 	 */
-	class GlxDevice : public GlDevice {
+	class GlDevice : public CairoDevice {
 	public:
-		~GlxDevice();
-
-		// Create a device. Might fail.
-		static GlxDevice *create(Engine &e, Display *display);
-
-		// Mode.
-		virtual DeviceType type() const;
-
-		// First level attempt. Might fail if we're a raw device.
-		// virtual CairoSurface *createSurface(Size size);
-
-		// Custom surface creation if raw mode is enables.
-		// virtual CairoSurface *createSurface(Size size, RepaintParams *params);
-
-		// Create a surface for Pango.
-		// virtual CairoSurface *createPangoSurface(Size size);
-
-	private:
-		// Create.
-		GlxDevice(Engine &e, Display *display);
-
-		// The display.
-		Display *display;
-
-		// The context.
-		GLXContext context;
-
-		// Allow raw mode?
-		bool allowRaw;
-
-		// Init.
-		bool init();
-	};
-
-	/**
-	 * GLX raw surface. Is attached directly to a window.
-	 */
-	class GlxWindowSurface : public CairoSurface {
-	public:
-		// Create.
-		GlxWindowSurface(GlxDevice *device, Size size, ::Window window);
-
-		// Custom resize.
-		virtual void resize(Size s);
-
-		// Support 'present'.
-		virtual void present();
-	};
-
-
-	/**
-	 * EGL device.
-	 */
-	class EglDevice : public GlDevice {
-	public:
-		~EglDevice();
-
-		// Create a device. Might fail.
-		static EglDevice *create(Engine &e, Display *display);
-		static EglDevice *create(Engine &e, struct wl_display *display);
-
-	private:
-		// Create.
-		EglDevice(Engine &e, EGLDisplay display);
-
-		// Initialization.
-		bool init();
-
-		// The display.
-		EGLDisplay display;
-
-		// The context.
-		EGLContext context;
-
-		// Configuration used for this context.
-		EGLConfig config;
+		// Create for a window.
+		virtual CairoSurface *createSurface(Size size, Handle window);
 	};
 
 }

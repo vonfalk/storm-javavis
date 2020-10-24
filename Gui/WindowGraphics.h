@@ -265,8 +265,11 @@ namespace gui {
 		ID2D1Layer *layer();
 #endif
 
-		// Prepare rendering a new frame (backend specific).
+		// Prepare the current state (backend specific).
 		void prepare();
+
+		// Prepare the initial state (backend specific).
+		void prepareState();
 	};
 
 

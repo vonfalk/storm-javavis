@@ -7,39 +7,8 @@
 #ifdef GUI_GTK
 namespace gui {
 
-	static GlDevice *createGl(Engine &e) {
-		// Should be safe to call 'app' here since it is created by now.
-		App *app = gui::app(e);
-
-		GlDevice *result = null;
-		GdkDisplay *gdkDisplay = app->defaultDisplay();
-		if (GDK_IS_WAYLAND_DISPLAY(gdkDisplay)) {
-			// EGL is our only option here.
-			GdkWaylandDisplay *display = GDK_WAYLAND_DISPLAY(gdkDisplay);
-			result = EglDevice::create(e, gdk_wayland_display_get_wl_display(display));
-		} else if (GDK_IS_X11_DISPLAY(gdkDisplay)) {
-			Display *display = GDK_DISPLAY_XDISPLAY(gdkDisplay);
-
-			// GLX seems faster in practice. It is also more stable using X11 forwarding. Might be
-			// required for Wayland support, though. EGL works fine when running locally, so it is a
-			// good fallback.
-			result = GlxDevice::create(e, display);
-			if (!result)
-				result = EglDevice::create(e, display);
-		} else {
-			throw new (e) GuiError(S("You are using an unsupported windowing system. Wayland and X11 are supported for OpenGL."));
-		}
-
-		if (!result)
-			throw new (e) GuiError(S("Failed to initialize OpenGL."));
-
-		if (cairo_device_status(result->device))
-			throw new (e) GuiError(S("Failed to initialize Cairo. Cairo requires at least OpenGL 2.0 or OpenGL ES 2.0."));
-
-		cairo_gl_device_set_thread_aware(result->device, TRUE);
-
-		return result;
-	}
+	// Name of the environment variable.
+	#define ENV_NAME "STORM_RENDER_BACKEND"
 
 	static CairoDevice *create(Engine &e, const char *preference) {
 		if (strcmp(preference, "gtk") == 0) {
@@ -49,7 +18,7 @@ namespace gui {
 		} else if (strcmp(preference, "software") == 0) {
 			return new SoftwareDevice();
 		} else if (strcmp(preference, "gl") == 0) {
-			return createGl(e);
+			return new GlDevice();
 		} else {
 			throw new (e) GuiError(S("The supplied value of STORM_RENDER_BACKEND is not supported."));
 		}
@@ -57,7 +26,10 @@ namespace gui {
 
 	static CairoDevice *create(Engine &e) {
 		TODO(L"Think about a good standard for STORM_RENDER_BACKEND");
-		const char *preference = getenv("STORM_RENDER_BACKEND");
+		// On X11 forwarding, GLX seems to work better, but how do we detect that?
+		return create(e, "gl");
+
+		const char *preference = getenv(ENV_NAME);
 		if (preference)
 			return create(e, preference);
 		else
@@ -75,10 +47,6 @@ namespace gui {
 		g_object_unref(pangoContext);
 		delete pangoSurface;
 		delete device;
-	}
-
-	DeviceType Device::type() {
-		return device->type();
 	}
 
 	RenderInfo Device::attach(Handle window) {
@@ -104,24 +72,13 @@ namespace gui {
 		}
 	}
 
-	RenderInfo Device::create(RepaintParams *params) {
-		RenderInfo info;
-		info.size = Size(gtk_widget_get_allocated_width(params->widget),
-						gtk_widget_get_allocated_height(params->widget));
-
-		// Create the surface as appropriate.
-		info.surface(device->createSurface(info.size, params));
-		info.target(info.surface()->target);
-
-		return info;
-	}
-
 
 	/**
 	 * Generic surface.
 	 */
 
 	CairoSurface::CairoSurface(cairo_surface_t *surface) : surface(surface) {
+		PVAR(cairo_surface_get_type(surface)); // TODO: Remove.
 		target = cairo_create(surface);
 	}
 
@@ -138,22 +95,24 @@ namespace gui {
 		target = cairo_create(surface);
 	}
 
-	void CairoSurface::present() {}
+	void CairoSurface::blit(cairo_t *to) {
+		cairo_set_source_surface(to, surface, 0, 0);
+		cairo_paint(to);
+	}
 
+	/**
+	 * Abstract device.
+	 */
+
+	CairoSurface *CairoDevice::createPangoSurface(Size size) {
+		return new CairoSurface(cairo_image_surface_create(CAIRO_FORMAT_RGB24, size.w, size.h));
+	}
 
 	/**
 	 * Software device.
 	 */
 
 	CairoSurface *SoftwareDevice::createSurface(Size size, Handle) {
-		return createPangoSurface(size);
-	}
-
-	CairoSurface *SoftwareDevice::createSurface(Size size, RepaintParams *) {
-		return createPangoSurface(size);
-	}
-
-	CairoSurface *SoftwareDevice::createPangoSurface(Size size) {
 		return new CairoSurface(cairo_image_surface_create(CAIRO_FORMAT_RGB24, size.w, size.h));
 	}
 
@@ -163,285 +122,129 @@ namespace gui {
 	 */
 
 	CairoSurface *GtkDevice::createSurface(Size size, Handle window) {
-		// PLN(L"Yeah boy!");
 		GdkWindow *gWin = gtk_widget_get_window(window.widget());
-		if (gWin) {
-			return new CairoSurface(gdk_window_create_similar_surface(gWin, CAIRO_CONTENT_COLOR, size.w, size.h));
-		} else {
-			PLN(L"TODO: Make sure to only attach whenever the window is realized!");
-			return null;
-		}
-	}
-
-	CairoSurface *GtkDevice::createSurface(Size size, RepaintParams *params) {
-		PLN(L"Using gdk!");
-		GdkWindow *gWin = gtk_widget_get_window(params->widget);
 		return new CairoSurface(gdk_window_create_similar_surface(gWin, CAIRO_CONTENT_COLOR, size.w, size.h));
-		// cairo_surface_t *target = cairo_get_target(params->ctx);
-		// return new CairoSurface(cairo_surface_create_similar(target, CAIRO_CONTENT_COLOR, int(size.w), int(size.h)));
-	}
-
-	CairoSurface *GtkDevice::createPangoSurface(Size size) {
-		return new CairoSurface(cairo_image_surface_create(CAIRO_FORMAT_RGB24, size.w, size.h));
-	}
-
-
-	/**
-	 * GL device.
-	 */
-
-	GlDevice::GlDevice(cairo_device_t *device) : device(device) {}
-
-	GlDevice::~GlDevice() {
-		if (device)
-			cairo_device_destroy(device);
-	}
-
-	CairoSurface *GlDevice::createSurface(Size size, Handle) {
-		// TODO: Utilize GtkGlSurface.
-		return new GlSurface(this, size);
-	}
-
-	CairoSurface *GlDevice::createSurface(Size size, RepaintParams *) {
-		// TODO: Utilize GtkGlSurface.
-		return new GlSurface(this, size);
-	}
-
-	CairoSurface *GlDevice::createPangoSurface(Size size) {
-		// TODO: We will need some kind of fallback here.
-		return new GlSurface(this, size);
 	}
 
 	/**
 	 * GL surface.
 	 */
 
-	GlSurface::GlSurface(GlDevice *device, Size size)
-		: CairoSurface(cairo_gl_surface_create(device->device, CAIRO_CONTENT_COLOR, int(size.w), int(size.h))),
-		  device(device) {}
+	static void reportError(const char *error) {
+		Engine &e = runtime::someEngine();
+
+		StrBuf *msg = new (e) StrBuf();
+		*msg << S("Initialization of OpenGL failed: ") << error << S("\n");
+		*msg << S("Try setting the environment variable ") << ENV_NAME << S(" to \"gtk\" or \"software\".");
+
+		throw new (e) GuiError(msg->toS());
+	}
+
+	static void reportError(GError *error) {
+		Engine &e = runtime::someEngine();
+
+		StrBuf *msg = new (e) StrBuf();
+		*msg << S("Initialization of OpenGL failed: ") << error->message << S("\n");
+		*msg << S("Try setting the environment variable ") << ENV_NAME << S(" to \"gtk\" or \"software\".");
+		g_clear_error(&error);
+
+		throw new (e) GuiError(msg->toS());
+	}
+
+	GlSurface::GlSurface(GdkWindow *window, Size size) : CairoSurface(), device(null), width(size.w), height(size.h) {
+		GError *error = NULL;
+		context = gdk_window_create_gl_context(window, &error);
+		if (error)
+			reportError(error);
+
+		// Use OpenGL ES, v2.0 or later.
+		gdk_gl_context_set_use_es(context, true);
+		gdk_gl_context_set_required_version(context, 2, 0);
+
+		gdk_gl_context_realize(context, &error);
+		if (error)
+			reportError(error);
+
+		gdk_gl_context_make_current(context);
+
+		glGenTextures(1, &texture);
+
+		glBindTexture(GL_TEXTURE_2D, texture);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+
+		// If we don't use ES, we need GL_BGRA instead of GL_RGBA
+		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
+
+		// Try to get the current context and create a Cairo device for it.
+		GdkDisplay *gdkDisplay = gdk_window_get_display(window);
+		if (GDK_IS_WAYLAND_DISPLAY(gdkDisplay)) {
+			// Try EGL.
+			GdkWaylandDisplay *display = GDK_WAYLAND_DISPLAY(gdkDisplay);
+			struct wl_display *wlDisplay = gdk_wayland_display_get_wl_display(display);
+			if (EGLContext eglContext = eglGetCurrentContext()) {
+				device = cairo_egl_device_create(eglGetDisplay((NativeDisplayType)wlDisplay), eglContext);
+			}
+		} else if (GDK_IS_X11_DISPLAY(gdkDisplay)) {
+			// Try GLX first, and then EGL. Note: It seems like Gtk+ does not attempt to use EGL on X11 at the moment.
+			Display *display = GDK_DISPLAY_XDISPLAY(gdkDisplay);
+			if (GLXContext glxContext = glXGetCurrentContext()) {
+				device = cairo_glx_device_create(display, glxContext);
+			} else if (EGLContext eglContext = eglGetCurrentContext()) {
+				device = cairo_egl_device_create(eglGetDisplay(display), eglContext);
+			}
+		}
+
+		if (!device)
+			reportError("Failed to find the created GL context.");
+
+		surface = cairo_gl_surface_create_for_texture(device, CAIRO_CONTENT_COLOR, texture, width, height);
+		target = cairo_create(surface);
+	}
+
+	GlSurface::~GlSurface() {
+		gdk_gl_context_make_current(context);
+		glDeleteTextures(1, &texture);
+
+		cairo_device_destroy(device);
+
+		g_clear_object(&context);
+	}
 
 	void GlSurface::resize(Size size) {
 		cairo_destroy(target);
-		cairo_surface_destroy(surface);
-		surface = cairo_gl_surface_create(device->device, CAIRO_CONTENT_COLOR, int(size.w), int(size.h));
+
+		width = int(size.w);
+		height = int(size.h);
+
+		gdk_gl_context_make_current(context);
+		glBindTexture(GL_TEXTURE_2D, texture);
+		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
+
+		cairo_gl_surface_set_size(surface, width, height);
 		target = cairo_create(surface);
 	}
 
+	void GlSurface::blit(cairo_t *to) {
+		cairo_surface_flush(surface);
+
+		GdkWindow *window = gdk_gl_context_get_window(context);
+
+		gdk_gl_context_make_current(context);
+		gdk_cairo_draw_from_gl(to, window,
+							texture, GL_TEXTURE, 1 /* scale */,
+							0, 0, width, height);
+	}
 
 	/**
-	 * GLX device.
+	 * GL device.
 	 */
 
-	GlxDevice::GlxDevice(Engine &e, Display *display)
-		: GlDevice(null), display(display), context(null), allowRaw(false) {
-
-		TODO(L"Allow customization of 'allowRaw'!");
-		allowRaw = true;
-	}
-
-	GlxDevice::~GlxDevice() {
-		if (device)
-			cairo_device_destroy(device);
-		device = null;
-
-		if (context)
-			glXDestroyContext(display, context);
-	}
-
-	GlxDevice *GlxDevice::create(Engine &e, Display *display) {
-		GlxDevice *result = new GlxDevice(e, display);
-		if (!result->init()) {
-			delete result;
-			return null;
-		} else {
-			result->device = cairo_glx_device_create(result->display, result->context);
-			return result;
-		}
-	}
-
-	// Find the best configuration.
-	static GLXFBConfig pickConfig(Display *display, int *attrs) {
-		int configCount = 0;
-		GLXFBConfig *configs = glXChooseFBConfig(display, DefaultScreen(display), attrs, &configCount);
-		if (!configs)
-			return null;
-		if (configCount == 0) {
-			XFree(configs);
-			return null;
-		}
-
-		// Just take the first one. It is probably good enough for now.
-		// We might want to look at glXGetFBConfigAttrib(display, configs[i], ?, out);
-		// for ? = GLX_SAMPLE_BUFFERS and ? = GLX_SAMPLES to pick a config with good anti-aliasing.
-		GLXFBConfig result = configs[0];
-		XFree(configs);
-
-		return result;
-	}
-
-	bool GlxDevice::init() {
-		int attrs[] = {
-			GLX_X_RENDERABLE, True,
-			GLX_DRAWABLE_TYPE, GLX_WINDOW_BIT,
-			GLX_RENDER_TYPE, GLX_RGBA_BIT,
-			GLX_X_VISUAL_TYPE, GLX_TRUE_COLOR,
-			GLX_RED_SIZE, 8,
-			GLX_GREEN_SIZE, 8,
-			GLX_BLUE_SIZE, 8,
-			GLX_STENCIL_SIZE, 8,
-			GLX_DOUBLEBUFFER, True,
-			None
-		};
-		// Use FBConfig if it is available. We might need to enforce this later, since we might
-		// require the ability to create pbuffers.
-		if (GLXFBConfig config = pickConfig(display, attrs)) {
-			context = glXCreateNewContext(display, config, GLX_RGBA_TYPE, NULL, True);
-			if (context)
-				return true;
-		}
-
-		// Fallback on the slightly older glXChooseVisual.
-		int cvAttrs[] = {
-			GLX_RGBA,
-			GLX_RED_SIZE, 8,
-			GLX_GREEN_SIZE, 8,
-			GLX_BLUE_SIZE, 8,
-			GLX_STENCIL_SIZE, 8,
-			GLX_DOUBLEBUFFER, True,
-			None
-		};
-		if (XVisualInfo *info = glXChooseVisual(display, DefaultScreen(display), cvAttrs)) {
-			context = glXCreateContext(display, info, NULL, True);
-			XFree(info);
-
-			if (context)
-				return true;
-		}
-		return false;
-	}
-
-	DeviceType GlxDevice::type() const {
-		if (allowRaw)
-			return dtRaw;
-		else
-			return dtBlit;
-	}
-
-	// CairoSurface *GlxDevice::createSurface(Size size) {
-	// 	// If we're supporting raw surfaces, we must fail here.
-	// 	if (allowRaw)
-	// 		return null;
-
-	// 	return GlDevice::createSurface(size);
-	// }
-
-	// CairoSurface *GlxDevice::createSurface(Size size, RepaintParams *params) {
-	// 	if (!allowRaw)
-	// 		return GlDevice::createSurface(size);
-
-	// 	return new GlxWindowSurface(this, size, GDK_WINDOW_XID(params->target));
-	// }
-
-	// CairoSurface *GlxDevice::createPangoSurface(Size size) {
-	// 	// This always works.
-	// 	return GlDevice::createSurface(size);
-	// }
-
-	/**
-	 * GLX surface.
-	 */
-
-	GlxWindowSurface::GlxWindowSurface(GlxDevice *device, Size size, ::Window window)
-		: CairoSurface(cairo_gl_surface_create_for_window(device->device, window, int(size.w), int(size.h))) {}
-
-	void GlxWindowSurface::resize(Size size) {
-		// TODO: We can maybe get away without re-creating the target.
-		cairo_destroy(target);
-		cairo_gl_surface_set_size(surface, int(size.w), int(size.h));
-		target = cairo_create(surface);
-	}
-
-	void GlxWindowSurface::present() {
-		cairo_gl_surface_swapbuffers(surface);
-	}
-
-
-	/**
-	 * EGL device.
-	 */
-
-	EglDevice::EglDevice(Engine &e, EGLDisplay display)
-		: GlDevice(null), display(display), context(null), config(null) {}
-
-	EglDevice::~EglDevice() {
-		if (device)
-			cairo_device_destroy(device);
-		device = null;
-
-		if (context)
-			eglDestroyContext(display, context);
-		if (display)
-			eglTerminate(display);
-	}
-
-	EglDevice *EglDevice::create(Engine &e, Display *xDisplay) {
-		EGLDisplay display = eglGetDisplay(xDisplay);
-		if (!eglInitialize(display, NULL, NULL))
-			return null;
-
-		EglDevice *me = new EglDevice(e, display);
-		if (!me->init()) {
-			delete me;
-			return null;
-		} else {
-			return me;
-		}
-	}
-
-	EglDevice *EglDevice::create(Engine &e, struct wl_display *wlDisplay) {
-		EGLDisplay display = eglGetDisplay((NativeDisplayType)wlDisplay);
-		if (!eglInitialize(display, NULL, NULL))
-			return null;
-
-		EglDevice *me = new EglDevice(e, display);
-		if (!me->init()) {
-			delete me;
-			return null;
-		} else {
-			return me;
-		}
-	}
-
-	bool EglDevice::init() {
-		EGLint attributes[] = {
-			EGL_RED_SIZE, 8,
-			EGL_GREEN_SIZE, 8,
-			EGL_BLUE_SIZE, 8,
-			EGL_STENCIL_SIZE, 8,
-			EGL_SURFACE_TYPE, EGL_WINDOW_BIT,
-			EGL_NONE,
-		};
-		EGLint configCount = 0;
-		if (!eglChooseConfig(display, attributes, &config, 1, &configCount))
-			return false;
-		if (configCount == 0)
-			return false;
-
-		// Make sure we get 'regular' OpenGL, not OpenGL ES, since that does not seem to work
-		// properly with Cairo, at least not over X11 forwarding.
-		eglBindAPI(EGL_OPENGL_API);
-
-		EGLint contextAttrs[] = {
-			// Specify OpenGL ES 2. (ignored when we're using OpenGL)
-			EGL_CONTEXT_CLIENT_VERSION, 2,
-			EGL_NONE,
-		};
-		context = eglCreateContext(display, config, EGL_NO_CONTEXT, contextAttrs);
-		if (!context)
-			return false;
-
-		device = cairo_egl_device_create(display, context);
-		return true;
+	CairoSurface *GlDevice::createSurface(Size size, Handle window) {
+		GdkWindow *w = gtk_widget_get_window(window.widget());
+		return new GlSurface(w, size);
 	}
 
 }

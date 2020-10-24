@@ -60,6 +60,8 @@ namespace gui {
 		state = State();
 		state.scale(info.scale);
 		state.clip = Rect(Point(), info.size);
+
+		prepareState();
 		oldStates->last() = state;
 
 		// Set up the backend.
@@ -112,6 +114,8 @@ namespace gui {
 	void WindowGraphics::prepare() {
 		info.target()->SetTransform(*state.transform());
 	}
+
+	void WindowGraphics::prepareState() {}
 
 	Bool WindowGraphics::pop() {
 		if (state.layer) {
@@ -374,6 +378,18 @@ namespace gui {
 		cairo_matrix_t tfm = state.transform();
 		cairo_set_matrix(info.target(), &tfm);
 		cairo_set_line_width(info.target(), state.lineWidth);
+	}
+
+	void WindowGraphics::prepareState() {
+		// Flip Y if needed.
+		if (info.surface()->flipY()) {
+			cairo_matrix_t flip = {
+				1, 0,
+				0, -1,
+				0, info.size.h
+			};
+			state.transform(flip);
+		}
 	}
 
 	void WindowGraphics::Layer::release() {

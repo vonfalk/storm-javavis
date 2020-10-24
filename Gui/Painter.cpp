@@ -31,8 +31,14 @@ namespace gui {
 		Handle handle = to->handle();
 		if (handle != attachedTo) {
 			onDetach();
-			attachedTo = handle;
-			create();
+
+			if (isReady(handle)) {
+				attachedTo = handle;
+				create();
+			} else {
+				// Try later.
+				attachedTo = Window::invalid;
+			}
 		}
 	}
 
@@ -117,8 +123,6 @@ namespace gui {
 	}
 
 	void Painter::onRepaint(RepaintParams *params) {
-		prepare(params);
-
 		// Do we need to render the frame now, or did we already render something before?
 		if (ready())
 			doRepaint();
@@ -174,6 +178,10 @@ namespace gui {
 
 #ifdef GUI_WIN32
 
+	bool Painter::isReady(Handle) {
+		return true;
+	}
+
 	void Painter::waitForFrame() {
 		// Wait until we have rendered a frame, so that Windows think we did it to satisfy the paint
 		// request.
@@ -216,10 +224,6 @@ namespace gui {
 		return more;
 	}
 
-	void Painter::prepare(RepaintParams *) {
-		// Not needed on Windows.
-	}
-
 	void Painter::present(Bool waitForVSync) {
 		if (waitForVSync)
 			target.swapChain()->Present(1, 0);
@@ -241,6 +245,10 @@ namespace gui {
 
 #endif
 #ifdef GUI_GTK
+
+	bool Painter::isReady(Handle window) {
+		return gtk_widget_get_window(window.widget()) != NULL;
+	}
 
 	void Painter::waitForFrame() {
 		// Just wait until we're not drawing at the moment.
@@ -285,33 +293,20 @@ namespace gui {
 		return more;
 	}
 
-	void Painter::prepare(RepaintParams *p) {
-		// Required when we're rendering directly to a window surface.
-		if (!target.any()) {
-			if (attached()) {
-				target = mgr->create(p);
-				if (graphics)
-					graphics->updateTarget(target);
-			}
-		}
-	}
-
 	void Painter::present(Bool waitForVSync) {
-		if (CairoSurface *surface = target.surface()) {
-			surface->present();
-		}
-
+		// We don't support "present" as all Gtk+ backends require integration with the repaint loop
+		// in some way.
 		atomicWrite(repaintScreen, atomicRead(repaintScreen));
 	}
 
 	void Painter::blit(RepaintParams *p) {
 		Lock::Guard z(lock);
-		atomicWrite(repaintScreen, atomicRead(repaintScreen));
 
 		if (CairoSurface *surface = target.surface()) {
-			cairo_set_source_surface(p->ctx, surface->surface, 0, 0);
-			cairo_paint(p->ctx);
+			surface->blit(p->ctx);
 		}
+
+		atomicWrite(repaintScreen, atomicRead(repaintScreen));
 	}
 
 	void Painter::invalidateWindow() {
