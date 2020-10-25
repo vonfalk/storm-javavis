@@ -310,8 +310,7 @@ namespace gui {
 	}
 
 	void Painter::invalidateWindow() {
-		if (GdkWindow *window = gtk_widget_get_window(attachedTo.widget()))
-			gdk_window_invalidate_rect(window, NULL, true);
+		gtk_widget_queue_draw(attachedTo.widget());
 	}
 
 #endif
