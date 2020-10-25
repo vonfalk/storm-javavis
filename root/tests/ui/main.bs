@@ -107,6 +107,11 @@ class PaintWin extends Frame {
 
 		create();
 	}
+
+	Bool onClick(Bool pressed, Point at, MouseButton button) {
+		FilePicker p = FilePicker:open(FileTypes("test"));
+		p.show(this);
+	}
 }
 
 class MainWin extends Frame {

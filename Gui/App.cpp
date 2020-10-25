@@ -335,8 +335,17 @@ namespace gui {
 		InitCommonControlsEx(&cc);
 	}
 
-	void App::showDialog(bool show) {
-		appWait->showDialog(show);
+	void App::beforeDialog() {
+		// Find some window, if we have one.
+		WindowMap::Iter iter = windows->begin();
+		if (iter != windows->end())
+			appWait->beforeDialog(iter.k());
+		else
+			appWait->beforeDialog(Handle());
+	}
+
+	void App::afterDialog() {
+		appWait->afterDialog();
 	}
 
 	void AppWait::platformInit() {
@@ -345,6 +354,7 @@ namespace gui {
 		currentEngine = &e;
 		blockingDialogs = 0;
 		blockTimer = NULL;
+		blockActive = false;
 
 		// Make sure we get a message queue.
 		if (!IsGUIThread(TRUE)) {
@@ -384,6 +394,10 @@ namespace gui {
 		// Only the first thread posts the message if needed.
 		if (atomicCAS(signalSent, 0, 1) == 0)
 			PostThreadMessage(threadId, WM_THREAD_SIGNAL, 0, 0);
+
+		// If we have the update timer active, we might need to start it now.
+		if (HWND timer = atomicRead(blockTimer))
+			blockUpdate(true);
 
 		fallback.signal();
 	}
@@ -467,43 +481,75 @@ namespace gui {
 			if (msg.wParam == 0) {
 				// This is our timer. It means we should check for UThreads that need to execute
 				// now. This will, among other things, drive animations.
-				os::UThread::leave();
+				blockUpdate(os::UThread::leave() || os::UThread::anySleeping());
 				return false;
 			}
 		}
 
 		if (blockStatus.empty()) {
-			if (blockTimer != NULL) {
-				KillTimer(blockTimer, 0);
-				blockTimer = NULL;
-			}
+			blockDeactivate();
 		} else {
-			if (blockTimer == NULL) {
-				blockTimer = hWnd;
-				// This will generate a timeout of USER_TIMER_MINIMUM, which is ~10ms.
-				// We use timer id 0 as that is not occupied by the window timer in the Window class.
-				SetTimer(hWnd, 0, 1, NULL);
-			}
+			blockActivate(hWnd);
 		}
 
 		// By default, we let messages through.
 		return true;
 	}
 
-	void AppWait::showDialog(bool show) {
-		if (show) {
-			blockingDialogs++;
-			// This will cause the next message to start the timer, which is enough.
-			blockStatus[NULL] = blockModal;
-		} else if (blockingDialogs > 1) {
-			blockingDialogs--;
-		} else {
-			blockStatus.erase(NULL);
-			if (blockTimer != NULL) {
-				KillTimer(blockTimer, 0);
-				blockTimer = NULL;
-			}
+	void AppWait::beforeDialog(Handle window) {
+		blockingDialogs++;
+
+		// Interact with checkBlockMsg.
+		blockStatus[NULL] = blockModal;
+
+		if (window != Window::invalid) {
+			blockActivate(window.hwnd());
 		}
+	}
+
+	void AppWait::afterDialog() {
+		if (blockingDialogs <= 0)
+			return;
+		if (--blockingDialogs == 0)
+			return;
+
+		blockStatus.erase(NULL);
+		if (blockStatus.empty())
+			blockDeactivate();
+	}
+
+	void AppWait::blockActivate(HWND window) {
+		if (blockTimer != NULL)
+			return;
+
+		blockTimer = window;
+		blockActive = true;
+
+		// This will generate a timeout of USER_TIMER_MINIMUM, which is ~10ms.
+		// We use timer id 0 as that is not occupied by the window timer in the Window class.
+		SetTimer(blockTimer, 0, 1, NULL);
+	}
+
+	void AppWait::blockUpdate(Bool active) {
+		if (active == blockActive)
+			return;
+
+		blockActive = active;
+		if (active) {
+			SetTimer(blockTimer, 0, 1, NULL);
+		} else {
+			KillTimer(blockTimer, 0);
+		}
+	}
+
+	void AppWait::blockDeactivate() {
+		if (blockTimer == NULL)
+			return;
+
+		KillTimer(blockTimer, 0);
+
+		blockTimer = NULL;
+		blockActive = false;
 	}
 
 

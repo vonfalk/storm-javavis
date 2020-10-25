@@ -79,6 +79,12 @@ namespace os {
 		// threads were run between the call and the return.
 		static bool leave();
 
+		// See if there are any UThreads that are currently sleeping, and may wake in the future.
+		// This can be used together with "leave" to detect if we need to keep "polling" for
+		// sleeping threads from custom thread-wait logic in certain cases (e.g. when it cannot use
+		// the standard "wait" function).
+		static bool anySleeping();
+
 		// Yield for a specific amount of time.
 		static void sleep(nat ms);
 
@@ -272,6 +278,9 @@ namespace os {
 
 		// Schedule the next thread.
 		bool leave();
+
+		// Any sleeping threads here?
+		bool anySleeping();
 
 		// Sleep.
 		void sleep(nat ms);

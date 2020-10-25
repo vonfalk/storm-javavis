@@ -243,12 +243,12 @@ namespace gui {
 				p = parent->handle().hwnd();
 
 			App *app = gui::app(engine());
-			app->showDialog(true);
+			app->beforeDialog();
 
 			// Will return an "error" if cancelled.
 			result = dialog->Show(p);
 
-			app->showDialog(false);
+			app->afterDialog();
 		}
 
 		UINT selectedType = 1;

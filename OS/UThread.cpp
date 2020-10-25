@@ -103,6 +103,10 @@ namespace os {
 		return UThreadState::current()->leave();
 	}
 
+	bool UThread::anySleeping() {
+		return UThreadState::current()->anySleeping();
+	}
+
 	void UThread::sleep(nat ms) {
 		UThreadState::current()->sleep(ms);
 	}
@@ -399,6 +403,10 @@ namespace os {
 
 		reap();
 		return true;
+	}
+
+	bool UThreadState::anySleeping() {
+		return sleeping.any();
 	}
 
 	void UThreadState::sleep(nat ms) {
