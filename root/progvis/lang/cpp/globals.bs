@@ -43,7 +43,7 @@ class CppGlobal extends GlobalVar {
 		if (!type.isValue)
 			throw SyntaxError(decl.pos, "Only value-types are supported. Did you declare this type in C++?");
 
-		var thread = named{ui:Render};
+		var thread = named{ui:Ui};
 
 		Function init = initFn(safeType(type, decl.pos), scope);
 		init.parentLookup = scope.top;

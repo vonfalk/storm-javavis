@@ -404,7 +404,7 @@ private GlobalVar[] findGlobalsHelp(Package pkg) on Compiler {
 
 	for (elem in pkg) {
 		if (elem as GlobalVar) {
-			if (elem.owner is named{Render})
+			if (elem.owner is named{Ui})
 				result << elem;
 		}
 	}
