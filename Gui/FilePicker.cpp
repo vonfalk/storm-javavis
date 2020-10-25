@@ -1,5 +1,6 @@
 #include "stdafx.h"
 #include "FilePicker.h"
+#include "App.h"
 #include "Core/Join.h"
 #include "Core/Convert.h"
 
@@ -241,8 +242,13 @@ namespace gui {
 			if (parent)
 				p = parent->handle().hwnd();
 
+			App *app = gui::app(engine());
+			app->showDialog(true);
+
 			// Will return an "error" if cancelled.
 			result = dialog->Show(p);
+
+			app->showDialog(false);
 		}
 
 		UINT selectedType = 1;

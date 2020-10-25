@@ -72,6 +72,9 @@ namespace gui {
 
 		// Get our instance.
 		HINSTANCE instance();
+
+		// Called before/after modal dialogs are shown, to indicate that we will enter a second window loop.
+		void showDialog(bool show);
 #endif
 #ifdef GUI_GTK
 		// Post a repaint request from any thread.
@@ -194,6 +197,10 @@ namespace gui {
 		// recursive window loop, making it impossible for us to get hold of it otherwise.
 		// 'false' means that this message should not be processed any further.
 		bool checkBlockMsg(HWND hWnd, const Message &msg);
+
+		// Notify before and after some part of the code attempts to create a dialog, so that we can
+		// keep the other UThreads interactive.
+		void showDialog(bool show);
 #endif
 #ifdef GUI_GTK
 		// Post a repaint request to the Gtk+ window. Safe to call from any thread.
@@ -234,6 +241,10 @@ namespace gui {
 
 			// When a menu is showing.
 			blockMenu,
+
+			// Modal dialog is showing. This is used for the NULL value, as this is not necessarily
+			// associated with a window.
+			blockModal,
 		};
 
 		// Each window we want to keep track of. Windows that are not affecting the block status
@@ -242,9 +253,11 @@ namespace gui {
 		typedef map<HWND, BlockStatus> BlockMap;
 		BlockMap blockStatus;
 
+		// Number of modal dialogs showing that are out of our control.
+		Nat blockingDialogs;
+
 		// Is the blocking timer active? If so, what window is it attached to?
 		HWND blockTimer;
-
 #endif
 
 #ifdef GUI_GTK
