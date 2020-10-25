@@ -10,7 +10,7 @@ use ui;
  * Note: Many aspects of the animation are configured from a custom syntax, so that new animations
  * do not have to overload a large number of constructors for commonly used scenarios.
  */
-class Animation on Render {
+class Animation on Ui {
 	// Play at step number.
 	Nat step;
 

@@ -15,7 +15,7 @@ class ExitError extends Exception {
 /**
  * Represents a running thread inside the program.
  */
-class ProgThread on Render {
+class ProgThread on Ui {
 	// Semaphore used to pause the monitored thread.
 	private Sema sema;
 
@@ -259,7 +259,7 @@ class StackVar {
 /**
  * A stack frame of a thread.
  */
-class StackFrame on Render {
+class StackFrame on Ui {
 	// Name of the function. (TODO: Add a SrcPos?)
 	Str function;
 

@@ -173,7 +173,7 @@ BarGraph barGraph(Presentation p) {
 /**
  * Class responsible for drawing the axis itself.
  */
-class GraphAxis on Render {
+class GraphAxis on Ui {
 	// The style of the text on the axis.
 	TextStyle textStyle;
 
@@ -377,7 +377,7 @@ class GraphAxis on Render {
 /**
  * Class representing a label in a graph.
  */
-class GraphLabel on Render {
+class GraphLabel on Ui {
 	// The title of this label.
 	Text text;
 
@@ -424,7 +424,7 @@ class GraphLabel on Render {
 /**
  * Class representing one set of data-points in a graph.
  */
-class GraphData on Render {
+class GraphData on Ui {
 	// A single value.
 	value Value {
 		// The value itself. Used for plotting.

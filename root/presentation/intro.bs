@@ -8,7 +8,7 @@ use core:geometry;
  * If 'duration' is zero when the animation is added to the presentation, the presentation will
  * overwrite the duration with its default setting.
  */
-class SlideIntro on Render {
+class SlideIntro on Ui {
 	// Duration of the animation.
 	Duration duration;
 

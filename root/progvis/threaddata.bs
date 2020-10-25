@@ -222,7 +222,7 @@ class ThreadData extends Drawable {
 /**
  * A single stack frame in a thread.
  */
-class FrameVal on Render {
+class FrameVal on Ui {
 	// Caption text.
 	Text caption;
 
@@ -317,7 +317,7 @@ class FrameVal on Render {
 
 private:
 	// A variable inside a frame.
-	class Var on Render {
+	class Var on Ui {
 		Str name;
 		Text text;
 		Data value;

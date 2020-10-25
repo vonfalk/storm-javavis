@@ -16,7 +16,7 @@ Url resUrl() {
 }
 
 // A 'style' used in a picture...
-void myBox(Node n) on Render {
+void myBox(Node n) on Ui {
 	n.margin(10, 10);
 }
 

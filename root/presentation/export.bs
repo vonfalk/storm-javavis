@@ -4,25 +4,25 @@ use core:io;
 use core:geometry;
 
 // Export a presentation as a PDF.
-void export(Presentation p, Url file) on Render {
+void export(Presentation p, Url file) on Ui {
 	export(p, file, true);
 }
 
 // Export a presentation as a PDF. 'all' specifies whether all animation steps shall be exported or not.
-void export(Presentation p, Url file, Bool all) on Render {
+void export(Presentation p, Url file, Bool all) on Ui {
 	Size pageSize = ui:pdf:slide;
 	pageSize.h = pageSize.w * p.size.h / p.size.w;
 	export(p, file, pageSize);
 }
 
 // Export a presentation as a PDF, specifying the page size of the produced PDF.
-void export(Presentation p, Url file, Size pageSize) on Render {
+void export(Presentation p, Url file, Size pageSize) on Ui {
 	export(p, file, pageSize, true);
 }
 
 // Export a presentation as a PDF, specifying the page size of the produced PDF. 'all' specifies
 // whether all animation steps shall be exported or not.
-void export(Presentation p, Url file, Size pageSize, Bool all) on Render {
+void export(Presentation p, Url file, Size pageSize, Bool all) on Ui {
 	PdfGraphics output(pageSize, p.size);
 
 	Bool first = true;

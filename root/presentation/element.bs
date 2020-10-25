@@ -4,7 +4,7 @@ use core:geometry;
 /**
  * An element on a slide.
  */
-class Element on Render {
+class Element on Ui {
 	// Current position. Generally set by the layout.
 	private Rect myPos;
 

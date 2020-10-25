@@ -9,7 +9,7 @@ use geometry;
  *
  * A slide is scaled to occupy 1024x768 virtual pixels regardless of the actual size of the output.
  */
-class Slide on Render {
+class Slide on Ui {
 	// Intro animation.
 	SlideIntro? intro;
 

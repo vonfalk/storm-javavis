@@ -62,7 +62,7 @@ class Globals extends Data {
 	void checkAccess(unsafe:RawPtr object, Nat offset, Nat size, Trackers trackers) : override {}
 
 private:
-	class Var on Render {
+	class Var on Ui {
 		Str name;
 		Text text;
 		Data value;

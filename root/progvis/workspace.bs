@@ -6,7 +6,7 @@ use core:geometry;
  * A workspace, where we place all variables and other data structures currently
  * visible to the user.
  */
-class Workspace on Render {
+class Workspace on Ui {
 	init() {
 		init() {}
 
@@ -321,7 +321,7 @@ class Workspace on Render {
 
 private:
 	// A single element on the screen, with some additional metadata.
-	class Element on Render {
+	class Element on Ui {
 		// Which object this corresponds to, if any.
 		unsafe:RawPtr object;
 

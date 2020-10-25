@@ -6,7 +6,7 @@ use core:geometry;
  * An element that can be drawn to the screen. Saves its position from the last paint so that it is
  * possible to interact with it at a later stage without having to re-implement the layout logic.
  */
-class Drawable on Render {
+class Drawable on Ui {
 	init() {
 		init() {
 			pos = Point();

@@ -12,7 +12,7 @@ use graphics;
  * In addition to the slides, the Presentation object contains global settings and resources for the
  * presentation in its entirety, such as background color, page numbering etc.
  */
-class Presentation on Render {
+class Presentation on Ui {
 	// Title of the presentation.
 	Str title;
 
@@ -227,7 +227,7 @@ class Presentation on Render {
  * A description of text-styles. Used to specify defaults in a presentation so that one doesn't need
  * to specify the same style all over the place.
  */
-class TextStyle on Render {
+class TextStyle on Ui {
 	// Font.
 	Font font;
 
@@ -257,5 +257,5 @@ class TextStyle on Render {
 }
 
 // Default text styles.
-TextStyle defaultHeadingStyle() on Render { TextStyle(Font("Arial", 32), black, 30); }
-TextStyle defaultContentStyle() on Render { TextStyle(Font("Arial", 22), black, 10); }
+TextStyle defaultHeadingStyle() on Ui { TextStyle(Font("Arial", 32), black, 30); }
+TextStyle defaultContentStyle() on Ui { TextStyle(Font("Arial", 22), black, 10); }

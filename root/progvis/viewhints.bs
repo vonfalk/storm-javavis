@@ -3,7 +3,7 @@ use ui;
 /**
  * View hints, as described in the comment for Hints.
  */
-class ViewHints on Render {
+class ViewHints on Ui {
 	// Should we pause on function entry?
 	Bool pauseOnEntry() { true; }
 
@@ -19,7 +19,7 @@ class ViewHints on Render {
 /**
  * Hints used when calling "traverse" to inspect and impact object creation.
  */
-class CreateHints on Render {
+class CreateHints on Ui {
 	// Get an opportunity to decorate a newly created object.
 	Data decorate(Data data) : abstract;
 }

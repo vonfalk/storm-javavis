@@ -8,7 +8,7 @@ use lang:bs:macro;
 /**
  * Class representing some loaded program that we want to execute and possibly single-step, etc.
  */
-class Program on Render {
+class Program on Ui {
 	// Package created by us as a temporary workspace.
 	private Package pkg;
 
@@ -427,10 +427,10 @@ class LoadError extends Exception {
 // Global variable that keeps track of all Program instances, so that we can find the owner to a
 // particular thread by its thread id.
 // TODO: This can't be private...
-package WeakSet<Program> programInstances on Render = WeakSet<Program>();
+package WeakSet<Program> programInstances on Ui = WeakSet<Program>();
 
 // Find the Program instance containing a particular thread ID.
-private Program? findProgram(Word threadId) on Render {
+private Program? findProgram(Word threadId) on Ui {
 	for (i in programInstances) {
 		if (i.threads.has(threadId))
 			return i;
@@ -443,7 +443,7 @@ public Program? findProgram() {
 }
 
 // Find a particular thread.
-public ProgThread? findThread(Word threadId) on Render {
+public ProgThread? findThread(Word threadId) on Ui {
 	for (i in programInstances) {
 		if (i.threads.has(threadId))
 			return i.threads.get(threadId);
@@ -451,7 +451,7 @@ public ProgThread? findThread(Word threadId) on Render {
 	return null;
 }
 
-private Nat findThisThreadId(Word id) on Render {
+private Nat findThisThreadId(Word id) on Ui {
 	if (t = findThread(id)) {
 		return t.threadId;
 	}
@@ -466,7 +466,7 @@ public Nat findThisThreadId() {
 
 // Find the "simple" thread ID for a thread. This might create the thread ID in the appropriate
 // location, which is why the current thread ID is needed as well.
-private Nat findNewThreadId(Word currentThread, Word query) on Render {
+private Nat findNewThreadId(Word currentThread, Word query) on Ui {
 	if (thread = findThread(query)) {
 		return thread.threadId;
 	}
@@ -484,7 +484,7 @@ public Nat findNewThreadId(Word query) {
 	findNewThreadId(currentUThread(), query);
 }
 
-private void watchErrorsI(Word threadId, FutureBase future) on Render {
+private void watchErrorsI(Word threadId, FutureBase future) on Ui {
 	if (thread = findThread(threadId)) {
 		thread.watch = future;
 	} else {

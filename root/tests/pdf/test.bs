@@ -24,7 +24,7 @@ void basicTest() {
 	print("Done!");
 }
 
-void draw(Graphics g, Size size) on Render {
+void draw(Graphics g, Size size) on Ui {
 	SolidBrush blackBrush(black);
 	SolidBrush redBrush(red);
 	SolidBrush greenBrush(green);
@@ -183,7 +183,7 @@ void test() {
 	p.waitForClose;
 }
 
-void save() on Render {
+void save() on Ui {
 	PdfGraphics g(a4, a4);
 
 	draw(g, a4);

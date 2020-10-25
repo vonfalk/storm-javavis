@@ -103,7 +103,7 @@ class Picture extends Element {
 /**
  * An element in a picture.
  */
-class PElement on Render {
+class PElement on Ui {
 	// Animations.
 	Animation[] animations;
 	void animation(Animation a) { animations << a; }
@@ -263,7 +263,7 @@ class Node extends PElement {
 }
 
 // Easy creation.
-Node node(Presentation p) on Render {
+Node node(Presentation p) on Ui {
 	Node(p.contentStyle);
 }
 
@@ -317,7 +317,7 @@ class Rectangle extends Node {
 }
 
 // Easy creation.
-Rectangle rectangle(Presentation p) on Render {
+Rectangle rectangle(Presentation p) on Ui {
 	Rectangle(p.contentStyle);
 }
 
@@ -378,7 +378,7 @@ class Circle extends Node {
 }
 
 // Easy creation.
-Circle circle(Presentation p) on Render {
+Circle circle(Presentation p) on Ui {
 	Circle(p.contentStyle);
 }
 
@@ -425,7 +425,7 @@ class ImageNode extends Rectangle {
 }
 
 // Easy creation.
-ImageNode imageNode(Presentation p, Bitmap b) on Render {
+ImageNode imageNode(Presentation p, Bitmap b) on Ui {
 	ImageNode(p.contentStyle, b);
 }
 
@@ -589,28 +589,28 @@ class Edge extends PElement {
 }
 
 // Create edges.
-Edge edge(Point from, Point to) on Render {
+Edge edge(Point from, Point to) on Ui {
 	Edge e;
 	e.from(from);
 	e.to(to);
 	e;
 }
 
-Edge edge(Point from, Node to) on Render {
+Edge edge(Point from, Node to) on Ui {
 	Edge e;
 	e.from(from);
 	e.to(to);
 	e;
 }
 
-Edge edge(Node from, Point to) on Render {
+Edge edge(Node from, Point to) on Ui {
 	Edge e;
 	e.from(from);
 	e.to(to);
 	e;
 }
 
-Edge edge(Node from, Node to) on Render {
+Edge edge(Node from, Node to) on Ui {
 	Edge e;
 	e.from(from);
 	e.to(to);
@@ -620,7 +620,7 @@ Edge edge(Node from, Node to) on Render {
 /**
  * Arrows at the end of an edge.
  */
-class Arrow on Render {
+class Arrow on Ui {
 	// The path to draw.
 	Path path;
 

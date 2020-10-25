@@ -307,7 +307,7 @@ class Primitive extends RWData {
 }
 
 // Arrow for all pointers.
-package Path ptrArrow on Render = {
+package Path ptrArrow on Ui = {
 	Path p;
 	p.start(Point(0, 0));
 	p.line(Point(-6, -4));
@@ -516,7 +516,7 @@ class Composite extends Data {
 	}
 
 private:
-	class Var on Render {
+	class Var on Ui {
 		Str name;
 		Text text;
 		Data value;
@@ -656,7 +656,7 @@ class ArrayData extends Data {
 private:
 	TypeInfo typeInfo;
 
-	class Var on Render {
+	class Var on Ui {
 		Text text;
 		Data value;
 

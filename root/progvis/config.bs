@@ -7,68 +7,68 @@ use core:geometry;
  */
 
 // Default font when drawing data.
-Font dataFont on Render = defaultFont();
+Font dataFont on Ui = defaultFont();
 
 // Font for captions.
-Font captionFont on Render = defaultFont();
+Font captionFont on Ui = defaultFont();
 
 // Font for code.
-Font codeFont on Render = Font("Liberation Mono", 12, 20);
+Font codeFont on Ui = Font("Liberation Mono", 12, 20);
 
 // Background color when drawing data.
-Brush dataBg on Render = SolidBrush(white);
+Brush dataBg on Ui = SolidBrush(white);
 
-Brush dataReadBg on Render = SolidBrush(Color(0.7, 1, 0.7));
-Brush dataWriteBg on Render = SolidBrush(Color(1, 0.7, 0.7));
-Brush dataError on Render = SolidBrush(red);
+Brush dataReadBg on Ui = SolidBrush(Color(0.7, 1, 0.7));
+Brush dataWriteBg on Ui = SolidBrush(Color(1, 0.7, 0.7));
+Brush dataError on Ui = SolidBrush(red);
 
 // Text color when drawing text.
-Brush dataFg on Render = SolidBrush(black);
+Brush dataFg on Ui = SolidBrush(black);
 
 // Text color when highlighting errors.
-Brush errorFg on Render = SolidBrush(red);
+Brush errorFg on Ui = SolidBrush(red);
 
 // Regular link.
-Brush activeLink on Render = SolidBrush(black);
-Brush inactiveLink on Render = SolidBrush(Color(0, 0, 0, 0.4));
+Brush activeLink on Ui = SolidBrush(black);
+Brush inactiveLink on Ui = SolidBrush(Color(0, 0, 0, 0.4));
 
 // Background color when drawing captions.
-Brush captionBg on Render = SolidBrush(white * 0.8);
-Brush captionActiveBg on Render = SolidBrush(white * 0.6 + blue);
+Brush captionBg on Ui = SolidBrush(white * 0.8);
+Brush captionActiveBg on Ui = SolidBrush(white * 0.6 + blue);
 
 // Text color when drawing captions.
-Brush captionFg on Render = SolidBrush(black);
+Brush captionFg on Ui = SolidBrush(black);
 
 // Inner margin for data elements.
-Size dataMargin on Render = Size(4, 2);
+Size dataMargin on Ui = Size(4, 2);
 
 // Border for data elements.
-Size dataBorder on Render = Size(4, 4);
+Size dataBorder on Ui = Size(4, 4);
 
 // Border for composite data elements.
-Size compositeBorder on Render = Size(4, 4);
+Size compositeBorder on Ui = Size(4, 4);
 
 // Offset for each stack frame.
-Float stackOffset on Render = 4;
+Float stackOffset on Ui = 4;
 
 // Minimum width for a thread.
-Float threadMinWidth on Render = 300;
+Float threadMinWidth on Ui = 300;
 
 // Default code view size.
-Size sourceSize on Render = Size(350, 200);
+Size sourceSize on Ui = Size(350, 200);
 
 // Highlight color for source code.
-Brush sourceHighlight on Render = SolidBrush(yellow);
-Brush sourceSleepingHighlight on Render = SolidBrush(Color(0.8, 0.8, 1));
-Brush sourceTerminatedHighlight on Render = SolidBrush(Color(1, 0.8, 0.8));
-Brush sourceReturnedHighlight on Render = SolidBrush(Color(0.8, 1, 0.8));
+Brush sourceHighlight on Ui = SolidBrush(yellow);
+Brush sourceSleepingHighlight on Ui = SolidBrush(Color(0.8, 0.8, 1));
+Brush sourceTerminatedHighlight on Ui = SolidBrush(Color(1, 0.8, 0.8));
+Brush sourceReturnedHighlight on Ui = SolidBrush(Color(0.8, 1, 0.8));
 
 // Button size in the thread controls.
-Size buttonSize on Render = Size(30, 30);
+Size buttonSize on Ui = Size(30, 30);
 
 // Marked color of a button.
-Brush buttonBg on Render = SolidBrush(white);
-Brush buttonMarked on Render = SolidBrush(white * 0.8 + blue);
+Brush buttonBg on Ui = SolidBrush(white);
+Brush buttonMarked on Ui = SolidBrush(white * 0.8 + blue);
 
 // Layout spacing of objects.
-Size layoutSpace on Render = Size(35, 20);
+Size layoutSpace on Ui = Size(35, 20);

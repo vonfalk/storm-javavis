@@ -4,7 +4,7 @@ use core:io;
 use core:lang;
 use core:geometry;
 
-class SourceView on Render {
+class SourceView on Ui {
 	// Program context.
 	Program? program;
 

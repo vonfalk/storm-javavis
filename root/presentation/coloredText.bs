@@ -116,7 +116,7 @@ class ColoredText extends Element {
 	}
 
 	// Representation of a single line.
-	private class Line on Render {
+	private class Line on Ui {
 		// Total height of the line.
 		Float height;
 

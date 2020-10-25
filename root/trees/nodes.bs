@@ -10,11 +10,11 @@ Font nFont() {
 	f;
 }
 
-// Font nodeFont on Render = defaultFont();
-Font nodeFont on Render = nFont();
-Brush nodeBrush on Render = SolidBrush(black);
+// Font nodeFont on Ui = defaultFont();
+Font nodeFont on Ui = nFont();
+Brush nodeBrush on Ui = SolidBrush(black);
 
-class Node on Render {
+class Node on Ui {
 	Point at;
 	Text text;
 	Node? left;
