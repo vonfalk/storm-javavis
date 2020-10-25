@@ -335,11 +335,15 @@ namespace gui {
 		InitCommonControlsEx(&cc);
 	}
 
+	void App::showDialog(bool show) {
+		appWait->showDialog(show);
+	}
 
 	void AppWait::platformInit() {
 		threadId = GetCurrentThreadId();
 		signalSent = 0;
 		currentEngine = &e;
+		blockingDialogs = 0;
 		blockTimer = NULL;
 
 		// Make sure we get a message queue.
@@ -484,6 +488,22 @@ namespace gui {
 
 		// By default, we let messages through.
 		return true;
+	}
+
+	void AppWait::showDialog(bool show) {
+		if (show) {
+			blockingDialogs++;
+			// This will cause the next message to start the timer, which is enough.
+			blockStatus[NULL] = blockModal;
+		} else if (blockingDialogs > 1) {
+			blockingDialogs--;
+		} else {
+			blockStatus.erase(NULL);
+			if (blockTimer != NULL) {
+				KillTimer(blockTimer, 0);
+				blockTimer = NULL;
+			}
+		}
 	}
 
 
