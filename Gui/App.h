@@ -226,9 +226,6 @@ namespace gui {
 
 		// Keep track of what each window is doing regarding potentially blocking the main message loop.
 		enum BlockStatus {
-			// When the user has clicked the title bar, but before dragging the window (there is a 500 ms delay here).
-			blockPreMove,
-
 			// When the user has actually started moving the window.
 			blockMoving,
 

@@ -428,11 +428,6 @@ namespace gui {
 	}
 
 	bool AppWait::checkBlockMsg(HWND hWnd, const Message &msg) {
-		static bool output = false;
-
-		if (output)
-			PVAR(msg);
-
 		switch (msg.msg) {
 		case WM_ENTERMENULOOP:
 			// Called when a pop-up menu is started.
@@ -442,26 +437,7 @@ namespace gui {
 			// Called when we're out of the menu loop.
 			blockStatus.erase(hWnd);
 			break;
-		case WM_SYSCOMMAND:
-			if ((msg.wParam & 0xFFF0) == SC_MOVE) {
-				// This message is sent when a user clicks the title bar. In around 500 ms we will
-				// get a WM_ENTERSIZEMOVE message. This won't happen if the user releases the mouse
-				// fairly quickly, however.
-				blockStatus[hWnd] = blockPreMove;
-			}
-			break;
-		case WM_WINDOWPOSCHANGING: {
-			// It seems like whenever the user clicks quickly on the title bar, the end of that is
-			// indicated by a WM_WINDOWPOSCHANGING message. We will get these messages during the
-			// move as well, so if we receive one after WM_ENTERSIZEMOVE, we just ignore it.
-			BlockMap::iterator found = blockStatus.find(hWnd);
-			if (found != blockStatus.end() && found->second == blockPreMove) {
-				blockStatus.erase(found);
-			}
-			break;
-		}
 		case WM_ENTERSIZEMOVE:
-			output = false;
 			blockStatus[hWnd] = blockMoving;
 			break;
 		case WM_EXITSIZEMOVE:
@@ -471,7 +447,6 @@ namespace gui {
 		case WM_CAPTURECHANGED:
 			// Seems to be a good "fallback" if the regular "done" notifications are not sent properly.
 			blockStatus.erase(hWnd);
-			PLN(L"DESTROY");
 			break;
 		case WM_DESTROY:
 			// We don't need this information anymore.
@@ -486,7 +461,6 @@ namespace gui {
 			break;
 		case WM_TIMER:
 			if (msg.wParam == 0) {
-				PLN(L"TIMER");
 				// This is our timer. It means we should check for UThreads that need to execute
 				// now. This will, among other things, drive animations.
 				os::UThread::leave();
