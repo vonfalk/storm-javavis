@@ -73,8 +73,12 @@ namespace gui {
 		// Get our instance.
 		HINSTANCE instance();
 
-		// Called before/after modal dialogs are shown, to indicate that we will enter a second window loop.
-		void showDialog(bool show);
+		// Called before a modal dialog is shown, indicating that we will soon enter a recursive
+		// message pumping loop.
+		void beforeDialog();
+
+		// Called after a modal dialog is shown, indicating that the modal message loop is done.
+		void afterDialog();
 #endif
 #ifdef GUI_GTK
 		// Get the default display.
@@ -195,9 +199,11 @@ namespace gui {
 		// 'false' means that this message should not be processed any further.
 		bool checkBlockMsg(HWND hWnd, const Message &msg);
 
-		// Notify before and after some part of the code attempts to create a dialog, so that we can
-		// keep the other UThreads interactive.
-		void showDialog(bool show);
+		// Called before a dialog is shown.
+		void beforeDialog(Handle window);
+
+		// Called when a dialog is done being shown.
+		void afterDialog();
 #endif
 #ifdef GUI_GTK
 		// Post a repaint request to the Gtk+ window. Safe to call from any thread.
@@ -255,6 +261,18 @@ namespace gui {
 
 		// Is the blocking timer active? If so, what window is it attached to?
 		HWND blockTimer;
+
+		// Is the block timer currently active?
+		Bool blockActive;
+
+		// Enable the block timer.
+		void blockActivate(HWND window);
+
+		// Update the block timer.
+		void blockUpdate(Bool more);
+
+		// Disable the block timer.
+		void blockDeactivate();
 #endif
 
 #ifdef GUI_GTK
