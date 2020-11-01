@@ -260,7 +260,7 @@ namespace storm {
 			{ EI_MAG3, ELFMAG3 },
 			{ EI_CLASS, EI_CLASS_CURRENT },
 			{ EI_DATA, EI_DATA_CURRENT },
-			{ EI_OSABI, EI_OSABI_CURRENT }
+			// { EI_OSABI, EI_OSABI_CURRENT } // This is set to 0x3 sometimes (e.g. when compiling with -std=c++17)
 		};
 
 		for (size_t i = 0; i < ARRAY_COUNT(verify); i++) {
