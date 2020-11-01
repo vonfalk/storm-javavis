@@ -195,6 +195,10 @@ namespace gui {
 		// Skia surface.
 		sk_sp<SkSurface> skiaSurface;
 
+		// Render target description.
+		GrBackendRenderTarget skiaTarget;
+
+
 		int i;
 	};
 

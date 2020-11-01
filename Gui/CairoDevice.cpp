@@ -287,13 +287,14 @@ namespace gui {
 		gdk_gl_context_make_current(context);
 
 		int stencilBits = 8; // Need to match the setup below.
-		int msaa = 4;
+		int msaa = 1; // This does not seem to always work when set to 4, for example. Not all
+					  // backends seem to support this (maybe we need to do enable it)
 
-		glGenFramebuffersEXT(1, &framebuffer);
-		glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, framebuffer);
+		glGenFramebuffers(1, &framebuffer);
+		glBindFramebuffer(GL_FRAMEBUFFER, framebuffer);
 
-		glGenRenderbuffersEXT(1, &renderbuffer);
-		glGenRenderbuffersEXT(1, &stencil);
+		glGenRenderbuffers(1, &renderbuffer);
+		glGenRenderbuffers(1, &stencil);
 
 		glBindRenderbuffer(GL_RENDERBUFFER, renderbuffer);
 		glRenderbufferStorage(GL_RENDERBUFFER, GL_RGB8, width, height);
@@ -301,9 +302,19 @@ namespace gui {
 		glBindRenderbuffer(GL_RENDERBUFFER, stencil);
 		glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, width, height);
 
-		glFramebufferRenderbufferEXT(GL_FRAMEBUFFER_EXT, GL_COLOR_ATTACHMENT0_EXT, GL_RENDERBUFFER_EXT, renderbuffer);
-		glFramebufferRenderbufferEXT(GL_FRAMEBUFFER_EXT, GL_DEPTH_ATTACHMENT_EXT, GL_RENDERBUFFER_EXT, stencil); // Might skip
-		glFramebufferRenderbufferEXT(GL_FRAMEBUFFER_EXT, GL_STENCIL_ATTACHMENT_EXT, GL_RENDERBUFFER_EXT, stencil);
+		glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0_EXT, GL_RENDERBUFFER, renderbuffer);
+		glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT_EXT, GL_RENDERBUFFER, stencil); // Might skip
+		glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_STENCIL_ATTACHMENT_EXT, GL_RENDERBUFFER, stencil);
+
+		glBindFramebuffer(GL_FRAMEBUFFER, framebuffer);
+		glViewport(0, 0, width, height);
+		GLfloat identity[16] = {
+			1, 0, 0, 0,
+			0, 1, 0, 0,
+			0, 0, 1, 0,
+			0, 0, 0, 1,
+		};
+		glLoadMatrixf(identity);
 
 		// Try to get the current context and create a Interface for it.
 		sk_sp<const GrGLInterface> interface;
@@ -335,9 +346,9 @@ namespace gui {
 		info.fFBOID = framebuffer;
 		info.fFormat = GL_RGB8;
 		// This must be alive as long as the surface is alive:
-		GrBackendRenderTarget target(width, height, msaa, stencilBits, info);
-		SkSurfaceProps props;
-		skiaSurface = SkSurface::MakeFromBackendRenderTarget(skiaContext.get(), target, kBottomLeft_GrSurfaceOrigin, kRGB_888x_SkColorType, nullptr, &props);
+		skiaTarget = GrBackendRenderTarget(width, height, msaa, stencilBits, info);
+		// SkSurfaceProps props; // last parameter
+		skiaSurface = SkSurface::MakeFromBackendRenderTarget(skiaContext.get(), skiaTarget, kBottomLeft_GrSurfaceOrigin, kRGB_888x_SkColorType, nullptr, nullptr);
 
 		PVAR(skiaSurface.get());
 		SkCanvas *canvas = skiaSurface->getCanvas();
@@ -359,9 +370,9 @@ namespace gui {
 		surface = null;
 
 		gdk_gl_context_make_current(context);
-		glDeleteRenderbuffersEXT(1, &renderbuffer);
-		glDeleteRenderbuffersEXT(1, &stencil);
-		glDeleteFramebuffersEXT(1, &framebuffer);
+		glDeleteRenderbuffers(1, &renderbuffer);
+		glDeleteRenderbuffers(1, &stencil);
+		glDeleteFramebuffers(1, &framebuffer);
 
 		gdk_gl_context_clear_current();
 		g_object_unref(context);
@@ -394,12 +405,24 @@ namespace gui {
 
 		gdk_gl_context_make_current(context);
 
+		glBindFramebuffer(GL_FRAMEBUFFER, framebuffer);
+		glViewport(0, 0, width, height);
+		GLfloat identity[16] = {
+			1, 0, 0, 0,
+			0, 1, 0, 0,
+			0, 0, 1, 0,
+			0, 0, 0, 1,
+		};
+		glLoadMatrixf(identity);
+
 		SkPaint line(SkColors::kGreen);
 
 		SkCanvas *canvas = skiaSurface->getCanvas();
+		canvas->resetMatrix();
 		canvas->drawColor(SkColors::kRed);
-		canvas->drawLine(0, 0, 100, 100 - i, line);
-		i--;
+		canvas->drawRect(SkRect{2.0f, 2.0f, 80.0f, 80.0f + i}, line);
+		// canvas->drawLine(0.0f, 0.0f, 150.0f, 150.0f - i, line);
+		i++;
 		canvas->flush();
 
 		gdk_cairo_draw_from_gl(to, window,
