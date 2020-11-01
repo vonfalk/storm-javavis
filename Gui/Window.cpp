@@ -925,6 +925,8 @@ namespace gui {
 
 		if (!useNativeWindow()) {
 			setWindowMask(gtk_widget_get_window(drawWidget()));
+			if (myPainter)
+				myPainter->uiAttach(this);
 			return;
 		}
 
@@ -942,6 +944,8 @@ namespace gui {
 			gdkWindow = oldWindow;
 			if (myPainter)
 				gtk_widget_set_double_buffered(drawTo, FALSE);
+			if (myPainter)
+				myPainter->uiAttach(this);
 			return;
 		}
 		if (!oldWindow)
@@ -976,6 +980,8 @@ namespace gui {
 			gtk_widget_set_double_buffered(drawTo, FALSE);
 		}
 		setWindowMask(gdkWindow);
+		if (myPainter)
+			myPainter->uiAttach(this);
 	}
 
 	void Window::onUnrealize() {

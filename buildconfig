@@ -4,7 +4,7 @@
 
 #Basic UI test.
 #Main -a -r ../root/ -f tests.ui.simple
-#Main -a -r ../root/ -f tests.ui.main
+Main -a -r ../root/ -f tests.ui.main
 #Main -a -r ../root/ -f tests.ui.simpleUi
 #Main -a -r ../root/ -f tests.ui.multiline
 #Main -a -r ../root/ -f tests.ui.dialog
@@ -21,7 +21,7 @@
 #Main -a -f presentation.tests.simple
 #Main -a -f progvis.debug
 #Main -a -f progvis.testCpp
-Main -a -f trees.main
+#Main -a -f trees.main
 
 #UI while running intensive memory allocations in the background.
 #Main -a -r ../root/ -f tests.ui.simpleMem

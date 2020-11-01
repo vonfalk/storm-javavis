@@ -30,8 +30,14 @@ namespace gui {
 		Handle handle = to->handle();
 		if (handle != attachedTo) {
 			detach();
-			attachedTo = handle;
-			create();
+
+			if (gtk_widget_get_window(handle.widget())) {
+				attachedTo = handle;
+				create();
+			} else {
+				// Will be attached again later.
+				attachedTo = Window::invalid;
+			}
 		}
 	}
 
@@ -345,7 +351,6 @@ namespace gui {
 		// Required when we're rendering directly to a window surface.
 		if (!target.any()) {
 			if (attached()) {
-				target = mgr->create(p);
 				if (graphics)
 					graphics->updateTarget(target);
 			}
@@ -359,18 +364,13 @@ namespace gui {
 		currentRepaint = repaintCounter;
 
 		if (CairoSurface *surface = target.surface()) {
-			cairo_set_source_surface(params->ctx, surface->surface, 0, 0);
-			cairo_paint(params->ctx);
-
-			// Make sure Cairo does not use our surface outside the lock!
-			cairo_surface_flush(cairo_get_group_target(params->ctx));
+			surface->blit(params->ctx);
 
 			// We're ready for the next frame now!
 			if (continuous) {
 				mgr->painterReady();
 #ifdef UI_SINGLETHREAD
-				if (GdkWindow *window = gtk_widget_get_window(attachedTo.widget()))
-					gdk_window_invalidate_rect(window, NULL, true);
+				gtk_widget_queue_draw(attachedTo.widget());
 #endif
 			}
 		}

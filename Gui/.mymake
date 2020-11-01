@@ -14,7 +14,7 @@ stormUsingNamespace+=storm::geometry
 # Name of the cairo shared library file.
 cairoName=libcairo.so.2
 
-# Compile cairo if neccessary. We're using build system provided by Cairo.
+# Compile cairo if necessary. We're using build system provided by Cairo.
 preBuild+=./build_cairo.sh <path|packagePath><cairoName> <maxThreads>
 
 # Set rpath.
@@ -23,5 +23,19 @@ linkFlags+=-Wl,-rpath,'$ORIGIN'
 # Make sure to link our version of Cairo first, since that contains all symbols needed.
 linkFlags+=<path|packagePath><cairoName>
 
-flags+=`pkg-config --cflags gtk+-3.0 x11`
-linkFlags+=`pkg-config --libs gtk+-3.0 x11` -lGL -lEGL
+# Skia stuff:
+# Compile Skia if necessary.
+preBuild+=./build_skia.sh <path|buildDir>skia.a <maxThreads>
+# Link Skia.
+linkFlags+=<path|buildDir>skia.a
+# Include path.
+include+=../Linux/skia
+# Defines
+define+=SK_GL=1
+# Need C++ 17.
+flags+=-std=c++17
+# No includes for the Skia header.
+noIncludes+=Skia.h
+
+flags+=`pkg-config --cflags gtk+-3.0 x11 fontconfig`
+linkFlags+=`pkg-config --libs gtk+-3.0 x11 fontconfig` -lGL -lEGL
