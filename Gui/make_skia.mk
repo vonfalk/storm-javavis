@@ -9,11 +9,17 @@ DEFINES := SK_R32_SHIFT=16 SK_ASSUME_GL_ES=1 SK_GAMMA_APPLY_TO_A8 GR_OP_ALLOCATE
 # There seems to be a number of options for enabling SSE and AVX. I don't think that is needed since
 # we will be using it through OpenGL.
 
+# Note: The below issue is fixed now, and therefore we can use -O3 freely again. This issue broke Skia even on -O2.
 # Note: Using -O3 with GCC seems to break the initialization of the ComponentArray passed to Swizzle
 # in SkSLIRGenerator.cpp, in the function getNormalizeSkPositionCode. Don't know if this is UB in
 # the Skia code or a micompilation by GCC. Should probably be reported somehow...
 
-CXXFLAGS := -std=c++17 -fPIC -O2 -iquote. -I/usr/include/freetype2 $(addprefix -D,$(DEFINES))
+# The -Wno-psabi flag is to silence a warning about ABI compatibility since we don't explicitly enable AVX at the time.
+
+# The cheap flags are used to build the standalone SKSL compiler to reduce compile times a bit.
+CHEAP_CXXFLAGS := -std=c++17 -fPIC -iquote. -Wno-psabi -I/usr/include/freetype2 $(addprefix -D,$(DEFINES))
+# These are the flags for the final library. We want to use -O3 here for speed.
+CXXFLAGS := -O3 $(CHEAP_CXXFLAGS)
 # Note: We skipped these: codec
 SOURCE_DIRS := effects effects/imagefilters gpu gpu/text gpu/ccpr gpu/effects gpu/effects/generated gpu/geometry gpu/glsl gpu/gl gpu/gl/builders gpu/mock gpu/gl/egl gpu/gl/glx gpu/ops gpu/tessellate gpu/gradients gpu/gradients/generated images opts sfnt utils c core fonts image lazy pathops shaders shaders/gradients sksl sksl/ir
 PORTS := SkDebug_stdio.cpp SkDiscardableMemory_none.cpp SkFontConfigInterface*.cpp SkFontMgr_fontconfig*.cpp SkFontMgr_FontConfigInterface*.cpp SkFontHost_*.cpp SkGlobalInitialization_default.cpp SkMemory_malloc.cpp SkOSFile_posix.cpp SkOSFile_stdio.cpp SkOSLibrary_posix.cpp SkImageGenerator_none.cpp
@@ -56,7 +62,7 @@ out/skslc: $(SKSL_OBJ)
 
 $(SKSL_OBJ): out/slc/%.o: src/%.cpp
 	@mkdir -p $(dir $@)
-	g++ -c $(CXXFLAGS) -DSKSL_STANDALONE -o $@ $<
+	g++ -c $(CHEAP_CXXFLAGS) -DSKSL_STANDALONE -o $@ $<
 
 src/sksl/sksl_fp.sksl: src/sksl/sksl_fp_raw.sksl
 	cat include/private/GrSharedEnums.h $^ | sed 's|^#|// #|g' > $@

@@ -307,14 +307,6 @@ namespace gui {
 		glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_STENCIL_ATTACHMENT_EXT, GL_RENDERBUFFER, stencil);
 
 		glBindFramebuffer(GL_FRAMEBUFFER, framebuffer);
-		glViewport(0, 0, width, height);
-		GLfloat identity[16] = {
-			1, 0, 0, 0,
-			0, 1, 0, 0,
-			0, 0, 1, 0,
-			0, 0, 0, 1,
-		};
-		glLoadMatrixf(identity);
 
 		// Try to get the current context and create a Interface for it.
 		sk_sp<const GrGLInterface> interface;
@@ -406,14 +398,6 @@ namespace gui {
 		gdk_gl_context_make_current(context);
 
 		glBindFramebuffer(GL_FRAMEBUFFER, framebuffer);
-		glViewport(0, 0, width, height);
-		GLfloat identity[16] = {
-			1, 0, 0, 0,
-			0, 1, 0, 0,
-			0, 0, 1, 0,
-			0, 0, 0, 1,
-		};
-		glLoadMatrixf(identity);
 
 		SkPaint line(SkColors::kGreen);
 
@@ -421,7 +405,7 @@ namespace gui {
 		canvas->resetMatrix();
 		canvas->drawColor(SkColors::kRed);
 		canvas->drawRect(SkRect{2.0f, 2.0f, 80.0f, 80.0f + i}, line);
-		// canvas->drawLine(0.0f, 0.0f, 150.0f, 150.0f - i, line);
+		canvas->drawLine(0.0f, 0.0f, 150.0f, 150.0f - i, line);
 		i++;
 		canvas->flush();
 
