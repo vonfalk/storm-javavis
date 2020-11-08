@@ -1,5 +1,4 @@
 #pragma once
-#include "RenderInfo.h"
 #include "Handle.h"
 
 #ifdef GUI_GTK

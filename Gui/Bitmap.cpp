@@ -18,7 +18,8 @@ namespace gui {
 			{ DXGI_FORMAT_R8G8B8A8_UNORM, D2D1_ALPHA_MODE_PREMULTIPLIED },
 			0, 0
 		};
-		owner->renderTarget()->GetDpi(&props.dpiX, &props.dpiY);
+		TODO(L"FIX THE THING BELOW"); // Note: The DPI will always be 96 in the current implementation.
+		// owner->renderTarget()->GetDpi(&props.dpiX, &props.dpiY);
 
 		// Non-premultiplied alpha is not supported. We need to convert our source bitmap...
 		byte *src = this->src->buffer();
@@ -38,9 +39,9 @@ namespace gui {
 			}
 		}
 
-		HRESULT r = owner->renderTarget()->CreateBitmap(s, img, stride, props, (ID2D1Bitmap **)out);
-		if (FAILED(r))
-			PLN(L"Error: " + ::toS(r));
+		// HRESULT r = owner->renderTarget()->CreateBitmap(s, img, stride, props, (ID2D1Bitmap **)out);
+		// if (FAILED(r))
+		// 	PLN(L"Error: " + ::toS(r));
 	}
 
 #endif

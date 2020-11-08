@@ -18,12 +18,22 @@ namespace gui {
 			::release(v);
 		}
 
+		T *operator ->() const {
+			return v;
+		}
+
 		ComPtr<T> &operator =(const ComPtr<T> &o) {
 			::release(v);
 			v = o.v;
 			if (v)
 				v->AddRef();
 			return *this;
+		}
+
+		// Clear (set to null)
+		void clear() {
+			::release(v);
+			v = null;
 		}
 
 		T *v;

@@ -27,15 +27,6 @@ namespace gui {
 	typedef PangoLayout OsTextLayout;
 
 	/**
-	 * Layer types in Cairo.
-	 */
-	enum STORM_HIDDEN(LayerKind) {
-		none,
-		group,
-		save
-	};
-
-	/**
 	 * How do we destroy various objects inside Cairo?
 	 */
 	template <class T>

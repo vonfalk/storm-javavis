@@ -6,9 +6,8 @@
 #include "Core/Event.h"
 #include "Core/Sema.h"
 #include "Handle.h"
-#include "RenderInfo.h"
-#include "DxDevice.h"
-#include "CairoDevice.h"
+#include "GraphicsId.h"
+#include "Device.h"
 
 namespace gui {
 	class Painter;
@@ -23,30 +22,30 @@ namespace gui {
 		// Shutdown the rendering thread.
 		void terminate();
 
-		// Attach a resource to this rendermgr.
+		// Allocate a Graphics ID.
+		Nat allocId();
+
+		// Free an ID.
+		void freeId(Nat id);
+
+		// Attach a resource to this rendermgr. TODO: Remove?
 		void attach(Resource *resource);
 
-		// Attach a Painter.
-		RenderInfo attach(Painter *painter, Handle window);
+		// Attach a Painter, creates a surface.
+		Surface *attach(Painter *painter, Handle window);
 
 		// Detach a Painter.
 		void detach(Painter *painter);
-
-		// Resize the RenderInfo to a new size. 'target' will be re-created.
-		void resize(RenderInfo &info, Size size, Float scale);
-
-		// Main thread entry point.
-		void main();
 
 		// Notify that a new painter is ready to repaint.
 		void painterReady();
 
 #ifdef GUI_WIN32
 		// Get the DWrite factory object.
-		inline IDWriteFactory *dWrite() { return device->dWrite(); }
+		inline IDWriteFactory *dWrite() { return null; /* return device->dWrite(); */ }
 
 		// Get the D2D factory object.
-		inline ID2D1Factory *d2d() { return device->d2d(); }
+		inline ID2D1Factory *d2d() { return null; /* return device->d2d(); */ }
 #endif
 #ifdef GUI_GTK
 		// Get a pango context.
@@ -62,7 +61,10 @@ namespace gui {
 		RenderMgr();
 
 		// The underlying device.
-		Device *device;
+		UNKNOWN(PTR_NOGC) Device *device;
+
+		// Identifiers for Graphics objects.
+		UNKNOWN(PTR_NOGC) IdMgr *idMgr;
 
 		// Live painters. TODO? Weak set?
 		Set<Painter *> *painters;
@@ -79,10 +81,11 @@ namespace gui {
 		// Exiting?
 		Bool exiting;
 
-#ifdef GUI_GTK
-		// Create the global context if neccessary.
-		cairo_device_t *createDevice(GtkWidget *widget);
-#endif
+		// Main entry point for the thread.
+		void main();
+
+		// Friend.
+		friend os::Thread spawnRenderThread(Engine &e);
 	};
 
 	// Create/get the singleton render manager.

@@ -15,12 +15,24 @@ namespace gui {
 	 *
 	 * Created automatically if used with a painter. See the WindowGraphics class for the
 	 * implementation.
+	 *
+	 * Each painter contains an identifier that is used to associate a graphics instance with
+	 * resources used by it. This allows multiple Graphics objects for different backends to be
+	 * active simultaneously, and even draw using the same set of graphics resources. Additionally,
+	 * different backends have different characteristics regarding how they handle their
+	 * resources. Some backends (e.g. software backends) do not require any particular
+	 * representation of resources, others (e.g. D2D) can use one internal representation throughout
+	 * all Graphics objects, and yet others (e.g. OpenGL-based backends on Gtk) require
+	 * instace-specific representations. This is reflected in how identifiers are allocated.
 	 */
 	class Graphics : public ObjectOn<Render> {
 		STORM_ABSTRACT_CLASS;
 	public:
 		// Create.
 		STORM_CTOR Graphics();
+
+		// Get the identifier for this Graphics object.
+		Nat STORM_FN id() const { return identifier; }
 
 		/**
 		 * General format. Use push and pop to save/restore the state.
@@ -105,6 +117,11 @@ namespace gui {
 
 		// Draw pre-formatted text.
 		virtual void STORM_FN draw(Text *text, Brush *brush, Point origin) ABSTRACT;
+
+	protected:
+		// Our identifier. Initialized to 0 (meaning, we don't need resources), but set by some
+		// subclasses during creation.
+		Nat identifier;
 	};
 
 

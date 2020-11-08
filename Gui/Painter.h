@@ -47,13 +47,6 @@ namespace gui {
 		void addResource(RenderResource *resource);
 		void removeResource(RenderResource *resource);
 
-#ifdef GUI_WIN32
-		// Get our render target.
-		inline ID2D1RenderTarget *renderTarget() { return target.target(); }
-#endif
-#ifdef GUI_GTK
-		inline CairoSurface *surface() { return target.surface(); }
-#endif
 
 		/**
 		 * The following functions (the ones starting with 'uiXxx') are intended to be called
@@ -82,10 +75,10 @@ namespace gui {
 		// Attached HWND.
 		Handle attachedTo;
 
-		// Rendering information.
-		RenderInfo target;
+		// Surface to render to.
+		Surface *surface;
 
-		// Graphics object.
+		// Graphics object. Associated to the surface.
 		WindowGraphics *graphics;
 
 		// App object.
@@ -113,9 +106,6 @@ namespace gui {
 		// event even when they are in continuous mode. If a painter ever returns false from
 		// ready(), it needs to call 'RenderMgr::painterReady' when it becomes ready again.
 		bool ready();
-
-		// Create any resources connected to the current device.
-		void create();
 
 		// Destroy any resources connected to the current device.
 		void destroy();
