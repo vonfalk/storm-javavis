@@ -6,6 +6,8 @@ namespace gui {
 	class CairoSurface;
 #endif
 
+	class WindowGraphics;
+
 	/**
 	 * Plaform specific information required to render to the screen.
 	 */
@@ -18,6 +20,9 @@ namespace gui {
 		// Scale of the surface (e.g. if we want to emulate a lower resolution when dealing with
 		// nonstandard DPI settings).
 		Float scale;
+
+		// Create a Graphics object for this render info.
+		WindowGraphics *createGraphics(Engine &e) const;
 
 #ifdef GUI_WIN32
 		inline ID2D1RenderTarget *target() const {

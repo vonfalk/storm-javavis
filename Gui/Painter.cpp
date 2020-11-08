@@ -31,11 +31,11 @@ namespace gui {
 		if (handle != attachedTo) {
 			detach();
 
-			if (gtk_widget_get_window(handle.widget())) {
+			if (windowReady(handle)) {
 				attachedTo = handle;
 				create();
 			} else {
-				// Will be attached again later.
+				// Will be attached again later. This only happens in Gtk+.
 				attachedTo = Window::invalid;
 			}
 		}
@@ -67,7 +67,7 @@ namespace gui {
 
 	void Painter::create() {
 		target = mgr->attach(this, attachedTo);
-		graphics = new (this) WindowGraphics(target, this);
+		graphics = target.createGraphics(engine());
 	}
 
 	void Painter::destroy() {
@@ -222,6 +222,10 @@ namespace gui {
 #error "Single threaded UI is not supported on Win32! Please disable SINGLE_THREADED_UI in stdafx.h."
 #endif
 
+	bool Painter::windowReady(Handle window) {
+		return true;
+	}
+
 	bool Painter::ready() {
 		// Always ready to draw!
 		return true;
@@ -249,7 +253,7 @@ namespace gui {
 
 		try {
 			graphics->beforeRender();
-			more = render(graphics->size(), graphics);
+			more = render(target.size / target.scale, graphics);
 			graphics->afterRender();
 		} catch (...) {
 			graphics->afterRender();
@@ -291,6 +295,10 @@ namespace gui {
 	void Painter::waitForFrame() {
 		// Just wait until we're not drawing at the moment.
 		Lock::Guard z(lock);
+	}
+
+	bool Painter::windowReady(Handle window) {
+		return gtk_widget_get_window(window.widget()) != null;
 	}
 
 	bool Painter::ready() {

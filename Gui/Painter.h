@@ -108,6 +108,9 @@ namespace gui {
 		// need to be able to detect that.
 		inline bool attached() const { return graphics != null; }
 
+		// Is the window ready to be rendered to?
+		bool windowReady(Handle window);
+
 		// Ready to render? Called by the render manager to determine if the painter is ready to
 		// render when it is in continuous mode. Some implementations may need to wait for some
 		// event even when they are in continuous mode. If a painter ever returns false from
