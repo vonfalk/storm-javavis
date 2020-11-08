@@ -4,7 +4,9 @@
 # SK_GAMMA_APPLY_TO_A8 seems to be set for "skia_private" config.
 # GR_OP_ALLOCATE_USE_NEW seems to be enable if we have gpu support
 # SKIA_IMPLEMENTATION=1 seems to be needed when building the library
-DEFINES := SK_R32_SHIFT=16 SK_ASSUME_GL_ES=1 SK_GAMMA_APPLY_TO_A8 GR_OP_ALLOCATE_USE_NEW SKIA_IMPLEMENTATION=1 SK_SUPPORT_GPU=1 SK_GL=1
+# SK_UNICODE_AVAILABLE=1 for unicode support in text shaping modules
+# SK_SHAPER_HARFBUZZ_AVAILABLE=1 for harfbuzz support
+DEFINES := SK_R32_SHIFT=16 SK_ASSUME_GL_ES=1 SK_GAMMA_APPLY_TO_A8 GR_OP_ALLOCATE_USE_NEW SKIA_IMPLEMENTATION=1 SK_SUPPORT_GPU=1 SK_GL=1 SK_UNICODE_AVAILABLE=1 SK_SHAPER_HARFBUZZ_AVAILABLE=1
 
 # There seems to be a number of options for enabling SSE and AVX. I don't think that is needed since
 # we will be using it through OpenGL.
@@ -21,13 +23,17 @@ CHEAP_CXXFLAGS := -std=c++17 -fPIC -iquote. -Wno-psabi -I/usr/include/freetype2 
 # These are the flags for the final library. We want to use -O3 here for speed.
 CXXFLAGS := -O3 $(CHEAP_CXXFLAGS)
 # Note: We skipped these: codec
+SKIA_LIBS := skshaper skparagraph
 SOURCE_DIRS := effects effects/imagefilters gpu gpu/text gpu/ccpr gpu/effects gpu/effects/generated gpu/geometry gpu/glsl gpu/gl gpu/gl/builders gpu/mock gpu/gl/egl gpu/gl/glx gpu/ops gpu/tessellate gpu/gradients gpu/gradients/generated images opts sfnt utils c core fonts image lazy pathops shaders shaders/gradients sksl sksl/ir
 PORTS := SkDebug_stdio.cpp SkDiscardableMemory_none.cpp SkFontConfigInterface*.cpp SkFontMgr_fontconfig*.cpp SkFontMgr_FontConfigInterface*.cpp SkFontHost_*.cpp SkGlobalInitialization_default.cpp SkMemory_malloc.cpp SkOSFile_posix.cpp SkOSFile_stdio.cpp SkOSLibrary_posix.cpp SkImageGenerator_none.cpp
 CODEC := SkMasks.cpp
 SOURCES := $(wildcard $(addsuffix /*.cpp,$(addprefix src/,$(SOURCE_DIRS)))) $(wildcard $(addprefix src/ports/,$(PORTS))) $(wildcard $(addprefix src/codec/,$(CODEC)))
 SOURCES := $(filter-out src/sksl/SkSLMain.cpp,$(SOURCES)) # Remove the main file...
 SOURCES := $(filter-out src/gpu/gl/GrGLMakeNativeInterface_none.cpp,$(SOURCES))
+LIB_SOURCES := $(wildcard $(addsuffix /src/*.cpp,$(addprefix modules/,$(SKIA_LIBS))))
+LIB_SOURCES := $(filter-out %_coretext.cpp,$(LIB_SOURCES))
 OBJECTS := $(patsubst src/%.cpp,out/%.o,$(SOURCES))
+LIB_OBJECTS := $(patsubst modules/%.cpp,out/modules/%.o,$(LIB_SOURCES))
 
 SKSL_SRC := src/core/SkMalloc.cpp src/core/SkMath.cpp src/core/SkSemaphore.cpp src/core/SkThreadID.cpp src/gpu/GrBlockAllocator.cpp src/gpu/GrMemoryPool.cpp src/ports/SkMemory_malloc.cpp $(wildcard src/sksl/*.cpp src/sksl/ir/*.cpp)
 SKSL_OBJ := $(patsubst src/%.cpp,out/slc/%.o,$(SKSL_SRC))
@@ -44,13 +50,17 @@ all: $(OUTPUT)
 clean:
 	rm -r out/
 
-$(OUTPUT): $(OBJECTS) out/skcms.o
+$(OUTPUT): $(OBJECTS) $(LIB_OBJECTS) out/skcms.o
 	@echo "Linking $(OUTPUT)..."
 	@ar rcs $(OUTPUT) $(OBJECTS) out/skcms.o
 
 $(OBJECTS): out/%.o: src/%.cpp
 	@mkdir -p $(dir $@)
 	g++ -c $(CXXFLAGS) -o $@ $<
+
+$(LIB_OBJECTS): out/modules/%.o: modules/%.cpp
+	@mkdir -p $(dir $@)
+	g++ -c $(CXXFLAGS) -I/usr/include/harfbuzz/ -o $@ $<
 
 out/sksl/SkSLCompiler.o: src/sksl/SkSLCompiler.cpp $(SKSL_DEHYDRATED)
 
