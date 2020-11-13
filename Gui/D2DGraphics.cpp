@@ -38,7 +38,6 @@ namespace gui {
 
 	void D2DGraphics::destroyed() {
 		info = RenderInfo();
-		owner = null;
 
 		// Remove any layers.
 		for (Nat i = 0; i < layers->count(); i++)

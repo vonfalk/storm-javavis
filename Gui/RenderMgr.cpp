@@ -23,6 +23,21 @@ namespace gui {
 			PLN("Error while initializing rendering: " << e);
 			throw;
 		}
+
+		idMgr = new IdMgr();
+	}
+
+	Nat RenderMgr::allocId() {
+		if (idMgr)
+			return idMgr->alloc();
+		else
+			return 0;
+	}
+
+	void RenderMgr::freeId(Nat id) {
+		// This is to ensure that we don't crash during shutdown.
+		if (idMgr)
+			idMgr->free(id);
 	}
 
 	void RenderMgr::attach(Resource *resource) {
@@ -50,12 +65,10 @@ namespace gui {
 	void RenderMgr::terminate() {
 		exiting = true;
 
-#ifdef UI_MULTITHREAD
 		waitEvent->set();
 		exitSema->down();
-#endif
 
-		// Destroy all resources.
+		// Destroy all resources in all painters.
 		for (Set<Painter *>::Iter i = painters->begin(), e = painters->end(); i != e; ++i) {
 			i.v()->destroy();
 			i.v()->destroyResources();
@@ -67,6 +80,9 @@ namespace gui {
 
 		delete device;
 		device = null;
+
+		delete idMgr;
+		idMgr = null;
 	}
 
 	void RenderMgr::main() {
@@ -131,16 +147,6 @@ namespace gui {
 		return r;
 	}
 
-#ifdef UI_SINGLETHREAD
-
-	os::Thread spawnRenderThread(Engine &e) {
-		// We use the Ui thread here, since we do not want true multithreaded rendering for some reason.
-		return Ui::thread(e)->thread();
-	}
-
-#endif
-#ifdef UI_MULTITHREAD
-
 	os::Thread spawnRenderThread(Engine &e) {
 		// Ugly hack...
 		struct Wrap {
@@ -154,7 +160,5 @@ namespace gui {
 		util::Fn<void, void> fn((Wrap *)&e, &Wrap::attach);
 		return os::Thread::spawn(fn, runtime::threadGroup(e));
 	}
-
-#endif
 
 }

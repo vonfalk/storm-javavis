@@ -6,6 +6,7 @@
 #include "Core/Event.h"
 #include "Core/Sema.h"
 #include "Handle.h"
+#include "GraphicsId.h"
 #include "RenderInfo.h"
 #include "DxDevice.h"
 #include "CairoDevice.h"
@@ -23,7 +24,13 @@ namespace gui {
 		// Shutdown the rendering thread.
 		void terminate();
 
-		// Attach a resource to this rendermgr.
+		// Allocate a Graphics ID.
+		Nat allocId();
+
+		// Free an ID.
+		void freeId();
+
+		// Attach a resource to this rendermgr. TODO: Remove?
 		void attach(Resource *resource);
 
 		// Attach a Painter.
@@ -34,9 +41,6 @@ namespace gui {
 
 		// Resize the RenderInfo to a new size. 'target' will be re-created.
 		void resize(RenderInfo &info, Size size, Float scale);
-
-		// Main thread entry point.
-		void main();
 
 		// Notify that a new painter is ready to repaint.
 		void painterReady();
@@ -59,7 +63,10 @@ namespace gui {
 		RenderMgr();
 
 		// The underlying device.
-		Device *device;
+		UNKNOWN(PTR_NOGC) Device *device;
+
+		// Identifiers for Graphics objects.
+		UNKNOWN(PTR_NOGC) IdMgr *idMgr;
 
 		// Live painters. TODO? Weak set?
 		Set<Painter *> *painters;
@@ -76,10 +83,11 @@ namespace gui {
 		// Exiting?
 		Bool exiting;
 
-#ifdef GUI_GTK
-		// Create the global context if neccessary.
-		cairo_device_t *createDevice(GtkWidget *widget);
-#endif
+		// Main entry point for the thread.
+		void main();
+
+		// Friend.
+		friend os::Thread spawnRenderThread(Engine &e);
 	};
 
 	// Create/get the singleton render manager.
