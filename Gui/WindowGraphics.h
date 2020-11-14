@@ -1,6 +1,5 @@
 #pragma once
 #include "Graphics.h"
-#include "RenderInfo.h"
 
 namespace gui {
 
@@ -19,17 +18,17 @@ namespace gui {
 		// Create.
 		WindowGraphics();
 
-		// Update the render target.
-		virtual void updateTarget(RenderInfo info);
+		// Called when the associated Surface was resized.
+		virtual void surfaceResized();
 
-		// Called when the target is destroyed.
-		virtual void destroyed();
+		// Called when the associated Surface is about to be destroyed.
+		virtual void surfaceDestroyed();
 
-		// Prepare for rendering.
-		virtual void beforeRender();
+		// Prepare for rendering. Given the BG color of the painter.
+		virtual void beforeRender(Color bgColor);
 
-		// Housekeeping after rendering.
-		virtual void afterRender();
+		// Housekeeping after rendering. Returns "false" if the surface needs to be re-created for some reason.
+		virtual bool afterRender();
 	};
 
 
@@ -38,10 +37,10 @@ namespace gui {
 	// generated on other systems. The Storm preprocessor does not support "ignoring" classes in
 	// certain conditions as it is not aware of all defines etc. so this is the option we have.
 #define DEFINE_WINDOW_GRAPHICS_FNS(CLASS)					\
-	void CLASS::updateTarget(RenderInfo info) {}			\
-	void CLASS::destroyed() {}								\
-	void CLASS::beforeRender() {}							\
-	void CLASS::afterRender() {}							\
+	void CLASS::surfaceResized() {}							\
+	void CLASS::surfaceDestroyed() {}						\
+	void CLASS::beforeRender(Color) {}						\
+	bool CLASS::afterRender() { return true; }				\
 	void CLASS::reset() {}									\
 	void CLASS::push() {}									\
 	void CLASS::push(Float) {}								\

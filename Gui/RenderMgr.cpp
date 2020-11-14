@@ -15,7 +15,7 @@ namespace gui {
 		exitSema = new (this) Sema(0);
 
 		try {
-			device = new Device(engine());
+			device = Device::create(engine());
 		} catch (const storm::Exception *e) {
 			PLN("Error while initializing rendering: " << e);
 			throw;
@@ -44,16 +44,11 @@ namespace gui {
 		resources->put(resource);
 	}
 
-	RenderInfo RenderMgr::attach(Painter *painter, Handle window) {
-		RenderInfo r = device->attach(window);
-		painters->put(painter);
-		return r;
-	}
-
-	void RenderMgr::resize(RenderInfo &info, Size size, Float scale) {
-		if (size != info.size)
-			device->resize(info, size);
-		info.scale = scale;
+	Surface *RenderMgr::attach(Painter *painter, Handle window) {
+		Surface *s = device->createSurface(window);
+		if (s)
+			painters->put(painter);
+		return s;
 	}
 
 	void RenderMgr::detach(Painter *painter) {
@@ -148,16 +143,19 @@ namespace gui {
 	}
 
 	os::Thread spawnRenderThread(Engine &e) {
-		// Ugly hack...
 		struct Wrap {
-			void attach() {
-				Engine &e = (Engine &)*this;
+			Engine &e;
+			Wrap(Engine &e) : e(e) {}
+
+			void run() {
 				RenderMgr *m = gui::renderMgr(e);
 				m->main();
+				delete this;
 			}
 		};
 
-		util::Fn<void, void> fn((Wrap *)&e, &Wrap::attach);
+		Wrap *wrap = new Wrap(e);
+		util::Fn<void, void> fn(wrap, &Wrap::run);
 		return os::Thread::spawn(fn, runtime::threadGroup(e));
 	}
 

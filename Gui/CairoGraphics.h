@@ -3,6 +3,8 @@
 
 namespace gui {
 
+	class CairoSurface;
+
 	/**
 	 * Graphics object used when drawing using Cairo on Linux.
 	 *
@@ -14,22 +16,22 @@ namespace gui {
 		STORM_CLASS;
 	public:
 		// Create.
-		CairoGraphics(RenderInfo info);
+		CairoGraphics(CairoSurface &surface);
 
 		// Destroy.
 		~CairoGraphics();
 
-		// Update the target.
-		void updateTarget(RenderInfo info);
+		// Called when the surface was resized.
+		void surfaceResized();
 
 		// Called when the target is destroyed.
-		void destroyed();
+		void surfaceDestroyed();
 
 		// Prepare the rendering.
-		void beforeRender();
+		void beforeRender(Color bgColor);
 
 		// Do any housekeeping after rendering.
-		void afterRender();
+		bool afterRender();
 
 		/**
 		 * General format. Use push and pop to save/restore the state.
@@ -110,7 +112,7 @@ namespace gui {
 
 	private:
 		// Render target.
-		RenderInfo info;
+		CairoSurface &surface;
 
 		/**
 		 * Layer types in Cairo.

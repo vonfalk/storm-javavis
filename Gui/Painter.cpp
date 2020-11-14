@@ -2,10 +2,11 @@
 #include "Painter.h"
 #include "RenderResource.h"
 #include "App.h"
+#include "Surface.h"
 
 namespace gui {
 
-	Painter::Painter() : continuous(false), repaintCounter(0), currentRepaint(0) {
+	Painter::Painter() : continuous(false), repaintCounter(0), currentRepaint(0), surface(null) {
 		attachedTo = Window::invalid;
 		app = gui::app(engine());
 		bgColor = app->defaultBgColor;
@@ -31,11 +32,12 @@ namespace gui {
 		if (handle != attachedTo) {
 			detach();
 
-			if (windowReady(handle)) {
+			surface = mgr->attach(this, handle);
+			if (surface) {
+				graphics = surface->createGraphics(engine());
 				attachedTo = handle;
-				create();
 			} else {
-				// Will be attached again later. This only happens in Gtk+.
+				// Will be attached again later. This currently only happens in Gtk+.
 				attachedTo = Window::invalid;
 			}
 		}
@@ -49,7 +51,7 @@ namespace gui {
 	}
 
 	void Painter::resize(Size sz, Float scale) {
-		if (target.any()) {
+		if (surface) {
 			// Do not attempt to resize the drawing surface if we're currently drawing to it.
 			Lock::Guard z(lock);
 
@@ -59,15 +61,10 @@ namespace gui {
 
 			// destroyResources();
 
-			mgr->resize(target, sz, scale);
+			surface->resize(sz, scale);
 			if (graphics)
-				graphics->updateTarget(target);
+				graphics->surfaceResized();
 		}
-	}
-
-	void Painter::create() {
-		target = mgr->attach(this, attachedTo);
-		graphics = target.createGraphics(engine());
 	}
 
 	void Painter::destroy() {
@@ -78,9 +75,10 @@ namespace gui {
 		destroyResources();
 
 		if (graphics)
-			graphics->destroyed();
+			graphics->surfaceDestroyed();
 		graphics = null;
-		target.release();
+		delete surface;
+		surface = null;
 
 		mgr->detach(this);
 	}
@@ -100,7 +98,7 @@ namespace gui {
 	}
 
 	void Painter::repaint() {
-		if (!target.any())
+		if (!surface)
 			return;
 
 		if (continuous) {
@@ -113,7 +111,7 @@ namespace gui {
 	}
 
 	void Painter::doRepaint(bool waitForVSync, bool fromDraw) {
-		if (!target.any())
+		if (!surface)
 			return;
 
 		bool more = false;
@@ -218,14 +216,6 @@ namespace gui {
 #endif
 #ifdef GUI_WIN32
 
-#ifdef SINGLE_THREADED_UI
-#error "Single threaded UI is not supported on Win32! Please disable SINGLE_THREADED_UI in stdafx.h."
-#endif
-
-	bool Painter::windowReady(Handle window) {
-		return true;
-	}
-
 	bool Painter::ready() {
 		// Always ready to draw!
 		return true;
@@ -240,41 +230,31 @@ namespace gui {
 	}
 
 	bool Painter::doRepaintI(bool waitForVSync, bool fromDraw) {
-		if (!target.target())
+		if (!surface)
 			return false;
-		if (!target.swapChain())
-			return false;
-
-		target.target()->BeginDraw();
-		target.target()->SetTransform(D2D1::Matrix3x2F::Identity());
-		target.target()->Clear(dx(bgColor));
 
 		bool more = false;
+		bool ok = false;
 
 		try {
-			graphics->beforeRender();
-			more = render(target.size / target.scale, graphics);
-			graphics->afterRender();
+			graphics->beforeRender(bgColor);
+			more = render(surface->size / surface->scale, graphics);
+			ok = graphics->afterRender();
 		} catch (...) {
 			graphics->afterRender();
-			target.target()->EndDraw();
 			throw;
 		}
 
-		HRESULT r = target.target()->EndDraw();
-
-		if (SUCCEEDED(r)) {
-			if (waitForVSync) {
-				r = target.swapChain()->Present(1, 0);
-			} else {
-				r = target.swapChain()->Present(0, 0);
-			}
+		if (ok) {
+			ok = surface->present(waitForVSync);
 		}
 
-		if (r == D2DERR_RECREATE_TARGET || r == DXGI_ERROR_DEVICE_RESET) {
+		if (!ok) {
 			// Re-create our render target.
 			destroy();
-			create();
+
+			surface = mgr->attach(this, attachedTo);
+			graphics = surface->createGraphics(engine());
 			// TODO: We probably want to re-draw ourselves here...
 		}
 
@@ -313,22 +293,11 @@ namespace gui {
 		bool more = false;
 		Lock::Guard z(lock);
 
-		CairoSurface *surface = target.surface();
 		// If it wasn't created by now, something is *really* bad.
 		if (!surface) {
 			WARNING("Surface was not properly created!");
 			return false;
 		}
-		cairo_surface_mark_dirty(surface->surface);
-
-		// Clear the surface with the background color.
-		cairo_set_source_rgba(target.target(), bgColor.r, bgColor.g, bgColor.b, bgColor.a);
-		cairo_set_operator(target.target(), CAIRO_OPERATOR_SOURCE);
-		cairo_paint(target.target());
-
-		// Set the the defaults once again, just in case.
-		cairo_set_operator(target.target(), CAIRO_OPERATOR_OVER);
-		cairo_set_fill_rule(target.target(), CAIRO_FILL_RULE_EVEN_ODD);
 
 		try {
 			graphics->beforeRender();
@@ -338,8 +307,6 @@ namespace gui {
 			graphics->afterRender();
 			throw;
 		}
-
-		cairo_surface_flush(surface->surface);
 
 		// Tell Gtk+ we're ready to draw, unless a call to 'draw' is already queued.
 		if (!fromDraw) {

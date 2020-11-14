@@ -3,6 +3,8 @@
 
 namespace gui {
 
+	class Surface;
+
 	/**
 	 * A generic interface to some rendering device.
 	 *
@@ -17,14 +19,11 @@ namespace gui {
 	 */
 	class Device : NoCopy {
 	public:
+		// Create a suitable device for this system.
+		static Device *create(Engine &e);
+
 		// Create.
-		Device(Size size, Float scale) : size(size), scale(scale) {}
-
-		// Size of the drawing area.
-		Size size;
-
-		// Scale (to respect DPI).
-		Float scale;
+		Device() {}
 
 		// Create a surface to draw on associated with a window.
 		// Might return "null", which means that the window is not yet ready for being rendered to.

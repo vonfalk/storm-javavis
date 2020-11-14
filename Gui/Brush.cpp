@@ -23,7 +23,7 @@ namespace gui {
 #ifdef GUI_WIN32
 
 	void SolidBrush::create(Painter *owner, ID2D1Resource **out) {
-		owner->renderTarget()->CreateSolidColorBrush(dx(col), (ID2D1SolidColorBrush **)out);
+		// owner->renderTarget()->CreateSolidColorBrush(dx(col), (ID2D1SolidColorBrush **)out);
 	}
 
 	void SolidBrush::prepare(ID2D1Brush *b) {
@@ -56,7 +56,7 @@ namespace gui {
 			D2D1_BITMAP_INTERPOLATION_MODE_LINEAR,
 		};
 		ID2D1BitmapBrush *brush = null;
-		owner->renderTarget()->CreateBitmapBrush(myBitmap->bitmap(owner), props, &brush);
+		// owner->renderTarget()->CreateBitmapBrush(myBitmap->bitmap(owner), props, &brush);
 		*out = brush;
 		brush->SetTransform(dx(myTfm));
 	}
@@ -134,7 +134,7 @@ namespace gui {
 				tmp[i].color = dx(myStops->at(i).color);
 			}
 
-			owner->renderTarget()->CreateGradientStopCollection(tmp, myStops->count(), &dxObject);
+			// owner->renderTarget()->CreateGradientStopCollection(tmp, myStops->count(), &dxObject);
 		}
 		return dxObject;
 	}
@@ -182,8 +182,8 @@ namespace gui {
 #ifdef GUI_WIN32
 
 	void LinearGradient::create(Painter *owner, ID2D1Resource **out) {
-		D2D1_LINEAR_GRADIENT_BRUSH_PROPERTIES p = { dx(myStart), dx(myEnd) };
-		owner->renderTarget()->CreateLinearGradientBrush(p, dxStops(owner), (ID2D1LinearGradientBrush**)out);
+		// D2D1_LINEAR_GRADIENT_BRUSH_PROPERTIES p = { dx(myStart), dx(myEnd) };
+		// owner->renderTarget()->CreateLinearGradientBrush(p, dxStops(owner), (ID2D1LinearGradientBrush**)out);
 	}
 
 	void LinearGradient::updatePoints() {
@@ -256,9 +256,9 @@ namespace gui {
 #ifdef GUI_WIN32
 
 	void RadialGradient::create(Painter *owner, ID2D1Resource **out) {
-		D2D1_RADIAL_GRADIENT_BRUSH_PROPERTIES p = { dx(myCenter), { 0.0f, 0.0f }, myRadius, myRadius };
-		D2D1_BRUSH_PROPERTIES b = { 1.0f, dx(myTransform) };
-		owner->renderTarget()->CreateRadialGradientBrush(p, b, dxStops(owner), (ID2D1RadialGradientBrush**)out);
+		// D2D1_RADIAL_GRADIENT_BRUSH_PROPERTIES p = { dx(myCenter), { 0.0f, 0.0f }, myRadius, myRadius };
+		// D2D1_BRUSH_PROPERTIES b = { 1.0f, dx(myTransform) };
+		// owner->renderTarget()->CreateRadialGradientBrush(p, b, dxStops(owner), (ID2D1RadialGradientBrush**)out);
 	}
 
 	void RadialGradient::update() {

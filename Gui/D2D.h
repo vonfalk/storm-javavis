@@ -13,10 +13,10 @@ namespace gui {
 	class D2DDevice : public Device {
 	public:
 		// Create.
-		D2Device(Engine &e);
+		D2DDevice(Engine &e);
 
 		// Create a surface.
-		virtual D2DSurface *createSurface(Handle window);
+		virtual Surface *createSurface(Handle window);
 
 		// Create a render target. Called from D2DSurface.
 		ID2D1RenderTarget *createTarget(IDXGISwapChain *swapChain);
@@ -28,7 +28,7 @@ namespace gui {
 		ComPtr<IDWriteFactory> writeFactory;
 
 		// D3D device and DXGI device.
-		ComPtr<ID2D10Device1> device;
+		ComPtr<ID3D10Device1> device;
 		ComPtr<IDXGIDevice> giDevice;
 	};
 
@@ -41,11 +41,17 @@ namespace gui {
 		// Destroy.
 		~D2DSurface();
 
+		// Create a suitable Graphics object.
+		virtual WindowGraphics *createGraphics(Engine &e);
+
 		// Resize.
-		virtual void resize(Size size);
+		virtual void resize(Size size, Float scale);
 
 		// Present.
-		virtual void present();
+		virtual bool present(bool waitForVSync);
+
+		// Get the render target.
+		ID2D1RenderTarget *target() const { return renderTarget.v; }
 
 	private:
 		// Create.

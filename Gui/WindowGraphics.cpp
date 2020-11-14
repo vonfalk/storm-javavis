@@ -10,12 +10,12 @@ namespace gui {
 
 	WindowGraphics::WindowGraphics() {}
 
-	void WindowGraphics::updateTarget(RenderInfo info) {}
+	void WindowGraphics::surfaceResized() {}
 
-	void WindowGraphics::destroyed() {}
+	void WindowGraphics::surfaceDestroyed() {}
 
-	void WindowGraphics::beforeRender() {}
+	void WindowGraphics::beforeRender(Color) {}
 
-	void WindowGraphics::afterRender() {}
+	bool WindowGraphics::afterRender() { return true; }
 
 }

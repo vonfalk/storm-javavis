@@ -1,5 +1,6 @@
 #include "stdafx.h"
 #include "D2D.h"
+#include "D2DGraphics.h"
 #include "Exception.h"
 #include "Win32Dpi.h"
 
@@ -21,6 +22,13 @@ namespace gui {
 			throw new (e) GuiError(m);
 		}
 	}
+
+#ifdef DEBUG
+	static D2D1_FACTORY_OPTIONS options = { D2D1_DEBUG_LEVEL_INFORMATION };
+#else
+	static D2D1_FACTORY_OPTIONS options = { D2D1_DEBUG_LEVEL_NONE };
+#endif
+	static UINT deviceFlags = D3D10_CREATE_DEVICE_BGRA_SUPPORT;
 
 	static HRESULT createDevice(ID3D10Device1 **device) {
 		HRESULT r;
@@ -79,8 +87,6 @@ namespace gui {
 		check(e, r, S("Failed to initialize Direct Write: "));
 	}
 
-	D2DDevice::~D2DDevice() {}
-
 	static void create(DXGI_SWAP_CHAIN_DESC &desc, HWND window) {
 		RECT c;
 		GetClientRect(window, &c);
@@ -97,10 +103,14 @@ namespace gui {
 		desc.SampleDesc.Count = 1;
 		desc.SampleDesc.Quality = 0;
 		desc.Windowed = TRUE;
-		desc.SwapEffect = DXGI_SWAP_EFFECT_FLIP_DISCARD; // Should improve performance.
+
+		// If supported, this improves performance:
+		// TODO: Check if compatible with DX10. We might need BufferCount=2.
+		DXGI_SWAP_EFFECT DXGI_SWAP_EFFECT_FLIP_DISCARD = DXGI_SWAP_EFFECT(3);
+		desc.SwapEffect = DXGI_SWAP_EFFECT_FLIP_DISCARD;
 	}
 
-	ID2D1RenderTarget *Device::createTarget(IDXGISwapChain *swapChain) {
+	ID2D1RenderTarget *D2DDevice::createTarget(IDXGISwapChain *swapChain) {
 		ID2D1RenderTarget *target;
 		ComPtr<IDXGISurface> surface;
 
@@ -120,41 +130,48 @@ namespace gui {
 		return target;
 	}
 
-	D2DSurface *D2DDevice::createSurface(Handle window) {
+	Surface *D2DDevice::createSurface(Handle window) {
 		DXGI_SWAP_CHAIN_DESC desc;
-		create(desc, window.hwnd());
+		gui::create(desc, window.hwnd());
 
 		// TODO: Maybe use CreateSwapChainForHwnd?
 		ComPtr<IDXGISwapChain> swapChain;
-		HRESULT r = giFactory->CreateSwapChain(device, &desc, &swapChain.v);
+		HRESULT r = giFactory->CreateSwapChain(device.v, &desc, &swapChain.v);
 		check(r, S("Failed to create a swap chain for a window: "));
 
 		ComPtr<ID2D1RenderTarget> target = createTarget(swapChain.v);
 
-		return new D2DSurface(sz, dpiScale(windowDpi(window.hwnd())), target, swapChain);
+		Size size(Float(desc.BufferDesc.Width), Float(desc.BufferDesc.Height));
+		return new D2DSurface(size, dpiScale(windowDpi(window.hwnd())), this, target, swapChain);
 	}
 
 
 	D2DSurface::D2DSurface(Size size, Float scale, D2DDevice *device,
 						const ComPtr<ID2D1RenderTarget> &target,
 						const ComPtr<IDXGISwapChain> &swap)
-		: Surface(size, scale), device(device), target(target), swapChain(swap) {}
+		: Surface(size, scale), device(device), renderTarget(target), swapChain(swap) {}
 
-	void D2DSurface::resize(Size size) {
-		target.clear();
+	D2DSurface::~D2DSurface() {}
+
+	WindowGraphics *D2DSurface::createGraphics(Engine &e) {
+		return new (e) D2DGraphics(*this);
+	}
+
+	void D2DSurface::resize(Size size, Float scale) {
+		renderTarget.clear();
 
 		HRESULT r = swapChain->ResizeBuffers(1, (UINT)size.w, (UINT)size.h, DXGI_FORMAT_UNKNOWN, 0);
 		check(r, S("Failed to resize buffer: "));
 
-		target = device->createTarget(swapChain.v);
+		renderTarget = device->createTarget(swapChain.v);
 
 		this->size = size;
+		this->scale = scale;
 	}
 
-	void D2DSurface::present(bool waitForVSync) {
-		HRESULT r = swapChain.Present(waitForVSync ? 1 : 0, 0);
-		// TODO: Check for D2DERR_RECREATE_TARGET or DXGI_ERROR_DEVICE_RESET in particular.
-		return SUCCEEDED(r);
+	bool D2DSurface::present(bool waitForVSync) {
+		HRESULT r = swapChain->Present(waitForVSync ? 1 : 0, 0);
+		return !(r == D2DERR_RECREATE_TARGET || r == DXGI_ERROR_DEVICE_RESET);
 	}
 
 }

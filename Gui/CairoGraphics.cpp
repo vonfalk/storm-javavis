@@ -8,7 +8,7 @@
 
 namespace gui {
 
-	CairoGraphics::CairoGraphics(RenderInfo info) : info(info) {
+	CairoGraphics::CairoGraphics(CairoSurface &surface) : surface(surface) {
 		oldStates = new (this) Array<State>();
 
 		state = State();
@@ -39,7 +39,19 @@ namespace gui {
 	 * State management.
 	 */
 
-	void CairoGraphics::beforeRender() {
+	void CairoGraphics::beforeRender(Color bgColor) {
+		// Make sure the cairo context is in a reasonable state.
+		cairo_surface_mark_dirty(surface->surface);
+
+		// Clear with the BG color.
+		cairo_set_source_rgba(surface->cairo, bgColor.r, bgColor.g, bgColor.b, bgColor.a);
+		cairo_set_operator(surface->cairo, CAIRO_OPERATOR_SOURCE);
+		cairo_paint(surface->cairo);
+
+		// Set defaults, just in case.
+		cairo_set_operator(surface->cairo, CAIRO_OPERATOR_OVER);
+		cairo_set_fill_rule(surface->cairo, CAIRO_FILL_RULE_EVEN_ODD);
+
 		// Update the clip region and scale of the root state.
 		state = State();
 		state.scale(info.scale);
@@ -50,9 +62,13 @@ namespace gui {
 		prepare();
 	}
 
-	void CairoGraphics::afterRender() {
+	bool CairoGraphics::afterRender() {
 		// Make sure all layers are returned to the stack.
 		reset();
+
+		cairo_surface_flush(surface->surface);
+
+		return true;
 	}
 
 

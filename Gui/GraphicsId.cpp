@@ -12,7 +12,7 @@ namespace gui {
 		delete []data;
 	}
 
-	Nat IdMgr::allocate() {
+	Nat IdMgr::alloc() {
 		if (!data) {
 			// Initial allocation.
 			count = 4;
@@ -40,7 +40,7 @@ namespace gui {
 		data[id / natBits] &= ~mask;
 	}
 
-	void IdMgr::alloc(Nat &in) {
+	Nat IdMgr::allocate(Nat &in) {
 		// Note: This could probably be made more efficient, but it is not really worth it. This is not hot code.
 		for (Nat i = 0; i < natBits; i++) {
 			Nat mask = Nat(1) << i;

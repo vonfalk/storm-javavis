@@ -3,6 +3,8 @@
 
 namespace gui {
 
+	class D2DSurface;
+
 	/**
 	 * Graphics object used when drawing using Direct2D on Windows.
 	 *
@@ -12,22 +14,22 @@ namespace gui {
 		STORM_CLASS;
 	public:
 		// Create.
-		D2DGraphics(RenderInfo info);
+		D2DGraphics(D2DSurface &surface);
 
 		// Destroy.
 		~D2DGraphics();
 
-		// Update the target.
-		virtual void updateTarget(RenderInfo info);
+		// Called when the surface was resized.
+		void surfaceResized();
 
 		// Called when the target is destroyed.
-		virtual void destroyed();
+		void surfaceDestroyed();
 
 		// Prepare the rendering.
-		virtual void beforeRender();
+		void beforeRender(Color bgColor);
 
 		// Do any housekeeping after rendering.
-		virtual void afterRender();
+		bool afterRender();
 
 		/**
 		 * General format. Use push and pop to save/restore the state.
@@ -107,8 +109,8 @@ namespace gui {
 		void STORM_FN draw(Text *text, Brush *brush, Point origin);
 
 	private:
-		// Render target.
-		RenderInfo info;
+		// Target surface.
+		D2DSurface &surface;
 
 		// A layer in D2D.
 		class Layer {
