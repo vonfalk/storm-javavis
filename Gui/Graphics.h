@@ -31,6 +31,9 @@ namespace gui {
 		// Create.
 		STORM_CTOR Graphics();
 
+		// Get the identifier for this Graphics object.
+		Nat STORM_FN id() const { return identifier; }
+
 		/**
 		 * General format. Use push and pop to save/restore the state.
 		 */
@@ -114,6 +117,11 @@ namespace gui {
 
 		// Draw pre-formatted text.
 		virtual void STORM_FN draw(Text *text, Brush *brush, Point origin) ABSTRACT;
+
+	protected:
+		// Our identifier. Initialized to 0 (meaning, we don't need resources), but set by some
+		// subclasses during creation.
+		Nat identifier;
 	};
 
 

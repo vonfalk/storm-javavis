@@ -14,7 +14,7 @@ namespace gui {
 		STORM_CLASS;
 	public:
 		// Create.
-		D2DGraphics(D2DSurface &surface);
+		D2DGraphics(D2DSurface &surface, Nat id);
 
 		// Destroy.
 		~D2DGraphics();

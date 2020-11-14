@@ -9,7 +9,8 @@
 
 namespace gui {
 
-	D2DGraphics::D2DGraphics(D2DSurface &surface) : surface(surface) {
+	D2DGraphics::D2DGraphics(D2DSurface &surface, Nat id) : surface(surface) {
+		identifier = id;
 		oldStates = new (this) Array<State>();
 		layers = new (this) Array<Layer>();
 

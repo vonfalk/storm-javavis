@@ -3,6 +3,7 @@
 #include "D2DGraphics.h"
 #include "Exception.h"
 #include "Win32Dpi.h"
+#include "RenderMgr.h"
 
 #ifdef GUI_WIN32
 
@@ -154,7 +155,12 @@ namespace gui {
 	D2DSurface::~D2DSurface() {}
 
 	WindowGraphics *D2DSurface::createGraphics(Engine &e) {
-		return new (e) D2DGraphics(*this);
+		if (device->id == 0) {
+			// Need an ID!
+			device->id = renderMgr(e)->allocId();
+		}
+
+		return new (e) D2DGraphics(*this, device->id);
 	}
 
 	void D2DSurface::resize(Size size, Float scale) {

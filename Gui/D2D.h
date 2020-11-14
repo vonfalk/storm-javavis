@@ -11,15 +11,13 @@ namespace gui {
 	 * Direct 2D device.
 	 */
 	class D2DDevice : public Device {
+		friend class D2DSurface;
 	public:
 		// Create.
 		D2DDevice(Engine &e);
 
 		// Create a surface.
 		virtual Surface *createSurface(Handle window);
-
-		// Create a render target. Called from D2DSurface.
-		ID2D1RenderTarget *createTarget(IDXGISwapChain *swapChain);
 
 	private:
 		// Factories.
@@ -30,6 +28,12 @@ namespace gui {
 		// D3D device and DXGI device.
 		ComPtr<ID3D10Device1> device;
 		ComPtr<IDXGIDevice> giDevice;
+
+		// Create a render target. Called from D2DSurface.
+		ID2D1RenderTarget *createTarget(IDXGISwapChain *swapChain);
+
+		// The ID allocated for the device.
+		Nat id;
 	};
 
 	/**
