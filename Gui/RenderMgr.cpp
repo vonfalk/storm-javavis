@@ -10,7 +10,6 @@ namespace gui {
 
 	RenderMgr::RenderMgr() : exiting(false) {
 		painters = new (this) Set<Painter *>();
-		resources = new (this) WeakSet<Resource>();
 		waitEvent = new (this) Event();
 		exitSema = new (this) Sema(0);
 
@@ -40,10 +39,6 @@ namespace gui {
 			idMgr->free(id);
 	}
 
-	void RenderMgr::attach(Resource *resource) {
-		resources->put(resource);
-	}
-
 	Surface *RenderMgr::attach(Painter *painter, Handle window) {
 		Surface *s = device->createSurface(window);
 		if (s)
@@ -66,12 +61,7 @@ namespace gui {
 		// Destroy all resources in all painters.
 		for (Set<Painter *>::Iter i = painters->begin(), e = painters->end(); i != e; ++i) {
 			i.v()->destroy();
-			i.v()->destroyResources();
 		}
-
-		WeakSet<Resource>::Iter r = resources->iter();
-		while (Resource *n = r.next())
-			n->destroy();
 
 		delete device;
 		device = null;

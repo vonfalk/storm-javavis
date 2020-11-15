@@ -2,40 +2,23 @@
 #include "Brush.h"
 #include "Painter.h"
 #include "Bitmap.h"
+#include "GraphicsMgr.h"
 
 namespace gui {
 
 	Brush::Brush() {}
 
-#ifdef GUI_WIN32
+	SolidBrush::SolidBrush(Color c) : myOpacity(1.0f), myColor(c) {}
 
-	void Brush::prepare(ID2D1Brush *b) {}
+	void SolidBrush::create(GraphicsMgrRaw *g, void *&result, Cleanup &update) {
+		g->create(this, result, update);
+	}
+	void SolidBrush::update(GraphicsMgrRaw *g, void *resource) {
+		g->update(this, resource);
+	}
 
-#endif
+
 #ifdef GUI_GTK
-
-	void Brush::prepare(cairo_t *c) {}
-
-#endif
-
-	SolidBrush::SolidBrush(Color c) : opacity(1.0f), col(c) {}
-
-#ifdef GUI_WIN32
-
-	void SolidBrush::create(Painter *owner, ID2D1Resource **out) {
-		// owner->renderTarget()->CreateSolidColorBrush(dx(col), (ID2D1SolidColorBrush **)out);
-	}
-
-	void SolidBrush::prepare(ID2D1Brush *b) {
-		b->SetOpacity(opacity);
-	}
-
-#endif
-#ifdef GUI_GTK
-
-	OsResource *SolidBrush::create(Painter *owner) {
-		return 0;
-	}
 
 	void SolidBrush::prepare(cairo_t *cairo) {
 		cairo_set_source_rgba(cairo, col.r, col.g, col.b, col.a * opacity);
@@ -43,11 +26,23 @@ namespace gui {
 
 #endif
 
-	BitmapBrush::BitmapBrush(Bitmap *bitmap) : myBitmap(bitmap), myTfm(new (engine()) Transform()) {}
+	BitmapBrush::BitmapBrush(Bitmap *bitmap) : myBitmap(bitmap), myTfm(new (engine()) Transform()), myOpacity(1.0f) {}
 
-	BitmapBrush::BitmapBrush(Bitmap *bitmap, Transform *tfm) : myBitmap(bitmap), myTfm(tfm) {}
+	BitmapBrush::BitmapBrush(Bitmap *bitmap, Transform *tfm) : myBitmap(bitmap), myTfm(tfm), myOpacity(1.0f) {}
 
-#ifdef GUI_WIN32
+	void BitmapBrush::transform(Transform *tfm) {
+		myTfm = tfm;
+		needUpdate();
+	}
+
+	void BitmapBrush::create(GraphicsMgrRaw *g, void *&result, Cleanup &update) {
+		g->create(this, result, update);
+	}
+	void BitmapBrush::update(GraphicsMgrRaw *g, void *resource) {
+		g->update(this, resource);
+	}
+
+#ifdef GUI__WIN32
 
 	void BitmapBrush::create(Painter *owner, ID2D1Resource **out) {
 		D2D1_BITMAP_BRUSH_PROPERTIES props = {
@@ -102,18 +97,9 @@ namespace gui {
 	}
 
 
-	Gradient::Gradient() : dxObject(null), myStops(null) {}
+	Gradient::Gradient() : myStops(null) {}
 
-	Gradient::Gradient(Array<GradientStop> *stops) : dxObject(null), myStops(stops) {}
-
-	Gradient::~Gradient() {
-		destroy();
-	}
-
-	void Gradient::destroy() {
-		Brush::destroy();
-		::release(dxObject);
-	}
+	Gradient::Gradient(Array<GradientStop> *stops) : myStops(stops) {}
 
 	Array<GradientStop> *Gradient::stops() const {
 		return new (this) Array<GradientStop>(*myStops);
@@ -121,25 +107,14 @@ namespace gui {
 
 	void Gradient::stops(Array<GradientStop> *stops) {
 		myStops = new (this) Array<GradientStop>(*stops);
-		destroy();
+
+		// We need to re-create the backend-specific things.
+		// Note: There is no destroy(), and if we had one, it would not work
+		// since the refcount for shared items would break.
+		// destroy();
+		TODO(L"FIXME");
 	}
 
-#ifdef GUI_WIN32
-
-	ID2D1GradientStopCollection *Gradient::dxStops(Painter *owner) {
-		if (!dxObject) {
-			D2D1_GRADIENT_STOP *tmp = (D2D1_GRADIENT_STOP *)alloca(sizeof(D2D1_GRADIENT_STOP) * myStops->count());
-			for (Nat i = 0; i < myStops->count(); i++) {
-				tmp[i].position = myStops->at(i).pos;
-				tmp[i].color = dx(myStops->at(i).color);
-			}
-
-			// owner->renderTarget()->CreateGradientStopCollection(tmp, myStops->count(), &dxObject);
-		}
-		return dxObject;
-	}
-
-#endif
 #ifdef GUI_GTK
 
 	void Gradient::applyStops(cairo_pattern_t *to) {
@@ -165,35 +140,27 @@ namespace gui {
 
 	void LinearGradient::start(Point p) {
 		myStart = p;
-		updatePoints();
+		needUpdate();
 	}
 
 	void LinearGradient::end(Point p) {
 		myEnd = p;
-		updatePoints();
+		needUpdate();
 	}
 
 	void LinearGradient::points(Point start, Point end) {
 		myStart = start;
 		myEnd = end;
-		updatePoints();
+		needUpdate();
 	}
 
-#ifdef GUI_WIN32
-
-	void LinearGradient::create(Painter *owner, ID2D1Resource **out) {
-		// D2D1_LINEAR_GRADIENT_BRUSH_PROPERTIES p = { dx(myStart), dx(myEnd) };
-		// owner->renderTarget()->CreateLinearGradientBrush(p, dxStops(owner), (ID2D1LinearGradientBrush**)out);
+	void LinearGradient::create(GraphicsMgrRaw *g, void *&result, Cleanup &update) {
+		g->create(this, result, update);
+	}
+	void LinearGradient::update(GraphicsMgrRaw *g, void *resource) {
+		g->update(this, resource);
 	}
 
-	void LinearGradient::updatePoints() {
-		if (ID2D1LinearGradientBrush *o = peek<ID2D1LinearGradientBrush>()) {
-			o->SetStartPoint(dx(myStart));
-			o->SetEndPoint(dx(myEnd));
-		}
-	}
-
-#endif
 #ifdef GUI_GTK
 
 	OsResource *LinearGradient::create(Painter *owner) {
@@ -240,37 +207,26 @@ namespace gui {
 
 	void RadialGradient::center(Point p) {
 		myCenter = p;
-		update();
+		needUpdate();
 	}
 
 	void RadialGradient::radius(Float v) {
 		myRadius = v;
-		update();
+		needUpdate();
 	}
 
 	void RadialGradient::transform(Transform *tfm) {
 		myTransform = tfm;
-		update();
+		needUpdate();
 	}
 
-#ifdef GUI_WIN32
-
-	void RadialGradient::create(Painter *owner, ID2D1Resource **out) {
-		// D2D1_RADIAL_GRADIENT_BRUSH_PROPERTIES p = { dx(myCenter), { 0.0f, 0.0f }, myRadius, myRadius };
-		// D2D1_BRUSH_PROPERTIES b = { 1.0f, dx(myTransform) };
-		// owner->renderTarget()->CreateRadialGradientBrush(p, b, dxStops(owner), (ID2D1RadialGradientBrush**)out);
+	void RadialGradient::create(GraphicsMgrRaw *g, void *&result, Cleanup &update) {
+		g->create(this, result, update);
+	}
+	void RadialGradient::update(GraphicsMgrRaw *g, void *resource) {
+		g->update(this, resource);
 	}
 
-	void RadialGradient::update() {
-		if (ID2D1RadialGradientBrush *o = peek<ID2D1RadialGradientBrush>()) {
-			o->SetCenter(dx(myCenter));
-			o->SetRadiusX(myRadius);
-			o->SetRadiusY(myRadius);
-			o->SetTransform(dx(myTransform));
-		}
-	}
-
-#endif
 #ifdef GUI_GTK
 
 	OsResource *RadialGradient::create(Painter *owner) {

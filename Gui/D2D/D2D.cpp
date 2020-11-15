@@ -1,6 +1,6 @@
 #include "stdafx.h"
 #include "D2D.h"
-#include "D2DGraphics.h"
+#include "D2D/Graphics.h"
 #include "Exception.h"
 #include "Win32Dpi.h"
 #include "RenderMgr.h"
@@ -107,8 +107,9 @@ namespace gui {
 
 		// If supported, this improves performance:
 		// TODO: Check if compatible with DX10. We might need BufferCount=2.
-		DXGI_SWAP_EFFECT DXGI_SWAP_EFFECT_FLIP_DISCARD = DXGI_SWAP_EFFECT(3);
-		desc.SwapEffect = DXGI_SWAP_EFFECT_FLIP_DISCARD;
+		TODO(L"Exaimine using 'FLIP'");
+		// DXGI_SWAP_EFFECT DXGI_SWAP_EFFECT_FLIP_DISCARD = DXGI_SWAP_EFFECT(3);
+		// desc.SwapEffect = DXGI_SWAP_EFFECT_FLIP_DISCARD;
 	}
 
 	ID2D1RenderTarget *D2DDevice::createTarget(IDXGISwapChain *swapChain) {

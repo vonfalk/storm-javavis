@@ -1,6 +1,7 @@
 #pragma once
 #include "Core/TObject.h"
 #include "Core/Array.h"
+#include "Core/WeakSet.h"
 #include "Font.h"
 
 namespace gui {
@@ -9,6 +10,11 @@ namespace gui {
 	class Text;
 	class Path;
 	class Bitmap;
+	class Resource;
+	class GraphicsMgrRaw;
+	class SolidBrush;
+	class LinearGradient;
+	class RadialGradient;
 
 	/**
 	 * Generic interface for drawing somewhere.
@@ -31,8 +37,23 @@ namespace gui {
 		// Create.
 		STORM_CTOR Graphics();
 
+		// Make sure we destroy our resources.
+		~Graphics();
+
 		// Get the identifier for this Graphics object.
 		Nat STORM_FN id() const { return identifier; }
+
+		// Get the graphics manager associated with this object. It is used to determine how
+		// resources are created. Graphics objects that do not create backend-specific resources
+		// will return a dummy implementation that asserts.
+		GraphicsMgrRaw *manager() const { return mgr; }
+
+		// Called when a resource tied to this graphics object is created. Returns 'true' if the
+		// resource was newly added here, and false otherwise.
+		Bool STORM_FN attach(Resource *resource);
+
+		// Destroy all resources associated to this object.
+		virtual void STORM_FN destroy();
 
 		/**
 		 * General format. Use push and pop to save/restore the state.
@@ -122,6 +143,18 @@ namespace gui {
 		// Our identifier. Initialized to 0 (meaning, we don't need resources), but set by some
 		// subclasses during creation.
 		Nat identifier;
+
+		// Replace the graphics manager.
+		void STORM_ASSIGN manager(GraphicsMgrRaw *m) { mgr = m; }
+
+	private:
+		// Resources associated with this graphics object. I.e. instances that have created
+		// something that is tied to this Graphics instance.
+		WeakSet<Resource> *resources;
+
+		// Graphics manager. Created during construction.
+		GraphicsMgrRaw *mgr;
+
 	};
 
 

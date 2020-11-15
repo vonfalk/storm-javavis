@@ -1,6 +1,6 @@
 #include "stdafx.h"
 #include "Device.h"
-#include "D2D.h"
+#include "D2D/D2D.h"
 
 namespace gui {
 

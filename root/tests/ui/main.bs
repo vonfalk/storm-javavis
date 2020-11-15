@@ -20,7 +20,7 @@ class MainPainter extends Painter {
 	LinearGradient brush3;
 	Moment started;
 	Bitmap bitmap;
-	Text text;
+	// Text text;
 	Path star;
 
 	init() {
@@ -36,7 +36,7 @@ class MainPainter extends Painter {
 			brush3([GradientStop(0, red), GradientStop(1, green)], Point(0, 0), Point(100, 100));
 			yellow(yellow);
 			bitmap(img);
-			text("Hello World!", font);
+			// text("Hello World!", font);
 		}
 
 		Int edges = 5;
@@ -82,10 +82,10 @@ class MainPainter extends Painter {
 		g.draw(bitmap);
 		g.pop();
 
-		g.push();
-		g.transform(skewX(10 deg));
-		g.draw(text, brush2, from);
-		g.pop();
+		// g.push();
+		// g.transform(skewX(10 deg));
+		// g.draw(text, brush2, from);
+		// g.pop();
 
 		g.pop();
 		g.pop();

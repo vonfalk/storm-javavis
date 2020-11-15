@@ -11,15 +11,10 @@ namespace gui {
 		app = gui::app(engine());
 		bgColor = app->defaultBgColor;
 		mgr = gui::renderMgr(engine());
-		resources = new (this) WeakSet<RenderResource>();
 		lock = new (this) Lock();
 	}
 
 	Painter::~Painter() {
-		WeakSet<RenderResource>::Iter i = resources->iter();
-		while (RenderResource *r = i.next())
-			r->forgetOwner();
-
 		detach();
 	}
 
@@ -71,30 +66,15 @@ namespace gui {
 		// Wait until we're not rendering anymore.
 		Lock::Guard z(lock);
 
-		// Go ahead and destroy all resources associated with this painter.
-		destroyResources();
-
-		if (graphics)
+		if (graphics) {
 			graphics->surfaceDestroyed();
+			graphics->destroy();
+		}
 		graphics = null;
 		delete surface;
 		surface = null;
 
 		mgr->detach(this);
-	}
-
-	void Painter::destroyResources() {
-		WeakSet<RenderResource>::Iter i = resources->iter();
-		while (RenderResource *r = i.next())
-			r->destroy();
-	}
-
-	void Painter::addResource(RenderResource *r) {
-		resources->put(r);
-	}
-
-	void Painter::removeResource(RenderResource *r) {
-		resources->remove(r);
 	}
 
 	void Painter::repaint() {

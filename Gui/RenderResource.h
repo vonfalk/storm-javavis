@@ -5,6 +5,13 @@ namespace gui {
 	class Painter;
 
 	/**
+	 * TODO:
+	 *
+	 * This file should be removed.
+	 */
+
+
+	/**
 	 * Resource used in DX somewhere, associated with a specific painter.
 	 */
 	class RenderResource : public Resource {

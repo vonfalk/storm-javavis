@@ -1,140 +1,262 @@
 #include "stdafx.h"
 #include "Resource.h"
 #include "Graphics.h"
+#include "Core/Exception.h"
 
 namespace gui {
 
-	Resource::Resource() : data(null), info(0) {}
+	static const Nat needUpdateFlag = 0x80000000;
+	static const Nat mask = ~needUpdateFlag;
+
+	Resource::Resource() : firstData(null), firstRefs(0), more(null) {}
 
 	void Resource::destroy(Graphics *g) {
-		GraphicsResource *r = get(g->id());
-		if (r) {
-			r->destroy();
-			clear(g->id());
-		}
+		// TODO: This should probably be a bit careful, as it is called inside a destructor.
+		clear(g->id());
 	}
 
 	GraphicsResource *Resource::forGraphics(Graphics *g) {
-		GraphicsResource *r = get(g->id());
-		if (!r) {
-			r = create(g);
-			set(g->id(), r);
-		}
-		return r;
+		return (GraphicsResource *)forGraphicsRaw(g);
 	}
 
-	GraphicsResource *Resource::get(Nat id) {
-		Nat offset = info >> 1;
-		if (info & 0x1) {
-			Arr *array = (Arr *)data;
-			if (id >= offset && id < array->count + offset)
-				return array->v[id - offset];
-			return null;
-		} else {
-			if (id == offset) {
-				return (GraphicsResource *)data;
-			} else {
-				return null;
+	void *Resource::forGraphicsRaw(Graphics *g) {
+		Bool addRef = g->attach(this);
+
+		GraphicsMgrRaw *mgr = g->manager();
+
+		void *ptr;
+		Nat count = get(g->id(), ptr, addRef);
+		if (count == 0 || ptr == null) {
+			Cleanup clean;
+			create(mgr, ptr, clean);
+			set(g->id(), ptr, clean, addRef);
+		}
+
+		if (count & needUpdateFlag) {
+			update(mgr, ptr);
+		}
+
+		return ptr;
+	}
+
+	void Resource::create(GraphicsMgrRaw *g, void *&data, Cleanup &cleanup) {
+		throw new (this) NotSupported(S("Can not create this resource type."));
+	}
+
+	void Resource::update(GraphicsMgrRaw *g, void *data) {
+		throw new (this) NotSupported(S("Can not update this resource type."));
+	}
+
+	void Resource::needUpdate() {
+		if (firstRefs > 0)
+			firstRefs |= needUpdateFlag;
+
+		if (more) {
+			for (Nat i = 0; i < more->count; i++) {
+				if (more->v[i].refs)
+					more->v[i].refs |= needUpdateFlag;
 			}
 		}
 	}
 
-	void Resource::set(Nat id, GraphicsResource *r) {
-		Nat offset = info >> 1;
-		if (info == 0) {
+	void Resource::recreate() {
+		if (firstRefs > 0) {
+			if (firstClean)
+				(*firstClean)(firstData);
+			firstData = null;
+		}
+
+		if (more) {
+			for (Nat i = 0; i < more->count; i++) {
+				Element &e = more->v[i];
+				if (e.refs > 0) {
+					if (e.clean)
+						(*e.clean)(e.data);
+					e.data = null;
+				}
+			}
+		}
+	}
+
+	Nat Resource::get(Nat id, void *&result, Bool addRef) {
+		if (id < offset)
+			return 0;
+
+		if (id == offset) {
+			if (firstRefs > 0) {
+				result = firstData;
+				firstRefs = (firstRefs & mask) + Nat(addRef);
+			}
+			return firstRefs;
+		}
+
+		if (more && id <= offset + more->count) {
+			Element &e = more->v[id - offset - 1];
+			if (e.refs > 0) {
+				result = e.data;
+				e.refs = (e.refs & mask) + Nat(addRef);
+			}
+			return e.refs;
+		}
+
+		return 0;
+	}
+
+	const GcType Resource::elemType = {
+		GcType::tArray,
+		null,
+		null,
+		sizeof(Resource::Element),
+		1,
+		{ OFFSET_OF(Resource::Element, data) }
+	};
+
+	void Resource::resize(Nat rangeMin, Nat rangeMax) {
+		Nat currMin = offset;
+		Nat currMax = offset;
+		if (more)
+			currMax = more->count + 1;
+		else if (firstRefs)
+			currMax = offset + 1;
+
+		// Nothing to do?
+		if (currMin == rangeMin && currMax == rangeMax)
+			return;
+
+		// Only zero or one element?
+		if (rangeMin == rangeMax) {
+			firstRefs = 0;
+			offset = 0;
+			more = null;
+			return;
+		} else if (rangeMin + 1 == rangeMax) {
+			firstRefs = get(rangeMin, firstData, false);
+			offset = rangeMin;
+			more = null;
+			return;
+		}
+
+		GcArray<Element> *newMore = runtime::allocArray<Element>(engine(), &elemType, currMax - currMin - 1);
+		if (currMin == rangeMin) {
+			// Same first element. Then we only need to copy the remaining elements.
+			for (Nat i = currMin + 1; i < min(currMax, rangeMax); i++) {
+				newMore->v[i - offset - 1] = more->v[i - offset - 1];
+			}
+		} else if (currMin < rangeMin) {
+			// The current first element will be removed. Just copy it from the array.
+			firstData = more->v[rangeMin - offset].data;
+			firstRefs = more->v[rangeMin - offset].refs;
+
+			for (Nat i = rangeMin + 1; i < min(currMax, rangeMax); i++) {
+				newMore->v[i - rangeMin - 1] = more->v[i - offset - 1];
+			}
+		} else {
+			// We need to put the new element in the new array somewhere. It will be blank for now.
+			newMore->v[currMin - rangeMin - 1].data = firstData;
+			newMore->v[currMin - rangeMin - 1].refs = firstRefs;
+
+			for (Nat i = currMin + 1; i < min(currMax, rangeMax); i++) {
+				newMore->v[i - rangeMin - 1] = more->v[i - offset - 1];
+			}
+
+			firstData = null;
+			firstRefs = 0;
+		}
+
+		more = newMore;
+		offset = rangeMin;
+	}
+
+	Nat Resource::set(Nat id, void *data, Cleanup clean, Bool addRef) {
+		// Empty?
+		if (firstRefs == 0) {
+			firstRefs = Nat(addRef);
+			firstData = data;
+			firstClean = clean;
+			offset = id;
+			return firstRefs;
+		}
+
+		// Make sure we have space.
+		Nat rangeMin = min(offset, id);
+		Nat rangeMax = max(offset, id) + 1;
+		if (more)
+			rangeMax = max(rangeMax, more->count + 1);
+
+		resize(rangeMin, rangeMax);
+
+		if (offset == id) {
 			// First element.
-			data = r;
-			info = id << 1;
-		} else if ((info & 0x1) == 0x0) {
-			// There is a single element there.
-			if (id == offset) {
-				// Simply replace the one already there.
-				data = r;
-			} else {
-				// We need to create an array.
-				Nat nOffset = min(offset, id);
-				Nat count = max(offset, id) - nOffset + 1;
-				Arr *array = runtime::allocArray<GraphicsResource *>(engine(), &pointerArrayType, count);
-				array->v[offset - nOffset] = (GraphicsResource *)data;
-				array->v[id - nOffset] = r;
-				data = array;
-				info = nOffset << 1 | 0x1;
-			}
+			firstData = data;
+			firstClean = clean;
+			firstRefs += Nat(addRef);
+			return firstRefs;
 		} else {
-			// We already have an array, but do we need to resize it?
-			Arr *array = (Arr *)data;
-			if (id >= offset && id < array->count + offset) {
-				// No, we can reuse it!
-				array->v[id - offset] = r;
-			} else {
-				// Need to resize it.
-				Nat nOffset = min(offset, id);
-				Nat count = max(array->count + offset, id + 1) - nOffset;
-				Arr *nArray = runtime::allocArray<GraphicsResource *>(engine(), &pointerArrayType, count);
-				for (Nat i = 0; i < array->count; i++)
-					nArray->v[i + offset - nOffset] = array->v[i];
+			PVAR(rangeMin);
+			PVAR(rangeMax);
 
-				nArray->v[id - nOffset] = r;
-				array = nArray;
-				info = nOffset << 1 | 0x1;
+			// Must be one of the remaining ones.
+			Element &e = more->v[id - offset - 1];
+			e.data = data;
+			e.clean = clean;
+			e.refs += Nat(addRef);
+			return e.refs;
+		}
+	}
+
+	void Resource::shrink() {
+		Bool found = false;
+		Nat low = 0;
+		Nat high = 0;
+
+		if (firstRefs > 0) {
+			found = true;
+			low = offset;
+			high = offset + 1;
+		}
+
+		if (more) {
+			for (Nat i = 0; i < more->count; i++) {
+				if (more->v[i].refs > 0) {
+					if (!found)
+						low = i + offset;
+					found = true;
+					high = i + offset + 1;
+				}
 			}
 		}
+
+		resize(low, high);
 	}
 
 	void Resource::clear(Nat id) {
-		Nat offset = info >> 1;
-		if ((info & 0x1) == 0) {
-			// Single element.
-			if (id == offset) {
-				data = null;
-				info = 0;
-			}
-		} else {
-			// Array.
-			Arr *array = (Arr *)data;
-			if (id < offset || id >= array->count + offset) {
-				// Outside the range, nothing to do.
-			} else if (id > offset && id < array->count + offset - 1) {
-				// Not one of the edge element, no need to resize.
-				array->v[id - offset] = null;
-			} else {
-				// One of the edge elements, we need to resize.
-				array->v[id - offset] = null;
+		if (id < offset)
+			return;
 
-				Nat low = array->count + offset;
-				Nat high = 0;
-				for (Nat i = 0; i < array->count; i++) {
-					if (array->v[i]) {
-						low = min(low, i + offset);
-						high = max(high, i + offset);
-					}
-				}
+		if (id == offset) {
+			if (firstRefs == 0)
+				return;
+			if (((--firstRefs) & mask) > 0)
+				return;
 
-				if (low == high) {
-					info = offset << 1;
-					data = array->v[low - offset];
-					return;
-				}
+			firstRefs = 0;
+			if (firstClean)
+				(*firstClean)(firstData);
+			firstData = null;
+			shrink();
+		} else if (more && id <= offset + more->count) {
+			Element &e = more->v[id - offset - 1];
+			if (e.refs == 0)
+				return;
+			if (((--e.refs) & mask) > 0)
+				return;
 
-				Arr *nArray = runtime::allocArray<GraphicsResource *>(engine(), &pointerArrayType, high - low + 1);
-				for (Nat i = low; i <= high; i++) {
-					nArray->v[i - low] = array->v[i - offset];
-				}
-
-				info = low << 1 | 0x1;
-				array = nArray;
-			}
+			e.refs = 0;
+			if (e.clean)
+				(*e.clean)(e.data);
+			e.data = null;
+			shrink();
 		}
 	}
-
-
-
-	GraphicsResource::GraphicsResource() {}
-
-	GraphicsResource::~GraphicsResource() {
-		destroy();
-	}
-
-	void GraphicsResource::destroy() {}
 
 }

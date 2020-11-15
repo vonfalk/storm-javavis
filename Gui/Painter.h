@@ -43,10 +43,6 @@ namespace gui {
 		// Background color. Updated on next redraw.
 		Color bgColor;
 
-		// Add a resource. Resources are invalidated whenever we have to re-create the render target.
-		void addResource(RenderResource *resource);
-		void removeResource(RenderResource *resource);
-
 
 		/**
 		 * The following functions (the ones starting with 'uiXxx') are intended to be called
@@ -90,9 +86,6 @@ namespace gui {
 		// Lock for the target surface.
 		Lock *lock;
 
-		// Resources.
-		WeakSet<RenderResource> *resources;
-
 		// Registered for continuous repaints in RenderMgr?  If true, then calls to 'repaint' will
 		// not do anything, instead we rely on RenderMgr to repaint us every frame.
 		Bool continuous;
@@ -109,9 +102,6 @@ namespace gui {
 
 		// Destroy any resources connected to the current device.
 		void destroy();
-
-		// Destroy loaded resources.
-		void destroyResources();
 
 		// Repaint number (to keep track of when 'redraw' should return and avoid flicker).
 		volatile Nat repaintCounter;

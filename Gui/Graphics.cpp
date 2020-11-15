@@ -1,11 +1,39 @@
 #include "stdafx.h"
 #include "Graphics.h"
 #include "Bitmap.h"
-#include "Core/Exception.h"
+#include "GraphicsMgr.h"
 
 namespace gui {
 
-	Graphics::Graphics() {}
+	Graphics::Graphics() {
+		resources = new (this) WeakSet<Resource>();
+
+		// This works well as a dummy implementation.
+		mgr = new (this) GraphicsMgrRaw();
+	}
+
+	Graphics::~Graphics() {
+		// Things might be null in the destructor...
+		if (resources) {
+			WeakSet<Resource>::Iter i = resources->iter();
+			while (Resource *r = i.next()) {
+				if (runtime::liveObject(r))
+					r->destroy(this);
+			}
+		}
+	}
+
+	Bool Graphics::attach(Resource *resource) {
+		return resources->put(resource);
+	}
+
+	void Graphics::destroy() {
+		WeakSet<Resource>::Iter i = resources->iter();
+		while (Resource *r = i.next()) {
+			r->destroy(this);
+		}
+		resources->clear();
+	}
 
 	void Graphics::reset() {
 		while (pop())
