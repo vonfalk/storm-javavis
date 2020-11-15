@@ -69,7 +69,7 @@ namespace storm {
 		 */
 
 		// Put a value.
-		void CODECALL putRaw(const void *key);
+		Bool CODECALL putRaw(const void *key);
 
 		// Put values from a set.
 		void CODECALL putSetRaw(SetBase *src);
@@ -272,9 +272,9 @@ namespace storm {
 			runtime::setVTable(this);
 		}
 
-		// Insert a value into the set, or update the existing one.
-		void put(const K &k) {
-			putRaw(&k);
+		// Insert a value into the set, or update the existing one. Returns 'true' if it did not exist before.
+		Bool put(const K &k) {
+			return putRaw(&k);
 		}
 
 		// Insert values from another set into this one.

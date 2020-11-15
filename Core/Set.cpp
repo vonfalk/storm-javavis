@@ -105,7 +105,7 @@ namespace storm {
 		}
 	}
 
-	void SetBase::putRaw(const void *key) {
+	Bool SetBase::putRaw(const void *key) {
 		nat hash = (*keyT.hashFn)(key);
 		nat old = findSlot(key, hash);
 		if (old == Info::free) {
@@ -114,9 +114,11 @@ namespace storm {
 				hash = newHash(key);
 			nat w = Info::free;
 			insert(key, hash, w);
+			return true;
 		} else {
 			keyT.safeDestroy(keyPtr(old));
 			keyT.safeCopy(keyPtr(old), key);
+			return false;
 		}
 	}
 

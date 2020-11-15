@@ -74,7 +74,7 @@ namespace storm {
 		*to << S("}");
 	}
 
-	void WeakSetBase::putRaw(TObject *key) {
+	Bool WeakSetBase::putRaw(TObject *key) {
 		clean();
 
 		nat hash = ptrHash(key);
@@ -87,8 +87,10 @@ namespace storm {
 			}
 			nat w = Info::free;
 			insert(key, hash, w);
+			return true;
 		} else {
 			data->v[old] = key;
+			return false;
 		}
 	}
 

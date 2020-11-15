@@ -64,7 +64,7 @@ namespace storm {
 		add(iter.type);
 		add(nativeFunction(e, Value(), Type::CTOR, valList(e, 1, t), address(&MapType::createClass))->makePure());
 		add(nativeFunction(e, Value(), Type::CTOR, valList(e, 2, t, t), address(&MapType::copyClass))->makePure());
-		add(nativeFunction(e, Value(), S("put"), valList(e, 3, t, keyRef, valRef), address(&MapBase::putRaw)));
+		add(nativeFunction(e, boolT, S("put"), valList(e, 3, t, keyRef, valRef), address(&MapBase::putRaw)));
 		add(nativeFunction(e, boolT, S("has"), thisKey, address(&MapBase::hasRaw))->makePure());
 		add(nativeFunction(e, valRef, S("get"), thisKey, address(&MapBase::getRaw))->makePure());
 		add(nativeFunction(e, valRef, S("get"), valList(e, 3, t, keyRef, valRef), address(&MapBase::getRawDef)));
