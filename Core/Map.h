@@ -69,8 +69,8 @@ namespace storm {
 		 * Low-level operations.
 		 */
 
-		// Put a value.
-		void CODECALL putRaw(const void *key, const void *value);
+		// Put a value. Returns 'true' if the key did not exist before.
+		Bool CODECALL putRaw(const void *key, const void *value);
 
 		// Contains value?
 		Bool CODECALL hasRaw(const void *key);
@@ -316,9 +316,9 @@ namespace storm {
 			runtime::setVTable(this);
 		}
 
-		// Insert a value into the map, or update the existing one.
-		void put(const K &k, const V &v) {
-			putRaw(&k, &v);
+		// Insert a value into the map, or update the existing one. Returns 'true' if the key did not exist before.
+		Bool put(const K &k, const V &v) {
+			return putRaw(&k, &v);
 		}
 
 		// Contains a key?

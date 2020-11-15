@@ -117,7 +117,7 @@ namespace storm {
 		}
 	}
 
-	void MapBase::putRaw(const void *key, const void *value) {
+	Bool MapBase::putRaw(const void *key, const void *value) {
 		nat hash = (*keyT.hashFn)(key);
 		nat old = findSlot(key, hash);
 		if (old == Info::free) {
@@ -126,9 +126,11 @@ namespace storm {
 				hash = newHash(key);
 			nat w = Info::free;
 			insert(key, value, hash, w);
+			return true;
 		} else {
 			valT.safeDestroy(valPtr(old));
 			valT.safeCopy(valPtr(old), value);
+			return false;
 		}
 	}
 

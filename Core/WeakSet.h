@@ -56,8 +56,8 @@ namespace storm {
 		 * Low-level operations.
 		 */
 
-		// Put a value.
-		void CODECALL putRaw(TObject *key);
+		// Put a value. Returns 'true' if the value did not exist before.
+		Bool CODECALL putRaw(TObject *key);
 
 		// Contains?
 		Bool CODECALL hasRaw(TObject *key);
@@ -223,9 +223,9 @@ namespace storm {
 			runtime::setVTable(this);
 		}
 
-		// Insert a value.
-		void put(K *k) {
-			putRaw(k);
+		// Insert a value. Returns 'true' if the value did not exist before.
+		Bool put(K *k) {
+			return putRaw(k);
 		}
 
 		// Contains a key?

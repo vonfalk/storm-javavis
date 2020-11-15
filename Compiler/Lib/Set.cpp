@@ -51,7 +51,7 @@ namespace storm {
 		add(iter.type);
 		add(nativeFunction(e, Value(), Type::CTOR, valList(e, 1, t), address(&SetType::createClass)));
 		add(nativeFunction(e, Value(), Type::CTOR, valList(e, 2, t, t), address(&SetType::copyClass)));
-		add(nativeFunction(e, Value(), S("put"), thisKey, address(&SetBase::putRaw)));
+		add(nativeFunction(e, boolT, S("put"), thisKey, address(&SetBase::putRaw)));
 		add(nativeFunction(e, Value(), S("put"), valList(e, 2, t, t), address(&SetBase::putSetRaw)));
 		add(nativeFunction(e, boolT, S("has"), thisKey, address(&SetBase::hasRaw)));
 		add(nativeFunction(e, keyRef, S("get"), thisKey, address(&SetBase::getRaw)));
