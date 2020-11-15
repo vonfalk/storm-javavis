@@ -29,16 +29,19 @@ namespace gui {
 		// Called whenever a GraphicsResource needs to be created.
 		virtual GraphicsResource *STORM_FN create(Graphics *g) ABSTRACT;
 
+		// Called whenever something changed in this resource, and the underlying objects should be updated.
+		void STORM_FN update();
+
 	private:
 		// Array typedef for convenience.
 		typedef GcArray<GraphicsResource *> Arr;
 
-		// Data. Either an array of elements, or just a GraphicsResource.
-		UNKNOWN(PTR_GC) void *data;
-
 		// Description of the data. If LSB is clear, then 'data' is a single element for the
 		// identifier in here. Otherwise, it is an array.
 		Nat info;
+
+		// Data. Either an array of elements, or just a GraphicsResource.
+		UNKNOWN(PTR_GC) void *data;
 
 		// Get the element at a particular ID.
 		GraphicsResource *get(Nat id);
@@ -64,8 +67,27 @@ namespace gui {
 		// Safeguard for destruction.
 		~GraphicsResource();
 
+		// Refcount.
+		void addRef() { refs++; }
+		Bool release() {
+			if (refs <= 1) {
+				refs = 0;
+				return true;
+			} else {
+				refs--;
+				return false;
+			}
+		}
+
+		// Update this resource.
+		virtual void STORM_FN update();
+
 		// Destroy this resource.
-		virtual void destroy();
+		virtual void STORM_FN destroy();
+
+	private:
+		// References.
+		Nat refs;
 	};
 
 }

@@ -28,9 +28,6 @@ namespace gui {
 		// Free an ID.
 		void freeId(Nat id);
 
-		// Attach a resource to this rendermgr. TODO: Remove?
-		void attach(Resource *resource);
-
 		// Attach a Painter, creates a surface.
 		Surface *attach(Painter *painter, Handle window);
 
@@ -65,9 +62,6 @@ namespace gui {
 
 		// Live painters. TODO? Weak set?
 		Set<Painter *> *painters;
-
-		// Live resources that needs cleaning before termination.
-		WeakSet<Resource> *resources;
 
 		// Event to wait for either: new continuous windows, or: termination.
 		Event *waitEvent;

@@ -15,7 +15,7 @@ namespace gui {
 	}
 
 	void RenderResource::attachTo(Painter *to) {
-		to->addResource(this);
+		// to->addResource(this);
 	}
 
 #ifdef GUI_WIN32

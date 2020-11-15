@@ -69,7 +69,7 @@ namespace gui {
 
 #ifdef GUI_WIN32
 		// Get the layout.
-		IDWriteTextLayout *layout(Painter *owner);
+		// IDWriteTextLayout *layout(Painter *owner);
 #endif
 #ifdef GUI_GTK
 		// Get the layout.

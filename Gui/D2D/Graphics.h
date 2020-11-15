@@ -1,7 +1,9 @@
 #pragma once
-#include "WindowGraphics.h"
+#include "Gui/WindowGraphics.h"
 
 namespace gui {
+
+	STORM_PKG(impl);
 
 	class D2DSurface;
 
@@ -107,6 +109,13 @@ namespace gui {
 
 		// Draw pre-formatted text.
 		void STORM_FN draw(Text *text, Brush *brush, Point origin);
+
+		/**
+		 * Create things.
+		 */
+		GraphicsResource *STORM_FN create(SolidBrush *b);
+		GraphicsResource *STORM_FN create(LinearGradient *b);
+		GraphicsResource *STORM_FN create(RadialGradient *b);
 
 	private:
 		// Target surface.

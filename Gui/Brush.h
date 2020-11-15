@@ -1,5 +1,5 @@
 #pragma once
-#include "RenderResource.h"
+#include "Resource.h"
 #include "Core/Array.h"
 
 namespace gui {
@@ -8,36 +8,11 @@ namespace gui {
 	/**
 	 * Brush (abstract).
 	 */
-	class Brush : public RenderResource {
+	class Brush : public Resource {
 		STORM_CLASS;
 	public:
+		// Create a brush.
 		Brush();
-
-#ifdef GUI_WIN32
-		// Get a brush.
-		inline ID2D1Brush *brush(Painter *owner) {
-			ID2D1Brush *b = get<ID2D1Brush>(owner);
-			prepare(b);
-			return b;
-		}
-
-		// Prepare for drawing a bounding box of 'bound'.
-		virtual void prepare(ID2D1Brush *b);
-#endif
-#ifdef GUI_GTK
-		// Set the source of the cairo_t to this brush.
-		inline void setSource(Painter *owner, cairo_t *c) {
-			cairo_pattern_t *b = get<cairo_pattern_t>(owner);
-			if (b) {
-				cairo_set_source(c, b);
-			} else {
-				prepare(c);
-			}
-		}
-
-		// Prepare for drawing, if 'create' returns null.
-		virtual void prepare(cairo_t *cairo);
-#endif
 	};
 
 	/**
@@ -46,29 +21,29 @@ namespace gui {
 	class SolidBrush : public Brush {
 		STORM_CLASS;
 	public:
+		// Create.
 		STORM_CTOR SolidBrush(Color color);
 
-#ifdef GUI_WIN32
-		virtual void create(Painter *owner, ID2D1Resource **out);
-
-		virtual void prepare(ID2D1Brush *b);
-#endif
-#ifdef GUI_GTK
-		virtual OsResource *create(Painter *owner);
-
-		virtual void prepare(cairo_t *cairo);
-#endif
-
 		// Opacity.
-		Float opacity;
+		inline Float STORM_FN opacity() const { return myOpacity; }
+		inline void STORM_ASSIGN opacity(Float o) { myOpacity = o; update(); }
 
 		// Color.
-		inline Color STORM_FN color() const { return col; }
+		inline Color STORM_FN color() const { return myColor; }
+		inline void STORM_ASSIGN color(Color c) { myColor = c; update(); }
+
+	protected:
+		// Create.
+		GraphicsResource *STORM_FN create(Graphics *g);
 
 	private:
 		// Color.
-		Color col;
+		Color myColor;
+
+		// Opacity.
+		Float myOpacity;
 	};
+
 
 	/**
 	 * Bitmap brush.
@@ -88,12 +63,6 @@ namespace gui {
 		// Set the current transform.
 		void STORM_ASSIGN transform(Transform *tfm);
 
-#ifdef GUI_WIN32
-		virtual void create(Painter *owner, ID2D1Resource **out);
-#endif
-#ifdef GUI_GTK
-		virtual OsResource *create(Painter *owner);
-#endif
 	private:
 		// The actual bitmap.
 		Bitmap *myBitmap;
@@ -101,6 +70,7 @@ namespace gui {
 		// The transform when applying the brush.
 		Transform *myTfm;
 	};
+
 
 	/**
 	 * A single gradient stop.
@@ -117,6 +87,7 @@ namespace gui {
 	wostream &operator <<(wostream &to, const GradientStop &s);
 	StrBuf &STORM_FN operator <<(StrBuf &to, GradientStop s);
 
+
 	/**
 	 * Gradient of some kind.
 	 */
@@ -125,7 +96,6 @@ namespace gui {
 	public:
 		Gradient();
 		Gradient(Array<GradientStop> *stops);
-		~Gradient();
 
 		// Get the stops.
 		Array<GradientStop> *STORM_FN stops() const;
@@ -133,20 +103,11 @@ namespace gui {
 		// Set the stops.
 		void STORM_ASSIGN stops(Array<GradientStop> *stops);
 
-		// Destroy the stops.
-		virtual void destroy();
+		// Peek at the stops (doesn't copy it).
+		Array<GradientStop> *peekStops() const { return myStops; }
 
-	protected:
-#ifdef GUI_WIN32
-		// Get the stops object.
-		ID2D1GradientStopCollection *dxStops(Painter *owner);
-#endif
-#ifdef GUI_GTK
-		// Apply stops to a pattern.
-		void applyStops(cairo_pattern_t *to);
-#endif
 	private:
-		ID2D1GradientStopCollection *dxObject;
+		// Stops.
 		Array<GradientStop> *myStops;
 	};
 
@@ -174,22 +135,14 @@ namespace gui {
 		// Set both.
 		void STORM_FN points(Point start, Point end);
 
-#ifdef GUI_WIN32
+	protected:
 		// Create.
-		virtual void create(Painter *owner, ID2D1Resource **out);
-#endif
-#ifdef GUI_GTK
-		// Create.
-		virtual OsResource *create(Painter *owner);
-#endif
+		GraphicsResource *STORM_FN create(Graphics *g);
 
 	private:
 		// Start and end point of the gradient.
 		Point myStart;
 		Point myEnd;
-
-		// Update the points in the underlying representation (if any).
-		void updatePoints();
 
 #ifdef GUI_GTK
 		// Set the transform of 'p'.
@@ -222,14 +175,9 @@ namespace gui {
 		Transform *STORM_FN transform() const { return myTransform; }
 		void STORM_ASSIGN transform(Transform *tfm);
 
-#ifdef GUI_WIN32
+	protected:
 		// Create.
-		virtual void create(Painter *owner, ID2D1Resource **out);
-#endif
-#ifdef GUI_GTK
-		// Create.
-		virtual OsResource *create(Painter *owner);
-#endif
+		GraphicsResource *STORM_FN create(Graphics *g);
 
 	private:
 		// Center point and radius.
@@ -238,9 +186,6 @@ namespace gui {
 
 		// Transform.
 		Transform *myTransform;
-
-		// Update the properties in the underlying representation (if any).
-		void update();
 
 #ifdef GUI_GTK
 		// Set the transform of 'p'.

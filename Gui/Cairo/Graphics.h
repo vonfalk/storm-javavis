@@ -1,7 +1,9 @@
 #pragma once
-#include "WindowGraphics.h"
+#include "Gui/WindowGraphics.h"
 
 namespace gui {
+
+	STORM_PKG(impl);
 
 	class CairoSurface;
 

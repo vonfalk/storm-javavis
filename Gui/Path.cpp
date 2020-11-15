@@ -98,7 +98,7 @@ namespace gui {
 		::release(g);
 
 		RenderMgr *mgr = renderMgr(engine());
-		mgr->attach(this);
+		// mgr->attach(this);
 		HRESULT r;
 		ID2D1GeometrySink *sink = null;
 

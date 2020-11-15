@@ -72,24 +72,24 @@ namespace gui {
 		l->SetMaxHeight(s.h);
 	}
 
-	IDWriteTextLayout *Text::layout(Painter *owner) {
-		if (effects) {
-			TODO(L"FIXME");
-			// for (Nat i = 0; i < effects->count(); i++) {
-			// 	Effect &e = effects->at(i);
-			// 	DWRITE_TEXT_RANGE range = { e.from, e.to };
-			// 	ID2D1SolidColorBrush *brush;
-			// 	owner->renderTarget()->CreateSolidColorBrush(dx(e.color), &brush);
-			// 	l->SetDrawingEffect(brush, range);
-			// 	brush->Release();
-			// }
+	// IDWriteTextLayout *Text::layout(Painter *owner) {
+	// 	if (effects) {
+	// 		TODO(L"FIXME");
+	// 		// for (Nat i = 0; i < effects->count(); i++) {
+	// 		// 	Effect &e = effects->at(i);
+	// 		// 	DWRITE_TEXT_RANGE range = { e.from, e.to };
+	// 		// 	ID2D1SolidColorBrush *brush;
+	// 		// 	owner->renderTarget()->CreateSolidColorBrush(dx(e.color), &brush);
+	// 		// 	l->SetDrawingEffect(brush, range);
+	// 		// 	brush->Release();
+	// 		// }
 
-			// No need to update the effects any other time, the solid color brush is device independent.
-			effects = null;
-		}
+	// 		// No need to update the effects any other time, the solid color brush is device independent.
+	// 		effects = null;
+	// 	}
 
-		return l;
-	}
+	// 	return l;
+	// }
 
 	Array<TextLine *> *Text::lineInfo() {
 		UINT32 numLines = 0;

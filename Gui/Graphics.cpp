@@ -5,7 +5,21 @@
 
 namespace gui {
 
-	Graphics::Graphics() {}
+	Graphics::Graphics() {
+		resources = new (this) WeakSet<Resource>();
+	}
+
+	Bool Graphics::attach(Resource *resource) {
+		return resources->put(resource);
+	}
+
+	void Graphics::destroy() {
+		WeakSet<Resource>::Iter i = resources->iter();
+		while (Resource *r = i.next()) {
+			r->destroy(this);
+		}
+		resources->clear();
+	}
 
 	void Graphics::reset() {
 		while (pop())
@@ -38,6 +52,18 @@ namespace gui {
 
 	void Graphics::draw(Bitmap *bitmap, Rect src, Rect dest) {
 		draw(bitmap, src, dest, 1);
+	}
+
+	GraphicsResource *Graphics::create(SolidBrush *) {
+		throw new (this) NotSupported(S("create(SolidBrush)"));
+	}
+
+	GraphicsResource *Graphics::create(LinearGradient *) {
+		throw new (this) NotSupported(S("create(LinearGradient)"));
+	}
+
+	GraphicsResource *Graphics::create(RadialGradient *) {
+		throw new (this) NotSupported(S("create(RadialGradient)"));
 	}
 
 }

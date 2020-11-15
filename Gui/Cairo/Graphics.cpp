@@ -1,5 +1,5 @@
 #include "stdafx.h"
-#include "CairoGraphics.h"
+#include "Graphics.h"
 #include "Painter.h"
 #include "Brush.h"
 #include "Text.h"

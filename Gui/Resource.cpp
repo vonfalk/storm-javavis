@@ -9,8 +9,10 @@ namespace gui {
 	void Resource::destroy(Graphics *g) {
 		GraphicsResource *r = get(g->id());
 		if (r) {
-			r->destroy();
-			clear(g->id());
+			if (r->release()) {
+				r->destroy();
+				clear(g->id());
+			}
 		}
 	}
 
@@ -20,7 +22,28 @@ namespace gui {
 			r = create(g);
 			set(g->id(), r);
 		}
+
+		// Keep track of instances where a GraphicsResource is shared.
+		if (g->attach(this))
+			r->addRef();
+
 		return r;
+	}
+
+	void Resource::update() {
+		if (info == 0) {
+			// Nothing to do.
+		} else if ((info & 0x1) == 0) {
+			// Single element.
+			((GraphicsResource *)data)->update();
+		} else {
+			// Array.
+			Arr *array = (Arr *)data;
+			for (Nat i = 0; i < array->count; i++) {
+				if (array->v[i])
+					array->v[i]->update();
+			}
+		}
 	}
 
 	GraphicsResource *Resource::get(Nat id) {
@@ -129,11 +152,11 @@ namespace gui {
 
 
 
-	GraphicsResource::GraphicsResource() {}
+	GraphicsResource::GraphicsResource() : refs(0) {}
 
-	GraphicsResource::~GraphicsResource() {
-		destroy();
-	}
+	GraphicsResource::~GraphicsResource() {}
+
+	void GraphicsResource::update() {}
 
 	void GraphicsResource::destroy() {}
 

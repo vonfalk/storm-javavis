@@ -19,9 +19,9 @@ class MainPainter extends Painter {
 	SolidBrush yellow;
 	LinearGradient brush3;
 	Moment started;
-	Bitmap bitmap;
-	Text text;
-	Path star;
+	// Bitmap bitmap;
+	// Text text;
+	// Path star;
 
 	init() {
 		Url f = resUrl / "ui_alpha.png";
@@ -35,22 +35,22 @@ class MainPainter extends Painter {
 			brush2(blue);
 			brush3([GradientStop(0, red), GradientStop(1, green)], Point(0, 0), Point(100, 100));
 			yellow(yellow);
-			bitmap(img);
-			text("Hello World!", font);
+			// bitmap(img);
+			// text("Hello World!", font);
 		}
 
-		Int edges = 5;
-		Int stops = edges * 2;
-		for (Int i = 0; i < stops; i++) {
-			Angle a = 360 deg / stops.float;
-			a *= i.float;
+		// Int edges = 5;
+		// Int stops = edges * 2;
+		// for (Int i = 0; i < stops; i++) {
+		// 	Angle a = 360 deg / stops.float;
+		// 	a *= i.float;
 
-			Point p = angle(a) * 20.0;
-			if (i % 2 == 0)
-				p *= 2.0;
-			star.point(p);
-		}
-		star.close();
+		// 	Point p = angle(a) * 20.0;
+		// 	if (i % 2 == 0)
+		// 		p *= 2.0;
+		// 	star.point(p);
+		// }
+		// star.close();
 	}
 
 	Bool render(Size size, Graphics g) {
@@ -77,15 +77,15 @@ class MainPainter extends Painter {
 		g.push();
 		g.transform(translate(Point(y, y)));
 
-		g.push();
-		g.transform(rotate(45 deg));
-		g.draw(bitmap);
-		g.pop();
+		// g.push();
+		// g.transform(rotate(45 deg));
+		// g.draw(bitmap);
+		// g.pop();
 
-		g.push();
-		g.transform(skewX(10 deg));
-		g.draw(text, brush2, from);
-		g.pop();
+		// g.push();
+		// g.transform(skewX(10 deg));
+		// g.draw(text, brush2, from);
+		// g.pop();
 
 		g.pop();
 		g.pop();
@@ -93,7 +93,7 @@ class MainPainter extends Painter {
 		g.push();
 		g.transform(rotate(y * 4 deg) * translate(Point(100, 100)));
 		g.lineWidth(5);
-		g.fill(star, yellow);
+		// g.fill(star, yellow);
 
 		true;
 	}
