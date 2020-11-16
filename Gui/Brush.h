@@ -26,15 +26,16 @@ namespace gui {
 
 		// Opacity.
 		inline Float STORM_FN opacity() const { return myOpacity; }
-		inline void STORM_ASSIGN opacity(Float o) { myOpacity = o; update(); }
+		inline void STORM_ASSIGN opacity(Float o) { myOpacity = o; needUpdate(); }
 
 		// Color.
 		inline Color STORM_FN color() const { return myColor; }
-		inline void STORM_ASSIGN color(Color c) { myColor = c; update(); }
+		inline void STORM_ASSIGN color(Color c) { myColor = c; needUpdate(); }
 
 	protected:
-		// Create.
-		GraphicsResource *STORM_FN create(Graphics *g);
+		// Create and update.
+		void create(GraphicsMgrRaw *g, void *&result, Cleanup &clean);
+		void update(GraphicsMgrRaw *g, void *resource);
 
 	private:
 		// Color.
@@ -136,8 +137,9 @@ namespace gui {
 		void STORM_FN points(Point start, Point end);
 
 	protected:
-		// Create.
-		GraphicsResource *STORM_FN create(Graphics *g);
+		// Create and update.
+		void create(GraphicsMgrRaw *g, void *&result, Cleanup &clean);
+		void update(GraphicsMgrRaw *g, void *resource);
 
 	private:
 		// Start and end point of the gradient.
@@ -176,8 +178,9 @@ namespace gui {
 		void STORM_ASSIGN transform(Transform *tfm);
 
 	protected:
-		// Create.
-		GraphicsResource *STORM_FN create(Graphics *g);
+		// Create and update.
+		void create(GraphicsMgrRaw *g, void *&result, Cleanup &clean);
+		void update(GraphicsMgrRaw *g, void *resource);
 
 	private:
 		// Center point and radius.

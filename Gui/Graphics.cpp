@@ -9,6 +9,17 @@ namespace gui {
 		resources = new (this) WeakSet<Resource>();
 	}
 
+	Graphics::~Graphics() {
+		// Things might be null in the destructor...
+		if (resources) {
+			WeakSet<Resource>::Iter i = resources->iter();
+			while (Resource *r = i.next()) {
+				if (runtime::liveObject(r))
+					r->destroy(this);
+			}
+		}
+	}
+
 	Bool Graphics::attach(Resource *resource) {
 		return resources->put(resource);
 	}

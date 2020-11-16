@@ -37,6 +37,9 @@ namespace gui {
 		// Create.
 		STORM_CTOR Graphics();
 
+		// Make sure we destroy our resources.
+		~Graphics();
+
 		// Get the identifier for this Graphics object.
 		Nat STORM_FN id() const { return identifier; }
 

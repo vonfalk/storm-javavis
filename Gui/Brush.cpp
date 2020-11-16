@@ -2,6 +2,7 @@
 #include "Brush.h"
 #include "Painter.h"
 #include "Bitmap.h"
+#include "GraphicsResource.h"
 
 namespace gui {
 
@@ -9,16 +10,15 @@ namespace gui {
 
 	SolidBrush::SolidBrush(Color c) : myOpacity(1.0f), myColor(c) {}
 
-	GraphicsResource *SolidBrush::create(Graphics *g) {
-		return g->create(this);
+	void SolidBrush::create(GraphicsMgrRaw *g, void *&result, Cleanup &update) {
+		g->create(this, result, update);
+	}
+	void SolidBrush::update(GraphicsMgrRaw *g, void *resource) {
+		g->update(this, resource);
 	}
 
 
 #ifdef GUI_GTK
-
-	OsResource *SolidBrush::create(Painter *owner) {
-		return 0;
-	}
 
 	void SolidBrush::prepare(cairo_t *cairo) {
 		cairo_set_source_rgba(cairo, col.r, col.g, col.b, col.a * opacity);
@@ -130,22 +130,25 @@ namespace gui {
 
 	void LinearGradient::start(Point p) {
 		myStart = p;
-		update();
+		needUpdate();
 	}
 
 	void LinearGradient::end(Point p) {
 		myEnd = p;
-		update();
+		needUpdate();
 	}
 
 	void LinearGradient::points(Point start, Point end) {
 		myStart = start;
 		myEnd = end;
-		update();
+		needUpdate();
 	}
 
-	GraphicsResource *LinearGradient::create(Graphics *g) {
-		return g->create(this);
+	void LinearGradient::create(GraphicsMgrRaw *g, void *&result, Cleanup &update) {
+		g->create(this, result, update);
+	}
+	void LinearGradient::update(GraphicsMgrRaw *g, void *resource) {
+		g->update(this, resource);
 	}
 
 #ifdef GUI_GTK
@@ -194,21 +197,24 @@ namespace gui {
 
 	void RadialGradient::center(Point p) {
 		myCenter = p;
-		update();
+		needUpdate();
 	}
 
 	void RadialGradient::radius(Float v) {
 		myRadius = v;
-		update();
+		needUpdate();
 	}
 
 	void RadialGradient::transform(Transform *tfm) {
 		myTransform = tfm;
-		update();
+		needUpdate();
 	}
 
-	GraphicsResource *RadialGradient::create(Graphics *g) {
-		return g->create(this);
+	void RadialGradient::create(GraphicsMgrRaw *g, void *&result, Cleanup &update) {
+		g->create(this, result, update);
+	}
+	void RadialGradient::update(GraphicsMgrRaw *g, void *resource) {
+		g->update(this, resource);
 	}
 
 #ifdef GUI_GTK

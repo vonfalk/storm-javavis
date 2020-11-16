@@ -1,5 +1,6 @@
 #pragma once
 #include "Gui/Resource.h"
+#include "Gui/GraphicsResource.h"
 #include "Gui/Brush.h"
 #include "D2D.h"
 

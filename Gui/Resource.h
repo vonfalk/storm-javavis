@@ -6,12 +6,17 @@ namespace gui {
 
 	class Graphics;
 	class GraphicsResource;
+	class GraphicsMgrRaw;
 
 	/**
 	 * A resource used in rendering that might need to create backend-specific resources.
 	 *
 	 * Any backend specific resources are created lazily, and the Resource keeps track of
 	 * potentially multiple such resources for multiple backends.
+	 *
+	 * Each backend is allowed to store one pointer to additional data. The Resource class provides
+	 * two interfaces for this, one with the suffix "Raw", that is not type-safe and not usable from
+	 * Storm, and one without the suffix that operates on GraphicsResource objects exclusively.
 	 */
 	class Resource : public ObjectOn<Render> {
 		STORM_ABSTRACT_CLASS;
@@ -19,75 +24,75 @@ namespace gui {
 		// Create.
 		STORM_CTOR Resource();
 
+		// Cleanup function for backend-specific data.
+		typedef void (*Cleanup)(void *);
+
 		// Destroy the resource for a particular Graphics backend.
 		void STORM_FN destroy(Graphics *g);
 
 		// Get a resource for a particular backend.
 		GraphicsResource *STORM_FN forGraphics(Graphics *g);
+		void *forGraphicsRaw(Graphics *g);
 
 	protected:
-		// Called whenever a GraphicsResource needs to be created.
-		virtual GraphicsResource *STORM_FN create(Graphics *g) ABSTRACT;
+		// Called whenever a resource needs to be created.
+		virtual void create(GraphicsMgrRaw *g, void *&data, Cleanup &cleanup);
+
+		// Called whenever a resource needs to be updated.
+		virtual void update(GraphicsMgrRaw *g, void *data);
 
 		// Called whenever something changed in this resource, and the underlying objects should be updated.
-		void STORM_FN update();
+		void STORM_FN needUpdate();
+
+		// Called whenever something changed that makes it necessary to re-create the resource when it is rendered again.
+		void STORM_FN recreate();
 
 	private:
-		// Array typedef for convenience.
-		typedef GcArray<GraphicsResource *> Arr;
+		// Storage of elements.
+		struct Element {
+			// The stored pointer (GC:d).
+			void *data;
 
-		// Description of the data. If LSB is clear, then 'data' is a single element for the
-		// identifier in here. Otherwise, it is an array.
-		Nat info;
+			// Cleanup function (not GC:d).
+			Cleanup clean;
 
-		// Data. Either an array of elements, or just a GraphicsResource.
-		UNKNOWN(PTR_GC) void *data;
+			// Number of references. If zero, this element is unused. Tagged in the MSB if needs to be updated.
+			Nat refs;
+		};
 
-		// Get the element at a particular ID.
-		GraphicsResource *get(Nat id);
+		// GcType for Element.
+		static const GcType elemType;
 
-		// Set the element at a particular ID. Resizes storage if needed.
-		void set(Nat id, GraphicsResource *r);
+		// First element's data.
+		UNKNOWN(PTR_GC) void *firstData;
 
-		// Clear the element at a particular ID. Resizes storage if needed.
+		// First element's cleanup.
+		UNKNOWN(PTR_NOGC) Cleanup firstClean;
+
+		// First element's references.
+		Nat firstRefs;
+
+		// Offset of the first element (i.e. the real index of the first element).
+		Nat offset;
+
+		// Any remaining elements.
+		GcArray<Element> *more;
+
+		// Get an element. Returns number of references. Optionally increases the refcount if the element exists.
+		Nat get(Nat id, void *&ptr, Bool addRef);
+
+		// Set an element. Possibly creates it.
+		Nat set(Nat id, void *ptr, Cleanup clean, Bool addRef);
+
+		// Clear an element (i.e. decrementing the refcount).
 		void clear(Nat id);
+
+		// Resize the storage.
+		void resize(Nat rangeMin, Nat rangeMax);
+
+		// Shrink the storage to fit.
+		void shrink();
 	};
 
-
-	/**
-	 * Some kind of backend-specific resource that is managed by a Resource class. These are not
-	 * meant to be used directly, they will be created as needed by subclasses to Resource.
-	 */
-	class GraphicsResource : public ObjectOn<Render> {
-		STORM_CLASS;
-	public:
-		// Create.
-		STORM_CTOR GraphicsResource();
-
-		// Safeguard for destruction.
-		~GraphicsResource();
-
-		// Refcount.
-		void addRef() { refs++; }
-		Bool release() {
-			if (refs <= 1) {
-				refs = 0;
-				return true;
-			} else {
-				refs--;
-				return false;
-			}
-		}
-
-		// Update this resource.
-		virtual void STORM_FN update();
-
-		// Destroy this resource.
-		virtual void STORM_FN destroy();
-
-	private:
-		// References.
-		Nat refs;
-	};
 
 }
