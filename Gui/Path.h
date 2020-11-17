@@ -75,12 +75,6 @@ namespace gui {
 		// Create.
 		STORM_CTOR Path();
 
-		// Destroy.
-		~Path();
-
-		// Destroy.
-		virtual void destroy();
-
 		// Clear this path.
 		void STORM_FN clear();
 
@@ -105,17 +99,22 @@ namespace gui {
 		// Get the bounding box of this path.
 		inline Rect STORM_FN bound() { return b; }
 
-#ifdef GUI_WIN32
-		// Get the geometry object.
-		ID2D1PathGeometry *geometry();
-#endif
 #ifdef GUI_GTK
-		// Set the path on the supplied cairo_t.
+		// Set the path on the supplied cairo_t. Cairo has no inherent representation of a path, so
+		// we don't utilize the fact that we can cache it.
 		void draw(cairo_t *c);
 #endif
 
 		// Get the actual path.
 		Array<PathPoint> *STORM_FN data();
+
+		// Peek at the actual object to avoid copying.
+		Array<PathPoint> *peekData() { return elements; }
+
+	protected:
+		// Create and update.
+		virtual void create(GraphicsMgrRaw *g, void *&result, Cleanup &cleanup);
+		virtual void update(GraphicsMgrRaw *g, void *resource);
 
 	private:
 		// All elements.
@@ -126,15 +125,6 @@ namespace gui {
 
 		// Bound.
 		Rect b;
-
-		// The underlying DX object.
-		ID2D1PathGeometry *g;
-
-		// Invalidate this path.
-		void invalidate();
-
-		// Create the path.
-		void create();
 	};
 
 }

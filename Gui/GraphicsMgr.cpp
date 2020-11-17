@@ -6,31 +6,15 @@ namespace gui {
 
 	DEFINE_GRAPHICS_MGR_FNS(GraphicsMgrRaw);
 
-	void GraphicsMgr::create(SolidBrush *brush, void *&result, Resource::Cleanup &cleanup) {
-		cleanup = null;
-		result = create(brush);
+#define DEFINE_MGR_FN(CLASS, TYPE)										\
+	void CLASS::create(TYPE *t, void *&result, Resource::Cleanup &cleanup) { \
+		cleanup = null;													\
+		result = create(t);												\
+	}																	\
+	void CLASS::update(TYPE *, void *resource) {						\
+		((GraphicsResource *)resource)->update();						\
 	}
 
-	void GraphicsMgr::create(LinearGradient *brush, void *&result, Resource::Cleanup &cleanup) {
-		cleanup = null;
-		result = create(brush);
-	}
-
-	void GraphicsMgr::create(RadialGradient *brush, void *&result, Resource::Cleanup &cleanup) {
-		cleanup = null;
-		result = create(brush);
-	}
-
-	void GraphicsMgr::update(SolidBrush *, void *resource) {
-		((GraphicsResource *)resource)->update();
-	}
-
-	void GraphicsMgr::update(LinearGradient *, void *resource) {
-		((GraphicsResource *)resource)->update();
-	}
-
-	void GraphicsMgr::update(RadialGradient *, void *resource) {
-		((GraphicsResource *)resource)->update();
-	}
+	FOR_GRAPHICS_MGR_FNS(DEFINE_MGR_FN, GraphicsMgr)
 
 }

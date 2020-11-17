@@ -64,12 +64,24 @@ namespace gui {
 		// Set the current transform.
 		void STORM_ASSIGN transform(Transform *tfm);
 
+		// Opacity.
+		inline Float STORM_FN opacity() const { return myOpacity; }
+		inline void STORM_ASSIGN opacity(Float o) { myOpacity = o; needUpdate(); }
+
+	protected:
+		// Create and update.
+		void create(GraphicsMgrRaw *g, void *&result, Cleanup &clean);
+		void update(GraphicsMgrRaw *g, void *resource);
+
 	private:
 		// The actual bitmap.
 		Bitmap *myBitmap;
 
 		// The transform when applying the brush.
 		Transform *myTfm;
+
+		// Opacity.
+		Float myOpacity;
 	};
 
 

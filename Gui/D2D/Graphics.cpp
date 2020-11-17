@@ -11,7 +11,7 @@ namespace gui {
 
 	D2DGraphics::D2DGraphics(D2DSurface &surface, Nat id) : surface(surface) {
 		identifier = id;
-		manager(new (this) D2DManager(surface));
+		manager(new (this) D2DManager(this, surface));
 
 		oldStates = new (this) Array<State>();
 		layers = new (this) Array<Layer>();
@@ -32,6 +32,8 @@ namespace gui {
 #ifdef GUI_WIN32
 
 #define BRUSH(B) ((ID2D1Brush *)(B)->forGraphicsRaw(this))
+#define BITMAP(R) ((ID2D1Bitmap *)(R)->forGraphicsRaw(this))
+#define PATH(P) ((ID2D1PathGeometry *)(P)->forGraphicsRaw(this))
 
 	void D2DGraphics::surfaceResized() {
 		// Remove any layers.
@@ -245,7 +247,7 @@ namespace gui {
 	}
 
 	void D2DGraphics::draw(Path *path, Brush *style) {
-		surface.target()->DrawGeometry(path->geometry(), BRUSH(style), state.lineWidth);
+		surface.target()->DrawGeometry(PATH(path), BRUSH(style), state.lineWidth);
 	}
 
 	void D2DGraphics::fill(Rect rect, Brush *style) {
@@ -271,15 +273,15 @@ namespace gui {
 	}
 
 	void D2DGraphics::fill(Path *path, Brush *style) {
-		surface.target()->FillGeometry(path->geometry(), BRUSH(style));
+		surface.target()->FillGeometry(PATH(path), BRUSH(style));
 	}
 
 	void D2DGraphics::draw(Bitmap *bitmap, Rect rect, Float opacity) {
-		// surface.target()->DrawBitmap(bitmap->bitmap(owner), &dx(rect), opacity, D2D1_BITMAP_INTERPOLATION_MODE_LINEAR, NULL);
+		surface.target()->DrawBitmap(BITMAP(bitmap), &dx(rect), opacity, D2D1_BITMAP_INTERPOLATION_MODE_LINEAR, NULL);
 	}
 
 	void D2DGraphics::draw(Bitmap *bitmap, Rect src, Rect dest, Float opacity) {
-		// surface.target()->DrawBitmap(bitmap->bitmap(owner), &dx(dest), opacity, D2D1_BITMAP_INTERPOLATION_MODE_LINEAR, &dx(src));
+		surface.target()->DrawBitmap(BITMAP(bitmap), &dx(dest), opacity, D2D1_BITMAP_INTERPOLATION_MODE_LINEAR, &dx(src));
 	}
 
 	void D2DGraphics::text(Str *text, Font *font, Brush *style, Rect rect) {

@@ -26,11 +26,21 @@ namespace gui {
 
 #endif
 
-	BitmapBrush::BitmapBrush(Bitmap *bitmap) : myBitmap(bitmap), myTfm(new (engine()) Transform()) {}
+	BitmapBrush::BitmapBrush(Bitmap *bitmap) : myBitmap(bitmap), myTfm(new (engine()) Transform()), myOpacity(1.0f) {}
 
-	BitmapBrush::BitmapBrush(Bitmap *bitmap, Transform *tfm) : myBitmap(bitmap), myTfm(tfm) {}
+	BitmapBrush::BitmapBrush(Bitmap *bitmap, Transform *tfm) : myBitmap(bitmap), myTfm(tfm), myOpacity(1.0f) {}
 
-	void BitmapBrush::transform(Transform *tfm) { /* dummy */ }
+	void BitmapBrush::transform(Transform *tfm) {
+		myTfm = tfm;
+		needUpdate();
+	}
+
+	void BitmapBrush::create(GraphicsMgrRaw *g, void *&result, Cleanup &update) {
+		g->create(this, result, update);
+	}
+	void BitmapBrush::update(GraphicsMgrRaw *g, void *resource) {
+		g->update(this, resource);
+	}
 
 #ifdef GUI__WIN32
 

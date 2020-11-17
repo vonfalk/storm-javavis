@@ -1,13 +1,22 @@
 #include "stdafx.h"
 #include "Bitmap.h"
 #include "Painter.h"
+#include "GraphicsMgr.h"
 #include "Exception.h"
 
 namespace gui {
 
 	Bitmap::Bitmap(Image *img) : src(img) {}
 
-#ifdef GUI_WIN32
+	void Bitmap::create(GraphicsMgrRaw *g, void *&result, Cleanup &update) {
+		g->create(this, result, update);
+	}
+
+	void Bitmap::update(GraphicsMgrRaw *g, void *resource) {
+		g->update(this, resource);
+	}
+
+#ifdef GUI__WIN32
 
 	void Bitmap::create(Painter *owner, ID2D1Resource **out) {
 		Nat w = src->width();
@@ -87,7 +96,6 @@ namespace gui {
 #endif
 
 	Size Bitmap::size() {
-		// TODO: Respect screen vs image dpi?
 		return src->size();
 	}
 
