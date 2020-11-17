@@ -1,12 +1,15 @@
 #include "stdafx.h"
 #include "Graphics.h"
 #include "Bitmap.h"
-#include "Core/Exception.h"
+#include "GraphicsMgr.h"
 
 namespace gui {
 
 	Graphics::Graphics() {
 		resources = new (this) WeakSet<Resource>();
+
+		// This works well as a dummy implementation.
+		mgr = new (this) GraphicsMgrRaw();
 	}
 
 	Graphics::~Graphics() {
@@ -63,18 +66,6 @@ namespace gui {
 
 	void Graphics::draw(Bitmap *bitmap, Rect src, Rect dest) {
 		draw(bitmap, src, dest, 1);
-	}
-
-	GraphicsResource *Graphics::create(SolidBrush *) {
-		throw new (this) NotSupported(S("create(SolidBrush)"));
-	}
-
-	GraphicsResource *Graphics::create(LinearGradient *) {
-		throw new (this) NotSupported(S("create(LinearGradient)"));
-	}
-
-	GraphicsResource *Graphics::create(RadialGradient *) {
-		throw new (this) NotSupported(S("create(RadialGradient)"));
 	}
 
 }

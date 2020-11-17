@@ -1,32 +1,10 @@
 #include "stdafx.h"
-#include "GraphicsResource.h"
+#include "GraphicsMgr.h"
+#include "Core/Exception.h"
 
 namespace gui {
 
-	void GraphicsMgrRaw::create(SolidBrush *brush, void *&result, Resource::Cleanup &cleanup) {
-		assert(false);
-	}
-
-	void GraphicsMgrRaw::create(LinearGradient *brush, void *&result, Resource::Cleanup &cleanup) {
-		assert(false);
-	}
-
-	void GraphicsMgrRaw::create(RadialGradient *brush, void *&result, Resource::Cleanup &cleanup) {
-		assert(false);
-	}
-
-	void GraphicsMgrRaw::update(SolidBrush *brush, void *resource) {
-		assert(false);
-	}
-
-	void GraphicsMgrRaw::update(LinearGradient *brush, void *resource) {
-		assert(false);
-	}
-
-	void GraphicsMgrRaw::update(RadialGradient *brush, void *resource) {
-		assert(false);
-	}
-
+	DEFINE_GRAPHICS_MGR_FNS(GraphicsMgrRaw);
 
 	void GraphicsMgr::create(SolidBrush *brush, void *&result, Resource::Cleanup &cleanup) {
 		cleanup = null;

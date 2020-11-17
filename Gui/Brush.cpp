@@ -2,7 +2,7 @@
 #include "Brush.h"
 #include "Painter.h"
 #include "Bitmap.h"
-#include "GraphicsResource.h"
+#include "GraphicsMgr.h"
 
 namespace gui {
 

@@ -110,13 +110,6 @@ namespace gui {
 		// Draw pre-formatted text.
 		void STORM_FN draw(Text *text, Brush *brush, Point origin);
 
-		/**
-		 * Create things.
-		 */
-		GraphicsResource *STORM_FN create(SolidBrush *b);
-		GraphicsResource *STORM_FN create(LinearGradient *b);
-		GraphicsResource *STORM_FN create(RadialGradient *b);
-
 	private:
 		// Target surface.
 		D2DSurface &surface;

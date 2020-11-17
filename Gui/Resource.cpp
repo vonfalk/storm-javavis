@@ -22,7 +22,7 @@ namespace gui {
 	void *Resource::forGraphicsRaw(Graphics *g) {
 		Bool addRef = g->attach(this);
 
-		GraphicsMgrRaw *mgr = null; // g->manager();
+		GraphicsMgrRaw *mgr = g->manager();
 
 		void *ptr;
 		Nat count = get(g->id(), ptr, addRef);
@@ -173,12 +173,13 @@ namespace gui {
 			firstRefs = Nat(addRef);
 			firstData = data;
 			firstClean = clean;
+			offset = id;
 			return firstRefs;
 		}
 
 		// Make sure we have space.
 		Nat rangeMin = min(offset, id);
-		Nat rangeMax = max(offset, id);
+		Nat rangeMax = max(offset, id) + 1;
 		if (more)
 			rangeMax = max(rangeMax, more->count + 1);
 
@@ -191,6 +192,9 @@ namespace gui {
 			firstRefs += Nat(addRef);
 			return firstRefs;
 		} else {
+			PVAR(rangeMin);
+			PVAR(rangeMax);
+
 			// Must be one of the remaining ones.
 			Element &e = more->v[id - offset - 1];
 			e.data = data;

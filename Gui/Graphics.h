@@ -11,7 +11,7 @@ namespace gui {
 	class Path;
 	class Bitmap;
 	class Resource;
-	class GraphicsResource;
+	class GraphicsMgrRaw;
 	class SolidBrush;
 	class LinearGradient;
 	class RadialGradient;
@@ -42,6 +42,11 @@ namespace gui {
 
 		// Get the identifier for this Graphics object.
 		Nat STORM_FN id() const { return identifier; }
+
+		// Get the graphics manager associated with this object. It is used to determine how
+		// resources are created. Graphics objects that do not create backend-specific resources
+		// will return a dummy implementation that asserts.
+		GraphicsMgrRaw *manager() const { return mgr; }
 
 		// Called when a resource tied to this graphics object is created. Returns 'true' if the
 		// resource was newly added here, and false otherwise.
@@ -134,24 +139,22 @@ namespace gui {
 		// Draw pre-formatted text.
 		virtual void STORM_FN draw(Text *text, Brush *brush, Point origin) ABSTRACT;
 
-
-		/**
-		 * Create resources specific to this class. Called internally by subclasses to Resource, not
-		 * to be used outside of that context.
-		 */
-		virtual GraphicsResource *STORM_FN create(SolidBrush *brush);
-		virtual GraphicsResource *STORM_FN create(LinearGradient *brush);
-		virtual GraphicsResource *STORM_FN create(RadialGradient *brush);
-
 	protected:
 		// Our identifier. Initialized to 0 (meaning, we don't need resources), but set by some
 		// subclasses during creation.
 		Nat identifier;
 
+		// Replace the graphics manager.
+		void STORM_ASSIGN manager(GraphicsMgrRaw *m) { mgr = m; }
+
 	private:
 		// Resources associated with this graphics object. I.e. instances that have created
 		// something that is tied to this Graphics instance.
 		WeakSet<Resource> *resources;
+
+		// Graphics manager. Created during construction.
+		GraphicsMgrRaw *mgr;
+
 	};
 
 

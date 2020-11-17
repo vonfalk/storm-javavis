@@ -61,4 +61,20 @@ namespace gui {
 		virtual void update(RadialGradient *brush, void *resource);
 	};
 
+	// Helper for the macro below.
+#define DEFINE_MGR_FN(CLASS, TYPE)										\
+	void CLASS::create(TYPE *, void *&, Resource::Cleanup &) {			\
+		throw new (this) NotSupported(S("create(") S(#TYPE) S(")"));	\
+	}																	\
+	void CLASS::update(TYPE *, void *) {								\
+		throw new (this) NotSupported(S("update(") S(#TYPE) S(")"));	\
+	}
+
+	// Define functions for a subclass to GraphicsMgrRaw. Useful since implementations of the
+	// GraphicsMgrRaw can not generally be compiled on the "wrong" platform.
+#define DEFINE_GRAPHICS_MGR_FNS(CLASS)			\
+	DEFINE_MGR_FN(CLASS, SolidBrush)			\
+	DEFINE_MGR_FN(CLASS, LinearGradient)		\
+	DEFINE_MGR_FN(CLASS, RadialGradient)
+
 }

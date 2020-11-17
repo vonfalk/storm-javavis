@@ -1,16 +1,18 @@
 #include "stdafx.h"
 #include "Graphics.h"
 #include "D2D.h"
-#include "Painter.h"
-#include "Brush.h"
-#include "Text.h"
-#include "Path.h"
-#include "Bitmap.h"
+#include "Manager.h"
+#include "Gui/Brush.h"
+#include "Gui/Text.h"
+#include "Gui/Path.h"
+#include "Gui/Bitmap.h"
 
 namespace gui {
 
 	D2DGraphics::D2DGraphics(D2DSurface &surface, Nat id) : surface(surface) {
 		identifier = id;
+		manager(new (this) D2DManager(surface));
+
 		oldStates = new (this) Array<State>();
 		layers = new (this) Array<Layer>();
 
@@ -27,22 +29,9 @@ namespace gui {
 			layers->at(i).release();
 	}
 
-	GraphicsResource *D2DGraphics::create(SolidBrush *b) {
-		return new (this) D2DSolidBrush(surface, b);
-	}
-
-	GraphicsResource *D2DGraphics::create(LinearGradient *b) {
-		return new (this) D2DLinearGradient(surface, b);
-	}
-
-	GraphicsResource *D2DGraphics::create(RadialGradient *b) {
-		return new (this) D2DRadialGradient(surface, b);
-	}
-
-
 #ifdef GUI_WIN32
 
-#define BRUSH(B) ((D2DBrush *)(B)->forGraphics(this))->brush
+#define BRUSH(B) ((ID2D1Brush *)(B)->forGraphicsRaw(this))
 
 	void D2DGraphics::surfaceResized() {
 		// Remove any layers.
