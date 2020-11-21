@@ -5,11 +5,20 @@
 #include "Text.h"
 #include "Path.h"
 #include "Bitmap.h"
+#include "Cairo.h"
+#include "Manager.h"
 
 namespace gui {
 
-	CairoGraphics::CairoGraphics(CairoSurface &surface) : surface(surface) {
+	CairoGraphics::CairoGraphics(CairoSurface &surface, Nat id) : surface(surface) {
+		identifier = id;
+
+#ifdef GUI_GTK
+		manager(new (this) CairoManager(this, &surface));
+#endif
+
 		oldStates = new (this) Array<State>();
+
 
 		state = State();
 		oldStates->push(state);
@@ -19,20 +28,12 @@ namespace gui {
 
 #ifdef GUI_GTK
 
-	Size CairoGraphics::size() {
-		return info.size / info.scale;
+	void CairoGraphics::surfaceResized() {
+		TODO("FIXME");
 	}
 
-	void CairoGraphics::updateTarget(RenderInfo info) {
-		this->info = info;
-	}
-
-	Size CairoGraphics::size() {
-		return info.size / info.scale;
-	}
-
-	void CairoGraphics::destroyed() {
-		info = RenderInfo();
+	void CairoGraphics::surfaceDestroyed() {
+		TODO("FIXME");
 	}
 
 	/**
@@ -41,21 +42,21 @@ namespace gui {
 
 	void CairoGraphics::beforeRender(Color bgColor) {
 		// Make sure the cairo context is in a reasonable state.
-		cairo_surface_mark_dirty(surface->surface);
+		cairo_surface_mark_dirty(surface.surface);
 
 		// Clear with the BG color.
-		cairo_set_source_rgba(surface->cairo, bgColor.r, bgColor.g, bgColor.b, bgColor.a);
-		cairo_set_operator(surface->cairo, CAIRO_OPERATOR_SOURCE);
-		cairo_paint(surface->cairo);
+		cairo_set_source_rgba(surface.device, bgColor.r, bgColor.g, bgColor.b, bgColor.a);
+		cairo_set_operator(surface.device, CAIRO_OPERATOR_SOURCE);
+		cairo_paint(surface.device);
 
 		// Set defaults, just in case.
-		cairo_set_operator(surface->cairo, CAIRO_OPERATOR_OVER);
-		cairo_set_fill_rule(surface->cairo, CAIRO_FILL_RULE_EVEN_ODD);
+		cairo_set_operator(surface.device, CAIRO_OPERATOR_OVER);
+		cairo_set_fill_rule(surface.device, CAIRO_FILL_RULE_EVEN_ODD);
 
 		// Update the clip region and scale of the root state.
 		state = State();
-		state.scale(info.scale);
-		state.clip = Rect(Point(), info.size);
+		state.scale(surface.scale);
+		state.clip = Rect(Point(), surface.size);
 		oldStates->last() = state;
 
 		// Set up the backend.
@@ -66,7 +67,7 @@ namespace gui {
 		// Make sure all layers are returned to the stack.
 		reset();
 
-		cairo_surface_flush(surface->surface);
+		cairo_surface_flush(surface.surface);
 
 		return true;
 	}
@@ -91,28 +92,28 @@ namespace gui {
 		oldStates->push(state);
 		state.type = LayerKind::group;
 		state.opacity = opacity;
-		cairo_push_group(info.target());
+		cairo_push_group(surface.device);
 	}
 
 	void CairoGraphics::push(Rect clip) {
 		oldStates->push(state);
 		state.type = LayerKind::save;
-		cairo_save(info.target());
+		cairo_save(surface.device);
 
 		Size sz = clip.size();
-		cairo_rectangle(info.target(), clip.p0.x, clip.p0.y, sz.w, sz.h);
-		cairo_clip(info.target());
+		cairo_rectangle(surface.device, clip.p0.x, clip.p0.y, sz.w, sz.h);
+		cairo_clip(surface.device);
 	}
 
 	void CairoGraphics::push(Rect clip, Float opacity) {
 		oldStates->push(state);
 		state.type = LayerKind::group;
 		state.opacity = opacity;
-		cairo_push_group(info.target());
+		cairo_push_group(surface.device);
 
 		Size sz = clip.size();
-		cairo_rectangle(info.target(), clip.p0.x, clip.p0.y, sz.w, sz.h);
-		cairo_clip(info.target());
+		cairo_rectangle(surface.device, clip.p0.x, clip.p0.y, sz.w, sz.h);
+		cairo_clip(surface.device);
 	}
 
 	Bool CairoGraphics::pop() {
@@ -120,11 +121,11 @@ namespace gui {
 		case LayerKind::none:
 			break;
 		case LayerKind::group:
-			cairo_pop_group_to_source(info.target());
-			cairo_paint_with_alpha(info.target(), state.opacity);
+			cairo_pop_group_to_source(surface.device);
+			cairo_paint_with_alpha(surface.device, state.opacity);
 			break;
 		case LayerKind::save:
-			cairo_restore(info.target());
+			cairo_restore(surface.device);
 			break;
 		}
 
@@ -142,19 +143,19 @@ namespace gui {
 	void CairoGraphics::transform(Transform *tfm) {
 		cairo_matrix_t m = cairoMultiply(cairo(tfm), oldStates->last().transform());
 		state.transform(m);
-		cairo_set_matrix(info.target(), &m);
+		cairo_set_matrix(surface.device, &m);
 	}
 
 	void CairoGraphics::lineWidth(Float w) {
 		// TODO: How is the width of lines affected by scaling etc.? How do we want it to behave?
 		state.lineWidth = oldStates->last().lineWidth *w;
-		cairo_set_line_width(info.target(), state.lineWidth);
+		cairo_set_line_width(surface.device, state.lineWidth);
 	}
 
 	void CairoGraphics::prepare() {
 		cairo_matrix_t tfm = state.transform();
-		cairo_set_matrix(info.target(), &tfm);
-		cairo_set_line_width(info.target(), state.lineWidth);
+		cairo_set_matrix(surface.device, &tfm);
+		cairo_set_line_width(surface.device, state.lineWidth);
 	}
 
 
@@ -162,142 +163,189 @@ namespace gui {
 	 * Draw stuff.
 	 */
 
+#define SET_BRUSH(style) CairoManager::applyBrush(surface.device, (style), (style)->forGraphicsRaw(this))
+#define GET_BITMAP(bitmap) ((cairo_surface_t *)(bitmap)->forGraphicsRaw(this))
+
 	void CairoGraphics::line(Point from, Point to, Brush *style) {
-		cairo_new_path(info.target());
-		cairo_move_to(info.target(), from.x, from.y);
-		cairo_line_to(info.target(), to.x, to.y);
+		cairo_new_path(surface.device);
+		cairo_move_to(surface.device, from.x, from.y);
+		cairo_line_to(surface.device, to.x, to.y);
 
-		style->setSource(owner, info.target());
+		SET_BRUSH(style);
 
-		cairo_stroke(info.target());
+		cairo_stroke(surface.device);
 	}
 
 	void CairoGraphics::draw(Rect rect, Brush *style) {
 		Size sz = rect.size();
-		cairo_rectangle(info.target(), rect.p0.x, rect.p0.y, sz.w, sz.h);
-		style->setSource(owner, info.target());
-		cairo_stroke(info.target());
+		cairo_rectangle(surface.device, rect.p0.x, rect.p0.y, sz.w, sz.h);
+		SET_BRUSH(style);
+		cairo_stroke(surface.device);
 	}
 
-	static void rectangle(const RenderInfo &info, const Rect &rect) {
+	static void rectangle(cairo_t *device, const Rect &rect) {
 		Size sz = rect.size();
-		cairo_rectangle(info.target(), rect.p0.x, rect.p0.y, sz.w, sz.h);
+		cairo_rectangle(device, rect.p0.x, rect.p0.y, sz.w, sz.h);
 	}
 
-	static void rounded_corner(const RenderInfo &info, Point center, Size scale, double from, double to) {
-		cairo_save(info.target());
-		cairo_translate(info.target(), center.x, center.y);
-		cairo_scale(info.target(), scale.w, scale.h);
-		cairo_arc(info.target(), 0, 0, 1, from, to);
-		cairo_restore(info.target());
+	static void rounded_corner(cairo_t *device, Point center, Size scale, double from, double to) {
+		cairo_save(device);
+		cairo_translate(device, center.x, center.y);
+		cairo_scale(device, scale.w, scale.h);
+		cairo_arc(device, 0, 0, 1, from, to);
+		cairo_restore(device);
 	}
 
-	static void rounded_rect(const RenderInfo &to, Rect rect, Size edges) {
+	static void rounded_rect(cairo_t *device, Rect rect, Size edges) {
 		const double quarter = M_PI / 2;
 
-		cairo_new_path(to.target());
-		rounded_corner(to, Point(rect.p1.x - edges.w, rect.p0.y + edges.h), edges, -quarter, 0);
-		rounded_corner(to, Point(rect.p1.x - edges.w, rect.p1.y - edges.h), edges, 0, quarter);
-		rounded_corner(to, Point(rect.p0.x + edges.w, rect.p1.y - edges.h), edges, quarter, 2*quarter);
-		rounded_corner(to, Point(rect.p0.x + edges.w, rect.p0.y + edges.h), edges, 2*quarter, 3*quarter);
-		cairo_close_path(to.target());
+		cairo_new_path(device);
+		rounded_corner(device, Point(rect.p1.x - edges.w, rect.p0.y + edges.h), edges, -quarter, 0);
+		rounded_corner(device, Point(rect.p1.x - edges.w, rect.p1.y - edges.h), edges, 0, quarter);
+		rounded_corner(device, Point(rect.p0.x + edges.w, rect.p1.y - edges.h), edges, quarter, 2*quarter);
+		rounded_corner(device, Point(rect.p0.x + edges.w, rect.p0.y + edges.h), edges, 2*quarter, 3*quarter);
+		cairo_close_path(device);
 	}
 
 	void CairoGraphics::draw(Rect rect, Size edges, Brush *style) {
-		rounded_rect(info, rect, edges);
+		rounded_rect(surface.device, rect, edges);
 
-		style->setSource(owner, info.target());
-		cairo_stroke(info.target());
+		SET_BRUSH(style);
+		cairo_stroke(surface.device);
 	}
 
-	static void cairo_oval(const RenderInfo &to, Rect rect) {
-		cairo_save(to.target());
+	static void cairo_oval(cairo_t *device, Rect rect) {
+		cairo_save(device);
 
 		Point center = rect.center();
-		cairo_translate(to.target(), center.x, center.y);
+		cairo_translate(device, center.x, center.y);
 		Size size = rect.size();
-		cairo_scale(to.target(), size.w / 2, size.h / 2);
+		cairo_scale(device, size.w / 2, size.h / 2);
 
-		cairo_new_path(to.target());
-		cairo_arc(to.target(), 0, 0, 1, 0, 2*M_PI);
+		cairo_new_path(device);
+		cairo_arc(device, 0, 0, 1, 0, 2*M_PI);
 
-		cairo_restore(to.target());
+		cairo_restore(device);
 	}
 
 	void CairoGraphics::oval(Rect rect, Brush *style) {
-		cairo_oval(info, rect);
+		cairo_oval(surface.device, rect);
 
-		style->setSource(owner, info.target());
-		cairo_stroke(info.target());
+		SET_BRUSH(style);
+		cairo_stroke(surface.device);
+	}
+
+	static void draw_path(cairo_t *to, Path *path) {
+		cairo_new_path(to);
+
+		Array<PathPoint> *data = path->peekData();
+		bool started = false;
+		Point current;
+		for (Nat i = 0; i < data->count(); i++) {
+			PathPoint &e = data->at(i);
+			switch (e.t) {
+			case tStart:
+				current = e.start()->pt;
+				cairo_move_to(to, current.x, current.y);
+				started = true;
+				break;
+			case tClose:
+				cairo_close_path(to);
+				started = false;
+				break;
+			case tLine:
+				if (started) {
+					current = e.line()->to;
+					cairo_line_to(to, current.x, current.y);
+				}
+				break;
+			case tBezier2:
+				if (started) {
+					Bezier2 *b = e.bezier2();
+					Point c1 = current + (2.0f/3.0f)*(b->c1 - current);
+					Point c2 = b->to + (2.0f/3.0f)*(b->c1 - b->to);
+					current = b->to;
+					cairo_curve_to(to, c1.x, c1.y, c2.x, c2.y, current.x, current.y);
+				}
+				break;
+			case tBezier3:
+				if (started) {
+					Bezier3 *b = e.bezier3();
+					current = b->to;
+					cairo_curve_to(to, b->c1.x, b->c1.y, b->c2.x, b->c2.y, current.x, current.y);
+				}
+				break;
+			}
+		}
 	}
 
 	void CairoGraphics::draw(Path *path, Brush *style) {
-		path->draw(info.target());
-		style->setSource(owner, info.target());
-		cairo_stroke(info.target());
+		draw_path(surface.device, path);
+		SET_BRUSH(style);
+		cairo_stroke(surface.device);
 	}
 
 	void CairoGraphics::fill(Rect rect, Brush *style) {
-		rectangle(info, rect);
-		style->setSource(owner, info.target());
-		cairo_fill(info.target());
+		rectangle(surface.device, rect);
+		SET_BRUSH(style);
+		cairo_fill(surface.device);
 	}
 
 	void CairoGraphics::fill(Rect rect, Size edges, Brush *style) {
-		rounded_rect(info, rect, edges);
+		rounded_rect(surface.device, rect, edges);
 
-		style->setSource(owner, info.target());
-		cairo_fill(info.target());
+		SET_BRUSH(style);
+		cairo_fill(surface.device);
 	}
 
 	void CairoGraphics::fill(Brush *style) {
 		cairo_matrix_t tfm;
 		cairo_matrix_init_identity(&tfm);
-		cairo_set_matrix(info.target(), &tfm);
+		cairo_set_matrix(surface.device, &tfm);
 
-		style->setSource(owner, info.target());
-		cairo_paint(info.target());
+		SET_BRUSH(style);
+		cairo_paint(surface.device);
 
 		tfm = state.transform();
-		cairo_set_matrix(info.target(), &tfm);
+		cairo_set_matrix(surface.device, &tfm);
 	}
 
 	void CairoGraphics::fillOval(Rect rect, Brush *style) {
-		cairo_oval(info, rect);
+		cairo_oval(surface.device, rect);
 
-		style->setSource(owner, info.target());
-		cairo_fill(info.target());
+		SET_BRUSH(style);
+		cairo_fill(surface.device);
 	}
 
 	void CairoGraphics::fill(Path *path, Brush *style) {
-		path->draw(info.target());
-		style->setSource(owner, info.target());
-		cairo_fill(info.target());
+		draw_path(surface.device, path);
+		SET_BRUSH(style);
+		cairo_fill(surface.device);
 	}
 
 	void CairoGraphics::draw(Bitmap *bitmap, Rect rect, Float opacity) {
-		cairo_pattern_t *pattern = cairo_pattern_create_for_surface(bitmap->get<cairo_surface_t>(owner));
+		cairo_pattern_t *pattern = cairo_pattern_create_for_surface(GET_BITMAP(bitmap));
 		cairo_matrix_t tfm;
 		Size original = bitmap->size();
 		Size target = rect.size();
 		cairo_matrix_init_scale(&tfm, original.w / target.w, original.h / target.h);
 		cairo_matrix_translate(&tfm, -rect.p0.x, -rect.p0.y);
 		cairo_pattern_set_matrix(pattern, &tfm);
-		cairo_set_source(info.target(), pattern);
+		cairo_set_source(surface.device, pattern);
 		if (opacity < 1.0f)
-			cairo_paint_with_alpha(info.target(), opacity);
+			cairo_paint_with_alpha(surface.device, opacity);
 		else
-			cairo_paint(info.target());
+			cairo_paint(surface.device);
 		cairo_pattern_destroy(pattern);
 	}
 
 	void CairoGraphics::draw(Bitmap *bitmap, Rect src, Rect dest, Float opacity) {
-		cairo_save(info.target());
+		cairo_save(surface.device);
 
-		rectangle(info, dest);
-		cairo_clip(info.target());
+		rectangle(surface.device, dest);
+		cairo_clip(surface.device);
 
-		cairo_pattern_t *pattern = cairo_pattern_create_for_surface(bitmap->get<cairo_surface_t>(owner));
+		cairo_pattern_t *pattern = cairo_pattern_create_for_surface(GET_BITMAP(bitmap));
 		cairo_matrix_t tfm;
 		Size original = src.size();
 		Size target = dest.size();
@@ -305,19 +353,19 @@ namespace gui {
 		cairo_matrix_scale(&tfm, original.w / target.w, original.h / target.h);
 		cairo_matrix_translate(&tfm, -dest.p0.x, -dest.p0.y);
 		cairo_pattern_set_matrix(pattern, &tfm);
-		cairo_set_source(info.target(), pattern);
+		cairo_set_source(surface.device, pattern);
 		if (opacity < 1.0f)
-			cairo_paint_with_alpha(info.target(), opacity);
+			cairo_paint_with_alpha(surface.device, opacity);
 		else
-			cairo_paint(info.target());
+			cairo_paint(surface.device);
 		cairo_pattern_destroy(pattern);
 
-		cairo_restore(info.target());
+		cairo_restore(surface.device);
 	}
 
 	void CairoGraphics::text(Str *text, Font *font, Brush *style, Rect rect) {
 		// Note: It would be good to not have to create the layout all the time.
-		PangoLayout *layout = pango_cairo_create_layout(info.target());
+		PangoLayout *layout = pango_cairo_create_layout(surface.device);
 
 		pango_layout_set_wrap(layout, PANGO_WRAP_WORD_CHAR);
 		pango_layout_set_font_description(layout, font->desc());
@@ -326,19 +374,20 @@ namespace gui {
 		pango_layout_set_height(layout, toPango(rect.size().h + 0.3f));
 		pango_layout_set_text(layout, text->utf8_str(), -1);
 
-		style->setSource(owner, info.target());
+		SET_BRUSH(style);
 
-		cairo_move_to(info.target(), rect.p0.x, rect.p0.y);
-		pango_cairo_show_layout(info.target(), layout);
+		cairo_move_to(surface.device, rect.p0.x, rect.p0.y);
+		pango_cairo_show_layout(surface.device, layout);
 
 		g_object_unref(layout);
 	}
 
 	void CairoGraphics::draw(Text *text, Brush *style, Point origin) {
-		style->setSource(owner, info.target());
+		SET_BRUSH(style);
 
-		cairo_move_to(info.target(), origin.x, origin.y);
-		pango_cairo_show_layout(info.target(), text->layout(owner));
+		TODO("FIXME!");
+		// cairo_move_to(surface.device, origin.x, origin.y);
+		// pango_cairo_show_layout(surface.device, text->layout(owner));
 	}
 
 #else

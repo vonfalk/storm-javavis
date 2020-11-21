@@ -11,7 +11,10 @@ namespace gui {
 
 	D2DGraphics::D2DGraphics(D2DSurface &surface, Nat id) : surface(surface) {
 		identifier = id;
+
+#ifdef GUI_WIN32
 		manager(new (this) D2DManager(this, surface));
+#endif
 
 		oldStates = new (this) Array<State>();
 		layers = new (this) Array<Layer>();
@@ -300,7 +303,9 @@ namespace gui {
 
 #else
 
-	DEFINE_WINDOW_GRAPHICS_FNS(CairoGraphics)
+	DEFINE_WINDOW_GRAPHICS_FNS(D2DGraphics)
+
+	void D2DGraphics::Layer::release() {}
 
 #endif
 

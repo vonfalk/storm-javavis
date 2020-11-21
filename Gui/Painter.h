@@ -2,6 +2,7 @@
 #include "Handle.h"
 #include "Window.h"
 #include "WindowGraphics.h"
+#include "Surface.h"
 #include "RenderMgr.h"
 #include "Core/WeakSet.h"
 #include "Core/Lock.h"
@@ -10,16 +11,6 @@ namespace gui {
 	class App;
 	class RenderResource;
 
-	/**
-	 * Paramters to 'redraw' calls. Not exposed to Storm.
-	 */
-	struct RepaintParams {
-#ifdef GUI_GTK
-		GdkWindow *target;
-		GtkWidget *widget;
-		cairo_t *ctx;
-#endif
-	};
 
 	/**
 	 * Object responsible for painting window contents. Create a subclass and override
@@ -90,6 +81,9 @@ namespace gui {
 		// not do anything, instead we rely on RenderMgr to repaint us every frame.
 		Bool continuous;
 
+		// Do we need to wait for "paint" messages from the window system?
+		Bool synchronizedPresent;
+
 		// Are we attached to anything? If we get detached while waiting to render the screen, we
 		// need to be able to detect that.
 		inline bool attached() const { return graphics != null; }
@@ -122,10 +116,6 @@ namespace gui {
 		// OS-specific data.
 		void CODECALL repaintI(RepaintParams *params);
 
-		// Called before and after the actual work inside 'repaint' is done. Used for platform specific calls.
-		void beforeRepaint(RepaintParams *handle);
-		void afterRepaint();
-
 		// Called from the UI thread.
 		void uiAfterRepaint(RepaintParams *handle);
 
@@ -135,8 +125,11 @@ namespace gui {
 		// Do repaints (always).
 		void doRepaint(bool waitForVSync, bool fromDraw);
 
-		// Do the platform specific of the repaint cycle.
+		// Do repaints without having to worry about scheduling repaints.
 		bool doRepaintI(bool waitForVSync, bool fromDraw);
+
+		// Ask the attached window to repaint itself whenever convenient.
+		void repaintAttachedWindow();
 	};
 
 }

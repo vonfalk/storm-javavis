@@ -18,7 +18,7 @@ namespace gui {
 		STORM_CLASS;
 	public:
 		// Create.
-		CairoGraphics(CairoSurface &surface);
+		CairoGraphics(CairoSurface &surface, Nat id);
 
 		// Destroy.
 		~CairoGraphics();
@@ -137,7 +137,7 @@ namespace gui {
 				tfm0 = 1; tfm1 = 0;
 				tfm2 = 0; tfm3 = 1;
 				tfm4 = 0; tfm5 = 0;
-				layer = LayerKind::none;
+				type = LayerKind::none;
 			}
 
 			State(const cairo_matrix_t &tfm, Float lineWidth) {

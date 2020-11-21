@@ -4,6 +4,17 @@
 namespace gui {
 
 	/**
+	 * Parameters passed to "repaint" calls. Highly backend-specific.
+	 */
+	struct RepaintParams {
+#ifdef GUI_GTK
+		GdkWindow *window;
+		GtkWidget *widget;
+		cairo_t *cairo;
+#endif
+	};
+
+	/**
 	 * A generic surface associated with some window on the current system, to which it is possible
 	 * to draw.
 	 */
@@ -24,8 +35,30 @@ namespace gui {
 		// Resize this surface.
 		virtual void resize(Size size, Float scale) = 0;
 
-		// Present this surface to the screen (usually a swap, but might involve other mechanisms).
-		virtual bool present(bool waitForVSync) = 0;
+		// Status codes from "present".
+		enum PresentStatus {
+			// All went well:
+			pSuccess,
+
+			// Re-create the associated resources and try again:
+			pRecreate,
+
+			// We cannot present from the rendering thread. Ask the UI thread to repaint the
+			// associated window and call "repaint" from the UI thread.
+			pRepaint,
+
+			// Fatal failure.
+			pFailure,
+		};
+
+		// Try to present this surface directly from the Render thread.
+		virtual PresentStatus present(bool waitForVSync) = 0;
+
+		// Called from the UI thread when "present" returned "repaint".
+		// Default implementation provided as all subclasses do not need this operation.
+		virtual void repaint(RepaintParams *params) {
+			(void)params;
+		}
 	};
 
 }

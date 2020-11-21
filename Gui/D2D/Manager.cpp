@@ -32,11 +32,11 @@ namespace gui {
 		}
 	}
 
-	D2DManager::D2DManager(Graphics *owner, D2DSurface &surface) : owner(owner), surface(surface) {}
+	D2DManager::D2DManager(Graphics *owner, D2DSurface &surface) : owner(owner), surface(&surface) {}
 
 	void D2DManager::create(SolidBrush *brush, void *&result, Resource::Cleanup &cleanup) {
 		ID2D1SolidColorBrush *b = null;
-		check(surface.target()->CreateSolidColorBrush(dx(brush->color()), &b), S("Failed to create a solid brush: "));
+		check(surface->target()->CreateSolidColorBrush(dx(brush->color()), &b), S("Failed to create a solid brush: "));
 		b->SetOpacity(brush->opacity());
 		result = b;
 		cleanup = &cleanupFn;
@@ -58,7 +58,7 @@ namespace gui {
 		};
 
 		ID2D1BitmapBrush *b = null;
-		check(surface.target()->CreateBitmapBrush(bitmap, props, &b), S("Failed to create bitmap brush: "));
+		check(surface->target()->CreateBitmapBrush(bitmap, props, &b), S("Failed to create bitmap brush: "));
 
 		b->SetTransform(dx(brush->transform()));
 		b->SetOpacity(brush->opacity());
@@ -74,11 +74,11 @@ namespace gui {
 	}
 
 	void D2DManager::create(LinearGradient *brush, void *&result, Resource::Cleanup &cleanup) {
-		ID2D1GradientStopCollection *stops = createStops(surface.target(), brush->peekStops());
+		ID2D1GradientStopCollection *stops = createStops(surface->target(), brush->peekStops());
 
 		D2D1_LINEAR_GRADIENT_BRUSH_PROPERTIES p = { dx(brush->start()), dx(brush->end()) };
 		ID2D1LinearGradientBrush *b = null;
-		HRESULT r = surface.target()->CreateLinearGradientBrush(p, stops, &b);
+		HRESULT r = surface->target()->CreateLinearGradientBrush(p, stops, &b);
 		if (stops)
 			stops->Release();
 
@@ -95,12 +95,12 @@ namespace gui {
 	}
 
 	void D2DManager::create(RadialGradient *brush, void *&result, Resource::Cleanup &cleanup) {
-		ID2D1GradientStopCollection *stops = createStops(surface.target(), brush->peekStops());
+		ID2D1GradientStopCollection *stops = createStops(surface->target(), brush->peekStops());
 
 		D2D1_RADIAL_GRADIENT_BRUSH_PROPERTIES p = { dx(brush->center()), { 0.0f, 0.0f }, brush->radius(), brush->radius() };
 		D2D1_BRUSH_PROPERTIES p2 = { 1.0f, dx(brush->transform()) };
 		ID2D1RadialGradientBrush *b = null;
-		HRESULT r = surface.target()->CreateRadialGradientBrush(p, p2, stops, &b);
+		HRESULT r = surface->target()->CreateRadialGradientBrush(p, p2, stops, &b);
 		stops->Release();
 
 		check(r, S("Failed to create radial gradient: "));
@@ -143,7 +143,7 @@ namespace gui {
 			}
 		}
 
-		HRESULT r = surface.target()->CreateBitmap(s, img, stride, props, (ID2D1Bitmap **)&result);
+		HRESULT r = surface->target()->CreateBitmap(s, img, stride, props, (ID2D1Bitmap **)&result);
 		check(r, S("Failed to create bitmap:"));
 		cleanup = &cleanupFn;
 	}
@@ -154,7 +154,7 @@ namespace gui {
 
 	void D2DManager::create(Path *path, void *&result, Resource::Cleanup &cleanup) {
 		ComPtr<ID2D1Factory> factory;
-		surface.target()->GetFactory(&factory.v);
+		surface->target()->GetFactory(&factory.v);
 
 		ID2D1PathGeometry *geometry;
 		check(factory->CreatePathGeometry(&geometry), S("Failed to create a path object: "));

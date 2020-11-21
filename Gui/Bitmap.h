@@ -9,11 +9,6 @@ namespace gui {
 	public:
 		STORM_CTOR Bitmap(Image *src);
 
-#ifdef GUI_GTK
-		// Create the bitmap.
-		virtual OsResource *create(Painter *owner);
-#endif
-
 		// Source image.
 		inline Image *STORM_FN image() { return src; }
 

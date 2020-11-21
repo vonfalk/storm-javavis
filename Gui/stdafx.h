@@ -17,41 +17,21 @@
  */
 
 #ifdef WINDOWS
+
 #define GUI_WIN32
 #define UI_MULTITHREAD
+
 #else
+
 #define GUI_GTK
-#endif
 
-#ifdef GUI_GTK
-#include "GtkMode.h"
-
-/**
- * For Gtk+, there are a few possible implementations of the rendering. They differ both in how
- * OpenGL interacts with the drawing in Gtk+.
- *
- * GTK_MT - multi-threaded
- * GTK_ST - single-threaded
- * GTK_MT_SW - multi-threaded, force software rendering
- * GTK_ST_SW - single-threaded, force software rendering
- *
- * Note: Client applications will notice when we are not multi threading rendering.
- */
-#define GTK_MT (GTK_RENDER_MT)
-#define GTK_ST (0)
-#define GTK_MT_SW (GTK_RENDER_MT | GTK_RENDER_SW)
-#define GTK_ST_SW (GTK_RENDER_SW)
-
-// The selected mode. Pick one of the above.
-#define GTK_MODE GTK_MT
-
-#if GTK_RENDER_IS_MT(GTK_MODE)
+// Define either GUI_MULTITHREAD or GUI_SINGLETHREAD. Note: using a single-threaded UI will be
+// visible to users of the API.
 #define UI_MULTITHREAD
-#else
-#define UI_SINGLETHREAD
-#endif
+// #define UI_SINGLETHREAD
 
 #endif
+
 
 
 #if defined(UI_MULTITHREAD) == defined(UI_SINGLETHREAD)

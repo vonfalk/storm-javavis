@@ -73,7 +73,7 @@ namespace gui {
 #endif
 #ifdef GUI_GTK
 		// Get the layout.
-		inline PangoLayout *layout(Painter *p) { return l; }
+		// inline PangoLayout *layout(Painter *p) { return l; }
 #endif
 
 	private:

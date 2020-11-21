@@ -99,12 +99,6 @@ namespace gui {
 		// Get the bounding box of this path.
 		inline Rect STORM_FN bound() { return b; }
 
-#ifdef GUI_GTK
-		// Set the path on the supplied cairo_t. Cairo has no inherent representation of a path, so
-		// we don't utilize the fact that we can cache it.
-		void draw(cairo_t *c);
-#endif
-
 		// Get the actual path.
 		Array<PathPoint> *STORM_FN data();
 

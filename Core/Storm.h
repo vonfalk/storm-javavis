@@ -314,9 +314,17 @@
 /**
  * Declare a string literal in Storm. Expands to L"" or u"" depending on what is appropriate for the
  * current system.
+ *
+ * LITERAL_S(x) produces whatever expression is passed as x. For example, LITERAL_S(1 + 2) yields "1 + 2"
  */
 #ifdef WINDOWS
-#define S(x) L ## x
+#define S_(x) L ## x
+#define S(x) S_(x)
+#define LITERAL__S(x) L ## #x
+#define LITERAL_S(x) LITERAL__S(x)
 #else
-#define S(x) u ## x
+#define S_(x) u ## x
+#define S(x) S_(x)
+#define LITERAL__S(x) u ## #x
+#define LITERAL_S(x) LITERAL__S(x)
 #endif

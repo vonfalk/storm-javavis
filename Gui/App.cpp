@@ -898,9 +898,7 @@ namespace gui {
 			RepaintRequest *now = repaintList;
 			repaintList = repaintList->next;
 
-			GdkWindow *window = gtk_widget_get_window(now->handle.widget());
-			if (window)
-				gdk_window_invalidate_rect(window, NULL, true);
+			gtk_widget_queue_draw(now->handle.widget());
 			now->wait.up();
 		}
 	}
