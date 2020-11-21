@@ -1,6 +1,8 @@
 #include "stdafx.h"
 #include "Device.h"
 #include "D2D/D2D.h"
+#include "Cairo/Cairo.h"
+#include "Exception.h"
 
 namespace gui {
 
@@ -12,8 +14,26 @@ namespace gui {
 
 #elif defined(GUI_GTK)
 
+#define ENV_NAME "STORM_RENDER_BACKEND"
+
 	Device *Device::create(Engine &e) {
-		assert(false, L"TODO: Fixme!");
+		const char *preference = getenv(ENV_NAME);
+		if (!preference)
+			preference = "gtk"; // TODO: Perhaps Skia?
+
+		if (strcmp(preference, "sw") == 0) {
+			return new CairoSwDevice(e);
+		} else if (strcmp(preference, "software") == 0) {
+			return new CairoSwDevice(e);
+		} else if (strcmp(preference, "gtk") == 0) {
+			return new CairoGtkDevice(e);
+		} else if (strcmp(preference, "gl") == 0) {
+			// return new CairoGlDevice(e);
+		} else if (strcmp(preference, "skia") == 0) {
+			// return new SkiaDevice(e);
+		}
+
+		throw new (e) GuiError(S("The supplied value of ") S(ENV_NAME) S(" is not supported."));
 	}
 
 #else

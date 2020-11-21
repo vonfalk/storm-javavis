@@ -25,9 +25,9 @@ linkFlags+=<path|packagePath><cairoName>
 
 # Skia stuff:
 # Compile Skia if necessary.
-preBuild+=./build_skia.sh <path|buildDir>skia.a <maxThreads>
+#preBuild+=./build_skia.sh <path|buildDir>skia.a <maxThreads>
 # Link Skia.
-linkFlags+=<path|buildDir>skia.a
+#linkFlags+=<path|buildDir>skia.a
 # Include path.
 include+=../Linux/skia
 # Defines

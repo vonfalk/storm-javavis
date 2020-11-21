@@ -49,6 +49,8 @@ namespace gui {
 				return i;
 			}
 		}
+
+		return 0;
 	}
 
 	void IdMgr::grow() {
