@@ -7,9 +7,29 @@
 namespace gui {
 
 	/**
+	 * Generic Cairo device. Used to coordinate ID creation.
+	 */
+	class CairoDevice : public Device {
+	public:
+		// Create.
+		CairoDevice(Engine &e);
+
+	protected:
+		// Get the ID.
+		Nat id();
+
+	private:
+		// Engine.
+		Engine &e;
+
+		// Our ID.
+		Nat myId;
+	};
+
+	/**
 	 * Cairo software device.
 	 */
-	class CairoSwDevice : public Device {
+	class CairoSwDevice : public CairoDevice {
 	public:
 		// Create.
 		CairoSwDevice(Engine &e);
@@ -22,10 +42,10 @@ namespace gui {
 	/**
 	 * Cairo device that uses whatever Gtk+ suggests (Usually an XLib surface).
 	 */
-	class CairoSwDevice : public Device {
+	class CairoGtkDevice : public CairoDevice {
 	public:
 		// Create.
-		CairoSwDevice(Engine &e);
+		CairoGtkDevice(Engine &e);
 
 		// Create a surface.
 		virtual Surface *createSurface(Handle window);
@@ -35,7 +55,7 @@ namespace gui {
 	/**
 	 * Cairo device that uses OpenGL.
 	 */
-	class CairoGLDevice : public Device {
+	class CairoGLDevice : public CairoDevice {
 	public:
 		// Create.
 		CairoGLDevice(Engine &e);
@@ -51,7 +71,7 @@ namespace gui {
 	class CairoSurface : public Surface {
 	public:
 		// Create.
-		CairoSurface(Size size, cairo_surface_t *surface);
+		CairoSurface(Nat id, Size size, cairo_surface_t *surface);
 
 		// The cairo device.
 		cairo_t *device;
@@ -64,16 +84,20 @@ namespace gui {
 
 		// Resize the surface.
 		void resize(Size size, Float scale);
+
+	private:
+		// Device ID.
+		Nat id;
 	};
 
 
 	/**
 	 * Cairo surface that uses blitting to present to the window.
 	 */
-	class CairoBlitSurface : public Surface {
+	class CairoBlitSurface : public CairoSurface {
 	public:
 		// Create.
-		CairoBlitSurface(Size size, cairo_surface_t *surface);
+		CairoBlitSurface(Nat id, Size size, cairo_surface_t *surface);
 
 		// Present.
 		virtual bool present(bool waitForVSync);

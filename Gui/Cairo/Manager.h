@@ -1,19 +1,19 @@
 #pragma once
 #include "Gui/GraphicsMgr.h"
-#include "D2D.h"
+#include "Cairo.h"
 
 namespace gui {
 
 	STORM_PKG(impl);
 
-	class D2DSurface;
+	class CairoSurface;
 
-	class D2DManager : public GraphicsMgrRaw {
+	class CairoManager : public GraphicsMgrRaw {
 		STORM_CLASS;
 	public:
-#ifdef GUI_WIN32
+#ifdef GUI_GTK
 		// Create.
-		D2DManager(Graphics *owner, D2DSurface &surface);
+		CairoManager(Graphics *owner, CairoSurface *surface);
 #endif
 
 		// Create resources:
@@ -32,17 +32,17 @@ namespace gui {
 		virtual void update(Bitmap *bitmap, void *resource);
 		virtual void update(Path *path, void *result);
 
+#ifdef GUI_GTK
+		// Specific for this manager: apply a brush to a cairo context.
+		static void applyBrush(cairo_t *to, Brush *brush, void *data);
+#endif
+
 	private:
 		// Owner (to get bitmaps for bitmap brushes)
 		Graphics *owner;
 
-		// Our surface.
-		D2DSurface *surface;
-
-#ifdef GUI_WIN32
-		// Check HRESULT:s.
-		void check(HRESULT r, const wchar *msg);
-#endif
+		// Surface.
+		CairoSurface *surface;
 	};
 
 }

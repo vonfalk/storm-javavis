@@ -257,20 +257,17 @@ namespace gui {
 		Lock::Guard z(lock);
 	}
 
-	bool Painter::windowReady(Handle window) {
-		return gtk_widget_get_window(window.widget()) != null;
-	}
-
 	bool Painter::ready() {
 		// Wait until the previous frame is actually shown.
 		return atomicRead(currentRepaint) == atomicRead(repaintCounter);
 	}
 
 	bool Painter::doRepaintI(bool waitForVSync, bool fromDraw) {
-		if (!target.any())
+		if (!surface)
 			return continuous;
 
 		bool more = false;
+		bool ok = false;
 		Lock::Guard z(lock);
 
 		// If it wasn't created by now, something is *really* bad.
@@ -280,21 +277,23 @@ namespace gui {
 		}
 
 		try {
-			graphics->beforeRender();
-			more = render(graphics->size(), graphics);
-			graphics->afterRender();
+			graphics->beforeRender(bgColor);
+			more = render(surface->size / surface->scale, graphics);
+			ok = graphics->afterRender();
 		} catch (...) {
 			graphics->afterRender();
 			throw;
 		}
+
+		// TODO: Handle OK being false?
+		(void)ok;
 
 		// Tell Gtk+ we're ready to draw, unless a call to 'draw' is already queued.
 		if (!fromDraw) {
 #ifdef UI_MULTITHREAD
 			app->repaint(attachedTo.widget());
 #else
-			if (GdkWindow *window = gtk_widget_get_window(attachedTo.widget()))
-				gdk_window_invalidate_rect(window, NULL, true);
+			gtk_widget_queue_draw(attachedTo.widget());
 #endif
 		}
 
@@ -304,12 +303,14 @@ namespace gui {
 
 	void Painter::beforeRepaint(RepaintParams *p) {
 		// Required when we're rendering directly to a window surface.
-		if (!target.any()) {
-			if (attached()) {
-				if (graphics)
-					graphics->updateTarget(target);
-			}
-		}
+
+		// TODO: Is this needed anymore?
+		// if (!target.any()) {
+		// 	if (attached()) {
+		// 		if (graphics)
+		// 			graphics->updateTarget(target);
+		// 	}
+		// }
 	}
 
 	void Painter::afterRepaint() {}

@@ -46,7 +46,7 @@ namespace gui {
 #endif
 #ifdef GUI_GTK
 		// Get a pango context.
-		inline PangoContext *pango() { return device->pango(); }
+		inline PangoContext *pango() { return null; }
 #endif
 	private:
 		friend RenderMgr *renderMgr(EnginePtr e);
