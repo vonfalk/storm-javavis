@@ -59,6 +59,13 @@ If you are interested in Storm and want to learn more, check out some of these s
   Storm. Refer to this part of the documentation if you are interested in creating new languages or
   syntax extensions to other languages.
 
+* [Libraries](md://Libraries/) describes some of the libraries included with Storm. For example, a
+  library for creating [GUI applications](md://Libraries/Gui), for [sound
+  playback](md://Libraries/Sound), and for making [presentations](md://Libraries/Presentation).
+
+* [Programs](md://Programs/) contains documentation on a number of programs written in Storm and
+  included in the download. These show what is possible to do in Storm.
+
 Note that the main goal of the documentation provided here is to get you started in using the
 language and to give an understanding of the language. It will not discuss specific APIs or the
 standard library in depth. For that kind of documentation, please refer to the built-in
