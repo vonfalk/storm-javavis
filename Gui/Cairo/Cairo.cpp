@@ -2,6 +2,8 @@
 #include "Cairo.h"
 #include "Graphics.h"
 #include "RenderMgr.h"
+#include "Exception.h"
+#include "Core/Convert.h"
 
 #ifdef GUI_GTK
 
@@ -41,10 +43,15 @@ namespace gui {
 	}
 
 
-	CairoSurface::CairoSurface(Nat id, Size size, cairo_surface_t *surface)
-		: Surface(size, 1.0f), surface(surface), id(id) {
+	CairoSurface::CairoSurface(Nat id, Size size)
+		: Surface(size, 1.0f), surface(null), device(null), id(id) {}
 
-		device = cairo_create(surface);
+
+	CairoSurface::CairoSurface(Nat id, Size size, cairo_surface_t *surface)
+		: Surface(size, 1.0f), surface(surface), device(null), id(id) {
+
+		if (surface)
+			device = cairo_create(surface);
 	}
 
 	WindowGraphics *CairoSurface::createGraphics(Engine &e) {
@@ -79,17 +86,52 @@ namespace gui {
 		cairo_surface_flush(cairo_get_group_target(params->cairo));
 	}
 
-#if 0
 
-	/**
-	 * This is approximately what needs to be done in the Cairo GL surface (also for Skia):
-	 */
+	CairoGlDevice::CairoGlDevice(Engine &e) : e(e) {}
 
-	GlSurface::GlSurface(GdkWindow *window, Size size) : CairoSurface(), device(null), width(size.w), height(size.h) {
+	Surface *CairoGlDevice::createSurface(Handle window) {
+		GdkWindow *win = gtk_widget_get_window(window.widget());
+		if (!win)
+			return null;
+
+		Size size(gtk_widget_get_allocated_width(window.widget()),
+				gtk_widget_get_allocated_height(window.widget()));
+
+		Nat id = renderMgr(e)->allocId();
+		return new CairoGlSurface(id, size, win);
+	}
+
+	static void reportError(const char *error) {
+		Engine &e = runtime::someEngine();
+
+		StrBuf *msg = new (e) StrBuf();
+		*msg << S("Initialization of OpenGL failed: ") << toWChar(e, error)->v << S("\n");
+		*msg << S("Try setting the environment variable ") << S(RENDER_ENV_NAME) << S(" to \"gtk\" or \"software\".");
+
+		throw new (e) GuiError(msg->toS());
+	}
+
+	static void reportError(GError *error) {
+		Engine &e = runtime::someEngine();
+
+		StrBuf *msg = new (e) StrBuf();
+		PVAR(error->message);
+		*msg << S("Initialization of OpenGL failed: ") << toWChar(e, error->message)->v << S("\n");
+		*msg << S("Try setting the environment variable ") << S(RENDER_ENV_NAME) << S(" to \"gtk\" or \"software\".");
+		g_clear_error(&error);
+
+		throw new (e) GuiError(msg->toS());
+	}
+
+	CairoGlSurface::CairoGlSurface(Nat id, Size size, GdkWindow *window)
+		: CairoSurface(id, size, null), context(null), texture(0), dev(0) {
+
+		TODO(L"Which thread do we execute this in? Is it a problem that we poke at Gtk+ from (potentially) the wrong thread?");
+
 		GError *error = NULL;
 		context = gdk_window_create_gl_context(window, &error);
 		if (error) {
-			g_object_unref(&context);
+			g_object_unref(context);
 			reportError(error);
 		}
 
@@ -99,9 +141,12 @@ namespace gui {
 
 		gdk_gl_context_realize(context, &error);
 		if (error) {
-			g_object_unref(&context);
+			g_object_unref(context);
 			reportError(error);
 		}
+
+		int width = size.w;
+		int height = size.h;
 
 		gdk_gl_context_make_current(context);
 
@@ -124,69 +169,71 @@ namespace gui {
 			GdkWaylandDisplay *display = GDK_WAYLAND_DISPLAY(gdkDisplay);
 			struct wl_display *wlDisplay = gdk_wayland_display_get_wl_display(display);
 			if (EGLContext eglContext = eglGetCurrentContext()) {
-				device = cairo_egl_device_create(eglGetDisplay((NativeDisplayType)wlDisplay), eglContext);
+				dev = cairo_egl_device_create(eglGetDisplay((NativeDisplayType)wlDisplay), eglContext);
 			}
 		} else if (GDK_IS_X11_DISPLAY(gdkDisplay)) {
 			// Try GLX first, and then EGL. Note: It seems like Gtk+ does not attempt to use EGL on X11 at the moment.
 			Display *display = GDK_DISPLAY_XDISPLAY(gdkDisplay);
 			if (GLXContext glxContext = glXGetCurrentContext()) {
-				device = cairo_glx_device_create(display, glxContext);
+				dev = cairo_glx_device_create(display, glxContext);
 			} else if (EGLContext eglContext = eglGetCurrentContext()) {
-				device = cairo_egl_device_create(eglGetDisplay(display), eglContext);
+				dev = cairo_egl_device_create(eglGetDisplay(display), eglContext);
 			}
 		}
 
-		if (!device) {
-			g_object_unref(&context);
+		if (!dev) {
+			g_object_unref(context);
 			reportError("Failed to find the created GL context.");
 		}
 
-		surface = cairo_gl_surface_create_for_texture(device, CAIRO_CONTENT_COLOR, texture, width, height);
-		target = cairo_create(surface);
+		surface = cairo_gl_surface_create_for_texture(dev, CAIRO_CONTENT_COLOR, texture, width, height);
+		device = cairo_create(surface);
 	}
 
-	GlSurface::~GlSurface() {
-		cairo_destroy(target);
-		target = null;
+	CairoGlSurface::~CairoGlSurface() {
+		cairo_destroy(device);
+		device = null;
 		cairo_surface_destroy(surface);
 		surface = null;
 
 		gdk_gl_context_make_current(context);
 		glDeleteTextures(1, &texture);
 
-		cairo_device_destroy(device);
+		cairo_device_destroy(dev);
 
 		gdk_gl_context_clear_current();
 		g_object_unref(context);
 	}
 
-	void GlSurface::resize(Size size) {
-		cairo_destroy(target);
+	void CairoGlSurface::resize(Size size, Float scale) {
+		this->scale = scale;
+		this->size = size;
 
-		width = int(size.w);
-		height = int(size.h);
+		cairo_destroy(device);
+
+		int width = size.w;
+		int height = size.h;
 
 		gdk_gl_context_make_current(context);
 		glBindTexture(GL_TEXTURE_2D, texture);
 		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
 
 		cairo_surface_destroy(surface);
-		surface = cairo_gl_surface_create_for_texture(device, CAIRO_CONTENT_COLOR, texture, width, height);
-		target = cairo_create(surface);
+		surface = cairo_gl_surface_create_for_texture(dev, CAIRO_CONTENT_COLOR, texture, width, height);
+		device = cairo_create(surface);
 	}
 
-	void GlSurface::blit(cairo_t *to) {
-		cairo_surface_flush(surface);
+	Surface::PresentStatus CairoGlSurface::present(bool waitForVSync) {
+		return pRepaint;
+	}
 
-		GdkWindow *window = gdk_gl_context_get_window(context);
-
+	void CairoGlSurface::repaint(RepaintParams *params) {
 		gdk_gl_context_make_current(context);
-		gdk_cairo_draw_from_gl(to, window,
+		gdk_cairo_draw_from_gl(params->cairo, params->window,
 							texture, GL_TEXTURE, 1 /* scale */,
-							0, 0, width, height);
+							0, 0, int(size.w), int(size.h));
 	}
 
-#endif
 
 }
 

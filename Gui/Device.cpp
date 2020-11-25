@@ -14,12 +14,10 @@ namespace gui {
 
 #elif defined(GUI_GTK)
 
-#define ENV_NAME "STORM_RENDER_BACKEND"
-
 	Device *Device::create(Engine &e) {
-		const char *preference = getenv(ENV_NAME);
+		const char *preference = getenv(RENDER_ENV_NAME);
 		if (!preference)
-			preference = "gtk"; // TODO: Perhaps Skia?
+			preference = "gl"; // TODO: Perhaps Skia?
 
 		if (strcmp(preference, "sw") == 0) {
 			return new CairoSwDevice(e);
@@ -28,12 +26,12 @@ namespace gui {
 		} else if (strcmp(preference, "gtk") == 0) {
 			return new CairoGtkDevice(e);
 		} else if (strcmp(preference, "gl") == 0) {
-			// return new CairoGlDevice(e);
+			return new CairoGlDevice(e);
 		} else if (strcmp(preference, "skia") == 0) {
 			// return new SkiaDevice(e);
 		}
 
-		throw new (e) GuiError(S("The supplied value of ") S(ENV_NAME) S(" is not supported."));
+		throw new (e) GuiError(S("The supplied value of ") S(RENDER_ENV_NAME) S(" is not supported."));
 	}
 
 #else
