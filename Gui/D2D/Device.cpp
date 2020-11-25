@@ -1,6 +1,6 @@
 #include "stdafx.h"
-#include "D2D.h"
-#include "D2D/Graphics.h"
+#include "Device.h"
+#include "Graphics.h"
 #include "Exception.h"
 #include "Win32Dpi.h"
 #include "RenderMgr.h"

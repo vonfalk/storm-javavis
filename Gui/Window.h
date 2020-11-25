@@ -206,6 +206,7 @@ namespace gui {
 		// Get the widget we shall set the font on.
 		virtual GtkWidget *fontWidget();
 
+	public:
 		// Get the widget we shall draw on.
 		virtual GtkWidget *drawWidget();
 #endif

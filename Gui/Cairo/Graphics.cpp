@@ -5,7 +5,7 @@
 #include "Text.h"
 #include "Path.h"
 #include "Bitmap.h"
-#include "Cairo.h"
+#include "Device.h"
 #include "Manager.h"
 
 namespace gui {
