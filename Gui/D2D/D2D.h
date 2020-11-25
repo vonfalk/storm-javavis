@@ -32,6 +32,9 @@ namespace gui {
 		// Create a render target. Called from D2DSurface.
 		ID2D1RenderTarget *createTarget(IDXGISwapChain *swapChain);
 
+		// Engine.
+		Engine &e;
+
 		// The ID allocated for the device.
 		Nat id;
 	};
@@ -52,7 +55,7 @@ namespace gui {
 		virtual void resize(Size size, Float scale);
 
 		// Present.
-		virtual bool present(bool waitForVSync);
+		virtual PresentStatus present(bool waitForVSync);
 
 		// Get the render target.
 		ID2D1RenderTarget *target() const { return renderTarget.v; }

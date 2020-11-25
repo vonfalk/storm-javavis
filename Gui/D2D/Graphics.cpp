@@ -305,6 +305,8 @@ namespace gui {
 
 	DEFINE_WINDOW_GRAPHICS_FNS(D2DGraphics)
 
+	void D2DGraphics::Layer::release() {}
+
 #endif
 
 }

@@ -6,7 +6,10 @@
 
 namespace gui {
 
-	Painter::Painter() : continuous(false), repaintCounter(0), currentRepaint(0), surface(null) {
+	Painter::Painter()
+		: continuous(false), synchronizedPresent(false),
+		  repaintCounter(0), currentRepaint(0), surface(null) {
+
 		attachedTo = Window::invalid;
 		app = gui::app(engine());
 		bgColor = app->defaultBgColor;
@@ -86,8 +89,6 @@ namespace gui {
 		} else {
 			doRepaint(false, false);
 		}
-
-		afterRepaint();
 	}
 
 	void Painter::doRepaint(bool waitForVSync, bool fromDraw) {
@@ -97,13 +98,12 @@ namespace gui {
 		bool more = false;
 		try {
 			Lock::Guard z(lock);
+			repaintCounter++;
 			more = doRepaintI(waitForVSync, fromDraw);
 		} catch (...) {
-			repaintCounter++;
 			throw;
 		}
 
-		repaintCounter++;
 		if (more != continuous) {
 			continuous = more;
 			if (more) {
@@ -112,6 +112,95 @@ namespace gui {
 			}
 		}
 	}
+
+	bool Painter::doRepaintI(bool waitForVSync, bool fromDraw) {
+		if (!surface)
+			return false;
+
+		bool more = false;
+		bool ok = false;
+
+		try {
+			graphics->beforeRender(bgColor);
+			more = render(surface->size / surface->scale, graphics);
+			ok = graphics->afterRender();
+		} catch (...) {
+			graphics->afterRender();
+			throw;
+		}
+
+		// Don't try to present if something failed.
+		if (!ok)
+			return more;
+
+		// Try to present the frame.
+		switch (surface->present(waitForVSync)) {
+		case Surface::pSuccess:
+			// All is well. Remember that we presented the frame.
+			synchronizedPresent = false;
+			currentRepaint = repaintCounter;
+			break;
+		case Surface::pRecreate:
+			// We need to re-create the render target.
+			destroy();
+			surface = mgr->attach(this, attachedTo);
+			graphics = surface->createGraphics(engine());
+			// TODO: We probably want to redraw immediately here. We can at least schedule a re-draw
+			// on the next frame! On Windows, this is almost equivalent, as we won't wait for vsync
+			// since Present() failed. On Linux, this will not happen.
+			return true;
+		case Surface::pRepaint:
+			// If this was not a direct call from "repaint", we need to schedule a repaint through
+			// the windowing system.
+			synchronizedPresent = true;
+			if (!fromDraw)
+				repaintAttachedWindow();
+			break;
+		case Surface::pFailure:
+			// Something else failed. Not too much we can do, I guess. This likely indicates either
+			// a bug in the implementation, or an out of memory condition.
+			WARNING(L"Rendering failure! Either you are out of (graphics) memory, or you have found a bug.");
+			break;
+		}
+
+		return more;
+	}
+
+	void Painter::uiAfterRepaint(RepaintParams *params) {
+		if (synchronizedPresent) {
+			Lock::Guard z(lock);
+
+			surface->repaint(params);
+			currentRepaint = repaintCounter;
+
+			// We're ready for the next frame now!
+			if (continuous) {
+				mgr->painterReady();
+#ifdef UI_SINGLETHREAD
+				repaintAttachedWindow();
+#endif
+			}
+		}
+	}
+
+	bool Painter::ready() {
+		// Wait until the previous frame is actually shown.
+		return atomicRead(currentRepaint) == atomicRead(repaintCounter);
+	}
+
+	void Painter::waitForFrame() {
+		if (synchronizedPresent) {
+			// Just wait until we're not drawing at the moment.
+			Lock::Guard z(lock);
+		} else {
+			// Wait until we have rendered a frame, so that Windows think we did it to satisfy the
+			// paint request.
+			Nat old = currentRepaint;
+			while (old == currentRepaint)
+				os::UThread::leave();
+		}
+	}
+
 
 #ifdef UI_SINGLETHREAD
 
@@ -146,8 +235,6 @@ namespace gui {
 #ifdef UI_MULTITHREAD
 
 	void Painter::repaintI(RepaintParams *params) {
-		beforeRepaint(params);
-
 		if (!ready()) {
 			// There is a frame ready right now! No need to wait even if we're not in continuous mode!
 		} else if (continuous) {
@@ -155,8 +242,6 @@ namespace gui {
 		} else {
 			doRepaint(false, true);
 		}
-
-		afterRepaint();
 	}
 
 	void Painter::uiAttach(Window *to) {
@@ -194,142 +279,22 @@ namespace gui {
 	}
 
 #endif
+
 #ifdef GUI_WIN32
 
-	bool Painter::ready() {
-		// Always ready to draw!
-		return true;
+	void Painter::repaintAttachedWindow() {
+		WARNING(L"This operation is not supported on Win32, as it should not be needed.");
 	}
-
-	void Painter::waitForFrame() {
-		// Wait until we have rendered a frame, so that Windows think we did it to satisfy the paint
-		// request.
-		Nat old = repaintCounter;
-		while (old == repaintCounter)
-			os::UThread::leave();
-	}
-
-	bool Painter::doRepaintI(bool waitForVSync, bool fromDraw) {
-		if (!surface)
-			return false;
-
-		bool more = false;
-		bool ok = false;
-
-		try {
-			graphics->beforeRender(bgColor);
-			more = render(surface->size / surface->scale, graphics);
-			ok = graphics->afterRender();
-		} catch (...) {
-			graphics->afterRender();
-			throw;
-		}
-
-		if (ok) {
-			ok = surface->present(waitForVSync);
-		}
-
-		if (!ok) {
-			// Re-create our render target.
-			destroy();
-
-			surface = mgr->attach(this, attachedTo);
-			graphics = surface->createGraphics(engine());
-			// TODO: We probably want to re-draw ourselves here...
-		}
-
-		return more;
-	}
-
-	void Painter::beforeRepaint(RepaintParams *handle) {}
-
-	void Painter::afterRepaint() {
-		currentRepaint = repaintCounter;
-	}
-
-	void Painter::uiAfterRepaint(RepaintParams *handle) {}
 
 #endif
 #ifdef GUI_GTK
 
-	void Painter::waitForFrame() {
-		// Just wait until we're not drawing at the moment.
-		Lock::Guard z(lock);
-	}
-
-	bool Painter::ready() {
-		// Wait until the previous frame is actually shown.
-		return atomicRead(currentRepaint) == atomicRead(repaintCounter);
-	}
-
-	bool Painter::doRepaintI(bool waitForVSync, bool fromDraw) {
-		if (!surface)
-			return continuous;
-
-		bool more = false;
-		bool ok = false;
-		Lock::Guard z(lock);
-
-		// If it wasn't created by now, something is *really* bad.
-		if (!surface) {
-			WARNING("Surface was not properly created!");
-			return false;
-		}
-
-		try {
-			graphics->beforeRender(bgColor);
-			more = render(surface->size / surface->scale, graphics);
-			ok = graphics->afterRender();
-		} catch (...) {
-			graphics->afterRender();
-			throw;
-		}
-
-		// TODO: Handle OK being false?
-		(void)ok;
-
-		// Tell Gtk+ we're ready to draw, unless a call to 'draw' is already queued.
-		if (!fromDraw) {
+	void Painter::repaintAttachedWindow() {
 #ifdef UI_MULTITHREAD
-			app->repaint(attachedTo.widget());
+		app->repaint(attachedTo.widget());
 #else
-			gtk_widget_queue_draw(attachedTo.widget());
+		gtk_widget_queue_draw(attachedTo.widget());
 #endif
-		}
-
-		// TODO: Handle VSync?
-		return more;
-	}
-
-	void Painter::beforeRepaint(RepaintParams *p) {
-		// Required when we're rendering directly to a window surface.
-
-		// TODO: Is this needed anymore?
-		// if (!target.any()) {
-		// 	if (attached()) {
-		// 		if (graphics)
-		// 			graphics->updateTarget(target);
-		// 	}
-		// }
-	}
-
-	void Painter::afterRepaint() {}
-
-	void Painter::uiAfterRepaint(RepaintParams *params) {
-		Lock::Guard z(lock);
-		currentRepaint = repaintCounter;
-
-		if (CairoSurface *surface = target.surface()) {
-			surface->blit(params->ctx);
-
-			// We're ready for the next frame now!
-			if (continuous) {
-				mgr->painterReady();
-#ifdef UI_SINGLETHREAD
-				gtk_widget_queue_draw(attachedTo.widget());
-#endif
-			}
-		}
 	}
 
 #endif

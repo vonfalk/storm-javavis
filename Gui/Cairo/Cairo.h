@@ -100,7 +100,10 @@ namespace gui {
 		CairoBlitSurface(Nat id, Size size, cairo_surface_t *surface);
 
 		// Present.
-		virtual bool present(bool waitForVSync);
+		virtual PresentStatus present(bool waitForVSync);
+
+		// Paint.
+		virtual void repaint(RepaintParams *params);
 	};
 
 }

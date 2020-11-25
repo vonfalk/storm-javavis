@@ -66,9 +66,17 @@ namespace gui {
 	CairoBlitSurface::CairoBlitSurface(Nat id, Size size, cairo_surface_t *surface)
 		: CairoSurface(id, size, surface) {}
 
-	bool CairoBlitSurface::present(bool waitForVSync) {
-		TODO(L"FIXME!");
-		return true;
+	Surface::PresentStatus CairoBlitSurface::present(bool waitForVSync) {
+		// We cannot do much here...
+		return pRepaint;
+	}
+
+	void CairoBlitSurface::repaint(RepaintParams *params) {
+		cairo_set_source_surface(params->cairo, surface, 0, 0);
+		cairo_paint(params->cairo);
+
+		// Make sure the operation is not pending, this function is called inside a lock.
+		cairo_surface_flush(cairo_get_group_target(params->cairo));
 	}
 
 #if 0

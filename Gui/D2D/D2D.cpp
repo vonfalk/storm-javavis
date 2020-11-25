@@ -64,7 +64,11 @@ namespace gui {
 		return r;
 	}
 
-	D2DDevice::D2DDevice(Engine &e) : factory(null), device(null), giDevice(null), giFactory(null), writeFactory(null) {
+	D2DDevice::D2DDevice(Engine &e)
+		: factory(null), device(null), giDevice(null),
+		  giFactory(null), writeFactory(null),
+		  engine(e), id(0) {
+
 		// Setup DX and DirectWrite.
 		HRESULT r;
 		r = D2D1CreateFactory(D2D1_FACTORY_TYPE_SINGLE_THREADED, __uuidof(ID2D1Factory), &options, (void **)&factory.v);
@@ -133,6 +137,11 @@ namespace gui {
 	}
 
 	Surface *D2DDevice::createSurface(Handle window) {
+		// Create an ID if we need it.
+		if (id == 0) {
+			id = renderMgr(e)->allocId();
+		}
+
 		DXGI_SWAP_CHAIN_DESC desc;
 		gui::create(desc, window.hwnd());
 
@@ -156,11 +165,6 @@ namespace gui {
 	D2DSurface::~D2DSurface() {}
 
 	WindowGraphics *D2DSurface::createGraphics(Engine &e) {
-		if (device->id == 0) {
-			// Need an ID!
-			device->id = renderMgr(e)->allocId();
-		}
-
 		return new (e) D2DGraphics(*this, device->id);
 	}
 
@@ -176,9 +180,15 @@ namespace gui {
 		this->scale = scale;
 	}
 
-	bool D2DSurface::present(bool waitForVSync) {
+	Surface::PresentStatus D2DSurface::present(bool waitForVSync) {
 		HRESULT r = swapChain->Present(waitForVSync ? 1 : 0, 0);
-		return !(r == D2DERR_RECREATE_TARGET || r == DXGI_ERROR_DEVICE_RESET);
+		if (r == D2DERR_RECREATE_TARGET || r == DXGI_ERROR_DEVICE_RESET) {
+			return pRecreate;
+		} else if (FAILED(r)) {
+			return pFailure;
+		} else {
+			return pSuccess;
+		}
 	}
 
 }
