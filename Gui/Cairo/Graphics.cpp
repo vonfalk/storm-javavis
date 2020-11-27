@@ -10,7 +10,7 @@
 
 namespace gui {
 
-	CairoGraphics::CairoGraphics(CairoSurface &surface, Nat id) : surface(surface) {
+	CairoGraphics::CairoGraphics(CairoSurface &surface, Nat id, Bool flipY) : surface(surface), flipY(flipY) {
 		identifier = id;
 
 #ifdef GUI_GTK
@@ -29,11 +29,11 @@ namespace gui {
 #ifdef GUI_GTK
 
 	void CairoGraphics::surfaceResized() {
-		TODO("FIXME");
+		// Not needed.
 	}
 
 	void CairoGraphics::surfaceDestroyed() {
-		TODO("FIXME");
+		// Not needed.
 	}
 
 	/**
@@ -57,6 +57,10 @@ namespace gui {
 		state = State();
 		state.scale(surface.scale);
 		state.clip = Rect(Point(), surface.size);
+
+		if (flipY)
+			state.flipY(surface.size.h);
+
 		oldStates->last() = state;
 
 		// Set up the backend.
