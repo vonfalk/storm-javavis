@@ -1,7 +1,7 @@
 #include "stdafx.h"
 #include "Device.h"
-#include "D2D/D2D.h"
-#include "Cairo/Cairo.h"
+#include "D2D/Device.h"
+#include "Cairo/Device.h"
 #include "Exception.h"
 
 namespace gui {

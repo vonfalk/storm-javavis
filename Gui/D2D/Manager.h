@@ -1,6 +1,6 @@
 #pragma once
 #include "Gui/GraphicsMgr.h"
-#include "D2D.h"
+#include "Device.h"
 
 namespace gui {
 

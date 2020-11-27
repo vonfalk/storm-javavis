@@ -18,10 +18,10 @@ namespace gui {
 		// Get the ID.
 		Nat id();
 
-	private:
 		// Engine.
 		Engine &e;
 
+	private:
 		// Our ID.
 		Nat myId;
 	};

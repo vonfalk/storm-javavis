@@ -1,6 +1,6 @@
 #include "stdafx.h"
 #include "Graphics.h"
-#include "D2D.h"
+#include "Graphics.h"
 #include "Manager.h"
 #include "Gui/Brush.h"
 #include "Gui/Text.h"

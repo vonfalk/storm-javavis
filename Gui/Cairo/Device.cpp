@@ -1,13 +1,24 @@
 #include "stdafx.h"
-#include "Cairo.h"
+#include "Device.h"
 #include "Graphics.h"
 #include "RenderMgr.h"
 #include "Exception.h"
+#include "App.h"
+#include "Window.h"
 #include "Core/Convert.h"
 
 #ifdef GUI_GTK
 
 namespace gui {
+
+	// Get the draw widget for a window:
+	static GtkWidget *drawWidget(Engine &e, Handle handle) {
+		Window *w = app(e)->findWindow(handle);
+		if (!w)
+			return handle.widget();
+		else
+			return w->drawWidget();
+	}
 
 	CairoDevice::CairoDevice(Engine &e) : e(e), myId(0) {}
 
@@ -31,7 +42,7 @@ namespace gui {
 	CairoGtkDevice::CairoGtkDevice(Engine &e) : CairoDevice(e) {}
 
 	Surface *CairoGtkDevice::createSurface(Handle window) {
-		GdkWindow *win = gtk_widget_get_window(window.widget());
+		GdkWindow *win = gtk_widget_get_window(drawWidget(e, window));
 		if (!win)
 			return null;
 
@@ -90,7 +101,7 @@ namespace gui {
 	CairoGlDevice::CairoGlDevice(Engine &e) : e(e) {}
 
 	Surface *CairoGlDevice::createSurface(Handle window) {
-		GdkWindow *win = gtk_widget_get_window(window.widget());
+		GdkWindow *win = gtk_widget_get_window(drawWidget(e, window));
 		if (!win)
 			return null;
 
