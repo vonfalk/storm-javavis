@@ -91,7 +91,7 @@ namespace gui {
 		// Resize the surface.
 		virtual void resize(Size size, Float scale);
 
-	private:
+	protected:
 		// Device ID.
 		Nat id;
 	};
@@ -126,6 +126,9 @@ namespace gui {
 
 		// Present.
 		virtual PresentStatus present(bool waitForVSync);
+
+		// Create a Graphics object with flipped Y coordinates.
+		virtual WindowGraphics *createGraphics(Engine &e);
 
 		// Paint.
 		virtual void repaint(RepaintParams *params);

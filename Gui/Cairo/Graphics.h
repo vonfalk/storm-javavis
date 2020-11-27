@@ -18,7 +18,7 @@ namespace gui {
 		STORM_CLASS;
 	public:
 		// Create.
-		CairoGraphics(CairoSurface &surface, Nat id);
+		CairoGraphics(CairoSurface &surface, Nat id, Bool flipY);
 
 		// Destroy.
 		~CairoGraphics();
@@ -173,6 +173,12 @@ namespace gui {
 				tfm5 *= v;
 			}
 
+			// Flip the Y axis.
+			void flipY(Float height) {
+				tfm3 *= -1;
+				tfm5 += height;
+			}
+
 			// Transform storage. Do not touch!
 			Float tfm0;
 			Float tfm1;
@@ -199,6 +205,9 @@ namespace gui {
 
 		// Current state.
 		State state;
+
+		// Flip the Y axis?
+		Bool flipY;
 
 		// Prepare rendering.
 		void prepare();

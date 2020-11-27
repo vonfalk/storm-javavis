@@ -66,7 +66,7 @@ namespace gui {
 	}
 
 	WindowGraphics *CairoSurface::createGraphics(Engine &e) {
-		return new (e) CairoGraphics(*this, id);
+		return new (e) CairoGraphics(*this, id, false);
 	}
 
 	void CairoSurface::resize(Size size, Float scale) {
@@ -212,6 +212,10 @@ namespace gui {
 
 		gdk_gl_context_clear_current();
 		g_object_unref(context);
+	}
+
+	WindowGraphics *CairoGlSurface::createGraphics(Engine &e) {
+		return new (e) CairoGraphics(*this, id, true);
 	}
 
 	void CairoGlSurface::resize(Size size, Float scale) {
