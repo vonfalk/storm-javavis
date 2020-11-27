@@ -814,36 +814,44 @@ namespace gui {
 			RepaintParams params = { window, drawWidget(), ctx };
 			myPainter->uiRepaint(&params);
 
-			if (GDK_IS_WAYLAND_WINDOW(window)) {
-				// This is a variant of what we're doing below.
-				GtkWidget *me = drawWidget();
-				GtkWidget *parentWidget = gtk_widget_get_parent(me);
-				if (!parentWidget || !GTK_IS_CONTAINER(parentWidget)) {
-					// If no parent exists, or the parent is not a container, we simply delegate to the
-					// default behaviour. This should not happen in practice, but it is good to have a
-					// decent fallback. Since the parent is not a container, the default implementation
-					// will probably work anyway.
-					return false;
-				}
+			// If we're using a native window, we need to inhibit the default behavior.
+			if (useNativeWindow())
+				return TRUE;
 
-				GtkContainer *parent = GTK_CONTAINER(gtk_widget_get_parent(me));
+			return FALSE;
 
-				// It seems Gtk+ does not understand what we're doing and therefore miscalculates the x-
-				// and y- positions of the layout during drawing. We correct this by using the offset in
-				// the cairo_t.
-				GtkAllocation position;
-				gtk_widget_get_allocation(me, &position);
+			//  This is not needed anymore. We're being kind to Gtk+ and are repainting through the
+			//  provided cairo_t context.
+			// if (GDK_IS_WAYLAND_WINDOW(window)) {
+			// 	// This is a variant of what we're doing below.
+			// 	GtkWidget *me = drawWidget();
+			// 	GtkWidget *parentWidget = gtk_widget_get_parent(me);
+			// 	if (!parentWidget || !GTK_IS_CONTAINER(parentWidget)) {
+			// 		// If no parent exists, or the parent is not a container, we simply delegate to the
+			// 		// default behaviour. This should not happen in practice, but it is good to have a
+			// 		// decent fallback. Since the parent is not a container, the default implementation
+			// 		// will probably work anyway.
+			// 		return false;
+			// 	}
 
-				// Since we have to pretend that the current child does not have a window when calling
-				// 'gtk_container_propagate_draw' below, the current widget's offset will be applied twice.
-				cairo_translate(ctx, -position.x, -position.y);
+			// 	GtkContainer *parent = GTK_CONTAINER(gtk_widget_get_parent(me));
 
-				drawing = true;
-				gtk_container_propagate_draw(parent, me, ctx);
-				drawing = false;
-			}
+			// 	// It seems Gtk+ does not understand what we're doing and therefore miscalculates the x-
+			// 	// and y- positions of the layout during drawing. We correct this by using the offset in
+			// 	// the cairo_t.
+			// 	GtkAllocation position;
+			// 	gtk_widget_get_allocation(me, &position);
 
-			return TRUE;
+			// 	// Since we have to pretend that the current child does not have a window when calling
+			// 	// 'gtk_container_propagate_draw' below, the current widget's offset will be applied twice.
+			// 	cairo_translate(ctx, -position.x, -position.y);
+
+			// 	drawing = true;
+			// 	gtk_container_propagate_draw(parent, me, ctx);
+			// 	drawing = false;
+			// }
+
+			// return TRUE;
 		}
 
 		// Do we have our own window and need to paint the background?
