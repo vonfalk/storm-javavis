@@ -19,6 +19,9 @@ namespace gui {
 	 * - Direct 2D (Windows)
 	 * - Cairo (Both HW and SW)
 	 * - Skia (HW, Linux)
+	 *
+	 * All functions here are called from the Render thread. Furthermore, "createSurface" is called
+	 * while holding a lock from the UI thread, so that it can access the windows freely.
 	 */
 	class Device : NoCopy {
 	public:

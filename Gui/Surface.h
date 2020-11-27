@@ -17,6 +17,9 @@ namespace gui {
 	/**
 	 * A generic surface associated with some window on the current system, to which it is possible
 	 * to draw.
+	 *
+	 * All functions here are called from the Render thread, except "repaint", which is called from
+	 * the UI thread.
 	 */
 	class Surface : NoCopy {
 	public:

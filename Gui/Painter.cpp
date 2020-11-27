@@ -170,6 +170,10 @@ namespace gui {
 		if (synchronizedPresent) {
 			Lock::Guard z(lock);
 
+			// If we don't have any surface, then we're being destroyed.
+			if (!surface)
+				return;
+
 			surface->repaint(params);
 			currentRepaint = repaintCounter;
 
@@ -245,7 +249,9 @@ namespace gui {
 	}
 
 	void Painter::uiAttach(Window *to) {
-		os::Future<void> result;
+		// Note: We're blocking the UI thread here, as Gtk+ requires some intricate interaction with
+		// the UI thread to create GL context, etc.
+		os::Future<void, Semaphore> result;
 		Painter *me = this;
 		os::FnCall<void, 2> params = os::fnCall().add(me).add(to);
 		os::UThread::spawn(address(&Painter::attach), true, params, result, &thread->thread());

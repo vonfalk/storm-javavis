@@ -137,8 +137,6 @@ namespace gui {
 	CairoGlSurface::CairoGlSurface(Nat id, Size size, GdkWindow *window)
 		: CairoSurface(id, size, null), context(null), texture(0), dev(0) {
 
-		TODO(L"Which thread do we execute this in? Is it a problem that we poke at Gtk+ from (potentially) the wrong thread?");
-
 		GError *error = NULL;
 		context = gdk_window_create_gl_context(window, &error);
 		if (error) {
