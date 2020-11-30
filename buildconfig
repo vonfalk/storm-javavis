@@ -4,7 +4,7 @@
 
 #Basic UI test.
 #Main -a -r ../root/ -f tests.ui.simple
-Main -a -r ../root/ -f tests.ui.main
+#Main -a -r ../root/ -f tests.ui.main
 #Main -a -r ../root/ -f tests.ui.simpleUi
 #Main -a -r ../root/ -f tests.ui.multiline
 #Main -a -r ../root/ -f tests.ui.dialog
@@ -42,4 +42,4 @@ Main -a -r ../root/ -f tests.ui.main
 #Main -a -i sle ../External/sle -f sle.main
 #Main -a -i sle ../External/sle -f sle.debug
 #Main -a -i icer2019 ../External/icer2019 -f icer2019.main
-#Main -a -i sigcse2020 ../External/sigcse2020 -f sigcse2020.debug
+Main -a -i sigcse2020 ../External/sigcse2020 -f sigcse2020.debug

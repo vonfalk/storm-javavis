@@ -31,7 +31,7 @@ namespace gui {
 	static CairoDevice *create(Engine &e) {
 		TODO(L"Think about a good standard for STORM_RENDER_BACKEND");
 		// On X11 forwarding, Gtk seems to work better, but how do we detect that?
-		return create(e, "skia");
+		return create(e, "gl");
 
 		const char *preference = getenv(ENV_NAME);
 		if (preference)
