@@ -127,7 +127,7 @@ namespace os {
 
 	Thread Thread::invalid = Thread(null);
 
-	const InlineSet<UThreadStack> &Thread::stacks() const {
+	const InlineSet<Stack> &Thread::stacks() const {
 		return data->uState.stacks;
 	}
 

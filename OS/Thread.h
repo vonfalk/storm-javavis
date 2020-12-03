@@ -60,7 +60,7 @@ namespace os {
 		void detach(Handle h) const;
 
 		// Get a list of UThreads running on this thread. Note that access to this list is not thread safe.
-		const InlineSet<UThreadStack> &stacks() const;
+		const InlineSet<Stack> &stacks() const;
 
 		// Start a thread.
 		static Thread spawn(ThreadGroup &group);

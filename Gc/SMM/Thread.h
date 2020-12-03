@@ -55,7 +55,7 @@ namespace storm {
 
 			// A reference to all UThreads that may be running on this thread, so that we may access
 			// them cheaply during scanning.
-			const InlineSet<os::UThreadStack> &stacks;
+			const InlineSet<os::Stack> &stacks;
 
 			// Handle to the current thread, along with additional operations not provided by the
 			// OS/threading library (these abilities do not belong there).
