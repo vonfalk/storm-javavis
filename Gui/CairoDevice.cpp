@@ -65,7 +65,7 @@ namespace gui {
 		if (preference)
 			return create(e, preference);
 		else
-			return create(e, "gtk");
+			return create(e, "gl");
 	}
 
 	Device::Device(Engine &e) {
