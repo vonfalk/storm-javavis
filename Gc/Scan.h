@@ -52,7 +52,7 @@ namespace storm {
 
 	public:
 		// Shorthand for stacks.
-		typedef os::InlineSet<os::UThreadStack> StackSet;
+		typedef os::InlineSet<os::Stack> StackSet;
 
 		// Scan an array of pointers.
 		static Result array(Source &source, void *base, size_t count) {
@@ -100,7 +100,7 @@ namespace storm {
 			// during detours. The UThreads will always be located inside the stacks set on the
 			// thread where they are intended to run. They can not be moved around while they
 			// contain anything useful since it is not possible to move the UThreads between sets
-			// atomically. Instead, the UThreadStack objects participating in a thread switch are
+			// atomically. Instead, the Stack objects participating in a thread switch are
 			// marked with a 'detourActive' != 0. Any such UThread shall be ignored during stack
 			// scanning since they are considered to belong to another thread. The UThread is
 			// instead associated with the proper thread by following the pointer inside the
@@ -116,32 +116,25 @@ namespace storm {
 			StackSet::iterator end = stacks.end();
 			for (StackSet::iterator i = stacks.begin(); i != end; ++i) {
 				// If this thread is used as a detour thread, do not scan it at all.
-				const os::UThreadStack *first = *i;
+				const os::Stack *first = *i;
 				if (first->detourActive)
 					continue;
 
 				// Examine the main stack and all detours for this thread.
-				for (const os::UThreadStack *stack = first; stack; stack = stack->detourTo) {
-					// Is this thread being initialized? During initialization, a stack does not
-					// contain sensible data. For example, 'desc' is probably null even if this
-					// stack is not the currently running stack. If 'stackLimit' is also null we
-					// will not only be confused, but we will also crash.
-					if (stack->initializing)
-						continue;
-
+				for (const os::Stack *stack = first; stack; stack = stack->detourTo) {
 					// Is this the currently scheduled UThread for this thread?
 					if (!stack->desc) {
 						// We should not find two of these for any given thread.
 						dbg_assert(to == null, L"We found two potential main stacks.");
 
 						// This is the main stack. Scan it later!
-						to = (void **)stack->stackLimit;
+						to = (void **)stack->limit();
 						continue;
 					}
 
 					// All is well. Commence scanning!
 					void **low = (void **)stack->desc->low;
-					void **high = (void **)stack->stackLimit;
+					void **high = (void **)stack->limit();
 					bytesScanned += (char *)high - (char *)low;
 					for (; low < high; low++) {
 						Result r = fix12(s, low);

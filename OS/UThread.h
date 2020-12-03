@@ -3,6 +3,7 @@
 #include "InlineList.h"
 #include "SortedInlineList.h"
 #include "InlineSet.h"
+#include "Stack.h"
 #include "Utils/Function.h"
 #include "Utils/Lock.h"
 #include "Utils/Memory.h"
@@ -162,52 +163,14 @@ namespace os {
 
 
 	/**
-	 * Stack description for an UThread. This is exposed so that we can garbage collect them
-	 * properly.
-	 */
-	class UThreadStack : public SetMember<UThreadStack> {
-	public:
-		UThreadStack();
-
-		// Description.
-		struct Desc {
-			// Information about the current stack. 'high' is the currently highest used address
-			// (inclusive) and 'low' is the lowest used address (exclusive).
-			void *low;
-			void *dummy;
-			void *high;
-		};
-
-		// Current stack description. If null, then this UThread is currently running, and the
-		// current CPU state describes the stack of that thread.
-		Desc *desc;
-
-		// Stack bottom for the current thread.
-		void *stackLimit;
-
-		// Is this thread being initialized? Updated atomically.
-		nat initializing;
-
-		// Is this thread participating in a detour? Updated atomically.
-
-		// If set, this stack is not considered to belong to the thread for which the thread's set
-		// contain this stack. Instead, it it considered to be a member of the thread which has a
-		// stack that points to this stack from its 'detourTo' member (either directly or
-		// indirectly). This is done to allow atomic migrations from one thread to another. However,
-		// it can cause a stack to be scanned twice if stack scanning happens at an unfortunate time.
-		nat detourActive;
-
-		// Which thread is currently running instead of this thread?
-		UThreadStack *detourTo;
-	};
-
-
-	/**
-	 * UThread data.
+	 * Additional state for a particular UThread.
 	 */
 	class UThreadData : NoCopy {
-		// Create.
-		UThreadData(UThreadState *thread);
+		// Create for a newly allocated thread.
+		UThreadData(UThreadState *thread, size_t stackSize);
+
+		// Create for an already existing thread.
+		UThreadData(UThreadState *thread, void *limit);
 
 	public:
 		// Number of references.
@@ -239,18 +202,14 @@ namespace os {
 		~UThreadData();
 
 		// A description of the current stack for this UThread.
-		UThreadStack stack;
-
-		// The stack we allocated for this UThread. May be null.
-		void *stackBase;
-		nat stackSize;
+		Stack stack;
 
 		// Detour data and originating UThread, so that we can resume the desired thread afterwards.
 		UThreadData *detourOrigin;
 		void *detourResult;
 
 		// Find the pointer to an UThreadData from the contained 'stack' member.
-		static inline UThreadData *fromStack(UThreadStack *stackPtr) {
+		static inline UThreadData *fromStack(Stack *stackPtr) {
 			return BASE_PTR(UThreadData, stackPtr, stack);
 		}
 
@@ -272,15 +231,16 @@ namespace os {
 
 		// Push a new context on top of an already initialized stack, assuming the current thread is
 		// not currently executing. Returns the old saved context so that it can be restored later.
-		UThreadStack::Desc *pushSubContext(const void *returnTo, void *param);
+		Stack::Desc *pushSubContext(const void *returnTo, void *param);
 
 		// Restore an old context returned from 'pushSubContext'.
-		void restoreContext(UThreadStack::Desc *context);
+		void restoreContext(Stack::Desc *context);
 	};
 
 	/**
-	 * Thread-specific state of the scheduler. It is designed to avoid locks as far as possible, to
-	 * ensure high performance in thread switching.
+	 * Thread-specific state of the scheduler (i.e., we have one of these for each OS thread, it
+	 * keeps tack of all UThreads on that OS thread). It is designed to avoid locks as far as
+	 * possible, to ensure high performance in thread switching.
 	 *
 	 * This class is not threadsafe except where explicitly noted.
 	 */
@@ -298,7 +258,7 @@ namespace os {
 		// List of stacks for all UThreads running on this hardware thread. This includes any
 		// threads not on the ready-queue, and allows garbage collecting the UThreads.
 		// Protected by the same lock as the Ready-queue.
-		InlineSet<UThreadStack> stacks;
+		InlineSet<Stack> stacks;
 
 		// Get all idle threads. Protects accesses to 'stacks' with the appropriate lock. Assumed to
 		// be executed from the appropriate OS thread.
@@ -413,18 +373,6 @@ namespace os {
 		// Wake threads up until 'timestamp'.
 		void wakeThreads(int64 time);
 	};
-
-	/**
-	 * Errors in the threading.
-	 */
-	class ThreadError : public Exception {
-	public:
-		ThreadError(const String &msg) : msg(msg) {}
-		virtual String what() const { return msg; }
-	private:
-		String msg;
-	};
-
 
 }
 

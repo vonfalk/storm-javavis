@@ -19,11 +19,12 @@ namespace os {
 	 * Forward declare machine specific functions at the bottom.
 	 */
 
-	typedef UThreadStack::Desc StackDesc;
+	typedef Stack::Desc StackDesc;
 
 	// Stack size. (we need about 30k on Windows to do cout).
 	// 40k is too small to run the compiler well.
     // TODO: Make compiler UThreads larger somehow? Maybe smaller stacks are enough in release builds...
+	// TOOD: On Windows, we want allocations to be 64k-aligned, as that is the allocation granularity there.
 	static nat stackSize = 400 * 1024;
 
 	// Switch the currently running threads. *oldEsp is set to the old esp.
@@ -35,15 +36,6 @@ namespace os {
 	// stack and remembering the location of that stack so that it can be altered later.
 	// Returns the function that shall be called, since there may be variants of the function.
 	static const void *endDetourFn(bool member);
-
-	// Allocate a new stack.
-	static void *allocStack(nat size);
-
-	// Free a previously allocated stack.
-	static void freeStack(void *base, nat size);
-
-	// Compute the initial stack description for this architecture.
-	static StackDesc *initialDesc(void *base, nat size);
 
 	// Get a platform-dependent highly accurate timestamp in some unit. This should be monotonically
 	// increasing.
@@ -290,52 +282,36 @@ namespace os {
 
 
 	/**
-	 * UThread data and UThreadStack.
+	 * UThread data.
 	 */
 
-	UThreadStack::UThreadStack() :
-		desc(null), stackLimit(null),
-		initializing(1),
-		detourActive(0), detourTo(null) {}
-
-	UThreadData::UThreadData(UThreadState *state) :
-		references(0), next(null), owner(null),
-		stackBase(null), stackSize(0),
-		detourOrigin(null), detourResult(null) {
+	UThreadData::UThreadData(UThreadState *state, size_t size)
+		: references(0), next(null), owner(null), stack(size),
+		  detourOrigin(null), detourResult(null) {
 
 		// Notify the GC that we exist and may contain interesting data.
+		// Note: This UThread must be scannable by this point!
+		state->newStack(this);
+	}
+
+	UThreadData::UThreadData(UThreadState *state, void *limit)
+		: references(0), next(null), owner(null), stack(limit),
+		  detourOrigin(null), detourResult(null) {
+
+		// Notify the GC that we exist and may contain interesting data.
+		// Note: This UThread must be scannable by this point!
 		state->newStack(this);
 	}
 
 	UThreadData *UThreadData::createFirst(UThreadState *thread, void *base) {
-		// For the thread where the stack was allocated by the OS, we do not need to care.
-		UThreadData *t = new UThreadData(thread);
-		t->stack.stackLimit = base;
-		// Note that we're done with our initialization.
-		atomicWrite(t->stack.initializing, 0);
-		return t;
+		return new UThreadData(thread, base);
 	}
 
 	UThreadData *UThreadData::create(UThreadState *thread) {
-		// 'allocStack' may throw an exception, so make sure it succeeds before proceeding any further.
-		void *stack = allocStack(os::stackSize);
-
-		UThreadData *t = new UThreadData(thread);
-		t->stackSize = os::stackSize;
-		t->stackBase = stack;
-		t->stack.desc = initialDesc(t->stackBase, t->stackSize);
-		t->stack.stackLimit = t->stack.desc->high;
-
-		// Note that we're done with our initialization.
-		atomicWrite(t->stack.initializing, 0);
-		return t;
+		return new UThreadData(thread, os::stackSize);
 	}
 
-	UThreadData::~UThreadData() {
-		// Remove from the global list in UThreadState.
-		if (stackBase)
-			freeStack(stackBase, stackSize);
-	}
+	UThreadData::~UThreadData() {}
 
 	void UThreadData::switchTo(UThreadData *to) {
 		doSwitch(&to->stack.desc, &stack.desc);
@@ -378,9 +354,7 @@ namespace os {
 		// Note: The lock mainly protects against insertions from other threads. We don't have to
 		// worry about deletions, as those are always performed by this OS thread.
 		util::Lock::L z(lock);
-		for (InlineSet<UThreadStack>::iterator at = stacks.begin(), end = stacks.end(); at != end; ++at) {
-			if (at->initializing)
-				continue;
+		for (InlineSet<Stack>::iterator at = stacks.begin(), end = stacks.end(); at != end; ++at) {
 			if (!at->desc)
 				continue;
 
@@ -584,7 +558,7 @@ namespace os {
 		// possible that the stack scanning will think the thread is active for the wrong OS thread,
 		// which would cause everything to crash due to the mismatch of stack pointers.
 		atomicWrite(to->stack.detourActive, 0);
-		atomicWrite(prev->stack.detourTo, (UThreadStack *)null);
+		atomicWrite(prev->stack.detourTo, (Stack *)null);
 
 		// Since we returned here from 'switchTo', we know that 'endDetour' has set the result for us!
 		return to->detourResult;
@@ -638,68 +612,7 @@ namespace os {
 		return nat((1000 * (target - now)) / v.QuadPart);
 	}
 
-	static nat pageSize() {
-		static nat sz = 0;
-		if (sz == 0) {
-			SYSTEM_INFO sysInfo;
-			GetSystemInfo(&sysInfo);
-			sz = sysInfo.dwPageSize;
-		}
-		return sz;
-	}
-
-#ifdef DEBUG
-	static nat stacks = 0;
-#endif
-
-	static void *allocStack(nat size) {
-		nat pageSz = pageSize();
-		size = roundUp(size, pageSz);
-		size += pageSz; // We want a guard page.
-
-		byte *mem = (byte *)VirtualAlloc(null, size, MEM_COMMIT | MEM_RESERVE, PAGE_READWRITE);
-		if (mem == null) {
-			// TODO: What to do in this case?
-#ifdef DEBUG
-			PLN(L"Out of memory when spawning a thread. Threads alive: " << stacks);
-#endif
-			throw ThreadError(L"Out of memory when spawning a thread.");
-		}
-
-#ifdef DEBUG
-		atomicIncrement(stacks);
-#endif
-
-		DWORD oldProt;
-		VirtualProtect(mem, 1, PAGE_READONLY | PAGE_GUARD, &oldProt);
-
-		// Do not show the guard page to other parts...
-		return mem + pageSz;
-	}
-
-	static void freeStack(void *base, nat size) {
-		byte *mem = (byte *)base;
-		mem -= pageSize();
-		VirtualFree(mem, 0, MEM_RELEASE);
-
-#ifdef DEBUG
-		atomicDecrement(stacks);
-#endif
-	}
-
-	static StackDesc *initialDesc(void *base, nat size) {
-		// Put the initial stack description in the 'top' of the stack.
-		// Update it whenever we call 'pushContext'.
-		byte *r = (byte *)base;
-		StackDesc *desc = (StackDesc *)base;
-
-		desc->low = r + size;
-		desc->high = r + size;
-
-		return desc;
-	}
-
-	static void *&stackPtr(UThreadStack &stack) {
+	static void *&stackPtr(Stack &stack) {
 		return stack.desc->low;
 	}
 
@@ -889,68 +802,7 @@ namespace os {
 		return nat(remaining / 1000);
 	}
 
-	static nat pageSize() {
-		static nat sz = 0;
-		if (sz == 0) {
-			int s = getpagesize();
-			assert(s > 0, L"Failed to acquire the page size for your system!");
-			sz = (nat)s;
-		}
-		return sz;
-	}
-
-#ifdef DEBUG
-	static nat stacks = 0;
-#endif
-
-	static void *allocStack(nat size) {
-		nat pageSz = pageSize();
-		size = roundUp(size, pageSz);
-		size += pageSz; // We want a guard page.
-
-		byte *mem = (byte *)mmap(null, size, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
-		if (mem == null) {
-			// TODO: What to do in this case?
-#ifdef DEBUG
-			PLN(L"Out of memory when spawning a thread. Threads alive: " << stacks);
-#endif
-			throw ThreadError(L"Out of memory when spawning a thread.");
-		}
-
-#ifdef DEBUG
-		atomicIncrement(stacks);
-#endif
-
-		mprotect(mem, 1, PROT_NONE); // no special guard-page it seems...
-
-		// Do not show the guard page to other parts...
-		return mem + pageSz;
-	}
-
-	static void freeStack(void *base, nat size) {
-		byte *mem = (byte *)base;
-		nat pageSz = pageSize();
-		mem -= pageSz;
-		munmap(mem, size + pageSz);
-
-#ifdef DEBUG
-		atomicDecrement(stacks);
-#endif
-	}
-
-	static StackDesc *initialDesc(void *base, nat size) {
-		// Put the initial stack description in the 'top' of the stack.
-		// Update it whenever we call 'pushContext'.
-		byte *r = (byte *)base;
-		StackDesc *desc = (StackDesc *)base;
-
-		desc->low = r + size;
-		desc->high = r + size;
-
-		return desc;
-	}
-
-	static void *&stackPtr(UThreadStack &stack) {
+	static void *&stackPtr(Stack &stack) {
 		return stack.desc->low;
 	}
 
