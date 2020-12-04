@@ -1,6 +1,7 @@
 #include "stdafx.h"
 #include "Painter.h"
 #include "RenderResource.h"
+#include "GraphicsWorkaround.h"
 #include "App.h"
 
 namespace gui {
@@ -61,7 +62,8 @@ namespace gui {
 
 	void Painter::create() {
 		target = mgr->attach(this, attachedTo);
-		graphics = new (this) WindowGraphics(target, this);
+		// graphics = new (this) WindowGraphics(target, this);
+		graphics = new (this) WorkaroundGraphics(target, this);
 	}
 
 	void Painter::destroy() {
