@@ -11,10 +11,8 @@ namespace gui {
 	class D2DManager : public GraphicsMgrRaw {
 		STORM_CLASS;
 	public:
-#ifdef GUI_WIN32
 		// Create.
 		D2DManager(Graphics *owner, D2DSurface &surface);
-#endif
 
 		// Create resources:
 		virtual void create(SolidBrush *brush, void *&result, Resource::Cleanup &cleanup);

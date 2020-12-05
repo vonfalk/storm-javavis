@@ -11,10 +11,8 @@ namespace gui {
 	class CairoManager : public GraphicsMgrRaw {
 		STORM_CLASS;
 	public:
-#ifdef GUI_GTK
 		// Create.
 		CairoManager(Graphics *owner, CairoSurface *surface);
-#endif
 
 		// Create resources:
 		virtual void create(SolidBrush *brush, void *&result, Resource::Cleanup &cleanup);
