@@ -5,6 +5,7 @@
 #include "D2D/Device.h"
 #include "Cairo/Device.h"
 #include "Cairo/GLDevice.h"
+#include "Skia/Device.h"
 #include "Exception.h"
 #include "Window.h"
 #include "RenderMgr.h"
@@ -31,7 +32,7 @@ namespace gui {
 	Device *Device::create(Engine &e) {
 		const char *preference = getenv(ENV_RENDER_BACKEND);
 		if (!preference)
-			preference = "gl"; // TODO: Perhaps Skia?
+			preference = "skia"; // TODO: What is best?
 
 		Device *result = null;
 
@@ -44,7 +45,7 @@ namespace gui {
 		} else if (strcmp(preference, "gl") == 0) {
 			result = new CairoGLDevice(e);
 		} else if (strcmp(preference, "skia") == 0) {
-			// result = new SkiaDevice(e);
+			result = new SkiaDevice(e);
 		}
 
 		if (!result)
