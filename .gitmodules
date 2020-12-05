@@ -19,6 +19,9 @@
 [submodule "Linux/cairo"]
 	path = Linux/cairo
 	url = ../linux/cairo.git
+[submodule "Linux/skia"]
+	path = Linux/skia
+	url = ../linux/skia.git
 [submodule "root/tests/server-tests"]
 	path = root/tests/server-tests
 	url = ../storm-server-tests.git
