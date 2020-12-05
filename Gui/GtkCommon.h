@@ -6,10 +6,10 @@
 #include <X11/Xlib.h>
 #define GL_GLEXT_PROTOTYPES
 #include <cairo/cairo.h>
-#include "CairoGL.h"
 #include <gtk/gtk.h>
 #include <gtk/gtkx.h>
 #include <gdk/gdkwayland.h>
+#include "Cairo/CairoGL.h"
 #include "GtkLayout.h"
 
 // Some headers define 'Bool' for us. That is not good...
