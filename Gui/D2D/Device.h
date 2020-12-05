@@ -1,6 +1,6 @@
 #pragma once
-#include "Device.h"
-#include "Surface.h"
+#include "Gui/Device.h"
+#include "Gui/Surface.h"
 #include "ComPtr.h"
 
 #ifdef GUI_WIN32

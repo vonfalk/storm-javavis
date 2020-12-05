@@ -4,6 +4,8 @@
 
 namespace gui {
 
+	CairoManager::CairoManager(Graphics *owner, CairoSurface *surface) : owner(owner), surface(surface) {}
+
 #ifdef GUI_GTK
 
 	// A value we use for dummy Cairo objects. It is not null, so that it does not trigger
@@ -23,8 +25,6 @@ namespace gui {
 		if (pattern)
 			cairo_pattern_destroy((cairo_pattern_t *)pattern);
 	}
-
-	CairoManager::CairoManager(Graphics *owner, CairoSurface *surface) : owner(owner), surface(surface) {}
 
 	void CairoManager::applyBrush(cairo_t *to, Brush *brush, void *data) {
 		if (data == COLOR_BRUSH) {

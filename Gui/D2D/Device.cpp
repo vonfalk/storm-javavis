@@ -67,7 +67,7 @@ namespace gui {
 	D2DDevice::D2DDevice(Engine &e)
 		: factory(null), device(null), giDevice(null),
 		  giFactory(null), writeFactory(null),
-		  engine(e), id(0) {
+		  e(e), id(0) {
 
 		// Setup DX and DirectWrite.
 		HRESULT r;

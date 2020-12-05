@@ -4,6 +4,8 @@
 
 namespace gui {
 
+	D2DManager::D2DManager(Graphics *owner, D2DSurface &surface) : owner(owner), surface(&surface) {}
+
 #ifdef GUI_WIN32
 
 	void D2DManager::check(HRESULT r, const wchar *msg) {
@@ -31,8 +33,6 @@ namespace gui {
 			u->Release();
 		}
 	}
-
-	D2DManager::D2DManager(Graphics *owner, D2DSurface &surface) : owner(owner), surface(&surface) {}
 
 	void D2DManager::create(SolidBrush *brush, void *&result, Resource::Cleanup &cleanup) {
 		ID2D1SolidColorBrush *b = null;
