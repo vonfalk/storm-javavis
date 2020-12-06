@@ -2,6 +2,7 @@
 #include "Device.h"
 #include "D2D/Device.h"
 #include "Cairo/Device.h"
+#include "Cairo/GlDevice.h"
 #include "Exception.h"
 
 namespace gui {
