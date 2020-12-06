@@ -98,7 +98,12 @@ namespace gui {
 	}
 
 
-	CairoGlDevice::CairoGlDevice(Engine &e) : e(e) {}
+	CairoGlDevice::CairoGlDevice(Engine &e) : e(e) {
+		TODO(L"It seems like we can use a single GL context.");
+		// According to this e-mail, we can use a single GL context for all windows in the application:
+		// https://mail.gnome.org/archives/gtk-list/2015-October/msg00045.html
+		// If that works (also for Skia), we could probably simplify resouce management quite a bit.
+	}
 
 	Surface *CairoGlDevice::createSurface(Handle window) {
 		GdkWindow *win = gtk_widget_get_window(drawWidget(e, window));
