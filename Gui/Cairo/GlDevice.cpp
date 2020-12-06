@@ -172,6 +172,8 @@ namespace gui {
 		gdk_cairo_draw_from_gl(params->cairo, params->window,
 							texture, GL_TEXTURE, 1 /* scale */,
 							0, 0, int(size.w), int(size.h));
+		// Make sure everything is flushed now. Otherwise, we might see flickering when we start re-painting again.
+		glFlush();
 	}
 
 

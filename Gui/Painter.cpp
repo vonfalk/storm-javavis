@@ -117,6 +117,9 @@ namespace gui {
 		if (!surface)
 			return false;
 
+		// Make sure we're not presenting while drawing.
+		Lock::Guard z(lock);
+
 		bool more = false;
 		bool ok = false;
 
