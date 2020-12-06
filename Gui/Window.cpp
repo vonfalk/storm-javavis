@@ -933,6 +933,11 @@ namespace gui {
 
 		if (!useNativeWindow()) {
 			setWindowMask(gtk_widget_get_window(drawWidget()));
+
+			// Make sure we are using double buffering when drawing to it in "composite" mode.
+			gtk_widget_set_double_buffered(drawWidget(), TRUE);
+			if (myPainter)
+				myPainter->uiAttach(this);
 			return;
 		}
 
@@ -950,6 +955,8 @@ namespace gui {
 			gdkWindow = oldWindow;
 			if (myPainter)
 				gtk_widget_set_double_buffered(drawTo, FALSE);
+			if (myPainter)
+				myPainter->uiAttach(this);
 			return;
 		}
 		if (!oldWindow)
@@ -984,6 +991,8 @@ namespace gui {
 			gtk_widget_set_double_buffered(drawTo, FALSE);
 		}
 		setWindowMask(gdkWindow);
+		if (myPainter)
+			myPainter->uiAttach(this);
 	}
 
 	void Window::onUnrealize() {

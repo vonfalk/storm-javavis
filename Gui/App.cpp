@@ -877,7 +877,6 @@ namespace gui {
 
 	AppWait::RepaintRequest::RepaintRequest(Handle handle) :
 		handle(handle), wait(0), next(null) {
-		TODO(L"Remove this now?");
 	}
 
 	void AppWait::repaint(Handle window) {
