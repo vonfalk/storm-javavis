@@ -909,6 +909,8 @@ namespace gui {
 	}
 
 	bool Window::useNativeWindow() {
+		return false;
+
 		// On Wayland, we don't need a separate window for things we're rendering into. That only
 		// confuses the window manager!
 		if (GDK_IS_WAYLAND_WINDOW(gtk_widget_get_window(drawWidget()))) {

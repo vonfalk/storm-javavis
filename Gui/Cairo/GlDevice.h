@@ -14,12 +14,36 @@ namespace gui {
 		// Create.
 		CairoGlDevice(Engine &e);
 
+		// Destroy.
+		~CairoGlDevice();
+
 		// Create a surface.
 		virtual Surface *createSurface(Handle window);
+
+		// Called by GL surfaces when they are destroyed to indicate that they no longer need the GL context.
+		void unrefContext();
+
+		// GL context. Might be null.
+		GdkGLContext *context;
+
+		// Cairo device. Might be null.
+		cairo_device_t *device;
 
 	private:
 		// Engine.
 		Engine &e;
+
+		// Users of the GL device and context.
+		Nat surfaces;
+
+		// Our ID.
+		Nat id;
+
+		// Create the context.
+		void create(GdkWindow *window);
+
+		// Destroy the context.
+		void destroy();
 	};
 
 
@@ -29,7 +53,7 @@ namespace gui {
 	class CairoGlSurface : public CairoSurface {
 	public:
 		// Create.
-		CairoGlSurface(Nat id, Size size, GdkWindow *window);
+		CairoGlSurface(Nat id, Size size, CairoGlDevice &owner);
 
 		// Destroy.
 		~CairoGlSurface();
@@ -47,14 +71,10 @@ namespace gui {
 		virtual void resize(Size size, Float scale);
 
 	private:
-		// Gl context.
-		GdkGLContext *context;
+		CairoGlDevice &owner;
 
 		// Main texture.
 		GLuint texture;
-
-		// Cairo device.
-		cairo_device_t *dev;
 	};
 
 }
