@@ -114,6 +114,25 @@ class PaintWin extends Frame {
 	}
 }
 
+class MultiPaintWin extends Frame {
+	init() {
+		init("Multi graphics") {}
+		size(Size(400.0 * 2 + 8.0 * 3, 400.0 + 8.0 * 2));
+
+		Window p1;
+		p1.pos = Rect(8, 8, 408, 408);
+		p1.painter(MainPainter());
+		add(p1);
+
+		Window p2;
+		p2.pos = Rect(416, 8, 816, 408);
+		p2.painter(MainPainter());
+		add(p2);
+
+		create();
+	}
+}
+
 class MainWin extends Frame {
 	Label lbl;
 	Edit input;
@@ -172,6 +191,12 @@ void main() {
 	print("Opening main window...");
 	// MainWin win;
 	PaintWin win;
+	spawn closeLater(win);
+	win.waitForClose;
+}
+
+void multi() {
+	MultiPaintWin win;
 	spawn closeLater(win);
 	win.waitForClose;
 }

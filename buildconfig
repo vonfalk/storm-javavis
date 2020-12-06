@@ -4,7 +4,8 @@
 
 #Basic UI test.
 #Main -a -r ../root/ -f tests.ui.simple
-Main -a -r ../root/ -f tests.ui.main
+#Main -a -r ../root/ -f tests.ui.main
+Main -a -f ../root/ -f tests.ui.multi
 #Main -a -r ../root/ -f tests.ui.simpleUi
 #Main -a -r ../root/ -f tests.ui.multiline
 #Main -a -r ../root/ -f tests.ui.dialog
