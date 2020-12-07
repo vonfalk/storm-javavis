@@ -1,15 +1,18 @@
 #pragma once
-#include "Gui/TextMgr.h"
-#include "ComPtr.h"
 
-#ifdef GUI_WIN32
+#include "Gui/TextMgr.h"
+
+#ifdef GUI_GTK
 
 namespace gui {
 
-	class D2DText : public TextMgr {
+	class CairoText : public TextMgr {
 	public:
 		// Create.
-		D2DText();
+		CairoText();
+
+		// Destroy.
+		~CairoText();
 
 		// Create a font.
 		virtual Resource createFont(const Font *font);
@@ -33,9 +36,8 @@ namespace gui {
 		virtual Array<Rect> *boundsOf(void *layout, Text *text, Str::Iter begin, Str::Iter end);
 
 	private:
-		// The IDWriteFactory for creating layouts and fonts.
-		ComPtr<IDWriteFactory> factory;
-
+		// Pango context.
+		PangoContext *context;
 	};
 
 }

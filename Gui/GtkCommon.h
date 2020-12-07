@@ -19,26 +19,6 @@ namespace gui {
 
 	class TextureContext;
 
-	/**
-	 * How do we destroy various objects inside Cairo?
-	 */
-	template <class T>
-	struct Destroy;
-
-	template <>
-	struct Destroy<cairo_pattern_t> {
-		static void destroy(OsResource *p) {
-			cairo_pattern_destroy((cairo_pattern_t *)p);
-		}
-	};
-
-	template <>
-	struct Destroy<cairo_surface_t> {
-		static void destroy(OsResource *i) {
-			cairo_surface_destroy((cairo_surface_t *)i);
-		}
-	};
-
 	// More convenient matrix operations.
 	cairo_matrix_t cairoMultiply(const cairo_matrix_t &a, const cairo_matrix_t &b);
 	cairo_matrix_t cairo(Transform *tfm);

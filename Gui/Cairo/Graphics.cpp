@@ -389,9 +389,8 @@ namespace gui {
 	void CairoGraphics::draw(Text *text, Brush *style, Point origin) {
 		SET_BRUSH(style);
 
-		TODO("FIXME!");
-		// cairo_move_to(surface.device, origin.x, origin.y);
-		// pango_cairo_show_layout(surface.device, text->layout(owner));
+		cairo_move_to(surface.device, origin.x, origin.y);
+		pango_cairo_show_layout(surface.device, (PangoLayout *)text->backendLayout(this));
 	}
 
 #else

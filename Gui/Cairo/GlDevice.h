@@ -17,6 +17,9 @@ namespace gui {
 		// Create a surface.
 		virtual Surface *createSurface(Handle window);
 
+		// Create a text manager.
+		virtual TextMgr *createTextMgr();
+
 	private:
 		// Engine.
 		Engine &e;

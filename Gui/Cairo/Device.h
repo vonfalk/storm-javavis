@@ -14,6 +14,9 @@ namespace gui {
 		// Create.
 		CairoDevice(Engine &e);
 
+		// Create a text manager.
+		virtual TextMgr *createTextMgr();
+
 	protected:
 		// Get the ID.
 		Nat id();

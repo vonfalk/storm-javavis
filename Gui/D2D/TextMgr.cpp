@@ -68,7 +68,7 @@ namespace gui {
 		return true;
 	}
 
-	D2DText::EffectResult D2DText::addEffect(void *layout, const Text::Effect &effect, Graphics *graphics) {
+	D2DText::EffectResult D2DText::addEffect(void *layout, const Text::Effect &effect, Str *, Graphics *graphics) {
 		// We need a render target to be able to apply effects...
 		if (!graphics)
 			return eWait;

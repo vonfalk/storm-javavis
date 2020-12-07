@@ -5,6 +5,7 @@
 #include "Exception.h"
 #include "App.h"
 #include "Window.h"
+#include "TextMgr.h"
 #include "Core/Convert.h"
 
 #ifdef GUI_GTK
@@ -21,6 +22,10 @@ namespace gui {
 	}
 
 	CairoDevice::CairoDevice(Engine &e) : e(e), myId(0) {}
+
+	TextMgr *CairoDevice::createTextMgr() {
+		return new CairoText();
+	}
 
 	Nat CairoDevice::id() {
 		if (myId == 0)

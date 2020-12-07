@@ -87,6 +87,7 @@ typedef DXObject IDXGIDevice;
 typedef DXObject IDWriteFactory;
 typedef DXObject ID2D1PathGeometry;
 typedef DXObject ID2D1GradientStopCollection;
+typedef DXObject ID2D1Layer;
 
 inline void release(DXObject *o) {}
 

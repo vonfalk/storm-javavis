@@ -6,6 +6,7 @@
 #include "App.h"
 #include "Window.h"
 #include "Core/Convert.h"
+#include "TextMgr.h"
 
 #ifdef GUI_GTK
 
@@ -38,6 +39,10 @@ namespace gui {
 
 		Nat id = renderMgr(e)->allocId();
 		return new CairoGlSurface(id, size, win);
+	}
+
+	TextMgr *CairoGlDevice::createTextMgr() {
+		return new CairoText();
 	}
 
 	static void reportError(const char *error) {

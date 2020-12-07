@@ -37,11 +37,6 @@ namespace gui {
 		// Notify that a new painter is ready to repaint.
 		void painterReady();
 
-#ifdef GUI_GTK
-		// Get a pango context.
-		inline PangoContext *pango() { return null; }
-#endif
-
 		// Get the text manager.
 		TextMgr *text() const { return textMgr; }
 
