@@ -64,6 +64,9 @@ namespace gui {
 			i.v()->destroy();
 		}
 
+		delete textMgr;
+		textMgr = null;
+
 		delete device;
 		device = null;
 
