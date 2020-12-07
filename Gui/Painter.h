@@ -9,7 +9,6 @@
 
 namespace gui {
 	class App;
-	class RenderResource;
 
 
 	/**

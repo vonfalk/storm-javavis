@@ -20,13 +20,6 @@ namespace gui {
 	class TextureContext;
 
 	/**
-	 * Define generic types to be used in Storm class declarations.
-	 */
-	typedef void OsResource;
-	typedef size_t OsLayer;
-	typedef PangoLayout OsTextLayout;
-
-	/**
 	 * How do we destroy various objects inside Cairo?
 	 */
 	template <class T>
@@ -58,7 +51,7 @@ namespace gui {
 #else
 
 // Allow using some types in class declarations even if we're not using Gtk+.
-// TODO: Can we remove some of these?
+// TODO: Can we remove some of these? After rewriting the rendering, probably yes.
 struct PangoContext;
 struct GdkWindow;
 struct GdkDisplay;

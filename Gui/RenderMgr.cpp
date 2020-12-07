@@ -15,6 +15,7 @@ namespace gui {
 
 		try {
 			device = Device::create(engine());
+			textMgr = device->createTextMgr();
 		} catch (const storm::Exception *e) {
 			PLN("Error while initializing rendering: " << e);
 			throw;

@@ -7,6 +7,7 @@
 namespace gui {
 
 	class Surface;
+	class TextMgr;
 
 	/**
 	 * A generic interface to some rendering device.
@@ -34,6 +35,9 @@ namespace gui {
 		// Create a surface to draw on associated with a window.
 		// Might return "null", which means that the window is not yet ready for being rendered to.
 		virtual Surface *createSurface(Handle window) = 0;
+
+		// Create a text manager compatible with this device.
+		virtual TextMgr *createTextMgr() = 0;
 	};
 
 }

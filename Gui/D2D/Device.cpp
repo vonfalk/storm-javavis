@@ -4,6 +4,7 @@
 #include "Exception.h"
 #include "Win32Dpi.h"
 #include "RenderMgr.h"
+#include "TextMgr.h"
 
 #ifdef GUI_WIN32
 
@@ -65,9 +66,7 @@ namespace gui {
 	}
 
 	D2DDevice::D2DDevice(Engine &e)
-		: factory(null), device(null), giDevice(null),
-		  giFactory(null), writeFactory(null),
-		  e(e), id(0) {
+		: factory(null), device(null), giDevice(null), giFactory(null), e(e), id(0) {
 
 		// Setup DX and DirectWrite.
 		HRESULT r;
@@ -86,10 +85,10 @@ namespace gui {
 
 		adapter->GetParent(__uuidof(IDXGIFactory), (void **)&giFactory.v);
 		check(e, r, S("Failed to get the DXGI factory: "));
+	}
 
-		DWRITE_FACTORY_TYPE type = DWRITE_FACTORY_TYPE_SHARED;
-		r = DWriteCreateFactory(type, __uuidof(IDWriteFactory), (IUnknown **)&writeFactory.v);
-		check(e, r, S("Failed to initialize Direct Write: "));
+	TextMgr *D2DDevice::createTextMgr() {
+		return new D2DText();
 	}
 
 	static void create(DXGI_SWAP_CHAIN_DESC &desc, HWND window) {
@@ -111,7 +110,7 @@ namespace gui {
 
 		// If supported, this improves performance:
 		// TODO: Check if compatible with DX10. We might need BufferCount=2.
-		TODO(L"Exaimine using 'FLIP'");
+		TODO(L"Exaimine using 'FLIP'. It requires DX11, but we have that in the SDK, so we can use it.");
 		// DXGI_SWAP_EFFECT DXGI_SWAP_EFFECT_FLIP_DISCARD = DXGI_SWAP_EFFECT(3);
 		// desc.SwapEffect = DXGI_SWAP_EFFECT_FLIP_DISCARD;
 	}

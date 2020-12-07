@@ -3,6 +3,7 @@
 #include "RenderMgr.h"
 #include "Core/Convert.h"
 #include "Win32Dpi.h"
+#include "TextMgr.h"
 
 #ifndef FW_NORMAL
 // Same as in the Win32 API.
@@ -33,17 +34,21 @@ namespace gui {
 	 */
 	struct FontData {
 		// Create.
-		FontData() : refs(1) {
+		FontData() : refs(1), backend() {
 			init();
 		}
 
 		// Destroy.
 		~FontData() {
+			backend.clear();
 			clear();
 		}
 
 		// Refcount.
 		nat refs;
+
+		// Backend data.
+		TextMgr::Resource backend;
 
 		// Increase
 		void addRef() {
@@ -74,19 +79,13 @@ namespace gui {
 		typedef std::map<Nat, HFONT> FontMap;
 		FontMap hFonts;
 
-		// TextFormat.
-		IDWriteTextFormat *textFmt;
-
-		void init() {
-			textFmt = null;
-		}
+		void init() {}
 
 		// Clear data. _not_ thread safe, only to be used inside 'invalidate'.
 		void clear() {
 			for (FontMap::iterator i = hFonts.begin(), end = hFonts.end(); i != end; ++i)
 				DeleteObject(i->second);
 			hFonts.clear();
-			::release(textFmt);
 		}
 #endif
 #ifdef GUI_GTK
@@ -197,6 +196,15 @@ namespace gui {
 			*to << L", strike out";
 	}
 
+	void *Font::backendFont() const {
+		os::Lock::L z(shared->lock);
+		if (!shared->backend.data) {
+			RenderMgr *mgr = renderMgr(engine());
+			shared->backend = mgr->text()->createFont(this);
+		}
+		return shared->backend.data;
+	}
+
 #ifdef GUI_WIN32
 
 	Font::Font(LOGFONT &f) {
@@ -236,30 +244,6 @@ namespace gui {
 		} else {
 			return found->second;
 		}
-	}
-
-	IDWriteTextFormat *Font::textFormat() {
-		os::Lock::L z(shared->lock);
-		if (!shared->textFmt) {
-			RenderMgr *mgr = renderMgr(engine());
-			DWRITE_FONT_STYLE style = fItalic ? DWRITE_FONT_STYLE_ITALIC : DWRITE_FONT_STYLE_NORMAL;
-			DWRITE_FONT_STRETCH stretch = DWRITE_FONT_STRETCH_NORMAL;
-			HRESULT r = mgr->dWrite()->CreateTextFormat(fName->c_str(),
-														NULL,
-														(DWRITE_FONT_WEIGHT)fWeight,
-														style,
-														stretch,
-														pxHeight(),
-														L"en-us",
-														&shared->textFmt);
-			if (FAILED(r)) {
-				WARNING(L"Failed to create font: " << ::toS(r));
-			}
-
-			if (fTabWidth > 0)
-				shared->textFmt->SetIncrementalTabStop(fTabWidth);
-		}
-		return shared->textFmt;
 	}
 
 	static void addLine(HDC dc, const wchar *start, size_t length, SIZE &update) {

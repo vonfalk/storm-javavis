@@ -21,6 +21,9 @@ namespace gui {
 		// Destroy.
 		~D2DGraphics();
 
+		// Get the surface (for use in TextMgr)
+		D2DSurface &getSurface() const { return surface; }
+
 		// Called when the surface was resized.
 		void surfaceResized();
 
@@ -122,17 +125,17 @@ namespace gui {
 				v = 0;
 			}
 
-			Layer(OsLayer layer) {
+			Layer(ID2D1Layer *layer) {
 				v = layer;
 			}
 
 			// Return a dummy value usable for non-pointers. Used in D2D to indicate PushAxisAlignedClip.
 			static Layer dummy() {
-				return Layer((OsLayer)1);
+				return Layer((ID2D1Layer *)1);
 			}
 
 			inline operator bool() {
-				return v != OsLayer(0);
+				return v != null;
 			}
 
 			inline bool operator ==(const Layer &o) const {
@@ -143,7 +146,7 @@ namespace gui {
 				return v != o.v;
 			}
 
-			UNKNOWN(PTR_NOGC) OsLayer v;
+			UNKNOWN(PTR_NOGC) ID2D1Layer *v;
 
 			// Release.
 			void release();

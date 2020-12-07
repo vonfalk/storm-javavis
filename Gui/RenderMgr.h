@@ -37,17 +37,14 @@ namespace gui {
 		// Notify that a new painter is ready to repaint.
 		void painterReady();
 
-#ifdef GUI_WIN32
-		// Get the DWrite factory object.
-		inline IDWriteFactory *dWrite() { return null; /* return device->dWrite(); */ }
-
-		// Get the D2D factory object.
-		inline ID2D1Factory *d2d() { return null; /* return device->d2d(); */ }
-#endif
 #ifdef GUI_GTK
 		// Get a pango context.
 		inline PangoContext *pango() { return null; }
 #endif
+
+		// Get the text manager.
+		TextMgr *text() const { return textMgr; }
+
 	private:
 		friend RenderMgr *renderMgr(EnginePtr e);
 
@@ -56,6 +53,9 @@ namespace gui {
 
 		// The underlying device.
 		UNKNOWN(PTR_NOGC) Device *device;
+
+		// The underlying text manager.
+		UNKNOWN(PTR_NOGC) TextMgr *textMgr;
 
 		// Identifiers for Graphics objects.
 		UNKNOWN(PTR_NOGC) IdMgr *idMgr;

@@ -19,11 +19,13 @@ namespace gui {
 		// Create a surface.
 		virtual Surface *createSurface(Handle window);
 
+		// Create a text manager.
+		virtual TextMgr *createTextMgr();
+
 	private:
 		// Factories.
 		ComPtr<ID2D1Factory> factory;
 		ComPtr<IDXGIFactory> giFactory;
-		ComPtr<IDWriteFactory> writeFactory;
 
 		// D3D device and DXGI device.
 		ComPtr<ID3D10Device1> device;

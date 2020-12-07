@@ -37,6 +37,8 @@ namespace gui {
 #define BRUSH(B) ((ID2D1Brush *)(B)->forGraphicsRaw(this))
 #define BITMAP(R) ((ID2D1Bitmap *)(R)->forGraphicsRaw(this))
 #define PATH(P) ((ID2D1PathGeometry *)(P)->forGraphicsRaw(this))
+#define FONT(F) ((IDWriteTextFormat *)(F)->backendFont())
+#define LAYOUT(L) ((IDWriteTextLayout *)(L)->backendLayout(this))
 
 	void D2DGraphics::surfaceResized() {
 		// Remove any layers.
@@ -288,12 +290,11 @@ namespace gui {
 	}
 
 	void D2DGraphics::text(Str *text, Font *font, Brush *style, Rect rect) {
-		// ID2D1Brush *b = style->brush(owner);
-		// surface.target()->DrawText(text->c_str(), text->peekLength(), font->textFormat(), dx(rect), b);
+		surface.target()->DrawText(text->c_str(), text->peekLength(), FONT(font), dx(rect), BRUSH(style));
 	}
 
 	void D2DGraphics::draw(Text *text, Brush *style, Point origin) {
-		// surface.target()->DrawTextLayout(dx(origin), text->layout(owner), style->brush(owner));
+		surface.target()->DrawTextLayout(dx(origin), LAYOUT(text), BRUSH(style));
 	}
 
 	void D2DGraphics::Layer::release() {

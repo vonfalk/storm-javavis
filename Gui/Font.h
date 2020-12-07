@@ -38,34 +38,34 @@ namespace gui {
 		 */
 
 		// Font name.
-		inline Str *STORM_FN name() { return fName; }
+		inline Str *STORM_FN name() const { return fName; }
 		void STORM_ASSIGN name(Str *name);
 
 		// Font height (pt).
-		inline Float STORM_FN height() { return fHeight; }
+		inline Float STORM_FN height() const { return fHeight; }
 		void STORM_ASSIGN height(Float h);
 
 		// Font height (dip).
-		inline Float STORM_FN pxHeight() { return fHeight * 92.0f / 72.0f; }
+		inline Float STORM_FN pxHeight() const { return fHeight * 92.0f / 72.0f; }
 
 		// Font weight. TODO: Make constants for weight.
-		inline Int STORM_FN weight() { return fWeight; }
+		inline Int STORM_FN weight() const { return fWeight; }
 		void STORM_ASSIGN weight(Int w);
 
 		// Italic.
-		inline Bool STORM_FN italic() { return fItalic; }
+		inline Bool STORM_FN italic() const { return fItalic; }
 		void STORM_ASSIGN italic(Bool u);
 
 		// Underline.
-		inline Bool STORM_FN underline() { return fUnderline; }
+		inline Bool STORM_FN underline() const { return fUnderline; }
 		void STORM_ASSIGN underline(Bool u);
 
 		// Strike thru.
-		inline Bool STORM_FN strikeOut() { return fStrikeOut; }
+		inline Bool STORM_FN strikeOut() const { return fStrikeOut; }
 		void STORM_ASSIGN strikeOut(Bool u);
 
 		// Tab stop size.
-		inline Float STORM_FN tabWidth() { return fTabWidth; }
+		inline Float STORM_FN tabWidth() const { return fTabWidth; }
 		void STORM_ASSIGN tabWidth(Float w);
 
 		// To string.
@@ -74,9 +74,6 @@ namespace gui {
 #ifdef GUI_WIN32
 		// Get a Win32 handle. Will be alive at least as long as this object.
 		HFONT handle(Nat dpi);
-
-		// Get TextFormat for D2D. This class retains ownership over the returned object.
-		IDWriteTextFormat *textFormat();
 
 		// Get the size of a string in a given font as reported by GDI.
 		Size stringSize(const Str *str);
@@ -88,6 +85,9 @@ namespace gui {
 		// Get a Pango font description.
 		PangoFontDescription *desc();
 #endif
+
+		// Get backend-specific representation. Creates it if necessary.
+		virtual void *backendFont() const;
 
 	private:
 		// Shared data. Be careful with this!

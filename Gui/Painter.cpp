@@ -1,6 +1,5 @@
 #include "stdafx.h"
 #include "Painter.h"
-#include "RenderResource.h"
 #include "App.h"
 #include "Surface.h"
 

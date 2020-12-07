@@ -6,6 +6,8 @@
 
 namespace gui {
 
+	class TextMgr;
+
 	/**
 	 * Information about a single line of formatted text.
 	 */
@@ -51,42 +53,25 @@ namespace gui {
 
 		// Layout border size. If no layout border is set from the constructor, it will return the
 		// largest possible float value.
-		Size STORM_FN layoutBorder();
+		inline Size STORM_FN layoutBorder() const { return myBorder; }
 		void STORM_ASSIGN layoutBorder(Size size);
 
 		// Get information about each line of the formatted text.
 		Array<TextLine *> *STORM_FN lineInfo();
 
+		// Get a set of rectangles that cover a range of characters.
+		Array<Rect> *STORM_FN boundsOf(Str::Iter begin, Str::Iter end);
+
 		// Set the color of a particular range of characters.
 		void STORM_FN color(Str::Iter begin, Str::Iter end, Color color);
 		void STORM_FN color(Str::Iter begin, Str::Iter end, SolidBrush *color);
 
-		// Get a set of rectangles that cover a range of characters.
-		Array<Rect> *STORM_FN boundsOf(Str::Iter begin, Str::Iter end);
-
 		// TODO: We can add formatting options for parts of the string here. For example, it is
 		// possible to apply a font to a specific part of the string.
 
-#ifdef GUI_WIN32
-		// Get the layout.
-		// IDWriteTextLayout *layout(Painter *owner);
-#endif
-#ifdef GUI_GTK
-		// Get the layout.
-		// inline PangoLayout *layout(Painter *p) { return l; }
-#endif
-
-	private:
-		// The layout itself.
-		OsTextLayout *l;
-
-		// The text we represent.
-		Str *myText;
-
-		// Which font are we using?
-		Font *myFont;
-
-		// Effect (currently only text color) to apply next time "prepare" is called.
+		/**
+		 * Text effect. Used internally.
+		 */
 		class Effect {
 			STORM_VALUE;
 		public:
@@ -101,14 +86,43 @@ namespace gui {
 			Effect(Nat from, Nat to, Color color);
 		};
 
-		// Any effects that should be applied before rendering.
-		Array<Effect> *effects;
+		// Get text effects.
+		Array<Effect> *STORM_FN effects() const;
 
-		// Create layout.
-		void init(Str *text, Font *font, Size size);
+		// Get the backend-specific representation for painting to "graphics".
+		void *backendLayout(Graphics *graphics);
 
-		// Destroy the layout.
-		void destroy();
+	private:
+		// The text layout.
+		UNKNOWN(PTR_NOGC) void *layout;
+
+		// Destructor for the data.
+		typedef void (*Cleanup)(void *);
+		UNKNOWN(PTR_NOGC) Cleanup cleanup;
+
+		// Text manager.
+		UNKNOWN(PTR_NOGC) TextMgr *mgr;
+
+		// The text we represent.
+		Str *myText;
+
+		// Which font are we using?
+		Font *myFont;
+
+		// Border of the layout.
+		Size myBorder;
+
+		// All text effects applied here.
+		Array<Effect> *myEffects;
+
+		// How many of the effects have been applied so far?
+		Nat appliedEffects;
+
+		// Common initialization.
+		void init();
+
+		// Re-create the layout.
+		void recreate();
 	};
 
 }
