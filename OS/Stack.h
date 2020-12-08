@@ -45,6 +45,7 @@ namespace os {
 		// Current stack description. If null, then this UThread is currently running, and the
 		// current CPU state describes the stack of that thread. "desc" always refers to somewhere
 		// on the stack this represents.
+		// Note: Assumed to be the first member of the class, except for the pointers in SetMember.
 		Desc *desc;
 
 		// Get the limit of the stack. For X86 and the like, this represents an address close to the
@@ -62,11 +63,16 @@ namespace os {
 		nat detourActive;
 
 		// Which thread is currently running instead of this thread?
+		// Note: Assumed to be here by StackCall.h
 		Stack *detourTo;
 
 		// Clear this stack. I.e. re-initialize an empty desc on top of it. Assumes it was
 		// allocated, and not an OS stack.
 		void clear();
+
+		// Get the low and high address of the allocated memory (if any).
+		void *allocLow() const { return base; }
+		void *allocHigh() const { return (byte *)base + size; }
 
 	private:
 		// The low address of the stack. If we represent an OS allocated stack, this is the limit.

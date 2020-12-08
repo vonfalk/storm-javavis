@@ -30,10 +30,6 @@ namespace os {
 			delete []params();
 	}
 
-	void **FnCallRaw::params() const {
-		return (void **)(paramsData & ~size_t(0x1));
-	}
-
 	bool FnCallRaw::freeParams() const {
 		return (paramsData & 0x1) == 0x1;
 	}
@@ -43,6 +39,11 @@ namespace os {
 		assert(!freeParams(), L"'data' is misaligned!");
 		if (owner)
 			paramsData |= 0x1;
+	}
+
+	// Helper, used in assembler.
+	extern "C" void fnCallRaw(FnCallRaw *me, const void *fn, bool member, void *first, void *result) {
+		me->callRaw(fn, member, first, result);
 	}
 
 }

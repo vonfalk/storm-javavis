@@ -7,7 +7,7 @@ namespace os {
 	 * Representation of parameters to be passed to a function on another thread.
 	 *
 	 * Usage:
-	 * fnCall<Result>().add(x).add(y)
+	 * FnCall<Result, N> call = fnCall().add(x).add(y)
 	 */
 
 	// Function declaration used for performing the actual call later on.
@@ -93,7 +93,9 @@ namespace os {
 		void params(void **data, bool owner);
 
 		// Get 'params'.
-		void **params() const;
+		inline void **params() const {
+			return (void **)(paramsData & ~size_t(0x1));
+		}
 
 		// Function to invoke in order to copy parameters and perform the actual call.
 		CallThunk thunk;
