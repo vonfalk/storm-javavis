@@ -16,6 +16,11 @@ namespace gui {
 
 		gdk_gl_context_make_current(context);
 
+		// If GL_VENDOR is just "Intel" (not "Intel Open Source Technology Center"), and GL_VERSION ends
+		// with "Mesa 20.0.8", and the version is lower than 20.x.x, then we should use the stack workaround.
+		PVAR((const char *)glGetString(GL_VENDOR));
+		PVAR((const char *)glGetString(GL_VERSION));
+
 		// Try to get the current context and create a Cairo device for it.
 		GdkDisplay *gdkDisplay = gdk_window_get_display(window);
 		if (GDK_IS_WAYLAND_DISPLAY(gdkDisplay)) {
