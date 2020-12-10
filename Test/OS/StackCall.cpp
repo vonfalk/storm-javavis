@@ -16,6 +16,7 @@ void stackThrow(int on) {
 }
 
 BEGIN_TEST(StackCall, OS) {
+	onStack(100);
 
 	os::Stack s(1024);
 
