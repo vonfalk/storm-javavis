@@ -37,6 +37,10 @@ namespace gui {
 		// Create a text manager compatible with this device.
 		virtual TextMgr *createTextMgr() = 0;
 
+		// Is this device hardware-accelerated?
+		// We use this to enable workarounds if needed.
+		virtual bool isHardware() const = 0;
+
 #ifdef GUI_GTK
 		// Get the draw widget for Gtk. Utility function as it is needed in all Gtk devices.
 		static GtkWidget *drawWidget(Engine &e, Handle handle);

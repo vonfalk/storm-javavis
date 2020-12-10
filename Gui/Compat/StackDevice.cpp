@@ -1,13 +1,12 @@
 #include "stdafx.h"
-#include "Device.h"
+#include "StackDevice.h"
+#include "StackGraphics.h"
 #include "OS/StackCall.h"
 
 namespace gui {
 
 	// 128 K stack should be enough.
-	StackDevice::StackDevice(Device *wrap) : wrap(wrap), stack(128 * 1024) {
-		TODO(L"Check stack alignment after stackCall!");
-	}
+	StackDevice::StackDevice(Device *wrap) : wrap(wrap), stack(128 * 1024) {}
 
 	StackDevice::~StackDevice() {
 		delete wrap;
@@ -18,17 +17,20 @@ namespace gui {
 	}
 
 	Surface *StackDevice::createSurface(Handle window) {
-		os::FnCall<Surface *, 2> c = fnCall().add(wrap).add(window);
+		os::FnCall<Surface *, 2> c = os::fnCall().add(wrap).add(window);
 		Surface *s = call(address(gui::createSurface), c);
-		return new StackSurface(s);
+		if (s)
+			return new StackSurface(this, s);
+		else
+			return null;
 	}
 
-	static TextMgr *CODECALL createTextmgr(Device *d) {
-		return d->createTextmgr();
+	static TextMgr *CODECALL createTextMgr(Device *d) {
+		return d->createTextMgr();
 	}
 
 	TextMgr *StackDevice::createTextMgr() {
-		os::FnCall<Surface *, 2> c = fnCall().add(wrap);
+		os::FnCall<TextMgr *, 2> c = os::fnCall().add(wrap);
 		TextMgr *m = call(address(gui::createTextMgr), c);
 		// Note: We're not wrapping the text manager due to recursive entries onto our stack.
 		return m;
@@ -48,10 +50,9 @@ namespace gui {
 
 	WindowGraphics *StackSurface::createGraphics(Engine &e) {
 		Engine *engine = &e;
-		os::FnCall<WindowGraphics *, 2> call = fnCall().add(wrap).add(engine);
+		os::FnCall<WindowGraphics *, 2> call = os::fnCall().add(wrap).add(engine);
 		WindowGraphics *g = owner->call(address(gui::createGraphics), call);
-		TOOD(L"We should wrap the graphics object as well.");
-		return g;
+		return new (e) StackGraphics(owner, g);
 	}
 
 	static void CODECALL resize(Surface *s, Size size, Float scale) {
@@ -59,29 +60,29 @@ namespace gui {
 	}
 
 	void StackSurface::resize(Size size, Float scale) {
-		os::FnCall<void, 3> call = fnCall().add(wrap).add(size).add(scale);
+		os::FnCall<void, 3> call = os::fnCall().add(wrap).add(size).add(scale);
 		owner->call(address(gui::resize), call);
 
 		this->size = wrap->size;
 		this->scale = wrap->scale;
 	}
 
-	static Surface::PresentStatus CODECALL present(Device *wrap, bool vsync) {
+	static Surface::PresentStatus CODECALL present(Surface *wrap, bool vsync) {
 		return wrap->present(vsync);
 	}
 
-	PresentStatus StackSurface::present(bool waitForVSync) {
-		os::FnCall<PresentStatus, 2> call = fnCall().add(wrap).add(waitForVSync);
-		return owner->call(address(gui::resize), call);
+	Surface::PresentStatus StackSurface::present(bool waitForVSync) {
+		os::FnCall<PresentStatus, 2> call = os::fnCall().add(wrap).add(waitForVSync);
+		return owner->call(address(gui::present), call);
 	}
 
-	static void CODECALL repaint(Device *wrap, RepaintParams *params) {
+	static void CODECALL repaint(Surface *wrap, RepaintParams *params) {
 		return wrap->repaint(params);
 	}
 
 	void StackSurface::repaint(RepaintParams *params) {
-		os::FnCall<void, 2> call = fnCall().add(wrap).add(params);
-		owner->call(address(gui::repaint, call);
+		os::FnCall<void, 2> call = os::fnCall().add(wrap).add(params);
+		owner->call(address(gui::repaint), call);
 	}
 
 }

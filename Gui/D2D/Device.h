@@ -22,6 +22,9 @@ namespace gui {
 		// Create a text manager.
 		virtual TextMgr *createTextMgr();
 
+		// We're hardware accelerated.
+		virtual bool isHardware() const { return true; }
+
 	private:
 		// Factories.
 		ComPtr<ID2D1Factory> factory;

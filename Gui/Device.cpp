@@ -5,6 +5,7 @@
 #include "D2D/Device.h"
 #include "Cairo/Device.h"
 #include "Cairo/GLDevice.h"
+#include "Compat/StackDevice.h"
 #include "Exception.h"
 #include "Window.h"
 #include "RenderMgr.h"
@@ -32,19 +33,30 @@ namespace gui {
 		if (!preference)
 			preference = "gl"; // TODO: Perhaps Skia?
 
+		Device *result = null;
+
 		if (strcmp(preference, "sw") == 0) {
-			return new CairoSwDevice(e);
+			result = new CairoSwDevice(e);
 		} else if (strcmp(preference, "software") == 0) {
-			return new CairoSwDevice(e);
+			result = new CairoSwDevice(e);
 		} else if (strcmp(preference, "gtk") == 0) {
-			return new CairoGtkDevice(e);
+			result = new CairoGtkDevice(e);
 		} else if (strcmp(preference, "gl") == 0) {
-			return new CairoGLDevice(e);
+			result = new CairoGLDevice(e);
 		} else if (strcmp(preference, "skia") == 0) {
-			// return new SkiaDevice(e);
+			// result = new SkiaDevice(e);
 		}
 
-		throw new (e) GuiError(S("The supplied value of ") S(ENV_RENDER_BACKEND) S(" is not supported."));
+		if (!result)
+			throw new (e) GuiError(S("The supplied value of ") S(ENV_RENDER_BACKEND) S(" is not supported."));
+
+		// If the device is a hardware device, we might want to add our compatibility layer.
+		if (result->isHardware()) {
+			TODO(L"We don't always want to do this!");
+			result = new StackDevice(result);
+		}
+
+		return result;
 	}
 
 #else
