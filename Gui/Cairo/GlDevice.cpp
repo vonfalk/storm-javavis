@@ -137,6 +137,7 @@ namespace gui {
 		cairo_surface_destroy(surface);
 		surface = null;
 
+		gdk_gl_context_clear_current();
 		gdk_gl_context_make_current(context);
 		glDeleteTextures(1, &texture);
 
@@ -159,7 +160,11 @@ namespace gui {
 		int width = size.w;
 		int height = size.h;
 
+		// The clear is since Cairo will switch GL context from time to time, turning make_context
+		// into a noop some times, when it really should not be a noop.
+		gdk_gl_context_clear_current();
 		gdk_gl_context_make_current(context);
+
 		glBindTexture(GL_TEXTURE_2D, texture);
 		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
 
