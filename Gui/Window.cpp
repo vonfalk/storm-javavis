@@ -909,6 +909,10 @@ namespace gui {
 	}
 
 	bool Window::useNativeWindow() {
+		// With the current model, we don't actually need separate windows that often. Messing
+		// around with that seems to break Gtk's drawing model rather than helping very much.
+		return false;
+
 		// On Wayland, we don't need a separate window for things we're rendering into. That only
 		// confuses the window manager!
 		if (GDK_IS_WAYLAND_WINDOW(gtk_widget_get_window(drawWidget()))) {

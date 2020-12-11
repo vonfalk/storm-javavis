@@ -5,6 +5,7 @@
 #include "LibData.h"
 #include "Resource.h"
 #include "Core/Array.h"
+#include "TextMgr.h"
 
 namespace gui {
 

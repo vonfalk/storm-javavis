@@ -38,6 +38,101 @@ namespace gui {
 
 		// Create a text manager compatible with this device.
 		virtual TextMgr *createTextMgr() = 0;
+
+#ifdef GUI_GTK
+		// Get the draw widget for Gtk. Utility function as it is needed in all Gtk devices.
+		static GtkWidget *drawWidget(Engine &e, Handle handle);
+#endif
 	};
 
+
+#ifdef GUI_GTK
+	/**
+	 * A slight specialization of the Device above for OpenGL contexts in Gtk.
+	 *
+	 * In Gtk, we can share GL contexts for all widgets that share the same GdkWindow. We strive to
+	 * do that since that allows us to share resources between them, so that it is more likely that
+	 * we hit the fast-path in the render resources (i.e. only one backend resource for each
+	 * object). For different GdkWindows, Gdk will create separate GL contexts for painting, so we
+	 * cannot share resources between those (even though it would be technically possible).
+	 *
+	 * This class expects derived classes to implement "createSurface(GLDevice::Context *)",
+	 * and that surfaces unref the context when they are done.
+	 */
+	class GLDevice : public Device {
+	public:
+		// Create.
+		GLDevice(Engine &e);
+
+		// Destroy.
+		~GLDevice();
+
+		/**
+		 * Representation of GL context.
+		 *
+		 * Reference counted.
+		 */
+		class Context : ::NoCopy {
+			friend class GLDevice;
+		public:
+			// Create. Used by GLDevice.
+			Context(GLDevice *owner, GdkWindow *window, GdkGLContext *context);
+
+			// Destroy.
+			~Context();
+
+			// Add a reference.
+			void ref() {
+				atomicIncrement(refs);
+			}
+
+			// Remove a reference.
+			void unref() {
+				if (atomicDecrement(refs) == 0)
+					delete this;
+			}
+
+			// The window.
+			GdkWindow *window;
+
+			// The GL context.
+			GdkGLContext *context;
+
+			// Allocated ID for this context. As we don't know how the actual device works, we don't
+			// allocate an ID here, we just provide storage for it (initialized to zero).
+			Nat id;
+
+		private:
+			// Reference counting.
+			size_t refs;
+
+			// Owning GLDevice. Set to zero when the device is destroyed.
+			GLDevice *owner;
+		};
+
+		// Engine (we need it, so why not make it public).
+		Engine &e;
+
+		// Create a surface. Implements the sharing logic.
+		virtual Surface *createSurface(Handle window);
+
+	protected:
+		// Override to create a Context.
+		virtual Context *createContext(GdkWindow *window, GdkGLContext *context);
+
+		// Create an appropriate surface. Expects that the implementation will eventually unreference Context.
+		virtual Surface *createSurface(GtkWidget *drawWidget, Context *context) = 0;
+
+	private:
+		// Mapping between GdkWindow their Contexts, so we know when to create a new context. We
+		// don't have refs to these contexts, so they may go out of scope. The Context will notify
+		// us of that situation.
+		typedef hash_map<GdkWindow *, Context *> Map;
+		Map context;
+
+		// Create a GL context.
+		GdkGLContext *createContext(GdkWindow *window);
+	};
+
+#endif
 }

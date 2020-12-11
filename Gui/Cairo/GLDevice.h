@@ -6,36 +6,52 @@
 namespace gui {
 
 	/**
+	 * Our specialization of a GLDevice::Context. Also contains a Cairo device.
+	 */
+	class CairoGLContext : public GLDevice::Context {
+	public:
+		// Create.
+		CairoGLContext(GLDevice *owner, GdkWindow *window, GdkGLContext *context);
+
+		// Destroy.
+		~CairoGLContext();
+
+		// The cairo device.
+		cairo_device_t *device;
+	};
+
+
+	/**
 	 * Cairo device that uses OpenGL. Note: Since bitmaps won't (likely) be shareable between
 	 * different instances, we generate unique IDs for each surface here.
 	 */
-	class CairoGlDevice : public Device {
+	class CairoGLDevice : public GLDevice {
 	public:
 		// Create.
-		CairoGlDevice(Engine &e);
-
-		// Create a surface.
-		virtual Surface *createSurface(Handle window);
+		CairoGLDevice(Engine &e);
 
 		// Create a text manager.
 		virtual TextMgr *createTextMgr();
 
-	private:
-		// Engine.
-		Engine &e;
+	protected:
+		// Create a context.
+		virtual CairoGLContext *createContext(GdkWindow *window, GdkGLContext *context);
+
+		// Create a surface.
+		virtual Surface *createSurface(GtkWidget *widget, Context *context);
 	};
 
 
 	/**
 	 * Cairo GL surface.
 	 */
-	class CairoGlSurface : public CairoSurface {
+	class CairoGLSurface : public CairoSurface {
 	public:
 		// Create.
-		CairoGlSurface(Nat id, Size size, GdkWindow *window);
+		CairoGLSurface(Size size, CairoGLContext *context);
 
 		// Destroy.
-		~CairoGlSurface();
+		~CairoGLSurface();
 
 		// Present.
 		virtual PresentStatus present(bool waitForVSync);
@@ -50,14 +66,11 @@ namespace gui {
 		virtual void resize(Size size, Float scale);
 
 	private:
-		// Gl context.
-		GdkGLContext *context;
+		// GL context.
+		CairoGLContext *context;
 
 		// Main texture.
 		GLuint texture;
-
-		// Cairo device.
-		cairo_device_t *dev;
 	};
 
 }
