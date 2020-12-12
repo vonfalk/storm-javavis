@@ -1,13 +1,16 @@
 #include "stdafx.h"
 #include "Graphics.h"
 #include "Device.h"
+#include "Manager.h"
 
 namespace gui {
 
 	SkiaGraphics::SkiaGraphics(SkiaSurface &surface, Nat id) : surface(surface) {
 		identifier = id;
 
-		// TODO: Set a manager at a later point.
+#ifdef GUI_GTK
+		manager(new (this) SkiaManager());
+#endif
 	}
 
 	SkiaGraphics::~SkiaGraphics() {}
@@ -86,38 +89,26 @@ namespace gui {
 	 * Draw stuff.
 	 */
 
-	void SkiaGraphics::line(Point from, Point to, Brush *style) {
-		SkPaint paint(SkColors::kBlue);
-		paint.setAntiAlias(true);
+	SkPaint *SkiaGraphics::paint(Brush *style, Bool stroke) {
+		SkPaint *paint = (SkPaint *)style->forGraphicsRaw(this);
+		paint->setStroke(stroke);
+		return paint;
+	}
 
-		surface.canvas->drawLine(skia(from), skia(to), paint);
+	void SkiaGraphics::line(Point from, Point to, Brush *style) {
+		surface.canvas->drawLine(skia(from), skia(to), *paint(style, true));
 	}
 
 	void SkiaGraphics::draw(Rect rect, Brush *style) {
-		SkPaint paint(SkColors::kRed);
-		paint.setAntiAlias(true);
-
-		paint.setStroke(true);
-
-		surface.canvas->drawRect(skia(rect), paint);
+		surface.canvas->drawRect(skia(rect), *paint(style, true));
 	}
 
 	void SkiaGraphics::draw(Rect rect, Size edges, Brush *style) {
-		SkPaint paint(SkColors::kRed);
-		paint.setAntiAlias(true);
-
-		paint.setStroke(true);
-
-		surface.canvas->drawRRect(SkRRect::MakeRectXY(skia(rect), edges.w, edges.h), paint);
+		surface.canvas->drawRRect(SkRRect::MakeRectXY(skia(rect), edges.w, edges.h), *paint(style, true));
 	}
 
 	void SkiaGraphics::oval(Rect rect, Brush *style) {
-		SkPaint paint(SkColors::kGreen);
-		paint.setAntiAlias(true);
-
-		paint.setStroke(true);
-
-		surface.canvas->drawOval(skia(rect), paint);
+		surface.canvas->drawOval(skia(rect), *paint(style, true));
 	}
 
 	void SkiaGraphics::draw(Path *path, Brush *style) {
@@ -125,39 +116,19 @@ namespace gui {
 	}
 
 	void SkiaGraphics::fill(Rect rect, Brush *style) {
-		SkPaint paint(SkColors::kRed);
-		paint.setAntiAlias(true);
-
-		paint.setStroke(false);
-
-		surface.canvas->drawRect(skia(rect), paint);
+		surface.canvas->drawRect(skia(rect), *paint(style, false));
 	}
 
 	void SkiaGraphics::fill(Rect rect, Size edges, Brush *style) {
-		SkPaint paint(SkColors::kRed);
-		paint.setAntiAlias(true);
-
-		paint.setStroke(false);
-
-		surface.canvas->drawRRect(SkRRect::MakeRectXY(skia(rect), edges.w, edges.h), paint);
+		surface.canvas->drawRRect(SkRRect::MakeRectXY(skia(rect), edges.w, edges.h), *paint(style, false));
 	}
 
 	void SkiaGraphics::fill(Brush *style) {
-		SkPaint paint(SkColors::kBlack);
-		paint.setAntiAlias(true);
-
-		paint.setStroke(false);
-
-		surface.canvas->drawPaint(paint);
+		surface.canvas->drawPaint(*paint(style, false));
 	}
 
 	void SkiaGraphics::fillOval(Rect rect, Brush *style) {
-		SkPaint paint(SkColors::kGreen);
-		paint.setAntiAlias(true);
-
-		paint.setStroke(false);
-
-		surface.canvas->drawOval(skia(rect), paint);
+		surface.canvas->drawOval(skia(rect), *paint(style, false));
 	}
 
 	void SkiaGraphics::fill(Path *path, Brush *style) {

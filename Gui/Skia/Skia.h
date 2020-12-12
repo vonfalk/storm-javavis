@@ -15,6 +15,7 @@
 #include "include/core/SkColor.h"
 #include "include/core/SkPoint.h"
 #include "include/core/SkRect.h"
+#include "include/effects/SkGradientShader.h"
 
 GrGLFuncPtr egl_get(void* ctx, const char name[]);
 GrGLFuncPtr glx_get(void* ctx, const char name[]);
