@@ -109,7 +109,36 @@ force the GUI library to create "real" windows for all places that are being ren
 the environment variable `STORM_RENDER_X_WINDOW`. This means that different `Painter`s are not able
 to share resources at all.
 
+In some cases, the user level threading in Storm triggers some latent bugs in graphics drivers (at
+least, the user level parts of them). These are typically only visible when using one of the OpenGL
+backends. If this is an issue, or a suspected issue, it is possible to enable one or more
+workarounds that make the part of the GUI library that calls OpenGL behave a bit more closely to a
+"regular" program. This is done automatically by the GUI library where issues are known beforehand,
+but as not all combinations of hardware and software have been tested, there might be situations
+that the GUI library are unaware of.
 
+The following workarounds are available:
+
+- `single-stack`: Make sure to execute all calls to OpenGL with the same stack regardless of which
+  UThread called the rendering code in the GUI library. This workaround fixes issues where a driver
+  for some reason depends on the stack used at one point being accessible in future points (e.g. by
+  accidentally storing a pointer to a stack-allocated variable). This incurs a small penalty for
+  each rendering call, as the system needs to switch to another stack.
+
+Below is a list of known hardware and software that requires one or more workarounds to function
+properly. Items in this list are applied automatically.
+
+|-------------|--------------|-----------|---------------------|
+| Hardware    | Driver       | Version   | Workarounds applied |
+|-------------|--------------|-----------|---------------------|
+| Intel cards | IRIS (MESA)  | < 20.?.?  | `single-stack`      |
+|-------------|--------------|-----------|---------------------|
+
+In case some other hardware shows issues in Storm, it is possible to use the
+`STORM_RENDER_WORKAROUND` environment variable to force using one or more workarounds to be
+active. If you find out that you need one or more workarounds for your hardware (or indeed, that the
+available workarounds do not fix the issue), please contact
+(info@storm-lang.org)[mailto:info@storm-lang.org] to let me knwo.
 
 Layout
 -------
