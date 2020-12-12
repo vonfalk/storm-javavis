@@ -58,6 +58,10 @@ namespace gui {
 
 			// destroyResources();
 
+			// Don't resize if there is nothing to do.
+			if (sz == surface->size && scale == surface->scale)
+				return;
+
 			surface->resize(sz, scale);
 			if (graphics)
 				graphics->surfaceResized();
