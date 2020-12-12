@@ -116,6 +116,9 @@ namespace gui {
 	private:
 		// Render target.
 		SkiaSurface &surface;
+
+		// Get the paint.
+		SkPaint *paint(Brush *brush, Bool stroke);
 	};
 
 }
