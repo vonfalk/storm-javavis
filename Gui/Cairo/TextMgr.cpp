@@ -4,6 +4,8 @@
 #include "Core/Utf.h"
 #include <limits>
 
+#ifdef GUI_GTK
+
 namespace gui {
 
 	CairoText::CairoText() {
@@ -208,3 +210,5 @@ namespace gui {
 	}
 
 }
+
+#endif

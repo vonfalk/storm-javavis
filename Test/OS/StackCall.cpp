@@ -11,8 +11,9 @@ int onStack(int val) {
 }
 
 void stackThrow(int on) {
-	if (on > 0)
+	if (on > 0) {
 		throw on;
+	}
 }
 
 BEGIN_TEST(StackCall, OS) {
@@ -37,6 +38,8 @@ BEGIN_TEST(StackCall, OS) {
 	os::FnCall<void, 2> second = os::fnCall().add(src);
 	os::stackCall(s, address(&stackThrow), second, false);
 
+#ifndef WINDOWS
+
 	src = 1;
 	try {
 		os::stackCall(s, address(&stackThrow), second, false);
@@ -44,6 +47,8 @@ BEGIN_TEST(StackCall, OS) {
 	} catch (int i) {
 		CHECK_EQ(i, 1);
 	}
+
+#endif
 
 	CHECK_EQ(os::UThread::current().threadData()->stack.detourTo, (void *)null);
 

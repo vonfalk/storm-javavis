@@ -22,9 +22,28 @@ namespace gui {
 	}
 
 	Device *applyEnvWorkarounds(Device *device) {
+#ifdef WINDOWS
+		// Apparently, getenv is unsafe on Windows. The returned pointer may be invalidated whenever
+		// someone calls getenv again. As we are in a multithreaded environment, that might happen
+		// at any time, so we use _dupenv_s as suggested.
+		std::string envval;
+		{
+			char *value = "";
+			size_t len = 0;
+			_dupenv_s(&value, &len, ENV_RENDER_WORKAROUND);
+
+			// Note found?
+			if (value == null)
+				return device;
+
+			envval = value;
+		}
+		const char *env = envval.c_str();
+#else
 		const char *env = getenv(ENV_RENDER_WORKAROUND);
 		if (!env)
 			return device;
+#endif
 
 		const char *start = env;
 		const char *at = env;

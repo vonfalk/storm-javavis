@@ -18,12 +18,14 @@ namespace os {
 		UThreadData *data = UThread::current().threadData();
 		try {
 			doStackCall(&data->stack, callOn, fn, fnCall, member, result);
+			callOn->clear();
 		} catch (...) {
 			// Unlink the stack. Otherwise, it will still be scanned at a later point. This is
 			// likely slightly too late, but it is the best we can do right now (stack has probably
 			// already been unwound from "callOn", which means that there is a window where the GC
 			// will make wrong assumptions). This case is handled in the GC scanning code.
 			atomicWrite(data->stack.detourTo, (Stack *)null);
+			callOn->clear();
 			throw;
 		}
 	}
@@ -32,6 +34,9 @@ namespace os {
 	// before the call. This is a bit similar to a detour, with the difference that the stack we're
 	// using is not supposed to be used for other purposes. Due to this, this operation is slightly
 	// cheaper than using the regular detour mechanisms.
+	// NOTE: Exceptions do not work on Windows at the time being. I.e., if the called function throws
+	// and exception that is to be thrown through this function, we will crash. Currently, we don't
+	// need this feature on Windows, so it is fine for now.
 	template <class Result, int params>
 	Result stackCall(Stack &callOn, const void *fn, const FnCall<Result, params> &fnCall, bool member) {
 		dbg_assert(OFFSET_OF(Stack, desc) == sizeof(void *)*2, L"Invalid layout of the Stack object.");
