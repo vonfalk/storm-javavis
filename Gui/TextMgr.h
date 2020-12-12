@@ -14,7 +14,7 @@ namespace gui {
 	 * This class works much like GraphicsMgr, with the major difference that there may only be one
 	 * TextMgr active in the system at any given point.
 	 */
-	class TextMgr {
+	class TextMgr : NoCopy {
 	public:
 		// Function for destroying resources. Must refer to a static function somewhere, as it is not GC:d.
 		// The main reason we have a cleanup function rather than another virtual function here is that the TextMgr

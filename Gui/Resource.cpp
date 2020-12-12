@@ -136,7 +136,7 @@ namespace gui {
 			return;
 		}
 
-		GcArray<Element> *newMore = runtime::allocArray<Element>(engine(), &elemType, currMax - currMin - 1);
+		GcArray<Element> *newMore = runtime::allocArray<Element>(engine(), &elemType, rangeMax - rangeMin - 1);
 		if (currMin == rangeMin) {
 			// Same first element. Then we only need to copy the remaining elements.
 			for (Nat i = currMin + 1; i < min(currMax, rangeMax); i++) {
@@ -192,9 +192,6 @@ namespace gui {
 			firstRefs += Nat(addRef);
 			return firstRefs;
 		} else {
-			PVAR(rangeMin);
-			PVAR(rangeMax);
-
 			// Must be one of the remaining ones.
 			Element &e = more->v[id - offset - 1];
 			e.data = data;
