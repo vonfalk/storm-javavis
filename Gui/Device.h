@@ -37,10 +37,6 @@ namespace gui {
 		// Create a text manager compatible with this device.
 		virtual TextMgr *createTextMgr() = 0;
 
-		// Is this device hardware-accelerated?
-		// We use this to enable workarounds if needed.
-		virtual bool isHardware() const = 0;
-
 #ifdef GUI_GTK
 		// Get the draw widget for Gtk. Utility function as it is needed in all Gtk devices.
 		static GtkWidget *drawWidget(Engine &e, Handle handle);
@@ -60,6 +56,9 @@ namespace gui {
 	 *
 	 * This class expects derived classes to implement "createSurface(GLDevice::Context *)",
 	 * and that surfaces unref the context when they are done.
+	 *
+	 * When a context is created, the driver also attempts to apply any workarounds required for the
+	 * hardware accelerated parts that are deemed necessary.
 	 */
 	class GLDevice : public Device {
 	public:

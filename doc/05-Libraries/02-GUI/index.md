@@ -136,8 +136,13 @@ properly. Items in this list are applied automatically.
 
 In case some other hardware shows issues in Storm, it is possible to use the
 `STORM_RENDER_WORKAROUND` environment variable to force using one or more workarounds to be
-active. If you find out that you need one or more workarounds for your hardware (or indeed, that the
-available workarounds do not fix the issue), please contact
+active. The variable is expected to contain a comma-separated list of workaround names if it is
+present. Note that no workarounds are applied automatically whenever `STORM_RENDER_WORKAROUND` is
+present, so if your hardware and software are listed above, and you don't want to enable the
+workaround, you can set the environment variable to the empty string.
+
+If you find out that you need one or more workarounds for your hardware (or indeed, that
+the available workarounds do not fix the issue), please contact
 (info@storm-lang.org)[mailto:info@storm-lang.org] to let me knwo.
 
 Layout

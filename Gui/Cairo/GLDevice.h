@@ -33,9 +33,6 @@ namespace gui {
 		// Create a text manager.
 		virtual TextMgr *createTextMgr();
 
-		// We're hardware accelerated.
-		virtual bool isHardware() const { return true; }
-
 	protected:
 		// Create a context.
 		virtual CairoGLContext *createContext(GdkWindow *window, GdkGLContext *context);
