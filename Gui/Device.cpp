@@ -5,17 +5,17 @@
 #include "D2D/Device.h"
 #include "Cairo/Device.h"
 #include "Cairo/GLDevice.h"
-#include "Compat/StackDevice.h"
 #include "Exception.h"
 #include "Window.h"
 #include "RenderMgr.h"
+#include "Workaround/Apply.h"
 
 namespace gui {
 
 #if defined(GUI_WIN32)
 
 	Device *Device::create(Engine &e) {
-		return new D2DDevice(e);
+		return applyEnvWorkarounds(new D2DDevice(e));
 	}
 
 #elif defined(GUI_GTK)
@@ -50,13 +50,7 @@ namespace gui {
 		if (!result)
 			throw new (e) GuiError(S("The supplied value of ") S(ENV_RENDER_BACKEND) S(" is not supported."));
 
-		// If the device is a hardware device, we might want to add our compatibility layer.
-		if (result->isHardware()) {
-			TODO(L"We don't always want to do this!");
-			result = new StackDevice(result);
-		}
-
-		return result;
+		return applyEnvWorkarounds(result);
 	}
 
 #else

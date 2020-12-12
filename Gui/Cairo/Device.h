@@ -17,9 +17,6 @@ namespace gui {
 		// Create a text manager.
 		virtual TextMgr *createTextMgr();
 
-		// Not hardware accelerated.
-		virtual bool isHardware() const { return false; }
-
 	protected:
 		// Get the ID.
 		Nat id();

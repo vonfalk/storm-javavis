@@ -29,9 +29,6 @@ namespace gui {
 		// Create a text manager compatible with this device.
 		virtual TextMgr *createTextMgr();
 
-		// Hardware acceleration?
-		virtual bool isHardware() const { return wrap->isHardware(); }
-
 		// Call a function on the stack here. Assumes it is a non-member function.
 		template <class Result, int params>
 		Result call(const void *function, os::FnCall<Result, params> &call) {
