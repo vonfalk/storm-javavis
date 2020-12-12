@@ -2,6 +2,7 @@
 #include "Gui/Env.h"
 #include "Gui/Device.h"
 #include "Gui/Surface.h"
+#include "Workaround.h"
 
 namespace gui {
 
@@ -17,7 +18,7 @@ namespace gui {
 	// Apply workarounds required for a particular OpenGL context. Assumes that the OpenGL context
 	// in question has been made current. Will not do anything in case the environment variable is
 	// set.
-	Surface *applyGLWorkarounds(Surface *surface);
+	SurfaceWorkaround *glWorkarounds();
 
 #endif
 

@@ -88,6 +88,11 @@ namespace gui {
 		Map::iterator found = context.find(w);
 		if (found == context.end()) {
 			c = createContext(w, createContext(w));
+
+			// Figure out if we need any workarounds...
+			gdk_gl_context_make_current(c->context);
+			c->workarounds = glWorkarounds();
+
 			context.insert(std::make_pair(w, c));
 		} else {
 			c = found->second;
@@ -95,7 +100,10 @@ namespace gui {
 		}
 
 		try {
-			return createSurface(widget, c);
+			Surface *r = createSurface(widget, c);
+			if (c->workarounds)
+				r = c->workarounds->apply(r);
+			return r;
 		} catch (...) {
 			c->unref();
 			throw;
@@ -127,7 +135,7 @@ namespace gui {
 	}
 
 	GLDevice::Context::Context(GLDevice *owner, GdkWindow *window, GdkGLContext *context)
-		: window(window), context(context), id(0), refs(1), owner(owner) {}
+		: window(window), context(context), id(0), refs(1), owner(owner), workarounds(null) {}
 
 	GLDevice::Context::~Context() {
 		// Remove us from our owner's map fo contexts. The owner might have been destroyed before
@@ -142,6 +150,8 @@ namespace gui {
 
 		gdk_gl_context_clear_current();
 		g_object_unref(context);
+
+		delete workarounds;
 	}
 
 #endif

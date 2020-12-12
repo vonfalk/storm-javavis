@@ -3,7 +3,7 @@
 
 namespace gui {
 
-	StackGraphics::StackGraphics(StackDevice *device, WindowGraphics *wrap)
+	StackGraphics::StackGraphics(StackWorkaround *device, WindowGraphics *wrap)
 		: owner(device), wrap(wrap) {}
 
 	StackGraphics::~StackGraphics() {

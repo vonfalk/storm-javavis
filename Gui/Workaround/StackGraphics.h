@@ -13,7 +13,7 @@ namespace gui {
 		STORM_CLASS;
 	public:
 		// Create.
-		StackGraphics(StackDevice *device, WindowGraphics *wrap);
+		StackGraphics(StackWorkaround *device, WindowGraphics *wrap);
 
 		// Destroy.
 		~StackGraphics();
@@ -111,8 +111,8 @@ namespace gui {
 		void STORM_FN draw(Text *text, Brush *brush, Point origin);
 
 	private:
-		// Device.
-		StackDevice *owner;
+		// Workaround.
+		StackWorkaround *owner;
 
 		// Wrapped object.
 		WindowGraphics *wrap;

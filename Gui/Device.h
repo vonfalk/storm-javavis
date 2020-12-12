@@ -6,6 +6,7 @@ namespace gui {
 
 	class Surface;
 	class TextMgr;
+	class SurfaceWorkaround;
 
 	/**
 	 * A generic interface to some rendering device.
@@ -73,7 +74,7 @@ namespace gui {
 		 *
 		 * Reference counted.
 		 */
-		class Context : ::NoCopy {
+		class Context : private ::NoCopy {
 			friend class GLDevice;
 		public:
 			// Create. Used by GLDevice.
@@ -109,6 +110,9 @@ namespace gui {
 
 			// Owning GLDevice. Set to zero when the device is destroyed.
 			GLDevice *owner;
+
+			// Workarounds to apply for this context.
+			SurfaceWorkaround *workarounds;
 		};
 
 		// Engine (we need it, so why not make it public).

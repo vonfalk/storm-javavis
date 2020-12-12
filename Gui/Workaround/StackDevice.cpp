@@ -6,38 +6,16 @@
 namespace gui {
 
 	// 128 K stack should be enough.
-	StackDevice::StackDevice(Device *wrap) : wrap(wrap), stack(128 * 1024) {}
+	StackWorkaround::StackWorkaround(SurfaceWorkaround *prev) : SurfaceWorkaround(prev), stack(128 * 1024) {}
 
-	StackDevice::~StackDevice() {
-		delete wrap;
-	}
+	StackWorkaround::~StackWorkaround() {}
 
-	static Surface *CODECALL createSurface(Device *d, Handle window) {
-		return d->createSurface(window);
-	}
-
-	Surface *StackDevice::createSurface(Handle window) {
-		os::FnCall<Surface *, 2> c = os::fnCall().add(wrap).add(window);
-		Surface *s = call(address(gui::createSurface), c);
-		if (s)
-			return new StackSurface(this, s);
-		else
-			return null;
-	}
-
-	static TextMgr *CODECALL createTextMgr(Device *d) {
-		return d->createTextMgr();
-	}
-
-	TextMgr *StackDevice::createTextMgr() {
-		os::FnCall<TextMgr *, 2> c = os::fnCall().add(wrap);
-		TextMgr *m = call(address(gui::createTextMgr), c);
-		// Note: We're not wrapping the text manager due to recursive entries onto our stack.
-		return m;
+	Surface *StackWorkaround::applyThis(Surface *to) {
+		return new StackSurface(this, to);
 	}
 
 
-	StackSurface::StackSurface(StackDevice *owner, Surface *wrap)
+	StackSurface::StackSurface(StackWorkaround *owner, Surface *wrap)
 		: Surface(wrap->size, wrap->scale), owner(owner), wrap(wrap) {}
 
 	StackSurface::~StackSurface() {

@@ -1,4 +1,5 @@
 #pragma once
+#include "Workaround.h"
 #include "Gui/Device.h"
 #include "Gui/Surface.h"
 #include "OS/Stack.h"
@@ -7,7 +8,7 @@
 namespace gui {
 
 	/**
-	 * A device used for working around buggy devices.
+	 * A workaround for buggy device drivers.
 	 *
 	 * For example, a version of the Iris driver accidentally saved a pointer to a stack-allocated
 	 * variable in a persistent data structure and read from it later. This caused us to crash since
@@ -15,19 +16,13 @@ namespace gui {
 	 *
 	 * This device wraps another device and ensures that it is always executed on one particular thread.
 	 */
-	class StackDevice : public Device {
+	class StackWorkaround : public SurfaceWorkaround {
 	public:
-		// Create the wrap device.
-		StackDevice(Device *wrap);
+		// Create.
+		StackWorkaround(SurfaceWorkaround *prev);
 
 		// Destroy.
-		~StackDevice();
-
-		// Create a surface.
-		virtual Surface *createSurface(Handle window);
-
-		// Create a text manager compatible with this device.
-		virtual TextMgr *createTextMgr();
+		~StackWorkaround();
 
 		// Call a function on the stack here. Assumes it is a non-member function.
 		template <class Result, int params>
@@ -44,10 +39,11 @@ namespace gui {
 			}
 		}
 
-	private:
-		// Wrapped device.
-		Device *wrap;
+	protected:
+		// Apply here.
+		virtual Surface *applyThis(Surface *to);
 
+	private:
 		// Lock for using the stack, in case we have multiple uthreads.
 		os::Lock lock;
 
@@ -61,7 +57,7 @@ namespace gui {
 	class StackSurface : public Surface {
 	public:
 		// Create.
-		StackSurface(StackDevice *device, Surface *wrap);
+		StackSurface(StackWorkaround *device, Surface *wrap);
 
 		// Destroy.
 		~StackSurface();
@@ -81,7 +77,7 @@ namespace gui {
 
 	private:
 		// Owner.
-		StackDevice *owner;
+		StackWorkaround *owner;
 
 		// Wrapping.
 		Surface *wrap;
