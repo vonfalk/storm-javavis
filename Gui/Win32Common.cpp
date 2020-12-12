@@ -7,6 +7,7 @@
 #pragma comment (lib, "Comctl32.lib")
 #pragma comment (lib, "Shell32.lib")
 #pragma comment (lib, "d3d10_1.lib")
+#pragma comment (lib, "d3d11.lib")
 #pragma comment (lib, "d2d1.lib")
 #pragma comment (lib, "dwrite.lib")
 

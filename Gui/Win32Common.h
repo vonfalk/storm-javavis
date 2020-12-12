@@ -6,6 +6,7 @@
 
 // D3D for rendering using D2D..
 #include <d3d10_1.h>
+#include <d3d11.h>
 
 // D2D for rendering.
 #include <d2d1.h>

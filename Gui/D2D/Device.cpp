@@ -30,10 +30,33 @@ namespace gui {
 #else
 	static D2D1_FACTORY_OPTIONS options = { D2D1_DEBUG_LEVEL_NONE };
 #endif
-	static UINT deviceFlags = D3D10_CREATE_DEVICE_BGRA_SUPPORT;
 
-	static HRESULT createDevice(ID3D10Device1 **device) {
+	static HRESULT createDevice(ID3D11Device **device, bool &dx10) {
+		D3D_FEATURE_LEVEL featureLevels[] = {
+			D3D_FEATURE_LEVEL_11_0,
+			D3D_FEATURE_LEVEL_10_1,
+			D3D_FEATURE_LEVEL_10_0,
+			D3D_FEATURE_LEVEL_9_3,
+			D3D_FEATURE_LEVEL_9_2,
+			D3D_FEATURE_LEVEL_9_1,
+		};
+		D3D_FEATURE_LEVEL selected;
+
+		UINT flags = D3D11_CREATE_DEVICE_BGRA_SUPPORT;
+		HRESULT r = D3D11CreateDevice(NULL, D3D_DRIVER_TYPE_HARDWARE, NULL, flags,
+									featureLevels, ARRAY_COUNT(featureLevels),
+									D3D11_SDK_VERSION, device, &selected,
+									NULL);
+
+		dx10 = selected >= D3D_FEATURE_LEVEL_10_0;
+
+		return r;
+	}
+
+	static HRESULT createDevice(ID3D10Device1 **device, bool &dx10) {
 		HRESULT r;
+
+		UINT deviceFlags = D3D10_CREATE_DEVICE_BGRA_SUPPORT;
 
 		D3D10_DRIVER_TYPE types[] = {
 			D3D10_DRIVER_TYPE_HARDWARE,
@@ -56,6 +79,9 @@ namespace gui {
 									featureLevels[f],
 									D3D10_1_SDK_VERSION,
 									device);
+
+				dx10 = featureLevels[f] >= D3D10_FEATURE_LEVEL_10_0;
+
 				if (SUCCEEDED(r))
 					return r;
 			}
@@ -65,19 +91,27 @@ namespace gui {
 		return r;
 	}
 
-	D2DDevice::D2DDevice(Engine &e)
-		: factory(null), device(null), giDevice(null), giFactory(null), e(e), id(0) {
+	D2DDevice::D2DDevice(Engine &e) : e(e), id(0) {
 
 		// Setup DX and DirectWrite.
 		HRESULT r;
 		r = D2D1CreateFactory(D2D1_FACTORY_TYPE_SINGLE_THREADED, __uuidof(ID2D1Factory), &options, (void **)&factory.v);
 		check(e, r, S("Failed to create D2D factory: "));
 
-		r = createDevice(&device.v);
-		check(e, r, S("Failed to create a D3D device: "));
+		r = createDevice(&device11.v, dx10Features);
+		if (SUCCEEDED(r)) {
+			r = device11->QueryInterface(__uuidof(IDXGIDevice), (void **)&giDevice.v);
+			check(e, r, S("Failed to get the DXGI device: "));
+		}
 
-		r = device->QueryInterface(__uuidof(IDXGIDevice), (void **)&giDevice.v);
-		check(e, r, S("Failed to get the DXGI device: "));
+		if (!device11.v) {
+			// Fall back to DirectX 10.
+			r = createDevice(&device10.v, dx10Features);
+			check(e, r, S("Failed to create a D3D device: "));
+
+			r = device10->QueryInterface(__uuidof(IDXGIDevice), (void **)&giDevice.v);
+			check(e, r, S("Failed to get the DXGI device: "));
+		}
 
 		ComPtr<IDXGIAdapter> adapter = null;
 		giDevice->GetParent(__uuidof(IDXGIAdapter), (void **)&adapter.v);
@@ -91,7 +125,7 @@ namespace gui {
 		return new D2DText();
 	}
 
-	static void create(DXGI_SWAP_CHAIN_DESC &desc, HWND window) {
+	static void createSwap(DXGI_SWAP_CHAIN_DESC &desc, HWND window) {
 		RECT c;
 		GetClientRect(window, &c);
 
@@ -100,19 +134,25 @@ namespace gui {
 		desc.BufferDesc.Width = c.right - c.left;
 		desc.BufferDesc.Height = c.bottom - c.top;
 		desc.BufferDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
-		desc.BufferDesc.RefreshRate.Numerator = 60; // TODO: Needed?
-		desc.BufferDesc.RefreshRate.Denominator = 1;
+		// These seem to not be needed since we're not in fullscreen. Best not set them not to accidentally
+		// limit our framerate on high-refresh monitors!
+		// desc.BufferDesc.RefreshRate.Numerator = 60;
+		// desc.BufferDesc.RefreshRate.Denominator = 1;
 		desc.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;
 		desc.OutputWindow = window;
 		desc.SampleDesc.Count = 1;
 		desc.SampleDesc.Quality = 0;
 		desc.Windowed = TRUE;
+		desc.SwapEffect = DXGI_SWAP_EFFECT_DISCARD;
+	}
 
-		// If supported, this improves performance:
-		// TODO: Check if compatible with DX10. We might need BufferCount=2.
-		TODO(L"Exaimine using 'FLIP'. It requires DX11, but we have that in the SDK, so we can use it.");
-		// DXGI_SWAP_EFFECT DXGI_SWAP_EFFECT_FLIP_DISCARD = DXGI_SWAP_EFFECT(3);
-		// desc.SwapEffect = DXGI_SWAP_EFFECT_FLIP_DISCARD;
+	static DXGI_SWAP_EFFECT DXGI_SWAP_EFFECT_FLIP_SEQUENTIAL = DXGI_SWAP_EFFECT(3);
+	static DXGI_SWAP_EFFECT DXGI_SWAP_EFFECT_FLIP_DISCARD = DXGI_SWAP_EFFECT(4);
+
+	static void createFlip(DXGI_SWAP_CHAIN_DESC &desc, HWND window) {
+		createSwap(desc, window);
+		desc.BufferCount = 2; // Need 2 buffers for FLIP.
+		desc.SwapEffect = DXGI_SWAP_EFFECT_FLIP_DISCARD;
 	}
 
 	ID2D1RenderTarget *D2DDevice::createTarget(IDXGISwapChain *swapChain) {
@@ -127,10 +167,10 @@ namespace gui {
 			{ DXGI_FORMAT_UNKNOWN, D2D1_ALPHA_MODE_PREMULTIPLIED },
 			0, 0, // DPI -- TODO: We can re-create render targets depending on DPI here to avoid scaling!
 			D2D1_RENDER_TARGET_USAGE_NONE,
-			D2D1_FEATURE_LEVEL_10, // Use _DEFAULT?
+			dx10Features ? D2D1_FEATURE_LEVEL_10 : D2D1_FEATURE_LEVEL_9,
 		};
 		r = factory->CreateDxgiSurfaceRenderTarget(surface.v, &props, &target);
-		check(r, S("Failed to create a render target: "));
+		check(e, r, S("Failed to create a render target: "));
 
 		return target;
 	}
@@ -142,12 +182,30 @@ namespace gui {
 		}
 
 		DXGI_SWAP_CHAIN_DESC desc;
-		gui::create(desc, window.hwnd());
-
-		// TODO: Maybe use CreateSwapChainForHwnd?
 		ComPtr<IDXGISwapChain> swapChain;
-		HRESULT r = giFactory->CreateSwapChain(device.v, &desc, &swapChain.v);
-		check(r, S("Failed to create a swap chain for a window: "));
+		HRESULT r;
+		if (device11) {
+			// Try FLIP with DX11.
+			gui::createSwap(desc, window.hwnd());
+			r = giFactory->CreateSwapChain(device11.v, &desc, &swapChain.v);
+
+			if (FAILED(r)) {
+				// Fall back on FLIP_SEQUENTIAL.
+				desc.SwapEffect = DXGI_SWAP_EFFECT_FLIP_SEQUENTIAL;
+				r = giFactory->CreateSwapChain(device11.v, &desc, &swapChain.v);
+			}
+
+			if (FAILED(r)) {
+				// Fall back on SWAP.
+				gui::createSwap(desc, window.hwnd());
+				r = giFactory->CreateSwapChain(device11.v, &desc, &swapChain.v);
+			}
+		} else {
+			// Try swap with DX 10.
+			gui::createSwap(desc, window.hwnd());
+			r = giFactory->CreateSwapChain(device10.v, &desc, &swapChain.v);
+		}
+		check(e, r, S("Failed to create a swap chain for a window: "));
 
 		ComPtr<ID2D1RenderTarget> target = createTarget(swapChain.v);
 
@@ -170,8 +228,8 @@ namespace gui {
 	void D2DSurface::resize(Size size, Float scale) {
 		renderTarget.clear();
 
-		HRESULT r = swapChain->ResizeBuffers(1, (UINT)size.w, (UINT)size.h, DXGI_FORMAT_UNKNOWN, 0);
-		check(r, S("Failed to resize buffer: "));
+		HRESULT r = swapChain->ResizeBuffers(0, (UINT)size.w, (UINT)size.h, DXGI_FORMAT_UNKNOWN, 0);
+		check(device->e, r, S("Failed to resize buffer: "));
 
 		renderTarget = device->createTarget(swapChain.v);
 
@@ -180,6 +238,7 @@ namespace gui {
 	}
 
 	Surface::PresentStatus D2DSurface::present(bool waitForVSync) {
+		waitForVSync = false;
 		HRESULT r = swapChain->Present(waitForVSync ? 1 : 0, 0);
 		if (r == D2DERR_RECREATE_TARGET || r == DXGI_ERROR_DEVICE_RESET) {
 			return pRecreate;

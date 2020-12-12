@@ -22,6 +22,10 @@ namespace gui {
 			return v;
 		}
 
+		operator bool() const {
+			return v != null;
+		}
+
 		ComPtr<T> &operator =(const ComPtr<T> &o) {
 			::release(v);
 			v = o.v;

@@ -22,23 +22,27 @@ namespace gui {
 		// Create a text manager.
 		virtual TextMgr *createTextMgr();
 
+		// Engine.
+		Engine &e;
+
 	private:
 		// Factories.
 		ComPtr<ID2D1Factory> factory;
 		ComPtr<IDXGIFactory> giFactory;
 
-		// D3D device and DXGI device.
-		ComPtr<ID3D10Device1> device;
+		// D3D device and DXGI device. We support both D3D10 and D3D11.
+		ComPtr<ID3D10Device1> device10;
+		ComPtr<ID3D11Device> device11;
 		ComPtr<IDXGIDevice> giDevice;
 
 		// Create a render target. Called from D2DSurface.
 		ID2D1RenderTarget *createTarget(IDXGISwapChain *swapChain);
 
-		// Engine.
-		Engine &e;
-
 		// The ID allocated for the device.
 		Nat id;
+
+		// Are we using a feature level of DX10 or higher?
+		bool dx10Features;
 	};
 
 	/**
