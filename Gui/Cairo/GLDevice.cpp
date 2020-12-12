@@ -38,7 +38,7 @@ namespace gui {
 		if (!device) {
 			StrBuf *msg = new (owner->e) StrBuf();
 			*msg << S("Initialization of OpenGL failed: Failed to extract the current GL context.\n");
-			*msg << S("Try setting the environment variable ") << S(RENDER_ENV_NAME) << S(" to \"gtk\" or \"software\".");
+			*msg << S("Try setting the environment variable ") << S(ENV_RENDER_BACKEND) << S(" to \"gtk\" or \"software\".");
 			throw new (owner->e) GuiError(msg->toS());
 		}
 

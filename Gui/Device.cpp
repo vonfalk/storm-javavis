@@ -28,7 +28,7 @@ namespace gui {
 	}
 
 	Device *Device::create(Engine &e) {
-		const char *preference = getenv(RENDER_ENV_NAME);
+		const char *preference = getenv(ENV_RENDER_BACKEND);
 		if (!preference)
 			preference = "gl"; // TODO: Perhaps Skia?
 
@@ -44,7 +44,7 @@ namespace gui {
 			// return new SkiaDevice(e);
 		}
 
-		throw new (e) GuiError(S("The supplied value of ") S(RENDER_ENV_NAME) S(" is not supported."));
+		throw new (e) GuiError(S("The supplied value of ") S(ENV_RENDER_BACKEND) S(" is not supported."));
 	}
 
 #else
@@ -56,7 +56,7 @@ namespace gui {
 	static void reportError(Engine &e, GError *error) {
 		StrBuf *msg = new (e) StrBuf();
 		*msg << S("Initialization of OpenGL failed: ") << toWChar(e, error->message)->v << S("\n");
-		*msg << S("Try setting the environment variable ") << S(RENDER_ENV_NAME) << S(" to \"gtk\" or \"software\".");
+		*msg << S("Try setting the environment variable ") << S(ENV_RENDER_BACKEND) << S(" to \"gtk\" or \"software\".");
 		g_clear_error(&error);
 
 		throw new (e) GuiError(msg->toS());

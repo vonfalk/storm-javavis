@@ -1,8 +1,6 @@
 #pragma once
 #include "Handle.h"
-
-// Environment variable to set render backend. Used on Linux.
-#define RENDER_ENV_NAME "STORM_RENDER_BACKEND"
+#include "Env.h"
 
 namespace gui {
 

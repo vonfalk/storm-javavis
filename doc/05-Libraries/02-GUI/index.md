@@ -32,27 +32,83 @@ automatic layout, this is generally handled gracefully anyway.
 
 On Linux, Storm relies on the support in Gtk+.
 
-Rendering backends (on Linux)
--------
+Rendering
+---------
 
-The GUI library supports multiple rendering backends on Linux (all supported through Cairo) for
-content rendered in Storm (i.e. not the widgets rendered by Gtk+ itself). By default, the GUI
-library utilizes the backend used by Gtk+, which should be sufficient in most cases. It is, however,
-possible to fall back to software rendering entirely, or to use the OpenGL rendered in Cairo. This
-is selected by setting the environment variable `STORM_RENDER_BACKEND` to one of the following values:
+Drawing things in the UI library is done using a Painter and the corresponding Graphics object
+created by the Painter. This system is designed to use hardware acceleration if available, and
+therefore most things that are possible to draw are represented by objects that cache some resources
+associated with the rendering state. As such, when drawing in the GUI library, it is a good idea to
+create resources up front and keep them alive as long as possible to maximize rendering performance
+(and to minimize the work the GC needs to do).
 
-- `gtk` (the default): Use the same backend Gtk+ uses. On X11, this usually involves using XRender
-  extensions to accelerate the graphics (at least according to the Cairo manual), and has the
-  benefit that copying the back-buffer to the window is fast as all content resides in the same
-  location. On Wayland, the situation should be similar, but a different (usually hardware
-  accelerated somehow) backend is used.
-- `sw` or `software`: Use the software rendering backend in Cairo. This is useful as a failsafe
-  default if the standard modes cause the video driver to crash, or cause other issues.
-- `gl`: Use the OpenGL backend of Cairo. This potentially increases rendering performance a bit, but
-  usually requiures copying the rendered image to the window through the CPU, which can be slow. It
-  is possible that the default backend is faster as well, as the OpenGL backend is currently marked
-  experimental in Cairo. Furthermore, the OpenGL backend has been observed to cause some video
-  drivers to crash (e.g. the iris driver for Intel cards).
+This system is designed to be pluggable and to support multiple rendering backends at the same
+time. For example, the package `ui.pdf` contains an example that renders to a PDF file instead of to
+the screen. This is accomplished by creating a subclass to the `Graphics` class and implementing all
+methods there. This class can then be passed along to the same rendering code that is used for
+drawing to the screen. If the new backend needs to associate some resources with the classes that
+represent drawable resources (for example `Bitmap`s), this is possible by associating the `Graphics`
+object with a `GraphicsMgr` instance. The `GraphicsMgr` contains a set of functions that are called
+to create and destroy such resources, and the system will then ensure that they are managed
+appropriately. These objects are lazily created, and can be retrieved by calling the `forGraphics`
+method on a `Resource` object.
+
+It is worth considering that while a single `Resource` may be used in different contexts without
+issue, the system is optimized around the case that a single `Resource` will only be used with a
+single backend. This means that a `Resource` is good at storing a single piece of associated data,
+but storing multiple pieces incurs a slight overhead. This is normally not a problem, but worth
+keeping in mind when rendering to many things at the same time.
+
+Rendering backends
+------------------
+
+The GUI library supports a number of rendering backends for anything that is rendered through a
+`Painter` (i.e. not default components, such as buttons). By default, the GUI library attempts to
+select a good backend for the system in use, but in certain situations the selection might need to
+be modified. The available backends do depend on the system in use.
+
+### Windows
+
+On Windows, the GUI library uses Direct2D for all rendering. There is currently no other backend
+available. In the current implementation, the backend uses a single rendering context for all
+rendering, so `Resource`s may be shared freely between different rendering contexts without any
+extra penalty.
+
+
+### Linux
+
+On Linux, there are a number of different backends available to the GUI library. It attempts to pick
+a hardware accelerated backend (using OpenGL), but in cases where drivers are missing or buggy, this
+might not be desirable. Furthermore, the OpenGL-based backends are not always performant when
+running X11 forwarding from another system.
+
+It is possible to override the backend used by setting the environment variable
+`STORM_RENDER_BACKEND` to one of the following values:
+
+- `sw` or `software`: Use software rendering. This is very useful as a failsafe if the other modes
+  cause crashes for some reason.
+- `gtk`: Render using the same Cairo backend used by Gtk. On X11, this is usually accelerated to
+  some extent using the XRender extension if it is available. The benefit of this method is that
+  resources (bitmaps) can be kept close to the X-server where they are eventually displayed to the
+  screen. This mode is also fairly robust as it uses the same code paths used by Gtk, but might
+  since rendering is multithreaded, it could show bugs that are not visible to regular Gtk
+  applications.
+- `gl` (the default): Render using the OpenGL backend in Cairo. This mode provides significant
+  performance improvements, especially when working with larger bitmaps. Due to the nature of
+  OpenGL support in Gtk, the GUI library needs to keep track of separate resources for each
+  top-level window (sometimes even at a finer level). As such, sharing `Resource`s between
+  different such contexts will incur a small performance penalty.
+
+When rendering in Linux, there are some things to take into consideration due to how Gtk works. As
+sub-windows is a construct entirely within Gtk, it typically only creates a single window for each
+top-level window in the application (with some exceptions). In particular, this means that whenever
+one part of the window is redrawn (for example, when playing an animation), any overlapping
+sub-windows also need to be redrawn, which could impact performance. In cases where this is an issue
+(in the rare case when drawing for example a background to a set of buttons), it is possible to
+force the GUI library to create "real" windows for all places that are being rendered to by setting
+the environment variable `STORM_RENDER_X_WINDOW`. This means that different `Painter`s are not able
+to share resources at all.
+
 
 
 Layout

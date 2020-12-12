@@ -7,6 +7,7 @@
 #include "Win32Dpi.h"
 #include "GtkSignal.h"
 #include "GtkEmpty.h"
+#include "Env.h"
 
 // We're using gtk_widget_override_font, as there is no better way of setting custom fonts on widgets...
 #pragma GCC diagnostic ignored "-Wdeprecated-declarations"
@@ -815,7 +816,7 @@ namespace gui {
 			myPainter->uiRepaint(&params);
 
 			// If we're using a native window, we need to inhibit the default behavior.
-			if (useNativeWindow())
+			if (gdkWindow)
 				return TRUE;
 
 			return FALSE;
@@ -909,25 +910,26 @@ namespace gui {
 	}
 
 	bool Window::useNativeWindow() {
-		// With the current model, we don't actually need separate windows that often. Messing
-		// around with that seems to break Gtk's drawing model rather than helping very much.
-		return false;
+		// By default, we don't need separate windows in the rendering model. This might, however,
+		// be expensive in cases where many widgets are overlaid the rendering area. For these
+		// cases, we do allow creating separate X windows by setting an environment variable.
 
-		// On Wayland, we don't need a separate window for things we're rendering into. That only
-		// confuses the window manager!
-		if (GDK_IS_WAYLAND_WINDOW(gtk_widget_get_window(drawWidget()))) {
+
+		// On Wayland, we don't want a separate window as it confuses the window manager.
+		if (GDK_IS_WAYLAND_WINDOW(gtk_widget_get_window(drawWidget())))
 			return false;
+
+		// Check the environment variable.
+		if (getenv(ENV_RENDER_X_WINDOW)) {
+			// It exists! We need to create a separate window in two cases:
+			// 1: we have a painter attached
+			// 2: our parent has a painter attached
+			if (myPainter)
+				return true;
+			if (myParent && myParent != this && myParent->myPainter)
+				return true;
 		}
 
-		// Check if we need to create a separate window for this widget. There are two cases in
-		// which we need that:
-		// 1: we have a painter attached to us
-		// 2: our parent has a painter attached
-
-		if (myPainter)
-			return true;
-		if (myParent && myParent != this && myParent->myPainter)
-			return true;
 		return false;
 	}
 
