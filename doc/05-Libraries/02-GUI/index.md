@@ -128,11 +128,9 @@ The following workarounds are available:
 Below is a list of known hardware and software that requires one or more workarounds to function
 properly. Items in this list are applied automatically.
 
-|-------------|--------------|--------------------|---------------------|
 | Hardware    | Driver       | Version            | Workarounds applied |
 |-------------|--------------|--------------------|---------------------|
 | Intel cards | IRIS (MESA)  | < 20.2.5, < 20.3.1 | `single-stack`      |
-|-------------|--------------|--------------------|---------------------|
 
 In case some other hardware shows issues in Storm, it is possible to use the
 `STORM_RENDER_WORKAROUND` environment variable to force using one or more workarounds to be
