@@ -10,12 +10,12 @@
 
 namespace os {
 
-	Stack::Stack(size_t size) : desc(null), detourActive(0), detourTo(null), base(null), size(0) {
-		alloc(size);
+	Stack::Stack(size_t size) : desc(null), detourActive(0), detourTo(null), alloc(null), size(0) {
+		allocate(size);
 		initDesc();
 	}
 
-	Stack::Stack(void *limit) : desc(null), detourActive(0), detourTo(null), base(limit), size(0) {
+	Stack::Stack(void *limit) : desc(null), detourActive(0), detourTo(null), alloc(limit), size(0) {
 		// Nothing more to do!
 	}
 
@@ -43,7 +43,7 @@ namespace os {
 		return sz;
 	}
 
-	void Stack::alloc(size_t size) {
+	void Stack::allocate(size_t size) {
 		size_t pageSz = pageSize();
 		size = roundUp(size, pageSz);
 		size += pageSz; // We want a guard page.
@@ -58,12 +58,12 @@ namespace os {
 		VirtualProtect(mem, 1, PAGE_READONLY | PAGE_GUARD, &oldProt);
 
 		// Do not show the guard page to other parts...
-		this->base = mem + pageSz;
+		this->alloc = mem + pageSz;
 		this->size = size - pageSz;
 	}
 
 	void Stack::free() {
-		byte *mem = (byte *)base;
+		byte *mem = (byte *)alloc;
 		mem -= pageSize();
 		VirtualFree(mem, 0, MEM_RELEASE);
 	}
@@ -71,10 +71,11 @@ namespace os {
 	void Stack::initDesc() {
 		// Put the initial stack description in the 'top' of the stack.
 		// It will be updated when we initialize the stack later.
-		byte *r = (byte *)base;
-		desc = (Desc *)base;
+		byte *r = (byte *)alloc;
+		desc = (Desc *)alloc;
 
 		desc->low = r + size;
+		desc->dummy = r;
 		desc->high = r + size;
 	}
 
@@ -90,7 +91,7 @@ namespace os {
 		return sz;
 	}
 
-	void Stack::alloc(size_t size) {
+	void Stack::allocate(size_t size) {
 		size_t pageSz = pageSize();
 		size = roundUp(size, pageSz);
 		size += pageSz; // We want a guard page.
@@ -104,12 +105,12 @@ namespace os {
 		mprotect(mem, 1, PROT_NONE); // no special guard-page it seems...
 
 		// Do not show the guard page to other parts...
-		this->base = mem + pageSz;
+		this->alloc = mem + pageSz;
 		this->size = size - pageSz;
 	}
 
 	void Stack::free() {
-		byte *mem = (byte *)base;
+		byte *mem = (byte *)alloc;
 		size_t pageSz = pageSize();
 		mem -= pageSz;
 		munmap(mem, size + pageSz);
@@ -118,10 +119,11 @@ namespace os {
 	void Stack::initDesc() {
 		// Put the initial stack description in the 'top' of the stack.
 		// It will be updated when we initialize the stack later.
-		byte *r = (byte *)base;
-		desc = (Desc *)base;
+		byte *r = (byte *)alloc;
+		desc = (Desc *)alloc;
 
 		desc->low = r + size;
+		desc->dummy = r;
 		desc->high = r + size;
 	}
 

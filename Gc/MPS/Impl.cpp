@@ -402,11 +402,11 @@ namespace storm {
 							// Do a quick sanity check. If the stack is allocated, then we don't want to
 							// scan it if "current" is outside the range. This can happen when an
 							// exception is thrown though a "stackCall" mechanism.
-							if (stack->allocLow() != stack->allocHigh()) {
+							if (stack->low() != stack->high()) {
 								// If it is outside, then we don't scan it now. We're in the process of
 								// destroying the stack.
-								if (size_t(current) <= size_t(stack->allocLow()) ||
-									size_t(current) > size_t(stack->allocHigh()))
+								if (size_t(current) <= size_t(stack->low()) ||
+									size_t(current) > size_t(stack->high()))
 									to = null;
 							}
 							continue;

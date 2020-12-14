@@ -29,7 +29,7 @@ namespace gui {
 		Result call(const void *function, os::FnCall<Result, params> &call) {
 			// Are we running on "stack" already>
 			size_t dummy;
-			if (size_t(&dummy) >= size_t(stack.allocLow()) && size_t(&dummy) < size_t(stack.allocHigh())) {
+			if (size_t(&dummy) >= size_t(stack.low()) && size_t(&dummy) < size_t(stack.high())) {
 				// Yes, just call the function.
 				return call.call(function, false);
 			} else {

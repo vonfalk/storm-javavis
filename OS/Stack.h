@@ -48,10 +48,17 @@ namespace os {
 		// Note: Assumed to be the first member of the class, except for the pointers in SetMember.
 		Desc *desc;
 
-		// Get the limit of the stack. For X86 and the like, this represents an address close to the
-		// high part of the address.
+		// Get the limit of the stack, i.e. the address that will only be used whenever the stack is
+		// full. For X86 and the like, this represents an address close to the high part of the
+		// address.
 		inline void *limit() const {
-			return (byte *)base + size;
+			return (byte *)alloc + size;
+		}
+
+		// Get the base of the stack, i.e. the address used first. For X86 and the like, this is an
+		// address close to the low part of the address.
+		inline void *base() const {
+			return alloc;
 		}
 
 		// Is this thread participating in a detour? Updated atomically.
@@ -70,21 +77,22 @@ namespace os {
 		// allocated, and not an OS stack.
 		void clear();
 
-		// Get the low and high address of the allocated memory (if any).
-		void *allocLow() const { return base; }
-		void *allocHigh() const { return (byte *)base + size; }
+		// Get the low and high address of the allocated memory (if any). These are independent of
+		// the current CPU architecture.
+		inline void *low() const { return alloc; }
+		inline void *high() const { return (byte *)alloc + size; }
 
 	private:
 		// The low address of the stack. If we represent an OS allocated stack, this is the limit.
-		void *base;
+		void *alloc;
 
 		// The size of the stack. If we represent an OS allocated stack, this is zero.
 		size_t size;
 
-		// Allocate an actual stack into "base" and "size".
-		void alloc(size_t size);
+		// Allocate an actual stack into "alloc" and "size".
+		void allocate(size_t size);
 
-		// Free the stack in "base" and "size".
+		// Free the stack in "alloc" and "size".
 		void free();
 
 		// Initialize "desc", assuming we have allocated a stack.

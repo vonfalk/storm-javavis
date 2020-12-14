@@ -46,4 +46,17 @@ namespace os {
 		me->callRaw(fn, member, first, result);
 	}
 
+#if defined(X86) && defined(WINDOWS)
+
+	// Helper, used on X86 from StackCall.asm.
+	extern "C" void fnCallCatch(FnCallRaw *me, const void *fn, bool member, void *first, void *result) {
+		try {
+			me->callRaw(fn, member, first, result);
+		} catch (...) {
+			PLN(L"Exceptions are not supported for stack calls on Windows.");
+			terminate();
+		}
+	}
+
+#endif
 }

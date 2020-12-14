@@ -2,7 +2,7 @@
 .model flat, c
 
 doStackCall PROTO C
-fnCallRaw PROTO C
+fnCallCatch PROTO C
 
 assume fs:nothing
 
@@ -41,28 +41,24 @@ doStackCall proc
 	mov esp, [eax]		; esp = callOn.desc->low
 	mov DWORD PTR [ecx+8], 0; callOn.desc = 0
 
-	;; We need to fix fs:[4] and fs:[8], otherwise exceptions won't work.
-	;; We want them to be the maximum of our limits and the limits of the new stack.
-	mov edx, [eax+8] 	; Load high address of the new stack
-	cmp edx, fs:[4] 	; Compare to current high address
-	jb no_update_high
-	mov fs:[4], edx 	; If [eax+8] >= fs:[4] : update fs:[4]
-	
-no_update_high:
-	mov edx, [eax] 		; Load low address of the new stack
-	cmp edx, fs:[8] 	; Compare to current low addres
-	ja no_update_low
-	mov fs:[8], edx 	; If [eax] <= fs:[8] : update fs:[8]
-no_update_low:
+	;; We need to fix fs:[4] and fs:[8], otherwise exceptions won't work properly. It seems
+	;; it is not enough to just set them to the max and min of the multiple stacks in use.
+	;; That breaks exception handling. So, we fix it by catching the exception at the bottom
+	;; of the original stack and re-throwing it later.
+	mov edx, [eax+8]	; Load high address of the new stack
+	mov fs:[4], edx 	; Set it in the TIB.
+	mov edx, [eax+4] 	; Load low address...
+	mov fs:[8], edx		; And set it.
 
 	;; Now we're done with the updates of the stack, so now we can go on to call 'callRaw':
+	push ebp		; Save EBP in case we get an exception thrown at us.
 	push [ebp+28]		; result
 	push 0			; first
 	push [ebp+24]		; member
 	push [ebp+16]		; fn
 	push [ebp+20]		; me
-	call fnCallRaw
-	add esp, 20 		; clean up the stack
+	call fnCallCatch
+	; add esp, 24 		; clean up the stack, we don't need to as we will replace esp anyway
 
 	;; Now we need to switch back to the old stack. We need to be a bit careful with the
 	;; order here as well. Otherwise, the GC might scan the two stack in an inconsistent

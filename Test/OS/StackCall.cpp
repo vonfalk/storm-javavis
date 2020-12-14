@@ -30,8 +30,8 @@ BEGIN_TEST(StackCall, OS) {
 	s.clear();
 
 	// "data" should be on the allocated stack somewhere.
-	CHECK_GT(size_t(data), size_t(s.allocLow()));
-	CHECK_LT(size_t(data), size_t(s.allocHigh()));
+	CHECK_GT(size_t(data), size_t(s.low()));
+	CHECK_LT(size_t(data), size_t(s.high()));
 
 	// Check exceptions.
 	src = -1;

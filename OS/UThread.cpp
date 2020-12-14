@@ -650,7 +650,7 @@ namespace os {
 		push(0); // edi
 		push(-1); // seh (end of list is -1)
 		push(stack.desc->high);
-		push(stack.limit()); // stack limit
+		push(stack.base());
 		push(stack.desc->low); // current stack pointer (approximate, this is enough)
 
 		// Set the 'desc' of 'stack' to the actual stack pointer, so that we can run code on this stack.
