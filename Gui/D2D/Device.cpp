@@ -100,19 +100,14 @@ namespace gui {
 		desc.BufferDesc.Width = c.right - c.left;
 		desc.BufferDesc.Height = c.bottom - c.top;
 		desc.BufferDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
-		desc.BufferDesc.RefreshRate.Numerator = 60; // TODO: Needed?
-		desc.BufferDesc.RefreshRate.Denominator = 1;
+		// Not needed in Windowed mode.
+		// desc.BufferDesc.RefreshRate.Numerator = 60; // TODO: Needed?
+		// desc.BufferDesc.RefreshRate.Denominator = 1;
 		desc.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;
 		desc.OutputWindow = window;
 		desc.SampleDesc.Count = 1;
 		desc.SampleDesc.Quality = 0;
 		desc.Windowed = TRUE;
-
-		// If supported, this improves performance:
-		// TODO: Check if compatible with DX10. We might need BufferCount=2.
-		TODO(L"Exaimine using 'FLIP'. It requires DX11, but we have that in the SDK, so we can use it.");
-		// DXGI_SWAP_EFFECT DXGI_SWAP_EFFECT_FLIP_DISCARD = DXGI_SWAP_EFFECT(3);
-		// desc.SwapEffect = DXGI_SWAP_EFFECT_FLIP_DISCARD;
 	}
 
 	ID2D1RenderTarget *D2DDevice::createTarget(IDXGISwapChain *swapChain) {
