@@ -71,6 +71,11 @@ namespace gui {
 		// Skia surface.
 		sk_sp<SkSurface> surface;
 
+		// Get the device.
+		GrDirectContext *device() {
+			return context->skia.get();
+		}
+
 	private:
 		// Context.
 		SkiaContext *context;

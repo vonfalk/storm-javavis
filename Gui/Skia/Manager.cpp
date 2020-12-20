@@ -2,10 +2,11 @@
 #include "Manager.h"
 #include "Skia.h"
 #include "LocalShader.h"
+#include "Device.h"
 
 namespace gui {
 
-	SkiaManager::SkiaManager() {}
+	SkiaManager::SkiaManager(SkiaSurface &surface) : surface(&surface) {}
 
 #ifdef GUI_GTK
 
@@ -123,13 +124,72 @@ namespace gui {
 		local->matrix = radialMatrix(brush);
 	}
 
-	void SkiaManager::create(Bitmap *bitmap, void *&result, Resource::Cleanup &cleanup) {}
+	static void cleanupImage(void *ptr) {
+		SkImage *image = (SkImage *)ptr;
+		image->unref();
+	}
 
-	void SkiaManager::update(Bitmap *, void *) {}
+	void SkiaManager::create(Bitmap *bitmap, void *&result, Resource::Cleanup &cleanup) {
+		Image *image = bitmap->image();
+		SkImageInfo info = SkImageInfo::Make(image->width(), image->height(), kRGBA_8888_SkColorType, kUnpremul_SkAlphaType);
+		SkPixmap pixmap(info, image->buffer(), image->stride());
 
-	void SkiaManager::create(Path *path, void *&result, Resource::Cleanup &cleanup) {}
+		sk_sp<SkImage> skImage = SkImage::MakeCrossContextFromPixmap(surface->device(), pixmap, false, true);
+		skImage.get()->ref(); // Keep it alive.
+		result = skImage.get();
+		cleanup = &cleanupImage;
+	}
 
-	void SkiaManager::update(Path *, void *) {}
+	void SkiaManager::update(Bitmap *, void *) {
+		// Should never be called.
+	}
+
+	static void cleanupPath(void *ptr) {
+		SkPath *p = (SkPath *)ptr;
+		delete p;
+	}
+
+	void SkiaManager::create(Path *path, void *&result, Resource::Cleanup &cleanup) {
+		SkPathBuilder builder(SkPathFillType::kEvenOdd);
+
+		Bool started = false;
+		Array<PathPoint> *elements = path->peekData();
+		for (Nat i = 0; i < elements->count(); i++) {
+			PathPoint &e = elements->at(i);
+			switch (e.t) {
+			case tStart:
+				builder.moveTo(skia(e.start()->pt));
+				started = true;
+				break;
+			case tClose:
+				builder.close();
+				started = false;
+				break;
+			case tLine:
+				if (started) {
+					builder.lineTo(skia(e.line()->to));
+				}
+				break;
+			case tBezier2:
+				if (started) {
+					builder.quadTo(skia(e.bezier2()->c1), skia(e.bezier2()->to));
+				}
+				break;
+			case tBezier3:
+				if (started) {
+					builder.cubicTo(skia(e.bezier3()->c1), skia(e.bezier3()->c2), skia(e.bezier3()->to));
+				}
+				break;
+			}
+		}
+
+		result = new SkPath(builder.detach());
+		cleanup = &cleanupPath;
+	}
+
+	void SkiaManager::update(Path *, void *) {
+		// Should never be called.
+	}
 
 #else
 
