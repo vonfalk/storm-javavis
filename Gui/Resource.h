@@ -79,6 +79,7 @@ namespace gui {
 		GcArray<Element> *more;
 
 		// Get an element. Returns number of references. Optionally increases the refcount if the element exists.
+		// Returns the old value of the refcount, including any "update" flags (which are cleared).
 		Nat get(Nat id, void *&ptr, Bool addRef);
 
 		// Set an element. Possibly creates it.

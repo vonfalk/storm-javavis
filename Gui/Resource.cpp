@@ -83,20 +83,24 @@ namespace gui {
 			return 0;
 
 		if (id == offset) {
+			Nat r = 0;
 			if (firstRefs > 0) {
 				result = firstData;
+				r = firstRefs;
 				firstRefs = (firstRefs & mask) + Nat(addRef);
 			}
-			return firstRefs;
+			return r;
 		}
 
 		if (more && id <= offset + more->count) {
 			Element &e = more->v[id - offset - 1];
+			Nat r = 0;
 			if (e.refs > 0) {
 				result = e.data;
+				r = e.refs;
 				e.refs = (e.refs & mask) + Nat(addRef);
 			}
-			return e.refs;
+			return r;
 		}
 
 		return 0;
