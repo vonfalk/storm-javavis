@@ -7,8 +7,10 @@ namespace gui {
 
 	SkiaGraphics::SkiaGraphics(SkiaSurface &surface, Nat id) : surface(surface) {
 		identifier = id;
+		states = new (this) Array<State>();
 
 #ifdef GUI_GTK
+		states->push(State());
 		manager(new (this) SkiaManager());
 #endif
 	}
@@ -56,32 +58,65 @@ namespace gui {
 			;
 	}
 
+	void SkiaGraphics::pushState() {
+		states->push(State(surface.canvas->getTotalMatrix(), lineW));
+	}
+
 	void SkiaGraphics::push() {
-		TODO(L"FIXME");
+		surface.canvas->save();
+		pushState();
 	}
 
 	void SkiaGraphics::push(Float opacity) {
-		TODO(L"FIXME");
+		if (opacity >= 1.0f) {
+			surface.canvas->save();
+		} else {
+			// TODO: Hints for the layer size according to clip? Skia probably does that anyway...
+			SkPaint paint;
+			paint.setAlphaf(opacity);
+			paint.setAntiAlias(true);
+			surface.canvas->saveLayer(nullptr, &paint);
+		}
+		pushState();
 	}
 
 	void SkiaGraphics::push(Rect clip) {
-		TODO(L"FIXME");
+		surface.canvas->save();
+		pushState();
+
+		surface.canvas->clipRect(skia(clip), SkClipOp::kIntersect, true);
 	}
 
 	void SkiaGraphics::push(Rect clip, Float opacity) {
-		TODO(L"FIXME");
+		// TODO: Is the layer size suggestion in device units (I guess so) or in transformed units?
+		SkRect rect = skia(clip);
+		SkPaint paint;
+		paint.setAlphaf(opacity);
+		paint.setAntiAlias(true);
+		surface.canvas->saveLayer(&rect, &paint);
+		pushState();
+
+		surface.canvas->clipRect(skia(clip), SkClipOp::kIntersect, true);
 	}
 
 	Bool SkiaGraphics::pop() {
-		return false;
+		if (states->count() <= 1)
+			return false;
+
+		states->pop();
+		surface.canvas->restore();
+
+		return true;
 	}
 
 	void SkiaGraphics::transform(Transform *tfm) {
-		TODO(L"FIXME");
+		SkMatrix m = states->last().matrix();
+		m.postConcat(skia(tfm));
+		surface.canvas->setMatrix(m);
 	}
 
 	void SkiaGraphics::lineWidth(Float w) {
-		TODO(L"FIXME");
+		lineW = states->last().lineWidth * w;
 	}
 
 
@@ -92,6 +127,7 @@ namespace gui {
 	SkPaint *SkiaGraphics::paint(Brush *style, Bool stroke) {
 		SkPaint *paint = (SkPaint *)style->forGraphicsRaw(this);
 		paint->setStroke(stroke);
+		paint->setStrokeWidth(lineW);
 		return paint;
 	}
 

@@ -56,6 +56,13 @@ namespace gui {
 		return {r.p0.x, r.p0.y, r.p1.x, r.p1.y};
 	}
 
+	// Matrix.
+	inline SkMatrix skia(Transform *tfm) {
+		return SkMatrix::MakeAll(tfm->at(0, 0), tfm->at(1, 0), tfm->at(3, 0),
+								tfm->at(0, 1), tfm->at(1, 1), tfm->at(3, 1),
+								tfm->at(0, 3), tfm->at(1, 3), tfm->at(3, 3));
+	}
+
 }
 
 #endif
