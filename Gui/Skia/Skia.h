@@ -15,6 +15,8 @@
 #include "include/core/SkColor.h"
 #include "include/core/SkPoint.h"
 #include "include/core/SkRect.h"
+#include "include/core/SkPath.h"
+#include "include/core/SkPathBuilder.h"
 #include "include/effects/SkGradientShader.h"
 
 // Someone defines None...

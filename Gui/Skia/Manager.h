@@ -5,11 +5,13 @@ namespace gui {
 
 	STORM_PKG(impl);
 
+	class SkiaSurface;
+
 	class SkiaManager : public GraphicsMgrRaw {
 		STORM_CLASS;
 	public:
 		// Create.
-		SkiaManager();
+		SkiaManager(SkiaSurface &surface);
 
 		// Create resources:
 		virtual void create(SolidBrush *brush, void *&result, Resource::Cleanup &cleanup);
@@ -26,6 +28,10 @@ namespace gui {
 		virtual void update(RadialGradient *brush, void *resource);
 		virtual void update(Bitmap *bitmap, void *resource);
 		virtual void update(Path *path, void *result);
+
+	private:
+		// Surface.
+		SkiaSurface *surface;
 	};
 
 }

@@ -11,7 +11,7 @@ namespace gui {
 
 #ifdef GUI_GTK
 		states->push(State());
-		manager(new (this) SkiaManager());
+		manager(new (this) SkiaManager(surface));
 #endif
 	}
 
@@ -111,7 +111,7 @@ namespace gui {
 
 	void SkiaGraphics::transform(Transform *tfm) {
 		SkMatrix m = states->last().matrix();
-		m.postConcat(skia(tfm));
+		m.preConcat(skia(tfm));
 		surface.canvas->setMatrix(m);
 	}
 
@@ -148,7 +148,8 @@ namespace gui {
 	}
 
 	void SkiaGraphics::draw(Path *path, Brush *style) {
-		TODO(L"FIXME");
+		SkPath *p = (SkPath *)path->forGraphicsRaw(this);
+		surface.canvas->drawPath(*p, *paint(style, true));
 	}
 
 	void SkiaGraphics::fill(Rect rect, Brush *style) {
@@ -168,15 +169,27 @@ namespace gui {
 	}
 
 	void SkiaGraphics::fill(Path *path, Brush *style) {
-		TODO(L"FIXME");
+		SkPath *p = (SkPath *)path->forGraphicsRaw(this);
+		surface.canvas->drawPath(*p, *paint(style, false));
 	}
 
 	void SkiaGraphics::draw(Bitmap *bitmap, Rect rect, Float opacity) {
-		TODO(L"FIXME");
+		SkPaint paint;
+		paint.setAntiAlias(true);
+		paint.setAlphaf(opacity);
+
+		SkImage *b = (SkImage *)bitmap->forGraphicsRaw(this);
+		surface.canvas->drawImageRect(b, skia(rect), &paint);
 	}
 
 	void SkiaGraphics::draw(Bitmap *bitmap, Rect src, Rect dest, Float opacity) {
-		TODO(L"FIXME");
+		SkPaint paint;
+		paint.setAntiAlias(true);
+		paint.setAlphaf(opacity);
+
+		// TODO: The fast version might not be appropriate here. Consider a tightly packed sprite sheet.
+		SkImage *b = (SkImage *)bitmap->forGraphicsRaw(this);
+		surface.canvas->drawImageRect(b, skia(src), skia(dest), &paint, SkCanvas::kFast_SrcRectConstraint);
 	}
 
 	void SkiaGraphics::text(Str *text, Font *font, Brush *style, Rect rect) {
