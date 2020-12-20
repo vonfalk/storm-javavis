@@ -119,6 +119,62 @@ namespace gui {
 
 		// Get the paint.
 		SkPaint *paint(Brush *brush, Bool stroke);
+
+		// State. The values here are always absolute, ie they do not depend on
+		// previous states on the state stack.
+		class State {
+			STORM_VALUE;
+		public:
+#ifdef GUI_GTK
+
+			State() {
+				lineWidth = 1.0f;
+				SkMatrix m;
+				m.get9(&tfm0);
+			}
+
+			State(const SkMatrix &tfm, Float lineWidth) {
+				this->lineWidth = lineWidth;
+				tfm.get9(&tfm0);
+			}
+
+			// Set the transform.
+			void matrix(const SkMatrix &src) {
+				src.get9(&tfm0);
+			}
+
+			// Get the transform.
+			SkMatrix matrix() const {
+				return SkMatrix::MakeAll(
+					tfm0, tfm1, tfm2,
+					tfm3, tfm4, tfm5,
+					tfm6, tfm7, tfm8);
+			}
+#endif
+
+			// Transform storage. Do not touch!
+			Float tfm0;
+			Float tfm1;
+			Float tfm2;
+			Float tfm3;
+			Float tfm4;
+			Float tfm5;
+			Float tfm6;
+			Float tfm7;
+			Float tfm8;
+
+			// Line size.
+			Float lineWidth;
+		};
+
+		// State stack. Always contains at least one element (the default state).
+		Array<State> *states;
+
+		// Current line width.
+		Float lineW;
+
+		// Push the current state from the Skia device.
+		void pushState();
 	};
 
 }

@@ -85,9 +85,43 @@ namespace gui {
 		local->matrix = linearMatrix(brush->start(), brush->end());
 	}
 
-	void SkiaManager::create(RadialGradient *brush, void *&result, Resource::Cleanup &cleanup) {}
+	static SkMatrix radialMatrix(RadialGradient *brush) {
+		Float r = brush->radius();
 
-	void SkiaManager::update(RadialGradient *brush, void *resource) {}
+		SkMatrix tfm = SkMatrix::Scale(r, r);
+		tfm.postTranslate(brush->center().x, brush->center().y);
+		tfm.postConcat(skia(brush->transform()));
+		return tfm;
+	}
+
+	void SkiaManager::create(RadialGradient *brush, void *&result, Resource::Cleanup &cleanup) {
+		SkPaint *paint = new SkPaint();
+		paint->setAntiAlias(true);
+
+		Array<GradientStop> *stops = brush->peekStops();
+		SkColor *colors = (SkColor *)alloca(stops->count() * sizeof(SkColor));
+		SkScalar *pos = (SkScalar *)alloca(stops->count() * sizeof(SkScalar));
+		for (Nat i = 0; i < stops->count(); i++) {
+			colors[i] = skia(stops->at(i).color).toSkColor();
+			pos[i] = stops->at(i).pos;
+		}
+
+		// We create a radial gradient with a center of 0, 0 and a radius of 1.0 and then use the matrix to scale and move it.
+		sk_sp<SkShader> shader = SkGradientShader::MakeRadial(SkPoint::Make(0, 0), 1.0, colors, pos, stops->count(), SkTileMode::kClamp);
+		shader = sk_make_sp<LocalShader>(shader, radialMatrix(brush));
+		paint->setShader(shader);
+
+		result = paint;
+		cleanup = &skiaCleanup;
+	}
+
+	void SkiaManager::update(RadialGradient *brush, void *resource) {
+		SkPaint *paint = (SkPaint *)resource;
+		SkShader *shader = paint->getShader();
+		// We always use a LocalShader in between.
+		LocalShader *local = (LocalShader *)shader;
+		local->matrix = radialMatrix(brush);
+	}
 
 	void SkiaManager::create(Bitmap *bitmap, void *&result, Resource::Cleanup &cleanup) {}
 
