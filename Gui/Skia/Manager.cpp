@@ -1,6 +1,7 @@
 #include "stdafx.h"
 #include "Manager.h"
 #include "Skia.h"
+#include "LocalShader.h"
 
 namespace gui {
 
@@ -41,30 +42,47 @@ namespace gui {
 
 	void SkiaManager::update(BitmapBrush *brush, void *resource) {}
 
-	void SkiaManager::create(LinearGradient *brush, void *&result, Resource::Cleanup &cleanup) {
-		// It seems like we can utilize the matrix in the shader with some further digging...
+	static SkMatrix linearMatrix(Point start, Point end) {
+		Point delta = end - start;
+		Angle a = angle(delta);
+		Float scale = delta.length();
 
+		SkMatrix tfm = SkMatrix::RotateRad(a.rad());
+		tfm.postScale(scale, scale);
+		tfm.postTranslate(start.x, start.y);
+		return tfm;
+	}
+
+	void SkiaManager::create(LinearGradient *brush, void *&result, Resource::Cleanup &cleanup) {
 		SkPaint *paint = new SkPaint();
 		paint->setAntiAlias(true);
 
 		Array<GradientStop> *stops = brush->peekStops();
+		// We transform these points later. Using (0, 0) - (0, -1) makes it easy to compute this transform.
 		SkPoint points[2] = {
-			skia(brush->start()), skia(brush->end())
+			{ 0, 0 },
+			{ 0, -1 },
 		};
-		SkColor *colors = (SkColor *)alloca(stops->count() * sizeof(SkScalar));
+		SkColor *colors = (SkColor *)alloca(stops->count() * sizeof(SkColor));
 		SkScalar *pos = (SkScalar *)alloca(stops->count() * sizeof(SkScalar));
 		for (Nat i = 0; i < stops->count(); i++) {
 			colors[i] = skia(stops->at(i).color).toSkColor();
 			pos[i] = stops->at(i).pos;
 		}
-		paint->setShader(SkGradientShader::MakeLinear(points, colors, pos, stops->count(), SkTileMode::kClamp));
+		sk_sp<SkShader> shader = SkGradientShader::MakeLinear(points, colors, pos, stops->count(), SkTileMode::kClamp);
+		shader = sk_make_sp<LocalShader>(shader, linearMatrix(brush->start(), brush->end()));
+		paint->setShader(shader);
 
 		result = paint;
 		cleanup = &skiaCleanup;
 	}
 
 	void SkiaManager::update(LinearGradient *brush, void *resource) {
-		TODO(L"Implement the update function!");
+		SkPaint *paint = (SkPaint *)resource;
+		SkShader *shader = paint->getShader();
+		// We always use a LocalShader in between.
+		LocalShader *local = (LocalShader *)shader;
+		local->matrix = linearMatrix(brush->start(), brush->end());
 	}
 
 	void SkiaManager::create(RadialGradient *brush, void *&result, Resource::Cleanup &cleanup) {}

@@ -17,6 +17,21 @@
 #include "include/core/SkRect.h"
 #include "include/effects/SkGradientShader.h"
 
+// Someone defines None...
+#undef None
+
+// This is technically not a part of the public API. We statically link to Skia, so we will make it work.
+// These are only used in LocalShader.h
+#include "src/shaders/SkShaderBase.h"
+#include "src/gpu/GrFragmentProcessor.h"
+#include "src/gpu/effects/GrMatrixEffect.h"
+#include "src/core/SkMatrixProvider.h"
+#include "src/core/SkTLazy.h"
+#include "src/core/SkVM.h"
+#include "src/core/SkReadBuffer.h"
+#include "src/core/SkWriteBuffer.h"
+#include "src/shaders/SkShaderBase.h"
+
 GrGLFuncPtr egl_get(void* ctx, const char name[]);
 GrGLFuncPtr glx_get(void* ctx, const char name[]);
 
