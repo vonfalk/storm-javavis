@@ -11,7 +11,7 @@ namespace gui {
 		STORM_CLASS;
 	public:
 		// Create.
-		SkiaManager(SkiaSurface &surface);
+		SkiaManager(Graphics *owner, SkiaSurface &surface);
 
 		// Create resources:
 		virtual void create(SolidBrush *brush, void *&result, Resource::Cleanup &cleanup);
@@ -30,6 +30,9 @@ namespace gui {
 		virtual void update(Path *path, void *result);
 
 	private:
+		// Owner. To get bitmap brushes.
+		Graphics *owner;
+
 		// Surface.
 		SkiaSurface *surface;
 	};

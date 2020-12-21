@@ -6,12 +6,12 @@
 
 namespace gui {
 
-	SkiaManager::SkiaManager(SkiaSurface &surface) : surface(&surface) {}
+	SkiaManager::SkiaManager(Graphics *owner, SkiaSurface &surface) : owner(owner), surface(&surface) {}
 
 #ifdef GUI_GTK
 
 	// Everything in here is a "SkPaint"
-	static void skiaCleanup(void *param) {
+	static void cleanupPaint(void *param) {
 		SkPaint *paint = (SkPaint *)param;
 		delete paint;
 	}
@@ -22,7 +22,7 @@ namespace gui {
 		SkPaint *paint = new SkPaint(skia(c));
 		paint->setAntiAlias(true);
 
-		cleanup = &skiaCleanup;
+		cleanup = &cleanupPaint;
 		result = paint;
 	}
 
@@ -35,13 +35,26 @@ namespace gui {
 	}
 
 	void SkiaManager::create(BitmapBrush *brush, void *&result, Resource::Cleanup &cleanup) {
-		TODO(L"Implement bitmap brushes for Skia!");
+		SkPaint *paint = new SkPaint();
+		paint->setAntiAlias(true);
 
-		result = null;
-		cleanup = null;
+		SkImage *image = (SkImage *)brush->bitmap()->forGraphicsRaw(owner);
+		SkSamplingOptions sampling(SkFilterMode::kLinear, SkMipmapMode::kNearest);
+		sk_sp<SkShader> shader = image->makeShader(SkTileMode::kRepeat, SkTileMode::kRepeat, sampling);
+		shader = sk_make_sp<LocalShader>(shader, skia(brush->transform()));
+		paint->setShader(shader);
+
+		result = paint;
+		cleanup = &cleanupPaint;
 	}
 
-	void SkiaManager::update(BitmapBrush *brush, void *resource) {}
+	void SkiaManager::update(BitmapBrush *brush, void *resource) {
+		SkPaint *paint = (SkPaint *)resource;
+		SkShader *shader = paint->getShader();
+		// We always use a LocalShader in between.
+		LocalShader *local = (LocalShader *)shader;
+		local->matrix = skia(brush->transform());
+	}
 
 	static SkMatrix linearMatrix(Point start, Point end) {
 		Point delta = end - start;
@@ -75,7 +88,7 @@ namespace gui {
 		paint->setShader(shader);
 
 		result = paint;
-		cleanup = &skiaCleanup;
+		cleanup = &cleanupPaint;
 	}
 
 	void SkiaManager::update(LinearGradient *brush, void *resource) {
@@ -113,7 +126,7 @@ namespace gui {
 		paint->setShader(shader);
 
 		result = paint;
-		cleanup = &skiaCleanup;
+		cleanup = &cleanupPaint;
 	}
 
 	void SkiaManager::update(RadialGradient *brush, void *resource) {
