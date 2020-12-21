@@ -67,16 +67,16 @@ namespace gui {
 	}
 
 
+	// Needs to match the setup below.
+	static const int stencilBits = 8;
+	// This does not always seem to work when set to something else than 1. Skia can do
+	// anti-aliasing anyway, so it is fine.
+	static const int msaa = 1;
+
 	SkiaSurface::SkiaSurface(Size size, SkiaContext *context)
 		: Surface(size, 1.0f), context(context) {
 
 		gdk_gl_context_make_current(context->context);
-
-		// Needs to match the setup below.
-		int stencilBits = 8;
-		// This does not always seem to work when set to something else than 1. Skia can do
-		// anti-aliasing anyway, so it is fine.
-		int msaa = 1;
 
 		glGenFramebuffers(1, &framebuffer);
 		glBindFramebuffer(GL_FRAMEBUFFER, framebuffer);
@@ -103,7 +103,6 @@ namespace gui {
 		info.fFBOID = framebuffer;
 		info.fFormat = GL_RGB8;
 		target = GrBackendRenderTarget(size.w, size.h, msaa, stencilBits, info);
-		// TODO: We might want to modify the origin later to fix coordinate systems.
 		surface = SkSurface::MakeFromBackendRenderTarget(context->skia.get(), target,
 														kBottomLeft_GrSurfaceOrigin,
 														kRGB_888x_SkColorType,
@@ -134,7 +133,18 @@ namespace gui {
 		glBindRenderbuffer(GL_RENDERBUFFER, stencilbuffer);
 		glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, size.w, size.h);
 
-		TODO(L"Resize Skia properly!");
+		// Clear out the old surface.
+		surface = sk_sp<SkSurface>();
+
+		// Create the surface again.
+		GrGLFramebufferInfo info;
+		info.fFBOID = framebuffer;
+		info.fFormat = GL_RGB8;
+		target = GrBackendRenderTarget(size.w, size.h, msaa, stencilBits, info);
+		surface = SkSurface::MakeFromBackendRenderTarget(context->skia.get(), target,
+														kBottomLeft_GrSurfaceOrigin,
+														kRGB_888x_SkColorType,
+														nullptr, nullptr);
 
 		canvas = surface->getCanvas();
 	}

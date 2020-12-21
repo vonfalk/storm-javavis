@@ -1,5 +1,6 @@
 #pragma once
 #include "Gui/GraphicsMgr.h"
+#include "Skia.h"
 
 namespace gui {
 
@@ -36,5 +37,23 @@ namespace gui {
 		// Surface.
 		SkiaSurface *surface;
 	};
+
+#ifdef GUI_GTK
+
+	/**
+	 * Simple representation of bitmaps/images.
+	 */
+	struct SkiaBitmap {
+		// The source image itself.
+		sk_sp<SkImage> image;
+
+		// Shader created for blitting it to the screen with suitable sampling (no wrapping).
+		sk_sp<SkShader> blitShader;
+
+		// Shader created for using it in a brush. Might be null.
+		sk_sp<SkShader> brushShader;
+	};
+
+#endif
 
 }

@@ -38,10 +38,14 @@ namespace gui {
 		SkPaint *paint = new SkPaint();
 		paint->setAntiAlias(true);
 
-		SkImage *image = (SkImage *)brush->bitmap()->forGraphicsRaw(owner);
-		SkSamplingOptions sampling(SkFilterMode::kLinear, SkMipmapMode::kNearest);
-		sk_sp<SkShader> shader = image->makeShader(SkTileMode::kRepeat, SkTileMode::kRepeat, sampling);
-		shader = sk_make_sp<LocalShader>(shader, skia(brush->transform()));
+		SkiaBitmap *bitmap = (SkiaBitmap *)brush->bitmap()->forGraphicsRaw(owner);
+
+		if (!bitmap->brushShader) {
+			SkSamplingOptions sampling(SkFilterMode::kLinear, SkMipmapMode::kNearest);
+			bitmap->brushShader = bitmap->image->makeShader(SkTileMode::kRepeat, SkTileMode::kRepeat, sampling);
+		}
+
+		sk_sp<LocalShader> shader = sk_make_sp<LocalShader>(bitmap->brushShader, skia(brush->transform()));
 		paint->setShader(shader);
 
 		result = paint;
@@ -137,20 +141,24 @@ namespace gui {
 		local->matrix = radialMatrix(brush);
 	}
 
-	static void cleanupImage(void *ptr) {
-		SkImage *image = (SkImage *)ptr;
-		image->unref();
+	static void cleanupBitmap(void *ptr) {
+		SkiaBitmap *b = (SkiaBitmap *)ptr;
+		delete b;
 	}
 
-	void SkiaManager::create(Bitmap *bitmap, void *&result, Resource::Cleanup &cleanup) {
-		Image *image = bitmap->image();
+	void SkiaManager::create(Bitmap *src, void *&result, Resource::Cleanup &cleanup) {
+		Image *image = src->image();
 		SkImageInfo info = SkImageInfo::Make(image->width(), image->height(), kRGBA_8888_SkColorType, kUnpremul_SkAlphaType);
 		SkPixmap pixmap(info, image->buffer(), image->stride());
 
-		sk_sp<SkImage> skImage = SkImage::MakeCrossContextFromPixmap(surface->device(), pixmap, false, true);
-		skImage.get()->ref(); // Keep it alive.
-		result = skImage.get();
-		cleanup = &cleanupImage;
+		SkiaBitmap *bitmap = new SkiaBitmap();
+		bitmap->image = SkImage::MakeCrossContextFromPixmap(surface->device(), pixmap, false, true);
+
+		SkSamplingOptions sampling(SkFilterMode::kLinear, SkMipmapMode::kNearest);
+		bitmap->blitShader = bitmap->image->makeShader(SkTileMode::kDecal, SkTileMode::kDecal, sampling);
+
+		result = bitmap;
+		cleanup = &cleanupBitmap;
 	}
 
 	void SkiaManager::update(Bitmap *, void *) {
