@@ -178,8 +178,22 @@ namespace gui {
 		paint.setAntiAlias(true);
 		paint.setAlphaf(opacity);
 
-		SkImage *b = (SkImage *)bitmap->forGraphicsRaw(this);
-		surface.canvas->drawImageRect(b, skia(rect), &paint);
+		SkiaBitmap *b = (SkiaBitmap *)bitmap->forGraphicsRaw(this);
+		paint.setShader(b->blitShader);
+
+		// Save the transform.
+		SkM44 transform = surface.canvas->getLocalToDevice();
+
+		// Compute a new transform.
+		Size size = rect.size();
+		surface.canvas->translate(rect.p0.x, rect.p0.y);
+		surface.canvas->scale(size.w / b->image->width(), size.h / b->image->height());
+
+		// Draw.
+		surface.canvas->drawRect(skia(Rect(0, 0, b->image->width(), b->image->height())), paint);
+
+		// Restore the transform.
+		surface.canvas->setMatrix(transform);
 	}
 
 	void SkiaGraphics::draw(Bitmap *bitmap, Rect src, Rect dest, Float opacity) {
@@ -187,9 +201,24 @@ namespace gui {
 		paint.setAntiAlias(true);
 		paint.setAlphaf(opacity);
 
-		// TODO: The fast version might not be appropriate here. Consider a tightly packed sprite sheet.
-		SkImage *b = (SkImage *)bitmap->forGraphicsRaw(this);
-		surface.canvas->drawImageRect(b, skia(src), skia(dest), &paint, SkCanvas::kFast_SrcRectConstraint);
+		SkiaBitmap *b = (SkiaBitmap *)bitmap->forGraphicsRaw(this);
+		paint.setShader(b->blitShader);
+
+		// Save the transform.
+		SkM44 transform = surface.canvas->getLocalToDevice();
+
+		// Compute a new transform.
+		Size imgSpace = src.size();
+		Size origSpace = dest.size();
+		surface.canvas->translate(dest.p0.x, dest.p0.y);
+		surface.canvas->scale(origSpace.w / imgSpace.w, origSpace.h / imgSpace.h);
+		surface.canvas->translate(src.p0.x, src.p0.y);
+
+		// Draw.
+		surface.canvas->drawRect(skia(src), paint);
+
+		// Restore the transform.
+		surface.canvas->setMatrix(transform);
 	}
 
 	void SkiaGraphics::text(Str *text, Font *font, Brush *style, Rect rect) {
