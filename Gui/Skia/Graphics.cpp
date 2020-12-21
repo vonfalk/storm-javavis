@@ -11,7 +11,7 @@ namespace gui {
 
 #ifdef GUI_GTK
 		states->push(State());
-		manager(new (this) SkiaManager(surface));
+		manager(new (this) SkiaManager(this, surface));
 #endif
 	}
 
