@@ -544,6 +544,15 @@ namespace os {
 		assert(to->owner == null, L"The UThread is already associated with a thread, can not use it for detour.");
 
 		UThreadData *prev = running;
+		Stack *prevStack = &prev->stack;
+
+		// Since the UThread might be in the process of a stack call, we cannot be sure that
+		// "detourTo" is empty. If it contains something, we need to traverse the list of "detourTo"
+		// to find the last element and add the detour there. Otherwise, we will trash the scanning
+		// due to resetting "detourTo" too early.
+		while (Stack *stack = atomicRead(prevStack->detourTo)) {
+			prevStack = stack;
+		}
 
 		// Remember the currently running UThread so that we can go back to it.
 		to->owner = this;
@@ -552,7 +561,7 @@ namespace os {
 		// Adopt the new UThread, so that it is scanned as if it belonged to our thread.
 		// Note: it is important to do this in the proper order, otherwise there will be a
 		// small window where the UThread is not scanned at all.
-		atomicWrite(prev->stack.detourTo, &to->stack);
+		atomicWrite(prevStack->detourTo, &to->stack);
 		atomicWrite(to->stack.detourActive, 1);
 
 		// Switch threads.
@@ -566,7 +575,7 @@ namespace os {
 		// possible that the stack scanning will think the thread is active for the wrong OS thread,
 		// which would cause everything to crash due to the mismatch of stack pointers.
 		atomicWrite(to->stack.detourActive, 0);
-		atomicWrite(prev->stack.detourTo, (Stack *)null);
+		atomicWrite(prevStack->detourTo, (Stack *)null);
 
 		// Since we returned here from 'switchTo', we know that 'endDetour' has set the result for us!
 		return to->detourResult;
