@@ -177,48 +177,20 @@ namespace gui {
 		SkPaint paint;
 		paint.setAntiAlias(true);
 		paint.setAlphaf(opacity);
+		paint.setFilterQuality(kMedium_SkFilterQuality); // For linear interpolation w/ mipmaps if available
 
 		SkiaBitmap *b = (SkiaBitmap *)bitmap->forGraphicsRaw(this);
-		paint.setShader(b->blitShader);
-
-		// Save the transform.
-		SkM44 transform = surface.canvas->getLocalToDevice();
-
-		// Compute a new transform.
-		Size size = rect.size();
-		surface.canvas->translate(rect.p0.x, rect.p0.y);
-		surface.canvas->scale(size.w / b->image->width(), size.h / b->image->height());
-
-		// Draw.
-		surface.canvas->drawRect(skia(Rect(0, 0, b->image->width(), b->image->height())), paint);
-
-		// Restore the transform.
-		surface.canvas->setMatrix(transform);
+		surface.canvas->drawImageRect(b->image, skia(rect), &paint);
 	}
 
 	void SkiaGraphics::draw(Bitmap *bitmap, Rect src, Rect dest, Float opacity) {
 		SkPaint paint;
 		paint.setAntiAlias(true);
 		paint.setAlphaf(opacity);
+		paint.setFilterQuality(kMedium_SkFilterQuality); // For linear interpolation w/ mipmaps if available
 
 		SkiaBitmap *b = (SkiaBitmap *)bitmap->forGraphicsRaw(this);
-		paint.setShader(b->blitShader);
-
-		// Save the transform.
-		SkM44 transform = surface.canvas->getLocalToDevice();
-
-		// Compute a new transform.
-		Size imgSpace = src.size();
-		Size origSpace = dest.size();
-		surface.canvas->translate(dest.p0.x, dest.p0.y);
-		surface.canvas->scale(origSpace.w / imgSpace.w, origSpace.h / imgSpace.h);
-		surface.canvas->translate(src.p0.x, src.p0.y);
-
-		// Draw.
-		surface.canvas->drawRect(skia(src), paint);
-
-		// Restore the transform.
-		surface.canvas->setMatrix(transform);
+		surface.canvas->drawImageRect(b->image, skia(src), skia(dest), &paint);
 	}
 
 	void SkiaGraphics::text(Str *text, Font *font, Brush *style, Rect rect) {

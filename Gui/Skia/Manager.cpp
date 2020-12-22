@@ -155,9 +155,6 @@ namespace gui {
 		SkiaBitmap *bitmap = new SkiaBitmap();
 		bitmap->image = SkImage::MakeCrossContextFromPixmap(surface->device(), pixmap, false, true);
 
-		SkSamplingOptions sampling(SkFilterMode::kLinear, SkMipmapMode::kNearest);
-		bitmap->blitShader = bitmap->image->makeShader(SkTileMode::kDecal, SkTileMode::kDecal, sampling);
-
 		result = bitmap;
 		cleanup = &cleanupBitmap;
 	}

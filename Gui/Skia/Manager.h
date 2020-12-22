@@ -47,9 +47,6 @@ namespace gui {
 		// The source image itself.
 		sk_sp<SkImage> image;
 
-		// Shader created for blitting it to the screen with suitable sampling (no wrapping).
-		sk_sp<SkShader> blitShader;
-
 		// Shader created for using it in a brush. Might be null.
 		sk_sp<SkShader> brushShader;
 	};

@@ -65,7 +65,10 @@ class ImagePainter extends Painter {
 				p = p * scale;
 			}
 
-			Rect pos(me.center - p/2, p);
+			Point corner = me.center - p/2;
+			corner.x = corner.x.int.float; // Truncate to avoid weird effects in Skia with the pattern image.
+			corner.y = corner.y.int.float; // Truncate to avoid weird effects in Skia with the pattern image.
+			Rect pos(corner, p);
 			g.draw(picture, pos);
 		}
 
