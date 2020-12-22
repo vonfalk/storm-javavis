@@ -49,7 +49,6 @@ namespace gui {
 	Bool CLASS::pop() { return false; }						\
 	void CLASS::transform(Transform *) {}					\
 	void CLASS::lineWidth(Float) {}							\
-	void CLASS::prepare() {}								\
 	void CLASS::line(Point, Point, Brush *) {}				\
 	void CLASS::draw(Rect, Brush *) {}						\
 	void CLASS::draw(Rect, Size, Brush *) {}				\

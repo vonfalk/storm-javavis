@@ -117,8 +117,12 @@ namespace gui {
 		// Render target.
 		SkiaSurface &surface;
 
+#ifdef GUI_GTK
+
 		// Get the paint.
 		SkPaint *paint(Brush *brush, Bool stroke);
+
+#endif
 
 		// State. The values here are always absolute, ie they do not depend on
 		// previous states on the state stack.
@@ -149,6 +153,11 @@ namespace gui {
 					tfm0, tfm1, tfm2,
 					tfm3, tfm4, tfm5,
 					tfm6, tfm7, tfm8);
+			}
+#else
+			// We need a constructor, since POD types are not supported.
+			State() {
+				lineWidth = 1.0f;
 			}
 #endif
 
