@@ -3,6 +3,7 @@
 #include "Skia.h"
 #include "LocalShader.h"
 #include "Device.h"
+#include "Exception.h"
 
 namespace gui {
 

@@ -6,6 +6,9 @@ stormUsingNamespace+=storm::geometry
 
 #flags+=/d1reportSingleClassLayoutGradientStop
 
+# No includes for the Skia header.
+noIncludes+=*/Skia.h
+
 [unix]
 # Note: We provide our own version of Cairo, since many systems do not provide a cairo
 # that has GL support. Our version of cairo is placed next to the Gui library, and the
@@ -34,8 +37,6 @@ include+=../Linux/skia
 define+=SK_GL=1
 # Need C++ 17.
 flags+=-std=c++17
-# No includes for the Skia header.
-noIncludes+=*/Skia.h
 
 flags+=`pkg-config --cflags gtk+-3.0 x11 fontconfig`
 linkFlags+=`pkg-config --libs gtk+-3.0 x11 fontconfig` -lGL -lEGL
