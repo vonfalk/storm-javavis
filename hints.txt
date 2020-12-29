@@ -11,3 +11,9 @@ Rundll32.exe fthsvc.dll,FthSysprepSpecialize
 Disable completely:
 set HKLM\Software\Microsoft\FTH\Enabled to 0
 There are some entries there as well, in State\...
+
+If the DebugBreak() function (or other crashes) don't let you break into the debugger,
+open gpedit.msc, go to Computer configuration, Administrative templates, System,
+Windows Error Reporting and disable the Prevent the user interface.. option. Also the following
+registry values can be applied: scripts/ShowCrashUI.reg Then restart the system.
+
