@@ -15,7 +15,8 @@ namespace gui {
 	Defaults sysDefaults(EnginePtr e) {
 		Defaults d = {
 			defaultFont(e),
-			color(GetSysColor(COLOR_3DFACE)),
+			color(GetSysColor(COLOR_BTNFACE)), // Same as COLOR_3DFACE, which is for dialogs etc.
+			color(GetSysColor(COLOR_BTNTEXT)),
 		};
 		return d;
 	}
@@ -29,7 +30,7 @@ namespace gui {
 		return new (e.v) Font(*desc);
 	}
 
-	static Color defaultColor(EnginePtr e, GtkStyleContext *style) {
+	static Color backgroundColor(EnginePtr e, GtkStyleContext *style) {
 		cairo_surface_t *surface = cairo_image_surface_create(CAIRO_FORMAT_RGB24, 1, 1);
 		cairo_t *cairo = cairo_create(surface);
 
@@ -50,15 +51,24 @@ namespace gui {
 		return Color(byte(r), byte(g), byte(b));
 	}
 
+	static Color foregroundColor(EnginePtr e, GtkStyleContext *style) {
+		GdkRGBA color;
+		gtk_style_context_get_color(style, GTK_STATE_FLAG_NORMAL, &color);
+
+		return Color(Float(color.red), Float(color.green), Float(color.blue), Float(color.alpha));
+	}
+
 	Defaults sysDefaults(EnginePtr e) {
 		GtkWidget *dummyLabel = gtk_label_new("dummy");
 		GtkWidget *dummyWindow = gtk_window_new(GTK_WINDOW_TOPLEVEL);
+		gtk_container_add(GTK_CONTAINER(dummyWindow), dummyLabel);
 
 		GtkStyleContext *labelStyle = gtk_widget_get_style_context(dummyLabel);
 		GtkStyleContext *windowStyle = gtk_widget_get_style_context(dummyWindow);
 		Defaults d = {
 			defaultFont(e, labelStyle),
-			defaultColor(e, windowStyle),
+			backgroundColor(e, windowStyle),
+			foregroundColor(e, labelStyle),
 		};
 		gtk_widget_destroy(dummyLabel);
 		gtk_widget_destroy(dummyWindow);

@@ -15,6 +15,9 @@ namespace gui {
 
 		// Default window background color.
 		Color bgColor;
+
+		// Default text color.
+		Color textColor;
 	};
 
 	// Get defaults.

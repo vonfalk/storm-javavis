@@ -22,6 +22,10 @@ namespace gui {
 		return app(e)->defaultBgColor;
 	}
 
+	Color defaultTextColor(EnginePtr e) {
+		return app(e)->defaultTextColor;
+	}
+
 	App::App() : appWait(null), creating(null) {
 		windows = new (this) Map<Handle, Window *>();
 		liveWindows = new (this) Set<Window *>();
@@ -31,6 +35,7 @@ namespace gui {
 		Defaults def = sysDefaults(engine());
 		defaultFont = def.font;
 		defaultBgColor = def.bgColor;
+		defaultTextColor = def.textColor;
 	}
 
 	void App::terminate() {

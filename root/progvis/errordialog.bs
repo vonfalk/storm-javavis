@@ -56,8 +56,9 @@ class ErrorPainter extends Painter {
 	init(SrcPos pos) {
 		init() {}
 
+		view.textFg = SolidBrush(defaultTextColor);
 		view.display(pos);
-		view.highlight = SolidBrush(Color(1, 0.8, 0.8));
+		view.highlight = SolidBrush(Color(1, 0.0, 0.0, 0.3));
 	}
 
 	SourceView view;

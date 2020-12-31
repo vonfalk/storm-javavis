@@ -21,6 +21,9 @@ namespace gui {
 	// Get the default background color.
 	Color STORM_FN defaultBgColor(EnginePtr e) ON(Ui);
 
+	// Get the default text color.
+	Color STORM_FN defaultTextColor(EnginePtr e) ON(Ui);
+
 	/**
 	 * Application object. One instance of this object is created to manage all live windows for one
 	 * Engine. This class is therefore a singleton, get the one and only instance using 'app' below.
@@ -33,6 +36,9 @@ namespace gui {
 
 		// Default background color.
 		Color defaultBgColor;
+
+		// Default text color.
+		Color defaultTextColor;
 
 		// Indicate that 'w' is about to create a window and attach it. This makes us forward any
 		// messages addressed to an unknown window to 'w'. This is only done until 'addWindow(w)' is

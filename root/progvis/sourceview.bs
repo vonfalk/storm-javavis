@@ -23,10 +23,14 @@ class SourceView on Render {
 	// Brush used to highlight.
 	Brush highlight;
 
+	// Brush used for text.
+	Brush textFg;
+
 	// Create, will try to load source code by itself.
 	init() {
 		init {
 			highlight = sourceHighlight;
+			textFg = dataFg;
 		}
 	}
 
@@ -35,6 +39,7 @@ class SourceView on Render {
 		init {
 			program = program;
 			highlight = sourceHighlight;
+			textFg = dataFg;
 		}
 	}
 
@@ -91,7 +96,7 @@ class SourceView on Render {
 				g.fill(f + offset, highlight);
 			}
 
-			g.draw(text, dataFg, offset);
+			g.draw(text, textFg, offset);
 			g.pop();
 		}
 	}
