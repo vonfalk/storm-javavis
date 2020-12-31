@@ -5,10 +5,8 @@
 #include "Window.h"
 #include "Exception.h"
 #include "Graphics.h"
+#include "TextMgr.h"
 #include "Core/Convert.h"
-
-// Temporary, we will provide our own eventually.
-#include "Gui/Cairo/TextMgr.h"
 
 #ifdef GUI_GTK
 
@@ -62,8 +60,7 @@ namespace gui {
 	}
 
 	TextMgr *SkiaDevice::createTextMgr() {
-		// Temporary...
-		return new CairoText();
+		return new SkiaText();
 	}
 
 

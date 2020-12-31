@@ -2,10 +2,13 @@
 
 #ifdef GUI_GTK
 
-	/**
-	 * Skia includes. Ignored by Mymake.
-	 */
+/**
+ * Skia includes. Ignored by Mymake.
+ */
 
+// Xlib defines Status and None... They are used as identifiers in Skia...
+#undef Status
+#undef None
 
 #include "include/gpu/GrDirectContext.h"
 #include "include/gpu/gl/GrGLInterface.h"
@@ -19,8 +22,11 @@
 #include "include/core/SkPathBuilder.h"
 #include "include/effects/SkGradientShader.h"
 
-// Someone defines None...
-#undef None
+// Text rendering.
+#include "modules/skparagraph/include/Paragraph.h"
+#include "modules/skparagraph/include/FontCollection.h"
+#include "modules/skparagraph/include/TypefaceFontProvider.h"
+#include "modules/skparagraph/src/ParagraphBuilderImpl.h"
 
 // This is technically not a part of the public API. We statically link to Skia, so we will make it work.
 // These are only used in LocalShader.h

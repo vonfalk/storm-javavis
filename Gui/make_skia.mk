@@ -52,7 +52,7 @@ clean:
 
 $(OUTPUT): $(OBJECTS) $(LIB_OBJECTS) out/skcms.o
 	@echo "Linking $(OUTPUT)..."
-	@ar rcs $(OUTPUT) $(OBJECTS) out/skcms.o
+	@ar rcs $(OUTPUT) $(OBJECTS) $(LIB_OBJECTS) out/skcms.o
 
 $(OBJECTS): out/%.o: src/%.cpp
 	@mkdir -p $(dir $@)
