@@ -118,30 +118,44 @@ namespace gui {
 		this->scale = scale;
 		this->size = size;
 
-		cairo_destroy(device);
-
 		int width = size.w;
 		int height = size.h;
+
+		cairo_destroy(device);
+		cairo_surface_destroy(surface);
 
 		// The clear is since Cairo will switch GL context from time to time, turning make_context
 		// into a noop some times, when it really should not be a noop.
 		gdk_gl_context_clear_current();
 		gdk_gl_context_make_current(context->context);
 
+		glDeleteTextures(1, &texture);
+		glGenTextures(1, &texture);
+
 		glBindTexture(GL_TEXTURE_2D, texture);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
 
-		cairo_surface_destroy(surface);
 		surface = cairo_gl_surface_create_for_texture(context->device, CAIRO_CONTENT_COLOR, texture, width, height);
 		device = cairo_create(surface);
 	}
 
 	Surface::PresentStatus CairoGLSurface::present(bool waitForVSync) {
+		glFlush();
 		return pRepaint;
 	}
 
 	void CairoGLSurface::repaint(RepaintParams *params) {
-		gdk_gl_context_make_current(context->context);
+		// Note: For some reason we get terrible artifacts if we switch the GL context here.
+		// Even though the manual states that we should select the appropriate GL context before
+		// doing anything, the implementation does not require that. It quickly selects its own
+		// GL context.
+
+		// gdk_gl_context_clear_current();
+		// gdk_gl_context_make_current(context->context);
 		gdk_cairo_draw_from_gl(params->cairo, params->window,
 							texture, GL_TEXTURE, 1 /* scale */,
 							0, 0, int(size.w), int(size.h));
