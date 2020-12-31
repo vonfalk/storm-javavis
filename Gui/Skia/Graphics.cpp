@@ -2,6 +2,8 @@
 #include "Graphics.h"
 #include "Device.h"
 #include "Manager.h"
+#include "Text.h"
+#include "TextMgr.h"
 
 namespace gui {
 
@@ -198,7 +200,10 @@ namespace gui {
 	}
 
 	void SkiaGraphics::draw(Text *text, Brush *style, Point origin) {
-		TODO(L"FIXME");
+		ParData *p = (ParData *)text->backendLayout(this);
+		// According to the assertion in the code, it seems like it expects utf-8 byte offsets.
+		p->layout->updateForegroundPaint(0, p->utf8Bytes, *paint(style, false));
+		p->layout->paint(surface.canvas, origin.x, origin.y);
 	}
 
 #else

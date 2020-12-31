@@ -75,7 +75,7 @@ namespace gui {
 		class Effect {
 			STORM_VALUE;
 		public:
-			// Range.
+			// Range. UTF-16 offsets.
 			Nat from;
 			Nat to;
 

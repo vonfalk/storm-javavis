@@ -20,7 +20,7 @@ Main -a -r ../root/ -f tests.ui.main
 #Main -a -f tests.ui.testAbout
 #Main -a -f presentation.tests.test
 #Main -a -f presentation.tests.simple
-Main -a -f progvis.debug
+#Main -a -f progvis.debug
 #Main -a -f progvis.testCpp
 #Main -a -f trees.main
 
