@@ -35,7 +35,7 @@ class TextPainter extends Painter {
 
 		{
 			var iter = text.text.begin();
-			text.color(iter + 3, iter + 7, green);
+			text.color(iter + 3, iter + 6, green);
 			text.color(iter + 2, iter + 4, red);
 		}
 

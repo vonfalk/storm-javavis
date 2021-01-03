@@ -79,7 +79,7 @@ namespace gui {
 			return eWait;
 
 		IDWriteTextLayout *l = (IDWriteTextLayout *)layout;
-		DWRITE_TEXT_RANGE range = { effect.from, effect.to };
+		DWRITE_TEXT_RANGE range = { effect.from, effect.to - effect.from };
 		ID2D1SolidColorBrush *brush;
 		g->getSurface().target()->CreateSolidColorBrush(dx(effect.color), &brush);
 		l->SetDrawingEffect(brush, range);
@@ -106,23 +106,20 @@ namespace gui {
 		l->GetLineMetrics(lines, numLines, &numLines);
 
 		Array<TextLine *> *result = new (text) Array<TextLine *>();
-		Str::Iter start = myText->begin();
-
+		Nat pos = 0;
 		Float yPos = 0;
 
 		for (Nat i = 0; i < numLines; i++) {
-			// TODO: I don't know if 'length' is the number of characters or codepoints.
+			// The offsets in here seem to refer back to the original string (UTF-16 encoded) rather
+			// than codepoint indices.
 			DWRITE_LINE_METRICS &l = lines[i];
-			Str::Iter pos = start;
-			for (Nat j = 0; j < l.length - l.newlineLength; j++)
-				++pos;
 
-			*result << new (text) TextLine(yPos + l.baseline, myText->substr(start, pos));
+			Str::Iter start = myText->posIter(pos);
+			Str::Iter end = myText->posIter(pos + l.length - l.newlineLength);
+
+			*result << new (text) TextLine(yPos + l.baseline, myText->substr(start, end));
 			yPos += l.height;
-
-			for (Nat j = 0; j < l.newlineLength; j++)
-				++pos;
-			start = pos;
+			pos += l.length;
 		}
 
 		delete []lines;
