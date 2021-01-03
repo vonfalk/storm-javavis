@@ -1,0 +1,92 @@
+use ui;
+use core:geometry;
+use graphics;
+
+class TextWindow extends Frame {
+	init() {
+		init("Text", Size(300, 400)) {}
+
+		painter = TextPainter();
+
+		create();
+	}
+}
+
+class TextPainter extends Painter {
+	Text text;
+	Brush color;
+	Brush hl;
+
+	Brush[] bg;
+
+	Text[] lines;
+	Float[] baseline;
+
+	Rect[] rects;
+
+	init() {
+		Font f("Arial", 25);
+
+		init() {
+			text = Text("ABÅÄあお☃😀!\n\tà̖ \n👩‍💻\nLast line", f);
+			color = SolidBrush(black);
+			hl = SolidBrush(red);
+		}
+
+		bg << SolidBrush(green + white * 0.6);
+		bg << SolidBrush(red + white * 0.6);
+		bg << SolidBrush(blue + white * 0.6);
+		bg << SolidBrush(yellow);
+
+		for (l in text.lineInfo) {
+			lines << Text(l.text, f);
+			baseline << l.baseline;
+		}
+
+		var iter = text.text.begin();
+		var end = text.text.end();
+
+		while (iter != end) {
+			var next = iter;
+			next++;
+			if (iter.v != Char(10)) {
+				var bounds = text.boundsOf(iter, next);
+				if (bounds.any)
+					rects << bounds[0];
+				else
+					print("Empty bounds for ${iter.v}");
+			}
+
+			iter = next;
+		}
+	}
+
+	Bool render(Size size, Graphics g) {
+		Point offset(8, 8);
+		Nat colorId = 0;
+		for (r in rects) {
+			g.fill(r + offset, bg[colorId]);
+			if (++colorId == bg.count)
+				colorId = 0;
+		}
+
+		for (b in baseline) {
+			g.line(Point(0, offset.y + b), Point(size.w, offset.y + b), hl);
+		}
+
+		g.draw(text, color, offset);
+
+		offset.y += text.size.h + 8;
+		for (l in lines) {
+			g.draw(l, color, offset);
+			offset.y += l.size.h;
+		}
+
+		false;
+	}
+}
+
+void text() {
+	TextWindow window;
+	window.waitForClose();
+}
