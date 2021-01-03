@@ -72,10 +72,15 @@ namespace gui {
 
 		*myEffects << Effect(begin.offset(), end.offset(), color);
 
-		if (mgr->addEffect(layout, myEffects->last(), myText, null) == TextMgr::eApplied) {
-			// We assume all calls behave the same way. So if we managed to apply this one, we're
-			// done now.
-			appliedEffects = myEffects->count();
+		// If all effects have been applied so far, try to apply the newly added one now.
+		if (appliedEffects == myEffects->count() - 1 && layout) {
+			TextMgr::EffectResult r = mgr->addEffect(layout, myEffects->last(), myText, null);
+			if (r == TextMgr::eApplied) {
+				appliedEffects = myEffects->count();
+			} else if (r == TextMgr::eReCreate) {
+				// We could be a bit more eager in this case. That would be beneficial if (for some
+				// reason) the effect had an impact on size or layout computations.
+			}
 		}
 	}
 

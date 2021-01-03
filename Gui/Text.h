@@ -62,7 +62,9 @@ namespace gui {
 		// Get a set of rectangles that cover a range of characters.
 		Array<Rect> *STORM_FN boundsOf(Str::Iter begin, Str::Iter end);
 
-		// Set the color of a particular range of characters.
+		// Set the color of a particular range of characters. Note: Repeatedly changing the color of
+		// text will build up a backlog of changes, so it is better to re-create the Text object
+		// from time to time.
 		void STORM_FN color(Str::Iter begin, Str::Iter end, Color color);
 		void STORM_FN color(Str::Iter begin, Str::Iter end, SolidBrush *color);
 
@@ -88,6 +90,9 @@ namespace gui {
 
 		// Get text effects.
 		Array<Effect> *STORM_FN effects() const;
+
+		// Peek at the effects (i.e. don't get a copy of them).
+		Array<Effect> *peekEffects() const { return myEffects; }
 
 		// Get the backend-specific representation for painting to "graphics".
 		void *backendLayout(Graphics *graphics);

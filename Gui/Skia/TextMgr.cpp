@@ -14,6 +14,8 @@ namespace gui {
 	using skia::textlayout::ParagraphStyle;
 	using skia::textlayout::Paragraph;
 	using skia::textlayout::ParagraphBuilder;
+	using skia::textlayout::LineMetrics;
+	using skia::textlayout::TextBox;
 
 	SkiaText::SkiaText() {
 		fontCollection = sk_make_sp<FontCollection>();
@@ -57,24 +59,95 @@ namespace gui {
 		delete p;
 	}
 
+	struct Effect {
+		Color color;
+		Nat start;
+		Nat end;
+		Nat index;
+
+		bool operator <(const Effect &o) const {
+			if (start != o.start)
+				return start < o.start;
+			if (end != o.end)
+				return end < o.end;
+			return index < o.index;
+		}
+	};
+
+	// Get a set of non-overlapping effects. We ensure that all intervals are sorted from start to end as well.
+	static std::vector<Effect> linearizeEffects(Array<Text::Effect> *input) {
+		if (input == null)
+			return std::vector<Effect>();
+
+		std::vector<Effect> effects(input->count());
+		for (Nat i = 0; i < input->count(); i++) {
+			const Text::Effect &e = input->at(i);
+			Effect n = {
+				e.color,
+				e.from,
+				e.to,
+				i
+			};
+			effects.push_back(n);
+		}
+
+		// Sort them.
+		std::sort(effects.begin(), effects.end());
+
+		// Now, we can iterate through them and merge any overlaps.
+		// TODO
+
+		return effects;
+	}
+
+	void put(std::unique_ptr<ParagraphBuilder> &builder, Str *str, Nat from, Nat to, size_t &length) {
+		if (from == to)
+			return;
+
+		Str *sub = str->substr(str->posIter(from), str->posIter(to));
+		const char *utf8 = sub->utf8_str();
+
+		size_t len = strlen(utf8);
+		builder->addText(utf8, len);
+		length += len;
+	}
+
 	SkiaText::Resource SkiaText::createLayout(const Text *text) {
 		ParagraphStyle *style = (ParagraphStyle *)text->font()->backendFont();
-
-		// This is what the samples are doing, even though it seems we should not access the type directly ourselves.
-		auto builder = ParagraphBuilder::make(*style, fontCollection);
+		TextStyle textStyle = style->getTextStyle();
 
 		// TODO: Handle tabs!
 
-		// TODO: Apply color effects! That means we need to sort the sub-ranges and figure out if they overlap.
+		std::vector<Effect> effects = linearizeEffects(text->peekEffects());
+		PVAR(effects.size());
 
-		const char *s = text->text()->utf8_str();
-		builder->addText(s, strlen(s));
+		std::unique_ptr<ParagraphBuilder> builder = ParagraphBuilder::make(*style, fontCollection);
+		Str *str = text->text();
+		size_t totalLength = 0;
+		Nat offset = 0;
+
+		for (size_t i = 0; i < effects.size(); i++) {
+			Effect &e = effects[i];
+			put(builder, str, offset, e.start, totalLength);
+
+			SkPaint paint;
+			paint.setAntiAlias(true);
+			paint.setColor(skia(e.color));
+			textStyle.setForegroundColor(paint);
+			builder->pushStyle(textStyle);
+			put(builder, str, e.start, e.end, totalLength);
+			builder->pop();
+
+			offset = e.end;
+		}
+
+		put(builder, str, offset, str->peekLength(), totalLength);
 
 		ParData *data = new ParData();
 
 		data->layout = builder->Build();
 		data->layout->layout(text->layoutBorder().w);
-		data->utf8Bytes = strlen(s); // TODO: Avoid re-computing the length.
+		data->utf8Bytes = totalLength;
 
 		return SkiaText::Resource(data, &destroyParagraph);
 	}
@@ -86,9 +159,9 @@ namespace gui {
 		return true;
 	}
 
-	SkiaText::EffectResult SkiaText::addEffect(void *layout, const Text::Effect &effect, Str *myText, Graphics *) {
-		// TODO!
-		return eApplied;
+	SkiaText::EffectResult SkiaText::addEffect(void *, const Text::Effect &, Str *, Graphics *) {
+		// Skia does not support changing the text effect on a part of the text after it is created.
+		return eReCreate;
 	}
 
 	Size SkiaText::size(void *layout) {
@@ -97,14 +170,102 @@ namespace gui {
 		return Size(par->layout->getMaxWidth(), par->layout->getHeight());
 	}
 
+	struct Hint {
+		size_t utf8;
+		Str::Iter str;
+		Str::Iter prev;
+
+		Hint(Str *s) : utf8(0), str(s->begin()), prev(s->begin()) {}
+	};
+
+	static void step(Hint &hint, size_t to) {
+		Str::Iter end;
+		byte buffer[utf8::maxBytes];
+
+		while (hint.utf8 < to) {
+			if (hint.str == end)
+				break;
+
+			nat count = 0;
+			utf8::encode(hint.str.v().codepoint(), buffer, &count);
+			hint.utf8 += count;
+			hint.prev = hint.str;
+			++hint.str;
+		}
+	}
+
+	static Str *extract(Str *from, size_t utf8Start, size_t utf8End, Hint &hint) {
+		if (utf8Start < hint.utf8)
+			hint = Hint(from);
+
+		step(hint, utf8Start);
+		Str::Iter start = hint.str;
+
+		step(hint, utf8End);
+		Str::Iter end = hint.str;
+
+		// Even though the implementation hints at not including newlines in the range, it
+		// does... We don't want to do that, so we explicitly remove the trailing newline.
+		if (hint.prev.v() == Char('\n'))
+			end = hint.prev;
+
+		return from->substr(start, end);
+	}
+
 	Array<TextLine *> *SkiaText::lineInfo(void *layout, Text *t) {
-		// TODO!
-		return null;
+		ParData *par = (ParData *)layout;
+
+		Str *text = t->text();
+		Array<TextLine *> *result = new (t) Array<TextLine *>();
+		Hint hint(text);
+		std::vector<LineMetrics> metrics;
+
+		result->reserve(metrics.size());
+
+		par->layout->getLineMetrics(metrics);
+		for (size_t i = 0; i < metrics.size(); i++) {
+			const LineMetrics &m = metrics[i];
+			Str *content = extract(text, m.fStartIndex, m.fEndIndex, hint);
+			*result << new (t) TextLine(m.fBaseline, content);
+		}
+
+		return result;
 	}
 
 	Array<Rect> *SkiaText::boundsOf(void *layout, Text *stormText, Str::Iter begin, Str::Iter end) {
-		// TODO!
-		return null;
+		ParData *par = (ParData *)layout;
+
+		// unsigned startIndex = 0;
+		// unsigned endIndex = 0;
+		// unsigned id = 0;
+		// Str *text = stormText->text();
+		// for (Str::Iter i = text->begin(), last = text->end(); i != last; ++i, id++) {
+		// 	if (i == begin) {
+		// 		startIndex = id;
+		// 	}
+		// 	if (i == end) {
+		// 		endIndex = id;
+		// 		break;
+		// 	}
+		// }
+
+		// Interestingly enough, the implementation in SkParagraph seems to accept UTF16 indices,
+		// not glyph indices as indicated in the header... The upside is that it is easier for us.
+		unsigned startIndex = begin.offset();
+		unsigned endIndex = end.offset();
+
+		Array<Rect> *result = new (stormText) Array<Rect>();
+		std::vector<TextBox> boxes = par->layout->getRectsForRange(startIndex, endIndex,
+																skia::textlayout::RectHeightStyle::kMax,
+																skia::textlayout::RectWidthStyle::kTight);
+
+		result->reserve(boxes.size());
+		for (size_t i = 0; i < boxes.size(); i++) {
+			const TextBox &box = boxes[i];
+			*result << Rect(box.rect.fLeft, box.rect.fTop, box.rect.fRight, box.rect.fBottom);
+		}
+
+		return result;
 	}
 
 }
