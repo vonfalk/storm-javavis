@@ -70,7 +70,9 @@ namespace gui {
 	}
 
 	static inline bool inRange(int prev, int curr, int target) {
-		if (curr > prev)
+		if (curr == prev)
+			return target == prev;
+		else if (curr > prev)
 			return target > prev && target <= curr;
 		else
 			return target >= curr && target < prev;
@@ -171,13 +173,13 @@ namespace gui {
 
 		PangoLayoutIter *iter = pango_layout_get_iter(l);
 		int lastIndex = pango_layout_iter_get_index(iter);
-		while (pango_layout_iter_next_cluster(iter)) {
+		do {
 			int index = pango_layout_iter_get_index(iter);
 			if (inRange(lastIndex, index, int(beginBytes)))
 				break;
 
 			lastIndex = index;
-		}
+		} while (pango_layout_iter_next_cluster(iter));
 
 		pango_layout_iter_get_cluster_extents(iter, NULL, &rect);
 		Rect lineBounds = fromPango(rect);
