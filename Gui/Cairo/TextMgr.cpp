@@ -118,7 +118,7 @@ namespace gui {
 		PangoAttribute *attr = pango_attr_foreground_new(pangoColor(color.r), pangoColor(color.g), pangoColor(color.b));
 		attr->start_index = beginBytes;
 		attr->end_index = endBytes;
-		pango_attr_list_insert(attrs, attr);
+		pango_attr_list_change(attrs, attr);
 
 		if (color.a < 1.0f) {
 			PangoAttribute *alpha = pango_attr_foreground_alpha_new(pangoColor(color.a));
