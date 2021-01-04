@@ -249,8 +249,8 @@ namespace gui {
 #ifdef UI_MULTITHREAD
 
 	void Painter::repaintI(RepaintParams *params) {
-		if (resized) {
-			// If we're resized, always repaint now.
+		if (resized && synchronizedPresent) {
+			// If we're resized and are running in the "synchronized present" mode, always repaint now.
 			doRepaint(false, true);
 		} else if (!ready()) {
 			// There is a frame ready right now! No need to wait even if we're not in continuous mode!
