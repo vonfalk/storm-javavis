@@ -6,7 +6,7 @@
 namespace gui {
 
 	Painter::Painter()
-		: continuous(false), synchronizedPresent(false),
+		: continuous(false), synchronizedPresent(false), resized(false),
 		  repaintCounter(0), currentRepaint(0), surface(null) {
 
 		attachedTo = Window::invalid;
@@ -65,6 +65,9 @@ namespace gui {
 			surface->resize(sz, scale);
 			if (graphics)
 				graphics->surfaceResized();
+
+			// Invalidate the current frame.
+			resized = true;
 		}
 	}
 
@@ -102,6 +105,7 @@ namespace gui {
 		try {
 			Lock::Guard z(lock);
 			repaintCounter++;
+			resized = false;
 			more = doRepaintI(waitForVSync, fromDraw);
 		} catch (...) {
 			throw;
@@ -245,7 +249,10 @@ namespace gui {
 #ifdef UI_MULTITHREAD
 
 	void Painter::repaintI(RepaintParams *params) {
-		if (!ready()) {
+		if (resized) {
+			// If we're resized, always repaint now.
+			doRepaint(false, true);
+		} else if (!ready()) {
 			// There is a frame ready right now! No need to wait even if we're not in continuous mode!
 		} else if (continuous) {
 			waitForFrame();

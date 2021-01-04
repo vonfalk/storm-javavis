@@ -902,6 +902,9 @@ namespace gui {
 			RepaintRequest *now = repaintList;
 			repaintList = repaintList->next;
 
+			// Invalidates a bit too much in windows containing more than just a GL area.
+			// gdk_window_invalidate_rect(gtk_widget_get_window(now->handle.widget()), NULL, false);
+
 			gtk_widget_queue_draw(now->handle.widget());
 			now->wait.up();
 		}

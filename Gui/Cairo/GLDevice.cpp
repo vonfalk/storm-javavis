@@ -129,9 +129,11 @@ namespace gui {
 		gdk_gl_context_clear_current();
 		gdk_gl_context_make_current(context->context);
 
-		glDeleteTextures(1, &texture);
-		glGenTextures(1, &texture);
+		// Save the old active texture. Otherwise Cairo will be very confused.
+		GLint oldTexture;
+		glGetIntegerv(GL_TEXTURE_BINDING_2D, &oldTexture);
 
+		// Now, we can bind the proper texture and resize it.
 		glBindTexture(GL_TEXTURE_2D, texture);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
@@ -139,6 +141,10 @@ namespace gui {
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
 
+		// Restore the old one. Otherwise Cairo will be unhappy.
+		glBindTexture(GL_TEXTURE_2D, oldTexture);
+
+		// ...and finally re-create the surface.
 		surface = cairo_gl_surface_create_for_texture(context->device, CAIRO_CONTENT_COLOR, texture, width, height);
 		device = cairo_create(surface);
 	}

@@ -83,6 +83,9 @@ namespace gui {
 		// Do we need to wait for "paint" messages from the window system?
 		Bool synchronizedPresent;
 
+		// Were we resized recently? If so, we don't have any frame available.
+		Bool resized;
+
 		// Are we attached to anything? If we get detached while waiting to render the screen, we
 		// need to be able to detect that.
 		inline bool attached() const { return graphics != null; }
