@@ -255,7 +255,8 @@ namespace gui {
 		} else if (!ready()) {
 			// There is a frame ready right now! No need to wait even if we're not in continuous mode!
 		} else if (continuous) {
-			waitForFrame();
+			// This does not seem to be needed. It only makes resizing the window laggy.
+			// waitForFrame();
 		} else {
 			doRepaint(false, true);
 		}
