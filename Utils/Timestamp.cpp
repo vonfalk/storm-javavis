@@ -26,7 +26,7 @@ Timestamp fromFileTime(FILETIME ft) {
 void Timestamp::output(std::wostream &to) const {
 	LARGE_INTEGER li;
 	li.QuadPart = time * 10LL;
-	FILETIME fTime = { li.LowPart, li.HighPart };
+	FILETIME fTime = { li.LowPart, (DWORD)li.HighPart };
 	SYSTEMTIME sTime;
 	FileTimeToSystemTime(&fTime, &sTime);
 

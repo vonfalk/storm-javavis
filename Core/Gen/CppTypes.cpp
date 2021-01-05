@@ -38,7 +38,15 @@
 #pragma GCC diagnostic ignored "-Wnarrowing"
 #pragma GCC diagnostic ignored "-Wunused-variable"
 
+// Someone defines VOID...
+#ifdef VOID
+#undef VOID
+#endif
+
 namespace storm {
+
+	static const size_t NONE = size_t(-1);
+	static const size_t VOID = size_t(-2);
 
 	/**
 	 * Add type flags depending on characteristics of T.
@@ -140,10 +148,10 @@ namespace storm {
 	};
 
 	// Invalid size.
-	const CppSize CppSize::invalid = { -1, -1, -1, -1 };
+	const CppSize CppSize::invalid = { nat(-1), nat(-1), nat(-1), nat(-1) };
 
 	// Invalid offset.
-	const CppOffset CppOffset::invalid = { -1, -1 };
+	const CppOffset CppOffset::invalid = { nat(-1), nat(-1) };
 
 	const CppType *CppMeta::cppTypes() {
 		// PTR_OFFSETS
@@ -247,7 +255,7 @@ namespace storm {
 
 		static const CppRefType types[] = {
 			// REF_TYPES
-			{ -1, null },
+			{ NONE, null },
 		};
 		return types;
 #else

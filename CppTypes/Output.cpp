@@ -363,14 +363,19 @@ static void templateParams(ResolvedTemplateType *t, wostream &to, set<String> &c
 		vector<Long> ids = templateParamsId(t);
 
 		to << L"static const size_t " << name << L"[] = { ";
-		join(to, ids, L", ");
-		to << L", -1 };\n";
+		for (size_t i = 0; i < ids.size(); i++) {
+			if (ids[i] == -2)
+				to << L"VOID, ";
+			else
+				to << ids[i] << L", ";
+		}
+		to << L"NONE };\n";
 	}
 }
 
 static bool genTypeRef(wostream &to, TypeRef *r, bool safe = false, bool skipExternal = false) {
 	if (as<VoidType>(r)) {
-		to << L"{ -1, null, false, false }";
+		to << L"{ NONE, null, false, false }";
 		return true;
 	}
 
@@ -466,11 +471,11 @@ static void genFnParams(wostream &to, World &w) {
 			to << L"}, ";
 		}
 
-		to << L"{ null, { -1, null, false } } };\n";
+		to << L"{ null, { NONE, null, false } } };\n";
 	}
 
 	// We only generate one for the empty parameter list.
-	to << L"static const CppParam params_empty[] = { { null, { -1, null } } };";
+	to << L"static const CppParam params_empty[] = { { null, { NONE, null } } };";
 }
 
 static void stormName(wostream &to, Function &f) {
@@ -586,11 +591,11 @@ static void genFunctions(wostream &to, World &w) {
 
 		// Thread id.
 		if (f.has(Function::isMember))
-			to << L"-1, ";
+			to << L"NONE, ";
 		else if (f.threadType)
 			to << f.threadType->id << L", ";
 		else
-			to << L"-1, ";
+			to << L"NONE, ";
 
 		// Documentation.
 		to << docId(w, f) << L", ";
@@ -809,7 +814,7 @@ static void genRefPtrOffsets(wostream &to, World &w) {
 		vector<ScannedVar> o = t.scannedVars();
 		for (nat i = 0; i < o.size(); i++) {
 			if (o[i].varName == L"") {
-				to << L"-1, ";
+				to << L"NONE, ";
 			} else {
 				to << L"OFFSET_OF(" << o[i].typeName << L", " << o[i].varName << L"), ";
 			}
@@ -822,7 +827,7 @@ static void genRefPtrOffsets(wostream &to, World &w) {
 		// 		PLN(L"  " << o[i].varName);
 		// }
 
-		to << L"-1 };\n";
+		to << L"NONE };\n";
 	}
 }
 
