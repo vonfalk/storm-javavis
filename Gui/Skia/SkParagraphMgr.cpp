@@ -1,10 +1,11 @@
 #include "stdafx.h"
-#include "TextMgr.h"
+#include "SkParagraphMgr.h"
 #include "Core/Convert.h"
 #include "Core/Utf.h"
 #include <limits>
 
 #ifdef GUI_GTK
+#if HAS_SK_PARAGRAPH
 
 namespace gui {
 
@@ -17,19 +18,19 @@ namespace gui {
 	using skia::textlayout::LineMetrics;
 	using skia::textlayout::TextBox;
 
-	SkiaText::SkiaText() {
+	SkiaParText::SkiaParText() {
 		fontCollection = sk_make_sp<FontCollection>();
 		fontCollection->setDefaultFontManager(SkFontMgr::RefDefault());
 	}
 
-	SkiaText::~SkiaText() {}
+	SkiaParText::~SkiaParText() {}
 
 	static void destroyParaStyle(void *fs) {
 		ParagraphStyle *style = (ParagraphStyle *)fs;
 		delete style;
 	}
 
-	SkiaText::Resource SkiaText::createFont(const Font *font) {
+	SkiaParText::Resource SkiaParText::createFont(const Font *font) {
 		TextStyle style;
 		// TODO: We might need to be explicit with fallbacks here.
 		style.setFontFamilies({SkString(font->name()->utf8_str())});
@@ -51,7 +52,7 @@ namespace gui {
 		ParagraphStyle *para = new ParagraphStyle();
 		para->setTextStyle(style);
 
-		return SkiaText::Resource(para, &destroyParaStyle);
+		return SkiaParText::Resource(para, &destroyParaStyle);
 	}
 
 	static void destroyParagraph(void *para) {
@@ -112,7 +113,7 @@ namespace gui {
 		length += len;
 	}
 
-	SkiaText::Resource SkiaText::createLayout(const Text *text) {
+	SkiaParText::Resource SkiaParText::createLayout(const Text *text) {
 		ParagraphStyle *style = (ParagraphStyle *)text->font()->backendFont();
 		TextStyle textStyle = style->getTextStyle();
 
@@ -149,22 +150,22 @@ namespace gui {
 		data->layout->layout(text->layoutBorder().w);
 		data->utf8Bytes = totalLength;
 
-		return SkiaText::Resource(data, &destroyParagraph);
+		return SkiaParText::Resource(data, &destroyParagraph);
 	}
 
-	bool SkiaText::updateBorder(void *layout, Size s) {
+	bool SkiaParText::updateBorder(void *layout, Size s) {
 		ParData *par = (ParData *)layout;
 		par->layout->layout(s.w);
 
 		return true;
 	}
 
-	SkiaText::EffectResult SkiaText::addEffect(void *, const Text::Effect &, Str *, Graphics *) {
+	SkiaParText::EffectResult SkiaParText::addEffect(void *, const Text::Effect &, Str *, Graphics *) {
 		// Skia does not support changing the text effect on a part of the text after it is created.
 		return eReCreate;
 	}
 
-	Size SkiaText::size(void *layout) {
+	Size SkiaParText::size(void *layout) {
 		ParData *par = (ParData *)layout;
 
 		return Size(par->layout->getMaxWidth(), par->layout->getHeight());
@@ -212,7 +213,7 @@ namespace gui {
 		return from->substr(start, end);
 	}
 
-	Array<TextLine *> *SkiaText::lineInfo(void *layout, Text *t) {
+	Array<TextLine *> *SkiaParText::lineInfo(void *layout, Text *t) {
 		ParData *par = (ParData *)layout;
 
 		Str *text = t->text();
@@ -232,7 +233,7 @@ namespace gui {
 		return result;
 	}
 
-	Array<Rect> *SkiaText::boundsOf(void *layout, Text *stormText, Str::Iter begin, Str::Iter end) {
+	Array<Rect> *SkiaParText::boundsOf(void *layout, Text *stormText, Str::Iter begin, Str::Iter end) {
 		ParData *par = (ParData *)layout;
 
 		// unsigned startIndex = 0;
@@ -268,6 +269,16 @@ namespace gui {
 		return result;
 	}
 
+
+	ParText::ParText(std::unique_ptr<skia::textlayout::Paragraph> layout, size_t utf8Bytes)
+		: layout(std::move(layout)), utf8Bytes(utf8Bytes) {}
+
+	void ParText::draw(SkCanvas &to, const SkPaint &paint, Point origin) {
+		layout->updateForegroundPaint(0, utf8Bytes, paint);
+		layout->paint(to, origin.x, origin.y);
+	}
+
 }
 
+#endif
 #endif

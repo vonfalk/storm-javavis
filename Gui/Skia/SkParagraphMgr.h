@@ -2,18 +2,20 @@
 
 #include "Skia.h"
 #include "Gui/TextMgr.h"
+#include "Text.h"
 
 #ifdef GUI_GTK
+#if HAS_SK_PARAGRAPH
 
 namespace gui {
 
-	class SkiaText : public TextMgr {
+	class SkiaParText : public TextMgr {
 	public:
 		// Create.
-		SkiaText();
+		SkiaParText();
 
 		// Destroy.
-		~SkiaText();
+		~SkiaParText();
 
 		// Create a font.
 		virtual Resource createFont(const Font *font);
@@ -41,16 +43,20 @@ namespace gui {
 		sk_sp<skia::textlayout::FontCollection> fontCollection;
 	};
 
-	// Data that contains a Paragraph.
-	class ParData {
+	class ParText : public SkiaText {
 	public:
+		ParText(std::unique_ptr<skia::textlayout::Paragraph> layout, size_t utf8Bytes);
 
 		// The layout.
 		std::unique_ptr<skia::textlayout::Paragraph> layout;
 
 		// Total number of UTF-8 bytes in the string. Needed to update the text style.
 		size_t utf8Bytes;
+
+		// Draw the text.
+		virtual void draw(SkCanvas &to, const SkPaint &paint, Point origin);
 	};
 }
 
+#endif
 #endif

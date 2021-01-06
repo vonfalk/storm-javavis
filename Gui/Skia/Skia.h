@@ -2,6 +2,9 @@
 
 #ifdef GUI_GTK
 
+// Use the SkParagraph library?
+#define HAS_SK_PARAGRAPH 0
+
 /**
  * Skia includes. Ignored by Mymake.
  */
@@ -21,12 +24,16 @@
 #include "include/core/SkPath.h"
 #include "include/core/SkPathBuilder.h"
 #include "include/effects/SkGradientShader.h"
+#include "include/core/SkTextBlob.h"
+
+#if HAS_SK_PARAGRAPH
 
 // Text rendering.
 #include "modules/skparagraph/include/Paragraph.h"
 #include "modules/skparagraph/include/FontCollection.h"
 #include "modules/skparagraph/include/TypefaceFontProvider.h"
-#include "modules/skparagraph/src/ParagraphBuilderImpl.h"
+
+#endif
 
 // This is technically not a part of the public API. We statically link to Skia, so we will make it work.
 // These are only used in LocalShader.h
