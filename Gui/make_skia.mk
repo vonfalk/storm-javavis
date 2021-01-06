@@ -22,8 +22,13 @@ DEFINES := SK_R32_SHIFT=16 SK_ASSUME_GL_ES=1 SK_GAMMA_APPLY_TO_A8 GR_OP_ALLOCATE
 CHEAP_CXXFLAGS := -std=c++17 -fPIC -iquote. -Wno-psabi -I/usr/include/freetype2 $(addprefix -D,$(DEFINES))
 # These are the flags for the final library. We want to use -O3 here for speed.
 CXXFLAGS := -O3 $(CHEAP_CXXFLAGS)
+
 # Note: We skipped these: codec
-SKIA_LIBS := skshaper skparagraph
+SKIA_LIBS :=
+
+# To use the SkParagraph library (requires more run-time and possibly compile-time dependencies):
+#SKIA_LIBS := skshaper skparagraph
+
 SOURCE_DIRS := effects effects/imagefilters gpu gpu/text gpu/ccpr gpu/effects gpu/effects/generated gpu/geometry gpu/glsl gpu/gl gpu/gl/builders gpu/mock gpu/gl/egl gpu/gl/glx gpu/ops gpu/tessellate gpu/gradients gpu/gradients/generated images opts sfnt utils c core fonts image lazy pathops shaders shaders/gradients sksl sksl/ir
 PORTS := SkDebug_stdio.cpp SkDiscardableMemory_none.cpp SkFontConfigInterface*.cpp SkFontMgr_fontconfig*.cpp SkFontMgr_FontConfigInterface*.cpp SkFontHost_*.cpp SkGlobalInitialization_default.cpp SkMemory_malloc.cpp SkOSFile_posix.cpp SkOSFile_stdio.cpp SkOSLibrary_posix.cpp SkImageGenerator_none.cpp
 CODEC := SkMasks.cpp

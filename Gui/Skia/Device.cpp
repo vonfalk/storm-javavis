@@ -5,7 +5,8 @@
 #include "Window.h"
 #include "Exception.h"
 #include "Graphics.h"
-#include "TextMgr.h"
+#include "PangoMgr.h"
+#include "SkParagraphMgr.h"
 #include "Core/Convert.h"
 
 #ifdef GUI_GTK
@@ -60,7 +61,12 @@ namespace gui {
 	}
 
 	TextMgr *SkiaDevice::createTextMgr() {
-		return new SkiaText();
+		// TODO: Do we want to allow switching between Pango and SkParagraph if both are available?
+#if HAS_SK_PARAGRAPH
+		return new SkParagraphMgr();
+#else
+		return new SkiaPangoMgr();
+#endif
 	}
 
 

@@ -200,11 +200,8 @@ namespace gui {
 	}
 
 	void SkiaGraphics::draw(Text *text, Brush *style, Point origin) {
-		ParData *p = (ParData *)text->backendLayout(this);
-		// According to the assertion in the code, it seems like it expects utf-8 byte offsets.
-		// Note: This destroys the effects we added...
-		p->layout->updateForegroundPaint(0, p->utf8Bytes, *paint(style, false));
-		p->layout->paint(surface.canvas, origin.x, origin.y);
+		SkiaText *p = (SkiaText *)text->backendLayout(this);
+		p->draw(*surface.canvas, *paint(style, false), origin);
 	}
 
 #else
