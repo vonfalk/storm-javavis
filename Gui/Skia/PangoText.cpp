@@ -72,6 +72,12 @@ namespace gui {
 	static void sk_draw_glyphs(PangoRenderer *renderer, PangoFont *font, PangoGlyphString *glyphs, int x, int y) {
 		SkRenderer *sk = (SkRenderer *)renderer;
 
+		PangoFcFont *fcFont = PANGO_FC_FONT(font);
+		PVAR(pango_fc_font_get_pattern(fcFont));
+
+		// FcPatternGetMatrix
+		// FcPatternGetInteger with FC_WIDTH, FC_WEIGHT, FC_SLANT, etc.
+
 		PangoColor *color = pango_renderer_get_color(renderer, PANGO_RENDER_PART_FOREGROUND);
 		PVAR(color);
 
@@ -85,6 +91,14 @@ namespace gui {
 		hb_face_t *hbFace = hb_font_get_face(hbFont);
 		hb_blob_t *hbBlob = hb_face_reference_blob(hbFace);
 
+		// int xscale = 0, yscale = 0;
+		// unsigned int xppem = 0, yppem = 0;
+		// hb_font_get_scale(hbFont, &xscale, &yscale);
+		// PVAR(xscale); PVAR(yscale);
+		// PVAR(hb_font_get_ptem(hbFont));
+		// hb_font_get_ppem(hbFont, &xppem, &yppem);
+		// PVAR(xppem); PVAR(yppem);
+
 		// TODO: If we use MakeWithoutCopy, and make sure to have a reference to the hb_blob
 		// somewhere, we can avoid copying fonts.
 		unsigned int size = 0;
@@ -96,11 +110,15 @@ namespace gui {
 
 		// TODO: Cache the typeface to avoid loading it all the time.
 		sk_sp<SkTypeface> skTypeface = SkTypeface::MakeFromData(data);
+		PLN(L"Done!");
 
 		// It would be nice to not have to allocate a FontDescription...
 		PangoFontDescription *description = pango_font_describe_with_absolute_size(font);
 		float fontSize = fromPango(pango_font_description_get_size(description));
+		PVAR(pango_font_description_get_family(description));
 		pango_font_description_free(description);
+
+		PVAR(skTypeface->getUnitsPerEm());
 
 		SkFont skFont(skTypeface, fontSize);
 
