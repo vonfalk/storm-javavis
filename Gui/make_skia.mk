@@ -6,7 +6,10 @@
 # SKIA_IMPLEMENTATION=1 seems to be needed when building the library
 # SK_UNICODE_AVAILABLE=1 for unicode support in text shaping modules
 # SK_SHAPER_HARFBUZZ_AVAILABLE=1 for harfbuzz support
-DEFINES := SK_R32_SHIFT=16 SK_ASSUME_GL_ES=1 SK_GAMMA_APPLY_TO_A8 GR_OP_ALLOCATE_USE_NEW SKIA_IMPLEMENTATION=1 SK_SUPPORT_GPU=1 SK_GL=1 SK_UNICODE_AVAILABLE=1 SK_SHAPER_HARFBUZZ_AVAILABLE=1
+DEFINES := SK_R32_SHIFT=16 SK_ASSUME_GL_ES=1 SK_GAMMA_APPLY_TO_A8 GR_OP_ALLOCATE_USE_NEW SKIA_IMPLEMENTATION=1 SK_SUPPORT_GPU=1 SK_GL=1
+
+# These are only needed if SkShaper and/or SkParagraph are used.
+#DEFINES := $(DEFINES) SK_UNICODE_AVAILABLE=1 SK_SHAPER_HARFBUZZ_AVAILABLE=1
 
 # There seems to be a number of options for enabling SSE and AVX. I don't think that is needed since
 # we will be using it through OpenGL.
