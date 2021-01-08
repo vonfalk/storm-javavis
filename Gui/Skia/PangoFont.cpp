@@ -150,6 +150,8 @@ namespace gui {
 	}
 
 	SkFont SkPangoFontCache::get(PangoFont *font) {
+		os::Lock::L z(lock);
+
 		FontMap::iterator found = fonts.find(font);
 		if (found != fonts.end())
 			return found->second;
@@ -170,12 +172,12 @@ namespace gui {
 		pango_font_description_free(description);
 
 		sk_sp<SkTypeface> typeface = get(key);
-		if (!typeface)
-			return SkFont();
-
 		SkFont f(typeface, fontSize);
-		g_object_ref(font);
-		fonts[font] = f;
+
+		if (typeface) {
+			g_object_ref(font);
+			fonts[font] = f;
+		}
 		return f;
 	}
 

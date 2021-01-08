@@ -27,6 +27,8 @@ class TextPainter extends Painter {
 	init() {
 		Font f("Arial", 25);
 		Font f2("Arial", 20);
+		f2.italic = true;
+		// f2.weight = 700;
 
 		init() {
 			text = Text("ABÅÄあお☃😀!\n\tà̖ \n👩‍💻\nLast line", f);

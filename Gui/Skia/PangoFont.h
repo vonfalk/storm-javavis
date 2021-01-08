@@ -103,12 +103,12 @@ namespace gui {
 		// Get a font.
 		SkFont get(PangoFont *font);
 
-		// Get a typeface.
-		sk_sp<SkTypeface> get(const SkTypefaceKey &key);
-
 	private:
 		// Lock.
 		os::Lock lock;
+
+		// Get a typeface.
+		sk_sp<SkTypeface> get(const SkTypefaceKey &key);
 
 		// Keep track of all the Pango fonts.
 		typedef std::unordered_map<PangoFont *, SkFont> FontMap;
