@@ -316,7 +316,8 @@ namespace gui {
 			pango_font_description_set_size(shared->desc, toPango(fHeight));
 			pango_font_description_set_style(shared->desc, fItalic ? PANGO_STYLE_ITALIC : PANGO_STYLE_NORMAL);
 			pango_font_description_set_weight(shared->desc, PangoWeight(fWeight));
-			// TODO: Set underline and strikethrough as well.
+			// Note: Underline and strikethrough are set when creating text layouts.
+			// TODO: Check that when creating labels etc...
 		}
 		return shared->desc;
 	}

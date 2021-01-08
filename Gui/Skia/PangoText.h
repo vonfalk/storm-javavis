@@ -39,7 +39,7 @@ namespace gui {
 			State();
 
 			// Grab the state from Pango.
-			State(PangoRenderer *from);
+			State(PangoRenderer *from, PangoRenderPart part = PANGO_RENDER_PART_FOREGROUND);
 
 			// Color to apply.
 			SkColor4f color;

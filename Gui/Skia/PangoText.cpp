@@ -11,15 +11,15 @@ namespace gui {
 
 	PangoText::State::State() : hasColor(false), hasAlpha(false), matrix() {}
 
-	PangoText::State::State(PangoRenderer *from) : hasColor(false), hasAlpha(false), matrix() {
-		if (PangoColor *color = pango_renderer_get_color(from, PANGO_RENDER_PART_FOREGROUND)) {
+	PangoText::State::State(PangoRenderer *from, PangoRenderPart part) : hasColor(false), hasAlpha(false), matrix() {
+		if (PangoColor *color = pango_renderer_get_color(from, part)) {
 			this->color.fR = color->red / 65535.0f;
 			this->color.fG = color->green / 65535.0f;
 			this->color.fB = color->blue / 65535.0f;
 			hasColor = true;
 		}
 
-		if (guint16 alpha = pango_renderer_get_alpha(from, PANGO_RENDER_PART_FOREGROUND)) {
+		if (guint16 alpha = pango_renderer_get_alpha(from, part)) {
 			color.fA = alpha / 65535.0f;
 			hasAlpha = true;
 		}
@@ -68,6 +68,21 @@ namespace gui {
 
 		void draw(SkCanvas &to, const SkPaint &paint, Point origin) {
 			to.drawTextBlob(text, origin.x, origin.y, paint);
+		}
+	};
+
+	/**
+	 * Render a rectangle.
+	 */
+	class RectangleOp : public PangoText::Operation {
+	public:
+		RectangleOp(SkRect rect, PangoText::State state)
+			: Operation(state), rect(rect) {}
+
+		SkRect rect;
+
+		void draw(SkCanvas &to, const SkPaint &paint, Point origin) {
+			to.drawRect(rect.makeOffset(origin.x, origin.y), paint);
 		}
 	};
 
@@ -173,7 +188,10 @@ namespace gui {
 	}
 
 	static void sk_draw_rectangle(PangoRenderer *renderer, PangoRenderPart part, int x, int y, int width, int height) {
-		PLN(L"Rectangle");
+		SkRenderer *sk = (SkRenderer *)renderer;
+		sk->flush();
+		SkRect rect = SkRect::MakeXYWH(fromPango(x), fromPango(y), fromPango(width), fromPango(height));
+		sk->push(new RectangleOp(rect, PangoText::State(renderer, part)));
 	}
 
 	static void sk_draw_trapezoid(PangoRenderer *renderer, PangoRenderPart part,
