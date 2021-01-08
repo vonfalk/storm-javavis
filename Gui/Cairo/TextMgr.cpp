@@ -30,13 +30,27 @@ namespace gui {
 		g_object_unref(layout);
 	}
 
+	static PangoAttrList *layout_attrs(PangoLayout *l) {
+		PangoAttrList *attrs = pango_layout_get_attributes(l);
+		if (!attrs) {
+			attrs = pango_attr_list_new();
+			pango_layout_set_attributes(l, attrs);
+			pango_attr_list_unref(attrs);
+		}
+		return attrs;
+	}
+
 	CairoText::Resource CairoText::createLayout(const Text *text) {
 		PangoLayout *l = pango_layout_new(context);
 
+		Font *font = text->font();
+
 		pango_layout_set_wrap(l, PANGO_WRAP_WORD_CHAR);
-		pango_layout_set_font_description(l, text->font()->desc());
+		pango_layout_set_font_description(l, font->desc());
 		updateBorder(l, text->layoutBorder());
-		pango_layout_set_text(l, text->text()->utf8_str(), -1);
+		const char *utf8 = text->text()->utf8_str();
+		int utf8Bytes = strlen(utf8);
+		pango_layout_set_text(l, utf8, utf8Bytes);
 
 		Float tabWidth = text->font()->tabWidth();
 		if (tabWidth > 0) {
@@ -44,6 +58,22 @@ namespace gui {
 			pango_tab_array_set_tab(array, 0, PANGO_TAB_LEFT, toPango(tabWidth));
 			pango_layout_set_tabs(l, array);
 			pango_tab_array_free(array);
+		}
+
+		if (font->underline()) {
+			PangoAttrList *attrs = layout_attrs(l);
+			PangoAttribute *attr = pango_attr_underline_new(PANGO_UNDERLINE_SINGLE);
+			attr->start_index = 0;
+			attr->end_index = utf8Bytes;
+			pango_attr_list_change(attrs, attr);
+		}
+
+		if (font->strikeOut()) {
+			PangoAttrList *attrs = layout_attrs(l);
+			PangoAttribute *attr = pango_attr_strikethrough_new(TRUE);
+			attr->start_index = 0;
+			attr->end_index = utf8Bytes;
+			pango_attr_list_change(attrs, attr);
 		}
 
 		return Resource(l, &freeLayout);
@@ -100,12 +130,7 @@ namespace gui {
 	CairoText::EffectResult CairoText::addEffect(void *layout, const Text::Effect &effect, Str *myText, Graphics *) {
 		PangoLayout *l = (PangoLayout *)layout;
 
-		PangoAttrList *attrs = pango_layout_get_attributes(l);
-		if (!attrs) {
-			attrs = pango_attr_list_new();
-			pango_layout_set_attributes(l, attrs);
-			pango_attr_list_unref(attrs);
-		}
+		PangoAttrList *attrs = layout_attrs(l);
 
 		Str::Iter begin = myText->posIter(effect.from);
 		Str::Iter end = myText->posIter(effect.to);
@@ -124,7 +149,7 @@ namespace gui {
 			PangoAttribute *alpha = pango_attr_foreground_alpha_new(pangoColor(color.a));
 			alpha->start_index = beginBytes;
 			alpha->end_index = endBytes;
-			pango_attr_list_insert(attrs, alpha);
+			pango_attr_list_change(attrs, alpha);
 		}
 
 		return eApplied;

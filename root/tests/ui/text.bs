@@ -28,6 +28,7 @@ class TextPainter extends Painter {
 		Font f("Arial", 25);
 		Font f2("Arial", 20);
 		f2.italic = true;
+		f2.underline = true;
 		// f2.weight = 700;
 
 		init() {
