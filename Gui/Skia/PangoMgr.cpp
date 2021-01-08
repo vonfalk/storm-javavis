@@ -58,7 +58,7 @@ namespace gui {
 			pango_tab_array_free(array);
 		}
 
-		return Resource(new PangoText(l), &freeLayout);
+		return Resource(new PangoText(l, cache), &freeLayout);
 	}
 
 	static inline guint16 pangoColor(Float v) {
@@ -97,6 +97,7 @@ namespace gui {
 	bool SkiaPangoMgr::updateBorder(void *layout, Size s) {
 		PangoText *t = (PangoText *)layout;
 		gui::updateBorder(t->pango, s);
+		t->invalidate();
 		return true;
 	}
 
@@ -131,6 +132,7 @@ namespace gui {
 			pango_attr_list_insert(attrs, alpha);
 		}
 
+		t->invalidate();
 		return eApplied;
 	}
 

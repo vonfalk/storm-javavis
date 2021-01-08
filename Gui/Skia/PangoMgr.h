@@ -2,6 +2,7 @@
 
 #include "Skia.h"
 #include "Text.h"
+#include "PangoFont.h"
 #include "Gui/TextMgr.h"
 
 #ifdef GUI_GTK
@@ -47,6 +48,9 @@ namespace gui {
 	private:
 		// Pango context.
 		PangoContext *context;
+
+		// Font cache.
+		SkPangoFontCache cache;
 	};
 
 }

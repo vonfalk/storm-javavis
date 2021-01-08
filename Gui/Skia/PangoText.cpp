@@ -33,6 +33,9 @@ namespace gui {
 	struct SkRenderer {
 		PangoRenderer parent;
 
+		// Font cache.
+		SkPangoFontCache *cache;
+
 		// Produced operations.
 		std::vector<std::unique_ptr<PangoText::Operation>> operations;
 
@@ -69,14 +72,18 @@ namespace gui {
 		((SkRenderer *)renderer)->flush();
 	}
 
+	static bool ignoreGlyph(PangoGlyphInfo &glyph) {
+		return glyph.glyph == PANGO_GLYPH_EMPTY
+			|| (glyph.glyph & PANGO_GLYPH_UNKNOWN_FLAG) != 0;
+	}
+
 	static void sk_draw_glyphs(PangoRenderer *renderer, PangoFont *font, PangoGlyphString *glyphs, int x, int y) {
 		SkRenderer *sk = (SkRenderer *)renderer;
+		SkPangoFont &skFont = sk->cache->get(font);
 
-		PangoFcFont *fcFont = PANGO_FC_FONT(font);
-		PVAR(pango_fc_font_get_pattern(fcFont));
-
-		// FcPatternGetMatrix
-		// FcPatternGetInteger with FC_WIDTH, FC_WEIGHT, FC_SLANT, etc.
+		// Needed. It seems we cannot mix matrix-based and position based runs. Should be fine,
+		// Pango merges things for us.
+		sk->flush();
 
 		PangoColor *color = pango_renderer_get_color(renderer, PANGO_RENDER_PART_FOREGROUND);
 		PVAR(color);
@@ -85,67 +92,50 @@ namespace gui {
 		PVAR(alpha);
 
 		const PangoMatrix *matrix = pango_renderer_get_matrix(renderer);
-		// TODO: Take "matrix" into account!
+		PVAR(matrix);
 
-		hb_font_t *hbFont = pango_font_get_hb_font(font);
-		hb_face_t *hbFace = hb_font_get_face(hbFont);
-		hb_blob_t *hbBlob = hb_face_reference_blob(hbFace);
-
-		// int xscale = 0, yscale = 0;
-		// unsigned int xppem = 0, yppem = 0;
-		// hb_font_get_scale(hbFont, &xscale, &yscale);
-		// PVAR(xscale); PVAR(yscale);
-		// PVAR(hb_font_get_ptem(hbFont));
-		// hb_font_get_ppem(hbFont, &xppem, &yppem);
-		// PVAR(xppem); PVAR(yppem);
-
-		// TODO: If we use MakeWithoutCopy, and make sure to have a reference to the hb_blob
-		// somewhere, we can avoid copying fonts.
-		unsigned int size = 0;
-		const char *fontData = hb_blob_get_data(hbBlob, &size);
-		sk_sp<SkData> data = SkData::MakeWithCopy(fontData, size);
-
-		// Unref the blob. Otherwise we leak memory.
-		hb_blob_destroy(hbBlob);
-
-		// TODO: Cache the typeface to avoid loading it all the time.
-		sk_sp<SkTypeface> skTypeface = SkTypeface::MakeFromData(data);
-		PLN(L"Done!");
-
-		// It would be nice to not have to allocate a FontDescription...
-		PangoFontDescription *description = pango_font_describe_with_absolute_size(font);
-		float fontSize = fromPango(pango_font_description_get_size(description));
-		PVAR(pango_font_description_get_family(description));
-		pango_font_description_free(description);
-
-		PVAR(skTypeface->getUnitsPerEm());
-
-		SkFont skFont(skTypeface, fontSize);
-
-		// TODO: We can set "edging" on the font.
-
-		const SkTextBlobBuilder::RunBuffer &buffer = sk->builder.allocRunPos(skFont, glyphs->num_glyphs);
-
-		// TODO: If the glyph is missing, we probably want to draw a "missing glyph" image or something.
-
+		// Count the non-empty glyphs.
+		int glyphCount = 0;
 		for (int i = 0; i < glyphs->num_glyphs; i++) {
-			PangoGlyphInfo &glyph = glyphs->glyphs[i];
+			if (!ignoreGlyph(glyphs->glyphs[i]))
+				glyphCount++;
+		}
 
-			if (glyph.glyph == PANGO_GLYPH_EMPTY) {
-				// TODO: Ignore this glyph.
-			} else if (glyph.glyph & PANGO_GLYPH_UNKNOWN_FLAG) {
-				glyph.glyph &= ~PANGO_GLYPH_UNKNOWN_FLAG;
-				PLN(L"Unknown glyph: " << glyph.glyph);
-				// TODO: Draw an "unknown glyph" box?
+		if (skFont.transform) {
+			// Respect the transform. We can not represent "slants", so we base it on the Y coordinate.
+			SkRSXform base = SkRSXform::Make(skFont.transform->yy, skFont.transform->xy, 0, 0);
+
+			const SkTextBlobBuilder::RunBuffer &buffer = sk->builder.allocRunRSXform(skFont.skia, glyphCount);
+			int dest = 0;
+			for (int i = 0; i < glyphs->num_glyphs; i++) {
+				PangoGlyphInfo &glyph = glyphs->glyphs[i];
+				if (!ignoreGlyph(glyph)) {
+					base.fTx = fromPango(x + glyph.geometry.x_offset);
+					base.fTy = fromPango(y + glyph.geometry.y_offset);
+
+					buffer.glyphs[dest] = glyph.glyph;
+					buffer.xforms()[dest] = base;
+					dest++;
+				}
+				x += glyph.geometry.width;
 			}
+		} else {
+			// No transform to worry about.
+			const SkTextBlobBuilder::RunBuffer &buffer = sk->builder.allocRunPos(skFont.skia, glyphCount);
+			int dest = 0;
+			for (int i = 0; i < glyphs->num_glyphs; i++) {
+				PangoGlyphInfo &glyph = glyphs->glyphs[i];
+				if (!ignoreGlyph(glyph)) {
+					SkPoint pos;
+					pos.fX = fromPango(x + glyph.geometry.x_offset);
+					pos.fY = fromPango(y + glyph.geometry.y_offset);
 
-			SkPoint pos;
-			pos.fX = fromPango(x + glyph.geometry.x_offset);
-			pos.fY = fromPango(y + glyph.geometry.y_offset);
-			x += glyph.geometry.width;
-
-			buffer.glyphs[i] = glyph.glyph;
-			buffer.points()[i] = pos;
+					buffer.glyphs[dest] = glyph.glyph;
+					buffer.points()[dest] = pos;
+					dest++;
+				}
+				x += glyph.geometry.width;
+			}
 		}
 
 		// TODO: We need to draw underlines, overlines and strike-through as well it seems.
@@ -187,8 +177,8 @@ namespace gui {
 		// implements draw_glyphs and draw_glyph_item, so we're probably fine.
 	}
 
-	static void sk_renderer_init(SkRenderer *) {
-		// No initialization required.
+	static void sk_renderer_init(SkRenderer *renderer) {
+		renderer->cache = null;
 	}
 
 	SkRenderer *sk_renderer_new() {
@@ -200,7 +190,8 @@ namespace gui {
 	 * The wrapper against the rest of the system.
 	 */
 
-	PangoText::PangoText(PangoLayout *layout) : pango(layout), valid(false) {}
+	PangoText::PangoText(PangoLayout *layout, SkPangoFontCache &cache)
+		: cache(cache), pango(layout), valid(false) {}
 
 	PangoText::~PangoText() {
 		g_object_unref(pango);
@@ -215,6 +206,7 @@ namespace gui {
 		// If we have not done so already, update our state:
 		if (!valid) {
 			SkRenderer *renderer = sk_renderer_new();
+			renderer->cache = &cache;
 			pango_renderer_draw_layout(PANGO_RENDERER(renderer), pango, 0, 0);
 			operations = std::move(renderer->operations);
 			g_object_unref(renderer);
