@@ -48,6 +48,10 @@
 #include "src/core/SkWriteBuffer.h"
 #include "src/shaders/SkShaderBase.h"
 
+// For font rendering.
+#include "src/ports/SkFontHost_FreeType_common.h"
+#include "src/core/SkFontDescriptor.h"
+
 GrGLFuncPtr egl_get(void* ctx, const char name[]);
 GrGLFuncPtr glx_get(void* ctx, const char name[]);
 
