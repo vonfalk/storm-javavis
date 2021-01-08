@@ -25,6 +25,7 @@
 #include "include/core/SkPathBuilder.h"
 #include "include/effects/SkGradientShader.h"
 #include "include/core/SkTextBlob.h"
+#include "include/core/SkRSXform.h"
 
 #if HAS_SK_PARAGRAPH
 

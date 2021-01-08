@@ -4,6 +4,8 @@
 
 #ifdef GUI_GTK
 
+#include <fontconfig/fontconfig.h>
+
 namespace gui {
 
 	class SkPangoFontCache;
@@ -47,8 +49,8 @@ namespace gui {
 		// The Skia font.
 		SkFont skia;
 
-		// Transform to apply.
-		// transform
+		// Transform to apply. Might be null.
+		const FcMatrix *transform;
 	};
 
 	/**

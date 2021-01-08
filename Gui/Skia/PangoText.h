@@ -2,6 +2,7 @@
 
 #include "Skia.h"
 #include "Text.h"
+#include "PangoFont.h"
 
 #ifdef GUI_GTK
 
@@ -15,7 +16,7 @@ namespace gui {
 	class PangoText : public SkiaText {
 	public:
 		// Create.
-		PangoText(PangoLayout *layout);
+		PangoText(PangoLayout *layout, SkPangoFontCache &cache);
 
 		// Destroy.
 		~PangoText();
@@ -40,6 +41,9 @@ namespace gui {
 		};
 
 	private:
+		// Skia font cache.
+		SkPangoFontCache &cache;
+
 		// Text-drawing operations.
 		std::vector<std::unique_ptr<Operation>> operations;
 
