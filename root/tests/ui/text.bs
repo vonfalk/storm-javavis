@@ -26,6 +26,7 @@ class TextPainter extends Painter {
 
 	init() {
 		Font f("Arial", 25);
+		Font f2("Arial", 20);
 
 		init() {
 			text = Text("ABÅÄあお☃😀!\n\tà̖ \n👩‍💻\nLast line", f);
@@ -45,7 +46,7 @@ class TextPainter extends Painter {
 		bg << SolidBrush(yellow);
 
 		for (l in text.lineInfo) {
-			lines << Text(l.text, f);
+			lines << Text(l.text, f2);
 			baseline << l.baseline;
 		}
 

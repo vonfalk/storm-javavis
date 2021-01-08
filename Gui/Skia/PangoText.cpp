@@ -81,10 +81,6 @@ namespace gui {
 		SkRenderer *sk = (SkRenderer *)renderer;
 		SkPangoFont &skFont = sk->cache->get(font);
 
-		// Needed. It seems we cannot mix matrix-based and position based runs. Should be fine,
-		// Pango merges things for us.
-		sk->flush();
-
 		PangoColor *color = pango_renderer_get_color(renderer, PANGO_RENDER_PART_FOREGROUND);
 		PVAR(color);
 
@@ -101,41 +97,20 @@ namespace gui {
 				glyphCount++;
 		}
 
-		if (skFont.transform) {
-			// Respect the transform. We can not represent "slants", so we base it on the Y coordinate.
-			SkRSXform base = SkRSXform::Make(skFont.transform->yy, skFont.transform->xy, 0, 0);
+		const SkTextBlobBuilder::RunBuffer &buffer = sk->builder.allocRunPos(skFont.skia, glyphCount);
+		int dest = 0;
+		for (int i = 0; i < glyphs->num_glyphs; i++) {
+			PangoGlyphInfo &glyph = glyphs->glyphs[i];
+			if (!ignoreGlyph(glyph)) {
+				SkPoint pos;
+				pos.fX = fromPango(x + glyph.geometry.x_offset);
+				pos.fY = fromPango(y + glyph.geometry.y_offset);
 
-			const SkTextBlobBuilder::RunBuffer &buffer = sk->builder.allocRunRSXform(skFont.skia, glyphCount);
-			int dest = 0;
-			for (int i = 0; i < glyphs->num_glyphs; i++) {
-				PangoGlyphInfo &glyph = glyphs->glyphs[i];
-				if (!ignoreGlyph(glyph)) {
-					base.fTx = fromPango(x + glyph.geometry.x_offset);
-					base.fTy = fromPango(y + glyph.geometry.y_offset);
-
-					buffer.glyphs[dest] = glyph.glyph;
-					buffer.xforms()[dest] = base;
-					dest++;
-				}
-				x += glyph.geometry.width;
+				buffer.glyphs[dest] = glyph.glyph;
+				buffer.points()[dest] = pos;
+				dest++;
 			}
-		} else {
-			// No transform to worry about.
-			const SkTextBlobBuilder::RunBuffer &buffer = sk->builder.allocRunPos(skFont.skia, glyphCount);
-			int dest = 0;
-			for (int i = 0; i < glyphs->num_glyphs; i++) {
-				PangoGlyphInfo &glyph = glyphs->glyphs[i];
-				if (!ignoreGlyph(glyph)) {
-					SkPoint pos;
-					pos.fX = fromPango(x + glyph.geometry.x_offset);
-					pos.fY = fromPango(y + glyph.geometry.y_offset);
-
-					buffer.glyphs[dest] = glyph.glyph;
-					buffer.points()[dest] = pos;
-					dest++;
-				}
-				x += glyph.geometry.width;
-			}
+			x += glyph.geometry.width;
 		}
 
 		// TODO: We need to draw underlines, overlines and strike-through as well it seems.
