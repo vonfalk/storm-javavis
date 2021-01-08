@@ -6,6 +6,8 @@
 
 #ifdef GUI_GTK
 
+#include <pango/pangofc-fontmap.h>
+
 namespace gui {
 
 	SkiaPangoMgr::SkiaPangoMgr() {

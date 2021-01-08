@@ -79,7 +79,7 @@ namespace gui {
 
 	static void sk_draw_glyphs(PangoRenderer *renderer, PangoFont *font, PangoGlyphString *glyphs, int x, int y) {
 		SkRenderer *sk = (SkRenderer *)renderer;
-		SkPangoFont &skFont = sk->cache->get(font);
+		SkFont skFont = sk->cache->get(font);
 
 		PangoColor *color = pango_renderer_get_color(renderer, PANGO_RENDER_PART_FOREGROUND);
 		PVAR(color);
@@ -97,7 +97,7 @@ namespace gui {
 				glyphCount++;
 		}
 
-		const SkTextBlobBuilder::RunBuffer &buffer = sk->builder.allocRunPos(skFont.skia, glyphCount);
+		const SkTextBlobBuilder::RunBuffer &buffer = sk->builder.allocRunPos(skFont, glyphCount);
 		int dest = 0;
 		for (int i = 0; i < glyphs->num_glyphs; i++) {
 			PangoGlyphInfo &glyph = glyphs->glyphs[i];
