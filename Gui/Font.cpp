@@ -315,6 +315,7 @@ namespace gui {
 			pango_font_description_set_family(shared->desc, fName->utf8_str());
 			pango_font_description_set_size(shared->desc, toPango(fHeight));
 			pango_font_description_set_style(shared->desc, fItalic ? PANGO_STYLE_ITALIC : PANGO_STYLE_NORMAL);
+			pango_font_description_set_weight(shared->desc, PangoWeight(fWeight));
 			// TODO: Set underline and strikethrough as well.
 		}
 		return shared->desc;

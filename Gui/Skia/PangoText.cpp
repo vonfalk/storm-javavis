@@ -6,6 +6,53 @@
 namespace gui {
 
 	/**
+	 * The state implementation.
+	 */
+
+	PangoText::State::State() : hasColor(false), hasAlpha(false), matrix() {}
+
+	PangoText::State::State(PangoRenderer *from) : hasColor(false), hasAlpha(false), matrix() {
+		if (PangoColor *color = pango_renderer_get_color(from, PANGO_RENDER_PART_FOREGROUND)) {
+			this->color.fR = color->red / 65535.0f;
+			this->color.fG = color->green / 65535.0f;
+			this->color.fB = color->blue / 65535.0f;
+			hasColor = true;
+		}
+
+		if (guint16 alpha = pango_renderer_get_alpha(from, PANGO_RENDER_PART_FOREGROUND)) {
+			color.fA = alpha / 65535.0f;
+			hasAlpha = true;
+		}
+
+		if (const PangoMatrix *m = pango_renderer_get_matrix(from)) {
+			matrix = SkMatrix::MakeAll(m->xx, m->xy, m->x0,
+									m->yx, m->yy, m->y0,
+									0, 0, 1);
+		}
+	}
+
+	bool PangoText::State::operator ==(const State &o) const {
+		if (hasColor != o.hasColor)
+			return false;
+		if (hasColor) {
+			if (color.fR != o.color.fR ||
+				color.fG != o.color.fG ||
+				color.fB != o.color.fB)
+				return false;
+		}
+
+		if (hasAlpha != o.hasAlpha)
+			return false;
+		if (hasAlpha) {
+			if (color.fA != o.color.fA)
+				return false;
+		}
+
+		return matrix == o.matrix;
+	}
+
+
+	/**
 	 * Various classes for storing text rendering operations.
 	 */
 
@@ -14,7 +61,8 @@ namespace gui {
 	 */
 	class TextOp : public PangoText::Operation {
 	public:
-		TextOp(sk_sp<SkTextBlob> text) : text(text) {}
+		TextOp(sk_sp<SkTextBlob> text, PangoText::State state)
+			: Operation(state), text(text) {}
 
 		sk_sp<SkTextBlob> text;
 
@@ -36,23 +84,32 @@ namespace gui {
 		// Font cache.
 		SkPangoFontCache *cache;
 
-		// Produced operations.
-		std::vector<std::unique_ptr<PangoText::Operation>> operations;
+		// Separate struct for C++ types to ensure proper construction and destruction. GObject
+		// likely calls malloc somewhere and is fine with that.
+		struct Data {
+			// Produced operations.
+			std::vector<std::unique_ptr<PangoText::Operation>> operations;
 
-		// TextBlobBuilder to concatenate as many runs as possible.
-		SkTextBlobBuilder builder;
+			// TextBlobBuilder to concatenate as many runs as possible.
+			SkTextBlobBuilder builder;
+
+			// Current state being built.
+			PangoText::State state;
+		};
+
+		Data *data;
 
 		// Push an operation.
 		void push(PangoText::Operation *op) {
-			operations.push_back(std::unique_ptr<PangoText::Operation>(op));
+			data->operations.push_back(std::unique_ptr<PangoText::Operation>(op));
 		}
 
 		// Flush runs to builder.
 		void flush() {
 			// Note: Returns nullptr if empty:
-			sk_sp<SkTextBlob> blob = builder.make();
+			sk_sp<SkTextBlob> blob = data->builder.make();
 			if (blob)
-				push(new TextOp(blob));
+				push(new TextOp(blob, data->state));
 		}
 	};
 
@@ -64,8 +121,9 @@ namespace gui {
 
 	static void sk_begin(PangoRenderer *renderer) {
 		SkRenderer *render = (SkRenderer *)renderer;
-		render->builder.make(); // Clears the builder.
-		render->operations.clear();
+		render->data->builder.make(); // Clears the builder.
+		render->data->state = PangoText::State();
+		render->data->operations.clear();
 	}
 
 	static void sk_end(PangoRenderer *renderer) {
@@ -81,14 +139,12 @@ namespace gui {
 		SkRenderer *sk = (SkRenderer *)renderer;
 		SkFont skFont = sk->cache->get(font);
 
-		PangoColor *color = pango_renderer_get_color(renderer, PANGO_RENDER_PART_FOREGROUND);
-		PVAR(color);
-
-		guint16 alpha = pango_renderer_get_alpha(renderer, PANGO_RENDER_PART_FOREGROUND);
-		PVAR(alpha);
-
-		const PangoMatrix *matrix = pango_renderer_get_matrix(renderer);
-		PVAR(matrix);
+		// If the state differs, start a new set of runs.
+		PangoText::State state(renderer);
+		if (state != sk->data->state) {
+			sk->flush();
+			sk->data->state = state;
+		}
 
 		// Count the non-empty glyphs.
 		int glyphCount = 0;
@@ -97,7 +153,7 @@ namespace gui {
 				glyphCount++;
 		}
 
-		const SkTextBlobBuilder::RunBuffer &buffer = sk->builder.allocRunPos(skFont, glyphCount);
+		const SkTextBlobBuilder::RunBuffer &buffer = sk->data->builder.allocRunPos(skFont, glyphCount);
 		int dest = 0;
 		for (int i = 0; i < glyphs->num_glyphs; i++) {
 			PangoGlyphInfo &glyph = glyphs->glyphs[i];
@@ -134,6 +190,16 @@ namespace gui {
 		PLN(L"Shape");
 	}
 
+	static void sk_renderer_init(SkRenderer *renderer) {
+		renderer->cache = null;
+		renderer->data = new SkRenderer::Data();
+	}
+
+	static void sk_renderer_finalize(GObject *renderer) {
+		SkRenderer *r = (SkRenderer *)renderer;
+		delete r->data;
+	}
+
 	static void sk_renderer_class_init(SkRendererClass *klass) {
 		PangoRendererClass *render = PANGO_RENDERER_CLASS(klass);
 
@@ -145,15 +211,14 @@ namespace gui {
 		render->begin = sk_begin;
 		render->end = sk_end;
 
+		GObjectClass *object = G_OBJECT_CLASS(klass);
+		object->finalize = sk_renderer_finalize;
+
 		// If we implement this one, we can get the actual text if we want to.
 		// render->draw_glyph_item = sk_draw_glyph_item;
 
 		// Note: Documentation says "draw_glyph" must be implemented, but PangoCairoRenderer only
 		// implements draw_glyphs and draw_glyph_item, so we're probably fine.
-	}
-
-	static void sk_renderer_init(SkRenderer *renderer) {
-		renderer->cache = null;
 	}
 
 	SkRenderer *sk_renderer_new() {
@@ -183,15 +248,37 @@ namespace gui {
 			SkRenderer *renderer = sk_renderer_new();
 			renderer->cache = &cache;
 			pango_renderer_draw_layout(PANGO_RENDERER(renderer), pango, 0, 0);
-			operations = std::move(renderer->operations);
+			operations = std::move(renderer->data->operations);
 			g_object_unref(renderer);
 
 			valid = true;
 		}
 
+		SkM44 base = to.getLocalToDevice();
+
 		for (size_t i = 0; i < operations.size(); i++) {
-			operations[i]->draw(to, paint, origin);
+			SkPaint p = paint;
+			State &s = operations[i]->state;
+			if (s.hasColor && s.hasAlpha) {
+				p.setColor4f(s.color);
+			} else if (s.hasColor) {
+				SkColor4f c = s.color;
+				c.fA = p.getAlphaf();
+				p.setColor4f(c);
+			} else if (s.hasAlpha) {
+				SkColor4f c = p.getColor4f();
+				c.fA = s.color.fA;
+				p.setColor4f(c);
+			}
+
+			// Note: This might not be correct. I have not found anywhere Pango returns matrices yet.
+			SkM44 tfm(s.matrix);
+			tfm.preConcat(base);
+			to.setMatrix(tfm);
+			operations[i]->draw(to, p, origin);
 		}
+
+		to.setMatrix(base);
 	}
 
 }
