@@ -162,7 +162,7 @@ namespace gui {
 		hb_face_t *hbFace = hb_font_get_face(hbFont);
 
 		PangoFcFont *fcFont = PANGO_FC_FONT(font);
-		FcPattern *pattern = pango_fc_font_get_pattern(fcFont);
+		FcPattern *pattern = fcFont->font_pattern;
 
 		SkTypefaceKey key(hb_face_reference_blob(hbFace), pattern);
 
