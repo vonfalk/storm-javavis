@@ -130,14 +130,14 @@ namespace gui {
 
 	private:
 		// Create a font.
-		SkPangoFont(SkPangoFontCache &cache, PangoFont *font);
+		SkPangoFont(SkPangoFontCache *cache, PangoFont *font);
 
 		// Reference to the pango typeface inside the font, so that we can remove it from the cache
 		// when we are destroyed if required.
 		sk_sp<SkPangoTypeface> typeface;
 
-		// The cache we belong to.
-		SkPangoFontCache &cache;
+		// The cache we belong to. Set to null whenever the cache is destroyed.
+		SkPangoFontCache *cache;
 
 		// Original Pango font. We keep a reference to it.
 		PangoFont *pango;

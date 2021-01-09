@@ -3,12 +3,19 @@ use core:geometry;
 use graphics;
 
 class TextWindow extends Frame {
+	TextPainter p;
+
 	init() {
 		init("Text", Size(300, 400)) {}
 
-		painter = TextPainter();
+		painter = p;
 
 		create();
+	}
+
+	Bool onClick(Bool pressed, Point at, MouseButton button) {
+		p.setFont(Font("Courier", 20));
+		return true;
 	}
 }
 
@@ -53,8 +60,19 @@ class TextPainter extends Painter {
 			baseline << l.baseline;
 		}
 
+		updateBoxes();
+	}
+
+	void setFont(Font f) {
+		text = Text(text.text, f);
+		updateBoxes();
+		repaint();
+	}
+
+	void updateBoxes() {
 		var iter = text.text.begin();
 		var end = text.text.end();
+		rects.clear();
 
 		while (iter != end) {
 			var next = iter;

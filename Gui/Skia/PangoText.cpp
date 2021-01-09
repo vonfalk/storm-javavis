@@ -64,6 +64,8 @@ namespace gui {
 		TextOp(sk_sp<SkTextBlob> text, std::vector<sk_sp<SkPangoFont>> fonts, PangoText::State state)
 			: Operation(state), text(text), fonts(std::move(fonts)) {}
 
+		~TextOp() {}
+
 		sk_sp<SkTextBlob> text;
 
 		// Fonts, so that the cache knows what we are using.
