@@ -141,7 +141,7 @@ namespace gui {
 	 * Font.
 	 */
 
-	SkPangoFont::SkPangoFont(SkPangoFontCache &cache, PangoFont *font) : cache(cache), pango(font) {
+	SkPangoFont::SkPangoFont(SkPangoFontCache *cache, PangoFont *font) : cache(cache), pango(font) {
 		assert(PANGO_IS_FC_FONT(font), L"Your system does not seem to use FontConfig with Pango.");
 
 		PangoFcFont *fcFont = PANGO_FC_FONT(font);
@@ -155,7 +155,7 @@ namespace gui {
 		double fontSize = fromPango(pango_font_description_get_size(fcFont->description));
 		fontSize = fcGetDouble(pattern, FC_PIXEL_SIZE, fontSize);
 
-		this->typeface = cache.typeface(key);
+		this->typeface = cache->typeface(key);
 		this->font = SkFont(typeface, fontSize);
 
 		if (SkPangoTypeface *typeface = this->typeface.get())
@@ -166,7 +166,8 @@ namespace gui {
 
 	SkPangoFont::~SkPangoFont() {
 		// Tell the font cache that we are dying.
-		cache.remove(pango);
+		if (cache)
+			cache->remove(pango);
 
 		// Remove the ref.
 		g_object_unref(pango);
@@ -174,7 +175,8 @@ namespace gui {
 		// Remove the ref from the typeface.
 		if (SkPangoTypeface *typeface = this->typeface.get()) {
 			if (atomicDecrement(typeface->users) == 1) {
-				cache.remove(typeface);
+				if (cache)
+					cache->remove(typeface);
 			}
 		}
 	}
@@ -185,7 +187,12 @@ namespace gui {
 
 	SkPangoFontCache::SkPangoFontCache() {}
 
-	SkPangoFontCache::~SkPangoFontCache() {}
+	SkPangoFontCache::~SkPangoFontCache() {
+		// Make sure the types are destroyed in the proper order.
+		for (FontMap::iterator i = fonts.begin(); i != fonts.end(); ++i) {
+			i->second->cache = null;
+		}
+	}
 
 	sk_sp<SkPangoFont> SkPangoFontCache::font(PangoFont *font) {
 		os::Lock::L z(lock);
@@ -194,7 +201,7 @@ namespace gui {
 		if (found != fonts.end())
 			return sk_sp<SkPangoFont>(SkSafeRef(found->second));
 
-		SkPangoFont *created = new SkPangoFont(*this, font);
+		SkPangoFont *created = new SkPangoFont(this, font);
 		if (created->typeface.get()) {
 			// Save it only if we managed to actually load the font.
 			fonts[font] = created;
