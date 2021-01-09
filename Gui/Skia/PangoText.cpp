@@ -61,10 +61,13 @@ namespace gui {
 	 */
 	class TextOp : public PangoText::Operation {
 	public:
-		TextOp(sk_sp<SkTextBlob> text, PangoText::State state)
-			: Operation(state), text(text) {}
+		TextOp(sk_sp<SkTextBlob> text, std::vector<sk_sp<SkPangoFont>> fonts, PangoText::State state)
+			: Operation(state), text(text), fonts(std::move(fonts)) {}
 
 		sk_sp<SkTextBlob> text;
+
+		// Fonts, so that the cache knows what we are using.
+		std::vector<sk_sp<SkPangoFont>> fonts;
 
 		void draw(SkCanvas &to, const SkPaint &paint, Point origin) {
 			to.drawTextBlob(text, origin.x, origin.y, paint);
@@ -108,6 +111,10 @@ namespace gui {
 			// TextBlobBuilder to concatenate as many runs as possible.
 			SkTextBlobBuilder builder;
 
+			// List containing all fonts in the builder. Kept so that the cache is aware of what we
+			// are actually using.
+			std::vector<sk_sp<SkPangoFont>> fonts;
+
 			// Current state being built.
 			PangoText::State state;
 		};
@@ -124,7 +131,8 @@ namespace gui {
 			// Note: Returns nullptr if empty:
 			sk_sp<SkTextBlob> blob = data->builder.make();
 			if (blob)
-				push(new TextOp(blob, data->state));
+				push(new TextOp(blob, std::move(data->fonts), data->state));
+			data->fonts = std::vector<sk_sp<SkPangoFont>>();
 		}
 	};
 
@@ -139,6 +147,7 @@ namespace gui {
 		render->data->builder.make(); // Clears the builder.
 		render->data->state = PangoText::State();
 		render->data->operations.clear();
+		render->data->fonts = std::vector<sk_sp<SkPangoFont>>();
 	}
 
 	static void sk_end(PangoRenderer *renderer) {
@@ -152,7 +161,7 @@ namespace gui {
 
 	static void sk_draw_glyphs(PangoRenderer *renderer, PangoFont *font, PangoGlyphString *glyphs, int x, int y) {
 		SkRenderer *sk = (SkRenderer *)renderer;
-		SkFont skFont = sk->cache->get(font);
+		sk_sp<SkPangoFont> skFont = sk->cache->font(font);
 
 		// If the state differs, start a new set of runs.
 		PangoText::State state(renderer);
@@ -168,23 +177,28 @@ namespace gui {
 				glyphCount++;
 		}
 
-		const SkTextBlobBuilder::RunBuffer &buffer = sk->data->builder.allocRunPos(skFont, glyphCount);
-		int dest = 0;
-		for (int i = 0; i < glyphs->num_glyphs; i++) {
-			PangoGlyphInfo &glyph = glyphs->glyphs[i];
-			if (!ignoreGlyph(glyph)) {
-				SkPoint pos;
-				pos.fX = fromPango(x + glyph.geometry.x_offset);
-				pos.fY = fromPango(y + glyph.geometry.y_offset);
+		if (glyphCount > 0) {
+			// Remember the font. For caching purposes.
+			sk->data->fonts.push_back(skFont);
 
-				buffer.glyphs[dest] = glyph.glyph;
-				buffer.points()[dest] = pos;
-				dest++;
+			const SkTextBlobBuilder::RunBuffer &buffer = sk->data->builder.allocRunPos(skFont->font, glyphCount);
+			int dest = 0;
+			for (int i = 0; i < glyphs->num_glyphs; i++) {
+				PangoGlyphInfo &glyph = glyphs->glyphs[i];
+				if (!ignoreGlyph(glyph)) {
+					SkPoint pos;
+					pos.fX = fromPango(x + glyph.geometry.x_offset);
+					pos.fY = fromPango(y + glyph.geometry.y_offset);
+
+					buffer.glyphs[dest] = glyph.glyph;
+					buffer.points()[dest] = pos;
+					dest++;
+				}
+				x += glyph.geometry.width;
 			}
-			x += glyph.geometry.width;
 		}
 
-		// TODO: We need to draw underlines, overlines and strike-through as well it seems.
+		// TODO: Draw "invalid" glyphs. Perhaps using rectangles.
 	}
 
 	static void sk_draw_rectangle(PangoRenderer *renderer, PangoRenderPart part, int x, int y, int width, int height) {

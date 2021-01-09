@@ -67,32 +67,87 @@ namespace gui {
 
 	/**
 	 * A typeface (i.e. font file, essentially).
+	 *
+	 * This is an extension of the FreeType base class in Skia, so that we can properly apply the
+	 * transformations from Fontconfig (the default implementation using fontconfig does not do that
+	 * properly either, it does not scale bitmap fonts even if asked).
+	 *
+	 * This class also stores the number of users from the GUI library, so that the cache may be
+	 * emptied when necessary. This is potentially important as some fonts require us to create
+	 * typefaces for particular font sizes in some cases. While it would not be too important to
+	 * evict individual fonts (there are only so many), fonts * sizes would be a bit too much,
+	 * especially since the fonts requiring this treatment are usually bitmap fonts.
 	 */
-	class SkPangoTypeface {
+	class SkPangoTypeface : public SkTypeface_FreeType {
 	public:
-		// Create from a harfbuzz blob containing the typeface.
-		SkPangoTypeface(const SkTypefaceKey &key);
+		// Create a typeface.
+		static sk_sp<SkPangoTypeface> load(const SkTypefaceKey &key);
 
-		// Destroy.
-		~SkPangoTypeface();
+		// The key used to create this typeface.
+		SkTypefaceKey key;
 
-		// The Skia typeface. Backed by the storage in the hb_blob_t.
-		sk_sp<SkTypeface> skia;
+		// Number of users in Storm.
+		size_t users;
+
+	protected:
+		// Various functions needed.
+		void onGetFamilyName(SkString *familyName) const;
+		void onGetFontDescriptor(SkFontDescriptor *desc, bool *serialize) const;
+		std::unique_ptr<SkStreamAsset> onOpenStream(int *ttcIndex) const;
+		std::unique_ptr<SkFontData> onMakeFontData() const;
+		sk_sp<SkTypeface> onMakeClone(const SkFontArguments &args) const;
+
+		// Apply transform etc.
+		void onFilterRec(SkScalerContextRec *rec) const;
 
 	private:
-		// Data extracted from the harfbuzz blob. We probably don't need to keep this alive as
-		// SkTypeface probably does that. But it is good to be safe here, as we ask Skia not to copy
-		// it.
-		sk_sp<SkData> data;
+		// Internal constructor.
+		SkPangoTypeface(std::unique_ptr<SkFontData> data, SkString family,
+						const SkFontStyle &style, bool fixedWidth,
+						const SkTypefaceKey &key);
+
+		// Font family.
+		SkString family;
+
+		// Font data.
+		std::unique_ptr<const SkFontData> data;
+	};
+
+
+	/**
+	 * Pango font for Skia. Tracks usage so that the system knows when to deallocate the font.
+	 *
+	 * Implemented to be used with sk_sp to track usage.
+	 */
+	class SkPangoFont : public SkNVRefCnt<SkPangoFont> {
+		friend class SkPangoFontCache;
+	public:
+		// Destroy.
+		~SkPangoFont();
+
+		// Skia font.
+		SkFont font;
+
+	private:
+		// Create a font.
+		SkPangoFont(SkPangoFontCache &cache, PangoFont *font);
+
+		// Reference to the pango typeface inside the font, so that we can remove it from the cache
+		// when we are destroyed if required.
+		sk_sp<SkPangoTypeface> typeface;
+
+		// The cache we belong to.
+		SkPangoFontCache &cache;
+
+		// Original Pango font. We keep a reference to it.
+		PangoFont *pango;
 	};
 
 	/**
 	 * Font cache.
-	 *
-	 * TODO: When do we empty the cache? From the code in Pango, it seems like they never remove
-	 * anything from their cache, so we might be fine...
 	 */
 	class SkPangoFontCache {
+		friend class SkPangoFont;
 	public:
 		// Create.
 		SkPangoFontCache();
@@ -101,21 +156,27 @@ namespace gui {
 		~SkPangoFontCache();
 
 		// Get a font.
-		SkFont get(PangoFont *font);
+		sk_sp<SkPangoFont> font(PangoFont *font);
 
 	private:
 		// Lock.
 		os::Lock lock;
 
-		// Get a typeface.
-		sk_sp<SkTypeface> get(const SkTypefaceKey &key);
+		// Remove a font.
+		void remove(PangoFont *font);
 
-		// Keep track of all the Pango fonts.
-		typedef std::unordered_map<PangoFont *, SkFont> FontMap;
+		// Get a typeface.
+		sk_sp<SkPangoTypeface> typeface(const SkTypefaceKey &key);
+
+		// Remove a typeface.
+		void remove(SkPangoTypeface *typeface);
+
+		// Get fonts. We don't own any of the pointers here.
+		typedef std::unordered_map<PangoFont *, SkPangoFont *> FontMap;
 		FontMap fonts;
 
 		// Get typefaces.
-		typedef std::unordered_map<SkTypefaceKey, sk_sp<SkTypeface>> TypefaceMap;
+		typedef std::unordered_map<SkTypefaceKey, sk_sp<SkPangoTypeface>> TypefaceMap;
 		TypefaceMap typefaces;
 	};
 
