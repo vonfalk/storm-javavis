@@ -196,7 +196,10 @@ namespace gui {
 	}
 
 	void SkiaGraphics::text(Str *text, Font *font, Brush *style, Rect rect) {
-		TODO(L"FIXME");
+		// We're creating some extra pressure on the GC here, but we don't want to re-implement all
+		// the logic in the backend here.
+		Text *t = new (this) Text(text, font, rect.size());
+		draw(t, style, rect.p0);
 	}
 
 	void SkiaGraphics::draw(Text *text, Brush *style, Point origin) {

@@ -368,22 +368,10 @@ namespace gui {
 	}
 
 	void CairoGraphics::text(Str *text, Font *font, Brush *style, Rect rect) {
-		// Note: It would be good to not have to create the layout all the time.
-		PangoLayout *layout = pango_cairo_create_layout(surface.device);
-
-		pango_layout_set_wrap(layout, PANGO_WRAP_WORD_CHAR);
-		pango_layout_set_font_description(layout, font->desc());
-		// Account for rounding errors...
-		pango_layout_set_width(layout, toPango(rect.size().w + 0.3f));
-		pango_layout_set_height(layout, toPango(rect.size().h + 0.3f));
-		pango_layout_set_text(layout, text->utf8_str(), -1);
-
-		SET_BRUSH(style);
-
-		cairo_move_to(surface.device, rect.p0.x, rect.p0.y);
-		pango_cairo_show_layout(surface.device, layout);
-
-		g_object_unref(layout);
+		// We're creating some extra pressure on the GC here, but we don't want to re-implement all
+		// the logic in the backend here.
+		Text *t = new (this) Text(text, font, rect.size());
+		draw(t, style, rect.p0);
 	}
 
 	void CairoGraphics::draw(Text *text, Brush *style, Point origin) {
