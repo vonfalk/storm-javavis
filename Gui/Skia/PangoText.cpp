@@ -91,6 +91,41 @@ namespace gui {
 		}
 	};
 
+	/**
+	 * Fill a path.
+	 */
+	class PathOp : public PangoText::Operation {
+	public:
+		PathOp(SkPath path, PangoText::State state)
+			: Operation(state), path(std::move(path)) {}
+
+		SkPath path;
+
+		void draw(SkCanvas &to, const SkPaint &paint, Point origin) {
+			// It is OK to mess with the transform matrix, it will be reset to the next operation.
+			to.translate(origin.x, origin.y);
+			to.drawPath(path, paint);
+		}
+	};
+
+	/**
+	 * Stroke a path.
+	 */
+	class StrokePathOp : public PangoText::Operation {
+	public:
+		StrokePathOp(SkPath path, PangoText::State state)
+			: Operation(state), path(std::move(path)) {}
+
+		SkPath path;
+
+		void draw(SkCanvas &to, const SkPaint &paint, Point origin) {
+			// It is OK to mess with the transform matrix, it will be reset to the next operation.
+			to.translate(origin.x, origin.y);
+			SkPaint p = paint;
+			p.setStroke(true);
+			to.drawPath(path, p);
+		}
+	};
 
 	/**
 	 * Custom Pango renderer so that we can render the text into a representation that we then use
@@ -161,6 +196,10 @@ namespace gui {
 			|| (glyph.glyph & PANGO_GLYPH_UNKNOWN_FLAG) != 0;
 	}
 
+	static bool missingGlyph(PangoGlyphInfo &glyph) {
+		return (glyph.glyph & PANGO_GLYPH_UNKNOWN_FLAG) != 0;
+	}
+
 	static void sk_draw_glyphs(PangoRenderer *renderer, PangoFont *font, PangoGlyphString *glyphs, int x, int y) {
 		SkRenderer *sk = (SkRenderer *)renderer;
 		sk_sp<SkPangoFont> skFont = sk->cache->font(font);
@@ -174,9 +213,12 @@ namespace gui {
 
 		// Count the non-empty glyphs.
 		int glyphCount = 0;
+		int missing = 0;
 		for (int i = 0; i < glyphs->num_glyphs; i++) {
 			if (!ignoreGlyph(glyphs->glyphs[i]))
 				glyphCount++;
+			else if (missingGlyph(glyphs->glyphs[i]))
+				missing++;
 		}
 
 		if (glyphCount > 0) {
@@ -185,22 +227,49 @@ namespace gui {
 
 			const SkTextBlobBuilder::RunBuffer &buffer = sk->data->builder.allocRunPos(skFont->font, glyphCount);
 			int dest = 0;
+			int currX = x;
 			for (int i = 0; i < glyphs->num_glyphs; i++) {
 				PangoGlyphInfo &glyph = glyphs->glyphs[i];
 				if (!ignoreGlyph(glyph)) {
 					SkPoint pos;
-					pos.fX = fromPango(x + glyph.geometry.x_offset);
+					pos.fX = fromPango(currX + glyph.geometry.x_offset);
 					pos.fY = fromPango(y + glyph.geometry.y_offset);
 
 					buffer.glyphs[dest] = glyph.glyph;
 					buffer.points()[dest] = pos;
 					dest++;
 				}
-				x += glyph.geometry.width;
+				currX += glyph.geometry.width;
 			}
 		}
 
-		// TODO: Draw "invalid" glyphs. Perhaps using rectangles.
+		// Draw any missing glyphs.
+		if (missing > 0) {
+			SkPathBuilder builder;
+			int currX = x;
+			for (int i = 0; i < glyphs->num_glyphs; i++) {
+				PangoGlyphInfo &glyph = glyphs->glyphs[i];
+				if (missingGlyph(glyph)) {
+					float x0 = fromPango(currX);
+					float y0 = fromPango(y);
+					float w = fromPango(glyph.geometry.width);
+					float h = w;
+					x0 += w * 0.1f;
+					y0 -= h * 0.1f;
+					w *= 0.8f;
+					h *= 0.8f;
+					builder.moveTo(x0, y0);
+					builder.lineTo(x0, y0 - h);
+					builder.lineTo(x0 + w, y0 - h);
+					builder.lineTo(x0 + w, y0);
+					builder.close();
+				}
+				currX += glyph.geometry.width;
+			}
+
+			sk->flush();
+			sk->push(new StrokePathOp(builder.detach(), state));
+		}
 	}
 
 	static void sk_draw_rectangle(PangoRenderer *renderer, PangoRenderPart part, int x, int y, int width, int height) {
@@ -212,16 +281,33 @@ namespace gui {
 
 	static void sk_draw_trapezoid(PangoRenderer *renderer, PangoRenderPart part,
 								double y1_, double x11, double x21,
-								double y2, double x12, double x22) {
-		PLN(L"Trapezoid");
+								double y2_, double x12, double x22) {
+		// Note: It looks like Pango will draw multiple (almost) intersecting trapezoids. As such,
+		// it could be beneficial to merge them in order to not cause issues with transparency and
+		// possibly anti-aliasing. It seems a default implementation for error underline drawing is
+		// present, and that uses this one, for example.
+
+		SkRenderer *sk = (SkRenderer *)renderer;
+		sk->flush();
+
+		SkPathBuilder builder;
+		builder.moveTo(x11, y1_);
+		builder.lineTo(x21, y1_);
+		builder.lineTo(x22, y2_);
+		builder.lineTo(x12, y2_);
+		builder.close();
+
+		sk->push(new PathOp(builder.detach(), PangoText::State(renderer, part)));
 	}
 
 	static void sk_draw_error(PangoRenderer *renderer, int x, int y, int width, int height) {
-		PLN(L"Error");
+		// We could implement this as a shape, but since we don't support error underlines anyway we
+		// currently rely on the default implementation in Pango. The downside is that whenever an
+		// error underline is present, it will look bad if we use transparency there.
 	}
 
 	static void sk_draw_shape(PangoRenderer *renderer, PangoAttrShape *attr, int x, int y) {
-		PLN(L"Shape");
+		// Not implemented. We don't use shape attributes.
 	}
 
 	static void sk_renderer_init(SkRenderer *renderer) {
@@ -240,13 +326,16 @@ namespace gui {
 		render->draw_glyphs = sk_draw_glyphs;
 		render->draw_rectangle = sk_draw_rectangle;
 		render->draw_trapezoid = sk_draw_trapezoid;
-		render->draw_error_underline = sk_draw_error;
 		render->draw_shape = sk_draw_shape;
 		render->begin = sk_begin;
 		render->end = sk_end;
 
 		GObjectClass *object = G_OBJECT_CLASS(klass);
 		object->finalize = sk_renderer_finalize;
+
+		// Not necessary, there is a default implementation. If we want to support error underlines,
+		// we probably want to implement our own version here.
+		// render->draw_error_underline = sk_draw_error;
 
 		// If we implement this one, we can get the actual text if we want to.
 		// render->draw_glyph_item = sk_draw_glyph_item;
