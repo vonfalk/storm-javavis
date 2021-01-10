@@ -51,12 +51,23 @@ namespace gui {
 	}
 
 	D2DText::Resource D2DText::createLayout(const Text *text) {
+		Font *font = text->font();
 		Str *t = text->text();
 		Size border = text->layoutBorder();
-		IDWriteTextFormat *format = (IDWriteTextFormat *)text->font()->backendFont();
+		IDWriteTextFormat *format = (IDWriteTextFormat *)font->backendFont();
 		IDWriteTextLayout *layout;
 		HRESULT r = factory->CreateTextLayout(t->c_str(), t->peekLength(), format, border.w, border.h, &layout);
 		check(r, S("Failed to create a text layout: "));
+
+		// We need to set these if they are present in the font...
+		DWRITE_TEXT_RANGE range = { 0, t->peekLength() };
+		if (font->underline()) {
+			layout->SetUnderline(TRUE, range);
+		}
+
+		if (font->strikeOut()) {
+			layout->SetStrikethrough(TRUE, range);
+		}
 
 		return D2DText::Resource(layout, &destroyCOM);
 	}
@@ -68,22 +79,38 @@ namespace gui {
 		return true;
 	}
 
-	D2DText::EffectResult D2DText::addEffect(void *layout, const Text::Effect &effect, Str *, Graphics *graphics) {
-		// We need a render target to be able to apply effects...
-		if (!graphics)
-			return eWait;
-
-		// It should be a D2DGraphics object.
-		D2DGraphics *g = as<D2DGraphics>(graphics);
-		if (!g)
-			return eWait;
+	D2DText::EffectResult D2DText::addEffect(void *layout, const TextEffect &effect, Str *, Graphics *graphics) {
 
 		IDWriteTextLayout *l = (IDWriteTextLayout *)layout;
 		DWRITE_TEXT_RANGE range = { effect.from, effect.to - effect.from };
-		ID2D1SolidColorBrush *brush;
-		g->getSurface().target()->CreateSolidColorBrush(dx(effect.color), &brush);
-		l->SetDrawingEffect(brush, range);
-		brush->Release();
+
+		switch (effect.type) {
+		case TextEffect::tColor:
+		// It should be a D2DGraphics object.
+			if (D2DGraphics *g = as<D2DGraphics>(graphics)) {
+				ID2D1SolidColorBrush *brush;
+				g->getSurface().target()->CreateSolidColorBrush(dx(effect.color()), &brush);
+				l->SetDrawingEffect(brush, range);
+				brush->Release();
+			} else {
+				// We need to apply these later.
+				return eWait;
+			}
+			break;
+		case TextEffect::tUnderline:
+			l->SetUnderline(effect.boolean() ? TRUE : FALSE, range);
+			break;
+		case TextEffect::tStrikeOut:
+			l->SetStrikethrough(effect.boolean() ? TRUE : FALSE, range);
+			break;
+		case TextEffect::tItalic:
+			l->SetFontStyle(effect.boolean() ? DWRITE_FONT_STYLE_ITALIC : DWRITE_FONT_STYLE_NORMAL, range);
+			break;
+		case TextEffect::tWeight:
+			l->SetFontWeight(DWRITE_FONT_WEIGHT(effect.integer()), range);
+			break;
+		}
+
 
 		return eApplied;
 	}
