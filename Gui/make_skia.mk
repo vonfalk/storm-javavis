@@ -52,6 +52,7 @@ ifeq ($(OUTPUT),)
 OUTPUT := skia.a
 endif
 
+.PHONY: all
 all: $(OUTPUT)
 
 .PHONY: clean
@@ -63,14 +64,17 @@ $(OUTPUT): $(OBJECTS) $(LIB_OBJECTS) out/skcms.o
 	@ar rcs $(OUTPUT) $(OBJECTS) $(LIB_OBJECTS) out/skcms.o
 
 $(OBJECTS): out/%.o: src/%.cpp
+	@echo "Compiling $<..."
 	@mkdir -p $(dir $@)
 	g++ -c $(CXXFLAGS) -o $@ $<
 
 $(LIB_OBJECTS): out/modules/%.o: modules/%.cpp
+	@echo "Compiling $<..."
 	@mkdir -p $(dir $@)
 	g++ -c $(CXXFLAGS) -I/usr/include/harfbuzz/ -o $@ $<
 
 out/skcms.o: third_party/skcms/skcms.cc
+	@echo "Compiling $<..."
 	gcc -c -I include/third_party/skcms -O3 -fPIC $< -o $@
 
 # The rules below compile the SKSL sources.
