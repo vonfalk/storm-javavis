@@ -47,7 +47,7 @@ class TextPainter extends Painter {
 		// f2.weight = 700;
 
 		init() {
-			text = Text("ABÅÄあお☃😀!\n\tà̖\n👩‍💻\nLast line", f);
+			text = Text("ABÅÄあお☃😀!\n\tà̖\n👩‍💻\nLast line", f);
 			color = SolidBrush(black);
 			hl = SolidBrush(red);
 		}
