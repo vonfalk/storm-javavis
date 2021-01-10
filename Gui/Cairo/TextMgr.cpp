@@ -152,6 +152,10 @@ namespace gui {
 			pango_attr_list_change(attrs, alpha);
 		}
 
+		// Tell Pango to re-compute the layout since we changed the formatting. Otherwise we are not
+		// able to modify the text formatting after we have rendered it once.
+		pango_layout_context_changed(l);
+
 		return eApplied;
 	}
 
