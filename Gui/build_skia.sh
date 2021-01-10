@@ -18,5 +18,5 @@ fi
 output=$(pwd)/$1
 
 cd ../Linux/skia
-make -f ../../Gui/make_skia.mk OUTPUT=$output $threads
+make -s -f ../../Gui/make_skia.mk OUTPUT=$output $threads
 
