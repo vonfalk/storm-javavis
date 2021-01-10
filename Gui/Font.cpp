@@ -111,7 +111,7 @@ namespace gui {
 		fName = face;
 		fHeight = height;
 		fWeight = FW_NORMAL;
-		fTabWidth = 0;
+		fTabWidth = 2 * height;
 		fItalic = false;
 		fUnderline = false;
 		fStrikeOut = false;
