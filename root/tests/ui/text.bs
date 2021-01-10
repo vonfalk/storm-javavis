@@ -56,6 +56,11 @@ class TextPainter extends Painter {
 			var iter = text.text.begin();
 			text.color(iter + 3, iter + 6, green);
 			text.color(iter + 2, iter + 4, red);
+
+			text.underline(iter + 1, iter + 4);
+			text.underline(iter, iter + 2);
+
+			text.italic(iter, iter + 3);
 		}
 
 		bg << SolidBrush(green + white * 0.6);
