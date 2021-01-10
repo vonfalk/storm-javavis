@@ -127,7 +127,7 @@ namespace gui {
 		return true;
 	}
 
-	CairoText::EffectResult CairoText::addEffect(void *layout, const Text::Effect &effect, Str *myText, Graphics *) {
+	CairoText::EffectResult CairoText::addEffect(void *layout, const TextEffect &effect, Str *myText, Graphics *) {
 		PangoLayout *l = (PangoLayout *)layout;
 
 		PangoAttrList *attrs = layout_attrs(l);
@@ -139,22 +139,43 @@ namespace gui {
 		size_t beginBytes = byteOffset(myText->begin(), text, begin);
 		size_t endBytes = beginBytes + byteOffset(begin, text + beginBytes, end);
 
-		Color color = effect.color;
-		PangoAttribute *attr = pango_attr_foreground_new(pangoColor(color.r), pangoColor(color.g), pangoColor(color.b));
-		attr->start_index = beginBytes;
-		attr->end_index = endBytes;
-		pango_attr_list_change(attrs, attr);
+		PangoAttribute *attr = null;
 
-		if (color.a < 1.0f) {
-			PangoAttribute *alpha = pango_attr_foreground_alpha_new(pangoColor(color.a));
-			alpha->start_index = beginBytes;
-			alpha->end_index = endBytes;
-			pango_attr_list_change(attrs, alpha);
+		switch (effect.type) {
+		case TextEffect::tColor:
+			attr = pango_attr_foreground_new(pangoColor(effect.d0), pangoColor(effect.d1), pangoColor(effect.d2));
+			if (effect.d3 < 1.0f) {
+				attr->start_index = beginBytes;
+				attr->end_index = endBytes;
+				pango_attr_list_change(attrs, attr);
+
+				attr = pango_attr_foreground_alpha_new(pangoColor(effect.d3));
+			}
+			break;
+		case TextEffect::tUnderline:
+			// There is SINGLE_LINE as well.
+			attr = pango_attr_underline_new(effect.boolean() ? PANGO_UNDERLINE_SINGLE : PANGO_UNDERLINE_NONE);
+			break;
+		case TextEffect::tStrikeOut:
+			attr = pango_attr_strikethrough_new(effect.boolean());
+			break;
+		case TextEffect::tItalic:
+			attr = pango_attr_style_new(effect.boolean() ? PANGO_STYLE_ITALIC : PANGO_STYLE_NORMAL);
+			break;
+		case TextEffect::tWeight:
+			attr = pango_attr_weight_new(PangoWeight(effect.integer()));
+			break;
 		}
 
-		// Tell Pango to re-compute the layout since we changed the formatting. Otherwise we are not
-		// able to modify the text formatting after we have rendered it once.
-		pango_layout_context_changed(l);
+		if (attr) {
+			attr->start_index = beginBytes;
+			attr->end_index = endBytes;
+			pango_attr_list_change(attrs, attr);
+
+			// Tell Pango to re-compute the layout since we changed the formatting. Otherwise we are
+			// not able to modify the text formatting after we have rendered it once.
+			pango_layout_context_changed(l);
+		}
 
 		return eApplied;
 	}
