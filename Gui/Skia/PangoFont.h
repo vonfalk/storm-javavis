@@ -45,7 +45,20 @@ namespace gui {
 				&& transform.yx == key.transform.yx
 				&& transform.yy == key.transform.yy;
 		}
+
+		// Hash.
+		size_t hash() const {
+			return std::hash<hb_blob_t *>()(blob)
+				^ std::hash<bool>()(embolden)
+				^ std::hash<float>()(transform.xx)
+				^ std::hash<float>()(transform.xy)
+				^ std::hash<float>()(transform.yx)
+				^ std::hash<float>()(transform.yy);
+		}
 	};
+
+	// For debugging:
+	std::wostream &operator <<(std::wostream &to, const SkTypefaceKey &key);
 
 }
 
@@ -53,12 +66,7 @@ namespace std {
 	template <>
 	struct hash<gui::SkTypefaceKey> {
 		size_t operator ()(const gui::SkTypefaceKey &key) const {
-			return hash<hb_blob_t *>()(key.blob)
-				^ hash<bool>()(key.embolden)
-				^ hash<float>()(key.transform.xx)
-				^ hash<float>()(key.transform.xy)
-				^ hash<float>()(key.transform.yx)
-				^ hash<float>()(key.transform.yy);
+			return key.hash();
 		}
 	};
 }

@@ -14,7 +14,15 @@ class TextWindow extends Frame {
 	}
 
 	Bool onClick(Bool pressed, Point at, MouseButton button) {
-		p.setFont(Font("Courier", 20));
+		if (pressed) {
+			if (button == MouseButton:right) {
+				var iter = p.text.text.begin;
+				p.text.color(iter, iter + 1, blue);
+				repaint();
+			} else {
+				p.setFont(Font("Courier", 20));
+			}
+		}
 		return true;
 	}
 }
@@ -39,7 +47,7 @@ class TextPainter extends Painter {
 		// f2.weight = 700;
 
 		init() {
-			text = Text("ABÅÄあお☃😀!\n\tà̖ \n👩‍💻\nLast line", f);
+			text = Text("ABÅÄあお☃😀!\n\tà̖\n👩‍💻\nLast line", f);
 			color = SolidBrush(black);
 			hl = SolidBrush(red);
 		}
@@ -65,11 +73,17 @@ class TextPainter extends Painter {
 
 	void setFont(Font f) {
 		text = Text(text.text, f);
+
 		updateBoxes();
 		repaint();
 	}
 
 	void updateBoxes() {
+		baseline.clear();
+		for (l in text.lineInfo) {
+			baseline << l.baseline;
+		}
+
 		var iter = text.text.begin();
 		var end = text.text.end();
 		rects.clear();

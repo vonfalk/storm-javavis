@@ -137,12 +137,7 @@ namespace gui {
 		PangoText *t = (PangoText *)layout;
 		PangoLayout *l = t->pango;
 
-		PangoAttrList *attrs = pango_layout_get_attributes(l);
-		if (!attrs) {
-			attrs = pango_attr_list_new();
-			pango_layout_set_attributes(l, attrs);
-			pango_attr_list_unref(attrs);
-		}
+		PangoAttrList *attrs = layout_attrs(l);
 
 		Str::Iter begin = myText->posIter(effect.from);
 		Str::Iter end = myText->posIter(effect.to);
@@ -163,6 +158,10 @@ namespace gui {
 			alpha->end_index = endBytes;
 			pango_attr_list_change(attrs, alpha);
 		}
+
+		// Tell Pango to re-compute the layout since we changed the formatting. Otherwise we are not
+		// able to modify the text formatting after we have rendered it once.
+		pango_layout_context_changed(l);
 
 		t->invalidate();
 		return eApplied;

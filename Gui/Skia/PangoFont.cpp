@@ -61,6 +61,11 @@ namespace gui {
 		hb_blob_destroy(blob);
 	}
 
+	std::wostream &operator <<(std::wostream &to, const SkTypefaceKey &key) {
+		return to << L"{ " << key.blob << L", " << key.embolden << L", { "
+				  << key.transform.xx << L", " << key.transform.xy << L", "
+				  << key.transform.xy << L", " << key.transform.yy << L" } }";
+	}
 
 	/**
 	 * Custom typeface implementation.
@@ -174,7 +179,7 @@ namespace gui {
 
 		// Remove the ref from the typeface.
 		if (SkPangoTypeface *typeface = this->typeface.get()) {
-			if (atomicDecrement(typeface->users) == 1) {
+			if (atomicDecrement(typeface->users) == 0) {
 				if (cache)
 					cache->remove(typeface);
 			}
