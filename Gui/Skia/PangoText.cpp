@@ -273,7 +273,8 @@ namespace gui {
 
 	void PangoText::invalidate() {
 		valid = false;
-		operations.clear();
+		// Keep the operations around until we actually rebuild. Otherwise, we might invalidate the
+		// needed fonts too early.
 	}
 
 	void PangoText::draw(SkCanvas &to, const SkPaint &paint, Point origin) {
