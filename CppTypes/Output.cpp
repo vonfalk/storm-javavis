@@ -591,11 +591,11 @@ static void genFunctions(wostream &to, World &w) {
 
 		// Thread id.
 		if (f.has(Function::isMember))
-			to << L"NONE, ";
+			to << L"nat(-1), ";
 		else if (f.threadType)
 			to << f.threadType->id << L", ";
 		else
-			to << L"NONE, ";
+			to << L"nat(-1), ";
 
 		// Documentation.
 		to << docId(w, f) << L", ";
