@@ -31,8 +31,10 @@ namespace gui {
 
 	Device *Device::create(Engine &e) {
 		const char *preference = getenv(ENV_RENDER_BACKEND);
-		if (!preference)
-			preference = "skia"; // TODO: What is best?
+		if (!preference) {
+			// Skia is indeed outperforming the Pango-GL backend, especially in cases with much text.
+			preference = "skia";
+		}
 
 		Device *result = null;
 

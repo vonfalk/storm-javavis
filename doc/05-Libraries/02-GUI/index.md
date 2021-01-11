@@ -93,11 +93,15 @@ It is possible to override the backend used by setting the environment variable
   screen. This mode is also fairly robust as it uses the same code paths used by Gtk, but might
   since rendering is multithreaded, it could show bugs that are not visible to regular Gtk
   applications.
-- `gl` (the default): Render using the OpenGL backend in Cairo. This mode provides significant
-  performance improvements, especially when working with larger bitmaps. Due to the nature of
-  OpenGL support in Gtk, the GUI library needs to keep track of separate resources for each
-  top-level window (sometimes even at a finer level). As such, sharing `Resource`s between
+- `gl`: Render using the (beta) OpenGL backend in Cairo. This mode provides significant performance
+  improvements over both `gtk` and `sw`, especially when working with larger bitmaps. Due to
+  the nature of OpenGL support in Gtk, the GUI library needs to keep track of separate resources
+  for each top-level window (sometimes even at a finer level). As such, sharing `Resource`s between
   different such contexts will incur a small performance penalty.
+- `skia` (the default): Render using OpenGL with Skia. Just as with the `gl` backend, this backend
+  is hardware accelerated and gives good performance. In many cases, performance with Skia is better
+  than the OpenGL backend in Cairo. Just as with the `gl` backend, rendering contexts in different
+  top-level windows use different GL contexts, and can therefore not share rendering resources.
 
 When rendering in Linux, there are some things to take into consideration due to how Gtk works. As
 sub-windows is a construct entirely within Gtk, it typically only creates a single window for each
@@ -114,7 +118,7 @@ least, the user level parts of them). These are typically only visible when usin
 backends. If this is an issue, or a suspected issue, it is possible to enable one or more
 workarounds that make the part of the GUI library that calls OpenGL behave a bit more closely to a
 "regular" program. This is done automatically by the GUI library where issues are known beforehand,
-but as not all combinations of hardware and software have been tested, there might be situations
+but as not all combinations of hardware and software have been tested there might be situations
 that the GUI library are unaware of.
 
 The following workarounds are available:
