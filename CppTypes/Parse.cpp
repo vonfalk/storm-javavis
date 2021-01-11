@@ -514,7 +514,12 @@ static void parseType(Tokenizer &tok, ParseEnv &env, const CppName &inside, bool
 			tok.skip();
 		} else if (t.token == L"enum") {
 			tok.skip();
-			parseEnum(tok, env, fullName);
+			ParseEnv sub = env;
+			if (sub.pkg.empty())
+				sub.pkg = name.token;
+			else
+				sub.pkg += L"." + name.token;
+			parseEnum(tok, sub, fullName);
 		} else if (t.token == L"template") {
 			// Skip until we find a {, and skip the body as well.
 			while (!tok.skipIf(L"{"))
