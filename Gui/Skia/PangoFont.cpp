@@ -4,7 +4,6 @@
 #ifdef GUI_GTK
 
 #include <dlfcn.h>
-#include <harfbuzz/hb.h>
 #include <pango/pangofc-font.h>
 
 namespace gui {

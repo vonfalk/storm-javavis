@@ -4,6 +4,7 @@
 
 #ifdef GUI_GTK
 
+#include <harfbuzz/hb.h>
 #include <fontconfig/fontconfig.h>
 
 namespace gui {
