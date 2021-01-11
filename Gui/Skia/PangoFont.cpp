@@ -3,6 +3,7 @@
 
 #ifdef GUI_GTK
 
+#include <dlfcn.h>
 #include <harfbuzz/hb.h>
 #include <pango/pangofc-font.h>
 
@@ -26,11 +27,25 @@ namespace gui {
 		return def;
 	}
 
+	static int fcGetInteger(FcPattern *pattern, const char *object, int def) {
+		int value = 0;
+		if (FcPatternGetInteger(pattern, object, 0, &value) == FcResultMatch)
+			return value;
+		return def;
+	}
+
 	static double fcGetDouble(FcPattern *pattern, const char *object, double def) {
 		double value = 0;
 		if (FcPatternGetDouble(pattern, object, 0, &value) == FcResultMatch)
 			return value;
 		return def;
+	}
+
+	static const char *fcGetString(FcPattern *pattern, const char *object) {
+		FcChar8 *data;
+		if (FcPatternGetString(pattern, object, 0, &data) == FcResultMatch)
+			return (const char *)data;
+		return null;
 	}
 
 	SkTypefaceKey::SkTypefaceKey(hb_blob_t *blob, int index, FcPattern *pattern)
@@ -148,16 +163,43 @@ namespace gui {
 	 * Font.
 	 */
 
+	// Wrapper around "pango_font_get_hb_font", since that does not exist before Pango v1.44.
+	// Returns null if the function is not available.
+	static hb_font_t *get_hb_font(PangoFont *from) {
+		typedef hb_font_t *(*Fn)(PangoFont *);
+		static nat searched = 0;
+		static Fn fn = null;
+		if (atomicRead(searched) == 0) {
+			fn = (Fn)dlsym(RTLD_DEFAULT, "pango_font_get_hb_font");
+			atomicWrite(searched, nat(1));
+		}
+
+		if (!fn)
+			return null;
+
+		return (*fn)(from);
+	}
+
 	SkPangoFont::SkPangoFont(SkPangoFontCache *cache, PangoFont *font) : cache(cache), pango(font) {
 		assert(PANGO_IS_FC_FONT(font), L"Your system does not seem to use FontConfig with Pango.");
 
 		PangoFcFont *fcFont = PANGO_FC_FONT(font);
 		FcPattern *pattern = fcFont->font_pattern;
 
-		hb_font_t *hbFont = pango_font_get_hb_font(font);
-		hb_face_t *hbFace = hb_font_get_face(hbFont);
+		hb_font_t *hbFont = get_hb_font(font); // pango_font_get_hb_font(font);
+		hb_blob_t *hbBlob = null;
+		int index = 0;
 
-		SkTypefaceKey key(hb_face_reference_blob(hbFace), hb_face_get_index(hbFace), pattern);
+		if (hbFont) {
+			hb_face_t *hbFace = hb_font_get_face(hbFont);
+			hbBlob = hb_face_reference_blob(hbFace);
+			index = hb_face_get_index(hbFace);
+		} else {
+			// Fallback: load the font ourselves. This only happens on older versions of Pango.
+			cache->loadBlob(pattern, hbBlob, index);
+		}
+
+		SkTypefaceKey key(hbBlob, index, pattern);
 
 		double fontSize = fromPango(pango_font_description_get_size(fcFont->description));
 		fontSize = fcGetDouble(pattern, FC_PIXEL_SIZE, fontSize);
@@ -198,6 +240,11 @@ namespace gui {
 		// Make sure the types are destroyed in the proper order.
 		for (FontMap::iterator i = fonts.begin(); i != fonts.end(); ++i) {
 			i->second->cache = null;
+		}
+
+		// If we created any blobs, free them now.
+		for (BlobMap::iterator i = blobs.begin(); i != blobs.end(); ++i) {
+			hb_blob_destroy(i->second);
 		}
 	}
 
@@ -247,6 +294,26 @@ namespace gui {
 		if (found != typefaces.end() && found->second.get() == typeface) {
 			typefaces.erase(found);
 		}
+	}
+
+	void SkPangoFontCache::loadBlob(FcPattern *pattern, hb_blob_t *&blob, int &index) {
+		const char *file = fcGetString(pattern, FC_FILE);
+		if (!file)
+			return;
+
+		BlobMap::iterator found = blobs.find(std::string(file));
+		if (found != blobs.end()) {
+			blob = found->second;
+		} else {
+			blob = hb_blob_create_from_file(file);
+			if (blob)
+				blobs[std::string(file)] = blob;
+		}
+
+		if (blob)
+			hb_blob_reference(blob);
+
+		index = fcGetInteger(pattern, FC_INDEX, 0);
 	}
 
 }

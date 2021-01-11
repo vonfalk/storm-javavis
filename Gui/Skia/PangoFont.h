@@ -191,6 +191,17 @@ namespace gui {
 		// Get typefaces.
 		typedef std::unordered_map<SkTypefaceKey, sk_sp<SkPangoTypeface>> TypefaceMap;
 		TypefaceMap typefaces;
+
+		// Load a font into a hb_blob object. Used as a fallback when we don't have a new enough
+		// version of Pango.
+		void loadBlob(FcPattern *pattern, hb_blob_t *&blob, int &index);
+
+		// Cache of font blobs. Only used if we fail to extract hb_face_t from Pango.
+		// We never deallocate these as we don't keep refcounts to them. That should be fine though,
+		// as it looks like Pango does the same. Anyhow, on new versions of Pango, we don't need
+		// the fallback, so it should be fine.
+		typedef std::unordered_map<std::string, hb_blob_t *> BlobMap;
+		BlobMap blobs;
 	};
 
 }
