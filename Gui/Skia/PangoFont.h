@@ -16,7 +16,7 @@ namespace gui {
 	class SkTypefaceKey {
 	public:
 		// Create, extract information from Fontconfig. Takes ownership of "blob".
-		SkTypefaceKey(hb_blob_t *blob, FcPattern *pattern = null);
+		SkTypefaceKey(hb_blob_t *blob, int index, FcPattern *pattern = null);
 
 		// Copy.
 		SkTypefaceKey(const SkTypefaceKey &o);
@@ -30,6 +30,9 @@ namespace gui {
 		// Blob (we have ownership of it).
 		hb_blob_t *blob;
 
+		// Typeface index inside the blob.
+		int index;
+
 		// Should we fake bold.
 		bool embolden;
 
@@ -39,6 +42,7 @@ namespace gui {
 		// Compare for equality.
 		bool operator ==(const SkTypefaceKey &key) const {
 			return blob == key.blob
+				&& index == key.index
 				&& embolden == key.embolden
 				&& transform.xx == key.transform.xx
 				&& transform.xy == key.transform.xy
@@ -49,6 +53,7 @@ namespace gui {
 		// Hash.
 		size_t hash() const {
 			return std::hash<hb_blob_t *>()(blob)
+				^ std::hash<int>()(index)
 				^ std::hash<bool>()(embolden)
 				^ std::hash<float>()(transform.xx)
 				^ std::hash<float>()(transform.xy)

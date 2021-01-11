@@ -2,6 +2,9 @@
 
 #ifdef GUI_GTK
 
+// Needed to get the definition of fc-font on some systems...
+#define PANGO_ENABLE_BACKEND
+
 #include <poll.h>
 #include <X11/Xlib.h>
 #define GL_GLEXT_PROTOTYPES

@@ -3,6 +3,7 @@
 
 #ifdef GUI_GTK
 
+#include <harfbuzz/hb.h>
 #include <pango/pangofc-font.h>
 
 namespace gui {
@@ -32,8 +33,8 @@ namespace gui {
 		return def;
 	}
 
-	SkTypefaceKey::SkTypefaceKey(hb_blob_t *blob, FcPattern *pattern)
-		: blob(blob), embolden(false), transform({1, 0, 0, 1}) {
+	SkTypefaceKey::SkTypefaceKey(hb_blob_t *blob, int index, FcPattern *pattern)
+		: blob(blob), index(index), embolden(false), transform({1, 0, 0, 1}) {
 		hb_blob_reference(blob);
 		if (pattern) {
 			if (const FcMatrix *m = fcGetMatrix(pattern, FC_MATRIX))
@@ -43,13 +44,14 @@ namespace gui {
 	}
 
 	SkTypefaceKey::SkTypefaceKey(const SkTypefaceKey &o)
-		: blob(o.blob), embolden(o.embolden), transform(o.transform) {
+		: blob(o.blob), index(o.index), embolden(o.embolden), transform(o.transform) {
 		hb_blob_reference(blob);
 	}
 
 	SkTypefaceKey &SkTypefaceKey::operator =(const SkTypefaceKey &o) {
 		hb_blob_reference(o.blob);
 		hb_blob_destroy(blob);
+		index = o.index;
 		blob = o.blob;
 		embolden = o.embolden;
 		transform = o.transform;
@@ -62,7 +64,7 @@ namespace gui {
 	}
 
 	std::wostream &operator <<(std::wostream &to, const SkTypefaceKey &key) {
-		return to << L"{ " << key.blob << L", " << key.embolden << L", { "
+		return to << L"{ " << key.blob << L", " << key.index << L", " << key.embolden << L", { "
 				  << key.transform.xx << L", " << key.transform.xy << L", "
 				  << key.transform.xy << L", " << key.transform.yy << L" } }";
 	}
@@ -83,7 +85,7 @@ namespace gui {
 		if (!scanner.scanFont(stream.get(), 0, &name, &style, &isFixedWidth, nullptr))
 			return nullptr;
 
-		std::unique_ptr<SkFontData> fData(new SkFontData(std::move(stream), 0, null, 0));
+		std::unique_ptr<SkFontData> fData(new SkFontData(std::move(stream), key.index, null, 0));
 		return sk_sp<SkPangoTypeface>(new SkPangoTypeface(std::move(fData), std::move(name), style, isFixedWidth, key));
 	}
 
@@ -155,7 +157,7 @@ namespace gui {
 		hb_font_t *hbFont = pango_font_get_hb_font(font);
 		hb_face_t *hbFace = hb_font_get_face(hbFont);
 
-		SkTypefaceKey key(hb_face_reference_blob(hbFace), pattern);
+		SkTypefaceKey key(hb_face_reference_blob(hbFace), hb_face_get_index(hbFace), pattern);
 
 		double fontSize = fromPango(pango_font_description_get_size(fcFont->description));
 		fontSize = fcGetDouble(pattern, FC_PIXEL_SIZE, fontSize);
