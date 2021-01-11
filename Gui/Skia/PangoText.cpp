@@ -1,5 +1,6 @@
 #include "stdafx.h"
 #include "PangoText.h"
+#include "Gui/PangoLayout.h"
 
 #ifdef GUI_GTK
 
@@ -357,7 +358,7 @@ namespace gui {
 		: cache(cache), pango(layout), valid(false) {}
 
 	PangoText::~PangoText() {
-		g_object_unref(pango);
+		gui::pango::free(pango);
 	}
 
 	void PangoText::invalidate() {
