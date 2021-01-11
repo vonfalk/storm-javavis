@@ -18,10 +18,7 @@ variants are available depending on which garbage collector is desired.
 - MPS releases
 
   These releases use the [Memory Pool System](http://www.ravenbrook.com/project/mps/) from
-  Ravenbrook Ltd. for memory management. The Memory Pool System is very stable and performant, but
-  is covered by a license requiring source code for all programs using the MPS to be available. It
-  is possible to use the Memory Pool System in other settings as well, but that requires a license
-  from Ravenbrook Ltd.
+  Ravenbrook Ltd. for memory management. The Memory Pool System is very stable and performant.
 
   - [Windows (32-bit), MPS](storm_mps.zip)
   - [Linux (64-bit), MPS](storm_mps.tar.gz)
@@ -31,8 +28,7 @@ variants are available depending on which garbage collector is desired.
   These releases use the Storm Memory Manager for memory management, which is a homegrown garbage
   collector for Storm. The SMM generally performs worse compared to the Memory Pool System
   (approximately 2-3x runtimes when using the MPS, and occationally longer pause times), and it is
-  not as mature as the MPS. This option does, however, not come with any additional license
-  requirements.
+  not as mature as the MPS.
 
   This option is currently experimental, but seems to work well in many cases.
 
@@ -44,8 +40,8 @@ To run the compiler, simply unpack the archive file and run `Storm` (`Storm.exe`
 the top loop for Basic Storm should start. For more detaled instructions, see
 [Introduction](md://Introduction/).
 
-For Windows, no external libraries are required, except for `dbghelp.dll`, which is included with
-Windows. The Ui library requires Windows 7 or later.
+For Windows, no external libraries are required (except for `dbghelp.dll`, which is included with
+Windows). The Ui library requires Windows 7 or later.
 
 For Linux, the C standard library for GCC 6.2.0 or later is required. For the Ui library, Gtk+ 3.10
 or later is required. `libpng` and `libjpeg` are also required for proper image decoding, but they
