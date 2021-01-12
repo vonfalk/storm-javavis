@@ -245,6 +245,8 @@ namespace gui {
 
 #else
 
+	void SkiaGraphics::destroy() {}
+
 	DEFINE_WINDOW_GRAPHICS_FNS(SkiaGraphics)
 
 #endif
