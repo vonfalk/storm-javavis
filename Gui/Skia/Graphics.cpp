@@ -21,6 +21,12 @@ namespace gui {
 
 #ifdef GUI_GTK
 
+	void SkiaGraphics::destroy() {
+		// Make sure the GL context is active before destroying things.
+		surface.makeCurrent();
+		WindowGraphics::destroy();
+	}
+
 	void SkiaGraphics::surfaceResized() {
 		// Not needed.
 	}
@@ -34,12 +40,16 @@ namespace gui {
 	 */
 
 	void SkiaGraphics::beforeRender(Color bgColor) {
+		surface.makeCurrent();
+
 		SkPaint paint(skia(bgColor));
 		paint.setStroke(false);
 		surface.canvas->drawPaint(paint);
 	}
 
 	bool SkiaGraphics::afterRender() {
+		surface.makeCurrent();
+
 		// Make sure all layers are returned to the stack.
 		reset();
 
@@ -61,15 +71,21 @@ namespace gui {
 	}
 
 	void SkiaGraphics::pushState() {
+		surface.makeCurrent();
+
 		states->push(State(surface.canvas->getTotalMatrix(), lineW));
 	}
 
 	void SkiaGraphics::push() {
+		surface.makeCurrent();
+
 		surface.canvas->save();
 		pushState();
 	}
 
 	void SkiaGraphics::push(Float opacity) {
+		surface.makeCurrent();
+
 		if (opacity >= 1.0f) {
 			surface.canvas->save();
 		} else {
@@ -83,6 +99,8 @@ namespace gui {
 	}
 
 	void SkiaGraphics::push(Rect clip) {
+		surface.makeCurrent();
+
 		surface.canvas->save();
 		pushState();
 
@@ -90,6 +108,8 @@ namespace gui {
 	}
 
 	void SkiaGraphics::push(Rect clip, Float opacity) {
+		surface.makeCurrent();
+
 		// TODO: Is the layer size suggestion in device units (I guess so) or in transformed units?
 		SkRect rect = skia(clip);
 		SkPaint paint;
@@ -102,6 +122,8 @@ namespace gui {
 	}
 
 	Bool SkiaGraphics::pop() {
+		surface.makeCurrent();
+
 		if (states->count() <= 1)
 			return false;
 
@@ -134,48 +156,59 @@ namespace gui {
 	}
 
 	void SkiaGraphics::line(Point from, Point to, Brush *style) {
+		surface.makeCurrent();
 		surface.canvas->drawLine(skia(from), skia(to), *paint(style, true));
 	}
 
 	void SkiaGraphics::draw(Rect rect, Brush *style) {
+		surface.makeCurrent();
 		surface.canvas->drawRect(skia(rect), *paint(style, true));
 	}
 
 	void SkiaGraphics::draw(Rect rect, Size edges, Brush *style) {
+		surface.makeCurrent();
 		surface.canvas->drawRRect(SkRRect::MakeRectXY(skia(rect), edges.w, edges.h), *paint(style, true));
 	}
 
 	void SkiaGraphics::oval(Rect rect, Brush *style) {
+		surface.makeCurrent();
 		surface.canvas->drawOval(skia(rect), *paint(style, true));
 	}
 
 	void SkiaGraphics::draw(Path *path, Brush *style) {
+		surface.makeCurrent();
 		SkPath *p = (SkPath *)path->forGraphicsRaw(this);
 		surface.canvas->drawPath(*p, *paint(style, true));
 	}
 
 	void SkiaGraphics::fill(Rect rect, Brush *style) {
+		surface.makeCurrent();
 		surface.canvas->drawRect(skia(rect), *paint(style, false));
 	}
 
 	void SkiaGraphics::fill(Rect rect, Size edges, Brush *style) {
+		surface.makeCurrent();
 		surface.canvas->drawRRect(SkRRect::MakeRectXY(skia(rect), edges.w, edges.h), *paint(style, false));
 	}
 
 	void SkiaGraphics::fill(Brush *style) {
+		surface.makeCurrent();
 		surface.canvas->drawPaint(*paint(style, false));
 	}
 
 	void SkiaGraphics::fillOval(Rect rect, Brush *style) {
+		surface.makeCurrent();
 		surface.canvas->drawOval(skia(rect), *paint(style, false));
 	}
 
 	void SkiaGraphics::fill(Path *path, Brush *style) {
+		surface.makeCurrent();
 		SkPath *p = (SkPath *)path->forGraphicsRaw(this);
 		surface.canvas->drawPath(*p, *paint(style, false));
 	}
 
 	void SkiaGraphics::draw(Bitmap *bitmap, Rect rect, Float opacity) {
+		surface.makeCurrent();
 		SkPaint paint;
 		paint.setAntiAlias(true);
 		paint.setAlphaf(opacity);
@@ -186,6 +219,7 @@ namespace gui {
 	}
 
 	void SkiaGraphics::draw(Bitmap *bitmap, Rect src, Rect dest, Float opacity) {
+		surface.makeCurrent();
 		SkPaint paint;
 		paint.setAntiAlias(true);
 		paint.setAlphaf(opacity);
@@ -196,6 +230,7 @@ namespace gui {
 	}
 
 	void SkiaGraphics::text(Str *text, Font *font, Brush *style, Rect rect) {
+		surface.makeCurrent();
 		// We're creating some extra pressure on the GC here, but we don't want to re-implement all
 		// the logic in the backend here.
 		Text *t = new (this) Text(text, font, rect.size());
@@ -203,6 +238,7 @@ namespace gui {
 	}
 
 	void SkiaGraphics::draw(Text *text, Brush *style, Point origin) {
+		surface.makeCurrent();
 		SkiaText *p = (SkiaText *)text->backendLayout(this);
 		p->draw(*surface.canvas, *paint(style, false), origin);
 	}

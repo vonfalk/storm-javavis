@@ -7,25 +7,40 @@
 
 namespace gui {
 
+	class SkiaDevice;
+
 	/**
 	 * Rendering context for Skia.
 	 */
 	class SkiaContext : public GLDevice::Context {
 	public:
 		// Create.
-		SkiaContext(GLDevice *owner, GdkWindow *window, GdkGLContext *context);
+		SkiaContext(SkiaDevice *owner, GdkWindow *window, GdkGLContext *context);
 
 		// Destroy.
 		~SkiaContext();
 
 		// Skia context.
 		sk_sp<GrDirectContext> skia;
+
+		// Make sure this context is active. Skia does not seem to switch contexts itself, so we
+		// will need to do it for Skia. As such, we try to minimize calls to "make_active".
+		void makeCurrent();
+
+		// Clear which context is the current one, in case someone manually modifies the current
+		// context.
+		void clearCurrent();
+
+	private:
+		// Pointer to the device, so that we may know which context is the current one.
+		SkiaDevice *device;
 	};
 
 	/**
 	 * A Skia device.
 	 */
 	class SkiaDevice : public GLDevice {
+		friend class SkiaContext;
 	public:
 		// Create.
 		SkiaDevice(Engine &e);
@@ -39,6 +54,10 @@ namespace gui {
 
 		// Create a surface.
 		virtual Surface *createSurface(GtkWidget *widget, Context *context);
+
+	private:
+		// Current active context. To skip calls to make_current.
+		SkiaContext *current;
 	};
 
 
@@ -75,6 +94,9 @@ namespace gui {
 		GrDirectContext *device() {
 			return context->skia.get();
 		}
+
+		// Ensure that the surface is active.
+		void makeCurrent() { context->makeCurrent(); }
 
 	private:
 		// Context.

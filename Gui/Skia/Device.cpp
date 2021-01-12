@@ -12,8 +12,8 @@
 
 namespace gui {
 
-	SkiaContext::SkiaContext(GLDevice *owner, GdkWindow *window, GdkGLContext *context)
-		: Context(owner, window, context) {
+	SkiaContext::SkiaContext(SkiaDevice *owner, GdkWindow *window, GdkGLContext *context)
+		: Context(owner, window, context), device(owner) {
 
 		gdk_gl_context_clear_current();
 		gdk_gl_context_make_current(context);
@@ -43,10 +43,27 @@ namespace gui {
 			throw new (runtime::someEngine()) GuiError(S("Failed to initialize OpenGL with Skia."));
 	}
 
-	SkiaContext::~SkiaContext() {}
+	SkiaContext::~SkiaContext() {
+		// Make sure we dont encounter errors when Skia flushes its buffers.
+		makeCurrent();
+		skia = sk_sp<GrDirectContext>();
+		clearCurrent();
+	}
+
+	void SkiaContext::makeCurrent() {
+		// This will try to avoid unneccessary calls to switch GL contexts.
+		if (device->current != this) {
+			gdk_gl_context_make_current(context);
+			device->current = this;
+		}
+	}
+
+	void SkiaContext::clearCurrent() {
+		device->current = null;
+	}
 
 
-	SkiaDevice::SkiaDevice(Engine &e) : GLDevice(e) {}
+	SkiaDevice::SkiaDevice(Engine &e) : GLDevice(e), current(null) {}
 
 	SkiaContext *SkiaDevice::createContext(GdkWindow *window, GdkGLContext *context) {
 		return new SkiaContext(this, window, context);
@@ -55,6 +72,10 @@ namespace gui {
 	Surface *SkiaDevice::createSurface(GtkWidget *widget, Context *context) {
 		Size size(gtk_widget_get_allocated_width(widget),
 				gtk_widget_get_allocated_height(widget));
+
+		if (context->id == 0) {
+			context->id = renderMgr(e)->allocId();
+		}
 
 		return new SkiaSurface(size, static_cast<SkiaContext *>(context));
 	}
@@ -109,8 +130,13 @@ namespace gui {
 	}
 
 	SkiaSurface::~SkiaSurface() {
+		context->clearCurrent();
 		gdk_gl_context_clear_current();
 		gdk_gl_context_make_current(context->context);
+
+		// Clear the surface now to avoid any errors when it flushes its buffers.
+		surface = sk_sp<SkSurface>();
+
 		glDeleteRenderbuffers(1, &colorbuffer);
 		glDeleteRenderbuffers(1, &stencilbuffer);
 		glDeleteFramebuffers(1, &framebuffer);
@@ -122,6 +148,7 @@ namespace gui {
 		this->size = size;
 		this->scale = scale;
 
+		context->clearCurrent();
 		gdk_gl_context_clear_current();
 		gdk_gl_context_make_current(context->context);
 		glBindRenderbuffer(GL_RENDERBUFFER, colorbuffer);

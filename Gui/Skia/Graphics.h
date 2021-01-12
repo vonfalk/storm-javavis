@@ -24,6 +24,9 @@ namespace gui {
 		// Destroy.
 		~SkiaGraphics();
 
+		// Called when resources are to be destroyed.
+		void STORM_FN destroy();
+
 		// Called when the surface was resized.
 		void surfaceResized();
 

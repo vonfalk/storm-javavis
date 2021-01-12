@@ -36,6 +36,8 @@ namespace gui {
 	}
 
 	void SkiaManager::create(BitmapBrush *brush, void *&result, Resource::Cleanup &cleanup) {
+		surface->makeCurrent();
+
 		SkPaint *paint = new SkPaint();
 		paint->setAntiAlias(true);
 
@@ -73,6 +75,8 @@ namespace gui {
 	}
 
 	void SkiaManager::create(LinearGradient *brush, void *&result, Resource::Cleanup &cleanup) {
+		surface->makeCurrent();
+
 		SkPaint *paint = new SkPaint();
 		paint->setAntiAlias(true);
 
@@ -114,6 +118,8 @@ namespace gui {
 	}
 
 	void SkiaManager::create(RadialGradient *brush, void *&result, Resource::Cleanup &cleanup) {
+		surface->makeCurrent();
+
 		SkPaint *paint = new SkPaint();
 		paint->setAntiAlias(true);
 
@@ -148,6 +154,8 @@ namespace gui {
 	}
 
 	void SkiaManager::create(Bitmap *src, void *&result, Resource::Cleanup &cleanup) {
+		surface->makeCurrent();
+
 		Image *image = src->image();
 		SkImageInfo info = SkImageInfo::Make(image->width(), image->height(), kRGBA_8888_SkColorType, kUnpremul_SkAlphaType);
 		SkPixmap pixmap(info, image->buffer(), image->stride());
@@ -169,6 +177,8 @@ namespace gui {
 	}
 
 	void SkiaManager::create(Path *path, void *&result, Resource::Cleanup &cleanup) {
+		surface->makeCurrent();
+
 		SkPathBuilder builder(SkPathFillType::kEvenOdd);
 
 		Bool started = false;
