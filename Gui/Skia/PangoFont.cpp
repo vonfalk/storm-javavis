@@ -5,6 +5,7 @@
 
 #include <dlfcn.h>
 #include <pango/pangofc-font.h>
+#include <fstream>
 
 namespace gui {
 
@@ -49,7 +50,6 @@ namespace gui {
 
 	SkTypefaceKey::SkTypefaceKey(hb_blob_t *blob, int index, FcPattern *pattern)
 		: blob(blob), index(index), embolden(false), transform({1, 0, 0, 1}) {
-		hb_blob_reference(blob);
 		if (pattern) {
 			if (const FcMatrix *m = fcGetMatrix(pattern, FC_MATRIX))
 				transform = *m;
@@ -241,9 +241,9 @@ namespace gui {
 			i->second->cache = null;
 		}
 
-		// If we created any blobs, free them now.
+		// Make sure the blobs don't try to access us.
 		for (BlobMap::iterator i = blobs.begin(); i != blobs.end(); ++i) {
-			hb_blob_destroy(i->second);
+			i->second->cache = null;
 		}
 	}
 
@@ -300,19 +300,50 @@ namespace gui {
 		if (!file)
 			return;
 
-		BlobMap::iterator found = blobs.find(std::string(file));
+		index = fcGetInteger(pattern, FC_INDEX, 0);
+
+		BlobMap::iterator found = blobs.find(file);
 		if (found != blobs.end()) {
-			blob = found->second;
-		} else {
-			blob = hb_blob_create_from_file(file);
-			if (blob)
-				blobs[std::string(file)] = blob;
+			blob = found->second->blob;
+			hb_blob_reference(blob);
+			return;
 		}
 
-		if (blob)
-			hb_blob_reference(blob);
+		// Load data. Note: hb_blob_create_from_file is not available in older versions of harfbuzz.
+		std::ifstream data(file, std::ios_base::in | std::ios_base::binary);
+		if (!data)
+			return;
 
-		index = fcGetInteger(pattern, FC_INDEX, 0);
+		data.seekg(0, std::ios_base::end);
+		size_t size = data.tellg();
+
+		Blob *created = new Blob{
+			file,
+			null,
+			new char[size],
+			this
+		};
+		data.seekg(0, std::ios_base::beg);
+		data.read(created->data, size);
+
+		blob = created->blob = hb_blob_create(created->data, size, HB_MEMORY_MODE_READONLY, created, &destroyBlob);
+		blobs[created->file] = created;
+	}
+
+	void SkPangoFontCache::destroyBlob(void *blob) {
+		Blob *b = (Blob *)blob;
+
+		// Remove it from the cache.
+		if (b->cache) {
+			os::Lock::L z(b->cache->lock);
+			b->cache->blobs.erase(b->file);
+		}
+
+		// Deallocate the data.
+		delete []b->data;
+
+		// Delete the struct itself.
+		delete b;
 	}
 
 }

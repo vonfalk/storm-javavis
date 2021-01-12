@@ -1,4 +1,4 @@
-* General [7/12]
+* General [7/13]
   - [ ] Graphics::fill does not behave correctly with regards to gradient's coordinate systems.
   - [ ] See if we should stop rendering a painter that is not visible, eg. inside a scrollwindow.
   - [ ] Make the text view and the multiline text view separate, as we want
@@ -6,6 +6,9 @@
   - [ ] 'waitForClose' when called on a frame that has not been shown blocks forever. This is not ideal.
   - [ ] Consider dropping the Cairo GL backend. Then we don't have to ship our own compiled version of
         Cairo, which could cause version incompatibility issues in theory.
+  - [ ] Ensure that typefaces are freed properly when using the Skia backend. It seems like the SkTypeface
+        is never unreffed, at least in short programs. Likely, this is due to Skia caching the typeface
+        somewhere (perhaps next to its texture atlas) for a long time.
   - [X] Apply underline and strikeOut properties on Gtk when a font contains those.
   - [X] There is a chance that copying the rendered cairo surface on Wayland is done in software.
   - [X] Investigate why GTK_MT_HW_COPY experiences fairly large (around 500 ms) stutters from time to time.

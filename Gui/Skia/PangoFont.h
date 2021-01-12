@@ -16,7 +16,7 @@ namespace gui {
 	 */
 	class SkTypefaceKey {
 	public:
-		// Create, extract information from Fontconfig. Takes ownership of "blob".
+		// Create, extract information from Fontconfig. Takes ownership of "blob", i.e. assumes that it is ref'd.
 		SkTypefaceKey(hb_blob_t *blob, int index, FcPattern *pattern = null);
 
 		// Copy.
@@ -102,6 +102,9 @@ namespace gui {
 
 		// Number of users in Storm.
 		size_t users;
+
+		// Destroy.
+		~SkPangoTypeface() { PLN(L"Destroying typeface"); }
 
 	protected:
 		// Various functions needed.
@@ -197,11 +200,32 @@ namespace gui {
 		// version of Pango.
 		void loadBlob(FcPattern *pattern, hb_blob_t *&blob, int &index);
 
+		/**
+		 * Simple data structure for loaded hb_blob_t:s. Used to keep track of their lifetime.
+		 */
+		struct Blob {
+			// File used as a key in the map.
+			std::string file;
+
+			// Allocated blob. This keeps track of the refcount and ensures this struct is
+			// destroyed. Therefore, the blob is not ref'd.
+			hb_blob_t *blob;
+
+			// Data allocated for the blob.
+			char *data;
+
+			// Owning font cache. Set to null when the cache is destroyed.
+			SkPangoFontCache *cache;
+		};
+
+		// Destroy a blob structure.
+		static void destroyBlob(void *blob);
+
 		// Cache of font blobs. Only used if we fail to extract hb_face_t from Pango.
 		// We never deallocate these as we don't keep refcounts to them. That should be fine though,
 		// as it looks like Pango does the same. Anyhow, on new versions of Pango, we don't need
 		// the fallback, so it should be fine.
-		typedef std::unordered_map<std::string, hb_blob_t *> BlobMap;
+		typedef std::unordered_map<std::string, Blob *> BlobMap;
 		BlobMap blobs;
 	};
 
