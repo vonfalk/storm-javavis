@@ -926,8 +926,11 @@ namespace gui {
 		if (GDK_IS_WAYLAND_WINDOW(gtk_widget_get_window(drawWidget())))
 			return false;
 
+		// Initialize the variable once. This is atomic and will only be executed once.
+		static const char *RENDER_X_WINDOW = getenv(ENV_RENDER_X_WINDOW);
+
 		// Check the environment variable.
-		if (getenv(ENV_RENDER_X_WINDOW)) {
+		if (RENDER_X_WINDOW) {
 			// It exists! We need to create a separate window in two cases:
 			// 1: we have a painter attached
 			// 2: our parent has a painter attached
