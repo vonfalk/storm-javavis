@@ -11,7 +11,7 @@
 #Main -a -r ../root/ -f tests.ui.dialog
 #Main -a -r ../root/ -f tests.ui.overlay
 #Main -a -r ../root/ -f tests.ui.enterLeave
-Main -a -f tests.ui.text
+#Main -a -f tests.ui.text
 #Main -a -f tests.layout.main
 #Main -a -f tests.layout.basicMain
 #Main -a -f tests.layout.gridTest
@@ -21,7 +21,7 @@ Main -a -f tests.ui.text
 #Main -a -f tests.ui.testAbout
 #Main -a -f presentation.tests.test
 #Main -a -f presentation.tests.simple
-#Main -a -f progvis.debug
+Main -a -f progvis.debug
 #Main -a -f progvis.testCpp
 #Main -a -f trees.main
 

@@ -392,9 +392,15 @@ private Listing patchListing(PatchState state, Hints hints, Listing source, Func
 		Instr instr = replaceRefs(state, source[i]);
 
 		if (instr.op == OpCode:fnRet) {
+			// Check parameters now.
+			checkMemAccess(params, instr);
 			if (!onlyMemory)
 				generateReturnCall(state.program, params, fn, false, instr.src);
 		} else if (instr.op == OpCode:fnRetRef) {
+			// Trigger a read from the parameter. This won't be done unless we do it now.
+			params.saveRegs();
+			params.recordReadRef(instr.src);
+			params.restoreRegs();
 			if (!onlyMemory)
 				generateReturnCall(state.program, params, fn, true, instr.src);
 		} else if (instr.op == OpCode:fnCall | instr.op == OpCode:fnCallRef) {
