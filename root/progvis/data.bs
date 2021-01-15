@@ -529,7 +529,7 @@ private:
 		init(Str name, Data value, Nat offset, Bool divider) {
 			init() {
 				name = name;
-				text = Text(name, dataFont);
+				text = Text(name, variableFont);
 				value = value;
 				offset = offset;
 				line = divider;
@@ -662,7 +662,7 @@ private:
 
 		init(Nat id, Data value) {
 			init() {
-				text = Text(id.toS + ":", dataFont);
+				text = Text(id.toS + ":", variableFont);
 				value = value;
 			}
 		}

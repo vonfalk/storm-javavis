@@ -71,7 +71,7 @@ private:
 		init(Str name, unsafe:RawPtr obj, Data value) {
 			init() {
 				name = name;
-				text = Text(name, dataFont);
+				text = Text(name, variableFont);
 				value = value;
 				obj = obj;
 			}

@@ -6,14 +6,17 @@ use core:geometry;
  * Defaults for the visualizations.
  */
 
-// Default font when drawing data.
-Font dataFont on Render = defaultFont();
-
 // Font for captions.
 Font captionFont on Render = defaultFont();
 
+// Default font when drawing data.
+Font dataFont on Render = defaultFont();
+
+// Font for variable names.
+Font variableFont on Render = Font("Consolas", 12);
+
 // Font for code.
-Font codeFont on Render = Font("Liberation Mono", 12, 20);
+Font codeFont on Render = Font("Consolas", 11, 20);
 
 // Background color when drawing data.
 Brush dataBg on Render = SolidBrush(white);
