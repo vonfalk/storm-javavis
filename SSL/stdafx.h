@@ -9,4 +9,13 @@ namespace ssl {
 
 }
 
+#ifdef WINDOWS
+
+// Common includes for Windows.
+#define SECURITY_WIN32
+#include <Security.h>
+#include <Schannel.h>
+
+#endif
+
 #endif
