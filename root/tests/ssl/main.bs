@@ -1,4 +1,13 @@
+use core:net;
+use ssl;
+
 void main() {
-	print("Hello!");
-	ssl:test();
+	ClientContext context;
+	var stream = connect("storm-lang.org", 443);
+	if (stream) {
+		var session = context.connect(stream, "storm-lang.org");
+		print("Got a session!");
+	} else {
+		print("Failed to connect.");
+	}
 }

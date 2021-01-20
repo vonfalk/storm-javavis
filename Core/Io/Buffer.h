@@ -29,6 +29,9 @@ namespace storm {
 		inline Nat STORM_FN filled() const { return data ? data->filled : 0; }
 		inline void STORM_FN filled(Nat p) { if (data) data->filled = min(p, count()); }
 
+		// Number of free bytes.
+		inline Nat STORM_FN free() const { return count() - filled(); }
+
 		// Element access.
 		Byte &STORM_FN operator [](Nat id) { return data->v[id]; }
 		Byte operator [](Nat id) const { return data->v[id]; }

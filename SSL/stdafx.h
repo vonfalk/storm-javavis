@@ -16,6 +16,12 @@ namespace ssl {
 #include <Security.h>
 #include <Schannel.h>
 
+// Missing from time to time.
+#ifndef SECBUFFER_ALERT
+#define SECBUFFER_ALERT 17
+#endif
+
+
 #endif
 
 #endif
