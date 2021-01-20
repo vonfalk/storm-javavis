@@ -1,0 +1,4 @@
+[]
+package=ssl
+input=*
+stormUsingNamespace=storm

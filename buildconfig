@@ -25,7 +25,10 @@
 #Main -a -f progvis.testCpp
 #Main -a -f trees.main
 
-Main -a -t sql.tests
+#Main -a -t sql.tests
+
+# SSL
+Main -a -f tests.ssl.main
 
 #UI while running intensive memory allocations in the background.
 #Main -a -r ../root/ -f tests.ui.simpleMem
