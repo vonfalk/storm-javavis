@@ -40,8 +40,6 @@ Gc+=lib
 Utils+=lib
 SoundLib+=lib
 SoundLib+=extern_lib
-Cairo+=lib
-Cairo+=extern_lib
 
 #Libraries that need the storm preprocessor to be run.
 Compiler+=stormpp
