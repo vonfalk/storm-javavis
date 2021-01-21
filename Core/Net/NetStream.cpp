@@ -101,7 +101,7 @@ namespace storm {
 	 * IStream.
 	 */
 
-	NetIStream::NetIStream(NetStream *owner, os::Thread t) : HandleIStream(owner->handle, t) {}
+	NetIStream::NetIStream(NetStream *owner, os::Thread t) : HandleIStream(owner->handle, t), owner(owner) {}
 
 	NetIStream::~NetIStream() {
 		// The socket will close the handle.
@@ -118,7 +118,7 @@ namespace storm {
 	 * OStream.
 	 */
 
-	NetOStream::NetOStream(NetStream *owner, os::Thread t) : HandleOStream(owner->handle, t) {}
+	NetOStream::NetOStream(NetStream *owner, os::Thread t) : HandleOStream(owner->handle, t), owner(owner) {}
 
 	NetOStream::~NetOStream() {
 		// The socket will close the handle.
