@@ -40,6 +40,21 @@ namespace ssl {
 			}
 		}
 
+		SecPkgContext_StreamSizes ss;
+		QueryContextAttributes(&session->context, SECPKG_ATTR_STREAM_SIZES, &ss);
+		// Max input:
+		PVAR(ss.cbMaximumMessage);
+
+		// This is only when using "digest"
+		// SecPkgContext_Sizes sizes;
+		// QueryContextAttributes(&session->context, SECPKG_ATTR_SIZES, &sizes);
+		// // Max output size is the sum of these two.
+		// PVAR(sizes.cbMaxSignature);
+		// PVAR(sizes.cbBlockSize);
+
+		// From here on, we can use EncryptMessage and DecryptMessage.
+		// We must use cbMaximumMessage from QueryContextAttributes to find max message size.
+
 		PLN(L"Done!");
 	}
 

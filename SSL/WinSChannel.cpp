@@ -61,7 +61,8 @@ namespace ssl {
 
 	SChannelSession::~SChannelSession() {
 		data->unref();
-		TODO(L"Free handle!");
+		if (SecIsValidHandle(&context))
+			DeleteSecurityContext(&context);
 	}
 
 	int SChannelSession::initSession(Engine &e, Buffer &io) {
