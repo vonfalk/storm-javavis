@@ -1,4 +1,5 @@
 #pragma once
+#include "OS/Sync.h"
 
 namespace ssl {
 
@@ -43,6 +44,10 @@ namespace ssl {
 	/**
 	 * Data for an individual session.
 	 */
-	class SSLSession : public RefCount {};
+	class SSLSession : public RefCount {
+	public:
+		// Lock for the session.
+		os::Lock lock;
+	};
 
 }

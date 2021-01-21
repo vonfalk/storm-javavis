@@ -1,7 +1,7 @@
 #include "stdafx.h"
 #include "ClientContext.h"
 #include "Exception.h"
-#include "WinSChannel.h"
+#include "SecureChannel.h"
 
 namespace ssl {
 
@@ -11,7 +11,7 @@ namespace ssl {
 
 	Session *ClientContext::connect(IStream *input, OStream *output, Str *host) {
 		SChannelContext *c = (SChannelContext *)data();
-		return new (this) Session(input, output, new SChannelSession(c, host->c_str()));
+		return new (this) Session(input, output, new SChannelSession(c), host->c_str());
 	}
 
 	Session *ClientContext::connect(NetStream *socket, Str *host) {

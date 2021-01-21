@@ -46,6 +46,7 @@ namespace storm {
 
 		// Get a pointer to the data.
 		byte *dataPtr() { return data ? data->v : null; }
+		const byte *dataPtr() const { return data ? data->v : null; }
 
 		// Empty/full?
 		inline Bool STORM_FN empty() const { return filled() == 0; }

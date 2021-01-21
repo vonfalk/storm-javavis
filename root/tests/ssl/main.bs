@@ -13,10 +13,13 @@ void main() {
 		var out = Utf8Output(session.output, windowsTextInfo());
 		out.autoFlush = false;
 
-		out.write("GET / HTTP/1.1\n");
+
+		out.write("GET / HTTP/1.0\n"); // To disable "chunked"...
 		out.write("Host: storm-lang.org\n");
 		out.write("\n\n");
 		out.flush();
+
+		print(in.readAll());
 
 		session.close();
 		print("Done!");

@@ -1,24 +1,28 @@
 #include "stdafx.h"
 #include "Session.h"
 
-#include "WinSChannel.h"
+#include "SecureChannel.h"
 
 namespace ssl {
 
 	// TODO: Platform independence...
 
-	Session::Session(IStream *input, OStream *output, SSLSession *ctx) : src(input), dst(output), data(ctx) {
+	Session::Session(IStream *input, OStream *output, SSLSession *ctx, const wchar *host)
+		: src(input), dst(output), data(ctx),
+		  decryptedStart(0), decryptedEnd(0), remainingStart(0),
+		  incomingEnd(false), outgoingEnd(false) {
+
 		SChannelSession *session = (SChannelSession *)ctx;
 
 		// Minimum "free" when calling receive.
 		Nat minFree = 128;
 
 		// Input and output buffers.
-		inBuffer = storm::buffer(engine(), 2*1024);
-		outBuffer = storm::buffer(engine(), 2*1024);
+		Buffer inBuffer = storm::buffer(engine(), 2*1024);
+		Buffer outBuffer = storm::buffer(engine(), 2*1024);
 
 		while (true) {
-			int result = session->initSession(engine(), inBuffer, outBuffer);
+			int result = session->initSession(engine(), inBuffer, outBuffer, host);
 
 			if (result == 0) {
 				break;
@@ -43,9 +47,8 @@ namespace ssl {
 
 		// Resize the input and output buffers so that we don't have to resize them in the
 		// future. We can't reallocate them and keep inter-thread consistency.
-		Nat bufferSizes = min(Nat(4*1024), session->maxBlockSize);
-		inBuffer = storm::buffer(engine(), bufferSizes);
-		outBuffer = storm::buffer(engine(), bufferSizes);
+		bufferSizes = min(Nat(4*1024), session->maxMessageSize);
+		incoming = storm::buffer(engine(), bufferSizes);
 	}
 
 	Session::Session(const Session &o) : src(o.src), dst(o.dst), data(o.data) {
@@ -69,8 +72,149 @@ namespace ssl {
 	}
 
 	void Session::close() {
+		shutdown();
 		src->close();
 		dst->close();
+	}
+
+	Bool Session::more() {
+		os::Lock::L z(data->lock);
+		// More decrypted data?
+		if (decryptedStart < decryptedEnd)
+			return true;
+
+		// If the remote end is shutdown, we won't get more data.
+		if (incomingEnd)
+			return false;
+
+		// Otherwise, see if we have more data to decrypt, or if there is more in the source.
+		return (remainingStart < incoming.filled()) // more encrypted data?
+			|| src->more(); // more from the source stream?
+	}
+
+	void Session::read(Buffer &to) {
+		os::Lock::L z(data->lock);
+
+		if (decryptedStart >= decryptedEnd)
+			fill();
+
+		Nat toFill = min(to.free(), decryptedEnd - decryptedStart);
+		memcpy(to.dataPtr() + to.filled(), incoming.dataPtr() + decryptedStart, toFill);
+		to.filled(to.filled() + toFill);
+		decryptedStart += toFill;
+	}
+
+	void Session::peek(Buffer &to) {
+		os::Lock::L z(data->lock);
+
+		if (decryptedStart >= decryptedEnd)
+			fill();
+
+		Nat toFill = min(to.free(), decryptedEnd - decryptedStart);
+		memcpy(to.dataPtr() + to.filled(), incoming.dataPtr() + decryptedStart, toFill);
+		to.filled(to.filled() + toFill);
+	}
+
+	void Session::write(const Buffer &from, Nat offset) {
+		if (offset >= from.filled())
+			return;
+
+		os::Lock::L z(data->lock);
+
+		if (outgoingEnd)
+			return;
+
+		// TODO: Respect the max message size!
+
+		SChannelSession *session = (SChannelSession *)data;
+		session->encrypt(engine(), from, offset, outgoing);
+		dst->write(outgoing);
+
+		// Clear the buffer if it becomes too large.
+		if (outgoing.count() > bufferSizes * 2)
+			outgoing = Buffer();
+	}
+
+	void Session::flush() {
+		os::Lock::L z(data->lock);
+		// We don't really buffer data, so just propagate the flush.
+		dst->flush();
+	}
+
+	void Session::fill() {
+		// In case we fail somewhere...
+		decryptedStart = decryptedEnd = 0;
+
+		// Anything left in the buffer?
+		if (remainingStart >= incoming.filled()) {
+			// Nope. Get more. But this means that the buffer is entirely empty, use that.
+			incoming.filled(0);
+			remainingStart = 0;
+			incoming = src->read(incoming);
+		}
+
+		// Should we shrink the buffer a bit?
+		Nat used = incoming.filled() - remainingStart;
+		if ((used * 2 < incoming.count()) && (incoming.count() > bufferSizes)) {
+			Buffer t = buffer(engine(), max(used, bufferSizes));
+			memcpy(t.dataPtr(), incoming.dataPtr() + remainingStart, used);
+			incoming = t;
+			incoming.filled(used);
+			remainingStart = 0;
+		}
+
+		SChannelSession *session = (SChannelSession *)data;
+
+		while (true) {
+			SChannelSession::Markers markers = session->decrypt(engine(), incoming, remainingStart);
+			decryptedStart = markers.plaintextStart;
+			decryptedEnd = markers.plaintextEnd;
+			remainingStart = markers.remainingStart;
+
+			// Did we decrypt something? Good, we're done for now.
+			if (decryptedStart != decryptedEnd)
+				break;
+
+			// End of transmission?
+			if (markers.shutdown) {
+				incomingEnd = true;
+				break;
+			}
+
+			// Is there a large "hole" in the beginning of the array? If so, we want to move it back
+			// into place to use the space more efficiently.
+			if (remainingStart > incoming.count() / 4) {
+				incoming.shift(remainingStart);
+				remainingStart = 0;
+				decryptedStart = decryptedEnd = 0;
+			}
+
+			// If we didn't get any data back, try to get more data and try again.
+			Nat margin = incoming.filled() / 2;
+			if (incoming.free() < margin)
+				incoming = grow(engine(), incoming, incoming.filled() * 2);
+
+			Nat before = incoming.filled();
+			incoming = src->read(incoming);
+
+			if (incoming.filled() == before) {
+				// Failed to receive data, give up.
+				break;
+			}
+		}
+	}
+
+	void Session::shutdown() {
+		os::Lock::L z(data->lock);
+
+		if (outgoingEnd)
+			return;
+
+		SChannelSession *session = (SChannelSession *)data;
+		Buffer msg = session->shutdown(engine());
+		dst->write(msg);
+
+		outgoingEnd = true;
 	}
 
 
@@ -83,14 +227,16 @@ namespace ssl {
 	void SessionIStream::close() {}
 
 	Bool SessionIStream::more() {
-		return true;
+		return owner->more();
 	}
 
 	Buffer SessionIStream::read(Buffer to) {
+		owner->read(to);
 		return to;
 	}
 
 	Buffer SessionIStream::peek(Buffer to) {
+		owner->peek(to);
 		return to;
 	}
 
@@ -101,12 +247,16 @@ namespace ssl {
 
 	SessionOStream::SessionOStream(Session *owner) : owner(owner) {}
 
-	void SessionOStream::close() {}
-
-	void SessionOStream::write(Buffer from, Nat offset) {
-		PLN(TO_S(this, from));
+	void SessionOStream::close() {
+		owner->shutdown();
 	}
 
-	void SessionOStream::flush() {}
+	void SessionOStream::write(Buffer from, Nat offset) {
+		owner->write(from, offset);
+	}
+
+	void SessionOStream::flush() {
+		owner->flush();
+	}
 
 }

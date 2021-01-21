@@ -16,12 +16,16 @@ namespace ssl {
 	 *
 	 * This class will not be "properly" cloned when crossing thread boundaries. We protect all
 	 * relevant data with locks though, and most data is constant after construction.
+	 *
+	 * TODO: Move most of the logic in this class to a separate class, so that we can make copies of
+	 * this one while retaining its state. Otherwise, the state will be borked as soon as we copy
+	 * this class.
 	 */
 	class Session : public Object {
 		STORM_CLASS;
 	public:
 		// Create from other parts of the system. Will initiate a SSL context.
-		Session(IStream *input, OStream *output, SSLSession *session);
+		Session(IStream *input, OStream *output, SSLSession *session, const wchar *host);
 
 		// Copy.
 		Session(const Session &o);
@@ -51,9 +55,48 @@ namespace ssl {
 		// SSL context.
 		SSLSession *data;
 
-		// Input and output buffers used when encrypting/decrypting data.
-		Buffer inBuffer;
-		Buffer outBuffer;
+		// Buffer for outgoing data. Contents here are not persistent, we keep it around to avoid
+		// memory allocations. It may be empty.
+		Buffer outgoing;
+
+		// This buffer is where we store data we have received from the network, and are in the
+		// process of decrypting. The data consists of a number of parts, namely:
+		// - decrypted plaintext - from decryptedStart to decryptedEnd.
+		// - ciphertext - from remainingStart to filled()
+		Buffer incoming;
+
+		// Start and end of decrypted data in 'incoming'.
+		Nat decryptedStart;
+		Nat decryptedEnd;
+
+		// Start of ciphertext in 'incoming'.
+		Nat remainingStart;
+
+		// Guideline on buffer size.
+		Nat bufferSizes;
+
+		// Is the read end shut down?
+		Bool incomingEnd;
+
+		// Is the write end shut down?
+		Bool outgoingEnd;
+
+		// Functions called from the streams.
+		friend class SessionIStream;
+		friend class SessionOStream;
+
+		Bool more();
+		void read(Buffer &to);
+		void peek(Buffer &to);
+
+		void write(const Buffer &from, Nat start);
+		void flush();
+
+		// Shutdown the write end.
+		void shutdown();
+
+		// Try to decrypt more data. Assumes that 'decrypted' in 'incoming' is empty.
+		void fill();
 	};
 
 
