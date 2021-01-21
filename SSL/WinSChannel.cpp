@@ -54,7 +54,9 @@ namespace ssl {
 	}
 
 
-	SChannelSession::SChannelSession(SChannelContext *data, const String &host) : data(data), host(host) {
+	SChannelSession::SChannelSession(SChannelContext *data, const String &host)
+		: data(data), host(host), maxBlockSize(0) {
+
 		data->ref();
 		SecInvalidateHandle(&context);
 	}
@@ -84,12 +86,10 @@ namespace ssl {
 		};
 
 		if (!SecIsValidHandle(&context)) {
-			PLN(L"First call");
 			// First call.
 			currentHandle = null;
 			inputParam = null;
 		} else {
-			PLN(L"Subsequent call");
 			// Other calls.
 			currentHandle = &context;
 			inputParam = &input;
@@ -113,7 +113,6 @@ namespace ssl {
 		// See if there is any unconsumed data in the input buffer.
 		if (input.pBuffers[1].BufferType == SECBUFFER_EXTRA) {
 			// Shift data back and keep unconsumed data in the beginning of "input".
-			PVAR(input.pBuffers[1].cbBuffer);
 			inBuffer.shift(inBuffer.filled() - input.pBuffers[1].cbBuffer);
 		} else if (status == SEC_E_INCOMPLETE_MESSAGE) {
 			// It was incomplete, just don't clear the buffer.
@@ -135,10 +134,12 @@ namespace ssl {
 
 			// Not done. More messages.
 			result = -1;
-
-			PLN(L"Continue");
 		} else if (status == SEC_E_OK) {
-			// All done!
+			// All done, set the maximum size for encryption/decryption.
+			SecPkgContext_StreamSizes ss;
+			QueryContextAttributes(&context, SECPKG_ATTR_STREAM_SIZES, &ss);
+			maxBlockSize = ss.cbMaximumMessage;
+
 			result = 0;
 		} else if (status == SEC_E_INCOMPLETE_MESSAGE) {
 			if (input.pBuffers[1].BufferType == SECBUFFER_MISSING) {
@@ -147,12 +148,7 @@ namespace ssl {
 				// Just provide a decent guess if we cant find a guess from the API.
 				result = 32;
 			}
-			PLN(L"NOT ENOUGH");
-		} else if (status == SEC_E_INVALID_TOKEN) {
-			PLN(L"INV TOKEN");
-			error = true;
 		} else {
-			PLN(L"ERROR");
 			error = true;
 		}
 
@@ -161,22 +157,23 @@ namespace ssl {
 			FreeContextBuffer(output.pBuffers[0].pvBuffer);
 
 		if (error) {
-			PVAR(SEC_I_COMPLETE_AND_CONTINUE);
-			PVAR(SEC_I_COMPLETE_NEEDED);
-			PVAR(SEC_I_CONTINUE_NEEDED);
-			PVAR(SEC_E_INCOMPLETE_MESSAGE);
-			PVAR(SEC_I_INCOMPLETE_CREDENTIALS);
-			PVAR(SEC_E_INSUFFICIENT_MEMORY);
-			PVAR(SEC_E_INTERNAL_ERROR);
-			PVAR(SEC_E_INVALID_HANDLE);
-			PVAR(SEC_E_INVALID_TOKEN);
-			PVAR(SEC_E_LOGON_DENIED);
-			PVAR(SEC_E_NO_AUTHENTICATING_AUTHORITY);
-			PVAR(SEC_E_NO_CREDENTIALS);
-			PVAR(SEC_E_TARGET_UNKNOWN);
-			PVAR(SEC_E_UNSUPPORTED_FUNCTION);
-			PVAR(SEC_E_WRONG_PRINCIPAL);
-			PVAR(SEC_E_ILLEGAL_MESSAGE);
+			// For easier checking of what went wrong.
+			// PVAR(SEC_I_COMPLETE_AND_CONTINUE);
+			// PVAR(SEC_I_COMPLETE_NEEDED);
+			// PVAR(SEC_I_CONTINUE_NEEDED);
+			// PVAR(SEC_E_INCOMPLETE_MESSAGE);
+			// PVAR(SEC_I_INCOMPLETE_CREDENTIALS);
+			// PVAR(SEC_E_INSUFFICIENT_MEMORY);
+			// PVAR(SEC_E_INTERNAL_ERROR);
+			// PVAR(SEC_E_INVALID_HANDLE);
+			// PVAR(SEC_E_INVALID_TOKEN);
+			// PVAR(SEC_E_LOGON_DENIED);
+			// PVAR(SEC_E_NO_AUTHENTICATING_AUTHORITY);
+			// PVAR(SEC_E_NO_CREDENTIALS);
+			// PVAR(SEC_E_TARGET_UNKNOWN);
+			// PVAR(SEC_E_UNSUPPORTED_FUNCTION);
+			// PVAR(SEC_E_WRONG_PRINCIPAL);
+			// PVAR(SEC_E_ILLEGAL_MESSAGE);
 			throw new (e) SSLError(TO_S(e, S("Failed to initialize an SSL session: ") << status));
 		}
 

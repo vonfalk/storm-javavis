@@ -49,6 +49,9 @@ namespace ssl {
 		// Host.
 		String host;
 
+		// Maximum block size for encryption/decryption. Set when the session is established.
+		Nat maxBlockSize;
+
 		// Lock for the session.
 		os::Lock lock;
 

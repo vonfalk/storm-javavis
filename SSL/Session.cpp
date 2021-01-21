@@ -14,15 +14,11 @@ namespace ssl {
 		Nat minFree = 128;
 
 		// Input and output buffers.
-		Buffer inBuffer = storm::buffer(engine(), 1*1024);
+		Buffer inBuffer = storm::buffer(engine(), 4*1024);
 		Buffer outBuffer;
 
 		while (true) {
-			PLN(L"In bytes: " << inBuffer.filled());
 			int result = session->initSession(engine(), inBuffer, outBuffer);
-			PLN(L"Remaining: " << inBuffer.filled());
-			PLN(L"Out bytes: " << outBuffer.filled());
-			PVAR(result);
 
 			if (result == 0) {
 				break;
@@ -40,22 +36,10 @@ namespace ssl {
 			inBuffer = src->read(inBuffer);
 		}
 
-		SecPkgContext_StreamSizes ss;
-		QueryContextAttributes(&session->context, SECPKG_ATTR_STREAM_SIZES, &ss);
-		// Max input:
-		PVAR(ss.cbMaximumMessage);
-
-		// This is only when using "digest"
-		// SecPkgContext_Sizes sizes;
-		// QueryContextAttributes(&session->context, SECPKG_ATTR_SIZES, &sizes);
-		// // Max output size is the sum of these two.
-		// PVAR(sizes.cbMaxSignature);
-		// PVAR(sizes.cbBlockSize);
+		PVAR(session->maxBlockSize);
 
 		// From here on, we can use EncryptMessage and DecryptMessage.
 		// We must use cbMaximumMessage from QueryContextAttributes to find max message size.
-
-		PLN(L"Done!");
 	}
 
 	Session::Session(const Session &o) : src(o.src), dst(o.dst), data(o.data) {
