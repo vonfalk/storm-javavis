@@ -11,10 +11,28 @@ namespace storm {
 	TextInfo::TextInfo() : useCrLf(false), useBom(false) {}
 
 	TextInfo sysTextInfo() {
-		TextInfo info;
 #ifdef WINDOWS
-		info.useCrLf = true;
+		return windowsTextInfo();
+#else
+		return unixTextInfo();
 #endif
+	}
+
+	TextInfo unixTextInfo() {
+		TextInfo info;
+		return info;
+	}
+
+	TextInfo windowsTextInfo() {
+		TextInfo info;
+		info.useCrLf = true;
+		return info;
+	}
+
+	TextInfo windowsTextInfo(Bool bom) {
+		TextInfo info;
+		info.useCrLf = true;
+		info.useBom = bom;
 		return info;
 	}
 
@@ -117,9 +135,9 @@ namespace storm {
 
 	void TextInput::close() {}
 
-	Char TextInput::readChar() {
-		return Char(nat(0));
-	}
+	// Char TextInput::readChar() {
+	// 	return Char(nat(0));
+	// }
 
 
 	TextInput *STORM_FN readText(IStream *stream) {
@@ -203,7 +221,7 @@ namespace storm {
 		}
 	}
 
-	void TextOutput::writeChar(Char ch) {}
+	// void TextOutput::writeChar(Char ch) {}
 
 	void TextOutput::flush() {}
 

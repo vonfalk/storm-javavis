@@ -13,6 +13,9 @@ namespace ssl {
 	 * use it on any pair of streams.
 	 *
 	 * Use ssl:Context to create endpoints.
+	 *
+	 * This class will not be "properly" cloned when crossing thread boundaries. We protect all
+	 * relevant data with locks though, and most data is constant after construction.
 	 */
 	class Session : public Object {
 		STORM_CLASS;
@@ -30,13 +33,13 @@ namespace ssl {
 		virtual void STORM_FN deepCopy(CloneEnv *env);
 
 		// Close the connection.
-		virtual void close();
+		virtual void STORM_FN close();
 
 		// Get input stream.
-		// IStream *STORM_FN input() const;
+		IStream *STORM_FN input();
 
 		// Get output stream.
-		// OStream *STORM_FN output() const;
+		OStream *STORM_FN output();
 
 	private:
 		// Input stream.
@@ -47,6 +50,68 @@ namespace ssl {
 
 		// SSL context.
 		SSLSession *data;
+
+		// Input and output buffers used when encrypting/decrypting data.
+		Buffer inBuffer;
+		Buffer outBuffer;
 	};
+
+
+	/**
+	 * Input stream for a session.
+	 *
+	 * This class is not really cloned, we store all data inside Session, and let that class handle
+	 * all state. There, we protect the data with locks as needed.
+	 */
+	class SessionIStream : public IStream {
+		STORM_CLASS;
+	public:
+		// Created by the Session.
+		SessionIStream(Session *owner);
+
+		// Close it.
+		virtual void STORM_FN close();
+
+		// More data?
+		virtual Bool STORM_FN more();
+
+		// Read data.
+		virtual Buffer STORM_FN read(Buffer to);
+
+		// Peek data.
+		virtual Buffer STORM_FN peek(Buffer to);
+
+	private:
+		// Session.
+		Session *owner;
+	};
+
+
+	/**
+	 * Output stream for a session.
+	 *
+	 * This class is not really cloned, we store all data inside Session, and let that class handle
+	 * all state. There, we protect the data with locks as needed.
+	 */
+	class SessionOStream : public OStream {
+		STORM_CLASS;
+	public:
+		// Created by the Session.
+		SessionOStream(Session *owner);
+
+		// Close it.
+		virtual void STORM_FN close();
+
+		// Write data.
+		virtual void STORM_FN write(Buffer buf, Nat start);
+
+		// Flush the stream.
+		virtual void STORM_FN flush();
+
+	private:
+		// Session.
+		Session *owner;
+	};
+
 
 }

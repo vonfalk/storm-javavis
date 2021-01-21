@@ -1,4 +1,5 @@
 use core:net;
+use core:io;
 use ssl;
 
 void main() {
@@ -7,6 +8,18 @@ void main() {
 	if (stream) {
 		var session = context.connect(stream, "storm-lang.org");
 		print("Got a session!");
+
+		var in = Utf8Input(session.input);
+		var out = Utf8Output(session.output, windowsTextInfo());
+		out.autoFlush = false;
+
+		out.write("GET / HTTP/1.1\n");
+		out.write("Host: storm-lang.org\n");
+		out.write("\n\n");
+		out.flush();
+
+		session.close();
+		print("Done!");
 	} else {
 		print("Failed to connect.");
 	}

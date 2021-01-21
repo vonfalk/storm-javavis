@@ -40,6 +40,15 @@ namespace storm {
 	// System default TextInfo.
 	TextInfo STORM_FN sysTextInfo();
 
+	// Unix line-endings.
+	TextInfo STORM_FN unixTextInfo();
+
+	// Windows line-endings.
+	TextInfo STORM_FN windowsTextInfo();
+
+	// Specify if you require a BOM.
+	TextInfo STORM_FN windowsTextInfo(Bool bom);
+
 	/**
 	 * Base interface for reading text. Caches one character. When implementing your own version,
 	 * override 'readChar' to read a code point in UTF32. Manages line endings so that the 'read'
@@ -47,7 +56,7 @@ namespace storm {
 	 * sometimes.
 	 */
 	class TextInput : public Object {
-		STORM_CLASS;
+		STORM_ABSTRACT_CLASS;
 	public:
 		// Create.
 		STORM_CTOR TextInput();
@@ -78,7 +87,7 @@ namespace storm {
 
 	protected:
 		// Override in derived readers, read one character.
-		virtual Char STORM_FN readChar();
+		virtual Char STORM_FN readChar() ABSTRACT;
 
 	private:
 		// Cached code point. 0 if at end of stream.
@@ -114,7 +123,7 @@ namespace storm {
 	 * override 'writeChar' and 'flush' to write a code point in UTF32.
 	 */
 	class TextOutput : public Object {
-		STORM_CLASS;
+		STORM_ABSTRACT_CLASS;
 	public:
 		// Create. Output regular unix line endings (TODO: Should this be OS-dependent?)
 		STORM_CTOR TextOutput();
@@ -143,7 +152,7 @@ namespace storm {
 
 	protected:
 		// Override in derived writers. Write one character.
-		virtual void STORM_FN writeChar(Char ch);
+		virtual void STORM_FN writeChar(Char ch) ABSTRACT;
 
 	private:
 		// Text config.

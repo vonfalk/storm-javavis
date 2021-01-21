@@ -14,8 +14,8 @@ namespace ssl {
 		Nat minFree = 128;
 
 		// Input and output buffers.
-		Buffer inBuffer = storm::buffer(engine(), 4*1024);
-		Buffer outBuffer;
+		inBuffer = storm::buffer(engine(), 2*1024);
+		outBuffer = storm::buffer(engine(), 2*1024);
 
 		while (true) {
 			int result = session->initSession(engine(), inBuffer, outBuffer);
@@ -24,8 +24,10 @@ namespace ssl {
 				break;
 			} else if (result < 0) {
 				// Send to server and receive more.
-				if (outBuffer.filled() > 0)
+				if (outBuffer.filled() > 0) {
 					dst->write(outBuffer);
+					dst->flush();
+				}
 			}
 
 			// Read more data.
@@ -36,10 +38,14 @@ namespace ssl {
 			inBuffer = src->read(inBuffer);
 		}
 
-		PVAR(session->maxBlockSize);
-
 		// From here on, we can use EncryptMessage and DecryptMessage.
 		// We must use cbMaximumMessage from QueryContextAttributes to find max message size.
+
+		// Resize the input and output buffers so that we don't have to resize them in the
+		// future. We can't reallocate them and keep inter-thread consistency.
+		Nat bufferSizes = min(Nat(4*1024), session->maxBlockSize);
+		inBuffer = storm::buffer(engine(), bufferSizes);
+		outBuffer = storm::buffer(engine(), bufferSizes);
 	}
 
 	Session::Session(const Session &o) : src(o.src), dst(o.dst), data(o.data) {
@@ -51,12 +57,56 @@ namespace ssl {
 	}
 
 	void Session::deepCopy(CloneEnv *) {
-		TODO(L"Think about how to handle copies.");
+		// No need.
+	}
+
+	IStream *Session::input() {
+		return new (this) SessionIStream(this);
+	}
+
+	OStream *Session::output() {
+		return new (this) SessionOStream(this);
 	}
 
 	void Session::close() {
 		src->close();
 		dst->close();
 	}
+
+
+	/**
+	 * Input stream.
+	 */
+
+	SessionIStream::SessionIStream(Session *owner) : owner(owner) {}
+
+	void SessionIStream::close() {}
+
+	Bool SessionIStream::more() {
+		return true;
+	}
+
+	Buffer SessionIStream::read(Buffer to) {
+		return to;
+	}
+
+	Buffer SessionIStream::peek(Buffer to) {
+		return to;
+	}
+
+
+	/**
+	 * Output stream.
+	 */
+
+	SessionOStream::SessionOStream(Session *owner) : owner(owner) {}
+
+	void SessionOStream::close() {}
+
+	void SessionOStream::write(Buffer from, Nat offset) {
+		PLN(TO_S(this, from));
+	}
+
+	void SessionOStream::flush() {}
 
 }
