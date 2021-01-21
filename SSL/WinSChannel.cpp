@@ -65,7 +65,7 @@ namespace ssl {
 			DeleteSecurityContext(&context);
 	}
 
-	int SChannelSession::initSession(Engine &e, Buffer &io) {
+	int SChannelSession::initSession(Engine &e, Buffer &inBuffer, Buffer &outBuffer) {
 		SECURITY_STATUS status;
 		// Ask it to allocate output buffers for us. That means we don't have to worry about the size of them.
 		ULONG requirements = ISC_REQ_ALLOCATE_MEMORY;
@@ -93,8 +93,8 @@ namespace ssl {
 			// Other calls.
 			currentHandle = &context;
 			inputParam = &input;
-			inBuffers[0].cbBuffer = io.filled();
-			inBuffers[0].pvBuffer = io.dataPtr();
+			inBuffers[0].cbBuffer = inBuffer.filled();
+			inBuffers[0].pvBuffer = inBuffer.dataPtr();
 		}
 
 		// Note: Doc says we need a SECBUFFER_ALERT, but it works anyway.
@@ -110,16 +110,28 @@ namespace ssl {
 										&context, &output,
 										&attrsOut, NULL /* expires */);
 
+		// See if there is any unconsumed data in the input buffer.
+		if (input.pBuffers[1].BufferType == SECBUFFER_EXTRA) {
+			// Shift data back and keep unconsumed data in the beginning of "input".
+			PVAR(input.pBuffers[1].cbBuffer);
+			inBuffer.shift(inBuffer.filled() - input.pBuffers[1].cbBuffer);
+		} else if (status == SEC_E_INCOMPLETE_MESSAGE) {
+			// It was incomplete, just don't clear the buffer.
+		} else {
+			// No unconsumed data. Clear it.
+			inBuffer.filled(0);
+		}
+
 		int result = 0;
 		bool error = false;
 		if (status == SEC_I_CONTINUE_NEEDED) {
 			// Send to server!
 			SecBuffer b = output.pBuffers[0];
-			if (io.count() < b.cbBuffer)
-				io = storm::buffer(e, b.cbBuffer);
+			if (outBuffer.count() < b.cbBuffer)
+				outBuffer = storm::buffer(e, b.cbBuffer);
 
-			memcpy(io.dataPtr(), b.pvBuffer, b.cbBuffer);
-			io.filled(b.cbBuffer);
+			memcpy(outBuffer.dataPtr(), b.pvBuffer, b.cbBuffer);
+			outBuffer.filled(b.cbBuffer);
 
 			// Not done. More messages.
 			result = -1;
@@ -131,13 +143,9 @@ namespace ssl {
 		} else if (status == SEC_E_INCOMPLETE_MESSAGE) {
 			if (input.pBuffers[1].BufferType == SECBUFFER_MISSING) {
 				result = input.pBuffers[1].cbBuffer;
-
-				// Provide a somewhat sensible minimum.
-				if (result < 32)
-					result = 32;
 			} else {
 				// Just provide a decent guess if we cant find a guess from the API.
-				result = 1024;
+				result = 32;
 			}
 			PLN(L"NOT ENOUGH");
 		} else if (status == SEC_E_INVALID_TOKEN) {
@@ -148,17 +156,7 @@ namespace ssl {
 			error = true;
 		}
 
-		PVAR(SECBUFFER_TOKEN);
-		PVAR(input.pBuffers[0].BufferType);
-		PVAR(input.pBuffers[1].BufferType);
-
-		if (input.pBuffers[1].BufferType == SECBUFFER_EXTRA) {
-			// Extra bytes, keep them in the output buffer!
-			PVAR(input.pBuffers[1].cbBuffer);
-			PVAR(input.pBuffers[1].pvBuffer);
-			TODO(L"Need to feed this back somehow!");
-		}
-
+		// Clean up.
 		if (output.pBuffers[0].pvBuffer)
 			FreeContextBuffer(output.pBuffers[0].pvBuffer);
 

@@ -32,6 +32,11 @@ namespace storm {
 		// Number of free bytes.
 		inline Nat STORM_FN free() const { return count() - filled(); }
 
+		// Shift data 'n' locations towards the front of the buffer. Effectively removing the first
+		// 'n' bytes. Assumes that only data up until 'filled' are relevant and updates 'filled'
+		// accordingly.
+		void STORM_FN shift(Nat n);
+
 		// Element access.
 		Byte &STORM_FN operator [](Nat id) { return data->v[id]; }
 		Byte operator [](Nat id) const { return data->v[id]; }

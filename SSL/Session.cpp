@@ -10,34 +10,34 @@ namespace ssl {
 	Session::Session(IStream *input, OStream *output, SSLSession *ctx) : src(input), dst(output), data(ctx) {
 		SChannelSession *session = (SChannelSession *)ctx;
 
-		// Fair initial size. We reuse the buffer as much as we can.
-		Buffer buffer = storm::buffer(engine(), 1*1024);
+		// Minimum "free" when calling receive.
+		Nat minFree = 128;
+
+		// Input and output buffers.
+		Buffer inBuffer = storm::buffer(engine(), 1*1024);
+		Buffer outBuffer;
 
 		while (true) {
-			// TODO: We need to figure out when messages are large enough. the underlying API seems
-			// to not handle that too well (or we give it wrong parameters somewhere...).
-
-			PLN(L"In bytes: " << buffer.filled());
-			int result = session->initSession(engine(), buffer);
-			PLN(L"Out bytes: " << buffer.filled());
+			PLN(L"In bytes: " << inBuffer.filled());
+			int result = session->initSession(engine(), inBuffer, outBuffer);
+			PLN(L"Remaining: " << inBuffer.filled());
+			PLN(L"Out bytes: " << outBuffer.filled());
 			PVAR(result);
+
 			if (result == 0) {
 				break;
-			} else if (result > 0) {
-				// Read more data.
-				Nat more = result;
-				if (buffer.free() < more)
-					buffer = grow(engine(), buffer, buffer.filled() + more);
-
-				buffer = src->read(buffer);
-			} else {
-				// Send to server and start receiving.
-				dst->write(buffer);
-
-				// Read back data.
-				buffer.filled(0);
-				buffer = src->read(buffer);
+			} else if (result < 0) {
+				// Send to server and receive more.
+				if (outBuffer.filled() > 0)
+					dst->write(outBuffer);
 			}
+
+			// Read more data.
+			Nat more = max(minFree, Nat(abs(result)));
+			if (inBuffer.free() < more)
+				inBuffer = grow(engine(), inBuffer, inBuffer.filled() + more);
+
+			inBuffer = src->read(inBuffer);
 		}
 
 		SecPkgContext_StreamSizes ss;

@@ -52,10 +52,12 @@ namespace ssl {
 		// Lock for the session.
 		os::Lock lock;
 
-		// Initialize a session. Uses the "buffer" to read/write data. May throw an exception.
+		// Initialize a session. Reads data from "input" (empty at first), and writes to
+		// "output". The function clears the part of "input" that was consumed, and may leave parts
+		// of it there. "output" is to be sent to the remote peer.
 		// Returns 0 if we're done, <0 if we need to send a message to the server, and >0 if we need
 		// to get more data. Note: remaining size is just a guess.
-		int initSession(Engine &e, Buffer &io);
+		int initSession(Engine &e, Buffer &input, Buffer &output);
 	};
 
 }

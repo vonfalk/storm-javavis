@@ -9,6 +9,15 @@ namespace storm {
 
 	Buffer::Buffer(GcArray<Byte> *buf) : data(buf) {}
 
+	void Buffer::shift(Nat n) {
+		if (n >= filled()) {
+			filled(0);
+		} else {
+			memmove(data->v, data->v + n, filled() - n);
+			filled(filled() - n);
+		}
+	}
+
 	void Buffer::deepCopy(CloneEnv *env) {
 		if (data) {
 			GcArray<Byte> *n = runtime::allocBuffer(env->engine(), data->count);
