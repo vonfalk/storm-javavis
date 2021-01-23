@@ -1,6 +1,18 @@
 #pragma once
 
 #ifdef WINDOWS
+
+// Common includes for Windows.
+#define SECURITY_WIN32
+#include <Security.h>
+#include <Schannel.h>
+
+// Missing from time to time.
+#ifndef SECBUFFER_ALERT
+#define SECBUFFER_ALERT 17
+#endif
+
+
 #include "Data.h"
 #include "Core/Io/Buffer.h"
 

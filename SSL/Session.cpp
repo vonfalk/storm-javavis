@@ -12,6 +12,7 @@ namespace ssl {
 		  decryptedStart(0), decryptedEnd(0), remainingStart(0),
 		  incomingEnd(false), outgoingEnd(false) {
 
+#ifdef WINDOWS
 		SChannelSession *session = (SChannelSession *)ctx;
 
 		// Minimum "free" when calling receive.
@@ -49,6 +50,7 @@ namespace ssl {
 		// future. We can't reallocate them and keep inter-thread consistency.
 		bufferSizes = min(Nat(4*1024), session->maxMessageSize);
 		incoming = storm::buffer(engine(), bufferSizes);
+#endif
 	}
 
 	Session::Session(const Session &o) : src(o.src), dst(o.dst), data(o.data) {
@@ -78,6 +80,7 @@ namespace ssl {
 	}
 
 	Bool Session::more() {
+#ifdef WINDOWS
 		os::Lock::L z(data->lock);
 		// More decrypted data?
 		if (decryptedStart < decryptedEnd)
@@ -90,11 +93,14 @@ namespace ssl {
 		// Otherwise, see if we have more data to decrypt, or if there is more in the source.
 		return (remainingStart < incoming.filled()) // more encrypted data?
 			|| src->more(); // more from the source stream?
+#endif
+		return true;
 	}
 
 	void Session::read(Buffer &to) {
 		os::Lock::L z(data->lock);
 
+#ifdef WINDOWS
 		if (decryptedStart >= decryptedEnd)
 			fill();
 
@@ -102,17 +108,20 @@ namespace ssl {
 		memcpy(to.dataPtr() + to.filled(), incoming.dataPtr() + decryptedStart, toFill);
 		to.filled(to.filled() + toFill);
 		decryptedStart += toFill;
+#endif
 	}
 
 	void Session::peek(Buffer &to) {
 		os::Lock::L z(data->lock);
 
+#ifdef WINDOWS
 		if (decryptedStart >= decryptedEnd)
 			fill();
 
 		Nat toFill = min(to.free(), decryptedEnd - decryptedStart);
 		memcpy(to.dataPtr() + to.filled(), incoming.dataPtr() + decryptedStart, toFill);
 		to.filled(to.filled() + toFill);
+#endif
 	}
 
 	void Session::write(const Buffer &from, Nat offset) {
@@ -121,6 +130,7 @@ namespace ssl {
 
 		os::Lock::L z(data->lock);
 
+#ifdef WINDOWS
 		if (outgoingEnd)
 			return;
 
@@ -133,6 +143,7 @@ namespace ssl {
 		// Clear the buffer if it becomes too large.
 		if (outgoing.count() > bufferSizes * 2)
 			outgoing = Buffer();
+#endif
 	}
 
 	void Session::flush() {
@@ -142,6 +153,7 @@ namespace ssl {
 	}
 
 	void Session::fill() {
+#ifdef WINDOWS
 		// In case we fail somewhere...
 		decryptedStart = decryptedEnd = 0;
 
@@ -202,10 +214,13 @@ namespace ssl {
 				break;
 			}
 		}
+#endif
 	}
 
 	void Session::shutdown() {
 		os::Lock::L z(data->lock);
+
+#ifdef WINDOWS
 
 		if (outgoingEnd)
 			return;
@@ -215,6 +230,7 @@ namespace ssl {
 		dst->write(msg);
 
 		outgoingEnd = true;
+#endif
 	}
 
 

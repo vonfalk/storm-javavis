@@ -29,6 +29,8 @@ namespace storm {
 		T v[size];
 
 		GcPreArray() : count(size), filled(0) {}
+		// Specify a size that is possibly smaller thant the desired size.
+		explicit GcPreArray(size_t count) : count(min(size, count)), filled(0) {}
 		operator GcArray<T> *() const { return (GcArray<T> *)this; }
 	};
 

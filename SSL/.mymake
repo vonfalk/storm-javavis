@@ -2,3 +2,7 @@
 package=ssl
 input=*
 stormUsingNamespace=storm
+
+[unix]
+library+=crypto
+library+=ssl
