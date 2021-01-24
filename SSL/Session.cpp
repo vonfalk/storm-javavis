@@ -137,7 +137,7 @@ namespace ssl {
 		memcpy(to.dataPtr() + to.filled(), incoming.dataPtr() + decryptedStart, toFill);
 		to.filled(to.filled() + toFill);
 #else
-		TODO(L"Implement peek! We can do as in PeekStream.")
+		TODO(L"Implement peek! We can do as in PeekStream.");
 #endif
 	}
 
