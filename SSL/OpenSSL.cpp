@@ -5,6 +5,7 @@
 
 #include "Exception.h"
 
+#include <openssl/err.h>
 #include <openssl/opensslv.h>
 #include <openssl/opensslconf.h>
 #ifndef OPENSSL_THREADS
@@ -36,10 +37,12 @@ namespace ssl {
 	}
 
 	static int verifyCallback(int preverifyOk, X509_STORE_CTX *x509) {
+		PLN(L"TODO: Don't blindly trust the certificates!");
+		return 1;
+
 		// See the manpage for SSL_CTX_set_verify for an example of how to get access to some context in here.
 		// 0 - fail immediately
 		// 1 - continue
-		PLN(L"In verification!");
 		if (preverifyOk != 1)
 			return 0;
 		return 1;
@@ -58,6 +61,9 @@ namespace ssl {
 
 		// Use default paths for certificates (TODO: make configurable).
 		SSL_CTX_set_default_verify_paths(ctx->context);
+
+		// Allowed ciphers. We should probably modify this list a bit...
+		SSL_CTX_set_cipher_list(ctx->context, "HIGH:!aNULL:!kRSA:!PSK:!SRP:!MD5:!RC4");
 
 		return ctx;
 	}
@@ -164,17 +170,49 @@ namespace ssl {
 
 	static int bioGets(BIO *bio, char *buffer, int size) {
 		// TODO: Implement this... It should work like BIO_puts()
-		// I don't think it is strictly necessary though.
+		// I don't think it is strictly necessary though. The network BIOs do not
+		// support gets, so we're probably fine.
 		PLN(L"Call to bioGets");
 		return 0;
 	}
 
 	static long int bioCtrl(BIO *bio, int cmd, long larg, void *parg) {
-		// TODO: Flush might be interesting here.
+		BIO_data *data = (BIO_data *)BIO_get_data(bio);
+
+		switch (cmd) {
+		case BIO_CTRL_RESET:
+			PLN("BIO_CTRL_RESET");
+			break;
+		case BIO_CTRL_EOF:
+			PLN("BIO_CTRL_EOF");
+			break;
+		case BIO_CTRL_SET_CLOSE:
+			PLN("BIO_CTRL_SET_CLOSE");
+			break;
+		case BIO_CTRL_GET_CLOSE:
+			PLN("BIO_CTRL_GET_CLOSE");
+			break;
+		case BIO_CTRL_PENDING:
+			PLN("BIO_CTRL_PENDING");
+			break;
+		case BIO_CTRL_WPENDING:
+			PLN("BIO_CTRL_WPENDING");
+			break;
+		case BIO_CTRL_FLUSH:
+			data->output->flush();
+			return 1;
+		case BIO_CTRL_GET_CALLBACK:
+			PLN("BIO_CTRL_GET_CALLBACK");
+			break;
+		case BIO_CTRL_SET_CALLBACK:
+			PLN("BIO_CTRL_SET_CALLBACK");
+			break;
+		}
 		return 0;
 	}
 
 	static long int bioCtrlCb(BIO *bio, int cmd, BIO_info_cb *cb) {
+		PVAR(cmd);
 		return 0;
 	}
 
@@ -216,6 +254,50 @@ namespace ssl {
 	// con = BIO_new(stormBio)
 	// ssl = BIO_new_ssl(ctx, 1) // 1 is for clients
 	// result = BIO_push(ssl, con)
+
+	OpenSSLSession::OpenSSLSession(OpenSSLContext *ctx) : context(ctx) {
+		context->ref();
+	}
+
+	OpenSSLSession::~OpenSSLSession() {
+		context->unref();
+	}
+
+	void *OpenSSLSession::create(IStream *input, OStream *output, const char *host) {
+		BIO_data *data = allocData(input, output);
+		BIO *io = BIO_new_storm(data);
+		BIO *sslBio = BIO_new_ssl(context->context, 1); // 1 means "client".
+		// According to what OpenSSL is doing, we don't need to free "io" manually. The docs are a
+		// bit unclear about that though (at least the "BIO_push" manpage).
+		connection = BIO_push(sslBio, io);
+
+		SSL *ssl = null;
+		BIO_get_ssl(connection, &ssl);
+		SSL_set_tlsext_host_name(ssl, host);
+
+		// Do the handshake!
+		PVAR(BIO_do_handshake(connection));
+		ERR_print_errors_fp(stdout);
+
+		X509 *cert = SSL_get_peer_certificate(ssl);
+		if (cert)
+			X509_free(cert);
+		else
+			PLN(L"No certificate presented!");
+
+		int certOk = SSL_get_verify_result(ssl);
+		if (certOk == X509_V_OK) {
+			PLN(L"Certificate OK.");
+		} else {
+			PLN(L"Certificate not ok!");
+		}
+
+		// TODO: Hostname verification?
+		// Example states that we should do it, but it does not say how.
+
+		return data;
+	}
+
 
 }
 

@@ -25,7 +25,7 @@ namespace ssl {
 		STORM_CLASS;
 	public:
 		// Create from other parts of the system. Will initiate a SSL context.
-		Session(IStream *input, OStream *output, SSLSession *session, const wchar *host);
+		Session(IStream *input, OStream *output, SSLSession *session, Str *host);
 
 		// Copy.
 		Session(const Session &o);
@@ -54,6 +54,9 @@ namespace ssl {
 
 		// SSL context.
 		SSLSession *data;
+
+		// Other data that needs to be kept alive by the GC.
+		UNKNOWN(PTR_GC) void *implData;
 
 		// Buffer for outgoing data. Contents here are not persistent, we keep it around to avoid
 		// memory allocations. It may be empty.
@@ -105,6 +108,9 @@ namespace ssl {
 	 *
 	 * This class is not really cloned, we store all data inside Session, and let that class handle
 	 * all state. There, we protect the data with locks as needed.
+	 *
+	 * TODO: This could be a PeekStream, then we don't have to handle Peek as a special case, and
+	 * get EOF for free.
 	 */
 	class SessionIStream : public IStream {
 		STORM_CLASS;

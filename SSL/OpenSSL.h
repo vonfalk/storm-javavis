@@ -36,7 +36,23 @@ namespace ssl {
 	/**
 	 * OpenSSL session.
 	 */
-	class OpenSSLSession : public SSLSession {};
+	class OpenSSLSession : public SSLSession {
+	public:
+		// Create from a context.
+		OpenSSLSession(OpenSSLContext *ctx);
+
+		// Destroy.
+		~OpenSSLSession();
+
+		// Session.
+		OpenSSLContext *context;
+
+		// Allocated BIO for the SSL connection.
+		BIO *connection;
+
+		// Create the session. Returns a pointer that needs to be kept alive by the GC.
+		void *create(IStream *input, OStream *output, const char *host);
+	};
 
 }
 

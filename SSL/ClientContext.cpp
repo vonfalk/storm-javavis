@@ -13,10 +13,10 @@ namespace ssl {
 	Session *ClientContext::connect(IStream *input, OStream *output, Str *host) {
 #ifdef WINDOWS
 		SChannelContext *c = (SChannelContext *)data();
-		return new (this) Session(input, output, new SChannelSession(c), host->c_str());
+		return new (this) Session(input, output, new SChannelSession(c), host);
 #else
-		data();
-		return null;
+		OpenSSLContext *c = (OpenSSLContext *)data();
+		return new (this) Session(input, output, new OpenSSLSession(c), host);
 #endif
 	}
 

@@ -2,12 +2,13 @@
 #include "Session.h"
 
 #include "SecureChannel.h"
+#include "OpenSSL.h"
 
 namespace ssl {
 
 	// TODO: Platform independence...
 
-	Session::Session(IStream *input, OStream *output, SSLSession *ctx, const wchar *host)
+	Session::Session(IStream *input, OStream *output, SSLSession *ctx, Str *host)
 		: src(input), dst(output), data(ctx),
 		  decryptedStart(0), decryptedEnd(0), remainingStart(0),
 		  incomingEnd(false), outgoingEnd(false) {
@@ -23,7 +24,7 @@ namespace ssl {
 		Buffer outBuffer = storm::buffer(engine(), 2*1024);
 
 		while (true) {
-			int result = session->initSession(engine(), inBuffer, outBuffer, host);
+			int result = session->initSession(engine(), inBuffer, outBuffer, host->c_str());
 
 			if (result == 0) {
 				break;
@@ -50,6 +51,10 @@ namespace ssl {
 		// future. We can't reallocate them and keep inter-thread consistency.
 		bufferSizes = min(Nat(4*1024), session->maxMessageSize);
 		incoming = storm::buffer(engine(), bufferSizes);
+#else
+		OpenSSLSession *session = (OpenSSLSession *)ctx;
+
+		implData = session->create(input, output, host->utf8_str());
 #endif
 	}
 
@@ -108,6 +113,16 @@ namespace ssl {
 		memcpy(to.dataPtr() + to.filled(), incoming.dataPtr() + decryptedStart, toFill);
 		to.filled(to.filled() + toFill);
 		decryptedStart += toFill;
+#else
+		OpenSSLSession *session = (OpenSSLSession *)data;
+		int bytes = BIO_read(session->connection, to.dataPtr() + to.filled(), to.free());
+		if (bytes > 0) {
+			to.filled(to.filled() + bytes);
+		} else if (bytes == 0) {
+			// We are at EOF!
+		} else {
+			// Error.
+		}
 #endif
 	}
 
@@ -121,6 +136,8 @@ namespace ssl {
 		Nat toFill = min(to.free(), decryptedEnd - decryptedStart);
 		memcpy(to.dataPtr() + to.filled(), incoming.dataPtr() + decryptedStart, toFill);
 		to.filled(to.filled() + toFill);
+#else
+		TODO(L"Implement peek! We can do as in PeekStream.")
 #endif
 	}
 
@@ -143,13 +160,21 @@ namespace ssl {
 		// Clear the buffer if it becomes too large.
 		if (outgoing.count() > bufferSizes * 2)
 			outgoing = Buffer();
+#else
+		OpenSSLSession *session = (OpenSSLSession *)data;
+		BIO_write(session->connection, from.dataPtr() + offset, from.filled() - offset);
 #endif
 	}
 
 	void Session::flush() {
 		os::Lock::L z(data->lock);
+#ifdef WINDOWS
 		// We don't really buffer data, so just propagate the flush.
 		dst->flush();
+#else
+		OpenSSLSession *session = (OpenSSLSession *)data;
+		BIO_flush(session->connection);
+#endif
 	}
 
 	void Session::fill() {
@@ -230,6 +255,8 @@ namespace ssl {
 		dst->write(msg);
 
 		outgoingEnd = true;
+#else
+		TODO(L"Do a proper shutdown!");
 #endif
 	}
 
