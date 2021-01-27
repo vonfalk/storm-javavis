@@ -98,8 +98,14 @@ namespace ssl {
 		SSL_CTX_free(context);
 	}
 
+	SSLSession *OpenSSLContext::createSession() {
+		return new OpenSSLSession(this);
+	}
+
 	/**
 	 * Data structure containing GC pointers that we allocate for our BIO class.
+	 *
+	 * TODO: Eventually, we might want to keep this somewhere else.
 	 */
 	struct BIO_data {
 		IStream *input;
@@ -431,7 +437,7 @@ namespace ssl {
 		return null;
 	}
 
-	void *OpenSSLSession::create(IStream *input, OStream *output, const char *host) {
+	void *OpenSSLSession::connect(IStream *input, OStream *output, Str *host) {
 		BIO_data *data = allocData(input, output);
 		BIO *io = BIO_new_storm(data);
 		BIO *sslBio = BIO_new_ssl(context->context, 1); // 1 means "client".
@@ -441,7 +447,7 @@ namespace ssl {
 
 		SSL *ssl = null;
 		BIO_get_ssl(connection, &ssl);
-		SSL_set_tlsext_host_name(ssl, host);
+		SSL_set_tlsext_host_name(ssl, host->utf8_str());
 		checkError();
 
 		// Do the handshake!
@@ -470,6 +476,57 @@ namespace ssl {
 		return data;
 	}
 
+	Bool SChannelSession::more(void *) {
+		TODO(L"Fix me!");
+		return true;
+	}
+
+	void SChannelSession::read(Buffer &to, void *) {
+		os::Lock::L z(lock);
+
+		int bytes = BIO_read(connection, to.dataPtr() + to.filled(), to.free());
+		if (bytes > 0) {
+			to.filled(to.filled() + bytes);
+		} else if (bytes == 0) {
+			// We are at EOF!
+		} else {
+			// Error.
+		}
+		TODO(L"Finish me!");
+	}
+
+	void SChannelSession::peek(Buffer &to, void *) {
+		os::Lock::L z(lock);
+
+		TODO(L"Finish me!");
+	}
+
+	void SChannelSession::write(const Buffer &from, Nat offset, void *) {
+		os::Lock::L z(lock);
+
+		BIO_write(connection, from.dataPtr() + offset, from.filled() - offset);
+	}
+
+	void SChannelSession::flush(void *gcData) {
+		os::Lock::L z(lock);
+
+		BIO_flush(connection);
+	}
+
+	void SChannelSession::shutdown(void *gcData) {
+		os::Lock::L z(lock);
+
+		TODO(L"Implement shutdown properly!");
+	}
+
+	void SChannelSession::close(void *gcData) {
+		os::Lock::L z(lock);
+
+		// TODO: We could do this through the BIO interface.
+		BIO_data *data = (BIO_data *)gcData;
+		data->src->close();
+		data->dst->close();
+	}
 
 }
 

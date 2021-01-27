@@ -12,14 +12,10 @@ namespace ssl {
 	 * special constructor is available for this particular use case. It is, however, possible to
 	 * use it on any pair of streams.
 	 *
-	 * Use ssl:Context to create endpoints.
+	 * Use ssl.Context to create sessions. Most likely you want either ssl.ClientContext or ssl.ServerContext.
 	 *
 	 * This class will not be "properly" cloned when crossing thread boundaries. We protect all
 	 * relevant data with locks though, and most data is constant after construction.
-	 *
-	 * TODO: Move most of the logic in this class to a separate class, so that we can make copies of
-	 * this one while retaining its state. Otherwise, the state will be borked as soon as we copy
-	 * this class.
 	 */
 	class Session : public Object {
 		STORM_CLASS;
@@ -46,43 +42,12 @@ namespace ssl {
 		OStream *STORM_FN output();
 
 	private:
-		// Input stream.
-		IStream *src;
-
-		// Output stream.
-		OStream *dst;
-
-		// SSL context.
+		// The SSL session.
 		SSLSession *data;
 
-		// Other data that needs to be kept alive by the GC.
-		UNKNOWN(PTR_GC) void *implData;
+		// Additional data needed to be exposed to the GC. Belongs to the ssl session object.
+		UNKNOWN(PTR_GC) void *gcData;
 
-		// Buffer for outgoing data. Contents here are not persistent, we keep it around to avoid
-		// memory allocations. It may be empty.
-		Buffer outgoing;
-
-		// This buffer is where we store data we have received from the network, and are in the
-		// process of decrypting. The data consists of a number of parts, namely:
-		// - decrypted plaintext - from decryptedStart to decryptedEnd.
-		// - ciphertext - from remainingStart to filled()
-		Buffer incoming;
-
-		// Start and end of decrypted data in 'incoming'.
-		Nat decryptedStart;
-		Nat decryptedEnd;
-
-		// Start of ciphertext in 'incoming'.
-		Nat remainingStart;
-
-		// Guideline on buffer size.
-		Nat bufferSizes;
-
-		// Is the read end shut down?
-		Bool incomingEnd;
-
-		// Is the write end shut down?
-		Bool outgoingEnd;
 
 		// Functions called from the streams.
 		friend class SessionIStream;
@@ -97,9 +62,6 @@ namespace ssl {
 
 		// Shutdown the write end.
 		void shutdown();
-
-		// Try to decrypt more data. Assumes that 'decrypted' in 'incoming' is empty.
-		void fill();
 	};
 
 
@@ -108,9 +70,6 @@ namespace ssl {
 	 *
 	 * This class is not really cloned, we store all data inside Session, and let that class handle
 	 * all state. There, we protect the data with locks as needed.
-	 *
-	 * TODO: This could be a PeekStream, then we don't have to handle Peek as a special case, and
-	 * get EOF for free.
 	 */
 	class SessionIStream : public IStream {
 		STORM_CLASS;

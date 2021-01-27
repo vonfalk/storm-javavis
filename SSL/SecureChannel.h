@@ -18,6 +18,8 @@
 
 namespace ssl {
 
+	class SChannelData;
+
 	/**
 	 * Various types we use on Windows.
 	 */
@@ -32,8 +34,11 @@ namespace ssl {
 		// Acquired credentials.
 		CredHandle credentials;
 
-		// Create for a client.
+		// Create for a client context.
 		static SChannelContext *createClient();
+
+		// Create a session for this context.
+		virtual SSLSession *createSession();
 
 	private:
 		// Create.
@@ -51,20 +56,32 @@ namespace ssl {
 
 		virtual ~SChannelSession();
 
+		// Implementation of the generic interface.
+		virtual void *connect(IStream *input, OStream *output, Str *host);
+		virtual Bool more(void *gcData);
+		virtual void read(Buffer &to, void *gcData);
+		virtual void peek(Buffer &to, void *gcData);
+		virtual void write(const Buffer &from, Nat start, void *gcData);
+		virtual void flush(void *gcData);
+		virtual void shutdown(void *gcData);
+		virtual void close(void *gcData);
+
+	private:
 		// Owning data, so we don't free it too early.
 		SChannelContext *data;
 
 		// Session (called a context here). Initialized when we first update the context.
 		CtxtHandle context;
 
-		// Host.
-		String host;
-
 		// Maximum message size for encryption/decryption. Set when the session is established.
 		Nat maxMessageSize;
 
 		// Block size for the cipher. Optimal encoding if messages are a size modulo this size (seems to be 16 often)
 		Nat blockSize;
+
+		// Buffer sizes for headers and trailers.
+		Nat headerSize;
+		Nat trailerSize;
 
 		// Initialize a session. Reads data from "input" (empty at first), and writes to
 		// "output". The function clears the part of "input" that was consumed, and may leave parts
@@ -74,7 +91,7 @@ namespace ssl {
 		int initSession(Engine &e, Buffer &input, Buffer &output, const wchar *host);
 
 		// Encrypt a message using this session.
-		void encrypt(Engine &e, const Buffer &input, Nat inputOffset, Buffer &output);
+		void encrypt(Engine &e, const Buffer &input, Nat inputOffset, Nat inputLength, Buffer &output);
 
 		// Markers from 'decrypt'.
 		struct Markers {
@@ -96,13 +113,11 @@ namespace ssl {
 		// Shutdown the channel. Returns a message to send to the remote peer.
 		Buffer shutdown(Engine &e);
 
-	private:
 		// Initialize sizes. Called when the context is established.
 		void initSizes();
 
-		// Buffer sizes for headers and trailers.
-		Nat headerSize;
-		Nat trailerSize;
+		// Fill the buffers in "data".
+		void fill(SChannelData *data);
 	};
 
 }

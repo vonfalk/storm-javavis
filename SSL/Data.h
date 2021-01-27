@@ -1,11 +1,15 @@
 #pragma once
 #include "OS/Sync.h"
+#include "Core/Str.h"
+#include "Core/Io/Stream.h"
 
 namespace ssl {
 
 	/**
 	 * Generic data utilities.
 	 */
+
+	class SSLSession;
 
 	/**
 	 * Generic refcount class.
@@ -39,7 +43,11 @@ namespace ssl {
 	 * Data for an SSL context. Internal to the Context, but convenient to have outside the class
 	 * declaration.
 	 */
-	class SSLContext : public RefCount {};
+	class SSLContext : public RefCount {
+	public:
+		// Create a session for this context.
+		virtual SSLSession *createSession() = 0;
+	};
 
 	/**
 	 * Data for an individual session.
@@ -48,6 +56,30 @@ namespace ssl {
 	public:
 		// Lock for the session.
 		os::Lock lock;
+
+		// Connect this session. Returns any additional data needed to be kept alive by the GC.
+		virtual void *connect(IStream *input, OStream *output, Str *host) = 0;
+
+		// More data available?
+		virtual Bool more(void *gcData) = 0;
+
+		// Read data.
+		virtual void read(Buffer &to, void *gcData) = 0;
+
+		// Peek data.
+		virtual void peek(Buffer &to, void *gcData) = 0;
+
+		// Write data.
+		virtual void write(const Buffer &from, Nat start, void *gcData) = 0;
+
+		// Flush the stream.
+		virtual void flush(void *gcData) = 0;
+
+		// Shut down the session.
+		virtual void shutdown(void *gcData) = 0;
+
+		// Close the underlying streams.
+		virtual void close(void *gcData) = 0;
 	};
 
 }

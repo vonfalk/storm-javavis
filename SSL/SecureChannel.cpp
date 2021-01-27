@@ -1,6 +1,7 @@
 #include "stdafx.h"
 #include "SecureChannel.h"
 #include "Exception.h"
+#include "SecureChannelData.h"
 
 #ifdef WINDOWS
 
@@ -82,6 +83,10 @@ namespace ssl {
 			throw new (runtime::someEngine()) SSLError(S("Failed to acquire credentials for SChannel."));
 
 		return new SChannelContext(credentials);
+	}
+
+	SSLSession *SChannelContext::createSession() {
+		return new SChannelSession(this);
 	}
 
 
@@ -190,9 +195,8 @@ namespace ssl {
 		return result;
 	}
 
-	void SChannelSession::encrypt(Engine &e, const Buffer &input, Nat offset, Buffer &output) {
+	void SChannelSession::encrypt(Engine &e, const Buffer &input, Nat offset, Nat inputSize, Buffer &output) {
 		// "reserve" size for header and trailer.
-		Nat inputSize = input.filled() - offset;
 		Nat size = headerSize + trailerSize + inputSize;
 		if (output.count() < size)
 			output = buffer(e, size);
@@ -294,6 +298,209 @@ namespace ssl {
 		blockSize = ss.cbBlockSize;
 		headerSize = ss.cbHeader;
 		trailerSize = ss.cbTrailer;
+	}
+
+	/**
+	 * The "public" API:
+	 */
+
+	void *SChannelSession::connect(IStream *input, OStream *output, Str *host) {
+		Engine &e = input->engine();
+		SChannelData *data = new (e) SChannelData(input, output);
+
+		// Minimum "free" when calling receive.
+		Nat minFree = 128;
+
+		// Input and output buffers.
+		Buffer inBuffer = storm::buffer(e, 2*1024);
+		Buffer outBuffer = storm::buffer(e, 2*1024);
+
+		while (true) {
+			int result = initSession(e, inBuffer, outBuffer, host->c_str());
+
+			if (result == 0) {
+				break;
+			} else if (result < 0) {
+				// Send to server and receive more.
+				if (outBuffer.filled() > 0) {
+					data->dst->write(outBuffer);
+					data->dst->flush();
+				}
+			}
+
+			// Read more data.
+			Nat more = max(minFree, Nat(abs(result)));
+			if (inBuffer.free() < more)
+				inBuffer = grow(e, inBuffer, inBuffer.filled() + more);
+
+			inBuffer = data->src->read(inBuffer);
+		}
+
+		// From here on, we can use EncryptMessage and DecryptMessage.
+		// We must use cbMaximumMessage from QueryContextAttributes to find max message size.
+
+		// Resize the input and output buffers so that we don't have to resize them in the
+		// future. We can't reallocate them and keep inter-thread consistency.
+		data->bufferSizes = min(Nat(4*1024), maxMessageSize);
+		data->incoming = storm::buffer(e, data->bufferSizes);
+
+		return data;
+	}
+
+	Bool SChannelSession::more(void *gcData) {
+		SChannelData *data = (SChannelData *)gcData;
+		os::Lock::L z(lock);
+
+		// More decrypted data?
+		if (data->decryptedStart < data->decryptedEnd)
+			return true;
+
+		// If the remote end is shutdown, we won't get more data.
+		if (data->incomingEnd)
+			return false;
+
+		// Otherwise, see if we have more data to decrypt, or if there is more in the source.
+		return (data->remainingStart < data->incoming.filled()) // more encrypted data?
+			|| data->src->more(); // more from the source stream?
+
+		return true;
+	}
+
+	void SChannelSession::read(Buffer &to, void *gcData) {
+		SChannelData *data = (SChannelData *)gcData;
+		os::Lock::L z(lock);
+
+		if (data->decryptedStart >= data->decryptedEnd)
+			fill(data);
+
+		Nat toFill = min(to.free(), data->decryptedEnd - data->decryptedStart);
+		memcpy(to.dataPtr() + to.filled(), data->incoming.dataPtr() + data->decryptedStart, toFill);
+		to.filled(to.filled() + toFill);
+		data->decryptedStart += toFill;
+	}
+
+	void SChannelSession::peek(Buffer &to, void *gcData) {
+		// TODO: More generous peeking, perhaps?
+
+		SChannelData *data = (SChannelData *)gcData;
+		os::Lock::L z(lock);
+
+		if (data->decryptedStart >= data->decryptedEnd)
+			fill(data);
+
+		Nat toFill = min(to.free(), data->decryptedEnd - data->decryptedStart);
+		memcpy(to.dataPtr() + to.filled(), data->incoming.dataPtr() + data->decryptedStart, toFill);
+		to.filled(to.filled() + toFill);
+	}
+
+	void SChannelSession::write(const Buffer &from, Nat offset, void *gcData) {
+		SChannelData *data = (SChannelData *)gcData;
+		os::Lock::L z(lock);
+
+		if (data->outgoingEnd)
+			return;
+
+		// Don't send more data than the max message size.
+		// For SChannel, this seems to be 64k, so it is unlikely, but we shall handle it properly.
+		while (offset < from.filled()) {
+			Nat chunkSz = min(from.filled() - offset, maxMessageSize);
+			encrypt(data->engine(), from, offset, chunkSz, data->outgoing);
+			data->dst->write(data->outgoing);
+
+			offset += chunkSz;
+		}
+
+		// Clear the buffer if it becomes too large.
+		if (data->outgoing.count() > data->bufferSizes * 2)
+			data->outgoing = Buffer();
+	}
+
+	void SChannelSession::flush(void *gcData) {
+		SChannelData *data = (SChannelData *)gcData;
+		os::Lock::L z(lock);
+		data->dst->flush();
+	}
+
+	void SChannelSession::shutdown(void *gcData) {
+		SChannelData *data = (SChannelData *)gcData;
+		os::Lock::L z(lock);
+
+		if (data->outgoingEnd)
+			return;
+
+		Buffer msg = shutdown(data->engine());
+		data->dst->write(msg);
+
+		data->outgoingEnd = true;
+	}
+
+	void SChannelSession::close(void *gcData) {
+		SChannelData *data = (SChannelData *)gcData;
+		os::Lock::L z(lock);
+
+		data->src->close();
+		data->dst->close();
+	}
+
+	void SChannelSession::fill(SChannelData *data) {
+		// In case we fail somewhere...
+		data->decryptedStart = data->decryptedEnd = 0;
+
+		// Anything left in the buffer?
+		if (data->remainingStart >= data->incoming.filled()) {
+			// Nope. Get more. But this means that the buffer is entirely empty, use that.
+			data->incoming.filled(0);
+			data->remainingStart = 0;
+			data->incoming = data->src->read(data->incoming);
+		}
+
+		// Should we shrink the buffer a bit?
+		Nat used = data->incoming.filled() - data->remainingStart;
+		if ((used * 2 < data->incoming.count()) && (data->incoming.count() > data->bufferSizes)) {
+			Buffer t = buffer(data->engine(), max(used, data->bufferSizes));
+			memcpy(t.dataPtr(), data->incoming.dataPtr() + data->remainingStart, used);
+			data->incoming = t;
+			data->incoming.filled(used);
+			data->remainingStart = 0;
+		}
+
+		while (true) {
+			SChannelSession::Markers markers = decrypt(data->engine(), data->incoming, data->remainingStart);
+			data->decryptedStart = markers.plaintextStart;
+			data->decryptedEnd = markers.plaintextEnd;
+			data->remainingStart = markers.remainingStart;
+
+			// Did we decrypt something? Good, we're done for now.
+			if (data->decryptedStart != data->decryptedEnd)
+				break;
+
+			// End of transmission?
+			if (markers.shutdown) {
+				data->incomingEnd = true;
+				break;
+			}
+
+			// Is there a large "hole" in the beginning of the array? If so, we want to move it back
+			// into place to use the space more efficiently.
+			if (data->remainingStart > data->incoming.count() / 4) {
+				data->incoming.shift(data->remainingStart);
+				data->remainingStart = 0;
+				data->decryptedStart = data->decryptedEnd = 0;
+			}
+
+			// If we didn't get any data back, try to get more data and try again.
+			Nat margin = data->incoming.filled() / 2;
+			if (data->incoming.free() < margin)
+				data->incoming = grow(data->engine(), data->incoming, data->incoming.filled() * 2);
+
+			Nat before = data->incoming.filled();
+			data->incoming = data->src->read(data->incoming);
+
+			if (data->incoming.filled() == before) {
+				// Failed to receive data, give up.
+				break;
+			}
+		}
 	}
 
 }

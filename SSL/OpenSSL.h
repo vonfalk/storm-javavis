@@ -28,6 +28,9 @@ namespace ssl {
 		// Our OpenSSL context.
 		SSL_CTX *context;
 
+		// Create a session.
+		virtual SSLSession *createSession();
+
 	private:
 		// Create.
 		OpenSSLContext(SSL_CTX *ctx);
@@ -42,16 +45,24 @@ namespace ssl {
 		OpenSSLSession(OpenSSLContext *ctx);
 
 		// Destroy.
-		~OpenSSLSession();
+		virtual ~OpenSSLSession();
 
+		// Implementation of the generic interface.
+		virtual void *connect(IStream *input, OStream *output, Str *host);
+		virtual Bool more(void *gcData);
+		virtual void read(Buffer &to, void *gcData);
+		virtual void peek(Buffer &to, void *gcData);
+		virtual void write(const Buffer &from, Nat start, void *gcData);
+		virtual void flush(void *gcData);
+		virtual void shutdown(void *gcData);
+		virtual void close(void *gcData);
+
+	private:
 		// Session.
 		OpenSSLContext *context;
 
 		// Allocated BIO for the SSL connection.
 		BIO *connection;
-
-		// Create the session. Returns a pointer that needs to be kept alive by the GC.
-		void *create(IStream *input, OStream *output, const char *host);
 	};
 
 }

@@ -6,18 +6,10 @@
 
 namespace ssl {
 
-	// TODO: Platform independent...
-
 	ClientContext::ClientContext() {}
 
 	Session *ClientContext::connect(IStream *input, OStream *output, Str *host) {
-#ifdef WINDOWS
-		SChannelContext *c = (SChannelContext *)data();
-		return new (this) Session(input, output, new SChannelSession(c), host);
-#else
-		OpenSSLContext *c = (OpenSSLContext *)data();
-		return new (this) Session(input, output, new OpenSSLSession(c), host);
-#endif
+		return new (this) Session(input, output, data()->createSession(), host);
 	}
 
 	Session *ClientContext::connect(NetStream *socket, Str *host) {
@@ -30,6 +22,7 @@ namespace ssl {
 	}
 
 	SSLContext *ClientContext::createData() {
+		// TODO: We might want to allow using OpenSSL on Windows eventually.
 #ifdef WINDOWS
 		return SChannelContext::createClient();
 #else
