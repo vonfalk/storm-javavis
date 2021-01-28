@@ -1,0 +1,101 @@
+use core:lang;
+use lang:bs;
+use lang:bs:macro;
+
+/**
+ * A SQL type.
+ */
+class SQLType {
+	// SQL-name.
+	Str sql;
+
+	// Storm-type.
+	Type storm;
+
+	init(Str sql, Type storm) {
+		init {
+			sql = sql;
+			storm = storm;
+		}
+	}
+}
+
+SQLType sqlInteger() {
+	SQLType("INTEGER", named{Int});
+}
+SQLType sqlReal() {
+	SQLType("REAL", named{Double});
+}
+SQLType sqlText() {
+	SQLType("TEXT", named{Str});
+}
+
+/**
+ * A column declaration.
+ */
+class ColumnDecl on Compiler {
+    Str name;
+	SQLType datatype;
+    Array<Str> modifiers;
+
+	init(SStr name, SQLType type, Array<Str> modifiers) {
+		init {
+			name = name.v;
+			datatype = type;
+			modifiers = modifiers;
+		}
+	}
+}
+
+/**
+ * Declaration of an entire table.
+ */
+class TableDecl on Compiler {
+    Str name;
+    Array<ColumnDecl> columns;
+
+	init(SStr name, Array<ColumnDecl> columns) {
+		init {
+			name = name.v;
+			columns = columns;
+		}
+	}
+}
+
+/**
+ * Declaration of a database.
+ */
+class DBDecl extends NamedDecl {
+    SStr name;
+    Scope scope;
+    Array<TableDecl> tables;
+
+    init(SStr name, Scope scope, Array<TableDecl> tables) {
+        init() {
+            name = name;
+            scope = scope;
+            tables = tables;
+        }
+    }
+
+    Named doCreate() {
+        DBType(name, tables);
+    }
+}
+
+/**
+ * Type stored in the name tree.
+ */
+class DBType extends Type {
+    Array<TableDecl> tables;
+
+    init(SStr name, Array<TableDecl> tables) {
+        init(name.v, TypeFlags:typeClass) {
+            tables = tables;
+        }
+
+		// TODO: Add a constructor that requires a connection.
+		add(TypeDefaultCtor(this));
+    }
+}
+

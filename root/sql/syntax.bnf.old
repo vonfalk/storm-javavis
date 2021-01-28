@@ -86,8 +86,8 @@ CData => createColumnData(name, dt, mod) : SName name, SDataType dt, SQLCurrModi
 Array<ColumnData> TableData();
 TableData => Array<ColumnData>() : CData -> push, (,",",CData -> push)*;
 
-SPlainFileItem => TableDecl(name, env, columns) : "TABLE[ \t]+", SName name, "{" [, TableData columns,]+ "}";
-SPlainFileItem => DbDecl(name, env, content) : "DATABASE[ \t]+", SName name, "{" [, SDbCont content,]+ "}";
+// SPlainFileItem => TableDecl(name, env, columns) : "TABLE[ \t]+", SName name, "{" [, TableData columns,]+ "}";
+SPlainFileItem => DBDecl(name, env, content) : "DATABASE[ \t]+", SName name, "{" [, SDbCont content,]+ "}";
 
 TableContent DData();
 DData => createTableData(name, columns) : "TABLE[ \t]+", SName name, "(" [, TableData columns,]+ ");";

@@ -1,0 +1,15 @@
+use test;
+use sql;
+
+DATABASE SimpleDB {
+	TABLE test(
+		id INTEGER PRIMARY KEY,
+		name TEXT
+	);
+}
+
+suite Simple {
+	SimpleDB c;
+
+	test 1 == 0;
+}

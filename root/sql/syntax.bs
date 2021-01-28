@@ -4,35 +4,6 @@ use lang:bs:macro;
 
 use sql;
 
-class ColumnData on Compiler {
-    public Str name;
-    public Str datatype;
-    public Array<Str> modifiers;
-}
-
-class TableContent on Compiler {
-    public Str name;
-    public Array<ColumnData> columns;
-}
-
-class DbDecl extends NamedDecl {
-    SStr name;
-    Scope scope;
-    Array<TableContent> tables;
-
-    init(SStr name, Scope scope, Array<TableContent> tables) {
-        init() {
-            name = name;
-            scope = scope;
-            tables = tables;
-        }
-    }
-
-    Named doCreate() {
-        DbType(name, tables);
-    }
-}
-
 Bool correctMod(Array<Str> a, Array<Str> b) {
     for(mod in a) {
         Bool found = false;
@@ -61,7 +32,7 @@ class DbConnection {
 
     void connect(Database db) {
         Int i = 0;
-        if (decl = this.typeOf() as DbType) {
+        if (decl = this.typeOf() as DBType) {
             for(table in decl.tables) {
                 i = 0;
                 var schema = db.schema(table.name);
@@ -120,65 +91,35 @@ class DbConnection {
     }
 }
 
-class DbType extends Type {
-    Array<TableContent> tables;
 
-    init(SStr name, Array<TableContent> tables) {
-        init(name.v, TypeFlags:typeClass) {
-            tables = tables;
-        }
+// class TableDecl extends NamedDecl {
+//     SStr name;
+//     Scope scope;
+//     Array<ColumnDecl> columns;
 
-        setThread(named{Compiler});
-        setSuper(named{DbConnection});
-        add(TypeDefaultCtor(this));
-    }
-}
+//     init(SStr name, Scope scope, Array<ColumnDecl> columns) {
+//         init() {
+//             name = name;
+//             scope = scope;
+//             columns = columns;
+//         }
+//     }
 
-
-class TableDecl extends NamedDecl {
-    SStr name;
-    Scope scope;
-    Array<ColumnData> columns;
-
-    init(SStr name, Scope scope, Array<ColumnData> columns) {
-        init() {
-            name = name;
-            scope = scope;
-            columns = columns;
-        }
-    }
-
-    Named doCreate() {
-		TableNamed(name, columns);
-	}
-}
+//     Named doCreate() {
+// 		TableNamed(name, columns);
+// 	}
+// }
 
 class TableNamed extends Named {
-    Array<ColumnData> columns;
+    Array<ColumnDecl> columns;
 
-    init(SStr name, Array<ColumnData> columns) {
+    init(SStr name, Array<ColumnDecl> columns) {
         init(name.v) {
             columns = columns;
         }
     }
 }
 
-ColumnData createColumnData(SStr name, Str dt, Array<Str> mod) on Compiler {
-    ColumnData data;
-    data.name = name.v;
-    data.datatype = dt;
-    data.modifiers = mod;
-
-    return data;
-}
-
-TableContent createTableData(SStr name, Array<ColumnData> d) on Compiler {
-    TableContent cont;
-    cont.name = name.v;
-    cont.columns = d;
-
-    return cont;
-}
 
 Str strMod(Block block, Str str, Array<SStr> arr, Str delim) on Compiler {
 	for(Nat i = 0; i < arr.count(); i++){

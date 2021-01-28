@@ -53,7 +53,7 @@ namespace sql {
 	/**
 	 * Database class specificly for SQLite.
 	 */
-	class SQLite : public Database{
+	class SQLite : public Database {
 		STORM_CLASS;
 	public:
 

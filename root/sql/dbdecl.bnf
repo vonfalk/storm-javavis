@@ -1,0 +1,41 @@
+use lang.bs;
+use core.lang;
+
+optional delimiter = lang.bs.SDelimiter;
+required delimiter = lang.bs.SRequiredDelimiter;
+
+// This file contains the table declarations of the SQL plugin.
+
+// TODO: We should maybe provide "sql name" token to allow for names with spaces in them.
+
+// The top-level table declaration.
+SPlainFileItem => DBDecl(name, env, columns) : "DATABASE" ~ SName name, "{" [, (STableDecl columns,)* ]+ "}";
+
+
+// Declaration of a single table.
+TableDecl STableDecl();
+STableDecl => TableDecl(name, columns) : "TABLE" ~ SName name, "(" [, SColumnDecls columns, ]+ ")", ";";
+
+// Column declarations.
+Array<ColumnDecl> SColumnDecls();
+SColumnDecls => Array<ColumnDecl>() : SColumnDecl -> push - (, ",", SColumnDecl -> push)*;
+
+ColumnDecl SColumnDecl();
+SColumnDecl => ColumnDecl(name, type, modifiers) : SName name ~ SDataType type -(~ SModifier modifiers)*;
+
+
+// Data types in table declarations.
+SQLType SDataType() #typeName;
+SDataType => sqlInteger() : "INTEGER";
+SDataType => sqlReal() : "REAL";
+SDataType => sqlText() : "TEXT";
+
+
+// Modifiers for columns.
+Str SModifier() #keyword;
+SModifier => t : "PRIMARY KEY" t;
+SModifier => t : "FOREIGN KEY" t;
+SModifier => t : "NOT NULL" t;
+SModifier => t : "UNIQUE" t;
+SModifier => t : "AUTOINCREMENT" t;
+
