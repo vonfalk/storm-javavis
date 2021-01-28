@@ -104,18 +104,23 @@ namespace ssl {
 
 	/**
 	 * Data structure containing GC pointers that we allocate for our BIO class.
-	 *
-	 * TODO: Eventually, we might want to keep this somewhere else.
 	 */
 	struct BIO_data {
 		IStream *input;
 		OStream *output;
+
+		// Buffer to support "peek".
+		GcArray<byte> *buffer;
+
+		// Number of bytes we have consumed inside 'buffer'.
+		Nat consumed;
 	};
 
 	// Pointer offsets in BIO_data
 	static const size_t BIO_data_offsets[] = {
 		OFFSET_OF(BIO_data, input),
 		OFFSET_OF(BIO_data, output),
+		OFFSET_OF(BIO_data, buffer),
 	};
 
 	// GCtype for the data.
@@ -277,7 +282,7 @@ namespace ssl {
 	// ssl = BIO_new_ssl(ctx, 1) // 1 is for clients
 	// result = BIO_push(ssl, con)
 
-	OpenSSLSession::OpenSSLSession(OpenSSLContext *ctx) : context(ctx) {
+	OpenSSLSession::OpenSSLSession(OpenSSLContext *ctx) : context(ctx), connection(null), eof(false) {
 		context->ref();
 	}
 
@@ -476,29 +481,93 @@ namespace ssl {
 		return data;
 	}
 
-	Bool OpenSSLSession::more(void *) {
-		TODO(L"Fix me!");
-		return true;
+	Bool OpenSSLSession::more(void *data) {
+		os::Lock::L z(lock);
+		BIO_data *d = (BIO_data *)data;
+
+		if (d->buffer != null && d->consumed < d->buffer->filled)
+			return true;
+
+		return !eof;
 	}
 
-	void OpenSSLSession::read(Buffer &to, void *) {
+	void OpenSSLSession::read(Buffer &to, void *data) {
 		os::Lock::L z(lock);
+		BIO_data *d = (BIO_data *)data;
 
-		int bytes = BIO_read(connection, to.dataPtr() + to.filled(), to.free());
-		if (bytes > 0) {
-			to.filled(to.filled() + bytes);
-		} else if (bytes == 0) {
-			// We are at EOF!
-		} else {
-			// Error.
+		if (d->buffer != null && d->consumed < d->buffer->filled) {
+			// Read data from the buffer first.
+			Nat copy = min(to.free(), d->buffer->filled - d->consumed);
+			memcpy(to.dataPtr() + to.filled(), d->buffer->v + d->consumed, copy);
+			to.filled(to.filled() + copy);
+			d->consumed += copy;
+
+			if (d->consumed >= d->buffer->filled) {
+				// We don't need the buffer anymore. Free it.
+				d->consumed = 0;
+				d->buffer = null;
+			}
 		}
-		TODO(L"Finish me!");
+
+		// Still more to read?
+		if (to.free() > 0) {
+			int bytes = BIO_read(connection, to.dataPtr() + to.filled(), to.free());
+			if (bytes > 0) {
+				to.filled(to.filled() + bytes);
+			} else if (bytes == 0) {
+				// We are at EOF!
+				eof = true;
+			} else {
+				// Error.
+				checkError();
+			}
+		}
 	}
 
-	void OpenSSLSession::peek(Buffer &to, void *) {
+	void OpenSSLSession::peek(Buffer &to, void *data) {
 		os::Lock::L z(lock);
+		BIO_data *d = (BIO_data *)data;
 
-		TODO(L"Finish me!");
+		if (d->buffer == null || d->buffer->filled - d->consumed < to.free()) {
+			fillBuffer(to.free(), data);
+		}
+
+		Nat copy = min(to.free(), d->buffer->filled - d->consumed);
+		memcpy(to.dataPtr() + to.filled(), d->buffer->v + d->consumed, copy);
+		to.filled(to.filled() + copy);
+	}
+
+	void OpenSSLSession::fillBuffer(Nat bytes, void *data) {
+		BIO_data *d = (BIO_data *)data;
+		Engine &e = d->input->engine();
+
+		if (d->buffer == null) {
+			d->buffer = runtime::allocArray<byte>(e, &byteArrayType, bytes);
+			d->consumed = 0;
+		} else if (d->buffer->count < bytes) {
+			GcArray<byte> *b = runtime::allocArray<byte>(e, &byteArrayType, bytes);
+			memcpy(b->v, d->buffer->v + d->consumed, d->buffer->filled - d->consumed);
+			b->filled = d->buffer->filled - d->consumed;
+			d->consumed = 0;
+			d->buffer = b;
+		} else {
+			memmove(d->buffer->v, d->buffer->v + d->consumed, d->buffer->filled - d->consumed);
+			d->buffer->filled -= d->consumed;
+			d->consumed = 0;
+		}
+
+		// Now, we have enough free space!
+		// Note: "consumed" is zero by now.
+		if (bytes > d->buffer->filled) {
+			int read = BIO_read(connection, d->buffer->v + d->buffer->filled, bytes - d->buffer->filled);
+			if (read > 0) {
+				d->buffer->filled += read;
+			} else if (read == 0) {
+				eof = true;
+			} else {
+				checkError();
+			}
+		}
 	}
 
 	void OpenSSLSession::write(const Buffer &from, Nat offset, void *) {
@@ -507,7 +576,7 @@ namespace ssl {
 		BIO_write(connection, from.dataPtr() + offset, from.filled() - offset);
 	}
 
-	void OpenSSLSession::flush(void *gcData) {
+	void OpenSSLSession::flush(void *) {
 		os::Lock::L z(lock);
 
 		BIO_flush(connection);
@@ -516,7 +585,11 @@ namespace ssl {
 	void OpenSSLSession::shutdown(void *gcData) {
 		os::Lock::L z(lock);
 
-		TODO(L"Implement shutdown properly!");
+		SSL *ssl = null;
+		BIO_get_ssl(connection, &ssl);
+		SSL_shutdown(ssl);
+
+		// Note: We might get more data from the remote peer. This only shuts down our end essentially.
 	}
 
 	void OpenSSLSession::close(void *gcData) {

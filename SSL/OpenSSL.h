@@ -63,6 +63,12 @@ namespace ssl {
 
 		// Allocated BIO for the SSL connection.
 		BIO *connection;
+
+		// Did we see an end-of-file?
+		Bool eof;
+
+		// Fill the buffer.
+		void fillBuffer(Nat bytes, void *data);
 	};
 
 }
