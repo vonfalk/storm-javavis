@@ -476,12 +476,12 @@ namespace ssl {
 		return data;
 	}
 
-	Bool SChannelSession::more(void *) {
+	Bool OpenSSLSession::more(void *) {
 		TODO(L"Fix me!");
 		return true;
 	}
 
-	void SChannelSession::read(Buffer &to, void *) {
+	void OpenSSLSession::read(Buffer &to, void *) {
 		os::Lock::L z(lock);
 
 		int bytes = BIO_read(connection, to.dataPtr() + to.filled(), to.free());
@@ -495,37 +495,37 @@ namespace ssl {
 		TODO(L"Finish me!");
 	}
 
-	void SChannelSession::peek(Buffer &to, void *) {
+	void OpenSSLSession::peek(Buffer &to, void *) {
 		os::Lock::L z(lock);
 
 		TODO(L"Finish me!");
 	}
 
-	void SChannelSession::write(const Buffer &from, Nat offset, void *) {
+	void OpenSSLSession::write(const Buffer &from, Nat offset, void *) {
 		os::Lock::L z(lock);
 
 		BIO_write(connection, from.dataPtr() + offset, from.filled() - offset);
 	}
 
-	void SChannelSession::flush(void *gcData) {
+	void OpenSSLSession::flush(void *gcData) {
 		os::Lock::L z(lock);
 
 		BIO_flush(connection);
 	}
 
-	void SChannelSession::shutdown(void *gcData) {
+	void OpenSSLSession::shutdown(void *gcData) {
 		os::Lock::L z(lock);
 
 		TODO(L"Implement shutdown properly!");
 	}
 
-	void SChannelSession::close(void *gcData) {
+	void OpenSSLSession::close(void *gcData) {
 		os::Lock::L z(lock);
 
 		// TODO: We could do this through the BIO interface.
 		BIO_data *data = (BIO_data *)gcData;
-		data->src->close();
-		data->dst->close();
+		data->input->close();
+		data->output->close();
 	}
 
 }
