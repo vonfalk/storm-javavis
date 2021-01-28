@@ -33,7 +33,7 @@ SQLType sqlText() {
 /**
  * A column declaration.
  */
-class ColumnDecl on Compiler {
+class ColumnDecl {
     Str name;
 	SQLType datatype;
     Array<Str> modifiers;
@@ -50,7 +50,7 @@ class ColumnDecl on Compiler {
 /**
  * Declaration of an entire table.
  */
-class TableDecl on Compiler {
+class TableDecl {
     Str name;
     Array<ColumnDecl> columns;
 
@@ -63,23 +63,37 @@ class TableDecl on Compiler {
 }
 
 /**
+ * Database description.
+ */
+class DBContents {
+	// Tables declared.
+	TableDecl[] tables;
+
+	// TODO: Also support indices, constraints, etc.
+
+	void add(TableDecl decl) {
+		tables.push(decl);
+	}
+}
+
+/**
  * Declaration of a database.
  */
 class DBDecl extends NamedDecl {
     SStr name;
     Scope scope;
-    Array<TableDecl> tables;
+	DBContents contents;
 
-    init(SStr name, Scope scope, Array<TableDecl> tables) {
+    init(SStr name, Scope scope, DBContents contents) {
         init() {
             name = name;
             scope = scope;
-            tables = tables;
+			contents = contents;
         }
     }
 
     Named doCreate() {
-        DBType(name, tables);
+        DBType(name, contents);
     }
 }
 
@@ -87,15 +101,38 @@ class DBDecl extends NamedDecl {
  * Type stored in the name tree.
  */
 class DBType extends Type {
-    Array<TableDecl> tables;
+    DBContents contents;
 
-    init(SStr name, Array<TableDecl> tables) {
+    init(SStr name, DBContents contents) {
         init(name.v, TypeFlags:typeClass) {
-            tables = tables;
+            contents = contents;
         }
 
-		// TODO: Add a constructor that requires a connection.
-		add(TypeDefaultCtor(this));
+		setSuper(named{TypedConnection});
+		addCtor();
     }
+
+	private addCtor() {
+		BSTreeCtor ctor([ValParam(thisPtr(this), "this"), ValParam(named{Connection}, "connection")], SrcPos());
+		CtorBody body(ctor, Scope());
+
+		// TODO: Add statements here.
+
+		ctor.body = body;
+		add(ctor);
+	}
+}
+
+/**
+ * Base class inherited from the DBType class.
+ */
+class TypedConnection {
+	// Underlying database.
+	Database db;
+
+	// Create and verify the database structure.
+	init(Database db, DBType structure) {
+		init { db = db; }
+	}
 }
 

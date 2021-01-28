@@ -9,7 +9,8 @@ DATABASE SimpleDB {
 }
 
 suite Simple {
-	SimpleDB c;
+	SQLite baseDb;
+	SimpleDB c(baseDb);
 
 	test 1 == 0;
 }
