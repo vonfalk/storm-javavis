@@ -9,7 +9,7 @@ required delimiter = lang.bs.SRequiredDelimiter;
 // TODO: We should maybe provide "sql name" token to allow for names with spaces in them.
 
 // The top-level table declaration.
-SPlainFileItem => DBDecl(name, env, contents) : "DATABASE" ~ SName name, "{" [, SDBContents contents, ]+ "}";
+SPlainFileItem => DBDecl(name, env, contents) : "DATABASE" ~ lang.bs.SName name, "{" [, SDBContents contents, ]+ "}";
 
 
 // Contents of a database.

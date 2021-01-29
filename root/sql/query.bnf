@@ -1,0 +1,38 @@
+
+optional delimiter = lang.bs.SDelimiter;
+required delimiter = lang.bs.SRequiredDelimiter;
+
+// Connection between a db connection and an sql statement.
+// For now: just returns the connection until we have some more logic behind it.
+lang.bs.SExpr => c : "WITH" #keyword ~ lang.bs.SExpr(block) c, ":", SQuery;
+lang.bs.SExpr => c : "with" #keyword ~ lang.bs.SExpr(block) c, ":", SQuery;
+
+
+// SQL name. We might want to extend this eventually.
+SStr SName();
+SName => s : "[A-Za-z_][A-Za-z0-9_]*" @s;
+
+// Base of an SQL query.
+void SQuery();
+SQuery : "INSERT" ~ "INTO" ~ SName ~ "VALUES", "(", SExprList, ")";
+
+// A list of SQL expressions.
+void SExprList();
+SExprList : SExpr - (, ",", SExpr)*;
+
+// An SQL expression that evaluates to some value. We might want to piggy-back on the expressions of Basic Storm here.
+void SExpr();
+SExpr : SAtom;
+
+
+// Atomic expressions.
+void SAtom();
+SAtom : SLiteral;
+SAtom : lang.bs.SName; // Identifiers in the surrounding code.
+SAtom : SName; // SQL identifiers, if they allow some other representation.
+
+// SQL literals.
+void SLiteral();
+SLiteral : "-?[0-9]+"; // Integer.
+SLiteral : "-?[0-9]+\.[0-9]+"; // Float.
+SLiteral : lang.bs.SString; // String.

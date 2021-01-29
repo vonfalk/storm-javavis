@@ -8,15 +8,17 @@ DATABASE SimpleDB {
 	);
 }
 
-class MyException extends sql:SQLError {
-	init() {
-		init("Test") {}
-	}
-}
-
 suite Simple {
 	SQLite baseDb;
 	SimpleDB c(baseDb);
+
+	Str test = "variable";
+	WITH c: INSERT INTO test VALUES (3, "test");
+	WITH c: INSERT INTO test VALUES (4, test);
+
+	// for (row in WITH c: SELECT * FROM test) {
+	// 	print("${row.id} - ${row.name}");
+	// }
 
 	test 1 == 0;
 }
