@@ -8,6 +8,12 @@ DATABASE SimpleDB {
 	);
 }
 
+class MyException extends sql:SQLError {
+	init() {
+		init("Test") {}
+	}
+}
+
 suite Simple {
 	SQLite baseDb;
 	SimpleDB c(baseDb);

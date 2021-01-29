@@ -45,6 +45,16 @@ class ColumnDecl {
 			modifiers = modifiers;
 		}
 	}
+
+	// Create an SQL part for this column.
+	Str toSQL() {
+		StrBuf buffer;
+		buffer << "\"" << name << "\" " << datatype.sql;
+		for (m in modifiers)
+			buffer << " " << m;
+
+		buffer.toS;
+	}
 }
 
 /**
@@ -59,6 +69,20 @@ class TableDecl {
 			name = name.v;
 			columns = columns;
 		}
+	}
+
+	// Create an SQL statement for this table declaration.
+	Str toSQL() {
+		StrBuf buffer;
+		buffer << "CREATE TABLE \"" << name << "\" (";
+		for (i, col in columns) {
+			if (i > 0)
+				buffer << ", ";
+			buffer << col.toSQL();
+		}
+		buffer << ");";
+
+		buffer.toS;
 	}
 }
 
@@ -112,14 +136,47 @@ class DBType extends Type {
 		addCtor();
     }
 
-	private addCtor() {
-		BSTreeCtor ctor([ValParam(thisPtr(this), "this"), ValParam(named{Connection}, "connection")], SrcPos());
+	private void addCtor() {
+		BSTreeCtor ctor([ValParam(thisPtr(this), "this"), ValParam(named{Database}, "db")], SrcPos());
 		CtorBody body(ctor, Scope());
-
-		// TODO: Add statements here.
+		if (var = body.variable(SimplePart("db"))) {
+			Actuals params;
+			params.add(LocalVarAccess(SrcPos(), var));
+			params.add(ReferDBType(this));
+			body.add(InitBlock(SrcPos(), body, params));
+		} else {
+			throw InternalError("Unable to find the 'db' parameter.");
+		}
 
 		ctor.body = body;
 		add(ctor);
+	}
+}
+
+/**
+ * Expression that returns a type.
+ */
+private class ReferDBType extends Expr {
+	private DBType referTo;
+
+	init(DBType referTo) {
+		init(SrcPos()) { referTo = referTo; }
+	}
+
+	ExprResult result() : override {
+		ExprResult(Value(named{DBType}));
+	}
+
+	void code(CodeGen state, CodeResult result) : override {
+		if (result.needed) {
+			var v = result.location(state);
+			state.l << core:asm:mov(v, core:asm:objPtr(referTo));
+			result.created(state);
+		}
+	}
+
+	Str toS() : override {
+		"<type>";
 	}
 }
 
@@ -131,8 +188,31 @@ class TypedConnection {
 	Database db;
 
 	// Create and verify the database structure.
-	init(Database db, DBType structure) {
+	init(Database db, DBType t) {
 		init { db = db; }
+
+		checkStructure(t.contents);
+	}
+
+	// Check the database contents for a match.
+	private void checkStructure(DBContents contents) {
+		// TODO: This should be rewritten and improved.
+		for (table in contents.tables) {
+			var schema = db.schema(table.name);
+			if (schema.size > 0) {
+				// Check the contents of the table.
+				if (table.columns.count() != schema.size()) {
+					throw SQLError("Table size mismatch");
+				} else {
+					print("TODO: Check table columns");
+				}
+			} else {
+				// Create the table.
+				var stmt = db.prepare(table.toSQL());
+				stmt.execute();
+				stmt.finalize();
+			}
+		}
 	}
 }
 

@@ -1,6 +1,6 @@
 #include "stdafx.h"
 #include "SQLite.h"
-#include "Core/Exception.h"
+#include "Exception.h"
 
 namespace sql {
 
@@ -31,7 +31,7 @@ namespace sql {
 		sqlite3_bind_double(stmt, (int)pos, (double)d);
 	}
 
-	Bool SQLite_Statement::execute() {
+	void SQLite_Statement::execute() {
 		Int rc = sqlite3_step(stmt);
 		lastId = db->lastRowId();
 
@@ -42,14 +42,10 @@ namespace sql {
 				result = true;
 
 			reset();
-
-			return true;
+		} else {
+			Str *msg = new (this) Str((wchar*)sqlite3_errmsg16(db->raw()));
+			throw new (this) SQLError(msg);
 		}
-
-		errorMsg = new (this) Str((wchar*)sqlite3_errmsg16(db->raw()));
-
-		// Unknown error.
-		return false;
 	}
 
 	void SQLite_Statement::finalize() {
@@ -334,14 +330,7 @@ namespace sql {
 		return s;
 	}
 
-	Int Schema::size() const  {
-		if (row)
-			return row->count();
-
-		return 0;
-	}
-
-	Nat Schema::sizeNat() const	 {
+	Nat Schema::size() const  {
 		if (row)
 			return row->count();
 

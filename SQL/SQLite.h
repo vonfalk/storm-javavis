@@ -31,8 +31,8 @@ namespace sql {
 		void STORM_FN bind(Int pos, Int i) override;
 		void STORM_FN bind(Int pos, Double d) override;
 
-		// Executes an SQLite statement, returns true if execute was successfull.
-		Bool STORM_FN execute() override;
+		// Executes an SQLite statement, returns true if execute was successful.
+		void STORM_FN execute() override;
 
 		// Calls SQLite3_finalize on SQLite_Statement and cleans member variables.
 		void STORM_FN finalize() override;

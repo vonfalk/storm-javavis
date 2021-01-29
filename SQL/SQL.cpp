@@ -7,13 +7,7 @@ namespace sql {
 	//			   Statement		  //
 	/////////////////////////////////////
 
-	Statement::Statement() {
-		errorMsg = new(this) Str(L"");
-	}
-
-	Str* Statement::errMsg() const {
-		return errorMsg;
-	}
+	Statement::Statement() {}
 
 	Statement::Iter::Iter() : owner(null) {}
 

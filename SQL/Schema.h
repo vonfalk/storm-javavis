@@ -5,6 +5,11 @@ namespace sql {
 	/**
 	 * The Schema class contains the structure from a table within your database.
 	 * To get the Schema one would need to call the schema() function in the SQLite class.
+	 *
+	 * TODO: This is implemented inside SQLite.cpp and has things quite tightly tied to that
+	 * database. Generalize it!
+	 *
+	 * TODO: The nomenclature is a bit off as well (e.g. "rows", but should be "columns").
 	 */
 	class Schema : public Object {
 		STORM_CLASS;
@@ -14,8 +19,7 @@ namespace sql {
 		STORM_CTOR Schema();
 
 		//Returns the row size of the table.
-		Int STORM_FN size() const;
-		Nat STORM_FN sizeNat() const;
+		Nat STORM_FN size() const;
 
 		//Returns the table name of a table.
 		Str* STORM_FN getTable() const;

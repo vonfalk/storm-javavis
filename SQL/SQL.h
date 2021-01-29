@@ -36,14 +36,20 @@ namespace sql {
     public:
         Statement();
 
-        virtual Bool STORM_FN execute() ABSTRACT;
+		// Execute this prepared statement. Throws on error.
+        virtual void STORM_FN execute() ABSTRACT;
+
+		// Bind parameters.
         virtual void STORM_FN bind(Int pos, Str *str) ABSTRACT;
         virtual void STORM_FN bind(Int pos, Int i) ABSTRACT;
         virtual void STORM_FN bind(Int pos, Double d) ABSTRACT;
         virtual void STORM_FN finalize() ABSTRACT;
         virtual void STORM_FN reset() ABSTRACT;
-        virtual Str * STORM_FN errMsg() const;
+
+		// Fetch a row.
         virtual MAYBE(Row *) STORM_FN fetch() const ABSTRACT;
+
+		// Get the last row id.
         virtual Long STORM_FN lastRowId() const ABSTRACT;
 
         class Iter {
@@ -57,9 +63,9 @@ namespace sql {
             const Statement *owner;
         };
 
+		// Iterator interface.
         Iter STORM_FN iter();
     protected:
-        Str *errorMsg;
         Long lastId;
     };
 
