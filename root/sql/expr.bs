@@ -1,0 +1,69 @@
+use core:lang;
+
+/**
+ * Base class for an SQL expression.
+ */
+class SQLExpr on Compiler {
+	// Position in source.
+	SrcPos pos;
+
+	// Create.
+	init(SrcPos pos) {
+		init { pos = pos; }
+	}
+}
+
+/**
+ * Numeric literal.
+ */
+class SQLInt extends SQLExpr {
+	// Integer value.
+	Long value;
+
+	// Create.
+	init(SrcPos pos, Str value) {
+		init(pos) {
+			value = value.toLong;
+		}
+	}
+}
+
+/**
+ * Float literal.
+ */
+class SQLFloat extends SQLExpr {
+	// Float value.
+	Double value;
+
+	// Create.
+	init(SrcPos pos, Str value) {
+		init(pos) {
+			value = value.toDouble;
+		}
+	}
+}
+
+/**
+ * String literal.
+ */
+class SQLStr extends SQLExpr {
+	// String value.
+	Str value;
+
+	// Create.
+	init(SrcPos pos, Str value) {
+		init(pos) {
+			value = value.unescape;
+		}
+	}
+}
+
+/**
+ * Name of something. Either something in Basic Storm, or something in SQL.
+ */
+class SQLName extends SQLExpr {
+	// Create.
+	init(SrcPos pos, SStr value) {
+		init(pos) {}
+	}
+}

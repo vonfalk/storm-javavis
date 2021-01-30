@@ -1,0 +1,108 @@
+use core:lang;
+use lang:bs;
+use lang:bs:macro;
+
+/**
+ * Expression that executes some SQL query.
+ */
+class QueryExpr extends Expr {
+	// The query to execute.
+	private Query query;
+
+	// Database contents.
+	private DBContents contents;
+
+	// Create.
+	init(SrcPos pos, Expr connection, DBContents contents, Query query) {
+		init(pos) {
+			query = query;
+			contents = contents;
+		}
+
+		print("Created a query: ${query}");
+	}
+
+	// Compute the result.
+	ExprResult result() {
+		ExprResult();
+	}
+
+	// Generate code.
+	void code(CodeGen state, CodeResult r) {
+		print("TODO!");
+	}
+}
+
+// Create a suitable query expression depending on what database connection was used.
+Expr queryExpr(SrcPos pos, Expr expr, Query query) {
+	var result = expr.result().type();
+	if (result.type is named{Database}) {
+		// Untyped version.
+		throw NotSupported("Untyped queries are not implemented yet.");
+	} else if (x = result.type as DBType) {
+		// Typed version.
+		// TODO: We might want to extract the connection here.
+		return QueryExpr(pos, expr, x.contents, query);
+	} else {
+		throw SyntaxError(expr.pos, "Expected a database or a typed database.");
+	}
+}
+
+
+/**
+ * Base class for an SQL query.
+ *
+ * Note: .toS() looks like SQL, but does not take proper care of edge-cases, so should not be
+ * treated as a proper SQL statement.
+ */
+class Query on Compiler {
+	// Position in source.
+	SrcPos pos;
+
+	// Create.
+	init(SrcPos pos) {
+		init() {
+			pos = pos;
+		}
+	}
+}
+
+/**
+ * INSERT query.
+ */
+class InsertQuery extends Query {
+	// Table name.
+	SStr table;
+
+	// Columns to insert into. If empty, we insert into all columns.
+	SStr[] columns;
+
+	// Values to insert.
+	SQLExpr[] values;
+
+	// Create, insert all columns.
+	init(SrcPos pos, SStr table, SQLExpr[] values) {
+		init(pos) {
+			table = table;
+			values = values;
+		}
+	}
+
+	// Create, insert into only a subset of columns.
+	init(SrcPos pos, SStr table, SStr[] columns, SQLExpr[] values) {
+		init(pos) {
+			table = table;
+			columns = columns;
+			values = values;
+		}
+	}
+
+	// To string.
+	void toS(StrBuf to) : override {
+		to << "INSERT INTO " << table.v;
+		if (columns.any)
+			to << " (" << join(columns, ", ", (x) => x.v) << ")";
+
+		to << " VALUES (" << join(values, ", ") << ");";
+	}
+}

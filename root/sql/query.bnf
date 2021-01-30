@@ -1,38 +1,42 @@
-
 optional delimiter = lang.bs.SDelimiter;
 required delimiter = lang.bs.SRequiredDelimiter;
 
 // Connection between a db connection and an sql statement.
 // For now: just returns the connection until we have some more logic behind it.
-lang.bs.SExpr => c : "WITH" #keyword ~ lang.bs.SExpr(block) c, ":", SQuery;
-lang.bs.SExpr => c : "with" #keyword ~ lang.bs.SExpr(block) c, ":", SQuery;
+lang.bs.SExpr => queryExpr(pos, c, query) : "WITH" #keyword ~ lang.bs.SExpr(block) c, ":", SQuery query;
+lang.bs.SExpr => queryExpr(pos, c, query) : "with" #keyword ~ lang.bs.SExpr(block) c, ":", SQuery query;
 
 
 // SQL name. We might want to extend this eventually.
 SStr SName();
 SName => s : "[A-Za-z_][A-Za-z0-9_]*" @s;
 
+// List of names.
+Array<SStr> SNameList();
+SNameList => Array<SStr>() : SName -> push - (, ",", SName -> push)*;
+
 // Base of an SQL query.
-void SQuery();
-SQuery : "INSERT" ~ "INTO" ~ SName ~ "VALUES", "(", SExprList, ")";
+Query SQuery();
+SQuery => InsertQuery(pos, name, init) : "INSERT" ~ "INTO" ~ SName name ~ "VALUES", "(", SExprList init, ")";
+SQuery => InsertQuery(pos, name, cols, init) : "INSERT" ~ "INTO" ~ SName name, "(", SNameList cols, ")", "VALUES", "(", SExprList init, ")";
 
 // A list of SQL expressions.
-void SExprList();
-SExprList : SExpr - (, ",", SExpr)*;
+Array<SQLExpr> SExprList();
+SExprList => Array<SQLExpr>() : SExpr -> push - (, ",", SExpr -> push)*;
 
 // An SQL expression that evaluates to some value. We might want to piggy-back on the expressions of Basic Storm here.
-void SExpr();
-SExpr : SAtom;
+SQLExpr SExpr();
+SExpr => x : SAtom x;
 
 
 // Atomic expressions.
-void SAtom();
-SAtom : SLiteral;
-SAtom : lang.bs.SName; // Identifiers in the surrounding code.
-SAtom : SName; // SQL identifiers, if they allow some other representation.
+SQLExpr SAtom();
+SAtom => x : SLiteral x;
+SAtom => SQLName(pos, name) : lang.bs.SName name; // Identifiers in the surrounding code.
+SAtom => SQLName(pos, name) : SName name; // SQL identifiers, if they allow some other representation.
 
 // SQL literals.
-void SLiteral();
-SLiteral : "-?[0-9]+"; // Integer.
-SLiteral : "-?[0-9]+\.[0-9]+"; // Float.
-SLiteral : lang.bs.SString; // String.
+SQLExpr SLiteral();
+SLiteral => SQLInt(pos, v) : "-?[0-9]+" v; // Integer.
+SLiteral => SQLFloat(pos, v) : "-?[0-9]+\.[0-9]+" v; // Float.
+SLiteral => SQLStr(pos, v) : lang.bs.SString v; // String.

@@ -14,7 +14,7 @@ suite Simple {
 
 	Str test = "variable";
 	WITH c: INSERT INTO test VALUES (3, "test");
-	WITH c: INSERT INTO test VALUES (4, test);
+	WITH c: INSERT INTO test(id, name) VALUES (4, test);
 
 	// for (row in WITH c: SELECT * FROM test) {
 	// 	print("${row.id} - ${row.name}");
