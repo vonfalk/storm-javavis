@@ -61,6 +61,8 @@ namespace storm {
 			createValVariant,
 			// Create a Variant instance from a class (a constructor).
 			createClassVariant,
+			// Create a Join instance.
+			createJoin,
 
 			// Should be the last one.
 			count,

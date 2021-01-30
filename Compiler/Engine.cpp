@@ -17,6 +17,7 @@
 #include "Lib/Enum.h"
 #include "Lib/Fn.h"
 #include "Lib/Maybe.h"
+#include "Lib/Join.h"
 #include "Syntax/Node.h"
 #include "Utils/Memory.h"
 #include "Utils/StackInfoSet.h"
@@ -451,6 +452,8 @@ namespace storm {
 			return FNREF(createValVariant);
 		case builtin::createClassVariant:
 			return FNREF(createClassVariant);
+		case builtin::createJoin:
+			return FNREF(createJoin);
 		default:
 			assert(false, L"Unknown reference: " + ::toS(ref));
 			return null;

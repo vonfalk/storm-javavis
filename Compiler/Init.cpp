@@ -13,6 +13,7 @@
 #include "Lib/RawPtr.h"
 #include "Lib/PinnedSet.h"
 #include "Lib/Variant.h"
+#include "Lib/Join.h"
 #include "NameSet.h"
 #include "Package.h"
 #include "License.h"
@@ -69,6 +70,7 @@ namespace storm {
 		core->add(new (e) CloneTemplate());
 		core->add(new (e) ToSTemplate());
 		core->add(new (e) EnumOutput());
+		core->add(new (e) JoinTemplate());
 
 		// Add the GC license, if any.
 		if (const GcLicense *l = e.gc.license()) {

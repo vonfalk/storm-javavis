@@ -8,7 +8,7 @@
 
 namespace storm {
 
-	ToSTemplate::ToSTemplate() : Template(new (engine()) Str(L"toS")) {}
+	ToSTemplate::ToSTemplate() : Template(new (engine()) Str(S("toS"))) {}
 
 	MAYBE(Named *) ToSTemplate::generate(SimplePart *part) {
 		Array<Value> *params = part->params;

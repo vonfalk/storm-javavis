@@ -77,14 +77,17 @@ namespace storm {
 		return false;
 	}
 
-	Named *NameOverloads::createTemplate(NameSet *owner, SimplePart *part) {
+	Named *NameOverloads::createTemplate(NameSet *owner, SimplePart *part, Scope source) {
 		Named *found = null;
 		for (Nat i = 0; i < templates->count(); i++) {
 			Named *n = templates->at(i)->generate(part);
 			if (found != null && n != null) {
 				throw new (this) TypedefError(owner->pos, TO_S(engine(), S("Multiple template matches for: ") << part));
 			} else if (n) {
-				found = n;
+				// Only pick it if it matches.
+				if (part->matches(n, source) >= 0) {
+					found = n;
+				}
 			}
 		}
 
@@ -276,7 +279,7 @@ namespace storm {
 		if (result)
 			return result;
 
-		Named *t = found->createTemplate(this, part);
+		Named *t = found->createTemplate(this, part, source);
 		// Are we allowed to access the newly created template?
 		if (!t || !t->visibleFrom(source))
 			return null;

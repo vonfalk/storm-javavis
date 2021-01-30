@@ -13,7 +13,7 @@ set HKLM\Software\Microsoft\FTH\Enabled to 0
 There are some entries there as well, in State\...
 
 If the DebugBreak() function (or other crashes) don't let you break into the debugger,
-open gpedit.msc, go to Computer configuration, Administrative templates, System,
+open gpedit.msc, go to Computer configuration, Administrative templates, System (or Windows components),
 Windows Error Reporting and disable the Prevent the user interface.. option. Also the following
 registry values can be applied: scripts/ShowCrashUI.reg Then restart the system.
 

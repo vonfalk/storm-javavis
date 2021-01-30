@@ -44,7 +44,7 @@ namespace storm {
 		// TODO: More care should be taking when dealing with templates and overload resolution!
 		//  maybe matches should not be added here, as we can currently not distinguish template-generated
 		//  matches from regular ones, which could be bad.
-		virtual MAYBE(Named *) STORM_FN createTemplate(NameSet *owner, SimplePart *from);
+		MAYBE(Named *) STORM_FN createTemplate(NameSet *owner, SimplePart *from, Scope source);
 
 		// To string.
 		virtual void STORM_FN toS(StrBuf *to) const;

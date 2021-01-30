@@ -1,0 +1,23 @@
+Str joinPlain(Array<Str> src) {
+	StrBuf out;
+	out << join(src);
+	out.toS;
+}
+
+Str joinSep(Array<Str> src) {
+	StrBuf out;
+	out << join(src, ", ");
+	out.toS;
+}
+
+Str joinTfm(Array<Str> src) {
+	StrBuf out;
+	out << join(src, (x) => "test-" + x);
+	out.toS;
+}
+
+Str joinTfmSep(Array<Str> src) {
+	StrBuf out;
+	out << join(src, ", ", (x) => "test-" + x);
+	out.toS;
+}

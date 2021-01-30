@@ -633,12 +633,28 @@ BEGIN_TEST(Globals, BS) {
  * Using a Variant from within Storm.
  */
 BEGIN_TEST(VariantStormTest, BS) {
-	CHECK_EQ(::toS(runFn<Variant>(S("test.bs.createStrVariant")).get<Str *>()), L"test");
-	CHECK_EQ(runFn<Variant>(S("test.bs.createIntVariant")).get<Int>(), 15);
+	CHECK_EQ(::toS(runFn<Variant>(S("tests.bs.createStrVariant")).get<Str *>()), L"test");
+	CHECK_EQ(runFn<Variant>(S("tests.bs.createIntVariant")).get<Int>(), 15);
 
 	// Using it together with RawPtr:
-	CHECK(runFn<Bool>(S("test.bs.variantRawObj")));
-	CHECK(runFn<Bool>(S("test.bs.variantRawInt")));
+	CHECK(runFn<Bool>(S("tests.bs.variantRawObj")));
+	CHECK(runFn<Bool>(S("tests.bs.variantRawInt")));
+} END_TEST
+
+/**
+ * Join behavior.
+ */
+BEGIN_TEST(JoinTest, BS) {
+	Engine &e = gEngine();
+	Array<Str *> *input = new (e) Array<Str *>();
+	input->push(new (e) Str(S("A")));
+	input->push(new (e) Str(S("B")));
+	input->push(new (e) Str(S("C")));
+
+	CHECK_EQ(::toS(runFn<Str *>(S("tests.bs.joinPlain"), input)), L"ABC");
+	CHECK_EQ(::toS(runFn<Str *>(S("tests.bs.joinSep"), input)), L"A, B, C");
+	CHECK_EQ(::toS(runFn<Str *>(S("tests.bs.joinTfm"), input)), L"test-Atest-Btest-C");
+	CHECK_EQ(::toS(runFn<Str *>(S("tests.bs.joinTfmSep"), input)), L"test-A, test-B, test-C");
 } END_TEST
 
 /**
