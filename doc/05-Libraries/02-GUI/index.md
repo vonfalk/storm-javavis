@@ -145,7 +145,7 @@ workaround, you can set the environment variable to the empty string.
 
 If you find out that you need one or more workarounds for your hardware (or indeed, that
 the available workarounds do not fix the issue), please contact
-(info@storm-lang.org)[mailto:info@storm-lang.org] to let me knwo.
+[info@storm-lang.org](mailto:info@storm-lang.org) to let me know.
 
 Layout
 -------
