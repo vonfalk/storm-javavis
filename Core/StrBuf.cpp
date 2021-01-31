@@ -524,6 +524,8 @@ namespace storm {
 	}
 
 	GcArray<wchar> *StrBuf::copyBuf(GcArray<wchar> *buf) const {
+		if (!buf)
+			return null;
 		GcArray<wchar> *to = runtime::allocArray<wchar>(engine(), &wcharArrayType, buf->count);
 		for (Nat i = 0; i < buf->count; i++)
 			to->v[i] = buf->v[i];
