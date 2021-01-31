@@ -13,22 +13,26 @@ namespace sql {
 		db = database;
 		result = false;
 		lastId = 0;
-		sqlite3_prepare16_v2(db->raw(), str->c_str(), -1, &stmt, null); // Should check error on this.
+		int ok = sqlite3_prepare_v2(db->raw(), str->utf8_str(), -1, &stmt, null);
+		if (ok != SQLITE_OK) {
+			Str *msg = new (this) Str((wchar *)sqlite3_errmsg16(db->raw()));
+			throw new (this) SQLError(msg);
+		}
 	}
 
 	SQLite_Statement::~SQLite_Statement() {
 		finalize();
 	}
 
-	void SQLite_Statement::bind(Int pos, Str *str) {
-		sqlite3_bind_text(stmt, (int)pos, str->utf8_str(), -1, SQLITE_TRANSIENT);
+	void SQLite_Statement::bind(Nat pos, Str *str) {
+		sqlite3_bind_text(stmt, pos, str->utf8_str(), -1, SQLITE_TRANSIENT);
 	}
 
-	void SQLite_Statement::bind(Int pos,Int i) {
-		sqlite3_bind_int(stmt, (int)pos, (int)i);
+	void SQLite_Statement::bind(Nat pos, Int i) {
+		sqlite3_bind_int(stmt, pos, (int)i);
 	}
-	void SQLite_Statement::bind(Int pos, Double d) {
-		sqlite3_bind_double(stmt, (int)pos, (double)d);
+	void SQLite_Statement::bind(Nat pos, Double d) {
+		sqlite3_bind_double(stmt, pos, (double)d);
 	}
 
 	void SQLite_Statement::execute() {
@@ -188,7 +192,7 @@ namespace sql {
 		Array<Schema::Content*>* row = new (this) Array<Schema::Content*>;
 		Statement *stmt;
 		stmt = prepare(query);
-		stmt->bind(1,str);
+		stmt->bind(1, str);
 		stmt->execute();
 
 		Row * r;
@@ -198,7 +202,7 @@ namespace sql {
 		if (r == NULL)
 			return new (this) Schema();
 
-		Str * toManip = r->getStr(0);
+		Str *toManip = r->getStr(0);
 
 		toManip = trimBlankLines(toManip);
 		Str::Iter f, l;

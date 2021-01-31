@@ -2,49 +2,107 @@ use core:lang;
 use lang:bs;
 use lang:bs:macro;
 
-/**
- * Expression that executes some SQL query.
- */
-class QueryExpr extends Expr {
-	// The query to execute.
-	private Query query;
+// Create a query expression for a typed query. Helper.
+private Expr typedQueryExpr(SrcPos pos, Block block, Expr connection, DBContents contents, Query query) {
+	query.resolve(ResolveContext(block, contents));
+	var q = query.build();
 
-	// Database contents.
-	private DBContents contents;
+	ExprBlock r(pos, block);
 
-	// Create.
-	init(SrcPos pos, Expr connection, DBContents contents, Query query) {
-		init(pos) {
-			query = query;
-			contents = contents;
-		}
+	// Create a prepared statement.
+	// TODO: We want to cache this eventually!
+	var prepared = {
+		var db = namedExpr(r, pos, "db", connection); // connection.db
+		var stmt = namedExpr(r, pos, "prepare", db, Actuals(StrLiteral(pos, q.query.toS)));
+		var varDecl = Var(r, SStr("statement"), stmt);
+		r.add(varDecl);
+		LocalVarAccess(pos, varDecl.var);
+	};
 
-		print("Created a query: ${query}");
+	// Bind parameters.
+	for (i, x in q.bind) {
+		Actuals params;
+		params.add(NumLiteral(pos, i + 1));
+		params.add(x);
+		r.add(namedExpr(r, pos, "bind", prepared, params));
 	}
 
-	// Compute the result.
-	ExprResult result() {
-		ExprResult();
-	}
+	// Execute it!
+	r.add(namedExpr(r, pos, "execute", prepared));
 
-	// Generate code.
-	void code(CodeGen state, CodeResult r) {
-		print("TODO!");
-	}
+	// For now: finalize it.
+	r.add(namedExpr(r, pos, "finalize", prepared));
+
+	// TODO: If we want the result back, we need to handle that here.
+	r;
 }
 
+
 // Create a suitable query expression depending on what database connection was used.
-Expr queryExpr(SrcPos pos, Expr expr, Query query) {
+Expr queryExpr(SrcPos pos, Block block, Expr expr, Query query) {
 	var result = expr.result().type();
 	if (result.type is named{Database}) {
 		// Untyped version.
 		throw NotSupported("Untyped queries are not implemented yet.");
 	} else if (x = result.type as DBType) {
 		// Typed version.
-		// TODO: We might want to extract the connection here.
-		return QueryExpr(pos, expr, x.contents, query);
+		return typedQueryExpr(pos, block, expr, x.contents, query);
 	} else {
 		throw SyntaxError(expr.pos, "Expected a database or a typed database.");
+	}
+}
+
+/**
+ * Context passed around while resolving a SQL query.
+ */
+class ResolveContext on Compiler {
+	// Current BS block.
+	Block block;
+
+	// Contents of the database.
+	// TODO: Handle the case when this is not available.
+	DBContents db;
+
+	// What table name is in the current "context"?
+	TableDecl? currentTable;
+
+	// Create.
+	init(Block block, DBContents db) {
+		init { block = block; db = db; }
+	}
+
+	// Is this a typed query?
+	Bool typed() {
+		// TODO: Support returning 'false'.
+		true;
+	}
+
+	// Set the current table to the specified table. Throws if that table is known to not exist.
+	void setTable(SrcPos pos, Str to) {
+		unless (found = db.find(to))
+			throw NoSuchTable(pos, to);
+		currentTable = found;
+	}
+}
+
+
+/**
+ * Query builder. Collects a SQL query string in a StrBuf, as well as BS expressions for any
+ * parameters that need to be bound.
+ */
+class QueryBuilder on Compiler {
+	// String builder that contains the final SQL query.
+	StrBuf query;
+
+	// Expressions that are used to bind parameters.
+	Expr[] bind;
+
+	// Append a properly escaped SQL name to the query.
+	void name(Str name) {
+		// It seems in standard SQL, double quotes are used for identifiers.
+		// I am unable to find anything that describes how to include double quotes in an identifier.
+		// Perhaps we should just disallow that (currently it is implicitly disallowed due to the grammar).
+		query << "\"" << name << "\"";
 	}
 }
 
@@ -65,6 +123,13 @@ class Query on Compiler {
 			pos = pos;
 		}
 	}
+
+	// Resolve any unknowns in this query, given a suitable context.
+	// Also typechecks as applicable.
+	void resolve(ResolveContext context) : abstract;
+
+	// Build a query.
+	QueryBuilder build() : abstract;
 }
 
 /**
@@ -95,6 +160,69 @@ class InsertQuery extends Query {
 			columns = columns;
 			values = values;
 		}
+	}
+
+	// Resolve.
+	void resolve(ResolveContext context) : override {
+		context.setTable(table.pos, table.v);
+
+		// If we found a table, explicitly specify the column names for easier typechecking later.
+		ColumnDecl[] cols;
+		if (table = context.currentTable) {
+			if (columns.empty) {
+				cols = table.columns;
+				for (c in cols)
+					columns << SStr(c.name, pos);
+			} else {
+				// Find all of the columns.
+				for (c in columns) {
+					unless (found = table.find(c.v))
+						throw NoSuchColumn(c.pos, c.v, table.name);
+					cols << found;
+				}
+			}
+		}
+
+		if (cols.any & (values.count != cols.count))
+			throw SyntaxError(pos, "The number of values does not match the number of columns inserted into.");
+
+		// It does not really make sense to refer to column names in an insert statement...
+		context.currentTable = null;
+
+		for (Nat i = 0; i < values.count; i++)
+			values[i] = values[i].resolve(context);
+
+		for (i, col in cols) {
+			Value result(values[i].result);
+			if (!Value(col.datatype.storm).canStore(result))
+				throw SyntaxError(values[i].pos, "Can not store a value of type ${result} in the column \"${col.name}\".");
+		}
+	}
+
+	// Build the query.
+	QueryBuilder build() : override {
+		QueryBuilder r;
+
+		r.query << "INSERT INTO ";
+		r.name(table.v);
+		if (columns.any) {
+			r.query << " (";
+			for (i, col in columns) {
+				if (i > 0)
+					r.query << ", ";
+				r.name(col.v);
+			}
+			r.query << ")";
+		}
+		r.query << " VALUES (";
+		for (i, v in values) {
+			if (i > 0)
+				r.query << ", ";
+			v.build(r);
+		}
+		r.query << ");";
+
+		r;
 	}
 
 	// To string.

@@ -55,25 +55,25 @@ namespace sql {
 
 	Row::Row(Array<Variant> * v) : v(v) {}
 
-	Str* Row::getStr(Int idx) {
+	Str* Row::getStr(Nat idx) {
 		if (v)
-			return (Str*)(v -> at(idx).getObject());
-
-		return new(this) Str();
+			return v->at(idx).get<Str *>();
+		else
+			return new (this) Str();
 	}
 
-	Int* Row::getInt(int idx) {
+	Int Row::getInt(Nat idx) {
 		if (v)
-			return (Int*)(v -> at(idx).getValue());
-
-		return new(this) Int();
+			return v->at(idx).get<Int>();
+		else
+			return 0;
 	}
 
-	Double* Row::getDouble(int idx) {
+	Double Row::getDouble(Nat idx) {
 		if (v)
-			return (Double*)(v -> at(idx).getValue());
-
-		return new(this) Double();
+			return v->at(idx).get<Double>();
+		else
+			return 0;
 	}
 
 }

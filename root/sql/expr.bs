@@ -1,4 +1,5 @@
 use core:lang;
+use lang:bs:macro;
 
 /**
  * Base class for an SQL expression.
@@ -11,6 +12,34 @@ class SQLExpr on Compiler {
 	init(SrcPos pos) {
 		init { pos = pos; }
 	}
+
+	// Resolve this expression. May return some other node. The default behavior is to return the
+	// node itself, which is what is needed for literals for example.
+	SQLExpr resolve(ResolveContext context) {
+		this;
+	}
+
+	// Build this expression.
+	void build(QueryBuilder into) : abstract;
+
+	// Get the type of this expression. Computes the type the first time it is called, and may throw
+	// a type-checking exception at that time.
+	Type? result() : final {
+		if (!hasResult) {
+			computedResult = computeResult();
+			hasResult = true;
+		}
+		computedResult;
+	}
+
+	// Compute the result.
+	protected Type? computeResult() : abstract;
+
+	// Is the type computed?
+	private Bool hasResult;
+
+	// What is the cached value of the type.
+	private Type? computedResult;
 }
 
 /**
@@ -25,6 +54,21 @@ class SQLInt extends SQLExpr {
 		init(pos) {
 			value = value.toLong;
 		}
+	}
+
+	// Build.
+	void build(QueryBuilder into) : override {
+		into.query << value;
+	}
+
+	// Result.
+	Type? computeResult() : override {
+		named{Int};
+	}
+
+	// Output.
+	void toS(StrBuf to) : override {
+		to << value;
 	}
 }
 
@@ -41,6 +85,22 @@ class SQLFloat extends SQLExpr {
 			value = value.toDouble;
 		}
 	}
+
+	// Build.
+	void build(QueryBuilder into) : override {
+		// TODO: Ensure that the representation is appropriate...
+		into.query << value;
+	}
+
+	// Result.
+	Type? computeResult() : override {
+		named{Double};
+	}
+
+	// Output.
+	void toS(StrBuf to) : override {
+		to << value;
+	}
 }
 
 /**
@@ -56,14 +116,147 @@ class SQLStr extends SQLExpr {
 			value = value.unescape;
 		}
 	}
+
+	// Build.
+	void build(QueryBuilder into) : override {
+		// TODO: Proper escaping!
+		into.query << "'";
+		for (ch in value) {
+			// Double any single quotes. That is enough.
+			if (ch.codepoint == 0x27)
+				into.query << ch << ch;
+			else
+				into.query << ch;
+		}
+		into.query << "'";
+	}
+
+	// Result.
+	Type? computeResult() : override {
+		named{Str};
+	}
+
+	// Output.
+	void toS(StrBuf to) : override {
+		to << "\"" << value.escape() << "\"";
+	}
 }
 
 /**
  * Name of something. Either something in Basic Storm, or something in SQL.
+ *
+ * We don't resolve this node immediately.
+ *
+ * TODO: We need to handle "dotted" names as well.
  */
 class SQLName extends SQLExpr {
+	// The unresolved name.
+	Str name;
+
 	// Create.
 	init(SrcPos pos, SStr value) {
-		init(pos) {}
+		init(pos) {
+			name = value.v;
+		}
+	}
+
+	// Resolve.
+	SQLExpr resolve(ResolveContext context) : override {
+		// Try names in the current table if possible.
+		if (table = context.currentTable) {
+			if (column = table.find(name)) {
+				// Found it!
+				return SQLColumn(pos, column);
+			}
+		}
+
+		// Ask Basic Storm for guidance...
+		var bsExpr = lang:bs:namedExpr(context.block, pos, name, lang:bs:Actuals());
+		unless (bsExpr as lang:bs:UnresolvedName)
+			return StormValue(pos, bsExpr);
+
+		// If the above check failed and we are a typed expression, just return that one. It will
+		// throw eventually.
+		if (context.typed())
+			return StormValue(pos, bsExpr);
+
+		// If untyped and we did not have a match yet, just use this node. Then we will fail at
+		// runtime if it was invalid.
+		this;
+	}
+
+	// Build. Only used in the "unknown" case.
+	void build(QueryBuilder into) : override {
+		into.name(name);
+	}
+
+	// Result (we don't know the type).
+	Type? computeResult() : override {
+		null;
+	}
+
+	// Output.
+	void toS(StrBuf to) : override {
+		to << "unresolved:" << name;
+	}
+}
+
+/**
+ * A resolved Storm expression of some kind. Will be bound to the prepared statement.
+ */
+class StormValue extends SQLExpr {
+	// The Basic Storm expression.
+	lang:bs:Expr expr;
+
+	// Create.
+	init(SrcPos pos, lang:bs:Expr expr) {
+		init(pos) {
+			expr = expr;
+		}
+	}
+
+	// Build.
+	void build(QueryBuilder into) : override {
+		into.query << "?";
+		into.bind << expr;
+	}
+
+	// Result.
+	Type? computeResult() : override {
+		expr.result.type.type;
+	}
+
+	// Output.
+	void toS(StrBuf to) : override {
+		to << "bs:(" << expr << ")";
+	}
+}
+
+/**
+ * Reference to a column in SQL.
+ */
+class SQLColumn extends SQLExpr {
+	// Column.
+	ColumnDecl column;
+
+	init(SrcPos pos, ColumnDecl column) {
+		init(pos) {
+			column = column;
+		}
+	}
+
+	// Build.
+	void build(QueryBuilder into) : override {
+		into.name(column.name);
+	}
+
+	// Result.
+	Type? computeResult() : override {
+		column.datatype.storm;
+	}
+
+	// Output.
+	void toS(StrBuf to) : override {
+		to << "column:" << column.name;
 	}
 }

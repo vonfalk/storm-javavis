@@ -71,6 +71,14 @@ class TableDecl {
 		}
 	}
 
+	// Find a column.
+	ColumnDecl? find(Str name) {
+		for (c in columns)
+			if (c.name == name)
+				return c;
+		null;
+	}
+
 	// Create an SQL statement for this table declaration.
 	Str toSQL() {
 		StrBuf buffer;
@@ -95,8 +103,18 @@ class DBContents {
 
 	// TODO: Also support indices, constraints, etc.
 
+	// Add a table.
 	void add(TableDecl decl) {
 		tables.push(decl);
+	}
+
+	// Find a table.
+	TableDecl? find(Str name) {
+		// TODO: Speedier lookup?
+		for (table in tables)
+			if (table.name == name)
+				return table;
+		null;
 	}
 }
 

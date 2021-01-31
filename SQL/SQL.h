@@ -15,13 +15,13 @@ namespace sql {
         STORM_CTOR Row(Array<Variant> * v);
 
         //If column is of type Str, use this to get the result. (TEXT or VARCHAR in sqlite3)
-        Str* STORM_FN getStr(Int idx);
+        Str* STORM_FN getStr(Nat idx);
 
         //If column is of type Int, use this to get the result. (INTEGER in sqlite3)
-        Int * STORM_FN getInt(Int idx);
+        Int STORM_FN getInt(Nat idx);
 
         //If column is of type Double, use this to get the result. (REAL in sqlite3)
-        Double* STORM_FN getDouble(Int idx);
+        Double STORM_FN getDouble(Nat idx);
     private:
         Array<Variant> * v;
     };
@@ -40,9 +40,9 @@ namespace sql {
         virtual void STORM_FN execute() ABSTRACT;
 
 		// Bind parameters.
-        virtual void STORM_FN bind(Int pos, Str *str) ABSTRACT;
-        virtual void STORM_FN bind(Int pos, Int i) ABSTRACT;
-        virtual void STORM_FN bind(Int pos, Double d) ABSTRACT;
+        virtual void STORM_FN bind(Nat pos, Str *str) ABSTRACT;
+        virtual void STORM_FN bind(Nat pos, Int i) ABSTRACT;
+        virtual void STORM_FN bind(Nat pos, Double d) ABSTRACT;
         virtual void STORM_FN finalize() ABSTRACT;
         virtual void STORM_FN reset() ABSTRACT;
 

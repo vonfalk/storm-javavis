@@ -10,7 +10,7 @@ namespace storm {
 
 	Value::Value() : type(null), ref(false) {}
 
-	Value::Value(Type *t) : type(t), ref(false) {}
+	Value::Value(MAYBE(Type *) t) : type(t), ref(false) {}
 
 	Value::Value(Type *t, Bool ref) : type(t), ref(ref) {}
 
@@ -36,7 +36,7 @@ namespace storm {
 		return !(*this == o);
 	}
 
-	Bool Value::canStore(Type *o) const {
+	Bool Value::canStore(MAYBE(Type *) o) const {
 		if (type == null)
 			return true; // void can 'store' all types.
 		if (o == null)

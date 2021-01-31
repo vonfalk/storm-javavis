@@ -1,0 +1,19 @@
+use core:lang;
+
+/**
+ * Thrown when an invalid table name is encountered.
+ */
+class NoSuchTable extends SyntaxError {
+	init(SrcPos pos, Str name) {
+		init(pos, "No table named ${name} is known.") {}
+	}
+}
+
+/**
+ * Thrown when we don't find a column.
+ */
+class NoSuchColumn extends SyntaxError {
+	init(SrcPos pos, Str col, Str table) {
+		init(pos, "No column named ${col} in ${table}.") {}
+	}
+}

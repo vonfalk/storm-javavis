@@ -1,5 +1,6 @@
 use test;
 use sql;
+use core:io;
 
 DATABASE SimpleDB {
 	TABLE test(
@@ -9,11 +10,11 @@ DATABASE SimpleDB {
 }
 
 suite Simple {
-	SQLite baseDb;
+	SQLite baseDb; // (cwdUrl / ".." / "test.db");
 	SimpleDB c(baseDb);
 
 	Str test = "variable";
-	WITH c: INSERT INTO test VALUES (3, "test");
+	WITH c: INSERT INTO test VALUES (3, "test's");
 	WITH c: INSERT INTO test(id, name) VALUES (4, test);
 
 	// for (row in WITH c: SELECT * FROM test) {

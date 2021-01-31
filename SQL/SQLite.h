@@ -27,9 +27,9 @@ namespace sql {
 		// Binds for all relevant data types in SQLite. If a statement includes question marks,
 		// these are used to bind one string to a question mark.
 		// pos specifies which question mark is to be replaced by matched data type.
-		void STORM_FN bind(Int pos, Str *str) override;
-		void STORM_FN bind(Int pos, Int i) override;
-		void STORM_FN bind(Int pos, Double d) override;
+		void STORM_FN bind(Nat pos, Str *str) override;
+		void STORM_FN bind(Nat pos, Int i) override;
+		void STORM_FN bind(Nat pos, Double d) override;
 
 		// Executes an SQLite statement, returns true if execute was successful.
 		void STORM_FN execute() override;
