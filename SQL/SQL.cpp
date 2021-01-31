@@ -31,10 +31,6 @@ namespace sql {
 		throw new (this) NotSupported(S("Empty Database"));
 	}
 
-	Long EmptyDB::lastRowId() const {
-		throw new (this) NotSupported(S("Empty Database"));
-	}
-
 	void EmptyDB::close() {
 		throw new (this) NotSupported(S("Empty Database"));
 	}

@@ -25,19 +25,19 @@ namespace sql {
 	}
 
 	void SQLite_Statement::bind(Nat pos, Str *str) {
-		sqlite3_bind_text(stmt, pos, str->utf8_str(), -1, SQLITE_TRANSIENT);
+		sqlite3_bind_text(stmt, pos + 1, str->utf8_str(), -1, SQLITE_TRANSIENT);
 	}
 
 	void SQLite_Statement::bind(Nat pos, Int i) {
-		sqlite3_bind_int(stmt, pos, (int)i);
+		sqlite3_bind_int(stmt, pos + 1, (int)i);
 	}
 	void SQLite_Statement::bind(Nat pos, Double d) {
-		sqlite3_bind_double(stmt, pos, (double)d);
+		sqlite3_bind_double(stmt, pos + 1, (double)d);
 	}
 
 	void SQLite_Statement::execute() {
 		Int rc = sqlite3_step(stmt);
-		lastId = db->lastRowId();
+		lastId = sqlite3_last_insert_rowid(db->raw());
 
 		if ((rc == SQLITE_ROW) || (rc == SQLITE_DONE)) {
 			// Check if stmt contains any columns.
@@ -124,24 +124,12 @@ namespace sql {
 		return new (str) SQLite_Statement(this, str);
 	}
 
-	Long SQLite::lastRowId() const {
-		Long i = 0;
-		if (db != null) {
-			i = (Long)sqlite3_last_insert_rowid(db);
-		}
-		return i;
-	}
-
-	void SQLite::close(){
+	void SQLite::close() {
 		sqlite3_close(db);
 	}
 
-	sqlite3 * SQLite::raw() const {
+	sqlite3 *SQLite::raw() const {
 		return db;
-	}
-
-	SQLite * STORM_FN SQLite::getDB() {
-		return this;
 	}
 
 	Array<Str*>* SQLite::tables(){
@@ -161,254 +149,147 @@ namespace sql {
 		return names;
 	}
 
+	static bool isWS(wchar c) {
+		switch (c) {
+		case ' ':
+		case '\n':
+		case '\r':
+		case '\t':
+			return true;
+		default:
+			return false;
+		}
+	}
 
-	////////////////////////////////////
-	//			   Schema			  //
-	////////////////////////////////////
+	static bool isSpecial(wchar c) {
+		switch (c) {
+		case '(':
+		case ')':
+		case ',':
+		case '.':
+		case ';':
+			return true;
+		default:
+			return false;
+		}
+	}
 
-	Schema::Content::Content(Str* name, Str* dt, Array<Str*> *attributes) : name(name), dt(dt), attributes(attributes) {}
-
-	Schema::Content::Content() : name(null), dt(null), attributes(null) {}
-
-	Schema::Schema(Array<Content*> *row, Str *table_name) : row(row), table_name(table_name) {}
-
-	Schema::Schema() : row(null), table_name(null) {}
-
-	Schema * SQLite::schema(Str *str) {
-
-		Str *query = new (this) Str(L"SELECT sql FROM sqlite_master WHERE type = 'table' and name = ?");
-
-		const wchar *constraints[] = {
-			S("DEFAULT"),
-			S("UNIQUE"),
-			S("CHECK"),
-			S("PRIMARY KEY"),
-			S("NOT NULL"),
-			S("AUTOINCREMENT")
-		};
-
-		Schema * temp = new (this) Schema();
-
-		Array<Schema::Content*>* row = new (this) Array<Schema::Content*>;
-		Statement *stmt;
-		stmt = prepare(query);
-		stmt->bind(1, str);
-		stmt->execute();
-
-		Row * r;
-		Statement::Iter i = stmt->iter();
-		r = i.next();
-
-		if (r == NULL)
-			return new (this) Schema();
-
-		Str *toManip = r->getStr(0);
-
-		toManip = trimBlankLines(toManip);
-		Str::Iter f, l;
-		Int par = 0;
-		Bool isForeignKey = false;
-
-		// Find starting position
-		for (Str::Iter it = toManip->begin(); it != toManip->end(); it++) {
-			if (*it == '(') {
-				f = it + 1;
-				par = 1;
+	static const wchar *skipWS(const wchar *at) {
+		for (; *at; at++) {
+			if (!isWS(*at))
 				break;
-			}
 		}
-		if (par == 1) {
-			for (Str::Iter it = f; it != toManip->end(); it++) {
-				if (*it == '('){
-					par++;
-				}
-				else if (*it == ')') {
-					par--;
-				}
+		return at;
+	}
 
-				else if ((*it == ',') && ((*(it + 1) == '\n') || (*(it + 1) == '\r')) || (*(it + 1) == '\n') ) {
-					l = it + 1;
-
-					//rows
-					Str * substr = trimBlankLines(removeIndentation(toManip->substr(f, l)));
-					substr = temp->removeIndent(substr);
-
-					Str * check = substr->substr(substr->begin(),substr->begin()+11);
-					Str * fk = new (this) Str(L"FOREIGN KEY");
-
-					if (*check == *fk) {
-						isForeignKey = true;
+	static const wchar *nextToken(const wchar *at) {
+		if (*at == '"') {
+			// Identifier. Quite easy, no escape sequences need to be taken into consideration (I think).
+			for (at++; *at; at++) {
+				if (*at == '"')
+					return at + 1;
+			}
+		} else if (*at == '\'') {
+			// String literal. '' is used as an "escape", otherwise easy.
+			for (at++; *at; at++) {
+				if (*at == '\'') {
+					if (at[1] == '\'') {
+						// Escaped, go on.
+						at++;
+					} else {
+						// End. We're done.
+						return at + 1;
 					}
-
-					Str * name = null;
-					Str * dt = null;
-					Array<Str*> * attributes = new (this) Array<Str*>();
-					Int wspace = 0;
-					Str::Iter first, last, frst;
-					Bool done = false;
-
-					first = substr->begin();
-					for (Str::Iter iter = substr->begin(); iter != substr->end(); iter++) {
-						//if foreign keys occur before last row
-						if (isForeignKey) {
-							l = it;
-							Str * foreignKey = trimBlankLines(removeIndentation(toManip->substr(f, l)));
-
-							foreignKey = temp->removeIndent(foreignKey);
-							temp->getForeignKey(foreignKey, row);
-							done = true;
-						}
-
-						if (done) {
-							break;
-						}
-
-						if (((((iter + 1) == substr->end()) && ((*iter == ','))) || (*iter == ' ')) && ((wspace == 0) || (wspace == 1)) ) {
-
-							if (wspace == 0) {
-								last = iter;
-								name  = substr->substr(first,last);
-							}
-
-							if (wspace == 1) {
-								last = iter;
-								dt = removeIndentation(substr->substr(first,last));
-							}
-
-							wspace++;
-							first = iter;
-						}
-
-						if (iter + 1 == substr->end()) {
-
-							last = iter;
-							Str * temp = trimBlankLines(removeIndentation(substr->substr(first,last)));
-
-							first = temp->begin();
-							for (Str::Iter itt = temp->begin(); itt != temp->end(); itt++) {
-								if (*itt == ' ' || (itt + 1) == temp->end() || ((*itt == ' ') && ((itt + 1) == temp->end())) ) {
-									if (itt + 1 == temp->end() && !(*itt == ' '))
-										last = itt + 1;
-									else
-										last = itt;
-
-									Str *  match = trimBlankLines(removeIndentation(temp->substr(first,last)));
-
-									for (nat i = 0;i < ARRAY_COUNT(constraints); i++) {
-										if (*match == constraints[i]) {
-											attributes->push(match);
-											first = itt;
-											break;
-										}
-									}
-								}
-							}
-							wspace++;
-						}
-
-						if (wspace == 3) {
-							Schema::Content * cont = new (this) Schema::Content(name,dt,attributes);
-
-							row->push(cont);
-							break;
-						}
-
-					}
-					f = it + 1;
-
-				}
-
-				if (par == 0) {
-					l = it;
-
-					Str * lastrow = (trimBlankLines(removeIndentation(toManip->substr(f, l))));
-
-					lastrow = temp->removeIndent(lastrow);
-					temp->getForeignKey(lastrow, row);
 				}
 			}
-		}
-		stmt->finalize();
-		Schema * s = new (this) Schema(row,str);
-
-		return s;
-	}
-
-	Nat Schema::size() const  {
-		if (row)
-			return row->count();
-
-		return 0;
-	}
-
-	Str * Schema::getTable() const {
-		return table_name;
-	}
-
-	Schema::Content * Schema::getRow(Int idx) const {
-		return row->at(idx);
-	}
-
-	void Schema::getForeignKey(Str * foreignKey, Array<Content*>* row) {
-
-		Int i = 0;
-		Str::Iter f, l;
-
-		for (Str::Iter iter = foreignKey->begin(); iter != foreignKey->end(); iter++) {
-			if (*iter == '[') {
-				f = iter;
-			}
-
-			if (*iter == ']') {
-				l = iter;
-				Str * name = foreignKey->substr(f,l);
-				Str * ch = new (this) Str(']');
-				name = *name + ch;
-
-
-				for (Array<Content*>::Iter it = row->begin(); it != row->end(); it++) {
-					if (*row->at(i)->getName() == *name) {
-						Array<Str*> * attr = row->at(i)->getAttr();
-
-						attr->push(foreignKey);
-						row->at(i)->setAttr(attr);
-						break;
-					}
-					i++;
-				}
-				break;
+		} else if (isSpecial(*at)) {
+			return at + 1;
+		} else {
+			// Some keyword or an unquoted literal.
+			for (; *at; at++) {
+				if (isWS(*at) || isSpecial(*at))
+					return at;
 			}
 		}
+
+		return at;
 	}
 
-
-	Str * Schema::Content::getName() const {
-		return name;
-	}
-
-	Array<Str*> * Schema::Content::getAttr() const {
-		return attributes;
-	}
-
-	Str * Schema::Content::getDt() const {
-		return dt;
-	}
-
-	void Schema::Content::setAttr(Array<Str*> * attr) {
-		attributes = attr;
-	}
-
-	Str * Schema::removeIndent(Str * str) {
-		Str::Iter last;
-		last = str->end();
-		for (Str::Iter iter = str->begin(); iter != str->end(); iter++) {
-			if (!(*iter == ' ')) {
-				str = str->substr(iter,last);
-				break;
-			}
+	static bool cmp(const wchar *begin, const wchar *end, const wchar *str) {
+		for (; begin != end; begin++, str++) {
+			if (*str == 0)
+				return false;
+			if (*str != *begin)
+				return false;
 		}
-		return str;
 
+		return *str == 0;
+	}
+
+	static Str *identifier(Engine &e, const wchar *begin, const wchar *end) {
+		if (*begin == '"')
+			return new (e) Str(begin + 1, end - 1);
+		else
+			return new (e) Str(begin, end);
+	}
+
+	static bool next(const wchar *&begin, const wchar *&end) {
+		begin = skipWS(end);
+		if (*begin == 0)
+			return false;
+		end = nextToken(begin);
+		return true;
+	}
+
+	Schema *SQLite::schema(Str *table) {
+		Str *query = new (this) Str(S("SELECT sql FROM sqlite_master WHERE type = 'table' and name = ?;"));
+		Statement *prepared = prepare(query);
+		prepared->bind(0, table);
+		prepared->execute();
+		Row *row = prepared->iter().next();
+		PVAR(row);
+		if (!row)
+			return null;
+
+		const wchar *data = row->getStr(0)->c_str();
+		const wchar *begin = data;
+		const wchar *end = data;
+
+		Str *tableName = null;
+		{
+			// Find the "(" and remember the name in the previous token.
+			const wchar *nameBegin, *nameEnd;
+			while (next(begin, end)) {
+				if (cmp(begin, end, S("(")))
+					break;
+
+				nameBegin = begin;
+				nameEnd = end;
+			}
+
+			tableName = identifier(engine(), nameBegin, nameEnd);
+		}
+
+		Array<Schema::Column *> *cols = new (this) Array<Schema::Column *>();
+		while (next(begin, end)) {
+			Str *colName = identifier(engine(), begin, end);
+			next(begin, end);
+			Str *typeName = identifier(engine(), begin, end);
+
+			while (next(begin, end)) {
+				if (cmp(begin, end, S(",")))
+					break;
+
+				// TODO: We need to handle these somehow... They are not easily separated without
+				// implementing the entire SQL grammar more or less...
+			}
+
+			cols->push(new (this) Schema::Column(colName, typeName));
+		}
+
+		// TODO: Also look for indices (they are in sqlite_master as well).
+
+		return new (this) Schema(tableName, cols);
 	}
 
 }

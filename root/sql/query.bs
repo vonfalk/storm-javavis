@@ -22,7 +22,7 @@ private Expr typedQueryExpr(SrcPos pos, Block block, Expr connection, DBContents
 	// Bind parameters.
 	for (i, x in q.bind) {
 		Actuals params;
-		params.add(NumLiteral(pos, i + 1));
+		params.add(NumLiteral(pos, i));
 		params.add(x);
 		r.add(namedExpr(r, pos, "bind", prepared, params));
 	}

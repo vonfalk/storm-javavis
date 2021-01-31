@@ -68,22 +68,17 @@ namespace sql {
 		// Returns an SQLite_Statement given an Str str.
 		Statement * STORM_FN prepare(Str *str) override;
 
-		// Returns last row id of a connection.
-		Long STORM_FN lastRowId() const override;
-
 		// Calls sqlite3_close(db).
 		void STORM_FN close() override;
 
 		// Returns all names of tables in SQLite connection in an Array of Str.
-		Array<Str*>* STORM_FN tables() override;
+		Array<Str*> *STORM_FN tables() override;
 
 		// Getter for member variable db.
 		sqlite3 * raw() const;
 
-		SQLite * STORM_FN getDB();
-
 		// Returns a Schema for SQLite connection.
-		Schema * STORM_FN schema(Str *str);
+		MAYBE(Schema *) STORM_FN schema(Str *str);
 
 	private:
 		sqlite3 * db;

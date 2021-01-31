@@ -79,11 +79,17 @@ namespace sql {
 	class Database : public Object {
         STORM_ABSTRACT_CLASS;
     public:
+		// Returns an SQLite_Statement given an Str str.
         virtual Statement * STORM_FN prepare(Str * str) ABSTRACT;
-        virtual Long STORM_FN lastRowId() const ABSTRACT;
+
+		// Calls sqlite3_close(db).
         virtual void STORM_FN close() ABSTRACT;
+
+		// Returns all names of tables in SQLite connection in an Array of Str.
         virtual Array<Str*>* STORM_FN tables() ABSTRACT;
-        virtual Schema * STORM_FN schema(Str * str) ABSTRACT;
+
+		// Returns a Schema for the connection.
+        virtual MAYBE(Schema *) STORM_FN schema(Str * str) ABSTRACT;
     };
 
 
@@ -92,6 +98,8 @@ namespace sql {
 	 *
 	 * Useful for dealing with edge-cases without having to use maybe-types. Throws an exception
 	 * when any member is invoked.
+	 *
+	 * TODO: Can we remove this now?
 	 */
 	class EmptyDB : public Database {
         STORM_CLASS;
@@ -99,9 +107,8 @@ namespace sql {
         STORM_CTOR EmptyDB();
 
         Statement * STORM_FN prepare(Str *str) override;
-        Long STORM_FN lastRowId() const override;
         void STORM_FN close() override;
         Array<Str*>* STORM_FN tables() override;
-        Schema * STORM_FN schema(Str * str) override;
+        MAYBE(Schema *) STORM_FN schema(Str * str) override;
     };
 }

@@ -216,13 +216,12 @@ class TypedConnection {
 	private void checkStructure(DBContents contents) {
 		// TODO: This should be rewritten and improved.
 		for (table in contents.tables) {
-			var schema = db.schema(table.name);
-			if (schema.size > 0) {
+			if (schema = db.schema(table.name)) {
 				// Check the contents of the table.
-				if (table.columns.count() != schema.size()) {
+				if (table.columns.count() != schema.count()) {
 					throw SQLError("Table size mismatch");
 				} else {
-					print("TODO: Check table columns");
+					print("TODO: Check table columns in ${schema}");
 				}
 			} else {
 				// Create the table.
