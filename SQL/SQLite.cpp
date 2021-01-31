@@ -247,7 +247,6 @@ namespace sql {
 		prepared->bind(0, table);
 		prepared->execute();
 		Row *row = prepared->iter().next();
-		PVAR(row);
 		if (!row)
 			return null;
 

@@ -32,6 +32,11 @@ class SQLExpr on Compiler {
 		computedResult;
 	}
 
+	// Get a Storm expression that corresponds to this expression if available.
+	lang:bs:Expr? stormExpr() {
+		null;
+	}
+
 	// Compute the result.
 	protected Type? computeResult() : abstract;
 
@@ -59,6 +64,11 @@ class SQLInt extends SQLExpr {
 	// Build.
 	void build(QueryBuilder into) : override {
 		into.query << value;
+	}
+
+	// Get a Storm expression.
+	lang:bs:Expr? stormExpr() : override {
+		lang:bs:NumLiteral(pos, value);
 	}
 
 	// Result.
@@ -90,6 +100,11 @@ class SQLFloat extends SQLExpr {
 	void build(QueryBuilder into) : override {
 		// TODO: Ensure that the representation is appropriate...
 		into.query << value;
+	}
+
+	// Get a Storm expression.
+	lang:bs:Expr? stormExpr() : override {
+		lang:bs:NumLiteral(pos, value);
 	}
 
 	// Result.
@@ -129,6 +144,11 @@ class SQLStr extends SQLExpr {
 				into.query << ch;
 		}
 		into.query << "'";
+	}
+
+	// Get a Storm expression.
+	lang:bs:Expr? stormExpr() : override {
+		lang:bs:StrLiteral(pos, value);
 	}
 
 	// Result.
@@ -219,6 +239,11 @@ class StormValue extends SQLExpr {
 	void build(QueryBuilder into) : override {
 		into.query << "?";
 		into.bind << expr;
+	}
+
+	// Get a Storm expression.
+	lang:bs:Expr? stormExpr() : override {
+		expr;
 	}
 
 	// Result.

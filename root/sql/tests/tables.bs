@@ -17,6 +17,8 @@ suite Simple {
 	WITH c: INSERT INTO test VALUES (3, "test's");
 	WITH c: INSERT INTO test(id, name) VALUES (4, test);
 
+	WITH c: UPDATE test SET name = name || " " || test WHERE id == 2 + 1;
+
 	// for (row in WITH c: SELECT * FROM test) {
 	// 	print("${row.id} - ${row.name}");
 	// }

@@ -1,0 +1,138 @@
+use core:lang;
+use lang:bs:macro;
+
+
+/**
+ * Operator that could be evaluated in Storm as well.
+ */
+class Operator extends SQLExpr {
+	// Left hand side.
+	SQLExpr lhs;
+
+	// Right hand side.
+	SQLExpr rhs;
+
+	// Operator name in Storm.
+	Str stormOp;
+
+	// Operator name in SQL.
+	Str sqlOp;
+
+	// Create.
+	init(SQLExpr lhs, SQLExpr rhs, SStr op) {
+		init(op.pos) {
+			lhs = lhs;
+			rhs = rhs;
+			stormOp = op.v;
+			sqlOp = op.v;
+		}
+	}
+
+	// Create.
+	init(SQLExpr lhs, SQLExpr rhs, SStr sql, Str storm) {
+		init(sql.pos) {
+			lhs = lhs;
+			rhs = rhs;
+			stormOp = storm;
+			sqlOp = sql.v;
+		}
+	}
+
+	SQLExpr resolve(ResolveContext context) : override {
+		lhs = lhs.resolve(context);
+		rhs = rhs.resolve(context);
+
+		if (lStorm = lhs.stormExpr) {
+			if (rStorm = rhs.stormExpr) {
+				// Simplify!
+				if (fn = findFunction()) {
+					lang:bs:Actuals params;
+					params.add(lStorm);
+					params.add(rStorm);
+					lang:bs:FnCall call(pos, Scope(), fn, params);
+					return StormValue(pos, call);
+				}
+			}
+		}
+
+		this;
+	}
+
+	// Compute the result.
+	Type? computeResult() : override {
+		unless (fn = findFunction()) {
+			Value l(lhs.result);
+			Value r(rhs.result);
+			throw SyntaxError(pos, "Invalid parameter types for the operator: ${l} ${sqlOp} ${r}");
+		}
+
+		fn.result.type;
+	}
+
+	// Build the operator.
+	void build(QueryBuilder to) : override {
+		lhs.build(to);
+		to.query << " " << sqlOp << " ";
+		rhs.build(to);
+	}
+
+	// To string.
+	void toS(StrBuf to) : override {
+		to << lhs << " " << op << " " << rhs;
+	}
+
+	// Figure out which function in Storm this operator would call.
+	private Function? findFunction() {
+		unless (lType = lhs.result)
+			throw SyntaxError(lhs.pos, "Unknown type of subexpression.");
+		unless (rType = rhs.result)
+			throw SyntaxError(rhs.pos, "Unknown type of subexpression.");
+
+		checkTypes(lType, rType);
+
+		Value[] params = [Value(lType), Value(rType)];
+		if (x = lType.find(stormOp, params, Scope()) as Function)
+			return x;
+
+		// Try one step up.
+		if (parent = lType.parent) {
+			if (x = parent.find(stormOp, params, Scope()) as Function)
+				return x;
+		}
+
+		return null;
+	}
+
+	// Allow subclasses to override, in order to limit available types.
+	protected void checkTypes(Type l, Type r) {}
+}
+
+
+// Create the equals operator, as we allow both = and ==.
+Operator equalsOp(SQLExpr lhs, SQLExpr rhs, SStr op) {
+	Operator(lhs, rhs, SStr("=", op.pos), "==");
+}
+
+
+class StrConcatOp extends Operator {
+	init(SQLExpr lhs, SQLExpr rhs, SStr op) {
+		init(lhs, rhs, op, "+") {}
+	}
+
+	protected void checkTypes(Type l, Type r) : override {
+		if ((l !is named{Str}) | (r !is named{Str}))
+			throw SyntaxError(pos, "Both operands must be strings. Not ${Value(l)} and ${Value(r)}.");
+	}
+}
+
+// Just like Operator, but disallows strings.
+class NumOperator extends Operator {
+	init(SQLExpr lhs, SQLExpr rhs, SStr op) {
+		init(lhs, rhs, op) {}
+	}
+
+	protected void checkTypes(Type l, Type r) : override {
+		if ((l is named{Str}) | (r is named{Str}))
+			throw SyntaxError(pos, "The operator ${sqlOp} is not applicable to strings in SQL.");
+	}
+}

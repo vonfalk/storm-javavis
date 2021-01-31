@@ -6,19 +6,16 @@ required delimiter = lang.bs.SRequiredDelimiter;
 lang.bs.SExpr => queryExpr(pos, block, c, query) : "WITH" #keyword ~ lang.bs.SExpr(block) c, ":", SQuery query;
 lang.bs.SExpr => queryExpr(pos, block, c, query) : "with" #keyword ~ lang.bs.SExpr(block) c, ":", SQuery query;
 
-
-// SQL name. We might want to extend this eventually.
-SStr SName();
-SName => s : "[A-Za-z_][A-Za-z0-9_]*" @s;
-
-// List of names.
-Array<SStr> SNameList();
-SNameList => Array<SStr>() : SName -> push - (, ",", SName -> push)*;
-
 // Base of an SQL query.
 Query SQuery();
-SQuery => InsertQuery(pos, name, init) : "INSERT" ~ "INTO" ~ SName name ~ "VALUES", "(", SExprList init, ")";
-SQuery => InsertQuery(pos, name, cols, init) : "INSERT" ~ "INTO" ~ SName name, "(", SNameList cols, ")", "VALUES", "(", SExprList init, ")";
+
+// Insert:
+SQuery => InsertQuery(pos, table, init) : "INSERT" ~ "INTO" ~ SName table ~ "VALUES", "(", SExprList init, ")";
+SQuery => InsertQuery(pos, table, cols, init) : "INSERT" ~ "INTO" ~ SName table, "(", SNameList cols, ")", "VALUES", "(", SExprList init, ")";
+
+// Update:
+SQuery => UpdateQuery(pos, table, assign, condition) : "UPDATE" ~ SName table ~ "SET" ~ SAssignExprs assign ~ "WHERE" ~ SExpr condition;
+SQuery => UpdateQuery(pos, table, assign) : "UPDATE" ~ SName table ~ "SET" ~ SAssignExprs assign;
 
 // A list of SQL expressions.
 Array<SQLExpr> SExprList();
@@ -26,8 +23,50 @@ SExprList => Array<SQLExpr>() : SExpr -> push - (, ",", SExpr -> push)*;
 
 // An SQL expression that evaluates to some value. We might want to piggy-back on the expressions of Basic Storm here.
 SQLExpr SExpr();
-SExpr => x : SAtom x;
+// Here we have operators ALL, ANY, BETWEEN, IN, LIKE, OR, SOME
+SExpr => x : SExpr1 x;
 
+SQLExpr SExpr1();
+// Operator AND
+SExpr1 => x : SExpr2 x;
+
+SQLExpr SExpr2();
+// Operator OR
+SExpr2 => x : SExpr3 x;
+
+SQLExpr SExpr3();
+// Operator NOT
+SExpr3 => x : SExpr4 x;
+
+SQLExpr SExpr4();
+// Comparison operators.
+SExpr4 => x : SExpr5 x;
+SExpr4 => equalsOp(l, r, op) : SExpr5 l, "==?" @op, SExpr5 r;
+SExpr4 => Operator(l, r, op) : SExpr5 l, "<" @op, SExpr5 r;
+SExpr4 => Operator(l, r, op) : SExpr5 l, ">" @op, SExpr5 r;
+SExpr4 => Operator(l, r, op) : SExpr5 l, "<=" @op, SExpr5 r;
+SExpr4 => Operator(l, r, op) : SExpr5 l, ">=" @op, SExpr5 r;
+SExpr4 => Operator(l, r, op) : SExpr5 l, "!=" @op, SExpr5 r;
+
+SQLExpr SExpr5();
+// Addition, subtraction, bitwise operators, etc.
+// Also unary + and -.
+SExpr5 => x : SExpr6 x;
+SExpr5 => NumOperator(l, r, op) : SExpr5 l, "+" @op, SExpr6 r;
+SExpr5 => NumOperator(l, r, op) : SExpr5 l, "-" @op, SExpr6 r;
+SExpr5 => StrConcatOp(l, r, op) : SExpr5 l, "||" @op, SExpr6 r;
+
+
+SQLExpr SExpr6();
+// Multiplication, division, modulus.
+SExpr6 => x : SExpr7 x;
+SExpr6 => NumOperator(l, r, op) : SExpr6 l, "*" @op, SExpr7 r;
+SExpr6 => NumOperator(l, r, op) : SExpr6 l, "/" @op, SExpr7 r;
+SExpr6 => NumOperator(l, r, op) : SExpr6 l, "%" @op, SExpr7 r;
+
+SQLExpr SExpr7();
+// Bitwise not.
+SExpr7 => x : SAtom x;
 
 // Atomic expressions.
 SQLExpr SAtom();
@@ -40,3 +79,18 @@ SQLExpr SLiteral();
 SLiteral => SQLInt(pos, v) : "-?[0-9]+" v; // Integer.
 SLiteral => SQLFloat(pos, v) : "-?[0-9]+\.[0-9]+" v; // Float.
 SLiteral => SQLStr(pos, v) : lang.bs.SString v; // String.
+
+// Assigned value in UPDATE statement.
+AssignExpr SAssignExpr();
+SAssignExpr => AssignExpr(col, expr) : SName col, "=", SExpr expr;
+
+Array<AssignExpr> SAssignExprs();
+SAssignExprs => Array<AssignExpr>() : SAssignExpr -> push - (, ",", SAssignExpr -> push)*;
+
+// SQL name. We might want to extend this eventually.
+SStr SName();
+SName => s : "[A-Za-z_][A-Za-z0-9_]*" @s;
+
+// List of names.
+Array<SStr> SNameList();
+SNameList => Array<SStr>() : SName -> push - (, ",", SName -> push)*;

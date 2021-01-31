@@ -3,7 +3,7 @@ use lang:bs;
 use lang:bs:macro;
 
 // Create a query expression for a typed query. Helper.
-private Expr typedQueryExpr(SrcPos pos, Block block, Expr connection, DBContents contents, Query query) {
+private Expr typedQueryExpr(SrcPos pos, Block block, Expr connection, DBContents contents, Query query) on Compiler {
 	query.resolve(ResolveContext(block, contents));
 	var q = query.build();
 
@@ -39,7 +39,7 @@ private Expr typedQueryExpr(SrcPos pos, Block block, Expr connection, DBContents
 
 
 // Create a suitable query expression depending on what database connection was used.
-Expr queryExpr(SrcPos pos, Block block, Expr expr, Query query) {
+Expr queryExpr(SrcPos pos, Block block, Expr expr, Query query) on Compiler {
 	var result = expr.result().type();
 	if (result.type is named{Database}) {
 		// Untyped version.
@@ -103,6 +103,12 @@ class QueryBuilder on Compiler {
 		// I am unable to find anything that describes how to include double quotes in an identifier.
 		// Perhaps we should just disallow that (currently it is implicitly disallowed due to the grammar).
 		query << "\"" << name << "\"";
+	}
+
+	// To string.
+	void toS(StrBuf to) : override {
+		to << "Query: " << query.toS;
+		to << "\nData: " << bind;
 	}
 }
 
@@ -232,5 +238,123 @@ class InsertQuery extends Query {
 			to << " (" << join(columns, ", ", (x) => x.v) << ")";
 
 		to << " VALUES (" << join(values, ", ") << ");";
+	}
+}
+
+/**
+ * UPDATE query.
+ */
+class UpdateQuery extends Query {
+	// Table to update.
+	SStr table;
+
+	// Columns to update.
+	AssignExpr[] update;
+
+	// Condition, if any.
+	SQLExpr? condition;
+
+	// Create, update all rows.
+	init(SrcPos pos, SStr table, AssignExpr[] update) {
+		init(pos) {
+			table = table;
+			update = update;
+		}
+	}
+
+	// Create, update some rows.
+	init(SrcPos pos, SStr table, AssignExpr[] update, SQLExpr condition) {
+		init(pos) {
+			table = table;
+			update = update;
+			condition = condition;
+		}
+	}
+
+	// Resolve.
+	void resolve(ResolveContext context) : override {
+		context.setTable(table.pos, table.v);
+
+		// Resolve all assignments.
+		for (x in update) {
+			x.value = x.value.resolve(context);
+		}
+
+		// Update the expression if suitable.
+		if (x = condition) {
+			var resolved = x.resolve(context);
+			if (context.typed) {
+				Value result(resolved.result);
+				if (!Value(named{Bool}).canStore(result))
+					throw SyntaxError(resolved.pos, "Expressions in WHERE clauses are expected to return a Bool, not ${result}.");
+			}
+			condition = resolved;
+		}
+
+		if (table = context.currentTable) {
+			// Check if all columns exist, and type-check the assignments.
+			for (x in update) {
+				unless (column = table.find(x.column.v))
+					throw NoSuchColumn(x.column.pos, x.column.v, table.name);
+
+				Value result(x.value.result);
+				if (!Value(column.datatype.storm).canStore(result))
+					throw SyntaxError(x.value.pos, "Cannot assign a ${result} to column ${column.name}");
+			}
+		}
+	}
+
+	// Build the query.
+	QueryBuilder build() : override {
+		QueryBuilder r;
+
+		r.query << "UPDATE ";
+		r.name(table.v);
+		r.query << " SET ";
+		for (i, x in update) {
+			if (i > 0)
+				r.query << ", ";
+			r.query << x.column.v << " = ";
+			x.value.build(r);
+		}
+
+		if (condition) {
+			r.query << " WHERE ";
+			condition.build(r);
+		}
+
+		r.query << ";";
+
+		print("SQL: ${r}");
+		r;
+	}
+
+	// To string.
+	void toS(StrBuf to) : override {
+		to << "UPDATE " << table.v << " SET " << join(update, ", ");
+		if (condition) {
+			to << " WHERE " << condition;
+		}
+	}
+}
+
+/**
+ * Value to update in an UPDATE query.
+ */
+class AssignExpr on Compiler {
+	// Column to update.
+	SStr column;
+
+	// Value to assign.
+	SQLExpr value;
+
+	// Create.
+	init(SStr column, SQLExpr value) {
+		init { column = column; value = value; }
+	}
+
+	// To string.
+	void toS(StrBuf to) : override {
+		to << column.v << " = " << value;
 	}
 }
