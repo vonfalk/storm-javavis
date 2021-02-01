@@ -13,6 +13,7 @@ namespace sql {
 		db = database;
 		result = false;
 		lastId = 0;
+		lastChanges = 0;
 		int ok = sqlite3_prepare_v2(db->raw(), str->utf8_str(), -1, &stmt, null);
 		if (ok != SQLITE_OK) {
 			Str *msg = new (this) Str((wchar *)sqlite3_errmsg16(db->raw()));
@@ -29,23 +30,33 @@ namespace sql {
 	}
 
 	void SQLite_Statement::bind(Nat pos, Int i) {
-		sqlite3_bind_int(stmt, pos + 1, (int)i);
+		sqlite3_bind_int(stmt, pos + 1, i);
 	}
+
+	void SQLite_Statement::bind(Nat pos, Long l) {
+		sqlite3_bind_int64(stmt, pos + 1, l);
+	}
+
 	void SQLite_Statement::bind(Nat pos, Double d) {
-		sqlite3_bind_double(stmt, pos + 1, (double)d);
+		sqlite3_bind_double(stmt, pos + 1, d);
 	}
 
 	void SQLite_Statement::execute() {
-		Int rc = sqlite3_step(stmt);
-		lastId = sqlite3_last_insert_rowid(db->raw());
+		if (result) {
+			sqlite3_reset(stmt);
+			result = false;
+		}
 
-		if ((rc == SQLITE_ROW) || (rc == SQLITE_DONE)) {
-			// Check if stmt contains any columns.
-			Int colNum = sqlite3_column_count(stmt);
-			if (colNum > 0)
-				result = true;
+		int r = sqlite3_step(stmt);
 
-			reset();
+		if (r == SQLITE_DONE) {
+			// No data. We're done.
+			lastId = sqlite3_last_insert_rowid(db->raw());
+			lastChanges = sqlite3_changes(db->raw());
+			result = false;
+		} else if (r == SQLITE_ROW) {
+			// We have data!
+			result = true;
 		} else {
 			Str *msg = new (this) Str((wchar*)sqlite3_errmsg16(db->raw()));
 			throw new (this) SQLError(msg);
@@ -60,22 +71,16 @@ namespace sql {
 		}
 	}
 
-	void SQLite_Statement::reset() {
-		if (stmt)
-			sqlite3_reset(stmt);
-	}
-
-	Row * SQLite_Statement::fetch() const {
+	Row * SQLite_Statement::fetch() {
+		// No result, don't do anything.
 		if (!result)
-			return null; // Maybe return null?
-
-		Engine &e = this -> engine();
-		Array<Variant> * row = new (this) Array<Variant>;
-
-		if (sqlite3_step(stmt) == SQLITE_DONE)
 			return null;
 
+		Engine &e = engine();
 		int num_column = sqlite3_column_count(stmt);
+		Array<Variant> *row = new (this) Array<Variant>();
+		row->reserve(Nat(num_column));
+
 		for (int i = 0; i < num_column; i++){
 			switch (sqlite3_column_type(stmt, i)) {
 			case SQLITE3_TEXT:
@@ -91,11 +96,24 @@ namespace sql {
 				break;
 			}
 		}
+
+		// Go to the next row.
+		int r = sqlite3_step(stmt);
+		if (r == SQLITE_DONE) {
+			result = false;
+		} else if (r != SQLITE_ROW) {
+			// TODO: Throw an error when the next result is about to be thrown.
+		}
+
 		return new (this) Row(row);
 	}
 
 	Long SQLite_Statement::lastRowId() const {
 		return lastId;
+	}
+
+	Nat SQLite_Statement::changes() const {
+		return lastChanges;
 	}
 
 	////////////////////////////////////

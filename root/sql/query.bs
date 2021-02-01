@@ -33,6 +33,10 @@ private Expr typedQueryExpr(SrcPos pos, Block block, Expr connection, DBContents
 	// For now: finalize it.
 	r.add(namedExpr(r, pos, "finalize", prepared));
 
+	// Get the result, if desired.
+	if (e = query.result(r, prepared))
+		r.add(e);
+
 	// TODO: If we want the result back, we need to handle that here.
 	r;
 }
@@ -136,6 +140,11 @@ class Query on Compiler {
 
 	// Build a query.
 	QueryBuilder build() : abstract;
+
+	// Compute the result of this query, if it should be available.
+	Expr? result(Block context, Expr statement) {
+		null;
+	}
 }
 
 /**
@@ -231,6 +240,11 @@ class InsertQuery extends Query {
 		r;
 	}
 
+	// Return the last created row ID.
+	Expr? result(Block context, Expr statement) {
+		namedExpr(context, pos, "lastRowId", statement);
+	}
+
 	// To string.
 	void toS(StrBuf to) : override {
 		to << "INSERT INTO " << table.v;
@@ -239,6 +253,13 @@ class InsertQuery extends Query {
 
 		to << " VALUES (" << join(values, ", ") << ");";
 	}
+}
+
+// Helper to check that a condition returns a boolean. Assumes that the condition was resolved beforehand.
+private void checkCondition(SQLExpr condition) on Compiler {
+	Value result(condition.result);
+	if (!Value(named{Bool}).canStore(result))
+		throw SyntaxError(condition.pos, "Expressions in WHERE clauses are expected to return a Bool, not ${result}.");
 }
 
 /**
@@ -283,11 +304,8 @@ class UpdateQuery extends Query {
 		// Update the expression if suitable.
 		if (x = condition) {
 			var resolved = x.resolve(context);
-			if (context.typed) {
-				Value result(resolved.result);
-				if (!Value(named{Bool}).canStore(result))
-					throw SyntaxError(resolved.pos, "Expressions in WHERE clauses are expected to return a Bool, not ${result}.");
-			}
+			if (context.typed)
+				checkCondition(resolved);
 			condition = resolved;
 		}
 
@@ -325,8 +343,12 @@ class UpdateQuery extends Query {
 
 		r.query << ";";
 
-		print("SQL: ${r}");
 		r;
+	}
+
+	// Return the number of modified rows.
+	Expr? result(Block context, Expr statement) {
+		namedExpr(context, pos, "changes", statement);
 	}
 
 	// To string.
@@ -356,5 +378,72 @@ class AssignExpr on Compiler {
 	// To string.
 	void toS(StrBuf to) : override {
 		to << column.v << " = " << value;
+	}
+}
+
+
+/**
+ * Delete statement.
+ */
+class DeleteQuery extends Query {
+	// Table to update.
+	SStr table;
+
+	// Condition, if any.
+	SQLExpr? condition;
+
+	// Create, delete all rows.
+	init(SrcPos pos, SStr table) {
+		init(pos) {
+			table = table;
+		}
+	}
+
+	// Create, delete only some rows.
+	init(SrcPos pos, SStr table, SQLExpr condition) {
+		init(pos) {
+			table = table;
+			condition = condition;
+		}
+	}
+
+	// Resolve.
+	void resolve(ResolveContext context) : override {
+		context.setTable(table.pos, table.v);
+
+		if (x = condition) {
+			var resolved = x.resolve(context);
+			if (context.typed)
+				checkCondition(resolved);
+			condition = resolved;
+		}
+	}
+
+	// Build the query.
+	QueryBuilder build() : override {
+		QueryBuilder r;
+
+		r.query << "DELETE FROM ";
+		r.name(table.v);
+		if (condition) {
+			r.query << " WHERE ";
+			condition.build(r);
+		}
+		r.query << ";";
+
+		r;
+	}
+
+	// Return the number of modified rows.
+	Expr? result(Block context, Expr statement) {
+		namedExpr(context, pos, "changes", statement);
+	}
+
+	// To string.
+	void toS(StrBuf to) : override {
+		to << "DELETE FROM " << table.v;
+		if (condition) {
+			to << " WHERE " << condition;
+		}
 	}
 }

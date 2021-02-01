@@ -42,31 +42,33 @@ namespace sql {
 		// Bind parameters.
         virtual void STORM_FN bind(Nat pos, Str *str) ABSTRACT;
         virtual void STORM_FN bind(Nat pos, Int i) ABSTRACT;
+		virtual void STORM_FN bind(Nat pos, Long i) ABSTRACT;
         virtual void STORM_FN bind(Nat pos, Double d) ABSTRACT;
         virtual void STORM_FN finalize() ABSTRACT;
-        virtual void STORM_FN reset() ABSTRACT;
 
 		// Fetch a row.
-        virtual MAYBE(Row *) STORM_FN fetch() const ABSTRACT;
+        virtual MAYBE(Row *) STORM_FN fetch() ABSTRACT;
 
 		// Get the last row id.
         virtual Long STORM_FN lastRowId() const ABSTRACT;
+
+		// Get the number of changes made when the statement was executed. Assuming the statement
+		// was one of INSERT, UPDATE or DELETE.
+		virtual Nat STORM_FN changes() const ABSTRACT;
 
         class Iter {
             STORM_VALUE;
         public:
             Iter();
-            Iter(const Statement *stmt);
+            Iter(Statement *stmt);
 
             MAYBE(Row *) STORM_FN next();
         private:
-            const Statement *owner;
+            Statement *owner;
         };
 
 		// Iterator interface.
         Iter STORM_FN iter();
-    protected:
-        Long lastId;
     };
 
 

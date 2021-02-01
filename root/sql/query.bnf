@@ -17,6 +17,10 @@ SQuery => InsertQuery(pos, table, cols, init) : "INSERT" ~ "INTO" ~ SName table,
 SQuery => UpdateQuery(pos, table, assign, condition) : "UPDATE" ~ SName table ~ "SET" ~ SAssignExprs assign ~ "WHERE" ~ SExpr condition;
 SQuery => UpdateQuery(pos, table, assign) : "UPDATE" ~ SName table ~ "SET" ~ SAssignExprs assign;
 
+// Delete:
+SQuery => DeleteQuery(pos, table, condition) : "DELETE" ~ "FROM" ~ SName table ~ "WHERE" ~ SExpr condition;
+SQuery => DeleteQuery(pos, table) : "DELETE" ~ "FROM" ~ SName table;
+
 // A list of SQL expressions.
 Array<SQLExpr> SExprList();
 SExprList => Array<SQLExpr>() : SExpr -> push - (, ",", SExpr -> push)*;

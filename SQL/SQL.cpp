@@ -11,9 +11,9 @@ namespace sql {
 
 	Statement::Iter::Iter() : owner(null) {}
 
-	Statement::Iter::Iter(const Statement *stmt) : owner(stmt) {}
+	Statement::Iter::Iter(Statement *stmt) : owner(stmt) {}
 
-	Row * Statement::Iter::next() {
+	Row *Statement::Iter::next() {
 		return owner->fetch();
 	}
 

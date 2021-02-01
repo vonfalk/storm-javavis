@@ -65,4 +65,10 @@ Bind is also supported in these direct queries where they are supported in actua
    var result = SELECT Playlistid, Name FROM playlists WHERE Playlistid = testId OR Name = testString DB db;
 
 
+Points left to consider:
 
+The datatype boolean is possibly treated differently in Storm compared to SQL. For example, some
+database engines do not have a separate boolean type, so they likely do like C, using integers
+instead. Thus, a == b returns a boolean according to the type system used by this extension, while
+the SQL engine might consider it to return an integer. This means that the SQL plugin is overly
+restrictive in some cases, which is not necessarily bad, but worth noting.

@@ -29,6 +29,7 @@ namespace sql {
 		// pos specifies which question mark is to be replaced by matched data type.
 		void STORM_FN bind(Nat pos, Str *str) override;
 		void STORM_FN bind(Nat pos, Int i) override;
+		void STORM_FN bind(Nat pos, Long l) override;
 		void STORM_FN bind(Nat pos, Double d) override;
 
 		// Executes an SQLite statement, returns true if execute was successful.
@@ -37,17 +38,24 @@ namespace sql {
 		// Calls SQLite3_finalize on SQLite_Statement and cleans member variables.
 		void STORM_FN finalize() override;
 
-		// Calls SQLite3_reset on SQLite_Statement.
-		void STORM_FN reset() override;
-
 		// Fetches a new row and returns nullptr if result is false or SQLITE_DONE-flag is set.
-		MAYBE(Row *) STORM_FN fetch() const override;
+		MAYBE(Row *) STORM_FN fetch() override;
 		Long STORM_FN lastRowId() const override;
+		Nat STORM_FN changes() const override;
 
 	private:
-		Bool result;
 		sqlite3_stmt * stmt;  // Used for prepared statements
 		const SQLite *db;
+
+		// Any result to produce from the statement?
+		// If 'true' means that we need to reset the statement before executing it again.
+		Bool result;
+
+		// Number of changes from last execute.
+		Nat lastChanges;
+
+		// Last row id.
+        Long lastId;
 	};
 
 	/**
