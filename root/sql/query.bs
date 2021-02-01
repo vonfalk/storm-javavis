@@ -30,14 +30,13 @@ private Expr typedQueryExpr(SrcPos pos, Block block, Expr connection, DBContents
 	// Execute it!
 	r.add(namedExpr(r, pos, "execute", prepared));
 
-	// For now: finalize it.
-	r.add(namedExpr(r, pos, "finalize", prepared));
+	// For now: finalize it. Note: We cannot extract the results if we do.
+	// r.add(namedExpr(r, pos, "finalize", prepared));
 
 	// Get the result, if desired.
 	if (e = query.result(r, prepared))
 		r.add(e);
 
-	// TODO: If we want the result back, we need to handle that here.
 	r;
 }
 
@@ -275,16 +274,8 @@ class UpdateQuery extends Query {
 	// Condition, if any.
 	SQLExpr? condition;
 
-	// Create, update all rows.
-	init(SrcPos pos, SStr table, AssignExpr[] update) {
-		init(pos) {
-			table = table;
-			update = update;
-		}
-	}
-
-	// Create, update some rows.
-	init(SrcPos pos, SStr table, AssignExpr[] update, SQLExpr condition) {
+	// Create.
+	init(SrcPos pos, SStr table, AssignExpr[] update, SQLExpr? condition) {
 		init(pos) {
 			table = table;
 			update = update;
@@ -383,7 +374,7 @@ class AssignExpr on Compiler {
 
 
 /**
- * Delete statement.
+ * DELETE query.
  */
 class DeleteQuery extends Query {
 	// Table to update.
@@ -392,15 +383,8 @@ class DeleteQuery extends Query {
 	// Condition, if any.
 	SQLExpr? condition;
 
-	// Create, delete all rows.
-	init(SrcPos pos, SStr table) {
-		init(pos) {
-			table = table;
-		}
-	}
-
-	// Create, delete only some rows.
-	init(SrcPos pos, SStr table, SQLExpr condition) {
+	// Create.
+	init(SrcPos pos, SStr table, SQLExpr? condition) {
 		init(pos) {
 			table = table;
 			condition = condition;
@@ -445,5 +429,115 @@ class DeleteQuery extends Query {
 		if (condition) {
 			to << " WHERE " << condition;
 		}
+	}
+}
+
+
+/**
+ * SELECT query.
+ */
+class SelectQuery extends Query {
+	// Table.
+	SStr table;
+
+	// Columns to select. If empty, we assume all columns.
+	SStr[] cols;
+
+	// Types for all columns, if available.
+	Type[] colTypes;
+
+	// Where clause, if present.
+	SQLExpr? condition;
+
+	init(SrcPos pos, SStr table, SStr[] cols, SQLExpr? condition) {
+		init(pos) {
+			table = table;
+			cols = cols;
+			condition = condition;
+		}
+	}
+
+	// Resolve.
+	void resolve(ResolveContext context) : override {
+		context.setTable(table.pos, table.v);
+
+		// TODO: Respect JOINs as well.
+
+		if (table = context.currentTable) {
+			if (cols.empty) {
+				for (x in table.columns) {
+					cols << SStr(x.name);
+					colTypes << x.datatype.storm;
+				}
+			} else {
+				for (x in cols) {
+					unless (c = table.find(x.v))
+						throw NoSuchColumn(x.pos, x.v, table.name);
+					colTypes << c.datatype.storm;
+				}
+			}
+		}
+
+		if (x = condition) {
+			var resolved = x.resolve(context);
+			if (context.typed)
+				checkCondition(resolved);
+			condition = resolved;
+		}
+	}
+
+	// Build the query.
+	QueryBuilder build() : override {
+		QueryBuilder r;
+
+		r.query << "SELECT ";
+		if (cols.empty) {
+			r.query << "*";
+		} else {
+			for (i, name in cols) {
+				if (i > 0)
+					r.query << ", ";
+				r.name(name.v);
+			}
+		}
+		r.query << " FROM ";
+		r.name(table.v);
+
+		// TODO: JOINs
+
+		if (condition) {
+			r.query << " WHERE ";
+			condition.build(r);
+		}
+
+		r.query << ";";
+		print(r.query.toS);
+		r;
+	}
+
+	// Return a proper iterator.
+	Expr? result(Block context, Expr statement) {
+		// If we don't have type info, just return a plain iterator.
+		if ((colTypes.count < cols.count) | cols.empty)
+			return namedExpr(context, pos, "iter", statement);
+
+		ValParam[] types;
+		for (i, c in cols)
+			types << ValParam(colTypes[i], c.v);
+
+		var iterType = getTypedIter(types);
+		unless (ctor = iterType.find("__init", [Value(iterType), statement.result.type.asRef(false)], Scope()) as Function)
+			throw InternalError("Could not find a suitable constructor in the generated type.");
+
+		print("Got a ctor!");
+		CtorCall(pos, context.scope, ctor, Actuals(statement));
+	}
+
+	// To string.
+	void toS(StrBuf to) : override {
+		to << "SELECT " << join(cols, ", ", (x) => x.v) << " FROM " << table.v;
+		// TODO: JOINs.
+		if (condition)
+			to << " WHERE " << condition;
 	}
 }

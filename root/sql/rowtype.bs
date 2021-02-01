@@ -1,0 +1,166 @@
+use core:lang;
+use lang:bs;
+use lang:bs:macro;
+
+/**
+ * Type used to represent a row with typed data from an iterator.
+ *
+ * Note: We use ValParam to associate strings to types.
+ */
+class TypedRow extends Type {
+	init(ValParam[] types) {
+		init("<row>", TypeFlags:typeClass) {}
+
+		parentLookup = named{};
+
+		// Add variables.
+		for (t in types) {
+			add(MemberVar(t.name, t.type, this));
+		}
+
+		// Add a constructor that reads data from a Row instance.
+		BSTreeCtor ctor([ValParam(thisPtr(this), "this"), ValParam(named{Row}, "row")], SrcPos());
+		CtorBody body(ctor, Scope(this));
+
+		unless (rowVar = body.variable(SimplePart("row")))
+			throw InternalError("Failed to find the local variable 'row'.");
+		LocalVarAccess row(SrcPos(), rowVar);
+
+		{
+			InitBlock init(SrcPos(), body, null);
+			for (i, t in types) {
+				init.init(Initializer(SStr(t.name), getColumn(row, t.type, i)));
+			}
+			body.add(init);
+		}
+
+		ctor.body = body;
+		add(ctor);
+
+		// Other default operators.
+		add(TypeDeepCopy(this));
+		add(TypeCopyCtor(this));
+	}
+}
+
+// Get an expression for extracting a particular column.
+private Expr getColumn(Expr row, Value type, Nat id) on Compiler {
+	var fn = getColumnFn(type.type);
+	Actuals params;
+	params.add(row);
+	params.add(NumLiteral(SrcPos(), id.long));
+	return FnCall(SrcPos(), Scope(), fn, params);
+}
+
+
+/**
+ * Type used to denote an iterator that produces instances of a TypedRow class.
+ *
+ * Follows the "simple" iterator type that only has a "next" function.
+ */
+class TypedIter extends Type {
+	init(ValParam[] types) {
+		init("<iter>", TypeFlags:typeValue) {}
+
+		parentLookup = named{};
+
+		TypedRow toCreate(types);
+		MemberVar iter("base", Value(named{Statement:Iter}), this);
+		iter.visibility = typePrivate();
+		add(iter);
+
+		addCtor();
+		addNext(toCreate, iter);
+		addIter();
+		add(TypeCopyCtor(this));
+		add(TypeAssign(this));
+	}
+
+	// Add constructor.
+	private void addCtor() {
+		BSTreeCtor ctor([ValParam(thisPtr(this), "this"), ValParam(named{Statement}, "stmt")], SrcPos());
+		CtorBody body(ctor, Scope(this, BSLookup()));
+
+		unless (stmtVar = body.variable(SimplePart("stmt")))
+			throw InternalError("Failed to find local variable 'stmt'.");
+		LocalVarAccess stmt(SrcPos(), stmtVar);
+
+		InitBlock init(SrcPos(), body, null);
+		init.init(Initializer(SStr("base"), namedExpr(body, SrcPos(), "iter", stmt)));
+		body.add(init);
+
+		ctor.body = body;
+		add(ctor);
+	}
+
+	// Add "next" member.
+	private void addNext(TypedRow row, MemberVar iter) {
+		BSTreeFn fn(wrapMaybe(Value(row)), SStr("next"), [ValParam(thisPtr(this), "this")], null);
+		FnBody body(fn, Scope(this, BSLookup()));
+
+		unless (thisVar = body.variable(SimplePart("this")))
+			throw InternalError("Failed to find local variable 'this'.");
+		LocalVarAccess me(SrcPos(), thisVar);
+
+		unless (typeCtor = row.find("__init", [Value(row), Value(named{Row})], Scope()) as Function)
+			throw InternalError("Failed to find the constructor of the generated row-type.");
+
+		// Call "next" and see if it returned null.
+		WeakMaybeCast cast(namedExpr(body, SrcPos(), "next", MemberVarAccess(SrcPos(), me, iter, true)));
+		cast.name(SStr("x"));
+		If check(body, cast);
+		body.add(check);
+
+		CondSuccess success(SrcPos(), body, cast);
+		check.trueCode = success;
+		if (created = cast.result) {
+			CtorCall c(SrcPos(), Scope(), typeCtor, Actuals(LocalVarAccess(SrcPos(), created)));
+			success.set(Return(SrcPos(), success, c));
+		}
+
+		// Just return null otherwise.
+		body.add(NullExpr(SrcPos()));
+
+		fn.body = body;
+		add(fn);
+	}
+
+	// Add "iter" member. We just return ourselves. Otherwise, we can't use it in foreach-loops. The
+	// "clean" option would be to make a separate class that is "some returned rows" that can be
+	// iterated. But this makes more sense overall.
+	private void addIter() {
+		BSTreeFn fn(Value(this), SStr("iter"), [ValParam(thisPtr(this), "this")], null);
+		FnBody body(fn, Scope(this));
+
+		unless (thisVar = body.variable(SimplePart("this")))
+			throw InternalError("Failed to find local variable 'this'.");
+		LocalVarAccess me(SrcPos(), thisVar);
+		body.add(me);
+
+		fn.body = body;
+		add(fn);
+	}
+}
+
+// Global cache of data types.
+private Map<Str, TypedIter> createdTypes on Compiler;
+
+// Compute a key for use in the map.
+private Str typeKey(ValParam[] types) on Compiler {
+	StrBuf s;
+	for (x in types) {
+		s << "!" << x.type << ":" << x.name;
+	}
+	return s.toS;
+}
+
+// Get a TypedIter instance.
+TypedIter getTypedIter(ValParam[] types) on Compiler {
+	Str key = typeKey(types);
+	if (createdTypes.has(key))
+		return createdTypes.get(key);
+
+	TypedIter created(types);
+	createdTypes.put(key, created);
+	return created;
+}

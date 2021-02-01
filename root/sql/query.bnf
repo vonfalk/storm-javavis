@@ -14,12 +14,24 @@ SQuery => InsertQuery(pos, table, init) : "INSERT" ~ "INTO" ~ SName table ~ "VAL
 SQuery => InsertQuery(pos, table, cols, init) : "INSERT" ~ "INTO" ~ SName table, "(", SNameList cols, ")", "VALUES", "(", SExprList init, ")";
 
 // Update:
-SQuery => UpdateQuery(pos, table, assign, condition) : "UPDATE" ~ SName table ~ "SET" ~ SAssignExprs assign ~ "WHERE" ~ SExpr condition;
-SQuery => UpdateQuery(pos, table, assign) : "UPDATE" ~ SName table ~ "SET" ~ SAssignExprs assign;
+SQuery => UpdateQuery(pos, table, assign, condition) : "UPDATE" ~ SName table ~ "SET" ~ SAssignExprs assign - SWhere condition;
 
 // Delete:
-SQuery => DeleteQuery(pos, table, condition) : "DELETE" ~ "FROM" ~ SName table ~ "WHERE" ~ SExpr condition;
-SQuery => DeleteQuery(pos, table) : "DELETE" ~ "FROM" ~ SName table;
+SQuery => DeleteQuery(pos, table, condition) : "DELETE" ~ "FROM" ~ SName table - SWhere condition;
+
+// Select:
+SQuery => SelectQuery(pos, table, cols, condition) : "SELECT" ~ SSelectCols cols ~ "FROM" ~ SName table - SWhere condition;
+
+
+// A WHERE clause that might be missing.
+Maybe<SQLExpr> SWhere();
+SWhere => Maybe<SQLExpr>() : ;
+SWhere => Maybe<SQLExpr>(x) : ~ "WHERE" ~ SExpr x;
+
+// Possible columns for a SELECT query.
+Array<SStr> SSelectCols();
+SSelectCols => x : SNameList x;
+SSelectCols => Array<SStr>() : "\*";
 
 // A list of SQL expressions.
 Array<SQLExpr> SExprList();

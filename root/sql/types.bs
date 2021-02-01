@@ -1,0 +1,43 @@
+use core:lang;
+use lang:bs;
+use lang:bs:macro;
+
+/**
+ * A SQL type.
+ */
+class SQLType {
+	// SQL-name.
+	Str sql;
+
+	// Storm-type.
+	Type storm;
+
+	init(Str sql, Type storm) {
+		init {
+			sql = sql;
+			storm = storm;
+		}
+	}
+}
+
+SQLType sqlInteger() {
+	SQLType("INTEGER", named{Int});
+}
+SQLType sqlReal() {
+	SQLType("REAL", named{Double});
+}
+SQLType sqlText() {
+	SQLType("TEXT", named{Str});
+}
+
+// Get a function for reading a particular type from a Row instance.
+Function getColumnFn(Type? type) on Compiler {
+	if (type is named{Int})
+		return named{Row:getInt<Row, Nat>};
+	else if (type is named{Str})
+		return named{Row:getStr<Row, Nat>};
+	else if (type is named{Double})
+		return named{Row:getDouble<Row, Nat>};
+	else
+		throw NotSupported("The type ${Value(type)} is not supported in the SQL library.");
+}

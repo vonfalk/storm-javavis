@@ -51,7 +51,7 @@ namespace sql {
 
 		if (r == SQLITE_DONE) {
 			// No data. We're done.
-			lastId = sqlite3_last_insert_rowid(db->raw());
+			lastId = (Int)sqlite3_last_insert_rowid(db->raw());
 			lastChanges = sqlite3_changes(db->raw());
 			result = false;
 		} else if (r == SQLITE_ROW) {
@@ -108,7 +108,7 @@ namespace sql {
 		return new (this) Row(row);
 	}
 
-	Long SQLite_Statement::lastRowId() const {
+	Int SQLite_Statement::lastRowId() const {
 		return lastId;
 	}
 

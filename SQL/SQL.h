@@ -49,8 +49,8 @@ namespace sql {
 		// Fetch a row.
         virtual MAYBE(Row *) STORM_FN fetch() ABSTRACT;
 
-		// Get the last row id.
-        virtual Long STORM_FN lastRowId() const ABSTRACT;
+		// Get the last row id. TODO: Make it Long.
+        virtual Int STORM_FN lastRowId() const ABSTRACT;
 
 		// Get the number of changes made when the statement was executed. Assuming the statement
 		// was one of INSERT, UPDATE or DELETE.
@@ -59,7 +59,6 @@ namespace sql {
         class Iter {
             STORM_VALUE;
         public:
-            Iter();
             Iter(Statement *stmt);
 
             MAYBE(Row *) STORM_FN next();

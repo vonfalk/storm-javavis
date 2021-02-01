@@ -9,8 +9,6 @@ namespace sql {
 
 	Statement::Statement() {}
 
-	Statement::Iter::Iter() : owner(null) {}
-
 	Statement::Iter::Iter(Statement *stmt) : owner(stmt) {}
 
 	Row *Statement::Iter::next() {

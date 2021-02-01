@@ -16,8 +16,7 @@ suite Simple {
 	Str test = "variable";
 	WITH c: INSERT INTO test VALUES (3, "test's");
 	WITH c: INSERT INTO test(id, name) VALUES (4, test);
-	var id = WITH c: INSERT INTO test(name) VALUES ("auto-id");
-	var insertedId = id.int; // TODO: Make sure we don't have to do this...
+	var insertedId = WITH c: INSERT INTO test(name) VALUES ("auto-id");
 	print("Inserted id: ${insertedId}");
 
 	WITH c: UPDATE test SET name = name || " " || test WHERE id == 2 + 1;
@@ -25,9 +24,10 @@ suite Simple {
 	var removed = WITH c: DELETE FROM test WHERE id == insertedId;
 	print("Removed ${removed}");
 
-	// for (row in WITH c: SELECT * FROM test) {
-	// 	print("${row.id} - ${row.name}");
-	// }
+	print("Contents of the table:");
+	for (row in WITH c: SELECT * FROM test) {
+		print("  ${row.id} - ${row.name}");
+	}
 
 	test 1 == 0;
 }

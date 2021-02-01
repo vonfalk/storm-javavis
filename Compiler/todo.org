@@ -57,9 +57,15 @@
     but the scale of the issue should be assessed first.
   - [ ] Parsing core.lang.syntax.bnf takes about 80 ms, which is a bit on the high end when compiling code...
 
+<<<<<<< HEAD
 * Loose ends so far [55/95]
+=======
+* Loose ends so far [54/95]
+>>>>>>> 429f307e (SELECT queries work properly in the SQL plugin now.)
   - [ ] We want to allocate threads in some kind of pool. since the minimum alignment for VirtualAlloc on Windows
     is 64k, we might waste quite a lot of memory when allocating small stacks.
+  - [ ] The Value() ctor was changed to accept a Maybe-type. Because of this, auto-cast from Type to Value
+    no longer works in Basic Storm. Investigate, and make a special case for Maybe perhaps.
   - [ ] Having a generator in Basic Storm generate types, makes it impossible to use those types in other files
     in the same package (depending on load order).
   - [ ] If CppAbstractHints is empty, it is still possible to instantiate it, even if the base class is abstract.

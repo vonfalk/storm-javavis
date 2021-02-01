@@ -3,34 +3,6 @@ use lang:bs;
 use lang:bs:macro;
 
 /**
- * A SQL type.
- */
-class SQLType {
-	// SQL-name.
-	Str sql;
-
-	// Storm-type.
-	Type storm;
-
-	init(Str sql, Type storm) {
-		init {
-			sql = sql;
-			storm = storm;
-		}
-	}
-}
-
-SQLType sqlInteger() {
-	SQLType("INTEGER", named{Int});
-}
-SQLType sqlReal() {
-	SQLType("REAL", named{Double});
-}
-SQLType sqlText() {
-	SQLType("TEXT", named{Str});
-}
-
-/**
  * A column declaration.
  */
 class ColumnDecl {

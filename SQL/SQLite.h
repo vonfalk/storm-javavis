@@ -40,7 +40,7 @@ namespace sql {
 
 		// Fetches a new row and returns nullptr if result is false or SQLITE_DONE-flag is set.
 		MAYBE(Row *) STORM_FN fetch() override;
-		Long STORM_FN lastRowId() const override;
+		Int STORM_FN lastRowId() const override;
 		Nat STORM_FN changes() const override;
 
 	private:
@@ -55,7 +55,7 @@ namespace sql {
 		Nat lastChanges;
 
 		// Last row id.
-        Long lastId;
+        Int lastId;
 	};
 
 	/**
