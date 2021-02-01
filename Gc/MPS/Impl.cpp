@@ -1071,7 +1071,11 @@ namespace storm {
 			gccode::finalize(obj);
 		} else if (t->finalizer) {
 			// If it is a tFixedObject, make sure it has been properly initialized before we're trying to destroy it!
-			if ((t->kind != GcType::tFixedObj) || (vtable::from((RootObject *)obj) != null)) {
+			bool finalize = true;
+			if (t->kind == GcType::tFixedObj || t->kind == GcType::tType)
+				finalize = vtable::from((RootObject *)obj) != null;
+
+			if (finalize) {
 				// Mark the object as destroyed so that we can detect it later.
 				objSetFinalized(fromClient(obj));
 
