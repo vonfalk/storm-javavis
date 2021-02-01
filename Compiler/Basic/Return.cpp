@@ -36,11 +36,18 @@ namespace storm {
 		void Return::valueCode(CodeGen *state) {
 			using namespace code;
 
-			// TODO? Check the refness of the casted expr?
-			CodeResult *r = new (this) CodeResult(returnType, state->block);
+			// Check the refness of the casted expr, so that we can avoid some copying.
+			Value type = returnType;
+			if (expr->result().type().ref)
+				type = returnType.asRef();
+
+			CodeResult *r = new (this) CodeResult(type, state->block);
 			expr->code(state, r);
 
-			state->returnValue(r->location(state));
+			if (type.ref)
+				*state->l << fnRetRef(r->location(state));
+			else
+				state->returnValue(r->location(state));
 		}
 
 		Value Return::findParentType(SrcPos pos, Block *block) {

@@ -254,10 +254,27 @@ namespace storm {
 				code::Var v = to->location(s);
 				*s->l << lea(v, var->var.v);
 				to->created(s);
+			} else if (!to->type().ref && var->result.ref) {
+				// Convert from "reference" to "plain type"
+				code::Var v = to->location(s);
+				if (!var->result.isAsmType()) {
+					*s->l << lea(ptrC, v);
+					*s->l << fnParam(engine().ptrDesc(), ptrC);
+					*s->l << fnParam(engine().ptrDesc(), var->var.v);
+					*s->l << fnCall(var->result.copyCtor(), true);
+				} else {
+					*s->l << mov(ptrA, var->var.v);
+					*s->l << mov(v, xRel(v.size(), ptrA, Offset()));
+				}
+				to->created(s);
+
 			} else if (!to->suggest(s, var->var.v)) {
 
 				code::Var v = to->location(s);
-				if (!var->result.isAsmType()) {
+				if (to->type().ref) {
+					// Both are references
+					*s->l << mov(v, var->var.v);
+				} else if (!var->result.isAsmType()) {
 					*s->l << lea(ptrA, var->var.v);
 					*s->l << lea(ptrC, v);
 					*s->l << fnParam(engine().ptrDesc(), ptrC);
@@ -293,9 +310,27 @@ namespace storm {
 				code::Var v = to->location(s);
 				*s->l << lea(v, var);
 				to->created(s);
-			} else if (!to->suggest(s, var)) {
+			} else if (!to->type().ref && type.ref) {
+				// Convert from "reference" to "plain type"
 				code::Var v = to->location(s);
 				if (!type.isAsmType()) {
+					*s->l << lea(ptrC, v);
+					*s->l << fnParam(engine().ptrDesc(), ptrC);
+					*s->l << fnParam(engine().ptrDesc(), var);
+					*s->l << fnCall(type.copyCtor(), true);
+				} else {
+					*s->l << mov(ptrA, var);
+					*s->l << mov(v, xRel(v.size(), ptrA, Offset()));
+				}
+				to->created(s);
+
+			} else if (!to->suggest(s, var)) {
+
+				code::Var v = to->location(s);
+				if (to->type().ref) {
+					// Both are references
+					*s->l << mov(v, var);
+				} else if (!type.isAsmType()) {
 					*s->l << lea(ptrA, var);
 					*s->l << lea(ptrC, v);
 					*s->l << fnParam(engine().ptrDesc(), ptrC);

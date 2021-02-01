@@ -561,13 +561,19 @@ namespace code {
 				break;
 			case primitive::integer:
 			case primitive::pointer:
-				// Always two 'mov'.
+				// Always two 'mov'. If 64-bit, could be 3.
 				*dest << mov(ptrA, value);
-				*dest << mov(asSize(ptrA, s), xRel(s, ptrA, Offset()));
+				if (s == Size::sLong) {
+					*dest << mov(high32(rax), intRel(ptrA, Offset::sInt));
+					*dest << mov(low32(rax), intRel(ptrA, Offset()));
+				} else {
+					*dest << mov(asSize(ptrA, s), xRel(s, ptrA, Offset()));
+				}
 				break;
 			case primitive::real:
 				// Load to the FP stack.
-				*dest << fld(xRel(s, ptrStack, Offset()));
+				*dest << mov(ptrA, value);
+				*dest << fld(xRel(s, ptrA, Offset()));
 				break;
 			}
 		}

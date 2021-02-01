@@ -100,7 +100,7 @@ namespace storm {
 				if (isSigned) {
 					*to << intValue;
 				} else {
-					*to << hex((Word)intValue);
+					*to << S("0x") << hex((Word)intValue);
 				}
 			} else {
 				*to << floatValue;

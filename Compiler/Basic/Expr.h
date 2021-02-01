@@ -25,6 +25,9 @@ namespace storm {
 			virtual ExprResult STORM_FN result();
 
 			// Generate code.
+			// If "result" indicates that the expression returns a reference, you can ask for either
+			// a reference or a value. If "result" returns a value, you can only ask for a value.
+			// Some expressions support the other way around as well, but this can not be relied on.
 			virtual void STORM_FN code(CodeGen *state, CodeResult *r);
 
 			// Is it possible to cast this one expression to 'to'? < 0, no cast possible.

@@ -166,12 +166,20 @@ namespace storm {
 				state->returnValue(code::Var());
 			} else {
 				// TODO? Do we need to check if 'r' is a reference first?
-				CodeResult *r = new (this) CodeResult(result, l->root());
+				Value res = result;
+				if (bodyExpr->result().type().ref)
+					res = result.asRef();
+
+				CodeResult *r = new (this) CodeResult(res, l->root());
 				bodyExpr->code(state, r);
 
 				if (!bodyExpr->result().nothing()) {
 					// If we get 'nothing', that means the result will not be produced at all.
-					state->returnValue(r->location(state));
+					if (res.ref) {
+						*state->l << fnRetRef(r->location(state));
+					} else {
+						state->returnValue(r->location(state));
+					}
 				}
 			}
 
