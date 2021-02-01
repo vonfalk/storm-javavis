@@ -1,6 +1,7 @@
 #pragma once
 #include "Expr.h"
 #include "Compiler/Scope.h"
+#include "Compiler/NamePart.h"
 
 namespace storm {
 	namespace bs {
@@ -41,6 +42,21 @@ namespace storm {
 
 		// Check if 'ctor' is implicitly callable.
 		Bool STORM_FN implicitlyCallableCtor(Function *ctor);
+
+
+		/**
+		 * Class used to find suitable constructors. This works like the plain SimplePart
+		 * implementation, but is aware of "maybe" instances.
+		 */
+		class MaybeAwarePart : public SimplePart {
+			STORM_CLASS;
+		public:
+			// Create.
+			STORM_CTOR MaybeAwarePart(Str *name, Array<Value> *params);
+
+			// Custom weight function.
+			virtual Int STORM_FN matches(Named *candidate, Scope source) const;
+		};
 
 	}
 }

@@ -31,19 +31,38 @@ namespace storm {
 			return true;
 		}
 
-		// Find a cast ctor.
-		static Function *castCtor(Value from, Value to, Scope scope) {
+		struct CastCtor {
+			Function *ctor;
+			Int extraWeight;
+		};
+
+		// Find a cast ctor. Returns a constructor and a value indicating wheter or not we did some maybe-casts.
+		static CastCtor castCtor(Value from, Value to, Scope scope, bool exact = false) {
+			CastCtor result = { null, false };
 			if (!to.type)
-				return null;
+				return result;
 
 			Array<Value> *params = new (to.type) Array<Value>(2, from);
 			params->at(0) = thisPtr(to.type);
-			Named *n = to.type->find(Type::CTOR, params, scope);
-			if (Function *ctor = as<Function>(n))
-				if (ctor->fnFlags() & fnAutoCast)
-					return ctor;
+			Str *name = new (to.type) Str(Type::CTOR);
 
-			return null;
+			SimplePart *part;
+			if (exact)
+				part = new (to.type) SimplePart(name, params);
+			else
+				part = new (to.type) MaybeAwarePart(name, params);
+
+			Named *n = to.type->find(part, scope);
+			if (Function *ctor = as<Function>(n)) {
+				if (ctor->fnFlags() & fnAutoCast) {
+					result.ctor = ctor;
+					// Note if we needed some additional casts.
+					result.extraWeight = part->matches(ctor, scope);
+					return result;
+				}
+			}
+
+			return result;
 		}
 
 		void expectCastable(Expr *from, Value to, Scope scope) {
@@ -81,8 +100,11 @@ namespace storm {
 			}
 
 			// Find a cast ctor!
-			if (castCtor(fromResult.type(), to, scope))
-				return 1000; // Larger than casting literals.
+			CastCtor ctor = castCtor(fromResult.type(), to, scope);
+			if (ctor.ctor) {
+				// Larger than casting literals.
+				return ctor.extraWeight + 1000;
+			}
 
 			return -1;
 		}
@@ -141,9 +163,19 @@ namespace storm {
 					return from;
 
 			// Cast ctor?
-			if (Function *ctor = castCtor(f, to, scope)) {
+			CastCtor ctor = castCtor(f, to, scope);
+			if (ctor.ctor) {
 				Actuals *params = new (from) Actuals(from);
-				return new (from) CtorCall(from->pos, scope, ctor, params);
+
+				// Check if we need to cast <maybe>:
+				if (isMaybe(ctor.ctor->params->at(1)) && !isMaybe(f)) {
+					Function *next = castCtor(f, ctor.ctor->params->at(1), scope, true).ctor;
+					assert(next, L"Could not find Maybe<> constructor.");
+					CtorCall *call = new (from) CtorCall(from->pos, scope, next, params);
+					params = new (from) Actuals(call);
+				}
+
+				return new (from) CtorCall(from->pos, scope, ctor.ctor, params);
 			}
 
 			return null;
@@ -203,6 +235,42 @@ namespace storm {
 			// Else, we don't allow it.
 			return false;
 		}
+
+
+		MaybeAwarePart::MaybeAwarePart(Str *name, Array<Value> *params)
+			: SimplePart(name, params) {}
+
+		Int MaybeAwarePart::matches(Named *candidate, Scope source) const {
+			Array<Value> *c = candidate->params;
+			if (c->count() != params->count())
+				return -1;
+
+			int distance = 0;
+
+			for (nat i = 0; i < c->count(); i++) {
+				const Value &ours = params->at(i);
+
+				// Remove Maybe<> if needed.
+				Value match = c->at(i);
+				if (!isMaybe(ours)) {
+					Value altered = unwrapMaybe(match);
+					if (altered.type != match.type) {
+						distance += 1000;
+						match = altered;
+					}
+				}
+
+				if (match == Value() && ours != Value())
+					return -1;
+				if (!match.matches(ours, candidate->flags))
+					return -1;
+				if (ours.type && match.type)
+					distance += ours.type->distanceFrom(match.type);
+			}
+
+			return distance;
+		}
+
 
 	}
 }

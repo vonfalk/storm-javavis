@@ -57,7 +57,7 @@
     but the scale of the issue should be assessed first.
   - [ ] Parsing core.lang.syntax.bnf takes about 80 ms, which is a bit on the high end when compiling code...
 
-* Loose ends so far [54/94]
+* Loose ends so far [55/95]
   - [ ] We want to allocate threads in some kind of pool. since the minimum alignment for VirtualAlloc on Windows
     is 64k, we might waste quite a lot of memory when allocating small stacks.
   - [ ] Having a generator in Basic Storm generate types, makes it impossible to use those types in other files
@@ -131,6 +131,8 @@
   - [ ] Move the 'assign' declaration to being purely a decorator (ie. Foo field(Foo v) : assign)?
   - [ ] If a type has a '==' or '<' outside the type itself, the corresponding operator will not be present in
     a Handle, like '<<' at the moment.
+  - [X] The Value() ctor was changed to accept a Maybe-type. Because of this, auto-cast from Type to Value
+    no longer works in Basic Storm. Investigate, and make a special case for Maybe perhaps.
   - [X] Add a 'pos' member to Named. Then we can implement a generic 'file private' and use that in Basic Storm.
     If this is done, we should remove or replace storm::bs::FileScope in Basic/Scope.h, as it is most likely not
     needed anymore.
