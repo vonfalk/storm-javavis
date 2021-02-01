@@ -36,9 +36,10 @@ namespace storm {
 		void Return::valueCode(CodeGen *state) {
 			using namespace code;
 
-			// Check the refness of the casted expr, so that we can avoid some copying.
+			// If we can get the result as a reference, do that as we avoid a copy. The exception
+			// is built-in types, as we can copy them cheaply.
 			Value type = returnType;
-			if (expr->result().type().ref)
+			if (!type.isPrimitive() && expr->result().type().ref)
 				type = returnType.asRef();
 
 			CodeResult *r = new (this) CodeResult(type, state->block);

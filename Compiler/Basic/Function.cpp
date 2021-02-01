@@ -165,9 +165,10 @@ namespace storm {
 				bodyExpr->code(state, r);
 				state->returnValue(code::Var());
 			} else {
-				// TODO? Do we need to check if 'r' is a reference first?
+				// If we can get the result as a reference, do that as we avoid a copy. The exception
+				// is built-in types, as we can copy them cheaply.
 				Value res = result;
-				if (bodyExpr->result().type().ref)
+				if (!res.isPrimitive() && bodyExpr->result().type().ref)
 					res = result.asRef();
 
 				CodeResult *r = new (this) CodeResult(res, l->root());
