@@ -17,16 +17,15 @@ namespace sql {
 	}
 
 	Schema::Column::Column(Str *name, Str *dt)
-		: name(name), datatype(dt), attributes(new (engine()) Array<Str *>()) {}
+		: name(name), datatype(dt), attributes(new (engine()) Str()) {}
 
-	Schema::Column::Column(Str *name, Str *dt, Array<Str *> *attrs)
+	Schema::Column::Column(Str *name, Str *dt, Str *attrs)
 		: name(name), datatype(dt), attributes(attrs) {}
 
 	void Schema::Column::toS(StrBuf *to) const {
 		*to << name << S(" ") << datatype;
-		for (Nat i = 0; i < attributes->count(); i++) {
-			*to << S(" ") << attributes->at(i);
-		}
+		if (attributes->empty())
+			*to << S(" ") << attributes;
 	}
 
 }

@@ -20,8 +20,12 @@ namespace sql {
         //If column is of type Int, use this to get the result. (INTEGER in sqlite3)
         Int STORM_FN getInt(Nat idx);
 
+		// Get a 64-bit integer.
+		Long STORM_FN getLong(Nat idx);
+
         //If column is of type Double, use this to get the result. (REAL in sqlite3)
         Double STORM_FN getDouble(Nat idx);
+
     private:
         Array<Variant> * v;
     };
@@ -72,12 +76,12 @@ namespace sql {
 
 
     /**
-	 * A pure virtual Database class.
+	 * A database connection.
 	 *
-	 * This class specifies which functions have to be made when inheriting from Database if you're
-	 * creating your own SQL language in Storm.
+	 * A connection to some database. This is the generic interface that the rest of the database
+	 * system utilizes.
 	 */
-	class Database : public Object {
+	class DBConnection : public Object {
         STORM_ABSTRACT_CLASS;
     public:
 		// Returns an SQLite_Statement given an Str str.
@@ -93,23 +97,4 @@ namespace sql {
         virtual MAYBE(Schema *) STORM_FN schema(Str * str) ABSTRACT;
     };
 
-
-    /**
-	 * Empty database implementation.
-	 *
-	 * Useful for dealing with edge-cases without having to use maybe-types. Throws an exception
-	 * when any member is invoked.
-	 *
-	 * TODO: Can we remove this now?
-	 */
-	class EmptyDB : public Database {
-        STORM_CLASS;
-    public:
-        STORM_CTOR EmptyDB();
-
-        Statement * STORM_FN prepare(Str *str) override;
-        void STORM_FN close() override;
-        Array<Str*>* STORM_FN tables() override;
-        MAYBE(Schema *) STORM_FN schema(Str * str) override;
-    };
 }

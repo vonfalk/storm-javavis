@@ -5,7 +5,7 @@ use lang:bs:macro;
 /**
  * A column declaration.
  */
-class ColumnDecl {
+class Column {
     Str name;
 	SQLType datatype;
     Array<Str> modifiers;
@@ -32,11 +32,11 @@ class ColumnDecl {
 /**
  * Declaration of an entire table.
  */
-class TableDecl {
+class Table {
     Str name;
-    Array<ColumnDecl> columns;
+    Array<Column> columns;
 
-	init(SStr name, Array<ColumnDecl> columns) {
+	init(SStr name, Array<Column> columns) {
 		init {
 			name = name.v;
 			columns = columns;
@@ -44,7 +44,7 @@ class TableDecl {
 	}
 
 	// Find a column.
-	ColumnDecl? find(Str name) {
+	Column? find(Str name) {
 		for (c in columns)
 			if (c.name == name)
 				return c;
@@ -69,19 +69,19 @@ class TableDecl {
 /**
  * Database description.
  */
-class DBContents {
+class Database {
 	// Tables declared.
-	TableDecl[] tables;
+	Table[] tables;
 
 	// TODO: Also support indices, constraints, etc.
 
 	// Add a table.
-	void add(TableDecl decl) {
+	void add(Table decl) {
 		tables.push(decl);
 	}
 
 	// Find a table.
-	TableDecl? find(Str name) {
+	Table? find(Str name) {
 		// TODO: Speedier lookup?
 		for (table in tables)
 			if (table.name == name)
@@ -93,12 +93,12 @@ class DBContents {
 /**
  * Declaration of a database.
  */
-class DBDecl extends NamedDecl {
+class DatabaseDecl extends NamedDecl {
     SStr name;
     Scope scope;
-	DBContents contents;
+	Database contents;
 
-    init(SStr name, Scope scope, DBContents contents) {
+    init(SStr name, Scope scope, Database contents) {
         init() {
             name = name;
             scope = scope;
@@ -107,17 +107,17 @@ class DBDecl extends NamedDecl {
     }
 
     Named doCreate() {
-        DBType(name, contents);
+        DatabaseType(name, contents);
     }
 }
 
 /**
  * Type stored in the name tree.
  */
-class DBType extends Type {
-    DBContents contents;
+class DatabaseType extends Type {
+    Database contents;
 
-    init(SStr name, DBContents contents) {
+    init(SStr name, Database contents) {
         init(name.v, TypeFlags:typeClass) {
             contents = contents;
         }
@@ -127,7 +127,7 @@ class DBType extends Type {
     }
 
 	private void addCtor() {
-		BSTreeCtor ctor([ValParam(thisPtr(this), "this"), ValParam(named{Database}, "db")], SrcPos());
+		BSTreeCtor ctor([ValParam(thisPtr(this), "this"), ValParam(named{DBConnection}, "db")], SrcPos());
 		CtorBody body(ctor, Scope());
 		if (var = body.variable(SimplePart("db"))) {
 			Actuals params;
@@ -147,14 +147,14 @@ class DBType extends Type {
  * Expression that returns a type.
  */
 private class ReferDBType extends Expr {
-	private DBType referTo;
+	private DatabaseType referTo;
 
-	init(DBType referTo) {
+	init(DatabaseType referTo) {
 		init(SrcPos()) { referTo = referTo; }
 	}
 
 	ExprResult result() : override {
-		ExprResult(Value(named{DBType}));
+		ExprResult(Value(named{DatabaseType}));
 	}
 
 	void code(CodeGen state, CodeResult result) : override {
@@ -174,22 +174,22 @@ private class ReferDBType extends Expr {
  * Base class inherited from the DBType class.
  */
 class TypedConnection {
-	// Underlying database.
-	Database db;
+	// Underlying database connection.
+	DBConnection connection;
 
 	// Create and verify the database structure.
-	init(Database db, DBType t) {
-		init { db = db; }
+	init(DBConnection conn, DatabaseType t) {
+		init { connection = conn; }
 
 		checkStructure(t.contents);
 	}
 
 	// Check the database contents for a match.
-	private void checkStructure(DBContents contents) {
+	private void checkStructure(Database db) {
 		// TODO: This should be rewritten and improved.
-		for (table in contents.tables) {
-			if (schema = db.schema(table.name)) {
-				// Check the contents of the table.
+		for (table in db.tables) {
+			if (schema = connection.schema(table.name)) {
+				// Check the database of the table.
 				if (table.columns.count() != schema.count()) {
 					throw SQLError("Table size mismatch");
 				} else {
@@ -197,7 +197,7 @@ class TypedConnection {
 				}
 			} else {
 				// Create the table.
-				var stmt = db.prepare(table.toSQL());
+				var stmt = connection.prepare(table.toSQL());
 				stmt.execute();
 				stmt.finalize();
 			}

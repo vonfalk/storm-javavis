@@ -87,7 +87,7 @@ namespace sql {
 				row->push(Variant(new (this)Str((wchar *)sqlite3_column_text16(stmt, i)), e));
 				break;
 			case SQLITE_INTEGER:
-				row->push(Variant(sqlite3_column_int(stmt,i), e));
+				row->push(Variant(sqlite3_column_int64(stmt,i), e));
 				break;
 			case SQLITE_FLOAT:
 				row->push(Variant(sqlite3_column_double(stmt,i), e));
@@ -259,6 +259,24 @@ namespace sql {
 		return true;
 	}
 
+	// Include any parameters to the type in a SQL statement.
+	static const wchar *parseType(const wchar *typeend) {
+		const wchar *begin = typeend;
+		const wchar *end = typeend;
+		next(begin, end);
+		if (!cmp(begin, end, S("("))) {
+			// No parameter!
+			return typeend;
+		}
+
+		// Find an end paren.
+		do {
+			next(begin, end);
+		} while (cmp(begin, end, S(")")));
+
+		return end;
+	}
+
 	Schema *SQLite::schema(Str *table) {
 		Str *query = new (this) Str(S("SELECT sql FROM sqlite_master WHERE type = 'table' and name = ?;"));
 		Statement *prepared = prepare(query);
@@ -291,14 +309,21 @@ namespace sql {
 		while (next(begin, end)) {
 			Str *colName = identifier(engine(), begin, end);
 			next(begin, end);
+			end = parseType(end);
 			Str *typeName = identifier(engine(), begin, end);
+			Str *attributes = null;
 
-			while (next(begin, end)) {
-				if (cmp(begin, end, S(",")))
-					break;
-
-				// TODO: We need to handle these somehow... They are not easily separated without
-				// implementing the entire SQL grammar more or less...
+			next(begin, end);
+			if (cmp(begin, end, S(","))) {
+				attributes = new (this) Str();
+			} else {
+				const wchar *attrStart = begin;
+				const wchar *attrEnd = begin;
+				do {
+					attrEnd = end;
+					next(begin, end);
+				} while (cmp(begin, end, S(",")));
+				attributes = new (this) Str(attrStart, attrEnd);
 			}
 
 			cols->push(new (this) Schema::Column(colName, typeName));

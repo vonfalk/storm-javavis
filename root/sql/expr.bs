@@ -262,9 +262,9 @@ class StormValue extends SQLExpr {
  */
 class SQLColumn extends SQLExpr {
 	// Column.
-	ColumnDecl column;
+	Column column;
 
-	init(SrcPos pos, ColumnDecl column) {
+	init(SrcPos pos, Column column) {
 		init(pos) {
 			column = column;
 		}

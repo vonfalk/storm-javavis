@@ -20,28 +20,6 @@ namespace sql {
 	}
 
 	/////////////////////////////////////
-	//			   Database			   //
-	/////////////////////////////////////
-
-	EmptyDB::EmptyDB() {}
-
-	Statement * EmptyDB::prepare(Str *str) {
-		throw new (this) NotSupported(S("Empty Database"));
-	}
-
-	void EmptyDB::close() {
-		throw new (this) NotSupported(S("Empty Database"));
-	}
-
-	Array<Str*>* EmptyDB::tables() {
-		throw new (this) NotSupported(S("Empty Database"));
-	}
-
-	Schema * STORM_FN EmptyDB::schema(Str * str) {
-		throw new (this) NotSupported(S("Empty Database"));
-	}
-
-	/////////////////////////////////////
 	//				 Row			   //
 	/////////////////////////////////////
 
@@ -53,21 +31,28 @@ namespace sql {
 		if (v)
 			return v->at(idx).get<Str *>();
 		else
-			return new (this) Str();
+			throw new (this) ArrayError(0, 0);
 	}
 
 	Int Row::getInt(Nat idx) {
 		if (v)
-			return v->at(idx).get<Int>();
+			return (Int)v->at(idx).get<Long>();
 		else
-			return 0;
+			throw new (this) ArrayError(0, 0);
+	}
+
+	Long Row::getLong(Nat idx) {
+		if (v)
+			return v->at(idx).get<Long>();
+		else
+			throw new (this) ArrayError(0, 0);
 	}
 
 	Double Row::getDouble(Nat idx) {
 		if (v)
 			return v->at(idx).get<Double>();
 		else
-			return 0;
+			throw new (this) ArrayError(0, 0);
 	}
 
 }

@@ -9,28 +9,28 @@ required delimiter = lang.bs.SRequiredDelimiter;
 // TODO: We should maybe provide "sql name" token to allow for names with spaces in them.
 
 // The top-level table declaration.
-SPlainFileItem => DBDecl(name, env, contents) : "DATABASE" ~ lang.bs.SName name, "{" [, SDBContents contents, ]+ "}";
+SPlainFileItem => DatabaseDecl(name, env, contents) : "DATABASE" ~ lang.bs.SName name, "{" [, SDatabase contents, ]+ "}";
 
 
 // Contents of a database.
-DBContents SDBContents();
-SDBContents => DBContents() : (SDBItem(me),)*;
+Database SDatabase();
+SDatabase => Database() : (SDBItem(me),)*;
 
 // An item in a DB declaration.
-void SDBItem(DBContents to);
-SDBItem => to : STableDecl -> add;
+void SDBItem(Database to);
+SDBItem => to : STable -> add;
 // More here!
 
 // Declaration of a single table.
-TableDecl STableDecl();
-STableDecl => TableDecl(name, columns) : "TABLE" ~ SName name, "(" [, SColumnDecls columns, ]+ ")", ";";
+Table STable();
+STable => Table(name, columns) : "TABLE" ~ SName name, "(" [, SColumns columns, ]+ ")", ";";
 
 // Column declarations.
-Array<ColumnDecl> SColumnDecls();
-SColumnDecls => Array<ColumnDecl>() : SColumnDecl -> push - (, ",", SColumnDecl -> push)*;
+Array<Column> SColumns();
+SColumns => Array<Column>() : SColumn -> push - (, ",", SColumn -> push)*;
 
-ColumnDecl SColumnDecl();
-SColumnDecl => ColumnDecl(name, type, modifiers) : SName name ~ SDataType type -(~ SModifier modifiers)*;
+Column SColumn();
+SColumn => Column(name, type, modifiers) : SName name ~ SDataType type -(~ SModifier modifiers)*;
 
 
 // Data types in table declarations.

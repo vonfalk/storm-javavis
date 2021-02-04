@@ -20,11 +20,17 @@ namespace sql {
 		public:
 			// Constructors of the Column class.
 			STORM_CTOR Column(Str *name, Str *dt);
-			STORM_CTOR Column(Str *name, Str *dt, Array<Str*> *attributes);
+			STORM_CTOR Column(Str *name, Str *dt, Str *attributes);
 
+			// Name of the column.
 			Str *name;
+
+			// Datatype of the column.
 			Str *datatype;
-			Array<Str*> *attributes;
+
+			// Attributes for the column. These are not parsed or separated (that requires intricate
+			// understanding of the SQL syntax).
+			Str *attributes;
 
 		protected:
 			// To string.

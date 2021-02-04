@@ -3,7 +3,7 @@ use lang:bs;
 use lang:bs:macro;
 
 // Create a query expression for a typed query. Helper.
-private Expr typedQueryExpr(SrcPos pos, Block block, Expr connection, DBContents contents, Query query) on Compiler {
+private Expr typedQueryExpr(SrcPos pos, Block block, Expr connection, Database contents, Query query) on Compiler {
 	query.resolve(ResolveContext(block, contents));
 	var q = query.build();
 
@@ -12,7 +12,7 @@ private Expr typedQueryExpr(SrcPos pos, Block block, Expr connection, DBContents
 	// Create a prepared statement.
 	// TODO: We want to cache this eventually!
 	var prepared = {
-		var db = namedExpr(r, pos, "db", connection); // connection.db
+		var db = namedExpr(r, pos, "connection", connection); // connection.connection
 		var stmt = namedExpr(r, pos, "prepare", db, Actuals(StrLiteral(pos, q.query.toS)));
 		var varDecl = Var(r, SStr("statement"), stmt);
 		r.add(varDecl);
@@ -44,10 +44,10 @@ private Expr typedQueryExpr(SrcPos pos, Block block, Expr connection, DBContents
 // Create a suitable query expression depending on what database connection was used.
 Expr queryExpr(SrcPos pos, Block block, Expr expr, Query query) on Compiler {
 	var result = expr.result().type();
-	if (result.type is named{Database}) {
+	if (result.type is named{DBConnection}) {
 		// Untyped version.
 		throw NotSupported("Untyped queries are not implemented yet.");
-	} else if (x = result.type as DBType) {
+	} else if (x = result.type as DatabaseType) {
 		// Typed version.
 		return typedQueryExpr(pos, block, expr, x.contents, query);
 	} else {
@@ -64,13 +64,13 @@ class ResolveContext on Compiler {
 
 	// Contents of the database.
 	// TODO: Handle the case when this is not available.
-	DBContents db;
+	Database db;
 
 	// What table name is in the current "context"?
-	TableDecl? currentTable;
+	Table? currentTable;
 
 	// Create.
-	init(Block block, DBContents db) {
+	init(Block block, Database db) {
 		init { block = block; db = db; }
 	}
 
@@ -181,7 +181,7 @@ class InsertQuery extends Query {
 		context.setTable(table.pos, table.v);
 
 		// If we found a table, explicitly specify the column names for easier typechecking later.
-		ColumnDecl[] cols;
+		Column[] cols;
 		if (table = context.currentTable) {
 			if (columns.empty) {
 				cols = table.columns;
@@ -511,7 +511,6 @@ class SelectQuery extends Query {
 		}
 
 		r.query << ";";
-		print(r.query.toS);
 		r;
 	}
 
@@ -529,7 +528,6 @@ class SelectQuery extends Query {
 		unless (ctor = iterType.find("__init", [Value(iterType), statement.result.type.asRef(false)], Scope()) as Function)
 			throw InternalError("Could not find a suitable constructor in the generated type.");
 
-		print("Got a ctor!");
 		CtorCall(pos, context.scope, ctor, Actuals(statement));
 	}
 
