@@ -2,11 +2,11 @@ use test;
 use sql;
 use core:io;
 
+// TODO: It would be nice to respect NULL/not null in the type system.
 DATABASE SimpleDB {
 	TABLE test(
 		id INTEGER PRIMARY KEY,
-		name TEXT,
-		city TEXT
+		name TEXT
 	);
 }
 
@@ -15,20 +15,81 @@ suite Simple {
 	SimpleDB c(baseDb);
 
 	Str test = "variable";
-	WITH c: INSERT INTO test VALUES (3, "test's", "city");
+	WITH c: INSERT INTO test VALUES (3, "test's");
 	WITH c: INSERT INTO test(id, name) VALUES (4, test);
 	var insertedId = WITH c: INSERT INTO test(name) VALUES ("auto-id");
-	print("Inserted id: ${insertedId}");
+
+	test insertedId == 5;
 
 	WITH c: UPDATE test SET name = name || " " || test WHERE id == 2 + 1;
 
 	var removed = WITH c: DELETE FROM test WHERE id == insertedId;
-	print("Removed ${removed}");
 
-	print("Contents of the table:");
+	test removed == 1.nat;
+
+	StrBuf data;
 	for (row in WITH c: SELECT * FROM test) {
-		print("  ${row.id} - ${row.name}");
+		data << row.id << ", " << row.name << "\n";
 	}
 
-	test 1 == 0;
+	test data.toS == "3, test's variable\n4, variable\n";
+}
+
+
+DATABASE TwoTables {
+	TABLE test(
+		id INTEGER PRIMARY KEY,
+		name TEXT,
+		city TEXT
+	);
+
+	TABLE extra(
+		id INTEGER PRIMARY KEY,
+		test INTEGER,
+		data TEXT
+	);
+}
+
+suite AutoMigrate {
+	SQLite baseDb;
+	{
+		SimpleDB c(baseDb);
+
+		WITH c: INSERT INTO test VALUES (3, "test1");
+	}
+
+	{
+		TwoTables c(baseDb);
+		Int rows = 0;
+
+		WITH c {
+			INSERT INTO test VALUES (4, "test2", "city");
+			INSERT INTO extra VALUES (1, 4, "more data");
+
+			for (x in SELECT city FROM test WHERE id == 4) {
+				rows++;
+				test x.city == "city";
+			}
+		}
+
+		// Outside the block to ensure it is actually executed.
+		test rows == 1;
+	}
+}
+
+suite Join {
+	SQLite db;
+	TwoTables c(db);
+
+	WITH c {
+		INSERT INTO test VALUES (3, "a", "a");
+		INSERT INTO test VALUES (4, "b", "b");
+
+		INSERT INTO extra(test, data) VALUES (3, "more");
+		INSERT INTO extra(test, data) VALUES (3, "even more");
+		INSERT INTO extra(test, data) VALUES (4, "some more");
+
+		// for (x in SELECT * FROM test JOIN extra ON extra.test == test.id WHERE test.id == 3) {
+		// }
+	}
 }

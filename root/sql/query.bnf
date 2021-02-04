@@ -2,9 +2,19 @@ optional delimiter = lang.bs.SDelimiter;
 required delimiter = lang.bs.SRequiredDelimiter;
 
 // Connection between a db connection and an sql statement.
-// For now: just returns the connection until we have some more logic behind it.
 lang.bs.SExpr => queryExpr(pos, block, c, query) : "WITH" #keyword ~ lang.bs.SExpr(block) c, ":", SQuery query;
 lang.bs.SExpr => queryExpr(pos, block, c, query) : "with" #keyword ~ lang.bs.SExpr(block) c, ":", SQuery query;
+
+// Allow WITH-blocks.
+lang.bs.SStmt => x : SWithBlock(block) x;
+
+lang.bs.Expr SWithBlock(lang.bs.Block block);
+SWithBlock => QueryBlock(pos, block, c) : "WITH" #keyword ~ lang.bs.SExpr(block) c, "{" [, (lang.bs.SBlockItem(me), )* ]+ "}";
+SWithBlock => QueryBlock(pos, block, c) : "with" #keyword ~ lang.bs.SExpr(block) c, "{" [, (lang.bs.SBlockItem(me), )* ]+ "}";
+
+// Allow queries as "regular" statements inside these blocks.
+SWithBlock..lang.bs.SExpr => queryBlockExpr(pos, block, query) : SQuery query;
+
 
 // Base of an SQL query.
 Query SQuery();

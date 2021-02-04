@@ -197,7 +197,6 @@ class TypedConnection {
 			if (schema = connection.schema(table.name)) {
 				var queries = checkColumns(table, schema);
 				for (q in queries) {
-					print("Corrective quiery ${q}");
 					var stmt = connection.prepare(q);
 					stmt.execute();
 					stmt.finalize();

@@ -92,10 +92,15 @@ namespace sql {
 			case SQLITE_FLOAT:
 				row->push(Variant(sqlite3_column_double(stmt,i), e));
 				break;
+			case SQLITE_NULL:
+				row->push(Variant());
+				break;
 			default:
+				assert(false, L"Unknown column type from SQLite!");
 				break;
 			}
 		}
+
 
 		// Go to the next row.
 		int r = sqlite3_step(stmt);

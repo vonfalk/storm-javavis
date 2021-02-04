@@ -24,7 +24,7 @@ SExpr => exploreType(pos, block, type) : "explore" #keyword, "{", SType type, "}
 SExpr => reloadName(block, type) : "reload" #keyword, "{", SType type, "}";
 
 // Debug things by printing expressions at compile-time.
-SExpr => printExpr(t, stmt) : "dump" #keyword, "{", (SStmt(block) stmt) t, "}";
+SStmt => printExpr(t, stmt) : "dump" #keyword, "{", (SStmt(block) stmt) t, "}";
 SExpr => printExpr(t, expr) : "dump" #keyword, "{", (SExpr(block) expr) t, "}";
 
 // Debug asm by printing asm at compile-time.

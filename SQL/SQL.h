@@ -7,6 +7,8 @@ namespace sql {
 
     /**
      * This is representing the result of a Row from a SQL SELECT statement query.
+	 *
+	 * TODO: What about null values?
      */
     class Row : public Object {
         STORM_CLASS;

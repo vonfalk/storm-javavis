@@ -51,8 +51,51 @@ Expr queryExpr(SrcPos pos, Block block, Expr expr, Query query) on Compiler {
 		// Typed version.
 		return typedQueryExpr(pos, block, expr, x.contents, query);
 	} else {
-		throw SyntaxError(expr.pos, "Expected a database or a typed database.");
+		throw SyntaxError(expr.pos, "Expected a database connection (typed or untyped).");
 	}
+}
+
+// A Query block.
+class QueryBlock extends ExprBlock {
+	init(SrcPos pos, Block parent, Expr db) {
+		var result = db.result.type;
+		if (result.type is named{DBConnection}) {
+		} else if (result.type as DatabaseType) {
+		} else {
+			throw SyntaxError(db.pos, "Expected a database connection (typed or untyped).");
+		}
+
+		super(pos, parent);
+
+		Var var(this, SStr(" db", db.pos), db);
+		add(var);
+
+		init {
+			connection(db.pos, var.var);
+		}
+	}
+
+	// Variable containing our database connection.
+	LocalVarAccess connection;
+
+	// Helper to find a Query block.
+	QueryBlock find(Block in) : static {
+		NameLookup? at = in.lookup;
+		while (l = at as BlockLookup) {
+			if (q = l.block as QueryBlock)
+				return q;
+
+			at = l.parent;
+		}
+
+		throw InternalError("Could not find a parent QueryBlock!");
+	}
+}
+
+// Create a suitable query expression, assuming we're inside a WITH block.
+Expr queryBlockExpr(SrcPos pos, Block block, Query query) on Compiler {
+	QueryBlock q = QueryBlock:find(block);
+	queryExpr(pos, block, q.connection, query);
 }
 
 /**
