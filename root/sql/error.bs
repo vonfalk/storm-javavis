@@ -17,3 +17,34 @@ class NoSuchColumn extends SyntaxError {
 		init(pos, "No column named ${col} in ${table}.") {}
 	}
 }
+
+
+/**
+ * Error in the database schema.
+ */
+class SchemaError extends SQLError {
+	init(Str message, Table expected, Schema actual) {
+		init(message) {
+			expected = expected;
+			actual = actual;
+		}
+	}
+
+	private Table expected;
+	private Schema actual;
+
+	void message(StrBuf out) : override {
+		super:message(out);
+
+		out << "\nExpected these columns in table " << actual.name << "\n";
+		out.indent();
+		for (c in expected.columns)
+			out << c << "\n";
+		out.dedent();
+		out << "But got the following columns:\n";
+		out.indent();
+		for (Nat i = 0; i < actual.count; i++)
+			out << actual[i] << "\n";
+		out.dedent();
+	}
+}

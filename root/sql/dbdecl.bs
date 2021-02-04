@@ -27,6 +27,12 @@ class Column {
 
 		buffer.toS;
 	}
+
+	void toS(StrBuf to) : override {
+		to << name << " " << datatype.sql;
+		for (m in modifiers)
+			to << " " << m;
+	}
 }
 
 /**
@@ -189,11 +195,12 @@ class TypedConnection {
 		// TODO: This should be rewritten and improved.
 		for (table in db.tables) {
 			if (schema = connection.schema(table.name)) {
-				// Check the database of the table.
-				if (table.columns.count() != schema.count()) {
-					throw SQLError("Table size mismatch");
-				} else {
-					print("TODO: Check table columns in ${schema}");
+				var queries = checkColumns(table, schema);
+				for (q in queries) {
+					print("Corrective quiery ${q}");
+					var stmt = connection.prepare(q);
+					stmt.execute();
+					stmt.finalize();
 				}
 			} else {
 				// Create the table.
@@ -205,3 +212,50 @@ class TypedConnection {
 	}
 }
 
+// Helper (on the Compiler thread) for checking column declarations. We need the parser, that's why
+// we run on the compiler thread.
+private Str[] checkColumns(Table table, Schema schema) {
+	if (table.columns.count < schema.count)
+		throw SchemaError("Too many columns in the database.", table, schema);
+
+	Str[] queries;
+
+	// We need to parse the modifier string...
+	Parser<SModifiers> parser;
+
+	for (Nat i = 0; i < schema.count; i++) {
+		var ref = table.columns[i];
+		var curr = schema[i];
+
+		if (ref.name != curr.name)
+			throw SchemaError("Mismatched name of column ${i}", table, schema);
+
+		if (ref.datatype.sql != curr.datatype)
+			throw SchemaError("Mismatched type of column ${i}", table, schema);
+
+		parser.parse(curr.attributes, core:io:Url());
+		if (parser.hasError())
+			throw SQLError("Failed to parse the column attributes for column ${curr.name}: ${curr.attributes}");
+
+		Set<Str> attrs;
+		for (x in parser.tree.transform)
+			attrs.put(x);
+
+		Bool modify = false;
+		for (x in ref.modifiers)
+			if (!attrs.has(x))
+				modify = true;
+
+		// Note: On databases other than SQLite, we are probably able to change these aspects.
+		if (modify)
+			throw SchemaError("Incorrect attributes for column ${i}", table, schema);
+	}
+
+	for (Nat i = schema.count; i < table.columns.count; i++) {
+		// Add a column!
+		var col = table.columns[i];
+		queries << "ALTER TABLE \"${table.name}\" ADD ${col.toSQL};";
+	}
+
+	queries;
+}

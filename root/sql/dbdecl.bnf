@@ -30,7 +30,8 @@ Array<Column> SColumns();
 SColumns => Array<Column>() : SColumn -> push - (, ",", SColumn -> push)*;
 
 Column SColumn();
-SColumn => Column(name, type, modifiers) : SName name ~ SDataType type -(~ SModifier modifiers)*;
+// Note: Using SModifiers here is wrong due to whitespace.
+SColumn => Column(name, type, modifiers) : SName name ~ SDataType type - (~ SModifier modifiers)*;
 
 
 // Data types in table declarations.
@@ -39,6 +40,10 @@ SDataType => sqlInteger() : "INTEGER";
 SDataType => sqlReal() : "REAL";
 SDataType => sqlText() : "TEXT";
 
+// Zero or more modifiers for a column.
+Array<Str> SModifiers();
+SModifiers => Array<Str>() : ;
+SModifiers => Array<Str>() : SModifier -> push - (~ SModifier -> push)*;
 
 // Modifiers for columns.
 Str SModifier() #keyword;

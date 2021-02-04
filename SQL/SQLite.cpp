@@ -278,6 +278,9 @@ namespace sql {
 	}
 
 	Schema *SQLite::schema(Str *table) {
+		// Note: There is PRAGMA table_info(table); that we could use. It does not seem like we get
+		// information on other constraints from there though.
+
 		Str *query = new (this) Str(S("SELECT sql FROM sqlite_master WHERE type = 'table' and name = ?;"));
 		Statement *prepared = prepare(query);
 		prepared->bind(0, table);
@@ -314,7 +317,7 @@ namespace sql {
 			Str *attributes = null;
 
 			next(begin, end);
-			if (cmp(begin, end, S(","))) {
+			if (cmp(begin, end, S(",")) || cmp(begin, end, S(")"))) {
 				attributes = new (this) Str();
 			} else {
 				const wchar *attrStart = begin;
@@ -322,11 +325,14 @@ namespace sql {
 				do {
 					attrEnd = end;
 					next(begin, end);
-				} while (cmp(begin, end, S(",")));
+				} while (*begin != 0 && !cmp(begin, end, S(")")) && !cmp(begin, end, S(",")));
 				attributes = new (this) Str(attrStart, attrEnd);
 			}
 
-			cols->push(new (this) Schema::Column(colName, typeName));
+			cols->push(new (this) Schema::Column(colName, typeName, attributes));
+
+			if (cmp(begin, end, S(")")))
+				break;
 		}
 
 		// TODO: Also look for indices (they are in sqlite_master as well).

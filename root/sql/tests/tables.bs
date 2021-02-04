@@ -5,7 +5,8 @@ use core:io;
 DATABASE SimpleDB {
 	TABLE test(
 		id INTEGER PRIMARY KEY,
-		name TEXT
+		name TEXT,
+		city TEXT
 	);
 }
 
@@ -14,7 +15,7 @@ suite Simple {
 	SimpleDB c(baseDb);
 
 	Str test = "variable";
-	WITH c: INSERT INTO test VALUES (3, "test's");
+	WITH c: INSERT INTO test VALUES (3, "test's", "city");
 	WITH c: INSERT INTO test(id, name) VALUES (4, test);
 	var insertedId = WITH c: INSERT INTO test(name) VALUES ("auto-id");
 	print("Inserted id: ${insertedId}");
