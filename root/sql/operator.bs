@@ -12,7 +12,7 @@ class Operator extends SQLExpr {
 	// Right hand side.
 	SQLExpr rhs;
 
-	// Operator name in Storm.
+	// Operator name in Storm (if available)
 	Str stormOp;
 
 	// Operator name in SQL.
@@ -134,5 +134,42 @@ class NumOperator extends Operator {
 	protected void checkTypes(Type l, Type r) : override {
 		if ((l is named{Str}) | (r is named{Str}))
 			throw SyntaxError(pos, "The operator ${sqlOp} is not applicable to strings in SQL.");
+	}
+}
+
+// LIKE operator. This is special since it does not exist in Storm.
+class LikeOperator extends SQLExpr {
+	// Left- and right hand sides.
+	SQLExpr lhs;
+	SQLExpr rhs;
+
+	// Create.
+	init(SrcPos pos, SQLExpr l, SQLExpr r) {
+		init(pos) {
+			lhs = l;
+			rhs = r;
+		}
+	}
+
+	SQLExpr resolve(ResolveContext context) : override {
+		lhs = lhs.resolve(context);
+		rhs = rhs.resolve(context);
+
+		this;
+	}
+
+	Type? computeResult() : override {
+		if (lhs.result !is named{Str})
+			throw SyntaxError(lhs.pos, "The left-hand side of a LIKE operator must be a string.");
+		if (rhs.result !is named{Str})
+			throw SyntaxError(lhs.pos, "The right-hand side of a LIKE operator must be a string.");
+
+		return named{Bool};
+	}
+
+	void build(QueryBuilder to) : override {
+		lhs.build(to);
+		to.query << " LIKE ";
+		rhs.build(to);
 	}
 }

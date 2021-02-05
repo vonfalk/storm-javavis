@@ -72,6 +72,7 @@ SExprList => Array<SQLExpr>() : SExpr -> push - (, ",", SExpr -> push)*;
 SQLExpr SExpr();
 // Here we have operators ALL, ANY, BETWEEN, IN, LIKE, OR, SOME
 SExpr => x : SExpr1 x;
+SExpr => LikeOperator(pos, l, r) : SExpr1 l ~ "LIKE" ~ SExpr1 r;
 
 SQLExpr SExpr1();
 // Operator AND

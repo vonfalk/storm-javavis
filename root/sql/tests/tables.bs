@@ -68,6 +68,28 @@ suite Repeat {
 	test rows == 3;
 }
 
+suite Like {
+	SQLite db;
+	SimpleDB c(db);
+
+	WITH c {
+		INSERT INTO test(name) VALUES ("test");
+		INSERT INTO test(name) VALUES ("best");
+		INSERT INTO test(name) VALUES ("beaver");
+
+		StrBuf all;
+		for (row in SELECT * FROM test WHERE name LIKE "_est") {
+			all << row.name << "|";
+		}
+
+		for (row in SELECT * FROM test WHERE name LIKE "be%") {
+			all << row.name << "!";
+		}
+
+		test all.toS == "test|best|best!beaver!";
+	}
+}
+
 
 DATABASE TwoTables {
 	TABLE test(
