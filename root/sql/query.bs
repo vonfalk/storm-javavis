@@ -125,8 +125,8 @@ class ResolveContext on Compiler {
 	// TODO: Handle the case when this is not available.
 	Database db;
 
-	// What table name is in the current "context"?
-	Table? currentTable;
+	// Which tables are visible in the current context?
+	Table[] visible;
 
 	// Create.
 	init(Block block, Database db) {
@@ -139,11 +139,53 @@ class ResolveContext on Compiler {
 		true;
 	}
 
-	// Set the current table to the specified table. Throws if that table is known to not exist.
-	void setTable(SrcPos pos, Str to) {
+	// Add a table to 'current'. Throws if the table is known not to exists.
+	Table? addTable(SrcPos pos, Str to) {
+		if (!typed)
+			return null;
+
 		unless (found = db.find(to))
 			throw NoSuchTable(pos, to);
-		currentTable = found;
+		visible << found;
+		found;
+	}
+
+	// Result from "resolve"
+	value ResolveResult {
+		Str table;
+		Column column;
+
+		init(Str table, Column column) {
+			init { table = table; column = column; }
+		}
+	}
+
+	// Resolve a column.
+	ResolveResult? resolve(SrcPos pos, Str? table, Str column) {
+
+		if (table) {
+			// TODO: Hashtable. That allows aliases as well.
+			for (t in visible) {
+				if (t.name != table)
+					continue;
+
+				if (col = t.find(column))
+					return ResolveResult(t.name, col);
+			}
+			return null;
+		} else {
+			ResolveResult? result;
+			for (t in visible) {
+				if (col = t.find(column)) {
+					if (result) {
+						throw SyntaxError(pos, "The column name ${column} is ambigous. It exists in tables ${result.table} and {t.name} at least.");
+					} else {
+						result = ResolveResult(t.name, col);
+					}
+				}
+			}
+			return result;
+		}
 	}
 }
 
@@ -237,11 +279,11 @@ class InsertQuery extends Query {
 
 	// Resolve.
 	void resolve(ResolveContext context) : override {
-		context.setTable(table.pos, table.v);
+		var table = context.addTable(table.pos, table.v);
 
 		// If we found a table, explicitly specify the column names for easier typechecking later.
 		Column[] cols;
-		if (table = context.currentTable) {
+		if (table) {
 			if (columns.empty) {
 				cols = table.columns;
 				for (c in cols)
@@ -260,7 +302,7 @@ class InsertQuery extends Query {
 			throw SyntaxError(pos, "The number of values does not match the number of columns inserted into.");
 
 		// It does not really make sense to refer to column names in an insert statement...
-		context.currentTable = null;
+		context.visible.clear();
 
 		for (Nat i = 0; i < values.count; i++)
 			values[i] = values[i].resolve(context);
@@ -344,7 +386,7 @@ class UpdateQuery extends Query {
 
 	// Resolve.
 	void resolve(ResolveContext context) : override {
-		context.setTable(table.pos, table.v);
+		var table = context.addTable(table.pos, table.v);
 
 		// Resolve all assignments.
 		for (x in update) {
@@ -359,7 +401,7 @@ class UpdateQuery extends Query {
 			condition = resolved;
 		}
 
-		if (table = context.currentTable) {
+		if (table) {
 			// Check if all columns exist, and type-check the assignments.
 			for (x in update) {
 				unless (column = table.find(x.column.v))
@@ -452,7 +494,7 @@ class DeleteQuery extends Query {
 
 	// Resolve.
 	void resolve(ResolveContext context) : override {
-		context.setTable(table.pos, table.v);
+		context.addTable(table.pos, table.v);
 
 		if (x = condition) {
 			var resolved = x.resolve(context);
@@ -518,11 +560,11 @@ class SelectQuery extends Query {
 
 	// Resolve.
 	void resolve(ResolveContext context) : override {
-		context.setTable(table.pos, table.v);
+		var table = context.addTable(table.pos, table.v);
 
 		// TODO: Respect JOINs as well.
 
-		if (table = context.currentTable) {
+		if (table) {
 			if (cols.empty) {
 				for (x in table.columns) {
 					cols << SStr(x.name);

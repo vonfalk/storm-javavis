@@ -107,7 +107,8 @@ suite Join {
 		INSERT INTO extra(test, data) VALUES (3, "even more");
 		INSERT INTO extra(test, data) VALUES (4, "some more");
 
-		// for (x in SELECT * FROM test JOIN extra ON extra.test == test.id WHERE test.id == 3) {
-		// }
+		for (x in SELECT * FROM test JOIN extra ON extra.test == test.id WHERE test.id == 3) {
+			print("Row: " + x.toS);
+		}
 	}
 }

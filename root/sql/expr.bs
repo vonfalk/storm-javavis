@@ -166,10 +166,11 @@ class SQLStr extends SQLExpr {
  * Name of something. Either something in Basic Storm, or something in SQL.
  *
  * We don't resolve this node immediately.
- *
- * TODO: We need to handle "dotted" names as well.
  */
 class SQLName extends SQLExpr {
+	// Table name, if present.
+	Str? table;
+
 	// The unresolved name.
 	Str name;
 
@@ -180,25 +181,36 @@ class SQLName extends SQLExpr {
 		}
 	}
 
+	// Create, a dotted name.
+	init(SrcPos pos, SStr table, SStr column) {
+		init(pos) {
+			table = table.v;
+			name = column.v;
+		}
+	}
+
 	// Resolve.
 	SQLExpr resolve(ResolveContext context) : override {
-		// Try names in the current table if possible.
-		if (table = context.currentTable) {
-			if (column = table.find(name)) {
-				// Found it!
-				return SQLColumn(pos, column);
-			}
+		// Try to resolve the name.
+		if (result = context.resolve(pos, table, name)) {
+			return SQLColumn(pos, result.table, result.column);
 		}
 
-		// Ask Basic Storm for guidance...
-		var bsExpr = lang:bs:namedExpr(context.block, pos, name, lang:bs:Actuals());
-		unless (bsExpr as lang:bs:UnresolvedName)
-			return StormValue(pos, bsExpr);
+		if (table) {
+			// If we have a table name, we can't do anything more.
+			if (context.typed())
+				throw SyntaxError(pos, "The name ${table}.${name} can not be resolved to a column.");
+		} else {
+			// Ask Basic Storm for guidance...
+			var bsExpr = lang:bs:namedExpr(context.block, pos, name, lang:bs:Actuals());
+			unless (bsExpr as lang:bs:UnresolvedName)
+				return StormValue(pos, bsExpr);
 
-		// If the above check failed and we are a typed expression, just return that one. It will
-		// throw eventually.
-		if (context.typed())
-			return StormValue(pos, bsExpr);
+			// If the above check failed and we are a typed expression, just return that one. It will
+			// throw eventually.
+			if (context.typed())
+				return StormValue(pos, bsExpr);
+		}
 
 		// If untyped and we did not have a match yet, just use this node. Then we will fail at
 		// runtime if it was invalid.
@@ -207,6 +219,10 @@ class SQLName extends SQLExpr {
 
 	// Build. Only used in the "unknown" case.
 	void build(QueryBuilder into) : override {
+		if (table) {
+			into.name(table);
+			into.query << ".";
+		}
 		into.name(name);
 	}
 
@@ -217,7 +233,10 @@ class SQLName extends SQLExpr {
 
 	// Output.
 	void toS(StrBuf to) : override {
-		to << "unresolved:" << name;
+		to << "unresolved:";
+		if (table)
+			to << table << ".";
+		to << name;
 	}
 }
 
@@ -261,17 +280,23 @@ class StormValue extends SQLExpr {
  * Reference to a column in SQL.
  */
 class SQLColumn extends SQLExpr {
+	// Table.
+	Str table;
+
 	// Column.
 	Column column;
 
-	init(SrcPos pos, Column column) {
+	init(SrcPos pos, Str table, Column column) {
 		init(pos) {
+			table = table;
 			column = column;
 		}
 	}
 
 	// Build.
 	void build(QueryBuilder into) : override {
+		into.name(table);
+		into.query << ".";
 		into.name(column.name);
 	}
 
@@ -282,6 +307,6 @@ class SQLColumn extends SQLExpr {
 
 	// Output.
 	void toS(StrBuf to) : override {
-		to << "column:" << column.name;
+		to << "column:" << table << "." << column.name;
 	}
 }

@@ -30,7 +30,7 @@ SQuery => UpdateQuery(pos, table, assign, condition) : "UPDATE" ~ SName table ~ 
 SQuery => DeleteQuery(pos, table, condition) : "DELETE" ~ "FROM" ~ SName table - SWhere condition;
 
 // Select:
-SQuery => SelectQuery(pos, table, cols, condition) : "SELECT" ~ SSelectCols cols ~ "FROM" ~ SName table - SWhere condition;
+SQuery => SelectQuery(pos, table, cols, condition) : "SELECT" ~ SSelectCols cols ~ "FROM" ~ SName table - SJoins - SWhere condition;
 
 
 // A WHERE clause that might be missing.
@@ -42,6 +42,18 @@ SWhere => Maybe<SQLExpr>(x) : ~ "WHERE" ~ SExpr x;
 Array<SStr> SSelectCols();
 SSelectCols => x : SNameList x;
 SSelectCols => Array<SStr>() : "\*";
+
+// Join clauses for a table.
+void SJoins();
+SJoins : ;
+SJoins : ~ SJoinType ~ SName table ~ "ON" ~ SExpr condition - SJoins;
+
+// Types of joins.
+void SJoinType();
+SJoinType : "LEFT" ~ "JOIN";
+SJoinType : "RIGHT" ~ "JOIN";
+SJoinType : "INNER" ~ "JOIN";
+SJoinType : "JOIN";
 
 // A list of SQL expressions.
 Array<SQLExpr> SExprList();
@@ -99,6 +111,7 @@ SQLExpr SAtom();
 SAtom => x : SLiteral x;
 SAtom => SQLName(pos, name) : lang.bs.SName name; // Identifiers in the surrounding code.
 SAtom => SQLName(pos, name) : SName name; // SQL identifiers, if they allow some other representation.
+SAtom => SQLName(pos, table, column) : SName table, "\.", SName column; // Disambiguation
 
 // SQL literals.
 SQLExpr SLiteral();

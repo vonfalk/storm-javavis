@@ -14,8 +14,11 @@ class TypedRow extends Type {
 		parentLookup = named{};
 
 		// Add variables.
+		MemberVar[] vars;
 		for (t in types) {
-			add(MemberVar(t.name, t.type, this));
+			MemberVar v(t.name, t.type, this);
+			vars << v;
+			add(v);
 		}
 
 		// Add a constructor that reads data from a Row instance.
@@ -37,9 +40,39 @@ class TypedRow extends Type {
 		ctor.body = body;
 		add(ctor);
 
+		// To string.
+		add(toString(vars));
+
 		// Other default operators.
 		add(TypeDeepCopy(this));
 		add(TypeCopyCtor(this));
+	}
+
+	// Generate a to-string function.
+	private Function toString(MemberVar[] vars) {
+		BSTreeFn fn(Value(), SStr("toS"), [ValParam(thisPtr(this), "this"), ValParam(named{StrBuf}, "to")], null);
+		FnBody body(fn, Scope(this, BSLookup()));
+
+		unless (toVar = body.variable(SimplePart("to")))
+			throw InternalError("Failed to find local variable 'to'.");
+		unless (thisVar = body.variable(SimplePart("this")))
+			throw InternalError("Failed to find local variable 'this'.");
+		LocalVarAccess to(SrcPos(), toVar);
+		LocalVarAccess me(SrcPos(), thisVar);
+
+		for (i, var in vars) {
+			Str s = var.name + ": ";
+			if (i > 0)
+				s = ", " + s;
+			body.add(namedExpr(body, SrcPos(), "<<", to, Actuals(StrLiteral(SrcPos(), s))));
+
+			MemberVarAccess access(SrcPos(), me, var, true);
+			body.add(namedExpr(body, SrcPos(), "<<", to, Actuals(access)));
+		}
+
+
+		fn.body = body;
+		fn;
 	}
 }
 
