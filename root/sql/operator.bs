@@ -71,9 +71,11 @@ class Operator extends SQLExpr {
 
 	// Build the operator.
 	void build(QueryBuilder to) : override {
+		to.query << "(";
 		lhs.build(to);
 		to.query << " " << sqlOp << " ";
 		rhs.build(to);
+		to.query << ")";
 	}
 
 	// To string.
@@ -109,7 +111,7 @@ class Operator extends SQLExpr {
 
 
 // Create the equals operator, as we allow both = and ==.
-Operator equalsOp(SQLExpr lhs, SQLExpr rhs, SStr op) {
+Operator equalsOp(SQLExpr lhs, SQLExpr rhs, SStr op) on Compiler {
 	Operator(lhs, rhs, SStr("=", op.pos), "==");
 }
 
@@ -134,6 +136,69 @@ class NumOperator extends Operator {
 	protected void checkTypes(Type l, Type r) : override {
 		if ((l is named{Str}) | (r is named{Str}))
 			throw SyntaxError(pos, "The operator ${sqlOp} is not applicable to strings in SQL.");
+	}
+}
+
+// Just like Operator, but only allows boolean values.
+class BoolOperator extends Operator {
+	init(SQLExpr lhs, SQLExpr rhs, SStr op, Str storm) {
+		init(lhs, rhs, op, storm) {}
+	}
+
+	protected void checkTypes(Type l, Type r) : override {
+		if ((l !is named{Bool}) | (r !is named{Bool}))
+			throw SyntaxError(pos, "The operator ${sqlOp} requires both operands to be booleans.");
+	}
+}
+
+// Create logical operators.
+BoolOperator andOp(SQLExpr lhs, SQLExpr rhs, SStr op) {
+	BoolOperator(lhs, rhs, op, "&");
+}
+BoolOperator orOp(SQLExpr lhs, SQLExpr rhs, SStr op) {
+	BoolOperator(lhs, rhs, op, "|");
+}
+
+// NOT operator.
+class NotOperator extends SQLExpr {
+	SQLExpr operand;
+
+	init(SrcPos pos, SQLExpr op) {
+		init(pos) {
+			operand = op;
+		}
+	}
+
+	SQLExpr resolve(ResolveContext context) : override {
+		operand = operand.resolve(context);
+
+		if (storm = lhs.stormExpr) {
+			// For typechecking.
+			computeResult();
+
+			unless (fn = named{Bool}.find("!", [Value(named{Bool})], Scope()) as Function)
+				throw InternalError("Unable to find the unary negation function.");
+
+			lang:bs:FnCall call(pos, Scope(), fn, lang:bs:Actuals(storm));
+			return StormValue(pos, call);
+		}
+
+		this;
+	}
+
+	Type? computeResult() : override {
+		if (operand.result !is named{Bool})
+			throw SyntaxError(lhs.pos, "The operand to NOT must be a boolean.");
+
+		return named{Bool};
+	}
+
+	void build(QueryBuilder to) : override {
+		to.query << "(";
+		lhs.build(to);
+		to.query << " LIKE ";
+		rhs.build(to);
+		to.query << ")";
 	}
 }
 

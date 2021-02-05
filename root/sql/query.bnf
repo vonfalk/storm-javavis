@@ -72,19 +72,21 @@ SExprList => Array<SQLExpr>() : SExpr -> push - (, ",", SExpr -> push)*;
 SQLExpr SExpr();
 // Here we have operators ALL, ANY, BETWEEN, IN, LIKE, OR, SOME
 SExpr => x : SExpr1 x;
-SExpr => LikeOperator(pos, l, r) : SExpr1 l ~ "LIKE" ~ SExpr1 r;
 
 SQLExpr SExpr1();
 // Operator AND
 SExpr1 => x : SExpr2 x;
+SExpr1 => andOp(lhs, rhs, op) : SExpr1 lhs ~ "AND" @op ~ SExpr2 rhs;
 
 SQLExpr SExpr2();
 // Operator OR
 SExpr2 => x : SExpr3 x;
+SExpr2 => orOp(lhs, rhs, op) : SExpr2 lhs ~ "OR" @op ~ SExpr3 rhs;
 
 SQLExpr SExpr3();
 // Operator NOT
 SExpr3 => x : SExpr4 x;
+SExpr3 => NotOperator(pos, x) : "NOT" ~ SExpr4 x;
 
 SQLExpr SExpr4();
 // Comparison operators.
@@ -95,6 +97,7 @@ SExpr4 => Operator(l, r, op) : SExpr5 l, ">" @op, SExpr5 r;
 SExpr4 => Operator(l, r, op) : SExpr5 l, "<=" @op, SExpr5 r;
 SExpr4 => Operator(l, r, op) : SExpr5 l, ">=" @op, SExpr5 r;
 SExpr4 => Operator(l, r, op) : SExpr5 l, "!=" @op, SExpr5 r;
+SExpr4 => LikeOperator(pos, l, r) : SExpr5 l ~ "LIKE" ~ SExpr5 r;
 
 SQLExpr SExpr5();
 // Addition, subtraction, bitwise operators, etc.
@@ -122,6 +125,7 @@ SAtom => x : SLiteral x;
 SAtom => SQLName(pos, name) : lang.bs.SName name; // Identifiers in the surrounding code.
 SAtom => SQLName(pos, name) : SName name; // SQL identifiers, if they allow some other representation.
 SAtom => SQLName(pos, table, column) : SName table, "\.", SName column; // Disambiguation
+SAtom => x : "(", SExpr x, ")";
 
 // Basic Storm expressions.
 SAtom => Escaped(expr) : "$", "{", lang.bs.SExpr @expr, "}";

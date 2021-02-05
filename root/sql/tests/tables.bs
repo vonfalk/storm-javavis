@@ -90,6 +90,24 @@ suite Like {
 	}
 }
 
+suite ComplexCondition {
+	SQLite db;
+	SimpleDB c(db);
+
+	WITH c {
+		INSERT INTO test VALUES (1, "test");
+		INSERT INTO test VALUES (2, "best");
+		INSERT INTO test VALUES (3, "beaver");
+
+		StrBuf all;
+		for (row in SELECT * FROM test WHERE name LIKE "_est" AND id >= 2) {
+			all << row.name << "|";
+		}
+
+		test all.toS == "best|";
+	}
+}
+
 
 DATABASE TwoTables {
 	TABLE test(
@@ -160,4 +178,3 @@ suite Join {
 		test all.toS == "4|some more|";
 	}
 }
-
