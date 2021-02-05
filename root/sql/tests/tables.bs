@@ -35,6 +35,21 @@ suite Simple {
 	test data.toS == "3, test's variable\n4, variable\n";
 }
 
+suite BSEscape {
+	SQLite db;
+	SimpleDB c(db);
+
+	WITH c {
+		INSERT INTO test VALUES (3, ${"test" # 3});
+
+		StrBuf data;
+		for (row in SELECT name AS n FROM test)
+			data << row.n << "|";
+
+		test data.toS == "test3|";
+	}
+}
+
 suite Repeat {
 	// Statements are cached, make sure that we can re-run them more than once.
 	SQLite baseDB;
@@ -107,8 +122,20 @@ suite Join {
 		INSERT INTO extra(test, data) VALUES (3, "even more");
 		INSERT INTO extra(test, data) VALUES (4, "some more");
 
-		for (x in SELECT * FROM test JOIN extra ON extra.test == test.id WHERE test.id == 3) {
-			print("Row: " + x.toS);
+		StrBuf all;
+		for (x in SELECT test.id AS id, data FROM test JOIN extra ON extra.test == test.id WHERE test.id == 3) {
+			all << x.id << "|" << x.data << "|";
 		}
+
+		test all.toS == "3|more|3|even more|";
+
+		all.clear();
+
+		for (x in SELECT * FROM test JOIN extra ON extra.test == test.id WHERE test.id == 4) {
+			all << x.test_id << "|" << x.extra_data << "|";
+		}
+
+		test all.toS == "4|some more|";
 	}
 }
+

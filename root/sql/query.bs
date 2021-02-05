@@ -178,7 +178,7 @@ class ResolveContext on Compiler {
 			for (t in visible) {
 				if (col = t.find(column)) {
 					if (result) {
-						throw SyntaxError(pos, "The column name ${column} is ambigous. It exists in tables ${result.table} and {t.name} at least.");
+						throw SyntaxError(pos, "The column name ${column} is ambigous. It exists in tables ${result.table} and ${t.name} at least.");
 					} else {
 						result = ResolveResult(t.name, col);
 					}
@@ -541,49 +541,177 @@ class SelectQuery extends Query {
 	// Table.
 	SStr table;
 
-	// Columns to select. If empty, we assume all columns.
-	SStr[] cols;
+	/**
+	 * Column to extract.
+	 */
+	class Column on Compiler {
+		// Position
+		SrcPos pos;
 
-	// Types for all columns, if available.
-	Type[] colTypes;
+		// Table (optional).
+		Str? table;
+
+		// Column.
+		Str column;
+
+		// Optional alternate name.
+		Str as;
+
+		// Type of this column, if available.
+		Type? type;
+
+		init(SrcPos pos, SStr column) {
+			init {
+				pos = pos;
+				column = column.v;
+				as = column.v;
+			}
+		}
+
+		init(SrcPos pos, SStr table, SStr column) {
+			init {
+				pos = pos;
+				table = table.v;
+				column = column.v;
+				as = table.v # "_" # column.v;
+			}
+		}
+
+		init(SrcPos pos, Str? table, Str column) {
+			init {
+				pos = pos;
+				table = table;
+				column = column;
+				as = column;
+			}
+
+			if (table)
+				as = table # "_" # column;
+		}
+
+		void setAs(SStr to) {
+			as = to.v;
+		}
+
+		// Build.
+		void build(QueryBuilder to) {
+			if (table) {
+				to.name(table);
+				to.query << ".";
+			}
+			to.name(column);
+		}
+
+		// ToS.
+		void toS(StrBuf to) : override {
+			if (table)
+				to << table << ".";
+			to << column << " AS " << as;
+		}
+	}
+
+	// Columns to select. If empty, we assume all columns.
+	Column[] cols;
+
+	/**
+	 * Join statement.
+	 */
+	class Join on Compiler {
+		// Type of join.
+		Str type;
+
+		// Table.
+		SStr table;
+
+		// Condition for join.
+		SQLExpr expr;
+
+		// Create.
+		init(Str type, SStr table, SQLExpr expr) {
+			init {
+				type = type;
+				table = table;
+				expr = expr;
+			}
+		}
+
+		// Build.
+		void build(QueryBuilder to) {
+			to.query << type << " ";
+			to.name(table.v);
+			to.query << " ON ";
+			expr.build(to);
+		}
+
+		// ToS.
+		void toS(StrBuf to) : override {
+			to << type << " " << table.v << " ON " << expr;
+		}
+	}
+
+	// Join clauses.
+	Join[] joins;
 
 	// Where clause, if present.
 	SQLExpr? condition;
 
-	init(SrcPos pos, SStr table, SStr[] cols, SQLExpr? condition) {
+	init(SrcPos pos, SStr table, Column[] cols, Join[] joins, SQLExpr? condition) {
 		init(pos) {
 			table = table;
 			cols = cols;
+			joins = joins;
 			condition = condition;
 		}
 	}
 
 	// Resolve.
 	void resolve(ResolveContext context) : override {
-		var table = context.addTable(table.pos, table.v);
+		context.addTable(table.pos, table.v);
 
-		// TODO: Respect JOINs as well.
-
-		if (table) {
-			if (cols.empty) {
-				for (x in table.columns) {
-					cols << SStr(x.name);
-					colTypes << x.datatype.storm;
-				}
-			} else {
-				for (x in cols) {
-					unless (c = table.find(x.v))
-						throw NoSuchColumn(x.pos, x.v, table.name);
-					colTypes << c.datatype.storm;
-				}
-			}
+		for (j in joins) {
+			context.addTable(j.table.pos, j.table.v);
+			// TODO: Might be too early, but I think this is how SQL works.
+			j.expr = j.expr.resolve(context);
 		}
+
+		if (context.visible.any)
+			resolveOutput(context);
 
 		if (x = condition) {
 			var resolved = x.resolve(context);
 			if (context.typed)
 				checkCondition(resolved);
 			condition = resolved;
+		}
+	}
+
+	// Resolve the output data.
+	private void resolveOutput(ResolveContext context) {
+		if (cols.empty) {
+			// No columns -> we need to add all visible columns.
+			for (table in context.visible) {
+				for (col in table.columns) {
+					Column c = if (joins.empty) {
+						Column(pos, null, col.name);
+					} else {
+						Column(pos, table.name, col.name);
+					};
+					c.type = col.datatype.storm;
+					cols << c;
+				}
+			}
+		} else {
+			// We have some columns. Check them.
+			for (col in cols) {
+				unless (result = context.resolve(col.pos, col.table, col.column)) {
+					if (table = col.table)
+						throw NoSuchColumn(col.pos, col.column, table);
+					else
+						throw NoSuchColumn(col.pos, col.column, table.v);
+				}
+
+				col.type = result.column.datatype.storm;
+			}
 		}
 	}
 
@@ -598,13 +726,16 @@ class SelectQuery extends Query {
 			for (i, name in cols) {
 				if (i > 0)
 					r.query << ", ";
-				r.name(name.v);
+				name.build(r);
 			}
 		}
 		r.query << " FROM ";
 		r.name(table.v);
 
-		// TODO: JOINs
+		for (j in joins) {
+			r.query << " ";
+			j.build(r);
+		}
 
 		if (condition) {
 			r.query << " WHERE ";
@@ -617,13 +748,21 @@ class SelectQuery extends Query {
 
 	// Return a proper iterator.
 	Expr? result(Block context, Expr statement) {
-		// If we don't have type info, just return a plain iterator.
-		if ((colTypes.count < cols.count) | cols.empty)
-			return namedExpr(context, pos, "iter", statement);
+		Bool noTypeInfo = cols.empty;
 
 		ValParam[] types;
-		for (i, c in cols)
-			types << ValParam(colTypes[i], c.v);
+		if (!noTypeInfo) {
+			for (c in cols) {
+				if (t = c.type)
+					types << ValParam(t, c.as);
+				else
+					noTypeInfo = true;
+			}
+		}
+
+		// If we don't have type info, just return a plain iterator.
+		if (noTypeInfo)
+			return namedExpr(context, pos, "iter", statement);
 
 		var iterType = getTypedIter(types);
 		unless (ctor = iterType.find("__init", [Value(iterType), statement.result.type.asRef(false)], Scope()) as Function)
@@ -634,8 +773,9 @@ class SelectQuery extends Query {
 
 	// To string.
 	void toS(StrBuf to) : override {
-		to << "SELECT " << join(cols, ", ", (x) => x.v) << " FROM " << table.v;
-		// TODO: JOINs.
+		to << "SELECT " << join(cols, ", ") << " FROM " << table.v;
+		for (j in joins)
+			to << join;
 		if (condition)
 			to << " WHERE " << condition;
 	}

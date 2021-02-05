@@ -277,6 +277,37 @@ class StormValue extends SQLExpr {
 }
 
 /**
+ * Escaped value from Basic Storm.
+ */
+class Escaped extends SQLExpr {
+	// Captured syntax tree.
+	lang:bs:SExpr expr;
+
+	// Create.
+	init(lang:bs:SExpr expr) {
+		init(expr.pos) {
+			expr = expr;
+		}
+	}
+
+	// Resolve.
+	SQLExpr resolve(ResolveContext context) : override {
+		StormValue(pos, expr.transform(context.block));
+	}
+
+	// Build.
+	void build(QueryBuilder into) : override {
+		throw InternalError("An 'Escaped' node was not transformed.");
+	}
+
+	// Result.
+	Type? computeResult() : override {
+		throw InternalError("An 'Escaped' node was not transformed.");
+	}
+}
+
+
+/**
  * Reference to a column in SQL.
  */
 class SQLColumn extends SQLExpr {

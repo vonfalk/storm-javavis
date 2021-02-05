@@ -30,7 +30,7 @@ SQuery => UpdateQuery(pos, table, assign, condition) : "UPDATE" ~ SName table ~ 
 SQuery => DeleteQuery(pos, table, condition) : "DELETE" ~ "FROM" ~ SName table - SWhere condition;
 
 // Select:
-SQuery => SelectQuery(pos, table, cols, condition) : "SELECT" ~ SSelectCols cols ~ "FROM" ~ SName table - SJoins - SWhere condition;
+SQuery => SelectQuery(pos, table, cols, joins, condition) : "SELECT" ~ SSelectCols cols ~ "FROM" ~ SName table - SJoins joins - SWhere condition;
 
 
 // A WHERE clause that might be missing.
@@ -39,14 +39,23 @@ SWhere => Maybe<SQLExpr>() : ;
 SWhere => Maybe<SQLExpr>(x) : ~ "WHERE" ~ SExpr x;
 
 // Possible columns for a SELECT query.
-Array<SStr> SSelectCols();
-SSelectCols => x : SNameList x;
-SSelectCols => Array<SStr>() : "\*";
+Array<SelectQuery.Column> SSelectCols();
+SSelectCols => Array<SelectQuery.Column>() : SSelectCol -> push - (, ",", SSelectCol -> push)*;
+SSelectCols => Array<SelectQuery.Column>() : "\*";
+
+SelectQuery.Column SSelectCol();
+SSelectCol => x : SSelectColI x - (~ "AS" ~ SName -> setAs)?;
+
+SelectQuery.Column SSelectColI();
+SSelectColI => SelectQuery.Column(pos, column) : SName column;
+SSelectColI => SelectQuery.Column(pos, table, column) : SName table, "\.", SName column;
 
 // Join clauses for a table.
-void SJoins();
-SJoins : ;
-SJoins : ~ SJoinType ~ SName table ~ "ON" ~ SExpr condition - SJoins;
+Array<SelectQuery.Join> SJoins();
+SJoins => Array<SelectQuery.Join>() : (~ SJoin -> push)*;
+
+SelectQuery.Join SJoin();
+SJoin => SelectQuery.Join(type, table, condition) : (SJoinType) type ~ SName table ~ "ON" ~ SExpr condition - SJoins;
 
 // Types of joins.
 void SJoinType();
@@ -112,6 +121,9 @@ SAtom => x : SLiteral x;
 SAtom => SQLName(pos, name) : lang.bs.SName name; // Identifiers in the surrounding code.
 SAtom => SQLName(pos, name) : SName name; // SQL identifiers, if they allow some other representation.
 SAtom => SQLName(pos, table, column) : SName table, "\.", SName column; // Disambiguation
+
+// Basic Storm expressions.
+SAtom => Escaped(expr) : "$", "{", lang.bs.SExpr @expr, "}";
 
 // SQL literals.
 SQLExpr SLiteral();
