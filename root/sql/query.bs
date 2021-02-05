@@ -2,6 +2,16 @@ use core:lang;
 use lang:bs;
 use lang:bs:macro;
 
+// Logic to generate unique query ID:s that we can later use to cache prepared statements for
+// databases. That way, we can instruct the database about our intentions and don't have to rely as
+// much on caches in the database.
+private Nat nextQueryID on Compiler;
+
+// Generate a connection ID for a particular
+private Nat newQueryID() on Compiler {
+	return nextQueryID++;
+}
+
 // Create a query expression for a typed query. Helper.
 private Expr typedQueryExpr(SrcPos pos, Block block, Expr connection, Database contents, Query query) on Compiler {
 	query.resolve(ResolveContext(block, contents));
@@ -9,11 +19,17 @@ private Expr typedQueryExpr(SrcPos pos, Block block, Expr connection, Database c
 
 	ExprBlock r(pos, block);
 
+	// Query ID.
+	Nat id = newQueryID();
+
 	// Create a prepared statement.
 	// TODO: We want to cache this eventually!
 	var prepared = {
-		var db = namedExpr(r, pos, "connection", connection); // connection.connection
-		var stmt = namedExpr(r, pos, "prepare", db, Actuals(StrLiteral(pos, q.query.toS)));
+		// Call "connection.prepare(id, query)".
+		Actuals params;
+		params.add(NumLiteral(pos, id));
+		params.add(StrLiteral(pos, q.query.toS));
+		var stmt = namedExpr(r, pos, "prepare", connection, params);
 		var varDecl = Var(r, SStr("statement"), stmt);
 		r.add(varDecl);
 		LocalVarAccess(pos, varDecl.var);

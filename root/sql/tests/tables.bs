@@ -35,6 +35,24 @@ suite Simple {
 	test data.toS == "3, test's variable\n4, variable\n";
 }
 
+suite Repeat {
+	// Statements are cached, make sure that we can re-run them more than once.
+	SQLite baseDB;
+	SimpleDB c(baseDB);
+
+	for (Int i = 0; i < 3; i++) {
+		Str v = "Value: ${i}";
+		WITH c: INSERT INTO test VALUES (i, v);
+	}
+
+	Int rows = 0;
+	for (row in WITH c: SELECT * FROM test) {
+		rows++;
+	}
+
+	test rows == 3;
+}
+
 
 DATABASE TwoTables {
 	TABLE test(

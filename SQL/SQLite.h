@@ -15,8 +15,6 @@ namespace sql {
 	class SQLite_Statement : public Statement {
 		STORM_CLASS;
 	public:
-
-
 		// Constructor of an SQLite_Statement. Takes an SQLite database and an Str.
 		STORM_CTOR SQLite_Statement(const SQLite *database, Str *str);
 
@@ -44,7 +42,10 @@ namespace sql {
 		Nat STORM_FN changes() const override;
 
 	private:
-		sqlite3_stmt * stmt;  // Used for prepared statements
+		// The prepared statement.
+		UNKNOWN(PTR_NOGC) sqlite3_stmt *stmt;
+
+		// Owner.
 		const SQLite *db;
 
 		// Any result to produce from the statement?
@@ -56,6 +57,12 @@ namespace sql {
 
 		// Last row id.
         Int lastId;
+
+		// Any error for the next call to "execute"?
+		Str *error;
+
+		// Reset if needed.
+		void reset();
 	};
 
 	/**

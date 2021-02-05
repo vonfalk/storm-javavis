@@ -14,6 +14,8 @@ namespace sql {
 		result = false;
 		lastId = 0;
 		lastChanges = 0;
+		error = null;
+
 		int ok = sqlite3_prepare_v2(db->raw(), str->utf8_str(), -1, &stmt, null);
 		if (ok != SQLITE_OK) {
 			Str *msg = new (this) Str((wchar *)sqlite3_errmsg16(db->raw()));
@@ -25,27 +27,35 @@ namespace sql {
 		finalize();
 	}
 
+	void SQLite_Statement::reset() {
+		if (result)
+			sqlite3_reset(stmt);
+		result = false;
+		error = null;
+	}
+
 	void SQLite_Statement::bind(Nat pos, Str *str) {
+		reset();
 		sqlite3_bind_text(stmt, pos + 1, str->utf8_str(), -1, SQLITE_TRANSIENT);
 	}
 
 	void SQLite_Statement::bind(Nat pos, Int i) {
+		reset();
 		sqlite3_bind_int(stmt, pos + 1, i);
 	}
 
 	void SQLite_Statement::bind(Nat pos, Long l) {
+		reset();
 		sqlite3_bind_int64(stmt, pos + 1, l);
 	}
 
 	void SQLite_Statement::bind(Nat pos, Double d) {
+		reset();
 		sqlite3_bind_double(stmt, pos + 1, d);
 	}
 
 	void SQLite_Statement::execute() {
-		if (result) {
-			sqlite3_reset(stmt);
-			result = false;
-		}
+		reset();
 
 		int r = sqlite3_step(stmt);
 
@@ -53,6 +63,7 @@ namespace sql {
 			// No data. We're done.
 			lastId = (Int)sqlite3_last_insert_rowid(db->raw());
 			lastChanges = sqlite3_changes(db->raw());
+			sqlite3_reset(stmt);
 			result = false;
 		} else if (r == SQLITE_ROW) {
 			// We have data!
@@ -72,6 +83,12 @@ namespace sql {
 	}
 
 	Row * SQLite_Statement::fetch() {
+		if (error) {
+			Str *msg = error;
+			error = null;
+			throw new (this) SQLError(error);
+		}
+
 		// No result, don't do anything.
 		if (!result)
 			return null;
@@ -105,9 +122,12 @@ namespace sql {
 		// Go to the next row.
 		int r = sqlite3_step(stmt);
 		if (r == SQLITE_DONE) {
+			sqlite3_reset(stmt);
 			result = false;
 		} else if (r != SQLITE_ROW) {
-			// TODO: Throw an error when the next result is about to be thrown.
+			error = new (this) Str((wchar *)sqlite3_errmsg16(db->raw()));
+			sqlite3_reset(stmt);
+			result = false;
 		}
 
 		return new (this) Row(row);
