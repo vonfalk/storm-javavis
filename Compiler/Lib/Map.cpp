@@ -71,7 +71,7 @@ namespace storm {
 		add(nativeFunction(e, boolT, S("remove"), thisKey, address(&MapBase::removeRaw)));
 		add(nativeFunction(e, iter, S("begin"), valList(e, 1, t), address(&MapBase::beginRaw))->makePure());
 		add(nativeFunction(e, iter, S("end"), valList(e, 1, t), address(&MapBase::endRaw))->makePure());
-		add(nativeFunction(e, Value(), S("find"), thisKey, address(&MapBase::findRaw))->makePure());
+		add(nativeFunction(e, iter, S("find"), thisKey, address(&MapBase::findRaw))->makePure());
 
 		Type *tObj = StormInfo<TObject>::type(e);
 
