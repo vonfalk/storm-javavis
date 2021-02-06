@@ -1,0 +1,42 @@
+use test;
+use sql;
+use core:io;
+
+suite Mixed {
+	SQLite db;
+
+	// To create tables.
+	SimpleDB c(db);
+
+	WITH db {
+		INSERT INTO test VALUES (1, "test");
+		INSERT INTO test VALUES (2, "test2");
+
+		StrBuf names;
+		for (row in SELECT * FROM test) {
+			names << row.getStr(1) << "|";
+		}
+
+		test names.toS == "test|test2|";
+	}
+}
+
+Int countTables(SQLite db) {
+	Int tables;
+	for (row in WITH db: SELECT name FROM sqlite_master WHERE type == "table") {
+		tables++;
+	}
+	tables;
+}
+
+suite Exclusive {
+	SQLite db;
+
+	WITH db : CREATE TABLE test(id INTEGER PRIMARY KEY, name TEXT);
+
+	test countTables(db) == 1;
+
+	WITH db: DROP TABLE test;
+
+	test countTables(db) == 0;
+}

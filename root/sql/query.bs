@@ -23,7 +23,6 @@ private Expr typedQueryExpr(SrcPos pos, Block block, Expr connection, Database c
 	Nat id = newQueryID();
 
 	// Create a prepared statement.
-	// TODO: We want to cache this eventually!
 	var prepared = {
 		// Call "connection.prepare(id, query)".
 		Actuals params;
@@ -46,12 +45,43 @@ private Expr typedQueryExpr(SrcPos pos, Block block, Expr connection, Database c
 	// Execute it!
 	r.add(namedExpr(r, pos, "execute", prepared));
 
-	// For now: finalize it. Note: We cannot extract the results if we do.
-	// r.add(namedExpr(r, pos, "finalize", prepared));
-
 	// Get the result, if desired.
 	if (e = query.result(r, prepared))
 		r.add(e);
+
+	r;
+}
+
+// Create a query expression for an untyped query. Helper.
+private Expr untypedQueryExpr(SrcPos pos, Block block, Expr database, Query query) on Compiler {
+	query.resolve(ResolveContext(block));
+	var q = query.build();
+
+	ExprBlock r(pos, block);
+
+	var prepared = {
+		var stmt = namedExpr(r, pos, "prepare", database, Actuals(StrLiteral(pos, q.query.toS)));
+		var varDecl = Var(r, SStr("statement"), stmt);
+		r.add(varDecl);
+		LocalVarAccess(pos, varDecl.var);
+	};
+
+	// Bind parameters.
+	for (i, x in q.bind) {
+		Actuals params;
+		params.add(NumLiteral(pos, i));
+		params.add(x);
+		r.add(namedExpr(r, pos, "bind", prepared, params));
+	}
+
+	// Execute it!
+	r.add(namedExpr(r, pos, "execute", prepared));
+
+	// Get the result, if desired. Otherwise, finalize the query.
+	if (e = query.result(r, prepared))
+		r.add(e);
+	else
+		r.add(namedExpr(r, pos, "finalize", prepared));
 
 	r;
 }
@@ -60,12 +90,12 @@ private Expr typedQueryExpr(SrcPos pos, Block block, Expr connection, Database c
 // Create a suitable query expression depending on what database connection was used.
 Expr queryExpr(SrcPos pos, Block block, Expr expr, Query query) on Compiler {
 	var result = expr.result().type();
-	if (result.type is named{DBConnection}) {
-		// Untyped version.
-		throw NotSupported("Untyped queries are not implemented yet.");
-	} else if (x = result.type as DatabaseType) {
+	if (x = result.type as DatabaseType) {
 		// Typed version.
 		return typedQueryExpr(pos, block, expr, x.contents, query);
+	} else if (Value(named{DBConnection}).canStore(result)) {
+		// Untyped version.
+		return untypedQueryExpr(pos, block, expr, query);
 	} else {
 		throw SyntaxError(expr.pos, "Expected a database connection (typed or untyped).");
 	}
@@ -75,7 +105,7 @@ Expr queryExpr(SrcPos pos, Block block, Expr expr, Query query) on Compiler {
 class QueryBlock extends ExprBlock {
 	init(SrcPos pos, Block parent, Expr db) {
 		var result = db.result.type;
-		if (result.type is named{DBConnection}) {
+		if (Value(named{DBConnection}).canStore(result)) {
 		} else if (result.type as DatabaseType) {
 		} else {
 			throw SyntaxError(db.pos, "Expected a database connection (typed or untyped).");
@@ -122,26 +152,30 @@ class ResolveContext on Compiler {
 	Block block;
 
 	// Contents of the database.
-	// TODO: Handle the case when this is not available.
-	Database db;
+	Database? db;
 
 	// Which tables are visible in the current context?
 	Table[] visible;
 
-	// Create.
+	// Create typed version.
 	init(Block block, Database db) {
 		init { block = block; db = db; }
 	}
 
+	// Create untyped version.
+	init(Block block) {
+		init { block = block; }
+	}
+
 	// Is this a typed query?
 	Bool typed() {
-		// TODO: Support returning 'false'.
-		true;
+		db.any;
 	}
 
 	// Add a table to 'current'. Throws if the table is known not to exists.
 	Table? addTable(SrcPos pos, Str to) {
-		if (!typed)
+		// Untyped version?
+		unless (db)
 			return null;
 
 		unless (found = db.find(to))
@@ -779,4 +813,84 @@ class SelectQuery extends Query {
 		if (condition)
 			to << " WHERE " << condition;
 	}
+}
+
+/**
+ * CREATE TABLE query.
+ *
+ * Only for untyped connections.
+ */
+class CreateQuery extends Query {
+	// Table name.
+	SStr table;
+
+	// Columns
+	Column[] columns;
+
+	// Is this a "CREATE IF NOT EXISTS"?
+	Bool ifNotExists;
+
+	// Create.
+	init(SrcPos pos, Bool ifNotExists, SStr table, Column[] columns) {
+		init(pos) {
+			table = table;
+			columns = columns;
+			ifNotExists = ifNotExists;
+		}
+	}
+
+	// Resolve.
+	void resolve(ResolveContext context) : override {
+		if (context.typed)
+			throw SyntaxError(pos, "Can not use CREATE TABLE queries with typed connections.");
+	}
+
+	// Build the query.
+	QueryBuilder build() : override {
+		QueryBuilder r;
+
+		r.query << "CREATE TABLE ";
+		if (ifNotExists)
+			r.query << "IF NOT EXISTS ";
+		r.name(table.v);
+		r.query << "(" << join(columns, ", ", (x) => x.toSQL) << ");";
+
+		r;
+	}
+
+}
+
+/**
+ * DROP TABLE query.
+ *
+ * Only for untyped connections.
+ */
+class DropQuery extends Query {
+	// Table name.
+	SStr table;
+
+	// Create.
+	init(SrcPos pos, SStr table) {
+		init(pos) {
+			table = table;
+		}
+	}
+
+	// Resolve.
+	void resolve(ResolveContext context) : override {
+		if (context.typed)
+			throw SyntaxError(pos, "Can not use CREATE TABLE queries with typed connections.");
+	}
+
+	// Build the query.
+	QueryBuilder build() : override {
+		QueryBuilder r;
+
+		r.query << "DROP TABLE ";
+		r.name(table.v);
+		r.query << ";";
+
+		r;
+	}
+
 }

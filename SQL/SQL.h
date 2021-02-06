@@ -50,6 +50,8 @@ namespace sql {
         virtual void STORM_FN bind(Nat pos, Int i) ABSTRACT;
 		virtual void STORM_FN bind(Nat pos, Long i) ABSTRACT;
         virtual void STORM_FN bind(Nat pos, Double d) ABSTRACT;
+
+		// Finalize (dispose of) the statement.
         virtual void STORM_FN finalize() ABSTRACT;
 
 		// Fetch a row.
@@ -67,7 +69,12 @@ namespace sql {
         public:
             Iter(Statement *stmt);
 
+			// Get the next element.
             MAYBE(Row *) STORM_FN next();
+
+			// To allow use in foreach-loops.
+			Iter STORM_FN iter() { return *this; }
+
         private:
             Statement *owner;
         };

@@ -193,6 +193,13 @@ class TypedConnection {
 		checkStructure(t.contents);
 	}
 
+	// Close.
+	void close() {
+		for (k, v in statements)
+			f.finalize();
+		connection.close();
+	}
+
 	// Get a cached prepared statement based on its ID.
 	// TODO: One idea here is to remove statements that are "prepared" and not return them
 	// until we are done with them. That allows us to be re-entrant properly.
