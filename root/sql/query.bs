@@ -851,6 +851,69 @@ class CreateQuery extends Query {
 }
 
 /**
+ * CREATE INDEX query.
+ *
+ * Only for untyped connections.
+ */
+class IndexQuery extends Query {
+	// Index name.
+	Str name;
+
+	// Table name.
+	SStr table;
+
+	// Columns.
+	SStr[] columns;
+
+	// Create.
+	init(SrcPos pos, SStr name, SStr table, SStr[] columns) {
+		init(pos) {
+			name = name.v;
+			table = table;
+			columns = columns;
+		}
+	}
+
+	// Create.
+	init(SrcPos pos, SStr table, SStr[] columns) {
+		StrBuf name;
+		name << table.v << "_" << join(columns, "_", (x) => x.v);
+
+		init(pos) {
+			name = name.toS;
+			table = table;
+			columns = columns;
+		}
+	}
+
+	// Resolve.
+	void resolve(ResolveContext context) : override {
+		if (context.typed)
+			throw SyntaxError(pos, "Can not use CREATE TABLE queries with typed connections.");
+	}
+
+	// Build the query.
+	QueryBuilder build() : override {
+		QueryBuilder r;
+
+		r.query << "CREATE INDEX ";
+		r.name(name);
+		r.query << " ON ";
+		r.name(table.v);
+		r.query << "(";
+		for (i, c in columns) {
+			if (i > 0)
+				r.query << ", ";
+			r.name(c.v);
+		}
+		r.query << ");";
+
+		r;
+	}
+
+}
+
+/**
  * DROP TABLE query.
  *
  * Only for untyped connections.

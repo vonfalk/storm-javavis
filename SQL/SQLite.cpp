@@ -87,7 +87,7 @@ namespace sql {
 		}
 	}
 
-	Row * SQLite_Statement::fetch() {
+	Row *SQLite_Statement::fetch() {
 		if (error) {
 			Str *msg = error;
 			error = null;
@@ -307,6 +307,19 @@ namespace sql {
 		return end;
 	}
 
+	static Str *identifierBefore(Engine &e, const wchar *&begin, const wchar *&end, const wchar *token) {
+		const wchar *nameBegin, *nameEnd;
+		while (next(begin, end)) {
+			if (cmp(begin, end, token))
+				break;
+
+			nameBegin = begin;
+			nameEnd = end;
+		}
+
+		return identifier(e, nameBegin, nameEnd);
+	}
+
 	static Array<Str *> *parsePK(Engine &e, const wchar *&oBegin, const wchar *&oEnd) {
 		const wchar *begin = oBegin;
 		const wchar *end = oEnd;
@@ -342,7 +355,9 @@ namespace sql {
 		// Note: There is PRAGMA table_info(table); that we could use. It does not seem like we get
 		// information on other constraints from there though.
 
-		Str *query = new (this) Str(S("SELECT sql FROM sqlite_master WHERE type = 'table' and name = ?;"));
+		// Tables:
+
+		Str *query = new (this) Str(S("SELECT sql FROM sqlite_master WHERE type = 'table' AND name = ?;"));
 		Statement *prepared = prepare(query);
 		prepared->bind(0, table);
 		prepared->execute();
@@ -354,20 +369,10 @@ namespace sql {
 		const wchar *begin = data;
 		const wchar *end = data;
 
-		Str *tableName = null;
-		{
-			// Find the "(" and remember the name in the previous token.
-			const wchar *nameBegin, *nameEnd;
-			while (next(begin, end)) {
-				if (cmp(begin, end, S("(")))
-					break;
+		prepared->finalize();
 
-				nameBegin = begin;
-				nameEnd = end;
-			}
-
-			tableName = identifier(engine(), nameBegin, nameEnd);
-		}
+		// Find the "(" and remember the name in the previous token.
+		Str *tableName = identifierBefore(engine(), begin, end, S("("));
 
 		Array<Str *> *pk = null;
 		Array<Schema::Column *> *cols = new (this) Array<Schema::Column *>();
@@ -401,9 +406,41 @@ namespace sql {
 				break;
 		}
 
-		// TODO: Also look for indices (they are in sqlite_master as well).
+		// Indices:
 
-		return new (this) Schema(tableName, cols, pk);
+		Array<Schema::Index *> *indices = new (this) Array<Schema::Index *>();
+
+		query = new (this) Str(S("SELECT sql FROM sqlite_master WHERE type = 'index' AND tbl_name = ? AND sql IS NOT NULL;"));
+		prepared = prepare(query);
+		prepared->bind(0, table);
+		prepared->execute();
+		Statement::Iter iter = prepared->iter();
+		while (Row *row = iter.next()) {
+			const wchar *data = row->getStr(0)->c_str();
+			const wchar *begin = data;
+			const wchar *end = data;
+
+			Str *name = identifierBefore(engine(), begin, end, S("ON"));
+			Array<Str *> *cols = new (this) Array<Str *>();
+
+			while (next(begin, end))
+				if (cmp(begin, end, S("(")))
+					break;
+
+			while (next(begin, end)) {
+				cols->push(identifier(engine(), begin, end));
+
+				next(begin, end);
+				if (cmp(begin, end, S(")")))
+					break;
+			}
+
+			*indices << new (this) Schema::Index(name, cols);
+		}
+
+		prepared->finalize();
+
+		return new (this) Schema(tableName, cols, pk, indices);
 	}
 
 }

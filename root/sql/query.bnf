@@ -36,6 +36,10 @@ SQuery => SelectQuery(pos, table, cols, joins, condition) : "SELECT" ~ SSelectCo
 SQuery => CreateQuery(pos, false, table) : "CREATE" ~ "TABLE" ~ SCreateTail table;
 SQuery => CreateQuery(pos, true, table) : "CREATE" ~ "TABLE" ~ "IF" ~ "NOT" ~ "EXISTS" ~ SCreateTail table;
 
+// Add an index (only untyped)
+SQuery => IndexQuery(pos, name, table, cols) : "CREATE" ~ "INDEX" ~ SName name ~ "ON" ~ SName table, "(", SNameList cols, ")";
+SQuery => IndexQuery(pos, table, cols) : "CREATE" ~ "INDEX" ~ "ON" ~ SName table, "(", SNameList cols, ")";
+
 // Drop table (only untyped)
 SQuery => DropQuery(pos, name) : "DROP" ~ "TABLE" ~ SName name;
 

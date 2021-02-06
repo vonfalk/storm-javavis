@@ -32,7 +32,8 @@ Int countTables(SQLite db) {
 suite Exclusive {
 	SQLite db;
 
-	WITH db : CREATE TABLE test(id INTEGER PRIMARY KEY, name TEXT);
+	WITH db: CREATE TABLE test(id INTEGER PRIMARY KEY, name TEXT);
+	WITH db: CREATE INDEX ON test(name);
 
 	test countTables(db) == 1;
 

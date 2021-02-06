@@ -19,7 +19,13 @@ SDatabase => Database() : (SDBItem(me),)*;
 // An item in a DB declaration.
 void SDBItem(Database to);
 SDBItem => to : STable -> add;
+SDBItem => to : SIndex -> add;
 // More here!
+
+// Declaration of an index.
+IndexDecl SIndex();
+SIndex => IndexDecl(pos, name, table, cols) : "INDEX" ~ SName name ~ "ON" ~ SName table, "(", SNameList cols, ")", ";";
+SIndex => IndexDecl(pos, table, cols) : "INDEX" ~ "ON" ~ SName table, "(", SNameList cols, ")", ";";
 
 // Declaration of a single table.
 Table STable();

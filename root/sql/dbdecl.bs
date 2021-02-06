@@ -76,6 +76,44 @@ class Column {
 }
 
 /**
+ * Index for a table.
+ */
+class Index {
+	// Name of the index (might be auto-generated).
+	Str name;
+
+	// Columns.
+	Str[] columns;
+
+	// Create.
+	init(Str name, Str[] columns) {
+		init {
+			name = name;
+			columns = columns;
+		}
+	}
+
+	// To SQL statement.
+	Str toSQL(Str table) {
+		StrBuf to;
+		to << "CREATE INDEX \"" << name << "\" ON \"" << table << "\"(";
+		for (i, c in columns) {
+			if (i > 0)
+				to << ", ";
+			to << "\"" << c << "\"";
+		}
+		to << ");";
+
+		to.toS;
+	}
+
+	// To string. No SQL escaping.
+	void toS(StrBuf to) : override {
+		to << "INDEX " << name << " ON ?(" << join(columns, ", ") << ")";
+	}
+}
+
+/**
  * Declaration of an entire table.
  */
 class Table {
@@ -83,7 +121,10 @@ class Table {
     Str name;
 
 	// Columns in the table.
-    Array<Column> columns;
+    Column[] columns;
+
+	// Indices for this table.
+	Index[] indices;
 
 	init(SStr name) {
 		init {
@@ -115,6 +156,15 @@ class Table {
 				throw SyntaxError(c.pos, "No column named ${c.v} was declared in this table.");
 			col.primaryKey = true;
 		}
+	}
+
+	// Add index.
+	void add(SrcPos pos, Index index) {
+		for (i in indices)
+			if (i.name == index.name)
+				throw SyntaxError(pos, "The index ${index.name} already exists.");
+
+		indices << index;
 	}
 
 	// Create an SQL statement for this table declaration.
@@ -150,17 +200,61 @@ class Table {
 }
 
 /**
+ * Helper type for creating indices.
+ */
+class IndexDecl {
+	SrcPos pos;
+	SStr table;
+	Index index;
+
+	init(SrcPos pos, SStr name, SStr table, SStr[] cols) {
+		Str[] c;
+		for (x in cols)
+			c << x.v;
+
+		init {
+			pos = pos;
+			table = table;
+			index(name.v, c);
+		}
+	}
+
+	init(SrcPos pos, SStr table, SStr[] cols) {
+		StrBuf name;
+		name << table.v;
+
+		Str[] c;
+		for (x in cols) {
+			c << x.v;
+			name << "_" << x.v;
+		}
+
+		init {
+			pos = pos;
+			table = table;
+			index(name.toS, c);
+		}
+	}
+}
+
+/**
  * Database description.
  */
 class Database {
-	// Tables declared.
+	// Tables declared (indices are stored inside each table).
 	Table[] tables;
-
-	// TODO: Also support indices, constraints, etc.
 
 	// Add a table.
 	void add(Table decl) {
 		tables.push(decl);
+	}
+
+	// Add an index.
+	void add(IndexDecl decl) {
+		unless (table = find(decl.table.v))
+			throw SyntaxError(decl.table.pos, "The table ${decl.table.v} was not declared (yet).");
+
+		table.add(decl.pos, decl.index);
 	}
 
 	// Find a table.
@@ -296,7 +390,7 @@ class TypedConnection {
 		// TODO: This should be rewritten and improved.
 		for (table in db.tables) {
 			if (schema = connection.schema(table.name)) {
-				var queries = checkColumns(table, schema);
+				var queries = checkTable(table, schema);
 				for (q in queries) {
 					var stmt = connection.prepare(q);
 					stmt.execute();
@@ -307,6 +401,12 @@ class TypedConnection {
 				var stmt = connection.prepare(table.toSQL(false));
 				stmt.execute();
 				stmt.finalize();
+
+				for (index in table.indices) {
+					var stmt = connection.prepare(index.toSQL(table.name));
+					stmt.execute();
+					stmt.finalize();
+				}
 			}
 		}
 	}
@@ -314,7 +414,7 @@ class TypedConnection {
 
 // Helper (on the Compiler thread) for checking column declarations. We need the parser, that's why
 // we run on the compiler thread.
-private Str[] checkColumns(Table table, Schema schema) {
+private Str[] checkTable(Table table, Schema schema) {
 	if (table.columns.count < schema.count)
 		throw SchemaError("Too many columns in the database.", table, schema);
 
@@ -360,5 +460,39 @@ private Str[] checkColumns(Table table, Schema schema) {
 		queries << "ALTER TABLE \"${table.name}\" ADD ${col.toSQL};";
 	}
 
+	// Check indices...
+	{
+		Set<Str> desired;
+		for (x in table.indices)
+			desired.put(hashIndex(x));
+		Set<Str> current;
+		for (x in schema.indices)
+			current.put(hashIndex(x));
+
+		// See what to remove...
+		for (x in schema.indices) {
+			if (!desired.has(hashIndex(x)))
+				queries << "DROP INDEX \"${x.name}\";";
+		}
+
+		// See what to add...
+		for (x in table.indices) {
+			if (!current.has(hashIndex(x)))
+				queries << x.toSQL(table.name);
+		}
+	}
+
 	queries;
+}
+
+// Produce a "hash" of an index.
+private Str hashIndex(Index i) {
+	StrBuf b;
+	b << i.name << "|" << join(i.columns, ",");
+	b.toS;
+}
+private Str hashIndex(Schema:Index i) {
+	StrBuf b;
+	b << i.name << "|" << join(i.columns, ",");
+	b.toS;
 }

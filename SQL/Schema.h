@@ -37,9 +37,30 @@ namespace sql {
 			virtual void STORM_FN toS(StrBuf *to) const override;
 		};
 
+		/**
+		 * An index on a particular table.
+		 */
+		class Index : public Object {
+			STORM_CLASS;
+		public:
+			// Create.
+			STORM_CTOR Index(Str *name, Array<Str *> *columns);
+
+			// Name of the index.
+			Str *name;
+
+			// Columns indexed.
+			Array<Str *> *columns;
+
+		protected:
+			// To string.
+			virtual void STORM_FN toS(StrBuf *to) const override;
+		};
+
 		// Create a filled schema.
 		STORM_CTOR Schema(Str *tableName, Array<Column *> *columns);
 		STORM_CTOR Schema(Str *tableName, Array<Column *> *columns, Array<Str *> *pk);
+		STORM_CTOR Schema(Str *tableName, Array<Column *> *columns, Array<Str *> *pk, Array<Index *> *indices);
 
 		// Number of columns in this table.
 		Nat STORM_FN count() const {
@@ -62,6 +83,9 @@ namespace sql {
 		// Get primary keys.
 		Array<Str *> *STORM_FN primaryKeys() const;
 
+		// Indices.
+		Array<Index *> *STORM_FN indices() const;
+
 	protected:
 		// To string.
 		virtual void STORM_FN toS(StrBuf *to) const override;
@@ -75,6 +99,9 @@ namespace sql {
 
 		// Primary keys (declared separatly).
 		Array<Str *> *pk;
+
+		// Indices.
+		Array<Index *> *index;
 	};
 
 }

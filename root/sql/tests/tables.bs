@@ -8,11 +8,20 @@ DATABASE SimpleDB {
 		id INTEGER PRIMARY KEY,
 		name TEXT
 	);
+
+	// Auto name of the index.
+	INDEX ON test(name);
 }
 
 suite Simple {
 	SQLite baseDb; // (cwdUrl / ".." / "test.db");
 	SimpleDB c(baseDb);
+
+	Int count = 0;
+	for (row in WITH c: SELECT * FROM test)
+		count++;
+
+	test count == 0;
 
 	Str test = "variable";
 	WITH c: INSERT INTO test VALUES (3, "test's");
@@ -117,11 +126,15 @@ DATABASE TwoTables {
 		city TEXT
 	);
 
+	INDEX ON test(name, city);
+
 	TABLE extra(
 		id INTEGER PRIMARY KEY,
 		test INTEGER,
 		data TEXT
 	);
+
+	INDEX ON extra(test);
 }
 
 suite AutoMigrate {
