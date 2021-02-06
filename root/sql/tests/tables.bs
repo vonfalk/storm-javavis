@@ -23,7 +23,8 @@ suite Simple {
 
 	WITH c: UPDATE test SET name = name || " " || test WHERE id == 2 + 1;
 
-	var removed = WITH c: DELETE FROM test WHERE id == insertedId;
+	Bool b = false;
+	var removed = WITH c: DELETE FROM test WHERE id == insertedId AND NOT b;
 
 	test removed == 1.nat;
 

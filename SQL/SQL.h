@@ -47,6 +47,7 @@ namespace sql {
 
 		// Bind parameters.
         virtual void STORM_FN bind(Nat pos, Str *str) ABSTRACT;
+		virtual void STORM_FN bind(Nat pos, Bool b) ABSTRACT;
         virtual void STORM_FN bind(Nat pos, Int i) ABSTRACT;
 		virtual void STORM_FN bind(Nat pos, Long i) ABSTRACT;
         virtual void STORM_FN bind(Nat pos, Double d) ABSTRACT;

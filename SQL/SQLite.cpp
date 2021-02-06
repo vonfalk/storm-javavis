@@ -39,6 +39,11 @@ namespace sql {
 		sqlite3_bind_text(stmt, pos + 1, str->utf8_str(), -1, SQLITE_TRANSIENT);
 	}
 
+	void SQLite_Statement::bind(Nat pos, Bool b) {
+		reset();
+		sqlite3_bind_int(stmt, pos + 1, b ? 1 : 0);
+	}
+
 	void SQLite_Statement::bind(Nat pos, Int i) {
 		reset();
 		sqlite3_bind_int(stmt, pos + 1, i);

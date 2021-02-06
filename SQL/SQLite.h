@@ -26,6 +26,7 @@ namespace sql {
 		// these are used to bind one string to a question mark.
 		// pos specifies which question mark is to be replaced by matched data type.
 		void STORM_FN bind(Nat pos, Str *str) override;
+		void STORM_FN bind(Nat pos, Bool b) override;
 		void STORM_FN bind(Nat pos, Int i) override;
 		void STORM_FN bind(Nat pos, Long l) override;
 		void STORM_FN bind(Nat pos, Double d) override;

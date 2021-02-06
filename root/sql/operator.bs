@@ -172,7 +172,7 @@ class NotOperator extends SQLExpr {
 	SQLExpr resolve(ResolveContext context) : override {
 		operand = operand.resolve(context);
 
-		if (storm = lhs.stormExpr) {
+		if (storm = operand.stormExpr) {
 			// For typechecking.
 			computeResult();
 
@@ -188,7 +188,7 @@ class NotOperator extends SQLExpr {
 
 	Type? computeResult() : override {
 		if (operand.result !is named{Bool})
-			throw SyntaxError(lhs.pos, "The operand to NOT must be a boolean.");
+			throw SyntaxError(operand.pos, "The operand to NOT must be a boolean.");
 
 		return named{Bool};
 	}
