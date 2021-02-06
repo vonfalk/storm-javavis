@@ -821,20 +821,16 @@ class SelectQuery extends Query {
  * Only for untyped connections.
  */
 class CreateQuery extends Query {
-	// Table name.
-	SStr table;
-
-	// Columns
-	Column[] columns;
+	// Table declaration.
+	Table table;
 
 	// Is this a "CREATE IF NOT EXISTS"?
 	Bool ifNotExists;
 
 	// Create.
-	init(SrcPos pos, Bool ifNotExists, SStr table, Column[] columns) {
+	init(SrcPos pos, Bool ifNotExists, Table table) {
 		init(pos) {
 			table = table;
-			columns = columns;
 			ifNotExists = ifNotExists;
 		}
 	}
@@ -848,13 +844,7 @@ class CreateQuery extends Query {
 	// Build the query.
 	QueryBuilder build() : override {
 		QueryBuilder r;
-
-		r.query << "CREATE TABLE ";
-		if (ifNotExists)
-			r.query << "IF NOT EXISTS ";
-		r.name(table.v);
-		r.query << "(" << join(columns, ", ", (x) => x.toSQL) << ");";
-
+		r.query << table.toSQL(ifNotExists);
 		r;
 	}
 

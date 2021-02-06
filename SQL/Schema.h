@@ -39,6 +39,7 @@ namespace sql {
 
 		// Create a filled schema.
 		STORM_CTOR Schema(Str *tableName, Array<Column *> *columns);
+		STORM_CTOR Schema(Str *tableName, Array<Column *> *columns, Array<Str *> *pk);
 
 		// Number of columns in this table.
 		Nat STORM_FN count() const {
@@ -58,6 +59,9 @@ namespace sql {
 			return columns->at(id);
 		}
 
+		// Get primary keys.
+		Array<Str *> *STORM_FN primaryKeys() const;
+
 	protected:
 		// To string.
 		virtual void STORM_FN toS(StrBuf *to) const override;
@@ -68,6 +72,9 @@ namespace sql {
 
 		// Columns.
 		Array<Column *> *columns;
+
+		// Primary keys (declared separatly).
+		Array<Str *> *pk;
 	};
 
 }

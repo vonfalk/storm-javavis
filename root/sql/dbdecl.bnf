@@ -23,33 +23,40 @@ SDBItem => to : STable -> add;
 
 // Declaration of a single table.
 Table STable();
-STable => Table(name, columns) : "TABLE" ~ SName name, "(" [, SColumns columns, ]+ ")", ";";
+STable => Table(name) : "TABLE" ~ SName name, "(" [, STableContent(me), ]+ ")", ";";
 
-// Column declarations.
-Array<Column> SColumns();
-SColumns => Array<Column>() : SColumn -> push - (, ",", SColumn -> push)*;
+// Table content.
+void STableContent(Table to);
+STableContent => to : STableItem(to) - (, ",", STableItem(to))*;
+
+// Something we can declare inside a table.
+void STableItem(Table to);
+STableItem => to : SColumn -> add;
+STableItem => to : SPKDecl -> add;
+
+// Declaration of a primary key.
+Array<SStr> SPKDecl();
+SPKDecl => cols : "PRIMARY" ~ "KEY", "(", SNameList cols, ")";
 
 Column SColumn();
 // Note: Using SModifiers here is wrong due to whitespace.
-SColumn => Column(name, type, modifiers) : SName name ~ SDataType type - (~ SModifier modifiers)*;
-
+SColumn => Column(name, type) : SName name ~ SDatatype type - (~ SModifier(me))*;
 
 // Data types in table declarations.
-SQLType SDataType() #typeName;
-SDataType => sqlInteger() : "INTEGER";
-SDataType => sqlReal() : "REAL";
-SDataType => sqlText() : "TEXT";
+SQLType SDatatype() #typeName;
+SDatatype => sqlInteger() : "INTEGER";
+SDatatype => sqlReal() : "REAL";
+SDatatype => sqlText() : "TEXT";
 
-// Zero or more modifiers for a column.
-Array<Str> SModifiers();
-SModifiers => Array<Str>() : ;
-SModifiers => Array<Str>() : SModifier -> push - (~ SModifier -> push)*;
+// Parse zero or more modifiers.
+void SModifiers(Column c);
+SModifiers : ;
+SModifiers : SModifier(c) - (~ SModifier(c))*;
 
 // Modifiers for columns.
-Str SModifier() #keyword;
-SModifier => t : "PRIMARY KEY" t;
-SModifier => t : "FOREIGN KEY" t;
-SModifier => t : "NOT NULL" t;
-SModifier => t : "UNIQUE" t;
-SModifier => t : "AUTOINCREMENT" t;
+void SModifier(Column to) #keyword;
+SModifier => to : "PRIMARY" ~ "KEY" -> setPrimary;
+SModifier => to : "NOT" ~ "NULL" -> setNotNull;
+SModifier => to : "UNIQUE" -> setUnique;
+SModifier => to : "AUTOINCREMENT" -> setAutoIncrement;
 

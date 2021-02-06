@@ -307,6 +307,37 @@ namespace sql {
 		return end;
 	}
 
+	static Array<Str *> *parsePK(Engine &e, const wchar *&oBegin, const wchar *&oEnd) {
+		const wchar *begin = oBegin;
+		const wchar *end = oEnd;
+
+		if (!cmp(begin, end, S("PRIMARY")))
+			return null;
+
+		next(begin, end);
+		if (!cmp(begin, end, S("KEY")))
+			return null;
+
+		next(begin, end);
+		if (!cmp(begin, end, S("(")))
+			return null;
+
+		Array<Str *> *cols = new (e) Array<Str *>();
+		while (next(begin, end)) {
+			cols->push(identifier(e, begin, end));
+
+			next(begin, end);
+			if (cmp(begin, end, S(")")))
+				break;
+			if (!cmp(begin, end, S(",")))
+				throw new (e) InternalError(S("Failed parsing primary key string."));
+		}
+
+		oBegin = begin;
+		oEnd = end;
+		return cols;
+	}
+
 	Schema *SQLite::schema(Str *table) {
 		// Note: There is PRAGMA table_info(table); that we could use. It does not seem like we get
 		// information on other constraints from there though.
@@ -338,28 +369,33 @@ namespace sql {
 			tableName = identifier(engine(), nameBegin, nameEnd);
 		}
 
+		Array<Str *> *pk = null;
 		Array<Schema::Column *> *cols = new (this) Array<Schema::Column *>();
 		while (next(begin, end)) {
-			Str *colName = identifier(engine(), begin, end);
-			next(begin, end);
-			end = parseType(end);
-			Str *typeName = identifier(engine(), begin, end);
-			Str *attributes = null;
-
-			next(begin, end);
-			if (cmp(begin, end, S(",")) || cmp(begin, end, S(")"))) {
-				attributes = new (this) Str();
+			if (pk = parsePK(engine(), begin, end)) {
+				next(begin, end);
 			} else {
-				const wchar *attrStart = begin;
-				const wchar *attrEnd = begin;
-				do {
-					attrEnd = end;
-					next(begin, end);
-				} while (*begin != 0 && !cmp(begin, end, S(")")) && !cmp(begin, end, S(",")));
-				attributes = new (this) Str(attrStart, attrEnd);
-			}
+				Str *colName = identifier(engine(), begin, end);
+				next(begin, end);
+				end = parseType(end);
+				Str *typeName = identifier(engine(), begin, end);
+				Str *attributes = null;
 
-			cols->push(new (this) Schema::Column(colName, typeName, attributes));
+				next(begin, end);
+				if (cmp(begin, end, S(",")) || cmp(begin, end, S(")"))) {
+					attributes = new (this) Str();
+				} else {
+					const wchar *attrStart = begin;
+					const wchar *attrEnd = begin;
+					do {
+						attrEnd = end;
+						next(begin, end);
+					} while (*begin != 0 && !cmp(begin, end, S(")")) && !cmp(begin, end, S(",")));
+					attributes = new (this) Str(attrStart, attrEnd);
+				}
+
+				cols->push(new (this) Schema::Column(colName, typeName, attributes));
+			}
 
 			if (cmp(begin, end, S(")")))
 				break;
@@ -367,7 +403,7 @@ namespace sql {
 
 		// TODO: Also look for indices (they are in sqlite_master as well).
 
-		return new (this) Schema(tableName, cols);
+		return new (this) Schema(tableName, cols, pk);
 	}
 
 }

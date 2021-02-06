@@ -33,11 +33,15 @@ SQuery => DeleteQuery(pos, table, condition) : "DELETE" ~ "FROM" ~ SName table -
 SQuery => SelectQuery(pos, table, cols, joins, condition) : "SELECT" ~ SSelectCols cols ~ "FROM" ~ SName table - SJoins joins - SWhere condition;
 
 // Create table (only untyped)
-SQuery => CreateQuery(pos, false, name, columns) : "CREATE" ~ "TABLE" ~ SName name, "(" [, SColumns columns, ]+ ")";
-SQuery => CreateQuery(pos, true, name, columns) : "CREATE" ~ "TABLE" ~ "IF" ~ "NOT" ~ "EXISTS" ~ SName name, "(" [, SColumns columns, ]+ ")";
+SQuery => CreateQuery(pos, false, table) : "CREATE" ~ "TABLE" ~ SCreateTail table;
+SQuery => CreateQuery(pos, true, table) : "CREATE" ~ "TABLE" ~ "IF" ~ "NOT" ~ "EXISTS" ~ SCreateTail table;
 
 // Drop table (only untyped)
 SQuery => DropQuery(pos, name) : "DROP" ~ "TABLE" ~ SName name;
+
+// Helper rule for CREATE TABLE.
+Table SCreateTail();
+SCreateTail => Table(name) : SName name, "(", [, STableContent(me), ]+ ")";
 
 // A WHERE clause that might be missing.
 Maybe<SQLExpr> SWhere();

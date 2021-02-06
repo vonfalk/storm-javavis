@@ -6,32 +6,72 @@ use lang:bs:macro;
  * A column declaration.
  */
 class Column {
+	// Name of the column.
     Str name;
-	SQLType datatype;
-    Array<Str> modifiers;
 
-	init(SStr name, SQLType type, Array<Str> modifiers) {
+	// Datatype.
+	SQLType datatype;
+
+	// Is this column a primary key?
+	Bool primaryKey;
+
+	// Is this column allowed to contain NULL?
+	Bool allowNull;
+
+	// Unique?
+	Bool unique;
+
+	// Auto-increment?
+	Bool autoIncrement;
+
+
+	init(SStr name, SQLType type) {
 		init {
 			name = name.v;
 			datatype = type;
-			modifiers = modifiers;
+			allowNull = true;
 		}
 	}
+
+	// Called from the syntax.
+	void setPrimary(Str x) { primaryKey = true; }
+	void setNotNull(Str x) { allowNull = false; }
+	void setUnique(Str x) { unique = true; }
+	void setAutoIncrement(Str x) { autoIncrement = true; }
 
 	// Create an SQL part for this column.
 	Str toSQL() {
 		StrBuf buffer;
 		buffer << "\"" << name << "\" " << datatype.sql;
-		for (m in modifiers)
-			buffer << " " << m;
+		modifiers(buffer);
 
 		buffer.toS;
 	}
 
 	void toS(StrBuf to) : override {
 		to << name << " " << datatype.sql;
-		for (m in modifiers)
-			to << " " << m;
+		modifiers(to);
+		if (primaryKey)
+			to << " (primary key)";
+	}
+
+	Bool ==(Column o) {
+		Bool same = name == o.name;
+		same &= datatype.sql == o.datatype.sql;
+		same &= primaryKey == o.primaryKey;
+		same &= allowNull == o.allowNull;
+		same &= unique == o.unique;
+		same &= autoIncrement == o.autoIncrement;
+		same;
+	}
+
+	private void modifiers(StrBuf to) {
+		if (!allowNull)
+			to << " NOT NULL";
+		if (unique)
+			to << " UNIQUE";
+		if (autoIncrement)
+			to << " AUTOINCREMENT";
 	}
 }
 
@@ -39,13 +79,15 @@ class Column {
  * Declaration of an entire table.
  */
 class Table {
+	// Name of the table.
     Str name;
+
+	// Columns in the table.
     Array<Column> columns;
 
-	init(SStr name, Array<Column> columns) {
+	init(SStr name) {
 		init {
 			name = name.v;
-			columns = columns;
 		}
 	}
 
@@ -57,17 +99,52 @@ class Table {
 		null;
 	}
 
+	// Add column (called from syntax).
+	void add(Column col) {
+		columns << col;
+	}
+
+	// Add primary key(s) (called from syntax).
+	void add(Array<SStr> cols) {
+		for (c in columns)
+			if (c.primaryKey)
+				throw SyntaxError(cols[0].pos, "Only one instance of the PRIMARY KEY keyword may be present for each table.");
+
+		for (c in cols) {
+			unless (col = find(c.v))
+				throw SyntaxError(c.pos, "No column named ${c.v} was declared in this table.");
+			col.primaryKey = true;
+		}
+	}
+
 	// Create an SQL statement for this table declaration.
-	Str toSQL() {
+	Str toSQL(Bool ifNotExists) {
 		StrBuf buffer;
-		buffer << "CREATE TABLE \"" << name << "\" (";
+		buffer << "CREATE TABLE ";
+		if (ifNotExists)
+			buffer << "IF NOT EXISTS ";
+		buffer << "\"" << name << "\" (";
+
+		Str[] pk;
 		for (i, col in columns) {
 			if (i > 0)
 				buffer << ", ";
 			buffer << col.toSQL();
+			if (col.primaryKey)
+				pk << col.name;
 		}
-		buffer << ");";
 
+		if (pk.any) {
+			buffer << ", PRIMARY KEY(";
+			for (i, k in pk) {
+				if (i > 0)
+					buffer << ", ";
+				buffer << "\"" << k << "\"";
+			}
+			buffer << ")";
+		}
+
+		buffer << ");";
 		buffer.toS;
 	}
 }
@@ -227,7 +304,7 @@ class TypedConnection {
 				}
 			} else {
 				// Create the table.
-				var stmt = connection.prepare(table.toSQL());
+				var stmt = connection.prepare(table.toSQL(false));
 				stmt.execute();
 				stmt.finalize();
 			}
@@ -244,30 +321,33 @@ private Str[] checkColumns(Table table, Schema schema) {
 	Str[] queries;
 
 	// We need to parse the modifier string...
-	Parser<SModifiers> parser;
+	Parser<SDatatype> typeParser;
+	Parser<SModifiers> modifierParser;
+
+	Set<Str> pk;
+	for (k in schema.primaryKeys)
+		pk.put(k);
 
 	for (Nat i = 0; i < schema.count; i++) {
 		var ref = table.columns[i];
 		var curr = schema[i];
 
-		if (ref.name != curr.name)
-			throw SchemaError("Mismatched name of column ${i}", table, schema);
+		typeParser.parse(curr.datatype, core:io:Url());
+		if (typeParser.hasError())
+			throw SQLError("Unknown column datatype for ${curr.name}: ${curr.datatype}.");
 
-		if (ref.datatype.sql != curr.datatype)
-			throw SchemaError("Mismatched type of column ${i}", table, schema);
+		Column c(SStr(ref.name), typeParser.tree.transform());
 
-		parser.parse(curr.attributes, core:io:Url());
-		if (parser.hasError())
+		modifierParser.parse(curr.attributes, core:io:Url());
+		if (modifierParser.hasError())
 			throw SQLError("Failed to parse the column attributes for column ${curr.name}: ${curr.attributes}");
 
-		Set<Str> attrs;
-		for (x in parser.tree.transform)
-			attrs.put(x);
+		modifierParser.tree.transform(c);
 
-		Bool modify = false;
-		for (x in ref.modifiers)
-			if (!attrs.has(x))
-				modify = true;
+		if (pk.has(ref.name))
+			c.primaryKey = true;
+
+		Bool modify = ref != c;
 
 		// Note: On databases other than SQLite, we are probably able to change these aspects.
 		if (modify)
