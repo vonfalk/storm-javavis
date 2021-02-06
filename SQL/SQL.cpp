@@ -75,4 +75,12 @@ namespace sql {
 		}
 	}
 
+	Bool Row::isNull(Nat idx) {
+		if (v) {
+			return v->at(idx).empty();
+		} else {
+			throw new (this) ArrayError(0, 0);
+		}
+	}
+
 }

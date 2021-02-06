@@ -24,7 +24,7 @@ class SQLExpr on Compiler {
 
 	// Get the type of this expression. Computes the type the first time it is called, and may throw
 	// a type-checking exception at that time.
-	Type? result() : final {
+	Value result() : final {
 		if (!hasResult) {
 			computedResult = computeResult();
 			hasResult = true;
@@ -38,19 +38,41 @@ class SQLExpr on Compiler {
 	}
 
 	// Compute the result.
-	protected Type? computeResult() : abstract;
+	protected Value computeResult() : abstract;
 
 	// Is the type computed?
 	private Bool hasResult;
 
 	// What is the cached value of the type.
-	private Type? computedResult;
+	private Value computedResult;
+}
+
+/**
+ * Literals.
+ */
+class SQLLiteral extends SQLExpr {
+	init(SrcPos pos) {
+		init(pos) {}
+	}
+
+	Bool same(SQLLiteral other) : abstract;
+	void toSQL(StrBuf to) : abstract;
+
+	Str toSQL() {
+		StrBuf b;
+		toSQL(b);
+		b.toS;
+	}
+
+	void build(QueryBuilder into) : override {
+		toSQL(into.query);
+	}
 }
 
 /**
  * Numeric literal.
  */
-class SQLInt extends SQLExpr {
+class SQLInt extends SQLLiteral {
 	// Integer value.
 	Long value;
 
@@ -62,8 +84,8 @@ class SQLInt extends SQLExpr {
 	}
 
 	// Build.
-	void build(QueryBuilder into) : override {
-		into.query << value;
+	void toSQL(StrBuf to) : override {
+		to << value;
 	}
 
 	// Get a Storm expression.
@@ -72,7 +94,8 @@ class SQLInt extends SQLExpr {
 	}
 
 	// Result.
-	Type? computeResult() : override {
+	Value computeResult() : override {
+		// TODO: Use Long for all things here? Then we also need to promote other variables to Longs.
 		named{Int};
 	}
 
@@ -80,12 +103,20 @@ class SQLInt extends SQLExpr {
 	void toS(StrBuf to) : override {
 		to << value;
 	}
+
+	// Equality.
+	Bool same(SQLLiteral other) : override {
+		unless (other as SQLInt)
+			return false;
+
+		return value == other.value;
+	}
 }
 
 /**
  * Float literal.
  */
-class SQLFloat extends SQLExpr {
+class SQLFloat extends SQLLiteral {
 	// Float value.
 	Double value;
 
@@ -97,9 +128,9 @@ class SQLFloat extends SQLExpr {
 	}
 
 	// Build.
-	void build(QueryBuilder into) : override {
+	void toSQL(StrBuf into) : override {
 		// TODO: Ensure that the representation is appropriate...
-		into.query << value;
+		into << value;
 	}
 
 	// Get a Storm expression.
@@ -108,7 +139,7 @@ class SQLFloat extends SQLExpr {
 	}
 
 	// Result.
-	Type? computeResult() : override {
+	Value computeResult() : override {
 		named{Double};
 	}
 
@@ -116,12 +147,20 @@ class SQLFloat extends SQLExpr {
 	void toS(StrBuf to) : override {
 		to << value;
 	}
+
+	// Equality.
+	Bool same(SQLLiteral other) : override {
+		unless (other as SQLInt)
+			return false;
+
+		return value == other.value;
+	}
 }
 
 /**
  * String literal.
  */
-class SQLStr extends SQLExpr {
+class SQLStr extends SQLLiteral {
 	// String value.
 	Str value;
 
@@ -133,17 +172,17 @@ class SQLStr extends SQLExpr {
 	}
 
 	// Build.
-	void build(QueryBuilder into) : override {
+	void toSQL(StrBuf into) : override {
 		// TODO: Proper escaping!
-		into.query << "'";
+		into << "'";
 		for (ch in value) {
 			// Double any single quotes. That is enough.
 			if (ch.codepoint == 0x27)
-				into.query << ch << ch;
+				into << ch << ch;
 			else
-				into.query << ch;
+				into << ch;
 		}
-		into.query << "'";
+		into << "'";
 	}
 
 	// Get a Storm expression.
@@ -152,13 +191,21 @@ class SQLStr extends SQLExpr {
 	}
 
 	// Result.
-	Type? computeResult() : override {
+	Value computeResult() : override {
 		named{Str};
 	}
 
 	// Output.
 	void toS(StrBuf to) : override {
 		to << "\"" << value.escape() << "\"";
+	}
+
+	// Equality.
+	Bool same(SQLLiteral other) : override {
+		unless (other as SQLInt)
+			return false;
+
+		return value == other.value;
 	}
 }
 
@@ -227,8 +274,8 @@ class SQLName extends SQLExpr {
 	}
 
 	// Result (we don't know the type).
-	Type? computeResult() : override {
-		null;
+	Value computeResult() : override {
+		Value();
 	}
 
 	// Output.
@@ -266,8 +313,8 @@ class StormValue extends SQLExpr {
 	}
 
 	// Result.
-	Type? computeResult() : override {
-		expr.result.type.type;
+	Value computeResult() : override {
+		expr.result.type.asRef(false);
 	}
 
 	// Output.
@@ -301,7 +348,7 @@ class Escaped extends SQLExpr {
 	}
 
 	// Result.
-	Type? computeResult() : override {
+	Value computeResult() : override {
 		throw InternalError("An 'Escaped' node was not transformed.");
 	}
 }
@@ -332,7 +379,7 @@ class SQLColumn extends SQLExpr {
 	}
 
 	// Result.
-	Type? computeResult() : override {
+	Value computeResult() : override {
 		column.datatype.storm;
 	}
 

@@ -123,7 +123,7 @@ DATABASE TwoTables {
 	TABLE test(
 		id INTEGER PRIMARY KEY,
 		name TEXT,
-		city TEXT
+		city TEXT DEFAULT "none"
 	);
 
 	INDEX ON test(name, city);
@@ -224,4 +224,37 @@ suite MultiPKTest {
 
 	// Try re-creating the typed connection to test that we parse the declaration from SQLite properly.
 	MultiPK d(db);
+}
+
+
+DATABASE NullDB {
+	TABLE test(
+		id INTEGER PRIMARY KEY,
+		value1 TEXT ALLOW NULL,
+		value2 TEXT,
+		value3 TEXT DEFAULT "empty"
+	);
+}
+
+suite NullTest {
+	SQLite db;
+	NullDB c(db);
+
+	WITH c {
+		Str? val;
+
+		INSERT INTO test(value2, value3) VALUES ("a", "i");
+		INSERT INTO test(value1, value2) VALUES ("b", "c");
+
+		INSERT INTO test(value1, value2) VALUES (val || "z", "d");
+		val = "z";
+		INSERT INTO test(value1, value2) VALUES (val || "z", "e");
+
+		StrBuf data;
+		for (row in SELECT * FROM test) {
+			data << row.value1.toS << "|" << row.value2 << "|" << row.value3 << "!";
+		}
+
+		test data.toS == "null|a|i!b|c|empty!null|d|empty!zz|e|empty!";
+	}
 }

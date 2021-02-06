@@ -55,7 +55,7 @@ namespace sql {
 
 	void Schema::Column::toS(StrBuf *to) const {
 		*to << name << S(" ") << datatype;
-		if (attributes->empty())
+		if (!attributes->empty())
 			*to << S(" ") << attributes;
 	}
 

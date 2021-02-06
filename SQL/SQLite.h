@@ -30,6 +30,7 @@ namespace sql {
 		void STORM_FN bind(Nat pos, Int i) override;
 		void STORM_FN bind(Nat pos, Long l) override;
 		void STORM_FN bind(Nat pos, Double d) override;
+		void STORM_FN bindNull(Nat pos) override;
 
 		// Executes an SQLite statement, returns true if execute was successful.
 		void STORM_FN execute() override;

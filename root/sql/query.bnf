@@ -145,7 +145,7 @@ SAtom => x : "(", SExpr x, ")";
 SAtom => Escaped(expr) : "$", "{", lang.bs.SExpr @expr, "}";
 
 // SQL literals.
-SQLExpr SLiteral();
+SQLLiteral SLiteral();
 SLiteral => SQLInt(pos, v) : "-?[0-9]+" v; // Integer.
 SLiteral => SQLFloat(pos, v) : "-?[0-9]+\.[0-9]+" v; // Float.
 SLiteral => SQLStr(pos, v) : lang.bs.SString v; // String.

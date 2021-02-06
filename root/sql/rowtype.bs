@@ -32,7 +32,7 @@ class TypedRow extends Type {
 		{
 			InitBlock init(SrcPos(), body, null);
 			for (i, t in types) {
-				init.init(Initializer(SStr(t.name), getColumn(row, t.type, i)));
+				init.init(Initializer(SStr(t.name), getColumn(body, row, t.type, i)));
 			}
 			body.add(init);
 		}
@@ -67,9 +67,11 @@ class TypedRow extends Type {
 			body.add(namedExpr(body, SrcPos(), "<<", to, Actuals(StrLiteral(SrcPos(), s))));
 
 			MemberVarAccess access(SrcPos(), me, var, true);
-			body.add(namedExpr(body, SrcPos(), "<<", to, Actuals(access)));
+			Expr value = access;
+			if (access.result.type.type !is named{Str})
+				value = namedExpr(body, SrcPos(), "toS", access);
+			body.add(namedExpr(body, SrcPos(), "<<", to, Actuals(value)));
 		}
-
 
 		fn.body = body;
 		fn;
@@ -77,7 +79,41 @@ class TypedRow extends Type {
 }
 
 // Get an expression for extracting a particular column.
-private Expr getColumn(Expr row, Value type, Nat id) on Compiler {
+private Expr getColumn(Block block, Expr row, Value type, Nat id) on Compiler {
+	if (isMaybe(type)) {
+		var fn = named{Row:isNull<Row, Nat>};
+		Actuals params;
+		params.add(row);
+		params.add(NumLiteral(SrcPos(), id.long));
+		If check(block, FnCall(SrcPos(), Scope(), fn, params));
+
+		CondSuccess ok(SrcPos(), block, check.condition);
+		ok.set(callCtor(block, type, Actuals()));
+		check.trueCode = ok;
+
+		check.falseCode = callCtor(block, type, Actuals(getPlainColumn(row, unwrapMaybe(type), id)));
+
+		check;
+	} else {
+		getPlainColumn(row, type, id);
+	}
+}
+
+// Call a constructor.
+private Expr callCtor(Block block, Value type, Actuals actuals) {
+	unless (t = type.type)
+		throw InternalError("Could not find a proper type.");
+
+	var params = actuals.values();
+	params.insert(0, type);
+	unless (fn = t.find("__init", params, Scope()) as Function)
+		throw InternalError("Could not find a constructor for ${type}");
+
+	return CtorCall(SrcPos(), Scope(), fn, actuals);
+}
+
+// Get an expression for extracting a particular column. Does not handle Maybe<>
+private Expr getPlainColumn(Expr row, Value type, Nat id) on Compiler {
 	var fn = getColumnFn(type.type);
 	Actuals params;
 	params.add(row);

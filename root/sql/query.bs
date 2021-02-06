@@ -12,6 +12,32 @@ private Nat newQueryID() on Compiler {
 	return nextQueryID++;
 }
 
+private Expr bindParam(SrcPos pos, Block block, Expr statement, Nat id, Expr param) on Compiler {
+	if (isMaybe(param.result.type)) {
+		WeakMaybeCast cast(param);
+		cast.name(SStr("x"));
+		If check(block, cast);
+
+		CondSuccess success(pos, block, cast);
+		check.trueCode = success;
+		if (created = cast.result) {
+			Actuals params;
+			params.add(NumLiteral(pos, id));
+			params.add(LocalVarAccess(pos, created));
+			success.set(namedExpr(block, pos, "bind", statement, params));
+		}
+
+		check.falseCode = namedExpr(block, pos, "bindNull", statement, Actuals(NumLiteral(pos, id)));
+
+		check;
+	} else {
+		Actuals params;
+		params.add(NumLiteral(pos, id));
+		params.add(param);
+		namedExpr(block, pos, "bind", statement, params);
+	}
+}
+
 // Create a query expression for a typed query. Helper.
 private Expr typedQueryExpr(SrcPos pos, Block block, Expr connection, Database contents, Query query) on Compiler {
 	query.resolve(ResolveContext(block, contents));
@@ -36,10 +62,7 @@ private Expr typedQueryExpr(SrcPos pos, Block block, Expr connection, Database c
 
 	// Bind parameters.
 	for (i, x in q.bind) {
-		Actuals params;
-		params.add(NumLiteral(pos, i));
-		params.add(x);
-		r.add(namedExpr(r, pos, "bind", prepared, params));
+		r.add(bindParam(pos, r, prepared, i, x));
 	}
 
 	// Execute it!
@@ -319,15 +342,25 @@ class InsertQuery extends Query {
 		Column[] cols;
 		if (table) {
 			if (columns.empty) {
-				cols = table.columns;
-				for (c in cols)
+				for (c in table.columns)
 					columns << SStr(c.name, pos);
 			} else {
 				// Find all of the columns.
+				Set<Str> used;
 				for (c in columns) {
+					used.put(c.v);
 					unless (found = table.find(c.v))
 						throw NoSuchColumn(c.pos, c.v, table.name);
 					cols << found;
+				}
+
+				// Check the ones that are not inserted.
+				for (c in table.columns) {
+					if (used.has(c.name))
+						continue;
+
+					if (!c.hasDefault())
+						throw SyntaxError(pos, "The column ${c.name} has no default value, and needs to be given a value.");
 				}
 			}
 		}
@@ -343,6 +376,9 @@ class InsertQuery extends Query {
 
 		for (i, col in cols) {
 			Value result(values[i].result);
+			if (col.allowNull)
+				result = unwrapMaybe(result);
+
 			if (!Value(col.datatype.storm).canStore(result))
 				throw SyntaxError(values[i].pos, "Can not store a value of type ${result} in the column \"${col.name}\".");
 		}
@@ -391,8 +427,8 @@ class InsertQuery extends Query {
 
 // Helper to check that a condition returns a boolean. Assumes that the condition was resolved beforehand.
 private void checkCondition(SQLExpr condition) on Compiler {
-	Value result(condition.result);
-	if (!Value(named{Bool}).canStore(result))
+	var result = condition.result;
+	if (!Value(named{Bool}).canStore(unwrapMaybe(result)))
 		throw SyntaxError(condition.pos, "Expressions in WHERE clauses are expected to return a Bool, not ${result}.");
 }
 
@@ -730,7 +766,7 @@ class SelectQuery extends Query {
 					} else {
 						Column(pos, table.name, col.name);
 					};
-					c.type = col.datatype.storm;
+					c.type = resultType(col);
 					cols << c;
 				}
 			}
@@ -744,9 +780,19 @@ class SelectQuery extends Query {
 						throw NoSuchColumn(col.pos, col.column, table.v);
 				}
 
-				col.type = result.column.datatype.storm;
+				col.type = resultType(result.column);
 			}
 		}
+	}
+
+	// Figure out the type for a column.
+	private Type resultType(sql:Column col) {
+		Type t = col.datatype.storm;
+		if (col.allowNull) {
+			if (maybe = wrapMaybe(t).type)
+				return maybe;
+		}
+		t;
 	}
 
 	// Build the query.

@@ -59,6 +59,11 @@ namespace sql {
 		sqlite3_bind_double(stmt, pos + 1, d);
 	}
 
+	void SQLite_Statement::bindNull(Nat pos) {
+		reset();
+		sqlite3_bind_null(stmt, pos + 1);
+	}
+
 	void SQLite_Statement::execute() {
 		reset();
 

@@ -24,20 +24,28 @@ class Column {
 	// Auto-increment?
 	Bool autoIncrement;
 
+	// Default value?
+	SQLLiteral? default;
+
 
 	init(SStr name, SQLType type) {
 		init {
 			name = name.v;
 			datatype = type;
-			allowNull = true;
 		}
 	}
 
 	// Called from the syntax.
 	void setPrimary(Str x) { primaryKey = true; }
-	void setNotNull(Str x) { allowNull = false; }
+	void setAllowNull(Str x) { allowNull = true; }
 	void setUnique(Str x) { unique = true; }
 	void setAutoIncrement(Str x) { autoIncrement = true; }
+	void setDefault(SQLLiteral x) { default = x; }
+
+	// Called from the syntax, gives a decent error message on how we're different from SQL.
+	void setNotNull(SStr x) {
+		throw SyntaxError(x.pos, "Columns are NOT NULL by default. Use ALLOW NULL to allow nullable columns.");
+	}
 
 	// Create an SQL part for this column.
 	Str toSQL() {
@@ -62,7 +70,31 @@ class Column {
 		same &= allowNull == o.allowNull;
 		same &= unique == o.unique;
 		same &= autoIncrement == o.autoIncrement;
+		if (default) {
+			if (odefault = o.default) {
+				same &= default.same(odefault);
+			} else {
+				same = false;
+			}
+		} else {
+			if (o.default) {
+				same = false;
+			}
+		}
 		same;
+	}
+
+	// See if this column has some kind of default value. I.e. it is OK to leave one without a value?
+	Bool hasDefault() {
+		if (default)
+			return true;
+		if (primaryKey)
+			return true;
+		if (allowNull)
+			return true;
+		if (autoIncrement)
+			return true;
+		false;
 	}
 
 	private void modifiers(StrBuf to) {
@@ -72,8 +104,30 @@ class Column {
 			to << " UNIQUE";
 		if (autoIncrement)
 			to << " AUTOINCREMENT";
+		if (default)
+			to << " DEFAULT " << default.toSQL();
 	}
 }
+
+/**
+ * Column declaration that acts as standard SQL (we have slightly different defaults).
+ */
+class ParseColumn extends Column {
+	init(SStr name, SQLType type) {
+		init(name, type) {}
+		allowNull = true;
+	}
+
+	void setNotNull(SStr x) : override {
+		allowNull = false;
+	}
+
+	void toS(StrBuf to) : override {
+		super:toS(to);
+		to << "!";
+	}
+}
+
 
 /**
  * Index for a table.
@@ -414,7 +468,7 @@ class TypedConnection {
 
 // Helper (on the Compiler thread) for checking column declarations. We need the parser, that's why
 // we run on the compiler thread.
-private Str[] checkTable(Table table, Schema schema) {
+private Str[] checkTable(Table table, Schema schema) on Compiler {
 	if (table.columns.count < schema.count)
 		throw SchemaError("Too many columns in the database.", table, schema);
 
@@ -423,6 +477,8 @@ private Str[] checkTable(Table table, Schema schema) {
 	// We need to parse the modifier string...
 	Parser<SDatatype> typeParser;
 	Parser<SModifiers> modifierParser;
+	typeParser.addSyntax(named{lang:bs});
+	modifierParser.addSyntax(named{lang:bs});
 
 	Set<Str> pk;
 	for (k in schema.primaryKeys)
@@ -436,11 +492,13 @@ private Str[] checkTable(Table table, Schema schema) {
 		if (typeParser.hasError())
 			throw SQLError("Unknown column datatype for ${curr.name}: ${curr.datatype}.");
 
-		Column c(SStr(ref.name), typeParser.tree.transform());
+		ParseColumn c(SStr(ref.name), typeParser.tree.transform());
 
 		modifierParser.parse(curr.attributes, core:io:Url());
-		if (modifierParser.hasError())
+		if (modifierParser.hasError()) {
+			modifierParser.throwError();
 			throw SQLError("Failed to parse the column attributes for column ${curr.name}: ${curr.attributes}");
+		}
 
 		modifierParser.tree.transform(c);
 

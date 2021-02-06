@@ -42,6 +42,10 @@ class Operator extends SQLExpr {
 		lhs = lhs.resolve(context);
 		rhs = rhs.resolve(context);
 
+		// If maybe types are involved, we bail out in trying to simplify.
+		if (isMaybe(lhs.result) | isMaybe(rhs.result))
+			return this;
+
 		if (lStorm = lhs.stormExpr) {
 			if (rStorm = rhs.stormExpr) {
 				// Simplify!
@@ -59,14 +63,17 @@ class Operator extends SQLExpr {
 	}
 
 	// Compute the result.
-	Type? computeResult() : override {
+	Value computeResult() : override {
 		unless (fn = findFunction()) {
-			Value l(lhs.result);
-			Value r(rhs.result);
+			Value l = unwrapMaybe(lhs.result);
+			Value r = unwrapMaybe(rhs.result);
 			throw SyntaxError(pos, "Invalid parameter types for the operator: ${l} ${sqlOp} ${r}");
 		}
 
-		fn.result.type;
+		if (isMaybe(lhs.result) | isMaybe(rhs.result))
+			wrapMaybe(fn.result);
+		else
+			fn.result;
 	}
 
 	// Build the operator.
@@ -85,9 +92,9 @@ class Operator extends SQLExpr {
 
 	// Figure out which function in Storm this operator would call.
 	private Function? findFunction() {
-		unless (lType = lhs.result)
+		unless (lType = unwrapMaybe(lhs.result).type)
 			throw SyntaxError(lhs.pos, "Unknown type of subexpression.");
-		unless (rType = rhs.result)
+		unless (rType = unwrapMaybe(rhs.result).type)
 			throw SyntaxError(rhs.pos, "Unknown type of subexpression.");
 
 		checkTypes(lType, rType);
@@ -186,8 +193,8 @@ class NotOperator extends SQLExpr {
 		this;
 	}
 
-	Type? computeResult() : override {
-		if (operand.result !is named{Bool})
+	Value computeResult() : override {
+		if (unwrapMaybe(operand.result).type !is named{Bool})
 			throw SyntaxError(operand.pos, "The operand to NOT must be a boolean.");
 
 		return named{Bool};
@@ -223,13 +230,16 @@ class LikeOperator extends SQLExpr {
 		this;
 	}
 
-	Type? computeResult() : override {
-		if (lhs.result !is named{Str})
+	Value computeResult() : override {
+		if (unwrapMaybe(lhs.result).type !is named{Str})
 			throw SyntaxError(lhs.pos, "The left-hand side of a LIKE operator must be a string.");
-		if (rhs.result !is named{Str})
+		if (unwrapMaybe(rhs.result).type !is named{Str})
 			throw SyntaxError(lhs.pos, "The right-hand side of a LIKE operator must be a string.");
 
-		return named{Bool};
+		if (isMaybe(lhs.result) | isMaybe(rhs.result))
+			return wrapMaybe(named{Bool});
+		else
+			return named{Bool};
 	}
 
 	void build(QueryBuilder to) : override {

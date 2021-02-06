@@ -62,7 +62,10 @@ SModifiers : SModifier(c) - (~ SModifier(c))*;
 // Modifiers for columns.
 void SModifier(Column to) #keyword;
 SModifier => to : "PRIMARY" ~ "KEY" -> setPrimary;
-SModifier => to : "NOT" ~ "NULL" -> setNotNull;
+SModifier => to : "ALLOW" ~ "NULL" -> setAllowNull;
 SModifier => to : "UNIQUE" -> setUnique;
 SModifier => to : "AUTOINCREMENT" -> setAutoIncrement;
+SModifier => to : "DEFAULT" ~ SLiteral -> setDefault;
+
+SModifier => to : ("NOT" ~ "NULL")@ -> setNotNull;
 

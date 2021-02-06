@@ -28,6 +28,9 @@ namespace sql {
         //If column is of type Double, use this to get the result. (REAL in sqlite3)
         Double STORM_FN getDouble(Nat idx);
 
+		// Is a particular column null?
+		Bool STORM_FN isNull(Nat idx);
+
     private:
         Array<Variant> * v;
     };
@@ -51,6 +54,9 @@ namespace sql {
         virtual void STORM_FN bind(Nat pos, Int i) ABSTRACT;
 		virtual void STORM_FN bind(Nat pos, Long i) ABSTRACT;
         virtual void STORM_FN bind(Nat pos, Double d) ABSTRACT;
+
+		// Bind a null value.
+		virtual void STORM_FN bindNull(Nat pos) ABSTRACT;
 
 		// Finalize (dispose of) the statement.
         virtual void STORM_FN finalize() ABSTRACT;

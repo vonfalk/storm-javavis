@@ -23,11 +23,11 @@ namespace storm {
 			Array<Expr *> *expressions;
 
 			// Compute all types.
-			Array<Value> *values();
+			Array<Value> *STORM_FN values();
 
 			// Generate the code to get one parameter. Returns where it is stored.
 			// 'type' may differ slightly from 'expressions->at(id)->result()'.
-			code::Operand code(nat id, CodeGen *s, Value type, Scope scope);
+			code::Operand STORM_FN code(Nat id, CodeGen *s, Value type, Scope scope);
 
 			// Empty?
 			inline Bool STORM_FN empty() { return expressions->empty(); }
