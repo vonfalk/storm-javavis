@@ -1,74 +1,49 @@
 SQLite in Storm:
 
-SQLite exists as a subclass of SQL, which is a general class for the purpose of expanding more database languages into storm.
+This package provides two parts:
 
-An SQLite connection can be established in memory or in a file using the following syntax:
+* A generic database interface (the DBConnection and Statement classes with subclasses) with
+  implementations for SQLite.
+* A language extension to Basic Storm that allows inline SQL queries, both with and without typechecking.
+
+
+An SQLite connection can be established in memory or in a file as follows:
  * SQLite db();
- * SQLite db(cwdUrl/"chinook.db");
+ * SQLite db(cwdUrl/"database.db");
 
-An SQLite_Statement of the before mentioned connection can be created using the following syntax:
- * SQLite_Statement playlist = db.prepare(*valid SQLite statement* ex: "SELECT * FROM playlists");
+A statement is then prepared and executed as follows:
+ * var statement = db.prepare("SQL QUERY ?;");
+ * statement.bind(x, "string");
+ * statement.execute();
 
-The SQLite_Statement can be executed with the following syntax:
- * playlist.execute();
-
-An error massage may be looked at after performing an execute with the following syntax:
- * playlist.errMsg();
-
-If execute is successful, the statement may be iterated and appropriate get may be used to extract
-information in the columns:
- * for (row in playlist)
-            print("id: " + row.getInt(0).toS + ", name: " + row.getStr(1));
-
-The last row id can be identified using the follow syntax:
- * Long id = db.lastRowId();
- * Long id = playlist.lastRowId();
-
-Our SQLite implementation also supports bind of different types to counter injections, syntax:
- * Int int_bind = 16;
-   Statement stmt_int = db.prepare("SELECT * FROM playlists WHERE Playlistid = ?");
-   stmt_int.bind(1, int_bind);
-
-It is possible to display all tables in an SQLite connection with the following syntax:
- * for (table in db.tables)
-       print(table);
-
-Schema of a connection may be looked at with the following syntax:
- * var s = db.schema("tracks");
-
-   print("Table name: " + s.getTable());
-   for (Int i = 0; i < s.size(); ++i) {
-       var cont = s.getRow(i);
-       var a = cont.getAttr();
-       Str s ="";
-       for (var it = a.begin(); it != a.end(); it++) {
-       	   s = s + " " + it.v;
-        }
-       print(cont.getName() + " " + cont.getDt() + s);
-    }
+There are then a number of methods in the Statement class that allows examining the result. In
+particular it is possible to use the Statement as an iterator for queries that produce table
+results.
 
 
-An issue with these are that you have to handle strings as well as having to go through
-many steps manually. Wouldn't it be nice to just have to write queries directly in built in language?
-
-After having created an SQLite connection the following queries may be written directly in the language:
- * [] = optional
- * var result = SELECT Playlistid, Name FROM playlists [WHERE playlistid = 2] DB db;
- * CREATE TABLE [IF NOT EXISTS] newTable( int INTEGER, double REAL, string TEXT) DB db;
- * INSERT INTO newTable[(int, double, charPtr)] VALUES(1, 2.0, "three") DB db;
- * UPDATE newTable SET charPtr = "four" WHERE int = 1 DB db;
- * DELETE FROM newTable WHERE charPtr = "four" DB db;
-
-Bind is also supported in these direct queries where they are supported in actual SQLite:
- * Str testString = "Movies";
-   Int testId = 2;
-   var result = SELECT Playlistid, Name FROM playlists WHERE Playlistid = testId OR Name = testString DB db;
+It is also possible to use the language extension in Basic Storm:
+ * Str x = "c";
+ * WITH db: INSERT INTO table VALUES ("a", "b", x);
 
 
-Points left to consider:
+The above does not allow Storm to type-check the queries. For that to work, it is necessary to
+declare a database first:
 
-The datatype boolean is possibly treated differently in Storm compared to SQL. For example, some
-database engines do not have a separate boolean type, so they likely do like C, using integers
-instead. Thus, a == b returns a boolean according to the type system used by this extension, while
-the SQL engine might consider it to return an integer. This means that the SQL plugin is overly
-restrictive in some cases, which is not necessarily bad, but worth noting.
+DATABASE MyDB {
+  TABLE test (
+    a INTEGER PRIMARY KEY,
+    b TEXT
+  );
+
+  INDEX ON test(b);
+}
+
+It is worth noting that columns are NOT NULL by default. Use ALLOW NULL if null are desired.
+
+The table may then be queried as follows:
+
+MyDB connection(db);
+for (row in WITH c: SELECT * FROM test) {
+  print(row.a # " " # b);
+}
+
