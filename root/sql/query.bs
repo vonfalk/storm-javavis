@@ -354,12 +354,14 @@ class InsertQuery extends Query {
 					cols << found;
 				}
 
+				Bool multiPK = table.multiplePK();
+
 				// Check the ones that are not inserted.
 				for (c in table.columns) {
 					if (used.has(c.name))
 						continue;
 
-					if (!c.hasDefault())
+					if (!c.hasDefault(multiPK))
 						throw SyntaxError(pos, "The column ${c.name} has no default value, and needs to be given a value.");
 				}
 			}
@@ -429,7 +431,7 @@ class InsertQuery extends Query {
 private void checkCondition(SQLExpr condition) on Compiler {
 	var result = condition.result;
 	if (!Value(named{Bool}).canStore(unwrapMaybe(result)))
-		throw SyntaxError(condition.pos, "Expressions in WHERE clauses are expected to return a Bool, not ${result}.");
+		throw SyntaxError(condition.pos, "Expressions in WHERE and ON clauses are expected to return a Bool, not ${result}.");
 }
 
 /**
@@ -742,6 +744,8 @@ class SelectQuery extends Query {
 			context.addTable(j.table.pos, j.table.v);
 			// TODO: Might be too early, but I think this is how SQL works.
 			j.expr = j.expr.resolve(context);
+			if (context.typed)
+				checkCondition(j.expr);
 		}
 
 		if (context.visible.any)

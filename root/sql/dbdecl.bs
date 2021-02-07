@@ -85,10 +85,10 @@ class Column {
 	}
 
 	// See if this column has some kind of default value. I.e. it is OK to leave one without a value?
-	Bool hasDefault() {
+	Bool hasDefault(Bool multiPK) {
 		if (default)
 			return true;
-		if (primaryKey)
+		if (primaryKey & !multiPK)
 			return true;
 		if (allowNull)
 			return true;
@@ -219,6 +219,15 @@ class Table {
 				throw SyntaxError(pos, "The index ${index.name} already exists.");
 
 		indices << index;
+	}
+
+	// Check if there are multiple primary keys.
+	Bool multiplePK() {
+		Nat count = 0;
+		for (c in columns)
+			if (c.primaryKey)
+				count++;
+		count > 1;
 	}
 
 	// Create an SQL statement for this table declaration.
