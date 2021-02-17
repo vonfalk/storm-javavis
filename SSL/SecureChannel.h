@@ -37,6 +37,9 @@ namespace ssl {
 		// Create for a client context.
 		static SChannelContext *createClient();
 
+		// Create for a server context.
+		static SChannelContext *createServer();
+
 		// Create a session for this context.
 		virtual SSLSession *createSession();
 

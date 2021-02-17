@@ -5,6 +5,11 @@
 
 #ifdef WINDOWS
 
+// For our test implementation. To be moved later.
+#include "Core/Io/Text.h"
+#pragma comment (lib, "crypt32.lib")
+#pragma comment (lib, "advapi32.lib")
+
 namespace ssl {
 
 	// Inspiration for this implementation:
@@ -33,6 +38,7 @@ namespace ssl {
 			SET_ERROR(SEC_E_LOGON_DENIED);
 			SET_ERROR(SEC_E_NO_AUTHENTICATING_AUTHORITY);
 			SET_ERROR(SEC_E_NO_CREDENTIALS);
+			SET_ERROR(SEC_E_UNKNOWN_CREDENTIALS);
 			SET_ERROR(SEC_E_TARGET_UNKNOWN);
 			SET_ERROR(SEC_E_UNSUPPORTED_FUNCTION);
 			SET_ERROR(SEC_E_WRONG_PRINCIPAL);
@@ -54,7 +60,6 @@ namespace ssl {
 	SChannelContext *SChannelContext::createClient() {
 		SECURITY_STATUS status;
 		CredHandle credentials;
-		TimeStamp expires;
 
 		SCHANNEL_CRED data = {
 			SCHANNEL_CRED_VERSION,
@@ -72,15 +77,171 @@ namespace ssl {
 			0, // Kernel format. Should be zero.
 		};
 
+		// Flags to consider:
+		// SCH_CRED_NO_DEFAULT_CREDS - don't try to find a certificate chain.
+		// SCH_CRED_NO_SERVERNAME_CHECK - don't check the server name.
+		// SCH_CRED_USE_DEFAULT_CREDS - probably good as a default? Seems to be the default
+		// SCH_USE_STRONG_CRYPTO - disable suites with known weaknesses.
+
 		// Acquire credentials.
 		status = AcquireCredentialsHandle(NULL, SCHANNEL_NAME, SECPKG_CRED_OUTBOUND,
 										NULL, &data, NULL, NULL,
-										&credentials, &expires);
+										&credentials, NULL);
 
 		if (status == SEC_E_SECPKG_NOT_FOUND)
 			throw new (runtime::someEngine()) SSLError(S("Failed to find the SChannel security package."));
 		else if (status != SEC_E_OK)
-			throw new (runtime::someEngine()) SSLError(S("Failed to acquire credentials for SChannel."));
+			throwError(runtime::someEngine(), S("Failed to acquire credentials for SChannel: "), status);
+
+		return new SChannelContext(credentials);
+	}
+
+	// Test code for loading a certificate using the Windows API.
+	// Inspired partially from: http://www.idrix.fr/Root/Samples/capi_pem.cpp
+	// linked from: https://stackoverflow.com/questions/8412838/how-to-import-private-key-in-pem-format-using-wincrypt-and-c
+	static const CERT_CONTEXT *loadCert() {
+		// Hint:
+		// CryptDecodeObjectEx might be used to decrypt PEM, then
+		// CryptImportKey
+		// Perhaps also look at PFXImportCertStore
+
+		Engine &e = runtime::someEngine();
+
+		Str *certData = readAllText(cwdUrl(e)->push(new (e) Str(S("..")))->push(new (e) Str(S("cert.pem"))));
+		Str *keyData = readAllText(cwdUrl(e)->push(new (e) Str(S("..")))->push(new (e) Str(S("key.pem"))));
+
+		// Note: The flag CRYPT_STRING_ANY might be interesting, that allows binary copies as well!
+		// Note: Last parameter can give us encoding actually used.
+		DWORD certSize = 0;
+		if (!CryptStringToBinaryW(certData->c_str(), NULL, CRYPT_STRING_BASE64_ANY, NULL, &certSize, NULL, NULL))
+			PLN(L"FAIL1");
+		BYTE *cert = new BYTE[certSize];
+		if (!CryptStringToBinaryW(certData->c_str(), NULL, CRYPT_STRING_BASE64_ANY, cert, &certSize, NULL, NULL))
+			PLN(L"FAIL2");
+
+		DWORD keySize = 0;
+		if (!CryptStringToBinaryW(keyData->c_str(), NULL, CRYPT_STRING_BASE64_ANY, NULL, &keySize, NULL, NULL))
+			PLN(L"FAIL3");
+		BYTE *key = new BYTE[keySize];
+		if (!CryptStringToBinaryW(keyData->c_str(), NULL, CRYPT_STRING_BASE64_ANY, key, &keySize, NULL, NULL))
+			PLN(L"FAIL4");
+
+
+		// Load the certificate
+		const CERT_CONTEXT *context = CertCreateCertificateContext(X509_ASN_ENCODING | PKCS_7_ASN_ENCODING, cert, certSize);
+		PVAR(context);
+		PVAR(context->hCertStore);
+
+		PLN(L"Loaded the certificate!");
+
+		// CertFreeCertificateContext(context);
+
+		// Load the key.
+		// TODO: How to support encrypted keys?
+		// We can decrypt with: openssl rsa -in <key> -out <key>
+		DWORD rawKeySize = 0;
+		if (!CryptDecodeObjectEx(X509_ASN_ENCODING | PKCS_7_ASN_ENCODING, PKCS_RSA_PRIVATE_KEY, key, keySize, 0, NULL, NULL, &rawKeySize))
+			PLN(L"Fail to load key1");
+		BYTE *rawKey = new BYTE[rawKeySize];
+		if (!CryptDecodeObjectEx(X509_ASN_ENCODING | PKCS_7_ASN_ENCODING, PKCS_RSA_PRIVATE_KEY, key, keySize, 0, NULL, rawKey, &rawKeySize))
+			PLN(L"Fail to load key2");
+
+		// Note: This is deprecated. Is there a better way to do this? We have a certstore handle.
+		// Note: Use NCryptImportKey instead. That's what the docs for CRYPT_KEY_PROV_INFO refers to as well.
+		// Note: This works but is persistent in the system...
+		HCRYPTPROV provider = 0;
+		if (!CryptAcquireContext(&provider, S("TEMPNAME"), MS_ENHANCED_PROV, PROV_RSA_FULL, CRYPT_NEWKEYSET)) {
+			DWORD error = GetLastError();
+			if (error == NTE_EXISTS) {
+				CryptAcquireContext(&provider, S("TEMPNAME"), MS_ENHANCED_PROV, PROV_RSA_FULL, CRYPT_DELETEKEYSET);
+				PVAR(GetLastError());
+			}
+
+			PVAR(error);
+		}
+		PVAR(provider);
+
+		HCRYPTKEY hKey = 0;
+		if (!CryptImportKey(provider, rawKey, rawKeySize, NULL, 0, &hKey)) {
+			DWORD error = GetLastError();
+			PLN(L"NO IMPORT KEY " << error);
+		}
+
+		CRYPT_KEY_PROV_INFO pkInfo = { 0 };
+		pkInfo.pwszContainerName = S("TEMPNAME");
+		pkInfo.pwszProvName = MS_ENHANCED_PROV;
+		pkInfo.dwProvType = PROV_RSA_SCHANNEL;
+		pkInfo.dwKeySpec = AT_KEYEXCHANGE;
+
+		CertSetCertificateContextProperty(context, CERT_KEY_PROV_INFO_PROP_ID, 0, &pkInfo);
+
+		PLN(L"OK!");
+
+		return context;
+
+
+		// We still need to import the key. Maybe we can use: CryptImportKey for this?
+		// See here: https://docs.microsoft.com/en-us/windows/win32/seccrypto/rsa-schannel-key-blobs
+
+		// It should be possible to call DecodeObjectEx with the PKCS_RSA_PRIVATE_KEY parameter and then CryptImportKey.
+
+		// There is a function called CryptImportPKCS8, but that is deprecated (and removed) in favor of PFXImportCertStore
+		// Note: PFX seems to be (partially) synonymous with PKCS 12.
+		// CRYPT_DATA_BLOB dataBlob = { bufSize, buffer };
+		// DWORD flags = 0;
+		// flags |= CRYPT_EXPORTABLE; // Allow exporting the keys?
+		// flags |= PKCS12_NO_PERSIST_KEY; // Don't save the keys on disk.
+		// HCERTSTORE store = PFXImportCertStore(&dataBlob, S("test"), flags);
+		// DWORD error = GetLastError();
+		// PVAR(store);
+		// PVAR(error);
+
+		// // Note: This is *probably* for the certificate. Both x509 and PKCS7 are for certs...
+		// DWORD decodedCount = 0;
+		// if (!CryptDecodeObjectEx(X509_ASN_ENCODING | PKCS_7_ASN_ENCODING, PKCS_RSA_PRIVATE_KEY, buffer, bufSize, 0, NULL, NULL, &decodedCount)) {
+		// 	PVAR(GetLastError());
+		// }
+
+		// PVAR(decodedCount);
+		// // LocalFree(decoded);
+	}
+
+	SChannelContext *SChannelContext::createServer() {
+		const CERT_CONTEXT *context = loadCert();
+
+		SECURITY_STATUS status;
+		CredHandle credentials;
+
+		// TODO: Keys!
+		// According to the documentation, keys should be in "array of private keys", not "root
+		// store".  The root store is used to verify clients.
+
+		SCHANNEL_CRED data = {
+			SCHANNEL_CRED_VERSION,
+			1, // Number of private keys
+			&context, // Array of private keys
+			NULL, // Root store
+			0, // Reserved
+			0, // Reserved
+			0, // Number of algorithms to use (0 = system default)
+			NULL, // Algorithms to use (0 = system default)
+			0, // Protocols (we should set it to zero to let the system decide). This is where we specify TLS version.
+			0, // Cipher strenght. 0 = system default
+			0, // Session lifespan. 0 = default (10 hours)
+			0, // Various flags.
+			0, // Kernel format. Should be zero.
+		};
+
+		// TODO: Add flags.
+
+		status = AcquireCredentialsHandle(NULL, SCHANNEL_NAME, SECPKG_CRED_INBOUND,
+										NULL, &data, NULL, NULL,
+										&credentials, NULL);
+
+		if (status == SEC_E_SECPKG_NOT_FOUND)
+			throw new (runtime::someEngine()) SSLError(S("Failed to find the SChannel security package."));
+		else if (status != SEC_E_OK)
+			throwError(runtime::someEngine(), S("Failed to acquire credentials for SChannel: "), status);
 
 		return new SChannelContext(credentials);
 	}
