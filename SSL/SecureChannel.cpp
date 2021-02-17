@@ -7,6 +7,7 @@
 
 // For our test implementation. To be moved later.
 #include "Core/Io/Text.h"
+#include "Core/Convert.h"
 #pragma comment (lib, "crypt32.lib")
 #pragma comment (lib, "advapi32.lib")
 
@@ -149,14 +150,39 @@ namespace ssl {
 		// Note: This is deprecated. Is there a better way to do this? We have a certstore handle.
 		// Note: Use NCryptImportKey instead. That's what the docs for CRYPT_KEY_PROV_INFO refers to as well.
 		// Note: This works but is persistent in the system...
-		HCRYPTPROV provider = 0;
-		if (!CryptAcquireContext(&provider, S("TEMPNAME"), MS_ENHANCED_PROV, PROV_RSA_FULL, CRYPT_NEWKEYSET)) {
-			DWORD error = GetLastError();
-			if (error == NTE_EXISTS) {
-				CryptAcquireContext(&provider, S("TEMPNAME"), MS_ENHANCED_PROV, PROV_RSA_FULL, CRYPT_DELETEKEYSET);
-				PVAR(GetLastError());
-			}
+		// HCRYPTPROV provider = 0;
+		// if (!CryptAcquireContext(&provider, S("TEMPNAME"), MS_ENHANCED_PROV, PROV_RSA_FULL, CRYPT_NEWKEYSET)) {
+		// 	DWORD error = GetLastError();
+		// 	if (error == NTE_EXISTS) {
+		// 		CryptAcquireContext(&provider, S("TEMPNAME"), MS_ENHANCED_PROV, PROV_RSA_FULL, CRYPT_DELETEKEYSET);
+		// 		PVAR(GetLastError());
+		// 	}
 
+		// 	PVAR(error);
+		// }
+		// PVAR(provider);
+
+		// HCRYPTKEY hKey = 0;
+		// if (!CryptImportKey(provider, rawKey, rawKeySize, NULL, 0, &hKey)) {
+		// 	DWORD error = GetLastError();
+		// 	PLN(L"NO IMPORT KEY " << error);
+		// }
+
+		// CRYPT_KEY_PROV_INFO pkInfo = { 0 };
+		// pkInfo.pwszContainerName = S("TEMPNAME");
+		// pkInfo.pwszProvName = MS_ENHANCED_PROV;
+		// pkInfo.dwProvType = PROV_RSA_SCHANNEL;
+		// pkInfo.dwKeySpec = AT_KEYEXCHANGE;
+
+		// CertSetCertificateContextProperty(context, CERT_KEY_PROV_INFO_PROP_ID, 0, &pkInfo);
+
+		// According to the documentation, setting a NULL name for the MS provider will generate a
+		// unique container for each call. It is not persisted if we set the VERIFYCONTEXT
+		// flag. Thus, if we keep a reference to it, SChannel will be able to access it for long enough.
+		HCRYPTPROV provider = 0;
+		// if (!CryptAcquireContext(&provider, NULL, MS_ENHANCED_PROV, PROV_RSA_FULL, CRYPT_VERIFYCONTEXT)) {
+		if (!CryptAcquireContext(&provider, NULL, MS_DEF_RSA_SCHANNEL_PROV, PROV_RSA_SCHANNEL, 0)) {
+			DWORD error = GetLastError();
 			PVAR(error);
 		}
 		PVAR(provider);
@@ -167,9 +193,22 @@ namespace ssl {
 			PLN(L"NO IMPORT KEY " << error);
 		}
 
+		DWORD nameLen = 0;
+		CryptGetProvParam(provider, PP_CONTAINER, NULL, &nameLen, 0);
+		PVAR(GetLastError());
+		BYTE *providerName = new BYTE[nameLen + 1];
+		PVAR(nameLen);
+		CryptGetProvParam(provider, PP_CONTAINER, providerName, &nameLen, 0);
+		providerName[nameLen] = 0;
+		PVAR((const char *)providerName);
+
+		wchar *providerName16 = new wchar[nameLen + 1];
+		PVAR(convert((const char *)providerName, providerName16, nameLen + 1));
+		PVAR(providerName16);
+
 		CRYPT_KEY_PROV_INFO pkInfo = { 0 };
-		pkInfo.pwszContainerName = S("TEMPNAME");
-		pkInfo.pwszProvName = MS_ENHANCED_PROV;
+		pkInfo.pwszContainerName = providerName16;
+		pkInfo.pwszProvName = MS_DEF_RSA_SCHANNEL_PROV;
 		pkInfo.dwProvType = PROV_RSA_SCHANNEL;
 		pkInfo.dwKeySpec = AT_KEYEXCHANGE;
 
