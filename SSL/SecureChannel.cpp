@@ -180,8 +180,8 @@ namespace ssl {
 		// unique container for each call. It is not persisted if we set the VERIFYCONTEXT
 		// flag. Thus, if we keep a reference to it, SChannel will be able to access it for long enough.
 		HCRYPTPROV provider = 0;
-		// if (!CryptAcquireContext(&provider, NULL, MS_ENHANCED_PROV, PROV_RSA_FULL, CRYPT_VERIFYCONTEXT)) {
-		if (!CryptAcquireContext(&provider, NULL, MS_DEF_RSA_SCHANNEL_PROV, PROV_RSA_SCHANNEL, CRYPT_VERIFYCONTEXT)) {
+		if (!CryptAcquireContext(&provider, NULL, MS_ENHANCED_PROV, PROV_RSA_FULL, 0 & CRYPT_VERIFYCONTEXT)) {
+		// if (!CryptAcquireContext(&provider, NULL, MS_DEF_RSA_SCHANNEL_PROV, PROV_RSA_SCHANNEL, 0 & CRYPT_VERIFYCONTEXT)) {
 			DWORD error = GetLastError();
 			PVAR(error);
 		}
@@ -212,7 +212,7 @@ namespace ssl {
 		pkInfo.dwKeySpec = AT_KEYEXCHANGE;
 		pkInfo.dwFlags = CERT_SET_KEY_PROV_HANDLE_PROP_ID; // Use the key in the handle?
 
-		PVAR(CertSetCertificateContextProperty(context, CERT_KEY_PROV_INFO_PROP_ID, 0, &pkInfo));
+		// PVAR(CertSetCertificateContextProperty(context, CERT_KEY_PROV_INFO_PROP_ID, 0, &pkInfo));
 
 		// Nice, when we set this parameter, we get the same one from "AcquireCertificatePrivateKey"!
 		// AcquireHandle for SChannel does not seem to care though...
@@ -224,7 +224,14 @@ namespace ssl {
 		PVAR(CryptAcquireCertificatePrivateKey(context, CRYPT_ACQUIRE_CACHE_FLAG, NULL, &nprov, &spec, &free));
 		PVAR(nprov);
 
+		BYTE encName[100];
+		DWORD encNameSize;
+		CertStrToNameW(X509_ASN_ENCODING, L"CN=test", CERT_X500_NAME_STR, NULL, encName, &encNameSize, NULL);
+		PVAR(encNameSize);
 
+		CERT_NAME_BLOB issuer = { encNameSize, encName };
+		const CERT_CONTEXT *c = CertCreateSelfSignCertificate(provider, &issuer, 0, NULL, NULL, NULL, NULL, NULL);
+		PVAR(c);
 
 		// CERT_KEY_CONTEXT keyContext;
 		// keyContext.cbSize = sizeof(keyContext);

@@ -8,6 +8,9 @@ void main() {
 }
 
 void server() {
+	Certificate c = Certificate:loadPEM(cwdUrl / ".." / "cert.pem");
+	print(c.toS);
+
 	ServerContext s;
 }
 

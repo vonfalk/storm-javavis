@@ -4,9 +4,7 @@
 
 namespace ssl {
 
-	ServerContext::ServerContext() {
-		data();
-	}
+	ServerContext::ServerContext() {}
 
 	SSLContext *ServerContext::createData() {
 #ifdef WINDOWS

@@ -10,6 +10,8 @@ namespace ssl {
 	 */
 
 	class SSLSession;
+	class WinSSLCert;
+	class OpenSSLCert;
 
 	/**
 	 * Generic refcount class.
@@ -80,6 +82,24 @@ namespace ssl {
 
 		// Close the underlying streams.
 		virtual void close(void *gcData) = 0;
+	};
+
+
+	/**
+	 * Some representation of a certificate.
+	 *
+	 * The certificate inside is expected to be read-only after creation.
+	 */
+	class SSLCert : public RefCount {
+	public:
+		// Get the windows SSL implementation (might convert it, might throw).
+		virtual WinSSLCert *windows() = 0;
+
+		// Get the OpenSSL implementation version (might convert it, might throw).
+		virtual OpenSSLCert *openSSL() = 0;
+
+		// Extract some sensible string data.
+		virtual void output(StrBuf *to) = 0;
 	};
 
 }
