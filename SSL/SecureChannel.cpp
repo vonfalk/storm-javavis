@@ -181,7 +181,7 @@ namespace ssl {
 		// flag. Thus, if we keep a reference to it, SChannel will be able to access it for long enough.
 		HCRYPTPROV provider = 0;
 		// if (!CryptAcquireContext(&provider, NULL, MS_ENHANCED_PROV, PROV_RSA_FULL, CRYPT_VERIFYCONTEXT)) {
-		if (!CryptAcquireContext(&provider, NULL, MS_DEF_RSA_SCHANNEL_PROV, PROV_RSA_SCHANNEL, 0)) {
+		if (!CryptAcquireContext(&provider, NULL, MS_DEF_RSA_SCHANNEL_PROV, PROV_RSA_SCHANNEL, CRYPT_VERIFYCONTEXT)) {
 			DWORD error = GetLastError();
 			PVAR(error);
 		}
@@ -204,15 +204,33 @@ namespace ssl {
 
 		wchar *providerName16 = new wchar[nameLen + 1];
 		PVAR(convert((const char *)providerName, providerName16, nameLen + 1));
-		PVAR(providerName16);
 
 		CRYPT_KEY_PROV_INFO pkInfo = { 0 };
 		pkInfo.pwszContainerName = providerName16;
 		pkInfo.pwszProvName = MS_DEF_RSA_SCHANNEL_PROV;
 		pkInfo.dwProvType = PROV_RSA_SCHANNEL;
 		pkInfo.dwKeySpec = AT_KEYEXCHANGE;
+		pkInfo.dwFlags = CERT_SET_KEY_PROV_HANDLE_PROP_ID; // Use the key in the handle?
 
-		CertSetCertificateContextProperty(context, CERT_KEY_PROV_INFO_PROP_ID, 0, &pkInfo);
+		PVAR(CertSetCertificateContextProperty(context, CERT_KEY_PROV_INFO_PROP_ID, 0, &pkInfo));
+
+		// Nice, when we set this parameter, we get the same one from "AcquireCertificatePrivateKey"!
+		// AcquireHandle for SChannel does not seem to care though...
+		PVAR(CertSetCertificateContextProperty(context, CERT_KEY_PROV_HANDLE_PROP_ID, 0, (void *)provider)); // takes ownership of "provider".
+
+		HCRYPTPROV nprov = 0;
+		DWORD spec = 0;
+		BOOL free = 0;
+		PVAR(CryptAcquireCertificatePrivateKey(context, CRYPT_ACQUIRE_CACHE_FLAG, NULL, &nprov, &spec, &free));
+		PVAR(nprov);
+
+
+
+		// CERT_KEY_CONTEXT keyContext;
+		// keyContext.cbSize = sizeof(keyContext);
+		// keyContext.hCryptProv = provider;
+		// keyContext.dwKeySpec = AT_KEYEXCHANGE;
+		// CertSetCertificateContextProperty(context, CERT_KEY_CONTEXT_PROP_ID, 0, &keyContext);
 
 		PLN(L"OK!");
 
