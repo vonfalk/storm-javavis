@@ -43,7 +43,15 @@ private:
 };
 
 // Get the single instance of StackInfoSet.
+// Note: This is implemented externally since we need a single instance per process.
 StackInfoSet &stackInfo();
+
+// Declare the global stackInfo implementation.
+#define DEFINE_STACK_INFO()						\
+	StackInfoSet &stackInfo() {					\
+		static StackInfoSet v;					\
+		return v;								\
+	}
 
 
 /**

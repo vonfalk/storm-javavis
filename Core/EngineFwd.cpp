@@ -2,6 +2,7 @@
 #include "EngineFwd.h"
 #include "Runtime.h"
 #include "OS/Shared.h"
+#include "Utils/StackInfoSet.h"
 
 namespace storm {
 
@@ -45,6 +46,8 @@ namespace storm {
 			&os::currentUThreadState,
 			&os::threadCreated,
 			&os::threadTerminated,
+
+			&::stackInfo,
 
 			// Dummy.
 			1.0f,

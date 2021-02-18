@@ -3,11 +3,6 @@
 #include <typeinfo>
 
 
-StackInfoSet &stackInfo() {
-	static StackInfoSet v;
-	return v;
-}
-
 StackInfoSet::StackInfoSet() {
 	attach(cppInfo);
 }

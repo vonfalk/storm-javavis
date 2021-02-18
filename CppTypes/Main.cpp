@@ -5,6 +5,7 @@
 #include "Parse.h"
 #include "Write.h"
 #include "Output.h"
+#include "Utils/StackInfoSet.h"
 
 void findHeaders(const Path &in, vector<Path> &out) {
 	vector<Path> c = in.children();
@@ -173,3 +174,5 @@ int _tmain(int argc, const wchar_t *argv[]) {
 
 	return 0;
 }
+
+DEFINE_STACK_INFO()

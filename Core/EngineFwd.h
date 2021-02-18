@@ -1,6 +1,8 @@
 #pragma once
 #include "OS/UThread.h"
 
+class StackInfoSet;
+
 namespace storm {
 	struct GcType;
 	struct GcCode;
@@ -58,6 +60,9 @@ namespace storm {
 		void (*setCurrentUThreadState)(os::UThreadState *state);
 		void (*threadCreated)();
 		void (*threadTerminated)();
+
+		// Get the global instace for stack traces.
+		StackInfoSet &(*stackInfo)();
 
 		// Completely different type to catch errors when using initializer lists.
 		Float dummy;

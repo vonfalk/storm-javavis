@@ -242,3 +242,7 @@ namespace os {
 	}
 
 }
+
+StackInfoSet &stackInfo() {
+	return (*storm::fwd.stackInfo)();
+}

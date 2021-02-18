@@ -705,3 +705,6 @@ namespace storm {
 	}
 
 }
+
+// Get the global StackInfoSet.
+DEFINE_STACK_INFO()

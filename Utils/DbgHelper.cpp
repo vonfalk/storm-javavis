@@ -8,6 +8,7 @@ static bool init(HANDLE process) {
 	if (SymInitialize(process, NULL, TRUE))
 		return true;
 
+	// Note: We might see multiple instances of this per process, so this is typically not fatal.
 	WARNING(L"Failed to initialize DbgHelp: " << GetLastError());
 	return false;
 }
