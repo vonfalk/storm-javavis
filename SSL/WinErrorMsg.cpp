@@ -1,0 +1,44 @@
+#include "stdafx.h"
+#include "WinErrorMsg.h"
+#include "Exception.h"
+
+#ifdef WINDOWS
+
+namespace ssl {
+
+#define SET_ERROR(MSG) case MSG: msg = WIDEN(#MSG); break
+
+	void throwError(Engine &e, const wchar *error, SECURITY_STATUS status) {
+		const wchar *msg = null;
+		switch (status) {
+			SET_ERROR(SEC_I_COMPLETE_AND_CONTINUE);
+			SET_ERROR(SEC_I_COMPLETE_NEEDED);
+			SET_ERROR(SEC_I_CONTINUE_NEEDED);
+			SET_ERROR(SEC_I_CONTEXT_EXPIRED);
+			SET_ERROR(SEC_E_CONTEXT_EXPIRED);
+			SET_ERROR(SEC_E_INCOMPLETE_MESSAGE);
+			SET_ERROR(SEC_I_INCOMPLETE_CREDENTIALS);
+			SET_ERROR(SEC_E_INSUFFICIENT_MEMORY);
+			SET_ERROR(SEC_E_INTERNAL_ERROR);
+			SET_ERROR(SEC_E_INVALID_HANDLE);
+			SET_ERROR(SEC_E_INVALID_TOKEN);
+			SET_ERROR(SEC_E_LOGON_DENIED);
+			SET_ERROR(SEC_E_NO_AUTHENTICATING_AUTHORITY);
+			SET_ERROR(SEC_E_NO_CREDENTIALS);
+			SET_ERROR(SEC_E_UNKNOWN_CREDENTIALS);
+			SET_ERROR(SEC_E_TARGET_UNKNOWN);
+			SET_ERROR(SEC_E_UNSUPPORTED_FUNCTION);
+			SET_ERROR(SEC_E_WRONG_PRINCIPAL);
+			SET_ERROR(SEC_E_ILLEGAL_MESSAGE);
+		}
+
+		if (msg)
+			throw new (e) SSLError(TO_S(e, error << msg));
+		else
+			throw new (e) SSLError(TO_S(e, error << status));
+	}
+
+
+}
+
+#endif

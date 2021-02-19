@@ -18,12 +18,19 @@ namespace ssl {
 		static WinSSLCert *fromPEM(Str *data);
 
 		// The actual data.
-		CERT_CONTEXT data;
+		const CERT_CONTEXT *data;
 
 		// Functions.
 		WinSSLCert *windows() override;
 		OpenSSLCert *openSSL() override;
 		void output(StrBuf *to) override;
+
+		// Destroy.
+		~WinSSLCert();
+
+	private:
+		// Create.
+		WinSSLCert(const CERT_CONTEXT *data);
 	};
 
 }
