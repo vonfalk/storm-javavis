@@ -1,21 +1,55 @@
 use core:net;
 use core:io;
 use ssl;
+use lang:bs:macro;
+
+Url certUrl() {
+	if (url = named{cert}.url)
+		return url;
+	throw InternalError("Failed to locate the certificate package in the filesystem.");
+}
 
 void main() {
+	var c = Certificate:loadPEM(certUrl / "cert.pem");
+	print(c.toS);
+
 	server();
 	// client();
+	client(c); // This should not work as certs don't match.
 }
 
 void server() {
-	Certificate c = Certificate:loadPEM(cwdUrl / ".." / "cert.pem");
-	print(c.toS);
-
 	ServerContext s;
 }
 
 void client() {
-	ClientContext context;
+	var context = ClientContext:systemDefault();
+	var stream = connect("storm-lang.org", 443);
+	if (stream) {
+		var session = context.connect(stream, "storm-lang.org");
+		print("Got a session!");
+
+		var in = Utf8Input(session.input);
+		var out = Utf8Output(session.output, windowsTextInfo());
+		out.autoFlush = false;
+
+
+		out.write("GET / HTTP/1.0\n"); // To disable "chunked"...
+		out.write("Host: storm-lang.org\n");
+		out.write("\n\n");
+		out.flush();
+
+		print(in.readAll());
+
+		session.close();
+		print("Done!");
+	} else {
+		print("Failed to connect.");
+	}
+}
+
+void client(Certificate c) {
+	var context = ClientContext:pinnedTo(c);
 	var stream = connect("storm-lang.org", 443);
 	if (stream) {
 		var session = context.connect(stream, "storm-lang.org");

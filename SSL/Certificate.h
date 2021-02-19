@@ -26,6 +26,9 @@ namespace ssl {
 		// Destroy.
 		~Certificate();
 
+		// Get the data.
+		SSLCert *get() { return data; }
+
 	protected:
 		// To string.
 		virtual void STORM_FN toS(StrBuf *to) const;

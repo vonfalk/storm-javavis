@@ -3,6 +3,8 @@
 #include "Exception.h"
 #include "SecureChannelData.h"
 #include "WinErrorMsg.h"
+#include "ClientContext.h"
+#include "ServerContext.h"
 
 #ifdef WINDOWS
 
@@ -15,15 +17,34 @@ namespace ssl {
 	// Note: We could use InitSecurityInterface and use the function table returned from there. I'm
 	// not sure what is the main benefit of that though.
 
-	SChannelContext::SChannelContext(CredHandle creds) : credentials(creds) {}
+#ifndef SCH_USE_STRONG_CRYPTO
+#define SCH_USE_STRONG_CRYPTO 0x00400000
+#endif
+
+	SChannelContext::SChannelContext(CredHandle creds) : credentials(creds), certificate(null) {}
 
 	SChannelContext::~SChannelContext() {
 		FreeCredentialsHandle(&credentials);
+
+		if (certificate)
+			certificate->unref();
 	}
 
-	SChannelContext *SChannelContext::createClient() {
+	SChannelContext *SChannelContext::createClient(ClientContext *context) {
 		SECURITY_STATUS status;
 		CredHandle credentials;
+
+		DWORD flags = 0;
+
+		// This is what OpenSSL does - it does not attempt to recover if the client does not send a complete chain.
+		flags |= SCH_CRED_NO_DEFAULT_CREDS;
+
+		if (context->strongCiphers())
+			flags |= SCH_USE_STRONG_CRYPTO;
+		if (!context->verifyHostname())
+			flags |= SCH_CRED_NO_SERVERNAME_CHECK;
+		if (context->pinnedCertificate())
+			flags |= SCH_CRED_MANUAL_CRED_VALIDATION;
 
 		SCHANNEL_CRED data = {
 			SCHANNEL_CRED_VERSION,
@@ -37,15 +58,9 @@ namespace ssl {
 			0, // Protocols (we should set it to zero to let the system decide). This is where we specify TLS version.
 			0, // Cipher strenght. 0 = system default
 			0, // Session lifespan. 0 = default (10 hours)
-			0, // Various flags. We might want to alter this later.
+			flags, // Various flags. We might want to alter this later.
 			0, // Kernel format. Should be zero.
 		};
-
-		// Flags to consider:
-		// SCH_CRED_NO_DEFAULT_CREDS - don't try to find a certificate chain.
-		// SCH_CRED_NO_SERVERNAME_CHECK - don't check the server name.
-		// SCH_CRED_USE_DEFAULT_CREDS - probably good as a default? Seems to be the default
-		// SCH_USE_STRONG_CRYPTO - disable suites with known weaknesses.
 
 		// Acquire credentials.
 		status = AcquireCredentialsHandle(NULL, SCHANNEL_NAME, SECPKG_CRED_OUTBOUND,
@@ -57,10 +72,18 @@ namespace ssl {
 		else if (status != SEC_E_OK)
 			throwError(runtime::someEngine(), S("Failed to acquire credentials for SChannel: "), status);
 
-		return new SChannelContext(credentials);
+		SChannelContext *result = new SChannelContext(credentials);
+		try {
+			if (Certificate *cert = context->pinnedCertificate())
+				result->certificate = cert->get()->windows();
+			return result;
+		} catch (...) {
+			delete result;
+			throw;
+		}
 	}
 
-	SChannelContext *SChannelContext::createServer() {
+	SChannelContext *SChannelContext::createServer(ServerContext *context) {
 		SECURITY_STATUS status;
 		CredHandle credentials;
 
@@ -122,6 +145,11 @@ namespace ssl {
 		ULONG requirements = ISC_REQ_ALLOCATE_MEMORY;
 		// Some more good features.
 		requirements |= ISC_REQ_REPLAY_DETECT | ISC_REQ_SEQUENCE_DETECT | ISC_REQ_CONFIDENTIALITY | ISC_REQ_STREAM;
+
+		// Don't validate the server automatically if we have provided a pinned certificate:
+		if (data->certificate)
+			requirements |= ISC_REQ_MANUAL_CRED_VALIDATION;
+
 		ULONG attrsOut = 0;
 		CtxtHandle *currentHandle = null;
 		SecBufferDesc *inputParam = null;
@@ -185,6 +213,8 @@ namespace ssl {
 			result = -1;
 		} else if (status == SEC_E_OK) {
 			// All done, set the maximum size for encryption/decryption.
+			checkCertificate(e);
+
 			initSizes();
 			result = 0;
 		} else if (status == SEC_E_INCOMPLETE_MESSAGE) {
@@ -206,6 +236,31 @@ namespace ssl {
 			throwError(e, S("Failed to initialize an SSL session: "), status);
 
 		return result;
+	}
+
+	void SChannelSession::checkCertificate(Engine &e) {
+		// We use auto-mode!
+		if (!data->certificate)
+			return;
+
+		PCCERT_CONTEXT pinned = data->certificate->data;
+
+		PCCERT_CONTEXT check = 0;
+		SECURITY_STATUS status = QueryContextAttributes(&context, SECPKG_ATTR_REMOTE_CERT_CONTEXT, &check);
+
+		bool ok = true;
+		if (pinned->dwCertEncodingType != check->dwCertEncodingType)
+			ok = false;
+		if (pinned->cbCertEncoded != check->cbCertEncoded)
+			ok = false;
+
+		if (ok)
+			ok = memcmp(pinned->pbCertEncoded, check->pbCertEncoded, pinned->cbCertEncoded) == 0;
+
+		CertFreeCertificateContext(check);
+
+		if (!ok)
+			throw new (e) SSLError(S("The certificate presented by the remote peer does not match the one we expected."));
 	}
 
 	void SChannelSession::encrypt(Engine &e, const Buffer &input, Nat offset, Nat inputSize, Buffer &output) {

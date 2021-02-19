@@ -12,13 +12,15 @@
 #define SECBUFFER_ALERT 17
 #endif
 
-
 #include "Data.h"
+#include "WinCert.h"
 #include "Core/Io/Buffer.h"
 
 namespace ssl {
 
 	class SChannelData;
+	class ClientContext;
+	class ServerContext;
 
 	/**
 	 * Various types we use on Windows.
@@ -34,11 +36,14 @@ namespace ssl {
 		// Acquired credentials.
 		CredHandle credentials;
 
+		// SSL Certificate to use, if any.
+		WinSSLCert *certificate;
+
 		// Create for a client context.
-		static SChannelContext *createClient();
+		static SChannelContext *createClient(ClientContext *context);
 
 		// Create for a server context.
-		static SChannelContext *createServer();
+		static SChannelContext *createServer(ServerContext *context);
 
 		// Create a session for this context.
 		virtual SSLSession *createSession();
@@ -121,6 +126,9 @@ namespace ssl {
 
 		// Fill the buffers in "data".
 		void fill(SChannelData *data);
+
+		// Check the validity of the remote peer's certificate.
+		void checkCertificate(Engine &e);
 	};
 
 }

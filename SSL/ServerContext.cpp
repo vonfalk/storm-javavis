@@ -8,9 +8,9 @@ namespace ssl {
 
 	SSLContext *ServerContext::createData() {
 #ifdef WINDOWS
-		return SChannelContext::createServer();
+		return SChannelContext::createServer(this);
 #else
-		return OpenSSLContext::createServer();
+		return OpenSSLContext::createServer(this);
 #endif
 	}
 
