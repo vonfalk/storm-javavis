@@ -1,6 +1,7 @@
 #include "stdafx.h"
 #include "Certificate.h"
 #include "WinCert.h"
+#include "Exception.h"
 #include "Core/Io/Text.h"
 
 namespace ssl {
@@ -37,6 +38,52 @@ namespace ssl {
 			data->output(to);
 		else
 			*to << S("<no certificate>");
+	}
+
+
+	CertificateKey *Certificate::loadKeyPEM(Str *data) {
+		SSLCertKey *c = null;
+#ifdef WINDOWS
+		c = WinSSLCertKey::fromPEM(data);
+#else
+		c = OpenSSLCertKey::fromPEM(data);
+#endif
+		return new (this) CertificateKey(this, c);
+	}
+
+	CertificateKey *Certificate::loadKeyPEM(Url *file) {
+		return loadKeyPEM(readAllText(file));
+	}
+
+
+	CertificateKey::CertificateKey(Certificate *cert, SSLCertKey *data) : cert(cert), data(data) {
+		if (!data->validate(engine(), cert->get())) {
+			delete data;
+			data = null;
+			throw new (this) SSLError(TO_S(this, S("The key is invalid for ") << cert << S(".")));
+		}
+	}
+
+	CertificateKey::CertificateKey(const CertificateKey &o) : cert(o.cert), data(o.data) {
+		if (data)
+			data->ref();
+	}
+
+	CertificateKey::~CertificateKey() {
+		clear();
+	}
+
+	void CertificateKey::clear() {
+		if (data)
+			data->unref();
+		data = null;
+	}
+
+	void CertificateKey::toS(StrBuf *to) const {
+		if (data)
+			*to << S("Key to certificate: ") << cert;
+		else
+			*to << S("<no certificate key>");
 	}
 
 }

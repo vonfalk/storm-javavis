@@ -13,6 +13,7 @@ namespace ssl {
 	ClientContext *ClientContext::pinnedTo(Certificate *to) {
 		ClientContext *c = new (to) ClientContext();
 		c->pinned = to;
+		c->checkHostname = false;
 		return c;
 	}
 

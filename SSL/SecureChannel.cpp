@@ -21,13 +21,11 @@ namespace ssl {
 #define SCH_USE_STRONG_CRYPTO 0x00400000
 #endif
 
-	SChannelContext::SChannelContext(CredHandle creds) : credentials(creds), certificate(null) {}
+	SChannelContext::SChannelContext(CredHandle creds, bool isServer)
+		: credentials(creds), certificate(null), isServer(isServer) {}
 
 	SChannelContext::~SChannelContext() {
 		FreeCredentialsHandle(&credentials);
-
-		if (certificate)
-			certificate->unref();
 	}
 
 	SChannelContext *SChannelContext::createClient(ClientContext *context) {
@@ -72,7 +70,7 @@ namespace ssl {
 		else if (status != SEC_E_OK)
 			throwError(runtime::someEngine(), S("Failed to acquire credentials for SChannel: "), status);
 
-		SChannelContext *result = new SChannelContext(credentials);
+		SChannelContext *result = new SChannelContext(credentials, false);
 		try {
 			if (Certificate *cert = context->pinnedCertificate())
 				result->certificate = cert->get()->windows();
@@ -83,11 +81,10 @@ namespace ssl {
 		}
 	}
 
-	SChannelContext *SChannelContext::createServer(ServerContext *context) {
+	SChannelContext *SChannelContext::createServer(ServerContext *context, CertificateKey *key) {
 		SECURITY_STATUS status;
 		CredHandle credentials;
 
-		// TODO: Keys!
 		// According to the documentation, keys should be in "array of private keys", not "root
 		// store".  The root store is used to verify clients.
 
@@ -118,11 +115,14 @@ namespace ssl {
 		else if (status != SEC_E_OK)
 			throwError(runtime::someEngine(), S("Failed to acquire credentials for SChannel: "), status);
 
-		return new SChannelContext(credentials);
+		return new SChannelContext(credentials, true);
 	}
 
 	SSLSession *SChannelContext::createSession() {
-		return new SChannelSession(this);
+		if (isServer)
+			return new SChannelServerSession(this);
+		else
+			return new SChannelClientSession(this);
 	}
 
 
@@ -234,6 +234,102 @@ namespace ssl {
 
 		if (error)
 			throwError(e, S("Failed to initialize an SSL session: "), status);
+
+		return result;
+	}
+
+	int SChannelSession::acceptSession(Engine &e, Buffer &inBuffer, Buffer &outBuffer) {
+		SECURITY_STATUS status;
+		// Ask it to allocate output buffers for us. That means we don't have to worry about the size of them.
+		ULONG requirements = ISC_REQ_ALLOCATE_MEMORY;
+		// Some more good features.
+		requirements |= ISC_REQ_REPLAY_DETECT | ISC_REQ_SEQUENCE_DETECT | ISC_REQ_CONFIDENTIALITY | ISC_REQ_STREAM;
+
+		ULONG attrsOut = 0;
+		CtxtHandle *currentHandle = null;
+
+		SecBuffer inBuffers[2] = {
+			{ 0, SECBUFFER_TOKEN, null },
+			{ 0, SECBUFFER_EMPTY, null }
+		};
+		SecBufferDesc input = {
+			SECBUFFER_VERSION, 2, inBuffers
+		};
+
+		if (!SecIsValidHandle(&context)) {
+			// First call.
+			currentHandle = null;
+		} else {
+			// Other calls.
+			currentHandle = &context;
+		}
+
+		inBuffers[0].cbBuffer = inBuffer.filled();
+		inBuffers[0].pvBuffer = inBuffer.dataPtr();
+
+		// Note: Doc says we need a SECBUFFER_ALERT, but it works anyway.
+		SecBuffer outBuffers[1] = { { 0, SECBUFFER_EMPTY, null } };
+		SecBufferDesc output = {
+			SECBUFFER_VERSION, 1, outBuffers,
+		};
+
+		status = AcceptSecurityContext(&data->credentials, currentHandle,
+									&input, requirements,
+									0 /* not used for schannel */,
+									&context, &output,
+									&attrsOut, NULL /* expires */);
+
+		// See if there is any unconsumed data in the input buffer.
+		if (input.pBuffers[1].BufferType == SECBUFFER_EXTRA) {
+			// Shift data back and keep unconsumed data in the beginning of "input".
+			inBuffer.shift(inBuffer.filled() - input.pBuffers[1].cbBuffer);
+		} else if (status == SEC_E_INCOMPLETE_MESSAGE) {
+			// It was incomplete, just don't clear the buffer.
+		} else {
+			// No unconsumed data. Clear it.
+			inBuffer.filled(0);
+		}
+
+		int result = 0;
+		bool error = false;
+		if (status == SEC_I_CONTINUE_NEEDED) {
+			// Send to server!
+			SecBuffer b = output.pBuffers[0];
+			if (outBuffer.count() < b.cbBuffer)
+				outBuffer = storm::buffer(e, b.cbBuffer);
+
+			memcpy(outBuffer.dataPtr(), b.pvBuffer, b.cbBuffer);
+			outBuffer.filled(b.cbBuffer);
+
+			// Not done. More messages.
+			result = -1;
+		} else if (status == SEC_E_OK) {
+			// All done, set the maximum size for encryption/decryption.
+			checkCertificate(e);
+
+			initSizes();
+			result = 0;
+		} else if (status == SEC_E_INCOMPLETE_MESSAGE) {
+			if (input.pBuffers[1].BufferType == SECBUFFER_MISSING) {
+				result = input.pBuffers[1].cbBuffer;
+			} else {
+				// Just provide a decent guess if we cant find a guess from the API.
+				result = 32;
+			}
+		} else {
+			error = true;
+		}
+
+		// Clean up.
+		if (output.pBuffers[0].pvBuffer)
+			FreeContextBuffer(output.pBuffers[0].pvBuffer);
+
+		if (error) {
+			if (status == SEC_E_ALGORITHM_MISMATCH)
+				throw new (e) SSLError(S("Failed to initialize an SSL session: SEC_E_ALGORITHM_MISMATCH. This could be due to a missing server side certificate."));
+			else
+				throwError(e, S("Failed to initialize an SSL session: "), status);
+		}
 
 		return result;
 	}
@@ -371,49 +467,6 @@ namespace ssl {
 	/**
 	 * The "public" API:
 	 */
-
-	void *SChannelSession::connect(IStream *input, OStream *output, Str *host) {
-		Engine &e = input->engine();
-		SChannelData *data = new (e) SChannelData(input, output);
-
-		// Minimum "free" when calling receive.
-		Nat minFree = 128;
-
-		// Input and output buffers.
-		Buffer inBuffer = storm::buffer(e, 2*1024);
-		Buffer outBuffer = storm::buffer(e, 2*1024);
-
-		while (true) {
-			int result = initSession(e, inBuffer, outBuffer, host->c_str());
-
-			if (result == 0) {
-				break;
-			} else if (result < 0) {
-				// Send to server and receive more.
-				if (outBuffer.filled() > 0) {
-					data->dst->write(outBuffer);
-					data->dst->flush();
-				}
-			}
-
-			// Read more data.
-			Nat more = max(minFree, Nat(abs(result)));
-			if (inBuffer.free() < more)
-				inBuffer = grow(e, inBuffer, inBuffer.filled() + more);
-
-			inBuffer = data->src->read(inBuffer);
-		}
-
-		// From here on, we can use EncryptMessage and DecryptMessage.
-		// We must use cbMaximumMessage from QueryContextAttributes to find max message size.
-
-		// Resize the input and output buffers so that we don't have to resize them in the
-		// future. We can't reallocate them and keep inter-thread consistency.
-		data->bufferSizes = min(Nat(4*1024), maxMessageSize);
-		data->incoming = storm::buffer(e, data->bufferSizes);
-
-		return data;
-	}
 
 	Bool SChannelSession::more(void *gcData) {
 		SChannelData *data = (SChannelData *)gcData;
@@ -571,6 +624,112 @@ namespace ssl {
 		}
 	}
 
+
+	/**
+	 * Client-specific parts:
+	 */
+
+	SChannelClientSession::SChannelClientSession(SChannelContext *c) : SChannelSession(c) {}
+
+	void *SChannelClientSession::connect(IStream *input, OStream *output, Str *host) {
+		Engine &e = input->engine();
+		SChannelData *data = new (e) SChannelData(input, output);
+
+		// Minimum "free" when calling receive.
+		Nat minFree = 128;
+
+		// Input and output buffers.
+		Buffer inBuffer = storm::buffer(e, 2*1024);
+		Buffer outBuffer = storm::buffer(e, 2*1024);
+
+		while (true) {
+			int result = initSession(e, inBuffer, outBuffer, host->c_str());
+
+			if (result == 0) {
+				break;
+			} else if (result < 0) {
+				// Send to server and receive more.
+				if (outBuffer.filled() > 0) {
+					data->dst->write(outBuffer);
+					data->dst->flush();
+				}
+			}
+
+			// Read more data.
+			Nat more = max(minFree, Nat(abs(result)));
+			if (inBuffer.free() < more)
+				inBuffer = grow(e, inBuffer, inBuffer.filled() + more);
+
+			inBuffer = data->src->read(inBuffer);
+			if (inBuffer.filled() == 0 && !data->src->more())
+				throw new (e) SSLError(S("Failed to authenticate to the server: End of stream."));
+		}
+
+		// From here on, we can use EncryptMessage and DecryptMessage.
+		// We must use cbMaximumMessage from QueryContextAttributes to find max message size.
+
+		// Resize the input and output buffers so that we don't have to resize them in the
+		// future. We can't reallocate them and keep inter-thread consistency.
+		data->bufferSizes = min(Nat(4*1024), maxMessageSize);
+		data->incoming = storm::buffer(e, data->bufferSizes);
+
+		return data;
+	}
+
+
+	/**
+	 * Server-specific parts:
+	 */
+
+	SChannelServerSession::SChannelServerSession(SChannelContext *c) : SChannelSession(c) {}
+
+	void *SChannelServerSession::connect(IStream *input, OStream *output, Str *host) {
+		Engine &e = input->engine();
+		SChannelData *data = new (e) SChannelData(input, output);
+
+		// Minimum "free" when calling receive.
+		Nat minFree = 128;
+
+		// Input and output buffers.
+		Buffer inBuffer = storm::buffer(e, 2*1024);
+		Buffer outBuffer = storm::buffer(e, 2*1024);
+
+		while (true) {
+			// Read more data.
+			inBuffer = data->src->read(inBuffer);
+			if (inBuffer.filled() == 0 && !data->src->more())
+				throw new (e) SSLError(S("Failed to authenticate to the client: End of stream."));
+
+			// Try to accept the connection...
+			int result = acceptSession(e, inBuffer, outBuffer);
+
+			// Send messages back if we're not done.
+			if (result == 0) {
+				break;
+			} else if (result < 0) {
+				// Send to server and receive more.
+				if (outBuffer.filled() > 0) {
+					data->dst->write(outBuffer);
+					data->dst->flush();
+				}
+			}
+
+			// Adjust buffer size if necessary.
+			Nat more = max(minFree, Nat(abs(result)));
+			if (inBuffer.free() < more)
+				inBuffer = grow(e, inBuffer, inBuffer.filled() + more);
+		}
+
+		// From here on, we can use EncryptMessage and DecryptMessage.
+		// We must use cbMaximumMessage from QueryContextAttributes to find max message size.
+
+		// Resize the input and output buffers so that we don't have to resize them in the
+		// future. We can't reallocate them and keep inter-thread consistency.
+		data->bufferSizes = min(Nat(4*1024), maxMessageSize);
+		data->incoming = storm::buffer(e, data->bufferSizes);
+
+		return data;
+	}
 }
 
 #endif

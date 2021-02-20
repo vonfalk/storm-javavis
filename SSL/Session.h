@@ -21,6 +21,7 @@ namespace ssl {
 		STORM_CLASS;
 	public:
 		// Create from other parts of the system. Will initiate a SSL context.
+		// Host may be null for server connections.
 		Session(IStream *input, OStream *output, SSLSession *session, Str *host);
 
 		// Copy.
@@ -78,16 +79,16 @@ namespace ssl {
 		SessionIStream(Session *owner);
 
 		// Close it.
-		virtual void STORM_FN close();
+		void STORM_FN close() override;
 
 		// More data?
-		virtual Bool STORM_FN more();
+		Bool STORM_FN more() override;
 
 		// Read data.
-		virtual Buffer STORM_FN read(Buffer to);
+		Buffer STORM_FN read(Buffer to) override;
 
 		// Peek data.
-		virtual Buffer STORM_FN peek(Buffer to);
+		Buffer STORM_FN peek(Buffer to) override;
 
 	private:
 		// Session.
@@ -108,13 +109,13 @@ namespace ssl {
 		SessionOStream(Session *owner);
 
 		// Close it.
-		virtual void STORM_FN close();
+		void STORM_FN close() override;
 
 		// Write data.
-		virtual void STORM_FN write(Buffer buf, Nat start);
+		void STORM_FN write(Buffer buf, Nat start) override;
 
 		// Flush the stream.
-		virtual void STORM_FN flush();
+		void STORM_FN flush() override;
 
 	private:
 		// Session.

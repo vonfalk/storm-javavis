@@ -13,13 +13,52 @@ void main() {
 	var c = Certificate:loadPEM(certUrl / "cert.pem");
 	print(c.toS);
 
-	server();
+	server(c);
 	// client();
-	client(c); // This should not work as certs don't match.
+	// client(c); // This should not work as certs don't match.
 }
 
-void server() {
-	ServerContext s;
+// TODO: We could do this with local pipes as well. Sadly, we don't have those yet.
+void server(Certificate cert) {
+	var key = cert.loadKeyPEM(certUrl / "key.pem");
+
+	ServerContext s(key);
+	print(s.toS);
+
+	Pipe toServer;
+	Pipe fromServer;
+
+	var x = spawn connect(cert, fromServer.input, toServer.output);
+	x.detach();
+
+	try {
+
+		var session = s.connect(toServer.input, fromServer.output);
+		print("Got a session in the server!");
+
+		var in = Utf8Input(session.input);
+		print(in.readAll);
+	} catch (Exception e) {
+		// To make the other end of the connection able to wake up.
+		toServer.close();
+		fromServer.close();
+		throw e;
+	}
+}
+
+void connect(Certificate cert, IStream input, OStream output) {
+	var session = ClientContext:pinnedTo(cert).connect(input, output, "localhost");
+
+	print("Got a session in the client!");
+
+	var out = Utf8Output(session.output);
+	out.write("Hello!");
+	out.flush();
+
+	print("Sent data!");
+
+	// Shut down so that the other end does not have to wait.
+	session.close();
 }
 
 void client() {

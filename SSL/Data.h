@@ -42,6 +42,67 @@ namespace ssl {
 	};
 
 	/**
+	 * Auto ptr for refcounts. Useful in implementation code, but might not work as data members in Storm classes.
+	 */
+	template <class T>
+	class RefPtr {
+	public:
+		// Create. Takes ownership.
+		RefPtr(T *p) : data(p) {}
+
+		// Destroy.
+		~RefPtr() {
+			if (data)
+				data->unref();
+		}
+
+		// Copy.
+		RefPtr(const RefPtr &o) : data(o.data) {
+			if (data)
+				data->ref();
+		}
+
+		// Assign.
+		RefPtr &operator =(const RefPtr &o) {
+			if (o.data)
+				o.data->ref();
+
+			if (data)
+				data->unref();
+			data = o.data;
+
+			return *this;
+		}
+
+#ifdef USE_MOVE
+		RefPtr(RefPtr &&o) : data(o.data) {
+			o.data = null;
+		}
+
+		RefPtr &operator =(RefPtr &&o) {
+			std::swap(data, o.data);
+			return *this;
+		}
+#endif
+
+		// Access the data.
+		T &operator *() const {
+			return *data;
+		}
+		T *operator ->() const {
+			return data;
+		}
+
+		operator bool() const {
+			return data != null;
+		}
+
+	private:
+		T *data;
+	};
+
+
+	/**
 	 * Data for an SSL context. Internal to the Context, but convenient to have outside the class
 	 * declaration.
 	 */
@@ -100,6 +161,16 @@ namespace ssl {
 
 		// Extract some sensible string data.
 		virtual void output(StrBuf *to) = 0;
+	};
+
+
+	/**
+	 * Some representation of a certificate key.
+	 */
+	class SSLCertKey : public RefCount {
+	public:
+		// Check so that the key is valid for a particular certificate.
+		virtual bool validate(Engine &e, SSLCert *cert) = 0;
 	};
 
 }

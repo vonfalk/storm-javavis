@@ -23,7 +23,7 @@ namespace ssl {
 		static ClientContext *STORM_FN systemDefault(EnginePtr e);
 
 		// Create a client context that will only trust a particular certificate. By default, we
-		// still verify the hostname of the certificate.
+		// don't verify the hostname of the certificate.
 		static ClientContext *STORM_FN pinnedTo(Certificate *certificate);
 
 		// Verify the hostname?

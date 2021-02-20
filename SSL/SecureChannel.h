@@ -21,6 +21,7 @@ namespace ssl {
 	class SChannelData;
 	class ClientContext;
 	class ServerContext;
+	class CertificateKey;
 
 	/**
 	 * Various types we use on Windows.
@@ -37,20 +38,23 @@ namespace ssl {
 		CredHandle credentials;
 
 		// SSL Certificate to use, if any.
-		WinSSLCert *certificate;
+		RefPtr<WinSSLCert> certificate;
 
 		// Create for a client context.
 		static SChannelContext *createClient(ClientContext *context);
 
 		// Create for a server context.
-		static SChannelContext *createServer(ServerContext *context);
+		static SChannelContext *createServer(ServerContext *context, CertificateKey *key);
 
 		// Create a session for this context.
 		virtual SSLSession *createSession();
 
 	private:
 		// Create.
-		SChannelContext(CredHandle handle);
+		SChannelContext(CredHandle handle, bool isServer);
+
+		// Server- or client context?
+		bool isServer;
 	};
 
 
@@ -65,7 +69,6 @@ namespace ssl {
 		virtual ~SChannelSession();
 
 		// Implementation of the generic interface.
-		virtual void *connect(IStream *input, OStream *output, Str *host);
 		virtual Bool more(void *gcData);
 		virtual void read(Buffer &to, void *gcData);
 		virtual void peek(Buffer &to, void *gcData);
@@ -74,7 +77,7 @@ namespace ssl {
 		virtual void shutdown(void *gcData);
 		virtual void close(void *gcData);
 
-	private:
+	protected:
 		// Owning data, so we don't free it too early.
 		SChannelContext *data;
 
@@ -97,6 +100,10 @@ namespace ssl {
 		// Returns 0 if we're done, <0 if we need to send a message to the server, and >0 if we need
 		// to get more data. Note: remaining size is just a guess.
 		int initSession(Engine &e, Buffer &input, Buffer &output, const wchar *host);
+
+		// Accept a session. Works much the same as "initSession", but does not expect "input" to be
+		// empty initially.
+		int acceptSession(Engine &e, Buffer &input, Buffer &output);
 
 		// Encrypt a message using this session.
 		void encrypt(Engine &e, const Buffer &input, Nat inputOffset, Nat inputLength, Buffer &output);
@@ -131,6 +138,28 @@ namespace ssl {
 		void checkCertificate(Engine &e);
 	};
 
+
+	/**
+	 * Client session.
+	 */
+	class SChannelClientSession : public SChannelSession {
+	public:
+		SChannelClientSession(SChannelContext *data);
+
+		// Client-side connect.
+		virtual void *connect(IStream *input, OStream *output, Str *host);
+	};
+
+	/**
+	 * Server session.
+	 */
+	class SChannelServerSession : public SChannelSession {
+	public:
+		SChannelServerSession(SChannelContext *data);
+
+		// Client-side connect.
+		virtual void *connect(IStream *input, OStream *output, Str *host);
+	};
 }
 
 #endif

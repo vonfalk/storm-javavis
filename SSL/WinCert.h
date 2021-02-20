@@ -33,6 +33,29 @@ namespace ssl {
 		WinSSLCert(const CERT_CONTEXT *data);
 	};
 
+
+	/**
+	 * Certificate key implementation on Windows.
+	 */
+	class WinSSLCertKey : public SSLCertKey {
+	public:
+		~WinSSLCertKey();
+
+		// Load from PEM file.
+		static WinSSLCertKey *fromPEM(Str *data);
+
+		// The actual data.
+		HCRYPTPROV provider;
+		HCRYPTKEY key;
+
+		// Functions.
+		bool validate(Engine &e, SSLCert *cert) override;
+
+	private:
+		// Create.
+		WinSSLCertKey(HCRYPTPROV provider, HCRYPTKEY key);
+	};
+
 }
 
 #endif

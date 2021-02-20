@@ -11,16 +11,22 @@
 
 namespace ssl {
 
+	static std::vector<BYTE> decodeBase64(Str *data) {
+		DWORD size = 0;
+		if (!CryptStringToBinaryW(data->c_str(), NULL, CRYPT_STRING_BASE64_ANY, NULL, &size, NULL, NULL))
+			throwError(data->engine(), S("Failed to decode PEM data: "), GetLastError());
+
+		std::vector<BYTE> result(size, 0);
+		if (!CryptStringToBinaryW(data->c_str(), NULL, CRYPT_STRING_BASE64_ANY, &result[0], &size, NULL, NULL))
+			throwError(data->engine(), S("Failed to decode PEM data: "), GetLastError());
+
+		return result;
+	}
+
 	WinSSLCert *WinSSLCert::fromPEM(Str *data) {
-		DWORD rawSize = 0;
-		if (!CryptStringToBinaryW(data->c_str(), NULL, CRYPT_STRING_BASE64_ANY, NULL, &rawSize, NULL, NULL))
-			throwError(data->engine(), S("Failed to decode PEM data: "), GetLastError());
+		std::vector<BYTE> raw(decodeBase64(data));
 
-		std::vector<BYTE> raw(rawSize, 0);
-		if (!CryptStringToBinaryW(data->c_str(), NULL, CRYPT_STRING_BASE64_ANY, &raw[0], &rawSize, NULL, NULL))
-			throwError(data->engine(), S("Failed to decode PEM data: "), GetLastError());
-
-		const CERT_CONTEXT *c = CertCreateCertificateContext(X509_ASN_ENCODING | PKCS_7_ASN_ENCODING, &raw[0], rawSize);
+		const CERT_CONTEXT *c = CertCreateCertificateContext(X509_ASN_ENCODING | PKCS_7_ASN_ENCODING, &raw[0], raw.size());
 		if (!c)
 			throwError(data->engine(), S("Failed to decode certificate data: "), GetLastError());
 
@@ -54,6 +60,49 @@ namespace ssl {
 		CERT_INFO *info = data->pCertInfo;
 		*to << S("Subject: ") << decodeName(to->engine(), info->Subject, CERT_X500_NAME_STR)->v;
 		*to << S(", issuer: ") << decodeName(to->engine(), info->Issuer, CERT_X500_NAME_STR)->v;
+	}
+
+
+	WinSSLCertKey *WinSSLCertKey::fromPEM(Str *data) {
+		std::vector<BYTE> raw(decodeBase64(data));
+		std::vector<BYTE> decoded;
+
+		{
+			DWORD size = 0;
+			if (!CryptDecodeObjectEx(X509_ASN_ENCODING | PKCS_7_ASN_ENCODING, PKCS_RSA_PRIVATE_KEY,
+										&raw[0], raw.size(), 0, NULL, NULL, &size))
+				throwError(data->engine(), S("Failed to decode the key: "), GetLastError());
+
+			decoded = std::vector<BYTE>(size, 0);
+			if (!CryptDecodeObjectEx(X509_ASN_ENCODING | PKCS_7_ASN_ENCODING, PKCS_RSA_PRIVATE_KEY,
+										&raw[0], raw.size(), 0, NULL, &decoded[0], &size))
+				throwError(data->engine(), S("Failed to decode the key: "), GetLastError());
+		}
+
+		HCRYPTPROV provider = 0;
+		if (!CryptAcquireContext(&provider, NULL, MS_DEF_RSA_SCHANNEL_PROV, PROV_RSA_SCHANNEL, CRYPT_VERIFYCONTEXT))
+			throwError(data->engine(), S("Failed to acquire a cryptographic provider: "), GetLastError());
+
+		HCRYPTKEY key = 0;
+		if (!CryptImportKey(provider, &decoded[0], decoded.size(), NULL, 0, &key)) {
+			CryptReleaseContext(provider, 0);
+			throwError(data->engine(), S("Failed to import the key: "), GetLastError());
+		}
+
+		return new WinSSLCertKey(provider, key);
+	}
+
+	WinSSLCertKey::WinSSLCertKey(HCRYPTPROV provider, HCRYPTKEY key) : provider(provider), key(key) {}
+
+	WinSSLCertKey::~WinSSLCertKey() {
+		CryptDestroyKey(key);
+		CryptReleaseContext(provider, 0);
+	}
+
+	bool WinSSLCertKey::validate(Engine &e, SSLCert *cert) {
+		RefPtr<WinSSLCert> c = cert->windows();
+		TODO(L"FIXME!");
+		return true;
 	}
 
 
