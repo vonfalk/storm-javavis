@@ -227,6 +227,9 @@ namespace storm {
 		gc.destroy();
 		libs.unload();
 		threadGroup.join();
+
+		// TODO: Execute the sanity check in the UThreadData destructor now. Otherwise we might do
+		// it at a point where we can not do cout properly.
 	}
 
 	Type *Engine::cppType(Nat id) const {

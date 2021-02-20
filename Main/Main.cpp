@@ -263,7 +263,8 @@ int stormMain(int argc, const wchar_t *argv[]) {
 		}
 	} catch (const storm::Exception *e) {
 		wcerr << e << endl;
-		return 1;
+		result = 1;
+		// Fall-thru to wait for UThreads.
 	} catch (const ::Exception &e) {
 		// Sometimes, we need to print the exception before the engine is destroyed.
 		wcerr << e << endl;
@@ -274,6 +275,7 @@ int stormMain(int argc, const wchar_t *argv[]) {
 	Moment waitStart;
 	while (os::UThread::leave() && Moment() - waitStart > time::s(1))
 		;
+
 	return result;
 }
 
