@@ -96,7 +96,7 @@ namespace sql {
 		if (error) {
 			Str *msg = error;
 			error = null;
-			throw new (this) SQLError(error);
+			throw new (this) SQLError(msg);
 		}
 
 		// No result, don't do anything.
@@ -114,10 +114,10 @@ namespace sql {
 				row->push(Variant(new (this)Str((wchar *)sqlite3_column_text16(stmt, i)), e));
 				break;
 			case SQLITE_INTEGER:
-				row->push(Variant(sqlite3_column_int64(stmt,i), e));
+				row->push(Variant(Long(sqlite3_column_int64(stmt, i)), e));
 				break;
 			case SQLITE_FLOAT:
-				row->push(Variant(sqlite3_column_double(stmt,i), e));
+				row->push(Variant(sqlite3_column_double(stmt, i), e));
 				break;
 			case SQLITE_NULL:
 				row->push(Variant());
