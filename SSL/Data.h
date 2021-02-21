@@ -94,6 +94,9 @@ namespace ssl {
 		T *operator ->() const {
 			return data;
 		}
+		T *get() const {
+			return data;
+		}
 
 		operator bool() const {
 			return data != null;

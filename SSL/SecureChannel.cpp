@@ -89,55 +89,42 @@ namespace ssl {
 		// store".  The root store is used to verify clients.
 		RefPtr<WinSSLCertKey> certKey = key->get()->windows();
 		RefPtr<WinSSLCert> cert = key->certificate()->get()->windows();
-		PCCERT_CONTEXT certificate = cert->data;
-		// TODO: We need to copy "certificate", but CertDuplicateCertificateContext does not make a copy, it only ups the refcount.
 
-		// TODO: We want to do this properly when we know that it works:
-		HCRYPTPROV provider;
-		if (!CryptAcquireContext(&provider, S("TEMPKEY"), MS_ENHANCED_PROV, PROV_RSA_FULL, CRYPT_NEWKEYSET))
-			PLN(L"Failed to acquire a context.");
+		// We (sadly) need to make a copy of the certificate since we will attach it with a
+		// key. That modifies the representation, and thus we might run into concurrency issues.
+		// I have no idea where the linking is actually stored, as CERT_CONTEXT is always const
+		// and seemingly lacks a location for this data to be stored.
+		cert = cert->copy();
 
-		HCRYPTKEY hKey = 0;
-		if (!CryptImportKey(provider, &certKey->data[0], certKey->data.size(), NULL, 0, &hKey))
-			PLN(L"Failed to import the key!");
+		{
+			PCCERT_CONTEXT certificate = cert->data;
 
-		CryptDestroyKey(hKey);
+			// Note: We keep this alive for as little as possible, in case we crash somewhere.
+			WinKeyStore store(certKey.get(), false);
+			store.attach(certificate);
 
-		CRYPT_KEY_PROV_INFO pkInfo = { 0 };
-		pkInfo.pwszContainerName = S("TEMPKEY");
-		pkInfo.pwszProvName = MS_ENHANCED_PROV;
-		pkInfo.dwProvType = PROV_RSA_FULL;
-		pkInfo.dwKeySpec = AT_KEYEXCHANGE;
-		pkInfo.dwFlags = CERT_SET_KEY_PROV_HANDLE_PROP_ID; // Does not really matter...
+			SCHANNEL_CRED data = {
+				SCHANNEL_CRED_VERSION,
+				1, // Number of private keys
+				&certificate, // Array of private keys
+				NULL, // Root store
+				0, // Reserved
+				0, // Reserved
+				0, // Number of algorithms to use (0 = system default)
+				NULL, // Algorithms to use (0 = system default)
+				0, // Protocols (we should set it to zero to let the system decide). This is where we specify TLS version.
+				0, // Cipher strenght. 0 = system default
+				0, // Session lifespan. 0 = default (10 hours)
+				0, // Various flags.
+				0, // Kernel format. Should be zero.
+			};
 
-		CertSetCertificateContextProperty(certificate, CERT_KEY_PROV_INFO_PROP_ID, 0, &pkInfo);
+			// TODO: Add flags.
 
-		SCHANNEL_CRED data = {
-			SCHANNEL_CRED_VERSION,
-			1, // Number of private keys
-			&certificate, // Array of private keys
-			NULL, // Root store
-			0, // Reserved
-			0, // Reserved
-			0, // Number of algorithms to use (0 = system default)
-			NULL, // Algorithms to use (0 = system default)
-			0, // Protocols (we should set it to zero to let the system decide). This is where we specify TLS version.
-			0, // Cipher strenght. 0 = system default
-			0, // Session lifespan. 0 = default (10 hours)
-			0, // Various flags.
-			0, // Kernel format. Should be zero.
-		};
-
-		// TODO: Add flags.
-
-		status = AcquireCredentialsHandle(NULL, SCHANNEL_NAME, SECPKG_CRED_INBOUND,
-										NULL, &data, NULL, NULL,
-										&credentials, NULL);
-
-		// At this point, we want to free the handle.
-		CryptReleaseContext(provider, 0);
-		if (!CryptAcquireContext(&provider, S("TEMPKEY"), MS_ENHANCED_PROV, PROV_RSA_FULL, CRYPT_DELETEKEYSET))
-			PLN(L"Failed to delete the context: " << GetLastError());
+			status = AcquireCredentialsHandle(NULL, SCHANNEL_NAME, SECPKG_CRED_INBOUND,
+											NULL, &data, NULL, NULL,
+											&credentials, NULL);
+		}
 
 		if (status == SEC_E_SECPKG_NOT_FOUND)
 			throw new (runtime::someEngine()) SSLError(S("Failed to find the SChannel security package."));
@@ -679,7 +666,6 @@ namespace ssl {
 
 		while (true) {
 			int result = initSession(e, inBuffer, outBuffer, host->c_str());
-			PLN(L"Init session returned " << result);
 
 			// Send to server and receive more.
 			if (outBuffer.filled() > 0) {
@@ -700,8 +686,6 @@ namespace ssl {
 			if (inBuffer.filled() == 0 && !data->src->more())
 				throw new (e) SSLError(S("Failed to authenticate to the server: End of stream."));
 		}
-
-		PLN(L"Now we are done!");
 
 		// From here on, we can use EncryptMessage and DecryptMessage.
 		// We must use cbMaximumMessage from QueryContextAttributes to find max message size.
@@ -740,7 +724,6 @@ namespace ssl {
 
 			// Try to accept the connection...
 			int result = acceptSession(e, inBuffer, outBuffer);
-			PLN(L"Accept session returned: " << result);
 
 			// Should we send something?
 			if (outBuffer.filled() > 0) {
