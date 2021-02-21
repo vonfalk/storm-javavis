@@ -96,9 +96,10 @@ namespace ssl {
 
 		// Initialize a session. Reads data from "input" (empty at first), and writes to
 		// "output". The function clears the part of "input" that was consumed, and may leave parts
-		// of it there. "output" is to be sent to the remote peer.
-		// Returns 0 if we're done, <0 if we need to send a message to the server, and >0 if we need
+		// of it there. "output" is to be sent to the remote peer if it contains more than zero bytes.
+		// Returns 0 if we're done, <0 if we need to continue, and >0 if we need
 		// to get more data. Note: remaining size is just a guess.
+		// Note that "output" might need to be sent even if we are done.
 		int initSession(Engine &e, Buffer &input, Buffer &output, const wchar *host);
 
 		// Accept a session. Works much the same as "initSession", but does not expect "input" to be

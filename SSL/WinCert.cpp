@@ -65,44 +65,41 @@ namespace ssl {
 
 	WinSSLCertKey *WinSSLCertKey::fromPEM(Str *data) {
 		std::vector<BYTE> raw(decodeBase64(data));
-		std::vector<BYTE> decoded;
 
-		{
-			DWORD size = 0;
-			if (!CryptDecodeObjectEx(X509_ASN_ENCODING | PKCS_7_ASN_ENCODING, PKCS_RSA_PRIVATE_KEY,
-										&raw[0], raw.size(), 0, NULL, NULL, &size))
-				throwError(data->engine(), S("Failed to decode the key: "), GetLastError());
+		DWORD size = 0;
+		if (!CryptDecodeObjectEx(X509_ASN_ENCODING | PKCS_7_ASN_ENCODING, PKCS_RSA_PRIVATE_KEY,
+									&raw[0], raw.size(), 0, NULL, NULL, &size))
+			throwError(data->engine(), S("Failed to decode the key: "), GetLastError());
 
-			decoded = std::vector<BYTE>(size, 0);
-			if (!CryptDecodeObjectEx(X509_ASN_ENCODING | PKCS_7_ASN_ENCODING, PKCS_RSA_PRIVATE_KEY,
-										&raw[0], raw.size(), 0, NULL, &decoded[0], &size))
-				throwError(data->engine(), S("Failed to decode the key: "), GetLastError());
-		}
+		std::vector<BYTE> decoded(size, 0);
+		if (!CryptDecodeObjectEx(X509_ASN_ENCODING | PKCS_7_ASN_ENCODING, PKCS_RSA_PRIVATE_KEY,
+									&raw[0], raw.size(), 0, NULL, &decoded[0], &size))
+			throwError(data->engine(), S("Failed to decode the key: "), GetLastError());
 
-		HCRYPTPROV provider = 0;
-		if (!CryptAcquireContext(&provider, NULL, MS_DEF_RSA_SCHANNEL_PROV, PROV_RSA_SCHANNEL, CRYPT_VERIFYCONTEXT))
-			throwError(data->engine(), S("Failed to acquire a cryptographic provider: "), GetLastError());
-
-		HCRYPTKEY key = 0;
-		if (!CryptImportKey(provider, &decoded[0], decoded.size(), NULL, 0, &key)) {
-			CryptReleaseContext(provider, 0);
-			throwError(data->engine(), S("Failed to import the key: "), GetLastError());
-		}
-
-		return new WinSSLCertKey(provider, key);
+		return new WinSSLCertKey(decoded);
 	}
 
-	WinSSLCertKey::WinSSLCertKey(HCRYPTPROV provider, HCRYPTKEY key) : provider(provider), key(key) {}
+	WinSSLCertKey::WinSSLCertKey(const std::vector<byte> &data) : data(data) {}
 
-	WinSSLCertKey::~WinSSLCertKey() {
-		CryptDestroyKey(key);
-		CryptReleaseContext(provider, 0);
-	}
+	WinSSLCertKey::~WinSSLCertKey() {}
 
 	bool WinSSLCertKey::validate(Engine &e, SSLCert *cert) {
 		RefPtr<WinSSLCert> c = cert->windows();
-		TODO(L"FIXME!");
+
+		// Try to import it into a temporary store and associate it with the certificate?
+		TODO(L"Implement early validation");
+
 		return true;
+	}
+
+	WinSSLCertKey *WinSSLCertKey::windows() {
+		ref();
+		return this;
+	}
+
+	OpenSSLCertKey *WinSSLCertKey::openSSL() {
+		// This is probably fairly easy to do, but useless since we can not do it for certificates at the moment.
+		throw new (runtime::someEngine()) SSLError(S("OpenSSL is not supported on Windows."));
 	}
 
 

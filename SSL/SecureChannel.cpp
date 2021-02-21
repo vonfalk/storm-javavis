@@ -87,11 +87,35 @@ namespace ssl {
 
 		// According to the documentation, keys should be in "array of private keys", not "root
 		// store".  The root store is used to verify clients.
+		RefPtr<WinSSLCertKey> certKey = key->get()->windows();
+		RefPtr<WinSSLCert> cert = key->certificate()->get()->windows();
+		PCCERT_CONTEXT certificate = cert->data;
+		// TODO: We need to copy "certificate", but CertDuplicateCertificateContext does not make a copy, it only ups the refcount.
+
+		// TODO: We want to do this properly when we know that it works:
+		HCRYPTPROV provider;
+		if (!CryptAcquireContext(&provider, S("TEMPKEY"), MS_ENHANCED_PROV, PROV_RSA_FULL, CRYPT_NEWKEYSET))
+			PLN(L"Failed to acquire a context.");
+
+		HCRYPTKEY hKey = 0;
+		if (!CryptImportKey(provider, &certKey->data[0], certKey->data.size(), NULL, 0, &hKey))
+			PLN(L"Failed to import the key!");
+
+		CryptDestroyKey(hKey);
+
+		CRYPT_KEY_PROV_INFO pkInfo = { 0 };
+		pkInfo.pwszContainerName = S("TEMPKEY");
+		pkInfo.pwszProvName = MS_ENHANCED_PROV;
+		pkInfo.dwProvType = PROV_RSA_FULL;
+		pkInfo.dwKeySpec = AT_KEYEXCHANGE;
+		pkInfo.dwFlags = CERT_SET_KEY_PROV_HANDLE_PROP_ID; // Does not really matter...
+
+		CertSetCertificateContextProperty(certificate, CERT_KEY_PROV_INFO_PROP_ID, 0, &pkInfo);
 
 		SCHANNEL_CRED data = {
 			SCHANNEL_CRED_VERSION,
-			0, // Number of private keys
-			NULL, // Array of private keys
+			1, // Number of private keys
+			&certificate, // Array of private keys
 			NULL, // Root store
 			0, // Reserved
 			0, // Reserved
@@ -109,6 +133,11 @@ namespace ssl {
 		status = AcquireCredentialsHandle(NULL, SCHANNEL_NAME, SECPKG_CRED_INBOUND,
 										NULL, &data, NULL, NULL,
 										&credentials, NULL);
+
+		// At this point, we want to free the handle.
+		CryptReleaseContext(provider, 0);
+		if (!CryptAcquireContext(&provider, S("TEMPKEY"), MS_ENHANCED_PROV, PROV_RSA_FULL, CRYPT_DELETEKEYSET))
+			PLN(L"Failed to delete the context: " << GetLastError());
 
 		if (status == SEC_E_SECPKG_NOT_FOUND)
 			throw new (runtime::someEngine()) SSLError(S("Failed to find the SChannel security package."));
@@ -198,17 +227,21 @@ namespace ssl {
 			inBuffer.filled(0);
 		}
 
-		int result = 0;
-		bool error = false;
-		if (status == SEC_I_CONTINUE_NEEDED) {
-			// Send to server!
+		// Did we get a token to send to the remote peer?
+		if (outBuffers[0].BufferType == SECBUFFER_TOKEN) {
 			SecBuffer b = output.pBuffers[0];
 			if (outBuffer.count() < b.cbBuffer)
 				outBuffer = storm::buffer(e, b.cbBuffer);
 
 			memcpy(outBuffer.dataPtr(), b.pvBuffer, b.cbBuffer);
 			outBuffer.filled(b.cbBuffer);
+		} else {
+			outBuffer.filled(0);
+		}
 
+		int result = 0;
+		bool error = false;
+		if (status == SEC_I_CONTINUE_NEEDED) {
 			// Not done. More messages.
 			result = -1;
 		} else if (status == SEC_E_OK) {
@@ -290,23 +323,25 @@ namespace ssl {
 			inBuffer.filled(0);
 		}
 
-		int result = 0;
-		bool error = false;
-		if (status == SEC_I_CONTINUE_NEEDED) {
-			// Send to server!
+		// Did we get a token to send to the remote peer?
+		if (outBuffers[0].BufferType == SECBUFFER_TOKEN) {
 			SecBuffer b = output.pBuffers[0];
 			if (outBuffer.count() < b.cbBuffer)
 				outBuffer = storm::buffer(e, b.cbBuffer);
 
 			memcpy(outBuffer.dataPtr(), b.pvBuffer, b.cbBuffer);
 			outBuffer.filled(b.cbBuffer);
+		} else {
+			outBuffer.filled(0);
+		}
 
+		int result = 0;
+		bool error = false;
+		if (status == SEC_I_CONTINUE_NEEDED) {
 			// Not done. More messages.
 			result = -1;
 		} else if (status == SEC_E_OK) {
 			// All done, set the maximum size for encryption/decryption.
-			checkCertificate(e);
-
 			initSizes();
 			result = 0;
 		} else if (status == SEC_E_INCOMPLETE_MESSAGE) {
@@ -644,15 +679,16 @@ namespace ssl {
 
 		while (true) {
 			int result = initSession(e, inBuffer, outBuffer, host->c_str());
+			PLN(L"Init session returned " << result);
+
+			// Send to server and receive more.
+			if (outBuffer.filled() > 0) {
+				data->dst->write(outBuffer);
+				data->dst->flush();
+			}
 
 			if (result == 0) {
 				break;
-			} else if (result < 0) {
-				// Send to server and receive more.
-				if (outBuffer.filled() > 0) {
-					data->dst->write(outBuffer);
-					data->dst->flush();
-				}
 			}
 
 			// Read more data.
@@ -664,6 +700,8 @@ namespace ssl {
 			if (inBuffer.filled() == 0 && !data->src->more())
 				throw new (e) SSLError(S("Failed to authenticate to the server: End of stream."));
 		}
+
+		PLN(L"Now we are done!");
 
 		// From here on, we can use EncryptMessage and DecryptMessage.
 		// We must use cbMaximumMessage from QueryContextAttributes to find max message size.
@@ -702,16 +740,17 @@ namespace ssl {
 
 			// Try to accept the connection...
 			int result = acceptSession(e, inBuffer, outBuffer);
+			PLN(L"Accept session returned: " << result);
+
+			// Should we send something?
+			if (outBuffer.filled() > 0) {
+				data->dst->write(outBuffer);
+				data->dst->flush();
+			}
 
 			// Send messages back if we're not done.
 			if (result == 0) {
 				break;
-			} else if (result < 0) {
-				// Send to server and receive more.
-				if (outBuffer.filled() > 0) {
-					data->dst->write(outBuffer);
-					data->dst->flush();
-				}
 			}
 
 			// Adjust buffer size if necessary.

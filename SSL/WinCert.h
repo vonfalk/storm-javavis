@@ -44,16 +44,17 @@ namespace ssl {
 		// Load from PEM file.
 		static WinSSLCertKey *fromPEM(Str *data);
 
-		// The actual data.
-		HCRYPTPROV provider;
-		HCRYPTKEY key;
+		// The actual data. Decoded and ready to be imported.
+		std::vector<byte> data;
 
 		// Functions.
 		bool validate(Engine &e, SSLCert *cert) override;
+		WinSSLCertKey *windows() override;
+		OpenSSLCertKey *openSSL() override;
 
 	private:
 		// Create.
-		WinSSLCertKey(HCRYPTPROV provider, HCRYPTKEY key);
+		WinSSLCertKey(const std::vector<byte> &data);
 	};
 
 }

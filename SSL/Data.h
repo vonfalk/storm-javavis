@@ -11,7 +11,9 @@ namespace ssl {
 
 	class SSLSession;
 	class WinSSLCert;
+	class WinSSLCertKey;
 	class OpenSSLCert;
+	class OpenSSLCertKey;
 
 	/**
 	 * Generic refcount class.
@@ -171,6 +173,12 @@ namespace ssl {
 	public:
 		// Check so that the key is valid for a particular certificate.
 		virtual bool validate(Engine &e, SSLCert *cert) = 0;
+
+		// Get a windows version of the data.
+		virtual WinSSLCertKey *windows() = 0;
+
+		// Get the OpenSSL version of the data.
+		virtual OpenSSLCertKey *openSSL() = 0;
 	};
 
 }
