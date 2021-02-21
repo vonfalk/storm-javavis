@@ -13,6 +13,8 @@
 #include <openssl/err.h>
 #include <openssl/opensslv.h>
 #include <openssl/opensslconf.h>
+#include <openssl/x509v3.h>
+
 #ifndef OPENSSL_THREADS
 #error "No thread support in OpenSSL!"
 #endif
@@ -468,12 +470,20 @@ namespace ssl {
 
 		SSL *ssl = null;
 		BIO_get_ssl(connection, &ssl);
-		SSL_set_tlsext_host_name(ssl, host->utf8_str());
+
+		const char *utf8Host = host->utf8_str();
+
+		if (context->checkHostname) {
+			X509_VERIFY_PARAM *param = SSL_get0_param(ssl);
+			X509_VERIFY_PARAM_set_hostflags(param, X509_CHECK_FLAG_NO_PARTIAL_WILDCARDS);
+			X509_VERIFY_PARAM_set1_host(param, utf8Host, 0);
+		}
+
+		SSL_set_tlsext_host_name(ssl, utf8Host);
 		checkError();
 
 		// Do the handshake!
 		if (BIO_do_handshake(connection) != 1) {
-			PLN(L"After handshake!");
 			checkError();
 		}
 
@@ -486,10 +496,6 @@ namespace ssl {
 		if (certOk != X509_V_OK) {
 			// TODO: We might want to get more descriptive errors here.
 			throw new (input) SSLError(TO_S(input, S("Failed to verify the remote peer: ") << certError(certOk)));
-		}
-
-		if (context->checkHostname) {
-			TODO(L"We need to verify the hostname!");
 		}
 
 		return data;
