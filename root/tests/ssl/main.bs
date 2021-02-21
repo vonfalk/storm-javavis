@@ -47,18 +47,22 @@ void server(Certificate cert) {
 }
 
 void connect(Certificate cert, IStream input, OStream output) {
-	var session = ClientContext:pinnedTo(cert).connect(input, output, "localhost");
+	try {
+		var session = ClientContext:pinnedTo(cert).connect(input, output, "localhost");
 
-	print("Got a session in the client!");
+		print("Got a session in the client!");
 
-	var out = Utf8Output(session.output);
-	out.write("Hello!");
-	out.flush();
+		var out = Utf8Output(session.output);
+		out.write("Hello!");
+		out.flush();
 
-	print("Sent data!");
+		print("Sent data!");
 
-	// Shut down so that the other end does not have to wait.
-	session.close();
+		// Shut down so that the other end does not have to wait.
+		session.close();
+	} catch (Exception e) {
+		print("Error in the client: ${e}");
+	}
 }
 
 void client() {

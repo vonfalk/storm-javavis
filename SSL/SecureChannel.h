@@ -74,7 +74,6 @@ namespace ssl {
 		virtual void peek(Buffer &to, void *gcData);
 		virtual void write(const Buffer &from, Nat start, void *gcData);
 		virtual void flush(void *gcData);
-		virtual void shutdown(void *gcData);
 		virtual void close(void *gcData);
 
 	protected:
@@ -149,6 +148,9 @@ namespace ssl {
 
 		// Client-side connect.
 		virtual void *connect(IStream *input, OStream *output, Str *host);
+
+		// Shutdown.
+		virtual void shutdown(void *gcData);
 	};
 
 	/**
@@ -160,6 +162,9 @@ namespace ssl {
 
 		// Client-side connect.
 		virtual void *connect(IStream *input, OStream *output, Str *host);
+
+		// Shutdown.
+		virtual void shutdown(void *gcData);
 	};
 }
 

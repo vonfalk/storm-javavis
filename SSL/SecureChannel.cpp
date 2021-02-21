@@ -564,19 +564,6 @@ namespace ssl {
 		data->dst->flush();
 	}
 
-	void SChannelSession::shutdown(void *gcData) {
-		SChannelData *data = (SChannelData *)gcData;
-		os::Lock::L z(lock);
-
-		if (data->outgoingEnd)
-			return;
-
-		Buffer msg = shutdown(data->engine());
-		data->dst->write(msg);
-
-		data->outgoingEnd = true;
-	}
-
 	void SChannelSession::close(void *gcData) {
 		SChannelData *data = (SChannelData *)gcData;
 		os::Lock::L z(lock);
@@ -698,6 +685,18 @@ namespace ssl {
 		return data;
 	}
 
+	void SChannelClientSession::shutdown(void *gcData) {
+		SChannelData *data = (SChannelData *)gcData;
+		os::Lock::L z(lock);
+
+		if (data->outgoingEnd)
+			return;
+
+		Buffer msg = SChannelSession::shutdown(data->engine());
+		data->dst->write(msg);
+
+		data->outgoingEnd = true;
+	}
 
 	/**
 	 * Server-specific parts:
@@ -751,6 +750,18 @@ namespace ssl {
 		data->incoming = storm::buffer(e, data->bufferSizes);
 
 		return data;
+	}
+
+	void SChannelServerSession::shutdown(void *gcData) {
+		SChannelData *data = (SChannelData *)gcData;
+		os::Lock::L z(lock);
+
+		if (data->outgoingEnd)
+			return;
+
+		// TODO!
+
+		data->outgoingEnd = true;
 	}
 }
 
