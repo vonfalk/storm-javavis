@@ -90,6 +90,10 @@ namespace ssl {
 		RefPtr<WinSSLCertKey> certKey = key->get()->windows();
 		RefPtr<WinSSLCert> cert = key->certificate()->get()->windows();
 
+		DWORD flags = 0;
+		if (context->strongCiphers())
+			flags |= SCH_USE_STRONG_CRYPTO;
+
 		// We (sadly) need to make a copy of the certificate since we will attach it with a
 		// key. That modifies the representation, and thus we might run into concurrency issues.
 		// I have no idea where the linking is actually stored, as CERT_CONTEXT is always const
@@ -115,7 +119,7 @@ namespace ssl {
 				0, // Protocols (we should set it to zero to let the system decide). This is where we specify TLS version.
 				0, // Cipher strenght. 0 = system default
 				0, // Session lifespan. 0 = default (10 hours)
-				0, // Various flags.
+				flags, // Various flags.
 				0, // Kernel format. Should be zero.
 			};
 

@@ -1,0 +1,10 @@
+SSL library
+-----------
+
+Supports both outgoing and incoming connections. Uses OpenSSL on UNIX systems, and the Windows
+SChannel implementation on Windows.
+
+Known limitations:
+- Password protected certificate keys are not supported
+- It is not possible to send a certificate chain from the server
+- It is not possible to start a server on a guest account on the current Windows implementation

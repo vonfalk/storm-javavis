@@ -49,6 +49,9 @@ namespace ssl {
 	template <class T>
 	class RefPtr {
 	public:
+		// Create for null.
+		RefPtr() : data(null) {}
+
 		// Create. Takes ownership.
 		RefPtr(T *p) : data(p) {}
 
@@ -174,8 +177,8 @@ namespace ssl {
 	 */
 	class SSLCertKey : public RefCount {
 	public:
-		// Check so that the key is valid for a particular certificate.
-		virtual bool validate(Engine &e, SSLCert *cert) = 0;
+		// Check so that the key is valid for a particular certificate. Returns an error message on error, or null.
+		virtual const wchar *validate(SSLCert *cert) = 0;
 
 		// Get a windows version of the data.
 		virtual WinSSLCertKey *windows() = 0;

@@ -1,6 +1,7 @@
 #include "stdafx.h"
 #include "ServerContext.h"
 #include "SecureChannel.h"
+#include "OpenSSL.h"
 
 namespace ssl {
 
@@ -24,7 +25,8 @@ namespace ssl {
 
 	void ServerContext::toS(StrBuf *to) const {
 		*to << S("Server context:\n");
-		*to << S("Certificate: ") << key;
+		*to << S("Certificate: ") << key << S("\n");
+		*to << S("Only strong ciphers: ") << (strongCiphers() ? S("yes") : S("no"));
 	}
 
 }

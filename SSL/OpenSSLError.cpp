@@ -3,9 +3,34 @@
 
 #ifdef POSIX
 
+#include "Exception.h"
+#include "Core/Convert.h"
 #include <openssl/x509.h>
+#include <openssl/err.h>
 
 namespace ssl {
+
+	void checkError() {
+		unsigned long error = ERR_get_error();
+		if (error) {
+			Engine &e = runtime::someEngine();
+			char buffer[256]; // Is enough according to the docs.
+			ERR_error_string(error, buffer);
+
+			const wchar *desc = toWChar(e, buffer, 256)->v;
+			throw new (e) SSLError(TO_S(e, S("Error from OpenSSL: ") << desc));
+		}
+	}
+
+	void throwError() {
+		unsigned long error = ERR_get_error();
+		Engine &e = runtime::someEngine();
+		char buffer[256]; // Is enough according to the docs.
+		ERR_error_string(error, buffer);
+
+		const wchar *desc = toWChar(e, buffer, 256)->v;
+		throw new (e) SSLError(TO_S(e, S("Error from OpenSSL: ") << desc));
+	}
 
 	const wchar *certError(long code) {
 		switch (code) {

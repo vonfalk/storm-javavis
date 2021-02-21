@@ -1,10 +1,13 @@
 #include "stdafx.h"
 #include "OpenSSL.h"
 #include "OpenSSLError.h"
+#include "ClientContext.h"
+#include "ServerContext.h"
 
 #ifdef POSIX
 
 #include "Exception.h"
+#include "OpenSSLCert.h"
 #include "Core/Convert.h"
 
 #include <openssl/err.h>
@@ -18,21 +21,6 @@
 #endif
 
 namespace ssl {
-
-	/**
-	 * Throw a suitable exception on SSL error.
-	 */
-	static void checkError() {
-		unsigned long error = ERR_get_error();
-		if (error) {
-			Engine &e = runtime::someEngine();
-			char buffer[256]; // Is enough according to the docs.
-			ERR_error_string(error, buffer);
-
-			const wchar *desc = toWChar(e, buffer, 256)->v;
-			throw new (e) SSLError(TO_S(e, S("Error from OpenSSL: ") << desc));
-		}
-	}
 
 	/**
 	 * Initialze the library properly.
@@ -64,32 +52,81 @@ namespace ssl {
 		return 1;
 	}
 
-	OpenSSLContext *OpenSSLContext::createClient() {
+#define EXCLUDE ":!aNULL:!kRSA:!PSK:!MD5";
+	static const char *defaultCiphers = "DEFAULT" EXCLUDE;
+	static const char *strongCiphers = "HIGH:!RC4" EXCLUDE;
+
+	OpenSSLContext *OpenSSLContext::createClient(ClientContext *context) {
 		init();
 		// Note: This means SSLv3 or TLSv1.x, as available.
-		OpenSSLContext *ctx = new OpenSSLContext(SSL_CTX_new(TLS_client_method()));
+		OpenSSLContext *ctx = new OpenSSLContext(SSL_CTX_new(TLS_client_method()), false);
 
 		SSL_CTX_set_verify(ctx->context, SSL_VERIFY_PEER, verifyCallback);
 		SSL_CTX_set_verify_depth(ctx->context, 10); // Should be enough.
-		// Make configurable.
-		long flags = SSL_OP_NO_SSLv2 | SSL_OP_NO_SSLv3 | SSL_OP_NO_TLSv1;
-		SSL_CTX_set_options(ctx->context, flags);
 
-		// Use default paths for certificates (TODO: make configurable).
-		SSL_CTX_set_default_verify_paths(ctx->context);
+		long options = SSL_OP_NO_SSLv2;
+		if (context->strongCiphers())
+			options |= SSL_OP_NO_SSLv3 | SSL_OP_NO_TLSv1;
+		SSL_CTX_set_options(ctx->context, options);
 
 		// Allowed ciphers. We should probably modify this list a bit...
-		SSL_CTX_set_cipher_list(ctx->context, "HIGH:!aNULL:!kRSA:!PSK:!SRP:!MD5:!RC4");
+		if (context->strongCiphers())
+			SSL_CTX_set_cipher_list(ctx->context, strongCiphers);
+		else
+			SSL_CTX_set_cipher_list(ctx->context, defaultCiphers);
+
+
+		if (Certificate *cert = context->pinnedCertificate()) {
+			// Only trust the supplied certificate:
+			RefPtr<OpenSSLCert> pinned = cert->get()->openSSL();
+
+			X509_STORE *store = X509_STORE_new();
+
+			// Does not take ownership of the cert.
+			X509_STORE_add_cert(store, pinned->data);
+
+			// Takes ownership of "store".
+			SSL_CTX_set0_verify_cert_store(ctx->context, store);
+		} else {
+			// Use default paths for certificates.
+			SSL_CTX_set_default_verify_paths(ctx->context);
+		}
+
+		ctx->checkHostname = context->verifyHostname();
 
 		return ctx;
 	}
 
-	OpenSSLContext *OpenSSLContext::createServer() {
+	OpenSSLContext *OpenSSLContext::createServer(ServerContext *context, CertificateKey *key) {
 		init();
-		return new OpenSSLContext(SSL_CTX_new(TLS_server_method()));
+
+		RefPtr<OpenSSLCert> oCert = key->certificate()->get()->openSSL();
+		RefPtr<OpenSSLCertKey> oKey = key->get()->openSSL();
+
+		OpenSSLContext *ctx = new OpenSSLContext(SSL_CTX_new(TLS_server_method()), true);
+
+		SSL_CTX_set_verify(ctx->context, SSL_VERIFY_NONE, NULL);
+
+		long options = SSL_OP_NO_SSLv2;
+		if (context->strongCiphers())
+			options |= SSL_OP_NO_SSLv3 | SSL_OP_NO_TLSv1;
+		SSL_CTX_set_options(ctx->context, options);
+
+		// Allowed ciphers. We should probably modify this list a bit...
+		if (context->strongCiphers())
+			SSL_CTX_set_cipher_list(ctx->context, strongCiphers);
+		else
+			SSL_CTX_set_cipher_list(ctx->context, defaultCiphers);
+
+		SSL_CTX_use_certificate(ctx->context, oCert->data);
+		SSL_CTX_use_PrivateKey(ctx->context, oKey->data);
+
+		return ctx;
 	}
 
-	OpenSSLContext::OpenSSLContext(SSL_CTX *ctx) : context(ctx) {
+	OpenSSLContext::OpenSSLContext(SSL_CTX *ctx, bool server)
+		: context(ctx), checkHostname(false), isServer(server) {
+
 		if (!ctx)
 			throw new (runtime::someEngine()) SSLError(S("Failed to create OpenSSL context."));
 	}
@@ -99,7 +136,10 @@ namespace ssl {
 	}
 
 	SSLSession *OpenSSLContext::createSession() {
-		return new OpenSSLSession(this);
+		if (isServer)
+			return new OpenSSLServerSession(this);
+		else
+			return new OpenSSLClientSession(this);
 	}
 
 	/**
@@ -289,43 +329,6 @@ namespace ssl {
 		context->unref();
 	}
 
-	void *OpenSSLSession::connect(IStream *input, OStream *output, Str *host) {
-		BIO_data *data = allocData(input, output);
-		BIO *io = BIO_new_storm(data);
-		BIO *sslBio = BIO_new_ssl(context->context, 1); // 1 means "client".
-		// According to what OpenSSL is doing, we don't need to free "io" manually. The docs are a
-		// bit unclear about that though (at least the "BIO_push" manpage).
-		connection = BIO_push(sslBio, io);
-
-		SSL *ssl = null;
-		BIO_get_ssl(connection, &ssl);
-		SSL_set_tlsext_host_name(ssl, host->utf8_str());
-		checkError();
-
-		// Do the handshake!
-		if (BIO_do_handshake(connection) != 1) {
-			checkError();
-		}
-
-		X509 *cert = SSL_get_peer_certificate(ssl);
-		if (cert) {
-			X509_free(cert);
-		} else {
-			throw new (input) SSLError(S("The remote host did not present a certificate!"));
-		}
-
-		long certOk = SSL_get_verify_result(ssl);
-		if (certOk != X509_V_OK) {
-			// TODO: We might want to get more descriptive errors here.
-			throw new (input) SSLError(TO_S(input, S("Failed to verify the remote peer: ") << certError(certOk)));
-		}
-
-		// TODO: Hostname verification?
-		// Example states that we should do it, but it does not say how.
-
-		return data;
-	}
-
 	Bool OpenSSLSession::more(void *data) {
 		os::Lock::L z(lock);
 		BIO_data *d = (BIO_data *)data;
@@ -444,6 +447,79 @@ namespace ssl {
 		BIO_data *data = (BIO_data *)gcData;
 		data->input->close();
 		data->output->close();
+	}
+
+
+	/**
+	 * Client session.
+	 */
+
+	OpenSSLClientSession::OpenSSLClientSession(OpenSSLContext *c) : OpenSSLSession(c) {}
+
+	void *OpenSSLClientSession::connect(IStream *input, OStream *output, Str *host) {
+		os::Lock::L z(lock);
+
+		BIO_data *data = allocData(input, output);
+		BIO *io = BIO_new_storm(data);
+		BIO *sslBio = BIO_new_ssl(context->context, 1); // 1 means "client".
+		// According to what OpenSSL is doing, we don't need to free "io" manually. The docs are a
+		// bit unclear about that though (at least the "BIO_push" manpage).
+		connection = BIO_push(sslBio, io);
+
+		SSL *ssl = null;
+		BIO_get_ssl(connection, &ssl);
+		SSL_set_tlsext_host_name(ssl, host->utf8_str());
+		checkError();
+
+		// Do the handshake!
+		if (BIO_do_handshake(connection) != 1) {
+			PLN(L"After handshake!");
+			checkError();
+		}
+
+		X509 *cert = SSL_get_peer_certificate(ssl);
+		if (!cert)
+			throw new (input) SSLError(S("The remote host did not present a certificate!"));
+		X509_free(cert);
+
+		long certOk = SSL_get_verify_result(ssl);
+		if (certOk != X509_V_OK) {
+			// TODO: We might want to get more descriptive errors here.
+			throw new (input) SSLError(TO_S(input, S("Failed to verify the remote peer: ") << certError(certOk)));
+		}
+
+		if (context->checkHostname) {
+			TODO(L"We need to verify the hostname!");
+		}
+
+		return data;
+	}
+
+
+	/**
+	 * Server session.
+	 */
+
+	OpenSSLServerSession::OpenSSLServerSession(OpenSSLContext *c) : OpenSSLSession(c) {}
+
+	void *OpenSSLServerSession::connect(IStream *input, OStream *output, Str *host) {
+		os::Lock::L z(lock);
+
+		BIO_data *data = allocData(input, output);
+		BIO *io = BIO_new_storm(data);
+		BIO *sslBio = BIO_new_ssl(context->context, 0); // 0 means "server".
+		// According to what OpenSSL is doing, we don't need to free "io" manually. The docs are a
+		// bit unclear about that though (at least the "BIO_push" manpage).
+		connection = BIO_push(sslBio, io);
+
+		checkError();
+
+		// Do the handshake!
+		if (BIO_do_handshake(connection) != 1) {
+			checkError();
+		}
+
+		return data;
 	}
 
 }

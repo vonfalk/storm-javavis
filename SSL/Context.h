@@ -29,6 +29,10 @@ namespace ssl {
 		// Deep copy.
 		virtual void STORM_FN deepCopy(CloneEnv *env);
 
+		// Only use strong ciphers. Disables cipher suites with known weaknesses, but compatibility may suffer.
+		Bool STORM_FN strongCiphers() const { return onlyStrong; }
+		void STORM_ASSIGN strongCiphers(Bool b);
+
 	protected:
 		// Creates 'data' as needed.
 		SSLContext *data();
@@ -44,6 +48,9 @@ namespace ssl {
 		// objects needed by the backend on demand. This pointer is ref-counted so that it is
 		// constant once we created it. We also share it between copies of this object.
 		SSLContext *created;
+
+		// Only strong ciphers.
+		Bool onlyStrong;
 	};
 
 }

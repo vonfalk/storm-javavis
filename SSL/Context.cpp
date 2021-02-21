@@ -4,9 +4,9 @@
 
 namespace ssl {
 
-	Context::Context() : created(null) {}
+	Context::Context() : created(null), onlyStrong(true) {}
 
-	Context::Context(const Context &o) : created(o.created) {
+	Context::Context(const Context &o) : created(o.created), onlyStrong(o.onlyStrong) {
 		if (created)
 			created->ref();
 	}
@@ -18,6 +18,11 @@ namespace ssl {
 
 	void Context::deepCopy(CloneEnv *) {
 		// No need to deep copy at the moment. We don't modify objects once they are in here.
+	}
+
+	void Context::strongCiphers(Bool v) {
+		onlyStrong = v;
+		invalidate();
 	}
 
 	SSLContext *Context::data() {

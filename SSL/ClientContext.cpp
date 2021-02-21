@@ -17,15 +17,10 @@ namespace ssl {
 		return c;
 	}
 
-	ClientContext::ClientContext() : checkHostname(true), onlyStrong(true) {}
+	ClientContext::ClientContext() : checkHostname(true) {}
 
 	void ClientContext::verifyHostname(Bool v) {
 		checkHostname = v;
-		invalidate();
-	}
-
-	void ClientContext::strongCiphers(Bool v) {
-		onlyStrong = v;
 		invalidate();
 	}
 
@@ -47,7 +42,7 @@ namespace ssl {
 		if (pinned)
 			*to << S("Pinned to: ") << pinned << S("\n");
 		*to << S("Verify hostname: ") << (checkHostname ? S("yes\n") : S("no\n"));
-		*to << S("Only strong ciphers: ") << (onlyStrong ? S("yes\n") : S("no\n"));
+		*to << S("Only strong ciphers: ") << (strongCiphers() ? S("yes") : S("no"));
 	}
 
 	SSLContext *ClientContext::createData() {

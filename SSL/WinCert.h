@@ -51,7 +51,7 @@ namespace ssl {
 		std::vector<byte> data;
 
 		// Functions.
-		bool validate(Engine &e, SSLCert *cert) override;
+		const wchar *validate(SSLCert *cert) override;
 		WinSSLCertKey *windows() override;
 		OpenSSLCertKey *openSSL() override;
 

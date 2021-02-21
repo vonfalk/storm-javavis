@@ -1,6 +1,7 @@
 #include "stdafx.h"
 #include "Certificate.h"
 #include "WinCert.h"
+#include "OpenSSLCert.h"
 #include "Exception.h"
 #include "Core/Io/Text.h"
 
@@ -57,10 +58,11 @@ namespace ssl {
 
 
 	CertificateKey::CertificateKey(Certificate *cert, SSLCertKey *data) : cert(cert), data(data) {
-		if (!data->validate(engine(), cert->get())) {
+		const wchar *error = data->validate(cert->get());
+		if (error) {
 			delete data;
 			data = null;
-			throw new (this) SSLError(TO_S(this, S("The key is invalid for ") << cert << S(".")));
+			throw new (this) SSLError(TO_S(this, S("The key is invalid for ") << cert << S(": ") << error));
 		}
 	}
 

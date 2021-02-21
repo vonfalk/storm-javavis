@@ -27,15 +27,11 @@ namespace ssl {
 		static ClientContext *STORM_FN pinnedTo(Certificate *certificate);
 
 		// Verify the hostname?
-		Bool STORM_FN verifyHostname() { return checkHostname; }
+		Bool STORM_FN verifyHostname() const { return checkHostname; }
 		void STORM_ASSIGN verifyHostname(Bool v);
 
-		// Only use strong ciphers. Disables cipher suites with known weaknesses, but compatibility may suffer.
-		Bool STORM_FN strongCiphers() { return onlyStrong; }
-		void STORM_ASSIGN strongCiphers(Bool b);
-
 		// Get pinned certificate, if any.
-		MAYBE(Certificate *) STORM_FN pinnedCertificate() { return pinned; }
+		MAYBE(Certificate *) STORM_FN pinnedCertificate() const { return pinned; }
 
 		// Create an endpoint.
 		Session *STORM_FN connect(IStream *input, OStream *output, Str *host);
@@ -62,9 +58,6 @@ namespace ssl {
 
 		// Verify hostname?
 		Bool checkHostname;
-
-		// Only strong ciphers.
-		Bool onlyStrong;
 	};
 
 }
