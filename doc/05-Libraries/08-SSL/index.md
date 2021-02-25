@@ -8,7 +8,7 @@ not suitable for encryption to disk, for example.
 
 The library itself does not implement any cryptographic primitives itself. Instead, it relies on the
 default cryptographic libraries of the operating system. On Linux and other POSIX systems, OpenSSL
-(>= 1.0.2) is used. On Windows, the standard cryptographic library (SChannel) is used instead. This
+(>= 1.1.0) is used. On Windows, the standard cryptographic library (SChannel) is used instead. This
 way, the SSL library benefits from any security patches in these critical libraries that are
 provided by your operating system.
 

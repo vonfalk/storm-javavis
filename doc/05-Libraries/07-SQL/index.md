@@ -5,8 +5,8 @@ The package `sql` contains an experimental generic database interface. It curren
 SQLite databases, but allows additional database connections to be added in the future by creating
 other subclassess to the `DBConnection` and `Statement` classes.
 
-The SQL extension was created by: David Ångström, Markus Larsson, Mohammed Hamade, Oscar Falk, Robin
-Gustavsson, Saima Akhter
+The SQL extension was originally created by: David Ångström, Markus Larsson, Mohammed Hamade, Oscar
+Falk, Robin Gustavsson, Saima Akhter
 
 Using the generic interface allows connecting and using a database as follows:
 
@@ -144,3 +144,7 @@ void useDB() {
 
 }
 ```
+
+*Note:* This library is fairly early in the development phase. As such, some aspects may change in
+the future. In particular, how types between Storm and SQL is one thing that will likely be improved
+as support for other databases are added.
