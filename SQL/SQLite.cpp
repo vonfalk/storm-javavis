@@ -313,7 +313,8 @@ namespace sql {
 	}
 
 	static Str *identifierBefore(Engine &e, const wchar *&begin, const wchar *&end, const wchar *token) {
-		const wchar *nameBegin, *nameEnd;
+		const wchar *nameBegin = begin;
+		const wchar *nameEnd = end;
 		while (next(begin, end)) {
 			if (cmp(begin, end, token))
 				break;
