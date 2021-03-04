@@ -38,7 +38,8 @@ class MainWin extends Frame {
 		PopupMenu runMenu;
 		runMenu << Menu:Text("Restart", &this.onRestart());
 		runMenu << Menu:Text("Spawn thread", &this.onSpawnThread());
-		runMenu << Menu:Check("Track reads/writes", &this.onTrackMemory(Bool));
+		runMenu << Menu:Check("Track reads/writes", &this.onTrackMemory(Bool), true);
+		painter.trackMemory(true);
 
 		PopupMenu helpMenu;
 		helpMenu << Menu:Text("About...", &this.onAbout());

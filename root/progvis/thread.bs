@@ -144,6 +144,11 @@ class ProgThread on Render {
 		return !terminating;
 	}
 
+	// Called when function is about to throw an exception. Disables further tracing of the function.
+	void onFatalException() {
+		terminating = true;
+	}
+
 	// Make the thread sleep until something else wakes it. Used to implement synchronization primitives.
 	void lockSleep(Variant value) {
 		sleeping = true;

@@ -132,6 +132,7 @@ namespace gui {
 			// Create.
 			STORM_CTOR Check(Str *title);
 			STORM_CTOR Check(Str *title, Fn<void, Bool> *fn);
+			STORM_CTOR Check(Str *title, Fn<void, Bool> *fn, Bool checked);
 
 			// Callback.
 			MAYBE(Fn<void, Bool> *) onClick;

@@ -117,6 +117,9 @@ namespace gui {
 
 	Menu::Check::Check(Str *title, Fn<void, Bool> *callback) : WithTitle(title), onClick(callback) {}
 
+	Menu::Check::Check(Str *title, Fn<void, Bool> *callback, Bool checked)
+		: WithTitle(title), onClick(callback), myChecked(checked) {}
+
 	Menu::Submenu::Submenu(Str *title, PopupMenu *menu) : WithTitle(title), myMenu(menu) {}
 
 	Menu *Menu::Submenu::findMenu(Handle handle) const {
