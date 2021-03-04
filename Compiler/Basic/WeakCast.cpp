@@ -96,7 +96,7 @@ namespace storm {
 		}
 
 		SrcPos WeakDowncast::pos() {
-			return expr->pos;
+			return expr->largePos();
 		}
 
 		MAYBE(Str *) WeakDowncast::overwrite() {
@@ -150,7 +150,7 @@ namespace storm {
 		WeakMaybeCast::WeakMaybeCast(Expr *expr) : WeakCast(), expr(expr) {}
 
 		SrcPos WeakMaybeCast::pos() {
-			return expr->pos;
+			return expr->largePos();
 		}
 
 		MAYBE(Str *) WeakMaybeCast::overwrite() {

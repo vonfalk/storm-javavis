@@ -25,6 +25,10 @@ namespace storm {
 			return true;
 		}
 
+		SrcPos Expr::largePos() {
+			return pos;
+		}
+
 		/**
 		 * Numeric literals.
 		 */

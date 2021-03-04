@@ -191,6 +191,10 @@ namespace storm {
 			fnCall = null;
 		}
 
+		SrcPos Operator::largePos() {
+			return pos.extend(lhs->largePos()).extend(rhs->largePos());
+		}
+
 		Expr *Operator::meaning() {
 			if (!fnCall)
 				fnCall = op->meaning(block, lhs, rhs);
@@ -257,14 +261,14 @@ namespace storm {
 		Expr *STORM_FN prefixOperator(Block *block, syntax::SStr *o, Expr *expr) {
 			Actuals *actual = new (block) Actuals();
 			actual->add(expr);
-			syntax::SStr *altered = new (o) syntax::SStr(*o->v + new (o) Str(S("*")), o->pos);
+			syntax::SStr *altered = new (o) syntax::SStr(*o->v + new (o) Str(S("*")), o->pos.extend(expr->largePos()));
 			return namedExpr(block, altered, actual);
 		}
 
 		Expr *STORM_FN postfixOperator(Block *block, syntax::SStr *o, Expr *expr) {
 			Actuals *actual = new (block) Actuals();
 			actual->add(expr);
-			syntax::SStr *altered = new (o) syntax::SStr(*new (o) Str(S("*")) + o->v, o->pos);
+			syntax::SStr *altered = new (o) syntax::SStr(*new (o) Str(S("*")) + o->v, o->pos.extend(expr->largePos()));
 			return namedExpr(block, altered, actual);
 		}
 

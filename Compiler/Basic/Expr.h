@@ -37,6 +37,11 @@ namespace storm {
 			// default implementation returns 'true' as we wish to isolate most expressions when we
 			// put them inside an ExprBlock.
 			virtual Bool STORM_FN isolate();
+
+			// Get a position suitable as a source location. It sometimes differs from "pos" since
+			// we in error messages typically want to point at details (e.g. a particular operator),
+			// while in debugging information we want to include the entire range.
+			virtual SrcPos STORM_FN largePos();
 		};
 
 

@@ -131,6 +131,14 @@ namespace storm {
 			}
 		}
 
+		SrcPos FnCall::largePos() {
+			SrcPos result = pos;
+			for (Nat i = 0; i < params->expressions->count(); i++)
+				result = result.extend(params->expressions->at(i)->largePos());
+			result.end++;
+			return result;
+		}
+
 		void FnCall::toS(StrBuf *to) const {
 			SimpleName *p = toExecute->path();
 			p->last() = new (p) SimplePart(p->last()->name);
@@ -210,6 +218,14 @@ namespace storm {
 			code::Var created = to->safeLocation(s, toCreate);
 			allocObject(s, ctor, vars, created);
 			to->created(s);
+		}
+
+		SrcPos CtorCall::largePos() {
+			SrcPos result = pos;
+			for (Nat i = 0; i < params->expressions->count(); i++)
+				result = result.extend(params->expressions->at(i)->largePos());
+			result.end++;
+			return result;
 		}
 
 		CtorCall *defaultCtor(const SrcPos &pos, Scope scope, Type *t) {
@@ -361,6 +377,10 @@ namespace storm {
 
 		void MemberVarAccess::assignResult() {
 			assignTo = true;
+		}
+
+		SrcPos MemberVarAccess::largePos() {
+			return pos.extend(member->pos);
 		}
 
 		void MemberVarAccess::code(CodeGen *s, CodeResult *to) {

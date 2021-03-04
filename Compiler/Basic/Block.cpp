@@ -142,14 +142,23 @@ namespace storm {
 			}
 		}
 
+		static void putLocation(CodeGen *state, SrcPos &last, SrcPos current) {
+			if (last != current) {
+				last = current;
+				*state->l << code::location(current);
+			}
+		}
+
 		void ExprBlock::blockCode(CodeGen *state, CodeResult *to) {
 			if (!exprs->any())
 				return;
 
+			SrcPos last = pos;
+
 			// Generate code for the entire block. Stop whenever we find a block that does not return.
 			for (Nat i = 0; i < exprs->count() - 1; i++) {
 				Expr *e = exprs->at(i);
-				*state->l << code::location(e->pos);
+				putLocation(state, last, e->largePos());
 
 				CodeResult *s = new (this) CodeResult();
 				executeExpr(e, state, s);
@@ -159,7 +168,7 @@ namespace storm {
 					return;
 			}
 
-			*state->l << code::location(exprs->last()->pos);
+			putLocation(state, last, exprs->last()->largePos());
 			executeExpr(exprs->last(), state, to);
 		}
 

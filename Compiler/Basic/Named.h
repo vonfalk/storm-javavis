@@ -39,6 +39,9 @@ namespace storm {
 			// Generate code.
 			virtual void STORM_FN code(CodeGen *s, CodeResult *to);
 
+			// Location.
+			virtual SrcPos STORM_FN largePos();
+
 		protected:
 			// To string.
 			virtual void STORM_FN toS(StrBuf *to) const;
@@ -78,6 +81,9 @@ namespace storm {
 
 			// Generate code.
 			virtual void STORM_FN code(CodeGen *s, CodeResult *to);
+
+			// Location.
+			virtual SrcPos STORM_FN largePos();
 
 		protected:
 			// To string.
@@ -178,6 +184,9 @@ namespace storm {
 
 			// Variable to access.
 			MemberVar *var;
+
+			// Location.
+			virtual SrcPos STORM_FN largePos();
 
 		protected:
 			// Output.

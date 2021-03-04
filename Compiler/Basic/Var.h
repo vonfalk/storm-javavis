@@ -68,6 +68,9 @@ namespace storm {
 			// Generate code.
 			virtual void STORM_FN code(CodeGen *state, CodeResult *to);
 
+			// Better location.
+			virtual SrcPos STORM_FN largePos();
+
 		protected:
 			virtual void STORM_FN toS(StrBuf *to) const;
 

@@ -132,6 +132,15 @@ namespace storm {
 			}
 		}
 
+		SrcPos Var::largePos() {
+			SrcPos result = pos;
+			if (initExpr)
+				result = result.extend(initExpr->largePos());
+			if (initCtor)
+				result = result.extend(initCtor->largePos());
+			return result;
+		}
+
 		void Var::toS(StrBuf *to) const {
 			if (var->constant)
 				*to << S("const ");

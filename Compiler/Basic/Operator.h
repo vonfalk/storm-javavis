@@ -62,7 +62,7 @@ namespace storm {
 		/**
 		 * Represents a binary operator. We need a special representation for it
 		 * since we are not handling priority in the parser. Unary operators are
-		 * easy to get right directly in the parser, so we do them right there.
+		 * easy to get right directly in the parser, so we handle them right there.
 		 */
 		class Operator : public Expr {
 			STORM_CLASS;
@@ -85,6 +85,9 @@ namespace storm {
 
 			// Invalidate the cached function we are about to call. Call if you alter 'lhs' or 'rhs.
 			void invalidate();
+
+			// Get position.
+			virtual SrcPos STORM_FN largePos();
 
 			// Get the meaning from the operator (intended for debugging or further transforms).
 			virtual Expr *STORM_FN meaning();

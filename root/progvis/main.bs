@@ -336,7 +336,7 @@ void debug() on Compiler {
 
 	if (url = named{progvis_demo}.url) {
 		MainWin win;
-		// win.open(url / "demo2.bs");
+		win.open(url / "demo2.bs");
 		// win.open(url / "array.bs");
 		// win.open(url / "cpp.cpp");
 		// win.open(url / "cpp2.cpp");
@@ -356,7 +356,7 @@ void debug() on Compiler {
 		// win.open(url / "bank" / "bank.c");
 		// win.open(url / "bank" / "bank_good.c");
 		// win.open(url / "buffer" / "buffer.c");
-		win.open(url / "simple_buffer.c");
+		// win.open(url / "simple_buffer.c");
 		// win.open(url / "cond.c");
 		win.waitForClose();
 	}

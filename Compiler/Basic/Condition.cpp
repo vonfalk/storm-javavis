@@ -32,7 +32,7 @@ namespace storm {
 		}
 
 		SrcPos BoolCondition::pos() {
-			return expr->pos;
+			return expr->largePos();
 		}
 
 		MAYBE(LocalVar *) BoolCondition::result() {
