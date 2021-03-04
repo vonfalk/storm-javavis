@@ -324,7 +324,11 @@ void checkPtr(unsafe:RawPtr base, Nat offset, Nat size) {
 
 // Check that the pointer provided as 'base' and 'offset' refers to the start of an allocation, and
 // that it was actually allocated on the heap.
-void checkDelete(unsafe:RawPtr base, Nat offset) {
+// Returns 'false' if the pointer was a null pointer.
+Bool checkDelete(unsafe:RawPtr base, Nat offset) {
+	if (base.empty() & offset == 0)
+		return false;
+
 	if (offset != sPtr.current * 2)
 		throw PtrError("Trying to delete memory not allocated by 'new'!");
 
@@ -334,10 +338,15 @@ void checkDelete(unsafe:RawPtr base, Nat offset) {
 
 	if ((base.readFilled & AllocFlags:arrayAlloc.v) != 0)
 		throw PtrError("This allocation was allocated using new[], and should be freed using delete[].");
+
+	true;
 }
 
 // Check that this pointer was allocated using 'new[]' for arrays. Returns the number of elements.
-void checkDeleteArray(unsafe:RawPtr base, Nat offset) {
+Bool checkDeleteArray(unsafe:RawPtr base, Nat offset) {
+	if (base.empty() & offset == 0)
+		return false;
+
 	if (offset != sPtr.current * 2)
 		throw PtrError("Trying to delete memory not allocated by 'new[]'!");
 
@@ -346,6 +355,7 @@ void checkDeleteArray(unsafe:RawPtr base, Nat offset) {
 		throw PtrError("Trying to delete memory allocated on the stack!");
 
 	// To make 'free' feasible, we don't complain that you need to use the plain delete if the plain new was used.
+	return true;
 }
 
 // Wrap things inside a pointer or a reference.

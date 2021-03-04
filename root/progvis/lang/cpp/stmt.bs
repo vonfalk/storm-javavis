@@ -375,16 +375,23 @@ class DeleteStmt extends Expr {
 		gen.l << fnParam(ptrDesc, ptrRel(ptrA));
 		gen.l << fnParam(intDesc, intRel(ptrA, Offset(sPtr)));
 		if (array) {
-			gen.l << fnCall(named{checkDeleteArray<unsafe:RawPtr, Nat>}.ref, false);
+			gen.l << fnCall(named{checkDeleteArray<unsafe:RawPtr, Nat>}.ref, false, byteDesc(), al);
 		} else {
-			gen.l << fnCall(named{checkDelete<unsafe:RawPtr, Nat>}.ref, false);
+			gen.l << fnCall(named{checkDelete<unsafe:RawPtr, Nat>}.ref, false, byteDesc(), al);
 		}
+
+		// Check if the check function returned 'true', then we can call the dtor.
+		Label end = gen.l.label;
+		gen.l << cmp(al, byteConst(0));
+		gen.l << jmp(end, CondFlag:ifEqual);
 
 		Type type = safeType(unwrapPtr(ptrExpr.result.type), pos);
 		Function dtor = type.cppDtor();
 		gen.l << mov(ptrA, ptr);
 		gen.l << fnParam(ptrDesc, ptrRel(ptrA));
 		gen.l << fnCall(dtor.ref, false);
+
+		gen.l << end;
 	}
 
 }
