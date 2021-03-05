@@ -1,10 +1,12 @@
-SSL
-===
+Crypto
+======
 
-The SSL library ultimately provides the ability to wrap streams inside a layer of encryption
-provided by SSL (or rather TLS). Among other things, this allows secure connections over the
-Internet (for example: HTTPS). As SSL is designed to be an interactive communication protocol, it is
-not suitable for encryption to disk, for example.
+The `crypto` library provides various cryptographic utilities.
+
+In particular, one of these is the ability to wrap streams inside SSL (or rather TLS) streams. Among
+other things, this allows secure connections over the Internet (for example: HTTPS). As SSL is
+designed to be an interactive communication protocol, it is not suitable for encryption to disk, for
+example.
 
 The library itself does not implement any cryptographic primitives itself. Instead, it relies on the
 default cryptographic libraries of the operating system. On Linux and other POSIX systems, OpenSSL
@@ -12,13 +14,12 @@ default cryptographic libraries of the operating system. On Linux and other POSI
 way, the SSL library benefits from any security patches in these critical libraries that are
 provided by your operating system.
 
-*Note:* This library is in a fairly early stage of development. It might be renamed and extended at
- some point so that it also provides other crypto-related services.
 
 Usage
 -----
 
-The SSL library provides the following classes that are needed to establish and accept SSL connections:
+The crypto library provides the following classes that are needed to establish and accept SSL
+connections:
 
 * `Certificate`: Represents a X509 certificate of some entity. Note that a certificate only
   encompassess the public parts of the certificate.
@@ -35,7 +36,7 @@ In order to illustrate how these concepts belong together, consider the followin
 perform a HTTP GET request over HTTPS:
 
 ```
-use ssl;
+use crypto;
 use core:net;
 use core:io;
 
@@ -78,7 +79,7 @@ For a server, the process is similar. The exception is that the `ServerContext` 
 `CertificateKey` for the certificate that it should use. This might once again be a self-signed
 certificate if desired.
 
-It is not necessary to use the SSL library to communicate over sockets. The `connect` function in
+It is not necessary to use the crypto library to communicate over sockets. The `connect` function in
 the contexts support passing arbitrary input and output streams to use for the encrypted
 communications. For example, it is possible to create two `core:io:Pipe` instances, wrap them in an
 SSL layer and have two threads (or UThreads) communicate that way (even though it is not very useful

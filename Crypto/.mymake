@@ -1,5 +1,5 @@
 []
-package=ssl
+package=crypto
 input=*
 stormUsingNamespace=storm
 

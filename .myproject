@@ -48,7 +48,7 @@ Gui+=stormpp
 Graphics+=stormpp
 Sound+=stormpp
 SQL+=stormpp
-SSL+=stormpp
+Crypto+=stormpp
 
 #Libraries linked into shared libraries loaded by Storm at runtime.
 TestLib+=sharedlib
@@ -56,7 +56,7 @@ Gui+=sharedlib
 Graphics+=sharedlib
 Sound+=sharedlib
 SQL+=sharedlib
-SSL+=sharedlib
+Crypto+=sharedlib
 
 #Libraries that require position independent code on some platforms. If you intend to put the compiler itself
 #inside a shared library, add 'Compiler+=pic' and 'Gc+=pic' here.
@@ -72,7 +72,7 @@ Compiler+=CppTypes
 Sound+=CppTypes
 Graphics+=CppTypes
 SQL+=CppTypes
-SSL+=CppTypes
+Crypto+=CppTypes
 
 #To make sure everything is built.
 Compiler+=TestLib
@@ -80,7 +80,7 @@ Compiler+=Gui
 Compiler+=Graphics
 Compiler+=Sound
 Compiler+=SQL
-Compiler+=SSL
+Compiler+=Crypto
 
 #Selection GC to use.
 [build,mps]

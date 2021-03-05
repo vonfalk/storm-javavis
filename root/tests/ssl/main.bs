@@ -1,6 +1,6 @@
 use core:net;
 use core:io;
-use ssl;
+use crypto;
 use lang:bs:macro;
 
 Url certUrl() {
