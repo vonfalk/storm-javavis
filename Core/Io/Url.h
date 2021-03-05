@@ -162,6 +162,10 @@ namespace storm {
 	Url *dbgRootUrl(Engine &e);
 	Url *STORM_FN cwdUrl(EnginePtr e);
 
+	// Create an HTTP/HTTPS url for a domain name.
+	Url *STORM_FN httpUrl(Str *host);
+	Url *STORM_FN httpsUrl(Str *host);
+
 	// Some exceptions.
 	class EXCEPTION_EXPORT InvalidName : public Exception {
 		STORM_EXCEPTION;

@@ -452,4 +452,14 @@ namespace storm {
 		return v->parent();
 	}
 
+	Url *httpUrl(Str *host) {
+		Protocol *p = new (host) HttpProtocol(false);
+		return new (host) Url(p, new (host) Array<Str *>(1, host));
+	}
+
+	Url *httpsUrl(Str *host) {
+		Protocol *p = new (host) HttpProtocol(true);
+		return new (host) Url(p, new (host) Array<Str *>(1, host));
+	}
+
 }

@@ -116,4 +116,48 @@ namespace storm {
 		virtual void STORM_FN toS(StrBuf *to) const;
 	};
 
+
+	/**
+	 * HTTP/HTTPS protocol.
+	 *
+	 * This protocol does not support accessing the underlying data.
+	 */
+	class HttpProtocol : public Protocol {
+		STORM_CLASS;
+	public:
+		// Ctor.
+		STORM_CTOR HttpProtocol(Bool secure);
+
+		// Compare parts.
+		virtual Bool STORM_FN partEq(Str *a, Str *b);
+
+		// Hash parts.
+		virtual Nat STORM_FN partHash(Str *a);
+
+		// Children of this directory.
+		virtual Array<Url *> *STORM_FN children(Url *url);
+
+		// Read a file.
+		virtual IStream *STORM_FN read(Url *url);
+
+		// Write a file.
+		virtual OStream *STORM_FN write(Url *url);
+
+		// Exists?
+		virtual Bool STORM_FN exists(Url *url);
+
+		// Create a directory.
+		virtual Bool STORM_FN createDir(Url *url);
+
+		// Convert an Url to a string suitable for other C-api:s. We throw an exception here.
+		virtual Str *STORM_FN format(Url *url);
+
+		// Output.
+		virtual void STORM_FN toS(StrBuf *to) const;
+
+	private:
+		// Is this https?
+		Bool secure;
+	};
+
 }

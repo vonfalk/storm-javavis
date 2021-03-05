@@ -241,4 +241,50 @@ namespace storm {
 #error "Please implement FileProtocol for your OS!"
 #endif
 
+
+	/**
+	 * HTTP/HTTPS
+	 */
+
+	HttpProtocol::HttpProtocol(Bool secure) : secure(secure) {}
+
+	Bool HttpProtocol::partEq(Str *a, Str *b) {
+		return *a == *b;
+	}
+
+	Nat HttpProtocol::partHash(Str *a) {
+		return a->hash();
+	}
+
+	Str *HttpProtocol::format(Url *url) {
+		throw new (this) ProtocolNotSupported(S("format"), S("http"));
+	}
+
+	Array<Url *> *HttpProtocol::children(Url *url) {
+		throw new (this) ProtocolNotSupported(S("children"), S("http"));
+	}
+
+	IStream *HttpProtocol::read(Url *url) {
+		throw new (this) ProtocolNotSupported(S("read"), S("http"));
+	}
+
+	OStream *HttpProtocol::write(Url *url) {
+		throw new (this) ProtocolNotSupported(S("write"), S("http"));
+	}
+
+	Bool HttpProtocol::exists(Url *url) {
+		throw new (this) ProtocolNotSupported(S("exists"), S("http"));
+	}
+
+	Bool HttpProtocol::createDir(Url *url) {
+		return false;
+	}
+
+	void HttpProtocol::toS(StrBuf *to) const {
+		if (secure)
+			*to << S("https://");
+		else
+			*to << S("http://");
+	}
+
 }
