@@ -1,0 +1,44 @@
+use core:io;
+use crypto;
+
+// Find the identity of this client. Create it if it is missing.
+Str clientIdentity() {
+	Url idFile = cwdUrl / "progvis_id";
+	if (idFile.exists)
+		return idFile.readAllText;
+
+	Str id = generateId();
+	var stream = idFile.write();
+	Utf8Output textOut(stream);
+	textOut.write(id);
+	textOut.flush();
+	textOut.close();
+	return id;
+}
+
+private Str generateId() {
+	RandomStream stream;
+	var data = stream.readAll(100);
+	stream.close();
+
+	StrBuf out;
+	for (Nat i = 0; i < data.filled; i++) {
+		out << toChar(data[i]);
+	}
+
+	out.toS;
+}
+
+private Char toChar(Byte b) {
+	Nat scaled = b.nat % (26n * 2n + 10n);
+	if (scaled < 10) {
+		// 0-9
+		Char(0x30 + scaled);
+	} else if (scaled < 36) {
+		// A-Z
+		Char(0x41 + scaled - 10);
+	} else {
+		// a-z
+		Char(0x61 + scaled - 36);
+	}
+}

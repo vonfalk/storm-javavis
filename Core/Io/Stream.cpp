@@ -98,14 +98,14 @@ namespace storm {
 
 	Byte IStream::readByte() {
 		GcPreArray<Byte, 1> d;
-		Buffer b = read(emptyBuffer(d));
+		Buffer b = readAll(emptyBuffer(d));
 		checkBuffer(engine(), b);
 		return d.v[0];
 	}
 
 	Int IStream::readInt() {
 		GcPreArray<Byte, 4> d;
-		Buffer b = read(emptyBuffer(d));
+		Buffer b = readAll(emptyBuffer(d));
 		checkBuffer(engine(), b);
 		Int r = Int(b[0]) << 24;
 		r |= Int(b[1]) << 16;
@@ -116,7 +116,7 @@ namespace storm {
 
 	Nat IStream::readNat() {
 		GcPreArray<Byte, 4> d;
-		Buffer b = read(emptyBuffer(d));
+		Buffer b = readAll(emptyBuffer(d));
 		checkBuffer(engine(), b);
 		Nat r = Nat(b[0]) << 24;
 		r |= Nat(b[1]) << 16;
@@ -127,7 +127,7 @@ namespace storm {
 
 	Long IStream::readLong() {
 		GcPreArray<Byte, 8> d;
-		Buffer b = read(emptyBuffer(d));
+		Buffer b = readAll(emptyBuffer(d));
 		checkBuffer(engine(), b);
 		Long r = Long(b[0]) << 56;
 		r |= Long(b[1]) << 48;
@@ -142,7 +142,7 @@ namespace storm {
 
 	Word IStream::readWord() {
 		GcPreArray<Byte, 8> d;
-		Buffer b = read(emptyBuffer(d));
+		Buffer b = readAll(emptyBuffer(d));
 		checkBuffer(engine(), b);
 		Long r = Long(b[0]) << 56;
 		r |= Long(b[1]) << 48;

@@ -521,6 +521,9 @@ namespace storm {
 		// Indicate the end of an object serialization. Not called if 'startXxx' returned false.
 		void STORM_FN end();
 
+		// Flush the stream.
+		void STORM_FN flush() { to->flush(); }
+
 	private:
 		// Keep track of how the serialization is progressing. Used as a stack.
 		Array<SerializedType::Cursor> *depth;

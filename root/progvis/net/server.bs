@@ -1,0 +1,92 @@
+use core:io;
+use core:net;
+
+// Thread.
+thread Server;
+
+// Port to listen to.
+Nat serverPort() { 21337; }
+
+
+/**
+ * Connection to a client on the server.
+ */
+class ServerClient on Server {
+	init(NetStream stream, Database db) {
+		init {
+			socket = stream;
+			input = ObjIStream(stream.input);
+			output = ObjOStream(stream.output);
+			db = db;
+		}
+	}
+
+	private Database db;
+	private NetStream socket;
+	private ObjIStream input;
+	private ObjOStream output;
+
+	// Run the communication with this client.
+	void run() {
+		if (!authenticate()) {
+			socket.close();
+			return;
+		}
+
+		try {
+			Request request = Request:read(input);
+			// Handle message...
+
+		} catch (Exception e) {
+			ErrorResponse(e.message).write(output);
+			output.flush();
+			socket.close();
+		}
+	}
+
+	// Authenticate the user on the other side.
+	private Bool authenticate() {
+		Request request = Request:read(input);
+		if (request as AuthRequest) {
+			print("Checking for user: ${request.key}...");
+			if (user = db.findUser(request.key)) {
+				// TODO: Extract username.
+				send(AuthResponse("ok"));
+				return true;
+			} else {
+				send(AuthLoginReply(["storm-lang.org"]));
+				return false;
+			}
+		} else {
+			error("The first message must be an authentication request!");
+			return false;
+		}
+	}
+
+	// Send an error message back.
+	private void error(Str message) {
+		send(ErrorResponse(message));
+	}
+
+	// Send a message to the client.
+	private void send(Response response) {
+		response.write(output);
+		output.flush();
+	}
+}
+
+// Run the server.
+void serverMain() on Server {
+	unless (listener = listen(serverPort))
+		throw ServerError("Failed to listen to ${serverPort}!");
+
+	Database db;
+
+	while (stream = listener.accept()) {
+		ServerClient client(stream, db);
+		(spawn client.run()).detach();
+	}
+
+	print("Server terminated!");
+	// TODO: Restart?
+}

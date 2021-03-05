@@ -1,0 +1,25 @@
+use util:serialize;
+
+/**
+ * This class is the base class for all requests (sent from the client to the server). We rely on
+ * the built-in serialization for sending and receiving them.
+ */
+class Request : serializable {
+	// Called by the server when processing the message.
+	void process(ServerClient server) {}
+}
+
+
+/**
+ * Authentication request. Expected to be the first message sent by a client.
+ *
+ * Returns either an AuthReply, AuthLoginReply, or an error.
+ */
+class AuthRequest : extends Request, serializable {
+	// The client key.
+	Str key;
+
+	init(Str key) {
+		init { key = key; }
+	}
+}

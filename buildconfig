@@ -21,8 +21,9 @@
 #Main -a -f tests.ui.testAbout
 #Main -a -f presentation.tests.test
 #Main -a -f presentation.tests.simple
-Main -a -f progvis.debug
+#Main -a -f progvis.debug
 #Main -a -f progvis.testCpp
+Main -a -f progvis.net.debugMain
 #Main -a -f trees.main
 
 #Main -a -t sql.tests

@@ -1,0 +1,42 @@
+use core:io;
+use sql;
+
+DATABASE ProgvisDB {
+	// Users in the system.
+	TABLE users(
+		// User id. Used in other tables.
+		id INTEGER PRIMARY KEY,
+		// User name.
+		name TEXT,
+		// User display name.
+		displayName TEXT
+	);
+
+	// Known clients in the system, and what users they map to.
+	TABLE clients(
+		// Client ID (a long string).
+		id TEXT PRIMARY KEY UNIQUE,
+		// User ID.
+		user INTEGER
+	);
+}
+
+class Database on Server {
+	init() {
+		SQLite db(cwdUrl / "progvis.db");
+
+		init() {
+			db(db);
+		}
+	}
+
+	private ProgvisDB db;
+
+	// Find a user's identity from its client key.
+	Int? findUser(Str clientId) {
+		for (x in WITH db: SELECT user FROM clients WHERE id == clientId) {
+			return x.user;
+		}
+		return null;
+	}
+}

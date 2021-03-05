@@ -1,0 +1,44 @@
+use util:serialize;
+
+/**
+ * This is the base class for all responses from the server to the client.
+ */
+class Response : serializable {}
+
+/**
+ * Error response. Contains some kind of error message.
+ */
+class ErrorResponse : extends Response, serializable {
+	Str message;
+
+	init(Str message) {
+		init { message = message; }
+	}
+}
+
+/**
+ * Authentication response. Successful case.
+ */
+class AuthResponse : extends Response, serializable {
+	// User name.
+	Str name;
+
+	// TODO: Other stats?
+
+	init(Str name) {
+		init { name = name; }
+	}
+}
+
+/**
+ * Authentication response. The user must sign in separately.
+ */
+class AuthLoginReply : extends Response, serializable {
+	// URL to redirect the user to.
+	// TODO: Allow Url to be serializable.
+	Str[] url;
+
+	init(Str[] url) {
+		init { url = url; }
+	}
+}

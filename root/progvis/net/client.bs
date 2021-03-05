@@ -1,0 +1,81 @@
+use core:io;
+use core:net;
+
+/**
+ * Thrown when the user needs to sign in.
+ */
+class SignInRedirect extends Exception {
+	init(Url to) {
+		init { to = to; }
+	}
+
+	// Redirect here.
+	Url to;
+
+	void message(StrBuf to) : override {
+		to << "Redirect here to sign in: " << to;
+	}
+}
+
+/**
+ * Thrown on other errors.
+ */
+class ServerError extends Exception {
+	init(Str msg) {
+		init { msg = msg; }
+	}
+
+	Str msg;
+
+	void message(StrBuf to) : override {
+		to << "Error from the server: " << msg;
+	}
+}
+
+// Helper for 'connect'.
+private NetStream connectOrThrow(Str host, Nat port) {
+	if (c = connect(host, port))
+		return c;
+	throw ServerError("Failed to connect to ${host}.");
+}
+
+/**
+ * Connection to the server.
+ */
+class Client {
+	// Authenticates the user.
+	init(Str host) {
+		NetStream socket = connectOrThrow(host, serverPort);
+
+		init {
+			socket = socket;
+			input = ObjIStream(socket.input);
+			output = ObjOStream(socket.output);
+		}
+
+		var response = query(AuthRequest(clientIdentity()));
+		if (response as AuthResponse) {
+			username = response.name;
+		} else if (response as AuthLoginReply) {
+			Url url(HttpProtocol(true), response.url);
+			throw SignInRedirect(url);
+		}
+	}
+
+	private NetStream socket;
+	private ObjIStream input;
+	private ObjOStream output;
+
+	private Str username;
+
+	// Perform a query to the server.
+	Response query(Request request) {
+		request.write(output);
+		output.flush();
+
+		var reply = Response:read(input);
+		if (reply as ErrorResponse)
+			throw ServerError(reply.message);
+		reply;
+	}
+}

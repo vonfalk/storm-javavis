@@ -1,0 +1,21 @@
+/**
+ * Entry-point for debugging.
+ */
+void debugMain() {
+	(spawn debugServer()).detach();
+	sleep(10 ms); // Make sure it is listening.
+
+	try {
+		Client c("localhost");
+	} catch (SignInRedirect redirect) {
+		print("We need to sign in... ${redirect.to}");
+	}
+}
+
+private void debugServer() on Server {
+	try {
+		serverMain();
+	} catch (Exception e) {
+		print(e.toS);
+	}
+}
