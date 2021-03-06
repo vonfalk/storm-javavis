@@ -26,22 +26,40 @@ class ServerClient on Server {
 	private ObjIStream input;
 	private ObjOStream output;
 
+	// Authenticated user ID.
+	private Int userId;
+
 	// Run the communication with this client.
 	void run() {
-		if (!authenticate()) {
-			socket.close();
-			return;
-		}
+		try {
+			if (!authenticate()) {
+				socket.close();
+				return;
+			}
 
+			while (handleMessage())
+				;
+
+		} catch (Exception e) {
+			print("Unhandled exception in the server:");
+			print(e.toS);
+		}
+	}
+
+	private Bool handleMessage() {
 		try {
 			Request request = Request:read(input);
 			// Handle message...
 
 		} catch (Exception e) {
+			print("Exception in the server: ${e}");
 			ErrorResponse(e.message).write(output);
 			output.flush();
 			socket.close();
+			return false;
 		}
+
+		true;
 	}
 
 	// Authenticate the user on the other side.
@@ -50,8 +68,8 @@ class ServerClient on Server {
 		if (request as AuthRequest) {
 			print("Checking for user: ${request.key}...");
 			if (user = db.findUser(request.key)) {
-				// TODO: Extract username.
-				send(AuthResponse("ok"));
+				userId = user.id;
+				send(AuthResponse(user.name));
 				return true;
 			} else {
 				send(AuthLoginReply(["storm-lang.org"]));

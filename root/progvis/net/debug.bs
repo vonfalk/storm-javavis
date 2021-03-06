@@ -2,13 +2,20 @@
  * Entry-point for debugging.
  */
 void debugMain() {
-	(spawn debugServer()).detach();
-	sleep(10 ms); // Make sure it is listening.
+	(spawn debugClient()).detach();
+	debugServer();
+}
 
+private void debugClient() {
+	sleep(10 ms);
 	try {
 		Client c("localhost");
+		print("We're in!");
 	} catch (SignInRedirect redirect) {
 		print("We need to sign in... ${redirect.to}");
+	} catch (Exception e) {
+		print("Exception from the client:");
+		print(e.toS);
 	}
 }
 

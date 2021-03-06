@@ -33,10 +33,23 @@ class Database on Server {
 	private ProgvisDB db;
 
 	// Find a user's identity from its client key.
-	Int? findUser(Str clientId) {
-		for (x in WITH db: SELECT user FROM clients WHERE id == clientId) {
-			return x.user;
+	UserInfo? findUser(Str clientId) {
+		// TODO: It would be nice to do a "SELECT FIRST" or "SELECT ONE" here.
+		for (x in WITH db: SELECT users.id, users.displayName FROM clients JOIN users ON clients.user == users.id WHERE clients.id == clientId) {
+			return UserInfo(x.users_id, x.users_displayName);
 		}
 		return null;
+	}
+}
+
+class UserInfo {
+	// User ID.
+	Int id;
+
+	// Display name of the user.
+	Str name;
+
+	init(Int id, Str name) {
+		init { id = id; name = name; }
 	}
 }
