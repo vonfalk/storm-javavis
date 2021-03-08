@@ -866,6 +866,61 @@ class SelectQuery extends Query {
 }
 
 /**
+ * SELECT ONE query.
+ *
+ * Works just like SELECT, but returns Maybe<Row> rather than an iterator.
+ */
+class SelectOneQuery extends SelectQuery {
+	init(SrcPos pos, SStr table, Column[] cols, Join[] joins, SQLExpr? condition) {
+		init(pos, table, cols, joins, condition) {}
+	}
+
+	// Modified result. Returns a single row (wrapped in Maybe) rather than an iterator.
+	Expr? result(Block context, Expr statement) {
+		Bool noTypeInfo = cols.empty;
+
+		ValParam[] types;
+		if (!noTypeInfo) {
+			for (c in cols) {
+				if (t = c.type)
+					types << ValParam(t, c.as);
+				else
+					noTypeInfo = true;
+			}
+		}
+
+		// No type info - just return a Maybe<Row> object.
+		if (noTypeInfo)
+			return namedExpr(context, pos, "fetch", statement);
+
+		// Otherwise, we want to return either <null> or an instance of the row-type.
+		TypedRow t = getTypedRow(types);
+		unless (ctor = t.find("__init", [Value(t), Value(named{Row})], Scope()) as Function)
+			throw InternalError("Could not find a suitable constructor in the generated type.");
+
+		unless (maybe = wrapMaybe(Value(t)).type)
+			throw InternalError("Could not find the maybe type for the generated row type.");
+
+		// Create an if-statement.
+		WeakMaybeCast cast(namedExpr(context, pos, "fetch", statement));
+		cast.name(SStr("x"));
+		If check(context, cast);
+
+		CondSuccess success(pos, context, cast);
+		check.trueCode = success;
+		if (created = cast.result) {
+			success.set(CtorCall(pos, Scope(), ctor, Actuals(LocalVarAccess(pos, created))));
+		}
+
+		if (maybeCtor = maybe.find("__init", [Value(maybe, true)], Scope()) as Function) {
+			check.falseCode = CtorCall(pos, Scope(), maybeCtor, Actuals());
+		}
+
+		check;
+	}
+}
+
+/**
  * CREATE TABLE query.
  *
  * Only for untyped connections.

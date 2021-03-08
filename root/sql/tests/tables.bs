@@ -185,6 +185,17 @@ suite Join {
 
 		all.clear();
 
+		if (x = SELECT ONE test.id AS id FROM test JOIN extra ON extra.test == test.id WHERE test.id == 3) {
+			all << x.id;
+		}
+		if (x = SELECT ONE test.id AS id FROM test WHERE test.id == 8) {
+			all << x.id;
+		}
+
+		test all.toS == "3";
+
+		all.clear();
+
 		for (x in SELECT * FROM test JOIN extra ON extra.test == test.id WHERE test.id == 4) {
 			all << x.test_id << "|" << x.extra_data << "|";
 		}

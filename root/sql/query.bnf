@@ -32,6 +32,9 @@ SQuery => DeleteQuery(pos, table, condition) : "DELETE" ~ "FROM" ~ SName table -
 // Select:
 SQuery => SelectQuery(pos, table, cols, joins, condition) : "SELECT" ~ SSelectCols cols ~ "FROM" ~ SName table - SJoins joins - SWhere condition;
 
+// Select one row (or zero):
+SQuery => SelectOneQuery(pos, table, cols, joins, condition) : "SELECT" ~ "ONE" ~ SSelectCols cols ~ "FROM" ~ SName table - SJoins joins - SWhere condition;
+
 // Create table (only untyped)
 SQuery => CreateQuery(pos, false, table) : "CREATE" ~ "TABLE" ~ SCreateTail table;
 SQuery => CreateQuery(pos, true, table) : "CREATE" ~ "TABLE" ~ "IF" ~ "NOT" ~ "EXISTS" ~ SCreateTail table;

@@ -133,7 +133,7 @@ class TypedIter extends Type {
 
 		parentLookup = named{};
 
-		TypedRow toCreate(types);
+		TypedRow toCreate = getTypedRow(types);
 		MemberVar iter("base", Value(named{Statement:Iter}), this);
 		iter.visibility = typePrivate();
 		add(iter);
@@ -212,7 +212,8 @@ class TypedIter extends Type {
 }
 
 // Global cache of data types.
-private Map<Str, TypedIter> createdTypes on Compiler;
+private Map<Str, TypedRow> createdRowTypes on Compiler;
+private Map<Str, TypedIter> createdIterTypes on Compiler;
 
 // Compute a key for use in the map.
 private Str typeKey(ValParam[] types) on Compiler {
@@ -223,13 +224,24 @@ private Str typeKey(ValParam[] types) on Compiler {
 	return s.toS;
 }
 
+// Get a TypedRow instance.
+TypedRow getTypedRow(ValParam[] types) on Compiler {
+	Str key = typeKey(types);
+	if (createdRowTypes.has(key))
+		return createdRowTypes.get(key);
+
+	TypedRow created(types);
+	createdRowTypes.put(key, created);
+	return created;
+}
+
 // Get a TypedIter instance.
 TypedIter getTypedIter(ValParam[] types) on Compiler {
 	Str key = typeKey(types);
-	if (createdTypes.has(key))
-		return createdTypes.get(key);
+	if (createdIterTypes.has(key))
+		return createdIterTypes.get(key);
 
 	TypedIter created(types);
-	createdTypes.put(key, created);
+	createdIterTypes.put(key, created);
 	return created;
 }
