@@ -34,11 +34,10 @@ class Database on Server {
 
 	// Find a user's identity from its client key.
 	UserInfo? findUser(Str clientId) {
-		// TODO: It would be nice to do a "SELECT FIRST" or "SELECT ONE" here.
-		for (x in WITH db: SELECT users.id, users.displayName FROM clients JOIN users ON clients.user == users.id WHERE clients.id == clientId) {
+		if (x = WITH db: SELECT ONE users.id, users.displayName FROM clients JOIN users ON clients.user == users.id WHERE clients.id == clientId) {
 			return UserInfo(x.users_id, x.users_displayName);
 		}
-		return null;
+		null;
 	}
 }
 
