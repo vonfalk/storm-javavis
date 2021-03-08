@@ -142,6 +142,16 @@ namespace storm {
 		void writeWord(Word v);
 		void writeFloat(Float v);
 		void writeDouble(Double v);
+
+		// Overloaded version. Convenient from templates. (CL crashed when having pointer-to-member as template parameter)
+		void writeT(Bool v) { writeBool(v); }
+		void writeT(Byte v) { writeByte(v); }
+		void writeT(Int v) { writeInt(v); }
+		void writeT(Nat v) { writeNat(v); }
+		void writeT(Long v) { writeLong(v); }
+		void writeT(Word v) { writeWord(v); }
+		void writeT(Float v) { writeFloat(v); }
+		void writeT(Double v) { writeDouble(v); }
 	};
 
 }

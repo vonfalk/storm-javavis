@@ -67,7 +67,7 @@ namespace storm {
 
 
 	/**
-	 * Description of a class that is serialized. Instances of the subclass, SerializedType,
+	 * Description of a class that is serialized. Instances of the subclass, SerializedStdType,
 	 * describe classes consisting of a fixed set of data members (that are serialized
 	 * automatically), while instances of this class may use custom serialization mechanisms.
 	 *
@@ -80,8 +80,8 @@ namespace storm {
 		// Create a description of an object of the type 't'.
 		STORM_CTOR SerializedType(Type *t, FnBase *ctor);
 
-		// Create a description of an object of the type 't', whith the super type 'p'.
-		STORM_CTOR SerializedType(Type *t, FnBase *ctor, SerializedType *super);
+		// Create a description of an object of the type 't', whith the super type 'p' (which is assumed to be serializable).
+		STORM_CTOR SerializedType(Type *t, FnBase *ctor, Type *super);
 
 		// The type.
 		Type *type;
@@ -90,7 +90,7 @@ namespace storm {
 		FnBase *readCtor;
 
 		// Super type.
-		inline MAYBE(SerializedType *) STORM_FN super() const { return mySuper; }
+		inline MAYBE(Type *) STORM_FN super() const { return mySuper; }
 
 		// Get the TypeInfo bitmask for this type.
 		typeInfo::TypeInfo STORM_FN info() const;
@@ -120,7 +120,7 @@ namespace storm {
 			inline Bool STORM_FN atEnd() const { return !type || pos == type->typesRepeat + 1; }
 
 			// Current element?
-			inline Type *STORM_FN current() const { return (pos == 0) ? type->mySuper->type : type->typeAt(pos - 1); }
+			inline Type *STORM_FN current() const { return (pos == 0) ? type->mySuper : type->typeAt(pos - 1); }
 
 			// Advance.
 			void STORM_FN next();
@@ -151,7 +151,7 @@ namespace storm {
 
 	private:
 		// The super type.
-		MAYBE(SerializedType *) mySuper;
+		MAYBE(Type *) mySuper;
 
 		// All types in this class, so that the Cursor can iterate over them easily.
 		Array<TObject *> *types;
@@ -187,11 +187,12 @@ namespace storm {
 		// Create a description of an object of the type 't'.
 		STORM_CTOR SerializedStdType(Type *t, FnBase *ctor);
 
-		// Create a description of an object of the type 't', with the super type 'p'.
-		STORM_CTOR SerializedStdType(Type *t, FnBase *ctor, SerializedType *super);
+		// Create a description of an object of the type 't', with the super type 'p' (assumed to be serializable).
+		STORM_CTOR SerializedStdType(Type *t, FnBase *ctor, Type *super);
 
 		// Add a member.
 		void STORM_FN add(Str *name, Type *type);
+		void add(const wchar *name, Type *type);
 
 		// Number of members.
 		inline Nat STORM_FN count() const { return names->count(); }
@@ -210,6 +211,22 @@ namespace storm {
 		Array<Str *> *names;
 	};
 
+	// C++ helper:
+	template <class Type>
+	void CODECALL callReadCtor(Type *to, ObjIStream *from) {
+		new (Place(to)) Type(from);
+	}
+
+	template <class Type>
+	SerializedStdType *serializedStdType(Engine &e) {
+		return new (e) SerializedStdType(StormInfo<Type>::type(e), fnPtr(e, callReadCtor<Type>));
+	}
+
+	template <class Type, class Parent>
+	SerializedStdType *serializedStdType(Engine &e) {
+		return new (e) SerializedStdType(StormInfo<Type>::type(e), fnPtr(e, callReadCtor<Type>), StormInfo<Parent>::type(e));
+	}
+
 
 	/**
 	 * Description of a sequence of tuples. Used to serialize containers using a format
@@ -226,7 +243,7 @@ namespace storm {
 	public:
 		// Create a type description.
 		STORM_CTOR SerializedTuples(Type *t, FnBase *ctor);
-		STORM_CTOR SerializedTuples(Type *t, FnBase *ctor, SerializedType *super);
+		STORM_CTOR SerializedTuples(Type *t, FnBase *ctor, Type *super);
 
 		// Add a type.
 		void STORM_FN add(Type *t) { typeAdd(t); }
@@ -512,6 +529,15 @@ namespace storm {
 		// Inidicate the start of serialization of the given object. Returns 'true' if the object
 		// should be serialized, false if it has already been serialized and should be skipped
 		// (including the call to 'end').
+		Bool STORM_FN startValue(Type *type);
+		Bool STORM_FN startClass(Type *type, Object *v);
+
+		// Versions of 'startValue' and 'startClass' where we have previously acquired a
+		// SerializedType instance somehow.
+		// Note: It is typically better to call the versions that take a Type parameter
+		// than calling the 'serializedType' function yourself. That allows us to cache
+		// a single instance of the SerializedType rather than potentially having to
+		// re-create it multiple times.
 		Bool STORM_FN startValue(SerializedType *type);
 		Bool STORM_FN startClass(SerializedType *type, Object *v);
 
@@ -536,6 +562,9 @@ namespace storm {
 		// assigned an identifier but not yet been written to the stream have their highest bit set.
 		Map<TObject *, Nat> *typeIds;
 
+		// Cached lookups for the results of calling "serializedType" for each type (actually Map<Type *, ...>).
+		Map<TObject *, SerializedType *> *serializedTypes;
+
 		// Next available type id.
 		Nat nextId;
 
@@ -553,6 +582,9 @@ namespace storm {
 
 		// Write the type info provided, if needed.
 		void writeInfo(SerializedType *desc);
+
+		// Find a SerializedType for a given Type.
+		SerializedType *findSerialized(Type *type);
 	};
 
 	// Demangle a name.

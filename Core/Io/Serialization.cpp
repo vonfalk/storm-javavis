@@ -19,7 +19,7 @@ namespace storm {
 		init();
 	}
 
-	SerializedType::SerializedType(Type *t, FnBase *ctor, SerializedType *super)
+	SerializedType::SerializedType(Type *t, FnBase *ctor, Type *super)
 		: type(t), readCtor(ctor), mySuper(super) {
 
 		init();
@@ -44,10 +44,7 @@ namespace storm {
 	void SerializedType::toS(StrBuf *to) const {
 		*to << S("Serialization info for ") << runtime::typeName(type) << S(":");
 		if (mySuper) {
-			*to << S("\n  super: ");
-			to->indent();
-			mySuper->toS(to);
-			to->dedent();
+			*to << S("\n  super: ") << runtime::typeName(mySuper);
 		}
 		*to << S("\n  constructor: ") << readCtor;
 	}
@@ -72,13 +69,17 @@ namespace storm {
 	SerializedStdType::SerializedStdType(Type *t, FnBase *ctor)
 		: SerializedType(t, ctor), names(new (engine()) Array<Str *>()) {}
 
-	SerializedStdType::SerializedStdType(Type *t, FnBase *ctor, SerializedType *parent)
+	SerializedStdType::SerializedStdType(Type *t, FnBase *ctor, Type *parent)
 		: SerializedType(t, ctor, parent), names(new (engine()) Array<Str *>()) {}
 
 	void SerializedStdType::add(Str *name, Type *type) {
 		typeAdd(type);
 		names->push(name);
 		typeRepeat(typeCount());
+	}
+
+	void SerializedStdType::add(const wchar *name, Type *type) {
+		add(new (this) Str(name), type);
 	}
 
 	SerializedMember SerializedStdType::at(Nat i) const {
@@ -101,7 +102,7 @@ namespace storm {
 		typeRepeat(typeCount());
 	}
 
-	SerializedTuples::SerializedTuples(Type *t, FnBase *ctor, SerializedType *super) : SerializedType(t, ctor) {
+	SerializedTuples::SerializedTuples(Type *t, FnBase *ctor, Type *super) : SerializedType(t, ctor) {
 		typeAdd(StormInfo<Nat>::type(engine()));
 		typeRepeat(typeCount());
 	}
@@ -584,6 +585,7 @@ namespace storm {
 		depth = new (this) Array<SerializedType::Cursor>();
 		typeIds = new (this) Map<TObject *, Nat>();
 		nextId = firstCustomId;
+		serializedTypes = new (this) Map<TObject *, SerializedType *>();
 
 		// Insert the standard types inside 'ids', so we don't have to bother with them later.
 		Engine &e = engine();
@@ -615,13 +617,39 @@ namespace storm {
 		return id;
 	}
 
+	Bool ObjOStream::startValue(Type *type) {
+		return startValue(findSerialized(type));
+	}
+
+	Bool ObjOStream::startClass(Type *type, Object *obj) {
+		return startClass(findSerialized(type), obj);
+	}
+
+	SerializedType *ObjOStream::findSerialized(Type *type) {
+		// For convenience in other parts of the implementation.
+		if (!type)
+			return null;
+
+		Map<TObject *, SerializedType *>::Iter found = serializedTypes->find((TObject *)type);
+		if (found != serializedTypes->end())
+			return found.v();
+
+		const Handle &h = runtime::typeHandle(type);
+		if (!h.serializedTypeFn)
+			throw new (this) SerializationError(TO_S(this, S("The type ") << runtime::typeName(type) << S(" is not serializable.")));
+
+		SerializedType *info = (*h.serializedTypeFn)();
+		serializedTypes->put((TObject *)type, info);
+		return info;
+	}
+
 	Bool ObjOStream::startValue(SerializedType *type) {
 		Type *expected = start(type);
 		if (expected && expected != type->type) {
 			// We can assume that the actual type is exactly what we're expecting since value types
 			// are sliced. Therefore, we don't need to search for the proper type as we need to do
 			// for classes.
-			PVAR(runtime::typeName(expected));
+			// PVAR(runtime::typeName(expected));
 			Str *msg = TO_S(this, S("Unexpected value type during serialization. Expected: ") << runtime::typeName(expected));
 			throw new (this) SerializationError(msg);
 		}
@@ -641,7 +669,7 @@ namespace storm {
 			// Find the expected type from the description. It should be a direct or indirect parent!
 			SerializedType *expectedDesc = type;
 			while (expectedDesc && expectedDesc->type != expected)
-				expectedDesc = expectedDesc->super();
+				expectedDesc = findSerialized(expectedDesc->super());
 			if (!expectedDesc)
 				throw new (this) SerializationError(S("The provided type description does not match the serialized object."));
 
@@ -734,7 +762,7 @@ namespace storm {
 		runtime::typeIdentifier(t->type)->write(to);
 
 		if (t->super()) {
-			to->writeNat(typeId(t->super()->type) & ~typeMask);
+			to->writeNat(typeId(t->super()) & ~typeMask);
 		} else {
 			to->writeNat(endId);
 		}

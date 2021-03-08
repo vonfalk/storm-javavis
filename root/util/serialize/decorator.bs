@@ -144,7 +144,6 @@ Function findReadFunction(SrcPos pos, Value type, Type from) {
 	}
 
 	throw SyntaxError(pos, "The type ${type} is not serializable.");
-	return Function(Value(), "", []);
 }
 
 
@@ -206,8 +205,6 @@ SerializedType findSerializedType(Type type, Type from) {
 	}
 
 	throw SyntaxError(SrcPos(), "The type ${type} is not serializable.");
-	// TODO: Remove once we have exceptions.
-	SerializedType(type, &findSerializedType(Type, Type));
 }
 
 /**
@@ -215,7 +212,7 @@ SerializedType findSerializedType(Type type, Type from) {
  */
 Function addStdType(Type type, Member[] members, Function ctorFun) {
 	SerializedStdType desc = if (t = type.declaredSuper) {
-		SerializedStdType(type, ctorFun.pointer, findSerializedType(t, type));
+		SerializedStdType(type, ctorFun.pointer, t);
 	} else {
 		SerializedStdType(type, ctorFun.pointer);
 	};
@@ -233,7 +230,7 @@ Function addStdType(Type type, Member[] members, Function ctorFun) {
  */
 Function addCustomType(Type type, Function ctorFun) {
 	SerializedType desc = if (t = type.declaredSuper) {
-		SerializedType(type, ctorFun.pointer, findSerializedType(t, type));
+		SerializedType(type, ctorFun.pointer, type);
 	} else {
 		SerializedType(type, ctorFun.pointer);
 	};
@@ -281,12 +278,12 @@ Function addWrite(Type type, Member[] members, Function typeFun) {
 	LocalVarAccess me(pos, body.safeVariable("this"));
 	LocalVarAccess to(pos, body.safeVariable("to"));
 
-	FnCall desc(pos, body.scope, typeFun, Actuals(), false, true);
+	// FnCall desc(pos, body.scope, typeFun, Actuals(), false, true);
 	Expr startCall = if (!t.isObject()) {
-		namedExpr(body, pos, "startValue", to, Actuals(desc));
+		namedExpr(body, pos, "startValue", to, Actuals(ReferNamed(pos, type)));
 	} else {
 		Actuals params;
-		params.add(desc);
+		params.add(ReferNamed(pos, type));
 		params.add(me);
 		namedExpr(body, pos, "startClass", to, params);
 	};

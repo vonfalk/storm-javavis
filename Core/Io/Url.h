@@ -137,6 +137,12 @@ namespace storm {
 		// Output.
 		virtual void STORM_FN toS(StrBuf *to) const;
 
+		// Serialization.
+		static SerializedType *STORM_FN serializedType(EnginePtr e);
+		static Url *STORM_FN read(ObjIStream *from);
+		Url(ObjIStream *from);
+		void STORM_FN write(ObjOStream *to) const;
+
 	private:
 		// Protocol. If null, we're a relative path!
 		Protocol *protocol;

@@ -4,6 +4,7 @@
 #include "Core/Hash.h"
 #include "Core/Str.h"
 #include "Core/Io/Serialization.h"
+#include "Core/Io/SerializationUtils.h"
 #include "Function.h"
 #include "Number.h"
 
@@ -33,9 +34,7 @@ namespace storm {
 	}
 
 	static Long longReadS(ObjIStream *from) {
-		Long r;
-		from->readPrimitiveValue(longId, &r);
-		return r;
+		return Serialize<Long>::read(from);
 	}
 
 	static void longWrite(Long v, OStream *to) {
@@ -43,9 +42,7 @@ namespace storm {
 	}
 
 	static void longWriteS(Long v, ObjOStream *to) {
-		to->startPrimitive(longId);
-		to->to->writeLong(v);
-		to->end();
+		Serialize<Long>::write(v, to);
 	}
 
 	LongType::LongType(Str *name, GcType *type) : Type(name, typeValue | typeFinal, Size::sLong, type, null) {}
@@ -136,9 +133,7 @@ namespace storm {
 	}
 
 	static Word wordReadS(ObjIStream *from) {
-		Word r;
-		from->readPrimitiveValue(wordId, &r);
-		return r;
+		return Serialize<Word>::read(from);
 	}
 
 	static void wordWrite(Word v, OStream *to) {
@@ -146,9 +141,7 @@ namespace storm {
 	}
 
 	static void wordWriteS(Word v, ObjOStream *to) {
-		to->startPrimitive(wordId);
-		to->to->writeWord(v);
-		to->end();
+		Serialize<Word>::write(v, to);
 	}
 
 	WordType::WordType(Str *name, GcType *type) : Type(name, typeValue | typeFinal, Size::sWord, type, null) {}

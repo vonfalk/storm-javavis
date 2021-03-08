@@ -4,6 +4,8 @@
 #include "StrBuf.h"
 #include "CloneEnv.h"
 #include "Protocol.h"
+#include "Serialization.h"
+#include "SerializationUtils.h"
 #include "Core/Convert.h"
 #include "Core/Exception.h"
 
@@ -68,33 +70,33 @@ namespace storm {
 
 	Url::Url() : flags(nothing) {
 		parts = new (this) Array<Str *>();
+		protocol = new (this) RelativeProtocol();
 	}
 
 	Url::Url(Protocol *p, Array<Str *> *parts) : protocol(p), parts(parts), flags(nothing) {
+		dbg_assert(p, L"Need a protocol!");
 		validate(this->parts);
 		simplifyInplace(this->parts);
 	}
 
-	Url::Url(Array<Str *> *parts) : protocol(null), parts(parts), flags(nothing) {
+	Url::Url(Array<Str *> *parts) : protocol(new (engine()) RelativeProtocol()), parts(parts), flags(nothing) {
 		validate(this->parts);
 		simplifyInplace(this->parts);
 	}
 
 	Url::Url(Protocol *p, Array<Str *> *parts, UrlFlags flags) : protocol(p), parts(parts), flags(flags) {
+		dbg_assert(p, L"Need a protocol!");
 		validate(this->parts);
 		simplifyInplace(this->parts);
 	}
 
-	Url::Url(Array<Str *> *parts, UrlFlags flags) : protocol(null), parts(parts), flags(flags) {
+	Url::Url(Array<Str *> *parts, UrlFlags flags) : protocol(new (engine()) RelativeProtocol()), parts(parts), flags(flags) {
 		validate(this->parts);
 		simplifyInplace(this->parts);
 	}
 
 	void Url::toS(StrBuf *to) const {
-		if (protocol)
-			*to << protocol;
-		else
-			*to << L"./";
+		*to << protocol;
 
 		if (parts->count() > 0)
 			*to << parts->at(0);
@@ -106,6 +108,34 @@ namespace storm {
 			*to << L"/";
 	}
 
+	Url::Url(ObjIStream *from) {
+		// Read data here so that we can initialize Url later.
+		protocol = (Protocol *)Protocol::read(from);
+		parts = Serialize<Array<Str *> *>::read(from);
+		flags = UrlFlags(Serialize<Nat>::read(from));
+	}
+
+	SerializedType *Url::serializedType(EnginePtr e) {
+		SerializedStdType *t = serializedStdType<Url>(e.v);
+		t->add(new (e.v) Str(S("protocol")), StormInfo<Protocol>::type(e.v));
+		t->add(new (e.v) Str(S("parts")), StormInfo<Array<Str *>>::type(e.v));
+		t->add(new (e.v) Str(S("flags")), StormInfo<Nat>::type(e.v));
+		return t;
+	}
+
+	Url *Url::read(ObjIStream *from) {
+		return (Url *)from->readClass(StormInfo<Url>::type(from->engine()));
+	}
+
+	void Url::write(ObjOStream *to) const {
+		if (to->startClass(StormInfo<Url>::type(engine()), (Object *)this)) {
+			protocol->write(to);
+			Serialize<Array<Str *> *>::write(parts, to);
+			Serialize<Nat>::write(Nat(flags), to);
+			to->end();
+		}
+	}
+
 	void Url::deepCopy(CloneEnv *e) {
 		cloned(parts, e);
 	}
@@ -114,26 +144,15 @@ namespace storm {
 		if (!sameType(this, &o))
 			return false;
 
-		if (protocol && o.protocol) {
-			if (*protocol != *o.protocol)
-				return false;
-		} else if (!protocol && !o.protocol) {
-			// OK.
-		} else {
+		if (*protocol != *o.protocol)
 			return false;
-		}
 
 		if (parts->count() != o.parts->count())
 			return false;
 
 		for (Nat i = 0; i < parts->count(); i++) {
-			if (protocol) {
-				if (!protocol->partEq(parts->at(i), o.parts->at(i)))
-					return false;
-			} else {
-				if (*parts->at(i) != *o.parts->at(i))
-					return false;
-			}
+			if (!protocol->partEq(parts->at(i), o.parts->at(i)))
+				return false;
 		}
 
 		return true;
@@ -141,14 +160,8 @@ namespace storm {
 
 	Nat Url::hash() const {
 		Nat r = 5381;
-		if (protocol) {
-			for (nat i = 0; i < parts->count(); i++) {
-				r = ((r << 5) + r) + protocol->partHash(parts->at(i));
-			}
-		} else {
-			for (nat i = 0; i < parts->count(); i++) {
-				r = ((r << 5) + r) + parts->at(i)->hash();
-			}
+		for (nat i = 0; i < parts->count(); i++) {
+			r = ((r << 5) + r) + protocol->partHash(parts->at(i));
 		}
 		return r;
 	}
@@ -224,7 +237,7 @@ namespace storm {
 	}
 
 	Bool Url::absolute() const {
-		return protocol != null;
+		return protocol->absolute();
 	}
 
 	Str *Url::name() const {
@@ -299,7 +312,7 @@ namespace storm {
 		for (nat i = equalTo; i < parts->count(); i++)
 			rel->push(parts->at(i));
 
-		return new (this) Url(null, rel, flags);
+		return new (this) Url(rel, flags);
 	}
 
 	/**
@@ -308,43 +321,31 @@ namespace storm {
 
 	// Find all children URL:s.
 	Array<Url *> *Url::children() {
-		if (!protocol)
-			throw new (this) ProtocolNotSupported(S("children"), S("<none>"));
 		return protocol->children(this);
 	}
 
 	// Open this Url for reading.
 	IStream *Url::read() {
-		if (!protocol)
-			throw new (this) ProtocolNotSupported(S("read"), S("<none>"));
 		return protocol->read(this);
 	}
 
 	// Open this Url for writing.
 	OStream *Url::write() {
-		if (!protocol)
-			throw new (this) ProtocolNotSupported(S("write"), S("<none>"));
 		return protocol->write(this);
 	}
 
 	// Does this Url exist?
 	Bool Url::exists() {
-		if (!protocol)
-			throw new (this) ProtocolNotSupported(S("exists"), S("<none>"));
 		return protocol->exists(this);
 	}
 
 	// Create a directory.
 	Bool Url::createDir() {
-		if (!protocol)
-			throw new (this) ProtocolNotSupported(S("createDir"), S("<none>"));
 		return protocol->createDir(this);
 	}
 
 	// Format.
 	Str *Url::format() {
-		if (!protocol)
-			throw new (this) ProtocolNotSupported(S("format"), S("<none>"));
 		return protocol->format(this);
 	}
 
@@ -378,7 +379,7 @@ namespace storm {
 			start = src + 2;
 		// Relative path?
 		else
-			protocol = null;
+			protocol = new (e) RelativeProtocol();
 
 		if (*start == 0)
 			return new (e) Url(protocol, parts, flags);

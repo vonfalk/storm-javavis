@@ -1,3 +1,4 @@
+use core:io;
 use util:serialize;
 
 /**
@@ -35,10 +36,9 @@ class AuthResponse : extends Response, serializable {
  */
 class AuthLoginReply : extends Response, serializable {
 	// URL to redirect the user to.
-	// TODO: Allow Url to be serializable.
-	Str[] url;
+	Url url;
 
-	init(Str[] url) {
+	init(Url url) {
 		init { url = url; }
 	}
 }

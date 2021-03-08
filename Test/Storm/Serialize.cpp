@@ -27,6 +27,9 @@ BEGIN_TEST(Serialize, BS) {
 	// Custom serialization.
 	CHECK(runFn<Bool>(S("tests.bs.customSerialization")));
 
+	// Serialization of Url.
+	CHECK(runFn<Bool>(S("tests.bs.urlSerialization")));
+
 } END_TEST
 
 

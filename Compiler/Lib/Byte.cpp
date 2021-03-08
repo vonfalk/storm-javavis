@@ -4,6 +4,7 @@
 #include "Core/Hash.h"
 #include "Core/Str.h"
 #include "Core/Io/Serialization.h"
+#include "Core/Io/SerializationUtils.h"
 #include "Function.h"
 #include "Number.h"
 
@@ -23,9 +24,7 @@ namespace storm {
 	}
 
 	Byte byteReadS(ObjIStream *from) {
-		Byte r;
-		from->readPrimitiveValue(byteId, &r);
-		return r;
+		return Serialize<Byte>::read(from);
 	}
 
 	void byteWrite(Byte b, OStream *to) {
@@ -33,9 +32,7 @@ namespace storm {
 	}
 
 	void byteWriteS(Byte b, ObjOStream *to) {
-		to->startPrimitive(byteId);
-		to->to->writeByte(b);
-		to->end();
+		Serialize<Byte>::write(b, to);
 	}
 
 

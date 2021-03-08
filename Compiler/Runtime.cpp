@@ -54,9 +54,24 @@ namespace storm {
 			return mangleName(t->path());
 		}
 
-		MAYBE(Type *) fromIdentifier(Str *name) {
+		static Type *CODECALL fromIdentifierI(Str *name) {
 			Engine &e = name->engine();
 			return lookupMangledName(e.scope(), name);
+		}
+
+		MAYBE(Type *) fromIdentifier(Str *name) {
+			// Note: This needs to be thread-safe!
+			// It is called during deserialization (for example) to find types. This may be
+			// done on other threads than the compiler thread.
+			const os::Thread &t = Compiler::thread(name->engine())->thread();
+			if (t != os::Thread::current()) {
+				os::Future<Type *> f;
+				os::FnCall<Type *> p = os::fnCall().add(name);
+				os::UThread::spawn(address(&fromIdentifierI), false, p, f, &t);
+				return f.result();
+			} else {
+				return fromIdentifierI(name);
+			}
 		}
 
 		bool isValue(Type *t) {

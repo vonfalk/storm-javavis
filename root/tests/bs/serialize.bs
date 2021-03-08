@@ -38,6 +38,8 @@ class Data : serializable {
 	}
 
 	// Write the members in another order. Should still be readable by 'read'.
+	// Note: Earlier the Employee class was shuffled as well. Since we now refer to Types directly,
+	// we can no longer do that.
 	void writeShuffled(ObjOStream to) {
 		SerializedStdType desc(named{Data}, &__init(Data, ObjIStream));
 		desc.add("b", named{core:Int});
@@ -48,10 +50,10 @@ class Data : serializable {
 
 		if (to.startClass(desc, this)) {
 			b.write(to);
-			data2.writeShuffled(to);
-			data3.writeShuffled(to);
+			data2.write(to);
+			data3.write(to);
 			a.write(to);
-			data1.writeShuffled(to);
+			data1.write(to);
 			to.end();
 		}
 	}
@@ -218,23 +220,6 @@ class Employee : serializable {
 		ok;
 	}
 
-	SerializedType shuffledType() : static {
-		SerializedStdType desc(named{Employee}, &__init(Employee, ObjIStream));
-		desc.add("salary", named{Salary});
-		desc.add("name", named{Str});
-		desc.add("coolness", named{Int});
-		desc;
-	}
-
-	void writeShuffled(ObjOStream to) {
-		if (to.startClass(shuffledType(), this)) {
-			salary.write(to);
-			name.write(to);
-			coolness.write(to);
-			to.end();
-		}
-	}
-
 	void toS(StrBuf to) {
 		to << "Employee: { name: " << name << ", coolness: " << coolness << ", salary: " << salary << " }";
 	}
@@ -252,20 +237,6 @@ class Manager : extends Employee, serializable {
 		name = "Mr. " # name;
 		coolness *= 10;
 		salary.amount *= 10;
-	}
-
-	SerializedType shuffledType() : static {
-		SerializedStdType desc(named{Manager}, &__init(Manager, ObjIStream), Employee:shuffledType());
-		desc.add("title", named{Str});
-		desc;
-	}
-
-	void writeShuffled(ObjOStream to) {
-		if (to.startClass(shuffledType(), this)) {
-			super:writeShuffled(to);
-			title.write(to);
-			to.end();
-		}
 	}
 
 	Bool compare(Employee other) {
@@ -306,7 +277,7 @@ class CustomData : serializable {
 	}
 
 	void write(ObjOStream to) {
-		if (to.startClass(serializedType, this)) {
+		if (to.startClass(named{CustomData}, this)) {
 			a.byte.write(to.to);
 			b.byte.write(to.to);
 			to.end();
@@ -527,6 +498,22 @@ Bool customSerialization() {
 	var copy = CustomData:read(objIn);
 
 	data.compare(copy);
+}
+
+// URL serialization.
+Bool urlSerialization() {
+	Url url = cwdUrl() / "test.bs";
+
+	MemOStream out;
+	ObjOStream objOut(out);
+	url.write(objOut);
+
+	// showString(out.buffer);
+
+	ObjIStream objIn(MemIStream(out.buffer));
+	var copy = Url:read(objIn);
+
+	copy.toS == url.toS;
 }
 
 // Simple measurements of serialization performance.

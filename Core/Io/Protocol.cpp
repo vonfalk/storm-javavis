@@ -5,6 +5,8 @@
 #include "Str.h"
 #include "StrBuf.h"
 #include "FileStream.h"
+#include "Serialization.h"
+#include "SerializationUtils.h"
 
 #ifdef WINDOWS
 #include <Shlwapi.h>
@@ -74,6 +76,65 @@ namespace storm {
 		return runtime::typeOf(this) == runtime::typeOf(&o);
 	}
 
+	SerializedType *Protocol::serializedType(EnginePtr e) {
+		SerializedStdType *type = serializedStdType<Protocol>(e.v);
+		// No data.
+		return type;
+	}
+
+	Protocol *Protocol::read(ObjIStream *from) {
+		return (Protocol *)from->readClass(StormInfo<Protocol>::type(from->engine()));
+	}
+
+	void Protocol::write(ObjOStream *to) {
+		if (to->startClass(StormInfo<Protocol>::type(engine()), this)) {
+			to->end();
+		}
+	}
+
+	Protocol::Protocol(ObjIStream *from) {
+		from->end();
+	}
+
+
+	/**
+	 * Protocol for relative paths.
+	 */
+
+	RelativeProtocol::RelativeProtocol() {}
+
+	Bool RelativeProtocol::partEq(Str *a, Str *b) {
+		return *a == *b;
+	}
+
+	Nat RelativeProtocol::partHash(Str *part) {
+		return part->hash();
+	}
+
+	void RelativeProtocol::toS(StrBuf *to) const {
+		*to << S("./");
+	}
+
+	SerializedType *RelativeProtocol::serializedType(EnginePtr e) {
+		SerializedStdType *type = serializedStdType<RelativeProtocol, Protocol>(e.v);
+		// No data.
+		return type;
+	}
+
+	RelativeProtocol *RelativeProtocol::read(ObjIStream *from) {
+		return (RelativeProtocol *)from->readClass(StormInfo<RelativeProtocol>::type(from->engine()));
+	}
+
+	void RelativeProtocol::write(ObjOStream *to) {
+		if (to->startClass(StormInfo<RelativeProtocol>::type(engine()), this)) {
+			Protocol::write(to);
+			to->end();
+		}
+	}
+
+	RelativeProtocol::RelativeProtocol(ObjIStream *from) : Protocol(from) {
+		from->end();
+	}
 
 	/**
 	 * File protocol.
@@ -85,6 +146,27 @@ namespace storm {
 #ifndef WINDOWS
 		*to << L"/";
 #endif
+	}
+
+	SerializedType *FileProtocol::serializedType(EnginePtr e) {
+		SerializedStdType *type = serializedStdType<FileProtocol, Protocol>(e.v);
+		// No data.
+		return type;
+	}
+
+	FileProtocol *FileProtocol::read(ObjIStream *from) {
+		return (FileProtocol *)from->readClass(StormInfo<FileProtocol>::type(from->engine()));
+	}
+
+	void FileProtocol::write(ObjOStream *to) {
+		if (to->startClass(StormInfo<FileProtocol>::type(engine()), this)) {
+			Protocol::write(to);
+			to->end();
+		}
+	}
+
+	FileProtocol::FileProtocol(ObjIStream *from) : Protocol(from) {
+		from->end();
 	}
 
 #ifdef WINDOWS
@@ -256,35 +338,42 @@ namespace storm {
 		return a->hash();
 	}
 
-	Str *HttpProtocol::format(Url *url) {
-		throw new (this) ProtocolNotSupported(S("format"), S("http"));
-	}
-
-	Array<Url *> *HttpProtocol::children(Url *url) {
-		throw new (this) ProtocolNotSupported(S("children"), S("http"));
-	}
-
-	IStream *HttpProtocol::read(Url *url) {
-		throw new (this) ProtocolNotSupported(S("read"), S("http"));
-	}
-
-	OStream *HttpProtocol::write(Url *url) {
-		throw new (this) ProtocolNotSupported(S("write"), S("http"));
-	}
-
-	Bool HttpProtocol::exists(Url *url) {
-		throw new (this) ProtocolNotSupported(S("exists"), S("http"));
-	}
-
-	Bool HttpProtocol::createDir(Url *url) {
-		return false;
-	}
-
 	void HttpProtocol::toS(StrBuf *to) const {
 		if (secure)
 			*to << S("https://");
 		else
 			*to << S("http://");
+	}
+
+	Bool HttpProtocol::operator ==(const Protocol &o) const {
+		if (!Protocol::operator ==(o))
+			return false;
+
+		const HttpProtocol &other = (const HttpProtocol &)o;
+		return secure == other.secure;
+	}
+
+	SerializedType *HttpProtocol::serializedType(EnginePtr e) {
+		SerializedStdType *type = serializedStdType<HttpProtocol, Protocol>(e.v);
+		type->add(S("secure"), StormInfo<Bool>::type(e.v));
+		return type;
+	}
+
+	HttpProtocol *HttpProtocol::read(ObjIStream *from) {
+		return (HttpProtocol *)from->readClass(StormInfo<HttpProtocol>::type(from->engine()));
+	}
+
+	void HttpProtocol::write(ObjOStream *to) {
+		if (to->startClass(StormInfo<HttpProtocol>::type(engine()), this)) {
+			Protocol::write(to);
+			Serialize<Bool>::write(secure, to);
+			to->end();
+		}
+	}
+
+	HttpProtocol::HttpProtocol(ObjIStream *from) : Protocol(from) {
+		secure = Serialize<Bool>::read(from);
+		from->end();
 	}
 
 }

@@ -58,8 +58,7 @@ class Client {
 			username = response.name;
 			print("Username: ${username}");
 		} else if (response as AuthLoginReply) {
-			Url url(HttpProtocol(true), response.url);
-			throw SignInRedirect(url);
+			throw SignInRedirect(response.url);
 		}
 	}
 

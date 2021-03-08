@@ -72,7 +72,7 @@ class ServerClient on Server {
 				send(AuthResponse(user.name));
 				return true;
 			} else {
-				send(AuthLoginReply(["storm-lang.org"]));
+				send(AuthLoginReply(httpsUrl("storm-lang.org") / "login.php"));
 				return false;
 			}
 		} else {

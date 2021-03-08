@@ -4,6 +4,7 @@
 #include "Core/Hash.h"
 #include "Core/Str.h"
 #include "Core/Io/Serialization.h"
+#include "Core/Io/SerializationUtils.h"
 #include "Function.h"
 #include "Number.h"
 
@@ -28,9 +29,7 @@ namespace storm {
 	}
 
 	static Int intReadS(ObjIStream *from) {
-		Int r;
-		from->readPrimitiveValue(intId, &r);
-		return r;
+		return Serialize<Int>::read(from);
 	}
 
 	static void intWrite(Int v, OStream *to) {
@@ -38,9 +37,7 @@ namespace storm {
 	}
 
 	static void intWriteS(Int v, ObjOStream *to) {
-		to->startPrimitive(intId);
-		to->to->writeInt(v);
-		to->end();
+		Serialize<Int>::write(v, to);
 	}
 
 	IntType::IntType(Str *name, GcType *type) : Type(name, typeValue | typeFinal, Size::sInt, type, null) {}
@@ -128,9 +125,7 @@ namespace storm {
 	}
 
 	static Nat natReadS(ObjIStream *from) {
-		Nat r;
-		from->readPrimitiveValue(natId, &r);
-		return r;
+		return Serialize<Nat>::read(from);
 	}
 
 	static void natWrite(Nat v, OStream *to) {
@@ -138,9 +133,7 @@ namespace storm {
 	}
 
 	static void natWriteS(Nat v, ObjOStream *to) {
-		to->startPrimitive(natId);
-		to->to->writeNat(v);
-		to->end();
+		Serialize<Nat>::write(v, to);
 	}
 
 

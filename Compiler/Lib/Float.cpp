@@ -3,6 +3,7 @@
 #include "Function.h"
 #include "Number.h"
 #include "Core/Io/Serialization.h"
+#include "Core/Io/SerializationUtils.h"
 
 namespace storm {
 	using namespace code;
@@ -116,9 +117,7 @@ namespace storm {
 	}
 
 	static Float floatReadS(ObjIStream *from) {
-		Float r;
-		from->readPrimitiveValue(floatId, &r);
-		return r;
+		return Serialize<Float>::read(from);
 	}
 
 	static void floatWrite(Float v, OStream *to) {
@@ -126,9 +125,7 @@ namespace storm {
 	}
 
 	static void floatWriteS(Float v, ObjOStream *to) {
-		to->startPrimitive(floatId);
-		to->to->writeFloat(v);
-		to->end();
+		Serialize<Float>::write(v, to);
 	}
 
 	FloatType::FloatType(Str *name, GcType *type) : Type(name, typeValue | typeFinal, Size::sFloat, type, null) {}
@@ -286,9 +283,7 @@ namespace storm {
 	}
 
 	static Double doubleReadS(ObjIStream *from) {
-		Double r;
-		from->readPrimitiveValue(doubleId, &r);
-		return r;
+		return Serialize<Double>::read(from);
 	}
 
 	static void doubleWrite(Double v, OStream *to) {
@@ -296,9 +291,7 @@ namespace storm {
 	}
 
 	static void doubleWriteS(Double v, ObjOStream *to) {
-		to->startPrimitive(doubleId);
-		to->to->writeDouble(v);
-		to->end();
+		Serialize<Double>::write(v, to);
 	}
 
 	DoubleType::DoubleType(Str *name, GcType *type) : Type(name, typeValue | typeFinal, Size::sDouble, type, null) {}
