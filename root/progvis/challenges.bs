@@ -1,7 +1,7 @@
 use ui;
 use layout;
 use core:geometry;
-use progvis;
+use progvis:net;
 
 window ChallengesDlg {
 	layout Grid {
@@ -9,7 +9,7 @@ window ChallengesDlg {
 		expandCol: 1;
 		Label usernameLbl("Nickname:") {}
 		Label username("") {}
-		Button logout("Log out") {}
+		ui:Button logout("Log out") {}
 	}
 
 	private MainWin mainWindow;
@@ -22,12 +22,12 @@ window ChallengesDlg {
 		}
 
 		username.text = client.username;
-		logout.onClick = &this.logout(Button);
+		logout.onClick = &this.logout(ui:Button);
 
 		create();
 	}
 
-	private void logout(Button b) {
+	private void logout(ui:Button b) {
 		// I know we're blocking the UI thread here...
 		client.query(LogoutRequest());
 
