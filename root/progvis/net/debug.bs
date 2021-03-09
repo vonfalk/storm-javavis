@@ -10,7 +10,7 @@ void debugClient() {
 	debugClient("storm-lang.org");
 }
 
-private void debugClient(Str host) {
+private void debugClient(Str host) on Network {
 	sleep(10 ms);
 	try {
 		Client c(host);
@@ -24,7 +24,7 @@ private void debugClient(Str host) {
 	}
 }
 
-private void debugServer() on Server {
+private void debugServer() on Network {
 	try {
 		serverMain();
 	} catch (Exception e) {

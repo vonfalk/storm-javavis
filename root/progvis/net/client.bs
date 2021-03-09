@@ -42,7 +42,7 @@ private NetStream connectOrThrow(Str host, Nat port) {
 /**
  * Connection to the server.
  */
-class Client {
+class Client on Network {
 	// Authenticates the user.
 	init(Str host) {
 		NetStream socket = connectOrThrow(host, serverPort);
@@ -55,9 +55,9 @@ class Client {
 
 		var response = query(AuthRequest(clientIdentity()));
 		if (response as AuthResponse) {
-			username = response.name;
-			print("Username: ${username}");
-		} else if (response as AuthLoginReply) {
+			uName = response.name;
+			print("Username: ${uName}");
+		} else if (response as AuthLoginResponse) {
 			throw SignInRedirect(response.url);
 		}
 	}
@@ -66,7 +66,8 @@ class Client {
 	private ObjIStream input;
 	private ObjOStream output;
 
-	private Str username;
+	private Str uName;
+	Str username() { uName; }
 
 	// Perform a query to the server.
 	Response query(Request request) {
@@ -77,5 +78,10 @@ class Client {
 		if (reply as ErrorResponse)
 			throw ServerError(reply.message);
 		reply;
+	}
+
+	// Close the connection.
+	void close() {
+		socket.close();
 	}
 }

@@ -1,0 +1,38 @@
+use ui;
+use layout;
+use core:geometry;
+use progvis;
+
+window ChallengesDlg {
+	layout Grid {
+		wrapCols: 3;
+		expandCol: 1;
+		Label usernameLbl("Nickname:") {}
+		Label username("") {}
+		Button logout("Log out") {}
+	}
+
+	private MainWin mainWindow;
+	private Client client;
+
+	init(MainWin mainWindow, Client client) {
+		init("Challenges", Size(500, 400)) {
+			mainWindow = mainWindow;
+			client = client;
+		}
+
+		username.text = client.username;
+		logout.onClick = &this.logout(Button);
+
+		create();
+	}
+
+	private void logout(Button b) {
+		// I know we're blocking the UI thread here...
+		client.query(LogoutRequest());
+
+		mainWindow.clearClient();
+		client.close();
+		close();
+	}
+}

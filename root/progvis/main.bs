@@ -3,6 +3,7 @@ use layout;
 use graphics;
 use core:geometry;
 use core:io;
+use progvis:net;
 use lang:bs:macro;
 
 /**
@@ -27,6 +28,9 @@ class MainWin extends Frame {
 	// Currently open file(s).
 	private Url[] currentFiles;
 
+	// Current client connection, if any.
+	private Client? client;
+
 	init() {
 		init("Progvis", Size(800, 800)) {}
 
@@ -34,6 +38,8 @@ class MainWin extends Frame {
 		fileMenu << Menu:Text("Open file...", &this.onOpen());
 		// fileMenu << Menu:Text("Open task...", &this.onOpenTask());
 		fileMenu << Menu:Text("Reload program", &this.onReload());
+		fileMenu << Menu:Separator();
+		fileMenu << Menu:Text("Online challenges...", &this.onOnline());
 
 		PopupMenu runMenu;
 		runMenu << Menu:Text("Restart", &this.onRestart());
@@ -99,6 +105,31 @@ class MainWin extends Frame {
 			showMessage(this, "Error", "You need to open a file before you can reload it.");
 		else
 			open(currentFiles);
+	}
+
+	private void onOnline() {
+		if (client) {
+			ChallengesDlg(this, client);
+		} else {
+			(spawn bgConnect()).detach();
+		}
+	}
+
+	private void bgConnect() {
+		try {
+			Client c("storm-lang.org");
+			this.client = c;
+			ChallengesDlg(this, c);
+		} catch (SignInRedirect redirect) {
+			showMessage(this, "Sign in", "You need to sign in before using the online features. Click OK to continue.");
+			core:sys:open(redirect.to);
+		} catch (ServerError error) {
+			showMessage(this, "Error", "The server returned an error: ${error.message}");
+		}
+	}
+
+	public void clearClient() {
+		client = null;
 	}
 
 	private void onRestart() {

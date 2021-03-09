@@ -2,7 +2,7 @@ use core:io;
 use core:net;
 
 // Thread.
-thread Server;
+thread Network;
 
 // Port to listen to.
 Nat serverPort() { 21337; }
@@ -11,7 +11,7 @@ Nat serverPort() { 21337; }
 /**
  * Connection to a client on the server.
  */
-class ServerClient on Server {
+class ServerClient on Network {
 	init(NetStream stream, Database db) {
 		init {
 			socket = stream;
@@ -28,6 +28,9 @@ class ServerClient on Server {
 
 	// Authenticated user ID.
 	private Int userId;
+
+	// Client key for this user (for logout mainly).
+	private Str clientKey;
 
 	// Run the communication with this client.
 	void run() {
@@ -49,12 +52,17 @@ class ServerClient on Server {
 	private Bool handleMessage() {
 		try {
 			Request request = Request:read(input);
-			// Handle message...
+
+			if (request as LogoutRequest) {
+				db.logout(clientKey);
+				send(LogoutResponse());
+			} else {
+				error("Unknown message.");
+			}
 
 		} catch (Exception e) {
 			print("Exception in the server: ${e}");
-			ErrorResponse(e.message).write(output);
-			output.flush();
+			error(e.message);
 			socket.close();
 			return false;
 		}
@@ -69,12 +77,13 @@ class ServerClient on Server {
 			print("Checking for user: ${request.key}...");
 			if (user = db.findUser(request.key)) {
 				userId = user.id;
+				clientKey = request.key;
 				send(AuthResponse(user.name));
 				return true;
 			} else {
 				// Note: This is fine since we know that the key is URL-safe.
 				Url url = httpsUrl("storm-lang.org") / "progvis" / ("login.php?id=" + request.key);
-				send(AuthLoginReply(url));
+				send(AuthLoginResponse(url));
 				return false;
 			}
 		} else {
@@ -96,7 +105,7 @@ class ServerClient on Server {
 }
 
 // Run the server.
-void serverMain() on Server {
+void serverMain() on Network {
 	unless (listener = listen(serverPort))
 		throw ServerError("Failed to listen to ${serverPort}!");
 

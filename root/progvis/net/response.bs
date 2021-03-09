@@ -34,7 +34,7 @@ class AuthResponse : extends Response, serializable {
 /**
  * Authentication response. The user must sign in separately.
  */
-class AuthLoginReply : extends Response, serializable {
+class AuthLoginResponse : extends Response, serializable {
 	// URL to redirect the user to.
 	Url url;
 
@@ -42,3 +42,8 @@ class AuthLoginReply : extends Response, serializable {
 		init { url = url; }
 	}
 }
+
+/**
+ * Reply for the logout request. No data.
+ */
+class LogoutResponse : extends Response, serializable {}

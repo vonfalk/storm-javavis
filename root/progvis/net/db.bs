@@ -21,7 +21,7 @@ DATABASE ProgvisDB {
 	);
 }
 
-class Database on Server {
+class Database on Network {
 	init() {
 		SQLite db(cwdUrl / "progvis.db");
 
@@ -38,6 +38,11 @@ class Database on Server {
 			return UserInfo(x.users_id, x.users_displayName);
 		}
 		null;
+	}
+
+	// Log out a client.
+	void logout(Str clientId) {
+		WITH db: DELETE FROM clients WHERE id == clientId;
 	}
 }
 
