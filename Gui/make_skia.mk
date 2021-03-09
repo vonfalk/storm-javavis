@@ -38,6 +38,7 @@ CODEC := SkMasks.cpp
 SOURCES := $(wildcard $(addsuffix /*.cpp,$(addprefix src/,$(SOURCE_DIRS)))) $(wildcard $(addprefix src/ports/,$(PORTS))) $(wildcard $(addprefix src/codec/,$(CODEC)))
 SOURCES := $(filter-out src/sksl/SkSLMain.cpp,$(SOURCES)) # Remove the main file...
 SOURCES := $(filter-out src/gpu/gl/GrGLMakeNativeInterface_none.cpp,$(SOURCES))
+SOURCES := $(filter-out src/gpu/GrPathRendering_none.cpp,$(SOURCES))
 LIB_SOURCES := $(wildcard $(addsuffix /src/*.cpp,$(addprefix modules/,$(SKIA_LIBS))))
 LIB_SOURCES := $(filter-out %_coretext.cpp,$(LIB_SOURCES))
 OBJECTS := $(patsubst src/%.cpp,out/%.o,$(SOURCES))
