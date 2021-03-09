@@ -13,6 +13,7 @@ private void debugClient() {
 		print("We're in!");
 	} catch (SignInRedirect redirect) {
 		print("We need to sign in... ${redirect.to}");
+	core:sys:open(redirect.to);
 	} catch (Exception e) {
 		print("Exception from the client:");
 		print(e.toS);

@@ -72,7 +72,9 @@ class ServerClient on Server {
 				send(AuthResponse(user.name));
 				return true;
 			} else {
-				send(AuthLoginReply(httpsUrl("storm-lang.org") / "login.php"));
+				// Note: This is fine since we know that the key is URL-safe.
+				Url url = httpsUrl("storm-lang.org") / "progvis" / ("login.php?id=" + request.key);
+				send(AuthLoginReply(url));
 				return false;
 			}
 		} else {
