@@ -2,14 +2,18 @@
  * Entry-point for debugging.
  */
 void debugMain() {
-	(spawn debugClient()).detach();
+	(spawn debugClient("localhost")).detach();
 	debugServer();
 }
 
-private void debugClient() {
+void debugClient() {
+	debugClient("storm-lang.org");
+}
+
+private void debugClient(Str host) {
 	sleep(10 ms);
 	try {
-		Client c("localhost");
+		Client c(host);
 		print("We're in!");
 	} catch (SignInRedirect redirect) {
 		print("We need to sign in... ${redirect.to}");
