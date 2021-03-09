@@ -10,7 +10,7 @@
 #elif defined(POSIX)
 
 #include <sys/types.h>
-#include <fnctl.h>
+#include <fcntl.h>
 #include <unistd.h>
 
 #endif
@@ -70,7 +70,7 @@ namespace ssl {
 		if (fd < 0)
 			throw new (this) InternalError(S("Failed to open /dev/urandom to acquire randomness."));
 
-		fnctl(fd, F_SETFD, FD_CLOEXEC);
+		fcntl(fd, F_SETFD, FD_CLOEXEC);
 		data = size_t(fd + 1);
 	}
 
