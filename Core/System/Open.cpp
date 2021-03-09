@@ -20,15 +20,13 @@ namespace storm {
 			msg = S("Out of memory.");
 			break;
 		case ERROR_FILE_NOT_FOUND:
-		case SE_ERR_FNF:
 			msg = S("File not found.");
 			break;
 		case ERROR_PATH_NOT_FOUND:
-		case SE_ERR_PNF:
 			msg = S("Path not found.");
 			break;
 		case SE_ERR_ACCESSDENIED:
-			msg = s("Access denied.");
+			msg = S("Access denied.");
 			break;
 		case SE_ERR_ASSOCINCOMPLETE:
 		case SE_ERR_NOASSOC:
