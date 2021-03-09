@@ -7,7 +7,7 @@ DATABASE ProgvisDB {
 		// User id. Used in other tables.
 		id INTEGER PRIMARY KEY,
 		// User name.
-		name TEXT,
+		name TEXT ALLOW NULL,
 		// User display name.
 		displayName TEXT
 	);
