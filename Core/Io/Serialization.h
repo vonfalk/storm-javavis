@@ -305,6 +305,18 @@ namespace storm {
 		Str *w;
 	};
 
+	/**
+	 * End of stream while reading from an object stream. Does not save a trace.
+	 */
+	class EXCEPTION_EXPORT EndOfStream : public Exception {
+		STORM_EXCEPTION;
+	public:
+		STORM_CTOR EndOfStream() {}
+
+		virtual void STORM_FN message(StrBuf *to) const {
+			*to << S("End of stream while reading an object.");
+		}
+	};
 
 	/**
 	 * Input stream for objects.

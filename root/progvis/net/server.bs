@@ -47,6 +47,8 @@ class ServerClient on Network {
 			print("Unhandled exception in the server:");
 			print(e.toS);
 		}
+
+		socket.close();
 	}
 
 	private Bool handleMessage() {
@@ -60,10 +62,12 @@ class ServerClient on Network {
 				error("Unknown message.");
 			}
 
+		} catch (EndOfStream eos) {
+			print("End of stream. Exiting.");
+			return false;
 		} catch (Exception e) {
 			print("Exception in the server: ${e}");
 			error(e.message);
-			socket.close();
 			return false;
 		}
 

@@ -389,6 +389,16 @@ namespace storm {
 
 		if (depth->empty()) {
 			// First type. Read its id from the stream.
+
+			if (!from->more())
+				throw new (this) EndOfStream();
+
+			// Check so that we have some data. "more" might turn "false" first when we try to read stuff.
+			GcPreArray<Byte, 1> d;
+			Buffer b = from->peek(emptyBuffer(d));
+			if (b.empty())
+				throw new (this) EndOfStream();
+
 			r.expectedType = from->readNat();
 			return r;
 		}
