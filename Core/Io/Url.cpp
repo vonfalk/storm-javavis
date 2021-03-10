@@ -226,8 +226,9 @@ namespace storm {
 	Url *Url::parent() const {
 		Array<Str *> *p = new (this) Array<Str *>();
 
-		for (nat i = 0; i < parts->count() - 1; i++)
-			p->push(parts->at(i));
+		if (parts->any())
+			for (nat i = 0; i < parts->count() - 1; i++)
+				p->push(parts->at(i));
 
 		return new (this) Url(protocol, p, flags | isDir);
 	}

@@ -32,7 +32,8 @@ namespace storm {
 				if (Expr *setter = findSetter(block, lhs, rhs))
 					return setter;
 
-				Str *msg = TO_S(engine(), S("Unable to assign to the value ") << l << S(". ")
+				Str *msg = TO_S(engine(), S("Unable to assign a ") << rhs->result().type().asRef(false) <<
+								S(" to the value ") << l << S(". ")
 								S("It is only possible to assign to references (such as variables), ")
 								S("and if an assignment function is available."));
 				throw new (this) SyntaxError(pos, msg);

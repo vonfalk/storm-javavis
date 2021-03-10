@@ -349,6 +349,9 @@ namespace storm {
 		// Indicate the end of an object.
 		void STORM_FN end();
 
+		// Close the underlying stream.
+		void STORM_FN close() { from->close(); }
+
 	private:
 		// Description of a member.
 		//
@@ -561,6 +564,9 @@ namespace storm {
 
 		// Flush the stream.
 		void STORM_FN flush() { to->flush(); }
+
+		// Close the underlying stream.
+		void STORM_FN close() { to->close(); }
 
 	private:
 		// Keep track of how the serialization is progressing. Used as a stack.

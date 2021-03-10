@@ -166,6 +166,8 @@ namespace storm {
 	Url *executableFileUrl(Engine &e);
 	Url *executableUrl(Engine &e);
 	Url *dbgRootUrl(Engine &e);
+
+	// Get the current working directory.
 	Url *STORM_FN cwdUrl(EnginePtr e);
 
 	// Create an HTTP/HTTPS url for a domain name.
