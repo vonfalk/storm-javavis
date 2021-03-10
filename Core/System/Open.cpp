@@ -41,6 +41,77 @@ namespace storm {
 			throw new (file) SystemError(TO_S(file, S("Failed to open ") << file << S(": ") << msg));
 	}
 
+	// Escape the string so that it can be read back by most C programs on Windows. Adds quotes around it.
+	static void escapeStr(StrBuf *out, Str *input) {
+		*out << Char('"');
+
+		Nat slashes = 0;
+		for (Str::Iter i = input->begin(); i != input->end(); ++i) {
+			if (i.v().codepoint() == '\\') {
+				slashes++;
+			} else if (i.v().codepoint() == '"') {
+				// If we have slashes right before the ", then we need to double those since they
+				// are interpreted as an escape character in this particular context.
+				for (Nat i = 0; i < slashes; i++)
+					*out << Char('\\');
+				*out << Char('"');
+				slashes = 0;
+			} else {
+				slashes = 0;
+			}
+
+			*out << i.v();
+		}
+
+		// If we have slashes here, we need to double them once more.
+		for (Nat i = 0; i < slashes; i++)
+			*out << Char('\\');
+		*out << Char('"');
+	}
+
+	// Convert parameters to a string.
+	static Str *strParams(Str *program, Array<Str *> *params) {
+		StrBuf *out = new (program) StrBuf();
+		escapeStr(out, program);
+
+		for (Nat i = 0; i < params->count(); i++) {
+			*out << Char(' ');
+			escapeStr(out, params->at(i));
+		}
+
+		return out->toS();
+	}
+
+	void execute(Url *file, Array<Str *> *params) {
+		STARTUPINFO info;
+		zeroMem(info);
+		info.cb = sizeof(info);
+
+		PROCESS_INFORMATION out;
+
+		Str *f = file->toS();
+		const wchar *p = strParams(f, params)->c_str();
+		if (!CreateProcess(f->c_str(), (LPWSTR)p, NULL, NULL, FALSE, 0, NULL, NULL, &info, &out)) {
+			const wchar *error = S("Unknown error.");
+			switch (GetLastError()) {
+			case ERROR_FILE_NOT_FOUND:
+				error = S("File not found.");
+				break;
+			case ERROR_PATH_NOT_FOUND:
+				error = S("Path not found.");
+				break;
+			case ERROR_ACCESS_DENIED:
+				error = S("Access denied.");
+				break;
+			}
+
+			throw new (file) SystemError(TO_S(file, S("Failed to launch ") << file << S(": ") << error));
+		}
+
+		CloseHandle(out.hProcess);
+		CloseHandle(out.hThread);
+	}
+
 }
 
 #elif defined(POSIX)
@@ -168,6 +239,34 @@ namespace storm {
 			throw new (file) SystemError(TO_S(file, S("Failed to open: ") << file));
 	}
 
+	void execute(Url *file, Array<Str *> *params) {
+		const char *cParam = new const char *[params->count() + 2];
+		try {
+			// If "file" is relative and only has a single part, then don't output "./" in front of
+			// it. That would probably inhibit the ability to look in PATH.
+			if (!file->absolute()) {
+				Array<Str *> *parts = file->getParts();
+				if (parts->count() == 1) {
+					cParam[0] = parts->at(0)->utf8_str();
+				} else {
+					cParam[0] = file->toS()->utf8_str();
+				}
+			} else {
+				cParam[0] = file->toS()->utf8_str();
+			}
+
+			for (Nat i = 0; i < params->count(); i++)
+				cParam[i + 1] = params->at(i)->toS();
+			cParam[params->count() + 1] = NULL;
+
+			execute(file->engine(), cParam, false);
+
+			delete []params;
+		} catch (...) {
+			delete []params;
+			throw;
+		}
+	}
 }
 
 #endif
