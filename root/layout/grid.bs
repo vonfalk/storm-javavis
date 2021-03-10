@@ -233,7 +233,7 @@ private:
 		Float[] result(rows, 0.0);
 		Nat width = 1;
 		while (width > 0) {
-			width = minStep(width, 0, result);
+			width = minStep(width, 0, result, rowWeights);
 		}
 		result;
 	}
@@ -243,7 +243,7 @@ private:
 		Float[] result(cols, 0);
 		Nat width = 1;
 		while (width > 0) {
-			width = minStep(width, 1, result);
+			width = minStep(width, 1, result, colWeights);
 		}
 		result;
 	}
@@ -257,7 +257,7 @@ private:
 	}
 
 	// Compute one step of the min-width process, or 0 if none. Returns the next larger size to examine.
-	Nat minStep(Nat current, Nat dim, Float[] result) {
+	Nat minStep(Nat current, Nat dim, Float[] result, Nat[] weights) {
 		Nat next = 0;
 		for (c in children) {
 			Float space = pick(dim, border);
@@ -281,9 +281,24 @@ private:
 
 				// ... and grow them if necessary.
 				if (sum < size) {
-					Float grow = (size - sum) / span.int.float;
+					// To make it look nicer, we grow according to the weights. Otherwise it will
+					// appear that the weights are not respected if two columns contain small things
+					// and a large thing spanned over the two columns.
+					Nat totalWeight = 0;
 					for (Nat x = 0; x < span; x++)
-						result[x + pos] += grow;
+						totalWeight += weights[x + pos];
+
+					if (totalWeight == 0) {
+						// Just equalize it. We have no other weights.
+						Float grow = (size - sum) / span.int.float;
+						for (Nat x = 0; x < span; x++)
+							result[x + pos] += grow;
+					} else {
+						// Respect the weights.
+						Float grow = (size - sum) / totalWeight.int.float;
+						for (Nat x = 0; x < span; x++)
+							result[x + pos] += grow * weights[x + pos].int.float;
+					}
 				}
 			}
 		}
