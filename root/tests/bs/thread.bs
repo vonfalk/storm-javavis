@@ -289,6 +289,39 @@ void spawnVoid() {
 	fut.result;
 }
 
+Int captureVal(CloneDerived v) {
+	v.c;
+}
+
+Int captureValO(CloneDerived v) on Other {
+	v.c;
+}
+
+CloneDerived returnVal() {
+	CloneDerived();
+}
+
+Int asyncPostSame() {
+	CloneDerived v;
+	var future = spawn captureVal(v);
+	future.result;
+}
+
+Int asyncReturnSame() {
+	var future = spawn returnVal();
+	future.result.c;
+}
+
+Int asyncPostSameThread() {
+	asyncPostSameI();
+}
+
+Int asyncPostSameI() on Other {
+	CloneDerived v;
+	var future = spawn captureValO(v);
+	future.result;
+}
+
 
 class ActorVar on Other {
 	// Public value that we will try to get from another thread.

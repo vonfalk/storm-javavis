@@ -173,14 +173,21 @@ namespace storm {
 		// Same as 'threadCall', but assumes 'result' is a pointer to where the result is to be stored.
 		void STORM_FN threadCallRef(CodeGen *to, Array<code::Operand> *params, code::Operand result, code::Operand thread);
 
+		// Generate code for this function call, asuming we want to do an async code. Examines the
+		// thread "affinity" of this function and clones parameters whenever needed. Like "autoCall"
+		// but returns a Future. The variant with "id" returns the newly created thread ID there.
+		void STORM_FN asyncAutoCall(CodeGen *to, Array<code::Operand> *params, CodeResult *result);
+		void STORM_FN asyncAutoCall(CodeGen *to, Array<code::Operand> *params, CodeResult *result, CodeResult *id);
+
+		// Generate code for this function call, but assume we never need to clone our
+		// parameters. Much like "localCall", but returns a Future. Always spawns the new UThread on
+		// the current Thread.
+		void STORM_FN asyncLocalCall(CodeGen *to, Array<code::Operand> *params, CodeResult *result);
+		void STORM_FN asyncLocalCall(CodeGen *to, Array<code::Operand> *params, CodeResult *result, CodeResult *id);
+
 		// Generate code for this function call, assuming we want to run on a different thread,
 		// returning a Future object. If 'thread' is left out, the current thread is used.
-		void STORM_FN asyncThreadCall(CodeGen *to, Array<code::Operand> *params, CodeResult *result, code::Operand thread);
 		void STORM_FN asyncThreadCall(CodeGen *to, Array<code::Operand> *params, CodeResult *result);
-
-		// Generate code for this function call, assuming we want to run on a different
-		// thread. Returning a Word with the newly created thread ID as well as the future.
-		void STORM_FN asyncThreadCall(CodeGen *to, Array<code::Operand> *params, CodeResult *future, CodeResult *id, code::Operand thread);
 		void STORM_FN asyncThreadCall(CodeGen *to, Array<code::Operand> *params, CodeResult *future, CodeResult *id);
 
 	private:
@@ -213,6 +220,9 @@ namespace storm {
 		// Generate code for a direct function call.
 		void localCall(CodeGen *to, Array<code::Operand> *params, CodeResult *result, code::Ref ref);
 		void localCallRef(CodeGen *to, Array<code::Operand> *params, code::Operand result, code::Ref ref);
+
+		// Helper for the async function call.
+		void asyncCall(CodeGen *to, Array<code::Operand> *params, CodeResult *future, CodeResult *id, bool copy);
 
 		// Add parameters for the function call.
 		void addParams(CodeGen *to, Array<code::Operand> *params);

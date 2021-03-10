@@ -451,12 +451,42 @@ namespace storm {
 
 	}
 
-	void Function::asyncThreadCall(CodeGen *to, Array<code::Operand> *params, CodeResult *result) {
-		asyncThreadCall(to, params, result, ptrConst(Offset()));
+	void Function::asyncAutoCall(CodeGen *to, Array<code::Operand> *params, CodeResult *result) {
+		asyncAutoCall(to, params, result, null);
 	}
 
-	void Function::asyncThreadCall(CodeGen *to, Array<code::Operand> *params, CodeResult *result, code::Operand thread) {
+	void Function::asyncAutoCall(CodeGen *to, Array<code::Operand> *params, CodeResult *result, CodeResult *id) {
+		RunOn r = runOn();
+		if (to->runOn.canRun(r)) {
+			asyncLocalCall(to, params, result, id);
+		} else {
+			asyncThreadCall(to, params, result, id);
+		}
+	}
+
+	void Function::asyncLocalCall(CodeGen *to, Array<code::Operand> *params, CodeResult *result) {
+		asyncLocalCall(to, params, result, null);
+	}
+
+	void Function::asyncLocalCall(CodeGen *to, Array<code::Operand> *params, CodeResult *result, CodeResult *id) {
+		asyncCall(to, params, result, id, false);
+	}
+
+	void Function::asyncThreadCall(CodeGen *to, Array<code::Operand> *params, CodeResult *result) {
+		asyncThreadCall(to, params, result, null);
+	}
+
+	void Function::asyncThreadCall(CodeGen *to, Array<code::Operand> *params, CodeResult *result, CodeResult *id) {
+		asyncCall(to, params, result, id, true);
+	}
+
+	void Function::asyncCall(CodeGen *to, Array<code::Operand> *params, CodeResult *result, CodeResult *id, bool copy) {
 		using namespace code;
+
+		// Figure out what thread to pass to the spawn function.
+		code::Operand thread = ptrConst(0);
+		if (runOn().state != RunOn::any)
+			thread = findThread(to, params);
 
 		Engine &e = engine();
 		CodeGen *sub = to->child();
@@ -466,7 +496,7 @@ namespace storm {
 		params = spillRegisters(sub, params);
 
 		// Create the parameters.
-		Var par = createFnCall(sub, this->params, params, true);
+		Var par = createFnCall(sub, this->params, params, copy);
 
 		// Create the result object.
 		Type *futureT = wrapFuture(e, this->result).type;
@@ -474,47 +504,11 @@ namespace storm {
 		allocObject(sub, futureT->defaultCtor(), new (this) Array<Operand>(), resultPos);
 		result->created(sub);
 
-		// Get the thunk.
-		Ref thunk = Ref(threadThunk());
-
-		TypeDesc *ptr = e.ptrDesc();
-
-		// Spawn the thread!
-		*to->l << lea(ptrA, par);
-		*to->l << fnParam(ptr, ref()); // fn
-		*to->l << fnParam(byteDesc(e), toOp(isMember())); // member
-		*to->l << fnParam(ptr, thunk); // thunk
-		*to->l << fnParam(ptr, ptrA); // params
-		*to->l << fnParam(ptr, resultPos); // result
-		*to->l << fnParam(ptr, thread); // on
-		*to->l << fnCall(e.ref(builtin::spawnFuture), false);
-
-		// Now, we're done!
-		*to->l << end(sub->block);
-	}
-
-	void Function::asyncThreadCall(CodeGen *to, Array<code::Operand> *params, CodeResult *future, CodeResult *id) {
-		asyncThreadCall(to, params, future, id, ptrConst(Offset()));
-	}
-
-	void Function::asyncThreadCall(CodeGen *to, Array<code::Operand> *params, CodeResult *future, CodeResult *id, code::Operand thread) {
-		using namespace code;
-
-		Engine &e = engine();
-		CodeGen *sub = to->child();
-		*to->l << begin(sub->block);
-
-		// Spill any registers to memory if necessary...
-		params = spillRegisters(sub, params);
-
-		// Create the parameters.
-		Var par = createFnCall(sub, this->params, params, true);
-
-		// Create the result object.
-		Type *futureT = wrapFuture(e, this->result).type;
-		code::Var resultPos = future->safeLocation(sub, thisPtr(futureT));
-		allocObject(sub, futureT->defaultCtor(), new (this) Array<Operand>(), resultPos);
-		future->created(sub);
+		// If we don't need copies, tell the future that as well.
+		if (!copy) {
+			*to->l << fnParam(e.ptrDesc(), resultPos);
+			*to->l << fnCall(e.ref(builtin::futureNoClone), true);
+		}
 
 		// Get the thunk.
 		Ref thunk = Ref(threadThunk());
@@ -529,11 +523,15 @@ namespace storm {
 		*to->l << fnParam(ptr, ptrA); // params
 		*to->l << fnParam(ptr, resultPos); // result
 		*to->l << fnParam(ptr, thread); // on
-		*to->l << fnCall(e.ref(builtin::spawnId), false, longDesc(e), rax);
 
-		// Save the thread ID.
-		if (id->needed())
-			*to->l << mov(id->location(to), rax);
+		// Take care of "id" if we need it.
+		if (id) {
+			*to->l << fnCall(e.ref(builtin::spawnId), false, longDesc(e), rax);
+			if (id->needed())
+				*to->l << mov(id->location(to), rax);
+		} else {
+			*to->l << fnCall(e.ref(builtin::spawnFuture), false);
+		}
 
 		// Now, we're done!
 		*to->l << end(sub->block);

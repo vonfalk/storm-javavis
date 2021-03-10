@@ -5,17 +5,17 @@
 
 namespace storm {
 
-	FutureBase::FutureBase(const Handle &type) : handle(type) {
-		data = new (runtime::allocStaticRaw(engine(), &Data::gcType)) Data();
+	FutureBase::FutureBase(const Handle &type) : dataClone(0), handle(type), result(null) {
+		data(new (runtime::allocStaticRaw(engine(), &Data::gcType)) Data());
 		result = (GcArray<byte> *)runtime::allocArray(engine(), type.gcArrayType, 1);
 	}
 
-	FutureBase::FutureBase(const FutureBase &o) : data(o.data), handle(o.handle), result(o.result) {
-		data->addRef();
+	FutureBase::FutureBase(const FutureBase &o) : dataClone(o.dataClone), handle(o.handle), result(o.result) {
+		data()->addRef();
 	}
 
 	FutureBase::~FutureBase() {
-		if (data->release()) {
+		if (data()->release()) {
 			// We are the last one, see if we should free our result as well.
 			// TODO: This can be solved nicer when we can attach destructors to arrays.
 			if (result->filled) {
@@ -25,18 +25,23 @@ namespace storm {
 	}
 
 	void FutureBase::deepCopy(CloneEnv *env) {
-		// We do not need to do anything here.
+		// We need to clone the result now that we have been cloned.
+		setClone();
+	}
+
+	void FutureBase::setNoClone() {
+		dataClone |= size_t(0x1);
 	}
 
 	void FutureBase::postRaw(const void *value) {
 		// Do not post multiple times.
 		if (atomicCAS(result->filled, 0, 1) == 0) {
 			handle.safeCopy(result->v, value);
-			if (handle.deepCopyFn) {
+			if (!noClone() && handle.deepCopyFn) {
 				CloneEnv *e = new (this) CloneEnv();
 				(*handle.deepCopyFn)(result->v, e);
 			}
-			data->future.posted();
+			data()->future.posted();
 		} else {
 			WARNING(L"Trying to re-use a future!");
 		}
@@ -44,7 +49,7 @@ namespace storm {
 
 	void FutureBase::error() {
 		if (atomicCAS(result->filled, 0, 1) == 0) {
-			data->future.error();
+			data()->future.error();
 		} else {
 			WARNING(L"Trying to re-use a future!");
 		}
@@ -59,27 +64,27 @@ namespace storm {
 	}
 
 	void FutureBase::resultRaw(void *to) {
-		data->future.result(&cloneEx, null);
+		data()->future.result(&cloneEx, null);
 
 		handle.safeCopy(to, result->v);
-		if (handle.deepCopyFn) {
+		if (!noClone() && handle.deepCopyFn) {
 			CloneEnv *e = new (this) CloneEnv();
 			(*handle.deepCopyFn)(to, e);
 		}
 	}
 
 	void FutureBase::errorResult() {
-		data->future.result(&cloneEx, null);
+		data()->future.result(&cloneEx, null);
 	}
 
 	void FutureBase::detach() {
-		data->future.detach();
+		data()->future.detach();
 	}
 
 	os::FutureBase *FutureBase::rawFuture() {
-		if (atomicCAS(data->releaseOnResult, 0, 1) == 0)
-			data->addRef();
-		return &data->future;
+		if (atomicCAS(data()->releaseOnResult, 0, 1) == 0)
+			data()->addRef();
+		return &data()->future;
 	}
 
 	FutureBase::FutureSema::FutureSema() : os::FutureSema<os::Sema>() {}

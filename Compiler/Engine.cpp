@@ -429,6 +429,8 @@ namespace storm {
 			return FNREF(FutureBase::postRaw);
 		case builtin::futureResult:
 			return FNREF(FutureBase::resultRaw);
+		case builtin::futureNoClone:
+			return FNREF(FutureBase::setNoClone);
 		case builtin::spawnResult:
 			return FNREF(spawnThreadResult);
 		case builtin::spawnFuture:

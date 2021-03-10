@@ -39,6 +39,8 @@ namespace storm {
 			// Access to 'postRaw' and 'resultRaw' in Future.
 			futurePost,
 			futureResult,
+			// Set a future into "no-clone"-mode.
+			futureNoClone,
 			// Low-level helpers for spawning threads.
 			spawnResult,
 			spawnFuture,

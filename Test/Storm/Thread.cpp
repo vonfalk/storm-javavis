@@ -42,6 +42,12 @@ BEGIN_TEST(BSThread, BS) {
 	CHECK_EQ(runFn<Int>(S("tests.bs.asyncPostVal")), 33);
 	CHECK_RUNS(runFn<void>(S("tests.bs.spawnVoid")));
 
+	// Check 'spawn' to the same thread. This should *not* cause any deep copies (we don't
+	// differentiate between classes and values here - we know that works properly from earlier tests).
+	CHECK_EQ(runFn<Int>(S("tests.bs.asyncPostSame")), 4);
+	CHECK_EQ(runFn<Int>(S("tests.bs.asyncReturnSame")), 4);
+	CHECK_EQ(runFn<Int>(S("tests.bs.asyncPostSameThread")), 4);
+
 	// Check variable accesses in other threads.
 	CHECK_EQ(runFn<Int>(S("tests.bs.threadVarAccess")), 6); // 1 copy, 1 deep copy. Starts at 4.
 	CHECK_ERROR(runFn<void>(S("tests.bs.threadVarAssign")), SyntaxError);

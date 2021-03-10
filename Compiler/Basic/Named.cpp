@@ -60,6 +60,15 @@ namespace storm {
 			to->created(s);
 		}
 
+		// Call async function.
+		static void callAsyncFn(Function *fn, CodeGen *s, Array<code::Operand> *actuals, CodeResult *to, bool sameObject) {
+			if (sameObject) {
+				fn->asyncLocalCall(s, actuals, to);
+			} else {
+				fn->asyncAutoCall(s, actuals, to);
+			}
+		}
+
 
 		/**
 		 * Function call.
@@ -117,15 +126,9 @@ namespace storm {
 
 			// Call!
 			if (async) {
-				// We will here more or less force to run on another uthread, even though we would
-				// not strictly need to in all cases.
-				Function *fn = toExecute;
-				if (fn->runOn().state == RunOn::any) {
-					fn->asyncThreadCall(s, vars, to);
-				} else {
-					code::Var threadVar = fn->findThread(s, vars);
-					fn->asyncThreadCall(s, vars, to, threadVar);
-				}
+				if (!lookup)
+					throw new (this) SyntaxError(pos, S("Can not use 'spawn' with super-calls."));
+				callAsyncFn(toExecute, s, vars, to, sameObject);
 			} else {
 				callFn(toExecute, s, vars, to, lookup, sameObject);
 			}

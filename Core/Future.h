@@ -53,6 +53,12 @@ namespace storm {
 		// Get the place where the result is to be stored.
 		void *rawResult() { return result->v; }
 
+		// Tell this future instance that it does not need to clone the result before returning it.
+		// This is set when we have a future that we know will be posted on the same Thread as the
+		// current thread. We will clear this flag as soon as "deepCopy" is called (which indicates
+		// that we crossed a Thread boundary).
+		void CODECALL setNoClone();
+
 	private:
 		// Custom extension of the 'FutureSema' object, so that we may get a notification when a
 		// result has been posted.
@@ -93,8 +99,16 @@ namespace storm {
 			static const GcType gcType;
 		};
 
+		// Pointer to Data (non-gc-alloc, so this is fine), and whether we can skip cloning the result (lsb).
+		size_t dataClone;
+
 		// Our data (non-gc).
-		Data *data;
+		Data *data() const { return (Data *)(dataClone & ~size_t(0x1)); }
+		void data(Data *to) { dataClone = size_t(to) | (dataClone & 0x1); }
+
+		// Can we skip clone?
+		bool noClone() const { return (dataClone & 0x1) != 0; }
+		void setClone() { dataClone &= ~size_t(0x1); }
 
 		// Handle.
 		const Handle &handle;
