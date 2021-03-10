@@ -142,6 +142,26 @@ namespace gui {
 
 #ifdef GUI_WIN32
 
+	Rect Frame::pos() {
+		if (created()) {
+			RECT r;
+			HWND h = handle().hwnd();
+			GetClientRect(h, &r);
+			POINT a = { r.left, r.top };
+			ClientToScreen(h, &a);
+			POINT b = { r.right, r. bottom };
+			ClientToScreen(h, &b);
+
+			if (parent() != this) {
+				ScreenToClient(parent()->handle().hwnd(), &a);
+				ScreenToClient(parent()->handle().hwnd(), &b);
+			}
+
+			myPos = dpiFromPx(currentDpi(), convert(a, b));
+		}
+		return myPos;
+	}
+
 	void Frame::pos(Rect r) {
 		if (full)
 			return;
@@ -393,6 +413,10 @@ namespace gui {
 
 #endif
 #ifdef GUI_GTK
+
+	Rect Frame::pos() {
+		return Window::pos();
+	}
 
 	void Frame::pos(Rect r) {
 		myPos = r;

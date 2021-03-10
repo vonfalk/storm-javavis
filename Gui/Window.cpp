@@ -319,13 +319,13 @@ namespace gui {
 
 	Rect Window::pos() {
 		if (created()) {
+			// Note: We don't take client borders into account for anything but top-level frames.
 			RECT r;
 			HWND h = handle().hwnd();
-			GetClientRect(h, &r);
+			GetWindowRect(h, &r);
+
 			POINT a = { r.left, r.top };
-			ClientToScreen(h, &a);
 			POINT b = { r.right, r. bottom };
-			ClientToScreen(h, &b);
 
 			if (myParent != this) {
 				ScreenToClient(myParent->handle().hwnd(), &a);
@@ -333,6 +333,12 @@ namespace gui {
 			}
 
 			myPos = dpiFromPx(currentDpi(), convert(a, b));
+
+			// The Edit control has an extra border (painted outside the control). Take that into account.
+			DWORD exStyle = GetWindowLong(h, GWL_EXSTYLE);
+			if (exStyle & WS_EX_CLIENTEDGE) {
+				myPos = myPos.grow(Size(1));
+			}
 		}
 		return myPos;
 	}
@@ -340,12 +346,17 @@ namespace gui {
 	void Window::pos(Rect r) {
 		myPos = r;
 		if (created()) {
-			RECT z = convert(dpiToPx(currentDpi(), r));
 			HWND h = handle().hwnd();
-			DWORD style = GetWindowLong(h, GWL_STYLE);
+
+			// The Edit control has an extra border (painted outside the control). Take that into account.
 			DWORD exStyle = GetWindowLong(h, GWL_EXSTYLE);
-			AdjustWindowRectEx(&z, style, FALSE, exStyle);
-			// Todo: keep track if we need to repaint.
+			if (exStyle & WS_EX_CLIENTEDGE) {
+				r = r.shrink(Size(1));
+			}
+
+			// Note: We don't take client borders into account for anything but top-level frames.
+			RECT z = convert(dpiToPx(currentDpi(), r));
+
 			MoveWindow(h, z.left, z.top, z.right - z.left, z.bottom - z.top, TRUE);
 		}
 	}

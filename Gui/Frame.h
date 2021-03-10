@@ -58,6 +58,9 @@ namespace gui {
 		virtual void STORM_ASSIGN pos(Rect r);
 		using Window::pos;
 
+		// Get position.
+		virtual Rect STORM_FN pos();
+
 		// Set fullscreen mode.
 		void STORM_ASSIGN fullscreen(Bool f);
 		Bool STORM_FN fullscreen();

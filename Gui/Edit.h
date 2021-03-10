@@ -46,7 +46,7 @@ namespace gui {
 #ifdef GUI_GTK
 		// Get/set text.
 		virtual Str *STORM_FN text();
-		virtual void STORM_FN text(Str *text);
+		virtual void STORM_ASSIGN text(Str *text);
 #endif
 
 		// Manipulate the selection.

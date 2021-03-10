@@ -117,7 +117,7 @@ namespace gui {
 		virtual void STORM_ASSIGN text(Str *str);
 
 		// Window position. Always relative to the client area (even in Frames).
-		Rect STORM_FN pos();
+		virtual Rect STORM_FN pos();
 		virtual void STORM_ASSIGN pos(Rect r);
 
 		// Get the minimum size for this window. Note: This does not consider the size and position
