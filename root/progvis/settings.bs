@@ -1,0 +1,153 @@
+use util:serialize;
+use core:io;
+use crypto;
+use ui;
+use layout;
+use core:geometry;
+
+/**
+ * Settings for Progvis.
+ */
+class Settings : serializable {
+	// Create a new instance.
+	init() {
+		init {
+			onlineId = generateId();
+		}
+	}
+
+	// Identity of this instance (for online usage).
+	Str onlineId;
+
+	// Program to use when opening code-files (if specified).
+	Url? customProgram;
+
+	// Load from a file, or create default settings if the file is missing.
+	Settings load(Url from) : static {
+		try {
+			ObjIStream input(from.read());
+			Settings s = Settings:read(input);
+			input.close();
+			return s;
+		} catch (EndOfStream e) {
+			Settings s;
+			// Make sure to persist the random ID.
+			s.save(from);
+			return s;
+		} catch (Exception e) {
+			print("Error loading settings: ${e}");
+			return Settings();
+		}
+	}
+
+	// Load from the default location.
+	Settings load() : static {
+		load(cwdUrl / "progvis_settings");
+	}
+
+	// Save settings to a file.
+	void save(Url to) {
+		ObjOStream output(to.write());
+		write(output);
+		output.close();
+	}
+
+	// Save to the default location.
+	void save() {
+		save(cwdUrl / "progvis_settings");
+	}
+
+	// Open a file given the current configuration.
+	void open(Url file) {
+		if (customProgram) {
+			// Use the program...
+			core:sys:execute(customProgram, [file.toS]);
+		} else {
+			core:sys:open(file);
+		}
+	}
+}
+
+
+private Str generateId() {
+	RandomStream stream;
+	var data = stream.readAll(100);
+	stream.close();
+
+	StrBuf out;
+	for (Nat i = 0; i < data.filled; i++) {
+		out << toChar(data[i]);
+	}
+
+	out.toS;
+}
+
+private Char toChar(Byte b) {
+	Nat scaled = b.nat % (26n * 2n + 10n);
+	if (scaled < 10) {
+		// 0-9
+		Char(0x30 + scaled);
+	} else if (scaled < 36) {
+		// A-Z
+		Char(0x41 + scaled - 10);
+	} else {
+		// a-z
+		Char(0x61 + scaled - 36);
+	}
+}
+
+/**
+ * Settings dialog.
+ */
+dialog SettingsDlg {
+	layout Grid {
+		expandCol: 0;
+		wrapCols: 2;
+		Label progLbl("Editor to use to open the code run inside Progvis (leave blank for default):") { colspan: 2; }
+		nextLine;
+		Edit program("") {}
+		Button pick("Pick a program") {}
+		nextLine;
+		Button ok("Save") { col: 1; }
+	}
+
+	private Settings toEdit;
+
+	init(Settings settings) {
+		init("Settings", Size(300, 50)) {
+			toEdit = settings;
+		}
+
+		if (prog = toEdit.customProgram) {
+			program.text = prog.toS;
+		}
+
+		ok.onClick = &this.onSave(Button);
+		pick.onClick = &this.onPickProg(Button);
+	}
+
+	private void onSave(Button b) {
+		{
+			Str p = program.text;
+			if (p.empty())
+				toEdit.customProgram = null;
+			else
+				toEdit.customProgram = parsePath(p);
+		}
+
+		toEdit.save();
+		close();
+	}
+
+	private void onPickProg(Button b) {
+		FileTypes ft("Programs");
+		// TODO: Switch on the OS here.
+		ft.add("Executable files", ["*.exe", "*"]);
+
+		FilePicker p = FilePicker:open(ft).okLabel("Select");
+		if (!p.show(this))
+			return;
+
+		program.text = p.results[0].toS;
+	}
+}

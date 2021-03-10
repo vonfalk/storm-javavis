@@ -44,7 +44,7 @@ private NetStream connectOrThrow(Str host, Nat port) {
  */
 class Client on Network {
 	// Authenticates the user.
-	init(Str host) {
+	init(Str host, Str identity) {
 		NetStream socket = connectOrThrow(host, serverPort);
 
 		init {
@@ -53,7 +53,7 @@ class Client on Network {
 			output = ObjOStream(socket.output);
 		}
 
-		var response = query(AuthRequest(clientIdentity()));
+		var response = query(AuthRequest(identity));
 		if (response as AuthResponse) {
 			uName = response.name;
 			print("Username: ${uName}");

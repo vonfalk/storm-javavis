@@ -25,15 +25,15 @@ class ThreadData extends Drawable {
 	Bool removeMe;
 
 	// Buttons.
-	Button step;
-	Button pause;
-	Button runSlow;
-	Button runFast;
-	Button runVeryFast;
-	Button removeDead;
+	SmallButton step;
+	SmallButton pause;
+	SmallButton runSlow;
+	SmallButton runFast;
+	SmallButton runVeryFast;
+	SmallButton removeDead;
 
 	// Buttons. Duplicates of the variables for easier layout.
-	Button[] buttons;
+	SmallButton[] buttons;
 
 	// Create.
 	init(ProgThread thread) {

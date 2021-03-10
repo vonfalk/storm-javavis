@@ -9,7 +9,7 @@ window ChallengesDlg {
 		expandCol: 1;
 		Label usernameLbl("Nickname:") {}
 		Label username("") {}
-		ui:Button logout("Log out") {}
+		Button logout("Log out") {}
 	}
 
 	private MainWin mainWindow;
@@ -22,12 +22,12 @@ window ChallengesDlg {
 		}
 
 		username.text = client.username;
-		logout.onClick = &this.logout(ui:Button);
+		logout.onClick = &this.logout(Button);
 
 		create();
 	}
 
-	private void logout(ui:Button b) {
+	private void logout(Button b) {
 		// I know we're blocking the UI thread here...
 		client.query(LogoutRequest());
 

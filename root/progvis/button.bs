@@ -5,7 +5,7 @@ use core:geometry;
 /**
  * A simple button. Given a path to draw as a decoration.
  */
-class Button extends Drawable {
+class SmallButton extends Drawable {
 	private Path path;
 	private Brush fill;
 	private Bool pressed;

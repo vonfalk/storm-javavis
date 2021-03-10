@@ -31,15 +31,22 @@ class MainWin extends Frame {
 	// Current client connection, if any.
 	private Client? client;
 
+	// Settings.
+	private Settings settings;
+
 	init() {
-		init("Progvis", Size(800, 800)) {}
+		init("Progvis", Size(800, 800)) {
+			settings = Settings:load();
+		}
 
 		PopupMenu fileMenu;
-		fileMenu << Menu:Text("Open file...", &this.onOpen());
-		// fileMenu << Menu:Text("Open task...", &this.onOpenTask());
-		fileMenu << Menu:Text("Reload program", &this.onReload());
-		fileMenu << Menu:Separator();
-		fileMenu << Menu:Text("Online challenges...", &this.onOnline());
+		fileMenu << Menu:Text("Open file...", &this.onOpen())
+			<< Menu:Text("Reload program", &this.onReload())
+			<< Menu:Text("Open in editor", &this.onOpenEditor())
+			<< Menu:Separator()
+			<< Menu:Text("Online challenges...", &this.onOnline())
+			<< Menu:Separator()
+			<< Menu:Text("Settings...", &this.onSettings());
 
 		PopupMenu runMenu;
 		runMenu << Menu:Text("Restart", &this.onRestart());
@@ -107,6 +114,18 @@ class MainWin extends Frame {
 			open(currentFiles);
 	}
 
+	private void onOpenEditor() {
+		if (currentFiles.empty()) {
+			showMessage(this, "No files open", "You have no files open currently.");
+		} else {
+			try {
+				settings.open(currentFiles[0]);
+			} catch (Exception e) {
+				showMessage(this, "Filed to launch editor", "Failed to launch the editor: ${e}. Is your configuration correct?");
+			}
+		}
+	}
+
 	private void onOnline() {
 		if (client) {
 			ChallengesDlg(this, client);
@@ -117,7 +136,7 @@ class MainWin extends Frame {
 
 	private void bgConnect() {
 		try {
-			Client c("storm-lang.org");
+			Client c("storm-lang.org", settings.onlineId);
 			this.client = c;
 			ChallengesDlg(this, c);
 		} catch (SignInRedirect redirect) {
@@ -126,6 +145,10 @@ class MainWin extends Frame {
 		} catch (ServerError error) {
 			showMessage(this, "Error", "The server returned an error: ${error.message}");
 		}
+	}
+
+	private void onSettings() {
+		SettingsDlg(settings).show(this);
 	}
 
 	public void clearClient() {

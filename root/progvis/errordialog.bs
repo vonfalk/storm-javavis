@@ -12,7 +12,7 @@ dialog CompileErrorDialog {
 		Label message("") { row: 0; col: 0; colspan: 2; }
 		CodeView code { row: 1; col: 0; colspan: 2; }
 		Label disclaimer("") { row: 2; col: 0; colspan: 2; }
-		ui:Button ok("OK") { row: 3; col: 1; }
+		Button ok("OK") { row: 3; col: 1; }
 	}
 
 	init(Str message, SrcPos pos) {
@@ -24,7 +24,7 @@ dialog CompileErrorDialog {
 
 		this.message.text = message;
 		var me = this;
-		ok.onClick = (ui:Button b) => me.close(0);
+		ok.onClick = (Button b) => me.close(0);
 		code.painter = ErrorPainter(pos);
 
 		Bool useDisclaimer = false;
