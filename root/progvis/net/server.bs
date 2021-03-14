@@ -1,17 +1,11 @@
 use core:io;
 use core:net;
 
-// Thread.
-thread Network;
-
-// Port to listen to.
-Nat serverPort() { 21337; }
-
 
 /**
  * Connection to a client on the server.
  */
-class ServerClient on Network {
+class ServerClient {
 	init(NetStream stream, Database db) {
 		init {
 			socket = stream;
@@ -122,4 +116,16 @@ void serverMain() on Network {
 
 	print("Server terminated!");
 	// TODO: Restart?
+}
+
+// Run a server that accepts a single client.
+void simpleServer() on Network {
+	unless (listener = listen(serverPort))
+		throw ServerError("Failed to listen to ${serverPort}!");
+
+	Database db;
+	if (stream = listener.accept()) {
+		ServerClient client(stream, db);
+		client.run();
+	}
 }

@@ -21,7 +21,7 @@ DATABASE ProgvisDB {
 	);
 }
 
-class Database on Network {
+class Database {
 	init() {
 		SQLite db(cwdUrl / "progvis.db");
 

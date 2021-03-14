@@ -28,6 +28,9 @@ class MainWin extends Frame {
 	// Currently open file(s).
 	private Url[] currentFiles;
 
+	// Host to connect to when going online.
+	private Str onlineUrl;
+
 	// Current client connection, if any.
 	private Client? client;
 
@@ -37,6 +40,7 @@ class MainWin extends Frame {
 	init() {
 		init("Progvis", Size(800, 800)) {
 			settings = Settings:load();
+			onlineUrl = "storm-lang.org";
 		}
 
 		PopupMenu fileMenu;
@@ -77,6 +81,25 @@ class MainWin extends Frame {
 	void close() : override {
 		painter.cleanup();
 		super:close();
+	}
+
+	// For debug mode.
+	assign onlineHost(Str to) {
+		onlineUrl = to;
+	}
+
+	// For testing.
+	public void connect() {
+		if (client.empty)
+			(spawn bgConnect()).detach();
+	}
+
+	// For testing, to ensure that we can terminate the server cleanly.
+	public void disconnect() {
+		if (c = client) {
+			c.close();
+		}
+		client = null;
 	}
 
 	Bool onMouseMove(Point pt) : override {
@@ -136,7 +159,7 @@ class MainWin extends Frame {
 
 	private void bgConnect() {
 		try {
-			Client c("storm-lang.org", settings.onlineId);
+			Client c(onlineUrl, settings.onlineId);
 			this.client = c;
 			ChallengesDlg(this, c);
 		} catch (SignInRedirect redirect) {
@@ -416,12 +439,28 @@ void debug() on Compiler {
 	}
 }
 
-void testCpp() on Compiler {
-	if (url = named{progvis_demo}.url) {
-		if (p = Program:load(url / "cpp.cpp")) {
-			p.run(p.main);
-		} else {
-			print("Failed to run the program!");
-		}
-	}
+// Debug the online capabilities with a local server.
+void debugServer() {
+	named{progvis}.compile();
+
+	spawn simpleServer();
+
+	MainWin win;
+	win.onlineHost = "localhost";
+	win.connect();
+	win.waitForClose();
+	win.disconnect();
+
+	// Wait for the other UThread to realize that we have disconnected.
+	sleep(500 ms);
 }
+
+// void testCpp() on Compiler {
+// 	if (url = named{progvis_demo}.url) {
+// 		if (p = Program:load(url / "cpp.cpp")) {
+// 			p.run(p.main);
+// 		} else {
+// 			print("Failed to run the program!");
+// 		}
+// 	}
+// }

@@ -1,0 +1,5 @@
+// Thread.
+thread Network;
+
+// Port to listen to.
+Nat serverPort() { 21337; }
