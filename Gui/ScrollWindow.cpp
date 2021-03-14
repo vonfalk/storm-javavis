@@ -104,7 +104,7 @@ namespace gui {
 			myFlags |= WS_HSCROLL;
 		if (vScroll)
 			myFlags |= WS_VSCROLL;
-		return createEx(NULL, childFlags | myFlags, 0, parent->handle().hwnd(), id);
+		return createEx(NULL, childFlags | myFlags, WS_EX_CONTROLPARENT, parent->handle().hwnd(), id);
 	}
 
 	void ScrollWindow::horizontal(Bool v) {

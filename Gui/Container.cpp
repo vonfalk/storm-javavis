@@ -113,7 +113,8 @@ namespace gui {
 #ifdef GUI_WIN32
 
 	bool Container::create(ContainerBase *parent, nat id) {
-		return Window::create(parent, id);
+		// Make sure it is a control parent to make tab and control focus work properly.
+		return Window::createEx(NULL, childFlags, WS_EX_CONTROLPARENT, parent->handle().hwnd(), id);
 	}
 
 	MsgResult Container::onMessage(const Message &msg) {
