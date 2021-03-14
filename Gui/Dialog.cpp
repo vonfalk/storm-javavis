@@ -54,19 +54,19 @@ namespace gui {
 		Frame::close();
 	}
 
-	MsgResult Dialog::beforeMessage(const Message &msg) {
+	MsgResult Dialog::onMessage(const Message &msg) {
 		switch (msg.msg) {
-		case WM_KEYDOWN:
-		{
-			Nat key = keycode(msg.wParam);
-			Modifiers mod = modifiers();
-			if (mod == mod::none && key == key::esc) {
-				close();
-				return msgResult(TRUE);
-			} else if (mod == mod::none && key == key::ret) {
-				if (defaultButton) {
-					// Simulate a click.
+		case WM_COMMAND: {
+			nat type = HIWORD(msg.wParam);
+			nat id = LOWORD(msg.wParam);
+
+			if (type == 0) {
+				// Accelerator. Check for IDOK or IDCANCEL.
+				if (id == IDOK) {
 					defaultButton->onCommand(BN_CLICKED);
+					return msgResult(TRUE);
+				} else if (id == IDCANCEL) {
+					close();
 					return msgResult(TRUE);
 				}
 			}

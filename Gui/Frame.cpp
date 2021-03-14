@@ -123,6 +123,10 @@ namespace gui {
 		return null;
 	}
 
+	void Frame::focus(Window *to) {
+		setFocus = to;
+	}
+
 	void Frame::onResize(Size size) {
 		updateMinSize();
 		Window::onResize(size);
@@ -263,6 +267,11 @@ namespace gui {
 
 		if (myMenu) {
 			setMenu(null);
+		}
+
+		// Set focus as requested.
+		if (setFocus) {
+			setFocus->focus();
 		}
 
 		return true;
@@ -495,6 +504,11 @@ namespace gui {
 
 		if (myMenu) {
 			setMenu(null);
+		}
+
+		// Set focus as requested.
+		if (setFocus) {
+			setFocus->focus();
 		}
 
 		return true;

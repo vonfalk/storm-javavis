@@ -364,6 +364,8 @@ namespace gui {
 	void Window::focus() {
 		if (created())
 			SetFocus(handle().hwnd());
+		else if (Frame *f = rootFrame())
+			f->focus(this);
 	}
 
 	void Window::font(Font *font) {
@@ -1107,7 +1109,10 @@ namespace gui {
 	}
 
 	void Window::focus() {
-		gtk_widget_grab_focus(handle().widget());
+		if (created())
+			gtk_widget_grab_focus(handle().widget());
+		else if (Frame *f = rootFrame())
+			f->focus(this);
 	}
 
 	void Window::font(Font *font) {

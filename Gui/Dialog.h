@@ -41,8 +41,8 @@ namespace gui {
 		virtual void STORM_FN onDestroy(Int code);
 
 #ifdef GUI_WIN32
-		// Handle ENTER and ESC.
-		virtual MsgResult beforeMessage(const Message &msg);
+		// Handle the dialog messages.
+		virtual MsgResult onMessage(const Message &msg);
 #endif
 
 	private:

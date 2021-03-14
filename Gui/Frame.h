@@ -80,6 +80,9 @@ namespace gui {
 		// menus associated with this window.
 		MAYBE(Menu::Item *) findMenuItem(Handle handle);
 
+		// Remember to set focus to the particular window on creation.
+		void focus(Window *child);
+
 	protected:
 		// Notification on window resizes.
 		virtual void onResize(Size size);
@@ -105,6 +108,12 @@ namespace gui {
 
 		// Popup menu we're tracking.
 		MAYBE(PopupMenu *) myPopup;
+
+		// Window to assign focus after creation. Only used on Windows currently.
+		MAYBE(Window *) setFocus;
+
+		// Padding due to differences on Windows/Linux (there is a Long in the base class, in the Duration).
+		size_t padding;
 
 		// Cached minimum size. Updated whenever the window is resized.
 		Size lastMinSize;
