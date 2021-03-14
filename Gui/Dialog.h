@@ -36,6 +36,10 @@ namespace gui {
 		// desired.
 		void STORM_ASSIGN defaultChoice(Button *button);
 
+		// Called when the dialog is about to be closed to give the implementation time to save
+		// things before they are destroyed.
+		virtual void STORM_FN onDestroy(Int code);
+
 #ifdef GUI_WIN32
 		// Handle ENTER and ESC.
 		virtual MsgResult beforeMessage(const Message &msg);

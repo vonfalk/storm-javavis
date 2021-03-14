@@ -25,6 +25,8 @@ namespace gui {
 		close(1);
 	}
 
+	void Dialog::onDestroy(Int code) {}
+
 #ifdef GUI_WIN32
 
 	Int Dialog::show(Frame *parent) {
@@ -42,6 +44,7 @@ namespace gui {
 	}
 
 	void Dialog::close(Int result) {
+		onDestroy(result);
 		this->result = result;
 		// Make sure to enable the old window before we remove ourselves.
 		if (parent) {
@@ -122,6 +125,8 @@ namespace gui {
 	}
 
 	void Dialog::close(Int result) {
+		onDestroy(result);
+
 		// If opened as a regular window, it might not be a dialog.
 		if (GTK_IS_DIALOG(handle().widget())) {
 			gtk_dialog_response(GTK_DIALOG(handle().widget()), result);

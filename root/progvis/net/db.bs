@@ -19,6 +19,39 @@ DATABASE ProgvisDB {
 		// User ID.
 		user INTEGER
 	);
+
+	// Problems in the system (all in the form of a concurrent program that might contain a bug).
+	TABLE problems(
+		// ID if this problem.
+		id INTEGER PRIMARY KEY,
+		// Problem author (foreign key to users)
+		author INTEGER,
+		// Title of the problem.
+		title TEXT,
+		// Program source code.
+		source TEXT,
+		// Language (= file extension) of the problem.
+		language TEXT
+	);
+	INDEX ON problems(author);
+
+	// Solutions to problems. A solution is either:
+	// 1. I think this code does not contain any concurrency issues.
+	// 2. I have found a concurrency issue.
+	// 3. I have found a concurrency issue, and I propose a solution.
+	TABLE solutions(
+		// ID of this solution.
+		id INTEGER PRIMARY KEY,
+		// Solution to what problem?
+		to INTEGER,
+		// Author of this solution.
+		author INTEGER,
+		// Solution found (or null, if in case 1 above).
+		solution TEXT ALLOW NULL,
+		// Proposed improvement (another problem, if any)
+		improved INTEGER ALLOW NULL
+	);
+	INDEX ON solutions(author);
 }
 
 class Database {
@@ -43,6 +76,34 @@ class Database {
 	// Log out a client.
 	void logout(Str clientId) {
 		WITH db: DELETE FROM clients WHERE id == clientId;
+	}
+
+	// Change username.
+	void changeName(Int userId, Str newName) {
+		WITH db: UPDATE users SET displayName = newName WHERE id == userId;
+	}
+
+	// Get a list of unsolved problems.
+	Problem[] unsolvedProblems(Int forUser) {
+		Problem[] result;
+		var x = WITH db: SELECT problems.id AS id, displayName, title FROM problems
+			JOIN users ON problems.author == users.id
+			WHERE author != forUser;
+		for (row in x) {
+			var problemId = row.id;
+			if (WITH db: SELECT ONE id FROM solutions WHERE to == problemId) {
+				// Already solved, don't include it.
+				continue;
+			}
+
+			result << Problem(problemId, row.title, row.displayName, countSolved(problemId));
+		}
+
+		result;
+	}
+
+	private Nat countSolved(Int problemId) {
+		WITH db: COUNT FROM solutions WHERE to == problemId;
 	}
 }
 

@@ -54,7 +54,7 @@ class ServerConn {
 	private Bool handleMessage() {
 		try {
 			Request request = Request:read(input);
-			if (response = request.execute(this)) {
+			if (response = request.execute(this, db)) {
 				send(response);
 				return true;
 			} else {

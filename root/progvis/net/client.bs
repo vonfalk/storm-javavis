@@ -77,6 +77,8 @@ class Client on Network {
 		var reply = Response:read(input);
 		if (reply as ErrorResponse)
 			throw ServerError(reply.message);
+		else if (reply as AuthResponse)
+			uName = reply.name;
 		reply;
 	}
 

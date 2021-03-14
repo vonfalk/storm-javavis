@@ -1,0 +1,19 @@
+use ui;
+use layout;
+use core:geometry;
+use progvis:net;
+
+dialog ProblemsDlg {
+	layout Grid {
+		wrapCols: 3;
+		expandCol: 1;
+	}
+
+	private Client client;
+
+	init(Client client) {
+		init("Problems", Size(500, 400)) {
+			client = client;
+		}
+	}
+}

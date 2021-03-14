@@ -34,6 +34,9 @@ class MainWin extends Frame {
 	// Current client connection, if any.
 	private Client? client;
 
+	// The 'online' menu so that we can enable/disable items as we please. The first one is the "sign in" item.
+	private PopupMenu onlineMenu;
+
 	// Settings.
 	private Settings settings;
 
@@ -44,26 +47,38 @@ class MainWin extends Frame {
 		}
 
 		PopupMenu fileMenu;
-		fileMenu << Menu:Text("Open file...", &this.onOpen())
+		fileMenu
+			<< Menu:Text("Open file...", &this.onOpen())
 			<< Menu:Text("Reload program", &this.onReload())
 			<< Menu:Text("Open in editor", &this.onOpenEditor())
-			<< Menu:Separator()
-			<< Menu:Text("Online challenges...", &this.onOnline())
 			<< Menu:Separator()
 			<< Menu:Text("Settings...", &this.onSettings());
 
 		PopupMenu runMenu;
-		runMenu << Menu:Text("Restart", &this.onRestart());
-		runMenu << Menu:Text("Spawn thread", &this.onSpawnThread());
-		runMenu << Menu:Check("Track reads/writes", &this.onTrackMemory(Bool), true);
+		runMenu
+			<< Menu:Text("Restart", &this.onRestart())
+			<< Menu:Text("Spawn thread", &this.onSpawnThread())
+			<< Menu:Check("Track reads/writes", &this.onTrackMemory(Bool), true);
 		painter.trackMemory(true);
+
+		onlineMenu
+			<< Menu:Text("Connect", &this.connect())
+			<< Menu:Text("Disconnect", &this.disconnect())
+			<< Menu:Text("Status...", &this.onOnlineStatus())
+			<< Menu:Text("Problems...", &this.onOnlineProblems())
+			<< Menu:Text("Submit problem...", &this.onOnlineSubmit());
+
+		for (Nat i = 1; i < onlineMenu.count; i++)
+			onlineMenu[i].enabled = false;
 
 		PopupMenu helpMenu;
 		helpMenu << Menu:Text("About...", &this.onAbout());
 
 		MenuBar m;
-		m << Menu:Submenu("File", fileMenu)
+		m
+			<< Menu:Submenu("File", fileMenu)
 			<< Menu:Submenu("Run", runMenu)
+			<< Menu:Submenu("Online", onlineMenu)
 			<< Menu:Submenu("Help", helpMenu);
 
 		menu = m;
@@ -88,10 +103,30 @@ class MainWin extends Frame {
 		onlineUrl = to;
 	}
 
-	// For testing.
+	// Connect in the background.
 	public void connect() {
 		if (client.empty)
 			(spawn bgConnect()).detach();
+	}
+
+	// Function executed in the background to connect.
+	private void bgConnect() {
+		onlineMenu[0].enabled = false;
+
+		try {
+			Client c(onlineUrl, settings.onlineId);
+			this.client = c;
+
+			for (Nat i = 1; i < onlineMenu.count; i++)
+				onlineMenu[i].enabled = true;
+		} catch (SignInRedirect redirect) {
+			showMessage(this, "Sign in", "You need to sign in before using the online features. Click OK to continue.");
+			core:sys:open(redirect.to);
+			onlineMenu[0].enabled = false;
+		} catch (ServerError error) {
+			showMessage(this, "Error", "The server returned an error: ${error.message}");
+			onlineMenu[0].enabled = false;
+		}
 	}
 
 	// For testing, to ensure that we can terminate the server cleanly.
@@ -100,6 +135,10 @@ class MainWin extends Frame {
 			c.close();
 		}
 		client = null;
+
+		for (Nat i = 1; i < onlineMenu.count; i++)
+			onlineMenu[i].enabled = false;
+		onlineMenu[0].enabled = true;
 	}
 
 	Bool onMouseMove(Point pt) : override {
@@ -149,26 +188,19 @@ class MainWin extends Frame {
 		}
 	}
 
-	private void onOnline() {
-		if (client) {
-			ChallengesDlg(this, client);
-		} else {
-			(spawn bgConnect()).detach();
+	private void onOnlineStatus() {
+		if (c = client) {
+			StatusDlg(c).show(this);
 		}
 	}
 
-	private void bgConnect() {
-		try {
-			Client c(onlineUrl, settings.onlineId);
-			this.client = c;
-			ChallengesDlg(this, c);
-		} catch (SignInRedirect redirect) {
-			showMessage(this, "Sign in", "You need to sign in before using the online features. Click OK to continue.");
-			core:sys:open(redirect.to);
-		} catch (ServerError error) {
-			showMessage(this, "Error", "The server returned an error: ${error.message}");
+	private void onOnlineProblems() {
+		if (c = client) {
+			ProblemsDlg(c).show(this);
 		}
 	}
+
+	private void onOnlineSubmit() {}
 
 	private void onSettings() {
 		SettingsDlg(settings).show(this);

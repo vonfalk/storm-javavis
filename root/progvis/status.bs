@@ -1,0 +1,63 @@
+use ui;
+use layout;
+use core:geometry;
+use progvis:net;
+
+dialog StatusDlg {
+	layout Grid {
+		wrapCols: 3;
+		expandCol: 1;
+		Label usernameLbl("Nickname:") {}
+		Label username("") {}
+		Button changeName("Change") {}
+	}
+
+	private Client client;
+
+	init(Client client) {
+		init("Status", Size(200, 100)) {
+			client = client;
+		}
+
+		username.text = client.username;
+		changeName.onClick = &this.onChangeUsername(Button);
+	}
+
+	private void onChangeUsername(Button b) {
+		UsernameDlg dlg;
+		dlg.show(this);
+		Str newName = dlg.name;
+		if (newName.empty)
+			return;
+
+		try {
+			client.query(ChangeNicknameRequest(newName));
+			username.text = newName;
+		} catch (Exception e) {
+			showMessage(this, "Error", e.message);
+		}
+	}
+}
+
+dialog UsernameDlg {
+	layout Grid {
+		expandCol: 1;
+		Label prompt("New nickname:") { row: 0; col: 0; }
+		Edit username("Nickname") { row: 0; col: 1; colspan: 2; }
+		Button ok("OK") { row: 1; col: 2; }
+	}
+
+	Str name;
+
+	init() {
+		init("Change username", Size(200, 10)) {}
+
+		username.focus();
+		defaultChoice(ok);
+	}
+
+	void onDestroy(Int code) : override {
+		if (code == 1)
+			name = username.text;
+	}
+}

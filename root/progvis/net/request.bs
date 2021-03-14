@@ -43,3 +43,28 @@ class LogoutRequest : extends Request, serializable {
 		LogoutResponse();
 	}
 }
+
+/**
+ * Change nickname.
+ */
+class ChangeNicknameRequest : extends Request, serializable {
+	Str newName;
+
+	init(Str newName) {
+		init { newName = newName; }
+	}
+
+	Response? execute(ServerConn server, Database db) : override {
+		db.changeName(server.userId, newName);
+		AuthResponse(newName);
+	}
+}
+
+/**
+ * Ask for unsolved problems.
+ */
+class UnsolvedRequest : extends Request, serializable {
+	Response? execute(ServerConn server, Database db) : override {
+		ProblemResponse(db.unsolvedProblems(server.userId));
+	}
+}

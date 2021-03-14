@@ -47,3 +47,17 @@ class AuthLoginResponse : extends Response, serializable {
  * Reply for the logout request. No data.
  */
 class LogoutResponse : extends Response, serializable {}
+
+/**
+ * Reply containing a list of problems (depending on what was requested).
+ */
+class ProblemResponse : extends Response, serializable {
+	// Problem list.
+	Problem[] problems;
+
+	init(Problem[] problems) {
+		init {
+			problems = problems;
+		}
+	}
+}

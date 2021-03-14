@@ -1,0 +1,28 @@
+use util:serialize;
+
+/**
+ * Misc. data types.
+ */
+
+
+/**
+ * Representation of a single problem (no source code, intended for lists of problems).
+ */
+class Problem : serializable {
+	Int id;
+
+	Str title;
+	Str author;
+
+	// Number of solutions.
+	Nat solutions;
+
+	init(Int id, Str title, Str author, Nat solutions) {
+		init {
+			id = id;
+			title = title;
+			author = author;
+			solutions = solutions;
+		}
+	}
+}
