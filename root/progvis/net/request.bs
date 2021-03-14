@@ -4,7 +4,18 @@ use util:serialize;
  * This class is the base class for all requests (sent from the client to the server). We rely on
  * the built-in serialization for sending and receiving them.
  */
-class Request : serializable {}
+class Request : serializable {
+	// Called by the server to execute the request. Returns a suitable message, or "null" if the
+	// client should be disconnected.
+	Response? execute(ServerConn server, Database db) {
+		error("Unknown message");
+	}
+
+	// Helper to create an error message.
+	protected Response error(Str message) {
+		ErrorResponse(message);
+	}
+}
 
 
 /**
@@ -19,9 +30,16 @@ class AuthRequest : extends Request, serializable {
 	init(Str key) {
 		init { key = key; }
 	}
+
+	// NOTE: This is handled as a special case, so we don't override "execute" here.
 }
 
 /**
  * Log out from this client. No additional data needed.
  */
-class LogoutRequest : extends Request, serializable {}
+class LogoutRequest : extends Request, serializable {
+	Response? execute(ServerConn server, Database db) : override {
+		db.logout(server.clientId);
+		LogoutResponse();
+	}
+}

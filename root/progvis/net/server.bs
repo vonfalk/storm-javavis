@@ -5,7 +5,7 @@ use core:net;
 /**
  * Connection to a client on the server.
  */
-class ServerClient {
+class ServerConn {
 	init(NetStream stream, Database db) {
 		init {
 			socket = stream;
@@ -21,10 +21,16 @@ class ServerClient {
 	private ObjOStream output;
 
 	// Authenticated user ID.
-	private Int userId;
+	private Int myUserId;
 
 	// Client key for this user (for logout mainly).
-	private Str clientKey;
+	private Str myClientId;
+
+	// Get user ID.
+	public Int userId() { myUserId; }
+
+	// Get the client ID.
+	public Str clientId() { myClientId; }
 
 	// Run the communication with this client.
 	void run() {
@@ -48,12 +54,12 @@ class ServerClient {
 	private Bool handleMessage() {
 		try {
 			Request request = Request:read(input);
-
-			if (request as LogoutRequest) {
-				db.logout(clientKey);
-				send(LogoutResponse());
+			if (response = request.execute(this)) {
+				send(response);
+				return true;
 			} else {
-				error("Unknown message.");
+				// No reply, that means we should disconnect.
+				return false;
 			}
 
 		} catch (EndOfStream eos) {
@@ -74,8 +80,8 @@ class ServerClient {
 		if (request as AuthRequest) {
 			print("Checking for user: ${request.key}...");
 			if (user = db.findUser(request.key)) {
-				userId = user.id;
-				clientKey = request.key;
+				myUserId = user.id;
+				myClientId = request.key;
 				send(AuthResponse(user.name));
 				return true;
 			} else {
@@ -110,7 +116,7 @@ void serverMain() on Network {
 	Database db;
 
 	while (stream = listener.accept()) {
-		ServerClient client(stream, db);
+		ServerConn client(stream, db);
 		(spawn client.run()).detach();
 	}
 
@@ -125,7 +131,7 @@ void simpleServer() on Network {
 
 	Database db;
 	if (stream = listener.accept()) {
-		ServerClient client(stream, db);
+		ServerConn client(stream, db);
 		client.run();
 	}
 }
