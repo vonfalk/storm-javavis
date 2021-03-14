@@ -607,12 +607,111 @@ class DeleteQuery extends Query {
 
 
 /**
- * SELECT query.
+ * Common parts for SELECT-like queries (SELECT, SELECT ONE and COUNT currently).
+ *
+ * Handles the logic of JOIN and WHERE clauses.
  */
-class SelectQuery extends Query {
+class SelectBase extends Query {
 	// Table.
 	SStr table;
 
+	/**
+	 * Join statement.
+	 */
+	class Join on Compiler {
+		// Type of join.
+		Str type;
+
+		// Table.
+		SStr table;
+
+		// Condition for join.
+		SQLExpr expr;
+
+		// Create.
+		init(Str type, SStr table, SQLExpr expr) {
+			init {
+				type = type;
+				table = table;
+				expr = expr;
+			}
+		}
+
+		// Build.
+		void build(QueryBuilder to) {
+			to.query << type << " ";
+			to.name(table.v);
+			to.query << " ON ";
+			expr.build(to);
+		}
+
+		// ToS.
+		void toS(StrBuf to) : override {
+			to << type << " " << table.v << " ON " << expr;
+		}
+	}
+
+	// Join clauses.
+	Join[] joins;
+
+	// Where clause, if present.
+	SQLExpr? condition;
+
+	init(SrcPos pos, SStr table, Join[] joins, SQLExpr? condition) {
+		init(pos) {
+			table = table;
+			joins = joins;
+			condition = condition;
+		}
+	}
+
+	// Resolve.
+	void resolve(ResolveContext context) : override {
+		context.addTable(table.pos, table.v);
+
+		for (j in joins) {
+			context.addTable(j.table.pos, j.table.v);
+			// TODO: Might be too early, but I think this is how SQL works.
+			j.expr = j.expr.resolve(context);
+			if (context.typed)
+				checkCondition(j.expr);
+		}
+
+		if (x = condition) {
+			var resolved = x.resolve(context);
+			if (context.typed)
+				checkCondition(resolved);
+			condition = resolved;
+		}
+	}
+
+	// Build the tail of the query (i.e. JOIN and WHERE clauses).
+	protected void buildTail(QueryBuilder to) {
+		for (j in joins) {
+			to.query << " ";
+			j.build(to);
+		}
+
+		if (condition) {
+			to.query << " WHERE ";
+			condition.build(to);
+		}
+	}
+
+	// To string. Once again, only the tail parts.
+	protected void tailToS(StrBuf to) {
+		for (j in joins)
+			to << join;
+		if (condition)
+			to << " WHERE " << condition;
+	}
+}
+
+
+/**
+ * SELECT query.
+ */
+class SelectQuery extends SelectBase {
 	/**
 	 * Column to extract.
 	 */
@@ -685,78 +784,18 @@ class SelectQuery extends Query {
 	// Columns to select. If empty, we assume all columns.
 	Column[] cols;
 
-	/**
-	 * Join statement.
-	 */
-	class Join on Compiler {
-		// Type of join.
-		Str type;
-
-		// Table.
-		SStr table;
-
-		// Condition for join.
-		SQLExpr expr;
-
-		// Create.
-		init(Str type, SStr table, SQLExpr expr) {
-			init {
-				type = type;
-				table = table;
-				expr = expr;
-			}
-		}
-
-		// Build.
-		void build(QueryBuilder to) {
-			to.query << type << " ";
-			to.name(table.v);
-			to.query << " ON ";
-			expr.build(to);
-		}
-
-		// ToS.
-		void toS(StrBuf to) : override {
-			to << type << " " << table.v << " ON " << expr;
-		}
-	}
-
-	// Join clauses.
-	Join[] joins;
-
-	// Where clause, if present.
-	SQLExpr? condition;
-
 	init(SrcPos pos, SStr table, Column[] cols, Join[] joins, SQLExpr? condition) {
-		init(pos) {
-			table = table;
+		init(pos, table, joins, condition) {
 			cols = cols;
-			joins = joins;
-			condition = condition;
 		}
 	}
 
 	// Resolve.
 	void resolve(ResolveContext context) : override {
-		context.addTable(table.pos, table.v);
-
-		for (j in joins) {
-			context.addTable(j.table.pos, j.table.v);
-			// TODO: Might be too early, but I think this is how SQL works.
-			j.expr = j.expr.resolve(context);
-			if (context.typed)
-				checkCondition(j.expr);
-		}
+		super:resolve(context);
 
 		if (context.visible.any)
 			resolveOutput(context);
-
-		if (x = condition) {
-			var resolved = x.resolve(context);
-			if (context.typed)
-				checkCondition(resolved);
-			condition = resolved;
-		}
 	}
 
 	// Resolve the output data.
@@ -816,15 +855,7 @@ class SelectQuery extends Query {
 		r.query << " FROM ";
 		r.name(table.v);
 
-		for (j in joins) {
-			r.query << " ";
-			j.build(r);
-		}
-
-		if (condition) {
-			r.query << " WHERE ";
-			condition.build(r);
-		}
+		buildTail(r);
 
 		r.query << ";";
 		r;
@@ -858,10 +889,7 @@ class SelectQuery extends Query {
 	// To string.
 	void toS(StrBuf to) : override {
 		to << "SELECT " << join(cols, ", ") << " FROM " << table.v;
-		for (j in joins)
-			to << join;
-		if (condition)
-			to << " WHERE " << condition;
+		tailToS(to);
 	}
 }
 
@@ -917,6 +945,48 @@ class SelectOneQuery extends SelectQuery {
 		}
 
 		check;
+	}
+}
+
+/**
+ * COUNT FROM query.
+ *
+ * Works like SELECT COUNT(*) FROM, but clearer. Returns a Nat.
+ */
+class CountQuery extends SelectBase {
+	init(SrcPos pos, SStr table, Join[] joins, SQLExpr? condition) {
+		init(pos, table, joins, condition) {}
+	}
+
+	// Build the query.
+	QueryBuilder build() : override {
+		QueryBuilder r;
+
+		r.query << "SELECT COUNT(*) FROM ";
+		r.name(table.v);
+
+		buildTail(r);
+
+		r.query << ";";
+		r;
+	}
+
+	// Return a Nat representing the number of rows.
+	Expr? result(Block context, Expr statement) {
+		pattern(context) {
+			if (row = ${statement}.fetch()) {
+				row.getLong(0).nat;
+			} else {
+				// This should not happen...
+				0;
+			}
+		};
+	}
+
+	// To string.
+	void toS(StrBuf to) : override {
+		to << "COUNT FROM " << table.v;
+		tailToS(to);
 	}
 }
 

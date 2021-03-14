@@ -32,6 +32,9 @@ suite Simple {
 
 	WITH c: UPDATE test SET name = name || " " || test WHERE id == 2 + 1;
 
+	Nat numRows = WITH c: COUNT FROM test WHERE id > 3;
+	test numRows == 2.nat;
+
 	Bool b = false;
 	var removed = WITH c: DELETE FROM test WHERE id == insertedId AND NOT b;
 

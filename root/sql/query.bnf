@@ -35,6 +35,9 @@ SQuery => SelectQuery(pos, table, cols, joins, condition) : "SELECT" ~ SSelectCo
 // Select one row (or zero):
 SQuery => SelectOneQuery(pos, table, cols, joins, condition) : "SELECT" ~ "ONE" ~ SSelectCols cols ~ "FROM" ~ SName table - SJoins joins - SWhere condition;
 
+// Count rows:
+SQuery => CountQuery(pos, table, joins, condition) : "COUNT" ~ "FROM" ~ SName table - SJoins joins - SWhere condition;
+
 // Create table (only untyped)
 SQuery => CreateQuery(pos, false, table) : "CREATE" ~ "TABLE" ~ SCreateTail table;
 SQuery => CreateQuery(pos, true, table) : "CREATE" ~ "TABLE" ~ "IF" ~ "NOT" ~ "EXISTS" ~ SCreateTail table;
