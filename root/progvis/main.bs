@@ -208,7 +208,16 @@ class MainWin extends Frame {
 		}
 	}
 
-	private void onOnlineSubmit() {}
+	private void onOnlineSubmit() {
+		if (c = client) {
+			if (currentFiles.count != 1 | !painter.hasProgram) {
+				showMessage(this, "Open a source file first", "To create a new problem, start by opening the file you want to upload.");
+				return;
+			}
+
+			UploadDlg(c, currentFiles[0]).show(this);
+		}
+	}
 
 	private void onSettings() {
 		SettingsDlg(settings).show(this);
@@ -310,6 +319,11 @@ class MainPainter extends Painter {
 	// Set whether or not to track reads/writes.
 	void trackMemory(Bool track) {
 		workspace.trackMemory = track;
+	}
+
+	// Do we have an open "program" instance?
+	Bool hasProgram() {
+		program.any;
 	}
 
 	// Open a program.

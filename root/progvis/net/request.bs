@@ -68,3 +68,25 @@ class UnsolvedRequest : extends Request, serializable {
 		ProblemResponse(db.unsolvedProblems(server.userId));
 	}
 }
+
+/**
+ * Publish a new problem.
+ */
+class NewProblemRequest : extends Request, serializable {
+	Str title;
+	Str code;
+	Str language;
+
+	init(Str title, Str code, Str language) {
+		init {
+			title = title;
+			code = code;
+			language = language;
+		}
+	}
+
+	Response? execute(ServerConn server, Database db) : override {
+		var id = db.createProblem(server.userId, title, code, language);
+		NewProblemResponse(id);
+	}
+}

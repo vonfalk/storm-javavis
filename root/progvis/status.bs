@@ -54,10 +54,12 @@ dialog UsernameDlg {
 
 		username.focus();
 		defaultChoice(ok);
+		ok.onClick = &this.done(Button);
 	}
 
-	void onDestroy(Int code) : override {
-		if (code == 1)
-			name = username.text;
+	void done(Button b) {
+		name = username.text;
+		close(1);
 	}
+
 }

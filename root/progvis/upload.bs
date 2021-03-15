@@ -1,0 +1,40 @@
+use ui;
+use layout;
+use progvis:net;
+use core:geometry;
+use core:io;
+
+/**
+ * Dialog for uploading new problems.
+ */
+dialog UploadDlg {
+	layout Grid {
+		expandCol: 1;
+		Label nameLbl("Name:") { row: 0; }
+		Edit name("Name your problem") { row: 0; col: 1; colspan: 2; }
+		Button upload("Upload") { row: 1; col: 2; }
+	}
+
+	Client client;
+	Url file;
+
+	init(Client client, Url file) {
+		init("Submit a problem", Size(300, 10)) {
+			client = client;
+			file = file;
+		}
+
+		defaultChoice(upload);
+		upload.onClick = &this.done(Button);
+	}
+
+	void done(Button b) {
+		try {
+			NewProblemRequest req(name.text, file.readAllText(), file.ext);
+			client.query(req);
+			close(1);
+		} catch (Exception e) {
+			showMessage(this, "Error", "Failed to upload the problem: ${e.message}");
+		}
+	}
+}

@@ -105,6 +105,11 @@ class Database {
 	private Nat countSolved(Int problemId) {
 		WITH db: COUNT FROM solutions WHERE to == problemId;
 	}
+
+	// Create a new problem.
+	Int createProblem(Int user, Str title, Str code, Str language) {
+		WITH db: INSERT INTO problems(author, title, source, language) VALUES (user, title, code, language);
+	}
 }
 
 class UserInfo {
