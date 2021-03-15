@@ -7,8 +7,8 @@ dialog StatusDlg {
 	layout Grid {
 		wrapCols: 3;
 		expandCol: 1;
-		Label usernameLbl("Nickname:") {}
-		Label username("") {}
+		Label usernameLbl("Nickname:", VAlign:center) {}
+		Label username("", VAlign:center) {}
 		Button changeName("Change") {}
 	}
 
@@ -42,7 +42,7 @@ dialog StatusDlg {
 dialog UsernameDlg {
 	layout Grid {
 		expandCol: 1;
-		Label prompt("New nickname:") { row: 0; col: 0; }
+		Label prompt("New nickname:", VAlign:center) { row: 0; col: 0; }
 		Edit username("Nickname") { row: 0; col: 1; colspan: 2; }
 		Button ok("OK") { row: 1; col: 2; }
 	}

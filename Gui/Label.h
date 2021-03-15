@@ -1,17 +1,21 @@
 #pragma once
 #include "Window.h"
+#include "Align.h"
 
 namespace gui {
 
 	/**
 	 * Label for displaying text.
 	 *
-	 * TODO: Allow setting text alignment.
+	 * Default alignment is top-left.
 	 */
 	class Label : public Window {
 		STORM_CLASS;
 	public:
 		STORM_CTOR Label(Str *text);
+		STORM_CTOR Label(Str *text, HAlign halign);
+		STORM_CTOR Label(Str *text, VAlign valign);
+		STORM_CTOR Label(Str *text, HAlign halign, VAlign valign);
 
 #ifdef GUI_GTK
 		using Window::text;
@@ -22,6 +26,10 @@ namespace gui {
 
 	protected:
 		virtual bool create(ContainerBase *parent, nat id);
+
+	private:
+		HAlign hAlign;
+		VAlign vAlign;
 	};
 
 }

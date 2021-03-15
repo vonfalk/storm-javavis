@@ -10,7 +10,7 @@ use core:io;
 dialog UploadDlg {
 	layout Grid {
 		expandCol: 1;
-		Label nameLbl("Name:") { row: 0; }
+		Label nameLbl("Name:", VAlign:center) { row: 0; }
 		Edit name("Name your problem") { row: 0; col: 1; colspan: 2; }
 		Button upload("Upload") { row: 1; col: 2; }
 	}
