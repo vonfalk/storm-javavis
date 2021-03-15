@@ -160,6 +160,8 @@ namespace storm {
 			}
 
 			if (pid == 0) {
+				PLN("In child, calling exec.");
+
 				// Child. Now we can call exec!
 				execvp(params[0], (char **)params);
 
@@ -230,17 +232,19 @@ namespace storm {
 			file->toS()->utf8_str(),
 			NULL
 		};
-		int status = execute(file->engine(), params, true);
-		if (status == 2)
-			throw new (file) SystemError(TO_S(file, S("The file ") << file << S(" does not exist.")));
-		if (status == 3)
-			throw new (file) SystemError(TO_S(file, S("Unable to find a tool for opening ") << file));
-		if (status != 0)
-			throw new (file) SystemError(TO_S(file, S("Failed to open: ") << file));
+		// Note: xdg-open does not always terminate immediately, so we cannot really look at its exit code.
+		execute(file->engine(), params, true);
+		// int status = execute(file->engine(), params, true);
+		// if (status == 2)
+		// 	throw new (file) SystemError(TO_S(file, S("The file ") << file << S(" does not exist.")));
+		// if (status == 3)
+		// 	throw new (file) SystemError(TO_S(file, S("Unable to find a tool for opening ") << file));
+		// if (status != 0)
+		// 	throw new (file) SystemError(TO_S(file, S("Failed to open: ") << file));
 	}
 
 	void execute(Url *file, Array<Str *> *params) {
-		const char *cParam = new const char *[params->count() + 2];
+		const char **cParam = new const char *[params->count() + 2];
 		try {
 			// If "file" is relative and only has a single part, then don't output "./" in front of
 			// it. That would probably inhibit the ability to look in PATH.
@@ -256,7 +260,7 @@ namespace storm {
 			}
 
 			for (Nat i = 0; i < params->count(); i++)
-				cParam[i + 1] = params->at(i)->toS();
+				cParam[i + 1] = params->at(i)->utf8_str();
 			cParam[params->count() + 1] = NULL;
 
 			execute(file->engine(), cParam, false);

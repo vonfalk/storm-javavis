@@ -501,7 +501,7 @@ void debugServer() {
 
 	MainWin win;
 	win.onlineHost = "localhost";
-	win.connect();
+	// win.connect();
 	win.waitForClose();
 	win.disconnect();
 

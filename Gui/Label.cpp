@@ -95,7 +95,7 @@ namespace gui {
 		case vCenter:
 			gtk_widget_set_valign(label, (GtkAlign)GTK_ALIGN_CENTER);
 			break;
-		case vRight:
+		case vBottom:
 			gtk_widget_set_valign(label, (GtkAlign)GTK_ALIGN_END);
 			break;
 		}
