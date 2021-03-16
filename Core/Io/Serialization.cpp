@@ -631,7 +631,7 @@ namespace storm {
 		return startValue(findSerialized(type));
 	}
 
-	Bool ObjOStream::startClass(Type *type, Object *obj) {
+	Bool ObjOStream::startClass(Type *type, const Object *obj) {
 		return startClass(findSerialized(type), obj);
 	}
 
@@ -671,7 +671,7 @@ namespace storm {
 		return true;
 	}
 
-	Bool ObjOStream::startClass(SerializedType *type, Object *v) {
+	Bool ObjOStream::startClass(SerializedType *type, const Object *v) {
 		Type *expected = start(type);
 		if (expected) {
 			// This is the start of a new type.
@@ -686,7 +686,7 @@ namespace storm {
 			writeInfo(expectedDesc);
 
 			// Now, the reader knows what we're talking about. Now we can bother with references...
-			Nat objId = objIds->get(v, objIds->count());
+			Nat objId = objIds->get((Object *)v, objIds->count());
 			to->writeNat(objId);
 
 			if (objId != objIds->count()) {
@@ -699,7 +699,7 @@ namespace storm {
 
 			// New object. Write its actual type.
 			to->writeNat(typeId(type->type) & ~typeMask);
-			objIds->put(v, objId);
+			objIds->put((Object *)v, objId);
 		} else {
 			// This is the parent of an object we're already serializing. We don't need any
 			// additional headers for that, just possibly the class description.

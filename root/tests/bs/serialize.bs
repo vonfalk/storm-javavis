@@ -516,6 +516,23 @@ Bool urlSerialization() {
 	copy.toS == url.toS;
 }
 
+// Version serialization.
+Bool versionSerialization() {
+	unless (version = core:info:parseVersion("1.0.2-test+abc"))
+		return false;
+
+	MemOStream out;
+	ObjOStream objOut(out);
+	version.write(objOut);
+
+	// showString(out.buffer);
+
+	ObjIStream objIn(MemIStream(out.buffer));
+	var copy = core:info:Version:read(objIn);
+
+	copy.toS == version.toS;
+}
+
 // Simple measurements of serialization performance.
 void serializationPerf() {
 	Data original;

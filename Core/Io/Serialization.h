@@ -342,6 +342,12 @@ namespace storm {
 		// described by 'type', even if this is not possible to express in the type system.
 		Object *STORM_FN readClass(Type *type);
 
+		// Helper in C++.
+		template <class T>
+		T *readClass() {
+			return (T *)readClass(StormInfo<T *>::type(engine()));
+		}
+
 		// Read a primitive value of some sort.
 		void readPrimitiveValue(StoredId id, PTR_GC out);
 		Object *readPrimitiveObject(StoredId id);
@@ -545,7 +551,7 @@ namespace storm {
 		// should be serialized, false if it has already been serialized and should be skipped
 		// (including the call to 'end').
 		Bool STORM_FN startValue(Type *type);
-		Bool STORM_FN startClass(Type *type, Object *v);
+		Bool STORM_FN startClass(Type *type, const Object *v);
 
 		// Versions of 'startValue' and 'startClass' where we have previously acquired a
 		// SerializedType instance somehow.
@@ -554,7 +560,13 @@ namespace storm {
 		// a single instance of the SerializedType rather than potentially having to
 		// re-create it multiple times.
 		Bool STORM_FN startValue(SerializedType *type);
-		Bool STORM_FN startClass(SerializedType *type, Object *v);
+		Bool STORM_FN startClass(SerializedType *type, const Object *v);
+
+		// Helper in C++.
+		template <class T>
+		Bool startClass(const T *v) {
+			return startClass(StormInfo<T *>::type(engine()), v);
+		}
 
 		// Indicate the start of serialization of a primitive type.
 		void STORM_FN startPrimitive(StoredId id);

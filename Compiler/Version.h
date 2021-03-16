@@ -42,6 +42,12 @@ namespace storm {
 		// Deep copy.
 		virtual void STORM_FN deepCopy(CloneEnv *env) const;
 
+		// Serialization.
+		static SerializedType *STORM_FN serializedType(EnginePtr e);
+		static Version *STORM_FN read(ObjIStream *from);
+		Version(ObjIStream *from);
+		void STORM_FN write(ObjOStream *to) const;
+
 	protected:
 		// To string.
 		virtual void STORM_FN toS(StrBuf *to) const;

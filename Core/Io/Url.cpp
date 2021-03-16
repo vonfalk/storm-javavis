@@ -117,18 +117,18 @@ namespace storm {
 
 	SerializedType *Url::serializedType(EnginePtr e) {
 		SerializedStdType *t = serializedStdType<Url>(e.v);
-		t->add(new (e.v) Str(S("protocol")), StormInfo<Protocol>::type(e.v));
-		t->add(new (e.v) Str(S("parts")), StormInfo<Array<Str *>>::type(e.v));
-		t->add(new (e.v) Str(S("flags")), StormInfo<Nat>::type(e.v));
+		t->add(S("protocol"), StormInfo<Protocol>::type(e.v));
+		t->add(S("parts"), StormInfo<Array<Str *>>::type(e.v));
+		t->add(S("flags"), StormInfo<Nat>::type(e.v));
 		return t;
 	}
 
 	Url *Url::read(ObjIStream *from) {
-		return (Url *)from->readClass(StormInfo<Url>::type(from->engine()));
+		return from->readClass<Url>();
 	}
 
 	void Url::write(ObjOStream *to) const {
-		if (to->startClass(StormInfo<Url>::type(engine()), (Object *)this)) {
+		if (to->startClass(this)) {
 			protocol->write(to);
 			Serialize<Array<Str *> *>::write(parts, to);
 			Serialize<Nat>::write(Nat(flags), to);

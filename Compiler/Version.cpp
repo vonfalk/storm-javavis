@@ -7,6 +7,8 @@
 #include "Core/Hash.h"
 #include "Core/Join.h"
 #include "Core/Io/Text.h"
+#include "Core/Io/Serialization.h"
+#include "Core/Io/SerializationUtils.h"
 
 #ifdef major
 #undef major
@@ -132,6 +134,41 @@ namespace storm {
 
 		// Note 'build' are ignored in comparisons, so we shall ignore it here as well!
 		return result;
+	}
+
+	SerializedType *Version::serializedType(EnginePtr e) {
+		SerializedStdType *t = serializedStdType<Version>(e.v);
+		Type *natType = StormInfo<Nat>::type(e.v);
+		Type *strArray = StormInfo<Array<Str *>>::type(e.v);
+		t->add(S("major"), natType);
+		t->add(S("minor"), natType);
+		t->add(S("patch"), natType);
+		t->add(S("pre"), strArray);
+		t->add(S("build"), strArray);
+		return t;
+	}
+
+	Version::Version(ObjIStream *from) {
+		major = Serialize<Nat>::read(from);
+		minor = Serialize<Nat>::read(from);
+		patch = Serialize<Nat>::read(from);
+		pre = Serialize<Array<Str *> *>::read(from);
+		build = Serialize<Array<Str *> *>::read(from);
+	}
+
+	Version *Version::read(ObjIStream *from) {
+		return from->readClass<Version>();
+	}
+
+	void Version::write(ObjOStream *to) const {
+		if (to->startClass(this)) {
+			Serialize<Nat>::write(major, to);
+			Serialize<Nat>::write(minor, to);
+			Serialize<Nat>::write(patch, to);
+			Serialize<Array<Str *> *>::write(pre, to);
+			Serialize<Array<Str *> *>::write(build, to);
+			to->end();
+		}
 	}
 
 	static bool parseNat(const wchar *&at, Nat &out) {

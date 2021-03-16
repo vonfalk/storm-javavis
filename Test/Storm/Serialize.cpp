@@ -30,6 +30,9 @@ BEGIN_TEST(Serialize, BS) {
 	// Serialization of Url.
 	CHECK(runFn<Bool>(S("tests.bs.urlSerialization")));
 
+	// Serialization of Version.
+	CHECK(runFn<Bool>(S("tests.bs.versionSerialization")));
+
 } END_TEST
 
 
