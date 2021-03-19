@@ -125,8 +125,9 @@ namespace storm {
 	// Spawn a new process. Properly indicates failures from "execlp" to the parent process.
 	// 'params' is an array of parameters as one would give the execvp() function.
 	// Makes sure we don't have to wait for the child process.
-	// If "monitorExit" is set, then we wait until the process was terminated and return the exit code.
-	static int execute(Engine &e, const char *params[], bool monitorExit = false) {
+	// If "monitorExit" is nonzero, then we wait (maximum of that many seconds) until the process was terminated and
+	// return the exit code. Returns - SIGALRM if the timeout expired.
+	static int execute(Engine &e, const char *params[], nat monitorExit = 0) {
 		// To detect errors in the child, we create a new pipe with the CLOEXEC flag set. As such,
 		// we can wait until the write end is closed. If nothing was written, then we know that
 		// everything went well (at least up to starting the process). Otherwise we write an error
@@ -151,41 +152,43 @@ namespace storm {
 			// Close the read end of the pipe.
 			close(pipeRead);
 
+			// Note: We need to use _exit here, otherwise we might crash in an exit cleanup handler somewhere...
+
 			// Fork once more to avoid zombies.
 			pid = fork();
 			if (pid < 0) {
 				const char *msg = "Failed to spawn a child process.";
-				write(pipeWrite, msg, strlen(msg));
-				exit(1);
+				(void)!write(pipeWrite, msg, strlen(msg));
+				_exit(1);
 			}
 
 			if (pid == 0) {
-				PLN("In child, calling exec.");
-
 				// Child. Now we can call exec!
 				execvp(params[0], (char **)params);
 
 				// If we get here, the call failed.
 				const char *prefix = "Failed to execute the child: ";
 				const char *error = strerror(errno);
-				write(pipeWrite, prefix, strlen(prefix));
-				write(pipeWrite, error, strlen(error));
-				exit(1);
+				(void)!write(pipeWrite, prefix, strlen(prefix));
+				(void)!write(pipeWrite, error, strlen(error));
+				_exit(1);
 			}
 
 			// Parent. See if we should wait for the exit code from the child.
 			if (monitorExit) {
+				alarm(monitorExit);
+
 				int status = 0;
 				waitpid(pid, &status, 0);
 
 				// Forward it.
 				if (WIFEXITED(status))
-					exit(WEXITSTATUS(status));
+					_exit(WEXITSTATUS(status));
 				if (WIFSIGNALED(status))
 					raise(WTERMSIG(status));
 			}
 
-			exit(100);
+			_exit(100);
 		}
 
 		// Close the write end from here.
@@ -233,14 +236,13 @@ namespace storm {
 			NULL
 		};
 		// Note: xdg-open does not always terminate immediately, so we cannot really look at its exit code.
-		execute(file->engine(), params, true);
-		// int status = execute(file->engine(), params, true);
-		// if (status == 2)
-		// 	throw new (file) SystemError(TO_S(file, S("The file ") << file << S(" does not exist.")));
-		// if (status == 3)
-		// 	throw new (file) SystemError(TO_S(file, S("Unable to find a tool for opening ") << file));
-		// if (status != 0)
-		// 	throw new (file) SystemError(TO_S(file, S("Failed to open: ") << file));
+		int status = execute(file->engine(), params, 1);
+		if (status == 2)
+			throw new (file) SystemError(TO_S(file, S("The file ") << file << S(" does not exist.")));
+		if (status == 3)
+			throw new (file) SystemError(TO_S(file, S("Unable to find a tool for opening ") << file));
+		if (status != 0 && status != -SIGALRM)
+			throw new (file) SystemError(TO_S(file, S("Failed to open: ") << file));
 	}
 
 	void execute(Url *file, Array<Str *> *params) {
@@ -263,11 +265,11 @@ namespace storm {
 				cParam[i + 1] = params->at(i)->utf8_str();
 			cParam[params->count() + 1] = NULL;
 
-			execute(file->engine(), cParam, false);
+			execute(file->engine(), cParam);
 
-			delete []params;
+			delete []cParam;
 		} catch (...) {
-			delete []params;
+			delete []cParam;
 			throw;
 		}
 	}
