@@ -70,6 +70,7 @@ namespace os {
 	void FutureBase::posted() {
 		nat p = atomicCAS(resultPosted, resultEmpty, resultValue);
 		assert(p == 0, L"A future may not be used more than once! this=" + ::toHex(this));
+		(void)p; // Avoid warning in release mode.
 		notify();
 	}
 
@@ -80,11 +81,13 @@ namespace os {
 			// Save the exception pointer directly. It may be GC:d.
 			nat p = atomicCAS(resultPosted, resultEmpty, resultErrorPtr);
 			assert(p == resultEmpty, L"A future may not be used more than once! this=" + ::toHex(this));
+			(void)p; // Avoid warning in release mode.
 			savePtrError();
 		} catch (...) {
 			// Fall back on exception_ptr or similar.
 			nat p = atomicCAS(resultPosted, resultEmpty, resultError);
 			assert(p == resultEmpty, L"A future may not be used more than once! this=" + ::toHex(this));
+			(void)p; // Avoid warning in release mode.
 			saveError();
 		}
 		notify();
@@ -306,7 +309,8 @@ namespace os {
 #elif defined(POSIX)
 
 	void FutureBase::throwError() {
-		std::rethrow_exception(*(std::exception_ptr *)exceptionData);
+		void *data = exceptionData;
+		std::rethrow_exception(*(std::exception_ptr *)data);
 	}
 
 	extern "C" void *__cxa_allocate_exception(size_t size);
@@ -341,7 +345,9 @@ namespace os {
 	void FutureBase::cleanError() {
 		if (resultPosted == resultError) {
 			// Destroy it properly.
-			((std::exception_ptr *)exceptionData)->~exception_ptr();
+			void *data = exceptionData;
+			std::exception_ptr *ePtr = (std::exception_ptr *)data;
+			ePtr->~exception_ptr();
 		}
 	}
 
