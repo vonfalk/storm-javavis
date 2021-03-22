@@ -1,0 +1,119 @@
+#!/bin/bash
+
+if [ $# -lt 1 ]
+then
+    echo "Error: Please specify which part of Storm you are building."
+    exit 1
+fi
+
+part=$1
+
+# Fetch mymake if not already present...
+if [ ! -d mymake ]
+then
+    echo "Mymake was not found. Fetching it..."
+    git clone git@fprg.se:mymake.git mymake
+fi
+
+if [ ! -f mymake/mm ]
+then
+    echo "Building mymake..."
+    pushd mymake > /dev/null
+    ./compile.sh mm
+    popd > /dev/null
+fi
+
+export PATH=${STORM_ROOT}/mymake/:$PATH
+
+# Create a temporary ~/.mymake-file...
+export HOME=${STORM_ROOT}/mymake
+rm -f ${STORM_ROOT}/mymake/.mymake
+echo "6" | mm --config > /dev/null
+
+# We need libbacktrace at the moment. I can't find a suitable library for that on Debian (also, it
+# is quite small, so no great problems in my opinion). We could live without it if this is a problem.
+git submodule init Linux/backtrace
+git submodule update Linux/backtrace
+
+
+case $part in
+    core)
+	# Fetch the MPS submodule and make sure it is up to date.
+	git submodule init mps
+	git submodule update mps
+
+	echo "Building the executable..."
+
+	# Construct x.y.z-debian+w (keeping +w only if it was present from the beginning)
+	version=$(find_version | sed -E 's/^([^+]*)(\+?.*)/\1-debian\2/g')
+	echo $version
+
+	echo "core.info" > ${STORM_ROOT}/Compiler/COMPILER.version
+	echo "$version" >> ${STORM_ROOT}/Compiler/COMPILER.version
+
+	mm release mps debian Main
+
+	# TODO: Installation!
+	# Needs: release/Storm -> /usr/bin/storm (not in any package known to dpkg -S)
+	# Also: root/{doc,lang,util} -> /usr/share/storm/
+	;;
+
+    crypto)
+	# Crypto lib. Only depends on "core" above.
+	mm release debian Crypto
+
+	# TODO: Installation! Copy root/crypto => /usr/share/storm/ (renaming the .so-file)
+	;;
+
+    graphics)
+	# Graphics lib. Only depends on "core" above.
+	# Also on the system libraries: libpng, libjpeg
+	mm release debian Graphics
+
+	# TODO: Installation! Copy root/graphics => /usr/share/storm/ (renaming the .so-file)
+	;;
+
+    gui)
+	# GUI lib. Technically does not depend on "graphics", but I will make it so (otherwise we can't load images etc.)
+	# Also on the system libraries: gtk+-3, pango, ...
+	mm release debian nocairogl noskia Gui
+	
+	;;
+
+    plugin)
+	echo "Distributing the Emacs plugin is not implemented yet."
+	exit 1
+	;;
+
+    sound)
+	# Sound library. Only depends on "core" above.
+	# Also depends on the system libraries: libmpg123, libogg, libvorbis, libvorbisfile, libflac, openal
+	mm release debian Sound
+
+	# TODO: Install. Essentially root/sound => /usr/share/storm/ (renaming the .so-file)
+	;;
+
+    sql)
+	# SQL lib. Has its own copy of sqlite3. Even the "sqlite3" binary links statically in Debian, so I think this is fine.
+	mm release debian SQL
+
+	# TODO: Install. Essentially root/sql => /usr/share/storm/ (renaming the .so-file)
+	;;
+
+    progvis)
+	# This does not need to be built.
+	# Depends on "core", "gui", "graphics", "sql"
+	# Also depends on openssl in the system.
+
+	# TODO: Install. Essentially root/progvis, and a startup script containing:
+	# #/bin/dash
+	# exec storm -f progvis.main
+	;;
+
+    *)
+	echo "Unknown part: $part"
+	exit 1
+	;;
+esac
+
+

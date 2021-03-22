@@ -2,7 +2,8 @@
 #include "Sound.h"
 #include "Core/GcType.h"
 #include "Core/Io/Stream.h"
-#include "FLAC/stream_decoder.h"
+#include "flac.h"
+
 
 namespace sound {
 

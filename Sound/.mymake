@@ -3,6 +3,11 @@ package=sound
 input=*
 stormUsingNamespace=storm
 
+# No includes for these. They may refer to files in libraries that are not present.
+noIncludes+=vorbis.h
+noIncludes+=flac.h
+
+[!debian]
 include+=../SoundLib/ogg/include/
 include+=../SoundLib/vorbis/include/
 include+=../SoundLib/flac/include/
@@ -11,7 +16,7 @@ include+=../SoundLib/
 
 #flags+=/d1reportSingleClassLayoutGradientStop
 
-[unix]
+[unix,!debian]
 # Specify the name, so that it works if the "openal.so"-link is missing...
 library+=:libopenal.so.1
 
@@ -21,3 +26,15 @@ flags+=-I../SoundLib/ogg/include/
 
 # Otherwise, GCC reports OV_CALLBACKS_STREAMONLY etc. inside vorbisfile.h as not used.
 flags+=-Wno-unused-variable
+
+[unix,debian]
+
+# This will make it so that SoundLib is not built or linked.
+noIncludes+=mpg123.h
+
+library+=openal
+library+=mpg123
+library+=ogg
+library+=vorbis
+library+=vorbisfile
+library+=FLAC

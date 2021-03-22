@@ -21,6 +21,15 @@
 #define GUI_WIN32
 #define UI_MULTITHREAD
 
+// Disable the GTK backends on win32 in case they were accidentally enabled.
+#ifdef GUI_ENABLE_SKIA
+#undef GUI_ENABLE_SKIA
+#endif
+
+#ifdef GUI_ENABLE_CAIRO_GL
+#undef GUI_ENABLE_CAIRO_GL
+#endif
+
 #else
 
 #define GUI_GTK

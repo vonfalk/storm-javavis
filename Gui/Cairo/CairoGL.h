@@ -7,6 +7,8 @@
 #include <GL/glx.h>
 #include <EGL/egl.h>
 
+#ifdef GUI_ENABLE_CAIRO_GL
+
 /**
  * This file basically contains the definitions from cairo-gl.h. That file is not present
  * everywhere, so we cannot use that file.
@@ -63,4 +65,5 @@ extern "C" {
 
 }
 
+#endif
 #endif

@@ -7,7 +7,7 @@
 #include "Window.h"
 #include "TextMgr.h"
 
-#ifdef GUI_GTK
+#ifdef GUI_ENABLE_CAIRO_GL
 
 namespace gui {
 

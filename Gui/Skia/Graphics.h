@@ -120,7 +120,7 @@ namespace gui {
 		// Render target.
 		SkiaSurface &surface;
 
-#ifdef GUI_GTK
+#ifdef GUI_ENABLE_SKIA
 
 		// Get the paint.
 		SkPaint *paint(Brush *brush, Bool stroke);
@@ -132,7 +132,7 @@ namespace gui {
 		class State {
 			STORM_VALUE;
 		public:
-#ifdef GUI_GTK
+#ifdef GUI_ENABLE_SKIA
 
 			State() {
 				lineWidth = 1.0f;

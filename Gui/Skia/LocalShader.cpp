@@ -1,7 +1,7 @@
 #include "stdafx.h"
 #include "LocalShader.h"
 
-#ifdef GUI_GTK
+#ifdef GUI_ENABLE_SKIA
 
 namespace gui {
 

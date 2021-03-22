@@ -38,7 +38,7 @@ namespace gui {
 		SkiaSurface *surface;
 	};
 
-#ifdef GUI_GTK
+#ifdef GUI_ENABLE_SKIA
 
 	/**
 	 * Simple representation of bitmaps/images.

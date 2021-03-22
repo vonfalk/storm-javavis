@@ -29,31 +29,58 @@ namespace gui {
 			return w->drawWidget();
 	}
 
+	template <class T>
+	Device *create(Engine &e) {
+		return new T(e);
+	}
+
+	struct CreateDevice {
+		const char *name;
+		Device *(*create)(Engine &e);
+	};
+
+	// These are ordered by priority:
+	static CreateDevice devices[] = {
+#ifdef GUI_ENABLE_SKIA
+		{ "skia", &create<SkiaDevice> },
+#endif
+#ifdef GUI_ENABLE_CAIRO_GL
+		{ "gl", &create<CairoGLDevice> },
+#endif
+		{ "gtk", &create<CairoGtkDevice> },
+		{ "software", &create<CairoSwDevice> },
+		{ "sw", &create<CairoSwDevice> },
+	};
+
 	Device *Device::create(Engine &e) {
 		const char *preference = getenv(ENV_RENDER_BACKEND);
+		CreateDevice *selected = null;
 		if (!preference) {
-			// Skia is indeed outperforming the Pango-GL backend, especially in cases with much text.
-			preference = "skia";
+			selected = &devices[0];
+		} else {
+			for (size_t i = 0; i < ARRAY_COUNT(devices); i++) {
+				if (strcmp(preference, devices[i].name) == 0) {
+					selected = &devices[i];
+					break;
+				}
+			}
+
+			if (selected) {
+				StrBuf *msg = new (e) StrBuf();
+				*msg << S("The supplied value of ") S(ENV_RENDER_BACKEND) S(" is not supported.\n");
+				*msg << S("This build provides the following options: ");
+				for (size_t i = 0; i < ARRAY_COUNT(devices); i++) {
+					if (i > 0)
+						*msg << S(", ");
+					*msg << toWChar(e, devices[i].name)->v;
+				}
+
+				throw new (e) GuiError(msg->toS());
+			}
 		}
 
-		Device *result = null;
-
-		if (strcmp(preference, "sw") == 0) {
-			result = new CairoSwDevice(e);
-		} else if (strcmp(preference, "software") == 0) {
-			result = new CairoSwDevice(e);
-		} else if (strcmp(preference, "gtk") == 0) {
-			result = new CairoGtkDevice(e);
-		} else if (strcmp(preference, "gl") == 0) {
-			result = new CairoGLDevice(e);
-		} else if (strcmp(preference, "skia") == 0) {
-			result = new SkiaDevice(e);
-		}
-
-		if (!result)
-			throw new (e) GuiError(S("The supplied value of ") S(ENV_RENDER_BACKEND) S(" is not supported."));
-
-		return applyEnvWorkarounds(result);
+		Device *device = (*selected->create)(e);
+		return applyEnvWorkarounds(device);
 	}
 
 #else

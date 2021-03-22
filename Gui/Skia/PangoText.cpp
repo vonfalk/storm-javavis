@@ -2,7 +2,7 @@
 #include "PangoText.h"
 #include "Gui/PangoLayout.h"
 
-#ifdef GUI_GTK
+#ifdef GUI_ENABLE_SKIA
 
 namespace gui {
 

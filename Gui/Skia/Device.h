@@ -3,7 +3,7 @@
 #include "Gui/Surface.h"
 #include "Skia.h"
 
-#ifdef GUI_GTK
+#ifdef GUI_ENABLE_SKIA
 
 namespace gui {
 

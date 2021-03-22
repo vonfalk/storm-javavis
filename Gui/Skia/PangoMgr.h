@@ -5,7 +5,7 @@
 #include "PangoFont.h"
 #include "Gui/TextMgr.h"
 
-#ifdef GUI_GTK
+#ifdef GUI_ENABLE_SKIA
 
 namespace gui {
 

@@ -2,7 +2,7 @@
 
 #include "Skia.h"
 
-#ifdef GUI_GTK
+#ifdef GUI_ENABLE_SKIA
 
 #include <harfbuzz/hb.h>
 #include <fontconfig/fontconfig.h>

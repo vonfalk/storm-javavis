@@ -292,7 +292,7 @@ namespace sound {
 	void AudioWait::work() {
 		AudioMgr *m = audioMgr(e);
 		working = true;
-		audioMgr(e)->notifyEvents();
+		m->notifyEvents();
 		working = false;
 		doExit();
 	}

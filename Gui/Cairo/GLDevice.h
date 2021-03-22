@@ -1,7 +1,7 @@
 #pragma once
 #include "Device.h"
 
-#ifdef GUI_GTK
+#ifdef GUI_ENABLE_CAIRO_GL
 
 namespace gui {
 

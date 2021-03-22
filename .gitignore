@@ -62,9 +62,9 @@ ReadMe.txt
 
 \#*\#
 
-# External code in other git repos. #
-#####################################
+# External code in other git repos.
 External/
+mymake/
 
 # Generated code.
 */Gen/*

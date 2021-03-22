@@ -11,7 +11,7 @@ namespace gui {
 		identifier = id;
 		states = new (this) Array<State>();
 
-#ifdef GUI_GTK
+#ifdef GUI_ENABLE_SKIA
 		states->push(State());
 		manager(new (this) SkiaManager(this, surface));
 #endif
@@ -19,7 +19,7 @@ namespace gui {
 
 	SkiaGraphics::~SkiaGraphics() {}
 
-#ifdef GUI_GTK
+#ifdef GUI_ENABLE_SKIA
 
 	void SkiaGraphics::destroy() {
 		// Make sure the GL context is active before destroying things.

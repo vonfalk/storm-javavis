@@ -9,7 +9,7 @@ namespace gui {
 
 	SkiaManager::SkiaManager(Graphics *owner, SkiaSurface &surface) : owner(owner), surface(&surface) {}
 
-#ifdef GUI_GTK
+#ifdef GUI_ENABLE_SKIA
 
 	// Everything in here is a "SkPaint"
 	static void cleanupPaint(void *param) {

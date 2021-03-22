@@ -10,6 +10,14 @@ stormUsingNamespace+=storm::geometry
 noIncludes+=*/Skia.h
 
 [unix]
+# Need C++ 17 for Skia. We always enable it to make things simple.
+flags+=-std=c++17
+
+# Defaults
+flags+=`pkg-config --cflags gtk+-3.0 x11 fontconfig`
+linkFlags+=`pkg-config --libs gtk+-3.0 x11 fontconfig pangoft2` -lGL -lEGL
+
+[unix,!nocairogl]
 # Note: We provide our own version of Cairo, since many systems do not provide a cairo
 # that has GL support. Our version of cairo is placed next to the Gui library, and the
 # rpath is set to $ORIGIN to give our version of Cairo priority over the system's version.
@@ -26,6 +34,9 @@ linkFlags+=-Wl,-rpath,'$ORIGIN'
 # Make sure to link our version of Cairo first, since that contains all symbols needed.
 linkFlags+=<path|packagePath><cairoName>
 
+define+=GUI_ENABLE_CAIRO_GL
+
+[unix,!noskia]
 # Skia stuff:
 # Compile Skia if necessary.
 preBuild+=./build_skia.sh <path|buildDir>skia.a <maxThreads>
@@ -35,8 +46,9 @@ linkFlags+=<path|buildDir>skia.a
 include+=../Linux/skia
 # Defines
 define+=SK_GL=1
-# Need C++ 17.
-flags+=-std=c++17
 
-flags+=`pkg-config --cflags gtk+-3.0 x11 fontconfig`
-linkFlags+=`pkg-config --libs gtk+-3.0 x11 fontconfig pangoft2` -lharfbuzz -lGL -lEGL
+# Need this as well.
+linkFlags+=-lharfbuzz
+
+define+=GUI_ENABLE_SKIA
+

@@ -1,7 +1,7 @@
 #include "stdafx.h"
 #include "Skia.h"
 
-#ifdef GUI_GTK
+#ifdef GUI_ENABLE_SKIA
 
 // Get EGL functions. Copied from Skia.
 GrGLFuncPtr egl_get(void* ctx, const char name[]) {

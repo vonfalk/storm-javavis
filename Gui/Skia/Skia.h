@@ -1,6 +1,6 @@
 #pragma once
 
-#ifdef GUI_GTK
+#ifdef GUI_ENABLE_SKIA
 
 /**
  * Skia includes. Ignored by Mymake.

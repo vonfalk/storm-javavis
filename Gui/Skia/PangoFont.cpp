@@ -1,7 +1,7 @@
 #include "stdafx.h"
 #include "PangoFont.h"
 
-#ifdef GUI_GTK
+#ifdef GUI_ENABLE_SKIA
 
 #include <dlfcn.h>
 #include <pango/pangofc-font.h>
