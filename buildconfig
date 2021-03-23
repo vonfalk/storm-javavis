@@ -42,12 +42,12 @@ Main -a -f progvis.debugServer
 #Main -a -t sql.tests
 
 #Presentations
-#Main -a -r ../root/ -i present ../External/present -i final ../External/final -f final.configura
-#Main -a -r ../root/ -i present ../External/present -i final ../External/final -f final.extendedMain
-#Main -a -r ../root/ -i present ../External/present -i final ../External/final -f final.main
-#Main -a -r ../root/ -i present ../External/present -i green ../External/green -f green.main
-#Main -a -r ../root/ -i present ../External/present -i thesis ../External/thesis -f thesis.main
-#Main -a -i sle ../External/sle -f sle.main
-#Main -a -i sle ../External/sle -f sle.debug
-#Main -a -i icer2019 ../External/icer2019 -f icer2019.main
-#Main -a -i sigcse2020 ../External/sigcse2020 -f sigcse2020.debug
+#Main -a -r ../root/ -i ../External/present -i ../External/final -f final.configura
+#Main -a -r ../root/ -i ../External/present -i ../External/final -f final.extendedMain
+#Main -a -r ../root/ -i ../External/present -i ../External/final -f final.main
+#Main -a -r ../root/ -i ../External/present -i ../External/green -f green.main
+#Main -a -r ../root/ -i ../External/present -i ../External/thesis -f thesis.main
+#Main -a -i ../External/sle -f sle.main
+#Main -a -i ../External/sle -f sle.debug
+#Main -a -i ../External/icer2019 -f icer2019.main
+#Main -a -i ../External/sigcse2020 -f sigcse2020.debug

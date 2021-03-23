@@ -316,6 +316,25 @@ namespace storm {
 		return new (this) Url(rel, flags);
 	}
 
+	Url *Url::updated() {
+		UrlFlags f = flags;
+		switch (protocol->stat(this)) {
+		case sNotFound:
+			return this;
+		case sDirectory:
+			f |= isDir;
+			break;
+		case sFile:
+			f &= ~isDir;
+			break;
+		}
+
+		if (f != flags)
+			return new (this) Url(protocol, parts, f);
+		else
+			return this;
+	}
+
 	/**
 	 * Forward to the protocol.
 	 */
@@ -337,7 +356,7 @@ namespace storm {
 
 	// Does this Url exist?
 	Bool Url::exists() {
-		return protocol->exists(this);
+		return protocol->stat(this) != sNotFound;
 	}
 
 	// Create a directory.

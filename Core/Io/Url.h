@@ -74,7 +74,7 @@ namespace storm {
 		// Get all parts.
 		Array<Str *> *STORM_FN getParts() const;
 
-		// Is this a directory?
+		// Is this a directory? Note: This only depends on the pathname.
 		Bool STORM_FN dir() const;
 
 		// Absolute path?
@@ -95,8 +95,14 @@ namespace storm {
 		// Generate an URL with the given extension. Replaces the original one.
 		Url *STORM_FN withExt(Str *ext) const;
 
-		// Generate a relative path.
+		// Generate a relative path (is spiritually const, but may return itself).
 		Url *relative(Url *to);
+
+		// Update this Url, that is: check if it is a file or a directory and update the status
+		// accordingly. You typically only need to call this function if you constructed the Url
+		// yourself and are unsure of whether it actually was a file or directory (e.g. because it
+		// was from user input). Does not modify the object, but may return itself.
+		Url *updated();
 
 		/**
 		 * Low-level operations.

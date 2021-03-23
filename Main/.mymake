@@ -1,3 +1,6 @@
 []
 input=Main.cpp
 output=Storm<gcSuffix>
+
+[debian]
+define+=STORM_ROOT=/usr/share/storm

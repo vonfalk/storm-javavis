@@ -27,6 +27,21 @@ namespace storm {
 	};
 
 	/**
+	 * File flags.
+	 */
+	enum StatType {
+		// File not found.
+		STORM_NAME(sNotFound, notFound),
+
+		// File found. It is a file.
+		STORM_NAME(sFile, file),
+
+		// Found. It is a directory.
+		STORM_NAME(sDirectory, directory),
+	};
+
+
+	/**
 	 * Defines a protocol to use with a Url. The protocol itself defines how
 	 * to access the underlying data. For example, the 'file' protocol opens
 	 * regular files.
@@ -66,7 +81,7 @@ namespace storm {
 		virtual OStream *STORM_FN write(Url *url);
 
 		// Exists?
-		virtual Bool STORM_FN exists(Url *url);
+		virtual StatType STORM_FN stat(Url *url);
 
 		// Create a directory.
 		virtual Bool STORM_FN createDir(Url *url);
@@ -141,7 +156,7 @@ namespace storm {
 		virtual OStream *STORM_FN write(Url *url);
 
 		// Exists?
-		virtual Bool STORM_FN exists(Url *url);
+		virtual StatType STORM_FN stat(Url *url);
 
 		// Create a directory.
 		virtual Bool STORM_FN createDir(Url *url);

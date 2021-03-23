@@ -39,15 +39,17 @@ namespace storm {
 		pkgPath = url;
 		engine().pkgMap()->put(pkgPath, this);
 
-		for (Iter i = begin(), e = end(); i != e; ++i) {
-			if (Package *p = as<Package>(i.v())) {
-				if (p->params->count() > 0)
-					continue;
-				Url *sub = url->pushDir(p->name);
-				if (!sub->exists())
-					continue;
+		if (pkgPath->dir()) {
+			for (Iter i = begin(), e = end(); i != e; ++i) {
+				if (Package *p = as<Package>(i.v())) {
+					if (p->params->count() > 0)
+						continue;
+					Url *sub = url->pushDir(p->name);
+					if (!sub->exists())
+						continue;
 
-				p->setUrl(sub);
+					p->setUrl(sub);
+				}
 			}
 		}
 
@@ -78,19 +80,26 @@ namespace storm {
 		if (!pkgPath)
 			return true;
 
-		Array<Url *> *children = pkgPath->children();
 		Array<Url *> *files = new (this) Array<Url *>();
 
-		// Load any remaining packages:
-		for (Nat i = 0; i < children->count(); i++) {
-			Url *now = children->at(i);
-			if (now->dir()) {
-				Str *name = now->name();
-				if (!tryFind(new (this) SimplePart(name), Scope()))
-					add(loadPackage(name));
-			} else {
-				files->push(now);
+		if (pkgPath->dir()) {
+			// A directory, the normal case:
+			Array<Url *> *children = pkgPath->children();
+
+			// Load any remaining packages:
+			for (Nat i = 0; i < children->count(); i++) {
+				Url *now = children->at(i);
+				if (now->dir()) {
+					Str *name = now->name();
+					if (!tryFind(new (this) SimplePart(name), Scope()))
+						add(loadPackage(name));
+				} else {
+					files->push(now);
+				}
 			}
+		} else {
+			// It is a file. Just load it. This is used when specifying files on the command line for example.
+			files->push(pkgPath);
 		}
 
 		// Load all code.
@@ -130,12 +139,18 @@ namespace storm {
 		if (!pkgPath)
 			return null;
 
+		// If pkgPath was a file, then we can't auto-load any sub-packages.
+		if (!pkgPath->dir()) {
+			PLN(L"Failed: " << pkgPath);
+			return null;
+		}
+
 		// Name parts that are empty do not play well with the Url.
 		if (name->empty())
 			return null;
 
 		// TODO: Make sure this is case sensitive!
-		Url *sub = pkgPath->push(name);
+		Url *sub = pkgPath->pushDir(name);
 		if (!sub->exists())
 			return null;
 

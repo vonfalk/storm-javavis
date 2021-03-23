@@ -1,23 +1,32 @@
-Command line options
+Command-line options
 =====================
 
-By default, launching Storm `StormMain` from the command line launches the REPL for Basic
-Storm. This behavior can be changed by using different command-line flags.
+By default, launching Storm `Storm` from the command line launches the REPL (i.e. an interactive
+session) for Basic Storm. This behavior can be changed by using different command-line flags.
 
-To start a REPL of another language, simply pass the name of that language on the command line, and
-it will start. For example: `StormMain bs` starts the Basic Storm REPL.
+To start a REPL of another language, pass `-l <language>`. For example: `Storm -l bs` to start the
+Basic Storm REPL.
 
-To pass a string to the REPL of a language, use the flag `-c`. For example: `StormMain bs -c 1+2` sends
-the expression `1+2` to the Basic Storm REPL.
+To pass a string to the REPL of a language, use the flag `-c`. For example: `Storm -l bs -c 1+2` sends
+the expression `1+2` to the Basic Storm REPL. This flag can of course be used without the `-l` flag.
 
 To run a single function, use the `-f` flag. This function may not take any parameters, and not all
-return types are supported. Example: `StormMain -f foo.main`.
+return types are supported. Example: `Storm -f foo.main`.
 
 To specify a root path, use `-r`. For example: `StormMain -r root/` launches Storm with `root/` as
-the root directory. The default is `root/` relative to the directory of the executable file.
+the root directory. The default root directory depends on your system. If you have Storm installed
+in your system, it resides in `/usr/share/storm` on most systems. Otherwise, it is the `root/`
+directory relative to the directory of the executable file.
 
 It is also possible to import specific directories into the package tree. This is done with the `-i`
-flag. `-i` takes two parameters, first the name of the package inside the namespace, then the path
-to the directory to be imported. The package may not exists within the root directory, otherwise the
-inclusion will fail. For example: `StormMain -i foo path/to/foo` will create the package `foo` with
-the contents of `path/to/foo`.
+and `-I` flags. `-i` takes one parameter, the name of a file or directory to be imported. This file
+is placed in a package with the same name as the file or directory. For example `Storm -i myfile.bs`
+will import the contents of `myfile.bs` into the package `myfile`. If you wish to specify the
+location of the imports, use `-I <package> <file>` instead. For example: `-I mypkg myfile.bs`
+imports the file into `mypkg` instead. Both `-i` and `-I` works with both files and
+directories. These flags do not alter the default behavior, so unless you specify something else, a
+REPL is still launched.
+
+Any options without a preceeding flag are treated the same as `-i`, i.e. as names of files or
+directories. So, to launch a function `main` inside the file `test.bs`, you can run: `Storm test.bs -f test.main`.
+

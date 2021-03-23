@@ -52,13 +52,23 @@ static StatePtr root(const wchar_t *arg, Params &result) {
 	return &start;
 }
 
+static StatePtr importShort(const wchar_t *arg, Params &result) {
+	EXPECT_MORE(L"Missing import path.");
+	Import i = {
+		arg,
+		null
+	};
+	result.import.push_back(i);
+	return &start;
+}
+
 static StatePtr importPath(const wchar_t *arg, Params &result) {
 	EXPECT_MORE(L"Missing import path.");
 	result.import.back().path = arg;
 	return &start;
 }
 
-static StatePtr import(const wchar_t *arg, Params &result) {
+static StatePtr importLong(const wchar_t *arg, Params &result) {
 	EXPECT_MORE(L"Missing import target.");
 	Import i = {
 		null,
@@ -66,6 +76,13 @@ static StatePtr import(const wchar_t *arg, Params &result) {
 	};
 	result.import.push_back(i);
 	return &importPath;
+}
+
+static StatePtr replLang(const wchar_t *arg, Params &result) {
+	EXPECT_MORE(L"Missing language for the REPL.");
+	result.mode = Params::modeRepl;
+	result.modeParam = arg;
+	return &start;
 }
 
 static StatePtr start(const wchar_t *arg, Params &result) {
@@ -87,9 +104,13 @@ static StatePtr start(const wchar_t *arg, Params &result) {
 		result.mode = Params::modeRepl;
 		return &replCommand;
 	} else if (wcscmp(arg, L"-i") == 0) {
-		return &import;
+		return &importShort;
+	} else if (wcscmp(arg, L"-I") == 0) {
+		return &importLong;
 	} else if (wcscmp(arg, L"-r") == 0) {
 		return &root;
+	} else if (wcscmp(arg, L"-l") == 0) {
+		return &replLang;
 	} else if (wcscmp(arg, L"--version") == 0) {
 		result.mode = Params::modeVersion;
 		return StatePtr();
@@ -97,8 +118,12 @@ static StatePtr start(const wchar_t *arg, Params &result) {
 		result.mode = Params::modeServer;
 		return StatePtr();
 	} else {
-		result.mode = Params::modeRepl;
-		result.modeParam = arg;
+		// This is the same as -i
+		Import i = {
+			arg,
+			null
+		};
+		result.import.push_back(i);
 		return &start;
 	}
 }
@@ -132,11 +157,13 @@ Params::Params(int argc, const wchar_t *argv[])
 void help(const wchar_t *cmd) {
 	wcout << L"Usage: " << endl;
 	wcout << cmd << L"                  - launch the default REPL." << endl;
-	wcout << cmd << L" <language>       - launch the REPL for <language>." << endl;
+	wcout << cmd << L" <path>           - import file or directory (like -i) and launch REPL." << endl;
+	wcout << cmd << L" -l <language>    - launch the REPL for <language>." << endl;
 	wcout << cmd << L" -f <function>    - run <function> then exit." << endl;
 	wcout << cmd << L" -t <package>     - run all tests in <package> then exit." << endl;
 	wcout << cmd << L" -T <package>     - run all tests in <package> and all sub-packages then exit." << endl;
-	wcout << cmd << L" -i <name> <path> - import package at <path> as <name>." << endl;
+	wcout << cmd << L" -i <path>        - import directory or file as the name of the package." << endl;
+	wcout << cmd << L" -I <name> <path> - import package (directory) at <path> as <name>." << endl;
 	wcout << cmd << L" -c <expr>        - evaluate <expr> in the default REPL." << endl;
 	wcout << cmd << L" -r <path>        - use <path> as the root path." << endl;
 	wcout << cmd << L" --version        - print the current version and exit." << endl;

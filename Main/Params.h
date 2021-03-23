@@ -3,6 +3,9 @@
 
 /**
  * Import external packages.
+ *
+ * Note: "into" might be null. In that case a suitable name should be extracted from
+ * "path" (which might be a file).
  */
 struct Import {
 	const wchar_t *path;

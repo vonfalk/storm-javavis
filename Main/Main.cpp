@@ -166,14 +166,30 @@ int runTests(Engine &e, const wchar_t *package, bool recursive) {
 void importPkgs(Engine &into, const Params &p) {
 	for (Nat i = 0; i < p.import.size(); i++) {
 		const Import &import = p.import[i];
-		SimpleName *n = parseSimpleName(new (into) Str(import.into));
+
+		Url *path = parsePath(new (into) Str(import.path));
+		if (!path->absolute())
+			path = cwdUrl(into)->push(path);
+
+		// Update file/directory flag.
+		path = path->updated();
+
+		if (!path->exists()) {
+			wcerr << L"WARNING: The path " << *path << L" could not be found. Will not import it." << endl;
+			continue;
+		}
+
+		SimpleName *n = null;
+		if (import.into) {
+			n = parseSimpleName(new (into) Str(import.into));
+		} else {
+			n = parseSimpleName(path->title());
+		}
+
 		if (n->empty())
 			continue;
 
 		NameSet *ns = into.nameSet(n->parent(), true);
-		Url *path = parsePath(new (into) Str(import.path));
-		if (!path->absolute())
-			path = cwdUrl(into)->push(path);
 		Package *pkg = new (into) Package(n->last()->name, path);
 		ns->add(pkg);
 	}
@@ -182,7 +198,7 @@ void importPkgs(Engine &into, const Params &p) {
 void showVersion(Engine &e) {
 	Array<VersionTag *> *tags = storm::versions(e.package(S("core")));
 	if (tags->empty()) {
-		wcout << L"Error: No version information found. Make sure this release was compiled correctly." << std::endl;
+		wcerr << L"Error: No version information found. Make sure this release was compiled correctly." << std::endl;
 		return;
 	}
 
@@ -213,8 +229,10 @@ int stormMain(int argc, const wchar_t *argv[]) {
 	Moment start;
 
 	// Start an Engine. TODO: Do not depend on 'Path'.
-#ifdef DEBUG
+#if defined(DEBUG)
 	Path root = Path::dbgRoot() + L"root";
+#elif defined(STORM_ROOT)
+	Path root = Path(WIDEN(STORM_ROOT));
 #else
 	Path root = Path::executable() + L"root";
 #endif

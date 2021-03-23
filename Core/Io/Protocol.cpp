@@ -56,8 +56,8 @@ namespace storm {
 		throw new (this) ProtocolNotSupported(S("write"), toS());
 	}
 
-	Bool Protocol::exists(Url *url) {
-		throw new (this) ProtocolNotSupported(S("exists"), toS());
+	StatType Protocol::stat(Url *url) {
+		throw new (this) ProtocolNotSupported(S("stat"), toS());
 	}
 
 	Bool Protocol::createDir(Url *url) {
@@ -241,8 +241,15 @@ namespace storm {
 		return new (url) FileOStream(format(url));
 	}
 
-	Bool FileProtocol::exists(Url *url) {
-		return PathFileExists(format(url)->c_str()) == TRUE;
+	StatType FileProtocol::stat(Url *url) {
+		DWORD result = GetFileAttributes(format(url)->c_str());
+		if (result == INVALID_FILE_ATTRIBUTES)
+			return sNotFound;
+
+		if (result & FILE_ATTRIBUTE_DIRECTORY)
+			return sDirectory;
+		else
+			return sFile;
 	}
 
 	Bool FileProtocol::createDir(Url *url) {
@@ -310,9 +317,15 @@ namespace storm {
 		return new (url) FileOStream(format(url));
 	}
 
-	Bool FileProtocol::exists(Url *url) {
+	StatType FileProtocol::stat(Url *url) {
 		struct stat s;
-		return stat(format(url)->utf8_str(), &s) == 0;
+		if (::stat(format(url)->utf8_str(), &s) == 0)
+			return sNotFound;
+
+		if (S_ISDIR(s.st_mode))
+			return sDirectory;
+		else
+			return sFile;
 	}
 
 	Bool FileProtocol::createDir(Url *url) {
