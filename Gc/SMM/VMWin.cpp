@@ -33,7 +33,24 @@ namespace storm {
 			RemoveVectoredExceptionHandler(handlerHandle);
 		}
 
+		class SaveLastError {
+		public:
+			SaveLastError() {
+				lastError = GetLastError();
+			}
+
+			~SaveLastError() {
+				SetLastError(lastError);
+			}
+
+		private:
+			DWORD lastError;
+		};
+
 		LONG VMWin::onException(struct _EXCEPTION_POINTERS *info) {
+			// We need to save and restore the last error value, since we might modify it by calling system calls.
+			SaveLastError z;
+
 			EXCEPTION_RECORD *record = info->ExceptionRecord;
 
 			if (record->ExceptionCode == EXCEPTION_ACCESS_VIOLATION) {
