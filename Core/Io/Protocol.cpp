@@ -319,7 +319,7 @@ namespace storm {
 
 	StatType FileProtocol::stat(Url *url) {
 		struct stat s;
-		if (::stat(format(url)->utf8_str(), &s) == 0)
+		if (::stat(format(url)->utf8_str(), &s) != 0)
 			return sNotFound;
 
 		if (S_ISDIR(s.st_mode))
