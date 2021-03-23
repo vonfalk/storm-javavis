@@ -3,6 +3,7 @@
 
 #if STORM_GC == STORM_GC_SMM && defined(POSIX)
 
+#include "Utils.h"
 #include <signal.h>
 
 namespace storm {
@@ -22,6 +23,9 @@ namespace storm {
 
 		// Handle signals.
 		static void onSigStop(int signal, siginfo_t *info, void *context) {
+			// We need to save/restore errno.
+			SaveLastError z;
+
 			(void)signal;
 			(void)info;
 

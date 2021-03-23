@@ -3,6 +3,7 @@
 
 #if STORM_GC == STORM_GC_SMM && defined(WINDOWS)
 
+#include "Utils.h"
 #include "VMAlloc.h"
 
 namespace storm {
@@ -32,20 +33,6 @@ namespace storm {
 		void VMWin::destroyNotify() {
 			RemoveVectoredExceptionHandler(handlerHandle);
 		}
-
-		class SaveLastError {
-		public:
-			SaveLastError() {
-				lastError = GetLastError();
-			}
-
-			~SaveLastError() {
-				SetLastError(lastError);
-			}
-
-		private:
-			DWORD lastError;
-		};
 
 		LONG VMWin::onException(struct _EXCEPTION_POINTERS *info) {
 			// We need to save and restore the last error value, since we might modify it by calling system calls.

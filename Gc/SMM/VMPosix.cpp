@@ -3,6 +3,7 @@
 
 #if STORM_GC == STORM_GC_SMM && defined(POSIX)
 
+#include "Utils.h"
 #include "VMAlloc.h"
 #include "Block.h"
 #include <sys/mman.h>
@@ -26,6 +27,9 @@ namespace storm {
 		static struct sigaction oldAction;
 
 		void VMPosix::sigsegv(int signal, siginfo_t *info, void *context) {
+			// We need to save and restore errno.
+			SaveLastError z;
+
 			(void)signal;
 			(void)context;
 
