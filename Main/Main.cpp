@@ -232,7 +232,7 @@ int stormMain(int argc, const wchar_t *argv[]) {
 #if defined(DEBUG)
 	Path root = Path::dbgRoot() + L"root";
 #elif defined(STORM_ROOT)
-	Path root = Path(WIDEN(STORM_ROOT));
+	Path root = Path(STRING(STORM_ROOT));
 #else
 	Path root = Path::executable() + L"root";
 #endif

@@ -1,5 +1,11 @@
 #!/bin/bash
 
+# Build-time packages (installed outside the base system)
+# Core: git g++
+# Crypto: libssl-dev
+# Graphics: libpng-dev libjpeg-dev
+
+
 if [ $# -lt 1 ]
 then
     echo "Error: Please specify which part of Storm you are building."
