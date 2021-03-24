@@ -12,7 +12,7 @@ part=$1
 if [ ! -d mymake ]
 then
     echo "Mymake was not found. Fetching it..."
-    git clone git@fprg.se:mymake.git mymake
+    git clone git://fprg.se/mymake.git mymake
 fi
 
 if [ ! -f mymake/mm ]
