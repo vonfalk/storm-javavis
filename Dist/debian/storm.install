@@ -1,0 +1,5 @@
+usr/bin/storm
+usr/share/storm/doc
+usr/share/storm/lang/*
+usr/share/storm/util/*
+usr/share/storm/test/*

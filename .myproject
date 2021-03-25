@@ -254,6 +254,10 @@ libPrefix=Release
 [sharedlib,storm_slow]
 libPrefix=Slow
 
+# No prefix on Debian releases.
+[sharedlib,storm_release,debian]
+libPrefix=
+
 #No PCH for c-files.
 [windows]
 compile+=*.c:cl <defines> <file> <includes> <flags> <warnings> /c /Fo<output>

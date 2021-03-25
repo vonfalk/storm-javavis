@@ -1,0 +1,34 @@
+# DESTDIR is the destination directory
+
+# To have a local .mymake configuration file
+export HOME = $(shell pwd)/mymake/
+
+.PHONY: all install
+all: mymake/mm
+	mm release mps debian Main
+	mm release debian Crypto
+	mm release debian Graphics
+	mm release debian Sound
+	mm release debian SQL
+
+mymake/mm:
+	cd mymake; ./compile.sh mm
+	echo "4" | mm --config > /dev/null
+
+install:
+	mkdir -p $(DESTDIR)/usr/bin
+	cp release/Storm_mps $(DESTDIR)/bin/storm
+	cp Dist/progvis $(DESTDIR)/usr/bin
+	mkdir -p $(DESTDIR)/usr/share/storm
+	cp -r root/doc $(DESTDIR)/usr/share/storm
+	cp -r root/lang $(DESTDIR)/usr/share/storm
+	cp -r root/layout $(DESTDIR)/usr/share/storm
+	cp -r root/crypto $(DESTDIR)/usr/share/storm
+	cp -r root/graphics $(DESTDIR)/usr/share/storm
+	cp -r root/sound $(DESTDIR)/usr/share/storm
+	cp -r root/presentation $(DESTDIR)/usr/share/storm
+	cp -r root/progvis $(DESTDIR)/usr/share/storm
+	cp -r root/sql $(DESTDIR)/usr/share/storm
+	cp -r root/test $(DESTDIR)/usr/share/storm
+	cp -r root/ui $(DESTDIR)/usr/share/storm
+	cp -r root/util $(DESTDIR)/usr/share/storm

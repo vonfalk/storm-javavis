@@ -7,120 +7,75 @@
 # Gui: gtk+-3-dev
 # Sound: libopenal-dev libmpg123-dev libogg-dev libflac-dev libvorbis-dev
 
-if [ $# -lt 1 ]
-then
-    echo "Error: Please specify which part of Storm you are building."
-    exit 1
-fi
 
-part=$1
+echo "Generating Debian source package..."
 
-# Fetch mymake if not already present...
+# Fetch mymake if it is not present already.
 if [ ! -d mymake ]
 then
     echo "Mymake was not found. Fetching it..."
     git clone git://fprg.se/mymake.git mymake
 fi
 
-if [ ! -f mymake/mm ]
-then
-    echo "Building mymake..."
-    pushd mymake > /dev/null
-    ./compile.sh mm
-    popd > /dev/null
-fi
-
-export PATH=${STORM_ROOT}/mymake/:$PATH
-
-# Create a temporary ~/.mymake-file...
-export HOME=${STORM_ROOT}/mymake
-rm -f ${STORM_ROOT}/mymake/.mymake
-echo "6" | mm --config > /dev/null
-
 # We need libbacktrace at the moment. I can't find a suitable library for that on Debian (also, it
 # is quite small, so no great problems in my opinion). We could live without it if this is a problem.
 git submodule init Linux/backtrace
 git submodule update Linux/backtrace
 
+# We also need the MPS
+git submodule init mps
+git submodule update mps
 
-case $part in
-    core)
-	# Fetch the MPS submodule and make sure it is up to date.
-	git submodule init mps
-	git submodule update mps
+# Clean up any build files that may be in the repository (Note: will not remove the mymake/ repo)
+git clean -xdf
 
-	echo "Building the executable..."
+# Construct x.y.z-debian+w (keeping +w only if it was present from the beginning)
+version=$(find_version)
+tar_file=${STORM_ROOT}/storm_${version%+*}.orig.tar
+echo "core.info" > ${STORM_ROOT}/Compiler/COMPILER.version
+echo "$version" | sed -E 's/^([^+]*)(\+?.*)/\1-debian\2/g' >> ${STORM_ROOT}/Compiler/COMPILER.version
 
-	# Construct x.y.z-debian+w (keeping +w only if it was present from the beginning)
-	version=$(find_version | sed -E 's/^([^+]*)(\+?.*)/\1-debian\2/g')
-	echo $version
+# Generate the changelog:
+function changelog {
+    git for-each-ref "refs/tags/release/" --sort='-*committerdate' --format="%(objectname) %(tag) %(taggerdate)" | while read hash tag dow month day time year timezone
+    do
+        if [[ $(git cat-file -t $hash) == "tag" ]]
+        then
+            echo "storm (${tag/release\//}) unstable; urgency=medium"
+            echo
+            git cat-file -p $hash | tail -n +6 | sed 's/^$/./' | sed 's/^/  /'
+            echo
+            echo " -- Filip Strömbäck <filip@fprg.se>  $dow, $day $month $year $time $timezone"
+            echo
+            echo
+        fi
+    done
+}
 
-	echo "core.info" > ${STORM_ROOT}/Compiler/COMPILER.version
-	echo "$version" >> ${STORM_ROOT}/Compiler/COMPILER.version
+changelog > ${STORM_ROOT}/Dist/debian/changelog
 
-	mm release mps debian Main
+# Create the source package as a tar file.
+# First: All files, but no submodules.
+tar -cf $tar_file --exclude="*/.git" -X<(sed -En "s|^[\t ]*path = (.*)$|./\1|p" ${STORM_ROOT}/.gitmodules) .
 
-	# TODO: Installation!
-	# Needs: release/Storm -> /usr/bin/storm (not in any package known to dpkg -S)
-	# Also: root/{doc,lang,util} -> /usr/share/storm/
-	;;
+# We need the libbacktrace library and the MPS
+tar -rf $tar_file ./Linux/backtrace
+tar -rf $tar_file ./mps
 
-    crypto)
-	# Crypto lib. Only depends on "core" above.
-	mm release debian Crypto
+# Add debian-specific things...
+pushd ${STORM_ROOT}/Dist/
+tar -rf $tar_file ./debian
+tar -rf $tar_file --transform="s/debian-makefile/Makefile/" ./debian-makefile
+popd
 
-	# TODO: Installation! Copy root/crypto => /usr/share/storm/ (renaming the .so-file)
-	;;
+# Need to compress it for dpkg-buildpackage...
+gzip $tar_file
 
-    graphics)
-	# Graphics lib. Only depends on "core" above.
-	# Also on the system libraries: libpng, libjpeg
-	mm release debian Graphics
+echo "Done!"
 
-	# TODO: Installation! Copy root/graphics => /usr/share/storm/ (renaming the .so-file)
-	;;
+# Now: Call dpkg-build...
 
-    gui)
-	# GUI lib. Technically does not depend on "graphics", but I will make it so (otherwise we can't load images etc.)
-	# Also on the system libraries: gtk+-3, pango, ...
-	mm release debian nocairogl noskia Gui
-	
-	;;
-
-    plugin)
-	echo "Distributing the Emacs plugin is not implemented yet."
-	exit 1
-	;;
-
-    sound)
-	# Sound library. Only depends on "core" above.
-	# Also depends on the system libraries: libmpg123, libogg, libvorbis, libvorbisfile, libflac, openal
-	mm release debian Sound
-
-	# TODO: Install. Essentially root/sound => /usr/share/storm/ (renaming the .so-file)
-	;;
-
-    sql)
-	# SQL lib. Has its own copy of sqlite3. Even the "sqlite3" binary links statically in Debian, so I think this is fine.
-	mm release debian SQL
-
-	# TODO: Install. Essentially root/sql => /usr/share/storm/ (renaming the .so-file)
-	;;
-
-    progvis)
-	# This does not need to be built.
-	# Depends on "core", "gui", "graphics", "sql"
-	# Also depends on openssl in the system.
-
-	# TODO: Install. Essentially root/progvis, and a startup script containing:
-	# #/bin/dash
-	# exec storm -f progvis.main
-	;;
-
-    *)
-	echo "Unknown part: $part"
-	exit 1
-	;;
-esac
-
-
+mkdir -p ${STORM_ROOT}/debbuild
+cd ${STORM_ROOT}/debbuild
+tar xf $tar_file.gz
+dpkg-buildpackage -uc -us
