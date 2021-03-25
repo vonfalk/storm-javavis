@@ -310,6 +310,9 @@ class Workspace on Render {
 		// Mark reads/writes.
 		if (trackMemAccess)
 			updateMemAccess();
+
+		// Detect deadlocks.
+		findDeadlock();
 	}
 
 	// Remove everything in the workspace.
@@ -445,6 +448,26 @@ private:
 
 			if (errorNotification)
 				errorNotification.call(trackers.errors);
+		}
+	}
+
+	// See if all threads seem to wait for some kind of synchronization primitive, and report a
+	// deadlock in that case. We don't have perfect knowledge of what threads are waiting for, so
+	// this is the best we can do.
+	private void findDeadlock() {
+		Bool anyThreads = false;
+		Bool allSleeping = true;
+
+		for (e in elements) {
+			if (t = e.visual.contained as ThreadData) {
+				anyThreads = true;
+				allSleeping &= t.thread.sleeping;
+			}
+		}
+
+		if (anyThreads & allSleeping) {
+			if (errorNotification)
+				errorNotification.call(["All threads are waiting. You have found a deadlock!"]);
 		}
 	}
 
