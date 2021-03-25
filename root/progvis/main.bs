@@ -484,7 +484,8 @@ void debug() on Compiler {
 
 	if (url = named{progvis_demo}.url) {
 		MainWin win;
-		win.open(url / "demo2.bs");
+		win.open(url / "assert.c");
+		// win.open(url / "demo2.bs");
 		// win.open(url / "array.bs");
 		// win.open(url / "cpp.cpp");
 		// win.open(url / "cpp2.cpp");

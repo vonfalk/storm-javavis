@@ -117,17 +117,30 @@ class ThreadData extends Drawable {
 		memory.clear();
 		memory = MemTracker(thread.memory);
 
-		if (thread.callDepth == 0) {
-			// Don't remove frames if the thread terminated. That makes us show where it crashed.
+		if (!thread.alive) {
+			// Make sure that we illustrate that the thread terminated.
 			source.highlight = sourceTerminatedHighlight;
 			if (buttons.last !is removeDead)
 				buttons << removeDead;
 
-			for (v in frames)
-				v.traverse(ws, work);
+			// If the thread crashed, then we don't want to remove the stack trace. If we do, we
+			// can't see what went wrong.
+			if (thread.crashed) {
+				for (v in frames)
+					v.traverse(ws, work);
+			} else {
+				// Otherwise, make sure that we don't show any more frames.
+				while (frames.any)
+					frames.pop();
+
+				source.displayEmpty("<thread exited normally>");
+			}
+
+			invalidateSize();
 			return;
 		}
 
+		// Keep our view of the thread up-to-date.
 		for (k, v in thread.frames) {
 			if (k >= frames.count)
 				frames.push(FrameVal(v));
@@ -143,6 +156,8 @@ class ThreadData extends Drawable {
 		// Update the source view.
 		if (pos = thread.pos)
 			source.display(pos);
+		else
+			source.displayEmpty();
 
 		if (thread.sleeping) {
 			source.highlight = sourceSleepingHighlight;
@@ -161,17 +176,19 @@ class ThreadData extends Drawable {
 	}
 
 	protected Size computeSize() : override {
-		Float w;
-		Float h;
+		Float w = 0;
+		Float h = 0;
 
-		for (Nat i = frames.count; i > 0; i--) {
-			var frame = frames[i - 1];
+		if (frames.any) {
+			for (Nat i = frames.count; i > 0; i--) {
+				var frame = frames[i - 1];
 
-			h += frame.captionHeight + compositeBorder.h;
+				h += frame.captionHeight + compositeBorder.h;
 
-			Size sz = frame.size;
-			h = max(h, sz.h);
-			w = max(w, sz.w + i.int.float*stackOffset);
+				Size sz = frame.size;
+				h = max(h, sz.h);
+				w = max(w, sz.w + i.int.float*stackOffset);
+			}
 		}
 
 		w = max(threadMinWidth, w);

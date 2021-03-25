@@ -51,6 +51,12 @@ class ProgThread on Render {
 	// Waiting for some external event?
 	Bool sleeping;
 
+	// Is the thread alive?
+	Bool alive() { callDepth > 0; }
+
+	// Did the thread crash? (Only relevant when "alive" returns false)
+	Bool crashed() { terminating; }
+
 	// Currently running? This is 'true' even if the thread is currently waiting in an animation.
 	private Bool running;
 
@@ -141,6 +147,9 @@ class ProgThread on Render {
 
 		popFrames();
 
+		// Tell the system that we have exited if this is the last function in the stack.
+		if (callDepth == 0)
+			return true;
 		return !terminating;
 	}
 

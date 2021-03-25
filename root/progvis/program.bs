@@ -223,7 +223,7 @@ class Program on Render {
 
 		ProgThread t = threads.get(id);
 		var notify = t.onFunctionExited();
-		if (t.callDepth == 0) {
+		if (!t.alive) {
 			threads.remove(id);
 
 			if (f = t.watch)
@@ -495,6 +495,12 @@ private void watchErrorsI(Word threadId, FutureBase future) on Render {
 // Tell the system to watch for errors for the specified thread ID using the supplied future.
 public void watchErrors(Word threadId, FutureBase future) {
 	watchErrorsI(threadId, future);
+}
+
+// Tell the system that we are about to throw some kind of exception, and that this will likely terminate the program.
+public void onFatalException() {
+	if (p = findThread(currentUThread()))
+		p.onFatalException();
 }
 
 // Add output to the program associated with the current thread, or output to stdout if no thread

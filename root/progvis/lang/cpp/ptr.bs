@@ -286,9 +286,7 @@ class PtrError extends Exception {
 		saveTrace();
 
 		// Disable tracing for this thread so that we don't trace any destructor calls.
-		if (p = progvis:findThread(currentUThread())) {
-			p.onFatalException();
-		}
+		progvis:onFatalException();
 	}
 
 	Str msg;

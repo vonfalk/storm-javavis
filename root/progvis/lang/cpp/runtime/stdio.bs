@@ -21,20 +21,8 @@ void putchar(Byte ch) {
 
 // Not really a part of the C standard. We have this for convenience. It does not output a newline.
 void putstr(ConstPtr<Byte> chars) {
-	Nat offset = chars.offset - sPtr.current * 2;
-	Nat size = chars.base.readSize * chars.base.readCount;
-	StrBuf buf;
-	while (offset <= size) {
-		Byte b = chars.base.readByte(offset);
-		if (b == 0)
-			break;
-
-		buf << Char(b.nat);
-
-		offset++;
-	}
-
-	printStr(buf.toS);
+	var s = toStorm(chars);
+	printStr(s);
 }
 
 void puts(ConstPtr<Byte> chars) {

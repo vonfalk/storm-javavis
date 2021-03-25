@@ -50,6 +50,19 @@ class SourceView on Render {
 		}
 	}
 
+	// Switch to an empty view.
+	void displayEmpty(Str message) {
+		file = Url();
+		Text t(message, codeFont);
+		text = t;
+		fillBounds = Rect(Point(), t.size);
+		fill = [fillBounds];
+	}
+
+	void displayEmpty() {
+		displayEmpty("<no source available>");
+	}
+
 	// Switch to a new view.
 	void display(Url file, Nat from, Nat to) {
 		if (file != this.file) {

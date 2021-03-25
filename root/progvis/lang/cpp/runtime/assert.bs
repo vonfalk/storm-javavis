@@ -1,0 +1,36 @@
+use progvis:lang:cpp;
+
+class AssertError extends Exception {
+	Str message;
+
+	init() {
+		init {}
+		progvis:onFatalException();
+	}
+
+	init(Str message) {
+		init { message = message; }
+		progvis:onFatalException();
+	}
+
+	void message(StrBuf to) : override {
+		to << "Assertion failed";
+		if (message.any)
+			to << ": " << message;
+	}
+}
+
+void assert(Bool condition) {
+	if (!condition)
+		throw AssertError();
+}
+
+void assert(Bool condition, Str message) {
+	if (!condition)
+		throw AssertError(message);
+}
+
+void assert(Bool condition, ConstPtr<Byte> message) {
+	if (!condition)
+		throw AssertError(toStorm(message));
+}
