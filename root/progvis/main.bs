@@ -307,6 +307,12 @@ class MainPainter extends Painter {
 	// Offset for the workspace.
 	private Point offset;
 
+	// Callback for reporting concurrency errors.
+	private fn(Str[])->void? concurrencyCb;
+
+	// Errors reported from the Workspace. We cache them here so that we can repaint before dispatching them.
+	private Str[] concurrencyErrors;
+
 	// Lock for traversal. The traversal may perform thread switches, so we need to make sure that
 	// multiple traversals are not in flight at the same time.
 	private sync:Lock traversalLock;
@@ -332,11 +338,16 @@ class MainPainter extends Painter {
 		program = loaded;
 		workspace.globals = loaded.findGlobals();
 		workspace.hints = loaded.hints;
-		workspace.onError = concurrencyCb;
+		this.concurrencyCb = concurrencyCb;
+		workspace.onError = &this.onError;
 		loaded.onChange = &this.update();
 		loaded.onError = errorCb;
 		update();
 		loaded.spawn(loaded.main);
+	}
+
+	private void onError(Str[] errors) {
+		concurrencyErrors.append(errors);
 	}
 
 	// Clean up the running program (i.e. make sure all threads are terminated).
@@ -391,6 +402,12 @@ class MainPainter extends Painter {
 		workspace.endTraversal();
 
 		repaint();
+
+		if (concurrencyCb) {
+			if (concurrencyErrors.any)
+				concurrencyCb.call(concurrencyErrors);
+			concurrencyErrors.clear();
+		}
 	}
 
 	// Called when the mouse is moved.
