@@ -4,7 +4,8 @@
 # Core: git g++
 # Crypto: libssl-dev
 # Graphics: libpng-dev libjpeg-dev
-
+# Gui: gtk+-3-dev
+# Sound: libopenal-dev libmpg123-dev libogg-dev libflac-dev libvorbis-dev
 
 if [ $# -lt 1 ]
 then
