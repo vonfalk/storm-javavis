@@ -225,7 +225,7 @@ private class PatchState on Compiler {
 			Int distance = 0;
 
 			for (Nat i = 0; i < params.count; i++) {
-				Value a = params[i];
+				Value a = candidate.params[i];
 				Value b = params[i];
 
 				if (a.ref != b.ref)
