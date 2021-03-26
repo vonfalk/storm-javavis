@@ -197,7 +197,7 @@ class Workspace on Render {
 		if (data = traverseNoCreate(object))
 			return data;
 
-		print("Miss: ${object} was not found.");
+		// print("Miss: ${object} was not found.");
 
 		// Create a new instance.
 		Nat id = elements.count;

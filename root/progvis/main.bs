@@ -72,6 +72,9 @@ class MainWin extends Frame {
 		for (Nat i = 1; i < onlineMenu.count; i++)
 			onlineMenu[i].enabled = false;
 
+		PopupMenu viewMenu;
+		viewMenu << Menu:Check("Zoom", &this.onZoom(Bool));
+
 		PopupMenu helpMenu;
 		helpMenu << Menu:Text("About...", &this.onAbout());
 
@@ -80,6 +83,7 @@ class MainWin extends Frame {
 			<< Menu:Submenu("File", fileMenu)
 			<< Menu:Submenu("Run", runMenu)
 			<< Menu:Submenu("Online", onlineMenu)
+			<< Menu:Submenu("View", viewMenu)
 			<< Menu:Submenu("Help", helpMenu);
 
 		menu = m;
@@ -240,6 +244,11 @@ class MainWin extends Frame {
 		painter.repaint();
 	}
 
+	private void onZoom(Bool b) {
+		painter.setZoom(if (b) 1.5; else 1.0;);
+		painter.repaint();
+	}
+
 	private void onAbout() {
 		var license = named{PROGVIS};
 		var version = named{PROGVIS_VERSION};
@@ -307,6 +316,9 @@ class MainPainter extends Painter {
 	// Offset for the workspace.
 	private Point offset;
 
+	// Scale factor for the workspace. Applied last, meaning that "offset" and "mouseOffset" are also scaled.
+	private Float scale;
+
 	// Callback for reporting concurrency errors.
 	private fn(Str[])->void? concurrencyCb;
 
@@ -318,13 +330,19 @@ class MainPainter extends Painter {
 	private sync:Lock traversalLock;
 
 	init() {
-		init();
+		init() { scale = 1.0; }
 		bgColor = Color(0.8, 0.8, 0.8);
 	}
 
 	// Set whether or not to track reads/writes.
 	void trackMemory(Bool track) {
 		workspace.trackMemory = track;
+	}
+
+	// Set zoom. Also pans to the center to make sure nothing gets hidden too badly.
+	void setZoom(Float zoom) {
+		offset = Point();
+		scale = zoom;
 	}
 
 	// Do we have an open "program" instance?
@@ -379,8 +397,8 @@ class MainPainter extends Painter {
 
 	// Render everything.
 	Bool render(Size me, Graphics g) : override {
-		g.transform(translate(-offset));
-		workspace.render(Rect(offset, me), g);
+		g.transform(translate(-offset) * scale(scale));
+		workspace.render(Rect(offset, me / scale), g);
 		false;
 	}
 
@@ -415,6 +433,7 @@ class MainPainter extends Painter {
 		if (!mouseDown)
 			return;
 
+		pt /= scale;
 		pt += offset;
 
 		if (mouseFocus) {
@@ -430,6 +449,7 @@ class MainPainter extends Painter {
 
 	// Called when a mouse button is clicked.
 	void mouseClicked(Point pt, Bool down, MouseButton button) {
+		pt /= scale;
 		pt += offset;
 
 		if (button == MouseButton:left) {
@@ -484,7 +504,7 @@ void debug() on Compiler {
 
 	if (url = named{progvis_demo}.url) {
 		MainWin win;
-		win.open(url / "assert.c");
+		// win.open(url / "assert.c");
 		// win.open(url / "demo2.bs");
 		// win.open(url / "array.bs");
 		// win.open(url / "cpp.cpp");
@@ -502,7 +522,7 @@ void debug() on Compiler {
 		// win.open(url / "thread_example.c");
 		// win.open(url / "printf.c");
 		// win.open(url / "globals.cpp");
-		// win.open(url / "bank" / "bank.c");
+		win.open(url / "bank" / "bank.c");
 		// win.open(url / "bank" / "bank_good.c");
 		// win.open(url / "buffer" / "buffer.c");
 		// win.open(url / "simple_buffer.c");
