@@ -5,18 +5,27 @@
 
 namespace gui {
 
+	class RadioGroup;
+
 	/**
 	 * Container interface.
 	 *
 	 * Classes may implement this interface to indicate that they are able to store child
 	 * windows. This is the minimal interface required by the windowing system. It does not allow
-	 * adding/removing child windows, that is the responsibility of child classes.
+	 * adding/removing child windows. That is the responsibility of child classes.
+	 *
+	 * Also keeps track of groupings inside the container.
+	 *
+	 * Note: It is currently not possible to extend this class directly from Storm.
 	 */
 	class ContainerBase : public Window {
 		STORM_CLASS;
 	public:
 		// Create.
 		STORM_CTOR ContainerBase();
+
+		// Get a radio group with a specified ID. Creates it if it does not exist.
+		RadioGroup *STORM_FN radioGroup(Nat id);
 
 #ifdef GUI_GTK
 		// Add a child widget to the layout here.
@@ -25,6 +34,13 @@ namespace gui {
 		// Move a child widget.
 		virtual void moveChild(GtkWidget *child, Rect pos);
 #endif
+
+	private:
+		// Radio button groups. Null until used.
+		Map<Nat, RadioGroup *> *radioGroups;
+
+		// Padding due to 8-byte alignment from Window.
+		Nat pad;
 	};
 
 	/**

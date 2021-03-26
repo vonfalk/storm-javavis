@@ -1,0 +1,37 @@
+use ui;
+use layout;
+use core:geometry;
+
+window CheckTest {
+	layout Grid {
+		wrapCols: 3;
+
+		RadioButton a("One", 1) {}
+		RadioButton b("Two", 1) {}
+		RadioButton c("Three", 1) {}
+		CheckButton z("Check") {}
+	}
+
+	init() {
+		init("Problems", Size(10, 10)) {}
+
+		a.onActivate = () => print("A activated");
+		b.onActivate = () => print("B activated");
+		c.onActivate = () => print("C activated");
+		a.onChange = (Bool b) => print("A changed to ${b}");
+		b.onChange = (Bool b) => print("B changed to ${b}");
+		c.onChange = (Bool b) => print("C changed to ${b}");
+
+		z.onChange = (Bool b) => print("Z changed to ${b}");
+
+		a.checked = true;
+		z.checked = true;
+
+		create();
+	}
+}
+
+void checkTest() {
+	CheckTest t;
+	t.waitForClose();
+}

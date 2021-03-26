@@ -15,6 +15,7 @@
 #Main -a -f tests.layout.main
 #Main -a -f tests.layout.basicMain
 #Main -a -f tests.layout.gridTest
+Main -a -f tests.layout.checkTest
 #Main -a -r ../root/ -f tests.ui.images
 #Main -a -f tests.ui.menu
 #Main -a -f tests.ui.fileDialog
@@ -23,7 +24,7 @@
 #Main -a -f presentation.tests.simple
 #Main -a -f progvis.main
 #Main -a -f progvis.debug
-Main -a -f progvis.debugServer
+#Main -a -f progvis.debugServer
 #Main -a -f trees.main
 
 #Main -a -t sql.tests

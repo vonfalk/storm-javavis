@@ -1,11 +1,25 @@
 #include "stdafx.h"
 #include "Container.h"
 #include "Exception.h"
+#include "RadioButton.h"
 #include <limits>
 
 namespace gui {
 
 	ContainerBase::ContainerBase() {}
+
+	RadioGroup *ContainerBase::radioGroup(Nat id) {
+		if (!radioGroups)
+			radioGroups = new (this) Map<Nat, RadioGroup *>();
+
+		Map<Nat, RadioGroup *>::Iter i = radioGroups->find(id);
+		if (i != radioGroups->end())
+			return i.v();
+
+		RadioGroup *g = new (this) RadioGroup();
+		radioGroups->put(id, g);
+		return g;
+	}
 
 #ifdef GUI_GTK
 	void ContainerBase::addChild(GtkWidget *child, Rect pos) {
