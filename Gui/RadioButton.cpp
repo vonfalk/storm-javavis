@@ -2,6 +2,7 @@
 #include "RadioButton.h"
 #include "Container.h"
 #include "Exception.h"
+#include "GtkSignal.h"
 
 namespace gui {
 
@@ -30,6 +31,16 @@ namespace gui {
 			if (button != except)
 				button->checked(false);
 		}
+	}
+
+	RadioButton *RadioGroup::pickCreated() {
+		WeakSet<RadioButton>::Iter i = buttons->iter();
+		while (RadioButton *button = i.next()) {
+			if (button->created())
+				return button;
+		}
+
+		return null;
 	}
 
 
@@ -77,6 +88,20 @@ namespace gui {
 	void RadioButton::group(RadioGroup *group) {
 		if (myGroup)
 			myGroup->remove(this);
+
+#ifdef GUI_GTK
+		if (created()) {
+			GtkRadioButton *button = null;
+			if (RadioButton *b = myGroup->pickCreated())
+				button = GTK_RADIO_BUTTON(b->handle().widget());
+			if (button)
+				gtk_radio_button_join_group(GTK_RADIO_BUTTON(handle().widget()), button);
+			else
+				// Else: create a new group for us.
+				gtk_radio_button_set_group(GTK_RADIO_BUTTON(handle().widget()), NULL);
+		}
+#endif
+
 		myGroup = group;
 		myGroup->add(this);
 	}
@@ -148,11 +173,25 @@ namespace gui {
 	bool RadioButton::create(ContainerBase *parent, nat id) {
 		findGroup(parent);
 
-		GtkWidget *button = gtk_radio_button_new_with_label(NULL, text()->utf8_str());
+		GtkWidget *group = null;
+		if (myGroup)
+			if (RadioButton *b = myGroup->pickCreated())
+				group = b->handle().widget();
+
+		GtkWidget *button;
+		if (group)
+			button = gtk_radio_button_new_with_label_from_widget(GTK_RADIO_BUTTON(group), text()->utf8_str());
+		else
+			button = gtk_radio_button_new_with_label(NULL, text()->utf8_str());
+
 		initWidget(parent, button);
 		gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(button), isChecked);
 		Signal<void, RadioButton>::Connect<&RadioButton::toggled>::to(button, "toggled", engine());
 		return true;
+	}
+
+	void RadioButton::toggled() {
+		change(checked());
 	}
 
 	void RadioButton::text(Str *text) {
@@ -180,10 +219,10 @@ namespace gui {
 
 	Bool RadioButton::checked() {
 		if (created()) {
-			return gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(handle().widget()));
-		} else {
-			return isChecked;
+			isChecked = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(handle().widget()));
 		}
+
+		return isChecked;
 	}
 
 	void RadioButton::checked(Bool v) {

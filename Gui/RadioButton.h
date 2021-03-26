@@ -26,6 +26,9 @@ namespace gui {
 		// Clear all except one.
 		void STORM_FN clearExcept(RadioButton *button);
 
+		// Pick an element that has been created.
+		MAYBE(RadioButton *) pickCreated();
+
 	private:
 		// A weak set of all the contained radio buttons.
 		WeakSet<RadioButton> *buttons;
@@ -34,6 +37,10 @@ namespace gui {
 
 	/**
 	 * Radio button.
+	 *
+	 * Note: If no radio button in a group is set to active, the system may select one to make
+	 * active (e.g. Gtk+ does not allow none of the radio buttons to be pressed, this is possible to
+	 * fix if we ever need it by having a hidden radio button somewhere).
 	 */
 	class RadioButton : public Window {
 		STORM_CLASS;
@@ -68,6 +75,9 @@ namespace gui {
 		void text(Str *text);
 
 		virtual GtkWidget *fontWidget();
+
+		// Toggled signal.
+		void toggled();
 #endif
 
 		// Checked?

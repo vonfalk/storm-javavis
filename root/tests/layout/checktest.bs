@@ -24,7 +24,7 @@ window CheckTest {
 
 		z.onChange = (Bool b) => print("Z changed to ${b}");
 
-		a.checked = true;
+		c.checked = true;
 		z.checked = true;
 
 		create();

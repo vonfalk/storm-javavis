@@ -1,6 +1,7 @@
 #include "stdafx.h"
 #include "CheckButton.h"
 #include "Container.h"
+#include "GtkSignal.h"
 
 namespace gui {
 
@@ -61,7 +62,7 @@ namespace gui {
 	void CheckButton::checked(Bool v) {
 		if (v != isChecked) {
 			isChecked = v;
-			toggled();
+			changed(v);
 		}
 
 		if (created()) {
@@ -74,10 +75,10 @@ namespace gui {
 #ifdef GUI_GTK
 
 	bool CheckButton::create(ContainerBase *parent, nat id) {
-		GtkWidget *button = gtk_check_button_new_with_label(NULL, text()->utf8_str());
+		GtkWidget *button = gtk_check_button_new_with_label(text()->utf8_str());
 		initWidget(parent, button);
 		gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(button), isChecked);
-		Signal<void, CheckButton>::Connect<&CheckButton::toggle>::to(button, "toggled", engine());
+		Signal<void, CheckButton>::Connect<&CheckButton::toggled>::to(button, "toggled", engine());
 		return true;
 	}
 
@@ -104,15 +105,19 @@ namespace gui {
 		return Size(Float(w), Float(h));
 	}
 
-	Bool Button::checked() {
+	Bool CheckButton::checked() {
 		if (created()) {
 			isChecked = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(handle().widget())) != 0;
 		}
 		return isChecked;
 	}
 
-	void Button::checked(Bool v) {
-		isChecked = v;
+	void CheckButton::checked(Bool v) {
+		if (isChecked != v) {
+			isChecked = v;
+			changed(v);
+		}
+
 		if (created()) {
 			gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(handle().widget()), isChecked);
 		}
