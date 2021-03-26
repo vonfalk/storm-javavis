@@ -56,7 +56,7 @@ namespace gui {
 		MAYBE(Button *) defaultButton;
 
 		// Default OK handler.
-		void CODECALL onOk(Button *b);
+		void CODECALL onOk();
 
 #ifdef GUI_GTK
 		// Gtk+ signals

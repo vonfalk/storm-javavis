@@ -26,12 +26,12 @@ class DlgMainWin extends Frame {
 
 		size(Size(200, 200));
 		button.pos(Rect(10, 10, 190, 190));
-		button.onClick = &this.showDialog(Button);
+		button.onClick = &this.showDialog();
 		add(button);
 		create();
 	}
 
-	private void showDialog(Button b) {
+	private void showDialog() {
 		button.text("Showing dialog...");
 		Dialog d;
 		d.waitForClose;

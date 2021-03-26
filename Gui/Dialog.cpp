@@ -21,7 +21,7 @@ namespace gui {
 		defaultButton = button;
 	}
 
-	void Dialog::onOk(Button *) {
+	void Dialog::onOk() {
 		close(1);
 	}
 

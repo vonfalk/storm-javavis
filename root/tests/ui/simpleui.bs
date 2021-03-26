@@ -19,14 +19,14 @@ class SimpleUi extends Frame {
 		edit.pos(Rect(10, 30, 190, 50));
 		bn.pos(Rect(10, 100, 190, 190));
 
-		bn.onClick = &this.onOk(Button);
+		bn.onClick = &this.onOk();
 		add(lbl);
 		add(edit);
 		add(bn);
 		create();
 	}
 
-	void onOk(Button b) {
+	void onOk() {
 		print("You entered: " # edit.text);
 		edit.text("");
 	}

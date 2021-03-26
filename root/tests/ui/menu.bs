@@ -71,9 +71,9 @@ dialog AboutWindow {
 		init("About", Size(200, 100)) {}
 
 		var me = this;
-		close.onClick = (Button b) => me.close(1);
+		close.onClick = () => me.close(1);
 		defaultChoice = ok;
-		ok.onClick = (Button b) => me.close(100);
+		ok.onClick = () => me.close(100);
 	}
 }
 

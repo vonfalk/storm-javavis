@@ -35,7 +35,7 @@ dialog OverviewDialog {
 		if (license = info.license) {
 			var me = this;
 			licButton.text = license.title;
-			Fn<void, Button> cb = (Button b) => LicenseDialog(license).show(me);
+			Fn<void> cb = () => LicenseDialog(license).show(me);
 			licButton.onClick = cb;
 		} else {
 			licLabel.visible = false;
@@ -67,7 +67,7 @@ class LicenseList extends Container {
 		add(b);
 
 		var me = this;
-		b.onClick = (Button b) => me.showLicense(owner, l);
+		b.onClick = () => me.showLicense(owner, l);
 	}
 
 	// Show a license.

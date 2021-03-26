@@ -63,7 +63,7 @@ namespace gui {
 		if (down && code == key::ret) {
 			if (!myMultiline || (mod & mod::ctrl)) {
 				if (onReturn) {
-					onReturn->call(this);
+					onReturn->call();
 					return true;
 				}
 			}

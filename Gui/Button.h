@@ -11,10 +11,10 @@ namespace gui {
 		STORM_CLASS;
 	public:
 		STORM_CTOR Button(Str *title);
-		STORM_CTOR Button(Str *title, Fn<void, Button *> *click);
+		STORM_CTOR Button(Str *title, Fn<void> *click);
 
 		// Click callback.
-		MAYBE(Fn<void, Button *> *) onClick;
+		MAYBE(Fn<void> *) onClick;
 
 #ifdef GUI_WIN32
 		// Notifications.

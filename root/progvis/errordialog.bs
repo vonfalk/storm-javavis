@@ -24,7 +24,7 @@ dialog CompileErrorDialog {
 
 		this.message.text = message;
 		var me = this;
-		ok.onClick = (Button b) => me.close(0);
+		ok.onClick = () => me.close(0);
 		code.painter = ErrorPainter(pos);
 
 		Bool useDisclaimer = false;

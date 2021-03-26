@@ -20,10 +20,10 @@ dialog StatusDlg {
 		}
 
 		username.text = client.username;
-		changeName.onClick = &this.onChangeUsername(Button);
+		changeName.onClick = &this.onChangeUsername();
 	}
 
-	private void onChangeUsername(Button b) {
+	private void onChangeUsername() {
 		UsernameDlg dlg;
 		dlg.show(this);
 		Str newName = dlg.name;
@@ -54,10 +54,10 @@ dialog UsernameDlg {
 
 		username.focus();
 		defaultChoice(ok);
-		ok.onClick = &this.done(Button);
+		ok.onClick = &this.done();
 	}
 
-	void done(Button b) {
+	void done() {
 		name = username.text;
 		close(1);
 	}

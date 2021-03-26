@@ -25,10 +25,10 @@ dialog UploadDlg {
 		}
 
 		defaultChoice(upload);
-		upload.onClick = &this.done(Button);
+		upload.onClick = &this.done();
 	}
 
-	void done(Button b) {
+	void done() {
 		try {
 			NewProblemRequest req(name.text, file.readAllText(), file.ext);
 			client.query(req);

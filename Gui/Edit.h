@@ -54,7 +54,7 @@ namespace gui {
 		void STORM_ASSIGN selected(Selection sel);
 
 		// Called when return is pressed.
-		MAYBE(Fn<void, Edit *> *) onReturn;
+		MAYBE(Fn<void> *) onReturn;
 
 		// Cue banner.
 		void STORM_ASSIGN cue(Str *t);

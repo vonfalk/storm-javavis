@@ -31,8 +31,9 @@ window ImageViewer {
 		image.painter(paint);
 
 		for (id, f in names) {
+			ImageViewer me = this;
 			Button b(f);
-			b.onClick = &this.chooseImage(Button);
+			b.onClick = () => me.chooseImage(f);
 			select << b;
 			add(b);
 			grid.add(component(b));
@@ -41,8 +42,8 @@ window ImageViewer {
 		create();
 	}
 
-	void chooseImage(Button x) {
-		Url url = resUrl / x.text;
+	void chooseImage(Str name) {
+		Url url = resUrl / name;
 		print("Loading " + url.toS);
 		paint.show(url.loadImage);
 		image.repaint();

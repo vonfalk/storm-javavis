@@ -10,14 +10,14 @@ namespace gui {
 		onClick = null;
 	}
 
-	Button::Button(Str *title, Fn<void, Button *> *click) : isDefault(false) {
+	Button::Button(Str *title, Fn<void> *click) : isDefault(false) {
 		text(title);
 		onClick = click;
 	}
 
 	void Button::clicked() {
 		if (onClick)
-			onClick->call(this);
+			onClick->call();
 	}
 
 #ifdef GUI_WIN32

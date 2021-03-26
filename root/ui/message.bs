@@ -67,7 +67,7 @@ class MessageDialog extends Dialog {
 		var me = this;
 		Button b(text);
 		defaultChoice(b);
-		b.onClick = (Button b) => me.close(result);
+		b.onClick = () => me.close(result);
 		buttons << b;
 		add(b);
 	}

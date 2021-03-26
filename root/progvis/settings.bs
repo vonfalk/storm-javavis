@@ -122,11 +122,11 @@ dialog SettingsDlg {
 			program.text = prog.toS;
 		}
 
-		ok.onClick = &this.onSave(Button);
-		pick.onClick = &this.onPickProg(Button);
+		ok.onClick = &this.onSave();
+		pick.onClick = &this.onPickProg();
 	}
 
-	private void onSave(Button b) {
+	private void onSave() {
 		{
 			Str p = program.text;
 			if (p.empty())
@@ -139,7 +139,7 @@ dialog SettingsDlg {
 		close();
 	}
 
-	private void onPickProg(Button b) {
+	private void onPickProg() {
 		FileTypes ft("Programs");
 		// TODO: Switch on the OS here.
 		ft.add("Executable files", ["*.exe", "*"]);

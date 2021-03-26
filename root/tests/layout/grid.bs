@@ -13,7 +13,7 @@ window MyWindow {
 
 	init() {
 		init("My window", Size(200, 200));
-		a.onClick = (Button b) => print("Clicked!");
+		a.onClick = () => print("Clicked!");
 		create();
 	}
 }
