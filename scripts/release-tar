@@ -85,8 +85,21 @@ do
     popd > /dev/null
 done
 
+function find_current_version() {
+    tag=`git describe --abbrev=0 HEAD`
+    desc=`git describe HEAD`
+
+    if [[ $tag != $desc ]]
+    then
+	# Format the extra information.
+	tag=`echo $desc | sed -E 's/-([0-9]+)-([a-zA-Z0-9]+)$/+git.\1.\2/'`
+    fi
+
+    echo $tag | sed 's!^release/!!'
+}
+
 # Build the tar file...
-version=$(find_version)
+version=$(find_current_version)
 tar_file=${STORM_ROOT}/storm_${version}.tar
 echo "core.info" > ${STORM_ROOT}/Compiler/COMPILER.version
 echo "$version" >> ${STORM_ROOT}/Compiler/COMPILER.version

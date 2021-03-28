@@ -1,7 +1,7 @@
 #!/bin/bash
 
-tag=`git describe --abbrev=0 master`
-desc=`git describe master`
+tag=`git describe --abbrev=0 HEAD`
+desc=`git describe HEAD`
 
 if [[ $tag != $desc ]]
 then
