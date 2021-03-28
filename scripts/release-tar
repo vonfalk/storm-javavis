@@ -1,0 +1,98 @@
+#!/bin/bash
+
+min_modules="Linux/backtrace
+mps"
+all_modules=$(sed -En "s|^[\t ]*path = (.*)$|\1|p" ${STORM_ROOT}/.gitmodules)
+selected_modules=""
+
+case "$1" in
+    minimal)
+	selected_modules="$min_modules"
+	shift
+    ;;
+    full)
+	selected_modules="$all_modules"
+	shift
+    ;;
+    *)
+       >&2 echo "Expected one of the base modes: minimal, full"
+       exit 1
+    ;;
+esac
+
+function find_module() {
+    matches=$(echo "$all_modules" | grep ${1})
+    count=$(echo "$matches" | wc -l)
+    if [[ $count -lt 1 || "$matches" == "" ]]
+    then
+	>&2 echo "No match for ${1}. Available modules are:"
+	>&2 echo "$all_modules"
+	exit 1
+    elif [ $count -gt 1 ]
+    then
+	>&2 echo "Multiple possible matches for ${1}:"
+	>&2 echo "$matches"
+	exit 1
+    else
+	echo "$matches"
+    fi
+}
+
+while [ $# -gt 0 ]
+do
+    case "$1" in
+	+*)
+	    module=$(find_module "${1:1}")
+	    if [ $? != 0 ]
+	    then
+		exit 1
+	    fi
+	    selected_modules="$selected_modules
+$module"
+	;;
+	-*)
+	    module=$(find_module "${1:1}")
+	    if [ $? != 0 ]
+	    then
+		exit 1
+	    fi
+	    selected_modules=$(echo "$selected_modules" | grep -v "$module")
+	;;
+	*)
+	    >&2 echo "Unknown extra parameter: $1"
+	    exit 1
+	    ;;
+    esac
+    shift
+done
+
+selected_modules=$(echo "$selected_modules" | sort | uniq)
+
+>&2 echo "Generating tar file with modules:"
+>&2 echo "$selected_modules"
+
+# Clean up build files.
+git clean -xdf > /dev/null
+
+# Make sure the submodules are up to date. Also clean them.
+for x in $selected_modules
+do
+    git submodule init $x
+    git submodule update $x
+
+    pushd $x > /dev/null
+    git clean -xdf > /dev/null
+    popd > /dev/null
+done
+
+# Build the tar file...
+version=$(find_version)
+tar_file=${STORM_ROOT}/storm_${version}.tar
+echo "core.info" > ${STORM_ROOT}/Compiler/COMPILER.version
+echo "$version" >> ${STORM_ROOT}/Compiler/COMPILER.version
+
+tar -cf $tar_file --exclude="*/.git" -X<(sed -En "s|^[\t ]*path = (.*)$|./\1|p" ${STORM_ROOT}/.gitmodules) .
+for x in $selected_modules
+do
+    tar -rf $tar_file ./$x
+done
