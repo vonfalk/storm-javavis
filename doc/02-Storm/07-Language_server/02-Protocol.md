@@ -163,13 +163,14 @@ The following colors are available to the language server:
 The data inside the `documentation` is a list containing the following data:
 
 * `name`: A string containing the name of the entity.
-* `params`: A list of parameters to this entity. Each of the parameters are a list, `(name type ref)`,
-  where *name* is the name of the parameter and *type* is a string containing the fully-qualified name of
-  the type of the parameter, or `nil` if the parameter refers to `void`. *ref* is `t` if the parameter is
-  a reference, otherwise `nil`.
-* `notes`: A list of notes for this entity. Takes the same form as `params` above, except that *type* does
-  not necessarily refer to a type. Any entity is valid as a note. The `type` and `ref` may be left out for
-  notes, which means that no type shall be shown for this note at all.
+* `params`: A list of parameters to this entity. Each of the parameters are a list, `(name type-name type-ref ref)`,
+  where *name* is the name of the parameter, *type-name* is a string that contains the name of the type
+  shown to the user, *type-ref* is a string containing the fully-qualified name of the type, or `nil` if
+  it refers to `void`. *ref* is `t` if the parameter is a reference, otherwise `nil`.
+* `notes`: A list of notes for this entity. Takes the same form as `params` above, except that *type-name* does
+  not necessarily refer to a type (and thus has a *type-ref* that is `nil`). Any entity is valid as a
+  note. The `type` and `ref` may be left out for notes, which means that no type shall be shown for this
+  note at all. Note: The return value for functions is usually returned as a note.
 * `visibility`: Visibility of this entity as a cons cell `(type . title)`, or `nil` if none was provided.
   *title* is a string suitable to show the user and *type* is the type implementing this visibility.
 * `body`: The body text of the documentation as a string.

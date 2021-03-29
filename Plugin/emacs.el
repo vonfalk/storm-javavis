@@ -1189,28 +1189,35 @@
 
 
 (defun storm-insert-param (param)
-  (let ((name (nth 0 param))
-	(type (nth 1 param))
-	(ref  (nth 2 param)))
-    (if (null type)
+  (let ((name      (nth 0 param))
+	(type-name (nth 1 param))
+	(type-ref  (nth 2 param))
+	(ref       (nth 3 param)))
+
+    (if (null type-name)
+	(setq type-name "void"))
+    (if (null type-ref)
 	(insert "void")
-      (storm-insert-link type type t))
+      (storm-insert-link type-name type-ref t))
     (when ref
       (insert "&"))
     (when (and (not (null name)) (< 0 (length name)))
       (insert " " name))))
 
 (defun storm-insert-note (param)
-  ;; Note: Either 1 or 3 elements.
+  ;; Note: Either 1 or 4 elements.
   (if (> (length param) 2)
-      (let ((note (nth 0 param))
-	    (type (nth 1 param))
-	    (ref  (nth 2 param)))
+      (let ((note      (nth 0 param))
+	    (type-name (nth 1 param))
+	    (type-ref  (nth 2 param))
+	    (ref       (nth 3 param)))
 	(when (and (not (null note)) (< 0 (length note)))
 	  (insert note " "))
-	(if (null type)
+	(if (null type-name)
+	    (setq type-name "void"))
+	(if (null type-ref)
 	    (insert "void")
-	  (storm-insert-link type type t))
+	  (storm-insert-link type-name type-ref t))
 	(when ref
 	  (insert "&")))
     (insert (first param))))

@@ -127,12 +127,24 @@ namespace storm {
 		return distance;
 	}
 
+	static void outputPart(StrBuf *to, const Value &v) {
+		if (v.type)
+			v.type->path()->toS(to);
+		else
+			*to << S("void");
+		if (v.ref)
+			*to << S("&");
+	}
+
 	void SimplePart::toS(StrBuf *to) const {
 		*to << name;
 		if (params != null && params->count() > 0) {
-			*to << L"(" << params->at(0);
-			for (nat i = 1; i < params->count(); i++)
-				*to << L", " << params->at(i);
+			*to << L"(";
+			outputPart(to, params->at(0));
+			for (nat i = 1; i < params->count(); i++) {
+				*to << L", ";
+				outputPart(to, params->at(i));
+			}
 			*to << L")";
 		}
 	}

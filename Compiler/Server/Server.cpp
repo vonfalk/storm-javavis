@@ -375,10 +375,13 @@ namespace storm {
 		SExpr *Server::formatValue(Str *name, Named *type, Bool ref) {
 			SExpr *result = null;
 			result = cons(engine(), ref ? t : null, result);
-			if (type)
+			if (type) {
+				result = cons(engine(), new (this) String(type->path()->toS()), result);
 				result = cons(engine(), new (this) String(type->identifier()), result);
-			else
+			} else {
 				result = cons(engine(), null, result);
+				result = cons(engine(), new (this) String(S("void")), result);
+			}
 			result = cons(engine(), new (this) String(name), result);
 			return result;
 		}
@@ -410,7 +413,7 @@ namespace storm {
 			for (Nat i = items->count(); i > 0; i--) {
 				Named *src = items->at(i - 1);
 				// TODO: We might actually want to *load* documentation to provide parameter names here.
-				SExpr *m = cons(e, new (e) String(src->identifier()),
+				SExpr *m = cons(e, new (e) String(src->path()->toS()),
 								new (e) String(doc(src)->summary()));
 				result = cons(e, m, result);
 			}

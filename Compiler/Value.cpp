@@ -230,9 +230,9 @@ namespace storm {
 		if (v.type) {
 			to << v.type->identifier();
 			if (v.ref)
-				to << L"&";
+				to << S("&");
 		} else {
-			to << L"void";
+			to << S("void");
 		}
 		return to;
 	}
