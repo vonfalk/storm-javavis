@@ -9,7 +9,7 @@
 #Only build targets containing .mymake-files.
 explicitTargets=yes
 
-[project,release,!debian]
+[project,release,!dist]
 input+=Main
 input+=Test
 
@@ -29,15 +29,17 @@ all+=storm_release
 [build,slow]
 all+=storm_slow
 
-# Forward the "debian" flag if present.
-[build,debian]
-all+=debian
-
-# Forward nocairo and noskia as needed.
+# Forward build flags:
+[build,dist]
+all+=dist
+[build,nostatic]
+all+=nostatic
 [build,noskia]
 Gui+=noskia
 [build,nocairogl]
 Gui+=nocairogl
+[build,nobacktrace]
+Utils+=nobacktrace
 
 [build]
 
@@ -85,7 +87,7 @@ Graphics+=CppTypes
 SQL+=CppTypes
 Crypto+=CppTypes
 
-[!debian]
+[!dist]
 #To make sure everything is built.
 #When building for Debian we want a bit more control of what we are building.
 Compiler+=TestLib
@@ -167,8 +169,8 @@ cflags+=-fPIC
 buildDir=slow/
 execDir=../slow/
 
-[debian]
-define+=DEBIAN_BUILD
+[nostatic]
+define+=NOSTATIC_BUILD
 
 [windows]
 #Tell the Win32 API we're working with UTF16.
@@ -254,8 +256,8 @@ libPrefix=Release
 [sharedlib,storm_slow]
 libPrefix=Slow
 
-# No prefix on Debian releases.
-[sharedlib,storm_release,debian]
+# No prefix on Dist releases.
+[sharedlib,storm_release,dist]
 libPrefix=
 
 #No PCH for c-files.

@@ -7,7 +7,7 @@ stormUsingNamespace=storm
 library+=png
 library+=jpeg
 
-[unix,release,!debian]
+[unix,release,!nostatic]
 # Set rpath, so we can supply the proper versions of libpng and libjpeg.
 linkFlags+=-Wl,-rpath,'$ORIGIN'
 

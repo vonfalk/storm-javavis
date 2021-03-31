@@ -2,5 +2,5 @@
 input=Main.cpp
 output=Storm<gcSuffix>
 
-[debian]
+[dist]
 define+=STORM_ROOT=/usr/share/storm

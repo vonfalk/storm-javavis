@@ -1,7 +1,7 @@
 #pragma once
 #include "Platform.h"
 
-#ifdef POSIX
+#if defined(POSIX) && !defined(NO_LIBBACKTRACE)
 
 // Note: On POSIX, there is a function named 'backtrace_symbols', which seems promising. However, it
 // just uses 'dladdr' to find function names, which is not sufficient since it does not get names

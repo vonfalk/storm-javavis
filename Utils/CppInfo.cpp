@@ -272,7 +272,7 @@ void CppInfo::format(GenericOutput &to, void *fnBase, int offset) const {
 	}
 }
 
-#elif defined(POSIX)
+#elif defined(POSIX) && !defined(NO_LIBBACKTRACE)
 #include "backtrace.h"
 #include <cxxabi.h>
 
@@ -334,6 +334,23 @@ void CppInfo::format(GenericOutput &to, void *base, int offset) const {
 		to.put("Unknown function @");
 		to.putHex((size_t)base + offset);
 	}
+}
+
+#elif defined(POSIX)
+#include <execinfo.h>
+
+// This gives us worse results than using libbacktrace above, but does not rely on any kind of
+// symbols or external libraries.
+
+void CppInfo::format(GenericOutput &to, void *base, int offset) const {
+	void *buffer[1] = { (byte *)base + offset };
+	char **data = backtrace_symbols(buffer, 1);
+
+	if (data[0]) {
+		to.put(data[0]);
+	}
+
+	::free(data);
 }
 
 #else

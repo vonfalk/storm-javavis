@@ -1,7 +1,7 @@
 #include "stdafx.h"
 #include "backtrace.h"
 
-#ifdef POSIX
+#if defined(POSIX) && !defined(NO_LIBBACKTRACE)
 
 // Include all files required by the backtrace library, so we do not have to compile it separatly.
 #include "Linux/backtrace/atomic.c"

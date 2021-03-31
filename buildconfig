@@ -1,4 +1,4 @@
-#Test
+Test
 
 #CppTypes -a ../Compiler/ ../Core/ ../Code/ --compiler --template ../Core/Gen/CppTypes.cpp --out ../Compiler/Gen/CppTypes.cpp --asm ../Core/Gen/CppVTables.VS_X86 ../Compiler/Gen/CppVTables.asm --doc ../doc.doc --using storm
 
@@ -15,7 +15,7 @@
 #Main -a -f tests.layout.main
 #Main -a -f tests.layout.basicMain
 #Main -a -f tests.layout.gridTest
-Main -a -f tests.layout.checkTest
+#Main -a -f tests.layout.checkTest
 #Main -a -r ../root/ -f tests.ui.images
 #Main -a -f tests.ui.menu
 #Main -a -f tests.ui.fileDialog
