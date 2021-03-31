@@ -253,9 +253,12 @@ class LayoutDeclBlock extends LayoutBlock {
 		ExprBlock block(member.pos, parent.root);
 		ExprBlock sub(member.pos, block);
 
+		Expr? preWrap;
 		Expr src = namedExpr(block, SStr("layout:" + member.v, member.pos), Actuals());
-		if (!Value(named{layout:Layout}).canStore(src.result.type))
+		if (!Value(named{layout:Layout}).canStore(src.result.type)) {
+			preWrap = src;
 			src = namedExpr(block, member.pos, "component", src);
+		}
 		Var result(block, SStr("@ result"), src);
 
 		block.add(result);
@@ -263,6 +266,6 @@ class LayoutDeclBlock extends LayoutBlock {
 		LocalVarAccess resultAcc(member.pos, result.var);
 		block.add(resultAcc);
 
-		init(block, sub, resultAcc);
+		init(block, sub, resultAcc, preWrap);
 	}
 }

@@ -136,6 +136,14 @@ class LayoutBlock extends LayoutRoot {
 		}
 	}
 
+	init(ExprBlock root, ExprBlock sub, Expr result, Expr? preWrap) {
+		init(root) {
+			sub = sub;
+			result = result;
+			preWrap = preWrap;
+		}
+	}
+
 
 	// Add a property.
 	void add(SStr name, Actuals? params) {
