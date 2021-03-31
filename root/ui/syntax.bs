@@ -188,7 +188,6 @@ class CtorBodyWrap extends SCtorBody {
 	private Nat fixSuper(ExprBlock block, Nat pos, InitBlock s) {
 		var decls = layout.allDecls();
 		Nat added = 0;
-		Expr[] vars;
 
 		for (member in decls) {
 			Actuals params = if (x = member.params) { x.transform(block); } else { Actuals(); };
@@ -198,30 +197,49 @@ class CtorBodyWrap extends SCtorBody {
 			// Create a local variable so that we can initialize the layout!
 			Var v(block, member.type.transform, varName, params);
 			block.insert(pos++, v);
-			LocalVarAccess var(member.pos, v.var);
-			vars << var;
 			added++;
 
 			// Initialize the variable as well.
+			LocalVarAccess var(member.pos, v.var);
 			s.init(Initializer(member.name.transform, var));
 		}
 
 		// Initialize the layout itself as well. We need an explicit cast here.
-		s.init(Initializer(SStr("layout", layout.pos), Actuals(layout.transform(block).block)));
+		SStr layoutName("layout", layout.pos);
+		s.init(Initializer(layoutName, Actuals(layout.transform(block).block)));
 
 
 		// Call 'add' for each of the components after the constructor call itself.
+		// We use "findAll" so that we are sure to find even the things added through
+		// any other syntax.
 		pos++;
-		for (var in vars) {
-			// Add it to the window if possible.
-			if (Value(named{ui:Window}).canStore(var.result.type)) {
-				block.insert(pos++, namedExpr(block, SStr("add", var.pos), Actuals(var)));
-				added++;
-			}
+		{
+			var me = namedExpr(block, layout.pos, "this", Actuals());
+			CtorCall cb(layout.pos, block.scope, named{AddCallback:__init<AddCallback, Container>}, Actuals(me));
+			FnPtr ptr(cb, named{AddCallback:add<AddCallback, Component>}, layout.pos);
+			var find = namedExpr(block, layout.pos, "findAll", namedExpr(block, layoutName, Actuals()), Actuals(ptr));
+			block.insert(pos++, find);
 		}
 
-		//  We add two statements for each declaration found.
+		//  We add one statements for each declaration found.
 		added;
+	}
+}
+
+/**
+ * Class used to hold the callback for the Window.
+ */
+class AddCallback on Ui {
+	Container to;
+
+	init(Container to) {
+		init { to = to; }
+	}
+
+	void add(Component component) {
+		if (component as UiComponent) {
+			to.add(component.window);
+		}
 	}
 }
 

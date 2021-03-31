@@ -12,7 +12,7 @@ use core:geometry;
  */
 class UiComponent extends Component {
 	// The window we're wrapping.
-	private Window window;
+	Window window;
 
 	// Minimum width of the component.
 	Float minWidth;
