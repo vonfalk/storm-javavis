@@ -83,22 +83,38 @@ class Database {
 		WITH db: UPDATE users SET displayName = newName WHERE id == userId;
 	}
 
-	// Get a list of unsolved problems.
-	Problem[] unsolvedProblems(Int forUser) {
+	// Get a list of solved or unsolved problems. Note: these are ones that might be interesting to
+	// solve, so we don't include problems from yourself.
+	Problem[] userChallenges(Int forUser, Bool wantSolved) {
 		Problem[] result;
 		var x = WITH db: SELECT problems.id AS id, displayName, title FROM problems
 			JOIN users ON problems.author == users.id
 			WHERE author != forUser;
 		for (row in x) {
 			var problemId = row.id;
-			if (WITH db: SELECT ONE id FROM solutions WHERE to == problemId) {
-				// Already solved, don't include it.
-				continue;
-			}
+			var add = if (WITH db: SELECT ONE id FROM solutions WHERE to == problemId) {
+				// Solved!
+				wantSolved;
+			} else {
+				!wantSolved;
+			};
 
-			result << Problem(problemId, row.title, row.displayName, countSolved(problemId));
+			if (add)
+				result << Problem(problemId, row.title, row.displayName, countSolved(problemId));
 		}
 
+		result;
+	}
+
+	// Get a list of the user's own problems.
+	Problem[] ownProblems(Int forUser) {
+		Problem[] result;
+		var x = WITH db: SELECT problems.id AS id, displayName, title FROM problems
+			JOIN users ON problems.author == users.id
+			WHERE author == forUser;
+		for (row in x) {
+			result << Problem(row.id, row.title, row.displayName, countSolved(row.id));
+		}
 		result;
 	}
 

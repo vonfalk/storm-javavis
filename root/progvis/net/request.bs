@@ -61,11 +61,26 @@ class ChangeNicknameRequest : extends Request, serializable {
 }
 
 /**
- * Ask for unsolved problems.
+ * Ask for challenges.
  */
-class UnsolvedRequest : extends Request, serializable {
+class ChallengesRequest : extends Request, serializable {
+	Bool solved;
+
+	init(Bool wantSolved) {
+		init { solved = wantSolved; }
+	}
+
 	Response? execute(ServerConn server, Database db) : override {
-		ProblemResponse(db.unsolvedProblems(server.userId));
+		ProblemResponse(db.userChallenges(server.userId, solved));
+	}
+}
+
+/**
+ * Ask for a user's own problems.
+ */
+class OwnProblemsRequest : extends Request, serializable {
+	Response? execute(ServerConn server, Database db) : override {
+		ProblemResponse(db.ownProblems(server.userId));
 	}
 }
 

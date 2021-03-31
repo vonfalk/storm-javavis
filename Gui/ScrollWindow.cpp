@@ -27,6 +27,22 @@ namespace gui {
 			child->handle(invalid);
 	}
 
+	void ScrollWindow::content(Window *n) {
+		// Destroy the old one.
+		if (child && child->created()) {
+			child->detachParent();
+		}
+
+		// And attach the new one.
+		child = n;
+		child->attachParent(this);
+
+		if (created())
+			child->parentCreated(1);
+		resized(Size());
+	}
+
+
 #ifdef GUI_WIN32
 
 	void ScrollWindow::parentCreated(nat id) {

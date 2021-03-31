@@ -39,6 +39,9 @@ namespace gui {
 		// Get the window scrolled.
 		Window *STORM_FN content() const { return child; }
 
+		// Set the contents.
+		void STORM_ASSIGN content(Window *child);
+
 		// Called when resized.
 		virtual void STORM_FN resized(Size size);
 
