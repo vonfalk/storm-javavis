@@ -46,6 +46,8 @@ class MainWin extends Frame {
 			onlineUrl = "storm-lang.org";
 		}
 
+		applySettings();
+
 		PopupMenu fileMenu;
 		fileMenu
 			<< Menu:Text("Open file...", &this.onOpen())
@@ -72,9 +74,6 @@ class MainWin extends Frame {
 		for (Nat i = 1; i < onlineMenu.count; i++)
 			onlineMenu[i].enabled = false;
 
-		PopupMenu viewMenu;
-		viewMenu << Menu:Check("Zoom", &this.onZoom(Bool));
-
 		PopupMenu helpMenu;
 		helpMenu << Menu:Text("About...", &this.onAbout());
 
@@ -83,7 +82,6 @@ class MainWin extends Frame {
 			<< Menu:Submenu("File", fileMenu)
 			<< Menu:Submenu("Run", runMenu)
 			<< Menu:Submenu("Online", onlineMenu)
-			<< Menu:Submenu("View", viewMenu)
 			<< Menu:Submenu("Help", helpMenu);
 
 		menu = m;
@@ -101,6 +99,11 @@ class MainWin extends Frame {
 	void close() : override {
 		painter.cleanup();
 		super:close();
+	}
+
+	void applySettings() {
+		painter.setZoom(settings.zoom);
+		painter.repaint();
 	}
 
 	// For debug mode.
@@ -224,7 +227,7 @@ class MainWin extends Frame {
 	}
 
 	private void onSettings() {
-		SettingsDlg(settings).show(this);
+		SettingsDlg(settings, &this.applySettings).show(this);
 	}
 
 	public void clearClient() {
@@ -241,11 +244,6 @@ class MainWin extends Frame {
 
 	private void onTrackMemory(Bool b) {
 		painter.trackMemory(b);
-		painter.repaint();
-	}
-
-	private void onZoom(Bool b) {
-		painter.setZoom(if (b) 1.5; else 1.0;);
 		painter.repaint();
 	}
 
@@ -341,8 +339,10 @@ class MainPainter extends Painter {
 
 	// Set zoom. Also pans to the center to make sure nothing gets hidden too badly.
 	void setZoom(Float zoom) {
-		offset = Point();
-		scale = zoom;
+		if (scale != zoom) {
+			offset = Point();
+			scale = zoom;
+		}
 	}
 
 	// Do we have an open "program" instance?

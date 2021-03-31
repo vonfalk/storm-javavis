@@ -7,6 +7,10 @@ dialog ProblemsDlg {
 	layout Grid {
 		wrapCols: 3;
 		expandCol: 1;
+
+		RadioButton a("One") {}
+		RadioButton b("Two") {}
+		CheckButton c("Three") {}
 	}
 
 	private Client client;
@@ -15,5 +19,8 @@ dialog ProblemsDlg {
 		init("Problems", Size(500, 400)) {
 			client = client;
 		}
+
+		a.group = b.group;
+		c.checked = true;
 	}
 }
