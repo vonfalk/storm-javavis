@@ -110,14 +110,14 @@ dialog SettingsDlg {
 		Grid {
 			colspan: 2;
 			expandCol: 0;
-			Label sizeLbl("Zoom:") {}
+			Label("Zoom:") {}
 			RadioButton small("Small", 1) {}
 			RadioButton medium("Medium", 1) {}
 			RadioButton large("Large", 1) {}
 			RadioButton huge("Huge", 1) {}
 		}
 		nextLine;
-		Label progLbl("Editor to use to open the code run inside Progvis (leave blank for default):") { colspan: 2; }
+		Label("Editor to use to open the code run inside Progvis (leave blank for default):") { colspan: 2; }
 		nextLine;
 		Edit program("") {}
 		Button pick("Pick a program") {}
