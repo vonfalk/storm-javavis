@@ -57,7 +57,7 @@ class MessageDialog extends Dialog {
 	// Add a button.
 	void addButton(Str text, Int result) {
 		var me = this;
-		Button b(text, (Button b) => me.close(result));
+		Button b(text, () => me.close(result));
 		buttons << b;
 		add(b);
 	}
