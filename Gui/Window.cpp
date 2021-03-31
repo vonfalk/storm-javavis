@@ -87,6 +87,9 @@ namespace gui {
 			} else if (!myParent->created()) {
 				// Parent has already been destroyed. This means we're destroyed,
 				// by our parent, even though we have a handle.
+
+				// If we have a timer, we need to destroy that though.
+				clearTimer();
 			} else {
 				destroyWindow(myHandle);
 			}
@@ -548,7 +551,8 @@ namespace gui {
 	}
 
 	void Window::clearTimer() {
-		KillTimer(handle().hwnd(), (UINT_PTR)handle().hwnd());
+		if (handle() != Handle())
+			KillTimer(handle().hwnd(), (UINT_PTR)handle().hwnd());
 	}
 
 #endif
@@ -632,8 +636,6 @@ namespace gui {
 	}
 
 	void Window::destroyWindow(Handle handle) {
-		// TODO: Perhaps we should not call gtk_widget_destroy on all widgets. It seems it is enough
-		// to destroy top-level widgets.
 		gtk_widget_destroy(handle.widget());
 		if (gTimer) {
 			delete gTimer;

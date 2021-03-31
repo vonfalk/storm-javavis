@@ -356,4 +356,3 @@ void CppInfo::format(GenericOutput &to, void *base, int offset) const {
 #else
 #error "Please implement CppInfo::format for your OS here."
 #endif
-

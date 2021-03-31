@@ -51,6 +51,11 @@ static void move(Basic *me, BasicChild *child, gint x, gint y, gint w, gint h) {
 }
 
 void basic_put(Basic *layout, GtkWidget *widget, gint x, gint y, gint w, gint h) {
+	if (w < 0)
+		w = 0;
+	if (h < 0)
+		h = 0;
+
 	BasicChild *child = g_new(BasicChild, 1);
 	child->widget = widget;
 	child->x = x;
@@ -63,6 +68,11 @@ void basic_put(Basic *layout, GtkWidget *widget, gint x, gint y, gint w, gint h)
 }
 
 void basic_move(Basic *layout, GtkWidget *widget, gint x, gint y, gint w, gint h) {
+	if (w < 0)
+		w = 0;
+	if (h < 0)
+		h = 0;
+
 	BasicChild *child = get_child(layout, widget);
 	assert(child, L"No child info!");
 	move(layout, child, x, y, w, h);

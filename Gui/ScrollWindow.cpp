@@ -377,6 +377,12 @@ namespace gui {
 	}
 
 	void ScrollWindow::addChild(GtkWidget *child, Rect pos) {
+		// Remove any child already inside the scroll window (a Scrollable is added automatically)
+		GtkWidget *content = gtk_bin_get_child(GTK_BIN(handle().widget()));
+		if (content)
+			gtk_container_remove(GTK_CONTAINER(handle().widget()), content);
+
+		// Now we can add the new child.
 		gtk_container_add(GTK_CONTAINER(handle().widget()), child);
 	}
 
