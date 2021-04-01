@@ -304,31 +304,39 @@ namespace gui {
 		// The global main context.
 		GMainContext *context;
 
-		// File descriptor for the eventfd we use as a condition.
-		int eventFd;
+		// Main loop we are using.
+		GMainLoop *mainLoop;
 
-		// Did we call 'wait' since the last call to 'dispatch'?
-		bool dispatchReady;
+		// Default poll function for Gtk+.
+		GPollFunc gtkDefaultPoll;
 
-		// Poll descriptors passed to Gtk+.
-		vector<GPollFD> gPollFd;
+		// Self-pipe so that we can signal ourselves. On Linux, we use an eventfd for this to save
+		// file descriptors and kernel resources. The eventfd is stored in both ends.
+		int pipeRead;
+		int pipeWrite;
+
+		// Filedescriptors to poll from Gtk+. NULL if we are not currently asked to poll by Gtk+.
+		GPollFD *gtkFD;
+		size_t gtkFDCount;
+
+		// Timeout requested by Gtk+. May be -1.
+		gint gtkTimeout;
 
 		// Poll descriptors used by the system calls.
 		vector<struct pollfd> pollFd;
 
-		// Handle all repaint requests.
-		void handleRepaints();
-
-		// Wait for a callback of some sort.
-		void doWait(os::IOHandle &io, int timeout);
-
-		// Low-level waiting primitives.
-		void gtkWait(os::IOHandle::Desc &io, int timeout);
-		void plainWait(struct pollfd *fds, size_t count, int timeout);
-
 		// Hook for Gtk+ events.
 		static void gtkEventHook(GdkEvent *event, gpointer data);
 
+		// Custom poll function.
+		static gint gtkCustomPoll(GPollFD *ufds, guint nfds, gint timeout);
+
+		// Helper for the wait functions.
+		void doWait(os::IOHandle &io, int timeout);
+		void doPoll(os::IOHandle::Desc &desc, int timeout);
+
+		// Handle all repaint requests.
+		void handleRepaints();
 #endif
 
 	};

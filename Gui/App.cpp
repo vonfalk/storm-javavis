@@ -7,9 +7,15 @@
 #include "Core/Exception.h"
 #include "Win32Dpi.h"
 
-#ifdef POSIX
-// NOTE: This does not exist on all POSIX systems (eg. MacOS)
+#if defined(POSIX)
+
+#include <fcntl.h>
+
+// Use eventfd if available.
+#if defined(LINUX)
 #include <sys/eventfd.h>
+#define GUI_HAS_EVENTFD 1
+#endif
 #endif
 
 namespace gui {
@@ -562,6 +568,13 @@ namespace gui {
 
 #ifdef GUI_GTK
 
+	// Thread-local pointer to the App structure, since we can not pass arbitrary data to the poll
+	// function in Gtk+.
+	static THREAD AppWait *currentWait = null;
+
+	// Default poll function, so we have something to fall back to.
+	static GPollFunc globalDefaultPoll = null;
+
 	void App::init() {
 		// Note: App::init is called after AppWait::platformInit
 		display = gdk_display_get_default();
@@ -573,8 +586,10 @@ namespace gui {
 
 	void AppWait::platformInit() {
 		done = false;
-		dispatchReady = false;
 		repaintList = null;
+
+		// Set up the pointer to ourselves.
+		currentWait = this;
 
 		// We'll be using threads with X from time to time. Mainly while painting in the background through Cairo.
 		XInitThreads();
@@ -590,12 +605,33 @@ namespace gui {
 		gdk_event_handler_set(&gtkEventHook, this, NULL);
 
 		// Find the context for the main loop.
+		mainLoop = null;
 		context = g_main_context_default();
 		// Become the owner of the main context.
 		g_main_context_acquire(context);
 
-		// We need an eventfd for our condition semantics.
-		eventFd = eventfd(0, EFD_CLOEXEC | EFD_NONBLOCK);
+		// Remember that we don't have an active query from Gtk+ at the moment.
+		gtkFD = null;
+		gtkFDCount = 0;
+		gtkTimeout = -1;
+
+		// Set our custom poll function so that we may preempt the current thread as we see fit.
+		gtkDefaultPoll = g_main_context_get_poll_func(context);
+		if (!globalDefaultPoll)
+			globalDefaultPoll = gtkDefaultPoll;
+		g_main_context_set_poll_func(context, &AppWait::gtkCustomPoll);
+
+		// Create a pipe/eventfd we can use.
+#if GUI_HAS_EVENTFD
+		pipeRead = pipeWrite = eventfd(0, EFD_CLOEXEC);
+#else
+		int ends[2] = { -1, -1 };
+		pipe(ends);
+		pipeRead = ends[0];
+		pipeWrite = ends[1];
+		fcntl(pipeRead, F_SETFD, FD_CLOEXEC);
+		fcntl(pipeWrite, F_SETFD, FD_CLOEXEC);
+#endif
 	}
 
 	void AppWait::platformDestroy() {
@@ -608,11 +644,20 @@ namespace gui {
 			}
 		}
 
+		// Clear the wait and restore the poll function.
+		currentWait = null;
+		g_main_context_set_poll_func(context, gtkDefaultPoll);
+
+		// Close the pipe.
+#if GUI_HAS_EVENTFD
+		close(pipeRead);
+#else
+		close(pipeRead);
+		close(pipeWrite);
+#endif
+
 		// Release ownership of the main context.
 		g_main_context_release(context);
-
-		// Close the eventfd.
-		close(eventFd);
 	}
 
 	void AppWait::gtkEventHook(GdkEvent *event, gpointer data) {
@@ -640,6 +685,73 @@ namespace gui {
 
 		// Pass it on to Gtk+.
 		gtk_main_do_event(event);
+	}
+
+	gint AppWait::gtkCustomPoll(GPollFD *ufds, guint nfds, gint timeout) {
+		// Fallback. Should not happen.
+		AppWait *wait = currentWait;
+		if (!wait) {
+			WARNING(L"Poll inside Gtk+ called from a thread we did not expect.");
+			return (*globalDefaultPoll)(ufds, nfds, timeout);
+		}
+
+		// This is the single location we know that Gtk+ will call regardless of modal dialogs etc.
+
+		// Our approach here is to call the scheduler at this point. We store "ufds" in our array
+		// and call "Thread::waitForWork" in order for it to provide us with information about any
+		// sleeping threads or pending IO operations.
+
+		// We don't care too much if we accidentally return back to Gtk+ too early some times. This
+		// is something that could happen with a timeout or a signal anyway, so it should handle
+		// that properly.
+
+		// Start by running other threads while there is work to do. The reason we don't go to sleep
+		// at this point is that we want to poll our filedescriptors periodically. Otherwise we
+		// might starve the Gtk+ thread (even if other threads yield), which is not too good.
+		os::UThreadState *state = os::UThread::current().threadData()->owner;
+		while (state->leave()) {
+			gint result = (*wait->gtkDefaultPoll)(ufds, nfds, 0);
+
+			// Either an error, or something happened on the file descriptors.
+			if (result != 0)
+				return result;
+
+			// If it requested a timeout of zero, don't get stuck here.
+			if (timeout == 0)
+				return 0;
+		}
+
+		// If timeout was zero, then we shall not sleep. Just poll once now, and be happy (we
+		// already yielded, so it is fine).
+		if (timeout == 0) {
+			return (*wait->gtkDefaultPoll)(ufds, nfds, 0);
+		}
+
+		// When we get here, there was no more work to do. We call waitForWork to sleep for an
+		// adequate period with a proper set of file descriptors to wait for.
+		wait->gtkFD = ufds;
+		wait->gtkFDCount = nfds;
+		wait->gtkTimeout = timeout;
+
+		state->owner->waitForWork();
+
+		wait->gtkFD = null;
+		wait->gtkFDCount = 0;
+		wait->gtkTimeout = -1;
+
+		gint numReady = 0;
+		for (size_t i = 0; i < nfds; i++)
+			if (ufds[i].revents)
+				numReady++;
+
+		// Repaint if needed.
+		wait->handleRepaints();
+
+		// At this point, we were either asked by the Gtk+ fds to wake, or by some event in
+		// Storm. In any case, we just report the proper number of events back to Gtk+, and let it
+		// deal with the situation. Regardless of the situation we will shortly call UThread::leave
+		// soon anyway.
+		return numReady;
 	}
 
 	static short from_g(GIOCondition src) {
@@ -694,24 +806,6 @@ namespace gui {
 		return r;
 	}
 
-	void AppWait::plainWait(struct pollfd *fds, size_t count, int timeout) {
-		int result = -1;
-		while (result < 0) {
-			result = poll(fds, count, timeout);
-
-			if (result < 0) {
-				if (errno != EINTR) {
-					perror("poll");
-					assert(false);
-				}
-
-				// TODO: Better approximation of the remaining time.
-				if (timeout > 0)
-					timeout = 0;
-			}
-		}
-	}
-
 	class NoSignals {
 	public:
 		NoSignals() {
@@ -730,90 +824,60 @@ namespace gui {
 		sigset_t old;
 	};
 
-	void AppWait::gtkWait(os::IOHandle::Desc &io, int stormTimeout) {
-		// NOTE: We could check the return value of '_prepare' to possibly avoid polling, but the
-		// return value is ignored in the Gtk+ implementation as well, so we can probably get away
-		// with ignoring it as well.
-		gint maxPriority = 0;
-		gint timeout = 0;
-		gint fdCount = 0;
-		gint oldSize = 0;
-		{
-			// Block signals from the GC while calling g_main_context_prepare and
-			// g_main_context_query. If signals arrive while Gtk+ is communicating with Xlib (mostly
-			// during startup), it sometimes bails out when it sees the EINTR result from a system
-			// call. It seems looks like the error is inside libxcb, which is used by libX11, but I am
-			// not sure.
-			// Note: it could be a very bad idea to block GC signals in this way since libxcb (or
-			// libX11 for that matter) could try taking a lock that a sleeping thread is hogging at
-			// the moment, which would cause a deadlock.
-			NoSignals z;
-			g_main_context_prepare(context, &maxPriority);
+	void AppWait::doPoll(os::IOHandle::Desc &desc, int timeout) {
+		pollFd.resize(desc.count + gtkFDCount);
+		for (size_t i = 0; i < desc.count; i++)
+			pollFd[i] = desc.fds[i];
+		for (size_t i = 0; i < gtkFDCount; i++)
+			pollFd[i + desc.count] = from_g(gtkFD[i]);
 
-			// Get poll fd:s from Gtk+:
-			do {
-				oldSize = gPollFd.size();
-				fdCount = g_main_context_query(context, maxPriority, &timeout, gPollFd.data(), oldSize);
-				gPollFd.resize(fdCount);
-			} while (fdCount > oldSize);
+		// Call poll
+		int result = -1;
+		while (result < 0) {
+			result = poll(&pollFd[0], pollFd.size(), timeout);
+			if (result < 0) {
+				if (errno != EINTR) {
+					perror("poll");
+					assert(false);
+				}
+
+				// TODO: Better approximation...
+				if (timeout > 0)
+					timeout = 0;
+			}
 		}
 
-		// Put them into an array of system specific poll fd:s.
-		pollFd.resize(io.count + gPollFd.size());
-		for (size_t i = 0; i < io.count; i++)
-			pollFd[i] = io.fds[i];
-		for (size_t i = 0; i < gPollFd.size(); i++)
-			pollFd[i + io.count] = from_g(gPollFd[i]);
-
-		// Adjust timeout.
-		if (timeout < 0)
-			timeout = stormTimeout;
-		else if (stormTimeout >= 0)
-			timeout = min(timeout, stormTimeout);
-
-		// Now, we can call 'poll'!
-		plainWait(pollFd.data(), pollFd.size(), timeout);
-
-		// Copy the poll descriptors back to their original location...
-		for (size_t i = 0; i < io.count; i++)
-			io.fds[i] = pollFd[i];
-		for (size_t i = 0; i < gPollFd.size(); i++)
-			gPollFd[i] = to_g(pollFd[i + io.count]);
-
-		{
-			NoSignals z;
-			// Let Gtk+ investigate the result of the polling.
-			g_main_context_check(context, maxPriority, gPollFd.data(), gint(gPollFd.size()));
-		}
-
-		dispatchReady = true;
+		for (size_t i = 0; i < desc.count; i++)
+			desc.fds[i] = pollFd[i];
+		for (size_t i = 0; i < gtkFDCount; i++)
+			gtkFD[i] = to_g(pollFd[i + desc.count]);
 	}
 
 	void AppWait::doWait(os::IOHandle &io, int timeout) {
+		if (gtkTimeout >= 0 && gtkTimeout < timeout)
+			timeout = gtkTimeout;
+
+		// We want to poll the pipe as well.
 		os::IOHandle::Desc desc = io.desc();
-		desc.fds[0].fd = eventFd;
+		desc.fds[0].fd = pipeRead;
 		desc.fds[0].events = POLLIN;
 		desc.fds[0].revents = 0;
 
-		if (msgDisabled) {
-			plainWait(desc.fds, desc.count, timeout);
-		} else {
-			gtkWait(desc, timeout);
-		}
+		// Call our custom poll.
+		doPoll(desc, timeout);
 
-		// If entry #0 is done, we want to read it so that it is not signaled anymore.
+		// If we were notified from the pipe, we need to read from it.
 		if (desc.fds[0].revents != 0) {
 			uint64_t v = 0;
-			ssize_t r = read(eventFd, &v, 8);
+			ssize_t r = read(pipeRead, &v, sizeof(v));
 			if (r <= 0)
-				perror("Failed to read from eventfd");
+				perror("Failed to read from the pipe.");
 		}
 
 		// Notify that we woke up. This needs to be done after reading from the eventfd, otherwise
 		// the 'signalSent' might be set again before we manage to clear the eventfd.
 		atomicWrite(signalSent, 0);
 
-		// Handle any repaint requests.
 		handleRepaints();
 	}
 
@@ -838,45 +902,41 @@ namespace gui {
 
 	void AppWait::signal() {
 		if (atomicCAS(signalSent, 0, 1) == 0) {
-			uint64_t val = 1;
+			uint64_t store = 1;
 			while (true) {
-				ssize_t r = write(eventFd, &val, 8);
+				ssize_t r = write(pipeWrite, &store, sizeof(uint64_t));
 				if (r >= 0)
 					break;
 				if (errno == EAGAIN || errno == EINTR)
 					continue;
-				perror("Failed to signal eventfd");
+				perror("Failed to signal the pipe");
 			}
 		}
 	}
 
 	void AppWait::work() {
+		if (done)
+			return;
+
 		handleRepaints();
 
-		// Don't try to dispatch anything unless we called wait earlier.
-		if (!dispatchReady)
-			return;
+		mainLoop = g_main_loop_new(context, TRUE);
+		g_main_loop_run(mainLoop);
+		g_main_loop_unref(mainLoop);
+		mainLoop = null;
 
-		// If we're already doing message processing, do not confuse Gtk by recursive calls to g_main_context_iteration.
-		if (msgDisabled)
-			return;
-
-		msgDisabled = true;
-		dispatchReady = false;
-
-		// Dispatch any pending events.
-		g_main_context_dispatch(context);
-
-		msgDisabled = false;
+		if (notifyExit)
+			notifyExit->up();
 	}
 
 	void AppWait::terminate(os::Sema &notify) {
 		uThread = os::UThread::invalid;
 
-		// We do not need to wait for the termination of the main loop. Just setting 'done' and
-		// calling signal() is enough.
-		notify.up();
 		done = true;
+		notifyExit = &notify;
+
+		if (mainLoop)
+			g_main_loop_quit(mainLoop);
 		signal();
 	}
 
