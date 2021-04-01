@@ -5,6 +5,7 @@
 #include "Frame.h"
 #include "Defaults.h"
 #include "Core/Exception.h"
+#include "Utils/Platform.h"
 #include "Win32Dpi.h"
 
 #if defined(POSIX)
@@ -933,10 +934,12 @@ namespace gui {
 		uThread = os::UThread::invalid;
 
 		done = true;
-		notifyExit = &notify;
-
-		if (mainLoop)
+		if (mainLoop) {
+			notifyExit = &notify;
 			g_main_loop_quit(mainLoop);
+		} else {
+			notify.up();
+		}
 		signal();
 	}
 
@@ -970,7 +973,121 @@ namespace gui {
 		}
 	}
 
+	// Previous version of gtk functions.
+	struct PrevGtk {
+		typedef void (*RunPtr)(GMainLoop *);
+		RunPtr run;
 
+		typedef void (*QuitPtr)(GMainLoop *);
+		QuitPtr quit;
+
+		// Hooked main loops.
+		hash_map<GMainLoop *, os::Sema *> hooked;
+
+		// Lock for the hooked main loops.
+		os::Lock hookLock;
+
+		PrevGtk() {
+			run = (RunPtr)dlsym(RTLD_NEXT, "g_main_loop_run");
+			quit = (QuitPtr)dlsym(RTLD_NEXT, "g_main_loop_quit");
+			if (!run || !quit) {
+				printf("Failed to initialize Gtk+ integration.\n");
+				exit(250);
+			}
+		}
+	};
+
+	static PrevGtk gtkFns;
+
+	static size_t findOffset() {
+		// Approximate size of the structure. Sligtly under-estimated.
+		const size_t maxSize = sizeof(void *) + sizeof(gint)*2;
+
+		GMainContext *context = g_main_context_default();
+		GMainLoop *loop = g_main_loop_new(context, TRUE);
+		size_t possible = 0;
+		for (size_t offset = 0; offset < maxSize; offset++) {
+			void *ptr = (char *)loop + offset;
+
+			// If it is the context, then don't bother changing it.
+			if ((offset % sizeof(void *)) == 0) {
+				if (*(void **)ptr == context)
+					continue;
+			}
+
+			// It is currently set to 'true', so find that.
+			if (*(char *)ptr == 1) {
+				possible |= 1 << offset;
+			}
+		}
+
+		// Now, set it to false, and see which one changed.
+		(*gtkFns.quit)(loop);
+
+		size_t found = maxSize;
+		for (size_t offset = 0; offset < maxSize; offset++) {
+			void *ptr = (char *)loop + offset;
+
+			if (possible & (1 << offset)) {
+				if (*(char *)ptr == 0) {
+					found = offset;
+					break;
+				}
+			}
+		}
+
+		g_main_loop_unref(loop);
+
+		assert(found != maxSize, L"Unable to find the location of 'running' inside GMainLoop!");
+
+		return found;
+	}
+
+	void AppWait::onRecursiveMain(GMainLoop *loop) {
+		// If this is the same UThread that runs the regular main loop, then there is no problem
+		// (note: this may happen before we started our own main loop, but that is fine).
+		if (os::UThread::current() == uThread) {
+			(*gtkFns.run)(loop);
+			return;
+		}
+
+		// We need to emulate running the main loop...
+		if (!g_main_loop_is_running(loop)) {
+			static size_t runningOffset = findOffset();
+			*((char *)loop + runningOffset) = 1;
+		}
+
+		// Wait for someone to end our main loop.
+		os::Sema wait(0);
+		{
+			os::Lock::L z(gtkFns.hookLock);
+			gtkFns.hooked[loop] = &wait;
+		}
+		wait.down();
+	}
+
+	// We need to hook g_main_loop_run to make sure that we don't run more than one of them at any
+	// given time.
+	extern "C" SHARED_EXPORT void g_main_loop_run(GMainLoop *loop) {
+		AppWait *wait = currentWait;
+		if (wait) {
+			wait->onRecursiveMain(loop);
+		} else {
+			(*gtkFns.run)(loop);
+		}
+	}
+
+	// We also hook the quit function so that we can tell exit the main loop when we need to.
+	extern "C" SHARED_EXPORT void g_main_loop_quit(GMainLoop *loop) {
+		(*gtkFns.quit)(loop);
+
+		os::Lock::L z(gtkFns.hookLock);
+		hash_map<GMainLoop *, os::Sema *>::iterator found = gtkFns.hooked.find(loop);
+		if (found != gtkFns.hooked.end()) {
+			found->second->up();
+			gtkFns.hooked.erase(found);
+		}
+	}
 
 #endif
 

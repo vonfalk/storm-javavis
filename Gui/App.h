@@ -337,6 +337,9 @@ namespace gui {
 
 		// Handle all repaint requests.
 		void handleRepaints();
+
+	public:
+		void onRecursiveMain(GMainLoop *loop);
 #endif
 
 	};
