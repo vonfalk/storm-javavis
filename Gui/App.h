@@ -331,6 +331,9 @@ namespace gui {
 		// Hook for Gtk+ events.
 		static void gtkEventHook(GdkEvent *event, gpointer data);
 
+	public:
+		// Called when someone tries to enter a new main loop recursively.
+		void onRecursiveMain(GMainLoop *loop);
 #endif
 
 	};

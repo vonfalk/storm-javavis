@@ -568,6 +568,9 @@ namespace gui {
 
 #ifdef GUI_GTK
 
+	// Current AppWait for this thread.
+	static THREAD AppWait *currentWait = null;
+
 	void App::init() {
 		// Note: App::init is called after AppWait::platformInit
 		display = gdk_display_get_default();
@@ -600,6 +603,9 @@ namespace gui {
 		// Become the owner of the main context.
 		g_main_context_acquire(context);
 
+		// Let the world know.
+		currentWait = this;
+
 		// Create a pipe/eventfd we can use.
 #if GUI_HAS_EVENTFD
 		pipeRead = pipeWrite = eventfd(0, EFD_CLOEXEC);
@@ -622,6 +628,9 @@ namespace gui {
 				repaintList = repaintList->next;
 			}
 		}
+
+		// Remove us.
+		currentWait = null;
 
 		// Release ownership of the main context.
 		g_main_context_release(context);
@@ -881,13 +890,13 @@ namespace gui {
 		if (msgDisabled)
 			return;
 
-		msgDisabled = true;
+		disableMsg();
 		dispatchReady = false;
 
 		// Dispatch any pending events.
 		g_main_context_dispatch(context);
 
-		msgDisabled = false;
+		enableMsg();
 	}
 
 	void AppWait::terminate(os::Sema &notify) {
@@ -935,6 +944,143 @@ namespace gui {
 		}
 	}
 
+
+	/**
+	 * Global main-loop management.
+	 */
+	struct GtkMainLoops {
+		typedef void (*RunPtr)(GMainLoop *);
+		RunPtr run;
+
+		typedef void (*QuitPtr)(GMainLoop *);
+		QuitPtr quit;
+
+		// Hooked main loops.
+		hash_map<GMainLoop *, os::Sema *> hooked;
+
+		// Lock for the hooked main loops.
+		os::Lock hookLock;
+
+		GtkMainLoops() {
+			run = (RunPtr)dlsym(RTLD_NEXT, "g_main_loop_run");
+			quit = (QuitPtr)dlsym(RTLD_NEXT, "g_main_loop_quit");
+			if (!run || !quit) {
+				printf("Failed to initialize Gtk+ integration.\n");
+				exit(250);
+			}
+		}
+	};
+
+	static GtkMainLoops gtkLoops;
+
+	static size_t findOffset() {
+		// Approximate size of the structure. Sligtly under-estimated.
+		const size_t maxSize = sizeof(void *) + sizeof(gint)*2;
+
+		GMainContext *context = g_main_context_default();
+		GMainLoop *loop = g_main_loop_new(context, TRUE);
+		size_t possible = 0;
+		for (size_t offset = 0; offset < maxSize; offset++) {
+			void *ptr = (char *)loop + offset;
+
+			// If it is the context, then don't bother changing it.
+			if ((offset % sizeof(void *)) == 0) {
+				if (*(void **)ptr == context)
+					continue;
+			}
+
+			// It is currently set to 'true', so find that.
+			if (*(char *)ptr == 1) {
+				possible |= 1 << offset;
+			}
+		}
+
+		// Now, set it to false, and see which one changed.
+		(*gtkLoops.quit)(loop);
+
+		size_t found = maxSize;
+		for (size_t offset = 0; offset < maxSize; offset++) {
+			void *ptr = (char *)loop + offset;
+
+			if (possible & (1 << offset)) {
+				if (*(char *)ptr == 0) {
+					found = offset;
+					break;
+				}
+			}
+		}
+
+		g_main_loop_unref(loop);
+
+		assert(found != maxSize, L"Unable to find the location of 'running' inside GMainLoop!");
+
+		return found;
+	}
+
+	void AppWait::onRecursiveMain(GMainLoop *loop) {
+		// Mark it as running... (sorry, no API to do this).
+		if (!g_main_loop_is_running(loop)) {
+			static size_t runningOffset = findOffset();
+			*((char *)loop + runningOffset) = 1;
+		}
+
+		if (os::UThread::current() == uThread) {
+			// We are inside "dispatch" when we get here, so we need to enable messages for
+			// "work" to actually do anything.
+			enableMsg();
+
+			// If this is the same UThread that runs the regular main loop, then we need to emulate
+			// what UThread usually does.
+			os::UThreadState *state = os::UThread::current().threadData()->owner;
+			while (g_main_loop_is_running(loop)) {
+				// Run other threads while we have things to do. We must remember to run this thread
+				// as well. Otherwise we won't dispatch events to Gtk+.
+				do {
+					work();
+
+					if (!g_main_loop_is_running(loop))
+						break;
+				} while (state->leave());
+
+				// When we have nothing to do, call wait.
+				if (g_main_loop_is_running(loop))
+					state->owner->waitForWork();
+			}
+
+			disableMsg();
+		} else {
+			// Otherwise, we can just block this UThread until we see that it is ready.
+			os::Sema wait(0);
+			{
+				os::Lock::L z(gtkLoops.hookLock);
+				gtkLoops.hooked[loop] = &wait;
+			}
+			wait.down();
+		}
+	}
+
+	// We hook g_main_loop_run since we lose the ability to preemt the current thread if we let that
+	// happen (e.g. when showing a dialog).
+	extern "C" SHARED_EXPORT void g_main_loop_run(GMainLoop *loop) {
+		AppWait *wait = currentWait;
+		if (wait) {
+			wait->onRecursiveMain(loop);
+		} else {
+			(*gtkLoops.run)(loop);
+		}
+	}
+
+	// We also hook the quit function so that we can tell exit the main loop when we need to.
+	extern "C" SHARED_EXPORT void g_main_loop_quit(GMainLoop *loop) {
+		(*gtkLoops.quit)(loop);
+
+		os::Lock::L z(gtkLoops.hookLock);
+		hash_map<GMainLoop *, os::Sema *>::iterator found = gtkLoops.hooked.find(loop);
+		if (found != gtkLoops.hooked.end()) {
+			found->second->up();
+			gtkLoops.hooked.erase(found);
+		}
+	}
 
 
 #endif
