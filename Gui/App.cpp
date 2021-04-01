@@ -1020,6 +1020,13 @@ namespace gui {
 	}
 
 	void AppWait::onRecursiveMain(GMainLoop *loop) {
+		// If this is a main loop that we don't control (it seems the DBus connection uses another
+		// context), then don't touch it.
+		if (g_main_loop_get_context(loop) != context) {
+			(*gtkLoops.run)(loop);
+			return;
+		}
+
 		// Mark it as running... (sorry, no API to do this).
 		if (!g_main_loop_is_running(loop)) {
 			static size_t runningOffset = findOffset();
