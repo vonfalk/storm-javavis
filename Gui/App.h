@@ -304,8 +304,10 @@ namespace gui {
 		// The global main context.
 		GMainContext *context;
 
-		// File descriptor for the eventfd we use as a condition.
-		int eventFd;
+		// Self-pipe so that we can signal ourselves. On Linux, we use an eventfd for this to save
+		// file descriptors and kernel resources. The eventfd is stored in both ends.
+		int pipeRead;
+		int pipeWrite;
 
 		// Did we call 'wait' since the last call to 'dispatch'?
 		bool dispatchReady;

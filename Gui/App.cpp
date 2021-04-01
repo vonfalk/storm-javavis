@@ -7,9 +7,15 @@
 #include "Core/Exception.h"
 #include "Win32Dpi.h"
 
-#ifdef POSIX
-// NOTE: This does not exist on all POSIX systems (eg. MacOS)
+#if defined(POSIX)
+
+#include <fcntl.h>
+
+// Use eventfd if available.
+#if defined(LINUX)
 #include <sys/eventfd.h>
+#define GUI_HAS_EVENTFD 1
+#endif
 #endif
 
 namespace gui {
@@ -594,8 +600,17 @@ namespace gui {
 		// Become the owner of the main context.
 		g_main_context_acquire(context);
 
-		// We need an eventfd for our condition semantics.
-		eventFd = eventfd(0, EFD_CLOEXEC | EFD_NONBLOCK);
+		// Create a pipe/eventfd we can use.
+#if GUI_HAS_EVENTFD
+		pipeRead = pipeWrite = eventfd(0, EFD_CLOEXEC);
+#else
+		int ends[2] = { -1, -1 };
+		(void)!pipe(ends);
+		pipeRead = ends[0];
+		pipeWrite = ends[1];
+		fcntl(pipeRead, F_SETFD, FD_CLOEXEC);
+		fcntl(pipeWrite, F_SETFD, FD_CLOEXEC);
+#endif
 	}
 
 	void AppWait::platformDestroy() {
@@ -611,8 +626,13 @@ namespace gui {
 		// Release ownership of the main context.
 		g_main_context_release(context);
 
-		// Close the eventfd.
-		close(eventFd);
+		// Close the pipe/eventfd.
+#if GUI_HAS_EVENTFD
+		close(pipeRead);
+#else
+		close(pipeRead);
+		close(pipeWrite);
+#endif
 	}
 
 	void AppWait::gtkEventHook(GdkEvent *event, gpointer data) {
@@ -791,7 +811,7 @@ namespace gui {
 
 	void AppWait::doWait(os::IOHandle &io, int timeout) {
 		os::IOHandle::Desc desc = io.desc();
-		desc.fds[0].fd = eventFd;
+		desc.fds[0].fd = pipeRead;
 		desc.fds[0].events = POLLIN;
 		desc.fds[0].revents = 0;
 
@@ -804,9 +824,9 @@ namespace gui {
 		// If entry #0 is done, we want to read it so that it is not signaled anymore.
 		if (desc.fds[0].revents != 0) {
 			uint64_t v = 0;
-			ssize_t r = read(eventFd, &v, 8);
+			ssize_t r = read(pipeRead, &v, 8);
 			if (r <= 0)
-				perror("Failed to read from eventfd");
+				perror("Failed to read from pipe/eventfd");
 		}
 
 		// Notify that we woke up. This needs to be done after reading from the eventfd, otherwise
@@ -840,12 +860,12 @@ namespace gui {
 		if (atomicCAS(signalSent, 0, 1) == 0) {
 			uint64_t val = 1;
 			while (true) {
-				ssize_t r = write(eventFd, &val, 8);
+				ssize_t r = write(pipeWrite, &val, 8);
 				if (r >= 0)
 					break;
 				if (errno == EAGAIN || errno == EINTR)
 					continue;
-				perror("Failed to signal eventfd");
+				perror("Failed to signal eventfd/pipe");
 			}
 		}
 	}
@@ -882,6 +902,11 @@ namespace gui {
 
 	AppWait::RepaintRequest::RepaintRequest(Handle handle) :
 		handle(handle), wait(0), next(null) {
+	}
+
+	static int doRepaint(void *widget) {
+		gtk_widget_queue_draw((GtkWidget *)widget);
+		return 0;
 	}
 
 	void AppWait::repaint(Handle window) {
