@@ -312,6 +312,9 @@ namespace gui {
 		// Did we call 'wait' since the last call to 'dispatch'?
 		bool dispatchReady;
 
+		// Did we start up enough to dispatch?
+		bool started;
+
 		// Poll descriptors passed to Gtk+.
 		vector<GPollFD> gPollFd;
 

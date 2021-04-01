@@ -583,6 +583,7 @@ namespace gui {
 	void AppWait::platformInit() {
 		done = false;
 		dispatchReady = false;
+		started = false;
 		repaintList = null;
 
 		// We'll be using threads with X from time to time. Mainly while painting in the background through Cairo.
@@ -892,6 +893,7 @@ namespace gui {
 
 		disableMsg();
 		dispatchReady = false;
+		started = true;
 
 		// Dispatch any pending events.
 		g_main_context_dispatch(context);
@@ -1025,8 +1027,14 @@ namespace gui {
 		}
 
 		if (os::UThread::current() == uThread) {
-			// We are inside "dispatch" when we get here, so we need to enable messages for
-			// "work" to actually do anything.
+			// In some cases, startup code executes a main loop. We need to make sure not to crash in those cases.
+			if (!started) {
+				(*gtkLoops.run)(loop);
+				return;
+			}
+
+			// We are (usually) inside "dispatch" when we get here, so we need to enable messages
+			// for "work" to actually do anything.
 			enableMsg();
 
 			// If this is the same UThread that runs the regular main loop, then we need to emulate
