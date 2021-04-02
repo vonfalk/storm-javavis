@@ -10,18 +10,23 @@ namespace os {
 	Sema::~Sema() {}
 
 	void Sema::up() {
-		util::Lock::L z(lock);
+		UThreadData *toWake = null;
 
-		UThreadData *data = waiting.pop();
-		if (!data) {
-			// No thread to wake.
-			count++;
-			return;
+		{
+			util::Lock::L z(lock);
+
+			toWake = waiting.pop();
+			if (!toWake) {
+				// No thread to wake.
+				count++;
+				return;
+			}
 		}
 
-		// Wake the thread up.
-		UThreadState *state = data->owner;
-		state->wake(data);
+		// Wake the thread up. Note: We can not do that inside the lock. Otherwise, the thread might
+		// wake up before we have time to release the lock, which could cause us to crash if this
+		// semaphore was deallocated by the thread that we woke (a typical use case for semaphores).
+		toWake->owner->wake(toWake);
 	}
 
 	void Sema::down() {
