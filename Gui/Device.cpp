@@ -65,7 +65,7 @@ namespace gui {
 				}
 			}
 
-			if (selected) {
+			if (!selected) {
 				StrBuf *msg = new (e) StrBuf();
 				*msg << S("The supplied value of ") S(ENV_RENDER_BACKEND) S(" is not supported.\n");
 				*msg << S("This build provides the following options: ");
