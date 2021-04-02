@@ -87,13 +87,20 @@ namespace os {
 	void Event::set() {
 		atomicWrite(s, 1);
 
-		// Wake all threads.
-		util::Lock::L z(lock);
-		while (UThreadData *data = waiting.pop()) {
-			// Wake the thread up.
-			UThreadState *state = data->owner;
-			state->wake(data);
+		// Wake all threads. We need to be a bit careful here. We need to be aware of the situation
+		// where a woken thread could deallocate this event. As such, we must not hold the lock
+		// while waking the threads! We solve this by storing all threads in a separate, local, list
+		// and then waking them all.
+		InlineList<UThreadData> local;
+		{
+			util::Lock::L z(lock);
+			while (UThreadData *data = waiting.pop())
+				local.push(data);
 		}
+
+		// Now we can take our time and wake the threads.
+		while (UThreadData *toWake = local.pop())
+			toWake->owner->wake(toWake);
 	}
 
 	void Event::clear() {
