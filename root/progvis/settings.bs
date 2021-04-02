@@ -40,7 +40,10 @@ class Settings : serializable {
 			return s;
 		} catch (Exception e) {
 			print("Error loading settings: ${e}");
-			return Settings();
+			Settings s;
+			// Make sure to persist the random ID.
+			s.save(from);
+			return s;
 		}
 	}
 
