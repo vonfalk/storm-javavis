@@ -20,6 +20,9 @@ namespace code {
 		// Key.
 		inline Nat STORM_FN key() const { return id; }
 
+		// Deep copy.
+		void STORM_FN deepCopy(CloneEnv *env);
+
 	private:
 		friend class Listing;
 		friend class Operand;

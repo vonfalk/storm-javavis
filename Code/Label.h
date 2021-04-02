@@ -16,6 +16,8 @@ namespace code {
 
 		inline Nat STORM_FN key() const { return id; }
 
+		void STORM_FN deepCopy(CloneEnv *env);
+
 	private:
 		friend class Listing;
 		friend class Output;

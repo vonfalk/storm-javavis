@@ -8,6 +8,8 @@ namespace code {
 
 	Label::Label(Nat id) : id(id) {}
 
+	void Label::deepCopy(CloneEnv *) {}
+
 	wostream &operator <<(wostream &to, Label l) {
 		return to << l.id;
 	}

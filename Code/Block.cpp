@@ -8,6 +8,8 @@ namespace code {
 
 	Block::Block(Nat id) : id(id) {}
 
+	void Block::deepCopy(CloneEnv *) {}
+
 	wostream &operator <<(wostream &to, Block l) {
 		if (l.id == Block().id)
 			return to << L"invalid block";
