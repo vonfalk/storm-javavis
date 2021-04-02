@@ -82,7 +82,7 @@ class MainWin extends Frame {
 		m
 			<< Menu:Submenu("File", fileMenu)
 			<< Menu:Submenu("Run", runMenu)
-			// << Menu:Submenu("Online", onlineMenu)
+			<< Menu:Submenu("Online", onlineMenu)
 			<< Menu:Submenu("Help", helpMenu);
 
 		menu = m;
