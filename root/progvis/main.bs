@@ -34,7 +34,8 @@ class MainWin extends Frame {
 	// Current client connection, if any.
 	private Client? client;
 
-	// The 'online' menu so that we can enable/disable items as we please. The first one is the "sign in" item.
+	// The 'online' menu so that we can enable/disable items as we please.
+	// The first one is the "sign in" item.
 	private PopupMenu onlineMenu;
 
 	// Settings.
@@ -81,7 +82,7 @@ class MainWin extends Frame {
 		m
 			<< Menu:Submenu("File", fileMenu)
 			<< Menu:Submenu("Run", runMenu)
-			<< Menu:Submenu("Online", onlineMenu)
+			// << Menu:Submenu("Online", onlineMenu)
 			<< Menu:Submenu("Help", helpMenu);
 
 		menu = m;
