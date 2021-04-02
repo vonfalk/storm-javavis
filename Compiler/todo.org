@@ -264,3 +264,18 @@
     all usages of that token with the corresponding color.
   - [X] In Array.get(), do not create the exception in getRaw() since it takes up a lot of valuable space in
     the i-cache. Instead, call a separate function or reverse the logic.
+* C++ front-end (in Progvis) [7/14]
+  - [ ] Ability to make const member functions.
+  - [ ] Check if function resolution works somewhat properly with const parameters etc.
+  - [ ] Ability to declare member functions outside the class.
+  - [ ] static_cast, c-style-cast, etc.
+  - [ ] Some kind of standard library for C++?
+  - [ ] Check so that we don't overwrite pointers with something weird.
+  - [ ] sizeof() for an array probably don't work correctly.
+  - [X] Threading constructs.
+  - [X] Strings.
+  - [X] malloc/free
+  - [X] Arrays
+  - [X] sizeof()
+  - [X] Pointer arithmetics.
+  - [X] nullptr/NULL
