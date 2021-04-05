@@ -32,6 +32,11 @@ namespace storm {
 			return r.contains(pt);
 		}
 
+		Bool Rect::intersects(Rect other) const {
+			return (p0.x < other.p1.x) && (other.p0.x < p1.x)
+				&& (p0.y < other.p1.y) && (other.p0.y < p1.y);
+		}
+
 		Rect Rect::operator +(Point pt) const {
 			return Rect(p0 + pt, p1 + pt);
 		}

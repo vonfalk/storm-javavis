@@ -37,6 +37,9 @@ namespace storm {
 			// Contains a point?
 			Bool STORM_FN contains(Point pt) const;
 
+			// Intersects with another Rect?
+			Bool STORM_FN intersects(Rect other) const;
+
 			// Size.
 			inline Size STORM_FN size() const { return p1 - p0; }
 			inline void STORM_ASSIGN size(Size to) { p1 = p0 + to; }
