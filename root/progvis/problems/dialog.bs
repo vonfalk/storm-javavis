@@ -1,0 +1,53 @@
+use ui;
+use layout;
+use core:geometry;
+use progvis:net;
+
+dialog ProblemsDlg {
+
+	private Painter painter;
+
+	init(Client client) {
+		init("Problems", Size(500, 400)) {
+			painter(Query(client));
+		}
+
+		painter(painter);
+	}
+
+	Bool onClick(Bool down, Point pt, MouseButton button) : override {
+		if (down & button == MouseButton:left) {
+			painter.onClick(pt);
+		}
+		true;
+	}
+
+	Bool onMouseVScroll(Point at, Int delta) : override {
+		painter.onVScroll(at, delta);
+		true;
+	}
+}
+
+class Query on Ui {
+	private Client client;
+
+	init(Client client) {
+		init { client = client; }
+	}
+
+	Problem[] problems(Nat type) {
+		Request req = if (type == 0) {
+			ChallengesRequest(false);
+		} else if (type == 1) {
+			ChallengesRequest(true);
+		} else {
+			OwnProblemsRequest();
+		};
+
+		if (ans = client.query(req) as ProblemResponse) {
+			return ans.problems;
+		} else {
+			return [];
+		}
+	}
+}

@@ -128,6 +128,9 @@ class MainWin extends Frame {
 
 			for (Nat i = 1; i < onlineMenu.count; i++)
 				onlineMenu[i].enabled = true;
+
+			print("TODO: Remove the next line");
+			onOnlineProblems();
 		} catch (SignInRedirect redirect) {
 			showMessage(this, "Sign in", "You need to sign in before using the online features. Click OK to continue.");
 			core:sys:open(redirect.to);
@@ -212,7 +215,7 @@ class MainWin extends Frame {
 
 	private void onOnlineProblems() {
 		if (c = client) {
-			ProblemsDlg(c).show(this);
+			problems:ProblemsDlg(c).show(this);
 		}
 	}
 

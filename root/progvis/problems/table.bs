@@ -1,0 +1,109 @@
+use ui;
+use core:geometry;
+use progvis:net;
+use graphics;
+
+SolidBrush tableText on Render = SolidBrush(black);
+SolidBrush tableFg on Render = SolidBrush(black);
+SolidBrush tableBg on Render = SolidBrush(white);
+Float tableHSpace on Render = 5;
+Float tableVSpace on Render = 4;
+
+class Table on Render {
+	private Row[] rows;
+	private Float[] minColSize;
+
+	init(Problem[] data) {
+		init {}
+
+		for (r in data) {
+			Row row(r);
+			rows << row;
+			row.layout(minColSize);
+		}
+	}
+
+	Float height() {
+		Float h;
+		for (row in rows)
+			h += row.height;
+		h;
+	}
+
+	// "draw" is what part of the table is currently visible (0, 0) is the top. We use this for
+	// clipping, we don't transform anything.
+	void render(Rect draw, Graphics g) {
+		if (minColSize.empty)
+			return;
+
+		Float width = draw.size.w;
+
+		// Expand the first column.
+		Float cols;
+		for (x in minColSize)
+			cols += x;
+		minColSize[0] += width - cols;
+
+		Point current;
+		for (row in rows) {
+			Float h = row.height;
+			Rect c(current, Size(width, h));
+			if (c.intersects(draw))
+				row.render(c.p0, minColSize, width, g);
+
+			current.y += h;
+		}
+	}
+}
+
+class Row on Render {
+	private Problem src;
+	private Text[] cols;
+	private Float colHeight;
+
+	init(Problem p) {
+		init {
+			src = p;
+		}
+
+		Font f = defaultFont;
+		cols << Text(p.title, f);
+		cols << Text(p.author, f);
+		cols << Text(p.solutions.toS, f);
+
+		for (c in cols)
+			colHeight = colHeight.max(c.size.h);
+		colHeight = (colHeight + 0.5).int.float; // Round to int.
+	}
+
+	void layout(Float[] w) {
+		while (w.count < cols.count)
+			w << 0;
+
+		for (i, c in cols)
+			w[i] = w[i].max(c.size.w + tableHSpace);
+	}
+
+	Float height() {
+		colHeight + tableVSpace;
+	}
+
+	void render(Point offset, Float[] colWidth, Float totalWidth, Graphics g) {
+		Point at = offset;
+		Float h = height;
+		Rect border(offset, Size(totalWidth, h));
+		g.fill(border, tableBg);
+		g.draw(border, tableFg);
+
+		at.y += tableVSpace * 0.5;
+		at.x += tableHSpace * 0.5;
+		for (i, c in cols) {
+			g.push(Rect(at, Size(colWidth[i], h)));
+			g.draw(c, tableText, at);
+			g.pop();
+
+			at.x += colWidth[i];
+		}
+	}
+}
+
