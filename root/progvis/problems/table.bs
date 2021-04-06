@@ -3,10 +3,11 @@ use core:geometry;
 use progvis:net;
 use graphics;
 
-SolidBrush tableText on Render = SolidBrush(black);
-SolidBrush tableFg on Render = SolidBrush(black);
+SolidBrush tableText on Render = SolidBrush(white * 0.1);
+SolidBrush tableFg on Render = SolidBrush(white * 0.4);
 SolidBrush tableBg on Render = SolidBrush(white);
-Float tableHSpace on Render = 5;
+SolidBrush tableActive on Render = SolidBrush(blue + white * 0.8);
+Float tableHSpace on Render = 10;
 Float tableVSpace on Render = 4;
 
 class Table on Render {
@@ -16,8 +17,18 @@ class Table on Render {
 	init(Problem[] data) {
 		init {}
 
+		Font f = defaultFont;
+		{
+			Font bold = f.clone;
+			bold.weight = 500;
+
+			Heading heading(bold);
+			rows << heading;
+			heading.layout(minColSize);
+		}
+
 		for (r in data) {
-			Row row(r);
+			Body row(r, f);
 			rows << row;
 			row.layout(minColSize);
 		}
@@ -54,22 +65,35 @@ class Table on Render {
 			current.y += h;
 		}
 	}
+
+	// Clicked.
+	void onClick(Point pt) {
+		Bool found = false;
+		Point current;
+		for (row in rows) {
+			Float h = row.height;
+			if (!found & (current.y + h > pt.y)) {
+				row.onClick(pt - current);
+				found = true;
+			} else {
+				row.deactivate();
+			}
+
+			current.y += h;
+		}
+	}
 }
 
 class Row on Render {
-	private Problem src;
 	private Text[] cols;
 	private Float colHeight;
+	protected Bool active;
 
-	init(Problem p) {
-		init {
-			src = p;
-		}
+	init(Str[] text, Font f) {
+		init {}
 
-		Font f = defaultFont;
-		cols << Text(p.title, f);
-		cols << Text(p.author, f);
-		cols << Text(p.solutions.toS, f);
+		for (x in text)
+			cols << Text(x, f);
 
 		for (c in cols)
 			colHeight = colHeight.max(c.size.h);
@@ -92,12 +116,18 @@ class Row on Render {
 		Point at = offset;
 		Float h = height;
 		Rect border(offset, Size(totalWidth, h));
-		g.fill(border, tableBg);
+		g.fill(border, if (active) tableActive; else tableBg;);
 		g.draw(border, tableFg);
 
-		at.y += tableVSpace * 0.5;
-		at.x += tableHSpace * 0.5;
+		Float dx = tableHSpace * 0.5;
+		Float dy = tableVSpace * 0.5;
+		at.y += dy;
+		at.x += dx;
 		for (i, c in cols) {
+			if (i > 0) {
+				g.line(Point(at.x - dx, offset.y), Point(at.x - dx, offset.y + height), tableFg);
+			}
+
 			g.push(Rect(at, Size(colWidth[i], h)));
 			g.draw(c, tableText, at);
 			g.pop();
@@ -105,5 +135,33 @@ class Row on Render {
 			at.x += colWidth[i];
 		}
 	}
+
+	void onClick(Point pt) {}
+
+	void deactivate() {
+		active = false;
+	}
 }
 
+class Heading extends Row {
+	init(Font f) {
+		init(["Problem name", "Author", "Solved"], f) {}
+	}
+}
+
+class Body extends Row {
+	private Problem src;
+
+	init(Problem p, Font f) {
+		var cols = [p.title, p.author, p.solutions.toS];
+
+		init(cols, f) {
+			src = p;
+		}
+	}
+
+	void onClick(Point pt) : override {
+		active = true;
+	}
+
+}

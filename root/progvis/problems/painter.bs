@@ -39,7 +39,7 @@ class Painter extends ui:Painter {
 			g.push(view);
 
 			// Scroll bar.
-			Float scrollWidth = 15;
+			Float scrollWidth = 12;
 			{
 				Float viewHeight = view.size.h - 6;
 				Float tableHeight = table.height;
@@ -48,7 +48,7 @@ class Painter extends ui:Painter {
 				Size sz(scrollWidth - 6, scaledSize * viewHeight);
 				Point origin(view.p1.x - scrollWidth + 3, scaledOffset * viewHeight);
 				origin += Point(0, scroll + 3); // To compensate for the transform. 3 is half the border around it.
-				g.fill(Rect(origin, sz), Size(5), scrollBrush);
+				g.fill(Rect(origin, sz), Size(3), scrollBrush);
 			}
 
 			// Table.
@@ -69,6 +69,11 @@ class Painter extends ui:Painter {
 				table = null;
 				(spawn selectTab(sel)).detach();
 			}
+			repaint();
+		} else if (table) {
+			pt.y -= tabs.height;
+			pt.y += scroll;
+			table.onClick(pt);
 			repaint();
 		}
 	}
