@@ -14,8 +14,8 @@ class Tabs on Render {
 
 	init(Str[] options) {
 		init() {
-			bg(white);
-			sel(Color(0.8, 0.8, 0.8));
+			bg(Color(0.7, 0.7, 0.7));
+			sel(white);
 			fg(black);
 		}
 

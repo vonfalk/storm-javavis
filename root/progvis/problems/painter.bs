@@ -3,7 +3,7 @@ use core:geometry;
 use graphics;
 
 class Painter extends ui:Painter {
-	private Query query;
+	private ProblemData data;
 	private Size size;
 	private Size viewport;
 
@@ -14,10 +14,10 @@ class Painter extends ui:Painter {
 	private Text loading;
 	private SolidBrush scrollBrush;
 
-	init(Query query) {
+	init(ProblemData data) {
 		init() {
-			query = query;
-			tabs(["Unsolved", "Solved", "My problems"]);
+			data = data;
+			tabs(data.allNames);
 			loading("Loading...", defaultFont);
 			scrollBrush(Color(0.4, 0.4, 0.4));
 		}
@@ -90,8 +90,7 @@ class Painter extends ui:Painter {
 	}
 
 	private void selectTab(Nat id) {
-		var problems = query.problems(id);
-		table = Table(problems);
+		table = Table(data.view(id));
 		scroll = 0;
 
 		repaint();

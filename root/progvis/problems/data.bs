@@ -1,0 +1,66 @@
+use ui;
+use progvis:net;
+
+on Ui:
+
+/**
+ * Data for the entire Problem dialog. Allows asking for different types of problems.
+ */
+class ProblemData {
+	private Str[] names;
+	private View[] views;
+
+	init(Client client) {
+		init {}
+	}
+
+	void add(Str name, View view) {
+		names << name;
+		views << view;
+	}
+
+	Nat count() { names.count; }
+	Str name(Nat id) { names[id]; }
+	View view(Nat id) { views[id]; }
+	Str[] allNames() { names; }
+}
+
+/**
+ * Data for some view. Controls what kind of information shall be displayed.
+ *
+ * Does not actually store any data, but encapsulates the queries that need to be done to acquire the data.
+ */
+class View {
+	private Client client;
+
+	init(Client client) {
+		init { client = client; }
+	}
+
+	Problem[] problems() : abstract;
+
+	protected Problem[] getProblems(Request req) {
+		if (ans = client.query(req) as ProblemResponse) {
+			return ans.problems;
+		} else {
+			return [];
+		}
+	}
+}
+
+/**
+ * View for problems that we can solve (e.g. unsolved problems).
+ */
+class SolvableView extends View {
+	private Request query;
+
+	init(Client client, Request request) {
+		init(client) {
+			query = request;
+		}
+	}
+
+	Problem[] problems() : override {
+		getProblems(query);
+	}
+}

@@ -11,11 +11,15 @@ Float tableHSpace on Render = 10;
 Float tableVSpace on Render = 4;
 
 class Table on Render {
+	private View view;
 	private Row[] rows;
 	private Float[] minColSize;
+	private Size lastSize;
 
-	init(Problem[] data) {
-		init {}
+	init(View view) {
+		init {
+			view = view;
+		}
 
 		Font f = defaultFont;
 		{
@@ -27,7 +31,7 @@ class Table on Render {
 			heading.layout(minColSize);
 		}
 
-		for (r in data) {
+		for (r in view.problems) {
 			Body row(r, f);
 			rows << row;
 			row.layout(minColSize);
@@ -44,6 +48,8 @@ class Table on Render {
 	// "draw" is what part of the table is currently visible (0, 0) is the top. We use this for
 	// clipping, we don't transform anything.
 	void render(Rect draw, Graphics g) {
+		lastSize = draw.size;
+
 		if (minColSize.empty)
 			return;
 
@@ -73,7 +79,7 @@ class Table on Render {
 		for (row in rows) {
 			Float h = row.height;
 			if (!found & (current.y + h > pt.y)) {
-				row.onClick(pt - current);
+				row.onClick(pt - current, lastSize.w);
 				found = true;
 			} else {
 				row.deactivate();
@@ -136,7 +142,7 @@ class Row on Render {
 		}
 	}
 
-	void onClick(Point pt) {}
+	void onClick(Point pt, Float width) {}
 
 	void deactivate() {
 		active = false;
@@ -160,8 +166,45 @@ class Body extends Row {
 		}
 	}
 
-	void onClick(Point pt) : override {
+	void onClick(Point pt, Float width) : override {
 		active = true;
 	}
 
+}
+
+/**
+ * A panel that can be opened from one of the rows in a table.
+ */
+class Panel on Render {
+	void render(Point offset, Float width, Graphics g) : abstract;
+	Float height() : abstract;
+}
+
+
+/**
+ * A simple panel that shows a "solve" button, with some more stats.
+ */
+class SolvePanel extends Panel {
+	private Text text;
+
+	init() {
+		init {
+			text("Solve!", defaultFont);
+		}
+	}
+
+	void render(Point offset, Float width, Graphics g) : override {
+		Rect bounds(offset, Size(width, height));
+		g.fill(bounds, tableBg);
+		g.draw(bounds, tableFg);
+
+		offset.x += tableHSpace;
+		offset.y += tableVSpace * 0.5;
+
+		g.draw(text, tableText, offset);
+	}
+
+	Float height() : override {
+		text.size.h + tableVSpace;
+	}
 }
