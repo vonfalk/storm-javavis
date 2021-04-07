@@ -7,6 +7,8 @@ SolidBrush tableText on Render = SolidBrush(white * 0.1);
 SolidBrush tableFg on Render = SolidBrush(white * 0.4);
 SolidBrush tableBg on Render = SolidBrush(white);
 SolidBrush tableActive on Render = SolidBrush(blue + white * 0.8);
+Duration panelAnimation on Render = 150 ms;
+Float panelMargin on Render = 50;
 Float tableHSpace on Render = 10;
 Float tableVSpace on Render = 4;
 
@@ -137,7 +139,7 @@ class Row on Render {
 		at.x += dx;
 		for (i, c in cols) {
 			if (i > 0) {
-				g.line(Point(at.x - dx, offset.y), Point(at.x - dx, offset.y + height), tableFg);
+				g.line(Point(at.x - dx, offset.y), Point(at.x - dx, offset.y + h), tableFg);
 			}
 
 			g.push(Rect(at, Size(colWidth[i], h)));
@@ -191,13 +193,22 @@ class Body extends Row {
 	}
 
 	void onClick(Point pt, Float width, Painter p) : override {
-		if (active)
-			return;
-
-		active = true;
-
-		// Temporary:
-		(spawn findPanel(p)).detach();
+		if (!active) {
+			active = true;
+			(spawn findPanel(p)).detach();
+		} else if (panel) {
+			// Click the panel?
+			Float base = baseHeight();
+			if (pt.y >= base) {
+				if (pt.x >= panelMargin & pt.x < width - panelMargin) {
+					pt.y -= base;
+					pt.x -= panelMargin;
+					panel.onClick(pt, width - 2*panelMargin, p);
+				}
+			} else {
+				deactivate();
+			}
+		}
 	}
 
 	Bool render(Point offset, Float[] colWidth, Float totalWidth, Graphics g) : override {

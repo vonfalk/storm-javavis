@@ -171,6 +171,12 @@ class SolutionView extends View {
 	Panel details(Int id) : override {
 		// TODO: What to show here?
 		// We should have "show problem" (if available), "show improvement" (if available).
-		MultiPanel();
+		for (s in solutions) {
+			if (s.id == id)
+				return SolutionPanel(s);
+		}
+
+		// Good for "zero height".
+		return MultiPanel();
 	}
 }

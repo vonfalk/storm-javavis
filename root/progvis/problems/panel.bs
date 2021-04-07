@@ -3,9 +3,7 @@ use core:geometry;
 use progvis:net;
 use graphics;
 
-Duration panelAnimation on Render = 150 ms;
 SolidBrush solveBg on Render = SolidBrush(green + white * 0.2);
-Float panelMargin on Render = 50;
 
 
 /**
@@ -14,6 +12,7 @@ Float panelMargin on Render = 50;
 class Panel on Render {
 	Bool render(Point offset, Float width, Graphics g) : abstract;
 	Float height() : abstract;
+	void onClick(Point pt, Float width, Painter p) : abstract;
 }
 
 
@@ -44,6 +43,19 @@ class MultiPanel extends Panel {
 		for (x in contained)
 			h += x.height;
 		h;
+	}
+
+	// Click.
+	void onClick(Point pt, Float width, Painter p) : override {
+		for (x in contained) {
+			Float h = x.height;
+			if (pt.y < h) {
+				x.onClick(pt, width, p);
+				return;
+			}
+
+			pt.y -= h;
+		}
 	}
 }
 
@@ -98,6 +110,69 @@ class StatsPanel extends Panel {
 	Float height() : override {
 		textHeight + tableVSpace;
 	}
+
+	void onClick(Point pt, Float width, Painter p) : override {
+		if (pt.x >= width - solve.size.w - tableHSpace * 2) {
+			print("Clicked!");
+		}
+	}
+}
+
+/**
+ * Panel containing "replay" and "show solution" as appropriate. Used as "details" for a solution.
+ */
+class SolutionPanel extends Panel {
+	private Solution solution;
+	private Text[] buttons;
+	private Brush[] colors;
+	private Float buttonHeight;
+
+	init(Solution solution) {
+		init {
+			solution = solution;
+		}
+
+		// TODO: How to know what we clicked?
+		if (solution.solution.any) {
+			buttons << Text("Show solution", defaultFont);
+			colors << SolidBrush(red + white * 0.2);
+		}
+		if (solution.improved.any) {
+			buttons << Text("Show improvements", defaultFont);
+			colors << SolidBrush(green + white * 0.2);
+		}
+
+		if (buttons.empty) {
+			buttons << Text("No more information available", defaultFont);
+			colors << SolidBrush(white);
+		}
+
+		for (b in buttons) {
+			buttonHeight = buttonHeight.max(b.size.h);
+		}
+	}
+
+	Bool render(Point offset, Float width, Graphics g) : override {
+		Float w = width / buttons.count.int.float;
+		for (i, button in buttons) {
+			Rect r(offset + Point(i.int.float * w, 0), Size(w, height));
+			g.fill(r, colors[i]);
+			g.draw(button, tableText, r.center - button.size / 2);
+			g.draw(r, tableFg);
+		}
+
+		false;
+	}
+
+	Float height() : override {
+		buttonHeight + tableVSpace;
+	}
+
+	void onClick(Point pt, Float width, Painter p) : override {
+		Float w = width / buttons.count.int.float;
+		Nat id = (pt.x / w).int.nat;
+		print("Clicked: ${id}");
+	}
 }
 
 /**
@@ -126,5 +201,9 @@ class TablePanel extends Panel {
 
 	Float height() : override {
 		table.height;
+	}
+
+	void onClick(Point pt, Float width, Painter p) : override {
+		table.onClick(pt, p);
 	}
 }
