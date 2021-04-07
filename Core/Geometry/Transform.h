@@ -18,6 +18,9 @@ namespace storm {
 		 * a * b * c
 		 *
 		 * Which means that a is applied first, then b and finally c.
+		 *
+		 * Note: we generally view transformations as being applied on the geometry. I.e. that we
+		 * transform from world space to screen space.
 		 */
 		class Transform : public Object {
 			STORM_CLASS;
@@ -104,6 +107,7 @@ namespace storm {
 		Transform *STORM_FN scale(EnginePtr e, Size scale);
 
 		// Scale, keeping the point 'origin' unchanged (i.e. scaling around 'origin').
+		Transform *STORM_FN scale(EnginePtr e, Size scale, Point origin);
 		Transform *STORM_FN scale(EnginePtr e, Float scale, Vector origin);
 		Transform *STORM_FN scale(EnginePtr e, Vector scale, Vector origin);
 
