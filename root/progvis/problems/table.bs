@@ -9,17 +9,16 @@ SolidBrush tableBg on Render = SolidBrush(white);
 SolidBrush tableActive on Render = SolidBrush(blue + white * 0.8);
 Float tableHSpace on Render = 10;
 Float tableVSpace on Render = 4;
+Float panelMargin on Render = 50;
+Duration panelAnimation on Render = 150 ms;
 
 class Table on Render {
-	private View view;
 	private Row[] rows;
 	private Float[] minColSize;
 	private Size lastSize;
 
 	init(View view) {
-		init {
-			view = view;
-		}
+		init {}
 
 		Font f = defaultFont;
 		{
@@ -32,7 +31,7 @@ class Table on Render {
 		}
 
 		for (r in view.problems) {
-			Body row(r, f);
+			Body row(view, r, f);
 			rows << row;
 			row.layout(minColSize);
 		}
@@ -47,11 +46,11 @@ class Table on Render {
 
 	// "draw" is what part of the table is currently visible (0, 0) is the top. We use this for
 	// clipping, we don't transform anything.
-	void render(Rect draw, Graphics g) {
+	Bool render(Rect draw, Graphics g) {
 		lastSize = draw.size;
 
 		if (minColSize.empty)
-			return;
+			return false;
 
 		Float width = draw.size.w;
 
@@ -61,15 +60,18 @@ class Table on Render {
 			cols += x;
 		minColSize[0] += width - cols;
 
+		Bool repaint = false;
 		Point current;
 		for (row in rows) {
 			Float h = row.height;
 			Rect c(current, Size(width, h));
 			if (c.intersects(draw))
-				row.render(c.p0, minColSize, width, g);
+				repaint |= row.render(c.p0, minColSize, width, g);
 
 			current.y += h;
 		}
+
+		repaint;
 	}
 
 	// Clicked.
@@ -93,6 +95,8 @@ class Table on Render {
 class Row on Render {
 	private Text[] cols;
 	private Float colHeight;
+
+	// This is "just" the background color of the row.
 	protected Bool active;
 
 	init(Str[] text, Font f) {
@@ -115,12 +119,16 @@ class Row on Render {
 	}
 
 	Float height() {
+		baseHeight();
+	}
+
+	protected Float baseHeight() {
 		colHeight + tableVSpace;
 	}
 
-	void render(Point offset, Float[] colWidth, Float totalWidth, Graphics g) {
+	Bool render(Point offset, Float[] colWidth, Float totalWidth, Graphics g) {
 		Point at = offset;
-		Float h = height;
+		Float h = baseHeight;
 		Rect border(offset, Size(totalWidth, h));
 		g.fill(border, if (active) tableActive; else tableBg;);
 		g.draw(border, tableFg);
@@ -140,6 +148,8 @@ class Row on Render {
 
 			at.x += colWidth[i];
 		}
+
+		false;
 	}
 
 	void onClick(Point pt, Float width) {}
@@ -156,27 +166,115 @@ class Heading extends Row {
 }
 
 class Body extends Row {
+	private View view;
 	private Problem src;
 
-	init(Problem p, Font f) {
+	// Panel to show, if any.
+	private Panel? panel;
+
+	// Animation position for the panel (float, 0-1).
+	private Float animationPos;
+
+	// Start time of the animation for the panel.
+	private Moment? animationStart;
+
+	init(View view, Problem p, Font f) {
 		var cols = [p.title, p.author, p.solutions.toS];
 
 		init(cols, f) {
+			view = view;
 			src = p;
 		}
 	}
 
-	void onClick(Point pt, Float width) : override {
-		active = true;
+	Float height() : override {
+		Float base = baseHeight();
+		if (panel)
+			base += panel.height * animationPos;
+		base;
 	}
 
+	void onClick(Point pt, Float width) : override {
+		active = true;
+
+		// Temporary:
+		setPanel(SolvePanel());
+	}
+
+	Bool render(Point offset, Float[] colWidth, Float totalWidth, Graphics g) : override {
+		Bool repaint = false;
+
+		// Update our animation (if any).
+		// Note: Doing this here means that we will have a small amount of overdraw during
+		// animations (the Table checks our heights before drawing us). That is fine.
+		if (animationStart) {
+			Float pos = (Moment() - animationStart) / panelAnimation;
+			if (active) {
+				animationPos = pos;
+				if (animationPos > 1.0) {
+					animationPos = 1.0;
+					this.animationStart = null;
+				}
+			} else {
+				animationPos = 1.0 - pos;
+				if (animationPos <= 0.0) {
+					animationPos = 0.0;
+					this.animationStart = null;
+					this.panel = null;
+				}
+			}
+			repaint = true;
+		}
+
+		// Draw everything!
+		repaint |= super:render(offset, colWidth, totalWidth, g);
+
+		// Draw the panel, if any.
+		if (panel) {
+			// If we don't have this, text rendering behaves strange.
+			if (animationPos > 0.001) {
+				offset.y += baseHeight();
+				offset.x += panelMargin;
+				Float width = totalWidth - 2*panelMargin;
+
+				g.push();
+				g.transform = scale(Size(1.0, animationPos), offset);
+
+				repaint |= panel.render(offset, width, g);
+
+				g.pop();
+			}
+		}
+
+		repaint;
+	}
+
+	void deactivate() : override {
+		super:deactivate();
+		clearPanel();
+	}
+
+	void setPanel(Panel panel) {
+		if (!active)
+			return;
+
+		this.panel = panel;
+		animationStart = Moment();
+		animationPos = 0.0;
+	}
+
+	void clearPanel() {
+		active = false;
+		animationStart = Moment();
+		animationPos = 1.0;
+	}
 }
 
 /**
  * A panel that can be opened from one of the rows in a table.
  */
 class Panel on Render {
-	void render(Point offset, Float width, Graphics g) : abstract;
+	Bool render(Point offset, Float width, Graphics g) : abstract;
 	Float height() : abstract;
 }
 
@@ -193,7 +291,7 @@ class SolvePanel extends Panel {
 		}
 	}
 
-	void render(Point offset, Float width, Graphics g) : override {
+	Bool render(Point offset, Float width, Graphics g) : override {
 		Rect bounds(offset, Size(width, height));
 		g.fill(bounds, tableBg);
 		g.draw(bounds, tableFg);
@@ -202,6 +300,8 @@ class SolvePanel extends Panel {
 		offset.y += tableVSpace * 0.5;
 
 		g.draw(text, tableText, offset);
+
+		false;
 	}
 
 	Float height() : override {

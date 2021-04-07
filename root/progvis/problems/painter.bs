@@ -27,6 +27,8 @@ class Painter extends ui:Painter {
 	}
 
 	Bool render(Size me, Graphics g) : override {
+		Bool repaint = false;
+
 		size = me;
 
 		tabs.render(me, g);
@@ -53,14 +55,14 @@ class Painter extends ui:Painter {
 
 			// Table.
 			view.p1.x -= scrollWidth;
-			table.render(view, g);
+			repaint |= table.render(view, g);
 
 			g.pop();
 		} else {
 			g.draw(loading, tableText, me / 2 - loading.size / 2);
 		}
 
-		false;
+		repaint;
 	}
 
 	void onClick(Point pt) {
