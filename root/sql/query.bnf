@@ -75,7 +75,7 @@ Array<SelectQuery.Join> SJoins();
 SJoins => Array<SelectQuery.Join>() : (~ SJoin -> push)*;
 
 SelectQuery.Join SJoin();
-SJoin => SelectQuery.Join(type, table, condition) : (SJoinType) type ~ SName table ~ "ON" ~ SExpr condition - SJoins;
+SJoin => SelectQuery.Join(type, table, condition) : (SJoinType) type ~ SName table ~ "ON" ~ SExpr condition;
 
 // Types of joins.
 void SJoinType();

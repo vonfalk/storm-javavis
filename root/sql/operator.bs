@@ -87,7 +87,7 @@ class Operator extends SQLExpr {
 
 	// To string.
 	void toS(StrBuf to) : override {
-		to << lhs << " " << op << " " << rhs;
+		to << lhs << " " << sqlOp << " " << rhs;
 	}
 
 	// Figure out which function in Storm this operator would call.
