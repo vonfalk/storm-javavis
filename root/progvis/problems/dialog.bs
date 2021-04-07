@@ -9,10 +9,9 @@ dialog ProblemsDlg {
 
 	init(Client client) {
 		ProblemData data(client);
-		data.add("Unsolved", SolvableView(client, ChallengesRequest(false)));
-		// TODO: Replace these views with something more suitable.
-		data.add("Solved", SolvableView(client, ChallengesRequest(true)));
-		data.add("My problems", SolvableView(client, OwnProblemsRequest()));
+		data.add("Unsolved", UnsolvedView(client));
+		data.add("Solved", SolvedView(client));
+		data.add("My problems", OwnView(client));
 
 		init("Problems", Size(500, 400)) {
 			painter(data);

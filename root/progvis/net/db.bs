@@ -121,9 +121,9 @@ class Database {
 	// Get the parent problem for a problem.
 	Problem? parentTo(Int problemId) {
 		var parent = WITH db: SELECT ONE problems.id AS id, users.displayName AS author, problems.title AS title FROM solutions
-			JOIN problems ON problems.id == solutions.improved
+			JOIN problems ON problems.id == solutions.to
 			JOIN users ON problems.author == users.id
-			WHERE solutions.to == problemId;
+			WHERE solutions.improved == problemId;
 
 		if (parent)
 			return Problem(parent.id, parent.title, parent.author, countSolved(parent.id));

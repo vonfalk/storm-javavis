@@ -1,0 +1,130 @@
+use ui;
+use core:geometry;
+use progvis:net;
+use graphics;
+
+Duration panelAnimation on Render = 150 ms;
+SolidBrush solveBg on Render = SolidBrush(green + white * 0.2);
+Float panelMargin on Render = 50;
+
+
+/**
+ * A panel that can be opened from one of the rows in a table.
+ */
+class Panel on Render {
+	Bool render(Point offset, Float width, Graphics g) : abstract;
+	Float height() : abstract;
+}
+
+
+/**
+ * A panel that contains zero or more other panels (stacked top-to-bottom).
+ */
+class MultiPanel extends Panel {
+	private Panel[] contained;
+
+	// Add a panel.
+	void add(Panel p) {
+		contained << p;
+	}
+
+	// Render.
+	Bool render(Point offset, Float width, Graphics g) : override {
+		Bool repaint = false;
+		for (x in contained) {
+			repaint |= x.render(offset, width, g);
+			offset.y += x.height;
+		}
+		repaint;
+	}
+
+	// Height.
+	Float height() : override {
+		Float h;
+		for (x in contained)
+			h += x.height;
+		h;
+	}
+}
+
+
+/**
+ * A simple panel that shows some additional stats, along with an optional Solve button.
+ */
+class StatsPanel extends Panel {
+	private Text info;
+	private Text solve;
+	private Float textHeight;
+
+	init(Problem? parent, Bool solvable) {
+		Str text = if (parent) {
+			"Solution to: ${parent.title}";
+		} else {
+			"New problem";
+		};
+
+		Str solveText = if (solvable) {
+			"Solve!";
+		} else {
+			"Check again";
+		};
+
+		init {
+			info(text, defaultFont);
+			solve(solveText, defaultFont);
+		}
+
+		textHeight = max(info.size.h, solve.size.h);
+	}
+
+	Bool render(Point offset, Float width, Graphics g) : override {
+		Rect bounds(offset, Size(width, height));
+		g.fill(bounds, tableBg);
+
+		Point delta(tableHSpace, tableVSpace * 0.5);
+		g.draw(info, tableText, offset + delta);
+
+		Float solveW = solve.size.w + tableHSpace * 2;
+		Rect button(offset + Point(width - solveW, 0), Size(solveW, height));
+		g.fill(button, solveBg);
+		g.line(button.p0, button.p0 + Point(0, height), tableFg);
+		g.draw(solve, tableText, button.p0 + delta);
+
+		g.draw(bounds, tableFg);
+
+		false;
+	}
+
+	Float height() : override {
+		textHeight + tableVSpace;
+	}
+}
+
+/**
+ * Panel containing a table.
+ */
+class TablePanel extends Panel {
+	private Table table;
+
+	init(View view) {
+		init {
+			table(view);
+		}
+	}
+
+	Bool render(Point offset, Float width, Graphics g) : override {
+		g.push();
+		g.transform = translate(offset);
+
+		// TODO: We could give it better data for clipping if we had it.
+		Bool repaint = table.render(Rect(0, 0, width, table.height), g);
+
+		g.pop();
+
+		repaint;
+	}
+
+	Float height() : override {
+		table.height;
+	}
+}

@@ -94,6 +94,13 @@ class StatsRequest : extends Request, serializable {
 	// Shall solutions be included in the response?
 	Bool solutions;
 
+	init(Int problem, Bool solutions) {
+		init {
+			problem = problem;
+			solutions = solutions;
+		}
+	}
+
 	init(Problem problem, Bool solutions) {
 		init {
 			problem = problem.id;

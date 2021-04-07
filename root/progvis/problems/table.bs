@@ -9,8 +9,6 @@ SolidBrush tableBg on Render = SolidBrush(white);
 SolidBrush tableActive on Render = SolidBrush(blue + white * 0.8);
 Float tableHSpace on Render = 10;
 Float tableVSpace on Render = 4;
-Float panelMargin on Render = 50;
-Duration panelAnimation on Render = 150 ms;
 
 class Table on Render {
 	private Row[] rows;
@@ -274,44 +272,5 @@ class Body extends Row {
 		active = false;
 		animationStart = Moment();
 		animationPos = 1.0;
-	}
-}
-
-/**
- * A panel that can be opened from one of the rows in a table.
- */
-class Panel on Render {
-	Bool render(Point offset, Float width, Graphics g) : abstract;
-	Float height() : abstract;
-}
-
-
-/**
- * A simple panel that shows a "solve" button, with some more stats.
- */
-class SolvePanel extends Panel {
-	private Text text;
-
-	init() {
-		init {
-			text("Solve!", defaultFont);
-		}
-	}
-
-	Bool render(Point offset, Float width, Graphics g) : override {
-		Rect bounds(offset, Size(width, height));
-		g.fill(bounds, tableBg);
-		g.draw(bounds, tableFg);
-
-		offset.x += tableHSpace;
-		offset.y += tableVSpace * 0.5;
-
-		g.draw(text, tableText, offset);
-
-		false;
-	}
-
-	Float height() : override {
-		text.size.h + tableVSpace;
 	}
 }

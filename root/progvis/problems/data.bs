@@ -31,7 +31,7 @@ class ProblemData {
  * Does not actually store any data, but encapsulates the queries that need to be done to acquire the data.
  */
 class View {
-	private Client client;
+	protected Client client;
 
 	init(Client client) {
 		init { client = client; }
@@ -75,13 +75,9 @@ class View {
 /**
  * View for problems that we can solve (e.g. unsolved problems).
  */
-class SolvableView extends View {
-	private Request query;
-
-	init(Client client, Request request) {
-		init(client) {
-			query = request;
-		}
+class UnsolvedView extends View {
+	init(Client client) {
+		init(client) {}
 	}
 
 	Str[] labels() : override {
@@ -89,10 +85,92 @@ class SolvableView extends View {
 	}
 
 	Row[] rows() : override {
-		getProblems(query);
+		getProblems(ChallengesRequest(false));
 	}
 
 	Panel details(Int id) : override {
-		SolvePanel();
+		Problem? parent;
+		if (response = client.query(StatsRequest(id, false)) as StatsResponse) {
+			parent = response.parent;
+		}
+
+		StatsPanel(parent, true);
+	}
+}
+
+/**
+ * View for problems that we have solved.
+ */
+class SolvedView extends View {
+	init(Client client) {
+		init(client) {}
+	}
+
+	Str[] labels() : override {
+		problemLabels();
+	}
+
+	Row[] rows() : override {
+		getProblems(ChallengesRequest(true));
+	}
+
+	Panel details(Int id) : override {
+		if (response = client.query(StatsRequest(id, true)) as StatsResponse) {
+			MultiPanel root;
+			root.add(StatsPanel(response.parent, false));
+			root.add(TablePanel(SolutionView(client, response.solutions)));
+			root;
+		} else {
+			StatsPanel(null, false);
+		}
+	}
+}
+
+/**
+ * View for own problems.
+ */
+class OwnView extends SolvedView {
+	init(Client client) {
+		init(client) {}
+	}
+
+	Row[] rows() : override {
+		getProblems(OwnProblemsRequest());
+	}
+}
+
+/**
+ * View for solutions.
+ */
+class SolutionView extends View {
+	private Solution[] solutions;
+
+	init(Client client, Solution[] solutions) {
+		init(client) { solutions = solutions; }
+	}
+
+	Str[] labels() : override {
+		["Solution", "Author"];
+	}
+
+	Row[] rows() : override {
+		Row[] result;
+		for (r in solutions) {
+			Str type = if (r.solution.empty) {
+				"Looks good to me!";
+			} else if (r.improved.empty) {
+				"I found a problem...";
+			} else {
+				"I tried to fix the problem I found";
+			};
+			result << Row(r.id, [type, r.author]);
+		}
+		result;
+	}
+
+	Panel details(Int id) : override {
+		// TODO: What to show here?
+		// We should have "show problem" (if available), "show improvement" (if available).
+		MultiPanel();
 	}
 }
