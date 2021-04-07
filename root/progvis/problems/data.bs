@@ -37,15 +37,39 @@ class View {
 		init { client = client; }
 	}
 
-	Problem[] problems() : abstract;
+	value Row {
+		// Some ID used to refer to this row.
+		Int id;
 
-	protected Problem[] getProblems(Request req) {
+		// Data shown to the user.
+		Str[] data;
+
+		init(Int id, Str[] data) {
+			init { id = id; data = data; }
+		}
+	}
+
+	Str[] labels() : abstract;
+	Row[] rows() : abstract;
+
+	protected Str[] problemLabels() {
+		["Problem name", "Author", "Solved"];
+	}
+
+	protected Row[] getProblems(Request req) {
 		if (ans = client.query(req) as ProblemResponse) {
-			return ans.problems;
+			Row[] data;
+			for (r in ans.problems) {
+				data << Row(r.id, [r.title, r.author, r.solutions.toS]);
+			}
+			return data;
 		} else {
 			return [];
 		}
 	}
+
+	// Find an appropriate panel for when a row has been clicked.
+	Panel details(Int id) : abstract;
 }
 
 /**
@@ -60,7 +84,15 @@ class SolvableView extends View {
 		}
 	}
 
-	Problem[] problems() : override {
+	Str[] labels() : override {
+		problemLabels();
+	}
+
+	Row[] rows() : override {
 		getProblems(query);
+	}
+
+	Panel details(Int id) : override {
+		SolvePanel();
 	}
 }

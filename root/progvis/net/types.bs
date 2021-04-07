@@ -26,3 +26,35 @@ class Problem : serializable {
 		}
 	}
 }
+
+/**
+ * Representation of a single solution to a problem.
+ *
+ * Note: This *may* link to another problem, but may also simply say: this looks good to me.
+ */
+class Solution : serializable {
+	Int id;
+	Str author;
+
+	// Solution, in string representation (if any).
+	Str? solution;
+
+	// Improved version, if any.
+	Int? improved;
+
+	init(Int id, Str author) {
+		init {
+			id = id;
+			author = author;
+		}
+	}
+
+	init(Int id, Str author, Str? solution, Int? improved) {
+		init {
+			id = id;
+			author = author;
+			solution = solution;
+			improved = improved;
+		}
+	}
+}

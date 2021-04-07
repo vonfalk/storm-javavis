@@ -85,6 +85,32 @@ class OwnProblemsRequest : extends Request, serializable {
 }
 
 /**
+ * Ask for more detailed stats of a problem.
+ */
+class StatsRequest : extends Request, serializable {
+	// Problem we are interested in.
+	Int problem;
+
+	// Shall solutions be included in the response?
+	Bool solutions;
+
+	init(Problem problem, Bool solutions) {
+		init {
+			problem = problem.id;
+			solutions = solutions;
+		}
+	}
+
+	Response? execute(ServerConn server, Database db) : override {
+		Solution[] sol;
+		if (solutions)
+			sol = db.solutionsTo(problem);
+		Problem? parent = db.parentTo(problem);
+		StatsResponse(parent, sol);
+	}
+}
+
+/**
  * Publish a new problem.
  */
 class NewProblemRequest : extends Request, serializable {

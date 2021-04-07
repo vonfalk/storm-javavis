@@ -63,6 +63,24 @@ class ProblemResponse : extends Response, serializable {
 }
 
 /**
+ * Stats for a problem. Solutions may be empty.
+ */
+class StatsResponse : extends Response, serializable {
+	// Problem is a solution to this problem (if any).
+	Problem? parent;
+
+	// Solutions to this problem, if requested.
+	Solution[] solutions;
+
+	init(Problem? parent, Solution[] solutions) {
+		init {
+			parent = parent;
+			solutions = solutions;
+		}
+	}
+}
+
+/**
  * Reply to creating an new exercise.
  */
 class NewProblemResponse : extends Response, serializable {

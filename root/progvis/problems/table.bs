@@ -25,12 +25,12 @@ class Table on Render {
 			Font bold = f.clone;
 			bold.weight = 500;
 
-			Heading heading(bold);
+			Heading heading(view.labels, bold);
 			rows << heading;
 			heading.layout(minColSize);
 		}
 
-		for (r in view.problems) {
+		for (r in view.rows) {
 			Body row(view, r, f);
 			rows << row;
 			row.layout(minColSize);
@@ -74,14 +74,14 @@ class Table on Render {
 		repaint;
 	}
 
-	// Clicked.
-	void onClick(Point pt) {
+	// Clicked. "painter" is needed for delayed repaints.
+	void onClick(Point pt, Painter painter) {
 		Bool found = false;
 		Point current;
 		for (row in rows) {
 			Float h = row.height;
 			if (!found & (current.y + h > pt.y)) {
-				row.onClick(pt - current, lastSize.w);
+				row.onClick(pt - current, lastSize.w, painter);
 				found = true;
 			} else {
 				row.deactivate();
@@ -152,7 +152,7 @@ class Row on Render {
 		false;
 	}
 
-	void onClick(Point pt, Float width) {}
+	void onClick(Point pt, Float width, Painter p) {}
 
 	void deactivate() {
 		active = false;
@@ -160,14 +160,14 @@ class Row on Render {
 }
 
 class Heading extends Row {
-	init(Font f) {
-		init(["Problem name", "Author", "Solved"], f) {}
+	init(Str[] labels, Font f) {
+		init(labels, f) {}
 	}
 }
 
 class Body extends Row {
 	private View view;
-	private Problem src;
+	private View:Row src;
 
 	// Panel to show, if any.
 	private Panel? panel;
@@ -178,10 +178,8 @@ class Body extends Row {
 	// Start time of the animation for the panel.
 	private Moment? animationStart;
 
-	init(View view, Problem p, Font f) {
-		var cols = [p.title, p.author, p.solutions.toS];
-
-		init(cols, f) {
+	init(View view, View:Row p, Font f) {
+		init(p.data, f) {
 			view = view;
 			src = p;
 		}
@@ -194,11 +192,14 @@ class Body extends Row {
 		base;
 	}
 
-	void onClick(Point pt, Float width) : override {
+	void onClick(Point pt, Float width, Painter p) : override {
+		if (active)
+			return;
+
 		active = true;
 
 		// Temporary:
-		setPanel(SolvePanel());
+		(spawn findPanel(p)).detach();
 	}
 
 	Bool render(Point offset, Float[] colWidth, Float totalWidth, Graphics g) : override {
@@ -232,7 +233,7 @@ class Body extends Row {
 		// Draw the panel, if any.
 		if (panel) {
 			// If we don't have this, text rendering behaves strange.
-			if (animationPos > 0.001) {
+			if (animationPos > 0.01) {
 				offset.y += baseHeight();
 				offset.x += panelMargin;
 				Float width = totalWidth - 2*panelMargin;
@@ -261,6 +262,12 @@ class Body extends Row {
 		this.panel = panel;
 		animationStart = Moment();
 		animationPos = 0.0;
+	}
+
+	private void findPanel(Painter p) {
+		setPanel(view.details(src.id));
+		// Force repaint!
+		p.repaint();
 	}
 
 	void clearPanel() {

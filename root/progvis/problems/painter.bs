@@ -75,7 +75,7 @@ class Painter extends ui:Painter {
 		} else if (table) {
 			pt.y -= tabs.height;
 			pt.y += scroll;
-			table.onClick(pt);
+			table.onClick(pt, this);
 			repaint();
 		}
 	}

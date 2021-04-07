@@ -118,6 +118,36 @@ class Database {
 		result;
 	}
 
+	// Get the parent problem for a problem.
+	Problem? parentTo(Int problemId) {
+		var parent = WITH db: SELECT ONE problems.id AS id, users.displayName AS author, problems.title AS title FROM solutions
+			JOIN problems ON problems.id == solutions.improved
+			JOIN users ON problems.author == users.id
+			WHERE solutions.to == problemId;
+
+		if (parent)
+			return Problem(parent.id, parent.title, parent.author, countSolved(parent.id));
+		else
+			return null;
+	}
+
+	// Get solutions to a problem.
+	Solution[] solutionsTo(Int problemId) {
+		var x = WITH db: SELECT
+				solutions.id AS id,
+				users.displayName AS author,
+				solutions.solution AS solution,
+				solutions.improved AS improved
+			FROM solutions
+			JOIN users ON solutions.author == users.id
+			WHERE solutions.to == problemId;
+		Solution[] result;
+		for (row in x) {
+			result << Solution(row.id, row.author, row.solution, row.improved);
+		}
+		result;
+	}
+
 	private Nat countSolved(Int problemId) {
 		WITH db: COUNT FROM solutions WHERE to == problemId;
 	}
