@@ -113,6 +113,7 @@ namespace storm {
 		protocol = (Protocol *)Protocol::read(from);
 		parts = Serialize<Array<Str *> *>::read(from);
 		flags = UrlFlags(Serialize<Nat>::read(from));
+		from->end();
 	}
 
 	SerializedType *Url::serializedType(EnginePtr e) {
