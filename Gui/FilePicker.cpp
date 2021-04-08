@@ -212,9 +212,10 @@ namespace gui {
 
 		if (SUCCEEDED(result) && defFolder) {
 			IShellItem *shItem = null;
-			result = SHCreateItemFromParsingName(defFolder->format()->c_str(), null, IID_PPV_ARGS(&shItem));
+			// We don't want to fail if the folder does not exist.
+			HRESULT r = SHCreateItemFromParsingName(defFolder->format()->c_str(), null, IID_PPV_ARGS(&shItem));
 
-			if (SUCCEEDED(result))
+			if (SUCCEEDED(r))
 				result = dialog->SetFolder(shItem);
 
 			if (shItem)
@@ -413,7 +414,10 @@ namespace gui {
 														NULL);
 		GtkFileChooser *chooser = GTK_FILE_CHOOSER(dialog);
 
-		if (current_folder)
+		// Note: Doc says we should avoid using this one (i.e. our "current_folder" hack might be bad).
+		if (defFolder)
+			gtk_file_chooser_set_current_folder(chooser, defFolder->format()->utf8_str());
+		else if (current_folder)
 			gtk_file_chooser_set_current_folder(chooser, current_folder);
 
 		if (types)
