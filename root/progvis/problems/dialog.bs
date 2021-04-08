@@ -9,14 +9,18 @@ dialog ProblemsDlg {
 	private Painter painter;
 
 	init(Client client) {
-		ProblemData data(client);
-		data.add("Unsolved", UnsolvedView(client));
-		data.add("Solved", SolvedView(client));
-		data.add("My problems", OwnView(client));
+		Callback cb;
+
+		ProblemData data;
+		data.add("Unsolved", UnsolvedView(client, cb));
+		data.add("Solved", SolvedView(client, cb));
+		data.add("My problems", OwnView(client, cb));
 
 		init("Problems", Size(500, 400)) {
 			painter(data);
 		}
+
+		cb.target = this;
 
 		painter(painter);
 	}
@@ -31,6 +35,28 @@ dialog ProblemsDlg {
 	Bool onMouseVScroll(Point at, Int delta) : override {
 		painter.onVScroll(at, delta);
 		true;
+	}
+}
+
+
+/**
+ * Callback for the dialog.
+ */
+class Callback on Ui {
+	ProblemsDlg? target;
+
+	init() {
+		init {}
+	}
+
+	// Open a particular problem.
+	void solveProblem(Int problemId) {
+		print("TODO: Solve problem! ${problemId}");
+	}
+
+	// Show a solution to a problem.
+	void showSolution(Int problemId, Str solution) {
+		print("TODO: Show a solution! ${problemId}");
 	}
 }
 

@@ -64,11 +64,13 @@ class MultiPanel extends Panel {
  * A simple panel that shows some additional stats, along with an optional Solve button.
  */
 class StatsPanel extends Panel {
+	private Int problemId;
 	private Text info;
 	private Text solve;
 	private Float textHeight;
+	private Callback callback;
 
-	init(Problem? parent, Bool solvable) {
+	init(Int problemId, Problem? parent, Bool solvable, Callback callback) {
 		Str text = if (parent) {
 			"Solution to: ${parent.title}";
 		} else {
@@ -76,7 +78,7 @@ class StatsPanel extends Panel {
 		};
 
 		Str solveText = if (solvable) {
-			"Solve!";
+			"Try to solve!";
 		} else {
 			"Check again";
 		};
@@ -84,6 +86,8 @@ class StatsPanel extends Panel {
 		init {
 			info(text, defaultFont);
 			solve(solveText, defaultFont);
+			problemId = problemId;
+			callback = callback;
 		}
 
 		textHeight = max(info.size.h, solve.size.h);
@@ -113,7 +117,7 @@ class StatsPanel extends Panel {
 
 	void onClick(Point pt, Float width, Painter p) : override {
 		if (pt.x >= width - solve.size.w - tableHSpace * 2) {
-			print("Clicked!");
+			(spawn callback.solveProblem(problemId)).detach();
 		}
 	}
 }
@@ -122,24 +126,29 @@ class StatsPanel extends Panel {
  * Panel containing "replay" and "show solution" as appropriate. Used as "details" for a solution.
  */
 class SolutionPanel extends Panel {
+	private Callback callback;
 	private Solution solution;
 	private Text[] buttons;
 	private Brush[] colors;
+	private Fn<void>[] actions;
 	private Float buttonHeight;
 
-	init(Solution solution) {
+	init(Solution solution, Callback callback) {
 		init {
 			solution = solution;
+			callback = callback;
 		}
 
 		// TODO: How to know what we clicked?
 		if (solution.solution.any) {
-			buttons << Text("Show solution", defaultFont);
+			buttons << Text("Show the issue", defaultFont);
 			colors << SolidBrush(red + white * 0.2);
+			actions << &this.showSolution();
 		}
 		if (solution.improved.any) {
-			buttons << Text("Show improvements", defaultFont);
+			buttons << Text("Show fix", defaultFont);
 			colors << SolidBrush(green + white * 0.2);
+			actions << &this.showImproved();
 		}
 
 		if (buttons.empty) {
@@ -171,7 +180,18 @@ class SolutionPanel extends Panel {
 	void onClick(Point pt, Float width, Painter p) : override {
 		Float w = width / buttons.count.int.float;
 		Nat id = (pt.x / w).int.nat;
-		print("Clicked: ${id}");
+		if (id < actions.count)
+			actions[id].call();
+	}
+
+	private void showSolution() {
+		if (s = solution.solution)
+			(spawn callback.showSolution(solution.to, s)).detach();
+	}
+
+	private void showImproved() {
+		if (p = solution.improved)
+			(spawn callback.solveProblem(p)).detach();
 	}
 }
 

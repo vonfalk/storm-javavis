@@ -10,7 +10,7 @@ class ProblemData {
 	private Str[] names;
 	private View[] views;
 
-	init(Client client) {
+	init() {
 		init {}
 	}
 
@@ -76,8 +76,12 @@ class View {
  * View for problems that we can solve (e.g. unsolved problems).
  */
 class UnsolvedView extends View {
-	init(Client client) {
-		init(client) {}
+	private Callback cb;
+
+	init(Client client, Callback cb) {
+		init(client) {
+			cb = cb;
+		}
 	}
 
 	Str[] labels() : override {
@@ -94,7 +98,7 @@ class UnsolvedView extends View {
 			parent = response.parent;
 		}
 
-		StatsPanel(parent, true);
+		StatsPanel(id, parent, true, cb);
 	}
 }
 
@@ -102,8 +106,12 @@ class UnsolvedView extends View {
  * View for problems that we have solved.
  */
 class SolvedView extends View {
-	init(Client client) {
-		init(client) {}
+	private Callback cb;
+
+	init(Client client, Callback cb) {
+		init(client) {
+			cb = cb;
+		}
 	}
 
 	Str[] labels() : override {
@@ -117,11 +125,11 @@ class SolvedView extends View {
 	Panel details(Int id) : override {
 		if (response = client.query(StatsRequest(id, true)) as StatsResponse) {
 			MultiPanel root;
-			root.add(StatsPanel(response.parent, false));
-			root.add(TablePanel(SolutionView(client, response.solutions)));
+			root.add(StatsPanel(id, response.parent, false, cb));
+			root.add(TablePanel(SolutionView(client, response.solutions, cb)));
 			root;
 		} else {
-			StatsPanel(null, false);
+			StatsPanel(-1, null, false, cb);
 		}
 	}
 }
@@ -130,8 +138,8 @@ class SolvedView extends View {
  * View for own problems.
  */
 class OwnView extends SolvedView {
-	init(Client client) {
-		init(client) {}
+	init(Client client, Callback cb) {
+		init(client, cb) {}
 	}
 
 	Row[] rows() : override {
@@ -144,9 +152,10 @@ class OwnView extends SolvedView {
  */
 class SolutionView extends View {
 	private Solution[] solutions;
+	private Callback cb;
 
-	init(Client client, Solution[] solutions) {
-		init(client) { solutions = solutions; }
+	init(Client client, Solution[] solutions, Callback cb) {
+		init(client) { solutions = solutions; cb = cb; }
 	}
 
 	Str[] labels() : override {
@@ -173,7 +182,7 @@ class SolutionView extends View {
 		// We should have "show problem" (if available), "show improvement" (if available).
 		for (s in solutions) {
 			if (s.id == id)
-				return SolutionPanel(s);
+				return SolutionPanel(s, cb);
 		}
 
 		// Good for "zero height".

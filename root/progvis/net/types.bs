@@ -33,7 +33,13 @@ class Problem : serializable {
  * Note: This *may* link to another problem, but may also simply say: this looks good to me.
  */
 class Solution : serializable {
+	// ID of this row in the DB.
 	Int id;
+
+	// ID if the problem we're a solution to.
+	Int to;
+
+	// Author of the solution.
 	Str author;
 
 	// Solution, in string representation (if any).
@@ -42,16 +48,18 @@ class Solution : serializable {
 	// Improved version, if any.
 	Int? improved;
 
-	init(Int id, Str author) {
+	init(Int id, Int to, Str author) {
 		init {
 			id = id;
+			to = to;
 			author = author;
 		}
 	}
 
-	init(Int id, Str author, Str? solution, Int? improved) {
+	init(Int id, Int to, Str author, Str? solution, Int? improved) {
 		init {
 			id = id;
+			to = to;
 			author = author;
 			solution = solution;
 			improved = improved;

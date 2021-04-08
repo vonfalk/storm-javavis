@@ -135,6 +135,7 @@ class Database {
 	Solution[] solutionsTo(Int problemId) {
 		var x = WITH db: SELECT
 				solutions.id AS id,
+				solutions.to AS to,
 				users.displayName AS author,
 				solutions.solution AS solution,
 				solutions.improved AS improved
@@ -143,7 +144,7 @@ class Database {
 			WHERE solutions.to == problemId;
 		Solution[] result;
 		for (row in x) {
-			result << Solution(row.id, row.author, row.solution, row.improved);
+			result << Solution(row.id, row.to, row.author, row.solution, row.improved);
 		}
 		result;
 	}
