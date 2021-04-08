@@ -14,6 +14,7 @@ class Settings : serializable {
 		init {
 			zoom = 1.0;
 			onlineId = generateId();
+			downloadDir = Url(["problems"], UrlFlags:isDir);
 		}
 	}
 
@@ -25,6 +26,9 @@ class Settings : serializable {
 
 	// Program to use when opening code-files (if specified).
 	Url? customProgram;
+
+	// Directory to use when storing downloaded files. May be a relative path.
+	Url downloadDir;
 
 	// Load from a file, or create default settings if the file is missing.
 	Settings load(Url from) : static {
@@ -72,6 +76,22 @@ class Settings : serializable {
 		} else {
 			core:sys:open(file);
 		}
+	}
+
+	// Get the download directory as an absolute directory.
+	Url absDownloadDir() {
+		if (!downloadDir.absolute)
+			cwdUrl / downloadDir;
+		else
+			downloadDir;
+	}
+
+	// Get an Url for a file in the download directory.
+	Url downloadFile(Str name) {
+		Url abs = absDownloadDir();
+		if (!abs.exists())
+			abs.createDir();
+		abs / name;
 	}
 }
 
@@ -123,7 +143,12 @@ dialog SettingsDlg {
 		Label("Editor to use to open the code run inside Progvis (leave blank for default):") { colspan: 2; }
 		nextLine;
 		Edit program("") {}
-		Button pick("Pick a program") {}
+		Button pickProgram("Pick a program") {}
+		nextLine;
+		Label("Directory where downloaded problems are saved:") { colspan: 2; }
+		nextLine;
+		Edit downloadDir("") {}
+		Button pickDir("Pick a directory") {}
 		nextLine;
 		Button ok("Save") { col: 1; }
 	}
@@ -141,6 +166,8 @@ dialog SettingsDlg {
 			program.text = prog.toS;
 		}
 
+		downloadDir.text = toEdit.absDownloadDir.toS;
+
 		if (settings.zoom < 0.8)
 			small.checked = true;
 		else if (settings.zoom < 1.1)
@@ -150,8 +177,10 @@ dialog SettingsDlg {
 		else
 			huge.checked = true;
 
+		defaultChoice = ok;
 		ok.onClick = &this.onSave();
-		pick.onClick = &this.onPickProg();
+		pickProgram.onClick = &this.onPickProg();
+		pickDir.onClick = &this.onPickDir();
 	}
 
 	private void onSave() {
@@ -172,6 +201,14 @@ dialog SettingsDlg {
 				toEdit.customProgram = parsePath(p);
 		}
 
+		if (downloadDir.text.any) {
+			Url p = parsePath(downloadDir.text);
+			if (p.absolute)
+				toEdit.downloadDir = p.relativeIfBelow(cwdUrl);
+			else
+				toEdit.downloadDir = p;
+		}
+
 		toEdit.save();
 		close();
 		callback.call();
@@ -187,5 +224,18 @@ dialog SettingsDlg {
 			return;
 
 		program.text = p.results[0].toS;
+	}
+
+	private void onPickDir() {
+		try {
+			FilePicker p = FilePicker:folder();
+			p.defaultFolder = parsePath(downloadDir.text);
+			if (!p.show(this))
+				return;
+
+			downloadDir.text = p.results[0].toS;
+		} catch (Exception e) {
+			showMessage(this, "Error", "Unknown error: ${e}");
+		}
 	}
 }
