@@ -44,7 +44,7 @@ namespace storm {
 		Array<Str *> *result = new (parts) Array<Str *>();
 		result->reserve(parts->count());
 
-		for (nat i = 0; i < parts->count(); i++) {
+		for (Nat i = 0; i < parts->count(); i++) {
 			Str *p = parts->at(i);
 			if (isDot(p->c_str())) {
 				// Ignore it.
@@ -59,7 +59,7 @@ namespace storm {
 	}
 
 	static void simplifyInplace(Array<Str *> *&parts) {
-		for (nat i = 0; i < parts->count(); i++) {
+		for (Nat i = 0; i < parts->count(); i++) {
 			Str *p = parts->at(i);
 			if (isDot(p->c_str()) || isParent(p->c_str())) {
 				parts = simplify(parts);
@@ -101,7 +101,7 @@ namespace storm {
 		if (parts->count() > 0)
 			*to << parts->at(0);
 
-		for (nat i = 1; i < parts->count(); i++)
+		for (Nat i = 1; i < parts->count(); i++)
 			*to << L"/" << parts->at(i);
 
 		if (flags & isDir)
@@ -161,7 +161,7 @@ namespace storm {
 
 	Nat Url::hash() const {
 		Nat r = 5381;
-		for (nat i = 0; i < parts->count(); i++) {
+		for (Nat i = 0; i < parts->count(); i++) {
 			r = ((r << 5) + r) + protocol->partHash(parts->at(i));
 		}
 		return r;
@@ -212,7 +212,7 @@ namespace storm {
 			throw new (this) InvalidName(url->toS());
 
 		Url *c = copy();
-		for (nat i = 0; i < url->parts->count(); i++)
+		for (Nat i = 0; i < url->parts->count(); i++)
 			c->parts->push(url->parts->at(i));
 
 		simplifyInplace(c->parts);
@@ -228,7 +228,7 @@ namespace storm {
 		Array<Str *> *p = new (this) Array<Str *>();
 
 		if (parts->any())
-			for (nat i = 0; i < parts->count() - 1; i++)
+			for (Nat i = 0; i < parts->count() - 1; i++)
 				p->push(parts->at(i));
 
 		return new (this) Url(protocol, p, flags | isDir);
@@ -298,8 +298,8 @@ namespace storm {
 		Array<Str *> *rel = new (this) Array<Str *>();
 		Str *up = new (this) Str(L"..");
 
-		nat equalTo = 0; // Equal up to a position
-		for (nat i = 0; i < to->parts->count(); i++) {
+		Nat equalTo = 0; // Equal up to a position
+		for (Nat i = 0; i < to->parts->count(); i++) {
 			if (equalTo == i) {
 				if (i >= parts->count()) {
 				} else if (protocol->partEq(to->parts->at(i), parts->at(i))) {
@@ -311,7 +311,31 @@ namespace storm {
 				rel->push(up);
 		}
 
-		for (nat i = equalTo; i < parts->count(); i++)
+		for (Nat i = equalTo; i < parts->count(); i++)
+			rel->push(parts->at(i));
+
+		return new (this) Url(rel, flags);
+	}
+
+	Url *Url::relativeIfBelow(Url *to) {
+		if (!absolute() || !to->absolute())
+			throw new (this) InvalidName(new (this) Str(S("Both paths to 'relativeIfBelow' must be absolute.")));
+
+		// Different protocols?
+		if (*protocol != *to->protocol)
+			return this;
+
+		// Check so that "to" is equal to "this" for all elements in "to".
+		if (to->parts->count() > parts->count())
+			return this;
+
+		for (Nat i = 0; i < to->parts->count(); i++) {
+			if (!protocol->partEq(to->parts->at(i), parts->at(i)))
+				return this;
+		}
+
+		Array<Str *> *rel = new (this) Array<Str *>();
+		for (Nat i = to->parts->count(); i < parts->count(); i++)
 			rel->push(parts->at(i));
 
 		return new (this) Url(rel, flags);

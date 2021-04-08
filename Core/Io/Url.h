@@ -96,13 +96,16 @@ namespace storm {
 		Url *STORM_FN withExt(Str *ext) const;
 
 		// Generate a relative path (is spiritually const, but may return itself).
-		Url *relative(Url *to);
+		Url *STORM_FN relative(Url *to);
+
+		// Generate a relative path if the current path is below "to" (i.e. they share a common prefix).
+		Url *STORM_FN relativeIfBelow(Url *to);
 
 		// Update this Url, that is: check if it is a file or a directory and update the status
 		// accordingly. You typically only need to call this function if you constructed the Url
 		// yourself and are unsure of whether it actually was a file or directory (e.g. because it
 		// was from user input). Does not modify the object, but may return itself.
-		Url *updated();
+		Url *STORM_FN updated();
 
 		/**
 		 * Low-level operations.
