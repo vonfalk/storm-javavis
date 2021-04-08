@@ -2,6 +2,7 @@ use ui;
 use layout;
 use core:geometry;
 use progvis:net;
+use core:io;
 
 dialog ProblemsDlg {
 
@@ -30,5 +31,55 @@ dialog ProblemsDlg {
 	Bool onMouseVScroll(Point at, Int delta) : override {
 		painter.onVScroll(at, delta);
 		true;
+	}
+}
+
+
+/**
+ * Action to take when the ProblemsDlg is closed.
+ *
+ * The base class does not mean anything at all.
+ */
+class Action on Ui {}
+
+
+/**
+ * Show a problem, possibly trying to solve it as well.
+ */
+class SolveProblem extends Action {
+	// Which problem to solve.
+	Problem problem;
+
+	// Source code.
+	Url source;
+
+	init(Problem problem, Url source) {
+		init {
+			problem = problem;
+			source = source;
+		}
+	}
+}
+
+
+/**
+ * Show a solution to a problem.
+ */
+class ShowSolution extends Action {
+	// Which problem is this a solution to_
+	Problem problem;
+
+	// Solution to show.
+	Str solution;
+
+	// Source code.
+	Url source;
+
+	init(Problem problem, Str solution, Url source) {
+		init {
+			problem = problem;
+			solution = solution;
+			source = source;
+		}
 	}
 }
