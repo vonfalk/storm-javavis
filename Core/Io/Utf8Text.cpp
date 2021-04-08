@@ -85,6 +85,7 @@ namespace storm {
 	}
 
 	void Utf8Output::close() {
+		flush();
 		dest->close();
 	}
 
