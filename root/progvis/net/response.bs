@@ -81,6 +81,32 @@ class StatsResponse : extends Response, serializable {
 }
 
 /**
+ * Details of a problem. All information (including source) that we need to solve it.
+ */
+class DetailsResponse : extends Response, serializable {
+	// Problem ID.
+	Int id;
+
+	// Problem title.
+	Str title;
+
+	// Source code.
+	Str source;
+
+	// Language.
+	Str language;
+
+	init(Int id, Str title, Str source, Str language) {
+		init {
+			id = id;
+			title = title;
+			source = source;
+			language = language;
+		}
+	}
+}
+
+/**
  * Reply to creating an new exercise.
  */
 class NewProblemResponse : extends Response, serializable {

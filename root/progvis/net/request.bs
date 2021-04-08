@@ -118,6 +118,21 @@ class StatsRequest : extends Request, serializable {
 }
 
 /**
+ * Ask for details about a problem (including source).
+ */
+class DetailsRequest : extends Request, serializable {
+	Int problemId;
+
+	init(Int id) {
+		init { problemId = id; }
+	}
+
+	Response? execute(ServerConn server, Database db) : override {
+		db.problemDetails(problemId);
+	}
+}
+
+/**
  * Publish a new problem.
  */
 class NewProblemRequest : extends Request, serializable {

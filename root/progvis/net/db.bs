@@ -52,6 +52,7 @@ DATABASE ProgvisDB {
 		improved INTEGER ALLOW NULL
 	);
 	INDEX ON solutions(author);
+	INDEX ON solutions(to);
 }
 
 class Database {
@@ -147,6 +148,16 @@ class Database {
 			result << Solution(row.id, row.to, row.author, row.solution, row.improved);
 		}
 		result;
+	}
+
+	// Get details about a problem (problem info + source). We don't fill "solutions".
+	DetailsResponse problemDetails(Int problemId) {
+		var x = WITH db: SELECT ONE title, source, language FROM problems WHERE id == problemId;
+		if (x) {
+			DetailsResponse(problemId, x.title, x.source, x.language);
+		} else {
+			throw ServerError("Problem number ${problemId} not found!");
+		}
 	}
 
 	private Nat countSolved(Int problemId) {

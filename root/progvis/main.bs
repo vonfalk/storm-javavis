@@ -215,7 +215,14 @@ class MainWin extends Frame {
 
 	private void onOnlineProblems() {
 		if (c = client) {
-			problems:ProblemsDlg(c).show(this);
+			problems:ProblemsDlg dlg(c, settings);
+			dlg.show(this);
+			// Note: ShowSolution must be first.
+			if (action = dlg.action as problems:ShowSolution) {
+				print("Show a solution!");
+			} else if (action = dlg.action as problems:SolveProblem) {
+				print("Solve a problem!");
+			}
 		}
 	}
 
