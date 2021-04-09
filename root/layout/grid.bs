@@ -211,8 +211,8 @@ private:
 
 	// Update our internal state from the data available to us.
 	void update() {
-		rows = 0;
-		cols = 0;
+		rows = rowWeights.count;
+		cols = colWeights.count;
 
 		for (i, c in children) {
 			var info = c.info;
