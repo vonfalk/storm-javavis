@@ -31,7 +31,9 @@ DATABASE ProgvisDB {
 		// Program source code.
 		source TEXT,
 		// Language (= file extension) of the problem.
-		language TEXT
+		language TEXT,
+		// Created (time string in UTC)
+		created TEXT
 	);
 	INDEX ON problems(author);
 
@@ -51,7 +53,9 @@ DATABASE ProgvisDB {
 		// Solution found (or null, if in case 1 above).
 		solution TEXT ALLOW NULL,
 		// Proposed improvement (another problem, if any)
-		improved INTEGER ALLOW NULL
+		improved INTEGER ALLOW NULL,
+		// Created (time string in UTC)
+		created TEXT
 	);
 	INDEX ON solutions(author);
 	INDEX ON solutions(to);
@@ -185,7 +189,7 @@ class Database {
 		WITH db: DELETE FROM solutions WHERE author == authorId AND type == sType;
 
 		// Add a new one.
-		WITH db: INSERT INTO solutions(to, author, type, solution) VALUES (problemId, authorId, sType, sSolution);
+		WITH db: INSERT INTO solutions(to, author, type, solution, created) VALUES (problemId, authorId, sType, sSolution, CURRENT DATETIME);
 	}
 
 	private Nat countSolved(Int problemId) {
@@ -194,7 +198,7 @@ class Database {
 
 	// Create a new problem.
 	Int createProblem(Int user, Str title, Str code, Str language) {
-		WITH db: INSERT INTO problems(author, title, source, language) VALUES (user, title, code, language);
+		WITH db: INSERT INTO problems(author, title, source, language, created) VALUES (user, title, code, language, CURRENT DATETIME);
 	}
 
 	// Create an improvement.
