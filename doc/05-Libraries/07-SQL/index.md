@@ -154,6 +154,9 @@ void useDB() {
 }
 ```
 
+*Note:* The syntax `${<expr>}` can be used to embed more complex Basic Storm expressions inside the
+ query, including differentiating between variables in the surrounding context and in SQL.
+
 *Note:* This library is fairly early in the development phase. As such, some aspects may change in
 the future. In particular, how types between Storm and SQL is one thing that will likely be improved
 as support for other databases are added.

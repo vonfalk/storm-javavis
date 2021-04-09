@@ -388,3 +388,37 @@ class SQLColumn extends SQLExpr {
 		to << "column:" << table << "." << column.name;
 	}
 }
+
+
+/**
+ * Built-in function in SQL.
+ */
+class SQLBuiltIn extends SQLExpr {
+	private Str sql;
+	private Value type;
+
+	init(SrcPos pos, Str sql, Value type) {
+		init(pos) {
+			sql = sql;
+			type = type;
+		}
+	}
+
+	void build(QueryBuilder into) : override {
+		into.query << sql;
+	}
+
+	Value computeResult() : override {
+		type;
+	}
+
+	void toS(StrBuf to) : override {
+		to << sql;
+	}
+}
+
+// The CURRENT DATETIME function.
+// Note: This currently only works in sqlite.
+SQLBuiltIn currentDateTime(SrcPos pos) {
+	SQLBuiltIn(pos, "datetime('now')", named{Str});
+}

@@ -150,6 +150,9 @@ SAtom => x : "(", SExpr x, ")";
 // Basic Storm expressions.
 SAtom => Escaped(expr) : "$", "{", lang.bs.SExpr @expr, "}";
 
+// Built-in functions.
+SAtom[10] => currentDateTime(pos) : "CURRENT" ~ "DATETIME";
+
 // SQL literals.
 SQLLiteral SLiteral();
 SLiteral => SQLInt(pos, v) : "-?[0-9]+" v; // Integer.
