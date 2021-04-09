@@ -4,12 +4,12 @@ class AssertError extends progvis:TypedError {
 	Str message;
 
 	init() {
-		init("assertion") {}
+		init("assert") {}
 		progvis:onFatalException();
 	}
 
 	init(Str message) {
-		init("assertion") { message = message; }
+		init("assert") { message = message; }
 		progvis:onFatalException();
 	}
 

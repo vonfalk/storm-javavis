@@ -281,8 +281,8 @@ class PtrType extends Type {
 }
 
 class PtrError extends progvis:TypedError {
-	init(Str msg) {
-		init("memory") { msg = msg; }
+	init(Str type, Str msg) {
+		init(type) { msg = msg; }
 		saveTrace();
 
 		// Disable tracing for this thread so that we don't trace any destructor calls.
@@ -307,7 +307,7 @@ void assumeSameAlloc(unsafe:RawPtr a, unsafe:RawPtr b) {
 	}
 
 	if (!same)
-		throw PtrError("Trying to compare pointers from different allocations with <, >, <=, =>, or -");
+		throw PtrError("undefined behavior", "Trying to compare pointers from different allocations with <, >, <=, =>, or -");
 }
 
 // Check the validity of a pointer. Assumes we want to read a maximum of 'size' bytes at wherever
@@ -319,9 +319,9 @@ void checkPtr(unsafe:RawPtr base, Nat offset, Nat size) {
 		offset -= sPtr.current * 2;
 	if (offset + size > total) {
 		if (total == 0)
-			throw PtrError("Trying to read from memory that was freed.");
+			throw PtrError("use after free", "Trying to read from memory that was freed.");
 		else
-			throw PtrError("Trying to read at offset ${offset} in an allocation of size ${total}.");
+			throw PtrError("buffer overflow", "Trying to read at offset ${offset} in an allocation of size ${total}.");
 	}
 }
 
@@ -333,14 +333,14 @@ Bool checkDelete(unsafe:RawPtr base, Nat offset) {
 		return false;
 
 	if (offset != sPtr.current * 2)
-		throw PtrError("Trying to delete memory not allocated by 'new'!");
+		throw PtrError("memory", "Trying to delete memory not allocated by 'new'!");
 
 	// Malloc'd memory is marked with the MSB set.
 	if ((base.readFilled & AllocFlags:heapAlloc.v) == 0)
-		throw PtrError("Trying to delete memory allocated on the stack!");
+		throw PtrError("memory", "Trying to delete memory allocated on the stack!");
 
 	if ((base.readFilled & AllocFlags:arrayAlloc.v) != 0)
-		throw PtrError("This allocation was allocated using new[], and should be freed using delete[].");
+		throw PtrError("memory", "This allocation was allocated using new[], and should be freed using delete[].");
 
 	true;
 }
@@ -351,11 +351,11 @@ Bool checkDeleteArray(unsafe:RawPtr base, Nat offset) {
 		return false;
 
 	if (offset != sPtr.current * 2)
-		throw PtrError("Trying to delete memory not allocated by 'new[]'!");
+		throw PtrError("memory", "Trying to delete memory not allocated by 'new[]'!");
 
 	// Malloc'd memory is marked with the MSB set.
 	if ((base.readFilled & AllocFlags:heapAlloc.v) == 0)
-		throw PtrError("Trying to delete memory allocated on the stack!");
+		throw PtrError("memory", "Trying to delete memory allocated on the stack!");
 
 	// To make 'free' feasible, we don't complain that you need to use the plain delete if the plain new was used.
 	return true;

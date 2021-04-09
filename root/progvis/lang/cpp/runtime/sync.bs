@@ -51,9 +51,9 @@ class SemaImpl {
 /**
  * Exception.
  */
-class SyncError extends Exception {
+class SyncError extends progvis:TypedError {
 	init(Str msg) {
-		init() { msg = msg; }
+		init("sync usage") { msg = msg; }
 		progvis:onFatalException();
 	}
 

@@ -218,7 +218,7 @@ class MainWin extends Frame {
 			problems:ProblemsDlg dlg(c, settings);
 			dlg.show(this);
 			if (action = dlg.action as problems:SolveProblem) {
-				open(action, RecordBehavior(this, action));
+				open(action, RecordBehavior(this, c, action));
 			} else if (action = dlg.action as problems:ShowProblem) {
 				open(action, RevisitBehavior(this, action.title));
 			} else if (action = dlg.action as problems:ShowSolution) {

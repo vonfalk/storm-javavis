@@ -134,6 +134,15 @@ class Database {
 			return null;
 	}
 
+	// Get the author to a problem.
+	Int? authorTo(Int problemId) {
+		if (x = WITH db: SELECT ONE author FROM problems WHERE id == problemId) {
+			return x.author;
+		} else {
+			return null;
+		}
+	}
+
 	// Get solutions to a problem.
 	Solution[] solutionsTo(Int problemId) {
 		var x = WITH db: SELECT
@@ -161,6 +170,15 @@ class Database {
 		} else {
 			throw ServerError("Problem number ${problemId} not found!");
 		}
+	}
+
+	// Store a new solution. If a solution of the same type is already present, overwrites the existing one.
+	Int newSolution(Int problemId, Int authorId, Str sType, Str? sSolution) {
+		// If an old one exists, just delete them.
+		WITH db: DELETE FROM solutions WHERE author == authorId AND type == sType;
+
+		// Add a new one.
+		WITH db: INSERT INTO solutions(to, author, type, solution) VALUES (problemId, authorId, sType, sSolution);
 	}
 
 	private Nat countSolved(Int problemId) {

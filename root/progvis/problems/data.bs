@@ -168,9 +168,9 @@ class SolutionView extends View {
 			Str type = if (r.solution.empty) {
 				"Looks correct to me!";
 			} else if (r.improved.empty) {
-				"I found a ${r.type}...";
+				"I found \"${r.type}\"...";
 			} else {
-				"I found a ${r.type} and tried to fix it";
+				"I found \"${r.type}\" and tried to fix it";
 			};
 			result << Row(r.id, [type, r.author]);
 		}

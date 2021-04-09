@@ -1,5 +1,6 @@
 use ui;
 use layout;
+use progvis:net;
 use core:geometry;
 
 /**
@@ -81,12 +82,14 @@ class RevisitBehavior extends DefaultBehavior {
  */
 class RecordBehavior extends Behavior {
 	private MainWin window;
+	private Client client;
 	private problems:SolveProblem problem;
 	private StrBuf operations;
 
-	init(MainWin window, problems:SolveProblem problem) {
+	init(MainWin window, Client client, problems:SolveProblem problem) {
 		init() {
 			window = window;
+			client = client;
 			problem = problem;
 		}
 	}
@@ -95,7 +98,19 @@ class RecordBehavior extends Behavior {
 		SubmitErrorDlg dlg(error);
 		dlg.show(window);
 
-		window.updateBehavior(RevisitBehavior(window, problem.title));
+		try {
+			Int solutionId = postSolution(error);
+
+			if (error as NoError) {
+				window.updateBehavior(RevisitBehavior(window, problem.title));
+			} else {
+				// TODO: We want to let the user suggest a solution!
+				window.updateBehavior(RevisitBehavior(window, problem.title));
+			}
+
+		} catch (Exception e) {
+			showMessage(window, "Error", "Failed to submit your solution: ${e.message}");
+		}
 	}
 
 	void onUserAction(Str action) : override {
@@ -118,6 +133,20 @@ class RecordBehavior extends Behavior {
 	private void onDone() {
 		// Note: this is needed due to a bug in the Gui library on Windows.
 		(spawn onProgramError(NoError())).detach();
+	}
+
+	private Int postSolution(ProgramError e) {
+		var req = if (e as NoError) {
+			PostSolutionRequest(problem.problemId, e.type, null);
+		} else {
+			PostSolutionRequest(problem.problemId, e.type, operations.toS);
+		};
+
+		if (res = client.query(req) as PostSolutionResponse) {
+			return res.id;
+		} else {
+			throw ProgvisError("Incorrect message received.");
+		}
 	}
 }
 
