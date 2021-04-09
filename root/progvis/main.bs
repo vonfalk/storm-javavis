@@ -141,6 +141,9 @@ class MainWin extends Frame {
 		for (Nat i = 1; i < onlineMenu.count; i++)
 			onlineMenu[i].enabled = false;
 		onlineMenu[0].enabled = true;
+
+		// Reset the behavior so that we don't try to use the client anymore.
+		updateBehavior(DefaultBehavior(this));
 	}
 
 	private void logout() {
@@ -251,8 +254,24 @@ class MainWin extends Frame {
 				return;
 			}
 
-			UploadDlg(c, currentFiles[0]).show(this);
+			Url file = currentFiles[0];
+
+			// Grab the source from the program, in case it changed on disk.
+			if (text = painter.sourceFor(file)) {
+				UploadDlg(c, text, file.ext).show(this);
+			} else {
+				showMessage(this, "Error", "Failed to find the source for this file.");
+			}
 		}
+	}
+
+	// Get source for the current file.
+	public Str currentSource() {
+		if (currentFiles.count != 1 | !painter.hasProgram)
+			throw InternalError("Failed to acquire source for the current file.");
+		if (text = painter.sourceFor(currentFiles[0]))
+			return text;
+		throw InternalError("Failed to acquire source for the current file.");
 	}
 
 	private void onSettings() {

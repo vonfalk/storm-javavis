@@ -80,6 +80,14 @@ class MainPainter extends Painter {
 		loaded.spawn(loaded.main);
 	}
 
+	// Try to find the loaded source code for the program.
+	Str? sourceFor(Url url) {
+		if (program)
+			if (text = program.source(url))
+				return text.text;
+		null;
+	}
+
 	private void onProgramError(Nat thread, Exception error) {
 		unless (behavior)
 			return;

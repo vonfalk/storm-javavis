@@ -108,7 +108,7 @@ class RecordBehavior extends Behavior {
 			if (error as NoError) {
 				window.updateBehavior(RevisitBehavior(window, problem.title));
 			} else {
-				window.updateBehavior(ImproveBehavior(window, solutionId));
+				window.updateBehavior(ImproveBehavior(window, client, problem, solutionId));
 			}
 
 		} catch (Exception e) {
@@ -129,6 +129,7 @@ class RecordBehavior extends Behavior {
 
 	ProblemPanel? panel() : override {
 		ProblemPanel p("Find an error in \"${problem.title}\"!");
+		p.button("Open in editor", &window.onOpenEditor());
 		p.button("I think there are no errors", &this.onDone);
 		p;
 	}
@@ -193,11 +194,17 @@ dialog SubmitErrorDlg {
  * Behavior that lets the user modify the problem and submit an improved version.
  */
 class ImproveBehavior extends DefaultBehavior {
+	private Client client;
+	private problems:SolveProblem problem;
 	private Int solutionId;
+	private Bool submitted;
 
-	init(MainWin window, Int solutionId) {
+	init(MainWin window, Client client, problems:SolveProblem problem, Int solutionId) {
 		init(window) {
+			client = client;
+			problem = problem;
 			solutionId = solutionId;
+			submitted = false;
 		}
 
 		StrBuf msg;
@@ -225,5 +232,20 @@ class ImproveBehavior extends DefaultBehavior {
 		p;
 	}
 
-	private void onSubmit() {}
+	private void onSubmit() {
+		// Avoid double submissions.
+		if (submitted)
+			return;
+		submitted = true;
+
+		(spawn onSubmitHelp()).detach();
+	}
+
+	private void onSubmitHelp() {
+		Str source = window.currentSource();
+		UploadDlg dlg(client, source, problem.source.ext, "Solution to " + problem.title, solutionId);
+		if (dlg.show(window) >= 0) {
+			window.updateBehavior(DefaultBehavior(window));
+		}
+	}
 }

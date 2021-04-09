@@ -186,3 +186,21 @@ class NewProblemRequest : extends Request, serializable {
 		NewProblemResponse(id);
 	}
 }
+
+/**
+ * Publish an improvement to an existing solution..
+ */
+class NewImprovementRequest : extends NewProblemRequest, serializable {
+	Int solutionId;
+
+	init(Str title, Str code, Str language, Int solutionId) {
+		init(title, code, language) {
+			solutionId = solutionId;
+		}
+	}
+
+	Response? execute(ServerConn server, Database db) : override {
+		var id = db.createImprovement(server.userId, title, code, language, solutionId);
+		NewProblemResponse(id);
+	}
+}

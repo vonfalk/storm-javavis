@@ -196,6 +196,21 @@ class Database {
 	Int createProblem(Int user, Str title, Str code, Str language) {
 		WITH db: INSERT INTO problems(author, title, source, language) VALUES (user, title, code, language);
 	}
+
+	// Create an improvement.
+	Int createImprovement(Int user, Str title, Str code, Str language, Int solutionId) {
+		// Check so that the solution exists, and is owned by the right user.
+		if (row = WITH db: SELECT ONE author FROM solutions WHERE id == solutionId) {
+			if (row.author != user)
+				throw ServerError("The solution you are trying to improve is not yours.");
+		} else {
+			throw ServerError("No such solution!");
+		}
+
+		Int problemId = createProblem(user, title, code, language);
+		WITH db: UPDATE solutions SET improved = problemId WHERE id == solutionId;
+		return problemId;
+	}
 }
 
 class UserInfo {

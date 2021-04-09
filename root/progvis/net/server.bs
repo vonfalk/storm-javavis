@@ -65,9 +65,13 @@ class ServerConn {
 		} catch (EndOfStream eos) {
 			print("End of stream. Exiting.");
 			return false;
-		} catch (Exception e) {
-			print("Exception in the server: ${e}");
+		} catch (ServerError e) {
+			// This is considered continuable.
 			error(e.message);
+			return true;
+		} catch (Exception e) {
+			print("Exception in the server: " + e.toS);
+			error("Exception in the server: " + e.message);
 			return false;
 		}
 

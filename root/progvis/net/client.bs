@@ -28,7 +28,7 @@ class ServerError extends Exception {
 	Str msg;
 
 	void message(StrBuf to) : override {
-		to << "Error from the server: " << msg;
+		to << msg;
 	}
 }
 

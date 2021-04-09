@@ -16,21 +16,45 @@ dialog UploadDlg {
 	}
 
 	Client client;
-	Url file;
+	Str source;
+	Str ext;
 
-	init(Client client, Url file) {
+	// If set, we're submitting a new problem based on this solution.
+	Int? solutionId;
+
+	// Upload a new problem.
+	init(Client client, Str source, Str ext) {
 		init("Submit a problem", Size(300, 10)) {
 			client = client;
-			file = file;
+			source = source;
+			ext = ext;
 		}
 
 		defaultChoice(upload);
 		upload.onClick = &this.done();
 	}
 
+	// Upload a solution to another problem.
+	init(Client client, Str source, Str ext, Str title, Int solutionId) {
+		init("Submit your solution", Size(300, 10)) {
+			client = client;
+			source = source;
+			ext = ext;
+			solutionId = solutionId;
+		}
+
+		name.text = title;
+		defaultChoice(upload);
+		upload.onClick = &this.done();
+	}
+
 	void done() {
 		try {
-			NewProblemRequest req(name.text, file.readAllText(), file.ext);
+			var req = if (solutionId) {
+				NewImprovementRequest(name.text, source, ext, solutionId);
+			} else {
+				NewProblemRequest(name.text, source, ext);
+			};
 			client.query(req);
 			close(1);
 		} catch (Exception e) {
