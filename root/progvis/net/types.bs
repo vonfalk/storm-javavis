@@ -42,25 +42,30 @@ class Solution : serializable {
 	// Author of the solution.
 	Str author;
 
+	// Type of solution (a tag that can be used to describe if it was an exception, a race condition, etc.)
+	Str type;
+
 	// Solution, in string representation (if any).
 	Str? solution;
 
 	// Improved version, if any.
 	Int? improved;
 
-	init(Int id, Int to, Str author) {
+	init(Int id, Int to, Str author, Str type) {
 		init {
 			id = id;
 			to = to;
 			author = author;
+			type = type;
 		}
 	}
 
-	init(Int id, Int to, Str author, Str? solution, Int? improved) {
+	init(Int id, Int to, Str author, Str type, Str? solution, Int? improved) {
 		init {
 			id = id;
 			to = to;
 			author = author;
+			type = type;
 			solution = solution;
 			improved = improved;
 		}

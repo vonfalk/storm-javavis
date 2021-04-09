@@ -56,3 +56,11 @@ class DeadlockError extends ProgramError {
 	Str type() { "deadlock"; }
 	Str message() { "All threads are waiting. You have found a deadlock!"; }
 }
+
+/**
+ * A "no error" for convenienve.
+ */
+class NoError extends ProgramError {
+	Str type() { "correct"; }
+	Str message() { "This program looks correct to me. I can't find any issues."; }
+}

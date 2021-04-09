@@ -46,6 +46,8 @@ DATABASE ProgvisDB {
 		to INTEGER,
 		// Author of this solution.
 		author INTEGER,
+		// Type of solution (e.g. asserttion, crash, ...).
+		type TEXT,
 		// Solution found (or null, if in case 1 above).
 		solution TEXT ALLOW NULL,
 		// Proposed improvement (another problem, if any)
@@ -138,6 +140,7 @@ class Database {
 				solutions.id AS id,
 				solutions.to AS to,
 				users.displayName AS author,
+				solutions.type AS type,
 				solutions.solution AS solution,
 				solutions.improved AS improved
 			FROM solutions
@@ -145,16 +148,16 @@ class Database {
 			WHERE solutions.to == problemId;
 		Solution[] result;
 		for (row in x) {
-			result << Solution(row.id, row.to, row.author, row.solution, row.improved);
+			result << Solution(row.id, row.to, row.author, row.type, row.solution, row.improved);
 		}
 		result;
 	}
 
 	// Get details about a problem (problem info + source). We don't fill "solutions".
-	DetailsResponse problemDetails(Int problemId) {
-		var x = WITH db: SELECT ONE title, source, language FROM problems WHERE id == problemId;
+	DetailsResponse problemDetails(Int problemId, Int currentUserId) {
+		var x = WITH db: SELECT ONE title, author, source, language FROM problems WHERE id == problemId;
 		if (x) {
-			DetailsResponse(problemId, x.title, x.source, x.language);
+			DetailsResponse(problemId, x.title, x.source, x.language, x.author != currentUserId);
 		} else {
 			throw ServerError("Problem number ${problemId} not found!");
 		}

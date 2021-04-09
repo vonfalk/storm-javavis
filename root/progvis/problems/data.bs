@@ -166,11 +166,11 @@ class SolutionView extends View {
 		Row[] result;
 		for (r in solutions) {
 			Str type = if (r.solution.empty) {
-				"Looks good to me!";
+				"Looks correct to me!";
 			} else if (r.improved.empty) {
-				"I found a problem...";
+				"I found a ${r.type}...";
 			} else {
-				"I tried to fix the problem I found";
+				"I found a ${r.type} and tried to fix it";
 			};
 			result << Row(r.id, [type, r.author]);
 		}

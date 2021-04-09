@@ -1,4 +1,6 @@
 use ui;
+use layout;
+use core:geometry;
 
 /**
  * Object containing callbacks that is called by the system as a response to different things the
@@ -46,17 +48,30 @@ class DefaultBehavior extends Behavior {
 			showMessage(window, "Data race found", "You found data races:\n" + error.message);
 		} else if (error as DeadlockError) {
 			showMessage(window, "Deadlock found", error.message);
+		} else if (error as NoError) {
+			// Nothing needed, we just don't want to show "program error".
 		} else {
 			showMessage(window, "Program error: " + error.type, error.message);
 		}
 	}
 
-	void onUserAction(Str action) : override {
-		// Nothing we need to do.
+}
+
+/**
+ * Behavior for revisiting an already solved problem.
+ */
+class RevisitBehavior extends DefaultBehavior {
+	private Str title;
+
+	init(MainWin window, Str title) {
+		init(window) { title = title; }
 	}
 
-	void onRestart() : override {
-		// Nothing we need to do.
+	Str? allowReload() : override { "Can not reload the current problem. Use Run -> Restart instead, or open a new problem."; }
+	Str? allowSubmit() : override { "You can not re-submit this problem as your own. Open a new file and submit that instead."; }
+
+	ProblemPanel? panel() : override {
+		ProblemPanel("Find an error in \"${title}\" (can not submit a solution)");
 	}
 }
 
@@ -77,6 +92,10 @@ class RecordBehavior extends Behavior {
 	}
 
 	void onProgramError(ProgramError error) : override {
+		SubmitErrorDlg dlg(error);
+		dlg.show(window);
+
+		window.updateBehavior(RevisitBehavior(window, problem.title));
 	}
 
 	void onUserAction(Str action) : override {
@@ -97,6 +116,42 @@ class RecordBehavior extends Behavior {
 	}
 
 	private void onDone() {
-		print("Done!");
+		// Note: this is needed due to a bug in the Gui library on Windows.
+		(spawn onProgramError(NoError())).detach();
+	}
+}
+
+
+/**
+ * Dialog presented when the user has found a solution.
+ */
+dialog SubmitErrorDlg {
+	layout Grid {
+		Label type("") {}
+		nextLine;
+		Label details("") {}
+		nextLine;
+		Label("Do you wish to submit this solution? It will replace any previous solution of the same type.") {}
+		nextLine;
+		Grid {
+			expandCol: 0, 1;
+			expandCol: 3, 1;
+			Button no("No") { col: 1; }
+			Button yes("Yes") { col: 2; }
+		}
+	}
+
+	init(ProgramError error) {
+		init("You found a problem!", Size(50, 50)) {}
+
+		if (error as NoError) {
+			this.text = "Submit";
+			type.text = "You arrived at the conclusion:";
+		} else {
+			type.text = "You found a problem of type: ${error.type}";
+		}
+		details.text = error.message;
+
+		defaultChoice = yes;
 	}
 }

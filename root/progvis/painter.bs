@@ -59,6 +59,12 @@ class MainPainter extends Painter {
 		program.any;
 	}
 
+	// Update the behavior without re-loading a program.
+	void updateBehavior(Behavior b) {
+		behavior = b;
+		panel = b.panel;
+	}
+
 	// Open a program.
 	void open(Url[] files, Behavior b) {
 		var loaded = Program:load(files);

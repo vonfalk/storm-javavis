@@ -68,7 +68,11 @@ class Callback on Ui {
 
 		var d = details(problemId);
 		var file = saveSource(d);
-		target.done(SolveProblem(d.id, d.title, file));
+		if (d.allowSolution) {
+			target.done(SolveProblem(d.id, d.title, file));
+		} else {
+			target.done(ShowProblem(d.id, d.title, file));
+		}
 	}
 
 	// Show a solution to a problem.
@@ -105,15 +109,9 @@ class Callback on Ui {
 /**
  * Action to take when the ProblemsDlg is closed.
  *
- * The base class does not mean anything at all.
+ * The base class contains basic information about the base-problem to display.
  */
-class Action on Ui {}
-
-
-/**
- * Show a problem, possibly trying to solve it as well.
- */
-class SolveProblem extends Action {
+class Action on Ui {
 	// Which problem to solve.
 	Int problemId;
 
@@ -134,9 +132,27 @@ class SolveProblem extends Action {
 
 
 /**
+ * Show a problem, possibly trying to solve it as well.
+ */
+class SolveProblem extends Action {
+	init(Int id, Str title, Url source) {
+		init(id, title, source) {}
+	}
+}
+
+/**
+ * Show a problem that can not be solved for some reason.
+ */
+class ShowProblem extends Action {
+	init(Int id, Str title, Url source) {
+		init(id, title, source) {}
+	}
+}
+
+/**
  * Show a solution to a problem.
  */
-class ShowSolution extends SolveProblem {
+class ShowSolution extends Action {
 	// Solution to show.
 	Str solution;
 

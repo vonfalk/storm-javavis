@@ -166,6 +166,14 @@ class MainWin extends Frame {
 		true;
 	}
 
+	// Used to transition between behaviors. Typically set through "open", but some behaviors need
+	// to switch during a simulation.
+	public void updateBehavior(Behavior b) {
+		behavior = b;
+		painter.updateBehavior(b);
+		repaint();
+	}
+
 	private void onOpen() {
 		FileTypes ft("Source code");
 		for (k in Program:supportedFiles)
@@ -209,12 +217,13 @@ class MainWin extends Frame {
 		if (c = client) {
 			problems:ProblemsDlg dlg(c, settings);
 			dlg.show(this);
-			// Note: ShowSolution must be first.
-			if (action = dlg.action as problems:ShowSolution) {
+			if (action = dlg.action as problems:SolveProblem) {
+				open(action, RecordBehavior(this, action));
+			} else if (action = dlg.action as problems:ShowProblem) {
+				open(action, RevisitBehavior(this, action.title));
+			} else if (action = dlg.action as problems:ShowSolution) {
 				print("TODO: This is not done!");
 				open(action, DefaultBehavior(this));
-			} else if (action = dlg.action as problems:SolveProblem) {
-				open(action, RecordBehavior(this, action));
 			}
 		}
 	}
@@ -268,7 +277,7 @@ class MainWin extends Frame {
 	}
 
 	// Open a problem from the server.
-	private void open(problems:SolveProblem problem, Behavior behavior) {
+	private void open(problems:Action problem, Behavior behavior) {
 		open([problem.source], "Solving: " + problem.title, behavior);
 	}
 

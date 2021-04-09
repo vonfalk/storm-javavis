@@ -96,12 +96,16 @@ class DetailsResponse : extends Response, serializable {
 	// Language.
 	Str language;
 
-	init(Int id, Str title, Str source, Str language) {
+	// Allow submitting a solution (i.e. is this my problem?)
+	Bool allowSolution;
+
+	init(Int id, Str title, Str source, Str language, Bool allowSolution) {
 		init {
 			id = id;
 			title = title;
 			source = source;
 			language = language;
+			allowSolution = allowSolution;
 		}
 	}
 }

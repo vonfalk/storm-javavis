@@ -128,7 +128,7 @@ class DetailsRequest : extends Request, serializable {
 	}
 
 	Response? execute(ServerConn server, Database db) : override {
-		db.problemDetails(problemId);
+		db.problemDetails(problemId, server.userId);
 	}
 }
 
