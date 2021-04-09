@@ -58,7 +58,7 @@ class ProblemPanel on Render {
 			g.draw(button, panelFg, r.center - button.size / 2);
 			g.pop();
 
-			pos.p1.x = r.p0.x;
+			pos.p1.x = r.p0.x - buttonSpace.w;
 		}
 
 		// Clip.
@@ -83,7 +83,7 @@ class ProblemPanel on Render {
 				return true;
 			}
 
-			pos.p1.x = r.p0.x;
+			pos.p1.x = r.p0.x - buttonSpace.w;
 		}
 
 		true;

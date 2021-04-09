@@ -186,16 +186,27 @@ class MainWin extends Frame {
 		open(picker.results);
 	}
 
-	private void onReload() {
-		if (currentFiles.empty)
+	public void onReload() {
+		if (currentFiles.empty) {
 			showMessage(this, "Error", "You need to open a file before you can reload it.");
-		else if (msg = behavior.allowReload())
+		} else if (msg = behavior.allowReload()) {
 			showMessage(this, "Error", msg);
-		else
-			open(currentFiles);
+		} else {
+			try {
+				painter.cleanup();
+				painter.open(currentFiles, behavior);
+			} catch (core:lang:CodeError error) {
+				CompileErrorDialog dlg(error.messageText, error.pos);
+				dlg.show(this);
+			} catch (Exception error) {
+				// Print the stack trace in the terminal to make it easier to debug.
+				print("Error:\n${error}");
+				showMessage(this, "Error opening code", "Unable to open the selected files:\n${error.message}");
+			}
+		}
 	}
 
-	private void onOpenEditor() {
+	public void onOpenEditor() {
 		if (currentFiles.empty()) {
 			showMessage(this, "No files open", "You have no files open currently.");
 		} else {

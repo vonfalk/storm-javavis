@@ -36,7 +36,7 @@ class Behavior on Ui {
  * Simply displays any errors and ignores the user actions.
  */
 class DefaultBehavior extends Behavior {
-	private MainWin window;
+	protected MainWin window;
 
 	init(MainWin window) {
 		init { window = window; }
@@ -96,7 +96,11 @@ class RecordBehavior extends Behavior {
 
 	void onProgramError(ProgramError error) : override {
 		SubmitErrorDlg dlg(error);
-		dlg.show(window);
+		if (dlg.show(window) < 0) {
+			// Don't submit.
+			window.updateBehavior(RevisitBehavior(window, problem.title));
+			return;
+		}
 
 		try {
 			Int solutionId = postSolution(error);
@@ -104,8 +108,7 @@ class RecordBehavior extends Behavior {
 			if (error as NoError) {
 				window.updateBehavior(RevisitBehavior(window, problem.title));
 			} else {
-				// TODO: We want to let the user suggest a solution!
-				window.updateBehavior(RevisitBehavior(window, problem.title));
+				window.updateBehavior(ImproveBehavior(window, solutionId));
 			}
 
 		} catch (Exception e) {
@@ -182,5 +185,45 @@ dialog SubmitErrorDlg {
 		details.text = error.message;
 
 		defaultChoice = yes;
+		no.onClick = &this.close();
 	}
+}
+
+/**
+ * Behavior that lets the user modify the problem and submit an improved version.
+ */
+class ImproveBehavior extends DefaultBehavior {
+	private Int solutionId;
+
+	init(MainWin window, Int solutionId) {
+		init(window) {
+			solutionId = solutionId;
+		}
+
+		StrBuf msg;
+		msg << "You may now attempt to solve the problem you found:\n";
+		msg << "1. Select \"Open in editor\" to edit the code.\n";
+		msg << "2. Save the file in your editor.\n";
+		msg << "3. Select \"Reload\" to load your changes and see if they work.\n";
+		msg << "4. Repeat 1-3 as necessary.\n";
+		msg << "5. Click \"Submit this version!\" in the green box when you are done.";
+		showMessage(window, "Improve the code", msg.toS);
+	}
+
+	// We encourage reloads!
+	Str? allowReload() : override { null; }
+
+	// But don't allow submitting through regular means.
+	Str? allowSubmit() : override { "To submit your improved version, click the button in the green bar!"; }
+
+	// Add a panel that explains it all.
+	ProblemPanel? panel() : override {
+		ProblemPanel p("Try to fix the problem you found!");
+		p.button("Open in editor", &window.onOpenEditor());
+		p.button("Reload", &window.onReload());
+		p.button("Submit this version!", &this.onSubmit());
+		p;
+	}
+
+	private void onSubmit() {}
 }

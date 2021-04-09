@@ -174,7 +174,14 @@ class Database {
 
 	// Store a new solution. If a solution of the same type is already present, overwrites the existing one.
 	Int newSolution(Int problemId, Int authorId, Str sType, Str? sSolution) {
-		// If an old one exists, just delete them.
+		// Find other solutions and examine if they have a solution attached to them.
+		for (row in WITH db: SELECT improved FROM solutions WHERE author == authorId AND type == sType) {
+			if (row.improved) {
+				throw ServerError("You have already found and solved this issue. Find another type of issue or solve another problem.");
+			}
+		}
+
+		// Now we can remove all rows.
 		WITH db: DELETE FROM solutions WHERE author == authorId AND type == sType;
 
 		// Add a new one.
