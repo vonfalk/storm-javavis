@@ -5,46 +5,94 @@ use core:geometry;
  * A small pop-down panel shown when the user is solving a problem from the server.
  */
 class ProblemPanel on Render {
-	// Text to draw.
-	private Text text;
+	// Caption text to draw.
+	private Text caption;
+
+	// Button text and action.
+	private Text[] buttons;
+	private Fn<void>[] actions;
 
 	// Height of this panel (computed based on contents).
 	private Float height;
 
-	init(Str problem) {
+	// Extra button space.
+	private Size buttonSpace;
+
+	// Our last size and position.
+	private Rect lastPos;
+
+	init(Str text) {
 		init {
-			text("Looking for errors in: " + problem, defaultFont);
+			caption(text, panelCaption);
+			buttonSpace(6, 2);
 		}
 
-		height = text.size.h + 4;
+		height = caption.size.h;
+	}
+
+	void button(Str text, Fn<void> action) {
+		buttons << Text(text, panelButton);
+		actions << action;
+
+		height = height.max(buttons.last.size.h);
 	}
 
 	void render(Rect viewport, Graphics g) {
-		Rect pos = pos(viewport);
+		lastPos = pos(viewport);
+		Rect pos = lastPos;
 
 		{
-			Rect t = pos;
-			t.p0.y -= 10;
+			Rect t = pos.grow(Size(6, 3));
+			t.p0.y -= 10; // To not make rounded corners appear on top.
 			g.fill(t, Size(6), panelBg);
+		}
+
+		// Draw buttons, right to left.
+		for (Nat i = buttons.count; i > 0; i--) {
+			var button = buttons[i - 1];
+
+			Size sz = button.size + buttonSpace;
+			Rect r(Point(pos.p1.x - sz.w, pos.p0.y), sz);
+			g.draw(r, Size(3), panelFg);
+			g.push(r);
+			g.draw(button, panelFg, r.center - button.size / 2);
+			g.pop();
+
+			pos.p1.x = r.p0.x;
 		}
 
 		// Clip.
 		g.push(pos);
-
-		g.draw(text, panelFg, pos.p0 + Size((pos.size.w - text.size.w) / 2, 0));
-
+		g.draw(caption, panelFg, pos.p0 + Size((pos.size.w - caption.size.w) / 2, 0));
 		g.pop();
 	}
 
 	// Called when the mouse is pressed. Returns "true" if it was captured by the panel.
-	Bool mouseClicked(Rect viewport, Point pt) {
-		false;
+	Bool mouseClicked(Point pt) {
+		Rect pos = lastPos;
+		if (!pos.contains(pt))
+			return false;
+
+		for (Nat i = buttons.count; i > 0; i--) {
+			var button = buttons[i - 1];
+
+			Size sz = button.size + buttonSpace;
+			Rect r(Point(pos.p1.x - sz.w, pos.p0.y), sz);
+			if (r.contains(pt)) {
+				actions[i - 1].call();
+				return true;
+			}
+
+			pos.p1.x = r.p0.x;
+		}
+
+		true;
 	}
 
 	// Compute our position based on the current viewport.
 	private Rect pos(Rect viewport) {
 		Float w = viewport.size.w;
 		Size sz(w * 0.7, height);
-		Rect(viewport.p0 + Point((w - sz.w) / 2, 0), sz);
+		Rect(viewport.p0 + Point((w - sz.w) / 2, 3), sz);
 	}
 }

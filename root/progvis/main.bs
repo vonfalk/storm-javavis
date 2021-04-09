@@ -15,6 +15,9 @@ class MainWin extends Frame {
 	// Currently open file(s).
 	private Url[] currentFiles;
 
+	// Current behavior.
+	private Behavior behavior;
+
 	// Host to connect to when going online.
 	private Str onlineUrl;
 
@@ -178,6 +181,8 @@ class MainWin extends Frame {
 	private void onReload() {
 		if (currentFiles.empty)
 			showMessage(this, "Error", "You need to open a file before you can reload it.");
+		else if (msg = behavior.allowReload())
+			showMessage(this, "Error", msg);
 		else
 			open(currentFiles);
 	}
@@ -207,14 +212,19 @@ class MainWin extends Frame {
 			// Note: ShowSolution must be first.
 			if (action = dlg.action as problems:ShowSolution) {
 				print("TODO: This is not done!");
-				open(action, ProblemPanel(action.title));
+				open(action, DefaultBehavior(this));
 			} else if (action = dlg.action as problems:SolveProblem) {
-				open(action, ProblemPanel(action.title));
+				open(action, RecordBehavior(this, action));
 			}
 		}
 	}
 
 	private void onOnlineSubmit() {
+		if (msg = behavior.allowSubmit) {
+			showMessage(this, "Unable to submit", msg);
+			return;
+		}
+
 		if (c = client) {
 			if (currentFiles.count != 1 | !painter.hasProgram) {
 				showMessage(this, "Open a source file first", "To create a new problem, start by opening the file you want to upload.");
@@ -254,21 +264,22 @@ class MainWin extends Frame {
 
 	// Open one or more files, shows nice messages on error.
 	private void open(Url[] files) {
-		open(files, join(files, ", ", (x) => x.name).toS, null);
+		open(files, join(files, ", ", (x) => x.name).toS, DefaultBehavior(this));
 	}
 
 	// Open a problem from the server.
-	private void open(problems:SolveProblem problem, ProblemPanel panel) {
-		open([problem.source], "Solving: " + problem.title, panel);
+	private void open(problems:SolveProblem problem, Behavior behavior) {
+		open([problem.source], "Solving: " + problem.title, behavior);
 	}
 
-	private void open(Url[] files, Str title, ProblemPanel? panel) {
+	private void open(Url[] files, Str title, Behavior behavior) {
 		currentFiles = files;
 		this.text = "Progvis - " + title;
 
 		try {
 			painter.cleanup();
-			painter.open(files, DefaultCallbacks(this), panel);
+			painter.open(files, behavior);
+			this.behavior = behavior;
 		} catch (core:lang:CodeError error) {
 			CompileErrorDialog dlg(error.messageText, error.pos);
 			dlg.show(this);

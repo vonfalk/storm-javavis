@@ -237,6 +237,8 @@ class ProgThread on Render {
 		if (doTerminate) {
 			terminating = true;
 			throw ExitError();
+		} else {
+			owner.notifyAdvance(threadId);
 		}
 	}
 }

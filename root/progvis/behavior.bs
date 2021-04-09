@@ -1,0 +1,102 @@
+use ui;
+
+/**
+ * Object containing callbacks that is called by the system as a response to different things the
+ * program is doing. This is used to encapsulate the entire behavior of the front-end depending on
+ * its current state.
+ */
+class Behavior on Ui {
+	// Called when something went wrong in the running program.
+	void onProgramError(ProgramError error) {}
+
+	// Called when the user performed some action. If the string is recorded, the same sequence can
+	// then be played back.
+	void onUserAction(Str action) {}
+
+	// Called when the program is restarted.
+	void onRestart() {}
+
+	// Allow reloading this program?
+	Str? allowReload() { null; }
+
+	// Allow submitting this program?
+	Str? allowSubmit() { null; }
+
+	// Get the panel to show during rendering.
+	ProblemPanel? panel() { null; }
+}
+
+
+/**
+ * Default callbacks for the main Progvis window.
+ *
+ * Simply displays any errors and ignores the user actions.
+ */
+class DefaultBehavior extends Behavior {
+	private MainWin window;
+
+	init(MainWin window) {
+		init { window = window; }
+	}
+
+	void onProgramError(ProgramError error) : override {
+		if (error as ThreadError) {
+			showMessage(window, "Thread ${error.threadId} crashed", "Thread ${error.threadId} crashed:\n" + error.message);
+		} else if (error as DataRaceError) {
+			showMessage(window, "Data race found", "You found data races:\n" + error.message);
+		} else if (error as DeadlockError) {
+			showMessage(window, "Deadlock found", error.message);
+		} else {
+			showMessage(window, "Program error: " + error.type, error.message);
+		}
+	}
+
+	void onUserAction(Str action) : override {
+		// Nothing we need to do.
+	}
+
+	void onRestart() : override {
+		// Nothing we need to do.
+	}
+}
+
+
+/**
+ * Behavior for recording progress and saving when an error is found.
+ */
+class RecordBehavior extends Behavior {
+	private MainWin window;
+	private problems:SolveProblem problem;
+	private StrBuf operations;
+
+	init(MainWin window, problems:SolveProblem problem) {
+		init() {
+			window = window;
+			problem = problem;
+		}
+	}
+
+	void onProgramError(ProgramError error) : override {
+	}
+
+	void onUserAction(Str action) : override {
+		operations << action << ";";
+	}
+
+	void onRestart() : override {
+		operations = StrBuf();
+	}
+
+	Str? allowReload() : override { "Can not reload the current problem. Use Run -> Restart instead, or open a new problem."; }
+	Str? allowSubmit() : override { "You can not re-submit this problem as your own. Open a new file and submit that instead."; }
+
+	ProblemPanel? panel() : override {
+		ProblemPanel p("Find an error in \"${problem.title}\"!");
+		p.button("I think there are no errors", &this.onDone);
+		p;
+	}
+
+	private void onDone() {
+		print("Done!");
+	}
+}

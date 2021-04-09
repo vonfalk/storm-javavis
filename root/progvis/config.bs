@@ -77,5 +77,7 @@ Brush buttonMarked on Render = SolidBrush(white * 0.8 + blue);
 Size layoutSpace on Render = Size(35, 20);
 
 // Background and foreground of the problem panel.
+Font panelCaption on Render = defaultFont;
+Font panelButton on Render = { var x = defaultFont.clone; x.height = x.height * 0.9; x; };
 Brush panelBg on Render = SolidBrush(Color(0, 0.9, 0, 0.8));
 Brush panelFg on Render = SolidBrush(black);

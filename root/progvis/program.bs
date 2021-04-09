@@ -31,6 +31,9 @@ class Program on Render {
 	// Event called whenever an error is encountered from one of the threads.
 	private Fn<void, Nat, Exception>? errorNotification;
 
+	// Event called when a particular thread has been advanced (for recording).
+	private Fn<void, Nat>? advanceNotification;
+
 	// Set the change notification.
 	public assign onChange(Fn<void> fn) {
 		changeNotification = fn;
@@ -43,10 +46,22 @@ class Program on Render {
 		fn;
 	}
 
+	// Set the "advance" notification.
+	public assign onAdvance(Fn<void, Nat> fn) {
+		advanceNotification = fn;
+		fn;
+	}
+
 	// Call the notification.
 	void notifyChange() {
 		if (changeNotification)
 			changeNotification.call();
+	}
+
+	// Call the advance notification.
+	void notifyAdvance(Nat thread) {
+		if (advanceNotification)
+			advanceNotification.call(thread);
 	}
 
 	package init(Package pkg, Fn<void> main, ViewHints[] hints) {

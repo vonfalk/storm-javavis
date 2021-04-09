@@ -29,8 +29,8 @@ class MainPainter extends Painter {
 	// Scale factor for the workspace. Applied last, meaning that "offset" and "mouseOffset" are also scaled.
 	private Float scale;
 
-	// Callbacks to use in the painter.
-	private Callbacks? callbacks;
+	// Behavior to use in the painter.
+	private Behavior? behavior;
 
 	// Lock for traversal. The traversal may perform thread switches, so we need to make sure that
 	// multiple traversals are not in flight at the same time.
@@ -60,21 +60,22 @@ class MainPainter extends Painter {
 	}
 
 	// Open a program.
-	void open(Url[] files, Callbacks cb, ProblemPanel? panel) {
+	void open(Url[] files, Behavior b) {
 		var loaded = Program:load(files);
 		program = loaded;
-		callbacks = cb;
+		behavior = b;
+		panel = b.panel;
 		workspace.globals = loaded.findGlobals();
 		workspace.hints = loaded.hints;
 		loaded.onChange = &this.update();
 		loaded.onError = &this.onProgramError;
-		this.panel = panel;
+		loaded.onAdvance = &this.onProgramAdvance;
 		update();
 		loaded.spawn(loaded.main);
 	}
 
 	private void onProgramError(Nat thread, Exception error) {
-		unless (callbacks)
+		unless (behavior)
 			return;
 
 		// These are ones we can dispatch directly.
@@ -85,13 +86,21 @@ class MainPainter extends Painter {
 		if (error as TypedError)
 			type = error.type;
 
-		callbacks.onProgramError(ThreadError(type, msg, thread));
+		behavior.onProgramError(ThreadError(type, msg, thread));
+	}
+
+	private void onProgramAdvance(Nat thread) {
+		unless (behavior)
+			return;
+
+		behavior.onUserAction(thread.toS);
 	}
 
 	// Clean up the running program (i.e. make sure all threads are terminated).
 	void cleanup() {
-		// Don't call any callbacks during termination.
-		callbacks = null;
+		// Don't call any behavior during termination.
+		behavior = null;
+		panel = null;
 
 		if (program)
 			program.terminate();
@@ -104,15 +113,17 @@ class MainPainter extends Painter {
 	// Restart the program.
 	void restart() {
 		if (program) {
-			// Don't call callbacks during restart.
-			var tmp = callbacks;
-			callbacks = null;
+			// Don't call behavior during restart.
+			var tmp = behavior;
+			behavior = null;
 
 			program.terminate();
 			workspace.clear();
 			workspace.globals = program.findGlobals();
 
-			callbacks = tmp;
+			behavior = tmp;
+			if (behavior)
+				behavior.onRestart();
 			program.spawn(program.main);
 		}
 	}
@@ -121,6 +132,8 @@ class MainPainter extends Painter {
 	void spawnThread() {
 		if (program) {
 			program.spawn(program.main);
+			if (behavior)
+				behavior.onUserAction("s");
 		}
 	}
 
@@ -157,8 +170,8 @@ class MainPainter extends Painter {
 		repaint();
 
 		if (error) {
-			if (callbacks) {
-				callbacks.onProgramError(error);
+			if (behavior) {
+				behavior.onProgramError(error);
 			}
 		}
 	}
@@ -189,6 +202,11 @@ class MainPainter extends Painter {
 
 		if (button == MouseButton:left) {
 			if (down) {
+				if (panel) {
+					if (panel.mouseClicked(pt))
+						return;
+				}
+
 				mouseDown = true;
 				mouseOffset = pt;
 				mouseFocus = workspace.findAtActivate(pt);
