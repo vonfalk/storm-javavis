@@ -1,0 +1,24 @@
+/**
+ * Generic exception shown to the user.
+ */
+class ProgvisError extends Exception {
+	init(Str msg) { init() { msg = msg; } }
+
+	Str msg;
+
+	void message(StrBuf to) {
+		to << msg;
+	}
+}
+
+
+/**
+ * Exception with a "category" that is recognized by the system.
+ */
+class TypedError extends Exception {
+	init(Str type) {
+		init { type = type; }
+	}
+
+	Str type;
+}

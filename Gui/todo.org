@@ -1,5 +1,6 @@
-* General [7/13]
+* General [7/14]
   - [ ] Graphics::fill does not behave correctly with regards to gradient's coordinate systems.
+  - [ ] Swap the two last parameters of Graphics.draw(Text, Brush, Point) to match the others.
   - [ ] See if we should stop rendering a painter that is not visible, eg. inside a scrollwindow.
   - [ ] Make the text view and the multiline text view separate, as we want
         to handle text separatly in the two cases.

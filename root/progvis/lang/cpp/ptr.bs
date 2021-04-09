@@ -280,9 +280,9 @@ class PtrType extends Type {
 	}
 }
 
-class PtrError extends Exception {
+class PtrError extends progvis:TypedError {
 	init(Str msg) {
-		init() { msg = msg; }
+		init("memory") { msg = msg; }
 		saveTrace();
 
 		// Disable tracing for this thread so that we don't trace any destructor calls.

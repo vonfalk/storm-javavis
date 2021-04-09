@@ -1,0 +1,58 @@
+
+/**
+ * Different errors produced in the program we are running.
+ */
+class ProgramError {
+	// Short description of what kind of error happened.
+	Str type() : abstract;
+
+	// Full error message.
+	Str message() : abstract;
+
+	// To string helper.
+	void toS(StrBuf to) : override {
+		to << type << ": " << message;
+	}
+}
+
+/**
+ * An error inside some thread.
+ */
+class ThreadError extends ProgramError {
+	private Str errorType;
+	private Str errorMsg;
+	public Nat threadId;
+
+	init(Str type, Str msg, Nat threadId) {
+		init {
+			errorType = type;
+			errorMsg = msg;
+			threadId = threadId;
+		}
+	}
+
+	Str type() : override { errorType; }
+	Str message() : override { errorMsg; }
+}
+
+/**
+ * A data race error, not tied to a particular thread.
+ */
+class DataRaceError extends ProgramError {
+	private Str[] messages;
+
+	init(Str[] messages) {
+		init { messages = messages; }
+	}
+
+	Str type() : override { "data race"; }
+	Str message() : override { join(messages, "\n").toS(); }
+}
+
+/**
+ * A deadlock.
+ */
+class DeadlockError extends ProgramError {
+	Str type() { "deadlock"; }
+	Str message() { "All threads are waiting. You have found a deadlock!"; }
+}

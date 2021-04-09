@@ -1,15 +1,15 @@
 use progvis:lang:cpp;
 
-class AssertError extends Exception {
+class AssertError extends progvis:TypedError {
 	Str message;
 
 	init() {
-		init {}
+		init("assertion") {}
 		progvis:onFatalException();
 	}
 
 	init(Str message) {
-		init { message = message; }
+		init("assertion") { message = message; }
 		progvis:onFatalException();
 	}
 

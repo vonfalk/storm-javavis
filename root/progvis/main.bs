@@ -7,19 +7,6 @@ use progvis:net;
 use lang:bs:macro;
 
 /**
- * Generic exception shown to the user.
- */
-class ProgvisError extends Exception {
-	init(Str msg) { init() { msg = msg; } }
-
-	Str msg;
-
-	void message(StrBuf to) {
-		to << msg;
-	}
-}
-
-/**
  * Main window.
  */
 class MainWin extends Frame {
@@ -219,9 +206,10 @@ class MainWin extends Frame {
 			dlg.show(this);
 			// Note: ShowSolution must be first.
 			if (action = dlg.action as problems:ShowSolution) {
-				print("Show a solution!");
+				print("TODO: This is not done!");
+				open(action, ProblemPanel(action.title));
 			} else if (action = dlg.action as problems:SolveProblem) {
-				print("Solve a problem!");
+				open(action, ProblemPanel(action.title));
 			}
 		}
 	}
@@ -266,21 +254,21 @@ class MainWin extends Frame {
 
 	// Open one or more files, shows nice messages on error.
 	private void open(Url[] files) {
+		open(files, join(files, ", ", (x) => x.name).toS, null);
+	}
+
+	// Open a problem from the server.
+	private void open(problems:SolveProblem problem, ProblemPanel panel) {
+		open([problem.source], "Solving: " + problem.title, panel);
+	}
+
+	private void open(Url[] files, Str title, ProblemPanel? panel) {
 		currentFiles = files;
-		{
-			StrBuf title;
-			title << "Progvis - ";
-			for (i, f in files) {
-				if (i > 0)
-					title << ", ";
-				title << f.name;
-			}
-			text = title.toS;
-		}
+		this.text = "Progvis - " + title;
 
 		try {
 			painter.cleanup();
-			painter.open(files, &this.onError, &this.onConcurrencyError);
+			painter.open(files, DefaultCallbacks(this), panel);
 		} catch (core:lang:CodeError error) {
 			CompileErrorDialog dlg(error.messageText, error.pos);
 			dlg.show(this);
@@ -306,193 +294,6 @@ class MainWin extends Frame {
 	}
 }
 
-class MainPainter extends Painter {
-	// The workspace we want to draw.
-	private Workspace workspace;
-
-	// The program we're currently executing.
-	private Program? program;
-
-	// Left mouse button pressed?
-	private Bool mouseDown;
-
-	// Current drawable object in focus. Only useful when 'mousedown' is pressed.
-	private Drawable? mouseFocus;
-
-	// Location mouse was pressed at.
-	private Point mouseOffset;
-
-	// Offset for the workspace.
-	private Point offset;
-
-	// Scale factor for the workspace. Applied last, meaning that "offset" and "mouseOffset" are also scaled.
-	private Float scale;
-
-	// Callback for reporting concurrency errors.
-	private fn(Str[])->void? concurrencyCb;
-
-	// Errors reported from the Workspace. We cache them here so that we can repaint before dispatching them.
-	private Str[] concurrencyErrors;
-
-	// Lock for traversal. The traversal may perform thread switches, so we need to make sure that
-	// multiple traversals are not in flight at the same time.
-	private sync:Lock traversalLock;
-
-	init() {
-		init() { scale = 1.0; }
-		bgColor = Color(0.8, 0.8, 0.8);
-	}
-
-	// Set whether or not to track reads/writes.
-	void trackMemory(Bool track) {
-		workspace.trackMemory = track;
-	}
-
-	// Set zoom. Also pans to the center to make sure nothing gets hidden too badly.
-	void setZoom(Float zoom) {
-		if (scale != zoom) {
-			offset = Point();
-			scale = zoom;
-		}
-	}
-
-	// Do we have an open "program" instance?
-	Bool hasProgram() {
-		program.any;
-	}
-
-	// Open a program.
-	void open(Url[] files, fn(Nat, Exception)->void errorCb, fn(Str[])->void concurrencyCb) {
-		var loaded = Program:load(files);
-		program = loaded;
-		workspace.globals = loaded.findGlobals();
-		workspace.hints = loaded.hints;
-		this.concurrencyCb = concurrencyCb;
-		workspace.onError = &this.onError;
-		loaded.onChange = &this.update();
-		loaded.onError = errorCb;
-		update();
-		loaded.spawn(loaded.main);
-	}
-
-	private void onError(Str[] errors) {
-		concurrencyErrors.append(errors);
-	}
-
-	// Clean up the running program (i.e. make sure all threads are terminated).
-	void cleanup() {
-		if (program)
-			program.terminate();
-
-		workspace.clear();
-		offset = Point();
-		repaint();
-	}
-
-	// Restart the program.
-	void restart() {
-		if (program) {
-			program.terminate();
-			workspace.clear();
-			workspace.globals = program.findGlobals();
-			program.spawn(program.main);
-		}
-	}
-
-	// Spawn another thread.
-	void spawnThread() {
-		if (program) {
-			program.spawn(program.main);
-		}
-	}
-
-	// Render everything.
-	Bool render(Size me, Graphics g) : override {
-		g.transform(translate(-offset) * scale(scale));
-		workspace.render(Rect(offset, me / scale), g);
-		false;
-	}
-
-	// Update the visualization of the data.
-	void update() {
-		sync:Lock:Guard guard(traversalLock);
-		workspace.beginTraversal();
-
-		if (program) {
-			for (id, thread in program.threads) {
-				workspace.traverse(thread);
-			}
-
-			if (output = program.getOutput()) {
-				workspace.outputText(output);
-			}
-		}
-
-		workspace.endTraversal();
-
-		repaint();
-
-		if (concurrencyCb) {
-			if (concurrencyErrors.any)
-				concurrencyCb.call(concurrencyErrors);
-			concurrencyErrors.clear();
-		}
-	}
-
-	// Called when the mouse is moved.
-	void mouseMoved(Point pt) {
-		if (!mouseDown)
-			return;
-
-		pt /= scale;
-		pt += offset;
-
-		if (mouseFocus) {
-			// Call the drawable.
-			if (mouseFocus.mouseMoved(pt, mouseOffset))
-				repaint();
-		} else {
-			// Update our transform.
-			offset -= pt - mouseOffset;
-			repaint();
-		}
-	}
-
-	// Called when a mouse button is clicked.
-	void mouseClicked(Point pt, Bool down, MouseButton button) {
-		pt /= scale;
-		pt += offset;
-
-		if (button == MouseButton:left) {
-			if (down) {
-				mouseDown = true;
-				mouseOffset = pt;
-				mouseFocus = workspace.findAtActivate(pt);
-
-				if (mouseFocus) {
-					mouseFocus.mouseClicked(pt, down);
-				}
-
-				repaint();
-			} else {
-				mouseOffset = pt;
-				mouseLeave();
-			}
-		}
-	}
-
-	// Called when the mouse leaves the window.
-	void mouseLeave() {
-		if (mouseFocus) {
-			// Tell it we released the cursor. We might want to differentiate between the two cases later on...
-			if (mouseFocus.mouseClicked(mouseOffset, false))
-				repaint();
-		}
-
-		mouseDown = false;
-		mouseFocus = null;
-	}
-}
 
 void main() on Compiler {
 	named{progvis}.compile();

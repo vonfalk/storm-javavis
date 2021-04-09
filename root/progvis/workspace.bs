@@ -34,15 +34,6 @@ class Workspace on Render {
 		}
 	}
 
-	// Error notification.
-	private Fn<void, Str[]>? errorNotification;
-
-	// Error callback (concurrency errors).
-	public assign onError(Fn<void, Str[]> fn) {
-		errorNotification = fn;
-		fn;
-	}
-
 
 	// Draw the workspace. Assumes we can clip anything not inside 'viewport'.
 	void render(Rect viewport, Graphics g) {
@@ -279,7 +270,7 @@ class Workspace on Render {
 	}
 
 	// Notify the workspace that traversal is over, and that any remaning objects may be removed.
-	void endTraversal() {
+	ProgramError? endTraversal() {
 		popQueue();
 
 		// Find any dead objects now, and potentially traverse them as well.
@@ -307,12 +298,17 @@ class Workspace on Render {
 			elements.pop();
 		}
 
+		ProgramError? error;
+
 		// Mark reads/writes.
 		if (trackMemAccess)
-			updateMemAccess();
+			error = updateMemAccess();
 
 		// Detect deadlocks.
-		findDeadlock();
+		if (error.empty)
+			error = findDeadlock();
+
+		return error;
 	}
 
 	// Remove everything in the workspace.
@@ -425,7 +421,7 @@ private:
 	}
 
 	// Update memory accesses in all objects.
-	private void updateMemAccess() {
+	private ProgramError? updateMemAccess() {
 		// First, collect all MemTracker objects.
 		Trackers trackers;
 		for (e in elements) {
@@ -446,15 +442,16 @@ private:
 		if (trackers.errors.any) {
 			pauseThreads();
 
-			if (errorNotification)
-				errorNotification.call(trackers.errors);
+			return DataRaceError(trackers.errors);
 		}
+
+		return null;
 	}
 
 	// See if all threads seem to wait for some kind of synchronization primitive, and report a
 	// deadlock in that case. We don't have perfect knowledge of what threads are waiting for, so
 	// this is the best we can do.
-	private void findDeadlock() {
+	private ProgramError? findDeadlock() {
 		Bool anyThreads = false;
 		Bool allSleeping = true;
 
@@ -466,9 +463,10 @@ private:
 		}
 
 		if (anyThreads & allSleeping) {
-			if (errorNotification)
-				errorNotification.call(["All threads are waiting. You have found a deadlock!"]);
+			return DeadlockError();
 		}
+
+		return null;
 	}
 
 	// Pause all threads due to some error.
