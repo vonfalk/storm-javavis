@@ -53,14 +53,15 @@ class View {
 	Row[] rows() : abstract;
 
 	protected Str[] problemLabels() {
-		["Problem name", "Author", "Solved"];
+		["ID", "Problem name", "Author", "Solved"];
 	}
 
 	protected Row[] getProblems(Request req) {
 		if (ans = client.query(req) as ProblemResponse) {
+			ans.problems.sort();
 			Row[] data;
 			for (r in ans.problems) {
-				data << Row(r.id, [r.title, r.author, r.solutions.toS]);
+				data << Row(r.id, [r.id.toS, r.title, r.author, r.solutions.toS]);
 			}
 			return data;
 		} else {
@@ -156,10 +157,11 @@ class SolutionView extends View {
 
 	init(Client client, Solution[] solutions, Callback cb) {
 		init(client) { solutions = solutions; cb = cb; }
+		solutions.sort();
 	}
 
 	Str[] labels() : override {
-		["Solution", "Author"];
+		["Author", "Solution"];
 	}
 
 	Row[] rows() : override {
@@ -172,7 +174,7 @@ class SolutionView extends View {
 			} else {
 				"I found \"${r.type}\" and tried to fix it";
 			};
-			result << Row(r.id, [type, r.author]);
+			result << Row(r.id, [r.author, type]);
 		}
 		result;
 	}

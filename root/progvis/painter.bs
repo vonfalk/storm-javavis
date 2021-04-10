@@ -68,6 +68,10 @@ class MainPainter extends Painter {
 	// Open a program.
 	void open(Url[] files, Behavior b) {
 		var loaded = Program:load(files);
+
+		// Terminate the previous program, if any. We do that here in case the load failed.
+		cleanup();
+
 		program = loaded;
 		behavior = b;
 		panel = b.panel;

@@ -145,8 +145,8 @@ class SolutionPanel extends Panel {
 			colors << SolidBrush(red + white * 0.2);
 			actions << &this.showSolution();
 		}
-		if (solution.improved.any) {
-			buttons << Text("Show fix", defaultFont);
+		if (id = solution.improved) {
+			buttons << Text("Show fix (ID ${id})", defaultFont);
 			colors << SolidBrush(green + white * 0.2);
 			actions << &this.showImproved();
 		}

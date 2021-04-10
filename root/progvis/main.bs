@@ -196,7 +196,6 @@ class MainWin extends Frame {
 			showMessage(this, "Error", msg);
 		} else {
 			try {
-				painter.cleanup();
 				painter.open(currentFiles, behavior);
 			} catch (core:lang:CodeError error) {
 				CompileErrorDialog dlg(error.messageText, error.pos);
@@ -314,6 +313,9 @@ class MainWin extends Frame {
 	private void open(Url[] files, Str title, Behavior behavior) {
 		currentFiles = files;
 		this.text = "Progvis - " + title;
+
+		// Set it to default first, so that in case of failure we will behave as "normal".
+		this.behavior = DefaultBehavior(this);
 
 		try {
 			painter.cleanup();

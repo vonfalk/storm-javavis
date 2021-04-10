@@ -226,8 +226,8 @@ class ImproveBehavior extends DefaultBehavior {
 	// Add a panel that explains it all.
 	ProblemPanel? panel() : override {
 		ProblemPanel p("Try to fix the problem you found!");
-		p.button("Open in editor", &window.onOpenEditor());
-		p.button("Reload", &window.onReload());
+		p.button("Open in editor", &this.onOpenEditor());
+		p.button("Reload", &this.onReload());
 		p.button("Submit this version!", &this.onSubmit());
 		p;
 	}
@@ -247,5 +247,15 @@ class ImproveBehavior extends DefaultBehavior {
 		if (dlg.show(window) >= 0) {
 			window.updateBehavior(DefaultBehavior(window));
 		}
+	}
+
+	private void onReload() {
+		// Needed due to a bug in App on Windows.
+		(spawn window.onReload()).detach();
+	}
+
+	private void onOpenEditor() {
+		// Needed due to a bug in App on Windows.
+		(spawn window.onOpenEditor()).detach();
 	}
 }

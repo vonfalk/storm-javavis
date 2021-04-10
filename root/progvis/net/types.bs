@@ -25,6 +25,11 @@ class Problem : serializable {
 			solutions = solutions;
 		}
 	}
+
+	// For sorting.
+	Bool <(Problem o) {
+		id < o.id;
+	}
 }
 
 /**
@@ -69,5 +74,10 @@ class Solution : serializable {
 			solution = solution;
 			improved = improved;
 		}
+	}
+
+	// For sorting.
+	Bool <(Solution o) {
+		id < o.id;
 	}
 }

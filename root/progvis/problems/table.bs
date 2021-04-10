@@ -58,7 +58,10 @@ class Table on Render {
 		Float cols;
 		for (x in minColSize)
 			cols += x;
-		minColSize[0] += width - cols;
+		if (minColSize.count > 1)
+			minColSize[1] += width - cols;
+		else
+			minColSize[0] += width - cols;
 
 		Bool repaint = false;
 		Point current;
