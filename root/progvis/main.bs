@@ -88,6 +88,7 @@ class MainWin extends Frame {
 
 	// Called when the frame is closed.
 	void close() : override {
+		behavior.onDispose();
 		painter.cleanup();
 		super:close();
 	}
@@ -172,6 +173,7 @@ class MainWin extends Frame {
 	// Used to transition between behaviors. Typically set through "open", but some behaviors need
 	// to switch during a simulation.
 	public void updateBehavior(Behavior b) {
+		behavior.onDispose();
 		behavior = b;
 		painter.updateBehavior(b);
 		repaint();
@@ -235,8 +237,7 @@ class MainWin extends Frame {
 			} else if (action = dlg.action as problems:ShowProblem) {
 				open(action, RevisitBehavior(this, action.title));
 			} else if (action = dlg.action as problems:ShowSolution) {
-				print("TODO: This is not done!");
-				open(action, DefaultBehavior(this));
+				open(action, ReplayBehavior(this, action.solution));
 			}
 		}
 	}
@@ -281,7 +282,7 @@ class MainWin extends Frame {
 		client = null;
 	}
 
-	private void onRestart() {
+	public void onRestart() {
 		painter.restart();
 	}
 
@@ -300,6 +301,12 @@ class MainWin extends Frame {
 		showLicenseDialog(this, ProgramInfo("Progvis", "Filip Strömbäck", version.version, license));
 	}
 
+	// Apply an action as if the user clicked something. The "step" received here is the same format
+	// that the Behavior class receives in its "onUserAction".
+	public void applyAction(Str step) {
+		painter.applyAction(step);
+	}
+
 	// Open one or more files, shows nice messages on error.
 	private void open(Url[] files) {
 		open(files, join(files, ", ", (x) => x.name).toS, DefaultBehavior(this));
@@ -315,6 +322,7 @@ class MainWin extends Frame {
 		this.text = "Progvis - " + title;
 
 		// Set it to default first, so that in case of failure we will behave as "normal".
+		this.behavior.onDispose();
 		this.behavior = DefaultBehavior(this);
 
 		try {

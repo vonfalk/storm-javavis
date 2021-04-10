@@ -24,6 +24,9 @@ class ThreadData extends Drawable {
 	// Shall we be removed (when the user clicks "remove").
 	Bool removeMe;
 
+	// Enable stepping.
+	Bool enableStep;
+
 	// Buttons.
 	SmallButton step;
 	SmallButton pause;
@@ -39,6 +42,7 @@ class ThreadData extends Drawable {
 	init(ProgThread thread) {
 		init {
 			thread = thread;
+			enableStep = true;
 			source(thread.owner);
 			step(stepDecoration, SolidBrush(yellow*0.5 + red), buttonSize);
 			pause(pauseDecoration, SolidBrush(black), buttonSize);
@@ -209,23 +213,28 @@ class ThreadData extends Drawable {
 	}
 
 	private void onStep() {
-		thread.resume();
+		if (enableStep)
+			thread.resume();
 	}
 
 	private void onPause() {
-		thread.pause();
+		if (enableStep)
+			thread.pause();
 	}
 
 	private void onRunSlow() {
-		thread.resume(1 s);
+		if (enableStep)
+			thread.resume(1 s);
 	}
 
 	private void onRunFast() {
-		thread.resume(500 ms);
+		if (enableStep)
+			thread.resume(500 ms);
 	}
 
 	private void onRunVeryFast() {
-		thread.resume(100 ms);
+		if (enableStep)
+			thread.resume(100 ms);
 	}
 
 	private void onRemove() {

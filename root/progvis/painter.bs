@@ -63,6 +63,7 @@ class MainPainter extends Painter {
 	void updateBehavior(Behavior b) {
 		behavior = b;
 		panel = b.panel;
+		workspace.enableStep = b.allowStep;
 	}
 
 	// Open a program.
@@ -73,8 +74,7 @@ class MainPainter extends Painter {
 		cleanup();
 
 		program = loaded;
-		behavior = b;
-		panel = b.panel;
+		updateBehavior(b);
 		workspace.globals = loaded.findGlobals();
 		workspace.hints = loaded.hints;
 		loaded.onChange = &this.update();
@@ -90,6 +90,23 @@ class MainPainter extends Painter {
 			if (text = program.source(url))
 				return text.text;
 		null;
+	}
+
+	// Apply an action. These are the same that we produce to the Behavior.
+	void applyAction(Str action) {
+		unless (program)
+			return;
+
+		if (action == "s") {
+			// Spawn new thread.
+			spawnThread();
+		} else if (action.isNat) {
+			// Step a thread.
+			Nat thread = action.toNat;
+			for (v in program.threads)
+				if (v.threadId == thread)
+					v.resume();
+		}
 	}
 
 	private void onProgramError(Nat thread, Exception error) {

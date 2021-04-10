@@ -19,11 +19,17 @@ class Behavior on Ui {
 	// Called when the program is restarted.
 	void onRestart() {}
 
+	// Called when this behavior is disposed.
+	void onDispose() {}
+
 	// Allow reloading this program?
 	Str? allowReload() { null; }
 
 	// Allow submitting this program?
 	Str? allowSubmit() { null; }
+
+	// Allow the user to step at their own pace.
+	Bool allowStep() { true; }
 
 	// Get the panel to show during rendering.
 	ProblemPanel? panel() { null; }
@@ -154,6 +160,116 @@ class RecordBehavior extends Behavior {
 	}
 }
 
+
+/**
+ * Behavior for playing back a solution.
+ *
+ * We inherit from default behavior to get default error messages.
+ */
+class ReplayBehavior extends DefaultBehavior {
+	private Str[] steps;
+	private Nat pos;
+
+	// Auto step currently active.
+	private Bool autoStep;
+
+	// Stop the auto step?
+	private Bool stopAuto;
+
+	init(MainWin window, Str solution) {
+		init(window) {}
+
+		Char sep = ";".begin.v;
+		Str:Iter last = solution.begin();
+		do {
+			Str:Iter next = solution.find(sep, last);
+			if (last != next)
+				steps << solution.substr(last, next);
+		} while (next != solution.end) {
+			last = next + 1;
+		}
+	}
+
+	void onProgramError(ProgramError error) : override {
+		stop();
+		super:onProgramError(error);
+	}
+
+	void onRestart() : override {
+		stop();
+		pos = 0;
+	}
+
+	void onDispose() : override {
+		stop();
+	}
+
+	ProblemPanel? panel() {
+		ProblemPanel p("Showing the problem");
+		p.button("Restart", &window.onRestart());
+		p.button("Next step", &this.onStep());
+		p.button("Play/Pause", &this.onAuto());
+		p;
+	}
+
+	private void onStep() {
+		if (!autoStep)
+			applyStep();
+	}
+
+	private void onAuto() {
+		if (autoStep) {
+			stop();
+		} else {
+			stopAuto = false;
+			(spawn autoStepFn()).detach();
+		}
+	}
+
+	private void applyStep() {
+		if (pos >= steps.count) {
+			(spawn showMessage(window, "End", "No more steps are available. Press \"Restart\" to see it again.")).detach();
+			return;
+		}
+
+		window.applyAction(steps[pos++]);
+	}
+
+	private void stop() {
+		stopAuto = true;
+		while (autoStep)
+			yield();
+	}
+
+	// Function running in another UThread.
+	// We're constantly monitoring the "main" thread. It is a bit wasteful, but OK.
+	private void autoStepFn() {
+		Moment next;
+
+		autoStep = true;
+		try {
+			while (!stopAuto) {
+				if (next < Moment()) {
+					next += 1 s;
+
+					applyStep();
+				}
+
+				if (pos >= steps.count)
+					break;
+
+				sleep(10 ms);
+			}
+		} catch (Exception e) {
+			print("Internal error: ${e}");
+		}
+		autoStep = false;
+	}
+
+	Bool allowStep() : override { false; }
+	Str? allowReload() : override { "You can not reload problems while showing a solution. Open another problem instead."; }
+	Str? allowSubmit() : override { "You can not submit this problem. Please open a new problem that you made first."; }
+}
 
 /**
  * Dialog presented when the user has found a solution.
