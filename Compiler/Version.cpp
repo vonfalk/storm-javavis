@@ -154,6 +154,7 @@ namespace storm {
 		patch = Serialize<Nat>::read(from);
 		pre = Serialize<Array<Str *> *>::read(from);
 		build = Serialize<Array<Str *> *>::read(from);
+		from->end();
 	}
 
 	Version *Version::read(ObjIStream *from) {
