@@ -57,6 +57,17 @@ class AuthLoginResponse : extends Response, serializable {
 class LogoutResponse : extends Response, serializable {}
 
 /**
+ * Reply for the leaderboard request.
+ */
+class LeaderboardResponse : extends Response, serializable {
+	Score[] scores;
+
+	init(Score[] scores) {
+		init { scores = scores; }
+	}
+}
+
+/**
  * Reply containing a list of problems (depending on what was requested).
  */
 class ProblemResponse : extends Response, serializable {

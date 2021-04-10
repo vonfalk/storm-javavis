@@ -80,6 +80,15 @@ class Database {
 		null;
 	}
 
+	// Find a user's name from its ID.
+	Str? findUserName(Int userId) {
+		if (x = WITH db: SELECT ONE displayName FROM users WHERE id == userId) {
+			return x.displayName;
+		} else {
+			return null;
+		}
+	}
+
 	// Log out a client.
 	void logout(Str clientId) {
 		WITH db: DELETE FROM clients WHERE id == clientId;
@@ -214,6 +223,49 @@ class Database {
 		Int problemId = createProblem(user, title, code, language);
 		WITH db: UPDATE solutions SET improved = problemId WHERE id == solutionId;
 		return problemId;
+	}
+
+	// Compute the points of all users in the database.
+	Int->Int allScores() {
+		Int->Int result;
+
+		// Points given to a solution that finds some error.
+		Int errorSolution = 5;
+		// Points given to a solution that don't find some error.
+		Int correctSolution = 1;
+		// Extra points if the solution was improved.
+		Int improved = 2;
+		// Points given to a problem that got an incorrect solution.
+		Int errorProblem = 1;
+		// Points given to a problem that got a correct solution.
+		Int correctProblem = 2;
+
+		var q = WITH db: SELECT
+			solutions.author AS author,
+			solutions.solution AS solution,
+			solutions.improved AS improved,
+			problems.author AS toAuthor
+			FROM solutions
+			JOIN problems ON solutions.to == problems.id;
+		for (row in q) {
+			Int pScore = 0;
+			Int sScore = 0;
+			if (row.solution) {
+				sScore += errorSolution;
+				pScore += errorProblem;
+			} else {
+				sScore += correctSolution;
+				pScore += correctProblem;
+			}
+
+			if (row.improved)
+				sScore += improved;
+
+			result[row.author] += sScore;
+			result[row.toAuthor] += pScore;
+		}
+
+		result;
 	}
 }
 

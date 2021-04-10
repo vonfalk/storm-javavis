@@ -10,17 +10,45 @@ dialog StatusDlg {
 		Label("Nickname:", VAlign:center) {}
 		Label username("", VAlign:center) {}
 		Button changeName("Change") {}
+		nextLine;
+		Label("Leaderboard:") { colspan: 3; }
+		nextLine;
+		Grid scoreGrid { colspan: 3; expandCol: 1; wrapCols: 3; }
 	}
 
 	private Client client;
 
 	init(Client client) {
-		init("Status", Size(200, 100)) {
+		init("Status", Size(200, 50)) {
 			client = client;
 		}
 
 		username.text = client.username;
 		changeName.onClick = &this.onChangeUsername();
+
+		Score[] scores;
+		try {
+			if (ans = client.query(LeaderboardRequest()) as LeaderboardResponse) {
+				scores = ans.scores;
+			}
+
+			for (score in scores) {
+				Label place(score.place.toS + ":", HAlign:right);
+				Label name(score.name);
+				Label score(score.points.toS + " p", HAlign:right);
+				add(place);
+				add(name);
+				add(score);
+				scoreGrid.add(component(place));
+				scoreGrid.add(component(name));
+				scoreGrid.add(component(score));
+				scoreGrid.nextLine;
+			}
+		} catch (Exception e) {
+			Label error("Failed to fetch the leaderboard");
+			add(error);
+			scoreGrid.add(component(error));
+		}
 	}
 
 	private void onChangeUsername() {

@@ -61,6 +61,53 @@ class ChangeNicknameRequest : extends Request, serializable {
 }
 
 /**
+ * Ask for the leaderboard.
+ */
+class LeaderboardRequest : extends Request, serializable {
+	Response? execute(ServerConn server, Database db) : override {
+		ScorePair[] scores;
+		for (user, score in db.allScores()) {
+			scores << ScorePair(user, score);
+		}
+
+		scores.sort();
+
+		// Pick the top 10, and the current user.
+		Bool currentFound = false;
+		Score[] result;
+		for (i, score in scores) {
+			Bool add = (score.user == server.userId);
+			currentFound |= add;
+			add |= i < 10;
+
+			if (currentFound & !add)
+				break;
+
+			if (add) {
+				if (user = db.findUserName(score.user))
+					result << Score(user, score.score, i.int + 1);
+			}
+		}
+
+		LeaderboardResponse(result);
+	}
+}
+
+// Pair for use when working with the scoreboard.
+private value ScorePair {
+	Int user;
+	Int score;
+
+	init(Int user, Int score) {
+		init { user = user; score = score; }
+	}
+
+	Bool <(ScorePair o) {
+		score > o.score;
+	}
+}
+
+/**
  * Ask for challenges.
  */
 class ChallengesRequest : extends Request, serializable {

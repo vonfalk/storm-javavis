@@ -81,3 +81,21 @@ class Solution : serializable {
 		id < o.id;
 	}
 }
+
+
+/**
+ * A single high-score entry.
+ */
+class Score : serializable {
+	Str name;
+	Int points;
+	Int place;
+
+	init(Str name, Int points, Int place) {
+		init {
+			name = name;
+			points = points;
+			place = place;
+		}
+	}
+}
