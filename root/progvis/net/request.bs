@@ -111,14 +111,18 @@ private value ScorePair {
  * Ask for challenges.
  */
 class ChallengesRequest : extends Request, serializable {
+	// Only solved problems?
 	Bool solved;
 
-	init(Bool wantSolved) {
-		init { solved = wantSolved; }
+	// Only improved problems? Ignored if "solved" is true.
+	Bool improved;
+
+	init(Bool wantSolved, Bool wantImproved) {
+		init { solved = wantSolved; improved = wantImproved; }
 	}
 
 	Response? execute(ServerConn server, Database db) : override {
-		ProblemResponse(db.userChallenges(server.userId, solved));
+		ProblemResponse(db.userChallenges(server.userId, solved, improved));
 	}
 }
 

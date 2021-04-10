@@ -14,11 +14,12 @@ dialog ProblemsDlg {
 		Callback cb(client, settings);
 
 		ProblemData data;
-		data.add("Unsolved", UnsolvedView(client, cb));
+		data.add("New problems", UnsolvedView(client, cb, false));
+		data.add("Improved", UnsolvedView(client, cb, true));
 		data.add("Solved", SolvedView(client, cb));
 		data.add("My problems", OwnView(client, cb));
 
-		init("Problems", Size(500, 400)) {
+		init("Problems", Size(600, 500)) {
 			painter(data);
 		}
 

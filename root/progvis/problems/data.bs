@@ -78,10 +78,12 @@ class View {
  */
 class UnsolvedView extends View {
 	private Callback cb;
+	private Bool improved;
 
-	init(Client client, Callback cb) {
+	init(Client client, Callback cb, Bool improved) {
 		init(client) {
 			cb = cb;
+			improved = improved;
 		}
 	}
 
@@ -90,7 +92,7 @@ class UnsolvedView extends View {
 	}
 
 	Row[] rows() : override {
-		getProblems(ChallengesRequest(false));
+		getProblems(ChallengesRequest(false, improved));
 	}
 
 	Panel details(Int id) : override {
@@ -120,7 +122,7 @@ class SolvedView extends View {
 	}
 
 	Row[] rows() : override {
-		getProblems(ChallengesRequest(true));
+		getProblems(ChallengesRequest(true, false));
 	}
 
 	Panel details(Int id) : override {
