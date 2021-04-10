@@ -68,7 +68,7 @@ namespace storm {
 			if (!to->startClass(StormInfo<Array<T> *>::type(to->engine()), value))
 				return;
 
-			to->to->writeNat(value->count());
+			Serialize<Nat>::write(value->count(), to);
 			for (Nat i = 0; i < value->count(); i++) {
 				Serialize<T>::write(value->at(i), to);
 			}
