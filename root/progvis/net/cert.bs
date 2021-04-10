@@ -1,0 +1,37 @@
+Str serverCertificate() {
+	StrBuf out;
+	out << "-----BEGIN CERTIFICATE-----\n";
+	out << "MIIFnTCCA4WgAwIBAgIUWmhWaCKNp2IZ36YkB42on8T9EGUwDQYJKoZIhvcNAQEL\n";
+	out << "BQAwXjELMAkGA1UEBhMCU0UxEjAQBgNVBAcMCUxpbmtvcGluZzEXMBUGA1UEAwwO\n";
+	out << "c3Rvcm0tbGFuZy5vcmcxIjAgBgkqhkiG9w0BCQEWE2luZm9Ac3Rvcm0tbGFuZy5v\n";
+	out << "cmcwHhcNMjEwNDEwMTExNTUwWhcNMzEwNDA4MTExNTUwWjBeMQswCQYDVQQGEwJT\n";
+	out << "RTESMBAGA1UEBwwJTGlua29waW5nMRcwFQYDVQQDDA5zdG9ybS1sYW5nLm9yZzEi\n";
+	out << "MCAGCSqGSIb3DQEJARYTaW5mb0BzdG9ybS1sYW5nLm9yZzCCAiIwDQYJKoZIhvcN\n";
+	out << "AQEBBQADggIPADCCAgoCggIBAKOR+QcOTJE/1cXMo+0NMAuR9zFDZRYR1zkYpY8L\n";
+	out << "3FXA4PDdFqfpOZ6D4fyacyCFKMs9Be1OKEWyR4DnF0pYDysoDvyre/bGj+2QHwR9\n";
+	out << "SBciYu1+vpU8rxwWMXSgTGQEErWouzjGMKgVGTuUByqiMyH7Skoq2b/FF8ByrgpP\n";
+	out << "Mf/DjKIlkhnyJTha8XzOxuKgnD7fLTaSrGiXWvN3UC8hNi4EvtbS3pbgkR4//LLg\n";
+	out << "z85LoHrvIRzEcNgwm9vwdqVkLKcM0wy9FG8cRUVfe6HW09J3mXtlV3SNp2Z05Z46\n";
+	out << "wHyz1Mrwmh00XOYzsYD9GN0K8BV/gBSOna/e56n1o2/YmGLtEcmF9+BChOd5fH+3\n";
+	out << "WkE/KjNNcleGBNxmfzWvJZQC/PAgPHHjjvve14fS89Kaa9fs0ho+ktzPpnCnD22R\n";
+	out << "CkQ8LM7zdMCmFW54J43JkU1T2qo7fMoVAerYmeDy4UWvGGRRqKMx9loOVbr8SmJe\n";
+	out << "UVSXuNb9HXcY+00QohJxGYCS4tYPGtn7s5TpLVWF1kNJ0fOFqm8pxSljyfgJd/9d\n";
+	out << "OWgJ+wQI2CMqn98ues8FJl/EVDwP4SNvhsy48ZTkCp6BKusVibsFxpjFrlncpiuV\n";
+	out << "cjAwZCHelKV07672z1qlUY5/1Z6fwItKJejoIK1NjK9wofhuDeV5lbnqVIjpTkcm\n";
+	out << "fXntAgMBAAGjUzBRMB0GA1UdDgQWBBR4W4aJm0eO5tieRH8dg/DuJWUNzTAfBgNV\n";
+	out << "HSMEGDAWgBR4W4aJm0eO5tieRH8dg/DuJWUNzTAPBgNVHRMBAf8EBTADAQH/MA0G\n";
+	out << "CSqGSIb3DQEBCwUAA4ICAQCJO6nx+I2gRcNhISWlgSwVx/Bs2keSExPt7PR4DMuU\n";
+	out << "Eec0EDdKNL/Q/F/NS2Rp7b5KZyFdyaljJtMHo2j8UrJ2M7qD+AisfIw1gp/wprS2\n";
+	out << "ojzJv7wQnckirX8Dhl2i8d6YTVS4hhkBVH86pNWjzxksVYcUFC44t8pJI8u7S/Xz\n";
+	out << "PjqibhD55Qvoyl//NFb1hbHj4tEC5X21NzAlir4QA6C3+19AVJlihf7woszw3SZE\n";
+	out << "/HKeWfHB7xnWDmUvnwrxzmRDqkWxyCjSaGnpSxBlTQcFWhtzz3PsuwDB8zvH//mY\n";
+	out << "gbSAyZHtTCpcszELEHFn6Jb/rbxwAzI+MqpG2iwxt1YQ0MbaPCDw5EvWZlevUeVv\n";
+	out << "AEuGCm4io6a+pK7Ye1TuLzOz9z326rGN1IaF3Ksfphp3cMBhLsr1qV6ZCQJJCYgy\n";
+	out << "Zyug5JhBaO76tqCYy8NmNgILoTV9Fa3iZG3cgDXrvewZbFvWWf9Ylff2S+CRvp/u\n";
+	out << "QQn7iOTOQeGDTyU6IpTCOVQ5/5xVp54XEUQbyb+VIi4T+6dx5TdVYq/q8ZxTfeX9\n";
+	out << "pdX0+gR2dRSj45+gHFn/lFupJk/nXBlefdjMaeSA4gxguWtU1oyd5qYg2MpxyuVf\n";
+	out << "liJ2ASg1GIrYaR1L9o91j8EVCWsyH2w33RuRqG/nKt2ZJAjUSbQHWeIY3p+4E0en\n";
+	out << "yg==\n";
+	out << "-----END CERTIFICATE-----\n";
+	out.toS;
+}
