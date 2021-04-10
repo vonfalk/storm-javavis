@@ -1,5 +1,6 @@
 use core:io;
 use core:net;
+use lang:bs:macro;
 
 /**
  * Thrown when the user needs to sign in.
@@ -56,6 +57,8 @@ class Client on Network {
 		var response = query(AuthRequest(identity));
 		if (response as AuthResponse) {
 			uName = response.name;
+			if (response.version > named{PROGVIS_VERSION}.version)
+				throw ServerError("Please upgrade Progvis. Version ${response.version} is available.");
 			print("Username: ${uName}");
 		} else if (response as AuthLoginResponse) {
 			throw SignInRedirect(response.url);

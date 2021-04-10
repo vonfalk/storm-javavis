@@ -1,5 +1,7 @@
 use core:io;
 use util:serialize;
+use core:info;
+use lang:bs:macro;
 
 /**
  * This is the base class for all responses from the server to the client.
@@ -24,10 +26,16 @@ class AuthResponse : extends Response, serializable {
 	// User name.
 	Str name;
 
+	// Server version.
+	Version version;
+
 	// TODO: Other stats?
 
 	init(Str name) {
-		init { name = name; }
+		init {
+			name = name;
+			version = named{PROGVIS_VERSION}.version;
+		}
 	}
 }
 
