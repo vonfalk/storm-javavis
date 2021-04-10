@@ -1,8 +1,9 @@
-* General [7/15]
+* General [7/16]
   - [ ] Graphics::fill does not behave correctly with regards to gradient's coordinate systems.
   - [ ] Swap the two last parameters of Graphics.draw(Text, Brush, Point) to match the others.
   - [ ] TODO: There are cases in which the dialog management deadlocks on Windows. For example:
         main GUI thread waits for a semaphore, and another thread calling waitForClose on a dialog.
+  - [ ] The Skia backend has an error when showing the tabs in the "problems" part of Progvis.
   - [ ] See if we should stop rendering a painter that is not visible, eg. inside a scrollwindow.
   - [ ] Make the text view and the multiline text view separate, as we want
         to handle text separatly in the two cases.
