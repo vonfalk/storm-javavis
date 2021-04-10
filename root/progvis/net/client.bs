@@ -1,6 +1,7 @@
 use core:io;
 use core:net;
 use lang:bs:macro;
+use crypto;
 
 /**
  * Thrown when the user needs to sign in.
@@ -44,14 +45,27 @@ private NetStream connectOrThrow(Str host, Nat port) {
  * Connection to the server.
  */
 class Client on Network {
-	// Authenticates the user.
-	init(Str host, Str identity) {
+	// Connect and authenticate the user.
+	Client connect(Str host, Str identity) : static {
 		NetStream socket = connectOrThrow(host, serverPort);
 
+		if (host == "storm-lang.org") {
+			var context = ClientContext:pinnedTo(Certificate:loadPEM(serverCertificate));
+			context.verifyHostname = false;
+
+			var session = context.connect(socket, host);
+			return Client(socket, session.input, session.output, identity);
+		} else {
+			return Client(socket, socket.input, socket.output, identity);
+		}
+	}
+
+	// Authenticates the user.
+	private init(NetStream socket, IStream input, OStream output, Str identity) {
 		init {
 			socket = socket;
-			input = ObjIStream(socket.input);
-			output = ObjOStream(socket.output);
+			input = ObjIStream(input);
+			output = ObjOStream(output);
 		}
 
 		var response = query(AuthRequest(identity));

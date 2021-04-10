@@ -114,7 +114,7 @@ class MainWin extends Frame {
 		onlineMenu[0].enabled = false;
 
 		try {
-			Client c(onlineUrl, settings.onlineId);
+			Client c = Client:connect(onlineUrl, settings.onlineId);
 			this.client = c;
 
 			for (Nat i = 1; i < onlineMenu.count; i++)

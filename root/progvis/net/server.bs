@@ -1,6 +1,6 @@
 use core:io;
 use core:net;
-
+use crypto;
 
 /**
  * Connection to a client on the server.
@@ -11,6 +11,15 @@ class ServerConn {
 			socket = stream;
 			input = ObjIStream(stream.input);
 			output = ObjOStream(stream.output);
+			db = db;
+		}
+	}
+
+	init(NetStream stream, IStream input, OStream output, Database db) {
+		init {
+			socket = stream;
+			input = ObjIStream(input);
+			output = ObjOStream(output);
 			db = db;
 		}
 	}
@@ -114,6 +123,25 @@ class ServerConn {
 
 // Run the server.
 void serverMain() on Network {
+	Url cert = cwdUrl / "cert.pem";
+	Url key = cwdUrl / "key.pem";
+	if (cert.exists & key.exists) {
+		var c = Certificate:loadPEM(cert);
+		var k = c.loadKeyPEM(key);
+
+		print("Launching SSL server...");
+		sslServerMain(ServerContext(k));
+	} else {
+		print("Launching non-SSL server...");
+		plainServerMain();
+	}
+
+	print("Server terminated!");
+	// TODO: Restart?
+}
+
+// Non-SSL version.
+private void plainServerMain() on Network {
 	unless (listener = listen(serverPort))
 		throw ServerError("Failed to listen to ${serverPort}!");
 
@@ -123,9 +151,30 @@ void serverMain() on Network {
 		ServerConn client(stream, db);
 		(spawn client.run()).detach();
 	}
+}
 
-	print("Server terminated!");
-	// TODO: Restart?
+// SSL version.
+private void sslServerMain(ServerContext context) on Network {
+	unless (listener = listen(serverPort))
+		throw ServerError("Failed to listen to ${serverPort}!");
+
+	Database db;
+
+	while (stream = listener.accept()) {
+		(spawn sslClient(stream, context, db)).detach();
+	}
+}
+
+// Perform SSL handshake for a single client, and run it.
+private void sslClient(NetStream stream, ServerContext context, Database db) on Network {
+	try {
+		var session = context.connect(stream);
+
+		ServerConn client(stream, session.input, session.output, db);
+		client.run();
+	} catch (Exception e) {
+		print("Error from client: ${e.message}");
+	}
 }
 
 // Run a server that accepts a single client.
