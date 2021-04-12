@@ -135,9 +135,13 @@ class RecordBehavior extends Behavior {
 
 	ProblemPanel? panel() : override {
 		ProblemPanel p("Find an error in \"${problem.title}\"!");
-		p.button("Open in editor", &window.onOpenEditor());
+		p.button("Open in editor", &this.onOpenEditor());
 		p.button("I think there are no errors", &this.onDone);
 		p;
+	}
+
+	private void onOpenEditor() {
+		(spawn window.onOpenEditor()).detach();
 	}
 
 	private void onDone() {
