@@ -169,6 +169,8 @@ namespace storm {
 		class MemberVarAccess : public Expr {
 			STORM_CLASS;
 		public:
+			// If 'sameObject' is "true", then we know that "member" refers to "this" of the current
+			// object, and assume that it was implicitly inserted there.
 			STORM_CTOR MemberVarAccess(SrcPos pos, Expr *member, MemberVar *var, Bool sameObject);
 
 			// Result type.
@@ -187,6 +189,9 @@ namespace storm {
 
 			// Location.
 			virtual SrcPos STORM_FN largePos();
+
+			// Is 'member' the implicit 'this' pointer?
+			Bool implicitThis() const { return sameObject; }
 
 		protected:
 			// Output.

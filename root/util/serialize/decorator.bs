@@ -136,9 +136,9 @@ LocalVar safeVariable(Block block, Str name) {
 
 // Find a suitable read or write function for a type, as accessed from 'from'.
 Function findReadFunction(SrcPos pos, Value type, Type from) {
-	if (type.type) {
+	if (t = type.type) {
 		Value param(named{ObjIStream});
-		if (x = type.find(SimplePart("read", [param]), Scope(from)) as Function) {
+		if (x = t.find(SimplePart("read", [param]), Scope(from)) as Function) {
 			return x;
 		}
 	}

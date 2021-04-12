@@ -12,7 +12,7 @@ namespace storm {
 		 * Look up a proper action from a name and a set of parameters.
 		 */
 		static MAYBE(Expr *) findCtor(Scope scope, Type *t, Actuals *actual, const SrcPos &pos);
-		static Expr *findTarget(Scope scope, Named *n, LocalVar *first, Actuals *actual, const SrcPos &pos, bool useLookup);
+		static Expr *findTarget(Scope scope, Named *n, LocalVar *thisVar, Actuals *actual, const SrcPos &pos, bool useLookup);
 		static Expr *findTargetThis(Block *block, SimpleName *name,
 									Actuals *params, const SrcPos &pos,
 									Named *&candidate);
@@ -35,7 +35,8 @@ namespace storm {
 
 		// Helper to create the actual type, given something found. If '!useLookup', then we will not use the lookup
 		// of the function or variable (ie use vtables).
-		static Expr *findTarget(Scope scope, Named *n, LocalVar *first, Actuals *actual, const SrcPos &pos, bool useLookup) {
+		// Note: 'thisVar' is assumed to be the implicit this variable (if it is present).
+		static Expr *findTarget(Scope scope, Named *n, LocalVar *thisVar, Actuals *actual, const SrcPos &pos, bool useLookup) {
 			if (!n)
 				return null;
 
@@ -45,30 +46,30 @@ namespace storm {
 				throw new (n) SyntaxError(pos, S("Manual invocations of destructors are forbidden."));
 
 			if (Function *f = as<Function>(n)) {
-				if (first)
-					actual = actual->withFirst(new (first) LocalVarAccess(pos, first));
-				return new (n) FnCall(pos, scope, f, actual, useLookup, first ? true : false);
+				if (thisVar)
+					actual = actual->withFirst(new (thisVar) LocalVarAccess(pos, thisVar));
+				return new (n) FnCall(pos, scope, f, actual, useLookup, thisVar ? true : false);
 			}
 
 			if (LocalVar *v = as<LocalVar>(n)) {
-				assert(!first);
+				assert(!thisVar);
 				return new (n) LocalVarAccess(pos, v);
 			}
 
 			if (MemberVar *v = as<MemberVar>(n)) {
-				if (first)
-					return new (n) MemberVarAccess(pos, new (first) LocalVarAccess(pos, first), v, true);
+				if (thisVar)
+					return new (n) MemberVarAccess(pos, new (thisVar) LocalVarAccess(pos, thisVar), v, true);
 				else
 					return new (n) MemberVarAccess(pos, actual->expressions->at(0), v, false);
 			}
 
 			if (NamedThread *v = as<NamedThread>(n)) {
-				assert(!first);
+				assert(!thisVar);
 				return new (n) NamedThreadAccess(pos, v);
 			}
 
 			if (GlobalVar *v = as<GlobalVar>(n)) {
-				assert(!first);
+				assert(!thisVar);
 				return new (n) GlobalVarAccess(pos, v);
 			}
 

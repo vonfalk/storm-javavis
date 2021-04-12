@@ -148,3 +148,37 @@ Int testMaybeNullInit() {
 	else
 		-1;
 }
+
+// Check the behavior of members...
+class MaybeClass {
+	Int? val;
+
+	init() {
+		init { val = 10; }
+	}
+
+	Int explicitSelf() {
+		Int val = 2;
+		// Note: Explicit a.val means that val will not be created inside the if stmt.
+		if (this.val)
+			return val;
+		0;
+	}
+
+	Int explicitOther() {
+		Int val = 2;
+		MaybeClass z = this;
+		// Note: Explicit a.val means that val will not be created inside the if stmt.
+		if (z.val)
+			return val;
+		0;
+	}
+}
+
+Int testExplicitSelf() {
+	MaybeClass().explicitSelf();
+}
+
+Int testExplicitOther() {
+	MaybeClass().explicitOther();
+}

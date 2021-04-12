@@ -59,9 +59,12 @@
     but the scale of the issue should be assessed first.
   - [ ] Parsing core.lang.syntax.bnf takes about 80 ms, which is a bit on the high end when compiling code...
 
-* Loose ends so far [56/98]
+* Loose ends so far [56/99]
   - [ ] We want to allocate threads in some kind of pool. since the minimum alignment for VirtualAlloc on Windows
     is 64k, we might waste quite a lot of memory when allocating small stacks.
+  - [ ] When a non-member function declares a "this" variable, we implicitly assume that it is a true "this"
+    and make assumptions about it (wrt threads) based on this assumption. This is dangerous. We need
+    to detect whether the "this" pointer is a "true" this-pointer or not.
   - [ ] Interestingly: "strBuf << maybe<Str>" calls via Variant.
   - [ ] The Value() ctor was changed to accept a Maybe-type. Because of this, auto-cast from Type to Value
     no longer works in Basic Storm. Investigate, and make a special case for Maybe perhaps.

@@ -65,9 +65,9 @@ namespace storm {
 			if (LocalVarAccess *var = as<LocalVarAccess>(expr))
 				return new (this) Str(*var->var->name);
 
-			// TODO? Enforce 'this' is used as the parameter?
 			if (MemberVarAccess *var = as<MemberVarAccess>(expr))
-				return new (this) Str(*var->var->name);
+				if (var->implicitThis())
+					return new (this) Str(*var->var->name);
 
 			return null;
 		}
