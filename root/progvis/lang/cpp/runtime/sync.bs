@@ -80,11 +80,19 @@ value semaphore {
 	}
 }
 
+// Check so that a pointer is valid.
+void checkSyncPtr(Ptr<semaphore> sema) {
+	Size sz = sPtr + sInt;
+	checkPtr(sema.base, sema.offset, sz.current);
+}
+
 void sema_init(Ptr<semaphore> sema, Int value) {
 	if (value < 0)
 		throw SyncError("Cannot initialize a semaphore with a negative value!");
 
 	SemaImpl s(value.nat);
+
+	checkSyncPtr(sema);
 
 	Nat offset = sema.offset - sPtr.current * 2;
 	if (sema.base.readPtr(offset).any)
@@ -95,12 +103,16 @@ void sema_init(Ptr<semaphore> sema, Int value) {
 }
 
 void sema_destroy(Ptr<semaphore> sema) {
+	checkSyncPtr(sema);
+
 	Nat offset = sema.offset - sPtr.current * 2;
 	sema.base.writePtr(offset, unsafe:RawPtr());
 	sema.base.writeInt(offset + sPtr.current, -1);
 }
 
 void sema_up(Ptr<semaphore> sema) {
+	checkSyncPtr(sema);
+
 	Nat offset = sema.offset - sPtr.current * 2;
 	var sem = sema.base.readPtr(offset);
 	if (s = sem.asObject() as SemaImpl) {
@@ -114,6 +126,8 @@ void sema_up(Ptr<semaphore> sema) {
 }
 
 void sema_down(Ptr<semaphore> sema) {
+	checkSyncPtr(sema);
+
 	Nat offset = sema.offset - sPtr.current * 2;
 
 	var sem = sema.base.readPtr(offset);
@@ -140,8 +154,16 @@ value lock {
 	}
 }
 
+// Check so that a pointer is valid.
+void checkSyncPtr(Ptr<lock> lock) {
+	Size sz = sPtr + sInt;
+	checkPtr(lock.base, lock.offset, sz.current);
+}
+
 void lock_init(Ptr<lock> lock) {
 	SemaImpl s(1);
+
+	checkSyncPtr(lock);
 
 	Nat offset = lock.offset - sPtr.current * 2;
 	if (lock.base.readPtr(offset).any)
@@ -152,12 +174,16 @@ void lock_init(Ptr<lock> lock) {
 }
 
 void lock_destroy(Ptr<lock> lock) {
+	checkSyncPtr(lock);
+
 	Nat offset = lock.offset - sPtr.current * 2;
 	lock.base.writePtr(offset, unsafe:RawPtr());
 	lock.base.writeInt(offset + sPtr.current, -1);
 }
 
 void lock_acquire(Ptr<lock> lock) {
+	checkSyncPtr(lock);
+
 	Nat offset = lock.offset - sPtr.current * 2;
 
 	var implRaw = lock.base.readPtr(offset);
@@ -178,6 +204,8 @@ void lock_acquire(Ptr<lock> lock) {
 }
 
 void lock_release(Ptr<lock> lock) {
+	checkSyncPtr(lock);
+
 	Nat offset = lock.offset - sPtr.current * 2;
 
 	var implRaw = lock.base.readPtr(offset);
@@ -260,8 +288,16 @@ value condition {
 	}
 }
 
+// Check so that a pointer is valid.
+void checkSyncPtr(Ptr<condition> cond) {
+	Size sz = sPtr + sInt;
+	checkPtr(cond.base, cond.offset, sz.current);
+}
+
 void cond_init(Ptr<condition> cond) {
 	CondImpl c;
+
+	checkSyncPtr(cond);
 
 	Nat offset = cond.offset - sPtr.current * 2;
 	if (cond.base.readPtr(offset).any)
@@ -272,12 +308,17 @@ void cond_init(Ptr<condition> cond) {
 }
 
 void cond_destroy(Ptr<condition> cond) {
+	checkSyncPtr(cond);
+
 	Nat offset = cond.offset - sPtr.current * 2;
 	cond.base.writePtr(offset, unsafe:RawPtr());
 	cond.base.writeInt(offset + sPtr.current, -1);
 }
 
 void cond_wait(Ptr<condition> cond, Ptr<lock> lock) {
+	checkSyncPtr(cond);
+	checkSyncPtr(lock);
+
 	Nat cOffset = cond.offset - sPtr.current * 2;
 	Nat lOffset = lock.offset - sPtr.current * 2;
 
@@ -303,6 +344,9 @@ void cond_wait(Ptr<condition> cond, Ptr<lock> lock) {
 }
 
 void cond_signal(Ptr<condition> cond, Ptr<lock> lock) {
+	checkSyncPtr(cond);
+	checkSyncPtr(lock);
+
 	Nat cOffset = cond.offset - sPtr.current * 2;
 	Nat lOffset = lock.offset - sPtr.current * 2;
 
@@ -321,6 +365,9 @@ void cond_signal(Ptr<condition> cond, Ptr<lock> lock) {
 }
 
 void cond_broadcast(Ptr<condition> cond, Ptr<lock> lock) {
+	checkSyncPtr(cond);
+	checkSyncPtr(lock);
+
 	Nat cOffset = cond.offset - sPtr.current * 2;
 	Nat lOffset = lock.offset - sPtr.current * 2;
 

@@ -113,7 +113,7 @@ class PtrType extends Type {
 			addFn(int, "-", [ref, ref], ptrDiff(Offset(sz)));
 		}
 
-		// Allocate arrays from Storm. Useful when implementing the standard library.
+		// Allocate arrays from Storm. Useful when implementing the standard library. These will be marked as heap allocations.
 		if (type = inside()) {
 			Function f(val, "allocArray", [Value(named{Nat})]);
 			f.setCode(DynamicCode(allocArrayFn(type)));
@@ -252,7 +252,7 @@ class PtrType extends Type {
 		l << mov(ptrRel(res, Offset()), ptrA);
 		l << mov(intRel(res, Offset(sPtr)), natConst(sPtr * 2));
 
-		Nat mask = AllocFlags:arrayAlloc.v;
+		Nat mask = AllocFlags:arrayAlloc.v | AllocFlags:heapAlloc.v;
 		l << or(param, natConst(mask));
 		l << mov(intRel(ptrA, Offset(sPtr)), param);
 
@@ -308,6 +308,12 @@ void assumeSameAlloc(unsafe:RawPtr a, unsafe:RawPtr b) {
 
 	if (!same)
 		throw PtrError("undefined behavior", "Trying to compare pointers from different allocations with <, >, <=, =>, or -");
+}
+
+// Check so that a pointer is not deallocated.
+void checkPtr(unsafe:RawPtr base) {
+	if ((base.readFilled() & AllocFlags:sizeMask.v) == 0)
+		throw PtrError("use after free", "Trying to read from memory that was freed.");
 }
 
 // Check the validity of a pointer. Assumes we want to read a maximum of 'size' bytes at wherever

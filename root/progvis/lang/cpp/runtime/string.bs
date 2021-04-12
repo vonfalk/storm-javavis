@@ -2,16 +2,24 @@ use progvis:lang:cpp;
 use core:asm;
 
 Int strlen(ConstPtr<Byte> src) {
+	checkPtr(src.base);
+
+	Bool foundNull = false;
 	Nat total = 0;
 	Nat offset = src.offset - sPtr.current * 2;
 	Nat size = src.base.readSize * src.base.readCount;
 	while (offset <= size) {
-		if (src.base.readByte(offset) == 0)
+		if (src.base.readByte(offset) == 0) {
+			foundNull = true;
 			break;
+		}
 
 		offset++;
 		total++;
 	}
+
+	if (!foundNull)
+		throw PtrError("buffer overflow", "Missing 0-byte at the end of the string.");
 
 	total.int;
 }
@@ -29,6 +37,9 @@ Ptr<Byte> strcpy(ConstPtr<Byte> src) {
 }
 
 Int strcmp(ConstPtr<Byte> a, ConstPtr<Byte> b) {
+	checkPtr(a.base);
+	checkPtr(b.base);
+
 	Nat aOffset = a.offset - sPtr.current * 2;
 	Nat bOffset = b.offset - sPtr.current * 2;
 	Nat aSize = a.base.readSize * a.base.readCount;
@@ -57,18 +68,26 @@ Int strcmp(ConstPtr<Byte> a, ConstPtr<Byte> b) {
 
 // Convert from c-string to a Storm string.
 Str toStorm(ConstPtr<Byte> chars) {
+	checkPtr(chars.base);
+
+	Bool foundNull = false;
 	Nat offset = chars.offset - sPtr.current * 2;
 	Nat size = chars.base.readSize * chars.base.readCount;
 	StrBuf buf;
 	while (offset <= size) {
 		Byte b = chars.base.readByte(offset);
-		if (b == 0)
+		if (b == 0) {
+			foundNull = true;
 			break;
+		}
 
 		buf << Char(b.nat);
 
 		offset++;
 	}
+
+	if (!foundNull)
+		throw PtrError("buffer overflow", "Missing 0-byte at the end of the string.");
 
 	buf.toS;
 }
