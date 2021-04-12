@@ -31,6 +31,9 @@ class Behavior on Ui {
 	// Allow the user to step at their own pace.
 	Bool allowStep() { true; }
 
+	// Allow changing "track reads/writes". If this returns "false", track memory is forced on.
+	Bool allowTrackMemory() { true; }
+
 	// Get the panel to show during rendering.
 	ProblemPanel? panel() { null; }
 }
@@ -76,6 +79,7 @@ class RevisitBehavior extends DefaultBehavior {
 
 	Str? allowReload() : override { "Can not reload the current problem. Use Run -> Restart instead, or open a new problem."; }
 	Str? allowSubmit() : override { "You can not re-submit this problem as your own. Open a new file and submit that instead."; }
+	Bool allowTrackMemory() : override { false; }
 
 	ProblemPanel? panel() : override {
 		ProblemPanel("Find an error in \"${title}\" (can not submit a solution)");
@@ -132,6 +136,7 @@ class RecordBehavior extends Behavior {
 
 	Str? allowReload() : override { "Can not reload the current problem. Use Run -> Restart instead, or open a new problem."; }
 	Str? allowSubmit() : override { "You can not re-submit this problem as your own. Open a new file and submit that instead."; }
+	Bool allowTrackMemory() : override { false; }
 
 	ProblemPanel? panel() : override {
 		ProblemPanel p("Find an error in \"${problem.title}\"!");
@@ -271,6 +276,7 @@ class ReplayBehavior extends DefaultBehavior {
 	}
 
 	Bool allowStep() : override { false; }
+	Bool allowTrackMemory() : override { false; }
 	Str? allowReload() : override { "You can not reload problems while showing a solution. Open another problem instead."; }
 	Str? allowSubmit() : override { "You can not submit this problem. Please open a new problem that you made first."; }
 }
@@ -342,6 +348,9 @@ class ImproveBehavior extends DefaultBehavior {
 
 	// But don't allow submitting through regular means.
 	Str? allowSubmit() : override { "To submit your improved version, click the button in the green bar!"; }
+
+	// Don't change 'track memory'.
+	Bool allowTrackMemory() : override { false; }
 
 	// Add a panel that explains it all.
 	ProblemPanel? panel() : override {

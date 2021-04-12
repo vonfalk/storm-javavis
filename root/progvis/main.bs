@@ -28,6 +28,9 @@ class MainWin extends Frame {
 	// The first one is the "sign in" item.
 	private PopupMenu onlineMenu;
 
+	// Menu element for tracking reads/writes.
+	private Menu:Check trackMemory;
+
 	// Settings.
 	private Settings settings;
 
@@ -35,6 +38,7 @@ class MainWin extends Frame {
 		init("Progvis", Size(800, 800)) {
 			settings = Settings:load();
 			onlineUrl = "storm-lang.org";
+			trackMemory("Track reads/writes");
 		}
 
 		applySettings();
@@ -51,7 +55,10 @@ class MainWin extends Frame {
 		runMenu
 			<< Menu:Text("Restart", &this.onRestart())
 			<< Menu:Text("Spawn thread", &this.onSpawnThread())
-			<< Menu:Check("Track reads/writes", &this.onTrackMemory(Bool), true);
+			<< trackMemory;
+
+		trackMemory.checked = true;
+		trackMemory.onClick = &this.onTrackMemory(Bool);
 		painter.trackMemory(true);
 
 		onlineMenu
@@ -177,7 +184,19 @@ class MainWin extends Frame {
 		behavior.onDispose();
 		behavior = b;
 		painter.updateBehavior(b);
+		onNewBehavior();
 		repaint();
+	}
+
+	// Called when a new behavior has been set.
+	private void onNewBehavior() {
+		if (!behavior.allowTrackMemory()) {
+			trackMemory.enabled = false;
+			trackMemory.checked = true;
+			painter.trackMemory(true);
+		} else {
+			trackMemory.enabled = true;
+		}
 	}
 
 	private void onOpen() {
@@ -325,11 +344,13 @@ class MainWin extends Frame {
 		// Set it to default first, so that in case of failure we will behave as "normal".
 		this.behavior.onDispose();
 		this.behavior = DefaultBehavior(this);
+		onNewBehavior();
 
 		try {
 			painter.cleanup();
 			painter.open(files, behavior);
 			this.behavior = behavior;
+			onNewBehavior();
 		} catch (core:lang:CodeError error) {
 			CompileErrorDialog dlg(error.messageText, error.pos);
 			dlg.show(this);
