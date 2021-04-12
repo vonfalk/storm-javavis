@@ -42,7 +42,7 @@ namespace storm {
 
 		static Array<ValParam> *childParams(ProductionType *owner) {
 			Array<ValParam> *p = new (owner) Array<ValParam>();
-			p->push(ValParam(thisPtr(owner), new (owner) Str(S("this"))));
+			p->push(thisParam(owner));
 			return p;
 		}
 

@@ -18,7 +18,7 @@ namespace storm {
 
 			// If we inherit from a class that does not know which thread to run on, we need a Thread as the
 			// first parameter (#1, it is after the this ptr).
-			RunOn runOn = params->at(0).type.type->runOn();
+			RunOn runOn = params->at(0).type().type->runOn();
 			needsThread = runOn.state == RunOn::runtime;
 			if (needsThread) {
 				Value expected = thisPtr(Thread::stormType(engine()));
@@ -29,7 +29,7 @@ namespace storm {
 					throw new (this) SyntaxError(pos, msg);
 				}
 
-				if (!expected.canStore(params->at(1).type)) {
+				if (!expected.canStore(params->at(1).type())) {
 					Str *msg = TO_S(engine(), S("This constructor needs to take a ")
 									<< expected << S(" as the first parameter, not " << params->at(1)));
 					throw new (this) SyntaxError(pos, msg);
@@ -71,7 +71,7 @@ namespace storm {
 
 			// Parameters (first one is special).
 			{
-				code::Var thisVar = state->createParam(params->at(0).type);
+				code::Var thisVar = state->createParam(params->at(0).type());
 				SimplePart *hiddenName = new (this) SimplePart(new (this) Str(L" this"));
 				SimplePart *normalName = new (this) SimplePart(new (this) Str(L"this"));
 				LocalVar *hidden = body->variable(hiddenName);
@@ -82,7 +82,7 @@ namespace storm {
 				// Add variable info. In the debug info, we always give the this
 				// variable. Otherwise, we would need additional temporary variables etc, which is
 				// not really worth the trouble.
-				Value thisVal = params->at(0).type;
+				Value thisVal = params->at(0).type();
 				Listing::VarInfo *info = new (this) Listing::VarInfo(normalName->name, thisVal.type, thisVal.ref, pos);
 				state->l->varInfo(thisVar, info);
 			}
@@ -116,9 +116,8 @@ namespace storm {
 			LocalVar *thread = 0;
 
 			for (nat i = 0; i < params->count(); i++) {
-				LocalVar *var = new (this) LocalVar(params->at(i).name, params->at(i).type, pos, true);
-				if (i == 0)
-					var->constant = true;
+				LocalVar *var = createParam(engine(), params->at(i), pos);
+
 				to->add(var);
 				if (i == 1 && needsThread)
 					thread = var;
@@ -198,10 +197,12 @@ namespace storm {
 
 		CtorBody::CtorBody(BSCtor *ctor) : ExprBlock(pickPos(ctor), ctor->scope), superCalled(false), initDone(false) {
 			threadParam = ctor->addParams(this);
+			owner = ctor;
 		}
 
 		CtorBody::CtorBody(BSRawCtor *ctor, Scope scope) : ExprBlock(ctor->pos, scope) {
 			threadParam = ctor->addParams(this);
+			owner = ctor;
 		}
 
 		void CtorBody::checkInit() {
@@ -256,8 +257,7 @@ namespace storm {
 
 			Value superPtr = thisPtr;
 			superPtr.type = super;
-			LocalVar *created = new (this) LocalVar(new (this) Str(L"this"), superPtr, thisVar->pos, true);
-			created->constant = true;
+			LocalVar *created = new (this) ThisVar(superPtr, thisVar->pos, true);
 			block->add(created);
 
 			this->params = params;
@@ -401,7 +401,7 @@ namespace storm {
 				created->result = thisPtr;
 			} else {
 				// We need to create it.
-				LocalVar *created = new (this) LocalVar(new (this) Str(L"this"), thisPtr, thisVar->pos, true);
+				LocalVar *created = new (this) ThisVar(thisPtr, thisVar->pos, true);
 				created->constant = true;
 				block->add(created);
 			}

@@ -4,6 +4,7 @@
 #include "Compiler/CodeGen.h"
 #include "Compiler/Syntax/SStr.h"
 #include "Actuals.h"
+#include "Param.h"
 
 namespace storm {
 	namespace bs {
@@ -35,10 +36,34 @@ namespace storm {
 			// Create the parameter.
 			void STORM_FN createParam(CodeGen *state);
 
+			// Is this a "true" this-variable?
+			virtual Bool STORM_FN thisVariable();
+
 		private:
 			// Create debug information.
 			void addInfo(code::Listing *l, code::Var var);
 		};
+
+		/**
+		 * Specialization for the "this"-variable that is automatically declared inside member
+		 * functions. This is so that other parts may find it and make assumptions wrt. threading etc.
+		 */
+		class ThisVar : public LocalVar {
+			STORM_CLASS;
+		public:
+			// Create with default name (i.e. this).
+			STORM_CTOR ThisVar(Value val, SrcPos pos, Bool param);
+
+			// Custom name. We won't find it automatically if it is not named "this", but we can
+			// still identify it as it is an instance of this class.
+			STORM_CTOR ThisVar(Str *name, Value val, SrcPos pos, Bool param);
+
+			// Is this a "true" this-variable? Yes!
+			virtual Bool STORM_FN thisVariable();
+		};
+
+		// Helper to create a parameter from a ValParam class.
+		LocalVar *STORM_FN createParam(EnginePtr e, ValParam param, SrcPos pos);
 
 		class Block;
 

@@ -29,6 +29,10 @@ namespace storm {
 			return pos;
 		}
 
+		Bool Expr::thisVariable() const {
+			return false;
+		}
+
 		/**
 		 * Numeric literals.
 		 */

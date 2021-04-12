@@ -19,10 +19,8 @@ namespace storm {
 			STORM_CLASS;
 		public:
 			// if '!lookup', then the lookup functionality (such as vtables) will not be used.
-			// if 'sameObject', then we will not spawn other threads for this function call, as it
-			// is assumed that we are always calling the same object.
 			STORM_CTOR FnCall(SrcPos pos, Scope scope, Function *toExecute, Actuals *params);
-			STORM_CTOR FnCall(SrcPos pos, Scope scope, Function *toExecute, Actuals *params, Bool lookup, Bool sameObject);
+			STORM_CTOR FnCall(SrcPos pos, Scope scope, Function *toExecute, Actuals *params, Bool lookup);
 
 			// Create a UnresolvedName object describing how to find this function.
 			UnresolvedName *STORM_FN name();
@@ -58,9 +56,6 @@ namespace storm {
 
 			// Use lookup?
 			Bool lookup;
-
-			// Same object?
-			Bool sameObject;
 
 			// Async function call?
 			Bool async;
@@ -133,6 +128,11 @@ namespace storm {
 			// Variable to access.
 			LocalVar *var;
 
+			// Is this a known "this"-variable?
+			Bool STORM_FN thisVariable() const {
+				return var->thisVariable();
+			}
+
 		protected:
 			// To string.
 			virtual void STORM_FN toS(StrBuf *to) const;
@@ -169,9 +169,14 @@ namespace storm {
 		class MemberVarAccess : public Expr {
 			STORM_CLASS;
 		public:
-			// If 'sameObject' is "true", then we know that "member" refers to "this" of the current
-			// object, and assume that it was implicitly inserted there.
-			STORM_CTOR MemberVarAccess(SrcPos pos, Expr *member, MemberVar *var, Bool sameObject);
+			// Standard creation if you don't need to take the case where "member" might not have
+			// been specified by the user into account (e.g. when you generate code internally).
+			STORM_CTOR MemberVarAccess(SrcPos pos, Expr *member, MemberVar *var);
+
+			// If "implicitMember" is true, then the expression "member" was implicitly
+			// generated. This mostly affects the decision of whether or not this is a "plain"
+			// variable in weak casts.
+			STORM_CTOR MemberVarAccess(SrcPos pos, Expr *member, MemberVar *var, Bool implicitMember);
 
 			// Result type.
 			virtual ExprResult STORM_FN result();
@@ -191,7 +196,7 @@ namespace storm {
 			virtual SrcPos STORM_FN largePos();
 
 			// Is 'member' the implicit 'this' pointer?
-			Bool implicitThis() const { return sameObject; }
+			Bool implicitMember() const { return implicit; }
 
 		protected:
 			// Output.
@@ -205,8 +210,8 @@ namespace storm {
 			// messages. Nothing else.
 			Bool assignTo;
 
-			// Do we know the target object is running on the same thread as the caller?
-			Bool sameObject;
+			// Did "member" get specified implicitly?
+			Bool implicit;
 
 			// Generate code for a value access.
 			void valueCode(CodeGen *s, CodeResult *to);

@@ -367,7 +367,7 @@ class DatabaseType extends Type {
     }
 
 	private void addCtor() {
-		BSTreeCtor ctor([ValParam(thisPtr(this), "this"), ValParam(named{DBConnection}, "db")], SrcPos());
+		BSTreeCtor ctor([thisParam(this), ValParam(named{DBConnection}, "db")], SrcPos());
 		CtorBody body(ctor, Scope());
 		if (var = body.variable(SimplePart("db"))) {
 			Actuals params;

@@ -1,5 +1,6 @@
 #include "stdafx.h"
 #include "Param.h"
+#include "Type.h"
 
 namespace storm {
 	namespace bs {
@@ -22,9 +23,14 @@ namespace storm {
 			return NameParam(type, new (type) Str(L""));
 		}
 
-		ValParam::ValParam(Value type, Str *name) : type(type), name(name) {}
+		ValParam::ValParam(Value type, Str *name)
+			: name(name), t(type.type), ref(type.ref), thisPar(false) {}
 
-		ValParam::ValParam(Value type, syntax::SStr *name) : type(type), name(name->v) {}
+		ValParam::ValParam(Value type, syntax::SStr *name)
+			: name(name->v), t(type.type), ref(type.ref), thisPar(false) {}
+
+		ValParam::ValParam(Value type, Str *name, Bool thisParam)
+			: name(name), t(type.type), ref(type.ref), thisPar(thisParam) {}
 
 		wostream &operator <<(wostream &to, ValParam p) {
 			StrBuf *b = new (p.name) StrBuf();
@@ -33,7 +39,18 @@ namespace storm {
 		}
 
 		StrBuf &operator <<(StrBuf &to, ValParam p) {
-			return to << p.type << L" " << p.name;
+			to << p.type() << S(" ") << p.name;
+			if (p.thisParam())
+				to << S(" (this param)");
+			return to;
+		}
+
+		ValParam thisParam(Type *me) {
+			return thisParam(new (me) Str(S("this")), me);
+		}
+
+		ValParam thisParam(Str *name, Type *me) {
+			return ValParam(thisPtr(me), name, true);
 		}
 
 		ValParam resolve(NameParam param, Scope scope) {
@@ -51,7 +68,7 @@ namespace storm {
 		Array<ValParam> *resolve(Array<NameParam> *params, Type *me, Scope scope) {
 			Array<ValParam> *res = new (params) Array<ValParam>();
 			res->reserve(params->count() + 1);
-			res->push(ValParam(thisPtr(me), new (params) Str(L"this")));
+			res->push(thisParam(me));
 			for (nat i = 0; i < params->count(); i++)
 				res->push(resolve(params->at(i), scope));
 			return res;
@@ -61,7 +78,7 @@ namespace storm {
 			Array<Value> *r = new (params) Array<Value>();
 			r->reserve(params->count());
 			for (nat i = 0; i < params->count(); i++)
-				r->push(params->at(i).type);
+				r->push(params->at(i).type());
 			return r;
 		}
 

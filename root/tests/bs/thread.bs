@@ -343,3 +343,29 @@ void threadVarAssign() {
 	ActorVar o;
 	o.value = CloneDerived();
 }
+
+
+class OnOther on Other {
+	Int echo(CloneDerived x) {
+		x.c;
+	}
+
+	// Similar to 'customThis', but actually a member.
+	Int defaultThis() {
+		CloneDerived d;
+		echo(d);
+	}
+}
+
+Int customThis() {
+	CloneDerived d;
+	OnOther this;
+
+	// The compiler must see that we *need* a copy here, even though we use an implicit "this".
+	echo(d);
+}
+
+Int defaultThis() {
+	OnOther z;
+	z.defaultThis();
+}

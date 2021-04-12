@@ -91,31 +91,27 @@ class WindowBody extends ClassBody {
 
 	// Add the 'resized' overload.
 	private void addResized(SrcPos pos) {
-		Value me(owner);
 		Value sizeType(named{core:geometry:Size});
-		BSTreeFn resized(Value(), SStr("resized", pos), [ValParam(me, "this"), ValParam(sizeType, "s")], null);
+		BSTreeFn resized(Value(), SStr("resized", pos), [thisParam(owner), ValParam(sizeType, "s")], null);
+		owner.add(resized);
 
 		FnBody resizeBody(resized, owner.scope);
 		var layout = namedExpr(resizeBody, pos, "layout", Actuals());
 		var size = namedExpr(resizeBody, pos, "s", Actuals());
 		resizeBody.add(namedExpr(resizeBody, pos, "resize", layout, Actuals(size)));
 		resized.body = resizeBody;
-
-		owner.add(resized);
 	}
 
 	// Add the 'minSize' overload.
 	private void addMinSize(SrcPos pos) {
-		Value me(owner);
 		Value size(named{core:geometry:Size});
-		BSTreeFn minSize(size, SStr("minSize", pos), [ValParam(me, "this")], null);
+		BSTreeFn minSize(size, SStr("minSize", pos), [thisParam(owner)], null);
+		owner.add(minSize);
 
 		FnBody minSizeBody(minSize, owner.scope);
 		var layout = namedExpr(minSizeBody, pos, "layout", Actuals());
 		minSizeBody.add(namedExpr(minSizeBody, pos, "minSize", layout));
 		minSize.body = minSizeBody;
-
-		owner.add(minSize);
 	}
 }
 

@@ -83,7 +83,7 @@ private:
 	void evalExpr(SReplExpr tree) {
 		Type sandboxType = named{lang:bs:ReplSandbox};
 		ReplBlock block(scope);
-		LocalVar thisPtr("this", thisPtr(sandboxType), SrcPos(), true);
+		ThisVar thisPtr(thisPtr(sandboxType), SrcPos(), true);
 		block.add(thisPtr);
 
 		Expr expr = tree.transform(block);

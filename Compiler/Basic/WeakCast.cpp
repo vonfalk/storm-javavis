@@ -66,7 +66,7 @@ namespace storm {
 				return new (this) Str(*var->var->name);
 
 			if (MemberVarAccess *var = as<MemberVarAccess>(expr))
-				if (var->implicitThis())
+				if (var->implicitMember())
 					return new (this) Str(*var->var->name);
 
 			return null;

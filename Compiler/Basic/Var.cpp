@@ -153,6 +153,25 @@ namespace storm {
 
 
 		/**
+		 * ThisVar
+		 */
+
+		ThisVar::ThisVar(Value val, SrcPos pos, Bool param)
+			: LocalVar(new (engine()) Str(S("this")), val, pos, param) {
+			constant = true;
+		}
+
+		ThisVar::ThisVar(Str *name, Value val, SrcPos pos, Bool param)
+			: LocalVar(name, val, pos, param) {
+			constant = true;
+		}
+
+		Bool ThisVar::thisVariable() {
+			return true;
+		}
+
+
+		/**
 		 * LocalVar
 		 */
 
@@ -166,6 +185,10 @@ namespace storm {
 				throw new (this) SyntaxError(pos,
 											TO_S(this, S("Attempted to create the variable \"")
 												<< name << S("\" with type \"void\", which is not allowed.")));
+		}
+
+		Bool LocalVar::thisVariable() {
+			return false;
 		}
 
 		void LocalVar::create(CodeGen *state) {
@@ -196,6 +219,13 @@ namespace storm {
 				l->varInfo(var, new (this) code::Listing::VarInfo(name, result.type, result.ref, pos));
 		}
 
+
+		LocalVar *createParam(EnginePtr e, ValParam param, SrcPos pos) {
+			if (param.thisParam())
+				return new (e.v) ThisVar(param.name, param.type(), pos, true);
+			else
+				return new (e.v) LocalVar(param.name, param.type(), pos, true);
+		}
 
 	}
 }

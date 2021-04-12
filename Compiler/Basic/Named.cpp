@@ -74,15 +74,15 @@ namespace storm {
 		 * Function call.
 		 */
 
-		FnCall::FnCall(SrcPos pos, Scope scope, Function *toExecute, Actuals *params, Bool lookup, Bool sameObject)
-			: Expr(pos), toExecute(toExecute), params(params), scope(scope), lookup(lookup), sameObject(sameObject), async(false) {
+		FnCall::FnCall(SrcPos pos, Scope scope, Function *toExecute, Actuals *params, Bool lookup)
+			: Expr(pos), toExecute(toExecute), params(params), scope(scope), lookup(lookup), async(false) {
 
 			if (params->expressions->count() != toExecute->params->count())
 				throw new (this) SyntaxError(pos, S("The parameter count does not match!"));
 		}
 
 		FnCall::FnCall(SrcPos pos, Scope scope, Function *toExecute, Actuals *params)
-			: Expr(pos), toExecute(toExecute), params(params), scope(scope), lookup(true), sameObject(false), async(false) {
+			: Expr(pos), toExecute(toExecute), params(params), scope(scope), lookup(true), async(false) {
 
 			if (params->expressions->count() != toExecute->params->count())
 				throw new (this) SyntaxError(pos, S("The parameter count does not match!"));
@@ -112,6 +112,9 @@ namespace storm {
 
 		void FnCall::code(CodeGen *s, CodeResult *to) {
 			using namespace code;
+
+			// Execute on the same thread?
+			Bool sameObject = params->hasThisFirst();
 
 			// Note that toExecute->params may not be equal to params->values()
 			// since some actual parameters may report that they can return a
@@ -371,8 +374,11 @@ namespace storm {
 		 * Member variable.
 		 */
 
-		MemberVarAccess::MemberVarAccess(SrcPos pos, Expr *member, MemberVar *var, Bool sameObject)
-			: Expr(pos), member(member), var(var), assignTo(false), sameObject(sameObject) {}
+		MemberVarAccess::MemberVarAccess(SrcPos pos, Expr *member, MemberVar *var)
+			: Expr(pos), member(member), var(var), assignTo(false), implicit(false) {}
+
+		MemberVarAccess::MemberVarAccess(SrcPos pos, Expr *member, MemberVar *var, Bool implicit)
+			: Expr(pos), member(member), var(var), assignTo(false), implicit(implicit) {}
 
 		ExprResult MemberVarAccess::result() {
 			return var->type.asRef();
@@ -435,7 +441,7 @@ namespace storm {
 
 		void MemberVarAccess::extractCode(CodeGen *s, CodeResult *to) {
 			RunOn target = var->owner()->runOn();
-			if (sameObject || s->runOn.canRun(target)) {
+			if (member->thisVariable() || s->runOn.canRun(target)) {
 				extractPlainCode(s, to);
 				return;
 			}

@@ -110,6 +110,9 @@ namespace storm {
 			STORM_CTOR CtorBody(BSCtor *owner);
 			STORM_CTOR CtorBody(BSRawCtor *owner, Scope scope);
 
+			// Owning function.
+			Function *owner;
+
 			// Temporary storage of the actual LocalVar that stores the parameter we need to capture.
 			LocalVar *threadParam;
 

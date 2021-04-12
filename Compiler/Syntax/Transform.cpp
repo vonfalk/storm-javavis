@@ -28,7 +28,7 @@ namespace storm {
 
 		static Array<ValParam> *tfmParams(Rule *rule, ProductionType *owner) {
 			Array<ValParam> *v = new (rule) Array<ValParam>(*rule->params());
-			v->insert(0, ValParam(thisPtr(owner), new (rule) Str(S("this"))));
+			v->insert(0, thisParam(owner));
 			return v;
 		}
 

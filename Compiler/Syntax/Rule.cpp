@@ -36,7 +36,7 @@ namespace storm {
 			Array<Value> *params = new (engine) Array<Value>();
 			params->push(me);
 			for (nat i = 0; i < tfmParams->count(); i++)
-				params->push(tfmParams->at(i).type);
+				params->push(tfmParams->at(i).type());
 
 			add(lazyFunction(engine, tfmResult, S("transform"), params, fnPtr(engine, &Rule::createTransform, this)));
 
@@ -86,7 +86,7 @@ namespace storm {
 			// Add our parameters.
 			code::Var me = code->createParam(thisPtr(this));
 			for (nat i = 0; i < tfmParams->count(); i++)
-				code->createParam(tfmParams->at(i).type);
+				code->createParam(tfmParams->at(i).type());
 
 			*l << code::prolog();
 

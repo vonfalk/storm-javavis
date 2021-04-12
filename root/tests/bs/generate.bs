@@ -57,7 +57,7 @@ class GenClass {
 			return null;
 
 		Value t = params[1];
-		BSTreeFn fn(t, SStr("addVal"), [ValParam(Value(me), "this"), ValParam(t, "b")], null);
+		BSTreeFn fn(t, SStr("addVal"), [thisParam(me), ValParam(t, "b")], null);
 
 		Scope scope(me, BSLookup());
 

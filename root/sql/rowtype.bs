@@ -22,7 +22,7 @@ class TypedRow extends Type {
 		}
 
 		// Add a constructor that reads data from a Row instance.
-		BSTreeCtor ctor([ValParam(thisPtr(this), "this"), ValParam(named{Row}, "row")], SrcPos());
+		BSTreeCtor ctor([thisParam(this), ValParam(named{Row}, "row")], SrcPos());
 		CtorBody body(ctor, Scope(this));
 
 		unless (rowVar = body.variable(SimplePart("row")))
@@ -50,7 +50,7 @@ class TypedRow extends Type {
 
 	// Generate a to-string function.
 	private Function toString(MemberVar[] vars) {
-		BSTreeFn fn(Value(), SStr("toS"), [ValParam(thisPtr(this), "this"), ValParam(named{StrBuf}, "to")], null);
+		BSTreeFn fn(Value(), SStr("toS"), [thisParam(this), ValParam(named{StrBuf}, "to")], null);
 		FnBody body(fn, Scope(this, BSLookup()));
 
 		unless (toVar = body.variable(SimplePart("to")))
@@ -147,7 +147,7 @@ class TypedIter extends Type {
 
 	// Add constructor.
 	private void addCtor() {
-		BSTreeCtor ctor([ValParam(thisPtr(this), "this"), ValParam(named{Statement}, "stmt")], SrcPos());
+		BSTreeCtor ctor([thisParam(this), ValParam(named{Statement}, "stmt")], SrcPos());
 		CtorBody body(ctor, Scope(this, BSLookup()));
 
 		unless (stmtVar = body.variable(SimplePart("stmt")))
@@ -164,7 +164,7 @@ class TypedIter extends Type {
 
 	// Add "next" member.
 	private void addNext(TypedRow row, MemberVar iter) {
-		BSTreeFn fn(wrapMaybe(Value(row)), SStr("next"), [ValParam(thisPtr(this), "this")], null);
+		BSTreeFn fn(wrapMaybe(Value(row)), SStr("next"), [thisParam(this)], null);
 		FnBody body(fn, Scope(this, BSLookup()));
 
 		unless (thisVar = body.variable(SimplePart("this")))
@@ -198,7 +198,7 @@ class TypedIter extends Type {
 	// "clean" option would be to make a separate class that is "some returned rows" that can be
 	// iterated. But this makes more sense overall.
 	private void addIter() {
-		BSTreeFn fn(Value(this), SStr("iter"), [ValParam(thisPtr(this), "this")], null);
+		BSTreeFn fn(Value(this), SStr("iter"), [thisParam(this)], null);
 		FnBody body(fn, Scope(this));
 
 		unless (thisVar = body.variable(SimplePart("this")))

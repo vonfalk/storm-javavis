@@ -42,6 +42,9 @@ namespace storm {
 			// Add a first parameter to a copy of this object.
 			Actuals *STORM_FN withFirst(Expr *expr) const;
 
+			// Is this call using a "this"-parameter as the first parameter?
+			Bool STORM_FN hasThisFirst() const;
+
 		protected:
 			virtual void STORM_FN toS(StrBuf *to) const;
 		};

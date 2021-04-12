@@ -51,4 +51,8 @@ BEGIN_TEST(BSThread, BS) {
 	// Check variable accesses in other threads.
 	CHECK_EQ(runFn<Int>(S("tests.bs.threadVarAccess")), 6); // 1 copy, 1 deep copy. Starts at 4.
 	CHECK_ERROR(runFn<void>(S("tests.bs.threadVarAssign")), SyntaxError);
+
+	// Check so that we don't mistake variables named "this" for the real thing.
+	CHECK_EQ(runFn<Int>(S("tests.bs.defaultThis")), 4); // Standard behavior, no copies.
+	CHECK_EQ(runFn<Int>(S("tests.bs.customThis")), 6); // 1 copy + 1 deep copy. Starts at 4.
 } END_TEST

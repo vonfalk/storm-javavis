@@ -42,6 +42,12 @@ namespace storm {
 			// we in error messages typically want to point at details (e.g. a particular operator),
 			// while in debugging information we want to include the entire range.
 			virtual SrcPos STORM_FN largePos();
+
+			// Is this an expression that is a "this"-variable? It may or may not be named "this",
+			// but it is known to be referring to the same object as the current one, so we know
+			// that we don't have to switch threads when calling member functions on the object this
+			// variable is referring to.
+			virtual Bool STORM_FN thisVariable() const;
 		};
 
 

@@ -12,7 +12,7 @@ namespace storm {
 		 * Look up a proper action from a name and a set of parameters.
 		 */
 		static MAYBE(Expr *) findCtor(Scope scope, Type *t, Actuals *actual, const SrcPos &pos);
-		static Expr *findTarget(Scope scope, Named *n, LocalVar *thisVar, Actuals *actual, const SrcPos &pos, bool useLookup);
+		static Expr *findTarget(Scope scope, Named *n, LocalVar *first, Actuals *actual, const SrcPos &pos, bool useLookup);
 		static Expr *findTargetThis(Block *block, SimpleName *name,
 									Actuals *params, const SrcPos &pos,
 									Named *&candidate);
@@ -35,8 +35,8 @@ namespace storm {
 
 		// Helper to create the actual type, given something found. If '!useLookup', then we will not use the lookup
 		// of the function or variable (ie use vtables).
-		// Note: 'thisVar' is assumed to be the implicit this variable (if it is present).
-		static Expr *findTarget(Scope scope, Named *n, LocalVar *thisVar, Actuals *actual, const SrcPos &pos, bool useLookup) {
+		// 'first' is assumed to have been added implicitly.
+		static Expr *findTarget(Scope scope, Named *n, LocalVar *first, Actuals *actual, const SrcPos &pos, bool useLookup) {
 			if (!n)
 				return null;
 
@@ -46,30 +46,30 @@ namespace storm {
 				throw new (n) SyntaxError(pos, S("Manual invocations of destructors are forbidden."));
 
 			if (Function *f = as<Function>(n)) {
-				if (thisVar)
-					actual = actual->withFirst(new (thisVar) LocalVarAccess(pos, thisVar));
-				return new (n) FnCall(pos, scope, f, actual, useLookup, thisVar ? true : false);
+				if (first)
+					actual = actual->withFirst(new (first) LocalVarAccess(pos, first));
+				return new (n) FnCall(pos, scope, f, actual, useLookup);
 			}
 
 			if (LocalVar *v = as<LocalVar>(n)) {
-				assert(!thisVar);
+				assert(!first);
 				return new (n) LocalVarAccess(pos, v);
 			}
 
 			if (MemberVar *v = as<MemberVar>(n)) {
-				if (thisVar)
-					return new (n) MemberVarAccess(pos, new (thisVar) LocalVarAccess(pos, thisVar), v, true);
+				if (first)
+					return new (n) MemberVarAccess(pos, new (first) LocalVarAccess(pos, first), v, true);
 				else
 					return new (n) MemberVarAccess(pos, actual->expressions->at(0), v, false);
 			}
 
 			if (NamedThread *v = as<NamedThread>(n)) {
-				assert(!thisVar);
+				assert(!first);
 				return new (n) NamedThreadAccess(pos, v);
 			}
 
 			if (GlobalVar *v = as<GlobalVar>(n)) {
-				assert(!thisVar);
+				assert(!first);
 				return new (n) GlobalVarAccess(pos, v);
 			}
 
@@ -102,7 +102,12 @@ namespace storm {
 			bool useLookup = true;
 
 			if (isSuperName(name)) {
+				// If it is not a proper this-variable, don't allow using "super".
+				if (!thisVar->thisVariable())
+					throw new (block) SyntaxError(pos, S("Can not call 'super' outside of member functions."));
+
 				SimpleName *part = name->from(1);
+
 				// It is something in the super type!
 				Type *super = thisVar->result.type->super();
 				if (!super) {

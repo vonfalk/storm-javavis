@@ -120,7 +120,7 @@ class LambdaExpr extends Expr {
 
 		var create = setupType(type, capture);
 
-		params.insert(0, ValParam(Value(type), "this"));
+		params.insert(0, thisParam(type));
 		BSTreeFn fn(result, SStr("<run>", pos), params, null);
 		type.add(fn);
 		fn.body = {
@@ -138,7 +138,7 @@ class LambdaExpr extends Expr {
 	private Expr setupType(Type type, Str[] capture) {
 		MemberVar[] vars;
 		ValParam[] formals;
-		formals << ValParam(Value(type), "this");
+		formals << thisParam(type);
 
 		Actuals actuals;
 		for (c in capture) {

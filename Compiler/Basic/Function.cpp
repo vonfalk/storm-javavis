@@ -217,7 +217,7 @@ namespace storm {
 
 			if (valParams->empty())
 				return;
-			if (*valParams->at(0).name != S("this"))
+			if (!valParams->at(0).thisParam())
 				return;
 
 			// All seems well, proceed.
@@ -237,13 +237,7 @@ namespace storm {
 
 		void BSRawFn::addParams(Block *to) {
 			for (Nat i = 0; i < valParams->count(); i++) {
-				LocalVar *v = new (this) LocalVar(valParams->at(i).name, valParams->at(i).type, pos, true);
-
-				if (parentLookup) {
-					if (i == 0 && isMember())
-						v->constant = true;
-				}
-
+				LocalVar *v = createParam(engine(), valParams->at(i), pos);
 				to->add(v);
 			}
 		}
@@ -253,7 +247,7 @@ namespace storm {
 			r->reserve(valParams->count());
 
 			for (Nat i = 0; i < valParams->count(); i++)
-				r->push(DocParam(valParams->at(i).name, valParams->at(i).type));
+				r->push(DocParam(valParams->at(i).name, valParams->at(i).type()));
 
 			return r;
 		}
@@ -283,7 +277,7 @@ namespace storm {
 			if (valParams->count() != params->count())
 				return false;
 			for (Nat i = 0; i < params->count(); i++)
-				if (valParams->at(i).type != params->at(i).type)
+				if (valParams->at(i).type() != params->at(i).type())
 					return false;
 
 			valParams = params;
@@ -357,7 +351,7 @@ namespace storm {
 
 			// Parameters.
 			for (Nat i = 0; i < valParams->count(); i++) {
-				g->createParam(valParams->at(i).type);
+				g->createParam(valParams->at(i).type());
 			}
 
 			*g->l << prolog();

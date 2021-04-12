@@ -43,6 +43,12 @@ namespace storm {
 			return copy;
 		}
 
+		Bool Actuals::hasThisFirst() const {
+			if (expressions->any())
+				return expressions->at(0)->thisVariable();
+			return false;
+		}
+
 		/**
 		 * Helper to compute an actual parameter. Takes care of ref/non-ref conversions.
 		 * Returns the value into which the resulting parameter were placed.

@@ -162,11 +162,10 @@ Function findReadFunction(SrcPos pos, Value type, Type from) {
  * }
  */
 Function addCtor(Type type, Member[] members) {
-	Value t = thisPtr(type);
 	Value objStream(named{ObjIStream});
 	SrcPos pos;
 
-	BSTreeCtor ctor([ValParam(t, "this"), ValParam(objStream, "from")], pos);
+	BSTreeCtor ctor([thisParam(type), ValParam(objStream, "from")], pos);
 	CtorBody body(ctor, Scope(type, BSLookup()));
 	LocalVarAccess from(pos, body.safeVariable("from"));
 
@@ -273,7 +272,7 @@ Function addWrite(Type type, Member[] members, Function typeFun) {
 	SrcPos pos;
 	Value t = thisPtr(type);
 	Value objStream(named{ObjOStream});
-	BSTreeFn fun(Value(), SStr("write", pos), [ValParam(t, "this"), ValParam(objStream, "to")], null);
+	BSTreeFn fun(Value(), SStr("write", pos), [thisParam(type), ValParam(objStream, "to")], null);
 	FnBody body(fun, Scope(type, BSLookup()));
 	LocalVarAccess me(pos, body.safeVariable("this"));
 	LocalVarAccess to(pos, body.safeVariable("to"));
@@ -301,7 +300,7 @@ Function addWrite(Type type, Member[] members, Function typeFun) {
 			Actuals a;
 			a.add(me);
 			a.add(to);
-			writeCalls.add(FnCall(pos, body.scope, fn, a, false, true));
+			writeCalls.add(FnCall(pos, body.scope, fn, a, false));
 		} else {
 			throw SyntaxError(pos, "The type ${s} does not have a write function!");
 		}
