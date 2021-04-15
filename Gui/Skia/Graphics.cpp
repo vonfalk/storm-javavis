@@ -42,6 +42,8 @@ namespace gui {
 	void SkiaGraphics::beforeRender(Color bgColor) {
 		surface.makeCurrent();
 
+		surface.canvas->setMatrix(states->last().matrix());
+
 		SkPaint paint(skia(bgColor));
 		paint.setStroke(false);
 		surface.canvas->drawPaint(paint);
