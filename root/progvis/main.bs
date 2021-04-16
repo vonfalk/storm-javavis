@@ -396,7 +396,8 @@ void researchMain() on Compiler {
 void debug() on Compiler {
 	named{progvis}.compile();
 
-	if (url = named{progvis_demo}.url) {
+	if (url = named{progvis}.url) {
+		url = url / ".." / "progvis_demo";
 		MainWin win;
 		// win.open(url / "assert.c");
 		// win.open(url / "demo2.bs");
