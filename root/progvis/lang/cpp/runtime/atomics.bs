@@ -1,0 +1,286 @@
+use lang:bs;
+use lang:bs:macro;
+use core:asm;
+use core:lang;
+use progvis:lang:cpp;
+
+/**
+ * Atomic operations.
+ *
+ * We don't need to worry about atomicity due to the concurrency model in use. We simply need to
+ * "hide" the atomic operations from Progvis.
+ */
+
+// Test and set (integers).
+Int test_and_set(Ptr<Int> ptr) {
+	checkPtr(ptr.base, ptr.offset, sInt.current);
+	Nat offset = ptr.offset - sPtr.current * 2;
+	Int old = ptr.base.readInt(offset);
+	ptr.base.writeInt(offset, 1);
+	old;
+}
+
+// Test and set (integers).
+Nat test_and_set(Ptr<Nat> ptr) {
+	checkPtr(ptr.base, ptr.offset, sInt.current);
+	Nat offset = ptr.offset - sPtr.current * 2;
+	Nat old = ptr.base.readNat(offset);
+	ptr.base.writeNat(offset, 1);
+	old;
+}
+
+// Test and set (booleans).
+Bool test_and_set(Ptr<Bool> ptr) {
+	checkPtr(ptr.base, ptr.offset, 1);
+	Nat offset = ptr.offset - sPtr.current * 2;
+	Bool old = ptr.base.readBool(offset);
+	ptr.base.writeBool(offset, true);
+	old;
+}
+
+// Atomic add (integers).
+Int atomic_add(Ptr<Int> ptr, Int add) {
+	checkPtr(ptr.base, ptr.offset, sInt.current);
+	Nat offset = ptr.offset - sPtr.current * 2;
+	Int old = ptr.base.readInt(offset);
+	ptr.base.writeInt(offset, old + add);
+	old;
+}
+
+// Atomic add (integers).
+Nat atomic_add(Ptr<Nat> ptr, Nat add) {
+	checkPtr(ptr.base, ptr.offset, sInt.current);
+	Nat offset = ptr.offset - sPtr.current * 2;
+	Nat old = ptr.base.readNat(offset);
+	ptr.base.writeNat(offset, old + add);
+	old;
+}
+
+// Atomic sub (integers).
+Int atomic_sub(Ptr<Int> ptr, Int sub) {
+	checkPtr(ptr.base, ptr.offset, sInt.current);
+	Nat offset = ptr.offset - sPtr.current * 2;
+	Int old = ptr.base.readInt(offset);
+	ptr.base.writeInt(offset, old - sub);
+	old;
+}
+
+// Atomic sub (integers).
+Nat atomic_sub(Ptr<Nat> ptr, Nat sub) {
+	checkPtr(ptr.base, ptr.offset, sInt.current);
+	Nat offset = ptr.offset - sPtr.current * 2;
+	Nat old = ptr.base.readNat(offset);
+	ptr.base.writeNat(offset, old - sub);
+	old;
+}
+
+// Atomic swap (exchange).
+Int atomic_swap(Ptr<Int> ptr, Int replace) {
+	checkPtr(ptr.base, ptr.offset, sInt.current);
+	Nat offset = ptr.offset - sPtr.current * 2;
+	Int old = ptr.base.readInt(offset);
+	ptr.base.writeInt(offset, replace);
+	old;
+}
+
+// Atomic swap (exchange).
+Nat atomic_swap(Ptr<Nat> ptr, Nat replace) {
+	checkPtr(ptr.base, ptr.offset, sInt.current);
+	Nat offset = ptr.offset - sPtr.current * 2;
+	Nat old = ptr.base.readNat(offset);
+	ptr.base.writeNat(offset, replace);
+	old;
+}
+
+// Generic version for pointers.
+atomic_swap : generate(params) {
+	if (params.count != 2)
+		return null;
+
+	unless (ptrType = params[0].type)
+		return null;
+	unless (ptrType as PtrType)
+		return null;
+
+	unless (replaceType = params[1].type)
+		return null;
+	unless (replaceType as PtrType)
+		return null;
+
+	if (ptrType.inside !is replaceType)
+		return null;
+
+	// Don't operate on references, that's wierd.
+	if (!replaceType.isPtr)
+		return null;
+
+	params[0] = params[0].asRef(false);
+	params[1] = params[1].asRef(false);
+	var result = params[1];
+
+	Listing l(false, result.desc);
+	var p1 = l.createParam(params[0].desc);
+	var p2 = l.createParam(params[1].desc);
+	var ptr = l.createVar(l.root, sPtr);
+	var offset = l.createVar(l.root, sInt);
+	var out = l.createVar(l.root, result.desc);
+
+	l << prolog();
+
+	// Check the pointer...
+	l << mov(ptr, ptrRel(p1, Offset()));
+	l << mov(offset, intRel(p1, Offset(sPtr)));
+	l << fnParam(ptrDesc, ptr);
+	l << fnParam(intDesc, offset);
+	l << fnParam(intDesc, natConst(params[0].size));
+	l << fnCall(named{checkPtr<unsafe:RawPtr, Nat, Nat>}.ref, false);
+
+	// Update the offset.
+	l << sub(offset, natConst(sPtr * 2));
+
+	// Read the old one (we need to call a function for this, otherwise we won't be "atomic").
+	l << fnParam(ptrDesc, ptr);
+	l << fnParam(intDesc, offset);
+	l << fnCall(named{unsafe:RawPtr:readPtr<unsafe:RawPtr, Nat>}.ref, true, ptrDesc, ptrRel(out, Offset()));
+
+	l << mov(eax, offset);
+	l << add(eax, natConst(sPtr));
+	l << fnParam(ptrDesc, ptr);
+	l << fnParam(intDesc, eax);
+	l << fnCall(named{unsafe:RawPtr:readNat<unsafe:RawPtr, Nat>}.ref, true, intDesc, intRel(out, Offset(sPtr)));
+
+	// Write the new one (we need to call functions for this, otherwise it won't be "atomic").
+	l << fnParam(ptrDesc, ptr);
+	l << fnParam(intDesc, offset);
+	l << fnParam(ptrDesc, ptrRel(p2, Offset()));
+	l << fnCall(named{unsafe:RawPtr:writePtr<unsafe:RawPtr, Nat, unsafe:RawPtr>}.ref, true);
+
+	l << mov(eax, offset);
+	l << add(eax, natConst(sPtr));
+	l << fnParam(ptrDesc, ptr);
+	l << fnParam(intDesc, eax);
+	l << fnParam(intDesc, intRel(p2, Offset(sPtr)));
+	l << fnCall(named{unsafe:RawPtr:writeNat<unsafe:RawPtr, Nat, Nat>}.ref, true);
+
+	// Done!
+	l << fnRet(out);
+
+	Function f(result, "atomic_swap", params);
+	f.setCode(DynamicCode(l));
+	f;
+}
+
+// Compare and swap.
+Int compare_and_swap(Ptr<Int> ptr, Int compare, Int swap) {
+	checkPtr(ptr.base, ptr.offset, sInt.current);
+	Nat offset = ptr.offset - sPtr.current * 2;
+	Int old = ptr.base.readInt(offset);
+	if (old == compare)
+		ptr.base.writeInt(offset, swap);
+	old;
+}
+
+// Compare and swap.
+Nat compare_and_swap(Ptr<Nat> ptr, Nat compare, Nat swap) {
+	checkPtr(ptr.base, ptr.offset, sInt.current);
+	Nat offset = ptr.offset - sPtr.current * 2;
+	Nat old = ptr.base.readNat(offset);
+	if (old == compare)
+		ptr.base.writeNat(offset, swap);
+	old;
+}
+
+// Generic version for pointers.
+compare_and_swap : generate(params) {
+	if (params.count != 3)
+		return null;
+
+	unless (ptrType = params[0].type)
+		return null;
+	unless (ptrType as PtrType)
+		return null;
+
+	unless (compareType = params[1].type)
+		return null;
+	unless (compareType as PtrType)
+		return null;
+
+	unless (replaceType = params[2].type)
+		return null;
+	unless (replaceType as PtrType)
+		return null;
+
+	if (ptrType.inside !is compareType)
+		return null;
+	if (ptrType.inside !is replaceType)
+		return null;
+
+	// Don't operate on references, that's wierd.
+	if (!replaceType.isPtr)
+		return null;
+
+	params[0] = params[0].asRef(false);
+	params[1] = params[1].asRef(false);
+	params[2] = params[2].asRef(false);
+	var result = params[1];
+
+	Listing l(false, result.desc);
+	var p1 = l.createParam(params[0].desc);
+	var p2 = l.createParam(params[1].desc);
+	var p3 = l.createParam(params[2].desc);
+	var ptr = l.createVar(l.root, sPtr);
+	var offset = l.createVar(l.root, sInt);
+	var out = l.createVar(l.root, result.desc);
+
+	l << prolog();
+
+	// Check the pointer...
+	l << mov(ptr, ptrRel(p1, Offset()));
+	l << mov(offset, intRel(p1, Offset(sPtr)));
+	l << fnParam(ptrDesc, ptr);
+	l << fnParam(intDesc, offset);
+	l << fnParam(intDesc, natConst(params[0].size));
+	l << fnCall(named{checkPtr<unsafe:RawPtr, Nat, Nat>}.ref, false);
+
+	// Update the offset.
+	l << sub(offset, natConst(sPtr * 2));
+
+	// Read the old one (we need to call a function for this, otherwise we won't be "atomic").
+	l << fnParam(ptrDesc, ptr);
+	l << fnParam(intDesc, offset);
+	l << fnCall(named{unsafe:RawPtr:readPtr<unsafe:RawPtr, Nat>}.ref, true, ptrDesc, ptrRel(out, Offset()));
+
+	l << mov(eax, offset);
+	l << add(eax, natConst(sPtr));
+	l << fnParam(ptrDesc, ptr);
+	l << fnParam(intDesc, eax);
+	l << fnCall(named{unsafe:RawPtr:readNat<unsafe:RawPtr, Nat>}.ref, true, intDesc, intRel(out, Offset(sPtr)));
+
+	// Compare the old one to the new one.
+	Label end = l.label;
+	l << cmp(ptrRel(p2, Offset()), ptrRel(out, Offset()));
+	l << jmp(end, CondFlag:ifNotEqual);
+	l << cmp(intRel(p2, Offset(sPtr)), intRel(out, Offset(sPtr)));
+	l << jmp(end, CondFlag:ifNotEqual);
+
+	// Write the new one (we need to call functions for this, otherwise it won't be "atomic").
+	l << fnParam(ptrDesc, ptr);
+	l << fnParam(intDesc, offset);
+	l << fnParam(ptrDesc, ptrRel(p3, Offset()));
+	l << fnCall(named{unsafe:RawPtr:writePtr<unsafe:RawPtr, Nat, unsafe:RawPtr>}.ref, true);
+
+	l << mov(eax, offset);
+	l << add(eax, natConst(sPtr));
+	l << fnParam(ptrDesc, ptr);
+	l << fnParam(intDesc, eax);
+	l << fnParam(intDesc, intRel(p3, Offset(sPtr)));
+	l << fnCall(named{unsafe:RawPtr:writeNat<unsafe:RawPtr, Nat, Nat>}.ref, true);
+
+	// Done!
+	l << end;
+	l << fnRet(out);
+
+	Function f(result, "compare_and_swap", params);
+	f.setCode(DynamicCode(l));
+	f;
+}

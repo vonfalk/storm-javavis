@@ -103,7 +103,7 @@ namespace storm {
 	};
 
 	// Get a description of this type.
-	code::TypeDesc *STORM_FN desc(EnginePtr e, Value v);
+	code::TypeDesc *STORM_FN desc(EnginePtr e, Value v) ON(Compiler);
 
 
 	/**
