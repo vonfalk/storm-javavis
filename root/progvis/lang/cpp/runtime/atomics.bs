@@ -92,6 +92,15 @@ Nat atomic_swap(Ptr<Nat> ptr, Nat replace) {
 	old;
 }
 
+// Atomic swap (exchange).
+Bool atomic_swap(Ptr<Bool> ptr, Bool replace) {
+	checkPtr(ptr.base, ptr.offset, 1);
+	Nat offset = ptr.offset - sPtr.current * 2;
+	Bool old = ptr.base.readBool(offset);
+	ptr.base.writeBool(offset, replace);
+	old;
+}
+
 // Generic version for pointers.
 atomic_swap : generate(params) {
 	if (params.count != 2)
@@ -187,6 +196,16 @@ Nat compare_and_swap(Ptr<Nat> ptr, Nat compare, Nat swap) {
 	Nat old = ptr.base.readNat(offset);
 	if (old == compare)
 		ptr.base.writeNat(offset, swap);
+	old;
+}
+
+// Compare and swap.
+Bool compare_and_swap(Ptr<Bool> ptr, Bool compare, Bool swap) {
+	checkPtr(ptr.base, ptr.offset, 1);
+	Nat offset = ptr.offset - sPtr.current * 2;
+	Bool old = ptr.base.readBool(offset);
+	if (old == compare)
+		ptr.base.writeBool(offset, swap);
 	old;
 }
 
