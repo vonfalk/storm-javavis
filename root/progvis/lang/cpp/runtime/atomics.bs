@@ -74,6 +74,172 @@ Nat atomic_sub(Ptr<Nat> ptr, Nat sub) {
 	old;
 }
 
+// Atomic read.
+Bool atomic_read(Ptr<Bool> from) {
+	checkPtr(from.base, from.offset, 1);
+	Nat offset = from.offset - sPtr.current * 2;
+	from.base.readBool(offset);
+}
+
+// Atomic read.
+Int atomic_read(Ptr<Int> from) {
+	checkPtr(from.base, from.offset, sInt.current);
+	Nat offset = from.offset - sPtr.current * 2;
+	from.base.readInt(offset);
+}
+
+// Atomic read.
+Nat atomic_read(Ptr<Nat> from) {
+	checkPtr(from.base, from.offset, sInt.current);
+	Nat offset = from.offset - sPtr.current * 2;
+	from.base.readNat(offset);
+}
+
+// Generic version for pointers.
+atomic_read : generate(params) {
+	if (params.count != 1)
+		return null;
+
+	unless (ptrType = params[0].type)
+		return null;
+	unless (ptrType as PtrType)
+		return null;
+
+	unless (readType = ptrType.inside)
+		return null;
+	unless (readType as PtrType)
+		return null;
+
+	// Don't operate on references, that's wierd.
+	if (!readType.isPtr)
+		return null;
+
+	params[0] = params[0].asRef(false);
+
+	Listing l(false, readType.desc);
+	var p1 = l.createParam(params[0].desc);
+	var ptr = l.createVar(l.root, sPtr);
+	var offset = l.createVar(l.root, sInt);
+	var out = l.createVar(l.root, readType.desc);
+
+	l << prolog();
+
+	// Check the pointer...
+	l << mov(ptr, ptrRel(p1, Offset()));
+	l << mov(offset, intRel(p1, Offset(sPtr)));
+	l << fnParam(ptrDesc, ptr);
+	l << fnParam(intDesc, offset);
+	l << fnParam(intDesc, natConst(params[0].size));
+	l << fnCall(named{checkPtr<unsafe:RawPtr, Nat, Nat>}.ref, false);
+
+	// Update the offset.
+	l << sub(offset, natConst(sPtr * 2));
+
+	// Read the old one (we need to call a function for this, otherwise we won't be "atomic").
+	l << fnParam(ptrDesc, ptr);
+	l << fnParam(intDesc, offset);
+	l << fnCall(named{unsafe:RawPtr:readPtr<unsafe:RawPtr, Nat>}.ref, true, ptrDesc, ptrRel(out, Offset()));
+
+	l << mov(eax, offset);
+	l << add(eax, natConst(sPtr));
+	l << fnParam(ptrDesc, ptr);
+	l << fnParam(intDesc, eax);
+	l << fnCall(named{unsafe:RawPtr:readNat<unsafe:RawPtr, Nat>}.ref, true, intDesc, intRel(out, Offset(sPtr)));
+
+	// Done!
+	l << fnRet(out);
+
+	Function f(readType, "atomic_read", params);
+	f.setCode(DynamicCode(l));
+	f;
+}
+
+// Atomic write.
+void atomic_write(Ptr<Bool> to, Bool value) {
+	checkPtr(to.base, to.offset, 1);
+	Nat offset = to.offset - sPtr.current * 2;
+	to.base.writeBool(offset, value);
+}
+
+// Atomic write.
+void atomic_write(Ptr<Int> to, Int value) {
+	checkPtr(to.base, to.offset, sInt.current);
+	Nat offset = to.offset - sPtr.current * 2;
+	to.base.writeInt(offset, value);
+}
+
+// Atomic write.
+void atomic_write(Ptr<Nat> to, Nat value) {
+	checkPtr(to.base, to.offset, sInt.current);
+	Nat offset = to.offset - sPtr.current * 2;
+	to.base.writeNat(offset, value);
+}
+
+// Generic version for pointers.
+atomic_write : generate(params) {
+	if (params.count != 2)
+		return null;
+
+	unless (ptrType = params[0].type)
+		return null;
+	unless (ptrType as PtrType)
+		return null;
+
+	unless (replaceType = params[1].type)
+		return null;
+	unless (replaceType as PtrType)
+		return null;
+
+	if (ptrType.inside !is replaceType)
+		return null;
+
+	// Don't operate on references, that's wierd.
+	if (!replaceType.isPtr)
+		return null;
+
+	params[0] = params[0].asRef(false);
+	params[1] = params[1].asRef(false);
+
+	Listing l(false, Value().desc);
+	var p1 = l.createParam(params[0].desc);
+	var p2 = l.createParam(params[1].desc);
+	var ptr = l.createVar(l.root, sPtr);
+	var offset = l.createVar(l.root, sInt);
+
+	l << prolog();
+
+	// Check the pointer...
+	l << mov(ptr, ptrRel(p1, Offset()));
+	l << mov(offset, intRel(p1, Offset(sPtr)));
+	l << fnParam(ptrDesc, ptr);
+	l << fnParam(intDesc, offset);
+	l << fnParam(intDesc, natConst(params[0].size));
+	l << fnCall(named{checkPtr<unsafe:RawPtr, Nat, Nat>}.ref, false);
+
+	// Update the offset.
+	l << sub(offset, natConst(sPtr * 2));
+
+	// Write the new one (we need to call functions for this, otherwise it won't be "atomic").
+	l << fnParam(ptrDesc, ptr);
+	l << fnParam(intDesc, offset);
+	l << fnParam(ptrDesc, ptrRel(p2, Offset()));
+	l << fnCall(named{unsafe:RawPtr:writePtr<unsafe:RawPtr, Nat, unsafe:RawPtr>}.ref, true);
+
+	l << mov(eax, offset);
+	l << add(eax, natConst(sPtr));
+	l << fnParam(ptrDesc, ptr);
+	l << fnParam(intDesc, eax);
+	l << fnParam(intDesc, intRel(p2, Offset(sPtr)));
+	l << fnCall(named{unsafe:RawPtr:writeNat<unsafe:RawPtr, Nat, Nat>}.ref, true);
+
+	// Done!
+	l << fnRet();
+
+	Function f(Value(), "atomic_write", params);
+	f.setCode(DynamicCode(l));
+	f;
+}
+
 // Atomic swap (exchange).
 Int atomic_swap(Ptr<Int> ptr, Int replace) {
 	checkPtr(ptr.base, ptr.offset, sInt.current);

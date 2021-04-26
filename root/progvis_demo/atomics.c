@@ -10,6 +10,8 @@ int main(void) {
 	b = atomic_add(&a, 10);
 	b = atomic_sub(&a, 5);
 
+	atomic_read(&b);
+
 	atomic_swap(&a, 8);
 
 	compare_and_swap(&a, 7, 10);
@@ -23,6 +25,9 @@ int main(void) {
 
 	tmp = atomic_swap(&strA, "X");
 
+
+	atomic_read(&strA);
+	atomic_write(&strA, tmp);
 
 	return 0;
 }
