@@ -67,8 +67,8 @@ namespace storm {
 	 *
 	 * The variable is initialized the first time it is accessed, or the first time 'create' is called.
 	 *
-	 * TODO: Expose 'dataPtr' to Storm in a good way. Perhaps by exposing Engine::ref so that ASM
-	 * can access it at least.
+	 * TODO: Expose 'dataPtr' to Storm in a good way. We have Engine::ref so that ASM can access it
+	 * at least.
 	 */
 	class GlobalVar : public Variable {
 		STORM_CLASS;

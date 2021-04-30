@@ -10,6 +10,7 @@ class Workspace on Render {
 	init() {
 		init() {
 			enableThreadStep = true;
+			trackDeadlock = true;
 		}
 
 		hints << DefaultViewHints();
@@ -20,6 +21,9 @@ class Workspace on Render {
 
 	// Should we track memory accesses?
 	private Bool trackMemAccess;
+
+	// Should we look for deadlocks? Reset when we have found one.
+	public Bool trackDeadlock;
 
 	// Track memory?
 	public assign trackMemory(Bool v) {
@@ -322,7 +326,7 @@ class Workspace on Render {
 			error = updateMemAccess();
 
 		// Detect deadlocks.
-		if (error.empty)
+		if (error.empty & trackDeadlock)
 			error = findDeadlock();
 
 		return error;
@@ -474,12 +478,16 @@ private:
 
 		for (e in elements) {
 			if (t = e.visual.contained as ThreadData) {
-				anyThreads = true;
-				allSleeping &= t.thread.sleeping;
+				if (t.thread.alive) {
+					anyThreads = true;
+					allSleeping &= t.thread.sleeping;
+				}
 			}
 		}
 
 		if (anyThreads & allSleeping) {
+			// Inhibit further messages until reset.
+			trackDeadlock = false;
 			return DeadlockError();
 		}
 
