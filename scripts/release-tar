@@ -5,7 +5,7 @@ mps"
 all_modules=$(sed -En "s|^[\t ]*path = (.*)$|\1|p" ${STORM_ROOT}/.gitmodules)
 selected_modules=""
 
-version=$(find_current_version)
+version=$(find_version)
 tar_file=${STORM_ROOT}/storm_${version}.tar
 
 case "$1" in
