@@ -5,6 +5,9 @@ mps"
 all_modules=$(sed -En "s|^[\t ]*path = (.*)$|\1|p" ${STORM_ROOT}/.gitmodules)
 selected_modules=""
 
+version=$(find_current_version)
+tar_file=${STORM_ROOT}/storm_${version}.tar
+
 case "$1" in
     minimal)
 	selected_modules="$min_modules"
@@ -41,6 +44,10 @@ function find_module() {
 while [ $# -gt 0 ]
 do
     case "$1" in
+	--output)
+	    shift
+	    tar_file="$1"
+	;;
 	+*)
 	    module=$(find_module "${1:1}")
 	    if [ $? != 0 ]
@@ -99,8 +106,6 @@ function find_current_version() {
 }
 
 # Build the tar file...
-version=$(find_current_version)
-tar_file=${STORM_ROOT}/storm_${version}.tar
 echo "core.info" > ${STORM_ROOT}/Compiler/COMPILER.version
 echo "$version" >> ${STORM_ROOT}/Compiler/COMPILER.version
 
