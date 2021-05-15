@@ -13,10 +13,17 @@ echo "$version" >> ${STORM_ROOT}/Compiler/COMPILER.version
 
 cd $STORM_ROOT
 
+if [[ "$STORM_USE_COMPAT" == "1" ]]
+then
+    compat="compat"
+else
+    compat=""
+fi
+
 # Seems to be more or less standard in Git bash at least. If we fail, we will just run the build
 # less efficiently, so it is not a big problem.
-mm release mps -ne || { echo "Compilation (mps) failed!"; exit 1; }
-mm release smm -ne || { echo "Compilation (smm) failed!"; exit 1; }
+mm release $compat mps -ne || { echo "Compilation (mps) failed!"; exit 1; }
+mm release $compat smm -ne || { echo "Compilation (smm) failed!"; exit 1; }
 
 echo "Done! Running test suite..."
 release/Test_mps --all || { echo "Tests failed (mps)!"; exit 1; }

@@ -14,4 +14,10 @@ namespace sql {
 
 #endif
 
+#ifdef STORM_COMPAT
+// Disable LFS so that we can run on systems without the fcntl64 function in glibc (Ubuntu 18.08 LTS).
+// Will be removed soon.
+#define SQLITE_DISABLE_LFS 1
+#endif
+
 #endif
