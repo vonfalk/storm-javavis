@@ -58,7 +58,7 @@ namespace sql {
 		Nat lastChanges;
 
 		// Last row id.
-        Int lastId;
+		Int lastId;
 
 		// Any error for the next call to "execute"?
 		Str *error;
