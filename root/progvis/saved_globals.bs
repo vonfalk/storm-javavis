@@ -1,0 +1,45 @@
+use lang;
+use core:lang;
+
+/**
+ * Stores a set of values that correspond to the global variables in a program.
+ *
+ * This is so that we can properly restore them when the program is restarted.
+ *
+ * Note: This approach will not work for actors, since they are inherently by-reference objects and
+ * their contents may thus still be mutated.
+ */
+class SavedGlobals on Compiler {
+	private Str->Variant data;
+
+	init() {
+		init {}
+	}
+
+	private init(GlobalVar[] globals) {
+		init {}
+
+		for (x in globals) {
+			var ptr = unsafe:RawPtr:fromGlobal(x);
+			Variant v = ptr.asVariant();
+			v.deepCopy(CloneEnv());
+			data.put(x.name, v);
+		}
+	}
+
+	SavedGlobals save(GlobalVar[] globals) : static {
+		SavedGlobals(globals);
+	}
+
+	void restore(GlobalVar[] globals) {
+		for (x in globals) {
+			if (!data.has(x.name))
+				continue;
+			Variant v = data.get(x.name);
+			v.deepCopy(CloneEnv());
+
+			var ptr = unsafe:RawPtr:fromGlobal(x);
+			ptr.copyVariant(v);
+		}
+	}
+}

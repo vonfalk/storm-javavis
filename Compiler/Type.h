@@ -213,6 +213,7 @@ namespace storm {
 		// Get the raw copy constructor for this type. This differs from the one found in the handle
 		// if this Type represents a GC:d object, as this function alwas operates on the actual
 		// object and not just the pointer (as the Handle does).
+		// Safe to call on threads other than the Compiler thread.
 		typedef void (*CopyCtorFn)(void *, const void *);
 		CopyCtorFn CODECALL rawCopyConstructor();
 

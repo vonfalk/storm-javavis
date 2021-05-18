@@ -34,3 +34,18 @@ Bool variantRawInt() {
 		false;
 	}
 }
+
+Variant variantFromRaw() {
+	RawPtr raw = RawPtr:allocArray(named{core:Int}, 1);
+	raw.writeFilled(1);
+	raw.writeInt(0, 55);
+
+	raw.asVariant();
+}
+
+Int saveVariant() {
+	RawPtr raw = RawPtr:allocArray(named{core:Int}, 1);
+	Variant v(10);
+	raw.copyVariant(v);
+	raw.readInt(0);
+}

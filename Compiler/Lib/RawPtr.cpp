@@ -143,6 +143,78 @@ namespace storm {
 		return t->stride;
 	}
 
+	// To make the calling convention behave correctly.
+	struct DummyPtr : GcArray<byte> {
+		Variant CODECALL rawPtrVariant() {
+			if (!this)
+				return Variant();
+
+			const GcType *t = runtime::gcTypeOf(this);
+			if (t->kind == GcType::tArray) {
+				// We can't express arrays as variants.
+				if (count != 1 || filled != 1)
+					return Variant();
+
+				if (!t->type)
+					return Variant();
+
+				// Create a variant!
+				return Variant(v, t->type);
+			} else if (t->kind == GcType::tWeakArray) {
+				// We don't support weak arrays.
+				return Variant();
+			} else if (t->kind == GcType::tFixed || t->kind == GcType::tFixedObj || t->kind == GcType::tType) {
+				// A pointer to some object.
+				return Variant((RootObject *)this);
+			} else {
+				return Variant();
+			}
+		}
+	};
+
+	Bool CODECALL rawPtrCopyVariant(void *to, Variant &variant) {
+		if (!to)
+			return false;
+
+		const GcType *t = runtime::gcTypeOf(to);
+		if (t->kind == GcType::tArray) {
+			GcArray<byte> *array = (GcArray<byte> *)to;
+			// We can't express arrays as variants.
+			if (array->count != 1 || !t->type)
+				return false;
+
+			if (!variant.has(t->type))
+				return false;
+
+			const Handle &handle = t->type->handle();
+
+			// If 'filled', then call the destructor.
+			if (array->filled)
+				handle.safeDestroy(array->v);
+
+			handle.safeCopy(array->v, variant.getValue());
+			array->filled = 1;
+			return true;
+		} else if (t->kind == GcType::tWeakArray) {
+			// We don't support weak arrays.
+			return false;
+		} else if (t->kind == GcType::tFixed || t->kind == GcType::tFixedObj || t->kind == GcType::tType) {
+			// A pointer to some object.
+			if (!t->type)
+				return false;
+			if (!variant.has(t->type))
+				return false;
+
+			Type::CopyCtorFn copyCtor = t->type->rawCopyConstructor();
+			if (!copyCtor)
+				return false;
+			(*copyCtor)(to, variant.getObject());
+			return true;
+		} else {
+			return false;
+		}
+	}
+
 	void *CODECALL rawPtrAllocArray(Type *type, Nat count) {
 		const GcType *t = type->handle().gcArrayType;
 		return runtime::allocArray(type->engine, t, count);
@@ -250,6 +322,7 @@ namespace storm {
 		Value variant(StormInfo<Variant>::type(e));
 		Array<Value> *variantPar = valList(e, 2, me.asRef(), variant.asRef());
 		add(inlinedFunction(e, Value(), Type::CTOR, variantPar, fnPtr(e, &rawPtrCopy))); // Same as a copy of a RawPtr.
+		add(nativeFunction(e, b, S("copyVariant"), valList(e, 2, me, variant.asRef()), address(&rawPtrCopyVariant)));
 
 		// Inspect the data.
 		Value type(StormInfo<Type *>::type(e));
@@ -257,6 +330,7 @@ namespace storm {
 		add(nativeFunction(e, Value(StormInfo<Bool>::type(e)), S("isValue"), v, address(&rawPtrIsValue)));
 		add(inlinedFunction(e, wrapMaybe(obj), S("asObject"), v, fnPtr(e, &rawPtrGet))->makePure());
 		add(inlinedFunction(e, wrapMaybe(tobj), S("asTObject"), v, fnPtr(e, &rawPtrGet))->makePure());
+		add(nativeFunction(e, variant, S("asVariant"), v, address(&DummyPtr::rawPtrVariant)));
 
 		// Allocate an array containing some type.
 		Array<Value> *typeNat = new (this) Array<Value>(2, StormInfo<Type *>::type(e));

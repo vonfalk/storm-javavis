@@ -11,6 +11,9 @@ class MainPainter extends Painter {
 	// The program we're currently executing.
 	private Program? program;
 
+	// Saved value of global variables.
+	private SavedGlobals savedGlobals;
+
 	// Problem panel, if any.
 	private ProblemPanel? panel;
 
@@ -75,7 +78,9 @@ class MainPainter extends Painter {
 
 		program = loaded;
 		updateBehavior(b);
-		workspace.globals = loaded.findGlobals();
+		var globals = loaded.findGlobals();
+		savedGlobals = SavedGlobals:save(globals);
+		workspace.globals = globals;
 		workspace.hints = loaded.hints;
 		workspace.trackDeadlock = true;
 		loaded.onChange = &this.update();
@@ -157,7 +162,9 @@ class MainPainter extends Painter {
 
 			program.terminate();
 			workspace.clear();
-			workspace.globals = program.findGlobals();
+			var globals = program.findGlobals();
+			savedGlobals.restore(globals);
+			workspace.globals = globals;
 			workspace.trackDeadlock = true;
 
 			behavior = tmp;

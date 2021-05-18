@@ -642,6 +642,9 @@ BEGIN_TEST(VariantStormTest, BS) {
 	// Using it together with RawPtr:
 	CHECK(runFn<Bool>(S("tests.bs.variantRawObj")));
 	CHECK(runFn<Bool>(S("tests.bs.variantRawInt")));
+
+	CHECK_EQ(runFn<Variant>(S("tests.bs.variantFromRaw")).get<Int>(), 55);
+	CHECK_EQ(runFn<Int>(S("tests.bs.saveVariant")), 10);
 } END_TEST
 
 /**
