@@ -205,7 +205,7 @@ class Database {
 		}
 
 		// Now we can remove all rows.
-		WITH db: DELETE FROM solutions WHERE author == authorId AND type == sType;
+		WITH db: DELETE FROM solutions WHERE to == problemId AND author == authorId AND type == sType;
 
 		// Add a new one.
 		WITH db: INSERT INTO solutions(to, author, type, solution, created) VALUES (problemId, authorId, sType, sSolution, CURRENT DATETIME);
