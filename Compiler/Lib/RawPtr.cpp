@@ -146,10 +146,16 @@ namespace storm {
 	// To make the calling convention behave correctly.
 	struct DummyPtr : GcArray<byte> {
 		Variant CODECALL rawPtrVariant() {
-			if (!this)
+			// Note: this is to make sure the compiler does not remove the null check on "this". It
+			// is technically UB to have a null this-pointer, but in these circumstances it can
+			// occur so we need to check it here. Volatile should do the trick, since the compiler
+			// is then unable to assume that "obj" is unchanged from earlier.
+			// We have a test for this particular behavior to make sure that it does not break.
+			volatile void *obj = this;
+			if (!obj)
 				return Variant();
 
-			const GcType *t = runtime::gcTypeOf(this);
+			const GcType *t = runtime::gcTypeOf((const void *)obj);
 			if (t->kind == GcType::tArray) {
 				// We can't express arrays as variants.
 				if (count != 1 || filled != 1)
@@ -165,7 +171,7 @@ namespace storm {
 				return Variant();
 			} else if (t->kind == GcType::tFixed || t->kind == GcType::tFixedObj || t->kind == GcType::tType) {
 				// A pointer to some object.
-				return Variant((RootObject *)this);
+				return Variant((RootObject *)obj);
 			} else {
 				return Variant();
 			}

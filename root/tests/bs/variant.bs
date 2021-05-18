@@ -43,6 +43,11 @@ Variant variantFromRaw() {
 	raw.asVariant();
 }
 
+Variant variantFromNull() {
+	RawPtr raw;
+	raw.asVariant();
+}
+
 Int saveVariant() {
 	RawPtr raw = RawPtr:allocArray(named{core:Int}, 1);
 	Variant v(10);

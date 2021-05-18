@@ -644,6 +644,7 @@ BEGIN_TEST(VariantStormTest, BS) {
 	CHECK(runFn<Bool>(S("tests.bs.variantRawInt")));
 
 	CHECK_EQ(runFn<Variant>(S("tests.bs.variantFromRaw")).get<Int>(), 55);
+	CHECK(runFn<Variant>(S("tests.bs.variantFromNull")).empty());
 	CHECK_EQ(runFn<Int>(S("tests.bs.saveVariant")), 10);
 } END_TEST
 
