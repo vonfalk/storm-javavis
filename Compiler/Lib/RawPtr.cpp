@@ -148,14 +148,15 @@ namespace storm {
 		Variant CODECALL rawPtrVariant() {
 			// Note: this is to make sure the compiler does not remove the null check on "this". It
 			// is technically UB to have a null this-pointer, but in these circumstances it can
-			// occur so we need to check it here. Volatile should do the trick, since the compiler
-			// is then unable to assume that "obj" is unchanged from earlier.
-			// We have a test for this particular behavior to make sure that it does not break.
-			volatile void *obj = this;
+			// occur so we need to check it here.
+			// We use atomic reads/writes to ensure that the compiler does not optimize the check
+			// away. We also have a test for this so that we get to know if this breaks in the future.
+			void *obj = this;
+			obj = atomicRead(obj);
 			if (!obj)
 				return Variant();
 
-			const GcType *t = runtime::gcTypeOf((const void *)obj);
+			const GcType *t = runtime::gcTypeOf(obj);
 			if (t->kind == GcType::tArray) {
 				// We can't express arrays as variants.
 				if (count != 1 || filled != 1)
