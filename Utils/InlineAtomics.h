@@ -340,8 +340,8 @@ inline void shortUnalignedAtomicWrite(volatile nat &v, nat value) {
 inline size_t unalignedAtomicRead(volatile size_t &v) {
 	size_t result;
 	asm (
-		"movq $0, %%rax\n\t"
 		"movq %[addr], %%rcx\n\t"
+		// "movq $0, %%rax\n\t"
 		// "lock addq (%%rcx), %%rax\n\t"
 		"movq (%%rcx), %%rax\n\t" // TODO: It seems X86 will make sure this is atomic...
 		"movq %%rax, %[result]\n\t"
