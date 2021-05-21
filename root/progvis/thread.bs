@@ -219,8 +219,11 @@ class ProgThread on Render {
 
 	// Determine whether or not we shall wait.
 	private void wait() {
+		// Remember if this 'wait' was due to us needing to sleep for a semaphore etc. If so,
+		// we should not notify the owner when we wake, as that wake was not due to a user action.
+		Bool wasSleeping = sleeping;
 		owner.notifyChange();
-		if (sleeping | autoStep == Duration()) {
+		if (wasSleeping | autoStep == Duration()) {
 			running = false;
 			sema.down();
 		} else {
@@ -237,7 +240,7 @@ class ProgThread on Render {
 		if (doTerminate) {
 			terminating = true;
 			throw ExitError();
-		} else {
+		} else if (!wasSleeping) {
 			owner.notifyAdvance(threadId);
 		}
 	}
