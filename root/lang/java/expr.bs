@@ -154,7 +154,7 @@ class AssignOp extends Expr {
     Bool suggestResult(Type t) : override { false; }
 
     Value result() : override {
-        Value();
+        Value(to.type);
     }
 }
 
