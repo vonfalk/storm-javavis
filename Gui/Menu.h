@@ -3,11 +3,13 @@
 #include "Core/Fn.h"
 #include "Handle.h"
 #include "MnemonicStr.h"
+#include "KeyChord.h"
 
 namespace gui {
 
 	class PopupMenu;
 	class Frame;
+	class Accelerators;
 
 	/**
 	 * A generic drop-down menu that is either shown as a sub-menu to the main window menu, or as a
@@ -31,6 +33,7 @@ namespace gui {
 		class Item : public ObjectOn<Ui> {
 			STORM_ABSTRACT_CLASS;
 			friend class Menu;
+			friend class PopupMenu;
 		public:
 			// Create.
 			STORM_CTOR Item();
@@ -51,6 +54,12 @@ namespace gui {
 			// Find a menu item from its handle (only meaningful on Gtk+).
 			virtual MAYBE(Item *) findMenuItem(Handle handle);
 
+			// Add all elements of this menu to the accelerator table.
+			virtual void addAccelerators(Accelerators *to);
+
+			// Remove all elements of this menu to the accelerator table.
+			virtual void removeAccelerators(Accelerators *to);
+
 		protected:
 			// Owning menu so that we can propagate updates.
 			MAYBE(Menu *) owner;
@@ -69,6 +78,9 @@ namespace gui {
 
 			// Destroy the element in here. Called by 'Menu'.
 			virtual void STORM_FN destroy();
+
+			// Called when our hotkey is pressed. Will only trigger "clicked" if "enabled" is true.
+			void STORM_FN onShortcut();
 		};
 
 		/**
@@ -93,14 +105,34 @@ namespace gui {
 		public:
 			// Create.
 			STORM_CTOR WithTitle(MnemonicStr title);
+			STORM_CTOR WithTitle(MnemonicStr title, KeyChord shortcut);
 
 			// Get/set the title.
 			MnemonicStr STORM_FN title() const { return myTitle; }
 			void STORM_ASSIGN title(MnemonicStr title);
 
+			// Get/set shortcut.
+			KeyChord STORM_FN shortcut() const { return myShortcut; }
+			void STORM_ASSIGN shortcut(KeyChord val);
+
+			// Add all elements of this menu to the accelerator table.
+			virtual void addAccelerators(Accelerators *to);
+
+			// Remove all elements of this menu to the accelerator table.
+			virtual void removeAccelerators(Accelerators *to);
+
 		protected:
 			// Title.
 			MnemonicStr myTitle;
+
+			// Shortcut, if any.
+			KeyChord myShortcut;
+
+			// Get a title that we should set to the item. Mainly used on Windows.
+			Str *findTitle();
+
+			// Call after creation is complete to register keyboard shortcuts.
+			void setupShortcut();
 		};
 
 		/**
@@ -112,6 +144,8 @@ namespace gui {
 			// Create.
 			STORM_CTOR Text(MnemonicStr title);
 			STORM_CTOR Text(MnemonicStr title, Fn<void> *fn);
+			STORM_CTOR Text(MnemonicStr title, KeyChord shortcut);
+			STORM_CTOR Text(MnemonicStr title, KeyChord shortcut, Fn<void> *fn);
 
 			// Callback.
 			MAYBE(Fn<void> *) onClick;
@@ -134,6 +168,9 @@ namespace gui {
 			STORM_CTOR Check(MnemonicStr title);
 			STORM_CTOR Check(MnemonicStr title, Fn<void, Bool> *fn);
 			STORM_CTOR Check(MnemonicStr title, Fn<void, Bool> *fn, Bool checked);
+			STORM_CTOR Check(MnemonicStr title, KeyChord chord);
+			STORM_CTOR Check(MnemonicStr title, KeyChord chord, Fn<void, Bool> *fn);
+			STORM_CTOR Check(MnemonicStr title, KeyChord chord, Fn<void, Bool> *fn, Bool checked);
 
 			// Callback.
 			MAYBE(Fn<void, Bool> *) onClick;
@@ -171,6 +208,12 @@ namespace gui {
 			// Find a menu item from its handle (only meaningful on Gtk+).
 			virtual MAYBE(Item *) findMenuItem(Handle handle);
 
+			// Add all elements of this menu to the accelerator table.
+			virtual void addAccelerators(Accelerators *to);
+
+			// Remove all elements of this menu to the accelerator table.
+			virtual void removeAccelerators(Accelerators *to);
+
 		protected:
 			// Create our element.
 			virtual void STORM_FN create();
@@ -197,11 +240,23 @@ namespace gui {
 		// Called to repaint this menu if needed.
 		virtual void repaint();
 
+		// Called to add an accelerator.
+		virtual void onAddAccelerator(KeyChord chord, Fn<void> *action);
+
+		// Called to remove an accelerator.
+		virtual void onRemoveAccelerator(KeyChord chord);
+
 		// Find a sub-menu from its handle.
 		MAYBE(Menu *) findMenu(Handle handle);
 
 		// Find a menu-item from its handle (only meaningful on Gtk+).
 		MAYBE(Menu::Item *) findMenuItem(Handle handle);
+
+		// Add all elements of this menu to the accelerator table.
+		void addAccelerators(Accelerators *to);
+
+		// Remove all elements of this menu to the accelerator table.
+		void removeAccelerators(Accelerators *to);
 
 	private:
 		// Parent menu, if any.
@@ -224,6 +279,15 @@ namespace gui {
 	public:
 		// Create.
 		STORM_CTOR PopupMenu();
+
+		// Attached inside another menu?
+		MAYBE(Menu::Submenu *) inside;
+
+		// Called to add an accelerator.
+		virtual void onAddAccelerator(KeyChord chord, Fn<void> *action);
+
+		// Called to remove an accelerator.
+		virtual void onRemoveAccelerator(KeyChord chord);
 	};
 
 	/**
@@ -242,6 +306,12 @@ namespace gui {
 
 		// Repaint.
 		virtual void repaint();
+
+		// Called to add an accelerator.
+		virtual void onAddAccelerator(KeyChord chord, Fn<void> *action);
+
+		// Called to remove an accelerator.
+		virtual void onRemoveAccelerator(KeyChord chord);
 	};
 
 }

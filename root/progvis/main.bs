@@ -45,16 +45,16 @@ class MainWin extends Frame {
 
 		PopupMenu fileMenu;
 		fileMenu
-			<< Menu:Text(mnemonic("_Open file..."), &this.onOpen())
-			<< Menu:Text(mnemonic("_Reload program"), &this.onReload())
-			<< Menu:Text(mnemonic("Open in _editor"), &this.onOpenEditor())
+			<< Menu:Text(mnemonic("_Open file..."), ctrlChord(Key:o), &this.onOpen())
+			<< Menu:Text(mnemonic("_Reload program"), KeyChord(Key:r, Modifiers:ctrl + Modifiers:shift), &this.onReload())
+			<< Menu:Text(mnemonic("Open in _editor"), ctrlChord(Key:e), &this.onOpenEditor())
 			<< Menu:Separator()
 			<< Menu:Text(mnemonic("_Settings..."), &this.onSettings());
 
 		PopupMenu runMenu;
 		runMenu
-			<< Menu:Text(mnemonic("_Restart"), &this.onRestart())
-			<< Menu:Text(mnemonic("_Spawn thread"), &this.onSpawnThread())
+			<< Menu:Text(mnemonic("_Restart"), ctrlChord(Key:r), &this.onRestart())
+			<< Menu:Text(mnemonic("_Spawn new thread"), ctrlChord(Key:n), &this.onSpawnThread())
 			<< trackMemory;
 
 		trackMemory.checked = true;
@@ -65,7 +65,7 @@ class MainWin extends Frame {
 			<< Menu:Text(mnemonic("_Connect"), &this.connect())
 			<< Menu:Text(mnemonic("_Disconnect"), &this.disconnect())
 			<< Menu:Text(mnemonic("_Status..."), &this.onOnlineStatus())
-			<< Menu:Text(mnemonic("_Problems..."), &this.onOnlineProblems())
+			<< Menu:Text(mnemonic("_Problems..."), ctrlChord(Key:p), &this.onOnlineProblems())
 			<< Menu:Text("Submit problem...", &this.onOnlineSubmit())
 			<< Menu:Text("Sign out", &this.logout());
 

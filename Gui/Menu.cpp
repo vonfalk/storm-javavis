@@ -3,6 +3,7 @@
 #include "Exception.h"
 #include "App.h"
 #include "Frame.h"
+#include "Accelerators.h"
 
 namespace gui {
 
@@ -45,6 +46,10 @@ namespace gui {
 		// Don't need to do anything here.
 	}
 
+	void Menu::onAddAccelerator(KeyChord, Fn<void> *) {}
+
+	void Menu::onRemoveAccelerator(KeyChord) {}
+
 	Menu *Menu::findMenu(Handle handle) {
 		if (handle == this->handle)
 			return this;
@@ -63,6 +68,16 @@ namespace gui {
 				return item;
 		}
 		return null;
+	}
+
+	void Menu::addAccelerators(Accelerators *to) {
+		for (Nat i = 0; i < items->count(); i++)
+			items->at(i)->addAccelerators(to);
+	}
+
+	void Menu::removeAccelerators(Accelerators *to) {
+		for (Nat i = 0; i < items->count(); i++)
+			items->at(i)->addAccelerators(to);
 	}
 
 
@@ -90,6 +105,11 @@ namespace gui {
 
 	void Menu::Item::clicked() {}
 
+	void Menu::Item::onShortcut() {
+		if (enable)
+			clicked();
+	}
+
 	Menu *Menu::Item::findMenu(Handle handle) const {
 		return null;
 	}
@@ -100,13 +120,61 @@ namespace gui {
 		return null;
 	}
 
+	void Menu::Item::addAccelerators(Accelerators *) {}
+
+	void Menu::Item::removeAccelerators(Accelerators *) {}
+
 	Menu::Separator::Separator() {}
 
 	Menu::WithTitle::WithTitle(MnemonicStr title) : myTitle(title) {}
 
+	Menu::WithTitle::WithTitle(MnemonicStr title, KeyChord shortcut) : myTitle(title), myShortcut(shortcut) {}
+
+	Str *Menu::WithTitle::findTitle() {
+		Str *t = myTitle.win32Mnemonic();
+		if (myShortcut.any())
+			t = TO_S(t, t << S("\t") << myShortcut);
+		return t;
+	}
+
+	void Menu::WithTitle::shortcut(KeyChord s) {
+		if (owner) {
+			if (myShortcut.any())
+				owner->onRemoveAccelerator(myShortcut);
+
+			if (s.any())
+				owner->onAddAccelerator(s, fnPtr<void, Menu::Item>(engine(), &Menu::Item::onShortcut, this));
+		}
+
+		myShortcut = s;
+
+#if defined(GUI_WIN32)
+		title(myTitle);
+#endif
+	}
+
+	void Menu::WithTitle::setupShortcut() {
+		if (owner && myShortcut.any())
+			owner->onAddAccelerator(myShortcut, fnPtr<void, Menu::Item>(engine(), &Menu::Item::onShortcut, this));
+	}
+
+	void Menu::WithTitle::addAccelerators(Accelerators *to) {
+		if (myShortcut.any())
+			to->add(myShortcut, fnPtr<void, Menu::Item>(engine(), &Menu::Item::onShortcut, this));
+	}
+
+	void Menu::WithTitle::removeAccelerators(Accelerators *to) {
+		if (myShortcut.any())
+			to->remove(myShortcut);
+	}
+
 	Menu::Text::Text(MnemonicStr title) : WithTitle(title) {}
 
 	Menu::Text::Text(MnemonicStr title, Fn<void> *callback) : WithTitle(title), onClick(callback) {}
+
+	Menu::Text::Text(MnemonicStr title, KeyChord s) : WithTitle(title, s) {}
+
+	Menu::Text::Text(MnemonicStr title, KeyChord s, Fn<void> *callback) : WithTitle(title, s), onClick(callback) {}
 
 	void Menu::Text::clicked() {
 		if (onClick)
@@ -120,7 +188,19 @@ namespace gui {
 	Menu::Check::Check(MnemonicStr title, Fn<void, Bool> *callback, Bool checked)
 		: WithTitle(title), onClick(callback), myChecked(checked) {}
 
-	Menu::Submenu::Submenu(MnemonicStr title, PopupMenu *menu) : WithTitle(title), myMenu(menu) {}
+	Menu::Check::Check(MnemonicStr title, KeyChord s) : WithTitle(title, s) {}
+
+	Menu::Check::Check(MnemonicStr title, KeyChord s, Fn<void, Bool> *callback)
+		: WithTitle(title, s), onClick(callback) {}
+
+	Menu::Check::Check(MnemonicStr title, KeyChord s, Fn<void, Bool> *callback, Bool checked)
+		: WithTitle(title, s), onClick(callback), myChecked(checked) {}
+
+	Menu::Submenu::Submenu(MnemonicStr title, PopupMenu *menu) : WithTitle(title), myMenu(menu) {
+		if (menu->inside)
+			throw new (this) GuiError(S("A popup menu may only be attached at a single place at a time."));
+		menu->inside = this;
+	}
 
 	Menu *Menu::Submenu::findMenu(Handle handle) const {
 		if (myMenu)
@@ -134,6 +214,18 @@ namespace gui {
 		if (myMenu)
 			return myMenu->findMenuItem(handle);
 		return null;
+	}
+
+	void Menu::Submenu::addAccelerators(Accelerators *to) {
+		WithTitle::addAccelerators(to);
+		if (myMenu)
+			myMenu->addAccelerators(to);
+	}
+
+	void Menu::Submenu::removeAccelerators(Accelerators *to) {
+		WithTitle::removeAccelerators(to);
+		if (myMenu)
+			myMenu->removeAccelerators(to);
 	}
 
 #ifdef GUI_WIN32
@@ -167,7 +259,7 @@ namespace gui {
 			MENUITEMINFO info;
 			info.cbSize = sizeof(info);
 			info.fMask = MIIM_STRING;
-			info.dwTypeData = (LPWSTR)myTitle.win32Mnemonic()->c_str();
+			info.dwTypeData = (LPWSTR)findTitle()->c_str();
 			SetMenuItemInfo(owner->handle.menu(), id, TRUE, &info);
 
 			owner->repaint();
@@ -178,7 +270,7 @@ namespace gui {
 		UINT flags = MF_STRING;
 		if (!enable)
 			flags |= MF_DISABLED;
-		AppendMenu(owner->handle.menu(), flags, 1, myTitle.win32Mnemonic()->c_str());
+		AppendMenu(owner->handle.menu(), flags, 1, findTitle()->c_str());
 	}
 
 	Bool Menu::Check::checked() {
@@ -226,7 +318,7 @@ namespace gui {
 			flags |= MF_DISABLED;
 		if (myChecked)
 			flags |= MF_CHECKED;
-		AppendMenu(owner->handle.menu(), flags, 1, myTitle.win32Mnemonic()->c_str());
+		AppendMenu(owner->handle.menu(), flags, 1, findTitle()->c_str());
 	}
 
 	void Menu::Submenu::create() {
@@ -237,7 +329,7 @@ namespace gui {
 		UINT flags = MF_STRING | MF_POPUP;
 		if (!enable)
 			flags |= MF_DISABLED;
-		AppendMenu(owner->handle.menu(), flags, (UINT_PTR)myMenu->handle.menu(), myTitle.win32Mnemonic()->c_str());
+		AppendMenu(owner->handle.menu(), flags, (UINT_PTR)myMenu->handle.menu(), findTitle()->c_str());
 	}
 
 	void Menu::Submenu::destroy() {
@@ -258,7 +350,7 @@ namespace gui {
 		SetMenuInfo(menu, &info);
 	}
 
-	PopupMenu::PopupMenu() {
+	PopupMenu::PopupMenu() : inside(null) {
 		handle = CreatePopupMenu();
 		setupMenu(handle.menu());
 	}
@@ -390,7 +482,7 @@ namespace gui {
 	}
 
 
-	PopupMenu::PopupMenu() {
+	PopupMenu::PopupMenu() : inside(null) {
 		GtkWidget *created = gtk_menu_new();
 		g_object_ref_sink(created);
 		handle = created;
@@ -409,5 +501,30 @@ namespace gui {
 	}
 
 #endif
+
+	void PopupMenu::onAddAccelerator(KeyChord chord, Fn<void> *action) {
+		if (inside && inside->owner) {
+			inside->owner->onAddAccelerator(chord, action);
+		}
+	}
+
+	void PopupMenu::onRemoveAccelerator(KeyChord chord) {
+		if (inside && inside->owner) {
+			inside->owner->onRemoveAccelerator(chord);
+		}
+	}
+
+	void MenuBar::onAddAccelerator(KeyChord chord, Fn<void> *action) {
+		if (attachedTo) {
+			attachedTo->accelerators()->add(chord, action);
+		}
+	}
+
+	void MenuBar::onRemoveAccelerator(KeyChord chord) {
+		if (attachedTo) {
+			attachedTo->accelerators()->remove(chord);
+		}
+	}
+
 
 }

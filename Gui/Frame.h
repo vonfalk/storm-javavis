@@ -2,6 +2,7 @@
 #include "Container.h"
 #include "Core/Event.h"
 #include "Menu.h"
+#include "Accelerators.h"
 
 namespace gui {
 
@@ -31,6 +32,9 @@ namespace gui {
 #ifdef GUI_WIN32
 		// Message!
 		virtual MsgResult onMessage(const Message &msg);
+
+		// Message: for handling accelerators.
+		virtual MsgResult beforeMessage(const Message &msg);
 
 		// Current DPI.
 		virtual Nat currentDpi();
@@ -69,6 +73,9 @@ namespace gui {
 		void STORM_ASSIGN cursorVisible(Bool v);
 		Bool STORM_FN cursorVisible();
 
+		// Get the accelerator table for this window.
+		Accelerators *STORM_FN accelerators() const { return myAccelerators; }
+
 		// Set the menu for this window.
 		void STORM_ASSIGN menu(MAYBE(MenuBar *) menu);
 		MAYBE(MenuBar *) STORM_FN menu();
@@ -106,14 +113,14 @@ namespace gui {
 		// Window menu.
 		MAYBE(MenuBar *) myMenu;
 
+		// Accelerator table.
+		Accelerators *myAccelerators;
+
 		// Popup menu we're tracking.
 		MAYBE(PopupMenu *) myPopup;
 
 		// Window to assign focus after creation. Only used on Windows currently.
 		MAYBE(Window *) setFocus;
-
-		// Padding due to differences on Windows/Linux (there is a Long in the base class, in the Duration).
-		size_t padding;
 
 		// Cached minimum size. Updated whenever the window is resized.
 		Size lastMinSize;

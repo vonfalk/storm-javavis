@@ -18,6 +18,7 @@ namespace gui {
 	Frame::Frame(Str *title) : myMenu(null), full(false), showCursor(true) {
 		dpi = defaultDpi;
 		onClose = new (this) Event();
+		myAccelerators = new (this) Accelerators();
 		attachParent(this);
 		text(title);
 		pos(Rect(-10000, -10000, -10002, -10002));
@@ -27,6 +28,7 @@ namespace gui {
 	Frame::Frame(Str *title, Size size) : myMenu(null), full(false), showCursor(true) {
 		dpi = defaultDpi;
 		onClose = new (this) Event();
+		myAccelerators = new (this) Accelerators();
 		attachParent(this);
 		text(title);
 		pos(Rect(Point(-10000, -10000), size));
@@ -88,12 +90,16 @@ namespace gui {
 			throw new (this) GuiError(S("A menu can only be attached to one frame at a time."));
 
 		MenuBar *old = myMenu;
-		if (old)
+		if (old) {
+			old->removeAccelerators(myAccelerators);
 			old->attachedTo = null;
+		}
 
 		myMenu = menu;
-		if (menu)
+		if (menu) {
 			menu->attachedTo = this;
+			menu->addAccelerators(myAccelerators);
+		}
 
 		if (created()) {
 			setMenu(old);
@@ -344,6 +350,18 @@ namespace gui {
 		}
 
 		return Container::onMessage(msg);
+	}
+
+	MsgResult Frame::beforeMessage(const Message &msg) {
+		switch (msg.msg) {
+		case WM_KEYDOWN:
+			// Note "modifiers()" give modifiers as they where when the message was queued, which is what we want.
+			if (myAccelerators->dispatch(KeyChord(keycode(msg.wParam), modifiers()))) {
+				return msgResult(0);
+			}
+			break;
+		}
+		return Container::beforeMessage(msg);
 	}
 
 	Nat Frame::currentDpi() {

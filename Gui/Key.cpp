@@ -3,7 +3,7 @@
 
 namespace gui {
 
-	Nat STORM_FN keycode(Key key) {
+	Nat keycode(Key key) {
 		// Control keys do not have any characters assigned to them, except for return and tab.
 		if (key >= key::firstControl && key < key::lastControl) {
 			switch (key) {
@@ -20,8 +20,125 @@ namespace gui {
 		return Nat(key);
 	}
 
-	Char STORM_FN keychar(Key key) {
+	Char keychar(Key key) {
 		return Char(keycode(key));
+	}
+
+#define KEY_NAME(enum, str)						\
+	case key::enum:								\
+	return S(str)
+
+	const wchar *c_name(Key key) {
+		switch (key) {
+			KEY_NAME(shift, "Shift");
+			KEY_NAME(control, "Ctrl");
+			KEY_NAME(alt, "Menu");
+			KEY_NAME(super, "Win");
+			KEY_NAME(esc, "Esc");
+			KEY_NAME(backspace, "Backspace");
+			KEY_NAME(tab, "Tab");
+			KEY_NAME(ret, "Return");
+			KEY_NAME(left, "Left");
+			KEY_NAME(right, "Right");
+			KEY_NAME(up, "Up");
+			KEY_NAME(down, "Down");
+			KEY_NAME(pageUp, "Page Up");
+			KEY_NAME(pageDown, "Page Down");
+			KEY_NAME(home, "Home");
+			KEY_NAME(end, "End");
+			KEY_NAME(insert, "Insert");
+			KEY_NAME(del, "Delete");
+			KEY_NAME(F1, "F1");
+			KEY_NAME(F2, "F2");
+			KEY_NAME(F3, "F3");
+			KEY_NAME(F4, "F4");
+			KEY_NAME(F5, "F5");
+			KEY_NAME(F6, "F6");
+			KEY_NAME(F7, "F7");
+			KEY_NAME(F8, "F8");
+			KEY_NAME(F9, "F9");
+			KEY_NAME(F10, "F10");
+			KEY_NAME(F11, "F11");
+			KEY_NAME(F12, "F12");
+			KEY_NAME(F13, "F13");
+			KEY_NAME(F14, "F14");
+			KEY_NAME(F15, "F15");
+			KEY_NAME(numpad0, "Num 0");
+			KEY_NAME(numpad1, "Num 1");
+			KEY_NAME(numpad2, "Num 2");
+			KEY_NAME(numpad3, "Num 3");
+			KEY_NAME(numpad4, "Num 4");
+			KEY_NAME(numpad5, "Num 5");
+			KEY_NAME(numpad6, "Num 6");
+			KEY_NAME(numpad7, "Num 7");
+			KEY_NAME(numpad8, "Num 8");
+			KEY_NAME(numpad9, "Num 9");
+			KEY_NAME(space, "<space>");
+			KEY_NAME(num0, "0");
+			KEY_NAME(num1, "1");
+			KEY_NAME(num2, "2");
+			KEY_NAME(num3, "3");
+			KEY_NAME(num4, "4");
+			KEY_NAME(num5, "5");
+			KEY_NAME(num6, "6");
+			KEY_NAME(num7, "7");
+			KEY_NAME(num8, "8");
+			KEY_NAME(num9, "9");
+			KEY_NAME(a, "A");
+			KEY_NAME(b, "B");
+			KEY_NAME(c, "C");
+			KEY_NAME(d, "D");
+			KEY_NAME(e, "E");
+			KEY_NAME(f, "F");
+			KEY_NAME(g, "G");
+			KEY_NAME(h, "H");
+			KEY_NAME(i, "I");
+			KEY_NAME(j, "J");
+			KEY_NAME(k, "K");
+			KEY_NAME(l, "L");
+			KEY_NAME(m, "M");
+			KEY_NAME(n, "N");
+			KEY_NAME(o, "O");
+			KEY_NAME(p, "P");
+			KEY_NAME(q, "Q");
+			KEY_NAME(r, "R");
+			KEY_NAME(s, "S");
+			KEY_NAME(t, "T");
+			KEY_NAME(u, "U");
+			KEY_NAME(v, "V");
+			KEY_NAME(w, "W");
+			KEY_NAME(x, "X");
+			KEY_NAME(y, "Y");
+			KEY_NAME(z, "Z");
+			KEY_NAME(unknown, "<none>");
+		default:
+			return S("?");
+		}
+	}
+
+	Str *name(EnginePtr e, Key k) {
+		return new (e.v) Str(c_name(k));
+	}
+
+	static void put(StrBuf *to, bool &first, const wchar *str) {
+		if (!first)
+			*to << S("+");
+		first = false;
+		*to << str;
+	}
+
+	Str *name(EnginePtr e, Modifiers m) {
+		StrBuf *out = new (e.v) StrBuf();
+		bool first = true;
+		if (m & mod::ctrl)
+			put(out, first, S("Ctrl"));
+		if (m & mod::alt)
+			put(out, first, S("Alt"));
+		if (m & mod::shift)
+			put(out, first, S("Shift"));
+		if (m & mod::super)
+			put(out, first, S("Win"));
+		return out->toS();
 	}
 
 	/**

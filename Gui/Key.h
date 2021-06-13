@@ -60,6 +60,11 @@ namespace gui {
 	// Get a character for the specific key.
 	Char STORM_FN keychar(key::Key key);
 
+	// Get the name of a key.
+	const wchar *c_name(key::Key key);
+	Str *STORM_FN name(EnginePtr e, key::Key key);
+	Str *STORM_FN name(EnginePtr e, mod::Modifiers mod);
+
 #ifdef GUI_WIN32
 	// Get the current modifiers.
 	Modifiers modifiers();
