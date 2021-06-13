@@ -285,7 +285,9 @@ namespace gui {
 
 		Menu::Item *item = app->findMenuItem(src);
 		if (!item) {
-			WARNING(L"Unknown menu item!");
+			// Note: This happens for example when a Menu::Check is toggled before it is shown
+			// and/or properly added to a window.
+			// WARNING(L"Unknown menu item!");
 			return;
 		}
 
