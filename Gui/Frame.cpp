@@ -503,6 +503,9 @@ namespace gui {
 		handle(frame);
 		initSignals(frame, container);
 
+		// Attach accelerators.
+		myAccelerators->attach(handle());
+
 		// Create child windows (if any).
 		parentCreated(0);
 

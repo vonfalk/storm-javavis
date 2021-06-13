@@ -46,7 +46,7 @@ namespace gui {
 		// Don't need to do anything here.
 	}
 
-	void Menu::onAddAccelerator(KeyChord, Fn<void> *) {}
+	void Menu::onAddAccelerator(KeyChord, Fn<void> *, Handle) {}
 
 	void Menu::onRemoveAccelerator(KeyChord) {}
 
@@ -143,7 +143,7 @@ namespace gui {
 				owner->onRemoveAccelerator(myShortcut);
 
 			if (s.any())
-				owner->onAddAccelerator(s, fnPtr<void, Menu::Item>(engine(), &Menu::Item::onShortcut, this));
+				owner->onAddAccelerator(s, fnPtr<void, Menu::Item>(engine(), &Menu::Item::onShortcut, this), handle);
 		}
 
 		myShortcut = s;
@@ -155,12 +155,12 @@ namespace gui {
 
 	void Menu::WithTitle::setupShortcut() {
 		if (owner && myShortcut.any())
-			owner->onAddAccelerator(myShortcut, fnPtr<void, Menu::Item>(engine(), &Menu::Item::onShortcut, this));
+			owner->onAddAccelerator(myShortcut, fnPtr<void, Menu::Item>(engine(), &Menu::Item::onShortcut, this), handle);
 	}
 
 	void Menu::WithTitle::addAccelerators(Accelerators *to) {
 		if (myShortcut.any())
-			to->add(myShortcut, fnPtr<void, Menu::Item>(engine(), &Menu::Item::onShortcut, this));
+			to->add(myShortcut, fnPtr<void, Menu::Item>(engine(), &Menu::Item::onShortcut, this), handle);
 	}
 
 	void Menu::WithTitle::removeAccelerators(Accelerators *to) {
@@ -502,9 +502,9 @@ namespace gui {
 
 #endif
 
-	void PopupMenu::onAddAccelerator(KeyChord chord, Fn<void> *action) {
+	void PopupMenu::onAddAccelerator(KeyChord chord, Fn<void> *action, Handle handle) {
 		if (inside && inside->owner) {
-			inside->owner->onAddAccelerator(chord, action);
+			inside->owner->onAddAccelerator(chord, action, handle);
 		}
 	}
 
@@ -514,9 +514,9 @@ namespace gui {
 		}
 	}
 
-	void MenuBar::onAddAccelerator(KeyChord chord, Fn<void> *action) {
+	void MenuBar::onAddAccelerator(KeyChord chord, Fn<void> *action, Handle handle) {
 		if (attachedTo) {
-			attachedTo->accelerators()->add(chord, action);
+			attachedTo->accelerators()->add(chord, action, handle);
 		}
 	}
 

@@ -81,5 +81,11 @@ namespace gui {
 	Modifiers modifiers(const GdkEventKey &event);
 	Key keycode(const GdkEventKey &event);
 
+	guint to_gtk(Key key);
+	GdkModifierType to_gtk(Modifiers mod);
+
+	Key from_gtk(guint key);
+	Modifiers from_gtk(GdkModifierType mod);
+
 #endif
 }

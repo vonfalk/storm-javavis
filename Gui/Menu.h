@@ -241,7 +241,7 @@ namespace gui {
 		virtual void repaint();
 
 		// Called to add an accelerator.
-		virtual void onAddAccelerator(KeyChord chord, Fn<void> *action);
+		virtual void onAddAccelerator(KeyChord chord, Fn<void> *action, Handle handle);
 
 		// Called to remove an accelerator.
 		virtual void onRemoveAccelerator(KeyChord chord);
@@ -284,7 +284,7 @@ namespace gui {
 		MAYBE(Menu::Submenu *) inside;
 
 		// Called to add an accelerator.
-		virtual void onAddAccelerator(KeyChord chord, Fn<void> *action);
+		virtual void onAddAccelerator(KeyChord chord, Fn<void> *action, Handle handle);
 
 		// Called to remove an accelerator.
 		virtual void onRemoveAccelerator(KeyChord chord);
@@ -308,7 +308,7 @@ namespace gui {
 		virtual void repaint();
 
 		// Called to add an accelerator.
-		virtual void onAddAccelerator(KeyChord chord, Fn<void> *action);
+		virtual void onAddAccelerator(KeyChord chord, Fn<void> *action, Handle handle);
 
 		// Called to remove an accelerator.
 		virtual void onRemoveAccelerator(KeyChord chord);

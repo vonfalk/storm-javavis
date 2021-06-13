@@ -222,6 +222,16 @@ namespace gui {
 		return key::unknown;
 	}
 
+	// Reverse of the above lookup.
+	static Nat reverseLookup(Key key) {
+		for (Nat i = 0; i < ARRAY_COUNT(keymap); i++) {
+			if (keymap[i].storm == key)
+				return keymap[i].system;
+		}
+
+		return 0;
+	}
+
 #ifdef GUI_WIN32
 
 	bool pressed(nat keycode) {
@@ -286,6 +296,50 @@ namespace gui {
 			result = Key(keyval);
 		}
 		return result;
+	}
+
+	Key from_gtk(guint key) {
+		Key result = lookup(key);
+		if (result == key::unknown)
+			result = Key(key);
+		return result;
+	}
+
+	Modifiers from_gtk(GdkModifierType mod) {
+		guint state = mod;
+		Modifiers r = mod::none;
+		if (state & GDK_CONTROL_MASK)
+			r |= mod::ctrl;
+		if (state & GDK_META_MASK)
+			r |= mod::alt;
+		if (state & GDK_SHIFT_MASK)
+			r |= mod::shift;
+		if (state & GDK_SUPER_MASK)
+			r |= mod::super;
+		return r;
+	}
+
+	guint to_gtk(Key key) {
+		Nat v = reverseLookup(key);
+		if (v == 0) {
+			// Assume it is a keycode, so that we can invert what "keycode" gives us.
+			return guint(key);
+		} else {
+			return v;
+		}
+	}
+
+	GdkModifierType to_gtk(Modifiers mod) {
+		Nat result = 0;
+		if (mod & mod::ctrl)
+			result |= GDK_CONTROL_MASK;
+		if (mod & mod::alt)
+			result |= GDK_META_MASK;
+		if (mod & mod::shift)
+			result |= GDK_SHIFT_MASK;
+		if (mod & mod::super)
+			result |= GDK_SUPER_MASK;
+		return (GdkModifierType)result;
 	}
 
 #endif
