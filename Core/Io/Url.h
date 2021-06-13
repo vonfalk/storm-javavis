@@ -179,6 +179,9 @@ namespace storm {
 	// Get the current working directory.
 	Url *STORM_FN cwdUrl(EnginePtr e);
 
+	// Get the user's config directory for an application. Created if not already present.
+	Url *STORM_FN userConfigUrl(Str *appName);
+
 	// Create an HTTP/HTTPS url for a domain name.
 	Url *STORM_FN httpUrl(Str *host);
 	Url *STORM_FN httpsUrl(Str *host);

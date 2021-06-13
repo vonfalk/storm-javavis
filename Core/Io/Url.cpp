@@ -461,17 +461,58 @@ namespace storm {
 		return parsePath(e.v, tmp);
 	}
 
+	Url *userConfigUrl(Str *appName) {
+		Engine &e = appName->engine();
+
+		wchar_t tmp[MAX_PATH + 1];
+		if (ShGetFolderPath(NULL, CSIDL_APPDATA|CSIDL_CREATE, NULL, 0, tmp) != S_OK)
+			throw new (e) InternalError(S("Failed to retrieve the AppData folder for the current user."));
+
+		Url *url = parsePath(e, tmp);
+		url = url->pushDir(appName);
+		if (!url->exists())
+			url->createDir();
+		return url;
+	}
+
 	Url *executableFileUrl(Engine &e) {
 		wchar_t tmp[MAX_PATH + 1];
 		GetModuleFileName(NULL, tmp, MAX_PATH + 1);
 		return parsePath(e, tmp);
 	}
+
 #elif defined(POSIX)
 	Url *cwdUrl(EnginePtr e) {
 		char path[PATH_MAX + 1] = { 0 };
 		if (!getcwd(path, PATH_MAX))
 			throw new (e.v) InternalError(S("Failed to get the current working directory."));
 		return parsePath(e.v, toWChar(e.v, path)->v);
+	}
+
+	Url *userConfigUrl(Str *appName) {
+		Engine &e = appName->engine();
+		Url *url = null;
+
+		const char *base = getenv("XDG_CONFIG_HOME");
+		if (base && *base != '\0') {
+			url = parsePath(e, toWChar(e, base)->v);
+		} else {
+			const char *home = getenv("HOME");
+			if (home == null)
+				throw new (e) InternalError(S("Failed to find the current user's HOME directory."));
+			url = parsePath(e, toWChar(e, home)->v);
+			url = url->pushDir(new (e) Str(S(".config")));
+		}
+
+		if (!url->exists())
+			url->createDir();
+
+		url = url->pushDir(appName);
+
+		if (!url->exists())
+			url->createDir();
+
+		return url;
 	}
 
 	Url *executableFileUrl(Engine &e) {
