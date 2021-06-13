@@ -9,6 +9,11 @@
 #include "Core/Convert.h"
 #include "Core/Exception.h"
 
+#if defined(WINDOWS)
+#include <Shlobj.h>
+#pragma comment (lib, "Shell32.lib")
+#endif
+
 namespace storm {
 
 	static inline bool isDot(const wchar *str) {
@@ -465,7 +470,7 @@ namespace storm {
 		Engine &e = appName->engine();
 
 		wchar_t tmp[MAX_PATH + 1];
-		if (ShGetFolderPath(NULL, CSIDL_APPDATA|CSIDL_CREATE, NULL, 0, tmp) != S_OK)
+		if (SHGetFolderPath(NULL, CSIDL_APPDATA|CSIDL_FLAG_CREATE, NULL, 0, tmp) != S_OK)
 			throw new (e) InternalError(S("Failed to retrieve the AppData folder for the current user."));
 
 		Url *url = parsePath(e, tmp);
