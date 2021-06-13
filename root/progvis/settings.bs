@@ -5,6 +5,13 @@ use ui;
 use layout;
 use core:geometry;
 
+// Base url where we store our temporary files.
+private Url configBaseUrl on Ui = userConfigUrl("progvis");
+
+private Url configBase() on Ui {
+	configBaseUrl;
+}
+
 /**
  * Settings for Progvis.
  */
@@ -53,7 +60,7 @@ class Settings : serializable {
 
 	// Load from the default location.
 	Settings load() : static {
-		load(cwdUrl / "progvis_settings");
+		load(configBase / "settings");
 	}
 
 	// Save settings to a file.
@@ -65,7 +72,7 @@ class Settings : serializable {
 
 	// Save to the default location.
 	void save() {
-		save(cwdUrl / "progvis_settings");
+		save(configBase / "settings");
 	}
 
 	// Open a file given the current configuration.
@@ -81,7 +88,7 @@ class Settings : serializable {
 	// Get the download directory as an absolute directory.
 	Url absDownloadDir() {
 		if (!downloadDir.absolute)
-			cwdUrl / downloadDir;
+			configBase / downloadDir;
 		else
 			downloadDir;
 	}
@@ -204,7 +211,7 @@ dialog SettingsDlg {
 		if (downloadDir.text.any) {
 			Url p = parsePath(downloadDir.text);
 			if (p.absolute)
-				toEdit.downloadDir = p.relativeIfBelow(cwdUrl);
+				toEdit.downloadDir = p.relativeIfBelow(configBase);
 			else
 				toEdit.downloadDir = p;
 		}
