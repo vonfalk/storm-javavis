@@ -2,6 +2,7 @@
 #include "Core/Array.h"
 #include "Core/Fn.h"
 #include "Handle.h"
+#include "MnemonicStr.h"
 
 namespace gui {
 
@@ -91,15 +92,15 @@ namespace gui {
 			STORM_ABSTRACT_CLASS;
 		public:
 			// Create.
-			STORM_CTOR WithTitle(Str *title);
+			STORM_CTOR WithTitle(MnemonicStr title);
 
 			// Get/set the title.
-			Str *STORM_FN title() const { return myTitle; }
-			void STORM_ASSIGN title(Str *title);
+			MnemonicStr STORM_FN title() const { return myTitle; }
+			void STORM_ASSIGN title(MnemonicStr title);
 
 		protected:
 			// Title.
-			Str *myTitle;
+			MnemonicStr myTitle;
 		};
 
 		/**
@@ -109,8 +110,8 @@ namespace gui {
 			STORM_CLASS;
 		public:
 			// Create.
-			STORM_CTOR Text(Str *title);
-			STORM_CTOR Text(Str *title, Fn<void> *fn);
+			STORM_CTOR Text(MnemonicStr title);
+			STORM_CTOR Text(MnemonicStr title, Fn<void> *fn);
 
 			// Callback.
 			MAYBE(Fn<void> *) onClick;
@@ -130,9 +131,9 @@ namespace gui {
 			STORM_CLASS;
 		public:
 			// Create.
-			STORM_CTOR Check(Str *title);
-			STORM_CTOR Check(Str *title, Fn<void, Bool> *fn);
-			STORM_CTOR Check(Str *title, Fn<void, Bool> *fn, Bool checked);
+			STORM_CTOR Check(MnemonicStr title);
+			STORM_CTOR Check(MnemonicStr title, Fn<void, Bool> *fn);
+			STORM_CTOR Check(MnemonicStr title, Fn<void, Bool> *fn, Bool checked);
 
 			// Callback.
 			MAYBE(Fn<void, Bool> *) onClick;
@@ -159,7 +160,7 @@ namespace gui {
 			STORM_CLASS;
 		public:
 			// Create.
-			STORM_CTOR Submenu(Str *title, PopupMenu *menu);
+			STORM_CTOR Submenu(MnemonicStr title, PopupMenu *menu);
 
 			// Get the submenu.
 			PopupMenu *STORM_FN menu() const { return myMenu; }

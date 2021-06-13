@@ -102,25 +102,25 @@ namespace gui {
 
 	Menu::Separator::Separator() {}
 
-	Menu::WithTitle::WithTitle(Str *title) : myTitle(title) {}
+	Menu::WithTitle::WithTitle(MnemonicStr title) : myTitle(title) {}
 
-	Menu::Text::Text(Str *title) : WithTitle(title) {}
+	Menu::Text::Text(MnemonicStr title) : WithTitle(title) {}
 
-	Menu::Text::Text(Str *title, Fn<void> *callback) : WithTitle(title), onClick(callback) {}
+	Menu::Text::Text(MnemonicStr title, Fn<void> *callback) : WithTitle(title), onClick(callback) {}
 
 	void Menu::Text::clicked() {
 		if (onClick)
 			onClick->call();
 	}
 
-	Menu::Check::Check(Str *title) : WithTitle(title) {}
+	Menu::Check::Check(MnemonicStr title) : WithTitle(title) {}
 
-	Menu::Check::Check(Str *title, Fn<void, Bool> *callback) : WithTitle(title), onClick(callback) {}
+	Menu::Check::Check(MnemonicStr title, Fn<void, Bool> *callback) : WithTitle(title), onClick(callback) {}
 
-	Menu::Check::Check(Str *title, Fn<void, Bool> *callback, Bool checked)
+	Menu::Check::Check(MnemonicStr title, Fn<void, Bool> *callback, Bool checked)
 		: WithTitle(title), onClick(callback), myChecked(checked) {}
 
-	Menu::Submenu::Submenu(Str *title, PopupMenu *menu) : WithTitle(title), myMenu(menu) {}
+	Menu::Submenu::Submenu(MnemonicStr title, PopupMenu *menu) : WithTitle(title), myMenu(menu) {}
 
 	Menu *Menu::Submenu::findMenu(Handle handle) const {
 		if (myMenu)
@@ -160,14 +160,14 @@ namespace gui {
 		AppendMenu(owner->handle.menu(), MF_SEPARATOR, 1, L"");
 	}
 
-	void Menu::WithTitle::title(Str *title) {
+	void Menu::WithTitle::title(MnemonicStr title) {
 		myTitle = title;
 
 		if (owner) {
 			MENUITEMINFO info;
 			info.cbSize = sizeof(info);
 			info.fMask = MIIM_STRING;
-			info.dwTypeData = (LPWSTR)myTitle->c_str();
+			info.dwTypeData = (LPWSTR)myTitle.win32Mnemonic()->c_str();
 			SetMenuItemInfo(owner->handle.menu(), id, TRUE, &info);
 
 			owner->repaint();
@@ -178,7 +178,7 @@ namespace gui {
 		UINT flags = MF_STRING;
 		if (!enable)
 			flags |= MF_DISABLED;
-		AppendMenu(owner->handle.menu(), flags, 1, myTitle->c_str());
+		AppendMenu(owner->handle.menu(), flags, 1, myTitle.win32Mnemonic()->c_str());
 	}
 
 	Bool Menu::Check::checked() {
@@ -226,7 +226,7 @@ namespace gui {
 			flags |= MF_DISABLED;
 		if (myChecked)
 			flags |= MF_CHECKED;
-		AppendMenu(owner->handle.menu(), flags, 1, myTitle->c_str());
+		AppendMenu(owner->handle.menu(), flags, 1, myTitle.win32Mnemonic()->c_str());
 	}
 
 	void Menu::Submenu::create() {
@@ -237,7 +237,7 @@ namespace gui {
 		UINT flags = MF_STRING | MF_POPUP;
 		if (!enable)
 			flags |= MF_DISABLED;
-		AppendMenu(owner->handle.menu(), flags, (UINT_PTR)myMenu->handle.menu(), myTitle->c_str());
+		AppendMenu(owner->handle.menu(), flags, (UINT_PTR)myMenu->handle.menu(), myTitle.win32Mnemonic()->c_str());
 	}
 
 	void Menu::Submenu::destroy() {
@@ -322,15 +322,15 @@ namespace gui {
 		gtk_menu_shell_append(GTK_MENU_SHELL(owner->handle.widget()), created);
 	}
 
-	void Menu::WithTitle::title(Str *title) {
+	void Menu::WithTitle::title(MnemonicStr title) {
 		myTitle = title;
 
 		if (handle != Handle())
-			gtk_menu_item_set_label(GTK_MENU_ITEM(handle.widget()), title->utf8_str());
+			gtk_menu_item_set_label(GTK_MENU_ITEM(handle.widget()), title.mnemonic()->utf8_str());
 	}
 
 	void Menu::Text::create() {
-		GtkWidget *created = gtk_menu_item_new_with_label(myTitle->utf8_str());
+		GtkWidget *created = gtk_menu_item_new_with_mnemonic(myTitle.mnemonic()->utf8_str());
 		g_object_ref_sink(created);
 		gtk_widget_set_sensitive(created, enable ? TRUE : FALSE);
 		handle = created;
@@ -363,7 +363,7 @@ namespace gui {
 	}
 
 	void Menu::Check::create() {
-		GtkWidget *created = gtk_check_menu_item_new_with_label(myTitle->utf8_str());
+		GtkWidget *created = gtk_check_menu_item_new_with_mnemonic(myTitle.mnemonic()->utf8_str());
 		g_object_ref_sink(created);
 		gtk_widget_set_sensitive(created, enable ? TRUE : FALSE);
 		handle = created;
@@ -372,7 +372,7 @@ namespace gui {
 	}
 
 	void Menu::Submenu::create() {
-		GtkWidget *created = gtk_menu_item_new_with_label(myTitle->utf8_str());
+		GtkWidget *created = gtk_menu_item_new_with_mnemonic(myTitle.mnemonic()->utf8_str());
 		g_object_ref_sink(created);
 		gtk_widget_set_sensitive(created, enable ? TRUE : FALSE);
 		handle = created;

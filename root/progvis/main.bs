@@ -45,16 +45,16 @@ class MainWin extends Frame {
 
 		PopupMenu fileMenu;
 		fileMenu
-			<< Menu:Text("Open file...", &this.onOpen())
-			<< Menu:Text("Reload program", &this.onReload())
-			<< Menu:Text("Open in editor", &this.onOpenEditor())
+			<< Menu:Text(mnemonic("_Open file..."), &this.onOpen())
+			<< Menu:Text(mnemonic("_Reload program"), &this.onReload())
+			<< Menu:Text(mnemonic("Open in _editor"), &this.onOpenEditor())
 			<< Menu:Separator()
-			<< Menu:Text("Settings...", &this.onSettings());
+			<< Menu:Text(mnemonic("_Settings..."), &this.onSettings());
 
 		PopupMenu runMenu;
 		runMenu
-			<< Menu:Text("Restart", &this.onRestart())
-			<< Menu:Text("Spawn thread", &this.onSpawnThread())
+			<< Menu:Text(mnemonic("_Restart"), &this.onRestart())
+			<< Menu:Text(mnemonic("_Spawn thread"), &this.onSpawnThread())
 			<< trackMemory;
 
 		trackMemory.checked = true;
@@ -62,10 +62,10 @@ class MainWin extends Frame {
 		painter.trackMemory(true);
 
 		onlineMenu
-			<< Menu:Text("Connect", &this.connect())
-			<< Menu:Text("Disconnect", &this.disconnect())
-			<< Menu:Text("Status...", &this.onOnlineStatus())
-			<< Menu:Text("Problems...", &this.onOnlineProblems())
+			<< Menu:Text(mnemonic("_Connect"), &this.connect())
+			<< Menu:Text(mnemonic("_Disconnect"), &this.disconnect())
+			<< Menu:Text(mnemonic("_Status..."), &this.onOnlineStatus())
+			<< Menu:Text(mnemonic("_Problems..."), &this.onOnlineProblems())
 			<< Menu:Text("Submit problem...", &this.onOnlineSubmit())
 			<< Menu:Text("Sign out", &this.logout());
 
@@ -73,14 +73,14 @@ class MainWin extends Frame {
 			onlineMenu[i].enabled = false;
 
 		PopupMenu helpMenu;
-		helpMenu << Menu:Text("About...", &this.onAbout());
+		helpMenu << Menu:Text(mnemonic("_About..."), &this.onAbout());
 
 		MenuBar m;
 		m
-			<< Menu:Submenu("File", fileMenu)
-			<< Menu:Submenu("Run", runMenu)
-			<< Menu:Submenu("Online", onlineMenu)
-			<< Menu:Submenu("Help", helpMenu);
+			<< Menu:Submenu(mnemonic("_File"), fileMenu)
+			<< Menu:Submenu(mnemonic("_Run"), runMenu)
+			<< Menu:Submenu(mnemonic("_Online"), onlineMenu)
+			<< Menu:Submenu(mnemonic("_Help"), helpMenu);
 
 		menu = m;
 
