@@ -141,7 +141,6 @@ namespace storm {
 
 		// If pkgPath was a file, then we can't auto-load any sub-packages.
 		if (!pkgPath->dir()) {
-			PLN(L"Failed: " << pkgPath);
 			return null;
 		}
 
