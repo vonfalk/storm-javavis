@@ -80,6 +80,11 @@ namespace gui {
 		// not do anything, instead we rely on RenderMgr to repaint us every frame.
 		Bool continuous;
 
+		// Are we registered with continuous repaints with the windowing system. This is essentially
+		// a copy of "continuous", but it is updated in response to repaint messages on the Ui
+		// thread rather than on the Render thread.
+		Bool uiContinuous;
+
 		// Do we need to wait for "paint" messages from the window system?
 		Bool synchronizedPresent;
 
@@ -104,6 +109,9 @@ namespace gui {
 
 		// Last repaint shown on the screen. Used to determine if we are ready to draw the next frame.
 		volatile Nat currentRepaint;
+
+		// Callback ID used for the tick callback in Gtk. Not used on Windows.
+		Nat tickCallbackId;
 
 		// Attach to a specific window.
 		void CODECALL attach(Window *to);
@@ -132,6 +140,9 @@ namespace gui {
 
 		// Ask the attached window to repaint itself whenever convenient.
 		void repaintAttachedWindow();
+
+		// Called when the window system should be asked for continuous repaints.
+		void uiSetContinuous(bool continuous);
 	};
 
 }

@@ -6,8 +6,8 @@
 namespace gui {
 
 	Painter::Painter()
-		: continuous(false), synchronizedPresent(false), resized(false),
-		  repaintCounter(0), currentRepaint(0), surface(null) {
+		: continuous(false), uiContinuous(false), synchronizedPresent(false), resized(false),
+		  repaintCounter(0), currentRepaint(0), tickCallbackId(0), surface(null) {
 
 		attachedTo = Window::invalid;
 		app = gui::app(engine());
@@ -187,12 +187,19 @@ namespace gui {
 			surface->repaint(params);
 			currentRepaint = repaintCounter;
 
-			// We're ready for the next frame now!
+			// If we are in continuous mode, schedule drawing the next frame right now.
 			if (continuous) {
 				mgr->painterReady();
 #ifdef UI_SINGLETHREAD
+				// If single threaded, we need to repaint now.
 				repaintAttachedWindow();
 #endif
+			}
+
+			// Update the repaint registration.
+			if (uiContinuous != continuous) {
+				uiSetContinuous(continuous);
+				uiContinuous = continuous;
 			}
 		}
 	}
@@ -233,6 +240,11 @@ namespace gui {
 	}
 
 	void Painter::uiDetach() {
+		if (uiContinuous) {
+			uiSetContinuous(false);
+			uiContinuous = false;
+		}
+
 		detach();
 	}
 
@@ -254,9 +266,12 @@ namespace gui {
 			doRepaint(false, true);
 		} else if (!ready()) {
 			// There is a frame ready right now! No need to wait even if we're not in continuous mode!
+		} else if (continuous && resized) {
+			// Note: This only happens on windows. In this case, we don't want to wait for a frame
+			// as it makes resizing the window laggy.
 		} else if (continuous) {
-			// This does not seem to be needed. It only makes resizing the window laggy.
-			// waitForFrame();
+			// Make sure we have a frame to render.
+			waitForFrame();
 		} else {
 			doRepaint(false, true);
 		}
@@ -273,6 +288,11 @@ namespace gui {
 	}
 
 	void Painter::uiDetach() {
+		if (uiContinuous) {
+			uiSetContinuous(false);
+			uiContinuous = false;
+		}
+
 		os::Future<void> result;
 		Painter *me = this;
 		os::FnCall<void, 2> params = os::fnCall().add(me);
@@ -306,15 +326,34 @@ namespace gui {
 		WARNING(L"This operation is not supported on Win32, as it should not be needed.");
 	}
 
+	void Painter::uiSetContinuous(bool) {
+		// Not needed on Windows.
+	}
+
 #endif
 #ifdef GUI_GTK
 
 	void Painter::repaintAttachedWindow() {
 #ifdef UI_MULTITHREAD
-		app->repaint(attachedTo.widget());
+		if (!uiContinuous)
+			app->repaint(attachedTo.widget());
 #else
 		gtk_widget_queue_draw(attachedTo.widget());
 #endif
+	}
+
+	// Called on each tick. We only need to queue a repaint for the widget.
+	static gboolean tickCallback(GtkWidget *widget, GdkFrameClock *clock, gpointer data) {
+		gtk_widget_queue_draw(widget);
+		return G_SOURCE_CONTINUE;
+	}
+
+	void Painter::uiSetContinuous(bool continuous) {
+		if (continuous) {
+			tickCallbackId = gtk_widget_add_tick_callback(attachedTo.widget(), &tickCallback, NULL, NULL);
+		} else {
+			gtk_widget_remove_tick_callback(attachedTo.widget(), tickCallbackId);
+		}
 	}
 
 #endif

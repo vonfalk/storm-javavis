@@ -34,7 +34,7 @@ namespace gui {
 		// Detach a Painter.
 		void detach(Painter *painter);
 
-		// Notify that a new painter is ready to repaint.
+		// Notify that a new painter is ready to repaint. OK to call from other threads.
 		void painterReady();
 
 		// Get the text manager.
