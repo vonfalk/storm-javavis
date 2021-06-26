@@ -18,6 +18,11 @@ namespace gui {
 		gdk_gl_context_clear_current();
 		gdk_gl_context_make_current(context);
 
+		// We just made ourself current, make sure we note that we did strange things, or
+		// "makeCurrent" will misbehave. Since we don't know if creation will succeed at this time,
+		// it is safest to set current to null.
+		device->current = null;
+
 		// Try to get the current context and create an Interface for it.
 		sk_sp<const GrGLInterface> interface;
 		GdkDisplay *gdkDisplay = gdk_window_get_display(window);

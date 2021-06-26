@@ -24,7 +24,7 @@ namespace gui {
 		sk_sp<GrDirectContext> skia;
 
 		// Make sure this context is active. Skia does not seem to switch contexts itself, so we
-		// will need to do it for Skia. As such, we try to minimize calls to "make_active".
+		// will need to do it for Skia. As such, we try to minimize calls to "gl_area_make_current".
 		void makeCurrent();
 
 		// Clear which context is the current one, in case someone manually modifies the current
