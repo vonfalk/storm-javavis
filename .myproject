@@ -212,7 +212,6 @@ flags+=-fvisibility=hidden
 cflags+=-fvisibility=hidden
 
 linkFlags+=-pthread
-library+=dl
 
 ext+=s
 ext+=S

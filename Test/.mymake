@@ -6,3 +6,4 @@ output=Test<gcSuffix>
 
 [unix]
 flags+=-Wno-sign-compare
+library+=dl

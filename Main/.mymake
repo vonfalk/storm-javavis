@@ -2,5 +2,8 @@
 input=Main.cpp
 output=Storm<gcSuffix>
 
+[unix]
+library+=dl
+
 [dist]
-define+=STORM_ROOT=/usr/share/storm
+define+=STORM_ROOT=/usr/lib/storm

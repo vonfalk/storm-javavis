@@ -9,3 +9,4 @@ noIncludes+=*/sqlite3.c
 cflags+=-Wno-cast-function-type
 cflags+=-Wno-implicit-fallthrough
 cflags+=-D_HAVE_SQLITE_CONFIG_H
+library+=dl

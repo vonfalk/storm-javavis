@@ -43,6 +43,7 @@ define+=SK_GL=1
 linkFlags+=-lharfbuzz
 
 define+=GUI_ENABLE_SKIA
+library+=dl
 
 # Note: Cairo needs to be first. Otherwise we link the wrong .so-file for Cairo.
 [unix]
