@@ -34,7 +34,10 @@ noIncludes+=mpg123.h
 
 library+=openal
 library+=mpg123
-library+=ogg
-library+=vorbis
 library+=vorbisfile
 library+=FLAC
+
+#Not needed, depended on by vorbisfile
+#library+=ogg
+#library+=vorbis
+
