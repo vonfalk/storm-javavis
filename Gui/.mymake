@@ -43,12 +43,13 @@ define+=SK_GL=1
 linkFlags+=-lharfbuzz
 
 define+=GUI_ENABLE_SKIA
-library+=dl
 
 # Note: Cairo needs to be first. Otherwise we link the wrong .so-file for Cairo.
 [unix]
 # Need C++ 17 for Skia. We always enable it to make things simple.
 flags+=-std=c++17
+
+library+=dl
 
 # Defaults
 flags+=`pkg-config --cflags gtk+-3.0 x11 fontconfig`
