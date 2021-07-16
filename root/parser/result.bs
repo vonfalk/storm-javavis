@@ -1,0 +1,29 @@
+use lang:bs:macro;
+use core:lang;
+
+/**
+ * Result type from the parsers. Contains information about a parse.
+ */
+Result : generate(params) {
+	if (params.count != 1)
+		return null;
+
+	var resType = params[0].asRef(false);
+
+	Type t("Result", [resType], TypeFlags:typeClass);
+
+	// Data members:
+
+	// Parse value, if parse succeeded.
+	t.add(MemberVar("value", wrapMaybe(resType), t));
+
+	// Last position parsed.
+	t.add(MemberVar("end", named{Str:Iter}, t));
+
+	// Error message.
+	t.add(MemberVar("error", named{Str}, t));
+
+	// TODO: Add a suitable constructor.
+
+	t;
+}

@@ -1,0 +1,14 @@
+use test;
+use parser;
+
+parseList : parser(List, recursive descent) {
+	// Additional packages to import syntax from.
+}
+
+suite SimpleRecursive {
+	var r = parseList("A, B, C");
+	if (x = r.value)
+		print("Got result: ${x}");
+	else
+		print("Error: ${r.error}");
+}

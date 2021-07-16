@@ -1,0 +1,20 @@
+use lang.bs;
+use core.lang;
+
+optional delimiter = SDelimiter;
+required delimiter = SRequiredDelimiter;
+
+// No package names.
+SFileItem => parser
+  : SName name #fnName, ":", "parser" #keyword, "(", SType start, ",", SParserType(env, name, start) parser, ")", ";";
+SFileItem => parser
+  : SName name #fnName, ":", "parser" #keyword, "(", SType start, ",", SParserType(env, name, start) parser, ")", "{" [, (SParserInclude -> include,)* ]+ "}";
+
+// Includes for a parser.
+SrcName SParserInclude();
+SParserInclude => v : SPackage v, ";";
+
+// Parser type.
+Parser SParserType(Scope env, SStr name, SrcName start) #keyword;
+SParserType => RecursiveParser(env, name, start) : "recursive" ~ "descent";
+SParserType => RecursiveParser(env, name, start) : "recursive";

@@ -1,0 +1,16 @@
+use core:lang;
+use lang:bnf;
+use lang:bs:macro;
+
+/**
+ * The recursive descent parser.
+ */
+class RecursiveParser extends Parser {
+	init(Scope env, SStr name, SrcName start) {
+		init(env, name, start) {}
+	}
+
+	void populateFn(Function fn) : override {
+		print("TODO: Implement the actual parser.");
+	}
+}

@@ -1,0 +1,63 @@
+use core:lang;
+use lang:bnf;
+use lang:bs:macro;
+
+/**
+ * A declared parser.
+ */
+class Parser extends lang:bs:NamedDecl {
+	// Override to initialize the function with its proper contents.
+	protected void populateFn(Function fn) : abstract;
+
+	// Create, specify the start rule (as a name).
+	init(Scope scope, SStr name, SrcName startName) {
+		init {
+			scope = scope;
+			name = name;
+			start = findRule(scope, startName);
+		}
+
+		if (parent = start.parent as NameSet)
+			include << parent;
+	}
+
+	// Scope.
+	Scope scope;
+
+	// Name.
+	SStr name;
+
+	// Start rule.
+	Rule start;
+
+	// Included packages.
+	NameSet[] include;
+
+	// Called to add an include.
+	void include(SrcName name) {
+		unless (inc = scope.find(name) as NameSet)
+			throw SyntaxError(name.pos, "Unknown package: ${name}");
+		include << inc;
+	}
+
+	// Create the parser.
+	protected Named doCreate() : override {
+		SimpleName resultName;
+		resultName.add("parser");
+		resultName.add("Result", [start.result]);
+		var resultType = scope.value(resultName, name.pos);
+
+		Function fn(name.pos, resultType, name.v, [named{Str}]);
+		populateFn(fn);
+		fn;
+	}
+}
+
+// Find a rule. Throws on error.
+private Rule findRule(Scope scope, SrcName name) {
+	if (rule = scope.find(name) as Rule)
+		rule;
+	else
+		throw SyntaxError(name.pos, "Unknown rule: ${name}");
+}
+

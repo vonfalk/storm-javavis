@@ -1,0 +1,29 @@
+Parser library
+==============
+
+This library implements various parsers that are faster (but weaker) than the compiler's parser. In
+general, they do not support all functionality of the compiler's parser, and are not as flexible. On
+the other hand, they are pre-compiled (and have no startup time) and are much faster. They are also
+able to parse text on any thread, and not locked to the Compiler thread as the compiler's parser.
+
+The limitations and characteristics of the parsers are outlined below. If a parser is fed grammar
+that is incompatible with the parser, an error is generated at compile-time unless otherwise
+noted. Another general difference between the compiler's parser and the parsers in this library is
+that these parsers typically start evaluating transform functions before parsing is complete. As
+such, some transform function might be executed, even if the string is not in the language described
+by the grammar.
+
+The following parsers are supported:
+
+
+Recursive Descent
+-----------------
+
+The recursive descent parser accepts LL(1) grammars, which essentially means:
+- No left-recursion is allowed.
+- Multiple productions for a non-terminal needs to be distinguished by the first token present
+  (either directly or indirectly).
+
+This parser transforms the parse tree directly, and as such it is not possible to capture parts of
+the parse tree in the syntax transformations. Due to how the parser works, it is also not possible
+to pass parameters to productions from tokens appearing "later" in the text.
