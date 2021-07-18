@@ -1,0 +1,198 @@
+use core:lang;
+use lang:bnf;
+
+/**
+ * Basic information on grammar.
+ */
+class Grammar on Compiler {
+	init(Rule start, NameSet[] include) {
+		init() {}
+
+		for (x in include)
+			add(x);
+
+		sort();
+
+		// Compute first-sets first.
+		computeFirst();
+
+		// Compute follow-sets.
+		computeFollow();
+
+		print("First-set:");
+		for (k, v in first) {
+			print("${k}: ${v}");
+		}
+
+		print("Follow-set:");
+		for (k, v in follow) {
+			print("${k}: ${v}");
+		}
+	}
+
+	// Map of rules -> productions that are visible.
+	Rule->Array<Production> rules;
+
+	// True if the rule might match epsilon.
+	Rule->Bool epsilon;
+
+	// First-sets for all rules.
+	Rule->Set<Regex> first;
+
+	// Follow-sets for all rules.
+	Rule->Set<Regex> follow;
+
+	// Check if a rule may be an epsilon production.
+	Bool epsilon(Rule r) {
+		for (x in rules[r]) {
+			if (x.firstA.end | x.firstB.end)
+				return true;
+		}
+		return false;
+	}
+
+	private void add(NameSet from) {
+		for (x in from) {
+			if (x as Rule) {
+				add(x);
+			} else if (x as ProductionType) {
+				add(x.production);
+			}
+		}
+	}
+
+	private void add(Rule rule) {
+		if (!rules.has(rule))
+			rules.put(rule, []);
+		epsilon[rule] = false;
+	}
+
+	private void add(Production prod) {
+		if (rule = prod.rule) {
+			Production[] p = rules[rule];
+			p << prod;
+		}
+	}
+
+	// Sort rules according to priority.
+	private void sort() {
+		for (k, v in rules) {
+			v.sort((Production a, Production b) => a.priority > b.priority);
+		}
+	}
+
+	// Compute first-sets. This is done by a fix-point iteration. Also updates 'epsilon'
+	private void computeFirst() {
+		do {
+			Bool changes = false;
+			for (k, v in rules)
+				changes |= updateFirst(k, v);
+		} while (changes);
+	}
+
+	private Bool updateFirst(Rule rule, Production[] prods) {
+		Set<Regex> s = first[rule];
+		Bool changes = false;
+		Nat oldCount = s.count;
+
+		for (x in prods) {
+			changes |= putToken(rule, s, x.firstA);
+			changes |= putToken(rule, s, x.firstB);
+		}
+
+		changes | oldCount != s.count;
+	}
+
+	private Bool putToken(Rule rule, Set<Regex> into, ProductionIter iter) {
+		if (!iter.valid)
+			return false;
+
+		if (iter.end) {
+			if (epsilon[rule]) {
+				epsilon[rule] = true;
+				return true;
+			} else {
+				return false;
+			}
+		}
+
+		if (regex = iter.token as RegexToken) {
+			into.put(regex.regex);
+
+			// We might need to consider regexes that matches empty productions as well. I think we
+			// are fine though.
+
+		} else if (rule = iter.token as RuleToken) {
+			// Merge first sets, but don't try to examine the set we're inserting into.
+			var firstSet = first[rule.rule];
+			if (firstSet !is into) {
+				for (x in first[rule.rule]) {
+					into.put(x);
+				}
+			}
+
+			// If the rule can match an epsilon production, we need to look further.
+			if (epsilon[rule.rule]) {
+				print("TODO!");
+			}
+		}
+
+		false;
+	}
+
+	// Compute follow-sets. This is done by a fix-point iteration.
+	private void computeFollow() {
+		do {
+			Bool changes = false;
+			for (k, v in rules) {
+				// Touch the follow set so that we always have all items.
+				follow[k];
+
+				for (p in v) {
+					changes |= updateFollow(k, p);
+				}
+			}
+		} while (changes);
+	}
+
+	private Bool updateFollow(Rule rule, Production p) {
+		Bool updated = false;
+
+		// Check all locations in this production.
+		for (Nat i = 0; i < p.tokens.count; i++) {
+			unless (r = p.tokens[i] as RuleToken)
+				continue;
+
+			var iter = p.posIter(i);
+			updated |= updateFollow(rule, r.rule, iter.nextA);
+			updated |= updateFollow(rule, r.rule, iter.nextB);
+		}
+
+		updated;
+	}
+
+	private Bool updateFollow(Rule inRule, Rule previous, ProductionIter current) {
+		unless (current.valid)
+			return false;
+
+		Set<Regex> addTo = follow[previous];
+		Nat oldCount = addTo.count;
+
+		if (current.end) {
+			// If at the end, we need to add the follow set of ourselves to the follow set of the symbol.
+			for (x in follow[inRule])
+				addTo.put(x);
+		} else if (rt = current.token as RuleToken) {
+			// The follow set is the first set of the new rule.
+			for (x in first[rt.rule])
+				addTo.put(x);
+
+			// If the rule has an epsilon, act accordingly...
+		} else if (rt = current.token as RegexToken) {
+			addTo.put(rt.regex);
+		}
+
+		addTo.count != oldCount;
+	}
+
+}

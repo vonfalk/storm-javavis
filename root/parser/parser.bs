@@ -60,4 +60,3 @@ private Rule findRule(Scope scope, SrcName name) {
 	else
 		throw SyntaxError(name.pos, "Unknown rule: ${name}");
 }
-
