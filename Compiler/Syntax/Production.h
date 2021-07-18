@@ -50,7 +50,7 @@ namespace storm {
 			// Get the position in the production.
 			inline Nat STORM_FN position() const { return pos; }
 
-			// Get the rule this option is a part of.
+			// Get the rule this production is a part of.
 			MAYBE(Rule *) rule() const;
 
 			// Get the production we're a part of.
