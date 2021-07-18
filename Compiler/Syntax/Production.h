@@ -51,13 +51,13 @@ namespace storm {
 			inline Nat STORM_FN position() const { return pos; }
 
 			// Get the rule this production is a part of.
-			MAYBE(Rule *) rule() const;
+			MAYBE(Rule *) STORM_FN rule() const;
 
 			// Get the production we're a part of.
-			MAYBE(Production *) production() const;
+			MAYBE(Production *) STORM_FN production() const;
 
 			// Get the current token.
-			MAYBE(Token *) token() const;
+			MAYBE(Token *) STORM_FN token() const;
 
 		private:
 			// Create.
@@ -129,7 +129,7 @@ namespace storm {
 			ProductionIter STORM_FN firstB();
 
 			// Create an iterator at a specific position.
-			ProductionIter posIter(Nat pos);
+			ProductionIter STORM_FN posIter(Nat pos);
 
 			// Output.
 			virtual void STORM_FN toS(StrBuf *to) const;
