@@ -18,3 +18,7 @@ ListTail => x : ",", Item -> push, ListTail(x);
 
 Str Item();
 Item => v : "[A-Z]+" v;
+
+// This is not reachable from 'List' and should therefore be removed.
+void Unreachable();
+Unreachable : Item - "INCORRECT";

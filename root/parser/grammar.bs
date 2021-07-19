@@ -5,30 +5,29 @@ use lang:bnf;
  * Basic information on grammar.
  */
 class Grammar on Compiler {
-	init(Rule start, NameSet[] include) {
-		init() {}
+	init(Rule start, NameSet[] include, Bool regexEpsilon) {
+		init() {
+			start = start;
+			regexEpsilon = regexEpsilon;
+		}
 
 		for (x in include)
 			add(x);
 
 		sort();
 
+		// Prune unreachable rules.
+		prune();
+
 		// Compute first-sets first.
 		computeFirst();
 
 		// Compute follow-sets.
 		computeFollow();
-
-		print("First-set:");
-		for (k, v in first) {
-			print("${k}: ${v}");
-		}
-
-		print("Follow-set:");
-		for (k, v in follow) {
-			print("${k}: ${v}");
-		}
 	}
+
+	// Start rule.
+	Rule start;
 
 	// Map of rules -> productions that are visible.
 	Rule->Array<Production> rules;
@@ -41,6 +40,40 @@ class Grammar on Compiler {
 
 	// Follow-sets for all rules.
 	Rule->Set<Regex> follow;
+
+	// Are we treating regexes that may match the empty string as epsilon productions?
+	Bool regexEpsilon;
+
+	// Output a representation of what we have arrived at.
+	void toS(StrBuf to) : override {
+		Rule[] order;
+		for (k, v in rules)
+			order << k;
+		// Note: This is not very efficient, as the identifiers are computed on each comparison. It
+		// is fine, as it is for debugging, though.
+		order.sort((a, b) => a.identifier < b.identifier);
+
+		to << "Start: " << start.identifier << "\n";
+		to << "Treating empty regexes as epsilon: " << regexEpsilon << "\n";
+
+		for (i, rule in order) {
+			if (i > 0)
+				to << "\n";
+
+			to << rule.identifier << ":\n";
+
+			Indent z(to);
+
+			to << "matches epsilon: " << epsilon[rule] << "\n";
+			to << "first-set: " << first[rule] << "\n";
+			to << "follow-set: " << follow[rule] << "\n";
+
+			to << "---\n";
+
+			for (i in rules[rule])
+				to << i << "\n";
+		}
+	}
 
 	// Check if a rule may be an epsilon production.
 	Bool epsilon(Rule r) {
@@ -108,7 +141,7 @@ class Grammar on Compiler {
 			return false;
 
 		if (iter.end) {
-			if (epsilon[rule]) {
+			if (!epsilon[rule]) {
 				epsilon[rule] = true;
 				return true;
 			} else {
@@ -116,11 +149,14 @@ class Grammar on Compiler {
 			}
 		}
 
+		Bool maybeEpsilon = false;
+
 		if (regex = iter.token as RegexToken) {
 			into.put(regex.regex);
 
-			// We might need to consider regexes that matches empty productions as well. I think we
-			// are fine though.
+			// If we need to check epsilon regexes:
+			if (regexEpsilon)
+				maybeEpsilon = regex.regex.matchesEmpty();
 
 		} else if (rule = iter.token as RuleToken) {
 			// Merge first sets, but don't try to examine the set we're inserting into.
@@ -132,12 +168,15 @@ class Grammar on Compiler {
 			}
 
 			// If the rule can match an epsilon production, we need to look further.
-			if (epsilon[rule.rule]) {
-				print("TODO!");
-			}
+			maybeEpsilon = epsilon[rule.rule];
 		}
 
-		false;
+		if (maybeEpsilon) {
+			// Look further.
+			return putToken(rule, into, iter.nextA) | putToken(rule, into, iter.nextB);
+		} else {
+			return false;
+		}
 	}
 
 	// Compute follow-sets. This is done by a fix-point iteration.
@@ -187,12 +226,55 @@ class Grammar on Compiler {
 			for (x in first[rt.rule])
 				addTo.put(x);
 
-			// If the rule has an epsilon, act accordingly...
+			// Keep going until we find a rule that does not match epsilon, or a regex.
+			if (epsilon[rt.rule]) {
+				// Note: since these update 'addTo', we don't need to check the return value from these.
+				updateFollow(inRule, previous, current.nextA);
+				updateFollow(inRule, previous, current.nextB);
+			}
 		} else if (rt = current.token as RegexToken) {
 			addTo.put(rt.regex);
+
+			// Check for empty regexes.
+			if (regexEpsilon & rt.regex.matchesEmpty()) {
+				updateFollow(inRule, previous, current.nextA);
+				updateFollow(inRule, previous, current.nextB);
+			}
 		}
 
 		addTo.count != oldCount;
 	}
 
+	// Prune rules that are not reachable from the start production.
+	private void prune() {
+		Rule->Bool reachable;
+		// Populate 'reachable' so that we can iterate through it easily later on.
+		for (k, v in rules)
+			reachable.put(k, false);
+
+		prune(reachable, start);
+
+		// Remove the ones that were not reachable.
+		for (k, v in reachable) {
+			if (!v)
+				rules.remove(k);
+		}
+	}
+
+	private void prune(Rule->Bool reachable, Rule current) {
+		// Do not re-visit rules.
+		if (reachable[current])
+			return;
+
+		reachable[current] = true;
+
+		// Traverse all productions.
+		for (p in rules[current]) {
+			for (token in p.tokens) {
+				if (token as RuleToken) {
+					prune(reachable, token.rule);
+				}
+			}
+		}
+	}
 }

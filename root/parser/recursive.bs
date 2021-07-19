@@ -11,7 +11,8 @@ class RecursiveParser extends Parser {
 	}
 
 	void populateFn(Function fn) : override {
-		Grammar grammar(start, include);
+		Grammar grammar(start, include, true);
+		print(grammar.toS);
 
 		print("TODO: Implement the actual parser.");
 		throw NotSupported("Implement the actual parser!");
