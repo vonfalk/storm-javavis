@@ -3,8 +3,14 @@ use lang:bnf;
 
 /**
  * Basic information on grammar.
+ *
+ * Note: This class does not attempt to expand the repetition possibly present in the grammar. This
+ * means that parsers that need to expand these rules might introduce left recursion etc. when
+ * expanding the grammar.
  */
 class Grammar on Compiler {
+	// The 'regexEpsilon' parameter indicates if regexes that may match the empty string are treated
+	// as epsilon productions. This has implications for first and follow sets etc.
 	init(Rule start, NameSet[] include, Bool regexEpsilon) {
 		init() {
 			start = start;
@@ -75,13 +81,86 @@ class Grammar on Compiler {
 		}
 	}
 
-	// Check if a rule may be an epsilon production.
-	Bool epsilon(Rule r) {
-		for (x in rules[r]) {
-			if (x.firstA.end | x.firstB.end)
-				return true;
+	// Check if the grammar has left-recursive productions. Returns a list of strings that describe
+	// paths with left recursion. The list is empty if none exist.
+	Str[] leftRecursive() {
+		Str[] result;
+		for (k, v in rules) {
+			if (x = leftRecursive(k))
+				result << x;
 		}
-		return false;
+		result;
+	}
+
+	// Check if a particular rule is left recursive. Returns an example of where the grammar is left
+	// recursive. Does not attempt to find *all* instances of left recursion.
+	Str? leftRecursive(Rule rule) {
+		Rule->Bool visited;
+		for (x in rules[rule]) {
+			if (r = leftRecursive(visited, rule, x)) {
+				return rule.identifier + " -> " + r;
+			}
+		}
+
+		return null;
+	}
+
+	// Helper for the function above.
+	private Str? leftRecursive(Rule->Bool visited, Rule original, Production prod) {
+		if (x = leftRecursive(visited, original, prod.firstA, false))
+			x;
+		else
+			leftRecursive(visited, original, prod.firstB, true);
+	}
+
+	private Str? leftRecursive(Rule->Bool visited, Rule original, ProductionIter iter, Bool repeated) {
+		if (!iter.valid)
+			return null;
+
+		if (iter.end)
+			return null;
+
+		if (x = iter.token as RegexToken) {
+			if (!x.regex.matchesEmpty)
+				return null;
+			if (!regexEpsilon)
+				return null;
+		} else if (x = iter.token as RuleToken) {
+			if (r = leftRecursive(visited, original, x.rule)) {
+				return r;
+			}
+			if (!epsilon[x.rule])
+				return null;
+		} else {
+			return null;
+		}
+
+		// Continue.
+		if (r = leftRecursive(visited, original, iter.nextA, repeated))
+			return r;
+
+		if (!repeated)
+			return leftRecursive(visited, original, iter.nextB, true);
+		else
+			return null;
+	}
+
+	private Str? leftRecursive(Rule->Bool visited, Rule original, Rule current) {
+		if (visited[current])
+			return null;
+
+		visited[current] = true;
+
+		if (original is current)
+			return original.identifier;
+
+		for (x in rules[current]) {
+			if (r = leftRecursive(visited, original, x)) {
+				return current.identifier + " -> " + r;
+			}
+		}
+
+		return null;
 	}
 
 	private void add(NameSet from) {

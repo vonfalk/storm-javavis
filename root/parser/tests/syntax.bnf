@@ -11,10 +11,14 @@ RSep : "[ \n\r\t]+";
 // Simple list to test LR parser.
 Array<Str> List();
 List => Array<Str>() : Item -> push, ListTail(me);
+List => Array<Str>() : ListRec;
 
 void ListTail(Array<Str> x);
 ListTail : ;
 ListTail => x : ",", Item -> push, ListTail(x);
+
+void ListRec();
+ListRec : List;
 
 Str Item();
 Item => v : "[A-Z]+" v;
