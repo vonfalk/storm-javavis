@@ -129,14 +129,14 @@ class Grammar on Compiler {
 		Nat oldCount = s.count;
 
 		for (x in prods) {
-			changes |= putToken(rule, s, x.firstA);
-			changes |= putToken(rule, s, x.firstB);
+			changes |= putToken(rule, s, x.firstA, false);
+			changes |= putToken(rule, s, x.firstB, true);
 		}
 
 		changes | oldCount != s.count;
 	}
 
-	private Bool putToken(Rule rule, Set<Regex> into, ProductionIter iter) {
+	private Bool putToken(Rule rule, Set<Regex> into, ProductionIter iter, Bool repeated) {
 		if (!iter.valid)
 			return false;
 
@@ -173,7 +173,13 @@ class Grammar on Compiler {
 
 		if (maybeEpsilon) {
 			// Look further.
-			return putToken(rule, into, iter.nextA) | putToken(rule, into, iter.nextB);
+			Bool changes = putToken(rule, into, iter.nextA, repeated);
+
+			// Don't loop forever.
+			if (!repeated)
+				changes |= putToken(rule, into, iter.nextB, true);
+
+			return changes;
 		} else {
 			return false;
 		}
@@ -203,14 +209,14 @@ class Grammar on Compiler {
 				continue;
 
 			var iter = p.posIter(i);
-			updated |= updateFollow(rule, r.rule, iter.nextA);
-			updated |= updateFollow(rule, r.rule, iter.nextB);
+			updated |= updateFollow(rule, r.rule, iter.nextA, false);
+			updated |= updateFollow(rule, r.rule, iter.nextB, true);
 		}
 
 		updated;
 	}
 
-	private Bool updateFollow(Rule inRule, Rule previous, ProductionIter current) {
+	private Bool updateFollow(Rule inRule, Rule previous, ProductionIter current, Bool repeated) {
 		unless (current.valid)
 			return false;
 
@@ -229,16 +235,21 @@ class Grammar on Compiler {
 			// Keep going until we find a rule that does not match epsilon, or a regex.
 			if (epsilon[rt.rule]) {
 				// Note: since these update 'addTo', we don't need to check the return value from these.
-				updateFollow(inRule, previous, current.nextA);
-				updateFollow(inRule, previous, current.nextB);
+				updateFollow(inRule, previous, current.nextA, repeated);
+				if (!repeated)
+					updateFollow(inRule, previous, current.nextB, true);
 			}
 		} else if (rt = current.token as RegexToken) {
 			addTo.put(rt.regex);
 
 			// Check for empty regexes.
 			if (regexEpsilon & rt.regex.matchesEmpty()) {
-				updateFollow(inRule, previous, current.nextA);
-				updateFollow(inRule, previous, current.nextB);
+				// Note: since these update 'addTo', we don't need to check the return value from these.
+				updateFollow(inRule, previous, current.nextA, repeated);
+
+				// Don't loop forever.
+				if (!repeated)
+					updateFollow(inRule, previous, current.nextB, true);
 			}
 		}
 
