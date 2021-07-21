@@ -11,4 +11,7 @@ suite SimpleRecursive {
 		print("Got result: ${x}");
 	else
 		print("Error: ${r.error}");
+
+	// TODO: Test with true/false in them, so we can skip "== true".
+	test r.value.any == true;
 }

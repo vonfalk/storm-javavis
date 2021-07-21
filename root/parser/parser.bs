@@ -1,5 +1,6 @@
 use core:lang;
 use lang:bnf;
+use lang:bs;
 use lang:bs:macro;
 
 /**
@@ -7,7 +8,7 @@ use lang:bs:macro;
  */
 class Parser extends lang:bs:NamedDecl {
 	// Override to initialize the function with its proper contents.
-	protected void populateFn(Function fn) : abstract;
+	protected void populateFn(BSTreeFn fn) : abstract;
 
 	// Create, specify the start rule (as a name).
 	init(Scope scope, SStr name, SrcName startName) {
@@ -19,6 +20,8 @@ class Parser extends lang:bs:NamedDecl {
 
 		if (parent = start.parent as NameSet)
 			include << parent;
+
+		print("TODO: Consider threads.");
 	}
 
 	// Scope.
@@ -41,13 +44,14 @@ class Parser extends lang:bs:NamedDecl {
 	}
 
 	// Create the parser.
+	// TODO: Overload with starting iterator as well.
 	protected Named doCreate() : override {
 		SimpleName resultName;
 		resultName.add("parser");
 		resultName.add("Result", [start.result]);
 		var resultType = scope.value(resultName, name.pos);
 
-		Function fn(name.pos, resultType, name.v, [named{Str}]);
+		BSTreeFn fn(resultType, name, [ValParam(named{Str}, "input")], null);
 		populateFn(fn);
 		fn;
 	}

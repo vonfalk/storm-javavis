@@ -23,7 +23,11 @@ Result : generate(params) {
 	// Error message.
 	t.add(MemberVar("error", named{Str}, t));
 
-	// TODO: Add a suitable constructor.
+	// We know that all of these are default-constructible, so we can generate a default ctor.
+	t.add(TypeDefaultCtor(t));
+	t.add(TypeCopyCtor(t));
+	t.add(TypeAssign(t));
+	t.add(TypeDeepCopy(t));
 
 	t;
 }

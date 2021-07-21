@@ -1,16 +1,32 @@
 use core:lang;
 use lang:bnf;
+use lang:bs;
 use lang:bs:macro;
 
 /**
  * The recursive descent parser.
+ *
+ * It generates a set of functions, one for each rule, with the following structure:
+ * T? Rx(State state, ...) {
+ *     if (first-set of P1 matches)
+ *         return P1(state, ...);
+ *     if (first-set of P2 matches)
+ *         return P2(state, ...);
+ *     state.error = "Expected ...";
+ *     return null;
+ * }
+ *
+ * T? Px(State state, ...) {
+ *     // For each production, either match the regex and update state, or call the corresponding rule.
+ *     return me;
+ * }
  */
 class RecursiveParser extends Parser {
 	init(Scope env, SStr name, SrcName start) {
 		init(env, name, start) {}
 	}
 
-	void populateFn(Function fn) : override {
+	void populateFn(BSTreeFn fn) : override {
 		Grammar grammar(start, include, true);
 		print(grammar.toS);
 
@@ -26,8 +42,68 @@ class RecursiveParser extends Parser {
 			}
 		}
 
-		print("TODO: Implement the actual parser.");
-		throw NotSupported("Implement the actual parser!");
+		FnBody body(fn, scope);
+		fn.body = body;
+
+		unless (input = body.variable(SimplePart("input")))
+			throw InternalError("Unable to find the input variable.");
+
+		Var stateVar(body, named{State}, SStr("state"), Actuals(LocalVarAccess(SrcPos(), input)));
+		body.add(stateVar);
+
+		// Create parser functions.
+		Rule->BSTreeFn ruleFns = createRuleFns(grammar);
+		Production->BSTreeFn prodFns = createProdFns(grammar);
+
+		// Then, generate code in them. We do this in two steps since the implementation of one
+		// function needs to call many others.
+		populateFns(ruleFns, prodFns);
+
+		Var resultVar(body, fn.result.type, SStr("result"), Actuals());
+		body.add(resultVar);
+
+		body.add(pattern(body) {
+					// Copy data to the result.
+					result.end = state.pos;
+					result.error = state.error;
+					return result;
+				});
 	}
 
+	/**
+	 * State for the parser.
+	 */
+	class State {
+		// String to parse.
+		Str input;
+
+		// Current position.
+		Str:Iter pos;
+
+		// Error?
+		Str error;
+
+		init(Str input) {
+			init {
+				input = input;
+				pos = input.begin;
+				error = "";
+			}
+		}
+	}
+
+	// Create rule functions, but don't populate them yet.
+	Rule->BSTreeFn createRuleFns(Grammar grammar) {
+		Rule->BSTreeFn r;
+		r;
+	}
+
+	// Create production functions, but don't populate them yet.
+	Production->BSTreeFn createProdFns(Grammar grammar) {
+		Production->BSTreeFn r;
+		r;
+	}
+
+	// Populate the functions.
+	void populateFns(Rule->BSTreeFn rules, Production->BSTreeFn prods) {}
 }
