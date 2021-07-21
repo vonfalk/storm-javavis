@@ -83,11 +83,17 @@ class Grammar on Compiler {
 
 	// Check if the grammar has left-recursive productions. Returns a list of strings that describe
 	// paths with left recursion. The list is empty if none exist.
+	// The implementation tries to avoid duplicates in the reporting. Otherwise, two rules that were
+	// mutually left-recursive would always appear twice.
 	Str[] leftRecursive() {
 		Str[] result;
+		Rule->Bool visited;
 		for (k, v in rules) {
-			if (x = leftRecursive(k))
-				result << x;
+			for (r in v) {
+				if (x = leftRecursive(visited, k, r)) {
+					result << (k.identifier + " -> " + x);
+				}
+			}
 		}
 		result;
 	}
@@ -366,5 +372,23 @@ class Grammar on Compiler {
 				}
 			}
 		}
+	}
+}
+
+
+/**
+ * Generic grammar exception.
+ */
+class GrammarError extends CodeError {
+	init(SrcPos where, Str message) {
+		init(where) {
+			message = message;
+		}
+	}
+
+	Str message;
+
+	void messageText(StrBuf to) : override {
+		to << "Invalid grammar: " << message;
 	}
 }

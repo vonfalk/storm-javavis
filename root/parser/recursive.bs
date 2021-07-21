@@ -14,7 +14,17 @@ class RecursiveParser extends Parser {
 		Grammar grammar(start, include, true);
 		print(grammar.toS);
 
-		print("Left recursive: ${grammar.leftRecursive}");
+		{
+			var recursive = grammar.leftRecursive;
+			if (recursive.any) {
+				StrBuf msg;
+				msg << "Left recursive grammars are not supported by the recursive descent parser. ";
+				msg << "The grammar has at least the following left recursive components:\n";
+				msg << join(recursive, "\n");
+
+				throw GrammarError(name.pos, msg.toS);
+			}
+		}
 
 		print("TODO: Implement the actual parser.");
 		throw NotSupported("Implement the actual parser!");
