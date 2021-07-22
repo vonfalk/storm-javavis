@@ -235,11 +235,17 @@ namespace storm {
 			setCode(new (this) LazyCode(fnPtr(engine(), &BSRawFn::generateCode, this)));
 		}
 
-		void BSRawFn::addParams(Block *to) {
+		Array<LocalVar *> *BSRawFn::addParams(Block *to) {
+			Array<LocalVar *> *params = new (this) Array<LocalVar *>();
+			params->reserve(valParams->count());
+
 			for (Nat i = 0; i < valParams->count(); i++) {
 				LocalVar *v = createParam(engine(), valParams->at(i), pos);
 				to->add(v);
+				params->push(v);
 			}
+
+			return params;
 		}
 
 		Array<DocParam> *BSRawFn::docParams() {
@@ -372,12 +378,12 @@ namespace storm {
 
 		bs::FnBody::FnBody(BSRawFn *owner, Scope scope)
 			: ExprBlock(owner->pos, scope), type(owner->result) {
-		 	owner->addParams(this);
+		 	parameters = owner->addParams(this);
 		}
 
 		bs::FnBody::FnBody(BSFunction *owner)
 			: ExprBlock(owner->body ? owner->body->pos : owner->pos, owner->scope), type(owner->result) {
-			owner->addParams(this);
+			parameters = owner->addParams(this);
 		}
 
 		void bs::FnBody::code(CodeGen *state, CodeResult *to) {

@@ -92,7 +92,7 @@ namespace storm {
 			void STORM_FN makeStatic();
 
 			// Add function parameters to a block. Mainly for internal use.
-			void STORM_FN addParams(Block *block);
+			Array<LocalVar *> *STORM_FN addParams(Block *block);
 
 			// Get parameters as required by documentation.
 			Array<DocParam> *STORM_FN docParams();
@@ -192,9 +192,13 @@ namespace storm {
 			// Store the result type (needed for 'return' among others).
 			Value type;
 
+			// Parameters, ordered as they appear in the list of formal parameters.
+			Array<LocalVar *> *parameters;
+
 			// We don't need to create a separate block for the function body itself, we can just
 			// use the root block.
 			virtual void STORM_FN code(CodeGen *state, CodeResult *to);
+
 		};
 
 	}

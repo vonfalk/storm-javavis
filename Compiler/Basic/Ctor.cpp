@@ -112,18 +112,21 @@ namespace storm {
 
 		void BSRawCtor::clearBody() {}
 
-		LocalVar *BSRawCtor::addParams(Block *to) {
-			LocalVar *thread = 0;
+		void BSRawCtor::addParams(Block *to, LocalVar *&thread, Array<LocalVar *> *&paramsOut) {
+			thread = null;
+
+			paramsOut = new (this) Array<LocalVar *>();
+			paramsOut->reserve(params->count());
 
 			for (nat i = 0; i < params->count(); i++) {
 				LocalVar *var = createParam(engine(), params->at(i), pos);
-
 				to->add(var);
+
 				if (i == 1 && needsThread)
 					thread = var;
+				else
+					paramsOut->push(var);
 			}
-
-			return thread;
 		}
 
 
@@ -196,12 +199,12 @@ namespace storm {
 		}
 
 		CtorBody::CtorBody(BSCtor *ctor) : ExprBlock(pickPos(ctor), ctor->scope), superCalled(false), initDone(false) {
-			threadParam = ctor->addParams(this);
+			ctor->addParams(this, threadParam, parameters);
 			owner = ctor;
 		}
 
 		CtorBody::CtorBody(BSRawCtor *ctor, Scope scope) : ExprBlock(ctor->pos, scope) {
-			threadParam = ctor->addParams(this);
+			ctor->addParams(this, threadParam, parameters);
 			owner = ctor;
 		}
 

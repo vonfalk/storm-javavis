@@ -28,8 +28,8 @@ namespace storm {
 			// We may need to run on a specific thread based on the current actual parameters.
 			virtual code::Var STORM_FN findThread(CodeGen *s, Array<code::Operand> *params);
 
-			// Add parameters. Returns the local variable that represents the 'threadParam' above if needed.
-			LocalVar *addParams(Block *to);
+			// Add parameters. Outputs 'threadParam' if not null, and remaining parameters for positional access.
+			void addParams(Block *to, LocalVar *&threadParam, Array<LocalVar *> *&params);
 
 			// Create the body. Expected to work until 'clearBody' is called.
 			virtual CtorBody *STORM_FN createBody();
@@ -116,6 +116,9 @@ namespace storm {
 			// Temporary storage of the actual LocalVar that stores the parameter we need to capture.
 			LocalVar *threadParam;
 
+			// Other formal parameters, in the order they appear in the formal parameter list.
+			Array<LocalVar *> *parameters;
+
 			// Stores a copy of the parameter used to store the thread. Not reference counted.
 			// This is to make it impossible to overwrite the thread parameter before passing it
 			// to the TObject's constructor, like this:
@@ -133,6 +136,7 @@ namespace storm {
 
 			// We don't need to create a separate block, we can just use the root block instead.
 			virtual void STORM_FN code(CodeGen *state, CodeResult *to);
+
 		};
 
 		/**
