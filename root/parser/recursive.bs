@@ -8,17 +8,15 @@ use lang:bs:macro;
  *
  * It generates a set of functions, one for each rule, with the following structure:
  * T? Rx(State state, ...) {
- *     if (first-set of P1 matches)
- *         return P1(state, ...);
- *     if (first-set of P2 matches)
- *         return P2(state, ...);
+ *     if (first-set of P1 matches) {
+ *         // Update state according to regex matches or call any other rule fns.
+ *         return me;
+ *     }
+ *     if (first-set of P2 matches) {
+ *         // as above
+ *     }
  *     state.error = "Expected ...";
  *     return null;
- * }
- *
- * T? Px(State state, ...) {
- *     // For each production, either match the regex and update state, or call the corresponding rule.
- *     return me;
  * }
  */
 class RecursiveParser extends Parser {
@@ -45,25 +43,27 @@ class RecursiveParser extends Parser {
 		FnBody body(fn, scope);
 		fn.body = body;
 
-		unless (input = body.variable(SimplePart("input")))
-			throw InternalError("Unable to find the input variable.");
-
-		Var stateVar(body, named{State}, SStr("state"), Actuals(LocalVarAccess(SrcPos(), input)));
+		// Note: Parameter 0 is the input.
+		Var stateVar(body, named{State}, SStr("state"), Actuals(LocalVarAccess(SrcPos(), body.parameters[0])));
 		body.add(stateVar);
 
-		// Create parser functions.
-		Rule->BSTreeFn ruleFns = createRuleFns(grammar);
-		Production->BSTreeFn prodFns = createProdFns(grammar);
+		// Create all required functions.
+		FnCache cache(grammar, fn, scope);
+		cache.createAll();
 
-		// Then, generate code in them. We do this in two steps since the implementation of one
-		// function needs to call many others.
-		populateFns(ruleFns, prodFns);
+		// Call the function for the start production.
+		Actuals actuals;
+		actuals.add(LocalVarAccess(SrcPos(), stateVar.var));
+		for (Nat i = 1; i < body.parameters.count; i++)
+			actuals.add(LocalVarAccess(SrcPos(), body.parameters[i]));
+
+		FnCall call(fn.pos, scope, cache.get(grammar.start), actuals);
 
 		Var resultVar(body, fn.result.type, SStr("result"), Actuals());
 		body.add(resultVar);
 
 		body.add(pattern(body) {
-					// Copy data to the result.
+					result.value = ${call};
 					result.end = state.pos;
 					result.error = state.error;
 					return result;
@@ -90,20 +90,153 @@ class RecursiveParser extends Parser {
 				error = "";
 			}
 		}
+
+		// Helper function from the grammar to match a set of regexes.
+		// Does not update 'pos' on a match.
+		Bool matches(Regex[] candidates) {
+			for (x in candidates) {
+				if (x.match(input, pos))
+					return true;
+			}
+			false;
+		}
 	}
 
-	// Create rule functions, but don't populate them yet.
-	Rule->BSTreeFn createRuleFns(Grammar grammar) {
-		Rule->BSTreeFn r;
-		r;
+
+	/**
+	 * Keep track of created functions.
+	 */
+	class FnCache on Compiler {
+		init(Grammar grammar, Named parent, Scope scope) {
+			init {
+				grammar = grammar;
+				parent = parent;
+				scope = scope;
+			}
+		}
+
+		// Parent entity.
+		Named parent;
+
+		// Scope.
+		Scope scope;
+
+		// The grammar.
+		Grammar grammar;
+
+		// Created functions. Not necessarily entirely done.
+		private Rule->BSTreeFn ruleFns;
+
+		// Get a function. Does not populate it.
+		BSTreeFn get(Rule r) {
+			if (ruleFns.has(r))
+				return ruleFns.get(r);
+
+			var params = r.params.clone;
+			params.insert(0, ValParam(named{State}, " state"));
+			BSTreeFn fn(wrapMaybe(r.result), SStr(r.name), params, null);
+			ruleFns.put(r, fn);
+
+			fn.parentLookup = parent;
+
+			fn;
+		}
+
+		// Create all functions in the grammar.
+		void createAll() {
+			for (k, v in grammar.rules)
+				create(k, v);
+		}
+
+		// Create a particular rule.
+		void create(Rule rule, Production[] productions) {
+			BSTreeFn fn = get(rule);
+			FnBody body(fn, scope);
+			fn.body = body;
+
+			// Look at the first sets for each production.
+			// If we have duplicates, that means the grammar is not LL(1).
+			Set<Regex> seen;
+			for (p in productions) {
+				Set<Regex> first = grammar.first(p);
+				for (x in first) {
+					if (!seen.put(x))
+						throwLLError(x, productions);
+				}
+
+				createClause(body, first, p);
+			}
+
+			if (grammar.epsilon[rule]) {
+				// Find and execute a production that may match epsilon.
+			} else {
+				// Emit an error and return null.
+			}
+		}
+
+		// Create a clause for a production inside the function.
+		private void createClause(FnBody body, Set<Regex> first, Production production) {
+			If check(body, createCondition(body, first));
+			body.add(check);
+
+			CondSuccess success(SrcPos(), check, check.condition);
+			success.set(createParse(body, production));
+			check.trueCode = success;
+		}
+
+		// Create code that evaluates to 'true' if one of the regexes match.
+		private Expr createCondition(FnBody body, Set<Regex> first) {
+			Regex[] candidates;
+			for (x in first)
+				candidates << x;
+
+			Actuals params;
+			params.add(LocalVarAccess(SrcPos(), body.parameters[0]));
+			params.add(RegexArray(candidates));
+			FnCall(SrcPos(), scope, named{State:matches<State, Regex[]>}, params);
+		}
+
+		private Expr createParse(FnBody body, Production production) {
+			// TODO!
+			Expr(SrcPos());
+		}
+
+		// Throw an error indicating problems with first-sets.
+		// We don't worry about efficiency here, as we know we will fail compilation anyway.
+		private void throwLLError(Regex regex, Production[] productions) {
+			StrBuf msg;
+			msg << "The grammar is not LL(1) since multiple productions may start with the same regex.\n";
+			msg << "The following productions may all start with \"" << regex << "\":\n";
+			for (x in productions) {
+				if (grammar.first(x).has(regex))
+					msg << x << "\n";
+			}
+			throw GrammarError(parent.pos, msg.toS);
+		}
+
+	}
+}
+
+private class RegexArray extends Expr {
+	private Regex[] data;
+
+	init(Regex[] data) {
+		init(SrcPos()) { data = data; }
 	}
 
-	// Create production functions, but don't populate them yet.
-	Production->BSTreeFn createProdFns(Grammar grammar) {
-		Production->BSTreeFn r;
-		r;
+	ExprResult result() {
+		ExprResult(Value(named{Regex[]}));
 	}
 
-	// Populate the functions.
-	void populateFns(Rule->BSTreeFn rules, Production->BSTreeFn prods) {}
+	void code(CodeGen state, CodeResult result) {
+		if (result.needed) {
+			var v = result.location(state);
+			state.l << mov(v, objPtr(data));
+			result.created(state);
+		}
+	}
+
+	Str toS() {
+		"<captured regex array>";
+	}
 }

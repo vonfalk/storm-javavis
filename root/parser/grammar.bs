@@ -81,6 +81,42 @@ class Grammar on Compiler {
 		}
 	}
 
+	// Compute the first-set for a production.
+	Set<Regex> first(Production p) {
+		Set<Regex> result;
+		updateFirst(result, p.firstA, false);
+		updateFirst(result, p.firstB, true);
+		result;
+	}
+
+	// Helper for 'first'.
+	private void updateFirst(Set<Regex> out, ProductionIter at, Bool repeated) {
+		if (!at.valid)
+			return;
+		if (at.end)
+			return;
+
+		if (t = at.token as RuleToken) {
+			for (x in first[t.rule])
+				out.put(x);
+
+			if (!epsilon[t.rule])
+				return;
+		} else if (t = at.token as RegexToken) {
+			out.put(t.regex);
+
+			if (!regexEpsilon)
+				return;
+			if (!t.regex.matchesEmpty())
+				return;
+		}
+
+		// Epsilon found, keep going.
+		updateFirst(out, at.nextA, repeated);
+		if (!repeated)
+			updateFirst(out, at.nextB, true);
+	}
+
 	// Check if the grammar has left-recursive productions. Returns a list of strings that describe
 	// paths with left recursion. The list is empty if none exist.
 	// The implementation tries to avoid duplicates in the reporting. Otherwise, two rules that were
@@ -389,6 +425,6 @@ class GrammarError extends CodeError {
 	Str message;
 
 	void messageText(StrBuf to) : override {
-		to << "Invalid grammar: " << message;
+		to << "Grammar error: " << message;
 	}
 }

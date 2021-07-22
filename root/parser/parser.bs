@@ -51,7 +51,10 @@ class Parser extends lang:bs:NamedDecl {
 		resultName.add("Result", [start.result]);
 		var resultType = scope.value(resultName, name.pos);
 
-		BSTreeFn fn(resultType, name, [ValParam(named{Str}, "input")], null);
+		ValParam[] params = start.params.clone;
+		params.insert(0, ValParam(named{Str}, " input"));
+
+		BSTreeFn fn(resultType, name, params, null);
 		populateFn(fn);
 		fn;
 	}
