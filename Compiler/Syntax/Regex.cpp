@@ -85,16 +85,16 @@ namespace storm {
 			states->filled = flags;
 		}
 
-		Bool Regex::match(Str *str) {
+		Maybe<Str::Iter> Regex::match(Str *str) {
 			return match(str, str->begin());
 		}
 
-		Bool Regex::match(Str *str, Str::Iter start) {
+		Maybe<Str::Iter> Regex::match(Str *str, Str::Iter start) {
 			Nat r = matchRaw(str, start.offset());
 			if (r == NO_MATCH)
-				return false;
-			lastMatch = str->posIter(r);
-			return true;
+				return Maybe<Str::Iter>();
+			else
+				return Maybe<Str::Iter>(str->posIter(r));
 		}
 
 		Bool Regex::matchAll(Str *str) {
@@ -106,10 +106,6 @@ namespace storm {
 			if (r == NO_MATCH)
 				return false;
 			return str->posIter(r) == str->end();
-		}
-
-		Str::Iter Regex::matchEnd() const {
-			return lastMatch;
 		}
 
 		Bool Regex::simple() const {

@@ -3,6 +3,7 @@
 #include "Core/StrBuf.h"
 #include "Core/Str.h"
 #include "Core/Exception.h"
+#include "Core/Maybe.h"
 
 namespace storm {
 	namespace syntax {
@@ -25,19 +26,16 @@ namespace storm {
 			// Does this regex match the empty string?
 			Bool STORM_FN matchesEmpty() const;
 
-			// Match the string 'str' starting from 'start' (if present). Returns true if a match
-			// was possible at all. The matched part of the string can be retrieved using
-			// 'matchEnd'.
-			// TODO: Return MAYBE(Str::Iter) if that is ever supported!
-			Bool STORM_FN match(Str *str);
-			Bool STORM_FN match(Str *str, Str::Iter start);
+			// Match the string 'str' starting from 'start' (if present). Returns an iterator if a
+			// match was possible, or null if the regex did not match. Note the difference between
+			// null (no match) and the start iterator (a match of the empty string).
+			Maybe<Str::Iter> STORM_FN match(Str *str);
+			Maybe<Str::Iter> STORM_FN match(Str *str, Str::Iter start);
 
-			// Match the entire string 'str' starting from 'start'.
+			// Match the entire string 'str' starting from 'start'. Does not return an iterator as
+			// that iterator would always be the end iterator or nothing.
 			Bool STORM_FN matchAll(Str *str);
 			Bool STORM_FN matchAll(Str *str, Str::Iter start);
-
-			// Get the result of the last match.
-			Str::Iter STORM_FN matchEnd() const;
 
 			// Is this a 'simple' regex? Ie. a regex that is basically a string literal?
 			Bool STORM_FN simple() const;
@@ -158,9 +156,6 @@ namespace storm {
 			// All states.
 			// We use 'filled' in here to store flags regarding the complexity of the regex.
 			GcArray<State> *states;
-
-			// Last match.
-			Str::Iter lastMatch;
 
 			// Parse a string.
 			void parse(Str *parse);

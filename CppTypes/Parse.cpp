@@ -79,7 +79,7 @@ static Auto<TypeRef> parseTypeRef(Tokenizer &tok) {
 	Auto<TypeRef> type;
 	if (tok.skipIf(L"MAYBE")) {
 		tok.expect(L"(");
-		type = new MaybeType(parseTypeRef(tok));
+		type = new MaybeClassType(parseTypeRef(tok));
 		tok.expect(L")");
 	} else if (tok.skipIf(L"UNKNOWN")) {
 		tok.expect(L"(");

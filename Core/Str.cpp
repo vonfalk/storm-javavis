@@ -942,4 +942,12 @@ namespace storm {
 		return str->substr(str->posIter(start), str->posIter(end));
 	}
 
+	StrBuf *operator <<(StrBuf *to, Str::Iter iter) {
+		*to << S("Iterator: ");
+		*to << iter.data()->substr(iter.data()->begin(), iter);
+		*to << S("|>");
+		*to << iter.data()->substr(iter);
+		return to;
+	}
+
 }

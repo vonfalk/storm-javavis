@@ -308,7 +308,10 @@ static TypeRef *findType(TypeRef *r, bool &ref, bool &maybe) {
 	} else if (RefType *rt = as<RefType>(r)) {
 		ref = true;
 		return findType(rt->of.borrow(), ref, maybe);
-	} else if (MaybeType *m = as<MaybeType>(r)) {
+	} else if (MaybeClassType *m = as<MaybeClassType>(r)) {
+		maybe = true;
+		return findType(m->of.borrow(), ref, maybe);
+	} else if (MaybeValueType *m = as<MaybeValueType>(r)) {
 		maybe = true;
 		return findType(m->of.borrow(), ref, maybe);
 	} else {

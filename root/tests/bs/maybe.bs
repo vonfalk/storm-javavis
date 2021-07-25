@@ -182,3 +182,14 @@ Int testExplicitSelf() {
 Int testExplicitOther() {
 	MaybeClass().explicitOther();
 }
+
+// Catch a maybe-type from C++.
+Str testReceiveMaybe() {
+	lang:bnf:Regex r("a?b");
+	StrBuf result;
+	if (x = r.match("abc"))
+		result << x;
+	if (x = r.match("c"))
+		result << x;
+	result.toS;
+}

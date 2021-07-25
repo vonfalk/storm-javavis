@@ -24,8 +24,12 @@ Auto<TypeRef> TemplateType::resolve(World &in, const CppName &context) const {
 	} else if (name == L"GcWeakArray" && p.size() == 1) {
 		return new GcArrayType(pos, p[0], true);
 	} else if (Template *found = in.templates.findUnsafe(name, context)) {
-		// Found it!
-		return new ResolvedTemplateType(pos, found, p);
+		// Found it! Note that the Maybe<> type is special.
+		if (found->name == L"storm::Maybe") {
+			return new MaybeValueType(p[0]);
+		} else {
+			return new ResolvedTemplateType(pos, found, p);
+		}
 	} else {
 		// Nothing found. Remain a unique, non-gc:d type.
 		return new TemplateType(pos, name, params);
@@ -82,23 +86,56 @@ void RefType::print(wostream &to) const {
 	to << of << L"&";
 }
 
-MaybeType::MaybeType(Auto<TypeRef> of) : TypeRef(of->pos) {
+MaybeClassType::MaybeClassType(Auto<TypeRef> of) : TypeRef(of->pos) {
 	if (this->of = of.as<PtrType>())
 		;
 	else
-		throw Error(L"MAYBE() must contain a pointer.", of->pos);
+		throw Error(L"MAYBE(T) must contain a pointer, use Maybe<T> instead.", of->pos);
 }
 
-Auto<TypeRef> MaybeType::resolve(World &in, const CppName &context) const {
-	Auto<MaybeType> r = new MaybeType(*this);
+Auto<TypeRef> MaybeClassType::resolve(World &in, const CppName &context) const {
+	Auto<MaybeClassType> r = new MaybeClassType(*this);
 	r->of = of->resolve(in, context).as<PtrType>();
 	if (!r->of)
 		throw Error(L"MAYBE content turned into non-pointer.", of->pos);
 	return r;
 }
 
-void MaybeType::print(wostream &to) const {
+void MaybeClassType::print(wostream &to) const {
 	to << L"MAYBE(" << of << L")";
+}
+
+MaybeValueType::MaybeValueType(Auto<TypeRef> of) : TypeRef(of->pos), of(of) {
+	if (of.as<PtrType>())
+		throw Error(L"Maybe<T> must refer to a value, use MAYBE(T *) instead.", of->pos);
+}
+
+Size MaybeValueType::size() const {
+	Size s = of->size();
+	// Align to struct boundary (should already be done).
+	s += s.align();
+
+	// Add a bool and align again.
+	s += Size::sByte;
+	s += s.align();
+
+	return s;
+}
+
+Auto<TypeRef> MaybeValueType::resolve(World &in, const CppName &context) const {
+	Auto<MaybeValueType> r = new MaybeValueType(*this);
+	r->of = of->resolve(in, context);
+	if (Auto<ResolvedType> x = r->of.as<ResolvedType>()) {
+		if (Class *c = as<Class>(x->type)) {
+			if (c->hasDtor())
+				throw Error(L"The maybe-type does not support values with destructors or copy-ctors.", of->pos);
+		}
+	}
+	return r;
+}
+
+void MaybeValueType::print(wostream &to) const {
+	to << L"storm::Maybe<" << of << L">";
 }
 
 NamedType::NamedType(const SrcPos &pos, const CppName &name) : TypeRef(pos), name(name) {}

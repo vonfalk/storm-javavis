@@ -145,17 +145,40 @@ public:
 
 
 /**
- * Maybe type.
+ * Maybe type, for classes (i.e. MAYBE(T *))
  */
-class MaybeType : public TypeRef {
+class MaybeClassType : public TypeRef {
 public:
-	MaybeType(Auto<TypeRef> of);
+	MaybeClassType(Auto<TypeRef> of);
 
 	// Type.
 	Auto<PtrType> of;
 
 	// Get the size of this type.
 	virtual Size size() const { return of->size(); }
+
+	// Is this a gc:d type?
+	virtual bool gcType() const { return of->gcType(); }
+
+	// Resolve.
+	virtual Auto<TypeRef> resolve(World &in, const CppName &context) const;
+
+	// Print.
+	virtual void print(wostream &to) const;
+};
+
+/**
+ * Maybe type, for values (i.e. Maybe<T>).
+ */
+class MaybeValueType : public TypeRef {
+public:
+	MaybeValueType(Auto<TypeRef> of);
+
+	// Type.
+	Auto<TypeRef> of;
+
+	// Get the size of this type.
+	virtual Size size() const;
 
 	// Is this a gc:d type?
 	virtual bool gcType() const { return of->gcType(); }
@@ -416,7 +439,7 @@ inline bool isGcPtr(Auto<TypeRef> t) {
 		return p->of->gcType();
 	} else if (Auto<RefType> r = t.as<RefType>()) {
 		return r->of->gcType();
-	} else if (Auto<MaybeType> r = t.as<MaybeType>()) {
+	} else if (Auto<MaybeClassType> r = t.as<MaybeClassType>()) {
 		return isGcPtr(r->of);
 	} else if (Auto<UnknownType> r = t.as<UnknownType>()) {
 		return r->gcType();

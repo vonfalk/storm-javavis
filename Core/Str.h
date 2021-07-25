@@ -141,6 +141,9 @@ namespace storm {
 			// Peek at the raw offset.
 			inline Nat offset() const { return pos; }
 
+			// Peek at the string.
+			inline const Str *data() const { return owner; }
+
 		private:
 			friend class Str;
 
@@ -229,6 +232,9 @@ namespace storm {
 
 	// Remove leading and trailing empty lines from a string.
 	Str *STORM_FN trimBlankLines(Str *src);
+
+	// Output for iterators for convenience.
+	StrBuf *STORM_FN operator <<(StrBuf *to, Str::Iter iter);
 
 #ifdef POSIX
 	// Low-level string operations for UTF-16.
