@@ -18,6 +18,26 @@ use lang:bs:macro;
  *     state.error = "Expected ...";
  *     return null;
  * }
+ *
+ * Each of the "update state" chunks is the logic for matching a single production. It has the
+ * following structure:
+ *
+ * var a = if (x = regex.match(state.input, state.pos)) {
+ *     Str matched = state.input.substr(state.pos, x);
+ *     state.pos = x;
+ *     matched;
+ * } else {
+ *     state.error = "Expected ...";
+ *     return null;
+ * }
+ *
+ * or
+ *
+ * var a = if (x = Px(state, ...)) {
+ *     x;
+ * } else {
+ *     return null;
+ * }
  */
 class RecursiveParser extends Parser {
 	init(Scope env, SStr name, SrcName start) {
@@ -134,7 +154,8 @@ class RecursiveParser extends Parser {
 
 			var params = r.params.clone;
 			params.insert(0, ValParam(named{State}, " state"));
-			BSTreeFn fn(wrapMaybe(r.result), SStr(r.name), params, null);
+
+			BSTreeFn fn(resultType(r.result), SStr(r.name), params, null);
 			ruleFns.put(r, fn);
 
 			fn.parentLookup = parent;
@@ -151,6 +172,7 @@ class RecursiveParser extends Parser {
 		// Create a particular rule.
 		void create(Rule rule, Production[] productions) {
 			BSTreeFn fn = get(rule);
+			print("Fn: ${fn}");
 			FnBody body(fn, scope);
 			fn.body = body;
 
@@ -237,6 +259,6 @@ private class RegexArray extends Expr {
 	}
 
 	Str toS() {
-		"<captured regex array>";
+		data.toS;
 	}
 }

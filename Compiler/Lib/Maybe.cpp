@@ -22,8 +22,15 @@ namespace storm {
 		Value p = val->at(0);
 		if (p.ref)
 			return null;
-		if (isMaybe(p))
+
+		// It is strange to support Maybe<void>. It could work, but it is not possible to initialize
+		// it to a sensible "present" value using the same API as for the other cases.
+		if (!p.type)
 			return null;
+
+		// It is convenient to have layers of Maybe<T> sometimes... Seems to work OK.
+		// if (isMaybe(p))
+		// 	return null;
 
 		if (p.isValue())
 			return new (name) MaybeValueType(name, p.type);
@@ -44,8 +51,6 @@ namespace storm {
 	}
 
 	Value wrapMaybe(Value v) {
-		if (isMaybe(v))
-			return v;
 		if (v == Value())
 			return v;
 		Engine &e = v.type->engine;

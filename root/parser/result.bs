@@ -1,6 +1,14 @@
 use lang:bs:macro;
 use core:lang;
 
+// Type of the result.
+package Value resultType(Value original) {
+	if (original == Value())
+		Value(named{Bool});
+	else
+		wrapMaybe(original);
+}
+
 /**
  * Result type from the parsers. Contains information about a parse.
  */
@@ -15,7 +23,7 @@ Result : generate(params) {
 	// Data members:
 
 	// Parse value, if parse succeeded.
-	t.add(MemberVar("value", wrapMaybe(resType), t));
+	t.add(MemberVar("value", resultType(resType), t));
 
 	// Last position parsed.
 	t.add(MemberVar("end", named{Str:Iter}, t));
