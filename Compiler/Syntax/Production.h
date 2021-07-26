@@ -131,6 +131,12 @@ namespace storm {
 			// Create an iterator at a specific position.
 			ProductionIter STORM_FN posIter(Nat pos);
 
+			// Result, if given.
+			MAYBE(Name *) result;
+
+			// Parameters to the result, if any.
+			MAYBE(Array<Str *> *) resultParams;
+
 			// Output.
 			virtual void STORM_FN toS(StrBuf *to) const;
 			void STORM_FN toS(StrBuf *to, Nat mark) const;

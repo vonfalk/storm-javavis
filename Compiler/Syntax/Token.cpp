@@ -3,6 +3,7 @@
 #include "Rule.h"
 #include "Decl.h"
 #include "Core/StrBuf.h"
+#include "Core/Join.h"
 
 namespace storm {
 	namespace syntax {
@@ -55,18 +56,23 @@ namespace storm {
 		}
 
 
-		RuleToken::RuleToken(Rule *rule) : rule(rule) {
+		RuleToken::RuleToken(Rule *rule, Array<Str *> *params) : rule(rule), params(params) {
 			color = rule->color;
 			type = tRule;
 		}
 
 		void RuleToken::toS(StrBuf *to, Bool bindings) const {
 			*to << rule->identifier();
+			if (params) {
+				*to << S("(");
+				join(to, params, S(", "));
+				*to << S(")");
+			}
 			Token::toS(to, bindings);
 		}
 
 
-		DelimToken::DelimToken(delim::Delimiter type, Rule *rule) : RuleToken(rule), type(type) {
+		DelimToken::DelimToken(delim::Delimiter type, Rule *rule) : RuleToken(rule, null), type(type) {
 			Token::type = tDelim;
 		}
 

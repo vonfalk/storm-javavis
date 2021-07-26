@@ -41,7 +41,8 @@ namespace storm {
 			// Capture the raw syntax tree?
 			Bool raw;
 
-			// Was this token bound to a variable?
+			// Was this token bound to a variable? Note that "target" is also set if we need to
+			// invoke a function, even if the token was not saved to a variable.
 			Bool bound;
 
 			// Update the data in here from a TokenDecl.
@@ -107,10 +108,13 @@ namespace storm {
 			STORM_CLASS;
 		public:
 			// Create.
-			STORM_CTOR RuleToken(Rule *rule);
+			STORM_CTOR RuleToken(Rule *rule, MAYBE(Array<Str *> *) params);
 
 			// Rule we're matching.
 			Rule *rule;
+
+			// Parameters to this token. null means no parens were given.
+			MAYBE(Array<Str *> *) params;
 
 			// Output.
 			virtual void STORM_FN toS(StrBuf *to, Bool bindings) const;

@@ -218,7 +218,7 @@ namespace storm {
 
 		Token *RuleTokenDecl::create(SrcPos pos, Scope scope, Delimiters *) {
 			if (Rule *rule = as<Rule>(scope.find(this->rule))) {
-				return new (this) RuleToken(rule);
+				return new (this) RuleToken(rule, params);
 			} else {
 				throw new (this) SyntaxError(pos, TO_S(this, S("The rule ") << this->rule << S(" does not exist.")));
 			}

@@ -111,7 +111,7 @@ namespace storm {
 
 				// Create the initial production.
 				rootProd = new (this) Production();
-				rootProd->tokens->push(new (this) RuleToken(root));
+				rootProd->tokens->push(new (this) RuleToken(root, null));
 
 				// Set up the initial state.
 				steps->v[0]->push(this, rootProd->firstA(), 0);

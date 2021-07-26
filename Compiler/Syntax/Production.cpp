@@ -3,6 +3,7 @@
 #include "Compiler/Lib/Array.h"
 #include "Compiler/Lib/Maybe.h"
 #include "Compiler/TypeCtor.h"
+#include "Core/Join.h"
 #include "Utils/Memory.h"
 #include "Exception.h"
 #include "Node.h"
@@ -35,6 +36,8 @@ namespace storm {
 			indentStart = decl->indentStart;
 			indentEnd = decl->indentEnd;
 			indentType = decl->indentType;
+			result = decl->result;
+			resultParams = decl->resultParams;
 
 			if (decl->parent) {
 				Named *p = scope.find(decl->parent);
@@ -160,6 +163,15 @@ namespace storm {
 
 			if (priority != 0)
 				*to << S("[") << priority << S("]");
+
+			if (result) {
+				*to << S(" => ") << result;
+				if (resultParams) {
+					*to << S("(");
+					join(to, resultParams, S(", "));
+					*to << S(")");
+				}
+			}
 
 			*to << L" : ";
 
