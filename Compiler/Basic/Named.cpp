@@ -146,7 +146,7 @@ namespace storm {
 		}
 
 		void FnCall::toS(StrBuf *to) const {
-			SimpleName *p = toExecute->path();
+			SimpleName *p = toExecute->safePath();
 			p->last() = new (p) SimplePart(p->last()->name);
 			*to << p << params;
 			if (async)

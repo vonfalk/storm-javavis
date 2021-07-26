@@ -113,6 +113,9 @@ namespace storm {
 		// Get a path to this Named.
 		SimpleName *STORM_FN path() const;
 
+		// Get a path, ignoring any parents that were not found.
+		SimpleName *safePath() const;
+
 		// Get an unique human-readable identifier for this named object.
 		virtual Str *STORM_FN identifier() const;
 
@@ -143,9 +146,6 @@ namespace storm {
 	private:
 		// Find closest named parent.
 		MAYBE(Named *) closestNamed() const;
-
-		// Get a path, ignoring any parents that were not found.
-		SimpleName *safePath() const;
 		MAYBE(Named *) safeClosestNamed() const;
 	};
 
