@@ -7,10 +7,11 @@ parseList : parser(List, recursive descent) {
 
 suite SimpleRecursive {
 	var r = parseList("A, B, C");
-	if (x = r.value)
+	if (x = r.value) {
 		print("Got result: ${x}");
-	else
-		print("Error: ${r.error}");
+	} else {
+		print("Error at ${r.end}, ${r.error}");
+	}
 
 	// TODO: Test with true/false in them, so we can skip "== true".
 	test r.value.any == true;
