@@ -572,10 +572,20 @@ static void parseType(Tokenizer &tok, ParseEnv &env, const CppName &inside, bool
 				sub.pkg += L"." + name.token;
 			parseEnum(tok, sub, fullName);
 		} else if (t.token == L"template") {
-			// Skip until we find a {, and skip the body as well.
-			while (!tok.skipIf(L"{"))
+			// Two possibilities:
+			while (true) {
+				// Either, we have something that ends with a semicolon. Then we're done.
+				if (tok.skipIf(L";")) {
+					break;
+				}
+				// Or, we have something declared inline. In that case, we skip the body as well.
+				if (tok.skipIf(L"{")) {
+					parseBlock(tok);
+					break;
+				}
+
 				tok.skip();
-			parseBlock(tok);
+			}
 		} else if (t.token == L"public") {
 			tok.skip();
 			tok.expect(L":");
