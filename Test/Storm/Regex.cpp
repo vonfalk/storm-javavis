@@ -134,5 +134,37 @@ BEGIN_TEST(RegexTest, Storm) {
 	CHECK_EQ(match(L"[ \n\r\t]*//.*[\n\r][ \n\r\t]*", L"   // comment\n  \n"), 17);
 	CHECK_EQ(match(L"[^\\\"\\\\]*", L"Type"), 4);
 
+} END_TEST
+
+static nat match(const wchar *regex, size_t regexLen, const char *str, size_t strLen) {
+	Engine &e = gEngine();
+	Regex r(new (e) Str(regex, regex + regexLen));
+	return r.matchAll(buffer(e, (Byte *)str, (Nat)strLen));
+}
+
+BEGIN_TEST(RegexBuffer, Storm) {
+	Engine &e = gEngine();
+
+	// Basic matching.
+	CHECK(match(S("ab"), 2, "ab", 2)); // simple case
+	CHECK(match(S("a.c"), 3, "abc", 3)); // no repeat
+	CHECK(match(S("a.*d"), 4, "abcd", 4)); // complex
+
+	// Null-bytes in the binary.
+	CHECK(match(S("a.c"), 3, "a\0c", 3)); // no repeat
+	CHECK(match(S("a.*d"), 4, "a\0\0d", 4)); // complex
+
+	// Null-bytes in the regex.
+	CHECK(match(S("\0a"), 2, "\0a", 2)); // simple
+	CHECK(match(S(".\0"), 2, "\0\0", 2)); // no repeat
+	CHECK(match(S("\0+"), 2, "\0\0", 2)); // complex
+
+	// Null-bytes in groups.
+	CHECK(match(S("[a\0]+"), 5, "\0a\0", 3));
+
+	// Non-ascii bytes (handled differently on different platforms).
+	CHECK(match(S("\x80"), 1, "\x80", 1)); // simple
+	CHECK(match(S("[\x80\x81]z"), 5, "\x81z", 2)); // no repeat
+	CHECK(match(S("[\x80-\x82]*"), 6, "\x80\x81\x82", 3));
 
 } END_TEST

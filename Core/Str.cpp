@@ -378,6 +378,10 @@ namespace storm {
 			*out++ = '\v';
 			src++;
 			return true;
+		case '0':
+			*out++ = '\0';
+			src++;
+			return true;
 		case 'x': {
 			int a = hexDigit(src[2]);
 			if (a < 0)
@@ -458,6 +462,9 @@ namespace storm {
 			return true;
 		} else if (ch == Char('\v')) {
 			*to << L"\\v";
+			return true;
+		} else if (ch == Char('\0')) {
+			*to << L"\\0";
 			return true;
 		} else if (ch == extra && extra != Char()) {
 			*to << L"\\" << extra;

@@ -14,6 +14,9 @@ namespace storm {
 		 * Regex matching. Stores pre-parsed patterns.
 		 *
 		 * Note: Surrogate pairs are not properly supported.
+		 *
+		 * Note: Care must be taken when serializing this class. Linux and Windows uses signed and
+		 * unsigned wchar, respectively.
 		 */
 		class Regex {
 			STORM_VALUE;
@@ -79,6 +82,10 @@ namespace storm {
 			public:
 				// Create.
 				Set(GcArray<wchar> *chars, Int first, Bool inverted);
+
+				// Value of 'first' when it is empty (large enough that it does not fit in a 16-bit
+				// codepoint).
+				static Int EMPTY;
 
 				// Create an empty set.
 				static Set empty();

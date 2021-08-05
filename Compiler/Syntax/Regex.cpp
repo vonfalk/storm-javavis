@@ -69,7 +69,7 @@ namespace storm {
 			nat pos = 0;
 			const wchar *s = str->c_str();
 			nat len = str->peekLength();
-			while (s[pos]) {
+			while (pos < len) {
 				tmp->push(State::parse(str->engine(), s, len, pos));
 				State &last = tmp->last();
 				if (flags >= fNoRepeat && (last.repeatable || last.skippable))
@@ -291,11 +291,13 @@ namespace storm {
 		 * Set.
 		 */
 
+		Int Regex::Set::EMPTY = 0x7FFFFFFF;
+
 		Regex::Set::Set(GcArray<wchar> *chars, Int first, Bool inverted)
 			: chars(chars), first(first), inverted(inverted) {}
 
 		Regex::Set Regex::Set::empty() {
-			return Set(null, 0, false);
+			return Set(null, EMPTY, false);
 		}
 
 		Regex::Set Regex::Set::single(wchar ch) {
@@ -303,7 +305,7 @@ namespace storm {
 		}
 
 		Regex::Set Regex::Set::all() {
-			return Set(null, 0, true);
+			return Set(null, EMPTY, true);
 		}
 
 		Regex::Set Regex::Set::parse(Engine &e, const wchar *str, nat len, nat &pos) {
@@ -415,14 +417,14 @@ namespace storm {
 		nat Regex::Set::count() const {
 			if (chars)
 				return chars->count;
-			else if (first != 0)
+			else if (first != EMPTY)
 				return 1;
 			else
 				return 0;
 		}
 
 		Bool Regex::Set::contains(wchar ch) const {
-			if (ch == wchar(first)) {
+			if (Int(ch) == first) {
 				return !inverted;
 			} else if (chars) {
 				for (nat i = 0; i < chars->count; i++) {
@@ -443,6 +445,9 @@ namespace storm {
 				break;
 			case '\r':
 				*to << L"\\r";
+				break;
+			case '\0':
+				*to << L"\\0";
 				break;
 			case '.':
 			case '[':
