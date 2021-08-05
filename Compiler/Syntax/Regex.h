@@ -3,6 +3,7 @@
 #include "Core/StrBuf.h"
 #include "Core/Str.h"
 #include "Core/Exception.h"
+#include "Core/Io/Buffer.h"
 #include "Core/Maybe.h"
 
 namespace storm {
@@ -36,6 +37,17 @@ namespace storm {
 			// that iterator would always be the end iterator or nothing.
 			Bool STORM_FN matchAll(Str *str);
 			Bool STORM_FN matchAll(Str *str, Str::Iter start);
+
+			// Match the buffer 'b' starting from 'start' (if present). Returns an integer
+			// indicating if a match was possible. When matching a binary, we treat each byte in the
+			// binary as a codepoint and match it against the pattern. This way it is possible to
+			// use "\x??" to match arbitrary bytes.
+			Maybe<Nat> STORM_FN match(Buffer b);
+			Maybe<Nat> STORM_FN match(Buffer b, Nat start);
+
+			// Match an entire buffer.
+			Bool STORM_FN matchAll(Buffer b);
+			Bool STORM_FN matchAll(Buffer b, Nat start);
 
 			// Is this a 'simple' regex? Ie. a regex that is basically a string literal?
 			Bool STORM_FN simple() const;
@@ -78,10 +90,10 @@ namespace storm {
 				static Set all();
 
 				// Parse a regex.
-				static Set parse(Engine &e, const wchar *str, nat &pos);
+				static Set parse(Engine &e, const wchar *str, nat len, nat &pos);
 
 				// Parse a group.
-				static Set parseGroup(Engine &e, const wchar *str, nat &pos);
+				static Set parseGroup(Engine &e, const wchar *str, nat len, nat &pos);
 
 				// Characters in this set.
 				GcArray<wchar> *chars;
@@ -125,7 +137,7 @@ namespace storm {
 				Bool repeatable;
 
 				// Parse the next state from a regex.
-				static State parse(Engine &e, const wchar *str, nat &pos);
+				static State parse(Engine &e, const wchar *str, nat len, nat &pos);
 
 				// Output.
 				void output(StrBuf *to) const;
@@ -160,14 +172,22 @@ namespace storm {
 			// Parse a string.
 			void parse(Str *parse);
 
-			// Match a simple string.
-			Nat matchSimple(Str *str, Nat start) const;
+			// Generic matching. Works for byte and wchar. Note: we don't handle "char" correctly,
+			// as that type might be signed.
+			template <class T>
+			Nat matchRaw(const T *str, Nat len, Nat start) const;
+
+			// Match a simple string (i.e. no uncertanties).
+			template <class T>
+			Nat matchSimple(const T *str, Nat len, Nat start) const;
 
 			// Match a string without repeats.
-			Nat matchNoRepeat(Str *str, Nat start) const;
+			template <class T>
+			Nat matchNoRepeat(const T *str, Nat len, Nat start) const;
 
 			// Match a complex string.
-			Nat matchComplex(Str *str, Nat start) const;
+			template <class T>
+			Nat matchComplex(const T *str, Nat len, Nat start) const;
 
 			// Output friends.
 			friend StrBuf &operator <<(StrBuf &to, Regex r);

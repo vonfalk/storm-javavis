@@ -68,8 +68,9 @@ namespace storm {
 
 			nat pos = 0;
 			const wchar *s = str->c_str();
+			nat len = str->peekLength();
 			while (s[pos]) {
-				tmp->push(State::parse(str->engine(), s, pos));
+				tmp->push(State::parse(str->engine(), s, len, pos));
 				State &last = tmp->last();
 				if (flags >= fNoRepeat && (last.repeatable || last.skippable))
 					flags = fComplex;
@@ -108,6 +109,28 @@ namespace storm {
 			return str->posIter(r) == str->end();
 		}
 
+		Maybe<Nat> Regex::match(Buffer b) {
+			return match(b, 0);
+		}
+
+		Maybe<Nat> Regex::match(Buffer b, Nat start) {
+			Nat r = matchRaw(b.dataPtr(), b.filled(), start);
+			if (r == NO_MATCH)
+				return Maybe<Nat>();
+			else
+				return Maybe<Nat>(r);
+		}
+
+		Bool Regex::matchAll(Buffer b) {
+			return matchAll(b, 0);
+		}
+
+		Bool Regex::matchAll(Buffer b, Nat start) {
+			Nat len = b.filled();
+			Nat r = matchRaw<byte>(b.dataPtr(), len, start);
+			return r == len;
+		}
+
 		Bool Regex::simple() const {
 			Bool s = true;
 			for (Nat i = 0; i < states->count; i++)
@@ -134,45 +157,56 @@ namespace storm {
 		}
 
 		Nat Regex::matchRaw(Str *s, Nat start) const {
+			return matchRaw<wchar>(s->c_str(), s->peekLength(), start);
+		}
+
+		template <class T>
+		Nat Regex::matchRaw(const T *s, Nat len, Nat start) const {
 			switch (states->filled) {
 			case fSimple:
-				return matchSimple(s, start);
+				return matchSimple(s, len, start);
 			case fNoRepeat:
-				return matchNoRepeat(s, start);
+				return matchNoRepeat(s, len, start);
 			default:
-				return matchComplex(s, start);
+				return matchComplex(s, len, start);
 			}
 		}
 
-		Nat Regex::matchSimple(Str *s, Nat start) const {
-			const wchar *str = s->c_str();
+		template <class T>
+		Nat Regex::matchSimple(const T *s, Nat len, Nat start) const {
+			if (start + states->count > len)
+				return NO_MATCH;
+			for (Nat i = 0; i < states->count; i++)
+				if (T(states->v[i].match.first) != s[i + start])
+					return NO_MATCH;
+			return start + states->count;
+		}
+
+		template <class T>
+		Nat Regex::matchNoRepeat(const T *s, Nat len, Nat start) const {
+			if (start + states->count > len)
+				return NO_MATCH;
 			for (Nat i = 0; i < states->count; i++) {
-				if (wchar(states->v[i].match.first) != str[i + start])
+				if (!states->v[i].match.contains(s[i + start]))
 					return NO_MATCH;
 			}
 			return start + states->count;
 		}
 
-		Nat Regex::matchNoRepeat(Str *s, Nat start) const {
-			const wchar *str = s->c_str();
-			for (Nat i = 0; i < states->count; i++) {
-				if (!states->v[i].match.contains(str[i + start]))
-					return NO_MATCH;
-			}
-			return start + states->count;
-		}
-
-		Nat Regex::matchComplex(Str *s, Nat start) const {
+		template <class T>
+		Nat Regex::matchComplex(const T *str, Nat len, Nat start) const {
 			// Pre-allocate this many entries for 'current' and 'next'.
 			const nat prealloc = 40;
-			const wchar *str = s->c_str();
 			typedef PODArray<nat, prealloc> States;
 
 			nat best = NO_MATCH;
 
+			// Extract an engine reference.
+			Engine &e = runtime::gcTypeOf(states)->type->engine;
+
 			// Our two needed state arrays.
-			States a(s->engine());
-			States b(s->engine());
+			States a(e);
+			States b(e);
 
 			// Current and next states.
 			States *current = &a;
@@ -187,10 +221,10 @@ namespace storm {
 			// loop would process the entire string even if we are done matching.
 			// Note: we iterate one iteration too far in this loop, so we can properly find
 			// the accepting state in all cases.
-			for (nat pos = start, size = start; pos <= size && current->count() > 0; pos++) {
-				wchar ch = str[pos];
-				if (ch)
-					size = pos + 1;
+			for (nat pos = start; pos <= len && current->count() > 0; pos++) {
+				wchar ch = 0;
+				if (pos < len)
+					ch = str[pos];
 
 				// Simulate each state...
 				for (nat i = 0; i < current->count(); i++) {
@@ -272,17 +306,17 @@ namespace storm {
 			return Set(null, 0, true);
 		}
 
-		Regex::Set Regex::Set::parse(Engine &e, const wchar *str, nat &pos) {
+		Regex::Set Regex::Set::parse(Engine &e, const wchar *str, nat len, nat &pos) {
 			switch (str[pos]) {
 			case '\\':
 				pos++;
-				if (str[pos])
+				if (pos < len)
 					return single(str[pos++]);
 				else
 					throw new (e) RegexError(str, S("Missing character after escape character (\\)"));
 			case '[':
 				pos++;
-				return parseGroup(e, str, pos);
+				return parseGroup(e, str, len, pos);
 			case '.':
 				pos++;
 				return all();
@@ -297,24 +331,27 @@ namespace storm {
 			pos++;
 		}
 
-		static nat parseGroup(Engine &e, const wchar *str, nat &pos, GcArray<wchar> *out) {
+		static nat parseGroup(Engine &e, const wchar *str, nat len, nat &pos, GcArray<wchar> *out) {
 			nat c = 0;
 			wchar lastCh = 0;
-			while (str[pos] != 0 && str[pos] != ']') {
+			bool hasLast = false;
+			while (pos < len && str[pos] != ']') {
 				switch (str[pos]) {
 				case '\\':
 					pos++;
-					if (str[pos]) {
+					if (pos < len) {
 						lastCh = str[pos];
+						hasLast = true;
 						put(out, c, str[pos++]);
 					} else {
 						lastCh = '\\';
+						hasLast = true;
 						put(out, c, '\\');
 					}
 					break;
 				case '-':
-					if (lastCh == 0) {
-						const wchar *msg = S("A dash (-) must not appear as the first character in a group.");
+					if (!hasLast) {
+						const wchar *msg = S("A character must appear before a dash (-) in a group.");
 						throw new (e) RegexError(str, msg);
 					}
 					++pos;
@@ -326,16 +363,19 @@ namespace storm {
 					for (wchar i = lastCh + 1; i <= str[pos]; i++) {
 						put(out, c, i);
 					}
-					lastCh = str[pos++];
+					++pos;
+					lastCh = 0;
+					hasLast = false;
 					break;
 				default:
 					lastCh = str[pos];
+					hasLast = true;
 					put(out, c, str[pos++]);
 					break;
 				}
 			}
 
-			if (str[pos] == '\0')
+			if (pos >= len)
 				throw new (e) RegexError(str, S("Missing ] to end the capture group."));
 
 			pos++;
@@ -351,7 +391,7 @@ namespace storm {
 			{},
 		};
 
-		Regex::Set Regex::Set::parseGroup(Engine &e, const wchar *str, nat &pos) {
+		Regex::Set Regex::Set::parseGroup(Engine &e, const wchar *str, nat len, nat &pos) {
 			Set r = empty();
 			if (str[pos] == '^') {
 				r.inverted = true;
@@ -359,10 +399,10 @@ namespace storm {
 			}
 
 			nat tmp = pos;
-			nat count = storm::syntax::parseGroup(e, str, tmp, null);
+			nat count = storm::syntax::parseGroup(e, str, len, tmp, null);
 
 			r.chars = runtime::allocArray<wchar>(e, &gcType, count);
-			storm::syntax::parseGroup(e, str, pos, r.chars);
+			storm::syntax::parseGroup(e, str, len, pos, r.chars);
 
 			if (count == 1) {
 				r.first = r.chars->v[0];
@@ -504,26 +544,28 @@ namespace storm {
 		 * State.
 		 */
 
-		Regex::State Regex::State::parse(Engine &e, const wchar *str, nat &pos) {
+		Regex::State Regex::State::parse(Engine &e, const wchar *str, nat len, nat &pos) {
 			State s = {
-				Set::parse(e, str, pos),
+				Set::parse(e, str, len, pos),
 				false,
 				false
 			};
-			switch (str[pos]) {
-			case '*':
-				s.skippable = true;
-				s.repeatable = true;
-				pos++;
-				break;
-			case '?':
-				s.skippable = true;
-				pos++;
-				break;
-			case '+':
-				s.repeatable = true;
-				pos++;
-				break;
+			if (pos < len) {
+				switch (str[pos]) {
+				case '*':
+					s.skippable = true;
+					s.repeatable = true;
+					pos++;
+					break;
+				case '?':
+					s.skippable = true;
+					pos++;
+					break;
+				case '+':
+					s.repeatable = true;
+					pos++;
+					break;
+				}
 			}
 			return s;
 		}
