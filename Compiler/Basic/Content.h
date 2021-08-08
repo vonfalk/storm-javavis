@@ -66,6 +66,24 @@ namespace storm {
 
 
 		/**
+		 * Declaration that expands to multiple declarations.
+		 *
+		 * Used since it is not possible to pass Array<TObject *> directly to Content as it is an
+		 * Object, not a TObject.
+		 */
+		class MultiDecl : public ObjectOn<Compiler> {
+			STORM_CLASS;
+		public:
+			STORM_CTOR MultiDecl();
+			STORM_CTOR MultiDecl(Array<TObject *> *data);
+
+			Array<TObject *> *data;
+
+			void STORM_FN push(TObject *v);
+		};
+
+
+		/**
 		 * Declare that a specific thread should be applied to all functions/classes in this file.
 		 */
 		class UseThreadDecl : public ObjectOn<Compiler> {

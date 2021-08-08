@@ -4,10 +4,14 @@ use core.lang;
 optional delimiter = SDelimiter;
 required delimiter = SRequiredDelimiter;
 
-// No package names.
-SFileItem => parser
+// Parser!
+SFileItem => parserOverloads(parser) : SParser(env) parser;
+
+// Ways to create a parser.
+Parser SParser(Scope env);
+SParser => parser
   : SName name #fnName, ":", "parser" #keyword, "(", SType start, ",", SParserType(env, name, start) parser, ")", ";";
-SFileItem => parser
+SParser => parser
   : SName name #fnName, ":", "parser" #keyword, "(", SType start, ",", SParserType(env, name, start) parser, ")", "{" [, (SParserInclude -> include,)* ]+ "}";
 
 // Includes for a parser.

@@ -64,8 +64,13 @@ class RecursiveParser extends Parser {
 		FnBody body(fn, scope);
 		fn.body = body;
 
-		// Note: Parameter 0 is the input.
-		Var stateVar(body, named{State}, SStr("state"), Actuals(LocalVarAccess(SrcPos(), body.parameters[0])));
+		// Note: Parameter 0 is the input, parameter 1 is the start position.
+		Var stateVar = {
+			Actuals params;
+			params.add(LocalVarAccess(SrcPos(), body.parameters[0]));
+			params.add(LocalVarAccess(SrcPos(), body.parameters[1]));
+			Var(body, named{State}, SStr("state"), params);
+		};
 		body.add(stateVar);
 
 		// Create all required functions.
@@ -75,7 +80,7 @@ class RecursiveParser extends Parser {
 		// Call the function for the start production.
 		Actuals actuals;
 		actuals.add(LocalVarAccess(SrcPos(), stateVar.var));
-		for (Nat i = 1; i < body.parameters.count; i++)
+		for (Nat i = 2; i < body.parameters.count; i++)
 			actuals.add(LocalVarAccess(SrcPos(), body.parameters[i]));
 
 		FnCall call(fn.pos, scope, cache.get(grammar.start), actuals);
@@ -104,10 +109,10 @@ class RecursiveParser extends Parser {
 		// Error?
 		Str error;
 
-		init(Str input) {
+		init(Str input, Str:Iter start) {
 			init {
 				input = input;
-				pos = input.begin;
+				pos = start;
 				error = "";
 			}
 		}

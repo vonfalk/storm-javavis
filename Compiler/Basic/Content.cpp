@@ -64,9 +64,13 @@ namespace storm {
 				add(v);
 			} else if (UseThreadDecl *u = as<UseThreadDecl>(o)) {
 				add(u);
+			} else if (MultiDecl *a = as<MultiDecl>(o)) {
+				for (Nat i = 0; i < a->data->count(); i++)
+					add(a->data->at(i));
 			} else {
 				Str *msg = TO_S(engine(), S("add for Content does not expect ")
-								<< runtime::typeOf(o)->identifier());
+								<< runtime::typeOf(o)->identifier()
+								<< S("."));
 				throw new (this) InternalError(msg);
 			}
 		}
@@ -88,6 +92,16 @@ namespace storm {
 
 			if (!fn->thread)
 				fn->thread = defaultThread;
+		}
+
+		MultiDecl::MultiDecl() {
+			data = new (this) Array<TObject *>();
+		}
+
+		MultiDecl::MultiDecl(Array<TObject *> *data) : data(data) {}
+
+		void MultiDecl::push(TObject *v) {
+			data->push(v);
 		}
 
 	}

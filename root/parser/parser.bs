@@ -43,8 +43,8 @@ class Parser extends lang:bs:NamedDecl {
 		include << inc;
 	}
 
-	// Create the parser.
-	// TODO: Overload with starting iterator as well.
+	// Create the parser. The generated function takes (Str, Str:Iter, ...) as parameters, where
+	// ... is the parameters to the root rule.
 	protected Named doCreate() : override {
 		SimpleName resultName;
 		resultName.add("parser");
@@ -53,6 +53,7 @@ class Parser extends lang:bs:NamedDecl {
 
 		ValParam[] params = start.params.clone;
 		params.insert(0, ValParam(named{Str}, " input"));
+		params.insert(1, ValParam(named{Str:Iter}, " start"));
 
 		BSTreeFn fn(resultType, name, params, null);
 		populateFn(fn);
@@ -66,4 +67,57 @@ private Rule findRule(Scope scope, SrcName name) {
 		rule;
 	else
 		throw SyntaxError(name.pos, "Unknown rule: ${name}");
+}
+
+// Create the overloads needed for the parser.
+MultiDecl parserOverloads(Parser parser) {
+	MultiDecl([parser, ParserOverload(parser)]);
+}
+
+/**
+ * Overload of a parser. Wraps the X(Str, Iter) with X(Str).
+ */
+class ParserOverload extends lang:bs:NamedDecl {
+	init(Parser parser) {
+		init {
+			wrap = parser;
+		}
+	}
+
+	Parser wrap;
+
+	protected Named doCreate() : override {
+		unless (wrapFn = wrap.create() as BSRawFn)
+			throw InternalError("Expected a function.");
+
+		ValParam[] params;
+		for (i, x in wrapFn.docParams) {
+			if (i != 1) // Remove the position parameter
+				params << ValParam(x.type, x.name);
+		}
+
+		BSTreeFn(wrapFn.result, SStr(wrapFn.name), params, wrapFn.declaredThread);
+	}
+
+	protected void doResolve(Named fn) : override {
+		unless (wrapFn = wrap.create() as BSRawFn)
+			throw InternalError("Expected a function.");
+
+		unless (fn as BSTreeFn)
+			throw InternalError("Expected a tree function.");
+
+		Scope scope(wrapFn);
+
+		FnBody body(fn, scope);
+		fn.body = body;
+
+		Actuals actuals;
+		LocalVarAccess str(SrcPos(), body.parameters[0]); // Source string.
+		actuals.add(str);
+		actuals.add(FnCall(SrcPos(), scope, named{Str:begin<Str>}, Actuals(str)));
+
+		for (Nat i = 2; i < body.parameters.count; i++)
+			actuals.add(LocalVarAccess(SrcPos(), body.parameters[i]));
+		body.add(FnCall(SrcPos(), scope, wrapFn, actuals));
+	}
 }

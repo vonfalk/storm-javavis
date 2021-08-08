@@ -7,9 +7,12 @@
 namespace storm {
 	namespace bs {
 
-		NamedDecl::NamedDecl() : visibility(null), thread(null) {}
+		NamedDecl::NamedDecl() : visibility(null), thread(null), created(null) {}
 
 		Named *NamedDecl::create() {
+			if (created)
+				return created;
+
 			created = doCreate();
 			created->visibility = visibility;
 

@@ -83,6 +83,9 @@ namespace storm {
 		// Set where to run.
 		void STORM_FN runOn(NamedThread *thread);
 
+		// Get declared "run on". Note: this is inherited from parent types in certain situations.
+		inline MAYBE(NamedThread *) STORM_FN declaredThread() const { return runOnThread; }
+
 		// Is this function 'pure'? Ie. are we sure that this function does not produce any side effects?
 		// For constructors and destructors, this means that we can ignore calling the function when the
 		// compiler deems it unneccessary. For other functions, it means that the compiler may choose to
