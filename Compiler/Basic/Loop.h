@@ -36,7 +36,8 @@ namespace storm {
 			// Set the body for the while expression.
 			void STORM_FN whileBody(CondSuccess *s);
 
-			// Create a CondSuccess for use with 'whileBody'. This can be done manually as well.
+			// Create a CondSuccess for use with 'whileBody' and add it as the while body. This can
+			// be done manually as well.
 			CondSuccess *STORM_FN createWhileBody();
 
 			// Result (always void or 'no return').

@@ -34,7 +34,8 @@ namespace storm {
 		CondSuccess *Loop::createWhileBody() {
 			if (!condition)
 				throw new (this) RuntimeError(S("Must call 'cond' before creating a while body!"));
-			return new (this) CondSuccess(pos, this, condition);
+			whileExpr = new (this) CondSuccess(pos, this, condition);
+			return whileExpr;
 		}
 
 		ExprResult Loop::result() {
@@ -131,6 +132,8 @@ namespace storm {
 			}
 
 			if (condition) {
+				if (doExpr)
+					*to << S(" ");
 				*to << S("while (") << condition << S(") ");
 			}
 

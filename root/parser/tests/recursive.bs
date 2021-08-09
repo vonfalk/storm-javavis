@@ -3,7 +3,6 @@ use parser;
 
 Str check(Result<Array<Str>> r) {
 	if (x = r.value) {
-		print("Result: ${x}");
 		x.toS;
 	} else {
 		"Error at ${r.end}, ${r.error}";
@@ -12,8 +11,15 @@ Str check(Result<Array<Str>> r) {
 
 Str check(Result<Str> r) {
 	if (x = r.value) {
-		print("Result: ${x}");
 		x;
+	} else {
+		"Error at ${r.end}, ${r.error}";
+	}
+}
+
+Str check(Result<Maybe<Str>> r) {
+	if (x = r.value) {
+		x.toS;
 	} else {
 		"Error at ${r.end}, ${r.error}";
 	}
@@ -31,16 +37,21 @@ suite SimpleRecursive {
 	test check(parseList(x, x.begin + 1)) == "[A, B, C]";
 }
 
-// parseRepList : parser(RepList, recursive descent) {}
+parseRepList : parser(RepList, recursive descent) {}
 
-// suite RepRecursive {
-// 	test check(parseRepList("[A, B]")) == "[A, B]";
-// 	test check(parseRepList("{A, B}")) == "[A, B]";
-// 	test check(parseRepList("[]")) == "[]";
-// 	test check(parseRepList("{}")) == "Error at";
-// }
+suite RepRecursive {
+	test check(parseRepList("[A, B,]")) == "[A, B]";
+	test check(parseRepList("{A, B,}")) == "[A, B]";
+	test check(parseRepList("[]")) == "[]";
+	test check(parseRepList("{}")) == "Error at Iterator: {|>}, Expected one of:\n\"[A-Z]+\"";
+}
 
-// parseOptional : parser(Optional, recursive descent) {}
+parseOptional : parser(Optional, recursive descent) {}
+
+suite OptionalRecursive {
+	test check(parseOptional("=")) == "null";
+	test check(parseOptional("=ZA")) == "ZA";
+}
 
 parseCapture : parser(Capture, recursive descent) {}
 

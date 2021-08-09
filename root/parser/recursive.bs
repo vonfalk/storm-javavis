@@ -210,7 +210,7 @@ class RecursiveParser extends Parser {
 				StrBuf msg;
 				msg << "Expected one of:";
 				for (x in seen)
-					msg << "\"" << x << "\"\n";
+					msg << "\n\"" << x << "\"";
 				StrLiteral msgStr(SrcPos(), msg.toS);
 				body.add(pattern(body) {
 							${state}.error = ${msgStr};
@@ -250,15 +250,21 @@ class RecursiveParser extends Parser {
 			init(SrcPos pos, ExprBlock block, Production production, Expr state, Expr errorVal) {
 				init {
 					pos = pos;
+					rootBlock = block;
 					block = block;
 					state = state;
 					errorVal = errorVal;
 					production = production;
+					inRepeat = null;
 				}
 			}
 
 			// For error messages.
 			SrcPos pos;
+
+			// Root block to generate code into. Variables are always placed here, block may refer
+			// to a sub-block from this (e.g. when in repeats).
+			ExprBlock rootBlock;
 
 			// The block we are currently generating code into.
 			ExprBlock block;
@@ -277,6 +283,10 @@ class RecursiveParser extends Parser {
 
 			// Start of captured segment. Populated when we encounter it.
 			LocalVar? captureStart;
+
+			// Are we inside the repetition? If so, this contains the expression we shall add with a
+			// repetition in it.
+			Expr? inRepeat;
 
 			// Get a variable. Throws appropriate message on error.
 			LocalVarAccess variable(Str name) {
@@ -310,9 +320,9 @@ class RecursiveParser extends Parser {
 
 					// Note: This is technically done in the wrong context. Should be done in the
 					// context of the production, not that of this function.
-					Expr init = namedExpr(block, pos, result, actuals);
-					Var v(block, SStr("me"), init);
-					block.add(v);
+					Expr init = namedExpr(rootBlock, pos, result, actuals);
+					Var v(rootBlock, SStr("me"), init);
+					rootBlock.add(v);
 					variables.put("me", v.var);
 				} else {
 					// It is a variable! That means we can simply "rename" a local variable.
@@ -339,9 +349,7 @@ class RecursiveParser extends Parser {
 						block.add(namedExpr(block, SrcPos(), invoke, actuals));
 					} else if (token.bound) {
 						// Bind to a variable.
-						Var v(block, SStr(target.name), expr);
-						variables.put(target.name, v.var);
-						block.add(v);
+						storeVariable(target.name, expr);
 					} else {
 						// Evaluate the expression.
 						block.add(expr);
@@ -349,12 +357,57 @@ class RecursiveParser extends Parser {
 				}
 			}
 
+			// Store a variable. Act according to the repetition currently in affect.
+			private void storeVariable(Str name, Expr expr) {
+				if (inRepeat.empty) {
+					Var v(rootBlock, SStr(name), expr);
+					variables.put(name, v.var);
+					rootBlock.add(v);
+				} else if (production.repType == RepType:repZeroOne) {
+					var type = wrapMaybe(expr.result.type.asRef(false));
+					Var v(rootBlock, type, SStr(name), Actuals());
+					variables.put(name, v.var);
+					rootBlock.add(v);
+
+					block.add(pattern(block) { ${LocalVarAccess(SrcPos(), v.var)} = ${expr}; });
+				} else {
+					var type = wrapArray(expr.result.type.asRef(false));
+					Var v(rootBlock, type, SStr(name), Actuals());
+					variables.put(name, v.var);
+					rootBlock.add(v);
+
+					block.add(pattern(block) { ${LocalVarAccess(SrcPos(), v.var)}.push(${expr}); });
+				}
+			}
+
 			// Figure out if we need to do anything at the start of a repetition.
-			void onRepStart() {
+			void onRepStart(Grammar g) {
 				if (production.repCapture.any) {
-					Var x(block, SStr("@capture start"), pattern(block) { ${state}.pos; });
-					block.add(x);
+					Var x(rootBlock, SStr("@capture start"), pattern(block) { ${state}.pos; });
+					rootBlock.add(x);
 					captureStart = x.var;
+				} else if (production.repType == RepType:repZeroOne) {
+					If c(rootBlock, createCond(g, production.repStart));
+					inRepeat = c;
+					CondSuccess success(SrcPos(), rootBlock, c.condition);
+					c.trueCode = success;
+
+					block = ExprBlock(SrcPos(), success);
+					success.set(block);
+				} else if (production.repType == RepType:repOnePlus) {
+					Loop loop(SrcPos(), rootBlock);
+					inRepeat = loop;
+					loop.condExpr(createCond(g, production.repStart));
+
+					block = ExprBlock(SrcPos(), loop);
+					loop.doBody(block);
+				} else if (production.repType == RepType:repZeroPlus) {
+					Loop loop(SrcPos(), rootBlock);
+					inRepeat = loop;
+					loop.condExpr(createCond(g, production.repStart));
+
+					block = ExprBlock(SrcPos(), loop);
+					loop.createWhileBody.set(block);
 				}
 			}
 
@@ -369,16 +422,49 @@ class RecursiveParser extends Parser {
 						${state}.input.substr(${start}, ${state}.pos);
 					};
 					storeToken(capture, captured);
+				} else if (r = inRepeat) {
+					rootBlock.add(r);
+					inRepeat = null;
+					block = rootBlock;
 				}
 			}
 
+			// Create a condition that checks for the first-set of the token at position.
+			private Expr createCond(Grammar grammar, Nat position) {
+				Regex[] candidates;
+				Token token = production.tokens[position];
+				if (token as RuleToken) {
+					for (x in grammar.first[token.rule])
+						candidates << x;
+				} else if (token as RegexToken) {
+					candidates << token.regex;
+				}
+
+				Actuals params;
+				params.add(state);
+				params.add(RegexArray(candidates));
+				FnCall(SrcPos(), Scope(), named{State:matches<State, Regex[]>}, params);
+			}
+
+			// Find candidates for a rule. Assumes we're inside a repeat segment.
+			private void findCandidates(Nat position, Regex[] candidates) {
+				Token token = production.tokens[position];
+				if (token as RuleToken) {
+					for (x in grammar.first[token.rule])
+						candidates << x;
+
+					if (grammar.epsilon[token.rule]) {
+						if (position + 1 >= productions.repEnd)
+							throw GrammarError(pos, "The production ${production} matches epsilon inside its repeat statement.");
+						findCandidates(position + 1, candidates);
+					}
+				} else if (token as RegexToken) {
+					candidates << token.regex;
+				}
+			}
 		}
 
 		private Expr createParse(FnBody body, Rule rule, Production production) {
-			// Check so that repetition is not enabled. We don't support that yet. We aim to do so, however.
-			if (production.repType != RepType:repNone)
-				throw GrammarError(parent.pos, "The production ${production} utilizes repetition, which is not supported yet.");
-
 			ExprBlock block(SrcPos(), body);
 			// TODO: Better position?
 			ProdState state(parent.pos, block, production, LocalVarAccess(SrcPos(), body.parameters[0]), errorResult(body.type));
@@ -394,7 +480,7 @@ class RecursiveParser extends Parser {
 					throw GrammarError(state.pos, "Capturing a raw parse tree is not supported.");
 
 				if (id == production.repStart) {
-					state.onRepStart();
+					state.onRepStart(grammar);
 				} else if (id == production.repEnd) {
 					state.onRepEnd();
 				}
@@ -403,7 +489,7 @@ class RecursiveParser extends Parser {
 					Expr e = parseToken(state, token, token.invoke.any | token.bound);
 					state.storeToken(token, e);
 				} else {
-					block.add(parseToken(state, token, false));
+					state.block.add(parseToken(state, token, false));
 				}
 			}
 
@@ -509,11 +595,6 @@ class RecursiveParser extends Parser {
 			check.falseCode = Return(SrcPos(), state.block, state.errorVal);
 
 			check;
-		}
-
-		// Create the variable 'me' if possible.
-		private Expr createMe(ExprBlock in, Str->LocalVar vars) {
-			
 		}
 
 		// Throw an error indicating problems with first-sets.
