@@ -26,3 +26,18 @@ Item => v : "[A-Z]+" v;
 // This is not reachable from 'List' and should therefore be removed.
 void Unreachable();
 Unreachable : Item - "INCORRECT";
+
+
+// Repetition statements.
+Array<Str> RepList();
+RepList => Array<Str>() : "\[", (Item -> push, ",",)* "\]";
+RepList => elems : "{", (Item elems, ",", )+ "}";
+
+// Optional statements.
+Maybe<Str> Optional();
+Optional => x : "=", (Item x)?;
+
+// Captures.
+Str Capture();
+Capture => x : "\[", (List) x, "\]";
+Capture => x : "z", (List) x;

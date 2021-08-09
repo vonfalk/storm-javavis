@@ -159,7 +159,7 @@ class RecursiveParser extends Parser {
 				return ruleFns.get(r);
 
 			var params = r.params.clone;
-			params.insert(0, ValParam(named{State}, " state"));
+			params.insert(0, ValParam(named{State}, "@state"));
 
 			BSTreeFn fn(resultType(r.result), SStr(r.name), params, null);
 			ruleFns.put(r, fn);
@@ -275,6 +275,9 @@ class RecursiveParser extends Parser {
 			// Variables created so far.
 			Str->LocalVar variables;
 
+			// Start of captured segment. Populated when we encounter it.
+			LocalVar? captureStart;
+
 			// Get a variable. Throws appropriate message on error.
 			LocalVarAccess variable(Str name) {
 				if (!variables.has(name)) {
@@ -322,14 +325,59 @@ class RecursiveParser extends Parser {
 				}
 			}
 
+			// Save a token to a variable, or invoke a function as appropriate.
+			void storeToken(Token token, Expr expr) {
+				if (target = token.target) {
+					if (invoke = token.invoke) {
+						// Invoke a function.
+						// Note: The scope is technically incorrect here. It should be evaluated in
+						// the context of the production rather than wherever the grammar was
+						// declared.
+						Actuals actuals;
+						actuals.add(variable("me"));
+						actuals.add(expr);
+						block.add(namedExpr(block, SrcPos(), invoke, actuals));
+					} else if (token.bound) {
+						// Bind to a variable.
+						Var v(block, SStr(target.name), expr);
+						variables.put(target.name, v.var);
+						block.add(v);
+					} else {
+						// Evaluate the expression.
+						block.add(expr);
+					}
+				}
+			}
+
+			// Figure out if we need to do anything at the start of a repetition.
+			void onRepStart() {
+				if (production.repCapture.any) {
+					Var x(block, SStr("@capture start"), pattern(block) { ${state}.pos; });
+					block.add(x);
+					captureStart = x.var;
+				}
+			}
+
+			// Figure out if we need to do anything at the end of a repetition.
+			void onRepEnd() {
+				if (capture = production.repCapture) {
+					unless (captureStart)
+						throw InternalError("Captured portion of the production ${production} is inconsistent.");
+
+					LocalVarAccess start(SrcPos(), captureStart);
+					Expr captured = pattern(block) {
+						${state}.input.substr(${start}, ${state}.pos);
+					};
+					storeToken(capture, captured);
+				}
+			}
+
 		}
 
 		private Expr createParse(FnBody body, Rule rule, Production production) {
 			// Check so that repetition is not enabled. We don't support that yet. We aim to do so, however.
 			if (production.repType != RepType:repNone)
 				throw GrammarError(parent.pos, "The production ${production} utilizes repetition, which is not supported yet.");
-			if (production.repCapture)
-				throw GrammarError(parent.pos, "We do not yet support capturing the content of the marked region.");
 
 			ExprBlock block(SrcPos(), body);
 			// TODO: Better position?
@@ -341,35 +389,31 @@ class RecursiveParser extends Parser {
 			}
 
 			// Go through the tokens.
-			for (token in production.tokens) {
+			for (id, token in production.tokens) {
 				if (token.raw)
 					throw GrammarError(state.pos, "Capturing a raw parse tree is not supported.");
 
+				if (id == production.repStart) {
+					state.onRepStart();
+				} else if (id == production.repEnd) {
+					state.onRepEnd();
+				}
+
 				if (target = token.target) {
-					if (invoke = token.invoke) {
-						// Invoke a function.
-						// Note: The scope is technically incorrect here. It should be evaluated in
-						// the context of the production rather than wherever the grammar was
-						// declared.
-						Expr e = parseToken(state, token, true);
-						Actuals actuals;
-						actuals.add(state.variable("me"));
-						actuals.add(e);
-						block.add(namedExpr(block, SrcPos(), invoke, actuals));
-					} else if (token.bound) {
-						// Bind to a variable.
-						Expr e = parseToken(state, token, true);
-						Var v(block, SStr(target.name), e);
-						state.variables.put(target.name, v.var);
-						block.add(v);
-					} else {
-						// Might be stored anyway, but we ignore that.
-						block.add(parseToken(state, token, false));
-					}
+					Expr e = parseToken(state, token, token.invoke.any | token.bound);
+					state.storeToken(token, e);
 				} else {
 					block.add(parseToken(state, token, false));
 				}
 			}
+
+			// End of the repeition might be after the last token.
+			if (production.tokens.count == production.repEnd) {
+				state.onRepEnd();
+			}
+
+			// print(production.toS);
+			// print(block.toS);
 
 			// Return success.
 			if (isMaybe(body.type)) {

@@ -1,0 +1,50 @@
+use test;
+use parser;
+
+Str check(Result<Array<Str>> r) {
+	if (x = r.value) {
+		print("Result: ${x}");
+		x.toS;
+	} else {
+		"Error at ${r.end}, ${r.error}";
+	}
+}
+
+Str check(Result<Str> r) {
+	if (x = r.value) {
+		print("Result: ${x}");
+		x;
+	} else {
+		"Error at ${r.end}, ${r.error}";
+	}
+}
+
+parseList : parser(List, recursive descent) {
+	// Additional packages to import syntax from.
+}
+
+suite SimpleRecursive {
+	// TODO: Test with true/false in them, so we can skip "== true".
+	test check(parseList("A, B, C")) == "[A, B, C]";
+
+	Str x = ",A, B, C";
+	test check(parseList(x, x.begin + 1)) == "[A, B, C]";
+}
+
+// parseRepList : parser(RepList, recursive descent) {}
+
+// suite RepRecursive {
+// 	test check(parseRepList("[A, B]")) == "[A, B]";
+// 	test check(parseRepList("{A, B}")) == "[A, B]";
+// 	test check(parseRepList("[]")) == "[]";
+// 	test check(parseRepList("{}")) == "Error at";
+// }
+
+// parseOptional : parser(Optional, recursive descent) {}
+
+parseCapture : parser(Capture, recursive descent) {}
+
+suite CaptureRecursive {
+	test check(parseCapture("[A,   C]")) == "A,   C";
+	test check(parseCapture("zA,  D")) == "A,  D";
+}
