@@ -133,7 +133,7 @@ namespace storm {
 				c = p->transform<FileContents>();
 			}
 
-			// Add any newly found use statements. Should only be the case if we used the C parser.
+			// Add any newly found use statements.
 			SyntaxLookup *lookup = new (this) SyntaxLookup();
 			add(lookup, c->use);
 

@@ -41,11 +41,11 @@ use core:asm;
  * }
  */
 class RecursiveParser extends Parser {
-	init(Scope env, SStr name, SrcName start) {
-		init(env, name, start) {}
+	init(Scope env, SStr name) {
+		init(env, name) {}
 	}
 
-	void populateFn(BSTreeFn fn) : override {
+	void populateFn(BSTreeFn fn, Scope scope, Rule start, NameSet[] include) : override {
 		Grammar grammar(start, include, true);
 		// print(grammar.toS);
 

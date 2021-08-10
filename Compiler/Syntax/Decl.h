@@ -407,7 +407,7 @@ namespace storm {
 			Array<ProductionDecl *> *productions;
 
 			// Add an item to the correct array.
-			void STORM_FN push(FileItem *item);
+			virtual void STORM_FN push(FileItem *item);
 
 			// Get delimiter object.
 			Delimiters *STORM_FN delimiters(Scope scope);

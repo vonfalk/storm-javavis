@@ -4,21 +4,35 @@ use core.lang;
 optional delimiter = SDelimiter;
 required delimiter = SRequiredDelimiter;
 
-// Parser!
+// Rule to generate proper overloads for the parser.
 SFileItem => parserOverloads(parser) : SParser(env) parser;
 
-// Ways to create a parser.
+// Create the actual parser (we want to be able to use the -> syntax).
 Parser SParser(Scope env);
 SParser => parser
-  : SName name #fnName, ":", "parser" #keyword, "(", SType start, ",", SParserType(env, name, start) parser, ")", ";";
-SParser => parser
-  : SName name #fnName, ":", "parser" #keyword, "(", SType start, ",", SParserType(env, name, start) parser, ")", "{" [, (SParserInclude -> include,)* ]+ "}";
+  : SName name #fnName, ":", "parser" #keyword, "(", SParserType(env, name) parser - SParserOptions(parser), ")", "{", SParserBody -> setSyntax, "}";
 
-// Includes for a parser.
-SrcName SParserInclude();
-SParserInclude => v : SPackage v, ";";
 
-// Parser type.
-Parser SParserType(Scope env, SStr name, SrcName start) #keyword;
-SParserType => RecursiveParser(env, name, start) : "recursive" ~ "descent";
-SParserType => RecursiveParser(env, name, start) : "recursive";
+// Parser types. This creates the actual parser instance to use, also makes the system extensible.
+Parser SParserType(Scope env, SStr name) #keyword;
+SParserType => RecursiveParser(env, name) : "recursive" ~ "descent";
+SParserType => RecursiveParser(env, name) : "recursive";
+
+
+// Additional options for the parser.
+void SParserOptions(Parser parser);
+SParserOptions : ;
+SParserOptions : ",", SParserOption(parser), SParserOptions(parser);
+
+void SParserOption(Parser parser);
+SParserOption => makeBinary(parser) : "binary" #keyword;
+
+
+// Body for a parser.
+// Note: We don't currently support 'extend', extra syntax may be included from the regular BS use stmts instead.
+ParserSyntax SParserBody();
+SParserBody => ParserSyntax() : (lang.bnf.SDocFileItem() -> push, ";", )*;
+
+// Additional things that may appear in our syntax.
+SParserBody..lang.bnf.SFileItem => StartDecl(rule) : "start" #keyword, "=", lang.bnf.SName rule;
+

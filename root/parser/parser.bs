@@ -8,66 +8,108 @@ use lang:bs:macro;
  */
 class Parser extends lang:bs:NamedDecl {
 	// Override to initialize the function with its proper contents.
-	protected void populateFn(BSTreeFn fn) : abstract;
+	protected void populateFn(BSTreeFn fn, Scope scope, Rule start, NameSet[] include) : abstract;
 
 	// Create, specify the start rule (as a name).
-	init(Scope scope, SStr name, SrcName startName) {
+	init(Scope scope, SStr name) {
 		init {
 			scope = scope;
 			name = name;
-			start = findRule(scope, startName);
 		}
-
-		if (parent = start.parent as NameSet)
-			include << parent;
 
 		print("TODO: Consider threads.");
 	}
 
 	// Scope.
-	Scope scope;
+	private Scope scope;
 
 	// Name.
 	SStr name;
 
-	// Start rule.
-	Rule start;
+	// Syntax entered in the parser block.
+	ParserSyntax? syntax;
 
-	// Included packages.
-	NameSet[] include;
+	// Called to make the parser into a binary parser.
+	void makeBinary() {
+		print("TODO: Binary parser!");
+	}
 
-	// Called to add an include.
-	void include(SrcName name) {
-		unless (inc = scope.find(name) as NameSet)
-			throw SyntaxError(name.pos, "Unknown package: ${name}");
-		include << inc;
+	// Set syntax. Called by the grammar.
+	void setSyntax(ParserSyntax syntax) {
+		this.syntax = syntax;
 	}
 
 	// Create the parser. The generated function takes (Str, Str:Iter, ...) as parameters, where
 	// ... is the parameters to the root rule.
 	protected Named doCreate() : override {
+		unless (syntax)
+			throw InternalError("The syntax for the parser was not set properly.");
+		unless (startName = syntax.start)
+			throw SyntaxError(name.pos, "You need to specify the start rule with 'start = <name>;'.");
+		unless (scopeTop = scope.top)
+			throw InternalError("Expected to find a package in the scope.");
+
+		Package syntaxPkg = syntax.createPackage(scope, scopeTop);
+
+		// Add includes. Most importantly so that we may access both 'syntaxPkg' and the current package.
+		NameSet[] include;
+		include << syntaxPkg;
+		for (name in syntax.use) {
+			unless (inc = scope.find(name) as NameSet)
+				throw SyntaxError(name.pos, "Unknown package: ${name}");
+			include << inc;
+		}
+
+		Scope s = addIncludes(scope, include);
+		Rule start = findRule(s, startName);
+
+		// We also need to include the current "top" package in the include directory. It is OK to
+		// do this after adding includes to the scope since the scope has its top set anyway.
+		include << ScopeLookup:firstPkg(scopeTop);
+
+		// Now we can start creating the actual parser functions!
 		SimpleName resultName;
 		resultName.add("parser");
 		resultName.add("Result", [start.result]);
-		var resultType = scope.value(resultName, name.pos);
+		var resultType = s.value(resultName, name.pos);
 
 		ValParam[] params = start.params.clone;
 		params.insert(0, ValParam(named{Str}, " input"));
 		params.insert(1, ValParam(named{Str:Iter}, " start"));
 
 		BSTreeFn fn(resultType, name, params, null);
-		populateFn(fn);
+		populateFn(fn, s, start, include);
 		fn;
 	}
 }
 
 // Find a rule. Throws on error.
-private Rule findRule(Scope scope, SrcName name) {
+private Rule findRule(Scope scope, SrcName name) on Compiler {
 	if (rule = scope.find(name) as Rule)
 		rule;
 	else
 		throw SyntaxError(name.pos, "Unknown rule: ${name}");
 }
+
+// Add a set of NameSet:s to a Scope. Making sure not to modify the original scope.
+private Scope addIncludes(Scope scope, NameSet[] add) on Compiler {
+	if (old = scope.lookup as BSLookup) {
+		BSLookup n;
+		n.includes = old.includes.clone;
+		for (x in add)
+			if (x as Package)
+				n.includes << x;
+		scope.lookup = n;
+	} else if (old = scope.lookup as ScopeExtra) {
+		ScopeExtra n;
+		n.extra = old.extra.clone;
+		for (x in add)
+			n.extra << x;
+		scope.lookup = n;
+	}
+	scope;
+}
+
 
 // Create the overloads needed for the parser.
 MultiDecl parserOverloads(Parser parser) {
@@ -120,4 +162,70 @@ class ParserOverload extends lang:bs:NamedDecl {
 			actuals.add(LocalVarAccess(SrcPos(), body.parameters[i]));
 		body.add(FnCall(SrcPos(), scope, wrapFn, actuals));
 	}
+}
+
+class ParserSyntax extends lang:bnf:FileContents {
+	// Name of the start rule.
+	SrcName? start;
+
+	void push(FileItem item) : override {
+		if (item as StartDecl) {
+			if (start)
+				throw SyntaxError(item.name.pos, "You can only specify the start rule once.");
+			start = item.name;
+		} else {
+			super:push(item);
+		}
+	}
+}
+
+// Create a package that contains the productions in here.
+Package createPackage(lang:bnf:FileContents this, Scope scope, NameLookup parent) on Compiler {
+	Package p("<anonymous>");
+	p.parentLookup = parent;
+
+	SyntaxLookup lookup;
+	if (old = scope.lookup as ScopeExtra) {
+		for (x in old.extra)
+			lookup.extra << x;
+	} else if (old = scope.lookup as BSLookup) {
+		for (x in old.includes)
+			lookup.extra << x;
+	}
+
+	// New includes.
+	for (x in use) {
+		unless (found = rootScope.find(x))
+			throw SyntaxError(x.pos, "The package ${x} does not exist!");
+		lookup.extra << found;
+	}
+
+	scope.lookup = lookup;
+	scope.top = p;
+
+	for (x in rules) {
+		p.add(Rule(x, scope));
+	}
+
+	var delims = delimiters(scope);
+
+	for (x in productions) {
+		Str name = if (n = x.name) {
+			n;
+		} else {
+			p.anonName();
+		};
+		p.add(ProductionType(name, x, delims, scope));
+	}
+
+	p;
+}
+
+// Declare what the start rule is.
+class StartDecl extends lang:bnf:FileItem {
+	init(SrcName name) {
+		init { name = name; }
+	}
+
+	SrcName name;
 }

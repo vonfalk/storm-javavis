@@ -27,3 +27,40 @@ The recursive descent parser accepts LL(1) grammars, which essentially means:
 This parser transforms the parse tree directly, and as such it is not possible to capture parts of
 the parse tree in the syntax transformations. Due to how the parser works, it is also not possible
 to pass parameters to productions from tokens appearing "later" in the text.
+
+
+Syntax
+------
+
+The Basic Storm syntax is described below.
+
+To generate a parser, use the following syntax:
+
+```
+<name> : parser(<type>, [binary]) {
+    start = <start rule>;
+    <syntax>;
+}
+```
+
+- `<name>` is the name of the generated parser. A function with the name `<name>` will be
+  generated. It can be called as either `<name>(<input>)` or `<name>(<input>, <start>)`, where
+  `<input>` is a string and `<start>` is an iterator.
+
+- `<type>` is the type of the parser to use. It can be any of the ones mentioned above. For example
+  `recursive` or `recursive descent` uses the recursive descent parser.
+
+- `[binary]` generates a parser in binary mode if it is included. This means that the parser accepts
+  its input as a `Buffer` instead of a `Str`, and iterators are `Nat` values, not `Str:Iter`. As a
+  consequence of this, captured parts of the input evaluate to `Buffer` instead of `Str`. Therefore,
+  you typically want to declare all syntax inside the parser block if you use the binary
+  mode. Otherwise, you have to ensure that the syntax transforms type-check both for `Str` and
+  `Buffer` (it is of course possible to do, but might be tedious).
+
+- `<start rule>` indicates the rule that shall be used as the start rule for the parser. The rule
+  used here does not need to be defined inside the syntax inside the parser block.
+
+- `<syntax>` is syntax as specified in the syntax language. The syntax will be placed in an
+  anonymous sub-package of the current package. Both the anonymous sub-package and the current
+  package will be visible by default. `use` statements can be used to import more grammar from other
+  packages.

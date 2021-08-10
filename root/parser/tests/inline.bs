@@ -1,0 +1,32 @@
+use test;
+use parser;
+
+// TODO: Should not have to use this. We need to have auto-includes for that to work. In that case,
+// we could import lang.bnf inside ../syntax.bnf.
+use lang:bnf;
+
+Str check(Result<Int> r) {
+	if (x = r.value) {
+		x.toS;
+	} else {
+		"Error at ${r.end}, ${r.error}";
+	}
+}
+
+inlineParser : parser(recursive descent) {
+	start = Start;
+	delimiter = Delim;
+
+	Int Start();
+	Start => +(a, b) : Num a, "\+", Num b;
+
+	Int Num();
+	Num => toInt(x) : "[0-9]+" x;
+
+	void Delim();
+	Delim : "[ \n\r\t]*";
+}
+
+suite InlineGrammar {
+	test check(inlineParser("1 + 3")) == "4";
+}

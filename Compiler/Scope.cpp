@@ -186,7 +186,7 @@ namespace storm {
 			to << L"> ";
 
 			bool first = true;
-			for (NameLookup *at = s.top; at; at = at->parentLookup) {
+			for (NameLookup *at = s.top; at; at = ScopeLookup::nextCandidate(at)) {
 				if (!first)
 					to << " -> ";
 				first = false;
