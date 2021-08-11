@@ -145,13 +145,15 @@ namespace storm {
 	}
 
 	void Package::exports(MAYBE(Package *) key, Array<Package *> *to) {
-		if (!generalExports)
-			return;
+		forceLoad();
 
-		generalExports->append(to);
+		if (generalExports) {
+			generalExports->append(to);
+		}
 
 		if (key && specificExports) {
 			PackageExports *exports = specificExports->get(key, null);
+
 			if (!exports)
 				return;
 
@@ -299,11 +301,12 @@ namespace storm {
 	}
 
 	Bool PackageExports::push(Package *package) {
-		// TODO: Eventually we want to ignore the O(n^2) here. The array is often very short, so it
+		// TODO: Eventually we want to remove the O(n^2) here. The array is often very short, so it
 		// should not be a problem (creating a set is likely slower).
 		for (Nat i = 0; i < exports->count(); i++)
 			if (exports->at(i) == package)
 				return false;
+
 		exports->push(package);
 		return true;
 	}

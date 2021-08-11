@@ -76,6 +76,9 @@ namespace storm {
 
 			// Add packages to a parser.
 			void add(syntax::ParserBase *to, Array<SrcName *> *used);
+
+			// Add exports to a package.
+			void addExports( Array<SrcName *> *exports);
 		};
 
 

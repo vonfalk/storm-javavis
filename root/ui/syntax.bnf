@@ -1,5 +1,5 @@
 use layout;
-// TODO: Export 'layout'.
+export layout;
 
 use core.lang;
 use lang.bs;

@@ -9,8 +9,9 @@ namespace storm {
 		class BSLookup : public ScopeLookup {
 			STORM_CLASS;
 		public:
-			// No automatic syntax.
+			// Create, optionally specify includes.
 			STORM_CTOR BSLookup();
+			STORM_CTOR BSLookup(Array<Package *> *includes);
 
 			// Clone.
 			virtual ScopeLookup *STORM_FN clone() const;
@@ -29,7 +30,7 @@ namespace storm {
 			Named *findHelper(Scope from, SimpleName *name);
 		};
 
-		// Add includes.
+		// Add includes. Note: it is generally more efficient to add multiple includes at once.
 		Bool STORM_FN addInclude(Scope to, Package *p);
 
 		// Add syntax to a parser.

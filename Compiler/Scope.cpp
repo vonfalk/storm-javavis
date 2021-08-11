@@ -8,6 +8,8 @@
 #include "Exception.h"
 #include "Core/Str.h"
 #include "Core/StrBuf.h"
+#include "Core/Array.h"
+#include "Core/Set.h"
 
 namespace storm {
 
@@ -241,6 +243,97 @@ namespace storm {
 		}
 
 		return null;
+	}
+
+	Array<Package *> *STORM_FN expandExports(Array<Package *> *from, MAYBE(Package *) key) {
+		Set<NameLookup *> *seen = new (from) Set<NameLookup *>();
+		Array<Package *> *result = new (from) Array<Package *>();
+
+		Nat fromIndex = 0;
+		Nat resultIndex = 0;
+		while (true) {
+			if (resultIndex >= result->count()) {
+				// Try to add a new one from 'from'.
+				if (fromIndex >= from->count())
+					break;
+
+				Package *add = from->at(fromIndex++);
+				if (!seen->has(add)) {
+					seen->put(add);
+					result->push(add);
+				}
+			}
+
+			// Note: The element we attempted to add might have been a duplicate. If so, we just try again.
+			if (resultIndex >= result->count())
+				continue;
+
+			// Add exports from the package, removing any packages we have already seen.
+			Package *examine = result->at(resultIndex++);
+			Nat oldCount = result->count();
+			examine->exports(key, result);
+			for (Nat i = oldCount; i < result->count(); i++) {
+				if (seen->has(result->at(i))) {
+					// Skip it.
+				} else {
+					// Keep it, and remember it in the set.
+					seen->put(result->at(i));
+					result->at(oldCount++) = result->at(i);
+				}
+			}
+			// Remove any remaining elements, they are at the end now.
+			while (result->count() > oldCount)
+				result->pop();
+		}
+
+		return result;
+	}
+
+	Array<NameLookup *> *STORM_FN expandExports(Array<NameLookup *> *from, MAYBE(Package *) key) {
+		Set<NameLookup *> *seen = new (from) Set<NameLookup *>();
+		Array<NameLookup *> *result = new (from) Array<NameLookup *>();
+
+		Nat fromIndex = 0;
+		Nat resultIndex = 0;
+		while (true) {
+			if (resultIndex >= result->count()) {
+				// Try to add a new one from 'from'.
+				if (fromIndex >= from->count())
+					break;
+
+				NameLookup *add = from->at(fromIndex++);
+				if (!seen->has(add)) {
+					seen->put(add);
+					result->push(add);
+				}
+			}
+
+			// Note: The element we attempted to add might have been a duplicate. If so, we just try again.
+			if (resultIndex >= result->count())
+				continue;
+
+			// Add exports from the package, removing any packages we have already seen.
+			NameLookup *examine = result->at(resultIndex++);
+			if (Package *p = as<Package>(examine)) {
+				Nat oldCount = result->count();
+				p->exports(key, result);
+
+				for (Nat i = oldCount; i < result->count(); i++) {
+					if (seen->has(result->at(i))) {
+						// Skip it.
+					} else {
+						// Keep it, and remember it in the set.
+						seen->put(result->at(i));
+						result->at(oldCount++) = result->at(i);
+					}
+				}
+				// Remove any remaining elements, they are at the end now.
+				while (result->count() > oldCount)
+					result->pop();
+			}
+		}
+
+		return result;
 	}
 
 }

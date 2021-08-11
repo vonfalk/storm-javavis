@@ -2,9 +2,6 @@ use test;
 use parser;
 use core:io;
 
-// TODO: Remove when we are able to.
-use lang:bnf;
-
 binaryParser : parser(recursive descent, binary) {
 	start = Start;
 

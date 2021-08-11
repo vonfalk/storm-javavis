@@ -1,10 +1,6 @@
 use test;
 use parser;
 
-// TODO: Should not have to use this. We need to have auto-includes for that to work. In that case,
-// we could import lang.bnf inside ../syntax.bnf.
-use lang:bnf;
-
 Str check(Result<Int> r) {
 	if (x = r.value) {
 		x.toS;

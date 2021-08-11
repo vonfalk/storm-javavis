@@ -1,6 +1,9 @@
 use lang.bs;
 use core.lang;
 
+// Everyone that imports this package also needs to import lang.bnf.
+export lang.bnf;
+
 optional delimiter = SDelimiter;
 required delimiter = SRequiredDelimiter;
 

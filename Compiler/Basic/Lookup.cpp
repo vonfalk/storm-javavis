@@ -1,6 +1,7 @@
 #include "stdafx.h"
 #include "Lookup.h"
 #include "Package.h"
+#include "Compiler/Syntax/Reader.h"
 
 namespace storm {
 	namespace bs {
@@ -8,6 +9,12 @@ namespace storm {
 		BSLookup::BSLookup() : ScopeLookup(S("void")) {
 			includes = new (this) Array<Package *>();
 		}
+
+		BSLookup::BSLookup(Array<Package *> *inc) : ScopeLookup(S("void")), includes(inc) {
+			Package *bsPackage = ScopeLookup::firstPkg(runtime::typeOf(this));
+			includes = expandExports(includes, bsPackage);
+		}
+
 
 		ScopeLookup *BSLookup::clone() const {
 			BSLookup *copy = new (this) BSLookup();
@@ -49,16 +56,17 @@ namespace storm {
 			// Current package.
 			to->addSyntax(firstPkg(from.top));
 
-			for (nat i = 0; i < includes->count(); i++)
-				to->addSyntax(includes->at(i));
+			Package *bnfPkg = ScopeLookup::firstPkg(StormInfo<syntax::DeclReader>::type(engine()));
+			Array<Package *> *expanded = expandExports(includes, bnfPkg);
+			for (Nat i = 0; i < expanded->count(); i++)
+				to->addSyntax(expanded->at(i));
 		}
 
 		Bool addInclude(Scope to, Package *pkg) {
 			if (BSLookup *s = as<BSLookup>(to.lookup)) {
-				for (nat i = 0; i < s->includes->count(); i++)
-					if (s->includes->at(i) == pkg)
-						return false;
+				Package *bsPackage = ScopeLookup::firstPkg(StormInfo<BSLookup>::type(pkg->engine()));
 				s->includes->push(pkg);
+				s->includes = expandExports(s->includes, bsPackage);
 				return true;
 			} else {
 				WARNING(L"This is not what you want to do!");

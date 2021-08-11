@@ -104,19 +104,17 @@ private Rule findRule(Scope scope, SrcName name) on Compiler {
 
 // Add a set of NameSet:s to a Scope. Making sure not to modify the original scope.
 private Scope addIncludes(Scope scope, NameSet[] add) on Compiler {
-	if (old = scope.lookup as BSLookup) {
-		BSLookup n;
-		n.includes = old.includes.clone;
-		for (x in add)
-			if (x as Package)
-				n.includes << x;
-		scope.lookup = n;
-	} else if (old = scope.lookup as ScopeExtra) {
-		ScopeExtra n;
-		n.extra = old.extra.clone;
-		for (x in add)
-			n.extra << x;
-		scope.lookup = n;
+	if (lookup = scope.lookup) {
+		lookup = lookup.clone;
+		if (lookup as BSLookup) {
+			for (x in add)
+				if (x as Package)
+					lookup.includes << x;
+		} else if (lookup as ScopeExtra) {
+			for (x in add)
+				lookup.extra << x;
+		}
+		scope.lookup = lookup;
 	}
 	scope;
 }
