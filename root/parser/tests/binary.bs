@@ -1,0 +1,41 @@
+use test;
+use parser;
+use core:io;
+
+// TODO: Remove when we are able to.
+use lang:bnf;
+
+binaryParser : parser(recursive descent, binary) {
+	start = Start;
+
+	Array<Buffer> Start();
+	Start => Array<Buffer>() : "[^\n]*" -> push - ("\n" - "[^\n]*" -> push)*;
+}
+
+suite BinaryParser {
+	Buffer b = buffer(7);
+	b.put(0x20);
+	b.put(0x21);
+	b.put(0x0A);
+	b.put(0x36);
+	b.put(0x33);
+	b.put(0x0A);
+	b.put(0x08);
+
+	var result = binaryParser(b);
+	test result.value.any == true;
+	if (v = result.value) {
+		test v.count == 3.nat;
+	} else {
+		print("Error at ${result.end}, ${result.error}");
+	}
+
+	result = binaryParser(b, 2);
+	test result.value.any == true;
+	if (v = result.value) {
+		test v.count == 3.nat;
+		test v[0].filled == 0.nat;
+	} else {
+		print("Error at ${result.end}, ${result.error}");
+	}
+}

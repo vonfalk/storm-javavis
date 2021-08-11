@@ -29,9 +29,12 @@ class Parser extends lang:bs:NamedDecl {
 	// Syntax entered in the parser block.
 	ParserSyntax? syntax;
 
+	// Parse a binary buffer rather than a string.
+	Bool binary;
+
 	// Called to make the parser into a binary parser.
 	void makeBinary() {
-		print("TODO: Binary parser!");
+		binary = true;
 	}
 
 	// Set syntax. Called by the grammar.
@@ -70,17 +73,25 @@ class Parser extends lang:bs:NamedDecl {
 		// Now we can start creating the actual parser functions!
 		SimpleName resultName;
 		resultName.add("parser");
-		resultName.add("Result", [start.result]);
-		var resultType = s.value(resultName, name.pos);
 
 		ValParam[] params = start.params.clone;
-		params.insert(0, ValParam(named{Str}, " input"));
-		params.insert(1, ValParam(named{Str:Iter}, " start"));
+		if (binary) {
+			params.insert(0, ValParam(named{core:io:Buffer}, " input"));
+			params.insert(1, ValParam(named{Nat}, " start"));
+			resultName.add("BinaryResult", [start.result]);
+		} else {
+			params.insert(0, ValParam(named{Str}, " input"));
+			params.insert(1, ValParam(named{Str:Iter}, " start"));
+			resultName.add("Result", [start.result]);
+		}
+
+		var resultType = s.value(resultName, name.pos);
 
 		BSTreeFn fn(resultType, name, params, null);
 		populateFn(fn, s, start, include);
 		fn;
 	}
+
 }
 
 // Find a rule. Throws on error.
@@ -156,7 +167,10 @@ class ParserOverload extends lang:bs:NamedDecl {
 		Actuals actuals;
 		LocalVarAccess str(SrcPos(), body.parameters[0]); // Source string.
 		actuals.add(str);
-		actuals.add(FnCall(SrcPos(), scope, named{Str:begin<Str>}, Actuals(str)));
+		if (wrap.binary)
+			actuals.add(NumLiteral(SrcPos(), 0));
+		else
+			actuals.add(FnCall(SrcPos(), scope, named{Str:begin<Str>}, Actuals(str)));
 
 		for (Nat i = 2; i < body.parameters.count; i++)
 			actuals.add(LocalVarAccess(SrcPos(), body.parameters[i]));

@@ -39,3 +39,35 @@ Result : generate(params) {
 
 	t;
 }
+
+
+/**
+ * Result type from parsers in binary mode.
+ */
+BinaryResult : generate(params) {
+	if (params.count != 1)
+		return null;
+
+	var resType = params[0].asRef(false);
+
+	Type t("BinaryResult", [resType], TypeFlags:typeClass);
+
+	// Data members:
+
+	// Parse value, if parse succeeded.
+	t.add(MemberVar("value", resultType(resType), t));
+
+	// Last position parsed.
+	t.add(MemberVar("end", named{Nat}, t));
+
+	// Error message.
+	t.add(MemberVar("error", named{Str}, t));
+
+	// We know that all of these are default-constructible, so we can generate a default ctor.
+	t.add(TypeDefaultCtor(t));
+	t.add(TypeCopyCtor(t));
+	t.add(TypeAssign(t));
+	t.add(TypeDeepCopy(t));
+
+	t;
+}

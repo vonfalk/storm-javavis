@@ -3,6 +3,7 @@ use lang:bnf;
 use lang:bs;
 use lang:bs:macro;
 use core:asm;
+use core:io;
 
 /**
  * The recursive descent parser.
@@ -69,12 +70,12 @@ class RecursiveParser extends Parser {
 			Actuals params;
 			params.add(LocalVarAccess(SrcPos(), body.parameters[0]));
 			params.add(LocalVarAccess(SrcPos(), body.parameters[1]));
-			Var(body, named{State}, SStr("state"), params);
+			Var(body, stateType(binary), SStr("state"), params);
 		};
 		body.add(stateVar);
 
 		// Create all required functions.
-		FnCache cache(grammar, fn, scope);
+		FnCache cache(grammar, fn, scope, binary);
 		cache.createAll();
 
 		// Call the function for the start production.
@@ -97,9 +98,9 @@ class RecursiveParser extends Parser {
 	}
 
 	/**
-	 * State for the parser.
+	 * State for the parser, when parsing strings.
 	 */
-	class State {
+	class StrState {
 		// String to parse.
 		Str input;
 
@@ -128,16 +129,57 @@ class RecursiveParser extends Parser {
 		}
 	}
 
+	/**
+	 * State for the parser, when parsing binary buffers.
+	 */
+	class BinaryState {
+		// Input to parse.
+		Buffer input;
+
+		// Current position.
+		Nat pos;
+
+		// Error?
+		Str error;
+
+		init(Buffer input, Nat start) {
+			init {
+				input = input;
+				pos = start;
+				error = "";
+			}
+		}
+
+		// Helper function from the grammar to match a set of regexes.
+		// Does not update 'pos' on a match.
+		Bool matches(Regex[] candidates) {
+			for (x in candidates) {
+				if (x.match(input, pos))
+					return true;
+			}
+			false;
+		}
+	}
+
+
+	// Get the type of the state required, based on if we're in binary mode or not.
+	Type stateType(Bool binary) : static {
+		if (binary)
+			named{BinaryState};
+		else
+			named{StrState};
+	}
 
 	/**
 	 * Keep track of created functions.
 	 */
 	class FnCache on Compiler {
-		init(Grammar grammar, Named parent, Scope scope) {
+		init(Grammar grammar, Named parent, Scope scope, Bool binary) {
 			init {
 				grammar = grammar;
 				parent = parent;
 				scope = scope;
+				binary = binary;
 			}
 		}
 
@@ -150,6 +192,9 @@ class RecursiveParser extends Parser {
 		// The grammar.
 		Grammar grammar;
 
+		// Running in binary mode?
+		Bool binary;
+
 		// Created functions. Not necessarily entirely done.
 		private Rule->BSTreeFn ruleFns;
 
@@ -159,7 +204,7 @@ class RecursiveParser extends Parser {
 				return ruleFns.get(r);
 
 			var params = r.params.clone;
-			params.insert(0, ValParam(named{State}, "@state"));
+			params.insert(0, ValParam(stateType(binary), "@state"));
 
 			BSTreeFn fn(resultType(r.result), SStr(r.name), params, null);
 			ruleFns.put(r, fn);
@@ -237,10 +282,8 @@ class RecursiveParser extends Parser {
 			for (x in first)
 				candidates << x;
 
-			Actuals params;
-			params.add(LocalVarAccess(SrcPos(), body.parameters[0]));
-			params.add(RegexArray(candidates));
-			FnCall(SrcPos(), scope, named{State:matches<State, Regex[]>}, params);
+			LocalVarAccess stateVar(SrcPos(), body.parameters[0]);
+			namedExpr(body, SrcPos(), "matches", stateVar, Actuals(RegexArray(candidates)));
 		}
 
 		/**
@@ -440,10 +483,7 @@ class RecursiveParser extends Parser {
 					candidates << token.regex;
 				}
 
-				Actuals params;
-				params.add(state);
-				params.add(RegexArray(candidates));
-				FnCall(SrcPos(), Scope(), named{State:matches<State, Regex[]>}, params);
+				namedExpr(block, SrcPos(), "matches", state, Actuals(RegexArray(candidates)));
 			}
 
 			// Find candidates for a rule. Assumes we're inside a repeat segment.
@@ -539,7 +579,7 @@ class RecursiveParser extends Parser {
 			if (needResult) {
 				pattern(s.block) {
 					if (x = ${RegexValue(regex)}.match(${state}.input, ${state}.pos)) {
-						Str substr = ${state}.input.substr(${state}.pos, x);
+						var substr = ${state}.input.cut(${state}.pos, x);
 						${state}.pos = x;
 						substr;
 					} else {
