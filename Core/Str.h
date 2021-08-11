@@ -169,6 +169,10 @@ namespace storm {
 		Str *STORM_FN substr(Iter from) const;
 		Str *STORM_FN substr(Iter from, Iter to) const;
 
+		// Alternative name for substr.
+		Str *STORM_FN cut(Iter from) const;
+		Str *STORM_FN cut(Iter from, Iter to) const;
+
 		// Remove characters from the middle of the string.
 		Str *STORM_FN remove(Iter from, Iter to) const;
 

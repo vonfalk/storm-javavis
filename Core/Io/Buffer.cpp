@@ -18,6 +18,16 @@ namespace storm {
 		}
 	}
 
+	Bool Buffer::put(Byte b) {
+		if (!data)
+			return false;
+		if (data->filled >= data->count)
+			return false;
+
+		data->v[data->filled++] = b;
+		return true;
+	}
+
 	void Buffer::deepCopy(CloneEnv *env) {
 		if (data) {
 			GcArray<Byte> *n = runtime::allocBuffer(env->engine(), data->count);
@@ -59,17 +69,17 @@ namespace storm {
 	}
 
 	Buffer cut(EnginePtr e, Buffer src, Nat from) {
-		Nat count = 0;
-		if (src.count() > from)
-			count = src.count() - from;
-		return cut(e, src, from, count);
+		return cut(e, src, from, src.count());
 	}
 
-	Buffer cut(EnginePtr e, Buffer src, Nat from, Nat count) {
-		Buffer r = buffer(e, count);
+	Buffer cut(EnginePtr e, Buffer src, Nat from, Nat to) {
+		if (to <= from)
+			return buffer(e, 0);
+
+		Buffer r = buffer(e, to - from);
 
 		if (src.filled() > from) {
-			Nat copy = src.filled() - from;
+			Nat copy = min(to, src.filled()) - from;
 			memcpy(r.dataPtr(), src.dataPtr() + from, copy);
 			r.filled(copy);
 		} else {

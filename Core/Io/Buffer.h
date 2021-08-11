@@ -37,6 +37,9 @@ namespace storm {
 		// accordingly.
 		void STORM_FN shift(Nat n);
 
+		// Put a single byte at the end of the buffer and increases "filled". Returns 'false' if there is no room.
+		Bool STORM_FN put(Byte data);
+
 		// Element access.
 		Byte &STORM_FN operator [](Nat id) { return data->v[id]; }
 		Byte operator [](Nat id) const { return data->v[id]; }
@@ -65,7 +68,7 @@ namespace storm {
 		friend Buffer buffer(EnginePtr e, const Byte *data, Nat count);
 	};
 
-	// Create a buffer.
+	// Create a buffer. It will be initially empty.
 	Buffer STORM_FN buffer(EnginePtr e, Nat count);
 
 	// Create a buffer using a (potentially stack-allocated) GcArray for backing data.
@@ -80,7 +83,7 @@ namespace storm {
 
 	// Get a 'substring' of a buffer.
 	Buffer STORM_FN cut(EnginePtr e, Buffer src, Nat from);
-	Buffer STORM_FN cut(EnginePtr e, Buffer src, Nat from, Nat count);
+	Buffer STORM_FN cut(EnginePtr e, Buffer src, Nat from, Nat to);
 
 	// Output.
 	void STORM_FN outputMark(StrBuf &to, Buffer b, Nat markAt);

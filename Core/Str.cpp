@@ -658,6 +658,14 @@ namespace storm {
 		return new (this) Str(s, e);
 	}
 
+	Str *Str::cut(Iter start) const {
+		return substr(start);
+	}
+
+	Str *Str::cut(Iter start, Iter end) const {
+		return substr(start, end);
+	}
+
 	Str *Str::remove(Iter start, Iter end) const {
 		return new (this) Str(data->v, toPtr(start), toPtr(end), data->v + charCount());
 	}
