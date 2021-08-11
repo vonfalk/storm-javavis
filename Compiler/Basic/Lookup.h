@@ -12,6 +12,9 @@ namespace storm {
 			// No automatic syntax.
 			STORM_CTOR BSLookup();
 
+			// Clone.
+			virtual ScopeLookup *STORM_FN clone() const;
+
 			// Included packages.
 			Array<Package *> *includes;
 

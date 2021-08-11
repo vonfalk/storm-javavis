@@ -108,6 +108,62 @@ namespace storm {
 		return true;
 	}
 
+	void Package::addExport(Package *pkg) {
+		addExport(pkg, null);
+	}
+
+	void Package::addExport(Package *pkg, MAYBE(Package *) key) {
+		if (key == null) {
+			if (!generalExports)
+				generalExports = new (this) PackageExports();
+
+			// Remove any duplicates.
+			if (generalExports->push(pkg) && specificExports) {
+				typedef Map<Package *, PackageExports *> EMap;
+				for (EMap::Iter i = specificExports->begin(), e = specificExports->end(); i != e; ++i) {
+					i.v()->remove(pkg);
+				}
+			}
+		} else {
+			if (!specificExports)
+				specificExports = new (this) Map<Package *, PackageExports *>();
+
+			PackageExports *exports = specificExports->get(key, null);
+			if (!exports) {
+				exports = new (this) PackageExports();
+				specificExports->put(key, exports);
+			}
+
+			exports->push(pkg);
+		}
+	}
+
+	Array<Package *> *Package::exports(MAYBE(Package *) key) {
+		Array<Package *> *res = new (this) Array<Package *>();
+		exports(key, res);
+		return res;
+	}
+
+	void Package::exports(MAYBE(Package *) key, Array<Package *> *to) {
+		if (!generalExports)
+			return;
+
+		generalExports->append(to);
+
+		if (key && specificExports) {
+			PackageExports *exports = specificExports->get(key, null);
+			if (!exports)
+				return;
+
+			exports->append(to);
+		}
+	}
+
+	void Package::exports(MAYBE(Package *) key, Array<NameLookup *> *to) {
+		// Yes, this is OK.
+		exports(key, (Array<Package *> *)to);
+	}
+
 	void Package::noDiscard() {
 		discardOnLoad = false;
 	}
@@ -227,6 +283,45 @@ namespace storm {
 
 		return r;
 	}
+
+	/**
+	 * Exports.
+	 */
+
+	PackageExports::PackageExports() {
+		exports = new (this) Array<Package *>();
+	}
+
+	PackageExports::PackageExports(const PackageExports &src) {
+		exports = new (this) Array<Package *>();
+		for (Nat i = 0; i < src.exports->count(); i++)
+			exports->push(src.exports->at(i));
+	}
+
+	Bool PackageExports::push(Package *package) {
+		// TODO: Eventually we want to ignore the O(n^2) here. The array is often very short, so it
+		// should not be a problem (creating a set is likely slower).
+		for (Nat i = 0; i < exports->count(); i++)
+			if (exports->at(i) == package)
+				return false;
+		exports->push(package);
+		return true;
+	}
+
+	Bool PackageExports::remove(Package *package) {
+		for (Nat i = 0; i < exports->count(); i++) {
+			if (exports->at(i) == package) {
+				exports->remove(i);
+				return true;
+			}
+		}
+		return false;
+	}
+
+	void PackageExports::append(Array<Package *> *to) {
+		to->append(exports);
+	}
+
 
 	/**
 	 * Documentation

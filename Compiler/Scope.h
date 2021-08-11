@@ -34,6 +34,9 @@ namespace storm {
 		STORM_CTOR ScopeLookup(Str *voidName);
 		ScopeLookup(const wchar *voidName);
 
+		// Clone this lookup instance.
+		virtual ScopeLookup *STORM_FN clone() const;
+
 		// Find 'name' in 'in'.
 		virtual MAYBE(Named *) STORM_FN find(Scope in, SimpleName *name);
 
@@ -129,6 +132,9 @@ namespace storm {
 		// Create.
 		STORM_CTOR ScopeExtra();
 		STORM_CTOR ScopeExtra(Str *voidName);
+
+		// Clone.
+		virtual ScopeLookup *STORM_FN clone() const;
 
 		// Additional NameLookups to search.
 		Array<NameLookup *> *extra;

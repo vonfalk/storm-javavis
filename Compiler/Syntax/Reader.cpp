@@ -169,6 +169,12 @@ namespace storm {
 
 		SyntaxLookup::SyntaxLookup() : ScopeExtra(new (engine()) Str(S("void"))) {}
 
+		ScopeLookup *SyntaxLookup::clone() const {
+			SyntaxLookup *copy = new (this) SyntaxLookup();
+			copy->extra->append(extra);
+			return copy;
+		}
+
 		Named *SyntaxLookup::find(Scope in, SimpleName *name) {
 			if (name->count() == 1) {
 				SimplePart *last = name->last();

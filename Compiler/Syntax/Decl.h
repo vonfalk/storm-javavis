@@ -49,6 +49,26 @@ namespace storm {
 
 
 		/**
+		 * Export declaration.
+		 */
+		class ExportDecl : public FileItem {
+			STORM_CLASS;
+		public:
+			// Create.
+			STORM_CTOR ExportDecl(SrcName *pkg);
+
+			// Package to export.
+			SrcName *pkg;
+
+			// Deep copy.
+			virtual void STORM_FN deepCopy(CloneEnv *env);
+
+			// Output.
+			virtual void STORM_FN toS(StrBuf *to) const;
+		};
+
+
+		/**
 		 * Delimiter declaration.
 		 */
 		class DelimDecl : public FileItem {
@@ -393,6 +413,9 @@ namespace storm {
 
 			// Used packages.
 			Array<SrcName *> *use;
+
+			// Exported packages.
+			Array<SrcName *> *exports;
 
 			// Name of the optional delimiter (if any).
 			MAYBE(SrcName *) optionalDelimiter;

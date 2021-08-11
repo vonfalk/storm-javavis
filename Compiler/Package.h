@@ -8,6 +8,8 @@ namespace storm {
 	class PkgReader;
 	class PkgFiles;
 
+	class PackageExports;
+
 	/**
 	 * Defines the contents of a package. A package is a NameSet associated with a path, which
 	 * allows it to load things from there.
@@ -38,6 +40,17 @@ namespace storm {
 		virtual Bool STORM_FN loadName(SimplePart *part);
 		virtual Bool STORM_FN loadAll();
 
+		// Add an export. That is: add a package that will be automatically included when this
+		// package is included. The key used here can be used to indicate that a particular package
+		// shall only be included in particular circumstances, e.g. for a particular language.
+		void STORM_FN addExport(Package *pkg);
+		void STORM_FN addExport(Package *pkg, MAYBE(Package *) key);
+
+		// Get exports. Either add them to an existing array, or get an array.
+		Array<Package *> *STORM_FN exports(MAYBE(Package *) key);
+		void STORM_FN exports(MAYBE(Package *) key, Array<Package *> *to);
+		void STORM_FN exports(MAYBE(Package *) key, Array<NameLookup *> *to);
+
 		// Inhibit discard messages from propagating.
 		void STORM_FN noDiscard();
 
@@ -48,8 +61,15 @@ namespace storm {
 		virtual void STORM_FN toS(StrBuf *to) const;
 
 	private:
-		// Our path. Points tu null if we're a virtual package.
+		// Our path. Points to null if we're a virtual package.
 		Url *pkgPath;
+
+		// General exports (i.e. for all types of users).
+		PackageExports *generalExports;
+
+		// Exports specific to some language. We maintain the invariant that exports in the general
+		// export do not appear here.
+		Map<Package *, PackageExports *> *specificExports;
 
 		// Shall we emit 'discardSource' messages on load?
 		Bool discardOnLoad;
@@ -67,6 +87,37 @@ namespace storm {
 		// Try to load a sub-package. Returns null on failure.
 		Package *loadPackage(Str *name);
 	};
+
+
+	/**
+	 * Package exports.
+	 *
+	 * Contains a list of packages that are exported by a package (i.e. packages that are
+	 * automatically included when a package is exported.
+	 */
+	class PackageExports : public ObjectOn<Compiler> {
+		STORM_CLASS;
+	public:
+		// Create.
+		STORM_CTOR PackageExports();
+
+		// Copy.
+		PackageExports(const PackageExports &src);
+
+		// Add an export.
+		Bool STORM_FN push(Package *package);
+
+		// Remove an export.
+		Bool STORM_FN remove(Package *package);
+
+		// Append the content in here to another array.
+		void STORM_FN append(Array<Package *> *to);
+
+	private:
+		// Exports.
+		Array<Package *> *exports;
+	};
+
 
 	/**
 	 * Documentation for a package.

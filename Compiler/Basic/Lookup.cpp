@@ -9,6 +9,12 @@ namespace storm {
 			includes = new (this) Array<Package *>();
 		}
 
+		ScopeLookup *BSLookup::clone() const {
+			BSLookup *copy = new (this) BSLookup();
+			copy->includes->append(includes);
+			return copy;
+		}
+
 		Named *BSLookup::findHelper(Scope scope, SimpleName *name) {
 			if (Named *found = ScopeLookup::find(scope, name))
 				return found;

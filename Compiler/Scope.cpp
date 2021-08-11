@@ -35,6 +35,10 @@ namespace storm {
 		voidName = new (this) Str(s);
 	}
 
+	ScopeLookup *ScopeLookup::clone() const {
+		return new (this) ScopeLookup(voidName);
+	}
+
 	Package *ScopeLookup::firstPkg(NameLookup *l) {
 		NameLookup *now = l;
 		while (!as<Package>(now)) {
@@ -219,6 +223,12 @@ namespace storm {
 
 	ScopeExtra::ScopeExtra(Str *v) : ScopeLookup(v) {
 		extra = new (this) Array<NameLookup *>();
+	}
+
+	ScopeLookup *ScopeExtra::clone() const {
+		ScopeExtra *copy = new (this) ScopeExtra();
+		copy->extra->append(extra);
+		return copy;
 	}
 
 	Named *ScopeExtra::find(Scope in, SimpleName *name) {

@@ -89,6 +89,9 @@ namespace storm {
 		public:
 			STORM_CTOR SyntaxLookup();
 
+			// Clone.
+			virtual ScopeLookup *STORM_FN clone() const;
+
 			// Lookup.
 			virtual MAYBE(Named *) STORM_FN find(Scope in, SimpleName *name);
 		};

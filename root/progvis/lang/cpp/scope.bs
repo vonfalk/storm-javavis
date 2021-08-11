@@ -14,6 +14,10 @@ class CppLookup extends ScopeLookup {
 		init("void") {}
 	}
 
+	ScopeLookup clone() : override {
+		CppLookup();
+	}
+
 	Named? find(Scope in, SimpleName name) : override {
 		// TODO: Modify the name to use C++ type conversion rules?
 
