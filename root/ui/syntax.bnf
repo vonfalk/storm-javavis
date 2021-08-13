@@ -1,6 +1,4 @@
 use layout;
-export layout;
-
 use core.lang;
 use lang.bs;
 

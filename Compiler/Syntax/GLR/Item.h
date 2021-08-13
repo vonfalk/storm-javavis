@@ -13,7 +13,7 @@ namespace storm {
 			STORM_PKG(lang.bnf.glr);
 
 			/**
-			 * Item in the LR tables. Has has functions and is therefore easy to look for.
+			 * Item in the LR tables. Has hash functions and is therefore easy to look for.
 			 *
 			 * See 'syntax.h' for notes on the identifiers used here!
 			 */

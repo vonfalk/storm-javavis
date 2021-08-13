@@ -143,12 +143,4 @@ namespace storm {
 		virtual MAYBE(Named *) STORM_FN find(Scope in, SimpleName *name);
 	};
 
-	// Expand a set of includes, taking exports into account. Will de-duplicate the existing array,
-	// but preserves order as far as possible. Exports for a particular package is added right after
-	// that entry, before any entries that might follow. Any recursive exports are currently added
-	// in level-order (i.e. depth 1 first, then depth 2), but this may change. Uses 'key' to extract
-	// exports that are potentially unique to a particular context.
-	Array<Package *> *STORM_FN expandExports(Array<Package *> *from, MAYBE(Package *) key);
-	Array<NameLookup *> *STORM_FN expandExports(Array<NameLookup *> *from, MAYBE(Package *) key);
-
 }

@@ -3,21 +3,22 @@
 #include "Core/StrBuf.h"
 #include "Core/Str.h"
 #include "Core/Io/Text.h"
+#include "Core/Set.h"
 #include "Engine.h"
 #include "Reader.h"
 #include "Exception.h"
 
 namespace storm {
 
-	Package::Package(Str *name) : NameSet(name), discardOnLoad(true) {}
+	Package::Package(Str *name) : NameSet(name), discardOnLoad(true), exportedLoaded(false) {}
 
-	Package::Package(Url *path) : NameSet(path->name()), pkgPath(path), discardOnLoad(true) {
+	Package::Package(Url *path) : NameSet(path->name()), pkgPath(path), discardOnLoad(true), exportedLoaded(false) {
 		engine().pkgMap()->put(pkgPath, this);
 
 		documentation = new (this) PackageDoc(this);
 	}
 
-	Package::Package(Str *name, Url *path) : NameSet(name), pkgPath(path), discardOnLoad(true) {
+	Package::Package(Str *name, Url *path) : NameSet(name), pkgPath(path), discardOnLoad(true), exportedLoaded(false) {
 		engine().pkgMap()->put(pkgPath, this);
 
 		documentation = new (this) PackageDoc(this);
@@ -57,6 +58,53 @@ namespace storm {
 			documentation = new (this) PackageDoc(this);
 	}
 
+	MAYBE(Named *) Package::find(SimplePart *part, Scope source) {
+		if (Named *found = NameSet::find(part, source))
+			return found;
+
+		loadExports();
+		if (exported) {
+			// Look inside exported packages, beware of cycles.
+			ExportSet examined(engine());
+			examined.push(this);
+
+			for (Nat i = 0; i < exported->count(); i++)
+				if (Named *found = exported->at(i)->recursiveFind(examined, part, source))
+					return found;
+		}
+
+		return null;
+	}
+
+	MAYBE(Named *) Package::recursiveFind(ExportSet &examined, SimplePart *part, Scope source) {
+		// See if this package is already examined.
+		for (nat i = 0; i < examined.count(); i++)
+			if (examined[i] == this)
+				return null;
+
+		// Remember that we have been examined.
+		examined.push(this);
+
+		// Look here. Note: We can not call 'find' directly, then we would lose 'examined'.
+		if (Named *found = NameSet::find(part, source))
+			return found;
+
+		if (exported) {
+			// Look at exports.
+			for (Nat i = 0; i < exported->count(); i++)
+				if (Named *found = exported->at(i)->recursiveFind(examined, part, source))
+					return found;
+		}
+
+		// Note: We don't have to remove this package from 'examined'. Doing so seems intuitive, but
+		// would result in us examining the same package from multiple paths. The big benefit of
+		// removing ourselves is that the 'examined' array would be smaller in size, and thus the
+		// loop in the top of this function would be faster. Calling 'find' more times is likely
+		// more expensive than a few extra iterations in a linear scan, however.
+
+		return null;
+	}
+
 	Bool Package::loadName(SimplePart *part) {
 		// We're only loading packages this way.
 		if (part->params->empty()) {
@@ -79,6 +127,9 @@ namespace storm {
 		// Nothing to load.
 		if (!pkgPath)
 			return true;
+
+		// Load exports if needed.
+		loadExports();
 
 		Array<Url *> *files = new (this) Array<Url *>();
 
@@ -109,61 +160,47 @@ namespace storm {
 	}
 
 	void Package::addExport(Package *pkg) {
-		addExport(pkg, null);
-	}
+		if (!exported)
+			exported = new (this) Array<Package *>();
 
-	void Package::addExport(Package *pkg, MAYBE(Package *) key) {
-		if (key == null) {
-			if (!generalExports)
-				generalExports = new (this) PackageExports();
-
-			// Remove any duplicates.
-			if (generalExports->push(pkg) && specificExports) {
-				typedef Map<Package *, PackageExports *> EMap;
-				for (EMap::Iter i = specificExports->begin(), e = specificExports->end(); i != e; ++i) {
-					i.v()->remove(pkg);
-				}
-			}
-		} else {
-			if (!specificExports)
-				specificExports = new (this) Map<Package *, PackageExports *>();
-
-			PackageExports *exports = specificExports->get(key, null);
-			if (!exports) {
-				exports = new (this) PackageExports();
-				specificExports->put(key, exports);
-			}
-
-			exports->push(pkg);
-		}
-	}
-
-	Array<Package *> *Package::exports(MAYBE(Package *) key) {
-		Array<Package *> *res = new (this) Array<Package *>();
-		exports(key, res);
-		return res;
-	}
-
-	void Package::exports(MAYBE(Package *) key, Array<Package *> *to) {
-		forceLoad();
-
-		if (generalExports) {
-			generalExports->append(to);
-		}
-
-		if (key && specificExports) {
-			PackageExports *exports = specificExports->get(key, null);
-
-			if (!exports)
+		// Remove duplicates: generally quite cheap to do, and prevents lookups from being expensive.
+		for (Nat i = 0; i < exported->count(); i++)
+			if (exported->at(i) == pkg)
 				return;
 
-			exports->append(to);
-		}
+		exported->push(pkg);
 	}
 
-	void Package::exports(MAYBE(Package *) key, Array<NameLookup *> *to) {
-		// Yes, this is OK.
-		exports(key, (Array<Package *> *)to);
+	Array<Package *> *Package::exports() {
+		loadExports();
+
+		if (exported)
+			return new (this) Array<Package *>(*exported);
+		else
+			return new (this) Array<Package *>();
+	}
+
+	Array<Package *> *Package::recursiveExports() {
+		Array<Package *> *result = exports();
+		Set<Package *> *seen = new (this) Set<Package *>();
+
+		// Note: 'result->count()' will change.
+		for (Nat at = 0; at < result->count(); at++) {
+			Package *examine = result->at(at);
+
+			examine->loadExports();
+			if (examine->exported) {
+				for (Nat i = 0; i < examine->exported->count(); i++) {
+					Package *add = examine->exported->at(i);
+					if (!seen->has(add)) {
+						seen->put(add);
+						result->push(add);
+					}
+				}
+			}
+		}
+
+		return result;
 	}
 
 	void Package::noDiscard() {
@@ -189,6 +226,62 @@ namespace storm {
 			*to << L"\n";
 			Indent z(to);
 			NameSet::toS(to);
+		}
+	}
+
+	void Package::loadExports() {
+		if (exportedLoaded)
+			return;
+		exportedLoaded = true;
+
+		if (!pkgPath)
+			return;
+
+		Url *exports = pkgPath->push(new (this) Str(S("export")));
+		if (!exports->exists())
+			return;
+
+		if (!exported)
+			exported = new (this) Array<Package *>();
+
+		Scope root = engine().scope();
+		TextInput *input = readText(exports);
+		SrcPos pos(exports, 0, 0);
+		while (input->more()) {
+			Str *line = input->readLine();
+
+			// Update position. We only count newlines as 1 character, regardless of how they are
+			// represented in the file.
+			if (pos.end != 0)
+				pos.start = pos.end + 1;
+			pos.end = pos.start + line->peekLength(); // Not always exact, but good enough.
+
+			// Trim whitespace to make "parsing" easier.
+			line = trimWhitespace(line);
+
+			// Empty line, ignore.
+			if (line->begin() == line->end())
+				continue;
+
+			// Comment, ignore.
+			if (line->begin().v() == Char('#'))
+				continue;
+			if (line->begin().v() == Char('/') && (line->begin() + 1).v() == Char('/'))
+				continue;
+
+			Name *name = parseComplexName(line);
+			if (!name)
+				throw new (this) SyntaxError(pos, TO_S(this, "Invalid format of names. Use: 'x.y.z(a, b.c)'. Comments start with '#' or '//'"));
+
+			Named *found = root.find(name);
+			if (!found)
+				throw new (this) SyntaxError(pos, TO_S(this, S("The name ") << name << S(" does not refer to anything.")));
+
+			Package *p = as<Package>(found);
+			if (!p)
+				throw new (this) SyntaxError(pos, TO_S(this, S("The name ") << found << S(" does not refer to a package.")));
+
+			exported->push(p);
 		}
 	}
 
@@ -286,45 +379,6 @@ namespace storm {
 		return r;
 	}
 
-	/**
-	 * Exports.
-	 */
-
-	PackageExports::PackageExports() {
-		exports = new (this) Array<Package *>();
-	}
-
-	PackageExports::PackageExports(const PackageExports &src) {
-		exports = new (this) Array<Package *>();
-		for (Nat i = 0; i < src.exports->count(); i++)
-			exports->push(src.exports->at(i));
-	}
-
-	Bool PackageExports::push(Package *package) {
-		// TODO: Eventually we want to remove the O(n^2) here. The array is often very short, so it
-		// should not be a problem (creating a set is likely slower).
-		for (Nat i = 0; i < exports->count(); i++)
-			if (exports->at(i) == package)
-				return false;
-
-		exports->push(package);
-		return true;
-	}
-
-	Bool PackageExports::remove(Package *package) {
-		for (Nat i = 0; i < exports->count(); i++) {
-			if (exports->at(i) == package) {
-				exports->remove(i);
-				return true;
-			}
-		}
-		return false;
-	}
-
-	void PackageExports::append(Array<Package *> *to) {
-		to->append(exports);
-	}
-
 
 	/**
 	 * Documentation
@@ -343,6 +397,7 @@ namespace storm {
 
 		return result;
 	}
+
 
 	/**
 	 * Helpers for Storm.

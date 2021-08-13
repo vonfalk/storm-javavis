@@ -19,6 +19,8 @@ namespace storm {
 	 * TODO: Better handling of line endings.
 	 * TODO: Find a good way of duplicating an input format to an output format.
 	 * TODO: Add TextInfo to a TextReader as well!
+	 * TODO: It is quite natural to have 'readLine' return MAYBE(Str *), then we can do:
+	 *   while (line = x.readLine()) {}
 	 */
 
 	/**

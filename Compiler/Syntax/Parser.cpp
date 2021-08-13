@@ -75,7 +75,7 @@ namespace storm {
 			return type->root;
 		}
 
-		void ParserBase::addSyntax(Package *pkg) {
+		void ParserBase::addSyntaxI(Package *pkg) {
 			pkg->forceLoad();
 			for (NameSet::Iter i = pkg->begin(), e = pkg->end(); i != e; ++i) {
 				Named *n = i.v();
@@ -84,6 +84,16 @@ namespace storm {
 				} else if (ProductionType *t = as<ProductionType>(n)) {
 					use->add(t);
 				}
+			}
+		}
+
+		void ParserBase::addSyntax(Package *pkg) {
+			addSyntaxI(pkg);
+
+			// Recursive exports.
+			Array<Package *> *deps = pkg->recursiveExports();
+			for (Nat i = 0; i < deps->count(); i++) {
+				addSyntaxI(deps->at(i));
 			}
 		}
 

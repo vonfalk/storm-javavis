@@ -1,0 +1,2 @@
+// We need this for the parser syntax to work properly.
+lang.bnf

@@ -118,6 +118,9 @@ namespace storm {
 		private:
 			// Backend being used.
 			ParserBackend *use;
+
+			// Private version for adding syntax.
+			void addSyntaxI(Package *pkg);
 		};
 
 

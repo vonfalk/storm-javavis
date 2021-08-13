@@ -56,6 +56,12 @@ namespace storm {
 			data->v[data->filled++] = e;
 		}
 
+		// Pop an element (does not clear storage).
+		void pop() {
+			if (data->filled > 0)
+				data->filled--;
+		}
+
 		// Access elements.
 		T &operator[] (nat id) {
 			return data->v[id];

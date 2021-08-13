@@ -237,6 +237,9 @@ namespace storm {
 	// Remove leading and trailing empty lines from a string.
 	Str *STORM_FN trimBlankLines(Str *src);
 
+	// Strip whitespace from a string.
+	Str *STORM_FN trimWhitespace(Str *src);
+
 	// Output for iterators for convenience.
 	StrBuf *STORM_FN operator <<(StrBuf *to, Str::Iter iter);
 

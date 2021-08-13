@@ -59,13 +59,9 @@
     but the scale of the issue should be assessed first.
   - [ ] Parsing core.lang.syntax.bnf takes about 80 ms, which is a bit on the high end when compiling code...
 
-* Loose ends so far [57/101]
+* Loose ends so far [57/100]
   - [ ] We want to allocate threads in some kind of pool. since the minimum alignment for VirtualAlloc on Windows
     is 64k, we might waste quite a lot of memory when allocating small stacks.
-  - [ ] When exporting something in the current package, do we want to make sure that those are
-    visible in the same package as well? Currently both BS and BNF ignores them (which is
-    sensible). Having this feature introduces many interesting circular dependencies - parsing a
-    file to find exports likely needs to know the exports of other files in the same package.
   - [ ] Add some helper "rules" to the recursive descent parser. For example: Capture(Nat n) that
     just captures 'n' chars/bytes (can't implement this in grammar). Then we can parse quite a bit
     of binary formats!  Perhaps also some rules for quick parsing of various integer types.

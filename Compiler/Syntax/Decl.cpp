@@ -34,21 +34,6 @@ namespace storm {
 
 
 		/**
-		 * Export declaration.
-		 */
-
-		ExportDecl::ExportDecl(SrcName *pkg) : pkg(pkg) {}
-
-		void ExportDecl::deepCopy(CloneEnv *env) {
-			cloned(pkg, env);
-		}
-
-		void ExportDecl::toS(StrBuf *to) const {
-			*to << S("export ") << pkg << S(";");
-		}
-
-
-		/**
 		 * Delimiters.
 		 */
 
@@ -475,7 +460,6 @@ namespace storm {
 
 		FileContents::FileContents() {
 			use = new (this) Array<SrcName *>();
-			exports = new (this) Array<SrcName *>();
 			rules = new (this) Array<RuleDecl *>();
 			productions = new (this) Array<ProductionDecl *>();
 		}
@@ -487,8 +471,6 @@ namespace storm {
 				productions->push(p);
 			else if (UseDecl *u = as<UseDecl>(item))
 				use->push(u->pkg);
-			else if (ExportDecl *e = as<ExportDecl>(item))
-				exports->push(e->pkg);
 			else if (DelimDecl *d = as<DelimDecl>(item))
 				pushDelimiter(d);
 			else if (CustomDecl *c = as<CustomDecl>(item))

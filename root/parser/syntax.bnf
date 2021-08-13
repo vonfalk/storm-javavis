@@ -1,19 +1,16 @@
 use lang.bs;
 use core.lang;
 
-// Everyone that imports this package also needs to import lang.bnf.
-export lang.bnf;
-
 optional delimiter = SDelimiter;
 required delimiter = SRequiredDelimiter;
 
 // Rule to generate proper overloads for the parser.
-SFileItem => parserOverloads(parser) : SParser(env) parser;
+SPlainFileItem => parserOverloads(parser) : SParser(env) parser;
 
 // Create the actual parser (we want to be able to use the -> syntax).
 Parser SParser(Scope env);
 SParser => parser
-  : SName name #fnName, ":", "parser" #keyword, "(", SParserType(env, name) parser - SParserOptions(parser), ")", "{", SParserBody -> setSyntax, "}";
+  : lang.bs.SName name #fnName, ":", "parser" #keyword, "(", SParserType(env, name) parser - SParserOptions(parser), ")", "{", SParserBody -> setSyntax, "}";
 
 
 // Parser types. This creates the actual parser instance to use, also makes the system extensible.

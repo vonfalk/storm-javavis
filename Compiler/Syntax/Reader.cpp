@@ -137,9 +137,6 @@ namespace storm {
 			SyntaxLookup *lookup = new (this) SyntaxLookup();
 			add(lookup, c->use);
 
-			// Add exports.
-			addExports(c->exports);
-
 			scope = Scope(info->pkg, lookup);
 		}
 
@@ -153,15 +150,10 @@ namespace storm {
 												TO_S(this, S("The package ") << name << S(" does not exist!")));
 				to->extra->push(found);
 			}
-
-			Package *bnfPkg = ScopeLookup::firstPkg(runtime::typeOf(this));
-			to->extra = expandExports(to->extra, bnfPkg);
 		}
 
 		void DeclReader::add(syntax::ParserBase *to, Array<SrcName *> *use) {
 			Scope root = engine().scope();
-			Array<Package *> *packages = new (this) Array<Package *>();
-			packages->reserve(use->count());
 			for (Nat i = 0; i < use->count(); i++) {
 				SrcName *name = use->at(i);
 				Package *found = as<Package>(root.find(name));
@@ -169,22 +161,9 @@ namespace storm {
 					throw new (this) SyntaxError(name->pos,
 												TO_S(this, S("The package ") << name << S(" does not exist!")));
 
-				packages->push(found);
+				to->addSyntax(found);
 			}
-
-			Package *bnfPkg = ScopeLookup::firstPkg(runtime::typeOf(this));
-			to->addSyntax(expandExports(packages, bnfPkg));
 		}
-
-		void DeclReader::addExports(Array<SrcName *> *exports) {
-				Scope root = engine().scope();
-				Package *bnfPkg = ScopeLookup::firstPkg(runtime::typeOf(this));
-				for (Nat i = 0; i < exports->count(); i++) {
-					if (Package *p = as<Package>(root.find(exports->at(i)))) {
-						info->pkg->addExport(p, bnfPkg);
-					}
-				}
-			}
 
 
 		SyntaxLookup::SyntaxLookup() : ScopeExtra(new (engine()) Str(S("void"))) {}

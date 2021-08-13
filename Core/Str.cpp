@@ -850,18 +850,23 @@ namespace storm {
 		return start;
 	}
 
+	static bool whitespace(wchar ch) {
+		switch (ch) {
+		case ' ':
+		case '\t':
+		case '\r':
+		case '\n':
+			return true;
+		default:
+			return false;
+		}
+	}
+
 	static bool emptyLine(const wchar *str, nat start) {
 		nat end = nextLine(str, start);
 		for (nat i = start; i < end; i++) {
-			switch (str[i]) {
-			case ' ':
-			case '\t':
-			case '\r':
-			case '\n':
-				break;
-			default:
+			if (!whitespace(str[i]))
 				return false;
-			}
 		}
 
 		return true;
@@ -955,6 +960,25 @@ namespace storm {
 		}
 
 		return str->substr(str->posIter(start), str->posIter(end));
+	}
+
+	Str *trimWhitespace(Str *str) {
+		const wchar *begin = str->c_str();
+		const wchar *end = str->c_str();
+
+		for (const wchar *at = begin; *at; at++) {
+			if (whitespace(*at))
+				begin = at + 1;
+			else
+				break;
+		}
+
+		for (const wchar *at = begin; *at; at++) {
+			if (!whitespace(*at))
+				end = at + 1;
+		}
+
+		return new (str) Str(begin, end);
 	}
 
 	StrBuf *operator <<(StrBuf *to, Str::Iter iter) {
