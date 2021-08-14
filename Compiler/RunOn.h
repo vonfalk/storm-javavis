@@ -42,6 +42,6 @@ namespace storm {
 
 	// Output.
 	wostream &operator <<(wostream &to, const RunOn &v);
-	StrBuf &operator <<(StrBuf &to, RunOn v);
+	StrBuf &STORM_FN operator <<(StrBuf &to, RunOn v);
 
 }
