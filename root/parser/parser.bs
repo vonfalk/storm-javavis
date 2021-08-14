@@ -198,9 +198,11 @@ Package createPackage(lang:bnf:FileContents this, Scope scope, NameLookup parent
 
 	SyntaxLookup lookup;
 	if (old = scope.lookup as ScopeExtra) {
+		lookup.extra << parent;
 		for (x in old.extra)
 			lookup.extra << x;
 	} else if (old = scope.lookup as BSLookup) {
+		lookup.extra << parent;
 		for (x in old.includes)
 			lookup.extra << x;
 	}
