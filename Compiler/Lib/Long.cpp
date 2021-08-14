@@ -155,6 +155,10 @@ namespace storm {
 		rv->at(1) = Value(this);
 		Value b(StormInfo<Bool>::type(engine));
 
+		Array<Value> *vb = new (this) Array<Value>(2, Value(this, false));
+		Array<Value> *rb = new (this) Array<Value>(2, Value(this, true));
+		vb->at(1) = rb->at(1) = Value(StormInfo<Byte>::type(engine));
+
 		add(inlinedFunction(engine, Value(this), S("+"), vv, fnPtr(engine, &numAdd))->makePure());
 		add(inlinedFunction(engine, Value(this), S("-"), vv, fnPtr(engine, &numSub))->makePure());
 		add(inlinedFunction(engine, Value(this), S("*"), vv, fnPtr(engine, &numMul))->makePure());
@@ -185,15 +189,18 @@ namespace storm {
 		add(inlinedFunction(engine, Value(this), S("|"), vv, fnPtr(engine, &numOr))->makePure());
 		add(inlinedFunction(engine, Value(this), S("^"), vv, fnPtr(engine, &numXor))->makePure());
 		add(inlinedFunction(engine, Value(this), S("~"), v, fnPtr(engine, &numNot))->makePure());
+		add(inlinedFunction(engine, Value(this), S("<<"), vb, fnPtr(engine, &numShl))->makePure());
+		add(inlinedFunction(engine, Value(this), S(">>"), vb, fnPtr(engine, &numShr))->makePure());
 
 		add(inlinedFunction(engine, Value(this), S("&="), rv, fnPtr(engine, &numAndEq<Word>))->makePure());
 		add(inlinedFunction(engine, Value(this), S("|="), rv, fnPtr(engine, &numOrEq<Word>))->makePure());
 		add(inlinedFunction(engine, Value(this), S("^="), rv, fnPtr(engine, &numXorEq<Word>))->makePure());
+		add(inlinedFunction(engine, Value(this), S("<<="), rb, fnPtr(engine, &numShlEq<Word>))->makePure());
+		add(inlinedFunction(engine, Value(this), S(">>="), rb, fnPtr(engine, &numShrEq<Word>))->makePure());
 
 		add(inlinedFunction(engine, Value(), Type::CTOR, rr, fnPtr(engine, &numCopyCtor<Word>))->makePure());
 		add(inlinedFunction(engine, Value(), Type::CTOR, r, fnPtr(engine, &numInit<Word>))->makePure());
 
-		Array<Value> *rb = valList(engine, 2, Value(this, true), Value(StormInfo<Byte>::type(engine)));
 		add(inlinedFunction(engine, Value(), Type::CTOR, rb, fnPtr(engine, &castWord))->makeAutoCast()->makePure());
 		Array<Value> *ri = valList(engine, 2, Value(this, true), Value(StormInfo<Nat>::type(engine)));
 		add(inlinedFunction(engine, Value(), Type::CTOR, ri, fnPtr(engine, &castWord))->makeAutoCast()->makePure());

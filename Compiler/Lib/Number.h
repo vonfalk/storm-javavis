@@ -29,6 +29,9 @@ namespace storm {
 	void numOr(InlineParams p);
 	void numXor(InlineParams p);
 	void numNot(InlineParams p);
+	void numShl(InlineParams p);
+	void numShr(InlineParams p);
+	void numSar(InlineParams p);
 
 	// Compare.
 	template <code::CondFlag f>
@@ -218,6 +221,36 @@ namespace storm {
 		code::Reg dest = p.regParam(0);
 
 		*p.state->l << bxor(tRel(T(), dest), p.param(1));
+		if (p.result->needed())
+			*p.state->l << mov(p.result->location(p.state), tRel(T(), dest));
+	}
+
+	template <class T>
+	void numShlEq(InlineParams p) {
+		p.allocRegs(0);
+		code::Reg dest = p.regParam(0);
+
+		*p.state->l << shl(tRel(T(), dest), p.param(1));
+		if (p.result->needed())
+			*p.state->l << mov(p.result->location(p.state), tRel(T(), dest));
+	}
+
+	template <class T>
+	void numShrEq(InlineParams p) {
+		p.allocRegs(0);
+		code::Reg dest = p.regParam(0);
+
+		*p.state->l << shr(tRel(T(), dest), p.param(1));
+		if (p.result->needed())
+			*p.state->l << mov(p.result->location(p.state), tRel(T(), dest));
+	}
+
+	template <class T>
+	void numSarEq(InlineParams p) {
+		p.allocRegs(0);
+		code::Reg dest = p.regParam(0);
+
+		*p.state->l << sar(tRel(T(), dest), p.param(1));
 		if (p.result->needed())
 			*p.state->l << mov(p.result->location(p.state), tRel(T(), dest));
 	}

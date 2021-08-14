@@ -77,10 +77,14 @@ namespace storm {
 		add(inlinedFunction(engine, Value(this), S("|"), vv, fnPtr(engine, &numOr))->makePure());
 		add(inlinedFunction(engine, Value(this), S("^"), vv, fnPtr(engine, &numXor))->makePure());
 		add(inlinedFunction(engine, Value(this), S("~"), v, fnPtr(engine, &numNot))->makePure());
+		add(inlinedFunction(engine, Value(this), S("<<"), vv, fnPtr(engine, &numShl))->makePure());
+		add(inlinedFunction(engine, Value(this), S(">>"), vv, fnPtr(engine, &numShr))->makePure());
 
 		add(inlinedFunction(engine, Value(this), S("&="), rv, fnPtr(engine, &numAndEq<Byte>))->makePure());
 		add(inlinedFunction(engine, Value(this), S("|="), rv, fnPtr(engine, &numOrEq<Byte>))->makePure());
 		add(inlinedFunction(engine, Value(this), S("^="), rv, fnPtr(engine, &numXorEq<Byte>))->makePure());
+		add(inlinedFunction(engine, Value(this), S("<<="), rv, fnPtr(engine, &numShlEq<Byte>))->makePure());
+		add(inlinedFunction(engine, Value(this), S(">>="), rv, fnPtr(engine, &numShrEq<Byte>))->makePure());
 
 
 		add(inlinedFunction(engine, Value(), Type::CTOR, rr, fnPtr(engine, &numCopyCtor<Byte>))->makePure());

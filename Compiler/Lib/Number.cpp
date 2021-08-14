@@ -113,4 +113,28 @@ namespace storm {
 		}
 	}
 
+	void numShl(InlineParams p) {
+		if (p.result->needed()) {
+			Operand result = p.result->location(p.state);
+			*p.state->l << mov(result, p.param(0));
+			*p.state->l << shl(result, p.param(1));
+		}
+	}
+
+	void numShr(InlineParams p) {
+		if (p.result->needed()) {
+			Operand result = p.result->location(p.state);
+			*p.state->l << mov(result, p.param(0));
+			*p.state->l << shr(result, p.param(1));
+		}
+	}
+
+	void numSar(InlineParams p) {
+		if (p.result->needed()) {
+			Operand result = p.result->location(p.state);
+			*p.state->l << mov(result, p.param(0));
+			*p.state->l << sar(result, p.param(1));
+		}
+	}
+
 }
