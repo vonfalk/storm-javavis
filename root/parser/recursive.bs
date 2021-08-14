@@ -46,7 +46,7 @@ class RecursiveParser extends Parser {
 		init(env, name) {}
 	}
 
-	void populateFn(BSTreeFn fn, Scope scope, Rule start, NameSet[] include) : override {
+	FnBody createBody(BSRawFn fn, Scope scope, Rule start, NameSet[] include) : override {
 		Grammar grammar(start, include, true);
 		// print(grammar.toS);
 
@@ -63,7 +63,6 @@ class RecursiveParser extends Parser {
 		}
 
 		FnBody body(fn, scope);
-		fn.body = body;
 
 		// Note: Parameter 0 is the input, parameter 1 is the start position.
 		Var stateVar = {
@@ -95,6 +94,8 @@ class RecursiveParser extends Parser {
 					result.error = state.error;
 					return result;
 				});
+
+		body;
 	}
 
 	/**

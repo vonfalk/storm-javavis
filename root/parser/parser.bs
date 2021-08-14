@@ -7,8 +7,8 @@ use lang:bs:macro;
  * A declared parser.
  */
 class Parser extends lang:bs:NamedDecl {
-	// Override to initialize the function with its proper contents.
-	protected void populateFn(BSTreeFn fn, Scope scope, Rule start, NameSet[] include) : abstract;
+	// Override to create function body.
+	FnBody createBody(BSRawFn fn, Scope scope, Rule start, NameSet[] include) : abstract;
 
 	// Create, specify the start rule (as a name).
 	init(Scope scope, SStr name) {
@@ -48,6 +48,76 @@ class Parser extends lang:bs:NamedDecl {
 		this.options = options;
 	}
 
+	// Function class so that we can do lazy-loading to get load order right.
+	class ParserFn extends BSRawFn {
+		init(Parser parser, ParserSyntax syntax, SrcName startName, NameLookup scopeTop) {
+			Package syntaxPkg = syntax.createPackage(parser.scope, scopeTop);
+
+			// Add includes. Most importantly so that we may access both 'syntaxPkg' and the current package.
+			NameSet[] include;
+			include << syntaxPkg;
+			for (name in syntax.use) {
+				unless (inc = parser.scope.find(name) as NameSet)
+					throw SyntaxError(name.pos, "Unknown package: ${name}");
+				include << inc;
+			}
+
+			Scope s = addIncludes(parser.scope, include);
+			Rule start = findRule(s, startName);
+
+			// We also need to include the current "top" package in the include directory. It is OK to
+			// do this after adding includes to the scope since the scope has its top set anyway.
+			include << ScopeLookup:firstPkg(scopeTop);
+
+			// Now we can start creating the actual parser functions!
+			SimpleName resultName;
+			resultName.add("parser");
+
+			ValParam[] params = start.params.clone;
+			if (parser.binary) {
+				params.insert(0, ValParam(named{core:io:Buffer}, " input"));
+				params.insert(1, ValParam(named{Nat}, " start"));
+				resultName.add("BinaryResult", [start.result]);
+			} else {
+				params.insert(0, ValParam(named{Str}, " input"));
+				params.insert(1, ValParam(named{Str:Iter}, " start"));
+				resultName.add("Result", [start.result]);
+			}
+
+			var resultType = s.value(resultName, parser.name.pos);
+
+			init(resultType, parser.name, params, null) {
+				parser = parser;
+				start = start;
+				scope = s;
+				include = include;
+			}
+		}
+
+		// Data we need when creating the body.
+		Parser? parser;
+		Rule? start;
+		Scope scope;
+		NameSet[] include;
+
+		FnBody createBody() : override {
+			unless (parser)
+				throw InternalError("Should not need to create the body more than once!");
+			unless (start)
+				throw InternalError("Should not need to create the body more than once!");
+
+			parser.createBody(this, scope, start, include);
+		}
+
+		void clearBody() : override {
+			// Shed some weight.
+			parser = null;
+			start = null;
+			scope = Scope();
+			include.clear();
+		}
+	}
+
 	// Create the parser. The generated function takes (Str, Str:Iter, ...) as parameters, where
 	// ... is the parameters to the root rule.
 	protected Named doCreate() : override {
@@ -58,50 +128,13 @@ class Parser extends lang:bs:NamedDecl {
 		unless (scopeTop = scope.top)
 			throw InternalError("Expected to find a package in the scope.");
 
-		Package syntaxPkg = syntax.createPackage(scope, scopeTop);
-
-		// Add includes. Most importantly so that we may access both 'syntaxPkg' and the current package.
-		NameSet[] include;
-		include << syntaxPkg;
-		for (name in syntax.use) {
-			unless (inc = scope.find(name) as NameSet)
-				throw SyntaxError(name.pos, "Unknown package: ${name}");
-			include << inc;
-		}
-
-		Scope s = addIncludes(scope, include);
-		Rule start = findRule(s, startName);
-
-		// We also need to include the current "top" package in the include directory. It is OK to
-		// do this after adding includes to the scope since the scope has its top set anyway.
-		include << ScopeLookup:firstPkg(scopeTop);
-
-		// Now we can start creating the actual parser functions!
-		SimpleName resultName;
-		resultName.add("parser");
-
-		ValParam[] params = start.params.clone;
-		if (binary) {
-			params.insert(0, ValParam(named{core:io:Buffer}, " input"));
-			params.insert(1, ValParam(named{Nat}, " start"));
-			resultName.add("BinaryResult", [start.result]);
-		} else {
-			params.insert(0, ValParam(named{Str}, " input"));
-			params.insert(1, ValParam(named{Str:Iter}, " start"));
-			resultName.add("Result", [start.result]);
-		}
-
-		var resultType = s.value(resultName, name.pos);
-
-		BSTreeFn fn(resultType, name, params, null);
+		ParserFn fn(this, syntax, startName, scopeTop);
 
 		// Apply options.
 		if (thread)
 			fn.thread(scope, thread);
 		if (options)
 			options.transform(scope, fn);
-
-		populateFn(fn, s, start, include);
 
 		fn;
 	}
