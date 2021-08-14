@@ -122,7 +122,7 @@ namespace storm {
 			// Create an iterator to end.
 			STORM_CTOR Iter();
 
-			// Deep copy. No need to do anything, strings are immutable!
+			// Deep copy.
 			void STORM_FN deepCopy(CloneEnv *env);
 
 			// Advance.

@@ -752,7 +752,13 @@ namespace storm {
 
 	Str::Iter::Iter(const Str *owner, Nat pos) : owner(owner), pos(pos) {}
 
-	void Str::Iter::deepCopy(CloneEnv *env) {}
+	void Str::Iter::deepCopy(CloneEnv *env) {
+		// What we need to do here is to make sure that the string inside of us is changed if the
+		// string was copied. Otherwise we might end up with a string + iterator pair that no longer
+		// match in threaded calls.
+		if (Object *clone = env->cloned(const_cast<Str *>(owner)))
+			owner = (Str *)clone;
+	}
 
 	Str::Iter &Str::Iter::operator ++() {
 		if (atEnd())
