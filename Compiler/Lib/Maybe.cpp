@@ -97,7 +97,25 @@ namespace storm {
 		*p.state->l << mov(ptrRel(p.regParam(0), Offset()), ptrConst(Offset()));
 	}
 
+	// Expects Maybe<X *> *, X ** or Maybe<X *> *, Maybe<X *> *
 	static void copyMaybeClass(InlineParams p) {
+		using namespace code;
+		p.allocRegs(0, 1);
+		Reg dest = p.regParam(0);
+		Reg src = p.regParam(1);
+
+		*p.state->l << mov(ptrRel(dest, Offset()), ptrRel(src, Offset()));
+
+		// See if we should return something (necessary since we can be used as an assignment).
+		if (p.result->needed()) {
+			if (!p.result->suggest(p.state, p.originalParam(0))) {
+				*p.state->l << mov(p.result->location(p.state), dest);
+			}
+		}
+	}
+
+	// Expects Maybe<X *> *, X *
+	static void copyMaybeClassValue(InlineParams p) {
 		using namespace code;
 		p.allocRegs(0);
 		Reg dest = p.regParam(0);
@@ -144,9 +162,11 @@ namespace storm {
 			*buf << L"null";
 	}
 
-	static void maybeCloneClass(Object *o, CloneEnv *env) {
-		if (o)
-			o->deepCopy(env);
+	static void maybeCloneClass(Object **o, CloneEnv *env) {
+		// Note: Since copying a Maybe<T> does not make a copy of the object, we need to call clone
+		// here rather than just deepCopy. This is similar to how a regular deepCopy is implemented.
+		if (*o)
+			cloned(*o, env);
 	}
 
 	code::TypeDesc *MaybeClassType::createTypeDesc() {
@@ -159,19 +179,20 @@ namespace storm {
 
 		Array<Value> *v = new (e) Array<Value>(1, Value(this, false));
 		Array<Value> *r = new (e) Array<Value>(1, Value(this, true));
-		Array<Value> *rv = new (e) Array<Value>(2, Value(this, false));
-		rv->at(0) = Value(this, true);
+		Array<Value> *rr = new (e) Array<Value>(2, Value(this, true));
 		Array<Value> *rp = new (e) Array<Value>(2, Value(this, true));
 		rp->at(1) = param();
 
 		add(inlinedFunction(e, Value(), CTOR, r, fnPtr(e, &initMaybeClass)));
-		add(inlinedFunction(e, Value(), CTOR, rv, fnPtr(e, &copyMaybeClass)));
-		add(inlinedFunction(e, Value(this, true), S("="), rv, fnPtr(e, &copyMaybeClass)));
+		// Note: We could take a value as the second parameter, but since that is non-standard,
+		// assumptions elsewhere in the system breaks from that.
+		add(inlinedFunction(e, Value(), CTOR, rr, fnPtr(e, &copyMaybeClass)));
+		add(inlinedFunction(e, Value(this, true), S("="), rr, fnPtr(e, &copyMaybeClass)));
 		add(inlinedFunction(e, b, S("empty"), v, fnPtr(e, &emptyMaybeClass)));
 		add(inlinedFunction(e, b, S("any"), v, fnPtr(e, &anyMaybeClass)));
 
 		// Cast constructor.
-		add(inlinedFunction(e, Value(), CTOR, rp, fnPtr(e, &copyMaybeClass))->makeAutoCast());
+		add(inlinedFunction(e, Value(), CTOR, rp, fnPtr(e, &copyMaybeClassValue))->makeAutoCast());
 
 		add(nativeEngineFunction(e, Value(Str::stormType(e)), S("toS"), v, address(&maybeToSClass)));
 
@@ -180,7 +201,8 @@ namespace storm {
 		add(nativeFunction(e, Value(), S("toS"), strBuf, address(&maybeToSBufClass)));
 
 		if (!contained->isA(TObject::stormType(e))) {
-			Array<Value> *clone = new (e) Array<Value>(2, Value(this, false));
+			// Note: other places assume that 'this' ptr is a reference, since this is usually the case.
+			Array<Value> *clone = new (e) Array<Value>(2, Value(this, true));
 			clone->at(1) = Value(CloneEnv::stormType(e));
 			add(nativeFunction(e, Value(), S("deepCopy"), clone, address(&maybeCloneClass)));
 
@@ -234,9 +256,9 @@ namespace storm {
 		if (!param().canStore(other))
 			return null;
 
-		Array<Value> *rv = new (this) Array<Value>(2, o);
-		rv->at(0) = Value(this).asRef(true);
-		return inlinedFunction(engine, Value(), S("="), rv, fnPtr(engine, &copyMaybeClass));
+		Array<Value> *rr = new (this) Array<Value>(2, o.asRef(true));
+		rr->at(0) = Value(this).asRef(true);
+		return inlinedFunction(engine, Value(), S("="), rr, fnPtr(engine, &copyMaybeClass));
 	}
 
 	Named *MaybeClassType::createCopy(Str *name, SimplePart *part) {
@@ -255,10 +277,9 @@ namespace storm {
 		if (!param().canStore(other))
 			return null;
 
-		Array<Value> *rv = new (this) Array<Value>(2, o.asRef(false));
-		rv->at(0) = Value(this).asRef(true);
-
-		return inlinedFunction(engine, Value(), CTOR, rv, fnPtr(engine, &copyMaybeClass))->makeAutoCast();
+		Array<Value> *rr = new (this) Array<Value>(2, o.asRef(true));
+		rr->at(0) = Value(this).asRef(true);
+		return inlinedFunction(engine, Value(), CTOR, rr, fnPtr(engine, &copyMaybeClass))->makeAutoCast();
 	}
 
 	void MaybeClassType::addSerialization(SerializeInfo *info) {

@@ -193,3 +193,28 @@ Str testReceiveMaybe() {
 		result << x;
 	result.toS;
 }
+
+
+// See if maybe types are cloned properly at thread boundaries. Both for values and classes.
+Int threadFn(CloneDerived? v) on Other {
+	if (v)
+		v.c;
+	else
+		-1;
+}
+Int threadFn(ThreadVal? v) on Other {
+	if (v)
+		v.v.c;
+	else
+		-1;
+}
+
+Int threadMaybeClass() {
+	// Should give 4 + 1 (copy ctor) + 1 (deep copy)
+	threadFn(CloneDerived());
+}
+
+Int threadMaybeValue() {
+	// Should give 4 + 1 (copy ctor) + 1 (deep copy)
+	threadFn(ThreadVal());
+}

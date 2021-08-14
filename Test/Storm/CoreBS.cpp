@@ -289,6 +289,9 @@ BEGIN_TEST(MaybeTest, BS) {
 	CHECK_EQ(runFn<Int>(S("tests.bs.testExplicitOther")), 2);
 
 	CHECK_EQ(toS(runFn<Str *>(S("tests.bs.testReceiveMaybe"))), L"Iterator: ab|>c");
+
+	CHECK_EQ(runFn<Int>(S("tests.bs.threadMaybeClass")), 6);
+	CHECK_EQ(runFn<Int>(S("tests.bs.threadMaybeValue")), 6);
 } END_TEST
 
 

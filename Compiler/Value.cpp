@@ -182,15 +182,27 @@ namespace storm {
 		if (type->typeFlags & typeClass)
 			return false;
 
-		code::TypeDesc *desc = type->typeDesc();
-		return as<code::PrimitiveDesc>(desc) != null;
+		// Check if it is a primitive.
+		code::PrimitiveDesc *desc = as<code::PrimitiveDesc>(type->typeDesc());
+		if (!desc)
+			return false;
+
+		// Exclude pointers, those need to be treated differently.
+		return desc->v.kind() != code::primitive::pointer;
 	}
 
 	Bool Value::isAsmType() const {
 		if (!type)
 			return false;
 
-		return isObject() || isPrimitive();
+		if (isObject())
+			return true;
+
+		// If it is a primitive type.
+		if (as<code::PrimitiveDesc>(type->typeDesc()))
+			return true;
+
+		return false;
 	}
 
 	Bool Value::isPtr() const {
