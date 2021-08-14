@@ -1,0 +1,121 @@
+use parser;
+use core:io;
+
+Buffer? Bytes(RecursiveParser:BinaryState state, Nat count) {
+	Nat from = state.pos;
+	Nat to = from + count;
+	if (to > state.input.count) {
+		state.error = "Expected ${count} bytes, but only ${state.input.count - from} remain.";
+		return null;
+	}
+
+	state.pos = to;
+	state.input.cut(from, to);
+}
+
+Str? Chars(RecursiveParser:StrState state, Nat count) {
+	if (count == 0)
+		return "";
+
+	// Step most codepoints in C++.
+	var start = state.pos;
+	var iter = start + (count - 1);
+	var end = iter + 1;
+
+	// If we failed to go the last step, then we did not have enough.
+	if (iter == end) {
+		state.error = "Expected ${count} codepoints, but reached end of the input too early.";
+		return null;
+	}
+
+	state.pos = end;
+	state.input.cut(start, end);
+}
+
+Bool enough(RecursiveParser:BinaryState state, Nat count) {
+	if (state.pos + count > state.input.count) {
+		state.error = "Expected ${count} bytes, but only ${state.input.count} remain.";
+		return false;
+	} else {
+		return true;
+	}
+}
+
+Byte? Nat8(RecursiveParser:BinaryState this) {
+	if (!enough(this, 1))
+		return null;
+
+	return input[pos++];
+}
+
+Nat? Nat16LE(RecursiveParser:BinaryState this) {
+	if (!enough(this, 2))
+		return null;
+
+	Nat result = input[pos++].nat;
+	result |= input[pos++].nat << 8b;
+	return result;
+}
+
+Nat? Nat16BE(RecursiveParser:BinaryState this) {
+	if (!enough(this, 2))
+		return null;
+
+	Nat result = input[pos++].nat << 8;
+	result |= input[pos++].nat;
+	return result;
+}
+
+Nat? Nat32LE(RecursiveParser:BinaryState this) {
+	if (!enough(this, 4))
+		return null;
+
+	Nat result = input[pos++].nat;
+	result |= input[pos++].nat << 8;
+	result |= input[pos++].nat << 16;
+	result |= input[pos++].nat << 24;
+	return result;
+}
+
+Nat? Nat32BE(RecursiveParser:BinaryState this) {
+	if (!enough(this, 4))
+		return null;
+
+	Nat result = input[pos++].nat << 24;
+	result |= input[pos++].nat << 16;
+	result |= input[pos++].nat << 8;
+	result |= input[pos++].nat;
+	return result;
+}
+
+Int? Int16LE(RecursiveParser:BinaryState this) {
+	unless (v = Nat16LE(this))
+		return null;
+
+	// Sign extend.
+	if (v > 0x8000)
+		v |= 0xFFFF0000;
+	v.int;
+}
+
+Int? Int16BE(RecursiveParser:BinaryState this) {
+	unless (v = Nat16BE(this))
+		return null;
+
+	// Sign extend.
+	if (v > 0x8000)
+		v |= 0xFFFF0000;
+	v.int;
+}
+
+Int? Int32LE(RecursiveParser:BinaryState this) {
+	unless (v = Nat32BE(this))
+		return null;
+	v.int;
+}
+
+Int? Int32BE(RecursiveParser:BinaryState this) {
+	unless (v = Nat32BE(this))
+		return null;
+	v.int;
+}

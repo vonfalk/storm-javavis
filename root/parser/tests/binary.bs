@@ -10,14 +10,7 @@ binaryParser : parser(recursive descent, binary) {
 }
 
 suite BinaryParser {
-	Buffer b = buffer(7);
-	b.put(0x20);
-	b.put(0x21);
-	b.put(0x0A);
-	b.put(0x36);
-	b.put(0x33);
-	b.put(0x0A);
-	b.put(0x08);
+	Buffer b = "ab\ncd\ne".toUtf8();
 
 	var result = binaryParser(b);
 	test result.value.any == true;
@@ -34,5 +27,80 @@ suite BinaryParser {
 		test v[0].filled == 0.nat;
 	} else {
 		print("Error at ${result.end}, ${result.error}");
+	}
+}
+
+pseudoParser : parser(recursive descent, binary) {
+	use parser.special;
+	start = Start;
+
+	Buffer Start();
+	Start => x : Number n - Bytes(n) x;
+
+	Nat Number();
+	Number => toNat(x) : "[0-9]" x;
+}
+
+pseudoStr : parser(recursive descent) {
+	use parser.special;
+	start = Start;
+
+	Str Start();
+	Start => x : Number n - Chars(n) x;
+
+	Nat Number();
+	Number => toNat(x) : "[0-9]" x;
+}
+
+Nat toNat(Buffer b) {
+	b.fromUtf8.toNat;
+}
+
+suite PseudoRules {
+	Buffer b = "3abcde".toUtf8();
+	var r = pseudoParser(b);
+	test r.value.any == true;
+	test r.end == 4.nat;
+	if (x = r.value) {
+		test x.count == 3.nat;
+		test x.fromUtf8 == "abc";
+	}
+
+	var z = pseudoStr("3abcde");
+	test z.value.any == true;
+	if (x = z.value) {
+		test x == "abc";
+	}
+}
+
+value BinData {
+	init(Nat a, Int b) {
+		init { a = a; b = b; }
+	}
+
+	Nat a;
+	Int b;
+}
+
+binNumParser : parser(recursive descent, binary) {
+	use parser.special;
+	start = Start;
+
+	BinData Start();
+	Start => BinData(a, b) : Nat16LE a - Int16BE b;
+}
+
+suite BinNumRules {
+	Buffer b = buffer(4);
+	b.push(0x01);
+	b.push(0x80);
+	b.push(0xFF);
+	b.push(0xFF);
+
+	var r = binNumParser(b);
+	test r.value.any == true;
+	if (x = r.value) {
+		test x.a == 0x8001_n;
+		test x.b == -1;
 	}
 }

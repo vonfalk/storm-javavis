@@ -1,7 +1,9 @@
 #include "stdafx.h"
 #include "Buffer.h"
 #include "Core/CloneEnv.h"
+#include "Core/Str.h"
 #include "Core/StrBuf.h"
+#include "Core/Convert.h"
 
 namespace storm {
 
@@ -18,7 +20,7 @@ namespace storm {
 		}
 	}
 
-	Bool Buffer::put(Byte b) {
+	Bool Buffer::push(Byte b) {
 		if (!data)
 			return false;
 		if (data->filled >= data->count)
@@ -117,4 +119,11 @@ namespace storm {
 		}
 	}
 
+	Buffer toUtf8(Str *str) {
+		return fullBuffer((GcArray<Byte> *)toChar(str->engine(), str->c_str()));
+	}
+
+	Str *fromUtf8(EnginePtr e, Buffer buffer) {
+		return new (e.v) Str(toWChar(e.v, (const char *)buffer.dataPtr(), buffer.filled()));
+	}
 }

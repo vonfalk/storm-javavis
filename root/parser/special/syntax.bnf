@@ -1,0 +1,25 @@
+use core.io;
+
+// This file contains pseduo-rules that are usable in some of the pre-generated parsers.
+// All rules here will get a first-set of "." to give the parser logic a reasonable chance
+// of detecting issues with grammars using these.
+
+// Match a certain number of bytes. Usable in binary recursive descent parsers.
+Buffer Bytes(Nat count);
+
+// Match a certain number of codepoints. Usable in string recursive descent parsers.
+Str Chars(Nat count);
+
+
+// For convenience: match various integer types. Usable for binary parsers.
+Byte Nat8();
+
+Nat Nat16LE();
+Nat Nat16BE();
+Nat Nat32LE();
+Nat Nat32BE();
+
+Int Int16LE();
+Int Int16BE();
+Int Int32LE();
+Int Int32BE();

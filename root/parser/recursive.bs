@@ -183,6 +183,8 @@ class RecursiveParser extends Parser {
 				binary = binary;
 				thread = parent.declaredThread;
 			}
+
+			loadSpecial();
 		}
 
 		// Parent entity.
@@ -201,10 +203,10 @@ class RecursiveParser extends Parser {
 		NamedThread? thread;
 
 		// Created functions. Not necessarily entirely done.
-		private Rule->BSTreeFn ruleFns;
+		private Rule->Function ruleFns;
 
 		// Get a function. Does not populate it.
-		BSTreeFn get(Rule r) {
+		Function get(Rule r) {
 			if (ruleFns.has(r))
 				return ruleFns.get(r);
 
@@ -226,7 +228,14 @@ class RecursiveParser extends Parser {
 
 		// Create a particular rule.
 		void create(Rule rule, Production[] productions) {
-			BSTreeFn fn = get(rule);
+			// Some functions might be defined outside of here.
+			unless (fn = get(rule) as BSTreeFn)
+				return;
+			// Check if we created it as well. There might be other BSTreeFn:s in the name tree.
+			if (fn.parentLookup !is parent)
+				return;
+
+			// We're good to go!
 			FnBody body(fn, scope);
 			fn.body = body;
 
@@ -605,7 +614,7 @@ class RecursiveParser extends Parser {
 
 		// "parse" a rule.
 		private Expr parseRule(ProdState state, RuleToken token, Bool needResult) {
-			BSTreeFn toCall = get(token.rule);
+			Function toCall = get(token.rule);
 
 			Actuals actuals;
 			actuals.add(state.state);
@@ -654,6 +663,45 @@ class RecursiveParser extends Parser {
 			throw GrammarError(parent.pos, msg.toS);
 		}
 
+		// Load the implementation for the special productions.
+		private void loadSpecial() {
+			Type stateT = stateType(binary);
+
+			// Note: We don't need to call 'loadAll' here. We don't need to load the special
+			// functions if the grammar refers to them. If it does, it will be loaded at this
+			// time. If the package is not loaded, we know that we don't need special functions, and
+			// we thus don't need to force loading speicals.
+			Package special = named{parser:special};
+			for (named in special) {
+				unless (named as Function)
+					continue;
+				unless (named.params.count > 0)
+					continue;
+				unless (named.params[0].type is stateT)
+					continue;
+
+				// We have something that likely matches a rule now. Find the rule!
+				unless (rule = special.find(SimplePart(named.name), Scope()) as Rule)
+					continue;
+
+				// Check so that parameters match.
+				var params = rule.params;
+				if (params.count + 1 != named.params.count)
+					continue;
+				Bool match = true;
+				for (Nat i = 0; i < params.count; i++) {
+					match &= params[i].type.type is named.params[i + 1].type;
+				}
+				if (!match)
+					continue;
+
+				if (wrapMaybe(rule.result).type !is named.result.type)
+					continue;
+
+				// Good match, add it!
+				ruleFns.put(rule, named);
+			}
+		}
 	}
 }
 

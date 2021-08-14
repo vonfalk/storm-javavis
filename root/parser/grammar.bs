@@ -1,5 +1,6 @@
 use core:lang;
 use lang:bnf;
+use lang:bs:macro;
 
 /**
  * Basic information on grammar.
@@ -235,6 +236,17 @@ class Grammar on Compiler {
 		}
 	}
 
+	// Check if a rule is a special rule (in the parser:special package and has zero productions).
+	private Bool specialRule(Rule r) : static {
+		r.parent is named{parser:special};
+	}
+
+	// Return the regex that is used as a first-set for special rules. We need something sensible so
+	// that parsers behave correctly. A match anything should be fine.
+	private Regex specialRegex() : static {
+		Regex(".");
+	}
+
 	// Compute first-sets. This is done by a fix-point iteration. Also updates 'epsilon'
 	private void computeFirst() {
 		do {
@@ -249,9 +261,13 @@ class Grammar on Compiler {
 		Bool changes = false;
 		Nat oldCount = s.count;
 
-		for (x in prods) {
-			changes |= putToken(rule, s, x.firstA, false);
-			changes |= putToken(rule, s, x.firstB, true);
+		if (specialRule(rule)) {
+			s.put(specialRegex());
+		} else {
+			for (x in prods) {
+				changes |= putToken(rule, s, x.firstA, false);
+				changes |= putToken(rule, s, x.firstB, true);
+			}
 		}
 
 		changes | oldCount != s.count;

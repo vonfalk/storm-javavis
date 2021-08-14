@@ -38,7 +38,7 @@ namespace storm {
 		void STORM_FN shift(Nat n);
 
 		// Put a single byte at the end of the buffer and increases "filled". Returns 'false' if there is no room.
-		Bool STORM_FN put(Byte data);
+		Bool STORM_FN push(Byte data);
 
 		// Element access.
 		Byte &STORM_FN operator [](Nat id) { return data->v[id]; }
@@ -88,5 +88,10 @@ namespace storm {
 	// Output.
 	void STORM_FN outputMark(StrBuf &to, Buffer b, Nat markAt);
 	StrBuf &STORM_FN operator <<(StrBuf &to, Buffer b);
+
+	// Conversion to/from UTF-8 strings. This is possible through the memory streams and text
+	// interface as well, but this is more convenient in some case.
+	Buffer STORM_FN toUtf8(Str *str);
+	Str *STORM_FN fromUtf8(EnginePtr e, Buffer b);
 
 }
