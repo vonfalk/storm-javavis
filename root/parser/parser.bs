@@ -16,9 +16,10 @@ class Parser extends lang:bs:NamedDecl {
 			scope = scope;
 			name = name;
 		}
-
-		print("TODO: Consider threads.");
 	}
+
+	// Options for this function.
+	private SFreeOptions? options;
 
 	// Scope.
 	private Scope scope;
@@ -40,6 +41,11 @@ class Parser extends lang:bs:NamedDecl {
 	// Set syntax. Called by the grammar.
 	void setSyntax(ParserSyntax syntax) {
 		this.syntax = syntax;
+	}
+
+	// Set options. Called by the grammar.
+	void setOptions(SFreeOptions options) {
+		this.options = options;
 	}
 
 	// Create the parser. The generated function takes (Str, Str:Iter, ...) as parameters, where
@@ -88,7 +94,15 @@ class Parser extends lang:bs:NamedDecl {
 		var resultType = s.value(resultName, name.pos);
 
 		BSTreeFn fn(resultType, name, params, null);
+
+		// Apply options.
+		if (thread)
+			fn.thread(scope, thread);
+		if (options)
+			options.transform(scope, fn);
+
 		populateFn(fn, s, start, include);
+
 		fn;
 	}
 
@@ -147,7 +161,13 @@ class ParserOverload extends lang:bs:NamedDecl {
 				params << ValParam(x.type, x.name);
 		}
 
-		BSTreeFn(wrapFn.result, SStr(wrapFn.name), params, wrapFn.declaredThread);
+		BSTreeFn fn(wrapFn.result, SStr(wrapFn.name, wrapFn.pos), params, wrapFn.declaredThread);
+
+		// Apply thread options.
+		if (thread = wrapFn.declaredThread)
+			fn.runOn(thread);
+
+		fn;
 	}
 
 	protected void doResolve(Named fn) : override {

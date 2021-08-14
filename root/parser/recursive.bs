@@ -174,12 +174,13 @@ class RecursiveParser extends Parser {
 	 * Keep track of created functions.
 	 */
 	class FnCache on Compiler {
-		init(Grammar grammar, Named parent, Scope scope, Bool binary) {
+		init(Grammar grammar, Function parent, Scope scope, Bool binary) {
 			init {
 				grammar = grammar;
 				parent = parent;
 				scope = scope;
 				binary = binary;
+				thread = parent.declaredThread;
 			}
 		}
 
@@ -195,6 +196,9 @@ class RecursiveParser extends Parser {
 		// Running in binary mode?
 		Bool binary;
 
+		// Named thread to run on.
+		NamedThread? thread;
+
 		// Created functions. Not necessarily entirely done.
 		private Rule->BSTreeFn ruleFns;
 
@@ -206,11 +210,10 @@ class RecursiveParser extends Parser {
 			var params = r.params.clone;
 			params.insert(0, ValParam(stateType(binary), "@state"));
 
-			BSTreeFn fn(resultType(r.result), SStr(r.name), params, null);
+			BSTreeFn fn(resultType(r.result), SStr(r.name), params, thread);
 			ruleFns.put(r, fn);
 
 			fn.parentLookup = parent;
-
 			fn;
 		}
 

@@ -1,0 +1,58 @@
+use test;
+use parser;
+
+class CopyTracker {
+	init(Str data) {
+		init {
+			data = data;
+			copies = 0;
+		}
+	}
+
+	init(CopyTracker x) {
+		init {
+			data = x.data;
+			copies = x.copies + 1;
+		}
+	}
+
+	Str data;
+	Nat copies;
+}
+
+// No-op function, but requires copies if threading is wrong.
+CopyTracker threadFn(CopyTracker x) on Compiler {
+	x;
+}
+
+threadParser : parser(recursive descent) on Compiler {
+	start = Start;
+
+	CopyTracker Start();
+	Start => threadFn(x) : Other() x;
+
+	CopyTracker Other();
+	Other => CopyTracker(str) : "[A-Z]+" str;
+}
+
+suite ThreadParser {
+	var result = threadParser("ABC");
+	test result.value.any == true;
+	if (x = result.value) {
+		test x.data == "ABC";
+
+		// One copy, when transitioning from the parser to this function.
+		test x.copies == 1.nat;
+	}
+
+	Str data = "ABC";
+	result = threadParser(data, data.begin + 1);
+	test result.value.any == true;
+	if (x = result.value) {
+		// If this breaks, iterators are not copied properly.
+		test x.data == "BC";
+
+		// One copy, when transitioning from the parser to this function.
+		test x.copies == 1.nat;
+	}
+}

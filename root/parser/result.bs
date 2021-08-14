@@ -1,4 +1,5 @@
 use lang:bs:macro;
+use lang:bs;
 use core:lang;
 
 // Type of the result.
@@ -7,6 +8,31 @@ package Value resultType(Value original) {
 		Value(named{Bool});
 	else
 		wrapMaybe(original);
+}
+
+// Generate a toS function body.
+package Function toSFunction(Type type) {
+	Scope scope = rootScope;
+	scope.lookup = BSLookup();
+
+	BSTreeFn fn(Value(), SStr("toS"), [ValParam(type, "this"), ValParam(named{StrBuf}, "to")], null);
+	FnBody body(fn, scope);
+	fn.body = body;
+
+	LocalVarAccess me(SrcPos(), body.parameters[0]);
+	LocalVarAccess to(SrcPos(), body.parameters[1]);
+	var b = pattern(body) {
+		${to} << "{\n";
+		${to}.indent();
+		${to} << "value: " << ${me}.value << "\n";
+		${to} << "end: " << ${me}.end << "\n";
+		${to} << "error: " << ${me}.error << "\n";
+		${to}.dedent();
+		${to} << "}";
+	};
+	body.add(b);
+
+	fn;
 }
 
 /**
@@ -30,6 +56,9 @@ Result : generate(params) {
 
 	// Error message.
 	t.add(MemberVar("error", named{Str}, t));
+
+	// To string function.
+	t.add(toSFunction(t));
 
 	// We know that all of these are default-constructible, so we can generate a default ctor.
 	t.add(TypeDefaultCtor(t));
@@ -62,6 +91,9 @@ BinaryResult : generate(params) {
 
 	// Error message.
 	t.add(MemberVar("error", named{Str}, t));
+
+	// To string function.
+	t.add(toSFunction(t));
 
 	// We know that all of these are default-constructible, so we can generate a default ctor.
 	t.add(TypeDefaultCtor(t));
