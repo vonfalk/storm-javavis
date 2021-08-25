@@ -518,6 +518,13 @@ class RecursiveParser extends Parser {
 		}
 
 		private Expr createParse(FnBody body, Rule rule, Production production) {
+			if (production.parent) {
+				SrcPos pos;
+				if (x = production.type)
+					pos = x.pos;
+				throw GrammarError(pos, "Parent productions are not supported by the recursive descent parser.");
+			}
+
 			ExprBlock block(SrcPos(), body);
 			// TODO: Better position?
 			ProdState state(parent.pos, block, production, LocalVarAccess(SrcPos(), body.parameters[0]), errorResult(body.type));
