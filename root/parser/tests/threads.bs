@@ -37,22 +37,22 @@ threadParser : parser(recursive descent) on Compiler {
 
 suite ThreadParser {
 	var result = threadParser("ABC");
-	test result.value.any == true;
+	test result.value.any;
 	if (x = result.value) {
 		test x.data == "ABC";
 
 		// One copy, when transitioning from the parser to this function.
-		test x.copies == 1.nat;
+		test x.copies == 1;
 	}
 
 	Str data = "ABC";
 	result = threadParser(data, data.begin + 1);
-	test result.value.any == true;
+	test result.value.any;
 	if (x = result.value) {
 		// If this breaks, iterators are not copied properly.
 		test x.data == "BC";
 
 		// One copy, when transitioning from the parser to this function.
-		test x.copies == 1.nat;
+		test x.copies == 1;
 	}
 }

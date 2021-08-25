@@ -1,7 +1,8 @@
 use lang.bs;
 use core.lang;
 
-delimiter = lang.bs.SDelimiter;
+optional delimiter = lang.bs.SDelimiter;
+required delimiter = lang.bs.SRequiredDelimiter;
 
 // Operators that makes sense to use for tests. We give them very low priority to avoid suprises.
 OpInfo STestOp() #fnName; // Mark it so that it is clearly visible.
@@ -19,13 +20,14 @@ ExprText SExprText(Block block);
 SExprText => ExprText(expr, text) : (SExpr(block) expr) text;
 
 // Main test logic, the test-statement.
-SSuiteBody..SStmt => testExpr(pos, block, lhs, op, rhs) : "test[ \t]+" #keyword, SExprText(block) lhs, STestOp op, SExprText(block) rhs, ";";
+SSuiteBody..SStmt[10] => testExpr(pos, block, lhs, op, rhs) : "test" #keyword ~ SExprText(block) lhs, STestOp op, SExprText(block) rhs, ";";
+SSuiteBody..SStmt[00] => testExpr(pos, block, cond, text) : "test" #keyword ~ (SCondition(block) cond) text, ";";
 
 // Abort the entire test run.
 SSuiteBody..SStmt[100] => abortExpr(pos, block) : "abort" #keyword, ";";
 
 // Allow creating test suites.
-SPlainFileItem => SuiteDecl(env, name, options, body) : "suite[ \t]+" #keyword, SName name #fnName, SFreeOptions@ options, "{" [, SSuiteBody@ body, ]+ "}" = SSuiteDecl;
+SPlainFileItem => SuiteDecl(env, name, options, body) : "suite" #keyword ~ SName name #fnName, SFreeOptions@ options, "{" [, SSuiteBody@ body, ]+ "}" = SSuiteDecl;
 
 // Extra rule for the body, so that we can allow special syntax only inside suites.
 void SSuiteBody(ExprBlock block);

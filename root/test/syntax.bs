@@ -136,12 +136,22 @@ package Expr testExpr(SrcPos pos, Block block, ExprText lhs, OpInfo op, ExprText
 	// Increment 'total'.
 	sub.add(namedExpr(sub, pos, "++*", namedExpr(sub, pos, "total", result)));
 
+	// Put lhs and rhs into an operator to find out what it means. This is so that any automatic
+	// casts will be applied as needed.
+	Value lhsType = lhs.expr.result.type;
+	Value rhsType = rhs.expr.result.type;
+	if (call = Operator(sub, lhs.expr, op, rhs.expr).meaning as FnCall) {
+		var toExec = call.function;
+		lhsType = toExec.params[0].asRef(false);
+		rhsType = toExec.params[1].asRef(false);
+	}
+
 	// Evaluate lhs and rhs and save them.
-	Var lhsVar(sub, SStr(" l", pos), lhs.expr);
+	Var lhsVar(sub, lhsType, SStr(" l", pos), lhs.expr);
 	sub.add(lhsVar);
 	LocalVarAccess l(pos, lhsVar.var);
 
-	Var rhsVar(sub, SStr(" r", pos), rhs.expr);
+	Var rhsVar(sub, rhsType, SStr(" r", pos), rhs.expr);
 	sub.add(rhsVar);
 	LocalVarAccess r(pos, rhsVar.var);
 
@@ -158,11 +168,37 @@ package Expr testExpr(SrcPos pos, Block block, ExprText lhs, OpInfo op, ExprText
 
 	// Generate a nice message on failure.
 	ConcatExpr msg(pos, fail);
-	msg.append(StrLiteral(pos, "Failed: ${lhs.text} ${op.name} ${rhs.text} ==> "));
+	msg.append(StrLiteral(pos, "Failed: ${lhs.text.trimWhitespace} ${op.name} ${rhs.text.trimWhitespace} ==> "));
 	msg.append(l);
 	msg.append(StrLiteral(pos, " ${op.name} "));
 	msg.append(r);
 
+	fail.add(FnCall(pos, fail.scope, named{print<Str>}, Actuals(msg)));
+
+	sub;
+}
+
+package Expr testExpr(SrcPos pos, Block block, Condition cond, Str text) on Compiler {
+	LocalVar resultVar = findResult(block);
+	LocalVarAccess result(pos, resultVar);
+
+	ExprBlock sub(pos, block);
+
+	// Increment 'total'.
+	sub.add(namedExpr(sub, pos, "++*", namedExpr(sub, pos, "total", result)));
+
+	// Check if the condition evaluates to true.
+	If check(sub, cond);
+	check.trueCode = CondSuccess(pos, check, cond);
+	sub.add(check);
+
+	ExprBlock fail(pos, check);
+	check.falseCode = fail;
+
+	fail.add(namedExpr(fail, pos, "++*", namedExpr(fail, pos, "failed", result)));
+
+	// Generate a message. In some cases, we could be more specific (e.g. for downcasts).
+	StrLiteral msg(pos, "Failed: ${text.trimWhitespace} ==> the test was false.");
 	fail.add(FnCall(pos, fail.scope, named{print<Str>}, Actuals(msg)));
 
 	sub;
