@@ -9,3 +9,6 @@ available.
 * [Sound](md://Libraries/Sound/)
 * [Layout](md://Libraries/Layout/)
 * [Presentation](md://Libraries/Presentation/)
+* [Unit tests](md://Libraries/Unit_tests/)
+* [SQL](md://Libraries/SQL/)
+* [Parser](md://Libraries/Parser/)
