@@ -1,12 +1,10 @@
 #include "stdafx.h"
 #include "Compiler/Package.h"
 
-// Run any test suites found in tests/suites
-BEGIN_TEST(StormSuites, BS) {
+BEGIN_TEST_FN(callStormSuite, Package *pkg) {
 	Engine &e = gEngine();
 
-	// Package to run suites inside.
-	Package *pkg = e.package(S("tests.suites"));
+	VERIFY(pkg != null);
 
 	SimpleName *fnName = parseSimpleName(e, S("test.runTests"));
 	fnName->last()->params->push(Value(StormInfo<Package>::type(e)));
@@ -41,5 +39,14 @@ BEGIN_TEST(StormSuites, BS) {
 	}
 
 	__result__ += our;
+} END_TEST_FN
+
+// Run any test suites found in tests/suites
+BEGIN_TEST(StormSuites, BS) {
+	Engine &e = gEngine();
+
+	CALL_TEST_FN(callStormSuite, e.package(S("tests.suites")));
+	CALL_TEST_FN(callStormSuite, e.package(S("sql.tests")));
+	CALL_TEST_FN(callStormSuite, e.package(S("parser.tests")));
 
 } END_TEST
