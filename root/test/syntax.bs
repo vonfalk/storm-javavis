@@ -124,14 +124,29 @@ class ExprText on Compiler {
 	}
 }
 
+// Add catch block for a test.
+private CatchBlock createCatch(SrcPos pos, Block parent, LocalVarAccess result, Str exprText) on Compiler {
+	CatchBlock block(pos, parent, named{Exception}, SStr("error"));
+	ExprBlock sub(pos, block);
+	block.expr = sub;
+
+	sub.add(namedExpr(block, pos, "++*", namedExpr(block, pos, "crashed", result)));
+
+	ConcatExpr msg(pos, block);
+	msg.append(StrLiteral(pos, "Crashed: ${exprText} ==> got exception "));
+	msg.append(namedExpr(block, pos, "error", Actuals()));
+	sub.add(FnCall(pos, block.scope, named{print<Str>}, Actuals(msg)));
+
+	block;
+}
+
 
 // Expression for a single test.
-// TODO: We should handle exceptions as well.
 package Expr testExpr(SrcPos pos, Block block, ExprText lhs, OpInfo op, ExprText rhs) on Compiler {
 	LocalVar resultVar = findResult(block);
 	LocalVarAccess result(pos, resultVar);
 
-	ExprBlock sub(pos, block);
+	TryBlock sub(pos, block);
 
 	// Increment 'total'.
 	sub.add(namedExpr(sub, pos, "++*", namedExpr(sub, pos, "total", result)));
@@ -166,14 +181,18 @@ package Expr testExpr(SrcPos pos, Block block, ExprText lhs, OpInfo op, ExprText
 
 	fail.add(namedExpr(fail, pos, "++*", namedExpr(fail, pos, "failed", result)));
 
+	Str exprText = "${lhs.text.trimWhitespace} ${op.name} ${rhs.text.trimWhitespace}";
+
 	// Generate a nice message on failure.
 	ConcatExpr msg(pos, fail);
-	msg.append(StrLiteral(pos, "Failed: ${lhs.text.trimWhitespace} ${op.name} ${rhs.text.trimWhitespace} ==> "));
+	msg.append(StrLiteral(pos, "Failed: ${exprText} ==> "));
 	msg.append(l);
 	msg.append(StrLiteral(pos, " ${op.name} "));
 	msg.append(r);
 
 	fail.add(FnCall(pos, fail.scope, named{print<Str>}, Actuals(msg)));
+
+	sub.addCatch(createCatch(pos, block, result, exprText));
 
 	sub;
 }
@@ -182,7 +201,7 @@ package Expr testExpr(SrcPos pos, Block block, Condition cond, Str text) on Comp
 	LocalVar resultVar = findResult(block);
 	LocalVarAccess result(pos, resultVar);
 
-	ExprBlock sub(pos, block);
+	TryBlock sub(pos, block);
 
 	// Increment 'total'.
 	sub.add(namedExpr(sub, pos, "++*", namedExpr(sub, pos, "total", result)));
@@ -198,8 +217,57 @@ package Expr testExpr(SrcPos pos, Block block, Condition cond, Str text) on Comp
 	fail.add(namedExpr(fail, pos, "++*", namedExpr(fail, pos, "failed", result)));
 
 	// Generate a message. In some cases, we could be more specific (e.g. for downcasts).
-	StrLiteral msg(pos, "Failed: ${text.trimWhitespace} ==> the test was false.");
+	text = text.trimWhitespace;
+	StrLiteral msg(pos, "Failed: ${text} ==> the test was false.");
 	fail.add(FnCall(pos, fail.scope, named{print<Str>}, Actuals(msg)));
+
+	sub.addCatch(createCatch(pos, block, result, text));
+
+	sub;
+}
+
+package Expr testExpr(SrcPos pos, Block block, ExprText expr, SrcName exception) on Compiler {
+	LocalVar resultVar = findResult(block);
+	LocalVarAccess result(pos, resultVar);
+
+	TryBlock sub(pos, block);
+
+	// Increment 'total'.
+	sub.add(namedExpr(sub, pos, "++*", namedExpr(sub, pos, "total", result)));
+
+	// Run the expression.
+	sub.add(expr.expr);
+
+	// If we got here, it did not throw.
+	sub.add(namedExpr(sub, pos, "++*", namedExpr(sub, pos, "failed", result)));
+
+	Str text = expr.text.trimWhitespace;
+	StrLiteral msg(pos, "Failed: ${text} ==> did not throw ${exception} as expected.");
+	sub.add(FnCall(pos, sub.scope, named{print<Str>}, Actuals(msg)));
+
+	// Add catch handler for the expected case.
+	{
+		CatchBlock catch(pos, block, exception, null);
+		catch.expr = Expr(pos);
+		sub.addCatch(catch);
+	}
+
+	// Add catch handler for other exceptions.
+	{
+		CatchBlock catch(pos, block, named{Exception}, SStr("error"));
+		ExprBlock handler(pos, catch);
+		catch.expr = handler;
+		sub.addCatch(catch);
+
+		handler.add(namedExpr(sub, pos, "++*", namedExpr(handler, pos, "failed", result)));
+
+		ConcatExpr msg(pos, block);
+		msg.append(StrLiteral(pos, "Crashed: ${text} ==> did not get exception ${exception} as expected, got "));
+		msg.append(namedExpr(handler, pos, "error", Actuals()));
+		handler.add(FnCall(pos, handler.scope, named{print<Str>}, Actuals(msg)));
+	}
+
+	print(sub.toS);
 
 	sub;
 }

@@ -132,6 +132,16 @@ namespace storm {
 			}
 		}
 
+		CatchBlock::CatchBlock(SrcPos pos, Block *parent, Type *t, MAYBE(syntax::SStr *) name) : Block(pos, parent), type(t) {
+			if (!type->isA(StormInfo<Exception>::type(engine())))
+				throw new (this) SyntaxError(t->pos, S("Can only catch classes that inherit from Exception!"));
+
+			if (name) {
+				var = new (this) LocalVar(name->v, Value(type), name->pos, false);
+				add(var);
+			}
+		}
+
 		void CatchBlock::expr(Expr *e) {
 			run = e;
 		}

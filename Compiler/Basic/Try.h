@@ -59,6 +59,7 @@ namespace storm {
 		public:
 			// Create. Specify the type and optionally the name of the exception to catch.
 			STORM_CTOR CatchBlock(SrcPos pos, Block *parent, SrcName *type, MAYBE(syntax::SStr *) name);
+			STORM_CTOR CatchBlock(SrcPos pos, Block *parent, Type *type, MAYBE(syntax::SStr *) name);
 
 			// Type we're catching.
 			Type *type;

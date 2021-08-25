@@ -8,6 +8,8 @@ easy creation and execution of unit tests. With the language extension, tests ar
 suite MySuite {
     test 1 + 2 == 3;
     test 2 + 5 < 8;
+    test true;
+    test foo() throws InternalError;
 }
 ```
 The test language also introduces the `abort` statement, which can be used to abort the remainder of
