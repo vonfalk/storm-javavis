@@ -93,15 +93,21 @@ It is possible to override the backend used by setting the environment variable
   screen. This mode is also fairly robust as it uses the same code paths used by Gtk, but might
   since rendering is multithreaded, it could show bugs that are not visible to regular Gtk
   applications.
-- `gl`: Render using the (beta) OpenGL backend in Cairo. This mode provides significant performance
-  improvements over both `gtk` and `sw`, especially when working with larger bitmaps. Due to
-  the nature of OpenGL support in Gtk, the GUI library needs to keep track of separate resources
-  for each top-level window (sometimes even at a finer level). As such, sharing `Resource`s between
-  different such contexts will incur a small performance penalty.
+- `gl` (not enabled by default): Render using the (beta) OpenGL backend in Cairo. This mode provides
+  significant performance improvements over both `gtk` and `sw`, especially when working with larger
+  bitmaps. Due to the nature of OpenGL support in Gtk, the GUI library needs to keep track of
+  separate resources for each top-level window (sometimes even at a finer level). As such, sharing
+  `Resource`s between different such contexts will incur a small performance penalty.
 - `skia` (the default): Render using OpenGL with Skia. Just as with the `gl` backend, this backend
   is hardware accelerated and gives good performance. In many cases, performance with Skia is better
   than the OpenGL backend in Cairo. Just as with the `gl` backend, rendering contexts in different
   top-level windows use different GL contexts, and can therefore not share rendering resources.
+
+Note that not all of the backends are enabled by default. The `software` and `gtk` backends are
+always available. To use the `gl` backend, the Gui library needs to be compiled with the `cairogl`
+flag to mymake. The `skia` backend is available in builds from this page, but not in the Debian
+package at the moment. Setting `STORM_RENDER_BACKEND` to an unsupported value will list available
+backends.
 
 When rendering in Linux, there are some things to take into consideration due to how Gtk works. As
 sub-windows is a construct entirely within Gtk, it typically only creates a single window for each

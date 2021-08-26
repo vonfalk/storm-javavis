@@ -36,8 +36,8 @@ all+=dist
 all+=nostatic
 [build,noskia]
 Gui+=noskia
-[build,nocairogl]
-Gui+=nocairogl
+[build,cairogl]
+Gui+=usecairogl
 [build,nobacktrace]
 Utils+=nobacktrace
 

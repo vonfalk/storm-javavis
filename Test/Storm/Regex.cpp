@@ -143,8 +143,6 @@ static nat match(const wchar *regex, size_t regexLen, const char *str, size_t st
 }
 
 BEGIN_TEST(RegexBuffer, Storm) {
-	Engine &e = gEngine();
-
 	// Basic matching.
 	CHECK(match(S("ab"), 2, "ab", 2)); // simple case
 	CHECK(match(S("a.c"), 3, "abc", 3)); // no repeat

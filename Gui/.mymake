@@ -9,10 +9,11 @@ stormUsingNamespace+=storm::geometry
 # No includes for the Skia header.
 noIncludes+=*/Skia.h
 
-[unix,!nocairogl]
+[unix,cairogl]
 # Note: We provide our own version of Cairo, since many systems do not provide a cairo
 # that has GL support. Our version of cairo is placed next to the Gui library, and the
 # rpath is set to $ORIGIN to give our version of Cairo priority over the system's version.
+# Specify "usecairogl" on the command line to enable this rendering backend.
 
 # Name of the cairo shared library file.
 cairoName=libcairo.so.2
