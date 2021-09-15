@@ -127,6 +127,7 @@ class MainPainter extends Painter {
 		if (error as TypedError)
 			type = error.type;
 
+		stopThreads();
 		behavior.onProgramError(ThreadError(type, msg, thread));
 	}
 
@@ -183,6 +184,24 @@ class MainPainter extends Painter {
 		}
 	}
 
+	// Stop all running threads.
+	void stopThreads() {
+		if (program) {
+			for (k, v in program.threads) {
+				v.pause();
+			}
+		}
+	}
+
+	// Start all threads with the specified speed
+	void resumeThreads(Duration speed) {
+		if (program) {
+			for (k, v in program.threads) {
+				v.resume(speed);
+			}
+		}
+	}
+
 	// Render everything.
 	Bool render(Size me, Graphics g) : override {
 		g.transform(translate(-offset) * scale(scale));
@@ -217,6 +236,7 @@ class MainPainter extends Painter {
 
 		if (error) {
 			if (behavior) {
+				stopThreads();
 				behavior.onProgramError(error);
 			}
 		}

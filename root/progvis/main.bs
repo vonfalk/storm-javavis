@@ -53,9 +53,13 @@ class MainWin extends Frame {
 
 		PopupMenu runMenu;
 		runMenu
-			<< Menu:Text(mnemonic("_Restart"), ctrlChord(Key:r), &this.onRestart())
+			<< Menu:Text(mnemonic("_Restart program"), ctrlChord(Key:r), &this.onRestart())
 			<< Menu:Text(mnemonic("_Spawn new thread"), ctrlChord(Key:n), &this.onSpawnThread())
-			<< trackMemory;
+			<< trackMemory
+			<< Menu:Separator()
+			<< Menu:Text(mnemonic("S_top all threads"), ctrlChord(Key:q), &this.onStopAll())
+			<< Menu:Text(mnemonic("Start _all threads (slow)"), ctrlChord(Key:a), &this.onRunSlow())
+			<< Menu:Text(mnemonic("Start all threads (_fast)"), ctrlChord(Key:s), &this.onRunFast());
 
 		trackMemory.checked = true;
 		trackMemory.onClick = &this.onTrackMemory(Bool);
@@ -313,6 +317,18 @@ class MainWin extends Frame {
 	private void onTrackMemory(Bool b) {
 		painter.trackMemory(b);
 		painter.repaint();
+	}
+
+	private void onStopAll() {
+		painter.stopThreads();
+	}
+
+	private void onRunSlow() {
+		painter.resumeThreads(1 s);
+	}
+
+	private void onRunFast() {
+		painter.resumeThreads(500 ms);
 	}
 
 	private void onAbout() {
