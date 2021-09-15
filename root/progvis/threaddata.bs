@@ -38,6 +38,10 @@ class ThreadData extends Drawable {
 	// Buttons. Duplicates of the variables for easier layout.
 	SmallButton[] buttons;
 
+	// When resizing the ThreadData, we are essentially resizing only the source listing. So this is
+	// the size of the source listing.
+	Size srcSize;
+
 	// Create.
 	init(ProgThread thread) {
 		init {
@@ -50,6 +54,7 @@ class ThreadData extends Drawable {
 			runFast(runFastDecoration, SolidBrush(green), buttonSize);
 			runVeryFast(runVeryFastDecoration, SolidBrush(green), buttonSize);
 			removeDead(removeDecoration, SolidBrush(red), buttonSize);
+			srcSize = sourceSize;
 		}
 
 		step.onClick = &this.onStep;
@@ -96,7 +101,7 @@ class ThreadData extends Drawable {
 		Rect sourcePos(rect.p0, rect.p1 - compositeBorder);
 		sourcePos.p1.y -= compositeBorder.h + buttonSize.h;
 		sourcePos.p0.x = rect.p0.x + compositeBorder.w;
-		sourcePos.p0.y = sourcePos.p1.y - sourceSize.h;
+		sourcePos.p0.y = sourcePos.p1.y - srcSize.h;
 		source.draw(g, sourcePos);
 
 		Point p(sourcePos.p0.x, sourcePos.p1.y + compositeBorder.h);
@@ -179,6 +184,12 @@ class ThreadData extends Drawable {
 		removeMe;
 	}
 
+	void resize(Size s) : override {
+		Size computed = computeSize();
+		srcSize = (s - (computed - srcSize)).max(Size(10));
+		invalidateSize();
+	}
+
 	protected Size computeSize() : override {
 		Float w = 0;
 		Float h = 0;
@@ -195,9 +206,10 @@ class ThreadData extends Drawable {
 			}
 		}
 
-		w = max(threadMinWidth, w);
-		w = max(sourceSize.w, w);
-		h += compositeBorder.h + sourceSize.h;
+		w = max(srcSize.w, w);
+		w = max(w, buttons.count.int.float * (buttonSize.w + compositeBorder.w));
+
+		h += compositeBorder.h + srcSize.h;
 
 		h += compositeBorder.h + buttonSize.h;
 

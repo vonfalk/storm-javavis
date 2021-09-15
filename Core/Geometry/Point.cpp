@@ -33,6 +33,10 @@ namespace storm {
 			}
 		}
 
+		Float Point::taxiLength() const {
+			return ::fabs(x) + ::fabs(y);
+		}
+
 		wostream &operator <<(wostream &to, const Point &p) {
 			return to << L"(" << p.x << L", " << p.y << L")";
 		}

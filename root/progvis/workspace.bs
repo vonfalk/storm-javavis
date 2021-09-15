@@ -275,7 +275,7 @@ class Workspace on Render {
 			t.enableStep = enableThreadStep;
 			t.traverse(this, list);
 
-			elements << Element(thread, Dockable(t, "Thread ${thread.threadId}"));
+			elements << Element(thread, Dockable(t, "Thread ${thread.threadId}", true));
 			objMap.put(key, id);
 		}
 	}

@@ -50,6 +50,11 @@ class Drawable on Render {
 		s;
 	}
 
+	// Request a size change.
+	void resize(Size s) {
+		cachedSize = s;
+	}
+
 	// Clear the size.
 	protected void invalidateSize() {
 		cachedSize = null;
@@ -154,6 +159,15 @@ class Dockable extends WithCaption {
 		}
 	}
 
+	init(Drawable wrap, Str caption, Bool resize) {
+		init(wrap, caption) {
+			lockedPath = lockDecoration();
+			unlockedPath = unlockDecoration();
+			locked = true;
+			allowResize = if (resize) { 30; } else { 0; };
+		}
+	}
+
 	void draw(Graphics g, Bool active) : override {
 		super:draw(g, active);
 
@@ -168,6 +182,13 @@ class Dockable extends WithCaption {
 		// Scale as well?
 		g.fill(decoration, captionFg);
 		g.pop();
+
+		if (!locked) {
+			Point edge = rect.p1;
+			for (Int i = 5; i < allowResize; i += 6) {
+				g.line(edge - Point(i.float, 0), edge - Point(0, i.float), captionFg);
+			}
+		}
 	}
 
 	private Rect buttonRect() {
@@ -178,8 +199,10 @@ class Dockable extends WithCaption {
 
 	private Path lockedPath;
 	private Path unlockedPath;
+	private Int allowResize;
 	private Bool locked;
-	private Point? mouseOrigin;
+	private Point? moveOrigin;
+	private Point? resizeOrigin;
 
 	Bool mouseClicked(Point pt, Bool down) : override {
 		if (down) {
@@ -187,31 +210,52 @@ class Dockable extends WithCaption {
 			if (button.contains(pt)) {
 				locked = !locked;
 				return true;
+			} else if (pt.y <= wrap.pos.y) {
+				moveOrigin = pt - pos;
 			} else {
-				mouseOrigin = pt - pos;
+				resizeOrigin = rect.p1 - pt;
 			}
 		} else {
-			mouseOrigin = null;
+			moveOrigin = null;
+			resizeOrigin = null;
 		}
 
 		wrap.mouseClicked(pt, down);
 	}
 
 	Bool mouseMoved(Point pt, Point origin) : override {
-		if (mouseOrigin) {
-			var newPos = pt - mouseOrigin;
+		if (moveOrigin) {
+			var newPos = pt - moveOrigin;
 			if (locked) {
 				if ((newPos - pos).lengthSq > 1000) {
 					pos = newPos;
 					locked = false;
 				}
 			} else {
-				pos = pt - mouseOrigin;
+				pos = pt - moveOrigin;
 			}
+			return true;
+		} else if (resizeOrigin) {
+			Size sz = (pt - wrap.pos) + resizeOrigin;
+			sz = sz.max(captionSz + Size(allowResize.float));
+			wrap.resize(sz);
 			return true;
 		}
 
 		false;
+	}
+
+	Drawable findAt(Point pt) : override {
+		Rect wrapRect = wrap.rect;
+		if (wrapRect.contains(pt)) {
+			if (!locked & ((wrapRect.p1 - pt).taxiLength < allowResize.float)) {
+				return this;
+			} else {
+				wrap.findAt(pt);
+			}
+		} else {
+			this;
+		}
 	}
 
 	Bool docked() : override {

@@ -54,9 +54,6 @@ Size compositeBorder on Render = Size(4, 4);
 // Offset for each stack frame.
 Float stackOffset on Render = 4;
 
-// Minimum width for a thread.
-Float threadMinWidth on Render = 300;
-
 // Default code view size.
 Size sourceSize on Render = Size(350, 200);
 

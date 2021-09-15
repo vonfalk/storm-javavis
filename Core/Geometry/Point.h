@@ -37,6 +37,9 @@ namespace storm {
 
 			// Normalize.
 			Point STORM_FN normalized() const;
+
+			// Taxicab/manhattan length (i.e. dx + dy).
+			Float STORM_FN taxiLength() const;
 		};
 
 		wostream &operator <<(wostream &to, const Point &s);
