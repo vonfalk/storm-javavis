@@ -159,16 +159,14 @@ class Dockable extends WithCaption {
 		}
 	}
 
-	init(Drawable wrap, Str caption, Bool resize) {
-		init(wrap, caption) {
-			lockedPath = lockDecoration();
-			unlockedPath = unlockDecoration();
-			locked = true;
-			allowResize = if (resize) { 30; } else { 0; };
-		}
-	}
-
 	void draw(Graphics g, Bool active) : override {
+		if (anchorSize) {
+			Float newHeight = wrap.size.h;
+			if (!locked)
+				pos.y += anchorSize - newHeight;
+			this.anchorSize = newHeight;
+		}
+
 		super:draw(g, active);
 
 		Rect button = buttonRect();
@@ -185,7 +183,7 @@ class Dockable extends WithCaption {
 
 		if (!locked) {
 			Point edge = rect.p1;
-			for (Int i = 5; i < allowResize; i += 6) {
+			for (Int i = 5; i < resizeZone; i += 6) {
 				g.line(edge - Point(i.float, 0), edge - Point(0, i.float), captionFg);
 			}
 		}
@@ -197,12 +195,26 @@ class Dockable extends WithCaption {
 		Rect(p, Size(captionSz.h)).shrink(Size(4));
 	}
 
+	// Anchor this item to the bottom left rather than the top left. This means that if the wrapped
+	// item changes its size, the bottom left corner is stationary rather than the top left.
+	Dockable anchorBottom() {
+		anchorSize = wrap.size().h;
+		this;
+	}
+
+	// Allow resizing this rectangle.
+	Dockable allowResize() {
+		resizeZone = 30;
+		this;
+	}
+
 	private Path lockedPath;
 	private Path unlockedPath;
-	private Int allowResize;
+	private Int resizeZone;
 	private Bool locked;
 	private Point? moveOrigin;
 	private Point? resizeOrigin;
+	private Float? anchorSize;
 
 	Bool mouseClicked(Point pt, Bool down) : override {
 		if (down) {
@@ -237,8 +249,10 @@ class Dockable extends WithCaption {
 			return true;
 		} else if (resizeOrigin) {
 			Size sz = (pt - wrap.pos) + resizeOrigin;
-			sz = sz.max(captionSz + Size(allowResize.float));
+			sz = sz.max(captionSz + Size(resizeZone.float));
 			wrap.resize(sz);
+			if (anchorSize.any)
+				anchorSize = wrap.size.h;
 			return true;
 		}
 
@@ -248,7 +262,7 @@ class Dockable extends WithCaption {
 	Drawable findAt(Point pt) : override {
 		Rect wrapRect = wrap.rect;
 		if (wrapRect.contains(pt)) {
-			if (!locked & ((wrapRect.p1 - pt).taxiLength < allowResize.float)) {
+			if (!locked & ((wrapRect.p1 - pt).taxiLength < resizeZone.float)) {
 				return this;
 			} else {
 				wrap.findAt(pt);

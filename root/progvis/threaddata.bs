@@ -110,14 +110,21 @@ class ThreadData extends Drawable {
 			b.draw(g, false);
 			p.x += buttonSize.w + compositeBorder.w;
 		}
-	}
 
-	// Draw all links and all stack contents to make it appear on top of everything else.
-	void drawLinks(Graphics g, Bool active) : override {
+		// Draw almost everything now. We only omit pointers from the last stack frame. Otherwise
+		// they will appear below other threads.
 		for (id, frame in frames) {
 			Bool a = id == frames.count - 1;
 			frame.draw(g, a);
-			frame.drawLinks(g, a & active);
+			if (!a)
+				frame.drawLinks(g, false);
+		}
+	}
+
+	// Draw the references from the last stack frame.
+	void drawLinks(Graphics g, Bool active) : override {
+		if (frames.any) {
+			frames.last.drawLinks(g, active);
 		}
 	}
 

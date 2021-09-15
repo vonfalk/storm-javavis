@@ -275,7 +275,7 @@ class Workspace on Render {
 			t.enableStep = enableThreadStep;
 			t.traverse(this, list);
 
-			elements << Element(thread, Dockable(t, "Thread ${thread.threadId}", true));
+			elements << Element(thread, Dockable(t, "Thread ${thread.threadId}").allowResize.anchorBottom);
 			objMap.put(key, id);
 		}
 	}
