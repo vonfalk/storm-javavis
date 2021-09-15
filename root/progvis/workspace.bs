@@ -62,18 +62,20 @@ class Workspace on Render {
 		Float x = space + viewport.p0.x;
 
 		for (e in elements) {
-			if (e.thread) {
-				Size sz = e.visual.size;
-				e.visual.pos.x = x;
-				e.visual.pos.y = viewport.p1.y - space - sz.h;
+			if (e.visual.docked) {
+				if (e.thread) {
+					Size sz = e.visual.size;
+					e.visual.pos.x = x;
+					e.visual.pos.y = viewport.p1.y - space - sz.h;
 
-				x += sz.w + space;
-			}
-			if (e.output) {
-				Size sz = e.visual.size;
-				e.visual.pos.x = viewport.p1.x - sz.w - space;
-				// e.visual.pos.y = viewport.p1.y - sz.h - space;
-				e.visual.pos.y = viewport.p0.y + space;
+					x += sz.w + space;
+				}
+				if (e.output) {
+					Size sz = e.visual.size;
+					e.visual.pos.x = viewport.p1.x - sz.w - space;
+					// e.visual.pos.y = viewport.p1.y - sz.h - space;
+					e.visual.pos.y = viewport.p0.y + space;
+				}
 			}
 
 			// TODO: Clipping?
@@ -132,7 +134,7 @@ class Workspace on Render {
 			return output;
 
 		OutputText created;
-		Element elem(WithCaption(created, "Output"));
+		Element elem(Dockable(created, "Output"));
 		elem.output = true;
 		elem.topmost = true;
 		elements << elem;
@@ -273,7 +275,7 @@ class Workspace on Render {
 			t.enableStep = enableThreadStep;
 			t.traverse(this, list);
 
-			elements << Element(thread, WithCaption(t, "Thread ${thread.threadId}"));
+			elements << Element(thread, Dockable(t, "Thread ${thread.threadId}"));
 			objMap.put(key, id);
 		}
 	}

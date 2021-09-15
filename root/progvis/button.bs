@@ -31,7 +31,7 @@ class SmallButton extends Drawable {
 
 		Rect decoration = path.bound;
 		g.push();
-		g.transform(translate(r.p0 + (r.size - decoration.size) / 2));
+		g.transform(translate(r.p0 - decoration.p0 + (r.size - decoration.size) / 2));
 		g.fill(path, fill);
 		g.pop();
 	}
@@ -53,7 +53,7 @@ class SmallButton extends Drawable {
 }
 
 // Create a path for a run button.
-Path runDecoration() {
+Path runDecoration() on Render {
 	Path p;
 	p.start(Point(0, 0));
 	p.line(Point(16, 10));
@@ -63,7 +63,7 @@ Path runDecoration() {
 }
 
 // Create a path for a "run fast" button.
-Path runFastDecoration() {
+Path runFastDecoration() on Render {
 	Path p;
 	p.start(Point(0, 0));
 	p.line(Point(10, 10));
@@ -78,7 +78,7 @@ Path runFastDecoration() {
 }
 
 // Create a path for a "run fast" button.
-Path runVeryFastDecoration() {
+Path runVeryFastDecoration() on Render {
 	Path p;
 	p.start(Point(0, 0));
 	p.line(Point(6.3, 10));
@@ -98,7 +98,7 @@ Path runVeryFastDecoration() {
 }
 
 // Create a path for a step button.
-Path stepDecoration() {
+Path stepDecoration() on Render {
 	Path p = runDecoration();
 	p.start(Point(16, 0));
 	p.line(Point(20, 0));
@@ -109,7 +109,7 @@ Path stepDecoration() {
 }
 
 // Pause decoration.
-Path pauseDecoration() {
+Path pauseDecoration() on Render {
 	Path p;
 	p.start(Point(0, 0));
 	p.line(Point(5, 0));
@@ -127,7 +127,7 @@ Path pauseDecoration() {
 }
 
 // Remove decoration (a cross)
-Path removeDecoration() {
+Path removeDecoration() on Render {
 	Path p;
 
 	p.start(Point(0, 2));
@@ -151,6 +151,41 @@ Path removeDecoration() {
 	p.line(Point(8, 10));
 
 	p.close();
+
+	p;
+}
+
+// Lock decoration (a padlock)
+Path lockDecoration() on Render {
+	Path p;
+
+	p.start(Point(0, 0));
+	p.line(Point(10, 0));
+	p.line(Point(10, 6));
+	p.line(Point(0, 6));
+	p.close();
+
+	p.start(Point(1, 0));
+	p.bezier(Point(1, -8), Point(9, -8), Point(9, 0));
+	p.line(Point(8, 0));
+	p.bezier(Point(8, -6), Point(2, -6), Point(2, 0));
+
+	p;
+}
+
+Path unlockDecoration() on Render {
+	Path p;
+
+	p.start(Point(0, 0));
+	p.line(Point(10, 0));
+	p.line(Point(10, 6));
+	p.line(Point(0, 6));
+	p.close();
+
+	p.start(Point(1, 0));
+	p.bezier(Point(1, -6), Point(-5, -6), Point(-5, 0));
+	p.line(Point(-6, 0));
+	p.bezier(Point(-6, -8), Point(2, -8), Point(2, 0));
 
 	p;
 }

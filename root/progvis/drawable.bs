@@ -72,6 +72,9 @@ class Drawable on Render {
 	// Get the contained drawable, if we're a wrapper around an object.
 	Drawable contained() { this; }
 
+	// Is this element docked in the main window?
+	Bool docked() { false; }
+
 }
 
 
@@ -121,7 +124,7 @@ class WithCaption extends Drawable {
 	private Text caption;
 
 	// Size of the caption area.
-	private Size captionSz;
+	protected Size captionSz;
 
 	// Return the sub-drawable if the click is there.
 	Drawable findAt(Point pt) : override {
@@ -136,4 +139,83 @@ class WithCaption extends Drawable {
 	}
 
 	Drawable contained() : override { wrap.contained; }
+}
+
+
+/**
+ * Extension of the WithCaption class that allows docking to the viewport.
+ */
+class Dockable extends WithCaption {
+	init(Drawable wrap, Str caption) {
+		init(wrap, caption) {
+			lockedPath = lockDecoration();
+			unlockedPath = unlockDecoration();
+			locked = true;
+		}
+	}
+
+	void draw(Graphics g, Bool active) : override {
+		super:draw(g, active);
+
+		Rect button = buttonRect();
+		g.draw(button, captionFg);
+
+		Path decoration = if (locked) { lockedPath; } else { unlockedPath; };
+
+		Rect bound = decoration.bound;
+		g.push();
+		g.transform(translate(button.p0 - bound.p0 + (button.size - bound.size) / 2));
+		// Scale as well?
+		g.fill(decoration, captionFg);
+		g.pop();
+	}
+
+	private Rect buttonRect() {
+		Size sz = size();
+		Point p(pos.x + sz.w - captionSz.h, pos.y);
+		Rect(p, Size(captionSz.h)).shrink(Size(4));
+	}
+
+	private Path lockedPath;
+	private Path unlockedPath;
+	private Bool locked;
+	private Point? mouseOrigin;
+
+	Bool mouseClicked(Point pt, Bool down) : override {
+		if (down) {
+			Rect button = buttonRect();
+			if (button.contains(pt)) {
+				locked = !locked;
+				return true;
+			} else {
+				mouseOrigin = pt - pos;
+			}
+		} else {
+			mouseOrigin = null;
+		}
+
+		wrap.mouseClicked(pt, down);
+	}
+
+	Bool mouseMoved(Point pt, Point origin) : override {
+		if (mouseOrigin) {
+			var newPos = pt - mouseOrigin;
+			if (locked) {
+				if ((newPos - pos).lengthSq > 1000) {
+					pos = newPos;
+					locked = false;
+				}
+			} else {
+				pos = pt - mouseOrigin;
+			}
+			return true;
+		}
+
+		false;
+	}
+
+	Bool docked() : override {
+		locked;
+	}
+
 }
