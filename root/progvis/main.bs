@@ -384,15 +384,6 @@ void main() on Compiler {
 	win.waitForClose();
 }
 
-// Used for research, notes whenever the program is started.
-void researchMain() on Compiler {
-	named{progvis}.compile();
-	postUsage();
-
-	MainWin win;
-	win.waitForClose();
-}
-
 void debug() on Compiler {
 	named{progvis}.compile();
 
