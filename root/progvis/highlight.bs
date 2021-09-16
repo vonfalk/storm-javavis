@@ -1,0 +1,107 @@
+use ui;
+use graphics;
+use core:io;
+use core:lang;
+use lang;
+use lang:bnf;
+
+// Load and highlight a source file into a Text object.
+Text highlightSource(Url file) on Render {
+	Str text = file.readAllText();
+	TextColor[] colors;
+
+	if (reader = progvisReader(file.ext, [file], rootPkg)) {
+		colors = highlightSource(file, reader, text);
+	} else if (reader = stdReader(file.ext, [file], rootPkg)) {
+		colors = highlightSource(file, reader, text);
+	}
+
+	Text result(file.readAllText(), codeFont);
+	for (x in colors) {
+		result.color(x.begin, x.end, hlColor(x.color));
+	}
+	result;
+}
+
+private value TextColor {
+	init(Str:Iter begin, Str:Iter end, TokenColor color) {
+		init {
+			begin = begin;
+			end = end;
+			color = color;
+		}
+	}
+
+	Str:Iter begin;
+	Str:Iter end;
+	TokenColor color;
+}
+
+private Color hlColor(TokenColor color) {
+	if (color == TokenColor:tComment) {
+		Color(0.69, 0.13, 0.13);
+	} else if (color == TokenColor:tDelimiter) {
+		black;
+	} else if (color == TokenColor:tString) {
+		Color(0.54, 0.13, 0.32);
+	} else if (color == TokenColor:tConstant) {
+		black;
+	} else if (color == TokenColor:tKeyword) {
+		Color(0.62, 0.12, 0.94);
+	} else if (color == TokenColor:tFnName) {
+		blue;
+	} else if (color == TokenColor:tVarName) {
+		Color(0.63, 0.32, 0.18);
+	} else if (color == TokenColor:tTypeName) {
+		Color(0.13, 0.54, 0.13);
+	} else {
+		black;
+	}
+}
+
+private TextColor[] highlightSource(Url file, PkgReader reader, Str text) on Compiler {
+	unless (fileReader = reader.readFile(file, text))
+		return [];
+
+	TextColor[] result;
+	do {
+		var parser = fileReader.createParser();
+		parser.parseApprox(fileReader.info.contents, fileReader.info.url, fileReader.info.start);
+
+		Str:Iter end = fileReader.info.contents.end;
+		var next = fileReader.next(ReaderQuery:qParser);
+		if (next)
+			end = next.info.start;
+
+		var tree = parser.infoTree();
+		findColors(result, fileReader.info.start, end, tree);
+
+		if (next)
+			fileReader = next;
+		else
+			break;
+	}
+
+	return result;
+}
+
+private Str:Iter findColors(TextColor[] to, Str:Iter start, Str:Iter end, InfoNode node) on Compiler {
+	if (start >= end)
+		return end;
+
+	// We don't need to traverse more than the first color.
+	if (node.color != TokenColor:tNone) {
+		var end = start + node.length();
+		to << TextColor(start, end, node.color);
+		return end;
+	}
+
+	if (node as InfoInternal) {
+		for (Nat i = 0; i < node.count; i++)
+			start = findColors(to, start, end, node[i]);
+		return start;
+	} else {
+		// Skip this node. It is a leaf without color.
+		return start + node.length();
+	}
+}

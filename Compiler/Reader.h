@@ -98,7 +98,7 @@ namespace storm {
 		 */
 
 		// Get a file reader for the given Url and the contents of the file.
-		virtual MAYBE(FileReader *) STORM_FN readFile(Url *url, Str * src);
+		virtual MAYBE(FileReader *) STORM_FN readFile(Url *url, Str *src);
 	};
 
 

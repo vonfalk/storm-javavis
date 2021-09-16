@@ -69,7 +69,7 @@ class SourceView on Render {
 			if (program) {
 				text = program.source(file);
 			} else {
-				text = Text(file.readAllText(), codeFont);
+				text = highlightSource(file);
 			}
 			this.file = file;
 		}

@@ -146,8 +146,7 @@ class Program on Render {
 	// Load source code.
 	package void loadSource(Url[] files) {
 		for (f in files) {
-			Str src = f.readAllText();
-			code.put(f, Text(src, codeFont));
+			code.put(f, highlightSource(f));
 		}
 	}
 
@@ -288,7 +287,7 @@ class SrcPosWrap {
 }
 
 
-private PkgReader? progvisReader(Str ext, Url[] files, Package pkg) {
+package PkgReader? progvisReader(Str ext, Url[] files, Package pkg) {
 	unless (name = readerName(ext))
 		return null;
 
@@ -297,7 +296,7 @@ private PkgReader? progvisReader(Str ext, Url[] files, Package pkg) {
 }
 
 // Find a standard Storm reader.
-private PkgReader? stdReader(Str ext, Url[] files, Package pkg) {
+package PkgReader? stdReader(Str ext, Url[] files, Package pkg) {
 	if (name = readerName(ext))
 		return createReader(name, files, pkg);
 	null;

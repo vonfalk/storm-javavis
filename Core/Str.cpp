@@ -796,6 +796,28 @@ namespace storm {
 		return !(*this == o);
 	}
 
+	Bool Str::Iter::operator >(const Iter &o) const {
+		return o < *this;
+	}
+
+	Bool Str::Iter::operator <(const Iter &o) const {
+		if (o.atEnd() && !atEnd())
+			return false;
+
+		if (owner != o.owner)
+			return false;
+
+		return pos < o.pos;
+	}
+
+	Bool Str::Iter::operator >=(const Iter &o) const {
+		return (*this > o) || (*this == o);
+	}
+
+	Bool Str::Iter::operator <=(const Iter &o) const {
+		return (*this < o) || (*this == o);
+	}
+
 	// Get the value.
 	Char Str::Iter::operator *() const {
 		return v();

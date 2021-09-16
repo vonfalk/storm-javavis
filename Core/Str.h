@@ -133,6 +133,10 @@ namespace storm {
 			// Compare.
 			Bool STORM_FN operator ==(const Iter &o) const;
 			Bool STORM_FN operator !=(const Iter &o) const;
+			Bool STORM_FN operator >(const Iter &o) const;
+			Bool STORM_FN operator <(const Iter &o) const;
+			Bool STORM_FN operator >=(const Iter &o) const;
+			Bool STORM_FN operator <=(const Iter &o) const;
 
 			// Get the value.
 			Char operator *() const;
