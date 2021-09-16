@@ -57,27 +57,19 @@ class Workspace on Render {
 
 	// Draw the workspace. Assumes we can clip anything not inside 'viewport'.
 	void render(Rect viewport, Graphics g) {
-		// Do some basic layout for the active threads. We probably don't want to do this at some point.
-		Float space = 10;
-		Float x = space + viewport.p0.x;
-
+		// Find new docked elements.
 		for (e in elements) {
-			if (e.visual.docked) {
-				if (e.thread) {
-					Size sz = e.visual.size;
-					e.visual.pos.x = x;
-					e.visual.pos.y = viewport.p1.y - space - sz.h;
-
-					x += sz.w + space;
-				}
-				if (e.output) {
-					Size sz = e.visual.size;
-					e.visual.pos.x = viewport.p1.x - sz.w - space;
-					// e.visual.pos.y = viewport.p1.y - sz.h - space;
-					e.visual.pos.y = viewport.p0.y + space;
+			if (!e.docked) {
+				if (e.visual.docked) {
+					e.docked = true;
+					docked.push(e);
 				}
 			}
+		}
 
+		layoutDocked(viewport);
+
+		for (e in elements) {
 			// TODO: Clipping?
 			if (!e.topmost) {
 				e.visual.draw(g, active is e.visual);
@@ -103,17 +95,67 @@ class Workspace on Render {
 		}
 	}
 
-	// Find an object at the specified location.
-	private Drawable? findAt(Point pt, Bool activate) {
+	// Layout docked elements.
+	private void layoutDocked(Rect viewport) {
+		Float space = 10;
+		Float x = space + viewport.p0.x;
+
+		for (Nat i = 0; i < docked.count; i++) {
+			var e = docked[i];
+			// Note: e.docked is set to false when the element is removed.
+			if (!e.visual.docked | !e.docked) {
+				e.docked = false;
+				docked.remove(i);
+				i--;
+				continue;
+			}
+
+			if (e.thread) {
+				Size sz = e.visual.size;
+				e.visual.pos.x = x;
+				e.visual.pos.y = viewport.p1.y - space - sz.h;
+
+				x += sz.w + space;
+			}
+			if (e.output) {
+				Size sz = e.visual.size;
+				e.visual.pos.x = viewport.p1.x - sz.w - space;
+				// e.visual.pos.y = viewport.p1.y - sz.h - space;
+				e.visual.pos.y = viewport.p0.y + space;
+			}
+		}
+	}
+
+	// Helper for 'findAt', only considers either topmost or non-topmost elements.
+	private Drawable? findAt(Point pt, Bool activate, Bool topmost) {
 		for (Nat i = elements.count; i > 0; i--) {
-			Drawable d = elements[i-1].visual;
+			var elem = elements[i-1];
+			if (elem.topmost != topmost)
+				continue;
+
+			Drawable d = elem.visual;
 			if (d.rect.contains(pt)) {
 				if (activate) {
 					active = d;
+
+					// Move it last to make it get focus.
+					elements.remove(i-1);
+					elements.push(elem);
 				}
 				return d.findAt(pt);
 			}
 		}
+
+		return null;
+	}
+
+	// Find an object at the specified location.
+	private Drawable? findAt(Point pt, Bool activate) {
+		if (r = findAt(pt, activate, true))
+			return r;
+		if (r = findAt(pt, activate, false))
+			return r;
+
 		active = null;
 		return null;
 	}
@@ -316,6 +358,8 @@ class Workspace on Render {
 				elements[to] = here;
 			if (here.visited)
 				to++;
+			else
+				here.docked = false;
 		}
 		while (to < elements.count) {
 			elements.pop();
@@ -337,6 +381,7 @@ class Workspace on Render {
 	// Remove everything in the workspace.
 	void clear() {
 		elements.clear();
+		docked.clear();
 		output = null;
 		globals = null;
 	}
@@ -361,6 +406,9 @@ private:
 
 		// Always on top?
 		Bool topmost;
+
+		// Is the element docked? (i.e. is it in the "docked"-array?)
+		Bool docked;
 
 		// Create, attach to an object.
 		init(unsafe:RawPtr object, Drawable visual) {
@@ -393,6 +441,9 @@ private:
 
 	// All elements in the workspace, in drawing order (back to front).
 	Element[] elements;
+
+	// Docked elements, to keep track of the order they were docked in.
+	Element[] docked;
 
 	// Active drawable.
 	Drawable? active;
