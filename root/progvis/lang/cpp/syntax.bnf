@@ -329,11 +329,11 @@ SAtom[10] => BoolLiteral(pos, false) : "false" #keyword;
 SAtom[10] => Nullptr(pos) : "nullptr" #keyword;
 SAtom[10] => Nullptr(pos) : "NULL" #keyword;
 
-void SStrContent();
+void SStrContent() #string;
 SStrContent : "[^\"\\\n]*"; // All except end of string and backslash.
 SStrContent : SStrContent - "\\." - SStrContent; // Gobble escape sequences (we could translate them here...)
 
-void SCharContent();
+void SCharContent() #string;
 SCharContent : "[^'\\\n]*"; // All except end of string and backslash.
 SCharContent : SCharContent - "\\." - SCharContent; // Gobble escape sequences (we could translate them here...)
 
