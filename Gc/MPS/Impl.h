@@ -132,14 +132,17 @@ namespace storm {
 		mps_chain_t chain;
 
 		// Separate non-protected pool for GcType objects.
+		// According to the documentation, the AMS pool does not protect memory, so we use that.
+		// We only have one allocation point for these since allocations are rare.
 		mps_pool_t gcTypePool;
+		mps_ap_t gcTypeAllocPoint;
+		util::Lock gcTypeAllocLock;
 
-		// Separate non-moving pool for storing Type-objects. Note: we only have one allocation
-		// point for the types since they are rarely allocated. This pool is also used when
-		// interfacing with external libraries which require their objects to not move around.
-		mps_pool_t typePool;
-		mps_ap_t typeAllocPoint;
-		util::Lock typeAllocLock;
+		// Separate non-moving pool for static allocations. We only have one allocation point for
+		// these, since allocations are rare.
+		mps_pool_t staticPool;
+		mps_ap_t staticAllocPoint;
+		util::Lock staticAllocLock;
 
 		// Pool for objects with weak references.
 		mps_pool_t weakPool;
@@ -165,9 +168,6 @@ namespace storm {
 		// Finalization interval (our copy).
 		nat finalizationInterval;
 
-		// Allocate an object in the Type pool.
-		void *allocTypeObj(const GcType *type);
-
 		// Attach/detach thread. Sets up/tears down all members in Thread, nothing else.
 		void attach(GcThread *thread, const os::Thread &oThread);
 		void detach(GcThread *thread);
@@ -186,27 +186,6 @@ namespace storm {
 
 		// Are we running finalizers at the moment? Used for synchronization.
 		volatile nat runningFinalizers;
-
-		// Struct used for GcTypes inside MPS. As it is not always possible to delete all GcType objects
-		// immediatly, we store the freed ones in an InlineSet until we can actually reclaim them.
-		struct MpsType : public os::SetMember<MpsType> {
-			// Constructor. If we don't provide a constructor, 'type' will be default-initialized to
-			// zero (from C++11 onwards), which is wasteful. The actual implementation of the
-			// constructor will be inlined anyway.
-			MpsType();
-
-			// Reachable?
-			bool reachable;
-
-			// The actual GcType. Must be last, as it contains a 'dynamic' array.
-			GcType type;
-		};
-
-		// All freed GcType-objects which have not yet been reclaimed.
-		os::InlineSet<MpsType> freeTypes;
-
-		// During destruction - ignore any freeType() calls?
-		bool ignoreFreeType;
 
 		// Size of an MpsType.
 		static size_t mpsTypeSize(size_t offsets);

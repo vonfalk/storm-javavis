@@ -20,9 +20,6 @@
 // Check the heap after this many allocations.
 #define MPS_CHECK_INTERVAL 100000
 
-// Use the old scanning (for comparing performance)?
-// #define MPS_OLD_SCAN
-
 
 namespace storm {
 
@@ -129,25 +126,18 @@ namespace storm {
 		}
 
 		inline bool fixHeader1(GcType *ptr) {
-			if (ptr) {
-				// Note: We don't return the result here, which is not ideal, but should work fine.
-				mps_addr_t *d = (mps_addr_t *)&(ptr->type);
-				mps_word_t _mps_wt;
-				MPS_FIX12(_ss, d);
-			}
-
-			// We only scan the 'type' member in the header. No need for step 2.
-			return false;
+			mps_word_t _mps_wt;
+			return MPS_FIX1(_ss, ptr);
 		}
 
-		inline Result fixHeader2(GcType **) { return MPS_RES_OK; }
+		inline Result fixHeader2(GcType **ptr) {
+			return MPS_FIX2(_ss, (void **)ptr);
+		}
 	};
 
 	static mps_res_t mpsScanExceptions(mps_ss_t ss, void *, size_t) {
 		return storm::scanExceptions<MpsScanner>(ss);
 	}
-
-#ifndef MPS_OLD_SCAN
 
 	static mps_res_t mpsScan(mps_ss_t ss, mps_addr_t base, mps_addr_t limit) {
 		return fmt::Scan<MpsScanner>::objects(ss, base, limit);
@@ -189,293 +179,6 @@ namespace storm {
 	static mps_res_t mpsScanArray(mps_ss_t ss, void *base, size_t count) {
 		return storm::Scan<MpsScanner>::array(ss, base, count);
 	}
-
-#else
-
-
-	// Helper for interpreting and scanning a GcType block.
-#define FIX_HEADER(header)									\
-	do {													\
-		mps_addr_t *d = (mps_addr_t *)&((header).type);		\
-		mps_res_t r = MPS_FIX12(ss, d);						\
-		if (r != MPS_RES_OK)								\
-			return r;										\
-	} while (false)
-
-	// # of bytes before the vtable the allocation actually starts.
-	static const nat vtableOffset = vtable::allocOffset();
-
-	// Helper for interpreting and scanning a vtable.
-	// Note: we can pass the interior pointer to MPS_FIX1
-	// Note: we assume vtable pointers are at offset 0
-#define FIX_VTABLE(base)						\
-	do {										\
-		mps_addr_t d = *(mps_addr_t *)(base);	\
-		if (d && MPS_FIX1(ss, d)) {				\
-			d = (byte *)d - vtableOffset;		\
-			mps_res_t r = MPS_FIX2(ss, &d);		\
-			if (r != MPS_RES_OK)				\
-				return r;						\
-			d = (byte *)d + vtableOffset;		\
-			*(mps_addr_t *)(base) = d;			\
-		}										\
-	} while (false)
-
-	// Helper for interpreting and scanning a block of data.
-#define FIX_GCTYPE(header, start, base)								\
-	for (nat _i = (start); _i < (header)->obj.count; _i++) {		\
-		size_t offset = (header)->obj.offset[_i];					\
-		mps_addr_t *data = (mps_addr_t *)((byte *)(base) + offset);	\
-		mps_res_t r = MPS_FIX12(ss, data);							\
-		if (r != MPS_RES_OK)										\
-			return r;												\
-	}
-
-	// Scan objects. If a MPS_FIX returns something other than MPS_RES_OK, return that code as
-	// quickly as possible.
-	static mps_res_t mpsScan(mps_ss_t ss, mps_addr_t base, mps_addr_t limit) {
-		MPS_SCAN_BEGIN(ss) {
-			for (mps_addr_t at = base; at < limit; at = fmt::skip(at)) {
-				Obj *o = fromClient(at);
-				FMT_CHECK_OBJ(o);
-
-				if (objIsCode(o)) {
-					// Scan code.
-					GcCode *c = refsCode(o);
-
-					// Scan our self-pointer to ensure that this object will be scanned after it has
-					// been moved.
-					mps_res_t r = MPS_FIX12(ss, &c->reserved);
-					if (r != MPS_RES_OK)
-						return r;
-#ifdef SLOW_DEBUG
-					dbg_assert(c->reserved == at, L"Invalid self-pointer!");
-#endif
-
-					for (size_t i = 0; i < c->refCount; i++) {
-						GcCodeRef &ref = c->refs[i];
-#ifdef SLOW_DEBUG
-						dbg_assert(ref.offset < objCodeSize(o), L"Code offset is out of bounds!");
-#endif
-						// Only some kind of references needs to be scanned.
-						if (ref.kind & 0x01) {
-							r = MPS_FIX12(ss, &ref.pointer);
-							if (r != MPS_RES_OK)
-								return r;
-						}
-					}
-
-					// Update the pointers in the code blob as well.
-					gccode::updatePtrs(at, c);
-				} else {
-					// Scan regular objects.
-					const Header *h = objHeader(o);
-					mps_addr_t pos = at;
-
-					switch (h->type) {
-					case GcType::tFixedObj:
-						FIX_VTABLE(pos);
-						// Fall thru.
-					case GcType::tFixed:
-						FIX_HEADER(h->obj);
-						FIX_GCTYPE(h, 0, pos);
-						break;
-					case GcType::tType: {
-						FIX_VTABLE(pos);
-						size_t offset = h->obj.offset[0];
-						GcType **data = (GcType **)((byte *)pos + offset);
-						FIX_HEADER(h->obj);
-						if (*data) {
-							// NOTE: We can probably get away without scanning this one.
-							FIX_HEADER(**data);
-						}
-						FIX_GCTYPE(h, 1, pos);
-						break;
-					}
-					case GcType::tArray:
-						FIX_HEADER(h->obj);
-						// Skip the header.
-						pos = (byte *)pos + arrayHeaderSize;
-						for (size_t i = 0; i < o->array.count; i++, pos = (byte *)pos + h->obj.stride) {
-							FIX_GCTYPE(h, 0, pos);
-						}
-						break;
-					case GcType::tWeakArray:
-						FIX_HEADER(h->obj);
-						// Skip the header.
-						pos = (byte *)pos + arrayHeaderSize;
-						for (size_t i = 0; i < weakCount(&o->weak); i++, pos = (byte *)pos + h->obj.stride) {
-							for (nat j = 0; j < h->obj.count; j++) {
-								size_t offset = h->obj.offset[j];
-								mps_addr_t *data = (mps_addr_t *)((byte *)pos + offset);
-								if (MPS_FIX1(ss, *data)) {
-									mps_res_t r = MPS_FIX2(ss, data);
-									if (r != MPS_RES_OK)
-										return r;
-									// Splatted?
-									if (*data == null)
-										weakSplat(&o->weak);
-								}
-							}
-						}
-						break;
-					}
-				}
-			}
-		} MPS_SCAN_END(ss);
-		return MPS_RES_OK;
-	}
-
-	/**
-	 * Platform specific scanning of threads.
-	 *
-	 * We can not use everything MPS provides since we're implementing our own UThreads on top of
-	 * kernel threads. We need to scan those stacks as well, otherwise we would be in big
-	 * trouble. Sadly, this breaks some assumptions that MPS makes about how the stack behaves, so
-	 * we have to do some fairly ugly stuff...
-	 *
-	 * TODO: Move some of these to os::UThread to centralize the knowledge about threading on the
-	 * current platform.
-	 */
-#if defined(X86) || defined(X64)
-
-	// Stack dummy used to recognize when the MPS wants to scan an entire stack. This is the largest
-	// possible address (word aligned). Ie. 0xFF...F0
-	static void *const stackDummy = (void *)((size_t)-1 & ~(wordSize - 1));
-
-	// Note: We're checking all word-aligned positions as we need to make sure we're scanning
-	// the return addresses into functions (which are also in this pool). MPS currently scans
-	// EIP as well, which is good as the currently executing function might otherwise be moved.
-	static mps_res_t mpsScanThread(mps_ss_t ss, void *base, void *limit, void *closure) {
-		GcThread *thread = (GcThread *)closure;
-		void **from = (void **)base;
-		void **to = (void **)limit;
-
-		if (limit == stackDummy) {
-			// We shall scan the entire stack! This is a bit special, as we will more or less
-			// completely ignore what MPS told us and figure it out ourselves.
-
-			// Decrease the scanned size to zero. We update it again later.
-			mps_decrease_scanned(ss, (char *)limit - (char *)base);
-
-			// Remember the total number of bytes scanned.
-			size_t bytesScanned = 0;
-
-			// We scan all UThreads on this thread, if one of them is the currently running thread
-			// their 'desc' is null. In that case we delay scanning that thread until after the
-			// other threads. If we do not find an 'active' thread, we're in the middle of a thread
-			// switch, which means that we can scan all threads as if they were sleeping.
-
-			// Aside from that, we need to be aware that UThreads may be executed by another thread
-			// during detours. The UThreads will always be located inside the stacks set on the
-			// thread where they are intended to run. They can not be moved around while they
-			// contain anything useful since it is not possible to move the UThreads between sets
-			// atomically. Instead, the Stack objects participating in a thread switch are
-			// marked with a 'detourActive' != 0. Any such UThread shall be ignored during stack
-			// scanning since they are considered to belong to another thread. The UThread is
-			// instead associated with the proper thread by following the pointer inside the
-			// 'detourTo' member.
-
-			// Remember we did not find a running stack.
-			to = null;
-
-			// Scan all UThreads.
-			MPS_SCAN_BEGIN(ss) {
-				// Examine all UThreads running on this thread.
-				os::InlineSet<os::Stack>::iterator i = thread->stacks->begin();
-				for (nat id = 0; i != thread->stacks->end(); ++i, id++) {
-					// If this thread is used as a detour thread, do not scan it at all.
-					const os::Stack *first = *i;
-					if (first->detourActive)
-						continue;
-
-					// Examine the main stack and all detours for this thread.
-					for (const os::Stack *stack = first; stack; stack = stack->detourTo) {
-						// Is this the main stack of this thread?
-						if (!stack->desc) {
-							// We should not find two of these for any given thread.
-							dbg_assert(to == null, L"We found two potential main stacks.");
-
-							// This is the main stack! Scan that later.
-							to = (void **)stack->limit();
-
-							// Do a quick sanity check. If the stack is allocated, then we don't want to
-							// scan it if "current" is outside the range. This can happen when an
-							// exception is thrown though a "stackCall" mechanism.
-							if (stack->low() != stack->high()) {
-								// If it is outside, then we don't scan it now. We're in the process of
-								// destroying the stack.
-								if (size_t(current) <= size_t(stack->low()) ||
-									size_t(current) > size_t(stack->high()))
-									to = null;
-							}
-							continue;
-						}
-
-						// All is well, scan it!
-						void **low = (void **)stack->desc->low;
-						void **high = (void **)stack->limit();
-
-						bytesScanned += (char *)high - (char *)low;
-						for (void **at = low; at < high; at++) {
-							mps_res_t r = MPS_FIX12(ss, at);
-							if (r != MPS_RES_OK)
-								return r;
-						}
-					}
-				}
-
-				// If we are right in the middle of a thread switch, we will fail to find a main
-				// stack. This means we have already scanned all stacks, and thus we do not need to
-				// do anything more.
-				if (to == null) {
-#ifdef DEBUG
-					// To see if this ever happens, and if it is handled correctly. This is *really*
-					// rare, as we have to hit a window of ~6 machine instructions when pausing another thread.
-					PLN(L"------------ We found an UThread in the process of switching! ------------");
-#endif
-				} else {
-					bytesScanned += (char *)to - (char *)from;
-					for (void **at = from; at < to; at++) {
-						mps_res_t r = MPS_FIX12(ss, at);
-						if (r != MPS_RES_OK)
-							return r;
-					}
-				}
-			} MPS_SCAN_END(ss);
-
-			// Finally, write the new size back to MPS.
-			mps_increase_scanned(ss, bytesScanned);
-		} else {
-			MPS_SCAN_BEGIN(ss) {
-				for (void **at = from; at < to; at++) {
-					mps_res_t r = MPS_FIX12(ss, at);
-					if (r != MPS_RES_OK)
-						return r;
-				}
-			} MPS_SCAN_END(ss);
-		}
-
-		return MPS_RES_OK;
-	}
-
-#else
-#error "Implement stack scanning for your machine!"
-#endif
-
-	static mps_res_t mpsScanArray(mps_ss_t ss, void *base, size_t count) {
-		MPS_SCAN_BEGIN(ss) {
-			void **data = (void **)base;
-			for (nat i = 0; i < count; i++) {
-				mps_res_t r = MPS_FIX12(ss, &data[i]);
-				if (r != MPS_RES_OK)
-					return r;
-			}
-		} MPS_SCAN_END(ss);
-		return MPS_RES_OK;
-	}
-
-#endif
 
 
 	// Check return codes from MPS.
@@ -564,24 +267,7 @@ namespace storm {
 #endif
 		} MPS_ARGS_END(args);
 
-		// GcType-objects are stored in a manually managed pool. We prefer this to just malloc()ing
-		// them since we can remove all of them easily whenever the Gc object is destroyed.
-		MPS_ARGS_BEGIN(args) {
-			MPS_ARGS_ADD(args, MPS_KEY_MEAN_SIZE, sizeof(GcType) + 10*sizeof(size_t));
-			MPS_ARGS_ADD(args, MPS_KEY_ALIGN, wordSize);
-			MPS_ARGS_ADD(args, MPS_KEY_SPARE, 0.50); // Low spare, as these objects are seldom allocated/deallocated.
-			check(mps_pool_create_k(&gcTypePool, arena, mps_class_mvff(), args), L"Failed to create a pool for types.");
-		} MPS_ARGS_END(args);
-
-		// Types are stored in a separate non-moving pool. This is to get around the limitation that
-		// no remote references (ie. references stored outside objects) are allowed by the MPS. In
-		// our GcType, however, we want to store a reference to the actual type so we can access it
-		// by reflection or the as<> operation. If Type-objects are allowed to move, then when one
-		// object scans and updates its GcType to point to the new position, which confuses MPS when
-		// it finds that other objects suddenly lost their reference to an object it thought they
-		// had. This is solved by putting Type objects in an AMS pool, which does not move
-		// objects. Therefore, our approach with a (nearly) constant remote reference works in this
-		// case, with full GC on types.
+		// GcType-objects are stored in an AMC pool, as those objects are not protected.
 		MPS_ARGS_BEGIN(args) {
 			MPS_ARGS_ADD(args, MPS_KEY_CHAIN, chain);
 			// Store types in the last generation, as they are very long-lived.
@@ -589,10 +275,23 @@ namespace storm {
 			MPS_ARGS_ADD(args, MPS_KEY_FORMAT, format);
 			// We want to support ambiguous references to this pool (eg. from the stack).
 			MPS_ARGS_ADD(args, MPS_KEY_AMS_SUPPORT_AMBIGUOUS, true);
-			check(mps_pool_create_k(&typePool, arena, mps_class_ams(), args), L"Failed to create a GC pool for types.");
+			check(mps_pool_create_k(&gcTypePool, arena, mps_class_amc(), args), L"Failed to create a GC pool for types.");
 		} MPS_ARGS_END(args);
 
-		check(mps_ap_create_k(&typeAllocPoint, typePool, mps_args_none), L"Failed to create type allocation point.");
+		check(mps_ap_create_k(&gcTypeAllocPoint, gcTypePool, mps_args_none), L"Failed to create GC type allocation point.");
+
+		// Non-moving pool.
+		MPS_ARGS_BEGIN(args) {
+			MPS_ARGS_ADD(args, MPS_KEY_CHAIN, chain);
+			// Store types in the next to last generation, as they are often long-lived.
+			MPS_ARGS_ADD(args, MPS_KEY_GEN, ARRAY_COUNT(generationParams) - 2);
+			MPS_ARGS_ADD(args, MPS_KEY_FORMAT, format);
+			// We want to support ambiguous references to this pool (eg. from the stack).
+			MPS_ARGS_ADD(args, MPS_KEY_AMS_SUPPORT_AMBIGUOUS, true);
+			check(mps_pool_create_k(&staticPool, arena, mps_class_ams(), args), L"Failed to create a GC pool for static objects.");
+		} MPS_ARGS_END(args);
+
+		check(mps_ap_create_k(&staticAllocPoint, staticPool, mps_args_none), L"Failed to create static allocation point.");
 
 		// Weak references are stored in a separate pool which supports weak references.
 		MPS_ARGS_BEGIN(args) {
@@ -644,7 +343,6 @@ namespace storm {
 
 		// Initialize.
 		runningFinalizers = 0;
-		ignoreFreeType = false;
 	}
 
 	void GcImpl::destroy() {
@@ -659,24 +357,21 @@ namespace storm {
 
 		// See if any finalizers needs to be executed. Here, we should ignore freeing any GcTypes,
 		// as the finalization order for the last types are unknown.
-		ignoreFreeType = true;
 		checkFinalizersLocked();
 
 		// Destroy the global allocation points.
-		mps_ap_destroy(typeAllocPoint);
+		mps_ap_destroy(gcTypeAllocPoint);
+		mps_ap_destroy(staticAllocPoint);
 		mps_ap_destroy(weakAllocPoint);
 		mps_ap_destroy(codeAllocPoint);
 #ifdef MPS_USE_IO_POOL
 		mps_ap_destroy(ioAllocPoint);
 #endif
 
-		// Clear these now, otherwise the destructor will crash badly after we've removed the backing storage.
-		freeTypes.clear();
-
 		// Destroy pools.
 		mps_pool_destroy(pool);
 		mps_pool_destroy(weakPool);
-		mps_pool_destroy(typePool);
+		mps_pool_destroy(staticPool);
 		mps_pool_destroy(codePool);
 #ifdef MPS_USE_IO_POOL
 		mps_pool_destroy(ioPool);
@@ -794,12 +489,9 @@ namespace storm {
 	}
 
 	void *GcImpl::alloc(const GcType *type) {
-		// Types are special.
-		if (type->kind == GcType::tType)
-			return allocTypeObj(type);
-
 		assert(type->kind == GcType::tFixed
-			|| type->kind == GcType::tFixedObj, L"Wrong type for calling alloc().");
+			|| type->kind == GcType::tFixedObj
+			|| type->kind == GcType::tType, L"Wrong type for calling alloc().");
 
 		size_t size = sizeObj(type);
 		mps_ap_t &ap = currentAllocPoint();
@@ -816,25 +508,20 @@ namespace storm {
 		return result;
 	}
 
-	void *GcImpl::allocTypeObj(const GcType *type) {
-		assert(type->kind == GcType::tType, L"Wrong type for calling allocTypeObj().");
-		return allocStatic(type);
-	}
-
 	void *GcImpl::allocStatic(const GcType *type) {
 		assert(type->kind == GcType::tFixed
 			|| type->kind == GcType::tFixedObj
 			|| type->kind == GcType::tType, L"Wrong type for calling allocStatic().");
 		// Since we're sharing one allocation point, take the lock for it.
-		util::Lock::L z(typeAllocLock);
+		util::Lock::L z(staticAllocLock);
 
 		size_t size = sizeObj(type);
 		mps_addr_t memory;
 		void *result;
 		do {
-			check(mps_reserve(&memory, typeAllocPoint, size), L"Out of memory (alloc type).");
+			check(mps_reserve(&memory, staticAllocPoint, size), L"Out of memory (static allocation).");
 			result = initObj(memory, type, size);
-		} while (!mps_commit(typeAllocPoint, memory, size));
+		} while (!mps_commit(staticAllocPoint, memory, size));
 
 		if (type->finalizer)
 			mps_finalize(arena, &result);
@@ -898,101 +585,27 @@ namespace storm {
 		return result;
 	}
 
-	size_t GcImpl::mpsTypeSize(size_t entries) {
-		return gcTypeSize(entries) + sizeof(MpsType) - sizeof(GcType);
-	}
-
-	// Note: We don't want to initialize 'type' here. We memset() it to zero anyway, and C++ does
-	// not know the type of it statically anyway.
-	GcImpl::MpsType::MpsType() {}
-
 	GcType *GcImpl::allocType(GcType::Kind kind, Type *type, size_t stride, size_t entries) {
-		size_t s = mpsTypeSize(entries);
-		void *mem;
-		check(mps_alloc((mps_addr_t *)&mem, gcTypePool, s), L"Failed to allocate type info.");
-		memset(mem, 0, s);
-		MpsType *t = new (mem) MpsType();
-		t->type.kind = kind;
-		t->type.type = type;
-		t->type.stride = stride;
-		t->type.count = entries;
-		return &t->type;
+		size_t size = gcTypeSize(entries) + headerSize;
+
+		mps_addr_t memory;
+		GcType *result;
+		util::Lock::L z(gcTypeAllocLock);
+
+		do {
+			check(mps_reserve(&memory, gcTypeAllocPoint, size), L"Out of memory.");
+			result = initGcType(memory, entries);
+		} while (!mps_commit(gcTypeAllocPoint, memory, size));
+
+		result->kind = kind;
+		result->type = type;
+		result->stride = stride;
+		result->count = entries;
+		return result;
 	}
 
-	struct MarkData {
-		// Format to look for.
-		mps_fmt_t fmt;
-	};
-
-	void GcImpl::markType(mps_addr_t addr, mps_fmt_t fmt, mps_pool_t pool, void *p, size_t) {
-		MarkData *data = (MarkData *)p;
-
-		// Does this address belong to the correct format?
-		if (fmt != data->fmt)
-			return;
-
-		// Mark the type.
-		GcType *t = (GcType *)GcImpl::typeOf(addr);
-		if (!t)
-			return;
-
-		MpsType *base = BASE_PTR(MpsType, t, type);
-		base->reachable = true;
-
-		// If this is a GcType::tType-object, also mark that type!
-		if (t->kind == GcType::tType) {
-			size_t offset = t->offset[0];
-			GcType *t2 = *(GcType **)((byte *)addr + offset);
-			if (t2) {
-				MpsType *base2 = BASE_PTR(MpsType, t2, type);
-				base2->reachable = true;
-			}
-		}
-	}
-
-	void GcImpl::freeType(GcType *t) {
-		if (ignoreFreeType)
-			return;
-		if (!t)
-			return;
-
-		// It is possible we can not yet reclaim 't'. Put it in the free set instead.
-		MpsType *base = BASE_PTR(MpsType, t, type);
-		freeTypes.insert(base);
-
-		// Shall we try to reclaim all freed types? This is expensive, so only do it rarely!
-		if (freeTypes.count() > 100) {
-			// Ensure no GC:s in flight.
-			mps_arena_park(arena);
-
-			// Mark all as unseen.
-			os::InlineSet<MpsType>::iterator end = freeTypes.end();
-			for (os::InlineSet<MpsType>::iterator i = freeTypes.begin(); i != end; ++i) {
-				i->reachable = false;
-			}
-
-			// Iterate through the heap and mark all reachable nodes.
-			MarkData d = { format };
-			mps_arena_formatted_objects_walk(arena, &markType, &d, 0);
-
-			// Release the GC once more.
-			mps_arena_release(arena);
-
-			// Remove all unseen nodes.
-			size_t removed = 0;
-			for (os::InlineSet<MpsType>::iterator i = freeTypes.begin(); i != end; ++i) {
-				if (!i->reachable) {
-					MpsType *e = *i;
-					freeTypes.erase(e);
-
-					size_t s = mpsTypeSize(e->type.count);
-					// I don't think we really need to call the destructor here, but let's play nice.
-					e->~MpsType();
-					mps_free(gcTypePool, e, s);
-					removed++;
-				}
-			}
-		}
+	void GcImpl::freeType(GcType *) {
+		// Not needed anymore.
 	}
 
 	const GcType *GcImpl::typeOf(const void *mem) {
