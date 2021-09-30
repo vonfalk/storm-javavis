@@ -72,26 +72,23 @@ class Workspace on Render {
 		for (e in elements) {
 			// TODO: Clipping?
 			if (!e.topmost) {
-				e.visual.draw(g, active is e.visual);
+				var visual = e.visual;
+				visual.draw(g, active is visual);
+			}
+		}
+
+		// Draw elements that are topmost.
+		for (i, e in elements) {
+			if (e.topmost) {
+				var visual = e.visual;
+				visual.draw(g, active is visual);
 			}
 		}
 
 		// Draw pointers etc above all other elements.
 		for (i, e in elements) {
 			var visual = e.visual;
-			if (!e.topmost) {
-				visual.drawLinks(g, active is visual);
-			} else {
-				visual.draw(g, active is visual);
-			}
-		}
-
-		// Topmost elements.
-		for (i, e in elements) {
-			if (e.topmost) {
-				var visual = e.visual;
-				visual.drawLinks(g, active is visual);
-			}
+			visual.drawLinks(g, active is visual);
 		}
 	}
 
