@@ -641,6 +641,10 @@ namespace code {
 			// We don't currently offer the ability to lookup source locations in the final binary.
 		}
 
+		void metaOut(Output *, Instr *) {
+			// We don't output metadata.
+		}
+
 		const OpEntry<OutputFn> outputMap[] = {
 			OUTPUT(mov),
 			OUTPUT(swap),
@@ -688,6 +692,7 @@ namespace code {
 			OUTPUT(lblOffset),
 			OUTPUT(align),
 			OUTPUT(location),
+			OUTPUT(meta),
 		};
 
 		void output(Listing *src, Output *to) {

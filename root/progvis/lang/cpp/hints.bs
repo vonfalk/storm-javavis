@@ -76,6 +76,11 @@ class CppCodeHints extends progvis:CodeHints {
 		false;
 	}
 
+	progvis:Barrier functionBarrier(Function fn) : override {
+		print("TODO: Barrier for ${fn}?");
+		progvis:Barrier:none;
+	}
+
 	Save saveVariable(Listing to, Var var, Listing:VarInfo info, Operand dest) : override {
 		if (!info.ref)
 			return Save:none;

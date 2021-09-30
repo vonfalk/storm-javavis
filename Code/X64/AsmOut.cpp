@@ -26,6 +26,10 @@ namespace code {
 			// We don't currently offer the ability to lookup source locations in the final binary.
 		}
 
+		void metaOut(Output *, Instr *) {
+			// We don't preserve metadata.
+		}
+
 		void pushOut(Output *to, Instr *instr) {
 			const Operand &src = instr->src();
 			switch (src.type()) {
@@ -705,6 +709,7 @@ namespace code {
 			OUTPUT(epilog),
 			OUTPUT(preserve),
 			OUTPUT(location),
+			OUTPUT(meta),
 
 			// Floating point.
 			OUTPUT(fstp),

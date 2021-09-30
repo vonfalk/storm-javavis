@@ -25,6 +25,10 @@ class CodeHints on Compiler {
 	// visualized.
 	Bool patchExternal(Function fn) : abstract;
 
+	// How to treat the external function in terms of barriers? Only called for functions that have
+	// no SrcBarrier located after them.
+	Barrier functionBarrier(Function fn) : abstract;
+
 	/**
 	 * How to handle the saved variable.
 	 */
@@ -99,6 +103,9 @@ class DefaultCodeHints extends CodeHints {
 
 	// Don't patch external functions.
 	Bool patchExternal(Function fn) : override { false; }
+
+	// The default is to not have any explicit barriers at all.
+	Barrier functionBarrier(Function fn) : override { Barrier:none; }
 
 	// Save a variable.
 	Save saveVariable(Listing to, Var var, Listing:VarInfo info, Operand dest) : override {

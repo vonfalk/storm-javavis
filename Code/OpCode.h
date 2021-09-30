@@ -77,6 +77,9 @@ namespace code {
 			// Source code reference, used for debug information or other transformations.
 			location,
 
+			// Other metadata. Does not emit any machine code.
+			meta,
+
 			// Blocks.
 			beginBlock,
 			endBlock,

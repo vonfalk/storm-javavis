@@ -290,7 +290,7 @@ private void patchFunction(PatchState state, Function fn) on Compiler {
 }
 
 // Find the hint responsible for this function.
-private Hints findHints(Hints[] hints, Function fn) {
+private Hints findHints(Hints[] hints, Function fn) on Compiler {
 	for (h in hints)
 		if (h.code.handlesFunction(fn))
 			return h;
@@ -423,6 +423,8 @@ private Listing patchListing(PatchState state, Hints hints, Listing source, Func
 		if (instr.op == OpCode:location) {
 			if (!onlyMemory)
 				generateCall(state.program, params, instr.src.srcPos);
+		} else if (b = barrier(instr)) {
+			generateBarrier(state.program, params, b.pos, b.type);
 		} else if (instr.op == OpCode:prolog) {
 			params.block = source.root;
 			if (onlyMemory)
@@ -438,10 +440,20 @@ private Listing patchListing(PatchState state, Hints hints, Listing source, Func
 		} else if (instr.op == OpCode:fnCall) {
 			// In case of function calls, the access operations must be after the call is finished.
 			checkMemAccess(params, instr);
+
+			// We also need to check if this call has a particular behavior regarding barriers.
+			// Note: We assume that a fnCall is never the last instruction as that would break the
+			// implementation.
+			addFnCallBarrier(state, params, instr, source[i + 1]);
 		} else if (instr.op == OpCode:fnCallRef) {
 			params.saveRegs();
 			params.recordWriteRef(instr.dest);
 			params.restoreRegs();
+
+			// We also need to check if this call has a particular behavior regarding barriers.
+			// Note: We assume that a fnCall is never the last instruction as that would break the
+			// implementation.
+			addFnCallBarrier(state, params, instr, source[i + 1]);
 		}
 
 	}
@@ -452,17 +464,49 @@ private Listing patchListing(PatchState state, Hints hints, Listing source, Func
 	dest;
 }
 
+// Add a barrier after a function call.
+private void addFnCallBarrier(PatchState state, PatchParams params, Instr instr, Instr next) on Compiler {
+	SrcPos pos;
+	Barrier barrier = Barrier:none;
+	if (b = barrier(next)) {
+		barrier = b.type;
+		pos = b.pos;
+	} else if (fn = calledFunction(instr)) {
+		barrier = params.codeHints.functionBarrier(fn);
+	}
+
+	generateBarrier(state.program, params, pos, barrier);
+}
+
+// Find a barrier in an instruction.
+private SrcBarrier? barrier(Instr i) on Compiler {
+	if (i.op == OpCode:meta)
+		if (barrier = i.src.obj as SrcBarrier)
+			return barrier;
+	return null;
+}
+
+// Find the function of a fnCall instruction.
+private Function? calledFunction(Instr i) on Compiler {
+	if (src = i.src.ref.source as NamedSource) {
+		if (fn = src.named as Function) {
+			return fn;
+		}
+	}
+	return null;
+}
+
 // Replace references in an instruction. Since we re-load packages, we might have references into
 // the temporary instances of a function for example. This function replaces these with their
 // original corresponding reference.
-private Instr replaceRefs(PatchState s, Instr i) {
+private Instr replaceRefs(PatchState s, Instr i) on Compiler {
 	Operand src = replaceRef(s, i.src);
 	Operand dst = replaceRef(s, i.dest);
 	i.alter(dst, src);
 }
 
 // Alter a single operand, as above.
-private Operand replaceRef(PatchState s, Operand op) {
+private Operand replaceRef(PatchState s, Operand op) on Compiler {
 	if (op.type == OpType:reference) {
 		return Operand(s.replaceRef(op.ref));
 	} else if (op.type == OpType:objReference) {
@@ -476,10 +520,7 @@ private Operand replaceRef(PatchState s, Operand op) {
 // Patch a call operation if needed.
 // We might need to call an alternate version of the function, if we need to add instrumentation to it.
 private Instr patchCall(PatchState state, Hints hints, Instr src) on Compiler {
-	unless (namedSrc = src.src.ref.source as NamedSource)
-		return src;
-
-	unless (fn = namedSrc.named as Function)
+	unless (fn = calledFunction(src))
 		return src;
 
 	// Anything inside 'pkg' does not need to be altered. We will patch all of those functions anyway.
@@ -671,6 +712,24 @@ private void generateCall(Program program, PatchParams to, SrcPos pos) on Compil
 	to.restoreRegs();
 }
 
+// Generate a call to track barriers.
+private void generateBarrier(Program program, PatchParams to, SrcPos pos, Barrier type) on Compiler {
+	if (type == Barrier:none)
+		return;
+
+	var fn = named{Program:newBarrier<Program, SrcPosWrap, Barrier>};
+
+	to.saveRegs();
+	Listing l = to.to;
+
+	l << fnParam(ptrDesc, objPtr(program));
+	l << fnParam(ptrDesc, objPtr(SrcPosWrap(pos)));
+	l << fnParam(intDesc, natConst(type.v));
+	l << fnCall(fn.ref, true);
+
+	to.restoreRegs();
+}
+
 // Save all variables to a data structure in the current block.
 private Var saveVariables(PatchParams to, Block current) on Compiler {
 	Listing l = to.to;
@@ -781,7 +840,7 @@ private void generateInit(Program program, PatchParams to, Function fn) on Compi
 }
 
 // Check if the listing contains any location information at all.
-private Bool anyLocation(Listing l) {
+private Bool anyLocation(Listing l) on Compiler {
 	for (Nat i = 0; i < l.count; i++) {
 		if (l[i].op == OpCode:location)
 			if (l[i].src.srcPos != SrcPos())

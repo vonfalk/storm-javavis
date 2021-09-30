@@ -73,6 +73,7 @@ namespace code {
 		OP_CODE(epilog, destNone),
 		OP_CODE(preserve, destWrite),
 		OP_CODE(location, destNone),
+		OP_CODE(meta, destNone),
 		OP_ALT_CODE(beginBlock, destNone, begin),
 		OP_ALT_CODE(endBlock, destNone, end),
 		OP_CODE(jmpBlock, destNone),

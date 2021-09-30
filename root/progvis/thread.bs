@@ -85,7 +85,7 @@ class ProgThread on Render {
 		frames.last.pos;
 	}
 
-	// Called by a monitored thread to possible pause execution.
+	// Called by a monitored thread to possibly pause execution.
 	// Returns 'false' if this event is not interesting to propagate.
 	Bool onNewLocation(SrcPos pos, StackVar[] vars) {
 		if (terminating)
@@ -103,6 +103,15 @@ class ProgThread on Render {
 
 		memory.clear();
 		true;
+	}
+
+	// Called by a monitored thread when a barrier instruction was hit.
+	void onNewBarrier(SrcPos pos, Barrier type) {
+		if (terminating)
+			return;
+
+		// TODO: Handle the barrier!
+		print("Barrier hit! ${type}");
 	}
 
 	// Called when a monitored thread is about to return.

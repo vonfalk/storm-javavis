@@ -187,6 +187,15 @@ class Program on Render {
 		t.onNewLocation(pos.v, vars);
 	}
 
+	// This function will be called by the executed code to notify that a (traced) function hit a
+	// barrier.
+	package void newBarrier(SrcPosWrap pos, Barrier type) {
+		Word id = currentUThread();
+		ProgThread t = threads.get(id);
+
+		t.onNewBarrier(pos.v, type);
+	}
+
 	// This function will be called when the function is about to return. It is basically the same
 	// as 'newLocation', except that we get the return value here, and we might want to indicate
 	// that the function is returning somehow.

@@ -1,0 +1,46 @@
+use core:lang;
+
+/**
+ * Explicit barriers.
+ *
+ * We support three types of barriers:
+ * - acquire
+ * - release
+ * - full (acquire + release, sequentially consistent)
+ *
+ * The runtime takes them into account from two places:
+ * 1. From SrcBarrier instances inserted as metadata in the listing. If this barrier appears right
+ *    after a function call instruction, we assume that that function has that particular
+ *    consistency.
+ * 2. From the CodeHints class. When a function call without a Barrier instance is encountered,
+ *    the function 'functionBarrier' is called to determine the semantics. This allows an
+ *    implementation to hide calls to internal helper functions, and properly treat library- or
+ *    external functions as hidden. This will not be done for functions that are patched
+ *    (as decided by 'patchExternal').
+ */
+enum Barrier {
+	none,
+	acquire,
+	release,
+	full
+}
+
+/**
+ * A barrier located in source code. Also provides location information.
+ */
+class SrcBarrier {
+	init(Barrier type, SrcPos pos) {
+		init {
+			type = type;
+			pos = pos;
+		}
+	}
+
+	Barrier type;
+
+	SrcPos pos;
+
+	void toS(StrBuf to) : override {
+		to << type << "@" << pos;
+	}
+}

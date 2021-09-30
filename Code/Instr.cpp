@@ -470,6 +470,14 @@ namespace code {
 		return instrLoose(e, op::location, Operand(), pos);
 	}
 
+	Instr *meta(EnginePtr e, Object *data) {
+		return instrLoose(e, op::meta, Operand(), objPtr(data));
+	}
+
+	Instr *meta(EnginePtr e, TObject *data) {
+		return instrLoose(e, op::meta, Operand(), objPtr(data));
+	}
+
 	Instr *begin(EnginePtr e, Block block) {
 		return instrLoose(e, op::beginBlock, Operand(), block);
 	}

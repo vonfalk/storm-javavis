@@ -215,6 +215,10 @@ namespace code {
 	// Node a source position.
 	Instr *STORM_FN location(EnginePtr e, SrcPos pos);
 
+	// Add metadata.
+	Instr *STORM_FN meta(EnginePtr e, Object *data);
+	Instr *STORM_FN meta(EnginePtr e, TObject *data);
+
 	// Scope management. A scope is assumed to be open on all instructions between "begin(scope)" and "end(scope)".
 	// Do not, for example, have all begin/end scopes in the end of the listing and jump forth and back between them.
 	// That makes the exception handling fail to detect what to destroy. NOTE: Does not preserve registers!

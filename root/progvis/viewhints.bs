@@ -7,6 +7,9 @@ class ViewHints on Render {
 	// Should we pause on function entry?
 	Bool pauseOnEntry() { true; }
 
+	// Do we provide information about barriers?
+	Bool barriersAvailable() { false; }
+
 	// Create an element for objects found during traversal. You don't need to wrap these in
 	// frames. Return 'null' to leave handling to the default implementation.
 	Data? createData(Workspace ws, TypeInfo info, unsafe:RawPtr base, Nat offset) : abstract;
