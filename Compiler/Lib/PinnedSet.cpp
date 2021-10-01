@@ -34,6 +34,11 @@ namespace storm {
 	}
 
 	void PinnedSet::toS(StrBuf *to) const {
+		if (!data) {
+			*to << S("{}");
+			return;
+		}
+
 		sort();
 
 		*to << S("{");
