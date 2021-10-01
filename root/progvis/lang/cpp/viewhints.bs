@@ -17,6 +17,9 @@ class CppViewHints extends ViewHints {
 	// Don't pause on function entry. We won't have set up our formal parameters by then...
 	Bool pauseOnEntry() : override { false; }
 
+	// We have barriers!
+	Bool barriersAvailable() : override { true; }
+
 	// Create element for visualization.
 	Data? createData(Workspace ws, TypeInfo info, unsafe:RawPtr base, Nat offset) {
 		if (info.isRef)

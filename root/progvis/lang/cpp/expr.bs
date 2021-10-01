@@ -717,6 +717,8 @@ class FnCall extends ExprRef {
 			// Void result.
 			fn.autoCall(gen, params, res);
 		}
+
+		addBarrier(gen);
 	}
 
 	// Call a function that returns the value through a pointer.
@@ -748,6 +750,8 @@ class FnCall extends ExprRef {
 
 		gen.l << fnCall(fn.ref, fn.isMember);
 
+		addBarrier(gen);
+
 		// Store the pointer or the value somewhere.
 		if (res.type.ref) {
 			var.adjust(gen, res.safeLocation(gen, result.type));
@@ -757,6 +761,13 @@ class FnCall extends ExprRef {
 		}
 
 		res.created(gen);
+	}
+
+	// Add a barrier if needed.
+	private void addBarrier(CodeGen gen) {
+		var type = fnBarrier(fn);
+		if (type != progvis:Barrier:none)
+			gen.l << meta(progvis:SrcBarrier(type, pos));
 	}
 
 	// Generate code for when someone else has already created the storage for us.

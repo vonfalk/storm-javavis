@@ -464,18 +464,22 @@ private Listing patchListing(PatchState state, Hints hints, Listing source, Func
 	dest;
 }
 
-// Add a barrier after a function call.
+// Add a barrier after a function call. Don't generate an extra barrier if a barrier is specified as
+// the next instruction.
 private void addFnCallBarrier(PatchState state, PatchParams params, Instr instr, Instr next) on Compiler {
-	SrcPos pos;
-	Barrier barrier = Barrier:none;
 	if (b = barrier(next)) {
-		barrier = b.type;
-		pos = b.pos;
+		// If it was indicated in the next instruction, then we don't need to add a barrier. That
+		// will be done when the next instruction is translated.
+		return;
 	} else if (fn = calledFunction(instr)) {
-		barrier = params.codeHints.functionBarrier(fn);
-	}
 
-	generateBarrier(state.program, params, pos, barrier);
+		// We don't insert barriers for functions where all code is visible to us.
+		if (fn.hasParent(state.pkg))
+			return;
+
+		var barrier = params.codeHints.functionBarrier(fn);
+		generateBarrier(state.program, params, SrcPos(), barrier);
+	}
 }
 
 // Find a barrier in an instruction.

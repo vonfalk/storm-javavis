@@ -77,8 +77,17 @@ class CppCodeHints extends progvis:CodeHints {
 	}
 
 	progvis:Barrier functionBarrier(Function fn) : override {
-		print("TODO: Barrier for ${fn}?");
-		progvis:Barrier:none;
+		// No extra barriers for functions in our runtime.
+		if (fn.hasParent(named{runtime}))
+			return progvis:Barrier:none;
+
+		// For other functions in Progvis, no barrier there either. These are implementation details
+		// that we don't want to be visible.
+		if (fn.hasParent(named{progvis}))
+			return progvis:Barrier:none;
+
+		// All other functions, we insert a barrier for. We don't know what they do.
+		return progvis:Barrier:full;
 	}
 
 	Save saveVariable(Listing to, Var var, Listing:VarInfo info, Operand dest) : override {

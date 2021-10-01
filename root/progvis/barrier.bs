@@ -18,11 +18,11 @@ use core:lang;
  *    external functions as hidden. This will not be done for functions that are patched
  *    (as decided by 'patchExternal').
  */
-enum Barrier {
-	none,
-	acquire,
-	release,
-	full
+enum Barrier : bitmask {
+	none = 0,
+	acquire = 1,
+	release = 2,
+	full = 3
 }
 
 /**

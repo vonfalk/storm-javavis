@@ -1,0 +1,21 @@
+use core:lang;
+
+// TODO: A hash table with weak keys would be better here.
+private WeakSet<Function> acquireFns on Compiler;
+private WeakSet<Function> releaseFns on Compiler;
+
+progvis:Barrier fnBarrier(Function f) on Compiler {
+	progvis:Barrier result = progvis:Barrier:none;
+	if (acquireFns.has(f))
+		result += progvis:Barrier:acquire;
+	if (releaseFns.has(f))
+		result += progvis:Barrier:release;
+	result;
+}
+
+void registerBarrier(Function fn, progvis:Barrier type) on Compiler {
+	if (type.has(progvis:Barrier:acquire))
+		acquireFns.put(fn);
+	if (type.has(progvis:Barrier:release))
+		releaseFns.put(fn);
+}

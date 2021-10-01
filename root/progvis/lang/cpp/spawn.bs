@@ -10,6 +10,17 @@ on Compiler:
  * Returns some kind of "thread id" for the new thread.
  */
 class SpawnCall extends Expr {
+	init(SrcPos pos, Block parent, SimpleName fn) {
+		Function toCall = findFn(pos, parent.scope, fn, []);
+
+		if (toCall.result != Value())
+			throw SyntaxError(pos, "It is not possible to spawn functions that return a value.");
+
+		init(pos) {
+			toCall = toCall;
+		}
+	}
+
 	init(SrcPos pos, Block parent, SimpleName fn, Expr[] params) {
 		Function toCall = findFn(pos, parent.scope, fn, params);
 

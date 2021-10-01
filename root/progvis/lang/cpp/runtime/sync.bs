@@ -110,7 +110,7 @@ void sema_destroy(Ptr<semaphore> sema) {
 	sema.base.writeInt(offset + sPtr.current, -1);
 }
 
-void sema_up(Ptr<semaphore> sema) {
+void sema_up(Ptr<semaphore> sema) : cppBarrier(release) {
 	checkSyncPtr(sema);
 
 	Nat offset = sema.offset - sPtr.current * 2;
@@ -125,7 +125,7 @@ void sema_up(Ptr<semaphore> sema) {
 	throw SyncError("Can not operate on an uninitialized semaphore!");
 }
 
-void sema_down(Ptr<semaphore> sema) {
+void sema_down(Ptr<semaphore> sema) : cppBarrier(acquire) {
 	checkSyncPtr(sema);
 
 	Nat offset = sema.offset - sPtr.current * 2;
@@ -181,7 +181,7 @@ void lock_destroy(Ptr<lock> lock) {
 	lock.base.writeInt(offset + sPtr.current, -1);
 }
 
-void lock_acquire(Ptr<lock> lock) {
+void lock_acquire(Ptr<lock> lock) : cppBarrier(acquire) {
 	checkSyncPtr(lock);
 
 	Nat offset = lock.offset - sPtr.current * 2;
@@ -203,7 +203,7 @@ void lock_acquire(Ptr<lock> lock) {
 	throw SyncError("Can not operate on an uninitialized lock!");
 }
 
-void lock_release(Ptr<lock> lock) {
+void lock_release(Ptr<lock> lock) : cppBarrier(release) {
 	checkSyncPtr(lock);
 
 	Nat offset = lock.offset - sPtr.current * 2;
@@ -315,7 +315,7 @@ void cond_destroy(Ptr<condition> cond) {
 	cond.base.writeInt(offset + sPtr.current, -1);
 }
 
-void cond_wait(Ptr<condition> cond, Ptr<lock> lock) {
+void cond_wait(Ptr<condition> cond, Ptr<lock> lock) : cppBarrier(full) {
 	checkSyncPtr(cond);
 	checkSyncPtr(lock);
 

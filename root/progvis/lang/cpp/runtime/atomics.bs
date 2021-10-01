@@ -12,7 +12,7 @@ use progvis:lang:cpp;
  */
 
 // Test and set (integers).
-Int test_and_set(Ptr<Int> ptr) {
+Int test_and_set(Ptr<Int> ptr) : cppBarrier(full) {
 	checkPtr(ptr.base, ptr.offset, sInt.current);
 	Nat offset = ptr.offset - sPtr.current * 2;
 	Int old = ptr.base.readInt(offset);
@@ -21,7 +21,7 @@ Int test_and_set(Ptr<Int> ptr) {
 }
 
 // Test and set (integers).
-Nat test_and_set(Ptr<Nat> ptr) {
+Nat test_and_set(Ptr<Nat> ptr) : cppBarrier(full) {
 	checkPtr(ptr.base, ptr.offset, sInt.current);
 	Nat offset = ptr.offset - sPtr.current * 2;
 	Nat old = ptr.base.readNat(offset);
@@ -30,7 +30,7 @@ Nat test_and_set(Ptr<Nat> ptr) {
 }
 
 // Test and set (booleans).
-Bool test_and_set(Ptr<Bool> ptr) {
+Bool test_and_set(Ptr<Bool> ptr) : cppBarrier(full) {
 	checkPtr(ptr.base, ptr.offset, 1);
 	Nat offset = ptr.offset - sPtr.current * 2;
 	Bool old = ptr.base.readBool(offset);
@@ -39,7 +39,7 @@ Bool test_and_set(Ptr<Bool> ptr) {
 }
 
 // Atomic add (integers).
-Int atomic_add(Ptr<Int> ptr, Int add) {
+Int atomic_add(Ptr<Int> ptr, Int add) : cppBarrier(full) {
 	checkPtr(ptr.base, ptr.offset, sInt.current);
 	Nat offset = ptr.offset - sPtr.current * 2;
 	Int old = ptr.base.readInt(offset);
@@ -48,7 +48,7 @@ Int atomic_add(Ptr<Int> ptr, Int add) {
 }
 
 // Atomic add (integers).
-Nat atomic_add(Ptr<Nat> ptr, Nat add) {
+Nat atomic_add(Ptr<Nat> ptr, Nat add) : cppBarrier(full) {
 	checkPtr(ptr.base, ptr.offset, sInt.current);
 	Nat offset = ptr.offset - sPtr.current * 2;
 	Nat old = ptr.base.readNat(offset);
@@ -57,7 +57,7 @@ Nat atomic_add(Ptr<Nat> ptr, Nat add) {
 }
 
 // Atomic sub (integers).
-Int atomic_sub(Ptr<Int> ptr, Int sub) {
+Int atomic_sub(Ptr<Int> ptr, Int sub) : cppBarrier(full) {
 	checkPtr(ptr.base, ptr.offset, sInt.current);
 	Nat offset = ptr.offset - sPtr.current * 2;
 	Int old = ptr.base.readInt(offset);
@@ -66,7 +66,7 @@ Int atomic_sub(Ptr<Int> ptr, Int sub) {
 }
 
 // Atomic sub (integers).
-Nat atomic_sub(Ptr<Nat> ptr, Nat sub) {
+Nat atomic_sub(Ptr<Nat> ptr, Nat sub) : cppBarrier(full) {
 	checkPtr(ptr.base, ptr.offset, sInt.current);
 	Nat offset = ptr.offset - sPtr.current * 2;
 	Nat old = ptr.base.readNat(offset);
@@ -75,21 +75,21 @@ Nat atomic_sub(Ptr<Nat> ptr, Nat sub) {
 }
 
 // Atomic read.
-Bool atomic_read(Ptr<Bool> from) {
+Bool atomic_read(Ptr<Bool> from) : cppBarrier(acquire) {
 	checkPtr(from.base, from.offset, 1);
 	Nat offset = from.offset - sPtr.current * 2;
 	from.base.readBool(offset);
 }
 
 // Atomic read.
-Int atomic_read(Ptr<Int> from) {
+Int atomic_read(Ptr<Int> from) : cppBarrier(acquire) {
 	checkPtr(from.base, from.offset, sInt.current);
 	Nat offset = from.offset - sPtr.current * 2;
 	from.base.readInt(offset);
 }
 
 // Atomic read.
-Nat atomic_read(Ptr<Nat> from) {
+Nat atomic_read(Ptr<Nat> from) : cppBarrier(acquire) {
 	checkPtr(from.base, from.offset, sInt.current);
 	Nat offset = from.offset - sPtr.current * 2;
 	from.base.readNat(offset);
@@ -151,25 +151,26 @@ atomic_read : generate(params) {
 
 	Function f(readType, "atomic_read", params);
 	f.setCode(DynamicCode(l));
+	registerBarrier(f, progvis:Barrier:acquire);
 	f;
 }
 
 // Atomic write.
-void atomic_write(Ptr<Bool> to, Bool value) {
+void atomic_write(Ptr<Bool> to, Bool value) : cppBarrier(release) {
 	checkPtr(to.base, to.offset, 1);
 	Nat offset = to.offset - sPtr.current * 2;
 	to.base.writeBool(offset, value);
 }
 
 // Atomic write.
-void atomic_write(Ptr<Int> to, Int value) {
+void atomic_write(Ptr<Int> to, Int value) : cppBarrier(release) {
 	checkPtr(to.base, to.offset, sInt.current);
 	Nat offset = to.offset - sPtr.current * 2;
 	to.base.writeInt(offset, value);
 }
 
 // Atomic write.
-void atomic_write(Ptr<Nat> to, Nat value) {
+void atomic_write(Ptr<Nat> to, Nat value) : cppBarrier(release) {
 	checkPtr(to.base, to.offset, sInt.current);
 	Nat offset = to.offset - sPtr.current * 2;
 	to.base.writeNat(offset, value);
@@ -237,11 +238,12 @@ atomic_write : generate(params) {
 
 	Function f(Value(), "atomic_write", params);
 	f.setCode(DynamicCode(l));
+	registerBarrier(f, progvis:Barrier:release);
 	f;
 }
 
 // Atomic swap (exchange).
-Int atomic_swap(Ptr<Int> ptr, Int replace) {
+Int atomic_swap(Ptr<Int> ptr, Int replace) : cppBarrier(full) {
 	checkPtr(ptr.base, ptr.offset, sInt.current);
 	Nat offset = ptr.offset - sPtr.current * 2;
 	Int old = ptr.base.readInt(offset);
@@ -250,7 +252,7 @@ Int atomic_swap(Ptr<Int> ptr, Int replace) {
 }
 
 // Atomic swap (exchange).
-Nat atomic_swap(Ptr<Nat> ptr, Nat replace) {
+Nat atomic_swap(Ptr<Nat> ptr, Nat replace) : cppBarrier(full) {
 	checkPtr(ptr.base, ptr.offset, sInt.current);
 	Nat offset = ptr.offset - sPtr.current * 2;
 	Nat old = ptr.base.readNat(offset);
@@ -259,7 +261,7 @@ Nat atomic_swap(Ptr<Nat> ptr, Nat replace) {
 }
 
 // Atomic swap (exchange).
-Bool atomic_swap(Ptr<Bool> ptr, Bool replace) {
+Bool atomic_swap(Ptr<Bool> ptr, Bool replace) : cppBarrier(full) {
 	checkPtr(ptr.base, ptr.offset, 1);
 	Nat offset = ptr.offset - sPtr.current * 2;
 	Bool old = ptr.base.readBool(offset);
@@ -342,11 +344,12 @@ atomic_swap : generate(params) {
 
 	Function f(result, "atomic_swap", params);
 	f.setCode(DynamicCode(l));
+	registerBarrier(f, progvis:Barrier:full);
 	f;
 }
 
 // Compare and swap.
-Int compare_and_swap(Ptr<Int> ptr, Int compare, Int swap) {
+Int compare_and_swap(Ptr<Int> ptr, Int compare, Int swap) : cppBarrier(full) {
 	checkPtr(ptr.base, ptr.offset, sInt.current);
 	Nat offset = ptr.offset - sPtr.current * 2;
 	Int old = ptr.base.readInt(offset);
@@ -356,7 +359,7 @@ Int compare_and_swap(Ptr<Int> ptr, Int compare, Int swap) {
 }
 
 // Compare and swap.
-Nat compare_and_swap(Ptr<Nat> ptr, Nat compare, Nat swap) {
+Nat compare_and_swap(Ptr<Nat> ptr, Nat compare, Nat swap) : cppBarrier(full) {
 	checkPtr(ptr.base, ptr.offset, sInt.current);
 	Nat offset = ptr.offset - sPtr.current * 2;
 	Nat old = ptr.base.readNat(offset);
@@ -366,7 +369,7 @@ Nat compare_and_swap(Ptr<Nat> ptr, Nat compare, Nat swap) {
 }
 
 // Compare and swap.
-Bool compare_and_swap(Ptr<Bool> ptr, Bool compare, Bool swap) {
+Bool compare_and_swap(Ptr<Bool> ptr, Bool compare, Bool swap) : cppBarrier(full) {
 	checkPtr(ptr.base, ptr.offset, 1);
 	Nat offset = ptr.offset - sPtr.current * 2;
 	Bool old = ptr.base.readBool(offset);
@@ -467,5 +470,6 @@ compare_and_swap : generate(params) {
 
 	Function f(result, "compare_and_swap", params);
 	f.setCode(DynamicCode(l));
+	registerBarrier(f, progvis:Barrier:full);
 	f;
 }
