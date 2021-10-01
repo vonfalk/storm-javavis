@@ -108,6 +108,20 @@ Path stepDecoration() on Render {
 	p;
 }
 
+// Create a path for a big step button.
+Path bigStepDecoration() on Render {
+	Path p;
+	p.start(Point(0, 10));
+	p.bezier(Point(7, 0), Point(11, 0), Point(18, 10));
+	p.line(Point(20, 6));
+	p.line(Point(20, 15));
+	p.line(Point(11, 15));
+	p.line(Point(14, 13));
+	p.bezier(Point(10, 4), Point(8, 4), Point(4, 13));
+	p.close();
+	p;
+}
+
 // Pause decoration.
 Path pauseDecoration() on Render {
 	Path p;

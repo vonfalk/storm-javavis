@@ -8,6 +8,7 @@ struct semaphore sema;
 // - actual calls to Progvis can happen after the call
 
 void fn_a() {
+	other = 20;
 	shared = 10;
 	sema_up(&sema); // release
 	int tmp = other; // may be moved earlier

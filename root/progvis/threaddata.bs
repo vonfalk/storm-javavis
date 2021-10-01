@@ -29,6 +29,7 @@ class ThreadData extends Drawable {
 
 	// Buttons.
 	SmallButton step;
+	SmallButton bigStep;
 	SmallButton pause;
 	SmallButton runSlow;
 	SmallButton runFast;
@@ -49,6 +50,7 @@ class ThreadData extends Drawable {
 			enableStep = true;
 			source(thread.owner);
 			step(stepDecoration, SolidBrush(yellow*0.5 + red), buttonSize);
+			bigStep(bigStepDecoration, SolidBrush(yellow*0.5 + red), buttonSize);
 			pause(pauseDecoration, SolidBrush(black), buttonSize);
 			runSlow(runDecoration, SolidBrush(green), buttonSize);
 			runFast(runFastDecoration, SolidBrush(green), buttonSize);
@@ -58,13 +60,14 @@ class ThreadData extends Drawable {
 		}
 
 		step.onClick = &this.onStep;
+		bigStep.onClick = &this.onBigStep;
 		pause.onClick = &this.onPause;
 		runSlow.onClick = &this.onRunSlow;
 		runFast.onClick = &this.onRunFast;
 		runVeryFast.onClick = &this.onRunVeryFast;
 		removeDead.onClick = &this.onRemove;
 
-		buttons = [step, pause, runSlow, runFast, runVeryFast];
+		buttons = [step, bigStep, pause, runSlow, runFast, runVeryFast];
 	}
 
 	// Draw the thread.
@@ -106,6 +109,8 @@ class ThreadData extends Drawable {
 
 		Point p(sourcePos.p0.x, sourcePos.p1.y + compositeBorder.h);
 		for (b in buttons) {
+			if (!showingButton(b))
+				continue;
 			b.pos = p;
 			b.draw(g, false);
 			p.x += buttonSize.w + compositeBorder.w;
@@ -225,13 +230,26 @@ class ThreadData extends Drawable {
 
 	Drawable findAt(Point pt) : override {
 		for (b in buttons) {
-			if (b.rect.contains(pt))
-				return b;
+			if (showingButton(b))
+				if (b.rect.contains(pt))
+					return b;
 		}
 		this;
 	}
 
+	private Bool showingButton(SmallButton b) {
+		if (b is bigStep)
+			return thread.barriersAvailable;
+		else
+			true;
+	}
+
 	private void onStep() {
+		if (enableStep)
+			thread.resume();
+	}
+
+	private void onBigStep() {
 		if (enableStep)
 			thread.resume();
 	}

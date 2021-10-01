@@ -57,6 +57,14 @@ class ProgThread on Render {
 	// Did the thread crash? (Only relevant when "alive" returns false)
 	Bool crashed() { terminating; }
 
+	// Do we have barriers in the current function?
+	Bool barriersAvailable() {
+		if (frames.any & callDepth > 0)
+			frames.last.hints.barriersAvailable;
+		else
+			false;
+	}
+
 	// Currently running? This is 'true' even if the thread is currently waiting in an animation.
 	private Bool running;
 
@@ -101,7 +109,7 @@ class ProgThread on Render {
 			wait();
 		}
 
-		memory.clear();
+		// memory.clear();
 		true;
 	}
 
@@ -110,8 +118,12 @@ class ProgThread on Render {
 		if (terminating)
 			return;
 
-		// TODO: Handle the barrier!
-		print("Barrier hit! ${type}");
+		if (pos.any) {
+			frames.last.pos = pos;
+			wait();
+		}
+
+		memory.clear();
 	}
 
 	// Called when a monitored thread is about to return.
