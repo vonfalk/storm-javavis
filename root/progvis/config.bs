@@ -22,7 +22,9 @@ Font codeFont on Render = Font("Consolas", 11, 20);
 Brush dataBg on Render = SolidBrush(white);
 
 Brush dataReadBg on Render = SolidBrush(Color(0.7, 1, 0.7));
+Brush dataReadFaint on Render = SolidBrush(Color(0.85, 1, 0.85));
 Brush dataWriteBg on Render = SolidBrush(Color(1, 0.7, 0.7));
+Brush dataWriteFaint on Render = SolidBrush(Color(1, 0.85, 0.85));
 Brush dataError on Render = SolidBrush(red);
 
 // Text color when drawing text.

@@ -135,7 +135,7 @@ class ThreadData extends Drawable {
 
 	// Update our contents.
 	void traverse(Workspace ws, WorkList work) {
-		memory.clear();
+		memory.clearAll();
 		memory = MemTracker(thread.memory);
 
 		if (!thread.alive) {
@@ -251,7 +251,7 @@ class ThreadData extends Drawable {
 
 	private void onBigStep() {
 		if (enableStep)
-			thread.resume();
+			thread.resumeBarrier();
 	}
 
 	private void onPause() {

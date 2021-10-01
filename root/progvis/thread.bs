@@ -22,6 +22,9 @@ class ProgThread on Render {
 	// Duration for automatic stepping. If zero, we will wait for user input instead.
 	private Duration autoStep;
 
+	// Step to the next barrier instead of the next statement.
+	private Bool barrierStep;
+
 	// Current call depth. There may be additional entries in 'frames', as we might have exited a
 	// function but not yet received any new information. In this case, we will still show the old
 	// state since it might contain references to values that are still known by the code, but not
@@ -44,8 +47,6 @@ class ProgThread on Render {
 	// Memory reads and writes by this thread since the last statement.
 	// Not stored inside a particular frame in order to properly track reading function
 	// parameters, etc.
-	// TODO: We could copy/move these around to solve the issue as well, we need
-	// to examine what works best in practice.
 	MemTracker memory;
 
 	// Waiting for some external event?
@@ -106,10 +107,14 @@ class ProgThread on Render {
 
 		if (pos.any) {
 			last.pos = pos;
-			wait();
+
+			if (!barrierStep) {
+				wait();
+				// Only clear if we waited, to highlight properly.
+				memory.clearNew();
+			}
 		}
 
-		// memory.clear();
 		true;
 	}
 
@@ -118,12 +123,14 @@ class ProgThread on Render {
 		if (terminating)
 			return;
 
-		if (pos.any) {
+		if (pos.any)
 			frames.last.pos = pos;
-			wait();
-		}
 
-		memory.clear();
+		if (barrierStep)
+			wait();
+
+		// We always clear memory at a barrier, even if we did not wait.
+		memory.clearAll();
 	}
 
 	// Called when a monitored thread is about to return.
@@ -139,7 +146,7 @@ class ProgThread on Render {
 		last.returned = true;
 		wait();
 
-		memory.clear();
+		memory.clearNew();
 		true;
 	}
 
@@ -204,6 +211,7 @@ class ProgThread on Render {
 	// Set the animation delay. Resumes the thread if it was stopped.
 	void resume(Duration duration) {
 		autoStep = duration;
+		barrierStep = false;
 
 		if (!running & !sleeping)
 			sema.up();
@@ -215,12 +223,24 @@ class ProgThread on Render {
 			return;
 
 		autoStep = Duration();
+		barrierStep = false;
+		sema.up();
+	}
+
+	// Resume execution, but step at the next barrier.
+	void resumeBarrier() {
+		if (running | sleeping)
+			return;
+
+		autoStep = Duration();
+		barrierStep = true;
 		sema.up();
 	}
 
 	// Pause the thread at the nearest convenient location.
 	void pause() {
 		autoStep = Duration();
+		barrierStep = false;
 	}
 
 	// Terminate the thread.

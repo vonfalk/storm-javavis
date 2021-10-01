@@ -1,12 +1,23 @@
 /**
  * Object tracking reads and writes to memory.
+ *
+ * There are two types of reads and writes in order to make the visualization clearer:
+ * 1. Recent reads/writes
+ * 2. Old read/writes
+ *
+ * The set of old reads/writes contain recent reads/writes as well. The recent reads/writes only
+ * contain reads writes in the last "step" (whatever that might have been). Thus, we use old
+ * reads/writes to check for concurrency issues, and recent reads/writes to highlight the results of
+ * the last step in the visualization.
  */
 class MemTracker {
-	// Memory that was read from recently.
+	// Old reads and writes.
 	unsafe:PinnedSet reads;
-
-	// Memory written to recently.
 	unsafe:PinnedSet writes;
+
+	// Recent reads and writes. These reads and writes are a part of 'reads' and 'writes'.
+	unsafe:PinnedSet newReads;
+	unsafe:PinnedSet newWrites;
 
 	// Initialize.
 	init() { init{} }
@@ -16,21 +27,33 @@ class MemTracker {
 		init {
 			reads = unsafe:PinnedSet(original.reads);
 			writes = unsafe:PinnedSet(original.writes);
+			newReads = unsafe:PinnedSet(original.newReads);
+			newWrites = unsafe:PinnedSet(original.newWrites);
 		}
 	}
 
 	// Clear content.
-	void clear() {
+	void clearAll() {
 		reads.clear();
 		writes.clear();
+		newReads.clear();
+		newWrites.clear();
+	}
+
+	// Clear only recent.
+	void clearNew() {
+		newReads.clear();
+		newWrites.clear();
 	}
 
 	// Convenience functions from ASM.
 	void addRead(lang:unknown:PTR_NOGC ptr) {
 		reads.put(ptr);
+		newReads.put(ptr);
 	}
 	void addWrite(lang:unknown:PTR_NOGC ptr) {
 		writes.put(ptr);
+		newWrites.put(ptr);
 	}
 }
 
@@ -55,6 +78,22 @@ class Trackers {
 			if (mem.writes.has(object))
 				return true;
 		}
+		false;
+	}
+
+	// Check if recently read from.
+	Bool newRead(unsafe:RawPtr object, Nat offset, Nat size) {
+		for (t in threads)
+			if (t.memory.newReads.has(object, offset, size))
+				return true;
+		false;
+	}
+
+	// Check if recently written to.
+	Bool newWrite(unsafe:RawPtr object, Nat offset, Nat size) {
+		for (t in threads)
+			if (t.memory.newWrites.has(object, offset, size))
+				return true;
 		false;
 	}
 

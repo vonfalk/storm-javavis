@@ -55,9 +55,11 @@ class Data extends Drawable {
 class RWData extends Data {
 	// Read from?
 	private Bool read;
+	private Bool newRead;
 
 	// Written to?
 	private Bool write;
+	private Bool newWrite;
 
 	// Concurrency error?
 	private Bool error;
@@ -66,15 +68,18 @@ class RWData extends Data {
 	void draw(Graphics g, Bool active) : override {
 		Rect r = rect;
 
+		var readColor = if (newRead) { dataReadBg; } else { dataReadFaint; };
+		var writeColor = if (newWrite) { dataWriteBg; } else { dataWriteFaint; };
+
 		if (read & write) {
 			Size s = r.size;
 			s.w /= 2;
-			g.fill(Rect(r.p0, s), dataReadBg);
-			g.fill(Rect(r.p0 + Point(s.w, 0), s), dataWriteBg);
+			g.fill(Rect(r.p0, s), readColor);
+			g.fill(Rect(r.p0 + Point(s.w, 0), s), writeColor);
 		} else if (read) {
-			g.fill(r, dataReadBg);
+			g.fill(r, readColor);
 		} else if (write) {
-			g.fill(r, dataWriteBg);
+			g.fill(r, writeColor);
 		} else {
 			g.fill(r, dataBg);
 		}
@@ -88,8 +93,8 @@ class RWData extends Data {
 
 	// Clear access.
 	void clearAccess() : override {
-		read = false;
-		write = false;
+		newRead = read = false;
+		newWrite = write = false;
 		error = false;
 	}
 
@@ -97,6 +102,9 @@ class RWData extends Data {
 	void checkAccess(unsafe:RawPtr object, Nat offset, Nat size, Trackers trackers) : override {
 		var r = trackers.readBy(object, offset, size);
 		var w = trackers.writtenBy(object, offset, size);
+
+		newRead = trackers.newRead(object, offset, size);
+		newWrite = trackers.newWrite(object, offset, size);
 
 		read = r.any;
 		write = w.any;
