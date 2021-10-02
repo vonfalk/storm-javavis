@@ -23,18 +23,18 @@ value Hints {
 	CodeHints code;
 
 	// View hints.
-	ViewHints? view;
+	progvis:data:ViewHints? view;
 
 	init(CodeHints code) {
 		init() { code = code; }
 	}
 
-	init(CodeHints code, ViewHints view) {
+	init(CodeHints code, progvis:data:ViewHints view) {
 		init() { code = code; view = view; }
 	}
 }
 
 // Create standard hints.
-Hints defHints() {
-	Hints(DefaultCodeHints(), DefaultViewHints());
+Hints defaultHints() {
+	Hints(DefaultCodeHints(), progvis:data:DefaultViewHints());
 }

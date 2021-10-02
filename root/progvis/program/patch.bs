@@ -296,14 +296,14 @@ private Hints findHints(Hints[] hints, Function fn) on Compiler {
 			return h;
 
 	// Default if none is found (will more or less never happen, as the last element in 'hints' is 'defHints()'.
-	return defHints();
+	return defaultHints();
 }
 
 // Common parameters to the code generation functions.
 class PatchParams on Compiler {
 	Package pkg;
 	CodeHints codeHints;
-	ViewHints viewHints;
+	progvis:data:ViewHints viewHints;
 	Listing to;
 	Block block;
 	Set<Nat> inactive;
@@ -321,7 +321,7 @@ class PatchParams on Compiler {
 		init() {
 			pkg = pkg;
 			codeHints = hints.code;
-			viewHints = if (v = hints.view) { v; } else { DefaultViewHints(); };
+			viewHints = if (v = hints.view) { v; } else { progvis:data:DefaultViewHints(); };
 			to = to;
 			saveA = to.createVar(to.root, sLong);
 			saveB = to.createVar(to.root, sLong);
@@ -808,7 +808,7 @@ private StackVar createStackVar(Str name) {
 
 // Generate the call to 'functionEntered' and make sure 'functionExited' is called on function exit (last).
 private void generateCallTracking(Program program, PatchParams to, Function fn) on Compiler {
-	var enterFn = named{Program:functionEntered<Program, Str, SrcPosWrap, ViewHints, StackVar[]>};
+	var enterFn = named{Program:functionEntered<Program, Str, SrcPosWrap, progvis:data:ViewHints, StackVar[]>};
 	// TODO: It is not always safe to do this... The destructor is expected to be a free function,
 	// but in almost all cases, it does not matter.
 	var exitFn = named{Program:functionExited<Program>};

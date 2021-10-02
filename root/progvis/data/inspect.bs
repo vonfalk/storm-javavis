@@ -22,6 +22,27 @@ Str? convertPrimitive(Type t, unsafe:RawPtr object, Nat offset) {
 	null;
 }
 
+Bool isPrimitive(Type t) {
+	if (t is named{core:Bool})
+		return true;
+	if (t is named{core:Byte})
+		return true;
+	if (t is named{core:Int})
+		return true;
+	if (t is named{core:Nat})
+		return true;
+	if (t is named{core:Long})
+		return true;
+	if (t is named{core:Word})
+		return true;
+	if (t is named{core:Float})
+		return true;
+	if (t is named{core:Double})
+		return true;
+
+	return false;
+}
+
 /**
  * Type information usable from other threads than the Compiler thread.
  */

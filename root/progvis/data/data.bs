@@ -1,0 +1,142 @@
+use ui;
+
+/**
+ * Some data in a program.
+ *
+ * This can either be a primitive that is a part of some large data structure, a data structure
+ * itself, or some combination of the two.
+ */
+class Data on Render {
+	// Update data inside this object. If this object consists of multiple objects that are showed
+	// as a single allocation, it should also add them to the traversal.
+	void update(World:Traversal t, unsafe:RawPtr object, Nat offset) {}
+
+	// Traverse this data. Most implementations of 'data' will likely also update their
+	// representation of their data here as well, as they do not consist of separate
+	// allocations. Find and update any pointers to data outside of this data structure.
+	void traverse(World:Traversal t, unsafe:RawPtr object, Nat offset) : abstract;
+
+	// Get the title of this data element. This will be used to create suitable labels when the data
+	// is visualized.
+	Str title() : abstract;
+}
+
+/**
+ * Unknown data.
+ */
+class Unknown extends Data {
+	void traverse(World:Traversal t, unsafe:RawPtr object, Nat offset) : override {}
+	Str title() : override { "Unknown"; }
+}
+
+/**
+ * Atomic data of some sort.
+ *
+ * This means that it does not consist of other types. As such, it makes sense to keep track of
+ * reads and writes for this data.
+ */
+class Atom extends Data {}
+
+/**
+ * Primitive type of some sort (e.g. integer, char, ...)
+ */
+class Primitive extends Atom {
+	void traverse(World:Traversal t, unsafe:RawPtr object, Nat offset) : override {}
+	Str title() : override { "?"; }
+}
+
+/**
+ * Pointer or reference.
+ */
+class Pointer extends Atom {
+	void traverse(World:Traversal t, unsafe:RawPtr object, Nat offset) : override {}
+	Str title() : override { "?"; }
+}
+
+/**
+ * Pointer on the stack. Examines the pointer passed directly to the object rather than
+ * dereferencing it once first.
+ */
+class StackPointer extends Pointer {}
+
+/**
+ * Data that represents an object (i.e. variables with values).
+ */
+class Composite extends Data {
+	/**
+	 * An individual variable in the composite type.
+	 */
+	value Part {
+		Str name;
+		Nat offset;
+		Data value;
+
+		// First element in a particular logical structure (used to show inheritance).
+		Bool first;
+
+		init(Str name, Nat offset, Data value, Bool first) {
+			init {
+				name = name;
+				offset = offset;
+				value = value;
+				first = first;
+			}
+		}
+	}
+
+	// Parts in here.
+	Part[] parts;
+
+	// Create.
+	init() {
+		init {}
+	}
+
+	// Add an element.
+	void add(Str name, Nat offset, Data value, Bool first) {
+		parts << Part(name, offset, value, first);
+	}
+
+	// Update.
+	void update(World:Traversal t, unsafe:RawPtr object, Nat offset) : override {
+		for (v in parts)
+			v.value.update(t, object, offset + v.offset);
+	}
+
+	// Traverse.
+	void traverse(World:Traversal t, unsafe:RawPtr object, Nat offset) : override {
+		for (v in parts)
+			v.value.traverse(t, object, offset + v.offset);
+	}
+
+	// Title.
+	Str title() : override {
+		"?";
+	}
+}
+
+/**
+ * Array data. Similar to objects (keys + values), but may be shown differently.
+ */
+class Array extends Data {}
+
+/**
+ * Standard array, extracts data from the core:Array implementation.
+ */
+class StdArray extends Array {
+	private core:lang:Type elemType;
+
+	init(core:lang:Type elemType) {
+		init() {
+			elemType = elemType;
+		}
+	}
+
+	void update(World:Traversal t, unsafe:RawPtr object, Nat offset) : override {}
+
+	void traverse(World:Traversal t, unsafe:RawPtr object, Nat offset) : override {}
+
+	Str title() : override {
+		elemType.name + "[]";
+	}
+}

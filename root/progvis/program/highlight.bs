@@ -16,7 +16,7 @@ Text highlightSource(Url file) on Render {
 		colors = highlightSource(file, reader, text);
 	}
 
-	Text result(file.readAllText(), codeFont);
+	Text result(file.readAllText(), progvis:codeFont);
 	for (x in colors) {
 		result.color(x.begin, x.end, hlColor(x.color));
 	}

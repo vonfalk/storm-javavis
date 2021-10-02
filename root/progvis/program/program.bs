@@ -6,17 +6,24 @@ use lang;
 use lang:bs:macro;
 
 /**
- * Class representing some loaded program that we want to execute and possibly single-step, etc.
+ * Class representing some loaded program that we want to execute and possibly single-step it.
+ *
+ * Keeps track of the current state of the threads, and allows accessing the global variables in the
+ * program. The data visible here is essentially a direct representation of the currently running
+ * program. It may thereby be updated at any time.
  */
 class Program on Render {
 	// Package created by us as a temporary workspace.
 	private Package pkg;
 
 	// All view hints that are active.
-	public ViewHints[] hints;
+	public progvis:data:ViewHints[] hints;
 
 	// Pointer to the 'main' function.
 	public Fn<void> main;
+
+	// Original state of global variables, so that we can restore them.
+	private SavedGlobals? globals;
 
 	// Source code, pre formatted.
 	private Url->Text code;
@@ -24,6 +31,16 @@ class Program on Render {
 	// Output from the program since the last check. This is not wired to stdout in any way at the
 	// moment, but we could do that. Use 'addOutput' to access it, with convenience functions below.
 	private StrBuf output;
+
+	// Thread ID:s. We maintain our own thread ID:s that have lower numbers. They are only unique for each program.
+	private Nat usedThreadId;
+
+	// Last thread that terminated. We use this to tell the user which thread crashed. If multiple
+	// threads crash at the same time, this might be inaccurate, but it is good enough for now.
+	private Nat lastTerminatedId;
+
+	// All threads in the program. The key is the ID of the UThread that executes the code.
+	public Word->ProgThread threads;
 
 	// Event called whenever the state of a thread changed.
 	private Fn<void>? changeNotification;
@@ -42,12 +59,14 @@ class Program on Render {
 
 	// Set the error notification.
 	public assign onError(Fn<void, Nat, Exception> fn) {
+		print("TODO: Update to include more structured errors (e.g. concurrency errors).");
 		errorNotification = fn;
 		fn;
 	}
 
-	// Set the "advance" notification.
+	// Set the "advance" notification. This is called whenever each thread is stepped.
 	public assign onAdvance(Fn<void, Nat> fn) {
+		print("TODO: We need to take 'barrier steps' into account.");
 		advanceNotification = fn;
 		fn;
 	}
@@ -64,7 +83,7 @@ class Program on Render {
 			advanceNotification.call(thread);
 	}
 
-	package init(Package pkg, Fn<void> main, ViewHints[] hints) {
+	package init(Package pkg, Fn<void> main, progvis:data:ViewHints[] hints) {
 		init() {
 			pkg = pkg;
 			main = main;
@@ -73,6 +92,9 @@ class Program on Render {
 
 		// Add us into the global map.
 		programInstances.put(this);
+
+		// Save global variables.
+		globals = SavedGlobals:save(findGlobals());
 	}
 
 	// Find supported file types.
@@ -103,16 +125,6 @@ class Program on Render {
 		output.clear();
 		result;
 	}
-
-	// Thread ID:s. We maintain our own thread ID:s that have lower numbers. They are only unique for each program.
-	private Nat usedThreadId;
-
-	// Last thread that terminated. We use this to tell the user which thread crashed. If multiple
-	// threads crash at the same time, this might be inaccurate, but it is good enough for now.
-	private Nat lastTerminatedId;
-
-	// All threads in the program. The key is the ID of the UThread that executes the code.
-	Word->ProgThread threads;
 
 	// Start a new thread executing a particular function assumed to be located inside the
 	// environment specified earlier. Always spawns a new thread..
@@ -151,7 +163,7 @@ class Program on Render {
 	}
 
 	// Get source for a file.
-	package Text? source(Url file) {
+	public Text? source(Url file) {
 		if (code.has(file))
 			return code.get(file);
 		else
@@ -173,9 +185,19 @@ class Program on Render {
 		while (threads.count > 0) {
 			yield();
 		}
+	}
 
-		// Reset the threa ID:s
+	// Reset the program state, so that we may restart it later.
+	void reset() {
+		if (threads.any())
+			terminate();
+
+		// Reset the thread ID:s
 		usedThreadId = 0;
+
+		// Restore globals.
+		if (globals)
+			globals.restore(findGlobals);
 	}
 
 	// This function will be called by the executed code to notify us of their current state in
@@ -208,7 +230,7 @@ class Program on Render {
 
 	// This function will be called by the executed code to notify that a new (traced) function was
 	// called, and that we shall open a new scope.
-	package MemTracker functionEntered(Str name, SrcPosWrap pos, ViewHints hints, StackVar[] vars) {
+	package MemTracker functionEntered(Str name, SrcPosWrap pos, progvis:data:ViewHints hints, StackVar[] vars) {
 		Word id = currentUThread();
 		ProgThread t = if (threads.has(id)) {
 			threads.get(id);
@@ -373,7 +395,7 @@ private Program loadProgram(Url[] files) on Compiler {
 	}
 
 	// Add the standard hints last, so that they have a chance to do things.
-	hints << defHints();
+	hints << defaultHints();
 
 	// Load all code.
 	read(readers);
@@ -382,7 +404,7 @@ private Program loadProgram(Url[] files) on Compiler {
 	pkg.compile();
 
 	// Extract the view hints for later use.
-	ViewHints[] viewHints;
+	progvis:data:ViewHints[] viewHints;
 	for (h in hints)
 		if (view = h.view)
 			viewHints << view;
@@ -401,7 +423,7 @@ private Fn<void> findMain(Hints[] hints, Package pkg) {
 			return r;
 	}
 
-	throw ProgvisError("Unable to find a 'main' function!");
+	throw progvis:ProgvisError("Unable to find a 'main' function!");
 }
 
 

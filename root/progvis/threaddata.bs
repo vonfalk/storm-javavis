@@ -3,6 +3,7 @@ use graphics;
 use core:geometry;
 use core:lang;
 use lang:bs:macro;
+use progvis:program;
 
 /**
  * Class representing the visual state of a thread.

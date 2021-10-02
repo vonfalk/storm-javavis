@@ -68,16 +68,16 @@ class SpawnCall extends Expr {
 		// Tell the program management to handle the future for us.
 		gen.l << fnParam(longDesc, id.location(gen));
 		gen.l << fnParam(ptrDesc, future.location(gen));
-		gen.l << fnCall(named{progvis:watchErrors<Word, FutureBase>}.ref, false);
+		gen.l << fnCall(named{progvis:program:watchErrors<Word, FutureBase>}.ref, false);
 
 		// Create a thread id for the new thread.
 		if (res.needed()) {
 			gen.l << fnParam(longDesc, id.location(gen));
-			gen.l << fnCall(named{progvis:findNewThreadId<Word>}.ref, false, intDesc, res.location(gen));
+			gen.l << fnCall(named{progvis:program:findNewThreadId<Word>}.ref, false, intDesc, res.location(gen));
 		}
 
 		// Note: I think this is the proper barrier. We might want "full" though.
-		gen.l << meta(progvis:SrcBarrier(progvis:Barrier:release, pos));
+		gen.l << meta(progvis:program:SrcBarrier(progvis:program:Barrier:release, pos));
 	}
 
 	void codePtr(CodeGen gen, Type type) : override {

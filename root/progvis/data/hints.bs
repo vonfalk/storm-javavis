@@ -1,0 +1,81 @@
+use ui;
+
+/**
+ * View hints. A part of the hints given to the visualization as a whole, dictates how data from a
+ * particular language should be extracted and viewed.
+ */
+class ViewHints on Render {
+	// Should we pause on function entry?
+	Bool pauseOnEntry() { true; }
+
+	// Are barriers available?
+	Bool barriersAvailable() { false; }
+
+	// Create an element for an object found during traversal. Return 'null' to leave handling to
+	// the default implementation.
+	Data? createData(World:Traversal t, TypeInfo type) : abstract;
+
+	// Create an allocation for the given data. This is called for the ViewHints object that created
+	// the data object. The default implementation just uses a simple Allocation object.
+	Allocation createAllocation(unsafe:RawPtr ptr, Data data) {
+		Allocation(ptr, data);
+	}
+
+	// Get a title for a type.
+	Str? typeTitle(World:Traversal t, TypeInfo type) : abstract;
+}
+
+
+/**
+ * Default hints. Strives to be a good default behavior for most cases.
+ */
+class DefaultViewHints extends ViewHints {
+	// Default behavior, works for most of Basic Storm.
+	Data? createData(World:Traversal t, TypeInfo info) : override {
+		if (info.isRef) {
+			// A reference to a value. This is not supported.
+			return Unknown();
+		} else if (!info.isValue) {
+			// A reference.
+			return Pointer();
+		} else if (isPrimitive(info.type)) {
+			return Primitive();
+		} else {
+			return createComposite(t, info.type);
+		}
+	}
+
+	// Create a composite object.
+	private Data createComposite(World:Traversal t, core:lang:Type type) {
+		if (type as core:lang:ArrayType) {
+			if (t = type.param.type) {
+				return StdArray(t);
+			}
+		} else {
+			var members = findMembers(type);
+			if (members.empty)
+				return Unknown();
+
+			Composite result;
+			for (m in members) {
+				result.add(m.name, m.offset, t.create(m.type), m.first);
+			}
+
+			return result;
+		}
+
+		Unknown();
+	}
+
+	// Type names.
+	Str? typeTitle(World:Traversal traverse, TypeInfo info) : override {
+		if (type = info.type as core:lang:ArrayType) {
+			if (t = type.param.type) {
+				TypeInfo info(t, true, false);
+				return traverse.typeTitle(info) + "[]";
+			}
+		}
+
+		info.type.name;
+	}
+}

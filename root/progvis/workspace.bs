@@ -13,11 +13,11 @@ class Workspace on Render {
 			trackDeadlock = true;
 		}
 
-		hints << DefaultViewHints();
+		// hints << DefaultViewHints();
 	}
 
 	// Hints on how to draw things.
-	ViewHints[] hints;
+	progvis:data:ViewHints[] hints;
 
 	// Should we track memory accesses?
 	private Bool trackMemAccess;
@@ -239,12 +239,8 @@ class Workspace on Render {
 	}
 
 	// Recursively add an object to the workspace.
-	Data traverse(unsafe:RawPtr object) {
-		traverse(object, null);
-	}
-
 	// Provide hints when traversing.
-	Data traverse(unsafe:RawPtr object, CreateHints? hints) {
+	Data traverse(unsafe:RawPtr object) {
 		// See if it exists.
 		if (data = traverseNoCreate(object))
 			return data;
@@ -254,8 +250,8 @@ class Workspace on Render {
 		// Create a new instance.
 		Nat id = elements.count;
 		var visual = createData(this, object);
-		if (hints)
-			visual = hints.decorate(visual);
+		// if (hints)
+		// 	visual = hints.decorate(visual);
 		elements << Element(object, visual);
 		objMap.put(object, id);
 
@@ -296,7 +292,7 @@ class Workspace on Render {
 	}
 
 	// Traverse the current contents of a thread.
-	void traverse(ProgThread thread) {
+	void traverse(progvis:program:ProgThread thread) {
 		unsafe:RawPtr key(thread);
 		Nat id = objMap.get(key, elements.count);
 		WorkList list(work, stackObjMap);
@@ -321,14 +317,14 @@ class Workspace on Render {
 
 	// Traverse an element. Check if it is a thread or a regular object first.
 	void traverse(Element elem) {
-		if (elem.object.empty) {
-			elem.visited = true;
-		} else if (elem.thread) {
-			if (t = elem.object.asTObject() as ProgThread)
-				traverse(t);
-		} else {
-			traverse(elem.object);
-		}
+		// if (elem.object.empty) {
+		// 	elem.visited = true;
+		// } else if (elem.thread) {
+		// 	if (t = elem.object.asTObject() as ProgThread)
+		// 		traverse(t);
+		// } else {
+		// 	traverse(elem.object);
+		// }
 	}
 
 	// Notify the workspace that traversal is over, and that any remaning objects may be removed.
@@ -418,7 +414,7 @@ private:
 		}
 
 		// Create, for a thread.
-		init(ProgThread thread, Drawable visual) {
+		init(progvis:program:ProgThread thread, Drawable visual) {
 			init {
 				object = unsafe:RawPtr(thread);
 				visual = visual;
@@ -555,57 +551,60 @@ private:
 
 	// Create a new node for an object. Called by 'traverse'.
 	public Data createData(unsafe:RawPtr object) {
-		if (t = object.type) {
-			TypeInfo info(t, true, false);
-			Data d = createData(info, object, 0);
-			if (d as DataWithCaption)
-				return d;
-			addTitle(d, info);
-		} else {
-			DataWithCaption(UnknownData(), "?");
-		}
+		// if (t = object.type) {
+		// 	TypeInfo info(t, true, false);
+		// 	Data d = createData(info, object, 0);
+		// 	if (d as DataWithCaption)
+		// 		return d;
+		// 	addTitle(d, info);
+		// } else {
+		// 	DataWithCaption(UnknownData(), "?");
+		// }
+		UnknownData();
 	}
 
 	// Create data for an element on the stack. Respects if it was a pointer or not.
 	public Data createStackData(unsafe:RawPtr object) {
-		if (t = object.type) {
-			TypeInfo info(t, object.isValue, false);
-			if (!info.isValue) {
-				StackPointer();
-			} else {
-				createData(info, object, 0);
-			}
-		} else {
-			// It is probably a pointer that's NULL at the moment.
-			StackPointer();
-		}
+		UnknownData();
+
+		// if (t = object.type) {
+		// 	TypeInfo info(t, object.isValue, false);
+		// 	if (!info.isValue) {
+		// 		StackPointer();
+		// 	} else {
+		// 		createData(info, object, 0);
+		// 	}
+		// } else {
+		// 	// It is probably a pointer that's NULL at the moment.
+		// 	StackPointer();
+		// }
 	}
 
 	// Create a new node for some object that is a part of another object.
-	public Data createData(TypeInfo info, unsafe:RawPtr object, Nat offset) {
-		for (h in hints) {
-			if (d = h.createData(this, info, object, offset)) {
-				if (d as Composite) {
-					return addTitle(d, info);
-				} else {
-					return d;
-				}
-			}
-		}
+	public Data createData(progvis:data:TypeInfo info, unsafe:RawPtr object, Nat offset) {
+		// for (h in hints) {
+		// 	if (d = h.createData(this, info, object, offset)) {
+		// 		if (d as Composite) {
+		// 			return addTitle(d, info);
+		// 		} else {
+		// 			return d;
+		// 		}
+		// 	}
+		// }
 
 		return UnknownData();
 	}
 
-	Data addTitle(Data d, TypeInfo info) {
+	Data addTitle(Data d, progvis:data:TypeInfo info) {
 		DataWithCaption(d, typeTitle(info));
 	}
 
 	// Compute a title for a Type.
-	public Str typeTitle(TypeInfo type) {
-		for (h in hints) {
-			if (r = h.typeTitle(this, type))
-				return r;
-		}
+	public Str typeTitle(progvis:data:TypeInfo type) {
+		// for (h in hints) {
+		// 	if (r = h.typeTitle(this, type))
+		// 		return r;
+		// }
 
 		"?";
 	}

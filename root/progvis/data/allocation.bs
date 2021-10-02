@@ -1,0 +1,54 @@
+use ui;
+
+/**
+ * A separate allocation, i.e. a top-level object.
+ */
+class Allocation on Render {
+	// The data in this allocation.
+	Data data;
+
+	// Object representing this allocation, if any.
+	unsafe:RawPtr src;
+
+	// Was this allocation visited? This is used by World during traversals.
+	Bool visited;
+
+	// Create.
+	init(unsafe:RawPtr src, Data data) {
+		init {
+			data = data;
+			src = src;
+			visited = false;
+		}
+	}
+
+	// Update.
+	void update(World:Traversal t, Nat id) {
+		t.allocMap.put(src, id);
+		data.update(t, src, 0);
+	}
+
+	// Traverse this allocation. Marks it as 'visited' as well.
+	void traverse(World:Traversal t) {
+		visited = true;
+		data.traverse(t, src, 0);
+	}
+
+	// Called when this allocation is no longer reachable. If 'true', the allocation will be
+	// removed, otherwise it will remain.
+	Bool remove() { true; }
+}
+
+
+/**
+ * A sticky allocation that remains without references.
+ */
+class StickyAllocation extends Allocation {
+	init(unsafe:RawPtr src, Data data) {
+		init(src, data) {}
+	}
+
+	Bool remove() : override { false; }
+}
+
+

@@ -4,7 +4,7 @@ use progvis:lang:cpp;
 
 // Print a string to the GUI.
 void printStr(Str str) {
-	progvis:output(str);
+	progvis:program:output(str);
 	// stdOut.write(str);
 	// stdOut.flush();
 }

@@ -3,7 +3,7 @@ required delimiter = lang.bs.SRequiredDelimiter;
 
 lang.bs.SFreeOption => registerBarrier(item, type) : "cppBarrier", "(", SBarrierType type, ")";
 
-progvis.Barrier SBarrierType() #keyword;
-SBarrierType => progvis.Barrier.acquire() : "acquire";
-SBarrierType => progvis.Barrier.release() : "release";
-SBarrierType => progvis.Barrier.full() : "full";
+progvis.program.Barrier SBarrierType() #keyword;
+SBarrierType => progvis.program.Barrier.acquire() : "acquire";
+SBarrierType => progvis.program.Barrier.release() : "release";
+SBarrierType => progvis.program.Barrier.full() : "full";

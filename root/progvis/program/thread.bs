@@ -151,7 +151,7 @@ class ProgThread on Render {
 	}
 
 	// Called when a new function was entered.
-	MemTracker onFunctionEntered(Str name, SrcPos pos, ViewHints hints, StackVar[] vars) {
+	MemTracker onFunctionEntered(Str name, SrcPos pos, progvis:data:ViewHints hints, StackVar[] vars) {
 		popFrames();
 
 		callDepth++;
@@ -324,7 +324,7 @@ class StackFrame on Render {
 	Str function;
 
 	// View hints for this function. Used to scrape variables of the stack.
-	ViewHints hints;
+	progvis:data:ViewHints hints;
 
 	// The current state of all variables. Ordered roughly as they appear in the source.
 	StackVar[] variables;
@@ -336,7 +336,7 @@ class StackFrame on Render {
 	Bool returned;
 
 	// Create.
-	init(Str name, ViewHints hints, StackVar[] vars, SrcPos pos) {
+	init(Str name, progvis:data:ViewHints hints, StackVar[] vars, SrcPos pos) {
 		init {
 			function = name;
 			hints = hints;

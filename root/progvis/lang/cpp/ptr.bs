@@ -286,7 +286,7 @@ class PtrError extends progvis:TypedError {
 		saveTrace();
 
 		// Disable tracing for this thread so that we don't trace any destructor calls.
-		progvis:onFatalException();
+		progvis:program:onFatalException();
 	}
 
 	Str msg;

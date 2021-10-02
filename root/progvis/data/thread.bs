@@ -1,0 +1,99 @@
+use ui;
+use progvis:program;
+
+/**
+ * Data for a thread in the program.
+ */
+class Thread extends Data {
+	// Original thread.
+	ProgThread src;
+
+	// Stack frames.
+	Frame[] frames;
+
+	// Mirrorred data from the thread.
+	Bool alive;
+	Bool sleeping;
+
+	// Create.
+	init(ProgThread thread) {
+		init {
+			src = thread;
+		}
+	}
+
+	// Traverse stack frames and find individual values.
+	void update(World:Traversal t, unsafe:RawPtr object, Nat offset) : override {
+		alive = src.alive;
+		sleeping = src.sleeping;
+
+		if (!src.alive) {
+			// Remove frames.
+			frames.clear();
+			return;
+		}
+
+		for (k, v in src.frames) {
+			if (k >= frames.count)
+				frames.push(Frame(v));
+			if (frames[k].src !is v)
+				frames[k] = Frame(v);
+			frames[k].update(t, object, 0);
+		}
+
+		while (frames.count > src.frames.count)
+			frames.pop();
+	}
+
+	// Traverse pointers.
+	void traverse(World:Traversal t, unsafe:RawPtr object, Nat offset) : override {
+		for (f in frames)
+			f.traverse(t, object, 0);
+	}
+
+	// Title.
+	Str title() : override {
+		"Thread " + src.threadId.toS;
+	}
+
+	// Stack frame.
+	class Frame extends Composite {
+		// Original stack frame.
+		StackFrame src;
+
+		// Create.
+		init(StackFrame src) {
+			init {
+				src = src;
+			}
+		}
+
+		Str title() : override {
+			// This is safe: the same stack frame object does not modify its title.
+			src.function;
+		}
+
+		void update(World:Traversal t, unsafe:RawPtr object, Nat offset) : override {
+			for (k, v in src.variables) {
+				var ptr = unsafe:RawPtr(v.value);
+				if (k >= parts.count) {
+					parts.push(Part(v.name, 0, t.createStack(ptr), false));
+				} else {
+					print("TODO: Update value on the stack!");
+					// parts.value.update(ptr);
+					// We might need to switch it to another type in the worst case.
+				}
+
+				t.addData(ptr, parts[k].value);
+			}
+		}
+
+		void traverse(World:Traversal t, unsafe:RawPtr object, Nat offset) : override {
+			for (k, v in src.variables) {
+				var ptr = unsafe:RawPtr(v.value);
+				parts[k].value.traverse(t, ptr, 0);
+			}
+		}
+	}
+
+}

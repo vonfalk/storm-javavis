@@ -3,8 +3,10 @@ use core:lang;
 use lang:bs:macro;
 
 // Hints for the C++ module.
-progvis:Hints hints() {
-	progvis:Hints(CppCodeHints(), CppViewHints());
+progvis:program:Hints hints() {
+	// progvis:Hints(CppCodeHints(), CppViewHints());
+	print("TODO: Re-instate the view hints!");
+	progvis:program:Hints(CppCodeHints());
 }
 
 /**
@@ -13,7 +15,7 @@ progvis:Hints hints() {
  * We can take all local variables and just put them inside a Variant directly, since they are
  * already allocated that way.
  */
-class CppCodeHints extends progvis:CodeHints {
+class CppCodeHints extends progvis:program:CodeHints {
 	init() {
 		init() {
 			// Anything not starting with a letter is an operator.
@@ -76,18 +78,18 @@ class CppCodeHints extends progvis:CodeHints {
 		false;
 	}
 
-	progvis:Barrier functionBarrier(Function fn) : override {
+	progvis:program:Barrier functionBarrier(Function fn) : override {
 		// No extra barriers for functions in our runtime.
 		if (fn.hasParent(named{runtime}))
-			return progvis:Barrier:none;
+			return progvis:program:Barrier:none;
 
 		// For other functions in Progvis, no barrier there either. These are implementation details
 		// that we don't want to be visible.
 		if (fn.hasParent(named{progvis}))
-			return progvis:Barrier:none;
+			return progvis:program:Barrier:none;
 
 		// All other functions, we insert a barrier for. We don't know what they do.
-		return progvis:Barrier:full;
+		return progvis:program:Barrier:full;
 	}
 
 	Save saveVariable(Listing to, Var var, Listing:VarInfo info, Operand dest) : override {
@@ -144,7 +146,7 @@ class CppCodeHints extends progvis:CodeHints {
 }
 
 void wrapMain(Fn<Int> fn) {
-	var program = progvis:findProgram();
+	var program = progvis:program:findProgram();
 	var result = fn.call.toS();
 	if (program) {
 		program.addOutput("\nMain returned ${result}\n");

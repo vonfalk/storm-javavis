@@ -4,18 +4,18 @@ use core:lang;
 private WeakSet<Function> acquireFns on Compiler;
 private WeakSet<Function> releaseFns on Compiler;
 
-progvis:Barrier fnBarrier(Function f) on Compiler {
-	progvis:Barrier result = progvis:Barrier:none;
+progvis:program:Barrier fnBarrier(Function f) on Compiler {
+	progvis:program:Barrier result = progvis:program:Barrier:none;
 	if (acquireFns.has(f))
-		result += progvis:Barrier:acquire;
+		result += progvis:program:Barrier:acquire;
 	if (releaseFns.has(f))
-		result += progvis:Barrier:release;
+		result += progvis:program:Barrier:release;
 	result;
 }
 
-void registerBarrier(Function fn, progvis:Barrier type) on Compiler {
-	if (type.has(progvis:Barrier:acquire))
+void registerBarrier(Function fn, progvis:program:Barrier type) on Compiler {
+	if (type.has(progvis:program:Barrier:acquire))
 		acquireFns.put(fn);
-	if (type.has(progvis:Barrier:release))
+	if (type.has(progvis:program:Barrier:release))
 		releaseFns.put(fn);
 }

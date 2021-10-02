@@ -4,6 +4,7 @@ use graphics;
 use core:geometry;
 use core:io;
 use progvis:net;
+use progvis:program;
 use lang:bs:macro;
 
 /**
@@ -405,6 +406,7 @@ void debug() on Compiler {
 
 	if (url = named{progvis}.url) {
 		url = url / ".." / "progvis_demo";
+
 		MainWin win;
 		// win.open(url / "assert.c");
 		// win.open(url / "atomics.c");

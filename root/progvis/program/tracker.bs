@@ -1,0 +1,138 @@
+/**
+ * Object tracking reads and writes to memory.
+ *
+ * There are two types of reads and writes in order to make the visualization clearer:
+ * 1. Recent reads/writes
+ * 2. Old read/writes
+ *
+ * The set of old reads/writes contain recent reads/writes as well. The recent reads/writes only
+ * contain reads writes in the last "step" (whatever that might have been). Thus, we use old
+ * reads/writes to check for concurrency issues, and recent reads/writes to highlight the results of
+ * the last step in the visualization.
+ */
+class MemTracker {
+	// Old reads and writes.
+	unsafe:PinnedSet reads;
+	unsafe:PinnedSet writes;
+
+	// Recent reads and writes. These reads and writes are a part of 'reads' and 'writes'.
+	unsafe:PinnedSet newReads;
+	unsafe:PinnedSet newWrites;
+
+	// Initialize.
+	init() { init{} }
+
+	// Copy.
+	init(MemTracker original) {
+		init {
+			reads = unsafe:PinnedSet(original.reads);
+			writes = unsafe:PinnedSet(original.writes);
+			newReads = unsafe:PinnedSet(original.newReads);
+			newWrites = unsafe:PinnedSet(original.newWrites);
+		}
+	}
+
+	// Clear content.
+	void clearAll() {
+		reads.clear();
+		writes.clear();
+		newReads.clear();
+		newWrites.clear();
+	}
+
+	// Clear only recent.
+	void clearNew() {
+		newReads.clear();
+		newWrites.clear();
+	}
+
+	// Convenience functions from ASM.
+	void addRead(lang:unknown:PTR_NOGC ptr) {
+		reads.put(ptr);
+		newReads.put(ptr);
+	}
+	void addWrite(lang:unknown:PTR_NOGC ptr) {
+		writes.put(ptr);
+		newWrites.put(ptr);
+	}
+}
+
+/**
+ * A collection of trackers for different threads.
+ */
+// class Trackers {
+// 	// Threads managed by this instance.
+// 	ThreadData[] threads;
+
+// 	// Add a thread.
+// 	void put(ThreadData thread) {
+// 		threads << thread;
+// 	}
+
+// 	// Check if any part of the object was accessed by a thread.
+// 	Bool accessed(unsafe:RawPtr object) {
+// 		for (t in threads) {
+// 			var mem = t.memory;
+// 			if (mem.reads.has(object))
+// 				return true;
+// 			if (mem.writes.has(object))
+// 				return true;
+// 		}
+// 		false;
+// 	}
+
+// 	// Check which threads read a particular offset inside the given object.
+// 	ThreadData[] readBy(unsafe:RawPtr object, Nat offset, Nat size) {
+// 		ThreadData[] r;
+// 		for (t in threads) {
+// 			if (t.memory.reads.has(object, offset, size))
+// 				r << t;
+// 		}
+// 		r;
+// 	}
+
+// 	// Check which threads wrote a particular offset inside the given object.
+// 	ThreadData[] writtenBy(unsafe:RawPtr object, Nat offset, Nat size) {
+// 		ThreadData[] r;
+// 		for (t in threads) {
+// 			if (t.memory.writes.has(object, offset, size))
+// 				r << t;
+// 		}
+// 		r;
+// 	}
+
+// 	// List of concurrency errors found.
+// 	Str[] errors;
+
+// 	// Add an error where multiple threads tried to write to the same data.
+// 	void multiWriteError(ThreadData[] by) {
+// 		StrBuf data;
+// 		data << "Threads ";
+// 		for (i, x in by) {
+// 			if (i > 0)
+// 				data << ", ";
+// 			data << x.thread.threadId;
+// 		}
+// 		data << " all wrote to the same value concurrently.";
+// 		errors << data.toS;
+// 	}
+
+// 	// Add an error where at least one thread wrote data while others read data.
+// 	void readWriteError(ThreadData write, ThreadData[] reads) {
+// 		StrBuf data;
+// 		data << "Thread " << write.thread.threadId << " wrote to a value that thread(s) ";
+// 		Bool first = true;
+// 		for (x in reads) {
+// 			if (x is write)
+// 				continue;
+
+// 			if (!first)
+// 				data << ", ";
+// 			first = false;
+// 			data << x.thread.threadId;
+// 		}
+// 		data << " read from.";
+// 		errors << data.toS;
+// 	}
+
+// }

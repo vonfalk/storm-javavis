@@ -7,6 +7,6 @@ lang:PkgReader reader(Url[] files, Package pkg) on Compiler {
 }
 
 // Hints as well.
-progvis:Hints hints() {
+progvis:program:Hints hints() {
 	progvis:lang:cpp:hints();
 }

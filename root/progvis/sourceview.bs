@@ -3,6 +3,7 @@ use graphics;
 use core:io;
 use core:lang;
 use core:geometry;
+use progvis:program;
 
 class SourceView on Render {
 	// Program context.

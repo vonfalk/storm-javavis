@@ -13,14 +13,14 @@ class SemaImpl {
 	Nat count;
 
 	// All threads waiting for this sema.
-	Queue<progvis:ProgThread> waiting;
+	Queue<progvis:program:ProgThread> waiting;
 
 	init(Nat count) {
 		init { count = count; }
 	}
 
 	void down(Variant waitFor) {
-		unless (thread = progvis:findThread(currentUThread())) {
+		unless (thread = progvis:program:findThread(currentUThread())) {
 			throw SyncError("This primitive is only intended to be used within the program visualization!");
 		}
 
@@ -54,7 +54,7 @@ class SemaImpl {
 class SyncError extends progvis:TypedError {
 	init(Str msg) {
 		init("sync usage") { msg = msg; }
-		progvis:onFatalException();
+		progvis:program:onFatalException();
 	}
 
 	Str msg;
@@ -190,7 +190,7 @@ void lock_acquire(Ptr<lock> lock) : cppBarrier(acquire) {
 	if (l = implRaw.asObject() as SemaImpl) {
 		offset += sPtr.current;
 
-		Nat myId = progvis:findThisThreadId();
+		Nat myId = progvis:program:findThisThreadId();
 		if (lock.base.readNat(offset) == myId)
 			throw SyncError("Trying to acquire a lock we're already holding!");
 
@@ -212,7 +212,7 @@ void lock_release(Ptr<lock> lock) : cppBarrier(release) {
 	if (l = implRaw.asObject() as SemaImpl) {
 		offset += sPtr.current;
 
-		Nat myId = progvis:findThisThreadId();
+		Nat myId = progvis:program:findThisThreadId();
 		if (lock.base.readNat(offset) != myId)
 			throw SyncError("Trying to release a lock we're not holding!");
 
@@ -230,7 +230,7 @@ void lock_release(Ptr<lock> lock) : cppBarrier(release) {
  */
 class CondImpl {
 	// All threads waiting.
-	Queue<progvis:ProgThread> waiting;
+	Queue<progvis:program:ProgThread> waiting;
 
 	// Get number of waiting threads.
 	Int waitingThreads() {
@@ -239,7 +239,7 @@ class CondImpl {
 
 	// Wait for signal. Assuming the lock is held by us.
 	void wait(Variant condVal, Variant lockVal, SemaImpl lock) {
-		unless (thread = progvis:findThread(currentUThread())) {
+		unless (thread = progvis:program:findThread(currentUThread())) {
 			throw SyncError("This primitive is only intended to be used within the program visualization!");
 		}
 
@@ -322,7 +322,7 @@ void cond_wait(Ptr<condition> cond, Ptr<lock> lock) : cppBarrier(full) {
 	Nat cOffset = cond.offset - sPtr.current * 2;
 	Nat lOffset = lock.offset - sPtr.current * 2;
 
-	Nat ourId = progvis:findThisThreadId();
+	Nat ourId = progvis:program:findThisThreadId();
 	if (lock.base.readNat(lOffset + sPtr.current) != ourId)
 		throw SyncError("The lock passed to 'cond_wait' must be held by the current thread!");
 
@@ -350,7 +350,7 @@ void cond_signal(Ptr<condition> cond, Ptr<lock> lock) {
 	Nat cOffset = cond.offset - sPtr.current * 2;
 	Nat lOffset = lock.offset - sPtr.current * 2;
 
-	if (lock.base.readNat(lOffset + sPtr.current) != progvis:findThisThreadId())
+	if (lock.base.readNat(lOffset + sPtr.current) != progvis:program:findThisThreadId())
 		throw SyncError("The lock passed to 'cond_signal' must be held by the current thread!");
 
 	if (cImpl = cond.base.readPtr(cOffset).asObject() as CondImpl) {
@@ -371,7 +371,7 @@ void cond_broadcast(Ptr<condition> cond, Ptr<lock> lock) {
 	Nat cOffset = cond.offset - sPtr.current * 2;
 	Nat lOffset = lock.offset - sPtr.current * 2;
 
-	if (lock.base.readNat(lOffset + sPtr.current) != progvis:findThisThreadId())
+	if (lock.base.readNat(lOffset + sPtr.current) != progvis:program:findThisThreadId())
 		throw SyncError("The lock passed to 'cond_broadcast' must be held by the current thread!");
 
 	if (cImpl = cond.base.readPtr(cOffset).asObject() as CondImpl) {

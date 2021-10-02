@@ -1,0 +1,240 @@
+use ui;
+use core:sync;
+
+/**
+ * This class represents all data that exists for a program, i.e. that program's view of the world.
+ *
+ * In contrast to the things in the 'program' package, this is a snapshot of the program's state,
+ * and not a picture that is continuously updated as the program executes. There is, however,
+ * references back to the program so that the program may be easily manipulated at a later time.
+ */
+class World on Render {
+	// Program we are representing a snapshot of.
+	private progvis:program:Program program;
+
+	// Lock for the traversal.
+	private Lock traverseLock;
+
+	// All allocations in this world. The order of these is not stable.
+	private Allocation[] allocations;
+
+	// Hints available to us.
+	private ViewHints[] hints;
+
+	// Create, and associate us with a program.
+	init(progvis:program:Program program) {
+		init {
+			program = program;
+			hints = program.hints;
+		}
+
+		clear();
+	}
+
+	// Clear the state. This differs from restarting the program and calling update since clear
+	// might remove lost objects without references (i.e. memory leaks).
+	void clear() {
+		allocations.clear();
+
+		// Add back the globals.
+		print("TODO: Add globals!");
+	}
+
+	// Update the current snapshot with the current state of the running program.
+	void update() {
+		Lock:Guard z(traverseLock);
+
+		var t = beginTraversal();
+		for (id, thread in program.threads) {
+			traverse(t, thread);
+		}
+		endTraversal(t);
+	}
+
+	// Access the allocations in here.
+	Array<Allocation>:Iter begin() { allocations.begin; }
+	Array<Allocation>:Iter end() { allocations.end; }
+
+	/**
+	 * Data used during object traversal.
+	 */
+	class Traversal on Render {
+		// Owning World object.
+		World owner;
+
+		// Map from pointers to index in 'allocations'.
+		unsafe:RawPtr->Nat allocMap;
+
+		// Map from pointers to data. Some language implementations may "hide" their by-value
+		// semantics through references. Furthermore, this is the case for objects on the stack, as
+		// they do not have an allocation per se.
+		unsafe:RawPtr->Data dataMap;
+
+		// Queue of remaining work during traversal.
+		Queue<Allocation> work;
+
+		// Init.
+		init(World world) {
+			init {
+				owner = world;
+			}
+		}
+
+		// Add special data for some object.
+		void addData(unsafe:RawPtr object, Data data) {
+			dataMap.put(object, data);
+		}
+
+		// Find data that a pointer refers to.
+		Data? find(unsafe:RawPtr object) {
+			// Heap allocations first.
+			Nat id = allocMap.get(object, owner.allocations.count);
+			if (id < owner.allocations.count) {
+				// Found something. Update the allocation if that has not already been done.
+				var alloc = owner.allocations[id];
+				if (!alloc.visited) {
+					alloc.visited = true;
+					work.push(alloc);
+				}
+				return alloc.data;
+			}
+
+			// Check if it is a stack allocation, or some other hidden allocation.
+			if (dataMap.has(object))
+				return dataMap.get(object);
+
+			// Else, we fail.
+			return null;
+		}
+
+		// Find data, or create new data if it does not exist.
+		Data findOrCreate(unsafe:RawPtr object) {
+			if (data = find(object))
+				return data;
+
+			var alloc = createAlloc(object);
+
+			Nat id = owner.allocations.count;
+			owner.allocations.push(alloc);
+			alloc.update(this, id);
+
+			work.push(alloc);
+
+			alloc.data;
+		}
+
+		// Create an allocation for an object.
+		private Allocation createAlloc(unsafe:RawPtr object) {
+			if (type = object.type) {
+				TypeInfo info(type, object.isValue, false);
+
+				for (h in owner.hints) {
+					if (d = h.createData(this, info)) {
+						return h.createAllocation(object, d);
+					}
+				}
+			}
+
+			return Allocation(object, Unknown());
+		}
+
+		Data create(TypeInfo type) {
+			for (h in owner.hints) {
+				if (d = h.createData(this, type)) {
+					return d;
+				}
+			}
+
+			return Unknown();
+		}
+
+		// Create data suitable to show 'object'. Creates the data in the context of a stack
+		// allocation, and therefore discards references in some cases.
+		Data createStack(unsafe:RawPtr object) {
+			if (type = object.type) {
+				TypeInfo info(type, object.isValue, false);
+				if (!info.isValue) {
+					StackPointer();
+				} else {
+					create(info);
+				}
+			} else {
+				// Probably a pointer that is null at the moment.
+				StackPointer();
+			}
+		}
+
+		// Find a title for a type.
+		Str typeTitle(TypeInfo info) {
+			"TODO";
+		}
+	}
+
+private:
+
+	// Begin traversal.
+	Traversal beginTraversal() {
+		Traversal t(this);
+
+		for (i, a in allocations) {
+			a.update(t, i);
+		}
+
+		t;
+	}
+
+	// End traversal.
+	void endTraversal(Traversal t) {
+		pop(t);
+
+		// Find dead elements, and potentially traverse them now.
+		for (a in allocations) {
+			if (!a.visited) {
+				if (!a.remove)
+					a.traverse(t);
+			}
+		}
+
+		pop(t);
+
+		// Clean up remaining non-visited objects.
+		Nat to = 0;
+		for (Nat i = 0; i < allocations.count; i++) {
+			Allocation here = allocations[i];
+			if (to < i)
+				allocations[to] = here;
+			if (here.visited)
+				to++;
+		}
+		while (to < allocations.count) {
+			allocations.pop();
+		}
+	}
+
+	// Traverse a thread.
+	void traverse(Traversal t, progvis:program:ProgThread thread) {
+		// Note: We don't call "traverse" here, we only put all threads on the work queue. That way,
+		// we are sure that all threads will have had a chance to add data to the Traversal before
+		// any other thread is traversed.
+
+		var obj = unsafe:RawPtr(thread);
+		Nat id = t.allocMap.get(obj, allocations.count);
+		if (id >= allocations.count) {
+			var data = Thread(thread);
+			StickyAllocation alloc(obj, data); // TODO: Allow removing threads, but later.
+
+			allocations.push(alloc);
+			alloc.update(t, id);
+		}
+	}
+
+	// Empty the traversal queue.
+	void pop(Traversal t) {
+		while (t.work.any()) {
+			var top = t.work.top();
+			t.work.pop();
+			top.traverse(t);
+		}
+	}
+
+}

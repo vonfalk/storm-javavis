@@ -2,6 +2,7 @@ use core:lang;
 use core:geometry;
 use ui;
 use progvis;
+use progvis:data;
 use lang:bs:macro;
 
 /**
@@ -12,7 +13,7 @@ use lang:bs:macro;
  */
 class CppViewHints extends ViewHints {
 	// Single 'create hints' instance.
-	CppCreateHints hints;
+	// CppCreateHints hints;
 
 	// Don't pause on function entry. We won't have set up our formal parameters by then...
 	Bool pauseOnEntry() : override { false; }
@@ -61,7 +62,7 @@ class CppViewHints extends ViewHints {
 	// Check if this is a special type in some way.
 	private Data? createSpecial(Workspace ws, TypeInfo info, unsafe:RawPtr object, Nat offset) {
 		if (ptr = info.type as PtrType) {
-			return CppPointer(ptr.inside, hints);
+			return CppPointer(ptr.inside);
 		}
 
 		if (info.type is named{runtime:semaphore}) {
@@ -132,31 +133,28 @@ class CppViewHints extends ViewHints {
  *
  * Tells the system that all C++ pointers are not GC:d.
  */
-class CppCreateHints extends CreateHints {
-	Data decorate(Data data) : override {
-		if (data as DataWithCaption) {
-			data.wrap = CppHeapObj(data.wrap);
-		} else {
-			data = CppHeapObj(data);
-		}
-		data;
-	}
-}
+// class CppCreateHints extends CreateHints {
+// 	Data decorate(Data data) : override {
+// 		if (data as DataWithCaption) {
+// 			data.wrap = CppHeapObj(data.wrap);
+// 		} else {
+// 			data = CppHeapObj(data);
+// 		}
+// 		data;
+// 	}
+// }
 
 
 /**
  * C++ pointers/references.
  */
 class CppPointer extends Pointer {
-	init(core:lang:Type? to, CreateHints hints) {
-		init { type = to; hints = hints; }
+	init(core:lang:Type? to) {
+		init { type = to; }
 	}
 
 	// Type of the thing we're pointing to.
 	core:lang:Type? type;
-
-	// Hints we should use.
-	CreateHints hints;
 
 	void update(Workspace ws, unsafe:RawPtr object, Nat offset) : override {
 		if (!object.any) {
@@ -172,7 +170,7 @@ class CppPointer extends Pointer {
 
 		Nat ptrOffset = object.readNat(offset + core:asm:sPtr.current) - 2*core:asm:sPtr.current;
 
-		Data baseData = ws.traverse(base, hints);
+		Data baseData = ws.traverse(base);
 		var off = baseData.findOffset(type, ptrOffset);
 		this.to = off.data;
 		this.offset = off.offset;

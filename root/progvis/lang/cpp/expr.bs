@@ -766,8 +766,8 @@ class FnCall extends ExprRef {
 	// Add a barrier if needed.
 	private void addBarrier(CodeGen gen) {
 		var type = fnBarrier(fn);
-		if (type != progvis:Barrier:none)
-			gen.l << meta(progvis:SrcBarrier(type, pos));
+		if (type != progvis:program:Barrier:none)
+			gen.l << meta(progvis:program:SrcBarrier(type, pos));
 	}
 
 	// Generate code for when someone else has already created the storage for us.
