@@ -10,7 +10,7 @@ use core:sync;
  */
 class World on Render {
 	// Program we are representing a snapshot of.
-	private progvis:program:Program program;
+	public progvis:program:Program program;
 
 	// Lock for the traversal.
 	private Lock traverseLock;
@@ -35,9 +35,12 @@ class World on Render {
 	// might remove lost objects without references (i.e. memory leaks).
 	void clear() {
 		allocations.clear();
+		program.reset();
 
-		// Add back the globals.
-		print("TODO: Add globals!");
+		var globals = program.findGlobals();
+		if (globals.any) {
+			allocations << StickyAllocation(unsafe:RawPtr(), Globals(globals));
+		}
 	}
 
 	// Update the current snapshot with the current state of the running program.

@@ -534,12 +534,17 @@ namespace storm {
 			if (t.isPrimitive()) {
 				// Default value is already there.
 			} else if (t.isValue()) {
+				Function *ctor = t.type->defaultCtor();
+				if (!ctor) {
+					Str *msg = TO_S(engine(), S("Can not initialize ") << v->name << S(" by default-constructing it. ")
+									S("Please initialize this member explicitly in ") << thisPtr << S("."));
+					throw new (this) SyntaxError(pos, msg);
+				}
+
 				*s->l << mov(ptrA, dest);
 				*s->l << add(ptrA, ptrConst(v->offset()));
 				*s->l << fnParam(engine().ptrDesc(), ptrA);
-				Function *c = t.type->defaultCtor();
-				assert(c, L"No default constructor!");
-				*s->l << fnCall(c->ref(), false);
+				*s->l << fnCall(ctor->ref(), false);
 			} else {
 				Function *ctor = t.type->defaultCtor();
 				if (!ctor) {

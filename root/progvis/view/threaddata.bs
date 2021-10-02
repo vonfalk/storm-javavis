@@ -1,0 +1,427 @@
+use ui;
+use graphics;
+use core:geometry;
+use core:lang;
+use lang:bs:macro;
+use progvis:program;
+
+/**
+ * Class representing the visual state of a thread.
+ */
+class ThreadData extends Drawable {
+	// Thread that contains the source data.
+	ProgThread thread;
+
+	// Copy of the memory accesses from the thread at the last update.
+	// Otherwise, we might see threads work when it is partly done.
+	// MemTracker memory;
+
+	// Stack frames.
+	// FrameVal[] frames;
+
+	// Source code view.
+	SourceView source;
+
+	// Shall we be removed (when the user clicks "remove").
+	Bool removeMe;
+
+	// Enable stepping.
+	Bool enableStep;
+
+	// Buttons.
+	SmallButton step;
+	SmallButton pause;
+	SmallButton runSlow;
+	SmallButton runFast;
+	SmallButton runVeryFast;
+	SmallButton removeDead;
+
+	// Buttons. Duplicates of the variables for easier layout.
+	SmallButton[] buttons;
+
+	// When resizing the ThreadData, we are essentially resizing only the source listing. So this is
+	// the size of the source listing.
+	Size srcSize;
+
+	// Create.
+	init(ProgThread thread) {
+		init {
+			thread = thread;
+			enableStep = true;
+			source(thread.owner);
+			step(stepDecoration, SolidBrush(yellow*0.5 + red), buttonSize);
+			pause(pauseDecoration, SolidBrush(black), buttonSize);
+			runSlow(runDecoration, SolidBrush(green), buttonSize);
+			runFast(runFastDecoration, SolidBrush(green), buttonSize);
+			runVeryFast(runVeryFastDecoration, SolidBrush(green), buttonSize);
+			removeDead(removeDecoration, SolidBrush(red), buttonSize);
+			srcSize = sourceSize;
+		}
+
+		step.onClick = &this.onStep;
+		pause.onClick = &this.onPause;
+		runSlow.onClick = &this.onRunSlow;
+		runFast.onClick = &this.onRunFast;
+		runVeryFast.onClick = &this.onRunVeryFast;
+		removeDead.onClick = &this.onRemove;
+
+		buttons = [step, pause, runSlow, runFast, runVeryFast];
+	}
+
+	// Draw the thread.
+	void draw(Graphics g, Bool active) : override {
+		// Rect rect = this.rect;
+		// g.fill(rect, dataBg);
+		// g.draw(rect, dataFg);
+
+		// Point offset = rect.p0 + compositeBorder;
+		// Float xOffset = 0;
+		// for (Nat i = frames.count; i > 0; i--) {
+		// 	var frame = frames[i - 1];
+
+		// 	Size sz = frame.size;
+		// 	if (i < frames.count)
+		// 		xOffset -= frame.nameWidth;
+		// 	frame.layoutOffset = xOffset;
+		// 	xOffset += sz.w;
+		// }
+		// Float xLimit = rect.size.w - compositeBorder.w*2;
+		// // Right-align everything.
+		// if (xOffset < xLimit)
+		// 	offset.x += xLimit - xOffset;
+		// for (frame in frames) {
+		// 	Size sz = frame.size;
+		// 	Float dx = min(frame.layoutOffset, xLimit - sz.w);
+		// 	frame.pos = Rect(offset + Point(dx, 0), sz);
+
+		// 	Float delta = frame.captionHeight + compositeBorder.h;
+		// 	offset.y += delta;
+		// 	xLimit -= stackOffset;
+		// }
+
+		// Rect sourcePos(rect.p0, rect.p1 - compositeBorder);
+		// sourcePos.p1.y -= compositeBorder.h + buttonSize.h;
+		// sourcePos.p0.x = rect.p0.x + compositeBorder.w;
+		// sourcePos.p0.y = sourcePos.p1.y - srcSize.h;
+		// source.draw(g, sourcePos);
+
+		// Point p(sourcePos.p0.x, sourcePos.p1.y + compositeBorder.h);
+		// for (b in buttons) {
+		// 	b.pos = p;
+		// 	b.draw(g, false);
+		// 	p.x += buttonSize.w + compositeBorder.w;
+		// }
+
+		// // Draw almost everything now. We only omit pointers from the last stack frame. Otherwise
+		// // they will appear below other threads.
+		// for (id, frame in frames) {
+		// 	Bool a = id == frames.count - 1;
+		// 	frame.draw(g, a);
+		// 	if (!a)
+		// 		frame.drawLinks(g, false);
+		// }
+	}
+
+	// Draw the references from the last stack frame.
+	void drawLinks(Graphics g, Bool active) : override {
+		// if (frames.any) {
+		// 	frames.last.drawLinks(g, active);
+		// }
+	}
+
+	// Update our contents.
+	// void traverse(Workspace ws, WorkList work) {
+	// 	memory.clear();
+	// 	memory = MemTracker(thread.memory);
+
+	// 	if (!thread.alive) {
+	// 		// Make sure that we illustrate that the thread terminated.
+	// 		source.highlight = sourceTerminatedHighlight;
+	// 		if (buttons.last !is removeDead)
+	// 			buttons << removeDead;
+
+	// 		// If the thread crashed, then we don't want to remove the stack trace. If we do, we
+	// 		// can't see what went wrong.
+	// 		if (thread.crashed) {
+	// 			for (v in frames)
+	// 				v.traverse(ws, work);
+	// 		} else {
+	// 			// Otherwise, make sure that we don't show any more frames.
+	// 			while (frames.any)
+	// 				frames.pop();
+
+	// 			source.displayEmpty("<thread exited normally>");
+	// 		}
+
+	// 		invalidateSize();
+	// 		return;
+	// 	}
+
+	// 	// Keep our view of the thread up-to-date.
+	// 	for (k, v in thread.frames) {
+	// 		if (k >= frames.count)
+	// 			frames.push(FrameVal(v));
+	// 		// Different frame?
+	// 		if (frames[k].source !is v)
+	// 			frames[k] = FrameVal(v);
+	// 		frames[k].traverse(ws, work);
+	// 	}
+
+	// 	while (frames.count > thread.frames.count)
+	// 		frames.pop();
+
+	// 	// Update the source view.
+	// 	if (pos = thread.pos)
+	// 		source.display(pos);
+	// 	else
+	// 		source.displayEmpty();
+
+	// 	if (thread.sleeping) {
+	// 		source.highlight = sourceSleepingHighlight;
+	// 	} else if (frames.last.returned) {
+	// 		source.highlight = sourceReturnedHighlight;
+	// 	} else {
+	// 		source.highlight = sourceHighlight;
+	// 	}
+
+	// 	invalidateSize();
+	// }
+
+	// Don't remove the thread until it has terminated and the user explicitly removes it.
+	Bool remove() : override {
+		removeMe;
+	}
+
+	void resize(Size s) : override {
+		Size computed = computeSize();
+		srcSize = (s - (computed - srcSize)).max(Size(10));
+		invalidateSize();
+	}
+
+	protected Size computeSize() : override {
+		Float w = 0;
+		Float h = 0;
+
+		// if (frames.any) {
+		// 	for (Nat i = frames.count; i > 0; i--) {
+		// 		var frame = frames[i - 1];
+
+		// 		h += frame.captionHeight + compositeBorder.h;
+
+		// 		Size sz = frame.size;
+		// 		h = max(h, sz.h);
+		// 		w = max(w, sz.w + i.int.float*stackOffset);
+		// 	}
+		// }
+
+		// w = max(srcSize.w, w);
+		// w = max(w, buttons.count.int.float * (buttonSize.w + compositeBorder.w));
+
+		// h += compositeBorder.h + srcSize.h;
+
+		// h += compositeBorder.h + buttonSize.h;
+
+		Size(w, h) + compositeBorder*2;
+	}
+
+	Drawable findAt(Point pt) : override {
+		for (b in buttons) {
+			if (b.rect.contains(pt))
+				return b;
+		}
+		this;
+	}
+
+	private void onStep() {
+		if (enableStep)
+			thread.resume();
+	}
+
+	private void onPause() {
+		if (enableStep)
+			thread.pause();
+	}
+
+	private void onRunSlow() {
+		if (enableStep)
+			thread.resume(1 s);
+	}
+
+	private void onRunFast() {
+		if (enableStep)
+			thread.resume(500 ms);
+	}
+
+	private void onRunVeryFast() {
+		if (enableStep)
+			thread.resume(100 ms);
+	}
+
+	private void onRemove() {
+		removeMe = true;
+		// Make it happen now, and not later.
+		thread.owner.notifyChange();
+	}
+}
+
+
+/**
+ * A single stack frame in a thread.
+ */
+// class FrameVal on Render {
+// 	// Caption text.
+// 	Text caption;
+
+// 	// The stack frame we represent.
+// 	StackFrame source;
+
+// 	// Position.
+// 	Rect pos;
+
+// 	init(StackFrame frame) {
+// 		init {
+// 			caption = Text(frame.function, captionFont);
+// 			source = frame;
+// 			computeSize = true;
+// 		}
+// 	}
+
+// 	// Get the width of all names in here.
+// 	Float nameWidth() { namesWidth; }
+
+// 	// Float that is used during layout.
+// 	Float layoutOffset;
+
+// 	// Update our contents.
+// 	// void traverse(Workspace ws, WorkList work) {
+// 	// 	for (k, v in source.variables) {
+// 	// 		if (k >= vars.count) {
+// 	// 			vars.push(Var(ws, v, work));
+// 	// 		} else {
+// 	// 			vars[k].update(ws, v, work);
+// 	// 		}
+// 	// 	}
+
+// 	// 	while (vars.count > source.variables.count)
+// 	// 		vars.pop();
+
+// 	// 	computeSize = true;
+// 	// }
+
+// 	// Did we return from this frame?
+// 	Bool returned() {
+// 		source.returned;
+// 	}
+
+// 	// Get the height of the caption.
+// 	Float captionHeight() {
+// 		caption.size.h + compositeBorder.h*2;
+// 	}
+
+// 	// Get the size.
+// 	Size size() {
+// 		if (computeSize) {
+// 			computeSize = false;
+// 			updateSize();
+// 		}
+
+// 		Float w = max(namesWidth + dataWidth + compositeBorder.w, caption.size.w);
+// 		Float h = height + captionHeight;
+// 		Size(w, h) + compositeBorder*2;
+// 	}
+
+// 	// Draw ourselves.
+// 	void draw(Graphics g, Bool active) {
+// 		g.fill(pos, dataBg);
+// 		g.draw(pos, dataFg);
+
+// 		Rect captionPos(pos.p0, Size(pos.size.w, caption.size.h + compositeBorder.h*2));
+// 		g.fill(captionPos, if (active) { captionActiveBg; } else { captionBg; });
+// 		g.draw(captionPos, captionFg);
+// 		g.draw(caption, captionFg, pos.p0 + compositeBorder);
+
+// 		Point at = pos.p0 + compositeBorder;
+// 		at.y = captionPos.p1.y + compositeBorder.h;
+// 		for (v in vars) {
+// 			var nameSz = v.text.size;
+// 			var dataSz = v.value.size;
+
+// 			g.draw(v.text, dataFg, at);
+// 			v.value.pos.x = pos.p1.x - dataSz.w - compositeBorder.w;
+// 			v.value.pos.y = at.y;
+// 			v.value.draw(g, active);
+
+// 			at.y += max(nameSz.h, dataSz.h) + dataBorder.h;
+// 		}
+// 	}
+
+// 	void drawLinks(Graphics g, Bool active) {
+// 		for (v in vars) {
+// 			v.value.drawLinks(g, active);
+// 		}
+// 	}
+
+// private:
+// 	// A variable inside a frame.
+// 	class Var on Render {
+// 		Str name;
+// 		Text text;
+// 		Data value;
+// 		Type? originalType;
+
+// 		init(Workspace ws, StackVar var, WorkList work) {
+// 			unsafe:RawPtr ptr(var.value);
+
+// 			init() {
+// 				name = var.name;
+// 				text = Text(var.name, variableFont);
+// 				value = ws.createStackData(ptr);
+// 				originalType = ptr.type;
+// 			}
+
+// 			work.push(value, ptr);
+// 		}
+
+// 		void update(Workspace ws, StackVar var, WorkList work) {
+// 			unsafe:RawPtr ptr(var.value);
+
+// 			if (name != var.name) {
+// 				name = var.name;
+// 				text = Text(name, variableFont);
+// 			}
+
+// 			if (originalType !is ptr.type) {
+// 				originalType = ptr.type;
+// 				value = ws.createStackData(ptr);
+// 			}
+
+// 			work.push(value, ptr);
+// 		}
+// 	}
+
+// 	// Values in here.
+// 	Var[] vars;
+
+// 	Float namesWidth;
+// 	Float dataWidth;
+// 	Float height;
+
+// 	Bool computeSize;
+
+// 	void updateSize() {
+// 		namesWidth = 0;
+// 		dataWidth = 0;
+// 		height = 0;
+// 		for (v in vars) {
+// 			var nameSz = v.text.size;
+// 			var dataSz = v.value.size;
+
+// 			namesWidth = max(namesWidth, nameSz.w + dataBorder.w);
+// 			dataWidth = max(dataWidth, dataSz.w);
+// 			height += max(nameSz.h, dataSz.h) + dataBorder.h;
+// 		}
+
+// 		height = max(height - dataBorder.h, dataBorder.h);
+// 	}
+// }
+

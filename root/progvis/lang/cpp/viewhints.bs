@@ -12,9 +12,6 @@ use lang:bs:macro;
  * which objects are no longer reachable in the implementation.
  */
 class CppViewHints extends ViewHints {
-	// Single 'create hints' instance.
-	// CppCreateHints hints;
-
 	// Don't pause on function entry. We won't have set up our formal parameters by then...
 	Bool pauseOnEntry() : override { false; }
 
@@ -22,30 +19,33 @@ class CppViewHints extends ViewHints {
 	Bool barriersAvailable() : override { true; }
 
 	// Create element for visualization.
-	Data? createData(Workspace ws, TypeInfo info, unsafe:RawPtr base, Nat offset) {
+	Data? createData(World:Traversal t, TypeInfo info) : override {
 		if (info.isRef)
 			return null;
 		if (!info.isValue)
 			return null;
 
-		// If this is the "outermost" allocation of something that was allocated as an array, create
-		// a special instance for that.
-		if (offset == 0 & base.type is info.type) {
-			// Is it an array allocation?
-			if ((base.readFilled & AllocFlags:arrayAlloc.v) != 0)
-				return createArray(ws, info, base);
-		}
+		print("TODO: Fix object creation!");
+		return null;
 
-		createSpecial(ws, info, base, offset);
+		// // If this is the "outermost" allocation of something that was allocated as an array, create
+		// // a special instance for that.
+		// if (offset == 0 & base.type is info.type) {
+		// 	// Is it an array allocation?
+		// 	if ((base.readFilled & AllocFlags:arrayAlloc.v) != 0)
+		// 		return createArray(ws, info, base);
+		// }
+
+		// createSpecial(ws, info, base, offset);
 	}
 
 	// Get a title for the type.
-	Str? typeTitle(Workspace ws, TypeInfo info) {
+	Str? typeTitle(World:Traversal traversal, TypeInfo info) : override {
 		if (type = info.type as PtrType) {
 			if (t = type.params[0].type) {
 				TypeInfo info(t, true, false);
 
-				Str result = ws.typeTitle(info);
+				Str result = traversal.typeTitle(info);
 				if (type.isConst)
 					result = "const " + result;
 
@@ -60,72 +60,72 @@ class CppViewHints extends ViewHints {
 	}
 
 	// Check if this is a special type in some way.
-	private Data? createSpecial(Workspace ws, TypeInfo info, unsafe:RawPtr object, Nat offset) {
-		if (ptr = info.type as PtrType) {
-			return CppPointer(ptr.inside);
-		}
+	// private Data? createSpecial(Workspace ws, TypeInfo info, unsafe:RawPtr object, Nat offset) {
+	// 	if (ptr = info.type as PtrType) {
+	// 		return CppPointer(ptr.inside);
+	// 	}
 
-		if (info.type is named{runtime:semaphore}) {
-			return hideImpl(ws, info, object, offset);
-		}
+	// 	if (info.type is named{runtime:semaphore}) {
+	// 		return hideImpl(ws, info, object, offset);
+	// 	}
 
-		if (info.type is named{runtime:lock}) {
-			return hideImpl(ws, info, object, offset);
-		}
+	// 	if (info.type is named{runtime:lock}) {
+	// 		return hideImpl(ws, info, object, offset);
+	// 	}
 
-		if (info.type is named{runtime:condition}) {
-			return hideImpl(ws, info, object, offset);
-		}
+	// 	if (info.type is named{runtime:condition}) {
+	// 		return hideImpl(ws, info, object, offset);
+	// 	}
 
-		if (info.type is named{Byte}) {
-			return CppChar();
-		}
+	// 	if (info.type is named{Byte}) {
+	// 		return CppChar();
+	// 	}
 
-		null;
-	}
+	// 	null;
+	// }
 
 	// Hide the variable "impl" from a composite type.
-	private Data hideImpl(Workspace ws, TypeInfo info, unsafe:RawPtr object, Nat offset) {
-		var members = findMembers(info.type);
+	// private Data hideImpl(Workspace ws, TypeInfo info, unsafe:RawPtr object, Nat offset) {
+	// 	var members = findMembers(info.type);
 
-		Composite result(info.type);
-		for (m in members) {
-			if (m.name != "impl")
-				result.add(m.name, m.offset, ws.createData(m.type, object, offset + m.offset), m.first);
-		}
+	// 	Composite result(info.type);
+	// 	for (m in members) {
+	// 		if (m.name != "impl")
+	// 			result.add(m.name, m.offset, ws.createData(m.type, object, offset + m.offset), m.first);
+	// 	}
 
-		result;
-	}
+	// 	result;
+	// }
 
 	// Create a data node for an array. We assume that 'offset' is zero (checked earlier).
-	private Data createArray(Workspace ws, TypeInfo info, unsafe:RawPtr base) {
-		var members = findMembers(info.type);
+	// private Data createArray(Workspace ws, TypeInfo info, unsafe:RawPtr base) {
+	// 	var members = findMembers(info.type);
 
-		// We know that the size will not change, so we can just stuff everything into a single
-		// Composite allocation. This could be a bit unclear if we're working with inheritance as
-		// well, but it should be good enough.
-		Nat count = base.readCount & AllocFlags:sizeMask.v;
-		Nat elemSz = Value(info.type).size.current;
+	// 	// We know that the size will not change, so we can just stuff everything into a single
+	// 	// Composite allocation. This could be a bit unclear if we're working with inheritance as
+	// 	// well, but it should be good enough.
+	// 	Nat count = base.readCount & AllocFlags:sizeMask.v;
+	// 	Nat elemSz = Value(info.type).size.current;
 
-		Composite result(info.type);
-		for (Nat i = 0; i < count; i++) {
-			Nat offset = i * elemSz;
+	// 	Composite result(info.type);
+	// 	for (Nat i = 0; i < count; i++) {
+	// 		Nat offset = i * elemSz;
 
-			// Primitive or special?
-			if (spec = createSpecial(ws, info, base, offset)) {
-				result.add("", offset, spec, true);
-			} else if (c = convertPrimitive(info.type, base, offset)) {
-				result.add("", offset, Primitive(info.type, c), true);
-			} else {
-				for (i, m in members) {
-					// We're ignoring 'm.first' to make array elements more clearly divided.
-					result.add(m.name, offset + m.offset, ws.createData(m.type, base, offset + m.offset), i == 0);
-				}
-			}
-		}
+	// 		// Primitive or special?
+	// 		if (spec = createSpecial(ws, info, base, offset)) {
+	// 			result.add("", offset, spec, true);
+	// 		} else if (c = convertPrimitive(info.type, base, offset)) {
+	// 			result.add("", offset, Primitive(info.type, c), true);
+	// 		} else {
+	// 			for (i, m in members) {
+	// 				// We're ignoring 'm.first' to make array elements more clearly divided.
+	// 				result.add(m.name, offset + m.offset, ws.createData(m.type, base, offset + m.offset), i == 0);
+	// 			}
+	// 		}
+	// 	}
 
-		result;
-	}
+	// 	result;
+	// }
 }
 
 /**
@@ -148,39 +148,39 @@ class CppViewHints extends ViewHints {
 /**
  * C++ pointers/references.
  */
-class CppPointer extends Pointer {
-	init(core:lang:Type? to) {
-		init { type = to; }
-	}
+// class CppPointer extends Pointer {
+// 	init(core:lang:Type? to) {
+// 		init { type = to; }
+// 	}
 
-	// Type of the thing we're pointing to.
-	core:lang:Type? type;
+// 	// Type of the thing we're pointing to.
+// 	core:lang:Type? type;
 
-	void update(Workspace ws, unsafe:RawPtr object, Nat offset) : override {
-		if (!object.any) {
-			to = null;
-			return;
-		}
+// 	void update(Workspace ws, unsafe:RawPtr object, Nat offset) : override {
+// 		if (!object.any) {
+// 			to = null;
+// 			return;
+// 		}
 
-		var base = object.readPtr(offset);
-		if (!base.any) {
-			to = null;
-			return;
-		}
+// 		var base = object.readPtr(offset);
+// 		if (!base.any) {
+// 			to = null;
+// 			return;
+// 		}
 
-		Nat ptrOffset = object.readNat(offset + core:asm:sPtr.current) - 2*core:asm:sPtr.current;
+// 		Nat ptrOffset = object.readNat(offset + core:asm:sPtr.current) - 2*core:asm:sPtr.current;
 
-		Data baseData = ws.traverse(base);
-		var off = baseData.findOffset(type, ptrOffset);
-		this.to = off.data;
-		this.offset = off.offset;
-	}
+// 		Data baseData = ws.traverse(base);
+// 		var off = baseData.findOffset(type, ptrOffset);
+// 		this.to = off.data;
+// 		this.offset = off.offset;
+// 	}
 
-	DataOffset findOffset(core:lang:Type? type, Nat offset) : override {
-		Float o = min(offset.int.float / (2*core:asm:sPtr.current.int.float), 1.0);
-		DataOffset(this, o * size.h);
-	}
-}
+// 	DataOffset findOffset(core:lang:Type? type, Nat offset) : override {
+// 		Float o = min(offset.int.float / (2*core:asm:sPtr.current.int.float), 1.0);
+// 		DataOffset(this, o * size.h);
+// 	}
+// }
 
 
 /**
@@ -190,113 +190,113 @@ class CppPointer extends Pointer {
  *
  * Assumes we don't have to deal with mouse movement etc. I.e. assumes we're not the topmost object.
  */
-class CppHeapObj extends Data {
-	init(Data wrap) {
-		init { wrap = wrap; dead = false; }
-	}
+// class CppHeapObj extends Data {
+// 	init(Data wrap) {
+// 		init { wrap = wrap; dead = false; }
+// 	}
 
-	// Wrapped object.
-	Data wrap;
+// 	// Wrapped object.
+// 	Data wrap;
 
-	// Have this object been deleted?
-	Bool dead;
+// 	// Have this object been deleted?
+// 	Bool dead;
 
-	// Is this a static allocation that does not need to be removed?
-	Bool staticAlloc;
+// 	// Is this a static allocation that does not need to be removed?
+// 	Bool staticAlloc;
 
-	Size size() : override {
-		wrap.size();
-	}
+// 	Size size() : override {
+// 		wrap.size();
+// 	}
 
-	assign size(Size sz) : override {
-		wrap.size(sz);
-	}
+// 	assign size(Size sz) : override {
+// 		wrap.size(sz);
+// 	}
 
-	void draw(ui:Graphics g, Bool active) : override {
-		wrap.pos = pos;
-		wrap.draw(g, active);
+// 	void draw(ui:Graphics g, Bool active) : override {
+// 		wrap.pos = pos;
+// 		wrap.draw(g, active);
 
-		if (dead) {
-			// Draw a big cross.
-			Size s = size;
-			g.line(pos, pos + s, errorFg);
-			g.line(pos + Size(0, s.h), pos + Size(s.w, 0), errorFg);
-		}
-	}
+// 		if (dead) {
+// 			// Draw a big cross.
+// 			Size s = size;
+// 			g.line(pos, pos + s, errorFg);
+// 			g.line(pos + Size(0, s.h), pos + Size(s.w, 0), errorFg);
+// 		}
+// 	}
 
-	void drawLinks(ui:Graphics g, Bool active) : override {
-		wrap.drawLinks(g, active);
-	}
+// 	void drawLinks(ui:Graphics g, Bool active) : override {
+// 		wrap.drawLinks(g, active);
+// 	}
 
-	void update(Workspace work, unsafe:RawPtr object, Nat offset) : override {
-		wrap.update(work, object, offset);
+// 	void update(Workspace work, unsafe:RawPtr object, Nat offset) : override {
+// 		wrap.update(work, object, offset);
 
-		if (offset == 0) {
-			staticAlloc = (object.readFilled() & AllocFlags:staticAlloc.v) != 0;
-			dead = object.readFilled() == 0;
-		}
-	}
+// 		if (offset == 0) {
+// 			staticAlloc = (object.readFilled() & AllocFlags:staticAlloc.v) != 0;
+// 			dead = object.readFilled() == 0;
+// 		}
+// 	}
 
-	DataOffset findOffset(core:lang:Type? type, Nat offset) : override {
-		wrap.findOffset(type, offset);
-	}
+// 	DataOffset findOffset(core:lang:Type? type, Nat offset) : override {
+// 		wrap.findOffset(type, offset);
+// 	}
 
-	Bool remove() : override {
-		dead | staticAlloc;
-	}
+// 	Bool remove() : override {
+// 		dead | staticAlloc;
+// 	}
 
-	Drawable findAt(Point pt) : override {
-		wrap.findAt(pt);
-	}
+// 	Drawable findAt(Point pt) : override {
+// 		wrap.findAt(pt);
+// 	}
 
-	void clearAccess() : override {
-		wrap.clearAccess();
-	}
+// 	void clearAccess() : override {
+// 		wrap.clearAccess();
+// 	}
 
-	void checkAccess(unsafe:RawPtr object, Nat offset, Nat size, Trackers trackers) : override {
-		wrap.checkAccess(object, offset, size, trackers);
-	}
+// 	void checkAccess(unsafe:RawPtr object, Nat offset, Nat size, Trackers trackers) : override {
+// 		wrap.checkAccess(object, offset, size, trackers);
+// 	}
 
-	Data contained() : override { wrap.contained; }
-}
+// 	Data contained() : override { wrap.contained; }
+// }
 
 /**
  * A single C++ character.
  */
-class CppChar extends RWData {
-	// Character value.
-	private Text ch;
+// class CppChar extends RWData {
+// 	// Character value.
+// 	private Text ch;
 
-	// Numeric value.
-	private Text num;
+// 	// Numeric value.
+// 	private Text num;
 
-	init() {
-		init() {
-			ch = Text("", codeFont);
-			num = Text("", dataFont);
-		}
-	}
+// 	init() {
+// 		init() {
+// 			ch = Text("", codeFont);
+// 			num = Text("", dataFont);
+// 		}
+// 	}
 
-	void draw(Graphics g, Bool active) : override {
-		super:draw(g, active);
+// 	void draw(Graphics g, Bool active) : override {
+// 		super:draw(g, active);
 
-		Rect p = rect;
-		Size chSize = ch.size;
-		g.draw(ch, dataFg, p.p1 - chSize - dataMargin);
-		g.draw(num, dataFg, p.p0 + dataMargin);
-	}
+// 		Rect p = rect;
+// 		Size chSize = ch.size;
+// 		g.draw(ch, dataFg, p.p1 - chSize - dataMargin);
+// 		g.draw(num, dataFg, p.p0 + dataMargin);
+// 	}
 
-	void update(Workspace ws, unsafe:RawPtr object, Nat offset) : override {
-		Byte data = object.readByte(offset);
-		ch = Text(Char(data.nat).toS, codeFont);
-		num = Text("(${data})", dataFont);
-		invalidateSize();
-	}
+// 	void update(Workspace ws, unsafe:RawPtr object, Nat offset) : override {
+// 		Byte data = object.readByte(offset);
+// 		ch = Text(Char(data.nat).toS, codeFont);
+// 		num = Text("(${data})", dataFont);
+// 		invalidateSize();
+// 	}
 
-	Size computeSize() : override {
-		Size a = ch.size;
-		Size b = num.size;
+// 	Size computeSize() : override {
+// 		Size a = ch.size;
+// 		Size b = num.size;
 
-		Size(a.w + b.w + dataMargin.w*3, max(a.h, b.h) + dataMargin.h*2);
-	}
-}
+// 		Size(a.w + b.w + dataMargin.w*3, max(a.h, b.h) + dataMargin.h*2);
+// 	}
+// }

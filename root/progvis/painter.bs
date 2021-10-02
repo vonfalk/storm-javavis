@@ -4,16 +4,15 @@ use graphics;
 use core:geometry;
 use core:io;
 use progvis:program;
+use progvis:data;
+use progvis:view;
 
 class MainPainter extends Painter {
 	// The workspace we want to draw.
-	private Workspace workspace;
+	private view:Workspace workspace;
 
-	// The program we're currently executing.
-	private Program? program;
-
-	// Saved value of global variables.
-	// private SavedGlobals savedGlobals;
+	// World of the program's state. Also has a reference to the actual program.
+	private World? world;
 
 	// Problem panel, if any.
 	private ProblemPanel? panel;
@@ -22,7 +21,7 @@ class MainPainter extends Painter {
 	private Bool mouseDown;
 
 	// Current drawable object in focus. Only useful when 'mousedown' is pressed.
-	private Drawable? mouseFocus;
+	private view:Drawable? mouseFocus;
 
 	// Location mouse was pressed at.
 	private Point mouseOffset;
@@ -36,10 +35,6 @@ class MainPainter extends Painter {
 	// Behavior to use in the painter.
 	private Behavior? behavior;
 
-	// Lock for traversal. The traversal may perform thread switches, so we need to make sure that
-	// multiple traversals are not in flight at the same time.
-	private sync:Lock traversalLock;
-
 	init() {
 		init() { scale = 1.0; }
 		bgColor = Color(0.8, 0.8, 0.8);
@@ -47,7 +42,8 @@ class MainPainter extends Painter {
 
 	// Set whether or not to track reads/writes.
 	void trackMemory(Bool track) {
-		workspace.trackMemory = track;
+		// workspace.trackMemory = track;
+		print("Set 'trackMemory'!");
 	}
 
 	// Set zoom. Also pans to the center to make sure nothing gets hidden too badly.
@@ -60,14 +56,15 @@ class MainPainter extends Painter {
 
 	// Do we have an open "program" instance?
 	Bool hasProgram() {
-		program.any;
+		world.any;
 	}
 
 	// Update the behavior without re-loading a program.
 	void updateBehavior(Behavior b) {
 		behavior = b;
 		panel = b.panel;
-		workspace.enableStep = b.allowStep;
+		print("TODO: Set enable step!");
+		// workspace.enableStep = b.allowStep;
 	}
 
 	// Open a program.
@@ -77,13 +74,10 @@ class MainPainter extends Painter {
 		// Terminate the previous program, if any. We do that here in case the load failed.
 		cleanup();
 
-		program = loaded;
+		world = World(loaded);
 		updateBehavior(b);
-		var globals = loaded.findGlobals();
-		// savedGlobals = SavedGlobals:save(globals);
-		workspace.globals = globals;
-		workspace.hints = loaded.hints;
-		workspace.trackDeadlock = true;
+		print("TODO: Track deadlocks!");
+		// workspace.trackDeadlock = true;
 		loaded.onChange = &this.update();
 		loaded.onError = &this.onProgramError;
 		loaded.onAdvance = &this.onProgramAdvance;
@@ -93,15 +87,15 @@ class MainPainter extends Painter {
 
 	// Try to find the loaded source code for the program.
 	Str? sourceFor(Url url) {
-		if (program)
-			if (text = program.source(url))
+		if (world)
+			if (text = world.program.source(url))
 				return text.text;
 		null;
 	}
 
 	// Apply an action. These are the same that we produce to the Behavior.
 	void applyAction(Str action) {
-		unless (program)
+		unless (world)
 			return;
 
 		if (action == "s") {
@@ -110,7 +104,7 @@ class MainPainter extends Painter {
 		} else if (action.isNat) {
 			// Step a thread.
 			Nat thread = action.toNat;
-			for (v in program.threads)
+			for (v in world.program.threads)
 				if (v.threadId == thread)
 					v.resume();
 		}
@@ -145,8 +139,10 @@ class MainPainter extends Painter {
 		behavior = null;
 		panel = null;
 
-		if (program)
-			program.terminate();
+		if (world) {
+			// This calls terminate if necessary.
+			world.clear();
+		}
 
 		workspace.clear();
 		offset = Point();
@@ -155,32 +151,27 @@ class MainPainter extends Painter {
 
 	// Restart the program.
 	void restart() {
-		if (program) {
+		if (world) {
 			// Don't call behavior during restart.
 			var tmp = behavior;
 			behavior = null;
 
-			// TODO: We need to re-initialize globals as well!
-
-			program.terminate();
+			world.clear();
 			workspace.clear();
-			program.reset();
-			var globals = program.findGlobals();
-			// savedGlobals.restore(globals);
-			workspace.globals = globals;
-			workspace.trackDeadlock = true;
+
+			// TODO: workspace.trackDeadlock = true;
 
 			behavior = tmp;
 			if (behavior)
 				behavior.onRestart();
-			program.spawn(program.main);
+			world.program.spawn(world.program.main);
 		}
 	}
 
 	// Spawn another thread.
 	void spawnThread() {
-		if (program) {
-			program.spawn(program.main);
+		if (world) {
+			world.program.spawn(world.program.main);
 			if (behavior)
 				behavior.onUserAction("s");
 		}
@@ -188,8 +179,8 @@ class MainPainter extends Painter {
 
 	// Stop all running threads.
 	void stopThreads() {
-		if (program) {
-			for (k, v in program.threads) {
+		if (world) {
+			for (k, v in world.program.threads) {
 				v.pause();
 			}
 		}
@@ -197,8 +188,8 @@ class MainPainter extends Painter {
 
 	// Start all threads with the specified speed
 	void resumeThreads(Duration speed) {
-		if (program) {
-			for (k, v in program.threads) {
+		if (world) {
+			for (k, v in world.program.threads) {
 				v.resume(speed);
 			}
 		}
@@ -219,29 +210,23 @@ class MainPainter extends Painter {
 
 	// Update the visualization of the data.
 	void update() {
-		sync:Lock:Guard guard(traversalLock);
-		workspace.beginTraversal();
+		if (world) {
+			world.update();
+			workspace.update(world);
 
-		if (program) {
-			for (id, thread in program.threads) {
-				workspace.traverse(thread);
-			}
-
-			if (output = program.getOutput()) {
-				workspace.outputText(output);
-			}
+			print("TODO: Check for errors!");
 		}
 
-		var error = workspace.endTraversal();
+		// var error = workspace.endTraversal();
 
 		repaint();
 
-		if (error) {
-			if (behavior) {
-				stopThreads();
-				behavior.onProgramError(error);
-			}
-		}
+		// if (error) {
+		// 	if (behavior) {
+		// 		stopThreads();
+		// 		behavior.onProgramError(error);
+		// 	}
+		// }
 	}
 
 	// Called when the mouse is moved.

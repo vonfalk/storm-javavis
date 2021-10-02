@@ -58,6 +58,13 @@ value TypeInfo {
 	}
 }
 
+TypeInfo fromValue(Value v) {
+	unless (t = v.type)
+		throw InternalError("Expected a non-void type.");
+
+	TypeInfo(t, v.isValue, v.ref);
+}
+
 /**
  * Description of members.
  */

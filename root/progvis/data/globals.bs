@@ -1,0 +1,66 @@
+use ui;
+use graphics;
+use core:geometry;
+use core:lang;
+use lang:bs:macro;
+
+/**
+ * Data for global variables.
+ */
+class Globals extends Composite {
+	init(GlobalVar[] globals) {
+		init() {}
+
+		for (v in globals) {
+			this.globals << Global(v.name, fromValue(v.type), unsafe:RawPtr:fromGlobal(v));
+		}
+
+		// Make the order consistent.
+		this.globals.sort((a, b) => a.name < b.name);
+	}
+
+	// Source data for globals.
+	value Global {
+		Str name;
+		TypeInfo type;
+		unsafe:RawPtr src;
+
+		init(Str name, TypeInfo type, unsafe:RawPtr src) {
+			init {
+				name = name;
+				type = type;
+				src = src;
+			}
+		}
+	}
+
+	// Additional data for the global variables.
+	private Global[] globals;
+
+	// Update.
+	void update(World:Traversal t, unsafe:RawPtr object, Nat offset) : override {
+		while (parts.count < globals.count) {
+			Global g = globals[parts.count];
+			parts << Part(g.name, 0, t.create(g.type), false);
+		}
+
+		for (i, p in parts) {
+			var src = globals[i].src;
+			t.addData(src, p.value);
+			p.value.update(t, src, 0);
+		}
+	}
+
+	// Traverse.
+	void traverse(World:Traversal t, unsafe:RawPtr object, Nat offset) : override {
+		for (i, p in parts) {
+			p.value.traverse(t, globals[i].src, 0);
+		}
+	}
+
+	// Title.
+	Str title() : override {
+		"Globals";
+	}
+
+}

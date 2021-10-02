@@ -31,25 +31,6 @@ class Data extends Drawable {
 
 	// Refine "contained" with a more convenient return type.
 	Data contained() : override { this; }
-
-	// Update the read/write state of this data element based on what threads have observed.
-	// Called for the root of a data object, thus we assume that 'offset' is zero.
-	void updateMemAccess(unsafe:RawPtr object, Trackers trackers) {
-		Nat size = object.readSize * object.readCount;
-
-		if (trackers.accessed(object)) {
-			checkAccess(object, 0, size, trackers);
-		} else {
-			clearAccess();
-		}
-	}
-
-	// Called to clear any access markers for this object.
-	void clearAccess() : abstract;
-
-	// Called when this object has been accessed by at least one thread. Recurses through the object
-	// hierarchy to find individual elements.
-	void checkAccess(unsafe:RawPtr object, Nat offset, Nat size, Trackers trackers) : abstract;
 }
 
 /**
@@ -97,37 +78,37 @@ class RWData extends Data {
 	}
 
 	// Clear access.
-	void clearAccess() : override {
-		newRead = read = false;
-		newWrite = write = false;
-		error = false;
-	}
+	// void clearAccess() : override {
+	// 	newRead = read = false;
+	// 	newWrite = write = false;
+	// 	error = false;
+	// }
 
-	// Update access.
-	void checkAccess(unsafe:RawPtr object, Nat offset, Nat size, Trackers trackers) : override {
-		var r = trackers.readBy(object, offset, size);
-		var w = trackers.writtenBy(object, offset, size);
+	// // Update access.
+	// void checkAccess(unsafe:RawPtr object, Nat offset, Nat size, Trackers trackers) : override {
+	// 	var r = trackers.readBy(object, offset, size);
+	// 	var w = trackers.writtenBy(object, offset, size);
 
-		newRead = trackers.newRead(object, offset, size);
-		newWrite = trackers.newWrite(object, offset, size);
+	// 	newRead = trackers.newRead(object, offset, size);
+	// 	newWrite = trackers.newWrite(object, offset, size);
 
-		read = r.any;
-		write = w.any;
-		error = false;
+	// 	read = r.any;
+	// 	write = w.any;
+	// 	error = false;
 
-		// Writes from multiple threads is not OK.
-		if (w.count > 1) {
-			trackers.multiWriteError(w);
-			error = true;
-		} else if (w.any) {
-			for (t in r) {
-				if (t !is w[0]) {
-					trackers.readWriteError(w[0], r);
-					error = true;
-				}
-			}
-		}
-	}
+	// 	// Writes from multiple threads is not OK.
+	// 	if (w.count > 1) {
+	// 		trackers.multiWriteError(w);
+	// 		error = true;
+	// 	} else if (w.any) {
+	// 		for (t in r) {
+	// 			if (t !is w[0]) {
+	// 				trackers.readWriteError(w[0], r);
+	// 				error = true;
+	// 			}
+	// 		}
+	// 	}
+	// }
 }
 
 /**
@@ -229,13 +210,13 @@ class DataWithCaption extends Data {
 		false;
 	}
 
-	void clearAccess() : override {
-		wrap.clearAccess();
-	}
+	// void clearAccess() : override {
+	// 	wrap.clearAccess();
+	// }
 
-	void checkAccess(unsafe:RawPtr object, Nat offset, Nat size, Trackers trackers) : override {
-		wrap.checkAccess(object, offset, size, trackers);
-	}
+	// void checkAccess(unsafe:RawPtr object, Nat offset, Nat size, Trackers trackers) : override {
+	// 	wrap.checkAccess(object, offset, size, trackers);
+	// }
 
 
 	// The drawable we're wrapping.
@@ -381,14 +362,14 @@ class Pointer extends RWData {
 	}
 
 	void update(Workspace work, unsafe:RawPtr object, Nat offset) : override {
-		var ptr = object.readPtr(offset);
-		if (ptr.any) {
-			var off = work.traverse(ptr).findOffset(null, 0);
-			this.to = off.data;
-			this.offset = off.offset;
-		} else {
-			to = null;
-		}
+		// var ptr = object.readPtr(offset);
+		// if (ptr.any) {
+		// 	var off = work.traverse(ptr).findOffset(null, 0);
+		// 	this.to = off.data;
+		// 	this.offset = off.offset;
+		// } else {
+		// 	to = null;
+		// }
 	}
 
 	DataOffset findOffset(core:lang:Type? type, Nat offset) : override {
@@ -402,15 +383,15 @@ class Pointer extends RWData {
  * dereferencing it once first.
  */
 class StackPointer extends Pointer {
-	void update(Workspace work, unsafe:RawPtr object, Nat offset) : override {
-		if (object.any) {
-			var off = work.traverse(object).findOffset(null, 0);
-			this.to = off.data;
-			this.offset = off.offset;
-		} else {
-			to = null;
-		}
-	}
+	// void update(Workspace work, unsafe:RawPtr object, Nat offset) : override {
+	// 	if (object.any) {
+	// 		var off = work.traverse(object).findOffset(null, 0);
+	// 		this.to = off.data;
+	// 		this.offset = off.offset;
+	// 	} else {
+	// 		to = null;
+	// 	}
+	// }
 }
 
 /**
@@ -510,23 +491,23 @@ class Composite extends Data {
 	}
 
 	// Called to clear any access markers for this object.
-	void clearAccess() {
-		for (v in content) {
-			v.value.clearAccess();
-		}
-	}
+	// void clearAccess() {
+	// 	for (v in content) {
+	// 		v.value.clearAccess();
+	// 	}
+	// }
 
 	// Called when this object has been accessed by at least one thread. Recurses through the object
 	// hierarchy to find individual elements.
-	void checkAccess(unsafe:RawPtr object, Nat offset, Nat size, Trackers trackers) {
-		for (i, v in content) {
-			Nat end = size;
-			if (i + 1 < content.count)
-				end = content[i + 1].offset;
+	// void checkAccess(unsafe:RawPtr object, Nat offset, Nat size, Trackers trackers) {
+	// 	for (i, v in content) {
+	// 		Nat end = size;
+	// 		if (i + 1 < content.count)
+	// 			end = content[i + 1].offset;
 
-			v.value.checkAccess(object, offset + v.offset, end - v.offset, trackers);
-		}
-	}
+	// 		v.value.checkAccess(object, offset + v.offset, end - v.offset, trackers);
+	// 	}
+	// }
 
 private:
 	class Var on Render {
@@ -636,9 +617,9 @@ class ArrayData extends Data {
 
 		// Create new elements.
 		for (Nat i = content.count; i < count; i++) {
-			Var v(i, work.createData(typeInfo, data, i*stride));
-			content << v;
-			v.value.update(work, data, i*stride);
+			// Var v(i, work.createData(typeInfo, data, i*stride));
+			// content << v;
+			// v.value.update(work, data, i*stride);
 		}
 
 		// Remove any extra.
@@ -652,19 +633,19 @@ class ArrayData extends Data {
 	// Called to clear any access markers for this object.
 	void clearAccess() {
 		for (v in content) {
-			v.value.clearAccess();
+			// v.value.clearAccess();
 		}
 	}
 
 	// Called when this object has been accessed by at least one thread. Recurses through the object
 	// hierarchy to find individual elements.
-	void checkAccess(unsafe:RawPtr object, Nat offset, Nat size, Trackers trackers) {
-		Nat stride = object.readSize;
+	// void checkAccess(unsafe:RawPtr object, Nat offset, Nat size, Trackers trackers) {
+	// 	Nat stride = object.readSize;
 
-		for (i, v in content) {
-			v.value.checkAccess(object, offset + i*stride, stride, trackers);
-		}
-	}
+	// 	for (i, v in content) {
+	// 		v.value.checkAccess(object, offset + i*stride, stride, trackers);
+	// 	}
+	// }
 
 private:
 	TypeInfo typeInfo;
