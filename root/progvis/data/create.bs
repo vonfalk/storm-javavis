@@ -1,7 +1,0 @@
-use ui;
-
-on Render:
-
-/**
- * Create a suitable representation of the data.
- */

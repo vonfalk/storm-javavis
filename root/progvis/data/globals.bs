@@ -9,7 +9,7 @@ use lang:bs:macro;
  */
 class Globals extends Composite {
 	init(GlobalVar[] globals) {
-		init() {}
+		init(null) {}
 
 		for (v in globals) {
 			this.globals << Global(v.name, fromValue(v.type), unsafe:RawPtr:fromGlobal(v));
@@ -61,7 +61,7 @@ class Globals extends Composite {
 	}
 
 	// Title.
-	Str title() : override {
+	Str title(World world) : override {
 		"Globals";
 	}
 

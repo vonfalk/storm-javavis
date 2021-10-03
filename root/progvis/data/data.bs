@@ -1,4 +1,5 @@
 use ui;
+use core:lang;
 
 /**
  * Some data in a program.
@@ -7,6 +8,9 @@ use ui;
  * itself, or some combination of the two.
  */
 class Data on Render {
+	// Type of this data.
+	Type? type() : abstract;
+
 	// Update data inside this object. If this object consists of multiple objects that are showed
 	// as a single allocation, it should also add them to the traversal.
 	void update(World:Traversal t, unsafe:RawPtr object, Nat offset) {}
@@ -18,7 +22,7 @@ class Data on Render {
 
 	// Get the title of this data element. This will be used to create suitable labels when the data
 	// is visualized.
-	Str title() : abstract;
+	Str title(World world) : abstract;
 }
 
 /**
@@ -26,7 +30,8 @@ class Data on Render {
  */
 class Unknown extends Data {
 	void traverse(World:Traversal t, unsafe:RawPtr object, Nat offset) : override {}
-	Str title() : override { "Unknown"; }
+	Str title(World world) : override { "Unknown"; }
+	Type? type() : override { null; }
 }
 
 /**
@@ -41,23 +46,92 @@ class Atom extends Data {}
  * Primitive type of some sort (e.g. integer, char, ...)
  */
 class Primitive extends Atom {
-	void traverse(World:Traversal t, unsafe:RawPtr object, Nat offset) : override {}
-	Str title() : override { "?"; }
+	// Create.
+	init(Type type) {
+		init {
+			pType = type;
+		}
+	}
+
+	// The type of data in this primitive.
+	private Type pType;
+
+	// Value of this primitive, as a string.
+	Str value;
+
+	// Traverse.
+	void traverse(World:Traversal t, unsafe:RawPtr object, Nat offset) : override {
+		if (v = convertPrimitive(pType, object, offset))
+			value = v;
+	}
+
+	// Title.
+	Str title(World world) : override {
+		world.typeTitle(pType);
+	}
+
+	// Type.
+	Type? type() : override { pType; }
 }
 
 /**
  * Pointer or reference.
  */
 class Pointer extends Atom {
-	void traverse(World:Traversal t, unsafe:RawPtr object, Nat offset) : override {}
-	Str title() : override { "?"; }
+	// Create. Provide the type of the pointer if it is known.
+	init(Type? type) {
+		init() {
+			pType = type;
+		}
+	}
+
+	// Type of the pointer, if known.
+	private Type? pType;
+
+	// Object we're pointing to.
+	Data? to;
+
+	// Traverse the pointer.
+	void traverse(World:Traversal t, unsafe:RawPtr object, Nat offset) : override {
+		traverse(t, object.readPtr(offset));
+	}
+
+	// Traverse a pointer.
+	protected void traverse(World:Traversal t, unsafe:RawPtr ptr) {
+		if (ptr.any) {
+			to = t.findOrCreate(ptr);
+		} else {
+			to = null;
+		}
+	}
+
+	// Title of the pointer.
+	Str title(World world) : override {
+		if (pType)
+			world.typeTitle(pType);
+		else
+			"";
+	}
+
+	// Type.
+	Type? type() : override { pType; }
 }
 
 /**
  * Pointer on the stack. Examines the pointer passed directly to the object rather than
  * dereferencing it once first.
  */
-class StackPointer extends Pointer {}
+class StackPointer extends Pointer {
+	// Note: The type of stack pointers is generally not known exactly, and it does not matter for our usage.
+	init() {
+		init(null) {}
+	}
+
+	// Traverse.
+	void traverse(World:Traversal t, unsafe:RawPtr object, Nat offset) : override {
+		traverse(t, object);
+	}
+}
 
 /**
  * Data that represents an object (i.e. variables with values).
@@ -87,9 +161,14 @@ class Composite extends Data {
 	// Parts in here.
 	Part[] parts;
 
+	// The type of this composite object.
+	private Type? myType;
+
 	// Create.
-	init() {
-		init {}
+	init(Type? type) {
+		init {
+			myType = type;
+		}
 	}
 
 	// Add an element.
@@ -110,8 +189,16 @@ class Composite extends Data {
 	}
 
 	// Title.
-	Str title() : override {
-		"?";
+	Str title(World world) : override {
+		if (myType)
+			world.typeTitle(myType);
+		else
+			"?";
+	}
+
+	// Type.
+	Type? type() : override {
+		myType;
 	}
 }
 
@@ -124,10 +211,12 @@ class Array extends Data {}
  * Standard array, extracts data from the core:Array implementation.
  */
 class StdArray extends Array {
-	private core:lang:Type elemType;
+	private Type arrayType;
+	private Type elemType;
 
-	init(core:lang:Type elemType) {
+	init(Type arrayType, Type elemType) {
 		init() {
+			arrayType = arrayType;
 			elemType = elemType;
 		}
 	}
@@ -136,7 +225,11 @@ class StdArray extends Array {
 
 	void traverse(World:Traversal t, unsafe:RawPtr object, Nat offset) : override {}
 
-	Str title() : override {
-		elemType.name + "[]";
+	Str title(World world) : override {
+		world.typeTitle(elemType) + "[]";
+	}
+
+	Type? type() : override {
+		arrayType;
 	}
 }

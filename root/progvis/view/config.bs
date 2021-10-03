@@ -12,6 +12,9 @@ Font captionFont on Render = defaultFont();
 // Default font when drawing data.
 Font dataFont on Render = defaultFont();
 
+// Size of a pointer variable.
+Size ptrSize on Render = Text("????", dataFont).size;
+
 // Font for variable names.
 Font variableFont on Render = Font("Consolas", 12);
 

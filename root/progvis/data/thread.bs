@@ -59,8 +59,13 @@ class Thread extends Data {
 	}
 
 	// Title.
-	Str title() : override {
+	Str title(World world) : override {
 		"Thread " + src.threadId.toS;
+	}
+
+	// Type.
+	Type? type() : override {
+		null;
 	}
 
 	// Stack frame.
@@ -70,12 +75,12 @@ class Thread extends Data {
 
 		// Create.
 		init(StackFrame src) {
-			init {
+			init(null) {
 				src = src;
 			}
 		}
 
-		Str title() : override {
+		Str title(World world) : override {
 			// This is safe: the same stack frame object does not modify its title.
 			src.function;
 		}
@@ -85,13 +90,27 @@ class Thread extends Data {
 				var ptr = unsafe:RawPtr(v.value);
 				if (k >= parts.count) {
 					parts << Part(v.name, 0, t.createStack(ptr), false);
+				} else if (parts[k].name != v.name) {
+					parts[k] = Part(v.name, 0, t.createStack(ptr), false);
 				} else {
-					print("TODO: Update value on the stack!");
-					// parts.value.update(ptr);
-					// We might need to switch it to another type in the worst case.
+					var oldType = parts[k].value.type;
+					var newType = ptr.type;
+					if (oldType.empty | newType.empty) {
+						// No need to replace if any of them said null.
+					} else if (newType !is oldType) {
+						parts[k].value = t.createStack(ptr);
+					}
 				}
 
-				t.addData(ptr, parts[k].value);
+				parts[k].value.update(t, ptr, 0);
+
+				// Don't add the object if it is represented as a StackPointer object. The
+				// StackPointer object treats the data as a pointer to the data, and not the value
+				// itself. If we add that, all StackData objects will simply point to themselves.
+				if (parts[k].value as StackPointer)
+					;
+				else
+					t.addData(ptr, parts[k].value);
 			}
 		}
 

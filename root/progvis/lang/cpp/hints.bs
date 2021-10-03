@@ -4,9 +4,7 @@ use lang:bs:macro;
 
 // Hints for the C++ module.
 progvis:program:Hints hints() {
-	// progvis:Hints(CppCodeHints(), CppViewHints());
-	print("TODO: Re-instate the view hints!");
-	progvis:program:Hints(CppCodeHints());
+	progvis:program:Hints(CppCodeHints(), CppViewHints());
 }
 
 /**

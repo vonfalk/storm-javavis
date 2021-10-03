@@ -40,12 +40,12 @@ class CppViewHints extends ViewHints {
 	}
 
 	// Get a title for the type.
-	Str? typeTitle(World:Traversal traversal, TypeInfo info) : override {
+	Str? typeTitle(World world, TypeInfo info) : override {
 		if (type = info.type as PtrType) {
 			if (t = type.params[0].type) {
 				TypeInfo info(t, true, false);
 
-				Str result = traversal.typeTitle(info);
+				Str result = world.typeTitle(info);
 				if (type.isConst)
 					result = "const " + result;
 

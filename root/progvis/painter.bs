@@ -17,6 +17,9 @@ class MainPainter extends Painter {
 	// Problem panel, if any.
 	private ProblemPanel? panel;
 
+	// Lock for traversals.
+	private core:sync:Lock traverseLock;
+
 	// Left mouse button pressed?
 	private Bool mouseDown;
 
@@ -211,7 +214,13 @@ class MainPainter extends Painter {
 	// Update the visualization of the data.
 	void update() {
 		if (world) {
+			core:sync:Lock:Guard z(traverseLock);
+
 			world.update();
+
+			if (o = world.program.getOutput())
+				workspace.outputText(o);
+
 			workspace.update(world);
 
 			print("TODO: Check for errors!");

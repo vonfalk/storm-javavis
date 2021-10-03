@@ -54,7 +54,7 @@ class SmallButton extends Drawable {
 
 	Bool sameData(Data d) : override { false; }
 
-	void update(Workspace ws) : override {}
+	void update(Workspace:Update ws) : override {}
 }
 
 // Create a path for a run button.

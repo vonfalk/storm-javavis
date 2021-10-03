@@ -58,6 +58,20 @@ class World on Render {
 	Array<Allocation>:Iter begin() { allocations.begin; }
 	Array<Allocation>:Iter end() { allocations.end; }
 
+	// Find the name for a type.
+	Str typeTitle(TypeInfo type) {
+		for (h in hints) {
+			if (r = h.typeTitle(this, type))
+				return r;
+		}
+		"?";
+	}
+
+	// Convenience wrapper.
+	Str typeTitle(core:lang:Type type) {
+		typeTitle(TypeInfo(type, true, false));
+	}
+
 	/**
 	 * Data used during object traversal.
 	 */
@@ -129,7 +143,7 @@ class World on Render {
 		// Create an allocation for an object.
 		private Allocation createAlloc(unsafe:RawPtr object) {
 			if (type = object.type) {
-				TypeInfo info(type, object.isValue, false);
+				TypeInfo info(type, true, false);
 
 				for (h in owner.hints) {
 					if (d = h.createData(this, info)) {
@@ -169,7 +183,7 @@ class World on Render {
 
 		// Find a title for a type.
 		Str typeTitle(TypeInfo info) {
-			"TODO";
+			owner.typeTitle(info);
 		}
 	}
 
@@ -181,6 +195,7 @@ private:
 
 		for (i, a in allocations) {
 			a.update(t, i);
+			a.visited = false;
 		}
 
 		t;

@@ -35,7 +35,127 @@ class UnknownView extends DataView {
 
 	Bool sameData(Data d) : override { d is data; }
 
-	void update(Workspace ws) : override {}
+	void update(Workspace:Update ws) : override {}
+}
+
+/**
+ * View of some atomic data.
+ *
+ * Highlights reads and writes as appropriate.
+ */
+class AtomView extends DataView {}
+
+/**
+ * Primitive of some sort.
+ */
+class PrimitiveView extends AtomView {
+	init(Primitive data) {
+		init {
+			data = data;
+		}
+	}
+
+	private Primitive data;
+	private Str lastValue;
+	private Text? text;
+
+	Bool sameData(Data d) : override { d is data; }
+
+	void update(Workspace:Update ws) : override {
+		ws.setVisual(data, this);
+		update();
+	}
+
+	private void update() {
+		if (lastValue != data.value) {
+			lastValue = data.value;
+			text = Text(lastValue, dataFont);
+
+			invalidateSize();
+		}
+	}
+
+	void draw(Graphics g, Bool active) : override {
+		super:draw(g, active);
+		if (text)
+			g.draw(text, dataFg, pos + dataMargin);
+	}
+
+	void drawLinks(Graphics g, Bool active) : override {}
+
+	protected Size computeSize() : override {
+		if (text)
+			text.size + dataMargin*2;
+		else
+			dataMargin*2;
+	}
+}
+
+// Arrow for all pointers.
+package Path ptrArrow on Render = {
+	Path p;
+	p.start(Point(0, 0));
+	p.line(Point(-6, -4));
+	p.line(Point(-6, 4));
+	p.close();
+	p;
+};
+
+/**
+ * View of a pointer.
+ */
+class PointerView extends AtomView {
+	init(Pointer data) {
+		init {
+			data = data;
+		}
+
+		size = ptrSize + dataMargin*2;
+	}
+
+	private Pointer data;
+	private Drawable? target;
+	private Path line;
+
+	Bool sameData(Data d) : override { d is data; }
+
+	void update(Workspace:Update ws) : override {
+		ws.setVisual(data, this);
+		if (to = data.to) {
+			target = ws.find(this, to);
+		} else {
+			target = null;
+		}
+	}
+
+	void draw(Graphics g, Bool active) : override {
+		super:draw(g, active);
+		if (target.empty) {
+			Rect r = rect;
+			g.line(rect.p0, rect.p1, activeLink);
+		}
+	}
+
+	void drawLinks(Graphics g, Bool active) : override {
+		if (target) {
+			Point to = target.pos;
+			// TODO: Offset?
+
+			Brush color = if (active) { activeLink; } else { inactiveLink; };
+			Rect r = rect;
+			Float dy = abs(r.center.y - to.y);
+			Float shift = max(0.2*dy, 40);
+			line.clear();
+			line.start(r.center);
+			line.bezier(to - Point(shift, 0), to);
+			g.draw(line, color);
+
+			g.push();
+			g.transform(translate(to));
+			g.fill(ptrArrow, color);
+			g.pop();
+		}
+	}
 }
 
 
@@ -80,12 +200,17 @@ class CompositeView extends DataView {
 		}
 	}
 
-	void update(Workspace ws) {
+	void update(Workspace:Update ws) {
+		ws.setVisual(data, this);
 		for (id, part in data.parts) {
 			if (id >= content.count) {
 				content << Variable(part.name, ws.create(part.value), part.first);
-			} else if (!content[id].data.sameData(part.value)) {
-				content[id].data = ws.create(part.value);
+			} else {
+				if (!content[id].data.sameData(part.value))
+					content[id].data = ws.create(part.value);
+
+				if (content[id].name.text != part.name)
+					content[id].name = Text(part.name, variableFont);
 			}
 			content[id].data.update(ws);
 		}

@@ -22,7 +22,7 @@ class ViewHints on Render {
 	}
 
 	// Get a title for a type.
-	Str? typeTitle(World:Traversal t, TypeInfo type) : abstract;
+	Str? typeTitle(World t, TypeInfo type) : abstract;
 }
 
 
@@ -37,9 +37,9 @@ class DefaultViewHints extends ViewHints {
 			return Unknown();
 		} else if (!info.isValue) {
 			// A reference.
-			return Pointer();
+			return Pointer(info.type);
 		} else if (isPrimitive(info.type)) {
-			return Primitive();
+			return Primitive(info.type);
 		} else {
 			return createComposite(t, info.type);
 		}
@@ -49,14 +49,14 @@ class DefaultViewHints extends ViewHints {
 	private Data createComposite(World:Traversal t, core:lang:Type type) {
 		if (type as core:lang:ArrayType) {
 			if (t = type.param.type) {
-				return StdArray(t);
+				return StdArray(type, t);
 			}
 		} else {
 			var members = findMembers(type);
 			if (members.empty)
 				return Unknown();
 
-			Composite result;
+			Composite result(type);
 			for (m in members) {
 				result.add(m.name, m.offset, t.create(m.type), m.first);
 			}
@@ -68,11 +68,11 @@ class DefaultViewHints extends ViewHints {
 	}
 
 	// Type names.
-	Str? typeTitle(World:Traversal traverse, TypeInfo info) : override {
+	Str? typeTitle(World world, TypeInfo info) : override {
 		if (type = info.type as core:lang:ArrayType) {
 			if (t = type.param.type) {
 				TypeInfo info(t, true, false);
-				return traverse.typeTitle(info) + "[]";
+				return world.typeTitle(info) + "[]";
 			}
 		}
 

@@ -262,7 +262,7 @@ class UnknownData extends RWData {
 /**
  * A primitive datatype, such as an integer. Represented as text.
  */
-class Primitive extends RWData {
+class OPrimitive extends RWData {
 	// The text to draw.
 	private Text text;
 
@@ -303,19 +303,19 @@ class Primitive extends RWData {
 }
 
 // Arrow for all pointers.
-package Path ptrArrow on Render = {
-	Path p;
-	p.start(Point(0, 0));
-	p.line(Point(-6, -4));
-	p.line(Point(-6, 4));
-	p.close();
-	p;
-};
+// package Path ptrArrow on Render = {
+// 	Path p;
+// 	p.start(Point(0, 0));
+// 	p.line(Point(-6, -4));
+// 	p.line(Point(-6, 4));
+// 	p.close();
+// 	p;
+// };
 
 /**
  * A pointer type, referring to some other data.
  */
-class Pointer extends RWData {
+class OPointer extends RWData {
 	// Object we're pointing to.
 	protected OData? to;
 
@@ -384,17 +384,17 @@ class Pointer extends RWData {
  * A pointer on the stack. Examines the pointer passed directly to the object rather than
  * dereferencing it once first.
  */
-class StackPointer extends Pointer {
-	// void update(Workspace work, unsafe:RawPtr object, Nat offset) : override {
-	// 	if (object.any) {
-	// 		var off = work.traverse(object).findOffset(null, 0);
-	// 		this.to = off.data;
-	// 		this.offset = off.offset;
-	// 	} else {
-	// 		to = null;
-	// 	}
-	// }
-}
+// class StackPointer extends Pointer {
+// 	// void update(Workspace work, unsafe:RawPtr object, Nat offset) : override {
+// 	// 	if (object.any) {
+// 	// 		var off = work.traverse(object).findOffset(null, 0);
+// 	// 		this.to = off.data;
+// 	// 		this.offset = off.offset;
+// 	// 	} else {
+// 	// 		to = null;
+// 	// 	}
+// 	// }
+// }
 
 /**
  * A composite type, consisting of one or more variables of other types.

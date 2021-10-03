@@ -46,7 +46,7 @@ class Drawable on Render {
 	Bool sameData(Data data) : abstract;
 
 	// Update the data in this drawable.
-	void update(Workspace ws) : abstract;
+	void update(Workspace:Update ws) : abstract;
 
 	// Cached size.
 	private Size? cachedSize;
@@ -144,7 +144,7 @@ class WithCaption extends Drawable {
 		wrap.sameData(d);
 	}
 
-	void update(Workspace ws) : override {
+	void update(Workspace:Update ws) : override {
 		wrap.update(ws);
 	}
 
