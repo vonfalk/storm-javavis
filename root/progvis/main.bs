@@ -410,7 +410,7 @@ void debug() on Compiler {
 		MainWin win;
 		// win.open(url / "assert.c");
 		// win.open(url / "atomics.c");
-		win.open(url / "demo1.bs");
+		// win.open(url / "demo1.bs");
 		// win.open(url / "demo2.bs");
 		// win.open(url / "array.bs");
 		// win.open(url / "cpp.cpp");
@@ -426,7 +426,7 @@ void debug() on Compiler {
 		// win.open(url / "pintos_debug.cpp");
 		// win.open(url / "pintos_live.c");
 		// win.open(url / "thread_example.c");
-		// win.open(url / "printf.c");
+		win.open(url / "printf.c");
 		// win.open(url / "globals.cpp");
 		// win.open(url / "restore_globals.c");
 		// win.open(url / "data_race.c");

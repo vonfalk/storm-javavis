@@ -20,6 +20,10 @@ class Data on Render {
 	// allocations. Find and update any pointers to data outside of this data structure.
 	void traverse(World:Traversal t, unsafe:RawPtr object, Nat offset) : abstract;
 
+	// Find the sub-data allocated at a particular position. Also attempts to match the desired type
+	// of the sub-data if possible.
+	Data atOffset(Type? type, Nat offset) { this; }
+
 	// Get the title of this data element. This will be used to create suitable labels when the data
 	// is visualized.
 	Str title(World world) : abstract;
@@ -199,6 +203,34 @@ class Composite extends Data {
 	// Type.
 	Type? type() : override {
 		myType;
+	}
+
+	// Find offset.
+	Data atOffset(Type? type, Nat offset) {
+		if (parts.empty)
+			return this;
+
+		// If we are the type that is sought after, give a pointer to us.
+		// Note: This assumes that we are not an array.
+		// Note: This does not work for "one past end" pointers.
+		if (type) {
+			if (myType) {
+				if (core:lang:isA(myType, type)) {
+					return this;
+				}
+			}
+		}
+
+		Nat found = parts.count - 1;
+		for (Nat i = 1; i < parts.count; i++) {
+			if (parts[i].offset > offset) {
+				found = i - 1;
+				break;
+			}
+		}
+
+		var elem = parts[found];
+		return elem.value.atOffset(type, offset - elem.offset);
 	}
 }
 

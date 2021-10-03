@@ -40,6 +40,11 @@ class DefaultViewHints extends ViewHints {
 			return Pointer(info.type);
 		} else if (isPrimitive(info.type)) {
 			return Primitive(info.type);
+		} else if (type = info.type as core:lang:ArrayType) {
+			if (t = type.param.type)
+				return StdArray(type, t);
+			else
+				return Unknown();
 		} else {
 			return createComposite(t, info.type);
 		}
@@ -47,24 +52,16 @@ class DefaultViewHints extends ViewHints {
 
 	// Create a composite object.
 	private Data createComposite(World:Traversal t, core:lang:Type type) {
-		if (type as core:lang:ArrayType) {
-			if (t = type.param.type) {
-				return StdArray(type, t);
-			}
-		} else {
-			var members = findMembers(type);
-			if (members.empty)
-				return Unknown();
+		var members = findMembers(type);
+		if (members.empty)
+			return Unknown();
 
-			Composite result(type);
-			for (m in members) {
-				result.add(m.name, m.offset, t.create(m.type), m.first);
-			}
-
-			return result;
+		Composite result(type);
+		for (m in members) {
+			result.add(m.name, m.offset, t.create(m.type), m.first);
 		}
 
-		Unknown();
+		result;
 	}
 
 	// Type names.

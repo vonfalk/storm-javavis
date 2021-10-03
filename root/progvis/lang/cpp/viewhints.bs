@@ -26,7 +26,6 @@ class CppViewHints extends ViewHints {
 			return null;
 
 		print("TODO: Fix object creation!");
-		return null;
 
 		// // If this is the "outermost" allocation of something that was allocated as an array, create
 		// // a special instance for that.
@@ -36,7 +35,7 @@ class CppViewHints extends ViewHints {
 		// 		return createArray(ws, info, base);
 		// }
 
-		// createSpecial(ws, info, base, offset);
+		createSpecial(t, info);
 	}
 
 	// Get a title for the type.
@@ -60,42 +59,42 @@ class CppViewHints extends ViewHints {
 	}
 
 	// Check if this is a special type in some way.
-	// private Data? createSpecial(Workspace ws, TypeInfo info, unsafe:RawPtr object, Nat offset) {
-	// 	if (ptr = info.type as PtrType) {
-	// 		return CppPointer(ptr.inside);
-	// 	}
+	private Data? createSpecial(World:Traversal t, TypeInfo info) {
+		if (ptr = info.type as PtrType) {
+			return CppPointer(ptr);
+		}
 
-	// 	if (info.type is named{runtime:semaphore}) {
-	// 		return hideImpl(ws, info, object, offset);
-	// 	}
+		if (info.type is named{runtime:semaphore}) {
+			return hideImpl(t, info);
+		}
 
-	// 	if (info.type is named{runtime:lock}) {
-	// 		return hideImpl(ws, info, object, offset);
-	// 	}
+		if (info.type is named{runtime:lock}) {
+			return hideImpl(t, info);
+		}
 
-	// 	if (info.type is named{runtime:condition}) {
-	// 		return hideImpl(ws, info, object, offset);
-	// 	}
+		if (info.type is named{runtime:condition}) {
+			return hideImpl(t, info);
+		}
 
-	// 	if (info.type is named{Byte}) {
-	// 		return CppChar();
-	// 	}
+		if (info.type is named{Byte}) {
+			return CppChar();
+		}
 
-	// 	null;
-	// }
+		null;
+	}
 
 	// Hide the variable "impl" from a composite type.
-	// private Data hideImpl(Workspace ws, TypeInfo info, unsafe:RawPtr object, Nat offset) {
-	// 	var members = findMembers(info.type);
+	private Data hideImpl(World:Traversal t, TypeInfo info) {
+		var members = findMembers(info.type);
 
-	// 	Composite result(info.type);
-	// 	for (m in members) {
-	// 		if (m.name != "impl")
-	// 			result.add(m.name, m.offset, ws.createData(m.type, object, offset + m.offset), m.first);
-	// 	}
+		Composite result(info.type);
+		for (m in members) {
+			if (m.name != "impl")
+				result.add(m.name, m.offset, t.create(m.type), m.first);
+		}
 
-	// 	result;
-	// }
+		result;
+	}
 
 	// Create a data node for an array. We assume that 'offset' is zero (checked earlier).
 	// private Data createArray(Workspace ws, TypeInfo info, unsafe:RawPtr base) {
@@ -148,39 +147,34 @@ class CppViewHints extends ViewHints {
 /**
  * C++ pointers/references.
  */
-// class CppPointer extends Pointer {
-// 	init(core:lang:Type? to) {
-// 		init { type = to; }
-// 	}
+class CppPointer extends Pointer {
+	init(PtrType type) {
+		init(type) { targetType = type.inside; }
+	}
 
-// 	// Type of the thing we're pointing to.
-// 	core:lang:Type? type;
+	// The type we point to.
+	private core:lang:Type? targetType;
 
-// 	void update(Workspace ws, unsafe:RawPtr object, Nat offset) : override {
-// 		if (!object.any) {
-// 			to = null;
-// 			return;
-// 		}
+	void traverse(World:Traversal t, unsafe:RawPtr object, Nat offset) : override {
+		if (!object.any) {
+			to = null;
+			return;
+		}
 
-// 		var base = object.readPtr(offset);
-// 		if (!base.any) {
-// 			to = null;
-// 			return;
-// 		}
+		var base = object.readPtr(offset);
+		if (!base.any) {
+			to = null;
+			return;
+		}
 
-// 		Nat ptrOffset = object.readNat(offset + core:asm:sPtr.current) - 2*core:asm:sPtr.current;
+		var sPtr = core:asm:sPtr.current;
+		Nat ptrOffset = object.readNat(offset + sPtr) - 2*sPtr;
 
-// 		Data baseData = ws.traverse(base);
-// 		var off = baseData.findOffset(type, ptrOffset);
-// 		this.to = off.data;
-// 		this.offset = off.offset;
-// 	}
-
-// 	DataOffset findOffset(core:lang:Type? type, Nat offset) : override {
-// 		Float o = min(offset.int.float / (2*core:asm:sPtr.current.int.float), 1.0);
-// 		DataOffset(this, o * size.h);
-// 	}
-// }
+		Data baseData = t.findOrCreate(base);
+		print("TODO: Find offset!");
+		to = baseData;
+	}
+}
 
 
 /**
@@ -263,6 +257,23 @@ class CppViewHints extends ViewHints {
 /**
  * A single C++ character.
  */
+class CppChar extends Primitive {
+	init() {
+		init(named{Byte}) {}
+	}
+
+	void traverse(World:Traversal t, unsafe:RawPtr object, Nat offset) : override {
+		Byte data = object.readByte(offset);
+		StrBuf b;
+		b << "(" << data << ") ";
+		if (data >= 32 & data < 128)
+			b << Char(data);
+		else
+			b << "?";
+		value = b.toS;
+	}
+}
+
 // class CppChar extends RWData {
 // 	// Character value.
 // 	private Text ch;
