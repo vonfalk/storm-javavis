@@ -146,7 +146,7 @@ class World on Render {
 				TypeInfo info(type, true, false);
 
 				for (h in owner.hints) {
-					if (d = h.createData(this, info)) {
+					if (d = h.createData(this, info, object)) {
 						return h.createAllocation(object, d);
 					}
 				}
@@ -155,14 +155,10 @@ class World on Render {
 			return Allocation(object, Unknown());
 		}
 
+		// Create data for an object. This object is assumed to be embedded inside some other
+		// larger data structure.
 		Data create(TypeInfo type) {
-			for (h in owner.hints) {
-				if (d = h.createData(this, type)) {
-					return d;
-				}
-			}
-
-			return Unknown();
+			return create(type, unsafe:RawPtr());
 		}
 
 		// Create data suitable to show 'object'. Creates the data in the context of a stack
@@ -173,12 +169,23 @@ class World on Render {
 				if (!info.isValue) {
 					StackPointer();
 				} else {
-					create(info);
+					create(info, object);
 				}
 			} else {
 				// Probably a pointer that is null at the moment.
 				StackPointer();
 			}
+		}
+
+		// Helper for createStack, like "create", but assumes a root allocation.
+		private Data create(TypeInfo type, unsafe:RawPtr root) {
+			for (h in owner.hints) {
+				if (d = h.createData(this, type, root)) {
+					return d;
+				}
+			}
+
+			return Unknown();
 		}
 
 		// Find a title for a type.

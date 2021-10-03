@@ -19,21 +19,20 @@ class CppViewHints extends ViewHints {
 	Bool barriersAvailable() : override { true; }
 
 	// Create element for visualization.
-	Data? createData(World:Traversal t, TypeInfo info) : override {
+	Data? createData(World:Traversal t, TypeInfo info, unsafe:RawPtr root) : override {
 		if (info.isRef)
 			return null;
 		if (!info.isValue)
 			return null;
 
-		print("TODO: Fix object creation!");
-
-		// // If this is the "outermost" allocation of something that was allocated as an array, create
-		// // a special instance for that.
-		// if (offset == 0 & base.type is info.type) {
-		// 	// Is it an array allocation?
-		// 	if ((base.readFilled & AllocFlags:arrayAlloc.v) != 0)
-		// 		return createArray(ws, info, base);
-		// }
+		// See if this is an array allocation. That is only relevant to do for "topmost" objects.
+		if (root.any) {
+			// Is it an array allocation?
+			if ((root.readFilled & AllocFlags:arrayAlloc.v) != 0) {
+				// return createArray(ws, info, base);
+				print("TODO: Create an array!");
+			}
+		}
 
 		createSpecial(t, info);
 	}
@@ -266,7 +265,7 @@ class CppChar extends Primitive {
 		Byte data = object.readByte(offset);
 		StrBuf b;
 		b << "(" << data << ") ";
-		if (data >= 32 & data < 128)
+		if ((data >= 32) & (data < 128))
 			b << Char(data);
 		else
 			b << "?";

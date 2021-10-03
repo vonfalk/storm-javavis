@@ -12,8 +12,10 @@ class ViewHints on Render {
 	Bool barriersAvailable() { false; }
 
 	// Create an element for an object found during traversal. Return 'null' to leave handling to
-	// the default implementation.
-	Data? createData(World:Traversal t, TypeInfo type) : abstract;
+	// the default implementation. If 'root' is non-null, then it is a pointer to the root of an
+	// allocation. This allows other implementations to examine the object to take additional
+	// aspects into account when deciding how to interpret it.
+	Data? createData(World:Traversal t, TypeInfo type, unsafe:RawPtr root) : abstract;
 
 	// Create an allocation for the given data. This is called for the ViewHints object that created
 	// the data object. The default implementation just uses a simple Allocation object.
@@ -31,7 +33,7 @@ class ViewHints on Render {
  */
 class DefaultViewHints extends ViewHints {
 	// Default behavior, works for most of Basic Storm.
-	Data? createData(World:Traversal t, TypeInfo info) : override {
+	Data? createData(World:Traversal t, TypeInfo info, unsafe:RawPtr root) : override {
 		if (info.isRef) {
 			// A reference to a value. This is not supported.
 			return Unknown();
