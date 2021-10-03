@@ -1,6 +1,7 @@
 use ui;
 use graphics;
 use core:geometry;
+use progvis:data;
 
 /**
  * A simple button. Given a path to draw as a decoration.
@@ -50,6 +51,10 @@ class SmallButton extends Drawable {
 		}
 		true;
 	}
+
+	Bool sameData(Data d) : override { false; }
+
+	void update(Workspace ws) : override {}
 }
 
 // Create a path for a run button.

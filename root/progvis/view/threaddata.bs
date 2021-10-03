@@ -6,6 +6,11 @@ use lang:bs:macro;
 use progvis:program;
 
 /**
+ * TODO: Remove this file.
+ */
+
+
+/**
  * Class representing the visual state of a thread.
  */
 class ThreadData extends Drawable {

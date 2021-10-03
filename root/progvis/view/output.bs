@@ -2,6 +2,7 @@ use ui;
 use graphics;
 use core:geometry;
 use core:lang;
+use progvis:data;
 
 /**
  * A panel containing output from a running program.
@@ -65,6 +66,12 @@ class OutputText extends Drawable {
 
 	// Don't remove.
 	Bool remove() : override { false; }
+
+	// No particular data to consider.
+	Bool sameData(Data d) : override { false; }
+
+	// Update, nothing to do in particular.
+	void update(Workspace ws) : override {}
 
 	// Draw.
 	void draw(Graphics g, Bool active) : override {

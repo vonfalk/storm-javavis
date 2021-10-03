@@ -131,7 +131,7 @@ class Workspace on Render {
 			return output;
 
 		OutputText created;
-		Element elem(Dockable(created, "Output"));
+		Element elem(null, Dockable(created, "Output"));
 		elem.output = true;
 		elem.topmost = true;
 		elements << elem;
@@ -153,7 +153,72 @@ class Workspace on Render {
 
 	// Update the contents of the workspace from a world, and a program (for output).
 	void update(World world) {
-		print("TODO: Update output.");
+		Allocation->Nat allocToElem;
+		for (id, elem in elements) {
+			if (alloc = elem.alloc)
+				allocToElem.put(alloc, id);
+			elem.visited = false;
+		}
+
+		for (alloc in world) {
+			Nat id = allocToElem.get(alloc, elements.count);
+			if (id >= elements.count) {
+				var elem = create(alloc);
+				elements << elem;
+				allocToElem.put(alloc, id);
+
+				elem.visual.update(this);
+			} else {
+				var elem = elements[id];
+				elem.visited = true;
+				elem.visual.update(this);
+			}
+		}
+
+		// Remove stale elements.
+		Nat to = 0;
+		for (Nat i = 0; i < elements.count; i++) {
+			Element here = elements[i];
+			if (to < i)
+				elements[to] = here;
+			if (here.visited)
+				to++;
+			else
+				here.docked = false;
+		}
+		while (to < elements.count) {
+			elements.pop();
+		}
+	}
+
+	// Create an element for an allocation.
+	Element create(Allocation alloc) {
+		var created = create(alloc.data);
+
+		if (alloc.data as progvis:data:Thread) {
+			Element e(alloc, Dockable(created, alloc.data.title).allowResize);
+			e.thread = true;
+			e.topmost = true;
+			e;
+		} else {
+			print("TODO: Do layout!");
+			// Don't have double borders.
+			if (x = created as WithCaption)
+				created = x.wrap;
+			Element(alloc, Movable(created, alloc.data.title));
+		}
+	}
+
+	// Create an element for a data element.
+	// TODO: Ask the view hints for support.
+	Drawable create(Data data) {
+		if (data as progvis:data:Thread) {
+			ThreadView(data);
+		} else if (data as progvis:data:Composite) {
+			WithCaption(CompositeView(data), data.title);
+		} else {
+			UnknownView(data);
+		}
 	}
 
 private:
@@ -161,6 +226,9 @@ private:
 	 * A single element on the screen with some additional metadata.
 	 */
 	class Element on Render {
+		// Which allocation is this element associated with?
+		Allocation? alloc;
+
 		// Visual part of the object.
 		Drawable visual;
 
@@ -176,12 +244,17 @@ private:
 		// Is the element docked? (i.e. is it in the "docked"-array?)
 		Bool docked;
 
+		// Visited this round?
+		Bool visited;
+
 		// Create.
-		init(Drawable visual) {
+		init(Allocation? alloc, Drawable visual) {
 			init {
+				alloc = alloc;
 				visual = visual;
 				thread = false;
 				topmost = false;
+				visited = true;
 			}
 		}
 	}
@@ -194,5 +267,4 @@ private:
 
 	// Active drawable.
 	Drawable? active;
-
 }

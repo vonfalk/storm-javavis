@@ -1,0 +1,248 @@
+use ui;
+use graphics;
+use core:geometry;
+use core:lang;
+use progvis:data;
+
+/**
+ * Representation of a thread.
+ */
+class ThreadView extends DataView {
+	// Create.
+	init(progvis:data:Thread thread) {
+		init {
+			thread = thread;
+			enableStep = true;
+			source(thread.src.owner);
+			step(stepDecoration, SolidBrush(yellow*0.5 + red), buttonSize);
+			pause(pauseDecoration, SolidBrush(black), buttonSize);
+			runSlow(runDecoration, SolidBrush(green), buttonSize);
+			runFast(runFastDecoration, SolidBrush(green), buttonSize);
+			runVeryFast(runVeryFastDecoration, SolidBrush(green), buttonSize);
+			removeDead(removeDecoration, SolidBrush(red), buttonSize);
+			srcSize = sourceSize;
+		}
+
+		step.onClick = &this.onStep;
+		pause.onClick = &this.onPause;
+		runSlow.onClick = &this.onRunSlow;
+		runFast.onClick = &this.onRunFast;
+		runVeryFast.onClick = &this.onRunVeryFast;
+		removeDead.onClick = &this.onRemove;
+
+		buttons = [step, pause, runSlow, runFast, runVeryFast];
+	}
+
+	// Thread we are controlling.
+	private progvis:data:Thread thread;
+
+	// Source code view.
+	SourceView source;
+
+	// Shall we be removed (when the user clicks "remove").
+	Bool removeMe;
+
+	// Enable stepping.
+	Bool enableStep;
+
+	// Buttons.
+	private SmallButton step;
+	private SmallButton pause;
+	private SmallButton runSlow;
+	private SmallButton runFast;
+	private SmallButton runVeryFast;
+	private SmallButton removeDead;
+
+	// Buttons. Duplicates of the variables for easier layout.
+	private SmallButton[] buttons;
+
+	// When resizing the ThreadData, we are essentially resizing only the source listing. So this is
+	// the size of the source listing.
+	private Size srcSize;
+
+	// Stack frames.
+	private WithCaption[] frames;
+
+	// Layout offset for frames.
+	private Float[] layoutOffset;
+
+	// Don't remove the thread until it has terminated and the user explicitly removes it.
+	Bool remove() : override {
+		removeMe;
+	}
+
+	Bool sameData(Data d) : override { d is thread; }
+
+	void update(Workspace ws) : override {
+		for (id, f in thread.frames) {
+			if (id >= frames.count) {
+				frames << create(f);
+				layoutOffset << 0;
+			} else if (!frames[id].sameData(f)) {
+				frames[id] = create(f);
+			}
+			frames[id].update(ws);
+		}
+		while (frames.count > thread.frames.count)
+			frames.pop();
+
+		if (thread.alive) {
+			if (pos = thread.pos)
+				source.display(pos);
+			else
+				source.displayEmpty();
+
+			if (thread.sleeping) {
+				source.highlight = sourceSleepingHighlight;
+			} else if (thread.afterReturn) {
+				source.highlight = sourceReturnedHighlight;
+			} else {
+				source.highlight = sourceHighlight;
+			}
+		} else {
+			source.highlight = sourceTerminatedHighlight;
+			if (buttons.last !is removeDead)
+				buttons << removeDead;
+
+			if (!thread.crashed)
+				source.displayEmpty("<thread exited normally>");
+		}
+
+		invalidateSize();
+	}
+
+	private WithCaption create(progvis:data:Thread:Frame f) {
+		WithCaption(CompositeView(f), f.title);
+	}
+
+	void resize(Size s) : override {
+		Size computed = computeSize();
+		srcSize = (s - (computed - srcSize)).max(Size(10));
+		invalidateSize();
+	}
+
+	protected Size computeSize() : override {
+		Float w = 0;
+		Float h = 0;
+
+		if (frames.any) {
+			for (Nat i = frames.count; i > 0; i--) {
+				var frame = frames[i - 1];
+
+				h += frame.captionSize.h + compositeBorder.h;
+
+				Size sz = frame.size;
+				h = max(h, sz.h);
+				w = max(w, sz.w + i.int.float*stackOffset);
+			}
+		}
+
+		w = max(srcSize.w, w);
+		w = max(w, buttons.count.int.float * (buttonSize.w + compositeBorder.w));
+
+		h += compositeBorder.h + srcSize.h;
+
+		h += compositeBorder.h + buttonSize.h;
+
+		Size(w, h) + compositeBorder*2;
+	}
+
+	void draw(Graphics g, Bool active) : override {
+		super:draw(g, active);
+
+		Rect rect = this.rect;
+
+		Point offset = rect.p0 + compositeBorder;
+		Float xOffset = 0;
+		for (Nat i = frames.count; i > 0; i--) {
+			var frame = frames[i - 1];
+
+			Size sz = frame.size;
+			if (i < frames.count) {
+				if (c = frame.wrap as CompositeView)
+					xOffset -= c.nameWidth;
+			}
+			layoutOffset[i - 1] = xOffset;
+			xOffset += sz.w;
+		}
+		Float xLimit = rect.size.w - compositeBorder.w*2;
+		// Right-align everything.
+		if (xOffset < xLimit)
+			offset.x += xLimit - xOffset;
+		for (id, frame in frames) {
+			Size sz = frame.size;
+			Float dx = min(layoutOffset[id], xLimit - sz.w);
+			frame.pos = offset + Point(dx, 0);
+
+			Float delta = frame.captionSize.h + compositeBorder.h;
+			offset.y += delta;
+			xLimit -= stackOffset;
+		}
+
+		Rect sourcePos(rect.p0, rect.p1 - compositeBorder);
+		sourcePos.p1.y -= compositeBorder.h + buttonSize.h;
+		sourcePos.p0.x = rect.p0.x + compositeBorder.w;
+		sourcePos.p0.y = sourcePos.p1.y - srcSize.h;
+		source.draw(g, sourcePos);
+
+		Point p(sourcePos.p0.x, sourcePos.p1.y + compositeBorder.h);
+		for (b in buttons) {
+			b.pos = p;
+			b.draw(g, false);
+			p.x += buttonSize.w + compositeBorder.w;
+		}
+
+		// Draw almost everything now. We only omit pointers from the last stack frame. Otherwise
+		// they will appear below other threads.
+		for (id, frame in frames) {
+			Bool a = id == frames.count - 1;
+			frame.draw(g, a);
+			if (!a)
+				frame.drawLinks(g, false);
+		}
+	}
+
+	void drawLinks(Graphics g, Bool active) : override {
+		if (frames.any)
+			frames.last.drawLinks(g, active);
+	}
+
+	Drawable findAt(Point pt) : override {
+		for (b in buttons) {
+			if (b.rect.contains(pt))
+				return b;
+		}
+		this;
+	}
+
+	private void onStep() {
+		if (enableStep)
+			thread.src.resume();
+	}
+
+	private void onPause() {
+		if (enableStep)
+			thread.src.pause();
+	}
+
+	private void onRunSlow() {
+		if (enableStep)
+			thread.src.resume(1 s);
+	}
+
+	private void onRunFast() {
+		if (enableStep)
+			thread.src.resume(500 ms);
+	}
+
+	private void onRunVeryFast() {
+		if (enableStep)
+			thread.src.resume(100 ms);
+	}
+
+	private void onRemove() {
+		removeMe = true;
+		// Make it happen now, and not later.
+		thread.src.owner.notifyChange();
+	}
+}

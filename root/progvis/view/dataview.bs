@@ -1,0 +1,149 @@
+use ui;
+use graphics;
+use core:geometry;
+use progvis:data;
+
+
+/**
+ * A view of some data.
+ */
+class DataView extends WithBorder {}
+
+
+/**
+ * Unknown data.
+ */
+class UnknownView extends DataView {
+	private Text text;
+	private Data? data;
+
+	init(Data? data) {
+		init {
+			text("?", dataFont);
+			data = data;
+		}
+
+		size = text.size + dataBorder*2;
+	}
+
+	void draw(Graphics g, Bool active) : override {
+		super:draw(g, active);
+		g.draw(text, dataFg, pos + dataBorder);
+	}
+
+	void drawLinks(Graphics g, Bool active) : override {}
+
+	Bool sameData(Data d) : override { d is data; }
+
+	void update(Workspace ws) : override {}
+}
+
+
+/**
+ * Composite data.
+ */
+class CompositeView extends DataView {
+	init(Composite data) {
+		init {
+			data = data;
+		}
+	}
+
+	private Composite data;
+
+	Bool sameData(Data d) : override { d is data; }
+
+	void draw(Graphics g, Bool active) : override {
+		super:draw(g, active);
+		Float width = rect.size.w;
+		Float xBase = pos.x + dataBorder.w;
+
+		for (v in content) {
+			Float y = pos.y + v.yPos;
+
+			if (v.line) {
+				g.line(Point(pos.x, y), Point(pos.x + width, y), dataFg);
+			}
+
+			y += dataBorder.h;
+
+			// Align the text a bit nicer on the y-axis, to line up the baselines...
+			g.draw(v.name, dataFg, Point(xBase, y + dataBorder.h));
+			v.data.pos = Point(xBase + namesWidth + dataWidth - v.data.size.w, y);
+			v.data.draw(g, false);
+		}
+	}
+
+	void drawLinks(Graphics g, Bool active) : override {
+		for (v in content) {
+			v.data.drawLinks(g, active);
+		}
+	}
+
+	void update(Workspace ws) {
+		for (id, part in data.parts) {
+			if (id >= content.count) {
+				content << Variable(part.name, ws.create(part.value), part.first);
+			} else if (!content[id].data.sameData(part.value)) {
+				content[id].data = ws.create(part.value);
+			}
+			content[id].data.update(ws);
+		}
+		while (content.count > data.parts.count)
+			content.pop();
+
+		invalidateSize();
+	}
+
+	Float nameWidth() { namesWidth; }
+
+private:
+
+	class Variable on Render {
+		Text name;
+		Drawable data;
+		Bool line;
+		Float yPos;
+
+		init(Str name, Drawable data, Bool line) {
+			init {
+				name = Text(name, variableFont);
+				data = data;
+				line = line;
+			}
+		}
+	}
+
+	Variable[] content;
+	Float namesWidth;
+	Float dataWidth;
+	Float height;
+
+	Size computeSize() : override {
+		if (content.any)
+			content[0].line = false;
+
+		// TODO: It would probably be nice to recurse into
+		// the values that are themselves variables and render them
+		// more compactly.
+		namesWidth = 0;
+		dataWidth = 0;
+		height = 0;
+		for (v in content) {
+			var nameSz = v.name.size;
+			var dataSz = v.data.size;
+
+			if (v.line)
+				height += dataBorder.h;
+
+			v.yPos = height;
+
+			namesWidth = max(namesWidth, nameSz.w + dataBorder.w);
+			dataWidth = max(dataWidth, dataSz.w);
+			height += max(nameSz.h, dataSz.h) + dataBorder.h;
+		}
+
+		height -= dataBorder.h;
+		Size(namesWidth + dataWidth, height) + compositeBorder*2;
+	}
+}

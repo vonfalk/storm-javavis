@@ -17,6 +17,8 @@ class Globals extends Composite {
 
 		// Make the order consistent.
 		this.globals.sort((a, b) => a.name < b.name);
+
+		print("TODO: Make all globals appear as pointers!");
 	}
 
 	// Source data for globals.

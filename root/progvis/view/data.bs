@@ -5,14 +5,14 @@ use lang:bs:macro;
 use progvis:data;
 
 /**
- * TODO: Move this file!
+ * TODO: Remove this file!
  */
 
 
 /**
  * A data structure instantiated somewhere. Managed by a Workspace.
  */
-class Data extends Drawable {
+class OData extends Drawable {
 	// Draw this data item at its current location.
 	void draw(Graphics g, Bool active) : abstract {
 		Rect r = rect;
@@ -30,7 +30,7 @@ class Data extends Drawable {
 	DataOffset findOffset(core:lang:Type? type, Nat offset) { DataOffset(this); }
 
 	// Refine "contained" with a more convenient return type.
-	Data contained() : override { this; }
+	OData contained() : override { this; }
 }
 
 /**
@@ -38,7 +38,7 @@ class Data extends Drawable {
  *
  * TODO: There might be better ways of visualizing this.
  */
-class RWData extends Data {
+class RWData extends OData {
 	// Read from?
 	private Bool read;
 	private Bool newRead;
@@ -116,16 +116,16 @@ class RWData extends Data {
  */
 value DataOffset {
 	// Inside this element.
-	Data data;
+	OData data;
 
 	// Y-offset in pixels.
 	Float offset;
 
 	// Create.
-	init(Data data) {
+	init(OData data) {
 		init { data = data; offset = 0; }
 	}
-	init(Data data, Float offset) {
+	init(OData data, Float offset) {
 		init { data = data; offset = offset; }
 	}
 }
@@ -133,9 +133,11 @@ value DataOffset {
 
 /**
  * Data element with a caption.
+ *
+ * TODO: Remove?
  */
-class DataWithCaption extends Data {
-	init(Data wrap, Str caption) {
+class DataWithCaption extends OData {
+	init(OData wrap, Str caption) {
 		Text c(caption, captionFont);
 
 		init() {
@@ -220,9 +222,9 @@ class DataWithCaption extends Data {
 
 
 	// The drawable we're wrapping.
-	Data wrap;
+	OData wrap;
 
-	Data contained() : override { wrap.contained; }
+	OData contained() : override { wrap.contained; }
 
 	// Caption text.
 	private Text caption;
@@ -315,7 +317,7 @@ package Path ptrArrow on Render = {
  */
 class Pointer extends RWData {
 	// Object we're pointing to.
-	protected Data? to;
+	protected OData? to;
 
 	// Y-offset inside 'to', if present.
 	protected Float offset;
@@ -397,13 +399,13 @@ class StackPointer extends Pointer {
 /**
  * A composite type, consisting of one or more variables of other types.
  */
-class Composite extends Data {
+class OComposite extends OData {
 	// Initialize to a particular type, so that we can visualize pointers better.
 	init(core:lang:Type type) {
 		init() { type = type; }
 	}
 
-	void add(Str name, Nat offset, Data data, Bool divider) {
+	void add(Str name, Nat offset, OData data, Bool divider) {
 		if (content.empty)
 			divider = false;
 
@@ -513,14 +515,14 @@ private:
 	class Var on Render {
 		Str name;
 		Text text;
-		Data value;
+		OData value;
 		Nat offset;
 		// Y-position of this variable. Updated whenever 'computeSize' is called.
 		Float yPos;
 		// Line before?
 		Bool line;
 
-		init(Str name, Data value, Nat offset, Bool divider) {
+		init(Str name, OData value, Nat offset, Bool divider) {
 			init() {
 				name = name;
 				text = Text(name, variableFont);
@@ -566,7 +568,7 @@ private:
 /**
  * A class describing an array.
  */
-class ArrayData extends Data {
+class ArrayData extends OData {
 	init(core:lang:Type type) {
 		init() {
 			typeInfo = TypeInfo(type, core:lang:Value(type).isValue, false);
@@ -652,9 +654,9 @@ private:
 
 	class Var on Render {
 		Text text;
-		Data value;
+		OData value;
 
-		init(Nat id, Data value) {
+		init(Nat id, OData value) {
 			init() {
 				text = Text(id.toS + ":", variableFont);
 				value = value;
