@@ -246,6 +246,8 @@ class Workspace on Render {
 				ThreadView(data);
 			} else if (data as Composite) {
 				WithCaption(CompositeView(data), data.title(world));
+			} else if (data as Array) {
+				ArrayView(data);
 			} else if (data as Primitive) {
 				PrimitiveView(data);
 			} else if (data as Pointer) {

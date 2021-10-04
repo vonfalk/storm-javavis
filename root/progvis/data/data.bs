@@ -235,27 +235,99 @@ class Composite extends Data {
 }
 
 /**
- * Array data. Similar to objects (keys + values), but may be shown differently.
+ * Array data. Similar to objects (keys + values), but may be shown differently, and all elements
+ * are of the same type.
  */
-class Array extends Data {}
+class Array extends Data {
+	// Create.
+	init(Type elemType) {
+		init() {
+			elemType = elemType;
+			elemValue = Value(elemType).isValue;
+		}
+	}
+
+	// Type of elements in the array.
+	Type elemType;
+
+	// Is the type in the array a value type?
+	private Bool elemValue;
+
+	// Data elements.
+	Data[] contents;
+
+	// Helper function to update the array.
+	protected void updateArray(World:Traversal t, unsafe:RawPtr array) {
+		// Note: readFilled is safe to call even if array is null.
+		updateArray(t, array, array.readFilled);
+	}
+
+	// With explicit size specified.
+	protected void updateArray(World:Traversal t, unsafe:RawPtr array, Nat size) {
+		if (array.empty) {
+			contents.clear();
+			return;
+		}
+
+		Nat stride = array.readSize;
+		TypeInfo type(elemType, elemValue, false);
+
+		// Note: We assume we don't need to change the type of elements here, as all arrays are of a
+		// fixed type.
+		for (Nat i = 0; i < size; i++) {
+			if (i >= contents.count)
+				contents << t.create(type);
+
+			contents[i].update(t, array, i*stride);
+		}
+		while (contents.count > size)
+			contents.pop();
+	}
+
+	// Helper function to traverse the array.
+	protected void traverseArray(World:Traversal t, unsafe:RawPtr array) {
+		if (array.empty)
+			return;
+
+		Nat stride = array.readSize;
+
+		for (i, elem in contents)
+			elem.traverse(t, array, i*stride);
+	}
+}
 
 /**
  * Standard array, extracts data from the core:Array implementation.
  */
 class StdArray extends Array {
 	private Type arrayType;
-	private Type elemType;
 
 	init(Type arrayType, Type elemType) {
-		init() {
+		init(elemType) {
 			arrayType = arrayType;
-			elemType = elemType;
 		}
 	}
 
-	void update(World:Traversal t, unsafe:RawPtr object, Nat offset) : override {}
+	void update(World:Traversal t, unsafe:RawPtr object, Nat offset) : override {
+		updateArray(t, arrayData(object, offset));
+	}
 
-	void traverse(World:Traversal t, unsafe:RawPtr object, Nat offset) : override {}
+	void traverse(World:Traversal t, unsafe:RawPtr object, Nat offset) : override {
+		traverseArray(t, arrayData(object, offset));
+	}
+
+	private unsafe:RawPtr arrayData(unsafe:RawPtr object, Nat offset) {
+		if (offset != 0) {
+			print("WARNING: The supplied object does not seem to be a Storm array.");
+			return unsafe:RawPtr();
+		}
+
+		// TODO: Extract the actual offset! We want to get the offset of the 'data' member, but as
+		// it is of type GcType<void>, it has no type in the Storm type system, and is therefore not
+		// visible. We could expose it as a UNKNOWN(PTR_GC) though.
+		Nat dataOffset = object.readSize - core:asm:sPtr.current;
+		object.readPtr(dataOffset);
+	}
 
 	Str title(World world) : override {
 		world.typeTitle(elemType) + "[]";

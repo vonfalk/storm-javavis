@@ -35,7 +35,10 @@ class UnknownView extends DataView {
 
 	Bool sameData(Data d) : override { d is data; }
 
-	void update(Workspace:Update ws) : override {}
+	void update(Workspace:Update ws) : override {
+		if (data)
+			ws.setVisual(data, this);
+	}
 }
 
 /**
@@ -262,6 +265,98 @@ private:
 				height += dataBorder.h;
 
 			v.yPos = height;
+
+			namesWidth = max(namesWidth, nameSz.w + dataBorder.w);
+			dataWidth = max(dataWidth, dataSz.w);
+			height += max(nameSz.h, dataSz.h) + dataBorder.h;
+		}
+
+		height -= dataBorder.h;
+		Size(namesWidth + dataWidth, height) + compositeBorder*2;
+	}
+}
+
+/**
+ * Array data.
+ */
+class ArrayView extends DataView {
+	init(Array data) {
+		init {
+			data = data;
+		}
+	}
+
+	private Array data;
+
+	Bool sameData(Data d) : override { d is data; }
+
+	void draw(Graphics g, Bool active) : override {
+		super:draw(g, active);
+		Float width = rect.size.w;
+		Point at = pos + compositeBorder;
+
+		for (v in content) {
+			var nameSz = v.text.size;
+			var dataSz = v.value.size;
+
+			// Align the text a bit nicer on the y-acis, to line up the baselines...
+			g.draw(v.text, dataFg, at + Point(0, dataBorder.h));
+
+			v.value.pos = at + Point(namesWidth + dataWidth - dataSz.w, 0);
+			v.value.draw(g, false);
+
+			at.y += max(nameSz.h, dataSz.h) + dataBorder.h;
+		}
+	}
+
+	void drawLinks(Graphics g, Bool active) : override {
+		for (v in content) {
+			v.value.drawLinks(g, active);
+		}
+	}
+
+	void update(Workspace:Update ws) {
+		ws.setVisual(data, this);
+
+		for (id, elem in data.contents) {
+			if (id >= content.count) {
+				content << Element(id, ws.create(elem));
+			}
+			// Note: Types don't change.
+			content[id].value.update(ws);
+		}
+		while (content.count > data.contents.count)
+			content.pop();
+
+		invalidateSize();
+	}
+
+private:
+
+	class Element on Render {
+		Text text;
+		Drawable value;
+
+		init(Nat id, Drawable value) {
+			init() {
+				text = Text(id.toS + ":", variableFont);
+				value = value;
+			}
+		}
+	}
+
+	Element[] content;
+	Float namesWidth;
+	Float dataWidth;
+	Float height;
+
+	Size computeSize() : override {
+		namesWidth = 0;
+		dataWidth = 0;
+		height = 0;
+		for (v in content) {
+			var nameSz = v.text.size;
+			var dataSz = v.value.size;
 
 			namesWidth = max(namesWidth, nameSz.w + dataBorder.w);
 			dataWidth = max(dataWidth, dataSz.w);
