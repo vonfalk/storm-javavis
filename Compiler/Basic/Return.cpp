@@ -9,7 +9,7 @@ namespace storm {
 
 		Return::Return(SrcPos pos, Block *block) : Expr(pos), returnType(findParentType(pos, block)) {
 			if (returnType != Value()) {
-				throw new (this) SyntaxError(pos, S("Trying to return a value from a void function."));
+				throw new (this) SyntaxError(pos, TO_S(this, S("Trying to return void from a function that returns ") << returnType));
 			}
 		}
 
