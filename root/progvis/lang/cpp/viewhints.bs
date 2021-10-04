@@ -3,6 +3,7 @@ use core:geometry;
 use ui;
 use progvis;
 use progvis:data;
+use progvis:view;
 use lang:bs:macro;
 
 /**
@@ -51,6 +52,8 @@ class CppViewHints extends ViewHints {
 				else
 					return result + " *";
 			}
+		} else if (info.type is named{Byte}) {
+			return "char";
 		}
 
 		null;
@@ -122,21 +125,22 @@ class CppViewHints extends ViewHints {
 				// Otherwise, just use the result.
 				result.add("", offset, element.copy, true);
 			}
-
-			// // Primitive or special?
-			// if (spec = createSpecial(ws, info, base, offset)) {
-			// 	result.add("", offset, spec, true);
-			// } else if (c = convertPrimitive(info.type, base, offset)) {
-			// 	result.add("", offset, Primitive(info.type, c), true);
-			// } else {
-			// 	for (i, m in members) {
-			// 		// We're ignoring 'm.first' to make array elements more clearly divided.
-			// 		result.add(m.name, offset + m.offset, ws.createData(m.type, base, offset + m.offset), i == 0);
-			// 	}
-			// }
 		}
 
 		result;
+	}
+
+	Drawable? createView(World world, Data data) : override {
+		if (data as CppChar) {
+			return CppCharView(data);
+		}
+
+		null;
+	}
+
+	Drawable decorateAllocation(Allocation alloc, Drawable data) : override {
+		print("TODO: Add our custom decorator here.");
+		data;
 	}
 }
 
@@ -277,65 +281,76 @@ class CppChar extends Primitive {
 		init(named{Byte}) {}
 	}
 	init(CppChar original) {
-		init(original) {}
+		init(original) {
+			charVal = original.charVal;
+		}
 	}
 
+	// Char value.
+	Byte charVal;
+
 	void traverse(World:Traversal t, unsafe:RawPtr object, Nat offset) : override {
-		Byte data = object.readByte(offset);
-		StrBuf b;
-		b << "(" << data << ") ";
-		if ((data >= 32) & (data < 128))
-			b << Char(data);
-		else
-			b << "?";
-		value = b.toS;
+		charVal = object.readByte(offset);
+		// For compatibility. Note: we should not need ".nat" here, but since toS(Long) and
+		// toS(Word) are loaded, we won't explore the toS(Byte).
+		value = charVal.nat.toS;
 	}
 
 	// Copy.
 	protected Data copyObject() : override {
 		CppChar(this);
 	}
-
-	// Title.
-	Str title(World w) : override {
-		"char";
-	}
 }
 
-// class CppChar extends RWData {
-// 	// Character value.
-// 	private Text ch;
+class CppCharView extends AtomView {
+	// Character value.
+	private Text ch;
 
-// 	// Numeric value.
-// 	private Text num;
+	// Numeric value.
+	private Text num;
 
-// 	init() {
-// 		init() {
-// 			ch = Text("", codeFont);
-// 			num = Text("", dataFont);
-// 		}
-// 	}
+	// Data source.
+	private CppChar src;
 
-// 	void draw(Graphics g, Bool active) : override {
-// 		super:draw(g, active);
+	// Last value.
+	private Nat last;
 
-// 		Rect p = rect;
-// 		Size chSize = ch.size;
-// 		g.draw(ch, dataFg, p.p1 - chSize - dataMargin);
-// 		g.draw(num, dataFg, p.p0 + dataMargin);
-// 	}
+	init(CppChar data) {
+		init() {
+			src = data;
+			ch = Text("", codeFont);
+			num = Text("", dataFont);
+			last = 0x100; // Not possible to represent in a Byte.
+		}
+	}
 
-// 	void update(Workspace ws, unsafe:RawPtr object, Nat offset) : override {
-// 		Byte data = object.readByte(offset);
-// 		ch = Text(Char(data.nat).toS, codeFont);
-// 		num = Text("(${data})", dataFont);
-// 		invalidateSize();
-// 	}
+	Bool sameData(Data d) : override { d is src; }
 
-// 	Size computeSize() : override {
-// 		Size a = ch.size;
-// 		Size b = num.size;
+	void update(Workspace:Update ws) : override {
+		ws.setVisual(src, this);
+		if (last != src.charVal.nat) {
+			last = src.charVal.nat;
+			ch = Text(Char(last).toS, codeFont);
+			num = Text("(${last})", dataFont);
+			invalidateSize();
+		}
+	}
 
-// 		Size(a.w + b.w + dataMargin.w*3, max(a.h, b.h) + dataMargin.h*2);
-// 	}
-// }
+	void draw(Graphics g, Bool active) : override {
+		super:draw(g, active);
+
+		Rect p = rect;
+		Size chSize = ch.size;
+		g.draw(ch, dataFg, p.p1 - chSize - dataMargin);
+		g.draw(num, dataFg, p.p0 + dataMargin);
+	}
+
+	void drawLinks(Graphics g, Bool active) : override {}
+
+	Size computeSize() : override {
+		Size a = ch.size;
+		Size b = num.size;
+
+		Size(a.w + b.w + dataMargin.w*3, max(a.h, b.h) + dataMargin.h*2);
+	}
+}

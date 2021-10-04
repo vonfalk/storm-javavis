@@ -25,6 +25,12 @@ class ViewHints on Render {
 
 	// Get a title for a type.
 	Str? typeTitle(World t, TypeInfo type) : abstract;
+
+	// Create a drawable from a Data object.
+	progvis:view:Drawable? createView(World world, Data data) { null; }
+
+	// Modify the proposed decoration for an allocation.
+	progvis:view:Drawable decorateAllocation(Allocation alloc, progvis:view:Drawable data) { data; }
 }
 
 
@@ -77,4 +83,10 @@ class DefaultViewHints extends ViewHints {
 
 		info.type.name;
 	}
+
+	// Create a drawable from a Data object. This is the default mapping of objects.
+	progvis:view:Drawable? createView(World world, Data data) : override {
+		progvis:view:defaultView(world, data);
+	}
+
 }

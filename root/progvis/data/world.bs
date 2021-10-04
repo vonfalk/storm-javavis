@@ -19,7 +19,7 @@ class World on Render {
 	private Allocation[] allocations;
 
 	// Hints available to us.
-	private ViewHints[] hints;
+	public ViewHints[] hints;
 
 	// Create, and associate us with a program.
 	init(progvis:program:Program program) {
