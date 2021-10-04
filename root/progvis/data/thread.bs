@@ -26,6 +26,19 @@ class Thread extends Data {
 		}
 	}
 
+	// Copy.
+	init(Thread original) {
+		init {
+			src = original.src;
+			frames = Frame[](original.frames);
+			alive = original.alive;
+			sleeping = original.sleeping;
+			crashed = original.crashed;
+			afterReturn = original.afterReturn;
+			pos = original.pos;
+		}
+	}
+
 	// Traverse stack frames and find individual values.
 	void update(World:Traversal t, unsafe:RawPtr object, Nat offset) : override {
 		alive = src.alive;
@@ -68,6 +81,16 @@ class Thread extends Data {
 		null;
 	}
 
+	// Copy.
+	protected Data copyObject() : override {
+		Thread(this);
+	}
+	protected void copyData(Data->Data data) : override {
+		for (Nat i = 0; i < frames.count; i++)
+			if (x = frames[i].copy(data) as Frame)
+				frames[i] = x;
+	}
+
 	// Stack frame.
 	class Frame extends Composite {
 		// Original stack frame.
@@ -77,6 +100,13 @@ class Thread extends Data {
 		init(StackFrame src) {
 			init(null) {
 				src = src;
+			}
+		}
+
+		// Copy.
+		init(Frame original) {
+			init(original) {
+				src = original.src;
 			}
 		}
 
@@ -119,6 +149,10 @@ class Thread extends Data {
 				var ptr = unsafe:RawPtr(v.value);
 				parts[k].value.traverse(t, ptr, 0);
 			}
+		}
+
+		protected Data copyObject() : override {
+			Frame(this);
 		}
 	}
 

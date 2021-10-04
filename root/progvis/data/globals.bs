@@ -21,6 +21,13 @@ class Globals extends Composite {
 		print("TODO: Make all globals appear as pointers!");
 	}
 
+	// Copy.
+	init(Globals original) {
+		init(original) {
+			globals = original.globals;
+		}
+	}
+
 	// Source data for globals.
 	value Global {
 		Str name;
@@ -65,4 +72,8 @@ class Globals extends Composite {
 		"Globals";
 	}
 
+	// Copy.
+	protected Data copyObject() : override {
+		Globals(this);
+	}
 }

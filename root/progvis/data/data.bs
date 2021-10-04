@@ -27,6 +27,30 @@ class Data on Render {
 	// Get the title of this data element. This will be used to create suitable labels when the data
 	// is visualized.
 	Str title(World world) : abstract;
+
+	// Copy this data element.
+	Data copy() : final {
+		Data->Data copies;
+		copy(copies);
+	}
+
+	// Copy this data element, uses 'copies' to keep track of cycles.
+	Data copy(Data->Data copies) : final {
+		if (copies.has(this)) {
+			copies.get(this);
+		} else {
+			var result = copyObject();
+			copies.put(this, result);
+			result.copyData(copies);
+			result;
+		}
+	}
+
+	// Create a copy of this object. Don't copy any data yet.
+	protected Data copyObject() : abstract;
+
+	// Copy all data inside.
+	protected void copyData(Data->Data copies) : abstract;
 }
 
 /**
@@ -36,6 +60,8 @@ class Unknown extends Data {
 	void traverse(World:Traversal t, unsafe:RawPtr object, Nat offset) : override {}
 	Str title(World world) : override { "Unknown"; }
 	Type? type() : override { null; }
+	protected Data copyObject() : override { Unknown(); }
+	protected void copyData(Data->Data copies) : override {}
 }
 
 /**
@@ -54,6 +80,14 @@ class Primitive extends Atom {
 	init(Type type) {
 		init {
 			pType = type;
+		}
+	}
+
+	// Copy.
+	init(Primitive original) {
+		init {
+			pType = original.pType;
+			value = original.value;
 		}
 	}
 
@@ -76,6 +110,15 @@ class Primitive extends Atom {
 
 	// Type.
 	Type? type() : override { pType; }
+
+	// Copy.
+	protected Data copyObject() : override {
+		Primitive(this);
+	}
+	protected void copyData(Data->Data copies) : override {
+		// Nothing to do here.
+	}
+
 }
 
 /**
@@ -86,6 +129,14 @@ class Pointer extends Atom {
 	init(Type? type) {
 		init() {
 			pType = type;
+		}
+	}
+
+	// Copy.
+	init(Pointer original) {
+		init() {
+			pType = original.pType;
+			to = original.to;
 		}
 	}
 
@@ -119,6 +170,15 @@ class Pointer extends Atom {
 
 	// Type.
 	Type? type() : override { pType; }
+
+	// Copy.
+	protected Data copyObject() : override {
+		Pointer(this);
+	}
+	protected void copyData(Data->Data copies) : override {
+		if (to)
+			this.to = to.copy(copies);
+	}
 }
 
 /**
@@ -130,10 +190,18 @@ class StackPointer extends Pointer {
 	init() {
 		init(null) {}
 	}
+	init(StackPointer original) {
+		init(original) {}
+	}
 
 	// Traverse.
 	void traverse(World:Traversal t, unsafe:RawPtr object, Nat offset) : override {
 		traverse(t, object);
+	}
+
+	// Copy.
+	protected Data copyObject() : override {
+		StackPointer(this);
 	}
 }
 
@@ -172,6 +240,14 @@ class Composite extends Data {
 	init(Type? type) {
 		init {
 			myType = type;
+		}
+	}
+
+	// Copy.
+	init(Composite original) {
+		init {
+			myType = original.myType;
+			parts = Part[](original.parts);
 		}
 	}
 
@@ -232,6 +308,15 @@ class Composite extends Data {
 		var elem = parts[found];
 		return elem.value.atOffset(type, offset - elem.offset);
 	}
+
+	// Copy.
+	protected Data copyObject() : override {
+		Composite(this);
+	}
+	protected void copyData(Data->Data copies) : override {
+		for (Nat i = 0; i < parts.count; i++)
+			parts[i].value = parts[i].value.copy(copies);
+	}
 }
 
 /**
@@ -244,6 +329,15 @@ class Array extends Data {
 		init() {
 			elemType = elemType;
 			elemValue = Value(elemType).isValue;
+		}
+	}
+
+	// Copy.
+	init(Array original) {
+		init() {
+			elemType = original.elemType;
+			elemValue = original.elemValue;
+			contents = Data[](original.contents);
 		}
 	}
 
@@ -294,6 +388,12 @@ class Array extends Data {
 		for (i, elem in contents)
 			elem.traverse(t, array, i*stride);
 	}
+
+	// Copy.
+	protected void copyData(Data->Data copies) : override {
+		for (Nat i = 0; i < contents.count; i++)
+			contents[i] = contents[i].copy(copies);
+	}
 }
 
 /**
@@ -305,6 +405,12 @@ class StdArray extends Array {
 	init(Type arrayType, Type elemType) {
 		init(elemType) {
 			arrayType = arrayType;
+		}
+	}
+
+	init(StdArray original) {
+		init(original) {
+			arrayType = original.arrayType;
 		}
 	}
 
@@ -335,5 +441,13 @@ class StdArray extends Array {
 
 	Type? type() : override {
 		arrayType;
+	}
+
+	// Copy.
+	protected Data copyObject() : override {
+		StdArray(this);
+	}
+	protected void copyData(Data->Data copies) : override {
+		super:copyData(copies);
 	}
 }
