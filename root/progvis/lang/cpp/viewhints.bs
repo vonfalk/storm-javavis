@@ -30,7 +30,8 @@ class CppViewHints extends ViewHints {
 		if (root.any) {
 			// Is it an array allocation?
 			if ((root.readFilled & AllocFlags:arrayAlloc.v) != 0) {
-				return createArray(t, info, root);
+				return CppArray(info.type);
+				// return createArray(t, info, root);
 			}
 		}
 
@@ -133,6 +134,8 @@ class CppViewHints extends ViewHints {
 	Drawable? createView(World world, Data data) : override {
 		if (data as CppChar) {
 			return CppCharView(data);
+		} else if (data as CppArray) {
+			return CppArrayView(data);
 		}
 
 		null;
@@ -143,22 +146,6 @@ class CppViewHints extends ViewHints {
 		data;
 	}
 }
-
-/**
- * C++ creation hints.
- *
- * Tells the system that all C++ pointers are not GC:d.
- */
-// class CppCreateHints extends CreateHints {
-// 	Data decorate(Data data) : override {
-// 		if (data as DataWithCaption) {
-// 			data.wrap = CppHeapObj(data.wrap);
-// 		} else {
-// 			data = CppHeapObj(data);
-// 		}
-// 		data;
-// 	}
-// }
 
 
 /**
@@ -188,8 +175,7 @@ class CppPointer extends Pointer {
 		Nat ptrOffset = object.readNat(offset + sPtr) - 2*sPtr;
 
 		Data baseData = t.findOrCreate(base);
-		print("TODO: Find offset!");
-		to = baseData;
+		to = baseData.atOffset(targetType, ptrOffset);
 	}
 }
 
@@ -340,9 +326,9 @@ class CppCharView extends AtomView {
 		super:draw(g, active);
 
 		Rect p = rect;
-		Size chSize = ch.size;
-		g.draw(ch, dataFg, p.p1 - chSize - dataMargin);
-		g.draw(num, dataFg, p.p0 + dataMargin);
+		Size numSize = num.size;
+		g.draw(num, dataFg, p.p1 - numSize - dataMargin);
+		g.draw(ch, dataFg, p.p0 + dataMargin);
 	}
 
 	void drawLinks(Graphics g, Bool active) : override {}
@@ -352,5 +338,151 @@ class CppCharView extends AtomView {
 		Size b = num.size;
 
 		Size(a.w + b.w + dataMargin.w*3, max(a.h, b.h) + dataMargin.h*2);
+	}
+}
+
+/**
+ * C++ array data. For custom view of the array data.
+ *
+ * TODO: Add an empty element at the end of an array, for "past-end" pointers.
+ */
+class CppArray extends Array {
+	// Create.
+	init(Type elemType) {
+		init(elemType, true) {}
+	}
+
+	// Copy.
+	init(CppArray original) {
+		init(original) {
+			elemSize = original.elemSize;
+		}
+	}
+
+	// Element size, cached.
+	private Nat elemSize;
+
+	// Update the array.
+	void update(World:Traversal t, unsafe:RawPtr array, Nat offset) {
+		if (offset == 0)
+			updateArray(t, array, arraySize(array));
+		else
+			print("WARNING: Invalid C++ array.");
+	}
+
+	// Traverse.
+	void traverse(World:Traversal t, unsafe:RawPtr array, Nat offset) {
+		if (offset == 0)
+			traverseArray(t, array);
+		else
+			print("WARNING: Invalid C++ array.");
+	}
+
+	// Get the size of the array.
+	private Nat arraySize(unsafe:RawPtr array) {
+		elemSize = array.readSize;
+		array.readCount & AllocFlags:sizeMask.v;
+	}
+
+	// Type.
+	Type? type() : override {
+		elemType;
+	}
+
+	// Title.
+	Str title(World world) : override {
+		world.typeTitle(elemType);
+	}
+
+	// Copy.
+	protected Data copyObject() : override {
+		CppArray(this);
+	}
+
+	// Find the data at a particular offset.
+	Data atOffset(Type? type, Nat offset) {
+		if (contents.empty)
+			return this;
+		if (elemSize == 0)
+			return this;
+
+		Nat element = min(offset / elemSize, contents.count - 1);
+		return contents[element].atOffset(type, offset - element*elemSize);
+	}
+}
+
+/**
+ * View of the array in C++. It differs from the "original" visualization in that it draws each part
+ * as its own box, without numbers.
+ */
+class CppArrayView extends DataView {
+	init(CppArray data) {
+		init {
+			data = data;
+		}
+	}
+
+	private CppArray data;
+
+	Bool sameData(Data d) : override { d is data; }
+
+	void draw(Graphics g, Bool active) : override {
+		// We don't need to call the super class here, minimize overdraw.
+		Point at = pos;
+		Float width = size.w;
+		for (x in content) {
+			Size s = x.size;
+			s.w = width;
+			x.size = s;
+
+			x.pos = at;
+			x.draw(g, false);
+
+			at.y += s.h;
+		}
+	}
+
+	void drawLinks(Graphics g, Bool active) : override {
+		for (v in content) {
+			v.drawLinks(g, active);
+		}
+	}
+
+	void update(Workspace:Update ws) {
+		ws.setVisual(data, this);
+
+		for (id, elem in data.contents) {
+			if (id >= content.count) {
+				content << create(ws, elem);
+			}
+			// Note: Types don't change.
+			content[id].update(ws);
+		}
+		while (content.count > data.contents.count)
+			content.pop();
+
+		invalidateSize();
+	}
+
+private:
+
+	Drawable[] content;
+
+	Drawable create(Workspace:Update ws, Data data) {
+		var c = ws.create(data);
+		// Remove captions.
+		if (c as WithCaption)
+			return c.wrap;
+		else
+			return c;
+	}
+
+	Size computeSize() : override {
+		Size s;
+		for (x in content) {
+			s.w = max(s.w, x.size.w);
+			s.h += x.size.h;
+		}
+		s;
 	}
 }

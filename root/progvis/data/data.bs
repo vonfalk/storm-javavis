@@ -332,6 +332,13 @@ class Array extends Data {
 		}
 	}
 
+	init(Type elemType, Bool isValue) {
+		init() {
+			elemType = elemType;
+			elemValue = isValue;
+		}
+	}
+
 	// Copy.
 	init(Array original) {
 		init() {
