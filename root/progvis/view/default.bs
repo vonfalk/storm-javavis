@@ -14,6 +14,8 @@ Drawable? defaultView(World world, Data data) on Render {
 		return PrimitiveView(data);
 	} else if (data as Pointer) {
 		return PointerView(data);
+	} else if (data as Pad) {
+		return PadView(data);
 	}
 
 	null;

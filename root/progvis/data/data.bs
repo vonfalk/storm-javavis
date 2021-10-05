@@ -65,6 +65,20 @@ class Unknown extends Data {
 }
 
 /**
+ * Pad data.
+ *
+ * This is essentially a dummy element that can be used as a pointer target in certain
+ * circumstances. One example is a pointer past the end in C/C++ arrays.
+ */
+class Pad extends Data {
+	void traverse(World:Traversal t, unsafe:RawPtr object, Nat offset) : override {}
+	Str title(World world) : override { "Pad"; }
+	Type? type() : override { null; }
+	protected Data copyObject() : override { Pad(); }
+	protected void copyData(Data->Data copies) : override {}
+}
+
+/**
  * Atomic data of some sort.
  *
  * This means that it does not consist of other types. As such, it makes sense to keep track of

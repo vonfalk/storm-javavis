@@ -343,39 +343,51 @@ class CppCharView extends AtomView {
 
 /**
  * C++ array data. For custom view of the array data.
- *
- * TODO: Add an empty element at the end of an array, for "past-end" pointers.
  */
 class CppArray extends Array {
 	// Create.
 	init(Type elemType) {
-		init(elemType, true) {}
+		init(elemType, true) {
+			end = Pad();
+		}
+
+		contents.push(end);
 	}
 
 	// Copy.
 	init(CppArray original) {
 		init(original) {
 			elemSize = original.elemSize;
+			end = original.end;
 		}
 	}
 
 	// Element size, cached.
 	private Nat elemSize;
 
+	// Padding element at the end of the array.
+	private Data end;
+
 	// Update the array.
 	void update(World:Traversal t, unsafe:RawPtr array, Nat offset) {
-		if (offset == 0)
+		if (offset == 0) {
+			contents.pop();
 			updateArray(t, array, arraySize(array));
-		else
+			contents.push(end);
+		} else {
 			print("WARNING: Invalid C++ array.");
+		}
 	}
 
 	// Traverse.
 	void traverse(World:Traversal t, unsafe:RawPtr array, Nat offset) {
-		if (offset == 0)
+		if (offset == 0) {
+			contents.pop();
 			traverseArray(t, array);
-		else
+			contents.push(end);
+		} else {
 			print("WARNING: Invalid C++ array.");
+		}
 	}
 
 	// Get the size of the array.
@@ -397,6 +409,10 @@ class CppArray extends Array {
 	// Copy.
 	protected Data copyObject() : override {
 		CppArray(this);
+	}
+	protected void copyData(Data->Data copies) : override {
+		super:copyData(copies);
+		end = end.copy(copies);
 	}
 
 	// Find the data at a particular offset.

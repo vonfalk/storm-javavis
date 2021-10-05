@@ -42,6 +42,28 @@ class UnknownView extends DataView {
 }
 
 /**
+ * Padding element.
+ *
+ * Zero-size element that can be used as a target for pointers. One example where this is useful is
+ * for pointers to the end of an array in C/C++.
+ */
+class PadView extends Drawable {
+	private Pad data;
+
+	init(Pad data) {
+		init { data = data; }
+	}
+
+	void draw(Graphics g, Bool active) : override {}
+	void drawLinks(Graphics g, Bool active) : override {}
+	Bool sameData(Data d) : override { d is data; }
+	void update(Workspace:Update ws) : override {
+		ws.setVisual(data, this);
+	}
+	Size computeSize() : override { Size(); }
+}
+
+/**
  * View of some atomic data.
  *
  * Highlights reads and writes as appropriate.
