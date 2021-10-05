@@ -1,4 +1,4 @@
-Standard library
+Standard Library
 ==================
 
 Storm provides a standard library located in the `core` package. This section is to highlight the
@@ -36,13 +36,15 @@ Containers
 
 Storm provides the following container types:
 
-* Str - string, immutable.
-* Array<T> - array.
-* Map<K, V> - hash map.
-* Set<K> - hash set.
-* WeakSet<K> - weak hash set. Stores weak references to heap-allocated objects.
-* Queue<T> - queue.
-* PQueue<T> - priority queue implemented as a max-heap.
+* `Str` - string, immutable.
+* `Array<T>` - array.
+* `Map<K, V>` - hash map.
+* `Set<K>` - hash set.
+* `WeakSet<K>` - weak hash set. Stores weak references to heap-allocated objects.
+* `Queue<T>` - queue.
+* `PQueue<T>` - priority queue implemented as a max-heap.
+* `RefMap<K, V>` - hash map, hashes K by object identity always.
+* `RefSet<K>` - hash set, hashes K by object identity always.
 
 All containers except `PQueue<T>` and `Queue<T>` provide iterators that allow accessing individual
 elements. These iterators work similarly to iterators in C++, except that they provide the members
@@ -56,6 +58,11 @@ The `Str` class stores characters in UTF-16 internally, but does not provide an 
 representation. Instead, iterators can be used to iterate through the string one UTF-32 codepoint at
 a time. One can also use the function `core.io.readStr` to create a `TextReader` that allows reading
 character by character from the string.
+
+In Basic Storm, some of these have shorthands:
+* `Array<T>` is `T[]`
+* `Map<K, V>` is `K->V`
+* `RefMap<K, V>` is `K&->V`
 
 Iterators
 ----------

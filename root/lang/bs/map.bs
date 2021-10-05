@@ -12,5 +12,17 @@ SrcName mapType(SrcName k, SrcName v) on Compiler {
 	name;
 }
 
+// Syntax for Str&->Int (i.e. by-reference semantics).
+SrcName refMapType(SrcName k, SrcName v) on Compiler {
+	RecPart map("RefMap");
+	map.add(k);
+	map.add(v);
+
+	SrcName name(k.pos.extend(v.pos));
+	name.add("core");
+	name.add(map);
+	name;
+}
+
 // TODO: Implement initializer syntax for maps.
 

@@ -15,6 +15,9 @@ namespace storm {
 	// Create types for unknown implementations.
 	Type *createMap(Str *name, ValueArray *params);
 
+	// Create types of RefMap.
+	Type *createRefMap(Str *name, ValueArray *params);
+
 	/**
 	 * Type for maps.
 	 */
@@ -22,7 +25,7 @@ namespace storm {
 		STORM_CLASS;
 	public:
 		// Create.
-		STORM_CTOR MapType(Str *name, Type *k, Type *v);
+		STORM_CTOR MapType(Str *name, Type *k, Type *v, Bool refKeys);
 
 		// Late initialization.
 		virtual void lateInit();
@@ -38,6 +41,9 @@ namespace storm {
 		// Content types.
 		Type *k;
 		Type *v;
+
+		// Treat keys as references always.
+		Bool refKeys;
 
 		// What we're watching for, to know when we can stop watching.
 		enum {
@@ -66,6 +72,7 @@ namespace storm {
 
 		// Helpers for creating instances.
 		static void createClass(void *mem);
+		static void createRefClass(void *mem);
 		static void copyClass(void *mem, MapBase *copy);
 	};
 

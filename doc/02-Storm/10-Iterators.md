@@ -26,3 +26,9 @@ operation, and therefore `k` and `v` are easier to read and write. This also all
 provide optional keys for their values. For example, `Array` provides the index of the current
 element as the key, which can be used if desired. Basic Storm implements a range-based for loop that
 uses this.
+
+A second type of iterators are provided by the `WeakSet<T>` class. This type has a single operation:
+
+* `T? next()`, which returns the next element if it is available, or `null`.
+
+This type is also supported by the for loop in storm. This type does, however, not support keys.

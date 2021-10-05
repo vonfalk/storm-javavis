@@ -288,6 +288,42 @@ namespace storm {
 		return *o.tObjHandle;
 	}
 
+	static void objDeepCopy(void *obj, CloneEnv *env) {
+		Object *&o = *(Object **)obj;
+		cloned(o, env);
+	}
+
+	static void objToS(const void *obj, StrBuf *to) {
+		const Object *o = *(const Object **)obj;
+		*to << o;
+	}
+
+	static Nat objHash(const void *obj) {
+		const void *ptr = *(const void **)obj;
+		return ptrHash(ptr);
+	}
+
+	static Bool objEqual(const void *a, const void *b) {
+		const void *aa = *(const void **)a;
+		const void *bb = *(const void **)b;
+		return aa == bb;
+	}
+
+	const Handle &Engine::refObjHandle() {
+		if (!o.refObjHandle) {
+			o.refObjHandle = new (*this) Handle();
+			o.refObjHandle->size = sizeof(void *);
+			o.refObjHandle->locationHash = true;
+			o.refObjHandle->gcArrayType = &pointerArrayType;
+			o.refObjHandle->copyFn = null;
+			o.refObjHandle->deepCopyFn = &objDeepCopy;
+			o.refObjHandle->toSFn = &objToS;
+			o.refObjHandle->hashFn = &objHash;
+			o.refObjHandle->equalFn = &objEqual;
+		}
+		return *o.refObjHandle;
+	}
+
 	void Engine::advance(BootStatus to) {
 		assert(to >= bootStatus, L"Trying to devolve the boot status.");
 		bootStatus = to;

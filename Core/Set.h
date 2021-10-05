@@ -329,4 +329,88 @@ namespace storm {
 			return Iter();
 		}
 	};
+
+
+	// Let Storm know about the Set template.
+	STORM_TEMPLATE(RefSet, createRefSet);
+
+	/**
+	 * C++ interface.
+	 */
+	template <class K>
+	class RefSet : public SetBase {
+		STORM_SPECIAL;
+	public:
+		// Get the Storm type for this object.
+		static Type *stormType(Engine &e) {
+			return runtime::cppTemplate(e, RefSetId, 1, StormInfo<K>::id());
+		}
+
+		// Empty set.
+		RefSet() : SetBase(runtime::refObjHandle(engine())) {
+			runtime::setVTable(this);
+		}
+
+		// Copy set.
+		RefSet(const RefSet<K> &o) : SetBase(o) {
+			runtime::setVTable(this);
+		}
+
+		// Insert a value into the set, or update the existing one. Returns 'true' if it did not exist before.
+		Bool put(const K &k) {
+			return putRaw(&k);
+		}
+
+		// Insert values from another set into this one.
+		void put(RefSet<K> *from) {
+			putSetRaw(from);
+		}
+
+		// Contains a key?
+		Bool has(const K &k) {
+			return hasRaw(&k);
+		}
+
+		// Get a previously inserted key. Throws if not found.
+		K &get(const K &k) {
+			return *(K *)getRaw(&k);
+		}
+
+		// Get a previously inserted key. Inserts and returns 'k' if not found.
+		K &at(const K &k) {
+			return *(K *)atRaw(&k);
+		}
+
+		// Remove a value.
+		Bool remove(const K &k) {
+			return removeRaw(&k);
+		}
+
+		/**
+		 * Iterator.
+		 */
+		class Iter : public SetBase::Iter {
+		public:
+			Iter() : SetBase::Iter() {}
+			Iter(RefSet<K> *owner) : SetBase::Iter(owner) {}
+
+			K operator *() const {
+				return *(K *)rawVal();
+			}
+
+			// We're using 'v' as a lone 'k' is meaningless to Storm.
+			const K &v() const {
+				return *(const K *)rawVal();
+			}
+		};
+
+		// Create the iterator.
+		Iter begin() {
+			return Iter(this);
+		}
+
+		Iter end() {
+			return Iter();
+		}
+	};
 }

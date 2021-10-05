@@ -15,6 +15,9 @@ namespace storm {
 	// Create types for unknown implementations.
 	Type *createSet(Str *name, ValueArray *params);
 
+	// Create the reference set type.
+	Type *createRefSet(Str *name, ValueArray *params);
+
 	/**
 	 * Type for sets.
 	 */
@@ -22,7 +25,7 @@ namespace storm {
 		STORM_CLASS;
 	public:
 		// Create.
-		STORM_CTOR SetType(Str *name, Type *k);
+		STORM_CTOR SetType(Str *name, Type *k, Bool ref);
 
 		// Notifications.
 		virtual void STORM_FN notifyAdded(NameSet *to, Named *added);
@@ -35,6 +38,9 @@ namespace storm {
 		// Content type.
 		Type *k;
 
+		// Is the key hashed by reference?
+		Bool ref;
+
 		// Currently watching for, so that we know when to stop.
 		enum {
 			watchNone = 0x00,
@@ -44,6 +50,7 @@ namespace storm {
 
 		// Helpers for creating instances.
 		static void createClass(void *mem);
+		static void createRefClass(void *mem);
 		static void copyClass(void *mem, SetBase *copy);
 
 		// Add serialization.

@@ -43,6 +43,9 @@ namespace storm {
 		// Get the handle for 'void'.
 		const Handle &voidHandle(Engine &e);
 
+		// Get the handle for treating regular objects as reference types in hash maps.
+		const Handle &refObjHandle(Engine &e);
+
 		// Get the type of an allocation.
 		Type *typeOf(const RootObject *o);
 

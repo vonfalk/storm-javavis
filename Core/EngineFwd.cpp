@@ -10,6 +10,7 @@ namespace storm {
 		static const EngineFwdShared fwd = {
 			&runtime::typeHandle,
 			&runtime::voidHandle,
+			&runtime::refObjHandle,
 			&runtime::typeOf,
 			&runtime::gcTypeOf,
 			&runtime::typeName,

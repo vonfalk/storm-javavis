@@ -17,10 +17,23 @@ namespace storm {
 		if (k.ref)
 			return null;
 
-		return new (params) SetType(name, k.type);
+		return new (params) SetType(name, k.type, false);
 	}
 
-	SetType::SetType(Str *name, Type *k) : Type(name, typeClass), k(k) {
+	Type *createRefSet(Str *name, ValueArray *params) {
+		if (params->count() != 1)
+			return null;
+
+		Value k = params->at(0);
+		if (k.ref)
+			return null;
+		if (k.isValue())
+			return null;
+
+		return new (params) SetType(name, k.type, true);
+	}
+
+	SetType::SetType(Str *name, Type *k, Bool ref) : Type(name, typeClass), k(k), ref(ref) {
 		params = new (engine) Array<Value>(Value(k));
 
 		setSuper(SetBase::stormType(engine));
@@ -29,6 +42,12 @@ namespace storm {
 	void CODECALL SetType::createClass(void *mem) {
 		SetType *t = (SetType *)runtime::typeOf((RootObject *)mem);
 		SetBase *o = new (Place(mem)) SetBase(t->k->handle());
+		runtime::setVTable(o);
+	}
+
+	void CODECALL SetType::createRefClass(void *mem) {
+		SetType *t = (SetType *)runtime::typeOf((RootObject *)mem);
+		SetBase *o = new (Place(mem)) SetBase(t->engine.refObjHandle());
 		runtime::setVTable(o);
 	}
 
@@ -49,7 +68,11 @@ namespace storm {
 		Array<Value> *thisKey = valList(e, 2, t, keyRef);
 
 		add(iter.type);
-		add(nativeFunction(e, Value(), Type::CTOR, valList(e, 1, t), address(&SetType::createClass)));
+		if (ref) {
+			add(nativeFunction(e, Value(), Type::CTOR, valList(e, 1, t), address(&SetType::createRefClass)));
+		} else {
+			add(nativeFunction(e, Value(), Type::CTOR, valList(e, 1, t), address(&SetType::createClass)));
+		}
 		add(nativeFunction(e, Value(), Type::CTOR, valList(e, 2, t, t), address(&SetType::copyClass)));
 		add(nativeFunction(e, boolT, S("put"), thisKey, address(&SetBase::putRaw)));
 		add(nativeFunction(e, Value(), S("put"), valList(e, 2, t, t), address(&SetBase::putSetRaw)));

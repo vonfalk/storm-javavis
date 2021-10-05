@@ -94,6 +94,9 @@ namespace storm {
 		// Get the one and only pointer handle for TObject.
 		const Handle &tObjHandle();
 
+		// Get a handle usable to treat regular objects as references in hash containers.
+		const Handle &refObjHandle();
+
 		// The threadgroup which all threads spawned from here shall belong to.
 		os::ThreadGroup threadGroup;
 
@@ -214,6 +217,9 @@ namespace storm {
 		struct GcRoot {
 			// Handle for TObject.
 			Handle *tObjHandle;
+
+			// Handle for reference hashes to Objects.
+			Handle *refObjHandle;
 
 			// Void handle.
 			Handle *voidHandle;

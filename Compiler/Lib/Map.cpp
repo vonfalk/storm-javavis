@@ -17,10 +17,24 @@ namespace storm {
 		if (k.ref || v.ref)
 			return null;
 
-		return new (params) MapType(name, k.type, v.type);
+		return new (params) MapType(name, k.type, v.type, false);
 	}
 
-	MapType::MapType(Str *name, Type *k, Type *v) : Type(name, typeClass), k(k), v(v) {
+	Type *createRefMap(Str *name, ValueArray *params) {
+		if (params->count() != 2)
+			return null;
+		Value k = params->at(0);
+		Value v = params->at(1);
+		if (k.ref || v.ref)
+			return null;
+
+		if (k.isValue())
+			return null;
+
+		return new (params) MapType(name, k.type, v.type, true);
+	}
+
+	MapType::MapType(Str *name, Type *k, Type *v, Bool ref) : Type(name, typeClass), k(k), v(v), refKeys(ref) {
 		if (engine.has(bootTemplates))
 			lateInit();
 
@@ -43,6 +57,12 @@ namespace storm {
 		runtime::setVTable(o);
 	}
 
+	void CODECALL MapType::createRefClass(void *mem) {
+		MapType *t = (MapType *)runtime::typeOf((RootObject *)mem);
+		MapBase *o = new (Place(mem)) MapBase(t->engine.refObjHandle(), t->v->handle());
+		runtime::setVTable(o);
+	}
+
 	void CODECALL MapType::copyClass(void *mem, MapBase *src) {
 		MapBase *o = new (Place(mem)) MapBase(*src);
 		runtime::setVTable(o);
@@ -62,7 +82,11 @@ namespace storm {
 		Array<Value> *thisKey = valList(e, 2, t, keyRef);
 
 		add(iter.type);
-		add(nativeFunction(e, Value(), Type::CTOR, valList(e, 1, t), address(&MapType::createClass))->makePure());
+		if (refKeys) {
+			add(nativeFunction(e, Value(), Type::CTOR, valList(e, 1, t), address(&MapType::createRefClass))->makePure());
+		} else {
+			add(nativeFunction(e, Value(), Type::CTOR, valList(e, 1, t), address(&MapType::createClass))->makePure());
+		}
 		add(nativeFunction(e, Value(), Type::CTOR, valList(e, 2, t, t), address(&MapType::copyClass))->makePure());
 		add(nativeFunction(e, boolT, S("put"), valList(e, 3, t, keyRef, valRef), address(&MapBase::putRaw)));
 		add(nativeFunction(e, boolT, S("has"), thisKey, address(&MapBase::hasRaw))->makePure());

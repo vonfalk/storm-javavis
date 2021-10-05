@@ -24,6 +24,7 @@ namespace storm {
 		// Everything present in storm::runtime:
 		const Handle &(*typeHandle)(Type *t);
 		const Handle &(*voidHandle)(Engine &e);
+		const Handle &(*refObjHandle)(Engine &e);
 		Type *(*typeOf)(const RootObject *o);
 		const GcType *(*gcTypeOf)(const void *alloc);
 		Str *(*typeName)(Type *t);

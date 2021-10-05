@@ -294,8 +294,6 @@ namespace storm {
 
 	/**
 	 * C++ interface.
-	 *
-	 * TODO: Set vtables for class in constructors.
 	 */
 	template <class K, class V>
 	class Map : public MapBase {
@@ -353,6 +351,101 @@ namespace storm {
 		public:
 			Iter() : MapBase::Iter() {}
 			Iter(Map<K, V> *owner) : MapBase::Iter(owner) {}
+			explicit Iter(MapBase::Iter i) : MapBase::Iter(i) {}
+
+			std::pair<K, V&> operator *() const {
+				return std::make_pair(*(K *)rawKey(), *(V *)rawVal());
+			}
+
+			// We can not provide the -> operator, so we adhere to the Storm convention of using k()
+			// and v() instead.
+
+			const K &k() const {
+				return *(const K *)rawKey();
+			}
+
+			V &v() const {
+				return *(V *)rawVal();
+			}
+		};
+
+		// Find a value.
+		Iter find(const K &k) {
+			return Iter(findRaw(&k));
+		}
+
+		// Create the iterator.
+		Iter begin() {
+			return Iter(this);
+		}
+
+		Iter end() {
+			return Iter();
+		}
+	};
+
+	// Let Storm know about the RefMap template.
+	STORM_TEMPLATE(RefMap, createRefMap);
+
+	/**
+	 * C++ interface.
+	 */
+	template <class K, class V>
+	class RefMap : public MapBase {
+		STORM_SPECIAL;
+	public:
+		// Get the Storm type for this object.
+		static Type *stormType(Engine &e) {
+			return runtime::cppTemplate(e, RefMapId, 2, StormInfo<K>::id(), StormInfo<V>::id());
+		}
+
+		// Empty map.
+		RefMap() : MapBase(runtime::refObjHandle(engine()), StormInfo<V>::handle(engine())) {
+			runtime::setVTable(this);
+		}
+
+		// Copy map.
+		RefMap(RefMap<K, V> *o) : MapBase(o) {
+			runtime::setVTable(this);
+		}
+
+		// Insert a value into the map, or update the existing one. Returns 'true' if the key did not exist before.
+		Bool put(const K &k, const V &v) {
+			return putRaw(&k, &v);
+		}
+
+		// Contains a key?
+		Bool has(const K &k) {
+			return hasRaw(&k);
+		}
+
+		// Get a value. Throws if not found.
+		V &get(const K &k) {
+			return *(V *)getRaw(&k);
+		}
+
+		// Get a value. Returns the default element if none found.
+		V &get(const K &k, const V &def) {
+			return *(V *)getRawDef(&k, &def);
+		}
+
+		// Get a value, create it if not alredy existing.
+		V &at(const K &k) {
+			return *(V *)atRaw(&k, &CreateFn<V>::fn);
+		}
+
+		// Remove a value.
+		Bool remove(const K &k) {
+			return removeRaw(&k);
+		}
+
+		/**
+		 * Iterator.
+		 */
+		class Iter : public MapBase::Iter {
+		public:
+			Iter() : MapBase::Iter() {}
+			Iter(RefMap<K, V> *owner) : MapBase::Iter(owner) {}
 			explicit Iter(MapBase::Iter i) : MapBase::Iter(i) {}
 
 			std::pair<K, V&> operator *() const {

@@ -63,6 +63,7 @@ SType => arrayType(t) : SType t, "\[\]";
 
 // Map type.
 SType[-10] => mapType(k, v) : SType k, "->", SType v;
+SType[-10] => refMapType(k, v) : SType k, "&", "->", SType v;
 
 // Maybe type.
 SType[10] => maybeType(t) : SType t, "\?" #typeName;

@@ -93,6 +93,10 @@ namespace storm {
 			return (*fwd.voidHandle)(e);
 		}
 
+		const Handle &refObjHandle(Engine &e) {
+			return (*fwd.refObjHandle)(e);
+		}
+
 		Type *typeOf(const RootObject *o) {
 			return (*fwd.typeOf)(o);
 		}
