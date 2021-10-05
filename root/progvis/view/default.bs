@@ -1,7 +1,8 @@
 use ui;
 use progvis:data;
 
-// Default view for the built-in types.
+// Default view for the built-in types. Called by the default view hints to create a default view
+// for some data.
 Drawable? defaultView(World world, Data data) on Render {
 	if (data as progvis:data:Thread) {
 		return ThreadView(data);
