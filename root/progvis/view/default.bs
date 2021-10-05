@@ -1,0 +1,19 @@
+use ui;
+use progvis:data;
+
+// Default view for the built-in types.
+Drawable? defaultView(World world, Data data) on Render {
+	if (data as progvis:data:Thread) {
+		return ThreadView(data);
+	} else if (data as Composite) {
+		return WithCaption(CompositeView(data), data.title(world));
+	} else if (data as Array) {
+		return ArrayView(data);
+	} else if (data as Primitive) {
+		return PrimitiveView(data);
+	} else if (data as Pointer) {
+		return PointerView(data);
+	}
+
+	null;
+}
