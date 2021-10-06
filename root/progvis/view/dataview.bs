@@ -102,8 +102,10 @@ class PrimitiveView extends AtomView {
 
 	void draw(Graphics g, Bool active) : override {
 		super:draw(g, active);
-		if (text)
-			g.draw(text, dataFg, pos + dataMargin);
+		if (text) {
+			Size margin = dataMargin;
+			g.draw(text, dataFg, Point(pos.x + size.w - text.size.w - margin.w, pos.y + margin.h));
+		}
 	}
 
 	void drawLinks(Graphics g, Bool active) : override {}
@@ -201,7 +203,8 @@ class CompositeView extends DataView {
 	void draw(Graphics g, Bool active) : override {
 		super:draw(g, active);
 		Float width = rect.size.w;
-		Float xBase = pos.x + dataBorder.w;
+		Float xBorder = compositeBorder.w;
+		Float xBase = pos.x + xBorder;
 
 		for (v in content) {
 			Float y = pos.y + v.yPos;
@@ -214,7 +217,8 @@ class CompositeView extends DataView {
 
 			// Align the text a bit nicer on the y-axis, to line up the baselines...
 			g.draw(v.name, dataFg, Point(xBase, y + dataBorder.h));
-			v.data.pos = Point(xBase + namesWidth + dataWidth - v.data.size.w, y);
+			v.data.pos = Point(xBase + width - v.data.size.w - xBorder*2, y);
+			// v.data.pos = Point(xBase + namesWidth + dataWidth - v.data.size.w, y);
 			v.data.draw(g, false);
 		}
 	}
@@ -245,7 +249,8 @@ class CompositeView extends DataView {
 		invalidateSize();
 	}
 
-	Float nameWidth() { namesWidth; }
+	Float maxNameWidth() { namesWidth; }
+	Float maxDataWidth() { dataWidth; }
 
 private:
 
@@ -315,6 +320,7 @@ class ArrayView extends DataView {
 	void draw(Graphics g, Bool active) : override {
 		super:draw(g, active);
 		Float width = rect.size.w;
+		Float xBorder = compositeBorder.w;
 		Point at = pos + compositeBorder;
 
 		for (v in content) {
@@ -324,7 +330,8 @@ class ArrayView extends DataView {
 			// Align the text a bit nicer on the y-acis, to line up the baselines...
 			g.draw(v.text, dataFg, at + Point(0, dataBorder.h));
 
-			v.value.pos = at + Point(namesWidth + dataWidth - dataSz.w, 0);
+			v.value.pos = at + Point(width - dataSz.w - xBorder*2, 0);
+			// v.value.pos = at + Point(namesWidth + dataWidth - dataSz.w, 0);
 			v.value.draw(g, false);
 
 			at.y += max(nameSz.h, dataSz.h) + dataBorder.h;

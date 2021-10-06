@@ -160,7 +160,8 @@ class ThreadView extends DataView {
 			Size sz = frame.size;
 			if (i < frames.count) {
 				if (c = frame.wrap as CompositeView)
-					xOffset -= c.nameWidth;
+					xOffset -= frame.size.w - c.maxDataWidth - dataBorder.w*3;
+					// xOffset -= c.maxNameWidth;
 			}
 			layoutOffset[i - 1] = xOffset;
 			xOffset += sz.w;

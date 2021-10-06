@@ -142,6 +142,8 @@ class Thread extends Data {
 				else
 					t.addData(ptr, parts[k].value);
 			}
+			while (parts.count > src.variables.count)
+				parts.pop();
 		}
 
 		void traverse(World:Traversal t, unsafe:RawPtr object, Nat offset) : override {

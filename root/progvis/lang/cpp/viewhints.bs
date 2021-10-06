@@ -31,7 +31,6 @@ class CppViewHints extends ViewHints {
 			// Is it an array allocation?
 			if ((root.readFilled & AllocFlags:arrayAlloc.v) != 0) {
 				return CppArray(info.type);
-				// return createArray(t, info, root);
 			}
 		}
 
@@ -98,44 +97,11 @@ class CppViewHints extends ViewHints {
 		result;
 	}
 
-	// Create a data node for an array. We assume that 'offset' is zero (checked earlier).
-	private Data createArray(World:Traversal t, TypeInfo info, unsafe:RawPtr base) {
-		// To make the representation a bit more compact, we stuff everything into a single
-		// Composite object. This works since we know that the size of the allocation will not
-		// change. This could be a bit unclear if we're working with inheritance as well, but it
-		// should be good enough.
-
-		// Create a single allocation so that we can se what it is.
-		Data element = t.create(info);
-
-		// Figure out the size and stride.
-		Nat count = base.readCount & AllocFlags:sizeMask.v;
-		Nat elemSz = base.readSize;
-
-		// Do it!
-		Composite result(info.type);
-		for (Nat i = 0; i < count; i++) {
-			Nat offset = i * elemSz;
-
-			// If the element is a Composite object, we can copy everything in there.
-			if (element as Composite) {
-				for (i, m in element.parts) {
-					result.add(m.name, offset + m.offset, m.value.copy, i == 0);
-				}
-			} else {
-				// Otherwise, just use the result.
-				result.add("", offset, element.copy, true);
-			}
-		}
-
-		result;
-	}
-
 	Drawable? createView(World world, Data data) : override {
 		if (data as CppChar) {
 			return CppCharView(data);
 		} else if (data as CppArray) {
-			return CppArrayView(data);
+			return WithCaption(CppArrayView(data), data.title(world));
 		}
 
 		null;
@@ -327,8 +293,9 @@ class CppCharView extends AtomView {
 
 		Rect p = rect;
 		Size numSize = num.size;
-		g.draw(num, dataFg, p.p1 - numSize - dataMargin);
-		g.draw(ch, dataFg, p.p0 + dataMargin);
+		Size margin = dataMargin;
+		g.draw(num, dataFg, p.p1 - numSize - margin);
+		g.draw(ch, dataFg, Point(p.p0.x + margin.w, p.p1.y - ch.size.h - margin.h));
 	}
 
 	void drawLinks(Graphics g, Bool active) : override {}
