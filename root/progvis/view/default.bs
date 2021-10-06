@@ -20,3 +20,13 @@ Drawable? defaultView(World world, Data data) on Render {
 
 	null;
 }
+
+// Default decoration.
+Drawable defaultDecorate(Allocation alloc, Drawable data) on Render {
+	if (data as ThreadView) {
+		// Let threads know about their allocation so that they can disappear.
+		data.alloc = alloc;
+	}
+
+	data;
+}

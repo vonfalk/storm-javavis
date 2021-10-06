@@ -48,7 +48,14 @@ class StickyAllocation extends Allocation {
 		init(src, data) {}
 	}
 
-	Bool remove() : override { false; }
+	private Bool removeMe;
+
+	Bool remove() : override { removeMe; }
+
+	// Unstick the allocation.
+	void unstick() {
+		removeMe = true;
+	}
 }
 
 

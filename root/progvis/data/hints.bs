@@ -89,4 +89,9 @@ class DefaultViewHints extends ViewHints {
 		progvis:view:defaultView(world, data);
 	}
 
+	// Default decoration.
+	progvis:view:Drawable decorateAllocation(Allocation alloc, progvis:view:Drawable data) {
+		progvis:view:defaultDecorate(alloc, data);
+	}
+
 }

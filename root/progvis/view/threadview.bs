@@ -66,6 +66,15 @@ class ThreadView extends DataView {
 	// Layout offset for frames.
 	private Float[] layoutOffset;
 
+	// Pointer to the allocation for this thread, so that we can remove the thread.
+	private StickyAllocation? srcAlloc;
+
+	// Set the allocation.
+	assign alloc(Allocation a) {
+		if (a as StickyAllocation)
+			srcAlloc = a;
+	}
+
 	// Don't remove the thread until it has terminated and the user explicitly removes it.
 	Bool remove() : override {
 		removeMe;
@@ -243,6 +252,8 @@ class ThreadView extends DataView {
 
 	private void onRemove() {
 		removeMe = true;
+		if (srcAlloc)
+			srcAlloc.unstick();
 		// Make it happen now, and not later.
 		thread.src.owner.notifyChange();
 	}
