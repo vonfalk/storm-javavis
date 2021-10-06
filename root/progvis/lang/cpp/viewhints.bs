@@ -37,6 +37,11 @@ class CppViewHints extends ViewHints {
 		createSpecial(t, info);
 	}
 
+	// Create a custom allocation.
+	Allocation createAllocation(unsafe:RawPtr ptr, Data data) {
+		HeapAllocation(ptr, data);
+	}
+
 	// Get a title for the type.
 	Str? typeTitle(World world, TypeInfo info) : override {
 		if (type = info.type as PtrType) {
@@ -108,7 +113,9 @@ class CppViewHints extends ViewHints {
 	}
 
 	Drawable decorateAllocation(Allocation alloc, Drawable data) : override {
-		print("TODO: Add our custom decorator here.");
+		if (alloc as HeapAllocation) {
+			return inject(data, (x) => HeapView(alloc, x));
+		}
 		data;
 	}
 }
@@ -147,86 +154,77 @@ class CppPointer extends Pointer {
 
 
 /**
- * Wrap heap allocations.
+ * Custom logic for C++ heap allocations.
  *
- * Manages the lifetime of the object and indicates when it has been deleted.
- *
- * Assumes we don't have to deal with mouse movement etc. I.e. assumes we're not the topmost object.
+ * Detects when allocations are deallocated, and makes sure they remain if they are not deallocated
+ * properly.
  */
-// class CppHeapObj extends Data {
-// 	init(Data wrap) {
-// 		init { wrap = wrap; dead = false; }
-// 	}
+class HeapAllocation extends Allocation {
+	// Create.
+	init(unsafe:RawPtr src, Data data) {
+		init(src, data) {}
+	}
 
-// 	// Wrapped object.
-// 	Data wrap;
+	// Is this allocation dead?
+	Bool dead;
 
-// 	// Have this object been deleted?
-// 	Bool dead;
+	// Is this a static allocation that we don't need to explicitly free.
+	Bool staticAlloc;
 
-// 	// Is this a static allocation that does not need to be removed?
-// 	Bool staticAlloc;
+	// Update our state.
+	void update(World:Traversal t, Nat id) : override {
+		super:update(t, id);
 
-// 	Size size() : override {
-// 		wrap.size();
-// 	}
+		// Update our state.
+		Nat filled = src.readFilled();
+		staticAlloc = (filled & AllocFlags:staticAlloc.v) != 0;
+		dead = filled == 0;
+	}
 
-// 	assign size(Size sz) : override {
-// 		wrap.size(sz);
-// 	}
+	// Remove when we are deallocated, or if we are a static allocation (e.g. a C-string).
+	Bool remove() : override {
+		dead | staticAlloc;
+	}
+}
 
-// 	void draw(ui:Graphics g, Bool active) : override {
-// 		wrap.pos = pos;
-// 		wrap.draw(g, active);
 
-// 		if (dead) {
-// 			// Draw a big cross.
-// 			Size s = size;
-// 			g.line(pos, pos + s, errorFg);
-// 			g.line(pos + Size(0, s.h), pos + Size(s.w, 0), errorFg);
-// 		}
-// 	}
+/**
+ * Visualization of the heap allocations.
+ */
+class HeapView extends WrapDrawable {
+	init(HeapAllocation alloc, Drawable wrap) {
+		init(wrap) {
+			alloc = alloc;
+		}
+	}
 
-// 	void drawLinks(ui:Graphics g, Bool active) : override {
-// 		wrap.drawLinks(g, active);
-// 	}
+	// Allocation with data.
+	HeapAllocation alloc;
 
-// 	void update(Workspace work, unsafe:RawPtr object, Nat offset) : override {
-// 		wrap.update(work, object, offset);
+	// Is this heap object dead?
+	Bool dead;
 
-// 		if (offset == 0) {
-// 			staticAlloc = (object.readFilled() & AllocFlags:staticAlloc.v) != 0;
-// 			dead = object.readFilled() == 0;
-// 		}
-// 	}
+	void draw(ui:Graphics g, Bool active) : override {
+		super:draw(g, active);
 
-// 	DataOffset findOffset(core:lang:Type? type, Nat offset) : override {
-// 		wrap.findOffset(type, offset);
-// 	}
+		if (alloc.dead) {
+			// Draw a big cross.
+			Size s = size;
+			g.line(pos, pos + s, errorFg);
+			g.line(pos + Size(0, s.h), pos + Size(s.w, 0), errorFg);
+		}
+	}
 
-// 	Bool remove() : override {
-// 		dead | staticAlloc;
-// 	}
+	void update(Workspace:Update ws) : override {
+		super:update(ws);
+		dead = alloc.dead;
+	}
 
-// 	Drawable findAt(Point pt) : override {
-// 		wrap.findAt(pt);
-// 	}
+}
 
-// 	void clearAccess() : override {
-// 		wrap.clearAccess();
-// 	}
-
-// 	void checkAccess(unsafe:RawPtr object, Nat offset, Nat size, Trackers trackers) : override {
-// 		wrap.checkAccess(object, offset, size, trackers);
-// 	}
-
-// 	Data contained() : override { wrap.contained; }
-// }
 
 /**
  * A single C++ character.
- *
- * TODO: Restore the previous visualization. That is a bit nicer.
  */
 class CppChar extends Primitive {
 	init() {

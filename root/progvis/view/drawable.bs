@@ -102,14 +102,89 @@ class WithBorder extends Drawable {
 
 
 /**
+ * Common object for all drawables that wrap other drawables.
+ */
+class WrapDrawable extends Drawable {
+	// Create.
+	init(Drawable wrap) {
+		init() {
+			wrap = wrap;
+		}
+	}
+
+	// Wrapped object.
+	Drawable wrap;
+
+	// Same data?
+	Bool sameData(Data d) : override {
+		wrap.sameData(d);
+	}
+
+	// Update.
+	void update(Workspace:Update ws) : override {
+		wrap.update(ws);
+	}
+
+	// Draw.
+	void draw(Graphics g, Bool active) : override {
+		wrap.pos = pos;
+		wrap.draw(g, active);
+	}
+
+	// Draw links.
+	void drawLinks(Graphics g, Bool active) : override {
+		wrap.drawLinks(g, active);
+	}
+
+	// Set and get size.
+	Size size() : override {
+		wrap.size();
+	}
+
+	assign size(Size s) : override {
+		wrap.size(s);
+	}
+
+	// Remove?
+	Bool remove() : override {
+		wrap.remove();
+	}
+
+	// Get contained element.
+	Drawable contained() : override {
+		wrap.contained();
+	}
+
+	// Get sub-element.
+	Drawable findAt(Point pt) : override {
+		wrap.findAt(pt);
+	}
+
+}
+
+// Insert a new wrap object at the innermost position.
+Drawable inject(Drawable into, fn(Drawable)->WrapDrawable insert) on Render {
+	if (into as WrapDrawable) {
+		WrapDrawable curr = into;
+		while (next = curr.wrap as WrapDrawable)
+			curr = next;
+
+		curr.wrap = insert.call(curr.wrap);
+		into;
+	} else {
+		insert.call(into);
+	}
+}
+
+
+/**
  * Drawable class that wraps another drawable to give it a caption.
  */
-class WithCaption extends Drawable {
+class WithCaption extends WrapDrawable {
 	init(Drawable wrap, Str caption) {
 		Text c(caption, captionFont);
 
-		init() {
-			wrap = wrap;
+		init(wrap) {
 			caption = c;
 			captionSz = c.size + compositeBorder*2;
 		}
@@ -136,21 +211,6 @@ class WithCaption extends Drawable {
 		wrap.draw(g, active);
 	}
 
-	void drawLinks(Graphics g, Bool active) : override {
-		wrap.drawLinks(g, active);
-	}
-
-	Bool sameData(Data d) : override {
-		wrap.sameData(d);
-	}
-
-	void update(Workspace:Update ws) : override {
-		wrap.update(ws);
-	}
-
-	// The drawable we're wrapping.
-	Drawable wrap;
-
 	// Caption text.
 	private Text caption;
 
@@ -167,12 +227,6 @@ class WithCaption extends Drawable {
 		else
 			this;
 	}
-
-	Bool remove() : override {
-		wrap.remove();
-	}
-
-	Drawable contained() : override { wrap.contained; }
 }
 
 
