@@ -1,0 +1,135 @@
+use progvis:program;
+
+/**
+ * Memory access.
+ *
+ * Used to report whether data was read from and/or written to.
+ */
+enum MemAccess : bitmask {
+	none = 0x00,
+	read = 0x01,
+	write = 0x02,
+	newRead = 0x04,
+	newWrite = 0x08,
+}
+
+/**
+ * Object that keeps track of all reads and writes by threads during a traversal.
+ *
+ * It is possible to ask this object which threads read and write certain data, and to detect race
+ * conditions from those observations. Collects information on any instances where reads and writes
+ * cause race conditions.
+ */
+class MemCheck {
+	// Memory trackers for each of the threads currently alive. Mapped thread-id->tracker.
+	private Nat->MemTracker threads;
+
+	// Error messages we produced.
+	private Str[] errors;
+
+	// Add a thread.
+	void add(Nat id, MemTracker tracker) {
+		threads.put(id, tracker);
+	}
+
+	// Get errors, if any.
+	ProgramError? error() {
+		if (errors.any)
+			return DataRaceError(errors);
+		else
+			return null;
+	}
+
+	// Query the memory access for some data.
+	// This is the fast-path: it does not allocate memory in the case no errors happen
+	// (which is the normal case). It calls one of the error functions in case of an error.
+	// These will have to re-do parts of the work in order to provide better error messages,
+	// but as they are on the slow path, this is fine.
+	MemAccess query(unsafe:RawPtr object, Nat offset, Nat size) {
+		MemAccess result = MemAccess:none;
+
+		// Dummy value, not a valid thread ID (if we have this many threads, we have other
+		// problems...)
+		Nat noWrite = 0xFFFFFFFF;
+		Nat writtenBy = noWrite;
+		Bool writeError = false;
+
+		// Check writes.
+		for (k, v in threads) {
+			if (v.writes.has(object, offset, size)) {
+				if (writtenBy != noWrite)
+					writeError = true;
+				writtenBy = k;
+				result += MemAccess:write;
+				if (v.newWrites.has(object, offset, size))
+					result += MemAccess:newWrite;
+			}
+		}
+
+		if (writeError)
+			dualWriteError(object, offset, size);
+
+		// Check reads.
+		Bool readError = false;
+		for (k, v in threads) {
+			if (v.reads.has(object, offset, size)) {
+				if ((writtenBy != noWrite) & (writtenBy != k))
+					readError = true;
+				result += MemAccess:read;
+				if (v.newReads.has(object, offset, size))
+					result += MemAccess:newRead;
+			}
+		}
+
+		if (!writeError & readError)
+			readWriteError(object, offset, size);
+
+		result;
+	}
+
+	// Add an error message concerning multiple writes.
+	private void dualWriteError(unsafe:RawPtr object, Nat offset, Nat size) {
+		Nat[] writes;
+
+		for (k, v in threads)
+			if (v.writes.has(object, offset, size))
+				writes << k;
+
+		writes.sort();
+
+		StrBuf result;
+		result << "Threads " << join(writes, ", ") << " all wrote to the same value concurrently.";
+		errors << result.toS;
+	}
+
+	// Add an error message concerning read-write errors.
+	private void readWriteError(unsafe:RawPtr object, Nat offset, Nat size) {
+		Nat[] writes;
+		Nat[] reads;
+
+		for (k, v in threads) {
+			if (v.writes.has(object, offset, size))
+				writes << k;
+			else if (v.reads.has(object, offset, size))
+				reads << k;
+		}
+
+		writes.sort();
+		reads.sort();
+
+		print("TODO: Inhibit reports of the same concurrency error after it has been found.");
+
+		StrBuf result;
+		if (writes.count > 1)
+			result << "Threads ";
+		else
+			result << "Thread ";
+		result << join(writes, ", ") << " wrote to a value that ";
+		if (reads.count > 1)
+			result << "threads ";
+		else
+			result << "thread ";
+		result << join(reads, ", ") << " read from concurrently.";
+		errors << result.toS;
+	}
+}

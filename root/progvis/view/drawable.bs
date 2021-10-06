@@ -42,8 +42,8 @@ class Drawable on Render {
 	// Called when this object is no longer reachable to determine if it is ready to be removed.
 	Bool remove() { true; }
 
-	// Check if this drawable represent some particular data object.
-	Bool sameData(Data data) : abstract;
+	// Get the data that corresponds to this drawable, if any.
+	Data? srcData() : abstract;
 
 	// Update the data in this drawable.
 	void update(Workspace:Update ws) : abstract;
@@ -116,8 +116,8 @@ class WrapDrawable extends Drawable {
 	Drawable wrap;
 
 	// Same data?
-	Bool sameData(Data d) : override {
-		wrap.sameData(d);
+	Data? srcData() : override {
+		wrap.srcData();
 	}
 
 	// Update.

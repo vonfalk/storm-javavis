@@ -128,6 +128,9 @@ class CppPointer extends Pointer {
 	init(PtrType type) {
 		init(type) { targetType = type.inside; }
 	}
+	init(CppPointer original) {
+		init(original) { targetType = original.targetType; }
+	}
 
 	// The type we point to.
 	private core:lang:Type? targetType;
@@ -149,6 +152,11 @@ class CppPointer extends Pointer {
 
 		Data baseData = t.findOrCreate(base);
 		to = baseData.atOffset(targetType, ptrOffset);
+	}
+
+	// Copy.
+	protected Data copyObject() : override {
+		CppPointer(this);
 	}
 }
 
@@ -274,10 +282,11 @@ class CppCharView extends AtomView {
 		}
 	}
 
-	Bool sameData(Data d) : override { d is src; }
+	Data? srcData() : override { src; }
 
 	void update(Workspace:Update ws) : override {
 		ws.setVisual(src, this);
+		super:update(ws);
 		if (last != src.charVal.nat) {
 			last = src.charVal.nat;
 			ch = Text(Char(last).toS, codeFont);
@@ -405,7 +414,7 @@ class CppArrayView extends DataView {
 
 	private CppArray data;
 
-	Bool sameData(Data d) : override { d is data; }
+	Data? srcData() : override { data; }
 
 	void draw(Graphics g, Bool active) : override {
 		// We don't need to call the super class here, minimize overdraw.

@@ -68,7 +68,7 @@ class OutputText extends Drawable {
 	Bool remove() : override { false; }
 
 	// No particular data to consider.
-	Bool sameData(Data d) : override { false; }
+	Data? srcData() : override { null; }
 
 	// Update, nothing to do in particular.
 	void update(Workspace:Update ws) : override {}

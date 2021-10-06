@@ -77,10 +77,11 @@ class MainPainter extends Painter {
 		// Terminate the previous program, if any. We do that here in case the load failed.
 		cleanup();
 
-		world = World(loaded);
+		var w = World(loaded);
+		world = w;
 		updateBehavior(b);
-		print("TODO: Track deadlocks!");
-		// workspace.trackDeadlock = true;
+		w.trackDeadlock = true;
+		print("TODO: Enable data race detection?");
 		loaded.onChange = &this.update();
 		loaded.onError = &this.onProgramError;
 		loaded.onAdvance = &this.onProgramAdvance;
@@ -213,29 +214,30 @@ class MainPainter extends Painter {
 
 	// Update the visualization of the data.
 	void update() {
+		ProgramError? error;
+
+		// TODO: Wait for all threads to have stopped somewhere? Otherwise we get two notifications
+		// very close to each other from time to time, and we might get two notifications of the
+		// same error.
 		if (world) {
 			core:sync:Lock:Guard z(traverseLock);
 
-			world.update();
+			error = world.update();
 
 			if (o = world.program.getOutput())
 				workspace.outputText(o);
 
 			workspace.update(world);
-
-			print("TODO: Check for errors!");
 		}
-
-		// var error = workspace.endTraversal();
 
 		repaint();
 
-		// if (error) {
-		// 	if (behavior) {
-		// 		stopThreads();
-		// 		behavior.onProgramError(error);
-		// 	}
-		// }
+		if (error) {
+			stopThreads();
+			if (behavior) {
+				behavior.onProgramError(error);
+			}
+		}
 	}
 
 	// Called when the mouse is moved.

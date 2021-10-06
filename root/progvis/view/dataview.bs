@@ -33,7 +33,7 @@ class UnknownView extends DataView {
 
 	void drawLinks(Graphics g, Bool active) : override {}
 
-	Bool sameData(Data d) : override { d is data; }
+	Data? srcData() : override { data; }
 
 	void update(Workspace:Update ws) : override {
 		if (data)
@@ -56,7 +56,7 @@ class PadView extends Drawable {
 
 	void draw(Graphics g, Bool active) : override {}
 	void drawLinks(Graphics g, Bool active) : override {}
-	Bool sameData(Data d) : override { d is data; }
+	Data? srcData() : override { data; }
 	void update(Workspace:Update ws) : override {
 		ws.setVisual(data, this);
 	}
@@ -68,7 +68,52 @@ class PadView extends Drawable {
  *
  * Highlights reads and writes as appropriate.
  */
-class AtomView extends DataView {}
+class AtomView extends DataView {
+	// Status of the memory.
+	MemAccess access;
+
+	// Update.
+	void update(Workspace:Update ws) : override {
+		if (x = srcData as Atom)
+			access = x.access;
+	}
+
+	// Draw. We draw the entire background ourselves, otherwise we would draw over the borders drawn
+	// by DataView.
+	void draw(Graphics g, Bool active) : override {
+		Rect r = rect;
+
+		if (access.has(MemAccess:read) & access.has(MemAccess:write)) {
+			Float center = r.center.x;
+			g.fill(Rect(r.p0, Point(center, r.p1.y)), readColor);
+			g.fill(Rect(Point(center, r.p0.y), r.p1), writeColor);
+		} else if (access.has(MemAccess:read)) {
+			g.fill(r, readColor);
+		} else if (access.has(MemAccess:write)) {
+			g.fill(r, writeColor);
+		} else {
+			g.fill(r, dataBg);
+		}
+
+		g.draw(r, dataFg);
+	}
+
+	// Read color.
+	private Brush readColor() {
+		if (access.has(MemAccess:newRead))
+			dataReadBg;
+		else
+			dataReadFaint;
+	}
+
+	// Write color.
+	private Brush writeColor() {
+		if (access.has(MemAccess:newWrite))
+			dataWriteBg;
+		else
+			dataWriteFaint;
+	}
+}
 
 /**
  * Primitive of some sort.
@@ -84,10 +129,11 @@ class PrimitiveView extends AtomView {
 	private Str lastValue;
 	private Text? text;
 
-	Bool sameData(Data d) : override { d is data; }
+	Data? srcData() : override { data; }
 
 	void update(Workspace:Update ws) : override {
 		ws.setVisual(data, this);
+		super:update(ws);
 		update();
 	}
 
@@ -144,10 +190,11 @@ class PointerView extends AtomView {
 	private Drawable? target;
 	private Path line;
 
-	Bool sameData(Data d) : override { d is data; }
+	Data? srcData() : override { data; }
 
 	void update(Workspace:Update ws) : override {
 		ws.setVisual(data, this);
+		super:update(ws);
 		if (to = data.to) {
 			target = ws.find(this, to);
 		} else {
@@ -166,7 +213,6 @@ class PointerView extends AtomView {
 	void drawLinks(Graphics g, Bool active) : override {
 		if (target) {
 			Point to = target.pos;
-			// TODO: Offset?
 
 			Brush color = if (active) { activeLink; } else { inactiveLink; };
 			Rect r = rect;
@@ -198,7 +244,7 @@ class CompositeView extends DataView {
 
 	private Composite data;
 
-	Bool sameData(Data d) : override { d is data; }
+	Data? srcData() : override { data; }
 
 	void draw(Graphics g, Bool active) : override {
 		super:draw(g, active);
@@ -235,7 +281,7 @@ class CompositeView extends DataView {
 			if (id >= content.count) {
 				content << Variable(part.name, ws.create(part.value), part.first);
 			} else {
-				if (!content[id].data.sameData(part.value))
+				if (content[id].data.srcData !is part.value)
 					content[id].data = ws.create(part.value);
 
 				if (content[id].name.text != part.name)
@@ -315,7 +361,7 @@ class ArrayView extends DataView {
 
 	private Array data;
 
-	Bool sameData(Data d) : override { d is data; }
+	Data? srcData() : override { data; }
 
 	void draw(Graphics g, Bool active) : override {
 		super:draw(g, active);

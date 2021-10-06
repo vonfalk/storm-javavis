@@ -84,7 +84,34 @@ class Pad extends Data {
  * This means that it does not consist of other types. As such, it makes sense to keep track of
  * reads and writes for this data.
  */
-class Atom extends Data {}
+class Atom extends Data {
+	// Create, give the size of this atom-object.
+	init(Nat size) {
+		init() {
+			size = size;
+		}
+	}
+
+	// Copy.
+	init(Atom original) {
+		init() {
+			size = original.size;
+			access = original.access;
+		}
+	}
+
+	// Recent memory access to this atom.
+	MemAccess access;
+
+	// Size of this object to detect reads/writes properly.
+	private Nat size;
+
+	// Update memory access. We do this here rather than in traverse since pointers override
+	// traverse in a way that it is difficult to call the super class in some cases.
+	void update(World:Traversal t, unsafe:RawPtr object, Nat offset) {
+		access = t.memory.query(object, offset, size);
+	}
+}
 
 /**
  * Primitive type of some sort (e.g. integer, char, ...)
@@ -92,14 +119,14 @@ class Atom extends Data {}
 class Primitive extends Atom {
 	// Create.
 	init(Type type) {
-		init {
+		init(Value(type).size.current) {
 			pType = type;
 		}
 	}
 
 	// Copy.
 	init(Primitive original) {
-		init {
+		init(original) {
 			pType = original.pType;
 			value = original.value;
 		}
@@ -141,14 +168,18 @@ class Primitive extends Atom {
 class Pointer extends Atom {
 	// Create. Provide the type of the pointer if it is known.
 	init(Type? type) {
-		init() {
+		var sz = core:asm:sPtr;
+		if (type)
+			sz = Value(type).size;
+
+		init(sz.current) {
 			pType = type;
 		}
 	}
 
 	// Copy.
 	init(Pointer original) {
-		init() {
+		init(original) {
 			pType = original.pType;
 			to = original.to;
 		}
@@ -211,6 +242,7 @@ class StackPointer extends Pointer {
 	// Traverse.
 	void traverse(World:Traversal t, unsafe:RawPtr object, Nat offset) : override {
 		traverse(t, object);
+		// TODO: How to update access here? I don't think we are able to.
 	}
 
 	// Copy.

@@ -52,7 +52,7 @@ class SmallButton extends Drawable {
 		true;
 	}
 
-	Bool sameData(Data d) : override { false; }
+	Data? srcData() : override { null; }
 
 	void update(Workspace:Update ws) : override {}
 }

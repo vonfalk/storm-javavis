@@ -1,5 +1,6 @@
 use ui;
 use core:sync;
+use progvis:program;
 
 /**
  * This class represents all data that exists for a program, i.e. that program's view of the world.
@@ -10,7 +11,7 @@ use core:sync;
  */
 class World on Render {
 	// Program we are representing a snapshot of.
-	public progvis:program:Program program;
+	public Program program;
 
 	// Lock for the traversal.
 	private Lock traverseLock;
@@ -21,11 +22,17 @@ class World on Render {
 	// Hints available to us.
 	public ViewHints[] hints;
 
+	// Errors to track.
+	public Bool trackDeadlock;
+	public Bool trackDataRaces;
+
 	// Create, and associate us with a program.
 	init(progvis:program:Program program) {
 		init {
 			program = program;
 			hints = program.hints;
+			trackDeadlock = true;
+			trackDataRaces = true;
 		}
 
 		clear();
@@ -44,11 +51,11 @@ class World on Render {
 	}
 
 	// Update the current snapshot with the current state of the running program.
-	void update() {
+	ProgramError? update() {
 		Lock:Guard z(traverseLock);
 
 		var t = beginTraversal();
-		for (id, thread in program.threads) {
+		for (thread in program.threads) {
 			traverse(t, thread);
 		}
 		endTraversal(t);
@@ -79,6 +86,9 @@ class World on Render {
 		// Owning World object.
 		World owner;
 
+		// Keep track of memory issues.
+		MemCheck memory;
+
 		// Map from pointers to index in 'allocations'.
 		unsafe:RawPtr->Nat allocMap;
 
@@ -94,6 +104,13 @@ class World on Render {
 		init(World world) {
 			init {
 				owner = world;
+			}
+
+			if (world.trackDataRaces) {
+				// Register all threads with the memory tracker.
+				for (t in world.program.threads) {
+					memory.add(t.threadId, t.memory);
+				}
 			}
 		}
 
@@ -208,8 +225,8 @@ private:
 		t;
 	}
 
-	// End traversal.
-	void endTraversal(Traversal t) {
+	// End traversal. Returns concurrency errors.
+	ProgramError? endTraversal(Traversal t) {
 		pop(t);
 
 		// Find dead elements, and potentially traverse them now.
@@ -234,6 +251,16 @@ private:
 		while (to < allocations.count) {
 			allocations.pop();
 		}
+
+		if (trackDataRaces)
+			if (e = t.memory.error)
+				return e;
+
+		if (trackDeadlock)
+			if (e = findDeadlock())
+				return e;
+
+		null;
 	}
 
 	// Traverse a thread.
@@ -246,7 +273,7 @@ private:
 		Nat id = t.allocMap.get(obj, allocations.count);
 		if (id >= allocations.count) {
 			var data = Thread(thread);
-			StickyAllocation alloc(obj, data); // TODO: Allow removing threads, but later.
+			StickyAllocation alloc(obj, data);
 
 			allocations.push(alloc);
 			alloc.update(t, id);
@@ -260,6 +287,28 @@ private:
 			t.work.pop();
 			top.traverse(t);
 		}
+	}
+
+	// Find a deadlock.
+	ProgramError? findDeadlock() {
+		Bool anyThreads = false;
+		Bool allSleeping = true;
+
+		for (a in allocations) {
+			if (t = a.data as Thread) {
+				if (t.alive) {
+					anyThreads = true;
+					allSleeping &= t.sleeping;
+				}
+			}
+		}
+
+		if (anyThreads & allSleeping) {
+			trackDeadlock = false;
+			return DeadlockError();
+		}
+
+		null;
 	}
 
 }

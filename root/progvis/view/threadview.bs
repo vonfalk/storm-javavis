@@ -80,14 +80,14 @@ class ThreadView extends DataView {
 		removeMe;
 	}
 
-	Bool sameData(Data d) : override { d is thread; }
+	Data? srcData() : override { thread; }
 
 	void update(Workspace:Update ws) : override {
 		for (id, f in thread.frames) {
 			if (id >= frames.count) {
 				frames << create(ws.world, f);
 				layoutOffset << 0;
-			} else if (!frames[id].sameData(f)) {
+			} else if (frames[id].srcData !is f) {
 				frames[id] = create(ws.world, f);
 			}
 			frames[id].update(ws);
