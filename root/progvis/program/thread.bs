@@ -282,7 +282,7 @@ class ProgThread on Render {
 			terminating = true;
 			throw ExitError();
 		} else if (!wasSleeping) {
-			owner.notifyAdvance(threadId);
+			owner.notifyAdvance(threadId, barrierStep);
 		}
 	}
 }

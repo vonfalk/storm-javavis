@@ -44,7 +44,10 @@ class Thread extends Data {
 		alive = src.alive;
 		sleeping = src.sleeping;
 		crashed = src.crashed;
-		afterReturn = src.frames.last.returned;
+		afterReturn = false;
+		// In some cases, we can be executed before the thread has started properly.
+		if (src.frames.any)
+			afterReturn = src.frames.last.returned;
 		pos = src.pos;
 
 		if (!src.alive) {

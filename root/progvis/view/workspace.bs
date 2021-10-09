@@ -13,6 +13,17 @@ class Workspace on Render {
 
 	}
 
+	// Enable stepping the threads?
+	private Bool enableStep;
+
+	// Set stepping.
+	assign enableStep(Bool v) {
+		enableStep = v;
+		for (e in elements)
+			if (x = e.visual.contained as ThreadView)
+				x.enableStep = v;
+	}
+
 	// Draw the workspace. Assumes we can clip anything not inside 'viewport'.
 	void render(Rect viewport, Graphics g) {
 		// Find new docked elements.
@@ -229,6 +240,10 @@ class Workspace on Render {
 			for (h in world.hints) {
 				created = h.decorateAllocation(alloc, created);
 			}
+
+			// Set stepping enabled for any new threads.
+			if (x = created.contained as ThreadView)
+				x.enableStep = owner.enableStep;
 
 			if (alloc.data as progvis:data:Thread) {
 				Element e(alloc, Dockable(created, alloc.data.title(world)).allowResize);

@@ -109,7 +109,7 @@ class Atom extends Data {
 	// Update memory access. We do this here rather than in traverse since pointers override
 	// traverse in a way that it is difficult to call the super class in some cases.
 	void update(World:Traversal t, unsafe:RawPtr object, Nat offset) {
-		access = t.memory.query(object, offset, size);
+		access = t.memory.query(access, object, offset, size);
 	}
 }
 

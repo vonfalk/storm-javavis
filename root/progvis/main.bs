@@ -29,8 +29,11 @@ class MainWin extends Frame {
 	// The first one is the "sign in" item.
 	private PopupMenu onlineMenu;
 
-	// Menu element for tracking reads/writes.
-	private Menu:Check trackMemory;
+	// Menu element for selecting the memory model.
+	private Menu:Check[] memOptions;
+
+	// Currently selected memory option.
+	private Nat selectedMemOption;
 
 	// Settings.
 	private Settings settings;
@@ -39,7 +42,6 @@ class MainWin extends Frame {
 		init("Progvis", Size(800, 800)) {
 			settings = Settings:load();
 			onlineUrl = "storm-lang.org";
-			trackMemory("Track reads/writes");
 		}
 
 		applySettings();
@@ -52,19 +54,29 @@ class MainWin extends Frame {
 			<< Menu:Separator()
 			<< Menu:Text(mnemonic("_Settings..."), &this.onSettings());
 
+		memOptions
+			<< Menu:Check(mnemonic("_Disabled"))
+			<< Menu:Check(mnemonic("Only _statements"))
+			<< Menu:Check(mnemonic("_Full"));
+
+		setMemoryCheck(2);
+
+		PopupMenu memCheck;
+		for (x in memOptions) {
+			memCheck << x;
+			var me = this;
+			x.onClick = (Bool v) => me.onMemoryChange(x, v);
+		}
+
 		PopupMenu runMenu;
 		runMenu
 			<< Menu:Text(mnemonic("_Restart program"), ctrlChord(Key:r), &this.onRestart())
 			<< Menu:Text(mnemonic("_Spawn new thread"), ctrlChord(Key:n), &this.onSpawnThread())
-			<< trackMemory
+			<< Menu:Submenu(mnemonic("Report _data races"), memCheck)
 			<< Menu:Separator()
 			<< Menu:Text(mnemonic("S_top all threads"), ctrlChord(Key:q), &this.onStopAll())
 			<< Menu:Text(mnemonic("Start _all threads (slow)"), ctrlChord(Key:a), &this.onRunSlow())
 			<< Menu:Text(mnemonic("Start all threads (_fast)"), ctrlChord(Key:s), &this.onRunFast());
-
-		trackMemory.checked = true;
-		trackMemory.onClick = &this.onTrackMemory(Bool);
-		painter.trackMemory(true);
 
 		onlineMenu
 			<< Menu:Text(mnemonic("_Connect"), &this.connect())
@@ -196,11 +208,12 @@ class MainWin extends Frame {
 	// Called when a new behavior has been set.
 	private void onNewBehavior() {
 		if (!behavior.allowTrackMemory()) {
-			trackMemory.enabled = false;
-			trackMemory.checked = true;
-			painter.trackMemory(true);
+			setMemoryCheck(2);
+			for (x in memOptions)
+				x.enabled = false;
 		} else {
-			trackMemory.enabled = true;
+			for (x in memOptions)
+				x.enabled = true;
 		}
 	}
 
@@ -315,9 +328,40 @@ class MainWin extends Frame {
 		painter.spawnThread();
 	}
 
-	private void onTrackMemory(Bool b) {
-		painter.trackMemory(b);
-		painter.repaint();
+	private void onMemoryChange(Menu:Check check, Bool value) {
+		if (!value) {
+			Bool any = false;
+			for (i, x in memOptions)
+				any |= x.checked;
+
+			if (!any)
+				check.checked = true;
+			return;
+		}
+
+		Nat selected = 0;
+		for (i, x in memOptions)
+			if (x is check)
+				selected = i;
+
+		setMemoryCheck(selected);
+	}
+
+	private void setMemoryCheck(Nat item) {
+		selectedMemOption = item;
+
+		for (i, x in memOptions)
+			memOptions[i].checked = i == item;
+
+		var v = if (item == 0) {
+			data:MemoryChecks:sequential;
+		} else if (item == 1) {
+			data:MemoryChecks:statement;
+		} else {
+			data:MemoryChecks:barriers;
+		};
+
+		painter.checkMemory(v);
 	}
 
 	private void onStopAll() {

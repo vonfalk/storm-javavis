@@ -14,6 +14,9 @@ class MainPainter extends Painter {
 	// World of the program's state. Also has a reference to the actual program.
 	private World? world;
 
+	// Memory model to check for.
+	private MemoryChecks memChecks;
+
 	// Problem panel, if any.
 	private ProblemPanel? panel;
 
@@ -43,10 +46,14 @@ class MainPainter extends Painter {
 		bgColor = Color(0.8, 0.8, 0.8);
 	}
 
-	// Set whether or not to track reads/writes.
-	void trackMemory(Bool track) {
-		// workspace.trackMemory = track;
-		print("Set 'trackMemory'!");
+	// Set the memory model.
+	void checkMemory(MemoryChecks mode) {
+		memChecks = mode;
+		if (world) {
+			world.trackMemory = mode;
+			// Might deadlock otherwise (if we get an error message).
+			spawn update();
+		}
 	}
 
 	// Set zoom. Also pans to the center to make sure nothing gets hidden too badly.
@@ -66,8 +73,7 @@ class MainPainter extends Painter {
 	void updateBehavior(Behavior b) {
 		behavior = b;
 		panel = b.panel;
-		print("TODO: Set enable step!");
-		// workspace.enableStep = b.allowStep;
+		workspace.enableStep = b.allowStep;
 	}
 
 	// Open a program.
@@ -81,7 +87,7 @@ class MainPainter extends Painter {
 		world = w;
 		updateBehavior(b);
 		w.trackDeadlock = true;
-		print("TODO: Enable data race detection?");
+		w.trackMemory = memChecks;
 		loaded.onChange = &this.update();
 		loaded.onError = &this.onProgramError;
 		loaded.onAdvance = &this.onProgramAdvance;
@@ -102,15 +108,26 @@ class MainPainter extends Painter {
 		unless (world)
 			return;
 
+		Bool barrier = false;
+		if (action.endsWith("*")) {
+			barrier = true;
+			action = action.cut(action.begin, action.findLast("*".begin.v));
+		}
+
 		if (action == "s") {
 			// Spawn new thread.
 			spawnThread();
 		} else if (action.isNat) {
 			// Step a thread.
 			Nat thread = action.toNat;
-			for (v in world.program.threads)
-				if (v.threadId == thread)
-					v.resume();
+			for (v in world.program.threads) {
+				if (v.threadId == thread) {
+					if (barrier)
+						v.resumeBarrier();
+					else
+						v.resume();
+				}
+			}
 		}
 	}
 
@@ -130,11 +147,15 @@ class MainPainter extends Painter {
 		behavior.onProgramError(ThreadError(type, msg, thread));
 	}
 
-	private void onProgramAdvance(Nat thread) {
+	private void onProgramAdvance(Nat thread, Bool barrier) {
 		unless (behavior)
 			return;
 
-		behavior.onUserAction(thread.toS);
+		var action = thread.toS;
+		if (barrier)
+			action += "*";
+
+		behavior.onUserAction(action);
 	}
 
 	// Clean up the running program (i.e. make sure all threads are terminated).
@@ -162,8 +183,6 @@ class MainPainter extends Painter {
 
 			world.clear();
 			workspace.clear();
-
-			// TODO: workspace.trackDeadlock = true;
 
 			behavior = tmp;
 			if (behavior)

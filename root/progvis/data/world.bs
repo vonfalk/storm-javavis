@@ -24,7 +24,7 @@ class World on Render {
 
 	// Errors to track.
 	public Bool trackDeadlock;
-	public Bool trackDataRaces;
+	public MemoryChecks trackMemory;
 
 	// Create, and associate us with a program.
 	init(progvis:program:Program program) {
@@ -32,7 +32,7 @@ class World on Render {
 			program = program;
 			hints = program.hints;
 			trackDeadlock = true;
-			trackDataRaces = true;
+			trackMemory = MemoryChecks:barriers;
 		}
 
 		clear();
@@ -104,13 +104,12 @@ class World on Render {
 		init(World world) {
 			init {
 				owner = world;
+				memory = create(world.trackMemory);
 			}
 
-			if (world.trackDataRaces) {
-				// Register all threads with the memory tracker.
-				for (t in world.program.threads) {
-					memory.add(t.threadId, t.memory);
-				}
+			// Register all threads with the memory tracker.
+			for (t in world.program.threads) {
+				memory.add(t.threadId, t.memory);
 			}
 		}
 
@@ -252,9 +251,8 @@ private:
 			allocations.pop();
 		}
 
-		if (trackDataRaces)
-			if (e = t.memory.error)
-				return e;
+		if (e = t.memory.error)
+			return e;
 
 		if (trackDeadlock)
 			if (e = findDeadlock())

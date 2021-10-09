@@ -95,6 +95,11 @@ class AtomView extends DataView {
 			g.fill(r, dataBg);
 		}
 
+		if (access.has(MemAccess:error)) {
+			g.line(r.p0, r.p1, dataError);
+			g.line(Point(r.p0.x, r.p1.y), Point(r.p1.x, r.p0.y), dataError);
+		}
+
 		g.draw(r, dataFg);
 	}
 
