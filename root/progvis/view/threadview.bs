@@ -15,6 +15,7 @@ class ThreadView extends DataView {
 			enableStep = true;
 			source(thread.src.owner);
 			step(stepDecoration, SolidBrush(yellow*0.5 + red), buttonSize);
+			bigStep(bigStepDecoration, SolidBrush(yellow*0.5 + red), buttonSize);
 			pause(pauseDecoration, SolidBrush(black), buttonSize);
 			runSlow(runDecoration, SolidBrush(green), buttonSize);
 			runFast(runFastDecoration, SolidBrush(green), buttonSize);
@@ -24,13 +25,14 @@ class ThreadView extends DataView {
 		}
 
 		step.onClick = &this.onStep;
+		bigStep.onClick = &this.onBigStep;
 		pause.onClick = &this.onPause;
 		runSlow.onClick = &this.onRunSlow;
 		runFast.onClick = &this.onRunFast;
 		runVeryFast.onClick = &this.onRunVeryFast;
 		removeDead.onClick = &this.onRemove;
 
-		buttons = [step, pause, runSlow, runFast, runVeryFast];
+		buttons = [step, bigStep, pause, runSlow, runFast, runVeryFast];
 	}
 
 	// Thread we are controlling.
@@ -47,6 +49,7 @@ class ThreadView extends DataView {
 
 	// Buttons.
 	private SmallButton step;
+	private SmallButton bigStep;
 	private SmallButton pause;
 	private SmallButton runSlow;
 	private SmallButton runFast;
@@ -197,6 +200,8 @@ class ThreadView extends DataView {
 
 		Point p(sourcePos.p0.x, sourcePos.p1.y + compositeBorder.h);
 		for (b in buttons) {
+			if (!showingButton(b))
+				continue;
 			b.pos = p;
 			b.draw(g, false);
 			p.x += buttonSize.w + compositeBorder.w;
@@ -219,6 +224,8 @@ class ThreadView extends DataView {
 
 	Drawable findAt(Point pt) : override {
 		for (b in buttons) {
+			if (!showingButton(b))
+				continue;
 			if (b.rect.contains(pt))
 				return b;
 		}
@@ -228,6 +235,11 @@ class ThreadView extends DataView {
 	private void onStep() {
 		if (enableStep)
 			thread.src.resume();
+	}
+
+	private void onBigStep() {
+		if (enableStep)
+			thread.src.resumeBarrier();
 	}
 
 	private void onPause() {
@@ -256,5 +268,12 @@ class ThreadView extends DataView {
 			srcAlloc.unstick();
 		// Make it happen now, and not later.
 		thread.src.owner.notifyChange();
+	}
+
+	private Bool showingButton(SmallButton b) {
+		if (b is bigStep)
+			thread.barriersAvailable;
+		else
+			true;
 	}
 }

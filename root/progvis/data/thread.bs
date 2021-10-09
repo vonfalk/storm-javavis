@@ -17,6 +17,7 @@ class Thread extends Data {
 	Bool sleeping;
 	Bool crashed;
 	Bool afterReturn;
+	Bool barriersAvailable;
 	SrcPos? pos;
 
 	// Create.
@@ -48,6 +49,7 @@ class Thread extends Data {
 		// In some cases, we can be executed before the thread has started properly.
 		if (src.frames.any)
 			afterReturn = src.frames.last.returned;
+		barriersAvailable = src.barriersAvailable;
 		pos = src.pos;
 
 		if (!src.alive) {
