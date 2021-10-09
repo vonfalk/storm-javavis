@@ -52,6 +52,11 @@ class ProgThread on Render {
 	// Waiting for some external event?
 	Bool sleeping;
 
+	// Is the thread currently paused? A thread is paused if it is not currently running any code in
+	// the program (i.e. do we have control of the thread currently). This means that 'paused' is
+	// true even if the thread is waiting for its turn to make a new step.
+	Bool paused;
+
 	// Is the thread alive?
 	Bool alive() { callDepth > 0; }
 
@@ -66,7 +71,8 @@ class ProgThread on Render {
 			false;
 	}
 
-	// Currently running? This is 'true' even if the thread is currently waiting in an animation.
+	// Is the thread currently running? If 'false', the thread is waiting in our semaphore. Thus,
+	// 'running' is true even if the thread is currently waiting inside a sleep block or similar.
 	private Bool running;
 
 	// Terminate the thread at the next opportunity to do so.
@@ -263,6 +269,7 @@ class ProgThread on Render {
 		// Remember if this 'wait' was due to us needing to sleep for a semaphore etc. If so,
 		// we should not notify the owner when we wake, as that wake was not due to a user action.
 		Bool wasSleeping = sleeping;
+		paused = true;
 		owner.notifyChange();
 		if (wasSleeping | autoStep == Duration()) {
 			running = false;
@@ -279,11 +286,13 @@ class ProgThread on Render {
 		running = true;
 
 		if (doTerminate) {
+			paused = false;
 			terminating = true;
 			throw ExitError();
 		} else if (!wasSleeping) {
 			owner.notifyAdvance(threadId, barrierStep);
 		}
+		paused = false;
 	}
 }
 

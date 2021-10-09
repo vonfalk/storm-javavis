@@ -235,11 +235,17 @@ class MainPainter extends Painter {
 	void update() {
 		ProgramError? error;
 
-		// TODO: Wait for all threads to have stopped somewhere? Otherwise we get two notifications
-		// very close to each other from time to time, and we might get two notifications of the
-		// same error.
 		if (world) {
 			core:sync:Lock:Guard z(traverseLock);
+
+			// Don't update now if at least one thread is running some code. If that is the case, we
+			// will get an intermediate view of that thread, and possibly report sporadic errors. We
+			// also know that the thread that is running will eventually pause again, and we will
+			// try to update later. As such, it is safe to just abort if we find that a thread is
+			// running, we don't actively need to try again.
+			if (!world.program.threadsPaused) {
+				return;
+			}
 
 			error = world.update();
 
