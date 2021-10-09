@@ -208,21 +208,14 @@ private class PatchState on Compiler {
 			init(s) {}
 		}
 
-		Named? choose(NameOverloads from, Scope source) : override {
-			// Just ignore the visibility. Furthermore, we know that we only will get one match.
-			for (Nat i = 0; i < from.count; i++) {
-				if (matches(from[i], source) >= 0)
-					return from[i];
-			}
-
-			null;
+		Bool visible(Named candidate, Scope source) : override {
+			// Just ignore visibility.
+			true;
 		}
 
 		Int matches(Named candidate, Scope source) : override {
 			if (candidate.params.count != params.count)
 				return -1;
-
-			Int distance = 0;
 
 			for (Nat i = 0; i < params.count; i++) {
 				Value a = candidate.params[i];
@@ -235,7 +228,8 @@ private class PatchState on Compiler {
 						return -1;
 			}
 
-			distance;
+			// It is a perfect match, we only get one of them.
+			0;
 		}
 	}
 

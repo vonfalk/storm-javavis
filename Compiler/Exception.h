@@ -95,14 +95,17 @@ namespace storm {
 	/**
 	 * Name lookup error.
 	 */
-	class EXCEPTION_EXPORT LookupError : public CompilerError {
+	class EXCEPTION_EXPORT LookupError : public CodeError {
 		STORM_EXCEPTION;
 	public:
-		STORM_CTOR LookupError(Str *msg) {
+		STORM_CTOR LookupError(Str *msg) : CodeError(SrcPos()) {
+			this->msg = msg;
+		}
+		STORM_CTOR LookupError(SrcPos pos, Str *msg) : CodeError(pos) {
 			this->msg = msg;
 		}
 
-		virtual void STORM_FN message(StrBuf *to) const {
+		virtual void STORM_FN messageText(StrBuf *to) const {
 			*to << S("Name lookup error: ") << msg;
 		}
 

@@ -62,10 +62,8 @@
 * Loose ends so far [58/101]
   - [ ] We want to allocate threads in some kind of pool. since the minimum alignment for VirtualAlloc on Windows
     is 64k, we might waste quite a lot of memory when allocating small stacks.
-  - [ ] Interestingly: "strBuf << maybe<Str>" calls via Variant. This might be because the toS()
-    template is not instantiated for Str? at that time, and is thus not explored. The same happens
-    for this sequence: 10.nat.toS; 10.word.toS; 10.byte.toS; If badness != 0, we should probably try
-    to instantiate a template if able to.
+  - [ ] Interestingly: "strBuf << maybe<Str>" calls via Variant. This is since Maybe<Str> does not have
+    an "<<" operator.
   - [ ] Cyclic dependencies between packages are not always handled nicely. One idea to solve this
     would be to have Package only load stages that correspond to the ones loaded by the package that
     is currently loading, and then hold off remaining loading until a later point, for example when

@@ -274,17 +274,79 @@ namespace storm {
 		if (i == overloads->end())
 			return null;
 
-		NameOverloads *found = i.v();
-		Named *result = part->choose(found, source);
-		if (result)
-			return result;
+		return tryFind(part, source, i.v());
+	}
 
-		Named *t = found->createTemplate(this, part, source);
-		// Are we allowed to access the newly created template?
-		if (!t || !t->visibleFrom(source))
-			return null;
+	Named *NameSet::tryFind(SimplePart *part, Scope source, NameOverloads *from) {
+		// Note: We do this in two steps. First, we find the best match, and keep track of whether
+		// or not there are multiple instances of that or not. If there are multiple instances of
+		// the best match, we need to produce an error. To do that, we loop through the candidates a
+		// second time (since the error path is generally not critical).
+		Named *bestCandidate = null;
+		Bool multipleBest = false;
+		Int best = std::numeric_limits<Int>::max();
 
-		return t;
+		for (Nat i = 0; i < from->count(); i++) {
+			Named *candidate = from->at(i);
+
+			// Ignore ones that are not visible. Note: We delegate this to the part, so that it may
+			// modify the default behavior.
+			if (!part->visible(candidate, source))
+				continue;
+
+			Int badness = part->matches(candidate, source);
+			if (badness < 0 || badness > best)
+				continue;
+
+			if (badness == best) {
+				// Multiple best matches so far. We can't keep track of them without allocating memory.
+				multipleBest = true;
+			} else {
+				multipleBest = false;
+				best = badness;
+				bestCandidate = candidate;
+			}
+		}
+
+		// If we have a badness above zero, we might need to create a template to get a better
+		// match.
+		if (best > 0) {
+			if (Named *created = from->createTemplate(this, part, source)) {
+				if (created && part->visible(created, source)) {
+					// Check suitability of the newly created template. Note: We more or less expect
+					// that the created template is a perfect match. If we get a higher badness,
+					// something is probably wrong with the implementation of the template.
+					Int badness = part->matches(created, source);
+					if (badness >= 0 && badness < best) {
+						bestCandidate = created;
+						best = badness;
+						multipleBest = false;
+					}
+				}
+			}
+		}
+
+		if (!multipleBest) {
+			// We have an answer!
+			return bestCandidate;
+		}
+
+		// Error case, we need to find all candidates.
+		StrBuf *msg = new (this) StrBuf();
+		*msg << S("Multiple possible matches for ") << this << S(", all with badness ") << best << S("\n");
+
+		for (Nat i = 0; i < from->count(); i++) {
+			Named *candidate = from->at(i);
+
+			if (!part->visible(candidate, source))
+				continue;
+
+			Int badness = part->matches(candidate, source);
+			if (badness == best)
+				*msg << S("  Could be: ") << candidate->identifier() << S("\n");
+		}
+
+		throw new (this) LookupError(msg->toS());
 	}
 
 	Bool NameSet::loadName(SimplePart *part) {

@@ -53,58 +53,6 @@ namespace storm {
 		return this;
 	}
 
-	Named *SimplePart::choose(NameOverloads *from, Scope source) const {
-		// Note: We do this in two steps. First, we find the best match, and keep track of whether
-		// or not there are multiple instances of that or not. If there are multiple instances of
-		// the best match, we need to produce an error. To do that, we loop through the candidates a
-		// second time (since the error path is generally not critical).
-		Named *bestCandidate = null;
-		Bool multipleBest = false;
-		Int best = std::numeric_limits<Int>::max();
-
-		for (Nat i = 0; i < from->count(); i++) {
-			Named *candidate = from->at(i);
-			// Do not consider 'candidate' if we're not allowed to access it! Note: no 'visibility' means 'public'.
-			if (!candidate->visibleFrom(source))
-				continue;
-
-			Int badness = matches(candidate, source);
-			if (badness < 0 || badness > best)
-				continue;
-
-			if (badness == best) {
-				// Multiple best matches so far. We can't keep track of them without allocating memory.
-				multipleBest = true;
-			} else {
-				multipleBest = false;
-				best = badness;
-				bestCandidate = candidate;
-			}
-		}
-
-		if (!multipleBest) {
-			// We have an answer!
-			return bestCandidate;
-		}
-
-		// Error case, we need to find all candidates.
-		StrBuf *msg = new (this) StrBuf();
-		*msg << S("Multiple possible matches for ") << this << S(", all with badness ") << best << S("\n");
-
-		for (Nat i = 0; i < from->count(); i++) {
-			Named *candidate = from->at(i);
-			// Do not consider 'candidate' if we're not allowed to access it! Note: no 'visibility' means 'public'.
-			if (!candidate->visibleFrom(source))
-				continue;
-
-			Int badness = matches(candidate, source);
-			if (badness == best)
-				*msg << S("  Could be: ") << candidate->identifier() << S("\n");
-		}
-
-		throw new (this) LookupError(msg->toS());
-	}
-
 	Int SimplePart::matches(Named *candidate, Scope source) const {
 		Array<Value> *c = candidate->params;
 		if (c->count() != params->count())
@@ -125,6 +73,10 @@ namespace storm {
 		}
 
 		return distance;
+	}
+
+	Bool SimplePart::visible(Named *candidate, Scope source) const {
+		return candidate->visibleFrom(source);
 	}
 
 	static void outputPart(StrBuf *to, const Value &v) {

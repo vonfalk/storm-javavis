@@ -64,13 +64,15 @@ namespace storm {
 		// Resolve names.
 		virtual MAYBE(SimplePart *) find(const Scope &scope);
 
-		// Choose an overload, assuming 'source' is trying to access it. 'source' is used to perform
-		// a visibility check on the potential candidates. If 'source' is null, all objects are
-		// considered.
-		virtual MAYBE(Named *) STORM_FN choose(NameOverloads *from, Scope source) const;
-
-		// Compute the badness of a candidate. Returns -1 on no match.
+		// Compute the badness of a candidate. Returns -1 on no match, and otherwise a positive
+		// measure of how bad the match is. The lookup process will pick the one with the lowest
+		// badness. We also assume that an exact match has a badness of 0.
 		virtual Int STORM_FN matches(Named *candidate, Scope source) const;
+
+		// Determine if a particular named entity should be visible. The default implementation
+		// simply calls 'candidate->visibleFrom(source)', which is suitable in most cases. This
+		// function is provided to allow overriding the default visibility rules.
+		virtual Bool STORM_FN visible(Named *candidate, Scope source) const;
 
 		// To string.
 		virtual void STORM_FN toS(StrBuf *to) const;

@@ -136,44 +136,53 @@ namespace storm {
 		// Find whatever is meant by the 'name' in this context. Return suitable expression. If
 		// 'useThis' is true, a 'this' pointer may be inserted as the first parameter.
 		static Expr *findTarget(Block *block, SimpleName *name, const SrcPos &pos, Actuals *params, bool useThis) {
-			const Scope &scope = block->scope;
+			try {
 
-			// Type ctors and local variables have priority.
-			{
-				Named *n = scope.find(name);
-				if (Type *t = as<Type>(n)) {
-					// If we find a suitable constructor, go for it. Otherwise, continue.
-					if (Expr *e = findCtor(block->scope, t, params, pos))
-						return e;
-				} else if (as<LocalVar>(n) != null && params->empty()) {
-					return findTarget(block->scope, n, null, params, pos, false);
+				const Scope &scope = block->scope;
+
+				// Type ctors and local variables have priority.
+				{
+					Named *n = scope.find(name);
+					if (Type *t = as<Type>(n)) {
+						// If we find a suitable constructor, go for it. Otherwise, continue.
+						if (Expr *e = findCtor(block->scope, t, params, pos))
+							return e;
+					} else if (as<LocalVar>(n) != null && params->empty()) {
+						return findTarget(block->scope, n, null, params, pos, false);
+					}
 				}
-			}
 
-			// If we have a this-pointer, try to use it!
-			Named *candidate = null;
-			if (useThis)
-				if (Expr *e = findTargetThis(block, name, params, pos, candidate))
+				// If we have a this-pointer, try to use it!
+				Named *candidate = null;
+				if (useThis)
+					if (Expr *e = findTargetThis(block, name, params, pos, candidate))
+						return e;
+
+				// Try without the this pointer.
+				BSNamePart *last = new (name) BSNamePart(name->last()->name, pos, params);
+				name->last() = last;
+				Named *n = scope.find(name);
+
+				if (Expr *e = findTarget(block->scope, n, null, params, pos, true))
 					return e;
 
-			// Try without the this pointer.
-			BSNamePart *last = new (name) BSNamePart(name->last()->name, pos, params);
-			name->last() = last;
-			Named *n = scope.find(name);
+				if (!n && !candidate)
+					// Delay throwing the error until later.
+					return new (name) UnresolvedName(block, name, pos, params, useThis);
 
-			if (Expr *e = findTarget(block->scope, n, null, params, pos, true))
-				return e;
+				if (!n)
+					n = candidate;
 
-			if (!n && !candidate)
-				// Delay throwing the error until later.
-				return new (name) UnresolvedName(block, name, pos, params, useThis);
+				Str *msg = TO_S(block, n << S(" is a ") << runtime::typeOf(n)->identifier()
+								<< S(". Only functions, variables and constructors are supported."));
+				throw new (block) TypeError(pos, msg);
 
-			if (!n)
-				n = candidate;
-
-			Str *msg = TO_S(block, n << S(" is a ") << runtime::typeOf(n)->identifier()
-							<< S(". Only functions, variables and constructors are supported."));
-			throw new (block) TypeError(pos, msg);
+			} catch (CodeError *error) {
+				// Add position information if it is available.
+				if (error->pos.empty())
+					error->pos = pos;
+				throw;
+			}
 		}
 
 		Expr *namedExpr(Block *block, syntax::SStr *name, Actuals *params) {

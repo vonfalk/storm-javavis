@@ -107,12 +107,18 @@ namespace storm {
 				return Value();
 		}
 
-		Type *t = as<Type>(find(in, name));
-		if (!t) {
-			throw new (this) SyntaxError(pos, TO_S(engine(), name << S(" can not be resolved to a type.")));
-		}
+		try {
+			Type *t = as<Type>(find(in, name));
+			if (!t) {
+				throw new (this) SyntaxError(pos, TO_S(engine(), name << S(" can not be resolved to a type.")));
+			}
 
-		return Value(t);
+			return Value(t);
+		} catch (CodeError *error) {
+			if (error->pos.empty())
+				error->pos = pos;
+			throw;
+		}
 	}
 
 
@@ -136,9 +142,18 @@ namespace storm {
 	}
 
 	Named *Scope::find(Name *name) const {
-		SimpleName *simple = name->simplify(*this);
-		if (simple)
-			return find(simple);
+		try {
+			SimpleName *simple = name->simplify(*this);
+			if (simple)
+				return find(simple);
+
+		} catch (CodeError *error) {
+			if (error->pos.empty()) {
+				if (SrcName *s = as<SrcName>(name))
+					error->pos = s->pos;
+			}
+			throw;
+		}
 
 		return null;
 	}

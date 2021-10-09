@@ -30,6 +30,7 @@ namespace storm {
 
 		// Any data?
 		Bool STORM_FN any() const;
+		Bool STORM_FN empty() const;
 
 		// Increase the positions.
 		SrcPos STORM_FN operator +(Nat v) const;

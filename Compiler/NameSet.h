@@ -193,6 +193,10 @@ namespace storm {
 		// Find a named here without bothering with lazy-loading.
 		MAYBE(Named *) STORM_FN tryFind(SimplePart *part, Scope source);
 
+		// Find a named in a NameSet. Use the SimplePart to determine which one to choose, and how
+		// to respect visibility.
+		MAYBE(Named *) STORM_FN tryFind(SimplePart *part, Scope source, NameOverloads *from);
+
 	private:
 		// Overloads.
 		typedef Map<Str *, NameOverloads *> Overloads;

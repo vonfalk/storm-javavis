@@ -249,9 +249,7 @@ class CppChar extends Primitive {
 
 	void traverse(World:Traversal t, unsafe:RawPtr object, Nat offset) : override {
 		charVal = object.readByte(offset);
-		// For compatibility. Note: we should not need ".nat" here, but since toS(Long) and
-		// toS(Word) are loaded, we won't explore the toS(Byte).
-		value = charVal.nat.toS;
+		value = charVal.toS;
 	}
 
 	// Copy.
