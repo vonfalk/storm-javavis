@@ -365,7 +365,7 @@ namespace storm {
 				// No need to copy, just call 'deepCopy'.
 				Function *toCall = type.type->deepCopyFn();
 				if (!toCall) {
-					WARNING(L"No deepCopy function in " << type.type);
+					// WARNING(L"No deepCopy function in " << type.type);
 					continue;
 				}
 
