@@ -287,6 +287,7 @@ namespace gui {
 	}
 
 	void Menu::Check::checked(Bool v) {
+		Bool changed = v != myChecked;
 		myChecked = v;
 
 		if (owner) {
@@ -294,22 +295,30 @@ namespace gui {
 			info.cbSize = sizeof(info);
 			info.fMask = MIIM_STATE;
 			GetMenuItemInfo(owner->handle.menu(), id, TRUE, &info);
+			UINT oldState = info.fState;
 			if (v)
 				info.fState |= MF_CHECKED;
 			else
 				info.fState &= ~MF_CHECKED;
 			SetMenuItemInfo(owner->handle.menu(), id, TRUE, &info);
 
-			owner->repaint();
+			if (info.fState != oldState) {
+				owner->repaint();
+
+				// We only get notifications when the checkbox is clicked, so we need to send a
+				// notification ourselves now.
+				if (onClick)
+					onClick->call(v);
+			}
+		} else {
+			if (changed && onClick)
+				onClick->call(v);
 		}
 	}
 
 	void Menu::Check::clicked() {
 		Bool check = !checked();
 		checked(check);
-
-		if (onClick)
-			onClick->call(check);
 	}
 
 	void Menu::Check::create() {
@@ -439,10 +448,15 @@ namespace gui {
 	}
 
 	void Menu::Check::checked(Bool v) {
+		Bool changed = v != myChecked;
 		myChecked = v;
 
 		if (handle != Handle()) {
 			gtk_check_menu_item_set_active(GTK_CHECK_MENU_ITEM(handle.widget()), v ? TRUE : FALSE);
+		} else {
+			// If it is not created, we need to send the notification ourselves.
+			if (changed && onClick)
+				onClick->call(check);
 		}
 	}
 
