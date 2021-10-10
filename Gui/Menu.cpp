@@ -458,6 +458,7 @@ namespace gui {
 		GtkWidget *created = gtk_check_menu_item_new_with_mnemonic(myTitle.mnemonic()->utf8_str());
 		g_object_ref_sink(created);
 		gtk_widget_set_sensitive(created, enable ? TRUE : FALSE);
+		gtk_check_menu_item_set_active(GTK_CHECK_MENU_ITEM(created), myChecked ? TRUE : FALSE);
 		handle = created;
 		gtk_menu_shell_append(GTK_MENU_SHELL(owner->handle.widget()), created);
 		connectMenu(created, engine());
