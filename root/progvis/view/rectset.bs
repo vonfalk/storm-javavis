@@ -1,0 +1,137 @@
+use core:geometry;
+
+/**
+ * Class that keeps track of a set of rectangles and allows fast queries if a particular rectangle
+ * would overlap the ones in the set, and where to place rectangles without overlap.
+ */
+class RectSet {
+	// Create.
+	init(Rect bounds) {
+		init {
+			updated = true;
+			rects(bounds, 6);
+		}
+	}
+
+	// Quadtree with all rectangles.
+	private Quadtree rects;
+
+	// Is the sorted data updated?
+	private Bool updated;
+
+	// Sorted x coordinates of the right edges of all rectangles.
+	private Float[] right;
+
+	// Sorted y coordinates of the bottom edges of all rectangles.
+	private Float[] bottom;
+
+	// Add a rectangle.
+	void add(Rect rect) {
+		// Shrink the rect a bit so that we don't get false positives later on.
+		rects.add(rect.shrink(Size(0.5)));
+
+		updated = false;
+		right << rect.p1.x;
+		bottom << rect.p1.y;
+	}
+
+	// Find a location for the given rectangle. We will try to find the location closest to the
+	// suggested rectangle, with the limitation that we only examine larger x and y
+	// coordinates. Returns the new top-left corner of the rectangle. Does not add the new rectangle
+	// to the data structure, that has to be done manually.
+	Point fit(Rect rect) {
+		if (right.empty)
+			return rect.p0;
+
+		update();
+
+		var original = rect.p0;
+
+		// Original position free?
+		if (!rects.intersects(rect))
+			return original;
+
+		// This should work with lambdas...
+		var right = this.right;
+		var bottom = this.bottom;
+		Nat bottomIndex = binarySearch(0, bottom.count, (i) => bottom[i] < rect.p0.y);
+		Nat rightIndex = binarySearch(0, right.count, (i) => right[i] < rect.p0.x);
+
+		// Best position. Start with a worst case of sorts.
+		Point best(original.x, bottom.last);
+		Float bestDistance = distance(original, best);
+		Size size = rect.size;
+
+		// Find the best position without changing y.
+		{
+			Point newBest = fitX(rightIndex, bestDistance, rect, original.y);
+			Float newDistance = distance(original, newBest);
+			if (newDistance < bestDistance) {
+				bestDistance = newDistance;
+				best = newBest;
+			}
+		}
+
+		// Check the positions downwards.
+		while (bottomIndex < bottom.count) {
+			// If we are too far away, exit early.
+			if (distance(original, Point(best.x, bottom[bottomIndex])) > bestDistance)
+				break;
+
+			Point newBest = fitX(rightIndex, bestDistance, rect, bottom[bottomIndex]);
+			Float newDistance = distance(original, newBest);
+			if (newDistance < bestDistance) {
+				bestDistance = newDistance;
+				best = newBest;
+			}
+
+			bottomIndex++;
+		}
+
+		best;
+	}
+
+	// Check along the X axis.
+	private Point fitX(Nat rightStart, Float maxDistance, Rect original, Float yStart) {
+		Size sz = original.size;
+		Point pt = original.p0;
+		pt.y = yStart;
+
+		// Try without moving first.
+		if (!rects.intersects(Rect(pt, sz)))
+			return pt;
+
+		for (Nat i = rightStart; i < right.count; i++) {
+			pt.x = right[i];
+			Float distance = distance(original.p0, pt);
+			// Terminate if we are too far away.
+			if (distance > maxDistance)
+				break;
+
+			if (!rects.intersects(Rect(pt, sz)))
+				return pt;
+		}
+
+		// This is always safe.
+		Point(right.last, yStart);
+	}
+
+	// Distance function. Prefer longer distance in the x axis.
+	private Float distance(Point a, Point b) : static {
+		Point delta = (a - b);
+		delta.x *= 3;
+		delta.length;
+	}
+
+	// Update the sorted arrays if necessary.
+	private void update() {
+		if (updated)
+			return;
+
+		right.sort();
+		bottom.sort();
+		updated = true;
+	}
+
+}
+

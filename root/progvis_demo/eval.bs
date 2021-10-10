@@ -4,4 +4,5 @@ use core:io;
 
 void main() {
 	var x = tree("10 + 8 * 2");
+	var y = 0;
 }

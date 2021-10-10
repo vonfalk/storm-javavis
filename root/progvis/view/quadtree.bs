@@ -1,0 +1,208 @@
+use core:geometry;
+
+/**
+ * A quadtree for rectangles.
+ */
+class Quadtree {
+	// Create the tree, specify overall bounds.
+	// Note: 'maxDepth' will not necessarily be respected.
+	init(Rect bounds, Nat maxDepth) {
+		init {
+			bounds = bounds;
+			root = LeafNode(maxDepth);
+		}
+	}
+
+	// Bounds of the entire quadtree.
+	private Rect bounds;
+
+	// Root node.
+	private Node root;
+
+	// Add a rectangle.
+	void add(Rect rect) {
+		// Note: We could expand if a rectangle is outside the bounds of the tree. It will, however,
+		// work anyway since we only check which sides the rectangle is of the center point. Thus,
+		// any rectangles outside the bounds will still be found, even though performance is
+		// slightly degraded.
+
+		root = root.add(bounds, rect);
+	}
+
+	// Check for interesction with another rectangle.
+	Bool intersects(Rect rect) {
+		root.intersects(bounds, rect);
+	}
+
+	// Output.
+	void toS(StrBuf to) {
+		to << "Quad tree: " << bounds << "\n";
+		Indent z(to);
+		root.toS(bounds, to);
+	}
+
+	// A node in the tree.
+	private class Node {
+		// Add a rectangle.
+		Node add(Rect bounds, Rect add) : abstract;
+
+		// Check for intersection.
+		Bool intersects(Rect bounds, Rect check) : abstract;
+
+		// Custom output.
+		void toS(Rect bounds, StrBuf to) : abstract;
+	}
+
+	// An internal node.
+	private class InternalNode extends Node {
+		// Create.
+		init(Nat depth) {
+			depth--;
+			init {
+				topLeft = LeafNode(depth);
+				topRight = LeafNode(depth);
+				bottomLeft = LeafNode(depth);
+				bottomRight = LeafNode(depth);
+			}
+		}
+
+		// The four quadrants.
+		Node topLeft;
+		Node topRight;
+		Node bottomLeft;
+		Node bottomRight;
+
+		// Add.
+		Node add(Rect bounds, Rect add) : override {
+			Point center = bounds.center;
+
+			if (add.p0.y < center.y) {
+				if (add.p0.x < center.x) {
+					topLeft = topLeft.add(Rect(bounds.p0, center), add);
+				}
+				if (add.p1.x >= center.x) {
+					topRight = topRight.add(Rect(center.x, bounds.p0.y, bounds.p1.x, center.y), add);
+				}
+			}
+			if (add.p1.y >= center.y) {
+				if (add.p0.x < center.x) {
+					bottomLeft = bottomLeft.add(Rect(bounds.p0.x, center.y, center.x, bounds.p1.y), add);
+				}
+				if (add.p1.x >= center.x) {
+					bottomRight = bottomRight.add(Rect(center, bounds.p1), add);
+				}
+			}
+
+			this;
+		}
+
+		// Intersects.
+		Bool intersects(Rect bounds, Rect check) : override {
+			Point center = bounds.center;
+
+			if (check.p0.y < center.y) {
+				if (check.p0.x < center.x) {
+					if (topLeft.intersects(Rect(bounds.p0, center), check))
+						return true;
+				}
+				if (check.p1.x >= center.x) {
+					if (topRight.intersects(Rect(center.x, bounds.p0.y, bounds.p1.x, center.y), check))
+						return true;
+				}
+			}
+			if (check.p1.y >= center.y) {
+				if (check.p0.x < center.x) {
+					if (bottomLeft.intersects(Rect(bounds.p0.x, center.y, center.x, bounds.p1.y), check))
+						return true;
+				}
+				if (check.p1.x >= center.x) {
+					if (bottomRight.intersects(Rect(center, bounds.p1), check))
+						return true;
+				}
+			}
+
+			false;
+		}
+
+		// Output.
+		void toS(Rect bounds, StrBuf to) : override {
+			Point center = bounds.center;
+
+			to << this << "\n";
+
+			{
+				Rect r(bounds.p0, center);
+				to << "Top left: " << r << "\n";
+				Indent z(to);
+				topLeft.toS(r, to);
+			}
+
+			{
+				Rect r(center.x, bounds.p0.y, bounds.p1.x, center.y);
+				to << "Top right: " << r << "\n";
+				Indent z(to);
+				topRight.toS(r, to);
+			}
+
+			{
+				Rect r(bounds.p0.x, center.y, center.x, bounds.p1.y);
+				to << "Bottom left: " << r << "\n";
+				Indent z(to);
+				bottomLeft.toS(r, to);
+			}
+
+			{
+				Rect r(center, bounds.p1);
+				to << "Bottom right: " << r << "\n";
+				Indent z(to);
+				bottomRight.toS(r, to);
+			}
+		}
+	}
+
+	// A leaf node.
+	private class LeafNode extends Node {
+		// Create.
+		init(Nat depth) {
+			init { depth = depth; }
+		}
+
+		// Remaining depth. We won't split the node if it is zero.
+		Nat depth;
+
+		// Rectangles here.
+		Rect[] rects;
+
+		// Add.
+		Node add(Rect bounds, Rect add) : override {
+			if ((depth > 0) & (rects.count > 10)) {
+				// Split.
+				InternalNode r(depth);
+				for (x in rects)
+					r.add(bounds, x);
+				r.add(bounds, add);
+				r;
+			} else {
+				// Just add it here.
+				rects << add;
+				this;
+			}
+		}
+
+		// Intersect.
+		Bool intersects(Rect bounds, Rect check) : override {
+			for (x in rects)
+				if (x.intersects(check))
+					return true;
+			false;
+		}
+
+		// Output.
+		void toS(Rect bounds, StrBuf to) : override {
+			to << this << "\n";
+			for (x in rects)
+				to << x << "\n";
+		}
+
+	}
+}

@@ -75,8 +75,11 @@ Size buttonSize on Render = Size(30, 30);
 Brush buttonBg on Render = SolidBrush(white);
 Brush buttonMarked on Render = SolidBrush(white * 0.8 + blue);
 
+// Layout edge spacing.
+Float layoutEdgeSpace on Render = 10;
+
 // Layout spacing of objects.
-Size layoutSpace on Render = Size(35, 20);
+Size layoutObjSpace on Render = Size(35, 20);
 
 // Background and foreground of the problem panel.
 Font panelCaption on Render = defaultFont;

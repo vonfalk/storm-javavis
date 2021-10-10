@@ -28,6 +28,11 @@ namespace storm {
 				&& (p0.y <= p.y) && (p.y < p1.y);
 		}
 
+		Bool Rect::contains(Rect r) const {
+			return (p0.x <= r.p0.x) && (r.p1.x < p1.x)
+				&& (p0.y <= r.p0.y) && (r.p1.y < p1.y);
+		}
+
 		Bool inside(Point pt, Rect r) {
 			return r.contains(pt);
 		}

@@ -63,7 +63,7 @@ class Workspace on Render {
 
 	// Layout docked elements.
 	private void layoutDocked(Rect viewport) {
-		Float space = 10;
+		Float space = layoutEdgeSpace;
 		Float x = space + viewport.p0.x;
 
 		for (Nat i = 0; i < docked.count; i++) {
@@ -180,21 +180,23 @@ class Workspace on Render {
 				elements << elem;
 				allocToElem.put(alloc, id);
 
-				elem.visual.update(update);
+				update.update(elem);
 			} else {
-				var elem = elements[id];
-				elem.visited = true;
-				elem.visual.update(update);
+				update.update(elements[id]);
 			}
 		}
 
 		// Retry the update phase for elements that did not find pointer targets.
 		update.retryUpdates();
 
+		// Check elements that need layout.
+		update.updateLayout();
+
 		// Remove stale elements.
 		Nat to = 0;
 		for (Nat i = 0; i < elements.count; i++) {
 			Element here = elements[i];
+
 			if (to < i)
 				elements[to] = here;
 			if (here.visited)
@@ -229,8 +231,38 @@ class Workspace on Render {
 		// Map of our representation of various data elements.
 		private Data->Drawable dataVisual;
 
+		// Remember what the root element for each element. We build this during the update so that
+		// we can use it for layout if needed.
+		private Drawable->Element root;
+
 		// Remember drawables that we did not find a data element for.
 		private Drawable[] retryUpdate;
+
+		// Elements that need to have updated layout.
+		private Element[] needLayout;
+
+		// Current element we are updating.
+		private Element? updating;
+
+		// Call to update an element. Sets up the class to keep track of which element is currently
+		// being updated.
+		void update(Element elem) {
+			updating = elem;
+
+			elem.visited = true;
+			elem.visual.update(this);
+
+			updating = null;
+		}
+		void update(Drawable elem) {
+			var found = root.find(elem);
+			if (found != root.end)
+				updating = found.v;
+
+			elem.update(this);
+
+			updating = null;
+		}
 
 		// Create an element for an allocation.
 		Element create(Allocation alloc) {
@@ -245,18 +277,20 @@ class Workspace on Render {
 			if (x = created.contained as ThreadView)
 				x.enableStep = owner.enableStep;
 
-			if (alloc.data as progvis:data:Thread) {
+			var elem = if (alloc.data as progvis:data:Thread) {
 				Element e(alloc, Dockable(created, alloc.data.title(world)).allowResize);
 				e.thread = true;
 				e.topmost = true;
 				e;
 			} else {
-				print("TODO: Do layout!");
 				// Don't have double borders.
 				if (x = created as WithCaption)
 					created = x.wrap;
 				Element(alloc, Movable(created, alloc.data.title(world)));
-			}
+			};
+
+			needLayout << elem;
+			elem;
 		}
 
 		// Create an element for a data element.
@@ -273,8 +307,9 @@ class Workspace on Render {
 		// Find our representation of some data element. If a suitable element is not found, the
 		// 'update' method of 'from' will be called again when we have traversed more elements.
 		Drawable? find(Drawable from, Data find) {
-			if (dataVisual.has(find))
-				return dataVisual.get(find);
+			var x = dataVisual.find(find);
+			if (x != dataVisual.end)
+				return x.v;
 
 			retryUpdate << from;
 			return null;
@@ -283,18 +318,143 @@ class Workspace on Render {
 		// Register a representation of some data. Expected to be called during 'update' of elements.
 		void setVisual(Data data, Drawable visual) {
 			dataVisual.put(data, visual);
+			if (updating)
+				root.put(visual, updating);
 		}
 
 		// Retry 'find' operations that failed.
 		void retryUpdates () {
 			Nat to = retryUpdate.count; // in case of multiple failures.
 			for (Nat i = 0; i < to; i++) {
-				retryUpdate[i].update(this);
+				update(retryUpdate[i]);
 			}
 
 			if (to != retryUpdate.count)
 				print("WARNING: Some pointers failed to find their targets.");
 			retryUpdate.clear();
+		}
+
+		// Update any objects that need to be laid out properly.
+		void updateLayout() {
+			// Skip building the pointer map if we don't need it.
+			if (needLayout.empty)
+				return;
+
+			// Build a representation of all pointers in the system. This is a high-level
+			// representation that is more or less only suitable for doing layout (in most cases we
+			// want to point to a particular part of an element, here we are only concerned with the
+			// top-level elements). This maps stores what elements (value) point to a particular
+			// element (key).
+			Element->Set<Element> pointersTo;
+
+			for (v in dataVisual) {
+				unless (v as PointerView)
+					continue;
+				unless (to = v.target)
+					continue;
+
+				var srcParent = root.find(v);
+				var dstParent = root.find(to);
+				if (srcParent == root.end | dstParent == root.end)
+					continue;
+
+				// We don't add docked objects here as we are not interested in references from them
+				// (it would make it very likely that a new thread would be placed on top of data).
+				if (srcParent.v.docked)
+					continue;
+
+				pointersTo[dstParent.v].put(srcParent.v);
+			}
+
+			// Create a set of rectangles for quicker layout. Don't add docked objects or objects
+			// that have not been laid out yet.
+			Rect bounds;
+			for (x in owner.elements)
+				bounds = bounds.include(x.visual.rect);
+
+			RectSet rects(bounds);
+			for (x in owner.elements) {
+				if (!x.docked & !x.needLayout)
+					rects.add(x.visual.rect);
+			}
+
+			for (x in needLayout) {
+				if (!updateLayout(x, pointersTo, rects)) {
+					// This is a fallback in case of isolated cycles (which should not happen).
+					placeElement(rects, x, Point(0, 0));
+				}
+			}
+		}
+
+		// Update layout for a particular element if necessary. Returns 'true' if we managed to find
+		// a layout, or 'false' if none of our parents had a position and we need to try again later.
+		private Bool updateLayout(Element elem, Element->Set<Element> pointers, RectSet rects) {
+			if (elem.topmost)
+				elem.needLayout = false;
+			if (!elem.needLayout)
+				return true;
+
+			// If we recursively find this element, exit. That means we have found a cycle.
+			if (elem.doingLayout)
+				return false;
+
+			// Prevent cycles. We don't need to do this earlier since we do not have any recursive
+			// calls to updateLayout before here.
+			elem.doingLayout = true;
+
+			// We try to place objects in columns of equal depth. This makes the pointer
+			// visualization look pretty nice. So, we essentially only have to keep track of the
+			// top-right corner of any parents. If multiple parents exist, the x coordinate is the
+			// maximum of the parents, and the y coordinate is the minimum.
+			var p = pointers[elem];
+			Float xSpace = layoutObjSpace.w;
+			Point suggested(layoutEdgeSpace, layoutEdgeSpace);
+			Bool anyParent = false;
+			for (src in p) {
+				// If the element does not yet have a layout, try to give it a position.
+				if (src.needLayout)
+					if (!updateLayout(elem, pointers, rects))
+						continue;
+
+				// Update suggested as noted above.
+				suggested.x = max(suggested.x, src.visual.rect.p1.x + xSpace);
+				if (anyParent)
+					suggested.y = min(suggested.y, src.visual.pos.y);
+				else
+					suggested.y = src.visual.pos.y;
+
+				anyParent = true;
+			}
+
+			elem.doingLayout = false;
+
+			// If we did not find any parent, we are in one of two cases. Either, we don't have any
+			// parents (e.g. the Globals object, or something only referred to from docked objects),
+			// or all calls to updateLayout failed. The first case is OK, while the second should
+			// result in failure.
+			if (!anyParent & p.any)
+				return false;
+
+			elem.needLayout = false;
+
+			// Now we need where we want the element. Check where other elements are and place it
+			// appropriately.
+			placeElement(rects, elem, suggested);
+			true;
+		}
+
+		// Place an element as close to the suggestion as possible, but picks a location where it
+		// does not intersect with other elements.
+		private void placeElement(RectSet rects, Element elem, Point suggestion) {
+			Size pad(layoutObjSpace);
+
+			Rect rect = elem.visual.rect.at(suggestion);
+			// Grow it to get suitable padding.
+			rect = rect.grow(pad);
+			Point location = rects.fit(rect);
+
+			elem.visual.pos = location + pad;
+			rects.add(elem.visual.rect);
 		}
 
 	}
@@ -325,6 +485,12 @@ private:
 		// Visited this round?
 		Bool visited;
 
+		// Need layout?
+		Bool needLayout;
+
+		// Are we doing layout for this element right now?
+		Bool doingLayout;
+
 		// Create.
 		init(Allocation? alloc, Drawable visual) {
 			init {
@@ -333,6 +499,7 @@ private:
 				thread = false;
 				topmost = false;
 				visited = true;
+				needLayout = true;
 			}
 		}
 	}

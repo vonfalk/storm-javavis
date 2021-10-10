@@ -37,6 +37,9 @@ namespace storm {
 			// Contains a point?
 			Bool STORM_FN contains(Point pt) const;
 
+			// Contains a rectangle?
+			Bool STORM_FN contains(Rect rect) const;
+
 			// Intersects with another Rect?
 			Bool STORM_FN intersects(Rect other) const;
 
