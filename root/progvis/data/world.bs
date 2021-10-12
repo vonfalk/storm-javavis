@@ -65,6 +65,72 @@ class World on Render {
 	Array<Allocation>:Iter begin() { allocations.begin; }
 	Array<Allocation>:Iter end() { allocations.end; }
 
+	// Get a summary of all the *data* in this world. The data is constructed so that the
+	// representation is unique for this particular state, and so that all states that are
+	// considered equal to this state have the same representation. This means that the summary
+	// could be used to re-create the data, even though this is not the intention (i.e. the format
+	// is not guaranteed to be stable through versions, nor easy to parse). Note that we are not
+	// concerned about links to the running program, nor read/write states in this
+	// representation. This is intended for automatically checking for data races or other problems.
+	Str summary() {
+		// We construct this by finding the globals and the threads and traversing them
+		// recursively. Each time we find an object, we give it a number, so that we can record
+		// pointers as numbers. It is crucial that the traversal order is stable here. For objects,
+		// that is easy, as their representation is generally ordered (with the possible exception
+		// of hash tables, which we don't support yet anyway). We do, however, need to be careful
+		// about traversing threads in the proper order.
+
+		// Note: This approach means that any data that is no longer reachable from either the
+		// globals or a thread will not be present in the summary. This is actually not a problem
+		// for us, as unreachable data is not interesting when finding concurrency issues. It could,
+		// however, be a problem if we want to use this in other contexts.
+
+		// Note: This approach means that the representation will be different if we start threads
+		// in a different order. This will most likely not be too big of a problem in most cases,
+		// but for programs that create many threads in a non-deterministic manner, this could
+		// increase the search space quite a bit.
+
+		StrBuf out;
+
+		Data->Nat dataId;
+
+		Thread[] threads;
+		Globals? globals;
+
+		Registrator allocMap;
+
+		for (a in allocations) {
+			if (t = a.data as Thread) {
+				// Ignore dead threads.
+				if (t.alive & !t.crashed)
+					threads << t;
+			} else if (g = a.data as Globals) {
+				globals = g;
+			}
+
+			a.register(allocMap);
+		}
+
+		// Start with the globals if we have them.
+		if (globals) {
+			out << "-{";
+			globals.summary(out, dataId, allocMap.result);
+			out << "}";
+		}
+
+		// Sort according to thread id.
+		threads.sort((a, b) => a.src.threadId < b.src.threadId);
+
+		// Output each thread in turn. We are not concerned with thread ID:s.
+		for (i, t in threads) {
+			out << i << "{";
+			t.summary(out, dataId, allocMap.result);
+			out << "}";
+		}
+
+		out.toS;
+	}
+
 	// Find the name for a type.
 	Str typeTitle(TypeInfo type) {
 		for (h in hints) {

@@ -37,6 +37,12 @@ class Allocation on Render {
 	// Called when this allocation is no longer reachable. If 'true', the allocation will be
 	// removed, otherwise it will remain.
 	Bool remove() { true; }
+
+	// Register all sub-data.
+	void register(Registrator r) {
+		r.setAllocation(this);
+		data.register(r);
+	}
 }
 
 
@@ -58,4 +64,24 @@ class StickyAllocation extends Allocation {
 	}
 }
 
+
+/**
+ * Registrator. Maps data to their allocation.
+ */
+class Registrator on Render {
+	// Current allocation.
+	private Allocation? current;
+
+	// Result data.
+	Data->Allocation result;
+
+	void setAllocation(Allocation a) {
+		current = a;
+	}
+
+	void add(Data d) {
+		if (current)
+			result.put(d, current);
+	}
+}
 

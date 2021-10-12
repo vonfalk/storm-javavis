@@ -86,6 +86,28 @@ class Thread extends Data {
 		null;
 	}
 
+	// Register.
+	void register(Registrator r) : override {
+		super:register(r);
+		for (f in frames)
+			f.register(r);
+	}
+
+	// Summary.
+	protected void putSummary(StrBuf to, Data->Nat id, Data->Allocation alloc) : override {
+		// Location of the thread.
+		if (pos) {
+			if (file = pos.file) {
+				to << file.title << ":" << pos.start << "-" << pos.end << ".";
+			}
+		}
+
+		// Stack frames. We don't need a delimiter.
+		for (f in frames) {
+			f.summary(to, id, alloc);
+		}
+	}
+
 	// Copy.
 	protected Data copyObject() : override {
 		Thread(this);
