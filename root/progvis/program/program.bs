@@ -39,6 +39,9 @@ class Program on Render {
 	// threads crash at the same time, this might be inaccurate, but it is good enough for now.
 	private Nat lastTerminatedId;
 
+	// Are we currently terminating all threads? We don't send update notifications during this time.
+	private Bool terminating;
+
 	// All threads in the program. The key is the ID of the UThread that executes the code.
 	public Word->ProgThread threads;
 
@@ -72,8 +75,11 @@ class Program on Render {
 
 	// Call the notification.
 	void notifyChange() {
-		if (changeNotification)
-			changeNotification.call();
+		// Inhibit notifications if we're terminating.
+		if (!terminating) {
+			if (changeNotification)
+				changeNotification.call();
+		}
 	}
 
 	// Call the advance notification.
@@ -196,6 +202,9 @@ class Program on Render {
 
 	// Terminate any threads running in the program, and wait for them to exit properly.
 	void terminate() {
+		// Inhibit change notifications - we want to make it look like all threads terminated at the same time.
+		terminating = true;
+
 		for (t in threads) {
 			t.terminate();
 		}
@@ -204,6 +213,9 @@ class Program on Render {
 		while (threads.count > 0) {
 			yield();
 		}
+
+		terminating = false;
+		notifyChange();
 	}
 
 	// Reset the program state, so that we may restart it later.

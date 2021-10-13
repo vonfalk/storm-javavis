@@ -41,8 +41,8 @@ class World on Render {
 	// Clear the state. This differs from restarting the program and calling update since clear
 	// might remove lost objects without references (i.e. memory leaks).
 	void clear() {
-		allocations.clear();
 		program.reset();
+		allocations.clear();
 
 		var globals = program.findGlobals();
 		if (globals.any) {
