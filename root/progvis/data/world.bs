@@ -65,6 +65,33 @@ class World on Render {
 	Array<Allocation>:Iter begin() { allocations.begin; }
 	Array<Allocation>:Iter end() { allocations.end; }
 
+	// Access threads.
+	ThreadIter threads() {
+		ThreadIter(allocations);
+	}
+
+	/**
+	 * Special iterator for threads.
+	 */
+	class ThreadIter on Render {
+		init(Allocation[] allocs) {
+			init { allocs = allocs; pos = 0; }
+		}
+
+		ThreadIter iter() { this; }
+
+		private Allocation[] allocs;
+		private Nat pos;
+
+		Thread? next() {
+			while (pos < allocs.count) {
+				if (t = allocs[pos++].data as Thread)
+					return t;
+			}
+			null;
+		}
+	}
+
 	// Get a summary of all the *data* in this world. The data is constructed so that the
 	// representation is unique for this particular state, and so that all states that are
 	// considered equal to this state have the same representation. This means that the summary

@@ -131,20 +131,12 @@ class MainPainter extends Painter {
 		}
 	}
 
-	private void onProgramError(Nat thread, Exception error) {
+	private void onProgramError(ThreadError error) {
 		unless (behavior)
 			return;
 
-		// These are ones we can dispatch directly.
-		Str type = "exception";
-		Str msg = error.message;
-
-		// See if it is an error we recognize.
-		if (error as TypedError)
-			type = error.type;
-
 		stopThreads();
-		behavior.onProgramError(ThreadError(type, msg, thread));
+		behavior.onProgramError(error);
 	}
 
 	private void onProgramAdvance(Nat thread, Bool barrier) {

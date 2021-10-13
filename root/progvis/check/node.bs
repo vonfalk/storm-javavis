@@ -1,0 +1,111 @@
+use ui;
+use progvis:program;
+use progvis:data;
+
+/**
+ * A node in the search graph we build during checking.
+ *
+ * Each node represents some state of the program. Each node knows the "shortest" parent, so that it
+ * is possible to step the program to the desired location easily. The shortest path in this sense
+ * means that it takes the least number of steps to get there.
+ */
+package class Node on Render {
+	// Create a dummy node.
+	init(Node? parent) {
+		init {}
+	}
+
+	// Create.
+	init(Node? parent, World state) {
+		init {}
+
+		if (parent)
+			this.parent(parent);
+		else
+			myDepth = 0;
+
+		for (thread in state.threads) {
+			if (thread.alive & !thread.crashed) {
+				unexplored.push(thread.id);
+			}
+		}
+	}
+
+	// Parent node.
+	private Node? myParent;
+
+	// Current depth of this node.
+	private Nat myDepth;
+
+	// Children to this node. Contains one element for each child to this node.
+	Edge[] edges;
+
+	// Unexplored edges (i.e. threads that existed when the program was created, but we have not yet
+	// added an edge for them).
+	Queue<Nat> unexplored;
+
+	// Get the depth.
+	Nat depth() { myDepth; }
+
+	// Get the parent.
+	Node? parent() { myParent; }
+
+	// Set the parent. This updates the parent node if it is shorter thant the current parent we are
+	// aware of.
+	void parent(Node parent) {
+		if (myParent) {
+			if (parent.depth + 1 < myDepth) {
+				this.myParent = parent;
+				myDepth = parent.depth + 1;
+				updateChildren();
+			}
+		} else {
+			myParent = parent;
+			myDepth = parent.depth + 1;
+			updateChildren();
+		}
+	}
+
+	// Update the parent of child nodes.
+	private void updateChildren() {
+		// We simply need to re-set ourselves as the parent.
+		for (e in edges) {
+			e.child.parent(this);
+		}
+	}
+
+	// Find the action to take to go to a particular node.
+	Nat? actionTo(Node node) {
+		for (e in edges)
+			if (e.child is node)
+				return e.action;
+		null;
+	}
+}
+
+
+/**
+ * Edges from a node (we refer to these as pointing to "children", even though the graph may be cyclic).
+ */
+package value Edge {
+	// Create.
+	init(Nat action, Node child, ProgramError? error) {
+		init() {
+			action = action;
+			child = child;
+			error = error;
+		}
+
+		if (error.any)
+			print("Found an error!");
+	}
+
+	// Thread ID we advance.
+	Nat action;
+
+	// Child node.
+	Node child;
+
+	// Errors found on this edge, if any.
+	ProgramError? error;
+}

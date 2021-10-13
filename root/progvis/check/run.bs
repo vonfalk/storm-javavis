@@ -1,0 +1,75 @@
+use ui;
+use progvis:program;
+use progvis:data;
+
+/**
+ * Restart the program and run it to the first location.
+ */
+void toStart(Program program) on Render {
+	program.reset();
+	program.spawn(program.main);
+
+	// First, we need to wait until we find at least one thread. Otherwise 'wait' will not wait properly.
+	while (program.threads.empty)
+		yield();
+
+	wait(program);
+}
+
+/**
+ * Advance the thread with a particular ID to the next barrier.
+ */
+Bool toNext(Program program, Nat thread) on Render {
+	for (v in program.threads) {
+		if (v.threadId == thread) {
+			if (v.barriersAvailable) {
+				v.resumeBarrier();
+			} else {
+				v.resume();
+			}
+			wait(program);
+			return true;
+		}
+	}
+
+	false;
+}
+
+/**
+ * Advance to a particular node. Restarts the program and executes it to the location.
+ */
+Bool toNode(Program program, Node target) on Render {
+	toStart(program);
+
+	Nat[] actions;
+	Node at = target;
+	while (parent = at.parent) {
+		if (action = parent.actionTo(at))
+			actions << action;
+		else
+			return false;
+
+		at = parent;
+	}
+
+	actions.reverse();
+	print("Actions: ${actions}");
+	for (x in actions)
+		if (!toNext(program, x))
+			return false;
+
+	true;
+}
+
+/**
+ * Wait for an operation to complete.
+ */
+void wait(Program program) on Render {
+	// Note: We need to wait first so that new threads will have the chance to register themselves
+	// properly with the Program instance. If this is slower than one "yield", then we are out of
+	// luck. In current language implementations we are, however, more or less guaranteed that this
+	// is the case though.
+	do {
+		yield();
+	} while (!program.threadsPaused());
+}

@@ -1,0 +1,233 @@
+use ui;
+use core:io;
+use progvis:program;
+use progvis:data;
+
+/**
+ * Root class for the model checker.
+ *
+ * Contains all state needed for the search of program states.
+ *
+ * Call 'check' for a simple interface to the entire checking progress.
+ */
+class Checker on Render {
+	// Create.
+	init(Url[] files, Progress callback) {
+		Program program = Program:load(files);
+		Node n(null);
+
+		init {
+			program = program;
+			world = World(program);
+			callback = callback;
+			root = n;
+			current = n;
+			pathDepth = 10;
+		}
+
+		program.onError = &this.onProgramError;
+	}
+
+	// Program we are checking.
+	private Program program;
+
+	// World representing the data in the program.
+	private World world;
+
+	// Callback for progress.
+	private Progress callback;
+
+	// Root node of the graph. This represents the program state just after starting the program.
+	private Node root;
+
+	// Node that represents the current state of the program.
+	private Node current;
+
+	// Lookup for states. Finds a node representing a particular state.
+	private Str->Node lookup;
+
+	// Number of states yet to explore.
+	private Nat toExplore;
+
+	// Total number of edges.
+	private Nat edges;
+
+	// Max number of times we will traverse a single "path" in the graph. We want this fairly large
+	// so that we don't have to restart the program very often, but if it is too large, we will miss
+	// the opportunity to explore "easy" solutions.
+	private Nat pathDepth;
+
+	// Program errors encountered recently.
+	private ProgramError? error;
+
+	// Check the loaded program.
+	void check() {
+		try {
+			reset();
+
+			traverse();
+
+			// Terminate when we are done.
+			program.terminate();
+		} catch (Exception e) {
+			program.terminate();
+			throw e;
+		}
+	}
+
+	// Prepare for checking.
+	private void reset() {
+		lookup.clear();
+		world.clear();
+		toStart(program);
+
+		root = getNode(null);
+		current = root;
+	}
+
+	// Traverse the state space. We try to minimize program restarts, so our strategy is to explore
+	// a particular path as far as possible (or until some maximum depth). Then we pick another one
+	// (by a BFS search) and update that.
+	private void traverse() {
+		do {
+			// Start by traversing "current" for a while.
+			traversePath();
+
+			// Find a new, shallow point to continue traversal. If we can't find one, we are done.
+			unless (next = findUnexplored())
+				break;
+
+			// Update the program execution to match where we wish to be. If this fails, it means a
+			// fatal error.
+			if (!updateCurrent(next))
+				return;
+		}
+	}
+
+	// Traverse "current" as far as possible, or until we hit the specified "path length".
+	private void traversePath() {
+		Nat startDepth = current.depth;
+		while (current.unexplored.any & current.depth < startDepth + pathDepth) {
+			Nat action = current.unexplored.top;
+			current.unexplored.pop();
+			toExplore--;
+
+			error = null;
+			if (!toNext(program, action)) {
+				callback.error("Failed to step thread ${action}!");
+				break;
+			}
+
+			Node n = getNode(current);
+			current.edges << Edge(action, n, error);
+			edges++;
+			current = n;
+
+			reportProgress();
+		}
+	}
+
+	// Find a node with some unexplored edges. Returns 'false' if none is found.
+	// Note: We could update 'parent' and 'depth' here rather than having Node do it internally.
+	private Node? findUnexplored() {
+		Queue<Node> work;
+		Set<Node> traversed;
+
+		work.push(root);
+		while (work.any) {
+			Node c = work.top; work.pop();
+			if (c.unexplored.any)
+				return c;
+
+			for (e in c.edges) {
+				if (!traversed.has(e.child)) {
+					traversed.put(e.child);
+					work.push(e.child);
+				}
+			}
+		}
+
+		null;
+	}
+
+	// Update 'current' to the desired node. This also means restarting the program and running it
+	// to the proper location.
+	private Bool updateCurrent(Node to) {
+		world.clear(); // also restarts the program.
+		if (!toNode(program, to)) {
+			callback.error("Failed to find a previous state.");
+			return false;
+		}
+		current = to;
+		true;
+	}
+
+	// Create a node for the current state.
+	private Node getNode(Node? parent) {
+		// Note: We let concurrency issues take priority over exceptions.
+		if (error = world.update())
+			this.error = error;
+
+		Str key = world.summary();
+
+		var found = lookup.find(key);
+		if (found == lookup.end) {
+			Node created(parent, world);
+			lookup.put(key, created);
+			toExplore += created.unexplored.count;
+			created;
+		} else {
+			print("Found duplicate node!");
+			Node n = found.v;
+			// Set new parent if needed.
+			if (parent)
+				n.parent(parent);
+			n;
+		}
+	}
+
+	// Report progress.
+	private void reportProgress() {
+		callback.progress(lookup.count, edges, toExplore);
+	}
+
+	// Called when an error is thrown in the program.
+	private void onProgramError(ThreadError error) {
+		// Only store the first error.
+		if (this.error.empty)
+			this.error = error;
+	}
+}
+
+// Check a program for concurrency errors. TODO: What kind of result do we want back?
+void check(Url[] files, Progress callback) on Render {
+	Checker checker(files, callback);
+	print("Compiled the program!");
+	checker.check();
+	print("Done checking!");
+}
+
+/**
+ * Progress callbacks called by the checker.
+ */
+class Progress on Render {
+	// Called when we have new information.
+	// 'states' is the current number of states.
+	// 'edges' is the current number of edges.
+	// 'unexplored' is the current number of edges that need to be explored.
+	void progress(Nat states, Nat edges, Nat unexplored) {
+		print("Progress: ${states} ${edges} ${unexplored}");
+	}
+
+	// Called for internal errors. These should not happen, and can be considered fatal.
+	void error(Str error) {
+		print("ERROR: " + error);
+	}
+}
+
+
+/**
+ * Result from the checker.
+ */
+class Result on Render {
+}

@@ -40,6 +40,9 @@ class Thread extends Data {
 		}
 	}
 
+	// Get thread id.
+	Nat id() { src.threadId; }
+
 	// Traverse stack frames and find individual values.
 	void update(World:Traversal t, unsafe:RawPtr object, Nat offset) : override {
 		alive = src.alive;
