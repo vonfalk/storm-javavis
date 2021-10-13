@@ -10,6 +10,7 @@ namespace gui {
 #ifdef GUI_WIN32
 
 	static const DWORD marqueeTime = 16;
+	static const WORD progressMax = 0xFFFF;
 
 	bool Progress::create(ContainerBase *parent, nat id) {
 		DWORD flags = childFlags;
@@ -23,8 +24,8 @@ namespace gui {
 		if (waitMode) {
 			SendMessage(handle().hwnd(), PBM_SETMARQUEE, 1, marqueeTime);
 		} else {
-			SendMessage(handle().hwnd(), PBM_SETRANGE32, 0, 0xFFFF);
-			SendMessage(handle().hwnd(), PBM_SETPOS, Nat(0xFFFF * myProgress), 0);
+			SendMessage(handle().hwnd(), PBM_SETRANGE32, 0, progressMax);
+			SendMessage(handle().hwnd(), PBM_SETPOS, Nat(progressMax * myProgress), 0);
 		}
 
 		return true;
@@ -43,10 +44,12 @@ namespace gui {
 			if (waitMode) {
 				SendMessage(handle().hwnd(), PBM_SETMARQUEE, 0, 0);
 				SetWindowLong(handle().hwnd(), GWL_STYLE, childFlags);
-				SendMessage(handle().hwnd(), PBM_SETPOS, Nat(0xFFFF * myProgress), 0);
+				SendMessage(handle().hwnd(), PBM_SETRANGE32, 0, progressMax);
 			}
-			SendMessage(handle().hwnd(), PBM_SETPOS, Nat(0xFFFF * myProgress), 0);
+			SendMessage(handle().hwnd(), PBM_SETPOS, Nat(progressMax * myProgress), 0);
 		}
+
+		waitMode = false;
 	}
 
 	void Progress::wait() {
@@ -98,6 +101,7 @@ namespace gui {
 
 	void Progress::progress(Float v) {
 		myProgress = v;
+		waitMode = false;
 
 		if (created()) {
 			if (timerId) {
