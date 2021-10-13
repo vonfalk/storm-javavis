@@ -19,7 +19,7 @@ void toStart(Program program) on Render {
 /**
  * Advance the thread with a particular ID to the next barrier.
  */
-Bool toNext(Program program, Nat thread) on Render {
+void toNext(Program program, Nat thread) on Render {
 	for (v in program.threads) {
 		if (v.threadId == thread) {
 			if (v.barriersAvailable) {
@@ -32,27 +32,20 @@ Bool toNext(Program program, Nat thread) on Render {
 		}
 	}
 
-	false;
+	throw CheckError("Failed to step thread ${thread} in the program.");
 }
 
 /**
  * Advance to a particular node. Restarts the program and executes it to the location.
  */
-Bool toNode(Program program, Node target) on Render {
+void toNode(Program program, Node target) on Render {
 	toStart(program);
 
 	Nat[] actions = target.path();
 
-	// If we get an empty path, but the node has a parent, something is wrong.
-	if (actions.empty & target.parent.any)
-		return false;
-
 	print("Actions: ${actions}");
 	for (x in actions)
-		if (!toNext(program, x))
-			return false;
-
-	true;
+		toNext(program, x);
 }
 
 /**

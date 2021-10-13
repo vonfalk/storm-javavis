@@ -90,7 +90,7 @@ package class Node on Render {
 			if (action = parent.actionTo(at))
 				result << action;
 			else
-				return [];
+				throw CheckError("Failed to find an edge from our parent node to ourselves.");
 
 			at = parent;
 		}

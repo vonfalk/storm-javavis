@@ -88,12 +88,8 @@ class Checker on Render {
 		while (work.any) {
 			Node c = work.top; work.pop();
 			for (e in c.edges) {
-				if (error = e.error) {
-					var path = e.child.path;
-					if (path.empty)
-						print("ERROR: Failed to find a path!");
-					return Result(error, path);
-				}
+				if (error = e.error)
+					return Result(error, e.child.path);
 
 				if (!traversed.has(e.child)) {
 					traversed.put(e.child);
@@ -132,10 +128,8 @@ class Checker on Render {
 				if (next.hasError)
 					return;
 
-			// Update the program execution to match where we wish to be. If this fails, it means a
-			// fatal error.
-			if (!updateCurrent(next))
-				return;
+			// Update the program execution to match where we wish to be.
+			updateCurrent(next);
 		}
 	}
 
@@ -148,10 +142,7 @@ class Checker on Render {
 			toExplore--;
 
 			error = null;
-			if (!toNext(program, action)) {
-				callback.error("Failed to step thread ${action}!");
-				break;
-			}
+			toNext(program, action);
 
 			Node n = getNode(current);
 			current.edges << Edge(action, n, error);
@@ -192,14 +183,10 @@ class Checker on Render {
 
 	// Update 'current' to the desired node. This also means restarting the program and running it
 	// to the proper location.
-	private Bool updateCurrent(Node to) {
+	private void updateCurrent(Node to) {
 		world.clear(); // also restarts the program.
-		if (!toNode(program, to)) {
-			callback.error("Failed to find a previous state.");
-			return false;
-		}
+		toNode(program, to);
 		current = to;
-		true;
 	}
 
 	// Create a node for the current state.
@@ -217,7 +204,6 @@ class Checker on Render {
 			toExplore += created.unexplored.count;
 			created;
 		} else {
-			print("Found duplicate node!");
 			Node n = found.v;
 			// Set new parent if needed.
 			if (parent)
@@ -239,7 +225,7 @@ class Checker on Render {
 	}
 }
 
-// Check a program for concurrency errors. TODO: What kind of result do we want back?
+// Check a program for concurrency errors.
 Result? check(Url[] files, Progress callback) on Render {
 	Checker checker(files, callback);
 	print("Compiled the program!");
@@ -260,11 +246,6 @@ class Progress on Render {
 	// 'unexplored' is the current number of edges that need to be explored.
 	void progress(Nat states, Nat edges, Nat unexplored) {
 		print("Progress: ${states} ${edges} ${unexplored}");
-	}
-
-	// Called for internal errors. These should not happen, and can be considered fatal.
-	void error(Str error) {
-		print("ERROR: " + error);
 	}
 }
 

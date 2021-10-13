@@ -1,0 +1,15 @@
+
+/**
+ * Generic error from the model checker.
+ */
+class CheckError extends Exception {
+	init(Str msg) {
+		init { msg = msg; }
+	}
+
+	private Str msg;
+
+	void message(StrBuf to) : override {
+		to << msg;
+	}
+}
