@@ -23,6 +23,7 @@ class Checker on Render {
 			root = n;
 			current = n;
 			pathDepth = 10;
+			exhaustive = false;
 		}
 
 		program.onError = &this.onProgramError;
@@ -59,6 +60,9 @@ class Checker on Render {
 
 	// Program errors encountered recently.
 	private ProgramError? error;
+
+	// Should we make an exhaustive search?
+	private Bool exhaustive;
 
 	// Check the loaded program.
 	void check() {
@@ -123,6 +127,11 @@ class Checker on Render {
 			unless (next = findUnexplored())
 				break;
 
+			// If the node has an error edge, we are done.
+			if (!exhaustive)
+				if (next.hasError)
+					return;
+
 			// Update the program execution to match where we wish to be. If this fails, it means a
 			// fatal error.
 			if (!updateCurrent(next))
@@ -153,8 +162,9 @@ class Checker on Render {
 		}
 	}
 
-	// Find a node with some unexplored edges. Returns 'false' if none is found.
-	// Note: We could update 'parent' and 'depth' here rather than having Node do it internally.
+	// Find a node with at least one unexplored edge. If an error is known to exist at a depth
+	// shorter than any unexplored edges, we return the node containing an error instead. If
+	// everything is explored, null is returned.
 	private Node? findUnexplored() {
 		Queue<Node> work;
 		Set<Node> traversed;
@@ -166,6 +176,10 @@ class Checker on Render {
 				return c;
 
 			for (e in c.edges) {
+				if (!exhaustive)
+					if (e.error.any)
+						return c;
+
 				if (!traversed.has(e.child)) {
 					traversed.put(e.child);
 					work.push(e.child);

@@ -98,6 +98,14 @@ package class Node on Render {
 		result.reverse();
 		result;
 	}
+
+	// Does this node have an edge with an error?
+	Bool hasError() {
+		for (x in edges)
+			if (x.error.any)
+				return true;
+		false;
+	}
 }
 
 
@@ -112,9 +120,6 @@ package value Edge {
 			child = child;
 			error = error;
 		}
-
-		if (error.any)
-			print("Found an error!");
 	}
 
 	// Thread ID we advance.
