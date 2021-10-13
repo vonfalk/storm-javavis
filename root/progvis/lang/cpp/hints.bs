@@ -81,6 +81,10 @@ class CppCodeHints extends progvis:program:CodeHints {
 		if (fn.hasParent(named{runtime}))
 			return progvis:program:Barrier:none;
 
+		// Neither for things in core.
+		if (fn.hasParent(named{core}))
+			return progvis:program:Barrier:none;
+
 		// For other functions in Progvis, no barrier there either. These are implementation details
 		// that we don't want to be visible.
 		if (fn.hasParent(named{progvis}))
