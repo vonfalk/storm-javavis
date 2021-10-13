@@ -75,6 +75,32 @@ class Checker on Render {
 		}
 	}
 
+	// Find an error. Simply run a BFS until we find an edge with an error.
+	Result? result() {
+		Queue<Node> work;
+		Set<Node> traversed;
+
+		work.push(root);
+		while (work.any) {
+			Node c = work.top; work.pop();
+			for (e in c.edges) {
+				if (error = e.error) {
+					var path = e.child.path;
+					if (path.empty)
+						print("ERROR: Failed to find a path!");
+					return Result(error, path);
+				}
+
+				if (!traversed.has(e.child)) {
+					traversed.put(e.child);
+					work.push(e.child);
+				}
+			}
+		}
+
+		null;
+	}
+
 	// Prepare for checking.
 	private void reset() {
 		lookup.clear();
@@ -200,11 +226,14 @@ class Checker on Render {
 }
 
 // Check a program for concurrency errors. TODO: What kind of result do we want back?
-void check(Url[] files, Progress callback) on Render {
+Result? check(Url[] files, Progress callback) on Render {
 	Checker checker(files, callback);
 	print("Compiled the program!");
 	checker.check();
 	print("Done checking!");
+	var result = checker.result();
+	print("Result: ${result}");
+	result;
 }
 
 /**
@@ -229,5 +258,23 @@ class Progress on Render {
 /**
  * Result from the checker.
  */
-class Result on Render {
+class Result {
+	// Create.
+	init(ProgramError error, Nat[] sequence) {
+		init {
+			error = error;
+			sequence = sequence;
+		}
+	}
+
+	// Error found.
+	ProgramError error;
+
+	// Sequence used to reach the error. We use "barrier steps" if available.
+	Nat[] sequence;
+
+	// Output.
+	void toS(StrBuf to) {
+		to << "Sequence: [" << join(sequence, ", ") << "], " << error;
+	}
 }

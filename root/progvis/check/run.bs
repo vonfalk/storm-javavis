@@ -41,18 +41,12 @@ Bool toNext(Program program, Nat thread) on Render {
 Bool toNode(Program program, Node target) on Render {
 	toStart(program);
 
-	Nat[] actions;
-	Node at = target;
-	while (parent = at.parent) {
-		if (action = parent.actionTo(at))
-			actions << action;
-		else
-			return false;
+	Nat[] actions = target.path();
 
-		at = parent;
-	}
+	// If we get an empty path, but the node has a parent, something is wrong.
+	if (actions.empty & target.parent.any)
+		return false;
 
-	actions.reverse();
 	print("Actions: ${actions}");
 	for (x in actions)
 		if (!toNext(program, x))

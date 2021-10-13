@@ -81,6 +81,23 @@ package class Node on Render {
 				return e.action;
 		null;
 	}
+
+	// Find a path to this node.
+	Nat[] path() {
+		Nat[] result;
+		Node at = this;
+		while (parent = at.parent) {
+			if (action = parent.actionTo(at))
+				result << action;
+			else
+				return [];
+
+			at = parent;
+		}
+
+		result.reverse();
+		result;
+	}
 }
 
 

@@ -122,7 +122,7 @@ class MainPainter extends Painter {
 			Nat thread = action.toNat;
 			for (v in world.program.threads) {
 				if (v.threadId == thread) {
-					if (barrier)
+					if (barrier & v.barriersAvailable)
 						v.resumeBarrier();
 					else
 						v.resume();
