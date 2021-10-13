@@ -43,7 +43,6 @@ void toNode(Program program, Node target) on Render {
 
 	Nat[] actions = target.path();
 
-	print("Actions: ${actions}");
 	for (x in actions)
 		toNext(program, x);
 }

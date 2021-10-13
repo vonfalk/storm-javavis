@@ -207,6 +207,11 @@ class MainWin extends Frame {
 		repaint();
 	}
 
+	// Set the default behavior again.
+	public void resetBehavior() {
+		updateBehavior(DefaultBehavior(this));
+	}
+
 	// Called when a new behavior has been set.
 	private void onNewBehavior() {
 		if (!behavior.allowTrackMemory()) {
@@ -369,8 +374,9 @@ class MainWin extends Frame {
 	private void onFindErrors() {
 		if (currentFiles.empty) {
 			showMessage(this, "No files open", "You have no files open currently.");
-		} else {
-			check:findErrorsUi(this, currentFiles);
+		} else if (result = check:findErrorsUi(this, currentFiles)) {
+			onRestart();
+			updateBehavior(ReplayBehavior(this, result.sequence));
 		}
 	}
 

@@ -293,7 +293,7 @@ class FullMemCheck extends MemCheck {
 		writes.sort();
 		reads.sort();
 
-		print("TODO: Inhibit reports of the same concurrency error after it has been found.");
+		// print("TODO: Inhibit reports of the same concurrency error after it has been found.");
 
 		StrBuf result;
 		if (writes.count > 1)

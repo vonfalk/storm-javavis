@@ -4,11 +4,17 @@ use core:io;
 dialog Dialog {
 	layout Grid {
 		expandCol: 0;
-		wrapCols: 1;
 
-		Label message("Compiling...") {}
+		Label status("Looking for errors...") { colspan: 2; }
+		nextLine;
 
-		ui:Progress progress() {}
+		ui:Progress progress() { colspan: 2; }
+		nextLine;
+
+		Label message("") { colspan: 2; }
+		nextLine;
+
+		Button ok("Cancel") { col: 1; }
 	}
 
 	init(Url[] files) {
@@ -16,24 +22,92 @@ dialog Dialog {
 			files = files;
 		}
 
+		ok.onClick = &this.onButton();
+
 		progress.wait;
-		spawn wait();
+
+		spawn check();
+	}
+
+	// Cancel our progress?
+	private Bool cancel;
+
+	// Are we done?
+	private Bool done;
+
+	// Result, if any.
+	Result? result;
+
+	// Window closed. Abort any running task.
+	void windowDestroyed() {
+		cancel = true;
+	}
+
+	// Called when we click the button.
+	void onButton() {
+		cancel = true;
+		close(1);
+	}
+
+	// Set us into an error state.
+	void error(Str message) {
+		progress.progress = 1.0;
+		status.text = "Search failed.";
+		this.message.text = "An internal error occurred: " + message;
+	}
+
+	// Set us in a "done" state.
+	void done(Result? result) {
+		this.result = result;
+		progress.progress = 1.0;
+		status.text = "Done!";
+		if (result) {
+			message.text = "Found an error of type: ${result.error.type}\nClick below to see the issue.";
+			ok.text = "Show";
+		} else {
+			message.text = "No errors found, at least not with this main program.";
+			ok.text = "Close";
+		}
+
+		size = minSize();
 	}
 
 	private Url[] files;
 
-	private void wait() {
-		sleep(3 s);
-		progress.progress = 0.50;
-		sleep(1 s);
-		progress.progress = 0.70;
+	private void check() {
+		try {
+			var result = check(files, UiProgress(this));
+			done(result);
+		} catch (progvis:program:ExitError e) {
+			// Early exit.
+		} catch (Exception e) {
+			error(e.message);
+		}
+	}
+
+	// Progress callbacks.
+	class UiProgress extends Progress {
+		init(Dialog owner) {
+			init { owner = owner; }
+		}
+
+		Dialog owner;
+
+		void progress(Nat states, Nat edges, Nat unexplored) : override {
+			print("P ${states} ${edges} ${unexplored} ${owner.cancel}");
+
+			if (owner.cancel)
+				throw progvis:program:ExitError();
+		}
 	}
 }
 
 
 // Show a dialog for finding errors, and return the result.
-void findErrorsUi(Frame parent, Url[] files) on Ui {
+Result? findErrorsUi(Frame parent, Url[] files) on Ui {
 	Dialog d(files);
-	d.show(parent);
-	// TODO: Return something useful.
+	if (d.show(parent) > 0) {
+		return d.result;
+	}
+	null;
 }

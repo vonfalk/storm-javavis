@@ -186,6 +186,9 @@ class ReplayBehavior extends DefaultBehavior {
 	// Stop the auto step?
 	private Bool stopAuto;
 
+	// Allow cancelling.
+	private Bool allowCancel;
+
 	init(MainWin window, Str solution) {
 		init(window) {}
 
@@ -198,6 +201,15 @@ class ReplayBehavior extends DefaultBehavior {
 		} while (next != solution.end) {
 			last = next + 1;
 		}
+	}
+
+	init(MainWin window, Nat[] steps) {
+		init(window) {
+			allowCancel = true;
+		}
+
+		for (x in steps)
+			this.steps << x.toS + "*";
 	}
 
 	void onProgramError(ProgramError error) : override {
@@ -219,6 +231,8 @@ class ReplayBehavior extends DefaultBehavior {
 		p.button("Restart", &window.onRestart());
 		p.button("Next step", &this.onStep());
 		p.button("Play/Pause", &this.onAuto());
+		if (allowCancel)
+			p.button("Close", &window.resetBehavior());
 		p;
 	}
 

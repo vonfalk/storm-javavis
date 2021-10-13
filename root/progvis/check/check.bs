@@ -228,12 +228,8 @@ class Checker on Render {
 // Check a program for concurrency errors.
 Result? check(Url[] files, Progress callback) on Render {
 	Checker checker(files, callback);
-	print("Compiled the program!");
 	checker.check();
-	print("Done checking!");
-	var result = checker.result();
-	print("Result: ${result}");
-	result;
+	checker.result();
 }
 
 /**

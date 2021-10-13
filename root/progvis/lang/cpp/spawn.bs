@@ -41,6 +41,10 @@ class SpawnCall extends Expr {
 	}
 
 	void code(CodeGen gen, CodeResult res) : override {
+		// Barrier needs to be first. Otherwise spawn will be done before the barrier, which leads to problems.
+		// Note: I think this is the proper barrier. We might want "full" though.
+		gen.l << meta(progvis:program:SrcBarrier(progvis:program:Barrier:release, pos));
+
 		Operand[] params;
 
 		for (i, param in this.params) {
@@ -75,9 +79,6 @@ class SpawnCall extends Expr {
 			gen.l << fnParam(longDesc, id.location(gen));
 			gen.l << fnCall(named{progvis:program:findNewThreadId<Word>}.ref, false, intDesc, res.location(gen));
 		}
-
-		// Note: I think this is the proper barrier. We might want "full" though.
-		gen.l << meta(progvis:program:SrcBarrier(progvis:program:Barrier:release, pos));
 	}
 
 	void codePtr(CodeGen gen, Type type) : override {

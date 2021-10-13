@@ -27,6 +27,8 @@ void fn_c() {
 int main(void) {
 	sema_init(&sema, 0);
 
+	other = 30;
+
 	thread_new(&fn_a);
 	thread_new(&fn_b);
 	thread_new(&fn_c);
