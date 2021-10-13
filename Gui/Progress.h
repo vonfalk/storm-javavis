@@ -15,38 +15,29 @@ namespace gui {
 
 		virtual Size STORM_FN minSize();
 
-		// Get the position.
-		Nat STORM_FN value() { return myValue; }
-		Nat STORM_FN v() { return myValue; }
+		// Get the progress.
+		Float STORM_FN progress() { return myProgress; }
 
-		// Set the position.
-		void STORM_ASSIGN value(Nat v);
-		void STORM_ASSIGN v(Nat v);
+		// Set the progress. Also make sure the progress bar is not in wait mode.
+		void STORM_ASSIGN progress(Float v);
 
-		// Get the maximum position.
-		Nat STORM_FN max() { return myMax; }
-
-		// Set the maximum position.
-		void STORM_ASSIGN max(Nat v);
-
-		// Get "unknown" progres (i.e. we don't know how long is left).
-		Bool STORM_FN unknown() { return myUnknown; }
-
-		// Set "unknown" progres (i.e. we don't know how long is left).
-		void STORM_ASSIGN unknown(Bool enable);
+		// Seet the progress into wait mode. This is until the progress is set again.
+		void STORM_FN wait();
 
 	protected:
 		virtual bool create(ContainerBase *parent, nat id);
 
+		virtual void windowDestroyed();
+
 	private:
-		// Current value.
-		Nat myValue;
+		// Current progress.
+		Float myProgress;
 
-		// Maximum position.
-		Nat myMax;
+		// Are we in wait mode.
+		Bool waitMode;
 
-		// Unknown progress.
-		Bool myUnknown;
+		// Timer ID in Gtk+.
+		Nat timerId;
 	};
 
 }

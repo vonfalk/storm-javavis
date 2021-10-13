@@ -456,7 +456,7 @@ namespace gui {
 		} else {
 			// If it is not created, we need to send the notification ourselves.
 			if (changed && onClick)
-				onClick->call(check);
+				onClick->call(v);
 		}
 	}
 

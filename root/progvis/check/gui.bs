@@ -16,8 +16,7 @@ dialog Dialog {
 			files = files;
 		}
 
-		// progress.value = 50;
-		progress.unknown = true;
+		progress.wait;
 		spawn wait();
 	}
 
@@ -25,10 +24,9 @@ dialog Dialog {
 
 	private void wait() {
 		sleep(3 s);
-		progress.unknown = false;
-		progress.value = 50;
+		progress.progress = 0.50;
 		sleep(1 s);
-		progress.value = 70;
+		progress.progress = 0.70;
 	}
 }
 

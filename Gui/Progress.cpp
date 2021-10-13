@@ -5,11 +5,7 @@
 
 namespace gui {
 
-	Progress::Progress() : myValue(0), myMax(100), myUnknown(false) {}
-
-	void Progress::v(Nat v) {
-		value(v);
-	}
+	Progress::Progress() : myProgress(0.0f), waitMode(false), timerId(0) {}
 
 #ifdef GUI_WIN32
 
@@ -18,54 +14,51 @@ namespace gui {
 	bool Progress::create(ContainerBase *parent, nat id) {
 		DWORD flags = childFlags;
 
-		if (myUnknown)
+		if (waitMode)
 			flags |= PBS_MARQUEE;
 
 		if (!createEx(PROGRESS_CLASS, flags, 0, parent->handle().hwnd(), id))
 			return false;
 
-		if (myUnknown) {
+		if (waitMode) {
 			SendMessage(handle().hwnd(), PBM_SETMARQUEE, 1, marqueeTime);
 		} else {
-			SendMessage(handle().hwnd(), PBM_SETRANGE32, 0, myMax);
-			SendMessage(handle().hwnd(), PBM_SETPOS, myValue, 0);
+			SendMessage(handle().hwnd(), PBM_SETRANGE32, 0, 0xFFFF);
+			SendMessage(handle().hwnd(), PBM_SETPOS, Nat(0xFFFF * myProgress), 0);
 		}
 
 		return true;
 	}
 
+	void Progress::windowDestroyed() {}
+
 	Size Progress::minSize() {
 		return dpiFromPx(currentDpi(), Size(200, 20));
 	}
 
-	void Progress::value(Nat v) {
-		myValue = std::min(v, Nat(0x7FFFFFFF));
-
-		if (created())
-			SendMessage(handle().hwnd(), PBM_SETPOS, myValue, 0);
-	}
-
-	void Progress::max(Nat v) {
-		myMax = std::min(v, Nat(0x7FFFFFFF));
-
-		if (created())
-			SendMessage(handle().hwnd(), PBM_SETRANGE32, 0, myMax);
-	}
-
-	void Progress::unknown(Bool v) {
-		myUnknown = v;
+	void Progress::progress(Float v) {
+		myProgress = v;
 
 		if (created()) {
-			if (myUnknown) {
-				SetWindowLong(handle().hwnd(), GWL_STYLE, childFlags | PBS_MARQUEE);
-				SendMessage(handle().hwnd(), PBM_SETMARQUEE, 1, marqueeTime);
-			} else {
+			if (waitMode) {
 				SendMessage(handle().hwnd(), PBM_SETMARQUEE, 0, 0);
 				SetWindowLong(handle().hwnd(), GWL_STYLE, childFlags);
-				SendMessage(handle().hwnd(), PBM_SETRANGE32, 0, myMax);
-				SendMessage(handle().hwnd(), PBM_SETPOS, myValue, 0);
+				SendMessage(handle().hwnd(), PBM_SETPOS, Nat(0xFFFF * myProgress), 0);
+			}
+			SendMessage(handle().hwnd(), PBM_SETPOS, Nat(0xFFFF * myProgress), 0);
+		}
+	}
+
+	void Progress::wait() {
+
+		if (created()) {
+			if (!waitMode) {
+				SetWindowLong(handle().hwnd(), GWL_STYLE, childFlags | PBS_MARQUEE);
+				SendMessage(handle().hwnd(), PBM_SETMARQUEE, 1, marqueeTime);
 			}
 		}
+
+		waitMode = true;
 	}
 
 #endif
@@ -74,7 +67,22 @@ namespace gui {
 	bool Progress::create(ContainerBase *parent, nat id) {
 		GtkWidget *widget = gtk_progress_bar_new();
 		initWidget(parent, widget);
+
+		if (waitMode) {
+			wait();
+		} else {
+			gtk_progress_bar_set_fraction(GTK_PROGRESS_BAR(widget), myProgress);
+		}
+
 		return true;
+	}
+
+	void Progress::windowDestroyed() {
+		if (timerId) {
+			if (GSource *s = g_main_context_find_source_by_id(NULL, timerId))
+				g_source_destroy(s);
+			timerId = 0;
+		}
 	}
 
 	Size Progress::minSize() {
@@ -86,6 +94,38 @@ namespace gui {
 		}
 
 		return Size(Float(w), Float(h));
+	}
+
+	void Progress::progress(Float v) {
+		myProgress = v;
+
+		if (created()) {
+			if (timerId) {
+				if (GSource *s = g_main_context_find_source_by_id(NULL, timerId))
+					g_source_destroy(s);
+				timerId = 0;
+			}
+
+			gtk_progress_bar_set_fraction(GTK_PROGRESS_BAR(handle().widget()), myProgress);
+		}
+	}
+
+	static gboolean progressTimeout(gpointer widget) {
+		gtk_progress_bar_pulse(GTK_PROGRESS_BAR(widget));
+		return G_SOURCE_CONTINUE;
+	}
+
+	void Progress::wait() {
+		waitMode = true;
+
+		if (created()) {
+			gtk_progress_bar_set_pulse_step(GTK_PROGRESS_BAR(handle().widget()), 0.02);
+			gtk_progress_bar_pulse(GTK_PROGRESS_BAR(handle().widget()));
+
+			if (timerId == 0) {
+				timerId = g_timeout_add(16, &progressTimeout, handle().widget());
+			}
+		}
 	}
 
 #endif
