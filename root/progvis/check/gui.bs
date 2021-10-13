@@ -1,0 +1,41 @@
+use ui;
+use core:io;
+
+dialog Dialog {
+	layout Grid {
+		expandCol: 0;
+		wrapCols: 1;
+
+		Label message("Compiling...") {}
+
+		ui:Progress progress() {}
+	}
+
+	init(Url[] files) {
+		init("Looking for concurrency errors...") {
+			files = files;
+		}
+
+		// progress.value = 50;
+		progress.unknown = true;
+		spawn wait();
+	}
+
+	private Url[] files;
+
+	private void wait() {
+		sleep(3 s);
+		progress.unknown = false;
+		progress.value = 50;
+		sleep(1 s);
+		progress.value = 70;
+	}
+}
+
+
+// Show a dialog for finding errors, and return the result.
+void findErrorsUi(Frame parent, Url[] files) on Ui {
+	Dialog d(files);
+	d.show(parent);
+	// TODO: Return something useful.
+}

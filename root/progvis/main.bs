@@ -74,6 +74,8 @@ class MainWin extends Frame {
 			<< Menu:Text(mnemonic("_Spawn new thread"), ctrlChord(Key:n), &this.onSpawnThread())
 			<< Menu:Submenu(mnemonic("Report _data races"), memCheck)
 			<< Menu:Separator()
+			<< Menu:Text(mnemonic("_Look for errors"), ctrlChord(Key:l), &this.onFindErrors())
+			<< Menu:Separator()
 			<< Menu:Text(mnemonic("S_top all threads"), ctrlChord(Key:q), &this.onStopAll())
 			<< Menu:Text(mnemonic("Start _all threads (slow)"), ctrlChord(Key:a), &this.onRunSlow())
 			<< Menu:Text(mnemonic("Start all threads (_fast)"), ctrlChord(Key:s), &this.onRunFast());
@@ -364,6 +366,14 @@ class MainWin extends Frame {
 		painter.checkMemory(v);
 	}
 
+	private void onFindErrors() {
+		if (currentFiles.empty) {
+			showMessage(this, "No files open", "You have no files open currently.");
+		} else {
+			check:findErrorsUi(this, currentFiles);
+		}
+	}
+
 	private void onStopAll() {
 		painter.stopThreads();
 	}
@@ -450,9 +460,6 @@ void debug() on Compiler {
 
 	if (url = named{progvis}.url) {
 		url = url / ".." / "progvis_demo";
-
-		check:check([url / "data_race.c"], check:Progress());
-		return;
 
 		MainWin win;
 		// win.open(url / "assert.c");
