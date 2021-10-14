@@ -232,12 +232,13 @@ class Program on Render {
 	}
 
 	// This function will be called by the executed code to notify us of their current state in
-	// their execution. This also lets us execute them at any location.
-	package void newLocation(SrcPosWrap pos, StackVar[] vars) {
+	// their execution. This also lets us execute them at any location. 'offset' is used to decide
+	// if it is necessary to break a barrier step operation.
+	package void newLocation(SrcPosWrap pos, StackVar[] vars, Nat offset) {
 		Word id = currentUThread();
 		ProgThread t = threads.get(id);
 
-		t.onNewLocation(pos.v, vars);
+		t.onNewLocation(pos.v, vars, offset);
 	}
 
 	// This function will be called by the executed code to notify that a (traced) function hit a
@@ -247,15 +248,6 @@ class Program on Render {
 		ProgThread t = threads.get(id);
 
 		t.onNewBarrier(pos.v, type);
-	}
-
-	// Called when we encountered a back edge in the program. This is interesting to identify cases
-	// where we should abort a pending barrier skip (e.g. when busy waiting without proper barriers).
-	package void backEdge() {
-		Word id = currentUThread();
-		ProgThread t = threads.get(id);
-
-		t.onBackEdge();
 	}
 
 	// This function will be called when the function is about to return. It is basically the same

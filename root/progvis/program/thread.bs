@@ -102,7 +102,10 @@ class ProgThread on Render {
 
 	// Called by a monitored thread to possibly pause execution.
 	// Returns 'false' if this event is not interesting to propagate.
-	Bool onNewLocation(SrcPos pos, StackVar[] vars) {
+	// 'offset' is the offset in the original asm listing. It is used
+	// to decide when to abort barrier skips that end up in an infinite
+	// loop without proper barriers (e.g. busy-wait).
+	Bool onNewLocation(SrcPos pos, StackVar[] vars, Nat offset) {
 		if (terminating)
 			return false;
 
@@ -110,6 +113,11 @@ class ProgThread on Render {
 
 		var last = frames.last;
 		last.variables = vars;
+
+		// Stop barrier step if we detect a loop.
+		if (last.lastOffset > offset)
+			barrierStep = false;
+		last.lastOffset = offset;
 
 		if (pos.any) {
 			last.pos = pos;
@@ -143,13 +151,6 @@ class ProgThread on Render {
 
 		// We always clear memory at a barrier, even if we did not wait.
 		memory.clearAll();
-	}
-
-	// Called when a back edge is encountered. This will abort a pending barrier skip to avoid
-	// hanging in loops during barrier skips.
-	void onBackEdge() {
-		print("Found a back edge!");
-		barrierStep = false;
 	}
 
 	// Called when a monitored thread is about to return.
@@ -359,6 +360,9 @@ class StackFrame on Render {
 
 	// Last regular step location in this frame. Barrier stops are not updated this way.
 	SrcPos lastStop;
+
+	// Last offset. So that we can detect loops.
+	Nat lastOffset;
 
 	// Did we return from this frame?
 	Bool returned;
