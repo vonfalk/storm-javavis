@@ -9,14 +9,14 @@ use core:lang;
  * - full (acquire + release, sequentially consistent)
  *
  * The runtime takes them into account from two places:
- * 1. From SrcBarrier instances inserted as metadata in the listing. If this barrier appears right
- *    after a function call instruction, we assume that that function has that particular
- *    consistency.
+ * 1. From SrcBarrier instances inserted as metadata in the listing.
  * 2. From the CodeHints class. When a function call without a Barrier instance is encountered,
  *    the function 'functionBarrier' is called to determine the semantics. This allows an
  *    implementation to hide calls to internal helper functions, and properly treat library- or
  *    external functions as hidden. This will not be done for functions that are patched
- *    (as decided by 'patchExternal').
+ *    (as decided by 'patchExternal'). These barriers are inserted right before the function
+ *    call. Thus, an implementation that inserts barriers itself should return "none"
+ *    for the relevant functions in CodeHints.
  */
 enum Barrier : bitmask {
 	none = 0,
