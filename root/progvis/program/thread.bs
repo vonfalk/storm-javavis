@@ -145,6 +145,13 @@ class ProgThread on Render {
 		memory.clearAll();
 	}
 
+	// Called when a back edge is encountered. This will abort a pending barrier skip to avoid
+	// hanging in loops during barrier skips.
+	void onBackEdge() {
+		print("Found a back edge!");
+		barrierStep = false;
+	}
+
 	// Called when a monitored thread is about to return.
 	// Returns 'false' if this event is not interesting to propagate.
 	void onFunctionReturn(StackVar[] vars) {

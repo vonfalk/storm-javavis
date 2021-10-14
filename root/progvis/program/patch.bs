@@ -380,8 +380,15 @@ private Listing patchListing(PatchState state, Hints hints, Listing source, Func
 			params.inactive.put(var.key());
 	}
 
+	// Labels we have seen so far. This is so that we can detect back edges.
+	Set<Nat> seenLabels;
+
 	for (Nat i = 0; i < source.count; i++) {
-		dest << source.labels(i);
+		if (labels = source.labels(i)) {
+			dest << labels;
+			for (x in labels)
+				seenLabels.put(x.key);
+		}
 		Instr instr = replaceRefs(state, source[i]);
 
 		if (instr.op == OpCode:fnRet) {
@@ -406,6 +413,14 @@ private Listing patchListing(PatchState state, Hints hints, Listing source, Func
 			if (!lastFnParam(source, i)) {
 				checkCallBarrier(state, params, source, i);
 				checkParamAccess(params, source, i);
+			}
+		} else if (instr.op == OpCode:jmp | instr.op == OpCode:jmpBlock) {
+			// See if this is a potential back-edge.
+			if (seenLabels.has(instr.dest.label.key)) {
+				// Yes, insert code that notifies of a back edge. This handles inserting new
+				// instruction(s) as well, so we should not fall through in this case!
+				notifyBackEdge(state.program, params, instr);
+				continue;
 			}
 		} else {
 			checkMemAccess(params, instr);
@@ -445,6 +460,45 @@ private Listing patchListing(PatchState state, Hints hints, Listing source, Func
 
 	// print("Patched ${fn.name}: ${dest}");
 	dest;
+}
+
+// Notify a back edge. There are two cases to consider here:
+// 1. Non-conditional jump: easy, just insert the notification before the jump.
+// 2. Conditional jump: more difficult. Invert the condition and emit a jump
+//    that will jump over the current location, so that we can only notify of
+//    back edges when they are actually taken!
+//
+// For original code like this:
+//    cmp(?, ?);
+//    jmp(x, ifAbove);
+//
+// Will be turned into:
+//    cmp(?, ?);
+//    jmp(t, ifBelowEqual);
+//    -- notify back edge --
+//    jmp(x, ifAlways);
+// t: ...
+private void notifyBackEdge(Program program, PatchParams to, Instr instr) on Compiler {
+	CondFlag condition = CondFlag:ifAlways;
+
+	// Note: the jmpBlock operation does not have a condition in its dest field.
+	if (instr.dest.type == OpType:condFlag)
+		condition = instr.dest.condFlag;
+
+	if (condition == CondFlag:ifAlways) {
+		// Case 1.
+		generateBackEdge(program, to);
+		to.to << instr;
+	} else {
+		// Case 2. Note: We now 'instr' is a regular jmp instruction!
+		var label = to.to.label();
+		to.to << jmp(label, condition.inverse);
+		generateBackEdge(program, to);
+		to.to << jmp(instr.src.label);
+		to.to << label;
+	}
+
+	print("After patching: ${to.to}");
 }
 
 // Is the last one a function parameter?
@@ -734,6 +788,19 @@ private void generateBarrier(Program program, PatchParams to, SrcPos pos, Barrie
 	l << fnParam(ptrDesc, objPtr(program));
 	l << fnParam(ptrDesc, objPtr(SrcPosWrap(pos)));
 	l << fnParam(intDesc, natConst(type.v));
+	l << fnCall(fn.ref, true);
+
+	to.restoreRegs();
+}
+
+// Generate a call to notify of a back edge that is being taken.
+private void generateBackEdge(Program program, PatchParams to) on Compiler {
+	var fn = named{Program:backEdge<Program>};
+
+	to.saveRegs();
+	Listing l = to.to;
+
+	l << fnParam(ptrDesc, objPtr(program));
 	l << fnCall(fn.ref, true);
 
 	to.restoreRegs();
