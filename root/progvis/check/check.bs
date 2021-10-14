@@ -73,8 +73,10 @@ class Checker on Render {
 
 			// Terminate when we are done.
 			program.terminate();
+			world.clear();
 		} catch (Exception e) {
 			program.terminate();
+			world.clear();
 			throw e;
 		}
 	}
@@ -148,9 +150,9 @@ class Checker on Render {
 			current.edges << Edge(action, n, error);
 			edges++;
 			current = n;
-
-			reportProgress();
 		}
+
+		reportProgress();
 	}
 
 	// Find a node with at least one unexplored edge. If an error is known to exist at a depth

@@ -54,6 +54,8 @@ dialog Dialog {
 		progress.progress = 1.0;
 		status.text = "Search failed.";
 		this.message.text = "An internal error occurred: " + message;
+
+		size = minSize();
 	}
 
 	// Set us in a "done" state.
