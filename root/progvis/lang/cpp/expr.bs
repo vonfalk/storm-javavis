@@ -700,6 +700,8 @@ class FnCall extends ExprRef {
 
 	// Call a regular, Storm function, or a C++ function without param.
 	private void plainCode(CodeGen gen, CodeResult res, Operand[] params) {
+		addBarrier(gen);
+
 		if (t = fnResult.type) {
 			if (res.type.ref & !fn.result.ref) {
 				// Create a variable to store the result in.
@@ -717,14 +719,14 @@ class FnCall extends ExprRef {
 			// Void result.
 			fn.autoCall(gen, params, res);
 		}
-
-		addBarrier(gen);
 	}
 
 	// Call a function that returns the value through a pointer.
 	private void resParamCode(CodeGen gen, CodeResult res, Operand[] params) {
 		unless (t = fnResult.type)
 			throw InternalError("Void values should never be returned by pointer.");
+
+		addBarrier(gen);
 
 		// Create a variable to store the result in.
 		CppVar var = allocTemporary(gen, t);
@@ -749,8 +751,6 @@ class FnCall extends ExprRef {
 		}
 
 		gen.l << fnCall(fn.ref, fn.isMember);
-
-		addBarrier(gen);
 
 		// Store the pointer or the value somewhere.
 		if (res.type.ref) {

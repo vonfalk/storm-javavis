@@ -115,6 +115,10 @@ class ProgThread on Render {
 			last.pos = pos;
 
 			if (!barrierStep) {
+				// Remember we stopped here last so that the next barrier step does not repeat this
+				// one.
+				last.lastStop = pos;
+
 				wait();
 				// Only clear if we waited, to highlight properly.
 				memory.clearNew();
@@ -129,11 +133,13 @@ class ProgThread on Render {
 		if (terminating)
 			return;
 
+		var last = frames.last;
 		if (pos.any)
-			frames.last.pos = pos;
+			last.pos = pos;
 
 		if (barrierStep)
-			wait();
+			if (last.pos != last.lastStop)
+				wait();
 
 		// We always clear memory at a barrier, even if we did not wait.
 		memory.clearAll();
@@ -202,6 +208,9 @@ class ProgThread on Render {
 		}
 
 		wait();
+
+		// Stop at the next thing, even if we are waiting for a barrier.
+		barrierStep = false;
 
 		// Remove any "waiting for" frame if needed.
 		popFrames();
@@ -340,6 +349,9 @@ class StackFrame on Render {
 
 	// Location in this frame.
 	SrcPos pos;
+
+	// Last regular step location in this frame. Barrier stops are not updated this way.
+	SrcPos lastStop;
 
 	// Did we return from this frame?
 	Bool returned;

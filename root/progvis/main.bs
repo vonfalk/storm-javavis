@@ -489,9 +489,9 @@ void debug() on Compiler {
 		// win.open(url / "printf.c");
 		// win.open(url / "globals.cpp");
 		// win.open(url / "restore_globals.c");
-		win.open(url / "data_race.c");
+		// win.open(url / "data_race.c");
 		// win.open(url / "bank" / "bank.c");
-		// win.open(url / "bank" / "bank_good.c");
+		win.open(url / "bank" / "bank_good.c");
 		// win.open(url / "buffer" / "buffer.c");
 		// win.open(url / "simple_buffer.c");
 		// win.open(url / "cond.c");
