@@ -151,7 +151,7 @@ atomic_read : generate(params) {
 
 	Function f(readType, "atomic_read", params);
 	f.setCode(DynamicCode(l));
-	registerBarrier(f, progvis:Barrier:acquire);
+	registerBarrier(f, progvis:program:Barrier:acquire);
 	f;
 }
 
@@ -238,7 +238,7 @@ atomic_write : generate(params) {
 
 	Function f(Value(), "atomic_write", params);
 	f.setCode(DynamicCode(l));
-	registerBarrier(f, progvis:Barrier:release);
+	registerBarrier(f, progvis:program:Barrier:release);
 	f;
 }
 
@@ -344,7 +344,7 @@ atomic_swap : generate(params) {
 
 	Function f(result, "atomic_swap", params);
 	f.setCode(DynamicCode(l));
-	registerBarrier(f, progvis:Barrier:full);
+	registerBarrier(f, progvis:program:Barrier:full);
 	f;
 }
 
@@ -470,6 +470,6 @@ compare_and_swap : generate(params) {
 
 	Function f(result, "compare_and_swap", params);
 	f.setCode(DynamicCode(l));
-	registerBarrier(f, progvis:Barrier:full);
+	registerBarrier(f, progvis:program:Barrier:full);
 	f;
 }
