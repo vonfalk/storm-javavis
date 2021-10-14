@@ -87,8 +87,7 @@ namespace code {
 			return ifFBelowEqual;
 		}
 
-		TODO(L"Implement!");
-		assert(false);
+		assert(false, L"Implement the inverse for this flag!");
 		return ifNever;
 	}
 
