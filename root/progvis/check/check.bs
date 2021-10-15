@@ -26,6 +26,8 @@ class Checker on Render {
 			exhaustive = false;
 		}
 
+		// Don't do sticky threads.
+		world.stickyThreads = false;
 		program.onError = &this.onProgramError;
 	}
 

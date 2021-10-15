@@ -26,6 +26,9 @@ class World on Render {
 	public Bool trackDeadlock;
 	public MemoryChecks trackMemory;
 
+	// Are thread allocations sticky?
+	public Bool stickyThreads;
+
 	// Create, and associate us with a program.
 	init(progvis:program:Program program) {
 		init {
@@ -33,6 +36,7 @@ class World on Render {
 			hints = program.hints;
 			trackDeadlock = true;
 			trackMemory = MemoryChecks:barriers;
+			stickyThreads = true;
 		}
 
 		clear();
@@ -364,11 +368,19 @@ private:
 		Nat id = t.allocMap.get(obj, allocations.count);
 		if (id >= allocations.count) {
 			var data = Thread(thread);
-			StickyAllocation alloc(obj, data);
+
+			var alloc = if (stickyThreads) {
+				StickyAllocation(obj, data);
+			} else {
+				Allocation(obj, data);
+			};
 
 			allocations.push(alloc);
 			alloc.update(t, id);
 		}
+
+		// Traverse it.
+		allocations[id].traverse(t);
 	}
 
 	// Empty the traversal queue.

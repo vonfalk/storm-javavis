@@ -227,8 +227,7 @@ class ProgThread on Render {
 	// Wake the thread again. Assumes that 'lockSleep' was called earlier.
 	void lockWake() {
 		sleeping = false;
-		if (!running)
-			sema.up();
+		wake();
 	}
 
 	// Set the animation delay. Resumes the thread if it was stopped.
@@ -236,8 +235,8 @@ class ProgThread on Render {
 		autoStep = duration;
 		barrierStep = false;
 
-		if (!running & !sleeping)
-			sema.up();
+		if (!sleeping)
+			wake();
 	}
 
 	// Resume execution, stopping at the next location.
@@ -247,7 +246,7 @@ class ProgThread on Render {
 
 		autoStep = Duration();
 		barrierStep = false;
-		sema.up();
+		wake();
 	}
 
 	// Resume execution, but step at the next barrier.
@@ -257,7 +256,7 @@ class ProgThread on Render {
 
 		autoStep = Duration();
 		barrierStep = true;
-		sema.up();
+		wake();
 	}
 
 	// Pause the thread at the nearest convenient location.
@@ -270,7 +269,7 @@ class ProgThread on Render {
 	void terminate() {
 		doTerminate = true;
 		autoStep = Duration();
-		sema.up();
+		wake();
 		// Once more, just to be safe...
 		sema.up();
 	}
@@ -300,6 +299,7 @@ class ProgThread on Render {
 				sema.down();
 			}
 		}
+		// Just to be safe, this is set in "wake" as well.
 		running = true;
 
 		if (doTerminate) {
@@ -310,6 +310,16 @@ class ProgThread on Render {
 			owner.notifyAdvance(threadId, barrierStep);
 		}
 		paused = false;
+	}
+
+	// Wake the thread. Calls sema.up if appropriate, and makes sure to clear the relevant flags as
+	// soon as possible (since it is sometimes too late to re-set the running flag at a later time).
+	private void wake() {
+		if (running)
+			return;
+
+		running = true;
+		sema.up();
 	}
 }
 

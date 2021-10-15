@@ -25,7 +25,7 @@ package class Node on Render {
 			myDepth = 0;
 
 		for (thread in state.threads) {
-			if (thread.alive & !thread.crashed) {
+			if (thread.alive & !thread.crashed & !thread.sleeping) {
 				unexplored.push(thread.id);
 			}
 		}
