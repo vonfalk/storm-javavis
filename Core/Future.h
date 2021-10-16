@@ -3,12 +3,13 @@
 #include "Handle.h"
 #include "OS/Future.h"
 #include "OS/Sync.h"
+#include "Core/GcTypeStore.h"
 
 namespace storm {
 	STORM_PKG(core);
 
 	/**
-	 * Future-object exposed to the runtime and built into function calls.  By calling
+	 * Future-object exposed to the runtime and built into function calls. By calling
 	 * 'asyncThreadCall' on a function, you will get one of these objects. It also simplifies the
 	 * interface of the Future in code since it supports copying of the future (references the same
 	 * result) and also correctly handles cases where the result is not waited for.
@@ -24,7 +25,7 @@ namespace storm {
 		// Copy ctor.
 		FutureBase(const FutureBase &o);
 
-		// Destroy.
+		// Destructor to keep the reference count of Data.
 		~FutureBase();
 
 		// Deep copy.
@@ -51,7 +52,7 @@ namespace storm {
 		os::FutureBase *rawFuture();
 
 		// Get the place where the result is to be stored.
-		void *rawResult() { return result->v; }
+		void *rawResult() { return data->result->v; }
 
 		// Tell this future instance that it does not need to clone the result before returning it.
 		// This is set when we have a future that we know will be posted on the same Thread as the
@@ -74,47 +75,53 @@ namespace storm {
 
 		// Data shared between futures. Since we allow copies, we need to share one FutureBase
 		// object. This struct is allocated on the non-moving GC heap since it contains potentially
-		// sensitive constructs.
+		// sensitive constructs (like OS semaphores and locks).
+		//
+		// We use reference counting here to get slightly more prompt destruction of the data
+		// object. This is since the FutureBase object is allocated in a generational pool, which
+		// is collected more frequently, while the Data object is in a non-moving pool that is
+		// rarely collected.  This way, we can at least free the OS resources earlier while making
+		// sure that we don't accidentally leak memory in certain situations (the finalizer on Data
+		// is a backup).
 		struct Data {
-			Data();
+			Data(const Handle &handle, GcArray<byte> *result);
+
 			~Data();
 
 			// The Future object we are playing with.
 			FutureSema future;
 
-			// Number of references to this object.
+			// Handle.
+			const Handle *handle;
+
+			// Result. We use 'filled' to determine if anything is stored here.
+			GcArray<byte> *result;
+
+			// References.
 			nat refs;
 
-			// Do a release whenever the result has been posted?
+			// Release on receiving a result?
 			nat releaseOnResult;
 
-			// Add/release ref. If 'release' returns true, then the last instance was freed.
+			// Add/release references.
 			void addRef();
-			bool release();
+			void release();
 
-			// Called when a result has been posted.
-			static void resultPosted(FutureSema *from);
+			// Called when the semaphore is notified.
+			static void resultPosted(FutureSema *sema);
+
+			// Finalizer for this type.
+			static void finalize(void *object, os::Thread *thread);
 
 			// GC description for this type.
-			static const GcType gcType;
+			static const GcTypeStore<3> gcType;
 		};
 
-		// Pointer to Data (non-gc-alloc, so this is fine), and whether we can skip cloning the result (lsb).
-		size_t dataClone;
+		// Pointer to the data.
+		UNKNOWN(PTR_GC) Data *data;
 
-		// Our data (non-gc).
-		Data *data() const { return (Data *)(dataClone & ~size_t(0x1)); }
-		void data(Data *to) { dataClone = size_t(to) | (dataClone & 0x1); }
-
-		// Can we skip clone?
-		bool noClone() const { return (dataClone & 0x1) != 0; }
-		void setClone() { dataClone &= ~size_t(0x1); }
-
-		// Handle.
-		const Handle &handle;
-
-		// Store the return value. We use 'filled' to see if something is stored here.
-		GcArray<byte> *result;
+		// Can we skip cloning the result?
+		Bool noClone;
 	};
 
 	// Declare the template.

@@ -5,51 +5,45 @@
 
 namespace storm {
 
-	FutureBase::FutureBase(const Handle &type) : dataClone(0), handle(type), result(null) {
-		data(new (runtime::allocStaticRaw(engine(), &Data::gcType)) Data());
-		result = (GcArray<byte> *)runtime::allocArray(engine(), type.gcArrayType, 1);
+	FutureBase::FutureBase(const Handle &type) : data(null), noClone(false) {
+		GcArray<byte> *result = (GcArray<byte> *)runtime::allocArray(engine(), type.gcArrayType, 1);
+		data = new (runtime::allocStaticRaw(engine(), &Data::gcType.type)) Data(type, result);
 	}
 
-	FutureBase::FutureBase(const FutureBase &o) : dataClone(o.dataClone), handle(o.handle), result(o.result) {
-		data()->addRef();
+	FutureBase::FutureBase(const FutureBase &o) : data(o.data), noClone(o.noClone) {
+		data->addRef();
 	}
 
 	FutureBase::~FutureBase() {
-		if (data()->release()) {
-			// We are the last one, see if we should free our result as well.
-			// TODO: This can be solved nicer when we can attach destructors to arrays.
-			if (result->filled) {
-				handle.safeDestroy(result->v);
-			}
-		}
+		data->release();
 	}
 
 	void FutureBase::deepCopy(CloneEnv *env) {
 		// We need to clone the result now that we have been cloned.
-		setClone();
+		noClone = false;
 	}
 
 	void FutureBase::setNoClone() {
-		dataClone |= size_t(0x1);
+		noClone = true;
 	}
 
 	void FutureBase::postRaw(const void *value) {
 		// Do not post multiple times.
-		if (atomicCAS(result->filled, 0, 1) == 0) {
-			handle.safeCopy(result->v, value);
-			if (!noClone() && handle.deepCopyFn) {
+		if (atomicCAS(data->result->filled, 0, 1) == 0) {
+			data->handle->safeCopy(data->result->v, value);
+			if (!noClone && data->handle->deepCopyFn) {
 				CloneEnv *e = new (this) CloneEnv();
-				(*handle.deepCopyFn)(result->v, e);
+				(*data->handle->deepCopyFn)(data->result->v, e);
 			}
-			data()->future.posted();
+			data->future.posted();
 		} else {
 			WARNING(L"Trying to re-use a future!");
 		}
 	}
 
 	void FutureBase::error() {
-		if (atomicCAS(result->filled, 0, 1) == 0) {
-			data()->future.error();
+		if (atomicCAS(data->result->filled, 0, 1) == 0) {
+			data->future.error();
 		} else {
 			WARNING(L"Trying to re-use a future!");
 		}
@@ -64,27 +58,28 @@ namespace storm {
 	}
 
 	void FutureBase::resultRaw(void *to) {
-		data()->future.result(&cloneEx, null);
+		data->future.result(&cloneEx, null);
 
-		handle.safeCopy(to, result->v);
-		if (!noClone() && handle.deepCopyFn) {
+		data->handle->safeCopy(to, data->result->v);
+		if (!noClone && data->handle->deepCopyFn) {
 			CloneEnv *e = new (this) CloneEnv();
-			(*handle.deepCopyFn)(to, e);
+			(*data->handle->deepCopyFn)(to, e);
 		}
 	}
 
 	void FutureBase::errorResult() {
-		data()->future.result(&cloneEx, null);
+		data->future.result(&cloneEx, null);
 	}
 
 	void FutureBase::detach() {
-		data()->future.detach();
+		data->future.detach();
 	}
 
 	os::FutureBase *FutureBase::rawFuture() {
-		if (atomicCAS(data()->releaseOnResult, 0, 1) == 0)
-			data()->addRef();
-		return &data()->future;
+		if (atomicCAS(data->releaseOnResult, 0, 1) == 0)
+			data->addRef();
+
+		return &data->future;
 	}
 
 	FutureBase::FutureSema::FutureSema() : os::FutureSema<os::Sema>() {}
@@ -94,16 +89,25 @@ namespace storm {
 		Data::resultPosted(this);
 	}
 
-	const GcType FutureBase::Data::gcType = {
-		GcType::tFixed,
-		null,
-		null,
-		sizeof(FutureBase::Data),
-		1,
-		{ OFFSET_OF(FutureBase::Data, future.ptrException) }
+	const GcTypeStore<3> FutureBase::Data::gcType = {
+		{
+			GcType::tFixed,
+			null,
+			&FutureBase::Data::finalize,
+			sizeof(FutureBase::Data),
+			3,
+			// First pointer offset.
+			{ OFFSET_OF(FutureBase::Data, future.ptrException) }
+		},
+		// Remaining two pointer offsets.
+		{
+			OFFSET_OF(FutureBase::Data, handle),
+			OFFSET_OF(FutureBase::Data, result),
+		}
 	};
 
-	FutureBase::Data::Data() : refs(1), releaseOnResult(0) {}
+	FutureBase::Data::Data(const Handle &type, GcArray<byte> *result)
+		: handle(&type), result(result), refs(1), releaseOnResult(0) {}
 
 	FutureBase::Data::~Data() {}
 
@@ -111,13 +115,9 @@ namespace storm {
 		atomicIncrement(refs);
 	}
 
-	bool FutureBase::Data::release() {
-		if (atomicDecrement(refs) == 0) {
+	void FutureBase::Data::release() {
+		if (atomicDecrement(refs) == 0)
 			this->~Data();
-			return true;
-		} else {
-			return false;
-		}
 	}
 
 	void FutureBase::Data::resultPosted(FutureSema *sema) {
@@ -127,5 +127,12 @@ namespace storm {
 			me->release();
 	}
 
+	void FutureBase::Data::finalize(void *object, os::Thread *) {
+		// If the refcount is larger than one, someone forgot to update the refcount, and we need to
+		// call the destructor.
+		Data *d = static_cast<Data *>(object);
+		if (atomicRead(d->refs) != 0)
+			d->~Data();
+	}
 
 }
