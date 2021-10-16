@@ -75,10 +75,10 @@ class SpawnCall extends Expr {
 		gen.l << fnCall(named{progvis:program:watchErrors<Word, FutureBase>}.ref, false);
 
 		// Create a thread id for the new thread.
-		if (res.needed()) {
-			gen.l << fnParam(longDesc, id.location(gen));
-			gen.l << fnCall(named{progvis:program:findNewThreadId<Word>}.ref, false, intDesc, res.location(gen));
-		}
+		// We do this even if it is not needed to ensure that the Program class can keep track of
+		// the new thread immediately.
+		gen.l << fnParam(longDesc, id.location(gen));
+		gen.l << fnCall(named{progvis:program:findNewThreadId<Word>}.ref, false, intDesc, res.safeLocation(gen, named{Nat}));
 	}
 
 	void codePtr(CodeGen gen, Type type) : override {
