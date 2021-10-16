@@ -4,8 +4,12 @@
 namespace util {
 
 #ifdef WINDOWS
+	// Default spin count. This is what the heap manager uses internally according to MSDN. We
+	// typically have fairly short critical sections here, so this should work well for us as well.
+	static const DWORD spinCount = 4000;
+
 	Lock::Lock() {
-		InitializeCriticalSection(&cs);
+		InitializeCriticalSectionAndSpinCount(&cs, spinCount);
 	}
 
 	Lock::~Lock() {
