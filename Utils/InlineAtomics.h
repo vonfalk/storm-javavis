@@ -66,31 +66,31 @@ void atomicWrite(volatile nat &v, nat value);
 #error "Revise atomics for 64-bit!"
 
 inline nat atomicIncrement(volatile nat &v) {
-	return (size_t)InterlockedIncrement((volatile LONG *)&v);
+	return (size_t)_InterlockedIncrement((volatile LONG *)&v);
 }
 
 inline nat atomicDecrement(volatile nat &v) {
-	return (size_t)InterlockedDecrement((volatile LONG *)&v);
+	return (size_t)_InterlockedDecrement((volatile LONG *)&v);
 }
 
 inline size_t atomicIncrement(volatile size_t &v) {
-	return (size_t)InterlockedIncrement64((volatile LONG64 *)&v);
+	return (size_t)_InterlockedIncrement64((volatile LONG64 *)&v);
 }
 
 inline size_t atomicDecrement(volatile size_t &v) {
-	return (size_t)InterlockedDecrement64((volatile LONG64 *)&v);
+	return (size_t)_InterlockedDecrement64((volatile LONG64 *)&v);
 }
 
 inline size_t atomicAnd(volatile size_t &v, size_t with) {
-	return (size_t)InterlockedAnd64((volatile LONG64 *)&v, with);
+	return (size_t)_InterlockedAnd64((volatile LONG64 *)&v, with);
 }
 
 inline size_t atomicOr(volatile size_t &v, size_t with) {
-	return (size_t)InterlockedOr64((volatile LONG64 *)&v, with);
+	return (size_t)_InterlockedOr64((volatile LONG64 *)&v, with);
 }
 
 inline size_t atomicXor(volatile size_t &v, size_t with) {
-	return (size_t)InterlockedXor64((volatile LONG64 *)&v, with);
+	return (size_t)_InterlockedXor64((volatile LONG64 *)&v, with);
 }
 
 inline nat atomicRead(volatile const nat &v) {
@@ -108,14 +108,23 @@ inline void atomicWrite(volatile nat &v, nat value) {
 	_ReadWriteBarrier();
 }
 
+// Note: The InterlockedCompareExchangePointer does is not inlined in VS 2008.
+inline size_t atomicCAS(volatile size_t &v, size_t compare, size_t exchange) {
+	return (size_t)_InterlockedCompareExchange64(&v, exchange, compare);
+}
+
+inline void *atomicCAS(void *volatile &v, void *compare, void *exchange) {
+	return _InterlockedCompareExchange64(&v, exchange, compare);
+}
+
 #else
 
 inline size_t atomicIncrement(volatile size_t &v) {
-	return (size_t)InterlockedIncrement((volatile LONG *)&v);
+	return (size_t)_InterlockedIncrement((volatile LONG *)&v);
 }
 
 inline size_t atomicDecrement(volatile size_t &v) {
-	return (size_t)InterlockedDecrement((volatile LONG *)&v);
+	return (size_t)_InterlockedDecrement((volatile LONG *)&v);
 }
 
 inline size_t atomicAnd(volatile size_t &v, size_t with) {
@@ -130,15 +139,16 @@ inline size_t atomicXor(volatile size_t &v, size_t with) {
 	return (size_t)_InterlockedXor((volatile LONG *)&v, with);
 }
 
-#endif
-
+// Note: The InterlockedCompareExchangePointer does is not inlined in VS 2008.
 inline size_t atomicCAS(volatile size_t &v, size_t compare, size_t exchange) {
-	return (size_t)InterlockedCompareExchangePointer((void *volatile*)&v, (void *)exchange, (void *)compare);
+	return _InterlockedCompareExchange((long volatile *)&v, exchange, compare);
 }
 
 inline void *atomicCAS(void *volatile &v, void *compare, void *exchange) {
-	return InterlockedCompareExchangePointer(&v, exchange, compare);
+	return (void *)_InterlockedCompareExchange((long volatile *)&v, (size_t)exchange, (size_t)compare);
 }
+
+#endif
 
 inline size_t atomicRead(volatile const size_t &v) {
 	_ReadWriteBarrier();
