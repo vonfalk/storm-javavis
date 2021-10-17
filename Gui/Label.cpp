@@ -121,7 +121,8 @@ namespace gui {
 	Size Label::minSize() {
 		gint w = 0, h = 0;
 
-		if (created()) {
+		// The win32 implementation will give a size of zero for empty strings.
+		if (created() && text->any()) {
 			gtk_widget_get_preferred_width(handle().widget(), &w, NULL);
 			gtk_widget_get_preferred_height(handle().widget(), &h, NULL);
 		}

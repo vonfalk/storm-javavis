@@ -22,7 +22,7 @@ dialog Dialog {
 			files = files;
 		}
 
-		ok.onClick = &this.onButton();
+		defaultChoice = ok;
 
 		progress.wait;
 
@@ -43,16 +43,16 @@ dialog Dialog {
 		cancel = true;
 	}
 
-	// Called when we click the button.
-	void onButton() {
+	// Called when we are done.
+	void onDestroy(Int code) : override {
 		cancel = true;
-		close(1);
 	}
 
 	// Set us into an error state.
 	void error(Str message) {
 		progress.progress = 1.0;
 		status.text = "Search failed.";
+		ok.text = "Close";
 		this.message.text = "An internal error occurred: " + message;
 
 		size = minSize();
@@ -96,7 +96,7 @@ dialog Dialog {
 		Dialog owner;
 
 		void progress(Nat states, Nat edges, Nat unexplored) : override {
-			print("P ${states} ${edges} ${unexplored} ${owner.cancel}");
+			// print("P ${states} ${edges} ${unexplored} ${owner.cancel}");
 
 			if (owner.cancel)
 				throw progvis:program:ExitError();
