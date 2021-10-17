@@ -13,6 +13,8 @@ on Compiler:
  * Markers we use to mark allocations in C++.
  *
  * We put these in the 'filled' member of the arrays we allocate.
+ *
+ * We set the size to zero when an allocation is freed. Other flags remain.
  */
 enum AllocFlags : bitmask {
 	// Mask for the size.

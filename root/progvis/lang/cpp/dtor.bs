@@ -43,10 +43,9 @@ Function cppDtor(Type type) on Compiler {
 // Generic destructor for C++ types.
 void cppGenericDtor(unsafe:RawPtr obj) {
 	// print("Destroying an object ${obj}");
-	asm {
-		mov ptrA, obj;
-		mov p[ptrA + sPtr], p0;
-	}
+	Nat filled = obj.readFilled;
+	filled &= ~AllocFlags:sizeMask.v;
+	obj.writeFilled(filled);
 }
 
 // Wrap a previously created C++ destructor to make it suitable to call from our array allocations.
@@ -95,9 +94,9 @@ Function wrapCppDtor(Function dtor) on Compiler {
 	l << cmp(current, target);
 	l << jmp(again, CondFlag:ifBelow);
 
-	// Mark it as 'empty'.
+	// Mark it as 'empty' by clearing the size (and keeping other flags).
 	l << mov(ptrA, param);
-	l << mov(ptrRel(ptrA, Offset(sPtr)), ptrConst(0));
+	l << and(ptrRel(ptrA, Offset(sPtr)), ptrConst(~AllocFlags:sizeMask.v));
 	l << fnRet();
 
 	Function f(Value(), "__cpp_destroy", [dtor.params[0]]);

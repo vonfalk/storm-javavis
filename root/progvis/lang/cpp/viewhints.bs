@@ -19,6 +19,9 @@ class CppViewHints extends ViewHints {
 	// We have barriers!
 	Bool barriersAvailable() : override { true; }
 
+	// Default hints. We need to call them at times to wrap everything in our heap allocations.
+	private progvis:data:DefaultViewHints defaultHints;
+
 	// Create element for visualization.
 	Data? createData(World:Traversal t, TypeInfo info, unsafe:RawPtr root) : override {
 		if (info.isRef)
@@ -34,7 +37,11 @@ class CppViewHints extends ViewHints {
 			}
 		}
 
-		createSpecial(t, info);
+		if (c = createSpecial(t, info))
+			return c;
+
+		// Fall through to the default hints to make sure that "createAllocation" will be called for us.
+		defaultHints.createData(t, info, root);
 	}
 
 	// Create a custom allocation.
@@ -263,7 +270,7 @@ class HeapAllocation extends Allocation {
 		// Update our state.
 		Nat filled = src.readFilled();
 		staticAlloc = (filled & AllocFlags:staticAlloc.v) != 0;
-		dead = filled == 0;
+		dead = (filled & AllocFlags:sizeMask.v) == 0;
 	}
 
 	// Remove when we are deallocated, or if we are a static allocation (e.g. a C-string).
