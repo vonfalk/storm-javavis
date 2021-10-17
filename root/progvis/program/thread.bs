@@ -100,6 +100,11 @@ class ProgThread on Render {
 		frames.last.pos;
 	}
 
+	// To string.
+	void toS(StrBuf to) : override {
+		to << "Thread " << threadId;
+	}
+
 	// Called by a monitored thread to possibly pause execution.
 	// Returns 'false' if this event is not interesting to propagate.
 	// 'offset' is the offset in the original asm listing. It is used

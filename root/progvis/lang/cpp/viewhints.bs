@@ -71,15 +71,15 @@ class CppViewHints extends ViewHints {
 		}
 
 		if (info.type is named{runtime:semaphore}) {
-			return hideImpl(t, info);
+			return createSync(t, info);
 		}
 
 		if (info.type is named{runtime:lock}) {
-			return hideImpl(t, info);
+			return createSync(t, info);
 		}
 
 		if (info.type is named{runtime:condition}) {
-			return hideImpl(t, info);
+			return createSync(t, info);
 		}
 
 		if (info.type is named{Byte}) {
@@ -89,14 +89,35 @@ class CppViewHints extends ViewHints {
 		null;
 	}
 
-	// Hide the variable "impl" from a composite type.
-	private Data hideImpl(World:Traversal t, TypeInfo info) {
+	// Create a visualization for a synchronization primitive. This hides the "impl" variable and
+	// wraps the allocation in a SyncData type that exposes the queue of waiting threads to the
+	// model checker (but not to the user of the visualization).
+	private Data createSync(World:Traversal t, TypeInfo info) {
 		var members = findMembers(info.type);
+		Str impl = "impl";
 
-		Composite result(info.type);
+		// Find the "impl" member.
+		Nat? implOffset;
 		for (m in members) {
-			if (m.name != "impl")
-				result.add(m.name, m.offset, t.create(m.type), m.first);
+			if (m.name == impl) {
+				implOffset = m.offset;
+			}
+		}
+
+		Composite result = if (implOffset) {
+			SyncData(info.type, implOffset);
+		} else {
+			Composite(info.type);
+		};
+
+		Bool first = true;
+		for (m in members) {
+			if (m.name == impl) {
+				first = m.first;
+			} else {
+				result.add(m.name, m.offset, t.create(m.type), first | m.first);
+				first = false;
+			}
 		}
 
 		result;
@@ -157,6 +178,61 @@ class CppPointer extends Pointer {
 	// Copy.
 	protected Data copyObject() : override {
 		CppPointer(this);
+	}
+}
+
+
+/**
+ * Synchronization primitives.
+ *
+ * Is aware of the hidden "impl" data member, and extracts a list of waiting threads from it. This
+ * list is only exposed to the model checker (through "summary"), and not to the visualization (as
+ * the wake order is generally undefined).
+ */
+class SyncData extends Composite {
+	// Create, and provide the offset of the "impl" member (expected to be a pointer).
+	init(Type? type, Nat implOffset) {
+		init(type) {
+			implOffset = implOffset;
+		}
+	}
+
+	// Copy.
+	init(SyncData original) {
+		init(original) {
+			implOffset = original.implOffset;
+		}
+	}
+
+	// Offset of the "impl" member.
+	private Nat implOffset;
+
+	// Threads currently waiting for this synchronization primitive.
+	private Nat[] waiting;
+
+	// Traverse.
+	void traverse(World:Traversal t, unsafe:RawPtr object, Nat offset) : override {
+		super:traverse(t, object, offset);
+
+		if (x = object.readPtr(offset + implOffset).asObject() as runtime:Waitable) {
+			waiting = x.waitingThreads();
+		}
+	}
+
+	// Summary.
+	protected void putSummary(StrBuf to, Data->Nat id, Data->Allocation alloc) : override {
+		super:putSummary(to, id, alloc);
+
+		// Also put the queue of waiting threads.
+		to << "+" << join(waiting, ",");
+	}
+
+	// Copy.
+	protected Data copyObject() : override {
+		SyncData(this);
+	}
+	protected void copyData(Data->Data copies) : override {
+		super:copyData(copies);
 	}
 }
 

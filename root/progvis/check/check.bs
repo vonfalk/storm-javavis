@@ -190,6 +190,18 @@ class Checker on Render {
 	private void updateCurrent(Node to) {
 		world.clear(); // also restarts the program.
 		toNode(program, to);
+
+		// Sanity checks that could be enabled during debugging.
+		if (true) {
+			world.update();
+			var found = lookup.find(world.summary);
+			if (found == lookup.end) {
+				throw CheckError("Failed to replay the program into the desired state.");
+			} else if (found.v !is to) {
+				throw CheckError("Failed to replay the program into the desired state.");
+			}
+		}
+
 		current = to;
 	}
 

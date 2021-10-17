@@ -152,9 +152,11 @@ class World on Render {
 		// Sort according to thread id.
 		threads.sort((a, b) => a.src.threadId < b.src.threadId);
 
-		// Output each thread in turn. We are not concerned with thread ID:s.
-		for (i, t in threads) {
-			out << i << "{";
+		// Output each thread in turn. We output thread ID:s so that the checker can know which
+		// threads to step. We could merge these to greatly reduce the search space, but it creates
+		// problems later on. TODO: Fix!
+		for (t in threads) {
+			out << t.id << "{";
 			t.summary(out, dataId, allocMap.result);
 			out << "}";
 		}

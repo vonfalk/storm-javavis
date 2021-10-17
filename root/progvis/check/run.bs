@@ -22,6 +22,9 @@ void toStart(Program program) on Render {
 void toNext(Program program, Nat thread) on Render {
 	for (v in program.threads) {
 		if (v.threadId == thread) {
+			if (v.sleeping)
+				throw CheckError("Can not step thread ${thread} as it is sleeping.");
+
 			if (v.barriersAvailable) {
 				v.resumeBarrier();
 			} else {

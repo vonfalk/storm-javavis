@@ -4,12 +4,22 @@ use core:sync;
 use progvis:lang:cpp;
 
 /**
+ * Base class for all synchronization primitives.
+ *
+ * Allows the runtime to extract the queue of waiting threads easily.
+ */
+class Waitable {
+	// Get threads that are currently waiting.
+	Nat[] waitingThreads() : abstract;
+}
+
+/**
  * Internals of a semaphore that is friendly to the visualization system. If regular semaphores were
  * used, we won't be able to abort the system when a thread is waiting for a semaphore.
  *
  * Note: We know that multiple HW threads won't use the same instance, so we can actually get by without locks!
  */
-class SemaImpl {
+class SemaImpl extends Waitable {
 	Nat count;
 
 	// All threads waiting for this sema.
@@ -45,6 +55,13 @@ class SemaImpl {
 		} else {
 			count++;
 		}
+	}
+
+	Nat[] waitingThreads() : override {
+		Nat[] result;
+		for (x in waiting)
+			result << x.threadId;
+		result;
 	}
 }
 
@@ -228,12 +245,12 @@ void lock_release(Ptr<lock> lock) : cppBarrier(release) {
 /**
  * Condition implementation.
  */
-class CondImpl {
+class CondImpl extends Waitable {
 	// All threads waiting.
 	Queue<progvis:program:ProgThread> waiting;
 
 	// Get number of waiting threads.
-	Int waitingThreads() {
+	Int waitingCount() {
 		waiting.count.int;
 	}
 
@@ -271,6 +288,14 @@ class CondImpl {
 
 			wake.lockWake();
 		}
+	}
+
+	// Get waiting threads.
+	Nat[] waitingThreads() : override {
+		Nat[] result;
+		for (x in waiting)
+			result << x.threadId;
+		result;
 	}
 }
 
@@ -331,7 +356,7 @@ void cond_wait(Ptr<condition> cond, Ptr<lock> lock) : cppBarrier(full) {
 			// We're not holding the lock anymore.
 			lock.base.writeNat(lOffset + sPtr.current, 0);
 
-			cond.base.writeInt(cOffset + sPtr.current, cImpl.waitingThreads + 1);
+			cond.base.writeInt(cOffset + sPtr.current, cImpl.waitingCount + 1);
 			cImpl.wait(Variant(cond), Variant(lock), lImpl);
 
 			// We're holding the lock now!
@@ -356,7 +381,7 @@ void cond_signal(Ptr<condition> cond, Ptr<lock> lock) {
 	if (cImpl = cond.base.readPtr(cOffset).asObject() as CondImpl) {
 		if (lImpl = lock.base.readPtr(lOffset).asObject() as SemaImpl) {
 			cImpl.signal(lImpl);
-			cond.base.writeInt(cOffset + sPtr.current, cImpl.waitingThreads);
+			cond.base.writeInt(cOffset + sPtr.current, cImpl.waitingCount);
 			return;
 		}
 	}
@@ -377,7 +402,7 @@ void cond_broadcast(Ptr<condition> cond, Ptr<lock> lock) {
 	if (cImpl = cond.base.readPtr(cOffset).asObject() as CondImpl) {
 		if (lImpl = lock.base.readPtr(lOffset).asObject() as SemaImpl) {
 			cImpl.broadcast(lImpl);
-			cond.base.writeInt(cOffset + sPtr.current, cImpl.waitingThreads);
+			cond.base.writeInt(cOffset + sPtr.current, cImpl.waitingCount);
 			return;
 		}
 	}
