@@ -95,8 +95,8 @@ dialog Dialog {
 
 		Dialog owner;
 
-		void progress(Nat states, Nat edges, Nat unexplored) : override {
-			// print("P ${states} ${edges} ${unexplored} ${owner.cancel}");
+		void progress(Nat depth, Nat states, Nat edges, Nat unexplored) : override {
+			// print("P ${states} ${edges} ${unexplored}");
 
 			if (owner.cancel)
 				throw progvis:program:ExitError();

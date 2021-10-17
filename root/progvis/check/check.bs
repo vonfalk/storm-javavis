@@ -9,6 +9,10 @@ use progvis:data;
  * Contains all state needed for the search of program states.
  *
  * Call 'check' for a simple interface to the entire checking progress.
+ *
+ * TODO: One interesting approach for getting an estimate of the total time required for checking is
+ * to find the maximum execution depth by exexuting one strand to the end, and then use the fanout
+ * from that to estimate the total search space.
  */
 class Checker on Render {
 	// Create.
@@ -54,6 +58,9 @@ class Checker on Render {
 
 	// Total number of edges.
 	private Nat edges;
+
+	// Maximum depth of the graph so far.
+	private Nat maxDepth;
 
 	// Max number of times we will traverse a single "path" in the graph. We want this fairly large
 	// so that we don't have to restart the program very often, but if it is too large, we will miss
@@ -151,6 +158,7 @@ class Checker on Render {
 			Node n = getNode(current);
 			current.edges << Edge(action, n, error);
 			edges++;
+			maxDepth = maxDepth.max(current.depth);
 			current = n;
 		}
 
@@ -230,7 +238,7 @@ class Checker on Render {
 
 	// Report progress.
 	private void reportProgress() {
-		callback.progress(lookup.count, edges, toExplore);
+		callback.progress(maxDepth, lookup.count, edges, toExplore);
 	}
 
 	// Called when an error is thrown in the program.
@@ -256,8 +264,8 @@ class Progress on Render {
 	// 'states' is the current number of states.
 	// 'edges' is the current number of edges.
 	// 'unexplored' is the current number of edges that need to be explored.
-	void progress(Nat states, Nat edges, Nat unexplored) {
-		print("Progress: ${states} ${edges} ${unexplored}");
+	void progress(Nat depth, Nat states, Nat edges, Nat unexplored) {
+		print("Progress: ${depth} ${states} ${edges} ${unexplored}");
 	}
 }
 
