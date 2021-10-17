@@ -97,7 +97,7 @@ class Thread extends Data {
 	}
 
 	// Summary.
-	protected void putSummary(StrBuf to, Data->Nat id, Data->Allocation alloc) : override {
+	protected void putSummary(StrBuf to, SummaryData data) : override {
 		// Location of the thread.
 		if (pos) {
 			if (file = pos.file) {
@@ -107,7 +107,7 @@ class Thread extends Data {
 
 		// Stack frames. We don't need a delimiter.
 		for (f in frames) {
-			f.summary(to, id, alloc);
+			f.summary(to, data);
 		}
 	}
 

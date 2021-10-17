@@ -142,10 +142,12 @@ class World on Render {
 			a.register(allocMap);
 		}
 
+		SummaryData data(allocMap.result);
+
 		// Start with the globals if we have them.
 		if (globals) {
 			out << "-{";
-			globals.summary(out, dataId, allocMap.result);
+			globals.summary(out, data);
 			out << "}";
 		}
 
@@ -157,7 +159,7 @@ class World on Render {
 		// problems later on. TODO: Fix!
 		for (t in threads) {
 			out << t.id << "{";
-			t.summary(out, dataId, allocMap.result);
+			t.summary(out, data);
 			out << "}";
 		}
 

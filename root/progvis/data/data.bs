@@ -52,15 +52,15 @@ class Data on Render {
 	}
 
 	// Create a summary of this object. See the entry function in World for more details.
-	void summary(StrBuf to, Data->Nat dataId, Data->Allocation alloc) : final {
-		Nat count = dataId.count;
-		Nat id = dataId.get(this, count);
+	void summary(StrBuf to, SummaryData data) : final {
+		Nat count = data.id.count;
+		Nat id = data.id.get(this, count);
 		to << id;
 		if (id == count) {
-			dataId.put(this, id);
+			data.id.put(this, id);
 
 			to << ":{";
-			putSummary(to, dataId, alloc);
+			putSummary(to, data);
 			to << "}";
 		} else {
 			// Output a delimiter so that summaries can be concatenated back-to-back elsewhere
@@ -71,7 +71,7 @@ class Data on Render {
 
 	// Internal helper for summary. This is called when we have determined that we need to output
 	// the contents of this data object.
-	protected void putSummary(StrBuf to, Data->Nat dataId, Data->Allocation alloc) : abstract;
+	protected void putSummary(StrBuf to, SummaryData data) : abstract;
 
 	// Create a copy of this object. Don't copy any data yet.
 	protected Data copyObject() : abstract;
@@ -81,13 +81,29 @@ class Data on Render {
 }
 
 /**
+ * Data passed along to the "summary" functions.
+ */
+class SummaryData on Render {
+	// Create. Provide data for the allocation for each data member.
+	init(Data->Allocation alloc) {
+		init { alloc = alloc; }
+	}
+
+	// Map from data elements to their allocated ID:s.
+	Data->Nat id;
+
+	// Map from data elements to the allocation they are contained in.
+	Data->Allocation alloc;
+}
+
+/**
  * Unknown data.
  */
 class Unknown extends Data {
 	void traverse(World:Traversal t, unsafe:RawPtr object, Nat offset) : override {}
 	Str title(World world) : override { "Unknown"; }
 	Type? type() : override { null; }
-	protected void putSummary(StrBuf to, Data->Nat dataId, Data->Allocation alloc) : override { to << "?"; }
+	protected void putSummary(StrBuf to, SummaryData data) : override { to << "?"; }
 	protected Data copyObject() : override { Unknown(); }
 	protected void copyData(Data->Data copies) : override {}
 }
@@ -102,7 +118,7 @@ class Pad extends Data {
 	void traverse(World:Traversal t, unsafe:RawPtr object, Nat offset) : override {}
 	Str title(World world) : override { "Pad"; }
 	Type? type() : override { null; }
-	protected void putSummary(StrBuf to, Data->Nat dataId, Data->Allocation alloc) : override { /* no need, we are padding */ }
+	protected void putSummary(StrBuf to, SummaryData data) : override { /* no need, we are padding */ }
 	protected Data copyObject() : override { Pad(); }
 	protected void copyData(Data->Data copies) : override {}
 }
@@ -182,7 +198,7 @@ class Primitive extends Atom {
 	Type? type() : override { pType; }
 
 	// Summary.
-	protected void putSummary(StrBuf to, Data->Nat dataId, Data->Allocation alloc) : override {
+	protected void putSummary(StrBuf to, SummaryData data) : override {
 		to << value;
 	}
 
@@ -251,12 +267,12 @@ class Pointer extends Atom {
 	Type? type() : override { pType; }
 
 	// Summary.
-	protected void putSummary(StrBuf to, Data->Nat id, Data->Allocation alloc) : override {
+	protected void putSummary(StrBuf to, SummaryData data) : override {
 		if (z = this.to) {
 			Data root = z;
 
-			var found = alloc.find(z);
-			if (found != alloc.end)
+			var found = data.alloc.find(z);
+			if (found != data.alloc.end)
 				root = found.v.data;
 
 			// If the root is not the same object as the one we're pointing to, output the root first.
@@ -265,13 +281,13 @@ class Pointer extends Atom {
 				// again. It is enough for the second part to output a reference to the exact
 				// object. Note: this will not be ambiguous since we only ever omit the first part
 				// of the representation.
-				if (!id.has(root)) {
-					root.summary(to, id, alloc);
+				if (!data.id.has(root)) {
+					root.summary(to, data);
 				}
 			}
 
 			// Then put the element. Either puts the entire thing, or just a reference to a sub-object.
-			z.summary(to, id, alloc);
+			z.summary(to, data);
 		} else {
 			to << "-";
 		}
@@ -424,10 +440,10 @@ class Composite extends Data {
 	}
 
 	// Summary.
-	protected void putSummary(StrBuf to, Data->Nat id, Data->Allocation alloc) : override {
+	protected void putSummary(StrBuf to, SummaryData data) : override {
 		for (p in parts) {
 			to << p.name << ":";
-			p.value.summary(to, id, alloc);
+			p.value.summary(to, data);
 		}
 	}
 
@@ -526,9 +542,9 @@ class Array extends Data {
 	}
 
 	// Summary.
-	protected void putSummary(StrBuf to, Data->Nat id, Data->Allocation alloc) : override {
+	protected void putSummary(StrBuf to, SummaryData data) : override {
 		for (c in contents)
-			c.summary(to, id, alloc);
+			c.summary(to, data);
 	}
 
 	// Copy.

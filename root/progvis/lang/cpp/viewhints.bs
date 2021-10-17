@@ -228,8 +228,8 @@ class SyncData extends Composite {
 	}
 
 	// Summary.
-	protected void putSummary(StrBuf to, Data->Nat id, Data->Allocation alloc) : override {
-		super:putSummary(to, id, alloc);
+	protected void putSummary(StrBuf to, SummaryData data) : override {
+		super:putSummary(to, data);
 
 		// Also put the queue of waiting threads.
 		to << "+" << join(waiting, ",");
