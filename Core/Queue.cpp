@@ -9,13 +9,14 @@ namespace storm {
 		if (other.empty())
 			return;
 
-		ensure(other.count());
+		Nat count = other.count();
+		ensure(count);
 
 		Nat at = other.head;
-		for (Nat i = 0; i < data->filled; i++, step(at)) {
+		for (Nat i = 0; i < count; i++, step(at)) {
 			handle.safeCopy(ptr(i), other.ptr(at));
 		}
-		data->filled = other.count();
+		data->filled = count;
 	}
 
 	void QueueBase::deepCopy(CloneEnv *env) {
