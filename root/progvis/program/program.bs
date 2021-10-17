@@ -223,6 +223,9 @@ class Program on Render {
 		if (threads.any())
 			terminate();
 
+		// Clear output.
+		output.clear();
+
 		// Reset the thread ID:s
 		usedThreadId = 0;
 
