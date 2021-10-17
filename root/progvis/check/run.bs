@@ -28,7 +28,7 @@ void toNext(Program program, Nat thread) on Render {
 				v.resume();
 			}
 			wait(program);
-			return true;
+			return;
 		}
 	}
 

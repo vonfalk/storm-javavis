@@ -14,6 +14,8 @@ namespace storm {
 		}
 
 		Return::Return(SrcPos pos, Block *block, Expr *expr) : Expr(pos), returnType(findParentType(pos, block)) {
+			if (returnType == Value())
+				throw new (this) SyntaxError(pos, S("Trying to return a value from a function that returns void."));
 			this->expr = expectCastTo(expr, returnType, block->scope);
 		}
 

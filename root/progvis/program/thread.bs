@@ -157,7 +157,7 @@ class ProgThread on Render {
 	// Returns 'false' if this event is not interesting to propagate.
 	void onFunctionReturn(StackVar[] vars) {
 		if (terminating)
-			return false;
+			return;
 
 		popFrames();
 
@@ -167,7 +167,6 @@ class ProgThread on Render {
 		wait();
 
 		memory.clearNew();
-		true;
 	}
 
 	// Called when a new function was entered.
