@@ -201,6 +201,7 @@ class SyncData extends Composite {
 	init(SyncData original) {
 		init(original) {
 			implOffset = original.implOffset;
+			waiting = original.waiting;
 		}
 	}
 
