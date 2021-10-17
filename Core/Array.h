@@ -100,8 +100,7 @@ namespace storm {
 
 
 		/**
-		 * Base class for the iterator. Not exposed to Storm, but it is used internally to make the
-		 * implementation of the Storm iterator easier.
+		 * Base class for the iterator.
 		 * TODO: How does this fit with deepCopy?
 		 */
 		class Iter {

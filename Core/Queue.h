@@ -53,6 +53,51 @@ namespace storm {
 		// Handle of the contained type.
 		const Handle &handle;
 
+		/**
+		 * Base class for the iterator.
+		 */
+		class Iter {
+			STORM_VALUE;
+		public:
+			// Pointing to the end.
+			Iter();
+
+			// Pointing to the start.
+			Iter(QueueBase *owner, Nat index);
+
+			// Compare.
+			bool operator ==(const Iter &o) const;
+			bool operator !=(const Iter &o) const;
+
+			// Increase.
+			Iter &operator ++();
+			Iter operator ++(int z);
+
+			// Get raw element.
+			void *CODECALL getRaw() const;
+
+			// Get index.
+			inline Nat getIndex() const { return index; }
+
+			// Raw pre- and post increment.
+			Iter &CODECALL preIncRaw();
+			Iter CODECALL postIncRaw();
+
+		private:
+			// Queue we're pointing to.
+			QueueBase *owner;
+
+			// Index into the logical queue (i.e. relative to head).
+			Nat index;
+
+			// At end?
+			Bool atEnd() const;
+		};
+
+		// Begin and end.
+		Iter CODECALL beginRaw();
+		Iter CODECALL endRaw();
+
 	private:
 		// Data. We store 'count' in here.
 		GcArray<byte> *data;
@@ -114,6 +159,32 @@ namespace storm {
 			pushRaw(&item);
 			return *this;
 		}
+
+		/**
+		 * Iterator.
+		 */
+		class Iter : public QueueBase::Iter {
+		public:
+			Iter() : QueueBase::Iter() {}
+
+			Iter(Queue<T> *owner, Nat id) : QueueBase::Iter(owner, id) {}
+
+			T &operator *() const {
+				return *(T *)getRaw();
+			}
+
+			T &v() const {
+				return *(T *)getRaw();
+			}
+
+			T *operator ->() const {
+				return (T *)getRaw();
+			}
+		};
+
+		// Begin/end.
+		Iter begin() { return Iter(this, 0); }
+		Iter end() { return Iter(this, count); }
 	};
 
 	/**

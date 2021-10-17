@@ -108,6 +108,64 @@ namespace storm {
 		*to << S("]");
 	}
 
+	QueueBase::Iter QueueBase::beginRaw() {
+		return Iter(this, 0);
+	}
+
+	QueueBase::Iter QueueBase::endRaw() {
+		return Iter(this, count());
+	}
+
+	QueueBase::Iter::Iter() : owner(null), index(0) {}
+
+	QueueBase::Iter::Iter(QueueBase *owner, Nat index) : owner(owner), index(index) {}
+
+	Bool QueueBase::Iter::operator ==(const Iter &o) const {
+		if (atEnd() || o.atEnd())
+			return atEnd() == o.atEnd();
+		else
+			return index == o.index && owner == o.owner;
+	}
+
+	Bool QueueBase::Iter::atEnd() const {
+		return owner == null
+			|| owner->count() <= index;
+	}
+
+	Bool QueueBase::Iter::operator !=(const Iter &o) const {
+		return !(*this == o);
+	}
+
+	QueueBase::Iter &QueueBase::Iter::operator ++() {
+		if (!atEnd())
+			index++;
+		return *this;
+	}
+
+	QueueBase::Iter QueueBase::Iter::operator ++(int) {
+		Iter c = *this;
+		++(*this);
+		return c;
+	}
+
+	void *QueueBase::Iter::getRaw() const {
+		if (atEnd()) {
+			Engine &e = runtime::someEngine();
+			throw new (e) QueueError(L"Trying to dereference an invalid iterator.");
+		}
+		Nat i = owner->head + index;
+		if (i >= owner->data->count)
+			i -= owner->data->count;
+		return owner->ptr(i);
+	}
+
+	QueueBase::Iter &QueueBase::Iter::preIncRaw() {
+		return operator ++();
+	}
+
+	QueueBase::Iter QueueBase::Iter::postIncRaw() {
+		return operator ++(0);
+	}
 
 	QueueError::QueueError(const wchar *msg) : msg(new (engine()) Str(msg)) {
 		saveTrace();

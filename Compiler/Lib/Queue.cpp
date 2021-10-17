@@ -106,7 +106,67 @@ namespace storm {
 			add(nativeFunction(e, t, S("<<"), valList(e, 2, t, ref), address(&addQueueVal)));
 		}
 
+		Type *iter = new (this) QueueIterType(contents);
+		add(iter);
+
+		add(nativeFunction(e, Value(iter), S("begin"), valList(e, 1, t), address(&QueueBase::beginRaw))->makePure());
+		add(nativeFunction(e, Value(iter), S("end"), valList(e, 1, t), address(&QueueBase::endRaw))->makePure());
+
 		return Type::loadAll();
 	}
+
+	/**
+	 * Iterator.
+	 */
+
+	static void CODECALL copyIterator(void *to, const QueueBase::Iter *from) {
+		new (Place(to)) QueueBase::Iter(*from);
+	}
+
+	static bool CODECALL iteratorEq(QueueBase::Iter &a, QueueBase::Iter &b) {
+		return a == b;
+	}
+
+	static bool CODECALL iteratorNeq(QueueBase::Iter &a, QueueBase::Iter &b) {
+		return a != b;
+	}
+
+	static void *CODECALL iteratorGet(const QueueBase::Iter &v) {
+		return v.getRaw();
+	}
+
+	static Nat CODECALL iteratorGetKey(const QueueBase::Iter &v) {
+		return v.getIndex();
+	}
+
+	QueueIterType::QueueIterType(Type *param)
+		: Type(new (param) Str(S("Iter")), new (param) Array<Value>(), typeValue),
+		  contents(param) {
+
+		setSuper(QueueBase::Iter::stormType(engine));
+	}
+
+	Bool QueueIterType::loadAll() {
+		Engine &e = engine;
+		Value v(this, false);
+		Value r(this, true);
+		Value param(contents, true);
+
+		Array<Value> *ref = valList(e, 1, r);
+		Array<Value> *refref = valList(e, 2, r, r);
+
+		Value vBool = Value(StormInfo<Bool>::type(e));
+		Value vNat = Value(StormInfo<Nat>::type(e));
+		add(nativeFunction(e, Value(), Type::CTOR, refref, address(&copyIterator))->makePure());
+		add(nativeFunction(e, vBool, S("=="), refref, address(&iteratorEq))->makePure());
+		add(nativeFunction(e, vBool, S("!="), refref, address(&iteratorNeq))->makePure());
+		add(nativeFunction(e, r, S("++*"), ref, address(&QueueBase::Iter::preIncRaw)));
+		add(nativeFunction(e, v, S("*++"), ref, address(&QueueBase::Iter::postIncRaw)));
+		add(nativeFunction(e, vNat, S("k"), ref, address(&iteratorGetKey))->makePure());
+		add(nativeFunction(e, param, S("v"), ref, address(&iteratorGet))->makePure());
+
+		return Type::loadAll();
+	}
+
 
 }
