@@ -112,12 +112,15 @@ class ThreadView extends DataView {
 				source.highlight = sourceHighlight;
 			}
 		} else {
-			source.highlight = sourceTerminatedHighlight;
+			if (!thread.crashed) {
+				source.highlight = sourceReturnedHighlight;
+				source.displayEmpty("<thread exited normally>");
+			} else {
+				source.highlight = sourceTerminatedHighlight;
+			}
+
 			if (buttons.last !is removeDead)
 				buttons << removeDead;
-
-			if (!thread.crashed)
-				source.displayEmpty("<thread exited normally>");
 		}
 
 		invalidateSize();

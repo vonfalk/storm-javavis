@@ -55,8 +55,8 @@ class Thread extends Data {
 		barriersAvailable = src.barriersAvailable;
 		pos = src.pos;
 
-		if (!src.alive) {
-			// Remove frames.
+		if (!alive & !crashed) {
+			// Remove frames, but not if we crashed (makes it easier to find the crash).
 			frames.clear();
 			return;
 		}
