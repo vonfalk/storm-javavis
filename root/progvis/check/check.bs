@@ -119,6 +119,8 @@ class Checker on Render {
 				actions << Action(t.threadId, false);
 				t.resume();
 			}
+
+			wait(program);
 		}
 
 		// Step the thread in single-step mode until we encounter the error.
@@ -126,6 +128,8 @@ class Checker on Render {
 		var t = findSeqThread(program, path.last);
 		while (t.alive & !t.sleeping) {
 			t.resume();
+			wait(program);
+
 			actions << Action(t.threadId, false);
 
 			if (e = world.update())
