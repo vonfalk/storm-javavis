@@ -151,7 +151,7 @@ namespace storm {
 	void *QueueBase::Iter::getRaw() const {
 		if (atEnd()) {
 			Engine &e = runtime::someEngine();
-			throw new (e) QueueError(L"Trying to dereference an invalid iterator.");
+			throw new (e) QueueError(S("Trying to dereference an invalid iterator."));
 		}
 		Nat i = owner->head + index;
 		if (i >= owner->data->count)
