@@ -17,25 +17,32 @@ void toStart(Program program) on Render {
 }
 
 /**
+ * Find the thread to step from a sequential ID.
+ */
+ProgThread findSeqThread(Program program, Nat seqId) on Render {
+	if (program.sortedThreads.count <= seqId)
+		throw CheckError("Can not step thread ${seqId}, it does not exist.");
+
+	var thread = program.sortedThreads[seqId];
+	if (thread.sleeping)
+		throw CheckError("Can not step the sleeping thread ${seqId}.");
+
+	thread;
+}
+
+/**
  * Advance the thread with a particular ID to the next barrier.
  */
-void toNext(Program program, Nat thread) on Render {
-	for (v in program.threads) {
-		if (v.threadId == thread) {
-			if (v.sleeping)
-				throw CheckError("Can not step thread ${thread} as it is sleeping.");
+void toNext(Program program, Nat seqId) on Render {
+	var thread = findSeqThread(program, seqId);
 
-			if (v.barriersAvailable) {
-				v.resumeBarrier();
-			} else {
-				v.resume();
-			}
-			wait(program);
-			return;
-		}
+	if (thread.barriersAvailable) {
+		thread.resumeBarrier();
+	} else {
+		thread.resume();
 	}
 
-	throw CheckError("Failed to step thread ${thread} in the program.");
+	wait(program);
 }
 
 /**

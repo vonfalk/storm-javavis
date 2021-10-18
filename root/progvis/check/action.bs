@@ -1,0 +1,27 @@
+/**
+ * Representation of an action.
+ *
+ * These are "actual" thread ID:s, not the sequence ID:s that are used inside the search.
+ */
+value Action {
+	init(Nat thread, Bool barrier) {
+		init {
+			thread = thread;
+			barrier = barrier;
+		}
+	}
+
+	// Thread to step.
+	Nat thread;
+
+	// Is it a barrier step?
+	Bool barrier;
+
+	// To string.
+	Str toS() {
+		if (barrier)
+			thread.toS() + "*";
+		else
+			thread.toS();
+	}
+}

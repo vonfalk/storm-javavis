@@ -92,6 +92,53 @@ class Checker on Render {
 
 	// Find an error. Simply run a BFS until we find an edge with an error.
 	Result? result() {
+		unless (edge = findError())
+			return null;
+
+		// We know that this is true.
+		unless (edgeError = edge.error)
+			return null;
+
+		Action[] actions;
+		Nat[] path = edge.child.path();
+
+		if (path.empty)
+			Result(edgeError, []);
+
+		// Go through the program and resolve the relative thread ID:s. We don't need to keep track
+		// of the world here.
+		world.clear();
+		toStart(program);
+
+		for (Nat i = 0; i < path.count - 1; i++) {
+			var t = findSeqThread(program, path[i]);
+			if (t.barriersAvailable) {
+				actions << Action(t.threadId, true);
+				t.resumeBarrier();
+			} else {
+				actions << Action(t.threadId, false);
+				t.resume();
+			}
+		}
+
+		// Step the thread in single-step mode until we encounter the error.
+		error = null;
+		var t = findSeqThread(program, path.last);
+		while (t.alive & !t.sleeping) {
+			t.resume();
+			actions << Action(t.threadId, false);
+
+			if (e = world.update())
+				break;
+			if (e = error)
+				break;
+		}
+
+		Result(edgeError, actions);
+	}
+
+	// Find an edge containing an error.
+	private Edge? findError() {
 		Queue<Node> work;
 		Set<Node> traversed;
 
@@ -100,7 +147,7 @@ class Checker on Render {
 			Node c = work.top; work.pop();
 			for (e in c.edges) {
 				if (error = e.error)
-					return Result(error, e.child.path);
+					return e;
 
 				if (!traversed.has(e.child)) {
 					traversed.put(e.child);
@@ -275,7 +322,7 @@ class Progress on Render {
  */
 class Result {
 	// Create.
-	init(ProgramError error, Nat[] sequence) {
+	init(ProgramError error, Action[] sequence) {
 		init {
 			error = error;
 			sequence = sequence;
@@ -286,7 +333,7 @@ class Result {
 	ProgramError error;
 
 	// Sequence used to reach the error. We use "barrier steps" if available.
-	Nat[] sequence;
+	Action[] sequence;
 
 	// Output.
 	void toS(StrBuf to) {

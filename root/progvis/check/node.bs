@@ -24,9 +24,12 @@ package class Node on Render {
 		else
 			myDepth = 0;
 
+		Nat id = 0;
 		for (thread in state.threads) {
-			if (thread.alive & !thread.crashed & !thread.sleeping) {
-				unexplored.push(thread.id);
+			if (thread.alive & !thread.crashed) {
+				if (!thread.sleeping)
+					unexplored.push(id);
+				id++;
 			}
 		}
 	}

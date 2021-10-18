@@ -85,8 +85,8 @@ class Data on Render {
  */
 class SummaryData on Render {
 	// Create. Provide data for the allocation for each data member.
-	init(Data->Allocation alloc) {
-		init { alloc = alloc; }
+	init(Data->Allocation alloc, Nat->Nat threadId) {
+		init { alloc = alloc; threadId = threadId; }
 	}
 
 	// Map from data elements to their allocated ID:s.
@@ -94,6 +94,9 @@ class SummaryData on Render {
 
 	// Map from data elements to the allocation they are contained in.
 	Data->Allocation alloc;
+
+	// Map for thread ID:s. From real thread ID to sequential ID.
+	Nat->Nat threadId;
 }
 
 /**

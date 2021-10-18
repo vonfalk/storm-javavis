@@ -124,7 +124,7 @@ class World on Render {
 		StrBuf out;
 
 		Data->Nat dataId;
-		// Nat->Nat threadId;
+		Nat->Nat threadId;
 
 		Thread[] threads;
 		Globals? globals;
@@ -135,7 +135,7 @@ class World on Render {
 			if (t = a.data as Thread) {
 				// Ignore dead threads.
 				if (t.alive & !t.crashed) {
-					// threadId.put(t.id, threads.count);
+					threadId.put(t.id, threads.count);
 					threads << t;
 				}
 			} else if (g = a.data as Globals) {
@@ -145,7 +145,7 @@ class World on Render {
 			a.register(allocMap);
 		}
 
-		SummaryData data(allocMap.result);
+		SummaryData data(allocMap.result, threadId);
 
 		// Start with the globals if we have them.
 		if (globals) {
@@ -158,11 +158,11 @@ class World on Render {
 		// they will remain in that order (assuming thread id:s don't wrap around back to zero).
 		// threads.sort((a, b) => a.src.threadId < b.src.threadId);
 
-		// Output each thread in turn. We output thread ID:s so that the checker can know which
-		// threads to step. We could merge these to greatly reduce the search space, but it creates
-		// problems later on. TODO: Fix!
-		for (t in threads) {
-			out << t.id << "{";
+		// Output each thread in turn. We output sequential ID:s, so that we can merge cases where
+		// one thread terminates and the other ones keep going. This is not perfect, as the order
+		// threads were started in still matter, but not as much.
+		for (i, t in threads) {
+			out << i << "{";
 			t.summary(out, data);
 			out << "}";
 		}

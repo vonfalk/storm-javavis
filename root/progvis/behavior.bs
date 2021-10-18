@@ -203,13 +203,13 @@ class ReplayBehavior extends DefaultBehavior {
 		}
 	}
 
-	init(MainWin window, Nat[] steps) {
+	init(MainWin window, check:Action[] steps) {
 		init(window) {
 			allowCancel = true;
 		}
 
 		for (x in steps)
-			this.steps << x.toS + "*";
+			this.steps << x.toS;
 	}
 
 	void onProgramError(ProgramError error) : override {

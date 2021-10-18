@@ -232,7 +232,8 @@ class SyncData extends Composite {
 		super:putSummary(to, data);
 
 		// Also put the queue of waiting threads.
-		to << "+" << join(waiting, ",");
+		for (t in waiting)
+			to << "+" << data.threadId.get(t, 0);
 	}
 
 	// Copy.
