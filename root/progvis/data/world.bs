@@ -59,7 +59,7 @@ class World on Render {
 		Lock:Guard z(traverseLock);
 
 		var t = beginTraversal();
-		for (thread in program.threads) {
+		for (thread in program.sortedThreads) {
 			traverse(t, thread);
 		}
 		endTraversal(t);
@@ -124,6 +124,7 @@ class World on Render {
 		StrBuf out;
 
 		Data->Nat dataId;
+		// Nat->Nat threadId;
 
 		Thread[] threads;
 		Globals? globals;
@@ -133,8 +134,10 @@ class World on Render {
 		for (a in allocations) {
 			if (t = a.data as Thread) {
 				// Ignore dead threads.
-				if (t.alive & !t.crashed)
+				if (t.alive & !t.crashed) {
+					// threadId.put(t.id, threads.count);
 					threads << t;
+				}
 			} else if (g = a.data as Globals) {
 				globals = g;
 			}
@@ -151,8 +154,9 @@ class World on Render {
 			out << "}";
 		}
 
-		// Sort according to thread id.
-		threads.sort((a, b) => a.src.threadId < b.src.threadId);
+		// Note: We don't need to sort threads by ID. Since we insert threads in a sorted order,
+		// they will remain in that order (assuming thread id:s don't wrap around back to zero).
+		// threads.sort((a, b) => a.src.threadId < b.src.threadId);
 
 		// Output each thread in turn. We output thread ID:s so that the checker can know which
 		// threads to step. We could merge these to greatly reduce the search space, but it creates
@@ -209,7 +213,7 @@ class World on Render {
 			}
 
 			// Register all threads with the memory tracker.
-			for (t in world.program.threads) {
+			for (t in world.program.sortedThreads) {
 				memory.add(t.threadId, t.memory);
 			}
 		}

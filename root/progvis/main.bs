@@ -494,6 +494,7 @@ void debug() on Compiler {
 		// win.open(url / "bank" / "bank_good.c");
 		// win.open(url / "buffer" / "buffer.c");
 		win.open(url / "buffer" / "buffer_sema_lock.c");
+		// win.open(url / "free_ptr.c");
 		// win.open(url / "simple_buffer.c");
 		// win.open(url / "cond.c");
 		win.waitForClose();

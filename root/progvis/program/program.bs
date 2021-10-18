@@ -45,6 +45,9 @@ class Program on Render {
 	// All threads in the program. The key is the ID of the UThread that executes the code.
 	public Word->ProgThread threads;
 
+	// Sorted list of threads. Sorted by their thread ID.
+	public ProgThread[] sortedThreads;
+
 	// Event called whenever the state of a thread changed.
 	private Fn<void>? changeNotification;
 
@@ -147,6 +150,43 @@ class Program on Render {
 		result;
 	}
 
+	// Add a thread to our thread structure.
+	private void addThread(Word id, ProgThread thread) {
+		threads.put(id, thread);
+
+		for (Nat i = sortedThreads.count; i > 0; i--) {
+			if (sortedThreads[i-1].threadId < thread.threadId) {
+				sortedThreads.insert(i, thread);
+				return;
+			}
+		}
+
+		sortedThreads.insert(0, thread);
+	}
+
+	// Remove a thread from our thread structure.
+	private void removeThread(Word id, ProgThread thread) {
+		// Manually clear the memory watchers now. Otherwise we will retain references too long in
+		// some cases.
+		thread.memory.clearAll();
+
+		threads.remove(id);
+
+		for (i, v in sortedThreads) {
+			if (v is thread) {
+				sortedThreads.remove(i);
+				return;
+			}
+		}
+	}
+	private void removeThread(Word id) {
+		var found = threads.find(id);
+		if (found == threads.end)
+			return;
+
+		removeThread(id, found.v);
+	}
+
 	// Start a new thread executing a particular function assumed to be located inside the
 	// environment specified earlier. Always spawns a new thread..
 	void spawn(Fn<void> fn) {
@@ -157,7 +197,7 @@ class Program on Render {
 	void run(Fn<void> fn) {
 		try {
 			// Add the thread now so that it may be used to capture the result of 'main'.
-			threads.put(currentUThread(), ProgThread(this, ++usedThreadId));
+			addThread(currentUThread(), ProgThread(this, ++usedThreadId));
 
 			fn.call();
 		} catch (ExitError e) {
@@ -168,8 +208,7 @@ class Program on Render {
 
 		// If the thread remains by now, remove it.
 		// This is just to be safe. It should not happen.
-		Word id = currentUThread();
-		threads.remove(id);
+		removeThread(currentUThread());
 	}
 
 	// Load source code.
@@ -271,7 +310,7 @@ class Program on Render {
 			threads.get(id);
 		} else {
 			ProgThread t(this, ++usedThreadId);
-			threads.put(id, t);
+			addThread(id, t);
 			t;
 		};
 
@@ -287,7 +326,7 @@ class Program on Render {
 			threads.get(id);
 		} else {
 			ProgThread t(this, ++usedThreadId);
-			threads.put(id, t);
+			addThread(id, t);
 			t;
 		};
 
@@ -304,7 +343,7 @@ class Program on Render {
 		ProgThread t = threads.get(id);
 		var notify = t.onFunctionExited();
 		if (!t.alive) {
-			threads.remove(id);
+			removeThread(id, t);
 
 			if (f = t.watch)
 				spawn checkErrors(t.threadId, f);
@@ -320,7 +359,7 @@ class Program on Render {
 		// We can just preemptively add the thread.
 		Nat id = ++usedThreadId;
 		ProgThread t(this, id);
-		threads.put(threadId, t);
+		addThread(threadId, t);
 
 		id;
 	}
