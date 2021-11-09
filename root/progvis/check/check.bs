@@ -99,46 +99,56 @@ class Checker on Render {
 		unless (edgeError = edge.error)
 			return null;
 
-		Action[] actions;
-		Nat[] path = edge.child.path();
+		try {
+			Action[] actions;
+			Nat[] path = edge.child.path();
 
-		if (path.empty)
-			Result(edgeError, []);
+			if (path.empty)
+				Result(edgeError, []);
 
-		// Go through the program and resolve the relative thread ID:s. We don't need to keep track
-		// of the world here.
-		world.clear();
-		toStart(program);
+			// Go through the program and resolve the relative thread ID:s. We don't need to keep track
+			// of the world here.
+			world.clear();
+			toStart(program);
 
-		for (Nat i = 0; i < path.count - 1; i++) {
-			var t = findSeqThread(program, path[i]);
-			if (t.barriersAvailable) {
-				actions << Action(t.threadId, true);
-				t.resumeBarrier();
-			} else {
-				actions << Action(t.threadId, false);
-				t.resume();
+			for (Nat i = 0; i < path.count - 1; i++) {
+				var t = findSeqThread(program, path[i]);
+				if (t.barriersAvailable) {
+					actions << Action(t.threadId, true);
+					t.resumeBarrier();
+				} else {
+					actions << Action(t.threadId, false);
+					t.resume();
+				}
+
+				wait(program);
 			}
 
-			wait(program);
+			// Step the thread in single-step mode until we encounter the error.
+			error = null;
+			var t = findSeqThread(program, path.last);
+			while (t.alive & !t.sleeping) {
+				t.resume();
+				wait(program);
+
+				actions << Action(t.threadId, false);
+
+				if (e = world.update())
+					break;
+				if (e = error)
+					break;
+			}
+
+			program.terminate();
+			world.clear();
+
+			Result(edgeError, actions);
+
+		} catch (Exception e) {
+			program.terminate();
+			world.clear();
+			throw e;
 		}
-
-		// Step the thread in single-step mode until we encounter the error.
-		error = null;
-		var t = findSeqThread(program, path.last);
-		while (t.alive & !t.sleeping) {
-			t.resume();
-			wait(program);
-
-			actions << Action(t.threadId, false);
-
-			if (e = world.update())
-				break;
-			if (e = error)
-				break;
-		}
-
-		Result(edgeError, actions);
 	}
 
 	// Find an edge containing an error.
