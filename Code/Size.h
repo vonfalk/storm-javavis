@@ -65,6 +65,9 @@ namespace code {
 		// Get a Size aligned as another size.
 		Size STORM_FN alignedAs(Size other) const;
 
+		// Get an unaligned size.
+		Size STORM_FN unaligned() const;
+
 		// Find out the 32- and 64-bit sizes (for storage).
 		nat size32() const;
 		nat size64() const;

@@ -225,7 +225,7 @@ class Pointer extends Atom {
 		if (type)
 			sz = Value(type).size;
 
-		init(sz.current) {
+		init(sz.unaligned.current) {
 			pType = type;
 		}
 	}

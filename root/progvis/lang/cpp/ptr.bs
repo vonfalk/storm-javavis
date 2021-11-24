@@ -78,18 +78,23 @@ class PtrType extends Type {
 
 	// Load members.
 	Bool loadAll() : override {
-		// Note: We make assumptions regarding the type in generated code. Don't alter the order of these!
+		// Note: We make assumptions regarding the type in generated code. Don't alter the order of
+		// these!
 		add(MemberVar("base", Value(named{core:unsafe:RawPtr}), this));
 		add(MemberVar("offset", Value(named{core:Nat}), this));
 
-		// Default ctor.
-		add(TypeDefaultCtor(this));
+		// Default ctors.
+		// add(TypeDefaultCtor(this));
 		add(TypeCopyCtor(this));
 		add(TypeAssign(this));
 
 		Value val(this, false);
 		Value ref(this, true);
 		Value int(named{Int});
+
+		// Version of the default ctor that writes a zero to our struct, so that we can see the
+		// initialization.
+		addFn(Value(), "__init", [ref], defCtor());
 
 		// Compare pointers.
 		addFn(named{Bool}, "==", [ref, ref], named{helpers:pointerEq<unsafe:RawPtr, unsafe:RawPtr>});
@@ -138,6 +143,20 @@ class PtrType extends Type {
 		Function f(result, name, params);
 		f.setCode(DynamicCode(l));
 		add(f);
+	}
+
+	// Generate the default ctor. We want to write to the int so that it registers as an
+	// initialization.
+	private Listing defCtor() : static {
+		Listing l(true, ptrDesc);
+		Var me = l.createParam(ptrDesc);
+		l << prolog();
+		l << fnParam(ptrDesc, me);
+		l << fnCall(named{core:unsafe:RawPtr:__init<core:unsafe:RawPtr>}.ref, true);
+		l << mov(ptrA, me);
+		l << mov(intRel(ptrA, Offset(sPtr)), intConst(0));
+		l << fnRet(ptrA);
+		l;
 	}
 
 	// Generate += / -= operator.

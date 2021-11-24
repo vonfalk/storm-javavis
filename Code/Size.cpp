@@ -173,6 +173,10 @@ namespace code {
 					other.align64());
 	}
 
+	Size Size::unaligned() const {
+		return Size(code::size(s32), 1, code::size(s64), 1);
+	}
+
 	Nat Size::size32() const {
 		return roundUp(code::size(s32), code::align(s32));
 	}

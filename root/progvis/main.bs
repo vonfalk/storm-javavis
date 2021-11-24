@@ -470,6 +470,7 @@ void debug() on Compiler {
 		MainWin win;
 		// win.open(url / "assert.c");
 		// win.open(url / "atomics.c");
+		win.open(url / "atomic_stack.c");
 		// win.open(url / "demo1.bs");
 		// win.open(url / "demo2.bs");
 		// win.open(url / "array.bs");
@@ -493,7 +494,7 @@ void debug() on Compiler {
 		// win.open(url / "bank" / "bank.c");
 		// win.open(url / "bank" / "bank_good.c");
 		// win.open(url / "buffer" / "buffer.c");
-		win.open(url / "buffer" / "buffer_sema_lock.c");
+		// win.open(url / "buffer" / "buffer_sema_lock.c");
 		// win.open(url / "free_ptr.c");
 		// win.open(url / "simple_buffer.c");
 		// win.open(url / "cond.c");
