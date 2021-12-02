@@ -194,6 +194,18 @@ class ProgThread on Render {
 	// Returns 'false' if this event is not interesting to propagate.
 	Bool onFunctionExited() {
 		// print("Function ${frames.last.function} exited.");
+
+		// If this is the last frame, and it did not contain a return statement, we should pause one
+		// time before the thread terminates, otherwise barrier steps will skip a bit too much in
+		// some cases.
+		if (!terminating & barrierStep) {
+			if (callDepth == 1 & frames.any) {
+				if (!frames.last.returned) {
+					wait();
+				}
+			}
+		}
+
 		if (callDepth > 0)
 			callDepth--;
 
