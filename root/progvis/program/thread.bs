@@ -11,6 +11,55 @@ class ExitError extends Exception {
 	}
 }
 
+/**
+ * Custom data type to use when referring to a thread ID.
+ *
+ * When referring to a thread by ID, it is important to use this type so that the system can
+ * properly collapse the thread ID:s when checking the program for errors (when doing this, we
+ * aggressively collapse states that are considered to be the same). So, whenever the runtime system
+ * finds a thread id by accessing a ProgThread class and displays it to the user, it is important to
+ * wrap it inside an instance of this class. For values that are returned from functions that create
+ * threads, that intentionally expose thread ids to the system, this is not necessary. As the thread
+ * id is visible to the user, the system is not able to merge executions.
+ *
+ * Note: The value 0 means "no thread", and a special value (noinit) means that the ID has not yet
+ * been initialized (useful to distinguish between "no initialization" and "no thread currently" in
+ * locks for example).
+ *
+ * Note: The size of this class must be exactly one Nat, otherwise other implementations may break
+ * (we access this from asm/RawPtr:s).
+ */
+value ThreadId {
+	// The actual thread id.
+	Nat v;
+
+	// Create an 'empty' thread id.
+	init() {
+		init { v = 0; }
+	}
+
+	// Create.
+	init(Nat v) {
+		init { v = v; }
+	}
+
+	// Create uninitialized id.
+	ThreadId noInit() : static {
+		ThreadId((-1).nat);
+	}
+
+	// Empty?
+	Bool empty() { noInit() | (v == 0); }
+	Bool any() { !empty(); }
+
+	// Not initialized?
+	Bool noInit() { v == (-1).nat; }
+
+	// Hash and equals if we want to use ThreadId throughout the system.
+	Nat hash() { v.hash; }
+	Bool ==(Nat o) { v == o; }
+}
+
 
 /**
  * Represents a running thread inside the program.
@@ -150,9 +199,19 @@ class ProgThread on Render {
 		if (pos.any)
 			last.pos = pos;
 
-		if (barrierStep)
-			if (last.pos != last.lastStop)
+		if (barrierStep) {
+			if (last.pos != last.lastStop) {
+				last.lastStop = last.pos;
+
 				wait();
+
+				// If this is a release barrier, make sure to stop at the next step. Otherwise, we
+				// may miss some interesting interleavings (e.g. let the new thread run first when
+				// starting a new thread).
+				if (type & Barrier:release)
+					barrierStep = false;
+			}
+		}
 
 		// We always clear memory at a barrier, even if we did not wait.
 		memory.clearAll();
@@ -200,7 +259,8 @@ class ProgThread on Render {
 		// some cases.
 		if (!terminating & barrierStep) {
 			if (callDepth == 1 & frames.any) {
-				if (!frames.last.returned) {
+				var last = frames.last;
+				if (!last.returned & last.lastStop != last.pos) {
 					wait();
 				}
 			}

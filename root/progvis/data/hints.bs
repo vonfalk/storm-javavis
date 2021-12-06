@@ -1,4 +1,5 @@
 use ui;
+use lang:bs:macro;
 
 /**
  * View hints. A part of the hints given to the visualization as a whole, dictates how data from a
@@ -46,6 +47,8 @@ class DefaultViewHints extends ViewHints {
 		} else if (!info.isValue) {
 			// A reference.
 			return Pointer(info.type);
+		} else if (info.type is named{progvis:program:ThreadId}) {
+			return ThreadId();
 		} else if (isPrimitive(info.type)) {
 			return Primitive(info.type);
 		} else if (type = info.type as core:lang:ArrayType) {

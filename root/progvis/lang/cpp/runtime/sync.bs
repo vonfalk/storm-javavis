@@ -164,10 +164,10 @@ void sema_down(Ptr<semaphore> sema) : cppBarrier(acquire) {
 value lock {
 	// Note: Layout here is important!
 	SemaImpl? impl;
-	Int taken_by;
+	progvis:program:ThreadId taken_by;
 
 	init() {
-		init { taken_by = -1; }
+		init { taken_by = progvis:program:ThreadId:noInit(); }
 	}
 }
 
@@ -195,7 +195,7 @@ void lock_destroy(Ptr<lock> lock) {
 
 	Nat offset = lock.offset - sPtr.current * 2;
 	lock.base.writePtr(offset, unsafe:RawPtr());
-	lock.base.writeInt(offset + sPtr.current, -1);
+	lock.base.writeNat(offset + sPtr.current, progvis:program:ThreadId:noInit.v);
 }
 
 void lock_acquire(Ptr<lock> lock) : cppBarrier(acquire) {
