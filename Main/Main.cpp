@@ -90,11 +90,20 @@ int runRepl(Engine &e, const wchar_t *lang, const wchar_t *input) {
 	return 0;
 }
 
+bool hasColon(const wchar_t *function) {
+	for (; *function; function++)
+		if (*function == ':')
+			return true;
+	return false;
+}
+
 int runFunction(Engine &e, const wchar_t *function) {
 	SimpleName *name = parseSimpleName(new (e) Str(function));
 	Named *found = e.scope().find(name);
 	if (!found) {
 		wcerr << L"Could not find " << function << endl;
+		if (hasColon(function))
+			wcerr << L"Did you mean to use '.' instead of ':'?" << endl;
 		return 1;
 	}
 
