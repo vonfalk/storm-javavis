@@ -159,6 +159,11 @@ class Atom extends Data {
 	void update(World:Traversal t, unsafe:RawPtr object, Nat offset) {
 		access = t.memory.query(access, object, offset, size);
 	}
+
+	// Add the access to the summary.
+	protected void putSummary(StrBuf to, SummaryData data) : override {
+		to << "?" << access.v;
+	}
 }
 
 /**
@@ -203,6 +208,7 @@ class Primitive extends Atom {
 	// Summary.
 	protected void putSummary(StrBuf to, SummaryData data) : override {
 		to << value;
+		super:putSummary(to, data);
 	}
 
 	// Copy.
@@ -294,6 +300,8 @@ class Pointer extends Atom {
 		} else {
 			to << "-";
 		}
+
+		super:putSummary(to, data);
 	}
 
 	// Copy.
