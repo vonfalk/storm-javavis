@@ -24,11 +24,19 @@ namespace storm {
 		*to = *from;
 	}
 
+	Str *CODECALL unknownPtrToS(EnginePtr e, RootObject *ptr) {
+		StrBuf *buf = new (e) StrBuf();
+		*buf << S("0x") << hex(ptr);
+		return buf->toS();
+	}
+
 	Bool UnknownType::loadAll() {
 		Array<Value> *rr = new (this) Array<Value>(2, Value(this, true));
+		Array<Value> *v = new (this) Array<Value>(1, Value(this, false));
 		// Note: These constructors do not need to be very efficient. They are almost never called.
 		if (size() == Size::sPtr) {
 			add(nativeFunction(engine, Value(), Type::CTOR, rr, address(&copyPtr))->makePure());
+			add(nativeEngineFunction(engine, StormInfo<Str *>::type(engine), S("toS"), v, address(&unknownPtrToS)));
 		} else {
 			add(nativeFunction(engine, Value(), Type::CTOR, rr, address(&copyInt))->makePure());
 		}

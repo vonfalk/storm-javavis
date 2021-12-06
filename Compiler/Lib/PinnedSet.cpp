@@ -194,7 +194,7 @@ namespace storm {
 		if (data) {
 			newData->filled = data->filled;
 			for (size_t i = 0; i < min(data->count, n); i++) {
-				newData->v[i] = data->v[i];
+				newData->v[newData->count - i - 1] = data->v[data->count - i - 1];
 			}
 		}
 
